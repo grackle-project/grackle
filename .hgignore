@@ -1,0 +1,21 @@
+# use glob syntax.
+syntax: glob
+
+*.o
+*.f
+*.f90
+*~
+*.pyc
+*.exe
+
+bin/enzo
+TAGS
+DEPEND
+DEPEND.bak
+out.compile
+out.make.DEPEND
+svn_version.def
+temp.show-*
+Make.config.machine
+Make.config.override
+*.mod

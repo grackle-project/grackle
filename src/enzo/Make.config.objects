@@ -1,0 +1,31 @@
+#=======================================================================
+#
+# FILE:        Make.config.objects
+#
+# DESCRIPTION: Make include file defining OBJS_MAIN
+#
+# AUTHOR:      James Bordner (jobordner@ucsd.edu)
+#
+# DATE:        2007-02-21
+#
+#=======================================================================
+
+#-----------------------------------------------------------------------
+# Default Enzo object files
+#-----------------------------------------------------------------------
+
+OBJS_CONFIG_LIB = \
+        calc_rates.o \
+        cool1d_multi.o \
+        cool_multi_time.o \
+        InitializeCloudyCooling.o \
+        InitializeRateData.o \
+        RadiationFieldCalculateRates.o \
+        solve_rate_cool.o \
+        calc_tdust_1d.o \
+        colh2diss.o \
+        cie_thin_cooling_rate.o \
+        coll_rates.o \
+        cool1d_cloudy.o \
+        set_default_chemistry_data.o \
+        solve_chemistry.o
