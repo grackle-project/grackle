@@ -18,12 +18,14 @@
  
 #include <string.h>
 #include <stdio.h>
+#include <math.h>
 #include "ErrorExceptions.h"
 #include "macros_and_parameters.h"
 #include "typedefs.h"
 #include "global_data.h"
 #include "chemistry_data.h"
 #include "code_units.h" 
+#include "phys_constants.h"
 
 int InitializeCloudyCooling(chemistry_data &my_chemistry,
                             code_units &my_units, float a_value);
@@ -131,8 +133,9 @@ int InitializeRateData(chemistry_data &my_chemistry,
   my_chemistry.n_cr_d1 = new float[my_chemistry.NumberOfTemperatureBins];
   my_chemistry.n_cr_d2 = new float[my_chemistry.NumberOfTemperatureBins]; 
 
-  int ioutput = 0;
-  float temperature_units = 1;
+  int ioutput = 1;
+  float temperature_units = mh*POW(my_units.length_units/
+                                   my_units.time_units,2)/kboltz;
 
   /* Call FORTRAN routine to do the hard work. */
  

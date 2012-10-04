@@ -39,10 +39,6 @@ int InitializeCloudyCooling(chemistry_data &my_chemistry,
                             code_units &my_units, FLOAT a_value)
 {
 
-  if (my_chemistry.MetalCooling != 3) {
-    return SUCCESS;
-  }
-
   int q, w;
   float64 *temp_data;
   long_int temp_int;
@@ -60,8 +56,7 @@ int InitializeCloudyCooling(chemistry_data &my_chemistry,
 
   // Zero arrays if cloudy cooling not used.
 
-  int cloudy_cooling = 1;
-  if (!cloudy_cooling) {
+  if (my_chemistry.MetalCooling != 3) {
     my_chemistry.CloudyCoolingGridRank = 0;
     return SUCCESS;
   }

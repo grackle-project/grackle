@@ -21,6 +21,7 @@
 #include "global_data.h"
 #include "chemistry_data.h"
 #include "code_units.h"
+#include "phys_constants.h"
 #include "fortran.def"
 
 /* function prototypes */
@@ -76,48 +77,66 @@ extern "C" void FORTRAN_NAME(solve_rate_cool)(
 int solve_chemistry(chemistry_data &my_chemistry,
                     code_units &my_units,
                     float a_value, float dt_value,
-                    int grid_dimension, float *grid_size,
-                    float *grid_start, float *grid_end,
+                    int grid_rank, int *grid_dimension,
+                    int *grid_start, int *grid_end,
                     float *density, float *internal_energy,
                     float *x_velocity, float *y_velocity, float  *z_velocity,
                     float *HI_density, float *HII_density, float *HM_density,
                     float *HeI_density, float *HeII_density, float *HeIII_density,
                     float *H2I_density, float *H2II_density,
-                    float *DI_density, float *DII_density,
+                    float *DI_density, float *DII_density, float *HDI_density,
                     float *e_density, float *metal_density)
-                      
 {
+
   /* Return if this doesn't concern us. */
-  if (!(MultiSpecies && RadiativeCooling)) return SUCCESS;
+  if (!(my_chemistry.MultiSpecies && my_chemistry.RadiativeCooling)) return SUCCESS;
 
   /* Set up information for rates which depend on the radiation field. 
      Precompute factors for self shielding (this is the cross section * dx). */
 
-  float HIShieldFactor = RadiationData.HIAveragePhotoHeatingCrossSection * 
-                         double(LengthUnits) * CellWidth[0][0];
-  float HeIShieldFactor = RadiationData.HeIAveragePhotoHeatingCrossSection * 
-                          double(LengthUnits) * CellWidth[0][0];
-  float HeIIShieldFactor = RadiationData.HeIIAveragePhotoHeatingCrossSection * 
-                           double(LengthUnits) * CellWidth[0][0];
+  // float HIShieldFactor = RadiationData.HIAveragePhotoHeatingCrossSection * 
+  //                        double(LengthUnits) * CellWidth[0][0];
+  // float HeIShieldFactor = RadiationData.HeIAveragePhotoHeatingCrossSection * 
+  //                         double(LengthUnits) * CellWidth[0][0];
+  // float HeIIShieldFactor = RadiationData.HeIIAveragePhotoHeatingCrossSection * 
+  //                          double(LengthUnits) * CellWidth[0][0];
+  float HIShieldFactor, HeIShieldFactor, HeIIShieldFactor;
+  HIShieldFactor = HeIShieldFactor = HeIIShieldFactor = 0.0;
+  
 
   /* Call the fortran routine to solve cooling equations. */
 
   int ierr = 0;
+  int i_method = 2;  // so total energy is internal energy
+  int i_dual = 1;    // doesn't matter
+  int MetalFieldPresent = 1;
+  float TemperatureUnits =  mh*POW(my_units.length_units/
+                                   my_units.time_units,2)/kboltz;
+  float DualEnergyFormalismEta1 = 0.0;
+  float DualEnergyFormalismEta2 = 0.0;
+  int RadiationFieldRecomputeMetalRates = 0;
+  int RadiativeTransfer = 0;
+  int RadiativeTransferCoupledRateSolver = 0;
+  int RTCoupledSolverIntermediateStep = 0;
+  int RadiativeTransferHydrogenOnly = 0;
+
+  float *kphHINum, *kphHeINum, *kphHeIINum, 
+    *kdissH2INum, *gammaNum;
 
   FORTRAN_NAME(solve_rate_cool)(
     density, internal_energy, internal_energy, x_velocity, y_velocity, z_velocity,
     e_density, HI_density, HII_density, 
     HeI_density, HeII_density, HeIII_density, 
     grid_dimension, grid_dimension+1, grid_dimension+2, 
-    &my_chemistry.NumberOfTemperatureBins, &ComovingCoordinates, &HydroMethod, 
-    &DualEnergyFormalism, &MultiSpecies, &MetalFieldPresent, &MetalCooling, 
-    &H2FormationOnDust, 
-    &GridRank, GridStartIndex, GridStartIndex+1, GridStartIndex+2, 
-    GridEndIndex, GridEndIndex+1, GridEndIndex+2,
-    &my_chemistry.ih2co, &my_chemistry.ipiht, &PhotoelectricHeating,
-    &dtCool, &afloat, &my_chemistry.TemperatureStart, &my_chemistry.TemperatureEnd,
-    &TemperatureUnits, &LengthUnits, &aUnits, &DensityUnits, &TimeUnits,
-    &DualEnergyFormalismEta1, &DualEnergyFormalismEta2, &Gamma,
+    &my_chemistry.NumberOfTemperatureBins, &my_units.comoving_coordinates, &i_method, 
+    &i_dual, &my_chemistry.MultiSpecies, &MetalFieldPresent, &my_chemistry.MetalCooling, 
+    &my_chemistry.H2FormationOnDust, 
+    &grid_rank, grid_start, grid_start+1, grid_start+2, 
+    grid_end, grid_end+1, grid_end+2,
+    &my_chemistry.ih2co, &my_chemistry.ipiht, &my_chemistry.PhotoelectricHeating,
+    &dt_value, &a_value, &my_chemistry.TemperatureStart, &my_chemistry.TemperatureEnd,
+    &TemperatureUnits, &my_units.length_units, &my_units.a_units, &my_units.density_units, &my_units.time_units,
+    &DualEnergyFormalismEta1, &DualEnergyFormalismEta2, &my_chemistry.Gamma,
     &my_chemistry.HydrogenFractionByMass, &my_chemistry.DeuteriumToHydrogenRatio,
     &my_chemistry.SolarMetalFractionByMass,
     my_chemistry.k1, my_chemistry.k2, my_chemistry.k3, my_chemistry.k4, my_chemistry.k5, 
@@ -140,7 +159,7 @@ int solve_chemistry(chemistry_data &my_chemistry,
     &my_chemistry.piHI, &my_chemistry.piHeI, &my_chemistry.piHeII,
     HM_density, H2I_density, H2II_density,
     DI_density, DII_density, HDI_density,
-    MetalPointer,
+    metal_density,
     my_chemistry.hyd01k, my_chemistry.h2k01, my_chemistry.vibh, my_chemistry.roth,my_chemistry.rotl,
     my_chemistry.GP99LowDensityLimit, my_chemistry.GP99HighDensityLimit, 
     my_chemistry.HDlte, my_chemistry.HDlow,
@@ -148,29 +167,30 @@ int solve_chemistry(chemistry_data &my_chemistry,
     my_chemistry.GAel, my_chemistry.gas_grain, 
     my_chemistry.metals, &my_chemistry.NumberOfElectronFracBins, 
     &my_chemistry.ElectronFracStart, &my_chemistry.ElectronFracEnd,
-    RadiationData.Spectrum[0], &RadiationFieldType, 
-    &RadiationData.NumberOfFrequencyBins, 
+    my_chemistry.Spectrum[0], &my_chemistry.RadiationFieldType, 
+    &my_chemistry.NumberOfFrequencyBins, 
     &RadiationFieldRecomputeMetalRates,
-    &RadiationData.RadiationShield, &HIShieldFactor, &HeIShieldFactor, &HeIIShieldFactor,
+    &my_chemistry.RadiationShield, &HIShieldFactor, &HeIShieldFactor, &HeIIShieldFactor,
     &RadiativeTransfer, &RadiativeTransferCoupledRateSolver,
     &RTCoupledSolverIntermediateStep, &ierr,
     &RadiativeTransferHydrogenOnly,
-    BaryonField[kphHINum], BaryonField[kphHeINum], BaryonField[kphHeIINum], 
-    BaryonField[kdissH2INum], BaryonField[gammaNum],
-    &H2OpticalDepthApproximation, &CIECooling, &ThreeBodyRate, my_chemistry.cieco,
-    &CloudyCoolingData.CMBTemperatureFloor,
-    &CloudyCoolingData.IncludeCloudyHeating,
-    &CloudyCoolingData.CloudyElectronFractionFactor,
-    &CloudyCoolingData.CloudyCoolingGridRank,
-    CloudyCoolingData.CloudyCoolingGridDimension,
-    CloudyCoolingData.CloudyCoolingGridParameters[0],
-    CloudyCoolingData.CloudyCoolingGridParameters[1],
-    CloudyCoolingData.CloudyCoolingGridParameters[2],
-    CloudyCoolingData.CloudyCoolingGridParameters[3],
-    CloudyCoolingData.CloudyCoolingGridParameters[4],
-    &CloudyCoolingData.CloudyDataSize,
-    CloudyCoolingData.CloudyCooling, CloudyCoolingData.CloudyHeating);
+    kphHINum, kphHeINum, kphHeIINum, 
+    kdissH2INum, gammaNum,
+    &my_chemistry.H2OpticalDepthApproximation, &my_chemistry.CIECooling, &my_chemistry.ThreeBodyRate, my_chemistry.cieco,
+    &my_chemistry.CMBTemperatureFloor,
+    &my_chemistry.IncludeCloudyHeating,
+    &my_chemistry.CloudyElectronFractionFactor,
+    &my_chemistry.CloudyCoolingGridRank,
+    my_chemistry.CloudyCoolingGridDimension,
+    my_chemistry.CloudyCoolingGridParameters[0],
+    my_chemistry.CloudyCoolingGridParameters[1],
+    my_chemistry.CloudyCoolingGridParameters[2],
+    my_chemistry.CloudyCoolingGridParameters[3],
+    my_chemistry.CloudyCoolingGridParameters[4],
+    &my_chemistry.CloudyDataSize,
+    my_chemistry.CloudyCooling, my_chemistry.CloudyHeating);
 
   return SUCCESS;
 
 }
+

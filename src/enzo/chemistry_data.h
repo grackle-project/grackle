@@ -50,6 +50,9 @@ struct chemistry_data
   float *StellarSpectrum;
   float *QuasarSpectrum;
 
+  float *Spectrum[4];
+  float *Emissivity[4];
+
   /*
     primordial chemistry rate data
   */

@@ -12,6 +12,7 @@
 int set_default_chemistry_data(chemistry_data &my_chemistry)
 {
   
+  my_chemistry.Gamma                       = 5./3.;
   my_chemistry.RadiativeCooling            = FALSE;             // off
   my_chemistry.MultiSpecies                = FALSE;             // off
   my_chemistry.ThreeBodyRate               = 0;                 // ABN02
