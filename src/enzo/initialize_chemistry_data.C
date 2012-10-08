@@ -27,8 +27,8 @@
 #include "code_units.h" 
 #include "phys_constants.h"
 
-int InitializeCloudyCooling(chemistry_data &my_chemistry,
-                            code_units &my_units, float a_value);
+int initialize_cloudy_data(chemistry_data &my_chemistry,
+                           code_units &my_units, float a_value);
 
 extern "C" void FORTRAN_NAME(calc_rates)(
      int *nratec, float *aye, float *temstart, float *temend, float *alpha0,
@@ -58,10 +58,12 @@ extern "C" void FORTRAN_NAME(calc_rates)(
 EXTERN char outfilename[];
 
  
-int InitializeRateData(chemistry_data &my_chemistry,
-                       code_units &my_units, float a_value)
+int initialize_chemistry_data(chemistry_data &my_chemistry,
+                              code_units &my_units, float a_value)
 {
- 
+
+  fprintf(stderr, "Initializing chemistry data.\n");
+
   /* Allocate CoolData space for rates. */
  
   my_chemistry.ceHI    = new float[my_chemistry.NumberOfTemperatureBins];
@@ -173,8 +175,8 @@ int InitializeRateData(chemistry_data &my_chemistry,
 
   /* Initialize Cloudy cooling, even if not being used. */
   /* If not used, this will just initialize some data structues. */
-  if (InitializeCloudyCooling(my_chemistry, my_units, a_value) == FAIL) {
-    fprintf(stderr, "Error in InitializeCloudyCooling.");
+  if (initialize_cloudy_data(my_chemistry, my_units, a_value) == FAIL) {
+    fprintf(stderr, "Error in initialize_cloudy_data.");
     return FAIL;
   }
 

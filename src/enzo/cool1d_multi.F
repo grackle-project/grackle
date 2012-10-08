@@ -746,7 +746,7 @@ c               endif
 
 !     --- Cooling/heating due to metals ---
 
-      if (imcool .eq. 1) then
+      if (imcool .eq. 999) then
 
          logxe0 = log(xe_start)
          logxe1 = log(xe_end)
@@ -993,7 +993,7 @@ c
 
 !     --- Cloudy metal cooling and heating ---
 
-      if (imcool .eq. 3) then
+      if (imcool .eq. 1) then
 
          call cool1D_cloudy(d, de, rhoH, metallicity,
      &        in, jn, kn, is, ie, j, k,

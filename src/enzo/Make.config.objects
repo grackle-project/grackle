@@ -18,8 +18,8 @@ OBJS_CONFIG_LIB = \
         calc_rates.o \
         cool1d_multi.o \
         cool_multi_time.o \
-        InitializeCloudyCooling.o \
-        InitializeRateData.o \
+        initialize_cloudy_data.o \
+        initialize_chemistry_data.o \
         RadiationFieldCalculateRates.o \
         solve_rate_cool.o \
         calc_tdust_1d.o \
@@ -27,5 +27,5 @@ OBJS_CONFIG_LIB = \
         cie_thin_cooling_rate.o \
         coll_rates.o \
         cool1d_cloudy.o \
-        set_default_chemistry_data.o \
+        set_default_chemistry_parameters.o \
         solve_chemistry.o

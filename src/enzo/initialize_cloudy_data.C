@@ -1,6 +1,6 @@
 /***********************************************************************
 /
-/  INITIALIZE CLOUDY COOLING
+/  INITIALIZE CLOUDY DATA
 /
 /  written by: Britton Smith
 /  date:       November, 2005
@@ -34,9 +34,9 @@
 
 /**************************** Functions Prototypes ******************************/
 
-// Initialize Cloudy Cooling
-int InitializeCloudyCooling(chemistry_data &my_chemistry,
-                            code_units &my_units, FLOAT a_value)
+// Initialize Cloudy cooling data
+int initialize_cloudy_data(chemistry_data &my_chemistry,
+                           code_units &my_units, FLOAT a_value)
 {
 
   int q, w;
@@ -51,7 +51,7 @@ int InitializeCloudyCooling(chemistry_data &my_chemistry,
   my_chemistry.CloudyCoolingGridParameters = new float*[CLOUDY_COOLING_MAX_DIMENSION];
   my_chemistry.CloudyCoolingGridDimension = new int[CLOUDY_COOLING_MAX_DIMENSION];
   for (q = 0;q < CLOUDY_COOLING_MAX_DIMENSION;q++) {
-    my_chemistry.CloudyCoolingGridDimension[q] = 0; 
+    my_chemistry.CloudyCoolingGridDimension[q] = 0;
   }
 
   // Zero arrays if cloudy cooling not used.
@@ -61,12 +61,10 @@ int InitializeCloudyCooling(chemistry_data &my_chemistry,
     return SUCCESS;
   }
 
-  if (debug) {
-    fprintf(stderr,"Initializing Cloudy cooling.\n");
-    fprintf(stderr,"cloudy_table_file: %s.\n",my_chemistry.cloudy_table_file);
-    fprintf(stderr,"IncludingCloudyHeating: %"ISYM".\n",my_chemistry.include_metal_heating);
-    fprintf(stderr,"cmb_temperature_floor: %"ISYM".\n",my_chemistry.cmb_temperature_floor);
-  }
+  fprintf(stderr,"Initializing Cloudy cooling.\n");
+  fprintf(stderr,"cloudy_table_file: %s.\n",my_chemistry.cloudy_table_file);
+  fprintf(stderr,"include_metalheating: %"ISYM".\n",my_chemistry.include_metal_heating);
+  fprintf(stderr,"cmb_temperature_floor: %"ISYM".\n",my_chemistry.cmb_temperature_floor);
 
   /* Get conversion units. */
 
@@ -83,8 +81,8 @@ int InitializeCloudyCooling(chemistry_data &my_chemistry,
   herr_t      status;
   herr_t      h5_error = -1;
 
-  if (debug) fprintf(stderr,"Reading Cloudy data from %s.\n", 
-                     my_chemistry.cloudy_table_file);
+  fprintf(stderr,"Reading Cloudy data from %s.\n", 
+          my_chemistry.cloudy_table_file);
   file_id = H5Fopen(my_chemistry.cloudy_table_file, 
                     H5F_ACC_RDONLY, H5P_DEFAULT);
 
@@ -108,7 +106,7 @@ int InitializeCloudyCooling(chemistry_data &my_chemistry,
     return FAIL;
   }
   my_chemistry.CloudyCoolingGridRank = (int) temp_int;
-  if (debug) fprintf(stderr,"Cloudy cooling grid rank: %"ISYM".\n",my_chemistry.CloudyCoolingGridRank);
+  fprintf(stderr,"Cloudy cooling grid rank: %"ISYM".\n",my_chemistry.CloudyCoolingGridRank);
   status = H5Aclose(attr_id);
   if (attr_id == h5_error) {
     fprintf(stderr,"Failed to close Rank attribute in Cooling dataset.\n");
@@ -127,12 +125,12 @@ int InitializeCloudyCooling(chemistry_data &my_chemistry,
     fprintf(stderr,"Failed to read Dimension attribute in Cooling dataset.\n");
     return FAIL;
   }
-  if (debug) fprintf(stderr,"Cloudy cooling grid dimensions:");
+  fprintf(stderr,"Cloudy cooling grid dimensions:");
   for (q = 0;q < my_chemistry.CloudyCoolingGridRank;q++) {
     my_chemistry.CloudyCoolingGridDimension[q] = (int) temp_int_arr[q];
-    if (debug) fprintf(stderr," %"ISYM,my_chemistry.CloudyCoolingGridDimension[q]);
+    fprintf(stderr," %"ISYM,my_chemistry.CloudyCoolingGridDimension[q]);
   }
-  if (debug) fprintf(stderr,".\n");
+  fprintf(stderr,".\n");
   status = H5Aclose(attr_id);
   if (attr_id == h5_error) {
     fprintf(stderr,"Failed to close Dimension attribute in Cooling dataset.\n");
@@ -148,7 +146,7 @@ int InitializeCloudyCooling(chemistry_data &my_chemistry,
   temp_data = new float64[my_chemistry.CloudyDataSize];
 
   status = H5Dread(dset_id, HDF5_R8, H5S_ALL, H5S_ALL, H5P_DEFAULT, temp_data);
-  if (debug) fprintf(stderr,"Reading Cloudy Cooling dataset.\n");
+  fprintf(stderr,"Reading Cloudy Cooling dataset.\n");
   if (status == h5_error) {
     fprintf(stderr,"Failed to read Cooling dataset.\n");
     return FAIL;
@@ -181,7 +179,7 @@ int InitializeCloudyCooling(chemistry_data &my_chemistry,
     }
 
     status = H5Dread(dset_id, HDF5_R8, H5S_ALL, H5S_ALL, H5P_DEFAULT, temp_data);
-    if (debug) fprintf(stderr,"Reading Cloudy Heating dataset.\n");
+    fprintf(stderr,"Reading Cloudy Heating dataset.\n");
     if (status == h5_error) {
       fprintf(stderr,"Failed to read Heating dataset.\n");
       return FAIL;
@@ -222,7 +220,7 @@ int InitializeCloudyCooling(chemistry_data &my_chemistry,
     }
 
     status = H5Dread(dset_id, HDF5_R8, H5S_ALL, H5S_ALL, H5P_DEFAULT, temp_data);
-    if (debug) fprintf(stderr,"Reading Cloudy %s dataset.\n",parameter_name);
+    fprintf(stderr,"Reading Cloudy %s dataset.\n",parameter_name);
     if (status == h5_error) {
       fprintf(stderr,"Failed to read %s dataset.\n",parameter_name);
       return FAIL;
@@ -246,7 +244,7 @@ int InitializeCloudyCooling(chemistry_data &my_chemistry,
       return FAIL;
     }
 
-    if (debug) fprintf(stderr,"%s: %"GSYM" to %"GSYM" (%"ISYM" steps).\n",parameter_name,
+    fprintf(stderr,"%s: %"GSYM" to %"GSYM" (%"ISYM" steps).\n",parameter_name,
 		       my_chemistry.CloudyCoolingGridParameters[q][0],
 		       my_chemistry.CloudyCoolingGridParameters[q][my_chemistry.CloudyCoolingGridDimension[q]-1],
 		       my_chemistry.CloudyCoolingGridDimension[q]);

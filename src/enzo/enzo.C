@@ -37,11 +37,9 @@
 #define MAIN_NAME main
 #endif
 
-int InitializeRateData(chemistry_data &my_chemistry,
-                       code_units &my_units, float a_value);
-int set_default_chemistry_data(chemistry_data &my_chemistry);
-int RadiationFieldCalculateRates(chemistry_data &my_chemistry,
-                                 code_units &my_units, float a_value);
+int set_default_chemistry_parameters(chemistry_data &my_chemistry);
+int initialize_chemistry_data(chemistry_data &my_chemistry,
+                              code_units &my_units, float a_value);
 
 int solve_chemistry(chemistry_data &my_chemistry,
                     code_units &my_units,
@@ -60,12 +58,14 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
 {
 
   chemistry_data my_chemistry;
-  if (set_default_chemistry_data(my_chemistry) == FAIL) {
+  if (set_default_chemistry_parameters(my_chemistry) == FAIL) {
     fprintf(stderr, "Error in set_default_chemistry_data.\n");
     return FAIL;
   }
   my_chemistry.use_chemistry = 1;
-  my_chemistry.primordial_chemistry = 2;  
+  my_chemistry.primordial_chemistry = 2;
+  my_chemistry.metal_cooling = 1;
+  my_chemistry.cloudy_table_file = (char*) "solar_2008_3D_metals.h5";
 
   code_units my_units;
   my_units.comoving_coordinates = 0;
@@ -81,8 +81,8 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
 
   float a_value = 1.0;
 
-  if (InitializeRateData(my_chemistry, my_units, a_value) == FAIL) {
-    fprintf(stderr, "Error in InitializeRateData.\n");
+  if (initialize_chemistry_data(my_chemistry, my_units, a_value) == FAIL) {
+    fprintf(stderr, "Error in initialize_chemistry_data.\n");
     return FAIL;
   }
 
@@ -114,13 +114,11 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
   e_density = new float[my_size];
   metal_density = new float[my_size];
 
-  float HydrogenFractionByMass = 0.76;
-
   density[0] = 1.0;
-  HI_density[0] = HydrogenFractionByMass * density[0];
+  HI_density[0] = my_chemistry.HydrogenFractionByMass * density[0];
   HII_density[0] = tiny_number * density[0];
   HM_density[0] = tiny_number * density[0];
-  HeI_density[0] = (1.0 - HydrogenFractionByMass) * density[0];
+  HeI_density[0] = (1.0 - my_chemistry.HydrogenFractionByMass) * density[0];
   HeII_density[0] = tiny_number * density[0];
   HeIII_density[0] = tiny_number * density[0];
   H2I_density[0] = tiny_number * density[0];
@@ -129,7 +127,7 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
   DII_density[0] = tiny_number * density[0];
   HDI_density[0] = tiny_number * density[0];
   e_density[0] = tiny_number * density[0];
-  metal_density[0] = tiny_number * density[0];
+  metal_density[0] = 1.e-5 * density[0];
 
   float temperature_units = mh*POW(my_units.length_units/
                                    my_units.time_units,2)/kboltz;

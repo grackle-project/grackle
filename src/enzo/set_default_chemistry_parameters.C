@@ -9,7 +9,7 @@
 #include "chemistry_data.h"
 #include "code_units.h"
 
-int set_default_chemistry_data(chemistry_data &my_chemistry)
+int set_default_chemistry_parameters(chemistry_data &my_chemistry)
 {
   
   my_chemistry.Gamma                          = 5./3.;
