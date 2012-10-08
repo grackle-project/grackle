@@ -8,7 +8,7 @@ syntax: glob
 *.pyc
 *.exe
 
-bin/enzo
+bin/freefall
 TAGS
 DEPEND
 DEPEND.bak
