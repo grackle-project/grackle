@@ -89,7 +89,7 @@ int solve_chemistry(chemistry_data &my_chemistry,
 {
 
   /* Return if this doesn't concern us. */
-  if (!(my_chemistry.MultiSpecies && my_chemistry.RadiativeCooling)) return SUCCESS;
+  if (!(my_chemistry.primordial_chemistry && my_chemistry.use_chemistry)) return SUCCESS;
 
   /* Set up information for rates which depend on the radiation field. 
      Precompute factors for self shielding (this is the cross section * dx). */
@@ -129,11 +129,11 @@ int solve_chemistry(chemistry_data &my_chemistry,
     HeI_density, HeII_density, HeIII_density, 
     grid_dimension, grid_dimension+1, grid_dimension+2, 
     &my_chemistry.NumberOfTemperatureBins, &my_units.comoving_coordinates, &i_method, 
-    &i_dual, &my_chemistry.MultiSpecies, &MetalFieldPresent, &my_chemistry.MetalCooling, 
-    &my_chemistry.H2FormationOnDust, 
+    &i_dual, &my_chemistry.primordial_chemistry, &MetalFieldPresent, &my_chemistry.metal_cooling, 
+    &my_chemistry.h2_on_dust, 
     &grid_rank, grid_start, grid_start+1, grid_start+2, 
     grid_end, grid_end+1, grid_end+2,
-    &my_chemistry.ih2co, &my_chemistry.ipiht, &my_chemistry.PhotoelectricHeating,
+    &my_chemistry.ih2co, &my_chemistry.ipiht, &my_chemistry.photoelectric_heating,
     &dt_value, &a_value, &my_chemistry.TemperatureStart, &my_chemistry.TemperatureEnd,
     &TemperatureUnits, &my_units.length_units, &my_units.a_units, &my_units.density_units, &my_units.time_units,
     &DualEnergyFormalismEta1, &DualEnergyFormalismEta2, &my_chemistry.Gamma,
@@ -176,9 +176,9 @@ int solve_chemistry(chemistry_data &my_chemistry,
     &RadiativeTransferHydrogenOnly,
     kphHINum, kphHeINum, kphHeIINum, 
     kdissH2INum, gammaNum,
-    &my_chemistry.H2OpticalDepthApproximation, &my_chemistry.CIECooling, &my_chemistry.ThreeBodyRate, my_chemistry.cieco,
-    &my_chemistry.CMBTemperatureFloor,
-    &my_chemistry.IncludeCloudyHeating,
+    &my_chemistry.h2_optical_depth_approximation, &my_chemistry.cie_cooling, &my_chemistry.three_body_rate, my_chemistry.cieco,
+    &my_chemistry.cmb_temperature_floor,
+    &my_chemistry.include_metal_heating,
     &my_chemistry.CloudyElectronFractionFactor,
     &my_chemistry.CloudyCoolingGridRank,
     my_chemistry.CloudyCoolingGridDimension,

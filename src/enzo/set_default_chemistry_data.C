@@ -12,31 +12,37 @@
 int set_default_chemistry_data(chemistry_data &my_chemistry)
 {
   
-  my_chemistry.Gamma                       = 5./3.;
-  my_chemistry.RadiativeCooling            = FALSE;             // off
-  my_chemistry.MultiSpecies                = FALSE;             // off
-  my_chemistry.ThreeBodyRate               = 0;                 // ABN02
-  my_chemistry.CIECooling                  = 1;
-  my_chemistry.H2OpticalDepthApproximation = 1;
-  my_chemistry.H2FormationOnDust           = FALSE;
+  my_chemistry.Gamma                          = 5./3.;
+  my_chemistry.use_chemistry                  = FALSE;  // off
+  my_chemistry.primordial_chemistry           = FALSE;  // off
+  my_chemistry.metal_cooling                  = FALSE;
+  my_chemistry.h2_on_dust                     = FALSE;
 
+  my_chemistry.cmb_temperature_floor          = TRUE;   // use CMB floor.
+  my_chemistry.cloudy_table_file              = "";
+  my_chemistry.include_metal_heating          = FALSE;
 
-  my_chemistry.RadiationFieldType          = 0;
-  my_chemistry.RadiationFieldRedshift      = 0.0;
-  my_chemistry.TabulatedLWBackground       = 0;
-  my_chemistry.RadiationFieldLevelRecompute = 0;
-  my_chemistry.RadiationShield = 0;
-  my_chemistry.AdjustUVBackground          = 1;
+  my_chemistry.three_body_rate                = 0;   // ABN02
+  my_chemistry.cie_cooling                    = 1;
+  my_chemistry.h2_optical_depth_approximation = 1;
+
+  my_chemistry.photoelectric_heating          = 0;
+  my_chemistry.photoelectric_heating_rate     = 8.5e-26;  // ergs cm-3 s-1
+
+  my_chemistry.RadiationFieldType             = 0;
+  my_chemistry.RadiationFieldRedshift         = 0.0;
+  my_chemistry.TabulatedLWBackground          = 0;
+  my_chemistry.RadiationFieldLevelRecompute   = 0;
+  my_chemistry.RadiationShield                = 0;
+  my_chemistry.AdjustUVBackground             = 1;
   my_chemistry.AdjustUVBackgroundHighRedshift = 0;
-  my_chemistry.SetUVBAmplitude             = 1.0;
-  my_chemistry.SetHeIIHeatingScale         = 1.8;
-  my_chemistry.PhotoelectricHeating	      = 0;
-  my_chemistry.PhotoelectricHeatingRate    = 8.5e-26;           // ergs cm-3 s-1
-  my_chemistry.RadiationXRaySecondaryIon   = 0;
-  my_chemistry.RadiationXRayComptonHeating = 0;
+  my_chemistry.SetUVBAmplitude                = 1.0;
+  my_chemistry.SetHeIIHeatingScale            = 1.8;
+  my_chemistry.RadiationXRaySecondaryIon      = 0;
+  my_chemistry.RadiationXRayComptonHeating    = 0;
 
-  my_chemistry.alpha0             = 1.5;               // radiation spectral slope
-  my_chemistry.f3                 = 1.0e-21;           // radiation normalization
+  my_chemistry.alpha0                   = 1.5;            // radiation spectral slope
+  my_chemistry.f3                       = 1.0e-21;        // radiation normalization
   my_chemistry.f0to3                    = 0.1;
   my_chemistry.RadiationRedshiftOn      = 7.0;
   my_chemistry.RadiationRedshiftOff     = 0.0;
@@ -59,12 +65,8 @@ int set_default_chemistry_data(chemistry_data &my_chemistry)
   my_chemistry.DustTemperatureEnd      = 1500.0;
 
   my_chemistry.CloudyCoolingGridRank          = 0;
-  my_chemistry.CloudyCoolingGridFile          = "";
-  my_chemistry.IncludeCloudyHeating           = 0;
-  my_chemistry.CMBTemperatureFloor            = 1;         // use CMB floor.
-  my_chemistry.CloudyElectronFractionFactor = 9.153959e-3; // calculated using Cloudy 07.02 abundances
+  my_chemistry.CloudyElectronFractionFactor = 9.153959e-3; // Cloudy 07.02 abundances
 
-  my_chemistry.MetalCooling = FALSE;
   my_chemistry.MetalCoolingTable = (char*) "metal_cool.dat";
 
   return SUCCESS;

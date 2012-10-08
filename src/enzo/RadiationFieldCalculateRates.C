@@ -371,7 +371,7 @@ int RadiationFieldCalculateRates(chemistry_data &my_chemistry,
 	   (1.0 + 0.2625 * POW(Redshift+0.918, 2.0)) ) *
       my_units.time_units * Ramp;
 
-    if (my_chemistry.MultiSpecies > 1) {
+    if (my_chemistry.primordial_chemistry > 1) {
 
       my_chemistry.k27 = 9.37e-10 * POW(1.0+Redshift, 2.526) *
 	exp( 12.7560 * POW(Redshift+2.707, 2.0) /

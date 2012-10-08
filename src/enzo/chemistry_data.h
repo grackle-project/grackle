@@ -3,26 +3,44 @@
 struct chemistry_data
 {
 
+  // adiabatic index
   float Gamma;
 
-  /*
-    chemistry and cooling parameters
-  */
+  /****************************************
+   *** chemistry and cooling parameters ***
+   ****************************************/
 
-  int RadiativeCooling;
-  int MultiSpecies;
-  int ThreeBodyRate;
-  int CIECooling;
-  int H2OpticalDepthApproximation;
-  int H2FormationOnDust;
-  int MetalCooling;
+  int use_chemistry;
+  int primordial_chemistry; // 1) HI, HII, HeI, HeII, HeIII, e
+                            // 2) + H2, H2I+, H-
+                            // 3) + D, D+, HD
+  int metal_cooling;        // 0) off, 1) on using Cloudy tables
+  int h2_on_dust;  // should be left off for now
 
-  int PhotoelectricHeating;
-  float PhotoelectricHeatingRate;
+  // Use a CMB temperature floor.
+  int cmb_temperature_floor;
 
-  /*
-    radiation background parameters
-  */
+  // Flag to control whether or not to include heating from Cloudy.
+  int include_metal_heating;
+
+  // Cooling grid file.
+  char *cloudy_table_file;
+
+  /* additional H2 chemistry parameters
+     best left unchanged. */
+  
+  int three_body_rate;
+  int cie_cooling;
+  int h2_optical_depth_approximation;
+
+  /* photo-electric heating from irradiated dust */
+
+  int photoelectric_heating;
+  float photoelectric_heating_rate; // in CGS
+
+  /***************************************
+   *** radiation background parameters ***
+   ***************************************/
 
   int RadiationFieldType;
   int AdjustUVBackground; 
@@ -53,9 +71,9 @@ struct chemistry_data
   float *Spectrum[4];
   float *Emissivity[4];
 
-  /*
-    primordial chemistry rate data
-  */
+  /**************************************
+   *** primordial chemistry rate data ***
+   **************************************/
 
   int NumberOfTemperatureBins;   
   int CaseBRecombination;
@@ -127,13 +145,14 @@ struct chemistry_data
 
   /* Chemical heating from H2 formation. */
   /* numerator and denominator of Eq 23 of Omukai ea. 2000. */
+
   float *n_cr_n;
   float *n_cr_d1;
   float *n_cr_d2;
 
-  /*
-    cooling data
-  */
+  /********************
+   *** cooling data ***
+   ********************/
 
   int ih2co;                     // flag for H2 cooling (0-off/1-on)
   int ipiht;                     // flag for photoionization cooling
@@ -150,10 +169,6 @@ struct chemistry_data
   float HydrogenFractionByMass;
   float DeuteriumToHydrogenRatio;
   float SolarMetalFractionByMass;
-
-  /* Equilibrium rates */
-
-  float *EquilibriumRate;
 
   /* 6 species rates */
 
@@ -172,7 +187,7 @@ struct chemistry_data
   float comp;                    // Compton cooling
   float comp_xray;               // X-ray compton heating coefficient
   float temp_xray;               // X-ray compton heating temperature (K)
-  float gammah;                  // Photoelectric heating
+  float gammah;                  // Photoelectric heating (code units)
 
   /* radiative rates (external field). */
 
@@ -218,7 +233,7 @@ struct chemistry_data
   float ElectronFracEnd;
   float *metals;
 
-  /* Energy transfer to grains. */
+  /* Gas/grain energy transfer. */
   float *gas_grain;
 
   /* For analysis, ratios of metal fine structure line emission is
@@ -233,15 +248,9 @@ struct chemistry_data
   float MR_ElectronFracStart;
   float MR_ElectronFracEnd;
 
-  /*
-    cloudy cooling data
-  */
-
-  // Use a CMB temperature floor.
-  int CMBTemperatureFloor;
-
-  // Flag to control whether or not to include heating from Cloudy.
-  int IncludeCloudyHeating;
+  /***************************
+   *** cloudy cooling data ***
+   ***************************/
 
   // Factor to account for extra electrons from metals.
   /* 
@@ -250,9 +259,6 @@ struct chemistry_data
      For solar abundance patters and N = 30 (Zn), f = 9.153959e-3.
    */
   float CloudyElectronFractionFactor;
-
-  // Cooling grid file.
-  char *CloudyCoolingGridFile;
 
   // Rank of Cloudy dataset.
   int CloudyCoolingGridRank;

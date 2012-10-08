@@ -64,8 +64,8 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
     fprintf(stderr, "Error in set_default_chemistry_data.\n");
     return FAIL;
   }
-  my_chemistry.RadiativeCooling = 1;
-  my_chemistry.MultiSpecies = 2;  
+  my_chemistry.use_chemistry = 1;
+  my_chemistry.primordial_chemistry = 2;  
 
   code_units my_units;
   my_units.comoving_coordinates = 0;
@@ -105,6 +105,7 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
   HM_density = new float[my_size];
   HeI_density = new float[my_size];
   HeII_density = new float[my_size];
+  HeIII_density = new float[my_size];
   H2I_density = new float[my_size];
   H2II_density = new float[my_size];
   DI_density = new float[my_size];

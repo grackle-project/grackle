@@ -56,16 +56,16 @@ int InitializeCloudyCooling(chemistry_data &my_chemistry,
 
   // Zero arrays if cloudy cooling not used.
 
-  if (my_chemistry.MetalCooling != 3) {
+  if (!my_chemistry.metal_cooling) {
     my_chemistry.CloudyCoolingGridRank = 0;
     return SUCCESS;
   }
 
   if (debug) {
     fprintf(stderr,"Initializing Cloudy cooling.\n");
-    fprintf(stderr,"CloudyCoolingGridFile: %s.\n",my_chemistry.CloudyCoolingGridFile);
-    fprintf(stderr,"IncludingCloudyHeating: %"ISYM".\n",my_chemistry.IncludeCloudyHeating);
-    fprintf(stderr,"CMBTemperatureFloor: %"ISYM".\n",my_chemistry.CMBTemperatureFloor);
+    fprintf(stderr,"cloudy_table_file: %s.\n",my_chemistry.cloudy_table_file);
+    fprintf(stderr,"IncludingCloudyHeating: %"ISYM".\n",my_chemistry.include_metal_heating);
+    fprintf(stderr,"cmb_temperature_floor: %"ISYM".\n",my_chemistry.cmb_temperature_floor);
   }
 
   /* Get conversion units. */
@@ -84,15 +84,15 @@ int InitializeCloudyCooling(chemistry_data &my_chemistry,
   herr_t      h5_error = -1;
 
   if (debug) fprintf(stderr,"Reading Cloudy data from %s.\n", 
-                     my_chemistry.CloudyCoolingGridFile);
-  file_id = H5Fopen(my_chemistry.CloudyCoolingGridFile, 
+                     my_chemistry.cloudy_table_file);
+  file_id = H5Fopen(my_chemistry.cloudy_table_file, 
                     H5F_ACC_RDONLY, H5P_DEFAULT);
 
   // Open cooling dataset and get grid dimensions.
 
   dset_id =  H5Dopen(file_id, "/Cooling");
   if (dset_id == h5_error) {
-    fprintf(stderr,"Can't open Cooling in %s.\n",my_chemistry.CloudyCoolingGridFile);
+    fprintf(stderr,"Can't open Cooling in %s.\n",my_chemistry.cloudy_table_file);
     return FAIL;
   }
 
@@ -170,13 +170,13 @@ int InitializeCloudyCooling(chemistry_data &my_chemistry,
   }
 
   // Read Heating data.
-  if (my_chemistry.IncludeCloudyHeating > 0) {
+  if (my_chemistry.include_metal_heating) {
 
     temp_data = new float64[my_chemistry.CloudyDataSize];
 
     dset_id =  H5Dopen(file_id, "/Heating");
     if (dset_id == h5_error) {
-      fprintf(stderr,"Can't open Heating in %s.\n",my_chemistry.CloudyCoolingGridFile);
+      fprintf(stderr,"Can't open Heating in %s.\n",my_chemistry.cloudy_table_file);
       return FAIL;
     }
 
@@ -217,7 +217,7 @@ int InitializeCloudyCooling(chemistry_data &my_chemistry,
 
     dset_id =  H5Dopen(file_id, parameter_name);
     if (dset_id == h5_error) {
-      fprintf(stderr,"Can't open %s in %s.\n",parameter_name,my_chemistry.CloudyCoolingGridFile);
+      fprintf(stderr,"Can't open %s in %s.\n",parameter_name,my_chemistry.cloudy_table_file);
       return FAIL;
     }
 
