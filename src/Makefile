@@ -1,6 +1,6 @@
 build:
-	$(MAKE) -C enzo
+	$(MAKE) -C clib
 clean:
-	$(MAKE) -C enzo  clean
+	$(MAKE) -C clib  clean
 install: build
-	$(MAKE) -C enzo  install
+	$(MAKE) -C clib  install

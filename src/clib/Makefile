@@ -39,7 +39,7 @@
 SHELL    = /bin/bash
 
 TOP_DIR  = ../..
-EXE      = enzo
+EXE      = freefall
 OUTPUT   = out.compile
 
 ENZO_DIR = .

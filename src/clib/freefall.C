@@ -32,7 +32,7 @@
 //  ENZO Main Program
 
 #ifdef SHARED_LIBRARY
-#define MAIN_NAME enzo_main
+#define MAIN_NAME freefall_main
 #else
 #define MAIN_NAME main
 #endif

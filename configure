@@ -5,7 +5,7 @@
 # This is because the DEPEND files will change later, and the contents
 # will be machine-dependent.
 
-set EXECS = (enzo)
+set EXECS = (clib)
 
 foreach exec ($EXECS)
 
@@ -16,19 +16,19 @@ foreach exec ($EXECS)
 
 end
 
-# Create empty src/enzo/Make.config.override file.  This file is
+# Create empty src/clib/Make.config.override file.  This file is
 # required by make, but should not be stored in the subversion
 # repository.  This is because the file will change later, and the
 # contents will be configuration-dependent.
 
-rm -f src/enzo/Make.config.override
-touch src/enzo/Make.config.override
+rm -f src/clib/Make.config.override
+touch src/clib/Make.config.override
 
 # Initialize the Make.config.machine file if it does not exist
 # Leave alone if it does exist
 
-if (! -e src/enzo/Make.config.machine) then
-   echo "CONFIG_MACHINE = unknown" > src/enzo/Make.config.machine
+if (! -e src/clib/Make.config.machine) then
+   echo "CONFIG_MACHINE = unknown" > src/clib/Make.config.machine
 endif
 
 
