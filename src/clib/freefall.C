@@ -68,7 +68,7 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
     *HeI_density, *HeII_density, *HeIII_density,
     *H2I_density, *H2II_density,
     *DI_density, *DII_density, *HDI_density,
-    *e_density, *metal_density;
+    *e_density, *metal_density, *cooling_time;
   float tiny_number = 1.e-20;
 
   int my_size = 1;
@@ -90,6 +90,7 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
   HDI_density = new float[my_size];
   e_density = new float[my_size];
   metal_density = new float[my_size];
+  cooling_time = new float[my_size];
 
   density[0] = 1.0;
   HI_density[0] = my_chemistry.HydrogenFractionByMass * density[0];
@@ -133,8 +134,25 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
     dt = timestep_fraction * 
       POW(((3 * pi) / (32 * gravitational_constant * density[0])), 0.5);
 
-    fprintf(stderr, "%"GSYM" %"GSYM" %"GSYM" %"GSYM"\n",
-            my_time, dt, density[0], (energy[0]*temperature_units));
+    if (calculate_cooling_time(my_chemistry, my_units,
+			       a_value, dt,
+			       grid_rank, grid_dimension,
+			       grid_start, grid_end,
+			       density, energy,
+			       x_velocity, y_velocity, z_velocity,
+			       HI_density, HII_density, HM_density,
+			       HeI_density, HeII_density, HeIII_density,
+			       H2I_density, H2II_density,
+			       DI_density, DII_density, HDI_density,
+			       e_density, metal_density, 
+			       cooling_time) == FAIL) {
+      fprintf(stderr, "Error in calculate_cooling_time.\n");
+      return FAIL;
+    }
+
+    fprintf(stderr, "%"GSYM" %"GSYM" %"GSYM" %"GSYM" %"GSYM"\n",
+            my_time, dt, density[0], (energy[0]*temperature_units),
+	    (cooling_time[0]*my_units.time_units));
 
     density_ratio = POW((freefall_constant - 
                          (0.5 * freefall_time_constant * my_time)), -2.) / density[0];

@@ -89,7 +89,8 @@ int solve_chemistry(chemistry_data &my_chemistry,
 {
 
   /* Return if this doesn't concern us. */
-  if (!(my_chemistry.primordial_chemistry && my_chemistry.use_chemistry)) return SUCCESS;
+
+  if (!my_chemistry.use_chemistry) return SUCCESS;
 
   /* Set up information for rates which depend on the radiation field. 
      Precompute factors for self shielding (this is the cross section * dx). */
