@@ -29,4 +29,7 @@ OBJS_CONFIG_LIB = \
         cool1d_cloudy.o \
         set_default_chemistry_parameters.o \
         solve_chemistry.o \
-        calculate_cooling_time.o
+        calculate_cooling_time.o \
+        calculate_temperature.o \
+        calculate_pressure.o \
+        calculate_gamma.o
