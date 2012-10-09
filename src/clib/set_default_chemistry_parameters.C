@@ -9,9 +9,11 @@
 #include "chemistry_data.h"
 #include "code_units.h"
 
-int set_default_chemistry_parameters(chemistry_data &my_chemistry)
+chemistry_data set_default_chemistry_parameters()
 {
   
+  chemistry_data my_chemistry;
+
   my_chemistry.Gamma                          = 5./3.;
   my_chemistry.use_chemistry                  = FALSE;  // off
   my_chemistry.primordial_chemistry           = FALSE;  // off
@@ -69,5 +71,5 @@ int set_default_chemistry_parameters(chemistry_data &my_chemistry)
 
   my_chemistry.MetalCoolingTable = (char*) "metal_cool.dat";
 
-  return SUCCESS;
+  return my_chemistry;
 }
