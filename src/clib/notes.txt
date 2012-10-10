@@ -1,0 +1,12 @@
+RadiativeCooling                use_chemistry
+MultiSpecies                    primordial_chemistry
+MetalCooling                    metal_cooling
+ThreeBodyRate                   three_body_rate
+H2FormationOnDust               h2_on_dust
+CIECooling                      cie_cooling
+H2OpticalDepthApproximation     h2_optical_depth_approximation
+PhotoelectricHeating            photoelectric_heating
+PhotoelectricHeatingRate        photoelectric_heating_rate
+CMBTemperatureFloor             cmb_temperature_floor
+IncludeCloudyHeating            include_metal_heating
+CloudyCoolingGridFile           cloudy_table_file
