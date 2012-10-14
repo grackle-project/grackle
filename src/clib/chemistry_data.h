@@ -1,6 +1,8 @@
+#ifndef __CHEMISTRY_DATA_H__
+#define __CHEMISTRY_DATA_H__
 #define CLOUDY_COOLING_MAX_DIMENSION 5
 
-struct chemistry_data
+typedef struct 
 {
 
   // adiabatic index
@@ -278,4 +280,6 @@ struct chemistry_data
 
   // Length of 1D flattened Cloudy data
   int CloudyDataSize;
-};
+} chemistry_data;
+
+#endif

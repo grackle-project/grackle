@@ -1,5 +1,8 @@
-#include "chemistry_data.h"
+#ifndef __GRACKLE_H__
+#define __GRACKLE_H__
+
 #include "code_units.h"
+#include "chemistry_data.h"
 #include "phys_constants.h"
 
 chemistry_data set_default_chemistry_parameters();
@@ -66,3 +69,4 @@ int calculate_temperature(chemistry_data &my_chemistry,
                           float *DI_density, float *DII_density, float *HDI_density,
                           float *e_density, float *metal_density,
                           float *temperature);
+#endif
