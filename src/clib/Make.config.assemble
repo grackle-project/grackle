@@ -137,34 +137,6 @@
 	$(error Illegal value '$(CONFIG_PARTICLES)' for $$(CONFIG_PARTICLES))
     endif
 
-#-----------------------------------------------------------------------
-# DETERMINE IO PRECISION SETTINGS
-#-----------------------------------------------------------------------
-
-    ERROR_IO = 1
-
-    # Settings for 32-bit I/O
-
-    ifeq ($(CONFIG_IO),32)
-        ERROR_IO = 0
-        ASSEMBLE_IO_DEFINES = -DIO_32
-    endif
-
-    # Settings for 64-bit io
-
-    ifeq ($(CONFIG_IO),64)
-        ERROR_IO = 0
-        ASSEMBLE_IO_DEFINES = -DIO_64
-    endif
-
-    # error if CONFIG_IO is incorrect
-
-    ifeq ($(ERROR_IO),1)
-       .PHONY: error_io
-       error_io:
-	$(error Illegal value '$(CONFIG_IO)' for $$(CONFIG_IO))
-    endif
-
 #=======================================================================
 # DETERMINE MPI USAGE
 #=======================================================================

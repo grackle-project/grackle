@@ -252,23 +252,6 @@ CONFIG_PARTICLES-%: suggest-clean
 
 #-----------------------------------------------------------------------
 
-VALID_IO = io-32 io-64
-.PHONY: $(VALID_IO)
-
-io-32: CONFIG_IO-32
-io-64: CONFIG_IO-64
-io-%:
-	@printf "\n\tInvalid target: $@\n\n\tValid targets: [$(VALID_IO)]\n\n"
-CONFIG_IO-%: suggest-clean
-	@tmp=.config.temp; \
-        grep -v CONFIG_IO $(MAKE_CONFIG_OVERRIDE) > $${tmp}; \
-        mv $${tmp} $(MAKE_CONFIG_OVERRIDE); \
-        echo "CONFIG_IO = $*" >> $(MAKE_CONFIG_OVERRIDE); \
-	$(MAKE)  show-config | grep CONFIG_IO; \
-	echo
-
-#-----------------------------------------------------------------------
-
 VALID_USE-MPI = use-mpi-yes use-mpi-no
 .PHONY: $(VALID_USE-MPI)
 
