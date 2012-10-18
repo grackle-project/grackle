@@ -36,7 +36,7 @@
 
 // Initialize Cloudy cooling data
 int initialize_cloudy_data(chemistry_data &my_chemistry,
-                           code_units &my_units, FLOAT a_value)
+                           code_units &my_units, float a_value)
 {
 
   int q, w;

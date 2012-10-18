@@ -53,7 +53,6 @@ struct chemistry_data
   int TabulatedLWBackground;
   float RadiationFieldRedshift;
 
-  FLOAT TimeFieldLastUpdated;
   int  RadiationShield;
 
   /* Frequency dependant information (constant). */
