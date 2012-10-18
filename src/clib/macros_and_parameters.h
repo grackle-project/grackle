@@ -77,14 +77,6 @@ typedef int            HDF5_hid_t;
 
 /* Precision-dependent definitions */
 
-#if defined(INITS32)
-#define inits_type float32
-#endif
-
-#if defined(INITS64)
-#define inits_type float64
-#endif
-
 #ifdef SMALL_INTS
 #define Eint int
 #define Eunsigned_int unsigned_int

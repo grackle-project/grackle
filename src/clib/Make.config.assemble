@@ -149,33 +149,6 @@
     endif
 
 #-----------------------------------------------------------------------
-# DETERMINE INITS PRECISION
-#-----------------------------------------------------------------------
-
-    ERROR_INITS = 1
-
-    # Settings for 32-bit inits
-
-    ifeq ($(CONFIG_INITS),32)
-        ERROR_INITS = 0
-        ASSEMBLE_INITS_DEFINES = -DINITS32
-    endif
-
-    # Settings for 64-bit inits
-
-    ifeq ($(CONFIG_INITS),64)
-        ERROR_INITS = 0
-        ASSEMBLE_INITS_DEFINES = -DINITS64
-    endif
-
-    # error if CONFIG_INITS is incorrect
-
-    ifeq ($(ERROR_INITS),1)
-       .PHONY: error_inits
-       error_inits: ;  $(error Illegal value $(CONFIG_INITS) for $$(CONFIG_INITS))
-    endif
-
-#-----------------------------------------------------------------------
 # DETERMINE IO PRECISION SETTINGS
 #-----------------------------------------------------------------------
 

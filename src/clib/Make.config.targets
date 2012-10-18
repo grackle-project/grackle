@@ -55,11 +55,6 @@ help-config:
 	@echo "      gmake particles-64"
 	@echo "      gmake particles-128"
 	@echo
-	@echo "   Set inits precision"
-	@echo
-	@echo "      gmake inits-32"
-	@echo "      gmake inits-64"
-	@echo
 	@echo "   Set IO precision"
 	@echo
 	@echo "      gmake io-32"
@@ -249,7 +244,6 @@ show-config:
 	@echo "   CONFIG_PRECISION  [precision-{32,64}]                     : $(CONFIG_PRECISION)"
 	@echo "   CONFIG_PARTICLES  [particles-{32,64,128}]                 : $(CONFIG_PARTICLES)"
 	@echo "   CONFIG_INTEGERS  [integers-{32,64}]                       : $(CONFIG_INTEGERS)" 
-	@echo "   CONFIG_INITS  [inits-{32,64}]                             : $(CONFIG_INITS)"
 	@echo "   CONFIG_IO  [io-{32,64}]                                   : $(CONFIG_IO)"
 	@echo "   CONFIG_USE_MPI  [use-mpi-{yes,no}]                        : $(CONFIG_USE_MPI)"
 	@echo "   CONFIG_OBJECT_MODE  [object-mode-{32,64}]                 : $(CONFIG_OBJECT_MODE)"
@@ -473,23 +467,6 @@ CONFIG_PARTICLES-%: suggest-clean
         mv $${tmp} $(MAKE_CONFIG_OVERRIDE); \
         echo "CONFIG_PARTICLES = $*" >> $(MAKE_CONFIG_OVERRIDE); \
 	$(MAKE)  show-config | grep CONFIG_PARTICLES; \
-	echo
-
-#-----------------------------------------------------------------------
-
-VALID_INITS = inits-32 inits-64
-.PHONY: $(VALID_INITS)
-
-inits-32: CONFIG_INITS-32
-inits-64: CONFIG_INITS-64
-inits-%:
-	@printf "\n\tInvalid target: $@\n\n\tValid targets: [$(VALID_INITS)]\n\n"
-CONFIG_INITS-%: suggest-clean
-	@tmp=.config.temp; \
-        grep -v CONFIG_INITS $(MAKE_CONFIG_OVERRIDE) > $${tmp}; \
-        mv $${tmp} $(MAKE_CONFIG_OVERRIDE); \
-        echo "CONFIG_INITS = $*" >> $(MAKE_CONFIG_OVERRIDE); \
-	$(MAKE)  show-config | grep CONFIG_INITS; \
 	echo
 
 #-----------------------------------------------------------------------
