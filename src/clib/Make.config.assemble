@@ -99,44 +99,6 @@
 	$(error Illegal value '$(CONFIG_PRECISION)' for $$(CONFIG_PRECISION))
     endif
 
-#-----------------------------------------------------------------------
-# DETERMINE PARTICLE PRECISION SETTINGS
-#-----------------------------------------------------------------------
-
-    ERROR_PARTICLES = 1
-
-    # Settings for 32-bit particle position precision
-
-    ifeq ($(CONFIG_PARTICLES),32)
-        ERROR_PARTICLES = 0
-        ASSEMBLE_PARTICLES_DEFINES = -DCONFIG_PFLOAT_4
-        ASSEMBLE_PARTICLE_NUMBER = 4
-    endif
-
-    # Settings for 64-bit particle position precision
-
-    ifeq ($(CONFIG_PARTICLES),64)
-        ERROR_PARTICLES = 0
-        ASSEMBLE_PARTICLES_DEFINES = -DCONFIG_PFLOAT_8
-        ASSEMBLE_PARTICLE_NUMBER = 8
-    endif
-
-    # Settings for 128-bit particle position precision
-
-    ifeq ($(CONFIG_PARTICLES),128)
-        ERROR_PARTICLES = 0
-        ASSEMBLE_PARTICLES_DEFINES = -DCONFIG_PFLOAT_16
-        ASSEMBLE_PARTICLE_NUMBER = 16
-    endif
-
-    # error if CONFIG_PARTICLES is incorrect
-
-    ifeq ($(ERROR_PARTICLES),1)
-       .PHONY: error_particles
-       error_particles:
-	$(error Illegal value '$(CONFIG_PARTICLES)' for $$(CONFIG_PARTICLES))
-    endif
-
 #=======================================================================
 # DETERMINE MPI USAGE
 #=======================================================================
@@ -262,7 +224,6 @@
               $(ASSEMBLE_INTEGER_DEFINES) \
               $(ASSEMBLE_IO_DEFINES) \
               $(ASSEMBLE_MPI_DEFINES) \
-              $(ASSEMBLE_PARTICLES_DEFINES) \
               $(ASSEMBLE_PRECISION_DEFINES)
 
     INCLUDES = $(MACH_INCLUDES) \

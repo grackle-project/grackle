@@ -9,9 +9,6 @@
 # 
 #    CONFIG_INTEGERS
 #    CONFIG_PRECISION
-#    CONFIG_PARTICLES
-#    CONFIG_INITS
-#    CONFIG_IO
 #    CONFIG_USE_MPI
 #    CONFIG_OPT
 #
@@ -34,16 +31,6 @@
 #-----------------------------------------------------------------------
 
      CONFIG_PRECISION = 64
-
-#=======================================================================
-# CONFIG_PARTICLES
-#=======================================================================
-#    32            use  32-bit precision for particle positions
-#    64            use  64-bit precision for particle positions
-#   128            use 128-bit precision for particle positions
-#-----------------------------------------------------------------------
-
-     CONFIG_PARTICLES = 64
 
 #=======================================================================
 # CONFIG_USE_MPI

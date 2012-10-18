@@ -8,7 +8,7 @@
 #
 # DATE:        2007-02-21
 #
-# DESCRIPTION  See 'gmake help-config' for definitive description of targets
+# DESCRIPTION  See 'make help-config' for definitive description of targets
 #
 #-----------------------------------------------------------------------
 
@@ -18,60 +18,30 @@ help-config:
 	@echo "   ENZO CONFIGURATION HELP"
 	@echo "========================================================================"
 	@echo
-	@echo "NUMERICAL PARAMETERS"
-	@echo
-	@echo "   Set maximum subgrids"
-	@echo
-	@echo "      gmake max-subgrids-###"
-	@echo
-	@echo "   Set maximum baryon fields"
-	@echo
-	@echo "      gmake max-baryons-###"
-	@echo
-	@echo "   Set maximum tasks per node"
-	@echo
-	@echo "      gmake max-tasks-per-node-###"
-	@echo
-	@echo "   Set initial memory pool size (in number of photons)"
-	@echo
-	@echo "      gmake memory-pool-###"
-	@echo
-	@echo
 	@echo "CONFIGURATION SETTINGS"
 	@echo
 	@echo "   Set integer size"
 	@echo
-	@echo "      gmake integers-32"
-	@echo "      gmake integers-64"
+	@echo "      make integers-32"
+	@echo "      make integers-64"
 	@echo
 	@echo "   Set floating-point precision"
 	@echo
-	@echo "      gmake precision-32"
-	@echo "      gmake precision-64"
-	@echo
-	@echo "   Set particle position precision"
-	@echo
-	@echo "      gmake particles-32"
-	@echo "      gmake particles-64"
-	@echo "      gmake particles-128"
-	@echo
-	@echo "   Set IO precision"
-	@echo
-	@echo "      gmake io-32"
-	@echo "      gmake io-64"
+	@echo "      make precision-32"
+	@echo "      make precision-64"
 	@echo
 	@echo "   Set whether to use MPI"
 	@echo
-	@echo "      gmake use-mpi-yes"
-	@echo "      gmake use-mpi-no"
+	@echo "      make use-mpi-yes"
+	@echo "      make use-mpi-no"
 	@echo
 	@echo "   Set optimization/debug/warning levels"
 	@echo
-	@echo "      gmake opt-warn"
-	@echo "      gmake opt-debug"
-	@echo "      gmake opt-cudadebug  (cuda device software emulation)"
-	@echo "      gmake opt-high"
-	@echo "      gmake opt-aggressive"
+	@echo "      make opt-warn"
+	@echo "      make opt-debug"
+	@echo "      make opt-cudadebug  (cuda device software emulation)"
+	@echo "      make opt-high"
+	@echo "      make opt-aggressive"
 	@echo
 
 #-----------------------------------------------------------------------
@@ -107,9 +77,7 @@ show-config:
 	@echo "   MACHINE-NAME: $(CONFIG_MACHINE)"
 	@echo
 	@echo "   CONFIG_PRECISION  [precision-{32,64}]                     : $(CONFIG_PRECISION)"
-	@echo "   CONFIG_PARTICLES  [particles-{32,64,128}]                 : $(CONFIG_PARTICLES)"
 	@echo "   CONFIG_INTEGERS  [integers-{32,64}]                       : $(CONFIG_INTEGERS)" 
-	@echo "   CONFIG_IO  [io-{32,64}]                                   : $(CONFIG_IO)"
 	@echo "   CONFIG_USE_MPI  [use-mpi-{yes,no}]                        : $(CONFIG_USE_MPI)"
 	@echo "   CONFIG_OPT  [opt-{warn,debug,cudadebug,high,aggressive}]  : $(CONFIG_OPT)"
 
@@ -120,7 +88,7 @@ show-config:
 .PHONY: suggest-clean
 suggest-clean:
 	@echo
-	@echo " *** Execute 'gmake clean' before rebuilding executables ***"
+	@echo " *** Execute 'make clean' before rebuilding executables ***"
 	@echo
 
 #-----------------------------------------------------------------------
@@ -228,26 +196,6 @@ CONFIG_PRECISION-%: suggest-clean
         mv $${tmp} $(MAKE_CONFIG_OVERRIDE); \
         echo "CONFIG_PRECISION = $*" >> $(MAKE_CONFIG_OVERRIDE); \
 	$(MAKE)  show-config | grep CONFIG_PRECISION; \
-	echo
-
-#-----------------------------------------------------------------------
-
-VALID_PARTICLES = particles-32 particles-64 particles-128
-.PHONY: $(VALID_PARTICLES)
-.PHONY: particles-%
-
-particles-32:  CONFIG_PARTICLES-32
-particles-64:  CONFIG_PARTICLES-64
-particles-128: CONFIG_PARTICLES-128
-	@printf "\nNote that star formation does not work with this option.\n\n"
-particles-%:
-	@printf "\n\tInvalid target: $@\n\n\tValid targets: [$(VALID_PARTICLES)]\n\n"
-CONFIG_PARTICLES-%: suggest-clean
-	@tmp=.config.temp; \
-        grep -v CONFIG_PARTICLES $(MAKE_CONFIG_OVERRIDE) > $${tmp}; \
-        mv $${tmp} $(MAKE_CONFIG_OVERRIDE); \
-        echo "CONFIG_PARTICLES = $*" >> $(MAKE_CONFIG_OVERRIDE); \
-	$(MAKE)  show-config | grep CONFIG_PARTICLES; \
 	echo
 
 #-----------------------------------------------------------------------

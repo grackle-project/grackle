@@ -142,56 +142,7 @@ typedef int            HDF5_hid_t;
 #endif
 #endif
 
-#ifdef CONFIG_PFLOAT_4
-#define PFLOAT_EPSILON 1e-6f
-#define FLOAT Eflt32
-#define PEXP expf
-#define PSYM "f"
 #define GSYM "g"
-#define GOUTSYM ".8g"
-#define MY_MPIFLOAT MPI_FLOAT
-#define FLOATDataType MPI_FLOAT
-#define HDF5_PREC HDF5_R4
-#define HDF5_FILE_PREC HDF5_R4
-#ifdef USE_PYTHON
-#define ENPY_PFLOAT NPY_FLOAT
-#define enpy_pfloat npy_float
-#endif
-#endif
-
-#ifdef CONFIG_PFLOAT_8
-#define PFLOAT_EPSILON 1e-12f
-#define FLOAT double
-#define PEXP exp
-#define PSYM "lf"
-#define GSYM "g"
-#define GOUTSYM ".14g"
-#define MY_MPIFLOAT MPI_DOUBLE
-#define FLOATDataType MPI_DOUBLE
-#define HDF5_PREC HDF5_R8
-#define HDF5_FILE_PREC HDF5_R8
-#ifdef USE_PYTHON
-#define ENPY_PFLOAT NPY_DOUBLE
-#define enpy_pfloat npy_double
-#endif
-#endif
-
-#ifdef CONFIG_PFLOAT_16
-#define PFLOAT_EPSILON 1e-16f
-#define FLOAT long_double
-#define PEXP expl
-#define PSYM "Lf"
-#define GSYM "g"
-#define GOUTSYM ".21Lg"
-#define MY_MPIFLOAT MPI_LONG_DOUBLE
-#define FLOATDataType MPI_LONG_DOUBLE
-#define HDF5_PREC HDF5_R16
-#define HDF5_FILE_PREC HDF5_R16
-#ifdef USE_PYTHON
-#define ENPY_PFLOAT NPY_LONGDOUBLE
-#define enpy_pfloat npy_longdouble
-#endif
-#endif
 
 /* Standard definitions (well, fairly standard) */
 
