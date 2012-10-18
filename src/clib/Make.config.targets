@@ -44,11 +44,6 @@ help-config:
 	@echo "      gmake integers-32"
 	@echo "      gmake integers-64"
 	@echo
-	@echo "   Set integer size for particle IDs"
-	@echo
-	@echo "      gmake particle-id-32"
-	@echo "      gmake particle-id-64"
-	@echo
 	@echo "   Set floating-point precision"
 	@echo
 	@echo "      gmake precision-32"
@@ -254,7 +249,6 @@ show-config:
 	@echo "   CONFIG_PRECISION  [precision-{32,64}]                     : $(CONFIG_PRECISION)"
 	@echo "   CONFIG_PARTICLES  [particles-{32,64,128}]                 : $(CONFIG_PARTICLES)"
 	@echo "   CONFIG_INTEGERS  [integers-{32,64}]                       : $(CONFIG_INTEGERS)" 
-	@echo "   CONFIG_PARTICLE_IDS  [particle-id-{32,64}]                : $(CONFIG_PARTICLE_IDS)"
 	@echo "   CONFIG_INITS  [inits-{32,64}]                             : $(CONFIG_INITS)"
 	@echo "   CONFIG_IO  [io-{32,64}]                                   : $(CONFIG_IO)"
 	@echo "   CONFIG_USE_MPI  [use-mpi-{yes,no}]                        : $(CONFIG_USE_MPI)"

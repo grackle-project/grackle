@@ -49,34 +49,6 @@
           -D__memory_pool_size=$(PARAMETER_MEMORY_POOL_SIZE)
 
 #-----------------------------------------------------------------------
-# DETERMINE INTEGER SIZE SETTINGS FOR PARTICLE INDICES
-#-----------------------------------------------------------------------
-
-    ERROR_IDS = 1
-
-    # Settings for 32-bit integers
-
-    ifeq ($(CONFIG_PARTICLE_IDS),32)
-        ERROR_IDS = 0
-        ASSEMBLE_IDS_DEFINES = -DCONFIG_PINT_4
-    endif
-
-    # Settings for 64-bit integers
-
-    ifeq ($(CONFIG_PARTICLE_IDS),64)
-        ERROR_IDS = 0
-        ASSEMBLE_IDS_DEFINES = -DCONFIG_PINT_8
-    endif
-
-    # error if CONFIG_INTEGERS is incorrect
-
-    ifeq ($(ERROR_IDS),1)
-       .PHONY: error_ids
-       error_ids:
-	$(error Illegal value '$(CONFIG_PARTICLE_IDS)' for $$(CONFIG_PARTICLE_IDS))
-    endif
-
-#-----------------------------------------------------------------------
 # DETERMINE INTEGER SIZE SETTINGS
 #-----------------------------------------------------------------------
 
