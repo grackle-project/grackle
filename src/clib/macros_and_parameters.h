@@ -78,68 +78,31 @@ typedef int            HDF5_hid_t;
 /* Precision-dependent definitions */
 
 #ifdef SMALL_INTS
-#define Eint int
-#define Eunsigned_int unsigned_int
+#define gr_int int
 #define ISYM "d"
-#define IntDataType MPI_INT
-#define HDF5_INT HDF5_I4
-#define HDF5_FILE_INT HDF5_FILE_I4
 #define nint(A) ( (int) ((A) + 0.5*sign(A)) )
 #define nlongint(A) ( (long_int) ((A) + 0.5*sign(A)) )
 #define ABS(A) abs((int) (A))
-#define ENPY_INT NPY_INT
-#define enpy_int npy_int
 #endif
 
 #ifdef LARGE_INTS
-#define int long_int // CUDA doesn't like this, and who can blame it?
-#define Eint long_int
-#define Eunsigned_int unsigned_long_int
+#define gr_int long_int
 #define ISYM "lld"
-#define IntDataType MPI_LONG_LONG_INT
-#define HDF5_INT HDF5_I8
-#define HDF5_FILE_INT HDF5_FILE_I8
 #define nint(A) ( (long_int) ((A) + 0.5*sign(A)) )
 #define nlongint(A) ( (long_int) ((A) + 0.5*sign(A)) )
 #define ABS(A) labs((long_int) (A))
-#define ENPY_INT NPY_LONG
-#define enpy_int npy_long
 #endif
 
 #ifdef CONFIG_BFLOAT_4
-#define BFLOAT_EPSILON 1e-6f
-#define Eflt float
+#define gr_float float
 #define FSYM "f"
 #define ESYM "e"
-#define FloatDataType MPI_FLOAT
-#ifdef COMPACT_IO
-#define HDF5_REAL HDF5_R4
-#define HDF5_FILE_REAL HDF5_FILE_R4
-#else
-#define HDF5_REAL HDF5_R4
-#define HDF5_FILE_REAL HDF5_FILE_R8
-#endif
-#ifdef USE_PYTHON
-#define ENPY_BFLOAT NPY_FLOAT
-#define enpy_bfloat npy_float
-#endif
 #endif
 
 #ifdef CONFIG_BFLOAT_8
-#define BFLOAT_EPSILON 1e-12f
-#define Eflt double
+#define gr_float double
 #define FSYM "lf"
 #define ESYM "le"
-#define FloatDataType MPI_DOUBLE
-#define float32 TEMP_HOLD_NAME
-#define float double
-#define TEMP_HOLD_NAME float32
-#define HDF5_REAL HDF5_R8
-#define HDF5_FILE_REAL HDF5_FILE_R8
-#ifdef USE_PYTHON
-#define ENPY_BFLOAT NPY_DOUBLE
-#define enpy_bfloat npy_double
-#endif
 #endif
 
 #define GSYM "g"
