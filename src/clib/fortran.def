@@ -4,5 +4,3 @@
 #define huge 1.0e+20
 
 #define RADIATION
-#define NO_CEN_METALS
-#define JHW_METALS_NORMZ 0.1

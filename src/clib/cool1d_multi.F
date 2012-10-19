@@ -102,13 +102,9 @@
 !  Parameters
 
       double precision mh
-      real    ZSOLAR, mu_metal, boost_factor
-! MKRJ 12/21/07 boost gammaha by this factor (JHW reduced by 1.0 because
-! it has been included in v2.0
-      parameter (boost_factor = 3.5) 
+      real    ZSOLAR, mu_metal
       parameter (mh = mass_h)      !DPC
       parameter (mu_metal = 16.d0)    ! approx. mean molecular weight of metals
-
 
 !  Locals
 
@@ -141,23 +137,9 @@
 
 !  Metal cooling locals
 
-      integer xe_idx, tcmb_idx
-      real logxe0, logxe1, dlogxea, xe, log_xe, xe1, dlogT, dlogxe, xi
-      real logTcmb, dlogTcmb, metalc_cmb, xe_max, metalfree
-      real xe_slope, xe_logtem0, xe_min
-      parameter (xe_slope = 5.d0, xe_logtem0 = 9.7859d0)  ! e^9.78 = 10^4.25 K
-      parameter (xe_min = -9.21d0)  ! e^-9.21 = 1e-4
-#ifdef CEN_METALS
-      integer nti, ndi, cmgenerate, NIT, NID, NIB
-      real    TEMMIN, DELT, DENMIN, DELD, FREQDEL, FREQMIN
-      PARAMETER(NIT=200,TEMMIN=3.d0,DELT=0.03d0)
-      PARAMETER(NID=300,DENMIN=-12.d0,DELD=0.05d0)
-      PARAMETER(NIB=400,FREQDEL=0.02d0,FREQMIN=1.d0)
-      real    metal_cool, metal_heat, xi
-      real    cbovcool(NIT,NID), cbovheat(NIT,NID), denwk(NID), 
-     &        radt(NIB), eb(NIB)
-      common  /cen_metal_com/ cbovcool, cbovheat, denwk
-#endif /* CEN_METALS */
+      integer tcmb_idx
+      real logxe0, logxe1, dlogxea, xe, log_xe, xe1, dlogT, dlogxe
+      real logTcmb, dlogTcmb, metalc_cmb, metalfree
 
 !  Iteration mask
 
