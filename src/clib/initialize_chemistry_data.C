@@ -28,30 +28,30 @@
 #include "phys_constants.h"
 
 int initialize_cloudy_data(chemistry_data &my_chemistry,
-                           code_units &my_units, float a_value);
+                           code_units &my_units, gr_float a_value);
 
 extern "C" void FORTRAN_NAME(calc_rates)(
-     int *nratec, float *aye, float *temstart, float *temend, float *alpha0,
-     float *f3, int *iradtype, int *casebrates, int *threebody,
-     float *utem, float *uxyz, float *uaye, float *urho, float *utim,
-     float *ceHIa, float *ceHeIa, float *ceHeIIa, float *ciHIa, float *ciHeIa,
-     float *ciHeISa, float *ciHeIIa, float *reHIIa, float *reHeII1a,
-     float *reHeII2a, float *reHeIIIa, float *brema, float *compa, 
-     float *gammahacgs, float *gammaha,
-     float *piHI, float *piHeI, float *piHeII,
-     float *hyd01ka, float *h2k01a, float *vibha, float *rotha, float *rotla,
-     float *gpldl, float *gphdl, float *hdlte, float *hdlow, float *hdcool, float *cieco,
-     float *gaHIa, float *gaH2a, float *gaHea, float *gaHpa, float *gaela, float *gasgr, 
-     float *k1a, float *k2a, float *k3a, float *k4a, float *k5a, float *k6a,
-        float *k7a, float *k8a, float *k9a, float *k10a,
-     float *k11a, float *k12a, float *k13a, float *k13dda, float *k14a,
-        float *k15a, float *k16a, float *k17a, float *k18a,
-     float *k19a, float *k20a, float *k21a, float *k22, float *k23,
-     float *k24, float *k25, float *k26, float *k27, float *k28, float *k29,
-        float *k30, float *k31,
-     float *k50, float *k51, float *k52, float *k53, float *k54, float *k55,
-        float *k56, int *ndratec, float *dtemstart, float *dtemend, float *h2dusta, 
-     float *ncrca, float *ncrd1a, float *ncrd2a, int *ioutput);
+     gr_int *nratec, gr_float *aye, gr_float *temstart, gr_float *temend, gr_float *alpha0,
+     gr_float *f3, gr_int *iradtype, gr_int *casebrates, gr_int *threebody,
+     gr_float *utem, gr_float *uxyz, gr_float *uaye, gr_float *urho, gr_float *utim,
+     gr_float *ceHIa, gr_float *ceHeIa, gr_float *ceHeIIa, gr_float *ciHIa, gr_float *ciHeIa,
+     gr_float *ciHeISa, gr_float *ciHeIIa, gr_float *reHIIa, gr_float *reHeII1a,
+     gr_float *reHeII2a, gr_float *reHeIIIa, gr_float *brema, gr_float *compa, 
+     gr_float *gammahacgs, gr_float *gammaha,
+     gr_float *piHI, gr_float *piHeI, gr_float *piHeII,
+     gr_float *hyd01ka, gr_float *h2k01a, gr_float *vibha, gr_float *rotha, gr_float *rotla,
+     gr_float *gpldl, gr_float *gphdl, gr_float *hdlte, gr_float *hdlow, gr_float *hdcool, gr_float *cieco,
+     gr_float *gaHIa, gr_float *gaH2a, gr_float *gaHea, gr_float *gaHpa, gr_float *gaela, gr_float *gasgr, 
+     gr_float *k1a, gr_float *k2a, gr_float *k3a, gr_float *k4a, gr_float *k5a, gr_float *k6a,
+        gr_float *k7a, gr_float *k8a, gr_float *k9a, gr_float *k10a,
+     gr_float *k11a, gr_float *k12a, gr_float *k13a, gr_float *k13dda, gr_float *k14a,
+        gr_float *k15a, gr_float *k16a, gr_float *k17a, gr_float *k18a,
+     gr_float *k19a, gr_float *k20a, gr_float *k21a, gr_float *k22, gr_float *k23,
+     gr_float *k24, gr_float *k25, gr_float *k26, gr_float *k27, gr_float *k28, gr_float *k29,
+        gr_float *k30, gr_float *k31,
+     gr_float *k50, gr_float *k51, gr_float *k52, gr_float *k53, gr_float *k54, gr_float *k55,
+        gr_float *k56, gr_int *ndratec, gr_float *dtemstart, gr_float *dtemend, gr_float *h2dusta, 
+     gr_float *ncrca, gr_float *ncrd1a, gr_float *ncrd2a, gr_int *ioutput);
 
 
 // character strings
@@ -59,84 +59,84 @@ EXTERN char outfilename[];
 
  
 int initialize_chemistry_data(chemistry_data &my_chemistry,
-                              code_units &my_units, float a_value)
+                              code_units &my_units, gr_float a_value)
 {
 
   fprintf(stderr, "Initializing chemistry data.\n");
 
   /* Allocate CoolData space for rates. */
  
-  my_chemistry.ceHI    = new float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.ceHeI   = new float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.ceHeII  = new float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.ciHI    = new float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.ciHeI   = new float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.ciHeIS  = new float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.ciHeII  = new float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.reHII   = new float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.reHeII1 = new float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.reHeII2 = new float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.reHeIII = new float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.brem    = new float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.hyd01k  = new float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.h2k01   = new float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.vibh    = new float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.roth    = new float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.rotl    = new float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.GP99LowDensityLimit  = new float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.GP99HighDensityLimit = new float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.HDlte   = new float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.HDlow   = new float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.HDcool  = new float[my_chemistry.NumberOfTemperatureBins*5];
-  my_chemistry.cieco   = new float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.GAHI    = new float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.GAH2    = new float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.GAHe    = new float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.GAHp    = new float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.GAel    = new float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.gas_grain = new float[my_chemistry.NumberOfTemperatureBins];
+  my_chemistry.ceHI    = new gr_float[my_chemistry.NumberOfTemperatureBins];
+  my_chemistry.ceHeI   = new gr_float[my_chemistry.NumberOfTemperatureBins];
+  my_chemistry.ceHeII  = new gr_float[my_chemistry.NumberOfTemperatureBins];
+  my_chemistry.ciHI    = new gr_float[my_chemistry.NumberOfTemperatureBins];
+  my_chemistry.ciHeI   = new gr_float[my_chemistry.NumberOfTemperatureBins];
+  my_chemistry.ciHeIS  = new gr_float[my_chemistry.NumberOfTemperatureBins];
+  my_chemistry.ciHeII  = new gr_float[my_chemistry.NumberOfTemperatureBins];
+  my_chemistry.reHII   = new gr_float[my_chemistry.NumberOfTemperatureBins];
+  my_chemistry.reHeII1 = new gr_float[my_chemistry.NumberOfTemperatureBins];
+  my_chemistry.reHeII2 = new gr_float[my_chemistry.NumberOfTemperatureBins];
+  my_chemistry.reHeIII = new gr_float[my_chemistry.NumberOfTemperatureBins];
+  my_chemistry.brem    = new gr_float[my_chemistry.NumberOfTemperatureBins];
+  my_chemistry.hyd01k  = new gr_float[my_chemistry.NumberOfTemperatureBins];
+  my_chemistry.h2k01   = new gr_float[my_chemistry.NumberOfTemperatureBins];
+  my_chemistry.vibh    = new gr_float[my_chemistry.NumberOfTemperatureBins];
+  my_chemistry.roth    = new gr_float[my_chemistry.NumberOfTemperatureBins];
+  my_chemistry.rotl    = new gr_float[my_chemistry.NumberOfTemperatureBins];
+  my_chemistry.GP99LowDensityLimit  = new gr_float[my_chemistry.NumberOfTemperatureBins];
+  my_chemistry.GP99HighDensityLimit = new gr_float[my_chemistry.NumberOfTemperatureBins];
+  my_chemistry.HDlte   = new gr_float[my_chemistry.NumberOfTemperatureBins];
+  my_chemistry.HDlow   = new gr_float[my_chemistry.NumberOfTemperatureBins];
+  my_chemistry.HDcool  = new gr_float[my_chemistry.NumberOfTemperatureBins*5];
+  my_chemistry.cieco   = new gr_float[my_chemistry.NumberOfTemperatureBins];
+  my_chemistry.GAHI    = new gr_float[my_chemistry.NumberOfTemperatureBins];
+  my_chemistry.GAH2    = new gr_float[my_chemistry.NumberOfTemperatureBins];
+  my_chemistry.GAHe    = new gr_float[my_chemistry.NumberOfTemperatureBins];
+  my_chemistry.GAHp    = new gr_float[my_chemistry.NumberOfTemperatureBins];
+  my_chemistry.GAel    = new gr_float[my_chemistry.NumberOfTemperatureBins];
+  my_chemistry.gas_grain = new gr_float[my_chemistry.NumberOfTemperatureBins];
 
   /* Allocate space in my_chemistry for rates. */
  
-  my_chemistry.k1 = new float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.k2 = new float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.k3 = new float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.k4 = new float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.k5 = new float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.k6 = new float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.k7 = new float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.k8 = new float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.k9 = new float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.k10 = new float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.k11 = new float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.k12 = new float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.k13 = new float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.k13dd = new float[my_chemistry.NumberOfTemperatureBins*7];
-  my_chemistry.k14 = new float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.k15 = new float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.k16 = new float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.k17 = new float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.k18 = new float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.k19 = new float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.k20 = new float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.k21 = new float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.k22 = new float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.k23 = new float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.k50 = new float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.k51 = new float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.k52 = new float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.k53 = new float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.k54 = new float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.k55 = new float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.k56 = new float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.h2dust = new float[my_chemistry.NumberOfTemperatureBins * 
+  my_chemistry.k1 = new gr_float[my_chemistry.NumberOfTemperatureBins];
+  my_chemistry.k2 = new gr_float[my_chemistry.NumberOfTemperatureBins];
+  my_chemistry.k3 = new gr_float[my_chemistry.NumberOfTemperatureBins];
+  my_chemistry.k4 = new gr_float[my_chemistry.NumberOfTemperatureBins];
+  my_chemistry.k5 = new gr_float[my_chemistry.NumberOfTemperatureBins];
+  my_chemistry.k6 = new gr_float[my_chemistry.NumberOfTemperatureBins];
+  my_chemistry.k7 = new gr_float[my_chemistry.NumberOfTemperatureBins];
+  my_chemistry.k8 = new gr_float[my_chemistry.NumberOfTemperatureBins];
+  my_chemistry.k9 = new gr_float[my_chemistry.NumberOfTemperatureBins];
+  my_chemistry.k10 = new gr_float[my_chemistry.NumberOfTemperatureBins];
+  my_chemistry.k11 = new gr_float[my_chemistry.NumberOfTemperatureBins];
+  my_chemistry.k12 = new gr_float[my_chemistry.NumberOfTemperatureBins];
+  my_chemistry.k13 = new gr_float[my_chemistry.NumberOfTemperatureBins];
+  my_chemistry.k13dd = new gr_float[my_chemistry.NumberOfTemperatureBins*7];
+  my_chemistry.k14 = new gr_float[my_chemistry.NumberOfTemperatureBins];
+  my_chemistry.k15 = new gr_float[my_chemistry.NumberOfTemperatureBins];
+  my_chemistry.k16 = new gr_float[my_chemistry.NumberOfTemperatureBins];
+  my_chemistry.k17 = new gr_float[my_chemistry.NumberOfTemperatureBins];
+  my_chemistry.k18 = new gr_float[my_chemistry.NumberOfTemperatureBins];
+  my_chemistry.k19 = new gr_float[my_chemistry.NumberOfTemperatureBins];
+  my_chemistry.k20 = new gr_float[my_chemistry.NumberOfTemperatureBins];
+  my_chemistry.k21 = new gr_float[my_chemistry.NumberOfTemperatureBins];
+  my_chemistry.k22 = new gr_float[my_chemistry.NumberOfTemperatureBins];
+  my_chemistry.k23 = new gr_float[my_chemistry.NumberOfTemperatureBins];
+  my_chemistry.k50 = new gr_float[my_chemistry.NumberOfTemperatureBins];
+  my_chemistry.k51 = new gr_float[my_chemistry.NumberOfTemperatureBins];
+  my_chemistry.k52 = new gr_float[my_chemistry.NumberOfTemperatureBins];
+  my_chemistry.k53 = new gr_float[my_chemistry.NumberOfTemperatureBins];
+  my_chemistry.k54 = new gr_float[my_chemistry.NumberOfTemperatureBins];
+  my_chemistry.k55 = new gr_float[my_chemistry.NumberOfTemperatureBins];
+  my_chemistry.k56 = new gr_float[my_chemistry.NumberOfTemperatureBins];
+  my_chemistry.h2dust = new gr_float[my_chemistry.NumberOfTemperatureBins * 
 			      my_chemistry.NumberOfDustTemperatureBins];
-  my_chemistry.n_cr_n = new float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.n_cr_d1 = new float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.n_cr_d2 = new float[my_chemistry.NumberOfTemperatureBins]; 
+  my_chemistry.n_cr_n = new gr_float[my_chemistry.NumberOfTemperatureBins];
+  my_chemistry.n_cr_d1 = new gr_float[my_chemistry.NumberOfTemperatureBins];
+  my_chemistry.n_cr_d2 = new gr_float[my_chemistry.NumberOfTemperatureBins]; 
 
-  int ioutput = 1;
-  float temperature_units = mh*POW(my_units.length_units/
+  gr_int ioutput = 1;
+  gr_float temperature_units = mh*POW(my_units.length_units/
                                    my_units.time_units,2)/kboltz;
 
   /* Call FORTRAN routine to do the hard work. */

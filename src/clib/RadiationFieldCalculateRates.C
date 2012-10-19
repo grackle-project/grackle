@@ -37,7 +37,7 @@
 /* function prototypes */
 
 int RadiationFieldCalculateRates(chemistry_data &my_chemistry,
-                                 code_units &my_units, float a_value)
+                                 code_units &my_units, gr_float a_value)
 {
   /* Return if there is no radiation (rates should be all zero). */
 
@@ -46,7 +46,7 @@ int RadiationFieldCalculateRates(chemistry_data &my_chemistry,
 
   /* Set units. */
 
-  float Redshift = 1.0 / (a_value * my_units.a_units) - 1;
+  gr_float Redshift = 1.0 / (a_value * my_units.a_units) - 1;
   if (!my_units.comoving_coordinates) {
     my_chemistry.RadiationRedshiftOn = Redshift+0.2;
     my_chemistry.RadiationRedshiftOff = 0.0;
@@ -66,7 +66,7 @@ int RadiationFieldCalculateRates(chemistry_data &my_chemistry,
      is used as an external control to the radiation. 
      (Only used if my_chemistry.RadiationFieldType = 1 to 4 or equal to 12). */
 
-  float Ramp = 0;
+  gr_float Ramp = 0;
 
   if (Redshift < my_chemistry.RadiationRedshiftOn && 
       Redshift >= my_chemistry.RadiationRedshiftOff) {
@@ -84,12 +84,12 @@ int RadiationFieldCalculateRates(chemistry_data &my_chemistry,
 
   }
 
-  float RampX = 0.0;  // this is unused below
-  float XRadRedShiftOn = 7.0;
-  float XRadRedShiftOff = 0.0 ;
-  float XRadRedShiftFullOn = 6.0 ;
-  float XRadRedShiftDropOff = 0.0 ;
-  float XRadRedShiftf0to3 = 0.1 ;
+  gr_float RampX = 0.0;  // this is unused below
+  gr_float XRadRedShiftOn = 7.0;
+  gr_float XRadRedShiftOff = 0.0 ;
+  gr_float XRadRedShiftFullOn = 6.0 ;
+  gr_float XRadRedShiftDropOff = 0.0 ;
+  gr_float XRadRedShiftf0to3 = 0.1 ;
   
   if (Redshift < XRadRedShiftOn &&
       Redshift >= XRadRedShiftOff) {
@@ -107,12 +107,12 @@ int RadiationFieldCalculateRates(chemistry_data &my_chemistry,
     
   }
 
-  float exp_arg = -1.0 * POW(Redshift-2.3, 2);
+  gr_float exp_arg = -1.0 * POW(Redshift-2.3, 2);
 
   /* Above z = 2.3, increase the width of the Gaussian by a factor of
      3 for HI and HeI. */
 
-  float beta2 = (my_chemistry.AdjustUVBackgroundHighRedshift && Redshift > 2.3) ? 9.0 : 1.0;
+  gr_float beta2 = (my_chemistry.AdjustUVBackgroundHighRedshift && Redshift > 2.3) ? 9.0 : 1.0;
 
   /* ------------------------------------------------------------------ */
   /* 1) For the Haardt and Madau (1996) quasar spectrum (alpha_q = 1.5) */
@@ -185,7 +185,7 @@ int RadiationFieldCalculateRates(chemistry_data &my_chemistry,
                  (1.0+0.2124 * POW(Redshift-0.9213, 2.0)) )
                  / CoolingUnits * Ramp;
 
-    float KP_mod = 1.0 ; 
+    gr_float KP_mod = 1.0 ; 
 
     if (Redshift >= 3 ) {
       KP_mod = 1.3 ;
@@ -240,7 +240,7 @@ int RadiationFieldCalculateRates(chemistry_data &my_chemistry,
        average photon energy in keV, corrected for relativistic effects. 
        Eq.(4) and Eq.(11) of Madau & Efstathiou (1999) */
 
-    float RedshiftXrayCutoff = 5.0;
+    gr_float RedshiftXrayCutoff = 5.0;
     
     my_chemistry.comp_xray = 6.65e-25 * 3.0e10 * 
                         (31.8*POW(1.0+Redshift, 0.3333)/511.0) * 
@@ -398,7 +398,7 @@ int RadiationFieldCalculateRates(chemistry_data &my_chemistry,
 	 a sawtooth pattern), a la Haiman & Abel, & Rees (2000).  This
 	 is really only applicable when there is plenty of neutral
 	 hydrogen is around, so I'm scaling it with Ramp. */
-      float LymanSawtoothSuppressionFactor = 0.1 + 0.9 * Ramp;
+      gr_float LymanSawtoothSuppressionFactor = 0.1 + 0.9 * Ramp;
 
       my_chemistry.k31 = 2.36e-12 * POW(1.0+Redshift, 1.185) * 
 	exp( -0.2173 * POW(Redshift-3.211, 2.0) / 
@@ -432,9 +432,9 @@ int RadiationFieldCalculateRates(chemistry_data &my_chemistry,
 
      rate is 1.13e-8 * F_LW  (flux in Lyman-Werner bands) */
 
-  float tiny_number = 1.0e-20;
+  gr_float tiny_number = 1.0e-20;
   if (my_chemistry.RadiationFieldType == 14) {
-    float logJ;
+    gr_float logJ;
     if (Redshift > 50.0)
       my_chemistry.k31 = tiny_number;
     else if (Redshift > 6.0) {

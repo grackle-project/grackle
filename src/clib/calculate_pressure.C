@@ -25,18 +25,18 @@
 
 int calculate_pressure(chemistry_data &my_chemistry,
                        code_units &my_units,
-                       int grid_rank, int *grid_dimension,
-                       float *density, float *internal_energy,
-                       float *HI_density, float *HII_density, float *HM_density,
-                       float *HeI_density, float *HeII_density, float *HeIII_density,
-                       float *H2I_density, float *H2II_density,
-                       float *DI_density, float *DII_density, float *HDI_density,
-                       float *e_density, float *metal_density,
-                       float *pressure)
+                       gr_int grid_rank, gr_int *grid_dimension,
+                       gr_float *density, gr_float *internal_energy,
+                       gr_float *HI_density, gr_float *HII_density, gr_float *HM_density,
+                       gr_float *HeI_density, gr_float *HeII_density, gr_float *HeIII_density,
+                       gr_float *H2I_density, gr_float *H2II_density,
+                       gr_float *DI_density, gr_float *DII_density, gr_float *HDI_density,
+                       gr_float *e_density, gr_float *metal_density,
+                       gr_float *pressure)
 {
 
-  float tiny_number = 1.e-20;
-  int i, size = 1;
+  gr_float tiny_number = 1.e-20;
+  gr_int i, size = 1;
   for (int dim = 0; dim < grid_rank; dim++)
     size *= grid_dimension[dim];
 
@@ -52,10 +52,10 @@ int calculate_pressure(chemistry_data &my_chemistry,
  
   if (my_chemistry.primordial_chemistry > 1) {
  
-    float TemperatureUnits =  mh*POW(my_units.length_units/
+    gr_float TemperatureUnits =  mh*POW(my_units.length_units/
                                      my_units.time_units,2)/kboltz;
 
-    float number_density, nH2, GammaH2Inverse,
+    gr_float number_density, nH2, GammaH2Inverse,
       GammaInverse = 1.0/(my_chemistry.Gamma-1.0), x, Gamma1, temp;
   
     for (i = 0; i < size; i++) {

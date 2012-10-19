@@ -51,49 +51,49 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
   my_units.time_units = 1.0e12;
   my_units.a_units = 1.0;
 
-  float energy_units = POW((my_units.length_units / my_units.time_units), 2.0);
+  gr_float energy_units = POW((my_units.length_units / my_units.time_units), 2.0);
 
-  float gravitational_constant = 4.0 * 3.1415926 * 6.6726e-8 * 
+  gr_float gravitational_constant = 4.0 * 3.1415926 * 6.6726e-8 * 
     my_units.density_units * POW(my_units.time_units, 2);
 
-  float a_value = 1.0;
+  gr_float a_value = 1.0;
 
   if (initialize_chemistry_data(my_chemistry, my_units, a_value) == FAIL) {
     fprintf(stderr, "Error in initialize_chemistry_data.\n");
     return FAIL;
   }
 
-  float *density, *energy, *x_velocity, *y_velocity, *z_velocity;
-  float *HI_density, *HII_density, *HM_density,
+  gr_float *density, *energy, *x_velocity, *y_velocity, *z_velocity;
+  gr_float *HI_density, *HII_density, *HM_density,
     *HeI_density, *HeII_density, *HeIII_density,
     *H2I_density, *H2II_density,
     *DI_density, *DII_density, *HDI_density,
     *e_density, *metal_density,
     *cooling_time, *temperature, *gamma;
-  float tiny_number = 1.e-20;
+  gr_float tiny_number = 1.e-20;
 
-  int my_size = 1;
-  density = new float[my_size];
-  energy = new float[my_size];
-  x_velocity = new float[my_size];
-  y_velocity = new float[my_size];
-  z_velocity = new float[my_size];
-  HI_density = new float[my_size];
-  HII_density = new float[my_size];
-  HM_density = new float[my_size];
-  HeI_density = new float[my_size];
-  HeII_density = new float[my_size];
-  HeIII_density = new float[my_size];
-  H2I_density = new float[my_size];
-  H2II_density = new float[my_size];
-  DI_density = new float[my_size];
-  DII_density = new float[my_size];
-  HDI_density = new float[my_size];
-  e_density = new float[my_size];
-  metal_density = new float[my_size];
-  cooling_time = new float[my_size];
-  temperature = new float[my_size];
-  gamma = new float[my_size];
+  gr_int my_size = 1;
+  density = new gr_float[my_size];
+  energy = new gr_float[my_size];
+  x_velocity = new gr_float[my_size];
+  y_velocity = new gr_float[my_size];
+  z_velocity = new gr_float[my_size];
+  HI_density = new gr_float[my_size];
+  HII_density = new gr_float[my_size];
+  HM_density = new gr_float[my_size];
+  HeI_density = new gr_float[my_size];
+  HeII_density = new gr_float[my_size];
+  HeIII_density = new gr_float[my_size];
+  H2I_density = new gr_float[my_size];
+  H2II_density = new gr_float[my_size];
+  DI_density = new gr_float[my_size];
+  DII_density = new gr_float[my_size];
+  HDI_density = new gr_float[my_size];
+  e_density = new gr_float[my_size];
+  metal_density = new gr_float[my_size];
+  cooling_time = new gr_float[my_size];
+  temperature = new gr_float[my_size];
+  gamma = new gr_float[my_size];
 
   density[0] = 1.0;
   HI_density[0] = my_chemistry.HydrogenFractionByMass * density[0];
@@ -110,7 +110,7 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
   e_density[0] = tiny_number * density[0];
   metal_density[0] = 1.e-5 * density[0];
 
-  float temperature_units = mh*POW(my_units.length_units/
+  gr_float temperature_units = mh*POW(my_units.length_units/
                                    my_units.time_units,2)/kboltz;
 
   energy[0] = 1000. / temperature_units;
@@ -118,14 +118,14 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
   y_velocity[0] = 0.0;
   z_velocity[0] = 0.0;
   
-  float my_time = 0.0;
-  float freefall_constant = POW(density[0], -0.5);
-  float freefall_time_constant = POW(((32 * gravitational_constant) / (3 * pi)), 0.5);
-  float dt, density_ratio, timestep_fraction;
+  gr_float my_time = 0.0;
+  gr_float freefall_constant = POW(density[0], -0.5);
+  gr_float freefall_time_constant = POW(((32 * gravitational_constant) / (3 * pi)), 0.5);
+  gr_float dt, density_ratio, timestep_fraction;
   timestep_fraction = 0.1;
 
-  int grid_rank = 3;
-  int grid_dimension[3], grid_start[3], grid_end[3];
+  gr_int grid_rank = 3;
+  gr_int grid_dimension[3], grid_start[3], grid_end[3];
   for (int i = 0;i < 3;i++) {
     grid_dimension[i] = 1;
     grid_start[i] = 0;

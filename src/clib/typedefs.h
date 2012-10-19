@@ -15,15 +15,15 @@
 /* These are the different types of baryon fields. */
 
 #ifdef SMALL_INTS
-typedef int field_type;
-typedef int boundary_type;
-typedef int gravity_boundary_type;
-typedef int interpolation_type;
-typedef int hydro_method;
-typedef int star_type;
-typedef int enum_type;
-typedef int staggering;
-typedef int fieldtype;
+typedef gr_int field_type;
+typedef gr_int boundary_type;
+typedef gr_int gravity_boundary_type;
+typedef gr_int interpolation_type;
+typedef gr_int hydro_method;
+typedef gr_int star_type;
+typedef gr_int enum_type;
+typedef gr_int staggering;
+typedef gr_int fieldtype;
 #endif
 
 #ifdef LARGE_INTS

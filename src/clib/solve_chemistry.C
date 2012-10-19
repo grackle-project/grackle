@@ -27,65 +27,65 @@
 /* function prototypes */
 
 extern "C" void FORTRAN_NAME(solve_rate_cool)(
-	float *d, float *e, float *ge, float *u, float *v, float *w, float *de,
-	float *HI, float *HII, float *HeI, float *HeII, float *HeIII,
-	int *in, int *jn, int *kn, int *nratec, int *iexpand, 
+	gr_float *d, gr_float *e, gr_float *ge, gr_float *u, gr_float *v, gr_float *w, gr_float *de,
+	gr_float *HI, gr_float *HII, gr_float *HeI, gr_float *HeII, gr_float *HeIII,
+	gr_int *in, gr_int *jn, gr_int *kn, gr_int *nratec, gr_int *iexpand, 
 	hydro_method *imethod,
-        int *idual, int *ispecies, int *imetal, int *imcool, int *idust, int *idim,
-	int *is, int *js, int *ks, int *ie, int *je, int *ke, int *ih2co, 
-	int *ipiht, int *igammah,
-	float *dt, float *aye, float *temstart, float *temend,
-	float *utem, float *uxyz, float *uaye, float *urho, float *utim,
-	float *eta1, float *eta2, float *gamma, float *fh, float *dtoh,
-	float *z_solar,
-	float *k1a, float *k2a, float *k3a, float *k4a, float *k5a, 
-	float *k6a, float *k7a, float *k8a, float *k9a, float *k10a,
-	float *k11a, float *k12a, float *k13a, float *k13dda, float *k14a, 
-	float *k15a,
-        float *k16a, float *k17a, float *k18a, float *k19a, float *k22a,
-	float *k24, float *k25, float *k26, float *k27, float *k28, float *k29,
-	float *k30, float *k31,
-	float *k50a, float *k51a, float *k52a, float *k53a, float *k54a,
-	float *k55a, float *k56a,
-	int *ndratec, float *dtemstart, float *dtemend, float *h2dusta, 
-	float *ncrna, float *ncrd1a, float *ncrd2a,
-	float *ceHIa, float *ceHeIa, float *ceHeIIa, float *ciHIa, 
-	float *ciHeIa, 
-	float *ciHeISa, float *ciHeIIa, float *reHIIa, float *reHeII1a, 
-	float *reHeII2a, float *reHeIIIa, float *brema, float *compa, float *gammaha,
-	float *comp_xraya, float *comp_temp, 
-	float *piHI, float *piHeI, float *piHeII,
-	float *HM, float *H2I, float *H2II, float *DI, float *DII, float *HDI,
-	float *metal,
-	float *hyd01ka, float *h2k01a, float *vibha, float *rotha, float *rotla,
-	float *gpldl, float *gphdl, float *HDltea, float *HDlowa,
-	float *gaHIa, float *gaH2a, float *gaHea, float *gaHpa, float *gaela,
-	float *gasgra, float *metala, int *n_xe, float *xe_start, float *xe_end,
-	float *inutot, int *iradtype, int *nfreq, int *imetalregen,
-	int *iradshield, float *avgsighp, float *avgsighep, float *avgsighe2p,
-	int *iradtrans, int *iradcoupled, int *iradstep, int *ierr,
-	int *irt_honly,
-	float *kphHI, float *kphHeI, float *kphHeII, 
-	float *kdissH2I, float *photogamma,
-	int *ih2optical, int *iciecool, int *ithreebody, float *ciecoa,
- 	int *icmbTfloor, int *iClHeat,
- 	float *clEleFra, int *clGridRank, int *clGridDim,
- 	float *clPar1, float *clPar2, float *clPar3, float *clPar4, float *clPar5,
- 	int *clDataSize, float *clCooling, float *clHeating);
+        gr_int *idual, gr_int *ispecies, gr_int *imetal, gr_int *imcool, gr_int *idust, gr_int *idim,
+	gr_int *is, gr_int *js, gr_int *ks, gr_int *ie, gr_int *je, gr_int *ke, gr_int *ih2co, 
+	gr_int *ipiht, gr_int *igammah,
+	gr_float *dt, gr_float *aye, gr_float *temstart, gr_float *temend,
+	gr_float *utem, gr_float *uxyz, gr_float *uaye, gr_float *urho, gr_float *utim,
+	gr_float *eta1, gr_float *eta2, gr_float *gamma, gr_float *fh, gr_float *dtoh,
+	gr_float *z_solar,
+	gr_float *k1a, gr_float *k2a, gr_float *k3a, gr_float *k4a, gr_float *k5a, 
+	gr_float *k6a, gr_float *k7a, gr_float *k8a, gr_float *k9a, gr_float *k10a,
+	gr_float *k11a, gr_float *k12a, gr_float *k13a, gr_float *k13dda, gr_float *k14a, 
+	gr_float *k15a,
+        gr_float *k16a, gr_float *k17a, gr_float *k18a, gr_float *k19a, gr_float *k22a,
+	gr_float *k24, gr_float *k25, gr_float *k26, gr_float *k27, gr_float *k28, gr_float *k29,
+	gr_float *k30, gr_float *k31,
+	gr_float *k50a, gr_float *k51a, gr_float *k52a, gr_float *k53a, gr_float *k54a,
+	gr_float *k55a, gr_float *k56a,
+	gr_int *ndratec, gr_float *dtemstart, gr_float *dtemend, gr_float *h2dusta, 
+	gr_float *ncrna, gr_float *ncrd1a, gr_float *ncrd2a,
+	gr_float *ceHIa, gr_float *ceHeIa, gr_float *ceHeIIa, gr_float *ciHIa, 
+	gr_float *ciHeIa, 
+	gr_float *ciHeISa, gr_float *ciHeIIa, gr_float *reHIIa, gr_float *reHeII1a, 
+	gr_float *reHeII2a, gr_float *reHeIIIa, gr_float *brema, gr_float *compa, gr_float *gammaha,
+	gr_float *comp_xraya, gr_float *comp_temp, 
+	gr_float *piHI, gr_float *piHeI, gr_float *piHeII,
+	gr_float *HM, gr_float *H2I, gr_float *H2II, gr_float *DI, gr_float *DII, gr_float *HDI,
+	gr_float *metal,
+	gr_float *hyd01ka, gr_float *h2k01a, gr_float *vibha, gr_float *rotha, gr_float *rotla,
+	gr_float *gpldl, gr_float *gphdl, gr_float *HDltea, gr_float *HDlowa,
+	gr_float *gaHIa, gr_float *gaH2a, gr_float *gaHea, gr_float *gaHpa, gr_float *gaela,
+	gr_float *gasgra, gr_float *metala, gr_int *n_xe, gr_float *xe_start, gr_float *xe_end,
+	gr_float *inutot, gr_int *iradtype, gr_int *nfreq, gr_int *imetalregen,
+	gr_int *iradshield, gr_float *avgsighp, gr_float *avgsighep, gr_float *avgsighe2p,
+	gr_int *iradtrans, gr_int *iradcoupled, gr_int *iradstep, gr_int *ierr,
+	gr_int *irt_honly,
+	gr_float *kphHI, gr_float *kphHeI, gr_float *kphHeII, 
+	gr_float *kdissH2I, gr_float *photogamma,
+	gr_int *ih2optical, gr_int *iciecool, gr_int *ithreebody, gr_float *ciecoa,
+ 	gr_int *icmbTfloor, gr_int *iClHeat,
+ 	gr_float *clEleFra, gr_int *clGridRank, gr_int *clGridDim,
+ 	gr_float *clPar1, gr_float *clPar2, gr_float *clPar3, gr_float *clPar4, gr_float *clPar5,
+ 	gr_int *clDataSize, gr_float *clCooling, gr_float *clHeating);
 
 
 int solve_chemistry(chemistry_data &my_chemistry,
                     code_units &my_units,
-                    float a_value, float dt_value,
-                    int grid_rank, int *grid_dimension,
-                    int *grid_start, int *grid_end,
-                    float *density, float *internal_energy,
-                    float *x_velocity, float *y_velocity, float  *z_velocity,
-                    float *HI_density, float *HII_density, float *HM_density,
-                    float *HeI_density, float *HeII_density, float *HeIII_density,
-                    float *H2I_density, float *H2II_density,
-                    float *DI_density, float *DII_density, float *HDI_density,
-                    float *e_density, float *metal_density)
+                    gr_float a_value, gr_float dt_value,
+                    gr_int grid_rank, gr_int *grid_dimension,
+                    gr_int *grid_start, gr_int *grid_end,
+                    gr_float *density, gr_float *internal_energy,
+                    gr_float *x_velocity, gr_float *y_velocity, gr_float  *z_velocity,
+                    gr_float *HI_density, gr_float *HII_density, gr_float *HM_density,
+                    gr_float *HeI_density, gr_float *HeII_density, gr_float *HeIII_density,
+                    gr_float *H2I_density, gr_float *H2II_density,
+                    gr_float *DI_density, gr_float *DII_density, gr_float *HDI_density,
+                    gr_float *e_density, gr_float *metal_density)
 {
 
   /* Return if this doesn't concern us. */
@@ -95,33 +95,33 @@ int solve_chemistry(chemistry_data &my_chemistry,
   /* Set up information for rates which depend on the radiation field. 
      Precompute factors for self shielding (this is the cross section * dx). */
 
-  // float HIShieldFactor = RadiationData.HIAveragePhotoHeatingCrossSection * 
+  // gr_float HIShieldFactor = RadiationData.HIAveragePhotoHeatingCrossSection * 
   //                        double(LengthUnits) * CellWidth[0][0];
-  // float HeIShieldFactor = RadiationData.HeIAveragePhotoHeatingCrossSection * 
+  // gr_float HeIShieldFactor = RadiationData.HeIAveragePhotoHeatingCrossSection * 
   //                         double(LengthUnits) * CellWidth[0][0];
-  // float HeIIShieldFactor = RadiationData.HeIIAveragePhotoHeatingCrossSection * 
+  // gr_float HeIIShieldFactor = RadiationData.HeIIAveragePhotoHeatingCrossSection * 
   //                          double(LengthUnits) * CellWidth[0][0];
-  float HIShieldFactor, HeIShieldFactor, HeIIShieldFactor;
+  gr_float HIShieldFactor, HeIShieldFactor, HeIIShieldFactor;
   HIShieldFactor = HeIShieldFactor = HeIIShieldFactor = 0.0;
   
 
   /* Call the fortran routine to solve cooling equations. */
 
-  int ierr = 0;
-  int i_method = 2;  // so total energy is internal energy
-  int i_dual = 1;    // doesn't matter
-  int MetalFieldPresent = 1;
-  float TemperatureUnits =  mh*POW(my_units.length_units/
+  gr_int ierr = 0;
+  gr_int i_method = 2;  // so total energy is internal energy
+  gr_int i_dual = 1;    // doesn't matter
+  gr_int MetalFieldPresent = 1;
+  gr_float TemperatureUnits =  mh*POW(my_units.length_units/
                                    my_units.time_units,2)/kboltz;
-  float DualEnergyFormalismEta1 = 0.0;
-  float DualEnergyFormalismEta2 = 0.0;
-  int RadiationFieldRecomputeMetalRates = 0;
-  int RadiativeTransfer = 0;
-  int RadiativeTransferCoupledRateSolver = 0;
-  int RTCoupledSolverIntermediateStep = 0;
-  int RadiativeTransferHydrogenOnly = 0;
+  gr_float DualEnergyFormalismEta1 = 0.0;
+  gr_float DualEnergyFormalismEta2 = 0.0;
+  gr_int RadiationFieldRecomputeMetalRates = 0;
+  gr_int RadiativeTransfer = 0;
+  gr_int RadiativeTransferCoupledRateSolver = 0;
+  gr_int RTCoupledSolverIntermediateStep = 0;
+  gr_int RadiativeTransferHydrogenOnly = 0;
 
-  float *kphHINum, *kphHeINum, *kphHeIINum, 
+  gr_float *kphHINum, *kphHeINum, *kphHeIINum, 
     *kdissH2INum, *gammaNum;
 
   FORTRAN_NAME(solve_rate_cool)(

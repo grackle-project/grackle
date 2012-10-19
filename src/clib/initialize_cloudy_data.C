@@ -36,20 +36,20 @@
 
 // Initialize Cloudy cooling data
 int initialize_cloudy_data(chemistry_data &my_chemistry,
-                           code_units &my_units, float a_value)
+                           code_units &my_units, gr_float a_value)
 {
 
-  int q, w;
+  gr_int q, w;
   float64 *temp_data;
   long_int temp_int;
   long_int *temp_int_arr;
   char parameter_name[MAX_LINE_LENGTH];
-  int debug = 0;
+  gr_int debug = 0;
 
   // Initialize things needed even if cloudy cooling is not used.
 
-  my_chemistry.CloudyCoolingGridParameters = new float*[CLOUDY_COOLING_MAX_DIMENSION];
-  my_chemistry.CloudyCoolingGridDimension = new int[CLOUDY_COOLING_MAX_DIMENSION];
+  my_chemistry.CloudyCoolingGridParameters = new gr_float*[CLOUDY_COOLING_MAX_DIMENSION];
+  my_chemistry.CloudyCoolingGridDimension = new gr_int[CLOUDY_COOLING_MAX_DIMENSION];
   for (q = 0;q < CLOUDY_COOLING_MAX_DIMENSION;q++) {
     my_chemistry.CloudyCoolingGridDimension[q] = 0;
   }
@@ -152,7 +152,7 @@ int initialize_cloudy_data(chemistry_data &my_chemistry,
     return FAIL;
   }
 
-  my_chemistry.CloudyCooling = new float[my_chemistry.CloudyDataSize];
+  my_chemistry.CloudyCooling = new gr_float[my_chemistry.CloudyDataSize];
   for (q = 0;q < my_chemistry.CloudyDataSize;q++) {
     my_chemistry.CloudyCooling[q] = temp_data[q] > 0 ? (float) log10(temp_data[q]) : (float) SMALL_LOG_VALUE;
 
@@ -185,7 +185,7 @@ int initialize_cloudy_data(chemistry_data &my_chemistry,
       return FAIL;
     }
 
-    my_chemistry.CloudyHeating = new float[my_chemistry.CloudyDataSize];
+    my_chemistry.CloudyHeating = new gr_float[my_chemistry.CloudyDataSize];
     for (q = 0;q < my_chemistry.CloudyDataSize;q++) {
       my_chemistry.CloudyHeating[q] = temp_data[q] > 0 ? (float) log10(temp_data[q]) : (float) SMALL_LOG_VALUE;
 
@@ -226,7 +226,7 @@ int initialize_cloudy_data(chemistry_data &my_chemistry,
       return FAIL;
     }
 
-    my_chemistry.CloudyCoolingGridParameters[q] = new float[my_chemistry.CloudyCoolingGridDimension[q]];
+    my_chemistry.CloudyCoolingGridParameters[q] = new gr_float[my_chemistry.CloudyCoolingGridDimension[q]];
     for (w = 0;w < my_chemistry.CloudyCoolingGridDimension[q];w++) {
       if (q < my_chemistry.CloudyCoolingGridRank - 1) {
 	my_chemistry.CloudyCoolingGridParameters[q][w] = (float) temp_data[w];
