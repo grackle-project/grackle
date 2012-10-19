@@ -26,8 +26,6 @@
 #include "global_data.h"
 #include "grackle.h"
 
-//  ENZO Main Program
-
 #ifdef SHARED_LIBRARY
 #define MAIN_NAME freefall_main
 #else
