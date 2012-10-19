@@ -23,7 +23,6 @@
  
 #define DEFINE_STORAGE
 #include "macros_and_parameters.h"
-#include "typedefs.h"
 #include "global_data.h"
 #include "grackle.h"
 
