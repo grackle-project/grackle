@@ -3,10 +3,10 @@
 !////////////////////  SUBROUTINE COOL_MULTI_TIME  \\\\\\\\\\\\\\\\\\\\\
 
       subroutine cool_multi_time(
-     &                d, e, ge, u, v, w, de, HI, HII, HeI, HeII, HeIII,
+     &                d, e, u, v, w, de, HI, HII, HeI, HeII, HeIII,
      &                  cooltime,
      &                in, jn, kn, nratec, iexpand, imethod,
-     &                idual, ispecies, imetal, imcool, idust, idim,
+     &                ispecies, imetal, imcool, idust, idim,
      &                is, js, ks, ie, je, ke, ih2co, ipiht, igammah,
      &                dt, aye, temstart, temend,
      &                utem, uxyz, uaye, urho, utim,
@@ -52,13 +52,13 @@
 !  Arguments
 
       integer in, jn, kn, is, js, ks, ie, je, ke, nratec, imethod,
-     &        idual, iexpand, ih2co, ipiht, ispecies, imetal, idim,
+     &        iexpand, ih2co, ipiht, ispecies, imetal, idim,
      &        iradtype, nfreq, imetalregen, iradshield, iradtrans,
      &        n_xe, imcool, idust, igammah, ih2optical, iciecool
       real    dt, aye, temstart, temend,
      &        utem, uxyz, uaye, urho, utim,
      &        eta1, eta2, gamma, xe_start, xe_end, z_solar
-      real    d(in,jn,kn),   ge(in,jn,kn),     e(in,jn,kn),
+      real    d(in,jn,kn),    e(in,jn,kn),
      &        u(in,jn,kn),    v(in,jn,kn),     w(in,jn,kn),
      &       de(in,jn,kn),   HI(in,jn,kn),   HII(in,jn,kn),
      &      HeI(in,jn,kn), HeII(in,jn,kn), HeIII(in,jn,kn),
@@ -173,8 +173,8 @@
 !        Compute the cooling rate
 
          call cool1d_multi(     
-     &                d, e, ge, u, v, w, de, HI, HII, HeI, HeII, HeIII,
-     &                in, jn, kn, nratec, idual, imethod,
+     &                d, e, u, v, w, de, HI, HII, HeI, HeII, HeIII,
+     &                in, jn, kn, nratec, imethod,
      &                iexpand, ispecies, imetal, imcool, idust, idim,
      &                is, ie, j, k, ih2co, ipiht, 1, igammah,
      &                aye, temstart, temend, z_solar,

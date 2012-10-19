@@ -26,12 +26,12 @@
 #include "fortran.def"
  
 extern "C" void FORTRAN_NAME(cool_multi_time)(
-	gr_float *d, gr_float *e, gr_float *ge, gr_float *u, gr_float *v, gr_float *w, gr_float *de,
+	gr_float *d, gr_float *e, gr_float *u, gr_float *v, gr_float *w, gr_float *de,
 	gr_float *HI, gr_float *HII, gr_float *HeI, gr_float *HeII, gr_float *HeIII,
 	gr_float *cooltime,
 	gr_int *in, gr_int *jn, gr_int *kn, gr_int *nratec, gr_int *iexpand,
 	hydro_method *imethod,
-        gr_int *idual, gr_int *ispecies, gr_int *imetal, gr_int *imcool, gr_int *idust, gr_int *idim,
+        gr_int *ispecies, gr_int *imetal, gr_int *imcool, gr_int *idust, gr_int *idim,
 	gr_int *is, gr_int *js, gr_int *ks, gr_int *ie, gr_int *je, gr_int *ke, gr_int *ih2co,
 	gr_int *ipiht, gr_int *igammah,
 	gr_float *dt, gr_float *aye, gr_float *temstart, gr_float *temend,
@@ -91,7 +91,6 @@ int calculate_cooling_time(chemistry_data &my_chemistry,
 
   gr_int ierr = 0;
   gr_int i_method = 2;  // so total energy is internal energy
-  gr_int i_dual = 1;    // doesn't matter
   gr_int MetalFieldPresent = 1;
   gr_float TemperatureUnits =  mh*POW(my_units.length_units/
                                    my_units.time_units,2)/kboltz;
@@ -107,14 +106,14 @@ int calculate_cooling_time(chemistry_data &my_chemistry,
     *kdissH2INum, *gammaNum;
 
     FORTRAN_NAME(cool_multi_time)(
-       density, internal_energy, internal_energy, x_velocity, y_velocity, z_velocity,
+       density, internal_energy, x_velocity, y_velocity, z_velocity,
        e_density, HI_density, HII_density,
        HeI_density, HeII_density, HeIII_density,
        cooling_time,
        grid_dimension, grid_dimension+1, grid_dimension+2,
        &my_chemistry.NumberOfTemperatureBins, &my_units.comoving_coordinates,
        &i_method,
-       &i_dual, &my_chemistry.primordial_chemistry, &MetalFieldPresent, &my_chemistry.metal_cooling, 
+       &my_chemistry.primordial_chemistry, &MetalFieldPresent, &my_chemistry.metal_cooling, 
        &my_chemistry.h2_on_dust,
        &grid_rank, grid_start, grid_start+1, grid_start+2,
        grid_end, grid_end+1, grid_end+2,

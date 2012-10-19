@@ -4,10 +4,10 @@
 !=======================================================================
 !/////////////////////  SUBROUTINE SOLVE_RATE  \\\\\\\\\\\\\\\\\\\\\\\\\
 
-      subroutine solve_rate_cool(d, e, ge, u, v, w, de,
+      subroutine solve_rate_cool(d, e, u, v, w, de,
      &                HI, HII, HeI, HeII, HeIII,
      &                in, jn, kn, nratec, iexpand, imethod,
-     &                idual, ispecies, imetal, imcool, idust, idim,
+     &                ispecies, imetal, imcool, idust, idim,
      &                is, js, ks, ie, je, ke, ih2co, ipiht, igammah,
      &                dt, aye, temstart, temend, 
      &                utem, uxyz, uaye, urho, utim,
@@ -71,7 +71,6 @@
 !    gamma*   - photoheating fields
 !
 !    is,ie    - start and end indices of active region (zero based)
-!    idual    - dual energy formalism flag (0 = off, 1 = on)
 !    iexpand  - comoving coordinates flag (0 = off, 1 = on)
 !    idim     - dimensionality (rank) of problem
 !    ispecies - chemistry module (1 - H/He only, 2 - molecular H, 3 - D) 
@@ -128,7 +127,7 @@
 !  General Arguments
 
       integer in, jn, kn, is, js, ks, ie, je, ke, nratec, imethod,
-     &        idual, iexpand, ih2co, ipiht, ispecies, imetal, idim,
+     &        iexpand, ih2co, ipiht, ispecies, imetal, idim,
      &        iradtype, nfreq, imetalregen, iradshield, iradtrans,
      &        iradcoupled, iradstep, n_xe, ierr, imcool, idust, 
      &        irt_honly, igammah, ih2optical, iciecool, ithreebody,
@@ -144,7 +143,7 @@
      &       HeI(in,jn,kn), HeII(in,jn,kn), HeIII(in,jn,kn)
       real    HM(in,jn,kn),  H2I(in,jn,kn), H2II(in,jn,kn)
       real    DI(in,jn,kn),  DII(in,jn,kn), HDI(in,jn,kn)
-      real    d(in,jn,kn),   ge(in,jn,kn),     e(in,jn,kn),
+      real    d(in,jn,kn),     e(in,jn,kn),
      &        u(in,jn,kn),    v(in,jn,kn),     w(in,jn,kn),
      &        metal(in,jn,kn)
 
@@ -341,8 +340,8 @@ c      chunit = (7.17775d-12)/(2.d0*uvel*uvel*mh)   ! 4.5 eV per H2 formed
 !           Compute the cooling rate, tgas, tdust, and metallicity for this row
 
             call cool1d_multi(
-     &                d, e, ge, u, v, w, de, HI, HII, HeI, HeII, HeIII,
-     &                in, jn, kn, nratec, idual, imethod,
+     &                d, e, u, v, w, de, HI, HII, HeI, HeII, HeIII,
+     &                in, jn, kn, nratec, imethod,
      &                iexpand, ispecies, imetal, imcool, idust, idim,
      &                is, ie, j, k, ih2co, ipiht, iter, igammah,
      &                aye, temstart, temend, z_solar,
@@ -572,23 +571,13 @@ c      chunit = (7.17775d-12)/(2.d0*uvel*uvel*mh)   ! 4.5 eV per H2 formed
      &                      dt, ttot(i), abs(0.1d0*energy/edot(i)), 
      &                      real(abs(0.1d0*energy/edot(i)))
 
-#define NO_FORTRAN_DEBUG
-#ifdef FORTRAN_DEBUG
-               if (ge(i,j,k) .le. 0.0 .and. idual .eq. 1)
-     &           write(6,*) 'a',ge(i,j,k),energy,d(i,j,k),e(i,j,k),iter
-               if (idual .eq. 1 .and.
-     &           ge(i,j,k)+edot(i)/d(i,j,k)*dtit(i) .le. 0.d0)
-     &           write(6,*) i,j,k,iter,ge(i,j,k),edot(i),tgas(i),
-     &              energy,de(i,j,k),ttot(i),d(i,j,k),e(i,j,k)
-#endif /* FORTRAN_DEBUG */
-
 #ifdef WRITE_COOLING_DEBUG
 !              If the timestep is too small, then output some debugging info
 
                if (((dtit(i)/dt .lt. 1.0e-2 .and. iter .gt. 800) 
      &               .or. iter .gt. itmax-100) .and.
      &              abs((dt-ttot(i))/dt) .gt. 1.0d-3)
-     &           write(3,2000) i,j,k,iter,ge(i,j,k),edot(i),tgas(i),
+     &           write(3,2000) i,j,k,iter,e(i,j,k),edot(i),tgas(i),
      &             energy,de(i,j,k),ttot(i),d(i,j,k),e(i,j,k),dtit(i)
  2000          format(4(i4,1x),1p,10(e14.3))
 #endif /* WRITE_COOLING_DEBUG */
@@ -605,22 +594,6 @@ c      chunit = (7.17775d-12)/(2.d0*uvel*uvel*mh)   ! 4.5 eV per H2 formed
      &              write(3,*) edot(i),d(i,j,k),dtit(i)
 #endif /* WRITE_COOLING_DEBUG */
 
-!              If using the dual energy formalism, there are 2 energy fields
-
-               if (idual .eq. 1) then
-                  ge(i,j,k) = ge(i,j,k) + edot(i)/d(i,j,k)*dtit(i)
-
-!                 Alternate energy update schemes (not currently used)
-
-!                 ge(i,j,k) = max(ge(i,j,k) + edot(i)/d(i,j,k)*dtit(i),
-!     &                      0.5d0*ge(i,j,k))
-!                 if (ge(i,j,k) .le. tiny) ge(i,j,k) = (energy + 
-!     &              edot(i)*dtit(i))/d(i,j,k)
-#ifdef WRITE_COOLING_DEBUG
-                  if (ge(i,j,k) .le. 0.d0) write(3,*)
-     &                 'a',ge(i,j,k),energy,d(i,j,k),e(i,j,k),iter
-#endif WRITE_COOLING_DEBUG
-               endif
             endif               ! itmask
             enddo
 

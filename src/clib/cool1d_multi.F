@@ -5,8 +5,8 @@
 !//////////////////////  SUBROUTINE COOL1D_MULTI  \\\\\\\\\\\\\\\\\\\\\\
 
       subroutine cool1d_multi(
-     &                d, e, ge, u, v, w, de, HI, HII, HeI, HeII, HeIII,
-     &                in, jn, kn, nratec, idual, imethod,
+     &                d, e, u, v, w, de, HI, HII, HeI, HeII, HeIII,
+     &                in, jn, kn, nratec, imethod,
      &                iexpand, ispecies, imetal, imcool, idust, idim, 
      &                is, ie, j, k, ih2co, ipiht, iter, igammah,
      &                aye, temstart, temend, z_solar,
@@ -63,13 +63,13 @@
 !  Arguments
 
       integer in, jn, kn, is, ie, j, k, nratec, imethod, idim,
-     &        idual, iexpand, ih2co, ipiht, ispecies, imcool, idust, 
+     &        iexpand, ih2co, ipiht, ispecies, imcool, idust, 
      &        nfreq, iradshield, iradtype, imetalregen, iradtrans,
      &        n_xe, imetal, igammah, ih2optical, iciecool
       real    aye, temstart, temend, z_solar,
      &        utem, uxyz, uaye, urho, utim,
      &        eta1, eta2, gamma
-      real    d(in,jn,kn),   ge(in,jn,kn),     e(in,jn,kn),
+      real    d(in,jn,kn),    e(in,jn,kn),
      &        u(in,jn,kn),    v(in,jn,kn),     w(in,jn,kn),
      &       de(in,jn,kn),   HI(in,jn,kn),   HII(in,jn,kn),
      &      HeI(in,jn,kn), HeII(in,jn,kn), HeIII(in,jn,kn)
@@ -208,29 +208,6 @@
             p2d(i) = (gamma - 1.d0)*d(i,j,k)*e(i,j,k)
             end if
          enddo
-      else
-         if (idual .eq. 1) then
-
-!           PPM with dual energy -- use gas energy
-
-            do i = is+1, ie+1
-               if ( itmask(i) ) then
-               p2d(i) = (gamma - 1.d0)*d(i,j,k)*ge(i,j,k)
-               end if
-            enddo
-         else
-
-!           PPM without dual energy -- use total energy
-
-            do i = is+1, ie+1
-               if ( itmask(i) ) then
-               p2d(i) = e(i,j,k) - 0.5d0*u(i,j,k)**2
-               if (idim .gt. 1) p2d(i) = p2d(i) - 0.5d0*v(i,j,k)**2
-               if (idim .gt. 2) p2d(i) = p2d(i) - 0.5d0*w(i,j,k)**2
-               p2d(i) = max((gamma - 1.d0)*d(i,j,k)*p2d(i), tiny)
-               end if
-            enddo
-         endif
       endif
 
 !     Compute temperature and H number density
@@ -735,7 +712,7 @@ c               endif
                if (edot(i) .ne. edot(i)) then
                   write(6,*) 'NaN in edot[2]: ', i, j, k, edot(i), 
      &                 photogamma(i,j,k),HI(i,j,k), de(i,j,k), d(i,j,k), 
-     &                 ge(i,j,k), p2d(i), tgas(i), dom, urho, aye, mh
+     &                 e(i,j,k), p2d(i), tgas(i), dom, urho, aye, mh
                endif
             endif
          enddo
