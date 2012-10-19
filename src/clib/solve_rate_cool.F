@@ -6,7 +6,7 @@
 
       subroutine solve_rate_cool(d, e, u, v, w, de,
      &                HI, HII, HeI, HeII, HeIII,
-     &                in, jn, kn, nratec, iexpand, imethod,
+     &                in, jn, kn, nratec, iexpand, 
      &                ispecies, imetal, imcool, idust, idim,
      &                is, js, ks, ie, je, ke, ih2co, ipiht, igammah,
      &                dt, aye, temstart, temend, 
@@ -79,7 +79,6 @@
 !    imetal   - flag if metal field is active (0 = no, 1 = yes)
 !    imcool   - flag if there is metal cooling
 !    idust    - flag for H2 formation on dust grains
-!    imethod  - Hydro method (0 = PPMDE, 2 = ZEUS-type)
 !    ih2co    - flag to include H2 cooling (1 = on, 0 = off)
 !    ipiht    - flag to include photoionization heating (1 = on, 0 = off)
 !    iradtrans - flag to include radiative transfer (1 = on, 0 = off)
@@ -126,7 +125,7 @@
 
 !  General Arguments
 
-      integer in, jn, kn, is, js, ks, ie, je, ke, nratec, imethod,
+      integer in, jn, kn, is, js, ks, ie, je, ke, nratec, 
      &        iexpand, ih2co, ipiht, ispecies, imetal, idim,
      &        iradtype, nfreq, imetalregen, iradshield, iradtrans,
      &        iradcoupled, iradstep, n_xe, ierr, imcool, idust, 
@@ -341,7 +340,7 @@ c      chunit = (7.17775d-12)/(2.d0*uvel*uvel*mh)   ! 4.5 eV per H2 formed
 
             call cool1d_multi(
      &                d, e, u, v, w, de, HI, HII, HeI, HeII, HeIII,
-     &                in, jn, kn, nratec, imethod,
+     &                in, jn, kn, nratec, 
      &                iexpand, ispecies, imetal, imcool, idust, idim,
      &                is, ie, j, k, ih2co, ipiht, iter, igammah,
      &                aye, temstart, temend, z_solar,

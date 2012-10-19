@@ -5,7 +5,7 @@
       subroutine cool_multi_time(
      &                d, e, u, v, w, de, HI, HII, HeI, HeII, HeIII,
      &                  cooltime,
-     &                in, jn, kn, nratec, iexpand, imethod,
+     &                in, jn, kn, nratec, iexpand, 
      &                ispecies, imetal, imcool, idust, idim,
      &                is, js, ks, ie, je, ke, ih2co, ipiht, igammah,
      &                dt, aye, temstart, temend,
@@ -51,7 +51,7 @@
 
 !  Arguments
 
-      integer in, jn, kn, is, js, ks, ie, je, ke, nratec, imethod,
+      integer in, jn, kn, is, js, ks, ie, je, ke, nratec, 
      &        iexpand, ih2co, ipiht, ispecies, imetal, idim,
      &        iradtype, nfreq, imetalregen, iradshield, iradtrans,
      &        n_xe, imcool, idust, igammah, ih2optical, iciecool
@@ -174,7 +174,7 @@
 
          call cool1d_multi(     
      &                d, e, u, v, w, de, HI, HII, HeI, HeII, HeIII,
-     &                in, jn, kn, nratec, imethod,
+     &                in, jn, kn, nratec, 
      &                iexpand, ispecies, imetal, imcool, idust, idim,
      &                is, ie, j, k, ih2co, ipiht, 1, igammah,
      &                aye, temstart, temend, z_solar,

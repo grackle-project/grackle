@@ -30,7 +30,6 @@ extern "C" void FORTRAN_NAME(cool_multi_time)(
 	gr_float *HI, gr_float *HII, gr_float *HeI, gr_float *HeII, gr_float *HeIII,
 	gr_float *cooltime,
 	gr_int *in, gr_int *jn, gr_int *kn, gr_int *nratec, gr_int *iexpand,
-	hydro_method *imethod,
         gr_int *ispecies, gr_int *imetal, gr_int *imcool, gr_int *idust, gr_int *idim,
 	gr_int *is, gr_int *js, gr_int *ks, gr_int *ie, gr_int *je, gr_int *ke, gr_int *ih2co,
 	gr_int *ipiht, gr_int *igammah,
@@ -90,7 +89,6 @@ int calculate_cooling_time(chemistry_data &my_chemistry,
   /* Call the fortran routine to solve cooling equations. */
 
   gr_int ierr = 0;
-  gr_int i_method = 2;  // so total energy is internal energy
   gr_int MetalFieldPresent = 1;
   gr_float TemperatureUnits =  mh*POW(my_units.length_units/
                                    my_units.time_units,2)/kboltz;
@@ -112,7 +110,6 @@ int calculate_cooling_time(chemistry_data &my_chemistry,
        cooling_time,
        grid_dimension, grid_dimension+1, grid_dimension+2,
        &my_chemistry.NumberOfTemperatureBins, &my_units.comoving_coordinates,
-       &i_method,
        &my_chemistry.primordial_chemistry, &MetalFieldPresent, &my_chemistry.metal_cooling, 
        &my_chemistry.h2_on_dust,
        &grid_rank, grid_start, grid_start+1, grid_start+2,

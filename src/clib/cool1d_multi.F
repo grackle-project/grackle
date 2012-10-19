@@ -6,7 +6,7 @@
 
       subroutine cool1d_multi(
      &                d, e, u, v, w, de, HI, HII, HeI, HeII, HeIII,
-     &                in, jn, kn, nratec, imethod,
+     &                in, jn, kn, nratec, 
      &                iexpand, ispecies, imetal, imcool, idust, idim, 
      &                is, ie, j, k, ih2co, ipiht, iter, igammah,
      &                aye, temstart, temend, z_solar,
@@ -62,7 +62,7 @@
 
 !  Arguments
 
-      integer in, jn, kn, is, ie, j, k, nratec, imethod, idim,
+      integer in, jn, kn, is, ie, j, k, nratec, idim,
      &        iexpand, ih2co, ipiht, ispecies, imcool, idust, 
      &        nfreq, iradshield, iradtype, imetalregen, iradtrans,
      &        n_xe, imetal, igammah, ih2optical, iciecool
@@ -199,16 +199,11 @@
 
 !     Compute Pressure
 
-      if (imethod .eq. 2) then
-
-!        Zeus - e() is really gas energy
-
-         do i = is+1, ie+1
-            if ( itmask(i) ) then
+      do i = is+1, ie+1
+         if ( itmask(i) ) then
             p2d(i) = (gamma - 1.d0)*d(i,j,k)*e(i,j,k)
-            end if
-         enddo
-      endif
+         end if
+      enddo
 
 !     Compute temperature and H number density
 
