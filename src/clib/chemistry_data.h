@@ -237,4 +237,17 @@ struct chemistry_data
 
   // Length of 1D flattened Cloudy data
   gr_int CloudyDataSize;
+
+  /******************************************************
+   *** place holder for radiative transfer parameters ***
+   *** These do nothing and should be left alone. *******
+   ******************************************************/
+
+  gr_int RadiativeTransfer;
+  gr_int RadiativeTransferCoupledRateSolver;
+  gr_int RTCoupledSolverIntermediateStep;
+  gr_int RadiativeTransferHydrogenOnly;
+  gr_float *kphHINum, *kphHeINum, *kphHeIINum, 
+    *kdissH2INum, *gammaNum;
+
 };

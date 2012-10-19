@@ -40,13 +40,13 @@ chemistry_data set_default_chemistry_parameters()
   my_chemistry.SetHeIIHeatingScale            = 1.8;
   my_chemistry.RadiationXRaySecondaryIon      = 0;
   my_chemistry.RadiationXRayComptonHeating    = 0;
-
   my_chemistry.f3                       = 1.0e-21;        // radiation normalization
   my_chemistry.f0to3                    = 0.1;
   my_chemistry.RadiationRedshiftOn      = 7.0;
   my_chemistry.RadiationRedshiftOff     = 0.0;
   my_chemistry.RadiationRedshiftFullOn  = 6.0;
   my_chemistry.RadiationRedshiftDropOff = 0.0;
+
   my_chemistry.HydrogenFractionByMass   = 0.76;
   /* The DToHRatio is by mass in the code, so multiply by 2. */
   my_chemistry.DeuteriumToHydrogenRatio = 2.0*3.4e-5; // Burles & Tytler 1998
@@ -65,6 +65,15 @@ chemistry_data set_default_chemistry_parameters()
 
   my_chemistry.CloudyCoolingGridRank          = 0;
   my_chemistry.CloudyElectronFractionFactor = 9.153959e-3; // Cloudy 07.02 abundances
+
+  /* Some inactive place holders. */
+  my_chemistry.RadiativeTransfer = 0;
+  my_chemistry.RadiativeTransferCoupledRateSolver = 0;
+  my_chemistry.RTCoupledSolverIntermediateStep = 0;
+  my_chemistry.RadiativeTransferHydrogenOnly = 0;
+  my_chemistry.kphHINum = my_chemistry.kphHeINum = 
+    my_chemistry.kphHeIINum = my_chemistry.kdissH2INum = 
+    my_chemistry.gammaNum = NULL;
 
   return my_chemistry;
 }

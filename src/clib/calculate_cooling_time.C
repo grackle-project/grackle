@@ -83,14 +83,6 @@ int calculate_cooling_time(chemistry_data &my_chemistry,
   gr_float temperature_units =  mh*POW(my_units.length_units/
                                        my_units.time_units,2)/kboltz;
 
-  gr_int RadiativeTransfer = 0;
-  gr_int RadiativeTransferCoupledRateSolver = 0;
-  gr_int RTCoupledSolverIntermediateStep = 0;
-  gr_int RadiativeTransferHydrogenOnly = 0;
-
-  gr_float *kphHINum, *kphHeINum, *kphHeIINum, 
-    *kdissH2INum, *gammaNum;
-
   /* Call the fortran routine to solve cooling equations. */
 
   gr_int ierr = 0;
@@ -129,7 +121,7 @@ int calculate_cooling_time(chemistry_data &my_chemistry,
        my_chemistry.GAHI, my_chemistry.GAH2, my_chemistry.GAHe, my_chemistry.GAHp,
        my_chemistry.GAel, my_chemistry.gas_grain,
        &my_chemistry.RadiationFieldType,
-       &RadiativeTransfer, gammaNum, 
+       &my_chemistry.RadiativeTransfer, my_chemistry.gammaNum, 
        &my_chemistry.h2_optical_depth_approximation, &my_chemistry.cie_cooling, my_chemistry.cieco,
        &my_chemistry.cmb_temperature_floor,
        &my_chemistry.include_metal_heating,
