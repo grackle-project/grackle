@@ -11,7 +11,7 @@
      &                is, js, ks, ie, je, ke, ih2co, ipiht, igammah,
      &                dt, aye, temstart, temend, 
      &                utem, uxyz, uaye, urho, utim,
-     &                eta1, eta2, gamma, fh, dtoh, z_solar,
+     &                gamma, fh, dtoh, z_solar,
      &                k1a, k2a, k3a, k4a, k5a, k6a, k7a, k8a, k9a, k10a,
      &                k11a, k12a, k13a, k13dda, k14a, k15a,
      &                k16a, k17a, k18a, k19a, k22a,
@@ -131,7 +131,7 @@
      &        iradcoupled, iradstep, n_xe, ierr, imcool, idust, 
      &        irt_honly, igammah, ih2optical, iciecool, ithreebody,
      &        ndratec
-      real    dt, aye, temstart, temend, eta1, eta2, gamma,
+      real    dt, aye, temstart, temend, gamma,
      &        utim, uxyz, uaye, urho, utem, fh, dtoh, z_solar, 
      &        xe_start, xe_end,
      &        dtemstart, dtemend
@@ -345,7 +345,7 @@ c      chunit = (7.17775d-12)/(2.d0*uvel*uvel*mh)   ! 4.5 eV per H2 formed
      &                is, ie, j, k, ih2co, ipiht, iter, igammah,
      &                aye, temstart, temend, z_solar,
      &                utem, uxyz, uaye, urho, utim,
-     &                eta1, eta2, gamma,
+     &                gamma,
      &                ceHIa, ceHeIa, ceHeIIa, ciHIa, ciHeIa, 
      &                ciHeISa, ciHeIIa, reHIIa, reHeII1a, 
      &                reHeII2a, reHeIIIa, brema, compa, gammaha,

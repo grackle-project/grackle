@@ -34,7 +34,7 @@ extern "C" void FORTRAN_NAME(solve_rate_cool)(
 	gr_int *ipiht, gr_int *igammah,
 	gr_float *dt, gr_float *aye, gr_float *temstart, gr_float *temend,
 	gr_float *utem, gr_float *uxyz, gr_float *uaye, gr_float *urho, gr_float *utim,
-	gr_float *eta1, gr_float *eta2, gr_float *gamma, gr_float *fh, gr_float *dtoh,
+	gr_float *gamma, gr_float *fh, gr_float *dtoh,
 	gr_float *z_solar,
 	gr_float *k1a, gr_float *k2a, gr_float *k3a, gr_float *k4a, gr_float *k5a, 
 	gr_float *k6a, gr_float *k7a, gr_float *k8a, gr_float *k9a, gr_float *k10a,
@@ -109,8 +109,6 @@ int solve_chemistry(chemistry_data &my_chemistry,
   gr_int MetalFieldPresent = 1;
   gr_float TemperatureUnits =  mh*POW(my_units.length_units/
                                    my_units.time_units,2)/kboltz;
-  gr_float DualEnergyFormalismEta1 = 0.0;
-  gr_float DualEnergyFormalismEta2 = 0.0;
   gr_int RadiationFieldRecomputeMetalRates = 0;
   gr_int RadiativeTransfer = 0;
   gr_int RadiativeTransferCoupledRateSolver = 0;
@@ -133,7 +131,7 @@ int solve_chemistry(chemistry_data &my_chemistry,
     &my_chemistry.ih2co, &my_chemistry.ipiht, &my_chemistry.photoelectric_heating,
     &dt_value, &a_value, &my_chemistry.TemperatureStart, &my_chemistry.TemperatureEnd,
     &TemperatureUnits, &my_units.length_units, &my_units.a_units, &my_units.density_units, &my_units.time_units,
-    &DualEnergyFormalismEta1, &DualEnergyFormalismEta2, &my_chemistry.Gamma,
+    &my_chemistry.Gamma,
     &my_chemistry.HydrogenFractionByMass, &my_chemistry.DeuteriumToHydrogenRatio,
     &my_chemistry.SolarMetalFractionByMass,
     my_chemistry.k1, my_chemistry.k2, my_chemistry.k3, my_chemistry.k4, my_chemistry.k5, 

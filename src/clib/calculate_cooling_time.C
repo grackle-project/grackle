@@ -34,7 +34,7 @@ extern "C" void FORTRAN_NAME(cool_multi_time)(
 	gr_int *ipiht, gr_int *igammah,
 	gr_float *dt, gr_float *aye, gr_float *temstart, gr_float *temend,
 	gr_float *utem, gr_float *uxyz, gr_float *uaye, gr_float *urho, gr_float *utim,
-	gr_float *eta1, gr_float *eta2, gr_float *gamma, gr_float *z_solar,
+	gr_float *gamma, gr_float *z_solar,
 	gr_float *ceHIa, gr_float *ceHeIa, gr_float *ceHeIIa, gr_float *ciHIa, gr_float *ciHeIa,
 	gr_float *ciHeISa, gr_float *ciHeIIa, gr_float *reHIIa, gr_float *reHeII1a,
 	gr_float *reHeII2a, gr_float *reHeIIIa, gr_float *brema, gr_float *compa, gr_float *gammaha,
@@ -91,8 +91,6 @@ int calculate_cooling_time(chemistry_data &my_chemistry,
   gr_int MetalFieldPresent = 1;
   gr_float TemperatureUnits =  mh*POW(my_units.length_units/
                                    my_units.time_units,2)/kboltz;
-  gr_float DualEnergyFormalismEta1 = 0.0;
-  gr_float DualEnergyFormalismEta2 = 0.0;
   gr_int RadiationFieldRecomputeMetalRates = 0;
   gr_int RadiativeTransfer = 0;
   gr_int RadiativeTransferCoupledRateSolver = 0;
@@ -117,7 +115,7 @@ int calculate_cooling_time(chemistry_data &my_chemistry,
        &dt_value, &a_value, &my_chemistry.TemperatureStart,
        &my_chemistry.TemperatureEnd,
        &TemperatureUnits, &my_units.length_units, &my_units.a_units, &my_units.density_units, &my_units.time_units,
-       &DualEnergyFormalismEta1, &DualEnergyFormalismEta2, &my_chemistry.Gamma,
+       &my_chemistry.Gamma,
        &my_chemistry.SolarMetalFractionByMass,
        my_chemistry.ceHI, my_chemistry.ceHeI, my_chemistry.ceHeII, my_chemistry.ciHI,
        my_chemistry.ciHeI,

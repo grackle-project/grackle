@@ -10,7 +10,7 @@
      &                is, js, ks, ie, je, ke, ih2co, ipiht, igammah,
      &                dt, aye, temstart, temend,
      &                utem, uxyz, uaye, urho, utim,
-     &                eta1, eta2, gamma, z_solar,
+     &                gamma, z_solar,
      &                ceHIa, ceHeIa, ceHeIIa, ciHIa, ciHeIa, 
      &                ciHeISa, ciHeIIa, reHIIa, reHeII1a, 
      &                reHeII2a, reHeIIIa, brema, compa, gammaha,
@@ -57,7 +57,7 @@
      &        n_xe, imcool, idust, igammah, ih2optical, iciecool
       real    dt, aye, temstart, temend,
      &        utem, uxyz, uaye, urho, utim,
-     &        eta1, eta2, gamma, xe_start, xe_end, z_solar
+     &        gamma, xe_start, xe_end, z_solar
       real    d(in,jn,kn),    e(in,jn,kn),
      &        u(in,jn,kn),    v(in,jn,kn),     w(in,jn,kn),
      &       de(in,jn,kn),   HI(in,jn,kn),   HII(in,jn,kn),
@@ -179,7 +179,7 @@
      &                is, ie, j, k, ih2co, ipiht, 1, igammah,
      &                aye, temstart, temend, z_solar,
      &                utem, uxyz, uaye, urho, utim,
-     &                eta1, eta2, gamma,
+     &                gamma,
      &                ceHIa, ceHeIa, ceHeIIa, ciHIa, ciHeIa, 
      &                ciHeISa, ciHeIIa, reHIIa, reHeII1a, 
      &                reHeII2a, reHeIIIa, brema, compa, gammaha,

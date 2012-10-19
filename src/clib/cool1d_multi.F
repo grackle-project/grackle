@@ -11,7 +11,7 @@
      &                is, ie, j, k, ih2co, ipiht, iter, igammah,
      &                aye, temstart, temend, z_solar,
      &                utem, uxyz, uaye, urho, utim,
-     &                eta1, eta2, gamma,
+     &                gamma,
      &                ceHIa, ceHeIa, ceHeIIa, ciHIa, ciHeIa, 
      &                ciHeISa, ciHeIIa, reHIIa, reHeII1a, 
      &                reHeII2a, reHeIIIa, brema, compa, gammaha,
@@ -68,7 +68,7 @@
      &        n_xe, imetal, igammah, ih2optical, iciecool
       real    aye, temstart, temend, z_solar,
      &        utem, uxyz, uaye, urho, utim,
-     &        eta1, eta2, gamma
+     &        gamma
       real    d(in,jn,kn),    e(in,jn,kn),
      &        u(in,jn,kn),    v(in,jn,kn),     w(in,jn,kn),
      &       de(in,jn,kn),   HI(in,jn,kn),   HII(in,jn,kn),
