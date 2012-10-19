@@ -224,28 +224,8 @@ struct chemistry_data
   /* CIE cooling */
   gr_float *cieco;
 
-  /* Metal line cooling (tabulated by temperature and electron
-     fraction) */
-
-  gr_int NumberOfElectronFracBins;
-  gr_float ElectronFracStart;
-  gr_float ElectronFracEnd;
-  gr_float *metals;
-
   /* Gas/grain energy transfer. */
   gr_float *gas_grain;
-
-  /* For analysis, ratios of metal fine structure line emission is
-     desired sometimes. */
-
-  gr_float *metal_ratios;
-  char *MetalCoolingTable;
-  gr_int MR_NumberOfTemperatureBins;
-  gr_int MR_NumberOfElectronFracBins;
-  gr_float MR_TemperatureStart;
-  gr_float MR_TemperatureEnd;
-  gr_float MR_ElectronFracStart;
-  gr_float MR_ElectronFracEnd;
 
   /***************************
    *** cloudy cooling data ***

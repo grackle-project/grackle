@@ -23,7 +23,7 @@
      &                gpldla, gphdla, gpldl, gphdl,
      &                hdltea, hdlowa, hdlte, hdlow,
      &                gaHIa, gaH2a, gaHea, gaHpa, gaela,
-     &                gasgra, metala, n_xe, xe_start, xe_end, 
+     &                gasgra, 
      &                ceHI, ceHeI, ceHeII, ciHI, ciHeI, ciHeIS, ciHeII,
      &                reHII, reHeII1, reHeII2, reHeIII, brem,
      &                indixe, t1, t2, logtem, tdef, edot,
@@ -65,7 +65,7 @@
       integer in, jn, kn, is, ie, j, k, nratec, idim,
      &        iexpand, ih2co, ipiht, ispecies, imcool, idust, 
      &        nfreq, iradshield, iradtype, imetalregen, iradtrans,
-     &        n_xe, imetal, igammah, ih2optical, iciecool
+     &        imetal, igammah, ih2optical, iciecool
       real    aye, temstart, temend, z_solar,
      &        utem, uxyz, uaye, urho, utim,
      &        gamma
@@ -79,8 +79,7 @@
       real    photogamma(in,jn,kn)
       real    hyd01ka(nratec), h2k01a(nratec), vibha(nratec), 
      &        rotha(nratec), rotla(nratec), gpldla(nratec),
-     &        gphdla(nratec), hdltea(nratec), hdlowa(nratec),
-     &        metala(nratec, n_xe)
+     &        gphdla(nratec), hdltea(nratec), hdlowa(nratec)
       real    gaHIa(nratec), gaH2a(nratec), gaHea(nratec),
      &        gaHpa(nratec), gaela(nratec), gasgra(nratec), 
      &        ciecoa(nratec)
@@ -90,7 +89,7 @@
      &        reHeII2a(nratec), reHeIIIa(nratec), brema(nratec)
       real    compa, piHI, piHeI, piHeII, comp_xraya, comp_temp,
      &        inutot(nfreq), avgsighp, avgsighep, avgsighe2p
-      real    gammaha, xe_start, xe_end
+      real    gammaha
 
 !  Cloudy cooling data
 
