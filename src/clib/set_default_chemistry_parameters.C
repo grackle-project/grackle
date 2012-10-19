@@ -42,7 +42,6 @@ chemistry_data set_default_chemistry_parameters()
   my_chemistry.RadiationXRaySecondaryIon      = 0;
   my_chemistry.RadiationXRayComptonHeating    = 0;
 
-  my_chemistry.alpha0                   = 1.5;            // radiation spectral slope
   my_chemistry.f3                       = 1.0e-21;        // radiation normalization
   my_chemistry.f0to3                    = 0.1;
   my_chemistry.RadiationRedshiftOn      = 7.0;

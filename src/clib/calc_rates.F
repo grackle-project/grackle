@@ -4,7 +4,7 @@ c=======================================================================
 c//////////////////////  SUBROUTINE CALC_RATES  \\\\\\\\\\\\\\\\\\\\\\\\\
 c
       subroutine calc_rates(
-     &             nratec, aye, temstart, temend, alpha0, f3, 
+     &             nratec, aye, temstart, temend, f3, 
      &             iradtype, casebrates, threebody,
      &             utem, uxyz, uaye, urho, utim,
      &             ceHIa, ceHeIa, ceHeIIa, ciHIa, ciHeIa, 
@@ -72,7 +72,6 @@ c    tbase1   = code time units
 c    xbase1   = code length units
 c    kunit    = conversion factor xbase1**3/tbase1
 c
-c    alpha0   = power law slope of radiation flux (?)
 c    f3       = amplitude of external flux at z = 3
 c    iradtype = radiation field type (0 - none,
 c                8 - hard spectrum w/ absorption,
@@ -161,7 +160,7 @@ c
 c  Arguments
 c
       integer nratec, iradtype, casebrates, threebody, ndratec
-      real    aye, temstart, temend, alpha0, f3, dtemstart, dtemend,
+      real    aye, temstart, temend, f3, dtemstart, dtemend,
      &        utem, uxyz, uaye, urho, utim
       real    ceHIa(nratec), ceHeIa(nratec), ceHeIIa(nratec),
      &        ciHIa(nratec), ciHeIa(nratec), ciHeISa(nratec), 
@@ -1101,14 +1100,7 @@ C	 reported by Patrick McDonald, modified in revision 2310
 c
 c       Set the radiation field (only used in iradtype = 5 or 8)
 
-        if (iradtype .eq. 5) then
-c
-c          5) A featureless power-low spectrum (quasar-like)
-c         (f3 is the amplitude of flux at the HI ionization edge)
-c
-           fext(n) = f3*(nu/e24)**(-alpha0)
-c
-        elseif (iradtype .eq. 8) then
+        if (iradtype .eq. 8) then
 c
 c          8) power law with absorbing neutral medium with
 c              10^22 cm^-2 column density

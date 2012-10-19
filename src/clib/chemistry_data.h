@@ -158,7 +158,6 @@ struct chemistry_data
 
   /* Radiation parameters (should be put in own spot). */
 
-  gr_float alpha0;
   gr_float f3;
   gr_float f0to3;
   gr_float RadiationRedshiftOn;
