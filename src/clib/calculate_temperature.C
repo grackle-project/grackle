@@ -55,9 +55,8 @@ int calculate_temperature(chemistry_data &my_chemistry,
                           gr_float *temperature)
 {
 
-  if (!my_chemistry.use_chemistry) {
+  if (!my_chemistry.use_chemistry)
     return SUCCESS;
-  }
 
   /* Compute the pressure first. */
  
@@ -80,9 +79,12 @@ int calculate_temperature(chemistry_data &my_chemistry,
   for (int dim = 0; dim < grid_rank; dim++)
     size *= grid_dimension[dim];
 
+  /* Calculate temperature units. */
+
+  gr_float temperature_units =  mh*POW(my_units.length_units/
+                                       my_units.time_units,2)/kboltz;
+
   gr_float number_density, tiny_number = 1.-20;
-  gr_float TemperatureUnits =  mh*POW(my_units.length_units/
-                                   my_units.time_units,2)/kboltz;
   gr_float inv_metal_mol = 1.0 / MU_METAL;
   
   /* Compute temperature with mu calculated directly. */
@@ -99,12 +101,13 @@ int calculate_temperature(chemistry_data &my_chemistry,
       number_density += HM_density[i] + 
         0.5 * (H2I_density[i] + H2II_density[i]);
 
-    if (my_chemistry.metal_cooling)
+    if (metal_density != NULL) {
       number_density += metal_density[i] * inv_metal_mol;
+    }
  
     /* Ignore deuterium. */
  
-    temperature[i] *= TemperatureUnits / max(number_density, tiny_number);
+    temperature[i] *= temperature_units / max(number_density, tiny_number);
     temperature[i] = max(temperature[i], MINIMUM_TEMPERATURE);
   }
  

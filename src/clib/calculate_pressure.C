@@ -34,6 +34,9 @@ int calculate_pressure(chemistry_data &my_chemistry,
                        gr_float *pressure)
 {
 
+  if (!my_chemistry.use_chemistry)
+    return SUCCESS;
+
   gr_float tiny_number = 1.e-20;
   gr_int i, size = 1;
   for (int dim = 0; dim < grid_rank; dim++)
@@ -51,8 +54,10 @@ int calculate_pressure(chemistry_data &my_chemistry,
  
   if (my_chemistry.primordial_chemistry > 1) {
  
-    gr_float TemperatureUnits =  mh*POW(my_units.length_units/
-                                     my_units.time_units,2)/kboltz;
+    /* Calculate temperature units. */
+
+    gr_float temperature_units =  mh*POW(my_units.length_units/
+                                         my_units.time_units,2)/kboltz;
 
     gr_float number_density, nH2, GammaH2Inverse,
       GammaInverse = 1.0/(my_chemistry.Gamma-1.0), x, Gamma1, temp;
@@ -70,7 +75,7 @@ int calculate_pressure(chemistry_data &my_chemistry,
  
       if (number_density == 0)
 	number_density = tiny_number;
-      temp = max(TemperatureUnits * pressure[i] / (number_density + nH2), 1);
+      temp = max(temperature_units * pressure[i] / (number_density + nH2), 1);
  
       /* Only do full computation if there is a reasonable amount of H2.
 	 The second term in GammaH2Inverse accounts for the vibrational

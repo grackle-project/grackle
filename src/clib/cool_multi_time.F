@@ -20,8 +20,7 @@
      &                gpldla, gphdla, hdltea, hdlowa,
      &                gaHIa, gaH2a, gaHea, gaHpa, gaela,
      &                gasgra, 
-     &                inutot, iradtype, nfreq, imetalregen,
-     &                iradshield, avgsighp, avgsighep, avgsighe2p,
+     &                iradtype,
      &                iradtrans, photogamma,
      &                ih2optical, iciecool, ciecoa, 
      &                icmbTfloor, iClHeat,
@@ -53,7 +52,7 @@
 
       integer in, jn, kn, is, js, ks, ie, je, ke, nratec, 
      &        iexpand, ih2co, ipiht, ispecies, imetal, idim,
-     &        iradtype, nfreq, imetalregen, iradshield, iradtrans,
+     &        iradtype, iradtrans,
      &        imcool, idust, igammah, ih2optical, iciecool
       real    dt, aye, temstart, temend,
      &        utem, uxyz, uaye, urho, utim,
@@ -77,8 +76,7 @@
      &        ciHIa(nratec), ciHeIa(nratec), ciHeISa(nratec), 
      &        ciHeIIa(nratec), reHIIa(nratec), reHeII1a(nratec), 
      &        reHeII2a(nratec), reHeIIIa(nratec), brema(nratec)
-      real    compa, piHI, piHeI, piHeII, comp_xraya, comp_temp,
-     &        inutot(nfreq), avgsighp, avgsighep, avgsighe2p
+      real    compa, piHI, piHeI, piHeII, comp_xraya, comp_temp
       real    gammaha
 
 !  Cloudy cooling data
@@ -195,8 +193,7 @@
      &                reHII, reHeII1, reHeII2, reHeIII, brem,
      &                indixe, t1, t2, logtem, tdef, edot,
      &                tgas, tgasold, p2d, tdust, metallicity, rhoH,
-     &                inutot, iradtype, nfreq, imetalregen,
-     &                iradshield, avgsighp, avgsighep, avgsighe2p,
+     &                iradtype,
      &                iradtrans, photogamma, 
      &                ih2optical, iciecool, ciecoa, cieco,
      &                icmbTfloor, iClHeat,

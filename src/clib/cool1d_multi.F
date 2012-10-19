@@ -28,8 +28,7 @@
      &                reHII, reHeII1, reHeII2, reHeIII, brem,
      &                indixe, t1, t2, logtem, tdef, edot,
      &                tgas, tgasold, p2d, tdust, metallicity, rhoH, 
-     &                inutot, iradtype, nfreq, imetalregen,
-     &                iradshield, avgsighp, avgsighep, avgsighe2p,
+     &                iradtype,
      &                iradtrans, photogamma,
      &                ih2optical, iciecool, ciecoa, cieco,
      &                icmbTfloor, iClHeat,
@@ -64,7 +63,7 @@
 
       integer in, jn, kn, is, ie, j, k, nratec, idim,
      &        iexpand, ih2co, ipiht, ispecies, imcool, idust, 
-     &        nfreq, iradshield, iradtype, imetalregen, iradtrans,
+     &        iradtype, iradtrans,
      &        imetal, igammah, ih2optical, iciecool
       real    aye, temstart, temend, z_solar,
      &        utem, uxyz, uaye, urho, utim,
@@ -87,8 +86,7 @@
      &        ciHIa(nratec), ciHeIa(nratec), ciHeISa(nratec), 
      &        ciHeIIa(nratec), reHIIa(nratec), reHeII1a(nratec), 
      &        reHeII2a(nratec), reHeIIIa(nratec), brema(nratec)
-      real    compa, piHI, piHeI, piHeII, comp_xraya, comp_temp,
-     &        inutot(nfreq), avgsighp, avgsighep, avgsighe2p
+      real    compa, piHI, piHeI, piHeII, comp_xraya, comp_temp
       real    gammaha
 
 !  Cloudy cooling data
@@ -629,17 +627,16 @@ c  new (correct) way: (april 4, 2007)
 !                       Photoionization heating
 
 #ifdef RADIATION
-      if (iradshield .eq. 0) then
 
-!        regular version
+!        photo-heating from UV background
 
-         if (iradtype .eq. 8) then
+      if (iradtype .eq. 8) then
 
 !           1) heating assuming high energy photons produces secondary
 !              electrons which do the heating (Shull & Steenberg, 1985).
 
-            do i = is+1, ie+1
-               if ( itmask(i) ) then
+         do i = is+1, ie+1
+            if ( itmask(i) ) then
                x = max(HII(i,j,k)/(HI(i,j,k)+HII(i,j,k)), 1.d-4)
                factor = 0.9971d0*(1.d0-(1.d0-x**0.2663d0)**1.3163d0)
                edot(i) = edot(i) + float(ipiht)*factor*(
@@ -647,44 +644,20 @@ c  new (correct) way: (april 4, 2007)
      &                + piHeI *HeI (i,j,k)*0.25d0     ! pi of HeI
      &                + piHeII*HeII(i,j,k)*0.25d0     ! pi of HeII
      &              )/dom
-               end if
-            enddo
+            end if
+         enddo
 
-         else
+      else
 
 !           2) standard heating
 
-            do i = is+1, ie+1
-               if ( itmask(i) ) then
+         do i = is+1, ie+1
+            if ( itmask(i) ) then
                edot(i) = edot(i) + float(ipiht)*(
      &                + piHI  *HI  (i,j,k)            ! pi of HI
      &                + piHeI *HeI (i,j,k)*0.25d0     ! pi of HeI
      &                + piHeII*HeII(i,j,k)*0.25d0     ! pi of HeII
      &              )/dom
-               end if
-            enddo
-
-         endif
-
-      else
-
-!        version with approximate self-shielding
-
-         do i = is+1, ie+1
-            if ( itmask(i) ) then
-
-            edot(i) = edot(i) + float(ipiht)*(
-     &                + piHI  *HI  (i,j,k)*
-     &                   exp(-avgsighp*HI(i,j,k)*dom)
-     &                + piHeI *HeI (i,j,k)*0.25d0*
-     &                   exp(-avgsighep*0.25d0*HeI(i,j,k)*dom)
-     &                + piHeII*HeII(i,j,k)*0.25d0*
-     &                   exp(-avgsighe2p*0.25d0*HeII(i,j,k)*dom)
-     &           )/dom
-
-!            write(6,*) 'cool1d_multi: after PI heating', edot(i),
-!     &           piHI, HI(i,j,k), avgsighp, dom
-
             end if
          enddo
 

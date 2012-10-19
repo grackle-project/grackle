@@ -34,7 +34,6 @@ chemistry_data set_default_chemistry_parameters()
   my_chemistry.RadiationFieldRedshift         = 0.0;
   my_chemistry.TabulatedLWBackground          = 0;
   my_chemistry.RadiationFieldLevelRecompute   = 0;
-  my_chemistry.RadiationShield                = 0;
   my_chemistry.AdjustUVBackground             = 1;
   my_chemistry.AdjustUVBackgroundHighRedshift = 0;
   my_chemistry.SetUVBAmplitude                = 1.0;

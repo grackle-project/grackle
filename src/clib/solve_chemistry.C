@@ -59,8 +59,7 @@ extern "C" void FORTRAN_NAME(solve_rate_cool)(
 	gr_float *gpldl, gr_float *gphdl, gr_float *HDltea, gr_float *HDlowa,
 	gr_float *gaHIa, gr_float *gaH2a, gr_float *gaHea, gr_float *gaHpa, gr_float *gaela,
 	gr_float *gasgra, 
-	gr_float *inutot, gr_int *iradtype, gr_int *nfreq, gr_int *imetalregen,
-	gr_int *iradshield, gr_float *avgsighp, gr_float *avgsighep, gr_float *avgsighe2p,
+	gr_int *iradtype,
 	gr_int *iradtrans, gr_int *iradcoupled, gr_int *iradstep, gr_int *ierr,
 	gr_int *irt_honly,
 	gr_float *kphHI, gr_float *kphHeI, gr_float *kphHeII, 
@@ -88,28 +87,20 @@ int solve_chemistry(chemistry_data &my_chemistry,
 
   /* Return if this doesn't concern us. */
 
-  if (!my_chemistry.use_chemistry) return SUCCESS;
+  if (!my_chemistry.use_chemistry)
+    return SUCCESS;
 
-  /* Set up information for rates which depend on the radiation field. 
-     Precompute factors for self shielding (this is the cross section * dx). */
+  /* Check for a metal field. */
 
-  // gr_float HIShieldFactor = RadiationData.HIAveragePhotoHeatingCrossSection * 
-  //                        double(LengthUnits) * CellWidth[0][0];
-  // gr_float HeIShieldFactor = RadiationData.HeIAveragePhotoHeatingCrossSection * 
-  //                         double(LengthUnits) * CellWidth[0][0];
-  // gr_float HeIIShieldFactor = RadiationData.HeIIAveragePhotoHeatingCrossSection * 
-  //                          double(LengthUnits) * CellWidth[0][0];
-  gr_float HIShieldFactor, HeIShieldFactor, HeIIShieldFactor;
-  HIShieldFactor = HeIShieldFactor = HeIIShieldFactor = 0.0;
-  
+  gr_int metal_field_present = TRUE;
+  if (metal_density == NULL)
+    metal_field_present = FALSE;
 
-  /* Call the fortran routine to solve cooling equations. */
+  /* Calculate temperature units. */
 
-  gr_int ierr = 0;
-  gr_int MetalFieldPresent = 1;
-  gr_float TemperatureUnits =  mh*POW(my_units.length_units/
-                                   my_units.time_units,2)/kboltz;
-  gr_int RadiationFieldRecomputeMetalRates = 0;
+  gr_float temperature_units =  mh*POW(my_units.length_units/
+                                       my_units.time_units,2)/kboltz;
+
   gr_int RadiativeTransfer = 0;
   gr_int RadiativeTransferCoupledRateSolver = 0;
   gr_int RTCoupledSolverIntermediateStep = 0;
@@ -118,19 +109,23 @@ int solve_chemistry(chemistry_data &my_chemistry,
   gr_float *kphHINum, *kphHeINum, *kphHeIINum, 
     *kdissH2INum, *gammaNum;
 
+  /* Call the fortran routine to solve cooling equations. */
+
+  gr_int ierr = 0;
+
   FORTRAN_NAME(solve_rate_cool)(
     density, internal_energy, x_velocity, y_velocity, z_velocity,
     e_density, HI_density, HII_density, 
     HeI_density, HeII_density, HeIII_density, 
     grid_dimension, grid_dimension+1, grid_dimension+2, 
     &my_chemistry.NumberOfTemperatureBins, &my_units.comoving_coordinates, 
-    &my_chemistry.primordial_chemistry, &MetalFieldPresent, &my_chemistry.metal_cooling, 
+    &my_chemistry.primordial_chemistry, &metal_field_present, &my_chemistry.metal_cooling, 
     &my_chemistry.h2_on_dust, 
     &grid_rank, grid_start, grid_start+1, grid_start+2, 
     grid_end, grid_end+1, grid_end+2,
     &my_chemistry.ih2co, &my_chemistry.ipiht, &my_chemistry.photoelectric_heating,
     &dt_value, &a_value, &my_chemistry.TemperatureStart, &my_chemistry.TemperatureEnd,
-    &TemperatureUnits, &my_units.length_units, &my_units.a_units, &my_units.density_units, &my_units.time_units,
+    &temperature_units, &my_units.length_units, &my_units.a_units, &my_units.density_units, &my_units.time_units,
     &my_chemistry.Gamma,
     &my_chemistry.HydrogenFractionByMass, &my_chemistry.DeuteriumToHydrogenRatio,
     &my_chemistry.SolarMetalFractionByMass,
@@ -160,10 +155,7 @@ int solve_chemistry(chemistry_data &my_chemistry,
     my_chemistry.HDlte, my_chemistry.HDlow,
     my_chemistry.GAHI, my_chemistry.GAH2, my_chemistry.GAHe, my_chemistry.GAHp,
     my_chemistry.GAel, my_chemistry.gas_grain, 
-    my_chemistry.Spectrum[0], &my_chemistry.RadiationFieldType, 
-    &my_chemistry.NumberOfFrequencyBins, 
-    &RadiationFieldRecomputeMetalRates,
-    &my_chemistry.RadiationShield, &HIShieldFactor, &HeIShieldFactor, &HeIIShieldFactor,
+    &my_chemistry.RadiationFieldType, 
     &RadiativeTransfer, &RadiativeTransferCoupledRateSolver,
     &RTCoupledSolverIntermediateStep, &ierr,
     &RadiativeTransferHydrogenOnly,

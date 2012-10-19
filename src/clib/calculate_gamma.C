@@ -44,6 +44,9 @@ int calculate_gamma(chemistry_data &my_chemistry,
                     gr_float *e_density, gr_float *metal_density,
                     gr_float *my_gamma)
 {
+
+  if (!my_chemistry.use_chemistry)
+    return SUCCESS;
  
   gr_int i, size = 1;
   for (int dim = 0; dim < grid_rank; dim++)

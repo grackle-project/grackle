@@ -28,8 +28,7 @@
      &                gpldla, gphdla, hdltea, hdlowa,
      &                gaHIa, gaH2a, gaHea, gaHpa, gaela, 
      &                gasgra, 
-     &                inutot, iradtype, nfreq, imetalregen,
-     &                iradshield, avgsighp, avgsighep, avgsighe2p,
+     &                iradtype,
      &                iradtrans, iradcoupled, iradstep, ierr,
      &                irt_honly,
      &                kphHI, kphHeI, kphHeII, kdissH2I, 
@@ -74,7 +73,6 @@
 !    iexpand  - comoving coordinates flag (0 = off, 1 = on)
 !    idim     - dimensionality (rank) of problem
 !    ispecies - chemistry module (1 - H/He only, 2 - molecular H, 3 - D) 
-!    iradshield - flag for crude radiative shielding correction 
 !    iradtype - type of radiative field (only used if = 8)
 !    imetal   - flag if metal field is active (0 = no, 1 = yes)
 !    imcool   - flag if there is metal cooling
@@ -127,7 +125,7 @@
 
       integer in, jn, kn, is, js, ks, ie, je, ke, nratec, 
      &        iexpand, ih2co, ipiht, ispecies, imetal, idim,
-     &        iradtype, nfreq, imetalregen, iradshield, iradtrans,
+     &        iradtype, iradtrans,
      &        iradcoupled, iradstep, ierr, imcool, idust, 
      &        irt_honly, igammah, ih2optical, iciecool, ithreebody,
      &        ndratec
@@ -163,8 +161,7 @@
      &        ciHIa(nratec), ciHeIa(nratec), ciHeISa(nratec), 
      &        ciHeIIa(nratec), reHIIa(nratec), reHeII1a(nratec), 
      &        reHeII2a(nratec), reHeIIIa(nratec), brema(nratec)
-      real    compa, piHI, piHeI, piHeII, comp_xraya, comp_temp,
-     &        inutot(nfreq), avgsighp, avgsighep, avgsighe2p
+      real    compa, piHI, piHeI, piHeII, comp_xraya, comp_temp
       real    gammaha 
 
 !  Chemistry tables (rates as a function of temperature)
@@ -360,8 +357,7 @@ c      chunit = (7.17775d-12)/(2.d0*uvel*uvel*mh)   ! 4.5 eV per H2 formed
      &                reHII, reHeII1, reHeII2, reHeIII, brem,
      &                indixe, t1, t2, logtem, tdef, edot,
      &                tgas, tgasold, p2d, tdust, metallicity, rhoH, 
-     &                inutot, iradtype, nfreq, imetalregen,
-     &                iradshield, avgsighp, avgsighep, avgsighe2p,
+     &                iradtype, 
      &                iradtrans, photogamma,
      &                ih2optical, iciecool, ciecoa, cieco,
      &                icmbTfloor, iClHeat,
@@ -374,7 +370,7 @@ c      chunit = (7.17775d-12)/(2.d0*uvel*uvel*mh)   ! 4.5 eV per H2 formed
 !         (maybe should add itmask to this call)
 
             call lookup_cool_rates1d(temstart, temend, nratec, j, k,
-     &               is, ie, ijk, iradtype, iradshield, ithreebody,
+     &               is, ie, ijk, iradtype, ithreebody,
      &               in, jn, kn, ispecies, idust, 
      &               tgas, HI, HII, HeI, HeII, tdust, metallicity, 
      &               k1a, k2a, k3a, k4a, k5a, k6a, k7a, k8a, k9a, k10a,
@@ -383,7 +379,7 @@ c      chunit = (7.17775d-12)/(2.d0*uvel*uvel*mh)   ! 4.5 eV per H2 formed
      &               k50a, k51a, k52a, k53a, k54a, k55a, k56a,
      &               ndratec, dtemstart, dtemend, h2dusta, 
      &               ncrna, ncrd1a, ncrd2a, 
-     &               avgsighp, avgsighep, avgsighe2p, piHI, piHeI,
+     &               piHI, piHeI,
      &               k1, k2, k3, k4, k5, k6, k7, k8, k9, k10,
      &               k11, k12, k13, k14, k15, k16, k17, k18,
      &               k19, k22, k24, k25, k26, 
@@ -831,7 +827,7 @@ c -------------------------------------------------------------------
 !   of temperature.
 
       subroutine lookup_cool_rates1d(temstart, temend, nratec, j, k,
-     &                is, ie, ijk, iradtype, iradshield, ithreebody,
+     &                is, ie, ijk, iradtype, ithreebody,
      &                in, jn, kn, ispecies, idust,
      &                tgas1d, HI, HII, HeI, HeII, tdust, metallicity, 
      &                k1a, k2a, k3a, k4a, k5a, k6a, k7a, k8a, k9a, k10a,
@@ -840,7 +836,7 @@ c -------------------------------------------------------------------
      &                k50a, k51a, k52a, k53a, k54a, k55a, k56a,
      &                ndratec, dtemstart, dtemend, h2dusta, 
      &                ncrna, ncrd1a, ncrd2a,
-     &                avgsighp, avgsighep, avgsighe2p, piHI, piHeI,
+     &                piHI, piHeI,
      &                k1, k2, k3, k4, k5, k6, k7, k8, k9, k10,
      &                k11, k12, k13, k14, k15, k16, k17, k18,
      &                k19, k22, k24, k25, k26,
@@ -855,7 +851,7 @@ c -------------------------------------------------------------------
 
 !     Arguments
 
-      integer is, ie, ijk, iradtype, iradshield, nratec, 
+      integer is, ie, ijk, iradtype, nratec, 
      &        in, jn, kn, ispecies, ithreebody, j, k,
      &        idust, ndratec
       real temstart, temend, tgas1d(in), dom,
@@ -875,7 +871,7 @@ c -------------------------------------------------------------------
      &     k13dda(nratec, 7), h2dusta(nratec, ndratec), 
      &     ncrna(nratec), ncrd1a(nratec), ncrd2a(nratec),
      &     k24, k25, k26,
-     &     avgsighp, avgsighep, avgsighe2p, piHI, piHeI
+     &     piHI, piHeI
 
 !     Density fields
 
@@ -1094,20 +1090,11 @@ c -------------------------------------------------------------------
 #ifdef RADIATION
       do i = is+1, ie+1
          if (itmask(i)) then
-         k24shield(i) = k24
-         k25shield(i) = k25
-         k26shield(i) = k26
-      endif
-      enddo
-      if (iradshield .eq. 1) then
-         do i = is+1, ie+1
-            if (itmask(i)) then
-            k24shield(i) = k24shield(i)*exp(-HI(i,j,k)*avgsighp*dom)
-            k25shield(i) = k25shield(i)*exp(-HeII(i,j,k)*avgsighe2p*dom)
-            k26shield(i) = k26shield(i)*exp(-HeI(i,j,k)*avgsighep*dom)
+            k24shield(i) = k24
+            k25shield(i) = k25
+            k26shield(i) = k26
          endif
-         enddo
-      endif
+      enddo
 
 !        If using a high-energy radiation field, then account for
 !          effects of secondary elections (Shull * Steenberg 1985)

@@ -52,23 +52,12 @@ struct chemistry_data
   gr_int RadiationXRayComptonHeating;
   gr_int TabulatedLWBackground;
   gr_float RadiationFieldRedshift;
-
-  gr_int  RadiationShield;
-
-  /* Frequency dependant information (constant). */
-
-  gr_int NumberOfFrequencyBins;
-  gr_float FrequencyBinWidth;    // in log10(eV)
-
-  gr_float *HICrossSection;
-  gr_float *HeICrossSection;
-  gr_float *HeIICrossSection;
-
-  gr_float *StellarSpectrum;
-  gr_float *QuasarSpectrum;
-
-  gr_float *Spectrum[4];
-  gr_float *Emissivity[4];
+  gr_float f3;
+  gr_float f0to3;
+  gr_float RadiationRedshiftOn;
+  gr_float RadiationRedshiftOff;
+  gr_float RadiationRedshiftFullOn;
+  gr_float RadiationRedshiftDropOff;
 
   /**************************************
    *** primordial chemistry rate data ***
@@ -156,14 +145,6 @@ struct chemistry_data
   gr_int ih2co;                     // flag for H2 cooling (0-off/1-on)
   gr_int ipiht;                     // flag for photoionization cooling
 
-  /* Radiation parameters (should be put in own spot). */
-
-  gr_float f3;
-  gr_float f0to3;
-  gr_float RadiationRedshiftOn;
-  gr_float RadiationRedshiftOff;
-  gr_float RadiationRedshiftFullOn;
-  gr_float RadiationRedshiftDropOff;
   gr_float HydrogenFractionByMass;
   gr_float DeuteriumToHydrogenRatio;
   gr_float SolarMetalFractionByMass;
