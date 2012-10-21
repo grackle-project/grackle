@@ -20,7 +20,6 @@ OBJS_CONFIG_LIB = \
         cool_multi_time.o \
         initialize_cloudy_data.o \
         initialize_chemistry_data.o \
-        RadiationFieldCalculateRates.o \
         solve_rate_cool.o \
         calc_tdust_1d.o \
         colh2diss.o \
@@ -32,4 +31,5 @@ OBJS_CONFIG_LIB = \
         calculate_cooling_time.o \
         calculate_temperature.o \
         calculate_pressure.o \
-        calculate_gamma.o
+        calculate_gamma.o \
+        update_UVbackground_rates.o 

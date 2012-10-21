@@ -605,45 +605,17 @@ c  new (correct) way: (april 4, 2007)
       endif
 
 !     --- Compute (external) radiative heating terms ---
+!     Photoionization heating
 
-!                       Photoionization heating
-
-#ifdef RADIATION
-
-!        photo-heating from UV background
-
-      if (iradtype .eq. 8) then
-
-!           1) heating assuming high energy photons produces secondary
-!              electrons which do the heating (Shull & Steenberg, 1985).
-
-         do i = is+1, ie+1
-            if ( itmask(i) ) then
-               x = max(HII(i,j,k)/(HI(i,j,k)+HII(i,j,k)), 1.d-4)
-               factor = 0.9971d0*(1.d0-(1.d0-x**0.2663d0)**1.3163d0)
-               edot(i) = edot(i) + float(ipiht)*factor*(
-     &                + piHI  *HI  (i,j,k)            ! pi of HI
-     &                + piHeI *HeI (i,j,k)*0.25d0     ! pi of HeI
-     &                + piHeII*HeII(i,j,k)*0.25d0     ! pi of HeII
-     &              )/dom
-            end if
-         enddo
-
-      else
-
-!           2) standard heating
-
-         do i = is+1, ie+1
-            if ( itmask(i) ) then
-               edot(i) = edot(i) + float(ipiht)*(
-     &                + piHI  *HI  (i,j,k)            ! pi of HI
-     &                + piHeI *HeI (i,j,k)*0.25d0     ! pi of HeI
-     &                + piHeII*HeII(i,j,k)*0.25d0     ! pi of HeII
-     &              )/dom
-            end if
-         enddo
-
-      endif
+      do i = is+1, ie+1
+         if ( itmask(i) ) then
+            edot(i) = edot(i) + float(ipiht)*(
+     &           + piHI  *HI  (i,j,k) ! pi of HI
+     &           + piHeI *HeI (i,j,k)*0.25d0 ! pi of HeI
+     &           + piHeII*HeII(i,j,k)*0.25d0 ! pi of HeII
+     &           )/dom
+         end if
+      enddo
 
 !     Photoheating from radiative transfer
 
@@ -667,7 +639,6 @@ c               endif
          enddo
       endif
 
-#endif /* RADIATION */
 
 !     --- Cloudy metal cooling and heating ---
 

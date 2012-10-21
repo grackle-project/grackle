@@ -42,22 +42,24 @@ struct chemistry_data
    *** radiation background parameters ***
    ***************************************/
 
-  gr_int RadiationFieldType;
-  gr_int AdjustUVBackground; 
-  gr_int AdjustUVBackgroundHighRedshift; 
-  gr_float SetUVBAmplitude;
-  gr_float SetHeIIHeatingScale;
-  gr_int RadiationFieldLevelRecompute;
-  gr_int RadiationXRaySecondaryIon;
-  gr_int RadiationXRayComptonHeating;
-  gr_int TabulatedLWBackground;
-  gr_float RadiationFieldRedshift;
-  gr_float f3;
-  gr_float f0to3;
-  gr_float RadiationRedshiftOn;
-  gr_float RadiationRedshiftOff;
-  gr_float RadiationRedshiftFullOn;
-  gr_float RadiationRedshiftDropOff;
+  gr_int UVbackground_type;
+  //  0 - no UV background
+  //  1 - Haardt & Madau (2001) quasar + galaxy (alpha_q = 1.57)
+  //  2 - Haardt & Madau model (ca. 2005) that ships with Cloudy v.8.00
+  //  3 - Haardt & Madau (2012)
+  //  4 - Faucher-Giguere
+  // -1 - Haardt & Madau (1996) quasar spectrum (alpha_q = 1.5) **DEPRECATED**
+  // -2 - Haardt & Madau (1996) quasar spectrum (alpha_q = 1.8) **DEPRECATED**
+
+  gr_float UVbackground_redshift_on;
+  gr_float UVbackground_redshift_off;
+  gr_float UVbackground_redshift_fullon;
+  gr_float UVbackground_redshift_drop;
+
+  gr_int Compton_xray_heating;
+
+  gr_float LWbackground_intensity;   // [in units of 10^21 erg/s/cm^2/Hz/sr]
+  gr_int LWbackground_sawtooth_suppression;
 
   /**************************************
    *** primordial chemistry rate data ***

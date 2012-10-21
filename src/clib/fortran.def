@@ -2,5 +2,3 @@
 
 #define tiny 1.0e-20
 #define huge 1.0e+20
-
-#define RADIATION

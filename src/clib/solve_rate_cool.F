@@ -1087,7 +1087,6 @@ c -------------------------------------------------------------------
 
 !        Include approximate self-shielding factors if requested
 
-#ifdef RADIATION
       do i = is+1, ie+1
          if (itmask(i)) then
             k24shield(i) = k24
@@ -1097,7 +1096,7 @@ c -------------------------------------------------------------------
       enddo
 
 !        If using a high-energy radiation field, then account for
-!          effects of secondary elections (Shull * Steenberg 1985)
+!          effects of secondary electrons (Shull * Steenberg 1985)
 !          (see calc_rate.src)
 
       if (iradtype .eq. 8) then
@@ -1114,7 +1113,6 @@ c -------------------------------------------------------------------
          enddo
       endif
 
-#endif /* RADIATION */
 
 !           If using H2, and using the density-dependent collisional
 !             H2 dissociation rate, then replace the the density-independant
@@ -1218,20 +1216,16 @@ c -------------------------------------------------------------------
      &               - k2(i)*HII(i,j,k)*de(i,j,k)
      &               - k4(i)*HeII(i,j,k)*de(i,j,k)/4.d0
      &               - k6(i)*HeIII(i,j,k)*de(i,j,k)/4.d0
-#ifdef RADIATION
      &               +      ( k24shield(i)*HI(i,j,k)
      &               + k25shield(i)*HeII(i,j,k)/4.d0
      &               + k26shield(i)*HeI(i,j,k)/4.d0)
-#endif /* RADIATION */
 
 !     Compute the HI density rate-of-change
 
             HIdot(i) =
      &               - k1(i)*HI(i,j,k)*de(i,j,k)
      &               + k2(i)*HII(i,j,k)*de(i,j,k)
-#ifdef RADIATION
      &               -      k24shield(i)*HI(i,j,k)
-#endif /* RADIATION */
 
          endif                  ! itmask
          enddo
@@ -1257,9 +1251,7 @@ c -------------------------------------------------------------------
      &               + 2.d0*k16(i)*HM(i,j,k)    *HII(i,j,k)
      &               + 2.d0*k18(i)*H2II(i,j,k)  *de(i,j,k)/2.d0
      &               +      k19(i)*H2II(i,j,k)  *HM(i,j,k)/2.d0
-#ifdef RADIATION
      &               -      k24shield(i)*HI(i,j,k)
-#endif /* RADIATION */
 
 !     Add H2 formation on dust grains
 
@@ -1283,12 +1275,9 @@ c -------------------------------------------------------------------
      &               - k6(i) * HeIII(i,j,k)* de(i,j,k)/4.d0
      &               - k7(i) * HI(i,j,k)   * de(i,j,k)
      &               - k18(i)* H2II(i,j,k) * de(i,j,k)/2.d0
-
-#ifdef RADIATION
      &               + (k24shield(i)*HI(i,j,k)
      &               +  k25shield(i)*HeII(i,j,k)/4.e0
      &               +  k26shield(i)*HeI(i,j,k)/4.e0)
-#endif /* RADIATION */
 
 !     H2 formation heating
 
@@ -1331,7 +1320,6 @@ c -------------------------------------------------------------------
 
 !     Add photo-ionization rates if needed
 
-#ifdef RADIATION
       if (iradtrans .eq. 1) then
          if (irt_honly .eq. 0) then
             do i = is+1, ie+1
@@ -1351,7 +1339,6 @@ c -------------------------------------------------------------------
             enddo
          endif
       endif
-#endif /* RADIATION */
 
       return
       end
@@ -1433,10 +1420,8 @@ c -------------------------------------------------------------------
 
             scoef  = k2(i)*HII(i,j,k)*de(i,j,k)
             acoef  = k1(i)*de(i,j,k)
-#ifdef RADIATION
      &             + k24shield(i)
             if (iradtrans .eq. 1) acoef = acoef + kphHI(i,j,k)
-#endif /* RADIATION */
             HIp(i)  = (scoef*dtit(i) + HI(i,j,k))/(1.d0 + acoef*dtit(i))
             if (HIp(i) .ne. HIp(i)) then
                write(*,*) 'HUGE HIp! :: ', i, j, k, HIp(i), HI(i,j,k),
@@ -1448,10 +1433,8 @@ c               ERROR_MESSAGE
 !        2) HII
 c 
             scoef  = k1(i)*HIp(i)*de(i,j,k)
-#ifdef RADIATION
      &                   + k24shield(i)*HIp(i)
             if (iradtrans .eq. 1) scoef = scoef + kphHI(i,j,k)*HIp(i)
-#endif /* RADIATION */
             acoef  = k2(i)*de (i,j,k)
             HIIp(i) = (scoef*dtit(i) + HII(i,j,k))/(1.d0 +acoef*dtit(i))
 !
@@ -1466,7 +1449,6 @@ c
 !        3) Electron density
 
             scoef = 0.d0
-#ifdef RADIATION
      &                 + k24shield(i)*HI(i,j,k)
      &                 + k25shield(i)*HeII(i,j,k)/4.d0
      &                 + k26shield(i)*HeI(i,j,k)/4.d0
@@ -1476,7 +1458,6 @@ c
      &           + kphHeII(i,j,k) * HeII(i,j,k)/4.d0
             if (iradtrans .eq. 1 .and. irt_honly .eq. 1) 
      &           scoef = scoef + kphHI(i,j,k)   * HI(i,j,k)
-#endif /* RADIATION */
             acoef = -(k1(i)*HI(i,j,k)      - k2(i)*HII(i,j,k)
      &              + k3(i)*HeI(i,j,k)/4.d0  - k6(i)*HeIII(i,j,k)/4.d0
      &              + k5(i)*HeII(i,j,k)/4.d0 - k4(i)*HeII(i,j,k)/4.d0)
@@ -1497,11 +1478,9 @@ c
 
          scoef  = k4(i)*HeII(i,j,k)*de(i,j,k)
          acoef  = k3(i)*de(i,j,k)
-#ifdef RADIATION
      &                + k26shield(i)
          if (iradtrans.eq.1 .and. irt_honly.eq.0) 
      $        acoef = acoef + kphHeI(i,j,k)
-#endif /* RADIATION */
          HeIp(i)   = ( scoef*dtit(i) + HeI(i,j,k) ) 
      &              / ( 1.d0 + acoef*dtit(i) )
 
@@ -1509,28 +1488,22 @@ c
 
          scoef  = k3(i)*HeIp(i)*de(i,j,k)
      &          + k6(i)*HeIII(i,j,k)*de(i,j,k)
-#ifdef RADIATION
      &          + k26shield(i)*HeIp(i)
          if (iradtrans.eq.1 .and. irt_honly.eq.0) 
      $        scoef = scoef + kphHeI(i,j,k)*HeIp(i)
-#endif /* RADIATION */
          acoef  = k4(i)*de(i,j,k) + k5(i)*de(i,j,k)
-#ifdef RADIATION
      &          + k25shield(i)
          if (iradtrans.eq.1 .and. irt_honly.eq.0) 
      $        acoef = acoef + kphHeII(i,j,k)
-#endif /* RADIATION */
          HeIIp(i)  = ( scoef*dtit(i) + HeII(i,j,k) )
      &              / ( 1.d0 + acoef*dtit(i) )
 
 !       6) HeIII
 
          scoef   = k5(i)*HeIIp(i)*de(i,j,k)
-#ifdef RADIATION
      &           + k25shield(i)*HeIIp(i)
          if (iradtrans.eq.1 .and. irt_honly.eq.0) 
      $        scoef = scoef + kphHeII(i,j,k) * HeIIp(i)
-#endif /* RADIATION */
          acoef   = k6(i)*de(i,j,k)
          HeIIIp(i)  = ( scoef*dtit(i) + HeIII(i,j,k) )
      &                / ( 1.d0 + acoef*dtit(i) )
@@ -1558,21 +1531,17 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
      &             + 2.d0*k16(i)* HM(i,j,k)  * HII(i,j,k)
      &             + 2.d0*k18(i)* H2II(i,j,k)* de(i,j,k)/2.d0
      &             +      k19(i)* H2II(i,j,k)* HM(i,j,k)/2.d0
-#ifdef RADIATION
      &             + 2.d0*k31   * H2I(i,j,k)/2.d0
             if (iradtrans.eq.1)
      &           scoef = scoef + 2.d0*kdissH2I(i,j,k)* H2I(i,j,k)/2.d0
-#endif /* RADIATION */
             acoef  =      k1(i) * de(i,j,k)
      &             +      k7(i) * de(i,j,k)  
      &             +      k8(i) * HM(i,j,k)
      &             +      k9(i) * HII(i,j,k)
      &             +      k10(i)* H2II(i,j,k)/2.d0
      &             + 2.d0*k22(i)* HI(i,j,k)**2
-#ifdef RADIATION
      &             + k24shield(i)
             if (iradtrans .eq. 1) acoef = acoef + kphHI(i,j,k)
-#endif /* RADIATION */
 
             if (idust .gt. 0) then
                acoef = acoef + 2.d0 * h2dust(i) * rhoH(i)
@@ -1590,10 +1559,8 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
 
             scoef  =    k1(i)  * HI(i,j,k) * de(i,j,k)
      &             +    k10(i) * H2II(i,j,k)*HI(i,j,k)/2.d0
-#ifdef RADIATION
      &             + k24shield(i)*HI(i,j,k)
             if (iradtrans .eq. 1) scoef = scoef + kphHI(i,j,k)*HI(i,j,k)
-#endif /* RADIATION */
             acoef  =    k2(i)  * de(i,j,k)
      &             +    k9(i)  * HI(i,j,k)
      &             +    k11(i) * H2I(i,j,k)/2.d0
@@ -1608,7 +1575,6 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
      &             +  k15(i)* HM(i,j,k) * HI(i,j,k)
      &             +  k17(i)* HM(i,j,k) * HII(i,j,k)
 !                  
-#ifdef RADIATION
      &             + k24shield(i)*HIp(i)
      &             + k25shield(i)*HeIIp(i)/4.d0
      &             + k26shield(i)*HeIp(i)/4.d0
@@ -1618,7 +1584,6 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
      &           + kphHeII(i,j,k) * HeIIp(i)/4.d0
             if (iradtrans .eq. 1 .and. irt_honly.eq.1) 
      &           scoef = scoef + kphHI(i,j,k)   * HIp(i)
-#endif /* RADIATION */
             acoef = - (k1(i) *HI(i,j,k)    - k2(i)*HII(i,j,k)
      &              +  k3(i) *HeI(i,j,k)/4.d0 - k6(i)*HeIII(i,j,k)/4.d0
      &              +  k5(i) *HeII(i,j,k)/4.d0- k4(i)*HeII(i,j,k)/4.d0
@@ -1636,10 +1601,8 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
      &            +       k22(i) * HI(i,j,k) * (HI(i,j,k))**2.d0)
             acoef = ( k13(i)*HI(i,j,k) + k11(i)*HII(i,j,k)
      &              + k12(i)*de(i,j,k) )
-#ifdef RADIATION
      &              + k29 + k31
             if (iradtrans.eq.1) acoef = acoef + kdissH2I(i,j,k)
-#endif /* RADIATION */
 
             if (idust .gt. 0) then
                scoef = scoef + 2.d0 * h2dust(i) * HI(i,j,k) * rhoH(i)
@@ -1653,9 +1616,7 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
             HMp(i) = ( k7(i)*HIp(i)*dep(i) )
      &             / ( (k8(i)+k15(i))*HIp(i)
      &             + ( k16(i)+k17(i))*HIIp(i)+k14(i)*dep(i)
-#ifdef RADIATION
      &             + k27
-#endif /* RADIATION */
      &                 )
 
 !           9) H2+
@@ -1663,15 +1624,11 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
             H2IIp(i) = 2.d0*( k9 (i)*HIp(i)*HIIp(i)
      &                    +   k11(i)*H2Ip(i)/2.d0*HIIp(i)
      &                    +   k17(i)*HMp(i)*HIIp(i)
-#ifdef RADIATION
      &                    + k29*H2Ip(i)
-#endif /* RADIATION */
      &                    )
      &                 /  ( k10(i)*HIp(i) + k18(i)*dep(i)
      &                    + k19(i)*HMp(i)
-#ifdef RADIATION
      &                    + (k28+k30)
-#endif /* RADIATION */
      &                    )
 
          endif                  ! itmask
@@ -1695,10 +1652,8 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
      &             +    k50(i) * HII(i,j,k)
      &             +    k54(i) * H2I(i,j,k)/2.d0
      &             +    k56(i) * HM(i,j,k)
-#ifdef RADIATION
      &             + k24shield(i)
             if (iradtrans .eq. 1) acoef = acoef + kphHI(i,j,k)
-#endif /* RADIATION */
             DIp(i)    = ( scoef*dtit(i) + DI(i,j,k) ) / 
      &                  ( 1.d0 + acoef*dtit(i) )
 
@@ -1708,10 +1663,8 @@ c
      &            +       k50(i) * HII(i,j,k)* DI(i,j,k)
      &            +  2.d0*k53(i) * HII(i,j,k)* HDI(i,j,k)/3.d0
      &            )
-#ifdef RADIATION
      &            + k24shield(i)*DI(i,j,k)
             if (iradtrans .eq. 1) scoef = scoef + kphHI(i,j,k)*DI(i,j,k)
-#endif /* RADIATION */
             acoef =    k2(i)  * de(i,j,k)
      &            +    k51(i) * HI(i,j,k)
      &            +    k52(i) * H2I(i,j,k)/2.d0
