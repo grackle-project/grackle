@@ -29,7 +29,6 @@
      &                indixe, t1, t2, logtem, tdef, edot,
      &                tgas, tgasold, p2d, tdust, metallicity, rhoH, 
      &                iradtype,
-     &                iradtrans, photogamma,
      &                ih2optical, iciecool, ciecoa, cieco,
      &                icmbTfloor, iClHeat,
      &                clEleFra, clGridRank, clGridDim,
@@ -63,7 +62,7 @@
 
       integer in, jn, kn, is, ie, j, k, nratec, idim,
      &        iexpand, ih2co, ipiht, ispecies, imcool, idust, 
-     &        iradtype, iradtrans,
+     &        iradtype,
      &        imetal, igammah, ih2optical, iciecool
       real    aye, temstart, temend, z_solar,
      &        utem, uxyz, uaye, urho, utim,
@@ -75,7 +74,6 @@
       real    HM(in,jn,kn),  H2I(in,jn,kn), H2II(in,jn,kn),
      &        DI(in,jn,kn),  DII(in,jn,kn), HDI(in,jn,kn),
      &        metal(in,jn,kn)
-      real    photogamma(in,jn,kn)
       real    hyd01ka(nratec), h2k01a(nratec), vibha(nratec), 
      &        rotha(nratec), rotla(nratec), gpldla(nratec),
      &        gphdla(nratec), hdltea(nratec), hdlowa(nratec)
@@ -108,7 +106,7 @@
 
 !  Locals
 
-      integer i, j1, iter, iradfield
+      integer i, j1, iter
       real dom, qq, vibl, logtem0, logtem9, dlogtem, energy, zr
       real dt2, ttmin, comp1, comp2, scoef, acoef, HIdot,
      &     hdlte1, hdlow1, gamma2, x, fudge, fH2,
@@ -164,7 +162,6 @@
       coolunit = (uaye**5 * xbase1**2 * mh**2) / (tbase1**3 * dbase1)
       zr       = 1.d0/(aye*uaye) - 1.d0
       fudge    = 1.d0
-      iradfield = -1
 
 !     Set compton cooling coefficients (and temperature)
 
@@ -616,29 +613,6 @@ c  new (correct) way: (april 4, 2007)
      &           )/dom
          end if
       enddo
-
-!     Photoheating from radiative transfer
-
-      if (iradtrans .eq. 1) then
-c     for radiative transfer, convert from eV/s*TimeUnits to the coolunits use
-         rtunits = ev2erg/utim/coolunit/dom
-         do i = is+1, ie+1
-            if (itmask(i)) then
-               edot(i) = edot(i) + float(ipiht) * photogamma(i,j,k) * 
-     &              rtunits * HI(i,j,k)
-c               if (photogamma(i,j,k).gt.0) then
-c                  print*, i,j,k,edot(i), photogamma(i,j,k),rtunits,dom,
-c     $                 aye,utim,coolunit,d(i,j,k),hi(i,j,k),tgas(i)
-c               endif
-               if (edot(i) .ne. edot(i)) then
-                  write(6,*) 'NaN in edot[2]: ', i, j, k, edot(i), 
-     &                 photogamma(i,j,k),HI(i,j,k), de(i,j,k), d(i,j,k), 
-     &                 e(i,j,k), p2d(i), tgas(i), dom, urho, aye, mh
-               endif
-            endif
-         enddo
-      endif
-
 
 !     --- Cloudy metal cooling and heating ---
 

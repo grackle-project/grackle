@@ -61,14 +61,5 @@ chemistry_data set_default_chemistry_parameters()
   my_chemistry.CloudyCoolingGridRank          = 0;
   my_chemistry.CloudyElectronFractionFactor = 9.153959e-3; // Cloudy 07.02 abundances
 
-  /* Some inactive place holders. */
-  my_chemistry.RadiativeTransfer = 0;
-  my_chemistry.RadiativeTransferCoupledRateSolver = 0;
-  my_chemistry.RTCoupledSolverIntermediateStep = 0;
-  my_chemistry.RadiativeTransferHydrogenOnly = 0;
-  my_chemistry.kphHINum = my_chemistry.kphHeINum = 
-    my_chemistry.kphHeIINum = my_chemistry.kdissH2INum = 
-    my_chemistry.gammaNum = NULL;
-
   return my_chemistry;
 }

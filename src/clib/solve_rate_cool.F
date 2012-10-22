@@ -29,10 +29,7 @@
      &                gaHIa, gaH2a, gaHea, gaHpa, gaela, 
      &                gasgra, 
      &                iradtype,
-     &                iradtrans, iradcoupled, iradstep, ierr,
-     &                irt_honly,
-     &                kphHI, kphHeI, kphHeII, kdissH2I, 
-     &                photogamma, 
+     &                ierr,
      &                ih2optical, iciecool, ithreebody, ciecoa, 
      &                icmbTfloor, iClHeat,
      &                clEleFra, clGridRank, clGridDim,
@@ -66,8 +63,6 @@
 !    HM       - H- density field
 !    H2I      - H_2 (molecular H) density field
 !    H2II     - H_2+ density field
-!    kph*     - photoionization fields
-!    gamma*   - photoheating fields
 !
 !    is,ie    - start and end indices of active region (zero based)
 !    iexpand  - comoving coordinates flag (0 = off, 1 = on)
@@ -79,9 +74,6 @@
 !    idust    - flag for H2 formation on dust grains
 !    ih2co    - flag to include H2 cooling (1 = on, 0 = off)
 !    ipiht    - flag to include photoionization heating (1 = on, 0 = off)
-!    iradtrans - flag to include radiative transfer (1 = on, 0 = off)
-!    iradcoupled - flag to indicate coupled radiative transfer
-!    iradstep - flag to indicate intermediate coupled radiative transfer timestep
 !
 !    fh       - Hydrogen mass fraction (typically 0.76)
 !    dtoh     - Deuterium to H mass ratio
@@ -125,9 +117,9 @@
 
       integer in, jn, kn, is, js, ks, ie, je, ke, nratec, 
      &        iexpand, ih2co, ipiht, ispecies, imetal, idim,
-     &        iradtype, iradtrans,
-     &        iradcoupled, iradstep, ierr, imcool, idust, 
-     &        irt_honly, igammah, ih2optical, iciecool, ithreebody,
+     &        iradtype, 
+     &        ierr, imcool, idust, 
+     &        igammah, ih2optical, iciecool, ithreebody,
      &        ndratec
       real    dt, aye, temstart, temend, gamma,
      &        utim, uxyz, uaye, urho, utem, fh, dtoh, z_solar, 
@@ -142,12 +134,6 @@
       real    d(in,jn,kn),     e(in,jn,kn),
      &        u(in,jn,kn),    v(in,jn,kn),     w(in,jn,kn),
      &        metal(in,jn,kn)
-
-!  Radiation fields
-
-      real kphHI(in,jn,kn), kphHeI(in,jn,kn), kphHeII(in,jn,kn),
-     &     kdissH2I(in,jn,kn)
-      real photogamma(in,jn,kn)
 
 !  Cooling tables (coolings rates as a function of temperature)
 
@@ -288,38 +274,11 @@ c      chunit = (7.17775d-12)/(2.d0*uvel*uvel*mh)   ! 4.5 eV per H2 formed
 
 !       tolerance = 1.0e-06 * dt
 
-!       Set iteration mask to include only cells with radiation in the
-!       intermediate coupled chemistry / energy step
+!     Initialize iteration mask to true for all cells.
 
-         if (iradcoupled .eq. 1 .and. iradstep .eq. 1) then
-            do i = is+1, ie+1
-               if (kphHI(i,j,k) .gt. 0) then 
-                  itmask(i) = .true. 
-               else 
-                  itmask(i) = .false.
-               endif
-            enddo
-         endif
-
-!     Normal rate solver, but don't double-count the cells with radiation
- 
-         if (iradcoupled .eq. 1 .and. iradstep .eq. 0) then
-            do i = is+1, ie+1
-               if (kphHI(i,j,k) .gt. 0) then 
-                  itmask(i) = .false. 
-               else 
-                  itmask(i) = .true.
-               endif
-            enddo
-         endif
-
-!     No radiation timestep coupling
-
-         if (iradcoupled .eq. 0 .or. iradtrans .eq. 0) then 
-            do i = is+1, ie+1
-               itmask(i) = .true.
-            enddo
-         endif
+         do i = is+1, ie+1
+            itmask(i) = .true.
+         enddo
 
 !        Set time elapsed to zero for each cell in 1D section
 
@@ -358,7 +317,6 @@ c      chunit = (7.17775d-12)/(2.d0*uvel*uvel*mh)   ! 4.5 eV per H2 formed
      &                indixe, t1, t2, logtem, tdef, edot,
      &                tgas, tgasold, p2d, tdust, metallicity, rhoH, 
      &                iradtype, 
-     &                iradtrans, photogamma,
      &                ih2optical, iciecool, ciecoa, cieco,
      &                icmbTfloor, iClHeat,
      &                clEleFra, clGridRank, clGridDim,
@@ -402,8 +360,7 @@ c      chunit = (7.17775d-12)/(2.d0*uvel*uvel*mh)   ! 4.5 eV per H2 formed
      &                     k50, k51, k52, k53, k54, k55, k56, 
      &                     h2dust, ncrn, ncrd1, ncrd2, rhoH, 
      &                     k24shield, k25shield, k26shield,
-     &                     iradtrans, irt_honly, kphHI, kphHeI, kphHeII, 
-     &                     kdissH2I, itmask, edot, chunit, dom)
+     &                     itmask, edot, chunit, dom)
 
 !           Find timestep that keeps relative chemical changes below 10%
 
@@ -605,8 +562,7 @@ c      chunit = (7.17775d-12)/(2.d0*uvel*uvel*mh)   ! 4.5 eV per H2 formed
      &                     HIp, HIIp, HeIp, HeIIp, HeIIIp, dep,
      &                     HMp, H2Ip, H2IIp, DIp, DIIp, HDIp,
      &                     dedot_prev, HIdot_prev,
-     &                     iradtrans, irt_honly, kphHI, kphHeI, kphHeII, 
-     &                     kdissH2I, itmask)
+     &                     itmask)
 
 !           Add the timestep to the elapsed time for each cell and find
 !            minimum elapsed time step in this row
@@ -1157,8 +1113,7 @@ c -------------------------------------------------------------------
      &                     k50, k51, k52, k53, k54, k55, k56, 
      &                     h2dust, ncrn, ncrd1, ncrd2, rhoH, 
      &                     k24shield, k25shield, k26shield,
-     &                     iradtrans, irt_honly, kphHI, kphHeI, kphHeII, 
-     &                     kdissH2I, itmask, edot, chunit, dom)
+     &                     itmask, edot, chunit, dom)
 
 ! -------------------------------------------------------------------
 
@@ -1166,8 +1121,7 @@ c -------------------------------------------------------------------
 
 !     arguments
 
-      integer ispecies, idust, is, ie, j, k, in, jn, kn, 
-     &     iradtrans, irt_honly
+      integer ispecies, idust, is, ie, j, k, in, jn, kn
       real dedot(in), HIdot(in), dom
       double precision edot(in)
       logical itmask(in)
@@ -1178,11 +1132,6 @@ c -------------------------------------------------------------------
      &       HeI(in,jn,kn), HeII(in,jn,kn), HeIII(in,jn,kn),
      &         d(in,jn,kn)
       real    HM(in,jn,kn),  H2I(in,jn,kn), H2II(in,jn,kn)
-
-!     Radiation fields
-
-      real    kphHI(in,jn,kn), kphHeI(in,jn,kn), kphHeII(in,jn,kn),
-     &        kdissH2I(in,jn,kn)
 
       double precision chunit
 
@@ -1318,28 +1267,6 @@ c -------------------------------------------------------------------
          enddo
       endif
 
-!     Add photo-ionization rates if needed
-
-      if (iradtrans .eq. 1) then
-         if (irt_honly .eq. 0) then
-            do i = is+1, ie+1
-               if (itmask(i)) then
-                  HIdot(i) = HIdot(i) - kphHI(i,j,k)*HI(i,j,k)
-                  dedot(i) = dedot(i) + kphHI(i,j,k)*HI(i,j,k)
-     &                 + kphHeI(i,j,k) * HeI(i,j,k) / 4.d0
-     &                 + kphHeII(i,j,k) *HeII(i,j,k) / 4.d0
-               endif
-            enddo
-         else
-            do i = is+1, ie+1
-               if (itmask(i)) then
-                  HIdot(i) = HIdot(i) - kphHI(i,j,k)*HI(i,j,k)
-                  dedot(i) = dedot(i) + kphHI(i,j,k)*HI(i,j,k)
-               endif
-            enddo
-         endif
-      endif
-
       return
       end
 
@@ -1361,16 +1288,14 @@ c -------------------------------------------------------------------
      &                     HIp, HIIp, HeIp, HeIIp, HeIIIp, dep,
      &                     HMp, H2Ip, H2IIp, DIp, DIIp, HDIp,
      &                     dedot_prev, HIdot_prev,
-     &                     iradtrans, irt_honly, kphHI, kphHeI, kphHeII,
-     &                     kdissH2I, itmask)
+     &                     itmask)
 c -------------------------------------------------------------------
 
       implicit NONE
 
 !     arguments
 
-      integer ispecies, idust, in, jn, kn, is, ie, j, k, 
-     &     iradtrans, irt_honly
+      integer ispecies, idust, in, jn, kn, is, ie, j, k
       real    dtit(in), dedot_prev(in), HIdot_prev(in)
       logical itmask(in)
 
@@ -1381,11 +1306,6 @@ c -------------------------------------------------------------------
      &         d(in,jn,kn)
       real    HM(in,jn,kn),  H2I(in,jn,kn), H2II(in,jn,kn)
       real    DI(in,jn,kn),  DII(in,jn,kn), HDI(in,jn,kn)
-
-!     Radiation fields
-
-      real    kphHI(in,jn,kn), kphHeI(in,jn,kn), kphHeII(in,jn,kn),
-     &        kdissH2I(in,jn,kn)
 
 !     Rate values
 
@@ -1421,11 +1341,10 @@ c -------------------------------------------------------------------
             scoef  = k2(i)*HII(i,j,k)*de(i,j,k)
             acoef  = k1(i)*de(i,j,k)
      &             + k24shield(i)
-            if (iradtrans .eq. 1) acoef = acoef + kphHI(i,j,k)
             HIp(i)  = (scoef*dtit(i) + HI(i,j,k))/(1.d0 + acoef*dtit(i))
             if (HIp(i) .ne. HIp(i)) then
                write(*,*) 'HUGE HIp! :: ', i, j, k, HIp(i), HI(i,j,k),
-     $              HII(i,j,k), de(i,j,k), kphHI(i,j,k), 
+     $              HII(i,j,k), de(i,j,k), 
      $              scoef, acoef, dtit(i)
 c               ERROR_MESSAGE
             endif
@@ -1434,7 +1353,6 @@ c               ERROR_MESSAGE
 c 
             scoef  = k1(i)*HIp(i)*de(i,j,k)
      &                   + k24shield(i)*HIp(i)
-            if (iradtrans .eq. 1) scoef = scoef + kphHI(i,j,k)*HIp(i)
             acoef  = k2(i)*de (i,j,k)
             HIIp(i) = (scoef*dtit(i) + HII(i,j,k))/(1.d0 +acoef*dtit(i))
 !
@@ -1442,7 +1360,7 @@ c
                write(*,*) 'negative HIIp! :: ', i, j, k, HIIp(i), 
      $              scoef, dtit(i), HII(i,j,k), acoef,
      $              k2(i), de(i,j,k),
-     $              kphHI(i,j,k), HIp(i),
+     $              HIp(i),
      $              k24shield(i)
             endif
 
@@ -1452,12 +1370,6 @@ c
      &                 + k24shield(i)*HI(i,j,k)
      &                 + k25shield(i)*HeII(i,j,k)/4.d0
      &                 + k26shield(i)*HeI(i,j,k)/4.d0
-            if (iradtrans .eq. 1 .and. irt_honly .eq. 0) 
-     &           scoef = scoef + kphHI(i,j,k)   * HI(i,j,k)
-     &           + kphHeI(i,j,k)  * HeI(i,j,k)/4.d0
-     &           + kphHeII(i,j,k) * HeII(i,j,k)/4.d0
-            if (iradtrans .eq. 1 .and. irt_honly .eq. 1) 
-     &           scoef = scoef + kphHI(i,j,k)   * HI(i,j,k)
             acoef = -(k1(i)*HI(i,j,k)      - k2(i)*HII(i,j,k)
      &              + k3(i)*HeI(i,j,k)/4.d0  - k6(i)*HeIII(i,j,k)/4.d0
      &              + k5(i)*HeII(i,j,k)/4.d0 - k4(i)*HeII(i,j,k)/4.d0)
@@ -1479,8 +1391,6 @@ c
          scoef  = k4(i)*HeII(i,j,k)*de(i,j,k)
          acoef  = k3(i)*de(i,j,k)
      &                + k26shield(i)
-         if (iradtrans.eq.1 .and. irt_honly.eq.0) 
-     $        acoef = acoef + kphHeI(i,j,k)
          HeIp(i)   = ( scoef*dtit(i) + HeI(i,j,k) ) 
      &              / ( 1.d0 + acoef*dtit(i) )
 
@@ -1489,12 +1399,8 @@ c
          scoef  = k3(i)*HeIp(i)*de(i,j,k)
      &          + k6(i)*HeIII(i,j,k)*de(i,j,k)
      &          + k26shield(i)*HeIp(i)
-         if (iradtrans.eq.1 .and. irt_honly.eq.0) 
-     $        scoef = scoef + kphHeI(i,j,k)*HeIp(i)
          acoef  = k4(i)*de(i,j,k) + k5(i)*de(i,j,k)
      &          + k25shield(i)
-         if (iradtrans.eq.1 .and. irt_honly.eq.0) 
-     $        acoef = acoef + kphHeII(i,j,k)
          HeIIp(i)  = ( scoef*dtit(i) + HeII(i,j,k) )
      &              / ( 1.d0 + acoef*dtit(i) )
 
@@ -1502,8 +1408,6 @@ c
 
          scoef   = k5(i)*HeIIp(i)*de(i,j,k)
      &           + k25shield(i)*HeIIp(i)
-         if (iradtrans.eq.1 .and. irt_honly.eq.0) 
-     $        scoef = scoef + kphHeII(i,j,k) * HeIIp(i)
          acoef   = k6(i)*de(i,j,k)
          HeIIIp(i)  = ( scoef*dtit(i) + HeIII(i,j,k) )
      &                / ( 1.d0 + acoef*dtit(i) )
@@ -1532,8 +1436,6 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
      &             + 2.d0*k18(i)* H2II(i,j,k)* de(i,j,k)/2.d0
      &             +      k19(i)* H2II(i,j,k)* HM(i,j,k)/2.d0
      &             + 2.d0*k31   * H2I(i,j,k)/2.d0
-            if (iradtrans.eq.1)
-     &           scoef = scoef + 2.d0*kdissH2I(i,j,k)* H2I(i,j,k)/2.d0
             acoef  =      k1(i) * de(i,j,k)
      &             +      k7(i) * de(i,j,k)  
      &             +      k8(i) * HM(i,j,k)
@@ -1541,7 +1443,6 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
      &             +      k10(i)* H2II(i,j,k)/2.d0
      &             + 2.d0*k22(i)* HI(i,j,k)**2
      &             + k24shield(i)
-            if (iradtrans .eq. 1) acoef = acoef + kphHI(i,j,k)
 
             if (idust .gt. 0) then
                acoef = acoef + 2.d0 * h2dust(i) * rhoH(i)
@@ -1551,8 +1452,7 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
      &                      ( 1. + acoef*dtit(i) )
             if (HIp(i) .ne. HIp(i)) then
                write(*,*) 'HUGE HIp! :: ', i, j, k, HIp(i), HI(i,j,k),
-     $              HII(i,j,k), de(i,j,k), H2I(i,j,k), kdissH2I(i,j,k),
-     $              kphHI(i,j,k)
+     $              HII(i,j,k), de(i,j,k), H2I(i,j,k)
             endif
 
 !          2) HII
@@ -1560,7 +1460,6 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
             scoef  =    k1(i)  * HI(i,j,k) * de(i,j,k)
      &             +    k10(i) * H2II(i,j,k)*HI(i,j,k)/2.d0
      &             + k24shield(i)*HI(i,j,k)
-            if (iradtrans .eq. 1) scoef = scoef + kphHI(i,j,k)*HI(i,j,k)
             acoef  =    k2(i)  * de(i,j,k)
      &             +    k9(i)  * HI(i,j,k)
      &             +    k11(i) * H2I(i,j,k)/2.d0
@@ -1578,12 +1477,6 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
      &             + k24shield(i)*HIp(i)
      &             + k25shield(i)*HeIIp(i)/4.d0
      &             + k26shield(i)*HeIp(i)/4.d0
-            if (iradtrans .eq. 1 .and. irt_honly.eq.0) 
-     &           scoef = scoef + kphHI(i,j,k)   * HIp(i)
-     &           + kphHeI(i,j,k)  * HeIp(i)/4.d0
-     &           + kphHeII(i,j,k) * HeIIp(i)/4.d0
-            if (iradtrans .eq. 1 .and. irt_honly.eq.1) 
-     &           scoef = scoef + kphHI(i,j,k)   * HIp(i)
             acoef = - (k1(i) *HI(i,j,k)    - k2(i)*HII(i,j,k)
      &              +  k3(i) *HeI(i,j,k)/4.d0 - k6(i)*HeIII(i,j,k)/4.d0
      &              +  k5(i) *HeII(i,j,k)/4.d0- k4(i)*HeII(i,j,k)/4.d0
@@ -1602,7 +1495,6 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
             acoef = ( k13(i)*HI(i,j,k) + k11(i)*HII(i,j,k)
      &              + k12(i)*de(i,j,k) )
      &              + k29 + k31
-            if (iradtrans.eq.1) acoef = acoef + kdissH2I(i,j,k)
 
             if (idust .gt. 0) then
                scoef = scoef + 2.d0 * h2dust(i) * HI(i,j,k) * rhoH(i)
@@ -1653,7 +1545,6 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
      &             +    k54(i) * H2I(i,j,k)/2.d0
      &             +    k56(i) * HM(i,j,k)
      &             + k24shield(i)
-            if (iradtrans .eq. 1) acoef = acoef + kphHI(i,j,k)
             DIp(i)    = ( scoef*dtit(i) + DI(i,j,k) ) / 
      &                  ( 1.d0 + acoef*dtit(i) )
 
@@ -1664,7 +1555,6 @@ c
      &            +  2.d0*k53(i) * HII(i,j,k)* HDI(i,j,k)/3.d0
      &            )
      &            + k24shield(i)*DI(i,j,k)
-            if (iradtrans .eq. 1) scoef = scoef + kphHI(i,j,k)*DI(i,j,k)
             acoef =    k2(i)  * de(i,j,k)
      &            +    k51(i) * HI(i,j,k)
      &            +    k52(i) * H2I(i,j,k)/2.d0
