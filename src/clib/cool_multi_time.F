@@ -20,7 +20,6 @@
      &                gpldla, gphdla, hdltea, hdlowa,
      &                gaHIa, gaH2a, gaHea, gaHpa, gaela,
      &                gasgra, 
-     &                iradtype,
      &                ih2optical, iciecool, ciecoa, 
      &                icmbTfloor, iClHeat,
      &                clEleFra, clGridRank, clGridDim,
@@ -51,7 +50,6 @@
 
       integer in, jn, kn, is, js, ks, ie, je, ke, nratec, 
      &        iexpand, ih2co, ipiht, ispecies, imetal, idim,
-     &        iradtype, 
      &        imcool, idust, igammah, ih2optical, iciecool
       real    dt, aye, temstart, temend,
      &        utem, uxyz, uaye, urho, utim,
@@ -191,7 +189,6 @@
      &                reHII, reHeII1, reHeII2, reHeIII, brem,
      &                indixe, t1, t2, logtem, tdef, edot,
      &                tgas, tgasold, p2d, tdust, metallicity, rhoH,
-     &                iradtype,
      &                ih2optical, iciecool, ciecoa, cieco,
      &                icmbTfloor, iClHeat,
      &                clEleFra, clGridRank, clGridDim,

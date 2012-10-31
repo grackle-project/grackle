@@ -31,7 +31,7 @@ int initialize_cloudy_data(chemistry_data &my_chemistry,
 
 extern "C" void FORTRAN_NAME(calc_rates)(
      gr_int *nratec, gr_float *aye, gr_float *temstart, gr_float *temend, 
-     gr_int *iradtype, gr_int *casebrates, gr_int *threebody,
+     gr_int *casebrates, gr_int *threebody,
      gr_float *utem, gr_float *uxyz, gr_float *uaye, gr_float *urho, gr_float *utim,
      gr_float *ceHIa, gr_float *ceHeIa, gr_float *ceHeIIa, gr_float *ciHIa, gr_float *ciHeIa,
      gr_float *ciHeISa, gr_float *ciHeIIa, gr_float *reHIIa, gr_float *reHeII1a,
@@ -140,7 +140,7 @@ int initialize_chemistry_data(chemistry_data &my_chemistry,
   FORTRAN_NAME(calc_rates)(
      &my_chemistry.NumberOfTemperatureBins, &a_value, &my_chemistry.TemperatureStart,
         &my_chemistry.TemperatureEnd,
-        &my_chemistry.UVbackground_type, &my_chemistry.CaseBRecombination, &my_chemistry.three_body_rate,
+        &my_chemistry.CaseBRecombination, &my_chemistry.three_body_rate,
      &temperature_units, &my_units.length_units, &my_units.a_units, 
      &my_units.density_units, &my_units.time_units,
      my_chemistry.ceHI, my_chemistry.ceHeI, my_chemistry.ceHeII, my_chemistry.ciHI,

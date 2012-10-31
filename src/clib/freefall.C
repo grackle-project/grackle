@@ -60,6 +60,12 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
     return FAIL;
   }
 
+  my_chemistry.UVbackground_file = (char*) "UVB_rates_HM2012.hdf5";
+  if (initialize_UVbackground_data(my_chemistry, my_units, a_value) == FAIL) {
+    fprintf(stderr, "Error in initialize_UVbackground_data.\n");
+    return FAIL;
+  }
+
   gr_float *density, *energy, *x_velocity, *y_velocity, *z_velocity;
   gr_float *HI_density, *HII_density, *HM_density,
     *HeI_density, *HeII_density, *HeIII_density,

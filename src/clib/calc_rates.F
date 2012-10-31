@@ -5,7 +5,7 @@ c//////////////////////  SUBROUTINE CALC_RATES  \\\\\\\\\\\\\\\\\\\\\\\\\
 c
       subroutine calc_rates(
      &             nratec, aye, temstart, temend,
-     &             iradtype, casebrates, threebody,
+     &             casebrates, threebody,
      &             utem, uxyz, uaye, urho, utim,
      &             ceHIa, ceHeIa, ceHeIIa, ciHIa, ciHeIa, 
      &             ciHeISa, ciHeIIa, reHIIa, reHeII1a, 
@@ -70,9 +70,6 @@ c    tbase1   = code time units
 c    xbase1   = code length units
 c    kunit    = conversion factor xbase1**3/tbase1
 c
-c    iradtype = radiation field type (0 - none,
-c                8 - hard spectrum w/ absorption,
-c                otherwise ignored)
 c    casebrates = use case-B recombination rates for k2, k4 and k6
 c
 c  RATES:
@@ -156,7 +153,7 @@ c
 c
 c  Arguments
 c
-      integer nratec, iradtype, casebrates, threebody, ndratec
+      integer nratec, casebrates, threebody, ndratec
       real    aye, temstart, temend, dtemstart, dtemend,
      &        utem, uxyz, uaye, urho, utim
       real    ceHIa(nratec), ceHeIa(nratec), ceHeIIa(nratec),

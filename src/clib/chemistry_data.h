@@ -42,14 +42,29 @@ struct chemistry_data
    *** radiation background parameters ***
    ***************************************/
 
-  gr_int UVbackground_type;
-  //  0 - no UV background
-  //  1 - Haardt & Madau (2001) quasar + galaxy (alpha_q = 1.57)
-  //  2 - Haardt & Madau model (ca. 2005) that ships with Cloudy v.8.00
-  //  3 - Haardt & Madau (2012)
-  //  4 - Faucher-Giguere
-  // -1 - Haardt & Madau (1996) quasar spectrum (alpha_q = 1.5) **DEPRECATED**
-  // -2 - Haardt & Madau (1996) quasar spectrum (alpha_q = 1.8) **DEPRECATED**
+  gr_int UVbackground;
+
+  char *UVbackground_file;
+
+  struct UVBtable {
+    gr_int Nz;
+
+    gr_float zmin, zmax;    
+    gr_float *z;
+
+    gr_float *k24;
+    gr_float *k25;
+    gr_float *k26;
+    gr_float *k27;
+    gr_float *k28;
+    gr_float *k29;
+    gr_float *k30;
+    gr_float *k31;
+
+    gr_float *piHI;
+    gr_float *piHeII;
+    gr_float *piHeI;
+  } UVbackground_table;
 
   gr_float UVbackground_redshift_on;
   gr_float UVbackground_redshift_off;

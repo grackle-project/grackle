@@ -28,7 +28,6 @@
      &                reHII, reHeII1, reHeII2, reHeIII, brem,
      &                indixe, t1, t2, logtem, tdef, edot,
      &                tgas, tgasold, p2d, tdust, metallicity, rhoH, 
-     &                iradtype,
      &                ih2optical, iciecool, ciecoa, cieco,
      &                icmbTfloor, iClHeat,
      &                clEleFra, clGridRank, clGridDim,
@@ -62,7 +61,6 @@
 
       integer in, jn, kn, is, ie, j, k, nratec, idim,
      &        iexpand, ih2co, ipiht, ispecies, imcool, idust, 
-     &        iradtype,
      &        imetal, igammah, ih2optical, iciecool
       real    aye, temstart, temend, z_solar,
      &        utem, uxyz, uaye, urho, utim,

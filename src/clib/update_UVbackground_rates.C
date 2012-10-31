@@ -1,21 +1,12 @@
 /***********************************************************************
 /
-/  SETS THE MULTI-SPECIES RATES BASED ON THE EXTERNAL RADIATION FIELD
+/  UPDATE UV BACKGROUND RATES BY INTERPOLATION FROM A TABLE
 /
-/  written by: Greg Bryan
-/  date:       October, 1996
-/  modified1:  Pascal Paschos, Robert Harkness
-/  date:       1st July 2002
-/  modified2:  Pascal Paschos
-/  date:       August, 2002	
-/  modified3:  Robert Harkness - Killed 32-bit IBM C++ bug
-/  date:       15 September 2002
-/  modified4:  Pascal Paschos & Robert Harkness - parameter controls
-/  date:       March, 2006
-/  modified5:  Robert Harkness - removed C++ I/O
-/  date:       February 29th, 2008
-/  modified6:  Ji-hoon Kim - changes to work with non-cosmological runs
-/  date:       November, 2009
+/  written by: Michael Kuhlen
+/  date:       October, 2012
+/
+/  based on Enzo's RadiationFieldCalculateRates.C (Greg Bryan, Pascal
+/  Paschos, Robert Harkness, Ji-hoon Kim)
 /
 /  PURPOSE:    
 /
@@ -40,21 +31,20 @@ int update_UVbackground_rates(chemistry_data &my_chemistry,
 {
   /* Return if there is no radiation (rates should be all zero). */
 
-  if (my_chemistry.UVbackground_type == 0)
+  if (my_chemistry.UVbackground == 0)
     return SUCCESS;
 
 
-  /* Check that UVbackground_type is allowed. */
+  /* Return if redshift is outside of table (rates should be all zero). */
 
-  if (my_chemistry.UVbackground_type < -2 || my_chemistry.UVbackground_type> 4) {
-    ENZO_VFAIL("my_chemistry.UVbackground_type %"ISYM" not recognized.\n", 
-	    my_chemistry.UVbackground_type)
-   }
+  float Redshift = 1.0 / (a_value * my_units.a_units) - 1;
+  if ( (Redshift < my_chemistry.UVbackground_table.zmin) ||
+       (Redshift > my_chemistry.UVbackground_table.zmax) )
+    return SUCCESS;
 
 
   /* Set units. */
 
-  float Redshift = 1.0 / (a_value * my_units.a_units) - 1;
   if (!my_units.comoving_coordinates) {
     my_chemistry.UVbackground_redshift_on = Redshift+0.2;
     my_chemistry.UVbackground_redshift_off = 0.0;
@@ -92,165 +82,86 @@ int update_UVbackground_rates(chemistry_data &my_chemistry,
   }
 
 
-  /* ------------------------------------------------------------------ */
-  /* Haardt & Madau (1996) quasar spectrum (alpha_q = 1.5) */
-  /* *** DEPRECATED *** */
+  /* Interpolate the UV background table. */
+  
+  // find interpolation index
+  gr_float *zvec = my_chemistry.UVbackground_table.z;
+  gr_int index=0;
+  while (Redshift >= zvec[index++]);
+  if(index == my_chemistry.UVbackground_table.Nz) index--;
 
-  if (my_chemistry.UVbackground_type == -1) {
-    float exp_arg = -1.0 * POW(Redshift-2.3, 2);
+  // *** k24 ***
+  gr_float slope = (my_chemistry.UVbackground_table.k24[index] - my_chemistry.UVbackground_table.k24[index-1]) / (zvec[index] - zvec[index-1]);
+  my_chemistry.k24 = (Redshift - zvec[index-1]) * slope + my_chemistry.UVbackground_table.k24[index-1];
 
-    my_chemistry.k24 = 6.7e-13 * POW(1.0+Redshift, 0.43) * exp(exp_arg/1.95)
-                     * my_units.time_units * Ramp;
-    my_chemistry.k25 = 6.3e-15 * POW(1.0+Redshift, 0.51) * exp(exp_arg/2.35) 
-                     * my_units.time_units * Ramp;
-    my_chemistry.k26 = 3.2e-13 * POW(1.0+Redshift, 0.50) * exp(exp_arg/2.00) 
-                     * my_units.time_units * Ramp;
-    my_chemistry.piHI   = 4.7e-24 * POW(1.0+Redshift, 0.43) * exp(exp_arg/1.95) 
-                     / CoolingUnits * Ramp;
-    my_chemistry.piHeI  = 8.2e-24 * POW(1.0+Redshift, 0.50) * exp(exp_arg/2.00) 
-                     / CoolingUnits * Ramp;
-    my_chemistry.piHeII = 1.6e-25 * POW(1.0+Redshift, 0.51) * exp(exp_arg/2.35) 
-                     / CoolingUnits * Ramp;
-  }   
-    
-  /* ------------------------------------------------------------------ */
-  /* Haardt & Madau (1996) quasar spectrum (alpha_q = 1.8) */
-  /* *** DEPRECATED *** */
+  // *** k25 ***
+  slope = (my_chemistry.UVbackground_table.k25[index] - my_chemistry.UVbackground_table.k25[index-1]) / (zvec[index] - zvec[index-1]);
+  my_chemistry.k25 = (Redshift - zvec[index-1]) * slope + my_chemistry.UVbackground_table.k25[index-1];
 
-  if (my_chemistry.UVbackground_type == -2) {
-    float exp_arg = -1.0 * POW(Redshift-2.3, 2);
+  // *** k26 ***
+  slope = (my_chemistry.UVbackground_table.k26[index] - my_chemistry.UVbackground_table.k26[index-1]) / (zvec[index] - zvec[index-1]);
+  my_chemistry.k26 = (Redshift - zvec[index-1]) * slope + my_chemistry.UVbackground_table.k26[index-1];
 
-    my_chemistry.k24 = 5.6e-13 * POW(1.0+Redshift, 0.43) * exp(exp_arg/1.95)
-                 * my_units.time_units * Ramp;
-    my_chemistry.k25 = 3.2e-15 * POW(1.0+Redshift, 0.30) * exp(exp_arg/2.60)
-                 * my_units.time_units * Ramp;
-    my_chemistry.k26 = 4.8e-13 * POW(1.0+Redshift, 0.43) * exp(exp_arg/1.95)
-                 * my_units.time_units * Ramp;
-    my_chemistry.piHI   = 3.9e-24 * POW(1.0+Redshift, 0.43) * exp(exp_arg/1.95)
-                 / CoolingUnits * Ramp;
-    my_chemistry.piHeI  = 6.4e-24 * POW(1.0+Redshift, 0.43) * exp(exp_arg/2.10)
-                 / CoolingUnits * Ramp;
-    my_chemistry.piHeII = 8.7e-26 * POW(1.0+Redshift, 0.30) * exp(exp_arg/2.70)
-                 / CoolingUnits * Ramp;
-  }
+  if (my_chemistry.primordial_chemistry > 1) {
 
-  /* ------------------------------------------------------------------ */
-  /* Haardt & Madau (2001) quasar + galaxy (alpha_q = 1.57)        */
+    // *** k27 ***
+    slope = (my_chemistry.UVbackground_table.k27[index] - my_chemistry.UVbackground_table.k27[index-1]) / (zvec[index] - zvec[index-1]);
+    my_chemistry.k27 = (Redshift - zvec[index-1]) * slope + my_chemistry.UVbackground_table.k27[index-1];
 
-  if (my_chemistry.UVbackground_type == 1) {
-   
-    my_chemistry.k24 = 1.04e-12 * POW(1.0+Redshift, 0.231)
-                 * exp( -0.6818 * POW(Redshift-1.855, 2.0) /
-             (1.0+0.1646 * POW(Redshift+0.3097, 2.0)) )
-      * my_units.time_units * Ramp;
-    my_chemistry.k25 = 1.84e-14 * POW(1.0+Redshift, -1.038)
-                 * exp( -1.1640 * POW(Redshift-1.973, 2.0) /
-                 (1.0+0.1940 * POW(Redshift-0.6561, 2.0)) )
-                 * my_units.time_units * Ramp;
-    my_chemistry.k26 = 5.79e-13 * POW(1.0+Redshift, 0.278)
-                 * exp( -0.8260 * POW(Redshift-1.973, 2.0) /
-                 (1.0+0.1730 * POW(Redshift+0.2880, 2.0)) )
-                 * my_units.time_units * Ramp;
-    my_chemistry.piHI   = 8.86e-24 * POW(1.0+Redshift, -0.0290)
-                 * exp( -0.7055 * POW(Redshift-2.003, 2.0) /
-                 (1.0+0.1884 * POW(Redshift+0.2888, 2.0)) )
-                 / CoolingUnits * Ramp;
-    my_chemistry.piHeI  = 5.86e-24 * POW(1.0+Redshift, 0.1764)
-                 * exp( -0.8029 * POW(Redshift-2.088, 2.0) /
-                 (1.0+0.1732 * POW(Redshift+0.1362, 2.0)) )
-                 / CoolingUnits * Ramp;
-    my_chemistry.piHeII = 2.17e-25 * POW(1.0+Redshift, -0.2196)
-                 * exp( -1.070 * POW(Redshift-1.782, 2.0) /
-                 (1.0+0.2124 * POW(Redshift-0.9213, 2.0)) )
-                 / CoolingUnits * Ramp;
-    }
+    // *** k28 ***
+    slope = (my_chemistry.UVbackground_table.k28[index] - my_chemistry.UVbackground_table.k28[index-1]) / (zvec[index] - zvec[index-1]);
+    my_chemistry.k28 = (Redshift - zvec[index-1]) * slope + my_chemistry.UVbackground_table.k28[index-1];
 
-  /* ------------------------------------------------------------------ */
-  /* Haardt & Madau model (ca. 2005) that ships with Cloudy v.8.00 */
-  /* [quasars and galaxies] */
+    // *** k29 ***
+    slope = (my_chemistry.UVbackground_table.k29[index] - my_chemistry.UVbackground_table.k29[index-1]) / (zvec[index] - zvec[index-1]);
+    my_chemistry.k29 = (Redshift - zvec[index-1]) * slope + my_chemistry.UVbackground_table.k29[index-1];
 
-  if (my_chemistry.UVbackground_type == 2) {
+    // *** k30 ***
+    slope = (my_chemistry.UVbackground_table.k30[index] - my_chemistry.UVbackground_table.k30[index-1]) / (zvec[index] - zvec[index-1]);
+    my_chemistry.k30 = (Redshift - zvec[index-1]) * slope + my_chemistry.UVbackground_table.k30[index-1];
 
-    my_chemistry.k24 = 4.68e-12 * POW(1.0+Redshift, -0.592) * 
-      exp( -0.7156 * POW(Redshift-2.292, 2.0) / 
-	   (1.0 + 0.2009 * POW(Redshift+0.548, 2.0)) ) *
-      my_units.time_units * Ramp;
-
-    my_chemistry.k25 = 3.67e-14 * POW(1.0+Redshift, -0.258) * 
-      exp( -1.1378 * POW(Redshift-1.875, 2.0) / 
-	   (1.0 + 0.1727 * POW(Redshift-0.607, 2.0)) ) *
-      my_units.time_units * Ramp;
-
-    my_chemistry.k26 = 1.11e-11 * POW(1.0+Redshift, -1.451) * 
-      exp( -0.7552 * POW(Redshift-2.954, 2.0) / 
-	   (1.0 + 0.2625 * POW(Redshift+0.918, 2.0)) ) *
-      my_units.time_units * Ramp;
-
-    if (my_chemistry.primordial_chemistry > 1) {
-
-      my_chemistry.k27 = 9.37e-10 * POW(1.0+Redshift, 2.526) *
-	exp( 12.7560 * POW(Redshift+2.707, 2.0) /
-	     (1.0 + -0.0301 * POW(Redshift+111.200, 2.0)) ) *
-	my_units.time_units * Ramp;
-      
-      my_chemistry.k28 = 9.84e-12 * POW(1.0+Redshift, 2.115) * 
-	exp( -1.9137 * POW(Redshift-1.748, 2.0) / 
-	     (1.0 + 0.3896 * POW(Redshift+3.679, 2.0)) ) * 
-	my_units.time_units * Ramp;
-      
-      my_chemistry.k29 = 6.87e-12 * POW(1.0+Redshift, -0.456) * 
-	exp( -0.7601 * POW(Redshift-2.234, 2.0) / 
-	     (1.0 + 0.1955 * POW(Redshift+0.655, 2.0)) ) * 
-	my_units.time_units * Ramp;
-      
-      my_chemistry.k30 = 2.61e-12 * POW(1.0+Redshift, -2.198) * 
-	exp( -0.5824 * POW(Redshift-3.811, 2.0) / 
-	     (1.0 + 0.3241 * POW(Redshift+0.838, 2.0)) ) * 
-	my_units.time_units * Ramp;
-      
-    }
-
-    my_chemistry.piHI = 4.09e-23 * POW(1.0+Redshift, -0.746) * 
-      exp( -0.7469 * POW(Redshift-2.419, 2.0) / 
-	   (1.0 + 0.2120 * POW(Redshift+0.686, 2.0)) )
-      / CoolingUnits * Ramp;
-
-    my_chemistry.piHeII = 1.28e-24 * POW(1.0+Redshift, -0.504) *
-      exp( -1.0742 * POW(Redshift-1.889, 2.0) /
-	   (1.0 + 0.1919 * POW(Redshift-0.518, 2.0)) )
-      / CoolingUnits * Ramp;
-
-    my_chemistry.piHeI = 4.86e-22 * POW(1.0+Redshift, -2.302) * 
-      exp( -0.5250 * POW(Redshift-3.900, 2.0) / 
-	   (1.0 + 0.3452 * POW(Redshift+0.673, 2.0)) )
-      / CoolingUnits * Ramp;
-
- }
-
-  /* ------------------------------------------------------------------ */
-  /* Haardt & Madau (2012) [quasars and galaxies] */
-
-  if (my_chemistry.UVbackground_type == 3) {
-
-    // NOT YET
+    // *** k31 ***
+    slope = (my_chemistry.UVbackground_table.k31[index] - my_chemistry.UVbackground_table.k31[index-1]) / (zvec[index] - zvec[index-1]);
+    my_chemistry.k31 = (Redshift - zvec[index-1]) * slope + my_chemistry.UVbackground_table.k31[index-1];
 
   }
 
-  /* ------------------------------------------------------------------ */
-  /* Faucher-Giguere et al. (2011) [quasars and galaxies] */
+  // *** piHI ***
+  slope = (my_chemistry.UVbackground_table.piHI[index] - my_chemistry.UVbackground_table.piHI[index-1]) / (zvec[index] - zvec[index-1]);
+  my_chemistry.piHI = (Redshift - zvec[index-1]) * slope + my_chemistry.UVbackground_table.piHI[index-1];
 
-  if (my_chemistry.UVbackground_type == 4) {
+  // *** piHeII ***
+  slope = (my_chemistry.UVbackground_table.piHeII[index] - my_chemistry.UVbackground_table.piHeII[index-1]) / (zvec[index] - zvec[index-1]);
+  my_chemistry.piHeII = (Redshift - zvec[index-1]) * slope + my_chemistry.UVbackground_table.piHeII[index-1];
 
-    // NOT YET
+  // *** piHeI ***
+  slope = (my_chemistry.UVbackground_table.piHeI[index] - my_chemistry.UVbackground_table.piHeI[index-1]) / (zvec[index] - zvec[index-1]);
+  my_chemistry.piHeI = (Redshift - zvec[index-1]) * slope + my_chemistry.UVbackground_table.piHeI[index-1];
 
-  }
+
+
+  // Now apply the Ramp factor
+  my_chemistry.k24 *= Ramp;
+  my_chemistry.k25 *= Ramp;
+  my_chemistry.k26 *= Ramp; 
+  if (my_chemistry.primordial_chemistry > 1) {
+    my_chemistry.k27 *= Ramp;
+    my_chemistry.k28 *= Ramp;
+    my_chemistry.k29 *= Ramp; 
+    my_chemistry.k30 *= Ramp; 
+    my_chemistry.k31 *= Ramp; 
+  } 
+  my_chemistry.piHI *= Ramp;
+  my_chemistry.piHeII *= Ramp;
+  my_chemistry.piHeI *= Ramp; 
 
 
 
   /* Molecular hydrogen constant photo-dissociation */
 
-  /* Note that k31 can be set by the UVbackground, in which case it is
-     overwritten here if (LWbackground_intensity > 0.0). */
+  /* Note that k31 can be set by above by the UV background table, in
+     which case it is overwritten here if (LWbackground_intensity >
+     0.0). */
 
   if (my_chemistry.LWbackground_intensity > 0.0) 
     my_chemistry.k31 = 1.13e8 * my_chemistry.LWbackground_intensity * my_units.time_units;

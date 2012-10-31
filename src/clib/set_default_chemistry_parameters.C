@@ -30,7 +30,21 @@ chemistry_data set_default_chemistry_parameters()
   my_chemistry.photoelectric_heating          = 0;
   my_chemistry.photoelectric_heating_rate     = 8.5e-26;  // ergs cm-3 s-1
 
-  my_chemistry.UVbackground_type             = 0;
+  my_chemistry.UVbackground                  = 0;
+
+  my_chemistry.UVbackground_table.Nz = 0;
+  my_chemistry.UVbackground_table.z = NULL;
+  my_chemistry.UVbackground_table.k24 = NULL;
+  my_chemistry.UVbackground_table.k25 = NULL;
+  my_chemistry.UVbackground_table.k26 = NULL;
+  my_chemistry.UVbackground_table.k27 = NULL;
+  my_chemistry.UVbackground_table.k28 = NULL;
+  my_chemistry.UVbackground_table.k29 = NULL;
+  my_chemistry.UVbackground_table.k30 = NULL;
+  my_chemistry.UVbackground_table.k31 = NULL;
+  my_chemistry.UVbackground_table.piHI = NULL;
+  my_chemistry.UVbackground_table.piHeII = NULL;
+  my_chemistry.UVbackground_table.piHeI = NULL;
 
   my_chemistry.UVbackground_redshift_on      = 7.0;
   my_chemistry.UVbackground_redshift_off     = 0.0;

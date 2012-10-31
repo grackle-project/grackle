@@ -28,7 +28,6 @@
      &                gpldla, gphdla, hdltea, hdlowa,
      &                gaHIa, gaH2a, gaHea, gaHpa, gaela, 
      &                gasgra, 
-     &                iradtype,
      &                ierr,
      &                ih2optical, iciecool, ithreebody, ciecoa, 
      &                icmbTfloor, iClHeat,
@@ -68,7 +67,6 @@
 !    iexpand  - comoving coordinates flag (0 = off, 1 = on)
 !    idim     - dimensionality (rank) of problem
 !    ispecies - chemistry module (1 - H/He only, 2 - molecular H, 3 - D) 
-!    iradtype - type of radiative field (only used if = 8)
 !    imetal   - flag if metal field is active (0 = no, 1 = yes)
 !    imcool   - flag if there is metal cooling
 !    idust    - flag for H2 formation on dust grains
@@ -117,7 +115,6 @@
 
       integer in, jn, kn, is, js, ks, ie, je, ke, nratec, 
      &        iexpand, ih2co, ipiht, ispecies, imetal, idim,
-     &        iradtype, 
      &        ierr, imcool, idust, 
      &        igammah, ih2optical, iciecool, ithreebody,
      &        ndratec
@@ -316,7 +313,6 @@ c      chunit = (7.17775d-12)/(2.d0*uvel*uvel*mh)   ! 4.5 eV per H2 formed
      &                reHII, reHeII1, reHeII2, reHeIII, brem,
      &                indixe, t1, t2, logtem, tdef, edot,
      &                tgas, tgasold, p2d, tdust, metallicity, rhoH, 
-     &                iradtype, 
      &                ih2optical, iciecool, ciecoa, cieco,
      &                icmbTfloor, iClHeat,
      &                clEleFra, clGridRank, clGridDim,
@@ -328,7 +324,7 @@ c      chunit = (7.17775d-12)/(2.d0*uvel*uvel*mh)   ! 4.5 eV per H2 formed
 !         (maybe should add itmask to this call)
 
             call lookup_cool_rates1d(temstart, temend, nratec, j, k,
-     &               is, ie, ijk, iradtype, ithreebody,
+     &               is, ie, ijk, ithreebody,
      &               in, jn, kn, ispecies, idust, 
      &               tgas, HI, HII, HeI, HeII, tdust, metallicity, 
      &               k1a, k2a, k3a, k4a, k5a, k6a, k7a, k8a, k9a, k10a,
@@ -783,7 +779,7 @@ c -------------------------------------------------------------------
 !   of temperature.
 
       subroutine lookup_cool_rates1d(temstart, temend, nratec, j, k,
-     &                is, ie, ijk, iradtype, ithreebody,
+     &                is, ie, ijk, ithreebody,
      &                in, jn, kn, ispecies, idust,
      &                tgas1d, HI, HII, HeI, HeII, tdust, metallicity, 
      &                k1a, k2a, k3a, k4a, k5a, k6a, k7a, k8a, k9a, k10a,
@@ -807,7 +803,7 @@ c -------------------------------------------------------------------
 
 !     Arguments
 
-      integer is, ie, ijk, iradtype, nratec, 
+      integer is, ie, ijk, nratec, 
      &        in, jn, kn, ispecies, ithreebody, j, k,
      &        idust, ndratec
       real temstart, temend, tgas1d(in), dom,
@@ -1051,23 +1047,23 @@ c -------------------------------------------------------------------
          endif
       enddo
 
+#ifdef SECONDARY_IONIZATION_NOT_YET_IMPLEMENTED
 !        If using a high-energy radiation field, then account for
 !          effects of secondary electrons (Shull * Steenberg 1985)
 !          (see calc_rate.src)
 
-      if (iradtype .eq. 8) then
-         do i = is+1, ie+1
-            if (itmask(i)) then
+      do i = is+1, ie+1
+         if (itmask(i)) then
             x = max(HII(i,j,k)/(HI(i,j,k)+HII(i,j,k)), 1.0d-4)
             factor = 0.3908d0*(1.d0 - x**0.4092d0)**1.7592d0
             k24shield(i) = k24shield(i) + 
-     &         factor*(piHI + 0.08d0*piHeI)/(e24*everg) *coolunit*tbase1
+     &           factor*(piHI + 0.08d0*piHeI)/(e24*everg) *coolunit*tbase1
             factor = 0.0554d0*(1.d0 - x**0.4614d0)**1.6660d0
             k26shield(i) = k26shield(i) + 
-     &         factor*(piHI/0.08d0 + piHeI)/(e26*everg) *coolunit*tbase1
+     &           factor*(piHI/0.08d0 + piHeI)/(e26*everg) *coolunit*tbase1
          endif
-         enddo
-      endif
+      enddo
+#endif
 
 
 !           If using H2, and using the density-dependent collisional

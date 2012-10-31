@@ -7,6 +7,9 @@ chemistry_data set_default_chemistry_parameters();
 int initialize_chemistry_data(chemistry_data &my_chemistry,
                               code_units &my_units, gr_float a_value);
 
+int initialize_UVbackground_data(chemistry_data &my_chemistry,
+				 code_units &my_units, gr_float a_value);
+
 int solve_chemistry(chemistry_data &my_chemistry,
 		    code_units &my_units,
 		    gr_float a_value, gr_float dt_value,
