@@ -87,8 +87,12 @@ int update_UVbackground_rates(chemistry_data &my_chemistry,
   // find interpolation index
   gr_float *zvec = my_chemistry.UVbackground_table.z;
   gr_int index=0;
-  while (Redshift >= zvec[index++]);
+  while (Redshift > zvec[index])
+    index++;
+  if(index == 0) index=1;
   if(index == my_chemistry.UVbackground_table.Nz) index--;
+
+  // printf("index = %d, %.3f <= %.3f <= %.3f\n",index,zvec[index-1],Redshift,zvec[index]);
 
   // *** k24 ***
   gr_float slope = (my_chemistry.UVbackground_table.k24[index] - my_chemistry.UVbackground_table.k24[index-1]) / (zvec[index] - zvec[index-1]);
@@ -138,6 +142,8 @@ int update_UVbackground_rates(chemistry_data &my_chemistry,
   slope = (my_chemistry.UVbackground_table.piHeI[index] - my_chemistry.UVbackground_table.piHeI[index-1]) / (zvec[index] - zvec[index-1]);
   my_chemistry.piHeI = (Redshift - zvec[index-1]) * slope + my_chemistry.UVbackground_table.piHeI[index-1];
 
+
+  // printf("%e %e %e\n",my_chemistry.k24,my_chemistry.k25,my_chemistry.k26);
 
 
   // Now apply the Ramp factor
