@@ -46,12 +46,7 @@ typedef struct
 
   gr_int UVbackground;
 
-<<<<<<< local
-  double TimeFieldLastUpdated;
-  int  RadiationShield;
-=======
   char *UVbackground_file;
->>>>>>> other
 
   struct UVBtable {
     gr_int Nz;
