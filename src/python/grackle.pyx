@@ -1,14 +1,3 @@
-cdef extern from "macros_and_parameters.h":
-    pass
-
-cdef extern from "code_units.h":
-    ctypedef struct code_units:
-      int comoving_coordinates
-      float density_units
-      float length_units
-      float time_units
-      float a_units
-
 cdef extern from "chemistry_data.h":
     ctypedef struct chemistry_data:
         float Gamma
@@ -24,6 +13,14 @@ cdef extern from "chemistry_data.h":
         int h2_optical_depth_approximation
         int photoelectric_heating
         # Most of the rest are not user-settable
+
+cdef extern from "code_units.h":
+    ctypedef struct code_units:
+      int comoving_coordinates
+      float density_units
+      float length_units
+      float time_units
+      float a_units
 
 cdef extern from "grackle.h":
     chemistry_data set_default_chemistry_parameters()
@@ -90,6 +87,3 @@ cdef extern from "grackle.h":
                               float *DI_density, float *DII_density, float *HDI_density,
                               float *e_density, float *metal_density,
                               float *temperature)
-
-cdef extern from "fix_enzo_defs.h":
-    pass
