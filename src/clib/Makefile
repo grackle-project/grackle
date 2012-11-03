@@ -171,9 +171,7 @@ lib%.$(MACH_SHARED_EXT): $(MODULES) autogen dep enzo.o $(OBJS_LIB)
 	fi)
 
 libgrackle.$(MACH_SHARED_EXT): $(MODULES) autogen dep
-	@cython --cplus grackle.pyx -o libgrackle.c
-	$(CXX) -c -o libgrackle.o $(DEFINES) $(CFLAGS) $(INCLUDES) libgrackle.c 
-	-@$(LD) $(LDFLAGS) $(SHARED_OPT) -o $@ libgrackle.o $(OBJS_LIB) $(LIBS) >& $(OUTPUT)
+	-@$(LD) $(LDFLAGS) $(SHARED_OPT) -o $@ $(OBJS_LIB) $(LIBS) >& $(OUTPUT)
 
 #-----------------------------------------------------------------------
 # WRITE ALL COMPILER OUTPUT TO FILE
