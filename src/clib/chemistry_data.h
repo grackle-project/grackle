@@ -55,7 +55,7 @@ typedef struct
   int TabulatedLWBackground;
   float RadiationFieldRedshift;
 
-  FLOAT TimeFieldLastUpdated;
+  double TimeFieldLastUpdated;
   int  RadiationShield;
 
   /* Frequency dependant information (constant). */
