@@ -5,13 +5,13 @@
 !//////////////////////  SUBROUTINE COOL1D_MULTI  \\\\\\\\\\\\\\\\\\\\\\
 
       subroutine cool1d_multi(
-     &                d, e, ge, u, v, w, de, HI, HII, HeI, HeII, HeIII,
-     &                in, jn, kn, nratec, idual, imethod,
+     &                d, e, u, v, w, de, HI, HII, HeI, HeII, HeIII,
+     &                in, jn, kn, nratec, 
      &                iexpand, ispecies, imetal, imcool, idust, idim, 
      &                is, ie, j, k, ih2co, ipiht, iter, igammah,
      &                aye, temstart, temend, z_solar,
      &                utem, uxyz, uaye, urho, utim,
-     &                eta1, eta2, gamma,
+     &                gamma,
      &                ceHIa, ceHeIa, ceHeIIa, ciHIa, ciHeIa, 
      &                ciHeISa, ciHeIIa, reHIIa, reHeII1a, 
      &                reHeII2a, reHeIIIa, brema, compa, gammaha,
@@ -23,14 +23,11 @@
      &                gpldla, gphdla, gpldl, gphdl,
      &                hdltea, hdlowa, hdlte, hdlow,
      &                gaHIa, gaH2a, gaHea, gaHpa, gaela,
-     &                gasgra, metala, n_xe, xe_start, xe_end, 
+     &                gasgra, 
      &                ceHI, ceHeI, ceHeII, ciHI, ciHeI, ciHeIS, ciHeII,
      &                reHII, reHeII1, reHeII2, reHeIII, brem,
      &                indixe, t1, t2, logtem, tdef, edot,
      &                tgas, tgasold, p2d, tdust, metallicity, rhoH, 
-     &                inutot, iradtype, nfreq, imetalregen,
-     &                iradshield, avgsighp, avgsighep, avgsighe2p,
-     &                iradtrans, photogamma,
      &                ih2optical, iciecool, ciecoa, cieco,
      &                icmbTfloor, iClHeat,
      &                clEleFra, clGridRank, clGridDim,
@@ -62,25 +59,22 @@
 
 !  Arguments
 
-      integer in, jn, kn, is, ie, j, k, nratec, imethod, idim,
-     &        idual, iexpand, ih2co, ipiht, ispecies, imcool, idust, 
-     &        nfreq, iradshield, iradtype, imetalregen, iradtrans,
-     &        n_xe, imetal, igammah, ih2optical, iciecool
+      integer in, jn, kn, is, ie, j, k, nratec, idim,
+     &        iexpand, ih2co, ipiht, ispecies, imcool, idust, 
+     &        imetal, igammah, ih2optical, iciecool
       real    aye, temstart, temend, z_solar,
      &        utem, uxyz, uaye, urho, utim,
-     &        eta1, eta2, gamma
-      real    d(in,jn,kn),   ge(in,jn,kn),     e(in,jn,kn),
+     &        gamma
+      real    d(in,jn,kn),    e(in,jn,kn),
      &        u(in,jn,kn),    v(in,jn,kn),     w(in,jn,kn),
      &       de(in,jn,kn),   HI(in,jn,kn),   HII(in,jn,kn),
      &      HeI(in,jn,kn), HeII(in,jn,kn), HeIII(in,jn,kn)
       real    HM(in,jn,kn),  H2I(in,jn,kn), H2II(in,jn,kn),
      &        DI(in,jn,kn),  DII(in,jn,kn), HDI(in,jn,kn),
      &        metal(in,jn,kn)
-      real    photogamma(in,jn,kn)
       real    hyd01ka(nratec), h2k01a(nratec), vibha(nratec), 
      &        rotha(nratec), rotla(nratec), gpldla(nratec),
-     &        gphdla(nratec), hdltea(nratec), hdlowa(nratec),
-     &        metala(nratec, n_xe)
+     &        gphdla(nratec), hdltea(nratec), hdlowa(nratec)
       real    gaHIa(nratec), gaH2a(nratec), gaHea(nratec),
      &        gaHpa(nratec), gaela(nratec), gasgra(nratec), 
      &        ciecoa(nratec)
@@ -88,9 +82,8 @@
      &        ciHIa(nratec), ciHeIa(nratec), ciHeISa(nratec), 
      &        ciHeIIa(nratec), reHIIa(nratec), reHeII1a(nratec), 
      &        reHeII2a(nratec), reHeIIIa(nratec), brema(nratec)
-      real    compa, piHI, piHeI, piHeII, comp_xraya, comp_temp,
-     &        inutot(nfreq), avgsighp, avgsighep, avgsighe2p
-      real    gammaha, xe_start, xe_end
+      real    compa, piHI, piHeI, piHeII, comp_xraya, comp_temp
+      real    gammaha
 
 !  Cloudy cooling data
 
@@ -105,17 +98,13 @@
 !  Parameters
 
       double precision mh
-      real    ZSOLAR, mu_metal, boost_factor
-! MKRJ 12/21/07 boost gammaha by this factor (JHW reduced by 1.0 because
-! it has been included in v2.0
-      parameter (boost_factor = 3.5) 
+      real    ZSOLAR, mu_metal
       parameter (mh = mass_h)      !DPC
       parameter (mu_metal = 16.d0)    ! approx. mean molecular weight of metals
 
-
 !  Locals
 
-      integer i, j1, iter, iradfield
+      integer i, j1, iter
       real dom, qq, vibl, logtem0, logtem9, dlogtem, energy, zr
       real dt2, ttmin, comp1, comp2, scoef, acoef, HIdot,
      &     hdlte1, hdlow1, gamma2, x, fudge, fH2,
@@ -144,23 +133,9 @@
 
 !  Metal cooling locals
 
-      integer xe_idx, tcmb_idx
-      real logxe0, logxe1, dlogxea, xe, log_xe, xe1, dlogT, dlogxe, xi
-      real logTcmb, dlogTcmb, metalc_cmb, xe_max, metalfree
-      real xe_slope, xe_logtem0, xe_min
-      parameter (xe_slope = 5.d0, xe_logtem0 = 9.7859d0)  ! e^9.78 = 10^4.25 K
-      parameter (xe_min = -9.21d0)  ! e^-9.21 = 1e-4
-#ifdef CEN_METALS
-      integer nti, ndi, cmgenerate, NIT, NID, NIB
-      real    TEMMIN, DELT, DENMIN, DELD, FREQDEL, FREQMIN
-      PARAMETER(NIT=200,TEMMIN=3.d0,DELT=0.03d0)
-      PARAMETER(NID=300,DENMIN=-12.d0,DELD=0.05d0)
-      PARAMETER(NIB=400,FREQDEL=0.02d0,FREQMIN=1.d0)
-      real    metal_cool, metal_heat, xi
-      real    cbovcool(NIT,NID), cbovheat(NIT,NID), denwk(NID), 
-     &        radt(NIB), eb(NIB)
-      common  /cen_metal_com/ cbovcool, cbovheat, denwk
-#endif /* CEN_METALS */
+      integer tcmb_idx
+      real logxe0, logxe1, dlogxea, xe, log_xe, xe1, dlogT, dlogxe
+      real logTcmb, dlogTcmb, metalc_cmb, metalfree
 
 !  Iteration mask
 
@@ -185,7 +160,6 @@
       coolunit = (uaye**5 * xbase1**2 * mh**2) / (tbase1**3 * dbase1)
       zr       = 1.d0/(aye*uaye) - 1.d0
       fudge    = 1.d0
-      iradfield = -1
 
 !     Set compton cooling coefficients (and temperature)
 
@@ -199,39 +173,11 @@
 
 !     Compute Pressure
 
-      if (imethod .eq. 2) then
-
-!        Zeus - e() is really gas energy
-
-         do i = is+1, ie+1
-            if ( itmask(i) ) then
+      do i = is+1, ie+1
+         if ( itmask(i) ) then
             p2d(i) = (gamma - 1.d0)*d(i,j,k)*e(i,j,k)
-            end if
-         enddo
-      else
-         if (idual .eq. 1) then
-
-!           PPM with dual energy -- use gas energy
-
-            do i = is+1, ie+1
-               if ( itmask(i) ) then
-               p2d(i) = (gamma - 1.d0)*d(i,j,k)*ge(i,j,k)
-               end if
-            enddo
-         else
-
-!           PPM without dual energy -- use total energy
-
-            do i = is+1, ie+1
-               if ( itmask(i) ) then
-               p2d(i) = e(i,j,k) - 0.5d0*u(i,j,k)**2
-               if (idim .gt. 1) p2d(i) = p2d(i) - 0.5d0*v(i,j,k)**2
-               if (idim .gt. 2) p2d(i) = p2d(i) - 0.5d0*w(i,j,k)**2
-               p2d(i) = max((gamma - 1.d0)*d(i,j,k)*p2d(i), tiny)
-               end if
-            enddo
-         endif
-      endif
+         end if
+      enddo
 
 !     Compute temperature and H number density
 
@@ -654,342 +600,17 @@ c  new (correct) way: (april 4, 2007)
       endif
 
 !     --- Compute (external) radiative heating terms ---
-
-!                       Photoionization heating
-
-#ifdef RADIATION
-      if (iradshield .eq. 0) then
-
-!        regular version
-
-         if (iradtype .eq. 8) then
-
-!           1) heating assuming high energy photons produces secondary
-!              electrons which do the heating (Shull & Steenberg, 1985).
-
-            do i = is+1, ie+1
-               if ( itmask(i) ) then
-               x = max(HII(i,j,k)/(HI(i,j,k)+HII(i,j,k)), 1.d-4)
-               factor = 0.9971d0*(1.d0-(1.d0-x**0.2663d0)**1.3163d0)
-               edot(i) = edot(i) + float(ipiht)*factor*(
-     &                + piHI  *HI  (i,j,k)            ! pi of HI
-     &                + piHeI *HeI (i,j,k)*0.25d0     ! pi of HeI
-     &                + piHeII*HeII(i,j,k)*0.25d0     ! pi of HeII
-     &              )/dom
-               end if
-            enddo
-
-         else
-
-!           2) standard heating
-
-            do i = is+1, ie+1
-               if ( itmask(i) ) then
-               edot(i) = edot(i) + float(ipiht)*(
-     &                + piHI  *HI  (i,j,k)            ! pi of HI
-     &                + piHeI *HeI (i,j,k)*0.25d0     ! pi of HeI
-     &                + piHeII*HeII(i,j,k)*0.25d0     ! pi of HeII
-     &              )/dom
-               end if
-            enddo
-
-         endif
-
-      else
-
-!        version with approximate self-shielding
-
-         do i = is+1, ie+1
-            if ( itmask(i) ) then
-
-            edot(i) = edot(i) + float(ipiht)*(
-     &                + piHI  *HI  (i,j,k)*
-     &                   exp(-avgsighp*HI(i,j,k)*dom)
-     &                + piHeI *HeI (i,j,k)*0.25d0*
-     &                   exp(-avgsighep*0.25d0*HeI(i,j,k)*dom)
-     &                + piHeII*HeII(i,j,k)*0.25d0*
-     &                   exp(-avgsighe2p*0.25d0*HeII(i,j,k)*dom)
-     &           )/dom
-
-!            write(6,*) 'cool1d_multi: after PI heating', edot(i),
-!     &           piHI, HI(i,j,k), avgsighp, dom
-
-            end if
-         enddo
-
-      endif
-
-!     Photoheating from radiative transfer
-
-      if (iradtrans .eq. 1) then
-c     for radiative transfer, convert from eV/s*TimeUnits to the coolunits use
-         rtunits = ev2erg/utim/coolunit/dom
-         do i = is+1, ie+1
-            if (itmask(i)) then
-               edot(i) = edot(i) + float(ipiht) * photogamma(i,j,k) * 
-     &              rtunits * HI(i,j,k)
-c               if (photogamma(i,j,k).gt.0) then
-c                  print*, i,j,k,edot(i), photogamma(i,j,k),rtunits,dom,
-c     $                 aye,utim,coolunit,d(i,j,k),hi(i,j,k),tgas(i)
-c               endif
-               if (edot(i) .ne. edot(i)) then
-                  write(6,*) 'NaN in edot[2]: ', i, j, k, edot(i), 
-     &                 photogamma(i,j,k),HI(i,j,k), de(i,j,k), d(i,j,k), 
-     &                 ge(i,j,k), p2d(i), tgas(i), dom, urho, aye, mh
-               endif
-            endif
-         enddo
-      endif
-
-#endif /* RADIATION */
-
-
-!     --- Cooling/heating due to metals ---
-
-      if (imcool .eq. 999) then
-
-         logxe0 = log(xe_start)
-         logxe1 = log(xe_end)
-         dlogxea = (logxe1 - logxe0) / real(n_xe-1)
-c
-c  Determine temperature for CMB temperature so we can subtract metal
-c  cooling at T=T_cmb
-c
-         logtcmb = log(comp2)
-         tcmb_idx = max(1, int((logtcmb-logtem0)/dlogtem)+1)
-         dlogTcmb = (logtcmb - (logtem0 + (tcmb_idx-1)*dlogtem)) 
-     $        / dlogtem
-         do i = is+1, ie+1
-            if (itmask(i)) then
-!
-               if (de(i,j,k) .lt. 0.0) then !#####
-                  write(6,*) 'cool1d_multi: negative d(i,j,k)', 
-     $                 de(i,j,k), d(i,j,k), metal(i,j,k)
-               endif
-!
-c               metalfree = d(i,j,k) - metal(i,j,k)
-               xe = de(i,j,k) / d(i,j,k)
-c               if (tgas(i) .lt. 1e4) xe = min(xe, 1e-2)
-               log_xe = max(min(log(xe), logxe1), logxe0)
-               if (logtem(i) .lt. xe_logtem0) then
-                  xe_max = max(xe_slope * (logtem(i) - xe_logtem0), 
-     $                         xe_min)
-                  log_xe = min(log_xe, xe_max)
-               endif
-               xe_idx = min(n_xe-1,
-     $              max(1, int((log_xe - logxe0)/dlogxea)+1))
-               xe1 = logxe0 + (xe_idx - 1)*dlogxea
-               dlogT = tdef(i)
-               dlogxe = (log_xe - xe1) / dlogxea
-c
-c  Interpolate metal cooling in temperature and electron fraction
-c
-               metalc(i) = 
-     $         metala(indixe(i),   xe_idx  )*(1.d0-dlogxe)*(1.d0-dlogT)+
-     $         metala(indixe(i)+1, xe_idx  )*(dlogxe  )*(1.d0-dlogT) +
-     $         metala(indixe(i),   xe_idx+1)*(1.d0-dlogxe)*(dlogT)   +
-     $         metala(indixe(i)+1, xe_idx+1)*(dlogxe  )*(dlogT)
-c
-c  Subtract metal cooling at T_cmb
-c
-            metalc_cmb = 
-     $       metala(tcmb_idx,   xe_idx  )*(1.d0-dlogxe)*(1.d0-dlogTcmb)+
-     $       metala(tcmb_idx+1, xe_idx  )*(dlogxe  )*(1.d0-dlogTcmb) +
-     $       metala(tcmb_idx,   xe_idx+1)*(1.d0-dlogxe)*(dlogTcmb)   +
-     $       metala(tcmb_idx+1, xe_idx+1)*(dlogxe  )*(dlogTcmb)
-               metalc(i) = metalc(i) - metalc_cmb
-
-               xi = min(3.d0, metal(i,j,k)/(d(i,j,k)*z_solar))
-               edot(i) = edot(i) - metalc(i) * d(i,j,k) * d(i,j,k) * 
-     $              (xi/JHW_METALS_NORMZ)
-#ifdef UNUSED
-               if (xi .gt. 1d-4 .and. tgas(i) .lt. 1e4) then
-                  write(6,'(a,3i5,2e12.4)') 'a0', i,j,k, exp(log_xe),
-     $                 exp(logtem(i))
-                  write(6,'(a,4e12.4)') 'a1', d(i,j,k), xi, 
-     $                 dlogxe, dlogT
-                  write(6,'(a,i5,4e12.4)') 'a2', xe_idx, 
-     $                 metala(indixe(i), xe_idx),
-     $                 metalc(i), metalc_cmb, coolunit
-                  write(6,'(a,2e12.4)') 'a3', edot(i),
-     $                 metalc(i)*d(i,j,k)*(xi/JHW_METALS_NORMZ)/dom
-
-                  write(6,*) ''
-               endif
-#endif
-
-               if (edot(i) .ne. edot(i)) then    !#####
-                  write(6,*) 'cool1d_multi: edot = NaN!', 
-     $                        metalc(i), d(i,j,k), xi, dom, edot(i), 
-     $                        dlogxe, log_xe, xe1, dlogxea,
-     $                        logxe1, logxe0, n_xe
-                  write(6,*) 'more: ',
-     $                        log_xe, log(xe), logxe1, logxe0, xe, 
-     $                        de(i,j,k), metal(i,j,k), d(i,j,k),  
-     $                        HII(i,j,k), HeII(i,j,k), HeIII(i,j,k),
-     $                        xe_max, xe_min
-                  edot(i) = 0.d0
-               endif
-
-            endif
-         enddo
-
-      endif                     ! imcool == 1
-
-#ifdef CEN_METALS
-
-      if (imcool .eq. 2) then
-
-!     Generate table if required
-
-      if (imetalregen .eq. 1) then
-         write(6,*) 'generating metallicity cooling table'
-         if ( (iradtype .eq. 10) .or. (iradtype .eq. 11) ) iradfield = 1
-
-!        Clear table
-
-         do j1=1, NID
-            denwk(j1) = 10.d0**(DENMIN+(j1-0.5d0)*DELD)
-            do i=1, NIT
-               cbovcool(i,j1) = 0.d0
-               cbovheat(i,j1) = 0.d0
-            enddo
-         enddo
-
-!        compute energy (in eV) of each bin
-
-!        write(6,*) 'radfield type ', iradfield  
-!        write(6,*) 'radtype value ', iradtype
-
-         if (iradfield .eq. 1) then
-
-            if (NIB .ne. nfreq) then
-               write(6,*) NIB, nfreq
-               write(6,*) 'cool1d_multi: NIB != nfreq'
-            endif
-
-            do i=1, NIB
-               eb(i) = FREQMIN*10.d0**(FREQDEL*(i-1.d0))
-            enddo
-
-!        Convert to 10^{-21} erg/cm^2/s
-
-            do i=1, NIB-1
-               radt(i) = inutot(i)*4.d0*pi_val
-     &                   *(eb(i+1)-eb(i))*(1.2d11/6.625d0)
-            enddo
-
-         else
-
-            do i=1, NIB-1
-               radt(i) = 0.d0
-            enddo
-
-         endif
-
-         radt(NIB) = 0.d0
-
-!!! JB 2008-05-20 commented to avoid portability issues with Fortran MPI
-!!!         call open_mpi_error_file('Metal', 57, 'unknown')
-         call mtlclht(denwk, radt, iradfield, cbovcool, cbovheat)
-!!! JB 2008-05-20 commented to avoid portability issues with Fortran MPI
-!!!         call close_mpi_error_file( 57 )
-
-         imetalregen = 0
-
-!        Convert from 10^-23 to our units
-
-         do j1=1, NID
-            do i=1, NIT
-               cbovcool(i,j1) = cbovcool(i,j1) * (1.d-23/coolunit)  ! DPC
-               cbovheat(i,j1) = cbovheat(i,j1) * (1.d-23/coolunit)  ! DPC
-!              write(31,*) i,j1,cbovcool(i,j1),cbovheat(i,j1)
-            enddo
-         enddo
-
-      endif
-
-!     Look-up in table
+!     Photoionization heating
 
       do i = is+1, ie+1
          if ( itmask(i) ) then
-
-         ndi = (log10(de(i,j,k)*dom)-DENMIN)/DELD + 1
-         ndi = min(max(1, ndi), NID)
-         nti = (log10(0.5d0*(tgas(i)+tgasold(i)))-TEMMIN)/DELT + 1
-         nti = min(max(1, nti), NIT)
-         xi = min(3.d0, metal(i,j,k)/(d(i,j,k)*ZSOLAR))
-
-c
-c        MKRJ 12/18/06
-c        Use the previous metal cooling/heating rate if T >= 10^4 K
-         if (tgas(i) .gt. 1.e4) then
-            metal_cool = cbovcool(nti,ndi) * xi * dom_inv *
-     &           (HI(i,j,k)+HII(i,j,k))
-            metal_heat = cbovheat(nti,ndi) * xi * dom_inv *
-     &           (HI(i,j,k)+HII(i,j,k))
-         else
-
-c           MKRJ: For low T, adopt the x=10^-2 cooling curve from
-c           Dalgarno & McCray 1972
-	    if (tgas(i) .ge. 1.e3) then
-               if (tgas(i) .ge. 6.31e3) then
-                  metal_cool = 3.13e-27*(tgas(i)**0.396)
-               else
-                  if (tgas(i) .ge. 3.16e3) then
-                     metal_cool = 2.64e-26*(tgas(i)**0.152)
-                  else
-                     metal_cool = 5.28e-27*(tgas(i)**0.352)
-                  endif
-               endif
-            else
-               if (tgas(i) .ge. 3.98e1) then
-                  if (tgas(i) .ge. 2.00e2) then
-                     metal_cool = 3.06e-27*(tgas(i)**0.431)
-                  else
-                     metal_cool = 1.52e-28*(tgas(i)**0.997)
-                  endif
-               else
-                  if (tgas(i) .ge. 2.51e1) then
-                     metal_cool = 2.39e-29*(tgas(i)**1.50)
-                  else
-                     metal_cool = 1.095e-32*(tgas(i)**3.885)
-                  endif
-               endif
-            endif
-
-c	    MKRJ 1/3/06 -- convert metal_cool (n^2 Lambda) from cgs to sim units 
-            metal_cool = metal_cool/coolunit * xi * 
-     &           ((HI(i,j,k)+HII(i,j,k)) * dom_inv)**2
-
-c	    MKRJ 12/18/06 -- Photoelectric heating rate (Gamma_pe)
-c            8.5e-26 came from Gamma_pe, assuming epsilon=0.05, G_0=1.7
-c            (see Gerritsen & Icke '97, or Joung & Mac Low '06, Sec. 2.2)
-c
-	    metal_heat = float(igammah) * boost_factor * 
-     &           gammaha * xi * (HI(i,j,k)+HII(i,j,k)) * dom_inv
-c
-c           MKRJ 10/15/08 -- Gamma (in erg/s) should weakly depend on 
-c            the gas density. The value 8.5e-26 is really for the solar 
-c            neighborhood, where n \approx 0.5 cm^-3.
-c            So assume:  emissivity \propto rho^1.4 &  
-c                        F_uv = emissivity*l_mfp \propto rho^0.4
-c            (n_H = 0.76*d(i,j,k)*dom)
-c
-            if (0.76*d(i,j,k)*dom .gt. 5.0e-1) then
-	       metal_heat = metal_heat * 
-     &                     (0.76*d(i,j,k)*dom/5.0e-1)**0.4
-            endif
-         endif ! tgas(i) .gt. 1.e4
-
-         edot(i) = edot(i) + metal_heat - metal_cool
-
+            edot(i) = edot(i) + float(ipiht)*(
+     &           + piHI  *HI  (i,j,k) ! pi of HI
+     &           + piHeI *HeI (i,j,k)*0.25d0 ! pi of HeI
+     &           + piHeII*HeII(i,j,k)*0.25d0 ! pi of HeII
+     &           )/dom
          end if
       enddo
-
-      endif
-
-#endif /* CEN_METALS */
 
 !     --- Cloudy metal cooling and heating ---
 

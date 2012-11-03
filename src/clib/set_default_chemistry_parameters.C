@@ -4,7 +4,6 @@
 
 #include "ErrorExceptions.h"
 #include "macros_and_parameters.h"
-#include "typedefs.h"
 #include "global_data.h"
 #include "chemistry_data.h"
 #include "code_units.h"
@@ -31,25 +30,32 @@ chemistry_data set_default_chemistry_parameters()
   my_chemistry.photoelectric_heating          = 0;
   my_chemistry.photoelectric_heating_rate     = 8.5e-26;  // ergs cm-3 s-1
 
-  my_chemistry.RadiationFieldType             = 0;
-  my_chemistry.RadiationFieldRedshift         = 0.0;
-  my_chemistry.TabulatedLWBackground          = 0;
-  my_chemistry.RadiationFieldLevelRecompute   = 0;
-  my_chemistry.RadiationShield                = 0;
-  my_chemistry.AdjustUVBackground             = 1;
-  my_chemistry.AdjustUVBackgroundHighRedshift = 0;
-  my_chemistry.SetUVBAmplitude                = 1.0;
-  my_chemistry.SetHeIIHeatingScale            = 1.8;
-  my_chemistry.RadiationXRaySecondaryIon      = 0;
-  my_chemistry.RadiationXRayComptonHeating    = 0;
+  my_chemistry.UVbackground                  = 0;
 
-  my_chemistry.alpha0                   = 1.5;            // radiation spectral slope
-  my_chemistry.f3                       = 1.0e-21;        // radiation normalization
-  my_chemistry.f0to3                    = 0.1;
-  my_chemistry.RadiationRedshiftOn      = 7.0;
-  my_chemistry.RadiationRedshiftOff     = 0.0;
-  my_chemistry.RadiationRedshiftFullOn  = 6.0;
-  my_chemistry.RadiationRedshiftDropOff = 0.0;
+  my_chemistry.UVbackground_table.Nz = 0;
+  my_chemistry.UVbackground_table.z = NULL;
+  my_chemistry.UVbackground_table.k24 = NULL;
+  my_chemistry.UVbackground_table.k25 = NULL;
+  my_chemistry.UVbackground_table.k26 = NULL;
+  my_chemistry.UVbackground_table.k27 = NULL;
+  my_chemistry.UVbackground_table.k28 = NULL;
+  my_chemistry.UVbackground_table.k29 = NULL;
+  my_chemistry.UVbackground_table.k30 = NULL;
+  my_chemistry.UVbackground_table.k31 = NULL;
+  my_chemistry.UVbackground_table.piHI = NULL;
+  my_chemistry.UVbackground_table.piHeII = NULL;
+  my_chemistry.UVbackground_table.piHeI = NULL;
+
+  my_chemistry.UVbackground_redshift_on      = 7.0;
+  my_chemistry.UVbackground_redshift_off     = 0.0;
+  my_chemistry.UVbackground_redshift_fullon  = 6.0;
+  my_chemistry.UVbackground_redshift_drop = 0.0;
+
+  my_chemistry.Compton_xray_heating = 0;
+
+  my_chemistry.LWbackground_intensity = 0.0;   // [in units of 10^21 erg/s/cm^2/Hz/sr]
+  my_chemistry.LWbackground_sawtooth_suppression = 0;
+
   my_chemistry.HydrogenFractionByMass   = 0.76;
   /* The DToHRatio is by mass in the code, so multiply by 2. */
   my_chemistry.DeuteriumToHydrogenRatio = 2.0*3.4e-5; // Burles & Tytler 1998
@@ -68,8 +74,6 @@ chemistry_data set_default_chemistry_parameters()
 
   my_chemistry.CloudyCoolingGridRank          = 0;
   my_chemistry.CloudyElectronFractionFactor = 9.153959e-3; // Cloudy 07.02 abundances
-
-  my_chemistry.MetalCoolingTable = (char*) "metal_cool.dat";
 
   return my_chemistry;
 }

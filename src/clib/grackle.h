@@ -8,65 +8,68 @@
 chemistry_data set_default_chemistry_parameters();
 
 int initialize_chemistry_data(chemistry_data &my_chemistry,
-                              code_units &my_units, float a_value);
+                              code_units &my_units, gr_float a_value);
+
+int initialize_UVbackground_data(chemistry_data &my_chemistry,
+				 code_units &my_units, gr_float a_value);
 
 int solve_chemistry(chemistry_data &my_chemistry,
 		    code_units &my_units,
-		    float a_value, float dt_value,
-		    int grid_rank, int *grid_dimension,
-		    int *grid_start, int *grid_end,
-		    float *density, float *internal_energy,
-		    float *x_velocity, float *y_velocity, float  *z_velocity,
-		    float *HI_density, float *HII_density, float *HM_density,
-		    float *HeI_density, float *HeII_density, float *HeIII_density,
-		    float *H2I_density, float *H2II_density,
-		    float *DI_density, float *DII_density, float *HDI_density,
-		    float *e_density, float *metal_density);
+		    gr_float a_value, gr_float dt_value,
+		    gr_int grid_rank, gr_int *grid_dimension,
+		    gr_int *grid_start, gr_int *grid_end,
+		    gr_float *density, gr_float *internal_energy,
+		    gr_float *x_velocity, gr_float *y_velocity, gr_float  *z_velocity,
+		    gr_float *HI_density, gr_float *HII_density, gr_float *HM_density,
+		    gr_float *HeI_density, gr_float *HeII_density, gr_float *HeIII_density,
+		    gr_float *H2I_density, gr_float *H2II_density,
+		    gr_float *DI_density, gr_float *DII_density, gr_float *HDI_density,
+		    gr_float *e_density, gr_float *metal_density);
 
 int calculate_cooling_time(chemistry_data &my_chemistry,
 			   code_units &my_units,
-			   float a_value, float dt_value,
-			   int grid_rank, int *grid_dimension,
-			   int *grid_start, int *grid_end,
-			   float *density, float *internal_energy,
-			   float *x_velocity, float *y_velocity, float  *z_velocity,
-			   float *HI_density, float *HII_density, float *HM_density,
-			   float *HeI_density, float *HeII_density, float *HeIII_density,
-			   float *H2I_density, float *H2II_density,
-			   float *DI_density, float *DII_density, float *HDI_density,
-			   float *e_density, float *metal_density,
-			   float *cooling_time);
+			   gr_float a_value, gr_float dt_value,
+			   gr_int grid_rank, gr_int *grid_dimension,
+			   gr_int *grid_start, gr_int *grid_end,
+			   gr_float *density, gr_float *internal_energy,
+			   gr_float *x_velocity, gr_float *y_velocity, gr_float  *z_velocity,
+			   gr_float *HI_density, gr_float *HII_density, gr_float *HM_density,
+			   gr_float *HeI_density, gr_float *HeII_density, gr_float *HeIII_density,
+			   gr_float *H2I_density, gr_float *H2II_density,
+			   gr_float *DI_density, gr_float *DII_density, gr_float *HDI_density,
+			   gr_float *e_density, gr_float *metal_density,
+			   gr_float *cooling_time);
 
 int calculate_gamma(chemistry_data &my_chemistry,
                     code_units &my_units,
-                    int grid_rank, int *grid_dimension,
-                    float *density, float *internal_energy,
-                    float *HI_density, float *HII_density, float *HM_density,
-                    float *HeI_density, float *HeII_density, float *HeIII_density,
-                    float *H2I_density, float *H2II_density,
-                    float *DI_density, float *DII_density, float *HDI_density,
-                    float *e_density, float *metal_density,
-                    float *my_gamma);
+                    gr_int grid_rank, gr_int *grid_dimension,
+                    gr_float *density, gr_float *internal_energy,
+                    gr_float *HI_density, gr_float *HII_density, gr_float *HM_density,
+                    gr_float *HeI_density, gr_float *HeII_density, gr_float *HeIII_density,
+                    gr_float *H2I_density, gr_float *H2II_density,
+                    gr_float *DI_density, gr_float *DII_density, gr_float *HDI_density,
+                    gr_float *e_density, gr_float *metal_density,
+                    gr_float *my_gamma);
 
 int calculate_pressure(chemistry_data &my_chemistry,
                        code_units &my_units,
-                       int grid_rank, int *grid_dimension,
-                       float *density, float *internal_energy,
-                       float *HI_density, float *HII_density, float *HM_density,
-                       float *HeI_density, float *HeII_density, float *HeIII_density,
-                       float *H2I_density, float *H2II_density,
-                       float *DI_density, float *DII_density, float *HDI_density,
-                       float *e_density, float *metal_density,
-                       float *pressure);
+                       gr_int grid_rank, gr_int *grid_dimension,
+                       gr_float *density, gr_float *internal_energy,
+                       gr_float *HI_density, gr_float *HII_density, gr_float *HM_density,
+                       gr_float *HeI_density, gr_float *HeII_density, gr_float *HeIII_density,
+                       gr_float *H2I_density, gr_float *H2II_density,
+                       gr_float *DI_density, gr_float *DII_density, gr_float *HDI_density,
+                       gr_float *e_density, gr_float *metal_density,
+                       gr_float *pressure);
 
 int calculate_temperature(chemistry_data &my_chemistry,
                           code_units &my_units,
-                          int grid_rank, int *grid_dimension,
-                          float *density, float *internal_energy,
-                          float *HI_density, float *HII_density, float *HM_density,
-                          float *HeI_density, float *HeII_density, float *HeIII_density,
-                          float *H2I_density, float *H2II_density,
-                          float *DI_density, float *DII_density, float *HDI_density,
-                          float *e_density, float *metal_density,
-                          float *temperature);
+                          gr_int grid_rank, gr_int *grid_dimension,
+                          gr_float *density, gr_float *internal_energy,
+                          gr_float *HI_density, gr_float *HII_density, gr_float *HM_density,
+                          gr_float *HeI_density, gr_float *HeII_density, gr_float *HeIII_density,
+                          gr_float *H2I_density, gr_float *H2II_density,
+                          gr_float *DI_density, gr_float *DII_density, gr_float *HDI_density,
+                          gr_float *e_density, gr_float *metal_density,
+                          gr_float *temperature);
 #endif
