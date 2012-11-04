@@ -170,6 +170,9 @@ lib%.$(MACH_SHARED_EXT): $(MODULES) autogen dep enzo.o $(OBJS_LIB)
 	   echo "Failed! See $(OUTPUT) for error messages"; \
 	fi)
 
+libgrackle.$(MACH_SHARED_EXT): $(MODULES) autogen dep
+	-@$(LD) $(LDFLAGS) $(SHARED_OPT) -o $@ $(OBJS_LIB) $(LIBS) >& $(OUTPUT)
+
 #-----------------------------------------------------------------------
 # WRITE ALL COMPILER OUTPUT TO FILE
 #-----------------------------------------------------------------------
