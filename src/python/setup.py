@@ -10,7 +10,7 @@ setup(
         include_dirs=["../clib/"],
         library_dirs=["../clib/"],
         libraries=["grackle"],
-        define_macros=[("BFLOAT_8", True),
-                       ("PFLOAT_8", True)]
+        define_macros=[("CONFIG_BFLOAT_8", True),
+                       ("LARGE_INTS", True)]
         )]
 )

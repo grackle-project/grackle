@@ -93,6 +93,7 @@ include Make.config.assemble
 #-----------------------------------------------------------------------
 
 MACH_SHARED_EXT=so
+MACH_SHARED_FLAGS=-shared
 
 -include $(ENZO_DIR)/Make.mach.$(CONFIG_MACHINE)
 -include $(HOME)/.enzo/Make.mach.$(CONFIG_MACHINE)
@@ -115,7 +116,7 @@ lib: CXXFLAGS += $(MACH_SHARED_FLAGS) -DSHARED_LIBRARY
 lib: FFLAGS   += $(MACH_SHARED_FLAGS)
 lib: F90FLAGS += $(MACH_SHARED_FLAGS)
 lib: LDFLAGS  += $(MACH_SHARED_FLAGS)
-lib: lib$(EXE)_p$(ASSEMBLE_PARTICLE_NUMBER)_b$(ASSEMBLE_PRECISION_NUMBER).$(MACH_SHARED_EXT)
+lib: libgrackle.$(MACH_SHARED_EXT)
 
 #-----------------------------------------------------------------------
 # MAKE AN EXECUTABLE
