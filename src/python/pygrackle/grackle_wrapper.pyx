@@ -2,8 +2,13 @@ from grackle_defs cimport *
 
 cdef class chemistry_data:
     cdef c_chemistry_data data
+    cdef c_code_units units
+
     def __cinit__(self):
         self.data = set_default_chemistry_parameters()
+
+    def initialize(self, a_value):
+        initialize_chemistry_data(self.data, self.units, a_value)
 
     property Gamma:
         def __get__(self):
@@ -76,3 +81,33 @@ cdef class chemistry_data:
             return self.data.cloudy_table_file
         def __set__(self, val):
             raise NotImplementedError
+
+    property comoving_coordinates:
+        def __get__(self):
+            return self.units.comoving_coordinates
+        def __set__(self, val):
+            self.units.comoving_coordinates = val
+
+    property density_units:
+        def __get__(self):
+            return self.units.density_units
+        def __set__(self, val):
+            self.units.density_units = val
+
+    property length_units:
+        def __get__(self):
+            return self.units.length_units
+        def __set__(self, val):
+            self.units.length_units = val
+
+    property time_units:
+        def __get__(self):
+            return self.units.time_units
+        def __set__(self, val):
+            self.units.time_units = val
+
+    property a_units:
+        def __get__(self):
+            return self.units.a_units
+        def __set__(self, val):
+            self.units.a_units = val

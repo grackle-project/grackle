@@ -20,7 +20,7 @@ cdef extern from "chemistry_data.h":
         # Most of the rest are not user-settable
 
 cdef extern from "code_units.h":
-    ctypedef struct code_units:
+    ctypedef struct c_code_units "code_units":
       gr_int comoving_coordinates
       gr_float density_units
       gr_float length_units
@@ -31,11 +31,11 @@ cdef extern from "grackle.h":
     c_chemistry_data set_default_chemistry_parameters()
 
     gr_int initialize_chemistry_data(c_chemistry_data &my_chemistry,
-                                  code_units &my_units, gr_float a_value)
+                                  c_code_units &my_units, gr_float a_value)
 
     gr_int solve_chemistry(
                 c_chemistry_data &my_chemistry,
-                code_units &my_units,
+                c_code_units &my_units,
                 gr_float a_value,
                 gr_float dt_value,
                 gr_int grid_rank,
@@ -63,7 +63,7 @@ cdef extern from "grackle.h":
 
     gr_int calculate_cooling_time(
                 c_chemistry_data &my_chemistry,
-                code_units &my_units,
+                c_code_units &my_units,
                 gr_float a_value,
                 gr_float dt_value,
                 gr_int grid_rank,
@@ -92,7 +92,7 @@ cdef extern from "grackle.h":
 
     gr_int calculate_gamma(
                 c_chemistry_data &my_chemistry,
-                code_units &my_units,
+                c_code_units &my_units,
                 gr_int grid_rank,
                 gr_int *grid_dimension,
                 gr_float *density,
@@ -114,7 +114,7 @@ cdef extern from "grackle.h":
 
     gr_int calculate_pressure(
                 c_chemistry_data &my_chemistry,
-                code_units &my_units,
+                c_code_units &my_units,
                 gr_int grid_rank,
                 gr_int *grid_dimension,
                 gr_float *density,
@@ -136,7 +136,7 @@ cdef extern from "grackle.h":
 
     gr_int calculate_temperature(
                 c_chemistry_data &my_chemistry,
-                code_units &my_units,
+                c_code_units &my_units,
                 gr_int grid_rank,
                 gr_int *grid_dimension,
                 gr_float *density,
