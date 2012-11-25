@@ -1,6 +1,7 @@
 # This is a translation of freefall.C from the clib distribution
 
 from pygrackle.grackle_wrapper import *
+from pygrackle.fluid_container import FluidContainer
 
 my_chemistry = chemistry_data()
 my_chemistry.use_chemistry = 1
@@ -22,3 +23,5 @@ gravitational_constant = (4.0 * 3.1415926 * 6.6726e-8 *
 a_value = 1.0/(1.0+10.0)
 
 my_chemistry.initialize(a_value)
+
+fc = FluidContainer(my_chemistry, 64)

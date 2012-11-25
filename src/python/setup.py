@@ -25,7 +25,6 @@ def setup_package():
         version="0.1",
         description="A wrapper for the Grackle chemistry library",
         configuration=configuration,
-        zip_safe=False,
         )
     return
 
