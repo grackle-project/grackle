@@ -124,8 +124,9 @@ cdef gr_float* get_field(fc, name):
 def calculate_temperature(fc):
     cdef gr_int grid_rank = 1
     cdef gr_int grid_dimension
-    cdef c_chemistry_data my_chemistry = fc.chemistry_data.data
-    cdef c_code_units my_units = fc.chemistry_data.units
+    cdef chemistry_data chem_data = fc.chemistry_data
+    cdef c_chemistry_data my_chemistry = chem_data.data
+    cdef c_code_units my_units = chem_data.units
     grid_dimension = fc["density"].shape[0]
     cdef gr_float *density = get_field(fc, "density")
     cdef gr_float *internal_energy = get_field(fc, "energy")
