@@ -35,6 +35,7 @@ from os.path import join as pjoin, dirname
 from distutils.dep_util import newer_group
 from distutils.errors import DistutilsError
 from numpy.distutils import log
+from numpy.distutils.misc_util import appendpath
 
 def generate_a_pyrex_source(self, base, ext_name, source, extension):
     ''' Monkey patch for numpy build_src.build_src method
