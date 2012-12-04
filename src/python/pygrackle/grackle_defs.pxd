@@ -33,7 +33,7 @@ cdef extern from "grackle.h":
     gr_int initialize_chemistry_data(c_chemistry_data &my_chemistry,
                                   c_code_units &my_units, gr_float a_value)
 
-    gr_int solve_chemistry(
+    gr_int c_solve_chemistry "solve_chemistry"(
                 c_chemistry_data &my_chemistry,
                 c_code_units &my_units,
                 gr_float a_value,
@@ -61,7 +61,7 @@ cdef extern from "grackle.h":
                 gr_float *e_density,
                 gr_float *metal_density)
 
-    gr_int calculate_cooling_time(
+    gr_int c_calculate_cooling_time "calculate_cooling_time"(
                 c_chemistry_data &my_chemistry,
                 c_code_units &my_units,
                 gr_float a_value,
@@ -90,7 +90,7 @@ cdef extern from "grackle.h":
                 gr_float *metal_density,
                 gr_float *cooling_time)
 
-    gr_int calculate_gamma(
+    gr_int c_calculate_gamma "calculate_gamma"(
                 c_chemistry_data &my_chemistry,
                 c_code_units &my_units,
                 gr_int grid_rank,
@@ -112,7 +112,7 @@ cdef extern from "grackle.h":
                 gr_float *metal_density,
                 gr_float *my_gamma)
 
-    gr_int calculate_pressure(
+    gr_int c_calculate_pressure "calculate_pressure"(
                 c_chemistry_data &my_chemistry,
                 c_code_units &my_units,
                 gr_int grid_rank,
@@ -134,7 +134,7 @@ cdef extern from "grackle.h":
                 gr_float *metal_density,
                 gr_float *pressure)
 
-    gr_int calculate_temperature(
+    gr_int c_calculate_temperature "calculate_temperature"(
                 c_chemistry_data &my_chemistry,
                 c_code_units &my_units,
                 gr_int grid_rank,

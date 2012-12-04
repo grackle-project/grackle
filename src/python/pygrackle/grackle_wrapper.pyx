@@ -1,4 +1,5 @@
 from grackle_defs cimport *
+cimport numpy as np
 
 cdef class chemistry_data:
     cdef c_chemistry_data data
@@ -111,3 +112,55 @@ cdef class chemistry_data:
             return self.units.a_units
         def __set__(self, val):
             self.units.a_units = val
+
+cdef gr_float* get_field(fc, name):
+    cdef np.ndarray rv = fc.get(name, None)
+    if rv is None:
+        return NULL
+    else:
+        return <gr_float *> rv.data
+
+
+def calculate_temperature(fc):
+    cdef gr_int grid_rank = 1
+    cdef gr_int grid_dimension
+    cdef c_chemistry_data my_chemistry = fc.chemistry_data.data
+    cdef c_code_units my_units = fc.chemistry_data.units
+    grid_dimension = fc["density"].shape[0]
+    cdef gr_float *density = get_field(fc, "density")
+    cdef gr_float *internal_energy = get_field(fc, "energy")
+    cdef gr_float *HI_density = get_field(fc, "HI")
+    cdef gr_float *HII_density = get_field(fc, "HII")
+    cdef gr_float *HM_density = get_field(fc, "HM")
+    cdef gr_float *HeI_density = get_field(fc, "HeI")
+    cdef gr_float *HeII_density = get_field(fc, "HeII")
+    cdef gr_float *HeIII_density = get_field(fc, "HeIII")
+    cdef gr_float *H2I_density = get_field(fc, "H2I")
+    cdef gr_float *H2II_density = get_field(fc, "H2II")
+    cdef gr_float *DI_density = get_field(fc, "DI")
+    cdef gr_float *DII_density = get_field(fc, "DII")
+    cdef gr_float *HDI_density = get_field(fc, "HDI")
+    cdef gr_float *e_density = get_field(fc, "de")
+    cdef gr_float *metal_density = get_field(fc, "metal_density")
+    cdef gr_float *temperature = get_field(fc, "temperature")
+    c_calculate_temperature(
+                my_chemistry,
+                my_units,
+                grid_rank,
+                &grid_dimension,
+                density,
+                internal_energy,
+                HI_density,
+                HII_density,
+                HM_density,
+                HeI_density,
+                HeII_density,
+                HeIII_density,
+                H2I_density,
+                H2II_density,
+                DI_density,
+                DII_density,
+                HDI_density,
+                e_density,
+                metal_density,
+                temperature)
