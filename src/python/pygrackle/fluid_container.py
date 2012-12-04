@@ -3,7 +3,7 @@ import numpy as np
 _fluid_names = {}
 _fluid_names[0] = ["HI", "HII", "HeI", "HeII", "HeIII", "de",
     "x-velocity", "y-velocity", "z-velocity",
-    "temperature", "gamma", "energy", "density", "metal_density"]
+    "temperature", "gamma", "energy", "density", "metal"]
 _fluid_names[1] = _fluid_names[0] + \
     ["H2I", "H2II", "HM"]
 _fluid_names[2] = _fluid_names[1] + \

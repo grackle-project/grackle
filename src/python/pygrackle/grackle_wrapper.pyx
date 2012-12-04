@@ -144,6 +144,7 @@ def calculate_temperature(fc):
     cdef gr_float *e_density = get_field(fc, "de")
     cdef gr_float *metal_density = get_field(fc, "metal_density")
     cdef gr_float *temperature = get_field(fc, "temperature")
+
     c_calculate_temperature(
                 my_chemistry,
                 my_units,
