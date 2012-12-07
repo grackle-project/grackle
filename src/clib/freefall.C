@@ -37,7 +37,7 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
 
   chemistry_data my_chemistry = set_default_chemistry_parameters();
   my_chemistry.use_chemistry = 1;
-  my_chemistry.primordial_chemistry = 2;
+  my_chemistry.primordial_chemistry = 3;
   my_chemistry.metal_cooling = 1;
   my_chemistry.cloudy_table_file = (char*) "solar_2008_3D_metals.h5";
 
@@ -53,22 +53,22 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
   gr_float gravitational_constant = 4.0 * 3.1415926 * 6.6726e-8 * 
     my_units.density_units * POW(my_units.time_units, 2);
 
-  // gr_float a_value = 1.0;
-  gr_float a_value = 1.0/(1.0+10.0);
+  gr_float a_value = 1.0;
+  //  gr_float a_value = 1.0/(1.0+10.0);
 
   if (initialize_chemistry_data(my_chemistry, my_units, a_value) == FAIL) {
     fprintf(stderr, "Error in initialize_chemistry_data.\n");
     return FAIL;
   }
 
-  my_chemistry.UVbackground = 1;
-  my_chemistry.UVbackground_file = (char*) "UVB_rates_HM2012.hdf5";
-  if (initialize_UVbackground_data(my_chemistry, my_units, a_value) == FAIL) {
-    fprintf(stderr, "Error in initialize_UVbackground_data.\n");
-    return FAIL;
-  }
+  // my_chemistry.UVbackground = 1;
+  // my_chemistry.UVbackground_file = (char*) "UVB_rates_HM2012.hdf5";
+  // if (initialize_UVbackground_data(my_chemistry, my_units, a_value) == FAIL) {
+  //   fprintf(stderr, "Error in initialize_UVbackground_data.\n");
+  //   return FAIL;
+  // }
 
-  update_UVbackground_rates(my_chemistry, my_units, a_value);
+  // update_UVbackground_rates(my_chemistry, my_units, a_value);
 
   gr_float *density, *energy, *x_velocity, *y_velocity, *z_velocity;
   gr_float *HI_density, *HII_density, *HM_density,
