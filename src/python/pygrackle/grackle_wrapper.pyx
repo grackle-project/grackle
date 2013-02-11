@@ -12,6 +12,12 @@ cdef class chemistry_data:
     def initialize(self, a_value):
         initialize_chemistry_data(self.data, self.units, a_value)
 
+    def initialize_UVbackground(self):
+        initialize_UVbackground_data(self.data)
+
+    def update_UVbackground(self, a_value):
+        update_UVbackground_rates(self.data, self.units, a_value)
+
     property Gamma:
         def __get__(self):
             return self.data.Gamma
@@ -83,6 +89,18 @@ cdef class chemistry_data:
             return self.data.cloudy_table_file
         def __set__(self, val):
             self.data.cloudy_table_file = val
+
+    property UVbackground:
+        def __get__(self):
+            return self.data.UVbackground
+        def __set__(self, val):
+            self.data.UVbackground = val
+
+    property UVbackground_file:
+        def __get__(self):
+            return self.data.UVbackground_file
+        def __set__(self, val):
+            self.data.UVbackground_file = val
 
     property comoving_coordinates:
         def __get__(self):

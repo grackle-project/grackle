@@ -10,8 +10,7 @@ chemistry_data set_default_chemistry_parameters();
 int initialize_chemistry_data(chemistry_data &my_chemistry,
                               code_units &my_units, gr_float a_value);
 
-int initialize_UVbackground_data(chemistry_data &my_chemistry,
-				 code_units &my_units, gr_float a_value);
+int initialize_UVbackground_data(chemistry_data &my_chemistry);
 int update_UVbackground_rates(chemistry_data &my_chemistry,
 			      code_units &my_units, float a_value);
 

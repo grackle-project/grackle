@@ -16,6 +16,7 @@
 
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
 
 #include "ErrorExceptions.h"
@@ -42,22 +43,12 @@ int update_UVbackground_rates(chemistry_data &my_chemistry,
        (Redshift > my_chemistry.UVbackground_table.zmax) )
     return SUCCESS;
 
-
-  /* Set units. */
-
   if (!my_units.comoving_coordinates) {
     my_chemistry.UVbackground_redshift_on = Redshift+0.2;
     my_chemistry.UVbackground_redshift_off = 0.0;
     my_chemistry.UVbackground_redshift_fullon = Redshift+0.1;
     my_chemistry.UVbackground_redshift_drop = 0.0;
   }
-    
-  double tbase1 = my_units.time_units;
-  double xbase1 = my_units.length_units/(a_value * my_units.a_units);
-  double dbase1 = my_units.density_units*POW(a_value * my_units.a_units, 3);
-  double mh     = 1.67e-24;
-  double CoolingUnits = (POW(my_units.a_units, 5) * xbase1*xbase1 * mh*mh) /
-                        (POW(tbase1, 3) * dbase1);
 
   /* ------------------------------------------------------------------ */
   /* First, calculate the ramp value, a number between 0 and 1 which
@@ -143,8 +134,37 @@ int update_UVbackground_rates(chemistry_data &my_chemistry,
   my_chemistry.piHeI = (Redshift - zvec[index-1]) * slope + my_chemistry.UVbackground_table.piHeI[index-1];
 
 
-  // printf("%e %e %e\n",my_chemistry.k24,my_chemistry.k25,my_chemistry.k26);
+  // Now convert the rates to code units.
+  
+  /* Get conversion units. */
+    
+  double tbase1 = my_units.time_units;
+  double xbase1 = my_units.length_units/(a_value * my_units.a_units);
+  double dbase1 = my_units.density_units*POW(a_value * my_units.a_units, 3);
+  double mh     = 1.67262171e-24;
+  double ev2erg = 1.60217653e-12;
+  double CoolingUnits = (POW(my_units.a_units, 5) * xbase1*xbase1 * mh*mh) / (POW(tbase1, 3) * dbase1) / ev2erg;  // compared to Enzo source, there's an additional factor of 1/ev2erg here, because the heating rates are stored as eV/s.
 
+
+  my_chemistry.k24 *= my_units.time_units;
+  my_chemistry.k25 *= my_units.time_units;
+  my_chemistry.k26 *= my_units.time_units;
+  
+  if (my_chemistry.primordial_chemistry > 1) {
+    my_chemistry.k27 *= my_units.time_units;
+    my_chemistry.k28 *= my_units.time_units;
+    my_chemistry.k29 *= my_units.time_units;
+    my_chemistry.k30 *= my_units.time_units;
+    my_chemistry.k31 *= my_units.time_units;
+  }
+    
+  my_chemistry.piHI /= CoolingUnits;
+  my_chemistry.piHeII /= CoolingUnits;
+  my_chemistry.piHeI /= CoolingUnits;
+  
+
+  // printf("%e %e %e\n",my_chemistry.k24,my_chemistry.k25,my_chemistry.k26);
+  // printf("%e %e %e\n",my_chemistry.piHI,my_chemistry.piHeII,my_chemistry.piHeI);
 
   // Now apply the Ramp factor
   my_chemistry.k24 *= Ramp;
@@ -198,7 +218,7 @@ int update_UVbackground_rates(chemistry_data &my_chemistry,
        is the average photon energy in keV, corrected for relativistic
        effects.  Eq.(4) and Eq.(11) of Madau & Efstathiou (1999) */
     
-    my_chemistry.comp_xray = 6.65e-25 * 3.0e10 * 
+    my_chemistry.comp_xray = 4.15e-13 * 3.0e10 * 
       (31.8*POW(1.0+Redshift, 0.3333)/511.0) * 
       (6.3e-5 * 1.6e-12) * 
       POW(1.0 + Redshift, 4) * 
