@@ -34,11 +34,11 @@ class FieldNotFound(Exception):
     def __init__(self, field):
         self.field = field
 
-    def __repr__(self):
+    def __str__(self):
         return "Field '%s' not found!" % (self.field)
 
 class NotAGrid(Exception):
-    def __repr__(self):
+    def __str__(self):
         return "This routine needs a yt grid."
 
 _grackle_to_yt = {
@@ -59,26 +59,49 @@ _grackle_to_yt = {
     "x-velocity": "x-velocity",
     "y-velocity": "y-velocity",
     "z-velocity": "z-velocity",
-    "energy": "Thermal_Energy",
+    "energy": "ThermalEnergy",
 }
+
+_skip = ("pressure", "temperature", "cooling_time", "gamma")
 
 _yt_to_grackle = dict((b, a) for a, b in _grackle_to_yt.items())
 
+def _units(chemistry_data, fname):
+    if fname.endswith("Density"):
+        return chemistry_data.density_units
+    elif fname.endswith("Energy"):
+        energy_units = (chemistry_data.length_units /
+                        chemistry_data.time_units)**2.0
+        return energy_units
+    elif fname.endswith("velocity"):
+        v_units = (chemistry_data.length_units / 
+                   chemistry_data.time_units)
+        return v_units
+    else:
+        raise FieldNotFound(fname)
+
+def _needed_fields(fc):
+    cd = fc.chemistry_data
+    for f in sorted(fc):
+        if f in _skip: continue
+        f2 = _grackle_to_yt[f]
+        yield f, f2, _units(cd, f2)
+        
 def grid_to_grackle(chemistry_data, grid, update = True):
-    if not hasattr(grid, ActiveDimensions):
+    if not hasattr(grid, "ActiveDimensions"):
         raise RuntimeError
     pf = grid.pf
     fields = pf.h.derived_field_list + pf.h.field_list
     ni = grid.ActiveDimensions[0]
     fc = FluidContainer(chemistry_data, ni)
-    if any(_grackle_to_yt[f] not in fields
-           for f in fc):
-        raise FieldNotFound((f,_grackle_to_yt[f]))
+    for f1, f2, conv in _needed_fields(fc):
+        if f2 not in fields:
+            raise FieldNotFound(f2)
     for j in xrange(grid.ActiveDimensions[1]):
         for k in xrange(grid.ActiveDimensions[2]):
-            for f in fc: # All the fields in yt
-                fc[f][:] = grid[_grackle_to_yt[f]][:,j,k]
+            for f1, f2, conv in _needed_fields(fc):
+                fc[f1][:] = grid[f2][:,j,k] / conv
             yield fc
             if not update: continue
-            for f in fc: # All the fields in yt
-                grid[_grackle_to_yt[f]][:,j,k] = fc[f][:]
+            for f1, f2, conv in _needed_fields(fc):
+                grid[f2][:,j,k] = fc[f1][:] * conv
