@@ -129,6 +129,7 @@ def solve_chemistry(fc, my_a, my_dt):
     cdef np.ndarray ref_gs, ref_ge
     ref_gs = np.zeros(3, dtype="int64")
     ref_ge = np.zeros(3, dtype="int64")
+    ref_ge[0] = grid_dimension
     cdef gr_int *grid_start, *grid_end
     grid_start = <gr_int *> ref_gs.data
     grid_end = <gr_int *> ref_ge.data
@@ -194,6 +195,7 @@ def calculate_cooling_time(fc, my_a, my_dt):
     cdef np.ndarray ref_gs, ref_ge
     ref_gs = np.zeros(3, dtype="int64")
     ref_ge = np.zeros(3, dtype="int64")
+    ref_ge[0] = grid_dimension
     cdef gr_int *grid_start, *grid_end
     grid_start = <gr_int *> ref_gs.data
     grid_end = <gr_int *> ref_ge.data
