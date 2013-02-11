@@ -27,7 +27,7 @@ a_value = 1.0
 my_chemistry.initialize(a_value)
 
 g = pf.h.grids[0]
-old = dict((f, g[f]) for f in pf.h.field_list)
+old = dict((f, g[f].copy()) for f in pf.h.field_list)
 
 dt = 1e12
 for fc in grid_to_grackle(my_chemistry, g):
