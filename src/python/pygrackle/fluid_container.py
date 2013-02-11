@@ -64,7 +64,7 @@ _grackle_to_yt = {
 
 _yt_to_grackle = dict((b, a) for a, b in _grackle_to_yt.items())
 
-def grid_to_grackle(chemistry_data, grid):
+def grid_to_grackle(chemistry_data, grid, update = True):
     if not hasattr(grid, ActiveDimensions):
         raise RuntimeError
     pf = grid.pf
@@ -77,5 +77,8 @@ def grid_to_grackle(chemistry_data, grid):
     for j in xrange(grid.ActiveDimensions[1]):
         for k in xrange(grid.ActiveDimensions[2]):
             for f in fc: # All the fields in yt
-                fc[f] = grid[_grackle_to_yt[f]][:,j,k]
+                fc[f][:] = grid[_grackle_to_yt[f]][:,j,k]
             yield fc
+            if not update: continue
+            for f in fc: # All the fields in yt
+                grid[_grackle_to_yt[f]][:,j,k] = fc[f][:]
