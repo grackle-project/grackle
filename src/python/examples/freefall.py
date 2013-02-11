@@ -41,6 +41,13 @@ a_value = 1.0
 
 my_chemistry.initialize(a_value)
 
+
+my_chemistry.UVbackground = 1;
+my_chemistry.UVbackground_file = "UVB_rates_HM2012.hdf5";
+my_chemistry.initialize_UVbackground()
+my_chemistry.update_UVbackground(a_value)
+
+
 fc = FluidContainer(my_chemistry, 1)
 fc["density"][:] = 1.0
 fc["HI"][:] = 0.76 * fc["density"]

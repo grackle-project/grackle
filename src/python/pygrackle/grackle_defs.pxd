@@ -17,6 +17,8 @@ cdef extern from "chemistry_data.h":
         gr_int cie_cooling
         gr_int h2_optical_depth_approximation
         gr_int photoelectric_heating
+        gr_int UVbackground
+        char *UVbackground_file
         # Most of the rest are not user-settable
 
 cdef extern from "code_units.h":
@@ -31,6 +33,11 @@ cdef extern from "grackle.h":
     c_chemistry_data set_default_chemistry_parameters()
 
     gr_int initialize_chemistry_data(c_chemistry_data &my_chemistry,
+                                  c_code_units &my_units, gr_float a_value)
+
+    gr_int initialize_UVbackground_data(c_chemistry_data &my_chemistry)
+
+    gr_int update_UVbackground_rates(c_chemistry_data &my_chemistry,
                                   c_code_units &my_units, gr_float a_value)
 
     gr_int c_solve_chemistry "solve_chemistry"(
