@@ -134,8 +134,6 @@ int update_UVbackground_rates(chemistry_data &my_chemistry,
   my_chemistry.piHeI = (Redshift - zvec[index-1]) * slope + my_chemistry.UVbackground_table.piHeI[index-1];
 
 
-  printf("%e %e %e\n",my_chemistry.piHI,my_chemistry.piHeII,my_chemistry.piHeI);
-
   // Now convert the rates to code units.
   
   /* Get conversion units. */
@@ -146,7 +144,6 @@ int update_UVbackground_rates(chemistry_data &my_chemistry,
   double mh     = 1.67262171e-24;
   double ev2erg = 1.60217653e-12;
   double CoolingUnits = (POW(my_units.a_units, 5) * xbase1*xbase1 * mh*mh) / (POW(tbase1, 3) * dbase1) / ev2erg;  // compared to Enzo source, there's an additional factor of 1/ev2erg here, because the heating rates are stored as eV/s.
-  printf("CoolingUnits = %e\n",CoolingUnits);
 
 
   my_chemistry.k24 *= my_units.time_units;
