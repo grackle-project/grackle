@@ -228,9 +228,9 @@ int initialize_UVbackground_data(chemistry_data &my_chemistry,
       my_chemistry.UVbackground_table.k31[i] *= my_units.time_units;
     }
 
-    my_chemistry.UVbackground_table.piHI[i] /= CoolingUnits;
-    my_chemistry.UVbackground_table.piHeII[i] /= CoolingUnits;
-    my_chemistry.UVbackground_table.piHeI[i] /= CoolingUnits;
+    my_chemistry.UVbackground_table.piHI[i] /= CoolingUnits / 1.60217653e-12;
+    my_chemistry.UVbackground_table.piHeII[i] /= CoolingUnits / 1.60217653e-12;
+    my_chemistry.UVbackground_table.piHeI[i] /= CoolingUnits / 1.60217653e-12;
   }
 
 

@@ -144,6 +144,7 @@ int update_UVbackground_rates(chemistry_data &my_chemistry,
 
 
   // printf("%e %e %e\n",my_chemistry.k24,my_chemistry.k25,my_chemistry.k26);
+  // printf("%e %e %e\n",my_chemistry.piHI,my_chemistry.piHeII,my_chemistry.piHeI);
 
 
   // Now apply the Ramp factor
