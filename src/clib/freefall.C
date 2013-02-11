@@ -63,7 +63,7 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
 
   my_chemistry.UVbackground = 1;
   my_chemistry.UVbackground_file = (char*) "UVB_rates_HM2012.hdf5";
-  if (initialize_UVbackground_data(my_chemistry, my_units, a_value) == FAIL) {
+  if (initialize_UVbackground_data(my_chemistry) == FAIL) {
     fprintf(stderr, "Error in initialize_UVbackground_data.\n");
     return FAIL;
   }

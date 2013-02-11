@@ -26,8 +26,7 @@ gr_int read_dataset(hid_t file_id, char *dset_name, gr_float *buffer);
 
 
 // Initialize UV Background data
-int initialize_UVbackground_data(chemistry_data &my_chemistry,
-				 code_units &my_units, gr_float a_value)
+int initialize_UVbackground_data(chemistry_data &my_chemistry)
 {
   gr_int Nz, i;
 
@@ -203,35 +202,6 @@ int initialize_UVbackground_data(chemistry_data &my_chemistry,
 
   
   H5Fclose(file_id);
-
-
-  // Now convert the rates to code units.
-
-  /* Get conversion units. */
-  double tbase1 = my_units.time_units;
-  double xbase1 = my_units.length_units/(a_value * my_units.a_units);
-  double dbase1 = my_units.density_units*POW(a_value * my_units.a_units, 3);
-  double mh     = 1.67e-24;
-  double CoolingUnits = (POW(my_units.a_units, 5) * xbase1*xbase1 * mh*mh) /
-    (POW(tbase1, 3) * dbase1);
-  
-  for(i=0;i<Nz;i++) {
-    my_chemistry.UVbackground_table.k24[i] *= my_units.time_units;
-    my_chemistry.UVbackground_table.k25[i] *= my_units.time_units;
-    my_chemistry.UVbackground_table.k26[i] *= my_units.time_units;
-
-    if (my_chemistry.primordial_chemistry > 1) {
-      my_chemistry.UVbackground_table.k27[i] *= my_units.time_units;
-      my_chemistry.UVbackground_table.k28[i] *= my_units.time_units;
-      my_chemistry.UVbackground_table.k29[i] *= my_units.time_units;
-      my_chemistry.UVbackground_table.k30[i] *= my_units.time_units;
-      my_chemistry.UVbackground_table.k31[i] *= my_units.time_units;
-    }
-
-    my_chemistry.UVbackground_table.piHI[i] /= CoolingUnits / 1.60217653e-12;
-    my_chemistry.UVbackground_table.piHeII[i] /= CoolingUnits / 1.60217653e-12;
-    my_chemistry.UVbackground_table.piHeI[i] /= CoolingUnits / 1.60217653e-12;
-  }
 
 
   // Get min/max of redshift vector
