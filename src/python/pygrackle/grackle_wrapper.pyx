@@ -12,6 +12,12 @@ cdef class chemistry_data:
     def initialize(self, a_value):
         initialize_chemistry_data(self.data, self.units, a_value)
 
+    def initialize_UVbackground(self):
+        initialize_UVbackground_data(self.data)
+
+    def update_UVbackground(self, a_value):
+        update_UVbackground_rates(self.data, self.units, a_value)
+
     property Gamma:
         def __get__(self):
             return self.data.Gamma
@@ -84,6 +90,18 @@ cdef class chemistry_data:
         def __set__(self, val):
             self.data.cloudy_table_file = val
 
+    property UVbackground:
+        def __get__(self):
+            return self.data.UVbackground
+        def __set__(self, val):
+            self.data.UVbackground = val
+
+    property UVbackground_file:
+        def __get__(self):
+            return self.data.UVbackground_file
+        def __set__(self, val):
+            self.data.UVbackground_file = val
+
     property comoving_coordinates:
         def __get__(self):
             return self.units.comoving_coordinates
@@ -129,6 +147,7 @@ def solve_chemistry(fc, my_a, my_dt):
     cdef np.ndarray ref_gs, ref_ge
     ref_gs = np.zeros(3, dtype="int64")
     ref_ge = np.zeros(3, dtype="int64")
+    ref_ge[0] = grid_dimension
     cdef gr_int *grid_start, *grid_end
     grid_start = <gr_int *> ref_gs.data
     grid_end = <gr_int *> ref_ge.data
@@ -194,6 +213,7 @@ def calculate_cooling_time(fc, my_a, my_dt):
     cdef np.ndarray ref_gs, ref_ge
     ref_gs = np.zeros(3, dtype="int64")
     ref_ge = np.zeros(3, dtype="int64")
+    ref_ge[0] = grid_dimension
     cdef gr_int *grid_start, *grid_end
     grid_start = <gr_int *> ref_gs.data
     grid_end = <gr_int *> ref_ge.data
