@@ -39,7 +39,6 @@
 SHELL    = /bin/bash
 
 TOP_DIR  = ../..
-EXE      = freefall
 OUTPUT   = out.compile
 
 ENZO_DIR = .
@@ -105,7 +104,7 @@ MACH_SHARED_FLAGS=-shared
 include Make.config.objects
 
 #-----------------------------------------------------------------------
-# MAKE ENZO BY DEFAULT
+# MAKE LIBGRACKLE BY DEFAULT
 #-----------------------------------------------------------------------
 
 libgrackle.$(MACH_SHARED_EXT): $(MODULES) autogen dep $(OBJS_LIB) MACHNOTES
@@ -129,10 +128,6 @@ lib: FFLAGS   += $(MACH_SHARED_FLAGS)
 lib: F90FLAGS += $(MACH_SHARED_FLAGS)
 lib: LDFLAGS  += $(MACH_SHARED_FLAGS)
 lib: libgrackle.$(MACH_SHARED_EXT)
-
-#-----------------------------------------------------------------------
-# MAKE AN EXECUTABLE
-#-----------------------------------------------------------------------
 
 MAKETAGS:
 	@(if [ "$(ETAGS_COMMAND)" != "0" ]; then \
@@ -164,10 +159,6 @@ lib%.$(MACH_SHARED_EXT): $(MODULES) autogen dep enzo.o $(OBJS_LIB)
 
 .PHONY: verbose
 verbose: VERBOSE = 1
-#verbose:
-#	@rm -fv $(OUTPUT)
-#	@echo "Writing all compiler output to $(OUTPUT)"
-verbose: $(EXE).exe
 
 #-----------------------------------------------------------------------
 # Implicit rules
