@@ -19,3 +19,9 @@ temp.show-*
 Make.config.machine
 Make.config.override
 *.mod
+
+src/clib/auto_show_config.C
+src/clib/auto_show_flags.C
+src/clib/auto_show_version.C
+src/clib/libgrackle.so
+src/python/build/*
