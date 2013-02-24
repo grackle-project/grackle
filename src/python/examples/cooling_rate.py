@@ -2,12 +2,14 @@
 
 import copy
 
-def check_convergence(fc1, fc2, fields=None, tol=0.1):
+def check_convergence(fc1, fc2, fields=None, tol=0.10):
     if fields is None:
         fields = ["HI", "HII", "HM", "HeI", "HeII", "HeIII",
                   "H2I", "H2II", "DI", "DII", "HDI", "de"]
     for field in fields:
-        if (np.abs(fc1[field] - fc2[field]) / fc1[field] > tol).any():
+        convergence = np.abs(fc1[field] - fc2[field]) / fc1[field]
+        if (convergence > tol).any():
+            print "Max change %s: %e." % (field, convergence.max())
             return False
     return True
 
@@ -20,12 +22,13 @@ pi_val      = 3.14159265
 hplanck     = 6.6260693e-27
 ev2erg      = 1.60217653e-12
 c_light     = 2.99792458e10
-GravConst   = 6.67428e-8
+GravConst   = 6.6726e-8
 sigma_sb    = 5.670373e-5
 SolarMass   = 1.9891e33
 Mpc         = 3.0857e24
 kpc         = 3.0857e21
 pc          = 3.0857e18
+yr_to_s     = 3.15569e7
 
 from pygrackle.grackle_wrapper import *
 from pygrackle.fluid_container import FluidContainer
@@ -42,7 +45,7 @@ my_chemistry.cloudy_table_file = "solar_2008_3D_metals.h5";
 my_chemistry.comoving_coordinates = 0
 my_chemistry.density_units = 1.67e-24
 my_chemistry.length_units = 1.0e16
-my_chemistry.time_units = 3.15569e7 * 1e6
+my_chemistry.time_units = yr_to_s * 1e6
 my_chemistry.a_units = 1.0
 
 energy_units = (my_chemistry.length_units /
@@ -84,7 +87,8 @@ fc_last = copy.deepcopy(fc)
 dt = 0.1
 my_time = 0.0
 while True:
-    print "t = %e." % my_time
+    print "t = %.2f Myr." % (my_time * my_chemistry.time_units /
+                           (yr_to_s * 1e6))
     for field in ["HI", "HII", "HM", "HeI", "HeII", "HeIII",
                   "H2I", "H2II", "DI", "DII", "HDI", "de"]:
         fc_last[field] = np.copy(fc[field])
@@ -96,8 +100,15 @@ while True:
 
 calculate_temperature(fc)
 calculate_cooling_time(fc, a_value)
-cooling_rate = fc["energy"] / fc["cooling_time"]
+
+cooling_rate = fc["density"] * my_chemistry.density_units * \
+  fc["energy"] * energy_units / \
+  (fc["cooling_time"] * my_chemistry.time_units)
 
 from matplotlib import pyplot
 pyplot.loglog(fc['temperature'], cooling_rate)
-pyplot.savefig('cooling_rate.png')
+pyplot.xlabel('T [K]')
+pyplot.ylabel('$\\Lambda$ [erg s$^{-1}$ cm$^{-3}$]')
+output_file = 'cooling_rate.png'
+print "Writing %s." % output_file
+pyplot.savefig(output_file)

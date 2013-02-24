@@ -7,12 +7,13 @@ pi_val      = 3.14159265
 hplanck     = 6.6260693e-27
 ev2erg      = 1.60217653e-12
 c_light     = 2.99792458e10
-GravConst   = 6.67428e-8
+GravConst   = 6.6726e-8
 sigma_sb    = 5.670373e-5
 SolarMass   = 1.9891e33
 Mpc         = 3.0857e24
 kpc         = 3.0857e21
 pc          = 3.0857e18
+yr_to_s     = 3.15569e7
 
 from pygrackle.grackle_wrapper import *
 from pygrackle.fluid_container import FluidContainer
@@ -34,19 +35,17 @@ my_chemistry.a_units = 1.0
 energy_units = (my_chemistry.length_units /
                 my_chemistry.time_units)**2.0
 
-gravitational_constant = (4.0 * 3.1415926 * 6.6726e-8 * 
+gravitational_constant = (4.0 * pi_val * GravConst * 
   my_chemistry.density_units * my_chemistry.time_units**2)
 
 a_value = 1.0
 
 my_chemistry.initialize(a_value)
 
-
 my_chemistry.UVbackground = 1;
 my_chemistry.UVbackground_file = "UVB_rates_HM2012.hdf5";
 my_chemistry.initialize_UVbackground()
 my_chemistry.update_UVbackground(a_value)
-
 
 fc = FluidContainer(my_chemistry, 1)
 fc["density"][:] = 1.0
@@ -77,18 +76,30 @@ fc["x-velocity"][:] = 0.0
 fc["y-velocity"][:] = 0.0
 fc["z-velocity"][:] = 0.0
 
+density_values = []
+temperature_values = []
+
 timestep_fraction = 0.1
 current_time = 0.0
 while fc["density"][0] < 1.e10:
     dt = timestep_fraction * \
       np.power(((3. * np.pi) / 
-                (32. * gravitational_constant * fc["density"][0])), 0.5)
+                (32. * gravitational_constant * 
+                 fc["density"][0])), 0.5)
 
     calculate_temperature(fc)
-    print fc["density"][0], fc["temperature"][0]
+
+    density_values.append(fc["density"][0] * my_chemistry.density_units)
+    temperature_values.append(fc["temperature"][0])
+
+    print "t: %e yr, rho: %e g/cm^3, T: %e [K]" % \
+      ((current_time * my_chemistry.time_units / yr_to_s),
+       (fc["density"][0] * my_chemistry.density_units),
+       fc["temperature"][0])
     
     density_ratio = np.power((freefall_constant - 
-                              (0.5 * freefall_time_constant * current_time)), -2.) / \
+                              (0.5 * freefall_time_constant * 
+                               current_time)), -2.) / \
                               fc["density"][0]
                               
     for field in fc.density_fields:
@@ -98,5 +109,13 @@ while fc["density"][0] < 1.e10:
       freefall_time_constant * np.power(fc["density"][0], 0.5) * dt
 
     solve_chemistry(fc, a_value, dt)
-
+    
     current_time += dt
+
+from matplotlib import pyplot
+pyplot.loglog(density_values, temperature_values)
+pyplot.xlabel('$\\rho$ [g cm$^{-3}$]')
+pyplot.ylabel('T [K]')
+output_file = 'freefall.png'
+print "Writing %s." % output_file
+pyplot.savefig(output_file)
