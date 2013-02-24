@@ -205,7 +205,7 @@ def solve_chemistry(fc, my_a, my_dt):
                 e_density,
                 metal_density)
     
-def calculate_cooling_time(fc, my_a, my_dt):
+def calculate_cooling_time(fc, my_a):
     cdef gr_int grid_rank = 1
     cdef gr_int grid_dimension
     grid_dimension = fc["density"].shape[0]
@@ -219,7 +219,6 @@ def calculate_cooling_time(fc, my_a, my_dt):
     grid_end = <gr_int *> ref_ge.data
 
     cdef gr_float a_value = <gr_float> my_a
-    cdef gr_float dt_value = <gr_float> my_dt
 
     cdef chemistry_data chem_data = fc.chemistry_data
     cdef c_chemistry_data my_chemistry = chem_data.data
@@ -248,7 +247,6 @@ def calculate_cooling_time(fc, my_a, my_dt):
                 my_chemistry,
                 my_units,
                 a_value,
-                dt_value,
                 grid_rank,
                 &grid_dimension,
                 grid_start,

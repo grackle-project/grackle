@@ -28,8 +28,7 @@ int solve_chemistry(chemistry_data &my_chemistry,
 		    gr_float *e_density, gr_float *metal_density);
 
 int calculate_cooling_time(chemistry_data &my_chemistry,
-			   code_units &my_units,
-			   gr_float a_value, gr_float dt_value,
+			   code_units &my_units, gr_float a_value,
 			   gr_int grid_rank, gr_int *grid_dimension,
 			   gr_int *grid_start, gr_int *grid_end,
 			   gr_float *density, gr_float *internal_energy,

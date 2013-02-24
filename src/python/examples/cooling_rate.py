@@ -93,7 +93,7 @@ while True:
     my_time += dt
 
 calculate_temperature(fc)
-calculate_cooling_time(fc, a_value, dt)
+calculate_cooling_time(fc, a_value)
 cooling_rate = fc["energy"] / fc["cooling_time"]
 
 from matplotlib import pyplot

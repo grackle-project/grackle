@@ -72,7 +72,6 @@ cdef extern from "grackle.h":
                 c_chemistry_data &my_chemistry,
                 c_code_units &my_units,
                 gr_float a_value,
-                gr_float dt_value,
                 gr_int grid_rank,
                 gr_int *grid_dimension,
                 gr_int *grid_start,

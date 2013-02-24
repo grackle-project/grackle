@@ -8,7 +8,7 @@
      &                in, jn, kn, nratec, iexpand, 
      &                ispecies, imetal, imcool, idust, idim,
      &                is, js, ks, ie, je, ke, ih2co, ipiht, igammah,
-     &                dt, aye, temstart, temend,
+     &                aye, temstart, temend,
      &                utem, uxyz, uaye, urho, utim,
      &                gamma, z_solar,
      &                ceHIa, ceHeIa, ceHeIIa, ciHIa, ciHeIa, 
@@ -51,7 +51,7 @@
       integer in, jn, kn, is, js, ks, ie, je, ke, nratec, 
      &        iexpand, ih2co, ipiht, ispecies, imetal, idim,
      &        imcool, idust, igammah, ih2optical, iciecool
-      real    dt, aye, temstart, temend,
+      real    aye, temstart, temend,
      &        utem, uxyz, uaye, urho, utim,
      &        gamma, z_solar
       real    d(in,jn,kn),    e(in,jn,kn),
@@ -99,7 +99,7 @@
  
       integer indixe(ijk)
       real t1(ijk), t2(ijk), logtem(ijk), tdef(ijk), p2d(ijk),
-     &     dtit(ijk), ttot(ijk), tgas(ijk), tgasold(ijk),
+     &     tgas(ijk), tgasold(ijk),
      &     tdust(ijk), metallicity(ijk), rhoH(ijk)
       double precision edot(ijk)
 
