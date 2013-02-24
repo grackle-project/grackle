@@ -34,6 +34,7 @@ tiny_number = 1e-20
 
 my_chemistry = chemistry_data()
 my_chemistry.use_chemistry = 1
+my_chemistry.with_radiative_cooling = 0
 my_chemistry.primordial_chemistry = 3
 my_chemistry.metal_cooling = 1
 my_chemistry.cloudy_table_file = "solar_2008_3D_metals.h5";
@@ -51,7 +52,8 @@ a_value = 1.0
 
 my_chemistry.initialize(a_value)
 
-fc = FluidContainer(my_chemistry, 81)
+n_points = 200
+fc = FluidContainer(my_chemistry, n_points)
 fc["density"][:] = 1.0
 fc["HI"][:] = 0.76 * fc["density"]
 fc["HII"][:] = tiny_number * fc["density"]
@@ -65,12 +67,12 @@ fc["DI"][:] = 2.0 * 3.4e-5 * fc["density"]
 fc["DII"][:] = tiny_number * fc["density"]
 fc["HDI"][:] = tiny_number * fc["density"]
 fc["de"][:] = tiny_number * fc["density"]
-fc["metal"][:] = 1.e-2 * fc["density"]
+fc["metal"][:] = 0.02041 * fc["density"]
 
 temperature_units = mass_h * ((my_chemistry.length_units/
                               my_chemistry.time_units)**2) / kboltz
 
-initial_energy = np.logspace(1, 9, 81) / temperature_units
+initial_energy = np.logspace(1, 9, n_points) / temperature_units
 
 fc["energy"] = np.copy(initial_energy)
 fc["x-velocity"][:] = 0.0

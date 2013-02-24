@@ -4,7 +4,7 @@
 !=======================================================================
 !/////////////////////  SUBROUTINE SOLVE_RATE  \\\\\\\\\\\\\\\\\\\\\\\\\
 
-      subroutine solve_rate_cool(d, e, u, v, w, de,
+      subroutine solve_rate_cool(icool, d, e, u, v, w, de,
      &                HI, HII, HeI, HeII, HeIII,
      &                in, jn, kn, nratec, iexpand, 
      &                ispecies, imetal, imcool, idust, idim,
@@ -51,6 +51,7 @@
 !    Solve the multi-species rate and cool equations.
 !
 !  INPUTS:
+!    icool    - flag to update energy from radiative cooling
 !    in,jn,kn - dimensions of 3D fields
 !
 !    d        - total density field
@@ -113,7 +114,7 @@
 
 !  General Arguments
 
-      integer in, jn, kn, is, js, ks, ie, je, ke, nratec, 
+      integer icool, in, jn, kn, is, js, ks, ie, je, ke, nratec, 
      &        iexpand, ih2co, ipiht, ispecies, imetal, idim,
      &        ierr, imcool, idust, 
      &        igammah, ih2optical, iciecool, ithreebody,
@@ -532,6 +533,7 @@ c      chunit = (7.17775d-12)/(2.d0*uvel*uvel*mh)   ! 4.5 eV per H2 formed
 
 !           Update total and gas energy
 
+            if (icool .eq. 1) then
             do i = is+1, ie+1
                if (itmask(i)) then
                e(i,j,k)  = e(i,j,k) + edot(i)/d(i,j,k)*dtit(i)
@@ -542,6 +544,7 @@ c      chunit = (7.17775d-12)/(2.d0*uvel*uvel*mh)   ! 4.5 eV per H2 formed
 
             endif               ! itmask
             enddo
+            endif
 
 !           Solve rate equations with one linearly implicit Gauss-Seidel 
 !           sweep of a backward Euler method ---

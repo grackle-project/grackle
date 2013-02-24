@@ -5,6 +5,8 @@
 typedef struct 
 {
 
+  gr_int with_radiative_cooling;
+
   // adiabatic index
   gr_float Gamma;
 

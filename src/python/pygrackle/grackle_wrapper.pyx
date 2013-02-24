@@ -30,6 +30,12 @@ cdef class chemistry_data:
         def __set__(self, val):
             self.data.use_chemistry = val
 
+    property with_radiative_cooling:
+        def __get__(self):
+            return self.data.with_radiative_cooling
+        def __set__(self, val):
+            self.data.with_radiative_cooling = val
+
     property primordial_chemistry:
         def __get__(self):
             return self.data.primordial_chemistry
