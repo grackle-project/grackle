@@ -107,6 +107,14 @@ include Make.config.objects
 # MAKE LIBGRACKLE BY DEFAULT
 #-----------------------------------------------------------------------
 
+# I believe this has to be done here, as it is target-specific.
+lib: CFLAGS   += $(MACH_SHARED_FLAGS) 
+lib: CXXFLAGS += $(MACH_SHARED_FLAGS) -DSHARED_LIBRARY
+lib: FFLAGS   += $(MACH_SHARED_FLAGS)
+lib: F90FLAGS += $(MACH_SHARED_FLAGS)
+lib: LDFLAGS  += $(MACH_SHARED_FLAGS)
+lib: libgrackle.$(MACH_SHARED_EXT)
+
 libgrackle.$(MACH_SHARED_EXT): $(MODULES) autogen dep $(OBJS_LIB) MACHNOTES
 	@rm -f $@
 	@echo "Linking"
@@ -120,14 +128,6 @@ libgrackle.$(MACH_SHARED_EXT): $(MODULES) autogen dep $(OBJS_LIB) MACHNOTES
 	   mv -f temp2 $(OUTPUT); \
 	   echo "Failed! See $(OUTPUT) for error messages"; \
 	fi)
-
-# I believe this has to be done here, as it is target-specific.
-lib: CFLAGS   += $(MACH_SHARED_FLAGS) 
-lib: CXXFLAGS += $(MACH_SHARED_FLAGS) -DSHARED_LIBRARY
-lib: FFLAGS   += $(MACH_SHARED_FLAGS)
-lib: F90FLAGS += $(MACH_SHARED_FLAGS)
-lib: LDFLAGS  += $(MACH_SHARED_FLAGS)
-lib: libgrackle.$(MACH_SHARED_EXT)
 
 MAKETAGS:
 	@(if [ "$(ETAGS_COMMAND)" != "0" ]; then \
