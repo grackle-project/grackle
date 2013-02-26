@@ -90,7 +90,7 @@
 
 !  Slice locals
 
-      real log_Z(in), e_frac(in), log_e_frac(in), 
+      real e_frac(in), log_e_frac(in), 
      &     cl_e_frac(in), fh(in), log_n_h(in),
      &     log_cool(in), log_cool_cmb(in), log_heat(in),
      &     edot_met(in), log10tem(in)
@@ -133,38 +133,26 @@
 
 !           Calculate proper log(n_H)
 
-            if (clGridRank .gt. 1) then
+            log_n_h(i) = log10(rhoH(i) * dom)
 
-               log_n_h(i) = log10(rhoH(i) * dom)
-
-            endif
-
-!           Calculate metallicity
-
-            if (clGridRank .gt. 2) then
-
-               log_Z(i) = log10(metallicity(i))
-
-            endif
-
-!           Calculate electron fraction
-            
-            if (clGridRank .gt. 3) then
-
-               e_frac(i) = 2.d0 * de(i,j,k) / 
-     &              (d(i,j,k) * (1 + fh(i)))
-!           Make sure electron fraction is never above 1 
-!           which can give bad cooling/heating values when 
-!           extrapolating in the Cloudy data.
-               log_e_frac(i) = min(log10(e_frac(i)), 0.0d0)
-
-!           Get extra electrons contributed by metals
-
-               cl_e_frac(i) = e_frac(i) * 
-     &              (1.d0 + (2.d0 * clEleFra * metallicity(i) * 
-     &              fh(i)) / (1.d0 + fh(i)))
-
-            endif
+c$$$!           Calculate electron fraction
+c$$$            
+c$$$            if (clGridRank .gt. 3) then
+c$$$
+c$$$               e_frac(i) = 2.d0 * de(i,j,k) / 
+c$$$     &              (d(i,j,k) * (1 + fh(i)))
+c$$$!           Make sure electron fraction is never above 1 
+c$$$!           which can give bad cooling/heating values when 
+c$$$!           extrapolating in the Cloudy data.
+c$$$               log_e_frac(i) = min(log10(e_frac(i)), 0.0d0)
+c$$$
+c$$$!           Get extra electrons contributed by metals
+c$$$
+c$$$               cl_e_frac(i) = e_frac(i) * 
+c$$$     &              (1.d0 + (2.d0 * clEleFra * metallicity(i) * 
+c$$$     &              fh(i)) / (1.d0 + fh(i)))
+c$$$
+c$$$            endif
 
 !           Call interpolation functions to get heating/cooling
 
@@ -213,104 +201,48 @@
                   edot_met(i) = edot_met(i) + 10.d0**log_heat(i)
                endif
 
-!           Interpolate over density, metallicity, and temperature.
-            else if (clGridRank .eq. 3) then
-               call interpolate_3D(log_n_h(i), log_Z(i), log10tem(i),
-     &              clGridDim,
-     &              clPar1, dclPar(1), clPar2, dclPar(2),
-     &              clPar3, dclPar(3),
-     &              clDataSize, clCooling, log_cool(i))
-               edot_met(i) = -10.d0**log_cool(i)
+c$$$!           Interpolate over density, metallicity, and temperature.
+c$$$            else if (clGridRank .eq. 3) then
+c$$$               call interpolate_3D(log_n_h(i), log_Z(i), log10tem(i),
+c$$$     &              clGridDim,
+c$$$     &              clPar1, dclPar(1), clPar2, dclPar(2),
+c$$$     &              clPar3, dclPar(3),
+c$$$     &              clDataSize, clCooling, log_cool(i))
+c$$$               edot_met(i) = -10.d0**log_cool(i)
+c$$$
+c$$$!     Ignore CMB term if T >> T_CMB
+c$$$               if ((icmbTfloor .eq. 1) .and. 
+c$$$     &              ((log10tem(i) - log10_tCMB) .lt. 2.d0)) then
+c$$$                  call interpolate_3D(log_n_h(i), log_Z(i), log10_tCMB,
+c$$$     &                 clGridDim,
+c$$$     &                 clPar1, dclPar(1), clPar2, dclPar(2),
+c$$$     &                 clPar3, dclPar(3),
+c$$$     &                 clDataSize, clCooling, log_cool_cmb(i))
+c$$$                  edot_met(i) = edot_met(i) + 10.d0**log_cool_cmb(i)
+c$$$               endif
+c$$$
+c$$$               if (iClHeat .eq. 1) then
+c$$$                  call interpolate_3D(log_n_h(i), log_Z(i), log10tem(i),
+c$$$     &                 clGridDim,
+c$$$     &                 clPar1, dclPar(1), clPar2, dclPar(2),
+c$$$     &                 clPar3, dclPar(3),
+c$$$     &                 clDataSize, clHeating, log_heat(i))
+c$$$                  edot_met(i) = edot_met(i) + 10.d0**log_heat(i)
+c$$$               endif
 
-!     Ignore CMB term if T >> T_CMB
-               if ((icmbTfloor .eq. 1) .and. 
-     &              ((log10tem(i) - log10_tCMB) .lt. 2.d0)) then
-                  call interpolate_3D(log_n_h(i), log_Z(i), log10_tCMB,
-     &                 clGridDim,
-     &                 clPar1, dclPar(1), clPar2, dclPar(2),
-     &                 clPar3, dclPar(3),
-     &                 clDataSize, clCooling, log_cool_cmb(i))
-                  edot_met(i) = edot_met(i) + 10.d0**log_cool_cmb(i)
-               endif
-
-               if (iClHeat .eq. 1) then
-                  call interpolate_3D(log_n_h(i), log_Z(i), log10tem(i),
-     &                 clGridDim,
-     &                 clPar1, dclPar(1), clPar2, dclPar(2),
-     &                 clPar3, dclPar(3),
-     &                 clDataSize, clHeating, log_heat(i))
-                  edot_met(i) = edot_met(i) + 10.d0**log_heat(i)
-               endif
-
-!           Interpolate over density, metallicity, electron fraction, and temperature.
-            else if (clGridRank .eq. 4) then
-               call interpolate_4D(log_n_h(i), log_Z(i), 
-     &              log_e_frac(i), log10tem(i), clGridDim,
-     &              clPar1, dclPar(1), clPar2, dclPar(2),
-     &              clPar3, dclPar(3), clPar4, dclPar(4),
-     &              clDataSize, clCooling, log_cool(i))
-               edot_met(i) = -10.d0**log_cool(i)
-
-!     Ignore CMB term if T >> T_CMB
-               if ((icmbTfloor .eq. 1) .and. 
-     &              ((log10tem(i) - log10_tCMB) .lt. 2.d0)) then
-                  call interpolate_4D(log_n_h(i), log_Z(i),
-     &                 log_e_frac(i), log10_tCMB, clGridDim,
-     &                 clPar1, dclPar(1), clPar2, dclPar(2),
-     &                 clPar3, dclPar(3), clPar4, dclPar(4),
-     &                 clDataSize, clCooling, log_cool_cmb(i))
-                  edot_met(i) = edot_met(i) + 10.d0**log_cool_cmb(i)
-               endif
-
-               if (iClHeat .eq. 1) then
-                  call interpolate_4D(log_n_h(i), log_Z(i), 
-     &                 log_e_frac(i), log10tem(i), clGridDim,
-     &                 clPar1, dclPar(1), clPar2, dclPar(2),
-     &                 clPar3, dclPar(3), clPar4, dclPar(4),
-     &                 clDataSize, clHeating, log_heat(i))
-                  edot_met(i) = edot_met(i) + 10.d0**log_heat(i)
-               endif
-
-!           Interpolate over density, metallicity, electron fraction, redshift, 
-!           and temperature.
             else
-               call interpolate_5D(log_n_h(i), log_Z(i), 
-     &           log_e_frac(i), zr, log10tem(i), clGridDim,
-     &           clPar1, dclPar(1), clPar2, dclPar(2),
-     &           clPar3, dclPar(3), clPar4, dclPar(4),
-     &           clPar5, dclPar(5),
-     &           clDataSize, clCooling, log_cool(i))
-               edot_met(i) = -10.d0**log_cool(i)
-
-!     Ignore CMB term if T >> T_CMB
-               if ((icmbTfloor .eq. 1) .and. 
-     &              ((log10tem(i) - log10_tCMB) .lt. 2.d0)) then
-                  call interpolate_5D(log_n_h(i), log_Z(i), 
-     &                 log_e_frac(i), zr, log10_tCMB, clGridDim,
-     &                 clPar1, dclPar(1), clPar2, dclPar(2),
-     &                 clPar3, dclPar(3), clPar4, dclPar(4),
-     &                 clPar5, dclPar(5),
-     &                 clDataSize, clCooling, log_cool_cmb(i))
-                  edot_met(i) = edot_met(i) + 10.d0**log_cool_cmb(i)
-               endif
-
-               if (iClHeat .eq. 1) then
-                  call interpolate_5D(log_n_h(i), log_Z(i), 
-     &                 log_e_frac(i), zr, log10tem(i), clGridDim,
-     &                 clPar1, dclPar(1), clPar2, dclPar(2),
-     &                 clPar3, dclPar(3), clPar4, dclPar(4),
-     &                 clPar5, dclPar(5),
-     &                 clDataSize, clHeating, log_heat(i))
-                  edot_met(i) = edot_met(i) + 10.d0**log_heat(i)
-               endif
-
+               write(*,*) "Maximum cooling data grid rank is 3!"
+               return
             endif
 
-            if (clGridRank .gt. 3) then
-               edot_met(i) = edot_met(i) * cl_e_frac(i)
-            endif
+c$$$            if (clGridRank .gt. 3) then
+c$$$               edot_met(i) = edot_met(i) * cl_e_frac(i)
+c$$$            endif
 
-            edot(i) = edot(i) + (edot_met(i) * rhoH(i) * d(i,j,k))
+!     Scale cooling by metallicity.
+
+            edot(i) = edot(i) + 
+     &           (metallicity(i) * edot_met(i) * rhoH(i) * d(i,j,k))
 
          end if
       enddo

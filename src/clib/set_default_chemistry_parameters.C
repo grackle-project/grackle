@@ -65,7 +65,7 @@ chemistry_data set_default_chemistry_parameters()
   my_chemistry.ih2co                   = 1;
   my_chemistry.ipiht                   = 1;
   my_chemistry.TemperatureStart        = 1.0;
-  my_chemistry.TemperatureEnd          = 1.0e8;
+  my_chemistry.TemperatureEnd          = 1.0e9;
   my_chemistry.comp_xray               = 0;
   my_chemistry.temp_xray               = 0;
   my_chemistry.CaseBRecombination      = 0;   // default to case A rates

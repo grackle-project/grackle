@@ -40,7 +40,7 @@ my_chemistry.use_chemistry = 1
 my_chemistry.with_radiative_cooling = 0
 my_chemistry.primordial_chemistry = 3
 my_chemistry.metal_cooling = 1
-my_chemistry.cloudy_table_file = "solar_2008_3D_metals.h5";
+my_chemistry.cloudy_table_file = "solar_cie_c10.h5";
 
 my_chemistry.comoving_coordinates = 0
 my_chemistry.density_units = 1.67e-24
@@ -109,6 +109,7 @@ from matplotlib import pyplot
 pyplot.loglog(fc['temperature'], cooling_rate)
 pyplot.xlabel('T [K]')
 pyplot.ylabel('$\\Lambda$ [erg s$^{-1}$ cm$^{-3}$]')
+pyplot.ylim(1e-30, 1e-21)
 output_file = 'cooling_rate.png'
 print "Writing %s." % output_file
 pyplot.savefig(output_file)
