@@ -85,7 +85,7 @@
 
 !  Locals
 
-      integer i, q
+      integer i, q, zindex, zmidpt, zhighpt
       real dclPar(clGridRank), inv_log10, log10_tCMB
 
 !  Slice locals
@@ -135,24 +135,30 @@
 
             log_n_h(i) = log10(rhoH(i) * dom)
 
-c$$$!           Calculate electron fraction
-c$$$            
-c$$$            if (clGridRank .gt. 3) then
-c$$$
-c$$$               e_frac(i) = 2.d0 * de(i,j,k) / 
-c$$$     &              (d(i,j,k) * (1 + fh(i)))
-c$$$!           Make sure electron fraction is never above 1 
-c$$$!           which can give bad cooling/heating values when 
-c$$$!           extrapolating in the Cloudy data.
-c$$$               log_e_frac(i) = min(log10(e_frac(i)), 0.0d0)
-c$$$
-c$$$!           Get extra electrons contributed by metals
-c$$$
-c$$$               cl_e_frac(i) = e_frac(i) * 
-c$$$     &              (1.d0 + (2.d0 * clEleFra * metallicity(i) * 
-c$$$     &              fh(i)) / (1.d0 + fh(i)))
-c$$$
-c$$$            endif
+!           Calculate index for redshift dimension
+
+            if (clGridRank .gt. 2) then
+
+!           Get index for redshift dimension via bisection
+
+               if (zr .le. clPar2(1)) then
+                  zindex = 1
+               else if (zr .ge. clPar2(clGridDim(2)-1)) then
+                  zindex = clGridDim(2) - 1
+               else
+                  zindex = 1
+                  zhighpt = clGridDim(2)
+                  do while ((zhighpt - zindex) .gt. 1)
+                     zmidpt = int((zhighpt + zindex) / 2)
+                     if (zr .ge. clPar2(zmidpt)) then
+                        zindex = zmidpt
+                     else
+                        zhighpt = zmidpt
+                     endif
+                  enddo
+               endif
+
+            endif
 
 !           Call interpolation functions to get heating/cooling
 
@@ -201,45 +207,44 @@ c$$$            endif
                   edot_met(i) = edot_met(i) + 10.d0**log_heat(i)
                endif
 
-c$$$!           Interpolate over density, metallicity, and temperature.
-c$$$            else if (clGridRank .eq. 3) then
-c$$$               call interpolate_3D(log_n_h(i), log_Z(i), log10tem(i),
-c$$$     &              clGridDim,
-c$$$     &              clPar1, dclPar(1), clPar2, dclPar(2),
-c$$$     &              clPar3, dclPar(3),
-c$$$     &              clDataSize, clCooling, log_cool(i))
-c$$$               edot_met(i) = -10.d0**log_cool(i)
-c$$$
-c$$$!     Ignore CMB term if T >> T_CMB
-c$$$               if ((icmbTfloor .eq. 1) .and. 
-c$$$     &              ((log10tem(i) - log10_tCMB) .lt. 2.d0)) then
-c$$$                  call interpolate_3D(log_n_h(i), log_Z(i), log10_tCMB,
-c$$$     &                 clGridDim,
-c$$$     &                 clPar1, dclPar(1), clPar2, dclPar(2),
-c$$$     &                 clPar3, dclPar(3),
-c$$$     &                 clDataSize, clCooling, log_cool_cmb(i))
-c$$$                  edot_met(i) = edot_met(i) + 10.d0**log_cool_cmb(i)
-c$$$               endif
-c$$$
-c$$$               if (iClHeat .eq. 1) then
-c$$$                  call interpolate_3D(log_n_h(i), log_Z(i), log10tem(i),
-c$$$     &                 clGridDim,
-c$$$     &                 clPar1, dclPar(1), clPar2, dclPar(2),
-c$$$     &                 clPar3, dclPar(3),
-c$$$     &                 clDataSize, clHeating, log_heat(i))
-c$$$                  edot_met(i) = edot_met(i) + 10.d0**log_heat(i)
-c$$$               endif
+!           Interpolate over density, redshift, and temperature.
+            else if (clGridRank .eq. 3) then
+               call interpolate_3Dz(log_n_h(i), zr, log10tem(i),
+     &              clGridDim,
+     &              clPar1, dclPar(1), 
+     &              clPar2, zindex,
+     &              clPar3, dclPar(3),
+     &              clDataSize, clCooling, log_cool(i))
+               edot_met(i) = -10.d0**log_cool(i)
+
+!     Ignore CMB term if T >> T_CMB
+               if ((icmbTfloor .eq. 1) .and. 
+     &              ((log10tem(i) - log10_tCMB) .lt. 2.d0)) then
+                  call interpolate_3Dz(log_n_h(i), zr, log10_tCMB,
+     &                 clGridDim,
+     &                 clPar1, dclPar(1),
+     &                 clPar2, zindex,
+     &                 clPar3, dclPar(3),
+     &                 clDataSize, clCooling, log_cool_cmb(i))
+                  edot_met(i) = edot_met(i) + 10.d0**log_cool_cmb(i)
+               endif
+
+               if (iClHeat .eq. 1) then
+                  call interpolate_3Dz(log_n_h(i), zr, log10tem(i),
+     &                 clGridDim,
+     &                 clPar1, dclPar(1),
+     &                 clPar2, zindex,
+     &                 clPar3, dclPar(3),
+     &                 clDataSize, clHeating, log_heat(i))
+                  edot_met(i) = edot_met(i) + 10.d0**log_heat(i)
+               endif
 
             else
                write(*,*) "Maximum cooling data grid rank is 3!"
                return
             endif
 
-c$$$            if (clGridRank .gt. 3) then
-c$$$               edot_met(i) = edot_met(i) * cl_e_frac(i)
-c$$$            endif
-
-!     Scale cooling by metallicity.
+!           Scale cooling by metallicity.
 
             edot(i) = edot(i) + 
      &           (metallicity(i) * edot_met(i) * rhoH(i) * d(i,j,k))
@@ -376,6 +381,75 @@ c$$$            endif
      &     max(1,int((input1-gridPar1(1))/dgridPar1)+1))
       index2 = min(gridDim(2)-1,
      &     max(1,int((input2-gridPar2(1))/dgridPar2)+1))
+      index3 = min(gridDim(3)-1,
+     &     max(1,int((input3-gridPar3(1))/dgridPar3)+1))
+
+      do q=1, 2
+
+         do w=1, 2
+
+!     interpolate over parameter 3
+
+            int_index = ((q+index1-2) * gridDim(2) + (w+index2-2)) * 
+     &           gridDim(3) + index3
+
+            slope = (dataField(int_index+1) - dataField(int_index)) /
+     &           (gridPar3(index3+1) - gridPar3(index3))
+
+            value3(w) = (input3 - gridPar3(index3)) * slope +
+     &           dataField(int_index)
+
+         enddo
+
+!     interpolate over parameter 2
+
+         slope = (value3(2) - value3(1)) / 
+     &        (gridPar2(index2+1) - gridPar2(index2))
+
+         value2(q) = (input2 - gridPar2(index2)) * slope + value3(1)
+
+      enddo
+
+!     interpolate over parameter 1
+
+      slope = (value2(2) - value2(1)) /
+     &     (gridPar1(index1+1) - gridPar1(index1))
+
+      value = (input1 - gridPar1(index1)) * slope + value2(1)
+
+      return
+      end
+!=======================================================================
+!////////////////////  SUBROUTINE INTERPOLATE_3Dz  \\\\\\\\\\\\\\\\\\\\\
+
+      subroutine interpolate_3Dz(input1, input2, input3, gridDim,
+     &     gridPar1, dgridPar1,
+     &     gridPar2, index2,
+     &     gridPar3, dgridPar3,
+     &     dataSize, dataField, value)
+
+!  General Arguments
+
+      integer dataSize, index2
+      integer gridDim(3)
+      real input1, input2, input3, value
+      real gridPar1(gridDim(1)), dgridPar1,
+     &     gridPar2(gridDim(2)),
+     &     gridPar3(gridDim(3)), dgridPar3
+      real dataField(dataSize)
+
+!  Locals
+
+      integer index1, index3, int_index, q, w
+      real slope, value3(2), value2(2)
+
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
+!=======================================================================
+
+!     Calculate interpolation indices
+
+      index1 = min(gridDim(1)-1,
+     &     max(1,int((input1-gridPar1(1))/dgridPar1)+1))
       index3 = min(gridDim(3)-1,
      &     max(1,int((input3-gridPar3(1))/dgridPar3)+1))
 
