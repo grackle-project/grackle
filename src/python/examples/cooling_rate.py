@@ -114,7 +114,7 @@ from matplotlib import pyplot
 pyplot.loglog(fc['temperature'], cooling_rate)
 pyplot.xlabel('T [K]')
 pyplot.ylabel('$\\Lambda$ [erg s$^{-1}$ cm$^{-3}$]')
-#pyplot.ylim(1e-30, 1e-21)
+pyplot.ylim(1e-30, 1e-21)
 output_file = 'cooling_rate.png'
 print "Writing %s." % output_file
 pyplot.savefig(output_file)
