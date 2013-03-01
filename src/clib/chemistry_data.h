@@ -1,6 +1,6 @@
 #ifndef __CHEMISTRY_DATA_H__
 #define __CHEMISTRY_DATA_H__
-#define CLOUDY_COOLING_MAX_DIMENSION 5
+#define CLOUDY_COOLING_MAX_DIMENSION 3
 
 typedef struct 
 {

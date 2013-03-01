@@ -40,10 +40,11 @@ my_chemistry.use_chemistry = 1
 my_chemistry.with_radiative_cooling = 0
 my_chemistry.primordial_chemistry = 3
 my_chemistry.metal_cooling = 1
-my_chemistry.cloudy_table_file = "solar_cie_c10.h5";
+my_chemistry.cloudy_table_file = "hm_2011_plus.h5";
+my_chemistry.include_metal_heating = 1
 
 my_chemistry.comoving_coordinates = 0
-my_chemistry.density_units = 1.67e-24
+my_chemistry.density_units = mass_h
 my_chemistry.length_units = 1.0e16
 my_chemistry.time_units = yr_to_s * 1e6
 my_chemistry.a_units = 1.0
@@ -93,23 +94,27 @@ while True:
                   "H2I", "H2II", "DI", "DII", "HDI", "de"]:
         fc_last[field] = np.copy(fc[field])
     solve_chemistry(fc, a_value, dt)
-    fc["energy"] = np.copy(initial_energy)    
+    fc["energy"] = np.copy(initial_energy)   
     if check_convergence(fc, fc_last):
         break
     my_time += dt
 
 calculate_temperature(fc)
 calculate_cooling_time(fc, a_value)
+  
+xbase1 = my_chemistry.length_units/(a_value*my_chemistry.a_units)
+dbase1   = my_chemistry.density_units*(a_value*my_chemistry.a_units)**3
+cool_unit = (my_chemistry.a_units**5 * xbase1**2 * mass_h**2) / \
+  (my_chemistry.time_units**3 * dbase1)
 
-cooling_rate = fc["density"] * my_chemistry.density_units * \
-  fc["energy"] * energy_units / \
-  (fc["cooling_time"] * my_chemistry.time_units)
-
+cooling_rate = cool_unit * fc["density"] * fc["energy"] / \
+  fc["cooling_time"]
+  
 from matplotlib import pyplot
 pyplot.loglog(fc['temperature'], cooling_rate)
 pyplot.xlabel('T [K]')
 pyplot.ylabel('$\\Lambda$ [erg s$^{-1}$ cm$^{-3}$]')
-pyplot.ylim(1e-30, 1e-21)
+#pyplot.ylim(1e-30, 1e-21)
 output_file = 'cooling_rate.png'
 print "Writing %s." % output_file
 pyplot.savefig(output_file)

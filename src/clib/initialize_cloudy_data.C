@@ -11,11 +11,7 @@
 /            from file.
 /  Rank = 1: interpolate over temperature.
 /  Rank = 2: interpolate over density and temperature.
-/  Rank = 3: interpolate over density, metallicity, and temperature.
-/  Rank = 4: interpolate over density, metallicity, electron fraction, 
-/            and temperature.
-/  Rank = 5: interpolate over density, metallicity, electron fraction, 
-/            redshift (for Haardt Madau background), and temperature.
+/  Rank = 3: interpolate over density, redshift, and temperature.
 /
 /  RETURNS:
 /    SUCCESS or FAIL
