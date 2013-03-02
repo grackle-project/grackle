@@ -1,5 +1,3 @@
-### Comment out Lines 535 to 544 of solve_rate_cool.F
-
 import copy
 
 def check_convergence(fc1, fc2, fields=None, tol=0.10):
@@ -12,8 +10,6 @@ def check_convergence(fc1, fc2, fields=None, tol=0.10):
             print "Max change %s: %e." % (field, convergence.max())
             return False
     return True
-
-# This is a translation of freefall.C from the clib distribution
 
 kboltz      = 1.3806504e-16
 mass_h      = 1.67262171e-24   
@@ -40,7 +36,7 @@ my_chemistry.use_chemistry = 1
 my_chemistry.with_radiative_cooling = 0
 my_chemistry.primordial_chemistry = 3
 my_chemistry.metal_cooling = 1
-my_chemistry.cloudy_table_file = "hm_2011_plus.h5";
+my_chemistry.grackle_data_file = "CloudyData_UVB=HM2012.h5"
 my_chemistry.include_metal_heating = 1
 
 my_chemistry.comoving_coordinates = 0

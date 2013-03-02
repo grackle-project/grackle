@@ -1,5 +1,3 @@
-# This is a translation of freefall.C from the clib distribution
-
 kboltz      = 1.3806504e-16
 mass_h      = 1.67262171e-24   
 mass_e      = 9.10938215e-28
@@ -22,14 +20,15 @@ tiny_number = 1e-20
 
 my_chemistry = chemistry_data()
 my_chemistry.use_chemistry = 1
+my_chemistry.with_radiative_cooling = 1
 my_chemistry.primordial_chemistry = 3
 my_chemistry.metal_cooling = 1
-my_chemistry.cloudy_table_file = "solar_2008_3D_metals.h5";
+my_chemistry.grackle_data_file = "CloudyData_UVB=HM2012.h5"
 
 my_chemistry.comoving_coordinates = 0
 my_chemistry.density_units = 1.67e-24
 my_chemistry.length_units = 1.0
-my_chemistry.time_units = 1.0e12
+my_chemistry.time_units = yr_to_s * 1e6
 my_chemistry.a_units = 1.0
 
 energy_units = (my_chemistry.length_units /
@@ -43,7 +42,6 @@ a_value = 1.0
 my_chemistry.initialize(a_value)
 
 my_chemistry.UVbackground = 1;
-my_chemistry.UVbackground_file = "UVB_rates_HM2012.hdf5";
 my_chemistry.initialize_UVbackground()
 my_chemistry.update_UVbackground(a_value)
 
@@ -78,6 +76,7 @@ fc["z-velocity"][:] = 0.0
 
 density_values = []
 temperature_values = []
+time_values = []
 
 timestep_fraction = 0.1
 current_time = 0.0
@@ -91,7 +90,8 @@ while fc["density"][0] < 1.e10:
 
     density_values.append(fc["density"][0] * my_chemistry.density_units)
     temperature_values.append(fc["temperature"][0])
-
+    time_values.append(current_time * my_chemistry.time_units / yr_to_s)
+    
     print "t: %e yr, rho: %e g/cm^3, T: %e [K]" % \
       ((current_time * my_chemistry.time_units / yr_to_s),
        (fc["density"][0] * my_chemistry.density_units),
@@ -113,9 +113,19 @@ while fc["density"][0] < 1.e10:
     current_time += dt
 
 from matplotlib import pyplot
-pyplot.loglog(density_values, temperature_values)
-pyplot.xlabel('$\\rho$ [g cm$^{-3}$]')
+
+p1, = pyplot.loglog(time_values, density_values)
+pyplot.xlabel('Time [yr]')
+pyplot.ylabel('$\\rho$ [g cm$^{-3}$]')
+pyplot.axis([1e6,4e7,1e-24,1e-13])
+
+pyplot.twinx()
+p2, = pyplot.loglog(time_values, temperature_values, color='r')
 pyplot.ylabel('T [K]')
+pyplot.axis([1e6,4e7,50.0,5e3])
+
+pyplot.legend([p1,p2],['density','temperature'],fancybox=True,loc='center left')
+
 output_file = 'freefall.png'
 print "Writing %s." % output_file
 pyplot.savefig(output_file)
