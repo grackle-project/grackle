@@ -90,23 +90,17 @@ cdef class chemistry_data:
         def __set__(self, val):
             self.data.photoelectric_heating = val
 
-    property cloudy_table_file:
+    property grackle_data_file:
         def __get__(self):
-            return self.data.cloudy_table_file
+            return self.data.grackle_data_file
         def __set__(self, val):
-            self.data.cloudy_table_file = val
+            self.data.grackle_data_file = val
 
     property UVbackground:
         def __get__(self):
             return self.data.UVbackground
         def __set__(self, val):
             self.data.UVbackground = val
-
-    property UVbackground_file:
-        def __get__(self):
-            return self.data.UVbackground_file
-        def __set__(self, val):
-            self.data.UVbackground_file = val
 
     property comoving_coordinates:
         def __get__(self):

@@ -13,13 +13,12 @@ cdef extern from "chemistry_data.h":
         gr_int h2_on_dust
         gr_int cmb_temperature_floor
         gr_int include_metal_heating
-        char *cloudy_table_file
+        char *grackle_data_file
         gr_int three_body_rate
         gr_int cie_cooling
         gr_int h2_optical_depth_approximation
         gr_int photoelectric_heating
         gr_int UVbackground
-        char *UVbackground_file
         # Most of the rest are not user-settable
 
 cdef extern from "code_units.h":
