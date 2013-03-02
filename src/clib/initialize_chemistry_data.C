@@ -29,6 +29,8 @@
 int initialize_cloudy_data(chemistry_data &my_chemistry,
                            code_units &my_units, gr_float a_value);
 
+int initialize_UVbackground_data(chemistry_data &my_chemistry);
+
 extern "C" void FORTRAN_NAME(calc_rates)(
      gr_int *nratec, gr_float *aye, gr_float *temstart, gr_float *temend, 
      gr_int *casebrates, gr_int *threebody,
@@ -170,6 +172,12 @@ int initialize_chemistry_data(chemistry_data &my_chemistry,
   /* If not used, this will just initialize some data structues. */
   if (initialize_cloudy_data(my_chemistry, my_units, a_value) == FAIL) {
     fprintf(stderr, "Error in initialize_cloudy_data.");
+    return FAIL;
+  }
+
+  /* Initialize UV Background data. */
+  if (initialize_UVbackground_data(my_chemistry) == FAIL) {
+    fprintf(stderr, "Error in initialize_UVbackground_data.");
     return FAIL;
   }
 
