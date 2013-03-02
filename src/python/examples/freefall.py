@@ -1,3 +1,5 @@
+import sys
+
 kboltz      = 1.3806504e-16
 mass_h      = 1.67262171e-24   
 mass_e      = 9.10938215e-28
@@ -40,7 +42,10 @@ gravitational_constant = (4.0 * pi_val * GravConst *
 
 a_value = 1.0
 
-my_chemistry.initialize(a_value)
+my_value = my_chemistry.initialize(a_value)
+if not my_value:
+    print "Error initializing chemistry."
+    sys.exit(0)
 
 my_chemistry.update_UVbackground(a_value)
 

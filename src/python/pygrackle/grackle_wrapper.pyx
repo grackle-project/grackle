@@ -10,10 +10,7 @@ cdef class chemistry_data:
         self.data = set_default_chemistry_parameters()
 
     def initialize(self, a_value):
-        initialize_chemistry_data(self.data, self.units, a_value)
-
-    def initialize_UVbackground(self):
-        initialize_UVbackground_data(self.data)
+        return initialize_chemistry_data(self.data, self.units, a_value)
 
     def update_UVbackground(self, a_value):
         update_UVbackground_rates(self.data, self.units, a_value)

@@ -35,8 +35,6 @@ cdef extern from "grackle.h":
     gr_int initialize_chemistry_data(c_chemistry_data &my_chemistry,
                                   c_code_units &my_units, gr_float a_value)
 
-    gr_int initialize_UVbackground_data(c_chemistry_data &my_chemistry)
-
     gr_int update_UVbackground_rates(c_chemistry_data &my_chemistry,
                                   c_code_units &my_units, gr_float a_value)
 

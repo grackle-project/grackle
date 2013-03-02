@@ -1,4 +1,5 @@
 import copy
+import sys
 
 def check_convergence(fc1, fc2, fields=None, tol=0.10):
     if fields is None:
@@ -51,7 +52,11 @@ energy_units = (my_chemistry.length_units /
 
 a_value = 1.0
 
-my_chemistry.initialize(a_value)
+my_value = my_chemistry.initialize(a_value)
+if not my_value:
+    print "Error initializing chemistry."
+    sys.exit(0)
+
 my_chemistry.update_UVbackground(a_value)
 
 n_points = 200

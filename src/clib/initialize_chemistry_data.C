@@ -171,13 +171,13 @@ int initialize_chemistry_data(chemistry_data &my_chemistry,
   /* Initialize Cloudy cooling, even if not being used. */
   /* If not used, this will just initialize some data structues. */
   if (initialize_cloudy_data(my_chemistry, my_units, a_value) == FAIL) {
-    fprintf(stderr, "Error in initialize_cloudy_data.");
+    fprintf(stderr, "Error in initialize_cloudy_data.\n");
     return FAIL;
   }
 
   /* Initialize UV Background data. */
   if (initialize_UVbackground_data(my_chemistry) == FAIL) {
-    fprintf(stderr, "Error in initialize_UVbackground_data.");
+    fprintf(stderr, "Error in initialize_UVbackground_data.\n");
     return FAIL;
   }
 
