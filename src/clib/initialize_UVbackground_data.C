@@ -45,16 +45,16 @@ int initialize_UVbackground_data(chemistry_data &my_chemistry)
   herr_t      h5_error = -1;
 
   fprintf(stderr,"Reading UV background data from %s.\n", 
-          my_chemistry.UVbackground_file);
-  file_id = H5Fopen(my_chemistry.UVbackground_file, 
+          my_chemistry.grackle_data_file);
+  file_id = H5Fopen(my_chemistry.grackle_data_file, 
                     H5F_ACC_RDONLY, H5P_DEFAULT);
 
 
   // Read Info dataset
 
-  dset_id =  H5Dopen(file_id, "/Info");
+  dset_id =  H5Dopen(file_id, "/UVBRates/Info");
   if (dset_id == h5_error) {
-    fprintf(stderr,"Can't open 'Info' dataset in %s.\n",my_chemistry.UVbackground_file);
+    fprintf(stderr,"Can't open 'Info' dataset in %s.\n",my_chemistry.grackle_data_file);
     return FAIL;
   }
 
@@ -77,21 +77,21 @@ int initialize_UVbackground_data(chemistry_data &my_chemistry)
 
   // Open redshift dataset and get number of elements
 
-  dset_id =  H5Dopen(file_id, "/z");
+  dset_id =  H5Dopen(file_id, "/UVBRates/z");
   if (dset_id == h5_error) {
-    fprintf(stderr,"Can't open redshift dataset ('z') in %s.\n",my_chemistry.UVbackground_file);
+    fprintf(stderr,"Can't open redshift dataset ('z') in %s.\n",my_chemistry.grackle_data_file);
     return FAIL;
   }
 
   dspace_id = H5Dget_space(dset_id);
   if (dspace_id == h5_error) {
-    fprintf(stderr,"Error opening dataspace for dataset 'z' in %s.\n",my_chemistry.UVbackground_file);
+    fprintf(stderr,"Error opening dataspace for dataset 'z' in %s.\n",my_chemistry.grackle_data_file);
     return FAIL;
   }
 
   Nz = H5Sget_simple_extent_npoints(dspace_id);
   if(Nz <= 0) {
-    fprintf(stderr,"Redshift dataset ('z') has inappropriate size = %lld in %s.\n",Nz,my_chemistry.UVbackground_file);
+    fprintf(stderr,"Redshift dataset ('z') has inappropriate size = %lld in %s.\n",Nz,my_chemistry.grackle_data_file);
     return FAIL;
   }
 
@@ -125,78 +125,78 @@ int initialize_UVbackground_data(chemistry_data &my_chemistry)
 
 
   // *** Redshift ***
-  if(! read_dataset(file_id, "z", my_chemistry.UVbackground_table.z) ) {
-    fprintf(stderr,"Error reading dataset 'z' in %s.\n",my_chemistry.UVbackground_file);
+  if(! read_dataset(file_id, "/UVBRates/z", my_chemistry.UVbackground_table.z) ) {
+    fprintf(stderr,"Error reading dataset 'z' in %s.\n",my_chemistry.grackle_data_file);
     return FAIL;
   }
 
   // *** k24 ***
-  if(! read_dataset(file_id, "k24", my_chemistry.UVbackground_table.k24) ) {
-    fprintf(stderr,"Error reading dataset 'k24' in %s.\n",my_chemistry.UVbackground_file);
+  if(! read_dataset(file_id, "/UVBRates/Chemistry/k24", my_chemistry.UVbackground_table.k24) ) {
+    fprintf(stderr,"Error reading dataset '/UVBRates/Chemistry/k24' in %s.\n",my_chemistry.grackle_data_file);
     return FAIL;
   }
 
   // *** k25 ***
-  if(! read_dataset(file_id, "k25", my_chemistry.UVbackground_table.k25) ) {
-    fprintf(stderr,"Error reading dataset 'k25' in %s.\n",my_chemistry.UVbackground_file);
+  if(! read_dataset(file_id, "/UVBRates/Chemistry/k25", my_chemistry.UVbackground_table.k25) ) {
+    fprintf(stderr,"Error reading dataset '/UVBRates/Chemistry/k25' in %s.\n",my_chemistry.grackle_data_file);
     return FAIL;
   }
 
   // *** k26 ***
-  if(! read_dataset(file_id, "k26", my_chemistry.UVbackground_table.k26) ) {
-    fprintf(stderr,"Error reading dataset 'k26' in %s.\n",my_chemistry.UVbackground_file);
+  if(! read_dataset(file_id, "/UVBRates/Chemistry/k26", my_chemistry.UVbackground_table.k26) ) {
+    fprintf(stderr,"Error reading dataset '/UVBRates/Chemistry/k26' in %s.\n",my_chemistry.grackle_data_file);
     return FAIL;
   }
 
   if (my_chemistry.primordial_chemistry > 1) {
 
     // *** k27 ***
-    if(! read_dataset(file_id, "k27", my_chemistry.UVbackground_table.k27) ) {
-      fprintf(stderr,"Error reading dataset 'k27' in %s.\n",my_chemistry.UVbackground_file);
+    if(! read_dataset(file_id, "/UVBRates/Chemistry/k27", my_chemistry.UVbackground_table.k27) ) {
+      fprintf(stderr,"Error reading dataset '/UVBRates/Chemistry/k27' in %s.\n",my_chemistry.grackle_data_file);
       return FAIL;      
     }
 
     // *** k28 ***
-    if(! read_dataset(file_id, "k28", my_chemistry.UVbackground_table.k28) ) {
-      fprintf(stderr,"Error reading dataset 'k28' in %s.\n",my_chemistry.UVbackground_file);
+    if(! read_dataset(file_id, "/UVBRates/Chemistry/k28", my_chemistry.UVbackground_table.k28) ) {
+      fprintf(stderr,"Error reading dataset '/UVBRates/Chemistry/k28' in %s.\n",my_chemistry.grackle_data_file);
       return FAIL;      
     }
 
     // *** k29 ***
-    if(! read_dataset(file_id, "k29", my_chemistry.UVbackground_table.k29) ) {
-      fprintf(stderr,"Error reading dataset 'k29' in %s.\n",my_chemistry.UVbackground_file);
+    if(! read_dataset(file_id, "/UVBRates/Chemistry/k29", my_chemistry.UVbackground_table.k29) ) {
+      fprintf(stderr,"Error reading dataset '/UVBRates/Chemistry/k29' in %s.\n",my_chemistry.grackle_data_file);
       return FAIL;      
     }
 
     // *** k30 ***
-    if(! read_dataset(file_id, "k30", my_chemistry.UVbackground_table.k30) ) {
-      fprintf(stderr,"Error reading dataset 'k30' in %s.\n",my_chemistry.UVbackground_file);
+    if(! read_dataset(file_id, "/UVBRates/Chemistry/k30", my_chemistry.UVbackground_table.k30) ) {
+      fprintf(stderr,"Error reading dataset '/UVBRates/Chemistry/k30' in %s.\n",my_chemistry.grackle_data_file);
       return FAIL;      
     }
 
     // *** k31 ***
-    if(! read_dataset(file_id, "k31", my_chemistry.UVbackground_table.k31) ) {
-      fprintf(stderr,"Error reading dataset 'k31' in %s.\n",my_chemistry.UVbackground_file);
+    if(! read_dataset(file_id, "/UVBRates/Chemistry/k31", my_chemistry.UVbackground_table.k31) ) {
+      fprintf(stderr,"Error reading dataset '/UVBRates/Chemistry/k31' in %s.\n",my_chemistry.grackle_data_file);
       return FAIL;      
     }
     
   }
 
   // *** piHI ***
-  if(! read_dataset(file_id, "piHI", my_chemistry.UVbackground_table.piHI) ) {
-    fprintf(stderr,"Error reading dataset 'piHI' in %s.\n",my_chemistry.UVbackground_file);
+  if(! read_dataset(file_id, "/UVBRates/Photoheating/piHI", my_chemistry.UVbackground_table.piHI) ) {
+    fprintf(stderr,"Error reading dataset '/UVBRates/Photoheating/piHI' in %s.\n",my_chemistry.grackle_data_file);
     return FAIL;
   }
 
   // *** piHeII ***
-  if(! read_dataset(file_id, "piHeII", my_chemistry.UVbackground_table.piHeII) ) {
-    fprintf(stderr,"Error reading dataset 'piHeII' in %s.\n",my_chemistry.UVbackground_file);
+  if(! read_dataset(file_id, "/UVBRates/Photoheating/piHeII", my_chemistry.UVbackground_table.piHeII) ) {
+    fprintf(stderr,"Error reading dataset '/UVBRates/Photoheating/piHeII' in %s.\n",my_chemistry.grackle_data_file);
     return FAIL;
   }
 
   // *** piHeI ***
-  if(! read_dataset(file_id, "piHeI", my_chemistry.UVbackground_table.piHeI) ) {
-    fprintf(stderr,"Error reading dataset 'piHeI' in %s.\n",my_chemistry.UVbackground_file);
+  if(! read_dataset(file_id, "/UVBRates/Photoheating/piHeI", my_chemistry.UVbackground_table.piHeI) ) {
+    fprintf(stderr,"Error reading dataset '/UVBRates/Photoheating/piHeI' in %s.\n",my_chemistry.grackle_data_file);
     return FAIL;
   }
 

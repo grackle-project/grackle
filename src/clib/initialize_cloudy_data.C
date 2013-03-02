@@ -57,7 +57,7 @@ int initialize_cloudy_data(chemistry_data &my_chemistry,
   }
 
   fprintf(stderr,"Initializing Cloudy cooling.\n");
-  fprintf(stderr,"cloudy_table_file: %s.\n",my_chemistry.cloudy_table_file);
+  fprintf(stderr,"cloudy_table_file: %s.\n",my_chemistry.grackle_data_file);
   fprintf(stderr,"include_metal_heating: %"ISYM".\n",my_chemistry.include_metal_heating);
   fprintf(stderr,"cmb_temperature_floor: %"ISYM".\n",my_chemistry.cmb_temperature_floor);
 
@@ -77,15 +77,15 @@ int initialize_cloudy_data(chemistry_data &my_chemistry,
   herr_t      h5_error = -1;
 
   fprintf(stderr,"Reading Cloudy data from %s.\n", 
-          my_chemistry.cloudy_table_file);
-  file_id = H5Fopen(my_chemistry.cloudy_table_file, 
+          my_chemistry.grackle_data_file);
+  file_id = H5Fopen(my_chemistry.grackle_data_file, 
                     H5F_ACC_RDONLY, H5P_DEFAULT);
 
   // Open cooling dataset and get grid dimensions.
 
-  dset_id =  H5Dopen(file_id, "/Cooling");
+  dset_id =  H5Dopen(file_id, "/CloudyRates/Cooling");
   if (dset_id == h5_error) {
-    fprintf(stderr,"Can't open Cooling in %s.\n",my_chemistry.cloudy_table_file);
+    fprintf(stderr,"Can't open Cooling in %s.\n",my_chemistry.grackle_data_file);
     return FAIL;
   }
 
@@ -218,9 +218,9 @@ int initialize_cloudy_data(chemistry_data &my_chemistry,
 
     temp_data = new float64[my_chemistry.CloudyDataSize];
 
-    dset_id =  H5Dopen(file_id, "/Heating");
+    dset_id =  H5Dopen(file_id, "/CloudyRates/Heating");
     if (dset_id == h5_error) {
-      fprintf(stderr,"Can't open Heating in %s.\n",my_chemistry.cloudy_table_file);
+      fprintf(stderr,"Can't open Heating in %s.\n",my_chemistry.grackle_data_file);
       return FAIL;
     }
 

@@ -10,6 +10,10 @@ typedef struct
   // adiabatic index
   gr_float Gamma;
 
+  // HDF5 file containing Cloudy cooling table and UV background
+  char *grackle_data_file;
+
+
   /****************************************
    *** chemistry and cooling parameters ***
    ****************************************/
@@ -26,9 +30,6 @@ typedef struct
 
   // Flag to control whether or not to include heating from Cloudy.
   gr_int include_metal_heating;
-
-  // Cooling grid file.
-  char *cloudy_table_file;
 
   /* additional H2 chemistry parameters
      best left unchanged. */
@@ -47,8 +48,6 @@ typedef struct
    ***************************************/
 
   gr_int UVbackground;
-
-  char *UVbackground_file;
 
   struct UVBtable {
     gr_int Nz;
