@@ -133,9 +133,22 @@ int initialize_chemistry_data(chemistry_data &my_chemistry,
   my_chemistry.n_cr_d1 = new gr_float[my_chemistry.NumberOfTemperatureBins];
   my_chemistry.n_cr_d2 = new gr_float[my_chemistry.NumberOfTemperatureBins]; 
 
+  my_chemistry.k24 = 0;
+  my_chemistry.k25 = 0;
+  my_chemistry.k26 = 0; 
+  my_chemistry.k27 = 0;
+  my_chemistry.k28 = 0;
+  my_chemistry.k29 = 0; 
+  my_chemistry.k30 = 0; 
+  my_chemistry.k31 = 0; 
+  my_chemistry.piHI = 0;
+  my_chemistry.piHeII = 0;
+  my_chemistry.piHeI = 0; 
+
   gr_int ioutput = 1;
-  gr_float temperature_units = mh*POW(my_units.length_units/
-                                   my_units.time_units,2)/kboltz;
+  gr_float temperature_units =  mh * POW(my_units.a_units * 
+                                         my_units.length_units /
+                                         my_units.time_units, 2) / kboltz;
 
   /* Call FORTRAN routine to do the hard work. */
  

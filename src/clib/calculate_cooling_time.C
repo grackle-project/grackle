@@ -82,8 +82,9 @@ int calculate_cooling_time(chemistry_data &my_chemistry,
 
   /* Calculate temperature units. */
 
-  gr_float temperature_units =  mh*POW(my_units.length_units/
-                                       my_units.time_units,2)/kboltz;
+  gr_float temperature_units =  mh * POW(my_units.a_units * 
+                                         my_units.length_units /
+                                         my_units.time_units, 2) / kboltz;
 
   /* Call the fortran routine to solve cooling equations. */
 
