@@ -2,34 +2,6 @@ import copy
 import numpy as np
 import sys
 
-def check_convergence(fc1, fc2, fields=None, tol=0.10):
-    if fields is None:
-        fields = ["HI", "HII", "HM", "HeI", "HeII", "HeIII",
-                  "H2I", "H2II", "DI", "DII", "HDI", "de"]
-    for field in fields:
-        convergence = np.abs(fc1[field] - fc2[field]) / fc1[field]
-        if (convergence > tol).any():
-            print "Max change %s: %e." % (field, convergence.max())
-            return False
-    return True
-
-def set_cosmology_units(my_chemistry, hubble_constant=0.704,
-                        omega_matter=0.268, omega_lambda=0.732,
-                        current_redshift=0.0, initial_redshift=0.0,
-                        comoving_box_size=1.0):
-    my_chemistry.a_units = 1. / (1. + initial_redshift)
-    my_chemistry.density_units = 1.8788e-29 * omega_matter * \
-      np.power(hubble_constant,2) * np.power(1 + current_redshift,3)
-    my_chemistry.length_units = 3.085678e24 * comoving_box_size / \
-      hubble_constant / (1. + current_redshift)
-    my_chemistry.time_units = 2.519445e17 / np.sqrt(omega_matter) / \
-     hubble_constant / np.power(1 + initial_redshift, 1.5)
-    temperature_units = 1.81723e6 * \
-      np.power(comoving_box_size, 2) * omega_matter * (1. + initial_redshift)
-    velocity_units = 1.22475e7 * comoving_box_size * \
-     np.sqrt(omega_matter)* np.sqrt(1. + initial_redshift)
-    return (temperature_units, velocity_units)
-
 kboltz      = 1.3806504e-16
 mass_h      = 1.67262171e-24   
 mass_e      = 9.10938215e-28
@@ -45,6 +17,59 @@ kpc         = 3.0857e21
 pc          = 3.0857e18
 yr_to_s     = 3.15569e7
 
+def check_convergence(fc1, fc2, fields=None, tol=0.01):
+    if fields is None:
+        fields = ["HI", "HII", "HM", "HeI", "HeII", "HeIII",
+                  "H2I", "H2II", "DI", "DII", "HDI", "de"]
+    for field in fields:
+        convergence = np.abs(fc1[field] - fc2[field]) / fc1[field]
+        if (convergence > tol).any():
+            print "Max change %s: %.10e." % (field, convergence.max())
+            return False
+    return True
+
+def set_cosmology_units(my_chemistry, hubble_constant=0.704,
+                        omega_matter=0.268, omega_lambda=0.732,
+                        current_redshift=0.0, initial_redshift=0.0,
+                        comoving_box_size=1.0):
+    """
+    Greg Bryan's note on cosmology units:
+    
+    time:        utim = 1 / sqrt(4 * \pi * G * \rho_0 * (1+zri)^3)
+    density:     urho = \rho_0 * (1+z)^3
+    length:      uxyz = (1 Mpc) * box / h / (1+z)
+    velocity:    uvel = uaye * uxyz / utim  (since u = a * dx/dt)
+    (*)  temperature: utem = m_H * \mu / k * uvel**2
+    a(t):        uaye = 1 / (1 + zri)
+    
+    where:
+    box     - size of simulation box in Mpc/h
+    zri     - initial redshift (start of simulation)
+    \rho_0  = 3*\Omega_0*H_0^2/(8*\pi*G)
+    Omega_0 - the fraction of non-relativistic matter at z=0
+    
+    Note that two definitions are dependent on redshift (urho
+    and uxyz) so make sure to call this routine immediately
+    before writing.
+    
+    * - the utem given below assumes that \mu = 1, so you must
+    multiply the resulting temperature field by \mu.
+    """
+    
+    my_chemistry.a_units = 1. / (1. + initial_redshift)
+    my_chemistry.density_units = 1.8788e-29 * omega_matter * \
+      np.power(hubble_constant,2) * np.power(1 + current_redshift,3)
+    my_chemistry.length_units = 3.085678e24 * comoving_box_size / \
+      hubble_constant / (1. + current_redshift)
+    my_chemistry.time_units = 2.519445e17 / np.sqrt(omega_matter) / \
+     hubble_constant / np.power(1 + initial_redshift, 1.5)
+     
+    velocity_units = my_chemistry.a_units * my_chemistry.length_units / \
+      my_chemistry.time_units
+    temperature_units = mass_h * velocity_units**2 / kboltz
+
+    return temperature_units
+
 from pygrackle.grackle_wrapper import *
 from pygrackle.fluid_container import FluidContainer
 
@@ -56,22 +81,17 @@ my_chemistry.with_radiative_cooling = 0
 my_chemistry.primordial_chemistry = 3
 my_chemistry.metal_cooling = 1
 my_chemistry.UVbackground = 1
-my_chemistry.grackle_data_file = "CloudyData_UVB=HM2012.h5"
 my_chemistry.include_metal_heating = 1
+my_chemistry.grackle_data_file = "CloudyData_UVB=HM2012.h5"
+#my_chemistry.grackle_data_file = "CloudyData_noUVB.h5"
 
 my_chemistry.comoving_coordinates = 1
+initial_redshift = 99.0
 current_redshift = 0.0
-a_value = 1.0 / (1.0 + current_redshift)
-temperature_units, velocity_units = \
-  set_cosmology_units(my_chemistry, 
-                      current_redshift=current_redshift)
-
-print my_chemistry.density_units
-print my_chemistry.length_units
-print my_chemistry.a_units
-print my_chemistry.time_units
-print temperature_units
-print velocity_units
+temperature_units = set_cosmology_units(my_chemistry, 
+                                        current_redshift=current_redshift,
+                                        initial_redshift=initial_redshift)
+a_value = 1.0 / (1.0 + current_redshift) / my_chemistry.a_units
 
 my_value = my_chemistry.initialize(a_value)
 if not my_value:
@@ -82,7 +102,7 @@ my_chemistry.update_UVbackground(a_value)
 
 n_points = 200
 fc = FluidContainer(my_chemistry, n_points)
-fc["density"][:] = 1. * mass_h / my_chemistry.density_units
+fc["density"][:] = 1.0 * mass_h / my_chemistry.density_units
 fc["HI"][:] = 0.76 * fc["density"]
 fc["HII"][:] = tiny_number * fc["density"]
 fc["HM"][:] = tiny_number * fc["density"]
@@ -128,10 +148,12 @@ cool_unit = (my_chemistry.a_units**5 * xbase1**2 * mass_h**2) / \
   (my_chemistry.time_units**3 * dbase1)
   
 cooling_rate = cool_unit * fc["energy"] / \
-  fc["cooling_time"] / fc["density"]
+  fc["cooling_time"] / (fc["density"] / a_value**3)
+
+t_sort = np.argsort(fc["temperature"])
   
 from matplotlib import pyplot
-pyplot.loglog(fc['temperature'], cooling_rate)
+pyplot.loglog(fc['temperature'][t_sort], cooling_rate[t_sort])
 pyplot.xlabel('T [K]')
 pyplot.ylabel('$\\Lambda$ [erg s$^{-1}$ cm$^{3}$]')
 output_file = 'cooling_rate.png'
