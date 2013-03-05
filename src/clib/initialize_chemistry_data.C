@@ -62,6 +62,11 @@ int initialize_chemistry_data(chemistry_data &my_chemistry,
 
   fprintf(stderr, "Initializing chemistry data.\n");
 
+  /* Consistency checks. */
+  if (my_chemistry.UVbackground == 0) {
+    my_chemistry.include_metal_heating = 0;
+  }
+
   /* Allocate CoolData space for rates. */
  
   my_chemistry.ceHI    = new gr_float[my_chemistry.NumberOfTemperatureBins];
