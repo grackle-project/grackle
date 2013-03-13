@@ -9,8 +9,8 @@
 /  PURPOSE:
 /
 ************************************************************************/
-#ifndef __ENZO_EXCEPTIONS__
-#define __ENZO_EXCEPTIONS__
+#ifndef __GRACKLE_EXCEPTIONS__
+#define __GRACKLE_EXCEPTIONS__
 
 #ifndef OSX10_4
 #include <execinfo.h>
@@ -27,17 +27,17 @@
 // http://www.ibm.com/developerworks/linux/library/l-cppexcep.html
 //
 
-// This must be included BEFORE macros_and_parameters.h
+// This must be included BEFORE grackle_macros.h
 // so we use int here
 
 extern char current_error[255];
 
- class EnzoFatalException
+ class GrackleFatalException
  {
  public:
-     EnzoFatalException(const char *error_msg,
-                        const char *filename = NULL,
-                        int line_number = 0)
+     GrackleFatalException(const char *error_msg,
+                           const char *filename = NULL,
+                           int line_number = 0)
      {
          void * array[25];
          int nSize = backtrace(array, 25);

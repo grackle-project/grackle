@@ -1,5 +1,5 @@
-#ifndef __macros_and_parameters_h_
-#define __macros_and_parameters_h_
+#ifndef __grackle_macros_h_
+#define __grackle_macros_h_
 /***********************************************************************
 /  
 / MACRO DEFINITIONS AND PARAMETERS
@@ -7,11 +7,11 @@
 ************************************************************************/
 
 #ifdef CONFIG_THROW_ABORT
-#define ENZO_FAIL(A) raise(SIGABRT);
-#define ENZO_VFAIL(A, ...) raise(SIGABRT);
+#define GRACKLE_FAIL(A) raise(SIGABRT);
+#define GRACKLE_VFAIL(A, ...) raise(SIGABRT);
 #else
-#define ENZO_FAIL(A) throw(EnzoFatalException(A, __FILE__, __LINE__));
-#define ENZO_VFAIL(format, ...) {snprintf(current_error, 254, format, ##__VA_ARGS__); throw(EnzoFatalException(current_error, __FILE__, __LINE__));}
+#define GRACKLE_FAIL(A) throw(GrackleFatalException(A, __FILE__, __LINE__));
+#define GRACKLE_VFAIL(format, ...) {snprintf(current_error, 254, format, ##__VA_ARGS__); throw(GrackleFatalException(current_error, __FILE__, __LINE__));}
 #endif
 
 /* Fortran name generator (cpp blues) */

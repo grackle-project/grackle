@@ -20,7 +20,7 @@
 
 #include <math.h>
 #include "hdf5.h"
-#include "macros_and_parameters.h"
+#include "grackle_macros.h"
 #include "global_data.h"
 #include "chemistry_data.h"
 #include "code_units.h"
