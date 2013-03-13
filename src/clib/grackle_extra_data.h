@@ -17,8 +17,8 @@
 /        2) read without DEFINE_STORAGE defined for external linkage
 /
 ************************************************************************/
-#ifndef GLOBAL_DATA_DEFINED__
-#define GLOBAL_DATA_DEFINED__
+#ifndef __EXTRA_GRACKLE_DATA_H__
+#define __EXTRA_GRACKLE_DATA_H__
 
 #include <stdio.h>
 #ifdef DEFINE_STORAGE

@@ -21,7 +21,7 @@
 #include <math.h>
 #include "hdf5.h"
 #include "grackle_macros.h"
-#include "global_data.h"
+#include "grackle_extra_data.h"
 #include "chemistry_data.h"
 #include "code_units.h"
 

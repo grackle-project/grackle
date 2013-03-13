@@ -1,5 +1,5 @@
-#ifndef __phys_constants_h_
-#define __phys_constants_h_
+#ifndef __g_phys_constants_h__
+#define __g_phys_constants_h__
 /***********************************************************************
 /  
 / DEFINITION OF PHYSICAL CONSTANTS

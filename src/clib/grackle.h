@@ -4,7 +4,6 @@
 #include "grackle_macros.h"
 #include "code_units.h"
 #include "chemistry_data.h"
-#include "phys_constants.h"
 
 chemistry_data set_default_chemistry_parameters();
 

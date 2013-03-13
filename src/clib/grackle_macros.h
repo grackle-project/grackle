@@ -1,5 +1,5 @@
-#ifndef __grackle_macros_h_
-#define __grackle_macros_h_
+#ifndef __GRACKLE_MACROS_H_
+#define __GRACKLE_MACROS_H_
 /***********************************************************************
 /  
 / MACRO DEFINITIONS AND PARAMETERS
