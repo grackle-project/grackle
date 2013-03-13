@@ -1,4 +1,4 @@
-cdef extern from "macros_and_parameters.h":
+cdef extern from "grackle_macros.h":
     # This does not need to be exactly correct, only of the right basic type
     ctypedef float gr_float
     ctypedef int gr_int
