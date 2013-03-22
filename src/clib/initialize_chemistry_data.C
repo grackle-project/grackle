@@ -21,7 +21,6 @@
 #include <math.h>
 #include "ErrorExceptions.h"
 #include "grackle_macros.h"
-#include "grackle_extra_data.h"
 #include "chemistry_data.h"
 #include "code_units.h" 
 #include "phys_constants.h"
@@ -50,11 +49,6 @@ extern "C" void FORTRAN_NAME(calc_rates)(
      gr_float *k50, gr_float *k51, gr_float *k52, gr_float *k53, gr_float *k54, gr_float *k55,
         gr_float *k56, gr_int *ndratec, gr_float *dtemstart, gr_float *dtemend, gr_float *h2dusta, 
      gr_float *ncrca, gr_float *ncrd1a, gr_float *ncrd2a, gr_int *ioutput);
-
-
-// character strings
-EXTERN char outfilename[];
-
  
 int initialize_chemistry_data(chemistry_data &my_chemistry,
                               code_units &my_units, gr_float a_value)
