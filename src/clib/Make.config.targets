@@ -3,10 +3,7 @@
 # FILE:        Make.config.targets
 #
 # SUMMARY:     Make targets for managing configuration settings
-#
-# AUTHOR:      James Bordner (jobordner@ucsd.edu)
-#
-# DATE:        2007-02-21
+#              (originally written by James Border for Enzo)
 #
 # DESCRIPTION  See 'make help-config' for definitive description of targets
 #
@@ -15,7 +12,7 @@
 #-----------------------------------------------------------------------
 help-config:
 	@echo "========================================================================"
-	@echo "   ENZO CONFIGURATION HELP"
+	@echo "   GRACKLE CONFIGURATION HELP"
 	@echo "========================================================================"
 	@echo
 	@echo "CONFIGURATION SETTINGS"
@@ -116,7 +113,7 @@ default:
 #-----------------------------------------------------------------------
 
 machine-%: suggest-clean
-	@if [ -e $(ENZO_DIR)/Make.mach.$* ] || [ -e $(HOME)/.enzo/Make.mach.$* ]; then \
+	@if [ -e $(GRACKLE_DIR)/Make.mach.$* ]; then \
            tmp=.config.temp; \
            grep -v CONFIG_MACHINE $(MAKE_CONFIG_MACHINE) > $${tmp}; \
            mv $${tmp} $(MAKE_CONFIG_MACHINE); \
@@ -133,9 +130,9 @@ machine-%: suggest-clean
 #-----------------------------------------------------------------------
 
 load-config-%:
-	@if [ -e $(HOME)/.enzo/Make.settings.$* ]; then \
+	@if [ -e $(HOME)/.grackle/Make.settings.$* ]; then \
            @tmp=.config.temp; \
-	   cat $(HOME)/.enzo/Make.settings.$* > $(MAKE_CONFIG_OVERRIDE); \
+	   cat $(HOME)/.grackle/Make.settings.$* > $(MAKE_CONFIG_OVERRIDE); \
            echo; \
            echo "   CONFIG SETTINGS: $*"; \
 	   $(MAKE) show-config; \
@@ -149,7 +146,7 @@ load-config-%:
 	   $(MAKE) suggest-clean; \
         else \
            echo; \
-           echo "   No such settings file "'"'"$(HOME)/.enzo/Make.settings.$*"'"'; \
+           echo "   No such settings file "'"'"$(HOME)/.grackle/Make.settings.$*"'"'; \
            echo; \
 	   exit 1; \
         fi;
@@ -158,9 +155,9 @@ load-config-%:
 
 save-config-%:
 	@tmp=.config.temp; \
-	cat $(MAKE_CONFIG_OVERRIDE) > $(HOME)/.enzo/Make.settings.$*; \
+	cat $(MAKE_CONFIG_OVERRIDE) > $(HOME)/.grackle/Make.settings.$*; \
 	echo; \
-	echo "   Settings saved to $(HOME)/.enzo/Make.settings.$*."; \
+	echo "   Settings saved to $(HOME)/.grackle/Make.settings.$*."; \
 	echo "   Type "'"'"$(MAKE) load-config-$*"'"'" to reload settings."; \
 	echo;
 

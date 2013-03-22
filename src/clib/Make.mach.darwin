@@ -74,7 +74,7 @@ MACH_LD_NOMPI  = g++ # Linker when not using MPI
 #-----------------------------------------------------------------------
 
 # Note: When compiling against HDF5 version 1.8 or greater, you need to
-# compile HDF5 with --with-default-api-version=v16, or Enzo with
+# compile HDF5 with --with-default-api-version=v16, or grackle with
 # -DH5_USE_16_API.
 
 MACH_DEFINES   = -DLINUX -DH5_USE_16_API 
@@ -132,7 +132,6 @@ MACH_INCLUDES_HYPRE   = $(LOCAL_INCLUDES_HYPRE)
 #-----------------------------------------------------------------------
 
 LOCAL_LIBS_MACH   = -L$(LOCAL_FC_INSTALL)/lib -lgfortran 
-                    #-L$(HOME)/yt/enzolib/enzolib -lproblemtype_handler
 LOCAL_LIBS_HDF5   = -L$(LOCAL_HDF5_INSTALL)/lib -lhdf5
 LOCAL_LIBS_PYTHON = -lpython2.6
 LOCAL_LIBS_PYTHON = -framework Python 
@@ -143,3 +142,11 @@ MACH_LIBS_PYTHON  = $(LOCAL_LIBS_PYTHON)
 MACH_LIBS_MPI    = $(LOCAL_LIBS_MPI)
 MACH_LIBS_HYPRE  = $(LOCAL_LIBS_HYPRE)
 MACH_LIBS_PAPI    = $(LOCAL_LIBS_PAPI)
+
+#-----------------------------------------------------------------------
+# Installation
+#-----------------------------------------------------------------------
+
+MACH_INSTALL_PREFIX = $(HOME)/local
+MACH_INSTALL_LIB_DIR =
+MACH_INSTALL_INCLUDE_DIR =

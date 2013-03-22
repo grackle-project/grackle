@@ -1,12 +1,9 @@
 #=======================================================================
 #
-# FILE:        Makefile.config
+# FILE:        Makefile
 #
-# SUMMARY:     Configurable Makefile for Enzo
-#
-# AUTHOR:      James Bordner (jobordner@ucsd.edu)
-#
-# DATE:        2007-02-21
+# SUMMARY:     Configurable Makefile for grackle
+#              (originally written by James Border for Enzo)
 #
 # DESCRIPTION
 #              See 'gmake help' for definitive description of targets
@@ -22,7 +19,7 @@
 #              DEPEND                 Make-generated dependencies
 #
 #              Make.mach.* should be the only file that one should
-#              edit when porting Enzo to a new machine.
+#              edit when porting grackle to a new machine.
 #
 #              Make.config.override should be the only file that
 #              one should edit when defining local user settings.
@@ -39,14 +36,11 @@
 SHELL    = /bin/bash
 
 TOP_DIR  = ../..
+DEFAULT_INSTALL_PREFIX = /usr/local
 OUTPUT   = out.compile
 
-ENZO_DIR = .
-MODULES  = 
+GRACKLE_DIR = .
 VERBOSE  = 0
-ETAGS_COMMAND = "0"
-
-LFLAGS=--header-file=libconfig/scanner.h --prefix=libconfig_yy
 
 SVN      = hg
 
@@ -55,29 +49,37 @@ SVN      = hg
 # configuration settings.
 #-----------------------------------------------------------------------
 
-include $(ENZO_DIR)/Make.config.settings
+include $(GRACKLE_DIR)/Make.config.settings
 
 #-----------------------------------------------------------------------
 # Make.config.machine is used for setting which Make.mach.* file to use
 #-----------------------------------------------------------------------
 
-MAKE_CONFIG_MACHINE  = $(ENZO_DIR)/Make.config.machine
-include $(ENZO_DIR)/Make.config.machine
+MAKE_CONFIG_MACHINE  = $(GRACKLE_DIR)/Make.config.machine
+include $(GRACKLE_DIR)/Make.config.machine
 
 #-----------------------------------------------------------------------
 # Make.config.override is used for overriding the default settings in
 # Make.config.settings.  This was made separate from the default settings 
-# to enable easily interfacing Enzo with a software testing environment 
+# to enable easily interfacing grackle with a software testing environment 
 # like lcatest.
 #-----------------------------------------------------------------------
 
-MAKE_CONFIG_OVERRIDE = $(ENZO_DIR)/Make.config.override
+MAKE_CONFIG_OVERRIDE = $(GRACKLE_DIR)/Make.config.override
 
 include $(MAKE_CONFIG_OVERRIDE)
 
-# THIS WAY OF DOING THE ABOVE DOES NOT WORK:
+#-----------------------------------------------------------------------
+# Make.mach.<machine-name> defines all machine-dependent settings.
 #
-# include $(ENZO_DIR)/Make.config.override
+# mqk 03/22/2013: moved this to before Make.config.assemble, so the
+# MACH_INSTALL_* variables are defined there.
+#-----------------------------------------------------------------------
+
+MACH_SHARED_EXT=so
+MACH_SHARED_FLAGS=-shared
+
+-include $(GRACKLE_DIR)/Make.mach.$(CONFIG_MACHINE)
 
 #-----------------------------------------------------------------------
 # Make.config.assemble takes the settings in the Make.config.settings
@@ -86,16 +88,6 @@ include $(MAKE_CONFIG_OVERRIDE)
 #-----------------------------------------------------------------------
 
 include Make.config.assemble
-
-#-----------------------------------------------------------------------
-# Make.mach.<machine-name> defines all machine-dependent settings.
-#-----------------------------------------------------------------------
-
-MACH_SHARED_EXT=so
-MACH_SHARED_FLAGS=-shared
-
--include $(ENZO_DIR)/Make.mach.$(CONFIG_MACHINE)
--include $(HOME)/.enzo/Make.mach.$(CONFIG_MACHINE)
 
 #=======================================================================
 # OBJECT FILES
@@ -129,20 +121,13 @@ libgrackle.$(MACH_SHARED_EXT): $(MODULES) autogen dep $(OBJS_LIB) MACHNOTES
 	   echo "Failed! See $(OUTPUT) for error messages"; \
 	fi)
 
-MAKETAGS:
-	@(if [ "$(ETAGS_COMMAND)" != "0" ]; then \
-	   	echo -e "Making Tags with $(ETAGS_COMMAND)" ; \
-		rm -f TAGS ; \
-		$(ETAGS_COMMAND) ; \
-		echo -e "Done updating TAGS" ; \
-	fi)
 MACHNOTES: 
 	@echo -e $(MACHINE_NOTES)
 
-lib%.$(MACH_SHARED_EXT): $(MODULES) autogen dep enzo.o $(OBJS_LIB)
+lib%.$(MACH_SHARED_EXT): $(MODULES) autogen dep $(OBJS_LIB)
 	@rm -f $@
 	@echo "Linking"
-	-@$(LD) $(LDFLAGS) $(SHARED_OPT) -o $@ enzo.o $(OBJS_LIB) $(LIBS) >& $(OUTPUT)
+	-@$(LD) $(LDFLAGS) $(SHARED_OPT) -o $@ $(OBJS_LIB) $(LIBS) >& $(OUTPUT)
 	@(if [ -e $@ ]; then \
 	   echo "Success!"; \
 	else \
@@ -164,14 +149,12 @@ verbose: VERBOSE = 1
 # Implicit rules
 #-----------------------------------------------------------------------
 
-.SUFFIXES: .c .C .F .F90 .o .cu .pyx
+.SUFFIXES: .C .F .o
 
 # Inhibit removing any *.o files after compiling
 
-.PRECIOUS: %.o %.C
+.PRECIOUS: %.o %.C %.F
 
-#.src.f:
-#	@$(CPP) $(DEFINES) $(CPPFLAGS) $*.src > $*.f
 .F.o:
 	@echo "Compiling $<"
 	@rm -f $@
@@ -187,53 +170,6 @@ verbose: VERBOSE = 1
           fi ; \
 	else \
 	  $(FC) -c -o $@ $(FFLAGS)  $(DEFINES) $*.f >> $(OUTPUT) 2>&1 ; \
-	  if [ ! -e $@ ]; then \
-	     echo "See $(OUTPUT) for error messages"; \
-	     exit 1; \
-	  fi ; \
-	fi)
-
-#.src90.f90:
-#	@echo "Compiling $<"
-#	@$(CPP) $(DEFINES) $(CPPFLAGS) $*.src90 > $*.f90
-.F90.o:
-	@rm -f $@
-	@echo "Compiling $<"
-	@(if [ $(VERBOSE) -eq 0 ]; then \
-	  $(F90) -c -o $@ $(F90FLAGS) $(DEFINES) $*.F90 >& $(OUTPUT) ; \
-	  if [ ! -e $@ ]; then \
-             echo; \
-             echo "$(F90) -c -o $@ $(DEFINES) $(F90FLAGS) $*.F90"; \
-             echo; \
-             $(F90) -c -o $@ $(F90FLAGS) $*.F90; \
-             echo; \
-             exit 1; \
-	  fi ; \
-	else \
-	  $(F90) -c -o $@ $(F90FLAGS) $(DEFINES) $*.F90 >> $(OUTPUT) 2>&1 ; \
-	  if [ ! -e $@ ]; then \
-	     echo "See $(OUTPUT) for error messages"; \
-	     exit 1; \
-	  fi ; \
-	fi)
-
-.c.o:
-	@rm -f $@
-	@echo "Compiling $<"
-	@(if [ $(VERBOSE) -eq 0 ]; then \
-	  $(CC) -c -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) $*.c \
-	    >& $(OUTPUT) ; \
-	  if [ ! -e $@ ]; then \
-             echo; \
-             echo "$(CC) -c -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) $*.c"; \
-             echo; \
-             $(CC) -c -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) $*.c;\
-             echo; \
-             exit 1; \
-          fi ; \
-	else \
-	  $(CC) -c -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) $*.c \
-	    >> $(OUTPUT) 2>&1 ; \
 	  if [ ! -e $@ ]; then \
 	     echo "See $(OUTPUT) for error messages"; \
 	     exit 1; \
@@ -257,29 +193,6 @@ verbose: VERBOSE = 1
 	else \
 	  $(CXX) -c -o $@ $(DEFINES) $(CXXFLAGS) $(INCLUDES) $*.C \
 	    >> $(OUTPUT) 2>&1 ; \
-	  if [ ! -e $@ ]; then \
-	     echo "See $(OUTPUT) for error messages"; \
-	     exit 1; \
-	  fi ; \
-	fi)
-
-.cu.o: 
-	@rm -f $@
-	@echo "Compiling $<"
-	@(if [ $(VERBOSE) -eq 0 ]; then \
-	  $(CUDACOMPILER) -c -o $@ $(DEFINES) $(CUDACOMPFLAGS) \
-	    $(INCLUDES) $*.cu >& $(OUTPUT) ; \
-	  if [ ! -e $@ ]; then \
-	     echo; \
-             echo "$(CUDACOMPILER) -c -o $@ $(DEFINES) $(CUDACOMPFLAGS) $(INCLUDES) $*.cu"; \
-             echo; \
-             $(CUDACOMPILER)  -c -o $@ $(DEFINES) $(CUDACOMPFLAGS) $(INCLUDES) $*.cu;\
-             echo; \
-             exit 1; \
-          fi ; \
-	else \
-	  $(CUDACOMPILER) -c -o $@ $(DEFINES) $(CUDACOMPFLAGS) \
-	    $(INCLUDES) $*.cu >> $(OUTPUT) 2>&1 ; \
 	  if [ ! -e $@ ]; then \
 	     echo "See $(OUTPUT) for error messages"; \
 	     exit 1; \
@@ -322,24 +235,10 @@ auto_show_version.C:
 dep:
 	@echo "Updating DEPEND"
 	-@(makedepend $(DEFINES) $(INCLUDES) -a -fDEPEND -o.o -m -- -- *.C) >> out.make.DEPEND 2>&1
-#	-@(makedepend $(DEFINES) $(INCLUDES) -a -fDEPEND -o.o -m -- -- *.c) >> out.make.DEPEND 2>&1
 	-@(makedepend $(DEFINES) $(INCLUDES) -a -fDEPEND -o.o -m -- -- *.F) >> out.make.DEPEND 2>&1
-#	-@(makedepend $(DEFINES) $(INCLUDES) -a -fDEPEND -o.o -m -- -- *.F90) >> out.make.DEPEND 2>&1
 	-@(makedepend $(DEFINES) $(INCLUDES) -a -fDEPEND -o.o -m -- -- *.h) >> out.make.DEPEND 2>&1
 
 include DEPEND
-
-#-----------------------------------------------------------------------
-# Radiative transfer module
-#-----------------------------------------------------------------------
-
-#include $(ENZO_DIR)/photons/Make.config.objects
-#
-#.PHONY: photon
-#photon: OBJS_LIB += photons/*.o
-#photon:
-#	@echo "Making radiative transfer module"
-#	+(cd photons/ ; make photon)
 
 #-----------------------------------------------------------------------
 # HELP TARGET
@@ -367,20 +266,28 @@ help:
 	@echo
 
 #-----------------------------------------------------------------------
+# INSTALLATION TARGET
+#-----------------------------------------------------------------------
+
+install:
+	@echo "Installing libgrackle.so to $(INSTALL_LIB_DIR)."
+	@cp libgrackle.so $(INSTALL_LIB_DIR)
+
+	@echo "Installing grackle header files to $(INSTALL_INCLUDE_DIR)/grackle."
+	@(if [ ! -d $(INSTALL_INCLUDE_DIR)/grackle ]; then \
+		mkdir $(INSTALL_INCLUDE_DIR)/grackle; \
+	fi)
+	@cp grackle.h grackle_macros.h code_units.h chemistry_data.h $(INSTALL_INCLUDE_DIR)/grackle/
+
+#-----------------------------------------------------------------------
 
 clean:
-	-@rm -f *.so *.o uuid/*.o *.mod *.f *.f90 DEPEND.bak *~ $(OUTPUT) *.exe \
-          auto_show*.C hydro_rk/*.o *.oo hydro_rk/*.oo \
-          uuid/*.oo DEPEND TAGS \
-          libconfig/*.o \
-          python_bridge/problemtype_handler.C \
-          python_bridge/problemtype_handler.h \
-          python_bridge/problemtype_handler.o
+	-@rm -f *.so *.o DEPEND.bak *~ $(OUTPUT) *.exe auto_show*.C DEPEND
 	-@touch DEPEND
 
 #-----------------------------------------------------------------------
 # Include configuration targets
 #-----------------------------------------------------------------------
 
-include $(ENZO_DIR)/Make.config.targets
+include $(GRACKLE_DIR)/Make.config.targets
 # DO NOT DELETE

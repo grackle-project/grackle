@@ -1,9 +1,10 @@
 #=======================================================================
-# File:        Make.config.settings
-# Author:      James Bordner (jobordner@ucsd.edu)
-# Description: This file contains all default compile-time configuration 
-# Description: settings and parameter values
-#=======================================================================
+#
+# FILE:        Make.config.settings
+#
+# SUMMARY:     This file contains all default compile-time configuration 
+#              settings and parameter values.
+#              (originally written by James Border for Enzo)
 #
 # Configuration settings
 # 
