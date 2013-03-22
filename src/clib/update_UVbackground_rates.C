@@ -19,7 +19,6 @@
 #include <stdlib.h>
 #include <math.h>
 
-#include "ErrorExceptions.h"
 #include "grackle_macros.h"
 #include "chemistry_data.h"
 #include "code_units.h"
