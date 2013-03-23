@@ -80,6 +80,7 @@ MACH_SHARED_EXT=so
 MACH_SHARED_FLAGS=-shared
 
 -include $(GRACKLE_DIR)/Make.mach.$(CONFIG_MACHINE)
+-include $(HOME)/.grackle/Make.mach.$(CONFIG_MACHINE)
 
 #-----------------------------------------------------------------------
 # Make.config.assemble takes the settings in the Make.config.settings
