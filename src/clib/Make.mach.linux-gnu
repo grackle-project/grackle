@@ -111,3 +111,11 @@ MACH_LIBS         = $(LOCAL_LIBS_HDF5) $(LOCAL_LIBS_MACH)
 MACH_LIBS_MPI     = $(LOCAL_LIBS_MPI)
 MACH_LIBS_HYPRE   = $(LOCAL_LIBS_HYPRE)
 MACH_LIBS_PAPI    = $(LOCAL_LIBS_PAPI)
+
+#-----------------------------------------------------------------------
+# Installation
+#-----------------------------------------------------------------------
+
+MACH_INSTALL_PREFIX = $(HOME)/local
+MACH_INSTALL_LIB_DIR =
+MACH_INSTALL_INCLUDE_DIR =

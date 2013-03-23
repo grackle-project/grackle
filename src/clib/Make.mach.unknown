@@ -3,10 +3,7 @@
 # FILE:        Make.mach.unknown
 #
 # DESCRIPTION: Empty template for Makefile settings
-#
-# AUTHOR:      James Bordner (jobordner@ucsd.edu)
-#
-# DATE:        2007-02-21
+#              (originally written by James Border for Enzo)
 #
 #=======================================================================
 
@@ -41,7 +38,7 @@ MACH_LD_NOMPI  = # Linker when not using MPI
 #-----------------------------------------------------------------------
 
 # Note: When compiling against HDF5 version 1.8 or greater, you need to
-# compile HDF5 with --with-default-api-version=v16, or Enzo with
+# compile HDF5 with --with-default-api-version=v16, or specify with
 # -DH5_USE_16_API.
 
 MACH_DEFINES   = -DH5_USE_16_API # Defines for the architecture; e.g. -DSUN, -DLINUX, etc.
@@ -105,3 +102,11 @@ MACH_LIBS         = $(LOCAL_LIBS_HDF5) $(LOCAL_LIBS_MACH)
 MACH_LIBS_MPI     = $(LOCAL_LIBS_MPI)
 MACH_LIBS_HYPRE   = $(LOCAL_LIBS_HYPRE)
 MACH_LIBS_PAPI    = $(LOCAL_LIBS_PAPI)
+
+#-----------------------------------------------------------------------
+# Installation
+#-----------------------------------------------------------------------
+
+MACH_INSTALL_PREFIX = $(HOME)/local
+MACH_INSTALL_LIB_DIR =
+MACH_INSTALL_INCLUDE_DIR =
