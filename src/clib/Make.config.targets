@@ -113,7 +113,7 @@ default:
 #-----------------------------------------------------------------------
 
 machine-%: suggest-clean
-	@if [ -e $(GRACKLE_DIR)/Make.mach.$* ]; then \
+	@if [ -e $(GRACKLE_DIR)/Make.mach.$* ]  || [ -e $(HOME)/.enzo/Make.mach.$* ]; then \
            tmp=.config.temp; \
            grep -v CONFIG_MACHINE $(MAKE_CONFIG_MACHINE) > $${tmp}; \
            mv $${tmp} $(MAKE_CONFIG_MACHINE); \
