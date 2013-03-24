@@ -37,31 +37,15 @@ MACH_FILE  = Make.mach.darwin
 
 LOCAL_PACKAGES       = /usr/local
 
-# This will not work on OSX Lion or newer.  You may wany to try installing
-# openmpi via macports.  
-LOCAL_MPI_INSTALL    = /usr/local
 LOCAL_FC_INSTALL     = /usr/local
 LOCAL_HDF5_INSTALL   = $(YT_DEST)
 LOCAL_SZIP_INSTALL   = $(LOCAL_PACKAGES)
-LOCAL_HYPRE_INSTALL  = $(HOME)
-LOCAL_PYTHON_INSTALL = $(YT_DEST)
 
 #-----------------------------------------------------------------------
 # Compiler settings
 #-----------------------------------------------------------------------
 
 MACH_CPP       = /usr/bin/cpp
-
-# With MPI
-
-MACH_CC_MPI    = mpicc
-MACH_CXX_MPI   = mpic++ 
-MACH_FC_MPI    = gfortran 
-MACH_F90_MPI   = gfortran
-MACH_LD_MPI    = mpic++ 
-MACH_CUDACOMPILER = /usr/local/cuda/bin/nvcc
-
-# Without MPI
 
 MACH_CC_NOMPI  = gcc  # C compiler when not using MPI
 MACH_CXX_NOMPI = g++ # C++ compiler when not using MPI
@@ -114,18 +98,9 @@ MACH_OPT_AGGRESSIVE  = -O3
 # Includes
 #-----------------------------------------------------------------------
 
-LOCAL_INCLUDES_MPI    = -I$(LOCAL_MPI_INSTALL)/include 
 LOCAL_INCLUDES_HDF5   = -I$(LOCAL_HDF5_INSTALL)/include
-LOCAL_INCLUDES_PYTHON = -I$(LOCAL_PYTHON_INSTALL)/include/python2.6/ \
-                        -I$(LOCAL_PYTHON_INSTALL)/lib/python2.6/site-packages/numpy/core/include
-LOCAL_INCLUDES_HYPRE  = 
-LOCAL_INCLUDES_PAPI   = # PAPI includes
-LOCAL_INCLUDES_CUDA   = -I/Developer/CUDA/common/inc
 
-MACH_INCLUDES         = $(LOCAL_INCLUDES_HDF5) $(LOCAL_INCLUDES_CUDA)
-MACH_INCLUDES_PYTHON  = $(LOCAL_INCLUDES_PYTHON)
-MACH_INCLUDES_MPI     = $(LOCAL_INCLUDES_MPI)
-MACH_INCLUDES_HYPRE   = $(LOCAL_INCLUDES_HYPRE)
+MACH_INCLUDES         = $(LOCAL_INCLUDES_HDF5)
 
 #-----------------------------------------------------------------------
 # Libraries
@@ -133,15 +108,8 @@ MACH_INCLUDES_HYPRE   = $(LOCAL_INCLUDES_HYPRE)
 
 LOCAL_LIBS_MACH   = -L$(LOCAL_FC_INSTALL)/lib -lgfortran 
 LOCAL_LIBS_HDF5   = -L$(LOCAL_HDF5_INSTALL)/lib -lhdf5
-LOCAL_LIBS_PYTHON = -lpython2.6
-LOCAL_LIBS_PYTHON = -framework Python 
-LOCAL_LIBS_CUDA   = -L/usr/local/cuda/lib/ -lcudart
 
 MACH_LIBS        = $(LOCAL_LIBS_HDF5) $(LOCAL_LIBS_MACH) 
-MACH_LIBS_PYTHON  = $(LOCAL_LIBS_PYTHON)
-MACH_LIBS_MPI    = $(LOCAL_LIBS_MPI)
-MACH_LIBS_HYPRE  = $(LOCAL_LIBS_HYPRE)
-MACH_LIBS_PAPI    = $(LOCAL_LIBS_PAPI)
 
 #-----------------------------------------------------------------------
 # Installation

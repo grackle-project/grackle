@@ -100,45 +100,18 @@
     endif
 
 #=======================================================================
-# DETERMINE MPI USAGE
+# COMPILERS
 #=======================================================================
-
-    ERROR_USE_MPI = 1
 
     ASSEMBLE_CPP = $(MACH_CPP)
 
-    # compilers and settings if USE_MPI is yes
+    # compilers and settings
 
-    ifeq ($(CONFIG_USE_MPI),yes)
-        ERROR_USE_MPI = 0
-        ASSEMBLE_CC  = $(MACH_CC_MPI)
-        ASSEMBLE_CXX = $(MACH_CXX_MPI)
-        ASSEMBLE_FC  = $(MACH_FC_MPI)
-        ASSEMBLE_F90 = $(MACH_F90_MPI)
-        ASSEMBLE_LD  = $(MACH_LD_MPI)
-        ASSEMBLE_MPI_DEFINES  = -DUSE_MPI
-        ASSEMBLE_MPI_INCLUDES = $(MACH_INCLUDES_MPI)
-        ASSEMBLE_MPI_LIBS     = $(MACH_LIBS_MPI)
-    endif
-
-    # compilers and settings if USE_MPI is no
-
-    ifeq ($(CONFIG_USE_MPI),no)
-        ERROR_USE_MPI = 0
-        ASSEMBLE_CC  = $(MACH_CC_NOMPI)
-        ASSEMBLE_CXX = $(MACH_CXX_NOMPI)
-        ASSEMBLE_FC  = $(MACH_FC_NOMPI)
-        ASSEMBLE_F90 = $(MACH_F90_NOMPI)
-        ASSEMBLE_LD  = $(MACH_LD_NOMPI)
-    endif
-
-    # error if CONFIG_USE_MPI is incorrect
-
-    ifeq ($(ERROR_USE_MPI),1)
-       .PHONY: error_compilers
-       error_compilers:
-	$(error Illegal value '$(CONFIG_USE_MPI)' for $$(CONFIG_USE_MPI))
-    endif
+    ASSEMBLE_CC  = $(MACH_CC_NOMPI)
+    ASSEMBLE_CXX = $(MACH_CXX_NOMPI)
+    ASSEMBLE_FC  = $(MACH_FC_NOMPI)
+    ASSEMBLE_F90 = $(MACH_F90_NOMPI)
+    ASSEMBLE_LD  = $(MACH_LD_NOMPI)
 
 #-----------------------------------------------------------------------
 # DETERMINE OPTIMIZATION LEVEL SETTINGS
@@ -223,11 +196,9 @@
     DEFINES = $(MACH_DEFINES) \
               $(ASSEMBLE_INTEGER_DEFINES) \
               $(ASSEMBLE_IO_DEFINES) \
-              $(ASSEMBLE_MPI_DEFINES) \
               $(ASSEMBLE_PRECISION_DEFINES)
 
     INCLUDES = $(MACH_INCLUDES) \
-    	       $(ASSEMBLE_MPI_INCLUDES) \
                $(MAKEFILE_INCLUDES)   -I.
 
     OBJS_LIB = $(OBJS_CONFIG_LIB) \
@@ -237,8 +208,7 @@
 	       $(OBJS_ECUDA_LIB) \
 	       $(OBJS_PYTHON) 
 
-    LIBS = $(MACH_LIBS) \
-           $(ASSEMBLE_MPI_LIBS)
+    LIBS = $(MACH_LIBS)
 
 #=======================================================================
 # INSTALLATION TARGETS

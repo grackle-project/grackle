@@ -27,11 +27,6 @@ help-config:
 	@echo "      make precision-32"
 	@echo "      make precision-64"
 	@echo
-	@echo "   Set whether to use MPI"
-	@echo
-	@echo "      make use-mpi-yes"
-	@echo "      make use-mpi-no"
-	@echo
 	@echo "   Set optimization/debug/warning levels"
 	@echo
 	@echo "      make opt-warn"
@@ -75,7 +70,6 @@ show-config:
 	@echo
 	@echo "   CONFIG_PRECISION  [precision-{32,64}]                     : $(CONFIG_PRECISION)"
 	@echo "   CONFIG_INTEGERS  [integers-{32,64}]                       : $(CONFIG_INTEGERS)" 
-	@echo "   CONFIG_USE_MPI  [use-mpi-{yes,no}]                        : $(CONFIG_USE_MPI)"
 	@echo "   CONFIG_OPT  [opt-{warn,debug,cudadebug,high,aggressive}]  : $(CONFIG_OPT)"
 
 	@echo
@@ -193,23 +187,6 @@ CONFIG_PRECISION-%: suggest-clean
         mv $${tmp} $(MAKE_CONFIG_OVERRIDE); \
         echo "CONFIG_PRECISION = $*" >> $(MAKE_CONFIG_OVERRIDE); \
 	$(MAKE)  show-config | grep CONFIG_PRECISION; \
-	echo
-
-#-----------------------------------------------------------------------
-
-VALID_USE-MPI = use-mpi-yes use-mpi-no
-.PHONY: $(VALID_USE-MPI)
-
-use-mpi-yes: CONFIG_USE-MPI-yes
-use-mpi-no: CONFIG_USE-MPI-no
-use-mpi-%:
-	@printf "\n\tInvalid target: $@\n\n\tValid targets: [$(VALID_USE-MPI)]\n\n"
-CONFIG_USE-MPI-%: suggest-clean
-	@tmp=.config.temp; \
-        grep -v CONFIG_USE_MPI $(MAKE_CONFIG_OVERRIDE) > $${tmp}; \
-        mv $${tmp} $(MAKE_CONFIG_OVERRIDE); \
-        echo "CONFIG_USE_MPI = $*" >> $(MAKE_CONFIG_OVERRIDE); \
-	$(MAKE)  show-config | grep CONFIG_USE_MPI; \
 	echo
 
 #-----------------------------------------------------------------------

@@ -17,21 +17,13 @@ MACH_FILE  = Make.mach.unknown
 
 MACH_CPP       = # C preprocessor command
 
-# With MPI
+# Compilers
 
-MACH_CC_MPI    = # C compiler when using MPI
-MACH_CXX_MPI   = # C++ compiler when using MPI
-MACH_FC_MPI    = # Fortran 77 compiler when using MPI
-MACH_F90_MPI   = # Fortran 90 compiler when using MPI
-MACH_LD_MPI    = # Linker when using MPI
-
-# Without MPI
-
-MACH_CC_NOMPI  = # C compiler when not using MPI
-MACH_CXX_NOMPI = # C++ compiler when not using MPI
-MACH_FC_NOMPI  = # Fortran 77 compiler when not using MPI
-MACH_F90_NOMPI = # Fortran 90 compiler when not using MPI
-MACH_LD_NOMPI  = # Linker when not using MPI
+MACH_CC_NOMPI  = # C compiler
+MACH_CXX_NOMPI = # C++ compiler
+MACH_FC_NOMPI  = # Fortran 77
+MACH_F90_NOMPI = # Fortran 90
+MACH_LD_NOMPI  = # Linker
 
 #-----------------------------------------------------------------------
 # Machine-dependent defines
@@ -76,32 +68,19 @@ MACH_OPT_AGGRESSIVE  = # Flags for aggressive optimization
 # Includes
 #-----------------------------------------------------------------------
 
-LOCAL_INCLUDES_MPI    = # MPI includes
 LOCAL_INCLUDES_HDF5   = # HDF5 includes
-LOCAL_INCLUDES_HYPRE  = # hypre includes
-LOCAL_INCLUDES_PAPI   = # PAPI includes
 
 MACH_INCLUDES         = $(LOCAL_INCLUDES_HDF5)
-
-MACH_INCLUDES_MPI     = $(LOCAL_INCLUDES_MPI)
-MACH_INCLUDES_HYPRE   = $(LOCAL_INCLUDES_HYPRE)
-MACH_INCLUDES_PAPI    = $(LOCAL_INCLUDES_PAPI)
 
 #-----------------------------------------------------------------------
 # Libraries
 #-----------------------------------------------------------------------
 
-LOCAL_LIBS_MPI    = # MPI libraries
 LOCAL_LIBS_HDF5   = # HDF5 libraries
-LOCAL_LIBS_HYPRE  = # hypre libraries
-LOCAL_LIBS_PAPI   = # PAPI libraries
 
 LOCAL_LIBS_MACH   = # Machine-dependent libraries
 
 MACH_LIBS         = $(LOCAL_LIBS_HDF5) $(LOCAL_LIBS_MACH)
-MACH_LIBS_MPI     = $(LOCAL_LIBS_MPI)
-MACH_LIBS_HYPRE   = $(LOCAL_LIBS_HYPRE)
-MACH_LIBS_PAPI    = $(LOCAL_LIBS_PAPI)
 
 #-----------------------------------------------------------------------
 # Installation
