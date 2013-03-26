@@ -5,8 +5,6 @@
 typedef struct 
 {
 
-  gr_int with_radiative_cooling;
-
   // adiabatic index
   gr_float Gamma;
 
@@ -18,12 +16,15 @@ typedef struct
    *** chemistry and cooling parameters ***
    ****************************************/
 
-  gr_int use_chemistry;
+  gr_int use_chemistry; // 0) grackle off, 1) grackle on
+  gr_int with_radiative_cooling; // include cooling in chemistry solver
+                                 // 0) no, 1) yes
   gr_int primordial_chemistry; // 1) HI, HII, HeI, HeII, HeIII, e
-                            // 2) + H2, H2I+, H-
-                            // 3) + D, D+, HD
+                               // 2) + H2, H2I+, H-
+                               // 3) + D, D+, HD
   gr_int metal_cooling;        // 0) off, 1) on using Cloudy tables
-  gr_int h2_on_dust;  // should be left off for now
+  gr_int h2_on_dust;  // H2 formation on dust
+                      // not well tested, should be left off for now
 
   // Use a CMB temperature floor.
   gr_int cmb_temperature_floor;

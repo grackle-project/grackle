@@ -29,7 +29,7 @@ chemistry_data set_default_chemistry_parameters()
   my_chemistry.photoelectric_heating          = 0;
   my_chemistry.photoelectric_heating_rate     = 8.5e-26;  // ergs cm-3 s-1
 
-  my_chemistry.UVbackground                  = 0;
+  my_chemistry.UVbackground                   = 0;
 
   my_chemistry.UVbackground_table.Nz = 0;
   my_chemistry.UVbackground_table.z = NULL;
