@@ -38,7 +38,7 @@ MACH_FILE  = Make.mach.darwin
 LOCAL_PACKAGES       = /usr/local
 
 LOCAL_FC_INSTALL     = /usr/local
-LOCAL_HDF5_INSTALL   = $(YT_DEST)
+LOCAL_HDF5_INSTALL   = /usr/local/hdf5
 LOCAL_SZIP_INSTALL   = $(LOCAL_PACKAGES)
 
 #-----------------------------------------------------------------------

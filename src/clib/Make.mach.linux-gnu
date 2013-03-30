@@ -1,6 +1,6 @@
 #=======================================================================
 #
-# FILE:        Make.mach.ubuntu-hardy
+# FILE:        Make.mach.linux-gnu
 #
 # DESCRIPTION: Makefile settings for a machine running Ubuntu 8.04
 #
@@ -13,9 +13,9 @@
 #
 #=======================================================================
 
-MACH_TEXT  = Generic Ubuntu 8.04
+MACH_TEXT  = Generic Linux
 MACH_VALID = 1
-MACH_FILE  = Make.mach.ubuntu-hardy
+MACH_FILE  = Make.mach.linux-gnu
 
 #-----------------------------------------------------------------------
 # Install paths (local variables)
