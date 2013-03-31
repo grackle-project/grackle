@@ -83,8 +83,6 @@ $(EXE).exe: $(MODULES) $(OBJS_LIB)
 	-@$(LD) $(LDFLAGS) -o $(EXE).exe $(OBJS_LIB) $(LIBS) $(GRACKLE_LIB) >& $(OUTPUT)
 	@(if [ -e $@ ]; then \
              echo "Success!"; \
-             if [ ! -e $(TOP_DIR)/bin ]; then mkdir $(TOP_DIR)/bin; fi; \
-             cp $(EXE).exe $(TOP_DIR)/bin/$(EXE); \
          else \
              echo "$(LD) $(LDFLAGS) -o $(EXE).exe $(OBJS_LIB) $(LIBS) $(GRACKLE_LIB)" >> temp1; \
              cat temp1 $(OUTPUT) > temp2; \
