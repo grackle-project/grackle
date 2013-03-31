@@ -25,3 +25,4 @@ src/clib/auto_show_flags.C
 src/clib/auto_show_version.C
 src/clib/libgrackle.so
 src/python/build/*
+doc/build
