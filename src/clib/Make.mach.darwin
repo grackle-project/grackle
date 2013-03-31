@@ -2,7 +2,7 @@
 #
 # FILE:        Make.mach.darwin
 #
-# DESCRIPTION: Makefile settings for Leopard OSX
+# DESCRIPTION: Makefile settings for OSX
 #  This was written to use:
 #       System OpenMPI (mpicc, mpic++)
 #       HDF5 installed to /usr/local/ with no additional 'configure'
@@ -22,7 +22,7 @@
 #
 #=======================================================================
 
-MACH_TEXT  = Darwin (OSX Leopard) 
+MACH_TEXT  = Darwin (OSX) 
 MACH_VALID = 1
 MACH_FILE  = Make.mach.darwin
 

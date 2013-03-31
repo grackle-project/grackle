@@ -6,7 +6,7 @@
 #              (originally written by James Border for Enzo)
 #
 # DESCRIPTION
-#              See 'gmake help' for definitive description of targets
+#              See 'make help' for definitive description of targets
 #
 #              Makefile.config includes the following files:
 # 
@@ -24,8 +24,8 @@
 #              Make.config.override should be the only file that
 #              one should edit when defining local user settings.
 #              Preferably, this is done implicitly through
-#              the available make targets (e.g. "gmake precision-32").
-#              Use "gmake help-config" for a list of all configuration
+#              the available make targets (e.g. "make precision-32").
+#              Use "make help-config" for a list of all configuration
 #              settings.  These make targets do error-checking; hand-editing 
 #              Make.config.override is more error-prone.
 #
@@ -251,19 +251,19 @@ help:
 	@echo "   Grackle Makefile Help"
 	@echo "========================================================================"
 	@echo
-	@echo "   gmake                Compile and generate librackle"
-	@echo "   gmake install        Copy the library somewhere"
-	@echo "   gmake help           Display this help information"
-	@echo "   gmake clean          Remove object files, executable, etc."
-	@echo "   gmake dep            Create make dependencies in DEPEND file"
+	@echo "   make                Compile and generate librackle"
+	@echo "   make install        Copy the library somewhere"
+	@echo "   make help           Display this help information"
+	@echo "   make clean          Remove object files, executable, etc."
+	@echo "   make dep            Create make dependencies in DEPEND file"
 	@echo
-	@echo "   gmake show-version   Display revision control system branch and revision"
-	@echo "   gmake show-diff      Display local file modifications"
+	@echo "   make show-version   Display revision control system branch and revision"
+	@echo "   make show-diff      Display local file modifications"
 	@echo
-	@echo "   gmake help-config    Display detailed help on configuration make targets"
-	@echo "   gmake show-config    Display the configuration settings"
-	@echo "   gmake show-flags     Display specific compilation flags"
-	@echo "   gmake default        Reset the configuration to the default values"
+	@echo "   make help-config    Display detailed help on configuration make targets"
+	@echo "   make show-config    Display the configuration settings"
+	@echo "   make show-flags     Display specific compilation flags"
+	@echo "   make default        Reset the configuration to the default values"
 	@echo
 
 #-----------------------------------------------------------------------

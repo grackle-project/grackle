@@ -148,6 +148,9 @@ load-config-%:
 #-----------------------------------------------------------------------
 
 save-config-%:
+	@(if [ ! -d $(HOME)/.grackle ]; then \
+		mkdir $(HOME)/.grackle; \
+	fi)
 	@tmp=.config.temp; \
 	cat $(MAKE_CONFIG_OVERRIDE) > $(HOME)/.grackle/Make.settings.$*; \
 	echo; \
