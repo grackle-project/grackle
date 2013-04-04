@@ -31,6 +31,8 @@ Contents:
 Citing grackle
 --------------
 
+Coming soon!
+
 Search
 ------
 
