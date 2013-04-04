@@ -35,12 +35,12 @@ Eint32 main(Eint32 argc, char *argv[])
   // Second, create a chemistry object for parameters and rate data.
   chemistry_data my_chemistry = set_default_chemistry_parameters();
   // Set parameter values for chemistry.
-  my_chemistry.use_chemistry = 1; // chemistry on
+  my_chemistry.use_chemistry = 1;          // chemistry on
   my_chemistry.with_radiative_cooling = 1; // cooling on
-  my_chemistry.primordial_chemistry = 3; // molecular network with H, He, D
-  my_chemistry.metal_cooling = 1; // metal cooling on
-  my_chemistry.UVbackground = 1; // UV background on
-  my_chemistry.include_metal_heating = 1; // heating on metals by UVB on
+  my_chemistry.primordial_chemistry = 3;   // molecular network with H, He, D
+  my_chemistry.metal_cooling = 1;          // metal cooling on
+  my_chemistry.UVbackground = 1;           // UV background on
+  my_chemistry.include_metal_heating = 1;  // heating on metals by UVB on
   my_chemistry.grackle_data_file = "CloudyData_UVB=HM2012.h5"; // data file
 
   // Set initial expansion factor (for internal units).
@@ -67,32 +67,38 @@ Eint32 main(Eint32 argc, char *argv[])
   // grid_start and grid_end are used to ignore ghost zones.
   gr_int field_size = 10;
   gr_int grid_rank = 3;
+  // If grid rank is less than 3, set the other dimensions, 
+  // start indices, and end indices to 0.
   gr_int grid_dimension[3], grid_start[3], grid_end[3];
   for (int i = 0;i < 3;i++) {
-    grid_dimension[i] = 0;
+    grid_dimension[i] = 0; // the active dimension not including ghost zones.
     grid_start[i] = 0;
     grid_end[i] = 0;
   }
   grid_dimension[0] = field_size;
   grid_end[0] = field_size - 1;
 
-  density = new gr_float[field_size];
-  energy = new gr_float[field_size];
-  x_velocity = new gr_float[field_size];
-  y_velocity = new gr_float[field_size];
-  z_velocity = new gr_float[field_size];
-  HI_density = new gr_float[field_size];
-  HII_density = new gr_float[field_size];
-  HM_density = new gr_float[field_size];
-  HeI_density = new gr_float[field_size];
-  HeII_density = new gr_float[field_size];
+  density       = new gr_float[field_size];
+  energy        = new gr_float[field_size];
+  x_velocity    = new gr_float[field_size];
+  y_velocity    = new gr_float[field_size];
+  z_velocity    = new gr_float[field_size];
+  // for primordial_chemistry >= 1
+  HI_density    = new gr_float[field_size];
+  HII_density   = new gr_float[field_size];
+  HeI_density   = new gr_float[field_size];
+  HeII_density  = new gr_float[field_size];
   HeIII_density = new gr_float[field_size];
-  H2I_density = new gr_float[field_size];
-  H2II_density = new gr_float[field_size];
-  DI_density = new gr_float[field_size];
-  DII_density = new gr_float[field_size];
-  HDI_density = new gr_float[field_size];
-  e_density = new gr_float[field_size];
+  e_density     = new gr_float[field_size];
+  // for primordial_chemistry >= 2
+  HM_density    = new gr_float[field_size];
+  H2I_density   = new gr_float[field_size];
+  H2II_density  = new gr_float[field_size];
+  // for primordial_chemistry >= 3
+  DI_density    = new gr_float[field_size];
+  DII_density   = new gr_float[field_size];
+  HDI_density   = new gr_float[field_size];
+  // for metal_cooling = 1
   metal_density = new gr_float[field_size];
 
   // set temperature units
@@ -126,12 +132,20 @@ Eint32 main(Eint32 argc, char *argv[])
     energy[i] = 1000. / temperature_units;
   }
 
+  // The UV background rates must be updated before 
+  // calling the other functions.
+  if (update_UVbackground_rates(my_chemistry, 
+                                my_units, a_value) == FAIL) {
+    fprintf(stderr, "Error in update_UBbackground_rates.\n");
+    return FAIL;
+  }
+
   /*********************************************************************
   / Calling the chemistry solver
   / These routines can now be called during the simulation.
   *********************************************************************/
 
-  // Evoling the chemistry.
+  // Evolving the chemistry.
   // some timestep
   gr_float dt = 3.15e7 * 1e6 / my_units.time_units;
 
@@ -147,22 +161,6 @@ Eint32 main(Eint32 argc, char *argv[])
                       DI_density, DII_density, HDI_density,
                       e_density, metal_density) == FAIL) {
     fprintf(stderr, "Error in solve_chemistry.\n");
-    return FAIL;
-  }
-
-  // Calculate temperature.
-  gr_float *temperature;
-  temperature = new gr_float[field_size];
-  if (calculate_temperature(my_chemistry, my_units,
-                            grid_rank, grid_dimension,
-                            density, energy,
-                            HI_density, HII_density, HM_density,
-                            HeI_density, HeII_density, HeIII_density,
-                            H2I_density, H2II_density,
-                            DI_density, DII_density, HDI_density,
-                            e_density, metal_density, 
-                            temperature) == FAIL) {
-    fprintf(stderr, "Error in calculate_temperature.\n");
     return FAIL;
   }
 
@@ -183,7 +181,23 @@ Eint32 main(Eint32 argc, char *argv[])
                              cooling_time) == FAIL) {
     fprintf(stderr, "Error in calculate_cooling_time.\n");
     return FAIL;
-    }
+  }
+
+  // Calculate temperature.
+  gr_float *temperature;
+  temperature = new gr_float[field_size];
+  if (calculate_temperature(my_chemistry, my_units,
+                            grid_rank, grid_dimension,
+                            density, energy,
+                            HI_density, HII_density, HM_density,
+                            HeI_density, HeII_density, HeIII_density,
+                            H2I_density, H2II_density,
+                            DI_density, DII_density, HDI_density,
+                            e_density, metal_density, 
+                            temperature) == FAIL) {
+    fprintf(stderr, "Error in calculate_temperature.\n");
+    return FAIL;
+  }
 
   // Calculate pressure.
   gr_float *pressure;
