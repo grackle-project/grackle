@@ -1,0 +1,14 @@
+#! /bin/bash
+
+echo "Issue the following commands:"
+GRACKLE_DIR=`pwd`
+echo "export PYTHONPATH=\$PYTHONPATH:${GRACKLE_DIR}"
+if [ `uname -s` == "Darwin" ]
+then
+    LIBVAR=DYLD_LIBRARY_PATH
+    echo "export DYLD_LIBRARY_PATH=\$DYLD_LIBRARY_PATH:${GRACKLE_DIR}/../clib"
+else
+    LIBVAR=LD_LIBRARY_PATH
+    echo "export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:${GRACKLE_DIR}/../clib"
+fi
+echo "You can also set your ${LIBVAR} to point to where you installed libgrackle."
