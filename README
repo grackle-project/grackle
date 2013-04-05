@@ -1,96 +1,10 @@
-This is a temporary guide to building the grackle cooling library and 
-running some examples with it.  Further documentation on how to build it 
-into simulation codes will come at a later date.
+Welcome to the grackle chemistry and cooling library for astrophysical 
+simulations!
 
-BUILDING THE LIBRARY
-####################
+The grackle documentation is available online here: grackle.readthedocs.org
 
-If you are familiar with compiling enzo, the process is almost identical 
-to that.
+The documentation can also be built locally.  See the README in the doc for 
+more information.
 
-1. In the top directory, run ./configure.
-
-2. cd src/clib (this is the source directory for the library)
-
-3. Makefile macros for compiling on various machines are called 
-   Make.mach.<something>.  If on Mac OSX, start with Make.mach.darwin.
-   Edit the following variables to point to the right installations of 
-   the following libraries:
-   mpi: LOCAL_MPI_INSTALL
-   fortran compiler: LOCAL_FC_INSTALL
-   hdf5: LOCAL_HDF5_INSTALL
-
-4. For whatever make macros you have chosen, Make.mach.<something>, 
-   type the following: make machine-<something>.  For example, with 
-   Make.mach.darwin, type make machine-darwin.
-
-5. make
-
-This should build a libgrackle.so.
-
-6. make install
-
-The installation location can be set by editing the following variables in 
-the Make.mach file:
-MACH_INSTALL_PREFIX
-MACH_INSTALL_LIB_DIR
-MACH_INSTALL_INCLUDE_DIR
-If the last two are not set, then they will be set from the value of the 
-first variable.  You will have to create the include and lib directories in 
-your install path if they do not already exist.
-
-RUNNING THE C++ EXAMPLE
-#######################
-
-This example outlines how the grackle functionality can be included in a 
-simulation code, how the data structures are to be initialized, and how each 
-of the available functions can be called.
-
-The example is located in src/example.  After libgrackle has been built, 
-build the example by going into the src/example directory and typing make.
-
-In order to run the example, you will need to add to your LD_LIBRARY_PATH the 
-path to the libgrackle installation (where it was put with "make install").  
-If running on a Mac, set DYLD_LIBRARY_PATH instead.  Copy the data files 
-from the input directory in the top level to wherever you intend to run 
-example.exe.  It will run with ./example.exe.
-
-RUNNING THE PYTHON EXAMPLES
-###########################
-
-The example works with a python wrapper that calls the various library 
-functions.  This requires a few python packages.  The easiest way to get them 
-is to install the analysis toolkit yt (yt-project.org).
-
-After building the grackle library, do the following:
-
-1. cd src
-
-2. ./set_libs
-
-This will print out some environment variables that should be set.  You must 
-set them by hand.
-
-3. cd python
-
-4. python setup.py install
-
-This must be run with a version of python that has Cython installed.  Your 
-yt installation will work for this.
-
-5. cd examples
-
-You will need the data files that are located in the input directory at the 
-top level of the grackle distribution.  Copy them here.
-
-The two examples can be run by typing:
-python <filename>
-
-There are two python examples:
- - cooling_rate.py: sets up an evenly spaced grid in temperature and iterates 
-                    the chemistry solver until the species fractions have 
-                    converged, then computes the cooling rate and outputs 
-                    a cooling curve figure.
- - freefall.py: runs a one-zone freefall model where the density increases 
-                according to dynamical collapse and adiabatic heating is 
-                continually added.
+The documentation explains how to build the library, integrate it into your 
+code, configure it properly, and run some examples.

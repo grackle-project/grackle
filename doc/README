@@ -1,0 +1,34 @@
+Grackle Documentation README
+
+This documentation is available online at: grackle.readthedocs.org
+
+In this directory and below are the Grackle documentation. They are written
+using the ReST [1] formatting, which is parsed into final formats using the
+Sphinx formatting engine [2].
+
+Here are some benefits of using ReST + Sphinx:
+
+- ReST is very readable in its raw form. It has minimal mark-up
+  and is in plain text.
+- Now that the documents are included in the Grackle mecurial repository,
+  wherever you are (Plane, Train, Automobile), all the documents are there
+  without needing access to the internet.
+- Sphinx can parse the documents into many convenient formats, most notably HTML
+  and a PDF.
+
+Building the documentation requires Sphinx.  The easiest thing to do is to 
+install the yt simulation analysis toolkit, available at yt-project.org.  
+With that, simply type:
+
+    pip install sphinx
+
+With Sphinx installed, build the documentation by typing the following in the 
+doc directory:
+
+    make html
+
+This will build html documentation in the build/html directory which is 
+viewable with a web browser.
+
+[1] http://docutils.sourceforge.net/rst.html
+[2] http://sphinx.pocoo.org/
