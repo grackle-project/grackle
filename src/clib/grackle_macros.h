@@ -34,33 +34,6 @@
 #define PFORTRAN_NAME(NAME) FORTRAN_NAME(NAME)
 #endif
 
-/* Precision-related definitions. */
-
-typedef long long long_int;
-typedef long double long_double;
-typedef unsigned int unsigned_int;
-typedef unsigned long long int unsigned_long_int;
-
-/* Previously in hdf4.h */
-
-typedef float        float32;
-typedef double       float64;
-typedef long double  float128;
-
-/* Macro definitions for portability */
-
-typedef void           *VOIDP;
-typedef int            Eint32;
-typedef long long int  Eint64;
-typedef float          Eflt32;
-typedef double         Eflt64;
-typedef long double    Eflt128;
-typedef long long int  Elong_int;
-
-typedef int            MPI_Arg;
-
-typedef int            HDF5_hid_t;
-
 /* HDF5 definitions */
 
 #define HDF5_FILE_I4 H5T_STD_I32BE
@@ -80,15 +53,15 @@ typedef int            HDF5_hid_t;
 #ifdef SMALL_INTS
 #define ISYM "d"
 #define nint(A) ( (int) ((A) + 0.5*sign(A)) )
-#define nlongint(A) ( (long_int) ((A) + 0.5*sign(A)) )
+#define nlongint(A) ( (long long) ((A) + 0.5*sign(A)) )
 #define ABS(A) abs((int) (A))
 #endif
 
 #ifdef LARGE_INTS
 #define ISYM "lld"
-#define nint(A) ( (long_int) ((A) + 0.5*sign(A)) )
-#define nlongint(A) ( (long_int) ((A) + 0.5*sign(A)) )
-#define ABS(A) labs((long_int) (A))
+#define nint(A) ( (long long) ((A) + 0.5*sign(A)) )
+#define nlongint(A) ( (long long) ((A) + 0.5*sign(A)) )
+#define ABS(A) labs((long long) (A))
 #endif
 
 #ifdef CONFIG_BFLOAT_4

@@ -15,7 +15,7 @@
 #define mh     1.67262171e-24   
 #define kboltz 1.3806504e-16
 
-Eint32 main(Eint32 argc, char *argv[])
+int main(int argc, char *argv[])
 {
 
   /*********************************************************************
@@ -49,9 +49,9 @@ Eint32 main(Eint32 argc, char *argv[])
   gr_float a_value = 1. / (1. + initial_redshift);
 
   // Finally, initialize the chemistry object.
-  if (initialize_chemistry_data(my_chemistry, my_units, a_value) == FAIL) {
+  if (initialize_chemistry_data(my_chemistry, my_units, a_value) == 0) {
     fprintf(stderr, "Error in initialize_chemistry_data.\n");
-    return FAIL;
+    return 0;
   }
 
   // Allocate field arrays.
@@ -102,7 +102,7 @@ Eint32 main(Eint32 argc, char *argv[])
   metal_density = new gr_float[field_size];
 
   // set temperature units
-  gr_float temperature_units =  mh * POW(my_units.a_units * 
+  gr_float temperature_units =  mh * pow(my_units.a_units * 
                                          my_units.length_units /
                                          my_units.time_units, 2) / kboltz;
 
@@ -135,9 +135,9 @@ Eint32 main(Eint32 argc, char *argv[])
   // The UV background rates must be updated before 
   // calling the other functions.
   if (update_UVbackground_rates(my_chemistry, 
-                                my_units, a_value) == FAIL) {
+                                my_units, a_value) == 0) {
     fprintf(stderr, "Error in update_UBbackground_rates.\n");
-    return FAIL;
+    return 0;
   }
 
   /*********************************************************************
@@ -159,9 +159,9 @@ Eint32 main(Eint32 argc, char *argv[])
                       HeI_density, HeII_density, HeIII_density,
                       H2I_density, H2II_density,
                       DI_density, DII_density, HDI_density,
-                      e_density, metal_density) == FAIL) {
+                      e_density, metal_density) == 0) {
     fprintf(stderr, "Error in solve_chemistry.\n");
-    return FAIL;
+    return 0;
   }
 
   // Calculate cooling time.
@@ -178,9 +178,9 @@ Eint32 main(Eint32 argc, char *argv[])
                              H2I_density, H2II_density,
                              DI_density, DII_density, HDI_density,
                              e_density, metal_density, 
-                             cooling_time) == FAIL) {
+                             cooling_time) == 0) {
     fprintf(stderr, "Error in calculate_cooling_time.\n");
-    return FAIL;
+    return 0;
   }
 
   // Calculate temperature.
@@ -194,9 +194,9 @@ Eint32 main(Eint32 argc, char *argv[])
                             H2I_density, H2II_density,
                             DI_density, DII_density, HDI_density,
                             e_density, metal_density, 
-                            temperature) == FAIL) {
+                            temperature) == 0) {
     fprintf(stderr, "Error in calculate_temperature.\n");
-    return FAIL;
+    return 0;
   }
 
   // Calculate pressure.
@@ -210,9 +210,9 @@ Eint32 main(Eint32 argc, char *argv[])
                          H2I_density, H2II_density,
                          DI_density, DII_density, HDI_density,
                          e_density, metal_density,
-                         pressure) == FAIL) {
+                         pressure) == 0) {
     fprintf(stderr, "Error in calculate_pressure.\n");
-    return FAIL;
+    return 0;
   }
 
   // Calculate gamma.
@@ -226,9 +226,10 @@ Eint32 main(Eint32 argc, char *argv[])
                       H2I_density, H2II_density,
                       DI_density, DII_density, HDI_density,
                       e_density, metal_density,
-                      gamma) == FAIL) {
+                      gamma) == 0) {
     fprintf(stderr, "Error in calculate_gamma.\n");
-    return FAIL;
+    return 0;
   }
 
+  return 1;
 }

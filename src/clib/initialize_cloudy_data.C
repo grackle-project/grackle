@@ -36,9 +36,9 @@ int initialize_cloudy_data(chemistry_data &my_chemistry,
 {
 
   gr_int q, w;
-  float64 *temp_data;
-  long_int temp_int;
-  long_int *temp_int_arr;
+  double *temp_data;
+  long long temp_int;
+  long long *temp_int_arr;
   char parameter_name[MAX_LINE_LENGTH];
   gr_int debug = 0;
 
@@ -110,7 +110,7 @@ int initialize_cloudy_data(chemistry_data &my_chemistry,
   }
 
   // Grid dimension.
-  temp_int_arr = new long_int[my_chemistry.CloudyCoolingGridRank];
+  temp_int_arr = new long long[my_chemistry.CloudyCoolingGridRank];
   attr_id = H5Aopen_name(dset_id, "Dimension");
   if (attr_id == h5_error) {
     fprintf(stderr,"Failed to open Dimension attribute in Cooling dataset.\n");
@@ -144,7 +144,7 @@ int initialize_cloudy_data(chemistry_data &my_chemistry,
       sprintf(parameter_name,"Temperature");
     }
 
-    temp_data = new float64[my_chemistry.CloudyCoolingGridDimension[q]];
+    temp_data = new double[my_chemistry.CloudyCoolingGridDimension[q]];
 
     attr_id = H5Aopen_name(dset_id, parameter_name);
     if (attr_id == h5_error) {
@@ -190,7 +190,7 @@ int initialize_cloudy_data(chemistry_data &my_chemistry,
   for (q = 0;q < my_chemistry.CloudyCoolingGridRank;q++) {
     my_chemistry.CloudyDataSize *= my_chemistry.CloudyCoolingGridDimension[q];
   }
-  temp_data = new float64[my_chemistry.CloudyDataSize];
+  temp_data = new double[my_chemistry.CloudyDataSize];
 
   status = H5Dread(dset_id, HDF5_R8, H5S_ALL, H5S_ALL, H5P_DEFAULT, temp_data);
   fprintf(stderr,"Reading Cloudy Cooling dataset.\n");
@@ -217,7 +217,7 @@ int initialize_cloudy_data(chemistry_data &my_chemistry,
   // Read Heating data.
   if (my_chemistry.include_metal_heating) {
 
-    temp_data = new float64[my_chemistry.CloudyDataSize];
+    temp_data = new double[my_chemistry.CloudyDataSize];
 
     dset_id =  H5Dopen(file_id, "/CloudyRates/Heating");
     if (dset_id == h5_error) {

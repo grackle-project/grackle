@@ -11,7 +11,7 @@
 #endif
 
 #ifdef LARGE_INTS
-#define gr_int long_int
+#define gr_int long long
 #endif
 
 #ifdef CONFIG_BFLOAT_4
