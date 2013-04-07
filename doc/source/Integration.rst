@@ -108,9 +108,9 @@ set to 1.  The initializing function will return an integer indicating success
   gr_float a_value = 1. / (1. + initial_redshift);
 
   // Finally, initialize the chemistry object.
-  if (initialize_chemistry_data(my_chemistry, my_units, a_value) == FAIL) {
+  if (initialize_chemistry_data(my_chemistry, my_units, a_value) == 0) {
     fprintf(stderr, "Error in initialize_chemistry_data.\n");
-    return FAIL;
+    return 0;
   }
 
 The *chemistry_data* structure is now ready to be used.
@@ -196,9 +196,9 @@ Updating the UV Background
 .. code-block:: c++
 
   if (update_UVbackground_rates(my_chemistry, 
-                                my_units, a_value) == FAIL) {
+                                my_units, a_value) == 0) {
     fprintf(stderr, "Error in update_UBbackground_rates.\n");
-    return FAIL;
+    return 0;
   }
 
 Solve the Chemistry and Cooling
@@ -219,9 +219,9 @@ Solve the Chemistry and Cooling
                       HeI_density, HeII_density, HeIII_density,
                       H2I_density, H2II_density,
                       DI_density, DII_density, HDI_density,
-                      e_density, metal_density) == FAIL) {
+                      e_density, metal_density) == 0) {
     fprintf(stderr, "Error in solve_chemistry.\n");
-    return FAIL;
+    return 0;
   }
 
 Calculating the Cooling Time
@@ -242,9 +242,9 @@ Calculating the Cooling Time
                              H2I_density, H2II_density,
                              DI_density, DII_density, HDI_density,
                              e_density, metal_density, 
-                             cooling_time) == FAIL) {
+                             cooling_time) == 0) {
     fprintf(stderr, "Error in calculate_cooling_time.\n");
-    return FAIL;
+    return 0;
   }
 
 Calculating the Temperature Field
@@ -262,9 +262,9 @@ Calculating the Temperature Field
                             H2I_density, H2II_density,
                             DI_density, DII_density, HDI_density,
                             e_density, metal_density, 
-                            temperature) == FAIL) {
+                            temperature) == 0) {
     fprintf(stderr, "Error in calculate_temperature.\n");
-    return FAIL;
+    return 0;
   }
 
 Calculating the Pressure Field
@@ -282,9 +282,9 @@ Calculating the Pressure Field
                          H2I_density, H2II_density,
                          DI_density, DII_density, HDI_density,
                          e_density, metal_density,
-                         pressure) == FAIL) {
+                         pressure) == 0) {
     fprintf(stderr, "Error in calculate_pressure.\n");
-    return FAIL;
+    return 0;
   }
 
 Calculating the Gamma Field
@@ -302,7 +302,7 @@ Calculating the Gamma Field
                       H2I_density, H2II_density,
                       DI_density, DII_density, HDI_density,
                       e_density, metal_density,
-                      gamma) == FAIL) {
+                      gamma) == 0) {
     fprintf(stderr, "Error in calculate_gamma.\n");
-    return FAIL;
+    return 0;
   }
