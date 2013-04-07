@@ -1,7 +1,7 @@
 #ifndef __GRACKLE_H__
 #define __GRACKLE_H__
 
-#include "grackle_macros.h"
+#include "grackle_types.h"
 #include "code_units.h"
 #include "chemistry_data.h"
 

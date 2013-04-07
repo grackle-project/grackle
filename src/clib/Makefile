@@ -278,7 +278,7 @@ install:
 	@(if [ ! -d $(INSTALL_INCLUDE_DIR)/grackle ]; then \
 		mkdir $(INSTALL_INCLUDE_DIR)/grackle; \
 	fi)
-	@cp grackle.h grackle_macros.h code_units.h chemistry_data.h $(INSTALL_INCLUDE_DIR)/grackle/
+	@cp grackle.h grackle_macros.h grackle_types.h code_units.h chemistry_data.h $(INSTALL_INCLUDE_DIR)/grackle/
 
 #-----------------------------------------------------------------------
 

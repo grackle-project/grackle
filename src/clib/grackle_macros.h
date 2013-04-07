@@ -78,7 +78,6 @@ typedef int            HDF5_hid_t;
 /* Precision-dependent definitions */
 
 #ifdef SMALL_INTS
-#define gr_int int
 #define ISYM "d"
 #define nint(A) ( (int) ((A) + 0.5*sign(A)) )
 #define nlongint(A) ( (long_int) ((A) + 0.5*sign(A)) )
@@ -86,7 +85,6 @@ typedef int            HDF5_hid_t;
 #endif
 
 #ifdef LARGE_INTS
-#define gr_int long_int
 #define ISYM "lld"
 #define nint(A) ( (long_int) ((A) + 0.5*sign(A)) )
 #define nlongint(A) ( (long_int) ((A) + 0.5*sign(A)) )
@@ -94,13 +92,11 @@ typedef int            HDF5_hid_t;
 #endif
 
 #ifdef CONFIG_BFLOAT_4
-#define gr_float float
 #define FSYM "f"
 #define ESYM "e"
 #endif
 
 #ifdef CONFIG_BFLOAT_8
-#define gr_float double
 #define FSYM "lf"
 #define ESYM "le"
 #endif
