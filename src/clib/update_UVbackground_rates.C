@@ -27,7 +27,7 @@
 /* function prototypes */
 
 int update_UVbackground_rates(chemistry_data &my_chemistry,
-			      code_units &my_units, float a_value)
+			      code_units &my_units, gr_float a_value)
 {
   /* Return if there is no radiation (rates should be all zero). */
 
@@ -37,7 +37,7 @@ int update_UVbackground_rates(chemistry_data &my_chemistry,
 
   /* Return if redshift is outside of table (rates should be all zero). */
 
-  float Redshift = 1.0 / (a_value * my_units.a_units) - 1;
+  gr_float Redshift = 1.0 / (a_value * my_units.a_units) - 1;
   if ( (Redshift < my_chemistry.UVbackground_table.zmin) ||
        (Redshift > my_chemistry.UVbackground_table.zmax) )
     return SUCCESS;
@@ -53,7 +53,7 @@ int update_UVbackground_rates(chemistry_data &my_chemistry,
   /* First, calculate the ramp value, a number between 0 and 1 which
      is used as an external control to the radiation. */
 
-  float Ramp = 0;
+  gr_float Ramp = 0;
 
   if (Redshift < my_chemistry.UVbackground_redshift_on && 
       Redshift >= my_chemistry.UVbackground_redshift_off) {
@@ -199,7 +199,7 @@ int update_UVbackground_rates(chemistry_data &my_chemistry,
      re-ionized universe) there's no suppression. */
 
   if (my_chemistry.LWbackground_sawtooth_suppression) {
-    float LymanSawtoothSuppressionFactor = 0.1 + 0.9 * Ramp;
+    gr_float LymanSawtoothSuppressionFactor = 0.1 + 0.9 * Ramp;
   
     my_chemistry.k31 *= LymanSawtoothSuppressionFactor;
   }
@@ -210,7 +210,7 @@ int update_UVbackground_rates(chemistry_data &my_chemistry,
 
   if (my_chemistry.Compton_xray_heating) {
 
-    float RedshiftXrayCutoff = 5.0;
+    gr_float RedshiftXrayCutoff = 5.0;
 
     /* This is sigma_thompson * c * (effective <h \nu>/<m_e c^2>) *
        U_xray * 1eV.  U_xray is the energy density of XRB in , <h \nu>
