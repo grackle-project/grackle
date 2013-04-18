@@ -67,7 +67,7 @@ Once you have chosen the make file to be used, a few variables should be set:
 
     * ``LOCAL_HDF5_INSTALL`` - path to your hdf5 installation.
 
-    * ``LOCAL_FC_INSTALL`` - path to fortran compilers (not including the bin subdirectory).
+    * ``LOCAL_FC_INSTALL`` - path to Fortran compilers (not including the bin subdirectory).
 
     * ``MACH_INSTALL_PREFIX`` - path where grackle header and library files will be installed.
 

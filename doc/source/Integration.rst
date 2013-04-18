@@ -34,7 +34,7 @@ The only source file that needs to be included in your simulation code is
 Data Types
 ----------
 
-The grackle library provied two variable sized data types, one for integers 
+The grackle library provides two variable sized data types, one for integers 
 and one for floating point variables.  With **grackle.h** included, both of 
 these data types are available.
 
@@ -64,8 +64,8 @@ defined as 1 / (1 + z\ :sub:`i`), where z\ :sub:`i` is the initial redshift
 of the simulation.  Following these definitions, the velocity and temperature 
 units are defined as:
 
-    * *velocity_units* = *a_units* x *length_units* / *time_units*
-    * *temperature_units* = m\ :sub:`H` * *velocity_units* \ :sup:`2` / k,
+    * *velocity_units* = *a_units* × *length_units* / *time_units*
+    * *temperature_units* = m\ :sub:`H` × *velocity_units* \ :sup:`2` / k,
 
 where k is the Boltzmann constant.  Temperature units convert from energy to 
 temperature in K.
@@ -197,7 +197,7 @@ Updating the UV Background
 
   if (update_UVbackground_rates(my_chemistry, 
                                 my_units, a_value) == 0) {
-    fprintf(stderr, "Error in update_UBbackground_rates.\n");
+    fprintf(stderr, "Error in update_UVbackground_rates.\n");
     return 0;
   }
 

@@ -13,8 +13,8 @@ provides a non-equilibrium primordial chemistry network for atomic H and He
 as well as H\ :sub:`2`\  and HD; tabulated metal cooling rates calculated 
 with the photo-ionization code, `Cloudy <http://nublado.org>`_; and 
 photo-heating and photo-ionization from the UV backgrounds of 
-`Faucher-Giguere et. al. (2009) 
-<http://adsabs.harvard.edu/abs/2009ApJ...703.1416F>`_ and 
+`Faucher-Giguere et al. (2009) 
+<http://adsabs.harvard.edu/abs/2009ApJ...703.1416F>`_ or 
 `Haardt & Madau (2012) 
 <http://adsabs.harvard.edu/abs/2012ApJ...746..125H>`_.
 
