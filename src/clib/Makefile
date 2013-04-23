@@ -272,7 +272,7 @@ help:
 
 install:
 	@echo "Installing libgrackle.so to $(INSTALL_LIB_DIR)."
-	@cp libgrackle.so $(INSTALL_LIB_DIR)
+	@cp libgrackle.so $(INSTALL_LIB_DIR)/
 
 	@echo "Installing grackle header files to $(INSTALL_INCLUDE_DIR)."
 	@cp grackle.h grackle_macros.h grackle_types.h code_units.h chemistry_data.h $(INSTALL_INCLUDE_DIR)
