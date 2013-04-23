@@ -115,7 +115,7 @@ libgrackle.$(MACH_SHARED_EXT): $(MODULES) autogen dep $(OBJS_LIB) MACHNOTES
 	@(if [ -e $@ ]; then \
 	   echo "Success!"; \
 	else \
-	   echo "$(LD) $(LDFLAGS) $(SHARED_OPT) -o $*.so $*.o $(OBJS_LIB) $(LIBS) $(LIB_INSTALL_FLAGS) -install_name $(INSTALL_LIB_DIR)/$@" >> temp1; \
+	   echo "$(LD) $(LDFLAGS) $(SHARED_OPT) -o $*.$(MACH_SHARED_EXT) $*.o $(OBJS_LIB) $(LIBS) $(LIB_INSTALL_FLAGS) -install_name $(INSTALL_LIB_DIR)/$@" >> temp1; \
 	   cat temp1 $(OUTPUT) > temp2; \
 	   rm -f temp1; \
 	   mv -f temp2 $(OUTPUT); \
@@ -132,7 +132,7 @@ lib%.$(MACH_SHARED_EXT): $(MODULES) autogen dep $(OBJS_LIB)
 	@(if [ -e $@ ]; then \
 	   echo "Success!"; \
 	else \
-	   echo "$(LD) $(LDFLAGS) $(SHARED_OPT) -o $*.so $*.o $(OBJS_LIB) $(LIBS)" >> temp1; \
+	   echo "$(LD) $(LDFLAGS) $(SHARED_OPT) -o $*.$(MACH_SHARED_EXT) $*.o $(OBJS_LIB) $(LIBS)" >> temp1; \
 	   cat temp1 $(OUTPUT) > temp2; \
 	   rm -f temp1; \
 	   mv -f temp2 $(OUTPUT); \
@@ -271,8 +271,8 @@ help:
 #-----------------------------------------------------------------------
 
 install:
-	@echo "Installing libgrackle.so to $(INSTALL_LIB_DIR)."
-	@cp libgrackle.so $(INSTALL_LIB_DIR)/
+	@echo "Installing libgrackle.$(MACH_SHARED_EXT) to $(INSTALL_LIB_DIR)."
+	@cp libgrackle.$(MACH_SHARED_EXT) $(INSTALL_LIB_DIR)/
 
 	@echo "Installing grackle header files to $(INSTALL_INCLUDE_DIR)/grackle."
 	@(if [ ! -d $(INSTALL_INCLUDE_DIR)/grackle ]; then \
@@ -283,7 +283,7 @@ install:
 #-----------------------------------------------------------------------
 
 clean:
-	-@rm -f *.so *.o DEPEND.bak *~ $(OUTPUT) *.exe auto_show*.C DEPEND
+	-@rm -f *.$(MACH_SHARED_EXT) *.o DEPEND.bak *~ $(OUTPUT) *.exe auto_show*.C DEPEND
 	-@touch DEPEND
 
 #-----------------------------------------------------------------------
