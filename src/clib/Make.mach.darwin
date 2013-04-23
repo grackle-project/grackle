@@ -72,7 +72,7 @@ MACH_CFLAGS   =
 MACH_CXXFLAGS =
 MACH_FFLAGS   = -fno-second-underscore -m64
 MACH_F90FLAGS = -fno-second-underscore -m64
-MACH_LDFLAGS  = 
+MACH_LDFLAGS  = -current_version $(LIB_RELEASE_VERSION) -compatibility_version $(LIB_COMPATIBILITY_VERSION) -install_name $(INSTALL_LIB_DIR)/libgrackle.$(MACH_SHARED_EXT)
 MACH_SHARED_FLAGS = -dynamiclib -Wl,-headerpad_max_install_names,-undefined,dynamic_lookup
 MACH_SHARED_EXT   = dylib
 
