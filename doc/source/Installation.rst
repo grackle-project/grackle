@@ -62,7 +62,8 @@ Compile settings for different systems are stored in files starting with
 "Make.mach" in the source directory.  Grackle comes with three sample make 
 macros: ``Make.mach.darwin`` for Mac OSX, ``Make.mach.linux-gnu`` for 
 Linux systems, and an unformatted ``Make.mach.unknown``.  If you have a make 
-file prepared for an Enzo install, you may use it to compile grackle.
+file prepared for an Enzo install, you may use it to compile grackle, although
+you will need to add ``-fPIC`` as a compile-time flag.
 Once you have chosen the make file to be used, a few variables should be set:
 
     * ``LOCAL_HDF5_INSTALL`` - path to your hdf5 installation.
