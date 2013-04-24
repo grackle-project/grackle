@@ -1,8 +1,8 @@
 #include "fortran.def"
 !=======================================================================
-!////////////////////  SUBROUTINE COOL_MULTI_TIME  \\\\\\\\\\\\\\\\\\\\\
+!////////////////////  SUBROUTINE COOL_MULTI_TIME_G  \\\\\\\\\\\\\\\\\\\
 
-      subroutine cool_multi_time(
+      subroutine cool_multi_time_g(
      &                d, e, u, v, w, de, HI, HII, HeI, HeII, HeIII,
      &                  cooltime,
      &                in, jn, kn, nratec, iexpand, 
@@ -165,7 +165,7 @@
 
 !        Compute the cooling rate
 
-         call cool1d_multi(     
+         call cool1d_multi_g(     
      &                d, e, u, v, w, de, HI, HII, HeI, HeII, HeIII,
      &                in, jn, kn, nratec, 
      &                iexpand, ispecies, imetal, imcool, idust, idim,
@@ -198,7 +198,7 @@
 
 !        Compute the cooling time on the slice
 !          (the gamma used here is the same as used to calculate the pressure
-!           in cool1d_multi)
+!           in cool1d_multi_g)
 
          do i = is+1, ie+1
             energy = max(p2d(i)/(gamma-1.d0), tiny)   

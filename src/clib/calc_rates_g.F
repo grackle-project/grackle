@@ -1,9 +1,9 @@
 #include "fortran.def"
 #include "phys_const.def"
 c=======================================================================
-c//////////////////////  SUBROUTINE CALC_RATES  \\\\\\\\\\\\\\\\\\\\\\\\\
+c//////////////////////  SUBROUTINE CALC_RATES_G  \\\\\\\\\\\\\\\\\\\\\\\
 c
-      subroutine calc_rates(
+      subroutine calc_rates_g(
      &             nratec, aye, temstart, temend,
      &             casebrates, threebody,
      &             utem, uxyz, uaye, urho, utim,
@@ -397,7 +397,7 @@ c
 c
 c       Call Tom Abels routine (from his web page, Feb/2000)
 c
-        call coll_rates(ttt, k1a(i), k2a(i), k3a(i), k4a(i), k5a(i),
+        call coll_rates_g(ttt, k1a(i), k2a(i), k3a(i), k4a(i), k5a(i),
      &                  k6a(i), k7a(i), k8a(i), k9a(i), k10a(i),
      &                  k11a(i), k12a(i), k13a(i), k14a(i), k15a(i), 
      &                  k16a(i), k17a(i), k18a(i), k19a(i), k23a(i),
@@ -584,7 +584,7 @@ c       Compute the density-dependant collision H2 dissociation rates.
 c          (this givens a 7-variable function that is used to compute
 c           the log10 of the rate -- normalize by dividing by kunit).
 c
-        call colh2diss(ttt, k13dda(i,1), k13dda(i,2), k13dda(i,3), 
+        call colh2diss_g(ttt, k13dda(i,1), k13dda(i,2), k13dda(i,3), 
      &                 k13dda(i,4), k13dda(i,5), k13dda(i,6), 
      &                 k13dda(i,7))
         k13dda(i,1) = k13dda(i,1) - log10(kunit)
@@ -632,7 +632,7 @@ c High density rate from MSM96
         k22a(i) = k22a(i) / kunit_3bdy
         
         k21a(i) = 2.8d-31 * (ttt**(-0.6d0)) / kunit_3bdy
-c        write(6,*),'calc_rates: check: ', ttt, k2a(i), k22a(i)
+c        write(6,*),'calc_rates_g: check: ', ttt, k2a(i), k22a(i)
 c
 c       ------ Deuterium rates -----
 c
@@ -790,7 +790,7 @@ c        brem2a(i) = 1.426d-27*sqrt(ttt)*gaunt / coolunit
 c
 c    e) Molecular hydrogen cooling
 c
-c       (Which one is used is controlled by a flag in cool1d_mulit.src)
+c       (Which one is used is controlled by a flag in cool1d_mulit_g.F)
 c
 c    e part1) - Lepp & Shull rates
 c
@@ -940,19 +940,19 @@ c
 c      hdcool=hdlte/(1.0d0+hdlte/hdlow)
 c
 c     g) CIE cooling as discussed in Ripamonti & Abel (2003)
-c        cie_thin_cooling_rate returns rate as erg s^-1 cm^3 g^2 so
+c        cie_thin_cooling_rate_g returns rate as erg s^-1 cm^3 g^2 so
 c         divide my mh^2 to get usual erg s^-1 cm^3, which is then
 c         converted to code units with the conversion factor coolunit.
 c         To get cooling rate
 c     
-      call cie_thin_cooling_rate(ttt, cierate)
+      call cie_thin_cooling_rate_g(ttt, cierate)
 c      ciecoa(i) = cierate/mh/mh/coolunit
 c
 c     Matt Turk: cie_thin_cooling actually returns
 c     erg per second times cm^3 per gram per (gram in H2 molecules)
 c     To reproduce eq 5 in RA04, divide c_t_c_r by mh, so to get
 c     erg/s cm^3 we multiply by mh.  We can either divide by 2 for 
-c     the H2 mass->number or in cool1d_multi_bdf.src, but we might
+c     the H2 mass->number or in cool1d_multi_g.F, but we might
 c     as well do it here.
 c
       ciecoa(i) = cierate * (mh/2.0d0) / coolunit

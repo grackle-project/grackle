@@ -24,7 +24,7 @@
 
 /* function prototypes */
 
-extern "C" void FORTRAN_NAME(solve_rate_cool)(
+extern "C" void FORTRAN_NAME(solve_rate_cool_g)(
         gr_int *icool,
 	gr_float *d, gr_float *e, gr_float *u, gr_float *v, gr_float *w, gr_float *de,
 	gr_float *HI, gr_float *HII, gr_float *HeI, gr_float *HeII, gr_float *HeIII,
@@ -102,7 +102,7 @@ int solve_chemistry(chemistry_data &my_chemistry,
 
   gr_int ierr = 0;
 
-  FORTRAN_NAME(solve_rate_cool)(
+  FORTRAN_NAME(solve_rate_cool_g)(
     &my_chemistry.with_radiative_cooling,
     density, internal_energy, x_velocity, y_velocity, z_velocity,
     e_density, HI_density, HII_density, 

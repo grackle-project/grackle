@@ -23,7 +23,7 @@
 #include "phys_constants.h"
 #include "fortran.def"
  
-extern "C" void FORTRAN_NAME(cool_multi_time)(
+extern "C" void FORTRAN_NAME(cool_multi_time_g)(
 	gr_float *d, gr_float *e, gr_float *u, gr_float *v, gr_float *w, gr_float *de,
 	gr_float *HI, gr_float *HII, gr_float *HeI, gr_float *HeII, gr_float *HeIII,
 	gr_float *cooltime,
@@ -89,7 +89,7 @@ int calculate_cooling_time(chemistry_data &my_chemistry,
 
   gr_int ierr = 0;
 
-    FORTRAN_NAME(cool_multi_time)(
+    FORTRAN_NAME(cool_multi_time_g)(
        density, internal_energy, x_velocity, y_velocity, z_velocity,
        e_density, HI_density, HII_density,
        HeI_density, HeII_density, HeIII_density,

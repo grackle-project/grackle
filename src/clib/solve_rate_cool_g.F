@@ -2,9 +2,9 @@
 #include "phys_const.def"
 
 !=======================================================================
-!/////////////////////  SUBROUTINE SOLVE_RATE  \\\\\\\\\\\\\\\\\\\\\\\\\
+!///////////////////  SUBROUTINE SOLVE_RATE_COOL_G  \\\\\\\\\\\\\\\\\\\\\
 
-      subroutine solve_rate_cool(icool, d, e, u, v, w, de,
+      subroutine solve_rate_cool_g(icool, d, e, u, v, w, de,
      &                HI, HII, HeI, HeII, HeIII,
      &                in, jn, kn, nratec, iexpand, 
      &                ispecies, imetal, imcool, idust, idim,
@@ -290,7 +290,7 @@ c      chunit = (7.17775d-12)/(2.d0*uvel*uvel*mh)   ! 4.5 eV per H2 formed
 
 !           Compute the cooling rate, tgas, tdust, and metallicity for this row
 
-            call cool1d_multi(
+            call cool1d_multi_g(
      &                d, e, u, v, w, de, HI, HII, HeI, HeII, HeIII,
      &                in, jn, kn, nratec, 
      &                iexpand, ispecies, imetal, imcool, idust, idim,

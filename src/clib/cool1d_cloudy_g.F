@@ -1,9 +1,9 @@
 #include "fortran.def"
 
 !=======================================================================
-!////////////////////  SUBROUTINE COOL1D_CLOUDY  \\\\\\\\\\\\\\\\\\\\\\\
+!////////////////////  SUBROUTINE COOL1D_CLOUDY_G  \\\\\\\\\\\\\\\\\\\\\
 
-      subroutine cool1D_cloudy(d, de, rhoH, metallicity,
+      subroutine cool1d_cloudy_g(d, de, rhoH, metallicity,
      &                in, jn, kn, is, ie, j, k,
      &                logtem, edot, comp2, ispecies, dom, zr,
      &                icmbTfloor, iClHeat, 

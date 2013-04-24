@@ -30,7 +30,7 @@ int initialize_cloudy_data(chemistry_data &my_chemistry,
 
 int initialize_UVbackground_data(chemistry_data &my_chemistry);
 
-extern "C" void FORTRAN_NAME(calc_rates)(
+extern "C" void FORTRAN_NAME(calc_rates_g)(
      gr_int *nratec, gr_float *aye, gr_float *temstart, gr_float *temend, 
      gr_int *casebrates, gr_int *threebody,
      gr_float *utem, gr_float *uxyz, gr_float *uaye, gr_float *urho, gr_float *utim,
@@ -151,7 +151,7 @@ int initialize_chemistry_data(chemistry_data &my_chemistry,
 
   /* Call FORTRAN routine to do the hard work. */
  
-  FORTRAN_NAME(calc_rates)(
+  FORTRAN_NAME(calc_rates_g)(
      &my_chemistry.NumberOfTemperatureBins, &a_value, &my_chemistry.TemperatureStart,
         &my_chemistry.TemperatureEnd,
         &my_chemistry.CaseBRecombination, &my_chemistry.three_body_rate,

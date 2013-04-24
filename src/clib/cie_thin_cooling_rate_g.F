@@ -1,6 +1,6 @@
 #include "fortran.def"
 #include "phys_const.def"
-      subroutine cie_thin_cooling_rate(temp, value)
+      subroutine cie_thin_cooling_rate_g(temp, value)
 c     written by Tom Abel    8/2003
 c     compute optically thin cooling rate due to CIE cooling
 c     as discussed in Ripamonti and Abel 2003.

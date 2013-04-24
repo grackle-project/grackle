@@ -2,9 +2,9 @@
 #include "phys_const.def"
 
 !=======================================================================
-!///////////////////////  SUBROUTINE CALC_TDUST  \\\\\\\\\\\\\\\\\\\\\\\
+!////////////////////  SUBROUTINE CALC_TDUST_1D_G  \\\\\\\\\\\\\\\\\\\\\
 
-      subroutine calc_tdust(
+      subroutine calc_tdust_1d_g(
      &     tdust, tgas, nh, gasgr, itmask, 
      &     trad, in, is, ie, j, k)
 
@@ -133,10 +133,10 @@
 
 !     Calculate grain opacities
 
-         call calc_kappa_gr(tdustnow, kgr, nm_itmask, 
+         call calc_kappa_gr_g(tdustnow, kgr, nm_itmask, 
      &        in, is, ie, t_subl)
 
-         call calc_kappa_gr(tdplus, kgrplus, nm_itmask, 
+         call calc_kappa_gr_g(tdplus, kgrplus, nm_itmask, 
      &        in, is, ie, t_subl)
 
          do i = is+1, ie+1
@@ -223,7 +223,7 @@
                      bi_t_mid(i) = min(bi_t_mid(i), t_subl)
                   endif
 
-                  call calc_kappa_gr(bi_t_mid, kgr, bi_itmask, 
+                  call calc_kappa_gr_g(bi_t_mid, kgr, bi_itmask, 
      &                 in, is, ie, t_subl)
                   sol(i) = radf * kgr(i) * 
      &                 (trad4 - bi_t_mid(i)**4) +
@@ -255,7 +255,7 @@
 
 !     If iteration count exceeded with bisection, end of the line.
          if (iter .gt. itmax) then
-            write(6,*) 'CALC_TDUST failed using both methods for ',
+            write(6,*) 'CALC_TDUST_1D_G failed using both methods for ',
      &           (c_total - c_done), 'cells.'
 c            ERROR_MESSAGE
          endif
@@ -271,7 +271,7 @@ c            ERROR_MESSAGE
 
 !     Check for bad solutions
             if (tdustnow(i) .lt. 0.0) then
-               write(6, *) 'CALC_TDUST Newton method - ',
+               write(6, *) 'CALC_TDUST_1D_G Newton method - ',
      &              'T_dust < 0: i = ', i, 'j = ', j,
      &              'k = ', k, 'nh = ', nh(i), 
      &              't_gas = ', tgas(i), 't_rad = ', trad,
@@ -287,9 +287,9 @@ c               ERROR_MESSAGE
       end
 
 !=======================================================================
-!///////////////////////  SUBROUTINE CALC_TDUST  \\\\\\\\\\\\\\\\\\\\\\\
+!////////////////////  SUBROUTINE CALC_KAPPA_GR_G  \\\\\\\\\\\\\\\\\\\\\
 
-      subroutine calc_kappa_gr(
+      subroutine calc_kappa_gr_g(
      &     tdust, kgr, itmask, in, is, ie, t_subl)
 
 !  CALCULATE GRAIN PLANK MEAN OPACITY

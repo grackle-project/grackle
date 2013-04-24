@@ -197,7 +197,7 @@ typedef struct
   /* 9 species rates (including H2) 
        The first five are for the Lepp & Shull rates.
        The next two are for the (better) Galli & Palla 1999 rates. 
-       The selection is controlled by a flag in cool1d_multi.src. */
+       The selection is controlled by a flag in cool1d_multi_g.F. */
 
   gr_float *hyd01k;
   gr_float *h2k01;

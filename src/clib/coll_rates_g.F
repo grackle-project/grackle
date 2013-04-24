@@ -1,8 +1,8 @@
 #include "fortran.def"
 c=======================================================================
-c/////////////////////  SUBROUTINE COLL_RATES  \\\\\\\\\\\\\\\\\\\\\\\\\
+c/////////////////////  SUBROUTINE COLL_RATES_G  \\\\\\\\\\\\\\\\\\\\\\\
 c
-      SUBROUTINE coll_rates(T, k1, k2, k3, k4, k5, k6, k7, k8, k9,
+      SUBROUTINE coll_rates_g(T, k1, k2, k3, k4, k5, k6, k7, k8, k9,
      $     k10, k11, k12, k13, k14, k15, k16, k17, k18, k19, k23,
      $     kunit, casebrates)
 c

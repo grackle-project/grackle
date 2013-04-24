@@ -1,9 +1,9 @@
 #include "fortran.def"
 #include "phys_const.def"
 c=======================================================================
-c/////////////////////  SUBROUTINE COLH2DISS  \\\\\\\\\\\\\\\\\\\\\\\\\
+c/////////////////////  SUBROUTINE COLH2DISS_G  \\\\\\\\\\\\\\\\\\\\\\\\
 c
-      subroutine colh2diss(tgas, f1, f2, f3, f4, f5, f6, f7)
+      subroutine colh2diss_g(tgas, f1, f2, f3, f4, f5, f6, f7)
 c
 c  COMPUTE DENSITY DEPENDENT COLLISIONAL H2 DISSOCIATION RATE
 c

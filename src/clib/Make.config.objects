@@ -12,18 +12,18 @@
 #-----------------------------------------------------------------------
 
 OBJS_CONFIG_LIB = \
-        calc_rates.o \
-        cool1d_multi.o \
-        cool_multi_time.o \
+        calc_rates_g.o \
+        cool1d_multi_g.o \
+        cool_multi_time_g.o \
         initialize_cloudy_data.o \
         initialize_chemistry_data.o \
         initialize_UVbackground_data.o \
-        solve_rate_cool.o \
-        calc_tdust_1d.o \
-        colh2diss.o \
-        cie_thin_cooling_rate.o \
-        coll_rates.o \
-        cool1d_cloudy.o \
+        solve_rate_cool_g.o \
+        calc_tdust_1d_g.o \
+        colh2diss_g.o \
+        cie_thin_cooling_rate_g.o \
+        coll_rates_g.o \
+        cool1d_cloudy_g.o \
         set_default_chemistry_parameters.o \
         solve_chemistry.o \
         calculate_cooling_time.o \

@@ -2,9 +2,9 @@
 #include "phys_const.def"
 
 !=======================================================================
-!//////////////////////  SUBROUTINE COOL1D_MULTI  \\\\\\\\\\\\\\\\\\\\\\
+!/////////////////////  SUBROUTINE COOL1D_MULTI_G  \\\\\\\\\\\\\\\\\\\\\
 
-      subroutine cool1d_multi(
+      subroutine cool1d_multi_g(
      &                d, e, u, v, w, de, HI, HII, HeI, HeII, HeIII,
      &                in, jn, kn, nratec, 
      &                iexpand, ispecies, imetal, imcool, idust, idim, 
@@ -584,7 +584,7 @@ c  new (correct) way: (april 4, 2007)
 
 !     Compute dust temperature
 
-         call calc_tdust(tdust, tgas, nh, gasgr_tdust, 
+         call calc_tdust_1d_g(tdust, tgas, nh, gasgr_tdust, 
      &           itmask, comp2, in, is, ie, j, k)
 
 !     Calculate cooling rate
@@ -616,7 +616,7 @@ c  new (correct) way: (april 4, 2007)
 
       if (imcool .eq. 1) then
 
-         call cool1D_cloudy(d, de, rhoH, metallicity,
+         call cool1d_cloudy_g(d, de, rhoH, metallicity,
      &        in, jn, kn, is, ie, j, k,
      &        logtem, edot, comp2, ispecies, dom, zr,
      &        icmbTfloor, iClHeat, 
