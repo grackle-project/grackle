@@ -172,21 +172,21 @@
 
 !           Interpolate over temperature.
             if (clGridRank .eq. 1) then
-               call interpolate_1D(log10tem(i), clGridDim, clPar1,
+               call interpolate_1D_g(log10tem(i), clGridDim, clPar1,
      &              dclPar(1), clDataSize, clCooling, log_cool(i))
                edot_met(i) = -10.d0**log_cool(i)
 
 !     Ignore CMB term if T >> T_CMB
                if ((icmbTfloor .eq. 1) .and. 
      &              ((log10tem(i) - log10_tCMB) .lt. 2.d0)) then
-                  call interpolate_1D(log10_tCMB, clGridDim, clPar1, 
+                  call interpolate_1D_g(log10_tCMB, clGridDim, clPar1, 
      &                 dclPar(1), clDataSize, clCooling, 
      &                 log_cool_cmb(i))
                   edot_met(i) = edot_met(i) + 10.d0**log_cool_cmb(i)
                endif
 
                if (get_heat .eq. 1) then
-                  call interpolate_1D(log10tem(i), clGridDim, clPar1, 
+                  call interpolate_1D_g(log10tem(i), clGridDim, clPar1, 
      &                 dclPar(1), clDataSize, clHeating, 
      &                 log_heat(i))
                   edot_met(i) = edot_met(i) + 10.d0**log_heat(i)
@@ -194,7 +194,7 @@
 
 !           Interpolate over density and temperature.
             else if (clGridRank .eq. 2) then
-               call interpolate_2D(log_n_h(i), log10tem(i), clGridDim,
+               call interpolate_2D_g(log_n_h(i), log10tem(i), clGridDim,
      &              clPar1, dclPar(1), clPar2, dclPar(2),
      &              clDataSize, clCooling, log_cool(i))
                edot_met(i) = -10.d0**log_cool(i)
@@ -202,14 +202,14 @@
 !     Ignore CMB term if T >> T_CMB
                if ((icmbTfloor .eq. 1) .and. 
      &              ((log10tem(i) - log10_tCMB) .lt. 2.0)) then
-                  call interpolate_2D(log_n_h(i), log10_tCMB, clGridDim,
-     &                 clPar1, dclPar(1), clPar2, dclPar(2),
+                  call interpolate_2D_g(log_n_h(i), log10_tCMB, 
+     &                 clGridDim, clPar1, dclPar(1), clPar2, dclPar(2),
      &                 clDataSize, clCooling, log_cool_cmb(i))
                   edot_met(i) = edot_met(i) + 10.d0**log_cool_cmb(i)
                endif
 
                if (get_heat .eq. 1) then
-               call interpolate_2D(log_n_h(i), log10tem(i), clGridDim,
+               call interpolate_2D_g(log_n_h(i), log10tem(i), clGridDim,
      &              clPar1, dclPar(1), clPar2, dclPar(2),
      &              clDataSize, clHeating, log_heat(i))
                   edot_met(i) = edot_met(i) + 10.d0**log_heat(i)
@@ -217,7 +217,7 @@
 
 !           Interpolate over density, redshift, and temperature.
             else if (clGridRank .eq. 3) then
-               call interpolate_3Dz(log_n_h(i), zr, log10tem(i),
+               call interpolate_3Dz_g(log_n_h(i), zr, log10tem(i),
      &              clGridDim,
      &              clPar1, dclPar(1), 
      &              clPar2, zindex,
@@ -229,7 +229,7 @@
 !     Ignore CMB term if T >> T_CMB
                if ((icmbTfloor .eq. 1) .and. 
      &              ((log10tem(i) - log10_tCMB) .lt. 2.d0)) then
-                  call interpolate_3Dz(log_n_h(i), zr, log10_tCMB,
+                  call interpolate_3Dz_g(log_n_h(i), zr, log10_tCMB,
      &                 clGridDim,
      &                 clPar1, dclPar(1),
      &                 clPar2, zindex,
@@ -240,7 +240,7 @@
                endif
 
                if (get_heat .eq. 1) then
-                  call interpolate_3Dz(log_n_h(i), zr, log10tem(i),
+                  call interpolate_3Dz_g(log_n_h(i), zr, log10tem(i),
      &                 clGridDim,
      &                 clPar1, dclPar(1),
      &                 clPar2, zindex,
@@ -269,7 +269,7 @@
 !=======================================================================
 !////////////////////  SUBROUTINE INTERPOLATE_1D  \\\\\\\\\\\\\\\\\\\\\\
 
-      subroutine interpolate_1D(input1, gridDim, gridPar1, dgridPar1, 
+      subroutine interpolate_1D_g(input1, gridDim, gridPar1, dgridPar1, 
      &     dataSize, dataField, value)
 
 !  General Arguments
@@ -306,7 +306,7 @@
 !=======================================================================
 !////////////////////  SUBROUTINE INTERPOLATE_2D  \\\\\\\\\\\\\\\\\\\\\\
 
-      subroutine interpolate_2D(input1, input2, gridDim, 
+      subroutine interpolate_2D_g(input1, input2, gridDim, 
      &     gridPar1, dgridPar1,
      &     gridPar2, dgridPar2,
      &     dataSize, dataField, value)
@@ -362,7 +362,7 @@
 !=======================================================================
 !////////////////////  SUBROUTINE INTERPOLATE_3D  \\\\\\\\\\\\\\\\\\\\\\
 
-      subroutine interpolate_3D(input1, input2, input3, gridDim,
+      subroutine interpolate_3D_g(input1, input2, input3, gridDim,
      &     gridPar1, dgridPar1,
      &     gridPar2, dgridPar2,
      &     gridPar3, dgridPar3,
@@ -437,7 +437,7 @@
 !     ahead of time because it is the redshift and will not 
 !     change for the entire grid.
 !
-      subroutine interpolate_3Dz(input1, input2, input3, gridDim,
+      subroutine interpolate_3Dz_g(input1, input2, input3, gridDim,
      &     gridPar1, dgridPar1,
      &     gridPar2, index2,
      &     gridPar3, dgridPar3,
@@ -464,7 +464,7 @@
 !=======================================================================
 
       if (end_int) then
-         call interpolate_2Df3D(input1, input2, 
+         call interpolate_2Df3D_g(input1, input2, 
      &        input3, gridDim,
      &        gridPar1, dgridPar1,
      &        gridPar2, index2,
@@ -525,7 +525,7 @@
 !     slice in the datacube before the redshift where 
 !     the UV background turns on.
 !
-      subroutine interpolate_2Df3D(input1, input2, input3, gridDim,
+      subroutine interpolate_2Df3D_g(input1, input2, input3, gridDim,
      &     gridPar1, dgridPar1,
      &     gridPar2, index2,
      &     gridPar3, dgridPar3,

@@ -974,7 +974,7 @@ c        Default is 8.5e-26 for epsilon=0.05, G_0=1.7 (rate in erg s^-1 cm^-3)
 c
       gammaha   = gammahacgs / coolunit
 
-#define OUTPUT_COOLING_RATE_DATA
+#define NO_OUTPUT_COOLING_RATE_DATA
 #ifdef OUTPUT_COOLING_RATE_DATA
 c
 c     Write out cooling rate data

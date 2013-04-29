@@ -255,12 +255,12 @@ c      chunit = (7.17775d-12)/(2.d0*uvel*uvel*mh)   ! 4.5 eV per H2 formed
 
 !  Convert densities from comoving to proper
 
-      call scale_fields(d, de, HI, HII, HeI, HeII, HeIII,
+      call scale_fields_g(d, de, HI, HII, HeI, HeII, HeIII,
      &                  HM, H2I, H2II, DI, DII, HDI, metal,
      &                  is, ie, js, je, ks, ke,
      &                  in, jn, kn, ispecies, imetal, aye**(-3))
 
-      call ceiling_species(d, de, HI, HII, HeI, HeII, HeIII,
+      call ceiling_species_g(d, de, HI, HII, HeI, HeII, HeIII,
      &                     HM, H2I, H2II, DI, DII, HDI, metal,
      &                     is, ie, js, je, ks, ke,
      &                     in, jn, kn, ispecies, imetal)
@@ -324,7 +324,7 @@ c      chunit = (7.17775d-12)/(2.d0*uvel*uvel*mh)   ! 4.5 eV per H2 formed
 !        Look-up rates as a function of temperature for 1D set of zones
 !         (maybe should add itmask to this call)
 
-            call lookup_cool_rates1d(temstart, temend, nratec, j, k,
+            call lookup_cool_rates1d_g(temstart, temend, nratec, j, k,
      &               is, ie, ijk, ithreebody,
      &               in, jn, kn, ispecies, idust, 
      &               tgas, HI, HII, HeI, HeII, tdust, metallicity, 
@@ -347,7 +347,7 @@ c      chunit = (7.17775d-12)/(2.d0*uvel*uvel*mh)   ! 4.5 eV per H2 formed
 !           Compute dedot and HIdot, the rates of change of de and HI
 !             (should add itmask to this call)
 
-            call rate_timestep(dedot, HIdot, ispecies, idust,
+            call rate_timestep_g(dedot, HIdot, ispecies, idust,
      &                     de, HI, HII, HeI, HeII, HeIII, d,
      &                     HM, H2I, H2II,
      &                     in, jn, kn, is, ie, j, k, 
@@ -549,7 +549,7 @@ c      chunit = (7.17775d-12)/(2.d0*uvel*uvel*mh)   ! 4.5 eV per H2 formed
 !           Solve rate equations with one linearly implicit Gauss-Seidel 
 !           sweep of a backward Euler method ---
 
-            call step_rate(de, HI, HII, HeI, HeII, HeIII, d,
+            call step_rate_g(de, HI, HII, HeI, HeII, HeIII, d,
      &                     HM, H2I, H2II, DI, DII, HDI, dtit,
      &                     in, jn, kn, is, ie, j, k, ispecies, idust,
      &                     k1, k2, k3, k4, k5, k6, k7, k8, k9, k10, k11,
@@ -608,14 +608,14 @@ c            WARNING_MESSAGE
 
 !     Convert densities back to comoving from proper
 
-      call scale_fields(d, de, HI, HII, HeI, HeII, HeIII,
+      call scale_fields_g(d, de, HI, HII, HeI, HeII, HeIII,
      &                  HM, H2I, H2II, DI, DII, HDI, metal,
      &                  is, ie, js, je, ks, ke,
      &                  in, jn, kn, ispecies, imetal, aye**3)
 
 !     Correct the species to ensure consistency (i.e. type conservation)
 
-      call make_consistent(de, HI, HII, HeI, HeII, HeIII,
+      call make_consistent_g(de, HI, HII, HeI, HeII, HeIII,
      &                     HM, H2I, H2II, DI, DII, HDI, metal, 
      &                     d, is, ie, js, je, ks, ke,
      &                     in, jn, kn, ispecies, imetal, fh, dtoh)
@@ -627,7 +627,7 @@ c -----------------------------------------------------------
 !   This routine scales the density fields from comoving to
 !     proper densities (and back again).
 
-      subroutine scale_fields(d, de, HI, HII, HeI, HeII, HeIII,
+      subroutine scale_fields_g(d, de, HI, HII, HeI, HeII, HeIII,
      &                        HM, H2I, H2II, DI, DII, HDI, metal,
      &                        is, ie, js, je, ks, ke,
      &                        in, jn, kn, ispecies, imetal, factor)
@@ -702,7 +702,7 @@ c -------------------------------------------------------------------
 c -----------------------------------------------------------
 !   This routine ensures that the species aren't below tiny.
 
-      subroutine ceiling_species(d, de, HI, HII, HeI, HeII, HeIII,
+      subroutine ceiling_species_g(d, de, HI, HII, HeI, HeII, HeIII,
      &                           HM, H2I, H2II, DI, DII, HDI, metal,
      &                           is, ie, js, je, ks, ke,
      &                           in, jn, kn, ispecies, imetal)
@@ -781,7 +781,7 @@ c -------------------------------------------------------------------
 !   rates which are tabulated in a log table as a function
 !   of temperature.
 
-      subroutine lookup_cool_rates1d(temstart, temend, nratec, j, k,
+      subroutine lookup_cool_rates1d_g(temstart, temend, nratec, j, k,
      &                is, ie, ijk, ithreebody,
      &                in, jn, kn, ispecies, idust,
      &                tgas1d, HI, HII, HeI, HeII, tdust, metallicity, 
@@ -1102,7 +1102,7 @@ c -------------------------------------------------------------------
 !  This routine calculates the electron and HI rates of change in
 !    order to determine the maximum permitted timestep
 
-      subroutine rate_timestep(dedot, HIdot, ispecies, idust,
+      subroutine rate_timestep_g(dedot, HIdot, ispecies, idust,
      &                     de, HI, HII, HeI, HeII, HeIII, d,
      &                     HM, H2I, H2II,
      &                     in, jn, kn, is, ie, j, k, 
@@ -1275,7 +1275,7 @@ c -------------------------------------------------------------------
 !   a backward-Euler time integrator to advance the rate equations 
 !   by one (sub-)cycle (dtit).
 
-      subroutine step_rate(de, HI, HII, HeI, HeII, HeIII, d,
+      subroutine step_rate_g(de, HI, HII, HeI, HeII, HeIII, d,
      &                     HM, H2I, H2II, DI, DII, HDI, dtit,
      &                     in, jn, kn, is, ie, j, k, ispecies, idust, 
      &                     k1, k2, k3, k4, k5, k6, k7, k8, k9, k10, k11,
@@ -1626,7 +1626,7 @@ c
 !   This routine correct the highest abundence species to
 !     insure conservation of particle number and charge.
 
-      subroutine make_consistent(de, HI, HII, HeI, HeII, HeIII,
+      subroutine make_consistent_g(de, HI, HII, HeI, HeII, HeIII,
      &                        HM, H2I, H2II, DI, DII, HDI, metal, d,
      &                        is, ie, js, je, ks, ke,
      &                        in, jn, kn, ispecies, imetal, fh, dtoh)
