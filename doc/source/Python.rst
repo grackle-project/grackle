@@ -73,7 +73,7 @@ useful for testing chemistry networks over a large range in density.
 
 ::
 
-    python cooling_rate.py
+    python freefall.py
 
 .. image:: _images/freefall.png
    :width: 500
