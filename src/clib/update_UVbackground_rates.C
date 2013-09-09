@@ -42,13 +42,6 @@ int update_UVbackground_rates(chemistry_data &my_chemistry,
        (Redshift > my_chemistry.UVbackground_table.zmax) )
     return SUCCESS;
 
-  if (!my_units.comoving_coordinates) {
-    my_chemistry.UVbackground_redshift_on = Redshift+0.2;
-    my_chemistry.UVbackground_redshift_off = 0.0;
-    my_chemistry.UVbackground_redshift_fullon = Redshift+0.1;
-    my_chemistry.UVbackground_redshift_drop = 0.0;
-  }
-
   /* ------------------------------------------------------------------ */
   /* First, calculate the ramp value, a number between 0 and 1 which
      is used as an external control to the radiation. */
