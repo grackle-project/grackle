@@ -56,6 +56,13 @@ int initialize_chemistry_data(chemistry_data &my_chemistry,
 
   fprintf(stderr, "Initializing chemistry data.\n");
 
+  /* Only allow a units to be one with proper coordinates. */
+  if (my_units.comoving_coordinates == 0 && 
+      my_units.a_units != 1.0) {
+    fprintf(stderr, "ERROR: a_units must be 1.0 if comoving_coordinates is 0.\n");
+    return FAIL;
+  }
+
   /* Consistency checks. */
   if (my_chemistry.UVbackground == 0) {
     my_chemistry.include_metal_heating = 0;
@@ -145,9 +152,7 @@ int initialize_chemistry_data(chemistry_data &my_chemistry,
   my_chemistry.piHeI = 0; 
 
   gr_int ioutput = 1;
-  gr_float temperature_units =  mh * POW(my_units.a_units * 
-                                         my_units.length_units /
-                                         my_units.time_units, 2) / kboltz;
+  gr_float temperature_units =  mh * POW(my_units.velocity_units, 2) / kboltz;
 
   /* Call FORTRAN routine to do the hard work. */
  
