@@ -152,6 +152,21 @@ int initialize_chemistry_data(chemistry_data &my_chemistry,
   my_chemistry.piHeI = 0; 
 
   gr_int ioutput = 1;
+
+  gr_float co_length_units, co_density_units;
+  if (my_units.comoving_coordinates) {
+    co_length_units = my_units.length_units;
+    co_density_units = my_units.density_units;
+  }
+  else {
+    co_length_units = my_units.length_units *
+      a_value * my_units.a_units;
+    co_density_units = my_units.density_units /
+      POW(a_value * my_units.a_units, 3);
+  }
+
+  /* Calculate temperature units. */
+
   gr_float temperature_units =  mh * POW(my_units.velocity_units, 2) / kboltz;
 
   /* Call FORTRAN routine to do the hard work. */
@@ -160,8 +175,8 @@ int initialize_chemistry_data(chemistry_data &my_chemistry,
      &my_chemistry.NumberOfTemperatureBins, &a_value, &my_chemistry.TemperatureStart,
         &my_chemistry.TemperatureEnd,
         &my_chemistry.CaseBRecombination, &my_chemistry.three_body_rate,
-     &temperature_units, &my_units.length_units, &my_units.a_units, 
-     &my_units.density_units, &my_units.time_units,
+     &temperature_units, &co_length_units, &my_units.a_units, 
+     &co_density_units, &my_units.time_units,
      my_chemistry.ceHI, my_chemistry.ceHeI, my_chemistry.ceHeII, my_chemistry.ciHI,
         my_chemistry.ciHeI,
      my_chemistry.ciHeIS, my_chemistry.ciHeII, my_chemistry.reHII,

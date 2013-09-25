@@ -95,9 +95,6 @@ int calculate_cooling_time(chemistry_data &my_chemistry,
 
   gr_float temperature_units =  mh * POW(my_units.velocity_units, 2) / kboltz;
 
-  fprintf(stderr, "DensityUnits = %"GSYM", LengthUnits = %"GSYM"\n",
-          co_density_units, co_length_units);
-
   /* Call the fortran routine to solve cooling equations. */
 
   gr_int ierr = 0;
