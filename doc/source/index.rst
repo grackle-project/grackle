@@ -28,6 +28,13 @@ Contents:
    Parameters.rst
    Python.rst
 
+Help
+----
+
+If you have any questions, please join the `Grackle Users Google Group
+<https://groups.google.com/forum/#!forum/grackle-cooling-users>`_.  Feel 
+free to post any questions or ideas for development.
+
 Citing grackle
 --------------
 
