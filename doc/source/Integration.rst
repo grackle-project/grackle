@@ -46,9 +46,10 @@ Code Units
 ----------
 
 The *code_units* structure contains conversions from code units to CGS.  
-If the simulation is cosmological, these conversion factors will convert from 
-*comoving code units* to *proper CGS units*.  These must be set and updated 
-manually.
+If *comoving_coordinates* is set to 0, it is assumed that the fields 
+passed into the solver are in the proper frame.  All of the units 
+(density, length, time, and velocity) must be set.  When using the 
+proper frame, *a_units* (units for the expansion factor) must be set to 1.0.
 
 .. code-block:: c++
 
@@ -57,18 +58,16 @@ manually.
   my_units.density_units = 1.67e-24; // 1 m_H/cc
   my_units.length_units = 3.086e21;  // 1 kpc
   my_units.time_units = 3.15569e13;  // 1 Myr
+  my_units.velocity_units = my_units.length_units / my_units.time_units;
   my_units.a_units = 1.0;            // units for the expansion factor
 
-Units for the expansion factor are optional.  If used, they are typically 
-defined as 1 / (1 + z\ :sub:`i`), where z\ :sub:`i` is the initial redshift 
-of the simulation.  Following these definitions, the velocity and temperature 
-units are defined as:
-
-    * *velocity_units* = *a_units* × *length_units* / *time_units*
-    * *temperature_units* = m\ :sub:`H` × *velocity_units* \ :sup:`2` / k,
-
-where k is the Boltzmann constant.  Temperature units convert from energy to 
-temperature in K.
+If *comoving_coordinates* is set to 1, it is assumed that the fields being 
+passed to the solver are in the comoving frame.  Hence, the units must 
+convert from code units in the **comoving** frame to CGS in the **proper** 
+frame.  For an example of using comoving units, see the units system in the 
+`Enzo <http://enzo-project.org/>`_ code.  For cosmological simualations, a 
+comoving unit system is preferred, though not required, since it allows the 
+densities to stay roughly constant over time.
 
 Chemistry Data
 --------------

@@ -30,6 +30,7 @@ int main(int argc, char *argv[])
   my_units.density_units = 1.67e-24;
   my_units.length_units = 1.0;
   my_units.time_units = 1.0e12;
+  my_units.velocity_units = my_units.length_units / my_units.time_units;
   my_units.a_units = 1.0; // units for the expansion factor
 
   // Second, create a chemistry object for parameters and rate data.
