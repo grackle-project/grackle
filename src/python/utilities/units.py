@@ -42,20 +42,14 @@ def set_cosmology_units(my_units, hubble_constant=0.704,
       hubble_constant / (1. + current_redshift)
     my_units.time_units = 2.519445e17 / np.sqrt(omega_matter) / \
      hubble_constant / np.power(1 + initial_redshift, 1.5)
+    my_units.velocity_units = 1.22475e7 * comoving_box_size * \
+      np.sqrt(omega_matter_now) * np.sqrt(1 + initial_redshift);
 
-def get_velocity_units(my_units):
-    "Calculate velocity units from other internal base units."
-
-    velocity_units = my_units.a_units * my_units.length_units / \
-      my_units.time_units
-    return velocity_units
-     
 def get_temperature_units(my_units):
     "Calculate temperature units from internal base units."
 
-    velocity_units = get_velocity_units(my_units)
-    temperature_units = mass_hydrogen_cgs * velocity_units**2 / \
-      boltzmann_constant_cgs
+    temperature_units = mass_hydrogen_cgs * \
+      my_units.velocity_units**2 / boltzmann_constant_cgs
     return temperature_units
 
 def get_cooling_units(my_units, current_redshift):
