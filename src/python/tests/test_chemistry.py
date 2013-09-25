@@ -29,9 +29,10 @@ from utilities.physical_constants import \
      sec_per_Gyr, \
      cm_per_mpc
 
-def random_nonzero():
-    return np.random.random() + 0.01
-     
+def random_logscale(log_min, log_max, size=1):
+    log_val = (log_max - log_min) * np.random.random(size) + log_min
+    return np.power(10, log_val)
+
 def test_proper_comoving_units():
     "Make sure proper and comoving units systems give the same answer."
 
@@ -48,9 +49,10 @@ def test_proper_comoving_units():
         chem_p.grackle_data_file = "../../../input/CloudyData_UVB=HM2012.h5"
         chem_p.comoving_coordinates = 0
         chem_p.a_units = 1.0
-        chem_p.density_units = 1e-5 * mass_hydrogen_cgs
-        chem_p.length_units = 1.0 * cm_per_mpc
-        chem_p.time_units = 2.0 * sec_per_Gyr
+        chem_p.density_units = random_logscale(-30, -10)
+        chem_p.length_units = random_logscale(0, 25)
+        chem_p.time_units = random_logscale(0, 17)
+        chem_p.velocity_units = chem_p.length_units / chem_p.time_units
         fc_p = setup_fluid_container(chem_p, current_redshift=current_redshift,
                                      converge=False)
         calculate_temperature(fc_p)
@@ -79,8 +81,9 @@ def test_proper_comoving_units():
         t_sort_c = np.argsort(fc_c["temperature"])
         t_cool_c = fc_c["cooling_time"][t_sort_c] * chem_c.time_units
 
-        yield assert_rel_equal, t_cool_p, t_cool_c, 1, \
-          "Proper and comoving cooling times disagree for z = %f." % current_redshift
+        yield assert_rel_equal, t_cool_p, t_cool_c, 4, \
+          "Proper and comoving cooling times disagree for z = %f with min/max = %f/%f." % \
+          (current_redshift, (t_cool_p / t_cool_c).min(), (t_cool_p / t_cool_c).max())
 
 def test_proper_units():
     "Make sure two different proper units systems give the same answer."
@@ -98,9 +101,10 @@ def test_proper_units():
         chem_1.grackle_data_file = "../../../input/CloudyData_UVB=HM2012.h5"
         chem_1.comoving_coordinates = 0
         chem_1.a_units = 1.0
-        chem_1.density_units = 1e-5 * random_nonzero() * mass_hydrogen_cgs
-        chem_1.length_units = random_nonzero() * cm_per_mpc
-        chem_1.time_units = 2.0 * random_nonzero() * sec_per_Gyr
+        chem_1.density_units = random_logscale(-30, -10)
+        chem_1.length_units = random_logscale(0, 2)
+        chem_1.time_units = random_logscale(0, 2)
+        chem_1.velocity_units = chem_1.length_units / chem_1.time_units
         fc_1 = setup_fluid_container(chem_1, current_redshift=current_redshift,
                                      converge=False)
         calculate_temperature(fc_1)
@@ -120,9 +124,10 @@ def test_proper_units():
         chem_2.grackle_data_file = "../../../input/CloudyData_UVB=HM2012.h5"
         chem_2.comoving_coordinates = 0
         chem_2.a_units = 1.0
-        chem_2.density_units = 1e-5 * random_nonzero() * mass_hydrogen_cgs
-        chem_2.length_units = random_nonzero() * cm_per_mpc
-        chem_2.time_units = 2.0 * random_nonzero() * sec_per_Gyr
+        chem_2.density_units = random_logscale(-30, -10)
+        chem_2.length_units = random_logscale(0, 2)
+        chem_2.time_units = random_logscale(0, 2)
+        chem_2.velocity_units = chem_2.length_units / chem_2.time_units
         fc_2 = setup_fluid_container(chem_2, current_redshift=current_redshift,
                                      converge=False)
         calculate_temperature(fc_2)
@@ -133,6 +138,7 @@ def test_proper_units():
 
         # comoving units
 
-        yield assert_rel_equal, t_cool_1, t_cool_2, 4, \
-          "Proper and comoving cooling times disagree for z = %f." % current_redshift
+        yield assert_rel_equal, t_cool_1, t_cool_2, 6, \
+          "Proper and comoving cooling times disagree for z = %f with min/max = %f/%f." % \
+          (current_redshift, (t_cool_1/t_cool_2).min(), (t_cool_1/t_cool_2).max())
 

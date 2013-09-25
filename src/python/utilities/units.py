@@ -43,7 +43,7 @@ def set_cosmology_units(my_units, hubble_constant=0.704,
     my_units.time_units = 2.519445e17 / np.sqrt(omega_matter) / \
      hubble_constant / np.power(1 + initial_redshift, 1.5)
     my_units.velocity_units = 1.22475e7 * comoving_box_size * \
-      np.sqrt(omega_matter_now) * np.sqrt(1 + initial_redshift);
+      np.sqrt(omega_matter) * np.sqrt(1 + initial_redshift);
 
 def get_temperature_units(my_units):
     "Calculate temperature units from internal base units."
