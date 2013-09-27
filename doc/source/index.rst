@@ -38,7 +38,32 @@ free to post any questions or ideas for development.
 Citing grackle
 --------------
 
-Coming soon!
+The Grackle library was born out of the chemistry and cooling routines of the 
+`Enzo <http://enzo-project.org/>`_ simulation code.  As such, all of those who 
+have contributed to Enzo development, and especially to the chemistry and 
+cooling, have contributed to the Grackle.  There is currently no paper that 
+specifically presents the Grackle library on its own, but the functionality 
+was fully described in the `Enzo method paper 
+<http://adsabs.harvard.edu/abs/2013arXiv1307.2265T>`_.  The Grackle was 
+originally designed for the `AGORA Project 
+<https://sites.google.com/site/santacruzcomparisonproject/>`_ and first referred 
+to by name in the `AGORA method paper 
+<http://adsabs.harvard.edu/abs/2013arXiv1308.2669K>`_.
+
+If you used the Grackle library in your work, please cite it as "the Grackle 
+chemistry and cooling library (`The Enzo Collaboration et al. 2013 
+<http://adsabs.harvard.edu/abs/2013arXiv1307.2265T>`_; `Kim, J. et al. 2013 
+<http://adsabs.harvard.edu/abs/2013arXiv1308.2669K>`_)."
+
+  The Enzo Collaboration, Bryan, G. L., Norman, M. L., et al. 2013, arXiv:1307.2265
+
+  Kim, J.-h., Abel, T., Agertz, O., et al. 2013, arXiv:1308.2669 
+
+
+
+
+
+
 
 Search
 ------
