@@ -67,7 +67,7 @@ convert from code units in the **comoving** frame to CGS in the **proper**
 frame.  For an example of using comoving units, see the units system in the 
 `Enzo <http://enzo-project.org/>`_ code.  For cosmological simualations, a 
 comoving unit system is preferred, though not required, since it allows the 
-densities to stay roughly constant over time.
+densities to stay close to 1.0.
 
 Chemistry Data
 --------------
