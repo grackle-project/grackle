@@ -57,7 +57,7 @@ int initialize_chemistry_data(chemistry_data &my_chemistry,
   fprintf(stderr, "Initializing chemistry data.\n");
 
   /* Only allow a units to be one with proper coordinates. */
-  if (my_units.comoving_coordinates == 0 && 
+  if (my_units.comoving_coordinates == FALSE && 
       my_units.a_units != 1.0) {
     fprintf(stderr, "ERROR: a_units must be 1.0 if comoving_coordinates is 0.\n");
     return FAIL;
@@ -154,7 +154,7 @@ int initialize_chemistry_data(chemistry_data &my_chemistry,
   gr_int ioutput = 1;
 
   gr_float co_length_units, co_density_units;
-  if (my_units.comoving_coordinates) {
+  if (my_units.comoving_coordinates == TRUE) {
     co_length_units = my_units.length_units;
     co_density_units = my_units.density_units;
   }

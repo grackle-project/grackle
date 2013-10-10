@@ -65,7 +65,7 @@ int initialize_cloudy_data(chemistry_data &my_chemistry,
   /* Get conversion units. */
 
   gr_float co_length_units, co_density_units;
-  if (my_units.comoving_coordinates) {
+  if (my_units.comoving_coordinates == TRUE) {
     co_length_units = my_units.length_units;
     co_density_units = my_units.density_units;
   }
