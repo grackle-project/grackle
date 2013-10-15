@@ -274,11 +274,11 @@ install:
 	@echo "Installing libgrackle.$(MACH_SHARED_EXT) to $(INSTALL_LIB_DIR)."
 	@cp libgrackle.$(MACH_SHARED_EXT) $(INSTALL_LIB_DIR)/
 
-	@echo "Installing grackle header files to $(INSTALL_INCLUDE_DIR)/grackle."
-	@(if [ ! -d $(INSTALL_INCLUDE_DIR)/grackle ]; then \
-		mkdir $(INSTALL_INCLUDE_DIR)/grackle; \
+	@echo "Installing grackle header files to $(INSTALL_INCLUDE_DIR)."
+	@(if [ ! -d $(INSTALL_INCLUDE_DIR) ]; then \
+		mkdir $(INSTALL_INCLUDE_DIR); \
 	fi)
-	@cp grackle.h grackle_macros.h grackle_types.h code_units.h chemistry_data.h $(INSTALL_INCLUDE_DIR)/grackle/
+	@cp grackle.h grackle_macros.h grackle_types.h code_units.h chemistry_data.h $(INSTALL_INCLUDE_DIR)
 
 #-----------------------------------------------------------------------
 
