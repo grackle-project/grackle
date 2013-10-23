@@ -255,10 +255,14 @@ c      chunit = (7.17775d-12)/(2.d0*uvel*uvel*mh)   ! 4.5 eV per H2 formed
 
 !  Convert densities from comoving to proper
 
-      call scale_fields_g(d, de, HI, HII, HeI, HeII, HeIII,
+      if (iexpand .eq. 1) then
+
+         call scale_fields_g(d, de, HI, HII, HeI, HeII, HeIII,
      &                  HM, H2I, H2II, DI, DII, HDI, metal,
      &                  is, ie, js, je, ks, ke,
      &                  in, jn, kn, ispecies, imetal, aye**(-3))
+
+      endif
 
       call ceiling_species_g(d, de, HI, HII, HeI, HeII, HeIII,
      &                     HM, H2I, H2II, DI, DII, HDI, metal,
@@ -608,10 +612,14 @@ c            WARNING_MESSAGE
 
 !     Convert densities back to comoving from proper
 
-      call scale_fields_g(d, de, HI, HII, HeI, HeII, HeIII,
+      if (iexpand .eq. 1) then
+
+         call scale_fields_g(d, de, HI, HII, HeI, HeII, HeIII,
      &                  HM, H2I, H2II, DI, DII, HDI, metal,
      &                  is, ie, js, je, ks, ke,
      &                  in, jn, kn, ispecies, imetal, aye**3)
+
+      endif
 
 !     Correct the species to ensure consistency (i.e. type conservation)
 

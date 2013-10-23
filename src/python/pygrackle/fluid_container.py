@@ -70,12 +70,10 @@ def _units(chemistry_data, fname):
     if fname.endswith("Density"):
         return chemistry_data.density_units
     elif fname.endswith("Energy"):
-        energy_units = (chemistry_data.length_units /
-                        chemistry_data.time_units)**2.0
+        energy_units = (chemistry_data.velocity_units)**2.0
         return energy_units
     elif fname.endswith("velocity"):
-        v_units = (chemistry_data.length_units / 
-                   chemistry_data.time_units)
+        v_units = (chemistry_data.velocity_units)
         return v_units
     else:
         raise FieldNotFound(fname)

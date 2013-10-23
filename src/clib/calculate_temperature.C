@@ -80,9 +80,7 @@ int calculate_temperature(chemistry_data &my_chemistry,
 
   /* Calculate temperature units. */
 
-  gr_float temperature_units =  mh * POW(my_units.a_units * 
-                                         my_units.length_units /
-                                         my_units.time_units, 2) / kboltz;
+  gr_float temperature_units =  mh * POW(my_units.velocity_units, 2) / kboltz;
 
   gr_float number_density, tiny_number = 1.-20;
   gr_float inv_metal_mol = 1.0 / MU_METAL;

@@ -79,11 +79,21 @@ int calculate_cooling_time(chemistry_data &my_chemistry,
   if (metal_density == NULL)
     metal_field_present = FALSE;
 
+  gr_float co_length_units, co_density_units;
+  if (my_units.comoving_coordinates == TRUE) {
+    co_length_units = my_units.length_units;
+    co_density_units = my_units.density_units;
+  }
+  else {
+    co_length_units = my_units.length_units *
+      a_value * my_units.a_units;
+    co_density_units = my_units.density_units /
+      POW(a_value * my_units.a_units, 3);
+  }
+
   /* Calculate temperature units. */
 
-  gr_float temperature_units =  mh * POW(my_units.a_units * 
-                                         my_units.length_units /
-                                         my_units.time_units, 2) / kboltz;
+  gr_float temperature_units =  mh * POW(my_units.velocity_units, 2) / kboltz;
 
   /* Call the fortran routine to solve cooling equations. */
 
@@ -102,8 +112,8 @@ int calculate_cooling_time(chemistry_data &my_chemistry,
        grid_end, grid_end+1, grid_end+2,
        &my_chemistry.ih2co, &my_chemistry.ipiht, &my_chemistry.photoelectric_heating,
        &a_value, &my_chemistry.TemperatureStart, &my_chemistry.TemperatureEnd,
-       &temperature_units, &my_units.length_units, &my_units.a_units, 
-       &my_units.density_units, &my_units.time_units,
+       &temperature_units, &co_length_units, &my_units.a_units, 
+       &co_density_units, &my_units.time_units,
        &my_chemistry.Gamma, &my_chemistry.SolarMetalFractionByMass,
        my_chemistry.ceHI, my_chemistry.ceHeI, my_chemistry.ceHeII, my_chemistry.ciHI,
        my_chemistry.ciHeI, my_chemistry.ciHeIS, my_chemistry.ciHeII, my_chemistry.reHII,

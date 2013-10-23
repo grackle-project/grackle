@@ -121,6 +121,8 @@
 
 !     Convert densities from comoving to 'proper'
 
+      if (iexpand .eq. 1) then
+
       do k = ks+1, ke+1
          do j = js+1, je+1
             do i = is+1, ie+1
@@ -154,6 +156,8 @@
          enddo
       enddo
  
+      endif
+
 !     Loop over slices (in the k-direction)
 
       do k = ks+1, ke+1
@@ -210,6 +214,8 @@
 
 !     Convert densities back to comoving from 'proper'
 
+      if (iexpand .eq. 1) then
+
       do k = ks+1, ke+1
          do j = js+1, je+1
             do i = is+1, ie+1
@@ -242,6 +248,8 @@
             endif
          enddo
       enddo
+
+      endif
 
       return
       end

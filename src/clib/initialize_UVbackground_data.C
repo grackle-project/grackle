@@ -213,6 +213,16 @@ int initialize_UVbackground_data(chemistry_data &my_chemistry)
   printf("  %s\n",info_string);
   printf("  z_min = %6.3f\n  z_max = %6.3f\n",my_chemistry.UVbackground_table.zmin,my_chemistry.UVbackground_table.zmax);
 
+  // Set redshift on/off flags from data.
+  my_chemistry.UVbackground_redshift_on     = my_chemistry.UVbackground_table.z[Nz-1];
+  my_chemistry.UVbackground_redshift_fullon = my_chemistry.UVbackground_table.z[Nz-1];
+  my_chemistry.UVbackground_redshift_off    = my_chemistry.UVbackground_table.zmin;
+  my_chemistry.UVbackground_redshift_drop   = my_chemistry.UVbackground_table.zmin;
+
+  printf("Setting UVbackground_redshift_on to %f.\n", my_chemistry.UVbackground_redshift_on);
+  printf("Setting UVbackground_redshift_fullon to %f.\n", my_chemistry.UVbackground_redshift_fullon);
+  printf("Setting UVbackground_redshift_off to %f.\n", my_chemistry.UVbackground_redshift_off);
+  printf("Setting UVbackground_redshift_drop to %f.\n", my_chemistry.UVbackground_redshift_drop);
 
   return SUCCESS;
 }

@@ -55,9 +55,7 @@ int calculate_pressure(chemistry_data &my_chemistry,
  
     /* Calculate temperature units. */
 
-    gr_float temperature_units =  mh * POW(my_units.a_units * 
-                                           my_units.length_units /
-                                           my_units.time_units, 2) / kboltz;
+    gr_float temperature_units =  mh * POW(my_units.velocity_units, 2) / kboltz;
 
     gr_float number_density, nH2, GammaH2Inverse,
       GammaInverse = 1.0/(my_chemistry.Gamma-1.0), x, Gamma1, temp;

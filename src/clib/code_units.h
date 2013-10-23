@@ -6,6 +6,7 @@ typedef struct
   gr_float density_units;
   gr_float length_units;
   gr_float time_units;
+  gr_float velocity_units;
   gr_float a_units;
 } code_units;
 #endif

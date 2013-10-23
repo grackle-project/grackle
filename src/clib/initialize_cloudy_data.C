@@ -64,9 +64,21 @@ int initialize_cloudy_data(chemistry_data &my_chemistry,
 
   /* Get conversion units. */
 
+  gr_float co_length_units, co_density_units;
+  if (my_units.comoving_coordinates == TRUE) {
+    co_length_units = my_units.length_units;
+    co_density_units = my_units.density_units;
+  }
+  else {
+    co_length_units = my_units.length_units *
+      a_value * my_units.a_units;
+    co_density_units = my_units.density_units /
+      POW(a_value * my_units.a_units, 3);
+  }
+
   double tbase1 = my_units.time_units;
-  double xbase1 = my_units.length_units/(a_value * my_units.a_units);
-  double dbase1 = my_units.density_units * POW(a_value * my_units.a_units, 3);
+  double xbase1 = co_length_units/(a_value * my_units.a_units);
+  double dbase1 = co_density_units * POW(a_value * my_units.a_units, 3);
   double mh = 1.67e-24;
   double CoolUnit = (POW(my_units.a_units,5) * POW(xbase1,2) * POW(mh,2)) /
                     (POW(tbase1,3) * dbase1);

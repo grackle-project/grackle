@@ -123,6 +123,12 @@ cdef class chemistry_data:
         def __set__(self, val):
             self.units.time_units = val
 
+    property velocity_units:
+        def __get__(self):
+            return self.units.velocity_units
+        def __set__(self, val):
+            self.units.velocity_units = val
+
     property a_units:
         def __get__(self):
             return self.units.a_units

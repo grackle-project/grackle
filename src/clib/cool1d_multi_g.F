@@ -163,13 +163,8 @@
 
 !     Set compton cooling coefficients (and temperature)
 
-      if (iexpand .eq. 1) then
-         comp1 = compa  * (1.d0 + zr)**4
-         comp2 = 2.73d0 * (1.d0 + zr)
-      else
-         comp1 = 1d-35  ! tiny was too large in comparison with compa
-         comp2 = tiny
-      endif
+      comp1 = compa  * (1.d0 + zr)**4
+      comp2 = 2.73d0 * (1.d0 + zr)
 
 !     Compute Pressure
 
