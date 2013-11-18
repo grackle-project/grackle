@@ -70,7 +70,7 @@ include $(GRACKLE_DIR)/Make.config.assemble
 
 OBJS_CONFIG_LIB = example.o
 
-GRACKLE_INCLUDE = -I$(MACH_INSTALL_PREFIX)/include/grackle
+GRACKLE_INCLUDE = -I$(MACH_INSTALL_PREFIX)/include
 GRACKLE_LIB = -L$(MACH_INSTALL_PREFIX)/lib -lgrackle
 
 #-----------------------------------------------------------------------
