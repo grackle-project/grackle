@@ -1,43 +1,43 @@
+import numpy as np
 import sys
-
-kboltz      = 1.3806504e-16
-mass_h      = 1.67262171e-24   
-mass_e      = 9.10938215e-28
-pi_val      = 3.14159265
-hplanck     = 6.6260693e-27
-ev2erg      = 1.60217653e-12
-c_light     = 2.99792458e10
-GravConst   = 6.6726e-8
-sigma_sb    = 5.670373e-5
-SolarMass   = 1.9891e33
-Mpc         = 3.0857e24
-kpc         = 3.0857e21
-pc          = 3.0857e18
-yr_to_s     = 3.15569e7
 
 from pygrackle.grackle_wrapper import *
 from pygrackle.fluid_container import FluidContainer
 
-tiny_number = 1e-20
+from utilities.api import \
+     get_cooling_units, \
+     get_temperature_units
 
+from utilities.physical_constants import \
+     gravitational_constant_cgs, \
+     mass_hydrogen_cgs, \
+     sec_per_Myr, \
+     sec_per_year, \
+     cm_per_mpc
+
+tiny_number = 1e-20
+     
+# Set solver parameters
 my_chemistry = chemistry_data()
 my_chemistry.use_chemistry = 1
 my_chemistry.with_radiative_cooling = 1
 my_chemistry.primordial_chemistry = 3
 my_chemistry.metal_cooling = 1
-my_chemistry.UVbackground = 1;
+my_chemistry.UVbackground = 1
+my_chemistry.include_metal_heating = 1
 my_chemistry.grackle_data_file = "CloudyData_UVB=HM2012.h5"
+#my_chemistry.grackle_data_file = "CloudyData_noUVB.h5"
 
-my_chemistry.comoving_coordinates = 0
-my_chemistry.density_units = 1.67e-24
-my_chemistry.length_units = 1.0
-my_chemistry.time_units = yr_to_s * 1e6
+# Set units
+my_chemistry.comoving_coordinates = 0 # proper units
 my_chemistry.a_units = 1.0
+my_chemistry.density_units = mass_hydrogen_cgs # rho = 1.0 is 1.67e-24 g
+my_chemistry.length_units = cm_per_mpc         # 1 Mpc in cm
+my_chemistry.time_units = sec_per_Myr          # 1 Myr in s
+my_chemistry.velocity_units = my_chemistry.length_units / my_chemistry.time_units
 
-energy_units = (my_chemistry.length_units /
-                my_chemistry.time_units)**2.0
-
-gravitational_constant = (4.0 * pi_val * GravConst * 
+# Set units of gravitational constant
+gravitational_constant = (4.0 * np.pi * gravitational_constant_cgs * 
   my_chemistry.density_units * my_chemistry.time_units**2)
 
 a_value = 1.0
@@ -70,8 +70,7 @@ freefall_time_constant = np.power(((32. * gravitational_constant) /
                                    (3. * np.pi)), 0.5)
 
 
-temperature_units = mass_h * ((my_chemistry.length_units/
-                              my_chemistry.time_units)**2) / kboltz
+temperature_units = get_temperature_units(my_chemistry)
 
 fc["energy"][:] = 1000. / temperature_units
 fc["x-velocity"][:] = 0.0
@@ -94,10 +93,10 @@ while fc["density"][0] < 1.e10:
 
     density_values.append(fc["density"][0] * my_chemistry.density_units)
     temperature_values.append(fc["temperature"][0])
-    time_values.append(current_time * my_chemistry.time_units / yr_to_s)
+    time_values.append(current_time * my_chemistry.time_units / sec_per_year)
     
     print "t: %e yr, rho: %e g/cm^3, T: %e [K]" % \
-      ((current_time * my_chemistry.time_units / yr_to_s),
+      ((current_time * my_chemistry.time_units / sec_per_year),
        (fc["density"][0] * my_chemistry.density_units),
        fc["temperature"][0])
     
