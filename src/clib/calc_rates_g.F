@@ -287,7 +287,7 @@ c  3) the units for the radiative rate coefficients is just 1/[time]
 c
 c  4) Energy transfer from gas to dust grains, following equation 2.15
 c     of Hollenbach & McKee (1989).
-      grain_coef = 1.2d-31 * 1.0d3**-0.5d0
+      grain_coef = 1.2d-31 * 1.0d3**(-0.5d0)
 c
 c  Compute log spacing in temperature
 c
@@ -450,12 +450,12 @@ c
         endif
 c
 c       redefine k4a if case B recombination rates are requested
-        if (casebrates) then
+        if (casebrates .eq. 1) then
            k4a(i) = 1.26d-14 * (5.7067d5/ttt)**(0.75d0)
         endif
 c
 c       compute the HII rec. rate using either the case A or case B formula
-        if (casebrates) then
+        if (casebrates .eq. 1) then
            if (ttt < 1.0d9) then
               k2a(i) = 4.881357d-6*ttt**(-1.5d0) 
      &             * (1.d0+1.14813d2*ttt**(-0.407d0))**(-2.242d0)
@@ -481,7 +481,7 @@ c       compute the HII rec. rate using either the case A or case B formula
         endif
 c
 c       compute the HeIII rec. rate using either the case A or case B formula
-        if (casebrates) then
+        if (casebrates .eq. 1) then
            if (ttt < 1.0d9) then
               k6a(i) = 7.8155d-5*ttt**(-1.5d0) 
      &             * (1.d0+2.0189d2*ttt**(-0.407d0))**(-2.242d0)

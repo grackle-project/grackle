@@ -18,23 +18,28 @@ def check_convergence(fc1, fc2, fields=None, tol=0.01):
     if fields is None:
         fields = ["HI", "HII", "HM", "HeI", "HeII", "HeIII",
                   "H2I", "H2II", "DI", "DII", "HDI", "de"]
+    max_field = None
+    max_val = 0.0
     for field in fields:
         if not field in fc1 or not field in fc2: continue
-        convergence = np.abs(fc1[field] - fc2[field]) / fc1[field]
-        if (convergence > tol).any():
-            print "Max change %s: %.10e." % (field, convergence.max())
-            return False
+        convergence = np.max(np.abs(fc1[field] - fc2[field]) / fc1[field])
+        if convergence > max_val:
+            max_val = convergence
+            max_field = field
+    if (max_val > tol).any():
+        print "Max change %s: %.10e." % (max_field, max_val)
+        return False
     return True
 
-def setup_fluid_container(my_chemistry, 
+def setup_fluid_container(my_chemistry,
                           density=mass_hydrogen_cgs,
+                          temperature=None,
                           current_redshift=0,
-                          n_points=200, 
                           hydrogen_mass_fraction=0.76,
                           metal_mass_fraction=0.02041,
                           d_to_h_ratio=3.4e-5,
-                          converge=False,
-                          max_iterations=1000):
+                          converge=False, tolerance=0.01,
+                          max_iterations=10000, dt=None):
     """
     Initialize a fluid container with a constant density and smoothly 
     increasing temperature from 10 K to 1e9 K.  Optionally, iterate the 
@@ -46,20 +51,23 @@ def setup_fluid_container(my_chemistry,
 
     my_value = my_chemistry.initialize(a_value)
     if not my_value:
-        print "Error initializing chemistry."
-        sys.exit(0)
+        sys.stderr.write("Error initializing chemistry.\n")
+        return None
 
     my_chemistry.update_UVbackground(a_value)
 
     tiny_number = 1e-20
+    n_points = 200
+    if temperature is None:
+        temperature = np.logspace(4, 9, n_points)
     fc = FluidContainer(my_chemistry, n_points)
     fc["density"][:] = density / my_chemistry.density_units
-    fc["HI"][:] = hydrogen_mass_fraction * fc["density"]
-    fc["HII"][:] = tiny_number * fc["density"]
+    fc["HII"][:] = hydrogen_mass_fraction * fc["density"]
+    fc["HI"][:] = tiny_number * fc["density"]
     fc["HeI"][:] = (1.0 - hydrogen_mass_fraction) * fc["density"]
     fc["HeII"][:] = tiny_number * fc["density"]
     fc["HeIII"][:] = tiny_number * fc["density"]
-    fc["de"][:] = tiny_number * fc["density"]
+    fc["de"][:] = fc["HII"] + fc["HeII"] / 4.0 + fc["HeIII"] / 2.0
     if my_chemistry.primordial_chemistry > 1:
         fc["HM"][:] = tiny_number * fc["density"]
         fc["H2I"][:] = tiny_number * fc["density"]
@@ -71,32 +79,59 @@ def setup_fluid_container(my_chemistry,
     fc["metal"][:] = metal_mass_fraction * fc["density"]
 
     temperature_units = get_temperature_units(my_chemistry)
-    initial_energy = np.logspace(4, 9, n_points) / temperature_units
-    fc["energy"] = np.copy(initial_energy)
+    fc["energy"] = temperature / temperature_units / \
+      calculate_mean_molecular_weight(my_chemistry, fc)
     fc["x-velocity"][:] = 0.0
     fc["y-velocity"][:] = 0.0
     fc["z-velocity"][:] = 0.0
 
     fc_last = fc.copy()
 
-    dt = 0.01 * sec_per_Myr / my_chemistry.time_units
+    if dt is None:
+        dt = 0.01 * sec_per_Myr / my_chemistry.time_units
     my_time = 0.0
     i = 0
     while converge and i < max_iterations:
-        print "t = %.2f Myr." % (my_time * my_chemistry.time_units /
-                                 sec_per_Myr)
+        print "t = %.3f Myr, dt = %.3e Myr" % \
+          ((my_time * my_chemistry.time_units / sec_per_Myr),
+           (dt * my_chemistry.time_units / sec_per_Myr))
         for field in ["HI", "HII", "HM", "HeI", "HeII", "HeIII",
                       "H2I", "H2II", "DI", "DII", "HDI", "de"]:
             if field in fc:
                 fc_last[field] = np.copy(fc[field])
         solve_chemistry(fc, a_value, dt)
-        fc["energy"] = np.copy(initial_energy)   
-        if check_convergence(fc, fc_last):
-            break
+        mu = calculate_mean_molecular_weight(my_chemistry, fc)
+        fc["energy"] = temperature / temperature_units / mu
+        converged = check_convergence(fc, fc_last, tol=tolerance)
+        if converged: break
         my_time += dt
         i += 1
 
-    if i > max_iterations:
-        print "ERROR: solver did not converge in %d iterations." % max_iterations
+    if i >= max_iterations:
+        sys.stderr.write("ERROR: solver did not converge in %d iterations.\n" % 
+                         max_iterations)
+        return None
         
     return fc
+
+def calculate_mean_molecular_weight(my_chemistry, fc):
+    mu_metal = 16.0
+    mu = fc["HI"] + fc["HII"] + fc["de"] + \
+      (fc["HeI"] + fc["HeII"] + fc["HeIII"]) / 4.
+    if my_chemistry.primordial_chemistry > 1:
+        mu += fc["HM"] + fc["H2I"] + fc["H2II"]
+    if my_chemistry.primordial_chemistry > 2:
+        mh += (fc["DI"] + fc["DII"]) / 2. + fc["HDI"] / 3.
+
+    if my_chemistry.metal_cooling == 1:
+        mu += fc["metal"] / mu_metal
+
+    return fc["density"] / mu
+
+def calculate_hydrogen_number_density(my_chemistry, fc):
+    nH = fc["HI"] + fc["HII"]
+    if my_chemistry.primordial_chemistry > 1:
+        nH += fc["HM"] + fc["H2I"] + fc["H2II"]
+    if my_chemistry.primordial_chemistry > 2:
+        nH += fc["HDI"] / 2.
+    return nH * my_chemistry.density_units / mass_hydrogen_cgs
