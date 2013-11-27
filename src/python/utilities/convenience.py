@@ -57,9 +57,11 @@ def setup_fluid_container(my_chemistry,
     my_chemistry.update_UVbackground(a_value)
 
     tiny_number = 1e-20
-    n_points = 200
     if temperature is None:
+        n_points = 200
         temperature = np.logspace(4, 9, n_points)
+    else:
+        n_points = temperature.size
     fc = FluidContainer(my_chemistry, n_points)
     fc["density"][:] = density / my_chemistry.density_units
     fc["HII"][:] = hydrogen_mass_fraction * fc["density"]
@@ -121,7 +123,7 @@ def calculate_mean_molecular_weight(my_chemistry, fc):
     if my_chemistry.primordial_chemistry > 1:
         mu += fc["HM"] + fc["H2I"] + fc["H2II"]
     if my_chemistry.primordial_chemistry > 2:
-        mh += (fc["DI"] + fc["DII"]) / 2. + fc["HDI"] / 3.
+        mu += (fc["DI"] + fc["DII"]) / 2. + fc["HDI"] / 3.
 
     if my_chemistry.metal_cooling == 1:
         mu += fc["metal"] / mu_metal
