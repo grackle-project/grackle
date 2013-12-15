@@ -89,7 +89,6 @@ parameters.
   my_chemistry.primordial_chemistry = 3;   // molecular network with H, He, D
   my_chemistry.metal_cooling = 1;          // metal cooling on
   my_chemistry.UVbackground = 1;           // UV background on
-  my_chemistry.include_metal_heating = 1;  // heating on metals by UVB on
   my_chemistry.grackle_data_file = "CloudyData_UVB=HM2012.h5"; // data file
 
 Once the desired parameters have been set, the chemistry and cooling rates 

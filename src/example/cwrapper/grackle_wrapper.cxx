@@ -87,7 +87,6 @@ int wrap_init_cooling(double udensity, double ulength, double utime,
   my_chemistry.with_radiative_cooling = 1;
   my_chemistry.primordial_chemistry = grackle_chemistry;   // molecular network with H, He, D
   my_chemistry.metal_cooling = 1;          // metal cooling on
-  my_chemistry.include_metal_heating = 1;  // heating on metals by UVB on
   my_chemistry.UVbackground = 1;          
   my_chemistry.grackle_data_file = "CloudyData_UVB=HM2012.h5"; 
 

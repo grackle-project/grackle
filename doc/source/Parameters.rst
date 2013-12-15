@@ -34,9 +34,6 @@ For all on/off integer flags, 0 is off and 1 is on.
 ``UVbackground`` (int)
     Flag to enable a UV background.  If enabled, the cooling table to be used must be specified with the ``grackle_data_file`` parameter.  Default: 0.
 
-``include_metal_heating`` (int)
-    Flag to include heating of the metals by the UV background.  Default: 0.
-
 ``grackle_data_file`` (string)
     Path to the data file containing the metal cooling and UV background tables.  Default: "".
 
