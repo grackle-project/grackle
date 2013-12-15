@@ -96,7 +96,7 @@ int initialize_cloudy_data(chemistry_data &my_chemistry,
 
   // Open cooling dataset and get grid dimensions.
 
-  dset_id =  H5Dopen(file_id, "/CloudyRates/Cooling");
+  dset_id =  H5Dopen(file_id, "/CoolingRates/Metals/Cooling");
   if (dset_id == h5_error) {
     fprintf(stderr,"Can't open Cooling in %s.\n",my_chemistry.grackle_data_file);
     return FAIL;
@@ -231,7 +231,7 @@ int initialize_cloudy_data(chemistry_data &my_chemistry,
 
     temp_data = new double[my_chemistry.CloudyDataSize];
 
-    dset_id =  H5Dopen(file_id, "/CloudyRates/Heating");
+    dset_id =  H5Dopen(file_id, "/CoolingRates/Metals/Heating");
     if (dset_id == h5_error) {
       fprintf(stderr,"Can't open Heating in %s.\n",my_chemistry.grackle_data_file);
       return FAIL;
