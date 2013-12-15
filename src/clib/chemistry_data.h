@@ -231,6 +231,24 @@ typedef struct
    *** cloudy cooling data ***
    ***************************/
 
+  // Rank of primordial dataset.
+  gr_int cloudy_primordial_grid_rank;
+
+  // Dimension of primordial dataset.
+  gr_int *cloudy_primordial_grid_dimension;
+
+  // Dataset parameter values.
+  gr_float **cloudy_primordial_grid_parameters;
+
+  // Primordial heating values
+  gr_float *primordial_heating_data;
+
+  // Primordial cooling values
+  gr_float *primordial_cooling_data;
+
+  // Length of 1D flattened primordial data
+  gr_int primordial_data_size;
+
   // Factor to account for extra electrons from metals.
   /* 
      f = SUM { A_i * i }, for i = 3 to N.
@@ -239,22 +257,22 @@ typedef struct
    */
   gr_float cloudy_electron_fraction_factor;
 
-  // Rank of Cloudy dataset.
+  // Rank of metal dataset.
   gr_int cloudy_metal_grid_rank;
 
-  // Dimension of Cloudy dataset.
+  // Dimension of metal dataset.
   gr_int *cloudy_metal_grid_dimension;
 
   // Dataset parameter values.
   gr_float **cloudy_metal_grid_parameters;
 
-  // Heating values
+  // Metal heating values
   gr_float *metal_heating_data;
 
-  // Cooling values
+  // Metal cooling values
   gr_float *metal_cooling_data;
 
-  // Length of 1D flattened Cloudy data
+  // Length of 1D flattened metal data
   gr_int metal_data_size;
 
 } chemistry_data;
