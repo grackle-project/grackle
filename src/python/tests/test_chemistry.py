@@ -25,7 +25,6 @@ def test_proper_comoving_units():
         chem_c.primordial_chemistry = 1
         chem_c.metal_cooling = 1
         chem_c.UVbackground = 1
-        chem_c.include_metal_heating = 1
         chem_c.grackle_data_file = "../../../input/CloudyData_UVB=HM2012.h5"
         set_cosmology_units(chem_c, 
                             current_redshift=current_redshift,
@@ -45,7 +44,6 @@ def test_proper_comoving_units():
         chem_p.primordial_chemistry = 1
         chem_p.metal_cooling = 1
         chem_p.UVbackground = 1
-        chem_p.include_metal_heating = 1
         chem_p.grackle_data_file = "../../../input/CloudyData_UVB=HM2012.h5"
         chem_p.comoving_coordinates = 0
         chem_p.a_units = 1.0
@@ -82,7 +80,6 @@ def test_proper_units():
         chem_1.primordial_chemistry = 1
         chem_1.metal_cooling = 1
         chem_1.UVbackground = 1
-        chem_1.include_metal_heating = 1
         chem_1.grackle_data_file = "../../../input/CloudyData_UVB=HM2012.h5"
         chem_1.comoving_coordinates = 0
         chem_1.a_units = 1.0
@@ -105,7 +102,6 @@ def test_proper_units():
         chem_2.primordial_chemistry = 1
         chem_2.metal_cooling = 1
         chem_2.UVbackground = 1
-        chem_2.include_metal_heating = 1
         chem_2.grackle_data_file = "../../../input/CloudyData_UVB=HM2012.h5"
         chem_2.comoving_coordinates = 0
         chem_2.a_units = 1.0

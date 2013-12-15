@@ -39,7 +39,6 @@ def test_equilibrium():
     my_chem.primordial_chemistry = 1
     my_chem.metal_cooling = 0
     my_chem.UVbackground = 0
-    my_chem.include_metal_heating = 0
     my_chem.comoving_coordinates = 0
     my_chem.a_units = 1.0
     my_chem.density_units = mass_hydrogen_cgs

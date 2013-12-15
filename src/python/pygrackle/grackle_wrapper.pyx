@@ -57,12 +57,6 @@ cdef class chemistry_data:
         def __set__(self, val):
             self.data.cmb_temperature_floor = val
 
-    property include_metal_heating:
-        def __get__(self):
-            return self.data.include_metal_heating
-        def __set__(self, val):
-            self.data.include_metal_heating = val
-
     property three_body_rate:
         def __get__(self):
             return self.data.three_body_rate

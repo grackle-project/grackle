@@ -26,7 +26,7 @@
 #include "code_units.h"
 
 #define SMALL_LOG_VALUE -99.0
-#define CLOUDY_COOLING_MAX_DIMENSION 3
+#define METAL_MAX_DIMENSION 3
 
 /**************************** Functions Prototypes ******************************/
 
@@ -44,9 +44,9 @@ int initialize_cloudy_data(chemistry_data &my_chemistry,
 
   // Initialize things needed even if cloudy cooling is not used.
 
-  my_chemistry.cloudy_metal_grid_parameters = new gr_float*[CLOUDY_COOLING_MAX_DIMENSION];
-  my_chemistry.cloudy_metal_grid_dimension = new gr_int[CLOUDY_COOLING_MAX_DIMENSION];
-  for (q = 0;q < CLOUDY_COOLING_MAX_DIMENSION;q++) {
+  my_chemistry.cloudy_metal_grid_parameters = new gr_float*[METAL_MAX_DIMENSION];
+  my_chemistry.cloudy_metal_grid_dimension = new gr_int[METAL_MAX_DIMENSION];
+  for (q = 0;q < METAL_MAX_DIMENSION;q++) {
     my_chemistry.cloudy_metal_grid_dimension[q] = 0;
   }
 
@@ -57,10 +57,8 @@ int initialize_cloudy_data(chemistry_data &my_chemistry,
     return SUCCESS;
   }
 
-  fprintf(stderr,"Initializing Cloudy cooling.\n");
+  fprintf(stderr,"Initializing Cloudy metal cooling.\n");
   fprintf(stderr,"cloudy_table_file: %s.\n",my_chemistry.grackle_data_file);
-  fprintf(stderr,"include_metal_heating: %"ISYM".\n",my_chemistry.include_metal_heating);
-  fprintf(stderr,"cmb_temperature_floor: %"ISYM".\n",my_chemistry.cmb_temperature_floor);
 
   /* Get conversion units. */
 
@@ -227,7 +225,7 @@ int initialize_cloudy_data(chemistry_data &my_chemistry,
   }
 
   // Read Heating data.
-  if (my_chemistry.include_metal_heating) {
+  if (my_chemistry.UVbackground) {
 
     temp_data = new double[my_chemistry.metal_data_size];
 
@@ -262,9 +260,9 @@ int initialize_cloudy_data(chemistry_data &my_chemistry,
 
   status = H5Fclose (file_id);
 
-  if (my_chemistry.cloudy_metal_grid_rank > CLOUDY_COOLING_MAX_DIMENSION) {
+  if (my_chemistry.cloudy_metal_grid_rank > METAL_MAX_DIMENSION) {
     fprintf(stderr,"Error: rank of Cloudy cooling data must be less than or equal to %"ISYM".\n",
-	    CLOUDY_COOLING_MAX_DIMENSION);
+	    METAL_MAX_DIMENSION);
     return FAIL;
   }
 

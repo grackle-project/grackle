@@ -22,7 +22,6 @@ my_chemistry.with_radiative_cooling = 0
 my_chemistry.primordial_chemistry = 3
 my_chemistry.metal_cooling = 1
 my_chemistry.UVbackground = 1
-my_chemistry.include_metal_heating = 1
 my_chemistry.grackle_data_file = "CloudyData_UVB=HM2012.h5"
 #my_chemistry.grackle_data_file = "CloudyData_noUVB.h5"
 

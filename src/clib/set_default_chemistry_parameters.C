@@ -21,7 +21,6 @@ chemistry_data set_default_chemistry_parameters()
 
   my_chemistry.cmb_temperature_floor          = TRUE;   // use CMB floor.
   my_chemistry.grackle_data_file              = "";
-  my_chemistry.include_metal_heating          = FALSE;
 
   my_chemistry.three_body_rate                = 0;   // ABN02
   my_chemistry.cie_cooling                    = 1;

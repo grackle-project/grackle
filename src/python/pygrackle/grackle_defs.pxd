@@ -12,7 +12,6 @@ cdef extern from "chemistry_data.h":
         gr_int metal_cooling
         gr_int h2_on_dust
         gr_int cmb_temperature_floor
-        gr_int include_metal_heating
         char *grackle_data_file
         gr_int three_body_rate
         gr_int cie_cooling

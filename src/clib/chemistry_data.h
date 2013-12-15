@@ -28,9 +28,6 @@ typedef struct
   // Use a CMB temperature floor.
   gr_int cmb_temperature_floor;
 
-  // Flag to control whether or not to include heating from Cloudy.
-  gr_int include_metal_heating;
-
   /* additional H2 chemistry parameters
      best left unchanged. */
   
