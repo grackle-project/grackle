@@ -237,26 +237,25 @@ typedef struct
      N = Atomic number of heaviest element in cooling model.
      For solar abundance patters and N = 30 (Zn), f = 9.153959e-3.
    */
-  gr_float CloudyElectronFractionFactor;
+  gr_float cloudy_electron_fraction_factor;
 
   // Rank of Cloudy dataset.
-  gr_int CloudyCoolingGridRank;
+  gr_int cloudy_metal_grid_rank;
 
   // Dimension of Cloudy dataset.
-  gr_int *CloudyCoolingGridDimension;
+  gr_int *cloudy_metal_grid_dimension;
 
   // Dataset parameter values.
-  //  gr_float *CloudyCoolingGridParameters[CLOUDY_COOLING_MAX_DIMENSION];
-  gr_float **CloudyCoolingGridParameters;
+  gr_float **cloudy_metal_grid_parameters;
 
   // Heating values
-  gr_float *CloudyHeating;
+  gr_float *metal_heating_data;
 
   // Cooling values
-  gr_float *CloudyCooling;
+  gr_float *metal_cooling_data;
 
   // Length of 1D flattened Cloudy data
-  gr_int CloudyDataSize;
+  gr_int metal_data_size;
 
 } chemistry_data;
 

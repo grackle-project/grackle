@@ -72,8 +72,8 @@ chemistry_data set_default_chemistry_parameters()
   my_chemistry.DustTemperatureStart         = 1.0;
   my_chemistry.DustTemperatureEnd           = 1500.0;
 
-  my_chemistry.CloudyCoolingGridRank        = 0;
-  my_chemistry.CloudyElectronFractionFactor = 9.153959e-3; // Cloudy 07.02 abundances
+  my_chemistry.cloudy_metal_grid_rank        = 0;
+  my_chemistry.cloudy_electron_fraction_factor = 9.153959e-3; // Cloudy 07.02 abundances
 
   return my_chemistry;
 }
