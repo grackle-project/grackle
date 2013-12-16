@@ -30,10 +30,13 @@
      &                gasgra, 
      &                ierr,
      &                ih2optical, iciecool, ithreebody, ciecoa, 
-     &                icmbTfloor, iClHeat,
-     &                clEleFra, clGridRank, clGridDim,
-     &                clPar1, clPar2, clPar3,
-     &                clDataSize, clCooling, clHeating)
+     &                icmbTfloor, iClHeat, clEleFra,
+     &                priGridRank, priGridDim,
+     &                priPar1, priPar2, priPar3,
+     &                priDataSize, priCooling, priHeating,
+     &                metGridRank, metGridDim,
+     &                metPar1, metPar2, metPar3,
+     &                metDataSize, metCooling, metHeating)
 
 !
 !  SOLVE MULTI-SPECIES RATE EQUATIONS AND RADIATIVE COOLING
@@ -94,12 +97,18 @@
 !    icmbTfloor - flag to include temperature floor from cmb
 !    iClHeat    - flag to include cloudy heating
 !    clEleFra   - parameter to account for additional electrons from metals 
-!    clGridRank - rank of cloudy cooling data grid
-!    clGridDim  - array containing dimensions of cloudy data
-!    clPar1, clPar2, clPar3 - arrays containing cloudy grid parameter values
-!    clDataSize - total size of flattened 1D cooling data array
-!    clCooling  - cloudy cooling data
-!    clHeating  - cloudy heating data
+!    priGridRank - rank of cloudy primordial cooling data grid
+!    priGridDim  - array containing dimensions of cloudy primordial data
+!    priPar1, priPar2, priPar3 - arrays containing primordial grid parameter values
+!    priDataSize - total size of flattened 1D primordial cooling data array
+!    priCooling  - primordial cooling data
+!    priHeating  - primordial heating data
+!    metGridRank - rank of cloudy metal cooling data grid
+!    metGridDim  - array containing dimensions of cloudy metal data
+!    metPar1, metPar2, metPar3 - arrays containing metal grid parameter values
+!    metDataSize - total size of flattened 1D metal cooling data array
+!    metCooling  - metal cooling data
+!    metHeating  - metal heating data
 !
 !  OUTPUTS:
 !    update chemical rate densities (HI, HII, etc)
@@ -163,12 +172,17 @@
 
 !  Cloudy cooling data
 
-      integer icmbTfloor, iClHeat, clGridRank, clDataSize
-      integer clGridDim(clGridRank)
+      integer icmbTfloor, iClHeat, 
+     &     priGridRank, priDataSize,
+     &     metGridRank, metDataSize
+      integer priGridDim(priGridRank), metGridDim(metGridRank)
       real clEleFra
-      real clPar1(clGridDim(1)), clPar2(clGridDim(2)), 
-     &     clPar3(clGridDim(3))
-      real clCooling(clDataSize), clHeating(clDataSize)
+      real priPar1(priGridDim(1)), priPar2(priGridDim(2)), 
+     &     priPar3(priGridDim(3)),
+     &     metPar1(metGridDim(1)), metPar2(metGridDim(2)), 
+     &     metPar3(metGridDim(3))
+      real priCooling(priDataSize), priHeating(priDataSize),
+     &     metCooling(metDataSize), metHeating(metDataSize)
 
 !  Parameters
 
@@ -191,7 +205,6 @@
 !  Locals
 
       integer i, j, k, iter
-      integer clGridDim1, clGridDim2, clGridDim3, clGridDim4, clGridDim5
       real ttmin, dom, energy, comp1, comp2
       double precision coolunit, dbase1, tbase1, xbase1, chunit, uvel
       double precision heq1, heq2, eqk221, eqk222, eqk131, eqk132,
@@ -319,9 +332,9 @@ c      chunit = (7.17775d-12)/(2.d0*uvel*uvel*mh)   ! 4.5 eV per H2 formed
      &                tgas, tgasold, p2d, tdust, metallicity, rhoH, 
      &                ih2optical, iciecool, ciecoa, cieco,
      &                icmbTfloor, iClHeat,
-     &                clEleFra, clGridRank, clGridDim,
-     &                clPar1, clPar2, clPar3,
-     &                clDataSize, clCooling, clHeating,
+     &                clEleFra, metGridRank, metGridDim,
+     &                metPar1, metPar2, metPar3,
+     &                metDataSize, metCooling, metHeating,
      &                itmask)
 
 !        Look-up rates as a function of temperature for 1D set of zones
