@@ -64,12 +64,13 @@ def setup_fluid_container(my_chemistry,
         n_points = temperature.size
     fc = FluidContainer(my_chemistry, n_points)
     fc["density"][:] = density / my_chemistry.density_units
-    fc["HII"][:] = hydrogen_mass_fraction * fc["density"]
-    fc["HI"][:] = tiny_number * fc["density"]
-    fc["HeI"][:] = (1.0 - hydrogen_mass_fraction) * fc["density"]
-    fc["HeII"][:] = tiny_number * fc["density"]
-    fc["HeIII"][:] = tiny_number * fc["density"]
-    fc["de"][:] = fc["HII"] + fc["HeII"] / 4.0 + fc["HeIII"] / 2.0
+    if my_chemistry.primordial_chemistry > 0:
+        fc["HII"][:] = hydrogen_mass_fraction * fc["density"]
+        fc["HI"][:] = tiny_number * fc["density"]
+        fc["HeI"][:] = (1.0 - hydrogen_mass_fraction) * fc["density"]
+        fc["HeII"][:] = tiny_number * fc["density"]
+        fc["HeIII"][:] = tiny_number * fc["density"]
+        fc["de"][:] = fc["HII"] + fc["HeII"] / 4.0 + fc["HeIII"] / 2.0
     if my_chemistry.primordial_chemistry > 1:
         fc["HM"][:] = tiny_number * fc["density"]
         fc["H2I"][:] = tiny_number * fc["density"]
@@ -118,6 +119,8 @@ def setup_fluid_container(my_chemistry,
 
 def calculate_mean_molecular_weight(my_chemistry, fc):
     mu_metal = 16.0
+    if my_chemistry.primordial_chemistry == 0:
+        return 0.6 * np.ones_like(fc["density"])
     mu = fc["HI"] + fc["HII"] + fc["de"] + \
       (fc["HeI"] + fc["HeII"] + fc["HeIII"]) / 4.
     if my_chemistry.primordial_chemistry > 1:
@@ -131,6 +134,9 @@ def calculate_mean_molecular_weight(my_chemistry, fc):
     return fc["density"] / mu
 
 def calculate_hydrogen_number_density(my_chemistry, fc):
+    if my_chemistry.primordial_chemistry == 0:
+        return my_chemistry.HydrogenFractionByMass * \
+          fc["density"] * my_chemistry.density_units / mass_hydrogen_cgs
     nH = fc["HI"] + fc["HII"]
     if my_chemistry.primordial_chemistry > 1:
         nH += fc["HM"] + fc["H2I"] + fc["H2II"]

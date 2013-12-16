@@ -340,6 +340,9 @@ c      chunit = (7.17775d-12)/(2.d0*uvel*uvel*mh)   ! 4.5 eV per H2 formed
      &                metDataSize, metCooling, metHeating,
      &                itmask)
 
+
+            if (ispecies .gt. 0) then
+
 !        Look-up rates as a function of temperature for 1D set of zones
 !         (maybe should add itmask to this call)
 
@@ -496,6 +499,8 @@ c      chunit = (7.17775d-12)/(2.d0*uvel*uvel*mh)   ! 4.5 eV per H2 formed
             endif
             enddo               ! end loop over i
 
+            endif ! end if (ispecies .gt. 0)
+
 !           Compute maximum timestep for cooling/heating
 
             do i = is+1, ie+1
@@ -565,6 +570,8 @@ c      chunit = (7.17775d-12)/(2.d0*uvel*uvel*mh)   ! 4.5 eV per H2 formed
             enddo
             endif
 
+            if (ispecies .gt. 0) then
+
 !           Solve rate equations with one linearly implicit Gauss-Seidel 
 !           sweep of a backward Euler method ---
 
@@ -581,6 +588,8 @@ c      chunit = (7.17775d-12)/(2.d0*uvel*uvel*mh)   ! 4.5 eV per H2 formed
      &                     HMp, H2Ip, H2IIp, DIp, DIIp, HDIp,
      &                     dedot_prev, HIdot_prev,
      &                     itmask)
+
+            endif
 
 !           Add the timestep to the elapsed time for each cell and find
 !            minimum elapsed time step in this row
@@ -636,12 +645,16 @@ c            WARNING_MESSAGE
 
       endif
 
+      if (ispecies .gt. 0) then
+
 !     Correct the species to ensure consistency (i.e. type conservation)
 
       call make_consistent_g(de, HI, HII, HeI, HeII, HeIII,
      &                     HM, H2I, H2II, DI, DII, HDI, metal, 
      &                     d, is, ie, js, je, ks, ke,
      &                     in, jn, kn, ispecies, imetal, fh, dtoh)
+
+      endif
 
       return
       end
@@ -678,15 +691,24 @@ c -------------------------------------------------------------------
          do j = js+1, je+1
             do i = is+1, ie+1
                d(i,j,k)     = d(i,j,k)*factor
-               de(i,j,k)    = de(i,j,k)*factor
-               HI(i,j,k)    = HI(i,j,k)*factor
-               HII(i,j,k)   = HII(i,j,k)*factor
-               HeI(i,j,k)   = HeI(i,j,k)*factor
-               HeII(i,j,k)  = HeII(i,j,k)*factor
-               HeIII(i,j,k) = HeIII(i,j,k)*factor
             enddo
          enddo
       enddo
+
+      if (ispecies .gt. 0) then
+         do k = ks+1, ke+1
+            do j = js+1, je+1
+               do i = is+1, ie+1
+                  de(i,j,k)    = de(i,j,k)*factor
+                  HI(i,j,k)    = HI(i,j,k)*factor
+                  HII(i,j,k)   = HII(i,j,k)*factor
+                  HeI(i,j,k)   = HeI(i,j,k)*factor
+                  HeII(i,j,k)  = HeII(i,j,k)*factor
+                  HeIII(i,j,k) = HeIII(i,j,k)*factor
+               enddo
+            enddo
+         enddo
+      endif
       if (ispecies .gt. 1) then
          do k = ks+1, ke+1
             do j = js+1, je+1
@@ -747,20 +769,20 @@ c -------------------------------------------------------------------
 
       integer i, j, k
 
-!     Multiply all fields by factor (1/a^3 or a^3)
-
-      do k = ks+1, ke+1
-         do j = js+1, je+1
-            do i = is+1, ie+1
-               de(i,j,k)    = max(de(i,j,k), tiny)
-               HI(i,j,k)    = max(HI(i,j,k), tiny)
-               HII(i,j,k)   = max(HII(i,j,k), tiny)
-               HeI(i,j,k)   = max(HeI(i,j,k), tiny)
-               HeII(i,j,k)  = max(HeII(i,j,k), tiny)
-               HeIII(i,j,k) = max(HeIII(i,j,k), 1d-5*tiny)
+      if (ispecies .gt. 0) then
+         do k = ks+1, ke+1
+            do j = js+1, je+1
+               do i = is+1, ie+1
+                  de(i,j,k)    = max(de(i,j,k), tiny)
+                  HI(i,j,k)    = max(HI(i,j,k), tiny)
+                  HII(i,j,k)   = max(HII(i,j,k), tiny)
+                  HeI(i,j,k)   = max(HeI(i,j,k), tiny)
+                  HeII(i,j,k)  = max(HeII(i,j,k), tiny)
+                  HeIII(i,j,k) = max(HeIII(i,j,k), 1d-5*tiny)
+               enddo
             enddo
          enddo
-      enddo
+      endif
       if (ispecies .gt. 1) then
          do k = ks+1, ke+1
             do j = js+1, je+1

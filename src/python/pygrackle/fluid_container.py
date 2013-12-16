@@ -6,7 +6,8 @@ _nd_fields   = ["energy",
                 "temperature", "pressure",
                 "gamma", "cooling_time"]
 _fluid_names = {}
-_fluid_names[1] = _base_fluids + \
+_fluid_names[0] = _base_fluids
+_fluid_names[1] = _fluid_names[0] + \
   ["HI", "HII", "HeI", "HeII", "HeIII", "de"]
 _fluid_names[2] = _fluid_names[1] + \
   ["H2I", "H2II", "HM"]

@@ -89,15 +89,22 @@ int calculate_temperature(chemistry_data &my_chemistry,
  
   for (i = 0; i < size; i++) {
  
-    number_density =
-      0.25 * (HeI_density[i] + HeII_density[i] +  HeIII_density[i]) +
-      HI_density[i] + HII_density[i] + e_density[i];
+    if (my_chemistry.primordial_chemistry == 0) {
+      number_density = density[i] / 0.6;
+    }
+
+    if (my_chemistry.primordial_chemistry > 0) {
+      number_density =
+        0.25 * (HeI_density[i] + HeII_density[i] +  HeIII_density[i]) +
+        HI_density[i] + HII_density[i] + e_density[i];
+    }
 
     /* Add in H2. */
  
-    if (my_chemistry.primordial_chemistry > 1)
+    if (my_chemistry.primordial_chemistry > 1) {
       number_density += HM_density[i] + 
         0.5 * (H2I_density[i] + H2II_density[i]);
+    }
 
     if (metal_density != NULL) {
       number_density += metal_density[i] * inv_metal_mol;
