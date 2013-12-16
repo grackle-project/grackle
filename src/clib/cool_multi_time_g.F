@@ -23,7 +23,7 @@
      &                ih2optical, iciecool, ciecoa, 
      &                icmbTfloor, iClHeat,
      &                clEleFra, clGridRank, clGridDim,
-     &                clPar1, clPar2, clPar3, clPar4, clPar5,
+     &                clPar1, clPar2, clPar3,
      &                clDataSize, clCooling, clHeating)
 
 !  SOLVE RADIATIVE COOLING/HEATING EQUATIONS
@@ -81,8 +81,7 @@
       integer clGridDim(clGridRank)
       real clEleFra
       real clPar1(clGridDim(1)), clPar2(clGridDim(2)), 
-     &     clPar3(clGridDim(3)), clPar4(clGridDim(4)), 
-     &     clPar5(clGridDim(5))
+     &     clPar3(clGridDim(3))
       real clCooling(clDataSize), clHeating(clDataSize)
 
 !  Parameters
@@ -196,7 +195,7 @@
      &                ih2optical, iciecool, ciecoa, cieco,
      &                icmbTfloor, iClHeat,
      &                clEleFra, clGridRank, clGridDim,
-     &                clPar1, clPar2, clPar3, clPar4, clPar5,
+     &                clPar1, clPar2, clPar3,
      &                clDataSize, clCooling, clHeating,
      &                itmask)
 

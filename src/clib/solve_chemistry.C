@@ -63,7 +63,6 @@ extern "C" void FORTRAN_NAME(solve_rate_cool_g)(
  	gr_int *icmbTfloor, gr_int *iClHeat,
  	gr_float *clEleFra, gr_int *clGridRank, gr_int *clGridDim,
  	gr_float *clPar1, gr_float *clPar2, gr_float *clPar3, 
-        gr_float *clPar4, gr_float *clPar5,
  	gr_int *clDataSize, gr_float *clCooling, gr_float *clHeating);
 
 
@@ -165,10 +164,9 @@ int solve_chemistry(chemistry_data &my_chemistry,
     my_chemistry.cloudy_metal.grid_parameters[0],
     my_chemistry.cloudy_metal.grid_parameters[1],
     my_chemistry.cloudy_metal.grid_parameters[2],
-    my_chemistry.cloudy_metal.grid_parameters[3],
-    my_chemistry.cloudy_metal.grid_parameters[4],
     &my_chemistry.cloudy_metal.data_size,
-    my_chemistry.cloudy_metal.cooling_data, my_chemistry.cloudy_metal.heating_data);
+    my_chemistry.cloudy_metal.cooling_data, 
+    my_chemistry.cloudy_metal.heating_data);
 
   return SUCCESS;
 

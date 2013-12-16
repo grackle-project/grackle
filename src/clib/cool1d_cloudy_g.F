@@ -8,7 +8,7 @@
      &                logtem, edot, comp2, ispecies, dom, zr,
      &                icmbTfloor, iClHeat, 
      &                clEleFra, clGridRank, clGridDim,
-     &                clPar1, clPar2, clPar3, clPar4, clPar5,
+     &                clPar1, clPar2, clPar3,
      &                clDataSize, clCooling, clHeating, 
      &                itmask)
 
@@ -42,7 +42,7 @@
 !    clEleFra   - parameter to account for additional electrons from metals 
 !    clGridRank - rank of cloudy cooling data grid
 !    clGridDim  - array containing dimensions of cloudy data
-!    clPar1, clPar2, clPar3, clPar4, clPar5 - arrays containing cloudy grid parameter values
+!    clPar1, clPar2, clPar3 - arrays containing cloudy grid parameter values
 !    clDataSize - total size of flattened 1D cooling data array
 !    clCooling  - cloudy cooling data
 !    clHeating  - cloudy heating data
@@ -73,8 +73,7 @@
       integer clGridDim(clGridRank)
       real clEleFra
       real clPar1(clGridDim(1)), clPar2(clGridDim(2)),
-     &     clPar3(clGridDim(3)), clPar4(clGridDim(4)),
-     &     clPar5(clGridDim(5))
+     &     clPar3(clGridDim(3))
       real clCooling(clDataSize), clHeating(clDataSize)
 
 !  Iteration mask
@@ -116,14 +115,6 @@
       if (clGridRank .gt. 2) then
          dclPar(3) = (clPar3(clGridDim(3)) - clPar3(1)) / 
      &        real(clGridDim(3) - 1)
-      endif
-      if (clGridRank .gt. 3) then
-         dclPar(4) = (clPar4(clGridDim(4)) - clPar4(1)) / 
-     &        real(clGridDim(4) - 1)
-      endif
-      if (clGridRank .gt. 4) then
-         dclPar(5) = (clPar5(clGridDim(5)) - clPar5(1)) / 
-     &        real(clGridDim(5) - 1)
       endif
 
       do i=is+1, ie+1
