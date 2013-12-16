@@ -331,8 +331,8 @@ c      chunit = (7.17775d-12)/(2.d0*uvel*uvel*mh)   ! 4.5 eV per H2 formed
      &                indixe, t1, t2, logtem, tdef, edot,
      &                tgas, tgasold, p2d, tdust, metallicity, rhoH, 
      &                ih2optical, iciecool, ciecoa, cieco,
-     &                icmbTfloor, iClHeat,
-     &                clEleFra, metGridRank, metGridDim,
+     &                icmbTfloor, iClHeat, clEleFra,
+     &                metGridRank, metGridDim,
      &                metPar1, metPar2, metPar3,
      &                metDataSize, metCooling, metHeating,
      &                itmask)

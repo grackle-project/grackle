@@ -21,10 +21,13 @@
      &                gaHIa, gaH2a, gaHea, gaHpa, gaela,
      &                gasgra, 
      &                ih2optical, iciecool, ciecoa, 
-     &                icmbTfloor, iClHeat,
-     &                clEleFra, clGridRank, clGridDim,
-     &                clPar1, clPar2, clPar3,
-     &                clDataSize, clCooling, clHeating)
+     &                icmbTfloor, iClHeat, clEleFra,
+     &                priGridRank, priGridDim,
+     &                priPar1, priPar2, priPar3,
+     &                priDataSize, priCooling, priHeating,
+     &                metGridRank, metGridDim,
+     &                metPar1, metPar2, metPar3,
+     &                metDataSize, metCooling, metHeating)
 
 !  SOLVE RADIATIVE COOLING/HEATING EQUATIONS
 !
@@ -77,12 +80,17 @@
 
 !  Cloudy cooling data
 
-      integer icmbTfloor, iClHeat, clGridRank, clDataSize
-      integer clGridDim(clGridRank)
+      integer icmbTfloor, iClHeat, 
+     &     priGridRank, priDataSize,
+     &     metGridRank, metDataSize
+      integer priGridDim(priGridRank), metGridDim(metGridRank)
       real clEleFra
-      real clPar1(clGridDim(1)), clPar2(clGridDim(2)), 
-     &     clPar3(clGridDim(3))
-      real clCooling(clDataSize), clHeating(clDataSize)
+      real priPar1(priGridDim(1)), priPar2(priGridDim(2)), 
+     &     priPar3(priGridDim(3)),
+     &     metPar1(metGridDim(1)), metPar2(metGridDim(2)), 
+     &     metPar3(metGridDim(3))
+      real priCooling(priDataSize), priHeating(priDataSize),
+     &     metCooling(metDataSize), metHeating(metDataSize)
 
 !  Parameters
 
@@ -193,10 +201,10 @@
      &                indixe, t1, t2, logtem, tdef, edot,
      &                tgas, tgasold, p2d, tdust, metallicity, rhoH,
      &                ih2optical, iciecool, ciecoa, cieco,
-     &                icmbTfloor, iClHeat,
-     &                clEleFra, clGridRank, clGridDim,
-     &                clPar1, clPar2, clPar3,
-     &                clDataSize, clCooling, clHeating,
+     &                icmbTfloor, iClHeat, clEleFra,
+     &                metGridRank, metGridDim,
+     &                metPar1, metPar2, metPar3,
+     &                metDataSize, metCooling, metHeating,
      &                itmask)
 
 !        Compute the cooling time on the slice
