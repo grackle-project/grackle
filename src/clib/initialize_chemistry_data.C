@@ -196,8 +196,16 @@ int initialize_chemistry_data(chemistry_data &my_chemistry,
      &my_chemistry.DustTemperatureEnd, my_chemistry.h2dust, 
      my_chemistry.n_cr_n, my_chemistry.n_cr_d1, my_chemistry.n_cr_d2, &ioutput);
 
-  /* Initialize Cloudy cooling, even if not being used. */
-  /* If not used, this will just initialize some data structues. */
+  /* Initialize Cloudy cooling. */
+  /* Primordial tables. */
+  if (initialize_cloudy_data(my_chemistry, my_chemistry.cloudy_primordial,
+                             "Primordial",
+                             my_units, a_value) == FAIL) {
+    fprintf(stderr, "Error in initialize_cloudy_data.\n");
+    return FAIL;
+  }
+
+  /* Metal tables. */
   if (initialize_cloudy_data(my_chemistry, my_chemistry.cloudy_metal,
                              "Metals",
                              my_units, a_value) == FAIL) {

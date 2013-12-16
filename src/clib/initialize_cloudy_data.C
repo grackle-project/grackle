@@ -58,7 +58,7 @@ int initialize_cloudy_data(chemistry_data &my_chemistry,
     return SUCCESS;
   }
 
-  fprintf(stderr,"Initializing Cloudy metal cooling.\n");
+  fprintf(stderr,"Initializing Cloudy cooling: %s.\n", group_name);
   fprintf(stderr,"cloudy_table_file: %s.\n",my_chemistry.grackle_data_file);
 
   /* Get conversion units. */
@@ -88,7 +88,6 @@ int initialize_cloudy_data(chemistry_data &my_chemistry,
   herr_t      status;
   herr_t      h5_error = -1;
 
-  fprintf(stderr,"Reading cooling data from %s.\n", group_name);
   file_id = H5Fopen(my_chemistry.grackle_data_file, 
                     H5F_ACC_RDONLY, H5P_DEFAULT);
 
