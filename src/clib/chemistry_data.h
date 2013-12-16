@@ -1,6 +1,29 @@
 #ifndef __CHEMISTRY_DATA_H__
 #define __CHEMISTRY_DATA_H__
 
+typedef struct
+{
+
+  // Rank of dataset.
+  gr_int grid_rank;
+
+  // Dimension of dataset.
+  gr_int *grid_dimension;
+
+  // Dataset parameter values.
+  gr_float **grid_parameters;
+
+  // Heating values
+  gr_float *heating_data;
+
+  // Cooling values
+  gr_float *cooling_data;
+
+  // Length of 1D flattened data
+  gr_int data_size;
+
+} cloudy_data;
+
 typedef struct 
 {
 
@@ -224,27 +247,13 @@ typedef struct
   /* Gas/grain energy transfer. */
   gr_float *gas_grain;
 
-  /***************************
-   *** cloudy cooling data ***
-   ***************************/
+  // Primordial cooling data
 
-  // Rank of primordial dataset.
-  gr_int cloudy_primordial_grid_rank;
+  cloudy_data cloudy_primordial;
 
-  // Dimension of primordial dataset.
-  gr_int *cloudy_primordial_grid_dimension;
+  // Metal cooling data
 
-  // Dataset parameter values.
-  gr_float **cloudy_primordial_grid_parameters;
-
-  // Primordial heating values
-  gr_float *primordial_heating_data;
-
-  // Primordial cooling values
-  gr_float *primordial_cooling_data;
-
-  // Length of 1D flattened primordial data
-  gr_int primordial_data_size;
+  cloudy_data cloudy_metal;
 
   // Factor to account for extra electrons from metals.
   /* 
@@ -253,24 +262,6 @@ typedef struct
      For solar abundance patters and N = 30 (Zn), f = 9.153959e-3.
    */
   gr_float cloudy_electron_fraction_factor;
-
-  // Rank of metal dataset.
-  gr_int cloudy_metal_grid_rank;
-
-  // Dimension of metal dataset.
-  gr_int *cloudy_metal_grid_dimension;
-
-  // Dataset parameter values.
-  gr_float **cloudy_metal_grid_parameters;
-
-  // Metal heating values
-  gr_float *metal_heating_data;
-
-  // Metal cooling values
-  gr_float *metal_cooling_data;
-
-  // Length of 1D flattened metal data
-  gr_int metal_data_size;
 
 } chemistry_data;
 

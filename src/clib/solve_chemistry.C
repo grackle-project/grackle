@@ -160,15 +160,15 @@ int solve_chemistry(chemistry_data &my_chemistry,
     &my_chemistry.cmb_temperature_floor,
     &my_chemistry.UVbackground,
     &my_chemistry.cloudy_electron_fraction_factor,
-    &my_chemistry.cloudy_metal_grid_rank,
-    my_chemistry.cloudy_metal_grid_dimension,
-    my_chemistry.cloudy_metal_grid_parameters[0],
-    my_chemistry.cloudy_metal_grid_parameters[1],
-    my_chemistry.cloudy_metal_grid_parameters[2],
-    my_chemistry.cloudy_metal_grid_parameters[3],
-    my_chemistry.cloudy_metal_grid_parameters[4],
-    &my_chemistry.metal_data_size,
-    my_chemistry.metal_cooling_data, my_chemistry.metal_heating_data);
+    &my_chemistry.cloudy_metal.grid_rank,
+    my_chemistry.cloudy_metal.grid_dimension,
+    my_chemistry.cloudy_metal.grid_parameters[0],
+    my_chemistry.cloudy_metal.grid_parameters[1],
+    my_chemistry.cloudy_metal.grid_parameters[2],
+    my_chemistry.cloudy_metal.grid_parameters[3],
+    my_chemistry.cloudy_metal.grid_parameters[4],
+    &my_chemistry.cloudy_metal.data_size,
+    my_chemistry.cloudy_metal.cooling_data, my_chemistry.cloudy_metal.heating_data);
 
   return SUCCESS;
 
