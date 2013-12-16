@@ -134,13 +134,17 @@
          do j = js+1, je+1
             do i = is+1, ie+1
                d(i,j,k)     = d(i,j,k)/aye**3
-               de(i,j,k)    = de(i,j,k)/aye**3
-               HI(i,j,k)    = HI(i,j,k)/aye**3
-               HII(i,j,k)   = HII(i,j,k)/aye**3
-               HeI(i,j,k)   = HeI(i,j,k)/aye**3
-               HeII(i,j,k)  = HeII(i,j,k)/aye**3
-               HeIII(i,j,k) = HeIII(i,j,k)/aye**3
             enddo
+            if (ispecies .gt. 0) then
+               do i = is+1, ie+1
+                  de(i,j,k)    = de(i,j,k)/aye**3
+                  HI(i,j,k)    = HI(i,j,k)/aye**3
+                  HII(i,j,k)   = HII(i,j,k)/aye**3
+                  HeI(i,j,k)   = HeI(i,j,k)/aye**3
+                  HeII(i,j,k)  = HeII(i,j,k)/aye**3
+                  HeIII(i,j,k) = HeIII(i,j,k)/aye**3
+               enddo
+            endif
             if (ispecies .gt. 1) then
                do i = is+1, ie+1
                   HM(i,j,k)   = HM(i,j,k)/aye**3
@@ -230,13 +234,17 @@
          do j = js+1, je+1
             do i = is+1, ie+1
                d(i,j,k)     = d(i,j,k)*aye**3
-               de(i,j,k)    = de(i,j,k)*aye**3
-               HI(i,j,k)    = HI(i,j,k)*aye**3
-               HII(i,j,k)   = HII(i,j,k)*aye**3
-               HeI(i,j,k)   = HeI(i,j,k)*aye**3
-               HeII(i,j,k)  = HeII(i,j,k)*aye**3
-               HeIII(i,j,k) = HeIII(i,j,k)*aye**3
             enddo
+            if (ispecies .gt. 0) then
+               do i = is+1, ie+1
+                  de(i,j,k)    = de(i,j,k)*aye**3
+                  HI(i,j,k)    = HI(i,j,k)*aye**3
+                  HII(i,j,k)   = HII(i,j,k)*aye**3
+                  HeI(i,j,k)   = HeI(i,j,k)*aye**3
+                  HeII(i,j,k)  = HeII(i,j,k)*aye**3
+                  HeIII(i,j,k) = HeIII(i,j,k)*aye**3
+               enddo
+            endif
             if (ispecies .gt. 1) then
                do i = is+1, ie+1
                   HM(i,j,k)   = HM(i,j,k)*aye**3

@@ -177,6 +177,7 @@
 
       do i = is+1, ie+1
          if ( itmask(i) ) then
+            edot(i) = 0.d0
             p2d(i) = (gamma - 1.d0)*d(i,j,k)*e(i,j,k)
          end if
       enddo
@@ -185,10 +186,15 @@
 
       do i = is+1, ie+1
          if ( itmask(i) ) then
-            tgas(i) = 
-     &           (HeI(i,j,k) + HeII(i,j,k) + HeIII(i,j,k))/4.d0 +
-     &           HI(i,j,k) + HII(i,j,k) + de(i,j,k)
-            rhoH(i) = HI(i,j,k) + HII(i,j,k)
+            if (ispecies .gt. 0) then            
+               tgas(i) = 
+     &              (HeI(i,j,k) + HeII(i,j,k) + HeIII(i,j,k))/4.d0 +
+     &              HI(i,j,k) + HII(i,j,k) + de(i,j,k)
+               rhoH(i) = HI(i,j,k) + HII(i,j,k)
+            else
+               tgas(i) = d(i,j,k) / 0.6
+               rhoH(i) = 0.76 * d(i,j,k)
+            endif
          end if
       enddo
 
@@ -256,8 +262,6 @@
          enddo
       endif
 
-!     --- 6 species cooling ---
-
       do i = is+1, ie+1
          if ( itmask(i) ) then
 
@@ -266,6 +270,16 @@
          logtem(i) = log(0.5d0*(tgas(i)+tgasold(i)))
          logtem(i) = max(logtem(i), logtem0)
          logtem(i) = min(logtem(i), logtem9)
+
+         endif
+      enddo
+
+!     --- 6 species cooling ---
+
+      if (ispecies .gt. 0) then
+
+      do i = is+1, ie+1
+         if ( itmask(i) ) then
 
 !        Compute index into the table and precompute parts of linear interp
 
@@ -358,6 +372,8 @@
          
          end if
       enddo
+
+      endif
      
 !     --- H2 cooling ---
 
@@ -604,6 +620,8 @@ c  new (correct) way: (april 4, 2007)
 !     --- Compute (external) radiative heating terms ---
 !     Photoionization heating
 
+      if (ispecies .gt. 0) then
+
       do i = is+1, ie+1
          if ( itmask(i) ) then
             edot(i) = edot(i) + float(ipiht)*(
@@ -613,6 +631,8 @@ c  new (correct) way: (april 4, 2007)
      &           )/dom
          end if
       enddo
+
+      endif
 
 !     --- Cloudy metal cooling and heating ---
 
