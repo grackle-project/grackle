@@ -23,7 +23,7 @@
      &                gpldla, gphdla, gpldl, gphdl,
      &                hdltea, hdlowa, hdlte, hdlow,
      &                gaHIa, gaH2a, gaHea, gaHpa, gaela,
-     &                gasgra, 
+     &                gasgra, mutaba,
      &                ceHI, ceHeI, ceHeII, ciHI, ciHeI, ciHeIS, ciHeII,
      &                reHII, reHeII1, reHeII2, reHeIII, brem,
      &                indixe, t1, t2, logtem, tdef, edot,
@@ -85,6 +85,7 @@
      &        ciHIa(nratec), ciHeIa(nratec), ciHeISa(nratec), 
      &        ciHeIIa(nratec), reHIIa(nratec), reHeII1a(nratec), 
      &        reHeII2a(nratec), reHeIIIa(nratec), brema(nratec)
+      real    mutaba(nratec)
       real    compa, piHI, piHeI, piHeII, comp_xraya, comp_temp
       real    gammaha
 
@@ -104,18 +105,20 @@
 
 !  Parameters
 
+      integer ti_max
       double precision mh
       real    ZSOLAR, mu_metal
       parameter (mh = mass_h)      !DPC
       parameter (mu_metal = 16.d0)    ! approx. mean molecular weight of metals
+      parameter (ti_max = 10)
 
 !  Locals
 
-      integer i, j1, iter
+      integer i, iter, ti
       real dom, qq, vibl, logtem0, logtem9, dlogtem, energy, zr
       real dt2, ttmin, comp1, comp2, scoef, acoef, HIdot,
      &     hdlte1, hdlow1, gamma2, x, fudge, fH2,
-     &     gphdl1, factor, dom_inv, tau, ciefudge
+     &     gphdl1, factor, dom_inv, tau, ciefudge, munew, muold
       double precision coolunit, dbase1, tbase1, xbase1, rtunits,
      &     nH2, nother
 
@@ -173,84 +176,153 @@
       comp1 = compa  * (1.d0 + zr)**4
       comp2 = 2.73d0 * (1.d0 + zr)
 
-!     Compute Pressure
+!     Initialize edot
 
       do i = is+1, ie+1
          if ( itmask(i) ) then
             edot(i) = 0.d0
+         end if
+      enddo
+
+!     Compute Pressure
+
+      do i = is+1, ie+1
+         if ( itmask(i) ) then
             p2d(i) = (gamma - 1.d0)*d(i,j,k)*e(i,j,k)
          end if
       enddo
 
-!     Compute temperature and H number density
+!     Compute Temperature
 
-      do i = is+1, ie+1
-         if ( itmask(i) ) then
-            if (ispecies .gt. 0) then            
+!     If no chemistry, use a tabulated mean molecular weight
+!     and iterate to convergence.
+
+      if (ispecies .eq. 0) then
+         do i = is+1, ie+1
+            if ( itmask(i) ) then
+               munew = 1.d0
+               do ti = 1, ti_max
+                  muold = munew
+
+                  tgas(i) = max((gamma - 1.d0)*e(i,j,k)*munew*utem,
+     &                 temstart)
+                  logtem(i) = log(tgas(i))
+                  logtem(i) = max(logtem(i), logtem0)
+                  logtem(i) = min(logtem(i), logtem9)
+
+                  indixe(i) = min(nratec-1,
+     &                 max(1,int((logtem(i)-logtem0)/dlogtem)+1))
+                  t1(i) = (logtem0 + (indixe(i) - 1)*dlogtem)
+                  t2(i) = (logtem0 + (indixe(i)    )*dlogtem)
+                  tdef(i) = (logtem(i) - t1(i)) / (t2(i) - t1(i))
+                  munew = mutaba(indixe(i)) + tdef(i)
+     &                 *(mutaba(indixe(i)+1) -mutaba(indixe(i)))
+
+                  tgas(i) = tgas(i) * munew / muold
+
+                  if (abs((munew/muold) - 1.d0) .le. 1.e-2) then
+                     muold = munew
+
+!     Add metal species to mean molecular weight
+
+                     munew = d(i,j,k) / (d(i,j,k) / munew +
+     &                    metal(i,j,k) / mu_metal)
+                     tgas(i) = tgas(i) * munew / muold
+                     go to 9998
+                  endif
+
+               enddo
+
+ 9998          continue
+
+            rhoH(i) = 0.76 * d(i,j,k)
+
+            endif
+         enddo
+
+      else
+
+!     Compute mean molecular weight (and temperature) directly
+
+         do i = is+1, ie+1
+            if ( itmask(i) ) then
                tgas(i) = 
      &              (HeI(i,j,k) + HeII(i,j,k) + HeIII(i,j,k))/4.d0 +
      &              HI(i,j,k) + HII(i,j,k) + de(i,j,k)
                rhoH(i) = HI(i,j,k) + HII(i,j,k)
-            else
-               tgas(i) = d(i,j,k) / 0.6
-               rhoH(i) = 0.76 * d(i,j,k)
-            endif
-         end if
-      enddo
-
-!          (include molecular hydrogen, but ignore deuterium)
-
-      if (ispecies .gt. 1) then
-         do i = is+1, ie+1
-            if ( itmask(i) ) then
-               tgas(i) = tgas(i) +
-     &              HM(i,j,k) + (H2I(i,j,k) + H2II(i,j,k))/2.d0
-               rhoH(i) = rhoH(i) + H2I(i,j,k) + H2II(i,j,k)
             end if
          enddo
+
+!     (include molecular hydrogen, but ignore deuterium)
+
+         if (ispecies .gt. 1) then
+            do i = is+1, ie+1
+               if ( itmask(i) ) then
+                  tgas(i) = tgas(i) +
+     &                 HM(i,j,k) + (H2I(i,j,k) + H2II(i,j,k))/2.d0
+                  rhoH(i) = rhoH(i) + H2I(i,j,k) + H2II(i,j,k)
+               end if
+            enddo
+         endif
+
+!     Include metal species
+
+         if (imetal .eq. 1) then
+            do i = is+1, ie+1
+               tgas(i) = tgas(i) + metal(i,j,k)/mu_metal
+            enddo
+         endif
+
+         do i = is+1, ie+1
+            if ( itmask(i) ) then
+               tgas(i) = max(p2d(i)*utem/tgas(i), temstart)
+            end if
+         enddo
+
+!     Correct temperature for gamma from H2
+
+         if (ispecies .gt. 1) then
+            do i = is+1, ie+1
+               if ( itmask(i) ) then
+                  nH2 = 0.5d0*(H2I(i,j,k) + H2II(i,j,k))
+                  nother = (HeI(i,j,k) + HeII(i,j,k) +
+     &                 HeIII(i,j,k))/4.d0 +
+     &                 HI(i,j,k) + HII(i,j,k) + de(i,j,k)
+                  if (nH2/nother .gt. 1.0d-3) then
+                     x = 6100.d0/tgas(i) ! not quite self-consistent
+                     if (x .gt. 10.d0) then
+                        gamma2 = 0.5d0*5.d0
+                     else
+                        gamma2 = 0.5d0*(5.d0 + 2.d0*x**2 * 
+     &                       exp(x)/(exp(x)-1)**2)
+                     endif
+                  else
+                     gamma2 = 2.5d0
+                  endif
+                  gamma2 = 1.d0 + (nH2 + nother)/
+     &                 (nH2*gamma2 + nother/(gamma-1.d0))
+                  tgas(i) = tgas(i) * (gamma2 - 1.d0)/(gamma - 1.d0)
+               end if
+            enddo
+         endif
+
       endif
 
-!     Include metal species and calculate metallicity
-      
+!     Calculate metallicity and H number density
+
       if (imetal .eq. 1) then
          do i = is+1, ie+1
-            tgas(i) = tgas(i) + metal(i,j,k)/mu_metal
-            metallicity(i) = metal(i,j,k) / d(i,j,k) / z_solar
+            if ( itmask(i) ) then
+               metallicity(i) = metal(i,j,k) / d(i,j,k) / z_solar
+            endif
          enddo
       endif
 
       do i = is+1, ie+1
          if ( itmask(i) ) then
-            tgas(i) = max(p2d(i)*utem/tgas(i), temstart)
             nh(i) = rhoH(i) * dom
          end if
       enddo
-
-!     Correct temperature for gamma from H2
-
-      if (ispecies .gt. 1) then
-         do i = is+1, ie+1
-            if ( itmask(i) ) then
-            nH2 = 0.5d0*(H2I(i,j,k) + H2II(i,j,k))
-            nother = (HeI(i,j,k) + HeII(i,j,k) + HeIII(i,j,k))/4.d0 +
-     &           HI(i,j,k) + HII(i,j,k) + de(i,j,k)
-            if (nH2/nother .gt. 1.0d-3) then
-               x = 6100.d0/tgas(i) ! not quite self-consistent
-               if (x .gt. 10.d0) then
-                  gamma2 = 0.5d0*5.d0
-               else
-                  gamma2 = 0.5d0*(5.d0 + 2.d0*x**2 * 
-     &                 exp(x)/(exp(x)-1)**2)
-               endif
-            else
-               gamma2 = 2.5d0
-            endif
-            gamma2 = 1.d0 + (nH2 + nother)/
-     &                      (nH2*gamma2 + nother/(gamma-1.d0))
-            tgas(i) = tgas(i) * (gamma2 - 1.d0)/(gamma - 1.d0)
-            end if
-         enddo
-      endif
 
 !     If this is the first time through, just set tgasold to tgas
 

@@ -27,7 +27,8 @@
      &                priDataSize, priCooling, priHeating,
      &                metGridRank, metGridDim,
      &                metPar1, metPar2, metPar3,
-     &                metDataSize, metCooling, metHeating)
+     &                metDataSize, metCooling, metHeating,
+     &                mutaba)
 
 !  SOLVE RADIATIVE COOLING/HEATING EQUATIONS
 !
@@ -75,6 +76,7 @@
      &        ciHIa(nratec), ciHeIa(nratec), ciHeISa(nratec), 
      &        ciHeIIa(nratec), reHIIa(nratec), reHeII1a(nratec), 
      &        reHeII2a(nratec), reHeIIIa(nratec), brema(nratec)
+      real    mutaba(nratec)
       real    compa, piHI, piHeI, piHeII, comp_xraya, comp_temp
       real    gammaha
 
@@ -199,7 +201,7 @@
      &                gpldla, gphdla, gpldl, gphdl,
      &                hdltea, hdlowa, hdlte, hdlow,
      &                gaHIa, gaH2a, gaHea, gaHpa, gaela,
-     &                gasgra, 
+     &                gasgra, mutaba,
      &                ceHI, ceHeI, ceHeII, ciHI, ciHeI, ciHeIS, ciHeII,
      &                reHII, reHeII1, reHeII2, reHeIII, brem,
      &                indixe, t1, t2, logtem, tdef, edot,

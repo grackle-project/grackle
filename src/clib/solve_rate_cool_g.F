@@ -36,7 +36,8 @@
      &                priDataSize, priCooling, priHeating,
      &                metGridRank, metGridDim,
      &                metPar1, metPar2, metPar3,
-     &                metDataSize, metCooling, metHeating)
+     &                metDataSize, metCooling, metHeating,
+     &                mutaba)
 
 !
 !  SOLVE MULTI-SPECIES RATE EQUATIONS AND RADIATIVE COOLING
@@ -109,6 +110,7 @@
 !    metDataSize - total size of flattened 1D metal cooling data array
 !    metCooling  - metal cooling data
 !    metHeating  - metal heating data
+!    mutab       - mean molecular weight
 !
 !  OUTPUTS:
 !    update chemical rate densities (HI, HII, etc)
@@ -169,6 +171,7 @@
      &     k13dda(nratec, 7), h2dusta(nratec, ndratec),
      &     ncrna(nratec), ncrd1a(nratec), ncrd2a(nratec),
      &     k24, k25, k26, k27, k28, k29, k30, k31
+      real mutaba(nratec)
 
 !  Cloudy cooling data
 
@@ -325,7 +328,7 @@ c      chunit = (7.17775d-12)/(2.d0*uvel*uvel*mh)   ! 4.5 eV per H2 formed
      &                gpldla, gphdla, gpldl, gphdl,
      &                hdltea, hdlowa, hdlte, hdlow,
      &                gaHIa, gaH2a, gaHea, gaHpa, gaela,
-     &                gasgra, 
+     &                gasgra, mutaba,
      &                ceHI, ceHeI, ceHeII, ciHI, ciHeI, ciHeIS, ciHeII,
      &                reHII, reHeII1, reHeII2, reHeIII, brem,
      &                indixe, t1, t2, logtem, tdef, edot,
