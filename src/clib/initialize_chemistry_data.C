@@ -32,6 +32,7 @@ int initialize_cloudy_data(chemistry_data &my_chemistry,
 int initialize_UVbackground_data(chemistry_data &my_chemistry);
 
 extern "C" void FORTRAN_NAME(calc_rates_g)(
+     gr_int *ispecies,
      gr_int *nratec, gr_float *aye, gr_float *temstart, gr_float *temend, 
      gr_int *casebrates, gr_int *threebody,
      gr_float *utem, gr_float *uxyz, gr_float *uaye, gr_float *urho, gr_float *utim,
@@ -49,7 +50,8 @@ extern "C" void FORTRAN_NAME(calc_rates_g)(
      gr_float *k19a, gr_float *k20a, gr_float *k21a, gr_float *k22, gr_float *k23,
      gr_float *k50, gr_float *k51, gr_float *k52, gr_float *k53, gr_float *k54, gr_float *k55,
         gr_float *k56, gr_int *ndratec, gr_float *dtemstart, gr_float *dtemend, gr_float *h2dusta, 
-     gr_float *ncrca, gr_float *ncrd1a, gr_float *ncrd2a, gr_int *ioutput);
+     gr_float *ncrca, gr_float *ncrd1a, gr_float *ncrd2a, 
+     gr_float *mutab, gr_int *ioutput);
  
 int initialize_chemistry_data(chemistry_data &my_chemistry,
                               code_units &my_units, gr_float a_value)
@@ -65,6 +67,13 @@ int initialize_chemistry_data(chemistry_data &my_chemistry,
   }
 
   /* Allocate CoolData space for rates. */
+
+  if (my_chemistry.primordial_chemistry == 0) {
+
+    my_chemistry.mu    = new gr_float[my_chemistry.NumberOfTemperatureBins];
+
+  }
+  else {
  
   my_chemistry.ceHI    = new gr_float[my_chemistry.NumberOfTemperatureBins];
   my_chemistry.ceHeI   = new gr_float[my_chemistry.NumberOfTemperatureBins];
@@ -137,15 +146,17 @@ int initialize_chemistry_data(chemistry_data &my_chemistry,
 
   my_chemistry.k24 = 0;
   my_chemistry.k25 = 0;
-  my_chemistry.k26 = 0; 
+  my_chemistry.k26 = 0;
   my_chemistry.k27 = 0;
   my_chemistry.k28 = 0;
-  my_chemistry.k29 = 0; 
-  my_chemistry.k30 = 0; 
-  my_chemistry.k31 = 0; 
+  my_chemistry.k29 = 0;
+  my_chemistry.k30 = 0;
+  my_chemistry.k31 = 0;
   my_chemistry.piHI = 0;
   my_chemistry.piHeII = 0;
-  my_chemistry.piHeI = 0; 
+  my_chemistry.piHeI = 0;
+
+  }
 
   gr_int ioutput = 1;
 
@@ -168,6 +179,7 @@ int initialize_chemistry_data(chemistry_data &my_chemistry,
   /* Call FORTRAN routine to do the hard work. */
  
   FORTRAN_NAME(calc_rates_g)(
+     &my_chemistry.primordial_chemistry,
      &my_chemistry.NumberOfTemperatureBins, &a_value, &my_chemistry.TemperatureStart,
         &my_chemistry.TemperatureEnd,
         &my_chemistry.CaseBRecombination, &my_chemistry.three_body_rate,
@@ -194,7 +206,8 @@ int initialize_chemistry_data(chemistry_data &my_chemistry,
         my_chemistry.k55, my_chemistry.k56, 
      &my_chemistry.NumberOfDustTemperatureBins, &my_chemistry.DustTemperatureStart, 
      &my_chemistry.DustTemperatureEnd, my_chemistry.h2dust, 
-     my_chemistry.n_cr_n, my_chemistry.n_cr_d1, my_chemistry.n_cr_d2, &ioutput);
+     my_chemistry.n_cr_n, my_chemistry.n_cr_d1, my_chemistry.n_cr_d2, 
+     my_chemistry.mu, &ioutput);
 
   /* Initialize Cloudy cooling. */
   /* Primordial tables. */

@@ -247,6 +247,9 @@ typedef struct
   /* Gas/grain energy transfer. */
   gr_float *gas_grain;
 
+  // Tabulated mean molecular weight
+  gr_float *mu;
+
   // Primordial cooling data
 
   cloudy_data cloudy_primordial;

@@ -4,6 +4,7 @@ c=======================================================================
 c//////////////////////  SUBROUTINE CALC_RATES_G  \\\\\\\\\\\\\\\\\\\\\\\
 c
       subroutine calc_rates_g(
+     &             ispecies,
      &             nratec, aye, temstart, temend,
      &             casebrates, threebody,
      &             utem, uxyz, uaye, urho, utim,
@@ -19,7 +20,7 @@ c
      &             k18a, k19a, k20a, k21a, k22a, k23a,
      &             k50a, k51a, k52a, k53a, k54a, k55a, k56a, 
      &             ndratec, dtemstart, dtemend, h2dusta, 
-     &             ncrna, ncrd1a, ncrd2a, ioutput
+     &             ncrna, ncrd1a, ncrd2a, mutab, ioutput
      &                     )
 c
 c  COMPUTE MULTISPECIES RATE LOOKUP TABLE
@@ -153,7 +154,7 @@ c
 c
 c  Arguments
 c
-      integer nratec, casebrates, threebody, ndratec
+      integer ispecies, nratec, casebrates, threebody, ndratec
       real    aye, temstart, temend, dtemstart, dtemend,
      &        utem, uxyz, uaye, urho, utim
       real    ceHIa(nratec), ceHeIa(nratec), ceHeIIa(nratec),
@@ -178,6 +179,7 @@ c
       real    k13dda(nratec, 7), hdcool(nratec, 5),
      &     h2dusta(nratec, ndratec),
      &     ncrna(nratec), ncrd1a(nratec), ncrd2a(nratec)
+      real    mutab(nratec)
       integer ioutput
 c
 c  Parameters
@@ -300,6 +302,9 @@ c
       d_ttt     = dtemstart
       d_logttt  = log(d_ttt)
       d_dlogtem = (log(dtemend) - log(dtemstart))/real(ndratec-1)
+
+      if (ispecies .gt. 0) then
+
 c
 c  Initialize constants to tiny
 c
@@ -964,6 +969,14 @@ c        equation 2.15 of Hollenbach & McKee (1989)
      &     (1.0d0 - (0.8d0 * exp(-75.0d0 / ttt))) / coolunit
 c
       enddo
+
+      else
+c
+c     Create tabulated mean molecular weight
+c
+         call calc_mu_table(nratec, temstart, temend, mutab)
+
+      endif
 c
 c     i) Compton cooling (Peebles 1971)
 c
@@ -1026,5 +1039,50 @@ c
 #endif /* OUTPUT_COOLING_RATE_DATA */
 
 c
+      return
+      end
+
+! ------------------------------------------------------------------
+!   Calculate a tabulated approximation to mean molecular weight.
+
+      subroutine calc_mu_table(nratec, temstart, temend, mutab)
+! ------------------------------------------------------------------
+
+      implicit NONE
+
+      integer nratec
+      real temstart, temend
+      real mutab(nratec)
+
+      integer i, j
+      real ttt, logttt, dlogtem, slope
+
+      integer nt
+      parameter (nt = 10)
+      real tt(nt), mt(nt)
+      parameter (tt = (/1.0d+01, 1.0d+02, 
+     &     1.0d+03, 1.0d+04, 1.3d+04, 2.1d+04,
+     &     3.4d+04, 6.3d+04, 1.0d+05, 1.0d+09/))
+      parameter (mt = (/1.18701555, 1.15484424,
+     &     1.09603514, 0.9981496, 0.96346395, 0.65175895,
+     &     0.6142901,  0.6056833, 0.5897776,  0.58822635/))
+
+      dlogtem= (log(temend) - log(temstart))/real(nratec-1)
+      j = 2
+
+      do i = 1, nratec
+
+         logttt = log(temstart) + real(i-1)*dlogtem
+         ttt = exp(logttt)
+
+         if (ttt .gt. tt(j)) then
+            j = min((j + 1), nt)
+         endif
+
+         slope = log(mt(j) / mt(j-1)) / log(tt(j) / tt(j-1))
+         mutab(i) = exp(slope * (logttt - log(tt(j))) + log(mt(j)))
+         
+      enddo
+
       return
       end
