@@ -58,10 +58,11 @@ def get_cooling_units(my_units, current_redshift):
     a_value = 1. / (1 + current_redshift) / my_units.a_units
     
     tbase1 = my_units.time_units
-    xbase1 = my_units.length_units / (a_value * my_units.a_units)
     if my_units.comoving_coordinates:
+        xbase1 = my_units.length_units / (a_value * my_units.a_units)
         dbase1 = my_units.density_units * (a_value * my_units.a_units)**3
     else:
+        xbase1 = my_units.length_units / my_units.a_units
         dbase1 = my_units.density_units * my_units.a_units**3
 
     coolunit = (my_units.a_units**5 * xbase1**2 * mass_hydrogen_cgs**2) / \
