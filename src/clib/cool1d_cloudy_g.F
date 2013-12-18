@@ -6,7 +6,7 @@
       subroutine cool1d_cloudy_g(d, de, rhoH, metallicity,
      &                in, jn, kn, is, ie, j, k,
      &                logtem, edot, comp2, ispecies, dom, zr,
-     &                icmbTfloor, iClHeat, 
+     &                icmbTfloor, iClHeat, iZscale,
      &                clEleFra, clGridRank, clGridDim,
      &                clPar1, clPar2, clPar3,
      &                clDataSize, clCooling, clHeating, 
@@ -39,6 +39,7 @@
 !
 !    icmbTfloor - flag to include temperature floor from cmb
 !    iClHeat    - flag to include cloudy heating
+!    iZscale    - flag to scale cooling by metallicity
 !    clEleFra   - parameter to account for additional electrons from metals 
 !    clGridRank - rank of cloudy cooling data grid
 !    clGridDim  - array containing dimensions of cloudy data
@@ -69,7 +70,8 @@
 
 !  Cloudy parameters and data
 
-      integer icmbTfloor, iClHeat, clGridRank, clDataSize
+      integer icmbTfloor, iClHeat, iZscale, 
+     &     clGridRank, clDataSize
       integer clGridDim(clGridRank)
       real clEleFra
       real clPar1(clGridDim(1)), clPar2(clGridDim(2)),
@@ -248,8 +250,12 @@
 
 !           Scale cooling by metallicity.
 
+            if (iZscale .eq. 1) then
+               edot_met(i) = edot_met(i) * metallicity(i)
+            endif
+
             edot(i) = edot(i) + 
-     &           (metallicity(i) * edot_met(i) * rhoH(i) * d(i,j,k))
+     &           (edot_met(i) * rhoH(i) * d(i,j,k))
 
          end if
       enddo

@@ -91,7 +91,7 @@
 
 !  Cloudy cooling data
 
-      integer icmbTfloor, iClHeat, 
+      integer icmbTfloor, iClHeat, iZscale,
      &     priGridRank, priDataSize,
      &     metGridRank, metDataSize
       integer priGridDim(priGridRank), metGridDim(metGridRank)
@@ -706,14 +706,31 @@ c  new (correct) way: (april 4, 2007)
 
       endif
 
+!     --- Cloudy primordial cooling and heating ---
+
+      if (ispecies .eq. 0) then
+
+         iZscale = 0
+         call cool1d_cloudy_g(d, de, rhoH, metallicity,
+     &        in, jn, kn, is, ie, j, k,
+     &        logtem, edot, comp2, ispecies, dom, zr,
+     &        icmbTfloor, iClHeat, iZscale, clEleFra,
+     &        priGridRank, priGridDim,
+     &        priPar1, priPar2, priPar3,
+     &        priDataSize, priCooling, priHeating,
+     &        itmask)
+
+      endif
+
 !     --- Cloudy metal cooling and heating ---
 
       if (imcool .eq. 1) then
 
+         iZscale = 1
          call cool1d_cloudy_g(d, de, rhoH, metallicity,
      &        in, jn, kn, is, ie, j, k,
      &        logtem, edot, comp2, ispecies, dom, zr,
-     &        icmbTfloor, iClHeat, clEleFra,
+     &        icmbTfloor, iClHeat, iZscale, clEleFra,
      &        metGridRank, metGridDim,
      &        metPar1, metPar2, metPar3,
      &        metDataSize, metCooling, metHeating,
