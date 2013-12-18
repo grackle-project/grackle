@@ -91,7 +91,7 @@
 
 !  Cloudy cooling data
 
-      integer icmbTfloor, iClHeat, iZscale,
+      integer icmbTfloor, iClHeat, iZscale, mycmbTfloor,
      &     priGridRank, priDataSize,
      &     metGridRank, metDataSize
       integer priGridDim(priGridRank), metGridDim(metGridRank)
@@ -127,7 +127,7 @@
       integer indixe(in)
       real t1(in), t2(in), logtem(in), tdef(in), p2d(in),
      &     tgas(in), tgasold(in), tdust(in), rhoH(in), nh(in),
-     &     metallicity(in)
+     &     metallicity(in), mutab(in)
       double precision edot(in)
 
 !  Cooling/heating slice locals
@@ -145,7 +145,7 @@
 
       integer tcmb_idx
       real logxe0, logxe1, dlogxea, xe, log_xe, xe1, dlogT, dlogxe
-      real logTcmb, dlogTcmb, metalc_cmb, metalfree
+      real logTcmb, dlogTcmb, metalc_cmb, metalfree, myde
 
 !  Iteration mask
 
@@ -235,7 +235,8 @@
 
  9998          continue
 
-            rhoH(i) = fh * d(i,j,k)
+               mutab(i) = munew
+               rhoH(i) = fh * d(i,j,k)
 
             endif
          enddo
@@ -711,14 +712,34 @@ c  new (correct) way: (april 4, 2007)
       if (ispecies .eq. 0) then
 
          iZscale = 0
+         mycmbTfloor = 0
          call cool1d_cloudy_g(d, de, rhoH, metallicity,
      &        in, jn, kn, is, ie, j, k,
      &        logtem, edot, comp2, ispecies, dom, zr,
-     &        icmbTfloor, iClHeat, iZscale, clEleFra,
+     &        mycmbTfloor, iClHeat, iZscale, clEleFra,
      &        priGridRank, priGridDim,
      &        priPar1, priPar2, priPar3,
      &        priDataSize, priCooling, priHeating,
      &        itmask)
+
+!     Compton cooling or heating
+
+         do i = is+1, ie+1
+            if ( itmask(i) ) then
+
+!     Calculate electron density from mean molecular weight
+
+               myde = 1 - mutab(i) * (3.0d0 * fh + 1.0d0) / 4.0d0
+               if (imetal .eq. 1) then
+                  myde = myde - mutab(i) * metal(i,j,k) / mu_metal
+               endif
+               myde = d(i,j,k) * myde / mutab(i)
+
+               edot(i) = edot(i) 
+     &              - comp1*(tgas(i)-comp2)*myde*dom_inv
+
+            end if
+         enddo
 
       endif
 
