@@ -110,7 +110,7 @@
       real    ZSOLAR, mu_metal
       parameter (mh = mass_h)      !DPC
       parameter (mu_metal = 16.d0)    ! approx. mean molecular weight of metals
-      parameter (ti_max = 10)
+      parameter (ti_max = 20)
 
 !  Locals
 
@@ -228,14 +228,18 @@
                      munew = d(i,j,k) / (d(i,j,k) / munew +
      &                    metal(i,j,k) / mu_metal)
                      tgas(i) = tgas(i) * munew / muold
+                     mutab(i) = munew
                      go to 9998
                   endif
 
                enddo
 
+               mutab(i) = munew
+               write(6,*) 'Mean molecular weight not converged!', 
+     &              munew, muold
+
  9998          continue
 
-               mutab(i) = munew
                rhoH(i) = fh * d(i,j,k)
 
             endif
@@ -731,7 +735,8 @@ c  new (correct) way: (april 4, 2007)
 
                myde = 1 - mutab(i) * (3.0d0 * fh + 1.0d0) / 4.0d0
                if (imetal .eq. 1) then
-                  myde = myde - mutab(i) * metal(i,j,k) / mu_metal
+                  myde = myde - mutab(i) * metal(i,j,k) / 
+     &                 (d(i,j,k) * mu_metal)
                endif
                myde = d(i,j,k) * myde / mutab(i)
 
