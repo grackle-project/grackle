@@ -220,7 +220,7 @@
 
                   tgas(i) = tgas(i) * munew / muold
 
-                  if (abs((munew/muold) - 1.d0) .le. 1.e-2) then
+                  if (abs((munew/muold) - 1.d0) .le. 1.d-2) then
                      muold = munew
 
 !     Add metal species to mean molecular weight

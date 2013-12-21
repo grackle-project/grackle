@@ -41,6 +41,13 @@ int calculate_pressure(chemistry_data &my_chemistry,
                        gr_float *DI_density, gr_float *DII_density, gr_float *HDI_density,
                        gr_float *e_density, gr_float *metal_density,
                        gr_float *pressure);
+
+int calculate_temperature_table(chemistry_data &my_chemistry,
+                                code_units &my_units,
+                                gr_int grid_rank, gr_int *grid_dimension,
+                                gr_float *density, gr_float *internal_energy,
+                                gr_float *metal_density,
+                                gr_float *temperature);
  
 int calculate_temperature(chemistry_data &my_chemistry,
                           code_units &my_units,
@@ -85,14 +92,23 @@ int calculate_temperature(chemistry_data &my_chemistry,
   gr_float number_density, tiny_number = 1.-20;
   gr_float inv_metal_mol = 1.0 / MU_METAL;
   
-  /* Compute temperature with mu calculated directly. */
+  if (my_chemistry.primordial_chemistry == 0) {
+    if (calculate_temperature_table(my_chemistry,
+                                    my_units,
+                                    grid_rank, grid_dimension,
+                                    density, internal_energy,
+                                    metal_density,
+                                    temperature) == FAIL) {
+      fprintf(stderr, "Error in calculcate_temperature_table.\n");
+      return FAIL;
+    }
+    return SUCCESS;
+  }
+
+ /* Compute temperature with mu calculated directly. */
  
   for (i = 0; i < size; i++) {
  
-    if (my_chemistry.primordial_chemistry == 0) {
-      number_density = density[i] / 0.6;
-    }
-
     if (my_chemistry.primordial_chemistry > 0) {
       number_density =
         0.25 * (HeI_density[i] + HeII_density[i] +  HeIII_density[i]) +
