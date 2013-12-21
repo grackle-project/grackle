@@ -13,6 +13,7 @@
 
 OBJS_CONFIG_LIB = \
         calculate_cooling_time.o \
+        calculate_cooling_time_table.o \
         calculate_gamma.o \
         calculate_pressure.o \
         calculate_temperature.o \
@@ -29,5 +30,6 @@ OBJS_CONFIG_LIB = \
         initialize_UVbackground_data.o \
         set_default_chemistry_parameters.o \
         solve_chemistry.o \
+        solve_chemistry_table.o \
         solve_rate_cool_g.o \
         update_UVbackground_rates.o 
