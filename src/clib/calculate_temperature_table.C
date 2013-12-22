@@ -27,12 +27,12 @@
   
 /* function prototypes */ 
  
-int calculate_temperature_table(chemistry_data &my_chemistry,
-                                code_units &my_units,
-                                gr_int grid_rank, gr_int *grid_dimension,
-                                gr_float *density, gr_float *internal_energy,
-                                gr_float *metal_density,
-                                gr_float *temperature)
+int calculate_temperature(chemistry_data &my_chemistry,
+                          code_units &my_units,
+                          gr_int grid_rank, gr_int *grid_dimension,
+                          gr_float *density, gr_float *internal_energy,
+                          gr_float *metal_density,
+                          gr_float *temperature)
 {
 
   if (!my_chemistry.use_chemistry)

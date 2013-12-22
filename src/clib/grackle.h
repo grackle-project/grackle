@@ -73,23 +73,31 @@ int calculate_temperature(chemistry_data &my_chemistry,
                           gr_float *e_density, gr_float *metal_density,
                           gr_float *temperature);
 
-int solve_chemistry_table(chemistry_data &my_chemistry,
-                          code_units &my_units,
-                          gr_float a_value, gr_float dt_value,
-                          gr_int grid_rank, gr_int *grid_dimension,
-                          gr_int *grid_start, gr_int *grid_end,
-                          gr_float *density, gr_float *internal_energy,
-                          gr_float *x_velocity, gr_float *y_velocity, gr_float *z_velocity,
-                          gr_float *metal_density);
+/* Tabular-only functions. */
 
-int calculate_cooling_time_table(chemistry_data &my_chemistry,
-                                 code_units &my_units, gr_float a_value,
-                                 gr_int grid_rank, gr_int *grid_dimension,
-                                 gr_int *grid_start, gr_int *grid_end,
-                                 gr_float *density, gr_float *internal_energy,
-                                 gr_float *x_velocity, gr_float *y_velocity, gr_float *z_velocity,
-                                 gr_float *metal_density,
-                                 gr_float *cooling_time);
+int solve_chemistry(chemistry_data &my_chemistry,
+                    code_units &my_units,
+                    gr_float a_value, gr_float dt_value,
+                    gr_int grid_rank, gr_int *grid_dimension,
+                    gr_int *grid_start, gr_int *grid_end,
+                    gr_float *density, gr_float *internal_energy,
+                    gr_float *x_velocity, gr_float *y_velocity, gr_float *z_velocity,
+                    gr_float *metal_density);
+
+int calculate_cooling_time(chemistry_data &my_chemistry,
+                           code_units &my_units, gr_float a_value,
+                           gr_int grid_rank, gr_int *grid_dimension,
+                           gr_int *grid_start, gr_int *grid_end,
+                           gr_float *density, gr_float *internal_energy,
+                           gr_float *x_velocity, gr_float *y_velocity, gr_float *z_velocity,
+                           gr_float *metal_density,
+                           gr_float *cooling_time);
+
+int calculate_pressure(chemistry_data &my_chemistry,
+                       code_units &my_units,
+                       gr_int grid_rank, gr_int *grid_dimension,
+                       gr_float *density, gr_float *internal_energy,
+                       gr_float *pressure);
 
 int calculate_temperature(chemistry_data &my_chemistry,
                           code_units &my_units,

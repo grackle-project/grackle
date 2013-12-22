@@ -42,12 +42,12 @@ int calculate_pressure(chemistry_data &my_chemistry,
                        gr_float *e_density, gr_float *metal_density,
                        gr_float *pressure);
 
-int calculate_temperature_table(chemistry_data &my_chemistry,
-                                code_units &my_units,
-                                gr_int grid_rank, gr_int *grid_dimension,
-                                gr_float *density, gr_float *internal_energy,
-                                gr_float *metal_density,
-                                gr_float *temperature);
+int calculate_temperature(chemistry_data &my_chemistry,
+                          code_units &my_units,
+                          gr_int grid_rank, gr_int *grid_dimension,
+                          gr_float *density, gr_float *internal_energy,
+                          gr_float *metal_density,
+                          gr_float *temperature);
  
 int calculate_temperature(chemistry_data &my_chemistry,
                           code_units &my_units,
@@ -93,12 +93,12 @@ int calculate_temperature(chemistry_data &my_chemistry,
   gr_float inv_metal_mol = 1.0 / MU_METAL;
   
   if (my_chemistry.primordial_chemistry == 0) {
-    if (calculate_temperature_table(my_chemistry,
-                                    my_units,
-                                    grid_rank, grid_dimension,
-                                    density, internal_energy,
-                                    metal_density,
-                                    temperature) == FAIL) {
+    if (calculate_temperature(my_chemistry,
+                              my_units,
+                              grid_rank, grid_dimension,
+                              density, internal_energy,
+                              metal_density,
+                              temperature) == FAIL) {
       fprintf(stderr, "Error in calculcate_temperature_table.\n");
       return FAIL;
     }

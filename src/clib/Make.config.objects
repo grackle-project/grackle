@@ -16,6 +16,7 @@ OBJS_CONFIG_LIB = \
         calculate_cooling_time_table.o \
         calculate_gamma.o \
         calculate_pressure.o \
+        calculate_pressure_table.o \
         calculate_temperature.o \
         calculate_temperature_table.o \
         calc_rates_g.o \
