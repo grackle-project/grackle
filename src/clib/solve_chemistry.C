@@ -24,6 +24,9 @@
 
 /* function prototypes */
 
+int update_UVbackground_rates(chemistry_data &my_chemistry,
+			      code_units &my_units, gr_float a_value);
+
 extern "C" void FORTRAN_NAME(solve_rate_cool_g)(
         gr_int *icool,
 	gr_float *d, gr_float *e, gr_float *u, gr_float *v, gr_float *w, gr_float *de,
@@ -88,6 +91,16 @@ int solve_chemistry(chemistry_data &my_chemistry,
 
   if (!my_chemistry.use_chemistry)
     return SUCCESS;
+
+  /* Update UV background rates. */
+
+  if (my_chemistry.UVbackground == 1) {
+    if (update_UVbackground_rates(my_chemistry,
+                                  my_units, a_value) == FAIL) {
+      fprintf(stderr, "Error in update_UVbackground_rates.\n");
+      return FAIL;
+    }
+  }
 
   /* Check for a metal field. */
 

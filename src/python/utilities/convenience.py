@@ -54,8 +54,6 @@ def setup_fluid_container(my_chemistry,
         sys.stderr.write("Error initializing chemistry.\n")
         return None
 
-    my_chemistry.update_UVbackground(a_value)
-
     tiny_number = 1e-20
     if temperature is None:
         n_points = 200

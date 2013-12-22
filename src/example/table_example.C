@@ -101,14 +101,6 @@ int main(int argc, char *argv[])
     energy[i] = 1000. / temperature_units;
   }
 
-  // The UV background rates must be updated before 
-  // calling the other functions.
-  if (update_UVbackground_rates(my_chemistry, 
-                                my_units, a_value) == 0) {
-    fprintf(stderr, "Error in update_UBbackground_rates.\n");
-    return 0;
-  }
-
   /*********************************************************************
   / Calling the chemistry solver
   / These routines can now be called during the simulation.
