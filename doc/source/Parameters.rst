@@ -17,16 +17,20 @@ For all on/off integer flags, 0 is off and 1 is on.
 ``primordial_chemistry`` (int)
     Flag to control which primordial chemistry network is used.  Default: 0.
 
-    - 0: no chemistry network.
+    - 0: no chemistry network.  Radiative cooling for primordial species is solved by interpolating from lookup tables calculated with Cloudy.
     - 1: 6-species atomic H and He.  Active species: H, H\ :sup:`+`, He, He\ :sup:`+`, \ :sup:`++`, e\ :sup:`-`.
     - 2: 9-species network including atomic species above and species for molecular hydrogen formation.  This network includes formation from the H\ :sup:`-` and H\ :sub:`2`\ :sup:`+` channels, three-body formation (H+H+H and H+H+H\ :sub:`2`), H\ :sub:`2` rotational transitions, chemical heating, and collision-induced emission (optional).  Active species: above + H\ :sup:`-`, H\ :sub:`2`, H\ :sub:`2`\ :sup:`+`.
     - 3: 12-species network include all above plus HD rotation cooling.  Active species: above plus D, D\ :sup:`+`, HD.
 
+.. note:: In order to make use of the non-equilibrium chemistry network (``primordial_chemistry`` options 1-3), you must add and advect baryon fields for each of the species used by that particular option.
+
 ``h2_on_dust`` (int)
-    - Flag to enable H\ :sub:`2` formation on dust grains, dust cooling, and dust-gas heat transfer follow `Omukai (2000) <http://adsabs.harvard.edu/abs/2000ApJ...534..809O>`_.  This assumes that the dust to gas ratio scales with the metallicity.  **This is not extensively tested and should probably not be used for now.** Default: 0.
+    - Flag to enable H\ :sub:`2` formation on dust grains, dust cooling, and dust-gas heat transfer follow `Omukai (2000) <http://adsabs.harvard.edu/abs/2000ApJ...534..809O>`_.  This assumes that the dust to gas ratio scales with the metallicity.  Default: 0.
 
 ``metal_cooling`` (int)
     Flag to enable metal cooling using the Cloudy tables.  If enabled, the cooling table to be used must be specified with the ``grackle_data_file`` parameter.  Default: 0.
+
+.. note:: In order to use the metal cooling, you must add and advect a metal density field.
 
 ``cmb_temperature_floor`` (int)
     Flag to enable an effective CMB temperature floor.  This is implemented by subtracting the value of the cooling rate at T\ :sub:`CMB` from the total cooling rate.  Default: 1.

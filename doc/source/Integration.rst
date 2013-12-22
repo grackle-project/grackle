@@ -185,20 +185,6 @@ routine, a timestep must be given.  For the four field calculator routines,
 the array to be filled with the field values must be created and passed as an 
 argument as well.
 
-Before these are called, the UV background 
-rates must be updated.  This need only be done once per timestep.
-
-Updating the UV Background
-++++++++++++++++++++++++++
-
-.. code-block:: c++
-
-  if (update_UVbackground_rates(my_chemistry, 
-                                my_units, a_value) == 0) {
-    fprintf(stderr, "Error in update_UVbackground_rates.\n");
-    return 0;
-  }
-
 Solve the Chemistry and Cooling
 +++++++++++++++++++++++++++++++
 
