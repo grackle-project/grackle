@@ -307,6 +307,13 @@ c      chunit = (7.17775d-12)/(2.d0*uvel*uvel*mh)   ! 4.5 eV per H2 formed
 
          do iter = 1, itmax
 
+            do i = is+1, ie+1
+               if (itmask(i)) then
+                  dtit(i) = huge
+               endif
+            enddo
+
+
 !           Compute the cooling rate, tgas, tdust, and metallicity for this row
 
             call cool1d_multi_g(
@@ -342,7 +349,6 @@ c      chunit = (7.17775d-12)/(2.d0*uvel*uvel*mh)   ! 4.5 eV per H2 formed
      &                metPar1, metPar2, metPar3,
      &                metDataSize, metCooling, metHeating,
      &                itmask)
-
 
             if (ispecies .gt. 0) then
 
