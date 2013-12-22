@@ -169,7 +169,7 @@ help:
 #-----------------------------------------------------------------------
 
 clean:
-	-@rm -f *.o *.mod *.f *.f90 *~ $(OUTPUT) $(EXE).exe
+	-@rm -f *.o *.mod *.f *.f90 *~ $(OUTPUT) $(EXE).exe example table_example
 
 #-----------------------------------------------------------------------
 # Include configuration targets
