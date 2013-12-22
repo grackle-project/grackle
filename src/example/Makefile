@@ -92,6 +92,42 @@ $(EXE).exe: $(MODULES) $(OBJS_LIB)
          fi)
 
 #-----------------------------------------------------------------------
+# REGULAR EXAMPLE
+#-----------------------------------------------------------------------
+
+example: $(MODULES) example.o
+	@rm -f $@
+	@echo "Linking"
+	-@$(LD) $(LDFLAGS) -o example example.o $(LIBS) $(GRACKLE_LIB) >& $(OUTPUT)
+	@(if [ -e $@ ]; then \
+             echo "Success!"; \
+         else \
+             echo "$(LD) $(LDFLAGS) -o example example.o $(LIBS) $(GRACKLE_LIB)" >> temp1; \
+             cat temp1 $(OUTPUT) > temp2; \
+             rm -f temp1; \
+             mv -f temp2 $(OUTPUT); \
+             echo "Failed! See $(OUTPUT) for error messages"; \
+         fi)
+
+#-----------------------------------------------------------------------
+# TABLE EXAMPLE
+#-----------------------------------------------------------------------
+
+table_example: $(MODULES) table_example.o
+	@rm -f $@
+	@echo "Linking"
+	-@$(LD) $(LDFLAGS) -o table_example table_example.o $(LIBS) $(GRACKLE_LIB) >& $(OUTPUT)
+	@(if [ -e $@ ]; then \
+             echo "Success!"; \
+         else \
+             echo "$(LD) $(LDFLAGS) -o table_example table_example.o $(LIBS) $(GRACKLE_LIB)" >> temp1; \
+             cat temp1 $(OUTPUT) > temp2; \
+             rm -f temp1; \
+             mv -f temp2 $(OUTPUT); \
+             echo "Failed! See $(OUTPUT) for error messages"; \
+         fi)
+
+#-----------------------------------------------------------------------
 # Implicit rules
 #-----------------------------------------------------------------------
 
@@ -103,7 +139,7 @@ $(EXE).exe: $(MODULES) $(OBJS_LIB)
 	-@($(CXX) -c -o $@ $(DEFINES) $(CXXFLAGS) $(INCLUDES) $(GRACKLE_INCLUDE) $*.C) >& $(OUTPUT)
 	@(if [ ! -e $@ ]; then \
              echo; \
-             echo "$(CXX) -c -o $@ $(DEFINES) $(CXXFLAGS) $(INCLUDES) $(GRACKLE_INCLUDE) *.C"; \
+             echo "$(CXX) -c -o $@ $(DEFINES) $(CXXFLAGS) $(INCLUDES) $(GRACKLE_INCLUDE) $*.C"; \
              echo; \
              $(CXX) -c -o $@ $(DEFINES) $(CXXFLAGS) $(INCLUDES) $(GRACKLE_INCLUDE) $*.C;\
              echo; \

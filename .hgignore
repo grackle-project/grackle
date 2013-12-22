@@ -26,5 +26,7 @@ src/clib/auto_show_config.C
 src/clib/auto_show_flags.C
 src/clib/auto_show_version.C
 src/clib/libgrackle.so
+src/example/example
+src/example/table_example
 src/python/build/*
 doc/build
