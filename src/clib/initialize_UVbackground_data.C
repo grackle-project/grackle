@@ -54,7 +54,8 @@ int initialize_UVbackground_data(chemistry_data &my_chemistry)
 
   dset_id =  H5Dopen(file_id, "/UVBRates/Info");
   if (dset_id == h5_error) {
-    fprintf(stderr,"Can't open 'Info' dataset in %s.\n",my_chemistry.grackle_data_file);
+    fprintf(stderr, "Can't open 'Info' dataset in %s.\n",
+            my_chemistry.grackle_data_file);
     return FAIL;
   }
 
@@ -66,7 +67,7 @@ int initialize_UVbackground_data(chemistry_data &my_chemistry)
 
   status = H5Dread(dset_id, memtype, H5S_ALL, H5S_ALL, H5P_DEFAULT, info_string);
   if (status == h5_error) {
-    fprintf(stderr,"Failed to read dataset 'Info'.\n");
+    fprintf(stderr, "Failed to read dataset 'Info'.\n");
     return FAIL;
   }
 
@@ -79,19 +80,22 @@ int initialize_UVbackground_data(chemistry_data &my_chemistry)
 
   dset_id =  H5Dopen(file_id, "/UVBRates/z");
   if (dset_id == h5_error) {
-    fprintf(stderr,"Can't open redshift dataset ('z') in %s.\n",my_chemistry.grackle_data_file);
+    fprintf(stderr, "Can't open redshift dataset ('z') in %s.\n",
+            my_chemistry.grackle_data_file);
     return FAIL;
   }
 
   dspace_id = H5Dget_space(dset_id);
   if (dspace_id == h5_error) {
-    fprintf(stderr,"Error opening dataspace for dataset 'z' in %s.\n",my_chemistry.grackle_data_file);
+    fprintf(stderr, "Error opening dataspace for dataset 'z' in %s.\n",
+            my_chemistry.grackle_data_file);
     return FAIL;
   }
 
   Nz = H5Sget_simple_extent_npoints(dspace_id);
   if(Nz <= 0) {
-    fprintf(stderr,"Redshift dataset ('z') has inappropriate size = %lld in %s.\n",Nz,my_chemistry.grackle_data_file);
+    fprintf(stderr, "Redshift dataset ('z') has inappropriate size = %lld in %s.\n",
+            Nz, my_chemistry.grackle_data_file);
     return FAIL;
   }
 
@@ -125,78 +129,102 @@ int initialize_UVbackground_data(chemistry_data &my_chemistry)
 
 
   // *** Redshift ***
-  if(! read_dataset(file_id, "/UVBRates/z", my_chemistry.UVbackground_table.z) ) {
-    fprintf(stderr,"Error reading dataset 'z' in %s.\n",my_chemistry.grackle_data_file);
+  if(! read_dataset(file_id, "/UVBRates/z",
+                    my_chemistry.UVbackground_table.z) ) {
+    fprintf(stderr, "Error reading dataset 'z' in %s.\n",
+            my_chemistry.grackle_data_file);
     return FAIL;
   }
 
   // *** k24 ***
-  if(! read_dataset(file_id, "/UVBRates/Chemistry/k24", my_chemistry.UVbackground_table.k24) ) {
-    fprintf(stderr,"Error reading dataset '/UVBRates/Chemistry/k24' in %s.\n",my_chemistry.grackle_data_file);
+  if(! read_dataset(file_id, "/UVBRates/Chemistry/k24",
+                    my_chemistry.UVbackground_table.k24) ) {
+    fprintf(stderr, "Error reading dataset '/UVBRates/Chemistry/k24' in %s.\n",
+            my_chemistry.grackle_data_file);
     return FAIL;
   }
 
   // *** k25 ***
-  if(! read_dataset(file_id, "/UVBRates/Chemistry/k25", my_chemistry.UVbackground_table.k25) ) {
-    fprintf(stderr,"Error reading dataset '/UVBRates/Chemistry/k25' in %s.\n",my_chemistry.grackle_data_file);
+  if(! read_dataset(file_id, "/UVBRates/Chemistry/k25",
+                    my_chemistry.UVbackground_table.k25) ) {
+    fprintf(stderr, "Error reading dataset '/UVBRates/Chemistry/k25' in %s.\n",
+            my_chemistry.grackle_data_file);
     return FAIL;
   }
 
   // *** k26 ***
-  if(! read_dataset(file_id, "/UVBRates/Chemistry/k26", my_chemistry.UVbackground_table.k26) ) {
-    fprintf(stderr,"Error reading dataset '/UVBRates/Chemistry/k26' in %s.\n",my_chemistry.grackle_data_file);
+  if(! read_dataset(file_id, "/UVBRates/Chemistry/k26",
+                    my_chemistry.UVbackground_table.k26) ) {
+    fprintf(stderr, "Error reading dataset '/UVBRates/Chemistry/k26' in %s.\n",
+            my_chemistry.grackle_data_file);
     return FAIL;
   }
 
   if (my_chemistry.primordial_chemistry > 1) {
 
     // *** k27 ***
-    if(! read_dataset(file_id, "/UVBRates/Chemistry/k27", my_chemistry.UVbackground_table.k27) ) {
-      fprintf(stderr,"Error reading dataset '/UVBRates/Chemistry/k27' in %s.\n",my_chemistry.grackle_data_file);
+    if(! read_dataset(file_id, "/UVBRates/Chemistry/k27",
+                      my_chemistry.UVbackground_table.k27) ) {
+      fprintf(stderr, "Error reading dataset '/UVBRates/Chemistry/k27' in %s.\n",
+              my_chemistry.grackle_data_file);
       return FAIL;      
     }
 
     // *** k28 ***
-    if(! read_dataset(file_id, "/UVBRates/Chemistry/k28", my_chemistry.UVbackground_table.k28) ) {
-      fprintf(stderr,"Error reading dataset '/UVBRates/Chemistry/k28' in %s.\n",my_chemistry.grackle_data_file);
+    if(! read_dataset(file_id, "/UVBRates/Chemistry/k28",
+                      my_chemistry.UVbackground_table.k28) ) {
+      fprintf(stderr, "Error reading dataset '/UVBRates/Chemistry/k28' in %s.\n",
+              my_chemistry.grackle_data_file);
       return FAIL;      
     }
 
     // *** k29 ***
-    if(! read_dataset(file_id, "/UVBRates/Chemistry/k29", my_chemistry.UVbackground_table.k29) ) {
-      fprintf(stderr,"Error reading dataset '/UVBRates/Chemistry/k29' in %s.\n",my_chemistry.grackle_data_file);
+    if(! read_dataset(file_id, "/UVBRates/Chemistry/k29",
+                      my_chemistry.UVbackground_table.k29) ) {
+      fprintf(stderr, "Error reading dataset '/UVBRates/Chemistry/k29' in %s.\n",
+              my_chemistry.grackle_data_file);
       return FAIL;      
     }
 
     // *** k30 ***
-    if(! read_dataset(file_id, "/UVBRates/Chemistry/k30", my_chemistry.UVbackground_table.k30) ) {
-      fprintf(stderr,"Error reading dataset '/UVBRates/Chemistry/k30' in %s.\n",my_chemistry.grackle_data_file);
+    if(! read_dataset(file_id, "/UVBRates/Chemistry/k30",
+                      my_chemistry.UVbackground_table.k30) ) {
+      fprintf(stderr, "Error reading dataset '/UVBRates/Chemistry/k30' in %s.\n",
+              my_chemistry.grackle_data_file);
       return FAIL;      
     }
 
     // *** k31 ***
-    if(! read_dataset(file_id, "/UVBRates/Chemistry/k31", my_chemistry.UVbackground_table.k31) ) {
-      fprintf(stderr,"Error reading dataset '/UVBRates/Chemistry/k31' in %s.\n",my_chemistry.grackle_data_file);
+    if(! read_dataset(file_id, "/UVBRates/Chemistry/k31",
+                      my_chemistry.UVbackground_table.k31) ) {
+      fprintf(stderr, "Error reading dataset '/UVBRates/Chemistry/k31' in %s.\n",
+              my_chemistry.grackle_data_file);
       return FAIL;      
     }
     
   }
 
   // *** piHI ***
-  if(! read_dataset(file_id, "/UVBRates/Photoheating/piHI", my_chemistry.UVbackground_table.piHI) ) {
-    fprintf(stderr,"Error reading dataset '/UVBRates/Photoheating/piHI' in %s.\n",my_chemistry.grackle_data_file);
+  if(! read_dataset(file_id, "/UVBRates/Photoheating/piHI",
+                    my_chemistry.UVbackground_table.piHI) ) {
+    fprintf(stderr, "Error reading dataset '/UVBRates/Photoheating/piHI' in %s.\n",
+            my_chemistry.grackle_data_file);
     return FAIL;
   }
 
   // *** piHeII ***
-  if(! read_dataset(file_id, "/UVBRates/Photoheating/piHeII", my_chemistry.UVbackground_table.piHeII) ) {
-    fprintf(stderr,"Error reading dataset '/UVBRates/Photoheating/piHeII' in %s.\n",my_chemistry.grackle_data_file);
+  if(! read_dataset(file_id, "/UVBRates/Photoheating/piHeII",
+                    my_chemistry.UVbackground_table.piHeII) ) {
+    fprintf(stderr, "Error reading dataset '/UVBRates/Photoheating/piHeII' in %s.\n",
+            my_chemistry.grackle_data_file);
     return FAIL;
   }
 
   // *** piHeI ***
-  if(! read_dataset(file_id, "/UVBRates/Photoheating/piHeI", my_chemistry.UVbackground_table.piHeI) ) {
-    fprintf(stderr,"Error reading dataset '/UVBRates/Photoheating/piHeI' in %s.\n",my_chemistry.grackle_data_file);
+  if(! read_dataset(file_id, "/UVBRates/Photoheating/piHeI",
+                    my_chemistry.UVbackground_table.piHeI) ) {
+    fprintf(stderr, "Error reading dataset '/UVBRates/Photoheating/piHeI' in %s.\n",
+            my_chemistry.grackle_data_file);
     return FAIL;
   }
 
@@ -209,9 +237,11 @@ int initialize_UVbackground_data(chemistry_data &my_chemistry)
   my_chemistry.UVbackground_table.zmax = my_chemistry.UVbackground_table.z[Nz-1];
 
   // Print out some information about the dataset just read in.
-  printf("UV background information:\n");
-  printf("  %s\n",info_string);
-  printf("  z_min = %6.3f\n  z_max = %6.3f\n",my_chemistry.UVbackground_table.zmin,my_chemistry.UVbackground_table.zmax);
+  fprintf(stderr, "UV background information:\n");
+  fprintf(stderr, "  %s\n",info_string);
+  fprintf(stderr, "  z_min = %6.3f\n  z_max = %6.3f\n",
+          my_chemistry.UVbackground_table.zmin,
+          my_chemistry.UVbackground_table.zmax);
 
   // Set redshift on/off flags from data.
   my_chemistry.UVbackground_redshift_on     = my_chemistry.UVbackground_table.z[Nz-1];
@@ -219,10 +249,14 @@ int initialize_UVbackground_data(chemistry_data &my_chemistry)
   my_chemistry.UVbackground_redshift_off    = my_chemistry.UVbackground_table.zmin;
   my_chemistry.UVbackground_redshift_drop   = my_chemistry.UVbackground_table.zmin;
 
-  printf("Setting UVbackground_redshift_on to %f.\n", my_chemistry.UVbackground_redshift_on);
-  printf("Setting UVbackground_redshift_fullon to %f.\n", my_chemistry.UVbackground_redshift_fullon);
-  printf("Setting UVbackground_redshift_off to %f.\n", my_chemistry.UVbackground_redshift_off);
-  printf("Setting UVbackground_redshift_drop to %f.\n", my_chemistry.UVbackground_redshift_drop);
+  fprintf(stderr, "Setting UVbackground_redshift_on to %f.\n",
+          my_chemistry.UVbackground_redshift_on);
+  fprintf(stderr, "Setting UVbackground_redshift_fullon to %f.\n",
+          my_chemistry.UVbackground_redshift_fullon);
+  fprintf(stderr, "Setting UVbackground_redshift_off to %f.\n",
+          my_chemistry.UVbackground_redshift_off);
+  fprintf(stderr, "Setting UVbackground_redshift_drop to %f.\n",
+          my_chemistry.UVbackground_redshift_drop);
 
   return SUCCESS;
 }
@@ -236,13 +270,13 @@ gr_int read_dataset(hid_t file_id, char *dset_name, gr_float *buffer) {
 
   dset_id =  H5Dopen(file_id, dset_name);
   if (dset_id == h5_error) {
-    fprintf(stderr,"Failed to open dataset 'z'.\n");
+    fprintf(stderr, "Failed to open dataset 'z'.\n");
     return FAIL;
   }
 
   status = H5Dread(dset_id, HDF5_R8, H5S_ALL, H5S_ALL, H5P_DEFAULT, buffer);
   if (status == h5_error) {
-    fprintf(stderr,"Failed to read dataset 'z'.\n");
+    fprintf(stderr, "Failed to read dataset 'z'.\n");
     return FAIL;
   }
  
