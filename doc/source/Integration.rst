@@ -26,6 +26,12 @@ To run the example, make sure to add the path to the directory containing
 the installed **libgrackle.so** to your LD_LIBRARY_PATH (or 
 DYLD_LIBRARY_PATH on Mac).
 
+This document follows **example.C**, which details the use of the 
+full-featured grackle functions.  The **table_example.C** file illustrates 
+the use of the grackle with fully tabulated cooling functions only.  In 
+this mode, a simplified set of functions are available.  For information 
+on these, see :ref:`tabulated-mode`.
+
 Header Files
 ------------
 
@@ -310,5 +316,87 @@ Calculating the Gamma Field
                       e_density, metal_density,
                       gamma) == 0) {
     fprintf(stderr, "Error in calculate_gamma.\n");
+    return 0;
+  }
+
+.. _tabulated-mode:
+
+Pure Tabulated Mode
+-------------------
+
+If you only intend to run simulations using the fully tabulated cooling 
+(*primordial_chemistry* set to 0), then a simplified set of functions are 
+available.  These functions do not require pointers to be given for the 
+field arrays for the chemistry species densities.  See the 
+**table_example.C** file in the **src/example** directory for an example.
+
+.. note:: No simplified function is available for the calculation of the gamma field since gamma is only altered in Grackle by the presence of H\ :sub:`2`\.
+
+Solve the Cooling
++++++++++++++++++
+
+.. code-block:: c++
+
+  // some timestep (one million years)
+  gr_float dt = 3.15e7 * 1e6 / my_units.time_units;
+
+  if (solve_chemistry(my_chemistry, my_units,
+                      a_value, dt,
+                      grid_rank, grid_dimension,
+                      grid_start, grid_end,
+                      density, energy,
+                      x_velocity, y_velocity, z_velocity,
+                      metal_density) == 0) {
+    fprintf(stderr, "Error in solve_chemistry.\n");
+    return 0;
+  }
+
+Calculating the Cooling Time
+++++++++++++++++++++++++++++
+
+.. code-block:: c++
+
+  gr_float *cooling_time;
+  cooling_time = new gr_float[field_size];
+  if (calculate_cooling_time(my_chemistry, my_units,
+                             a_value,
+                             grid_rank, grid_dimension,
+                             grid_start, grid_end,
+                             density, energy,
+                             x_velocity, y_velocity, z_velocity,
+                             metal_density, 
+                             cooling_time) == 0) {
+    fprintf(stderr, "Error in calculate_cooling_time.\n");
+    return 0;
+  }
+
+Calculating the Temperature Field
++++++++++++++++++++++++++++++++++
+
+.. code-block:: c++
+
+  gr_float *temperature;
+  temperature = new gr_float[field_size];
+  if (calculate_temperature(my_chemistry, my_units,
+                            grid_rank, grid_dimension,
+                            density, energy,
+                            metal_density, 
+                            temperature) == 0) {
+    fprintf(stderr, "Error in calculate_temperature.\n");
+    return 0;
+  }
+
+Calculating the Pressure Field
+++++++++++++++++++++++++++++++
+
+.. code-block:: c++
+
+  gr_float *pressure;
+  pressure = new gr_float[field_size];
+  if (calculate_pressure(my_chemistry, my_units,
+                         grid_rank, grid_dimension,
+                         density, energy,
+                         pressure) == 0) {
+    fprintf(stderr, "Error in calculate_pressure.\n");
     return 0;
   }
