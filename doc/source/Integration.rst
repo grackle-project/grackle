@@ -3,17 +3,28 @@
 Adding Grackle to Your Simulation Code
 ======================================
 
-Example Executable
-------------------
+Example Executables
+-------------------
 
-The grackle source code contains a C++ example that links against the 
-grackle library.  The example is located in the **src/example** directory 
-and is called **example.C**.  If you have already installed the grackle 
-library, you should be able to build the example by simply typing *make*.  
-To run the example, copy the file, **CloudyData_UVB=HM2012.h5**, from the 
-**input** directory to the same directory as the example executable.  
-Also, make sure to add the path to the directory containing the installed 
-**libgrackle.so** to your LD_LIBRARY_PATH (or DYLD_LIBRARY_PATH on Mac).
+The grackle source code contains two C++ examples that links against the 
+grackle library.  They are located in the **src/example** directory 
+and are called **example.C** and **table_example.C**.  If you have already 
+installed the grackle library, you can build the examples by 
+typing:
+
+.. code-block:: bash
+
+  $ make example
+
+or
+
+.. code-block:: bash
+
+  $ make table_example
+
+To run the example, make sure to add the path to the directory containing 
+the installed **libgrackle.so** to your LD_LIBRARY_PATH (or 
+DYLD_LIBRARY_PATH on Mac).
 
 Header Files
 ------------
@@ -40,7 +51,7 @@ these data types are available.
 
     * *gr_int* - the integer data type.  This type is a 32 bit integer (int) if compiled with *integers-32* and a 64 bit integer (long int) if compiled with *integers-64*.
 
-    * *gr_float* - the floating point data type.  This type is a 32 bit float (float) if compiled with *precisions-32* and a 64 bit float (double) if compiled with *precision-64*.
+    * *gr_float* - the floating point data type.  This type is a 32 bit float (float) if compiled with *precision-32* and a 64 bit float (double) if compiled with *precision-64*.
 
 Code Units
 ----------
@@ -64,7 +75,16 @@ proper frame, *a_units* (units for the expansion factor) must be set to 1.0.
 If *comoving_coordinates* is set to 1, it is assumed that the fields being 
 passed to the solver are in the comoving frame.  Hence, the units must 
 convert from code units in the **comoving** frame to CGS in the **proper** 
-frame.  For an example of using comoving units, see the units system in the 
+frame.  
+
+.. note:: With *comoving_coordinate* set to 1, velocity units need to be defined in the following way.
+
+.. code-block:: c++
+
+  my_units.velocity_units = my_units.a_units * 
+    (my_units.length_units / a_value) / my_units.time_units; // since u = a * dx/dt
+
+For an example of using comoving units, see the units system in the 
 `Enzo <http://enzo-project.org/>`_ code.  For cosmological simualations, a 
 comoving unit system is preferred, though not required, since it allows the 
 densities to stay close to 1.0.

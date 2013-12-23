@@ -16,7 +16,7 @@ def set_cosmology_units(my_units, hubble_constant=0.704,
     time:        utim = 1 / sqrt(4 * \pi * G * \rho_0 * (1+zri)^3)
     density:     urho = \rho_0 * (1+z)^3
     length:      uxyz = (1 Mpc) * box / h / (1+z)
-    velocity:    uvel = uaye * uxyz / utim  (since u = a * dx/dt)
+    velocity:    uvel = uaye * (uxyz / a) / utim  (since u = a * dx/dt)
     (*)  temperature: utem = m_H * \mu / k * uvel**2
     a(t):        uaye = 1 / (1 + zri)
     
