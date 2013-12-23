@@ -192,6 +192,8 @@ created.
   // for metal_cooling = 1
   metal_density = new gr_float[field_size];
 
+.. note:: The electron mass density should be scaled by the ratio of the proton mass to the electron mass such that the electron density in the code is the electron number density times the **proton** mass.
+
 Calling the Available Functions
 -------------------------------
 
