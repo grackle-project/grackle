@@ -13,7 +13,7 @@ chemistry_data set_default_chemistry_parameters()
   chemistry_data my_chemistry;
 
   my_chemistry.Gamma                          = 5./3.;
-  my_chemistry.use_chemistry                  = FALSE;  // off
+  my_chemistry.use_grackle                    = FALSE;  // off
   my_chemistry.with_radiative_cooling         = TRUE;
   my_chemistry.primordial_chemistry           = FALSE;  // off
   my_chemistry.metal_cooling                  = FALSE;

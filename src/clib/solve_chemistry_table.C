@@ -48,7 +48,7 @@ int solve_chemistry(chemistry_data &my_chemistry,
                     gr_float *metal_density)
 {
 
-  if (!my_chemistry.use_chemistry)
+  if (!my_chemistry.use_grackle)
     return SUCCESS;
 
   if (my_chemistry.primordial_chemistry != 0) {

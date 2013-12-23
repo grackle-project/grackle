@@ -34,7 +34,7 @@ def test_equilibrium():
     current_redshift = 0.0
 
     my_chem = chemistry_data()
-    my_chem.use_chemistry = 1
+    my_chem.use_grackle = 1
     my_chem.with_radiative_cooling = 0
     my_chem.primordial_chemistry = 1
     my_chem.metal_cooling = 0

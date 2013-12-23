@@ -44,7 +44,7 @@ int calculate_gamma(chemistry_data &my_chemistry,
                     gr_float *my_gamma)
 {
 
-  if (!my_chemistry.use_chemistry)
+  if (!my_chemistry.use_grackle)
     return SUCCESS;
  
   gr_int i, size = 1;

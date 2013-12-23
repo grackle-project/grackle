@@ -28,7 +28,7 @@ int calculate_pressure(chemistry_data &my_chemistry,
                        gr_float *pressure)
 {
 
-  if (!my_chemistry.use_chemistry)
+  if (!my_chemistry.use_grackle)
     return SUCCESS;
 
   if (my_chemistry.primordial_chemistry != 0) {

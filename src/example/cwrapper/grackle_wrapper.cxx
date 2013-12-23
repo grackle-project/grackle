@@ -83,7 +83,7 @@ int wrap_init_cooling(double udensity, double ulength, double utime,
   // Second, create a chemistry object for parameters and rate data.
  my_chemistry  = set_default_chemistry_parameters();
   // Set parameter values for chemistry.
-  my_chemistry.use_chemistry = 1;          
+  my_chemistry.use_grackle = 1;          
   my_chemistry.with_radiative_cooling = 1;
   my_chemistry.primordial_chemistry = grackle_chemistry;   // molecular network with H, He, D
   my_chemistry.metal_cooling = 1;          // metal cooling on

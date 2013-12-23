@@ -49,7 +49,7 @@ int calculate_cooling_time(chemistry_data &my_chemistry,
                            gr_float *cooling_time)
 {
 
-  if (!my_chemistry.use_chemistry)
+  if (!my_chemistry.use_grackle)
     return SUCCESS;
 
   if (my_chemistry.primordial_chemistry != 0) {

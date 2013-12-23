@@ -17,7 +17,7 @@ from utilities.physical_constants import \
 
 # Set solver parameters
 my_chemistry = chemistry_data()
-my_chemistry.use_chemistry = 1
+my_chemistry.use_grackle = 1
 my_chemistry.with_radiative_cooling = 0
 my_chemistry.primordial_chemistry = 0
 my_chemistry.metal_cooling = 1

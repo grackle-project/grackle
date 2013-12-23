@@ -38,7 +38,7 @@ typedef struct
    *** chemistry and cooling parameters ***
    ****************************************/
 
-  gr_int use_chemistry; // 0) grackle off, 1) grackle on
+  gr_int use_grackle;  // 0) grackle off, 1) grackle on
   gr_int with_radiative_cooling; // include cooling in chemistry solver
                                  // 0) no, 1) yes
   gr_int primordial_chemistry; // 1) HI, HII, HeI, HeII, HeIII, e

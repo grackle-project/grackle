@@ -20,7 +20,7 @@ def test_proper_comoving_units():
 
         # comoving units
         chem_c = chemistry_data()
-        chem_c.use_chemistry = 1
+        chem_c.use_grackle = 1
         chem_c.with_radiative_cooling = 0
         chem_c.primordial_chemistry = 1
         chem_c.metal_cooling = 1
@@ -39,7 +39,7 @@ def test_proper_comoving_units():
 
         # proper units
         chem_p = chemistry_data()
-        chem_p.use_chemistry = 1
+        chem_p.use_grackle = 1
         chem_p.with_radiative_cooling = 0
         chem_p.primordial_chemistry = 1
         chem_p.metal_cooling = 1
@@ -75,7 +75,7 @@ def test_proper_comoving_units_tabular():
 
         # comoving units
         chem_c = chemistry_data()
-        chem_c.use_chemistry = 1
+        chem_c.use_grackle = 1
         chem_c.with_radiative_cooling = 0
         chem_c.primordial_chemistry = 0
         chem_c.metal_cooling = 1
@@ -94,7 +94,7 @@ def test_proper_comoving_units_tabular():
 
         # proper units
         chem_p = chemistry_data()
-        chem_p.use_chemistry = 1
+        chem_p.use_grackle = 1
         chem_p.with_radiative_cooling = 0
         chem_p.primordial_chemistry = 0
         chem_p.metal_cooling = 1
@@ -130,7 +130,7 @@ def test_proper_units():
 
         # proper units
         chem_1 = chemistry_data()
-        chem_1.use_chemistry = 1
+        chem_1.use_grackle = 1
         chem_1.with_radiative_cooling = 0
         chem_1.primordial_chemistry = 1
         chem_1.metal_cooling = 1
@@ -152,7 +152,7 @@ def test_proper_units():
 
         # proper units
         chem_2 = chemistry_data()
-        chem_2.use_chemistry = 1
+        chem_2.use_grackle = 1
         chem_2.with_radiative_cooling = 0
         chem_2.primordial_chemistry = 1
         chem_2.metal_cooling = 1

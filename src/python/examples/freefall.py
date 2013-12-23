@@ -19,7 +19,7 @@ tiny_number = 1e-20
      
 # Set solver parameters
 my_chemistry = chemistry_data()
-my_chemistry.use_chemistry = 1
+my_chemistry.use_grackle = 1
 my_chemistry.with_radiative_cooling = 1
 my_chemistry.primordial_chemistry = 3
 my_chemistry.metal_cooling = 1

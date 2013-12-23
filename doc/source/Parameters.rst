@@ -8,7 +8,7 @@ Parameters
 
 For all on/off integer flags, 0 is off and 1 is on.
 
-``use_chemistry`` (int)
+``use_grackle`` (int)
     Flag to activate the grackle machinery.  Default: 0.
 
 ``with_radiative_cooling`` (int)

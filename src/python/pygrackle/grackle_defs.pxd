@@ -6,7 +6,7 @@ cdef extern from "grackle_types.h":
 cdef extern from "chemistry_data.h":
     ctypedef struct c_chemistry_data "chemistry_data":
         gr_float Gamma
-        gr_int use_chemistry
+        gr_int use_grackle
         gr_int with_radiative_cooling
         gr_int primordial_chemistry
         gr_int metal_cooling

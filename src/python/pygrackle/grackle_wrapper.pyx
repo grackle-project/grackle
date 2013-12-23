@@ -21,11 +21,11 @@ cdef class chemistry_data:
         def __set__(self, val):
             self.data.Gamma = val
 
-    property use_chemistry:
+    property use_grackle:
         def __get__(self):
-            return self.data.use_chemistry
+            return self.data.use_grackle
         def __set__(self, val):
-            self.data.use_chemistry = val
+            self.data.use_grackle = val
 
     property with_radiative_cooling:
         def __get__(self):

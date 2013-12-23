@@ -36,7 +36,7 @@ int main(int argc, char *argv[])
   // Second, create a chemistry object for parameters and rate data.
   chemistry_data my_chemistry = set_default_chemistry_parameters();
   // Set parameter values for chemistry.
-  my_chemistry.use_chemistry = 1;          // chemistry on
+  my_chemistry.use_grackle = 1;            // chemistry on
   my_chemistry.with_radiative_cooling = 1; // cooling on
   my_chemistry.primordial_chemistry = 0;   // fully tabulated cooling
   my_chemistry.metal_cooling = 1;          // metal cooling on

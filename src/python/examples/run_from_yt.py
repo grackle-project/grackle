@@ -5,7 +5,7 @@ from pygrackle.fluid_container import _yt_to_grackle
 pf = load("IsolatedGalaxy/galaxy0030/galaxy0030")
 
 my_chemistry = chemistry_data()
-my_chemistry.use_chemistry = 1
+my_chemistry.use_grackle = 1
 my_chemistry.primordial_chemistry = 1
 my_chemistry.metal_cooling = 1
 my_chemistry.grackle_data_file = "CloudyData_noUVB.h5";

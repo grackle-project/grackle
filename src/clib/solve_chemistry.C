@@ -89,7 +89,7 @@ int solve_chemistry(chemistry_data &my_chemistry,
 
   /* Return if this doesn't concern us. */
 
-  if (!my_chemistry.use_chemistry)
+  if (!my_chemistry.use_grackle)
     return SUCCESS;
 
   /* Update UV background rates. */

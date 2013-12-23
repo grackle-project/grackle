@@ -61,7 +61,7 @@ int calculate_temperature(chemistry_data &my_chemistry,
                           gr_float *temperature)
 {
 
-  if (!my_chemistry.use_chemistry)
+  if (!my_chemistry.use_grackle)
     return SUCCESS;
 
   /* Compute the pressure first. */
