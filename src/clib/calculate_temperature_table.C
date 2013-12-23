@@ -37,6 +37,9 @@ int calculate_temperature(chemistry_data &my_chemistry,
 
   if (!my_chemistry.use_chemistry)
     return SUCCESS;
+
+  if (!my_chemistry.use_chemistry)
+    return SUCCESS;
  
   /* Compute the size of the fields. */
  

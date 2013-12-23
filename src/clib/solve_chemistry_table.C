@@ -48,6 +48,14 @@ int solve_chemistry(chemistry_data &my_chemistry,
                     gr_float *metal_density)
 {
 
+  if (!my_chemistry.use_chemistry)
+    return SUCCESS;
+
+  if (my_chemistry.primordial_chemistry != 0) {
+    fprintf(stderr, "ERROR: this function requires primordial_chemistry set to 0.\n");
+    return FAIL;
+  }
+
   gr_float *HI_density, *HII_density, *HM_density,
     *HeI_density, *HeII_density, *HeIII_density,
     *H2I_density, *H2II_density,

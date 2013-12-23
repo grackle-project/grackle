@@ -31,6 +31,11 @@ int calculate_pressure(chemistry_data &my_chemistry,
   if (!my_chemistry.use_chemistry)
     return SUCCESS;
 
+  if (my_chemistry.primordial_chemistry != 0) {
+    fprintf(stderr, "ERROR: this function requires primordial_chemistry set to 0.\n");
+    return FAIL;
+  }
+
   gr_float tiny_number = 1.e-20;
   gr_int i, size = 1;
   for (int dim = 0; dim < grid_rank; dim++)
