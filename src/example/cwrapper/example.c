@@ -1,8 +1,15 @@
-/**************************************************
+/***********************************************************************
 /
-/ Example executable using libgrackle.
+/ Example executable using libgrackle
 /
-**************************************************/
+/
+/ Copyright (c) 2013, Enzo/Grackle Development Team.
+/
+/ Distributed under the terms of the Enzo Public Licence.
+/
+/ The full license is in the file LICENSE, distributed with this 
+/ software.
+************************************************************************/
 
 #include <stdlib.h>
 #include <stdio.h>

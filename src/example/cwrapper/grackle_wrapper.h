@@ -1,3 +1,16 @@
+/***********************************************************************
+/
+/ Grackle c wrapper
+/
+/
+/ Copyright (c) 2013, Enzo/Grackle Development Team.
+/
+/ Distributed under the terms of the Enzo Public Licence.
+/
+/ The full license is in the file LICENSE, distributed with this 
+/ software.
+************************************************************************/
+
 #ifndef __WRAPGRACKLE_H__
 #define __WRAPGRACKLE_H__
 
