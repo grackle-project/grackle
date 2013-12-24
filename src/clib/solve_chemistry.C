@@ -1,16 +1,14 @@
 /***********************************************************************
 /
-/  GRID CLASS (SOLVE THE COOLING/HEATING AND RATE EQUATIONS)
+/ Solve the chemistry and cooling
 /
-/  written by: Greg Bryan
-/  date:       October, 1996
-/  modified1:  July, 2005 to solve cool and rate equations simultaneously
 /
-/  PURPOSE:
+/ Copyright (c) 2013, Enzo/Grackle Development Team.
 /
-/  RETURNS:
-/    SUCCESS or FAIL
+/ Distributed under the terms of the Enzo Public Licence.
 /
+/ The full license is in the file LICENSE, distributed with this 
+/ software.
 ************************************************************************/
 
 #include <stdio.h>

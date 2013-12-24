@@ -1,17 +1,14 @@
 /***********************************************************************
 /
-/  UPDATE UV BACKGROUND RATES BY INTERPOLATION FROM A TABLE
+/ Update UV background rates to current redshift
 /
-/  written by: Michael Kuhlen
-/  date:       October, 2012
 /
-/  based on Enzo's RadiationFieldCalculateRates.C (Greg Bryan, Pascal
-/  Paschos, Robert Harkness, Ji-hoon Kim)
+/ Copyright (c) 2013, Enzo/Grackle Development Team.
 /
-/  PURPOSE:    
+/ Distributed under the terms of the Enzo Public Licence.
 /
-/  RETURNS: SUCCESS or FAIL
-/
+/ The full license is in the file LICENSE, distributed with this 
+/ software.
 ************************************************************************/
 
 #include <string.h>

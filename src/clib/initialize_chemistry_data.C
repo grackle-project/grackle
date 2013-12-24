@@ -1,19 +1,14 @@
 /***********************************************************************
 /
-/  INITIALIZE THE MULTI-SPECIES RATES
+/ Initialize chemistry and cooling rate data
 /
-/  written by: Greg Bryan
-/  date:       October, 1996
-/  modified1:  Dan Reynolds, July 2010; added case-B recombination rates
-/  modified2:  Britton Smith, October 2010; moved reading/writing of 
-/              parameters to Read/WriteParameterFile.
 /
-/  PURPOSE:
-/    For multi-species runs (with cooling), initialize both the
-/      CoolData and RateData rate tables.
+/ Copyright (c) 2013, Enzo/Grackle Development Team.
 /
-/  RETURNS: SUCCESS or FAIL
+/ Distributed under the terms of the Enzo Public Licence.
 /
+/ The full license is in the file LICENSE, distributed with this 
+/ software.
 ************************************************************************/
  
 #include <string.h>

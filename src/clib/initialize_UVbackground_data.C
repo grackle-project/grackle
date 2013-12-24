@@ -1,17 +1,14 @@
 /***********************************************************************
 /
-/  INITIALIZE UV BACKGROUND DATA
+/ Initialize UV background data
 /
-/  written by: Michael Kuhlen
-/  date:       October, 2012
-/  modified1:  
 /
-/  PURPOSE:  Read in photo-ionization and photo-heating rates from
-/            a user-specified HDF5 file.
+/ Copyright (c) 2013, Enzo/Grackle Development Team.
 /
-/  RETURNS:
-/    SUCCESS or FAIL
+/ Distributed under the terms of the Enzo Public Licence.
 /
+/ The full license is in the file LICENSE, distributed with this 
+/ software.
 ************************************************************************/
 
 #include <math.h>

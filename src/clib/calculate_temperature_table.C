@@ -1,15 +1,14 @@
 /***********************************************************************
 /
-/  GRID CLASS (COMPUTE THE TEMPERATURE FIELD)
+/ Calculate temperature field (tabulated cooling function)
 /
-/  written by: Greg Bryan
-/  date:       April, 1995
-/  modified1:
 /
-/  PURPOSE:
+/ Copyright (c) 2013, Enzo/Grackle Development Team.
 /
-/  RETURNS:
+/ Distributed under the terms of the Enzo Public Licence.
 /
+/ The full license is in the file LICENSE, distributed with this 
+/ software.
 ************************************************************************/
  
 #include <stdlib.h>

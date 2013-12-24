@@ -1,15 +1,14 @@
 /***********************************************************************
 /
-/  GRID CLASS (COMPUTE THE GAMMA FIELD)
+/ Calculate gamma (ratio of specific heats) field
 /
-/  written by: Greg Bryan
-/  date:       May, 1999
-/  modified1:
 /
-/  PURPOSE:
+/ Copyright (c) 2013, Enzo/Grackle Development Team.
 /
-/  RETURNS:
+/ Distributed under the terms of the Enzo Public Licence.
 /
+/ The full license is in the file LICENSE, distributed with this 
+/ software.
 ************************************************************************/
 
 #include <stdlib.h>

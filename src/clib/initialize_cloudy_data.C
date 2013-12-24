@@ -1,21 +1,14 @@
 /***********************************************************************
 /
-/  INITIALIZE CLOUDY DATA
+/ Initialize Cloudy cooling data
 /
-/  written by: Britton Smith
-/  date:       November, 2005
-/  modified1:  May, 2009
-/              Converted Cloudy table format from ascii to hdf5.
 /
-/  PURPOSE:  Read in heating, cooling, and mean molecular weight values 
-/            from file.
-/  Rank = 1: interpolate over temperature.
-/  Rank = 2: interpolate over density and temperature.
-/  Rank = 3: interpolate over density, redshift, and temperature.
+/ Copyright (c) 2013, Enzo/Grackle Development Team.
 /
-/  RETURNS:
-/    SUCCESS or FAIL
+/ Distributed under the terms of the Enzo Public Licence.
 /
+/ The full license is in the file LICENSE, distributed with this 
+/ software.
 ************************************************************************/
 
 #include <math.h>

@@ -1,3 +1,12 @@
+===========================
+The Grackle licensing terms
+===========================
+
+The Grackle is licensed under the The Enzo Public License, which is 
+BSD-like and is provided below.
+
+Copyright (c) 2013-, Enzo/Grackle development team.
+
 = Enzo Public License =
 
 ---------------- 
@@ -72,3 +81,13 @@ INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
 CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF 
 THE POSSIBILITY OF SUCH DAMAGE.
+
+Grackle History and Development Team
+------------------------------------
+
+The core Grackle functionality originated as the chemistry and cooling 
+module of the Enzo simulation code.  Enzo was originally written by 
+Greg Bryan and is now developed by a large team of researchers comprising 
+the Enzo development team.  The chemistry and cooling modules were first 
+extracted from Enzo to make the Grackle library by Britton Smith and is 
+developed by members of the Enzo development team.
