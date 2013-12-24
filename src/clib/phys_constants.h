@@ -1,3 +1,16 @@
+/***********************************************************************
+/
+/ Physical constants
+/
+/
+/ Copyright (c) 2013, Enzo/Grackle Development Team.
+/
+/ Distributed under the terms of the Enzo Public Licence.
+/
+/ The full license is in the file LICENSE, distributed with this 
+/ software.
+************************************************************************/
+
 #ifndef __g_phys_constants_h__
 #define __g_phys_constants_h__
 /***********************************************************************
