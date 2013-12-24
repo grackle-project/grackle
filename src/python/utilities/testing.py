@@ -1,3 +1,16 @@
+########################################################################
+#
+# Testing imports
+#
+#
+# Copyright (c) 2013, Enzo/Grackle Development Team.
+#
+# Distributed under the terms of the Enzo Public Licence.
+#
+# The full license is in the file LICENSE, distributed with this 
+# software.
+########################################################################
+
 import numpy as np
 from numpy.testing import assert_array_equal, assert_almost_equal, \
     assert_approx_equal, assert_array_almost_equal, assert_equal, \
