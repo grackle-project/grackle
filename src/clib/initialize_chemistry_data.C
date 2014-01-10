@@ -22,7 +22,8 @@
 
 int initialize_cloudy_data(chemistry_data &my_chemistry,
                            cloudy_data &my_cloudy, char *group_name,
-                           code_units &my_units, gr_float a_value);
+                           code_units &my_units, gr_float a_value,
+                           int read_data);
 
 int initialize_UVbackground_data(chemistry_data &my_chemistry);
 
@@ -205,18 +206,22 @@ int initialize_chemistry_data(chemistry_data &my_chemistry,
      my_chemistry.mu, &ioutput);
 
   /* Initialize Cloudy cooling. */
+  int read_data;
+
   /* Primordial tables. */
+  read_data = my_chemistry.primordial_chemistry == 0;
   if (initialize_cloudy_data(my_chemistry, my_chemistry.cloudy_primordial,
                              "Primordial",
-                             my_units, a_value) == FAIL) {
+                             my_units, a_value, read_data) == FAIL) {
     fprintf(stderr, "Error in initialize_cloudy_data.\n");
     return FAIL;
   }
 
   /* Metal tables. */
+  read_data = my_chemistry.metal_cooling == TRUE;
   if (initialize_cloudy_data(my_chemistry, my_chemistry.cloudy_metal,
                              "Metals",
-                             my_units, a_value) == FAIL) {
+                             my_units, a_value, read_data) == FAIL) {
     fprintf(stderr, "Error in initialize_cloudy_data.\n");
     return FAIL;
   }
