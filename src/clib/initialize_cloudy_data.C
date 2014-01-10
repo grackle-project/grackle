@@ -27,7 +27,7 @@
 int initialize_cloudy_data(chemistry_data &my_chemistry,
                            cloudy_data &my_cloudy, char *group_name,
                            code_units &my_units, gr_float a_value,
-                           int read_data)
+                           gr_int read_data)
 {
 
   gr_int q, w;

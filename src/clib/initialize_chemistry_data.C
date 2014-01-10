@@ -23,7 +23,7 @@
 int initialize_cloudy_data(chemistry_data &my_chemistry,
                            cloudy_data &my_cloudy, char *group_name,
                            code_units &my_units, gr_float a_value,
-                           int read_data);
+                           gr_int read_data);
 
 int initialize_UVbackground_data(chemistry_data &my_chemistry);
 
@@ -206,7 +206,7 @@ int initialize_chemistry_data(chemistry_data &my_chemistry,
      my_chemistry.mu, &ioutput);
 
   /* Initialize Cloudy cooling. */
-  int read_data;
+  gr_int read_data;
 
   /* Primordial tables. */
   read_data = my_chemistry.primordial_chemistry == 0;
