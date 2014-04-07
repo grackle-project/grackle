@@ -99,6 +99,45 @@
 	$(error Illegal value '$(CONFIG_PRECISION)' for $$(CONFIG_PRECISION))
     endif
 
+#-----------------------------------------------------------------------
+# DETERMINE DYNAMIC OR STATIC BUILD
+#-----------------------------------------------------------------------
+
+    ERROR_SHARED = 1
+
+    # Settings dynamic build
+
+    ifeq ($(CONFIG_SHARED),yes)
+        ERROR_SHARED = 0
+        ASSEMBLE_LD  = $(MACH_LD_NOMPI)
+        ASSEMBLE_LDOUTPUT_FLAGS = -o
+        ASSEMBLE_LDFLAGS = $(MACH_LDFLAGS) \
+                           $(ASSEMBLE_OPT_FLAGS)
+        ASSEMBLE_LIBS = $(MACH_LIBS)
+        MACH_SHARED_FLAGS = -shared
+        MACH_SHARED_EXT = so
+    endif
+
+    # Settings for 64-bit floating point baryon shared
+
+    ifeq ($(CONFIG_SHARED),no)
+        ERROR_SHARED = 0
+        ASSEMBLE_LD  = $(MACH_AR)
+        ASSEMBLE_LDOUTPUT_FLAGS =
+        ASSEMBLE_LDFLAGS = $(MACH_ARFLAGS)
+        ASSEMBLE_LIBS =
+        MACH_SHARED_FLAGS =
+        MACH_SHARED_EXT = a
+    endif
+
+    # error if CONFIG_SHARED is incorrect
+
+    ifeq ($(ERROR_SHARED),1)
+       .PHONY: error_shared
+       error_shared:
+	$(error Illegal value '$(CONFIG_SHARED)' for $$(CONFIG_SHARED))
+    endif
+
 #=======================================================================
 # COMPILERS
 #=======================================================================
@@ -110,8 +149,7 @@
     ASSEMBLE_CC  = $(MACH_CC_NOMPI)
     ASSEMBLE_CXX = $(MACH_CXX_NOMPI)
     ASSEMBLE_FC  = $(MACH_FC_NOMPI)
-    ASSEMBLE_F90 = $(MACH_F90_NOMPI)
-    ASSEMBLE_LD  = $(MACH_LD_NOMPI)
+    ASSEMBLE_F90 = $(MACH_F90_NOMPI)    
 
 #-----------------------------------------------------------------------
 # DETERMINE OPTIMIZATION LEVEL SETTINGS
@@ -190,8 +228,8 @@
                $(ASSEMBLE_PRECISION_FFLAGS) \
                $(ASSEMBLE_INTEGER_FFLAGS) \
                $(ASSEMBLE_OPT_FLAGS)
-    LDFLAGS  = $(MACH_LDFLAGS) \
-               $(ASSEMBLE_OPT_FLAGS)
+    LDFLAGS  = $(ASSEMBLE_LDFLAGS)
+    LDOUTPUT_FLAGS = $(ASSEMBLE_LDOUTPUT_FLAGS)
 
     DEFINES = $(MACH_DEFINES) \
               $(ASSEMBLE_INTEGER_DEFINES) \
@@ -201,14 +239,9 @@
     INCLUDES = $(MACH_INCLUDES) \
                $(MAKEFILE_INCLUDES)   -I.
 
-    OBJS_LIB = $(OBJS_CONFIG_LIB) \
-    	       $(OBJS_PHOTON_LIB) \
-    	       $(OBJS_LCAPERF_LIB) \
-	       $(OBJS_HYDRO_RK) \
-	       $(OBJS_ECUDA_LIB) \
-	       $(OBJS_PYTHON) 
+    OBJS_LIB = $(OBJS_CONFIG_LIB)
 
-    LIBS = $(MACH_LIBS)
+    LIBS = $(ASSEMBLE_LIBS)
 
 #=======================================================================
 # INSTALLATION TARGETS
