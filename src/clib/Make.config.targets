@@ -76,7 +76,7 @@ show-config:
 	@echo "   CONFIG_PRECISION  [precision-{32,64}]                     : $(CONFIG_PRECISION)"
 	@echo "   CONFIG_INTEGERS  [integers-{32,64}]                       : $(CONFIG_INTEGERS)" 
 	@echo "   CONFIG_OPT  [opt-{warn,debug,cudadebug,high,aggressive}]  : $(CONFIG_OPT)"
-	@echo "   CONFIG_OPT  [opt-{yes,no}]                                : $(CONFIG_SHARED)"
+	@echo "   CONFIG_SHARED  [shared-{yes,no}]                          : $(CONFIG_SHARED)"
 
 	@echo
 
