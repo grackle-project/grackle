@@ -123,8 +123,8 @@
     ifeq ($(CONFIG_SHARED),no)
         ERROR_SHARED = 0
         ASSEMBLE_LD  = $(MACH_AR)
-        ASSEMBLE_LDOUTPUT_FLAGS =
-        ASSEMBLE_LDFLAGS = $(MACH_ARFLAGS)
+        ASSEMBLE_LDOUTPUT_FLAGS = rcs
+        ASSEMBLE_LDFLAGS =
         ASSEMBLE_LIBS =
         MACH_SHARED_FLAGS =
         MACH_SHARED_EXT = a
