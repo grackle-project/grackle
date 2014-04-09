@@ -24,6 +24,7 @@ MACH_CXX_NOMPI = # C++ compiler
 MACH_FC_NOMPI  = # Fortran 77
 MACH_F90_NOMPI = # Fortran 90
 MACH_LD_NOMPI  = # Linker
+MACH_AR        = # archiver (for static libraries)
 
 #-----------------------------------------------------------------------
 # Machine-dependent defines
