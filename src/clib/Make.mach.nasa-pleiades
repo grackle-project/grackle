@@ -38,7 +38,6 @@ MACH_LD_NOMPI  = icpc
 # Install paths (local variables)
 #-----------------------------------------------------------------------
 
-LOCAL_MPI_INSTALL    = /nasa/sgi/mpt/2.06rp16
 LOCAL_HDF5_INSTALL   = $(YT_DEST)
 LOCAL_PYTHON_INSTALL = $(YT_DEST)
 LOCAL_COMPILER_DIR    = /nasa/intel/Compiler/2013.5.192/
@@ -99,7 +98,6 @@ LOCAL_LIBS_FC     = -L$(LOCAL_COMPILER_DIR)/lib/intel64
 LOCAL_LIBS_MACH = -L$(LOCAL_COMPILER_DIR)/lib/intel64 -lm -lifcore -lifport
 
 MACH_LIBS         = $(LOCAL_LIBS_HDF5) $(LOCAL_LIBS_MACH) #$(LOCAL_LIBS_PYTHON)
-MACH_LIBS_MPI     = $(LOCAL_LIBS_MPI)
 
 #-----------------------------------------------------------------------
 # Installation
