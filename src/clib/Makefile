@@ -76,9 +76,6 @@ include $(MAKE_CONFIG_OVERRIDE)
 # MACH_INSTALL_* variables are defined there.
 #-----------------------------------------------------------------------
 
-MACH_SHARED_EXT=so
-MACH_SHARED_FLAGS=-shared
-
 -include $(GRACKLE_DIR)/Make.mach.$(CONFIG_MACHINE)
 -include $(HOME)/.grackle/Make.mach.$(CONFIG_MACHINE)
 
@@ -111,11 +108,11 @@ lib: libgrackle.$(MACH_SHARED_EXT)
 libgrackle.$(MACH_SHARED_EXT): $(MODULES) autogen dep $(OBJS_LIB) MACHNOTES
 	@rm -f $@
 	@echo "Linking"
-	-@$(LD) $(LDFLAGS) $(SHARED_OPT) -o $@ $(OBJS_LIB) $(LIBS) $(LIB_INSTALL_FLAGS) >& $(OUTPUT)
+	-@$(LD) $(LDFLAGS) $(LDOUTPUT_FLAGS) $@ $(OBJS_LIB) $(LIBS) $(LIB_INSTALL_FLAGS) >& $(OUTPUT)
 	@(if [ -e $@ ]; then \
 	   echo "Success!"; \
 	else \
-	   echo "$(LD) $(LDFLAGS) $(SHARED_OPT) -o $*.$(MACH_SHARED_EXT) $*.o $(OBJS_LIB) $(LIBS) $(LIB_INSTALL_FLAGS)" >> temp1; \
+	   echo "$(LD) $(LDFLAGS) $(LDOUTPUT_FLAGS) $*.$(MACH_SHARED_EXT) $*.o $(OBJS_LIB) $(LIBS) $(LIB_INSTALL_FLAGS)" >> temp1; \
 	   cat temp1 $(OUTPUT) > temp2; \
 	   rm -f temp1; \
 	   mv -f temp2 $(OUTPUT); \
@@ -128,11 +125,11 @@ MACHNOTES:
 lib%.$(MACH_SHARED_EXT): $(MODULES) autogen dep $(OBJS_LIB)
 	@rm -f $@
 	@echo "Linking"
-	-@$(LD) $(LDFLAGS) $(SHARED_OPT) -o $@ $(OBJS_LIB) $(LIBS) >& $(OUTPUT)
+	-@$(LD) $(LDFLAGS) $(LDOUTPUT_FLAGS) $@ $(OBJS_LIB) $(LIBS) $(LIB_INSTALL_FLAGS) >& $(OUTPUT)
 	@(if [ -e $@ ]; then \
 	   echo "Success!"; \
 	else \
-	   echo "$(LD) $(LDFLAGS) $(SHARED_OPT) -o $*.$(MACH_SHARED_EXT) $*.o $(OBJS_LIB) $(LIBS)" >> temp1; \
+	   echo "$(LD) $(LDFLAGS) $(LDOUTPUT_FLAGS) $*.$(MACH_SHARED_EXT) $*.o $(OBJS_LIB) $(LIBS) $(LIB_INSTALL_FLAGS)" >> temp1; \
 	   cat temp1 $(OUTPUT) > temp2; \
 	   rm -f temp1; \
 	   mv -f temp2 $(OUTPUT); \

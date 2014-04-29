@@ -32,6 +32,7 @@ MACH_CXX_NOMPI = g++ # C++ compiler
 MACH_FC_NOMPI  = gfortran # Fortran 77
 MACH_F90_NOMPI = gfortran # Fortran 90
 MACH_LD_NOMPI  = g++ # Linker
+MACH_AR        = ar
 
 #-----------------------------------------------------------------------
 # Machine-dependent defines

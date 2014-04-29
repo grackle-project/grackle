@@ -35,6 +35,11 @@ help-config:
 	@echo "      make opt-high"
 	@echo "      make opt-aggressive"
 	@echo
+	@echo "   Set shared or static library compilation."
+	@echo
+	@echo "      make shared-yes (dynamic)"
+	@echo "      make shared-no (static)"
+	@echo
 
 #-----------------------------------------------------------------------
 
@@ -71,6 +76,7 @@ show-config:
 	@echo "   CONFIG_PRECISION  [precision-{32,64}]                     : $(CONFIG_PRECISION)"
 	@echo "   CONFIG_INTEGERS  [integers-{32,64}]                       : $(CONFIG_INTEGERS)" 
 	@echo "   CONFIG_OPT  [opt-{warn,debug,cudadebug,high,aggressive}]  : $(CONFIG_OPT)"
+	@echo "   CONFIG_SHARED  [shared-{yes,no}]                          : $(CONFIG_SHARED)"
 
 	@echo
 
@@ -211,6 +217,23 @@ CONFIG_OPT-%: suggest-clean
         mv $${tmp} $(MAKE_CONFIG_OVERRIDE); \
         echo "CONFIG_OPT = $*" >> $(MAKE_CONFIG_OVERRIDE); \
 	$(MAKE)  show-config | grep CONFIG_OPT; \
+	echo
+
+#-----------------------------------------------------------------------
+
+VALID_SHARED = shared-yes shared-no
+.PHONY: $(VALID_SHARED)
+
+shared-yes: CONFIG_SHARED-yes
+shared-no: CONFIG_SHARED-no
+shared-%:
+	@printf "\n\tInvalid target: $@\n\n\tValid targets: [$(VALID_SHARED)]\n\n"
+CONFIG_SHARED-%: suggest-clean
+	@tmp=.config.temp; \
+        grep -v CONFIG_SHARED $(MAKE_CONFIG_OVERRIDE) > $${tmp}; \
+        mv $${tmp} $(MAKE_CONFIG_OVERRIDE); \
+        echo "CONFIG_SHARED = $*" >> $(MAKE_CONFIG_OVERRIDE); \
+	$(MAKE)  show-config | grep CONFIG_SHARED; \
 	echo
 
 #-----------------------------------------------------------------------
