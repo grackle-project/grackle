@@ -166,18 +166,11 @@ c     set HeIII recombination rate as either case A or case B
       
       k7 = 6.77d-15*T_eV**0.8779d0 / kunit
       
-      IF (T_eV .GT. 0.1d0) THEN
-         k8 = exp(-20.06913897587003d0
-     &        + 0.2289800603272916d0*log_T_eV
-     &        + 0.03599837721023835d0*log_T_eV**2
-     &        - 0.004555120027032095d0*log_T_eV**3
-     &        - 0.0003105115447124016d0*log_T_eV**4
-     &        + 0.0001073294010367247d0*log_T_eV**5
-     &        - 8.36671960467864d-6*log_T_eV**6
-     &        + 2.238306228891639d-7*log_T_eV**7) / kunit
-      ELSE
-         k8 = 1.43d-9 / kunit
-      ENDIF
+      k8 = 1.35d-9*(T**9.8493d-2 + 3.2852d-1
+     &   * T**5.5610d-1 + 2.771d-7 * T**2.1826d0)
+     &   / (1d0 + 6.191d-3 * T**1.0461d0
+     &   + 8.9712d-11 * T**3.0424d0
+     &   + 3.2576d-14 * T**3.7741d0) / kunit
       
       k9 = 1.85d-23*T**1.8d0 / kunit
       IF (T .GT. 6.7d3) 
@@ -249,7 +242,7 @@ C     k12 = 4.38e-10*exp(-102000.0/T)*T**0.35 / kunit
          k15 = 2.56d-9*T_eV**1.78186d0 / kunit
       ENDIF
       
-      k16 = 6.5d-9/sqrt(T_eV) / kunit
+      k16 = 2.4d-6*(1d0+T/2d4)/sqrt(T) / kunit
       
       k17 = 1.d-8*T**(-0.4d0) / kunit
       IF (T .GT. 1.0d4)

@@ -503,18 +503,11 @@ c       Molecular hydrogen and associated rates
 c
         k7a(i) = 6.77d-15*tev**0.8779d0 / kunit
 c
-        if (tev .gt. 0.1d0) then
-          k8a(i) = exp(-20.06913897587003d0
-     &           + 0.2289800603272916d0*logtev
-     &           + 0.03599837721023835d0*logtev**2
-     &           - 0.004555120027032095d0*logtev**3
-     &           - 0.0003105115447124016d0*logtev**4
-     &           + 0.0001073294010367247d0*logtev**5
-     &           - 8.36671960467864d-6*logtev**6
-     &           + 2.238306228891639d-7*logtev**7) / kunit
-        else
-          k8a(i) = 1.43d-9 / kunit
-        endif
+        k8a(i) = 1.35d-9*(ttt**9.8493d-2 + 3.2852d-1
+     &         * ttt**5.5610d-1 + 2.771d-7 * ttt**2.1826d0)
+     &         / (1d0 + 6.191d-3 * ttt**1.0461d0
+     &         + 8.9712d-11 * ttt**3.0424d0
+     &         + 3.2576d-14 * ttt**3.7741d0) / kunit
 c
         k9a(i) = 1.85d-23*ttt**1.8d0 / kunit
         if(ttt .gt. 6.7d3) 
@@ -574,7 +567,7 @@ c
           k15a(i) = 2.56d-9*tev**1.78186d0 / kunit
         endif
 c
-        k16a(i) = 6.5d-9/sqrt(tev) / kunit
+        k16a(i) = 2.4d-6*(1d0+ttt/2d4)/sqrt(ttt) / kunit
 c
         k17a(i) = 1.0d-8*ttt**(-0.4d0) / kunit
         if(ttt.gt.1.0d4)
