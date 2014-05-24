@@ -927,14 +927,16 @@ c     f) HD cooling
 c
 c        HD Cooling Function (ergs cm3 /s)
 c
-c Fit to Lepp and Shull 1984 LTE (ergs/s) -> hdlte (ergs cm3/s)
+c Fit from Coppola et al 2011 LTE (ergs/s) -> hdlte (ergs cm3/s)
 c
-      hdltea(i) = -35.6998d0 + 15.35716d0*dlog10(ttt) -
-     &            5.58513d0   * (dlog10(ttt))**2 +
-     &            0.8561149d0 * (dlog10(ttt))**3 - 
-     &            1.75538d-2  * (dlog10(ttt))**4
+      tm  = max(ttt, 10.0d0)
+      tm  = min(tm, 3.d4)
+      hdltea(i) = -55.5725d0 + 56.649d0 * dlog10(tm) -
+     &            37.9102d0  * (dlog10(tm))**2 + 
+     &            12.698d0   * (dlog10(tm))**3 - 
+     &            2.02424d0  * (dlog10(tm))**4 + 
+     &            0.122393d0 * (dlog10(tm))**5
       hdltea(i) = (10.d0**min(hdltea(i), 0.d0)) / coolunit
-c      hdlte=10**lhdlte/den
 c
 c Galli and Palla 1998 low density limit (erg cm3 /s)
 c  uses HD-He collisional data, so reduced by 1.27
