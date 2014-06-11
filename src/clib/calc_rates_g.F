@@ -501,7 +501,7 @@ c       compute the HeIII rec. rate using either the case A or case B formula
 c
 c       Molecular hydrogen and associated rates
 c
-        k7a(i) = 6.77d-15*tev**0.8779d0 / kunit
+        k7a(i) = 3.0d-16 * (ttt/3.d2)**0.95d0 * exp(-ttt/9.32d3) / kunit
 c
         k8a(i) = 1.35d-9*(ttt**9.8493d-2 + 3.2852d-1
      &         * ttt**5.5610d-1 + 2.771d-7 * ttt**2.1826d0)

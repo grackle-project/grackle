@@ -164,8 +164,8 @@ c     set HeIII recombination rate as either case A or case B
      $        **0.7d0) / kunit
       ENDIF
       
-      k7 = 6.77d-15*T_eV**0.8779d0 / kunit
-      
+      k7 = 3.0d-16 * (T/3.d2)**0.95d0 * exp(-T/9.32d3) / kunit
+
       k8 = 1.35d-9*(T**9.8493d-2 + 3.2852d-1
      &   * T**5.5610d-1 + 2.771d-7 * T**2.1826d0)
      &   / (1d0 + 6.191d-3 * T**1.0461d0
