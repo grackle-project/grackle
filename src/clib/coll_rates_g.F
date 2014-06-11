@@ -163,9 +163,17 @@ c     set HeIII recombination rate as either case A or case B
          k6 = 3.36d-10/sqrt(T)/(T/1.d3)**0.2d0/(1+(T/1.d6)
      $        **0.7d0) / kunit
       ENDIF
-      
+
+c     H- formation by radiative association: HI + e -> H2I + gamma.
+c     Fit from Stancil, Lepp & Dalgarno (1998, ApJ, 509, 1), based
+c     on photodetachment cross-section of Wishart (1979, MNRAS, 187, P59)
+c
       k7 = 3.0d-16 * (T/3.d2)**0.95d0 * exp(-T/9.32d3) / kunit
 
+c     H- destruction by associative detachment with HI: HM + HI -> H2I + e
+c     This fit is from Kreckel et al (2010, Science, 329, 69), based on their
+c     experimental measurements of the process.
+c
       k8 = 1.35d-9*(T**9.8493d-2 + 3.2852d-1
      &   * T**5.5610d-1 + 2.771d-7 * T**2.1826d0)
      &   / (1d0 + 6.191d-3 * T**1.0461d0
@@ -241,7 +249,13 @@ C     k12 = 4.38e-10*exp(-102000.0/T)*T**0.35 / kunit
       ELSE
          k15 = 2.56d-9*T_eV**1.78186d0 / kunit
       ENDIF
-      
+
+c     H- destruction by mutual neutralization with HII: HM + HII -> 2H
+c     Fit from Croft et al (1999, MNRAS, 304, 327), based on the cross-section
+c     of Fussen & Kubach (1986, J. Phys. B, 18 L31). This fit agrees well
+c     with recent measurements of the rate by X. Urbain & collaborators, to
+c     within experimental error
+c            
       k16 = 2.4d-6*(1d0+T/2d4)/sqrt(T) / kunit
       
       k17 = 1.d-8*T**(-0.4d0) / kunit

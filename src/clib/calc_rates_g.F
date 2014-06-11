@@ -501,7 +501,15 @@ c       compute the HeIII rec. rate using either the case A or case B formula
 c
 c       Molecular hydrogen and associated rates
 c
+c       H- formation by radiative association: HI + e -> H2I + gamma.
+c       Fit from Stancil, Lepp & Dalgarno (1998, ApJ, 509, 1), based
+c       on photodetachment cross-section of Wishart (1979, MNRAS, 187, P59)       
+c
         k7a(i) = 3.0d-16 * (ttt/3.d2)**0.95d0 * exp(-ttt/9.32d3) / kunit
+c
+c       H- destruction by associative detachment with HI: HM + HI -> H2I + e
+c       This fit is from Kreckel et al (2010, Science, 329, 69), based on their
+c       experimental measurements of the process. 
 c
         k8a(i) = 1.35d-9*(ttt**9.8493d-2 + 3.2852d-1
      &         * ttt**5.5610d-1 + 2.771d-7 * ttt**2.1826d0)
@@ -566,6 +574,12 @@ c
         else
           k15a(i) = 2.56d-9*tev**1.78186d0 / kunit
         endif
+c
+c       H- destruction by mutual neutralization with HII: HM + HII -> 2H
+c       Fit from Croft et al (1999, MNRAS, 304, 327), based on the cross-section
+c       of Fussen & Kubach (1986, J. Phys. B, 18 L31). This fit agrees well
+c       with recent measurements of the rate by X. Urbain & collaborators, to
+c       within experimental error
 c
         k16a(i) = 2.4d-6*(1d0+ttt/2d4)/sqrt(ttt) / kunit
 c
@@ -890,6 +904,10 @@ c
 c
 c Excitation by H+
 c
+c Revised rate, using new collisional excitation rates from
+c Honvault et al (2011, Phys. Rev. Lett., 107, 023201) and
+c Honvault et al (2012, Phys. Rev. Lett., 108, 109903).
+c
       gaHpa(i) = 10.d0**(-22.089523
      &         + 1.5714711   * lt3
      &         + 0.015391166 * lt3**2
@@ -898,6 +916,9 @@ c
      &         + 0.32168730  * lt3**5) / coolunit
 c
 c Excitation by electrons
+c
+c Revised rate, based on data from  Yoon et al (2008,
+c J. Phys. Chem. Ref. Data, 37, 913).
 c
       if (tm .lt. 100) then
         gaela(i) = 0d0
