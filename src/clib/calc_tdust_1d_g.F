@@ -73,8 +73,6 @@
      &     bi_t_mid(in), bi_t_high(in)
       logical nm_itmask(in), bi_itmask(in)
 
-      double precision sola, solb, solpa, solpb
-
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
 !=======================================================================
 
@@ -149,19 +147,9 @@
      &              (gasgr(i) * nh(i) * 
      &              (tgas(i) - tdustnow(i)))
 
-               sola = radf * kgr(i) * 
-     &              (trad4 - tdustnow(i)**4)
-               solb = (gasgr(i) * nh(i) * 
-     &              (tgas(i) - tdustnow(i)))
-
                solplus(i) = radf * kgrplus(i) * 
      &              (trad4 - tdplus(i)**4) +
      &              (gasgr(i) * nh(i) * 
-     &              (tgas(i) - tdplus(i)))
-
-               solpa = radf * kgrplus(i) * 
-     &              (trad4 - tdplus(i)**4)
-               solpb = (gasgr(i) * nh(i) * 
      &              (tgas(i) - tdplus(i)))
 
                slope(i) = (solplus(i) - sol(i)) / 
