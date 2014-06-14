@@ -20,10 +20,11 @@
 #include "phys_constants.h"
 #include "fortran.def"
 
+extern chemistry_data my_chemistry;
+
 /* function prototypes */
 
-int solve_chemistry(chemistry_data &my_chemistry,
-                    code_units &my_units,
+int solve_chemistry(code_units &my_units,
                     gr_float a_value, gr_float dt_value,
                     gr_int grid_rank, gr_int *grid_dimension,
                     gr_int *grid_start, gr_int *grid_end,
@@ -36,8 +37,7 @@ int solve_chemistry(chemistry_data &my_chemistry,
                     gr_float *e_density, gr_float *metal_density);
 
 
-int solve_chemistry(chemistry_data &my_chemistry,
-                    code_units &my_units,
+int solve_chemistry(code_units &my_units,
                     gr_float a_value, gr_float dt_value,
                     gr_int grid_rank, gr_int *grid_dimension,
                     gr_int *grid_start, gr_int *grid_end,
@@ -66,8 +66,7 @@ int solve_chemistry(chemistry_data &my_chemistry,
     DI_density = DII_density = HDI_density =
     e_density;
 
-  if (solve_chemistry(my_chemistry,
-                      my_units,
+  if (solve_chemistry(my_units,
                       a_value, dt_value,
                       grid_rank, grid_dimension,
                       grid_start, grid_end,

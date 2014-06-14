@@ -20,12 +20,13 @@
 #include "code_units.h" 
 #include "phys_constants.h"
 
-int initialize_cloudy_data(chemistry_data &my_chemistry,
-                           cloudy_data &my_cloudy, char *group_name,
+extern chemistry_data my_chemistry;
+
+int initialize_cloudy_data(cloudy_data &my_cloudy, char *group_name,
                            code_units &my_units, gr_float a_value,
                            gr_int read_data);
 
-int initialize_UVbackground_data(chemistry_data &my_chemistry);
+int initialize_UVbackground_data();
 
 extern "C" void FORTRAN_NAME(calc_rates_g)(
      gr_int *ispecies,
@@ -49,8 +50,7 @@ extern "C" void FORTRAN_NAME(calc_rates_g)(
      gr_float *ncrca, gr_float *ncrd1a, gr_float *ncrd2a, 
      gr_float *mutab, gr_int *ioutput);
  
-int initialize_chemistry_data(chemistry_data &my_chemistry,
-                              code_units &my_units, gr_float a_value)
+int initialize_chemistry_data(code_units &my_units, gr_float a_value)
 {
 
   fprintf(stderr, "Initializing chemistry data.\n");
@@ -210,7 +210,7 @@ int initialize_chemistry_data(chemistry_data &my_chemistry,
 
   /* Primordial tables. */
   read_data = my_chemistry.primordial_chemistry == 0;
-  if (initialize_cloudy_data(my_chemistry, my_chemistry.cloudy_primordial,
+  if (initialize_cloudy_data(my_chemistry.cloudy_primordial,
                              "Primordial",
                              my_units, a_value, read_data) == FAIL) {
     fprintf(stderr, "Error in initialize_cloudy_data.\n");
@@ -219,7 +219,7 @@ int initialize_chemistry_data(chemistry_data &my_chemistry,
 
   /* Metal tables. */
   read_data = my_chemistry.metal_cooling == TRUE;
-  if (initialize_cloudy_data(my_chemistry, my_chemistry.cloudy_metal,
+  if (initialize_cloudy_data(my_chemistry.cloudy_metal,
                              "Metals",
                              my_units, a_value, read_data) == FAIL) {
     fprintf(stderr, "Error in initialize_cloudy_data.\n");
@@ -227,7 +227,7 @@ int initialize_chemistry_data(chemistry_data &my_chemistry,
   }
 
   /* Initialize UV Background data. */
-  if (initialize_UVbackground_data(my_chemistry) == FAIL) {
+  if (initialize_UVbackground_data() == FAIL) {
     fprintf(stderr, "Error in initialize_UVbackground_data.\n");
     return FAIL;
   }

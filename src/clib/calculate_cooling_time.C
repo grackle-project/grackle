@@ -21,10 +21,11 @@
 #include "phys_constants.h"
 #include "fortran.def"
 
+extern chemistry_data my_chemistry;
+
 /* function prototypes */
 
-int update_UVbackground_rates(chemistry_data &my_chemistry,
-			      code_units &my_units, gr_float a_value);
+int update_UVbackground_rates(code_units &my_units, gr_float a_value);
  
 extern "C" void FORTRAN_NAME(cool_multi_time_g)(
 	gr_float *d, gr_float *e, gr_float *u, gr_float *v, gr_float *w, gr_float *de,
@@ -60,8 +61,7 @@ extern "C" void FORTRAN_NAME(cool_multi_time_g)(
  	gr_int *metDataSize, gr_float *metCooling, gr_float *metHeating,
         gr_float *mutaba);
  
-int calculate_cooling_time(chemistry_data &my_chemistry,
-			   code_units &my_units, gr_float a_value,
+int calculate_cooling_time(code_units &my_units, gr_float a_value,
 			   gr_int grid_rank, gr_int *grid_dimension,
 			   gr_int *grid_start, gr_int *grid_end,
 			   gr_float *density, gr_float *internal_energy,
@@ -82,8 +82,7 @@ int calculate_cooling_time(chemistry_data &my_chemistry,
   /* Update UV background rates. */
 
   if (my_chemistry.UVbackground == 1) {
-    if (update_UVbackground_rates(my_chemistry,
-                                  my_units, a_value) == FAIL) {
+    if (update_UVbackground_rates(my_units, a_value) == FAIL) {
       fprintf(stderr, "Error in update_UVbackground_rates.\n");
       return FAIL;
     }

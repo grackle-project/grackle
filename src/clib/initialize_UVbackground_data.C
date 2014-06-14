@@ -18,12 +18,14 @@
 #include "chemistry_data.h"
 #include "code_units.h"
 
+extern chemistry_data my_chemistry;
+
 // function prototypes
 gr_int read_dataset(hid_t file_id, char *dset_name, gr_float *buffer);
 
 
 // Initialize UV Background data
-int initialize_UVbackground_data(chemistry_data &my_chemistry)
+int initialize_UVbackground_data()
 {
   gr_int Nz, i;
 

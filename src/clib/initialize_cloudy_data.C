@@ -18,14 +18,13 @@
 #include "chemistry_data.h"
 #include "code_units.h"
 
+extern chemistry_data my_chemistry;
+
 #define SMALL_LOG_VALUE -99.0
 #define CLOUDY_MAX_DIMENSION 3
 
-/**************************** Functions Prototypes ******************************/
-
 // Initialize Cloudy cooling data
-int initialize_cloudy_data(chemistry_data &my_chemistry,
-                           cloudy_data &my_cloudy, char *group_name,
+int initialize_cloudy_data(cloudy_data &my_cloudy, char *group_name,
                            code_units &my_units, gr_float a_value,
                            gr_int read_data)
 {

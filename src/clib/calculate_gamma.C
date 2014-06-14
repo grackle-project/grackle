@@ -20,8 +20,9 @@
 #include "code_units.h"
 #include "phys_constants.h"
 
-int calculate_temperature(chemistry_data &my_chemistry,
-                          code_units &my_units,
+extern chemistry_data my_chemistry;
+
+int calculate_temperature(code_units &my_units,
                           gr_int grid_rank, gr_int *grid_dimension,
                           gr_float *density, gr_float *internal_energy,
                           gr_float *HI_density, gr_float *HII_density, gr_float *HM_density,
@@ -31,8 +32,7 @@ int calculate_temperature(chemistry_data &my_chemistry,
                           gr_float *e_density, gr_float *metal_density,
                           gr_float *temperature);
 
-int calculate_gamma(chemistry_data &my_chemistry,
-                    code_units &my_units,
+int calculate_gamma(code_units &my_units,
                     gr_int grid_rank, gr_int *grid_dimension,
                     gr_float *density, gr_float *internal_energy,
                     gr_float *HI_density, gr_float *HII_density, gr_float *HM_density,
@@ -61,7 +61,7 @@ int calculate_gamma(chemistry_data &my_chemistry,
 
     /* Compute the temperature first. */
  
-    if (calculate_temperature(my_chemistry, my_units,
+    if (calculate_temperature(my_units,
                               grid_rank, grid_dimension,
                               density, internal_energy,
                               HI_density, HII_density, HM_density,

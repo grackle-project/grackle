@@ -21,10 +21,11 @@
 #include "chemistry_data.h"
 #include "code_units.h"
 
+extern chemistry_data my_chemistry;
+
 /* function prototypes */
 
-int update_UVbackground_rates(chemistry_data &my_chemistry,
-			      code_units &my_units, gr_float a_value)
+int update_UVbackground_rates(code_units &my_units, gr_float a_value)
 {
   /* Return if there is no radiation (rates should be all zero). */
 
@@ -162,10 +163,6 @@ int update_UVbackground_rates(chemistry_data &my_chemistry,
   my_chemistry.piHeII /= CoolingUnits;
   my_chemistry.piHeI /= CoolingUnits;
   
-
-  // printf("%e %e %e\n",my_chemistry.k24,my_chemistry.k25,my_chemistry.k26);
-  // printf("%e %e %e\n",my_chemistry.piHI,my_chemistry.piHeII,my_chemistry.piHeI);
-
   // Now apply the Ramp factor
   my_chemistry.k24 *= Ramp;
   my_chemistry.k25 *= Ramp;
@@ -180,8 +177,6 @@ int update_UVbackground_rates(chemistry_data &my_chemistry,
   my_chemistry.piHI *= Ramp;
   my_chemistry.piHeII *= Ramp;
   my_chemistry.piHeI *= Ramp; 
-
-
 
   /* Molecular hydrogen constant photo-dissociation */
 
@@ -204,8 +199,6 @@ int update_UVbackground_rates(chemistry_data &my_chemistry,
   
     my_chemistry.k31 *= LymanSawtoothSuppressionFactor;
   }
-
-
 
   /* Compton X-ray heating */
 
@@ -237,8 +230,6 @@ int update_UVbackground_rates(chemistry_data &my_chemistry,
       (0.256 * (1+Redshift));  
 
   }
-
-
 
   return SUCCESS;
 }

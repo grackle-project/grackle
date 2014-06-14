@@ -41,7 +41,10 @@ int main(int argc, char *argv[])
   my_units.a_units = 1.0; // units for the expansion factor
 
   // Second, create a chemistry object for parameters and rate data.
-  chemistry_data my_chemistry = set_default_chemistry_parameters();
+  if (set_default_chemistry_parameters() == 0) {
+    fprintf(stderr, "Error in set_default_chemistry_parameters.\n");
+    return 0;
+  }
   // Set parameter values for chemistry.
   my_chemistry.use_grackle = 1;            // chemistry on
   my_chemistry.with_radiative_cooling = 1; // cooling on
@@ -56,7 +59,7 @@ int main(int argc, char *argv[])
   gr_float a_value = 1. / (1. + initial_redshift);
 
   // Finally, initialize the chemistry object.
-  if (initialize_chemistry_data(my_chemistry, my_units, a_value) == 0) {
+  if (initialize_chemistry_data(my_units, a_value) == 0) {
     fprintf(stderr, "Error in initialize_chemistry_data.\n");
     return 0;
   }
@@ -117,7 +120,7 @@ int main(int argc, char *argv[])
   // some timestep
   gr_float dt = 3.15e7 * 1e6 / my_units.time_units;
 
-  if (solve_chemistry(my_chemistry, my_units,
+  if (solve_chemistry(my_units,
                       a_value, dt,
                       grid_rank, grid_dimension,
                       grid_start, grid_end,
@@ -131,7 +134,7 @@ int main(int argc, char *argv[])
   // Calculate cooling time.
   gr_float *cooling_time;
   cooling_time = new gr_float[field_size];
-  if (calculate_cooling_time(my_chemistry, my_units,
+  if (calculate_cooling_time(my_units,
                              a_value,
                              grid_rank, grid_dimension,
                              grid_start, grid_end,
@@ -146,7 +149,7 @@ int main(int argc, char *argv[])
   // Calculate temperature.
   gr_float *temperature;
   temperature = new gr_float[field_size];
-  if (calculate_temperature(my_chemistry, my_units,
+  if (calculate_temperature(my_units,
                             grid_rank, grid_dimension,
                             density, energy,
                             metal_density, 
@@ -158,7 +161,7 @@ int main(int argc, char *argv[])
   // Calculate pressure.
   gr_float *pressure;
   pressure = new gr_float[field_size];
-  if (calculate_pressure(my_chemistry, my_units,
+  if (calculate_pressure(my_units,
                          grid_rank, grid_dimension,
                          density, energy,
                          pressure) == 0) {

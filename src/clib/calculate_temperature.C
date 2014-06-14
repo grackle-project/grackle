@@ -19,6 +19,8 @@
 #include "chemistry_data.h"
 #include "code_units.h"
 #include "phys_constants.h"
+
+extern chemistry_data my_chemistry;
  
 /* Set the mean molecular mass. */
  
@@ -30,8 +32,7 @@
  
 /* function prototypes */ 
 
-int calculate_pressure(chemistry_data &my_chemistry,
-                       code_units &my_units,
+int calculate_pressure(code_units &my_units,
                        gr_int grid_rank, gr_int *grid_dimension,
                        gr_float *density, gr_float *internal_energy,
                        gr_float *HI_density, gr_float *HII_density, gr_float *HM_density,
@@ -41,15 +42,13 @@ int calculate_pressure(chemistry_data &my_chemistry,
                        gr_float *e_density, gr_float *metal_density,
                        gr_float *pressure);
 
-int calculate_temperature(chemistry_data &my_chemistry,
-                          code_units &my_units,
+int calculate_temperature(code_units &my_units,
                           gr_int grid_rank, gr_int *grid_dimension,
                           gr_float *density, gr_float *internal_energy,
                           gr_float *metal_density,
                           gr_float *temperature);
  
-int calculate_temperature(chemistry_data &my_chemistry,
-                          code_units &my_units,
+int calculate_temperature(code_units &my_units,
                           gr_int grid_rank, gr_int *grid_dimension,
                           gr_float *density, gr_float *internal_energy,
                           gr_float *HI_density, gr_float *HII_density, gr_float *HM_density,
@@ -65,7 +64,7 @@ int calculate_temperature(chemistry_data &my_chemistry,
 
   /* Compute the pressure first. */
  
-  if (calculate_pressure(my_chemistry, my_units,
+  if (calculate_pressure(my_units,
                          grid_rank, grid_dimension,
                          density, internal_energy,
                          HI_density, HII_density, HM_density,
@@ -92,8 +91,7 @@ int calculate_temperature(chemistry_data &my_chemistry,
   gr_float inv_metal_mol = 1.0 / MU_METAL;
   
   if (my_chemistry.primordial_chemistry == 0) {
-    if (calculate_temperature(my_chemistry,
-                              my_units,
+    if (calculate_temperature(my_units,
                               grid_rank, grid_dimension,
                               density, internal_energy,
                               metal_density,

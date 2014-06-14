@@ -20,10 +20,11 @@
 #include "phys_constants.h"
 #include "fortran.def"
 
+extern chemistry_data my_chemistry;
+
 /* function prototypes */
 
-int update_UVbackground_rates(chemistry_data &my_chemistry,
-			      code_units &my_units, gr_float a_value);
+int update_UVbackground_rates(code_units &my_units, gr_float a_value);
 
 extern "C" void FORTRAN_NAME(solve_rate_cool_g)(
         gr_int *icool,
@@ -71,8 +72,7 @@ extern "C" void FORTRAN_NAME(solve_rate_cool_g)(
         gr_float *mutaba);
 
 
-int solve_chemistry(chemistry_data &my_chemistry,
-                    code_units &my_units,
+int solve_chemistry(code_units &my_units,
                     gr_float a_value, gr_float dt_value,
                     gr_int grid_rank, gr_int *grid_dimension,
                     gr_int *grid_start, gr_int *grid_end,
@@ -93,8 +93,7 @@ int solve_chemistry(chemistry_data &my_chemistry,
   /* Update UV background rates. */
 
   if (my_chemistry.UVbackground == 1) {
-    if (update_UVbackground_rates(my_chemistry,
-                                  my_units, a_value) == FAIL) {
+    if (update_UVbackground_rates(my_units, a_value) == FAIL) {
       fprintf(stderr, "Error in update_UVbackground_rates.\n");
       return FAIL;
     }

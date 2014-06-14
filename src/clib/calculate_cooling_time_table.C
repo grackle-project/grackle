@@ -21,10 +21,11 @@
 #include "phys_constants.h"
 #include "fortran.def"
 
+extern chemistry_data my_chemistry;
+
 /* function prototypes */ 
  
-int calculate_cooling_time(chemistry_data &my_chemistry,
-			   code_units &my_units, gr_float a_value,
+int calculate_cooling_time(code_units &my_units, gr_float a_value,
 			   gr_int grid_rank, gr_int *grid_dimension,
 			   gr_int *grid_start, gr_int *grid_end,
 			   gr_float *density, gr_float *internal_energy,
@@ -37,8 +38,7 @@ int calculate_cooling_time(chemistry_data &my_chemistry,
 			   gr_float *cooling_time);
 
  
-int calculate_cooling_time(chemistry_data &my_chemistry,
-                           code_units &my_units, gr_float a_value,
+int calculate_cooling_time(code_units &my_units, gr_float a_value,
                            gr_int grid_rank, gr_int *grid_dimension,
                            gr_int *grid_start, gr_int *grid_end,
                            gr_float *density, gr_float *internal_energy,
@@ -67,8 +67,7 @@ int calculate_cooling_time(chemistry_data &my_chemistry,
     DI_density = DII_density = HDI_density =
     e_density;
 
-  if (calculate_cooling_time(my_chemistry,
-                             my_units, a_value,
+  if (calculate_cooling_time(my_units, a_value,
                              grid_rank, grid_dimension,
                              grid_start, grid_end,
                              density, internal_energy,

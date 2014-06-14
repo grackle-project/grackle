@@ -19,15 +19,16 @@
 #include "chemistry_data.h"
 #include "code_units.h"
 #include "phys_constants.h"
- 
+
+extern chemistry_data my_chemistry;
+
 /* Set the mean molecular mass. */
  
 #define MU_METAL 16.0
   
 /* function prototypes */ 
  
-int calculate_temperature(chemistry_data &my_chemistry,
-                          code_units &my_units,
+int calculate_temperature(code_units &my_units,
                           gr_int grid_rank, gr_int *grid_dimension,
                           gr_float *density, gr_float *internal_energy,
                           gr_float *metal_density,

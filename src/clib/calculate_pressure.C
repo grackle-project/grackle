@@ -20,8 +20,9 @@
 #include "code_units.h"
 #include "phys_constants.h"
 
-int calculate_pressure(chemistry_data &my_chemistry,
-                       code_units &my_units,
+extern chemistry_data my_chemistry;
+
+int calculate_pressure(code_units &my_units,
                        gr_int grid_rank, gr_int *grid_dimension,
                        gr_float *density, gr_float *internal_energy,
                        gr_float *HI_density, gr_float *HII_density, gr_float *HM_density,
