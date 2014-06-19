@@ -147,11 +147,11 @@ verbose: VERBOSE = 1
 # Implicit rules
 #-----------------------------------------------------------------------
 
-.SUFFIXES: .C .F .o
+.SUFFIXES: .c .C .F .o
 
 # Inhibit removing any *.o files after compiling
 
-.PRECIOUS: %.o %.C %.F
+.PRECIOUS: %.o %.c %.C %.F
 
 .F.o:
 	@echo "Compiling $<"
@@ -190,6 +190,29 @@ verbose: VERBOSE = 1
           fi ; \
 	else \
 	  $(CXX) -c -o $@ $(DEFINES) $(CXXFLAGS) $(INCLUDES) $*.C \
+	    >> $(OUTPUT) 2>&1 ; \
+	  if [ ! -e $@ ]; then \
+	     echo "See $(OUTPUT) for error messages"; \
+	     exit 1; \
+	  fi ; \
+	fi)
+
+.c.o:
+	@rm -f $@
+	@echo "Compiling $<"
+	@(if [ $(VERBOSE) -eq 0 ]; then \
+	  $(CC) -c -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) $*.c \
+	    >& $(OUTPUT) ; \
+	  if [ ! -e $@ ]; then \
+             echo; \
+             echo "$(CC) -c -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) $*.c"; \
+             echo; \
+             $(CC) -c -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) $*.c;\
+             echo; \
+             exit 1; \
+          fi ; \
+	else \
+	  $(CC) -c -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) $*.c \
 	    >> $(OUTPUT) 2>&1 ; \
 	  if [ ! -e $@ ]; then \
 	     echo "See $(OUTPUT) for error messages"; \
