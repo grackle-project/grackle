@@ -110,6 +110,24 @@ example: $(MODULES) example.o
          fi)
 
 #-----------------------------------------------------------------------
+# PURE C EXAMPLE
+#-----------------------------------------------------------------------
+
+c_example: $(MODULES) c_example.o
+	@rm -f $@
+	@echo "Linking"
+	-@$(LD) $(LDFLAGS) -o c_example c_example.o $(LIBS) $(GRACKLE_LIB) >& $(OUTPUT)
+	@(if [ -e $@ ]; then \
+             echo "Success!"; \
+         else \
+             echo "$(LD) $(LDFLAGS) -o c_example c_example.o $(LIBS) $(GRACKLE_LIB)" >> temp1; \
+             cat temp1 $(OUTPUT) > temp2; \
+             rm -f temp1; \
+             mv -f temp2 $(OUTPUT); \
+             echo "Failed! See $(OUTPUT) for error messages"; \
+         fi)
+
+#-----------------------------------------------------------------------
 # TABLE EXAMPLE
 #-----------------------------------------------------------------------
 
@@ -131,7 +149,7 @@ table_example: $(MODULES) table_example.o
 # Implicit rules
 #-----------------------------------------------------------------------
 
-.SUFFIXES: .C
+.SUFFIXES: .c .C
 
 .C.o:
 	@rm -f $@
@@ -142,6 +160,19 @@ table_example: $(MODULES) table_example.o
              echo "$(CXX) -c -o $@ $(DEFINES) $(CXXFLAGS) $(INCLUDES) $(GRACKLE_INCLUDE) $*.C"; \
              echo; \
              $(CXX) -c -o $@ $(DEFINES) $(CXXFLAGS) $(INCLUDES) $(GRACKLE_INCLUDE) $*.C;\
+             echo; \
+             exit 1; \
+          fi)
+
+.c.o:
+	@rm -f $@
+	@echo "Compiling $<"
+	-@($(CC) -c -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) $(GRACKLE_INCLUDE) $*.c) >& $(OUTPUT)
+	@(if [ ! -e $@ ]; then \
+             echo; \
+             echo "$(CC) -c -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) $(GRACKLE_INCLUDE) $*.c"; \
+             echo; \
+             $(CC) -c -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) $(GRACKLE_INCLUDE) $*.c;\
              echo; \
              exit 1; \
           fi)
