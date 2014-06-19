@@ -25,7 +25,7 @@ extern chemistry_data my_chemistry;
 
 /* function prototypes */ 
  
-int calculate_cooling_time(code_units &my_units, gr_float a_value,
+int calculate_cooling_time(code_units *my_units, gr_float a_value,
 			   gr_int grid_rank, gr_int *grid_dimension,
 			   gr_int *grid_start, gr_int *grid_end,
 			   gr_float *density, gr_float *internal_energy,
@@ -38,7 +38,7 @@ int calculate_cooling_time(code_units &my_units, gr_float a_value,
 			   gr_float *cooling_time);
 
  
-int calculate_cooling_time(code_units &my_units, gr_float a_value,
+int calculate_cooling_time_table(code_units *my_units, gr_float a_value,
                            gr_int grid_rank, gr_int *grid_dimension,
                            gr_int *grid_start, gr_int *grid_end,
                            gr_float *density, gr_float *internal_energy,

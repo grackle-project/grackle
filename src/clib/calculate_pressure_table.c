@@ -22,7 +22,7 @@
 
 extern chemistry_data my_chemistry;
 
-int calculate_pressure(code_units &my_units,
+int calculate_pressure_table(code_units *my_units,
                        gr_int grid_rank, gr_int *grid_dimension,
                        gr_float *density, gr_float *internal_energy,
                        gr_float *pressure)
@@ -37,8 +37,8 @@ int calculate_pressure(code_units &my_units,
   }
 
   gr_float tiny_number = 1.e-20;
-  gr_int i, size = 1;
-  for (int dim = 0; dim < grid_rank; dim++)
+  gr_int i, dim, size = 1;
+  for (dim = 0; dim < grid_rank; dim++)
     size *= grid_dimension[dim];
 
   for (i = 0; i < size; i++) {

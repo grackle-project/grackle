@@ -28,7 +28,7 @@ extern chemistry_data my_chemistry;
   
 /* function prototypes */ 
  
-int calculate_temperature(code_units &my_units,
+int calculate_temperature_table(code_units *my_units,
                           gr_int grid_rank, gr_int *grid_dimension,
                           gr_float *density, gr_float *internal_energy,
                           gr_float *metal_density,
@@ -45,13 +45,13 @@ int calculate_temperature(code_units &my_units,
  
   /* Compute the size of the fields. */
  
-  gr_int i, size = 1;
-  for (int dim = 0; dim < grid_rank; dim++)
+  gr_int i, dim, size = 1;
+  for (dim = 0; dim < grid_rank; dim++)
     size *= grid_dimension[dim];
 
   /* Calculate temperature units. */
 
-  gr_float temperature_units =  mh * POW(my_units.velocity_units, 2) / kboltz;
+  gr_float temperature_units =  mh * POW(my_units->velocity_units, 2) / kboltz;
 
   gr_float number_density, tiny_number = 1.-20;
   gr_float inv_metal_mol = 1.0 / MU_METAL;
