@@ -22,13 +22,13 @@
 
 extern chemistry_data my_chemistry;
 
-int initialize_cloudy_data(cloudy_data &my_cloudy, char *group_name,
-                           code_units &my_units, gr_float a_value,
+int initialize_cloudy_data(cloudy_data *my_cloudy, char *group_name,
+                           code_units *my_units, gr_float a_value,
                            gr_int read_data);
 
 int initialize_UVbackground_data();
 
-extern "C" void FORTRAN_NAME(calc_rates_g)(
+extern void FORTRAN_NAME(calc_rates_g)(
      gr_int *ispecies,
      gr_int *nratec, gr_float *aye, gr_float *temstart, gr_float *temend, 
      gr_int *casebrates, gr_int *threebody,
@@ -50,14 +50,14 @@ extern "C" void FORTRAN_NAME(calc_rates_g)(
      gr_float *ncrca, gr_float *ncrd1a, gr_float *ncrd2a, 
      gr_float *mutab, gr_int *ioutput);
  
-int initialize_chemistry_data(code_units &my_units, gr_float a_value)
+int initialize_chemistry_data(code_units *my_units, gr_float a_value)
 {
 
   fprintf(stderr, "Initializing chemistry data.\n");
 
   /* Only allow a units to be one with proper coordinates. */
-  if (my_units.comoving_coordinates == FALSE && 
-      my_units.a_units != 1.0) {
+  if (my_units->comoving_coordinates == FALSE && 
+      my_units->a_units != 1.0) {
     fprintf(stderr, "ERROR: a_units must be 1.0 if comoving_coordinates is 0.\n");
     return FAIL;
   }
@@ -66,79 +66,81 @@ int initialize_chemistry_data(code_units &my_units, gr_float a_value)
 
   if (my_chemistry.primordial_chemistry == 0) {
 
-    my_chemistry.mu    = new gr_float[my_chemistry.NumberOfTemperatureBins];
+    my_chemistry.mu    = malloc(my_chemistry.NumberOfTemperatureBins * sizeof(gr_float));
 
   }
   else {
  
-  my_chemistry.ceHI    = new gr_float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.ceHeI   = new gr_float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.ceHeII  = new gr_float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.ciHI    = new gr_float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.ciHeI   = new gr_float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.ciHeIS  = new gr_float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.ciHeII  = new gr_float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.reHII   = new gr_float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.reHeII1 = new gr_float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.reHeII2 = new gr_float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.reHeIII = new gr_float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.brem    = new gr_float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.hyd01k  = new gr_float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.h2k01   = new gr_float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.vibh    = new gr_float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.roth    = new gr_float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.rotl    = new gr_float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.GP99LowDensityLimit  = new gr_float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.GP99HighDensityLimit = new gr_float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.HDlte   = new gr_float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.HDlow   = new gr_float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.HDcool  = new gr_float[my_chemistry.NumberOfTemperatureBins*5];
-  my_chemistry.cieco   = new gr_float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.GAHI    = new gr_float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.GAH2    = new gr_float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.GAHe    = new gr_float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.GAHp    = new gr_float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.GAel    = new gr_float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.gas_grain = new gr_float[my_chemistry.NumberOfTemperatureBins];
+    my_chemistry.ceHI    = malloc(my_chemistry.NumberOfTemperatureBins * sizeof(gr_float));
+    my_chemistry.ceHeI   = malloc(my_chemistry.NumberOfTemperatureBins * sizeof(gr_float));
+    my_chemistry.ceHeII  = malloc(my_chemistry.NumberOfTemperatureBins * sizeof(gr_float));
+    my_chemistry.ciHI    = malloc(my_chemistry.NumberOfTemperatureBins * sizeof(gr_float));
+    my_chemistry.ciHeI   = malloc(my_chemistry.NumberOfTemperatureBins * sizeof(gr_float));
+    my_chemistry.ciHeIS  = malloc(my_chemistry.NumberOfTemperatureBins * sizeof(gr_float));
+    my_chemistry.ciHeII  = malloc(my_chemistry.NumberOfTemperatureBins * sizeof(gr_float));
+    my_chemistry.reHII   = malloc(my_chemistry.NumberOfTemperatureBins * sizeof(gr_float));
+    my_chemistry.reHeII1 = malloc(my_chemistry.NumberOfTemperatureBins * sizeof(gr_float));
+    my_chemistry.reHeII2 = malloc(my_chemistry.NumberOfTemperatureBins * sizeof(gr_float));
+    my_chemistry.reHeIII = malloc(my_chemistry.NumberOfTemperatureBins * sizeof(gr_float));
+    my_chemistry.brem    = malloc(my_chemistry.NumberOfTemperatureBins * sizeof(gr_float));
+    my_chemistry.hyd01k  = malloc(my_chemistry.NumberOfTemperatureBins * sizeof(gr_float));
+    my_chemistry.h2k01   = malloc(my_chemistry.NumberOfTemperatureBins * sizeof(gr_float));
+    my_chemistry.vibh    = malloc(my_chemistry.NumberOfTemperatureBins * sizeof(gr_float));
+    my_chemistry.roth    = malloc(my_chemistry.NumberOfTemperatureBins * sizeof(gr_float));
+    my_chemistry.rotl    = malloc(my_chemistry.NumberOfTemperatureBins * sizeof(gr_float));
+    my_chemistry.GP99LowDensityLimit  = malloc(my_chemistry.NumberOfTemperatureBins *
+                                               sizeof(gr_float));
+    my_chemistry.GP99HighDensityLimit = malloc(my_chemistry.NumberOfTemperatureBins * 
+                                               sizeof(gr_float));
+    my_chemistry.HDlte   = malloc(my_chemistry.NumberOfTemperatureBins * sizeof(gr_float));
+    my_chemistry.HDlow   = malloc(my_chemistry.NumberOfTemperatureBins * sizeof(gr_float));
+    my_chemistry.HDcool  = malloc(5 * my_chemistry.NumberOfTemperatureBins * sizeof(gr_float));
+    my_chemistry.cieco   = malloc(my_chemistry.NumberOfTemperatureBins * sizeof(gr_float));
+    my_chemistry.GAHI    = malloc(my_chemistry.NumberOfTemperatureBins * sizeof(gr_float));
+    my_chemistry.GAH2    = malloc(my_chemistry.NumberOfTemperatureBins * sizeof(gr_float));
+    my_chemistry.GAHe    = malloc(my_chemistry.NumberOfTemperatureBins * sizeof(gr_float));
+    my_chemistry.GAHp    = malloc(my_chemistry.NumberOfTemperatureBins * sizeof(gr_float));
+    my_chemistry.GAel    = malloc(my_chemistry.NumberOfTemperatureBins * sizeof(gr_float));
+    my_chemistry.gas_grain = malloc(my_chemistry.NumberOfTemperatureBins * sizeof(gr_float));
 
   /* Allocate space in my_chemistry for rates. */
  
-  my_chemistry.k1 = new gr_float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.k2 = new gr_float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.k3 = new gr_float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.k4 = new gr_float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.k5 = new gr_float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.k6 = new gr_float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.k7 = new gr_float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.k8 = new gr_float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.k9 = new gr_float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.k10 = new gr_float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.k11 = new gr_float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.k12 = new gr_float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.k13 = new gr_float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.k13dd = new gr_float[my_chemistry.NumberOfTemperatureBins*7];
-  my_chemistry.k14 = new gr_float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.k15 = new gr_float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.k16 = new gr_float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.k17 = new gr_float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.k18 = new gr_float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.k19 = new gr_float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.k20 = new gr_float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.k21 = new gr_float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.k22 = new gr_float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.k23 = new gr_float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.k50 = new gr_float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.k51 = new gr_float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.k52 = new gr_float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.k53 = new gr_float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.k54 = new gr_float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.k55 = new gr_float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.k56 = new gr_float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.h2dust = new gr_float[my_chemistry.NumberOfTemperatureBins * 
-			      my_chemistry.NumberOfDustTemperatureBins];
-  my_chemistry.n_cr_n = new gr_float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.n_cr_d1 = new gr_float[my_chemistry.NumberOfTemperatureBins];
-  my_chemistry.n_cr_d2 = new gr_float[my_chemistry.NumberOfTemperatureBins]; 
+    my_chemistry.k1 = malloc(my_chemistry.NumberOfTemperatureBins * sizeof(gr_float));
+    my_chemistry.k2 = malloc(my_chemistry.NumberOfTemperatureBins * sizeof(gr_float));
+    my_chemistry.k3 = malloc(my_chemistry.NumberOfTemperatureBins * sizeof(gr_float));
+    my_chemistry.k4 = malloc(my_chemistry.NumberOfTemperatureBins * sizeof(gr_float));
+    my_chemistry.k5 = malloc(my_chemistry.NumberOfTemperatureBins * sizeof(gr_float));
+    my_chemistry.k6 = malloc(my_chemistry.NumberOfTemperatureBins * sizeof(gr_float));
+    my_chemistry.k7 = malloc(my_chemistry.NumberOfTemperatureBins * sizeof(gr_float));
+    my_chemistry.k8 = malloc(my_chemistry.NumberOfTemperatureBins * sizeof(gr_float));
+    my_chemistry.k9 = malloc(my_chemistry.NumberOfTemperatureBins * sizeof(gr_float));
+    my_chemistry.k10 = malloc(my_chemistry.NumberOfTemperatureBins * sizeof(gr_float));
+    my_chemistry.k11 = malloc(my_chemistry.NumberOfTemperatureBins * sizeof(gr_float));
+    my_chemistry.k12 = malloc(my_chemistry.NumberOfTemperatureBins * sizeof(gr_float));
+    my_chemistry.k13 = malloc(my_chemistry.NumberOfTemperatureBins * sizeof(gr_float));
+    my_chemistry.k13dd = malloc(7 * my_chemistry.NumberOfTemperatureBins * sizeof(gr_float));
+    my_chemistry.k14 = malloc(my_chemistry.NumberOfTemperatureBins * sizeof(gr_float));
+    my_chemistry.k15 = malloc(my_chemistry.NumberOfTemperatureBins * sizeof(gr_float));
+    my_chemistry.k16 = malloc(my_chemistry.NumberOfTemperatureBins * sizeof(gr_float));
+    my_chemistry.k17 = malloc(my_chemistry.NumberOfTemperatureBins * sizeof(gr_float));
+    my_chemistry.k18 = malloc(my_chemistry.NumberOfTemperatureBins * sizeof(gr_float));
+    my_chemistry.k19 = malloc(my_chemistry.NumberOfTemperatureBins * sizeof(gr_float));
+    my_chemistry.k20 = malloc(my_chemistry.NumberOfTemperatureBins * sizeof(gr_float));
+    my_chemistry.k21 = malloc(my_chemistry.NumberOfTemperatureBins * sizeof(gr_float));
+    my_chemistry.k22 = malloc(my_chemistry.NumberOfTemperatureBins * sizeof(gr_float));
+    my_chemistry.k23 = malloc(my_chemistry.NumberOfTemperatureBins * sizeof(gr_float));
+    my_chemistry.k50 = malloc(my_chemistry.NumberOfTemperatureBins * sizeof(gr_float));
+    my_chemistry.k51 = malloc(my_chemistry.NumberOfTemperatureBins * sizeof(gr_float));
+    my_chemistry.k52 = malloc(my_chemistry.NumberOfTemperatureBins * sizeof(gr_float));
+    my_chemistry.k53 = malloc(my_chemistry.NumberOfTemperatureBins * sizeof(gr_float));
+    my_chemistry.k54 = malloc(my_chemistry.NumberOfTemperatureBins * sizeof(gr_float));
+    my_chemistry.k55 = malloc(my_chemistry.NumberOfTemperatureBins * sizeof(gr_float));
+    my_chemistry.k56 = malloc(my_chemistry.NumberOfTemperatureBins * sizeof(gr_float));
+    my_chemistry.h2dust = malloc(my_chemistry.NumberOfTemperatureBins *
+                                 my_chemistry.NumberOfDustTemperatureBins * sizeof(gr_float));
+    my_chemistry.n_cr_n = malloc(my_chemistry.NumberOfTemperatureBins * sizeof(gr_float));
+    my_chemistry.n_cr_d1 = malloc(my_chemistry.NumberOfTemperatureBins * sizeof(gr_float));
+    my_chemistry.n_cr_d2 = malloc(my_chemistry.NumberOfTemperatureBins * sizeof(gr_float));
 
   my_chemistry.k24 = 0;
   my_chemistry.k25 = 0;
@@ -157,20 +159,20 @@ int initialize_chemistry_data(code_units &my_units, gr_float a_value)
   gr_int ioutput = 1;
 
   gr_float co_length_units, co_density_units;
-  if (my_units.comoving_coordinates == TRUE) {
-    co_length_units = my_units.length_units;
-    co_density_units = my_units.density_units;
+  if (my_units->comoving_coordinates == TRUE) {
+    co_length_units = my_units->length_units;
+    co_density_units = my_units->density_units;
   }
   else {
-    co_length_units = my_units.length_units *
-      a_value * my_units.a_units;
-    co_density_units = my_units.density_units /
-      POW(a_value * my_units.a_units, 3);
+    co_length_units = my_units->length_units *
+      a_value * my_units->a_units;
+    co_density_units = my_units->density_units /
+      POW(a_value * my_units->a_units, 3);
   }
 
   /* Calculate temperature units. */
 
-  gr_float temperature_units =  mh * POW(my_units.velocity_units, 2) / kboltz;
+  gr_float temperature_units =  mh * POW(my_units->velocity_units, 2) / kboltz;
 
   /* Call FORTRAN routine to do the hard work. */
  
@@ -179,8 +181,8 @@ int initialize_chemistry_data(code_units &my_units, gr_float a_value)
      &my_chemistry.NumberOfTemperatureBins, &a_value, &my_chemistry.TemperatureStart,
         &my_chemistry.TemperatureEnd,
         &my_chemistry.CaseBRecombination, &my_chemistry.three_body_rate,
-     &temperature_units, &co_length_units, &my_units.a_units, 
-     &co_density_units, &my_units.time_units,
+     &temperature_units, &co_length_units, &my_units->a_units, 
+     &co_density_units, &my_units->time_units,
      my_chemistry.ceHI, my_chemistry.ceHeI, my_chemistry.ceHeII, my_chemistry.ciHI,
         my_chemistry.ciHeI,
      my_chemistry.ciHeIS, my_chemistry.ciHeII, my_chemistry.reHII,
@@ -210,7 +212,7 @@ int initialize_chemistry_data(code_units &my_units, gr_float a_value)
 
   /* Primordial tables. */
   read_data = my_chemistry.primordial_chemistry == 0;
-  if (initialize_cloudy_data(my_chemistry.cloudy_primordial,
+  if (initialize_cloudy_data(&my_chemistry.cloudy_primordial,
                              "Primordial",
                              my_units, a_value, read_data) == FAIL) {
     fprintf(stderr, "Error in initialize_cloudy_data.\n");
@@ -219,7 +221,7 @@ int initialize_chemistry_data(code_units &my_units, gr_float a_value)
 
   /* Metal tables. */
   read_data = my_chemistry.metal_cooling == TRUE;
-  if (initialize_cloudy_data(my_chemistry.cloudy_metal,
+  if (initialize_cloudy_data(&my_chemistry.cloudy_metal,
                              "Metals",
                              my_units, a_value, read_data) == FAIL) {
     fprintf(stderr, "Error in initialize_cloudy_data.\n");

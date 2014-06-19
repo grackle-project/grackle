@@ -106,22 +106,22 @@ int initialize_UVbackground_data()
   // Now allocate memory for UV background table.
   my_chemistry.UVbackground_table.Nz = Nz;
 
-  my_chemistry.UVbackground_table.z = new gr_float[Nz];
-  my_chemistry.UVbackground_table.k24 = new gr_float[Nz];
-  my_chemistry.UVbackground_table.k25 = new gr_float[Nz];
-  my_chemistry.UVbackground_table.k26 = new gr_float[Nz];
+  my_chemistry.UVbackground_table.z = malloc(Nz * sizeof(gr_float));
+  my_chemistry.UVbackground_table.k24 = malloc(Nz * sizeof(gr_float));
+  my_chemistry.UVbackground_table.k25 = malloc(Nz * sizeof(gr_float));
+  my_chemistry.UVbackground_table.k26 = malloc(Nz * sizeof(gr_float));
 
   if (my_chemistry.primordial_chemistry > 1) {
-    my_chemistry.UVbackground_table.k27 = new gr_float[Nz];
-    my_chemistry.UVbackground_table.k28 = new gr_float[Nz];
-    my_chemistry.UVbackground_table.k29 = new gr_float[Nz];
-    my_chemistry.UVbackground_table.k30 = new gr_float[Nz];
-    my_chemistry.UVbackground_table.k31 = new gr_float[Nz];
+    my_chemistry.UVbackground_table.k27 = malloc(Nz * sizeof(gr_float));
+    my_chemistry.UVbackground_table.k28 = malloc(Nz * sizeof(gr_float));
+    my_chemistry.UVbackground_table.k29 = malloc(Nz * sizeof(gr_float));
+    my_chemistry.UVbackground_table.k30 = malloc(Nz * sizeof(gr_float));
+    my_chemistry.UVbackground_table.k31 = malloc(Nz * sizeof(gr_float));
   }    
 
-  my_chemistry.UVbackground_table.piHI = new gr_float[Nz];
-  my_chemistry.UVbackground_table.piHeII = new gr_float[Nz];
-  my_chemistry.UVbackground_table.piHeI = new gr_float[Nz];
+  my_chemistry.UVbackground_table.piHI = malloc(Nz * sizeof(gr_float));
+  my_chemistry.UVbackground_table.piHeII = malloc(Nz * sizeof(gr_float));
+  my_chemistry.UVbackground_table.piHeI = malloc(Nz * sizeof(gr_float));
 
 
   // Now read everything.
