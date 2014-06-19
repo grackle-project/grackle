@@ -25,9 +25,9 @@ extern chemistry_data my_chemistry;
 
 /* function prototypes */
 
-int update_UVbackground_rates(code_units &my_units, gr_float a_value);
+int update_UVbackground_rates(code_units *my_units, gr_float a_value);
  
-extern "C" void FORTRAN_NAME(cool_multi_time_g)(
+extern void FORTRAN_NAME(cool_multi_time_g)(
 	gr_float *d, gr_float *e, gr_float *u, gr_float *v, gr_float *w, gr_float *de,
 	gr_float *HI, gr_float *HII, gr_float *HeI, gr_float *HeII, gr_float *HeIII,
 	gr_float *cooltime,
@@ -61,7 +61,7 @@ extern "C" void FORTRAN_NAME(cool_multi_time_g)(
  	gr_int *metDataSize, gr_float *metCooling, gr_float *metHeating,
         gr_float *mutaba);
  
-int calculate_cooling_time(code_units &my_units, gr_float a_value,
+int calculate_cooling_time(code_units *my_units, gr_float a_value,
 			   gr_int grid_rank, gr_int *grid_dimension,
 			   gr_int *grid_start, gr_int *grid_end,
 			   gr_float *density, gr_float *internal_energy,
@@ -95,20 +95,20 @@ int calculate_cooling_time(code_units &my_units, gr_float a_value,
     metal_field_present = FALSE;
 
   gr_float co_length_units, co_density_units;
-  if (my_units.comoving_coordinates == TRUE) {
-    co_length_units = my_units.length_units;
-    co_density_units = my_units.density_units;
+  if (my_units->comoving_coordinates == TRUE) {
+    co_length_units = my_units->length_units;
+    co_density_units = my_units->density_units;
   }
   else {
-    co_length_units = my_units.length_units *
-      a_value * my_units.a_units;
-    co_density_units = my_units.density_units /
-      POW(a_value * my_units.a_units, 3);
+    co_length_units = my_units->length_units *
+      a_value * my_units->a_units;
+    co_density_units = my_units->density_units /
+      POW(a_value * my_units->a_units, 3);
   }
 
   /* Calculate temperature units. */
 
-  gr_float temperature_units =  mh * POW(my_units.velocity_units, 2) / kboltz;
+  gr_float temperature_units =  mh * POW(my_units->velocity_units, 2) / kboltz;
 
   /* Call the fortran routine to solve cooling equations. */
 
@@ -120,15 +120,15 @@ int calculate_cooling_time(code_units &my_units, gr_float a_value,
        HeI_density, HeII_density, HeIII_density,
        cooling_time,
        grid_dimension, grid_dimension+1, grid_dimension+2,
-       &my_chemistry.NumberOfTemperatureBins, &my_units.comoving_coordinates,
+       &my_chemistry.NumberOfTemperatureBins, &my_units->comoving_coordinates,
        &my_chemistry.primordial_chemistry, &metal_field_present, &my_chemistry.metal_cooling, 
        &my_chemistry.h2_on_dust,
        &grid_rank, grid_start, grid_start+1, grid_start+2,
        grid_end, grid_end+1, grid_end+2,
        &my_chemistry.ih2co, &my_chemistry.ipiht, &my_chemistry.photoelectric_heating,
        &a_value, &my_chemistry.TemperatureStart, &my_chemistry.TemperatureEnd,
-       &temperature_units, &co_length_units, &my_units.a_units, 
-       &co_density_units, &my_units.time_units,
+       &temperature_units, &co_length_units, &my_units->a_units, 
+       &co_density_units, &my_units->time_units,
        &my_chemistry.Gamma, &my_chemistry.HydrogenFractionByMass,
        &my_chemistry.SolarMetalFractionByMass,
        my_chemistry.ceHI, my_chemistry.ceHeI, my_chemistry.ceHeII, my_chemistry.ciHI,
