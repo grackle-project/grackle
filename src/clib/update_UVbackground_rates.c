@@ -25,7 +25,7 @@ extern chemistry_data my_chemistry;
 
 /* function prototypes */
 
-int update_UVbackground_rates(code_units &my_units, gr_float a_value)
+int update_UVbackground_rates(code_units *my_units, gr_float a_value)
 {
   /* Return if there is no radiation (rates should be all zero). */
 
@@ -34,7 +34,7 @@ int update_UVbackground_rates(code_units &my_units, gr_float a_value)
 
   /* Return if redshift is outside of table (rates should be all zero). */
 
-  gr_float Redshift = 1.0 / (a_value * my_units.a_units) - 1;
+  gr_float Redshift = 1.0 / (a_value * my_units->a_units) - 1;
   if ( (Redshift < my_chemistry.UVbackground_table.zmin) ||
        (Redshift > my_chemistry.UVbackground_table.zmax) )
     return SUCCESS;
@@ -128,35 +128,35 @@ int update_UVbackground_rates(code_units &my_units, gr_float a_value)
   /* Get conversion units. */
 
   gr_float co_length_units, co_density_units;
-  if (my_units.comoving_coordinates == TRUE) {
-    co_length_units = my_units.length_units;
-    co_density_units = my_units.density_units;
+  if (my_units->comoving_coordinates == TRUE) {
+    co_length_units = my_units->length_units;
+    co_density_units = my_units->density_units;
   }
   else {
-    co_length_units = my_units.length_units *
-      a_value * my_units.a_units;
-    co_density_units = my_units.density_units /
-      POW(a_value * my_units.a_units, 3);
+    co_length_units = my_units->length_units *
+      a_value * my_units->a_units;
+    co_density_units = my_units->density_units /
+      POW(a_value * my_units->a_units, 3);
   }
 
-  double tbase1 = my_units.time_units;
-  double xbase1 = co_length_units/(a_value * my_units.a_units);
-  double dbase1 = co_density_units*POW(a_value * my_units.a_units, 3);
+  double tbase1 = my_units->time_units;
+  double xbase1 = co_length_units/(a_value * my_units->a_units);
+  double dbase1 = co_density_units*POW(a_value * my_units->a_units, 3);
   double mh     = 1.67262171e-24;
   double ev2erg = 1.60217653e-12;
-  double CoolingUnits = (POW(my_units.a_units, 5) * xbase1*xbase1 * mh*mh) / (POW(tbase1, 3) * dbase1) / ev2erg;  // compared to Enzo source, there's an additional factor of 1/ev2erg here, because the heating rates are stored as eV/s.
+  double CoolingUnits = (POW(my_units->a_units, 5) * xbase1*xbase1 * mh*mh) / (POW(tbase1, 3) * dbase1) / ev2erg;  // compared to Enzo source, there's an additional factor of 1/ev2erg here, because the heating rates are stored as eV/s.
 
 
-  my_chemistry.k24 *= my_units.time_units;
-  my_chemistry.k25 *= my_units.time_units;
-  my_chemistry.k26 *= my_units.time_units;
+  my_chemistry.k24 *= my_units->time_units;
+  my_chemistry.k25 *= my_units->time_units;
+  my_chemistry.k26 *= my_units->time_units;
   
   if (my_chemistry.primordial_chemistry > 1) {
-    my_chemistry.k27 *= my_units.time_units;
-    my_chemistry.k28 *= my_units.time_units;
-    my_chemistry.k29 *= my_units.time_units;
-    my_chemistry.k30 *= my_units.time_units;
-    my_chemistry.k31 *= my_units.time_units;
+    my_chemistry.k27 *= my_units->time_units;
+    my_chemistry.k28 *= my_units->time_units;
+    my_chemistry.k29 *= my_units->time_units;
+    my_chemistry.k30 *= my_units->time_units;
+    my_chemistry.k31 *= my_units->time_units;
   }
     
   my_chemistry.piHI /= CoolingUnits;
@@ -185,7 +185,7 @@ int update_UVbackground_rates(code_units &my_units, gr_float a_value)
      0.0). */
 
   if (my_chemistry.LWbackground_intensity > 0.0) 
-    my_chemistry.k31 = 1.13e8 * my_chemistry.LWbackground_intensity * my_units.time_units;
+    my_chemistry.k31 = 1.13e8 * my_chemistry.LWbackground_intensity * my_units->time_units;
   
   /* LWbackground_sawtooth_suppression is supposed to account for the
      suppression of LW flux due to Lyman-series absorption (giving a
