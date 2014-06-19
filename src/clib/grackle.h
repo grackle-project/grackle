@@ -22,12 +22,12 @@ extern chemistry_data my_chemistry;
 
 int set_default_chemistry_parameters();
 
-int initialize_chemistry_data(code_units &my_units, gr_float a_value);
+int initialize_chemistry_data(code_units *my_units, gr_float a_value);
 
 int initialize_UVbackground_data();
-int update_UVbackground_rates(code_units &my_units, gr_float a_value);
+int update_UVbackground_rates(code_units *my_units, gr_float a_value);
 
-int solve_chemistry(code_units &my_units,
+int solve_chemistry(code_units *my_units,
 		    gr_float a_value, gr_float dt_value,
 		    gr_int grid_rank, gr_int *grid_dimension,
 		    gr_int *grid_start, gr_int *grid_end,
@@ -39,7 +39,7 @@ int solve_chemistry(code_units &my_units,
 		    gr_float *DI_density, gr_float *DII_density, gr_float *HDI_density,
 		    gr_float *e_density, gr_float *metal_density);
 
-int calculate_cooling_time(code_units &my_units, gr_float a_value,
+int calculate_cooling_time(code_units *my_units, gr_float a_value,
 			   gr_int grid_rank, gr_int *grid_dimension,
 			   gr_int *grid_start, gr_int *grid_end,
 			   gr_float *density, gr_float *internal_energy,
@@ -51,7 +51,7 @@ int calculate_cooling_time(code_units &my_units, gr_float a_value,
 			   gr_float *e_density, gr_float *metal_density,
 			   gr_float *cooling_time);
 
-int calculate_gamma(code_units &my_units,
+int calculate_gamma(code_units *my_units,
                     gr_int grid_rank, gr_int *grid_dimension,
                     gr_float *density, gr_float *internal_energy,
                     gr_float *HI_density, gr_float *HII_density, gr_float *HM_density,
@@ -61,7 +61,7 @@ int calculate_gamma(code_units &my_units,
                     gr_float *e_density, gr_float *metal_density,
                     gr_float *my_gamma);
 
-int calculate_pressure(code_units &my_units,
+int calculate_pressure(code_units *my_units,
                        gr_int grid_rank, gr_int *grid_dimension,
                        gr_float *density, gr_float *internal_energy,
                        gr_float *HI_density, gr_float *HII_density, gr_float *HM_density,
@@ -71,7 +71,7 @@ int calculate_pressure(code_units &my_units,
                        gr_float *e_density, gr_float *metal_density,
                        gr_float *pressure);
 
-int calculate_temperature(code_units &my_units,
+int calculate_temperature(code_units *my_units,
                           gr_int grid_rank, gr_int *grid_dimension,
                           gr_float *density, gr_float *internal_energy,
                           gr_float *HI_density, gr_float *HII_density, gr_float *HM_density,
@@ -83,7 +83,7 @@ int calculate_temperature(code_units &my_units,
 
 /* Tabular-only functions. */
 
-int solve_chemistry(code_units &my_units,
+int solve_chemistry_table(code_units *my_units,
                     gr_float a_value, gr_float dt_value,
                     gr_int grid_rank, gr_int *grid_dimension,
                     gr_int *grid_start, gr_int *grid_end,
@@ -91,7 +91,7 @@ int solve_chemistry(code_units &my_units,
                     gr_float *x_velocity, gr_float *y_velocity, gr_float *z_velocity,
                     gr_float *metal_density);
 
-int calculate_cooling_time(code_units &my_units, gr_float a_value,
+int calculate_cooling_time_table(code_units *my_units, gr_float a_value,
                            gr_int grid_rank, gr_int *grid_dimension,
                            gr_int *grid_start, gr_int *grid_end,
                            gr_float *density, gr_float *internal_energy,
@@ -99,12 +99,12 @@ int calculate_cooling_time(code_units &my_units, gr_float a_value,
                            gr_float *metal_density,
                            gr_float *cooling_time);
 
-int calculate_pressure(code_units &my_units,
+int calculate_pressure_table(code_units *my_units,
                        gr_int grid_rank, gr_int *grid_dimension,
                        gr_float *density, gr_float *internal_energy,
                        gr_float *pressure);
 
-int calculate_temperature(code_units &my_units,
+int calculate_temperature_table(code_units *my_units,
                           gr_int grid_rank, gr_int *grid_dimension,
                           gr_float *density, gr_float *internal_energy,
                           gr_float *metal_density,
