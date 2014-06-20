@@ -32,7 +32,7 @@ MACH_CC_NOMPI  = icc
 MACH_CXX_NOMPI = icpc
 MACH_FC_NOMPI  = ifort
 MACH_F90_NOMPI = ifort
-MACH_LD_NOMPI  = icpc
+MACH_LD_NOMPI  = icc
 MACH_AR        = ar
 
 #-----------------------------------------------------------------------
