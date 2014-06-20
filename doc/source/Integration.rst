@@ -6,29 +6,24 @@ Adding Grackle to Your Simulation Code
 Example Executables
 -------------------
 
-The grackle source code contains two C++ examples that links against the 
-grackle library.  They are located in the **src/example** directory 
-and are called **example.C** and **table_example.C**.  If you have already 
-installed the grackle library, you can build the examples by 
-typing:
+The grackle source code contains two C and two C++ examples that link against 
+the grackle library.  They are located in the **src/example** directory 
+and are called **c_example.c**, **c_table_example.c**, **cxx_example.C**, and 
+**cxx_table_example.C**.  If you have already installed the grackle library, 
+you can build the examples by typing *make* and the name of the file without 
+extension.  For example, to build the C++ example, type:
 
 .. code-block:: bash
 
-  $ make example
-
-or
-
-.. code-block:: bash
-
-  $ make table_example
+  $ make cxx_example
 
 To run the example, make sure to add the path to the directory containing 
 the installed **libgrackle.so** to your LD_LIBRARY_PATH (or 
 DYLD_LIBRARY_PATH on Mac).
 
-This document follows **example.C**, which details the use of the 
-full-featured grackle functions.  The **table_example.C** file illustrates 
-the use of the grackle with fully tabulated cooling functions only.  In 
+This document follows **cxx_example.C**, which details the use of the 
+full-featured grackle functions.  The table examples illustrate 
+the use of the Grackle with fully tabulated cooling functions only.  In 
 this mode, a simplified set of functions are available.  For information 
 on these, see :ref:`tabulated-mode`.
 
@@ -46,22 +41,32 @@ Four source files are installed with the grackle library.  They are:
     * **code_units.h** - this defines the structure containing conversions from code units to CGS.
 
 The only source file that needs to be included in your simulation code is 
-**grackle.h**.
+**grackle.h**.  Since this is a C++ example and the Grackle is pure C, we 
+must surround the include with the 'extern "C"' directive.
+
+.. code-block:: c++
+
+  extern "C" {
+  #include <grackle.h>
+  }
 
 Data Types
 ----------
 
 The grackle library provides two variable sized data types, one for integers 
-and one for floating point variables.  With **grackle.h** included, both of 
+and one for floating point variables.  This allows the Grackle to switch easily 
+between 32 and 64 bit integers and floats.  With **grackle.h** included, both of 
 these data types are available.
 
-    * *gr_int* - the integer data type.  This type is a 32 bit integer (int) if compiled with *integers-32* and a 64 bit integer (long int) if compiled with *integers-64*.
+    * **gr_int** - the integer data type.  This type is a 32 bit integer (int) if compiled with *integers-32* and a 64 bit integer (long int) if compiled with *integers-64*.
 
-    * *gr_float* - the floating point data type.  This type is a 32 bit float (float) if compiled with *precision-32* and a 64 bit float (double) if compiled with *precision-64*.
+    * **gr_float** - the floating point data type.  This type is a 32 bit float (float) if compiled with *precision-32* and a 64 bit float (double) if compiled with *precision-64*.
 
 Code Units
 ----------
 
+**It is strongly recommended to use comoving coordinates with any cosmological 
+simulation.**  
 The *code_units* structure contains conversions from code units to CGS.  
 If *comoving_coordinates* is set to 0, it is assumed that the fields 
 passed into the solver are in the proper frame.  All of the units 
@@ -98,17 +103,21 @@ densities to stay close to 1.0.
 Chemistry Data
 --------------
 
-The *chemistry_data* structure contains all of the parameters for controlling 
-the behavior of the chemistry and cooling solver.  It also contains all of the 
-actual chemistry and cooling rate data.  The routine, 
-*set_default_chemistry_parameters* creates the *chemistry_data* structure 
-with the default settings and returns it.  The parameters can then be set to 
-their desired values.  See :ref:`parameters` for a full list of the available 
-parameters.
+The main Grackle header file contains a structure, called **my_chemistry**, which 
+contains all of the parameters that control the behavior of the solver as well as 
+all of the actual chemistry and cooling rate data.  The routine, 
+*set_default_chemistry_parameters* is responsible for the initial setup of this 
+structure and for setting of all the default parameter values.  The parameters can 
+then be set to their desired values.  See :ref:`parameters` for a full list of the 
+available parameters.  The function will return an integer indicating success 
+(1) or failure (0).
 
 .. code-block:: c++
 
-  chemistry_data my_chemistry = set_default_chemistry_parameters();
+  if (set_default_chemistry_parameters() == 0) {
+    fprintf(stderr, "Error in set_default_chemistry_parameters.\n");
+  }
+
   // Set parameter values for chemistry.
   my_chemistry.use_grackle = 1;            // chemistry on
   my_chemistry.with_radiative_cooling = 1; // cooling on
@@ -132,12 +141,12 @@ set to 1.  The initializing function will return an integer indicating success
   gr_float a_value = 1. / (1. + initial_redshift);
 
   // Finally, initialize the chemistry object.
-  if (initialize_chemistry_data(my_chemistry, my_units, a_value) == 0) {
+  if (initialize_chemistry_data(&my_units, a_value) == 0) {
     fprintf(stderr, "Error in initialize_chemistry_data.\n");
     return 0;
   }
 
-The *chemistry_data* structure is now ready to be used.
+The Grackle is now ready to be used.
 
 Creating the Necessary Fields
 -----------------------------
@@ -206,7 +215,7 @@ Calling the Available Functions
 There are five functions available, one to solve the chemistry and cooling 
 and four others to calculate the cooling time, temperature, pressure, and the 
 ratio of the specific heats (gamma).  The arguments required are the 
-*code_units* and *chemistry_data* structures, the field size and dimension 
+*code_units* structure, the field size and dimension 
 variables, and the field arrays themselves.  In some cases, the current value 
 of the expansion factor must also be given and for the chemistry solving 
 routine, a timestep must be given.  For the four field calculator routines, 
@@ -221,7 +230,7 @@ Solve the Chemistry and Cooling
   // some timestep (one million years)
   gr_float dt = 3.15e7 * 1e6 / my_units.time_units;
 
-  if (solve_chemistry(my_chemistry, my_units,
+  if (solve_chemistry(&my_units,
                       a_value, dt,
                       grid_rank, grid_dimension,
                       grid_start, grid_end,
@@ -243,7 +252,7 @@ Calculating the Cooling Time
 
   gr_float *cooling_time;
   cooling_time = new gr_float[field_size];
-  if (calculate_cooling_time(my_chemistry, my_units,
+  if (calculate_cooling_time(&my_units,
                              a_value,
                              grid_rank, grid_dimension,
                              grid_start, grid_end,
@@ -266,7 +275,7 @@ Calculating the Temperature Field
 
   gr_float *temperature;
   temperature = new gr_float[field_size];
-  if (calculate_temperature(my_chemistry, my_units,
+  if (calculate_temperature(&my_units,
                             grid_rank, grid_dimension,
                             density, energy,
                             HI_density, HII_density, HM_density,
@@ -286,7 +295,7 @@ Calculating the Pressure Field
 
   gr_float *pressure;
   pressure = new gr_float[field_size];
-  if (calculate_pressure(my_chemistry, my_units,
+  if (calculate_pressure(&my_units,
                          grid_rank, grid_dimension,
                          density, energy,
                          HI_density, HII_density, HM_density,
@@ -306,7 +315,7 @@ Calculating the Gamma Field
 
   gr_float *gamma;
   gamma = new gr_float[field_size];
-  if (calculate_gamma(my_chemistry, my_units,
+  if (calculate_gamma(&my_units,
                       grid_rank, grid_dimension,
                       density, energy,
                       HI_density, HII_density, HM_density,
@@ -328,7 +337,8 @@ If you only intend to run simulations using the fully tabulated cooling
 (*primordial_chemistry* set to 0), then a simplified set of functions are 
 available.  These functions do not require pointers to be given for the 
 field arrays for the chemistry species densities.  See the 
-**table_example.C** file in the **src/example** directory for an example.
+**cxx_table_example.C** and **c_table_example.c** files in the 
+**src/example** directory for an example.
 
 .. note:: No simplified function is available for the calculation of the gamma field since gamma is only altered in Grackle by the presence of H\ :sub:`2`\.
 
@@ -340,7 +350,7 @@ Solve the Cooling
   // some timestep (one million years)
   gr_float dt = 3.15e7 * 1e6 / my_units.time_units;
 
-  if (solve_chemistry(my_chemistry, my_units,
+  if (solve_chemistry(&my_units,
                       a_value, dt,
                       grid_rank, grid_dimension,
                       grid_start, grid_end,
@@ -358,7 +368,7 @@ Calculating the Cooling Time
 
   gr_float *cooling_time;
   cooling_time = new gr_float[field_size];
-  if (calculate_cooling_time(my_chemistry, my_units,
+  if (calculate_cooling_time(&my_units,
                              a_value,
                              grid_rank, grid_dimension,
                              grid_start, grid_end,
@@ -377,7 +387,7 @@ Calculating the Temperature Field
 
   gr_float *temperature;
   temperature = new gr_float[field_size];
-  if (calculate_temperature(my_chemistry, my_units,
+  if (calculate_temperature(&my_units,
                             grid_rank, grid_dimension,
                             density, energy,
                             metal_density, 
@@ -393,7 +403,7 @@ Calculating the Pressure Field
 
   gr_float *pressure;
   pressure = new gr_float[field_size];
-  if (calculate_pressure(my_chemistry, my_units,
+  if (calculate_pressure(&my_units,
                          grid_rank, grid_dimension,
                          density, energy,
                          pressure) == 0) {

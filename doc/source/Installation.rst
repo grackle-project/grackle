@@ -123,7 +123,8 @@ type:
 
    CONFIG_PRECISION  [precision-{32,64}]                     : 64
    CONFIG_INTEGERS  [integers-{32,64}]                       : 64
-   CONFIG_OPT  [opt-{warn,debug,cudadebug,high,aggressive}]  : debug
+   CONFIG_OPT  [opt-{warn,debug,cudadebug,high,aggressive}]  : high
+   CONFIG_SHARED  [shared-{yes,no}]                          : yes
 
 For example, to change the optimization to high, type:
 
