@@ -15,7 +15,6 @@
 SHELL    = /bin/bash
 
 TOP_DIR  = ../..
-EXE      = example
 OUTPUT   = out.compile
 
 GRACKLE_DIR = $(TOP_DIR)/src/clib
@@ -68,23 +67,23 @@ include $(GRACKLE_DIR)/Make.config.assemble
 # OBJECT FILES
 #=======================================================================
 
-OBJS_CONFIG_LIB = example.o
+OBJS_CONFIG_LIB = cxx_grackle.o
 
 GRACKLE_INCLUDE = -I$(MACH_INSTALL_PREFIX)/include
 GRACKLE_LIB = -L$(MACH_INSTALL_PREFIX)/lib -lgrackle
 
 #-----------------------------------------------------------------------
-# MAIN TARGET
+# C++ EXAMPLE
 #-----------------------------------------------------------------------
 
-$(EXE).exe: $(MODULES) $(OBJS_LIB)
+cxx_example: $(MODULES) cxx_example.o
 	@rm -f $@
 	@echo "Linking"
-	-@$(LD) $(LDFLAGS) -o $(EXE).exe $(OBJS_LIB) $(LIBS) $(GRACKLE_LIB) >& $(OUTPUT)
+	-@$(CXX) $(LDFLAGS) -o cxx_example cxx_example.o $(LIBS) $(GRACKLE_LIB) >& $(OUTPUT)
 	@(if [ -e $@ ]; then \
              echo "Success!"; \
          else \
-             echo "$(LD) $(LDFLAGS) -o $(EXE).exe $(OBJS_LIB) $(LIBS) $(GRACKLE_LIB)" >> temp1; \
+             echo "$(CXX) $(LDFLAGS) -o cxx_example cxx_example.o $(LIBS) $(GRACKLE_LIB)" >> temp1; \
              cat temp1 $(OUTPUT) > temp2; \
              rm -f temp1; \
              mv -f temp2 $(OUTPUT); \
@@ -92,17 +91,17 @@ $(EXE).exe: $(MODULES) $(OBJS_LIB)
          fi)
 
 #-----------------------------------------------------------------------
-# REGULAR EXAMPLE
+# C++ TABLE EXAMPLE
 #-----------------------------------------------------------------------
 
-example: $(MODULES) example.o
+cxx_table_example: $(MODULES) cxx_table_example.o
 	@rm -f $@
 	@echo "Linking"
-	-@$(LD) $(LDFLAGS) -o example example.o $(LIBS) $(GRACKLE_LIB) >& $(OUTPUT)
+	-@$(CXX) $(LDFLAGS) -o cxx_table_example cxx_table_example.o $(LIBS) $(GRACKLE_LIB) >& $(OUTPUT)
 	@(if [ -e $@ ]; then \
              echo "Success!"; \
          else \
-             echo "$(LD) $(LDFLAGS) -o example example.o $(LIBS) $(GRACKLE_LIB)" >> temp1; \
+             echo "$(CXX) $(LDFLAGS) -o cxx_table_example cxx_table_example.o $(LIBS) $(GRACKLE_LIB)" >> temp1; \
              cat temp1 $(OUTPUT) > temp2; \
              rm -f temp1; \
              mv -f temp2 $(OUTPUT); \
@@ -128,17 +127,17 @@ c_example: $(MODULES) c_example.o
          fi)
 
 #-----------------------------------------------------------------------
-# TABLE EXAMPLE
+# PURE C TABLE EXAMPLE
 #-----------------------------------------------------------------------
 
-table_example: $(MODULES) table_example.o
+c_table_example: $(MODULES) c_table_example.o
 	@rm -f $@
 	@echo "Linking"
-	-@$(LD) $(LDFLAGS) -o table_example table_example.o $(LIBS) $(GRACKLE_LIB) >& $(OUTPUT)
+	-@$(LD) $(LDFLAGS) -o c_table_example c_table_example.o $(LIBS) $(GRACKLE_LIB) >& $(OUTPUT)
 	@(if [ -e $@ ]; then \
              echo "Success!"; \
          else \
-             echo "$(LD) $(LDFLAGS) -o table_example table_example.o $(LIBS) $(GRACKLE_LIB)" >> temp1; \
+             echo "$(LD) $(LDFLAGS) -o c_table_example c_table_example.o $(LIBS) $(GRACKLE_LIB)" >> temp1; \
              cat temp1 $(OUTPUT) > temp2; \
              rm -f temp1; \
              mv -f temp2 $(OUTPUT); \
@@ -200,7 +199,7 @@ help:
 #-----------------------------------------------------------------------
 
 clean:
-	-@rm -f *.o *.mod *.f *.f90 *~ $(OUTPUT) $(EXE).exe example table_example
+	-@rm -f *.o *.mod *.f *.f90 *~ $(OUTPUT) cxx_example cxx_table_example c_example c_table_example
 
 #-----------------------------------------------------------------------
 # Include configuration targets
