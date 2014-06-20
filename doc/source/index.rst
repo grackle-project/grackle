@@ -62,14 +62,14 @@ to by name in the `AGORA method paper
 <http://adsabs.harvard.edu/abs/2013arXiv1308.2669K>`_.
 
 If you used the Grackle library in your work, please cite it as "the Grackle 
-chemistry and cooling library (`The Enzo Collaboration et al. 2013 
-<http://adsabs.harvard.edu/abs/2013arXiv1307.2265T>`_; `Kim, J. et al. 2013 
-<http://adsabs.harvard.edu/abs/2013arXiv1308.2669K>`_)."  Also, please add a 
+chemistry and cooling library (`The Enzo Collaboration et al. 2014 
+<http://adsabs.harvard.edu/abs/2014ApJS..211...19B>`_; `Kim, J. et al. 2014 
+<http://adsabs.harvard.edu/abs/2014ApJS..210...14K>`_)."  Also, please add a 
 footnote to `https://grackle.readthedocs.org/ <https://grackle.readthedocs.org/>`_.
 
-  The Enzo Collaboration, Bryan, G. L., Norman, M. L., et al. 2013, arXiv:1307.2265
+  The Enzo Collaboration, Bryan, G. L., Norman, M. L., et al. 2014, ApJS, 211, 19
 
-  Kim, J.-h., Abel, T., Agertz, O., et al. 2013, arXiv:1308.2669 
+  Kim, J.-h., Abel, T., Agertz, O., et al. 2014, ApJS, 210, 14
 
 Search
 ------

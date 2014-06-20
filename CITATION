@@ -2,9 +2,9 @@ If you used the Grackle library in your work, please cite it as
 “the Grackle chemistry and cooling library (The Enzo Collaboration et al. 2013; 
 Kim, J. et al. 2013).”
 
-    The Enzo Collaboration, Bryan, G. L., Norman, M. L., et al. 2013, arXiv:1307.2265
+    The Enzo Collaboration, Bryan, G. L., Norman, M. L., et al. 2014, ApJS, 211, 19
 
-    Kim, J.-h., Abel, T., Agertz, O., et al. 2013, arXiv:1308.2669
+    Kim, J.-h., Abel, T., Agertz, O., et al. 2014, ApJS, 210, 14
 
 Also, please add a footnote to:
 
@@ -12,55 +12,64 @@ https://grackle.readthedocs.org/
 
 For LaTex and BibTex users:
 
-\bibitem[The Enzo Collaboration et al.(2013)]{2013arXiv1307.2265T} The Enzo 
-Collaboration, Bryan, G.~L., Norman, M.~L., et al.\ 2013, arXiv:1307.2265 
+\bibitem[The Enzo Collaboration et al.(2014)]{2014ApJS..211...19B} Bryan, G.~L., Norman, 
+M.~L., O'Shea, B.~W., et al.\ 2014, \apjs, 211, 19 
 
-\bibitem[Kim et al.(2013)]{2013arXiv1308.2669K} Kim, J.-h., Abel, T., 
-Agertz, O., et al.\ 2013, arXiv:1308.2669 
+\bibitem[Kim et al.(2014)]{2014ApJS..210...14K} Kim, J.-h., Abel, T., 
+Agertz, O., et al.\ 2014, \apjs, 210, 14 
 
-@ARTICLE{2013arXiv1307.2265T,
-   author = {{The Enzo Collaboration} and {Bryan}, G.~L. and {Norman}, M.~L. and 
-	{O'Shea}, B.~W. and {Abel}, T. and {Wise}, J.~H. and {Turk}, M.~J. and 
-	{Reynolds}, D.~R. and {Collins}, D.~C. and {Wang}, P. and {Skillman}, S.~W. and 
-	{Smith}, B. and {Harkness}, R.~P. and {Bordner}, J. and {Kim}, J.-h. and 
-	{Kuhlen}, M. and {Xu}, H. and {Goldbaum}, N. and {Hummels}, C. and 
-	{Kritsuk}, A.~G. and {Tasker}, E. and {Skory}, S. and {Simpson}, C.~M. and 
-	{Hahn}, O. and {Oishi}, J.~S. and {So}, G.~C and {Zhao}, F. and 
-	{Cen}, R. and {Li}, Y.},
-    title = "{Enzo: An Adaptive Mesh Refinement Code for Astrophysics}",
-  journal = {ArXiv e-prints},
+@ARTICLE{2014ApJS..211...19B,
+   author = {{The Enzo Collaboration} {Bryan}, G.~L. and {Norman}, M.~L. and 
+        {O'Shea}, B.~W. and {Abel}, T. and 
+	{Wise}, J.~H. and {Turk}, M.~J. and {Reynolds}, D.~R. and {Collins}, D.~C. and 
+	{Wang}, P. and {Skillman}, S.~W. and {Smith}, B. and {Harkness}, R.~P. and 
+	{Bordner}, J. and {Kim}, J.-h. and {Kuhlen}, M. and {Xu}, H. and 
+	{Goldbaum}, N. and {Hummels}, C. and {Kritsuk}, A.~G. and {Tasker}, E. and 
+	{Skory}, S. and {Simpson}, C.~M. and {Hahn}, O. and {Oishi}, J.~S. and 
+	{So}, G.~C. and {Zhao}, F. and {Cen}, R. and {Li}, Y. and {The Enzo Collaboration}
+	},
+    title = "{ENZO: An Adaptive Mesh Refinement Code for Astrophysics}",
+  journal = {\apjs},
 archivePrefix = "arXiv",
    eprint = {1307.2265},
  primaryClass = "astro-ph.IM",
- keywords = {Astrophysics - Instrumentation and Methods for Astrophysics},
-     year = 2013,
-    month = jul,
-   adsurl = {http://adsabs.harvard.edu/abs/2013arXiv1307.2265T},
+ keywords = {hydrodynamics, methods: numerical },
+     year = 2014,
+    month = apr,
+   volume = 211,
+      eid = {19},
+    pages = {19},
+      doi = {10.1088/0067-0049/211/2/19},
+   adsurl = {http://adsabs.harvard.edu/abs/2014ApJS..211...19B},
   adsnote = {Provided by the SAO/NASA Astrophysics Data System}
 }
 
-@ARTICLE{2013arXiv1308.2669K,
+@ARTICLE{2014ApJS..210...14K,
    author = {{Kim}, J.-h. and {Abel}, T. and {Agertz}, O. and {Bryan}, G.~L. and 
 	{Ceverino}, D. and {Christensen}, C. and {Conroy}, C. and {Dekel}, A. and 
 	{Gnedin}, N.~Y. and {Goldbaum}, N.~J. and {Guedes}, J. and {Hahn}, O. and 
 	{Hobbs}, A. and {Hopkins}, P.~F. and {Hummels}, C.~B. and {Iannuzzi}, F. and 
 	{Keres}, D. and {Klypin}, A. and {Kravtsov}, A.~V. and {Krumholz}, M.~R. and 
 	{Kuhlen}, M. and {Leitner}, S.~N. and {Madau}, P. and {Mayer}, L. and 
-	{Moody}, C.~E. and {Nagamine}, K. and {Norman}, M.~L. and {O{\~n}orbe}, J. and 
+	{Moody}, C.~E. and {Nagamine}, K. and {Norman}, M.~L. and {Onorbe}, J. and 
 	{O'Shea}, B.~W. and {Pillepich}, A. and {Primack}, J.~R. and 
 	{Quinn}, T. and {Read}, J.~I. and {Robertson}, B.~E. and {Rocha}, M. and 
 	{Rudd}, D.~H. and {Shen}, S. and {Smith}, B.~D. and {Szalay}, A.~S. and 
 	{Teyssier}, R. and {Thompson}, R. and {Todoroki}, K. and {Turk}, M.~J. and 
-	{Wadsley}, J.~W. and {Wise}, J.~H. and {Zolotov}, A. and {for the AGORA Collaboration}
+	{Wadsley}, J.~W. and {Wise}, J.~H. and {Zolotov}, A. and {AGORA Collaboration29}, f.~t.
 	},
-    title = "{The AGORA High-Resolution Galaxy Simulations Comparison Project}",
-  journal = {ArXiv e-prints},
+    title = "{The AGORA High-resolution Galaxy Simulations Comparison Project}",
+  journal = {\apjs},
 archivePrefix = "arXiv",
    eprint = {1308.2669},
  primaryClass = "astro-ph.GA",
- keywords = {Astrophysics - Galaxy Astrophysics, Astrophysics - Cosmology and Extragalactic Astrophysics},
-     year = 2013,
-    month = aug,
-   adsurl = {http://adsabs.harvard.edu/abs/2013arXiv1308.2669K},
+ keywords = {cosmology: theory, dark matter, galaxies: formation, galaxies: evolution, hydrodynamics, methods: numerical},
+     year = 2014,
+    month = jan,
+   volume = 210,
+      eid = {14},
+    pages = {14},
+      doi = {10.1088/0067-0049/210/1/14},
+   adsurl = {http://adsabs.harvard.edu/abs/2014ApJS..210...14K},
   adsnote = {Provided by the SAO/NASA Astrophysics Data System}
 }
