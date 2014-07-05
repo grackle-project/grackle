@@ -145,10 +145,28 @@ c_table_example: $(MODULES) c_table_example.o
          fi)
 
 #-----------------------------------------------------------------------
+# FORTRAN EXAMPLE
+#-----------------------------------------------------------------------
+
+fortran_example: $(MODULES) fortran_example.o
+	@rm -f $@
+	@echo "Linking"
+	-@$(FC) $(LDFLAGS) -o fortran_example fortran_example.o $(LIBS) $(GRACKLE_LIB) >& $(OUTPUT)
+	@(if [ -e $@ ]; then \
+             echo "Success!"; \
+         else \
+             echo "$(FC) $(LDFLAGS) -o fortran_example fortran_example.o $(LIBS) $(GRACKLE_LIB)" >> temp1; \
+             cat temp1 $(OUTPUT) > temp2; \
+             rm -f temp1; \
+             mv -f temp2 $(OUTPUT); \
+             echo "Failed! See $(OUTPUT) for error messages"; \
+         fi)
+
+#-----------------------------------------------------------------------
 # Implicit rules
 #-----------------------------------------------------------------------
 
-.SUFFIXES: .c .C
+.SUFFIXES: .c .C .F
 
 .C.o:
 	@rm -f $@
@@ -176,6 +194,19 @@ c_table_example: $(MODULES) c_table_example.o
              exit 1; \
           fi)
 
+.F.o:
+	@rm -f $@
+	@echo "Compiling $<"
+	-@($(FC) -c -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) $(GRACKLE_INCLUDE) $*.F) >& $(OUTPUT)
+	@(if [ ! -e $@ ]; then \
+             echo; \
+             echo "$(FC) -c -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) $(GRACKLE_INCLUDE) $*.F"; \
+             echo; \
+             $(FC) -c -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) $(GRACKLE_INCLUDE) $*.F;\
+             echo; \
+             exit 1; \
+          fi)
+
 #-----------------------------------------------------------------------
 # HELP TARGET
 #-----------------------------------------------------------------------
@@ -199,7 +230,7 @@ help:
 #-----------------------------------------------------------------------
 
 clean:
-	-@rm -f *.o *.mod *.f *.f90 *~ $(OUTPUT) cxx_example cxx_table_example c_example c_table_example
+	-@rm -f *.o *.mod *.f *.f90 *~ $(OUTPUT) cxx_example cxx_table_example c_example c_table_example fortran_example
 
 #-----------------------------------------------------------------------
 # Include configuration targets

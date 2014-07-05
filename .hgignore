@@ -26,7 +26,10 @@ src/clib/auto_show_config.C
 src/clib/auto_show_flags.C
 src/clib/auto_show_version.C
 src/clib/libgrackle.so
-src/example/example
-src/example/table_example
+src/example/cxx_example
+src/example/cxx_table_example
+src/example/c_example
+src/example/c_table_example
+src/example/fortran_example
 src/python/build/*
 doc/build
