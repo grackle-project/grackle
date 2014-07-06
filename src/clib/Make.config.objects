@@ -29,6 +29,7 @@ OBJS_CONFIG_LIB = \
         cool_multi_time_g.o \
         initialize_chemistry_data.o \
         initialize_cloudy_data.o \
+        initialize_grackle.o \
         initialize_UVbackground_data.o \
         set_default_chemistry_parameters.o \
         solve_chemistry.o \
