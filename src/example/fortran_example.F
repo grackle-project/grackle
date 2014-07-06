@@ -1,6 +1,12 @@
       program fortran_example
 
-      integer iresult
+      integer iresult, i
+
+      real*8 tiny_number, mh, kboltz, fH
+      parameter (tiny_number = 1.0d-20)
+      parameter (mh = 1.67262171d-24)
+      parameter (kboltz = 1.3806504d-16)
+      parameter (fH = 0.76)
 
 c     Initialization parameters
 
@@ -13,7 +19,34 @@ c     Initialization parameters
 
       character*36 grackle_data_file
 
-c     Parameters
+c     Field data arrays
+
+      integer field_size
+      parameter (field_size = 1)
+
+      real*8 temperature_units, dt
+
+      real*8 density(field_size), energy(field_size),
+     &     x_velocity(field_size), y_velocity(field_size),
+     &     z_velocity(field_size),
+     &     HI_density(field_size), HII_density(field_size),
+     &     HM_density(field_size),
+     &     HeI_density(field_size), HeII_density(field_size),
+     &     HeIII_density(field_size),
+     &     H2I_density(field_size), H2II_density(field_size),
+     &     DI_density(field_size), DII_density(field_size),
+     &     HDI_density(field_size),
+     &     e_density(field_size), metal_density(field_size)
+
+c     Grid size and dimension
+c     grid_start and grid_end are used to ignore ghost zones.
+
+      integer*8 grid_rank, grid_dimension(3), 
+     &     grid_start(3), grid_end(3)
+
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+
+c     Set parameters
 
 c     chemistry on
       use_grackle = 1
@@ -28,14 +61,18 @@ c     UV background on
 c     cooling data for Haardt & Madau 2012 background
       grackle_data_file = "../../input/CloudyData_UVB=HM2012.h5"
 
-c     Units
+c     Set units
 
-      comoving_coordinates = 1
+      comoving_coordinates = 0
       density_units = 1.67d-24
       length_units = 1.0
       time_units = 1.0d12
       velocity_units = length_units / time_units
       a_units = 1.0
+
+      a_value = 1.0
+
+c     Initialize the Grackle
 
       iresult = initialize_grackle(
      &     comoving_coordinates,
@@ -46,5 +83,72 @@ c     Units
      &     grackle_data_file,
      &     primordial_chemistry, metal_cooling,
      &     h2_on_dust, cmb_temperature_floor)
+
+c     Set field arrays
+
+c     If grid rank is less than 3, set the other dimensions, 
+c     start indices, and end indices to 0.
+      grid_rank = 3
+      do i = 1, grid_rank
+         grid_dimension(i) = 0
+         grid_start(i) = 0
+         grid_end(i) = 0
+      enddo
+      grid_dimension(1) = field_size
+c     0-based
+      grid_end(1) = field_size - 1
+
+c     set temperature units
+      temperature_units =  mh *
+     &     (a_units * length_units / time_units)**2 / kboltz
+
+      do i = 1,field_size
+         density(i) = 1.0
+         HI_density(i) = fH * density(i)
+         HII_density(i) = tiny_number * density(i)
+         HM_density(i) = tiny_number * density(i)
+         HeI_density(i) = (1.0 - fH) * density(i)
+         HeII_density(i) = tiny_number * density(i)
+         HeIII_density(i) = tiny_number * density(i)
+         H2I_density(i) = tiny_number * density(i)
+         H2II_density(i) = tiny_number * density(i)
+         DI_density(i) = 2.0 * 3.4e-5 * density(i)
+         DII_density(i) = tiny_number * density(i)
+         HDI_density(i) = tiny_number * density(i)
+         e_density(i) = tiny_number * density(i)
+c        solar metallicity
+         metal_density(i) = 0.0204 * density(i)
+
+         x_velocity(i) = 0.0
+         y_velocity(i) = 0.0
+         z_velocity(i) = 0.0
+
+c        initilize internal energy (here 1000 K for no reason)
+         energy(i) = 1000. / temperature_units
+      enddo
+
+c
+c     Calling the chemistry solver
+c     These routines can now be called during the simulation.
+c
+
+c     Evolving the chemistry.
+
+c     some timestep
+      dt = 3.15e7 * 1e6 / time_units
+
+      iresult = solve_chemistry(comoving_coordinates,
+     &     density_units, length_units,
+     &     time_units, velocity_units,
+     &     a_units, a_value, dt,
+     &     grid_rank, grid_dimension,
+     &     grid_start, grid_end,
+     &     density, energy,
+     &     x_velocity, y_velocity, z_velocity,
+     &     HI_density, HII_density, HM_density,
+     &     HeI_density, HeII_density, HeIII_density,
+     &     H2I_density, H2II_density,
+     &     DI_density, DII_density, HDI_density,
+     &     e_density, metal_density)
 
       end program fortran_example
