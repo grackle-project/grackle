@@ -21,6 +21,8 @@
 #include "phys_constants.h"
 
 extern chemistry_data my_chemistry;
+
+int set_default_chemistry_parameters();
  
 int initialize_chemistry_data(code_units *my_units, gr_float a_value);
 
@@ -41,6 +43,11 @@ int initialize_grackle(gr_int comoving_coordinates,
   my_units.time_units = time_units;
   my_units.velocity_units = velocity_units;
   my_units.a_units = a_units;
+
+  if (set_default_chemistry_parameters() == FAIL) {
+    fprintf(stderr, "Error in set_default_chemistry_parameters.\n");
+    return FAIL;
+  }
 
   my_chemistry.use_grackle = use_grackle;
   my_chemistry.with_radiative_cooling = with_radiative_cooling;
