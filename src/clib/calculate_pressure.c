@@ -122,7 +122,8 @@ int calculate_pressure_(gr_int *comoving_coordinates,
   my_units.velocity_units = *velocity_units;
   my_units.a_units = *a_units;
 
-  return calculate_pressure(&my_units,
+  int rval;
+  rval = calculate_pressure(&my_units,
                             *grid_rank, grid_dimension,
                             density, internal_energy,
                             HI_density, HII_density, HM_density,
@@ -131,5 +132,6 @@ int calculate_pressure_(gr_int *comoving_coordinates,
                             DI_density, DII_density, HDI_density,
                             e_density, metal_density,
                             pressure);
+  return rval;
 
 }

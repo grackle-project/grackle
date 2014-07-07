@@ -85,7 +85,8 @@ int initialize_grackle_(gr_int *comoving_coordinates,
     grackle_data_file[i] = grackle_file[i];
   }
 
-  return initialize_grackle(*comoving_coordinates,
+  int rval;
+  rval = initialize_grackle(*comoving_coordinates,
                             *density_units, *length_units,
                             *time_units, *velocity_units,
                             *a_units, *a_value,
@@ -94,5 +95,6 @@ int initialize_grackle_(gr_int *comoving_coordinates,
                             *primordial_chemistry, *metal_cooling,
                             *UVbackground, *h2_on_dust,
                             *cmb_temperature_floor);
+  return rval;
 
 }

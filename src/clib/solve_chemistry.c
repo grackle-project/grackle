@@ -218,7 +218,8 @@ int solve_chemistry_(gr_int *comoving_coordinates,
   my_units.velocity_units = *velocity_units;
   my_units.a_units = *a_units;
 
-  return solve_chemistry(&my_units,
+  int rval;
+  rval = solve_chemistry(&my_units,
                          *a_value, *dt_value,
                          *grid_rank, grid_dimension,
                          grid_start, grid_end,
@@ -229,5 +230,6 @@ int solve_chemistry_(gr_int *comoving_coordinates,
                          H2I_density, H2II_density,
                          DI_density, DII_density, HDI_density,
                          e_density, metal_density);
+  return rval;
 
 }

@@ -195,7 +195,8 @@ int calculate_cooling_time_(gr_int *comoving_coordinates,
   my_units.velocity_units = *velocity_units;
   my_units.a_units = *a_units;
 
-  return calculate_cooling_time(&my_units, *a_value,
+  int rval;
+  rval = calculate_cooling_time(&my_units, *a_value,
                                 *grid_rank, grid_dimension,
                                 grid_start, grid_end,
                                 density, internal_energy,
@@ -206,5 +207,6 @@ int calculate_cooling_time_(gr_int *comoving_coordinates,
                                 DI_density, DII_density, HDI_density,
                                 e_density, metal_density,
                                 cooling_time);
+  return rval;
 
 }
