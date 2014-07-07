@@ -197,12 +197,12 @@ fortran_example: $(MODULES) fortran_example.o
 .F.o:
 	@rm -f $@
 	@echo "Compiling $<"
-	-@($(FC) -c -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) $(GRACKLE_INCLUDE) $*.F) >& $(OUTPUT)
+	-@($(FC) -c -o $@ $(DEFINES) $(FFLAGS) $(INCLUDES) $(GRACKLE_INCLUDE) $*.F) >& $(OUTPUT)
 	@(if [ ! -e $@ ]; then \
              echo; \
-             echo "$(FC) -c -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) $(GRACKLE_INCLUDE) $*.F"; \
+             echo "$(FC) -c -o $@ $(DEFINES) $(FFLAGS) $(INCLUDES) $(GRACKLE_INCLUDE) $*.F"; \
              echo; \
-             $(FC) -c -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) $(GRACKLE_INCLUDE) $*.F;\
+             $(FC) -c -o $@ $(DEFINES) $(FFLAGS) $(INCLUDES) $(GRACKLE_INCLUDE) $*.F;\
              echo; \
              exit 1; \
           fi)
