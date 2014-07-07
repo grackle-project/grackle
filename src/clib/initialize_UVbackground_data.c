@@ -250,12 +250,8 @@ int initialize_UVbackground_data()
 
   fprintf(stderr, "Setting UVbackground_redshift_on to %f.\n",
           my_chemistry.UVbackground_redshift_on);
-  fprintf(stderr, "Setting UVbackground_redshift_fullon to %f.\n",
-          my_chemistry.UVbackground_redshift_fullon);
   fprintf(stderr, "Setting UVbackground_redshift_off to %f.\n",
           my_chemistry.UVbackground_redshift_off);
-  fprintf(stderr, "Setting UVbackground_redshift_drop to %f.\n",
-          my_chemistry.UVbackground_redshift_drop);
 
   return SUCCESS;
 }
