@@ -31,7 +31,8 @@ int initialize_grackle(gr_int comoving_coordinates,
                        gr_int use_grackle, gr_int with_radiative_cooling,
                        char *grackle_data_file,
                        gr_int primordial_chemistry, gr_int metal_cooling,
-                       gr_int h2_on_dust, gr_int cmb_temperature_floor);
+                       gr_int UVbackground, gr_int h2_on_dust,
+                       gr_int cmb_temperature_floor);
 
 int solve_chemistry(code_units *my_units,
 		    gr_float a_value, gr_float dt_value,

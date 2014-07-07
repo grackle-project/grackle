@@ -33,7 +33,8 @@ int initialize_grackle(gr_int comoving_coordinates,
                        gr_int use_grackle, gr_int with_radiative_cooling,
                        char *grackle_data_file,
                        gr_int primordial_chemistry, gr_int metal_cooling,
-                       gr_int h2_on_dust, gr_int cmb_temperature_floor)
+                       gr_int UVbackground, gr_int h2_on_dust,
+                       gr_int cmb_temperature_floor)
 {
 
   code_units my_units;
@@ -54,6 +55,7 @@ int initialize_grackle(gr_int comoving_coordinates,
   my_chemistry.grackle_data_file = grackle_data_file;
   my_chemistry.primordial_chemistry = primordial_chemistry;
   my_chemistry.metal_cooling = metal_cooling;
+  my_chemistry.UVbackground = UVbackground;
   my_chemistry.h2_on_dust = h2_on_dust;
   my_chemistry.cmb_temperature_floor = cmb_temperature_floor;
 
@@ -72,7 +74,8 @@ int initialize_grackle_(gr_int *comoving_coordinates,
                         gr_int *use_grackle, gr_int *with_radiative_cooling,
                         char *grackle_file,
                         gr_int *primordial_chemistry, gr_int *metal_cooling,
-                        gr_int *h2_on_dust, gr_int *cmb_temperature_floor,
+                        gr_int *UVbackground, gr_int *h2_on_dust,
+                        gr_int *cmb_temperature_floor,
                         int n1)
 {
 
@@ -89,6 +92,7 @@ int initialize_grackle_(gr_int *comoving_coordinates,
                             *use_grackle, *with_radiative_cooling,
                             grackle_data_file,
                             *primordial_chemistry, *metal_cooling,
-                            *h2_on_dust, *cmb_temperature_floor);
+                            *UVbackground, *h2_on_dust,
+                            *cmb_temperature_floor);
 
 }
