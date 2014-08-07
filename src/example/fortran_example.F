@@ -15,7 +15,7 @@ c     Initialization parameters
      &     metal_cooling, h2_on_dust, cmb_temperature_floor
 
       real*8 density_units, length_units, time_units, velocity_units,
-     &     a_units, a_value
+     &     a_units, a_value, initial_redshift
 
       character*36 grackle_data_file
 
@@ -38,6 +38,9 @@ c     Field data arrays
      &     HDI_density(field_size),
      &     e_density(field_size), metal_density(field_size)
 
+      real*8 cooling_time(field_size), gamma(field_size),
+     &     pressure(field_size), temperature(field_Size)
+
 c     Grid size and dimension
 c     grid_start and grid_end are used to ignore ghost zones.
 
@@ -53,13 +56,17 @@ c     chemistry on
 c     cooling on
       with_radiative_cooling = 1
 c     molecular network with H, He, D
-      primordial_chemistry = 3
+      primordial_chemistry = 0
 c     metal cooling on
       metal_cooling = 1
 c     UV background on
       UVbackground = 1
 c     cooling data for Haardt & Madau 2012 background
       grackle_data_file = "../../input/CloudyData_UVB=HM2012.h5"
+c     no dust
+      h2_on_dust = 0
+c     include CMB cooling floor
+      cmb_temperature_floor = 1
 
 c     Set units
 
@@ -70,7 +77,10 @@ c     Set units
       velocity_units = length_units / time_units
       a_units = 1.0
 
-      a_value = 1.0
+c     Set initial expansion factor (for internal units).
+c     Set expansion factor to 1 for non-cosmological simulation.
+      initial_redshift = 0.;
+      a_value = 1. / (1. + initial_redshift);
 
 c     Initialize the Grackle
 
@@ -82,7 +92,8 @@ c     Initialize the Grackle
      &     use_grackle, with_radiative_cooling,
      &     grackle_data_file,
      &     primordial_chemistry, metal_cooling,
-     &     h2_on_dust, cmb_temperature_floor)
+     &     UVbackground, h2_on_dust,
+     &     cmb_temperature_floor)
 
 c     Set field arrays
 
@@ -90,7 +101,7 @@ c     If grid rank is less than 3, set the other dimensions,
 c     start indices, and end indices to 0.
       grid_rank = 3
       do i = 1, grid_rank
-         grid_dimension(i) = 0
+         grid_dimension(i) = 1
          grid_start(i) = 0
          grid_end(i) = 0
       enddo
@@ -137,7 +148,8 @@ c     Evolving the chemistry.
 c     some timestep
       dt = 3.15e7 * 1e6 / time_units
 
-      iresult = solve_chemistry(comoving_coordinates,
+      iresult = solve_chemistry(
+     &     comoving_coordinates,
      &     density_units, length_units,
      &     time_units, velocity_units,
      &     a_units, a_value, dt,
@@ -150,5 +162,75 @@ c     some timestep
      &     H2I_density, H2II_density,
      &     DI_density, DII_density, HDI_density,
      &     e_density, metal_density)
+
+c     Calculate cooling time.
+
+      iresult = calculate_cooling_time(
+     &     comoving_coordinates,
+     &     density_units, length_units,
+     &     time_units, velocity_units,
+     &     a_units, a_value,
+     &     grid_rank, grid_dimension,
+     &     grid_start, grid_end,
+     &     density, energy,
+     &     x_velocity, y_velocity, z_velocity,
+     &     HI_density, HII_density, HM_density,
+     &     HeI_density, HeII_density, HeIII_density,
+     &     H2I_density, H2II_density,
+     &     DI_density, DII_density, HDI_density,
+     &     e_density, metal_density, cooling_time)
+
+      write(*,*) "Cooling time = ", (cooling_time(1) * time_units), "s."
+
+c     Calculate temperature.
+
+      iresult = calculate_temperature(
+     &     comoving_coordinates,
+     &     density_units, length_units,
+     &     time_units, velocity_units,
+     &     a_units,
+     &     grid_rank, grid_dimension,
+     &     density, energy,
+     &     HI_density, HII_density, HM_density,
+     &     HeI_density, HeII_density, HeIII_density,
+     &     H2I_density, H2II_density,
+     &     DI_density, DII_density, HDI_density,
+     &     e_density, metal_density, temperature)
+
+      write(*,*) "Temperature = ", temperature(1), "K."
+
+c     Calcualte pressure.
+
+      iresult = calculate_pressure(
+     &     comoving_coordinates,
+     &     density_units, length_units,
+     &     time_units, velocity_units,
+     &     a_units,
+     &     grid_rank, grid_dimension,
+     &     density, energy,
+     &     HI_density, HII_density, HM_density,
+     &     HeI_density, HeII_density, HeIII_density,
+     &     H2I_density, H2II_density,
+     &     DI_density, DII_density, HDI_density,
+     &     e_density, metal_density, pressure)
+
+      write(*,*) "Pressure = ", pressure(1)
+
+c     Calculate gamma.
+
+      iresult = calculate_gamma(
+     &     comoving_coordinates,
+     &     density_units, length_units,
+     &     time_units, velocity_units,
+     &     a_units,
+     &     grid_rank, grid_dimension,
+     &     density, energy,
+     &     HI_density, HII_density, HM_density,
+     &     HeI_density, HeII_density, HeIII_density,
+     &     H2I_density, H2II_density,
+     &     DI_density, DII_density, HDI_density,
+     &     e_density, metal_density, gamma)
+
+      write(*,*) "Gamma = ", gamma(1)
 
       end program fortran_example
