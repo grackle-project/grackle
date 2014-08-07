@@ -55,7 +55,7 @@ int main(int argc, char *argv[])
 
   // Set initial expansion factor (for internal units).
   // Set expansion factor to 1 for non-cosmological simulation.
-  gr_float initial_redshift = 100.;
+  gr_float initial_redshift = 0.;
   gr_float a_value = 1. / (1. + initial_redshift);
 
   // Finally, initialize the chemistry object.
@@ -75,14 +75,12 @@ int main(int argc, char *argv[])
 
   // Set grid dimension and size.
   // grid_start and grid_end are used to ignore ghost zones.
-  gr_int field_size = 10;
+  gr_int field_size = 1;
   gr_int grid_rank = 3;
-  // If grid rank is less than 3, set the other dimensions, 
-  // start indices, and end indices to 0.
   gr_int grid_dimension[3], grid_start[3], grid_end[3];
   int i;
   for (i = 0;i < 3;i++) {
-    grid_dimension[i] = 0; // the active dimension not including ghost zones.
+    grid_dimension[i] = 1; // the active dimension not including ghost zones.
     grid_start[i] = 0;
     grid_end[i] = 0;
   }
@@ -179,11 +177,14 @@ int main(int argc, char *argv[])
                              HeI_density, HeII_density, HeIII_density,
                              H2I_density, H2II_density,
                              DI_density, DII_density, HDI_density,
-                             e_density, metal_density, 
+                             e_density, metal_density,
                              cooling_time) == 0) {
     fprintf(stderr, "Error in calculate_cooling_time.\n");
     return 0;
   }
+
+  fprintf(stderr, "Cooling time = %le s.\n", cooling_time[0] *
+          my_units.time_units);
 
   // Calculate temperature.
   gr_float *temperature;
@@ -201,6 +202,8 @@ int main(int argc, char *argv[])
     return 0;
   }
 
+  fprintf(stderr, "Temperature = %le K.\n", temperature[0]);
+
   // Calculate pressure.
   gr_float *pressure;
   pressure = malloc(field_size * sizeof(gr_float));
@@ -217,6 +220,8 @@ int main(int argc, char *argv[])
     return 0;
   }
 
+  fprintf(stderr, "Pressure = %le.\n", pressure[0]);
+
   // Calculate gamma.
   gr_float *gamma;
   gamma = malloc(field_size * sizeof(gr_float));
@@ -232,6 +237,8 @@ int main(int argc, char *argv[])
     fprintf(stderr, "Error in calculate_gamma.\n");
     return 0;
   }
+
+  fprintf(stderr, "gamma = %le.\n", gamma[0]);
 
   return 1;
 }
