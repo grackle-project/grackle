@@ -20,30 +20,32 @@
 #include "code_units.h"
 #include "phys_constants.h"
 
-extern chemistry_data my_chemistry;
+extern chemistry_data grackle_data;
 
-int calculate_temperature(code_units *my_units,
-                          gr_int grid_rank, gr_int *grid_dimension,
-                          gr_float *density, gr_float *internal_energy,
-                          gr_float *HI_density, gr_float *HII_density, gr_float *HM_density,
-                          gr_float *HeI_density, gr_float *HeII_density, gr_float *HeIII_density,
-                          gr_float *H2I_density, gr_float *H2II_density,
-                          gr_float *DI_density, gr_float *DII_density, gr_float *HDI_density,
-                          gr_float *e_density, gr_float *metal_density,
-                          gr_float *temperature);
+int _calculate_temperature(chemistry_data *my_chemistry,
+                           code_units *my_units,
+                           gr_int grid_rank, gr_int *grid_dimension,
+                           gr_float *density, gr_float *internal_energy,
+                           gr_float *HI_density, gr_float *HII_density, gr_float *HM_density,
+                           gr_float *HeI_density, gr_float *HeII_density, gr_float *HeIII_density,
+                           gr_float *H2I_density, gr_float *H2II_density,
+                           gr_float *DI_density, gr_float *DII_density, gr_float *HDI_density,
+                           gr_float *e_density, gr_float *metal_density,
+                           gr_float *temperature);
 
-int calculate_gamma(code_units *my_units,
-                    gr_int grid_rank, gr_int *grid_dimension,
-                    gr_float *density, gr_float *internal_energy,
-                    gr_float *HI_density, gr_float *HII_density, gr_float *HM_density,
-                    gr_float *HeI_density, gr_float *HeII_density, gr_float *HeIII_density,
-                    gr_float *H2I_density, gr_float *H2II_density,
-                    gr_float *DI_density, gr_float *DII_density, gr_float *HDI_density,
-                    gr_float *e_density, gr_float *metal_density,
-                    gr_float *my_gamma)
+int _calculate_gamma(chemistry_data *my_chemistry,
+                     code_units *my_units,
+                     gr_int grid_rank, gr_int *grid_dimension,
+                     gr_float *density, gr_float *internal_energy,
+                     gr_float *HI_density, gr_float *HII_density, gr_float *HM_density,
+                     gr_float *HeI_density, gr_float *HeII_density, gr_float *HeIII_density,
+                     gr_float *H2I_density, gr_float *H2II_density,
+                     gr_float *DI_density, gr_float *DII_density, gr_float *HDI_density,
+                     gr_float *e_density, gr_float *metal_density,
+                     gr_float *my_gamma)
 {
 
-  if (!my_chemistry.use_grackle)
+  if (!my_chemistry->use_grackle)
     return SUCCESS;
  
   gr_int i, dim, size = 1;
@@ -54,22 +56,23 @@ int calculate_gamma(code_units *my_units,
      (this should not really be called, but provide it just in case). */
  
   for (i = 0; i < size; i++) {
-    my_gamma[i] = my_chemistry.Gamma;
+    my_gamma[i] = my_chemistry->Gamma;
   }
  
-  if (my_chemistry.primordial_chemistry > 1) {
+  if (my_chemistry->primordial_chemistry > 1) {
 
     /* Compute the temperature first. */
  
-    if (calculate_temperature(my_units,
-                              grid_rank, grid_dimension,
-                              density, internal_energy,
-                              HI_density, HII_density, HM_density,
-                              HeI_density, HeII_density, HeIII_density,
-                              H2I_density, H2II_density,
-                              DI_density, DII_density, HDI_density,
-                              e_density, metal_density,
-                              my_gamma) == FAIL) {
+    if (_calculate_temperature(my_chemistry,
+                               my_units,
+                               grid_rank, grid_dimension,
+                               density, internal_energy,
+                               HI_density, HII_density, HM_density,
+                               HeI_density, HeII_density, HeIII_density,
+                               H2I_density, H2II_density,
+                               DI_density, DII_density, HDI_density,
+                               e_density, metal_density,
+                               my_gamma) == FAIL) {
       fprintf(stderr, "Error in calculate_gamma.\n");
       return FAIL;
     }
@@ -78,7 +81,7 @@ int calculate_gamma(code_units *my_units,
        astro-ph/9811308. */
  
     gr_float x, nH2, number_density, GammaH2Inverse, 
-      GammaInverse = 1 / (my_chemistry.Gamma - 1.0);
+      GammaInverse = 1 / (my_chemistry->Gamma - 1.0);
 
     for (i = 0; i < size; i++) {
  
@@ -109,8 +112,34 @@ int calculate_gamma(code_units *my_units,
  
     } // end: loop over i
  
-  } // end: if (my_chemistry.primordial_chemistry > 1)
+  } // end: if (my_chemistry->primordial_chemistry > 1)
 
+  return SUCCESS;
+}
+
+int calculate_gamma(code_units *my_units,
+                    gr_int grid_rank, gr_int *grid_dimension,
+                    gr_float *density, gr_float *internal_energy,
+                    gr_float *HI_density, gr_float *HII_density, gr_float *HM_density,
+                    gr_float *HeI_density, gr_float *HeII_density, gr_float *HeIII_density,
+                    gr_float *H2I_density, gr_float *H2II_density,
+                    gr_float *DI_density, gr_float *DII_density, gr_float *HDI_density,
+                    gr_float *e_density, gr_float *metal_density,
+                    gr_float *my_gamma)
+{
+  if (_calculate_gamma(&grackle_data,
+                       my_units,
+                       grid_rank, grid_dimension,
+                       density, internal_energy,
+                       HI_density, HII_density, HM_density,
+                       HeI_density, HeII_density, HeIII_density,
+                       H2I_density, H2II_density,
+                       DI_density, DII_density, HDI_density,
+                       e_density, metal_density,
+                       my_gamma) == FAIL) {
+    fprintf(stderr, "Error in _calculate_gamma.\n");
+    return FAIL;
+  }
   return SUCCESS;
 }
 

@@ -18,13 +18,12 @@
 #include "chemistry_data.h"
 #include "code_units.h"
 
-extern chemistry_data my_chemistry;
-
 #define SMALL_LOG_VALUE -99.0
 #define CLOUDY_MAX_DIMENSION 3
 
 // Initialize Cloudy cooling data
-int initialize_cloudy_data(cloudy_data *my_cloudy, char *group_name,
+int initialize_cloudy_data(chemistry_data *my_chemistry,
+                           cloudy_data *my_cloudy, char *group_name,
                            code_units *my_units, gr_float a_value,
                            gr_int read_data)
 {
@@ -52,7 +51,7 @@ int initialize_cloudy_data(cloudy_data *my_cloudy, char *group_name,
   }
 
   fprintf(stderr,"Initializing Cloudy cooling: %s.\n", group_name);
-  fprintf(stderr,"cloudy_table_file: %s.\n",my_chemistry.grackle_data_file);
+  fprintf(stderr,"cloudy_table_file: %s.\n",my_chemistry->grackle_data_file);
 
   /* Get conversion units. */
 
@@ -81,7 +80,7 @@ int initialize_cloudy_data(cloudy_data *my_cloudy, char *group_name,
   herr_t      status;
   herr_t      h5_error = -1;
 
-  file_id = H5Fopen(my_chemistry.grackle_data_file, 
+  file_id = H5Fopen(my_chemistry->grackle_data_file, 
                     H5F_ACC_RDONLY, H5P_DEFAULT);
 
   // Open cooling dataset and get grid dimensions.
@@ -89,7 +88,7 @@ int initialize_cloudy_data(cloudy_data *my_cloudy, char *group_name,
   sprintf(parameter_name, "/CoolingRates/%s/Cooling", group_name);
   dset_id =  H5Dopen(file_id, parameter_name);
   if (dset_id == h5_error) {
-    fprintf(stderr,"Can't open Cooling in %s.\n",my_chemistry.grackle_data_file);
+    fprintf(stderr,"Can't open Cooling in %s.\n",my_chemistry->grackle_data_file);
     return FAIL;
   }
 
@@ -217,14 +216,14 @@ int initialize_cloudy_data(cloudy_data *my_cloudy, char *group_name,
   }
 
   // Read Heating data.
-  if (my_chemistry.UVbackground) {
+  if (my_chemistry->UVbackground) {
 
     temp_data = malloc(my_cloudy->data_size * sizeof(double));
 
     sprintf(parameter_name, "/CoolingRates/%s/Heating", group_name);
     dset_id =  H5Dopen(file_id, parameter_name);
     if (dset_id == h5_error) {
-      fprintf(stderr,"Can't open Heating in %s.\n",my_chemistry.grackle_data_file);
+      fprintf(stderr,"Can't open Heating in %s.\n",my_chemistry->grackle_data_file);
       return FAIL;
     }
 

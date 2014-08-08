@@ -20,11 +20,12 @@
 #include "phys_constants.h"
 #include "fortran.def"
 
-extern chemistry_data my_chemistry;
+extern chemistry_data grackle_data;
 
 /* function prototypes */
 
-int update_UVbackground_rates(code_units *my_units, gr_float a_value);
+int update_UVbackground_rates(chemistry_data *my_chemistry,
+                              code_units *my_units, gr_float a_value);
 
 extern void FORTRAN_NAME(solve_rate_cool_g)(
         gr_int *icool,
@@ -71,29 +72,29 @@ extern void FORTRAN_NAME(solve_rate_cool_g)(
  	gr_int *metDataSize, gr_float *metCooling, gr_float *metHeating,
         gr_float *mutaba);
 
-
-int solve_chemistry(code_units *my_units,
-                    gr_float a_value, gr_float dt_value,
-                    gr_int grid_rank, gr_int *grid_dimension,
-                    gr_int *grid_start, gr_int *grid_end,
-                    gr_float *density, gr_float *internal_energy,
-                    gr_float *x_velocity, gr_float *y_velocity, gr_float *z_velocity,
-                    gr_float *HI_density, gr_float *HII_density, gr_float *HM_density,
-                    gr_float *HeI_density, gr_float *HeII_density, gr_float *HeIII_density,
-                    gr_float *H2I_density, gr_float *H2II_density,
-                    gr_float *DI_density, gr_float *DII_density, gr_float *HDI_density,
-                    gr_float *e_density, gr_float *metal_density)
+int _solve_chemistry(chemistry_data *my_chemistry,
+                     code_units *my_units,
+                     gr_float a_value, gr_float dt_value,
+                     gr_int grid_rank, gr_int *grid_dimension,
+                     gr_int *grid_start, gr_int *grid_end,
+                     gr_float *density, gr_float *internal_energy,
+                     gr_float *x_velocity, gr_float *y_velocity, gr_float *z_velocity,
+                     gr_float *HI_density, gr_float *HII_density, gr_float *HM_density,
+                     gr_float *HeI_density, gr_float *HeII_density, gr_float *HeIII_density,
+                     gr_float *H2I_density, gr_float *H2II_density,
+                     gr_float *DI_density, gr_float *DII_density, gr_float *HDI_density,
+                     gr_float *e_density, gr_float *metal_density)
 {
 
   /* Return if this doesn't concern us. */
 
-  if (!my_chemistry.use_grackle)
+  if (!my_chemistry->use_grackle)
     return SUCCESS;
 
   /* Update UV background rates. */
 
-  if (my_chemistry.UVbackground == 1) {
-    if (update_UVbackground_rates(my_units, a_value) == FAIL) {
+  if (my_chemistry->UVbackground == 1) {
+    if (update_UVbackground_rates(my_chemistry, my_units, a_value) == FAIL) {
       fprintf(stderr, "Error in update_UVbackground_rates.\n");
       return FAIL;
     }
@@ -126,73 +127,103 @@ int solve_chemistry(code_units *my_units,
   gr_int ierr = 0;
 
   FORTRAN_NAME(solve_rate_cool_g)(
-    &my_chemistry.with_radiative_cooling,
+    &my_chemistry->with_radiative_cooling,
     density, internal_energy, x_velocity, y_velocity, z_velocity,
     e_density, HI_density, HII_density, 
     HeI_density, HeII_density, HeIII_density, 
     grid_dimension, grid_dimension+1, grid_dimension+2, 
-    &my_chemistry.NumberOfTemperatureBins, &my_units->comoving_coordinates, 
-    &my_chemistry.primordial_chemistry, &metal_field_present, &my_chemistry.metal_cooling, 
-    &my_chemistry.h2_on_dust, &grid_rank, grid_start, grid_start+1, grid_start+2, 
+    &my_chemistry->NumberOfTemperatureBins, &my_units->comoving_coordinates, 
+    &my_chemistry->primordial_chemistry, &metal_field_present, &my_chemistry->metal_cooling, 
+    &my_chemistry->h2_on_dust, &grid_rank, grid_start, grid_start+1, grid_start+2, 
     grid_end, grid_end+1, grid_end+2,
-    &my_chemistry.ih2co, &my_chemistry.ipiht, &my_chemistry.photoelectric_heating,
-    &dt_value, &a_value, &my_chemistry.TemperatureStart, &my_chemistry.TemperatureEnd,
+    &my_chemistry->ih2co, &my_chemistry->ipiht, &my_chemistry->photoelectric_heating,
+    &dt_value, &a_value, &my_chemistry->TemperatureStart, &my_chemistry->TemperatureEnd,
     &temperature_units, &co_length_units, &my_units->a_units, 
-    &co_density_units, &my_units->time_units, &my_chemistry.Gamma,
-    &my_chemistry.HydrogenFractionByMass, &my_chemistry.DeuteriumToHydrogenRatio,
-    &my_chemistry.SolarMetalFractionByMass,
-    my_chemistry.k1, my_chemistry.k2, my_chemistry.k3, my_chemistry.k4, my_chemistry.k5, 
-    my_chemistry.k6, my_chemistry.k7, my_chemistry.k8, my_chemistry.k9, my_chemistry.k10,
-    my_chemistry.k11, my_chemistry.k12, my_chemistry.k13, my_chemistry.k13dd, 
-    my_chemistry.k14, my_chemistry.k15, my_chemistry.k16,
-    my_chemistry.k17, my_chemistry.k18, my_chemistry.k19, my_chemistry.k22,
-    &my_chemistry.k24, &my_chemistry.k25, &my_chemistry.k26, &my_chemistry.k27,
-    &my_chemistry.k28, &my_chemistry.k29, &my_chemistry.k30, &my_chemistry.k31,
-    my_chemistry.k50, my_chemistry.k51, my_chemistry.k52, my_chemistry.k53,
-    my_chemistry.k54, my_chemistry.k55, my_chemistry.k56,
-    &my_chemistry.NumberOfDustTemperatureBins, &my_chemistry.DustTemperatureStart, 
-    &my_chemistry.DustTemperatureEnd, my_chemistry.h2dust, 
-    my_chemistry.n_cr_n, my_chemistry.n_cr_d1, my_chemistry.n_cr_d2,
-    my_chemistry.ceHI, my_chemistry.ceHeI, my_chemistry.ceHeII, my_chemistry.ciHI,
-    my_chemistry.ciHeI, my_chemistry.ciHeIS, my_chemistry.ciHeII, my_chemistry.reHII, 
-    my_chemistry.reHeII1, my_chemistry.reHeII2, my_chemistry.reHeIII, my_chemistry.brem, 
-    &my_chemistry.comp, &my_chemistry.gammah,
-    &my_chemistry.comp_xray, &my_chemistry.temp_xray,
-    &my_chemistry.piHI, &my_chemistry.piHeI, &my_chemistry.piHeII,
+    &co_density_units, &my_units->time_units, &my_chemistry->Gamma,
+    &my_chemistry->HydrogenFractionByMass, &my_chemistry->DeuteriumToHydrogenRatio,
+    &my_chemistry->SolarMetalFractionByMass,
+    my_chemistry->k1, my_chemistry->k2, my_chemistry->k3, my_chemistry->k4, my_chemistry->k5, 
+    my_chemistry->k6, my_chemistry->k7, my_chemistry->k8, my_chemistry->k9, my_chemistry->k10,
+    my_chemistry->k11, my_chemistry->k12, my_chemistry->k13, my_chemistry->k13dd, 
+    my_chemistry->k14, my_chemistry->k15, my_chemistry->k16,
+    my_chemistry->k17, my_chemistry->k18, my_chemistry->k19, my_chemistry->k22,
+    &my_chemistry->k24, &my_chemistry->k25, &my_chemistry->k26, &my_chemistry->k27,
+    &my_chemistry->k28, &my_chemistry->k29, &my_chemistry->k30, &my_chemistry->k31,
+    my_chemistry->k50, my_chemistry->k51, my_chemistry->k52, my_chemistry->k53,
+    my_chemistry->k54, my_chemistry->k55, my_chemistry->k56,
+    &my_chemistry->NumberOfDustTemperatureBins, &my_chemistry->DustTemperatureStart, 
+    &my_chemistry->DustTemperatureEnd, my_chemistry->h2dust, 
+    my_chemistry->n_cr_n, my_chemistry->n_cr_d1, my_chemistry->n_cr_d2,
+    my_chemistry->ceHI, my_chemistry->ceHeI, my_chemistry->ceHeII, my_chemistry->ciHI,
+    my_chemistry->ciHeI, my_chemistry->ciHeIS, my_chemistry->ciHeII, my_chemistry->reHII, 
+    my_chemistry->reHeII1, my_chemistry->reHeII2, my_chemistry->reHeIII, my_chemistry->brem, 
+    &my_chemistry->comp, &my_chemistry->gammah,
+    &my_chemistry->comp_xray, &my_chemistry->temp_xray,
+    &my_chemistry->piHI, &my_chemistry->piHeI, &my_chemistry->piHeII,
     HM_density, H2I_density, H2II_density,
     DI_density, DII_density, HDI_density, metal_density,
-    my_chemistry.hyd01k, my_chemistry.h2k01, my_chemistry.vibh, 
-    my_chemistry.roth, my_chemistry.rotl,
-    my_chemistry.GP99LowDensityLimit, my_chemistry.GP99HighDensityLimit, 
-    my_chemistry.HDlte, my_chemistry.HDlow,
-    my_chemistry.GAHI, my_chemistry.GAH2, my_chemistry.GAHe, my_chemistry.GAHp,
-    my_chemistry.GAel, my_chemistry.gas_grain,
+    my_chemistry->hyd01k, my_chemistry->h2k01, my_chemistry->vibh, 
+    my_chemistry->roth, my_chemistry->rotl,
+    my_chemistry->GP99LowDensityLimit, my_chemistry->GP99HighDensityLimit, 
+    my_chemistry->HDlte, my_chemistry->HDlow,
+    my_chemistry->GAHI, my_chemistry->GAH2, my_chemistry->GAHe, my_chemistry->GAHp,
+    my_chemistry->GAel, my_chemistry->gas_grain,
     &ierr,
-    &my_chemistry.h2_optical_depth_approximation, &my_chemistry.cie_cooling, 
-    &my_chemistry.three_body_rate, my_chemistry.cieco,
-    &my_chemistry.cmb_temperature_floor,
-    &my_chemistry.UVbackground,
-    &my_chemistry.cloudy_electron_fraction_factor,
-    &my_chemistry.cloudy_primordial.grid_rank,
-    my_chemistry.cloudy_primordial.grid_dimension,
-    my_chemistry.cloudy_primordial.grid_parameters[0],
-    my_chemistry.cloudy_primordial.grid_parameters[1],
-    my_chemistry.cloudy_primordial.grid_parameters[2],
-    &my_chemistry.cloudy_primordial.data_size,
-    my_chemistry.cloudy_primordial.cooling_data, 
-    my_chemistry.cloudy_primordial.heating_data,
-    &my_chemistry.cloudy_metal.grid_rank,
-    my_chemistry.cloudy_metal.grid_dimension,
-    my_chemistry.cloudy_metal.grid_parameters[0],
-    my_chemistry.cloudy_metal.grid_parameters[1],
-    my_chemistry.cloudy_metal.grid_parameters[2],
-    &my_chemistry.cloudy_metal.data_size,
-    my_chemistry.cloudy_metal.cooling_data, 
-    my_chemistry.cloudy_metal.heating_data,
-    my_chemistry.mu);
+    &my_chemistry->h2_optical_depth_approximation, &my_chemistry->cie_cooling, 
+    &my_chemistry->three_body_rate, my_chemistry->cieco,
+    &my_chemistry->cmb_temperature_floor,
+    &my_chemistry->UVbackground,
+    &my_chemistry->cloudy_electron_fraction_factor,
+    &my_chemistry->cloudy_primordial.grid_rank,
+    my_chemistry->cloudy_primordial.grid_dimension,
+    my_chemistry->cloudy_primordial.grid_parameters[0],
+    my_chemistry->cloudy_primordial.grid_parameters[1],
+    my_chemistry->cloudy_primordial.grid_parameters[2],
+    &my_chemistry->cloudy_primordial.data_size,
+    my_chemistry->cloudy_primordial.cooling_data, 
+    my_chemistry->cloudy_primordial.heating_data,
+    &my_chemistry->cloudy_metal.grid_rank,
+    my_chemistry->cloudy_metal.grid_dimension,
+    my_chemistry->cloudy_metal.grid_parameters[0],
+    my_chemistry->cloudy_metal.grid_parameters[1],
+    my_chemistry->cloudy_metal.grid_parameters[2],
+    &my_chemistry->cloudy_metal.data_size,
+    my_chemistry->cloudy_metal.cooling_data, 
+    my_chemistry->cloudy_metal.heating_data,
+    my_chemistry->mu);
 
   return SUCCESS;
 
+}
+
+int solve_chemistry(code_units *my_units,
+                    gr_float a_value, gr_float dt_value,
+                    gr_int grid_rank, gr_int *grid_dimension,
+                    gr_int *grid_start, gr_int *grid_end,
+                    gr_float *density, gr_float *internal_energy,
+                    gr_float *x_velocity, gr_float *y_velocity, gr_float *z_velocity,
+                    gr_float *HI_density, gr_float *HII_density, gr_float *HM_density,
+                    gr_float *HeI_density, gr_float *HeII_density, gr_float *HeIII_density,
+                    gr_float *H2I_density, gr_float *H2II_density,
+                    gr_float *DI_density, gr_float *DII_density, gr_float *HDI_density,
+                    gr_float *e_density, gr_float *metal_density)
+{
+  if (_solve_chemistry(&grackle_data,
+                       my_units,
+                       a_value, dt_value,
+                       grid_rank, grid_dimension,
+                       grid_start, grid_end,
+                       density, internal_energy,
+                       x_velocity, y_velocity, z_velocity,
+                       HI_density, HII_density, HM_density,
+                       HeI_density, HeII_density, HeIII_density,
+                       H2I_density, H2II_density,
+                       DI_density, DII_density, HDI_density,
+                       e_density, metal_density) == FAIL) {
+    fprintf(stderr, "Error in _solve_chemistry.\n");
+    return FAIL;
+  }
+  return SUCCESS;
 }
 
 int solve_chemistry_(gr_int *comoving_coordinates,

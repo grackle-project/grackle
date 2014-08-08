@@ -20,18 +20,19 @@
 #include "code_units.h"
 #include "phys_constants.h"
 
-extern chemistry_data my_chemistry;
+extern chemistry_data grackle_data;
 
-int calculate_pressure_table(code_units *my_units,
-                       gr_int grid_rank, gr_int *grid_dimension,
-                       gr_float *density, gr_float *internal_energy,
-                       gr_float *pressure)
+int _calculate_pressure_table(chemistry_data *my_chemistry,
+                              code_units *my_units,
+                              gr_int grid_rank, gr_int *grid_dimension,
+                              gr_float *density, gr_float *internal_energy,
+                              gr_float *pressure)
 {
 
-  if (!my_chemistry.use_grackle)
+  if (!my_chemistry->use_grackle)
     return SUCCESS;
 
-  if (my_chemistry.primordial_chemistry != 0) {
+  if (my_chemistry->primordial_chemistry != 0) {
     fprintf(stderr, "ERROR: this function requires primordial_chemistry set to 0.\n");
     return FAIL;
   }
@@ -43,11 +44,27 @@ int calculate_pressure_table(code_units *my_units,
 
   for (i = 0; i < size; i++) {
  
-    pressure[i] = (my_chemistry.Gamma - 1.0) * density[i] * internal_energy[i];
+    pressure[i] = (my_chemistry->Gamma - 1.0) * density[i] * internal_energy[i];
  
     if (pressure[i] < tiny_number)
       pressure[i] = tiny_number;
   }  
  
+  return SUCCESS;
+}
+
+int calculate_pressure_table(code_units *my_units,
+                             gr_int grid_rank, gr_int *grid_dimension,
+                             gr_float *density, gr_float *internal_energy,
+                             gr_float *pressure)
+{
+  if (_calculate_pressure_table(&grackle_data,
+                                my_units,
+                                grid_rank, grid_dimension,
+                                density, internal_energy,
+                                pressure) == FAIL) {
+    fprintf(stderr, "Error_ in _calculate_pressure_table.\n");
+    return FAIL;
+  }
   return SUCCESS;
 }

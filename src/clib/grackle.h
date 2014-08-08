@@ -18,7 +18,7 @@
 #include "code_units.h"
 #include "chemistry_data.h"
 
-extern chemistry_data my_chemistry;
+extern chemistry_data grackle_data;
 
 int set_default_chemistry_parameters();
 

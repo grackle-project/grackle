@@ -20,20 +20,21 @@
 #include "code_units.h"
 #include "phys_constants.h"
 
-extern chemistry_data my_chemistry;
+extern chemistry_data grackle_data;
 
-int calculate_pressure(code_units *my_units,
-                       gr_int grid_rank, gr_int *grid_dimension,
-                       gr_float *density, gr_float *internal_energy,
-                       gr_float *HI_density, gr_float *HII_density, gr_float *HM_density,
-                       gr_float *HeI_density, gr_float *HeII_density, gr_float *HeIII_density,
-                       gr_float *H2I_density, gr_float *H2II_density,
-                       gr_float *DI_density, gr_float *DII_density, gr_float *HDI_density,
-                       gr_float *e_density, gr_float *metal_density,
-                       gr_float *pressure)
+int _calculate_pressure(chemistry_data *my_chemistry,
+                        code_units *my_units,
+                        gr_int grid_rank, gr_int *grid_dimension,
+                        gr_float *density, gr_float *internal_energy,
+                        gr_float *HI_density, gr_float *HII_density, gr_float *HM_density,
+                        gr_float *HeI_density, gr_float *HeII_density, gr_float *HeIII_density,
+                        gr_float *H2I_density, gr_float *H2II_density,
+                        gr_float *DI_density, gr_float *DII_density, gr_float *HDI_density,
+                        gr_float *e_density, gr_float *metal_density,
+                        gr_float *pressure)
 {
 
-  if (!my_chemistry.use_grackle)
+  if (!my_chemistry->use_grackle)
     return SUCCESS;
 
   gr_float tiny_number = 1.e-20;
@@ -43,7 +44,7 @@ int calculate_pressure(code_units *my_units,
 
   for (i = 0; i < size; i++) {
  
-    pressure[i] = (my_chemistry.Gamma - 1.0) * density[i] * internal_energy[i];
+    pressure[i] = (my_chemistry->Gamma - 1.0) * density[i] * internal_energy[i];
  
     if (pressure[i] < tiny_number)
       pressure[i] = tiny_number;
@@ -51,14 +52,14 @@ int calculate_pressure(code_units *my_units,
   
   /* Correct for Gamma from H2. */
  
-  if (my_chemistry.primordial_chemistry > 1) {
+  if (my_chemistry->primordial_chemistry > 1) {
  
     /* Calculate temperature units. */
 
     gr_float temperature_units =  mh * POW(my_units->velocity_units, 2) / kboltz;
 
     gr_float number_density, nH2, GammaH2Inverse,
-      GammaInverse = 1.0/(my_chemistry.Gamma-1.0), x, Gamma1, temp;
+      GammaInverse = 1.0/(my_chemistry->Gamma-1.0), x, Gamma1, temp;
   
     for (i = 0; i < size; i++) {
  
@@ -91,12 +92,38 @@ int calculate_pressure(code_units *my_units,
 	
       /* Correct pressure with improved Gamma. */
  
-      pressure[i] *= (Gamma1 - 1.0) / (my_chemistry.Gamma - 1.0);
+      pressure[i] *= (Gamma1 - 1.0) / (my_chemistry->Gamma - 1.0);
  
     } // end: loop over i
  
-  } // end: if (my_chemistry.primordial_chemistry > 1)
+  } // end: if (my_chemistry->primordial_chemistry > 1)
  
+  return SUCCESS;
+}
+
+int calculate_pressure(code_units *my_units,
+                       gr_int grid_rank, gr_int *grid_dimension,
+                       gr_float *density, gr_float *internal_energy,
+                       gr_float *HI_density, gr_float *HII_density, gr_float *HM_density,
+                       gr_float *HeI_density, gr_float *HeII_density, gr_float *HeIII_density,
+                       gr_float *H2I_density, gr_float *H2II_density,
+                       gr_float *DI_density, gr_float *DII_density, gr_float *HDI_density,
+                       gr_float *e_density, gr_float *metal_density,
+                       gr_float *pressure)
+{
+  if (_calculate_pressure(&grackle_data,
+                          my_units,
+                          grid_rank, grid_dimension,
+                          density, internal_energy,
+                          HI_density, HII_density, HM_density,
+                          HeI_density, HeII_density, HeIII_density,
+                          H2I_density, H2II_density,
+                          DI_density, DII_density, HDI_density,
+                          e_density, metal_density,
+                          pressure) == FAIL) {
+    fprintf(stderr, "Error in _calculate_pressure.\n");
+    return FAIL;
+  }
   return SUCCESS;
 }
 

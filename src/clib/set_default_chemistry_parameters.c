@@ -20,10 +20,20 @@
 #include "chemistry_data.h"
 #include "code_units.h"
 
-chemistry_data my_chemistry;
+chemistry_data grackle_data;
+
+chemistry_data _set_default_chemistry_parameters();
 
 int set_default_chemistry_parameters()
 {
+  grackle_data = _set_default_chemistry_parameters();
+  return SUCCESS;
+}
+
+chemistry_data _set_default_chemistry_parameters()
+{
+
+  chemistry_data my_chemistry;
 
   my_chemistry.Gamma                          = 5./3.;
   my_chemistry.use_grackle                    = FALSE;  // off
@@ -87,5 +97,5 @@ int set_default_chemistry_parameters()
   my_chemistry.cloudy_metal.grid_rank        = 0;
   my_chemistry.cloudy_electron_fraction_factor = 9.153959e-3; // Cloudy 07.02 abundances
 
-  return SUCCESS;
+  return my_chemistry;
 }

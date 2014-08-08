@@ -20,7 +20,7 @@
 #include "code_units.h"
 #include "phys_constants.h"
 
-extern chemistry_data my_chemistry;
+extern chemistry_data grackle_data;
  
 /* Set the mean molecular mass. */
  
@@ -32,47 +32,50 @@ extern chemistry_data my_chemistry;
  
 /* function prototypes */ 
 
-int calculate_pressure(code_units *my_units,
-                       gr_int grid_rank, gr_int *grid_dimension,
-                       gr_float *density, gr_float *internal_energy,
-                       gr_float *HI_density, gr_float *HII_density, gr_float *HM_density,
-                       gr_float *HeI_density, gr_float *HeII_density, gr_float *HeIII_density,
-                       gr_float *H2I_density, gr_float *H2II_density,
-                       gr_float *DI_density, gr_float *DII_density, gr_float *HDI_density,
-                       gr_float *e_density, gr_float *metal_density,
-                       gr_float *pressure);
+int _calculate_pressure(chemistry_data *my_chemistry,
+                        code_units *my_units,
+                        gr_int grid_rank, gr_int *grid_dimension,
+                        gr_float *density, gr_float *internal_energy,
+                        gr_float *HI_density, gr_float *HII_density, gr_float *HM_density,
+                        gr_float *HeI_density, gr_float *HeII_density, gr_float *HeIII_density,
+                        gr_float *H2I_density, gr_float *H2II_density,
+                        gr_float *DI_density, gr_float *DII_density, gr_float *HDI_density,
+                        gr_float *e_density, gr_float *metal_density,
+                        gr_float *pressure);
 
 int calculate_temperature_table(code_units *my_units,
-                          gr_int grid_rank, gr_int *grid_dimension,
-                          gr_float *density, gr_float *internal_energy,
-                          gr_float *metal_density,
-                          gr_float *temperature);
+                                gr_int grid_rank, gr_int *grid_dimension,
+                                gr_float *density, gr_float *internal_energy,
+                                gr_float *metal_density,
+                                gr_float *temperature);
  
-int calculate_temperature(code_units *my_units,
-                          gr_int grid_rank, gr_int *grid_dimension,
-                          gr_float *density, gr_float *internal_energy,
-                          gr_float *HI_density, gr_float *HII_density, gr_float *HM_density,
-                          gr_float *HeI_density, gr_float *HeII_density, gr_float *HeIII_density,
-                          gr_float *H2I_density, gr_float *H2II_density,
-                          gr_float *DI_density, gr_float *DII_density, gr_float *HDI_density,
-                          gr_float *e_density, gr_float *metal_density,
-                          gr_float *temperature)
+int _calculate_temperature(chemistry_data *my_chemistry,
+                           code_units *my_units,
+                           gr_int grid_rank, gr_int *grid_dimension,
+                           gr_float *density, gr_float *internal_energy,
+                           gr_float *HI_density, gr_float *HII_density, gr_float *HM_density,
+                           gr_float *HeI_density, gr_float *HeII_density, gr_float *HeIII_density,
+                           gr_float *H2I_density, gr_float *H2II_density,
+                           gr_float *DI_density, gr_float *DII_density, gr_float *HDI_density,
+                           gr_float *e_density, gr_float *metal_density,
+                           gr_float *temperature)
 {
 
-  if (!my_chemistry.use_grackle)
+  if (!my_chemistry->use_grackle)
     return SUCCESS;
 
   /* Compute the pressure first. */
  
-  if (calculate_pressure(my_units,
-                         grid_rank, grid_dimension,
-                         density, internal_energy,
-                         HI_density, HII_density, HM_density,
-                         HeI_density, HeII_density, HeIII_density,
-                         H2I_density, H2II_density,
-                         DI_density, DII_density, HDI_density,
-                         e_density, metal_density,
-                         temperature) == FAIL) {
+  if (_calculate_pressure(my_chemistry,
+                          my_units,
+                          grid_rank, grid_dimension,
+                          density, internal_energy,
+                          HI_density, HII_density, HM_density,
+                          HeI_density, HeII_density, HeIII_density,
+                          H2I_density, H2II_density,
+                          DI_density, DII_density, HDI_density,
+                          e_density, metal_density,
+                          temperature) == FAIL) {
     fprintf(stderr, "Error in calculate_pressure.\n");
     return FAIL;
   }
@@ -90,7 +93,7 @@ int calculate_temperature(code_units *my_units,
   gr_float number_density, tiny_number = 1.-20;
   gr_float inv_metal_mol = 1.0 / MU_METAL;
   
-  if (my_chemistry.primordial_chemistry == 0) {
+  if (my_chemistry->primordial_chemistry == 0) {
     if (calculate_temperature_table(my_units,
                               grid_rank, grid_dimension,
                               density, internal_energy,
@@ -106,7 +109,7 @@ int calculate_temperature(code_units *my_units,
  
   for (i = 0; i < size; i++) {
  
-    if (my_chemistry.primordial_chemistry > 0) {
+    if (my_chemistry->primordial_chemistry > 0) {
       number_density =
         0.25 * (HeI_density[i] + HeII_density[i] +  HeIII_density[i]) +
         HI_density[i] + HII_density[i] + e_density[i];
@@ -114,7 +117,7 @@ int calculate_temperature(code_units *my_units,
 
     /* Add in H2. */
  
-    if (my_chemistry.primordial_chemistry > 1) {
+    if (my_chemistry->primordial_chemistry > 1) {
       number_density += HM_density[i] + 
         0.5 * (H2I_density[i] + H2II_density[i]);
     }
@@ -129,6 +132,32 @@ int calculate_temperature(code_units *my_units,
     temperature[i] = max(temperature[i], MINIMUM_TEMPERATURE);
   }
  
+  return SUCCESS;
+}
+
+int calculate_temperature(code_units *my_units,
+                          gr_int grid_rank, gr_int *grid_dimension,
+                          gr_float *density, gr_float *internal_energy,
+                          gr_float *HI_density, gr_float *HII_density, gr_float *HM_density,
+                          gr_float *HeI_density, gr_float *HeII_density, gr_float *HeIII_density,
+                          gr_float *H2I_density, gr_float *H2II_density,
+                          gr_float *DI_density, gr_float *DII_density, gr_float *HDI_density,
+                          gr_float *e_density, gr_float *metal_density,
+                          gr_float *temperature)
+{
+  if (_calculate_temperature(&grackle_data,
+                             my_units,
+                             grid_rank, grid_dimension,
+                             density, internal_energy,
+                             HI_density, HII_density, HM_density,
+                             HeI_density, HeII_density, HeIII_density,
+                             H2I_density, H2II_density,
+                             DI_density, DII_density, HDI_density,
+                             e_density, metal_density,
+                             temperature) == FAIL) {
+    fprintf(stderr, "Error in calculate_temperature.\n");
+    return FAIL;
+  }
   return SUCCESS;
 }
 

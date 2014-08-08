@@ -20,7 +20,7 @@
 #include "code_units.h" 
 #include "phys_constants.h"
 
-extern chemistry_data my_chemistry;
+extern chemistry_data grackle_data;
 
 int set_default_chemistry_parameters();
  
@@ -50,14 +50,14 @@ int initialize_grackle(gr_int comoving_coordinates,
     return FAIL;
   }
 
-  my_chemistry.use_grackle = use_grackle;
-  my_chemistry.with_radiative_cooling = with_radiative_cooling;
-  my_chemistry.grackle_data_file = grackle_data_file;
-  my_chemistry.primordial_chemistry = primordial_chemistry;
-  my_chemistry.metal_cooling = metal_cooling;
-  my_chemistry.UVbackground = UVbackground;
-  my_chemistry.h2_on_dust = h2_on_dust;
-  my_chemistry.cmb_temperature_floor = cmb_temperature_floor;
+  grackle_data.use_grackle = use_grackle;
+  grackle_data.with_radiative_cooling = with_radiative_cooling;
+  grackle_data.grackle_data_file = grackle_data_file;
+  grackle_data.primordial_chemistry = primordial_chemistry;
+  grackle_data.metal_cooling = metal_cooling;
+  grackle_data.UVbackground = UVbackground;
+  grackle_data.h2_on_dust = h2_on_dust;
+  grackle_data.cmb_temperature_floor = cmb_temperature_floor;
 
   if (initialize_chemistry_data(&my_units, a_value) == FAIL) {
     fprintf(stderr, "Error in initialize_chemistry_data.\n");

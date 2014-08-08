@@ -21,7 +21,7 @@
 #include "phys_constants.h"
 #include "fortran.def"
 
-extern chemistry_data my_chemistry;
+extern chemistry_data grackle_data;
 
 /* function prototypes */ 
  
@@ -37,20 +37,20 @@ int calculate_cooling_time(code_units *my_units, gr_float a_value,
 			   gr_float *e_density, gr_float *metal_density,
 			   gr_float *cooling_time);
 
- 
-int calculate_cooling_time_table(code_units *my_units, gr_float a_value,
-                           gr_int grid_rank, gr_int *grid_dimension,
-                           gr_int *grid_start, gr_int *grid_end,
-                           gr_float *density, gr_float *internal_energy,
-                           gr_float *x_velocity, gr_float *y_velocity, gr_float *z_velocity,
-                           gr_float *metal_density,
-                           gr_float *cooling_time)
+int _calculate_cooling_time_table(chemistry_data *my_chemistry,
+                                  code_units *my_units, gr_float a_value,
+                                  gr_int grid_rank, gr_int *grid_dimension,
+                                  gr_int *grid_start, gr_int *grid_end,
+                                  gr_float *density, gr_float *internal_energy,
+                                  gr_float *x_velocity, gr_float *y_velocity, gr_float *z_velocity,
+                                  gr_float *metal_density,
+                                  gr_float *cooling_time)
 {
 
-  if (!my_chemistry.use_grackle)
+  if (!my_chemistry->use_grackle)
     return SUCCESS;
 
-  if (my_chemistry.primordial_chemistry != 0) {
+  if (my_chemistry->primordial_chemistry != 0) {
     fprintf(stderr, "ERROR: this function requires primordial_chemistry set to 0.\n");
     return FAIL;
   }
@@ -82,5 +82,27 @@ int calculate_cooling_time_table(code_units *my_units, gr_float a_value,
     return FAIL;
   }
  
+  return SUCCESS;
+}
+
+int calculate_cooling_time_table(code_units *my_units, gr_float a_value,
+                                 gr_int grid_rank, gr_int *grid_dimension,
+                                 gr_int *grid_start, gr_int *grid_end,
+                                 gr_float *density, gr_float *internal_energy,
+                                 gr_float *x_velocity, gr_float *y_velocity, gr_float *z_velocity,
+                                 gr_float *metal_density,
+                                 gr_float *cooling_time)
+{
+  if (_calculate_cooling_time_table(&grackle_data,
+                                    my_units, a_value,
+                                    grid_rank, grid_dimension,
+                                    grid_start, grid_end,
+                                    density, internal_energy,
+                                    x_velocity, y_velocity, z_velocity,
+                                    metal_density,
+                                    cooling_time) == FAIL) {
+    fprintf(stderr, "Error in _calculate_cooling_time_table.\n");
+    return FAIL;
+  }
   return SUCCESS;
 }

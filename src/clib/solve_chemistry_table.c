@@ -20,7 +20,7 @@
 #include "phys_constants.h"
 #include "fortran.def"
 
-extern chemistry_data my_chemistry;
+extern chemistry_data grackle_data;
 
 /* function prototypes */
 
@@ -36,20 +36,20 @@ int solve_chemistry(code_units *my_units,
                     gr_float *DI_density, gr_float *DII_density, gr_float *HDI_density,
                     gr_float *e_density, gr_float *metal_density);
 
-
-int solve_chemistry_table(code_units *my_units,
-                    gr_float a_value, gr_float dt_value,
-                    gr_int grid_rank, gr_int *grid_dimension,
-                    gr_int *grid_start, gr_int *grid_end,
-                    gr_float *density, gr_float *internal_energy,
-                    gr_float *x_velocity, gr_float *y_velocity, gr_float *z_velocity,
-                    gr_float *metal_density)
+int _solve_chemistry_table(chemistry_data *my_chemistry,
+                           code_units *my_units,
+                           gr_float a_value, gr_float dt_value,
+                           gr_int grid_rank, gr_int *grid_dimension,
+                           gr_int *grid_start, gr_int *grid_end,
+                           gr_float *density, gr_float *internal_energy,
+                           gr_float *x_velocity, gr_float *y_velocity, gr_float *z_velocity,
+                           gr_float *metal_density)
 {
 
-  if (!my_chemistry.use_grackle)
+  if (!my_chemistry->use_grackle)
     return SUCCESS;
 
-  if (my_chemistry.primordial_chemistry != 0) {
+  if (my_chemistry->primordial_chemistry != 0) {
     fprintf(stderr, "ERROR: this function requires primordial_chemistry set to 0.\n");
     return FAIL;
   }
@@ -85,3 +85,24 @@ int solve_chemistry_table(code_units *my_units,
 
 }
 
+int solve_chemistry_table(code_units *my_units,
+                          gr_float a_value, gr_float dt_value,
+                          gr_int grid_rank, gr_int *grid_dimension,
+                          gr_int *grid_start, gr_int *grid_end,
+                          gr_float *density, gr_float *internal_energy,
+                          gr_float *x_velocity, gr_float *y_velocity, gr_float *z_velocity,
+                          gr_float *metal_density)
+{
+  if (_solve_chemistry_table(&grackle_data,
+                             my_units,
+                             a_value, dt_value,
+                             grid_rank, grid_dimension,
+                             grid_start, grid_end,
+                             density, internal_energy,
+                             x_velocity, y_velocity, z_velocity,
+                             metal_density) == FAIL) {
+    fprintf(stderr, "Error in _solve_chemistry_table.\n");
+    return FAIL;
+  }
+  return SUCCESS;
+}
