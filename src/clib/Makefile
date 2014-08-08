@@ -112,7 +112,7 @@ libgrackle.$(MACH_SHARED_EXT): $(MODULES) autogen dep $(OBJS_LIB) MACHNOTES
 	@(if [ -e $@ ]; then \
 	   echo "Success!"; \
 	else \
-	   echo "$(LD) $(LDFLAGS) $(LDOUTPUT_FLAGS) $*.$(MACH_SHARED_EXT) $*.o $(OBJS_LIB) $(LIBS) $(LIB_INSTALL_FLAGS)" >> temp1; \
+	   echo "$(LD) $(LDFLAGS) $(LDOUTPUT_FLAGS) $@ $(OBJS_LIB) $(LIBS) $(LIB_INSTALL_FLAGS)" >> temp1; \
 	   cat temp1 $(OUTPUT) > temp2; \
 	   rm -f temp1; \
 	   mv -f temp2 $(OUTPUT); \
