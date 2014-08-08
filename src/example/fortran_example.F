@@ -12,7 +12,8 @@ c     Initialization parameters
 
       integer*8 comoving_coordinates, use_grackle,
      &     with_radiative_cooling, primordial_chemistry,
-     &     metal_cooling, h2_on_dust, cmb_temperature_floor
+     &     metal_cooling, UVbackground, h2_on_dust, 
+     &     cmb_temperature_floor
 
       real*8 density_units, length_units, time_units, velocity_units,
      &     a_units, a_value, initial_redshift
@@ -56,7 +57,7 @@ c     chemistry on
 c     cooling on
       with_radiative_cooling = 1
 c     molecular network with H, He, D
-      primordial_chemistry = 0
+      primordial_chemistry = 3
 c     metal cooling on
       metal_cooling = 1
 c     UV background on
@@ -72,10 +73,10 @@ c     Set units
 
       comoving_coordinates = 0
       density_units = 1.67d-24
-      length_units = 1.0
+      length_units = 1.0d0
       time_units = 1.0d12
       velocity_units = length_units / time_units
-      a_units = 1.0
+      a_units = 1.0d0
 
 c     Set initial expansion factor (for internal units).
 c     Set expansion factor to 1 for non-cosmological simulation.

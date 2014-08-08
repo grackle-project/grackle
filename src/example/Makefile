@@ -127,6 +127,24 @@ c_example: $(MODULES) c_example.o
          fi)
 
 #-----------------------------------------------------------------------
+# PURE C EXAMPLE
+#-----------------------------------------------------------------------
+
+c_example_nostruct: $(MODULES) c_example_nostruct.o
+	@rm -f $@
+	@echo "Linking"
+	-@$(LD) $(LDFLAGS) -o c_example_nostruct c_example_nostruct.o $(LIBS) $(GRACKLE_LIB) >& $(OUTPUT)
+	@(if [ -e $@ ]; then \
+             echo "Success!"; \
+         else \
+             echo "$(LD) $(LDFLAGS) -o c_example_nostruct c_example_nostruct.o $(LIBS) $(GRACKLE_LIB)" >> temp1; \
+             cat temp1 $(OUTPUT) > temp2; \
+             rm -f temp1; \
+             mv -f temp2 $(OUTPUT); \
+             echo "Failed! See $(OUTPUT) for error messages"; \
+         fi)
+
+#-----------------------------------------------------------------------
 # PURE C TABLE EXAMPLE
 #-----------------------------------------------------------------------
 
@@ -230,7 +248,7 @@ help:
 #-----------------------------------------------------------------------
 
 clean:
-	-@rm -f *.o *.mod *.f *.f90 *~ $(OUTPUT) cxx_example cxx_table_example c_example c_table_example fortran_example
+	-@rm -f *.o *.mod *.f *.f90 *~ $(OUTPUT) cxx_example cxx_table_example c_example c_example_nostruct c_table_example fortran_example
 
 #-----------------------------------------------------------------------
 # Include configuration targets

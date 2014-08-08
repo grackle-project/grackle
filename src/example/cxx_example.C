@@ -57,7 +57,7 @@ int main(int argc, char *argv[])
 
   // Set initial expansion factor (for internal units).
   // Set expansion factor to 1 for non-cosmological simulation.
-  gr_float initial_redshift = 100.;
+  gr_float initial_redshift = 0.;
   gr_float a_value = 1. / (1. + initial_redshift);
 
   // Finally, initialize the chemistry object.
