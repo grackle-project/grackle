@@ -106,3 +106,36 @@ int solve_chemistry_table(code_units *my_units,
   }
   return SUCCESS;
 }
+
+int solve_chemistry_table_(gr_int *comoving_coordinates,
+                           gr_float *density_units, gr_float *length_units,
+                           gr_float *time_units, gr_float *velocity_units,
+                           gr_float *a_units, gr_float *a_value, gr_float *dt_value,
+                           gr_int *grid_rank, gr_int *grid_dimension,
+                           gr_int *grid_start, gr_int *grid_end,
+                           gr_float *density, gr_float *internal_energy,
+                           gr_float *x_velocity, gr_float *y_velocity, gr_float *z_velocity,
+                           gr_float *metal_density)
+{
+  
+  code_units my_units;
+  my_units.comoving_coordinates = *comoving_coordinates;
+  my_units.density_units = *density_units;
+  my_units.length_units = *length_units;
+  my_units.time_units = *time_units;
+  my_units.velocity_units = *velocity_units;
+  my_units.a_units = *a_units;
+
+  int rval;
+
+  rval = solve_chemistry_table(&my_units,
+                               *a_value, *dt_value,
+                               *grid_rank, grid_dimension,
+                               grid_start, grid_end,
+                               density, internal_energy,
+                               x_velocity, y_velocity, z_velocity,
+                               metal_density);
+
+  return rval;
+
+}
