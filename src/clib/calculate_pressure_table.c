@@ -63,7 +63,7 @@ int calculate_pressure_table(code_units *my_units,
                                 grid_rank, grid_dimension,
                                 density, internal_energy,
                                 pressure) == FAIL) {
-    fprintf(stderr, "Error_ in _calculate_pressure_table.\n");
+    fprintf(stderr, "Error in _calculate_pressure_table.\n");
     return FAIL;
   }
   return SUCCESS;
