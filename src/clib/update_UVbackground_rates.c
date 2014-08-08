@@ -28,7 +28,8 @@ int update_UVbackground_rates(chemistry_data *my_chemistry,
 {
   /* Return if there is no radiation (rates should be all zero). */
 
-  if (my_chemistry->UVbackground == 0)
+  if (my_chemistry->UVbackground == 0 ||
+      my_chemistry->primordial_chemistry == 0)
     return SUCCESS;
 
   /* Return if redshift is outside of table (rates should be all zero). */

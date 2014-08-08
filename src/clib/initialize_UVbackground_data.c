@@ -26,8 +26,9 @@ int initialize_UVbackground_data(chemistry_data *my_chemistry)
 {
   gr_int Nz, i;
 
-  // Return if no UV background selected.
-  if (my_chemistry->UVbackground == 0)
+  // Return if no UV background selected or using fully tabulated cooling.
+  if (my_chemistry->UVbackground == 0 ||
+      my_chemistry->primordial_chemistry == 0)
     return SUCCESS;
 
 
