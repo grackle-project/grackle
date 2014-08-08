@@ -46,12 +46,12 @@ int main(int argc, char *argv[])
     return 0;
   }
   // Set parameter values for chemistry.
-  my_chemistry.use_grackle = 1;            // chemistry on
-  my_chemistry.with_radiative_cooling = 1; // cooling on
-  my_chemistry.primordial_chemistry = 0;   // fully tabulated cooling
-  my_chemistry.metal_cooling = 1;          // metal cooling on
-  my_chemistry.UVbackground = 1;           // UV background on
-  my_chemistry.grackle_data_file = "../../input/CloudyData_UVB=HM2012.h5"; // data file
+  grackle_data.use_grackle = 1;            // chemistry on
+  grackle_data.with_radiative_cooling = 1; // cooling on
+  grackle_data.primordial_chemistry = 0;   // fully tabulated cooling
+  grackle_data.metal_cooling = 1;          // metal cooling on
+  grackle_data.UVbackground = 1;           // UV background on
+  grackle_data.grackle_data_file = "../../input/CloudyData_UVB=HM2012.h5"; // data file
 
   // Set initial expansion factor (for internal units).
   // Set expansion factor to 1 for non-cosmological simulation.
@@ -101,7 +101,7 @@ int main(int argc, char *argv[])
   for (i = 0;i < field_size;i++) {
     density[i] = 1.0;
     // solar metallicity
-    metal_density[i] = my_chemistry.SolarMetalFractionByMass * density[i];
+    metal_density[i] = grackle_data.SolarMetalFractionByMass * density[i];
 
     x_velocity[i] = 0.0;
     y_velocity[i] = 0.0;

@@ -124,6 +124,7 @@ int main(int argc, char *argv[])
                                          time_units, 2) / kboltz;
 
   gr_float HydrogenFractionByMass = 0.76;
+  gr_float SolarMetalFractionByMass = 0.02041;
 
   for (i = 0;i < field_size;i++) {
     density[i] = 1.0;
@@ -140,7 +141,7 @@ int main(int argc, char *argv[])
     HDI_density[i] = tiny_number * density[i];
     e_density[i] = tiny_number * density[i];
     // solar metallicity
-    metal_density[i] = my_chemistry.SolarMetalFractionByMass * density[i];
+    metal_density[i] = SolarMetalFractionByMass * density[i];
 
     x_velocity[i] = 0.0;
     y_velocity[i] = 0.0;

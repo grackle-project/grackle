@@ -46,12 +46,12 @@ int main(int argc, char *argv[])
     return 0;
   }
   // Set parameter values for chemistry.
-  my_chemistry.use_grackle = 1;            // chemistry on
-  my_chemistry.with_radiative_cooling = 1; // cooling on
-  my_chemistry.primordial_chemistry = 3;   // molecular network with H, He, D
-  my_chemistry.metal_cooling = 1;          // metal cooling on
-  my_chemistry.UVbackground = 1;           // UV background on
-  my_chemistry.grackle_data_file = "../../input/CloudyData_UVB=HM2012.h5"; // data file
+  grackle_data.use_grackle = 1;            // chemistry on
+  grackle_data.with_radiative_cooling = 1; // cooling on
+  grackle_data.primordial_chemistry = 3;   // molecular network with H, He, D
+  grackle_data.metal_cooling = 1;          // metal cooling on
+  grackle_data.UVbackground = 1;           // UV background on
+  grackle_data.grackle_data_file = "../../input/CloudyData_UVB=HM2012.h5"; // data file
 
   // Set initial expansion factor (for internal units).
   // Set expansion factor to 1 for non-cosmological simulation.
@@ -117,10 +117,10 @@ int main(int argc, char *argv[])
 
   for (i = 0;i < field_size;i++) {
     density[i] = 1.0;
-    HI_density[i] = my_chemistry.HydrogenFractionByMass * density[i];
+    HI_density[i] = grackle_data.HydrogenFractionByMass * density[i];
     HII_density[i] = tiny_number * density[i];
     HM_density[i] = tiny_number * density[i];
-    HeI_density[i] = (1.0 - my_chemistry.HydrogenFractionByMass) * density[i];
+    HeI_density[i] = (1.0 - grackle_data.HydrogenFractionByMass) * density[i];
     HeII_density[i] = tiny_number * density[i];
     HeIII_density[i] = tiny_number * density[i];
     H2I_density[i] = tiny_number * density[i];
@@ -130,7 +130,7 @@ int main(int argc, char *argv[])
     HDI_density[i] = tiny_number * density[i];
     e_density[i] = tiny_number * density[i];
     // solar metallicity
-    metal_density[i] = my_chemistry.SolarMetalFractionByMass * density[i];
+    metal_density[i] = grackle_data.SolarMetalFractionByMass * density[i];
 
     x_velocity[i] = 0.0;
     y_velocity[i] = 0.0;
