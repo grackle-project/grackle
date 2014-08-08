@@ -55,7 +55,7 @@ int main(int argc, char *argv[])
 
   // Set initial expansion factor (for internal units).
   // Set expansion factor to 1 for non-cosmological simulation.
-  gr_float initial_redshift = 100.;
+  gr_float initial_redshift = 0.0;
   gr_float a_value = 1. / (1. + initial_redshift);
 
   // Finally, initialize the chemistry object.
@@ -71,14 +71,14 @@ int main(int argc, char *argv[])
 
   // Set grid dimension and size.
   // grid_start and grid_end are used to ignore ghost zones.
-  gr_int field_size = 10;
+  gr_int field_size = 1;
   gr_int grid_rank = 3;
   // If grid rank is less than 3, set the other dimensions, 
   // start indices, and end indices to 0.
   gr_int grid_dimension[3], grid_start[3], grid_end[3];
   int i;
   for (i = 0;i < 3;i++) {
-    grid_dimension[i] = 0; // the active dimension not including ghost zones.
+    grid_dimension[i] = 1; // the active dimension not including ghost zones.
     grid_start[i] = 0;
     grid_end[i] = 0;
   }
@@ -120,54 +120,61 @@ int main(int argc, char *argv[])
   // some timestep
   gr_float dt = 3.15e7 * 1e6 / my_units.time_units;
 
-  if (solve_chemistry_table(&my_units,
-                      a_value, dt,
-                      grid_rank, grid_dimension,
-                      grid_start, grid_end,
-                      density, energy,
-                      x_velocity, y_velocity, z_velocity,
-                      metal_density) == 0) {
-    fprintf(stderr, "Error in solve_chemistry.\n");
-    return 0;
-  }
+  /* if (solve_chemistry_table(&my_units, */
+  /*                           a_value, dt, */
+  /*                           grid_rank, grid_dimension, */
+  /*                           grid_start, grid_end, */
+  /*                           density, energy, */
+  /*                           x_velocity, y_velocity, z_velocity, */
+  /*                           metal_density) == 0) { */
+  /*   fprintf(stderr, "Error in solve_chemistry.\n"); */
+  /*   return 0; */
+  /* } */
 
   // Calculate cooling time.
   gr_float *cooling_time;
   cooling_time = malloc(field_size * sizeof(gr_float));
   if (calculate_cooling_time_table(&my_units,
-                             a_value,
-                             grid_rank, grid_dimension,
-                             grid_start, grid_end,
-                             density, energy,
-                             x_velocity, y_velocity, z_velocity,
-                             metal_density, 
-                             cooling_time) == 0) {
+                                   a_value,
+                                   grid_rank, grid_dimension,
+                                   grid_start, grid_end,
+                                   density, energy,
+                                   x_velocity, y_velocity, z_velocity,
+                                   metal_density, 
+                                   cooling_time) == 0) {
     fprintf(stderr, "Error in calculate_cooling_time.\n");
     return 0;
   }
+
+  fprintf(stderr, "Cooling time = %le s.\n", cooling_time[0] *
+          my_units.time_units);
 
   // Calculate temperature.
   gr_float *temperature;
   temperature = malloc(field_size * sizeof(gr_float));
   if (calculate_temperature_table(&my_units,
-                            grid_rank, grid_dimension,
-                            density, energy,
-                            metal_density, 
-                            temperature) == 0) {
+                                  grid_rank, grid_dimension,
+                                  density, energy,
+                                  metal_density, 
+                                  temperature) == 0) {
     fprintf(stderr, "Error in calculate_temperature.\n");
     return 0;
   }
+
+  fprintf(stderr, "Temperature = %le K.\n", temperature[0]);
 
   // Calculate pressure.
   gr_float *pressure;
   pressure = malloc(field_size * sizeof(gr_float));
   if (calculate_pressure_table(&my_units,
-                         grid_rank, grid_dimension,
-                         density, energy,
-                         pressure) == 0) {
+                               grid_rank, grid_dimension,
+                               density, energy,
+                               pressure) == 0) {
     fprintf(stderr, "Error in calculate_pressure.\n");
     return 0;
   }
+
+  fprintf(stderr, "Pressure = %le.\n", pressure[0]);
 
   return 1;
 }
