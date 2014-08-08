@@ -30,6 +30,9 @@ src/example/cxx_example
 src/example/cxx_table_example
 src/example/c_example
 src/example/c_table_example
+src/example/c_example_nostruct
+src/example/c_table_example_nostruct
 src/example/fortran_example
+src/example/fortran_table_example
 src/python/build/*
 doc/build
