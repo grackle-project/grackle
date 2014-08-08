@@ -28,24 +28,6 @@ extern chemistry_data grackle_data;
   
 /* function prototypes */ 
  
-int calculate_temperature_table(code_units *my_units,
-                                gr_int grid_rank, gr_int *grid_dimension,
-                                gr_float *density, gr_float *internal_energy,
-                                gr_float *metal_density,
-                                gr_float *temperature)
-{
-  if (_calculate_temperature_table(&grackle_data,
-                                   my_units,
-                                   grid_rank, grid_dimension,
-                                   density, internal_energy,
-                                   metal_density,
-                                   temperature) == FAIL) {
-    fprintf(stderr, "Error in _calculate_temperature_table.\n");
-    return FAIL;
-  }
-  return SUCCESS;
-}
-
 int _calculate_temperature_table(chemistry_data *my_chemistry,
                                  code_units *my_units,
                                  gr_int grid_rank, gr_int *grid_dimension,
@@ -134,4 +116,51 @@ int _calculate_temperature_table(chemistry_data *my_chemistry,
   }
 
   return SUCCESS;
+}
+
+int calculate_temperature_table(code_units *my_units,
+                                gr_int grid_rank, gr_int *grid_dimension,
+                                gr_float *density, gr_float *internal_energy,
+                                gr_float *metal_density,
+                                gr_float *temperature)
+{
+  if (_calculate_temperature_table(&grackle_data,
+                                   my_units,
+                                   grid_rank, grid_dimension,
+                                   density, internal_energy,
+                                   metal_density,
+                                   temperature) == FAIL) {
+    fprintf(stderr, "Error in _calculate_temperature_table.\n");
+    return FAIL;
+  }
+  return SUCCESS;
+}
+
+int calculate_temperature_table_(gr_int *comoving_coordinates,
+                                 gr_float *density_units, gr_float *length_units,
+                                 gr_float *time_units, gr_float *velocity_units,
+                                 gr_float *a_units,
+                                 gr_int *grid_rank, gr_int *grid_dimension,
+                                 gr_float *density, gr_float *internal_energy,
+                                 gr_float *metal_density,
+                                 gr_float *temperature)
+{
+
+  code_units my_units;
+  my_units.comoving_coordinates = *comoving_coordinates;
+  my_units.density_units = *density_units;
+  my_units.length_units = *length_units;
+  my_units.time_units = *time_units;
+  my_units.velocity_units = *velocity_units;
+  my_units.a_units = *a_units;
+
+  int rval;
+  rval = calculate_temperature_table(&my_units,
+                                     *grid_rank, grid_dimension,
+                                     density, internal_energy,
+                                     metal_density,
+                                     temperature);
+
+  return rval;
+
 }
