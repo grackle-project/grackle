@@ -122,16 +122,16 @@ int main(int argc, char *argv[])
   // some timestep
   gr_float dt = 3.15e7 * 1e6 / my_units.time_units;
 
-  // if (solve_chemistry_table(&my_units,
-  //                           a_value, dt,
-  //                           grid_rank, grid_dimension,
-  //                           grid_start, grid_end,
-  //                           density, energy,
-  //                           x_velocity, y_velocity, z_velocity,
-  //                           metal_density) == 0) {
-  //   fprintf(stderr, "Error in solve_chemistry.\n");
-  //   return 0;
-  // }
+  if (solve_chemistry_table(&my_units,
+                            a_value, dt,
+                            grid_rank, grid_dimension,
+                            grid_start, grid_end,
+                            density, energy,
+                            x_velocity, y_velocity, z_velocity,
+                            metal_density) == 0) {
+    fprintf(stderr, "Error in solve_chemistry.\n");
+    return 0;
+  }
 
   // Calculate cooling time.
   gr_float *cooling_time;

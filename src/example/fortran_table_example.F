@@ -5,6 +5,7 @@
       integer iresult, i
 
       integer*8 initialize_grackle,
+     &     solve_chemistry_table,
      &     calculate_cooling_time_table,
      &     calculate_temperature_table,
      &     calculate_pressure_table
@@ -136,16 +137,16 @@ c     Evolving the chemistry.
 c     some timestep
       dt = 3.15e7 * 1e6 / time_units
 
-c$$$      iresult = solve_chemistry_table(
-c$$$     &     comoving_coordinates,
-c$$$     &     density_units, length_units,
-c$$$     &     time_units, velocity_units,
-c$$$     &     a_units, a_value, dt,
-c$$$     &     grid_rank, grid_dimension,
-c$$$     &     grid_start, grid_end,
-c$$$     &     density, energy,
-c$$$     &     x_velocity, y_velocity, z_velocity,
-c$$$     &     metal_density)
+      iresult = solve_chemistry_table(
+     &     comoving_coordinates,
+     &     density_units, length_units,
+     &     time_units, velocity_units,
+     &     a_units, a_value, dt,
+     &     grid_rank, grid_dimension,
+     &     grid_start, grid_end,
+     &     density, energy,
+     &     x_velocity, y_velocity, z_velocity,
+     &     metal_density)
 
 c     Calculate cooling time.
 
