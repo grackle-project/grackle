@@ -1,6 +1,15 @@
       program fortran_example
 
+      implicit None
+
       integer iresult, i
+
+      integer*8 initialize_grackle,
+     &     solve_chemistry,
+     &     calculate_cooling_time,
+     &     calculate_temperature,
+     &     calculate_pressure,
+     &     calculate_gamma
 
       real*8 tiny_number, mh, kboltz, fH
       parameter (tiny_number = 1.0d-20)
