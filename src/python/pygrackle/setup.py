@@ -7,7 +7,6 @@ def configuration(parent_package='',top_path=None):
     config = Configuration('pygrackle',parent_package,top_path)
     config.add_extension("grackle_wrapper",
                 ["pygrackle/grackle_wrapper.pyx"],
-                language="c++",
                 include_dirs=["../clib/"],
                 library_dirs=["../clib/"],
                 libraries=["grackle"],

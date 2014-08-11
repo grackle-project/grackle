@@ -59,8 +59,6 @@ if not my_value:
     print "Error initializing chemistry."
     sys.exit(0)
 
-my_chemistry.update_UVbackground(a_value)
-
 fc = FluidContainer(my_chemistry, 1)
 fc["density"][:] = 1.0
 fc["HI"][:] = 0.76 * fc["density"]
