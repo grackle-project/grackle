@@ -30,17 +30,14 @@ cdef extern from "code_units.h":
       gr_float a_units
 
 cdef extern from "grackle.h":
-    c_chemistry_data set_default_chemistry_parameters()
+    c_chemistry_data _set_default_chemistry_parameters()
 
-    gr_int initialize_chemistry_data(c_chemistry_data &my_chemistry,
-                                  c_code_units &my_units, gr_float a_value)
+    gr_int _initialize_chemistry_data(c_chemistry_data *my_chemistry,
+                                  c_code_units *my_units, gr_float a_value)
 
-    gr_int update_UVbackground_rates(c_chemistry_data &my_chemistry,
-                                  c_code_units &my_units, gr_float a_value)
-
-    gr_int c_solve_chemistry "solve_chemistry"(
-                c_chemistry_data &my_chemistry,
-                c_code_units &my_units,
+    gr_int c_solve_chemistry "_solve_chemistry"(
+                c_chemistry_data *my_chemistry,
+                c_code_units *my_units,
                 gr_float a_value,
                 gr_float dt_value,
                 gr_int grid_rank,
@@ -66,9 +63,9 @@ cdef extern from "grackle.h":
                 gr_float *e_density,
                 gr_float *metal_density)
 
-    gr_int c_calculate_cooling_time "calculate_cooling_time"(
-                c_chemistry_data &my_chemistry,
-                c_code_units &my_units,
+    gr_int c_calculate_cooling_time "_calculate_cooling_time"(
+                c_chemistry_data *my_chemistry,
+                c_code_units *my_units,
                 gr_float a_value,
                 gr_int grid_rank,
                 gr_int *grid_dimension,
@@ -94,9 +91,9 @@ cdef extern from "grackle.h":
                 gr_float *metal_density,
                 gr_float *cooling_time)
 
-    gr_int c_calculate_gamma "calculate_gamma"(
-                c_chemistry_data &my_chemistry,
-                c_code_units &my_units,
+    gr_int c_calculate_gamma "_calculate_gamma"(
+                c_chemistry_data *my_chemistry,
+                c_code_units *my_units,
                 gr_int grid_rank,
                 gr_int *grid_dimension,
                 gr_float *density,
@@ -116,9 +113,9 @@ cdef extern from "grackle.h":
                 gr_float *metal_density,
                 gr_float *my_gamma)
 
-    gr_int c_calculate_pressure "calculate_pressure"(
-                c_chemistry_data &my_chemistry,
-                c_code_units &my_units,
+    gr_int c_calculate_pressure "_calculate_pressure"(
+                c_chemistry_data *my_chemistry,
+                c_code_units *my_units,
                 gr_int grid_rank,
                 gr_int *grid_dimension,
                 gr_float *density,
@@ -138,9 +135,9 @@ cdef extern from "grackle.h":
                 gr_float *metal_density,
                 gr_float *pressure)
 
-    gr_int c_calculate_temperature "calculate_temperature"(
-                c_chemistry_data &my_chemistry,
-                c_code_units &my_units,
+    gr_int c_calculate_temperature "_calculate_temperature"(
+                c_chemistry_data *my_chemistry,
+                c_code_units *my_units,
                 gr_int grid_rank,
                 gr_int *grid_dimension,
                 gr_float *density,

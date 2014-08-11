@@ -20,13 +20,10 @@ cdef class chemistry_data:
     cdef c_code_units units
 
     def __cinit__(self):
-        self.data = set_default_chemistry_parameters()
+        self.data = _set_default_chemistry_parameters()
 
     def initialize(self, a_value):
-        return initialize_chemistry_data(self.data, self.units, a_value)
-
-    def update_UVbackground(self, a_value):
-        update_UVbackground_rates(self.data, self.units, a_value)
+        return _initialize_chemistry_data(&self.data, &self.units, a_value)
 
     property Gamma:
         def __get__(self):
@@ -188,8 +185,8 @@ def solve_chemistry(fc, my_a, my_dt):
     cdef gr_float *metal_density = get_field(fc, "metal")
 
     c_solve_chemistry (
-                my_chemistry,
-                my_units,
+                &my_chemistry,
+                &my_units,
                 a_value,
                 dt_value,
                 grid_rank,
@@ -254,8 +251,8 @@ def calculate_cooling_time(fc, my_a):
     cdef gr_float *cooling_time = get_field(fc, "cooling_time")
     
     c_calculate_cooling_time (
-                my_chemistry,
-                my_units,
+                &my_chemistry,
+                &my_units,
                 a_value,
                 grid_rank,
                 &grid_dimension,
@@ -306,8 +303,8 @@ def calculate_gamma(fc):
     cdef gr_float *gamma = get_field(fc, "gamma")
     
     c_calculate_gamma (
-                my_chemistry,
-                my_units,
+                &my_chemistry,
+                &my_units,
                 grid_rank,
                 &grid_dimension,
                 density,
@@ -352,8 +349,8 @@ def calculate_pressure(fc):
     cdef gr_float *pressure = get_field(fc, "pressure")
     
     c_calculate_pressure (
-                my_chemistry,
-                my_units,
+                &my_chemistry,
+                &my_units,
                 grid_rank,
                 &grid_dimension,
                 density,
@@ -398,8 +395,8 @@ def calculate_temperature(fc):
     cdef gr_float *temperature = get_field(fc, "temperature")
 
     c_calculate_temperature(
-                my_chemistry,
-                my_units,
+                &my_chemistry,
+                &my_units,
                 grid_rank,
                 &grid_dimension,
                 density,
