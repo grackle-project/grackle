@@ -222,11 +222,10 @@ c
      &                 xx, dum, tbase1, xbase1, kunit, coolunit,
      &                 dbase1, dlogtem, kunit_3bdy, x, y, cierate,
      &                 grain_coef, d_ttt, d_logttt, d_dlogtem,
-     &                 ttt2, d_ttt2
+     &                 ttt2, d_ttt2, tm
       double precision sigma24(nnu), sigma25(nnu), sigma26(nnu), 
      &                 sigma27(nnu), sigma28(nnu), sigma29(nnu), 
      &                 sigma30(nnu), sigma31(nnu), fext(nnu)
-      real tm
       double precision HDLR, HDLV, lt, t3, lt3
 c
 c\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////////
