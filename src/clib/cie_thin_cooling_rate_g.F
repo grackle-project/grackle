@@ -15,6 +15,7 @@ C     (greater than 0.5).
 C     Currently it is not clear what happens in the regime where H2
 C     becomes mostly dissociated.
       implicit none
+#include "fortran_types.def"
       real*8 temp
       real*8 value
       real*8 cie_table(288)
@@ -117,7 +118,7 @@ C     becomes mostly dissociated.
      $     1.239e-10,1.275e-10,1.311e-10,1.348e-10,1.386e-10,1.425e-10,
      $     1.464e-10,1.505e-10,1.546e-10,1.588e-10,1.631e-10,1.674e-10,
      $     1.719e-10/
-      integer i, j, jmin, jmax
+      INTG_PREC i, j, jmin, jmax
       real*8 mh
       mh = mass_h
 c     rough low temperature extrapolation
