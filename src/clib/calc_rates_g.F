@@ -151,24 +151,25 @@ c
 #define USE_NEW_COLLISIONAL_RATES
 c
       implicit NONE
+#include "fortran_types.def"
 c
 c  Arguments
 c
-      integer ispecies, nratec, casebrates, threebody, ndratec
-      real    aye, temstart, temend, dtemstart, dtemend,
+      INTG_PREC ispecies, nratec, casebrates, threebody, ndratec
+      R_PREC  aye, temstart, temend, dtemstart, dtemend,
      &        utem, uxyz, uaye, urho, utim
-      real    ceHIa(nratec), ceHeIa(nratec), ceHeIIa(nratec),
+      R_PREC  ceHIa(nratec), ceHeIa(nratec), ceHeIIa(nratec),
      &        ciHIa(nratec), ciHeIa(nratec), ciHeISa(nratec), 
      &        ciHeIIa(nratec), reHIIa(nratec), reHeII1a(nratec), 
      &        reHeII2a(nratec), reHeIIIa(nratec), brema(nratec)
-      real    hyd01ka(nratec), h2k01a(nratec), vibha(nratec), 
+      R_PREC  hyd01ka(nratec), h2k01a(nratec), vibha(nratec), 
      &        rotha(nratec), rotla(nratec), gpldl(nratec),
      &        gphdl(nratec), hdltea(nratec), hdlowa(nratec)
-      real    gaHIa(nratec), gaH2a(nratec), gaHea(nratec), 
+      R_PREC  gaHIa(nratec), gaH2a(nratec), gaHea(nratec), 
      &        gaHpa(nratec), gaela(nratec), gasgra(nratec),
      &        ciecoa(nratec)
-      real    compa, gammaha, gammahacgs
-      real    k1a (nratec), k2a (nratec), k3a (nratec), k4a (nratec), 
+      R_PREC  compa, gammaha, gammahacgs
+      R_PREC  k1a (nratec), k2a (nratec), k3a (nratec), k4a (nratec), 
      &        k5a (nratec), k6a (nratec), k7a (nratec), k8a (nratec), 
      &        k9a (nratec), k10a(nratec), k11a(nratec), k12a(nratec), 
      &        k13a(nratec), k14a(nratec), k15a(nratec), k16a(nratec), 
@@ -176,21 +177,21 @@ c
      &        k21a(nratec), k23a(nratec),
      &        k22a(nratec), k50a(nratec), k51a(nratec), k52a(nratec), 
      &        k53a(nratec), k54a(nratec), k55a(nratec), k56a(nratec)
-      real    k13dda(nratec, 7), hdcool(nratec, 5),
+      R_PREC  k13dda(nratec, 7), hdcool(nratec, 5),
      &     h2dusta(nratec, ndratec),
      &     ncrna(nratec), ncrd1a(nratec), ncrd2a(nratec)
-      real    mutab(nratec)
-      integer ioutput
+      R_PREC  mutab(nratec)
+      INTG_PREC ioutput
 c
 c  Parameters
 c
-      integer nnu
+      INTG_PREC nnu
       parameter (nnu = 400)
-      integer ireco, ibrco, icico, iceco, iphoto_mol
+      INTG_PREC ireco, ibrco, icico, iceco, iphoto_mol
       parameter (ireco = 1, ibrco = 1, icico = 1, iceco = 1, 
      &           iphoto_mol = 0)
 
-      double precision everg, evhz, tevk, mh, pi, tiny_cgs, dhuge, kb
+      real*8 everg, evhz, tevk, mh, pi, tiny_cgs, dhuge, kb
       parameter (everg = ev2erg, evhz  = 2.41838d+14, 
      &           tevk = 1.1605d+4, mh = mass_h, 
      &           pi=pi_val, tiny_cgs = 1.0d-37, 
@@ -199,7 +200,7 @@ c
 c
 c         Set various cutoff values in eV.
 c
-      double precision e24,e25,e26,e27,e28a,e28b,e28c,e29a,e29b,e29c,
+      real*8 e24,e25,e26,e27,e28a,e28b,e28c,e29a,e29b,e29c,
      &                 e30a,e30b
         PARAMETER(
      &    e24  = 13.6d0
@@ -217,17 +218,17 @@ c
 
 c  Locals
 c
-      integer i,j,n
-      double precision nu, delnu, hnu, logttt, ttt, tev, logtev, 
+      INTG_PREC i,j,n
+      real*8 nu, delnu, hnu, logttt, ttt, tev, logtev, 
      &                 xx, dum, tbase1, xbase1, kunit, coolunit,
      &                 dbase1, dlogtem, kunit_3bdy, x, y, cierate,
      &                 grain_coef, d_ttt, d_logttt, d_dlogtem,
      &                 ttt2, d_ttt2
-      double precision sigma24(nnu), sigma25(nnu), sigma26(nnu), 
+      real*8 sigma24(nnu), sigma25(nnu), sigma26(nnu), 
      &                 sigma27(nnu), sigma28(nnu), sigma29(nnu), 
      &                 sigma30(nnu), sigma31(nnu), fext(nnu)
-      real tm
-      double precision HDLR, HDLV, lt, t3, lt3
+      R_PREC tm
+      real*8 HDLR, HDLV, lt, t3, lt3
 c
 c\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////////
 c=======================================================================
@@ -392,7 +393,7 @@ c
 c
 c       Compute temperature of this bin (in eV)
 c
-        logttt = log(temstart) + real(i-1)*dlogtem
+        logttt = log(temstart) + real(i-1,RKIND)*dlogtem
         ttt = exp(logttt)
         ttt2 = ttt / 1.0d2
         tev = ttt/tevk
@@ -672,7 +673,7 @@ c
 c
 c     Compute dust temperature of this bin
 c
-           d_logttt = log(dtemstart) + real(j-1)*d_dlogtem
+           d_logttt = log(dtemstart) + real(j-1,RKIND)*d_dlogtem
            d_ttt = exp(d_logttt)
            d_ttt2 = d_ttt / 1.0d2
 c
@@ -707,7 +708,7 @@ c  Write out cgs rate coefficients
 c
 c      open(10, file='k1-6.out', status='unknown')
 c      do i = 1, nratec
-c         write(10,1010) exp(log(temstart) + real(i-1)*dlogtem),
+c         write(10,1010) exp(log(temstart) + real(i-1,RKIND)*dlogtem),
 c     &               k1a(i),k2a(i),k3a(i),k4a(i),k5a(i),k6a(i)
 c      enddo
 c 1010 format(7(1pe11.4))
@@ -718,7 +719,7 @@ c  2) Cooling/heating rates (excluding external radiation field)
 c
       do i = 1, nratec
 c
-        logttt = log(temstart) + real(i-1)*dlogtem
+        logttt = log(temstart) + real(i-1,RKIND)*dlogtem
         ttt = exp(logttt)
 c
 c    a) Collisional excitations (Black 1981; Cen 1992)
@@ -957,7 +958,7 @@ c
      &            12.698d0   * (dlog10(tm))**3 - 
      &            2.02424d0  * (dlog10(tm))**4 + 
      &            0.122393d0 * (dlog10(tm))**5
-      hdltea(i) = (10.d0**min(hdltea(i), 0.d0)) / coolunit
+      hdltea(i) = (10.d0**min(hdltea(i), 0._RKIND)) / coolunit
 c
 c Galli and Palla 1998 low density limit (erg cm3 /s)
 c  uses HD-He collisional data, so reduced by 1.27
@@ -1023,7 +1024,7 @@ c
 !      call open_mpi_error_file( 'cool_rates.out', 10, 'unknown' )
 
         do i=1, nratec
-           logttt = log(temstart) + real(i-1)*dlogtem
+           logttt = log(temstart) + real(i-1,RKIND)*dlogtem
            ttt = exp(logttt)
            write(10,1000) ttt, ceHIa(i), ceHeIa(i), ceHeIIa(i),
      &                    ciHIa(i), ciHeIa(i), ciHeISa(i),
@@ -1046,7 +1047,7 @@ c
 !      call open_mpi_error_file( 'rates.out', 10, 'unknown' )
 
         do i=1, nratec
-           logttt = log(temstart) + real(i-1)*dlogtem
+           logttt = log(temstart) + real(i-1,RKIND)*dlogtem
            ttt = exp(logttt)
            write(10,1000) ttt, k1a(i), k2a(i), k3a(i), k4a(i), k5a(i),
      &                    k6a(i), k7a(i), k8a(i), k9a(i), k10a(i),
@@ -1073,17 +1074,18 @@ c
 ! ------------------------------------------------------------------
 
       implicit NONE
+#include "fortran_types.def"
 
-      integer nratec
-      real temstart, temend
-      real mutab(nratec)
+      INTG_PREC nratec
+      R_PREC temstart, temend
+      R_PREC mutab(nratec)
 
-      integer i, j
-      real ttt, logttt, dlogtem, slope
+      INTG_PREC i, j
+      R_PREC ttt, logttt, dlogtem, slope
 
-      integer nt
+      INTG_PREC nt
       parameter (nt = 10)
-      real tt(nt), mt(nt)
+      R_PREC tt(nt), mt(nt)
       parameter (tt = (/1.0d+01, 1.0d+02, 
      &     1.0d+03, 1.0d+04, 1.3d+04, 2.1d+04,
      &     3.4d+04, 6.3d+04, 1.0d+05, 1.0d+09/))
@@ -1091,12 +1093,12 @@ c
      &     1.09603514, 0.9981496, 0.96346395, 0.65175895,
      &     0.6142901,  0.6056833, 0.5897776,  0.58822635/))
 
-      dlogtem= (log(temend) - log(temstart))/real(nratec-1)
+      dlogtem= (log(temend) - log(temstart))/real(nratec-1,RKIND)
       j = 2
 
       do i = 1, nratec
 
-         logttt = log(temstart) + real(i-1)*dlogtem
+         logttt = log(temstart) + real(i-1,RKIND)*dlogtem
          ttt = exp(logttt)
 
          if (ttt .gt. tt(j)) then
