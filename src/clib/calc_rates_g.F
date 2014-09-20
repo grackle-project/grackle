@@ -227,8 +227,7 @@ c
       real*8 sigma24(nnu), sigma25(nnu), sigma26(nnu), 
      &                 sigma27(nnu), sigma28(nnu), sigma29(nnu), 
      &                 sigma30(nnu), sigma31(nnu), fext(nnu)
-      R_PREC tm
-      real*8 HDLR, HDLV, lt, t3, lt3
+      real*8 tm, HDLR, HDLV, lt, t3, lt3
 c
 c\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////////
 c=======================================================================
@@ -296,13 +295,13 @@ c  Compute log spacing in temperature
 c
       ttt    = temstart
       logttt = log(ttt)
-      dlogtem= (log(temend) - log(temstart))/real(nratec-1)
+      dlogtem= (log(temend) - log(temstart))/real(nratec-1, 8)
 c
 c  Compute log spacing in dust temperature
 c
       d_ttt     = dtemstart
       d_logttt  = log(d_ttt)
-      d_dlogtem = (log(dtemend) - log(dtemstart))/real(ndratec-1)
+      d_dlogtem = (log(dtemend) - log(dtemstart))/real(ndratec-1, 8)
 
       if (ispecies .gt. 0) then
 
@@ -393,7 +392,7 @@ c
 c
 c       Compute temperature of this bin (in eV)
 c
-        logttt = log(temstart) + real(i-1,RKIND)*dlogtem
+        logttt = log(temstart) + real(i-1, 8)*dlogtem
         ttt = exp(logttt)
         ttt2 = ttt / 1.0d2
         tev = ttt/tevk
@@ -673,7 +672,7 @@ c
 c
 c     Compute dust temperature of this bin
 c
-           d_logttt = log(dtemstart) + real(j-1,RKIND)*d_dlogtem
+           d_logttt = log(dtemstart) + real(j-1, 8)*d_dlogtem
            d_ttt = exp(d_logttt)
            d_ttt2 = d_ttt / 1.0d2
 c
@@ -719,7 +718,7 @@ c  2) Cooling/heating rates (excluding external radiation field)
 c
       do i = 1, nratec
 c
-        logttt = log(temstart) + real(i-1,RKIND)*dlogtem
+        logttt = log(temstart) + real(i-1, 8)*dlogtem
         ttt = exp(logttt)
 c
 c    a) Collisional excitations (Black 1981; Cen 1992)
@@ -807,7 +806,7 @@ c       (Which one is used is controlled by a flag in cool1d_mulit_g.F)
 c
 c    e part1) - Lepp & Shull rates
 c
-        xx = log10(ttt/1.0d4)
+        xx = dlog10(ttt/1.0d4)
         vibha  (i) = 1.1d-18*exp(-min(log(dhuge),6744.d0/ttt)) 
      &               / coolunit
 c
@@ -843,7 +842,7 @@ c     e part2) - Galli and Palla (1999) rates as fit by Tom Abel
 c
         tm = max(ttt, 13.0d0)       ! no cooling below 13 Kelvin ...
         tm = min(tm, 1.d5)      ! fixes numerics
-        lt = log10(tm)
+        lt = dlog10(tm)
 c     low density limit from Galli and Palla
         gpldl(i)  = 10.d0**(-103.d0+97.59d0*lt-48.05d0*lt**2 
      &       +10.8d0*lt*lt*lt-0.9032d0*lt*lt*lt*lt) / coolunit
@@ -1024,7 +1023,7 @@ c
 !      call open_mpi_error_file( 'cool_rates.out', 10, 'unknown' )
 
         do i=1, nratec
-           logttt = log(temstart) + real(i-1,RKIND)*dlogtem
+           logttt = log(temstart) + real(i-1, 8)*dlogtem
            ttt = exp(logttt)
            write(10,1000) ttt, ceHIa(i), ceHeIa(i), ceHeIIa(i),
      &                    ciHIa(i), ciHeIa(i), ciHeISa(i),
@@ -1047,7 +1046,7 @@ c
 !      call open_mpi_error_file( 'rates.out', 10, 'unknown' )
 
         do i=1, nratec
-           logttt = log(temstart) + real(i-1,RKIND)*dlogtem
+           logttt = log(temstart) + real(i-1, 8)*dlogtem
            ttt = exp(logttt)
            write(10,1000) ttt, k1a(i), k2a(i), k3a(i), k4a(i), k5a(i),
      &                    k6a(i), k7a(i), k8a(i), k9a(i), k10a(i),
@@ -1093,12 +1092,12 @@ c
      &     1.09603514, 0.9981496, 0.96346395, 0.65175895,
      &     0.6142901,  0.6056833, 0.5897776,  0.58822635/))
 
-      dlogtem= (log(temend) - log(temstart))/real(nratec-1,RKIND)
+      dlogtem= (log(temend) - log(temstart))/real(nratec-1, 8)
       j = 2
 
       do i = 1, nratec
 
-         logttt = log(temstart) + real(i-1,RKIND)*dlogtem
+         logttt = log(temstart) + real(i-1, 8)*dlogtem
          ttt = exp(logttt)
 
          if (ttt .gt. tt(j)) then
