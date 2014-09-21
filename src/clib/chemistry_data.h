@@ -18,22 +18,22 @@ typedef struct
 {
 
   // Rank of dataset.
-  gr_int grid_rank;
+  long long grid_rank;
 
   // Dimension of dataset.
-  gr_int *grid_dimension;
+  long long *grid_dimension;
 
   // Dataset parameter values.
-  gr_float **grid_parameters;
+  double **grid_parameters;
 
   // Heating values
-  gr_float *heating_data;
+  double *heating_data;
 
   // Cooling values
-  gr_float *cooling_data;
+  double *cooling_data;
 
   // Length of 1D flattened data
-  gr_int data_size;
+  long long data_size;
 
 } cloudy_data;
 

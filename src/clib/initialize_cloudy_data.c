@@ -28,17 +28,16 @@ int initialize_cloudy_data(chemistry_data *my_chemistry,
                            gr_int read_data)
 {
 
-  gr_int q, w;
+  long long q, w;
   double *temp_data;
   long long temp_int;
   long long *temp_int_arr;
   char parameter_name[MAX_LINE_LENGTH];
-  gr_int debug = 0;
 
   // Initialize things needed even if cloudy cooling is not used.
 
-  my_cloudy->grid_parameters = malloc(CLOUDY_MAX_DIMENSION * sizeof(gr_float));
-  my_cloudy->grid_dimension = malloc(CLOUDY_MAX_DIMENSION * sizeof(gr_int));
+  my_cloudy->grid_parameters = malloc(CLOUDY_MAX_DIMENSION * sizeof(double));
+  my_cloudy->grid_dimension = malloc(CLOUDY_MAX_DIMENSION * sizeof(long long));
   for (q = 0;q < CLOUDY_MAX_DIMENSION;q++) {
     my_cloudy->grid_dimension[q] = 0;
   }
@@ -88,7 +87,8 @@ int initialize_cloudy_data(chemistry_data *my_chemistry,
   sprintf(parameter_name, "/CoolingRates/%s/Cooling", group_name);
   dset_id =  H5Dopen(file_id, parameter_name);
   if (dset_id == h5_error) {
-    fprintf(stderr,"Can't open Cooling in %s.\n",my_chemistry->grackle_data_file);
+    fprintf(stderr,"Can't open Cooling in %s.\n",
+            my_chemistry->grackle_data_file);
     return FAIL;
   }
 
@@ -104,7 +104,7 @@ int initialize_cloudy_data(chemistry_data *my_chemistry,
     return FAIL;
   }
   my_cloudy->grid_rank = (int) temp_int;
-  fprintf(stderr,"Cloudy cooling grid rank: %"ISYM".\n",my_cloudy->grid_rank);
+  fprintf(stderr,"Cloudy cooling grid rank: %"ISYM".\n", my_cloudy->grid_rank);
   status = H5Aclose(attr_id);
   if (attr_id == h5_error) {
     fprintf(stderr,"Failed to close Rank attribute in Cooling dataset.\n");
@@ -126,7 +126,7 @@ int initialize_cloudy_data(chemistry_data *my_chemistry,
   fprintf(stderr,"Cloudy cooling grid dimensions:");
   for (q = 0;q < my_cloudy->grid_rank;q++) {
     my_cloudy->grid_dimension[q] = (int) temp_int_arr[q];
-    fprintf(stderr," %"ISYM,my_cloudy->grid_dimension[q]);
+    fprintf(stderr," %"ISYM, my_cloudy->grid_dimension[q]);
   }
   fprintf(stderr,".\n");
   status = H5Aclose(attr_id);
@@ -161,14 +161,15 @@ int initialize_cloudy_data(chemistry_data *my_chemistry,
       return FAIL;
     }
 
-    my_cloudy->grid_parameters[q] = malloc(my_cloudy->grid_dimension[q] * sizeof(gr_float));
+    my_cloudy->grid_parameters[q] = malloc(my_cloudy->grid_dimension[q] *
+                                           sizeof(double));
     for (w = 0;w < my_cloudy->grid_dimension[q];w++) {
       if (q < my_cloudy->grid_rank - 1) {
-	my_cloudy->grid_parameters[q][w] = (float) temp_data[w];
+	my_cloudy->grid_parameters[q][w] = (double) temp_data[w];
       }
       else {
 	// convert temeperature to log
-	my_cloudy->grid_parameters[q][w] = (float) log10(temp_data[w]);
+	my_cloudy->grid_parameters[q][w] = (double) log10(temp_data[w]);
       }
 
     }
@@ -200,9 +201,10 @@ int initialize_cloudy_data(chemistry_data *my_chemistry,
     return FAIL;
   }
 
-  my_cloudy->cooling_data = malloc(my_cloudy->data_size * sizeof(gr_float));
+  my_cloudy->cooling_data = malloc(my_cloudy->data_size * sizeof(double));
   for (q = 0;q < my_cloudy->data_size;q++) {
-    my_cloudy->cooling_data[q] = temp_data[q] > 0 ? (float) log10(temp_data[q]) : (float) SMALL_LOG_VALUE;
+    my_cloudy->cooling_data[q] = temp_data[q] > 0 ?
+      (double) log10(temp_data[q]) : (double) SMALL_LOG_VALUE;
 
     // Convert to code units.
     my_cloudy->cooling_data[q] -= log10(CoolUnit);
@@ -223,7 +225,8 @@ int initialize_cloudy_data(chemistry_data *my_chemistry,
     sprintf(parameter_name, "/CoolingRates/%s/Heating", group_name);
     dset_id =  H5Dopen(file_id, parameter_name);
     if (dset_id == h5_error) {
-      fprintf(stderr,"Can't open Heating in %s.\n",my_chemistry->grackle_data_file);
+      fprintf(stderr,"Can't open Heating in %s.\n",
+              my_chemistry->grackle_data_file);
       return FAIL;
     }
 
@@ -234,9 +237,10 @@ int initialize_cloudy_data(chemistry_data *my_chemistry,
       return FAIL;
     }
 
-    my_cloudy->heating_data = malloc(my_cloudy->data_size * sizeof(gr_float));
+    my_cloudy->heating_data = malloc(my_cloudy->data_size * sizeof(double));
     for (q = 0;q < my_cloudy->data_size;q++) {
-      my_cloudy->heating_data[q] = temp_data[q] > 0 ? (float) log10(temp_data[q]) : (float) SMALL_LOG_VALUE;
+      my_cloudy->heating_data[q] = temp_data[q] > 0 ?
+        (double) log10(temp_data[q]) : (double) SMALL_LOG_VALUE;
 
       // Convert to code units.
       my_cloudy->heating_data[q] -= log10(CoolUnit);
