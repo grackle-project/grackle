@@ -6,28 +6,12 @@
       integer, parameter :: RKIND=4
 #endif
 
-
 #ifdef CONFIG_BFLOAT_8
 #define tiny 1.d-20
 #define huge 1.d+20
 #define R_PREC real*8
 #define CMPLX_PREC complex*16
       integer, parameter :: RKIND=8
-#endif
-
-
-#ifdef SMALL_INTS
-#define INTG_PREC integer*4
-#define LOGIC_PREC logical*4
-      integer, parameter :: IKIND=4
-      integer, parameter :: LKIND=4
-#endif
-
-#ifdef LARGE_INTS
-#define INTG_PREC integer*8
-#define LOGIC_PREC logical*8
-      integer, parameter :: IKIND=8
-      integer, parameter :: LKIND=8
 #endif
 
       integer, parameter :: DKIND=8

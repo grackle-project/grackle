@@ -104,7 +104,7 @@ int initialize_cloudy_data(chemistry_data *my_chemistry,
     return FAIL;
   }
   my_cloudy->grid_rank = (int) temp_int;
-  fprintf(stderr,"Cloudy cooling grid rank: %"ISYM".\n", my_cloudy->grid_rank);
+  fprintf(stderr,"Cloudy cooling grid rank: %lld.\n", my_cloudy->grid_rank);
   status = H5Aclose(attr_id);
   if (attr_id == h5_error) {
     fprintf(stderr,"Failed to close Rank attribute in Cooling dataset.\n");
@@ -126,7 +126,7 @@ int initialize_cloudy_data(chemistry_data *my_chemistry,
   fprintf(stderr,"Cloudy cooling grid dimensions:");
   for (q = 0;q < my_cloudy->grid_rank;q++) {
     my_cloudy->grid_dimension[q] = (int) temp_int_arr[q];
-    fprintf(stderr," %"ISYM, my_cloudy->grid_dimension[q]);
+    fprintf(stderr," %lld", my_cloudy->grid_dimension[q]);
   }
   fprintf(stderr,".\n");
   status = H5Aclose(attr_id);
@@ -140,7 +140,7 @@ int initialize_cloudy_data(chemistry_data *my_chemistry,
   for (q = 0;q < my_cloudy->grid_rank;q++) {
 
     if (q < my_cloudy->grid_rank - 1) {
-      sprintf(parameter_name,"Parameter%"ISYM,(q+1));
+      sprintf(parameter_name,"Parameter%lld",(q+1));
     }
     else {
       sprintf(parameter_name,"Temperature");
@@ -173,7 +173,7 @@ int initialize_cloudy_data(chemistry_data *my_chemistry,
       }
 
     }
-    fprintf(stderr,"%s: %"GSYM" to %"GSYM" (%"ISYM" steps).\n",parameter_name,
+    fprintf(stderr,"%s: %"GSYM" to %"GSYM" (%lld steps).\n",parameter_name,
             my_cloudy->grid_parameters[q][0],
             my_cloudy->grid_parameters[q][my_cloudy->grid_dimension[q]-1],
             my_cloudy->grid_dimension[q]);
@@ -257,7 +257,7 @@ int initialize_cloudy_data(chemistry_data *my_chemistry,
   status = H5Fclose (file_id);
 
   if (my_cloudy->grid_rank > CLOUDY_MAX_DIMENSION) {
-    fprintf(stderr,"Error: rank of Cloudy cooling data must be less than or equal to %"ISYM".\n",
+    fprintf(stderr,"Error: rank of Cloudy cooling data must be less than or equal to %lld.\n",
 	    CLOUDY_MAX_DIMENSION);
     return FAIL;
   }

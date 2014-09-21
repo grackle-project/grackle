@@ -63,20 +63,6 @@
 
 /* Precision-dependent definitions */
 
-#ifdef SMALL_INTS
-#define ISYM "d"
-#define nint(A) ( (int) ((A) + 0.5*sign(A)) )
-#define nlongint(A) ( (long long) ((A) + 0.5*sign(A)) )
-#define ABS(A) abs((int) (A))
-#endif
-
-#ifdef LARGE_INTS
-#define ISYM "lld"
-#define nint(A) ( (long long) ((A) + 0.5*sign(A)) )
-#define nlongint(A) ( (long long) ((A) + 0.5*sign(A)) )
-#define ABS(A) labs((long long) (A))
-#endif
-
 #ifdef CONFIG_BFLOAT_4
 #define FSYM "f"
 #define ESYM "e"
