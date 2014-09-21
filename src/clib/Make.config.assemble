@@ -38,37 +38,7 @@
 #-----------------------------------------------------------------------
 
 #-----------------------------------------------------------------------
-# DETERMINE INTEGER SIZE SETTINGS
-#-----------------------------------------------------------------------
-
-    ERROR_INTEGERS = 1
-
-    # Settings for 32-bit integers
-
-    ifeq ($(CONFIG_INTEGERS),32)
-        ERROR_INTEGERS = 0
-        ASSEMBLE_INTEGER_DEFINES = -DSMALL_INTS
-        ASSEMBLE_INTEGER_FFLAGS = $(MACH_FFLAGS_INTEGER_32)
-    endif
-
-    # Settings for 64-bit integers
-
-    ifeq ($(CONFIG_INTEGERS),64)
-        ERROR_INTEGERS = 0
-        ASSEMBLE_INTEGER_DEFINES = -DLARGE_INTS
-        ASSEMBLE_INTEGER_FFLAGS = $(MACH_FFLAGS_INTEGER_64)
-    endif
-
-    # error if CONFIG_INTEGERS is incorrect
-
-    ifeq ($(ERROR_INTEGERS),1)
-       .PHONY: error_integers
-       error_integers:
-	$(error Illegal value '$(CONFIG_INTEGERS)' for $$(CONFIG_INTEGERS))
-    endif
-
-#-----------------------------------------------------------------------
-# DETERMINE FLOATING POINT PRECISION SETTINGS
+# DETERMINE BARYON FIELD PRECISION SETTINGS
 #-----------------------------------------------------------------------
 
     ERROR_PRECISION = 1
@@ -222,17 +192,14 @@
                $(ASSEMBLE_OPT_FLAGS)
     FFLAGS   = $(MACH_FFLAGS) \
                $(ASSEMBLE_PRECISION_FFLAGS) \
-               $(ASSEMBLE_INTEGER_FFLAGS) \
                $(ASSEMBLE_OPT_FLAGS)
     F90FLAGS = $(MACH_F90FLAGS) \
                $(ASSEMBLE_PRECISION_FFLAGS) \
-               $(ASSEMBLE_INTEGER_FFLAGS) \
                $(ASSEMBLE_OPT_FLAGS)
     LDFLAGS  = $(ASSEMBLE_LDFLAGS)
     LDOUTPUT_FLAGS = $(ASSEMBLE_LDOUTPUT_FLAGS)
 
     DEFINES = $(MACH_DEFINES) \
-              $(ASSEMBLE_INTEGER_DEFINES) \
               $(ASSEMBLE_IO_DEFINES) \
               $(ASSEMBLE_PRECISION_DEFINES)
 

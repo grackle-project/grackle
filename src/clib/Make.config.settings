@@ -8,26 +8,17 @@
 #
 # Configuration settings
 # 
-#    CONFIG_INTEGERS
 #    CONFIG_PRECISION
 #    CONFIG_OPT
+#    CONFIG_SHARED
 #
 #=======================================================================
 
 #=======================================================================
-# CONFIG_INTEGERS
-#=======================================================================
-#    32            use 32-bit integers
-#    64            use 64-bit integers
-#-----------------------------------------------------------------------
-
-     CONFIG_INTEGERS = 64
-
-#=======================================================================
 # CONFIG_PRECISION
 #=======================================================================
-#    32            use 32-bit precision for floating point data
-#    64            use 64-bit precision for floating point data
+#    32            use 32-bit precision for baryon field data
+#    64            use 64-bit precision for baryon field data
 #-----------------------------------------------------------------------
 
      CONFIG_PRECISION = 64
@@ -37,7 +28,6 @@
 #=======================================================================
 #    warn          Write out verbose warnings when compiling
 #    debug         Compile for debugging
-#    cudadebug     Use device emulation to debug cuda code
 #    high          Use conservative but high optimization
 #    aggressive    Use aggressive optimization
 #-----------------------------------------------------------------------

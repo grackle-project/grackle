@@ -17,12 +17,7 @@ help-config:
 	@echo
 	@echo "CONFIGURATION SETTINGS"
 	@echo
-	@echo "   Set integer size"
-	@echo
-	@echo "      make integers-32"
-	@echo "      make integers-64"
-	@echo
-	@echo "   Set floating-point precision"
+	@echo "   Set baryon field precision"
 	@echo
 	@echo "      make precision-32"
 	@echo "      make precision-64"
@@ -31,7 +26,6 @@ help-config:
 	@echo
 	@echo "      make opt-warn"
 	@echo "      make opt-debug"
-	@echo "      make opt-cudadebug  (cuda device software emulation)"
 	@echo "      make opt-high"
 	@echo "      make opt-aggressive"
 	@echo
@@ -74,7 +68,6 @@ show-config:
 	@echo "   MACHINE-NAME: $(CONFIG_MACHINE)"
 	@echo
 	@echo "   CONFIG_PRECISION  [precision-{32,64}]                     : $(CONFIG_PRECISION)"
-	@echo "   CONFIG_INTEGERS  [integers-{32,64}]                       : $(CONFIG_INTEGERS)" 
 	@echo "   CONFIG_OPT  [opt-{warn,debug,cudadebug,high,aggressive}]  : $(CONFIG_OPT)"
 	@echo "   CONFIG_SHARED  [shared-{yes,no}]                          : $(CONFIG_SHARED)"
 
@@ -164,23 +157,6 @@ save-config-%:
 	echo "   Settings saved to $(HOME)/.grackle/Make.settings.$*."; \
 	echo "   Type "'"'"$(MAKE) load-config-$*"'"'" to reload settings."; \
 	echo;
-
-#-----------------------------------------------------------------------
-
-VALID_INTEGERS = integers-32 integers-64
-.PHONY: $(VALID_INTEGERS)
-
-integers-32: CONFIG_INTEGERS-32
-integers-64: CONFIG_INTEGERS-64
-integers-%:
-	@printf "\n\tInvalid target: $@\n\n\tValid targets: [$(VALID_INTEGERS)]\n\n"
-CONFIG_INTEGERS-%: suggest-clean
-	@tmp=.config.temp; \
-	grep -v CONFIG_INTEGERS $(MAKE_CONFIG_OVERRIDE) > $${tmp}; \
-	mv $${tmp} $(MAKE_CONFIG_OVERRIDE); \
-	echo "CONFIG_INTEGERS = $*" >> $(MAKE_CONFIG_OVERRIDE); \
-	$(MAKE)  show-config | grep CONFIG_INTEGERS; \
-	echo
 
 #-----------------------------------------------------------------------
 
