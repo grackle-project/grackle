@@ -26,46 +26,46 @@ extern chemistry_data grackle_data;
 /* function prototypes */
 
 int update_UVbackground_rates(chemistry_data *my_chemistry,
-                              code_units *my_units, gr_float a_value);
+                              code_units *my_units, double a_value);
  
 extern void FORTRAN_NAME(cool_multi_time_g)(
 	gr_float *d, gr_float *e, gr_float *u, gr_float *v, gr_float *w, gr_float *de,
 	gr_float *HI, gr_float *HII, gr_float *HeI, gr_float *HeII, gr_float *HeIII,
 	gr_float *cooltime,
-	gr_int *in, gr_int *jn, gr_int *kn, gr_int *nratec, gr_int *iexpand,
-        gr_int *ispecies, gr_int *imetal, gr_int *imcool, gr_int *idust, gr_int *idim,
-	gr_int *is, gr_int *js, gr_int *ks, gr_int *ie, gr_int *je, gr_int *ke, 
-        gr_int *ih2co, gr_int *ipiht, gr_int *igammah,
-	gr_float *aye, gr_float *temstart, gr_float *temend,
-	gr_float *utem, gr_float *uxyz, gr_float *uaye, gr_float *urho, gr_float *utim,
-	gr_float *gamma, gr_float *fh, gr_float *z_solar,
-	gr_float *ceHIa, gr_float *ceHeIa, gr_float *ceHeIIa, 
-        gr_float *ciHIa, gr_float *ciHeIa,
-	gr_float *ciHeISa, gr_float *ciHeIIa, gr_float *reHIIa, gr_float *reHeII1a,
-	gr_float *reHeII2a, gr_float *reHeIIIa, gr_float *brema, gr_float *compa, 
-        gr_float *gammaha, gr_float *comp_xraya, gr_float *comp_temp, 
-        gr_float *piHI, gr_float *piHeI, gr_float *piHeII,
+	int *in, int *jn, int *kn, int *nratec, int *iexpand,
+        int *ispecies, int *imetal, int *imcool, int *idust, int *idim,
+	int *is, int *js, int *ks, int *ie, int *je, int *ke, 
+        int *ih2co, int *ipiht, int *igammah,
+	double *aye, double *temstart, double *temend,
+	double *utem, double *uxyz, double *uaye, double *urho, double *utim,
+	double *gamma, double *fh, double *z_solar,
+	double *ceHIa, double *ceHeIa, double *ceHeIIa, 
+        double *ciHIa, double *ciHeIa,
+	double *ciHeISa, double *ciHeIIa, double *reHIIa, double *reHeII1a,
+	double *reHeII2a, double *reHeIIIa, double *brema, double *compa, 
+        double *gammaha, double *comp_xraya, double *comp_temp, 
+        double *piHI, double *piHeI, double *piHeII,
 	gr_float *HM, gr_float *H2I, gr_float *H2II, 
         gr_float *DI, gr_float *DII, gr_float *HDI, gr_float *metal,
-	gr_float *hyd01ka, gr_float *h2k01a, gr_float *vibha, 
-        gr_float *rotha, gr_float *rotla,
-	gr_float *gpldl, gr_float *gphdl, gr_float *HDltea, gr_float *HDlowa,
-	gr_float *gaHIa, gr_float *gaH2a, gr_float *gaHea, gr_float *gaHpa, gr_float *gaela,
-	gr_float *gasgra,
-	gr_int *ih2optical, gr_int *iciecool, gr_float *ciecoa,
- 	gr_int *icmbTfloor, gr_int *iClHeat, gr_float *clEleFra,
-        gr_int *priGridRank, gr_int *priGridDim,
- 	gr_float *priPar1, gr_float *priPar2, gr_float *priPar3, 
- 	gr_int *priDataSize, gr_float *priCooling, gr_float *priHeating,
-        gr_int *metGridRank, gr_int *metGridDim,
- 	gr_float *metPar1, gr_float *metPar2, gr_float *metPar3, 
- 	gr_int *metDataSize, gr_float *metCooling, gr_float *metHeating,
-        gr_float *mutaba);
+	double *hyd01ka, double *h2k01a, double *vibha, 
+        double *rotha, double *rotla,
+	double *gpldl, double *gphdl, double *HDltea, double *HDlowa,
+	double *gaHIa, double *gaH2a, double *gaHea, double *gaHpa, double *gaela,
+	double *gasgra,
+	int *ih2optical, int *iciecool, double *ciecoa,
+ 	int *icmbTfloor, int *iClHeat, double *clEleFra,
+        long long *priGridRank, long long *priGridDim,
+ 	double *priPar1, double *priPar2, double *priPar3, 
+ 	long long *priDataSize, double *priCooling, double *priHeating,
+        long long *metGridRank, long long *metGridDim,
+ 	double *metPar1, double *metPar2, double *metPar3, 
+ 	long long *metDataSize, double *metCooling, double *metHeating,
+        double *mutaba);
 
 int _calculate_cooling_time(chemistry_data *my_chemistry,
-                            code_units *my_units, gr_float a_value,
-                            gr_int grid_rank, gr_int *grid_dimension,
-                            gr_int *grid_start, gr_int *grid_end,
+                            code_units *my_units, double a_value,
+                            int grid_rank, int *grid_dimension,
+                            int *grid_start, int *grid_end,
                             gr_float *density, gr_float *internal_energy,
                             gr_float *x_velocity, gr_float *y_velocity, gr_float *z_velocity,
                             gr_float *HI_density, gr_float *HII_density, gr_float *HM_density,
@@ -92,11 +92,11 @@ int _calculate_cooling_time(chemistry_data *my_chemistry,
 
   /* Check for a metal field. */
 
-  gr_int metal_field_present = TRUE;
+  int metal_field_present = TRUE;
   if (metal_density == NULL)
     metal_field_present = FALSE;
 
-  gr_float co_length_units, co_density_units;
+  double co_length_units, co_density_units;
   if (my_units->comoving_coordinates == TRUE) {
     co_length_units = my_units->length_units;
     co_density_units = my_units->density_units;
@@ -110,11 +110,11 @@ int _calculate_cooling_time(chemistry_data *my_chemistry,
 
   /* Calculate temperature units. */
 
-  gr_float temperature_units =  mh * POW(my_units->velocity_units, 2) / kboltz;
+  double temperature_units =  mh * POW(my_units->velocity_units, 2) / kboltz;
 
   /* Call the fortran routine to solve cooling equations. */
 
-  gr_int ierr = 0;
+  int ierr = 0;
 
     FORTRAN_NAME(cool_multi_time_g)(
        density, internal_energy, x_velocity, y_velocity, z_velocity,
@@ -173,9 +173,9 @@ int _calculate_cooling_time(chemistry_data *my_chemistry,
   return SUCCESS;
 }
 
-int calculate_cooling_time(code_units *my_units, gr_float a_value,
-                           gr_int grid_rank, gr_int *grid_dimension,
-                           gr_int *grid_start, gr_int *grid_end,
+int calculate_cooling_time(code_units *my_units, double a_value,
+                           int grid_rank, int *grid_dimension,
+                           int *grid_start, int *grid_end,
                            gr_float *density, gr_float *internal_energy,
                            gr_float *x_velocity, gr_float *y_velocity, gr_float *z_velocity,
                            gr_float *HI_density, gr_float *HII_density, gr_float *HM_density,
@@ -204,12 +204,12 @@ int calculate_cooling_time(code_units *my_units, gr_float a_value,
   return SUCCESS;
 }
 
-int calculate_cooling_time_(gr_int *comoving_coordinates,
-                            gr_float *density_units, gr_float *length_units,
-                            gr_float *time_units, gr_float *velocity_units,
-                            gr_float *a_units, gr_float *a_value,
-                            gr_int *grid_rank, gr_int *grid_dimension,
-                            gr_int *grid_start, gr_int *grid_end,
+int calculate_cooling_time_(int *comoving_coordinates,
+                            double *density_units, double *length_units,
+                            double *time_units, double *velocity_units,
+                            double *a_units, double *a_value,
+                            int *grid_rank, int *grid_dimension,
+                            int *grid_start, int *grid_end,
                             gr_float *density, gr_float *internal_energy,
                             gr_float *x_velocity, gr_float *y_velocity, gr_float *z_velocity,
                             gr_float *HI_density, gr_float *HII_density, gr_float *HM_density,

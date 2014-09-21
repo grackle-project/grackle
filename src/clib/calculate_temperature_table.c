@@ -30,7 +30,7 @@ extern chemistry_data grackle_data;
  
 int _calculate_temperature_table(chemistry_data *my_chemistry,
                                  code_units *my_units,
-                                 gr_int grid_rank, gr_int *grid_dimension,
+                                 int grid_rank, int *grid_dimension,
                                  gr_float *density, gr_float *internal_energy,
                                  gr_float *metal_density,
                                  gr_float *temperature)
@@ -46,27 +46,27 @@ int _calculate_temperature_table(chemistry_data *my_chemistry,
  
   /* Compute the size of the fields. */
  
-  gr_int i, dim, size = 1;
+  int i, dim, size = 1;
   for (dim = 0; dim < grid_rank; dim++)
     size *= grid_dimension[dim];
 
   /* Calculate temperature units. */
 
-  gr_float temperature_units =  mh * POW(my_units->velocity_units, 2) / kboltz;
+  double temperature_units =  mh * POW(my_units->velocity_units, 2) / kboltz;
 
-  gr_float number_density, tiny_number = 1.-20;
-  gr_float inv_metal_mol = 1.0 / MU_METAL;
+  double number_density, tiny_number = 1.-20;
+  double inv_metal_mol = 1.0 / MU_METAL;
 
-  gr_float munew, muold;
-  gr_int ti, ti_max, index;
+  double munew, muold;
+  int ti, ti_max, index;
   ti_max = 20;
 
-  gr_float logtem0 = log(my_chemistry->TemperatureStart);
-  gr_float logtem9 = log(my_chemistry->TemperatureEnd);
-  gr_float dlogtem = (log(my_chemistry->TemperatureEnd) - 
-                      log(my_chemistry->TemperatureStart)) / 
-                      (my_chemistry->NumberOfTemperatureBins - 1);
-  gr_float logtem, t1, t2, tdef;
+  double logtem0 = log(my_chemistry->TemperatureStart);
+  double logtem9 = log(my_chemistry->TemperatureEnd);
+  double dlogtem = (log(my_chemistry->TemperatureEnd) - 
+                    log(my_chemistry->TemperatureStart)) / 
+    (my_chemistry->NumberOfTemperatureBins - 1);
+  double logtem, t1, t2, tdef;
 
   /* Compute temperature with mu calculated directly. */
  
@@ -119,7 +119,7 @@ int _calculate_temperature_table(chemistry_data *my_chemistry,
 }
 
 int calculate_temperature_table(code_units *my_units,
-                                gr_int grid_rank, gr_int *grid_dimension,
+                                int grid_rank, int *grid_dimension,
                                 gr_float *density, gr_float *internal_energy,
                                 gr_float *metal_density,
                                 gr_float *temperature)
@@ -136,11 +136,11 @@ int calculate_temperature_table(code_units *my_units,
   return SUCCESS;
 }
 
-int calculate_temperature_table_(gr_int *comoving_coordinates,
-                                 gr_float *density_units, gr_float *length_units,
-                                 gr_float *time_units, gr_float *velocity_units,
-                                 gr_float *a_units,
-                                 gr_int *grid_rank, gr_int *grid_dimension,
+int calculate_temperature_table_(int *comoving_coordinates,
+                                 double *density_units, double *length_units,
+                                 double *time_units, double *velocity_units,
+                                 double *a_units,
+                                 int *grid_rank, int *grid_dimension,
                                  gr_float *density, gr_float *internal_energy,
                                  gr_float *metal_density,
                                  gr_float *temperature)

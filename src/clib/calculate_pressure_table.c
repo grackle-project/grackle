@@ -24,7 +24,7 @@ extern chemistry_data grackle_data;
 
 int _calculate_pressure_table(chemistry_data *my_chemistry,
                               code_units *my_units,
-                              gr_int grid_rank, gr_int *grid_dimension,
+                              int grid_rank, int *grid_dimension,
                               gr_float *density, gr_float *internal_energy,
                               gr_float *pressure)
 {
@@ -37,8 +37,8 @@ int _calculate_pressure_table(chemistry_data *my_chemistry,
     return FAIL;
   }
 
-  gr_float tiny_number = 1.e-20;
-  gr_int i, dim, size = 1;
+  double tiny_number = 1.e-20;
+  int i, dim, size = 1;
   for (dim = 0; dim < grid_rank; dim++)
     size *= grid_dimension[dim];
 
@@ -54,7 +54,7 @@ int _calculate_pressure_table(chemistry_data *my_chemistry,
 }
 
 int calculate_pressure_table(code_units *my_units,
-                             gr_int grid_rank, gr_int *grid_dimension,
+                             int grid_rank, int *grid_dimension,
                              gr_float *density, gr_float *internal_energy,
                              gr_float *pressure)
 {
@@ -69,11 +69,11 @@ int calculate_pressure_table(code_units *my_units,
   return SUCCESS;
 }
 
-int calculate_pressure_table_(gr_int *comoving_coordinates,
-                              gr_float *density_units, gr_float *length_units,
-                              gr_float *time_units, gr_float *velocity_units,
-                              gr_float *a_units,
-                              gr_int *grid_rank, gr_int *grid_dimension,
+int calculate_pressure_table_(int *comoving_coordinates,
+                              double *density_units, double *length_units,
+                              double *time_units, double *velocity_units,
+                              double *a_units,
+                              int *grid_rank, int *grid_dimension,
                               gr_float *density, gr_float *internal_energy,
                               gr_float *pressure)
 {
