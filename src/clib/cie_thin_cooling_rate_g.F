@@ -118,7 +118,7 @@ C     becomes mostly dissociated.
      $     1.239d-10,1.275d-10,1.311d-10,1.348d-10,1.386d-10,1.425d-10,
      $     1.464d-10,1.505d-10,1.546d-10,1.588d-10,1.631d-10,1.674d-10,
      $     1.719d-10/
-      INTG_PREC i, j, jmin, jmax
+      integer i, j, jmin, jmax
       real*8 mh
       mh = mass_h
 c     rough low temperature extrapolation
