@@ -155,39 +155,40 @@ c
 c
 c  Arguments
 c
-      INTG_PREC ispecies, nratec, casebrates, threebody, ndratec
-      R_PREC  aye, temstart, temend, dtemstart, dtemend,
-     &        utem, uxyz, uaye, urho, utim
-      R_PREC  ceHIa(nratec), ceHeIa(nratec), ceHeIIa(nratec),
+      integer ispecies, nratec, casebrates, threebody, ndratec
+      real aye
+      real*8 temstart, temend, dtemstart, dtemend
+      real*8  utem, uxyz, uaye, urho, utim
+      real*8  ceHIa(nratec), ceHeIa(nratec), ceHeIIa(nratec),
      &        ciHIa(nratec), ciHeIa(nratec), ciHeISa(nratec), 
      &        ciHeIIa(nratec), reHIIa(nratec), reHeII1a(nratec), 
-     &        reHeII2a(nratec), reHeIIIa(nratec), brema(nratec)
-      R_PREC  hyd01ka(nratec), h2k01a(nratec), vibha(nratec), 
+     &        reHeII2a(nratec), reHeIIIa(nratec), brema(nratec),
+     &        hyd01ka(nratec), h2k01a(nratec), vibha(nratec), 
      &        rotha(nratec), rotla(nratec), gpldl(nratec),
-     &        gphdl(nratec), hdltea(nratec), hdlowa(nratec)
-      R_PREC  gaHIa(nratec), gaH2a(nratec), gaHea(nratec), 
+     &        gphdl(nratec), hdltea(nratec), hdlowa(nratec),
+     &        gaHIa(nratec), gaH2a(nratec), gaHea(nratec), 
      &        gaHpa(nratec), gaela(nratec), gasgra(nratec),
-     &        ciecoa(nratec)
-      R_PREC  compa, gammaha, gammahacgs
-      R_PREC  k1a (nratec), k2a (nratec), k3a (nratec), k4a (nratec), 
+     &        ciecoa(nratec),
+     &        compa, gammaha, gammahacgs,
+     &        k1a (nratec), k2a (nratec), k3a (nratec), k4a (nratec), 
      &        k5a (nratec), k6a (nratec), k7a (nratec), k8a (nratec), 
      &        k9a (nratec), k10a(nratec), k11a(nratec), k12a(nratec), 
      &        k13a(nratec), k14a(nratec), k15a(nratec), k16a(nratec), 
      &        k17a(nratec), k18a(nratec), k19a(nratec), k20a(nratec), 
      &        k21a(nratec), k23a(nratec),
      &        k22a(nratec), k50a(nratec), k51a(nratec), k52a(nratec), 
-     &        k53a(nratec), k54a(nratec), k55a(nratec), k56a(nratec)
-      R_PREC  k13dda(nratec, 7), hdcool(nratec, 5),
-     &     h2dusta(nratec, ndratec),
-     &     ncrna(nratec), ncrd1a(nratec), ncrd2a(nratec)
-      R_PREC  mutab(nratec)
-      INTG_PREC ioutput
+     &        k53a(nratec), k54a(nratec), k55a(nratec), k56a(nratec),
+     &        k13dda(nratec, 7), hdcool(nratec, 5),
+     &        h2dusta(nratec, ndratec),
+     &        ncrna(nratec), ncrd1a(nratec), ncrd2a(nratec),
+     &        mutab(nratec)
+      integer ioutput
 c
 c  Parameters
 c
-      INTG_PREC nnu
+      integer nnu
       parameter (nnu = 400)
-      INTG_PREC ireco, ibrco, icico, iceco, iphoto_mol
+      integer ireco, ibrco, icico, iceco, iphoto_mol
       parameter (ireco = 1, ibrco = 1, icico = 1, iceco = 1, 
      &           iphoto_mol = 0)
 
@@ -218,7 +219,7 @@ c
 
 c  Locals
 c
-      INTG_PREC i,j,n
+      integer i,j,n
       real*8 nu, delnu, hnu, logttt, ttt, tev, logtev, 
      &                 xx, dum, tbase1, xbase1, kunit, coolunit,
      &                 dbase1, dlogtem, kunit_3bdy, x, y, cierate,
@@ -707,7 +708,7 @@ c  Write out cgs rate coefficients
 c
 c      open(10, file='k1-6.out', status='unknown')
 c      do i = 1, nratec
-c         write(10,1010) exp(log(temstart) + real(i-1,RKIND)*dlogtem),
+c         write(10,1010) exp(log(temstart) + real(i-1,8)*dlogtem),
 c     &               k1a(i),k2a(i),k3a(i),k4a(i),k5a(i),k6a(i)
 c      enddo
 c 1010 format(7(1pe11.4))
@@ -957,7 +958,7 @@ c
      &            12.698d0   * (dlog10(tm))**3 - 
      &            2.02424d0  * (dlog10(tm))**4 + 
      &            0.122393d0 * (dlog10(tm))**5
-      hdltea(i) = (10.d0**min(hdltea(i), 0._RKIND)) / coolunit
+      hdltea(i) = (10.d0**min(hdltea(i), 0.0d0)) / coolunit
 c
 c Galli and Palla 1998 low density limit (erg cm3 /s)
 c  uses HD-He collisional data, so reduced by 1.27
@@ -1075,16 +1076,16 @@ c
       implicit NONE
 #include "fortran_types.def"
 
-      INTG_PREC nratec
-      R_PREC temstart, temend
-      R_PREC mutab(nratec)
+      integer nratec
+      real*8 temstart, temend
+      real*8 mutab(nratec)
 
-      INTG_PREC i, j
-      R_PREC ttt, logttt, dlogtem, slope
+      integer i, j
+      real*8 ttt, logttt, dlogtem, slope
 
-      INTG_PREC nt
+      integer nt
       parameter (nt = 10)
-      R_PREC tt(nt), mt(nt)
+      real*8 tt(nt), mt(nt)
       parameter (tt = (/1.0d+01, 1.0d+02, 
      &     1.0d+03, 1.0d+04, 1.3d+04, 2.1d+04,
      &     3.4d+04, 6.3d+04, 1.0d+05, 1.0d+09/))

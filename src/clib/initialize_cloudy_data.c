@@ -24,8 +24,8 @@
 // Initialize Cloudy cooling data
 int initialize_cloudy_data(chemistry_data *my_chemistry,
                            cloudy_data *my_cloudy, char *group_name,
-                           code_units *my_units, gr_float a_value,
-                           gr_int read_data)
+                           code_units *my_units, float a_value,
+                           int read_data)
 {
 
   long long q, w;
@@ -54,7 +54,7 @@ int initialize_cloudy_data(chemistry_data *my_chemistry,
 
   /* Get conversion units. */
 
-  gr_float co_length_units, co_density_units;
+  double co_length_units, co_density_units;
   if (my_units->comoving_coordinates == TRUE) {
     co_length_units = my_units->length_units;
     co_density_units = my_units->density_units;

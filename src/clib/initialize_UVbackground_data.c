@@ -19,12 +19,12 @@
 #include "code_units.h"
 
 // function prototypes
-gr_int read_dataset(hid_t file_id, char *dset_name, gr_float *buffer);
+int read_dataset(hid_t file_id, char *dset_name, double *buffer);
 
 // Initialize UV Background data
 int initialize_UVbackground_data(chemistry_data *my_chemistry)
 {
-  gr_int Nz, i;
+  long long Nz;
 
   // Return if no UV background selected or using fully tabulated cooling.
   if (my_chemistry->UVbackground == 0 ||
@@ -104,22 +104,22 @@ int initialize_UVbackground_data(chemistry_data *my_chemistry)
   // Now allocate memory for UV background table.
   my_chemistry->UVbackground_table.Nz = Nz;
 
-  my_chemistry->UVbackground_table.z = malloc(Nz * sizeof(gr_float));
-  my_chemistry->UVbackground_table.k24 = malloc(Nz * sizeof(gr_float));
-  my_chemistry->UVbackground_table.k25 = malloc(Nz * sizeof(gr_float));
-  my_chemistry->UVbackground_table.k26 = malloc(Nz * sizeof(gr_float));
+  my_chemistry->UVbackground_table.z = malloc(Nz * sizeof(double));
+  my_chemistry->UVbackground_table.k24 = malloc(Nz * sizeof(double));
+  my_chemistry->UVbackground_table.k25 = malloc(Nz * sizeof(double));
+  my_chemistry->UVbackground_table.k26 = malloc(Nz * sizeof(double));
 
   if (my_chemistry->primordial_chemistry > 1) {
-    my_chemistry->UVbackground_table.k27 = malloc(Nz * sizeof(gr_float));
-    my_chemistry->UVbackground_table.k28 = malloc(Nz * sizeof(gr_float));
-    my_chemistry->UVbackground_table.k29 = malloc(Nz * sizeof(gr_float));
-    my_chemistry->UVbackground_table.k30 = malloc(Nz * sizeof(gr_float));
-    my_chemistry->UVbackground_table.k31 = malloc(Nz * sizeof(gr_float));
+    my_chemistry->UVbackground_table.k27 = malloc(Nz * sizeof(double));
+    my_chemistry->UVbackground_table.k28 = malloc(Nz * sizeof(double));
+    my_chemistry->UVbackground_table.k29 = malloc(Nz * sizeof(double));
+    my_chemistry->UVbackground_table.k30 = malloc(Nz * sizeof(double));
+    my_chemistry->UVbackground_table.k31 = malloc(Nz * sizeof(double));
   }    
 
-  my_chemistry->UVbackground_table.piHI = malloc(Nz * sizeof(gr_float));
-  my_chemistry->UVbackground_table.piHeII = malloc(Nz * sizeof(gr_float));
-  my_chemistry->UVbackground_table.piHeI = malloc(Nz * sizeof(gr_float));
+  my_chemistry->UVbackground_table.piHI = malloc(Nz * sizeof(double));
+  my_chemistry->UVbackground_table.piHeII = malloc(Nz * sizeof(double));
+  my_chemistry->UVbackground_table.piHeI = malloc(Nz * sizeof(double));
 
 
   // Now read everything.
@@ -256,7 +256,7 @@ int initialize_UVbackground_data(chemistry_data *my_chemistry)
 
 
 
-gr_int read_dataset(hid_t file_id, char *dset_name, gr_float *buffer) {
+int read_dataset(hid_t file_id, char *dset_name, double *buffer) {
   hid_t dset_id;
   herr_t status;
   herr_t h5_error = -1;

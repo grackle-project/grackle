@@ -24,35 +24,35 @@ extern chemistry_data grackle_data;
 
 int initialize_cloudy_data(chemistry_data *my_chemistry,
                            cloudy_data *my_cloudy, char *group_name,
-                           code_units *my_units, gr_float a_value,
-                           gr_int read_data);
+                           code_units *my_units, float a_value,
+                           int read_data);
 
 int initialize_UVbackground_data(chemistry_data *my_chemistry);
 
 extern void FORTRAN_NAME(calc_rates_g)(
-     gr_int *ispecies,
-     gr_int *nratec, gr_float *aye, gr_float *temstart, gr_float *temend, 
-     gr_int *casebrates, gr_int *threebody,
-     gr_float *utem, gr_float *uxyz, gr_float *uaye, gr_float *urho, gr_float *utim,
-     gr_float *ceHIa, gr_float *ceHeIa, gr_float *ceHeIIa, gr_float *ciHIa, gr_float *ciHeIa,
-     gr_float *ciHeISa, gr_float *ciHeIIa, gr_float *reHIIa, gr_float *reHeII1a,
-     gr_float *reHeII2a, gr_float *reHeIIIa, gr_float *brema, gr_float *compa, 
-     gr_float *gammahacgs, gr_float *gammaha,
-     gr_float *hyd01ka, gr_float *h2k01a, gr_float *vibha, gr_float *rotha, gr_float *rotla,
-     gr_float *gpldl, gr_float *gphdl, gr_float *hdlte, gr_float *hdlow, gr_float *hdcool, gr_float *cieco,
-     gr_float *gaHIa, gr_float *gaH2a, gr_float *gaHea, gr_float *gaHpa, gr_float *gaela, gr_float *gasgr, 
-     gr_float *k1a, gr_float *k2a, gr_float *k3a, gr_float *k4a, gr_float *k5a, gr_float *k6a,
-        gr_float *k7a, gr_float *k8a, gr_float *k9a, gr_float *k10a,
-     gr_float *k11a, gr_float *k12a, gr_float *k13a, gr_float *k13dda, gr_float *k14a,
-        gr_float *k15a, gr_float *k16a, gr_float *k17a, gr_float *k18a,
-     gr_float *k19a, gr_float *k20a, gr_float *k21a, gr_float *k22, gr_float *k23,
-     gr_float *k50, gr_float *k51, gr_float *k52, gr_float *k53, gr_float *k54, gr_float *k55,
-        gr_float *k56, gr_int *ndratec, gr_float *dtemstart, gr_float *dtemend, gr_float *h2dusta, 
-     gr_float *ncrca, gr_float *ncrd1a, gr_float *ncrd2a, 
-     gr_float *mutab, gr_int *ioutput);
+     int *ispecies,
+     int *nratec, float *aye, double *temstart, double *temend, 
+     int *casebrates, int *threebody,
+     double *utem, double *uxyz, double *uaye, double *urho, double *utim,
+     double *ceHIa, double *ceHeIa, double *ceHeIIa, double *ciHIa, double *ciHeIa,
+     double *ciHeISa, double *ciHeIIa, double *reHIIa, double *reHeII1a,
+     double *reHeII2a, double *reHeIIIa, double *brema, double *compa, 
+     double *gammahacgs, double *gammaha,
+     double *hyd01ka, double *h2k01a, double *vibha, double *rotha, double *rotla,
+     double *gpldl, double *gphdl, double *hdlte, double *hdlow, double *hdcool, double *cieco,
+     double *gaHIa, double *gaH2a, double *gaHea, double *gaHpa, double *gaela, double *gasgr, 
+     double *k1a, double *k2a, double *k3a, double *k4a, double *k5a, double *k6a,
+     double *k7a, double *k8a, double *k9a, double *k10a,
+     double *k11a, double *k12a, double *k13a, double *k13dda, double *k14a,
+     double *k15a, double *k16a, double *k17a, double *k18a,
+     double *k19a, double *k20a, double *k21a, double *k22, double *k23,
+     double *k50, double *k51, double *k52, double *k53, double *k54, double *k55,
+     double *k56, int *ndratec, double *dtemstart, double *dtemend, double *h2dusta, 
+     double *ncrca, double *ncrd1a, double *ncrd2a, 
+     double *mutab, int *ioutput);
 
 int _initialize_chemistry_data(chemistry_data *my_chemistry, 
-                               code_units *my_units, gr_float a_value)
+                               code_units *my_units, float a_value)
 {
 
   fprintf(stderr, "Initializing chemistry data.\n");
@@ -68,81 +68,81 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
 
   if (my_chemistry->primordial_chemistry == 0) {
 
-    my_chemistry->mu    = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(gr_float));
+    my_chemistry->mu    = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
 
   }
   else {
  
-    my_chemistry->ceHI    = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(gr_float));
-    my_chemistry->ceHeI   = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(gr_float));
-    my_chemistry->ceHeII  = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(gr_float));
-    my_chemistry->ciHI    = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(gr_float));
-    my_chemistry->ciHeI   = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(gr_float));
-    my_chemistry->ciHeIS  = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(gr_float));
-    my_chemistry->ciHeII  = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(gr_float));
-    my_chemistry->reHII   = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(gr_float));
-    my_chemistry->reHeII1 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(gr_float));
-    my_chemistry->reHeII2 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(gr_float));
-    my_chemistry->reHeIII = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(gr_float));
-    my_chemistry->brem    = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(gr_float));
-    my_chemistry->hyd01k  = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(gr_float));
-    my_chemistry->h2k01   = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(gr_float));
-    my_chemistry->vibh    = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(gr_float));
-    my_chemistry->roth    = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(gr_float));
-    my_chemistry->rotl    = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(gr_float));
+    my_chemistry->ceHI    = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_chemistry->ceHeI   = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_chemistry->ceHeII  = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_chemistry->ciHI    = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_chemistry->ciHeI   = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_chemistry->ciHeIS  = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_chemistry->ciHeII  = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_chemistry->reHII   = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_chemistry->reHeII1 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_chemistry->reHeII2 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_chemistry->reHeIII = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_chemistry->brem    = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_chemistry->hyd01k  = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_chemistry->h2k01   = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_chemistry->vibh    = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_chemistry->roth    = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_chemistry->rotl    = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
     my_chemistry->GP99LowDensityLimit  = malloc(my_chemistry->NumberOfTemperatureBins *
-                                               sizeof(gr_float));
+                                               sizeof(double));
     my_chemistry->GP99HighDensityLimit = malloc(my_chemistry->NumberOfTemperatureBins * 
-                                               sizeof(gr_float));
-    my_chemistry->HDlte   = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(gr_float));
-    my_chemistry->HDlow   = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(gr_float));
-    my_chemistry->HDcool  = malloc(5 * my_chemistry->NumberOfTemperatureBins * sizeof(gr_float));
-    my_chemistry->cieco   = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(gr_float));
-    my_chemistry->GAHI    = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(gr_float));
-    my_chemistry->GAH2    = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(gr_float));
-    my_chemistry->GAHe    = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(gr_float));
-    my_chemistry->GAHp    = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(gr_float));
-    my_chemistry->GAel    = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(gr_float));
-    my_chemistry->gas_grain = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(gr_float));
+                                               sizeof(double));
+    my_chemistry->HDlte   = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_chemistry->HDlow   = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_chemistry->HDcool  = malloc(5 * my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_chemistry->cieco   = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_chemistry->GAHI    = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_chemistry->GAH2    = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_chemistry->GAHe    = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_chemistry->GAHp    = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_chemistry->GAel    = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_chemistry->gas_grain = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
 
   /* Allocate space in my_chemistry for rates. */
  
-    my_chemistry->k1 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(gr_float));
-    my_chemistry->k2 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(gr_float));
-    my_chemistry->k3 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(gr_float));
-    my_chemistry->k4 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(gr_float));
-    my_chemistry->k5 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(gr_float));
-    my_chemistry->k6 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(gr_float));
-    my_chemistry->k7 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(gr_float));
-    my_chemistry->k8 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(gr_float));
-    my_chemistry->k9 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(gr_float));
-    my_chemistry->k10 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(gr_float));
-    my_chemistry->k11 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(gr_float));
-    my_chemistry->k12 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(gr_float));
-    my_chemistry->k13 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(gr_float));
-    my_chemistry->k13dd = malloc(7 * my_chemistry->NumberOfTemperatureBins * sizeof(gr_float));
-    my_chemistry->k14 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(gr_float));
-    my_chemistry->k15 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(gr_float));
-    my_chemistry->k16 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(gr_float));
-    my_chemistry->k17 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(gr_float));
-    my_chemistry->k18 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(gr_float));
-    my_chemistry->k19 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(gr_float));
-    my_chemistry->k20 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(gr_float));
-    my_chemistry->k21 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(gr_float));
-    my_chemistry->k22 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(gr_float));
-    my_chemistry->k23 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(gr_float));
-    my_chemistry->k50 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(gr_float));
-    my_chemistry->k51 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(gr_float));
-    my_chemistry->k52 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(gr_float));
-    my_chemistry->k53 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(gr_float));
-    my_chemistry->k54 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(gr_float));
-    my_chemistry->k55 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(gr_float));
-    my_chemistry->k56 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(gr_float));
+    my_chemistry->k1 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_chemistry->k2 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_chemistry->k3 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_chemistry->k4 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_chemistry->k5 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_chemistry->k6 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_chemistry->k7 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_chemistry->k8 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_chemistry->k9 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_chemistry->k10 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_chemistry->k11 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_chemistry->k12 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_chemistry->k13 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_chemistry->k13dd = malloc(7 * my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_chemistry->k14 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_chemistry->k15 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_chemistry->k16 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_chemistry->k17 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_chemistry->k18 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_chemistry->k19 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_chemistry->k20 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_chemistry->k21 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_chemistry->k22 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_chemistry->k23 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_chemistry->k50 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_chemistry->k51 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_chemistry->k52 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_chemistry->k53 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_chemistry->k54 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_chemistry->k55 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_chemistry->k56 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
     my_chemistry->h2dust = malloc(my_chemistry->NumberOfTemperatureBins *
-                                 my_chemistry->NumberOfDustTemperatureBins * sizeof(gr_float));
-    my_chemistry->n_cr_n = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(gr_float));
-    my_chemistry->n_cr_d1 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(gr_float));
-    my_chemistry->n_cr_d2 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(gr_float));
+                                 my_chemistry->NumberOfDustTemperatureBins * sizeof(double));
+    my_chemistry->n_cr_n = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_chemistry->n_cr_d1 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_chemistry->n_cr_d2 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
 
     my_chemistry->k24 = 0;
     my_chemistry->k25 = 0;
@@ -158,9 +158,9 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
 
   }
 
-  gr_int ioutput = 1;
+  int ioutput = 1;
 
-  gr_float co_length_units, co_density_units;
+  double co_length_units, co_density_units;
   if (my_units->comoving_coordinates == TRUE) {
     co_length_units = my_units->length_units;
     co_density_units = my_units->density_units;
@@ -174,7 +174,7 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
 
   /* Calculate temperature units. */
 
-  gr_float temperature_units =  mh * POW(my_units->velocity_units, 2) / kboltz;
+  double temperature_units =  mh * POW(my_units->velocity_units, 2) / kboltz;
 
   /* Call FORTRAN routine to do the hard work. */
  
@@ -210,7 +210,7 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
      my_chemistry->mu, &ioutput);
 
   /* Initialize Cloudy cooling. */
-  gr_int read_data;
+  int read_data;
 
   /* Primordial tables. */
   read_data = my_chemistry->primordial_chemistry == 0;
@@ -241,7 +241,7 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
   return SUCCESS;
 }
 
-int initialize_chemistry_data(code_units *my_units, gr_float a_value)
+int initialize_chemistry_data(code_units *my_units, float a_value)
 {
   if (_initialize_chemistry_data(&grackle_data, my_units, a_value) == FAIL) {
     fprintf(stderr, "Error in _initialize_chemistry_data.\n");
