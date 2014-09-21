@@ -24,14 +24,14 @@ extern chemistry_data grackle_data;
 
 int initialize_cloudy_data(chemistry_data *my_chemistry,
                            cloudy_data *my_cloudy, char *group_name,
-                           code_units *my_units, float a_value,
+                           code_units *my_units, double a_value,
                            int read_data);
 
 int initialize_UVbackground_data(chemistry_data *my_chemistry);
 
 extern void FORTRAN_NAME(calc_rates_g)(
      int *ispecies,
-     int *nratec, float *aye, double *temstart, double *temend, 
+     int *nratec, double *aye, double *temstart, double *temend, 
      int *casebrates, int *threebody,
      double *utem, double *uxyz, double *uaye, double *urho, double *utim,
      double *ceHIa, double *ceHeIa, double *ceHeIIa, double *ciHIa, double *ciHeIa,
@@ -52,7 +52,7 @@ extern void FORTRAN_NAME(calc_rates_g)(
      double *mutab, int *ioutput);
 
 int _initialize_chemistry_data(chemistry_data *my_chemistry, 
-                               code_units *my_units, float a_value)
+                               code_units *my_units, double a_value)
 {
 
   fprintf(stderr, "Initializing chemistry data.\n");

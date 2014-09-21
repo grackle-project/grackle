@@ -156,8 +156,7 @@ c
 c  Arguments
 c
       integer ispecies, nratec, casebrates, threebody, ndratec
-      real aye
-      real*8 temstart, temend, dtemstart, dtemend
+      real*8  aye, temstart, temend, dtemstart, dtemend
       real*8  utem, uxyz, uaye, urho, utim
       real*8  ceHIa(nratec), ceHeIa(nratec), ceHeIIa(nratec),
      &        ciHIa(nratec), ciHeIa(nratec), ciHeISa(nratec), 

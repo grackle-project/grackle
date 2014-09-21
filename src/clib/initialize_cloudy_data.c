@@ -24,7 +24,7 @@
 // Initialize Cloudy cooling data
 int initialize_cloudy_data(chemistry_data *my_chemistry,
                            cloudy_data *my_cloudy, char *group_name,
-                           code_units *my_units, float a_value,
+                           code_units *my_units, double a_value,
                            int read_data)
 {
 

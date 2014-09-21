@@ -62,17 +62,17 @@
 
 !  General Arguments
 
-      INTG_PREC in, jn, kn, is, ie, j, k, ispecies
+      integer in, jn, kn, is, ie, j, k, ispecies
 
-      R_PREC comp2, dom, zr
-      R_PREC d(in,jn,kn), de(in,jn,kn),
-     &     rhoH(in), metallicity(in), logtem(in)
-      real*8 edot(in)
+      real*8 comp2, dom, zr
+      R_PREC d(in,jn,kn), de(in,jn,kn)
+      real*8 rhoH(in), metallicity(in), logtem(in),
+     &       edot(in)
 
 !  Cloudy parameters and data
 
-      INTG_PREC icmbTfloor, iClHeat, iZscale
-      R_PREC clEleFra
+      integer icmbTfloor, iClHeat, iZscale
+      real*8 clEleFra
       integer*8 clGridRank, clDataSize,
      &     clGridDim(clGridRank)
       real*8 clPar1(clGridDim(1)), clPar2(clGridDim(2)),
@@ -81,22 +81,22 @@
 
 !  Iteration mask
 
-      LOGIC_PREC itmask(in)
+      logical itmask(in)
 
 !  Parameters
 
 !  Locals
 
-      INTG_PREC i, q, zindex, zmidpt, zhighpt, get_heat
-      R_PREC dclPar(clGridRank), inv_log10, log10_tCMB
-      LOGIC_PREC end_int
+      integer i, q, zindex, zmidpt, zhighpt, get_heat
+      real*8 dclPar(clGridRank), inv_log10, log10_tCMB
+      logical end_int
 
 !  Slice locals
 
-      R_PREC e_frac(in), log_e_frac(in), 
-     &     cl_e_frac(in), fh(in), log_n_h(in),
-     &     log_cool(in), log_cool_cmb(in), log_heat(in),
-     &     edot_met(in), log10tem(in)
+      real*8 e_frac(in), log_e_frac(in), 
+     &       cl_e_frac(in), fh(in), log_n_h(in),
+     &       log_cool(in), log_cool_cmb(in), log_heat(in),
+     &       edot_met(in), log10tem(in)
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
 !=======================================================================
@@ -104,20 +104,20 @@
       end_int = .false.
       get_heat = iClHeat
 
-      inv_log10 = 1._RKIND / log(10._RKIND)
+      inv_log10 = 1._DKIND / log(10._DKIND)
       log10_tCMB = log10(comp2)
 
 !     Calculate parameter value slopes
 
       dclPar(1) = (clPar1(clGridDim(1)) - clPar1(1)) / 
-     &     real(clGridDim(1) - 1, RKIND)
+     &     real(clGridDim(1) - 1, DKIND)
       if (clGridRank .gt. 1) then
          dclPar(2) = (clPar2(clGridDim(2)) - clPar2(1)) / 
-     &        real(clGridDim(2) - 1, RKIND)
+     &        real(clGridDim(2) - 1, DKIND)
       endif
       if (clGridRank .gt. 2) then
          dclPar(3) = (clPar3(clGridDim(3)) - clPar3(1)) / 
-     &        real(clGridDim(3) - 1, RKIND)
+     &        real(clGridDim(3) - 1, DKIND)
       endif
 
       do i=is+1, ie+1
@@ -168,22 +168,22 @@
             if (clGridRank .eq. 1) then
                call interpolate_1D_g(log10tem(i), clGridDim, clPar1,
      &              dclPar(1), clDataSize, clCooling, log_cool(i))
-               edot_met(i) = -10._RKIND**log_cool(i)
+               edot_met(i) = -10._DKIND**log_cool(i)
 
 !     Ignore CMB term if T >> T_CMB
                if ((icmbTfloor .eq. 1) .and. 
-     &              ((log10tem(i) - log10_tCMB) .lt. 2._RKIND)) then
+     &              ((log10tem(i) - log10_tCMB) .lt. 2._DKIND)) then
                   call interpolate_1D_g(log10_tCMB, clGridDim, clPar1, 
      &                 dclPar(1), clDataSize, clCooling, 
      &                 log_cool_cmb(i))
-                  edot_met(i) = edot_met(i) + 10._RKIND**log_cool_cmb(i)
+                  edot_met(i) = edot_met(i) + 10._DKIND**log_cool_cmb(i)
                endif
 
                if (get_heat .eq. 1) then
                   call interpolate_1D_g(log10tem(i), clGridDim, clPar1, 
      &                 dclPar(1), clDataSize, clHeating, 
      &                 log_heat(i))
-                  edot_met(i) = edot_met(i) + 10._RKIND**log_heat(i)
+                  edot_met(i) = edot_met(i) + 10._DKIND**log_heat(i)
                endif
 
 !           Interpolate over density and temperature.
@@ -191,22 +191,22 @@
                call interpolate_2D_g(log_n_h(i), log10tem(i), clGridDim,
      &              clPar1, dclPar(1), clPar2, dclPar(2),
      &              clDataSize, clCooling, log_cool(i))
-               edot_met(i) = -10._RKIND**log_cool(i)
+               edot_met(i) = -10._DKIND**log_cool(i)
 
 !     Ignore CMB term if T >> T_CMB
                if ((icmbTfloor .eq. 1) .and. 
-     &              ((log10tem(i) - log10_tCMB) .lt. 2._RKIND)) then
+     &              ((log10tem(i) - log10_tCMB) .lt. 2._DKIND)) then
                   call interpolate_2D_g(log_n_h(i), log10_tCMB, 
      &                 clGridDim, clPar1, dclPar(1), clPar2, dclPar(2),
      &                 clDataSize, clCooling, log_cool_cmb(i))
-                  edot_met(i) = edot_met(i) + 10._RKIND**log_cool_cmb(i)
+                  edot_met(i) = edot_met(i) + 10._DKIND**log_cool_cmb(i)
                endif
 
                if (get_heat .eq. 1) then
                call interpolate_2D_g(log_n_h(i), log10tem(i), clGridDim,
      &              clPar1, dclPar(1), clPar2, dclPar(2),
      &              clDataSize, clHeating, log_heat(i))
-                  edot_met(i) = edot_met(i) + 10._RKIND**log_heat(i)
+                  edot_met(i) = edot_met(i) + 10._DKIND**log_heat(i)
                endif
 
 !           Interpolate over density, redshift, and temperature.
@@ -218,11 +218,11 @@
      &              clPar3, dclPar(3),
      &              clDataSize, clCooling, 
      &              end_int, log_cool(i))
-               edot_met(i) = -10._RKIND**log_cool(i)
+               edot_met(i) = -10._DKIND**log_cool(i)
 
 !     Ignore CMB term if T >> T_CMB
                if ((icmbTfloor .eq. 1) .and. 
-     &              ((log10tem(i) - log10_tCMB) .lt. 2._RKIND)) then
+     &              ((log10tem(i) - log10_tCMB) .lt. 2._DKIND)) then
                   call interpolate_3Dz_g(log_n_h(i), zr, log10_tCMB,
      &                 clGridDim,
      &                 clPar1, dclPar(1),
@@ -230,7 +230,7 @@
      &                 clPar3, dclPar(3),
      &                 clDataSize, clCooling, 
      &                 end_int, log_cool_cmb(i))
-                  edot_met(i) = edot_met(i) + 10._RKIND**log_cool_cmb(i)
+                  edot_met(i) = edot_met(i) + 10._DKIND**log_cool_cmb(i)
                endif
 
                if (get_heat .eq. 1) then
@@ -241,7 +241,7 @@
      &                 clPar3, dclPar(3),
      &                 clDataSize, clHeating, 
      &                 end_int, log_heat(i))
-                  edot_met(i) = edot_met(i) + 10._RKIND**log_heat(i)
+                  edot_met(i) = edot_met(i) + 10._DKIND**log_heat(i)
                endif
 
             else
@@ -275,16 +275,16 @@
 
 !  General Arguments
 
-      INTG_PREC dataSize
-      INTG_PREC gridDim(1)
-      R_PREC input1, value
-      R_PREC gridPar1(gridDim(1)), dgridPar1
-      R_PREC dataField(dataSize)
+      integer*8 dataSize
+      integer*8 gridDim(1)
+      real*8 input1, value
+      real*8 gridPar1(gridDim(1)), dgridPar1
+      real*8 dataField(dataSize)
 
 !  Locals
 
-      INTG_PREC index1
-      R_PREC slope
+      integer index1
+      real*8 slope
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
 !=======================================================================
@@ -317,17 +317,17 @@
 
 !  General Arguments
 
-      INTG_PREC dataSize
-      INTG_PREC gridDim(2)
-      R_PREC input1, input2, value
-      R_PREC gridPar1(gridDim(1)), dgridPar1,
-     &     gridPar2(gridDim(2)), dgridPar2
-      R_PREC dataField(dataSize)
+      integer*8 dataSize
+      integer*8 gridDim(2)
+      real*8 input1, input2, value
+      real*8 gridPar1(gridDim(1)), dgridPar1,
+     &       gridPar2(gridDim(2)), dgridPar2
+      real*8 dataField(dataSize)
 
 !  Locals
 
-      INTG_PREC index1, index2, int_index, q
-      R_PREC slope, value2(2)
+      integer index1, index2, int_index, q
+      real*8 slope, value2(2)
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
 !=======================================================================
@@ -377,18 +377,18 @@
 
 !  General Arguments
 
-      INTG_PREC dataSize
-      INTG_PREC gridDim(3)
-      R_PREC input1, input2, input3, value
-      R_PREC gridPar1(gridDim(1)), dgridPar1,
-     &     gridPar2(gridDim(2)), dgridPar2,
-     &     gridPar3(gridDim(3)), dgridPar3
-      R_PREC dataField(dataSize)
+      integer*8 dataSize
+      integer*8 gridDim(3)
+      real*8 input1, input2, input3, value
+      real*8 gridPar1(gridDim(1)), dgridPar1,
+     &       gridPar2(gridDim(2)), dgridPar2,
+     &       gridPar3(gridDim(3)), dgridPar3
+      real*8 dataField(dataSize)
 
 !  Locals
 
-      INTG_PREC index1, index2, index3, int_index, q, w
-      R_PREC slope, value3(2), value2(2)
+      integer index1, index2, index3, int_index, q, w
+      real*8 slope, value3(2), value2(2)
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
 !=======================================================================
@@ -456,19 +456,19 @@
 
 !  General Arguments
 
-      INTG_PREC dataSize, index2
-      INTG_PREC gridDim(3)
-      R_PREC input1, input2, input3, value
-      R_PREC gridPar1(gridDim(1)), dgridPar1,
-     &     gridPar2(gridDim(2)),
-     &     gridPar3(gridDim(3)), dgridPar3
-      R_PREC dataField(dataSize)
+      integer*8 dataSize, index2
+      integer*8 gridDim(3)
+      real*8 input1, input2, input3, value
+      real*8 gridPar1(gridDim(1)), dgridPar1,
+     &       gridPar2(gridDim(2)),
+     &       gridPar3(gridDim(3)), dgridPar3
+      real*8 dataField(dataSize)
 
 !  Locals
 
-      LOGIC_PREC end_int
-      INTG_PREC index1, index3, int_index, q, w
-      R_PREC slope, value3(2), value2(2)
+      logical end_int
+      integer index1, index3, int_index, q, w
+      real*8 slope, value3(2), value2(2)
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
 !=======================================================================
@@ -547,19 +547,19 @@
 
 !  General Arguments
 
-      INTG_PREC dataSize, index2
-      INTG_PREC gridDim(3)
-      R_PREC input1, input2, input3, value
-      R_PREC gridPar1(gridDim(1)), dgridPar1,
-     &     gridPar2(gridDim(2)),
-     &     gridPar3(gridDim(3)), dgridPar3
-      R_PREC dataField(dataSize)
+      integer*8 dataSize, index2
+      integer*8 gridDim(3)
+      real*8 input1, input2, input3, value
+      real*8 gridPar1(gridDim(1)), dgridPar1,
+     &       gridPar2(gridDim(2)),
+     &       gridPar3(gridDim(3)), dgridPar3
+      real*8 dataField(dataSize)
 
 !  Locals
 
-      LOGIC_PREC end_int
-      INTG_PREC index1, index3, int_index, q
-      R_PREC slope, value3(2), value2(2)
+      logical end_int
+      integer index1, index3, int_index, q
+      real*8 slope, value3(2), value2(2)
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
 !=======================================================================

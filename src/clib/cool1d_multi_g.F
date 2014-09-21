@@ -63,37 +63,37 @@
 
 !  Arguments
 
-      INTG_PREC in, jn, kn, is, ie, j, k, nratec, idim,
+      integer in, jn, kn, is, ie, j, k, nratec, idim,
      &        iexpand, ih2co, ipiht, ispecies, imcool, idust, 
      &        imetal, igammah, ih2optical, iciecool
-      R_PREC  aye, temstart, temend, z_solar,
+      real*8  aye, temstart, temend, z_solar,
      &        utem, uxyz, uaye, urho, utim,
      &        gamma, fh
       R_PREC  d(in,jn,kn),    e(in,jn,kn),
      &        u(in,jn,kn),    v(in,jn,kn),     w(in,jn,kn),
-     &       de(in,jn,kn),   HI(in,jn,kn),   HII(in,jn,kn),
-     &      HeI(in,jn,kn), HeII(in,jn,kn), HeIII(in,jn,kn)
-      R_PREC  HM(in,jn,kn),  H2I(in,jn,kn), H2II(in,jn,kn),
+     &        de(in,jn,kn),   HI(in,jn,kn),   HII(in,jn,kn),
+     &        HeI(in,jn,kn), HeII(in,jn,kn), HeIII(in,jn,kn),
+     &        HM(in,jn,kn),  H2I(in,jn,kn), H2II(in,jn,kn),
      &        DI(in,jn,kn),  DII(in,jn,kn), HDI(in,jn,kn),
      &        metal(in,jn,kn)
-      R_PREC  hyd01ka(nratec), h2k01a(nratec), vibha(nratec), 
+      real*8  hyd01ka(nratec), h2k01a(nratec), vibha(nratec), 
      &        rotha(nratec), rotla(nratec), gpldla(nratec),
-     &        gphdla(nratec), hdltea(nratec), hdlowa(nratec)
-      R_PREC  gaHIa(nratec), gaH2a(nratec), gaHea(nratec),
+     &        gphdla(nratec), hdltea(nratec), hdlowa(nratec),
+     &        gaHIa(nratec), gaH2a(nratec), gaHea(nratec),
      &        gaHpa(nratec), gaela(nratec), gasgra(nratec), 
-     &        ciecoa(nratec)
-      R_PREC  ceHIa(nratec), ceHeIa(nratec), ceHeIIa(nratec),
+     &        ciecoa(nratec),
+     &        ceHIa(nratec), ceHeIa(nratec), ceHeIIa(nratec),
      &        ciHIa(nratec), ciHeIa(nratec), ciHeISa(nratec), 
      &        ciHeIIa(nratec), reHIIa(nratec), reHeII1a(nratec), 
-     &        reHeII2a(nratec), reHeIIIa(nratec), brema(nratec)
-      R_PREC  mutaba(nratec)
-      R_PREC  compa, piHI, piHeI, piHeII, comp_xraya, comp_temp
-      R_PREC  gammaha
+     &        reHeII2a(nratec), reHeIIIa(nratec), brema(nratec),
+     &        mutaba(nratec),
+     &        compa, piHI, piHeI, piHeII, comp_xraya, comp_temp,
+     &        gammaha
 
 !  Cloudy cooling data
 
-      INTG_PREC icmbTfloor, iClHeat, iZscale, mycmbTfloor
-      R_PREC clEleFra
+      integer icmbTfloor, iClHeat, iZscale, mycmbTfloor
+      real*8 clEleFra
       integer*8 priGridRank, priDataSize,
      &     metGridRank, metDataSize,
      &     priGridDim(priGridRank), metGridDim(metGridRank)
@@ -106,51 +106,44 @@
 
 !  Parameters
 
-      INTG_PREC ti_max
-      real*8 mh
-      R_PREC  ZSOLAR, mu_metal
+      integer ti_max
+      real*8 mh, mu_metal
       parameter (mh = mass_h)      !DPC
-      parameter (mu_metal = 16._RKIND)    ! approx. mean molecular weight of metals
+      parameter (mu_metal = 16._DKIND)    ! approx. mean molecular weight of metals
       parameter (ti_max = 20)
 
 !  Locals
 
-      INTG_PREC i, iter, ti
-      R_PREC dom, qq, vibl, logtem0, logtem9, dlogtem, energy, zr
-      R_PREC dt2, ttmin, comp1, comp2, scoef, acoef, HIdot,
-     &     hdlte1, hdlow1, gamma2, x, fudge, fH2,
-     &     gphdl1, factor, dom_inv, tau, ciefudge, munew, muold
-      real*8 coolunit, dbase1, tbase1, xbase1, rtunits,
-     &     nH2, nother
+      integer i, iter, ti
+      real*8 dom, qq, vibl, logtem0, logtem9, dlogtem, energy, zr,
+     &       dt2, ttmin, comp1, comp2, scoef, acoef, HIdot,
+     &       hdlte1, hdlow1, gamma2, x, fudge, fH2,
+     &       gphdl1, factor, dom_inv, tau, ciefudge, munew, muold,
+     &       coolunit, dbase1, tbase1, xbase1, rtunits,
+     &       nH2, nother, myde
 
 !  Slice locals
  
-      INTG_PREC indixe(in)
-      R_PREC t1(in), t2(in), logtem(in), tdef(in), p2d(in),
-     &     tgas(in), tgasold(in), tdust(in), rhoH(in), nh(in),
-     &     metallicity(in), mutab(in)
-      real*8 edot(in)
+      integer*8 indixe(in)
+      real*8 t1(in), t2(in), logtem(in), tdef(in), p2d(in),
+     &       tgas(in), tgasold(in), tdust(in), rhoH(in), nh(in),
+     &       metallicity(in), mutab(in),
+     &       edot(in)
 
 !  Cooling/heating slice locals
 
       real*8 ceHI(in), ceHeI(in), ceHeII(in),
-     &     ciHI(in), ciHeI(in), ciHeIS(in), ciHeII(in),
-     &     reHII(in), reHeII1(in), reHeII2(in), reHeIII(in),
-     &     brem(in), cieco(in)
-      R_PREC hyd01k(in), h2k01(in), vibh(in), roth(in), rotl(in),
-     &     gpldl(in), gphdl(in), hdlte(in), hdlow(in), metalc(in)
-      R_PREC gaHI(in), gaH2(in), gaHe(in), gaHp(in), gael(in),
-     &     galdl(in), gasgr(in), gasgr_tdust(in)
-
-!  Metal cooling locals
-
-      INTG_PREC tcmb_idx
-      R_PREC logxe0, logxe1, dlogxea, xe, log_xe, xe1, dlogT, dlogxe
-      R_PREC logTcmb, dlogTcmb, metalc_cmb, metalfree, myde
+     &       ciHI(in), ciHeI(in), ciHeIS(in), ciHeII(in),
+     &       reHII(in), reHeII1(in), reHeII2(in), reHeIII(in),
+     &       brem(in), cieco(in),
+     &       hyd01k(in), h2k01(in), vibh(in), roth(in), rotl(in),
+     &       gpldl(in), gphdl(in), hdlte(in), hdlow(in), metalc(in),
+     &       gaHI(in), gaH2(in), gaHe(in), gaHp(in), gael(in),
+     &       galdl(in), gasgr(in), gasgr_tdust(in)
 
 !  Iteration mask
 
-      LOGIC_PREC itmask(in)
+      logical itmask(in)
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
 !=======================================================================
@@ -159,29 +152,29 @@
 
       logtem0 = log(temstart)
       logtem9 = log(temend)
-      dlogtem= (log(temend) - log(temstart))/real(nratec-1, RKIND)
+      dlogtem= (log(temend) - log(temstart))/real(nratec-1, DKIND)
 
 !     Set units
 
       dom      = urho*(aye**3)/mh
-      dom_inv  = 1._RKIND/dom
+      dom_inv  = 1._DKIND/dom
       tbase1   = utim
       xbase1   = uxyz/(aye*uaye)    ! uxyz is [x]*a      = [x]*[a]*a'        '
       dbase1   = urho*(aye*uaye)**3 ! urho is [dens]/a^3 = [dens]/([a]*a')^3 '
       coolunit = (uaye**5 * xbase1**2 * mh**2) / (tbase1**3 * dbase1)
-      zr       = 1._RKIND/(aye*uaye) - 1._RKIND
-      fudge    = 1._RKIND
+      zr       = 1._DKIND/(aye*uaye) - 1._DKIND
+      fudge    = 1._DKIND
 
 !     Set compton cooling coefficients (and temperature)
 
-      comp1 = compa  * (1._RKIND + zr)**4
-      comp2 = 2.73_RKIND * (1._RKIND + zr)
+      comp1 = compa  * (1._DKIND + zr)**4
+      comp2 = 2.73_DKIND * (1._DKIND + zr)
 
 !     Initialize edot
 
       do i = is+1, ie+1
          if ( itmask(i) ) then
-            edot(i) = 0._RKIND
+            edot(i) = 0._DKIND
          end if
       enddo
 
@@ -189,7 +182,7 @@
 
       do i = is+1, ie+1
          if ( itmask(i) ) then
-            p2d(i) = (gamma - 1._RKIND)*d(i,j,k)*e(i,j,k)
+            p2d(i) = (gamma - 1._DKIND)*d(i,j,k)*e(i,j,k)
          end if
       enddo
 
@@ -201,18 +194,19 @@
       if (ispecies .eq. 0) then
          do i = is+1, ie+1
             if ( itmask(i) ) then
-               munew = 1._RKIND
+               munew = 1._DKIND
                do ti = 1, ti_max
                   muold = munew
 
-                  tgas(i) = max((gamma - 1._RKIND)*e(i,j,k)*munew*utem,
+                  tgas(i) = max((gamma - 1._DKIND)*e(i,j,k)*munew*utem,
      &                 temstart)
                   logtem(i) = log(tgas(i))
                   logtem(i) = max(logtem(i), logtem0)
                   logtem(i) = min(logtem(i), logtem9)
 
                   indixe(i) = min(nratec-1,
-     &                 max(1,int((logtem(i)-logtem0)/dlogtem, IKIND)+1))
+     &                 max(1,int((logtem(i)-logtem0)/dlogtem,
+     &                 DIKIND)+1))
                   t1(i) = (logtem0 + (indixe(i) - 1)*dlogtem)
                   t2(i) = (logtem0 + (indixe(i)    )*dlogtem)
                   tdef(i) = (logtem(i) - t1(i)) / (t2(i) - t1(i))
@@ -221,8 +215,8 @@
 
                   tgas(i) = tgas(i) * munew / muold
 
-                  if (abs((munew/muold) - 1._RKIND) .le. 
-     &                 1.e-2_RKIND) then
+                  if (abs((munew/muold) - 1._DKIND) .le. 
+     &                 1.e-2_DKIND) then
                      muold = munew
 
 !     Add metal species to mean molecular weight
@@ -254,7 +248,7 @@
          do i = is+1, ie+1
             if ( itmask(i) ) then
                tgas(i) = 
-     &              (HeI(i,j,k) + HeII(i,j,k) + HeIII(i,j,k))/4._RKIND +
+     &              (HeI(i,j,k) + HeII(i,j,k) + HeIII(i,j,k))/4._DKIND +
      &              HI(i,j,k) + HII(i,j,k) + de(i,j,k)
                rhoH(i) = HI(i,j,k) + HII(i,j,k)
             end if
@@ -266,7 +260,7 @@
             do i = is+1, ie+1
                if ( itmask(i) ) then
                   tgas(i) = tgas(i) +
-     &                 HM(i,j,k) + (H2I(i,j,k) + H2II(i,j,k))/2._RKIND
+     &                 HM(i,j,k) + (H2I(i,j,k) + H2II(i,j,k))/2._DKIND
                   rhoH(i) = rhoH(i) + H2I(i,j,k) + H2II(i,j,k)
                end if
             enddo
@@ -291,25 +285,25 @@
          if (ispecies .gt. 1) then
             do i = is+1, ie+1
                if ( itmask(i) ) then
-                  nH2 = 0.5_RKIND*(H2I(i,j,k) + H2II(i,j,k))
+                  nH2 = 0.5_DKIND*(H2I(i,j,k) + H2II(i,j,k))
                   nother = (HeI(i,j,k) + HeII(i,j,k) +
-     &                 HeIII(i,j,k))/4._RKIND +
+     &                 HeIII(i,j,k))/4._DKIND +
      &                 HI(i,j,k) + HII(i,j,k) + de(i,j,k)
-                  if (nH2/nother .gt. 1.0e-3_RKIND) then
-                     x = 6100._RKIND/tgas(i) ! not quite self-consistent
-                     if (x .gt. 10._RKIND) then
-                        gamma2 = 0.5_RKIND*5._RKIND
+                  if (nH2/nother .gt. 1.0e-3_DKIND) then
+                     x = 6100._DKIND/tgas(i) ! not quite self-consistent
+                     if (x .gt. 10._DKIND) then
+                        gamma2 = 0.5_DKIND*5._DKIND
                      else
-                        gamma2 = 0.5_RKIND*(5._RKIND + 2._RKIND*x**2 * 
+                        gamma2 = 0.5_DKIND*(5._DKIND + 2._DKIND*x**2 * 
      &                       exp(x)/(exp(x)-1)**2)
                      endif
                   else
-                     gamma2 = 2.5_RKIND
+                     gamma2 = 2.5_DKIND
                   endif
-                  gamma2 = 1._RKIND + (nH2 + nother)/
-     &                 (nH2*gamma2 + nother/(gamma-1._RKIND))
-                  tgas(i) = tgas(i) * (gamma2 - 1._RKIND)/
-     &                 (gamma - 1._RKIND)
+                  gamma2 = 1._DKIND + (nH2 + nother)/
+     &                 (nH2*gamma2 + nother/(gamma-1._DKIND))
+                  tgas(i) = tgas(i) * (gamma2 - 1._DKIND)/
+     &                 (gamma - 1._DKIND)
                end if
             enddo
          endif
@@ -347,7 +341,7 @@
 
 !        Compute log temperature and truncate if above/below table max/min
 
-         logtem(i) = log(0.5_RKIND*(tgas(i)+tgasold(i)))
+         logtem(i) = log(0.5_DKIND*(tgas(i)+tgasold(i)))
          logtem(i) = max(logtem(i), logtem0)
          logtem(i) = min(logtem(i), logtem9)
 
@@ -364,7 +358,7 @@
 !        Compute index into the table and precompute parts of linear interp
 
          indixe(i) = min(nratec-1,
-     &           max(1,int((logtem(i)-logtem0)/dlogtem, IKIND)+1))
+     &           max(1,int((logtem(i)-logtem0)/dlogtem, DIKIND)+1))
          t1(i) = (logtem0 + (indixe(i) - 1)*dlogtem)
          t2(i) = (logtem0 + (indixe(i)    )*dlogtem)
          tdef(i) = (logtem(i) - t1(i)) / (t2(i) - t1(i))
@@ -408,22 +402,22 @@
 !                    Collisional excitations
 
      &             - ceHI  (i)*HI  (i,j,k)*de(i,j,k)              ! ce of HI
-     &             - ceHeI (i)*HeII(i,j,k)*de(i,j,k)**2*dom/4._RKIND  ! ce of HeI
-     &             - ceHeII(i)*HeII(i,j,k)*de(i,j,k)/4._RKIND         ! ce of HeII
+     &             - ceHeI (i)*HeII(i,j,k)*de(i,j,k)**2*dom/4._DKIND  ! ce of HeI
+     &             - ceHeII(i)*HeII(i,j,k)*de(i,j,k)/4._DKIND         ! ce of HeII
 
 !                    Collisional ionizations
 
      &             - ciHI  (i)*HI  (i,j,k)*de(i,j,k)              ! ci of HI
-     &             - ciHeI (i)*HeI (i,j,k)*de(i,j,k)/4._RKIND         ! ci of HeI
-     &             - ciHeII(i)*HeII(i,j,k)*de(i,j,k)/4._RKIND         ! ci of HeII
-     &             - ciHeIS(i)*HeII(i,j,k)*de(i,j,k)**2*dom/4._RKIND  ! ci of HeIS
+     &             - ciHeI (i)*HeI (i,j,k)*de(i,j,k)/4._DKIND         ! ci of HeI
+     &             - ciHeII(i)*HeII(i,j,k)*de(i,j,k)/4._DKIND         ! ci of HeII
+     &             - ciHeIS(i)*HeII(i,j,k)*de(i,j,k)**2*dom/4._DKIND  ! ci of HeIS
 
 !                    Recombinations
 
      &             - reHII  (i)*HII  (i,j,k)*de(i,j,k)           ! re of HII
-     &             - reHeII1(i)*HeII (i,j,k)*de(i,j,k)/4._RKIND      ! re of HeII
-     &             - reHeII2(i)*HeII (i,j,k)*de(i,j,k)/4._RKIND      ! re of HeII
-     &             - reHeIII(i)*HeIII(i,j,k)*de(i,j,k)/4._RKIND      ! re of HeIII
+     &             - reHeII1(i)*HeII (i,j,k)*de(i,j,k)/4._DKIND      ! re of HeII
+     &             - reHeII2(i)*HeII (i,j,k)*de(i,j,k)/4._DKIND      ! re of HeII
+     &             - reHeIII(i)*HeIII(i,j,k)*de(i,j,k)/4._DKIND      ! re of HeIII
 
 !                    Compton cooling or heating
 
@@ -435,12 +429,12 @@
 
 !                    Bremsstrahlung
 
-     &             - brem(i)*(HII(i,j,k)+HeII(i,j,k)/4._RKIND +
+     &             - brem(i)*(HII(i,j,k)+HeII(i,j,k)/4._DKIND +
      &           HeIII(i,j,k)) * de(i,j,k)
 
 !                    Photoelectric heating by UV-irradiated dust
 
-     &             + real(igammah, RKIND)*gammaha*(HI(i,j,k)+HII(i,j,k))
+     &             + real(igammah, DKIND)*gammaha*(HI(i,j,k)+HII(i,j,k))
      &             *dom_inv)
 
          if (edot(i) .ne. edot(i)) then
@@ -483,31 +477,31 @@
          do i = is+1, ie+1
             if ( itmask(i) ) then
 #ifdef OPTICAL_DEPTH_FUDGE
-            nH2 = 0.5_RKIND*H2I(i,j,k)
+            nH2 = 0.5_DKIND*H2I(i,j,k)
             nother = (HeI(i,j,k) + HeII(i,j,k) + 
-     &           HeIII(i,j,k))/4._RKIND +
+     &           HeIII(i,j,k))/4._DKIND +
      &           HI(i,j,k) + HII(i,j,k) + de(i,j,k)
             fH2 = nH2/(nH2 + nother)
-            fudge = sqrt((40._RKIND * 10._RKIND**(4.8_RKIND * 
-     &           sqrt(max(log10(tgas(i)),2._RKIND)-2._RKIND)) / fH2**2)/
+            fudge = sqrt((40._DKIND * 10._DKIND**(4.8_DKIND * 
+     &           sqrt(max(log10(tgas(i)),2._DKIND)-2._DKIND)) / fH2**2)/
      &           ((nH2 + nother)*dom) )
-            fudge = min(fudge, 1._RKIND)
+            fudge = min(fudge, 1._DKIND)
 #endif /* OPTICAL_DEPTH_FUDGE */
             ! Note that this optical depth approximation comes from
             ! RA04.
             if (ih2optical.eq.1) then
-                fudge = (0.76_RKIND*d(i,j,k)*dom/
-     &              8.e9_RKIND)**(-0.45_RKIND)
-                fudge = min(fudge, 1._RKIND)
+                fudge = (0.76_DKIND*d(i,j,k)*dom/
+     &              8.e9_DKIND)**(-0.45_DKIND)
+                fudge = min(fudge, 1._DKIND)
             else
-                fudge = 1._RKIND
+                fudge = 1._DKIND
             endif
             galdl(i) = gaHI(i) * HI(i,j,k)  + gaH2(i) * H2I(i,j,k)
      &               + gaHe(i) * HeI(i,j,k) + gaHp(i) * HII(i,j,k)
      &               + gael(i) * de(i,j,k)
             gphdl1 = gphdl(i)/dom
-            edot(i) = edot(i) - real(ih2co, RKIND)*fudge*H2I(i,j,k)*
-     &           gphdl(i)/(1._RKIND + gphdl1/galdl(i)) / (2._RKIND*dom)
+            edot(i) = edot(i) - real(ih2co, DKIND)*fudge*H2I(i,j,k)*
+     &           gphdl(i)/(1._DKIND + gphdl1/galdl(i)) / (2._DKIND*dom)
 
             end if
          enddo
@@ -535,28 +529,28 @@
             if ( itmask(i) ) then
 
 #ifdef OPTICAL_DEPTH_FUDGE
-            nH2 = 0.5_RKIND*H2I(i,j,k)
+            nH2 = 0.5_DKIND*H2I(i,j,k)
             nother = (HeI(i,j,k) + HeII(i,j,k) +
-     &           HeIII(i,j,k))/4._RKIND +
+     &           HeIII(i,j,k))/4._DKIND +
      &           HI(i,j,k) + HII(i,j,k) + de(i,j,k)
             fH2 = nH2/(nH2 + nother)
-            fudge = sqrt((40._RKIND * 10._RKIND**(4.8_RKIND * 
-     &           sqrt(max(log10(tgas(i)),2._RKIND)-2._RKIND)) / fH2**2)/
+            fudge = sqrt((40._DKIND * 10._DKIND**(4.8_DKIND * 
+     &           sqrt(max(log10(tgas(i)),2._DKIND)-2._DKIND)) / fH2**2)/
      &           ((nH2 + nother)*dom) )
-            fudge = min(fudge, 1._RKIND)
+            fudge = min(fudge, 1._DKIND)
 #endif /* OPTICAL_DEPTH_FUDGE */
             ! Note that this optical depth approximation comes from
             ! RA04.
             if (ih2optical.eq.1) then
-                fudge = (0.76_RKIND*d(i,j,k)*dom/
-     &              8.e9_RKIND)**(-0.45_RKIND)
-                fudge = min(fudge, 1._RKIND)
+                fudge = (0.76_DKIND*d(i,j,k)*dom/
+     &              8.e9_DKIND)**(-0.45_DKIND)
+                fudge = min(fudge, 1._DKIND)
             else
-                fudge = 1._RKIND
+                fudge = 1._DKIND
             endif
             gphdl1 = gphdl(i)/(HI(i,j,k)*dom)
-            edot(i) = edot(i) - real(ih2co, RKIND)*fudge*H2I(i,j,k)*
-     &           gphdl(i)/(1._RKIND + gphdl1/gpldl(i)) / (2._RKIND*dom)
+            edot(i) = edot(i) - real(ih2co, DKIND)*fudge*H2I(i,j,k)*
+     &           gphdl(i)/(1._DKIND + gphdl1/gpldl(i)) / (2._DKIND*dom)
 
             end if
          enddo
@@ -582,28 +576,28 @@
 
          do i = is+1, ie+1
             if ( itmask(i) ) then
-            qq   = 1.2_RKIND*(HI(i,j,k)*dom)**0.77_RKIND + 
-     &                (H2I(i,j,k)*dom/2._RKIND)**0.77_RKIND
+            qq   = 1.2_DKIND*(HI(i,j,k)*dom)**0.77_DKIND + 
+     &                (H2I(i,j,k)*dom/2._DKIND)**0.77_DKIND
             vibl = (HI(i,j,k)*hyd01k(i) + 
-     &             H2I(i,j,k)/2._RKIND*h2k01(i))
-     &             *dom*8.18e-13_RKIND
+     &             H2I(i,j,k)/2._DKIND*h2k01(i))
+     &             *dom*8.18e-13_DKIND
 
 #ifdef OPTICAL_DEPTH_FUDGE
-            nH2 = 0.5_RKIND*H2I(i,j,k)
+            nH2 = 0.5_DKIND*H2I(i,j,k)
             nother = (HeI(i,j,k) + HeII(i,j,k) +
-     &           HeIII(i,j,k))/4._RKIND +
+     &           HeIII(i,j,k))/4._DKIND +
      &           HI(i,j,k) + HII(i,j,k) + de(i,j,k)
             fH2 = nH2/(nH2 + nother)
-            fudge = sqrt((40._RKIND * 10._RKIND**(4.8_RKIND * 
-     &           sqrt(max(log10(tgas(i)),2._RKIND)-2._RKIND)) / fH2**2)/
+            fudge = sqrt((40._DKIND * 10._DKIND**(4.8_DKIND * 
+     &           sqrt(max(log10(tgas(i)),2._DKIND)-2._DKIND)) / fH2**2)/
      &           ((nH2 + nother)*dom) )
-            fudge = min(fudge, 1._RKIND)
+            fudge = min(fudge, 1._DKIND)
 #endif /* OPTICAL_DEPTH_FUDGE */
 
-            edot(i) = edot(i) - real(ih2co, RKIND)*fudge*H2I(i,j,k)*(
-     &           vibh(i)/(1._RKIND+vibh(i)/max(   vibl     ,tiny)) +
-     &           roth(i)/(1._RKIND+roth(i)/max(qq*rotl(i),tiny))     
-     &           )/2._RKIND/dom
+            edot(i) = edot(i) - real(ih2co, DKIND)*fudge*H2I(i,j,k)*(
+     &           vibh(i)/(1._DKIND+vibh(i)/max(   vibl     ,tiny)) +
+     &           roth(i)/(1._DKIND+roth(i)/max(qq*rotl(i),tiny))     
+     &           )/2._DKIND/dom
             end if
          enddo
 
@@ -618,15 +612,15 @@ C     Ripamonti & Abel 2003
             do i = is+1, ie+1
             if (itmask(i)) then
 c     Only calculate if H2I(i) is a substantial fraction
-              if (d(i,j,k)*dom.gt.1e10_RKIND) then
-                ciefudge = 1._RKIND
-                tau = ((d(i,j,k)/2e16_RKIND)*dom)**2.8_RKIND  ! 2e16 is in units of cm^-3
-                tau = max(tau, 1.e-5_RKIND)
-                ciefudge = min((1._RKIND-exp(-tau))/tau,1._RKIND)
+              if (d(i,j,k)*dom.gt.1e10_DKIND) then
+                ciefudge = 1._DKIND
+                tau = ((d(i,j,k)/2e16_DKIND)*dom)**2.8_DKIND  ! 2e16 is in units of cm^-3
+                tau = max(tau, 1.e-5_DKIND)
+                ciefudge = min((1._DKIND-exp(-tau))/tau,1._DKIND)
 c               Matt's attempt at a second exponentialier cutoff
-                tau = ((d(i,j,k)/2.e18_RKIND)*dom)**8._RKIND  ! 2e18 is in units of cm^-3
-                tau = max(tau, 1.e-5_RKIND)
-                ciefudge = ciefudge*min((1.-exp(-tau))/tau,1._RKIND)
+                tau = ((d(i,j,k)/2.e18_DKIND)*dom)**8._DKIND  ! 2e18 is in units of cm^-3
+                tau = max(tau, 1.e-5_DKIND)
+                ciefudge = ciefudge*min((1.-exp(-tau))/tau,1._DKIND)
 c               ciefudge, which is applied to the continuum, is applied to edot
                 edot(i) = ciefudge*(edot(i) - 
      &                  H2I(i,j,k)*(d(i,j,k)*cieco(i)))
@@ -658,16 +652,16 @@ c CMB cooling floor
          do i = is+1, ie+1
             if ( itmask(i) ) then
 c  old (incorrect) way:
-c               hdlte1 = hdlte(i)/(HDI(i,j,k)*dom/2._RKIND)
+c               hdlte1 = hdlte(i)/(HDI(i,j,k)*dom/2._DKIND)
 c               hdlow1 = max(hdlow(i), tiny)
 c               edot(i) = edot(i) - HDI(i,j,k)*
-c     .                     (hdlte1/(1._RKIND + hdlte1/hdlow1)/(2._RKIND*dom))
+c     .                     (hdlte1/(1._DKIND + hdlte1/hdlow1)/(2._DKIND*dom))
 c  new (correct) way: (april 4, 2007)
                hdlte1 = hdlte(i)/(HI(i,j,k)*dom)
                hdlow1 = max(hdlow(i), tiny)
                edot(i) = edot(i) - HDI(i,j,k)*
-     .              (hdlte(i)/(1._RKIND + hdlte1/hdlow1)) /
-     &              (3._RKIND*dom)
+     .              (hdlte(i)/(1._DKIND + hdlte1/hdlow1)) /
+     &              (3._DKIND*dom)
             end if
          enddo
       endif
@@ -710,10 +704,10 @@ c  new (correct) way: (april 4, 2007)
 
       do i = is+1, ie+1
          if ( itmask(i) ) then
-            edot(i) = edot(i) + real(ipiht, RKIND)*(
+            edot(i) = edot(i) + real(ipiht, DKIND)*(
      &           + piHI  *HI  (i,j,k) ! pi of HI
-     &           + piHeI *HeI (i,j,k)*0.25_RKIND ! pi of HeI
-     &           + piHeII*HeII(i,j,k)*0.25_RKIND ! pi of HeII
+     &           + piHeI *HeI (i,j,k)*0.25_DKIND ! pi of HeI
+     &           + piHeII*HeII(i,j,k)*0.25_DKIND ! pi of HeII
      &           )/dom
          end if
       enddo
@@ -742,8 +736,8 @@ c  new (correct) way: (april 4, 2007)
 
 !     Calculate electron density from mean molecular weight
 
-               myde = 1 - mutab(i) * (3.0_RKIND * fh + 1.0_RKIND) /
-     &              4.0_RKIND
+               myde = 1 - mutab(i) * (3.0_DKIND * fh + 1.0_DKIND) /
+     &              4.0_DKIND
                if (imetal .eq. 1) then
                   myde = myde - mutab(i) * metal(i,j,k) / 
      &                 (d(i,j,k) * mu_metal)
