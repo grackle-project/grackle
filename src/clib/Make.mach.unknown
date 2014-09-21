@@ -48,22 +48,6 @@ MACH_F90FLAGS = # Fortran 90 compiler flags
 MACH_LDFLAGS  = # Linker flags
 
 #-----------------------------------------------------------------------
-# Precision-related flags
-#-----------------------------------------------------------------------
-
-# GNU compilers
-# MACH_FFLAGS_INTEGER_32 = 
-# MACH_FFLAGS_INTEGER_64 = -fdefault-integer-8
-# MACH_FFLAGS_REAL_32    = 
-# MACH_FFLAGS_REAL_64    = -fdefault-real-8 -fdefault-double-8
-
-# INTEL compilers
-# MACH_FFLAGS_INTEGER_32 = 
-# MACH_FFLAGS_INTEGER_64 = -i8
-# MACH_FFLAGS_REAL_32    = 
-# MACH_FFLAGS_REAL_64    = -r8
-
-#-----------------------------------------------------------------------
 # Optimization flags
 #-----------------------------------------------------------------------
 
