@@ -24,7 +24,7 @@
 /* function prototypes */
 
 int update_UVbackground_rates(chemistry_data *my_chemistry,
-                              code_units *my_units, gr_float a_value)
+                              code_units *my_units, double a_value)
 {
   /* Return if there is no radiation (rates should be all zero). */
 
@@ -34,7 +34,7 @@ int update_UVbackground_rates(chemistry_data *my_chemistry,
 
   /* Return if redshift is outside of table (rates should be all zero). */
 
-  gr_float Redshift = 1.0 / (a_value * my_units->a_units) - 1;
+  double Redshift = 1.0 / (a_value * my_units->a_units) - 1;
   if ( (Redshift < my_chemistry->UVbackground_table.zmin) ||
        (Redshift > my_chemistry->UVbackground_table.zmax) )
     return SUCCESS;
@@ -43,7 +43,7 @@ int update_UVbackground_rates(chemistry_data *my_chemistry,
   /* First, calculate the ramp value, a number between 0 and 1 which
      is used as an external control to the radiation. */
 
-  gr_float Ramp = 0;
+  double Ramp = 0;
 
   if (Redshift < my_chemistry->UVbackground_redshift_on && 
       Redshift >= my_chemistry->UVbackground_redshift_off) {
@@ -65,8 +65,8 @@ int update_UVbackground_rates(chemistry_data *my_chemistry,
   /* Interpolate the UV background table. */
   
   // find interpolation index
-  gr_float *zvec = my_chemistry->UVbackground_table.z;
-  gr_int index=0;
+  double *zvec = my_chemistry->UVbackground_table.z;
+  int index=0;
   while (Redshift > zvec[index])
     index++;
   if(index == 0) index=1;
@@ -75,7 +75,7 @@ int update_UVbackground_rates(chemistry_data *my_chemistry,
   // printf("index = %d, %.3f <= %.3f <= %.3f\n",index,zvec[index-1],Redshift,zvec[index]);
 
   // *** k24 ***
-  gr_float slope = (my_chemistry->UVbackground_table.k24[index] - my_chemistry->UVbackground_table.k24[index-1]) / (zvec[index] - zvec[index-1]);
+  double slope = (my_chemistry->UVbackground_table.k24[index] - my_chemistry->UVbackground_table.k24[index-1]) / (zvec[index] - zvec[index-1]);
   my_chemistry->k24 = (Redshift - zvec[index-1]) * slope + my_chemistry->UVbackground_table.k24[index-1];
 
   // *** k25 ***
@@ -127,7 +127,7 @@ int update_UVbackground_rates(chemistry_data *my_chemistry,
   
   /* Get conversion units. */
 
-  gr_float co_length_units, co_density_units;
+  double co_length_units, co_density_units;
   if (my_units->comoving_coordinates == TRUE) {
     co_length_units = my_units->length_units;
     co_density_units = my_units->density_units;
@@ -195,7 +195,7 @@ int update_UVbackground_rates(chemistry_data *my_chemistry,
      re-ionized universe) there's no suppression. */
 
   if (my_chemistry->LWbackground_sawtooth_suppression) {
-    gr_float LymanSawtoothSuppressionFactor = 0.1 + 0.9 * Ramp;
+    double LymanSawtoothSuppressionFactor = 0.1 + 0.9 * Ramp;
   
     my_chemistry->k31 *= LymanSawtoothSuppressionFactor;
   }
@@ -204,7 +204,7 @@ int update_UVbackground_rates(chemistry_data *my_chemistry,
 
   if (my_chemistry->Compton_xray_heating) {
 
-    gr_float RedshiftXrayCutoff = 5.0;
+    double RedshiftXrayCutoff = 5.0;
 
     /* This is sigma_thompson * c * (effective <h \nu>/<m_e c^2>) *
        U_xray * 1eV.  U_xray is the energy density of XRB in , <h \nu>
