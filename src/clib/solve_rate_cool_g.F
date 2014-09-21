@@ -176,16 +176,16 @@
 
 !  Cloudy cooling data
 
-      INTG_PREC icmbTfloor, iClHeat, 
-     &     priGridRank, priDataSize,
-     &     metGridRank, metDataSize
-      INTG_PREC priGridDim(priGridRank), metGridDim(metGridRank)
+      INTG_PREC icmbTfloor, iClHeat
       R_PREC clEleFra
-      R_PREC priPar1(priGridDim(1)), priPar2(priGridDim(2)), 
+      integer*8 priGridRank, priDataSize,
+     &     metGridRank, metDataSize,
+     &     priGridDim(priGridRank), metGridDim(metGridRank)
+      real*8 priPar1(priGridDim(1)), priPar2(priGridDim(2)), 
      &     priPar3(priGridDim(3)),
      &     metPar1(metGridDim(1)), metPar2(metGridDim(2)), 
-     &     metPar3(metGridDim(3))
-      R_PREC priCooling(priDataSize), priHeating(priDataSize),
+     &     metPar3(metGridDim(3)),
+     &     priCooling(priDataSize), priHeating(priDataSize),
      &     metCooling(metDataSize), metHeating(metDataSize)
 
 !  Parameters

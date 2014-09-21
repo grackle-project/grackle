@@ -64,12 +64,12 @@ extern void FORTRAN_NAME(solve_rate_cool_g)(
 	gr_int *ierr,
 	gr_int *ih2optical, gr_int *iciecool, gr_int *ithreebody, gr_float *ciecoa,
  	gr_int *icmbTfloor, gr_int *iClHeat, gr_float *clEleFra,
-        gr_int *priGridRank, gr_int *priGridDim,
- 	gr_float *priPar1, gr_float *priPar2, gr_float *priPar3, 
- 	gr_int *priDataSize, gr_float *priCooling, gr_float *priHeating,
-        gr_int *metGridRank, gr_int *metGridDim,
- 	gr_float *metPar1, gr_float *metPar2, gr_float *metPar3, 
- 	gr_int *metDataSize, gr_float *metCooling, gr_float *metHeating,
+        long long *priGridRank, long long *priGridDim,
+        double *priPar1, double *priPar2, double *priPar3, 
+ 	long long *priDataSize, double *priCooling, double *priHeating,
+        long long *metGridRank, long long *metGridDim,
+ 	double *metPar1, double *metPar2, double *metPar3, 
+ 	long long *metDataSize, double *metCooling, double *metHeating,
         gr_float *mutaba);
 
 int _solve_chemistry(chemistry_data *my_chemistry,

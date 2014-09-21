@@ -71,13 +71,13 @@
 
 !  Cloudy parameters and data
 
-      INTG_PREC icmbTfloor, iClHeat, iZscale, 
-     &     clGridRank, clDataSize
-      INTG_PREC clGridDim(clGridRank)
+      INTG_PREC icmbTfloor, iClHeat, iZscale
       R_PREC clEleFra
-      R_PREC clPar1(clGridDim(1)), clPar2(clGridDim(2)),
-     &     clPar3(clGridDim(3))
-      R_PREC clCooling(clDataSize), clHeating(clDataSize)
+      integer*8 clGridRank, clDataSize,
+     &     clGridDim(clGridRank)
+      real*8 clPar1(clGridDim(1)), clPar2(clGridDim(2)),
+     &     clPar3(clGridDim(3)),
+     &     clCooling(clDataSize), clHeating(clDataSize)
 
 !  Iteration mask
 
