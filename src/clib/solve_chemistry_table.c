@@ -25,9 +25,9 @@ extern chemistry_data grackle_data;
 /* function prototypes */
 
 int solve_chemistry(code_units *my_units,
-                    gr_float a_value, gr_float dt_value,
-                    gr_int grid_rank, gr_int *grid_dimension,
-                    gr_int *grid_start, gr_int *grid_end,
+                    double a_value, double dt_value,
+                    int grid_rank, int *grid_dimension,
+                    int *grid_start, int *grid_end,
                     gr_float *density, gr_float *internal_energy,
                     gr_float *x_velocity, gr_float *y_velocity, gr_float *z_velocity,
                     gr_float *HI_density, gr_float *HII_density, gr_float *HM_density,
@@ -38,9 +38,9 @@ int solve_chemistry(code_units *my_units,
 
 int _solve_chemistry_table(chemistry_data *my_chemistry,
                            code_units *my_units,
-                           gr_float a_value, gr_float dt_value,
-                           gr_int grid_rank, gr_int *grid_dimension,
-                           gr_int *grid_start, gr_int *grid_end,
+                           double a_value, double dt_value,
+                           int grid_rank, int *grid_dimension,
+                           int *grid_start, int *grid_end,
                            gr_float *density, gr_float *internal_energy,
                            gr_float *x_velocity, gr_float *y_velocity, gr_float *z_velocity,
                            gr_float *metal_density)
@@ -86,9 +86,9 @@ int _solve_chemistry_table(chemistry_data *my_chemistry,
 }
 
 int solve_chemistry_table(code_units *my_units,
-                          gr_float a_value, gr_float dt_value,
-                          gr_int grid_rank, gr_int *grid_dimension,
-                          gr_int *grid_start, gr_int *grid_end,
+                          double a_value, double dt_value,
+                          int grid_rank, int *grid_dimension,
+                          int *grid_start, int *grid_end,
                           gr_float *density, gr_float *internal_energy,
                           gr_float *x_velocity, gr_float *y_velocity, gr_float *z_velocity,
                           gr_float *metal_density)
@@ -107,12 +107,12 @@ int solve_chemistry_table(code_units *my_units,
   return SUCCESS;
 }
 
-int solve_chemistry_table_(gr_int *comoving_coordinates,
-                           gr_float *density_units, gr_float *length_units,
-                           gr_float *time_units, gr_float *velocity_units,
-                           gr_float *a_units, gr_float *a_value, gr_float *dt_value,
-                           gr_int *grid_rank, gr_int *grid_dimension,
-                           gr_int *grid_start, gr_int *grid_end,
+int solve_chemistry_table_(int *comoving_coordinates,
+                           double *density_units, double *length_units,
+                           double *time_units, double *velocity_units,
+                           double *a_units, double *a_value, double *dt_value,
+                           int *grid_rank, int *grid_dimension,
+                           int *grid_start, int *grid_end,
                            gr_float *density, gr_float *internal_energy,
                            gr_float *x_velocity, gr_float *y_velocity, gr_float *z_velocity,
                            gr_float *metal_density)

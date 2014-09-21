@@ -25,7 +25,7 @@ extern chemistry_data grackle_data;
 /* function prototypes */
 
 int update_UVbackground_rates(chemistry_data *my_chemistry,
-                              code_units *my_units, float a_value);
+                              code_units *my_units, double a_value);
 
 extern void FORTRAN_NAME(solve_rate_cool_g)(
         int *icool,
@@ -35,7 +35,7 @@ extern void FORTRAN_NAME(solve_rate_cool_g)(
         int *ispecies, int *imetal, int *imcool, int *idust, int *idim,
 	int *is, int *js, int *ks, int *ie, int *je, int *ke,
         int *ih2co, int *ipiht, int *igammah,
-	float *dt, float *aye, double *temstart, double *temend,
+	double *dt, double *aye, double *temstart, double *temend,
 	double *utem, double *uxyz, double *uaye, double *urho, double *utim,
 	double *gamma, double *fh, double *dtoh, double *z_solar,
 	double *k1a, double *k2a, double *k3a, double *k4a, double *k5a, 
@@ -74,7 +74,7 @@ extern void FORTRAN_NAME(solve_rate_cool_g)(
 
 int _solve_chemistry(chemistry_data *my_chemistry,
                      code_units *my_units,
-                     float a_value, float dt_value,
+                     double a_value, double dt_value,
                      long long grid_rank, long long *grid_dimension,
                      long long *grid_start, long long *grid_end,
                      gr_float *density, gr_float *internal_energy,
@@ -197,7 +197,7 @@ int _solve_chemistry(chemistry_data *my_chemistry,
 }
 
 int solve_chemistry(code_units *my_units,
-                    float a_value, float dt_value,
+                    double a_value, double dt_value,
                     long long grid_rank, long long *grid_dimension,
                     long long *grid_start, long long *grid_end,
                     gr_float *density, gr_float *internal_energy,
@@ -229,7 +229,7 @@ int solve_chemistry(code_units *my_units,
 int solve_chemistry_(int *comoving_coordinates,
                      double *density_units, double *length_units,
                      double *time_units, double *velocity_units,
-                     double *a_units, float *a_value, float *dt_value,
+                     double *a_units, double *a_value, double *dt_value,
                      long long *grid_rank, long long *grid_dimension,
                      long long *grid_start, long long *grid_end,
                      gr_float *density, gr_float *internal_energy,
