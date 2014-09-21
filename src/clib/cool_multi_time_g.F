@@ -53,38 +53,38 @@
 
 !  Arguments
 
-      INTG_PREC in, jn, kn, is, js, ks, ie, je, ke, nratec, 
+      integer in, jn, kn, is, js, ks, ie, je, ke, nratec, 
      &        iexpand, ih2co, ipiht, ispecies, imetal, idim,
      &        imcool, idust, igammah, ih2optical, iciecool
-      R_PREC  aye, temstart, temend,
+      real*8  aye, temstart, temend,
      &        utem, uxyz, uaye, urho, utim,
      &        gamma, fh, z_solar
-      R_PREC  d(in,jn,kn),    e(in,jn,kn),
-     &        u(in,jn,kn),    v(in,jn,kn),     w(in,jn,kn),
-     &       de(in,jn,kn),   HI(in,jn,kn),   HII(in,jn,kn),
-     &      HeI(in,jn,kn), HeII(in,jn,kn), HeIII(in,jn,kn),
+      R_PREC  d(in,jn,kn),   e(in,jn,kn),
+     &        u(in,jn,kn),   v(in,jn,kn),    w(in,jn,kn),
+     &        de(in,jn,kn),  HI(in,jn,kn),   HII(in,jn,kn),
+     &        HeI(in,jn,kn), HeII(in,jn,kn), HeIII(in,jn,kn),
+     &        HM(in,jn,kn),  H2I(in,jn,kn),  H2II(in,jn,kn),
+     &        DI(in,jn,kn),  DII(in,jn,kn),  HDI(in,jn,kn),
+     &        metal(in,jn,kn),
      &        cooltime(in,jn,kn)
-      R_PREC  HM(in,jn,kn),  H2I(in,jn,kn), H2II(in,jn,kn),
-     &        DI(in,jn,kn),  DII(in,jn,kn), HDI(in,jn,kn)
-      R_PREC  metal(in,jn,kn)
-      R_PREC  hyd01ka(nratec), h2k01a(nratec), vibha(nratec), 
+      real*8  hyd01ka(nratec), h2k01a(nratec), vibha(nratec), 
      &        rotha(nratec), rotla(nratec), gpldla(nratec),
-     &        gphdla(nratec), hdltea(nratec), hdlowa(nratec)
-      R_PREC  gaHIa(nratec), gaH2a(nratec), gaHea(nratec),
+     &        gphdla(nratec), hdltea(nratec), hdlowa(nratec),
+     &        gaHIa(nratec), gaH2a(nratec), gaHea(nratec),
      &        gaHpa(nratec), gaela(nratec), gasgra(nratec),
-     &        ciecoa(nratec)
-      R_PREC  ceHIa(nratec), ceHeIa(nratec), ceHeIIa(nratec),
+     &        ciecoa(nratec),
+     &        ceHIa(nratec), ceHeIa(nratec), ceHeIIa(nratec),
      &        ciHIa(nratec), ciHeIa(nratec), ciHeISa(nratec), 
      &        ciHeIIa(nratec), reHIIa(nratec), reHeII1a(nratec), 
-     &        reHeII2a(nratec), reHeIIIa(nratec), brema(nratec)
-      R_PREC  mutaba(nratec)
-      R_PREC  compa, piHI, piHeI, piHeII, comp_xraya, comp_temp
-      R_PREC  gammaha
+     &        reHeII2a(nratec), reHeIIIa(nratec), brema(nratec),
+     &        mutaba(nratec),
+     &        compa, piHI, piHeI, piHeII, comp_xraya, comp_temp,
+     &        gammaha
 
 !  Cloudy cooling data
 
-      INTG_PREC icmbTfloor, iClHeat
-      R_PREC clEleFra
+      integer icmbTfloor, iClHeat
+      real*8 clEleFra
       integer*8 priGridRank, priDataSize,
      &     metGridRank, metDataSize,
      &     priGridDim(priGridRank), metGridDim(metGridRank)
@@ -97,34 +97,34 @@
 
 !  Parameters
 
-      INTG_PREC ijk
+      integer ijk
       parameter (ijk = MAX_ANY_SINGLE_DIRECTION)
 
 !  Locals
 
-      INTG_PREC i, j, k, n
-      R_PREC comp1, comp2, energy
+      integer i, j, k, n
+      real*8 comp1, comp2, energy
 
 !  Slice locals
  
-      INTG_PREC indixe(ijk)
-      R_PREC t1(ijk), t2(ijk), logtem(ijk), tdef(ijk), p2d(ijk),
-     &     tgas(ijk), tgasold(ijk),
-     &     tdust(ijk), metallicity(ijk), rhoH(ijk)
+      integer*8 indixe(ijk)
+      real*8 t1(ijk), t2(ijk), logtem(ijk), tdef(ijk), p2d(ijk),
+     &       tgas(ijk), tgasold(ijk),
+     &       tdust(ijk), metallicity(ijk), rhoH(ijk)
       real*8 edot(ijk)
 
 !  Cooling/heating slice locals
 
       real*8 ceHI(ijk), ceHeI(ijk), ceHeII(ijk),
-     &     ciHI(ijk), ciHeI(ijk), ciHeIS(ijk), ciHeII(ijk),
-     &     reHII(ijk), reHeII1(ijk), reHeII2(ijk), reHeIII(ijk),
-     &     brem(ijk), cieco(ijk)
-      R_PREC hyd01k(ijk), h2k01(ijk), vibh(ijk), roth(ijk), rotl(ijk),
-     &     gpldl(ijk), gphdl(ijk), hdlte(ijk), hdlow(ijk)
+     &       ciHI(ijk), ciHeI(ijk), ciHeIS(ijk), ciHeII(ijk),
+     &       reHII(ijk), reHeII1(ijk), reHeII2(ijk), reHeIII(ijk),
+     &       brem(ijk), cieco(ijk),
+     &       hyd01k(ijk), h2k01(ijk), vibh(ijk), roth(ijk), rotl(ijk),
+     &       gpldl(ijk), gphdl(ijk), hdlte(ijk), hdlow(ijk)
           
 !  Iteration mask for multi_cool
 
-      LOGIC_PREC itmask(ijk)
+      logical itmask(ijk)
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
 !=======================================================================
@@ -222,7 +222,7 @@
 !           in cool1d_multi_g)
 
          do i = is+1, ie+1
-            energy = max(p2d(i)/(gamma-1._RKIND), tiny)   
+            energy = max(p2d(i)/(gamma-1._DKIND), tiny)   
             cooltime(i,j,k) = abs(energy/edot(i))
          enddo
 
