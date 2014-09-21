@@ -25,58 +25,58 @@ extern chemistry_data grackle_data;
 /* function prototypes */
 
 int update_UVbackground_rates(chemistry_data *my_chemistry,
-                              code_units *my_units, gr_float a_value);
+                              code_units *my_units, float a_value);
 
 extern void FORTRAN_NAME(solve_rate_cool_g)(
-        gr_int *icool,
+        int *icool,
 	gr_float *d, gr_float *e, gr_float *u, gr_float *v, gr_float *w, gr_float *de,
 	gr_float *HI, gr_float *HII, gr_float *HeI, gr_float *HeII, gr_float *HeIII,
-	gr_int *in, gr_int *jn, gr_int *kn, gr_int *nratec, gr_int *iexpand, 
-        gr_int *ispecies, gr_int *imetal, gr_int *imcool, gr_int *idust, gr_int *idim,
-	gr_int *is, gr_int *js, gr_int *ks, gr_int *ie, gr_int *je, gr_int *ke,
-        gr_int *ih2co, gr_int *ipiht, gr_int *igammah,
-	gr_float *dt, gr_float *aye, gr_float *temstart, gr_float *temend,
-	gr_float *utem, gr_float *uxyz, gr_float *uaye, gr_float *urho, gr_float *utim,
-	gr_float *gamma, gr_float *fh, gr_float *dtoh, gr_float *z_solar,
-	gr_float *k1a, gr_float *k2a, gr_float *k3a, gr_float *k4a, gr_float *k5a, 
-	gr_float *k6a, gr_float *k7a, gr_float *k8a, gr_float *k9a, gr_float *k10a,
-	gr_float *k11a, gr_float *k12a, gr_float *k13a, gr_float *k13dda, gr_float *k14a, 
-	gr_float *k15a, gr_float *k16a, gr_float *k17a, gr_float *k18a, gr_float *k19a, 
-        gr_float *k22a,	gr_float *k24, gr_float *k25, gr_float *k26, gr_float *k27, 
-        gr_float *k28, gr_float *k29, gr_float *k30, gr_float *k31,
-	gr_float *k50a, gr_float *k51a, gr_float *k52a, gr_float *k53a, gr_float *k54a,
-	gr_float *k55a, gr_float *k56a,
-	gr_int *ndratec, gr_float *dtemstart, gr_float *dtemend, gr_float *h2dusta, 
-	gr_float *ncrna, gr_float *ncrd1a, gr_float *ncrd2a,
-	gr_float *ceHIa, gr_float *ceHeIa, gr_float *ceHeIIa, gr_float *ciHIa, 
-	gr_float *ciHeIa, gr_float *ciHeISa, gr_float *ciHeIIa, 
-        gr_float *reHIIa, gr_float *reHeII1a, gr_float *reHeII2a, gr_float *reHeIIIa, 
-        gr_float *brema, gr_float *compa, gr_float *gammaha,
-	gr_float *comp_xraya, gr_float *comp_temp, 
-	gr_float *piHI, gr_float *piHeI, gr_float *piHeII,
+	int *in, int *jn, int *kn, int *nratec, int *iexpand, 
+        int *ispecies, int *imetal, int *imcool, int *idust, int *idim,
+	int *is, int *js, int *ks, int *ie, int *je, int *ke,
+        int *ih2co, int *ipiht, int *igammah,
+	float *dt, float *aye, double *temstart, double *temend,
+	double *utem, double *uxyz, double *uaye, double *urho, double *utim,
+	double *gamma, double *fh, double *dtoh, double *z_solar,
+	double *k1a, double *k2a, double *k3a, double *k4a, double *k5a, 
+	double *k6a, double *k7a, double *k8a, double *k9a, double *k10a,
+	double *k11a, double *k12a, double *k13a, double *k13dda, double *k14a, 
+	double *k15a, double *k16a, double *k17a, double *k18a, double *k19a, 
+        double *k22a,	double *k24, double *k25, double *k26, double *k27, 
+        double *k28, double *k29, double *k30, double *k31,
+	double *k50a, double *k51a, double *k52a, double *k53a, double *k54a,
+	double *k55a, double *k56a,
+	int *ndratec, double *dtemstart, double *dtemend, double *h2dusta, 
+	double *ncrna, double *ncrd1a, double *ncrd2a,
+	double *ceHIa, double *ceHeIa, double *ceHeIIa, double *ciHIa, 
+	double *ciHeIa, double *ciHeISa, double *ciHeIIa, 
+        double *reHIIa, double *reHeII1a, double *reHeII2a, double *reHeIIIa, 
+        double *brema, double *compa, double *gammaha,
+	double *comp_xraya, double *comp_temp, 
+	double *piHI, double *piHeI, double *piHeII,
 	gr_float *HM, gr_float *H2I, gr_float *H2II, 
         gr_float *DI, gr_float *DII, gr_float *HDI, gr_float *metal,
-	gr_float *hyd01ka, gr_float *h2k01a, gr_float *vibha, 
-        gr_float *rotha, gr_float *rotla,
-	gr_float *gpldl, gr_float *gphdl, gr_float *HDltea, gr_float *HDlowa,
-	gr_float *gaHIa, gr_float *gaH2a, gr_float *gaHea, gr_float *gaHpa, gr_float *gaela,
-	gr_float *gasgra,
-	gr_int *ierr,
-	gr_int *ih2optical, gr_int *iciecool, gr_int *ithreebody, gr_float *ciecoa,
- 	gr_int *icmbTfloor, gr_int *iClHeat, gr_float *clEleFra,
+	double *hyd01ka, double *h2k01a, double *vibha, 
+        double *rotha, double *rotla,
+	double *gpldl, double *gphdl, double *HDltea, double *HDlowa,
+	double *gaHIa, double *gaH2a, double *gaHea, double *gaHpa, double *gaela,
+	double *gasgra,
+	int *ierr,
+	int *ih2optical, int *iciecool, int *ithreebody, double *ciecoa,
+ 	int *icmbTfloor, int *iClHeat, double *clEleFra,
         long long *priGridRank, long long *priGridDim,
         double *priPar1, double *priPar2, double *priPar3, 
  	long long *priDataSize, double *priCooling, double *priHeating,
         long long *metGridRank, long long *metGridDim,
  	double *metPar1, double *metPar2, double *metPar3, 
  	long long *metDataSize, double *metCooling, double *metHeating,
-        gr_float *mutaba);
+        double *mutaba);
 
 int _solve_chemistry(chemistry_data *my_chemistry,
                      code_units *my_units,
-                     gr_float a_value, gr_float dt_value,
-                     gr_int grid_rank, gr_int *grid_dimension,
-                     gr_int *grid_start, gr_int *grid_end,
+                     float a_value, float dt_value,
+                     long long grid_rank, long long *grid_dimension,
+                     long long *grid_start, long long *grid_end,
                      gr_float *density, gr_float *internal_energy,
                      gr_float *x_velocity, gr_float *y_velocity, gr_float *z_velocity,
                      gr_float *HI_density, gr_float *HII_density, gr_float *HM_density,
@@ -102,11 +102,11 @@ int _solve_chemistry(chemistry_data *my_chemistry,
 
   /* Check for a metal field. */
 
-  gr_int metal_field_present = TRUE;
+  int metal_field_present = TRUE;
   if (metal_density == NULL)
     metal_field_present = FALSE;
 
-  gr_float co_length_units, co_density_units;
+  double co_length_units, co_density_units;
   if (my_units->comoving_coordinates == TRUE) {
     co_length_units = my_units->length_units;
     co_density_units = my_units->density_units;
@@ -120,11 +120,11 @@ int _solve_chemistry(chemistry_data *my_chemistry,
 
   /* Calculate temperature units. */
 
-  gr_float temperature_units =  mh * POW(my_units->velocity_units, 2) / kboltz;
+  double temperature_units =  mh * POW(my_units->velocity_units, 2) / kboltz;
 
   /* Call the fortran routine to solve cooling equations. */
 
-  gr_int ierr = 0;
+  int ierr = 0;
 
   FORTRAN_NAME(solve_rate_cool_g)(
     &my_chemistry->with_radiative_cooling,
@@ -197,9 +197,9 @@ int _solve_chemistry(chemistry_data *my_chemistry,
 }
 
 int solve_chemistry(code_units *my_units,
-                    gr_float a_value, gr_float dt_value,
-                    gr_int grid_rank, gr_int *grid_dimension,
-                    gr_int *grid_start, gr_int *grid_end,
+                    float a_value, float dt_value,
+                    long long grid_rank, long long *grid_dimension,
+                    long long *grid_start, long long *grid_end,
                     gr_float *density, gr_float *internal_energy,
                     gr_float *x_velocity, gr_float *y_velocity, gr_float *z_velocity,
                     gr_float *HI_density, gr_float *HII_density, gr_float *HM_density,
@@ -226,12 +226,12 @@ int solve_chemistry(code_units *my_units,
   return SUCCESS;
 }
 
-int solve_chemistry_(gr_int *comoving_coordinates,
-                     gr_float *density_units, gr_float *length_units,
-                     gr_float *time_units, gr_float *velocity_units,
-                     gr_float *a_units, gr_float *a_value, gr_float *dt_value,
-                     gr_int *grid_rank, gr_int *grid_dimension,
-                     gr_int *grid_start, gr_int *grid_end,
+int solve_chemistry_(int *comoving_coordinates,
+                     double *density_units, double *length_units,
+                     double *time_units, double *velocity_units,
+                     double *a_units, float *a_value, float *dt_value,
+                     long long *grid_rank, long long *grid_dimension,
+                     long long *grid_start, long long *grid_end,
                      gr_float *density, gr_float *internal_energy,
                      gr_float *x_velocity, gr_float *y_velocity, gr_float *z_velocity,
                      gr_float *HI_density, gr_float *HII_density, gr_float *HM_density,

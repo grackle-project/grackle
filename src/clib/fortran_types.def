@@ -29,3 +29,6 @@
       integer, parameter :: IKIND=8
       integer, parameter :: LKIND=8
 #endif
+
+      integer, parameter :: DKIND=8
+      integer, parameter :: DIKIND=8
