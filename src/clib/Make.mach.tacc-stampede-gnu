@@ -1,15 +1,16 @@
 #=======================================================================
 #
-# FILE:        Make.mach.tacc-stampede
+# FILE:        Make.mach.tacc-stampede-gnu
 #
 # DESCRIPTION: TACC Stampede Makefile
 #              Written by Cameron Hummels, Jan 14
+#              Edited by Gabriel Altay, Sept 14
 #
 #=======================================================================
 
 MACH_TEXT  = Stampede
 MACH_VALID = 0
-MACH_FILE  = Make.mach.tacc-stampede
+MACH_FILE  = Make.mach.tacc-stampede-gnu
 
 #-----------------------------------------------------------------------
 # Compiler settings
@@ -18,12 +19,13 @@ MACH_FILE  = Make.mach.tacc-stampede
 MACH_CPP       = /usr/bin/cpp # C preprocessor command
 
 # Compilers
-MACH_CC_NOMPI  = icc # C compiler
-MACH_CXX_NOMPI = icpc # C++ compiler
-MACH_FC_NOMPI  = ifort # Fortran 77
-MACH_F90_NOMPI = ifort # Fortran 90
-MACH_LD_NOMPI  = icpc # Linker
+MACH_CC_NOMPI  = gcc # C compiler
+MACH_CXX_NOMPI = g++ # C++ compiler
+MACH_FC_NOMPI  = gfortran # Fortran 77
+MACH_F90_NOMPI = gfortran # Fortran 90
+MACH_LD_NOMPI  = gfortran # Linker
 MACH_AR        = ar
+
 
 #-----------------------------------------------------------------------
 # Machine-dependent defines
@@ -39,46 +41,45 @@ MACH_DEFINES   = -DLINUX -DH5_USE_16_API -fPIC # Defines for the architecture; e
 # Compiler flag settings
 #-----------------------------------------------------------------------
 
-MACH_CPPFLAGS = -P -traditional # C preprocessor flags
-MACH_CFLAGS   = -mp1 -prec_div -fp_port -align # C compiler flags
-MACH_CXXFLAGS = -mp1 -prec_div -fp_port -align # C++ compiler flags
-MACH_FFLAGS   = # Fortran 77 compiler flags
-MACH_F90FLAGS = -mp1 -prec_div -fp_port -align -save -zero # Fortran 90 compiler flags
-MACH_LDFLAGS  = -Wl,-noinhibit-exec -lifcore -lifport -lpthread -ldl # Linker flags
+MACH_CPPFLAGS = -P -traditional
+MACH_CFLAGS   = 
+MACH_CXXFLAGS = 
+MACH_FFLAGS   = -fno-second-underscore -ffixed-line-length-132
+MACH_F90FLAGS = -fno-second-underscore
+MACH_LDFLAGS  = -lstdc++ -lc
 
 #-----------------------------------------------------------------------
 # Precision-related flags
 #-----------------------------------------------------------------------
 
 MACH_FFLAGS_INTEGER_32 = # Flag to force Fortran to use 32-bit integers
-MACH_FFLAGS_INTEGER_64 = -i8 # Flag to force Fortran to use 64-bit integers
+MACH_FFLAGS_INTEGER_64 = -fdefault-integer-8 # Flag to force Fortran to use 64-bit integers
 MACH_FFLAGS_REAL_32    = # Flag to force Fortran to use 32-bit REALs
-MACH_FFLAGS_REAL_64    = -r8 # Flag to force Fortran to use 64-bit REALs
+MACH_FFLAGS_REAL_64    = -fdefault-real-8 -fdefault-double-8 # Flag to force Fortran to use 64-bit REALs
 # Needs to be run in 64 bit mode on stampede.
 
 #-----------------------------------------------------------------------
 # Optimization flags
 #-----------------------------------------------------------------------
 
-MACH_OPT_WARN        = # Flags for verbose compiler warnings
-MACH_OPT_DEBUG       = -g -O0 # Flags for debugging
-MACH_OPT_HIGH        = -O2 # Flags for high conservative optimization
-MACH_OPT_AGGRESSIVE  = -O3 -Mfptrap -Mflushz -fastsse -Mdaz -Mnontemporal -Mnofprelaxed -Mvect=altcode,assoc,prefetch -Kieee # Flags for aggressive optimization
+MACH_OPT_WARN        = -Wall -g
+MACH_OPT_DEBUG       = -g
+MACH_OPT_HIGH        = -O2
+MACH_OPT_AGGRESSIVE  = -O3 -g
 
 #-----------------------------------------------------------------------
 # Includes
 #-----------------------------------------------------------------------
 
-LOCAL_INCLUDES_HDF5   = -I$(LOCAL_HDF5_INSTALL)/include # HDF5 includes
+LOCAL_HDF5_INSTALL = $(TACC_HDF5_DIR)
+LOCAL_FC_INSTALL = 
 
+LOCAL_INCLUDES_HDF5   = -I$(LOCAL_HDF5_INSTALL)/include # HDF5 includes
 MACH_INCLUDES         = $(LOCAL_INCLUDES_HDF5)
 
 #-----------------------------------------------------------------------
 # Libraries
 #-----------------------------------------------------------------------
-
-LOCAL_HDF5_INSTALL = $(YT_DEST)
-LOCAL_FC_INSTALL = /opt/apps/intel/13/composer_x2_2013.2.146/compiler/lib/intel64
 
 LOCAL_LIBS_HDF5   = -L$(LOCAL_HDF5_INSTALL)/lib -lhdf5 # HDF5 libraries
 LOCAL_LIBS_MACH   = -L$(LOCAL_FC_INSTALL) -lm # Machine-dependent libraries
