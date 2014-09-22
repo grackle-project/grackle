@@ -429,21 +429,22 @@ c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 fo
 
                olddtit = dtit(i)
                dtit(i) = min(abs(0.1_DKIND*de(i,j,k)/dedot(i)), 
-     &                       abs(0.1_DKIND*HI(i,j,k)/HIdot(i)),
-     &                       dt-ttot(i), 0.5_DKIND*dt)
+     &              abs(0.1_DKIND*HI(i,j,k)/HIdot(i)),
+     &              dt-ttot(i), 0.5_DKIND*dt)
 
-              if (d(i,j,k)*dom.gt.1e8_DKIND.and.edot(i).gt.0._DKIND)then
-                ! Equilibrium value for H is:
-                !  H = (-1._DKIND / (4*k22)) * (k13 - sqrt(8 k13 k22 rho + k13^2))
-                ! We now want this to change by 10% or less, but we're only
-                ! differentiating by dT.  We have de/dt.  We need dT/de.
-                ! T = (g-1)*p2d*utem/N; tgas == (g-1)(p2d*utem/N)
-                ! dH_eq / dt = (dH_eq/dT) * (dT/de) * (de/dt)
-                !   dH_eq / dT (see above; we can calculate the derivative here)
-                !   dT / de = utem * (gamma - 1._DKIND) / N == tgas / p2d
-                !   de / dt = edot
-                ! Now we use our estimate of dT/de to get the estimated
-                ! difference in the equilibrium
+               if (d(i,j,k)*dom .gt. 1e8_DKIND .and. 
+     &              edot(i) .gt. 0._DKIND) then
+!              Equilibrium value for H is:
+!              H = (-1._DKIND / (4*k22)) * (k13 - sqrt(8 k13 k22 rho + k13^2))
+!              We now want this to change by 10% or less, but we're only
+!              differentiating by dT.  We have de/dt.  We need dT/de.
+!              T = (g-1)*p2d*utem/N; tgas == (g-1)(p2d*utem/N)
+!              dH_eq / dt = (dH_eq/dT) * (dT/de) * (de/dt)
+!              dH_eq / dT (see above; we can calculate the derivative here)
+!              dT / de = utem * (gamma - 1._DKIND) / N == tgas / p2d
+!              de / dt = edot
+!              Now we use our estimate of dT/de to get the estimated
+!              difference in the equilibrium
                 eqt2 = min(log(tgas(i)) + 0.1_DKIND*dlogtem, t2(i))
                 eqtdef = (eqt2 - t1(i))/(t2(i) - t1(i))
                 eqk222 = k22a(indixe(i)) +
@@ -545,7 +546,6 @@ c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 fo
      &              edot(i) .lt. 0._DKIND) 
      &              edot(i) = tiny
 	       if (abs(edot(i)) .lt. tiny) edot(i) = tiny
-!
 !              Compute timestep for 10% change
 
 !              if (iter .gt. 100) then
@@ -580,7 +580,8 @@ c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 fo
             if (icool .eq. 1) then
             do i = is+1, ie+1
                if (itmask(i)) then
-               e(i,j,k)  = e(i,j,k) + edot(i)/d(i,j,k)*dtit(i)
+               e(i,j,k)  = e(i,j,k) +
+     &                 real(edot(i)/d(i,j,k)*dtit(i), RKIND)
 #ifdef WRITE_COOLING_DEBUG
                if (e(i,j,k) .ne. e(i,j,k)) 
      &              write(3,*) edot(i),d(i,j,k),dtit(i)
@@ -801,7 +802,7 @@ c -------------------------------------------------------------------
                   HII(i,j,k)   = max(HII(i,j,k), tiny)
                   HeI(i,j,k)   = max(HeI(i,j,k), tiny)
                   HeII(i,j,k)  = max(HeII(i,j,k), tiny)
-                  HeIII(i,j,k) = max(HeIII(i,j,k), 1e-5_DKIND*tiny)
+                  HeIII(i,j,k) = max(HeIII(i,j,k), 1e-5_RKIND*tiny)
                enddo
             enddo
          enddo
@@ -833,7 +834,7 @@ c -------------------------------------------------------------------
             do j = js+1, je+1
                do i = is+1, ie+1
                   metal(i,j,k) = min(max(metal(i,j,k), tiny),
-     $                               0.9_DKIND*d(i,j,k))
+     &                 0.9_RKIND*d(i,j,k))
                enddo
             enddo
          enddo
@@ -1670,35 +1671,36 @@ c
 
       do i = is+1, ie+1
          if (itmask(i)) then
-         HIdot_prev(i) = abs(HI(i,j,k)-HIp(i))/max(dtit(i),tiny)
-         HI(i,j,k)    = max(HIp(i), tiny)
-         HII(i,j,k)   = max(HIIp(i), tiny)
-         HeI(i,j,k)   = max(HeIp(i), tiny)
-         HeII(i,j,k)  = max(HeIIp(i), tiny)
-         HeIII(i,j,k) = max(HeIIIp(i), 1e-5_DKIND*tiny)
+         HIdot_prev(i) = abs(HI(i,j,k)-HIp(i)) /
+     &           max(real(dtit(i), RKIND), tiny)
+         HI(i,j,k)    = max(real(HIp(i), RKIND), tiny)
+         HII(i,j,k)   = max(real(HIIp(i), RKIND), tiny)
+         HeI(i,j,k)   = max(real(HeIp(i), RKIND), tiny)
+         HeII(i,j,k)  = max(real(HeIIp(i), RKIND), tiny)
+         HeIII(i,j,k) = max(real(HeIIIp(i), RKIND), 1e-5_RKIND*tiny)
 
 !        de(i,j,k)    = dep(i)
 
 !        Use charge conservation to determine electron fraction
 
          dedot_prev(i) = de(i,j,k)
-         de(i,j,k) = HII(i,j,k) + HeII(i,j,k)/4._DKIND +
-     &        HeIII(i,j,k)/2._DKIND
+         de(i,j,k) = HII(i,j,k) + HeII(i,j,k)/4._RKIND +
+     &        HeIII(i,j,k)/2._RKIND
          if (ispecies .gt. 1) 
-     &      de(i,j,k) = de(i,j,k) - HM(i,j,k) + H2II(i,j,k)/2._DKIND
+     &        de(i,j,k) = de(i,j,k) - HM(i,j,k) + H2II(i,j,k)/2._RKIND
          dedot_prev(i) = abs(de(i,j,k)-dedot_prev(i))/
-     &                         max(dtit(i),tiny)
+     &        max(dtit(i),tiny)
 
          if (ispecies .gt. 1) then
-            HM(i,j,k)    = max(HMp(i), tiny)
-            H2I(i,j,k)   = max(H2Ip(i), tiny)
-            H2II(i,j,k)  = max(H2IIp(i), tiny)
+            HM(i,j,k)    = max(real(HMp(i), RKIND), tiny)
+            H2I(i,j,k)   = max(real(H2Ip(i),RKIND), tiny)
+            H2II(i,j,k)  = max(real(H2IIp(i), RKIND), tiny)
          endif
 
          if (ispecies .gt. 2) then
-            DI(i,j,k)    = max(DIp(i), tiny)
-            DII(i,j,k)   = max(DIIp(i), tiny)
-            HDI(i,j,k)   = max(HDIp(i), tiny)
+            DI(i,j,k)    = max(real(DIp(i), RKIND), tiny)
+            DII(i,j,k)   = max(real(DIIp(i), RKIND), tiny)
+            HDI(i,j,k)   = max(real(HDIp(i), RKIND), tiny)
          endif
       endif                     ! itmask
 !     
@@ -1744,8 +1746,8 @@ c
 
       integer i, j, k
       real*8 totalH(ijk), totalHe(ijk), 
-     &       totalD, correctH, correctHe, correctD,
-     &       metalfree(ijk)
+     &       totalD, metalfree(ijk)
+      R_PREC correctH, correctHe, correctD
 
 !     Loop over all zones
 
@@ -1789,11 +1791,12 @@ c
 !     Correct densities by keeping fractions the same
 
       do i = is+1, ie+1
-         correctH = fh*metalfree(i)/totalH(i)
+         correctH = real(fh*metalfree(i)/totalH(i), RKIND)
          HI(i,j,k)  = HI(i,j,k)*correctH
          HII(i,j,k) = HII(i,j,k)*correctH
 
-         correctHe = (1._DKIND - fh)*metalfree(i)/totalHe(i)
+         correctHe = real((1._DKIND - fh)*
+     &        metalfree(i)/totalHe(i), RKIND)
          HeI(i,j,k)   = HeI(i,j,k)*correctHe
          HeII(i,j,k)  = HeII(i,j,k)*correctHe
          HeIII(i,j,k) = HeIII(i,j,k)*correctHe
@@ -1816,7 +1819,7 @@ c
             HDI (i,j,k) = abs(HDI (i,j,k))
             totalD = DI(i,j,k) + DII(i,j,k) +
      &           2._DKIND/3._DKIND*HDI(i,j,k)
-            correctD = fh*dtoh*metalfree(i)/totalD
+            correctD = real(fh*dtoh*metalfree(i)/totalD, RKIND)
             DI  (i,j,k) = DI (i,j,k)*correctD
             DII (i,j,k) = DII(i,j,k)*correctD
             HDI (i,j,k) = HDI(i,j,k)*correctD
@@ -1826,10 +1829,10 @@ c
 !       Set the electron density
 
       do i = is+1, ie+1
-         de (i,j,k) = HII(i,j,k) + HeII(i,j,k)/4._DKIND +
-     &        HeIII(i,j,k)/2._DKIND
+         de (i,j,k) = HII(i,j,k) + HeII(i,j,k)/4._RKIND +
+     &        HeIII(i,j,k)/2._RKIND
          if (ispecies .gt. 1) de(i,j,k) = de(i,j,k)
-     &        - HM(i,j,k) + H2II(i,j,k)/2._DKIND
+     &        - HM(i,j,k) + H2II(i,j,k)/2._RKIND
       enddo
 
       enddo  ! end loop over j

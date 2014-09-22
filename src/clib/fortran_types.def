@@ -1,6 +1,6 @@
 #ifdef CONFIG_BFLOAT_4
-#define tiny 1.d-20
-#define huge 1.d+20
+#define tiny 1.e-20
+#define huge 1.e+20
 #define R_PREC real*4
 #define CMPLX_PREC complex*8
       integer, parameter :: RKIND=4
