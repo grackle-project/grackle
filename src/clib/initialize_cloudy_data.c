@@ -11,6 +11,7 @@
 / software.
 ************************************************************************/
 
+#include <stdlib.h>
 #include <math.h>
 #include "hdf5.h"
 #include "grackle_macros.h"
@@ -257,7 +258,7 @@ int initialize_cloudy_data(chemistry_data *my_chemistry,
   status = H5Fclose (file_id);
 
   if (my_cloudy->grid_rank > CLOUDY_MAX_DIMENSION) {
-    fprintf(stderr,"Error: rank of Cloudy cooling data must be less than or equal to %lld.\n",
+    fprintf(stderr,"Error: rank of Cloudy cooling data must be less than or equal to %d.\n",
 	    CLOUDY_MAX_DIMENSION);
     return FAIL;
   }

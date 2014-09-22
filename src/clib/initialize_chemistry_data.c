@@ -10,7 +10,8 @@
 / The full license is in the file LICENSE, distributed with this 
 / software.
 ************************************************************************/
- 
+
+#include <stdlib.h> 
 #include <string.h>
 #include <stdio.h>
 #include <math.h>
