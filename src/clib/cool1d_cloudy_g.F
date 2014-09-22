@@ -87,7 +87,8 @@
 
 !  Locals
 
-      integer i, q, zindex, zmidpt, zhighpt, get_heat
+      integer i, get_heat
+      integer*8 zindex, zmidpt, zhighpt
       real*8 dclPar(clGridRank), inv_log10, log10_tCMB
       logical end_int
 
@@ -283,7 +284,7 @@
 
 !  Locals
 
-      integer index1
+      integer*8 index1
       real*8 slope
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
@@ -292,7 +293,7 @@
 !     Calculate interpolation index
 
       index1 = min(gridDim(1)-1,
-     &     max(1,int((input1-gridPar1(1))/dgridPar1)+1))
+     &     max(1,int((input1-gridPar1(1))/dgridPar1, DIKIND)+1))
 
 !     Interpolate over parameter 1
 
@@ -326,7 +327,8 @@
 
 !  Locals
 
-      integer index1, index2, int_index, q
+      integer*8 index1, index2, int_index
+      integer q
       real*8 slope, value2(2)
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
@@ -335,9 +337,9 @@
 !     Calculate interpolation indices
 
       index1 = min(gridDim(1)-1,
-     &     max(1,int((input1-gridPar1(1))/dgridPar1)+1))
+     &     max(1,int((input1-gridPar1(1))/dgridPar1, DIKIND)+1))
       index2 = min(gridDim(2)-1,
-     &     max(1,int((input2-gridPar2(1))/dgridPar2)+1))
+     &     max(1,int((input2-gridPar2(1))/dgridPar2, DIKIND)+1))
 
       do q=1, 2
 
@@ -387,7 +389,8 @@
 
 !  Locals
 
-      integer index1, index2, index3, int_index, q, w
+      integer*8 index1, index2, index3, int_index
+      integer q, w
       real*8 slope, value3(2), value2(2)
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
@@ -396,11 +399,11 @@
 !     Calculate interpolation indices
 
       index1 = min(gridDim(1)-1,
-     &     max(1,int((input1-gridPar1(1))/dgridPar1)+1))
+     &     max(1,int((input1-gridPar1(1))/dgridPar1, DIKIND)+1))
       index2 = min(gridDim(2)-1,
-     &     max(1,int((input2-gridPar2(1))/dgridPar2)+1))
+     &     max(1,int((input2-gridPar2(1))/dgridPar2, DIKIND)+1))
       index3 = min(gridDim(3)-1,
-     &     max(1,int((input3-gridPar3(1))/dgridPar3)+1))
+     &     max(1,int((input3-gridPar3(1))/dgridPar3, DIKIND)+1))
 
       do q=1, 2
 
@@ -467,7 +470,8 @@
 !  Locals
 
       logical end_int
-      integer index1, index3, int_index, q, w
+      integer*8 index1, index3, int_index
+      integer q, w
       real*8 slope, value3(2), value2(2)
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
@@ -487,9 +491,9 @@
 !     Calculate interpolation indices
 
       index1 = min(gridDim(1)-1,
-     &     max(1,int((input1-gridPar1(1))/dgridPar1)+1))
+     &     max(1,int((input1-gridPar1(1))/dgridPar1, DIKIND)+1))
       index3 = min(gridDim(3)-1,
-     &     max(1,int((input3-gridPar3(1))/dgridPar3)+1))
+     &     max(1,int((input3-gridPar3(1))/dgridPar3, DIKIND)+1))
 
       do q=1, 2
 
@@ -557,8 +561,8 @@
 
 !  Locals
 
-      logical end_int
-      integer index1, index3, int_index, q
+      integer*8 index1, index3, int_index
+      integer q
       real*8 slope, value3(2), value2(2)
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
@@ -567,9 +571,9 @@
 !     Calculate interpolation indices
 
       index1 = min(gridDim(1)-1,
-     &     max(1,int((input1-gridPar1(1))/dgridPar1)+1))
+     &     max(1,int((input1-gridPar1(1))/dgridPar1, DIKIND)+1))
       index3 = min(gridDim(3)-1,
-     &     max(1,int((input3-gridPar3(1))/dgridPar3)+1))
+     &     max(1,int((input3-gridPar3(1))/dgridPar3, DIKIND)+1))
 
       do q=1, 2
 
