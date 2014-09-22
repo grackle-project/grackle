@@ -6,6 +6,8 @@
 #              Written by Cameron Hummels, Jan 14
 #              Edited by Gabriel Altay, Sept 14
 #
+# NOTES: Prepend the HDF5 lib directory to LD_LIBRARY_PATH for this to work
+# e.g. export LD_LIBRARY_PATH=$TACC_HDF5_DIR/lib:$LD_LIBRARY_PATH 
 #=======================================================================
 
 MACH_TEXT  = Stampede
