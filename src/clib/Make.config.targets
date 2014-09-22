@@ -68,7 +68,7 @@ show-config:
 	@echo "   MACHINE-NAME: $(CONFIG_MACHINE)"
 	@echo
 	@echo "   CONFIG_PRECISION  [precision-{32,64}]                     : $(CONFIG_PRECISION)"
-	@echo "   CONFIG_OPT  [opt-{warn,debug,cudadebug,high,aggressive}]  : $(CONFIG_OPT)"
+	@echo "   CONFIG_OPT  [opt-{warn,debug,high,aggressive}]            : $(CONFIG_OPT)"
 	@echo "   CONFIG_SHARED  [shared-{yes,no}]                          : $(CONFIG_SHARED)"
 
 	@echo
@@ -177,12 +177,11 @@ CONFIG_PRECISION-%: suggest-clean
 
 #-----------------------------------------------------------------------
 
-VALID_OPT = opt-warn opt-debug opt-cudadebug opt-high opt-aggressive
+VALID_OPT = opt-warn opt-debug opt-high opt-aggressive
 .PHONY: $(VALID_OPT)
 
 opt-warn:       CONFIG_OPT-warn
 opt-debug:      CONFIG_OPT-debug
-opt-cudadebug:  CONFIG_OPT-cudadebug
 opt-high:       CONFIG_OPT-high
 opt-aggressive: CONFIG_OPT-aggressive
 opt-%:

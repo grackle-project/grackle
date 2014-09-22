@@ -40,7 +40,7 @@ DEFAULT_INSTALL_PREFIX = /usr/local
 OUTPUT   = out.compile
 
 GRACKLE_DIR = .
-VERBOSE  = 0
+VERBOSE  = 1
 
 SVN      = hg
 
@@ -108,7 +108,7 @@ lib: libgrackle.$(MACH_SHARED_EXT)
 libgrackle.$(MACH_SHARED_EXT): $(MODULES) autogen dep $(OBJS_LIB) MACHNOTES
 	@rm -f $@
 	@echo "Linking"
-	-@$(LD) $(LDFLAGS) $(LDOUTPUT_FLAGS) $@ $(OBJS_LIB) $(LIBS) $(LIB_INSTALL_FLAGS) >& $(OUTPUT)
+	-@$(LD) $(LDFLAGS) $(LDOUTPUT_FLAGS) $@ $(OBJS_LIB) $(LIBS) $(LIB_INSTALL_FLAGS) >> $(OUTPUT) 2>&1
 	@(if [ -e $@ ]; then \
 	   echo "Success!"; \
 	else \
@@ -125,11 +125,11 @@ MACHNOTES:
 lib%.$(MACH_SHARED_EXT): $(MODULES) autogen dep $(OBJS_LIB)
 	@rm -f $@
 	@echo "Linking"
-	-@$(LD) $(LDFLAGS) $(LDOUTPUT_FLAGS) $@ $(OBJS_LIB) $(LIBS) $(LIB_INSTALL_FLAGS) >& $(OUTPUT)
+	-@$(LD) $(LDFLAGS) $(LDOUTPUT_FLAGS) $@ $(OBJS_LIB) $(LIBS) $(LIB_INSTALL_FLAGS) >> $(OUTPUT) 2>&1
 	@(if [ -e $@ ]; then \
 	   echo "Success!"; \
 	else \
-	   echo "$(LD) $(LDFLAGS) $(LDOUTPUT_FLAGS) $*.$(MACH_SHARED_EXT) $*.o $(OBJS_LIB) $(LIBS) $(LIB_INSTALL_FLAGS)" >> temp1; \
+	   echo "$(LD) $(LDFLAGS) $(LDOUTPUT_FLAGS) $*.$(MACH_SHARED_EXT) $@ $(OBJS_LIB) $(LIBS) $(LIB_INSTALL_FLAGS)" >> temp1; \
 	   cat temp1 $(OUTPUT) > temp2; \
 	   rm -f temp1; \
 	   mv -f temp2 $(OUTPUT); \
@@ -167,7 +167,7 @@ verbose: VERBOSE = 1
              exit 1; \
           fi ; \
 	else \
-	  $(FC) -c -o $@ $(FFLAGS)  $(DEFINES) $*.f >> $(OUTPUT) 2>&1 ; \
+	  $(FC) -c -o $@ $(FFLAGS) $(DEFINES) $*.F >> $(OUTPUT) 2>&1 ; \
 	  if [ ! -e $@ ]; then \
 	     echo "See $(OUTPUT) for error messages"; \
 	     exit 1; \
@@ -189,7 +189,7 @@ verbose: VERBOSE = 1
              exit 1; \
           fi ; \
 	else \
-	  $(CXX) -c -o $@ $(DEFINES) $(CXXFLAGS) $(INCLUDES) $*.C \
+	  $(CXX) -c -o $@ $(DEFINES) $(CXXFLAGS) $(INCLUDES) $*.C 
 	    >> $(OUTPUT) 2>&1 ; \
 	  if [ ! -e $@ ]; then \
 	     echo "See $(OUTPUT) for error messages"; \
