@@ -115,10 +115,10 @@
 !  Locals
 
       integer i, iter, ti
-      real*8 dom, qq, vibl, logtem0, logtem9, dlogtem, energy, zr,
-     &       dt2, ttmin, comp1, comp2, scoef, acoef, HIdot,
+      real*8 dom, qq, vibl, logtem0, logtem9, dlogtem, zr,
+     &       comp1, comp2, 
      &       hdlte1, hdlow1, gamma2, x, fudge, fH2,
-     &       gphdl1, factor, dom_inv, tau, ciefudge, munew, muold,
+     &       gphdl1, dom_inv, tau, ciefudge, munew, muold,
      &       coolunit, dbase1, tbase1, xbase1, rtunits,
      &       nH2, nother, myde
 
@@ -137,7 +137,7 @@
      &       reHII(in), reHeII1(in), reHeII2(in), reHeIII(in),
      &       brem(in), cieco(in),
      &       hyd01k(in), h2k01(in), vibh(in), roth(in), rotl(in),
-     &       gpldl(in), gphdl(in), hdlte(in), hdlow(in), metalc(in),
+     &       gpldl(in), gphdl(in), hdlte(in), hdlow(in),
      &       gaHI(in), gaH2(in), gaHe(in), gaHp(in), gael(in),
      &       galdl(in), gasgr(in), gasgr_tdust(in)
 
