@@ -102,7 +102,7 @@
 
 !  Locals
 
-      integer i, j, k, n
+      integer i, j, k
       real*8 comp1, comp2, energy
 
 !  Slice locals
@@ -136,35 +136,35 @@
       do k = ks+1, ke+1
          do j = js+1, je+1
             do i = is+1, ie+1
-               d(i,j,k)     = d(i,j,k)/aye**3
+               d(i,j,k)     = d(i,j,k)/real(aye**3, RKIND)
             enddo
             if (ispecies .gt. 0) then
                do i = is+1, ie+1
-                  de(i,j,k)    = de(i,j,k)/aye**3
-                  HI(i,j,k)    = HI(i,j,k)/aye**3
-                  HII(i,j,k)   = HII(i,j,k)/aye**3
-                  HeI(i,j,k)   = HeI(i,j,k)/aye**3
-                  HeII(i,j,k)  = HeII(i,j,k)/aye**3
-                  HeIII(i,j,k) = HeIII(i,j,k)/aye**3
+                  de(i,j,k)    = de(i,j,k)/real(aye**3, RKIND)
+                  HI(i,j,k)    = HI(i,j,k)/real(aye**3, RKIND)
+                  HII(i,j,k)   = HII(i,j,k)/real(aye**3, RKIND)
+                  HeI(i,j,k)   = HeI(i,j,k)/real(aye**3, RKIND)
+                  HeII(i,j,k)  = HeII(i,j,k)/real(aye**3, RKIND)
+                  HeIII(i,j,k) = HeIII(i,j,k)/real(aye**3, RKIND)
                enddo
             endif
             if (ispecies .gt. 1) then
                do i = is+1, ie+1
-                  HM(i,j,k)   = HM(i,j,k)/aye**3
-                  H2I(i,j,k)  = H2I(i,j,k)/aye**3
-                  H2II(i,j,k) = H2II(i,j,k)/aye**3
+                  HM(i,j,k)   = HM(i,j,k)/real(aye**3, RKIND)
+                  H2I(i,j,k)  = H2I(i,j,k)/real(aye**3, RKIND)
+                  H2II(i,j,k) = H2II(i,j,k)/real(aye**3, RKIND)
                enddo
             endif
             if (ispecies .gt. 2) then
                do i = is+1, ie+1
-                  DI(i,j,k)  = DI(i,j,k)/aye**3
-                  DII(i,j,k) = DII(i,j,k)/aye**3
-                  HDI(i,j,k) = HDI(i,j,k)/aye**3
+                  DI(i,j,k)  = DI(i,j,k)/real(aye**3, RKIND)
+                  DII(i,j,k) = DII(i,j,k)/real(aye**3, RKIND)
+                  HDI(i,j,k) = HDI(i,j,k)/real(aye**3, RKIND)
                enddo
             endif
             if (imetal .eq. 1) then
                do i = is+1, ie+1
-                  metal(i,j,k) = metal(i,j,k)/aye**3
+                  metal(i,j,k) = metal(i,j,k)/real(aye**3, RKIND)
                enddo
             endif
          enddo
@@ -223,7 +223,7 @@
 
          do i = is+1, ie+1
             energy = max(p2d(i)/(gamma-1._DKIND), tiny)   
-            cooltime(i,j,k) = abs(energy/edot(i))
+            cooltime(i,j,k) = real(abs(energy/edot(i)), RKIND)
          enddo
 
        enddo
@@ -236,35 +236,35 @@
       do k = ks+1, ke+1
          do j = js+1, je+1
             do i = is+1, ie+1
-               d(i,j,k)     = d(i,j,k)*aye**3
+               d(i,j,k)     = d(i,j,k)*real(aye**3, RKIND)
             enddo
             if (ispecies .gt. 0) then
                do i = is+1, ie+1
-                  de(i,j,k)    = de(i,j,k)*aye**3
-                  HI(i,j,k)    = HI(i,j,k)*aye**3
-                  HII(i,j,k)   = HII(i,j,k)*aye**3
-                  HeI(i,j,k)   = HeI(i,j,k)*aye**3
-                  HeII(i,j,k)  = HeII(i,j,k)*aye**3
-                  HeIII(i,j,k) = HeIII(i,j,k)*aye**3
+                  de(i,j,k)    = de(i,j,k)*real(aye**3, RKIND)
+                  HI(i,j,k)    = HI(i,j,k)*real(aye**3, RKIND)
+                  HII(i,j,k)   = HII(i,j,k)*real(aye**3, RKIND)
+                  HeI(i,j,k)   = HeI(i,j,k)*real(aye**3, RKIND)
+                  HeII(i,j,k)  = HeII(i,j,k)*real(aye**3, RKIND)
+                  HeIII(i,j,k) = HeIII(i,j,k)*real(aye**3, RKIND)
                enddo
             endif
             if (ispecies .gt. 1) then
                do i = is+1, ie+1
-                  HM(i,j,k)   = HM(i,j,k)*aye**3
-                  H2I(i,j,k)  = H2I(i,j,k)*aye**3
-                  H2II(i,j,k) = H2II(i,j,k)*aye**3
+                  HM(i,j,k)   = HM(i,j,k)*real(aye**3, RKIND)
+                  H2I(i,j,k)  = H2I(i,j,k)*real(aye**3, RKIND)
+                  H2II(i,j,k) = H2II(i,j,k)*real(aye**3, RKIND)
                enddo
             endif
             if (ispecies .gt. 2) then
                do i = is+1, ie+1
-                  DI(i,j,k)  = DI(i,j,k)*aye**3
-                  DII(i,j,k) = DII(i,j,k)*aye**3
-                  HDI(i,j,k) = HDI(i,j,k)*aye**3
+                  DI(i,j,k)  = DI(i,j,k)*real(aye**3, RKIND)
+                  DII(i,j,k) = DII(i,j,k)*real(aye**3, RKIND)
+                  HDI(i,j,k) = HDI(i,j,k)*real(aye**3, RKIND)
                enddo
             endif
             if (imetal .eq. 1) then
                do i = is+1, ie+1
-                  metal(i,j,k) = metal(i,j,k)*aye**3
+                  metal(i,j,k) = metal(i,j,k)*real(aye**3, RKIND)
                enddo
             endif
          enddo
