@@ -114,8 +114,6 @@ int _calculate_cooling_time(chemistry_data *my_chemistry,
 
   /* Call the fortran routine to solve cooling equations. */
 
-  int ierr = 0;
-
     FORTRAN_NAME(cool_multi_time_g)(
        density, internal_energy, x_velocity, y_velocity, z_velocity,
        e_density, HI_density, HII_density,

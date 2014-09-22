@@ -52,11 +52,7 @@ int _calculate_temperature_table(chemistry_data *my_chemistry,
 
   /* Calculate temperature units. */
 
-  double temperature_units =  mh * POW(my_units->velocity_units, 2) / kboltz;
-
-  double number_density, tiny_number = 1.-20;
-  double inv_metal_mol = 1.0 / MU_METAL;
-
+  double temperature_units = mh * POW(my_units->velocity_units, 2) / kboltz;
   double munew, muold;
   int ti, ti_max, index;
   ti_max = 20;
