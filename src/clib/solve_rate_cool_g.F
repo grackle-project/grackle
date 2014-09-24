@@ -131,8 +131,7 @@
      &        ierr, imcool, idust, 
      &        igammah, ih2optical, iciecool, ithreebody,
      &        ndratec
-      real    dt, aye
-      real*8  temstart, temend, gamma,
+      real*8  dt, aye, temstart, temend, gamma,
      &        utim, uxyz, uaye, urho, utem, fh, dtoh, z_solar, 
      &        dtemstart, dtemend
 
@@ -311,10 +310,9 @@ c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 fo
 
             do i = is+1, ie+1
                if (itmask(i)) then
-                  dtit(i) = huge
+                  dtit(i) = huge8
                endif
             enddo
-
 
 !           Compute the cooling rate, tgas, tdust, and metallicity for this row
 
@@ -398,9 +396,9 @@ c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 fo
                if (itmask(i)) then
 !              Bound from below to prevent numerical errors
                
-	       if (abs(dedot(i)) .lt. tiny) 
+	       if (abs(dedot(i)) .lt. tiny8) 
      &             dedot(i) = min(tiny,de(i,j,k))
-	       if (abs(HIdot(i)) .lt. tiny)
+	       if (abs(HIdot(i)) .lt. tiny8)
      &             HIdot(i) = min(tiny,HI(i,j,k))
 
 !              If the net rate is almost perfectly balanced then set
@@ -410,8 +408,8 @@ c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 fo
      &                 abs(k2(i)*HII(i,j,k)*de(i,j,k)))/
      &             max(abs(dedot(i)),abs(HIdot(i))) .gt.
      &              1.0e6_DKIND) then
-                  dedot(i) = tiny
-                  HIdot(i) = tiny
+                  dedot(i) = tiny8
+                  HIdot(i) = tiny8
                endif
 
 !              If the iteration count is high then take the smaller of
@@ -528,34 +526,21 @@ c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 fo
 !              (the gamma used here is the right one even for H2 since p2d 
 !               is calculated with this gamma).
 
-               energy = max(p2d(i)/(gamma-1._DKIND), tiny)
-
-!              This is an alternate energy calculation, based directly on
-!              the code's specific energy field, which differs from the above
-!              only if using the dual energy formalism.
-
-!              energy = max(ge(i,j,k)*d(i,j,k), p2d(i)/(gamma-1._DKIND), 
-!     &                    tiny)
-!              if (energy .lt. tiny) energy = d(i,j,k)*(e(i,j,k) - 
-!     &              0.5_DKIND*(u(i,j,k)**2 + v(i,j,k)**2 + w(i,j,k)**2))
+               energy = max(p2d(i)/(gamma-1._DKIND), tiny8)
 
 !              If the temperature is at the bottom of the temperature look-up 
 !              table and edot < 0, then shut off the cooling.
 
                if (tgas(i) .le. 1.01_DKIND*temstart .and.
      &              edot(i) .lt. 0._DKIND) 
-     &              edot(i) = tiny
-	       if (abs(edot(i)) .lt. tiny) edot(i) = tiny
+     &              edot(i) = tiny8
+	       if (abs(edot(i)) .lt. tiny8) edot(i) = tiny8
+
 !              Compute timestep for 10% change
 
-!              if (iter .gt. 100) then
-!                 dtit(i) = min(real(abs(0.1_DKIND*energy/edot(i)), DKIND), 
-!     &                        dt-ttot(i), dtit(i))
-!              else
                   dtit(i) = min(real(abs(0.1_DKIND*
      &              energy/edot(i)), DKIND), 
-     &                        dt-ttot(i), dtit(i))
-!              endif
+     &              dt-ttot(i), dtit(i))
 
                if (dtit(i) .ne. dtit(i)) !#####
      &           write(6,*) 'HUGE dtit :: ', energy, edot(i), dtit(i),
@@ -615,7 +600,7 @@ c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 fo
 !           Add the timestep to the elapsed time for each cell and find
 !            minimum elapsed time step in this row
 
-            ttmin = huge
+            ttmin = huge8
             do i = is+1, ie+1
                ttot(i) = min(ttot(i) + dtit(i), dt)
                if (abs(dt-ttot(i)) .lt.
@@ -1075,7 +1060,7 @@ c -------------------------------------------------------------------
 !              Assume dust melting at T > 1500 K
 
                if (tdust(i) .gt. dtemend) then
-                  h2dust(i) = tiny
+                  h2dust(i) = tiny8
                else
 
 !                 Get log dust temperature
@@ -1160,14 +1145,14 @@ c -------------------------------------------------------------------
                do i = is+1, ie+1
                   if (itmask(i)) then
                   nh = min(HI(i,j,k)*dom, 1.0e9_DKIND)
-                  k13(i) = tiny
+                  k13(i) = tiny8
                   if (tgas1d(i) .ge. 500._DKIND .and.
      &                tgas1d(i) .lt. 1.0e6_DKIND) then
                      k13(i) = k13dd(i,1)-k13dd(i,2)/
      &                          (1._DKIND+(nh/k13dd(i,5))**k13dd(i,7))
      &                     + k13dd(i,3)-k13dd(i,4)/
      &                          (1._DKIND+(nh/k13dd(i,6))**k13dd(i,7))
-                     k13(i) = max(10._DKIND**k13(i), tiny)
+                     k13(i) = max(10._DKIND**k13(i), tiny8)
                   endif
                endif
                enddo
@@ -1672,7 +1657,7 @@ c
       do i = is+1, ie+1
          if (itmask(i)) then
          HIdot_prev(i) = abs(HI(i,j,k)-HIp(i)) /
-     &           max(real(dtit(i), RKIND), tiny)
+     &           max(real(dtit(i), DKIND), tiny8)
          HI(i,j,k)    = max(real(HIp(i), RKIND), tiny)
          HII(i,j,k)   = max(real(HIIp(i), RKIND), tiny)
          HeI(i,j,k)   = max(real(HeIp(i), RKIND), tiny)
@@ -1689,7 +1674,7 @@ c
          if (ispecies .gt. 1) 
      &        de(i,j,k) = de(i,j,k) - HM(i,j,k) + H2II(i,j,k)/2._RKIND
          dedot_prev(i) = abs(de(i,j,k)-dedot_prev(i))/
-     &        max(dtit(i),tiny)
+     &        max(dtit(i),tiny8)
 
          if (ispecies .gt. 1) then
             HM(i,j,k)    = max(real(HMp(i), RKIND), tiny)

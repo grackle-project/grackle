@@ -14,5 +14,8 @@
       integer, parameter :: RKIND=8
 #endif
 
+#define tiny8 1.d-20
+#define huge8 1.d+20
+
       integer, parameter :: DKIND=8
       integer, parameter :: DIKIND=8
