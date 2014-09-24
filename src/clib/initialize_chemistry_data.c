@@ -242,7 +242,7 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
   return SUCCESS;
 }
 
-int initialize_chemistry_data(code_units *my_units, float a_value)
+int initialize_chemistry_data(code_units *my_units, double a_value)
 {
   if (_initialize_chemistry_data(&grackle_data, my_units, a_value) == FAIL) {
     fprintf(stderr, "Error in _initialize_chemistry_data.\n");
