@@ -3,15 +3,36 @@
 Adding Grackle to Your Simulation Code
 ======================================
 
+This document follows the example files, **cxx_example.C** and 
+**cxx_table_example.C**.  For a list of all available functions, see the 
+:ref:`reference`.
+
 Example Executables
 -------------------
 
-The grackle source code contains two C and two C++ examples that link against 
-the grackle library.  They are located in the **src/example** directory 
-and are called **c_example.c**, **c_table_example.c**, **cxx_example.C**, and 
-**cxx_table_example.C**.  If you have already installed the grackle library, 
-you can build the examples by typing *make* and the name of the file without 
-extension.  For example, to build the C++ example, type:
+The grackle source code contains examples for C, C++, and Fortran codes.  
+They are located in the **src/example** directory and detail different uses 
+of the grackle library.
+
+    * **c_example.c** - full functionality C example that uses the units and chemistry data structures.
+
+    * **c_table_example.c** - tabulated cooling only (no chemistry) C example that uses the units and chemistry data structures.
+
+    * **c_example_nostruct.c** - full functionality C example that uses the ``initialize_grackle`` function instead of data structures.
+
+    * **c_table_example_nostruct.c** - tabulated cooling only (no chemistry) C example that uses the ``initialize_grackle`` function instead of data structures.
+
+    * **cxx_example.C** - full functionality C++ example that uses the units and chemistry data structures.
+
+    * **cxx_table_example.C** - tabulated cooling only (no chemistry) C++ example that uses the units and chemistry data structures.
+
+    * **fortran_example.F** - full functionality Fortran example that uses the ``initialize_grackle`` function.
+
+    * **fortran_table_example.F** - tabulated cooling only (no chemistry) Fortran example that uses the ``initialize_grackle`` function.
+
+Once you have already installed the grackle library, you can build the examples 
+by typing *make* and the name of the file without extension.  For example, to 
+build the C++ example, type:
 
 .. code-block:: bash
 
@@ -30,15 +51,19 @@ on these, see :ref:`tabulated-mode`.
 Header Files
 ------------
 
-Four source files are installed with the grackle library.  They are:
+Six header files are installed with the grackle library.  They are:
 
-    * **grackle.h** - the primary header file, containing declarations for all the available functions and data structures.  This is the only header file that needs to be included.
+    * **grackle.h** - the primary header file, containing declarations for all the available functions and data structures.  This is the only header file that needs to be included for C and C++ codes.
 
-    * **grackle_macros.h** - this contains basic variable type definitions.
+    * **grackle_types.h** - defines the variable type **gr_float** to be used for the baryon fields passed to the grackle functions.  This can be either a 4 or 8 byte float, allowing the code to be easily configured for either single or double precision baryon fields.
 
-    * **chemistry_data.h** - this defines the primary data structure which all run time parameters as well as the chemistry, cooling, and UV background data.
+    * **grackle_fortran_types.def** - similar to **grackle_types.h**, but used with Fortran codes.  This defines the variable type **R_PREC** as either real\*4 or real\*8.
 
-    * **code_units.h** - this defines the structure containing conversions from code units to CGS.
+    * **grackle_macros.h** - contains some macros used internally.
+
+    * **chemistry_data.h** - defines the primary data structure which all run time parameters as well as the chemistry, cooling, and UV background data.
+
+    * **code_units.h** - defines the structure containing conversions from code units to CGS.
 
 The only source file that needs to be included in your simulation code is 
 **grackle.h**.  Since this is a C++ example and the Grackle is pure C, we 
@@ -53,14 +78,14 @@ must surround the include with the 'extern "C"' directive.
 Data Types
 ----------
 
-The grackle library provides two variable sized data types, one for integers 
-and one for floating point variables.  This allows the Grackle to switch easily 
-between 32 and 64 bit integers and floats.  With **grackle.h** included, both of 
-these data types are available.
-
-    * **gr_int** - the integer data type.  This type is a 32 bit integer (int) if compiled with *integers-32* and a 64 bit integer (long int) if compiled with *integers-64*.
-
-    * **gr_float** - the floating point data type.  This type is a 32 bit float (float) if compiled with *precision-32* and a 64 bit float (double) if compiled with *precision-64*.
+The grackle library provides a configurable variable type to control the 
+precision of the baryon fields passed to the grackle functions.  For C and 
+C++ codes, this is **gr_float**.  For Fortran codes, this is **R_PREC**.  
+The precision of these types can be configured with the *precision* compile 
+option.  Compile with *precision-32* to make **gr_float** and **R_PREC** a 4 
+byte float (*float* for C/C++ and *real\*4* for Fortran).  Compile with 
+*precision-64* to make **gr_float** and **R_PREC** an 8 byte float (*double* 
+for C/C++ and *real\*8* for Fortran).
 
 Code Units
 ----------
@@ -70,8 +95,8 @@ simulation.**
 The *code_units* structure contains conversions from code units to CGS.  
 If *comoving_coordinates* is set to 0, it is assumed that the fields 
 passed into the solver are in the proper frame.  All of the units 
-(density, length, time, and velocity) must be set.  When using the 
-proper frame, *a_units* (units for the expansion factor) must be set to 1.0.
+(density, length, time, velocity, and expansion factor) must be set.  When using 
+the proper frame, *a_units* (units for the expansion factor) must be set to 1.0.
 
 .. code-block:: c++
 
@@ -103,7 +128,7 @@ densities to stay close to 1.0.
 Chemistry Data
 --------------
 
-The main Grackle header file contains a structure, called **my_chemistry**, which 
+The main Grackle header file contains a structure, called **grackle_data**, which 
 contains all of the parameters that control the behavior of the solver as well as 
 all of the actual chemistry and cooling rate data.  The routine, 
 *set_default_chemistry_parameters* is responsible for the initial setup of this 
@@ -119,12 +144,12 @@ available parameters.  The function will return an integer indicating success
   }
 
   // Set parameter values for chemistry.
-  my_chemistry.use_grackle = 1;            // chemistry on
-  my_chemistry.with_radiative_cooling = 1; // cooling on
-  my_chemistry.primordial_chemistry = 3;   // molecular network with H, He, D
-  my_chemistry.metal_cooling = 1;          // metal cooling on
-  my_chemistry.UVbackground = 1;           // UV background on
-  my_chemistry.grackle_data_file = "CloudyData_UVB=HM2012.h5"; // data file
+  grackle_data.use_grackle = 1;            // chemistry on
+  grackle_data.with_radiative_cooling = 1; // cooling on
+  grackle_data.primordial_chemistry = 3;   // molecular network with H, He, D
+  grackle_data.metal_cooling = 1;          // metal cooling on
+  grackle_data.UVbackground = 1;           // UV background on
+  grackle_data.grackle_data_file = "CloudyData_UVB=HM2012.h5"; // data file
 
 Once the desired parameters have been set, the chemistry and cooling rates 
 must be initialized with the *initialize_chemistry_data*.  This function 
@@ -137,8 +162,8 @@ set to 1.  The initializing function will return an integer indicating success
 
   // Set initial expansion factor (for internal units).
   // Set expansion factor to 1 for non-cosmological simulation.
-  gr_float initial_redshift = 100.;
-  gr_float a_value = 1. / (1. + initial_redshift);
+  double initial_redshift = 100.;
+  double a_value = 1. / (1. + initial_redshift);
 
   // Finally, initialize the chemistry object.
   if (initialize_chemistry_data(&my_units, a_value) == 0) {
@@ -171,13 +196,13 @@ created.
 
   // Set grid dimension and size.
   // grid_start and grid_end are used to ignore ghost zones.
-  gr_int field_size = 10;
-  gr_int grid_rank = 3;
-  // If grid rank is less than 3, set the other dimensions, 
-  // start indices, and end indices to 0.
-  gr_int grid_dimension[3], grid_start[3], grid_end[3];
+  int field_size = 10;
+  int grid_rank = 3;
+  // If grid rank is less than 3, set the other dimensions to 1 and  
+  // start indices and end indices to 0.
+  int grid_dimension[3], grid_start[3], grid_end[3];
   for (int i = 0;i < 3;i++) {
-    grid_dimension[i] = 0; // the active dimension not including ghost zones.
+    grid_dimension[i] = 1; // the active dimension not including ghost zones.
     grid_start[i] = 0;
     grid_end[i] = 0;
   }
@@ -228,7 +253,7 @@ Solve the Chemistry and Cooling
 .. code-block:: c++
 
   // some timestep (one million years)
-  gr_float dt = 3.15e7 * 1e6 / my_units.time_units;
+  double dt = 3.15e7 * 1e6 / my_units.time_units;
 
   if (solve_chemistry(&my_units,
                       a_value, dt,
@@ -337,8 +362,9 @@ If you only intend to run simulations using the fully tabulated cooling
 (*primordial_chemistry* set to 0), then a simplified set of functions are 
 available.  These functions do not require pointers to be given for the 
 field arrays for the chemistry species densities.  See the 
-**cxx_table_example.C** and **c_table_example.c** files in the 
-**src/example** directory for an example.
+**cxx_table_example.C**, **c_table_example.c**, 
+**c_table_example_nostruct.c**, and **fortran_table_example.F** files in the 
+**src/example** directory for examples.
 
 .. note:: No simplified function is available for the calculation of the gamma field since gamma is only altered in Grackle by the presence of H\ :sub:`2`\.
 
@@ -348,7 +374,7 @@ Solve the Cooling
 .. code-block:: c++
 
   // some timestep (one million years)
-  gr_float dt = 3.15e7 * 1e6 / my_units.time_units;
+  double dt = 3.15e7 * 1e6 / my_units.time_units;
 
   if (solve_chemistry(&my_units,
                       a_value, dt,
