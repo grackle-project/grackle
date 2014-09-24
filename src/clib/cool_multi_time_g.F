@@ -49,7 +49,7 @@
 !-----------------------------------------------------------------------
 
       implicit NONE
-#include "fortran_types.def"
+#include "grackle_fortran_types.def"
 
 !  Arguments
 

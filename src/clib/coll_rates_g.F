@@ -55,7 +55,7 @@ c
 #define NO_USE_SAVIN2004
 c
       implicit NONE
-#include "fortran_types.def"
+#include "grackle_fortran_types.def"
 c
 c  Arguments
 c

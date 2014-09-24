@@ -37,7 +37,7 @@ c
 c-----------------------------------------------------------------------
 c
       implicit NONE
-#include "fortran_types.def"
+#include "grackle_fortran_types.def"
 c
 c  Arguments
 c

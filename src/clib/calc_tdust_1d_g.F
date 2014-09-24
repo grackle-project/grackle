@@ -38,7 +38,7 @@
 !-----------------------------------------------------------------------
 
       implicit NONE
-#include "fortran_types.def"
+#include "grackle_fortran_types.def"
 
 !  Arguments
 
@@ -324,7 +324,7 @@ c               ERROR_MESSAGE
 !-----------------------------------------------------------------------
 
       implicit NONE
-#include "fortran_types.def"
+#include "grackle_fortran_types.def"
 
 !  Arguments
 

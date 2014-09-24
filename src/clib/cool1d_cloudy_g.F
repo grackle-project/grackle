@@ -58,7 +58,7 @@
 !-----------------------------------------------------------------------
 
       implicit NONE
-#include "fortran_types.def"
+#include "grackle_fortran_types.def"
 
 !  General Arguments
 
@@ -272,7 +272,7 @@
      &     dataSize, dataField, value)
 
       implicit NONE
-#include "fortran_types.def"
+#include "grackle_fortran_types.def"
 
 !  General Arguments
 
@@ -314,7 +314,7 @@
      &     dataSize, dataField, value)
 
       implicit NONE
-#include "fortran_types.def"
+#include "grackle_fortran_types.def"
 
 !  General Arguments
 
@@ -375,7 +375,7 @@
      &     dataSize, dataField, value)
 
       implicit NONE
-#include "fortran_types.def"
+#include "grackle_fortran_types.def"
 
 !  General Arguments
 
@@ -455,7 +455,7 @@
      &     end_int, value)
 
       implicit NONE
-#include "fortran_types.def"
+#include "grackle_fortran_types.def"
 
 !  General Arguments
 
@@ -547,7 +547,7 @@
      &     value)
 
       implicit NONE
-#include "fortran_types.def"
+#include "grackle_fortran_types.def"
 
 !  General Arguments
 

@@ -28,35 +28,35 @@ int main(int argc, char *argv[])
   // Set parameters
 
   // chemistry on
-  gr_int use_grackle = 1;
+  int use_grackle = 1;
   // cooling on
-  gr_int with_radiative_cooling = 1;
+  int with_radiative_cooling = 1;
   // molecular network with H, He, D
-  gr_int primordial_chemistry = 3;
+  int primordial_chemistry = 3;
   // metal cooling on
-  gr_int metal_cooling = 1;
+  int metal_cooling = 1;
   // UV background on
-  gr_int UVbackground = 1;
+  int UVbackground = 1;
   // cooling data for Haardt & Madau 2012 background
   char *grackle_data_file = "../../input/CloudyData_UVB=HM2012.h5";
   // no dust
-  gr_int h2_on_dust = 0;
+  int h2_on_dust = 0;
   // include CMB cooling floor
-  gr_int cmb_temperature_floor = 1;
+  int cmb_temperature_floor = 1;
 
   // First, set up the units system.
   // These are conversions from code units to cgs.
-  gr_int comoving_coordinates = 0; // 1 if cosmological sim, 0 if not
-  gr_float density_units = 1.67e-24;
-  gr_float length_units = 1.0;
-  gr_float time_units = 1.0e12;
-  gr_float velocity_units = length_units / time_units;
-  gr_float a_units = 1.0; // units for the expansion factor
+  int comoving_coordinates = 0; // 1 if cosmological sim, 0 if not
+  double density_units = 1.67e-24;
+  double length_units = 1.0;
+  double time_units = 1.0e12;
+  double velocity_units = length_units / time_units;
+  double a_units = 1.0; // units for the expansion factor
 
   // Set initial expansion factor (for internal units).
   // Set expansion factor to 1 for non-cosmological simulation.
-  gr_float initial_redshift = 0.;
-  gr_float a_value = 1. / (1. + initial_redshift);
+  double initial_redshift = 0.;
+  double a_value = 1. / (1. + initial_redshift);
 
   // Initialize everything.
   if (initialize_grackle(comoving_coordinates,
@@ -83,9 +83,9 @@ int main(int argc, char *argv[])
 
   // Set grid dimension and size.
   // grid_start and grid_end are used to ignore ghost zones.
-  gr_int field_size = 1;
-  gr_int grid_rank = 3;
-  gr_int grid_dimension[3], grid_start[3], grid_end[3];
+  int field_size = 1;
+  int grid_rank = 3;
+  int grid_dimension[3], grid_start[3], grid_end[3];
   int i;
   for (i = 0;i < 3;i++) {
     grid_dimension[i] = 1; // the active dimension not including ghost zones.
@@ -119,12 +119,12 @@ int main(int argc, char *argv[])
   metal_density = malloc(field_size * sizeof(gr_float));
 
   // set temperature units
-  gr_float temperature_units =  mh * pow(a_units * 
-                                         length_units /
-                                         time_units, 2) / kboltz;
+  double temperature_units = mh * pow(a_units * 
+                                      length_units /
+                                      time_units, 2) / kboltz;
 
-  gr_float HydrogenFractionByMass = 0.76;
-  gr_float SolarMetalFractionByMass = 0.02041;
+  double HydrogenFractionByMass = 0.76;
+  double SolarMetalFractionByMass = 0.02041;
 
   for (i = 0;i < field_size;i++) {
     density[i] = 1.0;
@@ -158,7 +158,7 @@ int main(int argc, char *argv[])
 
   // Evolving the chemistry.
   // some timestep
-  gr_float dt = 3.15e7 * 1e6 / time_units;
+  double dt = 3.15e7 * 1e6 / time_units;
 
   if (solve_chemistry_(&comoving_coordinates,
                        &density_units, &length_units,

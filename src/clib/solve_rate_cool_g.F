@@ -122,7 +122,7 @@
 !-----------------------------------------------------------------------
 
       implicit NONE
-#include "fortran_types.def"
+#include "grackle_fortran_types.def"
 
 !  General Arguments
 
@@ -677,7 +677,7 @@ c -----------------------------------------------------------
 c -------------------------------------------------------------------
 
       implicit NONE
-#include "fortran_types.def"
+#include "grackle_fortran_types.def"
 
 !     Arguments
 
@@ -762,7 +762,7 @@ c -----------------------------------------------------------
 c -------------------------------------------------------------------
 
       implicit NONE
-#include "fortran_types.def"
+#include "grackle_fortran_types.def"
 
 !     Arguments
 
@@ -857,7 +857,7 @@ c -------------------------------------------------------------------
 ! -------------------------------------------------------------------
 
       implicit NONE
-#include "fortran_types.def"
+#include "grackle_fortran_types.def"
 
 !     Arguments
 
@@ -1181,7 +1181,7 @@ c -------------------------------------------------------------------
 ! -------------------------------------------------------------------
 
       implicit NONE
-#include "fortran_types.def"
+#include "grackle_fortran_types.def"
 
 !     arguments
 
@@ -1356,7 +1356,7 @@ c -------------------------------------------------------------------
 c -------------------------------------------------------------------
 
       implicit NONE
-#include "fortran_types.def"
+#include "grackle_fortran_types.def"
 
 !     arguments
 
@@ -1710,7 +1710,7 @@ c
 ! -------------------------------------------------------------------
 
       implicit NONE
-#include "fortran_types.def"
+#include "grackle_fortran_types.def"
 
 !     Arguments
 

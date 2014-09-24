@@ -1,25 +1,27 @@
       program fortran_example
 
       implicit None
+#include "grackle_fortran_types.def"
 
       integer iresult, i
 
-      integer*8 initialize_grackle,
+      integer initialize_grackle,
      &     solve_chemistry,
      &     calculate_cooling_time,
      &     calculate_temperature,
      &     calculate_pressure,
      &     calculate_gamma
 
-      real*8 tiny_number, mh, kboltz, fH
-      parameter (tiny_number = 1.0d-20)
+      real*8 mh, kboltz, fH
+      R_PREC tiny_number
+      parameter (tiny_number = 1.0e-20_RKIND)
       parameter (mh = 1.67262171d-24)
       parameter (kboltz = 1.3806504d-16)
       parameter (fH = 0.76)
 
 c     Initialization parameters
 
-      integer*8 comoving_coordinates, use_grackle,
+      integer comoving_coordinates, use_grackle,
      &     with_radiative_cooling, primordial_chemistry,
      &     metal_cooling, UVbackground, h2_on_dust, 
      &     cmb_temperature_floor
@@ -36,7 +38,7 @@ c     Field data arrays
 
       real*8 temperature_units, dt
 
-      real*8 density(field_size), energy(field_size),
+      R_PREC density(field_size), energy(field_size),
      &     x_velocity(field_size), y_velocity(field_size),
      &     z_velocity(field_size),
      &     HI_density(field_size), HII_density(field_size),
@@ -48,13 +50,13 @@ c     Field data arrays
      &     HDI_density(field_size),
      &     e_density(field_size), metal_density(field_size)
 
-      real*8 cooling_time(field_size), gamma(field_size),
+      R_PREC cooling_time(field_size), gamma(field_size),
      &     pressure(field_size), temperature(field_Size)
 
 c     Grid size and dimension
 c     grid_start and grid_end are used to ignore ghost zones.
 
-      integer*8 grid_rank, grid_dimension(3), 
+      integer grid_rank, grid_dimension(3), 
      &     grid_start(3), grid_end(3)
 
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
