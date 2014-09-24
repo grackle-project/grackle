@@ -35,7 +35,7 @@ int initialize_grackle(int comoving_coordinates,
                        char *grackle_data_file,
                        int primordial_chemistry, int metal_cooling,
                        int UVbackground, int h2_on_dust,
-                       int cmb_temperature_floor)
+                       int cmb_temperature_floor, double gamma)
 {
 
   code_units my_units;
@@ -59,6 +59,7 @@ int initialize_grackle(int comoving_coordinates,
   grackle_data.UVbackground = UVbackground;
   grackle_data.h2_on_dust = h2_on_dust;
   grackle_data.cmb_temperature_floor = cmb_temperature_floor;
+  grackle_data.Gamma = gamma;
 
   if (initialize_chemistry_data(&my_units, a_value) == FAIL) {
     fprintf(stderr, "Error in initialize_chemistry_data.\n");
@@ -76,7 +77,7 @@ int initialize_grackle_(int *comoving_coordinates,
                         char *grackle_file,
                         int *primordial_chemistry, int *metal_cooling,
                         int *UVbackground, int *h2_on_dust,
-                        int *cmb_temperature_floor,
+                        int *cmb_temperature_floor, double *gamma,
                         int n1)
 {
 
@@ -95,7 +96,7 @@ int initialize_grackle_(int *comoving_coordinates,
                             grackle_data_file,
                             *primordial_chemistry, *metal_cooling,
                             *UVbackground, *h2_on_dust,
-                            *cmb_temperature_floor);
+                            *cmb_temperature_floor, *gamma);
   return rval;
 
 }

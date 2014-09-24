@@ -37,7 +37,7 @@ int initialize_grackle(int comoving_coordinates,
                        char *grackle_data_file,
                        int primordial_chemistry, int metal_cooling,
                        int UVbackground, int h2_on_dust,
-                       int cmb_temperature_floor);
+                       int cmb_temperature_floor, double gamma);
 
 int solve_chemistry(code_units *my_units,
 		    double a_value, double dt_value,

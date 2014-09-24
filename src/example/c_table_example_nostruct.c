@@ -43,6 +43,8 @@ int main(int argc, char *argv[])
   int h2_on_dust = 0;
   // include CMB cooling floor
   int cmb_temperature_floor = 1;
+  // set adiabatic index
+  double Gamma = 5./3.;
 
   // First, set up the units system.
   // These are conversions from code units to cgs.
@@ -67,7 +69,7 @@ int main(int argc, char *argv[])
                          grackle_data_file,
                          primordial_chemistry, metal_cooling,
                          UVbackground, h2_on_dust,
-                         cmb_temperature_floor) == 0) {
+                         cmb_temperature_floor, Gamma) == 0) {
     fprintf(stderr, "Error in initialize_grackle.\n");
     return 0;
   }

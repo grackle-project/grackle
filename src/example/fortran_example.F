@@ -27,7 +27,7 @@ c     Initialization parameters
      &     cmb_temperature_floor
 
       real*8 density_units, length_units, time_units, velocity_units,
-     &     a_units, a_value, initial_redshift
+     &     a_units, a_value, initial_redshift, my_gamma
 
       character*36 grackle_data_file
 
@@ -79,6 +79,8 @@ c     no dust
       h2_on_dust = 0
 c     include CMB cooling floor
       cmb_temperature_floor = 1
+c     set adiabatic index
+      my_gamma = 5./3.;
 
 c     Set units
 
@@ -105,7 +107,7 @@ c     Initialize the Grackle
      &     grackle_data_file,
      &     primordial_chemistry, metal_cooling,
      &     UVbackground, h2_on_dust,
-     &     cmb_temperature_floor)
+     &     cmb_temperature_floor, my_gamma)
 
 c     Set field arrays
 
