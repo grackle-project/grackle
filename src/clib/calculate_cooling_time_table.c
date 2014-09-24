@@ -65,7 +65,7 @@ int _calculate_cooling_time_table(chemistry_data *my_chemistry,
     HeI_density = HeII_density = HeIII_density =
     H2I_density = H2II_density =
     DI_density = DII_density = HDI_density =
-    e_density;
+    e_density = NULL;
 
   if (calculate_cooling_time(my_units, a_value,
                              grid_rank, grid_dimension,

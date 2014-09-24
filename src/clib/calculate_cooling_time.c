@@ -110,7 +110,7 @@ int _calculate_cooling_time(chemistry_data *my_chemistry,
 
   /* Calculate temperature units. */
 
-  double temperature_units =  mh * POW(my_units->velocity_units, 2) / kboltz;
+  double temperature_units = mh * POW(my_units->velocity_units, 2) / kboltz;
 
   /* Call the fortran routine to solve cooling equations. */
 
