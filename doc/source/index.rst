@@ -7,9 +7,9 @@ Welcome to grackle's documentation!
 ===================================
 
 Grackle is a chemistry and radiative cooling library for astrophysical 
-simulations.  It is a generalized and trimmed down version of the chemistry 
-network of the `Enzo <http://enzo-project.org>`_ simulation code.  Grackle 
-provides:
+simulations with interfaces for C, C++, and Fortran codes.  It is a 
+generalized and trimmed down version of the chemistry network of the 
+`Enzo <http://enzo-project.org>`_ simulation code.  Grackle provides:
 
 - two options for primordial chemistry and cooling:
 
@@ -37,6 +37,7 @@ Contents:
    Installation.rst
    Integration.rst
    Parameters.rst
+   Reference.rst
    Python.rst
 
 Help
