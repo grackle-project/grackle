@@ -34,7 +34,7 @@ installed, grackle can be obtained with the following command:
 
 ::
 
-    ~ $ hg clone https://bitbucket.org/brittonsmith/grackle
+    ~ $ hg clone https://bitbucket.org/grackle/grackle
 
 Building
 --------
@@ -67,10 +67,6 @@ very good place to start.  Starting with an Enzo make file, you will likely
 have to add to the following variables:
 
     * ``MACH_CPPFLAGS`` - -fPIC
-
-    * ``MACH_FFLAGS_INTEGER_64`` - -fdefault-integer-8 # or -i8 for Intel compilers
-
-    * ``MACH_FFLAGS_REAL_64`` - -fdefault-real-8 -fdefault-double-8 # or -r8 for Intel compilers
 
 Once you have chosen the make file to be used, a few variables should be set:
 
@@ -109,8 +105,8 @@ Compiler Settings
 +++++++++++++++++
 
 There are three compile options available for setting the precision of 
-floating point and integer variables and for optimization.  To see them, 
-type:
+baryon fields, optimization, and building static or dynamic libraries.  
+To see them, type:
 
 .. highlight:: none
 
@@ -122,8 +118,7 @@ type:
    MACHINE-NAME: darwin
 
    CONFIG_PRECISION  [precision-{32,64}]                     : 64
-   CONFIG_INTEGERS  [integers-{32,64}]                       : 64
-   CONFIG_OPT  [opt-{warn,debug,cudadebug,high,aggressive}]  : high
+   CONFIG_OPT  [opt-{warn,debug,high,aggressive}]            : high
    CONFIG_SHARED  [shared-{yes,no}]                          : yes
 
 For example, to change the optimization to high, type:
