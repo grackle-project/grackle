@@ -55,8 +55,8 @@ int main(int argc, char *argv[])
 
   // Set initial expansion factor (for internal units).
   // Set expansion factor to 1 for non-cosmological simulation.
-  gr_float initial_redshift = 0.0;
-  gr_float a_value = 1. / (1. + initial_redshift);
+  double initial_redshift = 0.0;
+  double a_value = 1. / (1. + initial_redshift);
 
   // Finally, initialize the chemistry object.
   if (initialize_chemistry_data(&my_units, a_value) == 0) {
@@ -67,15 +67,15 @@ int main(int argc, char *argv[])
   // Allocate field arrays.
   gr_float *density, *energy, *x_velocity, *y_velocity, *z_velocity,
     *metal_density;
-  gr_float tiny_number = 1.e-20;
+  double tiny_number = 1.e-20;
 
   // Set grid dimension and size.
   // grid_start and grid_end are used to ignore ghost zones.
-  gr_int field_size = 1;
-  gr_int grid_rank = 3;
+  int field_size = 1;
+  int grid_rank = 3;
   // If grid rank is less than 3, set the other dimensions, 
   // start indices, and end indices to 0.
-  gr_int grid_dimension[3], grid_start[3], grid_end[3];
+  int grid_dimension[3], grid_start[3], grid_end[3];
   int i;
   for (i = 0;i < 3;i++) {
     grid_dimension[i] = 1; // the active dimension not including ghost zones.
@@ -94,9 +94,9 @@ int main(int argc, char *argv[])
   metal_density = malloc(field_size * sizeof(gr_float));
 
   // set temperature units
-  gr_float temperature_units =  mh * pow(my_units.a_units * 
-                                         my_units.length_units /
-                                         my_units.time_units, 2) / kboltz;
+  double temperature_units = mh * pow(my_units.a_units * 
+                                      my_units.length_units /
+                                      my_units.time_units, 2) / kboltz;
 
   for (i = 0;i < field_size;i++) {
     density[i] = 1.0;
@@ -118,7 +118,7 @@ int main(int argc, char *argv[])
 
   // Evolving the chemistry.
   // some timestep
-  gr_float dt = 3.15e7 * 1e6 / my_units.time_units;
+  double dt = 3.15e7 * 1e6 / my_units.time_units;
 
   if (solve_chemistry_table(&my_units,
                             a_value, dt,
@@ -140,7 +140,7 @@ int main(int argc, char *argv[])
                                    grid_start, grid_end,
                                    density, energy,
                                    x_velocity, y_velocity, z_velocity,
-                                   metal_density, 
+                                   metal_density,
                                    cooling_time) == 0) {
     fprintf(stderr, "Error in calculate_cooling_time.\n");
     return 0;

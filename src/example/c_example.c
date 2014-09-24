@@ -55,8 +55,8 @@ int main(int argc, char *argv[])
 
   // Set initial expansion factor (for internal units).
   // Set expansion factor to 1 for non-cosmological simulation.
-  gr_float initial_redshift = 0.;
-  gr_float a_value = 1. / (1. + initial_redshift);
+  double initial_redshift = 0.;
+  double a_value = 1. / (1. + initial_redshift);
 
   // Finally, initialize the chemistry object.
   if (initialize_chemistry_data(&my_units, a_value) == 0) {
@@ -71,13 +71,13 @@ int main(int argc, char *argv[])
     *H2I_density, *H2II_density,
     *DI_density, *DII_density, *HDI_density,
     *e_density, *metal_density;
-  gr_float tiny_number = 1.e-20;
+  double tiny_number = 1.e-20;
 
   // Set grid dimension and size.
   // grid_start and grid_end are used to ignore ghost zones.
-  gr_int field_size = 1;
-  gr_int grid_rank = 3;
-  gr_int grid_dimension[3], grid_start[3], grid_end[3];
+  int field_size = 1;
+  int grid_rank = 3;
+  int grid_dimension[3], grid_start[3], grid_end[3];
   int i;
   for (i = 0;i < 3;i++) {
     grid_dimension[i] = 1; // the active dimension not including ghost zones.
@@ -111,7 +111,7 @@ int main(int argc, char *argv[])
   metal_density = malloc(field_size * sizeof(gr_float));
 
   // set temperature units
-  gr_float temperature_units =  mh * pow(my_units.a_units * 
+  double temperature_units =  mh * pow(my_units.a_units * 
                                          my_units.length_units /
                                          my_units.time_units, 2) / kboltz;
 
@@ -147,7 +147,7 @@ int main(int argc, char *argv[])
 
   // Evolving the chemistry.
   // some timestep
-  gr_float dt = 3.15e7 * 1e6 / my_units.time_units;
+  double dt = 3.15e7 * 1e6 / my_units.time_units;
 
   if (solve_chemistry(&my_units,
                       a_value, dt,
@@ -183,7 +183,7 @@ int main(int argc, char *argv[])
     return 0;
   }
 
-  fprintf(stderr, "Cooling time = %le s.\n", cooling_time[0] *
+  fprintf(stderr, "Cooling time = %g s.\n", cooling_time[0] *
           my_units.time_units);
 
   // Calculate temperature.
@@ -202,7 +202,7 @@ int main(int argc, char *argv[])
     return 0;
   }
 
-  fprintf(stderr, "Temperature = %le K.\n", temperature[0]);
+  fprintf(stderr, "Temperature = %g K.\n", temperature[0]);
 
   // Calculate pressure.
   gr_float *pressure;
@@ -220,7 +220,7 @@ int main(int argc, char *argv[])
     return 0;
   }
 
-  fprintf(stderr, "Pressure = %le.\n", pressure[0]);
+  fprintf(stderr, "Pressure = %g.\n", pressure[0]);
 
   // Calculate gamma.
   gr_float *gamma;
@@ -238,7 +238,7 @@ int main(int argc, char *argv[])
     return 0;
   }
 
-  fprintf(stderr, "gamma = %le.\n", gamma[0]);
+  fprintf(stderr, "gamma = %g.\n", gamma[0]);
 
   return 1;
 }
