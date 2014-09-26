@@ -29,7 +29,7 @@
      &                indixe, t1, t2, logtem, tdef, edot,
      &                tgas, tgasold, p2d, tdust, metallicity, rhoH, 
      &                ih2optical, iciecool, ciecoa, cieco,
-     &                icmbTfloor, iClHeat, clEleFra,
+     &                icmbTfloor, iClHeat, 
      &                priGridRank, priGridDim,
      &                priPar1, priPar2, priPar3,
      &                priDataSize, priCooling, priHeating,
@@ -93,7 +93,6 @@
 !  Cloudy cooling data
 
       integer icmbTfloor, iClHeat, iZscale, mycmbTfloor
-      real*8 clEleFra
       integer*8 priGridRank, priDataSize,
      &     metGridRank, metDataSize,
      &     priGridDim(priGridRank), metGridDim(metGridRank)
@@ -723,7 +722,7 @@ c  new (correct) way: (april 4, 2007)
          call cool1d_cloudy_g(d, rhoH, metallicity,
      &        in, jn, kn, is, ie, j, k,
      &        logtem, edot, comp2, dom, zr,
-     &        mycmbTfloor, iClHeat, iZscale, clEleFra,
+     &        mycmbTfloor, iClHeat, iZscale,
      &        priGridRank, priGridDim,
      &        priPar1, priPar2, priPar3,
      &        priDataSize, priCooling, priHeating,
@@ -760,7 +759,7 @@ c  new (correct) way: (april 4, 2007)
          call cool1d_cloudy_g(d, rhoH, metallicity,
      &        in, jn, kn, is, ie, j, k,
      &        logtem, edot, comp2, dom, zr,
-     &        icmbTfloor, iClHeat, iZscale, clEleFra,
+     &        icmbTfloor, iClHeat, iZscale,
      &        metGridRank, metGridDim,
      &        metPar1, metPar2, metPar3,
      &        metDataSize, metCooling, metHeating,

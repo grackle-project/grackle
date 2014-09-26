@@ -30,7 +30,7 @@
      &                gasgra, 
      &                ierr,
      &                ih2optical, iciecool, ithreebody, ciecoa, 
-     &                icmbTfloor, iClHeat, clEleFra,
+     &                icmbTfloor, iClHeat,
      &                priGridRank, priGridDim,
      &                priPar1, priPar2, priPar3,
      &                priDataSize, priCooling, priHeating,
@@ -97,7 +97,6 @@
 !
 !    icmbTfloor - flag to include temperature floor from cmb
 !    iClHeat    - flag to include cloudy heating
-!    clEleFra   - parameter to account for additional electrons from metals 
 !    priGridRank - rank of cloudy primordial cooling data grid
 !    priGridDim  - array containing dimensions of cloudy primordial data
 !    priPar1, priPar2, priPar3 - arrays containing primordial grid parameter values
@@ -177,7 +176,6 @@
 !  Cloudy cooling data
 
       integer icmbTfloor, iClHeat
-      real*8 clEleFra
       integer*8 priGridRank, priDataSize,
      &     metGridRank, metDataSize,
      &     priGridDim(priGridRank), metGridDim(metGridRank)
@@ -341,7 +339,7 @@ c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 fo
      &                indixe, t1, t2, logtem, tdef, edot,
      &                tgas, tgasold, p2d, tdust, metallicity, rhoH, 
      &                ih2optical, iciecool, ciecoa, cieco,
-     &                icmbTfloor, iClHeat, clEleFra,
+     &                icmbTfloor, iClHeat, 
      &                priGridRank, priGridDim,
      &                priPar1, priPar2, priPar3,
      &                priDataSize, priCooling, priHeating,

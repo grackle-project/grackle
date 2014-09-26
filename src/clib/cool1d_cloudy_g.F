@@ -7,7 +7,7 @@
      &                in, jn, kn, is, ie, j, k,
      &                logtem, edot, comp2, dom, zr,
      &                icmbTfloor, iClHeat, iZscale,
-     &                clEleFra, clGridRank, clGridDim,
+     &                clGridRank, clGridDim,
      &                clPar1, clPar2, clPar3,
      &                clDataSize, clCooling, clHeating, 
      &                itmask)
@@ -38,7 +38,6 @@
 !    icmbTfloor - flag to include temperature floor from cmb
 !    iClHeat    - flag to include cloudy heating
 !    iZscale    - flag to scale cooling by metallicity
-!    clEleFra   - parameter to account for additional electrons from metals 
 !    clGridRank - rank of cloudy cooling data grid
 !    clGridDim  - array containing dimensions of cloudy data
 !    clPar1, clPar2, clPar3 - arrays containing cloudy grid parameter values
@@ -70,7 +69,6 @@
 !  Cloudy parameters and data
 
       integer icmbTfloor, iClHeat, iZscale
-      real*8 clEleFra
       integer*8 clGridRank, clDataSize,
      &     clGridDim(clGridRank)
       real*8 clPar1(clGridDim(1)), clPar2(clGridDim(2)),

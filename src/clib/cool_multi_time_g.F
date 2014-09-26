@@ -21,7 +21,7 @@
      &                gaHIa, gaH2a, gaHea, gaHpa, gaela,
      &                gasgra, 
      &                ih2optical, iciecool, ciecoa, 
-     &                icmbTfloor, iClHeat, clEleFra,
+     &                icmbTfloor, iClHeat,
      &                priGridRank, priGridDim,
      &                priPar1, priPar2, priPar3,
      &                priDataSize, priCooling, priHeating,
@@ -84,7 +84,6 @@
 !  Cloudy cooling data
 
       integer icmbTfloor, iClHeat
-      real*8 clEleFra
       integer*8 priGridRank, priDataSize,
      &     metGridRank, metDataSize,
      &     priGridDim(priGridRank), metGridDim(metGridRank)
@@ -208,7 +207,7 @@
      &                indixe, t1, t2, logtem, tdef, edot,
      &                tgas, tgasold, p2d, tdust, metallicity, rhoH,
      &                ih2optical, iciecool, ciecoa, cieco,
-     &                icmbTfloor, iClHeat, clEleFra,
+     &                icmbTfloor, iClHeat, 
      &                priGridRank, priGridDim,
      &                priPar1, priPar2, priPar3,
      &                priDataSize, priCooling, priHeating,
