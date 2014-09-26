@@ -55,9 +55,9 @@ Six header files are installed with the grackle library.  They are:
 
     * **grackle.h** - the primary header file, containing declarations for all the available functions and data structures.  This is the only header file that needs to be included for C and C++ codes.
 
-    * **grackle_types.h** - defines the variable type **gr_float** to be used for the baryon fields passed to the grackle functions.  This can be either a 4 or 8 byte float, allowing the code to be easily configured for either single or double precision baryon fields.
+    * **grackle_types.h** - defines the variable type :c:type:`gr_float` to be used for the baryon fields passed to the grackle functions.  This can be either a 4 or 8 byte float, allowing the code to be easily configured for either single or double precision baryon fields.
 
-    * **grackle_fortran_types.def** - similar to **grackle_types.h**, but used with Fortran codes.  This defines the variable type **R_PREC** as either real\*4 or real\*8.
+    * **grackle_fortran_types.def** - similar to **grackle_types.h**, but used with Fortran codes.  This defines the variable type :c:type:`R_PREC` as either real\*4 or real\*8.
 
     * **grackle_macros.h** - contains some macros used internally.
 
@@ -80,11 +80,11 @@ Data Types
 
 The grackle library provides a configurable variable type to control the 
 precision of the baryon fields passed to the grackle functions.  For C and 
-C++ codes, this is **gr_float**.  For Fortran codes, this is **R_PREC**.  
+C++ codes, this is :c:type:`gr_float`.  For Fortran codes, this is :c:type:`R_PREC`.  
 The precision of these types can be configured with the *precision* compile 
-option.  Compile with *precision-32* to make **gr_float** and **R_PREC** a 4 
+option.  Compile with *precision-32* to make :c:type:`gr_float` and :c:type:`R_PREC` a 4 
 byte float (*float* for C/C++ and *real\*4* for Fortran).  Compile with 
-*precision-64* to make **gr_float** and **R_PREC** an 8 byte float (*double* 
+*precision-64* to make :c:type:`gr_float` and :c:type:`R_PREC` an 8 byte float (*double* 
 for C/C++ and *real\*8* for Fortran).
 
 .. c:type:: gr_float
