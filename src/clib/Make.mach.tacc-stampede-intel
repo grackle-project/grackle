@@ -49,16 +49,6 @@ MACH_F90FLAGS = -mp1 -prec_div -fp_port -align -save -zero # Fortran 90 compiler
 MACH_LDFLAGS  = -Wl,-noinhibit-exec -lifcore -lifport -lpthread -ldl # Linker flags
 
 #-----------------------------------------------------------------------
-# Precision-related flags
-#-----------------------------------------------------------------------
-
-MACH_FFLAGS_INTEGER_32 = # Flag to force Fortran to use 32-bit integers
-MACH_FFLAGS_INTEGER_64 = -i8 # Flag to force Fortran to use 64-bit integers
-MACH_FFLAGS_REAL_32    = # Flag to force Fortran to use 32-bit REALs
-MACH_FFLAGS_REAL_64    = -r8 # Flag to force Fortran to use 64-bit REALs
-# Needs to be run in 64 bit mode on stampede.
-
-#-----------------------------------------------------------------------
 # Optimization flags
 #-----------------------------------------------------------------------
 
