@@ -7,7 +7,7 @@ c
      &             ispecies,
      &             nratec, aye, temstart, temend,
      &             casebrates, threebody,
-     &             utem, uxyz, uaye, urho, utim,
+     &             uxyz, uaye, urho, utim,
      &             ceHIa, ceHeIa, ceHeIIa, ciHIa, ciHeIa, 
      &             ciHeISa, ciHeIIa, reHIIa, reHeII1a, 
      &             reHeII2a, reHeIIIa, brema, compa, 
@@ -157,7 +157,7 @@ c  Arguments
 c
       integer ispecies, nratec, casebrates, threebody, ndratec
       real*8  aye, temstart, temend, dtemstart, dtemend
-      real*8  utem, uxyz, uaye, urho, utim
+      real*8  uxyz, uaye, urho, utim
       real*8  ceHIa(nratec), ceHeIa(nratec), ceHeIIa(nratec),
      &        ciHIa(nratec), ciHeIa(nratec), ciHeISa(nratec), 
      &        ciHeIIa(nratec), reHIIa(nratec), reHeII1a(nratec), 

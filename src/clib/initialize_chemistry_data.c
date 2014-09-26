@@ -34,7 +34,7 @@ extern void FORTRAN_NAME(calc_rates_g)(
      int *ispecies,
      int *nratec, double *aye, double *temstart, double *temend, 
      int *casebrates, int *threebody,
-     double *utem, double *uxyz, double *uaye, double *urho, double *utim,
+     double *uxyz, double *uaye, double *urho, double *utim,
      double *ceHIa, double *ceHeIa, double *ceHeIIa, double *ciHIa, double *ciHeIa,
      double *ciHeISa, double *ciHeIIa, double *reHIIa, double *reHeII1a,
      double *reHeII2a, double *reHeIIIa, double *brema, double *compa, 
@@ -172,10 +172,6 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
       POW(a_value * my_units->a_units, 3);
   }
 
-  /* Calculate temperature units. */
-
-  double temperature_units =  mh * POW(my_units->velocity_units, 2) / kboltz;
-
   /* Call FORTRAN routine to do the hard work. */
  
   FORTRAN_NAME(calc_rates_g)(
@@ -183,7 +179,7 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
      &my_chemistry->NumberOfTemperatureBins, &a_value, &my_chemistry->TemperatureStart,
         &my_chemistry->TemperatureEnd,
         &my_chemistry->CaseBRecombination, &my_chemistry->three_body_rate,
-     &temperature_units, &co_length_units, &my_units->a_units, 
+     &co_length_units, &my_units->a_units, 
      &co_density_units, &my_units->time_units,
      my_chemistry->ceHI, my_chemistry->ceHeI, my_chemistry->ceHeII, my_chemistry->ciHI,
         my_chemistry->ciHeI,
