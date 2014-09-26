@@ -21,6 +21,8 @@
 #include "code_units.h" 
 #include "phys_constants.h"
 
+extern int grackle_verbose;
+
 extern chemistry_data grackle_data;
 
 int initialize_cloudy_data(chemistry_data *my_chemistry,
@@ -56,7 +58,8 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
                                code_units *my_units, double a_value)
 {
 
-  fprintf(stderr, "Initializing chemistry data.\n");
+  if (grackle_verbose)
+    fprintf(stderr, "Initializing chemistry data.\n");
 
   /* Only allow a units to be one with proper coordinates. */
   if (my_units->comoving_coordinates == FALSE && 

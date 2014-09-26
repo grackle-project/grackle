@@ -19,6 +19,8 @@
 #include "chemistry_data.h"
 #include "code_units.h"
 
+extern int grackle_verbose;
+
 // function prototypes
 int read_dataset(hid_t file_id, char *dset_name, double *buffer);
 
@@ -33,7 +35,8 @@ int initialize_UVbackground_data(chemistry_data *my_chemistry)
     return SUCCESS;
 
 
-  fprintf(stderr, "Initializing UV background.\n");
+  if (grackle_verbose)
+    fprintf(stderr, "Initializing UV background.\n");
 
 
   // Read in UV background data from hdf5 file.
@@ -42,8 +45,9 @@ int initialize_UVbackground_data(chemistry_data *my_chemistry)
   herr_t      status;
   herr_t      h5_error = -1;
 
-  fprintf(stderr, "Reading UV background data from %s.\n", 
-          my_chemistry->grackle_data_file);
+  if (grackle_verbose)
+    fprintf(stderr, "Reading UV background data from %s.\n", 
+            my_chemistry->grackle_data_file);
   file_id = H5Fopen(my_chemistry->grackle_data_file, 
                     H5F_ACC_RDONLY, H5P_DEFAULT);
 
@@ -235,11 +239,13 @@ int initialize_UVbackground_data(chemistry_data *my_chemistry)
   my_chemistry->UVbackground_table.zmax = my_chemistry->UVbackground_table.z[Nz-1];
 
   // Print out some information about the dataset just read in.
-  fprintf(stderr, "UV background information:\n");
-  fprintf(stderr, "  %s\n",info_string);
-  fprintf(stderr, "  z_min = %6.3f\n  z_max = %6.3f\n",
-          my_chemistry->UVbackground_table.zmin,
-          my_chemistry->UVbackground_table.zmax);
+  if (grackle_verbose) {
+    fprintf(stderr, "UV background information:\n");
+    fprintf(stderr, "  %s\n",info_string);
+    fprintf(stderr, "  z_min = %6.3f\n  z_max = %6.3f\n",
+            my_chemistry->UVbackground_table.zmin,
+            my_chemistry->UVbackground_table.zmax);
+  }
 
   // Set redshift on/off flags from data.
   my_chemistry->UVbackground_redshift_on     = my_chemistry->UVbackground_table.z[Nz-1];
@@ -247,10 +253,12 @@ int initialize_UVbackground_data(chemistry_data *my_chemistry)
   my_chemistry->UVbackground_redshift_off    = my_chemistry->UVbackground_table.zmin;
   my_chemistry->UVbackground_redshift_drop   = my_chemistry->UVbackground_table.zmin;
 
-  fprintf(stderr, "Setting UVbackground_redshift_on to %f.\n",
-          my_chemistry->UVbackground_redshift_on);
-  fprintf(stderr, "Setting UVbackground_redshift_off to %f.\n",
-          my_chemistry->UVbackground_redshift_off);
+  if (grackle_verbose) {
+    fprintf(stderr, "Setting UVbackground_redshift_on to %f.\n",
+            my_chemistry->UVbackground_redshift_on);
+    fprintf(stderr, "Setting UVbackground_redshift_off to %f.\n",
+            my_chemistry->UVbackground_redshift_off);
+  }
 
   return SUCCESS;
 }

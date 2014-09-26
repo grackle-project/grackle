@@ -20,6 +20,8 @@
 #include "chemistry_data.h"
 #include "code_units.h"
 
+int grackle_verbose = FALSE;
+
 chemistry_data grackle_data;
 
 chemistry_data _set_default_chemistry_parameters();

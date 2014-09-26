@@ -95,6 +95,18 @@ for C/C++ and *real\*8* for Fortran).
 
    The Fortran analog of :c:type:`gr_float`.  This is of type *real\*4* if compiled with *precision-32* and type *real\*8* if compiled with *precision-64*.
 
+Enabling Output
+---------------
+
+By default, grackle will not print anything but error messages.  However, a short 
+summary of the running configuration can be printed by setting ``grackle_verbose`` 
+to 1.
+
+.. code-block:: c++
+
+   // Enable output
+   grackle_verbose = 1;
+
 Code Units
 ----------
 

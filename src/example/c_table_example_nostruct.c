@@ -25,6 +25,9 @@
 int main(int argc, char *argv[])
 {
 
+  // Enable output
+  grackle_verbose = 1;
+
   // Set parameters
 
   // chemistry on

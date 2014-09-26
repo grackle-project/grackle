@@ -27,6 +27,9 @@ extern "C" {
 int main(int argc, char *argv[])
 {
 
+  // Enable output
+  grackle_verbose = 1;
+
   /*********************************************************************
   / Initial setup of units and chemistry objects.
   / This should be done at simulation start.

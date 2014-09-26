@@ -30,6 +30,9 @@ int main(int argc, char *argv[])
   / This should be done at simulation start.
   *********************************************************************/
 
+  // Enable output
+  grackle_verbose = 1;
+
   // First, set up the units system.
   // These are conversions from code units to cgs.
   code_units my_units;
@@ -45,6 +48,7 @@ int main(int argc, char *argv[])
     fprintf(stderr, "Error in set_default_chemistry_parameters.\n");
     return 0;
   }
+
   // Set parameter values for chemistry.
   grackle_data.use_grackle = 1;            // chemistry on
   grackle_data.with_radiative_cooling = 1; // cooling on
