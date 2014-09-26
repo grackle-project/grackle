@@ -685,7 +685,7 @@ c -------------------------------------------------------------------
      &        HM(in,jn,kn),  H2I(in,jn,kn), H2II(in,jn,kn),
      &        DI(in,jn,kn),  DII(in,jn,kn), HDI(in,jn,kn),
      &        d(in,jn,kn),metal(in,jn,kn)
-      real factor
+      real*8 factor
 
 !     locals
 
@@ -918,8 +918,7 @@ c -------------------------------------------------------------------
 !     locals
 
       integer i, n1
-      real factor
-      real*8 x, logtem0, logtem9, dlogtem, nh,
+      real*8 factor, x, logtem0, logtem9, dlogtem, nh,
      &       d_logtem0, d_logtem9, d_dlogtem
 
 !     Set log values of start and end of lookup tables
