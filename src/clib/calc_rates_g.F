@@ -185,8 +185,6 @@ c
 c
 c  Parameters
 c
-      integer nnu
-      parameter (nnu = 400)
       integer ireco, ibrco, icico, iceco, iphoto_mol
       parameter (ireco = 1, ibrco = 1, icico = 1, iceco = 1, 
      &           iphoto_mol = 0)
@@ -218,15 +216,12 @@ c
 
 c  Locals
 c
-      integer i,j,n
-      real*8 nu, delnu, hnu, logttt, ttt, tev, logtev, 
-     &                 xx, dum, tbase1, xbase1, kunit, coolunit,
-     &                 dbase1, dlogtem, kunit_3bdy, x, y, cierate,
-     &                 grain_coef, d_ttt, d_logttt, d_dlogtem,
-     &                 ttt2, d_ttt2
-      real*8 sigma24(nnu), sigma25(nnu), sigma26(nnu), 
-     &                 sigma27(nnu), sigma28(nnu), sigma29(nnu), 
-     &                 sigma30(nnu), sigma31(nnu), fext(nnu)
+      integer i,j
+      real*8 logttt, ttt, tev, logtev, 
+     &     xx, dum, tbase1, xbase1, kunit, coolunit,
+     &     dbase1, dlogtem, kunit_3bdy, cierate,
+     &     grain_coef, d_ttt, d_logttt, d_dlogtem,
+     &     ttt2, d_ttt2
       real*8 tm, HDLR, HDLV, lt, t3, lt3
 c
 c\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////////
