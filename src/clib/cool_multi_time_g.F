@@ -222,7 +222,7 @@
 
          do i = is+1, ie+1
             energy = max(p2d(i)/(gamma-1._DKIND), tiny)   
-            cooltime(i,j,k) = real(abs(energy/edot(i)), RKIND)
+            cooltime(i,j,k) = real(energy/edot(i), RKIND)
          enddo
 
        enddo
