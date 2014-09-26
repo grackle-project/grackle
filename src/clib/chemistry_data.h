@@ -252,7 +252,6 @@ typedef struct
 
   double *HDlte;
   double *HDlow;
-  double *HDcool;
 
   /* CIE cooling */
   double *cieco;

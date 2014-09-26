@@ -13,7 +13,7 @@ c
      &             reHeII2a, reHeIIIa, brema, compa, 
      &             gammahacgs, gammaha,
      &             hyd01ka, h2k01a, vibha, rotha, rotla, 
-     &             gpldl, gphdl, hdltea, hdlowa, hdcool, ciecoa,
+     &             gpldl, gphdl, hdltea, hdlowa, ciecoa,
      &             gaHIa, gaH2a, gaHea, gaHpa, gaela, gasgra,
      &             k1a, k2a, k3a, k4a, k5a, k6a, k7a, k8a, k9a, k10a,
      &             k11a, k12a, k13a, k13dda, k14a, k15a, k16a, k17a,
@@ -177,7 +177,7 @@ c
      &        k21a(nratec), k23a(nratec),
      &        k22a(nratec), k50a(nratec), k51a(nratec), k52a(nratec), 
      &        k53a(nratec), k54a(nratec), k55a(nratec), k56a(nratec),
-     &        k13dda(nratec, 7), hdcool(nratec, 5),
+     &        k13dda(nratec, 7),
      &        h2dusta(nratec, ndratec),
      &        ncrna(nratec), ncrd1a(nratec), ncrd2a(nratec),
      &        mutab(nratec)
@@ -961,7 +961,6 @@ c
      &            dexp(-128.d0/ttt) * 128.d0 +
      &            (5.0d0/3.0d0) * (4.1d-12+2.1e-13*ttt**0.92d0) *
      &            dexp(-255.d0/ttt) * 255.d0) * kb/1.27d0 ) / coolunit
-c      hdcool=hdlte/(1.0d0+hdlte/hdlow)
 c
 c     g) CIE cooling as discussed in Ripamonti & Abel (2003)
 c        cie_thin_cooling_rate_g returns rate as erg s^-1 cm^3 g^2 so

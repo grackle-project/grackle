@@ -40,7 +40,7 @@ extern void FORTRAN_NAME(calc_rates_g)(
      double *reHeII2a, double *reHeIIIa, double *brema, double *compa, 
      double *gammahacgs, double *gammaha,
      double *hyd01ka, double *h2k01a, double *vibha, double *rotha, double *rotla,
-     double *gpldl, double *gphdl, double *hdlte, double *hdlow, double *hdcool, double *cieco,
+     double *gpldl, double *gphdl, double *hdlte, double *hdlow, double *cieco,
      double *gaHIa, double *gaH2a, double *gaHea, double *gaHpa, double *gaela, double *gasgr, 
      double *k1a, double *k2a, double *k3a, double *k4a, double *k5a, double *k6a,
      double *k7a, double *k8a, double *k9a, double *k10a,
@@ -97,7 +97,6 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
                                                sizeof(double));
     my_chemistry->HDlte   = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
     my_chemistry->HDlow   = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_chemistry->HDcool  = malloc(5 * my_chemistry->NumberOfTemperatureBins * sizeof(double));
     my_chemistry->cieco   = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
     my_chemistry->GAHI    = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
     my_chemistry->GAH2    = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
@@ -195,7 +194,7 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
      my_chemistry->hyd01k, my_chemistry->h2k01, my_chemistry->vibh, my_chemistry->roth,
         my_chemistry->rotl,
      my_chemistry->GP99LowDensityLimit, my_chemistry->GP99HighDensityLimit,
-        my_chemistry->HDlte, my_chemistry->HDlow, my_chemistry->HDcool, my_chemistry->cieco,
+        my_chemistry->HDlte, my_chemistry->HDlow, my_chemistry->cieco,
      my_chemistry->GAHI, my_chemistry->GAH2, my_chemistry->GAHe, my_chemistry->GAHp,
         my_chemistry->GAel, my_chemistry->gas_grain, 
      my_chemistry->k1, my_chemistry->k2, my_chemistry->k3, my_chemistry->k4, my_chemistry->k5,
