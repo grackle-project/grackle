@@ -3,9 +3,9 @@
 !=======================================================================
 !////////////////////  SUBROUTINE COOL1D_CLOUDY_G  \\\\\\\\\\\\\\\\\\\\\
 
-      subroutine cool1d_cloudy_g(d, de, rhoH, metallicity,
+      subroutine cool1d_cloudy_g(d, rhoH, metallicity,
      &                in, jn, kn, is, ie, j, k,
-     &                logtem, edot, comp2, ispecies, dom, zr,
+     &                logtem, edot, comp2, dom, zr,
      &                icmbTfloor, iClHeat, iZscale,
      &                clEleFra, clGridRank, clGridDim,
      &                clPar1, clPar2, clPar3,
@@ -25,13 +25,11 @@
 !    in,jn,kn - dimensions of 3D fields
 !
 !    d        - total density field
-!    de       - electron density field
 !
 !    rhoH     - total H mass density
 !    metallicity - metallicity
 !
 !    is,ie    - start and end indices of active region (zero based)
-!    ispecies - chemistry module (1 - H/He only, 2 - molecular H, 3 - D) 
 !    logtem   - natural log of temperature values
 !
 !    dom      - unit conversion to proper number density in code units
@@ -62,10 +60,10 @@
 
 !  General Arguments
 
-      integer in, jn, kn, is, ie, j, k, ispecies
+      integer in, jn, kn, is, ie, j, k
 
       real*8 comp2, dom, zr
-      R_PREC d(in,jn,kn), de(in,jn,kn)
+      R_PREC d(in,jn,kn)
       real*8 rhoH(in), metallicity(in), logtem(in),
      &       edot(in)
 
@@ -94,8 +92,7 @@
 
 !  Slice locals
 
-      real*8 e_frac(in), log_e_frac(in), 
-     &       cl_e_frac(in), fh(in), log_n_h(in),
+      real*8 fh(in), log_n_h(in),
      &       log_cool(in), log_cool_cmb(in), log_heat(in),
      &       edot_met(in), log10tem(in)
 
@@ -478,10 +475,10 @@
 !=======================================================================
 
       if (end_int) then
-         call interpolate_2Df3D_g(input1, input2, 
+         call interpolate_2Df3D_g(input1,
      &        input3, gridDim,
      &        gridPar1, dgridPar1,
-     &        gridPar2, index2,
+     &        index2,
      &        gridPar3, dgridPar3,
      &        dataSize, dataField, 
      &        value)
@@ -539,9 +536,9 @@
 !     slice in the datacube before the redshift where 
 !     the UV background turns on.
 !
-      subroutine interpolate_2Df3D_g(input1, input2, input3, gridDim,
+      subroutine interpolate_2Df3D_g(input1, input3, gridDim,
      &     gridPar1, dgridPar1,
-     &     gridPar2, index2,
+     &     index2,
      &     gridPar3, dgridPar3,
      &     dataSize, dataField, 
      &     value)
@@ -553,9 +550,8 @@
 
       integer*8 dataSize, index2
       integer*8 gridDim(3)
-      real*8 input1, input2, input3, value
+      real*8 input1, input3, value
       real*8 gridPar1(gridDim(1)), dgridPar1,
-     &       gridPar2(gridDim(2)),
      &       gridPar3(gridDim(3)), dgridPar3
       real*8 dataField(dataSize)
 
@@ -563,7 +559,7 @@
 
       integer*8 index1, index3, int_index
       integer q
-      real*8 slope, value3(2), value2(2)
+      real*8 slope, value3(2)
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
 !=======================================================================

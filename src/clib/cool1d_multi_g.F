@@ -720,9 +720,9 @@ c  new (correct) way: (april 4, 2007)
 
          iZscale = 0
          mycmbTfloor = 0
-         call cool1d_cloudy_g(d, de, rhoH, metallicity,
+         call cool1d_cloudy_g(d, rhoH, metallicity,
      &        in, jn, kn, is, ie, j, k,
-     &        logtem, edot, comp2, ispecies, dom, zr,
+     &        logtem, edot, comp2, dom, zr,
      &        mycmbTfloor, iClHeat, iZscale, clEleFra,
      &        priGridRank, priGridDim,
      &        priPar1, priPar2, priPar3,
@@ -757,9 +757,9 @@ c  new (correct) way: (april 4, 2007)
       if (imcool .eq. 1) then
 
          iZscale = 1
-         call cool1d_cloudy_g(d, de, rhoH, metallicity,
+         call cool1d_cloudy_g(d, rhoH, metallicity,
      &        in, jn, kn, is, ie, j, k,
-     &        logtem, edot, comp2, ispecies, dom, zr,
+     &        logtem, edot, comp2, dom, zr,
      &        icmbTfloor, iClHeat, iZscale, clEleFra,
      &        metGridRank, metGridDim,
      &        metPar1, metPar2, metPar3,
