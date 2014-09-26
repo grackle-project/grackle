@@ -1005,16 +1005,12 @@ c        Default is 8.5e-26 for epsilon=0.05, G_0=1.7 (rate in erg s^-1 cm^-3)
 c
       gammaha   = gammahacgs / coolunit
 
-#define NO_OUTPUT_COOLING_RATE_DATA
-#ifdef OUTPUT_COOLING_RATE_DATA
 c
 c     Write out cooling rate data
 c
 
       if (ioutput.eq.1) then
         open(10, file='cool_rates.out', status='unknown')
-
-!      call open_mpi_error_file( 'cool_rates.out', 10, 'unknown' )
 
         do i=1, nratec
            logttt = log(temstart) + real(i-1, 8)*dlogtem
@@ -1027,8 +1023,6 @@ c
  1000      format(1p,30(e10.3,1x))
         enddo
 
-!      call close_mpi_error_file( 10 )
-
         close(10)
 
 c
@@ -1036,8 +1030,6 @@ c     Write out species rate data
 c
 
         open(10, file='rates.out', status='unknown')
-
-!      call open_mpi_error_file( 'rates.out', 10, 'unknown' )
 
         do i=1, nratec
            logttt = log(temstart) + real(i-1, 8)*dlogtem
@@ -1048,15 +1040,10 @@ c
      &                    k16a(i), k17a(i), k18a(i), k19a(i), k22a(i)
         enddo
 
-!      call close_mpi_error_file( 10 )
-
        close(10)
 
       endif
 
-#endif /* OUTPUT_COOLING_RATE_DATA */
-
-c
       return
       end
 

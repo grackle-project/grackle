@@ -158,7 +158,7 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
 
   }
 
-  int ioutput = 1;
+  int ioutput = 0;
 
   double co_length_units, co_density_units;
   if (my_units->comoving_coordinates == TRUE) {
