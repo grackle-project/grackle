@@ -94,11 +94,11 @@ int _calculate_temperature(chemistry_data *my_chemistry,
   double inv_metal_mol = 1.0 / MU_METAL;
   
   if (my_chemistry->primordial_chemistry == 0) {
-    if (calculate_temperature_table(my_units,
-                              grid_rank, grid_dimension,
-                              density, internal_energy,
-                              metal_density,
-                              temperature) == FAIL) {
+    if (_calculate_temperature_table(my_chemistry, my_units,
+                                     grid_rank, grid_dimension,
+                                     density, internal_energy,
+                                     metal_density,
+                                     temperature) == FAIL) {
       fprintf(stderr, "Error in calculcate_temperature_table.\n");
       return FAIL;
     }
