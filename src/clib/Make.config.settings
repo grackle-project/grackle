@@ -37,7 +37,6 @@
 #=======================================================================
 #    warn          Write out verbose warnings when compiling
 #    debug         Compile for debugging
-#    cudadebug     Use device emulation to debug cuda code
 #    high          Use conservative but high optimization
 #    aggressive    Use aggressive optimization
 #-----------------------------------------------------------------------
