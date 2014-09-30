@@ -12,6 +12,7 @@
 #-----------------------------------------------------------------------
 
 OBJS_CONFIG_LIB = \
+        auto_show_version.o \
         calculate_cooling_time.o \
         calculate_cooling_time_table.o \
         calculate_gamma.o \

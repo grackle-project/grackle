@@ -20,6 +20,8 @@
 #include "code_units.h" 
 #include "phys_constants.h"
 
+void auto_show_version(FILE *fp);
+
 int initialize_cloudy_data(chemistry_data &my_chemistry,
                            cloudy_data &my_cloudy, char *group_name,
                            code_units &my_units, gr_float a_value,
@@ -52,6 +54,8 @@ extern "C" void FORTRAN_NAME(calc_rates_g)(
 int initialize_chemistry_data(chemistry_data &my_chemistry,
                               code_units &my_units, gr_float a_value)
 {
+
+  auto_show_version(stderr);
 
   fprintf(stderr, "Initializing chemistry data.\n");
 
