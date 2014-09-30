@@ -40,7 +40,7 @@ DEFAULT_INSTALL_PREFIX = /usr/local
 OUTPUT   = out.compile
 
 GRACKLE_DIR = .
-VERBOSE  = 1
+VERBOSE  = 0
 
 SVN      = hg
 
@@ -225,28 +225,28 @@ verbose: VERBOSE = 1
 #-----------------------------------------------------------------------
 
 .PHONY: autogen
-autogen: auto_show_config.C auto_show_flags.C auto_show_version.C
+autogen: auto_show_config.c auto_show_flags.c auto_show_version.c
 
-# Force update of auto_show_config.C
+# Force update of auto_show_config.c
 
-.PHONY: auto_show_config.C
-auto_show_config.C:
+.PHONY: auto_show_config.c
+auto_show_config.c:
 	-@$(MAKE) -s show-config  >& temp.show-config
-	-@awk 'BEGIN {print "#include <stdio.h>\nvoid auto_show_config(FILE *fp) {"}; {print "   fprintf (fp,\""$$0"\\n\");"}; END {print "}"}' < temp.show-config > auto_show_config.C
+	-@awk 'BEGIN {print "#include <stdio.h>\nvoid auto_show_config(FILE *fp) {"}; {print "   fprintf (fp,\""$$0"\\n\");"}; END {print "}"}' < temp.show-config > auto_show_config.c
 
-# Force update of auto_show_flags.C
+# Force update of auto_show_flags.c
 
-.PHONY: auto_show_flags.C
-auto_show_flags.C:
+.PHONY: auto_show_flags.c
+auto_show_flags.c:
 	-@$(MAKE) -s show-flags  >& temp.show-flags
-	-@awk 'BEGIN {print "#include <stdio.h>\nvoid auto_show_flags(FILE *fp) {"}; {print "   fprintf (fp,\""$$0"\\n\");"}; END {print "}"}' < temp.show-flags > auto_show_flags.C
+	-@awk 'BEGIN {print "#include <stdio.h>\nvoid auto_show_flags(FILE *fp) {"}; {print "   fprintf (fp,\""$$0"\\n\");"}; END {print "}"}' < temp.show-flags > auto_show_flags.c
 
-# Force update of auto_show_version.C
+# Force update of auto_show_version.c
 
-.PHONY: auto_show_version.C
-auto_show_version.C:
+.PHONY: auto_show_version.c
+auto_show_version.c:
 	-@$(MAKE) -s show-version  >& temp.show-version
-	-@awk 'BEGIN {print "#include <stdio.h>\nvoid auto_show_version(FILE *fp) {"}; {print "   fprintf (fp,\""$$0"\\n\");"}; END {print "}"}' < temp.show-version > auto_show_version.C
+	-@awk 'BEGIN {print "#include <stdio.h>\nvoid auto_show_version(FILE *fp) {"}; {print "   fprintf (fp,\""$$0"\\n\");"}; END {print "}"}' < temp.show-version > auto_show_version.c
 
 #-----------------------------------------------------------------------
 # Generate dependency file
@@ -256,6 +256,7 @@ auto_show_version.C:
 dep:
 	@echo "Updating DEPEND"
 	-@(makedepend $(DEFINES) $(INCLUDES) -a -fDEPEND -o.o -m -- -- *.C) >> out.make.DEPEND 2>&1
+	-@(makedepend $(DEFINES) $(INCLUDES) -a -fDEPEND -o.o -m -- -- *.c) >> out.make.DEPEND 2>&1
 	-@(makedepend $(DEFINES) $(INCLUDES) -a -fDEPEND -o.o -m -- -- *.F) >> out.make.DEPEND 2>&1
 	-@(makedepend $(DEFINES) $(INCLUDES) -a -fDEPEND -o.o -m -- -- *.h) >> out.make.DEPEND 2>&1
 
@@ -303,7 +304,7 @@ install:
 #-----------------------------------------------------------------------
 
 clean:
-	-@rm -f *.$(MACH_SHARED_EXT) *.o DEPEND.bak *~ $(OUTPUT) *.exe auto_show*.C DEPEND
+	-@rm -f *.$(MACH_SHARED_EXT) *.o DEPEND.bak *~ $(OUTPUT) *.exe auto_show*.C DEPEND out.make.DEPEND
 	-@touch DEPEND
 
 #-----------------------------------------------------------------------

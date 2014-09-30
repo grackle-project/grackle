@@ -25,6 +25,10 @@ extern int grackle_verbose;
 
 extern chemistry_data grackle_data;
 
+void auto_show_config(FILE *fp);
+void auto_show_flags(FILE *fp);
+void auto_show_version(FILE *fp);
+
 int initialize_cloudy_data(chemistry_data *my_chemistry,
                            cloudy_data *my_cloudy, char *group_name,
                            code_units *my_units, double a_value,
@@ -58,8 +62,22 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
                                code_units *my_units, double a_value)
 {
 
-  if (grackle_verbose)
-    fprintf(stderr, "Initializing chemistry data.\n");
+  if (grackle_verbose) {
+    FILE *fptr = fopen("GRACKLE_INFO", "w");
+    auto_show_version(fptr);
+    fprintf(fptr, "Grackle build options:\n");
+    auto_show_config(fptr);
+    fprintf(fptr, "Grackle build flags:\n");
+    auto_show_flags(fptr);
+    fclose(fptr);
+
+    auto_show_version(stderr);
+    fprintf(stderr, "Initializing grackle data.\n");
+    fprintf(stderr, "with_radiative_cooling: %d.\n", my_chemistry->with_radiative_cooling);
+    fprintf(stderr, "primordial_chemistry: %d.\n", my_chemistry->primordial_chemistry);
+    fprintf(stderr, "metal_cooling: %d.\n", my_chemistry->metal_cooling);
+    fprintf(stderr, "UVbackground: %d.\n", my_chemistry->UVbackground);
+  }
 
   /* Only allow a units to be one with proper coordinates. */
   if (my_units->comoving_coordinates == FALSE && 

@@ -85,9 +85,9 @@ suggest-clean:
 
 show-version:
 	@echo
+	@echo "The Grackle Version $(LIB_RELEASE_VERSION)"
 	@echo "Mercurial Branch   `$(SVN) identify -b`"
 	@echo "Mercurial Revision `$(SVN) identify -i`"
-	@echo "Library Release Version $(LIB_RELEASE_VERSION)"
 	@echo
 
 #-----------------------------------------------------------------------

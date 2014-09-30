@@ -22,9 +22,9 @@ Make.config.machine
 Make.config.override
 *.mod
 
-src/clib/auto_show_config.C
-src/clib/auto_show_flags.C
-src/clib/auto_show_version.C
+src/clib/auto_show_config.c
+src/clib/auto_show_flags.c
+src/clib/auto_show_version.c
 src/clib/libgrackle.so
 src/example/cxx_example
 src/example/cxx_table_example
