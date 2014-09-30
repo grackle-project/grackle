@@ -222,7 +222,7 @@
 
          do i = is+1, ie+1
             energy = max(p2d(i)/(gamma-1.d0), tiny)   
-            cooltime(i,j,k) = abs(energy/edot(i))
+            cooltime(i,j,k) = energy/edot(i)
          enddo
 
        enddo

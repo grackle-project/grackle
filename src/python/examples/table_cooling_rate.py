@@ -65,7 +65,7 @@ cool_unit = get_cooling_units(my_chemistry, current_redshift)
 density_proper = fc["density"] / \
   (my_chemistry.a_units * a_value)**(3*my_chemistry.comoving_coordinates)
 cooling_rate = cool_unit * fc["energy"] / \
-  fc["cooling_time"] / density_proper
+  np.abs(fc["cooling_time"]) / density_proper
 
 t_sort = np.argsort(fc["temperature"])
   
