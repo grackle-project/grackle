@@ -34,7 +34,7 @@ installed, grackle can be obtained with the following command:
 
 ::
 
-    ~ $ hg clone https://bitbucket.org/brittonsmith/grackle
+    ~ $ hg clone https://bitbucket.org/grackle/grackle
 
 Building
 --------
@@ -123,7 +123,7 @@ type:
 
    CONFIG_PRECISION  [precision-{32,64}]                     : 64
    CONFIG_INTEGERS  [integers-{32,64}]                       : 64
-   CONFIG_OPT  [opt-{warn,debug,cudadebug,high,aggressive}]  : debug
+   CONFIG_OPT  [opt-{warn,debug,high,aggressive}]            : debug
 
 For example, to change the optimization to high, type:
 
