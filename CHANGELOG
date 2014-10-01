@@ -1,0 +1,29 @@
+== Version 2.0 ==
+_Release date - Oct 1, 2014_
+
+  * Enhancement: All C++ files converted to C for easier integration into
+	C and Fortran code
+  * Enhancement: Main chemistry data structure moved into grackle
+	namespace.  The user is no longer responsible for carrying it.
+  * Enhancement: Changeable integer precision compile flag removed for
+	greater simplicity
+  * Enhancement: Internal chemistry and cooling calculation now always
+	done in double precision with gr_float type only used for baryon
+	fields.  The Grackle can now be reliably run in 32-bit mode.
+  * Enhancement: Changeable Fortran baryon field precision now controlled
+	with a custom variable type for better stability
+  * Enhancement: Examples now available for C, C++, and Fortran codes
+  * Enhancement: Grackle output now configurable so that all processors do
+	not have to print info
+  * Enhancement: Version and compile options now written to a file at run
+	start-up
+
+== Version 1.1 ==
+_Release date - Oct 1, 2014_
+
+  * New feature: Static library build option
+  * Enhancement: Updated H-, H2, and HD chemistry and cooling rates
+  * Enhancement: Sign of returned cooling time is now preserved
+
+== Version 1.0 ==
+_Release date - Jan 10, 2014_
