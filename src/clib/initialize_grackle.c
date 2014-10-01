@@ -82,10 +82,11 @@ int initialize_grackle_(int *comoving_coordinates,
 {
 
   int i;
-  char *grackle_data_file = malloc(n1 * sizeof(char));
+  char *grackle_data_file = malloc((n1+1) * sizeof(char));
   for (i = 0; i < n1; i++) {
     grackle_data_file[i] = grackle_file[i];
   }
+  grackle_data_file[n1] = NULL; // make NULL-terminated
 
   int rval;
   rval = initialize_grackle(*comoving_coordinates,
