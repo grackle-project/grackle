@@ -58,7 +58,7 @@ MACH_CFLAGS   = -mp1 -prec_div -fp_port -align # C compiler flags
 MACH_CXXFLAGS = -mp1 -prec_div -fp_port -align # C++ compiler flags
 MACH_FFLAGS   = # Fortran 77 compiler flags
 MACH_F90FLAGS = -mp1 -prec_div -fp_port -align -save -zero # Fortran 90 compiler flags
-MACH_LDFLAGS  = -Wl,-noinhibit-exec -lifcore -lifport -lpthread -ldl # Linker flags
+MACH_LDFLAGS  = -lifcore -lifport -lpthread -ldl # Linker flags
 
 #-----------------------------------------------------------------------
 # Optimization flags
