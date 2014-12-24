@@ -284,7 +284,7 @@ help:
 #-----------------------------------------------------------------------
 
 clean:
-	-@rm -f *.o *.mod *.f *.f90 *~ $(OUTPUT) cxx_example cxx_table_example c_example c_table_example c_example_nostruct c_table_example_nostruct fortran_example fortran_table_example
+	-@rm -f *.o *.mod *.f *.f90 *~ *.exe $(OUTPUT) cxx_example cxx_table_example c_example c_table_example c_example_nostruct c_table_example_nostruct fortran_example fortran_table_example
 
 #-----------------------------------------------------------------------
 # Include configuration targets
