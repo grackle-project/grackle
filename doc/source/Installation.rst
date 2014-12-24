@@ -70,7 +70,7 @@ have to add to the following variables:
 
 Once you have chosen the make file to be used, a few variables should be set:
 
-    * ``LOCAL_HDF5_INSTALL`` - path to your hdf5 installation.
+    * ``LOCAL_HDF5_INSTALL`` - path to your hdf5 installation.  
 
     * ``LOCAL_FC_INSTALL`` - path to Fortran compilers (not including the bin subdirectory).
 
@@ -192,5 +192,53 @@ Then, to install:
 ::
 
     ~/grackle/src/clib $ make install
+
+Once installed, you can test your installation with the provided example to
+assure it is functioning correctly.  If something goes wrong in this process,
+investigate the ``out.compile`` file to see what went wrong during compilation,
+or use ``ldd`` on your executable to determine what went wrong during linking.
+
+::
+
+    ~/grackle/src/clib $ cd ../example
+    ~/grackle/src/example $ make clean 
+    ~/grackle/src/example $ make 
+
+    Compiling cxx_example.C
+    Linking
+    Success!
+  
+    ~/grackle/src/example $ ./cxx_example
+    
+    The Grackle Version 2.0
+    Mercurial Branch   default
+    Mercurial Revision 72030d6d47be
+
+    Initializing grackle data.
+    with_radiative_cooling: 1.
+    primordial_chemistry: 3.
+    metal_cooling: 1.
+    UVbackground: 1.
+    Initializing Cloudy cooling: Metals.
+    cloudy_table_file: ../../input/CloudyData_UVB=HM2012.h5.
+    Cloudy cooling grid rank: 3.
+    Cloudy cooling grid dimensions: 29 26 161.
+    Parameter1: -10 to 4 (29 steps).
+    Parameter2: 0 to 14.849 (26 steps).
+    Temperature: 1 to 9 (161 steps).
+    Reading Cloudy Cooling dataset.
+    Reading Cloudy Heating dataset.
+    Initializing UV background.
+    Reading UV background data from ../../input/CloudyData_UVB=HM2012.h5.
+    UV background information:
+    Haardt & Madau (2012, ApJ, 746, 125) [Galaxies & Quasars]
+    z_min =  0.000
+    z_max = 15.130
+    Setting UVbackground_redshift_on to 15.130000.
+    Setting UVbackground_redshift_off to 0.000000.
+    Cooling time = -1.434987e+13 s.
+    Temperature = 4.637034e+02 K.
+    Pressure = 3.345738e+34.
+    gamma = 1.666645e+00.
 
 Now it's time to integrate grackle into your simulation code: :ref:`integration`
