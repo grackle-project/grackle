@@ -193,6 +193,8 @@ Then, to install:
 
     ~/grackle/src/clib $ make install
 
+5. Test your Installation
+
 Once installed, you can test your installation with the provided example to
 assure it is functioning correctly.  If something goes wrong in this process,
 investigate the ``out.compile`` file to see what went wrong during compilation,
