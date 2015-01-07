@@ -31,11 +31,12 @@
 #
 #=======================================================================
 
-DEFAULT_INSTALL_PREFIX = /usr/local
-GRACKLE_DIR = .
+SHELL       = /bin/bash
 OUTPUT      = out.compile
 VERBOSE     = 0
 SVN         = hg
+GRACKLE_DIR = .
+DEFAULT_INSTALL_PREFIX = /usr/local
 
 #-----------------------------------------------------------------------
 # Make.config.settings is used for setting default values to all compile-time 
