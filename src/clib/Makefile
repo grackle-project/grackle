@@ -31,16 +31,11 @@
 #
 #=======================================================================
 
-SHELL    = /bin/bash
-
-TOP_DIR  = ../..
 DEFAULT_INSTALL_PREFIX = /usr/local
-OUTPUT   = out.compile
-
 GRACKLE_DIR = .
-VERBOSE  = 0
-
-SVN      = hg
+OUTPUT      = out.compile
+VERBOSE     = 0
+SVN         = hg
 
 #-----------------------------------------------------------------------
 # Make.config.settings is used for setting default values to all compile-time 
@@ -103,7 +98,7 @@ libgrackle.la: $(MODULES) autogen dep $(OBJS_LIB) MACHNOTES
 	  if [ -e $@ ]; then \
 	     echo "Success!"; \
 	  else \
-	     echo "libtool -v --mode=link --tag=CC $(LD) $(LDFLAGS) -o $@ $(OBJS_LIB) $(LIBS) -rpath $(INSTALL_LIB_DIR) -release $(LIB_RELEASE_VERSION)" >> temp1; \
+	     echo "libtool --mode=link --tag=CC $(LD) $(LDFLAGS) -o $@ $(OBJS_LIB) $(LIBS) -rpath $(INSTALL_LIB_DIR) -release $(LIB_RELEASE_VERSION)" >> temp1; \
 	     cat temp1 $(OUTPUT) > temp2; \
 	     rm -f temp1; \
 	     mv -f temp2 $(OUTPUT); \
@@ -114,7 +109,7 @@ libgrackle.la: $(MODULES) autogen dep $(OBJS_LIB) MACHNOTES
 	fi)
 
 MACHNOTES: 
-	@echo -e $(MACHINE_NOTES)
+	@echo $(MACHINE_NOTES)
 
 #-----------------------------------------------------------------------
 # WRITE ALL COMPILER OUTPUT TO FILE
@@ -127,11 +122,11 @@ verbose: VERBOSE = 1
 # Implicit rules
 #-----------------------------------------------------------------------
 
-.SUFFIXES: .c .C .F .lo
+.SUFFIXES: .c .C .F .lo .o
 
 # Inhibit removing any *.o files after compiling
 
-.PRECIOUS: %.lo %.c %.C %.F
+.PRECIOUS: %.o %.lo %.c %.C %.F
 
 .F.lo:
 	@rm -f $@
