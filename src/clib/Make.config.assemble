@@ -166,7 +166,7 @@
 
     OBJS_LIB = $(OBJS_CONFIG_LIB)
 
-    LIBS = $(ASSEMBLE_LIBS)
+    LIBS = $(MACH_LIBS)
 
 #=======================================================================
 # INSTALLATION TARGETS
