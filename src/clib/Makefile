@@ -98,10 +98,6 @@ libgrackle.la: $(MODULES) autogen dep $(OBJS_LIB) MACHNOTES
 	  if [ -e $@ ]; then \
 	     echo "Success!"; \
 	  else \
-	     echo "libtool --mode=link --tag=CC $(LD) $(LDFLAGS) -o $@ $(OBJS_LIB) $(LIBS) -rpath $(INSTALL_LIB_DIR) -release $(LIB_RELEASE_VERSION)" >> temp1; \
-	     cat temp1 $(OUTPUT) > temp2; \
-	     rm -f temp1; \
-	     mv -f temp2 $(OUTPUT); \
 	     echo "Failed! See $(OUTPUT) for error messages"; \
 	fi ; \
 	else \
@@ -135,16 +131,14 @@ verbose: VERBOSE = 1
 	  libtool --mode=compile --tag=FC $(FC) -c $(FFLAGS) $(DEFINES) $*.F >& $(OUTPUT) ; \
 	  if [ ! -e $@ ]; then \
              echo; \
-             echo "libtool --mode=compile --tag=FC $(FC) -c $(FFLAGS) $(DEFINES) $*.F"; \
-             echo; \
-             libtool --mode=compile --tag=FC $(FC) -c $(FFLAGS) $(DEFINES) $*.F; \
+	     echo "Compiling $< failed!"; \
+	     echo "See $(OUTPUT) for error messages."; \
              echo; \
              exit 1; \
           fi ; \
 	else \
 	  libtool --mode=compile --tag=FC $(FC) -c $(FFLAGS) $(DEFINES) $*.F; \
 	  if [ ! -e $@ ]; then \
-	     echo "See $(OUTPUT) for error messages"; \
 	     exit 1; \
 	  fi ; \
 	fi)
@@ -157,16 +151,14 @@ verbose: VERBOSE = 1
 	    >& $(OUTPUT) ; \
 	  if [ ! -e $@ ]; then \
              echo; \
-             echo "libtool --mode=compile --tag=CXX $(CXX) -c $(DEFINES) $(CXXFLAGS) $(INCLUDES) $*.C"; \
-             echo; \
-             libtool --mode=compile --tag=CXX $(CXX) -c $(DEFINES) $(CXXFLAGS) $(INCLUDES) $*.C;\
+	     echo "Compiling $< failed!"; \
+	     echo "See $(OUTPUT) for error messages."; \
              echo; \
              exit 1; \
           fi ; \
 	else \
 	  libtool --mode=compile --tag=CXX $(CXX) -c $(DEFINES) $(CXXFLAGS) $(INCLUDES) $*.C; \
 	  if [ ! -e $@ ]; then \
-	     echo "See $(OUTPUT) for error messages"; \
 	     exit 1; \
 	  fi ; \
 	fi)
@@ -179,16 +171,14 @@ verbose: VERBOSE = 1
 	    >& $(OUTPUT) ; \
 	  if [ ! -e $@ ]; then \
              echo; \
-             echo "libtool --mode=compile --tag=CC $(CC) -c $(DEFINES) $(CFLAGS) $(INCLUDES) $*.c"; \
-             echo; \
-             libtool --mode=compile --tag=CC $(CC) -c $(DEFINES) $(CFLAGS) $(INCLUDES) $*.c;\
+	     echo "Compiling $< failed!"; \
+	     echo "See $(OUTPUT) for error messages."; \
              echo; \
              exit 1; \
           fi ; \
 	else \
 	  libtool --mode=compile --tag=CC $(CC) -c $(DEFINES) $(CFLAGS) $(INCLUDES) $*.c; \
 	  if [ ! -e $@ ]; then \
-	     echo "See $(OUTPUT) for error messages"; \
 	     exit 1; \
 	  fi ; \
 	fi)
