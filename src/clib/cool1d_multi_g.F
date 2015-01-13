@@ -728,7 +728,7 @@ c  new (correct) way: (april 4, 2007)
      &        priDataSize, priCooling, priHeating,
      &        itmask)
 
-!     Compton cooling or heating
+!     Compton cooling or heating/photoelectric heating
 
          do i = is+1, ie+1
             if ( itmask(i) ) then
@@ -745,6 +745,7 @@ c  new (correct) way: (april 4, 2007)
 
                edot(i) = edot(i) 
      &              - comp1*(tgas(i)-comp2)*myde*dom_inv
+     &              + real(igammah, DKIND)*gammaha*rhoH(i)*dom_inv
 
             end if
          enddo
