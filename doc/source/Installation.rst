@@ -25,7 +25,7 @@ Downloading
 -----------
 
 Grackle is available in a mercurial repository 
-`here <https://bitbucket.org/brittonsmith/grackle>`_.  The mercurial site 
+`here <https://bitbucket.org/grackle/grackle>`_.  The mercurial site 
 is `here <http://mercurial.selenic.com/>`_ and an excellent tutorial can be 
 found `here <http://hginit.com/>`_.  With mercurial 
 installed, grackle can be obtained with the following command:
