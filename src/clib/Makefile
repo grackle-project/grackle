@@ -81,6 +81,12 @@ include $(MAKE_CONFIG_OVERRIDE)
 
 include Make.config.assemble
 
+#
+# If libtool is not defined, set it to a default value
+#
+
+LIBTOOL ?= libtool
+
 #=======================================================================
 # OBJECT FILES
 #=======================================================================
@@ -95,14 +101,14 @@ libgrackle.la: $(MODULES) autogen dep $(OBJS_LIB) MACHNOTES
 	@rm -f $@
 	@(if [ $(VERBOSE) -eq 0 ]; then \
 	  echo "Linking" ; \
-	  libtool --mode=link --tag=CC $(LD) $(LDFLAGS) -o $@ $(OBJS_LIB) $(LIBS) -rpath $(INSTALL_LIB_DIR) -release $(LIB_RELEASE_VERSION) >> $(OUTPUT) 2>&1 ; \
+	  $(LIBTOOL) --mode=link --tag=CC $(LD) $(LDFLAGS) -o $@ $(OBJS_LIB) $(LIBS) -rpath $(INSTALL_LIB_DIR) -release $(LIB_RELEASE_VERSION) >> $(OUTPUT) 2>&1 ; \
 	  if [ -e $@ ]; then \
 	     echo "Success!"; \
 	  else \
 	     echo "Failed! See $(OUTPUT) for error messages"; \
 	fi ; \
 	else \
-	  libtool --mode=link --tag=CC $(LD) $(LDFLAGS) -o $@ $(OBJS_LIB) $(LIBS) -rpath $(INSTALL_LIB_DIR) -release $(LIB_RELEASE_VERSION) ; \
+	  $(LIBTOOL) --mode=link --tag=CC $(LD) $(LDFLAGS) -o $@ $(OBJS_LIB) $(LIBS) -rpath $(INSTALL_LIB_DIR) -release $(LIB_RELEASE_VERSION) ; \
 	fi)
 
 MACHNOTES: 
@@ -129,7 +135,7 @@ verbose: VERBOSE = 1
 	@rm -f $@
 	@(if [ $(VERBOSE) -eq 0 ]; then \
 	  echo "Compiling $<" ; \
-	  libtool --mode=compile --tag=FC $(FC) -c $(FFLAGS) $(DEFINES) $*.F >& $(OUTPUT) ; \
+	  $(LIBTOOL) --mode=compile --tag=FC $(FC) -c $(FFLAGS) $(DEFINES) $*.F >& $(OUTPUT) ; \
 	  if [ ! -e $@ ]; then \
              echo; \
 	     echo "Compiling $< failed!"; \
@@ -138,7 +144,7 @@ verbose: VERBOSE = 1
              exit 1; \
           fi ; \
 	else \
-	  libtool --mode=compile --tag=FC $(FC) -c $(FFLAGS) $(DEFINES) $*.F; \
+	  $(LIBTOOL) --mode=compile --tag=FC $(FC) -c $(FFLAGS) $(DEFINES) $*.F; \
 	  if [ ! -e $@ ]; then \
 	     exit 1; \
 	  fi ; \
@@ -148,7 +154,7 @@ verbose: VERBOSE = 1
 	@rm -f $@
 	@(if [ $(VERBOSE) -eq 0 ]; then \
 	  echo "Compiling $<" ; \
-	  libtool --mode=compile --tag=CXX $(CXX) -c $(DEFINES) $(CXXFLAGS) $(INCLUDES) $*.C \
+	  $(LIBTOOL) --mode=compile --tag=CXX $(CXX) -c $(DEFINES) $(CXXFLAGS) $(INCLUDES) $*.C \
 	    >& $(OUTPUT) ; \
 	  if [ ! -e $@ ]; then \
              echo; \
@@ -158,7 +164,7 @@ verbose: VERBOSE = 1
              exit 1; \
           fi ; \
 	else \
-	  libtool --mode=compile --tag=CXX $(CXX) -c $(DEFINES) $(CXXFLAGS) $(INCLUDES) $*.C; \
+	  $(LIBTOOL) --mode=compile --tag=CXX $(CXX) -c $(DEFINES) $(CXXFLAGS) $(INCLUDES) $*.C; \
 	  if [ ! -e $@ ]; then \
 	     exit 1; \
 	  fi ; \
@@ -168,7 +174,7 @@ verbose: VERBOSE = 1
 	@rm -f $@
 	@(if [ $(VERBOSE) -eq 0 ]; then \
 	  echo "Compiling $<" ; \
-	  libtool --mode=compile --tag=CC $(CC) -c $(DEFINES) $(CFLAGS) $(INCLUDES) $*.c \
+	  $(LIBTOOL) --mode=compile --tag=CC $(CC) -c $(DEFINES) $(CFLAGS) $(INCLUDES) $*.c \
 	    >& $(OUTPUT) ; \
 	  if [ ! -e $@ ]; then \
              echo; \
@@ -178,7 +184,7 @@ verbose: VERBOSE = 1
              exit 1; \
           fi ; \
 	else \
-	  libtool --mode=compile --tag=CC $(CC) -c $(DEFINES) $(CFLAGS) $(INCLUDES) $*.c; \
+	  $(LIBTOOL) --mode=compile --tag=CC $(CC) -c $(DEFINES) $(CFLAGS) $(INCLUDES) $*.c; \
 	  if [ ! -e $@ ]; then \
 	     exit 1; \
 	  fi ; \
@@ -265,7 +271,7 @@ install:
 		mkdir $(INSTALL_LIB_DIR); \
 	fi)
 	@echo "Installing grackle library files to $(INSTALL_LIB_DIR)."
-	libtool --mode=install install -c libgrackle.la $(INSTALL_LIB_DIR)/libgrackle.la
+	$(LIBTOOL) --mode=install install -c libgrackle.la $(INSTALL_LIB_DIR)/libgrackle.la
 
 #-----------------------------------------------------------------------
 
