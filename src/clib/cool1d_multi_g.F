@@ -88,7 +88,7 @@
      &        reHeII2a(nratec), reHeIIIa(nratec), brema(nratec),
      &        mutaba(nratec),
      &        compa, piHI, piHeI, piHeII, comp_xraya, comp_temp,
-     &        gammaha
+     &        gammaha,gammaha_eff
 
 !  Cloudy cooling data
 
@@ -396,6 +396,11 @@
 
       do i = is+1, ie+1
          if ( itmask(i) ) then
+         if ( tgas(i) > 3.d4 ) then
+            gammaha_eff = 0 
+         else
+            gammaha_eff = gammaha
+         endif
          edot(i) = (
 
 !                    Collisional excitations
@@ -732,6 +737,11 @@ c  new (correct) way: (april 4, 2007)
 
          do i = is+1, ie+1
             if ( itmask(i) ) then
+            if ( tgas(i) > 3.d4 ) then
+               gammaha_eff = 0 
+            else
+               gammaha_eff = gammaha
+            endif
 
 !     Calculate electron density from mean molecular weight
 
