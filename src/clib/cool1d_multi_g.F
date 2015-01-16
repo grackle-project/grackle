@@ -88,7 +88,7 @@
      &        reHeII2a(nratec), reHeIIIa(nratec), brema(nratec),
      &        mutaba(nratec),
      &        compa, piHI, piHeI, piHeII, comp_xraya, comp_temp,
-     &        gammaha
+     &        gammaha,gammaha_eff
 
 !  Cloudy cooling data
 
@@ -396,6 +396,11 @@
 
       do i = is+1, ie+1
          if ( itmask(i) ) then
+         if ( tgas(i) > 3.d4 ) then
+            gammaha_eff = 0 
+         else
+            gammaha_eff = gammaha
+         endif
          edot(i) = (
 
 !                    Collisional excitations
@@ -433,7 +438,7 @@
 
 !                    Photoelectric heating by UV-irradiated dust
 
-     &             + real(igammah, DKIND)*gammaha*(HI(i,j,k)+HII(i,j,k))
+     &             + real(igammah, DKIND)*gammaha_eff*(HI(i,j,k)+HII(i,j,k))
      &             *dom_inv)
 
          if (edot(i) .ne. edot(i)) then
@@ -728,10 +733,15 @@ c  new (correct) way: (april 4, 2007)
      &        priDataSize, priCooling, priHeating,
      &        itmask)
 
-!     Compton cooling or heating
+!     Compton cooling or heating/photoelectric heating
 
          do i = is+1, ie+1
             if ( itmask(i) ) then
+            if ( tgas(i) > 3.d4 ) then
+               gammaha_eff = 0 
+            else
+               gammaha_eff = gammaha
+            endif
 
 !     Calculate electron density from mean molecular weight
 
@@ -745,6 +755,7 @@ c  new (correct) way: (april 4, 2007)
 
                edot(i) = edot(i) 
      &              - comp1*(tgas(i)-comp2)*myde*dom_inv
+     &              + real(igammah, DKIND)*gammaha_eff*rhoH(i)*dom_inv
 
             end if
          enddo

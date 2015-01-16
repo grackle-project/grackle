@@ -131,7 +131,7 @@ def setup_fluid_container(my_chemistry,
 def calculate_mean_molecular_weight(my_chemistry, fc):
     mu_metal = 16.0
     if my_chemistry.primordial_chemistry == 0:
-        return 0.6 * np.ones_like(fc["density"])
+        return calc_mu_table(fc['temperature'])
     mu = fc["HI"] + fc["HII"] + fc["de"] + \
       (fc["HeI"] + fc["HeII"] + fc["HeIII"]) / 4.
     if my_chemistry.primordial_chemistry > 1:
@@ -154,3 +154,18 @@ def calculate_hydrogen_number_density(my_chemistry, fc):
     if my_chemistry.primordial_chemistry > 2:
         nH += fc["HDI"] / 2.
     return nH * my_chemistry.density_units / mass_hydrogen_cgs
+
+
+# ------------------------------------------------------------------
+#   Calculate a tabulated approximation to mean molecular weight.
+# ------------------------------------------------------------------
+def calc_mu_table(temperature):
+    tt = np.array([1.0e+01, 1.0e+02, 1.0e+03, 1.0e+04, 1.3e+04, 2.1e+04, \
+                   3.4e+04, 6.3e+04, 1.0e+05, 1.0e+09])
+    mt = np.array([1.18701555, 1.15484424, \
+                   1.09603514, 0.9981496, 0.96346395, 0.65175895, \
+                   0.6142901,  0.6056833, 0.5897776,  0.58822635])
+    
+    logttt= np.log(temperature)
+    logmu = np.interp(logttt,np.log(tt),np.log(mt)) # linear interpolation in log-log space
+    return np.exp(logmu)
