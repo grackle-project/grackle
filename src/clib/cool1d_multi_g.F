@@ -438,7 +438,7 @@
 
 !                    Photoelectric heating by UV-irradiated dust
 
-     &             + real(igammah, DKIND)*gammaha*(HI(i,j,k)+HII(i,j,k))
+     &             + real(igammah, DKIND)*gammaha_eff*(HI(i,j,k)+HII(i,j,k))
      &             *dom_inv)
 
          if (edot(i) .ne. edot(i)) then
@@ -755,7 +755,7 @@ c  new (correct) way: (april 4, 2007)
 
                edot(i) = edot(i) 
      &              - comp1*(tgas(i)-comp2)*myde*dom_inv
-     &              + real(igammah, DKIND)*gammaha*rhoH(i)*dom_inv
+     &              + real(igammah, DKIND)*gammaha_eff*rhoH(i)*dom_inv
 
             end if
          enddo
