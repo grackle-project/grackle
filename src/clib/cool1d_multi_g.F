@@ -438,8 +438,8 @@
 
 !                    Photoelectric heating by UV-irradiated dust
 
-     &             + real(igammah, DKIND)*gammaha_eff*(HI(i,j,k)+HII(i,j,k))
-     &             *dom_inv)
+     &             + real(igammah, DKIND)*gammaha_eff*(HI(i,j,k)+
+     &             HII(i,j,k)) * dom_inv)
 
          if (edot(i) .ne. edot(i)) then
             write(6,*) 'NaN in edot[1]: ', i, j, k, edot(i), 
