@@ -1,7 +1,11 @@
 # use glob syntax.
 syntax: glob
 
+*.a
+*.la
+*.lai
 *.o
+*.lo
 *.f
 *.f90
 *~
