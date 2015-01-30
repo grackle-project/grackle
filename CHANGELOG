@@ -1,3 +1,14 @@
+== Version 2.0.1 ==
+_Release date - Jan 30, 2015_
+
+  * Enhancement: Physically motivated temperature cutoff for photo-
+	electric heating added.
+  * Bugfix: Spatially constant photo-electric heating now included in
+	purely tabulated cooling mode.
+  * Bugfix: Make sure grackle_data_file string is null-terminated.
+  * Minor compilation bugfixes.
+  * Installation docs updated.
+
 == Version 2.0 ==
 _Release date - Oct 1, 2014_
 
