@@ -220,9 +220,12 @@
 
 !     Add metal species to mean molecular weight
 
-                     munew = d(i,j,k) / (d(i,j,k) / munew +
-     &                    metal(i,j,k) / mu_metal)
-                     tgas(i) = tgas(i) * munew / muold
+                     if (imetal .eq. 1) then
+                        munew = d(i,j,k) / (d(i,j,k) / munew +
+     &                       metal(i,j,k) / mu_metal)
+                        tgas(i) = tgas(i) * munew / muold
+                     endif
+
                      mutab(i) = munew
                      go to 9998
                   endif
