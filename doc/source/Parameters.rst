@@ -43,7 +43,7 @@ For all on/off integer flags, 0 is off and 1 is on.
 
 .. c:var:: int UVbackground
 
-   Flag to enable a UV background.  If enabled, the cooling table to be used must be specified with the c:data:`grackle_data_file` parameter.  Default: 0.
+   Flag to enable a UV background.  If enabled, the cooling table to be used must be specified with the :c:data:`grackle_data_file` parameter.  Default: 0.
 
 .. c:var:: char* grackle_data_file
 
