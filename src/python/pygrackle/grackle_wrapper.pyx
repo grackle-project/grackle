@@ -103,6 +103,12 @@ cdef class chemistry_data:
         def __set__(self, val):
             self.data.UVbackground = val
 
+    property SolarMetalFractionByMass:
+        def __get__(self):
+            return self.data.SolarMetalFractionByMass
+        def __set__(self, val):
+            self.data.SolarMetalFractionByMass = val
+
     property comoving_coordinates:
         def __get__(self):
             return self.units.comoving_coordinates

@@ -17,6 +17,7 @@ cdef extern from "chemistry_data.h":
         int h2_optical_depth_approximation
         int photoelectric_heating
         int UVbackground
+        float SolarMetalFractionByMass
         # Most of the rest are not user-settable
 
 cdef extern from "code_units.h":

@@ -81,8 +81,9 @@ if my_chemistry.primordial_chemistry > 2:
     fc["DII"][:] = tiny_number * fc["density"]
     fc["HDI"][:] = tiny_number * fc["density"]
 if my_chemistry.metal_cooling == 1:
-    fc["metal"][:] = 0.1 * 0.0204 * fc["density"]
-
+    fc["metal"][:] = 0.1 * fc["density"] * \
+      my_chemistry.SolarMetalFractionByMass
+    
 fc["x-velocity"][:] = 0.0
 fc["y-velocity"][:] = 0.0
 fc["z-velocity"][:] = 0.0
