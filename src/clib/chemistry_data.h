@@ -32,6 +32,9 @@ typedef struct
   // Cooling values
   double *cooling_data;
 
+  // Mean Molecular Weight values
+  double *mmw_data;
+
   // Length of 1D flattened data
   long long data_size;
 

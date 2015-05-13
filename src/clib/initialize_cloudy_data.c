@@ -47,7 +47,7 @@ int initialize_cloudy_data(chemistry_data *my_chemistry,
 
   // Zero arrays if cloudy cooling not used.
 
-  if (!read_data) {
+  if (read_data == 0) {
     my_cloudy->grid_rank = 0;
     return SUCCESS;
   }
@@ -229,7 +229,7 @@ int initialize_cloudy_data(chemistry_data *my_chemistry,
   }
 
   // Read Heating data.
-  if (my_chemistry->UVbackground) {
+  if (my_chemistry->UVbackground == 1) {
 
     temp_data = malloc(my_cloudy->data_size * sizeof(double));
 
@@ -262,6 +262,36 @@ int initialize_cloudy_data(chemistry_data *my_chemistry,
     status = H5Dclose(dset_id);
     if (status == h5_error) {
       fprintf(stderr,"Failed to close Heating dataset.\n");
+      return FAIL;
+    }
+  }
+
+  // Read MMW data.
+  if (my_chemistry->primordial_chemistry == 0 &&
+      strcmp(group_name, "Primordial") == 0) {
+
+    my_cloudy->mmw_data = malloc(my_cloudy->data_size * sizeof(double));
+
+    sprintf(parameter_name, "/CoolingRates/%s/MMW", group_name);
+    dset_id =  H5Dopen(file_id, parameter_name);
+    if (dset_id == h5_error) {
+      fprintf(stderr,"Can't open MMW in %s.\n",
+              my_chemistry->grackle_data_file);
+      return FAIL;
+    }
+
+    status = H5Dread(dset_id, HDF5_R8, H5S_ALL, H5S_ALL, H5P_DEFAULT,
+                     my_cloudy->mmw_data);
+    if (grackle_verbose)
+      fprintf(stderr,"Reading Cloudy MMW dataset.\n");
+    if (status == h5_error) {
+      fprintf(stderr,"Failed to read MMW dataset.\n");
+      return FAIL;
+    }
+
+    status = H5Dclose(dset_id);
+    if (status == h5_error) {
+      fprintf(stderr,"Failed to close MMW dataset.\n");
       return FAIL;
     }
   }
