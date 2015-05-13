@@ -34,6 +34,7 @@ OBJS_CONFIG_LIB = \
         initialize_cloudy_data.o \
         initialize_grackle.o \
         initialize_UVbackground_data.o \
+        mmw1d_cloudy_g.o \
         set_default_chemistry_parameters.o \
         solve_chemistry.o \
         solve_chemistry_table.o \
