@@ -5,7 +5,9 @@
 
       subroutine mmw1d_cloudy_g(d, metal, e, rhoH,
      &                in, jn, kn, is, ie, j, k,
-     &                logtem, mmw, dom, zr, imetal,
+     &                logtem, mmw, dom, zr, 
+     &                temstart, temend,
+     &                gamma, utem, imetal,
      &                clGridRank, clGridDim,
      &                clPar1, clPar2, clPar3,
      &                clDataSize, clMMW,
@@ -15,7 +17,7 @@
 !  CALCULATE MEAN MOLECULAR WEIGHT AND TEMPERATURE FROM CLOUDY TABLES
 !
 !  written by: Britton Smith
-!  date: September, 2009
+!  date: May, 2015
 !
 !  PURPOSE:
 !    Calculate mean molecular weight for tabulated cooling.
@@ -35,6 +37,9 @@
 !
 !    dom      - unit conversion to proper number density in code units
 !    zr       - current redshift
+!    temstart, temend - start and end of temperature range for rate table
+!    gamma    - adiabatic index
+!    utem     - temperature units
 !    imetal   - flag if metal field is active (0 = no, 1 = yes)
 !
 !    clGridRank - rank of cloudy cooling data grid
@@ -60,7 +65,7 @@
       integer in, jn, kn, is, ie, j, k,
      &     imetal
 
-      real*8 dom, zr
+      real*8 dom, zr, gamma, temstart, temend, utem
       R_PREC d(in,jn,kn), metal(in,jn,kn), e(in,jn,kn)
       real*8 rhoH(in), tgas(in),
      &       mmw(in), logtem(in)
@@ -79,9 +84,14 @@
 
 !  Parameters
 
+      integer ti_max
+      real*8 mu_metal
+      parameter (mu_metal = 16._DKIND)    ! approx. mean molecular weight of metals
+      parameter (ti_max = 20)
+
 !  Locals
 
-      integer i
+      integer i, ti
       integer*8 zindex, zmidpt, zhighpt
       real*8 dclPar(clGridRank), inv_log10,
      &     muold, munew
@@ -111,70 +121,107 @@
      &        real(clGridDim(3) - 1, DKIND)
       endif
 
+!     Calculate index for redshift dimension
+
+      if (clGridRank .gt. 2) then
+
+!     Get index for redshift dimension via bisection
+
+         if (zr .le. clPar2(1)) then
+            zindex = 1
+         else if (zr .ge. clPar2(clGridDim(2)-1)) then
+            zindex = clGridDim(2)
+            end_int = .true.
+         else if (zr .ge. clPar2(clGridDim(2)-2)) then
+            zindex = clGridDim(2) - 2
+         else
+            zindex = 1
+            zhighpt = clGridDim(2) - 2
+            do while ((zhighpt - zindex) .gt. 1)
+               zmidpt = int((zhighpt + zindex) / 2)
+               if (zr .ge. clPar2(zmidpt)) then
+                  zindex = zmidpt
+               else
+                  zhighpt = zmidpt
+               endif
+            enddo
+         endif
+
+      endif
+
       do i=is+1, ie+1
          if ( itmask(i) ) then
+            munew = 1._DKIND
+            do ti = 1, ti_max
+               muold = munew
 
-            log10tem(i) = logtem(i) * inv_log10
+               tgas(i) = max((gamma - 1._DKIND) * 
+     &                       e(i,j,k) * munew * utem,
+     &              temstart)
+               logtem(i) = log(tgas(i))
 
-!           Calculate proper log(n_H)
+               log10tem(i) = logtem(i) * inv_log10
 
-            log_n_h(i) = log10(rhoH(i) * dom)
+!              Calculate proper log(n_H)
 
-!           Calculate index for redshift dimension
+               log_n_h(i) = log10(rhoH(i) * dom)
 
-            if (clGridRank .gt. 2) then
+!              Call interpolation functions to get heating/cooling
 
-!           Get index for redshift dimension via bisection
+!              Interpolate over temperature.
+               if (clGridRank .eq. 1) then
+                  call interpolate_1D_g(log10tem(i), clGridDim,
+     &                 clPar1, dclPar(1),
+     &                 clDataSize, clMMW, munew)
 
-               if (zr .le. clPar2(1)) then
-                  zindex = 1
-               else if (zr .ge. clPar2(clGridDim(2)-1)) then
-                  zindex = clGridDim(2)
-                  end_int = .true.
-               else if (zr .ge. clPar2(clGridDim(2)-2)) then
-                  zindex = clGridDim(2) - 2
+!              Interpolate over density and temperature.
+               else if (clGridRank .eq. 2) then
+                  call interpolate_2D_g(log_n_h(i), log10tem(i), 
+     &                 clGridDim,
+     &                 clPar1, dclPar(1),
+     &                 clPar2, dclPar(2),
+     &                 clDataSize, clMMW, munew)
+
+!              Interpolate over density, redshift, and temperature.
+               else if (clGridRank .eq. 3) then
+                  call interpolate_3Dz_g(log_n_h(i), zr, log10tem(i),
+     &                 clGridDim,
+     &                 clPar1, dclPar(1), 
+     &                 clPar2, zindex,
+     &                 clPar3, dclPar(3),
+     &                 clDataSize, clMMW, 
+     &                 end_int, munew)
+
                else
-                  zindex = 1
-                  zhighpt = clGridDim(2) - 2
-                  do while ((zhighpt - zindex) .gt. 1)
-                     zmidpt = int((zhighpt + zindex) / 2)
-                     if (zr .ge. clPar2(zmidpt)) then
-                        zindex = zmidpt
-                     else
-                        zhighpt = zmidpt
-                     endif
-                  enddo
+                  write(*,*) "Maximum mmw data grid rank is 3!"
+                  return
                endif
 
-            endif
+               tgas(i) = tgas(i) * munew / muold
 
-!           Call interpolation functions to get heating/cooling
+               if (abs((munew/muold) - 1._DKIND) .le. 
+     &              1.e-2_DKIND) then
+                  muold = munew
 
-!           Interpolate over temperature.
-            if (clGridRank .eq. 1) then
-               call interpolate_1D_g(log10tem(i), clGridDim, clPar1,
-     &              dclPar(1), clDataSize, clMMW, mmw(i))
+!     Add metal species to mean molecular weight
 
-!           Interpolate over density and temperature.
-            else if (clGridRank .eq. 2) then
-               call interpolate_2D_g(log_n_h(i), log10tem(i), clGridDim,
-     &              clPar1, dclPar(1), clPar2, dclPar(2),
-     &              clDataSize, clMMW, mmw(i))
+                  if (imetal .eq. 1) then
+                     munew = d(i,j,k) / (d(i,j,k) / munew +
+     &                    metal(i,j,k) / mu_metal)
+                     tgas(i) = tgas(i) * munew / muold
+                  endif
 
-!           Interpolate over density, redshift, and temperature.
-            else if (clGridRank .eq. 3) then
-               call interpolate_3Dz_g(log_n_h(i), zr, log10tem(i),
-     &              clGridDim,
-     &              clPar1, dclPar(1), 
-     &              clPar2, zindex,
-     &              clPar3, dclPar(3),
-     &              clDataSize, clMMW, 
-     &              end_int, mmw(i))
+                  mmw(i) = munew
+                  go to 9998
+               endif
 
-            else
-               write(*,*) "Maximum cooling data grid rank is 3!"
-               return
-            endif
+            enddo
+
+            mmw(i) = munew
+            write(6,*) 'Mean molecular weight not converged!', 
+     &           munew, muold
+
+ 9998       continue
 
          end if
       enddo
