@@ -5,7 +5,7 @@
 
       subroutine mmw1d_cloudy_g(d, metal, e, rhoH,
      &                in, jn, kn, is, ie, j, k,
-     &                logtem, mmw, dom, zr, 
+     &                tgas, mmw, dom, zr, 
      &                temstart, temend,
      &                gamma, utem, imetal,
      &                clGridRank, clGridDim,
@@ -151,6 +151,13 @@
 
       do i=is+1, ie+1
          if ( itmask(i) ) then
+!              Calculate proper log(n_H)
+               log_n_h(i) = log10(rhoH(i) * dom)
+         endif
+      enddo
+
+      do i=is+1, ie+1
+         if ( itmask(i) ) then
             munew = 1._DKIND
             do ti = 1, ti_max
                muold = munew
@@ -161,10 +168,6 @@
                logtem(i) = log(tgas(i))
 
                log10tem(i) = logtem(i) * inv_log10
-
-!              Calculate proper log(n_H)
-
-               log_n_h(i) = log10(rhoH(i) * dom)
 
 !              Call interpolation functions to get heating/cooling
 
