@@ -32,7 +32,7 @@
      &                icmbTfloor, iClHeat, 
      &                priGridRank, priGridDim,
      &                priPar1, priPar2, priPar3,
-     &                priDataSize, priCooling, priHeating,
+     &                priDataSize, priCooling, priHeating, priMMW,
      &                metGridRank, metGridDim,
      &                metPar1, metPar2, metPar3,
      &                metDataSize, metCooling, metHeating,
@@ -101,6 +101,7 @@
      &     metPar1(metGridDim(1)), metPar2(metGridDim(2)), 
      &     metPar3(metGridDim(3)),
      &     priCooling(priDataSize), priHeating(priDataSize),
+     &     priMMW(priDataSize),
      &     metCooling(metDataSize), metHeating(metDataSize)
 
 !  Parameters
@@ -128,6 +129,8 @@
      &       tgas(in), tgasold(in), tdust(in), rhoH(in), nh(in),
      &       metallicity(in), mutab(in),
      &       edot(in)
+
+      real*8 tgas2(in), mmw(in)
 
 !  Cooling/heating slice locals
 
@@ -191,6 +194,27 @@
 !     and iterate to convergence.
 
       if (ispecies .eq. 0) then
+
+         do i = is+1, ie+1
+            if ( itmask(i) ) then
+               rhoH(i) = fh * d(i,j,k)
+            endif
+         enddo
+
+         call mmw1d_cloudy_g(d, metal, e, rhoH,
+     &        in, jn, kn, is, ie, j, k,
+     &        tgas2, mmw, dom, zr, 
+     &        temstart, temend,
+     &        gamma, utem, imetal,
+     &        priGridRank, priGridDim,
+     &        priPar1, priPar2, priPar3,
+     &        priDataSize, priMMW,
+     &        itmask)
+
+         do i = is+1, ie+1
+            write(*,*) "MMW, T:", mmw(i), tgas2(i)
+         enddo
+
          do i = is+1, ie+1
             if ( itmask(i) ) then
                munew = 1._DKIND
@@ -238,9 +262,12 @@
 
  9998          continue
 
-               rhoH(i) = fh * d(i,j,k)
-
             endif
+         enddo
+
+         do i = is+1, ie+1
+            write(*,*) "mu old, T old, mu new, T new",
+     &           mutab(i), tgas(i), mmw(i), tgas2(i)
          enddo
 
       else

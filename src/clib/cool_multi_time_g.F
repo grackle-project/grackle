@@ -24,7 +24,7 @@
      &                icmbTfloor, iClHeat,
      &                priGridRank, priGridDim,
      &                priPar1, priPar2, priPar3,
-     &                priDataSize, priCooling, priHeating,
+     &                priDataSize, priCooling, priHeating, priMMW,
      &                metGridRank, metGridDim,
      &                metPar1, metPar2, metPar3,
      &                metDataSize, metCooling, metHeating,
@@ -92,6 +92,7 @@
      &     metPar1(metGridDim(1)), metPar2(metGridDim(2)), 
      &     metPar3(metGridDim(3)),
      &     priCooling(priDataSize), priHeating(priDataSize),
+     &     priMMW(priDataSize),
      &     metCooling(metDataSize), metHeating(metDataSize)
 
 !  Parameters
@@ -210,7 +211,7 @@
      &                icmbTfloor, iClHeat, 
      &                priGridRank, priGridDim,
      &                priPar1, priPar2, priPar3,
-     &                priDataSize, priCooling, priHeating,
+     &                priDataSize, priCooling, priHeating, priMMW,
      &                metGridRank, metGridDim,
      &                metPar1, metPar2, metPar3,
      &                metDataSize, metCooling, metHeating,

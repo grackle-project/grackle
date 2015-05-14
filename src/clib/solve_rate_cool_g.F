@@ -33,7 +33,7 @@
      &                icmbTfloor, iClHeat,
      &                priGridRank, priGridDim,
      &                priPar1, priPar2, priPar3,
-     &                priDataSize, priCooling, priHeating,
+     &                priDataSize, priCooling, priHeating, priMMW,
      &                metGridRank, metGridDim,
      &                metPar1, metPar2, metPar3,
      &                metDataSize, metCooling, metHeating,
@@ -103,6 +103,7 @@
 !    priDataSize - total size of flattened 1D primordial cooling data array
 !    priCooling  - primordial cooling data
 !    priHeating  - primordial heating data
+!    priMMW      - primordial mmw data
 !    metGridRank - rank of cloudy metal cooling data grid
 !    metGridDim  - array containing dimensions of cloudy metal data
 !    metPar1, metPar2, metPar3 - arrays containing metal grid parameter values
@@ -184,6 +185,7 @@
      &     metPar1(metGridDim(1)), metPar2(metGridDim(2)), 
      &     metPar3(metGridDim(3)),
      &     priCooling(priDataSize), priHeating(priDataSize),
+     &     priMMW(priDataSize),
      &     metCooling(metDataSize), metHeating(metDataSize)
 
 !  Parameters
@@ -342,7 +344,7 @@ c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 fo
      &                icmbTfloor, iClHeat, 
      &                priGridRank, priGridDim,
      &                priPar1, priPar2, priPar3,
-     &                priDataSize, priCooling, priHeating,
+     &                priDataSize, priCooling, priHeating, priMMW,
      &                metGridRank, metGridDim,
      &                metPar1, metPar2, metPar3,
      &                metDataSize, metCooling, metHeating,
