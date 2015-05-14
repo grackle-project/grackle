@@ -23,6 +23,7 @@ OBJS_CONFIG_LIB = \
         calculate_temperature.o \
         calculate_temperature_table.o \
         calc_rates_g.o \
+        calc_temp_cloudy_g.o \
         calc_tdust_1d_g.o \
         cie_thin_cooling_rate_g.o \
         colh2diss_g.o \
