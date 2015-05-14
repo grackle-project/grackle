@@ -212,10 +212,6 @@
      &        itmask)
 
          do i = is+1, ie+1
-            write(*,*) "MMW, T:", mmw(i), tgas2(i)
-         enddo
-
-         do i = is+1, ie+1
             if ( itmask(i) ) then
                munew = 1._DKIND
                do ti = 1, ti_max
@@ -263,11 +259,6 @@
  9998          continue
 
             endif
-         enddo
-
-         do i = is+1, ie+1
-            write(*,*) "mu old, T old, mu new, T new",
-     &           mutab(i), tgas(i), mmw(i), tgas2(i)
          enddo
 
       else
