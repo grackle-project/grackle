@@ -19,6 +19,7 @@
 #include "chemistry_data.h"
 #include "code_units.h"
 #include "phys_constants.h"
+#include "fortran.def"
 
 extern chemistry_data grackle_data;
 
@@ -27,10 +28,22 @@ extern chemistry_data grackle_data;
 #define MU_METAL 16.0
   
 /* function prototypes */ 
+
+extern void FORTRAN_NAME(calc_temp_cloudy_g)(
+        gr_float *d, gr_float *e, gr_float *metal, gr_float *temperature,
+	int *in, int *jn, int *kn, int *iexpand, int *imetal,
+	int *is, int *js, int *ks, int *ie, int *je, int *ke,
+	double *aye, double *temstart, double *temend,
+	double *utem, double *uxyz, double *uaye, double *urho, double *utim,
+	double *gamma, double *fh,
+        long long *priGridRank, long long *priGridDim,
+        double *priPar1, double *priPar2, double *priPar3, 
+ 	long long *priDataSize, double *priMMW);
  
 int _calculate_temperature_table(chemistry_data *my_chemistry,
-                                 code_units *my_units,
+                                 code_units *my_units, double a_value,
                                  int grid_rank, int *grid_dimension,
+                                 int *grid_start, int *grid_end,
                                  gr_float *density, gr_float *internal_energy,
                                  gr_float *metal_density,
                                  gr_float *temperature)
@@ -50,79 +63,60 @@ int _calculate_temperature_table(chemistry_data *my_chemistry,
   for (dim = 0; dim < grid_rank; dim++)
     size *= grid_dimension[dim];
 
+  /* Check for a metal field. */
+
+  int metal_field_present = TRUE;
+  if (metal_density == NULL)
+    metal_field_present = FALSE;
+
+  double co_length_units, co_density_units;
+  if (my_units->comoving_coordinates == TRUE) {
+    co_length_units = my_units->length_units;
+    co_density_units = my_units->density_units;
+  }
+  else {
+    co_length_units = my_units->length_units *
+      a_value * my_units->a_units;
+    co_density_units = my_units->density_units /
+      POW(a_value * my_units->a_units, 3);
+  }
+
   /* Calculate temperature units. */
 
   double temperature_units = mh * POW(my_units->velocity_units, 2) / kboltz;
-  double munew, muold;
-  int ti, ti_max, index;
-  ti_max = 20;
 
-  double logtem0 = log(my_chemistry->TemperatureStart);
-  double logtem9 = log(my_chemistry->TemperatureEnd);
-  double dlogtem = (log(my_chemistry->TemperatureEnd) - 
-                    log(my_chemistry->TemperatureStart)) / 
-    (my_chemistry->NumberOfTemperatureBins - 1);
-  double logtem, t1, t2, tdef;
-
-  /* Compute temperature with mu calculated directly. */
- 
-  for (i = 0; i < size; i++) {
-
-    munew = 1.0;
-
-    for (ti = 0; ti < ti_max; ti++) {
-
-      muold = munew;
-      temperature[i] = max((my_chemistry->Gamma - 1.) * 
-                           internal_energy[i] *
-                           munew * temperature_units,
-                           my_chemistry->TemperatureStart);
-      logtem = log(temperature[i]);
-      logtem = max(logtem, logtem0);
-      logtem = min(logtem, logtem9);
-
-      index = min(my_chemistry->NumberOfTemperatureBins - 2,
-                  max(0, (int) ((logtem-logtem0)/dlogtem)));
-      t1 = (logtem0 + (index)     * dlogtem);
-      t2 = (logtem0 + (index + 1) * dlogtem);
-      tdef = (logtem - t1) / (t2 - t1);
-      munew = my_chemistry->mu[index] + tdef
-        * (my_chemistry->mu[index+1] - my_chemistry->mu[index]);
-
-      temperature[i] = temperature[i] * munew / muold;
-
-      if (fabs((munew/muold) - 1.) <= 1.e-2) {
-        muold = munew;
-
-        // Add metal species to mean molecular weight
-          
-        munew = density[i] / (density[i] / munew +
-                              metal_density[i] / MU_METAL);
-        temperature[i] = temperature[i] * munew / muold;
-        break;
-
-      }
-
-    }
-
-    if (ti >= ti_max) {
-      fprintf(stderr, "Warning: mean molecular weight failed to converge!\n");
-    }
-
-  }
+  FORTRAN_NAME(calc_temp_cloudy_g)(
+        density, internal_energy, metal_density, temperature,
+        grid_dimension, grid_dimension+1, grid_dimension+2,
+        &my_units->comoving_coordinates, &metal_field_present,
+        grid_start, grid_start+1, grid_start+2,
+        grid_end, grid_end+1, grid_end+2,
+        &a_value, &my_chemistry->TemperatureStart, &my_chemistry->TemperatureEnd,
+        &temperature_units, &co_length_units, &my_units->a_units, 
+        &co_density_units, &my_units->time_units,
+        &my_chemistry->Gamma, &my_chemistry->HydrogenFractionByMass,
+        &my_chemistry->cloudy_primordial.grid_rank,
+        my_chemistry->cloudy_primordial.grid_dimension,
+        my_chemistry->cloudy_primordial.grid_parameters[0],
+        my_chemistry->cloudy_primordial.grid_parameters[1],
+        my_chemistry->cloudy_primordial.grid_parameters[2],
+        &my_chemistry->cloudy_primordial.data_size,
+        my_chemistry->cloudy_primordial.mmw_data);
 
   return SUCCESS;
 }
 
-int calculate_temperature_table(code_units *my_units,
+int calculate_temperature_table(code_units *my_units, double a_value,
                                 int grid_rank, int *grid_dimension,
+                                int *grid_start, int *grid_end,
                                 gr_float *density, gr_float *internal_energy,
                                 gr_float *metal_density,
                                 gr_float *temperature)
 {
   if (_calculate_temperature_table(&grackle_data,
-                                   my_units,
+                                   my_units, a_value,
                                    grid_rank, grid_dimension,
+                                   grid_start, grid_end,
                                    density, internal_energy,
                                    metal_density,
                                    temperature) == FAIL) {
@@ -135,8 +129,9 @@ int calculate_temperature_table(code_units *my_units,
 int calculate_temperature_table_(int *comoving_coordinates,
                                  double *density_units, double *length_units,
                                  double *time_units, double *velocity_units,
-                                 double *a_units,
+                                 double *a_units, double *a_value,
                                  int *grid_rank, int *grid_dimension,
+                                 int *grid_start, int *grid_end,
                                  gr_float *density, gr_float *internal_energy,
                                  gr_float *metal_density,
                                  gr_float *temperature)
@@ -151,8 +146,9 @@ int calculate_temperature_table_(int *comoving_coordinates,
   my_units.a_units = *a_units;
 
   int rval;
-  rval = calculate_temperature_table(&my_units,
+  rval = calculate_temperature_table(&my_units, *a_value,
                                      *grid_rank, grid_dimension,
+                                     grid_start, grid_end,
                                      density, internal_energy,
                                      metal_density,
                                      temperature);
