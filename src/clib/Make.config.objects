@@ -23,6 +23,7 @@ OBJS_CONFIG_LIB = \
         calculate_temperature.o \
         calculate_temperature_table.o \
         calc_rates_g.o \
+        calc_temp1d_cloudy_g.o \
         calc_temp_cloudy_g.o \
         calc_tdust_1d_g.o \
         cie_thin_cooling_rate_g.o \
@@ -35,7 +36,6 @@ OBJS_CONFIG_LIB = \
         initialize_cloudy_data.o \
         initialize_grackle.o \
         initialize_UVbackground_data.o \
-        mmw1d_cloudy_g.o \
         set_default_chemistry_parameters.o \
         solve_chemistry.o \
         solve_chemistry_table.o \

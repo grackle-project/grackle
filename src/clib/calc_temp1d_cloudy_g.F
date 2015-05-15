@@ -1,9 +1,9 @@
 #include "fortran.def"
 
 !=======================================================================
-!/////////////////////  SUBROUTINE MMW1D_CLOUDY_G  \\\\\\\\\\\\\\\\\\\\\
+!//////////////////  SUBROUTINE CALC_TEMP1D_CLOUDY_G  \\\\\\\\\\\\\\\\\\
 
-      subroutine mmw1d_cloudy_g(d, metal, e, rhoH,
+      subroutine calc_temp1d_cloudy_g(d, metal, e, rhoH,
      &                in, jn, kn, is, ie, j, k,
      &                tgas, mmw, dom, zr, 
      &                temstart, temend,
@@ -14,13 +14,13 @@
      &                itmask)
 
 !
-!  CALCULATE MEAN MOLECULAR WEIGHT AND TEMPERATURE FROM CLOUDY TABLES
+!  CALCULATE TEMPERATURE AND MEAN MOLECULAR WEIGHT FROM CLOUDY TABLES
 !
 !  written by: Britton Smith
 !  date: May, 2015
 !
 !  PURPOSE:
-!    Calculate mean molecular weight for tabulated cooling.
+!    Calculate temperature and mean molecular weight for tabulated cooling.
 !
 !  INPUTS:
 !    in,jn,kn - dimensions of 3D fields
@@ -51,7 +51,7 @@
 !    itmask     - iteration mask
 !
 !  OUTPUTS:
-!    fills mmw and temperature array
+!    fills temperature and mmw arrays
 !
 !  PARAMETERS:
 !

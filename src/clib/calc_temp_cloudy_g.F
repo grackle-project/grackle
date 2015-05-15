@@ -140,7 +140,7 @@
 
 !     Calculate temperature and mean molecular weight
 
-         call mmw1d_cloudy_g(d, metal, e, rhoH,
+         call calc_temp1d_cloudy_g(d, metal, e, rhoH,
      &        in, jn, kn, is, ie, j, k,
      &        tgas, mmw, dom, zr, 
      &        temstart, temend,
