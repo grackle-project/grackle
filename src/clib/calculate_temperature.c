@@ -43,15 +43,17 @@ int _calculate_pressure(chemistry_data *my_chemistry,
                         gr_float *e_density, gr_float *metal_density,
                         gr_float *pressure);
 
-int calculate_temperature_table(code_units *my_units,
+int calculate_temperature_table(code_units *my_units, double a_value,
                                 int grid_rank, int *grid_dimension,
+                                int *grid_start, int *grid_end,
                                 gr_float *density, gr_float *internal_energy,
                                 gr_float *metal_density,
                                 gr_float *temperature);
  
 int _calculate_temperature(chemistry_data *my_chemistry,
-                           code_units *my_units,
+                           code_units *my_units, double a_value,
                            int grid_rank, int *grid_dimension,
+                           int *grid_start, int *grid_end,
                            gr_float *density, gr_float *internal_energy,
                            gr_float *HI_density, gr_float *HII_density, gr_float *HM_density,
                            gr_float *HeI_density, gr_float *HeII_density, gr_float *HeIII_density,
@@ -94,8 +96,9 @@ int _calculate_temperature(chemistry_data *my_chemistry,
   double inv_metal_mol = 1.0 / MU_METAL;
   
   if (my_chemistry->primordial_chemistry == 0) {
-    if (_calculate_temperature_table(my_chemistry, my_units,
+    if (_calculate_temperature_table(my_chemistry, my_units, a_value,
                                      grid_rank, grid_dimension,
+                                     grid_start, grid_end,
                                      density, internal_energy,
                                      metal_density,
                                      temperature) == FAIL) {
@@ -135,8 +138,9 @@ int _calculate_temperature(chemistry_data *my_chemistry,
   return SUCCESS;
 }
 
-int calculate_temperature(code_units *my_units,
+int calculate_temperature(code_units *my_units, double a_value,
                           int grid_rank, int *grid_dimension,
+                          int *grid_start, int *grid_end,
                           gr_float *density, gr_float *internal_energy,
                           gr_float *HI_density, gr_float *HII_density, gr_float *HM_density,
                           gr_float *HeI_density, gr_float *HeII_density, gr_float *HeIII_density,
@@ -146,8 +150,9 @@ int calculate_temperature(code_units *my_units,
                           gr_float *temperature)
 {
   if (_calculate_temperature(&grackle_data,
-                             my_units,
+                             my_units, a_value,
                              grid_rank, grid_dimension,
+                             grid_start, grid_end,
                              density, internal_energy,
                              HI_density, HII_density, HM_density,
                              HeI_density, HeII_density, HeIII_density,
@@ -164,8 +169,9 @@ int calculate_temperature(code_units *my_units,
 int calculate_temperature_(int *comoving_coordinates,
                            double *density_units, double *length_units,
                            double *time_units, double *velocity_units,
-                           double *a_units,
+                           double *a_units, double *a_value,
                            int *grid_rank, int *grid_dimension,
+                           int *grid_start, int *grid_end,
                            gr_float *density, gr_float *internal_energy,
                            gr_float *HI_density, gr_float *HII_density, gr_float *HM_density,
                            gr_float *HeI_density, gr_float *HeII_density, gr_float *HeIII_density,
@@ -184,8 +190,9 @@ int calculate_temperature_(int *comoving_coordinates,
   my_units.a_units = *a_units;
 
   int rval;
-  rval = calculate_temperature(&my_units,
+  rval = calculate_temperature(&my_units, *a_value,
                                *grid_rank, grid_dimension,
+                               grid_start, grid_end,
                                density, internal_energy,
                                HI_density, HII_density, HM_density,
                                HeI_density, HeII_density, HeIII_density,

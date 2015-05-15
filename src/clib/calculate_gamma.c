@@ -23,8 +23,9 @@
 extern chemistry_data grackle_data;
 
 int _calculate_temperature(chemistry_data *my_chemistry,
-                           code_units *my_units,
+                           code_units *my_units, double a_value,
                            int grid_rank, int *grid_dimension,
+                           int *grid_start, int *grid_end,
                            gr_float *density, gr_float *internal_energy,
                            gr_float *HI_density, gr_float *HII_density, gr_float *HM_density,
                            gr_float *HeI_density, gr_float *HeII_density, gr_float *HeIII_density,
@@ -34,8 +35,9 @@ int _calculate_temperature(chemistry_data *my_chemistry,
                            gr_float *temperature);
 
 int _calculate_gamma(chemistry_data *my_chemistry,
-                     code_units *my_units,
+                     code_units *my_units, double a_value,
                      int grid_rank, int *grid_dimension,
+                     int *grid_start, int *grid_end,
                      gr_float *density, gr_float *internal_energy,
                      gr_float *HI_density, gr_float *HII_density, gr_float *HM_density,
                      gr_float *HeI_density, gr_float *HeII_density, gr_float *HeIII_density,
@@ -64,8 +66,9 @@ int _calculate_gamma(chemistry_data *my_chemistry,
     /* Compute the temperature first. */
  
     if (_calculate_temperature(my_chemistry,
-                               my_units,
+                               my_units, a_value,
                                grid_rank, grid_dimension,
+                               grid_start, grid_end,
                                density, internal_energy,
                                HI_density, HII_density, HM_density,
                                HeI_density, HeII_density, HeIII_density,
@@ -117,8 +120,9 @@ int _calculate_gamma(chemistry_data *my_chemistry,
   return SUCCESS;
 }
 
-int calculate_gamma(code_units *my_units,
+int calculate_gamma(code_units *my_units, double a_value,
                     int grid_rank, int *grid_dimension,
+                    int *grid_start, int *grid_end,
                     gr_float *density, gr_float *internal_energy,
                     gr_float *HI_density, gr_float *HII_density, gr_float *HM_density,
                     gr_float *HeI_density, gr_float *HeII_density, gr_float *HeIII_density,
@@ -128,8 +132,9 @@ int calculate_gamma(code_units *my_units,
                     gr_float *my_gamma)
 {
   if (_calculate_gamma(&grackle_data,
-                       my_units,
+                       my_units, a_value,
                        grid_rank, grid_dimension,
+                       grid_start, grid_end,
                        density, internal_energy,
                        HI_density, HII_density, HM_density,
                        HeI_density, HeII_density, HeIII_density,
@@ -146,8 +151,9 @@ int calculate_gamma(code_units *my_units,
 int calculate_gamma_(int *comoving_coordinates,
                      double *density_units, double *length_units,
                      double *time_units, double *velocity_units,
-                     double *a_units,
+                     double *a_units, double *a_value,
                      int *grid_rank, int *grid_dimension,
+                     int *grid_start, int *grid_end,
                      gr_float *density, gr_float *internal_energy,
                      gr_float *HI_density, gr_float *HII_density, gr_float *HM_density,
                      gr_float *HeI_density, gr_float *HeII_density, gr_float *HeIII_density,
@@ -166,8 +172,9 @@ int calculate_gamma_(int *comoving_coordinates,
   my_units.a_units = *a_units;
 
   int rval;
-  rval = calculate_gamma(&my_units,
+  rval = calculate_gamma(&my_units, *a_value,
                          *grid_rank, grid_dimension,
+                         grid_start, grid_end,
                          density, internal_energy,
                          HI_density, HII_density, HM_density,
                          HeI_density, HeII_density, HeIII_density,
