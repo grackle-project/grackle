@@ -95,7 +95,7 @@ fc["z-velocity"][:] = 0.0
 
 temperature_units = get_temperature_units(my_chemistry)
 fc["energy"][:] = initial_temperature / temperature_units
-calculate_temperature(fc)
+calculate_temperature(fc, a_value)
 fc["energy"][:] *= initial_temperature / fc["temperature"]
 
 temperature_values = []
@@ -108,7 +108,7 @@ while current_time < final_time:
     calculate_cooling_time(fc, a_value)
     dt = timestep_fraction * np.abs(fc["cooling_time"][0])
 
-    calculate_temperature(fc)
+    calculate_temperature(fc, a_value)
 
     temperature_values.append(fc["temperature"][0])
     time_values.append(current_time * my_chemistry.time_units)

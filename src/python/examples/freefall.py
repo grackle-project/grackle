@@ -104,7 +104,7 @@ while fc["density"][0] < 1.e10:
                 (32. * gravitational_constant * 
                  fc["density"][0])), 0.5)
 
-    calculate_temperature(fc)
+    calculate_temperature(fc, a_value)
 
     density_values.append(fc["density"][0] * my_chemistry.density_units)
     temperature_values.append(fc["temperature"][0])

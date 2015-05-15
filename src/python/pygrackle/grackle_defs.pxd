@@ -94,8 +94,11 @@ cdef extern from "grackle.h":
     int c_calculate_gamma "_calculate_gamma"(
                 c_chemistry_data *my_chemistry,
                 c_code_units *my_units,
+                double a_value,
                 int grid_rank,
                 int *grid_dimension,
+                int *grid_start,
+                int *grid_end,
                 gr_float *density,
                 gr_float *internal_energy,
                 gr_float *HI_density,
@@ -138,8 +141,11 @@ cdef extern from "grackle.h":
     int c_calculate_temperature "_calculate_temperature"(
                 c_chemistry_data *my_chemistry,
                 c_code_units *my_units,
+                double a_value,
                 int grid_rank,
                 int *grid_dimension,
+                int *grid_start,
+                int *grid_end,
                 gr_float *density,
                 gr_float *internal_energy,
                 gr_float *HI_density,

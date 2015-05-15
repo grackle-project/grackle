@@ -63,7 +63,7 @@ fc = setup_fluid_container(my_chemistry,
 
 a_value = 1.0 / (1.0 + current_redshift) / my_chemistry.a_units
 
-calculate_temperature(fc)
+calculate_temperature(fc, a_value)
 calculate_cooling_time(fc, a_value)
 
 cool_unit = get_cooling_units(my_chemistry, current_redshift)
