@@ -194,8 +194,9 @@ int main(int argc, char *argv[])
   // Calculate temperature.
   gr_float *temperature;
   temperature = new gr_float[field_size];
-  if (calculate_temperature(&my_units,
+  if (calculate_temperature(&my_units, a_value,
                             grid_rank, grid_dimension,
+                            grid_start, grid_end,
                             density, energy,
                             HI_density, HII_density, HM_density,
                             HeI_density, HeII_density, HeIII_density,
@@ -230,8 +231,9 @@ int main(int argc, char *argv[])
   // Calculate gamma.
   gr_float *gamma;
   gamma = new gr_float[field_size];
-  if (calculate_gamma(&my_units,
+  if (calculate_gamma(&my_units, a_value,
                       grid_rank, grid_dimension,
+                      grid_start, grid_end,
                       density, energy,
                       HI_density, HII_density, HM_density,
                       HeI_density, HeII_density, HeIII_density,
