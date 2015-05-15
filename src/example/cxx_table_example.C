@@ -157,8 +157,9 @@ int main(int argc, char *argv[])
   // Calculate temperature.
   gr_float *temperature;
   temperature = new gr_float[field_size];
-  if (calculate_temperature_table(&my_units,
+  if (calculate_temperature_table(&my_units, a_value,
                                   grid_rank, grid_dimension,
+                                  grid_start, grid_end,
                                   density, energy,
                                   metal_density, 
                                   temperature) == 0) {
