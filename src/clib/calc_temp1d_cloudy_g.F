@@ -222,7 +222,7 @@
 
             mmw(i) = munew
             write(6,*) 'Mean molecular weight not converged!', 
-     &           munew, muold
+     &           munew, muold, abs((munew/muold) - 1._DKIND)
 
  9998       continue
 
