@@ -60,8 +60,7 @@ extern void FORTRAN_NAME(cool_multi_time_g)(
         double *priMMW,
         long long *metGridRank, long long *metGridDim,
  	double *metPar1, double *metPar2, double *metPar3, 
- 	long long *metDataSize, double *metCooling, double *metHeating,
-        double *mutaba);
+ 	long long *metDataSize, double *metCooling, double *metHeating);
 
 int _calculate_cooling_time(chemistry_data *my_chemistry,
                             code_units *my_units, double a_value,
@@ -166,8 +165,7 @@ int _calculate_cooling_time(chemistry_data *my_chemistry,
        my_chemistry->cloudy_metal.grid_parameters[2],
        &my_chemistry->cloudy_metal.data_size,
        my_chemistry->cloudy_metal.cooling_data,
-       my_chemistry->cloudy_metal.heating_data,
-       my_chemistry->mu);
+       my_chemistry->cloudy_metal.heating_data);
  
   return SUCCESS;
 }

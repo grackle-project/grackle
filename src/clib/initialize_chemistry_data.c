@@ -56,7 +56,7 @@ extern void FORTRAN_NAME(calc_rates_g)(
      double *k50, double *k51, double *k52, double *k53, double *k54, double *k55,
      double *k56, int *ndratec, double *dtemstart, double *dtemend, double *h2dusta, 
      double *ncrca, double *ncrd1a, double *ncrd2a, 
-     double *mutab, int *ioutput);
+     int *ioutput);
 
 int _initialize_chemistry_data(chemistry_data *my_chemistry, 
                                code_units *my_units, double a_value)
@@ -88,12 +88,7 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
 
   /* Allocate CoolData space for rates. */
 
-  if (my_chemistry->primordial_chemistry == 0) {
-
-    my_chemistry->mu    = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-
-  }
-  else {
+  if (my_chemistry->primordial_chemistry > 0) {
  
     my_chemistry->ceHI    = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
     my_chemistry->ceHeI   = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
@@ -224,7 +219,7 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
      &my_chemistry->NumberOfDustTemperatureBins, &my_chemistry->DustTemperatureStart, 
      &my_chemistry->DustTemperatureEnd, my_chemistry->h2dust, 
      my_chemistry->n_cr_n, my_chemistry->n_cr_d1, my_chemistry->n_cr_d2, 
-     my_chemistry->mu, &ioutput);
+     &ioutput);
 
   /* Initialize Cloudy cooling. */
   int read_data;

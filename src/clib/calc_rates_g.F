@@ -20,7 +20,7 @@ c
      &             k18a, k19a, k20a, k21a, k22a, k23a,
      &             k50a, k51a, k52a, k53a, k54a, k55a, k56a, 
      &             ndratec, dtemstart, dtemend, h2dusta, 
-     &             ncrna, ncrd1a, ncrd2a, mutab, ioutput
+     &             ncrna, ncrd1a, ncrd2a, ioutput
      &                     )
 c
 c  COMPUTE MULTISPECIES RATE LOOKUP TABLE
@@ -179,8 +179,7 @@ c
      &        k53a(nratec), k54a(nratec), k55a(nratec), k56a(nratec),
      &        k13dda(nratec, 7),
      &        h2dusta(nratec, ndratec),
-     &        ncrna(nratec), ncrd1a(nratec), ncrd2a(nratec),
-     &        mutab(nratec)
+     &        ncrna(nratec), ncrd1a(nratec), ncrd2a(nratec)
       integer ioutput
 c
 c  Parameters
@@ -988,12 +987,6 @@ c        equation 2.15 of Hollenbach & McKee (1989)
 c
       enddo
 
-      else
-c
-c     Create tabulated mean molecular weight
-c
-         call calc_mu_table(nratec, temstart, temend, mutab)
-
       endif
 c
 c     i) Compton cooling (Peebles 1971)
@@ -1043,52 +1036,6 @@ c
        close(10)
 
       endif
-
-      return
-      end
-
-! ------------------------------------------------------------------
-!   Calculate a tabulated approximation to mean molecular weight.
-
-      subroutine calc_mu_table(nratec, temstart, temend, mutab)
-! ------------------------------------------------------------------
-
-      implicit NONE
-#include "grackle_fortran_types.def"
-
-      integer nratec
-      real*8 temstart, temend
-      real*8 mutab(nratec)
-
-      integer i, j
-      real*8 ttt, logttt, dlogtem, slope
-
-      integer nt
-      parameter (nt = 10)
-      real*8 tt(nt), mt(nt)
-      parameter (tt = (/1.0d+01, 1.0d+02, 
-     &     1.0d+03, 1.0d+04, 1.3d+04, 2.1d+04,
-     &     3.4d+04, 6.3d+04, 1.0d+05, 1.0d+09/))
-      parameter (mt = (/1.18701555, 1.15484424,
-     &     1.09603514, 0.9981496, 0.96346395, 0.65175895,
-     &     0.6142901,  0.6056833, 0.5897776,  0.58822635/))
-
-      dlogtem= (log(temend) - log(temstart))/real(nratec-1, 8)
-      j = 2
-
-      do i = 1, nratec
-
-         logttt = log(temstart) + real(i-1, 8)*dlogtem
-         ttt = exp(logttt)
-
-         if (ttt .gt. tt(j)) then
-            j = min((j + 1), nt)
-         endif
-
-         slope = log(mt(j) / mt(j-1)) / log(tt(j) / tt(j-1))
-         mutab(i) = exp(slope * (logttt - log(tt(j))) + log(mt(j)))
-         
-      enddo
 
       return
       end

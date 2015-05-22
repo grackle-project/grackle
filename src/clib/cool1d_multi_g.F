@@ -23,7 +23,7 @@
      &                gpldla, gphdla, gpldl, gphdl,
      &                hdltea, hdlowa, hdlte, hdlow,
      &                gaHIa, gaH2a, gaHea, gaHpa, gaela,
-     &                gasgra, mutaba,
+     &                gasgra,
      &                ceHI, ceHeI, ceHeII, ciHI, ciHeI, ciHeIS, ciHeII,
      &                reHII, reHeII1, reHeII2, reHeIII, brem,
      &                indixe, t1, t2, logtem, tdef, edot,
@@ -86,7 +86,6 @@
      &        ciHIa(nratec), ciHeIa(nratec), ciHeISa(nratec), 
      &        ciHeIIa(nratec), reHIIa(nratec), reHeII1a(nratec), 
      &        reHeII2a(nratec), reHeIIIa(nratec), brema(nratec),
-     &        mutaba(nratec),
      &        compa, piHI, piHeI, piHeII, comp_xraya, comp_temp,
      &        gammaha, gammaha_eff
 
@@ -118,7 +117,7 @@
       real*8 dom, qq, vibl, logtem0, logtem9, dlogtem, zr,
      &       comp1, comp2, 
      &       hdlte1, hdlow1, gamma2, x, fudge, fH2,
-     &       gphdl1, dom_inv, tau, ciefudge, munew, muold,
+     &       gphdl1, dom_inv, tau, ciefudge,
      &       coolunit, dbase1, tbase1, xbase1, rtunits,
      &       nH2, nother, myde
 
@@ -127,10 +126,9 @@
       integer*8 indixe(in)
       real*8 t1(in), t2(in), logtem(in), tdef(in), p2d(in),
      &       tgas(in), tgasold(in), tdust(in), rhoH(in), nh(in),
-     &       metallicity(in), mutab(in),
-     &       edot(in)
+     &       metallicity(in), edot(in)
 
-      real*8 tgas2(in), mmw(in)
+      real*8  mmw(in)
 
 !  Cooling/heating slice locals
 

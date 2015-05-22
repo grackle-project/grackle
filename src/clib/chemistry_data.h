@@ -262,9 +262,6 @@ typedef struct
   /* Gas/grain energy transfer. */
   double *gas_grain;
 
-  // Tabulated mean molecular weight
-  double *mu;
-
   // Primordial cooling data
 
   cloudy_data cloudy_primordial;
