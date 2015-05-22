@@ -203,63 +203,13 @@
 
          call calc_temp1d_cloudy_g(d, metal, e, rhoH,
      &        in, jn, kn, is, ie, j, k,
-     &        tgas2, mmw, dom, zr, 
+     &        tgas, mmw, dom, zr, 
      &        temstart, temend,
      &        gamma, utem, imetal,
      &        priGridRank, priGridDim,
      &        priPar1, priPar2, priPar3,
      &        priDataSize, priMMW,
      &        itmask)
-
-         do i = is+1, ie+1
-            if ( itmask(i) ) then
-               munew = 1._DKIND
-               do ti = 1, ti_max
-                  muold = munew
-
-                  tgas(i) = max((gamma - 1._DKIND)*e(i,j,k)*munew*utem,
-     &                 temstart)
-                  logtem(i) = log(tgas(i))
-                  logtem(i) = max(logtem(i), logtem0)
-                  logtem(i) = min(logtem(i), logtem9)
-
-                  indixe(i) = min(nratec-1,
-     &                 max(1,int((logtem(i)-logtem0)/dlogtem,
-     &                 DIKIND)+1))
-                  t1(i) = (logtem0 + (indixe(i) - 1)*dlogtem)
-                  t2(i) = (logtem0 + (indixe(i)    )*dlogtem)
-                  tdef(i) = (logtem(i) - t1(i)) / (t2(i) - t1(i))
-                  munew = mutaba(indixe(i)) + tdef(i)
-     &                 *(mutaba(indixe(i)+1) -mutaba(indixe(i)))
-
-                  tgas(i) = tgas(i) * munew / muold
-
-                  if (abs((munew/muold) - 1._DKIND) .le. 
-     &                 1.e-2_DKIND) then
-                     muold = munew
-
-!     Add metal species to mean molecular weight
-
-                     if (imetal .eq. 1) then
-                        munew = d(i,j,k) / (d(i,j,k) / munew +
-     &                       metal(i,j,k) / mu_metal)
-                        tgas(i) = tgas(i) * munew / muold
-                     endif
-
-                     mutab(i) = munew
-                     go to 9998
-                  endif
-
-               enddo
-
-               mutab(i) = munew
-               write(6,*) 'Mean molecular weight not converged!', 
-     &              munew, muold
-
- 9998          continue
-
-            endif
-         enddo
 
       else
 
@@ -768,13 +718,13 @@ c  new (correct) way: (april 4, 2007)
 
 !     Calculate electron density from mean molecular weight
 
-               myde = 1 - mutab(i) * (3.0_DKIND * fh + 1.0_DKIND) /
+               myde = 1 - mmw(i) * (3.0_DKIND * fh + 1.0_DKIND) /
      &              4.0_DKIND
                if (imetal .eq. 1) then
-                  myde = myde - mutab(i) * metal(i,j,k) / 
+                  myde = myde - mmw(i) * metal(i,j,k) / 
      &                 (d(i,j,k) * mu_metal)
                endif
-               myde = d(i,j,k) * myde / mutab(i)
+               myde = d(i,j,k) * myde / mmw(i)
 
                edot(i) = edot(i) 
      &              - comp1*(tgas(i)-comp2)*myde*dom_inv
