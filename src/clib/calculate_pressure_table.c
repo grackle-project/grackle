@@ -23,8 +23,9 @@
 extern chemistry_data grackle_data;
 
 int _calculate_pressure_table(chemistry_data *my_chemistry,
-                              code_units *my_units,
+                              code_units *my_units, double a_value,
                               int grid_rank, int *grid_dimension,
+                              int *grid_start, int *grid_end,
                               gr_float *density, gr_float *internal_energy,
                               gr_float *pressure)
 {
@@ -53,14 +54,16 @@ int _calculate_pressure_table(chemistry_data *my_chemistry,
   return SUCCESS;
 }
 
-int calculate_pressure_table(code_units *my_units,
+int calculate_pressure_table(code_units *my_units, double a_value,
                              int grid_rank, int *grid_dimension,
+                             int *grid_start, int *grid_end,
                              gr_float *density, gr_float *internal_energy,
                              gr_float *pressure)
 {
   if (_calculate_pressure_table(&grackle_data,
-                                my_units,
+                                my_units, a_value,
                                 grid_rank, grid_dimension,
+                                grid_start, grid_end,
                                 density, internal_energy,
                                 pressure) == FAIL) {
     fprintf(stderr, "Error in _calculate_pressure_table.\n");
@@ -72,8 +75,9 @@ int calculate_pressure_table(code_units *my_units,
 int calculate_pressure_table_(int *comoving_coordinates,
                               double *density_units, double *length_units,
                               double *time_units, double *velocity_units,
-                              double *a_units,
+                              double *a_units, double *a_value,
                               int *grid_rank, int *grid_dimension,
+                              int *grid_start, int *grid_end,
                               gr_float *density, gr_float *internal_energy,
                               gr_float *pressure)
 {
@@ -87,8 +91,9 @@ int calculate_pressure_table_(int *comoving_coordinates,
   my_units.a_units = *a_units;
 
   int rval;
-  rval = calculate_pressure_table(&my_units,
+  rval = calculate_pressure_table(&my_units, *a_value,
                                   *grid_rank, grid_dimension,
+                                  grid_start, grid_end,
                                   density, internal_energy,
                                   pressure);
 

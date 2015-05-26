@@ -41,8 +41,7 @@ int initialize_grackle(int comoving_coordinates,
                        int UVbackground, int h2_on_dust,
                        int cmb_temperature_floor, double gamma);
 
-int solve_chemistry(code_units *my_units,
-                    double a_value, double dt_value,
+int solve_chemistry(code_units *my_units, double a_value, double dt_value,
                     int grid_rank, int *grid_dimension,
                     int *grid_start, int *grid_end,
                     gr_float *density, gr_float *internal_energy,
@@ -54,8 +53,7 @@ int solve_chemistry(code_units *my_units,
                     gr_float *e_density, gr_float *metal_density);
 
 int _solve_chemistry(chemistry_data *my_chemistry,
-                     code_units *my_units,
-                     double a_value, double dt_value,
+                     code_units *my_units, double a_value, double dt_value,
                      int grid_rank, int *grid_dimension,
                      int *grid_start, int *grid_end,
                      gr_float *density, gr_float *internal_energy,
@@ -157,8 +155,9 @@ int calculate_gamma_(int *comoving_coordinates,
                      gr_float *e_density, gr_float *metal_density,
                      gr_float *my_gamma);
 
-int calculate_pressure(code_units *my_units,
+int calculate_pressure(code_units *my_units, double a_value,
                        int grid_rank, int *grid_dimension,
+                       int *grid_start, int *grid_end,
                        gr_float *density, gr_float *internal_energy,
                        gr_float *HI_density, gr_float *HII_density, gr_float *HM_density,
                        gr_float *HeI_density, gr_float *HeII_density, gr_float *HeIII_density,
@@ -168,8 +167,9 @@ int calculate_pressure(code_units *my_units,
                        gr_float *pressure);
 
 int _calculate_pressure(chemistry_data *my_chemistry,
-                        code_units *my_units,
+                        code_units *my_units, double a_value,
                         int grid_rank, int *grid_dimension,
+                        int *grid_start, int *grid_end,
                         gr_float *density, gr_float *internal_energy,
                         gr_float *HI_density, gr_float *HII_density, gr_float *HM_density,
                         gr_float *HeI_density, gr_float *HeII_density, gr_float *HeIII_density,
@@ -181,8 +181,9 @@ int _calculate_pressure(chemistry_data *my_chemistry,
 int calculate_pressure_(int *comoving_coordinates,
                         double *density_units, double *length_units,
                         double *time_units, double *velocity_units,
-                        double *a_units,
+                        double *a_units, double *a_value,
                         int *grid_rank, int *grid_dimension,
+                        int *grid_start, int *grid_end,
                         gr_float *density, gr_float *internal_energy,
                         gr_float *HI_density, gr_float *HII_density, gr_float *HM_density,
                         gr_float *HeI_density, gr_float *HeII_density, gr_float *HeIII_density,
@@ -285,22 +286,25 @@ int calculate_cooling_time_table_(int *comoving_coordinates,
                                   gr_float *metal_density,
                                   gr_float *cooling_time);
 
-int calculate_pressure_table(code_units *my_units,
+int calculate_pressure_table(code_units *my_units, double a_value,
                              int grid_rank, int *grid_dimension,
+                             int *grid_start, int *grid_end,
                              gr_float *density, gr_float *internal_energy,
                              gr_float *pressure);
 
 int _calculate_pressure_table(chemistry_data *my_chemistry,
-                              code_units *my_units,
+                              code_units *my_units, double a_value,
                               int grid_rank, int *grid_dimension,
+                              int *grid_start, int *grid_end,
                               gr_float *density, gr_float *internal_energy,
                               gr_float *pressure);
 
 int calculate_pressure_table_(int *comoving_coordinates,
                               double *density_units, double *length_units,
                               double *time_units, double *velocity_units,
-                              double *a_units,
+                              double *a_units, double *a_value,
                               int *grid_rank, int *grid_dimension,
+                              int *grid_start, int *grid_end,
                               gr_float *density, gr_float *internal_energy,
                               gr_float *pressure);
 

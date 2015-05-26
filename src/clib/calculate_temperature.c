@@ -33,8 +33,9 @@ extern chemistry_data grackle_data;
 /* function prototypes */ 
 
 int _calculate_pressure(chemistry_data *my_chemistry,
-                        code_units *my_units,
+                        code_units *my_units, double a_value,
                         int grid_rank, int *grid_dimension,
+                        int *grid_start, int *grid_end,
                         gr_float *density, gr_float *internal_energy,
                         gr_float *HI_density, gr_float *HII_density, gr_float *HM_density,
                         gr_float *HeI_density, gr_float *HeII_density, gr_float *HeIII_density,
@@ -69,8 +70,9 @@ int _calculate_temperature(chemistry_data *my_chemistry,
   /* Compute the pressure first. */
  
   if (_calculate_pressure(my_chemistry,
-                          my_units,
+                          my_units, a_value,
                           grid_rank, grid_dimension,
+                          grid_start, grid_end,
                           density, internal_energy,
                           HI_density, HII_density, HM_density,
                           HeI_density, HeII_density, HeIII_density,
