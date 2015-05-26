@@ -187,8 +187,9 @@ c     Calcualte pressure.
      &     comoving_coordinates,
      &     density_units, length_units,
      &     time_units, velocity_units,
-     &     a_units,
+     &     a_units, a_value,
      &     grid_rank, grid_dimension,
+     &     grid_start, grid_end,
      &     density, energy,
      &     pressure)
 

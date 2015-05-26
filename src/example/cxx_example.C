@@ -213,8 +213,9 @@ int main(int argc, char *argv[])
   // Calculate pressure.
   gr_float *pressure;
   pressure = new gr_float[field_size];
-  if (calculate_pressure(&my_units,
+  if (calculate_pressure(&my_units, a_value,
                          grid_rank, grid_dimension,
+                         grid_start, grid_end,
                          density, energy,
                          HI_density, HII_density, HM_density,
                          HeI_density, HeII_density, HeIII_density,
