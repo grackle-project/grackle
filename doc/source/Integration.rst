@@ -293,10 +293,9 @@ Calling the Available Functions
 There are five functions available, one to solve the chemistry and cooling 
 and four others to calculate the cooling time, temperature, pressure, and the 
 ratio of the specific heats (gamma).  The arguments required are the 
-*code_units* structure, the field size and dimension 
-variables, and the field arrays themselves.  In some cases, the current value 
-of the expansion factor must also be given and for the chemistry solving 
-routine, a timestep must be given.  For the four field calculator routines, 
+*code_units* structure, the value of the expansion factor, the field size and 
+dimension variables, and the field arrays themselves.  For the chemistry solving 
+routine, a timestep must also be given.  For the four field calculator routines, 
 the array to be filled with the field values must be created and passed as an 
 argument as well.
 
@@ -308,8 +307,7 @@ Solve the Chemistry and Cooling
   // some timestep (one million years)
   double dt = 3.15e7 * 1e6 / my_units.time_units;
 
-  if (solve_chemistry(&my_units,
-                      a_value, dt,
+  if (solve_chemistry(&my_units, a_value, dt,
                       grid_rank, grid_dimension,
                       grid_start, grid_end,
                       density, energy,
@@ -330,8 +328,7 @@ Calculating the Cooling Time
 
   gr_float *cooling_time;
   cooling_time = new gr_float[field_size];
-  if (calculate_cooling_time(&my_units,
-                             a_value,
+  if (calculate_cooling_time(&my_units, a_value,
                              grid_rank, grid_dimension,
                              grid_start, grid_end,
                              density, energy,
@@ -353,8 +350,9 @@ Calculating the Temperature Field
 
   gr_float *temperature;
   temperature = new gr_float[field_size];
-  if (calculate_temperature(&my_units,
+  if (calculate_temperature(&my_units, a_value,
                             grid_rank, grid_dimension,
+                            grid_start, grid_end,
                             density, energy,
                             HI_density, HII_density, HM_density,
                             HeI_density, HeII_density, HeIII_density,
@@ -373,8 +371,9 @@ Calculating the Pressure Field
 
   gr_float *pressure;
   pressure = new gr_float[field_size];
-  if (calculate_pressure(&my_units,
+  if (calculate_pressure(&my_units, a_value,
                          grid_rank, grid_dimension,
+                         grid_start, grid_end,
                          density, energy,
                          HI_density, HII_density, HM_density,
                          HeI_density, HeII_density, HeIII_density,
@@ -393,8 +392,9 @@ Calculating the Gamma Field
 
   gr_float *gamma;
   gamma = new gr_float[field_size];
-  if (calculate_gamma(&my_units,
+  if (calculate_gamma(&my_units, a_value,
                       grid_rank, grid_dimension,
+                      grid_start, grid_end,
                       density, energy,
                       HI_density, HII_density, HM_density,
                       HeI_density, HeII_density, HeIII_density,
@@ -429,13 +429,12 @@ Solve the Cooling
   // some timestep (one million years)
   double dt = 3.15e7 * 1e6 / my_units.time_units;
 
-  if (solve_chemistry(&my_units,
-                      a_value, dt,
-                      grid_rank, grid_dimension,
-                      grid_start, grid_end,
-                      density, energy,
-                      x_velocity, y_velocity, z_velocity,
-                      metal_density) == 0) {
+  if (solve_chemistry_table(&my_units, a_value, dt,
+                            grid_rank, grid_dimension,
+                            grid_start, grid_end,
+                            density, energy,
+                            x_velocity, y_velocity, z_velocity,
+                            metal_density) == 0) {
     fprintf(stderr, "Error in solve_chemistry.\n");
     return 0;
   }
@@ -447,14 +446,13 @@ Calculating the Cooling Time
 
   gr_float *cooling_time;
   cooling_time = new gr_float[field_size];
-  if (calculate_cooling_time(&my_units,
-                             a_value,
-                             grid_rank, grid_dimension,
-                             grid_start, grid_end,
-                             density, energy,
-                             x_velocity, y_velocity, z_velocity,
-                             metal_density, 
-                             cooling_time) == 0) {
+  if (calculate_cooling_time_table(&my_units, a_value,
+                                   grid_rank, grid_dimension,
+                                   grid_start, grid_end,
+                                   density, energy,
+                                   x_velocity, y_velocity, z_velocity,
+                                   metal_density, 
+                                   cooling_time) == 0) {
     fprintf(stderr, "Error in calculate_cooling_time.\n");
     return 0;
   }
@@ -466,11 +464,12 @@ Calculating the Temperature Field
 
   gr_float *temperature;
   temperature = new gr_float[field_size];
-  if (calculate_temperature(&my_units,
-                            grid_rank, grid_dimension,
-                            density, energy,
-                            metal_density, 
-                            temperature) == 0) {
+  if (calculate_temperature_table(&my_units, a_value,
+                                  grid_rank, grid_dimension,
+                                  grid_start, grid_end,
+                                  density, energy,
+                                  metal_density, 
+                                  temperature) == 0) {
     fprintf(stderr, "Error in calculate_temperature.\n");
     return 0;
   }
@@ -482,10 +481,11 @@ Calculating the Pressure Field
 
   gr_float *pressure;
   pressure = new gr_float[field_size];
-  if (calculate_pressure(&my_units,
-                         grid_rank, grid_dimension,
-                         density, energy,
-                         pressure) == 0) {
+  if (calculate_pressure_table(&my_units, a_value,
+                               grid_rank, grid_dimension,
+                               grid_start, grid_end,
+                               density, energy,
+                               pressure) == 0) {
     fprintf(stderr, "Error in calculate_pressure.\n");
     return 0;
   }
