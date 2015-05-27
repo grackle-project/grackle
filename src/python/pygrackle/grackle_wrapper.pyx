@@ -343,10 +343,20 @@ def calculate_gamma(fc, my_a):
                 metal_density,
                 gamma)
     
-def calculate_pressure(fc):
+def calculate_pressure(fc, my_a):
     cdef int grid_rank = 1
     cdef int grid_dimension
     grid_dimension = fc["density"].shape[0]
+    cdef np.ndarray ref_gs, ref_ge
+    ref_gs = np.zeros(3, dtype="int64")
+    ref_ge = np.zeros(3, dtype="int64")
+    ref_ge[0] = grid_dimension -1 
+    cdef int *grid_start, *grid_end
+    grid_start = <int *> ref_gs.data
+    grid_end = <int *> ref_ge.data
+
+    cdef double a_value = <double> my_a
+    
     cdef chemistry_data chem_data = fc.chemistry_data
     cdef c_chemistry_data my_chemistry = chem_data.data
     cdef c_code_units my_units = chem_data.units
@@ -370,8 +380,11 @@ def calculate_pressure(fc):
     c_calculate_pressure (
                 &my_chemistry,
                 &my_units,
+                a_value,
                 grid_rank,
                 &grid_dimension,
+                grid_start,
+                grid_end,
                 density,
                 internal_energy,
                 HI_density,
