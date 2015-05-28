@@ -163,7 +163,7 @@
                muold = munew
 
                tgas(i) = max((gamma - 1._DKIND) * 
-     &                       e(i,j,k) * munew * utem,
+     &              e(i,j,k) * munew * utem,
      &              temstart)
                logtem(i) = log(tgas(i))
 
@@ -200,6 +200,7 @@
                   return
                endif
 
+               munew = 0.5 * (munew + muold)
                tgas(i) = tgas(i) * munew / muold
 
                if (abs((munew/muold) - 1._DKIND) .le. 
