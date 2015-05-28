@@ -80,6 +80,7 @@
     ASSEMBLE_FC  = $(MACH_FC_NOMPI)
     ASSEMBLE_F90 = $(MACH_F90_NOMPI)
     ASSEMBLE_LD = $(MACH_LD_NOMPI)
+    ASSEMBLE_LIBTOOL = $(MACH_LIBTOOL)
 
 #-----------------------------------------------------------------------
 # DETERMINE OPTIMIZATION LEVEL SETTINGS
@@ -142,6 +143,7 @@
     FC       = $(ASSEMBLE_FC)
     F90      = $(ASSEMBLE_F90)
     LD       = $(ASSEMBLE_LD)
+    LIBTOOL  = $(ASSEMBLE_LIBTOOL)
     CUDACOMPILER = $(ASSEMBLE_CUDACOMPILER)
     CUDACOMPFLAGS = $(ASSEMBLE_CUDAFLAGS)
 

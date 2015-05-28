@@ -40,6 +40,7 @@ show-flags:
 	@echo "FC  = `which $(FC)`"
 	@echo "F90 = `which $(F90)`"
 	@echo "LD  = `which $(LD)`"
+	@echo "LIBTOOL = `which $(LIBTOOL)`"
 	@echo ""
 	@echo "DEFINES = $(DEFINES)"
 	@echo ""
