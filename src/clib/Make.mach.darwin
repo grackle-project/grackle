@@ -53,6 +53,8 @@ MACH_FC_NOMPI  = gfortran # Fortran 77 compiler when not using MPI
 MACH_F90_NOMPI = gfortran # Fortran 90 compiler when not using MPI
 MACH_LD_NOMPI  = gcc # Linker when not using MPI
 
+MACH_LIBTOOL   = glibtool
+
 #-----------------------------------------------------------------------
 # Machine-dependent defines
 #-----------------------------------------------------------------------
@@ -107,5 +109,3 @@ MACH_LIBS        = $(LOCAL_LIBS_HDF5) $(LOCAL_LIBS_MACH)
 MACH_INSTALL_PREFIX = $(HOME)/local
 MACH_INSTALL_LIB_DIR =
 MACH_INSTALL_INCLUDE_DIR =
-
-LIBTOOL = glibtool
