@@ -99,6 +99,7 @@ calculate_temperature(fc, a_value)
 fc["energy"][:] *= initial_temperature / fc["temperature"]
 
 temperature_values = []
+mu_values = []
 time_values = []
 
 timestep_fraction = 0.01
@@ -112,6 +113,9 @@ while current_time < final_time:
 
     temperature_values.append(fc["temperature"][0])
     time_values.append(current_time * my_chemistry.time_units)
+    mu_values.append(fc["temperature"][0] /
+                     (fc["energy"][0] * (my_chemistry.Gamma - 1.) *
+                      temperature_units))
 
     print "t: %e yr, T: %e K, dt: %e yr" % \
       ((current_time * my_chemistry.time_units / sec_per_year),
@@ -124,10 +128,19 @@ while current_time < final_time:
 
 from matplotlib import pyplot
 
-p1, = pyplot.loglog(time_values, temperature_values)
-pyplot.xlabel('Time [s]')
-pyplot.ylabel('T [K]')
-output_file = 'cooling_cell.png'
+p1, = pyplot.loglog(time_values, temperature_values, 
+                    color="k", label="T")
+pyplot.xlabel("Time [s]")
+pyplot.ylabel("T [K]")
+output_file = "cooling_cell.png"
+
+pyplot.twinx()
+p2, = pyplot.semilogx(time_values, mu_values,
+                      color="r", label="$\\mu$")
+pyplot.ylabel("$\\mu$")
+pyplot.legend([p1,p2],["T","$\\mu$"], fancybox=True,
+              loc="center left")
+
 print "Writing %s." % output_file
 pyplot.savefig(output_file)
 
