@@ -83,7 +83,17 @@ chemistry_data _set_default_chemistry_parameters()
   my_chemistry.HydrogenFractionByMass       = 0.76;
   /* The DToHRatio is by mass in the code, so multiply by 2. */
   my_chemistry.DeuteriumToHydrogenRatio     = 2.0*3.4e-5; // Burles & Tytler 1998
-  my_chemistry.SolarMetalFractionByMass     = 0.02041;
+
+  /*
+     Up until version 2.1, the solar metal mass fraction was 0.02041.  
+     This is close to 0.0194 of Anders & Grevesse (1989), but significantly 
+     higher than the more recent value of 0.0122 from Asplund et al. (2005).
+     As of version 2.1, the solar metal mass fraction has been set to 0.01295, 
+     which is consistent with the abundances used in Cloudy when generating the 
+     cooling tables.
+  */
+  my_chemistry.SolarMetalFractionByMass     = 0.01295; // Cloudy v13 abundances
+
   my_chemistry.NumberOfTemperatureBins      = 600;
   my_chemistry.ih2co                        = 1;
   my_chemistry.ipiht                        = 1;
