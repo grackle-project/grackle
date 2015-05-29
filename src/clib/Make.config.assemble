@@ -67,45 +67,6 @@
 	$(error Illegal value '$(CONFIG_PRECISION)' for $$(CONFIG_PRECISION))
     endif
 
-#-----------------------------------------------------------------------
-# DETERMINE DYNAMIC OR STATIC BUILD
-#-----------------------------------------------------------------------
-
-    ERROR_SHARED = 1
-
-    # Settings dynamic build
-
-    ifeq ($(CONFIG_SHARED),yes)
-        ERROR_SHARED = 0
-        ASSEMBLE_LD  = $(MACH_LD_NOMPI)
-        ASSEMBLE_LDOUTPUT_FLAGS = -o
-        ASSEMBLE_LDFLAGS = $(MACH_LDFLAGS) \
-                           $(ASSEMBLE_OPT_FLAGS)
-        ASSEMBLE_LIBS = $(MACH_LIBS)
-        MACH_SHARED_FLAGS = -shared
-        MACH_SHARED_EXT = so
-    endif
-
-    # Settings for 64-bit floating point baryon shared
-
-    ifeq ($(CONFIG_SHARED),no)
-        ERROR_SHARED = 0
-        ASSEMBLE_LD  = $(MACH_AR)
-        ASSEMBLE_LDOUTPUT_FLAGS = rcs
-        ASSEMBLE_LDFLAGS =
-        ASSEMBLE_LIBS =
-        MACH_SHARED_FLAGS =
-        MACH_SHARED_EXT = a
-    endif
-
-    # error if CONFIG_SHARED is incorrect
-
-    ifeq ($(ERROR_SHARED),1)
-       .PHONY: error_shared
-       error_shared:
-	$(error Illegal value '$(CONFIG_SHARED)' for $$(CONFIG_SHARED))
-    endif
-
 #=======================================================================
 # COMPILERS
 #=======================================================================
@@ -117,7 +78,9 @@
     ASSEMBLE_CC  = $(MACH_CC_NOMPI)
     ASSEMBLE_CXX = $(MACH_CXX_NOMPI)
     ASSEMBLE_FC  = $(MACH_FC_NOMPI)
-    ASSEMBLE_F90 = $(MACH_F90_NOMPI)    
+    ASSEMBLE_F90 = $(MACH_F90_NOMPI)
+    ASSEMBLE_LD = $(MACH_LD_NOMPI)
+    ASSEMBLE_LIBTOOL = $(MACH_LIBTOOL)
 
 #-----------------------------------------------------------------------
 # DETERMINE OPTIMIZATION LEVEL SETTINGS
@@ -180,6 +143,7 @@
     FC       = $(ASSEMBLE_FC)
     F90      = $(ASSEMBLE_F90)
     LD       = $(ASSEMBLE_LD)
+    LIBTOOL  = $(ASSEMBLE_LIBTOOL)
     CUDACOMPILER = $(ASSEMBLE_CUDACOMPILER)
     CUDACOMPFLAGS = $(ASSEMBLE_CUDAFLAGS)
 
@@ -204,7 +168,7 @@
 
     OBJS_LIB = $(OBJS_CONFIG_LIB)
 
-    LIBS = $(ASSEMBLE_LIBS)
+    LIBS = $(MACH_LIBS)
 
 #=======================================================================
 # INSTALLATION TARGETS
@@ -231,4 +195,3 @@
 #-----------------------------------------------------------------------
 
 LIB_RELEASE_VERSION = 2.0.1
-LIB_COMPATIBILITY_VERSION = 2.0

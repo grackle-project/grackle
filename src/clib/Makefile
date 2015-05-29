@@ -31,18 +31,12 @@
 #
 #=======================================================================
 
-# Use bash since sh on datastar does not recognize ">&" used in dep: target
-
-SHELL    = /bin/bash
-
-TOP_DIR  = ../..
-DEFAULT_INSTALL_PREFIX = /usr/local
-OUTPUT   = out.compile
-
+SHELL       = /bin/bash
+OUTPUT      = out.compile
+VERBOSE     = 0
+SVN         = hg
 GRACKLE_DIR = .
-VERBOSE  = 0
-
-SVN      = hg
+DEFAULT_INSTALL_PREFIX = /usr/local
 
 #-----------------------------------------------------------------------
 # Make.config.settings is used for setting default values to all compile-time 
@@ -87,6 +81,12 @@ include $(MAKE_CONFIG_OVERRIDE)
 
 include Make.config.assemble
 
+#
+# If libtool is not defined, set it to a default value
+#
+
+LIBTOOL ?= libtool
+
 #=======================================================================
 # OBJECT FILES
 #=======================================================================
@@ -97,44 +97,22 @@ include Make.config.objects
 # MAKE LIBGRACKLE BY DEFAULT
 #-----------------------------------------------------------------------
 
-# I believe this has to be done here, as it is target-specific.
-lib: CFLAGS   += $(MACH_SHARED_FLAGS) 
-lib: CXXFLAGS += $(MACH_SHARED_FLAGS) -DSHARED_LIBRARY
-lib: FFLAGS   += $(MACH_SHARED_FLAGS)
-lib: F90FLAGS += $(MACH_SHARED_FLAGS)
-lib: LDFLAGS  += $(MACH_SHARED_FLAGS)
-lib: libgrackle.$(MACH_SHARED_EXT)
-
-libgrackle.$(MACH_SHARED_EXT): $(MODULES) autogen dep $(OBJS_LIB) MACHNOTES
+libgrackle.la: $(MODULES) autogen dep $(OBJS_LIB) MACHNOTES
 	@rm -f $@
-	@echo "Linking"
-	-@$(LD) $(LDFLAGS) $(LDOUTPUT_FLAGS) $@ $(OBJS_LIB) $(LIBS) $(LIB_INSTALL_FLAGS) >> $(OUTPUT) 2>&1
-	@(if [ -e $@ ]; then \
-	   echo "Success!"; \
+	@(if [ $(VERBOSE) -eq 0 ]; then \
+	  echo "Linking" ; \
+	  $(LIBTOOL) --mode=link --tag=CC $(LD) $(LDFLAGS) -o $@ $(OBJS_LIB) $(LIBS) -rpath $(INSTALL_LIB_DIR) -release $(LIB_RELEASE_VERSION) >> $(OUTPUT) 2>&1 ; \
+	  if [ -e $@ ]; then \
+	     echo "Success!"; \
+	  else \
+	     echo "Failed! See $(OUTPUT) for error messages"; \
+	fi ; \
 	else \
-	   echo "$(LD) $(LDFLAGS) $(LDOUTPUT_FLAGS) $@ $(OBJS_LIB) $(LIBS) $(LIB_INSTALL_FLAGS)" >> temp1; \
-	   cat temp1 $(OUTPUT) > temp2; \
-	   rm -f temp1; \
-	   mv -f temp2 $(OUTPUT); \
-	   echo "Failed! See $(OUTPUT) for error messages"; \
+	  $(LIBTOOL) --mode=link --tag=CC $(LD) $(LDFLAGS) -o $@ $(OBJS_LIB) $(LIBS) -rpath $(INSTALL_LIB_DIR) -release $(LIB_RELEASE_VERSION) ; \
 	fi)
 
 MACHNOTES: 
-	@echo -e $(MACHINE_NOTES)
-
-lib%.$(MACH_SHARED_EXT): $(MODULES) autogen dep $(OBJS_LIB)
-	@rm -f $@
-	@echo "Linking"
-	-@$(LD) $(LDFLAGS) $(LDOUTPUT_FLAGS) $@ $(OBJS_LIB) $(LIBS) $(LIB_INSTALL_FLAGS) >> $(OUTPUT) 2>&1
-	@(if [ -e $@ ]; then \
-	   echo "Success!"; \
-	else \
-	   echo "$(LD) $(LDFLAGS) $(LDOUTPUT_FLAGS) $*.$(MACH_SHARED_EXT) $@ $(OBJS_LIB) $(LIBS) $(LIB_INSTALL_FLAGS)" >> temp1; \
-	   cat temp1 $(OUTPUT) > temp2; \
-	   rm -f temp1; \
-	   mv -f temp2 $(OUTPUT); \
-	   echo "Failed! See $(OUTPUT) for error messages"; \
-	fi)
+	@echo $(MACHINE_NOTES)
 
 #-----------------------------------------------------------------------
 # WRITE ALL COMPILER OUTPUT TO FILE
@@ -147,75 +125,67 @@ verbose: VERBOSE = 1
 # Implicit rules
 #-----------------------------------------------------------------------
 
-.SUFFIXES: .c .C .F .o
+.SUFFIXES: .c .C .F .lo .o
 
 # Inhibit removing any *.o files after compiling
 
-.PRECIOUS: %.o %.c %.C %.F
+.PRECIOUS: %.o %.lo %.c %.C %.F
 
-.F.o:
-	@echo "Compiling $<"
+.F.lo:
 	@rm -f $@
 	@(if [ $(VERBOSE) -eq 0 ]; then \
-	  $(FC) -c -o $@ $(FFLAGS) $(DEFINES) $*.F >& $(OUTPUT) ; \
+	  echo "Compiling $<" ; \
+	  $(LIBTOOL) --mode=compile --tag=FC $(FC) -c $(FFLAGS) $(DEFINES) $*.F >& $(OUTPUT) ; \
 	  if [ ! -e $@ ]; then \
              echo; \
-             echo "$(FC) -c -o $@ $(FFLAGS) $(DEFINES) $*.F"; \
-             echo; \
-             $(FC) -c -o $@ $(FFLAGS) $(DEFINES) $*.F; \
+	     echo "Compiling $< failed!"; \
+	     echo "See $(OUTPUT) for error messages."; \
              echo; \
              exit 1; \
           fi ; \
 	else \
-	  $(FC) -c -o $@ $(FFLAGS) $(DEFINES) $*.F >> $(OUTPUT) 2>&1 ; \
+	  $(LIBTOOL) --mode=compile --tag=FC $(FC) -c $(FFLAGS) $(DEFINES) $*.F; \
 	  if [ ! -e $@ ]; then \
-	     echo "See $(OUTPUT) for error messages"; \
 	     exit 1; \
 	  fi ; \
 	fi)
 
-.C.o:
+.C.lo:
 	@rm -f $@
-	@echo "Compiling $<"
 	@(if [ $(VERBOSE) -eq 0 ]; then \
-	  $(CXX) -c -o $@ $(DEFINES) $(CXXFLAGS) $(INCLUDES) $*.C \
+	  echo "Compiling $<" ; \
+	  $(LIBTOOL) --mode=compile --tag=CXX $(CXX) -c $(DEFINES) $(CXXFLAGS) $(INCLUDES) $*.C \
 	    >& $(OUTPUT) ; \
 	  if [ ! -e $@ ]; then \
              echo; \
-             echo "$(CXX) -c -o $@ $(DEFINES) $(CXXFLAGS) $(INCLUDES) $*.C"; \
-             echo; \
-             $(CXX) -c -o $@ $(DEFINES) $(CXXFLAGS) $(INCLUDES) $*.C;\
+	     echo "Compiling $< failed!"; \
+	     echo "See $(OUTPUT) for error messages."; \
              echo; \
              exit 1; \
           fi ; \
 	else \
-	  $(CXX) -c -o $@ $(DEFINES) $(CXXFLAGS) $(INCLUDES) $*.C 
-	    >> $(OUTPUT) 2>&1 ; \
+	  $(LIBTOOL) --mode=compile --tag=CXX $(CXX) -c $(DEFINES) $(CXXFLAGS) $(INCLUDES) $*.C; \
 	  if [ ! -e $@ ]; then \
-	     echo "See $(OUTPUT) for error messages"; \
 	     exit 1; \
 	  fi ; \
 	fi)
 
-.c.o:
+.c.lo:
 	@rm -f $@
-	@echo "Compiling $<"
 	@(if [ $(VERBOSE) -eq 0 ]; then \
-	  $(CC) -c -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) $*.c \
+	  echo "Compiling $<" ; \
+	  $(LIBTOOL) --mode=compile --tag=CC $(CC) -c $(DEFINES) $(CFLAGS) $(INCLUDES) $*.c \
 	    >& $(OUTPUT) ; \
 	  if [ ! -e $@ ]; then \
              echo; \
-             echo "$(CC) -c -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) $*.c"; \
-             echo; \
-             $(CC) -c -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) $*.c;\
+	     echo "Compiling $< failed!"; \
+	     echo "See $(OUTPUT) for error messages."; \
              echo; \
              exit 1; \
           fi ; \
 	else \
-	  $(CC) -c -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) $*.c \
-	    >> $(OUTPUT) 2>&1 ; \
+	  $(LIBTOOL) --mode=compile --tag=CC $(CC) -c $(DEFINES) $(CFLAGS) $(INCLUDES) $*.c; \
 	  if [ ! -e $@ ]; then \
-	     echo "See $(OUTPUT) for error messages"; \
 	     exit 1; \
 	  fi ; \
 	fi)
@@ -292,19 +262,21 @@ help:
 #-----------------------------------------------------------------------
 
 install:
-	@echo "Installing libgrackle.$(MACH_SHARED_EXT) to $(INSTALL_LIB_DIR)."
-	@cp libgrackle.$(MACH_SHARED_EXT) $(INSTALL_LIB_DIR)/
-
 	@echo "Installing grackle header files to $(INSTALL_INCLUDE_DIR)."
 	@(if [ ! -d $(INSTALL_INCLUDE_DIR) ]; then \
 		mkdir $(INSTALL_INCLUDE_DIR); \
 	fi)
 	@cp grackle.h grackle_macros.h grackle_types.h code_units.h chemistry_data.h grackle_fortran_types.def $(INSTALL_INCLUDE_DIR)
+	@(if [ ! -d $(INSTALL_LIB_DIR) ]; then \
+		mkdir $(INSTALL_LIB_DIR); \
+	fi)
+	@echo "Installing grackle library files to $(INSTALL_LIB_DIR)."
+	$(LIBTOOL) --mode=install install -c libgrackle.la $(INSTALL_LIB_DIR)/libgrackle.la
 
 #-----------------------------------------------------------------------
 
 clean:
-	-@rm -f *.$(MACH_SHARED_EXT) *.o DEPEND.bak *~ $(OUTPUT) *.exe auto_show*.C DEPEND out.make.DEPEND
+	-@rm -f *.la .libs/* *.o *.lo DEPEND.bak *~ $(OUTPUT) *.exe auto_show*.c DEPEND out.make.DEPEND
 	-@touch DEPEND
 
 #-----------------------------------------------------------------------
@@ -312,4 +284,3 @@ clean:
 #-----------------------------------------------------------------------
 
 include $(GRACKLE_DIR)/Make.config.targets
-# DO NOT DELETE

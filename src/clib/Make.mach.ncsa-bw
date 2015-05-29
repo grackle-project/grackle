@@ -37,7 +37,6 @@ MACH_LD_NOMPI  = cc # Linker
 # Machine-dependent defines
 #-----------------------------------------------------------------------
 MACH_DEFINES   = -DLINUX -DH5_USE_16_API
-MACH_AR   = ar
 
 #-----------------------------------------------------------------------
 # Compiler flag settings
