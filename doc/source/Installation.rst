@@ -58,17 +58,18 @@ Building
 
 3. Configure the build system.
 
+.. note:: As of version 2.1, Grackle uses ``libtool`` for building and installation.  As such, both shared and static libraries will be built automatically and it is not necessary to add the -fPIC compiler flag.
+
 Compile settings for different systems are stored in files starting with 
 "Make.mach" in the source directory.  Grackle comes with three sample make 
 macros: ``Make.mach.darwin`` for Mac OSX, ``Make.mach.linux-gnu`` for 
 Linux systems, and an unformatted ``Make.mach.unknown``.  If you have a make 
 file prepared for an Enzo install, it cannot be used straight away, but is a 
-very good place to start.  Starting with an Enzo make file, you will likely 
-have to add to the following variables:
-
-    * ``MACH_CPPFLAGS`` - -fPIC
+very good place to start.
 
 Once you have chosen the make file to be used, a few variables should be set:
+
+    * ``MACH_LIBTOOL`` - path to ``libtool`` executable.  Note, on a Mac, this should point to ``glibtool``.
 
     * ``LOCAL_HDF5_INSTALL`` - path to your hdf5 installation.  
 
@@ -104,9 +105,8 @@ home directory.
 Compiler Settings
 +++++++++++++++++
 
-There are three compile options available for setting the precision of 
-baryon fields, optimization, and building static or dynamic libraries.  
-To see them, type:
+There are two compile options available for setting the precision of 
+baryon fields and optimization.  To see them, type:
 
 .. highlight:: none
 
@@ -119,7 +119,6 @@ To see them, type:
 
    CONFIG_PRECISION  [precision-{32,64}]                     : 64
    CONFIG_OPT  [opt-{warn,debug,high,aggressive}]            : high
-   CONFIG_SHARED  [shared-{yes,no}]                          : yes
 
 For example, to change the optimization to high, type:
 
@@ -197,8 +196,9 @@ Then, to install:
 
 Once installed, you can test your installation with the provided example to
 assure it is functioning correctly.  If something goes wrong in this process,
-investigate the ``out.compile`` file to see what went wrong during compilation,
-or use ``ldd`` on your executable to determine what went wrong during linking.
+check the ``out.compile`` file to see what went wrong during compilation,
+or use ``ldd`` (``otool -L`` on Mac) on your executable to determine what went 
+wrong during linking.
 
 ::
 
