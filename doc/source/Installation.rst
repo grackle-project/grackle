@@ -58,7 +58,10 @@ Building
 
 3. Configure the build system.
 
-.. note:: As of version 2.1, Grackle uses ``libtool`` for building and installation.  As such, both shared and static libraries will be built automatically and it is not necessary to add the -fPIC compiler flag.
+.. note:: 
+   As of version 2.1, Grackle uses ``libtool`` for building and installation.  
+   As such, both shared and static libraries will be built automatically and 
+   it is not necessary to add the -fPIC compiler flag.
 
 Compile settings for different systems are stored in files starting with 
 "Make.mach" in the source directory.  Grackle comes with three sample make 
@@ -69,17 +72,23 @@ very good place to start.
 
 Once you have chosen the make file to be used, a few variables should be set:
 
-    * ``MACH_LIBTOOL`` - path to ``libtool`` executable.  Note, on a Mac, this should point to ``glibtool``.
+    * ``MACH_LIBTOOL`` - path to ``libtool`` executable.  Note, on a Mac, 
+      this should point to ``glibtool``, which can be installed with macports 
+      or homebrew.
 
     * ``LOCAL_HDF5_INSTALL`` - path to your hdf5 installation.  
 
-    * ``LOCAL_FC_INSTALL`` - path to Fortran compilers (not including the bin subdirectory).
+    * ``LOCAL_FC_INSTALL`` - path to Fortran compilers (not including the bin 
+      subdirectory).
 
-    * ``MACH_INSTALL_PREFIX`` - path where grackle header and library files will be installed.
+    * ``MACH_INSTALL_PREFIX`` - path where grackle header and library files 
+      will be installed.
 
-    * ``MACH_INSTALL_LIB_DIR`` - path where libgrackle will be installed (only set if different from MACH_INSTALL_PREFIX/lib).
+    * ``MACH_INSTALL_LIB_DIR`` - path where libgrackle will be installed (only 
+      set if different from MACH_INSTALL_PREFIX/lib).
 
-    * ``MACH_INSTALL_INCLUDE_DIR`` - path where grackle header files will be installed (only set if different from MACH_INSTALL_PREFIX/include).
+    * ``MACH_INSTALL_INCLUDE_DIR`` - path where grackle header files will be 
+      installed (only set if different from MACH_INSTALL_PREFIX/include).
 
 Once the proper variables are set, they are loaded into the build system by 
 doing the following:
