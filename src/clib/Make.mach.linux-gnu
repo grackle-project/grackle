@@ -38,7 +38,7 @@ MACH_AR        = ar
 # Machine-dependent defines
 #-----------------------------------------------------------------------
 
-MACH_DEFINES   = -DLINUX -DH5_USE_16_API -fPIC
+MACH_DEFINES   = -DLINUX -DH5_USE_16_API -fPIC 
 
 #-----------------------------------------------------------------------
 # Compiler flag settings
@@ -56,8 +56,8 @@ MACH_LDFLAGS  =
 #-----------------------------------------------------------------------
 
 MACH_OPT_WARN        = -Wall -g
-MACH_OPT_DEBUG       = -g
-MACH_OPT_HIGH        = -O2
+MACH_OPT_DEBUG       = -g -O0 -ffast-math
+MACH_OPT_HIGH        = -O2 -ffast-math
 MACH_OPT_AGGRESSIVE  = -O3 -g
 
 #-----------------------------------------------------------------------
@@ -66,7 +66,7 @@ MACH_OPT_AGGRESSIVE  = -O3 -g
 
 LOCAL_INCLUDES_HDF5   = -I$(LOCAL_HDF5_INSTALL)/include # HDF5 includes
 
-MACH_INCLUDES         = $(LOCAL_INCLUDES_HDF5)
+MACH_INCLUDES         = $(LOCAL_INCLUDES_HDF5) -I./FortranRoutines/
 
 #-----------------------------------------------------------------------
 # Libraries
@@ -81,6 +81,6 @@ MACH_LIBS         = $(LOCAL_LIBS_HDF5) $(LOCAL_LIBS_MACH)
 # Installation
 #-----------------------------------------------------------------------
 
-MACH_INSTALL_PREFIX = $(HOME)/local
+MACH_INSTALL_PREFIX = /home/regan/Research/Grackle/grackle-updaterates/src/clib/
 MACH_INSTALL_LIB_DIR =
 MACH_INSTALL_INCLUDE_DIR =
