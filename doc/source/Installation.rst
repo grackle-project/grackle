@@ -221,9 +221,9 @@ wrong during linking.
   
     ~/grackle/src/example $ ./cxx_example
     
-    The Grackle Version 2.0
+    The Grackle Version 2.1
     Mercurial Branch   default
-    Mercurial Revision 72030d6d47be
+    Mercurial Revision 98538c5ba2d5
 
     Initializing grackle data.
     with_radiative_cooling: 1.

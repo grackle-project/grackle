@@ -194,4 +194,4 @@
 # LIBRARY RELEASE VERSION
 #-----------------------------------------------------------------------
 
-LIB_RELEASE_VERSION = 2.0.1
+LIB_RELEASE_VERSION = 2.1
