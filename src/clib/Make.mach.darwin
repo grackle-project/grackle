@@ -52,7 +52,8 @@ MACH_CXX_NOMPI = g++ # C++ compiler when not using MPI
 MACH_FC_NOMPI  = gfortran # Fortran 77 compiler when not using MPI
 MACH_F90_NOMPI = gfortran # Fortran 90 compiler when not using MPI
 MACH_LD_NOMPI  = gcc # Linker when not using MPI
-MACH_AR        = ar
+
+MACH_LIBTOOL   = glibtool
 
 #-----------------------------------------------------------------------
 # Machine-dependent defines
@@ -74,8 +75,6 @@ MACH_CXXFLAGS =
 MACH_FFLAGS   = -fno-second-underscore -m64
 MACH_F90FLAGS = -fno-second-underscore -m64
 MACH_LDFLAGS  = 
-MACH_SHARED_FLAGS = -dynamiclib -Wl,-headerpad_max_install_names,-undefined,dynamic_lookup
-MACH_SHARED_EXT   = dylib
 
 #-----------------------------------------------------------------------
 # Optimization flags
