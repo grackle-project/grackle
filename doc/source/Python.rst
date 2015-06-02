@@ -61,6 +61,23 @@ systems.
 .. image:: _images/cooling_rate.png
    :width: 500
 
+Cooling Cell Example
+++++++++++++++++++++
+
+This sets up a single grid cell with an initial density and temperature and solves 
+the chemistry and cooling for a given amount of time.  The script will output a table 
+of temperature vs. time.  This can be used to test implementations of the Grackle in 
+simulation codes.
+
+.. highlight:: none
+
+::
+
+    python cooling_rate.py
+
+.. image:: _images/cooling_cell.png
+   :width: 500
+
 Free-Fall Collapse Example
 ++++++++++++++++++++++++++
 
