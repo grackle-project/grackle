@@ -1573,11 +1573,14 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
 
 !           8) H-
 
-            HMp(i) = ( k7(i)*HIp(i)*dep(i) )
-     &             / ( (k8(i)+k15(i))*HIp(i)
-     &             + ( k16(i)+k17(i))*HIIp(i)+k14(i)*dep(i)
-     &             + k27
-     &                 )
+            scoef = k7(i) * HI(i,j,k) * de(i,j,k) 
+            acoef = (k8(i)  + k15(i))  * HI(i,j,k) + 
+     &              (k16(i) + k17(i))  * HII(i,j,k) +  
+     &	            k14(i) * de(i,j,k) + k19(i) * H2II(i,j,k)/2.0 +
+     &	            k27
+            HMp(i) = (scoef*dtit(i) + HM(i,j,k))
+     &           / (1.0 + acoef*dtit(i))
+
 
 !           9) H2+
 
