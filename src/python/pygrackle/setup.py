@@ -8,7 +8,7 @@ def configuration(parent_package='',top_path=None):
     config.add_extension("grackle_wrapper",
                 ["pygrackle/grackle_wrapper.pyx"],
                 include_dirs=["../clib/"],
-                library_dirs=["../clib/"],
+                library_dirs=["../clib/.libs/"],
                 libraries=["grackle"],
                 define_macros=[("CONFIG_BFLOAT_8", True),
                                ("LARGE_INTS", True)]
