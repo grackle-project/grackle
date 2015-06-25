@@ -30,6 +30,7 @@ OBJS_CONFIG_LIB = \
         colh2diss_g.lo \
         coll_rates_g.lo \
         cool1d_cloudy_g.lo \
+        cool1d_cloudy_old_g.lo \
         cool1d_multi_g.lo \
         cool_multi_time_g.lo \
         initialize_chemistry_data.lo \

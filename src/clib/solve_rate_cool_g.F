@@ -30,7 +30,7 @@
      &                gasgra, 
      &                ierr,
      &                ih2optical, iciecool, ithreebody, ciecoa, 
-     &                icmbTfloor, iClHeat,
+     &                icmbTfloor, iClHeat, clEleFra,
      &                priGridRank, priGridDim,
      &                priPar1, priPar2, priPar3,
      &                priDataSize, priCooling, priHeating, priMMW,
@@ -132,7 +132,7 @@
      &        ndratec, clnew
       real*8  dt, aye, temstart, temend, gamma,
      &        utim, uxyz, uaye, urho, utem, fh, dtoh, z_solar, 
-     &        dtemstart, dtemend
+     &        dtemstart, dtemend, clEleFra
 
 !  Density, energy and velocity fields fields
 
@@ -339,7 +339,7 @@ c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 fo
      &                indixe, t1, t2, logtem, tdef, edot,
      &                tgas, tgasold, p2d, tdust, metallicity, rhoH, 
      &                ih2optical, iciecool, ciecoa, cieco,
-     &                icmbTfloor, iClHeat, 
+     &                icmbTfloor, iClHeat, clEleFra,
      &                priGridRank, priGridDim,
      &                priPar1, priPar2, priPar3,
      &                priDataSize, priCooling, priHeating, priMMW,
