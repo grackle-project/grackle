@@ -36,7 +36,8 @@
      &                priDataSize, priCooling, priHeating, priMMW,
      &                metGridRank, metGridDim,
      &                metPar1, metPar2, metPar3,
-     &                metDataSize, metCooling, metHeating)
+     &                metDataSize, metCooling, metHeating,
+     &                clnew)
 
 !
 !  SOLVE MULTI-SPECIES RATE EQUATIONS AND RADIATIVE COOLING
@@ -128,7 +129,7 @@
      &        iexpand, ih2co, ipiht, ispecies, imetal, idim,
      &        ierr, imcool, idust, 
      &        igammah, ih2optical, iciecool, ithreebody,
-     &        ndratec
+     &        ndratec, clnew
       real*8  dt, aye, temstart, temend, gamma,
      &        utim, uxyz, uaye, urho, utem, fh, dtoh, z_solar, 
      &        dtemstart, dtemend
@@ -345,6 +346,7 @@ c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 fo
      &                metGridRank, metGridDim,
      &                metPar1, metPar2, metPar3,
      &                metDataSize, metCooling, metHeating,
+     &                clnew,
      &                itmask)
 
             if (ispecies .gt. 0) then

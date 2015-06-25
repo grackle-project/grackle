@@ -36,6 +36,7 @@
      &                metGridRank, metGridDim,
      &                metPar1, metPar2, metPar3,
      &                metDataSize, metCooling, metHeating,
+     &                clnew,
      &                itmask)
 
 !  SOLVE RADIATIVE COOLING/HEATING EQUATIONS
@@ -65,7 +66,7 @@
 
       integer in, jn, kn, is, ie, j, k, nratec, idim,
      &        iexpand, ih2co, ipiht, ispecies, imcool, idust, 
-     &        imetal, igammah, ih2optical, iciecool
+     &        imetal, igammah, ih2optical, iciecool, clnew
       real*8  aye, temstart, temend, z_solar,
      &        utem, uxyz, uaye, urho, utim,
      &        gamma, fh
@@ -737,15 +738,23 @@ c  new (correct) way: (april 4, 2007)
 
       if (imcool .eq. 1) then
 
-         iZscale = 1
-         call cool1d_cloudy_g(d, rhoH, metallicity,
-     &        in, jn, kn, is, ie, j, k,
-     &        logtem, edot, comp2, dom, zr,
-     &        icmbTfloor, iClHeat, iZscale,
-     &        metGridRank, metGridDim,
-     &        metPar1, metPar2, metPar3,
-     &        metDataSize, metCooling, metHeating,
-     &        itmask)
+         if (clnew .eq. 1) then
+
+            iZscale = 1
+            call cool1d_cloudy_g(d, rhoH, metallicity,
+     &           in, jn, kn, is, ie, j, k,
+     &           logtem, edot, comp2, dom, zr,
+     &           icmbTfloor, iClHeat, iZscale,
+     &           metGridRank, metGridDim,
+     &           metPar1, metPar2, metPar3,
+     &           metDataSize, metCooling, metHeating,
+     &           itmask)
+
+         else
+
+            write(*,*) "old school nothing"
+
+         endif
 
       endif
 
