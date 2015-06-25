@@ -278,6 +278,9 @@ typedef struct
    */
   double cloudy_electron_fraction_factor;
 
+  // New/old cloudy data flag
+  int cloudy_data_new;
+
 } chemistry_data;
 
 #endif
