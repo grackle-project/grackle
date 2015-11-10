@@ -166,21 +166,23 @@ c     set HeIII recombination rate as either case A or case B
          k6 = 3.36e-10_DKIND/sqrt(T)/(T/1.e3_DKIND)**0.2_DKIND
      &        / (1._DKIND+(T/1.e6_DKIND)**0.7_DKIND) / kunit
       ENDIF
-      
-      k7 = 6.77e-15_DKIND*T_eV**0.8779_DKIND / kunit
-      
-      IF (T_eV .GT. 0.1_DKIND) THEN
-         k8 = exp(-20.06913897587003_DKIND
-     &        + 0.2289800603272916_DKIND*log_T_eV
-     &        + 0.03599837721023835_DKIND*log_T_eV**2
-     &        - 0.004555120027032095_DKIND*log_T_eV**3
-     &        - 0.0003105115447124016_DKIND*log_T_eV**4
-     &        + 0.0001073294010367247_DKIND*log_T_eV**5
-     &        - 8.36671960467864e-6_DKIND*log_T_eV**6
-     &        + 2.238306228891639e-7_DKIND*log_T_eV**7) / kunit
-      ELSE
-         k8 = 1.43e-9_DKIND / kunit
-      ENDIF
+c
+c     H- formation by radiative association: HI + e -> H2I + gamma.
+c     Fit from Stancil, Lepp & Dalgarno (1998, ApJ, 509, 1), based
+c     on photodetachment cross-section of Wishart (1979, MNRAS, 187, P59)       
+c      
+      k7 = 3.0e-16_DKIND * (T/3.e2_DKIND)**0.95_DKIND 
+     &   * exp(-T/9.32e3_DKIND) / kunit
+c
+c     H- destruction by associative detachment with HI: HM + HI -> H2I + e
+c     This fit is from Kreckel et al (2010, Science, 329, 69), based on their
+c     experimental measurements of the process. 
+c     
+      k8 = 1.35e-9_DKIND*(T**9.8493e-2_DKIND + 3.2852e-1_DKIND
+     &   * T**5.5610e-1_DKIND + 2.771e-7_DKIND * T**2.1826_DKIND)
+     &   / (1._DKIND + 6.191e-3_DKIND * T**1.0461_DKIND
+     &   + 8.9712e-11_DKIND * T**3.0424_DKIND
+     &   + 3.2576e-14_DKIND * T**3.7741_DKIND) / kunit
       
       k9 = 1.85e-23_DKIND*T**1.8_DKIND / kunit
       IF (T .GT. 6.7e3_DKIND) 
@@ -252,8 +254,14 @@ C     k12 = 4.38e-10*exp(-102000.0/T)*T**0.35 / kunit
       ELSE
          k15 = 2.56e-9_DKIND*T_eV**1.78186_DKIND / kunit
       ENDIF
-      
-      k16 = 6.5e-9_DKIND/sqrt(T_eV) / kunit
+c
+c     H- destruction by mutual neutralization with HII: HM + HII -> 2H
+c     Fit from Croft et al (1999, MNRAS, 304, 327), based on the cross-section
+c     of Fussen & Kubach (1986, J. Phys. B, 18 L31). This fit agrees well
+c     with recent measurements of the rate by X. Urbain & collaborators, to
+c     within experimental error
+c      
+      k16 = 2.4e-6_DKIND*(1._DKIND+T/2e4_DKIND)/sqrt(T) / kunit
       
       k17 = 1.e-8_DKIND*T**(-0.4_DKIND) / kunit
       IF (T .GT. 1.0e4_DKIND)
