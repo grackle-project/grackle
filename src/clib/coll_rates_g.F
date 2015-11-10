@@ -69,7 +69,7 @@ c
 c
 c  Locals
 c
-      real*8 log_T, log_T_eV, T_ev
+      real*8 log_T, log_T_eV, T_ev, tk9
 c
 c\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
 c=======================================================================
@@ -188,6 +188,21 @@ c
       IF (T .GT. 6.7e3_DKIND) 
      &     k9 = 5.81e-16_DKIND*(T/56200._DKIND)**(-0.6657_DKIND
      &     *log10(T/56200._DKIND)) / kunit
+
+c     H2+ formation by radiative association: HI + HII -> H2II + gamma
+c     This fit is from Latif et al (2015, MNRAS, 446, 3163) and is valid
+c     for temperatures in the range 1 < T < 32000 K. At higher temperatures,
+c     we keep the value of the rate coefficient constant; note that its 
+c     behaviour in this regime is unlikely to be important
+c
+      IF (T .GT. 3.2e4_DKIND) THEN
+        tk9 = 3.2e4_DKIND
+      ELSE
+        tk9 = T
+      ENDIF
+      k9 = 1d1**(-18.20_DKIND  - 3.194_DKIND * log10(tk9)
+     &          + 1.786_DKIND  * log10(tk9)**2
+     &          - 0.2072_DKIND * log10(tk9)**3 ) / kunit
       
       k10 = 6.0e-10_DKIND / kunit
       

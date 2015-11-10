@@ -220,7 +220,7 @@ c
      &     xx, dum, tbase1, xbase1, kunit, coolunit,
      &     dbase1, dlogtem, kunit_3bdy, cierate,
      &     grain_coef, d_ttt, d_logttt, d_dlogtem,
-     &     ttt2, d_ttt2
+     &     ttt2, d_ttt2, tk9
       real*8 tm, HDLR, HDLV, lt, t3, lt3
 c
 c\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////////
@@ -511,10 +511,20 @@ c
      &         + 8.9712d-11 * ttt**3.0424d0
      &         + 3.2576d-14 * ttt**3.7741d0) / kunit
 c
-        k9a(i) = 1.85d-23*ttt**1.8d0 / kunit
-        if(ttt .gt. 6.7d3) 
-     &     k9a(i) = 5.81d-16*(ttt/56200.d0)**(-0.6657d0*
-     &       log10(ttt/56200.d0)) / kunit
+c       H2+ formation by radiative association: HI + HII -> H2II + gamma
+c       This fit is from Latif et al (2015, MNRAS, 446, 3163) and is valid
+c       for temperatures in the range 1 < T < 32000 K. At higher temperatures,
+c       we keep the value of the rate coefficient constant; note that its 
+c       behaviour in this regime is unlikely to be important
+c
+        if (ttt .gt. 3.2d4) then
+          tk9 = 3.2d4
+        else
+          tk9 = ttt
+        endif
+        k9a(i) = 1d1**(-18.20d0 - 3.194d0 * dlog10(tk9)
+     $         + 1.786d0  * dlog10(tk9)**2
+     $         - 0.2072d0 * dlog10(tk9)**3 ) / kunit
 c
         k10a(i) = 6.0d-10 / kunit
 c
