@@ -136,7 +136,7 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
     my_chemistry->k11 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
     my_chemistry->k12 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
     my_chemistry->k13 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_chemistry->k13dd = malloc(7 * my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_chemistry->k13dd = malloc(14 * my_chemistry->NumberOfTemperatureBins * sizeof(double));
     my_chemistry->k14 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
     my_chemistry->k15 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
     my_chemistry->k16 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));

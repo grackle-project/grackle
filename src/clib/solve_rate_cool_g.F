@@ -169,7 +169,7 @@
      &       k50a(nratec), k51a(nratec), k52a(nratec), k53a(nratec),
      &       k54a(nratec), k55a(nratec), k56a(nratec),
      &       k57a(nratec), k58a(nratec),
-     &       k13dda(nratec, 7), h2dusta(nratec, ndratec),
+     &       k13dda(nratec, 14), h2dusta(nratec, ndratec),
      &       ncrna(nratec), ncrd1a(nratec), ncrd2a(nratec),
      &       k24, k25, k26, k27, k28, k29, k30, k31
 
@@ -233,7 +233,7 @@
      &       k16(ijk), k17(ijk), k18(ijk), k19(ijk), k22(ijk),
      &       k50(ijk), k51(ijk), k52(ijk), k53(ijk), k54(ijk),
      &       k55(ijk), k56(ijk), k57(ijk), k58(ijk),
-     &       k13dd(ijk, 7), h2dust(ijk),
+     &       k13dd(ijk, 14), h2dust(ijk),
      &       ncrn(ijk), ncrd1(ijk), ncrd2(ijk)
 
 !  Cooling/heating row locals
@@ -880,7 +880,7 @@ c -------------------------------------------------------------------
      &       k17a(nratec), k18a(nratec), k19a(nratec), k22a(nratec),
      &       k50a(nratec), k51a(nratec), k52a(nratec), k53a(nratec),
      &       k54a(nratec), k55a(nratec), k56a(nratec), k57a(nratec),
-     &       k58a(nratec), k13dda(nratec, 7), h2dusta(nratec, ndratec), 
+     &       k58a(nratec), k13dda(nratec, 14), h2dusta(nratec, ndratec), 
      &       ncrna(nratec), ncrd1a(nratec), ncrd2a(nratec),
      &       k24, k25, k26,
      &       piHI, piHeI
@@ -898,7 +898,7 @@ c -------------------------------------------------------------------
      &       k16(ijk), k17(ijk), k18(ijk), k19(ijk), k22(ijk),
      &       k50(ijk), k51(ijk), k52(ijk), k53(ijk), k54(ijk),
      &       k55(ijk), k56(ijk), k57(ijk), k58(ijk),
-     &       k13dd(ijk, 7), h2dust(ijk), 
+     &       k13dd(ijk, 14), h2dust(ijk), 
      &       ncrn(ijk), ncrd1(ijk), ncrd2(ijk),
      &       k24shield(ijk), k25shield(ijk), k26shield(ijk)
 
@@ -925,6 +925,7 @@ c -------------------------------------------------------------------
       integer i, n1
       real*8 factor, x, logtem0, logtem9, dlogtem, nh,
      &       d_logtem0, d_logtem9, d_dlogtem
+      real*8 k13_CID, k13_DT
 
 !     Set log values of start and end of lookup tables
 
@@ -1016,7 +1017,7 @@ c -------------------------------------------------------------------
          endif
          enddo
 
-         do n1 = 1, 7
+         do n1 = 1, 14
             do i = is+1, ie+1
                if (itmask(i)) then
                k13dd(i,n1) = k13dda(indixe(i),n1) +
@@ -1154,11 +1155,20 @@ c -------------------------------------------------------------------
                   k13(i) = tiny8
                   if (tgas1d(i) .ge. 500._DKIND .and.
      &                tgas1d(i) .lt. 1.0e6_DKIND) then
-                     k13(i) = k13dd(i,1)-k13dd(i,2)/
+c Direct collisional dissociation
+                     k13_CID = k13dd(i,1)-k13dd(i,2)/
      &                          (1._DKIND+(nh/k13dd(i,5))**k13dd(i,7))
      &                     + k13dd(i,3)-k13dd(i,4)/
      &                          (1._DKIND+(nh/k13dd(i,6))**k13dd(i,7))
-                     k13(i) = max(10._DKIND**k13(i), tiny8)
+                     k13_CID = max(10._DKIND**k13_CID, tiny8)
+c Dissociative tunnelling
+                     k13_DT  = k13dd(i,8)-k13dd(i,9)/
+     &                          (1._DKIND+(nh/k13dd(i,12))**k13dd(i,14))
+     &                     + k13dd(i,10)-k13dd(i,11)/
+     &                          (1._DKIND+(nh/k13dd(i,13))**k13dd(i,14))
+                     k13_DT  = max(10._DKIND**k13_DT, tiny8)
+c
+                     k13(i)  = k13_DT + k13_CID
                   endif
                endif
                enddo

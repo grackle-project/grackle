@@ -32,7 +32,7 @@ c  modified1: January, 1996 by Greg Bryan; adapted to KRONOS
 c  modified2: October, 1996 by GB; moved to AMR
 c  modified3: February, 2000 by GB; added Toms new collisional rates
 c  modified4: July, 2010 by Dan Reynolds; added case-B recombination rates
-c  modified5: November, 2015 by Simon Glover; added H-H, H-He coll. ion.
+c  modified5: November, 2015 by Simon Glover; added several new processes
 c
 c  PURPOSE:
 c    Construct tables for rate coefficients and some cooling functions 
@@ -183,7 +183,7 @@ c
      &        k22a(nratec), k50a(nratec), k51a(nratec), k52a(nratec), 
      &        k53a(nratec), k54a(nratec), k55a(nratec), k56a(nratec),
      &        k57a(nratec), k58a(nratec),
-     &        k13dda(nratec, 7),
+     &        k13dda(nratec, 14),
      &        h2dusta(nratec, ndratec),
      &        ncrna(nratec), ncrd1a(nratec), ncrd2a(nratec)
       integer ioutput
@@ -221,7 +221,7 @@ c
 
 c  Locals
 c
-      integer i,j
+      integer i,j,idt
       real*8 logttt, ttt, tev, logtev, 
      &     xx, dum, tbase1, xbase1, kunit, coolunit,
      &     dbase1, dlogtem, kunit_3bdy, cierate,
@@ -342,7 +342,7 @@ c
         k57a(i) = tiny
         k58a(i) = tiny
 c
-        do j = 1, 7
+        do j = 1, 14
            k13dda(i,j) = tiny
         enddo
 c
@@ -604,14 +604,28 @@ c
 c
 #endif /* USE_NEW_COLLISIONAL_RATES */
 c
-c       Compute the density-dependant collision H2 dissociation rates.
-c          (this givens a 7-variable function that is used to compute
-c           the log10 of the rate -- normalize by dividing by kunit).
+c       Compute the coefficients needed for the density-dependent collision 
+c       H2 dissociation rate. Our source for this (Martin et al, 1996, ApJ, 461, 265) 
+c       distinguishes between two processes, direct collisional dissociation (idt=0) and
+c       dissociative tunnelling (idt=1). We need to account for both processes, so call 
+c       the routine twice, once for each process.
 c
-        call colh2diss_g(ttt, k13dda(i,1), k13dda(i,2), k13dda(i,3), 
+c       For each process, the routine returns seven coefficients that are later used
+c       to compute the log10 of the corresponding rate.
+c
+        idt = 0
+        call colh2diss_g(ttt, idt, k13dda(i,1), k13dda(i,2), k13dda(i,3), 
      &                 k13dda(i,4), k13dda(i,5), k13dda(i,6), 
      &                 k13dda(i,7))
+c       Normalize by dividing by kunit
         k13dda(i,1) = k13dda(i,1) - log10(kunit)
+c
+        idt = 1
+        call colh2diss_g(ttt, idt, k13dda(i,8), k13dda(i,9), k13dda(i,10), 
+     &                 k13dda(i,11), k13dda(i,12), k13dda(i,13), 
+     &                 k13dda(i,14))
+c       Normalize by dividing by kunit
+        k13dda(i,8) = k13dda(i,8) - log10(kunit)
 c
 c       ------ 3-body H2 rate ----
 c       The first bit is my fit to A.E. Orel 1987, J.Chem.Phys., 87, 
