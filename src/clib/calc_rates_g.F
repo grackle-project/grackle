@@ -18,7 +18,8 @@ c
      &             k1a, k2a, k3a, k4a, k5a, k6a, k7a, k8a, k9a, k10a,
      &             k11a, k12a, k13a, k13dda, k14a, k15a, k16a, k17a,
      &             k18a, k19a, k20a, k21a, k22a, k23a,
-     &             k50a, k51a, k52a, k53a, k54a, k55a, k56a, 
+     &             k50a, k51a, k52a, k53a, k54a, k55a, k56a,
+     &             k57a, k58a, 
      &             ndratec, dtemstart, dtemend, h2dusta, 
      &             ncrna, ncrd1a, ncrd2a, ioutput
      &                     )
@@ -31,6 +32,7 @@ c  modified1: January, 1996 by Greg Bryan; adapted to KRONOS
 c  modified2: October, 1996 by GB; moved to AMR
 c  modified3: February, 2000 by GB; added Toms new collisional rates
 c  modified4: July, 2010 by Dan Reynolds; added case-B recombination rates
+c  modified5: November, 2015 by Simon Glover; added H-H, H-He coll. ion.
 c
 c  PURPOSE:
 c    Construct tables for rate coefficients and some cooling functions 
@@ -138,6 +140,9 @@ C ------- 31:   H2I   + p   -> 2HI
 C
 c ------- 50-56: deuterium rates (given below)
 c
+c ------- 57: coll. ion. of H by H:   HI + HI  -> HII +  HI + e
+c ------- 58: coll. ion. of H by He:  HI + HeI -> HII + HeI + e
+c
 c ------- h2dust: 2H  + grain -> H2  + grain (eq 3.8 from Hollenbach & McKee 1989)
 c
 c ncrn, ncrd1, ncrd1: numerator and denominator terms in Eq 23 of Omukai ea 2000
@@ -177,6 +182,7 @@ c
      &        k21a(nratec), k23a(nratec),
      &        k22a(nratec), k50a(nratec), k51a(nratec), k52a(nratec), 
      &        k53a(nratec), k54a(nratec), k55a(nratec), k56a(nratec),
+     &        k57a(nratec), k58a(nratec),
      &        k13dda(nratec, 7),
      &        h2dusta(nratec, ndratec),
      &        ncrna(nratec), ncrd1a(nratec), ncrd2a(nratec)
@@ -333,6 +339,8 @@ c
         k54a(i) = tiny
         k55a(i) = tiny
         k56a(i) = tiny
+        k57a(i) = tiny
+        k58a(i) = tiny
 c
         do j = 1, 7
            k13dda(i,j) = tiny
@@ -668,6 +676,24 @@ c
         k54a(i) = 7.5d-11*exp(-3.82d3/ttt) / kunit
         k55a(i) = 7.5d-11*exp(-4.24d3/ttt) / kunit
         k56a(i) = 1.5d-9 *(ttt/300.d0)**(-0.1d0) / kunit
+c
+c       ------ New H ionization rates -----
+c
+c       57) H  +  H  ->  H+ + H  + e
+c       58) H  +  He ->  H+ + He + e
+c
+c       The rate coefficients for reactions 57 and 58 are from 
+c       Lenzuni, Chernoff & Salpeter (1991). The value for reaction 57 is based
+c       on the experimental cross-sections of Gealy & van Zyl (1987); that for
+c       reaction 58 is based on cross-sections from van Zyl, Le & Amme (1981).
+c
+        if (ttt .gt. 3d3) then
+          k57a(i) = 1.2d-17  * ttt**1.2d0 * dexp(-1.578d5 / ttt) / kunit
+          k58a(i) = 1.75d-17 * ttt**1.3d0 * dexp(-1.578d5 / ttt) / kunit
+        else
+          k57a(i) = tiny
+          k58a(i) = tiny
+        endif
 c
 c     H2 formation on dust grains.
 c     Loop over dust temperature.

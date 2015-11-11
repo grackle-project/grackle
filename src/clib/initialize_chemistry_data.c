@@ -54,8 +54,8 @@ extern void FORTRAN_NAME(calc_rates_g)(
      double *k15a, double *k16a, double *k17a, double *k18a,
      double *k19a, double *k20a, double *k21a, double *k22, double *k23,
      double *k50, double *k51, double *k52, double *k53, double *k54, double *k55,
-     double *k56, int *ndratec, double *dtemstart, double *dtemend, double *h2dusta, 
-     double *ncrca, double *ncrd1a, double *ncrd2a, 
+     double *k56, double *k57, double *k58, int *ndratec, double *dtemstart, 
+     double *dtemend, double *h2dusta, double *ncrca, double *ncrd1a, double *ncrd2a, 
      int *ioutput);
 
 int _initialize_chemistry_data(chemistry_data *my_chemistry, 
@@ -154,6 +154,8 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
     my_chemistry->k54 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
     my_chemistry->k55 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
     my_chemistry->k56 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_chemistry->k57 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_chemistry->k58 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
     my_chemistry->h2dust = malloc(my_chemistry->NumberOfTemperatureBins *
                                  my_chemistry->NumberOfDustTemperatureBins * sizeof(double));
     my_chemistry->n_cr_n = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
@@ -215,7 +217,7 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
         my_chemistry->k15, my_chemistry->k16, my_chemistry->k17, my_chemistry->k18,
      my_chemistry->k19, my_chemistry->k20, my_chemistry->k21, my_chemistry->k22, my_chemistry->k23,
      my_chemistry->k50, my_chemistry->k51, my_chemistry->k52, my_chemistry->k53, my_chemistry->k54,
-        my_chemistry->k55, my_chemistry->k56, 
+        my_chemistry->k55, my_chemistry->k56, my_chemistry->k57, my_chemistry->k58,
      &my_chemistry->NumberOfDustTemperatureBins, &my_chemistry->DustTemperatureStart, 
      &my_chemistry->DustTemperatureEnd, my_chemistry->h2dust, 
      my_chemistry->n_cr_n, my_chemistry->n_cr_d1, my_chemistry->n_cr_d2, 

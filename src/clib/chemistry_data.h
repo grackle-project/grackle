@@ -180,6 +180,11 @@ typedef struct
   double *k55;
   double *k56;
 
+  /* New H-ionizing reactions, used for 6, 9 & 12 species chemistry */
+
+  double *k57;
+  double *k58;
+
   /* H2 formation on dust. */
 
   int NumberOfDustTemperatureBins;   
