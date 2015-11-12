@@ -47,7 +47,8 @@ extern void FORTRAN_NAME(calc_rates_g)(
      double *gammahacgs, double *gammaha,
      double *hyd01ka, double *h2k01a, double *vibha, double *rotha, double *rotla,
      double *gpldl, double *gphdl, double *hdlte, double *hdlow, double *cieco,
-     double *gaHIa, double *gaH2a, double *gaHea, double *gaHpa, double *gaela, double *gasgr, 
+     double *gaHIa, double *gaH2a, double *gaHea, double *gaHpa, double *gaela, 
+     double *h2ltea, double *gasgr, 
      double *k1a, double *k2a, double *k3a, double *k4a, double *k5a, double *k6a,
      double *k7a, double *k8a, double *k9a, double *k10a,
      double *k11a, double *k12a, double *k13a, double *k13dda, double *k14a,
@@ -119,6 +120,7 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
     my_chemistry->GAHe    = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
     my_chemistry->GAHp    = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
     my_chemistry->GAel    = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_chemistry->H2LTE   =  malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
     my_chemistry->gas_grain = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
 
   /* Allocate space in my_chemistry for rates. */
@@ -210,7 +212,7 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
      my_chemistry->GP99LowDensityLimit, my_chemistry->GP99HighDensityLimit,
         my_chemistry->HDlte, my_chemistry->HDlow, my_chemistry->cieco,
      my_chemistry->GAHI, my_chemistry->GAH2, my_chemistry->GAHe, my_chemistry->GAHp,
-        my_chemistry->GAel, my_chemistry->gas_grain, 
+     my_chemistry->GAel, my_chemistry->H2LTE, my_chemistry->gas_grain, 
      my_chemistry->k1, my_chemistry->k2, my_chemistry->k3, my_chemistry->k4, my_chemistry->k5,
         my_chemistry->k6, my_chemistry->k7, my_chemistry->k8, my_chemistry->k9, my_chemistry->k10,
      my_chemistry->k11, my_chemistry->k12, my_chemistry->k13, my_chemistry->k13dd, my_chemistry->k14,

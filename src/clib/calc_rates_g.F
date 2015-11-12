@@ -14,7 +14,7 @@ c
      &             gammahacgs, gammaha,
      &             hyd01ka, h2k01a, vibha, rotha, rotla, 
      &             gpldl, gphdl, hdltea, hdlowa, ciecoa,
-     &             gaHIa, gaH2a, gaHea, gaHpa, gaela, gasgra,
+     &             gaHIa, gaH2a, gaHea, gaHpa, gaela, h2ltea, gasgra,
      &             k1a, k2a, k3a, k4a, k5a, k6a, k7a, k8a, k9a, k10a,
      &             k11a, k12a, k13a, k13dda, k14a, k15a, k16a, k17a,
      &             k18a, k19a, k20a, k21a, k22a, k23a,
@@ -171,8 +171,8 @@ c
      &        rotha(nratec), rotla(nratec), gpldl(nratec),
      &        gphdl(nratec), hdltea(nratec), hdlowa(nratec),
      &        gaHIa(nratec), gaH2a(nratec), gaHea(nratec), 
-     &        gaHpa(nratec), gaela(nratec), gasgra(nratec),
-     &        ciecoa(nratec),
+     &        gaHpa(nratec), gaela(nratec), h2ltea(nratec),
+     &        gasgra(nratec), ciecoa(nratec),
      &        compa, gammaha, gammahacgs,
      &        k1a (nratec), k2a (nratec), k3a (nratec), k4a (nratec), 
      &        k5a (nratec), k6a (nratec), k7a (nratec), k8a (nratec), 
@@ -382,7 +382,8 @@ c
         gaHea(i)    = tiny
         gaHpa(i)    = tiny
         gaela(i)    = tiny
-        gasgra(i)    = tiny
+        h2ltea(i)   = tiny
+        gasgra(i)   = tiny
       enddo
 c
 c  Fill in tables over the range temstart to temend
@@ -986,6 +987,22 @@ c
      &           + 8.9167183d0  * lt3**6
      &           + 6.4380698d0  * lt3**7
      &           - 6.3701156d0  * lt3**8) / coolunit
+      endif
+c     e part 4) - New fit to LTE rate from Glover (2015, MNRAS, 451, 2082)
+      if (tm .lt. 1d2) then
+c Crude extrapolation, but don't expect H2 cooling to be significant
+c at these temperatures
+        h2ltea(i) = 7.d-27 * tm**1.5 * exp(-512./tm) / coolunit
+      else
+        h2ltea(i) = 10.d0**(-20.584225d0
+     &            + 5.0194035d0 * lt3
+     &            - 1.5738805d0 * lt3**2
+     &            - 4.7155769d0 * lt3**3
+     &            + 2.4714161d0 * lt3**4
+     &            + 5.4710750d0 * lt3**5
+     &            - 3.9467356d0 * lt3**6
+     &            - 2.2148338d0 * lt3**7
+     &            + 1.8161874d0 * lt3**8) / coolunit
       endif
 c
 c     f) HD cooling

@@ -256,6 +256,9 @@ typedef struct
   double *GAHp;
   double *GAel;
 
+  /* Updated H2 LTE rate from Glover (2015, MNRAS, 451, 2082) */
+  double *H2LTE;
+
   /* 12 species rates (including HD) */
 
   double *HDlte;
