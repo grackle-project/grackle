@@ -16,6 +16,7 @@ cdef extern from "chemistry_data.h":
         int cie_cooling
         int h2_optical_depth_approximation
         int photoelectric_heating
+        int CaseBRecombination
         int UVbackground
         float SolarMetalFractionByMass
         double k24

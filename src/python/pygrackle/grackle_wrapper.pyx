@@ -97,6 +97,12 @@ cdef class chemistry_data:
         def __set__(self, val):
             self.data.grackle_data_file = val
 
+    property CaseBRecombination:
+        def __get__(self):
+            return self.data.CaseBRecombination
+        def __set__(self, val):
+            self.data.CaseBRecombination = val
+
     property UVbackground:
         def __get__(self):
             return self.data.UVbackground
