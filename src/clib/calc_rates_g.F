@@ -1020,13 +1020,18 @@ c
      &            0.122393d0 * (dlog10(tm))**5
       hdltea(i) = (10.d0**min(hdltea(i), 0.0d0)) / coolunit
 c
-c Galli and Palla 1998 low density limit (erg cm3 /s)
-c  uses HD-He collisional data, so reduced by 1.27
+c Rate based on Wrathmall, Gusdorf & Flower (2007) collisional excitation rates
+c for HD-H collisions
 c
-      hdlowa(i) = ((3.0d0 * (4.4d-12 + 3.6d-13*ttt**0.77d0) *
-     &            dexp(-128.d0/ttt) * 128.d0 +
-     &            (5.0d0/3.0d0) * (4.1d-12+2.1e-13*ttt**0.92d0) *
-     &            dexp(-255.d0/ttt) * 255.d0) * kb/1.27d0 ) / coolunit
+      tm = max(ttt, 1.d1)
+      tm = min(tm, 6.d3)
+
+      hdlowa(i) = -23.175780d0  + 1.5035261d0 * dlog10(tm/1.d3)
+     &          + 0.40871403d0  * (dlog10(tm/1.d3))**2
+     &          + 0.17849311d0  * (dlog10(tm/1.d3))**3
+     &          - 0.077291388d0 * (dlog10(tm/1.d3))**4
+     &          + 0.10031326d0  * (dlog10(tm/1.d3))**5
+      hdlowa(i) = (10.d0**hdlowa(i)) / coolunit
 c
 c     g) CIE cooling as discussed in Ripamonti & Abel (2003)
 c        cie_thin_cooling_rate_g returns rate as erg s^-1 cm^3 g^2 so
