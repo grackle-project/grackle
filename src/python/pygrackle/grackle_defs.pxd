@@ -18,7 +18,14 @@ cdef extern from "chemistry_data.h":
         int photoelectric_heating
         int UVbackground
         float SolarMetalFractionByMass
-        # Most of the rest are not user-settable
+        double k24
+        double k25
+        double k26
+        double k27
+        double k28
+        double k29
+        double k30
+        double k31
 
 cdef extern from "code_units.h":
     ctypedef struct c_code_units "code_units":
