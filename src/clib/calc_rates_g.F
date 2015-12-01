@@ -615,16 +615,16 @@ c       For each process, the routine returns seven coefficients that are later 
 c       to compute the log10 of the corresponding rate.
 c
         idt = 0
-        call colh2diss_g(ttt, idt, k13dda(i,1), k13dda(i,2), k13dda(i,3), 
-     &                 k13dda(i,4), k13dda(i,5), k13dda(i,6), 
-     &                 k13dda(i,7))
+        call colh2diss_g(ttt, idt, k13dda(i,1), k13dda(i,2), 
+     &                 k13dda(i,3), k13dda(i,4), k13dda(i,5), 
+     &                 k13dda(i,6), k13dda(i,7))
 c       Normalize by dividing by kunit
         k13dda(i,1) = k13dda(i,1) - log10(kunit)
 c
         idt = 1
-        call colh2diss_g(ttt, idt, k13dda(i,8), k13dda(i,9), k13dda(i,10), 
-     &                 k13dda(i,11), k13dda(i,12), k13dda(i,13), 
-     &                 k13dda(i,14))
+        call colh2diss_g(ttt, idt, k13dda(i,8), k13dda(i,9), 
+     &                 k13dda(i,10), k13dda(i,11), k13dda(i,12), 
+     &                 k13dda(i,13), k13dda(i,14))
 c       Normalize by dividing by kunit
         k13dda(i,8) = k13dda(i,8) - log10(kunit)
 c
