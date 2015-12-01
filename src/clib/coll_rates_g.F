@@ -184,11 +184,6 @@ c
      &   + 8.9712e-11_DKIND * T**3.0424_DKIND
      &   + 3.2576e-14_DKIND * T**3.7741_DKIND) / kunit
       
-      k9 = 1.85e-23_DKIND*T**1.8_DKIND / kunit
-      IF (T .GT. 6.7e3_DKIND) 
-     &     k9 = 5.81e-16_DKIND*(T/56200._DKIND)**(-0.6657_DKIND
-     &     *log10(T/56200._DKIND)) / kunit
-
 c     H2+ formation by radiative association: HI + HII -> H2II + gamma
 c     This fit is from Latif et al (2015, MNRAS, 446, 3163) and is valid
 c     for temperatures in the range 1 < T < 32000 K. At higher temperatures,
