@@ -1445,8 +1445,8 @@ c               ERROR_MESSAGE
 !        2) HII
 c 
             scoef  = k1(i)*HIp(i)*de(i,j,k)
-     &             + k57(i)*HI(i)*HI(i)
-     &             + k58(i)*HI(i)*HeI(i,j,k)/4._DKIND
+     &             + k57(i)*HIp(i)*HIp(i)
+     &             + k58(i)*HIp(i)*HeI(i,j,k)/4._DKIND
      &             + k24shield(i)*HIp(i)
             acoef  = k2(i)*de (i,j,k)
             HIIp(i) = (scoef*dtit(i) + HII(i,j,k))/
@@ -1463,8 +1463,8 @@ c
 !        3) Electron density
 
             scoef = 0._DKIND
-     &                 + k57(i)*HI(i)*HI(I)
-     &                 + k58(i)*HI(i)*HeI(i,j,k)/4._DKIND
+     &                 + k57(i)*HIp(i)*HIp(i)
+     &                 + k58(i)*HIp(i)*HeI(i,j,k)/4._DKIND
      &                 + k24shield(i)*HI(i,j,k)
      &                 + k25shield(i)*HeII(i,j,k)/4._DKIND
      &                 + k26shield(i)*HeI(i,j,k)/4._DKIND
