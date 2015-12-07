@@ -228,8 +228,11 @@ c
      &        - 9.36345888928611e-6_DKIND*log_T_eV**8) / kunit
 #endif /* USE_SAVIN2004 */
          
-C     k12 = 4.38e-10*exp(-102000.0/T)*T**0.35 / kunit
-         k12 = 5.6e-11_DKIND*exp(-102124._DKIND/T)*T**0.5_DKIND / kunit
+
+c Revised rate coefficient for collisional dissociation of H2 by electrons,
+c from Trevisan & Tennyson (2002, Plasma Phys. Cont. Fus., 44, 1263). 
+c Assumes all of the H2 molecules are in the v=0 vibrational ground state
+      k12 = 4.4886e-9_DKIND*T**0.109127_DKIND*exp(-101858._DKIND/T) / kunit
       ELSE
          k13 = tiny 
          k11 = tiny
