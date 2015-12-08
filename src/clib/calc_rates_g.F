@@ -634,7 +634,8 @@ c       314. I then match it to the T^-1 of Palla etal (1983)
 c       Which is then 4 times smaller than the Palla rate ! Thats
 c       molecule uncertainties ! :-)
 c
-c Our varying threebody rates from Simon
+c Our varying threebody rates from Simon, with corresponding 
+c collisional dissociation rates
         if(threebody.eq.0)then
           if (ttt .le. 300.d0) then
              k22a(i) = 1.3d-32 * (ttt/300.d0)**(-0.38d0)
@@ -642,27 +643,40 @@ c Our varying threebody rates from Simon
              k22a(i) = 1.3d-32 * (ttt/300.d0)**(-1.d0)
           endif
         elseif(threebody.eq.1)then
-c Inverse of PSS83 three-body rate
+c PSS83 three-body rate
           k22a(i) = 5.5d-29 / ttt
+c Inverse of PSS83 three-body rate
           k13a(i) = (5.24d-7 / ttt**0.485d0) 
      &                   * exp(-5.2d4 / ttt)
         elseif(threebody.eq.2)then
-c Inverse of CW83 rate
+c CW83 three-body rate
           k22a(i) = 8.8d-33
+c Inverse of CW83 rate
           k13a(i) = 8.4d-11 * ttt**0.515d0 * exp(-5.2d4 / ttt)
         elseif(threebody.eq.3)then
-c Rate from JGC67, used by FH07 to construct their three-body rate
+c FH07 three-body rate
           k22a(i) = 1.44d-26 / ttt**1.54d0
+c Rate from JGC67, used by FH07 to construct their three-body rate
           k13a(i) = (1.38d-4 / ttt**1.025d0)
      &                   * exp(-5.2d4 / ttt)
         elseif(threebody.eq.4)then
-c High density rate from MSM96
+c Rate from Glover (2008), derived by detailed balance from MSM96
           k22a(i) = 7.7d-31 / ttt**0.464d0
+c High density limiting rate from MSM96
           k13a(i) = 1d1**(-178.4239d0 - 68.42243d0 * log10(ttt) 
      &                   + 43.20243d0 * log10(ttt)**2
      &                   - 4.633167d0 * log10(ttt)**3 
      &                   + 69.70086d0 * log10(1d0 + 40870.38d0 / ttt)
      &                   - (23705.7d0 / ttt))
+        elseif(threebody.eq.5)then
+c Rate from Forrey (2013)
+          k22a(i) = (6d-32 / ttt**0.25d0) + (2d-31 / ttt**0.5d0)
+c Inferred from detailed balance from Forrey rate
+          if (ttt .le. 3000.d0) then
+            k13a(i) = 2.4d-8 * exp(-5.2d4/ttt)
+          else
+            k13a(i) = 2.2d-6 * ttt**(-0.565) * exp(-5.2d4/ttt)
+          endif
         else
             write(0,*) "I didn't understand your threebody rate."
             stop
