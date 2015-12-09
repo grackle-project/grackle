@@ -698,13 +698,48 @@ c       55) HD  +  H  -> H2 +  D
 c       56) D   +  H- -> HD +  e-
 c      [57) D-  +  H  -> HD +  e-]  included by multiply 56 by 2
 c
-        k50a(i) = 1.0d-9 *exp(-4.1d1/ttt)  / kunit
-        k51a(i) = 1.0d-9                   / kunit
-        k52a(i) = 2.1d-9                   / kunit
-        k53a(i) = 1.0d-9 *exp(-4.57d2/ttt) / kunit
-        k54a(i) = 7.5d-11*exp(-3.82d3/ttt) / kunit
-        k55a(i) = 7.5d-11*exp(-4.24d3/ttt) / kunit
-        k56a(i) = 1.5d-9 *(ttt/300.d0)**(-0.1d0) / kunit
+        if (ttt .le. 2d5) then
+c Fit from Savin (2002), valid for T < 2e5 K; at higher T, we extrapolate
+          k50a(i) = (2.0d-10 * ttt**0.402d0 * exp(-3.71d1/ttt)
+     &             - 3.31d-17 * ttt**1.48d0) / kunit
+        else
+          k50a(i) = 2.5d-8 * (ttt/2.0d5)**0.402d0 / kunit
+        endif
+c Fit from Savin (2002), valid for T < 2e5 K
+        k51a(i) = (2.06d-10 * ttt**0.396d0 * exp(-3.30d1/ttt)
+     &            + 2.03d-9 * ttt**(-0.332d0)) / kunit
+c k52, k53: fits by Galli & Palla (2002) to calculations by Gerlich (1982)
+c For k52, we use a fixed value at T > 1e4 K to avoid numerical problems with
+c the fitting function. Note that at these temperatures, we do not expect the
+c reaction to be important
+        if (ttt. le. 1d4) then
+          k52a(i) = 1.0d-9 * (0.417 + 0.846 * log10(ttt) 
+     &            - 0.137 * log10(ttt)**2)   / kunit
+        else
+          k52a(i) = 1.609d-9 / kunit
+        endif
+        k53a(i) = 1.1d-9 *exp(-4.88d2/ttt) / kunit
+c Fit by Clark et al (2011), based on data from in Mielke et al (2003)
+        if (ttt .le. 2d3) then
+          k54a(i) = 1d1**(-5.64737d1 + 5.88886 * log10(ttt)
+     $            + 7.19692d0  * log10(ttt)**2
+     $            + 2.25069d0  * log10(ttt)**3
+     $            - 2.16903d0  * log10(ttt)**4
+     $            + 3.17887d-1 * log10(ttt)**5)
+        else
+          k54a(i) = 3.17d-10 * exp(-5.207d3 / ttt)
+        endif
+c From Galli & Palla (2002), based on Shavitt (1959). Fit modified at low
+c temperature, as recommended by Ripamonti (2007) and McGreer & Bryan (2008)
+c to avoid producing an anomalously large rate coefficient
+        if (ttt .le. 2d2) then
+          k55a(i) = 1.08d-22 / kunit
+        else
+          k55a(i) = 5.25d-11 * exp(-4.43d3/ttt + 1.739d5/ttt**2) / kunit
+        endif
+c Same as for H- + H; measurements by Miller et al (2012) suggest
+c that there is no significant isotope effect for this reaction
+        k56a(i) = k8a(i)
 c
 c       ------ New H ionization rates -----
 c
