@@ -19,7 +19,6 @@
 #include "chemistry_data.h"
 #include "code_units.h"
 #include "phys_constants.h"
-#include "fortran.def"
 
 extern chemistry_data grackle_data;
 
