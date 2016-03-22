@@ -84,9 +84,6 @@
 
 !  Parameters
 
-      integer ijk
-      parameter (ijk = MAX_ANY_SINGLE_DIRECTION)
-
       real*8 mh
       parameter (mh = mass_h)
 

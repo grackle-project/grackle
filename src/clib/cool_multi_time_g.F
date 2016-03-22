@@ -95,9 +95,6 @@
 
 !  Parameters
 
-      integer ijk
-      parameter (ijk = MAX_ANY_SINGLE_DIRECTION)
-
 !  Locals
 
       integer i, j, k
