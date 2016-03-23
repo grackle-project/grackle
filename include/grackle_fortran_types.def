@@ -1,0 +1,33 @@
+!=======================================================================
+!
+!
+! Grackle fortran variable types
+!
+!
+! Copyright (c) 2013, Enzo/Grackle Development Team.
+!
+! Distributed under the terms of the Enzo Public Licence.
+!
+! The full license is in the file LICENSE, distributed with this 
+! software.
+!=======================================================================
+
+#ifdef CONFIG_BFLOAT_4
+#define tiny 1.e-20
+#define huge 1.e+20
+#define R_PREC real*4
+      integer, parameter :: RKIND=4
+#endif
+
+#ifdef CONFIG_BFLOAT_8
+#define tiny 1.d-20
+#define huge 1.d+20
+#define R_PREC real*8
+      integer, parameter :: RKIND=8
+#endif
+
+#define tiny8 1.d-20
+#define huge8 1.d+20
+
+      integer, parameter :: DKIND=8
+      integer, parameter :: DIKIND=8
