@@ -278,6 +278,11 @@ typedef struct
    */
   double cloudy_electron_fraction_factor;
 
+  // number of OpenMP threads if supported
+# ifdef _OPENMP
+  int omp_nthreads;
+# endif
+
 } chemistry_data;
 
 #endif

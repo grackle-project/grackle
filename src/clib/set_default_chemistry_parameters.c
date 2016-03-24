@@ -109,5 +109,10 @@ chemistry_data _set_default_chemistry_parameters()
   my_chemistry.cloudy_metal.grid_rank        = 0;
   my_chemistry.cloudy_electron_fraction_factor = 9.153959e-3; // Cloudy 07.02 abundances
 
+//number of OpenMP threads
+# ifdef _OPENMP
+  my_chemistry.omp_nthreads = omp_get_max_threads(); // maximum allowed number
+# endif
+
   return my_chemistry;
 }

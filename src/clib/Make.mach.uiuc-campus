@@ -51,11 +51,11 @@ MACH_DEFINES   = -DLINUX -DH5_USE_16_API
 #-----------------------------------------------------------------------
 
 MACH_CPPFLAGS = -P -traditional # C preprocessor flags
-MACH_CFLAGS   = -mp1 -prec_div -fp_port -align # C compiler flags
-MACH_CXXFLAGS = -mp1 -prec_div -fp_port -align # C++ compiler flags
-MACH_FFLAGS   = # Fortran 77 compiler flags
-MACH_F90FLAGS = -mp1 -prec_div -fp_port -align -save -zero # Fortran 90 compiler flags
-MACH_LDFLAGS  = -lifcore -lifport -lpthread -ldl # Linker flags
+MACH_CFLAGS   = -qopenmp -mp1 -prec_div -fp_port -align # C compiler flags
+MACH_CXXFLAGS = -qopenmp -mp1 -prec_div -fp_port -align # C++ compiler flags
+MACH_FFLAGS   = -qopenmp # Fortran 77 compiler flags
+MACH_F90FLAGS = -qopenmp -mp1 -prec_div -fp_port -align -save -zero # Fortran 90 compiler flags
+MACH_LDFLAGS  = -qopenmp -lifcore -lifport -lpthread -ldl # Linker flags
 
 #-----------------------------------------------------------------------
 # Optimization flags
@@ -88,6 +88,6 @@ MACH_LIBS         = $(LOCAL_LIBS_HDF5) $(LOCAL_LIBS_MACH)
 
 # if $(HOME)/local does not exist, mkdir before `make install`
 
-MACH_INSTALL_PREFIX = /home/hyschive/scratch/Test/Grackle_OpenMP/library/original
+MACH_INSTALL_PREFIX = /home/hyschive/scratch/Test/Grackle_OpenMP/library/omp_t2
 MACH_INSTALL_LIB_DIR =
 MACH_INSTALL_INCLUDE_DIR =

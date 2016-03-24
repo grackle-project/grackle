@@ -20,6 +20,9 @@
 #include "chemistry_data.h"
 #include "code_units.h" 
 #include "phys_constants.h"
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 
 extern int grackle_verbose;
 
@@ -62,6 +65,21 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
                                code_units *my_units, double a_value)
 {
 
+//initialize OpenMP
+# ifdef _OPENMP
+//number of threads
+  omp_set_num_threads( my_chemistry->omp_nthreads );
+
+//schedule
+  const int chunk_size = -1;  // determined by default
+//const int chunk_size = 1;
+
+  omp_set_schedule( omp_sched_static,  chunk_size );
+//omp_set_schedule( omp_sched_dynamic, chunk_size );
+//omp_set_schedule( omp_sched_guided,  chunk_size );
+//omp_set_schedule( omp_sched_auto,    chunk_size );
+# endif
+
   if (grackle_verbose) {
     FILE *fptr = fopen("GRACKLE_INFO", "w");
     auto_show_version(fptr);
@@ -77,6 +95,28 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
     fprintf(stderr, "primordial_chemistry: %d.\n", my_chemistry->primordial_chemistry);
     fprintf(stderr, "metal_cooling: %d.\n", my_chemistry->metal_cooling);
     fprintf(stderr, "UVbackground: %d.\n", my_chemistry->UVbackground);
+
+#   ifdef _OPENMP
+    int omp_nthread, omp_chunk_size, omp_nested;
+    omp_sched_t omp_schedule;
+
+    omp_nested = omp_get_nested();
+    omp_get_schedule( &omp_schedule, &omp_chunk_size );
+#   pragma omp parallel
+#   pragma omp master
+    { omp_nthread = omp_get_num_threads(); }
+
+      fprintf( stderr, "OpenMP: on\n" );
+      fprintf( stderr, "  num_threads: %d\n", omp_nthread );
+      fprintf( stderr, "  schedule: %s\n", ( omp_schedule == omp_sched_static  ) ? "static"  :
+                                           ( omp_schedule == omp_sched_dynamic ) ? "dynamic" :
+                                           ( omp_schedule == omp_sched_guided  ) ? "guided"  :
+                                           ( omp_schedule == omp_sched_auto    ) ? "auto"    :
+                                                                                   "unknown" );
+      fprintf( stderr, "  chunk size: %d\n", omp_chunk_size );
+#   else
+      fprintf( stderr, "OpenMP: off\n" );
+#   endif
   }
 
   /* Only allow a units to be one with proper coordinates. */
