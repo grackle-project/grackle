@@ -120,6 +120,9 @@
 
       implicit NONE
 #include "grackle_fortran_types.def"
+#ifdef _OPENMP
+#include "omp_lib.h"
+#endif
 
 !  General Arguments
 
@@ -281,8 +284,41 @@ c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 fo
      &                     is, ie, js, je, ks, ke,
      &                     in, jn, kn, ispecies, imetal)
 
+
 !  Loop over zones, and do an entire i-column in one go
 
+! parallelize the k loop with OpenMP
+#ifdef _OPENMP
+! ierr is declared as shared and should be modified with atomic operation
+!$omp parallel do private(
+     &i, j, k, iter,
+     &ttmin, energy, comp1, comp2,
+     &heq1, heq2, eqk221, eqk222, eqk131, eqk132,
+     &eqt1, eqt2, eqtdef, dheq, heq,
+     &indixe,
+     &t1, t2, logtem, tdef,
+     &dtit, ttot, p2d, tgas, tgasold,
+     &tdust, metallicity, rhoH, olddtit,
+     &HIp, HIIp, HeIp, HeIIp, HeIIIp,
+     &HMp, H2Ip, H2IIp,
+     &dep, dedot,HIdot, dedot_prev,
+     &DIp, DIIp, HDIp, HIdot_prev,
+     &k24shield, k25shield, k26shield,
+     &k1 , k2 , k3 , k4 , k5,
+     &k6 , k7 , k8 , k9 , k10,
+     &k11, k12, k13, k14, k15,
+     &k16, k17, k18, k19, k22,
+     &k50, k51, k52, k53, k54,
+     &k55, k56, k13dd, h2dust,
+     &ncrn, ncrd1, ncrd2,
+     &ceHI, ceHeI, ceHeII,
+     &ciHI, ciHeI, ciHeIS, ciHeII,
+     &reHII, reHeII1, reHeII2, reHeIII,
+     &brem, edot,
+     &hyd01k, h2k01, vibh, roth, rotl,
+     &gpldl, gphdl, hdlte, hdlow, cieco,
+     &itmask )
+#endif // #ifdef _OPENMP
       do k = ks+1, ke+1
       do j = js+1, je+1
 
@@ -636,6 +672,10 @@ c            WARNING_MESSAGE
 !     
        enddo
       enddo
+! stop OpenMP parallelization
+#ifdef _OPENMP
+!$omp end parallel do
+#endif
 
 !     Convert densities back to comoving from proper
 
