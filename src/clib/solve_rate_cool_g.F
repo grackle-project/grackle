@@ -208,6 +208,7 @@
 !  Locals
 
       integer i, j, k, iter
+      integer t, dj, dk
       real*8 ttmin, dom, energy, comp1, comp2
       real*8 coolunit, dbase1, tbase1, xbase1, chunit, uvel
       real*8 heq1, heq2, eqk221, eqk222, eqk131, eqk132,
@@ -286,6 +287,8 @@ c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 fo
 
 
 !  Loop over zones, and do an entire i-column in one go
+      dk = ke - ks + 1
+      dj = je - js + 1
 
 ! parallelize the k loop with OpenMP
 #ifdef _OPENMP
@@ -319,8 +322,10 @@ c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 fo
      &gpldl, gphdl, hdlte, hdlow, cieco,
      &itmask )
 #endif // #ifdef _OPENMP
-      do k = ks+1, ke+1
-      do j = js+1, je+1
+!     flat j and k loops for better OpenMP parallelism
+      do t = 0, dk*dj-1
+        k = t/dj      + ks+1
+        j = mod(t,dj) + js+1
 
 !       tolerance = 1.0e-06_DKIND * dt
 
@@ -670,9 +675,7 @@ c            WARNING_MESSAGE
 !     
 !     Next j,k
 !     
-       enddo
       enddo
-! stop OpenMP parallelization
 #ifdef _OPENMP
 !$omp end parallel do
 #endif
