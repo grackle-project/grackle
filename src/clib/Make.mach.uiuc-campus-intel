@@ -50,13 +50,13 @@ MACH_DEFINES   = -DLINUX -DH5_USE_16_API
 # Compiler flag settings
 #-----------------------------------------------------------------------
 
-OPENMP_FLAG   = -qopenmp
+MACH_OMPFLAGS = -fopenmp # OpenMP flags
 MACH_CPPFLAGS = -P -traditional # C preprocessor flags
-MACH_CFLAGS   = $(OPENMP_FLAG) -mp1 -prec_div -fp_port -align # C compiler flags
-MACH_CXXFLAGS = $(OPENMP_FLAG) -mp1 -prec_div -fp_port -align # C++ compiler flags
-MACH_FFLAGS   = $(OPENMP_FLAG) # Fortran 77 compiler flags
-MACH_F90FLAGS = $(OPENMP_FLAG) -mp1 -prec_div -fp_port -align -save -zero # Fortran 90 compiler flags
-MACH_LDFLAGS  = $(OPENMP_FLAG) -lifcore -lifport -lpthread -ldl # Linker flags
+MACH_CFLAGS   = -mp1 -prec_div -fp_port -align # C compiler flags
+MACH_CXXFLAGS = -mp1 -prec_div -fp_port -align # C++ compiler flags
+MACH_FFLAGS   = # Fortran 77 compiler flags
+MACH_F90FLAGS = -mp1 -prec_div -fp_port -align #-save -zero # Fortran 90 compiler flags
+MACH_LDFLAGS  = #-lifcore -lifport -lpthread -ldl # Linker flags
 
 #-----------------------------------------------------------------------
 # Optimization flags

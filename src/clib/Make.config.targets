@@ -29,6 +29,11 @@ help-config:
 	@echo "      make opt-high"
 	@echo "      make opt-aggressive"
 	@echo
+	@echo "   Set OpenMP support"
+	@echo
+	@echo "      make omp-on"
+	@echo "      make omp-off"
+	@echo
 
 #-----------------------------------------------------------------------
 
@@ -65,6 +70,7 @@ show-config:
 	@echo
 	@echo "   CONFIG_PRECISION  [precision-{32,64}]                     : $(CONFIG_PRECISION)"
 	@echo "   CONFIG_OPT  [opt-{warn,debug,high,aggressive}]            : $(CONFIG_OPT)"
+	@echo "   CONFIG_OMP  [omp-{on,off}]                                : $(CONFIG_OMP)"
 	@echo
 
 #-----------------------------------------------------------------------
@@ -186,6 +192,23 @@ CONFIG_OPT-%: suggest-clean
         mv $${tmp} $(MAKE_CONFIG_OVERRIDE); \
         echo "CONFIG_OPT = $*" >> $(MAKE_CONFIG_OVERRIDE); \
 	$(MAKE)  show-config | grep CONFIG_OPT; \
+	echo
+
+#-----------------------------------------------------------------------
+ 
+VALID_OMP = omp-on omp-off
+.PHONY: $(VALID_OMP)
+
+omp-on:  CONFIG_OMP-on
+omp-off: CONFIG_OMP-off
+omp-%:
+	@printf "\n\tInvalid target: $@\n\n\tValid targets: [$(VALID_OMP)]\n\n"
+CONFIG_OMP-%: suggest-clean
+	@tmp=.config.temp; \
+        grep -v CONFIG_OMP $(MAKE_CONFIG_OVERRIDE) > $${tmp}; \
+        mv $${tmp} $(MAKE_CONFIG_OVERRIDE); \
+        echo "CONFIG_OMP = $*" >> $(MAKE_CONFIG_OVERRIDE); \
+	$(MAKE)  show-config | grep CONFIG_OMP; \
 	echo
 
 #-----------------------------------------------------------------------

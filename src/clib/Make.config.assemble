@@ -133,6 +133,34 @@
 	$(error Illegal value '$(CONFIG_OPT)' for $$(CONFIG_OPT))
     endif
 
+#-----------------------------------------------------------------------
+# DETERMINE OPENMP SUPPORT
+#-----------------------------------------------------------------------
+
+    ERROR_OMP = 1
+
+    # Settings for supporting OpenMP
+
+    ifeq ($(CONFIG_OMP),on)
+        ERROR_OMP = 0
+        ASSEMBLE_OMP_FLAGS = $(MACH_OMPFLAGS)
+    endif
+
+    # Settings for disabling OpenMP
+
+    ifeq ($(CONFIG_OMP),off)
+        ERROR_OMP = 0
+        ASSEMBLE_OMP_FLAGS =
+    endif
+
+    # error if CONFIG_OMP is incorrect
+
+    ifeq ($(ERROR_OMP),1)
+       .PHONY: error_omp
+       error_omp:
+	$(error Illegal value '$(CONFIG_OMP)' for $$(CONFIG_OMP))
+    endif
+
 #=======================================================================
 # ASSIGN ALL OUTPUT VARIABLES
 #=======================================================================
@@ -149,14 +177,19 @@
 
     CPPFLAGS = $(MACH_CPPFLAGS)
     CFLAGS   = $(MACH_CFLAGS) \
-               $(ASSEMBLE_OPT_FLAGS)
+               $(ASSEMBLE_OPT_FLAGS) \
+               $(ASSEMBLE_OMP_FLAGS)
     CXXFLAGS = $(MACH_CXXFLAGS) \
-               $(ASSEMBLE_OPT_FLAGS)
+               $(ASSEMBLE_OPT_FLAGS) \
+               $(ASSEMBLE_OMP_FLAGS)
     FFLAGS   = $(MACH_FFLAGS) \
-               $(ASSEMBLE_OPT_FLAGS)
+               $(ASSEMBLE_OPT_FLAGS) \
+               $(ASSEMBLE_OMP_FLAGS)
     F90FLAGS = $(MACH_F90FLAGS) \
-               $(ASSEMBLE_OPT_FLAGS)
-    LDFLAGS  = $(ASSEMBLE_LDFLAGS)
+               $(ASSEMBLE_OPT_FLAGS) \
+               $(ASSEMBLE_OMP_FLAGS)
+    LDFLAGS  = $(MACH_LDFLAGS) \
+               $(ASSEMBLE_LDFLAGS)
     LDOUTPUT_FLAGS = $(ASSEMBLE_LDOUTPUT_FLAGS)
 
     DEFINES = $(MACH_DEFINES) \
