@@ -48,6 +48,9 @@
 
       implicit NONE
 #include "grackle_fortran_types.def"
+#ifdef _OPENMP
+#include "omp_lib.h"
+#endif
 
 !  Arguments
 
@@ -97,6 +100,7 @@
 !  Locals
 
       integer i, j, k
+      integer t, dj, dk
       real*8 comp1, comp2, energy
 
 !  Slice locals
@@ -122,13 +126,36 @@
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
 !=======================================================================
+      dk = ke - ks + 1
+      dj = je - js + 1
 
 !     Convert densities from comoving to 'proper'
 
       if (iexpand .eq. 1) then
 
-      do k = ks+1, ke+1
-         do j = js+1, je+1
+! parallelize the k and j loops with OpenMP
+! flat j and k loops for better parallelism
+#ifdef _OPENMP
+!$omp parallel do schedule(runtime) private(
+!$omp&   i, j, k,
+!$omp&   comp1, comp2, energy,
+!$omp&   indixe,
+!$omp&   t1, t2, logtem, tdef, p2d,
+!$omp&   tgas, tgasold,
+!$omp&   tdust, metallicity, rhoH,
+!$omp&   edot,
+!$omp&   ceHI, ceHeI, ceHeII,
+!$omp&   ciHI, ciHeI, ciHeIS, ciHeII,
+!$omp&   reHII, reHeII1, reHeII2, reHeIII,
+!$omp&   brem, cieco,
+!$omp&   hyd01k, h2k01, vibh, roth, rotl,
+!$omp&   gpldl, gphdl, hdlte, hdlow,
+!$omp&   itmask )
+#endif // #ifdef _OPENMP
+      do t = 0, dk*dj-1
+        k = t/dj      + ks+1
+        j = mod(t,dj) + js+1
+
             do i = is+1, ie+1
                d(i,j,k)     = d(i,j,k)/real(aye**3, RKIND)
             enddo
@@ -161,15 +188,37 @@
                   metal(i,j,k) = metal(i,j,k)/real(aye**3, RKIND)
                enddo
             endif
-         enddo
       enddo
+#ifdef _OPENMP
+!$omp end parallel do
+#endif
  
       endif
 
 !     Loop over slices (in the k-direction)
 
-      do k = ks+1, ke+1
-       do j = js+1, je+1
+! parallelize the k and j loops with OpenMP
+! flat j and k loops for better parallelism
+#ifdef _OPENMP
+!$omp parallel do schedule(runtime) private(
+!$omp&   i, j, k,
+!$omp&   comp1, comp2, energy,
+!$omp&   indixe,
+!$omp&   t1, t2, logtem, tdef, p2d,
+!$omp&   tgas, tgasold,
+!$omp&   tdust, metallicity, rhoH,
+!$omp&   edot,
+!$omp&   ceHI, ceHeI, ceHeII,
+!$omp&   ciHI, ciHeI, ciHeIS, ciHeII,
+!$omp&   reHII, reHeII1, reHeII2, reHeIII,
+!$omp&   brem, cieco,
+!$omp&   hyd01k, h2k01, vibh, roth, rotl,
+!$omp&   gpldl, gphdl, hdlte, hdlow,
+!$omp&   itmask )
+#endif // #ifdef _OPENMP
+      do t = 0, dk*dj-1
+        k = t/dj      + ks+1
+        j = mod(t,dj) + js+1
 
          do i = is+1, ie+1
             itmask(i) = .true.
@@ -220,15 +269,38 @@
             cooltime(i,j,k) = real(energy/edot(i), RKIND)
          enddo
 
-       enddo
       enddo
+#ifdef _OPENMP
+!$omp end parallel do
+#endif
 
 !     Convert densities back to comoving from 'proper'
 
       if (iexpand .eq. 1) then
 
-      do k = ks+1, ke+1
-         do j = js+1, je+1
+! parallelize the k and j loops with OpenMP
+! flat j and k loops for better parallelism
+#ifdef _OPENMP
+!$omp parallel do schedule(runtime) private(
+!$omp&   i, j, k,
+!$omp&   comp1, comp2, energy,
+!$omp&   indixe,
+!$omp&   t1, t2, logtem, tdef, p2d,
+!$omp&   tgas, tgasold,
+!$omp&   tdust, metallicity, rhoH,
+!$omp&   edot,
+!$omp&   ceHI, ceHeI, ceHeII,
+!$omp&   ciHI, ciHeI, ciHeIS, ciHeII,
+!$omp&   reHII, reHeII1, reHeII2, reHeIII,
+!$omp&   brem, cieco,
+!$omp&   hyd01k, h2k01, vibh, roth, rotl,
+!$omp&   gpldl, gphdl, hdlte, hdlow,
+!$omp&   itmask )
+#endif // #ifdef _OPENMP
+      do t = 0, dk*dj-1
+        k = t/dj      + ks+1
+        j = mod(t,dj) + js+1
+
             do i = is+1, ie+1
                d(i,j,k)     = d(i,j,k)*real(aye**3, RKIND)
             enddo
@@ -261,8 +333,10 @@
                   metal(i,j,k) = metal(i,j,k)*real(aye**3, RKIND)
                enddo
             endif
-         enddo
       enddo
+#ifdef _OPENMP
+!$omp end parallel do
+#endif
 
       endif
 

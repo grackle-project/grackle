@@ -290,7 +290,8 @@ c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 fo
       dk = ke - ks + 1
       dj = je - js + 1
 
-! parallelize the k loop with OpenMP
+! parallelize the k and j loops with OpenMP
+! flat j and k loops for better parallelism
 #ifdef _OPENMP
 ! ierr is declared as shared and should be modified with atomic operation
 !$omp parallel do schedule(runtime) private(
@@ -322,7 +323,6 @@ c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 fo
 !$omp&   gpldl, gphdl, hdlte, hdlow, cieco,
 !$omp&   itmask )
 #endif // #ifdef _OPENMP
-!     flat j and k loops for better OpenMP parallelism
       do t = 0, dk*dj-1
         k = t/dj      + ks+1
         j = mod(t,dj) + js+1
