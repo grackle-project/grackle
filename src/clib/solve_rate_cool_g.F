@@ -293,7 +293,7 @@ c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 fo
 ! parallelize the k loop with OpenMP
 #ifdef _OPENMP
 ! ierr is declared as shared and should be modified with atomic operation
-!$omp parallel do private(
+!$omp parallel do schedule(runtime) private(
 !$omp&   i, j, k, iter,
 !$omp&   ttmin, energy, comp1, comp2,
 !$omp&   heq1, heq2, eqk221, eqk222, eqk131, eqk132,

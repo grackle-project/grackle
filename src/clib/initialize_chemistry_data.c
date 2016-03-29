@@ -71,12 +71,12 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
   omp_set_num_threads( my_chemistry->omp_nthreads );
 
 //schedule
-  const int chunk_size = -1;  // determined by default
-//const int chunk_size = 1;
+//const int chunk_size = -1;  // determined by default
+  const int chunk_size = 1;
 
-  omp_set_schedule( omp_sched_static,  chunk_size );
+//omp_set_schedule( omp_sched_static,  chunk_size );
 //omp_set_schedule( omp_sched_dynamic, chunk_size );
-//omp_set_schedule( omp_sched_guided,  chunk_size );
+  omp_set_schedule( omp_sched_guided,  chunk_size );
 //omp_set_schedule( omp_sched_auto,    chunk_size );
 # endif
 

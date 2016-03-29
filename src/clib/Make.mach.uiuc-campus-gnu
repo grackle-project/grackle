@@ -8,9 +8,9 @@
 #
 #=======================================================================
 
-MACH_TEXT  = UIUC Campus
+MACH_TEXT  = UIUC Campus GNU
 MACH_VALID = 0
-MACH_FILE  = Make.mach.uiuc-campus
+MACH_FILE  = Make.mach.uiuc-campus-gnu
 
 # Make sure to have the intel module loaded: 
 # $ module load intel
