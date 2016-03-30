@@ -72,6 +72,7 @@ int _calculate_temperature(chemistry_data *my_chemistry,
 
   /* Compute the pressure first. */
  
+  if (my_chemistry->primordial_chemistry > 0) {
   if (_calculate_pressure(my_chemistry,
                           my_units, a_value,
                           grid_rank, grid_dimension,
@@ -85,7 +86,7 @@ int _calculate_temperature(chemistry_data *my_chemistry,
                           temperature) == FAIL) {
     fprintf(stderr, "Error in calculate_pressure.\n");
     return FAIL;
-  }
+  }}
  
   /* Compute the size of the fields. */
  

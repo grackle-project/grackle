@@ -168,6 +168,10 @@
             temperature(i,j,k) = tgas(i)
          enddo
 
+      enddo
+#ifdef _OPENMP
+!$omp end parallel do
+#endif
 
 !     Convert densities back to comoving from proper
 
@@ -178,11 +182,6 @@
      &                  in, jn, kn, imetal, aye**3)
 
       endif
-
-      enddo
-#ifdef _OPENMP
-!$omp end parallel do
-#endif
 
       return
       end
