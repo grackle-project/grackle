@@ -61,6 +61,9 @@
 
       implicit NONE
 #include "grackle_fortran_types.def"
+#ifdef _OPENMP
+#include "omp_lib.h"
+#endif
 
 !  General Arguments
 
@@ -89,6 +92,7 @@
 !  Locals
 
       integer i, j, k
+      integer t, dj, dk
       real*8 dom, zr
       real*8 dbase1, tbase1, xbase1
 
@@ -123,8 +127,20 @@
 
 !  Loop over zones, and do an entire i-column in one go
 
-      do k = ks+1, ke+1
-      do j = js+1, je+1
+      dk = ke - ks + 1
+      dj = je - js + 1
+
+! parallelize the k and j loops with OpenMP
+! flat j and k loops for better parallelism
+#ifdef _OPENMP
+!$omp parallel do schedule(runtime) private(
+!$omp&  i, j, k, 
+!$omp&  tgas, rhoH, mmw,
+!$omp&  itmask )
+#endif
+      do t = 0, dk*dj-1
+        k = t/dj      + ks+1
+        j = mod(t,dj) + js+1
 
 !     Initialize iteration mask to true for all cells.
 
@@ -164,7 +180,9 @@
       endif
 
       enddo
-      enddo
+#ifdef _OPENMP
+!$omp end parallel do
+#endif
 
       return
       end

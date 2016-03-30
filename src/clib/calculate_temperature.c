@@ -19,6 +19,9 @@
 #include "chemistry_data.h"
 #include "code_units.h"
 #include "phys_constants.h"
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 
 extern chemistry_data grackle_data;
  
@@ -112,6 +115,9 @@ int _calculate_temperature(chemistry_data *my_chemistry,
 
  /* Compute temperature with mu calculated directly. */
  
+# ifdef _OPENMP
+# pragma omp parallel for schedule( runtime ) private( i, number_density )
+# endif
   for (i = 0; i < size; i++) {
  
     if (my_chemistry->primordial_chemistry > 0) {

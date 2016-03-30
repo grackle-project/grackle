@@ -19,6 +19,9 @@
 #include "chemistry_data.h"
 #include "code_units.h"
 #include "phys_constants.h"
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 
 extern chemistry_data grackle_data;
 
@@ -43,6 +46,9 @@ int _calculate_pressure(chemistry_data *my_chemistry,
   for (dim = 0; dim < grid_rank; dim++)
     size *= grid_dimension[dim];
 
+# ifdef _OPENMP
+# pragma omp parallel for schedule( runtime ) private( i )
+# endif
   for (i = 0; i < size; i++) {
  
     pressure[i] = (my_chemistry->Gamma - 1.0) * density[i] * internal_energy[i];
@@ -62,6 +68,10 @@ int _calculate_pressure(chemistry_data *my_chemistry,
     double number_density, nH2, GammaH2Inverse,
       GammaInverse = 1.0/(my_chemistry->Gamma-1.0), x, Gamma1, temp;
   
+#   ifdef _OPENMP
+#   pragma omp parallel for schedule( runtime ) \
+    private( i, number_density, nH2, GammaH2Inverse, x, Gamma1, temp )
+#   endif
     for (i = 0; i < size; i++) {
  
       number_density =
@@ -71,7 +81,7 @@ int _calculate_pressure(chemistry_data *my_chemistry,
  
       nH2 = 0.5 * (H2I_density[i] + H2II_density[i]);
  
-      /* First, approximate temperature. */
+      /* First, approximata temperature. */
  
       if (number_density == 0)
 	number_density = tiny_number;

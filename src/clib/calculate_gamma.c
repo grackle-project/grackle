@@ -19,6 +19,9 @@
 #include "chemistry_data.h"
 #include "code_units.h"
 #include "phys_constants.h"
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 
 extern chemistry_data grackle_data;
 
@@ -86,6 +89,10 @@ int _calculate_gamma(chemistry_data *my_chemistry,
     double x, nH2, number_density, GammaH2Inverse, 
       GammaInverse = 1 / (my_chemistry->Gamma - 1.0);
 
+#   ifdef _OPENMP
+#   pragma omp parallel for schedule( runtime ) \
+    private( x, nH2, number_density, GammaH2Inverse )
+#   endif
     for (i = 0; i < size; i++) {
  
       /* Compute relative number abundence of molecular hydrogen. */
