@@ -156,6 +156,8 @@
             temperature(i,j,k) = tgas(i)
          enddo
 
+      enddo
+      enddo
 
 !     Convert densities back to comoving from proper
 
@@ -166,9 +168,6 @@
      &                  in, jn, kn, imetal, aye**3)
 
       endif
-
-      enddo
-      enddo
 
       return
       end
