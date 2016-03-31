@@ -239,7 +239,11 @@
                endif
 
             else
+#ifdef _OPENMP
+!$omp critical
                write(*,*) "Maximum cooling data grid rank is 3!"
+!$omp end critical
+#endif
                return
             endif
 

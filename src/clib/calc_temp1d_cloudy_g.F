@@ -194,7 +194,11 @@
      &                 end_int, munew)
 
                else
+#ifdef _OPENMP
+!$omp critical
                   write(*,*) "Maximum mmw data grid rank is 3!"
+!$omp end critical
+#endif
                   return
                endif
 
@@ -220,8 +224,12 @@
             enddo
 
             mmw(i) = munew
+#ifdef _OPENMP
+!$omp critical
             write(6,*) 'Mean molecular weight not converged!', 
      &           munew, muold, abs((munew/muold) - 1._DKIND)
+!$omp end critical
+#endif
 
  9998       continue
 

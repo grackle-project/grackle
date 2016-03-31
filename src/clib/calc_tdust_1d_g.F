@@ -246,8 +246,12 @@
 
 !     If iteration count exceeded with bisection, end of the line.
          if (iter .gt. itmax) then
+#ifdef _OPENMP
+!$omp critical
             write(6,*) 'CALC_TDUST_1D_G failed using both methods for ',
      &           (c_total - c_done), 'cells.'
+!$omp end critical
+#endif
 c            ERROR_MESSAGE
          endif
 
@@ -262,11 +266,15 @@ c            ERROR_MESSAGE
 
 !     Check for bad solutions
             if (tdustnow(i) .lt. 0._DKIND) then
+#ifdef _OPENMP
+!$omp critical
                write(6, *) 'CALC_TDUST_1D_G Newton method - ',
      &              'T_dust < 0: i = ', i, 'j = ', j,
      &              'k = ', k, 'nh = ', nh(i), 
      &              't_gas = ', tgas(i), 't_rad = ', trad,
      &              't_dust = ', tdustnow(i)
+!$omp end critical
+#endif
 c               ERROR_MESSAGE
             endif
 
