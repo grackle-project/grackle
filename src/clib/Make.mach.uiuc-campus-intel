@@ -89,6 +89,6 @@ MACH_LIBS         = $(LOCAL_LIBS_HDF5) $(LOCAL_LIBS_MACH)
 
 # if $(HOME)/local does not exist, mkdir before `make install`
 
-MACH_INSTALL_PREFIX = /home/hyschive/scratch/Test/Grackle_OpenMP/library/omp_t2
+MACH_INSTALL_PREFIX = $(HOME)/local
 MACH_INSTALL_LIB_DIR =
 MACH_INSTALL_INCLUDE_DIR =
