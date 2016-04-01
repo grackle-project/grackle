@@ -12,9 +12,6 @@ MACH_TEXT  = UIUC Campus Intel
 MACH_VALID = 0
 MACH_FILE  = Make.mach.uiuc-campus-intel
 
-# Make sure to have the intel module loaded: 
-# $ module load intel
-
 #-----------------------------------------------------------------------
 # Install paths (local variables)
 #-----------------------------------------------------------------------

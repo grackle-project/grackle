@@ -97,10 +97,9 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
     fprintf(stderr, "UVbackground: %d.\n", my_chemistry->UVbackground);
 
 #   ifdef _OPENMP
-    int omp_nthread, omp_chunk_size, omp_nested;
+    int omp_nthread, omp_chunk_size;
     omp_sched_t omp_schedule;
 
-    omp_nested = omp_get_nested();
     omp_get_schedule( &omp_schedule, &omp_chunk_size );
 #   pragma omp parallel
 #   pragma omp master

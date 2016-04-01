@@ -139,7 +139,7 @@
 
     ERROR_OMP = 1
 
-    # Settings for supporting OpenMP
+    # Settings for enabling OpenMP
 
     ifeq ($(CONFIG_OMP),on)
         ERROR_OMP = 0
