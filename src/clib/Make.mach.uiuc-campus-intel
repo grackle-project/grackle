@@ -1,6 +1,6 @@
 #=======================================================================
 #
-# FILE:        Make.mach.uiuc-campus-gnu
+# FILE:        Make.mach.uiuc-campus-intel
 #
 # DESCRIPTION: Makefile for the UIUC Campus cluster with Intel compiler
 #              and OpenMP support

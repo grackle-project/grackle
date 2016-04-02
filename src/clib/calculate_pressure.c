@@ -81,7 +81,7 @@ int _calculate_pressure(chemistry_data *my_chemistry,
  
       nH2 = 0.5 * (H2I_density[i] + H2II_density[i]);
  
-      /* First, approximata temperature. */
+      /* First, approximate temperature. */
  
       if (number_density == 0)
 	number_density = tiny_number;
