@@ -1,4 +1,3 @@
-#include "fortran.def"
 #include "phys_const.def"
 
 !=======================================================================
@@ -187,8 +186,8 @@
 
 !  Parameters
 
-      integer itmax, ijk
-      parameter (itmax = 10000, ijk = MAX_ANY_SINGLE_DIRECTION)
+      integer itmax
+      parameter (itmax = 10000)
 
 #ifdef CONFIG_BFLOAT_4
       R_PREC tolerance
@@ -213,38 +212,38 @@
 
 !  row temporaries
 
-      integer*8 indixe(ijk)
-      real*8 t1(ijk), t2(ijk), logtem(ijk), tdef(ijk), 
-     &       dtit(ijk), ttot(ijk), p2d(ijk), tgas(ijk), tgasold(ijk),
-     &       tdust(ijk), metallicity(ijk), rhoH(ijk), olddtit
+      integer*8 indixe(in)
+      real*8 t1(in), t2(in), logtem(in), tdef(in),
+     &       dtit(in), ttot(in), p2d(in), tgas(in), tgasold(in),
+     &       tdust(in), metallicity(in), rhoH(in), olddtit
 
 !  Rate equation row temporaries
 
-      real*8 HIp(ijk), HIIp(ijk), HeIp(ijk), HeIIp(ijk), HeIIIp(ijk),
-     &       HMp(ijk), H2Ip(ijk), H2IIp(ijk),
-     &       dep(ijk), dedot(ijk),HIdot(ijk), dedot_prev(ijk),
-     &       DIp(ijk), DIIp(ijk), HDIp(ijk), HIdot_prev(ijk),
-     &       k24shield(ijk), k25shield(ijk), k26shield(ijk),
-     &       k1 (ijk), k2 (ijk), k3 (ijk), k4 (ijk), k5 (ijk),
-     &       k6 (ijk), k7 (ijk), k8 (ijk), k9 (ijk), k10(ijk),
-     &       k11(ijk), k12(ijk), k13(ijk), k14(ijk), k15(ijk),
-     &       k16(ijk), k17(ijk), k18(ijk), k19(ijk), k22(ijk),
-     &       k50(ijk), k51(ijk), k52(ijk), k53(ijk), k54(ijk),
-     &       k55(ijk), k56(ijk), k13dd(ijk, 7), h2dust(ijk),
-     &       ncrn(ijk), ncrd1(ijk), ncrd2(ijk)
+      real*8 HIp(in), HIIp(in), HeIp(in), HeIIp(in), HeIIIp(in),
+     &       HMp(in), H2Ip(in), H2IIp(in),
+     &       dep(in), dedot(in),HIdot(in), dedot_prev(in),
+     &       DIp(in), DIIp(in), HDIp(in), HIdot_prev(in),
+     &       k24shield(in), k25shield(in), k26shield(in),
+     &       k1 (in), k2 (in), k3 (in), k4 (in), k5 (in),
+     &       k6 (in), k7 (in), k8 (in), k9 (in), k10(in),
+     &       k11(in), k12(in), k13(in), k14(in), k15(in),
+     &       k16(in), k17(in), k18(in), k19(in), k22(in),
+     &       k50(in), k51(in), k52(in), k53(in), k54(in),
+     &       k55(in), k56(in), k13dd(in, 7), h2dust(in),
+     &       ncrn(in), ncrd1(in), ncrd2(in)
 
 !  Cooling/heating row locals
 
-      real*8 ceHI(ijk), ceHeI(ijk), ceHeII(ijk),
-     &       ciHI(ijk), ciHeI(ijk), ciHeIS(ijk), ciHeII(ijk),
-     &       reHII(ijk), reHeII1(ijk), reHeII2(ijk), reHeIII(ijk),
-     &       brem(ijk), edot(ijk)
-      real*8 hyd01k(ijk), h2k01(ijk), vibh(ijk), roth(ijk), rotl(ijk),
-     &       gpldl(ijk), gphdl(ijk), hdlte(ijk), hdlow(ijk), cieco(ijk)
+      real*8 ceHI(in), ceHeI(in), ceHeII(in),
+     &       ciHI(in), ciHeI(in), ciHeIS(in), ciHeII(in),
+     &       reHII(in), reHeII1(in), reHeII2(in), reHeIII(in),
+     &       brem(in), edot(in)
+      real*8 hyd01k(in), h2k01(in), vibh(in), roth(in), rotl(in),
+     &       gpldl(in), gphdl(in), hdlte(in), hdlow(in), cieco(in)
 
 !  Iteration mask
 
-      logical itmask(ijk)
+      logical itmask(in)
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
 !=======================================================================
@@ -353,7 +352,7 @@ c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 fo
 !         (maybe should add itmask to this call)
 
             call lookup_cool_rates1d_g(temstart, temend, nratec, j, k,
-     &               is, ie, ijk, ithreebody,
+     &               is, ie, ithreebody,
      &               in, jn, kn, ispecies, idust, 
      &               tgas, HI, HII, HeI, HeII, tdust, metallicity, 
      &               k1a, k2a, k3a, k4a, k5a, k6a, k7a, k8a, k9a, k10a,
@@ -833,7 +832,7 @@ c -------------------------------------------------------------------
 !   of temperature.
 
       subroutine lookup_cool_rates1d_g(temstart, temend, nratec, j, k,
-     &                is, ie, ijk, ithreebody,
+     &                is, ie, ithreebody,
      &                in, jn, kn, ispecies, idust,
      &                tgas1d, HI, HII, HeI, HeII, tdust, metallicity, 
      &                k1a, k2a, k3a, k4a, k5a, k6a, k7a, k8a, k9a, k10a,
@@ -858,13 +857,13 @@ c -------------------------------------------------------------------
 
 !     Arguments
 
-      integer is, ie, ijk, nratec, 
+      integer is, ie, nratec,
      &        in, jn, kn, ispecies, ithreebody, j, k,
      &        idust, ndratec
       real*8 temstart, temend, tgas1d(in), dom,
      &       dtemstart, dtemend
       real*8 coolunit, tbase1
-      logical itmask(ijk)
+      logical itmask(in)
 
 !     Chemistry rates as a function of temperature
 
@@ -887,26 +886,26 @@ c -------------------------------------------------------------------
 
 !     Returned rate values
 
-      real*8 k1 (ijk), k2 (ijk), k3 (ijk), k4 (ijk), k5 (ijk),
-     &       k6 (ijk), k7 (ijk), k8 (ijk), k9 (ijk), k10(ijk),
-     &       k11(ijk), k12(ijk), k13(ijk), k14(ijk), k15(ijk),
-     &       k16(ijk), k17(ijk), k18(ijk), k19(ijk), k22(ijk),
-     &       k50(ijk), k51(ijk), k52(ijk), k53(ijk), k54(ijk),
-     &       k55(ijk), k56(ijk), k13dd(ijk, 7), h2dust(ijk), 
-     &       ncrn(ijk), ncrd1(ijk), ncrd2(ijk),
-     &       k24shield(ijk), k25shield(ijk), k26shield(ijk)
+      real*8 k1 (in), k2 (in), k3 (in), k4 (in), k5 (in),
+     &       k6 (in), k7 (in), k8 (in), k9 (in), k10(in),
+     &       k11(in), k12(in), k13(in), k14(in), k15(in),
+     &       k16(in), k17(in), k18(in), k19(in), k22(in),
+     &       k50(in), k51(in), k52(in), k53(in), k54(in),
+     &       k55(in), k56(in), k13dd(in, 7), h2dust(in),
+     &       ncrn(in), ncrd1(in), ncrd2(in),
+     &       k24shield(in), k25shield(in), k26shield(in)
 
 !     1D temporaries (passed in)
 
-      integer*8 indixe(ijk)
-      real*8 t1(ijk), t2(ijk), logtem(ijk), tdef(ijk),
-     &       tdust(ijk), metallicity(ijk)
+      integer*8 indixe(in)
+      real*8 t1(in), t2(in), logtem(in), tdef(in),
+     &       tdust(in), metallicity(in)
 
 !     1D temporaries (not passed in)
 
-      integer*8 d_indixe(ijk)
-      real*8 d_t1(ijk), d_t2(ijk), d_logtem(ijk), d_tdef(ijk),
-     &       dusti1(ijk), dusti2(ijk)
+      integer*8 d_indixe(in)
+      real*8 d_t1(in), d_t2(in), d_logtem(in), d_tdef(in),
+     &       dusti1(in), dusti2(in)
 
 !     Parameters
 
@@ -1721,16 +1720,11 @@ c
      &        DI(in,jn,kn),  DII(in,jn,kn), HDI(in,jn,kn)
       real*8 fh, dtoh
 
-!     Parameters
-
-      integer ijk
-      parameter (ijk = MAX_ANY_SINGLE_DIRECTION)
-
 !     locals
 
       integer i, j, k
-      real*8 totalH(ijk), totalHe(ijk), 
-     &       totalD, metalfree(ijk)
+      real*8 totalH(in), totalHe(in),
+     &       totalD, metalfree(in)
       R_PREC correctH, correctHe, correctD
 
 !     Loop over all zones

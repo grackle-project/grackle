@@ -1,4 +1,3 @@
-#include "fortran.def"
 #include "phys_const.def"
       subroutine cie_thin_cooling_rate_g(temp, value)
 c     written by Tom Abel    8/2003

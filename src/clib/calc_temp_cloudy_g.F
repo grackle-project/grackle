@@ -1,4 +1,3 @@
-#include "fortran.def"
 #include "phys_const.def"
 
 !=======================================================================
@@ -84,9 +83,6 @@
 
 !  Parameters
 
-      integer ijk
-      parameter (ijk = MAX_ANY_SINGLE_DIRECTION)
-
       real*8 mh
       parameter (mh = mass_h)
 
@@ -98,11 +94,11 @@
 
 !  row temporaries
 
-      real*8 tgas(ijk), rhoH(ijk), mmw(ijk)
+      real*8 tgas(in), rhoH(in), mmw(in)
 
 !  Iteration mask
 
-      logical itmask(ijk)
+      logical itmask(in)
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
 !=======================================================================

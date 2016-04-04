@@ -1,4 +1,3 @@
-#include "fortran.def"
 !=======================================================================
 !////////////////////  SUBROUTINE COOL_MULTI_TIME_G  \\\\\\\\\\\\\\\\\\\
 
@@ -95,9 +94,6 @@
 
 !  Parameters
 
-      integer ijk
-      parameter (ijk = MAX_ANY_SINGLE_DIRECTION)
-
 !  Locals
 
       integer i, j, k
@@ -105,24 +101,24 @@
 
 !  Slice locals
  
-      integer*8 indixe(ijk)
-      real*8 t1(ijk), t2(ijk), logtem(ijk), tdef(ijk), p2d(ijk),
-     &       tgas(ijk), tgasold(ijk),
-     &       tdust(ijk), metallicity(ijk), rhoH(ijk)
-      real*8 edot(ijk)
+      integer*8 indixe(in)
+      real*8 t1(in), t2(in), logtem(in), tdef(in), p2d(in),
+     &       tgas(in), tgasold(in),
+     &       tdust(in), metallicity(in), rhoH(in)
+      real*8 edot(in)
 
 !  Cooling/heating slice locals
 
-      real*8 ceHI(ijk), ceHeI(ijk), ceHeII(ijk),
-     &       ciHI(ijk), ciHeI(ijk), ciHeIS(ijk), ciHeII(ijk),
-     &       reHII(ijk), reHeII1(ijk), reHeII2(ijk), reHeIII(ijk),
-     &       brem(ijk), cieco(ijk),
-     &       hyd01k(ijk), h2k01(ijk), vibh(ijk), roth(ijk), rotl(ijk),
-     &       gpldl(ijk), gphdl(ijk), hdlte(ijk), hdlow(ijk)
+      real*8 ceHI(in), ceHeI(in), ceHeII(in),
+     &       ciHI(in), ciHeI(in), ciHeIS(in), ciHeII(in),
+     &       reHII(in), reHeII1(in), reHeII2(in), reHeIII(in),
+     &       brem(in), cieco(in),
+     &       hyd01k(in), h2k01(in), vibh(in), roth(in), rotl(in),
+     &       gpldl(in), gphdl(in), hdlte(in), hdlow(in)
           
 !  Iteration mask for multi_cool
 
-      logical itmask(ijk)
+      logical itmask(in)
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
 !=======================================================================
