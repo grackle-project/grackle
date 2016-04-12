@@ -46,7 +46,6 @@ c    constants from the equations themselves.  This is explained for
 c    each of two types used: rate coefficients, cooling coefficients.
 c    Note also that the densities in the rate equations are true, not
 c    comoving densities and so we must include a factor of a^3.
-c    NOTE: if the spectrum changes, this routine must be called again.
 c
 c  PARAMETERS:
 c    nnu      = number of frequency bins
@@ -76,66 +75,38 @@ c    casebrates = use case-B recombination rates for k2, k4 and k6
 c
 c  RATES:
 c
-c  (New rates numbering as of Feb/2000, agrees with original
-c   Abel etal 1997)
-c    old   -> new              old   -> new
-c    k1-10 -> k1-10            k16   -> k14
-c    k11   -> k13              k17   -> k15
-c    k12   -> k11              k18   -> k16
-c    k13   -> removed          k19   -> k17
-c    k14   -> k12              k20   -> k18
-c    k15   -> removed          k21   -> k19
+c  Reaction rate numbering agrees with Abel et al. (1997).
 c
-C ------- 1:    HI    + e   -> HII   + 2e
-C ------- 2:    HII   + e   -> H     + p
-C ------- 3:    HeI   + e   -> HeII  + 2e
-C ------- 4:    HeII  + e   -> HeI   + p
-C ------- 5:    HeII  + e   -> HeIII + 2e
-C ------- 6:    HeIII + e   -> HeII  + p
-C ------- 7:    HI    + e   -> HM    + p
-C ------- 8:    HM    + HI  -> H2I*  + e
-C ------- 9:    HI    + HII -> H2II  + p
-C ------- 10:   H2II  + HI  -> H2I*  + HII
-c
-c
-C --------------  old  ---------------------
-C ------- 11:   H2I   + H   -> 3H
-C ------- 12:   H2I   + HII -> H2II  + H
-C ------- 13:   H2I   + e   -> HI    + HM
-C ------- 14:   H2I   + e   -> 2HI   + e
-C ------- 15:   H2I   + H2I -> H2I   + 2HI
-C ------- 16:   HM    + e   -> HI    + 2e
-C ------- 17:   HM    + HI  -> 2H    + e
-C ------- 18:   HM    + HII -> 2HI
-C ------- 19:   HM    + HII -> H2II  + e
-C ------- 20:   H2II  + e   -> 2HI
-C ------- 21:   H2II  + HM  -> HI    + H2I
-C --------------  old  ---------------------
-c
-c --------------  new  ---------------------
-C ---11--       H2I   + HII -> H2II  + H
-C ---12--       H2I   + e   -> 2HI   + e
-C ---13--       H2I   + H   -> 3H
-C ---14--       HM    + e   -> HI    + 2e
-C ---15--       HM    + HI  -> 2H    + e
-C ---16--       HM    + HII -> 2HI
-C ---17--       HM    + HII -> H2II  + e
-C ---18--       H2II  + e   -> 2HI
-C ---19--       H2II  + HM  -> HI    + H2I
-c (20) - unused
-c --------------  new  ---------------------
-c
-c
-C ------- 21:   2H    + H2  -> H2I   + H2I
-C ------- 22:   2H    + H   -> H2I   + H
-C ------- 24:   HI    + p   -> HII   + e
-C ------- 25:   HeII  + p   -> HeIII + e
-C ------- 26:   HeI   + p   -> HeII  + e
-C ------- 27:   HM    + p   -> HI    + e
-C ------- 28:   H2II  + p   -> HI    + HII
-C ------- 29:   H2I   + p   -> H2II  + e
-C ------- 30:   H2II  + p   -> 2HII  + e
-C ------- 31:   H2I   + p   -> 2HI
+c ------- 1:    HI    + e   -> HII   + 2e
+c ------- 2:    HII   + e   -> H     + p
+c ------- 3:    HeI   + e   -> HeII  + 2e
+c ------- 4:    HeII  + e   -> HeI   + p
+c ------- 5:    HeII  + e   -> HeIII + 2e
+c ------- 6:    HeIII + e   -> HeII  + p
+c ------- 7:    HI    + e   -> HM    + p
+c ------- 8:    HM    + HI  -> H2I*  + e
+c ------- 9:    HI    + HII -> H2II  + p
+c ------- 10:   H2II  + HI  -> H2I*  + HII
+c ------- 11:   H2I   + HII -> H2II  + H
+c ------- 12:   H2I   + e   -> 2HI   + e
+c ------- 13:   H2I   + H   -> 3H
+c ------- 14:   HM    + e   -> HI    + 2e
+c ------- 15:   HM    + HI  -> 2H    + e
+c ------- 16:   HM    + HII -> 2HI
+c ------- 17:   HM    + HII -> H2II  + e
+c ------- 18:   H2II  + e   -> 2HI
+c ------- 19:   H2II  + HM  -> HI    + H2I
+c ------- 20:   unused
+c ------- 21:   2H    + H2  -> H2I   + H2I
+c ------- 22:   2H    + H   -> H2I   + H
+c ------- 24:   HI    + p   -> HII   + e
+c ------- 25:   HeII  + p   -> HeIII + e
+c ------- 26:   HeI   + p   -> HeII  + e
+c ------- 27:   HM    + p   -> HI    + e
+c ------- 28:   H2II  + p   -> HI    + HII
+c ------- 29:   H2I   + p   -> H2II  + e
+c ------- 30:   H2II  + p   -> 2HII  + e
+c ------- 31:   H2I   + p   -> 2HI
 C
 c ------- 50-56: deuterium rates (given below)
 c
