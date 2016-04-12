@@ -52,6 +52,7 @@ MACH_DEFINES = -DLINUX -DH5_USE_16_API -fPIC
 # Compiler flag settings
 #-----------------------------------------------------------------------
 
+MACH_OMPFLAGS = # OpenMP flags
 MACH_CPPFLAGS = -P -traditional
 MACH_CFLAGS   = -mp1 -prec_div -fp_port -align # C compiler flags
 MACH_CXXFLAGS = -mp1 -prec_div -fp_port -align # C++ compiler flags
