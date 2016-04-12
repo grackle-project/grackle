@@ -97,6 +97,12 @@ cdef class chemistry_data:
         def __set__(self, val):
             self.data.grackle_data_file = val
 
+    property CaseBRecombination:
+        def __get__(self):
+            return self.data.CaseBRecombination
+        def __set__(self, val):
+            self.data.CaseBRecombination = val
+
     property UVbackground:
         def __get__(self):
             return self.data.UVbackground
@@ -108,6 +114,54 @@ cdef class chemistry_data:
             return self.data.SolarMetalFractionByMass
         def __set__(self, val):
             self.data.SolarMetalFractionByMass = val
+
+    property k24:
+        def __get__(self):
+            return self.data.k24
+        def __set__(self, val):
+            self.data.k24 = val
+
+    property k25:
+        def __get__(self):
+            return self.data.k25
+        def __set__(self, val):
+            self.data.k25 = val
+
+    property k26:
+        def __get__(self):
+            return self.data.k26
+        def __set__(self, val):
+            self.data.k26 = val
+
+    property k27:
+        def __get__(self):
+            return self.data.k27
+        def __set__(self, val):
+            self.data.k27 = val
+
+    property k28:
+        def __get__(self):
+            return self.data.k28
+        def __set__(self, val):
+            self.data.k28 = val
+
+    property k29:
+        def __get__(self):
+            return self.data.k29
+        def __set__(self, val):
+            self.data.k29 = val
+
+    property k30:
+        def __get__(self):
+             return self.data.k30
+        def __set__(self, val):
+             self.data.k30 = val
+
+    property k31:
+        def __get__(self):
+             return self.data.k31
+        def __set__(self, val):
+             self.data.k31 = val
 
     property comoving_coordinates:
         def __get__(self):
