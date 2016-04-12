@@ -107,11 +107,16 @@ c ------- 28:   H2II  + p   -> HI    + HII
 c ------- 29:   H2I   + p   -> H2II  + e
 c ------- 30:   H2II  + p   -> 2HII  + e
 c ------- 31:   H2I   + p   -> 2HI
-C
-c ------- 50-56: deuterium rates (given below)
-c
-c ------- 57: coll. ion. of H by H:   HI + HI  -> HII +  HI + e
-c ------- 58: coll. ion. of H by He:  HI + HeI -> HII + HeI + e
+c ------- 50:   H+    + D   -> H     + D+
+c ------- 51:   H     + D+  -> H+    + D
+c ------- 52:   H2    + D+  -> HD    + H+
+c ------- 53:   HD    + H+  -> H2    + D+
+c ------- 54:   H2    + D   -> HD    + H
+c ------- 55:   HD    + H   -> H2    + D
+c ------- 56:   D     + H-  -> HD    + e-
+c ------- 57:   D-    + H   -> HD    + e-  (included by multiplying 56 by 2)
+c ------- 57:   HI    + HI  -> HII   + HI    + e
+c ------- 58:   HI    + HeI -> HII   + HeI   + e
 c
 c ------- h2dust: 2H  + grain -> H2  + grain (eq 3.8 from Hollenbach & McKee 1989)
 c
