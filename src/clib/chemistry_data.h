@@ -180,6 +180,11 @@ typedef struct
   double *k55;
   double *k56;
 
+  /* New H-ionizing reactions, used for 6, 9 & 12 species chemistry */
+
+  double *k57;
+  double *k58;
+
   /* H2 formation on dust. */
 
   int NumberOfDustTemperatureBins;   
@@ -250,6 +255,9 @@ typedef struct
   double *GAHe;
   double *GAHp;
   double *GAel;
+
+  /* Updated H2 LTE rate from Glover (2015, MNRAS, 451, 2082) */
+  double *H2LTE;
 
   /* 12 species rates (including HD) */
 

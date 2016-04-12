@@ -16,6 +16,7 @@
      &                k16a, k17a, k18a, k19a, k22a,
      &                k24, k25, k26, k27, k28, k29, k30, k31,
      &                k50a, k51a, k52a, k53a, k54a, k55a, k56a,
+     &                k57a, k58a,
      &                ndratec, dtemstart, dtemend, h2dusta,
      &                ncrna, ncrd1a, ncrd2a,
      &                ceHIa, ceHeIa, ceHeIIa, ciHIa, ciHeIa, 
@@ -26,7 +27,7 @@
      &                hyd01ka, h2k01a, vibha, rotha, rotla, 
      &                gpldla, gphdla, hdltea, hdlowa,
      &                gaHIa, gaH2a, gaHea, gaHpa, gaela, 
-     &                gasgra, 
+     &                h2ltea, gasgra, 
      &                ierr,
      &                ih2optical, iciecool, ithreebody, ciecoa, 
      &                icmbTfloor, iClHeat,
@@ -148,8 +149,8 @@
      &        rotha(nratec), rotla(nratec), gpldla(nratec),
      &        gphdla(nratec), hdltea(nratec), hdlowa(nratec),
      &        gaHIa(nratec), gaH2a(nratec), gaHea(nratec),
-     &        gaHpa(nratec), gaela(nratec), gasgra(nratec), 
-     &        ciecoa(nratec),
+     &        gaHpa(nratec), gaela(nratec), h2ltea(nratec),
+     &        gasgra(nratec), ciecoa(nratec),
      &        ceHIa(nratec), ceHeIa(nratec), ceHeIIa(nratec),
      &        ciHIa(nratec), ciHeIa(nratec), ciHeISa(nratec), 
      &        ciHeIIa(nratec), reHIIa(nratec), reHeII1a(nratec), 
@@ -166,7 +167,8 @@
      &       k17a(nratec), k18a(nratec), k19a(nratec), k22a(nratec),
      &       k50a(nratec), k51a(nratec), k52a(nratec), k53a(nratec),
      &       k54a(nratec), k55a(nratec), k56a(nratec),
-     &       k13dda(nratec, 7), h2dusta(nratec, ndratec),
+     &       k57a(nratec), k58a(nratec),
+     &       k13dda(nratec, 14), h2dusta(nratec, ndratec),
      &       ncrna(nratec), ncrd1a(nratec), ncrd2a(nratec),
      &       k24, k25, k26, k27, k28, k29, k30, k31
 
@@ -229,7 +231,8 @@
      &       k11(in), k12(in), k13(in), k14(in), k15(in),
      &       k16(in), k17(in), k18(in), k19(in), k22(in),
      &       k50(in), k51(in), k52(in), k53(in), k54(in),
-     &       k55(in), k56(in), k13dd(in, 7), h2dust(in),
+     &       k55(in), k56(in), k57(in), k58(in),
+     &       k13dd(in, 14), h2dust(in),
      &       ncrn(in), ncrd1(in), ncrd2(in)
 
 !  Cooling/heating row locals
@@ -331,7 +334,7 @@ c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 fo
      &                gpldla, gphdla, gpldl, gphdl,
      &                hdltea, hdlowa, hdlte, hdlow,
      &                gaHIa, gaH2a, gaHea, gaHpa, gaela,
-     &                gasgra,
+     &                h2ltea, gasgra,
      &                ceHI, ceHeI, ceHeII, ciHI, ciHeI, ciHeIS, ciHeII,
      &                reHII, reHeII1, reHeII2, reHeIII, brem,
      &                indixe, t1, t2, logtem, tdef, edot,
@@ -358,15 +361,15 @@ c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 fo
      &               k1a, k2a, k3a, k4a, k5a, k6a, k7a, k8a, k9a, k10a,
      &               k11a, k12a, k13a, k13dda, k14a, k15a, k16a,
      &               k17a, k18a, k19a, k22a,
-     &               k50a, k51a, k52a, k53a, k54a, k55a, k56a,
-     &               ndratec, dtemstart, dtemend, h2dusta, 
+     &               k50a, k51a, k52a, k53a, k54a, k55a, k56a, 
+     &               k57a, k58a, ndratec, dtemstart, dtemend, h2dusta, 
      &               ncrna, ncrd1a, ncrd2a, 
      &               piHI, piHeI,
      &               k1, k2, k3, k4, k5, k6, k7, k8, k9, k10,
      &               k11, k12, k13, k14, k15, k16, k17, k18,
      &               k19, k22, k24, k25, k26, 
-     &               k50, k51, k52, k53, k54, k55,
-     &               k56, k13dd, k24shield, k25shield, k26shield,
+     &               k50, k51, k52, k53, k54, k55, k56, k57,
+     &               k58, k13dd, k24shield, k25shield, k26shield,
      &               h2dust, ncrn, ncrd1, ncrd2, 
      &               t1, t2, tdef, logtem, indixe, 
      &               dom, coolunit, tbase1, itmask)
@@ -381,7 +384,7 @@ c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 fo
      &                     k1, k2, k3, k4, k5, k6, k7, k8, k9, k10, k11,
      &                     k12, k13, k14, k15, k16, k17, k18, k19, k22,
      &                     k24, k25, k26, k27, k28, k29, k30, k31,
-     &                     k50, k51, k52, k53, k54, k55, k56, 
+     &                     k50, k51, k52, k53, k54, k55, k56, k57, k58, 
      &                     h2dust, ncrn, ncrd1, ncrd2, rhoH, 
      &                     k24shield, k25shield, k26shield,
      &                     itmask, edot, chunit, dom)
@@ -502,10 +505,12 @@ c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 fo
      &               +      k15(i)*HM(i,j,k)    *HI(i,j,k),
      &               + 2._DKIND*k16(i)*HM(i,j,k)    *HII(i,j,k),
      &               + 2._DKIND*k18(i)*H2II(i,j,k)  *de(i,j,k)/2._DKIND,
-     &               +      k19(i)*H2II(i,j,k)  *HM(i,j,k)/2._DKIND
+     &               +      k19(i)*H2II(i,j,k)  *HM(i,j,k)/2._DKIND,
+     &               -      k57(i)*HI(i,j,k)    *HI(i,j,k),
+     &               -      k58(i)*HI(i,j,k)    *HeI(i,j,k)/4._DKIND
                endif
  1000          format(i5,3(i3,1x),1p,11(e11.3))
- 1100          format(1p,20(e11.3))
+ 1100          format(1p,22(e11.3))
 #endif /* WRITE_COOLING_DEBUG */
             else               ! itmask
                dtit(i) = dt;
@@ -583,7 +588,7 @@ c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 fo
      &                     k1, k2, k3, k4, k5, k6, k7, k8, k9, k10, k11,
      &                     k12, k13, k14, k15, k16, k17, k18, k19, k22,
      &                     k24, k25, k26, k27, k28, k29, k30, k31,
-     &                     k50, k51, k52, k53, k54, k55, k56, 
+     &                     k50, k51, k52, k53, k54, k55, k56, k57, k58, 
      &                     h2dust, rhoH,
      &                     k24shield, k25shield, k26shield,
      &                     HIp, HIIp, HeIp, HeIIp, HeIIIp, dep,
@@ -838,15 +843,15 @@ c -------------------------------------------------------------------
      &                k1a, k2a, k3a, k4a, k5a, k6a, k7a, k8a, k9a, k10a,
      &                k11a, k12a, k13a, k13dda, k14a, k15a, k16a,
      &                k17a, k18a, k19a, k22a,
-     &                k50a, k51a, k52a, k53a, k54a, k55a, k56a,
-     &                ndratec, dtemstart, dtemend, h2dusta, 
+     &                k50a, k51a, k52a, k53a, k54a, k55a, k56a, k57a,
+     &                k58a, ndratec, dtemstart, dtemend, h2dusta, 
      &                ncrna, ncrd1a, ncrd2a,
      &                piHI, piHeI,
      &                k1, k2, k3, k4, k5, k6, k7, k8, k9, k10,
      &                k11, k12, k13, k14, k15, k16, k17, k18,
      &                k19, k22, k24, k25, k26,
-     &                k50, k51, k52, k53, k54, k55,
-     &                k56, k13dd, k24shield, k25shield, k26shield,
+     &                k50, k51, k52, k53, k54, k55, k56, k57,
+     &                k58, k13dd, k24shield, k25shield, k26shield,
      &                h2dust, ncrn, ncrd1, ncrd2,
      &                t1, t2, tdef, logtem, indixe, 
      &                dom, coolunit, tbase1, itmask)
@@ -873,8 +878,8 @@ c -------------------------------------------------------------------
      &       k13a(nratec), k14a(nratec), k15a(nratec), k16a(nratec), 
      &       k17a(nratec), k18a(nratec), k19a(nratec), k22a(nratec),
      &       k50a(nratec), k51a(nratec), k52a(nratec), k53a(nratec),
-     &       k54a(nratec), k55a(nratec), k56a(nratec),
-     &       k13dda(nratec, 7), h2dusta(nratec, ndratec), 
+     &       k54a(nratec), k55a(nratec), k56a(nratec), k57a(nratec),
+     &       k58a(nratec), k13dda(nratec, 14), h2dusta(nratec, ndratec), 
      &       ncrna(nratec), ncrd1a(nratec), ncrd2a(nratec),
      &       k24, k25, k26,
      &       piHI, piHeI
@@ -891,7 +896,8 @@ c -------------------------------------------------------------------
      &       k11(in), k12(in), k13(in), k14(in), k15(in),
      &       k16(in), k17(in), k18(in), k19(in), k22(in),
      &       k50(in), k51(in), k52(in), k53(in), k54(in),
-     &       k55(in), k56(in), k13dd(in, 7), h2dust(in),
+     &       k55(in), k56(in), k57(in), k58(in),
+     &       k13dd(in, 14), h2dust(in), 
      &       ncrn(in), ncrd1(in), ncrd2(in),
      &       k24shield(in), k25shield(in), k26shield(in)
 
@@ -918,6 +924,7 @@ c -------------------------------------------------------------------
       integer i, n1
       real*8 factor, x, logtem0, logtem9, dlogtem, nh,
      &       d_logtem0, d_logtem9, d_dlogtem
+      real*8 k13_CID, k13_DT
 
 !     Set log values of start and end of lookup tables
 
@@ -956,6 +963,10 @@ c -------------------------------------------------------------------
      &           (k5a(indixe(i)+1) -k5a(indixe(i)))*tdef(i)
          k6(i) = k6a(indixe(i)) +
      &           (k6a(indixe(i)+1) -k6a(indixe(i)))*tdef(i)
+         k57(i) = k57a(indixe(i)) +
+     &            (k57a(indixe(i)+1) -k57a(indixe(i)))*tdef(i)
+         k58(i) = k58a(indixe(i)) +
+     &            (k58a(indixe(i)+1) -k58a(indixe(i)))*tdef(i)
       endif
       enddo
 
@@ -1005,7 +1016,7 @@ c -------------------------------------------------------------------
          endif
          enddo
 
-         do n1 = 1, 7
+         do n1 = 1, 14
             do i = is+1, ie+1
                if (itmask(i)) then
                k13dd(i,n1) = k13dda(indixe(i),n1) +
@@ -1143,11 +1154,20 @@ c -------------------------------------------------------------------
                   k13(i) = tiny8
                   if (tgas1d(i) .ge. 500._DKIND .and.
      &                tgas1d(i) .lt. 1.0e6_DKIND) then
-                     k13(i) = k13dd(i,1)-k13dd(i,2)/
+c Direct collisional dissociation
+                     k13_CID = k13dd(i,1)-k13dd(i,2)/
      &                          (1._DKIND+(nh/k13dd(i,5))**k13dd(i,7))
      &                     + k13dd(i,3)-k13dd(i,4)/
      &                          (1._DKIND+(nh/k13dd(i,6))**k13dd(i,7))
-                     k13(i) = max(10._DKIND**k13(i), tiny8)
+                     k13_CID = max(10._DKIND**k13_CID, tiny8)
+c Dissociative tunnelling
+                     k13_DT  = k13dd(i,8)-k13dd(i,9)/
+     &                          (1._DKIND+(nh/k13dd(i,12))**k13dd(i,14))
+     &                     + k13dd(i,10)-k13dd(i,11)/
+     &                          (1._DKIND+(nh/k13dd(i,13))**k13dd(i,14))
+                     k13_DT  = max(10._DKIND**k13_DT, tiny8)
+c
+                     k13(i)  = k13_DT + k13_CID
                   endif
                endif
                enddo
@@ -1168,7 +1188,7 @@ c -------------------------------------------------------------------
      &                     k1, k2, k3, k4, k5, k6, k7, k8, k9, k10, k11,
      &                     k12, k13, k14, k15, k16, k17, k18, k19, k22,
      &                     k24, k25, k26, k27, k28, k29, k30, k31,
-     &                     k50, k51, k52, k53, k54, k55, k56, 
+     &                     k50, k51, k52, k53, k54, k55, k56, k57, k58, 
      &                     h2dust, ncrn, ncrd1, ncrd2, rhoH, 
      &                     k24shield, k25shield, k26shield,
      &                     itmask, edot, chunit, dom)
@@ -1201,7 +1221,7 @@ c -------------------------------------------------------------------
      &       k11(in), k12(in), k13(in), k14(in), k15(in),
      &       k16(in), k17(in), k18(in), k19(in), k22(in),
      &       k50(in), k51(in), k52(in), k53(in), k54(in),
-     &       k55(in), k56(in), h2dust(in), 
+     &       k55(in), k56(in), k57(in), k58(in), h2dust(in), 
      &       ncrn(in), ncrd1(in), ncrd2(in), rhoH(in), 
      &       k24shield(in), k25shield(in), k26shield(in),
      &       k24, k25, k26, k27, k28, k29, k30, k31
@@ -1224,6 +1244,8 @@ c -------------------------------------------------------------------
      &               - k2(i)*HII(i,j,k)*de(i,j,k)
      &               - k4(i)*HeII(i,j,k)*de(i,j,k)/4._DKIND
      &               - k6(i)*HeIII(i,j,k)*de(i,j,k)/4._DKIND
+     &               + k57(i)*HI(i,j,k)*HI(i,j,k)
+     &               + k58(i)*HI(i,j,k)*HeI(i,j,k)/4._DKIND
      &               +      ( k24shield(i)*HI(i,j,k)
      &               + k25shield(i)*HeII(i,j,k)/4._DKIND
      &               + k26shield(i)*HeI(i,j,k)/4._DKIND)
@@ -1233,6 +1255,8 @@ c -------------------------------------------------------------------
             HIdot(i) =
      &               - k1(i)*HI(i,j,k)*de(i,j,k)
      &               + k2(i)*HII(i,j,k)*de(i,j,k)
+     &               - k57(i)*HI(i,j,k)*HI(i,j,k)
+     &               - k58(i)*HI(i,j,k)*HeI(i,j,k)/4._DKIND
      &               -      k24shield(i)*HI(i,j,k)
 
          endif                  ! itmask
@@ -1259,6 +1283,8 @@ c -------------------------------------------------------------------
      &               + 2._DKIND*k16(i)*HM(i,j,k)    *HII(i,j,k)
      &               + 2._DKIND*k18(i)*H2II(i,j,k)  *de(i,j,k)/2._DKIND
      &               +      k19(i)*H2II(i,j,k)  *HM(i,j,k)/2._DKIND
+     &               -      k57(i)*HI(i,j,k)    *HI(i,j,k)
+     &               -      k58(i)*HI(i,j,k)    *HeI(i,j,k)/4._DKIND
      &               -      k24shield(i)*HI(i,j,k)
 
 !     Add H2 formation on dust grains
@@ -1283,6 +1309,8 @@ c -------------------------------------------------------------------
      &               - k6(i) * HeIII(i,j,k)* de(i,j,k)/4._DKIND
      &               - k7(i) * HI(i,j,k)   * de(i,j,k)
      &               - k18(i)* H2II(i,j,k) * de(i,j,k)/2._DKIND
+     &               + k57(i)* HI(i,j,k)   * HI(i,j,k)
+     &               + k58(i)* HI(i,j,k)   * HeI(i,j,k)/4._DKIND
      &               + (k24shield(i)*HI(i,j,k)
      &               +  k25shield(i)*HeII(i,j,k)/4._DKIND
      &               +  k26shield(i)*HeI(i,j,k)/4._DKIND)
@@ -1341,7 +1369,7 @@ c -------------------------------------------------------------------
      &                     k1, k2, k3, k4, k5, k6, k7, k8, k9, k10, k11,
      &                     k12, k13, k14, k15, k16, k17, k18, k19, k22,
      &                     k24, k25, k26, k27, k28, k29, k30, k31,
-     &                     k50, k51, k52, k53, k54, k55, k56, 
+     &                     k50, k51, k52, k53, k54, k55, k56, k57, k58,
      &                     h2dust, rhoH,
      &                     k24shield, k25shield, k26shield,
      &                     HIp, HIIp, HeIp, HeIIp, HeIIIp, dep,
@@ -1374,7 +1402,8 @@ c -------------------------------------------------------------------
      &       k11(in), k12(in), k13(in), k14(in), k15(in),
      &       k16(in), k17(in), k18(in), k19(in), k22(in),
      &       k50(in), k51(in), k52(in), k53(in), k54(in),
-     &       k55(in), k56(in), h2dust(in), rhoH(in),
+     &       k55(in), k56(in), k57(in), k58(in), 
+     &       h2dust(in), rhoH(in),
      &       k24shield(in), k25shield(in), k26shield(in),
      &       k24, k25, k26, k27, k28, k29, k30, k31
 
@@ -1400,6 +1429,8 @@ c -------------------------------------------------------------------
 
             scoef  = k2(i)*HII(i,j,k)*de(i,j,k)
             acoef  = k1(i)*de(i,j,k)
+     &             + k57(i)*HI(i,j,k)
+     &             + k58(i)*HeI(i,j,k)/4._DKIND
      &             + k24shield(i)
             HIp(i)  = (scoef*dtit(i) + HI(i,j,k))/
      &           (1._DKIND + acoef*dtit(i))
@@ -1413,7 +1444,9 @@ c               ERROR_MESSAGE
 !        2) HII
 c 
             scoef  = k1(i)*HIp(i)*de(i,j,k)
-     &                   + k24shield(i)*HIp(i)
+     &             + k57(i)*HIp(i)*HIp(i)
+     &             + k58(i)*HIp(i)*HeI(i,j,k)/4._DKIND
+     &             + k24shield(i)*HIp(i)
             acoef  = k2(i)*de (i,j,k)
             HIIp(i) = (scoef*dtit(i) + HII(i,j,k))/
      &           (1._DKIND +acoef*dtit(i))
@@ -1429,6 +1462,8 @@ c
 !        3) Electron density
 
             scoef = 0._DKIND
+     &                 + k57(i)*HIp(i)*HIp(i)
+     &                 + k58(i)*HIp(i)*HeI(i,j,k)/4._DKIND
      &                 + k24shield(i)*HI(i,j,k)
      &                 + k25shield(i)*HeII(i,j,k)/4._DKIND
      &                 + k26shield(i)*HeI(i,j,k)/4._DKIND
@@ -1506,6 +1541,8 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
      &             +      k9(i) * HII(i,j,k)
      &             +      k10(i)* H2II(i,j,k)/2._DKIND
      &             + 2._DKIND*k22(i)* HI(i,j,k)**2
+     &             +      k57(i)* HI(i,j,k)
+     &             +      k58(i)* HeI(i,j,k)/4._DKIND
      &             + k24shield(i)
 
             if (idust .gt. 0) then
@@ -1523,6 +1560,8 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
 
             scoef  =    k1(i)  * HI(i,j,k) * de(i,j,k)
      &             +    k10(i) * H2II(i,j,k)*HI(i,j,k)/2._DKIND
+     &             +    k57(i) * HI(i,j,k) * HI(i,j,k)
+     &             +    k58(i) * HI(i,j,k) * HeI(i,j,k)/4._DKIND
      &             + k24shield(i)*HI(i,j,k)
             acoef  =    k2(i)  * de(i,j,k)
      &             +    k9(i)  * HI(i,j,k)
@@ -1537,6 +1576,8 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
             scoef =   k8(i) * HM(i,j,k) * HI(i,j,k)
      &             +  k15(i)* HM(i,j,k) * HI(i,j,k)
      &             +  k17(i)* HM(i,j,k) * HII(i,j,k)
+     &             +  k57(i)* HI(i,j,k) * HI(i,j,k)
+     &             +  k58(i)* HI(i,j,k) * HeI(i,j,k)/4._DKIND
 !                  
      &             + k24shield(i)*HIp(i)
      &             + k25shield(i)*HeIIp(i)/4._DKIND

@@ -13,11 +13,12 @@ c
      &             gammahacgs, gammaha,
      &             hyd01ka, h2k01a, vibha, rotha, rotla, 
      &             gpldl, gphdl, hdltea, hdlowa, ciecoa,
-     &             gaHIa, gaH2a, gaHea, gaHpa, gaela, gasgra,
+     &             gaHIa, gaH2a, gaHea, gaHpa, gaela, h2ltea, gasgra,
      &             k1a, k2a, k3a, k4a, k5a, k6a, k7a, k8a, k9a, k10a,
      &             k11a, k12a, k13a, k13dda, k14a, k15a, k16a, k17a,
      &             k18a, k19a, k20a, k21a, k22a, k23a,
-     &             k50a, k51a, k52a, k53a, k54a, k55a, k56a, 
+     &             k50a, k51a, k52a, k53a, k54a, k55a, k56a,
+     &             k57a, k58a, 
      &             ndratec, dtemstart, dtemend, h2dusta, 
      &             ncrna, ncrd1a, ncrd2a, ioutput
      &                     )
@@ -30,6 +31,7 @@ c  modified1: January, 1996 by Greg Bryan; adapted to KRONOS
 c  modified2: October, 1996 by GB; moved to AMR
 c  modified3: February, 2000 by GB; added Toms new collisional rates
 c  modified4: July, 2010 by Dan Reynolds; added case-B recombination rates
+c  modified5: November, 2015 by Simon Glover; added several new processes
 c
 c  PURPOSE:
 c    Construct tables for rate coefficients and some cooling functions 
@@ -137,6 +139,9 @@ C ------- 31:   H2I   + p   -> 2HI
 C
 c ------- 50-56: deuterium rates (given below)
 c
+c ------- 57: coll. ion. of H by H:   HI + HI  -> HII +  HI + e
+c ------- 58: coll. ion. of H by He:  HI + HeI -> HII + HeI + e
+c
 c ------- h2dust: 2H  + grain -> H2  + grain (eq 3.8 from Hollenbach & McKee 1989)
 c
 c ncrn, ncrd1, ncrd1: numerator and denominator terms in Eq 23 of Omukai ea 2000
@@ -165,8 +170,8 @@ c
      &        rotha(nratec), rotla(nratec), gpldl(nratec),
      &        gphdl(nratec), hdltea(nratec), hdlowa(nratec),
      &        gaHIa(nratec), gaH2a(nratec), gaHea(nratec), 
-     &        gaHpa(nratec), gaela(nratec), gasgra(nratec),
-     &        ciecoa(nratec),
+     &        gaHpa(nratec), gaela(nratec), h2ltea(nratec),
+     &        gasgra(nratec), ciecoa(nratec),
      &        compa, gammaha, gammahacgs,
      &        k1a (nratec), k2a (nratec), k3a (nratec), k4a (nratec), 
      &        k5a (nratec), k6a (nratec), k7a (nratec), k8a (nratec), 
@@ -176,7 +181,8 @@ c
      &        k21a(nratec), k23a(nratec),
      &        k22a(nratec), k50a(nratec), k51a(nratec), k52a(nratec), 
      &        k53a(nratec), k54a(nratec), k55a(nratec), k56a(nratec),
-     &        k13dda(nratec, 7),
+     &        k57a(nratec), k58a(nratec),
+     &        k13dda(nratec, 14),
      &        h2dusta(nratec, ndratec),
      &        ncrna(nratec), ncrd1a(nratec), ncrd2a(nratec)
       integer ioutput
@@ -214,12 +220,12 @@ c
 
 c  Locals
 c
-      integer i,j
+      integer i,j,idt
       real*8 logttt, ttt, tev, logtev, 
      &     xx, dum, tbase1, xbase1, kunit, coolunit,
      &     dbase1, dlogtem, kunit_3bdy, cierate,
      &     grain_coef, d_ttt, d_logttt, d_dlogtem,
-     &     ttt2, d_ttt2
+     &     ttt2, d_ttt2, tk9
       real*8 tm, HDLR, HDLV, lt, t3, lt3
 c
 c\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////////
@@ -332,8 +338,10 @@ c
         k54a(i) = tiny
         k55a(i) = tiny
         k56a(i) = tiny
+        k57a(i) = tiny
+        k58a(i) = tiny
 c
-        do j = 1, 7
+        do j = 1, 14
            k13dda(i,j) = tiny
         enddo
 c
@@ -373,7 +381,8 @@ c
         gaHea(i)    = tiny
         gaHpa(i)    = tiny
         gaela(i)    = tiny
-        gasgra(i)    = tiny
+        h2ltea(i)   = tiny
+        gasgra(i)   = tiny
       enddo
 c
 c  Fill in tables over the range temstart to temend
@@ -510,10 +519,20 @@ c
      &         + 8.9712d-11 * ttt**3.0424d0
      &         + 3.2576d-14 * ttt**3.7741d0) / kunit
 c
-        k9a(i) = 1.85d-23*ttt**1.8d0 / kunit
-        if(ttt .gt. 6.7d3) 
-     &     k9a(i) = 5.81d-16*(ttt/56200.d0)**(-0.6657d0*
-     &       log10(ttt/56200.d0)) / kunit
+c       H2+ formation by radiative association: HI + HII -> H2II + gamma
+c       This fit is from Latif et al (2015, MNRAS, 446, 3163) and is valid
+c       for temperatures in the range 1 < T < 32000 K. At higher temperatures,
+c       we keep the value of the rate coefficient constant; note that its 
+c       behaviour in this regime is unlikely to be important
+c
+        if (ttt .gt. 3.2d4) then
+          tk9 = 3.2d4
+        else
+          tk9 = ttt
+        endif
+        k9a(i) = 1d1**(-18.20d0 - 3.194d0 * dlog10(tk9)
+     $         + 1.786d0  * dlog10(tk9)**2
+     $         - 0.2072d0 * dlog10(tk9)**3 ) / kunit
 c
         k10a(i) = 6.0d-10 / kunit
 c
@@ -585,14 +604,28 @@ c
 c
 #endif /* USE_NEW_COLLISIONAL_RATES */
 c
-c       Compute the density-dependant collision H2 dissociation rates.
-c          (this givens a 7-variable function that is used to compute
-c           the log10 of the rate -- normalize by dividing by kunit).
+c       Compute the coefficients needed for the density-dependent collision 
+c       H2 dissociation rate. Our source for this (Martin et al, 1996, ApJ, 461, 265) 
+c       distinguishes between two processes, direct collisional dissociation (idt=0) and
+c       dissociative tunnelling (idt=1). We need to account for both processes, so call 
+c       the routine twice, once for each process.
 c
-        call colh2diss_g(ttt, k13dda(i,1), k13dda(i,2), k13dda(i,3), 
-     &                 k13dda(i,4), k13dda(i,5), k13dda(i,6), 
-     &                 k13dda(i,7))
+c       For each process, the routine returns seven coefficients that are later used
+c       to compute the log10 of the corresponding rate.
+c
+        idt = 0
+        call colh2diss_g(ttt, idt, k13dda(i,1), k13dda(i,2), 
+     &                 k13dda(i,3), k13dda(i,4), k13dda(i,5), 
+     &                 k13dda(i,6), k13dda(i,7))
+c       Normalize by dividing by kunit
         k13dda(i,1) = k13dda(i,1) - log10(kunit)
+c
+        idt = 1
+        call colh2diss_g(ttt, idt, k13dda(i,8), k13dda(i,9), 
+     &                 k13dda(i,10), k13dda(i,11), k13dda(i,12), 
+     &                 k13dda(i,13), k13dda(i,14))
+c       Normalize by dividing by kunit
+        k13dda(i,8) = k13dda(i,8) - log10(kunit)
 c
 c       ------ 3-body H2 rate ----
 c       The first bit is my fit to A.E. Orel 1987, J.Chem.Phys., 87, 
@@ -600,7 +633,8 @@ c       314. I then match it to the T^-1 of Palla etal (1983)
 c       Which is then 4 times smaller than the Palla rate ! Thats
 c       molecule uncertainties ! :-)
 c
-c Our varying threebody rates from Simon
+c Our varying threebody rates from Simon, with corresponding 
+c collisional dissociation rates
         if(threebody.eq.0)then
           if (ttt .le. 300.d0) then
              k22a(i) = 1.3d-32 * (ttt/300.d0)**(-0.38d0)
@@ -608,27 +642,40 @@ c Our varying threebody rates from Simon
              k22a(i) = 1.3d-32 * (ttt/300.d0)**(-1.d0)
           endif
         elseif(threebody.eq.1)then
-c Inverse of PSS83 three-body rate
+c PSS83 three-body rate
           k22a(i) = 5.5d-29 / ttt
+c Inverse of PSS83 three-body rate
           k13a(i) = (5.24d-7 / ttt**0.485d0) 
      &                   * exp(-5.2d4 / ttt)
         elseif(threebody.eq.2)then
-c Inverse of CW83 rate
+c CW83 three-body rate
           k22a(i) = 8.8d-33
+c Inverse of CW83 rate
           k13a(i) = 8.4d-11 * ttt**0.515d0 * exp(-5.2d4 / ttt)
         elseif(threebody.eq.3)then
-c Rate from JGC67, used by FH07 to construct their three-body rate
+c FH07 three-body rate
           k22a(i) = 1.44d-26 / ttt**1.54d0
+c Rate from JGC67, used by FH07 to construct their three-body rate
           k13a(i) = (1.38d-4 / ttt**1.025d0)
      &                   * exp(-5.2d4 / ttt)
         elseif(threebody.eq.4)then
-c High density rate from MSM96
+c Rate from Glover (2008), derived by detailed balance from MSM96
           k22a(i) = 7.7d-31 / ttt**0.464d0
+c High density limiting rate from MSM96
           k13a(i) = 1d1**(-178.4239d0 - 68.42243d0 * log10(ttt) 
      &                   + 43.20243d0 * log10(ttt)**2
      &                   - 4.633167d0 * log10(ttt)**3 
      &                   + 69.70086d0 * log10(1d0 + 40870.38d0 / ttt)
      &                   - (23705.7d0 / ttt))
+        elseif(threebody.eq.5)then
+c Rate from Forrey (2013)
+          k22a(i) = (6d-32 / ttt**0.25d0) + (2d-31 / ttt**0.5d0)
+c Inferred from detailed balance from Forrey rate
+          if (ttt .le. 3000.d0) then
+            k13a(i) = 2.4d-8 * exp(-5.2d4/ttt)
+          else
+            k13a(i) = 2.2d-6 * ttt**(-0.565) * exp(-5.2d4/ttt)
+          endif
         else
             write(0,*) "I didn't understand your threebody rate."
             stop
@@ -650,13 +697,66 @@ c       55) HD  +  H  -> H2 +  D
 c       56) D   +  H- -> HD +  e-
 c      [57) D-  +  H  -> HD +  e-]  included by multiply 56 by 2
 c
-        k50a(i) = 1.0d-9 *exp(-4.1d1/ttt)  / kunit
-        k51a(i) = 1.0d-9                   / kunit
-        k52a(i) = 2.1d-9                   / kunit
-        k53a(i) = 1.0d-9 *exp(-4.57d2/ttt) / kunit
-        k54a(i) = 7.5d-11*exp(-3.82d3/ttt) / kunit
-        k55a(i) = 7.5d-11*exp(-4.24d3/ttt) / kunit
-        k56a(i) = 1.5d-9 *(ttt/300.d0)**(-0.1d0) / kunit
+        if (ttt .le. 2d5) then
+c Fit from Savin (2002), valid for T < 2e5 K; at higher T, we extrapolate
+          k50a(i) = (2.0d-10 * ttt**0.402d0 * exp(-3.71d1/ttt)
+     &             - 3.31d-17 * ttt**1.48d0) / kunit
+        else
+          k50a(i) = 2.5d-8 * (ttt/2.0d5)**0.402d0 / kunit
+        endif
+c Fit from Savin (2002), valid for T < 2e5 K
+        k51a(i) = (2.06d-10 * ttt**0.396d0 * exp(-3.30d1/ttt)
+     &            + 2.03d-9 * ttt**(-0.332d0)) / kunit
+c k52, k53: fits by Galli & Palla (2002) to calculations by Gerlich (1982)
+c For k52, we use a fixed value at T > 1e4 K to avoid numerical problems with
+c the fitting function. Note that at these temperatures, we do not expect the
+c reaction to be important
+        if (ttt. le. 1d4) then
+          k52a(i) = 1.0d-9 * (0.417 + 0.846 * log10(ttt) 
+     &            - 0.137 * log10(ttt)**2)   / kunit
+        else
+          k52a(i) = 1.609d-9 / kunit
+        endif
+        k53a(i) = 1.1d-9 *exp(-4.88d2/ttt) / kunit
+c Fit by Clark et al (2011), based on data from in Mielke et al (2003)
+        if (ttt .le. 2d3) then
+          k54a(i) = 1d1**(-5.64737d1 + 5.88886 * log10(ttt)
+     $            + 7.19692d0  * log10(ttt)**2
+     $            + 2.25069d0  * log10(ttt)**3
+     $            - 2.16903d0  * log10(ttt)**4
+     $            + 3.17887d-1 * log10(ttt)**5)
+        else
+          k54a(i) = 3.17d-10 * exp(-5.207d3 / ttt)
+        endif
+c From Galli & Palla (2002), based on Shavitt (1959). Fit modified at low
+c temperature, as recommended by Ripamonti (2007) and McGreer & Bryan (2008)
+c to avoid producing an anomalously large rate coefficient
+        if (ttt .le. 2d2) then
+          k55a(i) = 1.08d-22 / kunit
+        else
+          k55a(i) = 5.25d-11 * exp(-4.43d3/ttt + 1.739d5/ttt**2) / kunit
+        endif
+c Same as for H- + H; measurements by Miller et al (2012) suggest
+c that there is no significant isotope effect for this reaction
+        k56a(i) = k8a(i)
+c
+c       ------ New H ionization rates -----
+c
+c       57) H  +  H  ->  H+ + H  + e
+c       58) H  +  He ->  H+ + He + e
+c
+c       The rate coefficients for reactions 57 and 58 are from 
+c       Lenzuni, Chernoff & Salpeter (1991). The value for reaction 57 is based
+c       on the experimental cross-sections of Gealy & van Zyl (1987); that for
+c       reaction 58 is based on cross-sections from van Zyl, Le & Amme (1981).
+c
+        if (ttt .gt. 3d3) then
+          k57a(i) = 1.2d-17  * ttt**1.2d0 * dexp(-1.578d5 / ttt) / kunit
+          k58a(i) = 1.75d-17 * ttt**1.3d0 * dexp(-1.578d5 / ttt) / kunit
+        else
+          k57a(i) = tiny
+          k58a(i) = tiny
+        endif
 c
 c     H2 formation on dust grains.
 c     Loop over dust temperature.
@@ -936,6 +1036,22 @@ c
      &           + 6.4380698d0  * lt3**7
      &           - 6.3701156d0  * lt3**8) / coolunit
       endif
+c     e part 4) - New fit to LTE rate from Glover (2015, MNRAS, 451, 2082)
+      if (tm .lt. 1d2) then
+c Crude extrapolation, but don't expect H2 cooling to be significant
+c at these temperatures
+        h2ltea(i) = 7.d-27 * tm**1.5 * exp(-512./tm) / coolunit
+      else
+        h2ltea(i) = 10.d0**(-20.584225d0
+     &            + 5.0194035d0 * lt3
+     &            - 1.5738805d0 * lt3**2
+     &            - 4.7155769d0 * lt3**3
+     &            + 2.4714161d0 * lt3**4
+     &            + 5.4710750d0 * lt3**5
+     &            - 3.9467356d0 * lt3**6
+     &            - 2.2148338d0 * lt3**7
+     &            + 1.8161874d0 * lt3**8) / coolunit
+      endif
 c
 c     f) HD cooling
 c
@@ -952,13 +1068,18 @@ c
      &            0.122393d0 * (dlog10(tm))**5
       hdltea(i) = (10.d0**min(hdltea(i), 0.0d0)) / coolunit
 c
-c Galli and Palla 1998 low density limit (erg cm3 /s)
-c  uses HD-He collisional data, so reduced by 1.27
+c Rate based on Wrathmall, Gusdorf & Flower (2007) collisional excitation rates
+c for HD-H collisions
 c
-      hdlowa(i) = ((3.0d0 * (4.4d-12 + 3.6d-13*ttt**0.77d0) *
-     &            dexp(-128.d0/ttt) * 128.d0 +
-     &            (5.0d0/3.0d0) * (4.1d-12+2.1e-13*ttt**0.92d0) *
-     &            dexp(-255.d0/ttt) * 255.d0) * kb/1.27d0 ) / coolunit
+      tm = max(ttt, 1.d1)
+      tm = min(tm, 6.d3)
+
+      hdlowa(i) = -23.175780d0  + 1.5035261d0 * dlog10(tm/1.d3)
+     &          + 0.40871403d0  * (dlog10(tm/1.d3))**2
+     &          + 0.17849311d0  * (dlog10(tm/1.d3))**3
+     &          - 0.077291388d0 * (dlog10(tm/1.d3))**4
+     &          + 0.10031326d0  * (dlog10(tm/1.d3))**5
+      hdlowa(i) = (10.d0**hdlowa(i)) / coolunit
 c
 c     g) CIE cooling as discussed in Ripamonti & Abel (2003)
 c        cie_thin_cooling_rate_g returns rate as erg s^-1 cm^3 g^2 so

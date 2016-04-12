@@ -55,7 +55,7 @@ For all on/off integer flags, 0 is off and 1 is on.
 
 .. c:var:: int three_body_rate
 
-   Flag to control which three-body H\ :sub:`2` formation rate is used.  0: `Abel, Bryan & Norman (2002) <http://adsabs.harvard.edu/abs/2002Sci...295...93A>`_, 1: `Palla, Salpeter & Stahler (1983) <http://adsabs.harvard.edu/abs/1983ApJ...271..632P>`_, 2: `Cohen & Westberg (1983) <http://adsabs.harvard.edu/abs/1983JPCRD..12..531C>`_, 3: `Flower & Harris (2007) <http://adsabs.harvard.edu/abs/2007MNRAS.377..705F>`_, 4: `Glover (2008) <http://adsabs.harvard.edu/abs/2008AIPC..990...25G>`_.  These are discussed in `Turk et. al. (2011) <http://adsabs.harvard.edu/abs/2011ApJ...726...55T>`_.  Default: 0.
+   Flag to control which three-body H\ :sub:`2` formation rate is used.  0: `Abel, Bryan & Norman (2002) <http://adsabs.harvard.edu/abs/2002Sci...295...93A>`_, 1: `Palla, Salpeter & Stahler (1983) <http://adsabs.harvard.edu/abs/1983ApJ...271..632P>`_, 2: `Cohen & Westberg (1983) <http://adsabs.harvard.edu/abs/1983JPCRD..12..531C>`_, 3: `Flower & Harris (2007) <http://adsabs.harvard.edu/abs/2007MNRAS.377..705F>`_, 4: `Glover (2008) <http://adsabs.harvard.edu/abs/2008AIPC..990...25G>`_, 5: `Forrey (2013) <http://adsabs.harvard.edu/abs/2013ApJ...773L..25F>`_.  The first five options are discussed in `Turk et. al. (2011) <http://adsabs.harvard.edu/abs/2011ApJ...726...55T>`_.  Default: 0.
 
 .. c:var:: int cie_cooling
 

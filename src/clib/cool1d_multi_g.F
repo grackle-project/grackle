@@ -22,7 +22,7 @@
      &                gpldla, gphdla, gpldl, gphdl,
      &                hdltea, hdlowa, hdlte, hdlow,
      &                gaHIa, gaH2a, gaHea, gaHpa, gaela,
-     &                gasgra,
+     &                h2ltea, gasgra,
      &                ceHI, ceHeI, ceHeII, ciHI, ciHeI, ciHeIS, ciHeII,
      &                reHII, reHeII1, reHeII2, reHeIII, brem,
      &                indixe, t1, t2, logtem, tdef, edot,
@@ -79,8 +79,8 @@
      &        rotha(nratec), rotla(nratec), gpldla(nratec),
      &        gphdla(nratec), hdltea(nratec), hdlowa(nratec),
      &        gaHIa(nratec), gaH2a(nratec), gaHea(nratec),
-     &        gaHpa(nratec), gaela(nratec), gasgra(nratec), 
-     &        ciecoa(nratec),
+     &        gaHpa(nratec), gaela(nratec), h2ltea(nratec),
+     &        gasgra(nratec), ciecoa(nratec),
      &        ceHIa(nratec), ceHeIa(nratec), ceHeIIa(nratec),
      &        ciHIa(nratec), ciHeIa(nratec), ciHeISa(nratec), 
      &        ciHeIIa(nratec), reHIIa(nratec), reHeII1a(nratec), 
@@ -138,7 +138,7 @@
      &       hyd01k(in), h2k01(in), vibh(in), roth(in), rotl(in),
      &       gpldl(in), gphdl(in), hdlte(in), hdlow(in),
      &       gaHI(in), gaH2(in), gaHe(in), gaHp(in), gael(in),
-     &       galdl(in), gasgr(in), gasgr_tdust(in)
+     &       h2lte(in), galdl(in), gasgr(in), gasgr_tdust(in)
 
 !  Iteration mask
 
@@ -443,6 +443,8 @@
      &         *(gaela(indixe(i)+1) - gaela(indixe(i)))
             gphdl(i) = gphdla(indixe(i)) + tdef(i)
      &         *(gphdla(indixe(i)+1) - gphdla(indixe(i)))
+            h2lte(i) = h2ltea(indixe(i)) + tdef(i)
+     &         *(h2ltea(indixe(i)+1) - h2ltea(indixe(i)))
             cieco(i) = ciecoa(indixe(i)) + tdef(i)
      &         *(ciecoa(indixe(i)+1) - ciecoa(indixe(i)))
             end if
@@ -473,7 +475,8 @@
             galdl(i) = gaHI(i) * HI(i,j,k)  + gaH2(i) * H2I(i,j,k)
      &               + gaHe(i) * HeI(i,j,k) + gaHp(i) * HII(i,j,k)
      &               + gael(i) * de(i,j,k)
-            gphdl1 = gphdl(i)/dom
+c            gphdl1 = gphdl(i)/dom
+            gphdl1 = h2lte(i)/dom
             edot(i) = edot(i) - real(ih2co, DKIND)*fudge*H2I(i,j,k)*
      &           gphdl(i)/(1._DKIND + gphdl1/galdl(i)) / (2._DKIND*dom)
 
