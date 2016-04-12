@@ -67,6 +67,8 @@ include $(GRACKLE_DIR)/Make.config.assemble
 # add the OpenMP flag
 #-----------------------------------------------------------------------
 
+#please set MACH_OMPFLAGS in the machine specific makefile when compiling grackle
+MACH_OMPFLAGS =
 LDFLAGS += $(ASSEMBLE_OMP_FLAGS)
 
 #=======================================================================
