@@ -1,9 +1,14 @@
 from .convenience import \
-     setup_fluid_container, \
-     calculate_mean_molecular_weight, \
-     calculate_hydrogen_number_density
+    setup_fluid_container, \
+    calculate_mean_molecular_weight, \
+    calculate_hydrogen_number_density
+
+from .evolve import \
+    evolve_constant_density, \
+    evolve_freefall, \
+    calculate_collapse_factor
 
 from .units import \
-     set_cosmology_units, \
-     get_temperature_units, \
-     get_cooling_units
+    set_cosmology_units, \
+    get_temperature_units, \
+    get_cooling_units
