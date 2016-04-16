@@ -14,7 +14,8 @@
 #	module load cray-hdf5
 #=======================================================================
 
-MACH_TEXT  = Generic Linux
+MACH_TEXT  = Blue Waters with gnu compilers. \
+	     Do this: module swap PrgEnv-cray PrgEnv-gnu ; module load cray-hdf5
 MACH_VALID = 1
 MACH_FILE  = Make.mach.ncsa-bluewaters-gnu
 
@@ -38,6 +39,7 @@ MACH_LIBTOOL   = libtool
 #-----------------------------------------------------------------------
 # Machine-dependent defines
 #-----------------------------------------------------------------------
+
 MACH_DEFINES   = -DLINUX -DH5_USE_16_API -fPIC
 
 #-----------------------------------------------------------------------
@@ -60,7 +62,7 @@ MACH_CFLAGS   =
 MACH_CXXFLAGS = 
 MACH_FFLAGS   = -fno-second-underscore -m64
 MACH_F90FLAGS = -fno-second-underscore -m64
-MACH_LDFLAGS  = -Bdynamic
+MACH_LDFLAGS  =
 
 #-----------------------------------------------------------------------
 # Optimization flags
