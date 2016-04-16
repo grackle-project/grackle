@@ -110,9 +110,6 @@ if __name__=="__main__":
     data = evolve_freefall(fc, final_density,
                            safety_factor=safety_factor)
 
-    # save data arrays as a yt dataset
-    yt.save_as_dataset({}, "freefall.h5", data)
-
     # make a plot of rho/f_H2 vs. T
     p1, = pyplot.loglog(data["density"], data["temperature"], color="black")
     pyplot.xlabel("$\\rho$ [g/cm$^{3}$]")
@@ -125,3 +122,6 @@ if __name__=="__main__":
 
     pyplot.legend([p1, p2], ["T", "f$_{H2}$"], loc="upper left")
     pyplot.savefig("freefall.png")
+
+    # save data arrays as a yt dataset
+    yt.save_as_dataset({}, "freefall.h5", data)
