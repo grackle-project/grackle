@@ -16,8 +16,11 @@ import numpy as np
 import sys
 import yt
 
-from pygrackle.grackle_wrapper import *
-from pygrackle.fluid_container import FluidContainer
+from pygrackle.grackle_wrapper import \
+    chemistry_data
+
+from pygrackle.fluid_container import \
+    FluidContainer
 
 from utilities.api import \
      get_temperature_units, \
@@ -51,8 +54,8 @@ if __name__=="__main__":
     my_chemistry.a_units = 1.0
     a_value = 1. / (1. + current_redshift) / my_chemistry.a_units
     my_chemistry.density_units  = mass_hydrogen_cgs # rho = 1.0 is 1.67e-24 g
-    my_chemistry.length_units   = cm_per_mpc         # 1 Mpc in cm
-    my_chemistry.time_units     = sec_per_Myr          # 1 Myr in s
+    my_chemistry.length_units   = cm_per_mpc        # 1 Mpc in cm
+    my_chemistry.time_units     = sec_per_Myr       # 1 Myr in s
     my_chemistry.velocity_units = my_chemistry.a_units * \
       (my_chemistry.length_units / a_value) / my_chemistry.time_units;
     temperature_units = get_temperature_units(my_chemistry)
@@ -99,8 +102,9 @@ if __name__=="__main__":
     # down to a lower temperature to get the species fractions in a
     # reasonable state.
     cooling_temperature = 100.
-    data0 = evolve_constant_density(fc, cooling_temperature,
-                                    safety_factor=safety_factor)
+    data0 = evolve_constant_density(
+        fc, final_temperature=cooling_temperature,
+        safety_factor=safety_factor)
 
     # evolve density and temperature according to free-fall collapse
     data = evolve_freefall(fc, final_density,
@@ -115,8 +119,9 @@ if __name__=="__main__":
     pyplot.ylabel("T [K]")
 
     pyplot.twinx()
-    p2, = pyplot.loglog(data["density"], data["H2I"] / data["density"], color="red")
+    p2, = pyplot.loglog(data["density"], data["H2I"] / data["density"],
+                        color="red")
     pyplot.ylabel("H$_{2}$ fraction")
 
     pyplot.legend([p1, p2], ["T", "f$_{H2}$"], loc="upper left")
-    pyplot.savefig("freefall.pdf")
+    pyplot.savefig("freefall.png")

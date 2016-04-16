@@ -131,28 +131,33 @@ def calculate_collapse_factor(pressure, density):
     force_factor = min(force_factor, 0.95)
     return force_factor
 
-def evolve_constant_density(fc, final_temperature, safety_factor=0.01,
+def evolve_constant_density(fc, final_temperature=None,
+                            final_time=None, safety_factor=0.01,
                             a_value=1.0):
     my_chemistry = fc.chemistry_data
 
-    # Set units of gravitational constant
-    gravitational_constant = (4.0 * np.pi * gravitational_constant_cgs * 
-        my_chemistry.density_units * my_chemistry.time_units**2)        
-
-    # some constants for the analytical free-fall solution
-    freefall_constant = np.power(fc["density"][0], -0.5)
-    freefall_time_constant = np.power(((32. * gravitational_constant) / 
-                                       (3. * np.pi)), 0.5)
+    if final_temperature is None and final_time is None:
+        raise RuntimeError("Must specify either final_temperature " +
+                           "or final_time.")
 
     data = defaultdict(list)
     current_time = 0.0
-    dt = safety_factor * freefall_constant / freefall_time_constant
+    calculate_cooling_time(fc, a_value)
+    dt = safety_factor * np.abs(fc["cooling_time"][0])
     calculate_temperature(fc, a_value)
-    while fc["temperature"][0] > final_temperature:
+    while True:
+        if final_temperature is not None and \
+          fc["temperature"][0] <= final_temperature:
+            break
+        if final_time is not None and \
+          current_time >= final_time:
+            break
+
         calculate_temperature(fc, a_value)
         print "Evolve constant density - t: %e yr, rho: %e g/cm^3, T: %e K." % \
           (current_time * my_chemistry.time_units / sec_per_year,
-           fc["temperature"][0], (fc["H2I"][0] / fc["density"][0]))
+           fc["density"][0] * my_chemistry.density_units,
+           fc["temperature"][0])
         solve_chemistry(fc, a_value, dt)
 
         for field in fc.density_fields:
