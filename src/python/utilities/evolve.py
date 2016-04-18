@@ -50,7 +50,7 @@ def evolve_freefall(fc, final_density, safety_factor=0.01,
         data["temperature"].append(fc["temperature"][0])
         calculate_pressure(fc, a_value)
         data["pressure"].append(fc["pressure"][0])
-        data["time"].append(current_time)
+        data["time"].append(current_time * my_chemistry.time_units)
 
         # compute the new density using the modified 
         # free-fall collapse as per Omukai et al. (2005)
@@ -91,7 +91,7 @@ def evolve_freefall(fc, final_density, safety_factor=0.01,
         elif field == "energy":
             data[field] = yt.YTArray(data[field], "erg/g")
         elif field == "time":
-            data[field] = yt.YTArray(data[field], "Myr")
+            data[field] = yt.YTArray(data[field], "s")
         elif field == "temperature":
             data[field] = yt.YTArray(data[field], "K")
         elif field == "pressure":
@@ -167,7 +167,7 @@ def evolve_constant_density(fc, final_temperature=None,
         data["temperature"].append(fc["temperature"][0])
         calculate_pressure(fc, a_value)
         data["pressure"].append(fc["pressure"][0])
-        data["time"].append(current_time)
+        data["time"].append(current_time * my_chemistry.time_units)
         current_time += dt
 
     for field in data:
@@ -176,7 +176,7 @@ def evolve_constant_density(fc, final_temperature=None,
         elif field == "energy":
             data[field] = yt.YTArray(data[field], "erg/g")
         elif field == "time":
-            data[field] = yt.YTArray(data[field], "Myr")
+            data[field] = yt.YTArray(data[field], "s")
         elif field == "temperature":
             data[field] = yt.YTArray(data[field], "K")
         elif field == "pressure":
