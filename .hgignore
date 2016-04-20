@@ -40,6 +40,7 @@ src/example/c_table_example_nostruct
 src/example/fortran_example
 src/example/fortran_table_example
 src/python/build/*
+src/python/*.png
 src/python/.cache/*
 src/python/pygrackle.egg-info/*
 src/python/pygrackle/*.c
