@@ -72,19 +72,19 @@ def test_equilibrium():
     my_T = fc["temperature"][t_sort]
     my_nH = calculate_hydrogen_number_density(my_chem, fc).mean()
 
-    cooling_rate_eq = total_cooling(my_T, my_nH) / my_nH**2
+    cooling_rate_eq = -1*total_cooling(my_T, my_nH) / my_nH**2
     cooling_rate_g = fc["energy"][t_sort] / t_cool * fc["density"] * \
         my_chem.density_units / my_nH**2
 
     # Make a cooling rate figure
     fontsize = 14
     axes = pyplot.axes()
-    axes.loglog(my_T, cooling_rate_eq, color='black', alpha=0.7,
+    axes.loglog(my_T, -1*cooling_rate_eq, color='black', alpha=0.7,
                 linestyle="--", linewidth=1.5)
-    axes.loglog(my_T, cooling_rate_g, color='black', alpha=0.7,
+    axes.loglog(my_T, 01*cooling_rate_g, color='black', alpha=0.7,
                 linestyle="-", linewidth=1)
     axes.xaxis.set_label_text('T [K]', fontsize=fontsize)
-    axes.yaxis.set_label_text('$\\Lambda$ / n${_{\\rm H}}^{2}$ [erg s$^{-1}$ cm$^{3}$]',
+    axes.yaxis.set_label_text(r'$-\Lambda$ / n${_{\rm H}}^{2}$ [erg s$^{-1}$ cm$^{3}$]',
                               fontsize=fontsize)
     axes.set_xlim(1e4, 1e9)
     axes.set_ylim(1e-26, 2e-22)
