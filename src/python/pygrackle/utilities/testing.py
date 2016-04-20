@@ -11,6 +11,7 @@
 # software.
 ########################################################################
 
+import importlib
 import numpy as np
 from numpy.testing import assert_array_equal, assert_almost_equal, \
     assert_approx_equal, assert_array_almost_equal, assert_equal, \
@@ -32,3 +33,22 @@ def assert_rel_equal(a1, a2, decimals, err_msg='', verbose=True):
 def random_logscale(log_min, log_max, size=1):
     log_val = (log_max - log_min) * np.random.random(size) + log_min
     return np.power(10, log_val)
+
+def requires_module(module):
+    """
+    Decorator that takes a module name as an argument and tries to import it.
+    If the module imports without issue, the function is returned, but if not,
+    a null function is returned. This is so tests that depend on certain modules
+    being imported will not fail if the module is not installed on the testing
+    platform.
+    """
+    def ffalse(func):
+        return lambda: None
+    def ftrue(func):
+        return func
+    try:
+        importlib.import_module(module)
+    except ImportError:
+        return ffalse
+    else:
+        return ftrue

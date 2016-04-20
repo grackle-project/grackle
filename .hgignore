@@ -41,6 +41,7 @@ src/example/fortran_example
 src/example/fortran_table_example
 src/python/build/*
 src/python/*.png
+src/python/flake8.out
 src/python/.cache/*
 src/python/pygrackle.egg-info/*
 src/python/pygrackle/*.c
