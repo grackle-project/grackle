@@ -3,6 +3,7 @@ import os.path
 import glob
 import sys
 import time
+import setuptools
 
 def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration
