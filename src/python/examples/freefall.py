@@ -12,7 +12,6 @@
 ########################################################################
 
 from matplotlib import pyplot
-import numpy as np
 import sys
 import yt
 
@@ -23,16 +22,15 @@ from pygrackle.fluid_container import \
     FluidContainer
 
 from utilities.api import \
-     get_temperature_units, \
-     evolve_constant_density, \
-     evolve_freefall
+    get_temperature_units, \
+    evolve_constant_density, \
+    evolve_freefall
 
 from utilities.physical_constants import \
-     boltzmann_constant_cgs, \
-     mass_hydrogen_cgs, \
-     mass_electron_cgs, \
-     sec_per_Myr, \
-     cm_per_mpc
+    mass_hydrogen_cgs, \
+    mass_electron_cgs, \
+    sec_per_Myr, \
+    cm_per_mpc
 
 tiny_number = 1e-60
 
@@ -57,7 +55,7 @@ if __name__=="__main__":
     my_chemistry.length_units   = cm_per_mpc        # 1 Mpc in cm
     my_chemistry.time_units     = sec_per_Myr       # 1 Myr in s
     my_chemistry.velocity_units = my_chemistry.a_units * \
-      (my_chemistry.length_units / a_value) / my_chemistry.time_units;
+        (my_chemistry.length_units / a_value) / my_chemistry.time_units
     temperature_units = get_temperature_units(my_chemistry)
 
     # set initial density and temperature

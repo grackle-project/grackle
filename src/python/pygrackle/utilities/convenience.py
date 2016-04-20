@@ -21,7 +21,7 @@ from pygrackle.fluid_container import FluidContainer
 from .units import \
     get_temperature_units
 
-from utilities.physical_constants import \
+from pygrackle.utilities.physical_constants import \
     mass_hydrogen_cgs, \
     sec_per_Myr
 
@@ -167,6 +167,6 @@ def calc_mu_table(temperature):
                    1.09603514, 0.9981496, 0.96346395, 0.65175895, \
                    0.6142901,  0.6056833, 0.5897776,  0.58822635])
 
-    logttt= np.log(temperature)
+    logttt = np.log(temperature)
     logmu = np.interp(logttt,np.log(tt),np.log(mt)) # linear interpolation in log-log space
     return np.exp(logmu)

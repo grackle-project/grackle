@@ -7,7 +7,7 @@
 #
 # Distributed under the terms of the Enzo Public Licence.
 #
-# The full license is in the file LICENSE, distributed with this 
+# The full license is in the file LICENSE, distributed with this
 # software.
 ########################################################################
 
@@ -33,7 +33,7 @@ class FluidContainer(dict):
         super(FluidContainer, self).__init__()
         self.dtype = dtype
         self.chemistry_data = chemistry_data
-        self.n_vals = n_vals        
+        self.n_vals = n_vals
         for fluid in _fluid_names[self.chemistry_data.primordial_chemistry] + _nd_fields:
             self._setup_fluid(fluid)
 
@@ -98,7 +98,7 @@ def _needed_fields(fc):
         if f in _skip: continue
         f2 = _grackle_to_yt[f]
         yield f, f2, _units(cd, f2)
-        
+
 def grid_to_grackle(chemistry_data, grid, update = True):
     if not hasattr(grid, "ActiveDimensions"):
         raise RuntimeError

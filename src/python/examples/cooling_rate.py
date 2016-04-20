@@ -7,7 +7,7 @@
 #
 # Distributed under the terms of the Enzo Public Licence.
 #
-# The full license is in the file LICENSE, distributed with this 
+# The full license is in the file LICENSE, distributed with this
 # software.
 ########################################################################
 
@@ -18,18 +18,13 @@ import yt
 from pygrackle.grackle_wrapper import \
     calculate_cooling_time, \
     calculate_temperature, \
-    chemistry_data, \
-    solve_chemistry
+    chemistry_data
 
-from pygrackle.fluid_container import \
-    FluidContainer
-
-from utilities.api import \
+from pygrackle.utilities.api import \
     setup_fluid_container, \
-    set_cosmology_units, \
     get_cooling_units
 
-from utilities.physical_constants import \
+from pygrackle.utilities.physical_constants import \
     mass_hydrogen_cgs, \
     sec_per_Myr, \
     cm_per_mpc
@@ -55,7 +50,7 @@ if __name__ == "__main__":
     my_chemistry.length_units = cm_per_mpc         # 1 Mpc in cm
     my_chemistry.time_units = sec_per_Myr          # 1 Gyr in s
     my_chemistry.velocity_units = my_chemistry.a_units * \
-      (my_chemistry.length_units / a_value) / my_chemistry.time_units;
+        (my_chemistry.length_units / a_value) / my_chemistry.time_units
 
     # Call convenience function for setting up a fluid container.
     # This container holds the solver parameters, units, and fields.
@@ -70,9 +65,9 @@ if __name__ == "__main__":
 
     cool_unit = get_cooling_units(my_chemistry, current_redshift)
     density_proper = fc["density"] / \
-      (my_chemistry.a_units * a_value)**(3*my_chemistry.comoving_coordinates)
+        (my_chemistry.a_units * a_value)**(3*my_chemistry.comoving_coordinates)
     cooling_rate = cool_unit * fc["energy"] / \
-      np.abs(fc["cooling_time"]) / density_proper
+        np.abs(fc["cooling_time"]) / density_proper
 
     data = {}
     t_sort = np.argsort(fc["temperature"])
