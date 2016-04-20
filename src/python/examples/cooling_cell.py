@@ -26,11 +26,11 @@ from pygrackle.grackle_wrapper import \
 from pygrackle.fluid_container import \
     FluidContainer
 
-from utilities.api import \
+from pygrackle.utilities.api import \
     get_temperature_units, \
     evolve_constant_density
 
-from utilities.physical_constants import \
+from pygrackle.utilities.physical_constants import \
     mass_hydrogen_cgs, \
     sec_per_Myr, \
     cm_per_mpc
