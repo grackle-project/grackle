@@ -4,3 +4,5 @@ clean:
 	$(MAKE) -C clib  clean
 install: build
 	$(MAKE) -C clib  install
+test: build
+	$(MAKE) -C python test
