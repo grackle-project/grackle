@@ -50,13 +50,13 @@ def ne(T, nH, Y=0.24, rates='enzo'):
 def alphaHII(T, rates='enzo'):
     if rates == 'cen':
         return 8.4e-11 * np.power(T,-0.5) * np.power((T * 1e-3),-0.2) / \
-          (1. + np.power((T * 1e-6),0.7))
+            (1. + np.power((T * 1e-6),0.7))
     elif rates == 'enzo':
         T_eV = T/11605.e0
         log_T_eV = np.log(T_eV)
-        rates = np.zeros_like(T)
+        alpha_rates = np.zeros_like(T)
         filter1 = T > 5500.e0
-        rates[T > 5500.e0] = \
+        alpha_rates[T > 5500.e0] = \
             np.exp(-28.61303380689232e0
                    - 0.7241125657826851e0*log_T_eV[filter1]
                    - 0.02026044731984691e0*log_T_eV[filter1]**2
@@ -68,8 +68,8 @@ def alphaHII(T, rates='enzo'):
                    - 1.856767039775261e-8*log_T_eV[filter1]**8
                    - 3.071135243196595e-9*log_T_eV[filter1]**9)
         filter2 = T <= 5500.e0
-        rates[filter2] = alphaHeII(T[filter2], rates=rates)
-        return rates
+        alpha_rates[filter2] = alphaHeII(T[filter2], rates=rates)
+        return alpha_rates
 
 def alphaHeII(T, rates='enzo'):
     if rates == 'cen':
