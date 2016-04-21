@@ -191,6 +191,6 @@ def test_proper_units():
         t_cool_2 = fc_2["cooling_time"][t_sort_2] * chem_2.time_units
 
         assert_rel_equal(
-            t_cool_1, t_cool_2, 5,
+            t_cool_1, t_cool_2, 4,
             "Proper and comoving cooling times disagree for z = %f with min/max = %f/%f." %
             (current_redshift, (t_cool_1/t_cool_2).min(), (t_cool_1/t_cool_2).max()))
