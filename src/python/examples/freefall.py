@@ -12,7 +12,6 @@
 ########################################################################
 
 from matplotlib import pyplot
-import sys
 import yt
 
 from pygrackle.grackle_wrapper import \

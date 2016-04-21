@@ -17,7 +17,6 @@
 
 from matplotlib import pyplot
 import os
-import sys
 import yt
 
 from pygrackle.grackle_wrapper import \
