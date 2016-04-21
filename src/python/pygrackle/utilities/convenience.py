@@ -63,9 +63,7 @@ def setup_fluid_container(my_chemistry,
 
     a_value = 1.0 / (1.0 + current_redshift) / my_chemistry.a_units
 
-    my_value = my_chemistry.initialize(a_value)
-    if not my_value:
-        raise RuntimeError("Error initializing chemistry")
+    my_chemistry.initialize(a_value)
 
     tiny_number = 1e-20
     if temperature is None:

@@ -16,6 +16,7 @@
 ########################################################################
 
 from matplotlib import pyplot
+import os
 import sys
 import yt
 
@@ -52,7 +53,10 @@ if __name__ == "__main__":
     my_chemistry.primordial_chemistry = 0
     my_chemistry.metal_cooling = 1
     my_chemistry.UVbackground = 1
-    my_chemistry.grackle_data_file = "../../../input/CloudyData_UVB=HM2012.h5"
+    grackle_dir = os.path.dirname(os.path.dirname(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+    my_chemistry.grackle_data_file = os.sep.join(
+        [grackle_dir, "input", "CloudyData_UVB=HM2012.h5"])
     #my_chemistry.grackle_data_file = "CloudyData_noUVB.h5"
 
     # Set units
@@ -67,9 +71,6 @@ if __name__ == "__main__":
     temperature_units = get_temperature_units(my_chemistry)
 
     rval = my_chemistry.initialize(a_value)
-    if not rval:
-        print "Error initializing chemistry."
-        sys.exit(0)
 
     fc = FluidContainer(my_chemistry, 1)
     fc["density"][:] = density

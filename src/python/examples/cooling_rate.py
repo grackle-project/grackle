@@ -13,6 +13,7 @@
 
 from matplotlib import pyplot
 import numpy as np
+import os
 import yt
 
 from pygrackle.grackle_wrapper import \
@@ -39,7 +40,10 @@ if __name__ == "__main__":
     my_chemistry.primordial_chemistry = 3
     my_chemistry.metal_cooling = 1
     my_chemistry.UVbackground = 1
-    my_chemistry.grackle_data_file = "../../../input/CloudyData_UVB=HM2012.h5"
+    grackle_dir = os.path.dirname(os.path.dirname(os.path.dirname(
+        os.path.dirname(os.path.abspath(__file__)))))
+    my_chemistry.grackle_data_file = os.sep.join(
+        [grackle_dir, "input", "CloudyData_UVB=HM2012.h5"])
     #my_chemistry.grackle_data_file = "CloudyData_noUVB.h5"
 
     # Set units

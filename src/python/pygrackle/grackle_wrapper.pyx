@@ -23,7 +23,10 @@ cdef class chemistry_data:
         self.data = _set_default_chemistry_parameters()
 
     def initialize(self, a_value):
-        return _initialize_chemistry_data(&self.data, &self.units, a_value)
+        ret =  _initialize_chemistry_data(&self.data, &self.units, a_value)
+        if ret is None:
+            raise RuntimeError("Error initializing chemistry")
+        return ret
 
     property Gamma:
         def __get__(self):

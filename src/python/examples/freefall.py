@@ -66,9 +66,6 @@ if __name__=="__main__":
     final_density       = 1.e12 * mass_hydrogen_cgs
 
     rval = my_chemistry.initialize(a_value)
-    if not rval:
-        print "Error initializing chemistry."
-        sys.exit(0)
 
     fc = FluidContainer(my_chemistry, 1)
     fc["density"][:] = initial_density / my_chemistry.density_units
