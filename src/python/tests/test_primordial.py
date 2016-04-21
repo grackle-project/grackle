@@ -81,7 +81,7 @@ def test_equilibrium():
     axes = pyplot.axes()
     axes.loglog(my_T, -1*cooling_rate_eq, color='black', alpha=0.7,
                 linestyle="--", linewidth=1.5)
-    axes.loglog(my_T, 01*cooling_rate_g, color='black', alpha=0.7,
+    axes.loglog(my_T, -1*cooling_rate_g, color='black', alpha=0.7,
                 linestyle="-", linewidth=1)
     axes.xaxis.set_label_text('T [K]', fontsize=fontsize)
     axes.yaxis.set_label_text(r'$-\Lambda$ / n${_{\rm H}}^{2}$ [erg s$^{-1}$ cm$^{3}$]',
