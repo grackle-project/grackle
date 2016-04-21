@@ -37,7 +37,10 @@ if __name__ == "__main__":
     my_chemistry = chemistry_data()
     my_chemistry.use_grackle = 1
     my_chemistry.with_radiative_cooling = 0
-    my_chemistry.primordial_chemistry = 3
+    if 'PRIMORDIAL_CHEM' in os.environ:
+        my_chemistry.primordial_chemistry = int(os.environ['PRIMORDIAL_CHEM'])
+    else:
+        my_chemistry.primordial_chemistry = 3
     my_chemistry.metal_cooling = 1
     my_chemistry.UVbackground = 1
     grackle_dir = os.path.dirname(os.path.dirname(os.path.dirname(
@@ -88,7 +91,13 @@ if __name__ == "__main__":
                   color="black")
     pyplot.xlabel('T [K]')
     pyplot.ylabel('$\\Lambda$ [erg s$^{-1}$ cm$^{3}$]')
-    pyplot.savefig("cooling_rate.png")
 
     # save data arrays as a yt dataset
-    yt.save_as_dataset({}, "cooling_rate.h5", data)
+    if 'PRIMORDIAL_CHEM' in os.environ:
+        ds_name = 'cooling_rate.pc%s.h5' % os.environ['PRIMORDIAL_CHEM']
+        im_name = 'cooling_rate.pc%s.png' % os.environ['PRIMORDIAL_CHEM']
+    else:
+        ds_name = 'cooling_rate.h5'
+        im_name = 'cooling_rate.png'
+    pyplot.savefig(im_name)
+    yt.save_as_dataset({}, ds_name, data)

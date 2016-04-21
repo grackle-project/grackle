@@ -45,12 +45,15 @@ def temporary_directory():
         shutil.rmtree(tmpdir)
 
 
-def example_test(example_path):
+def example_test(example_path, primordial_chemistry=None):
+    env = dict(os.environ)
+    if primordial_chemistry is not None:
+        env['PRIMORDIAL_CHEM'] = str(primordial_chemistry)
     with temporary_directory() as tmpdir:
         try:
             output = subprocess.check_output(
                 ['python', example_path], stderr=subprocess.STDOUT,
-                cwd=tmpdir)
+                cwd=tmpdir, env=env)
         except subprocess.CalledProcessError as er:
             command = 'python %s' % example_path
             raise RuntimeError('Command %s failed with return code %s'
@@ -67,6 +70,8 @@ def example_test(example_path):
 
         answer_path = os.sep.join([os.path.dirname(
             os.path.abspath(__file__)), 'example_answers'])
+        if primordial_chemistry is not None:
+            example_base = example_base + 'pc%s' % primordial_chemistry
         answer_name = '.'.join([example_base, 'h5'])
 
         ds_old = yt.load(os.sep.join([answer_path, answer_name]))
@@ -87,4 +92,8 @@ def example_test(example_path):
 
 def test_examples():
     for example_path in python_examples:
-        yield example_test, example_path
+        if 'cooling_rate.py' in example_path:
+            for i in range(4):
+                yield example_test, example_path, i
+        else:
+            yield example_test, example_path

@@ -40,7 +40,7 @@ def check_convergence(fc1, fc2, fields=None, tol=0.01):
         if convergence > max_val:
             max_val = convergence
             max_field = field
-    if (max_val > tol).any():
+    if np.any(max_val > tol):
         print "Max change %s: %.10e." % (max_field, max_val)
         return False
     return True
