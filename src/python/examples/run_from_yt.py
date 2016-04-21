@@ -19,7 +19,7 @@ from pygrackle.api import \
     solve_chemistry
 from pygrackle.fluid_container import _yt_to_grackle
 
-pf = yt.load("IsolatedGalaxy/galaxy0030/galaxy0030")
+ds = yt.load("IsolatedGalaxy/galaxy0030/galaxy0030")
 
 my_chemistry = chemistry_data()
 my_chemistry.use_grackle = 1
@@ -44,8 +44,8 @@ a_value = 1.0
 
 my_chemistry.initialize(a_value)
 
-g = pf.h.grids[0]
-old = dict((f, g[f].copy()) for f in pf.h.field_list)
+g = ds.index.grids[0]
+old = dict((f, g[f].copy()) for f in ds.field_list)
 
 dt = 1e12
 for fc in grid_to_grackle(my_chemistry, g):

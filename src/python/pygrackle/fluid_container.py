@@ -49,31 +49,31 @@ class FieldNotFound(Exception):
         self.field = field
 
     def __str__(self):
-        return "Field '%s' not found!" % (self.field)
+        return "Field '%s' not found!" % ((self.field, ))
 
 class NotAGrid(Exception):
     def __str__(self):
         return "This routine needs a yt grid."
 
 _grackle_to_yt = {
-    "density": "Density",
-    "HI": "HI_Density",
-    "HII": "HII_Density",
-    "HM": "HM_Density",
-    "HeI": "HeI_Density",
-    "HeII": "HeII_Density",
-    "HeIII": "HeIII_Density",
-    "H2I": "H2I_Density",
-    "H2II": "H2II_Density",
-    "DI": "DI_Density",
-    "DII": "DII_Density",
-    "HDI": "HDI_Density",
-    "de": "Electron_Density",
-    "metal": "Metal_Density",
-    "x-velocity": "x-velocity",
-    "y-velocity": "y-velocity",
-    "z-velocity": "z-velocity",
-    "energy": "ThermalEnergy",
+    'density': ('gas', 'density'),
+    'HI': ('gas', 'H_p0_density'),
+    'HII': ('gas', 'H_p1_density'),
+    'HM': ('gas', 'HM_density'),
+    'HeI': ('gas', 'He_p0_density'),
+    'HeII': ('gas', 'He_p1_density'),
+    'HeIII': ('gas', 'He_p2_density'),
+    'H2I': ('gas', 'H2_p0_density'),
+    'H2II': ('gas', 'H2_p1_density'),
+    'DI': ('gas', 'D_p0_density'),
+    'DII': ('gas', 'D_p1_density'),
+    'HDI': ('gas', 'HD_p0_density'),
+    'de': ('gas', 'El_density'),
+    'metal': ('gas', 'metal_density'),
+    'x-velocity': ('gas', 'velocity_x'),
+    'y-velocity': ('gas', 'velocity_y'),
+    'z-velocity': ('gas', 'velocity_z'),
+    'energy': ('gas', 'thermal_energy'),
 }
 
 _skip = ("pressure", "temperature", "cooling_time", "gamma")
@@ -81,12 +81,12 @@ _skip = ("pressure", "temperature", "cooling_time", "gamma")
 _yt_to_grackle = dict((b, a) for a, b in _grackle_to_yt.items())
 
 def _units(chemistry_data, fname):
-    if fname.endswith("Density"):
+    if fname[1].endswith("density"):
         return chemistry_data.density_units
-    elif fname.endswith("Energy"):
+    elif fname[1].endswith("energy"):
         energy_units = (chemistry_data.velocity_units)**2.0
         return energy_units
-    elif fname.endswith("velocity"):
+    elif fname[1].startswith("velocity"):
         v_units = (chemistry_data.velocity_units)
         return v_units
     else:
@@ -102,8 +102,8 @@ def _needed_fields(fc):
 def grid_to_grackle(chemistry_data, grid, update = True):
     if not hasattr(grid, "ActiveDimensions"):
         raise RuntimeError
-    pf = grid.pf
-    fields = pf.h.derived_field_list + pf.h.field_list
+    ds = grid.ds
+    fields = ds.derived_field_list + ds.field_list
     ni = grid.ActiveDimensions[0]
     fc = FluidContainer(chemistry_data, ni)
     for f1, f2, conv in _needed_fields(fc):
