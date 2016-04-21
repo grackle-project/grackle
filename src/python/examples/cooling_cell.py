@@ -52,7 +52,7 @@ if __name__ == "__main__":
     my_chemistry.primordial_chemistry = 0
     my_chemistry.metal_cooling = 1
     my_chemistry.UVbackground = 1
-    my_chemistry.grackle_data_file = "CloudyData_UVB=HM2012.h5"
+    my_chemistry.grackle_data_file = "../../../input/CloudyData_UVB=HM2012.h5"
     #my_chemistry.grackle_data_file = "CloudyData_noUVB.h5"
 
     # Set units
