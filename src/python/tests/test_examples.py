@@ -57,7 +57,7 @@ def example_test(example_path, primordial_chemistry=None):
                 cwd=tmpdir, env=env)
         except subprocess.CalledProcessError as er:
             command = 'python %s' % example_path
-            raise RuntimeError('Command %s failed with return code %s'
+            raise RuntimeError('Command %s failed with return code %s '
                                'and the following output: %s' %
                                (command, er.returncode, output))
 
