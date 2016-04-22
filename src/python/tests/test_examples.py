@@ -37,7 +37,7 @@ python_examples = glob.glob(os.sep.join(EXAMPLES_GLOB))
 @contextlib.contextmanager
 def temporary_directory():
     curdir = os.getcwd()
-    tmpdir = tempfile.mkdtemp(dir='.')
+    tmpdir = tempfile.mkdtemp(dir=curdir)
     try:
         yield tmpdir
     finally:
@@ -56,6 +56,7 @@ def example_test(example_path, primordial_chemistry=None):
     with temporary_directory() as tmpdir:
         output = ''
         try:
+            print tmpdir
             output = subprocess.check_output(
                 [python_executable, example_path], stderr=subprocess.STDOUT,
                 cwd=tmpdir, env=env)
