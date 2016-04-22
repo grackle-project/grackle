@@ -49,11 +49,15 @@ def example_test(example_path, primordial_chemistry=None):
     env = dict(os.environ)
     if primordial_chemistry is not None:
         env['PRIMORDIAL_CHEM'] = str(primordial_chemistry)
+    if 'PYTHON_EXE' in env:
+        python_executable = env['PYTHON_EXE']
+    else:
+        python_executable = 'python'
     with temporary_directory() as tmpdir:
         output = ''
         try:
             output = subprocess.check_output(
-                ['python', example_path], stderr=subprocess.STDOUT,
+                [python_executable, example_path], stderr=subprocess.STDOUT,
                 cwd=tmpdir, env=env)
         except subprocess.CalledProcessError as er:
             command = 'python %s' % example_path
