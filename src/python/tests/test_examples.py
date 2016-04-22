@@ -50,6 +50,7 @@ def example_test(example_path, primordial_chemistry=None):
     if primordial_chemistry is not None:
         env['PRIMORDIAL_CHEM'] = str(primordial_chemistry)
     with temporary_directory() as tmpdir:
+        output = ''
         try:
             output = subprocess.check_output(
                 ['python', example_path], stderr=subprocess.STDOUT,
