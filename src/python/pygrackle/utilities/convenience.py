@@ -7,39 +7,40 @@
 #
 # Distributed under the terms of the Enzo Public Licence.
 #
-# The full license is in the file LICENSE, distributed with this 
+# The full license is in the file LICENSE, distributed with this
 # software.
 ########################################################################
 
 import numpy as np
 import sys
 
-from pygrackle.grackle_wrapper import *
+from pygrackle.grackle_wrapper import \
+    solve_chemistry
 from pygrackle.fluid_container import FluidContainer
 
 from .units import \
-     set_cosmology_units, \
-     get_temperature_units
-     
-from utilities.physical_constants import \
-     mass_hydrogen_cgs, \
-     sec_per_Myr
+    get_temperature_units
+
+from pygrackle.utilities.physical_constants import \
+    mass_hydrogen_cgs, \
+    sec_per_Myr
 
 def check_convergence(fc1, fc2, fields=None, tol=0.01):
     "Check for fields to be different by less than tol."
-    
+
     if fields is None:
         fields = ["HI", "HII", "HM", "HeI", "HeII", "HeIII",
                   "H2I", "H2II", "DI", "DII", "HDI", "de"]
     max_field = None
     max_val = 0.0
     for field in fields:
-        if not field in fc1 or not field in fc2: continue
+        if field not in fc1 or field not in fc2:
+            continue
         convergence = np.max(np.abs(fc1[field] - fc2[field]) / fc1[field])
         if convergence > max_val:
             max_val = convergence
             max_field = field
-    if (max_val > tol).any():
+    if np.any(max_val > tol):
         print "Max change %s: %.10e." % (max_field, max_val)
         return False
     return True
@@ -54,18 +55,15 @@ def setup_fluid_container(my_chemistry,
                           converge=False, tolerance=0.01,
                           max_iterations=10000, dt=None):
     """
-    Initialize a fluid container with a constant density and smoothly 
-    increasing temperature from 10 K to 1e9 K.  Optionally, iterate the 
-    chemistry solver until the species fractions converge.  Return 
+    Initialize a fluid container with a constant density and smoothly
+    increasing temperature from 10 K to 1e9 K.  Optionally, iterate the
+    chemistry solver until the species fractions converge.  Return
     the fluid container.
     """
 
     a_value = 1.0 / (1.0 + current_redshift) / my_chemistry.a_units
 
-    my_value = my_chemistry.initialize(a_value)
-    if not my_value:
-        sys.stderr.write("Error initializing chemistry.\n")
-        return None
+    my_chemistry.initialize(a_value)
 
     tiny_number = 1e-20
     if temperature is None:
@@ -94,7 +92,7 @@ def setup_fluid_container(my_chemistry,
 
     temperature_units = get_temperature_units(my_chemistry)
     fc["energy"] = temperature / temperature_units / \
-      calculate_mean_molecular_weight(my_chemistry, fc)
+        calculate_mean_molecular_weight(my_chemistry, fc)
     fc["x-velocity"][:] = 0.0
     fc["y-velocity"][:] = 0.0
     fc["z-velocity"][:] = 0.0
@@ -122,10 +120,10 @@ def setup_fluid_container(my_chemistry,
         i += 1
 
     if i >= max_iterations:
-        sys.stderr.write("ERROR: solver did not converge in %d iterations.\n" % 
+        sys.stderr.write("ERROR: solver did not converge in %d iterations.\n" %
                          max_iterations)
         return None
-        
+
     return fc
 
 def calculate_mean_molecular_weight(my_chemistry, fc):
@@ -133,7 +131,7 @@ def calculate_mean_molecular_weight(my_chemistry, fc):
     if my_chemistry.primordial_chemistry == 0:
         return calc_mu_table(fc['temperature'])
     mu = fc["HI"] + fc["HII"] + fc["de"] + \
-      (fc["HeI"] + fc["HeII"] + fc["HeIII"]) / 4.
+        (fc["HeI"] + fc["HeII"] + fc["HeIII"]) / 4.
     if my_chemistry.primordial_chemistry > 1:
         mu += fc["HM"] + fc["H2I"] + fc["H2II"]
     if my_chemistry.primordial_chemistry > 2:
@@ -165,7 +163,7 @@ def calc_mu_table(temperature):
     mt = np.array([1.18701555, 1.15484424, \
                    1.09603514, 0.9981496, 0.96346395, 0.65175895, \
                    0.6142901,  0.6056833, 0.5897776,  0.58822635])
-    
-    logttt= np.log(temperature)
+
+    logttt = np.log(temperature)
     logmu = np.interp(logttt,np.log(tt),np.log(mt)) # linear interpolation in log-log space
     return np.exp(logmu)

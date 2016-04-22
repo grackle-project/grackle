@@ -15,32 +15,37 @@ from collections import defaultdict
 import numpy as np
 import yt
 
-from pygrackle.grackle_wrapper import *
+from pygrackle.grackle_wrapper import \
+    calculate_cooling_time, \
+    calculate_temperature, \
+    calculate_pressure, \
+    solve_chemistry
+
 
 from .physical_constants import \
     gravitational_constant_cgs, \
     sec_per_year
 
-def evolve_freefall(fc, final_density, safety_factor=0.01, 
+def evolve_freefall(fc, final_density, safety_factor=0.01,
                     include_pressure=True, a_value=1.0):
     my_chemistry = fc.chemistry_data
 
     # Set units of gravitational constant
-    gravitational_constant = (4.0 * np.pi * gravitational_constant_cgs * 
-        my_chemistry.density_units * my_chemistry.time_units**2)        
+    gravitational_constant = (
+        4.0 * np.pi * gravitational_constant_cgs *
+        my_chemistry.density_units * my_chemistry.time_units**2)
 
     # some constants for the analytical free-fall solution
-    freefall_constant = np.power(fc["density"][0], -0.5)
-    freefall_time_constant = np.power(((32. * gravitational_constant) / 
+    freefall_time_constant = np.power(((32. * gravitational_constant) /
                                        (3. * np.pi)), 0.5)
-   
+
     data = defaultdict(list)
     current_time = 0.0
     while fc["density"][0] * my_chemistry.density_units < final_density:
         # calculate timestep based on free-fall solution
         dt = safety_factor * \
-          np.power(((3. * np.pi) / 
-                    (32. * gravitational_constant * 
+          np.power(((3. * np.pi) /
+                    (32. * gravitational_constant *
                      fc["density"][0])), 0.5)
 
         for field in fc.density_fields:
@@ -52,7 +57,7 @@ def evolve_freefall(fc, final_density, safety_factor=0.01,
         data["pressure"].append(fc["pressure"][0])
         data["time"].append(current_time * my_chemistry.time_units)
 
-        # compute the new density using the modified 
+        # compute the new density using the modified
         # free-fall collapse as per Omukai et al. (2005)
         if include_pressure:
             force_factor = calculate_collapse_factor(data["pressure"], data["density"])
@@ -66,8 +71,8 @@ def evolve_freefall(fc, final_density, safety_factor=0.01,
                                  np.power((1 - force_factor), 0.5))), -2.)
 
         print "Evolve Frefall - t: %e yr, rho: %e g/cm^3, T: %e K." % \
-         ((current_time * my_chemistry.time_units / sec_per_year), 
-          (fc["density"][0] * my_chemistry.density_units), fc["temperature"][0])
+            ((current_time * my_chemistry.time_units / sec_per_year),
+             (fc["density"][0] * my_chemistry.density_units), fc["temperature"][0])
 
         # use this to multiply by elemental densities if you are tracking those
         density_ratio = new_density / fc["density"][0]
@@ -78,10 +83,10 @@ def evolve_freefall(fc, final_density, safety_factor=0.01,
 
         # now update energy for adiabatic heating from collapse
         fc["energy"][0] += (my_chemistry.Gamma - 1.) * fc["energy"][0] * \
-          freefall_time_constant * np.power(fc["density"][0], 0.5) * dt
+            freefall_time_constant * np.power(fc["density"][0], 0.5) * dt
 
         solve_chemistry(fc, a_value, dt)
-          
+
         # update time
         current_time += dt
 
@@ -98,7 +103,7 @@ def evolve_freefall(fc, final_density, safety_factor=0.01,
             data[field] = yt.YTArray(data[field], "dyne/cm**2")
         else:
             data[field] = np.array(data[field])
-        
+
     return data
 
 def calculate_collapse_factor(pressure, density):
@@ -123,10 +128,10 @@ def calculate_collapse_factor(pressure, density):
         force_factor = 0.0
     elif gamma_eff < 1.0:
         force_factor = 0.6 + 2.5 * (gamma_eff - 1) - \
-          6.0 * np.power((gamma_eff - 1.0), 2.)
+            6.0 * np.power((gamma_eff - 1.0), 2.)
     else:
         force_factor = 1.0 + 0.2 * (gamma_eff - (4./3.)) - \
-          2.9 * np.power((gamma_eff - (4./3.)), 2.);
+            2.9 * np.power((gamma_eff - (4./3.)), 2.)
     force_factor = max(force_factor, 0.0)
     force_factor = min(force_factor, 0.95)
     return force_factor
@@ -146,18 +151,16 @@ def evolve_constant_density(fc, final_temperature=None,
     dt = safety_factor * np.abs(fc["cooling_time"][0])
     calculate_temperature(fc, a_value)
     while True:
-        if final_temperature is not None and \
-          fc["temperature"][0] <= final_temperature:
+        if final_temperature is not None and fc["temperature"][0] <= final_temperature:
             break
-        if final_time is not None and \
-          current_time >= final_time:
+        if final_time is not None and current_time >= final_time:
             break
 
         calculate_temperature(fc, a_value)
         print "Evolve constant density - t: %e yr, rho: %e g/cm^3, T: %e K." % \
-          (current_time * my_chemistry.time_units / sec_per_year,
-           fc["density"][0] * my_chemistry.density_units,
-           fc["temperature"][0])
+            (current_time * my_chemistry.time_units / sec_per_year,
+             fc["density"][0] * my_chemistry.density_units,
+             fc["temperature"][0])
         solve_chemistry(fc, a_value, dt)
 
         for field in fc.density_fields:

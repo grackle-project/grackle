@@ -7,7 +7,7 @@
 #
 # Distributed under the terms of the Enzo Public Licence.
 #
-# The full license is in the file LICENSE, distributed with this 
+# The full license is in the file LICENSE, distributed with this
 # software.
 ########################################################################
 
@@ -23,16 +23,16 @@ def nHII(T, nH, rates='enzo'):
     return nH - nHI(T, nH, rates=rates)
 
 def nHeI(T, nH, Y=0.24, rates='enzo'):
-    return nHeII(T, nH, Y=Y, rates=rates) * (alphaHeII(T, rates=rates) + 
-                                alphad(T, rates=rates)) / \
-        GammaeHeI(T, rates=rates)
+    return (nHeII(T, nH, Y=Y, rates=rates) *
+            (alphaHeII(T, rates=rates) + alphad(T, rates=rates)) /
+            GammaeHeI(T, rates=rates))
 
 def nHeII(T, nH, Y=0.24, rates='enzo'):
     y = Y / (4 - 4*Y)
-    return y * nH / (1. + ((alphaHeII(T, rates=rates) + 
-                            alphad(T, rates=rates)) / 
-                           (GammaeHeI(T, rates=rates))) + 
-                     (GammaeHeII(T, rates=rates) / 
+    return y * nH / (1. + ((alphaHeII(T, rates=rates) +
+                            alphad(T, rates=rates)) /
+                           (GammaeHeI(T, rates=rates))) +
+                     (GammaeHeII(T, rates=rates) /
                       alphaHeIII(T, rates=rates)))
 
 def nHeIII(T, nH, Y=0.24, rates='enzo'):
@@ -50,38 +50,35 @@ def ne(T, nH, Y=0.24, rates='enzo'):
 def alphaHII(T, rates='enzo'):
     if rates == 'cen':
         return 8.4e-11 * np.power(T,-0.5) * np.power((T * 1e-3),-0.2) / \
-          (1. + np.power((T * 1e-6),0.7))
+            (1. + np.power((T * 1e-6),0.7))
     elif rates == 'enzo':
-        log_T = np.log(T)
         T_eV = T/11605.e0
         log_T_eV = np.log(T_eV)
-        rates = np.zeros_like(T)
+        alpha_rates = np.zeros_like(T)
         filter1 = T > 5500.e0
-        rates[T > 5500.e0] = \
-          np.exp(-28.61303380689232e0
-                 - 0.7241125657826851e0*log_T_eV[filter1]
-                 - 0.02026044731984691e0*log_T_eV[filter1]**2
-                 - 0.002380861877349834e0*log_T_eV[filter1]**3
-                 - 0.0003212605213188796e0*log_T_eV[filter1]**4
-                 - 0.00001421502914054107e0*log_T_eV[filter1]**5
-                 + 4.989108920299513e-6*log_T_eV[filter1]**6
-                 + 5.755614137575758e-7*log_T_eV[filter1]**7
-                 - 1.856767039775261e-8*log_T_eV[filter1]**8
-                 - 3.071135243196595e-9*log_T_eV[filter1]**9)
+        alpha_rates[T > 5500.e0] = \
+            np.exp(-28.61303380689232e0
+                   - 0.7241125657826851e0*log_T_eV[filter1]
+                   - 0.02026044731984691e0*log_T_eV[filter1]**2
+                   - 0.002380861877349834e0*log_T_eV[filter1]**3
+                   - 0.0003212605213188796e0*log_T_eV[filter1]**4
+                   - 0.00001421502914054107e0*log_T_eV[filter1]**5
+                   + 4.989108920299513e-6*log_T_eV[filter1]**6
+                   + 5.755614137575758e-7*log_T_eV[filter1]**7
+                   - 1.856767039775261e-8*log_T_eV[filter1]**8
+                   - 3.071135243196595e-9*log_T_eV[filter1]**9)
         filter2 = T <= 5500.e0
-        rates[filter2] = alphaHeII(T[filter2], rates=rates)
-        return rates
+        alpha_rates[filter2] = alphaHeII(T[filter2], rates=rates)
+        return alpha_rates
 
 def alphaHeII(T, rates='enzo'):
     if rates == 'cen':
         return 1.5e-10 * np.power(T,-0.6353)
     elif rates == 'enzo':
-        log_T = np.log(T)
         T_eV = T/11605.e0
-        log_T_eV = np.log(T_eV)
-        return 1.54e-9*(1.e0+0.3e0/np.exp(8.099328789667e0/T_eV)) / \
-          (np.exp(40.49664394833662e0/T_eV)*T_eV**1.5e0) + \
-          3.92e-13/T_eV**0.6353e0
+        return (1.54e-9*(1.e0+0.3e0/np.exp(8.099328789667e0/T_eV)) /
+                (np.exp(40.49664394833662e0/T_eV)*T_eV**1.5e0) +
+                3.92e-13/T_eV**0.6353e0)
 
 def alphaHeIII(T, rates='enzo'):
     # same between cen and enzo
@@ -93,23 +90,22 @@ def alphaHeIII(T, rates='enzo'):
 def alphad(T, rates='enzo'):
     if rates == 'cen':
         return 1.9e-3 * np.power(T,-1.5) * np.exp(-470000 / T) * \
-              (1. + 0.3 * np.exp(-94000 / T))
+            (1. + 0.3 * np.exp(-94000 / T))
     elif rates == 'enzo':
         return np.zeros_like(T)
 
 # Collisional ionization
-      
+
 def GammaeHI(T, rates='enzo'):
     if rates == 'cen':
         return 5.85e-11 * np.power(T,0.5) * np.exp(-157809.1/T) / \
            (1. + np.power((T * 1e-5),0.5))
     elif rates == 'enzo':
-        log_T = np.log(T)
         T_eV = T/11605.e0
         log_T_eV = np.log(T_eV)
-        return np.exp(-32.71396786375e0 
+        return np.exp(-32.71396786375e0
                       + 13.53655609057e0*log_T_eV
-                      - 5.739328757388e0*log_T_eV**2 
+                      - 5.739328757388e0*log_T_eV**2
                       + 1.563154982022e0*log_T_eV**3
                       - 0.2877056004391e0*log_T_eV**4
                       + 0.03482559773736999e0*log_T_eV**5
@@ -120,9 +116,8 @@ def GammaeHI(T, rates='enzo'):
 def GammaeHeI(T, rates='enzo'):
     if rates == 'cen':
         return 2.38e-11 * np.power(T,0.5) * np.exp(-285335.4/T) / \
-              (1. + np.power((T * 1e-5),0.5))
+            (1. + np.power((T * 1e-5),0.5))
     elif rates == 'enzo':
-        log_T = np.log(T)
         T_eV = T/11605.e0
         log_T_eV = np.log(T_eV)
         return np.exp(-44.09864886561001e0
@@ -138,9 +133,8 @@ def GammaeHeI(T, rates='enzo'):
 def GammaeHeII(T, rates='enzo'):
     if rates == 'cen':
         return 5.68e-12 * np.power(T,0.5) * np.exp(-631515.0/T) / \
-              (1. + np.power((T * 1e-5),0.5))
+            (1. + np.power((T * 1e-5),0.5))
     elif rates == 'enzo':
-        log_T = np.log(T)
         T_eV = T/11605.e0
         log_T_eV = np.log(T_eV)
         return np.exp(-68.71040990212001e0
@@ -206,7 +200,7 @@ def rHeIII(T, nH, rates='enzo'):
       np.power((T * 1e-3),-0.2) / (1. + np.power((T * 1e-6),0.7))
 
 # Dielectronic recombination cooling
-      
+
 def drHeII(T, nH, Y=0.24, rates='enzo'):
     return 1.24e-13 * ne(T, nH, rates=rates) * nHeII(T, nH, Y=Y, rates=rates) * \
       np.power(T,-1.5) * np.exp(-470000.0 / T) * (1. + 0.3 * np.exp(-94000.0 / T))
@@ -222,7 +216,7 @@ def freefree(T, nH, Y=0.24, rates='enzo'):
        4 * nHeIII(T, nH, rates=rates))
 
 # Total cooling
-      
+
 def total_cooling(T, nH, rates='enzo'):
     return ceHI(T, nH, rates=rates) + ceHeII(T, nH, rates=rates) + \
       ciHI(T, nH, rates=rates) + ciHeI(T, nH, rates=rates) + \

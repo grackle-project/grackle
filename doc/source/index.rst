@@ -35,6 +35,7 @@ Contents:
    :maxdepth: 2
 
    Installation.rst
+   Testing.rst
    Integration.rst
    Parameters.rst
    Reference.rst

@@ -11,28 +11,16 @@ The best thing to do is to install the `yt analysis toolkit
 Installing the Python Wrappers
 ------------------------------
 
-After building the grackle library, some additional environment variables must 
-be set.  Move into the **src/python** directory and run the **set_libs** script 
-and follow the instructions.  Then, run *python setup.py install* to build and 
-install the python wrappers.
+After building the grackle library, some additional environment variables must
+be set.  Move into the ``src/python`` directory and run `python setup.py
+install` to build and install the python wrappers.
 
 .. highlight:: none
 
 ::
 
     ~/grackle $ cd src/python
-    ~/grackle/src/python $ ./set_libs
-    Issue the following commands:
-    export PYTHONPATH=$PYTHONPATH:/grackle/src/python
-    export LD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:/grackle/src/python/../clib
-    You can also set your LD_LIBRARY_PATH to point to where you installed libgrackle.
     ~/grackle/src/python $ python setup.py install
-    running install
-    running build
-    running config_cc
-    [clipped]
-    running install_clib
-    customize UnixCCompiler
 
 Running the Example Scripts
 ---------------------------

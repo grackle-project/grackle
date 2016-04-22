@@ -2,8 +2,8 @@
 #
 # Cooling cell example script
 #
-#  This will initialize a single cell at a given temperature,  
-#  iterate the cooling solver for a fixed time, and output the 
+#  This will initialize a single cell at a given temperature,
+#  iterate the cooling solver for a fixed time, and output the
 #  temperature vs. time.
 #
 #
@@ -11,13 +11,12 @@
 #
 # Distributed under the terms of the Enzo Public Licence.
 #
-# The full license is in the file LICENSE, distributed with this 
+# The full license is in the file LICENSE, distributed with this
 # software.
 ########################################################################
 
 from matplotlib import pyplot
-import numpy as np
-import sys
+import os
 import yt
 
 from pygrackle.grackle_wrapper import \
@@ -27,14 +26,13 @@ from pygrackle.grackle_wrapper import \
 from pygrackle.fluid_container import \
     FluidContainer
 
-from utilities.api import \
+from pygrackle.utilities.api import \
     get_temperature_units, \
     evolve_constant_density
 
-from utilities.physical_constants import \
+from pygrackle.utilities.physical_constants import \
     mass_hydrogen_cgs, \
     sec_per_Myr, \
-    sec_per_year, \
     cm_per_mpc
 
 tiny_number = 1e-20
@@ -54,7 +52,10 @@ if __name__ == "__main__":
     my_chemistry.primordial_chemistry = 0
     my_chemistry.metal_cooling = 1
     my_chemistry.UVbackground = 1
-    my_chemistry.grackle_data_file = "CloudyData_UVB=HM2012.h5"
+    grackle_dir = os.path.dirname(os.path.dirname(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+    my_chemistry.grackle_data_file = os.sep.join(
+        [grackle_dir, "input", "CloudyData_UVB=HM2012.h5"])
     #my_chemistry.grackle_data_file = "CloudyData_noUVB.h5"
 
     # Set units
@@ -65,13 +66,10 @@ if __name__ == "__main__":
     my_chemistry.length_units = cm_per_mpc         # 1 Mpc in cm
     my_chemistry.time_units = sec_per_Myr          # 1 Myr in s
     my_chemistry.velocity_units = my_chemistry.a_units * \
-      (my_chemistry.length_units / a_value) / my_chemistry.time_units;
+        (my_chemistry.length_units / a_value) / my_chemistry.time_units
     temperature_units = get_temperature_units(my_chemistry)
 
     rval = my_chemistry.initialize(a_value)
-    if not rval:
-        print "Error initializing chemistry."
-        sys.exit(0)
 
     fc = FluidContainer(my_chemistry, 1)
     fc["density"][:] = density
@@ -116,8 +114,8 @@ if __name__ == "__main__":
     pyplot.ylabel("T [K]")
 
     data["mu"] = data["temperature"] / \
-      (data["energy"] * (my_chemistry.Gamma - 1.) *
-       temperature_units)
+        (data["energy"] * (my_chemistry.Gamma - 1.) *
+         temperature_units)
     pyplot.twinx()
     p2, = pyplot.semilogx(data["time"].to("Myr"), data["mu"],
                           color="red", label="$\\mu$")
