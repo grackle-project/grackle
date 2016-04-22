@@ -37,7 +37,7 @@ python_examples = glob.glob(os.sep.join(EXAMPLES_GLOB))
 @contextlib.contextmanager
 def temporary_directory():
     curdir = os.getcwd()
-    tmpdir = tempfile.mkdtemp()
+    tmpdir = tempfile.mkdtemp(dir='.')
     try:
         yield tmpdir
     finally:
@@ -60,7 +60,7 @@ def example_test(example_path, primordial_chemistry=None):
                 [python_executable, example_path], stderr=subprocess.STDOUT,
                 cwd=tmpdir, env=env)
         except subprocess.CalledProcessError as er:
-            command = 'python %s' % example_path
+            command = '%s %s' % (python_executable, example_path)
             raise RuntimeError('Command %s failed with return code %s '
                                'and the following output: %s' %
                                (command, er.returncode, output))
