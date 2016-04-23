@@ -54,17 +54,17 @@ def example_test(example_path, primordial_chemistry=None):
     else:
         python_executable = 'python'
     with temporary_directory() as tmpdir:
-        output = ''
+        command = '%s %s' % (python_executable, example_path)
         try:
             print tmpdir
-            output = subprocess.check_output(
-                [python_executable, example_path], stderr=subprocess.STDOUT,
-                cwd=tmpdir, env=env)
+            print os.getcwd()
+            subprocess.check_output(
+                command, stderr=subprocess.STDOUT,
+                cwd=tmpdir, env=env, shell=True)
         except subprocess.CalledProcessError as er:
-            command = '%s %s' % (python_executable, example_path)
             raise RuntimeError('Command %s failed with return code %s '
                                'and the following output: %s' %
-                               (command, er.returncode, output))
+                               (command, er.returncode, er.output))
 
         example_base = os.path.split(example_path)[1].strip('.py')
         possible_files = [
