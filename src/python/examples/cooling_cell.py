@@ -56,7 +56,6 @@ if __name__ == "__main__":
         os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
     my_chemistry.grackle_data_file = os.sep.join(
         [grackle_dir, "input", "CloudyData_UVB=HM2012.h5"])
-    #my_chemistry.grackle_data_file = "CloudyData_noUVB.h5"
 
     # Set units
     my_chemistry.comoving_coordinates = 0 # proper units
