@@ -42,7 +42,7 @@ def check_convergence(fc1, fc2, fields=None, tol=0.01):
             max_val = convergence
             max_field = field
     if np.any(max_val > tol):
-        print "Max change %s: %.10e." % (max_field, max_val)
+        sys.stderr.write("max change - %5s: %.10e." % (max_field, max_val))
         return False
     return True
 
@@ -106,9 +106,9 @@ def setup_fluid_container(my_chemistry,
     while converge and i < max_iterations:
         calculate_cooling_time(fc, a_value)
         dt = 0.1 * np.abs(fc["cooling_time"]).min()
-        print "t = %.3f Myr, dt = %.3e Myr" % \
-          ((my_time * my_chemistry.time_units / sec_per_Myr),
-           (dt * my_chemistry.time_units / sec_per_Myr))
+        sys.stderr.write("t: %.3f Myr, dt: %.3e Myr, " % \
+                         ((my_time * my_chemistry.time_units / sec_per_Myr),
+                          (dt * my_chemistry.time_units / sec_per_Myr)))
         for field in ["HI", "HII", "HM", "HeI", "HeII", "HeIII",
                       "H2I", "H2II", "DI", "DII", "HDI", "de"]:
             if field in fc:
@@ -118,7 +118,10 @@ def setup_fluid_container(my_chemistry,
         fc["energy"] = temperature / temperature_units / mu / \
           (my_chemistry.Gamma - 1.0)
         converged = check_convergence(fc, fc_last, tol=tolerance)
-        if converged: break
+        if converged:
+            sys.stderr.write("\n")
+            break
+        sys.stderr.write("\r")
         my_time += dt
         i += 1
 
