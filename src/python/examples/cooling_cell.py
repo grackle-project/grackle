@@ -19,8 +19,8 @@ import matplotlib
 import os
 import yt
 
-from matplotlib import pyplot
 matplotlib.use('agg')
+from matplotlib import pyplot
 
 from pygrackle.grackle_wrapper import \
     calculate_temperature, \
