@@ -14,17 +14,20 @@
 import numpy as np
 import sys
 
+from pygrackle.fluid_container import \
+    FluidContainer
+
 from pygrackle.grackle_wrapper import \
     solve_chemistry, \
-    calculate_cooling_time
-from pygrackle.fluid_container import FluidContainer
-
-from .units import \
-    get_temperature_units
+    calculate_cooling_time, \
+    calculate_temperature
 
 from pygrackle.utilities.physical_constants import \
     mass_hydrogen_cgs, \
     sec_per_Myr
+
+from .units import \
+    get_temperature_units
 
 def check_convergence(fc1, fc2, fields=None, tol=0.01):
     "Check for fields to be different by less than tol."
@@ -93,8 +96,8 @@ def setup_fluid_container(my_chemistry,
 
     temperature_units = get_temperature_units(my_chemistry)
     fc["energy"] = temperature / temperature_units / \
-        calculate_mean_molecular_weight(my_chemistry, fc) / \
-        (my_chemistry.Gamma - 1.0)
+      calculate_mean_molecular_weight(my_chemistry, fc, a_value) / \
+      (my_chemistry.Gamma - 1.0)
     fc["x-velocity"][:] = 0.0
     fc["y-velocity"][:] = 0.0
     fc["z-velocity"][:] = 0.0
@@ -114,7 +117,7 @@ def setup_fluid_container(my_chemistry,
             if field in fc:
                 fc_last[field] = np.copy(fc[field])
         solve_chemistry(fc, a_value, dt)
-        mu = calculate_mean_molecular_weight(my_chemistry, fc)
+        mu = calculate_mean_molecular_weight(my_chemistry, fc, a_value)
         fc["energy"] = temperature / temperature_units / mu / \
           (my_chemistry.Gamma - 1.0)
         converged = check_convergence(fc, fc_last, tol=tolerance)
@@ -132,21 +135,14 @@ def setup_fluid_container(my_chemistry,
 
     return fc
 
-def calculate_mean_molecular_weight(my_chemistry, fc):
-    mu_metal = 16.0
-    if my_chemistry.primordial_chemistry == 0:
-        return calc_mu_table(fc['temperature'])
-    mu = fc["HI"] + fc["HII"] + fc["de"] + \
-        (fc["HeI"] + fc["HeII"] + fc["HeIII"]) / 4.
-    if my_chemistry.primordial_chemistry > 1:
-        mu += fc["HM"] + fc["H2I"] + fc["H2II"]
-    if my_chemistry.primordial_chemistry > 2:
-        mu += (fc["DI"] + fc["DII"]) / 2. + fc["HDI"] / 3.
-
-    if my_chemistry.metal_cooling == 1:
-        mu += fc["metal"] / mu_metal
-
-    return fc["density"] / mu
+def calculate_mean_molecular_weight(my_chemistry, fc, a_value):
+    if (fc["energy"] == 0).all():
+        return np.ones(fc["energy"].size)
+    temperature_units = get_temperature_units(my_chemistry)
+    calculate_temperature(fc, a_value)
+    return (fc["temperature"] / \
+            (fc["energy"] * (my_chemistry.Gamma - 1.) *
+             temperature_units))
 
 def calculate_hydrogen_number_density(my_chemistry, fc):
     if my_chemistry.primordial_chemistry == 0:
@@ -158,18 +154,3 @@ def calculate_hydrogen_number_density(my_chemistry, fc):
     if my_chemistry.primordial_chemistry > 2:
         nH += fc["HDI"] / 2.
     return nH * my_chemistry.density_units / mass_hydrogen_cgs
-
-
-# ------------------------------------------------------------------
-#   Calculate a tabulated approximation to mean molecular weight.
-# ------------------------------------------------------------------
-def calc_mu_table(temperature):
-    tt = np.array([1.0e+01, 1.0e+02, 1.0e+03, 1.0e+04, 1.3e+04, 2.1e+04, \
-                   3.4e+04, 6.3e+04, 1.0e+05, 1.0e+09])
-    mt = np.array([1.18701555, 1.15484424, \
-                   1.09603514, 0.9981496, 0.96346395, 0.65175895, \
-                   0.6142901,  0.6056833, 0.5897776,  0.58822635])
-
-    logttt = np.log(temperature)
-    logmu = np.interp(logttt,np.log(tt),np.log(mt)) # linear interpolation in log-log space
-    return np.exp(logmu)
