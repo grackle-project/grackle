@@ -24,7 +24,9 @@ from pygrackle.fluid_container import _yt_to_grackle
 DS_NAME = "ActiveParticleCosmology/DD0046/DD0046"
 
 if 'YT_DATA_DIR' in os.environ:
-    ds_path = os.sep.join(os.environ['YT_DATA_DIR'], DS_NAME)
+    ds_path = os.sep.join([os.environ['YT_DATA_DIR'], DS_NAME])
+else:
+    ds_path = DS_NAME
 
 ds = yt.load(ds_path)
 
