@@ -24,7 +24,7 @@ from matplotlib.testing.compare import \
     compare_images
 from pygrackle.utilities.testing import \
     assert_equal, \
-    assert_almost_equal
+    assert_array_almost_equal
 
 current_path = os.path.abspath(__file__)
 
@@ -82,7 +82,7 @@ def example_test(example_path, primordial_chemistry=None):
         ad_new = ds_new.data
 
         for field_name in ds_old.field_list:
-            assert_almost_equal(ad_old[field_name], ad_new[field_name])
+            assert_array_almost_equal(ad_old[field_name], ad_new[field_name])
 
         answer_name = '.'.join([example_base, 'png'])
 
