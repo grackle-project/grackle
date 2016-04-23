@@ -96,7 +96,7 @@ def setup_fluid_container(my_chemistry,
 
     temperature_units = get_temperature_units(my_chemistry)
     fc["energy"] = temperature / temperature_units / \
-      calculate_mean_molecular_weight(my_chemistry, fc, a_value) / \
+      calculate_mean_molecular_weight(fc, a_value) / \
       (my_chemistry.Gamma - 1.0)
     fc["x-velocity"][:] = 0.0
     fc["y-velocity"][:] = 0.0
@@ -117,7 +117,7 @@ def setup_fluid_container(my_chemistry,
             if field in fc:
                 fc_last[field] = np.copy(fc[field])
         solve_chemistry(fc, a_value, dt)
-        mu = calculate_mean_molecular_weight(my_chemistry, fc, a_value)
+        mu = calculate_mean_molecular_weight(fc, a_value)
         fc["energy"] = temperature / temperature_units / mu / \
           (my_chemistry.Gamma - 1.0)
         converged = check_convergence(fc, fc_last, tol=tolerance)
@@ -135,7 +135,8 @@ def setup_fluid_container(my_chemistry,
 
     return fc
 
-def calculate_mean_molecular_weight(my_chemistry, fc, a_value):
+def calculate_mean_molecular_weight(fc, a_value):
+    my_chemistry = fc.chemistry_data
     if (fc["energy"] == 0).all():
         return np.ones(fc["energy"].size)
     temperature_units = get_temperature_units(my_chemistry)
@@ -144,7 +145,8 @@ def calculate_mean_molecular_weight(my_chemistry, fc, a_value):
             (fc["energy"] * (my_chemistry.Gamma - 1.) *
              temperature_units))
 
-def calculate_hydrogen_number_density(my_chemistry, fc):
+def calculate_hydrogen_number_density(fc):
+    my_chemistry = fc.chemistry_data
     if my_chemistry.primordial_chemistry == 0:
         return my_chemistry.HydrogenFractionByMass * \
           fc["density"] * my_chemistry.density_units / mass_hydrogen_cgs
