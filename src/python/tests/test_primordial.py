@@ -11,10 +11,8 @@
 # software.
 ########################################################################
 
-import matplotlib
 import numpy as np
 
-matplotlib.use('agg')
 from matplotlib import pyplot
 
 from pygrackle.utilities.testing import \
