@@ -21,7 +21,7 @@ from pygrackle.api import \
     solve_chemistry
 from pygrackle.fluid_container import _yt_to_grackle
 
-DS_NAME = "ActiveParticleCosmology/DD0046/DD0046"
+DS_NAME = "IsolatedGalaxy/galaxy0030/galaxy0030"
 
 if 'YT_DATA_DIR' in os.environ:
     ds_path = os.sep.join([os.environ['YT_DATA_DIR'], DS_NAME])
