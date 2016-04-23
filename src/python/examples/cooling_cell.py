@@ -15,9 +15,12 @@
 # software.
 ########################################################################
 
-from matplotlib import pyplot
+import matplotlib
 import os
 import yt
+
+from matplotlib import pyplot
+matplotlib.use('agg')
 
 from pygrackle.grackle_wrapper import \
     calculate_temperature, \
@@ -108,7 +111,7 @@ if __name__ == "__main__":
         fc, final_time=final_time,
         safety_factor=safety_factor)
 
-    p1, = pyplot.loglog(data["time"].to("Myr"), data["temperature"],
+    p1, = pyplot.loglog(data["time"].in_units("Myr"), data["temperature"],
                         color="black", label="T")
     pyplot.xlabel("Time [Myr]")
     pyplot.ylabel("T [K]")
@@ -117,7 +120,7 @@ if __name__ == "__main__":
         (data["energy"] * (my_chemistry.Gamma - 1.) *
          temperature_units)
     pyplot.twinx()
-    p2, = pyplot.semilogx(data["time"].to("Myr"), data["mu"],
+    p2, = pyplot.semilogx(data["time"].in_units("Myr"), data["mu"],
                           color="red", label="$\\mu$")
     pyplot.ylabel("$\\mu$")
     pyplot.legend([p1,p2],["T","$\\mu$"], fancybox=True,

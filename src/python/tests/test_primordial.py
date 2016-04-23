@@ -11,9 +11,11 @@
 # software.
 ########################################################################
 
+import matplotlib
 import numpy as np
 
 from matplotlib import pyplot
+matplotlib.use('agg')
 
 from pygrackle.utilities.testing import \
     assert_rel_equal

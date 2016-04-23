@@ -11,10 +11,13 @@
 # software.
 ########################################################################
 
-from matplotlib import pyplot
+import matplotlib
 import numpy as np
 import os
 import yt
+
+from matplotlib import pyplot
+matplotlib.use('agg')
 
 from pygrackle.grackle_wrapper import \
     calculate_cooling_time, \
