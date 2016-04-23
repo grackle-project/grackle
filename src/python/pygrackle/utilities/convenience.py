@@ -15,7 +15,8 @@ import numpy as np
 import sys
 
 from pygrackle.grackle_wrapper import \
-    solve_chemistry
+    solve_chemistry, \
+    calculate_cooling_time
 from pygrackle.fluid_container import FluidContainer
 
 from .units import \
@@ -53,7 +54,7 @@ def setup_fluid_container(my_chemistry,
                           metal_mass_fraction=0.02041,
                           d_to_h_ratio=3.4e-5,
                           converge=False, tolerance=0.01,
-                          max_iterations=10000, dt=None):
+                          max_iterations=10000):
     """
     Initialize a fluid container with a constant density and smoothly
     increasing temperature from 10 K to 1e9 K.  Optionally, iterate the
@@ -92,18 +93,19 @@ def setup_fluid_container(my_chemistry,
 
     temperature_units = get_temperature_units(my_chemistry)
     fc["energy"] = temperature / temperature_units / \
-        calculate_mean_molecular_weight(my_chemistry, fc)
+        calculate_mean_molecular_weight(my_chemistry, fc) / \
+        (my_chemistry.Gamma - 1.0)
     fc["x-velocity"][:] = 0.0
     fc["y-velocity"][:] = 0.0
     fc["z-velocity"][:] = 0.0
 
     fc_last = fc.copy()
 
-    if dt is None:
-        dt = 0.01 * sec_per_Myr / my_chemistry.time_units
     my_time = 0.0
     i = 0
     while converge and i < max_iterations:
+        calculate_cooling_time(fc, a_value)
+        dt = 0.1 * np.abs(fc["cooling_time"]).min()
         print "t = %.3f Myr, dt = %.3e Myr" % \
           ((my_time * my_chemistry.time_units / sec_per_Myr),
            (dt * my_chemistry.time_units / sec_per_Myr))
@@ -113,7 +115,8 @@ def setup_fluid_container(my_chemistry,
                 fc_last[field] = np.copy(fc[field])
         solve_chemistry(fc, a_value, dt)
         mu = calculate_mean_molecular_weight(my_chemistry, fc)
-        fc["energy"] = temperature / temperature_units / mu
+        fc["energy"] = temperature / temperature_units / mu / \
+          (my_chemistry.Gamma - 1.0)
         converged = check_convergence(fc, fc_last, tol=tolerance)
         if converged: break
         my_time += dt
