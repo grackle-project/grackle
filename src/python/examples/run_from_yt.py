@@ -21,7 +21,12 @@ from pygrackle.api import \
     solve_chemistry
 from pygrackle.fluid_container import _yt_to_grackle
 
-ds = yt.load("IsolatedGalaxy/galaxy0030/galaxy0030")
+DS_NAME = "IsolatedGalaxy/galaxy0030/galaxy0030"
+
+if 'YT_DATA_DIR' in os.environ:
+    ds_path = os.sep.join(os.environ['YT_DATA_DIR'], DS_NAME)
+
+ds = yt.load(ds_path)
 
 my_chemistry = chemistry_data()
 my_chemistry.use_grackle = 1
