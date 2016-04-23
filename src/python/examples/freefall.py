@@ -11,8 +11,11 @@
 # software.
 ########################################################################
 
-from matplotlib import pyplot
 import yt
+import matplotlib
+
+matplotlib.use('agg')
+from matplotlib import pyplot
 
 from pygrackle.grackle_wrapper import \
     chemistry_data
