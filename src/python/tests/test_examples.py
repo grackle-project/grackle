@@ -49,18 +49,13 @@ def example_test(example_path, primordial_chemistry=None):
     env = dict(os.environ)
     if primordial_chemistry is not None:
         env['PRIMORDIAL_CHEM'] = str(primordial_chemistry)
-    if 'PYTHON_EXE' in env:
-        python_executable = env['PYTHON_EXE']
-    else:
-        python_executable = 'python'
+    python_executable = 'python'
     with temporary_directory() as tmpdir:
         command = '%s %s' % (python_executable, example_path)
         try:
-            print tmpdir
-            print os.getcwd()
             subprocess.check_output(
-                command, stderr=subprocess.STDOUT,
-                cwd=tmpdir, env=env, shell=True)
+                command.split(' '), stderr=subprocess.STDOUT,
+                cwd=tmpdir, env=env)
         except subprocess.CalledProcessError as er:
             raise RuntimeError('Command %s failed with return code %s '
                                'and the following output: %s' %
