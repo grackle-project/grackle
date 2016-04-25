@@ -1,3 +1,7 @@
+import warnings
+
+warnings.warn("Importing from pygrackle.utilities.api is deprecated.  Import from pygrackle directly.")
+
 from .convenience import \
     setup_fluid_container
 
