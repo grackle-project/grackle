@@ -280,7 +280,6 @@ c
       IF (T .GT. 1.0e4_DKIND)
      &     k17=4.0e-4_DKIND*T**(-1.4_DKIND)*exp(-15100._DKIND/T) / kunit
       
-C     k18 = 5.56396e-8_DKIND/T_eV**0.6035_DKIND / kunit
       k18 = 1.e-8_DKIND / kunit
       If (T .GT. 617._DKIND)
      $     k18 = 1.32e-6_DKIND * T**(-0.76_DKIND) / kunit

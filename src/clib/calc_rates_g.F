@@ -46,7 +46,6 @@ c    constants from the equations themselves.  This is explained for
 c    each of two types used: rate coefficients, cooling coefficients.
 c    Note also that the densities in the rate equations are true, not
 c    comoving densities and so we must include a factor of a^3.
-c    NOTE: if the spectrum changes, this routine must be called again.
 c
 c  PARAMETERS:
 c    nnu      = number of frequency bins
@@ -76,71 +75,48 @@ c    casebrates = use case-B recombination rates for k2, k4 and k6
 c
 c  RATES:
 c
-c  (New rates numbering as of Feb/2000, agrees with original
-c   Abel etal 1997)
-c    old   -> new              old   -> new
-c    k1-10 -> k1-10            k16   -> k14
-c    k11   -> k13              k17   -> k15
-c    k12   -> k11              k18   -> k16
-c    k13   -> removed          k19   -> k17
-c    k14   -> k12              k20   -> k18
-c    k15   -> removed          k21   -> k19
+c  Reaction rate numbering agrees with Abel et al. (1997).
 c
-C ------- 1:    HI    + e   -> HII   + 2e
-C ------- 2:    HII   + e   -> H     + p
-C ------- 3:    HeI   + e   -> HeII  + 2e
-C ------- 4:    HeII  + e   -> HeI   + p
-C ------- 5:    HeII  + e   -> HeIII + 2e
-C ------- 6:    HeIII + e   -> HeII  + p
-C ------- 7:    HI    + e   -> HM    + p
-C ------- 8:    HM    + HI  -> H2I*  + e
-C ------- 9:    HI    + HII -> H2II  + p
-C ------- 10:   H2II  + HI  -> H2I*  + HII
-c
-c
-C --------------  old  ---------------------
-C ------- 11:   H2I   + H   -> 3H
-C ------- 12:   H2I   + HII -> H2II  + H
-C ------- 13:   H2I   + e   -> HI    + HM
-C ------- 14:   H2I   + e   -> 2HI   + e
-C ------- 15:   H2I   + H2I -> H2I   + 2HI
-C ------- 16:   HM    + e   -> HI    + 2e
-C ------- 17:   HM    + HI  -> 2H    + e
-C ------- 18:   HM    + HII -> 2HI
-C ------- 19:   HM    + HII -> H2II  + e
-C ------- 20:   H2II  + e   -> 2HI
-C ------- 21:   H2II  + HM  -> HI    + H2I
-C --------------  old  ---------------------
-c
-c --------------  new  ---------------------
-C ---11--       H2I   + HII -> H2II  + H
-C ---12--       H2I   + e   -> 2HI   + e
-C ---13--       H2I   + H   -> 3H
-C ---14--       HM    + e   -> HI    + 2e
-C ---15--       HM    + HI  -> 2H    + e
-C ---16--       HM    + HII -> 2HI
-C ---17--       HM    + HII -> H2II  + e
-C ---18--       H2II  + e   -> 2HI
-C ---19--       H2II  + HM  -> HI    + H2I
-c (20) - unused
-c --------------  new  ---------------------
-c
-c
-C ------- 21:   2H    + H2  -> H2I   + H2I
-C ------- 22:   2H    + H   -> H2I   + H
-C ------- 24:   HI    + p   -> HII   + e
-C ------- 25:   HeII  + p   -> HeIII + e
-C ------- 26:   HeI   + p   -> HeII  + e
-C ------- 27:   HM    + p   -> HI    + e
-C ------- 28:   H2II  + p   -> HI    + HII
-C ------- 29:   H2I   + p   -> H2II  + e
-C ------- 30:   H2II  + p   -> 2HII  + e
-C ------- 31:   H2I   + p   -> 2HI
-C
-c ------- 50-56: deuterium rates (given below)
-c
-c ------- 57: coll. ion. of H by H:   HI + HI  -> HII +  HI + e
-c ------- 58: coll. ion. of H by He:  HI + HeI -> HII + HeI + e
+c ------- 1:    HI    + e   -> HII   + 2e
+c ------- 2:    HII   + e   -> H     + p
+c ------- 3:    HeI   + e   -> HeII  + 2e
+c ------- 4:    HeII  + e   -> HeI   + p
+c ------- 5:    HeII  + e   -> HeIII + 2e
+c ------- 6:    HeIII + e   -> HeII  + p
+c ------- 7:    HI    + e   -> HM    + p
+c ------- 8:    HM    + HI  -> H2I*  + e
+c ------- 9:    HI    + HII -> H2II  + p
+c ------- 10:   H2II  + HI  -> H2I*  + HII
+c ------- 11:   H2I   + HII -> H2II  + H
+c ------- 12:   H2I   + e   -> 2HI   + e
+c ------- 13:   H2I   + H   -> 3H
+c ------- 14:   HM    + e   -> HI    + 2e
+c ------- 15:   HM    + HI  -> 2H    + e
+c ------- 16:   HM    + HII -> 2HI
+c ------- 17:   HM    + HII -> H2II  + e
+c ------- 18:   H2II  + e   -> 2HI
+c ------- 19:   H2II  + HM  -> HI    + H2I
+c ------- 20:   unused
+c ------- 21:   2H    + H2  -> H2I   + H2I
+c ------- 22:   2H    + H   -> H2I   + H
+c ------- 24:   HI    + p   -> HII   + e
+c ------- 25:   HeII  + p   -> HeIII + e
+c ------- 26:   HeI   + p   -> HeII  + e
+c ------- 27:   HM    + p   -> HI    + e
+c ------- 28:   H2II  + p   -> HI    + HII
+c ------- 29:   H2I   + p   -> H2II  + e
+c ------- 30:   H2II  + p   -> 2HII  + e
+c ------- 31:   H2I   + p   -> 2HI
+c ------- 50:   H+    + D   -> H     + D+
+c ------- 51:   H     + D+  -> H+    + D
+c ------- 52:   H2    + D+  -> HD    + H+
+c ------- 53:   HD    + H+  -> H2    + D+
+c ------- 54:   H2    + D   -> HD    + H
+c ------- 55:   HD    + H   -> H2    + D
+c ------- 56:   D     + H-  -> HD    + e-
+c ------- 57:   D-    + H   -> HD    + e-  (included by multiplying 56 by 2)
+c ------- 57:   HI    + HI  -> HII   + HI    + e
+c ------- 58:   HI    + HeI -> HII   + HeI   + e
 c
 c ------- h2dust: 2H  + grain -> H2  + grain (eq 3.8 from Hollenbach & McKee 1989)
 c
@@ -149,10 +125,6 @@ c               for H2 formation heating.
 c
 c-----------------------------------------------------------------------
 c
-c  This define indicates if the Tom Abels new (as of Feb/2000) collisional
-c    rates (k1-k19) should be used.
-c
-#define USE_NEW_COLLISIONAL_RATES
 c
       implicit NONE
 #include "grackle_fortran_types.def"
@@ -400,7 +372,6 @@ c
         tev = ttt/tevk
         logtev = log(tev)
 c
-#ifdef USE_NEW_COLLISIONAL_RATES
 c
 c       Call Tom Abels routine (from his web page, Feb/2000)
 c
@@ -409,200 +380,6 @@ c
      &                  k11a(i), k12a(i), k13a(i), k14a(i), k15a(i), 
      &                  k16a(i), k17a(i), k18a(i), k19a(i), k23a(i),
      &                  kunit, casebrates)
-c
-#else /* USE_NEW_COLLISIONAL_RATES */
-c
-c       Compute rates in cgs: cm^3/s (note: tev, logtev is double)
-c        (the k1-19 rates below are an older set)
-c 
-        if (tev .gt. 0.8d0) then
-          k1a(i) = exp(-32.71396786375d0
-     &           + 13.53655609057d0*logtev
-     &           - 5.739328757388d0*logtev**2 
-     &           + 1.563154982022d0*logtev**3
-     &           - 0.2877056004391d0*logtev**4
-     &           + 0.03482559773736999d0*logtev**5
-     &           - 0.00263197617559d0*logtev**6
-     &           + 0.0001119543953861d0*logtev**7
-     &           - 2.039149852002d-6*logtev**8) / kunit
-c
-          k3a(i) = exp(-44.09864886561001d0
-     &           + 23.91596563469d0*logtev
-     &           - 10.75323019821d0*logtev**2
-     &           + 3.058038757198d0*logtev**3
-     &           - 0.5685118909884001d0*logtev**4
-     &           + 0.06795391233790001d0*logtev**5
-     &           - 0.005009056101857001d0*logtev**6
-     &           + 0.0002067236157507d0*logtev**7
-     &           - 3.649161410833d-6*logtev**8) / kunit
-c
-          k4a(i) = (1.54d-9*(1.d0+0.3d0/exp(8.099328789667d0/tev))
-     &           / (exp(40.49664394833662d0/tev)*tev**1.5d0)
-     &           + 3.92d-13/tev**0.6353d0) / kunit
-c
-          k5a(i) = exp(-68.71040990212001d0
-     &           + 43.93347632635d0*logtev
-     &           - 18.48066993568d0*logtev**2
-     &           + 4.701626486759002d0*logtev**3
-     &           - 0.7692466334492d0*logtev**4
-     &           + 0.08113042097303d0*logtev**5
-     &           - 0.005324020628287001d0*logtev**6
-     &           + 0.0001975705312221d0*logtev**7
-     &           - 3.165581065665d-6*logtev**8) / kunit
-        else
-          k1a(i) = tiny
-          k3a(i) = tiny
-          k4a(i) = 3.92d-13/tev**0.6353d0 / kunit
-          k5a(i) = tiny
-        endif
-c
-c       redefine k4a if case B recombination rates are requested
-        if (casebrates .eq. 1) then
-           k4a(i) = 1.26d-14 * (5.7067d5/ttt)**(0.75d0)
-        endif
-c
-c       compute the HII rec. rate using either the case A or case B formula
-        if (casebrates .eq. 1) then
-           if (ttt < 1.0d9) then
-              k2a(i) = 4.881357d-6*ttt**(-1.5d0) 
-     &             * (1.d0+1.14813d2*ttt**(-0.407d0))**(-2.242d0)
-     &             / kunit
-           else
-              k2a(i) = tiny
-           endif
-        else
-           if ( ttt .gt. 5500.d0 ) then
-              k2a(i) = exp(-28.61303380689232d0
-     &             - 0.7241125657826851d0*logtev
-     &             - 0.02026044731984691d0*logtev**2
-     &             - 0.002380861877349834d0*logtev**3
-     &             - 0.0003212605213188796d0*logtev**4
-     &             - 0.00001421502914054107d0*logtev**5
-     &             + 4.989108920299513d-6*logtev**6
-     &             + 5.755614137575758d-7*logtev**7
-     &             - 1.856767039775261d-8*logtev**8
-     &             - 3.071135243196595d-9*logtev**9) / kunit
-           else
-              k2a(i) = k4a(i)
-           endif
-        endif
-c
-c       compute the HeIII rec. rate using either the case A or case B formula
-        if (casebrates .eq. 1) then
-           if (ttt < 1.0d9) then
-              k6a(i) = 7.8155d-5*ttt**(-1.5d0) 
-     &             * (1.d0+2.0189d2*ttt**(-0.407d0))**(-2.242d0)
-     &             / kunit
-           else
-              k6a(i) = tiny
-           endif
-        else
-           k6a(i) = 3.36d-10/sqrt(ttt)/(ttt/1.d3)**0.2d0
-     &          / (1.d0+(ttt/1.d6)**0.7d0) / kunit
-        endif
-c
-c       Molecular hydrogen and associated rates
-c
-c       H- formation by radiative association: HI + e -> H2I + gamma.
-c       Fit from Stancil, Lepp & Dalgarno (1998, ApJ, 509, 1), based
-c       on photodetachment cross-section of Wishart (1979, MNRAS, 187, P59)       
-c
-        k7a(i) = 3.0d-16 * (ttt/3.d2)**0.95d0 * exp(-ttt/9.32d3) / kunit
-c
-c       H- destruction by associative detachment with HI: HM + HI -> H2I + e
-c       This fit is from Kreckel et al (2010, Science, 329, 69), based on their
-c       experimental measurements of the process. 
-c
-        k8a(i) = 1.35d-9*(ttt**9.8493d-2 + 3.2852d-1
-     &         * ttt**5.5610d-1 + 2.771d-7 * ttt**2.1826d0)
-     &         / (1d0 + 6.191d-3 * ttt**1.0461d0
-     &         + 8.9712d-11 * ttt**3.0424d0
-     &         + 3.2576d-14 * ttt**3.7741d0) / kunit
-c
-c       H2+ formation by radiative association: HI + HII -> H2II + gamma
-c       This fit is from Latif et al (2015, MNRAS, 446, 3163) and is valid
-c       for temperatures in the range 1 < T < 32000 K. At higher temperatures,
-c       we keep the value of the rate coefficient constant; note that its 
-c       behaviour in this regime is unlikely to be important
-c
-        if (ttt .gt. 3.2d4) then
-          tk9 = 3.2d4
-        else
-          tk9 = ttt
-        endif
-        k9a(i) = 1d1**(-18.20d0 - 3.194d0 * dlog10(tk9)
-     $         + 1.786d0  * dlog10(tk9)**2
-     $         - 0.2072d0 * dlog10(tk9)**3 ) / kunit
-c
-        k10a(i) = 6.0d-10 / kunit
-c
-        if (tev .gt. 0.3d0) then
-          k13a(i) = 1.0670825d-10*tev**2.012d0/
-     &              (exp(4.463d0/tev)*(1.d0+0.2472d0*tev)**3.512d0) / 
-     &              kunit
-c
-          k11a(i) = exp(-24.24914687731536d0
-     &            + 3.400824447095291d0*logtev
-     &            - 3.898003964650152d0*logtev**2
-     &            + 2.045587822403071d0*logtev**3
-     &            - 0.5416182856220388d0*logtev**4
-     &            + 0.0841077503763412d0*logtev**5
-     &            - 0.007879026154483455d0*logtev**6
-     &            + 0.0004138398421504563d0*logtev**7
-     &            - 9.36345888928611d-6*logtev**8) / kunit
-
-          k12a(i) = 4.38d-10*exp(-102000.d0/ttt)*ttt**0.35d0 / kunit
-        else
-          k13a(i) = tiny
-          k11a(i) = tiny
-          k12a(i) = tiny
-        endif
-c
-        if (tev .gt. 0.04d0) then
-          k14a(i) = exp(-18.01849334273d0
-     &            + 2.360852208681d0*logtev
-     &            - 0.2827443061704d0*logtev**2
-     &            + 0.01623316639567d0*logtev**3
-     &            - 0.03365012031362999d0*logtev**4
-     &            + 0.01178329782711d0*logtev**5
-     &            - 0.001656194699504d0*logtev**6
-     &            + 0.0001068275202678d0*logtev**7
-     &            - 2.631285809207d-6*logtev**8) / kunit
-        else
-          k14a(i) =  tiny
-        endif
-c
-        if (tev .gt. 0.1d0) then
-          k15a(i) = exp(-20.37260896533324d0
-     &            + 1.139449335841631d0*logtev
-     &            - 0.1421013521554148d0*logtev**2
-     &            + 0.00846445538663d0*logtev**3
-     &            - 0.0014327641212992d0*logtev**4
-     &            + 0.0002012250284791d0*logtev**5
-     &            + 0.0000866396324309d0*logtev**6
-     &            - 0.00002585009680264d0*logtev**7
-     &            + 2.4555011970392d-6*logtev**8
-     &            - 8.06838246118d-8*logtev**9) / kunit
-        else
-          k15a(i) = 2.56d-9*tev**1.78186d0 / kunit
-        endif
-c
-c       H- destruction by mutual neutralization with HII: HM + HII -> 2H
-c       Fit from Croft et al (1999, MNRAS, 304, 327), based on the cross-section
-c       of Fussen & Kubach (1986, J. Phys. B, 18 L31). This fit agrees well
-c       with recent measurements of the rate by X. Urbain & collaborators, to
-c       within experimental error
-c
-        k16a(i) = 2.4d-6*(1d0+ttt/2d4)/sqrt(ttt) / kunit
-c
-        k17a(i) = 1.0d-8*ttt**(-0.4d0) / kunit
-        if(ttt.gt.1.0d4)
-     &     k17a(i)=4.0d-4*ttt**(-1.4d0)*exp(-15100.d0/ttt) / kunit
-c
-        k18a(i) = 5.56396d-8/tev**0.6035d0 / kunit
-        k19a(i) = 4.64d-8/sqrt(tev) / kunit
-c
-#endif /* USE_NEW_COLLISIONAL_RATES */
 c
 c       Compute the coefficients needed for the density-dependent collision 
 c       H2 dissociation rate. Our source for this (Martin et al, 1996, ApJ, 461, 265) 
