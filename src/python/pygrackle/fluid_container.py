@@ -48,7 +48,7 @@ class FluidContainer(dict):
         self.chemistry_data = chemistry_data
         self.n_vals = n_vals
         for fluid in _fluid_names[self.chemistry_data.primordial_chemistry] + \
-          _nd_fields:
+            _nd_fields:
             self._setup_fluid(fluid)
 
     def _setup_fluid(self, fluid_name):

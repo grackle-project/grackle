@@ -89,7 +89,7 @@ if __name__ == "__main__":
     fc["z-velocity"][:] = 0.0
 
     fc["energy"][:] = initial_temperature / \
-      fc.chemistry_data.temperature_units
+        fc.chemistry_data.temperature_units
     fc.calculate_temperature(a_value)
     fc["energy"][:] *= initial_temperature / fc["temperature"]
 

@@ -27,9 +27,7 @@ from pygrackle.utilities.primordial_equilibrium import \
     nHI, nHII, nHeI, nHeII, nHeIII
 
 from pygrackle.utilities.physical_constants import \
-    mass_hydrogen_cgs, \
-    sec_per_Myr
-
+    mass_hydrogen_cgs
 
 def test_equilibrium():
     """
