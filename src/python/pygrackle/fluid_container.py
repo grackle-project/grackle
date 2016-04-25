@@ -13,6 +13,11 @@
 
 import numpy as np
 
+from pygrackle.utilities.physical_constants import \
+    mass_hydrogen_cgs
+from pygrackle.utilities.units import \
+    get_cooling_units
+
 _base_fluids = ["density", "metal"]
 _nd_fields   = ["energy",
                 "x-velocity", "y-velocity", "z-velocity",
@@ -40,6 +45,16 @@ class FluidContainer(dict):
 
     def _setup_fluid(self, fluid_name):
         self[fluid_name] = np.zeros(self.n_vals, self.dtype)
+
+    def cooling_units(self, a_value=None):
+        if self.chemistry_data.comoving_coordinates:
+            if a_value is None:
+                raise RuntimeError(
+                    "Must specify a_value if comoving_coordinates=1.")
+            current_redshift = 1. / (self.a_unit * a_value) - 1.0
+        else:
+            current_redshift = 0.
+        return get_cooling_units(self.chemistry_data, current_redshift)
 
     @property
     def density_fields(self):

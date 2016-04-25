@@ -22,8 +22,7 @@ from pygrackle.grackle_wrapper import \
     chemistry_data
 
 from pygrackle.utilities.api import \
-    setup_fluid_container, \
-    get_cooling_units
+    setup_fluid_container
 
 from pygrackle.utilities.physical_constants import \
     mass_hydrogen_cgs, \
@@ -69,10 +68,9 @@ if __name__ == "__main__":
     calculate_temperature(fc, a_value)
     calculate_cooling_time(fc, a_value)
 
-    cool_unit = get_cooling_units(my_chemistry, current_redshift)
     density_proper = fc["density"] / \
         (my_chemistry.a_units * a_value)**(3*my_chemistry.comoving_coordinates)
-    cooling_rate = cool_unit * fc["energy"] / \
+    cooling_rate = fc.cooling_units(a_value) * fc["energy"] / \
         np.abs(fc["cooling_time"]) / density_proper
 
     data = {}
