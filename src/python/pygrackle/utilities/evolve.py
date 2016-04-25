@@ -15,13 +15,6 @@ from collections import defaultdict
 import numpy as np
 import yt
 
-from pygrackle.grackle_wrapper import \
-    calculate_cooling_time, \
-    calculate_temperature, \
-    calculate_pressure, \
-    solve_chemistry
-
-
 from .physical_constants import \
     gravitational_constant_cgs, \
     sec_per_year
@@ -51,9 +44,9 @@ def evolve_freefall(fc, final_density, safety_factor=0.01,
         for field in fc.density_fields:
             data[field].append(fc[field][0] * my_chemistry.density_units)
         data["energy"].append(fc["energy"][0])
-        calculate_temperature(fc, a_value)
+        fc.calculate_temperature(a_value)
         data["temperature"].append(fc["temperature"][0])
-        calculate_pressure(fc, a_value)
+        fc.calculate_pressure(a_value)
         data["pressure"].append(fc["pressure"][0])
         data["time"].append(current_time * my_chemistry.time_units)
 
@@ -85,7 +78,7 @@ def evolve_freefall(fc, final_density, safety_factor=0.01,
         fc["energy"][0] += (my_chemistry.Gamma - 1.) * fc["energy"][0] * \
             freefall_time_constant * np.power(fc["density"][0], 0.5) * dt
 
-        solve_chemistry(fc, a_value, dt)
+        fc.solve_chemistry(a_value, dt)
 
         # update time
         current_time += dt
@@ -147,28 +140,28 @@ def evolve_constant_density(fc, final_temperature=None,
 
     data = defaultdict(list)
     current_time = 0.0
-    calculate_cooling_time(fc, a_value)
+    fc.calculate_cooling_time(a_value)
     dt = safety_factor * np.abs(fc["cooling_time"][0])
-    calculate_temperature(fc, a_value)
+    fc.calculate_temperature(a_value)
     while True:
         if final_temperature is not None and fc["temperature"][0] <= final_temperature:
             break
         if final_time is not None and current_time >= final_time:
             break
 
-        calculate_temperature(fc, a_value)
+        fc.calculate_temperature(a_value)
         print "Evolve constant density - t: %e yr, rho: %e g/cm^3, T: %e K." % \
             (current_time * my_chemistry.time_units / sec_per_year,
              fc["density"][0] * my_chemistry.density_units,
              fc["temperature"][0])
-        solve_chemistry(fc, a_value, dt)
+        fc.solve_chemistry(a_value, dt)
 
         for field in fc.density_fields:
             data[field].append(fc[field][0] * my_chemistry.density_units)
         data["energy"].append(fc["energy"][0])
-        calculate_temperature(fc, a_value)
+        fc.calculate_temperature(a_value)
         data["temperature"].append(fc["temperature"][0])
-        calculate_pressure(fc, a_value)
+        fc.calculate_pressure(a_value)
         data["pressure"].append(fc["pressure"][0])
         data["time"].append(current_time * my_chemistry.time_units)
         current_time += dt

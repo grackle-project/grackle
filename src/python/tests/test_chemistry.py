@@ -14,8 +14,6 @@
 import numpy as np
 
 from pygrackle.grackle_wrapper import \
-    calculate_temperature, \
-    calculate_cooling_time, \
     chemistry_data
 
 from pygrackle.utilities.api import \
@@ -46,8 +44,8 @@ def test_proper_comoving_units():
         fc_c = setup_fluid_container(chem_c, current_redshift=current_redshift,
                                      converge=True)
         a_c = 1.0 / (1.0 + current_redshift) / chem_c.a_units
-        calculate_temperature(fc_c, a_c)
-        calculate_cooling_time(fc_c, a_c)
+        fc_c.calculate_temperaturea(a_c)
+        fc_c.calculate_cooling_time(a_c)
         t_sort_c = np.argsort(fc_c["temperature"])
         t_cool_c = fc_c["cooling_time"][t_sort_c] * chem_c.time_units
 
@@ -73,8 +71,8 @@ def test_proper_comoving_units():
         fc_p = setup_fluid_container(chem_p, current_redshift=current_redshift,
                                      converge=True)
         a_p = 1.0 / (1.0 + current_redshift) / chem_p.a_units
-        calculate_temperature(fc_p, a_p)
-        calculate_cooling_time(fc_p, a_p)
+        fc_p.calculate_temperature(a_p)
+        fc_p.calculate_cooling_time(a_p)
         t_sort_p = np.argsort(fc_p["temperature"])
         t_cool_p = fc_p["cooling_time"][t_sort_p] * chem_p.time_units
 
@@ -103,8 +101,8 @@ def test_proper_comoving_units_tabular():
         fc_c = setup_fluid_container(chem_c, current_redshift=current_redshift,
                                      converge=False)
         a_c = 1.0 / (1.0 + current_redshift) / chem_c.a_units
-        calculate_temperature(fc_c, a_c)
-        calculate_cooling_time(fc_c, a_c)
+        fc_c.calculate_temperature(a_c)
+        fc_c.calculate_cooling_time(a_c)
         t_sort_c = np.argsort(fc_c["temperature"])
         t_cool_c = fc_c["cooling_time"][t_sort_c] * chem_c.time_units
 
@@ -130,8 +128,8 @@ def test_proper_comoving_units_tabular():
         fc_p = setup_fluid_container(chem_p, current_redshift=current_redshift,
                                      converge=False)
         a_p = 1.0 / (1.0 + current_redshift) / chem_p.a_units
-        calculate_temperature(fc_p, a_p)
-        calculate_cooling_time(fc_p, a_p)
+        fc_p.calculate_temperature(a_p)
+        fc_p.calculate_cooling_time(a_p)
         t_sort_p = np.argsort(fc_p["temperature"])
         t_cool_p = fc_p["cooling_time"][t_sort_p] * chem_p.time_units
 
@@ -163,8 +161,8 @@ def test_proper_units():
         fc_1 = setup_fluid_container(chem_1, current_redshift=current_redshift,
                                      converge=False)
         a_1 = 1.0 / (1.0 + current_redshift) / chem_1.a_units
-        calculate_temperature(fc_1, a_1)
-        calculate_cooling_time(fc_1, a_1)
+        fc_1.calculate_temperature(a_1)
+        fc_1.calculate_cooling_time(a_1)
         t_sort_1 = np.argsort(fc_1["temperature"])
         t_cool_1 = fc_1["cooling_time"][t_sort_1] * chem_1.time_units
 
@@ -185,8 +183,8 @@ def test_proper_units():
         fc_2 = setup_fluid_container(chem_2, current_redshift=current_redshift,
                                      converge=False)
         a_2 = 1.0 / (1.0 + current_redshift) / chem_2.a_units
-        calculate_temperature(fc_2, a_2)
-        calculate_cooling_time(fc_2, a_2)
+        fc_2.calculate_temperature(a_2)
+        fc_2.calculate_cooling_time(a_2)
         t_sort_2 = np.argsort(fc_2["temperature"])
         t_cool_2 = fc_2["cooling_time"][t_sort_2] * chem_2.time_units
 

@@ -19,8 +19,6 @@ from pygrackle.utilities.testing import \
     assert_rel_equal
 
 from pygrackle.grackle_wrapper import \
-    calculate_cooling_time, \
-    calculate_temperature, \
     chemistry_data
 
 from pygrackle.utilities.api import \
@@ -64,8 +62,8 @@ def test_equilibrium():
                                converge=True, tolerance=1e-6, max_iterations=np.inf)
 
     a = 1.0 / (1.0 + current_redshift) / my_chem.a_units
-    calculate_temperature(fc, a)
-    calculate_cooling_time(fc, a)
+    fc.calculate_temperature(a)
+    fc.calculate_cooling_time(a)
     t_sort = np.argsort(fc["temperature"])
     t_cool = fc["cooling_time"][t_sort] * my_chem.time_units
     my_T = fc["temperature"][t_sort]

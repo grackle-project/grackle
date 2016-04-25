@@ -13,8 +13,16 @@
 
 import numpy as np
 
+from pygrackle.grackle_wrapper import \
+    calculate_cooling_time, \
+    calculate_gamma, \
+    calculate_pressure, \
+    calculate_temperature, \
+    solve_chemistry
+
 from pygrackle.utilities.physical_constants import \
     mass_hydrogen_cgs
+
 from pygrackle.utilities.units import \
     get_cooling_units
 
@@ -59,6 +67,21 @@ class FluidContainer(dict):
     @property
     def density_fields(self):
         return _fluid_names[self.chemistry_data.primordial_chemistry]
+
+    def calculate_cooling_time(self, a_value):
+        calculate_cooling_time(self, a_value)
+
+    def calculate_gamma(self, a_value):
+        calculate_gamma(self, a_value)
+
+    def calculate_pressure(self, a_value):
+        calculate_pressure(self, a_value)
+
+    def calculate_temperature(self, a_value):
+        calculate_temperature(self, a_value)
+
+    def solve_chemistry(self, a_value, dt):
+        solve_chemistry(self, a_value, dt)
 
 class FieldNotFound(Exception):
     def __init__(self, field):

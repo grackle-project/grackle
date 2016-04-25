@@ -20,7 +20,6 @@ import os
 import yt
 
 from pygrackle.grackle_wrapper import \
-    calculate_temperature, \
     chemistry_data
 
 from pygrackle.fluid_container import \
@@ -95,7 +94,7 @@ if __name__ == "__main__":
 
     fc["energy"][:] = initial_temperature / \
       fc.chemistry_data.temperature_units
-    calculate_temperature(fc, a_value)
+    fc.calculate_temperature(a_value)
     fc["energy"][:] *= initial_temperature / fc["temperature"]
 
     # timestepping safety factor

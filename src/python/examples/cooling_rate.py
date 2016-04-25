@@ -17,8 +17,6 @@ import os
 import yt
 
 from pygrackle.grackle_wrapper import \
-    calculate_cooling_time, \
-    calculate_temperature, \
     chemistry_data
 
 from pygrackle.utilities.api import \
@@ -65,8 +63,8 @@ if __name__ == "__main__":
                                current_redshift=current_redshift,
                                converge=True)
 
-    calculate_temperature(fc, a_value)
-    calculate_cooling_time(fc, a_value)
+    fc.calculate_temperature(a_value)
+    fc.calculate_cooling_time(a_value)
 
     density_proper = fc["density"] / \
         (my_chemistry.a_units * a_value)**(3*my_chemistry.comoving_coordinates)

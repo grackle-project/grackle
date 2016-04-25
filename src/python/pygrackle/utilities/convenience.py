@@ -17,11 +17,6 @@ import sys
 from pygrackle.fluid_container import \
     FluidContainer
 
-from pygrackle.grackle_wrapper import \
-    solve_chemistry, \
-    calculate_cooling_time, \
-    calculate_temperature
-
 from pygrackle.utilities.physical_constants import \
     mass_hydrogen_cgs, \
     sec_per_Myr
@@ -104,7 +99,7 @@ def setup_fluid_container(my_chemistry,
     my_time = 0.0
     i = 0
     while converge and i < max_iterations:
-        calculate_cooling_time(fc, a_value)
+        fc.calculate_cooling_time(a_value)
         dt = 0.1 * np.abs(fc["cooling_time"]).min()
         sys.stderr.write("t: %.3f Myr, dt: %.3e Myr, " % \
                          ((my_time * my_chemistry.time_units / sec_per_Myr),
@@ -113,7 +108,7 @@ def setup_fluid_container(my_chemistry,
                       "H2I", "H2II", "DI", "DII", "HDI", "de"]:
             if field in fc:
                 fc_last[field] = np.copy(fc[field])
-        solve_chemistry(fc, a_value, dt)
+        fc.solve_chemistry(a_value, dt)
         mu = calculate_mean_molecular_weight(fc, a_value)
         fc["energy"] = temperature / \
           fc.chemistry_data.temperature_units / mu / \
@@ -137,7 +132,7 @@ def calculate_mean_molecular_weight(fc, a_value):
     my_chemistry = fc.chemistry_data
     if (fc["energy"] == 0).all():
         return np.ones(fc["energy"].size)
-    calculate_temperature(fc, a_value)
+    fc.calculate_temperature(a_value)
     return (fc["temperature"] / \
             (fc["energy"] * (my_chemistry.Gamma - 1.) *
              fc.chemistry_data.temperature_units))
