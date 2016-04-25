@@ -1,10 +1,6 @@
 import subprocess
 import os
 
-from pygrackle.utilities.testing import requires_module
-
-
-@requires_module('flake8')
 def test_flake8():
     python_grackle_dir = os.path.dirname(
         os.path.dirname(os.path.abspath(__file__)))
