@@ -61,8 +61,7 @@ def test_equilibrium():
     my_chem.velocity_units = my_chem.length_units / my_chem.time_units
     fc = setup_fluid_container(my_chem, current_redshift=current_redshift,
                                temperature=np.logspace(4.5, 9, 200),
-                               converge=True, tolerance=1e-6, max_iterations=np.inf,
-                               dt=(0.0001 * sec_per_Myr / my_chem.time_units))
+                               converge=True, tolerance=1e-6, max_iterations=np.inf)
 
     a = 1.0 / (1.0 + current_redshift) / my_chem.a_units
     calculate_temperature(fc, a)
@@ -70,7 +69,7 @@ def test_equilibrium():
     t_sort = np.argsort(fc["temperature"])
     t_cool = fc["cooling_time"][t_sort] * my_chem.time_units
     my_T = fc["temperature"][t_sort]
-    my_nH = calculate_hydrogen_number_density(my_chem, fc).mean()
+    my_nH = calculate_hydrogen_number_density(fc).mean()
 
     cooling_rate_eq = -1*total_cooling(my_T, my_nH) / my_nH**2
     cooling_rate_g = fc["energy"][t_sort] / t_cool * fc["density"] * \
