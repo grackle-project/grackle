@@ -88,7 +88,7 @@ def setup_fluid_container(my_chemistry,
 
     fc["energy"] = temperature / \
       fc.chemistry_data.temperature_units / \
-      calculate_mean_molecular_weight(fc, a_value) / \
+      fc.calculate_mean_molecular_weight(a_value) / \
       (my_chemistry.Gamma - 1.0)
     fc["x-velocity"][:] = 0.0
     fc["y-velocity"][:] = 0.0
@@ -109,7 +109,7 @@ def setup_fluid_container(my_chemistry,
             if field in fc:
                 fc_last[field] = np.copy(fc[field])
         fc.solve_chemistry(a_value, dt)
-        mu = calculate_mean_molecular_weight(fc, a_value)
+        mu = fc.calculate_mean_molecular_weight(a_value)
         fc["energy"] = temperature / \
           fc.chemistry_data.temperature_units / mu / \
           (my_chemistry.Gamma - 1.0)
@@ -127,15 +127,6 @@ def setup_fluid_container(my_chemistry,
         return None
 
     return fc
-
-def calculate_mean_molecular_weight(fc, a_value):
-    my_chemistry = fc.chemistry_data
-    if (fc["energy"] == 0).all():
-        return np.ones(fc["energy"].size)
-    fc.calculate_temperature(a_value)
-    return (fc["temperature"] / \
-            (fc["energy"] * (my_chemistry.Gamma - 1.) *
-             fc.chemistry_data.temperature_units))
 
 def calculate_hydrogen_number_density(fc):
     my_chemistry = fc.chemistry_data

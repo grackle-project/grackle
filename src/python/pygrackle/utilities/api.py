@@ -1,6 +1,5 @@
 from .convenience import \
     setup_fluid_container, \
-    calculate_mean_molecular_weight, \
     calculate_hydrogen_number_density
 
 from .evolve import \
