@@ -10,5 +10,4 @@ from .evolve import \
 
 from .units import \
     set_cosmology_units, \
-    get_temperature_units, \
     get_cooling_units

@@ -21,7 +21,6 @@ from pygrackle.fluid_container import \
     FluidContainer
 
 from pygrackle.utilities.api import \
-    get_temperature_units, \
     evolve_constant_density, \
     evolve_freefall
 
@@ -55,7 +54,6 @@ if __name__=="__main__":
     my_chemistry.time_units     = sec_per_Myr       # 1 Myr in s
     my_chemistry.velocity_units = my_chemistry.a_units * \
         (my_chemistry.length_units / a_value) / my_chemistry.time_units
-    temperature_units = get_temperature_units(my_chemistry)
 
     # set initial density and temperature
     initial_temperature = 50000. # start the gas at this temperature
@@ -84,7 +82,8 @@ if __name__=="__main__":
         fc["HDI"][:] = tiny_number * fc["density"]
     if my_chemistry.metal_cooling == 1:
         fc["metal"][:] = 0.0 * fc["density"]
-    fc["energy"][:] = initial_temperature / temperature_units
+    fc["energy"][:] = initial_temperature / \
+      fc.chemistry_data.temperature_units
     fc["x-velocity"][:] = 0.0
     fc["y-velocity"][:] = 0.0
     fc["z-velocity"][:] = 0.0

@@ -14,9 +14,7 @@
 import numpy as np
 
 from .physical_constants import \
-    boltzmann_constant_cgs, \
     mass_hydrogen_cgs
-
 
 def set_cosmology_units(my_units, hubble_constant=0.704,
                         omega_matter=0.268, omega_lambda=0.732,
@@ -58,15 +56,6 @@ def set_cosmology_units(my_units, hubble_constant=0.704,
         hubble_constant / np.power(1 + initial_redshift, 1.5)
     my_units.velocity_units = 1.22475e7 * comoving_box_size * \
         np.sqrt(omega_matter) * np.sqrt(1 + initial_redshift)
-
-
-def get_temperature_units(my_units):
-    "Calculate temperature units from internal base units."
-
-    temperature_units = mass_hydrogen_cgs * \
-        my_units.velocity_units**2 / boltzmann_constant_cgs
-    return temperature_units
-
 
 def get_cooling_units(my_units, current_redshift):
     "Calculate cooling units from internal base units."

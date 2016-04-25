@@ -26,9 +26,6 @@ from pygrackle.utilities.physical_constants import \
     mass_hydrogen_cgs, \
     sec_per_Myr
 
-from .units import \
-    get_temperature_units
-
 def check_convergence(fc1, fc2, fields=None, tol=0.01):
     "Check for fields to be different by less than tol."
 
@@ -94,8 +91,8 @@ def setup_fluid_container(my_chemistry,
         fc["HDI"][:] = tiny_number * fc["density"]
     fc["metal"][:] = metal_mass_fraction * fc["density"]
 
-    temperature_units = get_temperature_units(my_chemistry)
-    fc["energy"] = temperature / temperature_units / \
+    fc["energy"] = temperature / \
+      fc.chemistry_data.temperature_units / \
       calculate_mean_molecular_weight(fc, a_value) / \
       (my_chemistry.Gamma - 1.0)
     fc["x-velocity"][:] = 0.0
@@ -118,7 +115,8 @@ def setup_fluid_container(my_chemistry,
                 fc_last[field] = np.copy(fc[field])
         solve_chemistry(fc, a_value, dt)
         mu = calculate_mean_molecular_weight(fc, a_value)
-        fc["energy"] = temperature / temperature_units / mu / \
+        fc["energy"] = temperature / \
+          fc.chemistry_data.temperature_units / mu / \
           (my_chemistry.Gamma - 1.0)
         converged = check_convergence(fc, fc_last, tol=tolerance)
         if converged:
@@ -139,11 +137,10 @@ def calculate_mean_molecular_weight(fc, a_value):
     my_chemistry = fc.chemistry_data
     if (fc["energy"] == 0).all():
         return np.ones(fc["energy"].size)
-    temperature_units = get_temperature_units(my_chemistry)
     calculate_temperature(fc, a_value)
     return (fc["temperature"] / \
             (fc["energy"] * (my_chemistry.Gamma - 1.) *
-             temperature_units))
+             fc.chemistry_data.temperature_units))
 
 def calculate_hydrogen_number_density(fc):
     my_chemistry = fc.chemistry_data

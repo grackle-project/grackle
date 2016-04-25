@@ -11,6 +11,10 @@
 # software.
 ########################################################################
 
+from pygrackle.utilities.physical_constants import \
+    boltzmann_constant_cgs, \
+    mass_hydrogen_cgs
+
 from grackle_defs cimport *
 import numpy as np
 cimport numpy as np
@@ -201,6 +205,11 @@ cdef class chemistry_data:
             return self.units.a_units
         def __set__(self, val):
             self.units.a_units = val
+
+    property temperature_units:
+        def __get__(self):
+            return mass_hydrogen_cgs * \
+              self.velocity_units**2 / boltzmann_constant_cgs
 
 cdef gr_float* get_field(fc, name):
     cdef np.ndarray rv = fc.get(name, None)

@@ -27,7 +27,6 @@ from pygrackle.fluid_container import \
     FluidContainer
 
 from pygrackle.utilities.api import \
-    get_temperature_units, \
     evolve_constant_density
 
 from pygrackle.utilities.physical_constants import \
@@ -66,7 +65,6 @@ if __name__ == "__main__":
     my_chemistry.time_units = sec_per_Myr          # 1 Myr in s
     my_chemistry.velocity_units = my_chemistry.a_units * \
         (my_chemistry.length_units / a_value) / my_chemistry.time_units
-    temperature_units = get_temperature_units(my_chemistry)
 
     rval = my_chemistry.initialize(a_value)
 
@@ -95,7 +93,8 @@ if __name__ == "__main__":
     fc["y-velocity"][:] = 0.0
     fc["z-velocity"][:] = 0.0
 
-    fc["energy"][:] = initial_temperature / temperature_units
+    fc["energy"][:] = initial_temperature / \
+      fc.chemistry_data.temperature_units
     calculate_temperature(fc, a_value)
     fc["energy"][:] *= initial_temperature / fc["temperature"]
 
@@ -114,7 +113,7 @@ if __name__ == "__main__":
 
     data["mu"] = data["temperature"] / \
         (data["energy"] * (my_chemistry.Gamma - 1.) *
-         temperature_units)
+         fc.chemistry_data.temperature_units)
     pyplot.twinx()
     p2, = pyplot.semilogx(data["time"].to("Myr"), data["mu"],
                           color="red", label="$\\mu$")
