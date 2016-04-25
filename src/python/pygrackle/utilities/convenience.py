@@ -87,9 +87,9 @@ def setup_fluid_container(my_chemistry,
     fc["metal"][:] = metal_mass_fraction * fc["density"]
 
     fc["energy"] = temperature / \
-      fc.chemistry_data.temperature_units / \
-      fc.calculate_mean_molecular_weight(a_value) / \
-      (my_chemistry.Gamma - 1.0)
+        fc.chemistry_data.temperature_units / \
+        fc.calculate_mean_molecular_weight(a_value) / \
+        (my_chemistry.Gamma - 1.0)
     fc["x-velocity"][:] = 0.0
     fc["y-velocity"][:] = 0.0
     fc["z-velocity"][:] = 0.0
@@ -111,8 +111,8 @@ def setup_fluid_container(my_chemistry,
         fc.solve_chemistry(a_value, dt)
         mu = fc.calculate_mean_molecular_weight(a_value)
         fc["energy"] = temperature / \
-          fc.chemistry_data.temperature_units / mu / \
-          (my_chemistry.Gamma - 1.0)
+            fc.chemistry_data.temperature_units / mu / \
+            (my_chemistry.Gamma - 1.0)
         converged = check_convergence(fc, fc_last, tol=tolerance)
         if converged:
             sys.stderr.write("\n")

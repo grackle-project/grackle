@@ -13,10 +13,8 @@
 
 import numpy as np
 
-from pygrackle.grackle_wrapper import \
-    chemistry_data
-
-from pygrackle.utilities.api import \
+from pygrackle import \
+    chemistry_data, \
     setup_fluid_container, \
     set_cosmology_units
 
@@ -44,7 +42,7 @@ def test_proper_comoving_units():
         fc_c = setup_fluid_container(chem_c, current_redshift=current_redshift,
                                      converge=True)
         a_c = 1.0 / (1.0 + current_redshift) / chem_c.a_units
-        fc_c.calculate_temperaturea(a_c)
+        fc_c.calculate_temperature(a_c)
         fc_c.calculate_cooling_time(a_c)
         t_sort_c = np.argsort(fc_c["temperature"])
         t_cool_c = fc_c["cooling_time"][t_sort_c] * chem_c.time_units

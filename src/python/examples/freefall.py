@@ -14,13 +14,9 @@
 from matplotlib import pyplot
 import yt
 
-from pygrackle.grackle_wrapper import \
-    chemistry_data
-
-from pygrackle.fluid_container import \
-    FluidContainer
-
-from pygrackle.utilities.api import \
+from pygrackle import \
+    chemistry_data, \
+    FluidContainer, \
     evolve_constant_density, \
     evolve_freefall
 
@@ -83,7 +79,7 @@ if __name__=="__main__":
     if my_chemistry.metal_cooling == 1:
         fc["metal"][:] = 0.0 * fc["density"]
     fc["energy"][:] = initial_temperature / \
-      fc.chemistry_data.temperature_units
+        fc.chemistry_data.temperature_units
     fc["x-velocity"][:] = 0.0
     fc["y-velocity"][:] = 0.0
     fc["z-velocity"][:] = 0.0

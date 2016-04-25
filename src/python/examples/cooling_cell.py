@@ -19,13 +19,9 @@ from matplotlib import pyplot
 import os
 import yt
 
-from pygrackle.grackle_wrapper import \
-    chemistry_data
-
-from pygrackle.fluid_container import \
-    FluidContainer
-
-from pygrackle.utilities.api import \
+from pygrackle import \
+    FluidContainer, \
+    chemistry_data, \
     evolve_constant_density
 
 from pygrackle.utilities.physical_constants import \
@@ -93,7 +89,7 @@ if __name__ == "__main__":
     fc["z-velocity"][:] = 0.0
 
     fc["energy"][:] = initial_temperature / \
-      fc.chemistry_data.temperature_units
+        fc.chemistry_data.temperature_units
     fc.calculate_temperature(a_value)
     fc["energy"][:] *= initial_temperature / fc["temperature"]
 
