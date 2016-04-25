@@ -18,12 +18,9 @@ from matplotlib import pyplot
 from pygrackle.utilities.testing import \
     assert_rel_equal
 
-from pygrackle.grackle_wrapper import \
-    chemistry_data
-
-from pygrackle.utilities.api import \
-    setup_fluid_container, \
-    calculate_hydrogen_number_density
+from pygrackle import \
+    chemistry_data, \
+    setup_fluid_container
 
 from pygrackle.utilities.primordial_equilibrium import \
     total_cooling, \
@@ -67,7 +64,7 @@ def test_equilibrium():
     t_sort = np.argsort(fc["temperature"])
     t_cool = fc["cooling_time"][t_sort] * my_chem.time_units
     my_T = fc["temperature"][t_sort]
-    my_nH = calculate_hydrogen_number_density(fc).mean()
+    my_nH = fc.calculate_hydrogen_number_density().mean()
 
     cooling_rate_eq = -1*total_cooling(my_T, my_nH) / my_nH**2
     cooling_rate_g = fc["energy"][t_sort] / t_cool * fc["density"] * \
