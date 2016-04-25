@@ -68,14 +68,26 @@ class FluidContainer(dict):
     def density_fields(self):
         return _fluid_names[self.chemistry_data.primordial_chemistry]
 
-    def calculate_mean_molecular_weight(a_value):
-        my_chemistry = fc.chemistry_data
-        if (fc["energy"] == 0).all():
-            return np.ones(fc["energy"].size)
-        fc.calculate_temperature(a_value)
-        return (fc["temperature"] / \
-                (fc["energy"] * (my_chemistry.Gamma - 1.) *
-                 fc.chemistry_data.temperature_units))
+    def calculate_hydrogen_number_density(self):
+        my_chemistry = self.chemistry_data
+        if my_chemistry.primordial_chemistry == 0:
+            return my_chemistry.HydrogenFractionByMass * \
+              self["density"] * my_chemistry.density_units / mass_hydrogen_cgs
+        nH = self["HI"] + self["HII"]
+        if my_chemistry.primordial_chemistry > 1:
+            nH += self["HM"] + self["H2I"] + self["H2II"]
+        if my_chemistry.primordial_chemistry > 2:
+            nH += self["HDI"] / 2.
+        return nH * my_chemistry.density_units / mass_hydrogen_cgs
+
+    def calculate_mean_molecular_weight(self, a_value):
+        my_chemistry = self.chemistry_data
+        if (self["energy"] == 0).all():
+            return np.ones(self["energy"].size)
+        self.calculate_temperature(a_value)
+        return (self["temperature"] / \
+                (self["energy"] * (my_chemistry.Gamma - 1.) *
+                 self.chemistry_data.temperature_units))
 
     def calculate_cooling_time(self, a_value):
         calculate_cooling_time(self, a_value)

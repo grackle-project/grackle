@@ -1,6 +1,5 @@
 from .convenience import \
-    setup_fluid_container, \
-    calculate_hydrogen_number_density
+    setup_fluid_container
 
 from .evolve import \
     evolve_constant_density, \

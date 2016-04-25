@@ -127,15 +127,3 @@ def setup_fluid_container(my_chemistry,
         return None
 
     return fc
-
-def calculate_hydrogen_number_density(fc):
-    my_chemistry = fc.chemistry_data
-    if my_chemistry.primordial_chemistry == 0:
-        return my_chemistry.HydrogenFractionByMass * \
-          fc["density"] * my_chemistry.density_units / mass_hydrogen_cgs
-    nH = fc["HI"] + fc["HII"]
-    if my_chemistry.primordial_chemistry > 1:
-        nH += fc["HM"] + fc["H2I"] + fc["H2II"]
-    if my_chemistry.primordial_chemistry > 2:
-        nH += fc["HDI"] / 2.
-    return nH * my_chemistry.density_units / mass_hydrogen_cgs
