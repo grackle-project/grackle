@@ -14,13 +14,9 @@
 from matplotlib import pyplot
 import yt
 
-from pygrackle.grackle_wrapper import \
-    chemistry_data
-
-from pygrackle.fluid_container import \
-    FluidContainer
-
-from pygrackle.utilities.api import \
+from pygrackle import \
+    chemistry_data, \
+    FluidContainer, \
     evolve_constant_density, \
     evolve_freefall
 

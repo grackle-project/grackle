@@ -16,10 +16,8 @@ import numpy as np
 import os
 import yt
 
-from pygrackle.grackle_wrapper import \
-    chemistry_data
-
-from pygrackle.utilities.api import \
+from pygrackle import \
+    chemistry_data, \
     setup_fluid_container
 
 from pygrackle.utilities.physical_constants import \
