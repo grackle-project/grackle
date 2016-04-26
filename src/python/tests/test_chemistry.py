@@ -185,9 +185,9 @@ def test_proper_units():
         chem_2.grackle_data_file = "../../input/CloudyData_UVB=HM2012.h5"
         chem_2.comoving_coordinates = 0
         chem_2.a_units = 1.0
-        chem_2.density_units = random_logscale(-28, -26)
-        chem_2.length_units = random_logscale(0, 2)
-        chem_2.time_units = random_logscale(0, 2)
+        chem_2.density_units = random_logscale(-28, -26, random_state=my_random_state)
+        chem_2.length_units = random_logscale(0, 2, random_state=my_random_state)
+        chem_2.time_units = random_logscale(0, 2, random_state=my_random_state)
         chem_2.velocity_units = chem_2.length_units / chem_2.time_units
         fc_2 = setup_fluid_container(chem_2, current_redshift=current_redshift,
                                      converge=False)
