@@ -26,6 +26,7 @@ from pygrackle.utilities.testing import \
 def test_proper_comoving_units():
     "Make sure proper and comoving units systems give the same answer."
 
+    my_random_state = np.random.RandomState(7921)
     for current_redshift in [0., 1., 3., 6., 9.]:
 
         # comoving units
@@ -59,11 +60,11 @@ def test_proper_comoving_units():
         chem_p.a_units = 1.0
         # Set the proper units to be of similar magnitude to the
         # comoving system to help the solver be more efficient.
-        chem_p.density_units = random_logscale(-2, 2) * \
+        chem_p.density_units = random_logscale(-2, 2, random_state=my_random_state) * \
             chem_c.density_units / (1 + current_redshift)**3
-        chem_p.length_units = random_logscale(-2, 2) * \
+        chem_p.length_units = random_logscale(-2, 2, random_state=my_random_state) * \
             chem_c.length_units * (1 + current_redshift)
-        chem_p.time_units = random_logscale(-2, 2) * \
+        chem_p.time_units = random_logscale(-2, 2, random_state=my_random_state) * \
             chem_c.time_units
         chem_p.velocity_units = chem_p.length_units / chem_p.time_units
         fc_p = setup_fluid_container(chem_p, current_redshift=current_redshift,
@@ -74,15 +75,20 @@ def test_proper_comoving_units():
         t_sort_p = np.argsort(fc_p["temperature"])
         t_cool_p = fc_p["cooling_time"][t_sort_p] * chem_p.time_units
 
+        comp = "\nDU1: %e, LU1: %e, TU1: %e - DU2: %e, LU2: %e, TU2L %e." % \
+            (chem_p.density_units, chem_p.length_units, chem_p.time_units,
+             chem_c.density_units, chem_c.length_units, chem_c.time_units)
+
         assert_rel_equal(
             t_cool_p, t_cool_c, 4,
-            "Proper and comoving cooling times disagree for z = %f with min/max = %f/%f." %
-            (current_redshift, (t_cool_p / t_cool_c).min(), (t_cool_p / t_cool_c).max()))
+            ("Proper and comoving cooling times disagree for z = %f with min/max = %f/%f." %
+             (current_redshift, (t_cool_p / t_cool_c).min(), (t_cool_p / t_cool_c).max()) + comp))
 
 
 def test_proper_comoving_units_tabular():
     "Make sure proper and comoving units systems give the same answer with tabular cooling."
 
+    my_random_state = np.random.RandomState(19650909)
     for current_redshift in [0., 1., 3., 6., 9.]:
 
         # comoving units
@@ -116,11 +122,11 @@ def test_proper_comoving_units_tabular():
         chem_p.a_units = 1.0
         # Set the proper units to be of similar magnitude to the
         # comoving system to help the solver be more efficient.
-        chem_p.density_units = random_logscale(-2, 2) * \
+        chem_p.density_units = random_logscale(-2, 2, random_state=my_random_state) * \
             chem_c.density_units / (1 + current_redshift)**3
-        chem_p.length_units = random_logscale(-2, 2) * \
+        chem_p.length_units = random_logscale(-2, 2, random_state=my_random_state) * \
             chem_c.length_units * (1 + current_redshift)
-        chem_p.time_units = random_logscale(-2, 2) * \
+        chem_p.time_units = random_logscale(-2, 2, random_state=my_random_state) * \
             chem_c.time_units
         chem_p.velocity_units = chem_p.length_units / chem_p.time_units
         fc_p = setup_fluid_container(chem_p, current_redshift=current_redshift,
@@ -131,15 +137,20 @@ def test_proper_comoving_units_tabular():
         t_sort_p = np.argsort(fc_p["temperature"])
         t_cool_p = fc_p["cooling_time"][t_sort_p] * chem_p.time_units
 
+        comp = "\nDU1: %e, LU1: %e, TU1: %e - DU2: %e, LU2: %e, TU2L %e." % \
+            (chem_p.density_units, chem_p.length_units, chem_p.time_units,
+             chem_c.density_units, chem_c.length_units, chem_c.time_units)
+
         assert_rel_equal(
             t_cool_p, t_cool_c, 4,
-            "Proper and comoving cooling times disagree for z = %f with min/max = %f/%f." %
-            (current_redshift, (t_cool_p / t_cool_c).min(), (t_cool_p / t_cool_c).max()))
+            ("Proper and comoving tabular cooling times disagree for z = %f with min/max = %f/%f.\n" %
+             (current_redshift, (t_cool_p / t_cool_c).min(), (t_cool_p / t_cool_c).max()) + comp))
 
 
 def test_proper_units():
     "Make sure two different proper units systems give the same answer."
 
+    my_random_state = np.random.RandomState(20150725)
     for current_redshift in [0., 1., 3.]:
 
         # proper units
@@ -152,9 +163,9 @@ def test_proper_units():
         chem_1.grackle_data_file = "../../input/CloudyData_UVB=HM2012.h5"
         chem_1.comoving_coordinates = 0
         chem_1.a_units = 1.0
-        chem_1.density_units = random_logscale(-30, -10)
-        chem_1.length_units = random_logscale(0, 2)
-        chem_1.time_units = random_logscale(0, 2)
+        chem_1.density_units = random_logscale(-1, 1, random_state=my_random_state)
+        chem_1.length_units = random_logscale(0, 2, random_state=my_random_state)
+        chem_1.time_units = random_logscale(0, 2, random_state=my_random_state)
         chem_1.velocity_units = chem_1.length_units / chem_1.time_units
         fc_1 = setup_fluid_container(chem_1, current_redshift=current_redshift,
                                      converge=False)
@@ -174,7 +185,7 @@ def test_proper_units():
         chem_2.grackle_data_file = "../../input/CloudyData_UVB=HM2012.h5"
         chem_2.comoving_coordinates = 0
         chem_2.a_units = 1.0
-        chem_2.density_units = random_logscale(-30, -10)
+        chem_2.density_units = random_logscale(-28, -26)
         chem_2.length_units = random_logscale(0, 2)
         chem_2.time_units = random_logscale(0, 2)
         chem_2.velocity_units = chem_2.length_units / chem_2.time_units
@@ -186,7 +197,11 @@ def test_proper_units():
         t_sort_2 = np.argsort(fc_2["temperature"])
         t_cool_2 = fc_2["cooling_time"][t_sort_2] * chem_2.time_units
 
+        comp = "\nDU1: %e, LU1: %e, TU1: %e - DU2: %e, LU2: %e, TU2L %e." % \
+            (chem_1.density_units, chem_1.length_units, chem_1.time_units,
+             chem_2.density_units, chem_2.length_units, chem_2.time_units)
+
         assert_rel_equal(
             t_cool_1, t_cool_2, 4,
-            "Proper and comoving cooling times disagree for z = %f with min/max = %f/%f." %
-            (current_redshift, (t_cool_1/t_cool_2).min(), (t_cool_1/t_cool_2).max()))
+            ("Different proper unit system cooling times disagree for z = %f with min/max = %f/%f." %
+             (current_redshift, (t_cool_1/t_cool_2).min(), (t_cool_1/t_cool_2).max()) + comp))

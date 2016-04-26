@@ -30,8 +30,10 @@ def assert_rel_equal(a1, a2, decimals, err_msg='', verbose=True):
                                decimals, err_msg=err_msg,
                                verbose=verbose)
 
-def random_logscale(log_min, log_max, size=1):
-    log_val = (log_max - log_min) * np.random.random(size) + log_min
+def random_logscale(log_min, log_max, size=1, random_state=None):
+    if random_state is None:
+        random_state = np.random.RandomState()
+    log_val = (log_max - log_min) * random_state.random_sample(size) + log_min
     return np.power(10, log_val)
 
 def requires_module(module):
