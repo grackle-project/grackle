@@ -21,7 +21,7 @@ import tempfile
 import yt
 
 from pygrackle.utilities.testing import \
-    assert_array_almost_equal
+    assert_allclose
 
 current_path = os.path.abspath(__file__)
 
@@ -77,7 +77,7 @@ def example_test(example_path, primordial_chemistry=None):
         ad_new = ds_new.data
 
         for field_name in ds_old.field_list:
-            assert_array_almost_equal(ad_old[field_name], ad_new[field_name])
+            assert_allclose(ad_old[field_name].v, ad_new[field_name].v)
 
 
 def test_examples():
