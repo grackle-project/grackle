@@ -20,10 +20,7 @@ import subprocess
 import tempfile
 import yt
 
-from matplotlib.testing.compare import \
-    compare_images
 from pygrackle.utilities.testing import \
-    assert_equal, \
     assert_array_almost_equal
 
 current_path = os.path.abspath(__file__)
@@ -62,11 +59,9 @@ def example_test(example_path, primordial_chemistry=None):
                                (command, er.returncode, er.output))
 
         example_base = os.path.split(example_path)[1].strip('.py')
-        possible_files = [
-            '.'.join([example_base, ext]) for ext in ['h5', 'png']]
+        possible_file = '.'.join([example_base, 'h5'])
 
-        if not all([os.path.exists(os.sep.join([tmpdir, pf]))
-                    for pf in possible_files]):
+        if not os.path.exists(os.sep.join([tmpdir, possible_file])):
             return
 
         answer_path = os.sep.join([os.path.dirname(
@@ -83,12 +78,6 @@ def example_test(example_path, primordial_chemistry=None):
 
         for field_name in ds_old.field_list:
             assert_array_almost_equal(ad_old[field_name], ad_new[field_name])
-
-        answer_name = '.'.join([example_base, 'png'])
-
-        result = compare_images(os.sep.join([answer_path, answer_name]),
-                                os.sep.join([tmpdir, answer_name]), 12)
-        assert_equal(result, None, result)
 
 
 def test_examples():
