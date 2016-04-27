@@ -22,9 +22,9 @@ extern int grackle_verbose;
 
 extern chemistry_data grackle_data;
 
-int set_default_chemistry_parameters();
+int set_default_chemistry_parameters(void);
 
-chemistry_data _set_default_chemistry_parameters();
+chemistry_data _set_default_chemistry_parameters(void);
 
 int initialize_chemistry_data(code_units *my_units, double a_value);
 

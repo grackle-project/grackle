@@ -24,15 +24,15 @@ int grackle_verbose = FALSE;
 
 chemistry_data grackle_data;
 
-chemistry_data _set_default_chemistry_parameters();
+chemistry_data _set_default_chemistry_parameters(void);
 
-int set_default_chemistry_parameters()
+int set_default_chemistry_parameters(void)
 {
   grackle_data = _set_default_chemistry_parameters();
   return SUCCESS;
 }
 
-chemistry_data _set_default_chemistry_parameters()
+chemistry_data _set_default_chemistry_parameters(void)
 {
 
   chemistry_data my_chemistry;
