@@ -20,13 +20,14 @@
      &                gaHIa, gaH2a, gaHea, gaHpa, gaela,
      &                h2ltea, gasgra, 
      &                ih2optical, iciecool, ciecoa, 
-     &                icmbTfloor, iClHeat,
+     &                icmbTfloor, iClHeat, clEleFra,
      &                priGridRank, priGridDim,
      &                priPar1, priPar2, priPar3,
      &                priDataSize, priCooling, priHeating, priMMW,
      &                metGridRank, metGridDim,
      &                metPar1, metPar2, metPar3,
-     &                metDataSize, metCooling, metHeating)
+     &                metDataSize, metCooling, metHeating,
+     &                clnew)
 
 !  SOLVE RADIATIVE COOLING/HEATING EQUATIONS
 !
@@ -56,10 +57,11 @@
 
       integer in, jn, kn, is, js, ks, ie, je, ke, nratec, 
      &        iexpand, ih2co, ipiht, ispecies, imetal, idim,
-     &        imcool, idust, igammah, ih2optical, iciecool
+     &        imcool, idust, igammah, ih2optical, iciecool,
+     &        clnew
       real*8  aye, temstart, temend,
      &        utem, uxyz, uaye, urho, utim,
-     &        gamma, fh, z_solar
+     &        gamma, fh, z_solar, clEleFra
       R_PREC  d(in,jn,kn),   e(in,jn,kn),
      &        u(in,jn,kn),   v(in,jn,kn),    w(in,jn,kn),
      &        de(in,jn,kn),  HI(in,jn,kn),   HII(in,jn,kn),
@@ -251,13 +253,14 @@
      &                indixe, t1, t2, logtem, tdef, edot,
      &                tgas, tgasold, p2d, tdust, metallicity, rhoH,
      &                ih2optical, iciecool, ciecoa, cieco,
-     &                icmbTfloor, iClHeat, 
+     &                icmbTfloor, iClHeat, clEleFra,
      &                priGridRank, priGridDim,
      &                priPar1, priPar2, priPar3,
      &                priDataSize, priCooling, priHeating, priMMW,
      &                metGridRank, metGridDim,
      &                metPar1, metPar2, metPar3,
      &                metDataSize, metCooling, metHeating,
+     &                clnew,
      &                itmask)
 
 !        Compute the cooling time on the slice

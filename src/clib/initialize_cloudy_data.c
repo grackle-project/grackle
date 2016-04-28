@@ -108,7 +108,7 @@ int initialize_cloudy_data(chemistry_data *my_chemistry,
     fprintf(stderr,"Failed to read Rank attribute in Cooling dataset.\n");
     return FAIL;
   }
-  my_cloudy->grid_rank = (int) temp_int;
+  my_cloudy->grid_rank = (long long) temp_int;
   if (grackle_verbose)
     fprintf(stderr,"Cloudy cooling grid rank: %lld.\n", my_cloudy->grid_rank);
   status = H5Aclose(attr_id);
@@ -132,7 +132,7 @@ int initialize_cloudy_data(chemistry_data *my_chemistry,
   if (grackle_verbose)
     fprintf(stderr,"Cloudy cooling grid dimensions:");
   for (q = 0;q < my_cloudy->grid_rank;q++) {
-    my_cloudy->grid_dimension[q] = (int) temp_int_arr[q];
+    my_cloudy->grid_dimension[q] = (long long) temp_int_arr[q];
     if (grackle_verbose)
       fprintf(stderr," %lld", my_cloudy->grid_dimension[q]);
   }
@@ -144,6 +144,38 @@ int initialize_cloudy_data(chemistry_data *my_chemistry,
     return FAIL;
   }
   free(temp_int_arr);
+
+  // If Parameter2 is metallicity, this is an old style data file.
+  if (my_cloudy->grid_rank > 2) {
+    hid_t filetype, memtype, space, attr;
+    size_t sdim;
+    hsize_t dims[1] = {1};
+    char **rdata;
+    int ndims, i;
+    attr = H5Aopen (dset_id, "Parameter2_Name", H5P_DEFAULT);
+    filetype = H5Aget_type (attr);
+    sdim = H5Tget_size (filetype);
+    sdim++;
+
+    space = H5Aget_space (attr);
+    ndims = H5Sget_simple_extent_dims (space, dims, NULL);
+    rdata = (char **) malloc (dims[0] * sizeof (char *));
+    rdata[0] = (char *) malloc (dims[0] * sdim * sizeof (char));
+    for (i=1; i<dims[0]; i++)
+        rdata[i] = rdata[0] + i * sdim;
+    memtype = H5Tcopy (H5T_C_S1);
+    status = H5Tset_size (memtype, sdim);
+    status = H5Aread (attr, memtype, rdata[0]);
+
+    if (strcmp(rdata[0], "redshift") != 0) {
+      fprintf(stderr, "This is an old style cloudy dataset.\n");
+      my_chemistry->cloudy_data_new = 0;
+    }
+
+    free (rdata[0]);
+    free (rdata);
+    status = H5Aclose (attr);
+  }
 
   // Grid parameters.
   for (q = 0;q < my_cloudy->grid_rank;q++) {

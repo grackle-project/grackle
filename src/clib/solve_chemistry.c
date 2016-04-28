@@ -62,14 +62,15 @@ extern void FORTRAN_NAME(solve_rate_cool_g)(
 	double *h2ltea, double *gasgra,
 	int *ierr,
 	int *ih2optical, int *iciecool, int *ithreebody, double *ciecoa,
- 	int *icmbTfloor, int *iClHeat,
+ 	int *icmbTfloor, int *iClHeat, double *clEleFra,
         long long *priGridRank, long long *priGridDim,
         double *priPar1, double *priPar2, double *priPar3, 
  	long long *priDataSize, double *priCooling, double *priHeating,
         double *priMMW, 
         long long *metGridRank, long long *metGridDim,
  	double *metPar1, double *metPar2, double *metPar3, 
- 	long long *metDataSize, double *metCooling, double *metHeating);
+ 	long long *metDataSize, double *metCooling, double *metHeating,
+        int *clnew);
 
 int _solve_chemistry(chemistry_data *my_chemistry,
                      code_units *my_units,
@@ -173,6 +174,7 @@ int _solve_chemistry(chemistry_data *my_chemistry,
     &my_chemistry->three_body_rate, my_chemistry->cieco,
     &my_chemistry->cmb_temperature_floor,
     &my_chemistry->UVbackground,
+    &my_chemistry->cloudy_electron_fraction_factor,
     &my_chemistry->cloudy_primordial.grid_rank,
     my_chemistry->cloudy_primordial.grid_dimension,
     my_chemistry->cloudy_primordial.grid_parameters[0],
@@ -189,7 +191,8 @@ int _solve_chemistry(chemistry_data *my_chemistry,
     my_chemistry->cloudy_metal.grid_parameters[2],
     &my_chemistry->cloudy_metal.data_size,
     my_chemistry->cloudy_metal.cooling_data, 
-    my_chemistry->cloudy_metal.heating_data);
+    my_chemistry->cloudy_metal.heating_data,
+    &my_chemistry->cloudy_data_new);
 
   return SUCCESS;
 

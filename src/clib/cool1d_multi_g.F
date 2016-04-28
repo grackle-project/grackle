@@ -28,13 +28,14 @@
      &                indixe, t1, t2, logtem, tdef, edot,
      &                tgas, tgasold, p2d, tdust, metallicity, rhoH, 
      &                ih2optical, iciecool, ciecoa, cieco,
-     &                icmbTfloor, iClHeat, 
+     &                icmbTfloor, iClHeat, clEleFra,
      &                priGridRank, priGridDim,
      &                priPar1, priPar2, priPar3,
      &                priDataSize, priCooling, priHeating, priMMW,
      &                metGridRank, metGridDim,
      &                metPar1, metPar2, metPar3,
      &                metDataSize, metCooling, metHeating,
+     &                clnew,
      &                itmask)
 
 !  SOLVE RADIATIVE COOLING/HEATING EQUATIONS
@@ -64,10 +65,10 @@
 
       integer in, jn, kn, is, ie, j, k, nratec, idim,
      &        iexpand, ih2co, ipiht, ispecies, imcool, idust, 
-     &        imetal, igammah, ih2optical, iciecool
+     &        imetal, igammah, ih2optical, iciecool, clnew
       real*8  aye, temstart, temend, z_solar,
      &        utem, uxyz, uaye, urho, utim,
-     &        gamma, fh
+     &        gamma, fh, clEleFra
       R_PREC  d(in,jn,kn),    e(in,jn,kn),
      &        u(in,jn,kn),    v(in,jn,kn),     w(in,jn,kn),
      &        de(in,jn,kn),   HI(in,jn,kn),   HII(in,jn,kn),
@@ -743,15 +744,30 @@ c  new (correct) way: (april 4, 2007)
 
       if (imcool .eq. 1) then
 
-         iZscale = 1
-         call cool1d_cloudy_g(d, rhoH, metallicity,
-     &        in, jn, kn, is, ie, j, k,
-     &        logtem, edot, comp2, dom, zr,
-     &        icmbTfloor, iClHeat, iZscale,
-     &        metGridRank, metGridDim,
-     &        metPar1, metPar2, metPar3,
-     &        metDataSize, metCooling, metHeating,
-     &        itmask)
+         if (clnew .eq. 1) then
+
+            iZscale = 1
+            call cool1d_cloudy_g(d, rhoH, metallicity,
+     &           in, jn, kn, is, ie, j, k,
+     &           logtem, edot, comp2, dom, zr,
+     &           icmbTfloor, iClHeat, iZscale,
+     &           metGridRank, metGridDim,
+     &           metPar1, metPar2, metPar3,
+     &           metDataSize, metCooling, metHeating,
+     &           itmask)
+
+         else
+
+            call cool1D_cloudy_old_g(d, de, rhoH, metallicity,
+     &           in, jn, kn, is, ie, j, k,
+     &           logtem, edot, comp2, ispecies, dom, zr,
+     &           icmbTfloor, iClHeat, 
+     &           clEleFra, metGridRank, metGridDim,
+     &           metPar1, metPar2, metPar3,
+     &           metDataSize, metCooling, metHeating, 
+     &           itmask)
+
+         endif
 
       endif
 
