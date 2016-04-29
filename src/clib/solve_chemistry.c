@@ -69,7 +69,8 @@ extern void FORTRAN_NAME(solve_rate_cool_g)(
         double *priMMW, 
         long long *metGridRank, long long *metGridDim,
  	double *metPar1, double *metPar2, double *metPar3, 
- 	long long *metDataSize, double *metCooling, double *metHeating);
+ 	long long *metDataSize, double *metCooling, double *metHeating,
+        int *iVheat, int *iMheat, double *Vheat, double *Mheat);
 
 int _solve_chemistry(chemistry_data *my_chemistry,
                      code_units *my_units,
@@ -104,6 +105,14 @@ int _solve_chemistry(chemistry_data *my_chemistry,
   int metal_field_present = TRUE;
   if (metal_density == NULL)
     metal_field_present = FALSE;
+
+  /* Check if heating rate arrays have been given. */
+  int use_volumetric_heating_rate = 0;
+  if (my_chemistry->volumetric_heating_rate != NULL)
+    use_volumetric_heating_rate = 1;
+  int use_specific_heating_rate = 0;
+  if (my_chemistry->specific_heating_rate != NULL)
+    use_specific_heating_rate = 1;
 
   double co_length_units, co_density_units;
   if (my_units->comoving_coordinates == TRUE) {
@@ -189,7 +198,9 @@ int _solve_chemistry(chemistry_data *my_chemistry,
     my_chemistry->cloudy_metal.grid_parameters[2],
     &my_chemistry->cloudy_metal.data_size,
     my_chemistry->cloudy_metal.cooling_data, 
-    my_chemistry->cloudy_metal.heating_data);
+    my_chemistry->cloudy_metal.heating_data,
+    &use_volumetric_heating_rate, &use_specific_heating_rate,
+    my_chemistry->volumetric_heating_rate, my_chemistry->specific_heating_rate);
 
   return SUCCESS;
 

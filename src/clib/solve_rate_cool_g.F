@@ -36,7 +36,8 @@
      &                priDataSize, priCooling, priHeating, priMMW,
      &                metGridRank, metGridDim,
      &                metPar1, metPar2, metPar3,
-     &                metDataSize, metCooling, metHeating)
+     &                metDataSize, metCooling, metHeating,
+     &                iVheat, iMheat, Vheat, Mheat)
 
 !
 !  SOLVE MULTI-SPECIES RATE EQUATIONS AND RADIATIVE COOLING
@@ -109,6 +110,10 @@
 !    metDataSize - total size of flattened 1D metal cooling data array
 !    metCooling  - metal cooling data
 !    metHeating  - metal heating data
+!    iVheat      - flag for using volumetric heating rate
+!    iMheat      - flag for using specific heating rate
+!    Vheat       - array of volumetric heating rates
+!    Mheat       - array of specific heating rates
 !
 !  OUTPUTS:
 !    update chemical rate densities (HI, HII, etc)
@@ -131,7 +136,7 @@
      &        iexpand, ih2co, ipiht, ispecies, imetal, idim,
      &        ierr, imcool, idust, 
      &        igammah, ih2optical, iciecool, ithreebody,
-     &        ndratec
+     &        ndratec, iVheat, iMheat
       real*8  dt, aye, temstart, temend, gamma,
      &        utim, uxyz, uaye, urho, utem, fh, dtoh, z_solar, 
      &        dtemstart, dtemend
@@ -144,7 +149,7 @@
      &        DI(in,jn,kn),  DII(in,jn,kn), HDI(in,jn,kn),
      &        d(in,jn,kn),     e(in,jn,kn),
      &        u(in,jn,kn),    v(in,jn,kn),     w(in,jn,kn),
-     &        metal(in,jn,kn)
+     &        metal(in,jn,kn), Vheat(in,jn,kn), Mheat(in,jn,kn)
 
 !  Cooling tables (coolings rates as a function of temperature)
 
@@ -388,6 +393,7 @@ c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 fo
      &                metGridRank, metGridDim,
      &                metPar1, metPar2, metPar3,
      &                metDataSize, metCooling, metHeating,
+     &                iVheat, iMheat, Vheat, Mheat,
      &                itmask)
 
             if (ispecies .gt. 0) then

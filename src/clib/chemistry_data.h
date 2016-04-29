@@ -286,6 +286,18 @@ typedef struct
    */
   double cloudy_electron_fraction_factor;
 
+  /* Constant heating rates
+     Use these to supply fields of heating rates for each
+     computational element. */
+
+  // Pointer to volumetric heating rate array
+
+  double *volumetric_heating_rate;
+
+  // Poointer to specific heating rate array
+
+  double *specific_heating_rate;
+
   // number of OpenMP threads if supported
 # ifdef _OPENMP
   int omp_nthreads;

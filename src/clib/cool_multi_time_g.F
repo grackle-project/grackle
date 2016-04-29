@@ -26,7 +26,8 @@
      &                priDataSize, priCooling, priHeating, priMMW,
      &                metGridRank, metGridDim,
      &                metPar1, metPar2, metPar3,
-     &                metDataSize, metCooling, metHeating)
+     &                metDataSize, metCooling, metHeating,
+     &                iVheat, iMheat, Vheat, Mheat)
 
 !  SOLVE RADIATIVE COOLING/HEATING EQUATIONS
 !
@@ -56,7 +57,8 @@
 
       integer in, jn, kn, is, js, ks, ie, je, ke, nratec, 
      &        iexpand, ih2co, ipiht, ispecies, imetal, idim,
-     &        imcool, idust, igammah, ih2optical, iciecool
+     &        imcool, idust, igammah, ih2optical, iciecool,
+     &        iVheat, iMheat
       real*8  aye, temstart, temend,
      &        utem, uxyz, uaye, urho, utim,
      &        gamma, fh, z_solar
@@ -66,7 +68,7 @@
      &        HeI(in,jn,kn), HeII(in,jn,kn), HeIII(in,jn,kn),
      &        HM(in,jn,kn),  H2I(in,jn,kn),  H2II(in,jn,kn),
      &        DI(in,jn,kn),  DII(in,jn,kn),  HDI(in,jn,kn),
-     &        metal(in,jn,kn),
+     &        metal(in,jn,kn), Vheat(in,jn,kn), Mheat(in,jn,kn),
      &        cooltime(in,jn,kn)
       real*8  hyd01ka(nratec), h2k01a(nratec), vibha(nratec), 
      &        rotha(nratec), rotla(nratec), gpldla(nratec),
@@ -258,6 +260,7 @@
      &                metGridRank, metGridDim,
      &                metPar1, metPar2, metPar3,
      &                metDataSize, metCooling, metHeating,
+     &                iVheat, iMheat, Vheat, Mheat,
      &                itmask)
 
 !        Compute the cooling time on the slice
