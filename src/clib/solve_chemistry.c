@@ -70,7 +70,7 @@ extern void FORTRAN_NAME(solve_rate_cool_g)(
         long long *metGridRank, long long *metGridDim,
  	double *metPar1, double *metPar2, double *metPar3, 
  	long long *metDataSize, double *metCooling, double *metHeating,
-        int *iVheat, int *iMheat, double *Vheat, double *Mheat);
+        int *iVheat, int *iMheat, gr_float *Vheat, gr_float *Mheat);
 
 int _solve_chemistry(chemistry_data *my_chemistry,
                      code_units *my_units,
@@ -108,11 +108,11 @@ int _solve_chemistry(chemistry_data *my_chemistry,
 
   /* Check if heating rate arrays have been given. */
   int use_volumetric_heating_rate = 0;
-  if (my_chemistry->volumetric_heating_rate != NULL)
-    use_volumetric_heating_rate = 1;
+  /* if (my_chemistry->volumetric_heating_rate != NULL) */
+  /*   use_volumetric_heating_rate = 1; */
   int use_specific_heating_rate = 0;
-  if (my_chemistry->specific_heating_rate != NULL)
-    use_specific_heating_rate = 1;
+  /* if (my_chemistry->specific_heating_rate != NULL) */
+  /*   use_specific_heating_rate = 1; */
 
   double co_length_units, co_density_units;
   if (my_units->comoving_coordinates == TRUE) {

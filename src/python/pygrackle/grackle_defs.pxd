@@ -27,6 +27,8 @@ cdef extern from "chemistry_data.h":
         double k29
         double k30
         double k31
+        double *volumetric_heating_rate
+        double *specific_heating_rate
 
 cdef extern from "code_units.h":
     ctypedef struct c_code_units "code_units":

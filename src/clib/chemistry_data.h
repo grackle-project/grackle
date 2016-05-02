@@ -14,6 +14,8 @@
 #ifndef __CHEMISTRY_DATA_H__
 #define __CHEMISTRY_DATA_H__
 
+#include "grackle_types.h"
+
 typedef struct
 {
 
@@ -292,11 +294,11 @@ typedef struct
 
   // Pointer to volumetric heating rate array
 
-  double *volumetric_heating_rate;
+  gr_float *volumetric_heating_rate;
 
   // Poointer to specific heating rate array
 
-  double *specific_heating_rate;
+  gr_float *specific_heating_rate;
 
   // number of OpenMP threads if supported
 # ifdef _OPENMP
