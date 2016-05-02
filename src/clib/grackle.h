@@ -53,6 +53,10 @@ int solve_chemistry(code_units *my_units, double a_value, double dt_value,
                     gr_float *e_density, gr_float *metal_density,
                     gr_float *volumetric_heating_rate, gr_float *specific_heating_rate);
 
+int solve_chemistry_new(code_units *my_units,
+                        grackle_field_data *my_fields,
+                        double a_value, double dt_value);
+
 int _solve_chemistry(chemistry_data *my_chemistry,
                      code_units *my_units, double a_value, double dt_value,
                      int grid_rank, int *grid_dimension,
@@ -93,6 +97,10 @@ int calculate_cooling_time(code_units *my_units, double a_value,
                            gr_float *e_density, gr_float *metal_density,
                            gr_float *cooling_time,
                            gr_float *volumetric_heating_rate, gr_float *specific_heating_rate);
+
+int calculate_cooling_time_new(code_units *my_units,
+                               grackle_field_data *my_fields,
+                               double a_value, gr_float *cooling_time);
 
 int _calculate_cooling_time(chemistry_data *my_chemistry,
                             code_units *my_units, double a_value,
@@ -135,6 +143,10 @@ int calculate_gamma(code_units *my_units, double a_value,
                     gr_float *e_density, gr_float *metal_density,
                     gr_float *my_gamma);
 
+int calculate_gamma_new(code_units *my_units,
+                        grackle_field_data *my_fields,
+                        double a_value, gr_float *my_gamma);
+
 int _calculate_gamma(chemistry_data *my_chemistry,
                      code_units *my_units, double a_value,
                      int grid_rank, int *grid_dimension,
@@ -172,6 +184,10 @@ int calculate_pressure(code_units *my_units, double a_value,
                        gr_float *e_density, gr_float *metal_density,
                        gr_float *pressure);
 
+int calculate_pressure_new(code_units *my_units,
+                           grackle_field_data *my_fields,
+                           double a_value, gr_float *pressure);
+
 int _calculate_pressure(chemistry_data *my_chemistry,
                         code_units *my_units, double a_value,
                         int grid_rank, int *grid_dimension,
@@ -208,6 +224,10 @@ int calculate_temperature(code_units *my_units, double a_value,
                           gr_float *DI_density, gr_float *DII_density, gr_float *HDI_density,
                           gr_float *e_density, gr_float *metal_density,
                           gr_float *temperature);
+
+int calculate_temperature_new(code_units *my_units,
+                              grackle_field_data *my_fields,
+                              double a_value, gr_float *temperature);
 
 int _calculate_temperature(chemistry_data *my_chemistry,
                            code_units *my_units, double a_value,

@@ -68,58 +68,56 @@ int main(int argc, char *argv[])
     return 0;
   }
 
-  // Allocate field arrays.
-  gr_float *density, *energy, *x_velocity, *y_velocity, *z_velocity,
-    *HI_density, *HII_density, *HM_density,
-    *HeI_density, *HeII_density, *HeIII_density,
-    *H2I_density, *H2II_density,
-    *DI_density, *DII_density, *HDI_density,
-    *e_density, *metal_density,
-    *volumetric_heating_rate, *specific_heating_rate;
   double tiny_number = 1.e-20;
+
+  // Create struct for storing grackle field data
+  grackle_field_data my_fields;
 
   // Set grid dimension and size.
   // grid_start and grid_end are used to ignore ghost zones.
   int field_size = 1;
-  int grid_rank = 3;
-  int grid_dimension[3], grid_start[3], grid_end[3];
+  my_fields.grid_rank = 3;
+  my_fields.grid_dimension = malloc(field_size * sizeof(int));
+  my_fields.grid_start = malloc(field_size * sizeof(int));
+  my_fields.grid_end = malloc(field_size * sizeof(int));
+
   int i;
   for (i = 0;i < 3;i++) {
-    grid_dimension[i] = 1; // the active dimension not including ghost zones.
-    grid_start[i] = 0;
-    grid_end[i] = 0;
+    my_fields.grid_dimension[i] = 1; // the active dimension not including ghost zones.
+    my_fields.grid_start[i] = 0;
+    my_fields.grid_end[i] = 0;
   }
-  grid_dimension[0] = field_size;
-  grid_end[0] = field_size - 1;
+  my_fields.grid_dimension[0] = field_size;
+  my_fields.grid_end[0] = field_size - 1;
 
-  density       = malloc(field_size * sizeof(gr_float));
-  energy        = malloc(field_size * sizeof(gr_float));
-  x_velocity    = malloc(field_size * sizeof(gr_float));
-  y_velocity    = malloc(field_size * sizeof(gr_float));
-  z_velocity    = malloc(field_size * sizeof(gr_float));
+  my_fields.density         = malloc(field_size * sizeof(gr_float));
+  my_fields.internal_energy = malloc(field_size * sizeof(gr_float));
+  my_fields.x_velocity      = malloc(field_size * sizeof(gr_float));
+  my_fields.y_velocity      = malloc(field_size * sizeof(gr_float));
+  my_fields.z_velocity      = malloc(field_size * sizeof(gr_float));
   // for primordial_chemistry >= 1
-  HI_density    = malloc(field_size * sizeof(gr_float));
-  HII_density   = malloc(field_size * sizeof(gr_float));
-  HeI_density   = malloc(field_size * sizeof(gr_float));
-  HeII_density  = malloc(field_size * sizeof(gr_float));
-  HeIII_density = malloc(field_size * sizeof(gr_float));
-  e_density     = malloc(field_size * sizeof(gr_float));
+  my_fields.HI_density      = malloc(field_size * sizeof(gr_float));
+  my_fields.HII_density     = malloc(field_size * sizeof(gr_float));
+  my_fields.HeI_density     = malloc(field_size * sizeof(gr_float));
+  my_fields.HeII_density    = malloc(field_size * sizeof(gr_float));
+  my_fields.HeIII_density   = malloc(field_size * sizeof(gr_float));
+  my_fields.e_density       = malloc(field_size * sizeof(gr_float));
   // for primordial_chemistry >= 2
-  HM_density    = malloc(field_size * sizeof(gr_float));
-  H2I_density   = malloc(field_size * sizeof(gr_float));
-  H2II_density  = malloc(field_size * sizeof(gr_float));
+  my_fields.HM_density      = malloc(field_size * sizeof(gr_float));
+  my_fields.H2I_density     = malloc(field_size * sizeof(gr_float));
+  my_fields.H2II_density    = malloc(field_size * sizeof(gr_float));
   // for primordial_chemistry >= 3
-  DI_density    = malloc(field_size * sizeof(gr_float));
-  DII_density   = malloc(field_size * sizeof(gr_float));
-  HDI_density   = malloc(field_size * sizeof(gr_float));
+  my_fields.DI_density      = malloc(field_size * sizeof(gr_float));
+  my_fields.DII_density     = malloc(field_size * sizeof(gr_float));
+  my_fields.HDI_density     = malloc(field_size * sizeof(gr_float));
   // for metal_cooling = 1
-  metal_density = malloc(field_size * sizeof(gr_float));
+  my_fields.metal_density   = malloc(field_size * sizeof(gr_float));
 
   // set constant heating rate terms (set as NULL pointers if not wanted)
   // volumetric heating rate (provide in units [erg s^-1 cm^-3])
-  volumetric_heating_rate = malloc(field_size * sizeof(gr_float));
+  my_fields.volumetric_heating_rate = malloc(field_size * sizeof(gr_float));
   // specific heating rate (provide in units [egs s^-1 g^-1]
-  specific_heating_rate = malloc(field_size * sizeof(gr_float));
+  my_fields.specific_heating_rate = malloc(field_size * sizeof(gr_float));
 
   // set temperature units
   double temperature_units =  mh * pow(my_units.a_units * 
@@ -127,31 +125,33 @@ int main(int argc, char *argv[])
                                          my_units.time_units, 2) / kboltz;
 
   for (i = 0;i < field_size;i++) {
-    density[i] = 1.0;
-    HI_density[i] = grackle_data.HydrogenFractionByMass * density[i];
-    HII_density[i] = tiny_number * density[i];
-    HM_density[i] = tiny_number * density[i];
-    HeI_density[i] = (1.0 - grackle_data.HydrogenFractionByMass) * density[i];
-    HeII_density[i] = tiny_number * density[i];
-    HeIII_density[i] = tiny_number * density[i];
-    H2I_density[i] = tiny_number * density[i];
-    H2II_density[i] = tiny_number * density[i];
-    DI_density[i] = 2.0 * 3.4e-5 * density[i];
-    DII_density[i] = tiny_number * density[i];
-    HDI_density[i] = tiny_number * density[i];
-    e_density[i] = tiny_number * density[i];
+    my_fields.density[i] = 1.0;
+    my_fields.HI_density[i] = grackle_data.HydrogenFractionByMass * my_fields.density[i];
+    my_fields.HII_density[i] = tiny_number * my_fields.density[i];
+    my_fields.HM_density[i] = tiny_number * my_fields.density[i];
+    my_fields.HeI_density[i] = (1.0 - grackle_data.HydrogenFractionByMass) *
+      my_fields.density[i];
+    my_fields.HeII_density[i] = tiny_number * my_fields.density[i];
+    my_fields.HeIII_density[i] = tiny_number * my_fields.density[i];
+    my_fields.H2I_density[i] = tiny_number * my_fields.density[i];
+    my_fields.H2II_density[i] = tiny_number * my_fields.density[i];
+    my_fields.DI_density[i] = 2.0 * 3.4e-5 * my_fields.density[i];
+    my_fields.DII_density[i] = tiny_number * my_fields.density[i];
+    my_fields.HDI_density[i] = tiny_number * my_fields.density[i];
+    my_fields.e_density[i] = tiny_number * my_fields.density[i];
     // solar metallicity
-    metal_density[i] = grackle_data.SolarMetalFractionByMass * density[i];
+    my_fields.metal_density[i] = grackle_data.SolarMetalFractionByMass *
+      my_fields.density[i];
 
-    x_velocity[i] = 0.0;
-    y_velocity[i] = 0.0;
-    z_velocity[i] = 0.0;
+    my_fields.x_velocity[i] = 0.0;
+    my_fields.y_velocity[i] = 0.0;
+    my_fields.z_velocity[i] = 0.0;
 
     // initilize internal energy (here 1000 K for no reason)
-    energy[i] = 1000. / temperature_units;
+    my_fields.internal_energy[i] = 1000. / temperature_units;
 
-    volumetric_heating_rate[i] = 0.0;
-    specific_heating_rate[i] = 0.0;
+    my_fields.volumetric_heating_rate[i] = 0.0;
+    my_fields.specific_heating_rate[i] = 0.0;
   }
 
   /*********************************************************************
@@ -163,19 +163,8 @@ int main(int argc, char *argv[])
   // some timestep
   double dt = 3.15e7 * 1e6 / my_units.time_units;
 
-  if (solve_chemistry(&my_units,
-                      a_value, dt,
-                      grid_rank, grid_dimension,
-                      grid_start, grid_end,
-                      density, energy,
-                      x_velocity, y_velocity, z_velocity,
-                      HI_density, HII_density, HM_density,
-                      HeI_density, HeII_density, HeIII_density,
-                      H2I_density, H2II_density,
-                      DI_density, DII_density, HDI_density,
-                      e_density, metal_density,
-                      volumetric_heating_rate,
-                      specific_heating_rate) == 0) {
+  if (solve_chemistry_new(&my_units, &my_fields,
+                          a_value, dt) == 0) {
     fprintf(stderr, "Error in solve_chemistry.\n");
     return 0;
   }
@@ -183,20 +172,8 @@ int main(int argc, char *argv[])
   // Calculate cooling time.
   gr_float *cooling_time;
   cooling_time = malloc(field_size * sizeof(gr_float));
-  if (calculate_cooling_time(&my_units,
-                             a_value,
-                             grid_rank, grid_dimension,
-                             grid_start, grid_end,
-                             density, energy,
-                             x_velocity, y_velocity, z_velocity,
-                             HI_density, HII_density, HM_density,
-                             HeI_density, HeII_density, HeIII_density,
-                             H2I_density, H2II_density,
-                             DI_density, DII_density, HDI_density,
-                             e_density, metal_density,
-                             cooling_time,
-                             volumetric_heating_rate,
-                             specific_heating_rate) == 0) {
+  if (calculate_cooling_time_new(&my_units, &my_fields,
+                                 a_value, cooling_time) == 0) {
     fprintf(stderr, "Error in calculate_cooling_time.\n");
     return 0;
   }
@@ -207,16 +184,8 @@ int main(int argc, char *argv[])
   // Calculate temperature.
   gr_float *temperature;
   temperature = malloc(field_size * sizeof(gr_float));
-  if (calculate_temperature(&my_units, a_value,
-                            grid_rank, grid_dimension,
-                            grid_start, grid_end,
-                            density, energy,
-                            HI_density, HII_density, HM_density,
-                            HeI_density, HeII_density, HeIII_density,
-                            H2I_density, H2II_density,
-                            DI_density, DII_density, HDI_density,
-                            e_density, metal_density, 
-                            temperature) == 0) {
+  if (calculate_temperature_new(&my_units, &my_fields,
+                                a_value, temperature) == 0) {
     fprintf(stderr, "Error in calculate_temperature.\n");
     return 0;
   }
@@ -226,16 +195,8 @@ int main(int argc, char *argv[])
   // Calculate pressure.
   gr_float *pressure;
   pressure = malloc(field_size * sizeof(gr_float));
-  if (calculate_pressure(&my_units, a_value,
-                         grid_rank, grid_dimension,
-                         grid_start, grid_end,
-                         density, energy,
-                         HI_density, HII_density, HM_density,
-                         HeI_density, HeII_density, HeIII_density,
-                         H2I_density, H2II_density,
-                         DI_density, DII_density, HDI_density,
-                         e_density, metal_density,
-                         pressure) == 0) {
+  if (calculate_pressure_new(&my_units, &my_fields,
+                             a_value, pressure) == 0) {
     fprintf(stderr, "Error in calculate_pressure.\n");
     return 0;
   }
@@ -245,16 +206,8 @@ int main(int argc, char *argv[])
   // Calculate gamma.
   gr_float *gamma;
   gamma = malloc(field_size * sizeof(gr_float));
-  if (calculate_gamma(&my_units, a_value,
-                      grid_rank, grid_dimension,
-                      grid_start, grid_end,
-                      density, energy,
-                      HI_density, HII_density, HM_density,
-                      HeI_density, HeII_density, HeIII_density,
-                      H2I_density, H2II_density,
-                      DI_density, DII_density, HDI_density,
-                      e_density, metal_density,
-                      gamma) == 0) {
+  if (calculate_gamma_new(&my_units, &my_fields,
+                          a_value, gamma) == 0) {
     fprintf(stderr, "Error in calculate_gamma.\n");
     return 0;
   }

@@ -175,6 +175,30 @@ int calculate_temperature(code_units *my_units, double a_value,
   return SUCCESS;
 }
 
+int calculate_temperature_new(code_units *my_units,
+                              grackle_field_data *my_fields,
+                              double a_value, gr_float *temperature)
+{
+  if (_calculate_temperature(&grackle_data,
+                             my_units, a_value,
+                             my_fields->grid_rank, my_fields->grid_dimension,
+                             my_fields->grid_start, my_fields->grid_end,
+                             my_fields->density, my_fields->internal_energy,
+                             my_fields->HI_density, my_fields->HII_density,
+                             my_fields->HM_density,
+                             my_fields->HeI_density, my_fields->HeII_density,
+                             my_fields->HeIII_density,
+                             my_fields->H2I_density, my_fields->H2II_density,
+                             my_fields->DI_density, my_fields->DII_density,
+                             my_fields->HDI_density,
+                             my_fields->e_density, my_fields->metal_density,
+                             temperature) == FAIL) {
+    fprintf(stderr, "Error in calculate_temperature.\n");
+    return FAIL;
+  }
+  return SUCCESS;
+}
+
 int calculate_temperature_(int *comoving_coordinates,
                            double *density_units, double *length_units,
                            double *time_units, double *velocity_units,
