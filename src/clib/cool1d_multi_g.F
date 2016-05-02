@@ -776,7 +776,7 @@ c  new (correct) way: (april 4, 2007)
       do i = is+1, ie+1
          if ( itmask(i) ) then
             edot(i) = edot(i) + (
-     &           Mheat(i,j,k) / coolunit)
+     &           Mheat(i,j,k) * d(i,j,k)**2 / coolunit)
          end if
       enddo
 
