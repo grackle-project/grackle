@@ -48,7 +48,9 @@ c     Field data arrays
      &     H2I_density(field_size), H2II_density(field_size),
      &     DI_density(field_size), DII_density(field_size),
      &     HDI_density(field_size),
-     &     e_density(field_size), metal_density(field_size)
+     &     e_density(field_size), metal_density(field_size),
+     &     volumetric_heating_rate(field_size),
+     &     specific_heating_rate(field_size)
 
       R_PREC cooling_time(field_size), gamma(field_size),
      &     pressure(field_size), temperature(field_Size)
@@ -150,6 +152,9 @@ c        solar metallicity
 
 c        initilize internal energy (here 1000 K for no reason)
          energy(i) = 1000. / temperature_units
+
+         volumetric_heating_rate(i) = 0.0
+         specific_heating_rate(i) = 0.0
       enddo
 
 c
@@ -175,7 +180,9 @@ c     some timestep
      &     HeI_density, HeII_density, HeIII_density,
      &     H2I_density, H2II_density,
      &     DI_density, DII_density, HDI_density,
-     &     e_density, metal_density)
+     &     e_density, metal_density,
+     &     volumetric_heating_rate,
+     &     specific_heating_rate)
 
 c     Calculate cooling time.
 
@@ -192,7 +199,9 @@ c     Calculate cooling time.
      &     HeI_density, HeII_density, HeIII_density,
      &     H2I_density, H2II_density,
      &     DI_density, DII_density, HDI_density,
-     &     e_density, metal_density, cooling_time)
+     &     e_density, metal_density, cooling_time,
+     &     volumetric_heating_rate,
+     &     specific_heating_rate)
 
       write(*,*) "Cooling time = ", (cooling_time(1) * time_units), "s."
 

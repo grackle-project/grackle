@@ -39,7 +39,9 @@ c     Field data arrays
 
       R_PREC density(field_size), energy(field_size),
      &     x_velocity(field_size), y_velocity(field_size),
-     &     z_velocity(field_size), metal_density(field_size)
+     &     z_velocity(field_size), metal_density(field_size),
+     &     volumetric_heating_rate(field_size),
+     &     specific_heating_rate(field_size)
 
       R_PREC cooling_time(field_size), gamma(field_size),
      &     pressure(field_size), temperature(field_Size)
@@ -129,6 +131,9 @@ c        solar metallicity
 
 c        initilize internal energy (here 1000 K for no reason)
          energy(i) = 1000. / temperature_units
+
+         volumetric_heating_rate(i) = 0.0
+         specific_heating_rate(i) = 0.0
       enddo
 
 c
@@ -150,7 +155,9 @@ c     some timestep
      &     grid_start, grid_end,
      &     density, energy,
      &     x_velocity, y_velocity, z_velocity,
-     &     metal_density)
+     &     metal_density,
+     &     volumetric_heating_rate,
+     &     specific_heating_rate)
 
 c     Calculate cooling time.
 
@@ -163,7 +170,9 @@ c     Calculate cooling time.
      &     grid_start, grid_end,
      &     density, energy,
      &     x_velocity, y_velocity, z_velocity,
-     &     metal_density, cooling_time)
+     &     metal_density, cooling_time,
+     &     volumetric_heating_rate,
+     &     specific_heating_rate)
 
       write(*,*) "Cooling time = ", (cooling_time(1) * time_units), "s."
 

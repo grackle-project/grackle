@@ -75,7 +75,8 @@ int main(int argc, char *argv[])
     *HeI_density, *HeII_density, *HeIII_density,
     *H2I_density, *H2II_density,
     *DI_density, *DII_density, *HDI_density,
-    *e_density, *metal_density;
+    *e_density, *metal_density,
+    *volumetric_heating_rate, *specific_heating_rate;
   gr_float tiny_number = 1.e-20;
 
   // Set grid dimension and size.
@@ -114,6 +115,12 @@ int main(int argc, char *argv[])
   // for metal_cooling = 1
   metal_density = new gr_float[field_size];
 
+  // set constant heating rate terms (set as NULL pointers if not wanted)
+  // volumetric heating rate (provide in units [erg s^-1 cm^-3])
+  volumetric_heating_rate = new gr_float[field_size];
+  // specific heating rate (provide in units [egs s^-1 g^-1]
+  specific_heating_rate = new gr_float[field_size];
+
   // set temperature units
   double temperature_units = mh * pow(my_units.a_units * 
                                       my_units.length_units /
@@ -143,6 +150,9 @@ int main(int argc, char *argv[])
 
     // initilize internal energy (here 1000 K for no reason)
     energy[i] = 1000. / temperature_units;
+
+    volumetric_heating_rate[i] = 0.0;
+    specific_heating_rate[i] = 0.0;
   }
 
   /*********************************************************************
@@ -164,7 +174,9 @@ int main(int argc, char *argv[])
                       HeI_density, HeII_density, HeIII_density,
                       H2I_density, H2II_density,
                       DI_density, DII_density, HDI_density,
-                      e_density, metal_density) == 0) {
+                      e_density, metal_density,
+                      volumetric_heating_rate,
+                      specific_heating_rate) == 0) {
     fprintf(stderr, "Error in solve_chemistry.\n");
     return 0;
   }
@@ -183,7 +195,9 @@ int main(int argc, char *argv[])
                              H2I_density, H2II_density,
                              DI_density, DII_density, HDI_density,
                              e_density, metal_density, 
-                             cooling_time) == 0) {
+                             cooling_time,
+                             volumetric_heating_rate,
+                             specific_heating_rate) == 0) {
     fprintf(stderr, "Error in calculate_cooling_time.\n");
     return 0;
   }
