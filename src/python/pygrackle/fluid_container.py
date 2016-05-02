@@ -47,7 +47,6 @@ class FluidContainer(dict):
         self.dtype = dtype
         self.chemistry_data = chemistry_data
         self.n_vals = n_vals
-        self.chemistry_data.n_vals = n_vals
         for fluid in _fluid_names[self.chemistry_data.primordial_chemistry] + \
             _nd_fields:
             self._setup_fluid(fluid)

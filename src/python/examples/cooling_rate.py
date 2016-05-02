@@ -61,7 +61,6 @@ if __name__ == "__main__":
                                current_redshift=current_redshift,
                                converge=True)
 
-    fc.chemistry_data.volumetric_heating_rate = np.zeros(200, dtype=np.float64)
     fc.calculate_temperature(a_value)
     fc.calculate_cooling_time(a_value)
 

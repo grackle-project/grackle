@@ -18,29 +18,19 @@ from pygrackle.utilities.physical_constants import \
 from grackle_defs cimport *
 import numpy as np
 cimport numpy as np
-from cpython cimport array
-from cython cimport view
 
 cdef class chemistry_data:
     cdef c_chemistry_data data
     cdef c_code_units units
-    cdef int n_vals
 
     def __cinit__(self):
         self.data = _set_default_chemistry_parameters()
-        self.n_vals = 0
 
     def initialize(self, a_value):
         ret =  _initialize_chemistry_data(&self.data, &self.units, a_value)
         if ret is None:
             raise RuntimeError("Error initializing chemistry")
         return ret
-
-    property n_vals:
-        def __get__(self):
-            return self.n_vals
-        def __set__(self, val):
-            self.n_vals = val
 
     property Gamma:
         def __get__(self):
@@ -179,24 +169,6 @@ cdef class chemistry_data:
              return self.data.k31
         def __set__(self, val):
              self.data.k31 = val
-
-    property volumetric_heating_rate:
-        def __get__(self):
-            cdef double* p = self.data.volumetric_heating_rate
-            cdef view.array my_array = <double[:self.n_vals]> p
-            return np.asarray(my_array)
-        def __set__(self, val):
-            cdef array.array a = array.array('d', val)
-            self.data.volumetric_heating_rate = a.data.as_doubles
-
-    property specific_heating_rate:
-        def __get__(self):
-            cdef double* p = self.data.specific_heating_rate
-            cdef view.array my_array = <double[:self.n_vals]> p
-            return np.asarray(my_array)
-        def __set__(self, val):
-            cdef array.array a = array.array('d', val)
-            self.data.specific_heating_rate = a.data.as_doubles
 
     property comoving_coordinates:
         def __get__(self):
