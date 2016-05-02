@@ -14,8 +14,6 @@
 #ifndef __CHEMISTRY_DATA_H__
 #define __CHEMISTRY_DATA_H__
 
-#include "grackle_types.h"
-
 typedef struct
 {
 
@@ -287,18 +285,6 @@ typedef struct
      For solar abundance patters and N = 30 (Zn), f = 9.153959e-3.
    */
   double cloudy_electron_fraction_factor;
-
-  /* Constant heating rates
-     Use these to supply fields of heating rates for each
-     computational element. */
-
-  // Pointer to volumetric heating rate array
-
-  gr_float *volumetric_heating_rate;
-
-  // Poointer to specific heating rate array
-
-  gr_float *specific_heating_rate;
 
   // number of OpenMP threads if supported
 # ifdef _OPENMP

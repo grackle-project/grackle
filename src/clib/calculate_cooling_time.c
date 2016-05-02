@@ -73,7 +73,8 @@ int _calculate_cooling_time(chemistry_data *my_chemistry,
                             gr_float *H2I_density, gr_float *H2II_density,
                             gr_float *DI_density, gr_float *DII_density, gr_float *HDI_density,
                             gr_float *e_density, gr_float *metal_density,
-                            gr_float *cooling_time)
+                            gr_float *cooling_time,
+                            gr_float *volumetric_heating_rate, gr_float *specific_heating_rate)
 {
  
   /* Return if this doesn't concern us. */
@@ -98,11 +99,11 @@ int _calculate_cooling_time(chemistry_data *my_chemistry,
 
   /* Check if heating rate arrays have been given. */
   int use_volumetric_heating_rate = 0;
-  /* if (my_chemistry->volumetric_heating_rate != NULL) */
-  /*   use_volumetric_heating_rate = 1; */
+  if (volumetric_heating_rate != NULL)
+    use_volumetric_heating_rate = 1;
   int use_specific_heating_rate = 0;
-  /* if (my_chemistry->specific_heating_rate != NULL) */
-  /*   use_specific_heating_rate = 1; */
+  if (specific_heating_rate != NULL)
+    use_specific_heating_rate = 1;
 
   double co_length_units, co_density_units;
   if (my_units->comoving_coordinates == TRUE) {
@@ -175,7 +176,7 @@ int _calculate_cooling_time(chemistry_data *my_chemistry,
        my_chemistry->cloudy_metal.cooling_data,
        my_chemistry->cloudy_metal.heating_data,
        &use_volumetric_heating_rate, &use_specific_heating_rate,
-       my_chemistry->volumetric_heating_rate, my_chemistry->specific_heating_rate);
+       volumetric_heating_rate, specific_heating_rate);
  
   return SUCCESS;
 }
@@ -190,7 +191,8 @@ int calculate_cooling_time(code_units *my_units, double a_value,
                            gr_float *H2I_density, gr_float *H2II_density,
                            gr_float *DI_density, gr_float *DII_density, gr_float *HDI_density,
                            gr_float *e_density, gr_float *metal_density,
-                           gr_float *cooling_time)
+                           gr_float *cooling_time,
+                           gr_float *volumetric_heating_rate, gr_float *specific_heating_rate)
 {
 
   if (_calculate_cooling_time(&grackle_data,
@@ -204,7 +206,8 @@ int calculate_cooling_time(code_units *my_units, double a_value,
                               H2I_density, H2II_density,
                               DI_density, DII_density, HDI_density,
                               e_density, metal_density,
-                              cooling_time) == FAIL) {
+                              cooling_time,
+                              volumetric_heating_rate, specific_heating_rate) == FAIL) {
     fprintf(stderr, "Error in _calculate_cooling_time.\n");
     return FAIL;
   }
@@ -224,7 +227,8 @@ int calculate_cooling_time_(int *comoving_coordinates,
                             gr_float *H2I_density, gr_float *H2II_density,
                             gr_float *DI_density, gr_float *DII_density, gr_float *HDI_density,
                             gr_float *e_density, gr_float *metal_density,
-                            gr_float *cooling_time)
+                            gr_float *cooling_time,
+                            gr_float *volumetric_heating_rate, gr_float *specific_heating_rate)
 {
 
   code_units my_units;
@@ -246,7 +250,8 @@ int calculate_cooling_time_(int *comoving_coordinates,
                                 H2I_density, H2II_density,
                                 DI_density, DII_density, HDI_density,
                                 e_density, metal_density,
-                                cooling_time);
+                                cooling_time,
+                                volumetric_heating_rate, specific_heating_rate);
   return rval;
 
 }

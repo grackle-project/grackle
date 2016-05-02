@@ -34,7 +34,8 @@ int calculate_cooling_time(code_units *my_units, double a_value,
 			   gr_float *H2I_density, gr_float *H2II_density,
 			   gr_float *DI_density, gr_float *DII_density, gr_float *HDI_density,
 			   gr_float *e_density, gr_float *metal_density,
-			   gr_float *cooling_time);
+			   gr_float *cooling_time,
+                           gr_float *volumetric_heating_rate, gr_float *specific_heating_rate);
 
 int _calculate_cooling_time_table(chemistry_data *my_chemistry,
                                   code_units *my_units, double a_value,
@@ -43,7 +44,9 @@ int _calculate_cooling_time_table(chemistry_data *my_chemistry,
                                   gr_float *density, gr_float *internal_energy,
                                   gr_float *x_velocity, gr_float *y_velocity, gr_float *z_velocity,
                                   gr_float *metal_density,
-                                  gr_float *cooling_time)
+                                  gr_float *cooling_time,
+                                  gr_float *volumetric_heating_rate,
+                                  gr_float *specific_heating_rate)
 {
 
   if (!my_chemistry->use_grackle)
@@ -76,7 +79,8 @@ int _calculate_cooling_time_table(chemistry_data *my_chemistry,
                              H2I_density, H2II_density,
                              DI_density, DII_density, HDI_density,
                              e_density, metal_density,
-                             cooling_time) == FAIL) {
+                             cooling_time,
+                             volumetric_heating_rate, specific_heating_rate) == FAIL) {
     fprintf(stderr, "Error in calculate_cooling_time.\n");
     return FAIL;
   }
@@ -90,7 +94,9 @@ int calculate_cooling_time_table(code_units *my_units, double a_value,
                                  gr_float *density, gr_float *internal_energy,
                                  gr_float *x_velocity, gr_float *y_velocity, gr_float *z_velocity,
                                  gr_float *metal_density,
-                                 gr_float *cooling_time)
+                                 gr_float *cooling_time,
+                                 gr_float *volumetric_heating_rate,
+                                 gr_float *specific_heating_rate)
 {
   if (_calculate_cooling_time_table(&grackle_data,
                                     my_units, a_value,
@@ -99,7 +105,8 @@ int calculate_cooling_time_table(code_units *my_units, double a_value,
                                     density, internal_energy,
                                     x_velocity, y_velocity, z_velocity,
                                     metal_density,
-                                    cooling_time) == FAIL) {
+                                    cooling_time,
+                                    volumetric_heating_rate, specific_heating_rate) == FAIL) {
     fprintf(stderr, "Error in _calculate_cooling_time_table.\n");
     return FAIL;
   }
@@ -115,7 +122,9 @@ int calculate_cooling_time_table_(int *comoving_coordinates,
                                   gr_float *density, gr_float *internal_energy,
                                   gr_float *x_velocity, gr_float *y_velocity, gr_float *z_velocity,
                                   gr_float *metal_density,
-                                  gr_float *cooling_time)
+                                  gr_float *cooling_time,
+                                  gr_float *volumetric_heating_rate,
+                                  gr_float *specific_heating_rate)
 {
 
   code_units my_units;
@@ -133,7 +142,8 @@ int calculate_cooling_time_table_(int *comoving_coordinates,
                                       density, internal_energy,
                                       x_velocity, y_velocity, z_velocity,
                                       metal_density,
-                                      cooling_time);
+                                      cooling_time,
+                                      volumetric_heating_rate, specific_heating_rate);
 
   return rval;
 

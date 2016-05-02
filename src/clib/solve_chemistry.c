@@ -83,7 +83,8 @@ int _solve_chemistry(chemistry_data *my_chemistry,
                      gr_float *HeI_density, gr_float *HeII_density, gr_float *HeIII_density,
                      gr_float *H2I_density, gr_float *H2II_density,
                      gr_float *DI_density, gr_float *DII_density, gr_float *HDI_density,
-                     gr_float *e_density, gr_float *metal_density)
+                     gr_float *e_density, gr_float *metal_density,
+                     gr_float *volumetric_heating_rate, gr_float *specific_heating_rate)
 {
 
   /* Return if this doesn't concern us. */
@@ -108,11 +109,11 @@ int _solve_chemistry(chemistry_data *my_chemistry,
 
   /* Check if heating rate arrays have been given. */
   int use_volumetric_heating_rate = 0;
-  /* if (my_chemistry->volumetric_heating_rate != NULL) */
-  /*   use_volumetric_heating_rate = 1; */
+  if (volumetric_heating_rate != NULL)
+    use_volumetric_heating_rate = 1;
   int use_specific_heating_rate = 0;
-  /* if (my_chemistry->specific_heating_rate != NULL) */
-  /*   use_specific_heating_rate = 1; */
+  if (specific_heating_rate != NULL)
+    use_specific_heating_rate = 1;
 
   double co_length_units, co_density_units;
   if (my_units->comoving_coordinates == TRUE) {
@@ -200,7 +201,7 @@ int _solve_chemistry(chemistry_data *my_chemistry,
     my_chemistry->cloudy_metal.cooling_data, 
     my_chemistry->cloudy_metal.heating_data,
     &use_volumetric_heating_rate, &use_specific_heating_rate,
-    my_chemistry->volumetric_heating_rate, my_chemistry->specific_heating_rate);
+    volumetric_heating_rate, specific_heating_rate);
 
   return SUCCESS;
 
@@ -216,7 +217,8 @@ int solve_chemistry(code_units *my_units,
                     gr_float *HeI_density, gr_float *HeII_density, gr_float *HeIII_density,
                     gr_float *H2I_density, gr_float *H2II_density,
                     gr_float *DI_density, gr_float *DII_density, gr_float *HDI_density,
-                    gr_float *e_density, gr_float *metal_density)
+                    gr_float *e_density, gr_float *metal_density,
+                    gr_float *volumetric_heating_rate, gr_float *specific_heating_rate)
 {
   if (_solve_chemistry(&grackle_data,
                        my_units,
@@ -229,7 +231,8 @@ int solve_chemistry(code_units *my_units,
                        HeI_density, HeII_density, HeIII_density,
                        H2I_density, H2II_density,
                        DI_density, DII_density, HDI_density,
-                       e_density, metal_density) == FAIL) {
+                       e_density, metal_density,
+                       volumetric_heating_rate, specific_heating_rate) == FAIL) {
     fprintf(stderr, "Error in _solve_chemistry.\n");
     return FAIL;
   }
@@ -248,7 +251,8 @@ int solve_chemistry_(int *comoving_coordinates,
                      gr_float *HeI_density, gr_float *HeII_density, gr_float *HeIII_density,
                      gr_float *H2I_density, gr_float *H2II_density,
                      gr_float *DI_density, gr_float *DII_density, gr_float *HDI_density,
-                     gr_float *e_density, gr_float *metal_density)
+                     gr_float *e_density, gr_float *metal_density,
+                     gr_float *volumetric_heating_rate, gr_float *specific_heating_rate)
 {
 
   code_units my_units;
@@ -270,7 +274,8 @@ int solve_chemistry_(int *comoving_coordinates,
                          HeI_density, HeII_density, HeIII_density,
                          H2I_density, H2II_density,
                          DI_density, DII_density, HDI_density,
-                         e_density, metal_density);
+                         e_density, metal_density,
+                         volumetric_heating_rate, specific_heating_rate);
   return rval;
 
 }
