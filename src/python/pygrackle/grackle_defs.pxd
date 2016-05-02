@@ -69,7 +69,9 @@ cdef extern from "grackle.h":
                 gr_float *DII_density,
                 gr_float *HDI_density,
                 gr_float *e_density,
-                gr_float *metal_density)
+                gr_float *metal_density,
+                gr_float *volumetric_heating_rate,
+                gr_float *specific_heating_rate)
 
     int c_calculate_cooling_time "_calculate_cooling_time"(
                 c_chemistry_data *my_chemistry,
@@ -97,7 +99,9 @@ cdef extern from "grackle.h":
                 gr_float *HDI_density,
                 gr_float *e_density,
                 gr_float *metal_density,
-                gr_float *cooling_time)
+                gr_float *cooling_time,
+                gr_float *volumetric_heating_rate,
+                gr_float *specific_heating_rate)
 
     int c_calculate_gamma "_calculate_gamma"(
                 c_chemistry_data *my_chemistry,

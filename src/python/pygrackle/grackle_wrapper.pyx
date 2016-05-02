@@ -256,6 +256,8 @@ def solve_chemistry(fc, my_a, my_dt):
     cdef gr_float *HDI_density = get_field(fc, "HDI")
     cdef gr_float *e_density = get_field(fc, "de")
     cdef gr_float *metal_density = get_field(fc, "metal")
+    cdef gr_float *volumetric_heating_rate = get_field(fc, "volumetric_heating_rate")
+    cdef gr_float *specific_heating_rate = get_field(fc, "specific_heating_rate")
 
     c_solve_chemistry (
                 &my_chemistry,
@@ -283,7 +285,9 @@ def solve_chemistry(fc, my_a, my_dt):
                 DII_density,
                 HDI_density,
                 e_density,
-                metal_density)
+                metal_density,
+                volumetric_heating_rate,
+                specific_heating_rate)
     
 def calculate_cooling_time(fc, my_a):
     cdef int grid_rank = 1
@@ -323,7 +327,9 @@ def calculate_cooling_time(fc, my_a):
     cdef gr_float *e_density = get_field(fc, "de")
     cdef gr_float *metal_density = get_field(fc, "metal")
     cdef gr_float *cooling_time = get_field(fc, "cooling_time")
-    
+    cdef gr_float *volumetric_heating_rate = get_field(fc, "volumetric_heating_rate")
+    cdef gr_float *specific_heating_rate = get_field(fc, "specific_heating_rate")
+
     c_calculate_cooling_time (
                 &my_chemistry,
                 &my_units,
@@ -350,8 +356,10 @@ def calculate_cooling_time(fc, my_a):
                 HDI_density,
                 e_density,
                 metal_density,
-                cooling_time)
-    
+                cooling_time,
+                volumetric_heating_rate,
+                specific_heating_rate)
+
 def calculate_gamma(fc, my_a):
     cdef int grid_rank = 1
     cdef int grid_dimension
