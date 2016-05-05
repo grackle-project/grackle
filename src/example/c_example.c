@@ -72,6 +72,7 @@ int main(int argc, char *argv[])
 
   // Create struct for storing grackle field data
   grackle_field_data my_fields;
+  my_fields.a_value = a_value;
 
   // Set grid dimension and size.
   // grid_start and grid_end are used to ignore ghost zones.
@@ -163,8 +164,7 @@ int main(int argc, char *argv[])
   // some timestep
   double dt = 3.15e7 * 1e6 / my_units.time_units;
 
-  if (solve_chemistry_new(&my_units, &my_fields,
-                          a_value, dt) == 0) {
+  if (solve_chemistry(&my_units, &my_fields, dt) == 0) {
     fprintf(stderr, "Error in solve_chemistry.\n");
     return 0;
   }
@@ -172,8 +172,8 @@ int main(int argc, char *argv[])
   // Calculate cooling time.
   gr_float *cooling_time;
   cooling_time = malloc(field_size * sizeof(gr_float));
-  if (calculate_cooling_time_new(&my_units, &my_fields,
-                                 a_value, cooling_time) == 0) {
+  if (calculate_cooling_time(&my_units, &my_fields,
+                             cooling_time) == 0) {
     fprintf(stderr, "Error in calculate_cooling_time.\n");
     return 0;
   }
@@ -184,8 +184,8 @@ int main(int argc, char *argv[])
   // Calculate temperature.
   gr_float *temperature;
   temperature = malloc(field_size * sizeof(gr_float));
-  if (calculate_temperature_new(&my_units, &my_fields,
-                                a_value, temperature) == 0) {
+  if (calculate_temperature(&my_units, &my_fields,
+                            temperature) == 0) {
     fprintf(stderr, "Error in calculate_temperature.\n");
     return 0;
   }
@@ -195,8 +195,8 @@ int main(int argc, char *argv[])
   // Calculate pressure.
   gr_float *pressure;
   pressure = malloc(field_size * sizeof(gr_float));
-  if (calculate_pressure_new(&my_units, &my_fields,
-                             a_value, pressure) == 0) {
+  if (calculate_pressure(&my_units, &my_fields,
+                         pressure) == 0) {
     fprintf(stderr, "Error in calculate_pressure.\n");
     return 0;
   }
@@ -206,8 +206,8 @@ int main(int argc, char *argv[])
   // Calculate gamma.
   gr_float *gamma;
   gamma = malloc(field_size * sizeof(gr_float));
-  if (calculate_gamma_new(&my_units, &my_fields,
-                          a_value, gamma) == 0) {
+  if (calculate_gamma(&my_units, &my_fields,
+                      gamma) == 0) {
     fprintf(stderr, "Error in calculate_gamma.\n");
     return 0;
   }
