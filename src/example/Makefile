@@ -97,24 +97,6 @@ cxx_example: $(MODULES) cxx_example.o
          fi)
 
 #-----------------------------------------------------------------------
-# C++ TABLE EXAMPLE
-#-----------------------------------------------------------------------
-
-cxx_table_example: $(MODULES) cxx_table_example.o
-	@rm -f $@
-	@echo "Linking"
-	-@$(CXX) $(LDFLAGS) -o cxx_table_example cxx_table_example.o $(LIBS) $(GRACKLE_LIB) >& $(OUTPUT)
-	@(if [ -e $@ ]; then \
-             echo "Success!"; \
-         else \
-             echo "$(CXX) $(LDFLAGS) -o cxx_table_example cxx_table_example.o $(LIBS) $(GRACKLE_LIB)" >> temp1; \
-             cat temp1 $(OUTPUT) > temp2; \
-             rm -f temp1; \
-             mv -f temp2 $(OUTPUT); \
-             echo "Failed! See $(OUTPUT) for error messages"; \
-         fi)
-
-#-----------------------------------------------------------------------
 # C++ OPENMP EXAMPLE
 #-----------------------------------------------------------------------
 
@@ -151,60 +133,6 @@ c_example: $(MODULES) c_example.o
          fi)
 
 #-----------------------------------------------------------------------
-# PURE C TABLE EXAMPLE
-#-----------------------------------------------------------------------
-
-c_table_example: $(MODULES) c_table_example.o
-	@rm -f $@
-	@echo "Linking"
-	-@$(LD) $(LDFLAGS) -o c_table_example c_table_example.o $(LIBS) $(GRACKLE_LIB) >& $(OUTPUT)
-	@(if [ -e $@ ]; then \
-             echo "Success!"; \
-         else \
-             echo "$(LD) $(LDFLAGS) -o c_table_example c_table_example.o $(LIBS) $(GRACKLE_LIB)" >> temp1; \
-             cat temp1 $(OUTPUT) > temp2; \
-             rm -f temp1; \
-             mv -f temp2 $(OUTPUT); \
-             echo "Failed! See $(OUTPUT) for error messages"; \
-         fi)
-
-#-----------------------------------------------------------------------
-# PURE C EXAMPLE W/O STRUCTURES
-#-----------------------------------------------------------------------
-
-c_example_nostruct: $(MODULES) c_example_nostruct.o
-	@rm -f $@
-	@echo "Linking"
-	-@$(LD) $(LDFLAGS) -o c_example_nostruct c_example_nostruct.o $(LIBS) $(GRACKLE_LIB) >& $(OUTPUT)
-	@(if [ -e $@ ]; then \
-             echo "Success!"; \
-         else \
-             echo "$(LD) $(LDFLAGS) -o c_example_nostruct c_example_nostruct.o $(LIBS) $(GRACKLE_LIB)" >> temp1; \
-             cat temp1 $(OUTPUT) > temp2; \
-             rm -f temp1; \
-             mv -f temp2 $(OUTPUT); \
-             echo "Failed! See $(OUTPUT) for error messages"; \
-         fi)
-
-#-----------------------------------------------------------------------
-# PURE C TABLE EXAMPLE W/O STRUCTURES
-#-----------------------------------------------------------------------
-
-c_table_example_nostruct: $(MODULES) c_table_example_nostruct.o
-	@rm -f $@
-	@echo "Linking"
-	-@$(LD) $(LDFLAGS) -o c_table_example_nostruct c_table_example_nostruct.o $(LIBS) $(GRACKLE_LIB) >& $(OUTPUT)
-	@(if [ -e $@ ]; then \
-             echo "Success!"; \
-         else \
-             echo "$(LD) $(LDFLAGS) -o c_table_example_nostruct c_table_example_nostruct.o $(LIBS) $(GRACKLE_LIB)" >> temp1; \
-             cat temp1 $(OUTPUT) > temp2; \
-             rm -f temp1; \
-             mv -f temp2 $(OUTPUT); \
-             echo "Failed! See $(OUTPUT) for error messages"; \
-         fi)
-
-#-----------------------------------------------------------------------
 # FORTRAN EXAMPLE
 #-----------------------------------------------------------------------
 
@@ -216,24 +144,6 @@ fortran_example: $(MODULES) fortran_example.o
              echo "Success!"; \
          else \
              echo "$(FC) $(LDFLAGS) -o fortran_example fortran_example.o $(LIBS) $(GRACKLE_LIB)" >> temp1; \
-             cat temp1 $(OUTPUT) > temp2; \
-             rm -f temp1; \
-             mv -f temp2 $(OUTPUT); \
-             echo "Failed! See $(OUTPUT) for error messages"; \
-         fi)
-
-#-----------------------------------------------------------------------
-# FORTRAN TABLE EXAMPLE
-#-----------------------------------------------------------------------
-
-fortran_table_example: $(MODULES) fortran_table_example.o
-	@rm -f $@
-	@echo "Linking"
-	-@$(FC) $(LDFLAGS) -o fortran_table_example fortran_table_example.o $(LIBS) $(GRACKLE_LIB) >& $(OUTPUT)
-	@(if [ -e $@ ]; then \
-             echo "Success!"; \
-         else \
-             echo "$(FC) $(LDFLAGS) -o fortran_table_example fortran_table_example.o $(LIBS) $(GRACKLE_LIB)" >> temp1; \
              cat temp1 $(OUTPUT) > temp2; \
              rm -f temp1; \
              mv -f temp2 $(OUTPUT); \
@@ -308,7 +218,7 @@ help:
 #-----------------------------------------------------------------------
 
 clean:
-	-@rm -f *.o *.mod *.f *.f90 *~ *.exe $(OUTPUT) cxx_example cxx_table_example cxx_omp_example c_example c_table_example c_example_nostruct c_table_example_nostruct fortran_example fortran_table_example
+	-@rm -f *.o *.mod *.f *.f90 *~ *.exe $(OUTPUT) cxx_example cxx_omp_example c_example fortran_example
 
 #-----------------------------------------------------------------------
 # Include configuration targets
