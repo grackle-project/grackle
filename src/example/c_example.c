@@ -46,7 +46,7 @@ int main(int argc, char *argv[])
   // Second, create a chemistry object for parameters and rate data.
   if (set_default_chemistry_parameters() == 0) {
     fprintf(stderr, "Error in set_default_chemistry_parameters.\n");
-    return 0;
+    return EXIT_SUCCESS;
   }
 
   // Set parameter values for chemistry.
@@ -65,7 +65,7 @@ int main(int argc, char *argv[])
   // Finally, initialize the chemistry object.
   if (initialize_chemistry_data(&my_units, a_value) == 0) {
     fprintf(stderr, "Error in initialize_chemistry_data.\n");
-    return 0;
+    return EXIT_SUCCESS;
   }
 
   double tiny_number = 1.e-20;
@@ -166,7 +166,7 @@ int main(int argc, char *argv[])
 
   if (solve_chemistry(&my_units, &my_fields, dt) == 0) {
     fprintf(stderr, "Error in solve_chemistry.\n");
-    return 0;
+    return EXIT_SUCCESS;
   }
 
   // Calculate cooling time.
@@ -175,7 +175,7 @@ int main(int argc, char *argv[])
   if (calculate_cooling_time(&my_units, &my_fields,
                              cooling_time) == 0) {
     fprintf(stderr, "Error in calculate_cooling_time.\n");
-    return 0;
+    return EXIT_SUCCESS;
   }
 
   fprintf(stderr, "Cooling time = %g s.\n", cooling_time[0] *
@@ -187,7 +187,7 @@ int main(int argc, char *argv[])
   if (calculate_temperature(&my_units, &my_fields,
                             temperature) == 0) {
     fprintf(stderr, "Error in calculate_temperature.\n");
-    return 0;
+    return EXIT_SUCCESS;
   }
 
   fprintf(stderr, "Temperature = %g K.\n", temperature[0]);
@@ -198,7 +198,7 @@ int main(int argc, char *argv[])
   if (calculate_pressure(&my_units, &my_fields,
                          pressure) == 0) {
     fprintf(stderr, "Error in calculate_pressure.\n");
-    return 0;
+    return EXIT_SUCCESS;
   }
 
   fprintf(stderr, "Pressure = %g.\n", pressure[0]);
@@ -209,10 +209,10 @@ int main(int argc, char *argv[])
   if (calculate_gamma(&my_units, &my_fields,
                       gamma) == 0) {
     fprintf(stderr, "Error in calculate_gamma.\n");
-    return 0;
+    return EXIT_SUCCESS;
   }
 
   fprintf(stderr, "gamma = %g.\n", gamma[0]);
 
-  return 1;
+  return EXIT_FAILURE;
 }
