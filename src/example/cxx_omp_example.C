@@ -38,16 +38,8 @@ enum Routine_t { TAB_COOL=1, TAB_TIME=2, TAB_TEMP=3, TAB_PRES=4,
 // function prototypes
 float InvokeGrackle( const Routine_t Routine, const int NThread, const int NIter, const int NCell,
                      const int RSeed, const gr_float D0, const gr_float T0, const gr_float FAmp,
-                     code_units *my_units, double a_value, double dt_value,
-                     int grid_rank, int *grid_dimension,
-                     int *grid_start, int *grid_end,
-                     gr_float *density, gr_float *internal_energy,
-                     gr_float *x_velocity, gr_float *y_velocity, gr_float *z_velocity,
-                     gr_float *HI_density, gr_float *HII_density, gr_float *HM_density,
-                     gr_float *HeI_density, gr_float *HeII_density, gr_float *HeIII_density,
-                     gr_float *H2I_density, gr_float *H2II_density,
-                     gr_float *DI_density, gr_float *DII_density, gr_float *HDI_density,
-                     gr_float *e_density, gr_float *metal_density, gr_float *output );
+                     code_units *my_units, grackle_field_data *my_fields, double dt_value,
+                     gr_float *output );
 void CompareResult( const gr_float **Field_t1, const gr_float **Field_tN, const int NCell, const int NField );
 
 
@@ -182,75 +174,95 @@ int main(int argc, char *argv[])
     return EXIT_FAILURE;
   }
 
+  grackle_field_data my_fields_t1, my_fields_tN;
+
   // Set grid dimension and size.
   // grid_start and grid_end are used to ignore ghost zones.
   const int N3        = NCell1D*NCell1D*NCell1D;
   const int grid_rank = 3;
 
+  my_fields_t1.a_value = a_value;
+  my_fields_t1.grid_rank = grid_rank;
+  my_fields_t1.grid_dimension = new int[grid_rank];
+  my_fields_t1.grid_start = new int[grid_rank];
+  my_fields_t1.grid_end = new int[grid_rank];
+
+  my_fields_tN.a_value = a_value;
+  my_fields_tN.grid_rank = grid_rank;
+  my_fields_tN.grid_dimension = new int[grid_rank];
+  my_fields_tN.grid_start = new int[grid_rank];
+  my_fields_tN.grid_end = new int[grid_rank];
+
   // If grid rank is less than 3, set the other dimensions,
   // start indices, and end indices to 0.
-  int grid_dimension[3], grid_start[3], grid_end[3];
   for (int i=0; i<3; i++)
   {
-    grid_dimension[i] = NCell1D; // the active dimension not including ghost zones.
-    grid_start    [i] = 0;
-    grid_end      [i] = NCell1D-1;
+    my_fields_t1.grid_dimension[i] = NCell1D; // the active dimension not including ghost zones.
+    my_fields_t1.grid_start    [i] = 0;
+    my_fields_t1.grid_end      [i] = NCell1D-1;
+
+    my_fields_tN.grid_dimension[i] = NCell1D; // the active dimension not including ghost zones.
+    my_fields_tN.grid_start    [i] = 0;
+    my_fields_tN.grid_end      [i] = NCell1D-1;
   }
 
   // Allocate field arrays. (t1/tN for single-/multi-thread results)
-  gr_float *density, *x_velocity, *y_velocity, *z_velocity, *metal_density;
   gr_float *energy_t1, *cooling_time_t1, *temperature_t1, *pressure_t1, *gamma_t1;
   gr_float *energy_tN, *cooling_time_tN, *temperature_tN, *pressure_tN, *gamma_tN;
-  gr_float *HI_density_t1, *HII_density_t1, *HM_density_t1, *HeI_density_t1, *HeII_density_t1,
-           *HeIII_density_t1, *H2I_density_t1, *H2II_density_t1, *DI_density_t1, *DII_density_t1,
-           *HDI_density_t1, *e_density_t1;
-  gr_float *HI_density_tN, *HII_density_tN, *HM_density_tN, *HeI_density_tN, *HeII_density_tN,
-           *HeIII_density_tN, *H2I_density_tN, *H2II_density_tN, *DI_density_tN, *DII_density_tN,
-           *HDI_density_tN, *e_density_tN;
 
-  density          = new gr_float[N3];
-  x_velocity       = new gr_float[N3];
-  y_velocity       = new gr_float[N3];
-  z_velocity       = new gr_float[N3];
-  metal_density    = new gr_float[N3];
+  my_fields_t1.density          = new gr_float[N3];
+  my_fields_t1.x_velocity       = new gr_float[N3];
+  my_fields_t1.y_velocity       = new gr_float[N3];
+  my_fields_t1.z_velocity       = new gr_float[N3];
+  my_fields_t1.metal_density    = new gr_float[N3];
+  my_fields_t1.internal_energy  = new gr_float[N3];
 
-  energy_t1        = new gr_float[N3];
+  my_fields_t1.HI_density       = new gr_float[N3];
+  my_fields_t1.HII_density      = new gr_float[N3];
+  my_fields_t1.HeI_density      = new gr_float[N3];
+  my_fields_t1.HeII_density     = new gr_float[N3];
+  my_fields_t1.HeIII_density    = new gr_float[N3];
+  my_fields_t1.e_density        = new gr_float[N3];
+  my_fields_t1.HM_density       = new gr_float[N3];
+  my_fields_t1.H2I_density      = new gr_float[N3];
+  my_fields_t1.H2II_density     = new gr_float[N3];
+  my_fields_t1.DI_density       = new gr_float[N3];
+  my_fields_t1.DII_density      = new gr_float[N3];
+  my_fields_t1.HDI_density      = new gr_float[N3];
+  my_fields_t1.volumetric_heating_rate = NULL;
+  my_fields_t1.specific_heating_rate   = NULL;
+
   cooling_time_t1  = new gr_float[N3];
   temperature_t1   = new gr_float[N3];
   pressure_t1      = new gr_float[N3];
   gamma_t1         = new gr_float[N3];
 
-  energy_tN        = new gr_float[N3];
+  my_fields_tN.density          = my_fields_t1.density;
+  my_fields_tN.x_velocity       = my_fields_t1.x_velocity;
+  my_fields_tN.y_velocity       = my_fields_t1.y_velocity;
+  my_fields_tN.z_velocity       = my_fields_t1.z_velocity;
+  my_fields_tN.metal_density    = my_fields_t1.metal_density;
+  my_fields_tN.internal_energy  = my_fields_t1.internal_energy;
+
+  my_fields_tN.HI_density       = new gr_float[N3];
+  my_fields_tN.HII_density      = new gr_float[N3];
+  my_fields_tN.HeI_density      = new gr_float[N3];
+  my_fields_tN.HeII_density     = new gr_float[N3];
+  my_fields_tN.HeIII_density    = new gr_float[N3];
+  my_fields_tN.e_density        = new gr_float[N3];
+  my_fields_tN.HM_density       = new gr_float[N3];
+  my_fields_tN.H2I_density      = new gr_float[N3];
+  my_fields_tN.H2II_density     = new gr_float[N3];
+  my_fields_tN.DI_density       = new gr_float[N3];
+  my_fields_tN.DII_density      = new gr_float[N3];
+  my_fields_tN.HDI_density      = new gr_float[N3];
+  my_fields_tN.volumetric_heating_rate = NULL;
+  my_fields_tN.specific_heating_rate   = NULL;
+
   cooling_time_tN  = new gr_float[N3];
   temperature_tN   = new gr_float[N3];
   pressure_tN      = new gr_float[N3];
   gamma_tN         = new gr_float[N3];
-
-  HI_density_t1    = new gr_float[N3];
-  HII_density_t1   = new gr_float[N3];
-  HeI_density_t1   = new gr_float[N3];
-  HeII_density_t1  = new gr_float[N3];
-  HeIII_density_t1 = new gr_float[N3];
-  e_density_t1     = new gr_float[N3];
-  HM_density_t1    = new gr_float[N3];
-  H2I_density_t1   = new gr_float[N3];
-  H2II_density_t1  = new gr_float[N3];
-  DI_density_t1    = new gr_float[N3];
-  DII_density_t1   = new gr_float[N3];
-  HDI_density_t1   = new gr_float[N3];
-
-  HI_density_tN    = new gr_float[N3];
-  HII_density_tN   = new gr_float[N3];
-  HeI_density_tN   = new gr_float[N3];
-  HeII_density_tN  = new gr_float[N3];
-  HeIII_density_tN = new gr_float[N3];
-  e_density_tN     = new gr_float[N3];
-  HM_density_tN    = new gr_float[N3];
-  H2I_density_tN   = new gr_float[N3];
-  H2II_density_tN  = new gr_float[N3];
-  DI_density_tN    = new gr_float[N3];
-  DII_density_tN   = new gr_float[N3];
-  HDI_density_tN   = new gr_float[N3];
 
   // set temperature units and other constants
   const double temperature_units = mh * pow(my_units.a_units *
@@ -266,11 +278,12 @@ int main(int argc, char *argv[])
   // fields to be updated are reset by InvokeGrackle to ensure the same input fields
   for (int i=0; i<N3; i++)
   {
-    density      [i] = D0*FLUC(FAmp);
-    metal_density[i] = grackle_data.SolarMetalFractionByMass * density[i] * FLUC(FAmp);
-    x_velocity   [i] = 0.0; // velocity are not useful currently
-    y_velocity   [i] = 0.0;
-    z_velocity   [i] = 0.0;
+    my_fields_t1.density      [i] = D0*FLUC(FAmp);
+    my_fields_t1.metal_density[i] = grackle_data.SolarMetalFractionByMass *
+      my_fields_t1.density[i] * FLUC(FAmp);
+    my_fields_t1.x_velocity   [i] = 0.0; // velocity are not useful currently
+    my_fields_t1.y_velocity   [i] = 0.0;
+    my_fields_t1.z_velocity   [i] = 0.0;
   }
 
 
@@ -286,14 +299,7 @@ int main(int argc, char *argv[])
   {
     T_CoolT_t1
       = InvokeGrackle( TAB_COOL, 1, NIter, N3, RSeed, D0, T0, FAmp,
-                       &my_units, a_value, dt,
-                       grid_rank, grid_dimension, grid_start, grid_end,
-                       density, energy_t1, x_velocity, y_velocity, z_velocity,
-                       HI_density_t1, HII_density_t1, HM_density_t1,
-                       HeI_density_t1, HeII_density_t1, HeIII_density_t1,
-                       H2I_density_t1, H2II_density_t1,
-                       DI_density_t1, DII_density_t1, HDI_density_t1,
-                       e_density_t1, metal_density, NULL );
+                       &my_units, &my_fields_t1, dt, NULL );
   }
 
   // multi-thread
@@ -301,22 +307,15 @@ int main(int argc, char *argv[])
   {
     T_CoolT_tN
       = InvokeGrackle( TAB_COOL, NThread, NIter, N3, RSeed, D0, T0, FAmp,
-                       &my_units, a_value, dt,
-                       grid_rank, grid_dimension, grid_start, grid_end,
-                       density, energy_tN, x_velocity, y_velocity, z_velocity,
-                       HI_density_tN, HII_density_tN, HM_density_tN,
-                       HeI_density_tN, HeII_density_tN, HeIII_density_tN,
-                       H2I_density_tN, H2II_density_tN,
-                       DI_density_tN, DII_density_tN, HDI_density_tN,
-                       e_density_tN, metal_density, NULL );
+                       &my_units, &my_fields_tN, dt, NULL );
   }
 
   // check results
   if ( Mode == 3 )
   {
     const int NField = 1;
-    const gr_float *Field_t1[NField] = { energy_t1 };
-    const gr_float *Field_tN[NField] = { energy_tN };
+    const gr_float *Field_t1[NField] = { my_fields_t1.internal_energy };
+    const gr_float *Field_tN[NField] = { my_fields_tN.internal_energy };
 
     CompareResult( Field_t1, Field_tN, N3, NField );
   }
@@ -330,14 +329,7 @@ int main(int argc, char *argv[])
   {
     T_TimeT_t1
       = InvokeGrackle( TAB_TIME, 1, NIter, N3, RSeed, D0, T0, FAmp,
-                       &my_units, a_value, dt,
-                       grid_rank, grid_dimension, grid_start, grid_end,
-                       density, energy_t1, x_velocity, y_velocity, z_velocity,
-                       HI_density_t1, HII_density_t1, HM_density_t1,
-                       HeI_density_t1, HeII_density_t1, HeIII_density_t1,
-                       H2I_density_t1, H2II_density_t1,
-                       DI_density_t1, DII_density_t1, HDI_density_t1,
-                       e_density_t1, metal_density, cooling_time_t1 );
+                       &my_units, &my_fields_t1, dt, cooling_time_t1 );
   }
 
   // multi-thread
@@ -345,14 +337,7 @@ int main(int argc, char *argv[])
   {
     T_TimeT_tN
       = InvokeGrackle( TAB_TIME, NThread, NIter, N3, RSeed, D0, T0, FAmp,
-                       &my_units, a_value, dt,
-                       grid_rank, grid_dimension, grid_start, grid_end,
-                       density, energy_tN, x_velocity, y_velocity, z_velocity,
-                       HI_density_tN, HII_density_tN, HM_density_tN,
-                       HeI_density_tN, HeII_density_tN, HeIII_density_tN,
-                       H2I_density_tN, H2II_density_tN,
-                       DI_density_tN, DII_density_tN, HDI_density_tN,
-                       e_density_tN, metal_density, cooling_time_tN );
+                       &my_units, &my_fields_tN, dt, cooling_time_tN );
   }
 
   // check results
@@ -374,14 +359,7 @@ int main(int argc, char *argv[])
   {
     T_TempT_t1
       = InvokeGrackle( TAB_TEMP, 1, NIter, N3, RSeed, D0, T0, FAmp,
-                       &my_units, a_value, dt,
-                       grid_rank, grid_dimension, grid_start, grid_end,
-                       density, energy_t1, x_velocity, y_velocity, z_velocity,
-                       HI_density_t1, HII_density_t1, HM_density_t1,
-                       HeI_density_t1, HeII_density_t1, HeIII_density_t1,
-                       H2I_density_t1, H2II_density_t1,
-                       DI_density_t1, DII_density_t1, HDI_density_t1,
-                       e_density_t1, metal_density, temperature_t1 );
+                       &my_units, &my_fields_t1, dt, temperature_t1 );
   }
 
   // multi-thread
@@ -389,14 +367,7 @@ int main(int argc, char *argv[])
   {
     T_TempT_tN
       = InvokeGrackle( TAB_TEMP, NThread, NIter, N3, RSeed, D0, T0, FAmp,
-                       &my_units, a_value, dt,
-                       grid_rank, grid_dimension, grid_start, grid_end,
-                       density, energy_tN, x_velocity, y_velocity, z_velocity,
-                       HI_density_tN, HII_density_tN, HM_density_tN,
-                       HeI_density_tN, HeII_density_tN, HeIII_density_tN,
-                       H2I_density_tN, H2II_density_tN,
-                       DI_density_tN, DII_density_tN, HDI_density_tN,
-                       e_density_tN, metal_density, temperature_tN );
+                       &my_units, &my_fields_tN, dt, temperature_tN );
   }
 
   // check results
@@ -418,14 +389,7 @@ int main(int argc, char *argv[])
   {
     T_PresT_t1
       = InvokeGrackle( TAB_PRES, 1, NIter, N3, RSeed, D0, T0, FAmp,
-                       &my_units, a_value, dt,
-                       grid_rank, grid_dimension, grid_start, grid_end,
-                       density, energy_t1, x_velocity, y_velocity, z_velocity,
-                       HI_density_t1, HII_density_t1, HM_density_t1,
-                       HeI_density_t1, HeII_density_t1, HeIII_density_t1,
-                       H2I_density_t1, H2II_density_t1,
-                       DI_density_t1, DII_density_t1, HDI_density_t1,
-                       e_density_t1, metal_density, pressure_t1 );
+                       &my_units, &my_fields_t1, dt, pressure_t1 );
   }
 
   // multi-thread
@@ -433,14 +397,7 @@ int main(int argc, char *argv[])
   {
     T_PresT_tN
       = InvokeGrackle( TAB_PRES, NThread, NIter, N3, RSeed, D0, T0, FAmp,
-                       &my_units, a_value, dt,
-                       grid_rank, grid_dimension, grid_start, grid_end,
-                       density, energy_tN, x_velocity, y_velocity, z_velocity,
-                       HI_density_tN, HII_density_tN, HM_density_tN,
-                       HeI_density_tN, HeII_density_tN, HeIII_density_tN,
-                       H2I_density_tN, H2II_density_tN,
-                       DI_density_tN, DII_density_tN, HDI_density_tN,
-                       e_density_tN, metal_density, pressure_tN );
+                       &my_units, &my_fields_tN, dt, pressure_tN );
   }
 
   // check results
@@ -475,14 +432,7 @@ int main(int argc, char *argv[])
   {
     T_CoolC_t1
       = InvokeGrackle( CHE_COOL, 1, NIter, N3, RSeed, D0, T0, FAmp,
-                       &my_units, a_value, dt,
-                       grid_rank, grid_dimension, grid_start, grid_end,
-                       density, energy_t1, x_velocity, y_velocity, z_velocity,
-                       HI_density_t1, HII_density_t1, HM_density_t1,
-                       HeI_density_t1, HeII_density_t1, HeIII_density_t1,
-                       H2I_density_t1, H2II_density_t1,
-                       DI_density_t1, DII_density_t1, HDI_density_t1,
-                       e_density_t1, metal_density, NULL );
+                       &my_units, &my_fields_t1, dt, NULL );
   }
 
   // multi-thread
@@ -490,14 +440,7 @@ int main(int argc, char *argv[])
   {
     T_CoolC_tN
       = InvokeGrackle( CHE_COOL, NThread, NIter, N3, RSeed, D0, T0, FAmp,
-                       &my_units, a_value, dt,
-                       grid_rank, grid_dimension, grid_start, grid_end,
-                       density, energy_tN, x_velocity, y_velocity, z_velocity,
-                       HI_density_tN, HII_density_tN, HM_density_tN,
-                       HeI_density_tN, HeII_density_tN, HeIII_density_tN,
-                       H2I_density_tN, H2II_density_tN,
-                       DI_density_tN, DII_density_tN, HDI_density_tN,
-                       e_density_tN, metal_density, NULL );
+                       &my_units, &my_fields_tN, dt, NULL );
   }
 
   // check results
@@ -505,13 +448,17 @@ int main(int argc, char *argv[])
   {
     const int NField = 13;
     const gr_float *Field_t1[NField] =
-     { HI_density_t1, HeI_density_t1, HII_density_t1, HM_density_t1,
-       HeII_density_t1, HeIII_density_t1, H2I_density_t1, H2II_density_t1,
-       DI_density_t1, DII_density_t1, HDI_density_t1, e_density_t1, energy_t1 };
+     { my_fields_t1.HI_density, my_fields_t1.HeI_density, my_fields_t1.HII_density,
+       my_fields_t1.HM_density, my_fields_t1.HeII_density, my_fields_t1.HeIII_density,
+       my_fields_t1.H2I_density, my_fields_t1.H2II_density, my_fields_t1.DI_density,
+       my_fields_t1.DII_density, my_fields_t1.HDI_density, my_fields_t1.e_density,
+       my_fields_t1.internal_energy };
     const gr_float *Field_tN[NField] =
-     { HI_density_tN, HeI_density_tN, HII_density_tN, HM_density_tN,
-       HeII_density_tN, HeIII_density_tN, H2I_density_tN, H2II_density_tN,
-       DI_density_tN, DII_density_tN, HDI_density_tN, e_density_tN, energy_tN };
+     { my_fields_tN.HI_density, my_fields_tN.HeI_density, my_fields_tN.HII_density,
+       my_fields_tN.HM_density, my_fields_tN.HeII_density, my_fields_tN.HeIII_density,
+       my_fields_tN.H2I_density, my_fields_tN.H2II_density, my_fields_tN.DI_density,
+       my_fields_tN.DII_density, my_fields_tN.HDI_density, my_fields_tN.e_density,
+       my_fields_tN.internal_energy };
 
     CompareResult( Field_t1, Field_tN, N3, NField );
   }
@@ -525,14 +472,7 @@ int main(int argc, char *argv[])
   {
     T_TimeC_t1
       = InvokeGrackle( CHE_TIME, 1, NIter, N3, RSeed, D0, T0, FAmp,
-                       &my_units, a_value, dt,
-                       grid_rank, grid_dimension, grid_start, grid_end,
-                       density, energy_t1, x_velocity, y_velocity, z_velocity,
-                       HI_density_t1, HII_density_t1, HM_density_t1,
-                       HeI_density_t1, HeII_density_t1, HeIII_density_t1,
-                       H2I_density_t1, H2II_density_t1,
-                       DI_density_t1, DII_density_t1, HDI_density_t1,
-                       e_density_t1, metal_density, cooling_time_t1 );
+                       &my_units, &my_fields_t1, dt, cooling_time_t1 );
   }
 
   // multi-thread
@@ -540,14 +480,7 @@ int main(int argc, char *argv[])
   {
     T_TimeC_tN
       = InvokeGrackle( CHE_TIME, NThread, NIter, N3, RSeed, D0, T0, FAmp,
-                       &my_units, a_value, dt,
-                       grid_rank, grid_dimension, grid_start, grid_end,
-                       density, energy_tN, x_velocity, y_velocity, z_velocity,
-                       HI_density_tN, HII_density_tN, HM_density_tN,
-                       HeI_density_tN, HeII_density_tN, HeIII_density_tN,
-                       H2I_density_tN, H2II_density_tN,
-                       DI_density_tN, DII_density_tN, HDI_density_tN,
-                       e_density_tN, metal_density, cooling_time_tN );
+                       &my_units, &my_fields_tN, dt, cooling_time_tN );
   }
 
   // check results
@@ -569,14 +502,7 @@ int main(int argc, char *argv[])
   {
     T_TempC_t1
       = InvokeGrackle( CHE_TEMP, 1, NIter, N3, RSeed, D0, T0, FAmp,
-                       &my_units, a_value, dt,
-                       grid_rank, grid_dimension, grid_start, grid_end,
-                       density, energy_t1, x_velocity, y_velocity, z_velocity,
-                       HI_density_t1, HII_density_t1, HM_density_t1,
-                       HeI_density_t1, HeII_density_t1, HeIII_density_t1,
-                       H2I_density_t1, H2II_density_t1,
-                       DI_density_t1, DII_density_t1, HDI_density_t1,
-                       e_density_t1, metal_density, temperature_t1 );
+                       &my_units, &my_fields_t1, dt, temperature_t1 );
   }
 
   // multi-thread
@@ -584,14 +510,7 @@ int main(int argc, char *argv[])
   {
     T_TempC_tN
       = InvokeGrackle( CHE_TEMP, NThread, NIter, N3, RSeed, D0, T0, FAmp,
-                       &my_units, a_value, dt,
-                       grid_rank, grid_dimension, grid_start, grid_end,
-                       density, energy_tN, x_velocity, y_velocity, z_velocity,
-                       HI_density_tN, HII_density_tN, HM_density_tN,
-                       HeI_density_tN, HeII_density_tN, HeIII_density_tN,
-                       H2I_density_tN, H2II_density_tN,
-                       DI_density_tN, DII_density_tN, HDI_density_tN,
-                       e_density_tN, metal_density, temperature_tN );
+                       &my_units, &my_fields_tN, dt, temperature_tN );
   }
 
   // check results
@@ -613,14 +532,7 @@ int main(int argc, char *argv[])
   {
     T_PresC_t1
       = InvokeGrackle( CHE_PRES, 1, NIter, N3, RSeed, D0, T0, FAmp,
-                       &my_units, a_value, dt,
-                       grid_rank, grid_dimension, grid_start, grid_end,
-                       density, energy_t1, x_velocity, y_velocity, z_velocity,
-                       HI_density_t1, HII_density_t1, HM_density_t1,
-                       HeI_density_t1, HeII_density_t1, HeIII_density_t1,
-                       H2I_density_t1, H2II_density_t1,
-                       DI_density_t1, DII_density_t1, HDI_density_t1,
-                       e_density_t1, metal_density, pressure_t1 );
+                       &my_units, &my_fields_t1, dt, pressure_t1 );
   }
 
   // multi-thread
@@ -628,14 +540,7 @@ int main(int argc, char *argv[])
   {
     T_PresC_tN
       = InvokeGrackle( CHE_PRES, NThread, NIter, N3, RSeed, D0, T0, FAmp,
-                       &my_units, a_value, dt,
-                       grid_rank, grid_dimension, grid_start, grid_end,
-                       density, energy_tN, x_velocity, y_velocity, z_velocity,
-                       HI_density_tN, HII_density_tN, HM_density_tN,
-                       HeI_density_tN, HeII_density_tN, HeIII_density_tN,
-                       H2I_density_tN, H2II_density_tN,
-                       DI_density_tN, DII_density_tN, HDI_density_tN,
-                       e_density_tN, metal_density, pressure_tN );
+                       &my_units, &my_fields_tN, dt, pressure_tN );
   }
 
   // check results
@@ -657,14 +562,7 @@ int main(int argc, char *argv[])
   {
     T_GamaC_t1
       = InvokeGrackle( CHE_GAMA, 1, NIter, N3, RSeed, D0, T0, FAmp,
-                       &my_units, a_value, dt,
-                       grid_rank, grid_dimension, grid_start, grid_end,
-                       density, energy_t1, x_velocity, y_velocity, z_velocity,
-                       HI_density_t1, HII_density_t1, HM_density_t1,
-                       HeI_density_t1, HeII_density_t1, HeIII_density_t1,
-                       H2I_density_t1, H2II_density_t1,
-                       DI_density_t1, DII_density_t1, HDI_density_t1,
-                       e_density_t1, metal_density, gamma_t1 );
+                       &my_units, &my_fields_t1, dt, gamma_t1 );
   }
 
   // multi-thread
@@ -672,14 +570,7 @@ int main(int argc, char *argv[])
   {
     T_GamaC_tN
       = InvokeGrackle( CHE_GAMA, NThread, NIter, N3, RSeed, D0, T0, FAmp,
-                       &my_units, a_value, dt,
-                       grid_rank, grid_dimension, grid_start, grid_end,
-                       density, energy_tN, x_velocity, y_velocity, z_velocity,
-                       HI_density_tN, HII_density_tN, HM_density_tN,
-                       HeI_density_tN, HeII_density_tN, HeIII_density_tN,
-                       H2I_density_tN, H2II_density_tN,
-                       DI_density_tN, DII_density_tN, HDI_density_tN,
-                       e_density_tN, metal_density, gamma_tN );
+                       &my_units, &my_fields_tN, dt, gamma_tN );
   }
 
   // check results
@@ -751,49 +642,48 @@ int main(int argc, char *argv[])
   fclose( File );
 
 
-  delete [] density;
-  delete [] x_velocity;
-  delete [] y_velocity;
-  delete [] z_velocity;
-  delete [] metal_density;
+  delete [] my_fields_t1.density;
+  delete [] my_fields_t1.x_velocity;
+  delete [] my_fields_t1.y_velocity;
+  delete [] my_fields_t1.z_velocity;
+  delete [] my_fields_t1.metal_density;
 
-  delete [] energy_t1;
+  delete [] my_fields_t1.HI_density;
+  delete [] my_fields_t1.HII_density;
+  delete [] my_fields_t1.HeI_density;
+  delete [] my_fields_t1.HeII_density;
+  delete [] my_fields_t1.HeIII_density;
+  delete [] my_fields_t1.e_density;
+  delete [] my_fields_t1.HM_density;
+  delete [] my_fields_t1.H2I_density;
+  delete [] my_fields_t1.H2II_density;
+  delete [] my_fields_t1.DI_density;
+  delete [] my_fields_t1.DII_density;
+  delete [] my_fields_t1.HDI_density;
+  delete [] my_fields_t1.internal_energy;
+
   delete [] cooling_time_t1;
   delete [] temperature_t1;
   delete [] pressure_t1;
   delete [] gamma_t1;
 
-  delete [] energy_tN;
+  delete [] my_fields_tN.HI_density;
+  delete [] my_fields_tN.HII_density;
+  delete [] my_fields_tN.HeI_density;
+  delete [] my_fields_tN.HeII_density;
+  delete [] my_fields_tN.HeIII_density;
+  delete [] my_fields_tN.e_density;
+  delete [] my_fields_tN.HM_density;
+  delete [] my_fields_tN.H2I_density;
+  delete [] my_fields_tN.H2II_density;
+  delete [] my_fields_tN.DI_density;
+  delete [] my_fields_tN.DII_density;
+  delete [] my_fields_tN.HDI_density;
+
   delete [] cooling_time_tN;
   delete [] temperature_tN;
   delete [] pressure_tN;
   delete [] gamma_tN;
-
-  delete [] HI_density_t1;
-  delete [] HII_density_t1;
-  delete [] HeI_density_t1;
-  delete [] HeII_density_t1;
-  delete [] HeIII_density_t1;
-  delete [] e_density_t1;
-  delete [] HM_density_t1;
-  delete [] H2I_density_t1;
-  delete [] H2II_density_t1;
-  delete [] DI_density_t1;
-  delete [] DII_density_t1;
-  delete [] HDI_density_t1;
-
-  delete [] HI_density_tN;
-  delete [] HII_density_tN;
-  delete [] HeI_density_tN;
-  delete [] HeII_density_tN;
-  delete [] HeIII_density_tN;
-  delete [] e_density_tN;
-  delete [] HM_density_tN;
-  delete [] H2I_density_tN;
-  delete [] H2II_density_tN;
-  delete [] DI_density_tN;
-  delete [] DII_density_tN;
-  delete [] HDI_density_tN;
 
   return EXIT_SUCCESS;
 
@@ -814,16 +704,8 @@ int main(int argc, char *argv[])
 //-------------------------------------------------------------------------------------------------------
 float InvokeGrackle( const Routine_t Routine, const int NThread, const int NIter, const int NCell,
                      const int RSeed, const gr_float D0, const gr_float T0, const gr_float FAmp,
-                     code_units *my_units, double a_value, double dt,
-                     int grid_rank, int *grid_dimension,
-                     int *grid_start, int *grid_end,
-                     gr_float *density, gr_float *energy,
-                     gr_float *x_velocity, gr_float *y_velocity, gr_float *z_velocity,
-                     gr_float *HI_density, gr_float *HII_density, gr_float *HM_density,
-                     gr_float *HeI_density, gr_float *HeII_density, gr_float *HeIII_density,
-                     gr_float *H2I_density, gr_float *H2II_density,
-                     gr_float *DI_density, gr_float *DII_density, gr_float *HDI_density,
-                     gr_float *e_density, gr_float *metal_density, gr_float *output )
+                     code_units *my_units, grackle_field_data *my_fields, double dt,
+                     gr_float *output )
 {
 
   fprintf( stdout, "   Number of threads = %2d ... ", NThread ); fflush( stdout );
@@ -854,20 +736,15 @@ float InvokeGrackle( const Routine_t Routine, const int NThread, const int NIter
         if ( my_units->comoving_coordinates == 1 )
         for (int i=0; i<NCell; i++)
         {
-          density      [i] = D0*FLUC(FAmp);
-          metal_density[i] = grackle_data.SolarMetalFractionByMass * density[i] * FLUC(FAmp);
+          my_fields->density      [i] = D0*FLUC(FAmp);
+          my_fields->metal_density[i] = grackle_data.SolarMetalFractionByMass *
+            my_fields->density[i] * FLUC(FAmp);
         }
 
         // initialize the fields to be updated
-        for (int i=0; i<NCell; i++) energy[i] = T0*FLUC(FAmp);
+        for (int i=0; i<NCell; i++) my_fields->internal_energy[i] = T0*FLUC(FAmp);
 
-        ChkErr = solve_chemistry_table(
-                   my_units, a_value, dt,
-                   grid_rank, grid_dimension,
-                   grid_start, grid_end,
-                   density, energy,
-                   x_velocity, y_velocity, z_velocity,
-                   metal_density );
+        ChkErr = solve_chemistry( my_units, my_fields, dt );
         break;
 
       case TAB_TIME:
@@ -875,17 +752,12 @@ float InvokeGrackle( const Routine_t Routine, const int NThread, const int NIter
         if ( my_units->comoving_coordinates == 1 )
         for (int i=0; i<NCell; i++)
         {
-          density      [i] = D0*FLUC(FAmp);
-          metal_density[i] = grackle_data.SolarMetalFractionByMass * density[i] * FLUC(FAmp);
+          my_fields->density      [i] = D0*FLUC(FAmp);
+          my_fields->metal_density[i] = grackle_data.SolarMetalFractionByMass *
+            my_fields->density[i] * FLUC(FAmp);
         }
 
-        ChkErr = calculate_cooling_time_table(
-                   my_units, a_value,
-                   grid_rank, grid_dimension,
-                   grid_start, grid_end,
-                   density, energy,
-                   x_velocity, y_velocity, z_velocity,
-                   metal_density, output );
+        ChkErr = calculate_cooling_time( my_units, my_fields, output );
         break;
 
       case TAB_TEMP:
@@ -893,25 +765,16 @@ float InvokeGrackle( const Routine_t Routine, const int NThread, const int NIter
         if ( my_units->comoving_coordinates == 1 )
         for (int i=0; i<NCell; i++)
         {
-          density      [i] = D0*FLUC(FAmp);
-          metal_density[i] = grackle_data.SolarMetalFractionByMass * density[i] * FLUC(FAmp);
+          my_fields->density      [i] = D0*FLUC(FAmp);
+          my_fields->metal_density[i] = grackle_data.SolarMetalFractionByMass *
+            my_fields->density[i] * FLUC(FAmp);
         }
 
-        ChkErr = calculate_temperature_table(
-                   my_units, a_value,
-                   grid_rank, grid_dimension,
-                   grid_start, grid_end,
-                   density, energy,
-                   metal_density, output );
+        ChkErr = calculate_temperature( my_units, my_fields, output );
         break;
 
       case TAB_PRES:
-        ChkErr =  calculate_pressure_table(
-                    my_units, a_value,
-                    grid_rank, grid_dimension,
-                    grid_start, grid_end,
-                    density, energy,
-                    output );
+        ChkErr =  calculate_pressure( my_units, my_fields, output );
         break;
 
       case CHE_COOL:
@@ -919,39 +782,30 @@ float InvokeGrackle( const Routine_t Routine, const int NThread, const int NIter
         if ( my_units->comoving_coordinates == 1 )
         for (int i=0; i<NCell; i++)
         {
-          density      [i] = D0*FLUC(FAmp);
-          metal_density[i] = grackle_data.SolarMetalFractionByMass * density[i] * FLUC(FAmp);
+          my_fields->density      [i] = D0*FLUC(FAmp);
+          my_fields->metal_density[i] = grackle_data.SolarMetalFractionByMass *
+            my_fields->density[i] * FLUC(FAmp);
         }
 
         // initialize the fields to be updated
         for (int i=0; i<NCell; i++)
         {
-          HI_density   [i] = grackle_data.HydrogenFractionByMass * density[i];
-          HeI_density  [i] = density[i] - HI_density[i];
-          HII_density  [i] = tiny_number * density[i];
-          HM_density   [i] = tiny_number * density[i];
-          HeII_density [i] = tiny_number * density[i];
-          HeIII_density[i] = tiny_number * density[i];
-          H2I_density  [i] = tiny_number * density[i];
-          H2II_density [i] = tiny_number * density[i];
-          DI_density   [i] = 2.0*3.4e-5  * density[i];
-          DII_density  [i] = tiny_number * density[i];
-          HDI_density  [i] = tiny_number * density[i];
-          e_density    [i] = tiny_number * density[i];
-          energy       [i] = T0*FLUC(FAmp);
+          my_fields->HI_density   [i] = grackle_data.HydrogenFractionByMass * my_fields->density[i];
+          my_fields->HeI_density  [i] = my_fields->density[i] - my_fields->HI_density[i];
+          my_fields->HII_density  [i] = tiny_number * my_fields->density[i];
+          my_fields->HM_density   [i] = tiny_number * my_fields->density[i];
+          my_fields->HeII_density [i] = tiny_number * my_fields->density[i];
+          my_fields->HeIII_density[i] = tiny_number * my_fields->density[i];
+          my_fields->H2I_density  [i] = tiny_number * my_fields->density[i];
+          my_fields->H2II_density [i] = tiny_number * my_fields->density[i];
+          my_fields->DI_density   [i] = 2.0*3.4e-5  * my_fields->density[i];
+          my_fields->DII_density  [i] = tiny_number * my_fields->density[i];
+          my_fields->HDI_density  [i] = tiny_number * my_fields->density[i];
+          my_fields->e_density    [i] = tiny_number * my_fields->density[i];
+          my_fields->internal_energy[i] = T0*FLUC(FAmp);
         }
 
-        ChkErr = solve_chemistry(
-                   my_units, a_value, dt,
-                   grid_rank, grid_dimension,
-                   grid_start, grid_end,
-                   density, energy,
-                   x_velocity, y_velocity, z_velocity,
-                   HI_density, HII_density, HM_density,
-                   HeI_density, HeII_density, HeIII_density,
-                   H2I_density, H2II_density,
-                   DI_density, DII_density, HDI_density,
-                   e_density, metal_density );
+        ChkErr = solve_chemistry( my_units, my_fields, dt );
         break;
 
       case CHE_TIME:
@@ -959,60 +813,24 @@ float InvokeGrackle( const Routine_t Routine, const int NThread, const int NIter
         if ( my_units->comoving_coordinates == 1 )
         for (int i=0; i<NCell; i++)
         {
-          density      [i] = D0*FLUC(FAmp);
-          metal_density[i] = grackle_data.SolarMetalFractionByMass * density[i] * FLUC(FAmp);
+          my_fields->density      [i] = D0*FLUC(FAmp);
+          my_fields->metal_density[i] = grackle_data.SolarMetalFractionByMass *
+            my_fields->density[i] * FLUC(FAmp);
         }
 
-        ChkErr = calculate_cooling_time(
-                   my_units, a_value,
-                   grid_rank, grid_dimension,
-                   grid_start, grid_end,
-                   density, energy,
-                   x_velocity, y_velocity, z_velocity,
-                   HI_density, HII_density, HM_density,
-                   HeI_density, HeII_density, HeIII_density,
-                   H2I_density, H2II_density,
-                   DI_density, DII_density, HDI_density,
-                   e_density, metal_density, output );
+        ChkErr = calculate_cooling_time( my_units, my_fields, output );
         break;
 
       case CHE_TEMP:
-        ChkErr = calculate_temperature(
-                   my_units, a_value,
-                   grid_rank, grid_dimension,
-                   grid_start, grid_end,
-                   density, energy,
-                   HI_density, HII_density, HM_density,
-                   HeI_density, HeII_density, HeIII_density,
-                   H2I_density, H2II_density,
-                   DI_density, DII_density, HDI_density,
-                   e_density, metal_density, output );
+        ChkErr = calculate_temperature( my_units, my_fields, output );
         break;
 
       case CHE_PRES:
-        ChkErr = calculate_pressure(
-                   my_units, a_value,
-                   grid_rank, grid_dimension,
-                   grid_start, grid_end,
-                   density, energy,
-                   HI_density, HII_density, HM_density,
-                   HeI_density, HeII_density, HeIII_density,
-                   H2I_density, H2II_density,
-                   DI_density, DII_density, HDI_density,
-                   e_density, metal_density, output );
+        ChkErr = calculate_pressure( my_units, my_fields, output );
         break;
 
       case CHE_GAMA:
-        ChkErr = calculate_gamma(
-                   my_units, a_value,
-                   grid_rank, grid_dimension,
-                   grid_start, grid_end,
-                   density, energy,
-                   HI_density, HII_density, HM_density,
-                   HeI_density, HeII_density, HeIII_density,
-                   H2I_density, H2II_density,
-                   DI_density, DII_density, HDI_density,
-                   e_density, metal_density, output );
+        ChkErr = calculate_gamma( my_units, my_fields, output );
         break;
 
       default:
