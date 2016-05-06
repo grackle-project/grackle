@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
   // Second, create a chemistry object for parameters and rate data.
   if (set_default_chemistry_parameters() == 0) {
     fprintf(stderr, "Error in set_default_chemistry_parameters.\n");
-    return EXIT_SUCCESS;
+    return EXIT_FAILURE;
   }
   // Set parameter values for chemistry.
   grackle_data.use_grackle = 1;            // chemistry on
@@ -66,7 +66,7 @@ int main(int argc, char *argv[])
   // Finally, initialize the chemistry object.
   if (initialize_chemistry_data(&my_units, a_value) == 0) {
     fprintf(stderr, "Error in initialize_chemistry_data.\n");
-    return EXIT_SUCCESS;
+    return EXIT_FAILURE;
   }
 
   gr_float tiny_number = 1.e-20;
@@ -167,7 +167,7 @@ int main(int argc, char *argv[])
 
   if (solve_chemistry(&my_units, &my_fields, dt) == 0) {
     fprintf(stderr, "Error in solve_chemistry.\n");
-    return EXIT_SUCCESS;
+    return EXIT_FAILURE;
   }
 
   // Calculate cooling time.
@@ -176,7 +176,7 @@ int main(int argc, char *argv[])
   if (calculate_cooling_time(&my_units, &my_fields,
                              cooling_time) == 0) {
     fprintf(stderr, "Error in calculate_cooling_time.\n");
-    return EXIT_SUCCESS;
+    return EXIT_FAILURE;
   }
 
   fprintf(stderr, "Cooling time = %le s.\n", cooling_time[0] *
@@ -188,7 +188,7 @@ int main(int argc, char *argv[])
   if (calculate_temperature(&my_units, &my_fields,
                             temperature) == 0) {
     fprintf(stderr, "Error in calculate_temperature.\n");
-    return EXIT_SUCCESS;
+    return EXIT_FAILURE;
   }
 
   fprintf(stderr, "Temperature = %le K.\n", temperature[0]);
@@ -199,7 +199,7 @@ int main(int argc, char *argv[])
   if (calculate_pressure(&my_units, &my_fields,
                          pressure) == 0) {
     fprintf(stderr, "Error in calculate_pressure.\n");
-    return EXIT_SUCCESS;
+    return EXIT_FAILURE;
   }
 
   fprintf(stderr, "Pressure = %le.\n", pressure[0]);
@@ -210,10 +210,10 @@ int main(int argc, char *argv[])
   if (calculate_gamma(&my_units, &my_fields,
                       gamma) == 0) {
     fprintf(stderr, "Error in calculate_gamma.\n");
-    return EXIT_SUCCESS;
+    return EXIT_FAILURE;
   }
 
   fprintf(stderr, "gamma = %le.\n", gamma[0]);
 
-  return EXIT_FAILURE;
+  return EXIT_SUCCESS;
 }
