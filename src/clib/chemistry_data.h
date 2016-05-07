@@ -79,6 +79,12 @@ typedef struct
   int photoelectric_heating;
   double photoelectric_heating_rate; // in CGS
 
+  /* flags to signal that arrays of volumetric or
+     specific heating rates are being provided */
+
+  int use_volumetric_heating_rate;
+  int use_specific_heating_rate;
+
   /***************************************
    *** radiation background parameters ***
    ***************************************/

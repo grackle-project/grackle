@@ -97,14 +97,6 @@ int _calculate_cooling_time(chemistry_data *my_chemistry,
   if (metal_density == NULL)
     metal_field_present = FALSE;
 
-  /* Check if heating rate arrays have been given. */
-  int use_volumetric_heating_rate = 0;
-  if (volumetric_heating_rate != NULL)
-    use_volumetric_heating_rate = 1;
-  int use_specific_heating_rate = 0;
-  if (specific_heating_rate != NULL)
-    use_specific_heating_rate = 1;
-
   double co_length_units, co_density_units;
   if (my_units->comoving_coordinates == TRUE) {
     co_length_units = my_units->length_units;
@@ -175,7 +167,8 @@ int _calculate_cooling_time(chemistry_data *my_chemistry,
        &my_chemistry->cloudy_metal.data_size,
        my_chemistry->cloudy_metal.cooling_data,
        my_chemistry->cloudy_metal.heating_data,
-       &use_volumetric_heating_rate, &use_specific_heating_rate,
+       &my_chemistry->use_volumetric_heating_rate,
+       &my_chemistry->use_specific_heating_rate,
        volumetric_heating_rate, specific_heating_rate);
  
   return SUCCESS;
