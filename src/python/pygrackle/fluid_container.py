@@ -56,14 +56,14 @@ class FluidContainer(dict):
         tbase1 = self.chemistry_data.time_units
         if self.chemistry_data.comoving_coordinates:
             xbase1 = self.chemistry_data.length_units / \
-              (self.chemistry_data.a_value * self.chemistry_data.a_units)
+                (self.chemistry_data.a_value * self.chemistry_data.a_units)
             dbase1 = self.chemistry_data.density_units * \
-              (self.chemistry_data.a_value * self.chemistry_data.a_units)**3
+                (self.chemistry_data.a_value * self.chemistry_data.a_units)**3
         else:
             xbase1 = self.chemistry_data.length_units / \
-              self.chemistry_data.a_units
+                self.chemistry_data.a_units
             dbase1 = self.chemistry_data.density_units * \
-              self.chemistry_data.a_units**3
+                self.chemistry_data.a_units**3
 
         coolunit = (self.chemistry_data.a_units**5 * xbase1**2 *
                     mass_hydrogen_cgs**2) / (tbase1**3 * dbase1)

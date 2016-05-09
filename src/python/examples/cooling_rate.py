@@ -47,7 +47,7 @@ if __name__ == "__main__":
     my_chemistry.comoving_coordinates = 0 # proper units
     my_chemistry.a_units = 1.0
     my_chemistry.a_value = 1.0 / (1.0 + current_redshift) / \
-      my_chemistry.a_units
+        my_chemistry.a_units
     my_chemistry.density_units = mass_hydrogen_cgs # rho = 1.0 is 1.67e-24 g
     my_chemistry.length_units = cm_per_mpc         # 1 Mpc in cm
     my_chemistry.time_units = sec_per_Myr          # 1 Gyr in s

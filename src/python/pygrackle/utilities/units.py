@@ -13,9 +13,6 @@
 
 import numpy as np
 
-from .physical_constants import \
-    mass_hydrogen_cgs
-
 def set_cosmology_units(my_units, hubble_constant=0.704,
                         omega_matter=0.268, omega_lambda=0.732,
                         current_redshift=0.0, initial_redshift=0.0,
@@ -48,6 +45,8 @@ def set_cosmology_units(my_units, hubble_constant=0.704,
 
     my_units.comoving_coordinates = 1
     my_units.a_units = 1. / (1. + initial_redshift)
+    my_units.a_value = 1.0 / (1.0 + current_redshift) / \
+        my_units.a_units
     my_units.density_units = 1.8788e-29 * omega_matter * \
         np.power(hubble_constant, 2) * np.power(1 + current_redshift, 3)
     my_units.length_units = 3.085678e24 * comoving_box_size / \
