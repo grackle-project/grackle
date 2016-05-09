@@ -135,6 +135,9 @@ int main(int argc, char *argv[])
   / This should be done at simulation start.
   *********************************************************************/
 
+  // Set initial redshift (for internal units).
+  double initial_redshift = 0.;
+
   // First, set up the units system.
   // These are conversions from code units to cgs.
   code_units my_units;
@@ -144,6 +147,8 @@ int main(int argc, char *argv[])
   my_units.time_units           = 1.0e12;
   my_units.velocity_units       = my_units.length_units / my_units.time_units;
   my_units.a_units              = 1.0;  // units for the expansion factor
+  // Set expansion factor to 1 for non-cosmological simulation.
+  my_units.a_value = 1. / (1. + initial_redshift);
 
   // Second, create a chemistry object for parameters and rate data.
   if (set_default_chemistry_parameters() == 0) {
@@ -163,13 +168,8 @@ int main(int argc, char *argv[])
                                                     // (remove this line if Grackle is not compiled with OpenMP support)
 # endif
 
-  // Set initial expansion factor (for internal units).
-  // Set expansion factor to 1 for non-cosmological simulation.
-  double initial_redshift = 0;
-  double a_value = 1. / (1. + initial_redshift);
-
   // Finally, initialize the chemistry object.
-  if ( initialize_chemistry_data(&my_units, a_value) == 0 ) {
+  if ( initialize_chemistry_data(&my_units) == 0 ) {
     fprintf( stderr, "Error in initialize_chemistry_data.\n" );
     return EXIT_FAILURE;
   }
@@ -181,13 +181,11 @@ int main(int argc, char *argv[])
   const int N3        = NCell1D*NCell1D*NCell1D;
   const int grid_rank = 3;
 
-  my_fields_t1.a_value = a_value;
   my_fields_t1.grid_rank = grid_rank;
   my_fields_t1.grid_dimension = new int[grid_rank];
   my_fields_t1.grid_start = new int[grid_rank];
   my_fields_t1.grid_end = new int[grid_rank];
 
-  my_fields_tN.a_value = a_value;
   my_fields_tN.grid_rank = grid_rank;
   my_fields_tN.grid_dimension = new int[grid_rank];
   my_fields_tN.grid_start = new int[grid_rank];
@@ -419,7 +417,7 @@ int main(int argc, char *argv[])
   // Set parameter values for chemistry and initialize the chemistry object again
   grackle_data.primordial_chemistry = 3;  // molecular network with H, He, D
 
-  if ( initialize_chemistry_data(&my_units, a_value) == 0 ) {
+  if ( initialize_chemistry_data(&my_units) == 0 ) {
     fprintf( stderr, "Error in initialize_chemistry_data.\n" );
     return EXIT_FAILURE;
   }

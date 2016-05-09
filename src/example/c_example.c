@@ -30,6 +30,9 @@ int main(int argc, char *argv[])
   / This should be done at simulation start.
   *********************************************************************/
 
+  // Set initial redshift (for internal units).
+  double initial_redshift = 0.;
+
   // Enable output
   grackle_verbose = 1;
 
@@ -42,6 +45,8 @@ int main(int argc, char *argv[])
   my_units.time_units = 1.0e12;
   my_units.velocity_units = my_units.length_units / my_units.time_units;
   my_units.a_units = 1.0; // units for the expansion factor
+  // Set expansion factor to 1 for non-cosmological simulation.
+  my_units.a_value = 1. / (1. + initial_redshift);
 
   // Second, create a chemistry object for parameters and rate data.
   if (set_default_chemistry_parameters() == 0) {
@@ -57,13 +62,8 @@ int main(int argc, char *argv[])
   grackle_data.UVbackground = 1;           // UV background on
   grackle_data.grackle_data_file = "../../input/CloudyData_UVB=HM2012.h5"; // data file
 
-  // Set initial expansion factor (for internal units).
-  // Set expansion factor to 1 for non-cosmological simulation.
-  double initial_redshift = 0.;
-  double a_value = 1. / (1. + initial_redshift);
-
   // Finally, initialize the chemistry object.
-  if (initialize_chemistry_data(&my_units, a_value) == 0) {
+  if (initialize_chemistry_data(&my_units) == 0) {
     fprintf(stderr, "Error in initialize_chemistry_data.\n");
     return EXIT_FAILURE;
   }
@@ -72,7 +72,6 @@ int main(int argc, char *argv[])
 
   // Create struct for storing grackle field data
   grackle_field_data my_fields;
-  my_fields.a_value = a_value;
 
   // Set grid dimension and size.
   // grid_start and grid_end are used to ignore ghost zones.
