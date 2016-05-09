@@ -45,6 +45,7 @@ my_chemistry.density_units = 1.67e-24
 my_chemistry.length_units = 1.0
 my_chemistry.time_units = 1.0e12
 my_chemistry.a_units = 1.0
+my_chemistry.a_value = 1.0
 
 energy_units = (my_chemistry.length_units /
                 my_chemistry.time_units)**2.0
@@ -53,16 +54,14 @@ gravitational_constant = (
     4.0 * 3.1415926 * 6.6726e-8 * my_chemistry.density_units *
     my_chemistry.time_units**2)
 
-a_value = 1.0
-
-my_chemistry.initialize(a_value)
+my_chemistry.initialize()
 
 g = ds.index.grids[0]
 old = dict((f, g[f].copy()) for f in ds.field_list)
 
 dt = 1e12
 for fc in grid_to_grackle(my_chemistry, g):
-    fc.solve_chemistry(a_value, dt)
+    fc.solve_chemistry(dt)
 
 for f in old:
     if f not in _yt_to_grackle: continue

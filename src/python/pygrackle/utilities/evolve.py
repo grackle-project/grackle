@@ -20,7 +20,7 @@ from .physical_constants import \
     sec_per_year
 
 def evolve_freefall(fc, final_density, safety_factor=0.01,
-                    include_pressure=True, a_value=1.0):
+                    include_pressure=True):
     my_chemistry = fc.chemistry_data
 
     # Set units of gravitational constant
@@ -44,9 +44,9 @@ def evolve_freefall(fc, final_density, safety_factor=0.01,
         for field in fc.density_fields:
             data[field].append(fc[field][0] * my_chemistry.density_units)
         data["energy"].append(fc["energy"][0])
-        fc.calculate_temperature(a_value)
+        fc.calculate_temperature()
         data["temperature"].append(fc["temperature"][0])
-        fc.calculate_pressure(a_value)
+        fc.calculate_pressure()
         data["pressure"].append(fc["pressure"][0])
         data["time"].append(current_time * my_chemistry.time_units)
 
@@ -78,7 +78,7 @@ def evolve_freefall(fc, final_density, safety_factor=0.01,
         fc["energy"][0] += (my_chemistry.Gamma - 1.) * fc["energy"][0] * \
             freefall_time_constant * np.power(fc["density"][0], 0.5) * dt
 
-        fc.solve_chemistry(a_value, dt)
+        fc.solve_chemistry(dt)
 
         # update time
         current_time += dt
@@ -130,8 +130,7 @@ def calculate_collapse_factor(pressure, density):
     return force_factor
 
 def evolve_constant_density(fc, final_temperature=None,
-                            final_time=None, safety_factor=0.01,
-                            a_value=1.0):
+                            final_time=None, safety_factor=0.01):
     my_chemistry = fc.chemistry_data
 
     if final_temperature is None and final_time is None:
@@ -140,28 +139,28 @@ def evolve_constant_density(fc, final_temperature=None,
 
     data = defaultdict(list)
     current_time = 0.0
-    fc.calculate_cooling_time(a_value)
+    fc.calculate_cooling_time()
     dt = safety_factor * np.abs(fc["cooling_time"][0])
-    fc.calculate_temperature(a_value)
+    fc.calculate_temperature()
     while True:
         if final_temperature is not None and fc["temperature"][0] <= final_temperature:
             break
         if final_time is not None and current_time >= final_time:
             break
 
-        fc.calculate_temperature(a_value)
+        fc.calculate_temperature()
         print "Evolve constant density - t: %e yr, rho: %e g/cm^3, T: %e K." % \
             (current_time * my_chemistry.time_units / sec_per_year,
              fc["density"][0] * my_chemistry.density_units,
              fc["temperature"][0])
-        fc.solve_chemistry(a_value, dt)
+        fc.solve_chemistry(dt)
 
         for field in fc.density_fields:
             data[field].append(fc[field][0] * my_chemistry.density_units)
         data["energy"].append(fc["energy"][0])
-        fc.calculate_temperature(a_value)
+        fc.calculate_temperature()
         data["temperature"].append(fc["temperature"][0])
-        fc.calculate_pressure(a_value)
+        fc.calculate_pressure()
         data["pressure"].append(fc["pressure"][0])
         data["time"].append(current_time * my_chemistry.time_units)
         current_time += dt

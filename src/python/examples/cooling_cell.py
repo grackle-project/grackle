@@ -54,14 +54,16 @@ if __name__ == "__main__":
     # Set units
     my_chemistry.comoving_coordinates = 0 # proper units
     my_chemistry.a_units = 1.0
-    a_value = 1. / (1. + current_redshift) / my_chemistry.a_units
+    my_chemistry.a_value = 1. / (1. + current_redshift) / \
+      my_chemistry.a_units
     my_chemistry.density_units = mass_hydrogen_cgs # rho = 1.0 is 1.67e-24 g
     my_chemistry.length_units = cm_per_mpc         # 1 Mpc in cm
     my_chemistry.time_units = sec_per_Myr          # 1 Myr in s
     my_chemistry.velocity_units = my_chemistry.a_units * \
-        (my_chemistry.length_units / a_value) / my_chemistry.time_units
+        (my_chemistry.length_units / my_chemistry.a_value) / \
+        my_chemistry.time_units
 
-    rval = my_chemistry.initialize(a_value)
+    rval = my_chemistry.initialize()
 
     fc = FluidContainer(my_chemistry, 1)
     fc["density"][:] = density
@@ -90,7 +92,7 @@ if __name__ == "__main__":
 
     fc["energy"][:] = initial_temperature / \
         fc.chemistry_data.temperature_units
-    fc.calculate_temperature(a_value)
+    fc.calculate_temperature()
     fc["energy"][:] *= initial_temperature / fc["temperature"]
 
     # timestepping safety factor
