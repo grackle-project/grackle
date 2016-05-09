@@ -38,8 +38,6 @@ def test_equilibrium():
     T = 1e4 K is slow.
     """
 
-    current_redshift = 0.0
-
     my_chem = chemistry_data()
     my_chem.use_grackle = 1
     my_chem.with_radiative_cooling = 0
@@ -48,17 +46,16 @@ def test_equilibrium():
     my_chem.UVbackground = 0
     my_chem.comoving_coordinates = 0
     my_chem.a_units = 1.0
+    my_chem.a_value = 1.0
     my_chem.density_units = mass_hydrogen_cgs
     my_chem.length_units = 1.0
     my_chem.time_units = 1.0
     my_chem.velocity_units = my_chem.length_units / my_chem.time_units
-    fc = setup_fluid_container(my_chem, current_redshift=current_redshift,
-                               temperature=np.logspace(4.5, 9, 200),
+    fc = setup_fluid_container(my_chem, temperature=np.logspace(4.5, 9, 200),
                                converge=True, tolerance=1e-6, max_iterations=np.inf)
 
-    a = 1.0 / (1.0 + current_redshift) / my_chem.a_units
-    fc.calculate_temperature(a)
-    fc.calculate_cooling_time(a)
+    fc.calculate_temperature()
+    fc.calculate_cooling_time()
     t_sort = np.argsort(fc["temperature"])
     t_cool = fc["cooling_time"][t_sort] * my_chem.time_units
     my_T = fc["temperature"][t_sort]
