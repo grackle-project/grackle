@@ -56,7 +56,9 @@ def setup_fluid_container(my_chemistry,
     the fluid container.
     """
 
-    my_chemistry.initialize()
+    rval = my_chemistry.initialize()
+    if rval == 0:
+        raise RuntimeError("Failed to initialize chemistry_data.")
 
     tiny_number = 1e-20
     if temperature is None:
