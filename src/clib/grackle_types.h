@@ -35,8 +35,6 @@ typedef struct
   int *grid_start;
   int *grid_end;
 
-  double a_value;
-
   gr_float *density;
   gr_float *HI_density;
   gr_float *HII_density;
@@ -61,5 +59,18 @@ typedef struct
   gr_float *specific_heating_rate;
 
 } grackle_field_data;
+
+typedef struct
+{
+
+  int comoving_coordinates;
+  double density_units;
+  double length_units;
+  double time_units;
+  double velocity_units;
+  double a_units;
+  double a_value;
+
+} code_units;
 
 #endif

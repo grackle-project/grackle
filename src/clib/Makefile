@@ -266,7 +266,7 @@ install:
 	@(if [ ! -d $(INSTALL_INCLUDE_DIR) ]; then \
 		mkdir $(INSTALL_INCLUDE_DIR); \
 	fi)
-	@cp grackle.h grackle_macros.h grackle_types.h code_units.h chemistry_data.h grackle_fortran_types.def $(INSTALL_INCLUDE_DIR)
+	@cp grackle.h grackle_macros.h grackle_types.h chemistry_data.h grackle_fortran_types.def $(INSTALL_INCLUDE_DIR)
 	@(if [ ! -d $(INSTALL_LIB_DIR) ]; then \
 		mkdir $(INSTALL_LIB_DIR); \
 	fi)

@@ -17,7 +17,6 @@
 #include "grackle_macros.h"
 #include "grackle_types.h"
 #include "chemistry_data.h"
-#include "code_units.h"
 
 #define SMALL_LOG_VALUE -99.0
 #define CLOUDY_MAX_DIMENSION 3
@@ -27,8 +26,7 @@ extern int grackle_verbose;
 // Initialize Cloudy cooling data
 int initialize_cloudy_data(chemistry_data *my_chemistry,
                            cloudy_data *my_cloudy, char *group_name,
-                           code_units *my_units, double a_value,
-                           int read_data)
+                           code_units *my_units, int read_data)
 {
 
   long long q, w;
@@ -66,14 +64,16 @@ int initialize_cloudy_data(chemistry_data *my_chemistry,
   }
   else {
     co_length_units = my_units->length_units *
-      a_value * my_units->a_units;
+      my_units->a_value * my_units->a_units;
     co_density_units = my_units->density_units /
-      POW(a_value * my_units->a_units, 3);
+      POW(my_units->a_value * my_units->a_units, 3);
   }
 
   double tbase1 = my_units->time_units;
-  double xbase1 = co_length_units/(a_value * my_units->a_units);
-  double dbase1 = co_density_units * POW(a_value * my_units->a_units, 3);
+  double xbase1 = co_length_units /
+    (my_units->a_value * my_units->a_units);
+  double dbase1 = co_density_units *
+    POW(my_units->a_value * my_units->a_units, 3);
   double mh = 1.67e-24;
   double CoolUnit = (POW(my_units->a_units,5) * POW(xbase1,2) * POW(mh,2)) /
                     (POW(tbase1,3) * dbase1);

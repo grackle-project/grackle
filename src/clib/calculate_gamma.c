@@ -17,7 +17,6 @@
 #include "grackle_macros.h"
 #include "grackle_types.h"
 #include "chemistry_data.h"
-#include "code_units.h"
 #include "phys_constants.h"
 #ifdef _OPENMP
 #include <omp.h>
@@ -26,7 +25,7 @@
 extern chemistry_data grackle_data;
 
 int _calculate_temperature(chemistry_data *my_chemistry,
-                           code_units *my_units, double a_value,
+                           code_units *my_units,
                            int grid_rank, int *grid_dimension,
                            int *grid_start, int *grid_end,
                            gr_float *density, gr_float *internal_energy,
@@ -38,7 +37,7 @@ int _calculate_temperature(chemistry_data *my_chemistry,
                            gr_float *temperature);
 
 int _calculate_gamma(chemistry_data *my_chemistry,
-                     code_units *my_units, double a_value,
+                     code_units *my_units,
                      int grid_rank, int *grid_dimension,
                      int *grid_start, int *grid_end,
                      gr_float *density, gr_float *internal_energy,
@@ -68,8 +67,7 @@ int _calculate_gamma(chemistry_data *my_chemistry,
 
     /* Compute the temperature first. */
  
-    if (_calculate_temperature(my_chemistry,
-                               my_units, a_value,
+    if (_calculate_temperature(my_chemistry, my_units,
                                grid_rank, grid_dimension,
                                grid_start, grid_end,
                                density, internal_energy,
@@ -132,7 +130,7 @@ int calculate_gamma(code_units *my_units,
                     gr_float *my_gamma)
 {
   if (_calculate_gamma(&grackle_data,
-                       my_units, my_fields->a_value,
+                       my_units,
                        my_fields->grid_rank, my_fields->grid_dimension,
                        my_fields->grid_start, my_fields->grid_end,
                        my_fields->density, my_fields->internal_energy,

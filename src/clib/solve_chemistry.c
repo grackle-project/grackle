@@ -16,7 +16,6 @@
 #include "grackle_macros.h"
 #include "grackle_types.h"
 #include "chemistry_data.h"
-#include "code_units.h"
 #include "phys_constants.h"
 
 extern chemistry_data grackle_data;
@@ -24,7 +23,7 @@ extern chemistry_data grackle_data;
 /* function prototypes */
 
 int update_UVbackground_rates(chemistry_data *my_chemistry,
-                              code_units *my_units, double a_value);
+                              code_units *my_units);
 
 extern void FORTRAN_NAME(solve_rate_cool_g)(
         int *icool,
@@ -73,8 +72,7 @@ extern void FORTRAN_NAME(solve_rate_cool_g)(
         int *iVheat, int *iMheat, gr_float *Vheat, gr_float *Mheat);
 
 int _solve_chemistry(chemistry_data *my_chemistry,
-                     code_units *my_units,
-                     double a_value, double dt_value,
+                     code_units *my_units, double dt_value,
                      int grid_rank, int *grid_dimension,
                      int *grid_start, int *grid_end,
                      gr_float *density, gr_float *internal_energy,
@@ -95,7 +93,7 @@ int _solve_chemistry(chemistry_data *my_chemistry,
   /* Update UV background rates. */
 
   if (my_chemistry->UVbackground == 1) {
-    if (update_UVbackground_rates(my_chemistry, my_units, a_value) == FAIL) {
+    if (update_UVbackground_rates(my_chemistry, my_units) == FAIL) {
       fprintf(stderr, "Error in update_UVbackground_rates.\n");
       return FAIL;
     }
@@ -114,9 +112,9 @@ int _solve_chemistry(chemistry_data *my_chemistry,
   }
   else {
     co_length_units = my_units->length_units *
-      a_value * my_units->a_units;
+      my_units->a_value * my_units->a_units;
     co_density_units = my_units->density_units /
-      POW(a_value * my_units->a_units, 3);
+      POW(my_units->a_value * my_units->a_units, 3);
   }
 
   /* Calculate temperature units. */
@@ -138,7 +136,7 @@ int _solve_chemistry(chemistry_data *my_chemistry,
     &my_chemistry->h2_on_dust, &grid_rank, grid_start, grid_start+1, grid_start+2, 
     grid_end, grid_end+1, grid_end+2,
     &my_chemistry->ih2co, &my_chemistry->ipiht, &my_chemistry->photoelectric_heating,
-    &dt_value, &a_value, &my_chemistry->TemperatureStart, &my_chemistry->TemperatureEnd,
+    &dt_value, &my_units->a_value, &my_chemistry->TemperatureStart, &my_chemistry->TemperatureEnd,
     &temperature_units, &co_length_units, &my_units->a_units, 
     &co_density_units, &my_units->time_units, &my_chemistry->Gamma,
     &my_chemistry->HydrogenFractionByMass, &my_chemistry->DeuteriumToHydrogenRatio,
@@ -205,8 +203,7 @@ int solve_chemistry(code_units *my_units,
                     double dt_value)
 {
   if (_solve_chemistry(&grackle_data,
-                       my_units,
-                       my_fields->a_value, dt_value,
+                       my_units, dt_value,
                        my_fields->grid_rank,   my_fields->grid_dimension,
                        my_fields->grid_start,  my_fields->grid_end,
                        my_fields->density,     my_fields->internal_energy,

@@ -17,7 +17,6 @@
 #include "grackle_macros.h"
 #include "grackle_types.h"
 #include "chemistry_data.h"
-#include "code_units.h"
 #include "phys_constants.h"
 #ifdef _OPENMP
 #include <omp.h>
@@ -47,7 +46,7 @@ extern void FORTRAN_NAME(calc_temp_cloudy_g)(
  	long long *priDataSize, double *priMMW);
 
 int _calculate_pressure(chemistry_data *my_chemistry,
-                        code_units *my_units, double a_value,
+                        code_units *my_units,
                         int grid_rank, int *grid_dimension,
                         int *grid_start, int *grid_end,
                         gr_float *density, gr_float *internal_energy,
@@ -59,7 +58,7 @@ int _calculate_pressure(chemistry_data *my_chemistry,
                         gr_float *pressure);
 
 int _calculate_temperature_table(chemistry_data *my_chemistry,
-                                 code_units *my_units, double a_value,
+                                 code_units *my_units,
                                  int grid_rank, int *grid_dimension,
                                  int *grid_start, int *grid_end,
                                  gr_float *density, gr_float *internal_energy,
@@ -67,7 +66,7 @@ int _calculate_temperature_table(chemistry_data *my_chemistry,
                                  gr_float *temperature);
  
 int _calculate_temperature(chemistry_data *my_chemistry,
-                           code_units *my_units, double a_value,
+                           code_units *my_units,
                            int grid_rank, int *grid_dimension,
                            int *grid_start, int *grid_end,
                            gr_float *density, gr_float *internal_energy,
@@ -85,8 +84,7 @@ int _calculate_temperature(chemistry_data *my_chemistry,
   /* Compute the pressure first. */
  
   if (my_chemistry->primordial_chemistry > 0) {
-  if (_calculate_pressure(my_chemistry,
-                          my_units, a_value,
+  if (_calculate_pressure(my_chemistry, my_units,
                           grid_rank, grid_dimension,
                           grid_start, grid_end,
                           density, internal_energy,
@@ -114,7 +112,7 @@ int _calculate_temperature(chemistry_data *my_chemistry,
   double inv_metal_mol = 1.0 / MU_METAL;
   
   if (my_chemistry->primordial_chemistry == 0) {
-    if (_calculate_temperature_table(my_chemistry, my_units, a_value,
+    if (_calculate_temperature_table(my_chemistry, my_units,
                                      grid_rank, grid_dimension,
                                      grid_start, grid_end,
                                      density, internal_energy,
@@ -160,7 +158,7 @@ int _calculate_temperature(chemistry_data *my_chemistry,
 }
 
 int _calculate_temperature_table(chemistry_data *my_chemistry,
-                                 code_units *my_units, double a_value,
+                                 code_units *my_units,
                                  int grid_rank, int *grid_dimension,
                                  int *grid_start, int *grid_end,
                                  gr_float *density, gr_float *internal_energy,
@@ -195,9 +193,9 @@ int _calculate_temperature_table(chemistry_data *my_chemistry,
   }
   else {
     co_length_units = my_units->length_units *
-      a_value * my_units->a_units;
+      my_units->a_value * my_units->a_units;
     co_density_units = my_units->density_units /
-      POW(a_value * my_units->a_units, 3);
+      POW(my_units->a_value * my_units->a_units, 3);
   }
 
   /* Calculate temperature units. */
@@ -210,7 +208,8 @@ int _calculate_temperature_table(chemistry_data *my_chemistry,
         &my_units->comoving_coordinates, &metal_field_present,
         grid_start, grid_start+1, grid_start+2,
         grid_end, grid_end+1, grid_end+2,
-        &a_value, &my_chemistry->TemperatureStart, &my_chemistry->TemperatureEnd,
+        &my_units->a_value,
+        &my_chemistry->TemperatureStart, &my_chemistry->TemperatureEnd,
         &temperature_units, &co_length_units, &my_units->a_units, 
         &co_density_units, &my_units->time_units,
         &my_chemistry->Gamma, &my_chemistry->HydrogenFractionByMass,
@@ -229,8 +228,7 @@ int calculate_temperature(code_units *my_units,
                           grackle_field_data *my_fields,
                           gr_float *temperature)
 {
-  if (_calculate_temperature(&grackle_data,
-                             my_units, my_fields->a_value,
+  if (_calculate_temperature(&grackle_data, my_units,
                              my_fields->grid_rank, my_fields->grid_dimension,
                              my_fields->grid_start, my_fields->grid_end,
                              my_fields->density, my_fields->internal_energy,

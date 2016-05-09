@@ -18,7 +18,6 @@
 #include "grackle_macros.h"
 #include "grackle_types.h"
 #include "chemistry_data.h"
-#include "code_units.h" 
 #include "phys_constants.h"
 #ifdef _OPENMP
 #include <omp.h>
@@ -34,7 +33,7 @@ void auto_show_version(FILE *fp);
 
 int initialize_cloudy_data(chemistry_data *my_chemistry,
                            cloudy_data *my_cloudy, char *group_name,
-                           code_units *my_units, double a_value,
+                           code_units *my_units,
                            int read_data);
 
 int initialize_UVbackground_data(chemistry_data *my_chemistry);
@@ -63,7 +62,7 @@ extern void FORTRAN_NAME(calc_rates_g)(
      int *ioutput);
 
 int _initialize_chemistry_data(chemistry_data *my_chemistry, 
-                               code_units *my_units, double a_value)
+                               code_units *my_units)
 {
 
 //initialize OpenMP
@@ -226,16 +225,16 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
   }
   else {
     co_length_units = my_units->length_units *
-      a_value * my_units->a_units;
+      my_units->a_value * my_units->a_units;
     co_density_units = my_units->density_units /
-      POW(a_value * my_units->a_units, 3);
+      POW(my_units->a_value * my_units->a_units, 3);
   }
 
   /* Call FORTRAN routine to do the hard work. */
  
   FORTRAN_NAME(calc_rates_g)(
      &my_chemistry->primordial_chemistry,
-     &my_chemistry->NumberOfTemperatureBins, &a_value, &my_chemistry->TemperatureStart,
+     &my_chemistry->NumberOfTemperatureBins, &my_units->a_value, &my_chemistry->TemperatureStart,
         &my_chemistry->TemperatureEnd,
         &my_chemistry->CaseBRecombination, &my_chemistry->three_body_rate,
      &co_length_units, &my_units->a_units, 
@@ -271,8 +270,7 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
   read_data = my_chemistry->primordial_chemistry == 0;
   if (initialize_cloudy_data(my_chemistry,
                              &my_chemistry->cloudy_primordial,
-                             "Primordial",
-                             my_units, a_value, read_data) == FAIL) {
+                             "Primordial", my_units, read_data) == FAIL) {
     fprintf(stderr, "Error in initialize_cloudy_data.\n");
     return FAIL;
   }
@@ -281,8 +279,7 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
   read_data = my_chemistry->metal_cooling == TRUE;
   if (initialize_cloudy_data(my_chemistry,
                              &my_chemistry->cloudy_metal,
-                             "Metals",
-                             my_units, a_value, read_data) == FAIL) {
+                             "Metals", my_units, read_data) == FAIL) {
     fprintf(stderr, "Error in initialize_cloudy_data.\n");
     return FAIL;
   }
@@ -296,9 +293,9 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
   return SUCCESS;
 }
 
-int initialize_chemistry_data(code_units *my_units, double a_value)
+int initialize_chemistry_data(code_units *my_units)
 {
-  if (_initialize_chemistry_data(&grackle_data, my_units, a_value) == FAIL) {
+  if (_initialize_chemistry_data(&grackle_data, my_units) == FAIL) {
     fprintf(stderr, "Error in _initialize_chemistry_data.\n");
     return FAIL;
   }

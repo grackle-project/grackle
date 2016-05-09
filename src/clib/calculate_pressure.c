@@ -17,7 +17,6 @@
 #include "grackle_macros.h"
 #include "grackle_types.h"
 #include "chemistry_data.h"
-#include "code_units.h"
 #include "phys_constants.h"
 #ifdef _OPENMP
 #include <omp.h>
@@ -26,7 +25,7 @@
 extern chemistry_data grackle_data;
 
 int _calculate_pressure(chemistry_data *my_chemistry,
-                        code_units *my_units, double a_value,
+                        code_units *my_units,
                         int grid_rank, int *grid_dimension,
                         int *grid_start, int *grid_end,
                         gr_float *density, gr_float *internal_energy,
@@ -116,8 +115,7 @@ int calculate_pressure(code_units *my_units,
                        grackle_field_data *my_fields,
                        gr_float *pressure)
 {
-  if (_calculate_pressure(&grackle_data,
-                          my_units, my_fields->a_value,
+  if (_calculate_pressure(&grackle_data, my_units,
                           my_fields->grid_rank, my_fields->grid_dimension,
                           my_fields->grid_start, my_fields->grid_end,
                           my_fields->density, my_fields->internal_energy,

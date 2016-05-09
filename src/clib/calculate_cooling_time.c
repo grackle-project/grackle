@@ -17,7 +17,6 @@
 #include "grackle_macros.h"
 #include "grackle_types.h"
 #include "chemistry_data.h"
-#include "code_units.h"
 #include "phys_constants.h"
 
 extern chemistry_data grackle_data;
@@ -25,7 +24,7 @@ extern chemistry_data grackle_data;
 /* function prototypes */
 
 int update_UVbackground_rates(chemistry_data *my_chemistry,
-                              code_units *my_units, double a_value);
+                              code_units *my_units);
  
 extern void FORTRAN_NAME(cool_multi_time_g)(
 	gr_float *d, gr_float *e, gr_float *u, gr_float *v, gr_float *w, gr_float *de,
@@ -63,7 +62,7 @@ extern void FORTRAN_NAME(cool_multi_time_g)(
         int *iVheat, int *iMheat, gr_float *Vheat, gr_float *Mheat);
 
 int _calculate_cooling_time(chemistry_data *my_chemistry,
-                            code_units *my_units, double a_value,
+                            code_units *my_units,
                             int grid_rank, int *grid_dimension,
                             int *grid_start, int *grid_end,
                             gr_float *density, gr_float *internal_energy,
@@ -85,7 +84,7 @@ int _calculate_cooling_time(chemistry_data *my_chemistry,
   /* Update UV background rates. */
 
   if (my_chemistry->UVbackground == 1) {
-    if (update_UVbackground_rates(my_chemistry, my_units, a_value) == FAIL) {
+    if (update_UVbackground_rates(my_chemistry, my_units) == FAIL) {
       fprintf(stderr, "Error in update_UVbackground_rates.\n");
       return FAIL;
     }
@@ -104,9 +103,9 @@ int _calculate_cooling_time(chemistry_data *my_chemistry,
   }
   else {
     co_length_units = my_units->length_units *
-      a_value * my_units->a_units;
+      my_units->a_value * my_units->a_units;
     co_density_units = my_units->density_units /
-      POW(a_value * my_units->a_units, 3);
+      POW(my_units->a_value * my_units->a_units, 3);
   }
 
   /* Calculate temperature units. */
@@ -127,7 +126,7 @@ int _calculate_cooling_time(chemistry_data *my_chemistry,
        &grid_rank, grid_start, grid_start+1, grid_start+2,
        grid_end, grid_end+1, grid_end+2,
        &my_chemistry->ih2co, &my_chemistry->ipiht, &my_chemistry->photoelectric_heating,
-       &a_value, &my_chemistry->TemperatureStart, &my_chemistry->TemperatureEnd,
+       &my_units->a_value, &my_chemistry->TemperatureStart, &my_chemistry->TemperatureEnd,
        &temperature_units, &co_length_units, &my_units->a_units, 
        &co_density_units, &my_units->time_units,
        &my_chemistry->Gamma, &my_chemistry->HydrogenFractionByMass,
@@ -180,7 +179,7 @@ int calculate_cooling_time(code_units *my_units,
 {
 
   if (_calculate_cooling_time(&grackle_data,
-                              my_units, my_fields->a_value,
+                              my_units,
                               my_fields->grid_rank, my_fields->grid_dimension,
                               my_fields->grid_start, my_fields->grid_end,
                               my_fields->density, my_fields->internal_energy,

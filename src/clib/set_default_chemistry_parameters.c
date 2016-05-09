@@ -18,7 +18,6 @@
 #include "grackle_macros.h"
 #include "grackle_types.h"
 #include "chemistry_data.h"
-#include "code_units.h"
 
 int grackle_verbose = FALSE;
 

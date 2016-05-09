@@ -19,12 +19,11 @@
 #include "grackle_macros.h"
 #include "grackle_types.h"
 #include "chemistry_data.h"
-#include "code_units.h"
 
 /* function prototypes */
 
 int update_UVbackground_rates(chemistry_data *my_chemistry,
-                              code_units *my_units, double a_value)
+                              code_units *my_units)
 {
   /* Return if there is no radiation (rates should be all zero). */
 
@@ -34,7 +33,7 @@ int update_UVbackground_rates(chemistry_data *my_chemistry,
 
   /* Return if redshift is outside of table (rates should be all zero). */
 
-  double Redshift = 1.0 / (a_value * my_units->a_units) - 1;
+  double Redshift = 1.0 / (my_units->a_value * my_units->a_units) - 1;
   if ( (Redshift < my_chemistry->UVbackground_table.zmin) ||
        (Redshift > my_chemistry->UVbackground_table.zmax) )
     return SUCCESS;
@@ -134,17 +133,22 @@ int update_UVbackground_rates(chemistry_data *my_chemistry,
   }
   else {
     co_length_units = my_units->length_units *
-      a_value * my_units->a_units;
+      my_units->a_value * my_units->a_units;
     co_density_units = my_units->density_units /
-      POW(a_value * my_units->a_units, 3);
+      POW(my_units->a_value * my_units->a_units, 3);
   }
 
   double tbase1 = my_units->time_units;
-  double xbase1 = co_length_units/(a_value * my_units->a_units);
-  double dbase1 = co_density_units*POW(a_value * my_units->a_units, 3);
+  double xbase1 = co_length_units /
+    (my_units->a_value * my_units->a_units);
+  double dbase1 = co_density_units *
+    POW(my_units->a_value * my_units->a_units, 3);
   double mh     = 1.67262171e-24;
   double ev2erg = 1.60217653e-12;
-  double CoolingUnits = (POW(my_units->a_units, 5) * xbase1*xbase1 * mh*mh) / (POW(tbase1, 3) * dbase1) / ev2erg;  // compared to Enzo source, there's an additional factor of 1/ev2erg here, because the heating rates are stored as eV/s.
+  /* compared to Enzo source, there's an additional factor of
+     1/ev2erg here, because the heating rates are stored as eV/s. */
+  double CoolingUnits = (POW(my_units->a_units, 5) * xbase1*xbase1 * mh*mh) /
+    (POW(tbase1, 3) * dbase1) / ev2erg;
 
 
   my_chemistry->k24 *= my_units->time_units;
