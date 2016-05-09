@@ -16,7 +16,7 @@
 #include "hdf5.h"
 #include "grackle_macros.h"
 #include "grackle_types.h"
-#include "chemistry_data.h"
+#include "grackle_chemistry_data.h"
 
 #define SMALL_LOG_VALUE -99.0
 #define CLOUDY_MAX_DIMENSION 3

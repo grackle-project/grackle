@@ -16,7 +16,7 @@
 #include <math.h>
 #include "grackle_macros.h"
 #include "grackle_types.h"
-#include "chemistry_data.h"
+#include "grackle_chemistry_data.h"
 #include "phys_constants.h"
 
 extern chemistry_data grackle_data;
