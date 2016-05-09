@@ -31,16 +31,6 @@ int initialize_chemistry_data(code_units *my_units, double a_value);
 int _initialize_chemistry_data(chemistry_data *my_chemistry, 
                                code_units *my_units, double a_value);
 
-int initialize_grackle(int comoving_coordinates,
-                       double density_units, double length_units,
-                       double time_units, double velocity_units,
-                       double a_units, double a_value,
-                       int use_grackle, int with_radiative_cooling,
-                       char *grackle_data_file,
-                       int primordial_chemistry, int metal_cooling,
-                       int UVbackground, int h2_on_dust,
-                       int cmb_temperature_floor, double gamma);;
-
 int solve_chemistry(code_units *my_units,
                     grackle_field_data *my_fields,
                     double dt_value);
