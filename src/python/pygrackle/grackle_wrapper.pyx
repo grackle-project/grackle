@@ -26,8 +26,8 @@ cdef class chemistry_data:
     def __cinit__(self):
         self.data = _set_default_chemistry_parameters()
 
-    def initialize(self, a_value):
-        ret =  _initialize_chemistry_data(&self.data, &self.units, a_value)
+    def initialize(self):
+        ret =  _initialize_chemistry_data(&self.data, &self.units)
         if ret is None:
             raise RuntimeError("Error initializing chemistry")
         return ret
@@ -206,6 +206,12 @@ cdef class chemistry_data:
         def __set__(self, val):
             self.units.a_units = val
 
+    property a_value:
+        def __get__(self):
+            return self.units.a_value
+        def __set__(self, val):
+            self.units.a_value = val
+
     property temperature_units:
         def __get__(self):
             return mass_hydrogen_cgs * \
@@ -218,7 +224,7 @@ cdef gr_float* get_field(fc, name):
     else:
         return <gr_float *> rv.data
 
-def solve_chemistry(fc, my_a, my_dt):
+def solve_chemistry(fc, my_dt):
     cdef int grid_rank = 1
     cdef int grid_dimension
     grid_dimension = fc["density"].shape[0]
@@ -232,7 +238,6 @@ def solve_chemistry(fc, my_a, my_dt):
     grid_start = <int *> ref_gs.data
     grid_end = <int *> ref_ge.data
 
-    cdef double a_value = <double> my_a
     cdef double dt_value = <double> my_dt
 
     cdef chemistry_data chem_data = fc.chemistry_data
@@ -262,7 +267,6 @@ def solve_chemistry(fc, my_a, my_dt):
     c_solve_chemistry (
                 &my_chemistry,
                 &my_units,
-                a_value,
                 dt_value,
                 grid_rank,
                 &grid_dimension,
@@ -289,7 +293,7 @@ def solve_chemistry(fc, my_a, my_dt):
                 volumetric_heating_rate,
                 specific_heating_rate)
     
-def calculate_cooling_time(fc, my_a):
+def calculate_cooling_time(fc):
     cdef int grid_rank = 1
     cdef int grid_dimension
     grid_dimension = fc["density"].shape[0]
@@ -302,8 +306,6 @@ def calculate_cooling_time(fc, my_a):
     cdef int *grid_end
     grid_start = <int *> ref_gs.data
     grid_end = <int *> ref_ge.data
-
-    cdef double a_value = <double> my_a
 
     cdef chemistry_data chem_data = fc.chemistry_data
     cdef c_chemistry_data my_chemistry = chem_data.data
@@ -333,7 +335,6 @@ def calculate_cooling_time(fc, my_a):
     c_calculate_cooling_time (
                 &my_chemistry,
                 &my_units,
-                a_value,
                 grid_rank,
                 &grid_dimension,
                 grid_start,
@@ -360,7 +361,7 @@ def calculate_cooling_time(fc, my_a):
                 volumetric_heating_rate,
                 specific_heating_rate)
 
-def calculate_gamma(fc, my_a):
+def calculate_gamma(fc):
     cdef int grid_rank = 1
     cdef int grid_dimension
     grid_dimension = fc["density"].shape[0]
@@ -372,8 +373,6 @@ def calculate_gamma(fc, my_a):
     cdef int *grid_end
     grid_start = <int *> ref_gs.data
     grid_end = <int *> ref_ge.data
-
-    cdef double a_value = <double> my_a
 
     cdef chemistry_data chem_data = fc.chemistry_data
     cdef c_chemistry_data my_chemistry = chem_data.data
@@ -398,7 +397,6 @@ def calculate_gamma(fc, my_a):
     c_calculate_gamma (
                 &my_chemistry,
                 &my_units,
-                a_value,
                 grid_rank,
                 &grid_dimension,
                 grid_start,
@@ -420,7 +418,7 @@ def calculate_gamma(fc, my_a):
                 metal_density,
                 gamma)
     
-def calculate_pressure(fc, my_a):
+def calculate_pressure(fc):
     cdef int grid_rank = 1
     cdef int grid_dimension
     grid_dimension = fc["density"].shape[0]
@@ -433,8 +431,6 @@ def calculate_pressure(fc, my_a):
     grid_start = <int *> ref_gs.data
     grid_end = <int *> ref_ge.data
 
-    cdef double a_value = <double> my_a
-    
     cdef chemistry_data chem_data = fc.chemistry_data
     cdef c_chemistry_data my_chemistry = chem_data.data
     cdef c_code_units my_units = chem_data.units
@@ -458,7 +454,6 @@ def calculate_pressure(fc, my_a):
     c_calculate_pressure (
                 &my_chemistry,
                 &my_units,
-                a_value,
                 grid_rank,
                 &grid_dimension,
                 grid_start,
@@ -480,7 +475,7 @@ def calculate_pressure(fc, my_a):
                 metal_density,
                 pressure)
 
-def calculate_temperature(fc, my_a):
+def calculate_temperature(fc):
     cdef int grid_rank = 1
     cdef int grid_dimension
     grid_dimension = fc["density"].shape[0]
@@ -492,8 +487,6 @@ def calculate_temperature(fc, my_a):
     cdef int *grid_end
     grid_start = <int *> ref_gs.data
     grid_end = <int *> ref_ge.data
-
-    cdef double a_value = <double> my_a
 
     cdef chemistry_data chem_data = fc.chemistry_data
     cdef c_chemistry_data my_chemistry = chem_data.data
@@ -518,7 +511,6 @@ def calculate_temperature(fc, my_a):
     c_calculate_temperature(
                 &my_chemistry,
                 &my_units,
-                a_value,
                 grid_rank,
                 &grid_dimension,
                 grid_start,

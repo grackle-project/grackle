@@ -23,9 +23,6 @@ from pygrackle.grackle_wrapper import \
 from pygrackle.utilities.physical_constants import \
     mass_hydrogen_cgs
 
-from pygrackle.utilities.units import \
-    get_cooling_units
-
 _base_fluids = ["density", "metal"]
 _nd_fields   = ["energy",
                 "x-velocity", "y-velocity", "z-velocity",
@@ -54,15 +51,23 @@ class FluidContainer(dict):
     def _setup_fluid(self, fluid_name):
         self[fluid_name] = np.zeros(self.n_vals, self.dtype)
 
-    def cooling_units(self, a_value=None):
+    @property
+    def cooling_units(self):
+        tbase1 = self.chemistry_data.time_units
         if self.chemistry_data.comoving_coordinates:
-            if a_value is None:
-                raise RuntimeError(
-                    "Must specify a_value if comoving_coordinates=1.")
-            current_redshift = 1. / (self.a_unit * a_value) - 1.0
+            xbase1 = self.chemistry_data.length_units / \
+              (self.chemistry_data.a_value * self.chemistry_data.a_units)
+            dbase1 = self.chemistry_data.density_units * \
+              (self.chemistry_data.a_value * self.chemistry_data.a_units)**3
         else:
-            current_redshift = 0.
-        return get_cooling_units(self.chemistry_data, current_redshift)
+            xbase1 = self.chemistry_data.length_units / \
+              self.chemistry_data.a_units
+            dbase1 = self.chemistry_data.density_units * \
+              self.chemistry_data.a_units**3
+
+        coolunit = (self.chemistry_data.a_units**5 * xbase1**2 *
+                    mass_hydrogen_cgs**2) / (tbase1**3 * dbase1)
+        return coolunit
 
     @property
     def density_fields(self):
@@ -80,29 +85,29 @@ class FluidContainer(dict):
             nH += self["HDI"] / 2.
         return nH * my_chemistry.density_units / mass_hydrogen_cgs
 
-    def calculate_mean_molecular_weight(self, a_value):
+    def calculate_mean_molecular_weight(self):
         my_chemistry = self.chemistry_data
         if (self["energy"] == 0).all():
             return np.ones(self["energy"].size)
-        self.calculate_temperature(a_value)
+        self.calculate_temperature()
         return (self["temperature"] / \
                 (self["energy"] * (my_chemistry.Gamma - 1.) *
                  self.chemistry_data.temperature_units))
 
-    def calculate_cooling_time(self, a_value):
-        calculate_cooling_time(self, a_value)
+    def calculate_cooling_time(self):
+        calculate_cooling_time(self)
 
-    def calculate_gamma(self, a_value):
-        calculate_gamma(self, a_value)
+    def calculate_gamma(self):
+        calculate_gamma(self)
 
-    def calculate_pressure(self, a_value):
-        calculate_pressure(self, a_value)
+    def calculate_pressure(self):
+        calculate_pressure(self)
 
-    def calculate_temperature(self, a_value):
-        calculate_temperature(self, a_value)
+    def calculate_temperature(self):
+        calculate_temperature(self)
 
-    def solve_chemistry(self, a_value, dt):
-        solve_chemistry(self, a_value, dt)
+    def solve_chemistry(self, dt):
+        solve_chemistry(self, dt)
 
 class FieldNotFound(Exception):
     def __init__(self, field):

@@ -56,19 +56,3 @@ def set_cosmology_units(my_units, hubble_constant=0.704,
         hubble_constant / np.power(1 + initial_redshift, 1.5)
     my_units.velocity_units = 1.22475e7 * comoving_box_size * \
         np.sqrt(omega_matter) * np.sqrt(1 + initial_redshift)
-
-def get_cooling_units(my_units, current_redshift=None):
-    "Calculate cooling units from internal base units."
-
-    tbase1 = my_units.time_units
-    if my_units.comoving_coordinates:
-        a_value = 1. / (1 + current_redshift) / my_units.a_units
-        xbase1 = my_units.length_units / (a_value * my_units.a_units)
-        dbase1 = my_units.density_units * (a_value * my_units.a_units)**3
-    else:
-        xbase1 = my_units.length_units / my_units.a_units
-        dbase1 = my_units.density_units * my_units.a_units**3
-
-    coolunit = (my_units.a_units**5 * xbase1**2 * mass_hydrogen_cgs**2) / \
-        (tbase1**3 * dbase1)
-    return coolunit

@@ -26,6 +26,5 @@ from .utilities.evolve import \
     evolve_freefall
 
 from .utilities.units import \
-    set_cosmology_units, \
-    get_cooling_units
+    set_cosmology_units
 

@@ -44,7 +44,6 @@ def check_convergence(fc1, fc2, fields=None, tol=0.01):
 def setup_fluid_container(my_chemistry,
                           density=mass_hydrogen_cgs,
                           temperature=None,
-                          current_redshift=0,
                           hydrogen_mass_fraction=0.76,
                           metal_mass_fraction=0.02041,
                           d_to_h_ratio=3.4e-5,
@@ -57,9 +56,7 @@ def setup_fluid_container(my_chemistry,
     the fluid container.
     """
 
-    a_value = 1.0 / (1.0 + current_redshift) / my_chemistry.a_units
-
-    my_chemistry.initialize(a_value)
+    my_chemistry.initialize()
 
     tiny_number = 1e-20
     if temperature is None:
@@ -88,7 +85,7 @@ def setup_fluid_container(my_chemistry,
 
     fc["energy"] = temperature / \
         fc.chemistry_data.temperature_units / \
-        fc.calculate_mean_molecular_weight(a_value) / \
+        fc.calculate_mean_molecular_weight() / \
         (my_chemistry.Gamma - 1.0)
     fc["x-velocity"][:] = 0.0
     fc["y-velocity"][:] = 0.0
@@ -99,7 +96,7 @@ def setup_fluid_container(my_chemistry,
     my_time = 0.0
     i = 0
     while converge and i < max_iterations:
-        fc.calculate_cooling_time(a_value)
+        fc.calculate_cooling_time()
         dt = 0.1 * np.abs(fc["cooling_time"]).min()
         sys.stderr.write("t: %.3f Myr, dt: %.3e Myr, " % \
                          ((my_time * my_chemistry.time_units / sec_per_Myr),
@@ -108,8 +105,8 @@ def setup_fluid_container(my_chemistry,
                       "H2I", "H2II", "DI", "DII", "HDI", "de"]:
             if field in fc:
                 fc_last[field] = np.copy(fc[field])
-        fc.solve_chemistry(a_value, dt)
-        mu = fc.calculate_mean_molecular_weight(a_value)
+        fc.solve_chemistry(dt)
+        mu = fc.calculate_mean_molecular_weight()
         fc["energy"] = temperature / \
             fc.chemistry_data.temperature_units / mu / \
             (my_chemistry.Gamma - 1.0)

@@ -46,27 +46,29 @@ if __name__ == "__main__":
     # Set units
     my_chemistry.comoving_coordinates = 0 # proper units
     my_chemistry.a_units = 1.0
-    a_value = 1.0 / (1.0 + current_redshift) / my_chemistry.a_units
+    my_chemistry.a_value = 1.0 / (1.0 + current_redshift) / \
+      my_chemistry.a_units
     my_chemistry.density_units = mass_hydrogen_cgs # rho = 1.0 is 1.67e-24 g
     my_chemistry.length_units = cm_per_mpc         # 1 Mpc in cm
     my_chemistry.time_units = sec_per_Myr          # 1 Gyr in s
     my_chemistry.velocity_units = my_chemistry.a_units * \
-        (my_chemistry.length_units / a_value) / my_chemistry.time_units
+        (my_chemistry.length_units / my_chemistry.a_value) / \
+        my_chemistry.time_units
 
     # Call convenience function for setting up a fluid container.
     # This container holds the solver parameters, units, and fields.
     temperature = np.logspace(1, 9, 200)
     fc = setup_fluid_container(my_chemistry,
                                temperature=temperature,
-                               current_redshift=current_redshift,
                                converge=True)
 
-    fc.calculate_temperature(a_value)
-    fc.calculate_cooling_time(a_value)
+    fc.calculate_temperature()
+    fc.calculate_cooling_time()
 
     density_proper = fc["density"] / \
-        (my_chemistry.a_units * a_value)**(3*my_chemistry.comoving_coordinates)
-    cooling_rate = fc.cooling_units(a_value) * fc["energy"] / \
+        (my_chemistry.a_units *
+         my_chemistry.a_value)**(3*my_chemistry.comoving_coordinates)
+    cooling_rate = fc.cooling_units * fc["energy"] / \
         np.abs(fc["cooling_time"]) / density_proper
 
     data = {}

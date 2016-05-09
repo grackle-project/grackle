@@ -2,7 +2,7 @@ cdef extern from "grackle_types.h":
     # This does not need to be exactly correct, only of the right basic type
     ctypedef float gr_float
 
-cdef extern from "chemistry_data.h":
+cdef extern from "grackle_chemistry_data.h":
     ctypedef struct c_chemistry_data "chemistry_data":
         double Gamma
         int use_grackle
@@ -28,7 +28,7 @@ cdef extern from "chemistry_data.h":
         double k30
         double k31
 
-cdef extern from "code_units.h":
+cdef extern from "grackle_types.h":
     ctypedef struct c_code_units "code_units":
       int comoving_coordinates
       double density_units
@@ -36,17 +36,17 @@ cdef extern from "code_units.h":
       double velocity_units
       double time_units
       double a_units
+      double a_value
 
 cdef extern from "grackle.h":
     c_chemistry_data _set_default_chemistry_parameters()
 
     int _initialize_chemistry_data(c_chemistry_data *my_chemistry,
-                                  c_code_units *my_units, double a_value)
+                                   c_code_units *my_units)
 
     int c_solve_chemistry "_solve_chemistry"(
                 c_chemistry_data *my_chemistry,
                 c_code_units *my_units,
-                double a_value,
                 double dt_value,
                 int grid_rank,
                 int *grid_dimension,
@@ -76,7 +76,6 @@ cdef extern from "grackle.h":
     int c_calculate_cooling_time "_calculate_cooling_time"(
                 c_chemistry_data *my_chemistry,
                 c_code_units *my_units,
-                double a_value,
                 int grid_rank,
                 int *grid_dimension,
                 int *grid_start,
@@ -106,7 +105,6 @@ cdef extern from "grackle.h":
     int c_calculate_gamma "_calculate_gamma"(
                 c_chemistry_data *my_chemistry,
                 c_code_units *my_units,
-                double a_value,
                 int grid_rank,
                 int *grid_dimension,
                 int *grid_start,
@@ -131,7 +129,6 @@ cdef extern from "grackle.h":
     int c_calculate_pressure "_calculate_pressure"(
                 c_chemistry_data *my_chemistry,
                 c_code_units *my_units,
-                double a_value,
                 int grid_rank,
                 int *grid_dimension,
                 int *grid_start,
@@ -156,7 +153,6 @@ cdef extern from "grackle.h":
     int c_calculate_temperature "_calculate_temperature"(
                 c_chemistry_data *my_chemistry,
                 c_code_units *my_units,
-                double a_value,
                 int grid_rank,
                 int *grid_dimension,
                 int *grid_start,
