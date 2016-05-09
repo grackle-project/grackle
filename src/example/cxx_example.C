@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
   my_units.velocity_units = my_units.length_units / my_units.time_units;
   my_units.a_units = 1.0; // units for the expansion factor
   // Set expansion factor to 1 for non-cosmological simulation.
-  my_units.a_value = 1. / (1. + initial_redshift);
+  my_units.a_value = 1. / (1. + initial_redshift) / my_units.a_units;
 
   // Second, create a chemistry object for parameters and rate data.
   if (set_default_chemistry_parameters() == 0) {
