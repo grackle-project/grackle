@@ -84,7 +84,10 @@ int _solve_chemistry(chemistry_data *my_chemistry,
                      gr_float *H2I_density, gr_float *H2II_density,
                      gr_float *DI_density, gr_float *DII_density, gr_float *HDI_density,
                      gr_float *e_density, gr_float *metal_density,
-                     gr_float *volumetric_heating_rate, gr_float *specific_heating_rate)
+                     gr_float *volumetric_heating_rate, gr_float *specific_heating_rate,
+                     gr_float *photogamma, gr_float *kphHINum, gr_float *kphHeINum,
+                     gr_float *kphHeIINum, gr_float *kdissH2INum, gr_float *kphHMNum,
+                     gr_float *kdissH2IINum)
 {
 
   /* Return if this doesn't concern us. */
@@ -228,7 +231,11 @@ int solve_chemistry(code_units *my_units,
                        my_fields->HDI_density,
                        my_fields->e_density,   my_fields->metal_density,
                        my_fields->volumetric_heating_rate,
-                       my_fields->specific_heating_rate) == FAIL) {
+                       my_fields->specific_heating_rate,
+                       my_fields->photgamma, my_fields->kphHINum,
+                       my_fields->kphHeINum, my_fields->kphHeIINum,
+                       my_fields->kdissH2INum, my_fields->kpHMNum
+                       my_fields->kdissH2IINum) == FAIL) {
     fprintf(stderr, "Error in _solve_chemistry.\n");
     return FAIL;
   }
