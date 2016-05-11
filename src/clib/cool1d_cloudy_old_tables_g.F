@@ -1,7 +1,7 @@
 !=======================================================================
-!/////////////////  SUBROUTINE COOL1D_CLOUDY_OLD_G  \\\\\\\\\\\\\\\\\\\\
+!//////////////  SUBROUTINE COOL1D_CLOUDY_OLD_TABLES_G  \\\\\\\\\\\\\\\\
 
-      subroutine cool1D_cloudy_old_g(d, de, rhoH, metallicity,
+      subroutine cool1D_cloudy_old_tables_g(d, de, rhoH, metallicity,
      &                in, jn, kn, is, ie, j, k,
      &                logtem, edot, comp2, ispecies, dom, zr,
      &                icmbTfloor, iClHeat, 
@@ -11,13 +11,15 @@
      &                itmask)
 
 !
-!  SOLVE CLOUDY METAL COOLING
+!  SOLVE CLOUDY METAL COOLING FOR OLD CLOUDY TABLES
 !
 !  written by: Britton Smith
 !  date: September, 2009
 !
 !  PURPOSE:
 !    Solve cloudy cooling by interpolating from the data.
+!    This version uses tables formatted for the original
+!    Cloudy cooling functionality in Enzo.
 !
 !  INPUTS:
 !    in,jn,kn - dimensions of 3D fields

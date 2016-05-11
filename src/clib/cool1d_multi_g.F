@@ -758,7 +758,8 @@ c  new (correct) way: (april 4, 2007)
 
          else
 
-            call cool1D_cloudy_old_g(d, de, rhoH, metallicity,
+            call cool1D_cloudy_old_tables_g(
+     &           d, de, rhoH, metallicity,
      &           in, jn, kn, is, ie, j, k,
      &           logtem, edot, comp2, ispecies, dom, zr,
      &           icmbTfloor, iClHeat, 
