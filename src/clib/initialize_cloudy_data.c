@@ -87,6 +87,11 @@ int initialize_cloudy_data(chemistry_data *my_chemistry,
   file_id = H5Fopen(my_chemistry->grackle_data_file, 
                     H5F_ACC_RDONLY, H5P_DEFAULT);
 
+  if (H5Aexists(file_id, "old_style")) {
+    my_chemistry->cloudy_data_new = 0;
+    fprintf(stderr, "Loading old-style Cloudy tables.\n");
+  }
+
   // Open cooling dataset and get grid dimensions.
 
   sprintf(parameter_name, "/CoolingRates/%s/Cooling", group_name);
@@ -144,38 +149,6 @@ int initialize_cloudy_data(chemistry_data *my_chemistry,
     return FAIL;
   }
   free(temp_int_arr);
-
-  // If Parameter2 is metallicity, this is an old style data file.
-  if (my_cloudy->grid_rank > 2) {
-    hid_t filetype, memtype, space, attr;
-    size_t sdim;
-    hsize_t dims[1] = {1};
-    char **rdata;
-    int ndims, i;
-    attr = H5Aopen (dset_id, "Parameter2_Name", H5P_DEFAULT);
-    filetype = H5Aget_type (attr);
-    sdim = H5Tget_size (filetype);
-    sdim++;
-
-    space = H5Aget_space (attr);
-    ndims = H5Sget_simple_extent_dims (space, dims, NULL);
-    rdata = (char **) malloc (dims[0] * sizeof (char *));
-    rdata[0] = (char *) malloc (dims[0] * sdim * sizeof (char));
-    for (i=1; i<dims[0]; i++)
-        rdata[i] = rdata[0] + i * sdim;
-    memtype = H5Tcopy (H5T_C_S1);
-    status = H5Tset_size (memtype, sdim);
-    status = H5Aread (attr, memtype, rdata[0]);
-
-    if (strcmp(rdata[0], "redshift") != 0) {
-      fprintf(stderr, "This is an old style cloudy dataset.\n");
-      my_chemistry->cloudy_data_new = 0;
-    }
-
-    free (rdata[0]);
-    free (rdata);
-    status = H5Aclose (attr);
-  }
 
   // Grid parameters.
   for (q = 0;q < my_cloudy->grid_rank;q++) {
