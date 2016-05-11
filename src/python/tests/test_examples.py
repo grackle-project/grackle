@@ -42,10 +42,13 @@ def temporary_directory():
         shutil.rmtree(tmpdir)
 
 
-def example_test(example_path, primordial_chemistry=None):
+def example_test(example_path, primordial_chemistry=None,
+                 metal_cooling=None):
     env = dict(os.environ)
     if primordial_chemistry is not None:
         env['PRIMORDIAL_CHEM'] = str(primordial_chemistry)
+    if metal_cooling is not None:
+        env['METAL_COOLING'] = str(metal_cooling)
     python_executable = 'python'
     with temporary_directory() as tmpdir:
         command = '%s %s' % (python_executable, example_path)
@@ -85,5 +88,8 @@ def test_examples():
         if 'cooling_rate.py' in example_path:
             for i in range(4):
                 yield example_test, example_path, i
+        elif 'freefall.py' in example_path:
+            for i in range(2):
+                yield example_test, example_path, None, i
         else:
             yield example_test, example_path
