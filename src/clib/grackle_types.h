@@ -58,14 +58,14 @@ typedef struct
   gr_float *volumetric_heating_rate;
   gr_float *specific_heating_rate;
 
-  /* AJE - radiation support */
-  gr_float *photogamma;
+  /* AJE-RT - Radiative transfer fields */
+  gr_float *gammaNum;
   gr_float *kphHINum;
   gr_float *kphHeINum;
   gr_float *kphHeIINum;
   gr_float *kdissH2INum;
-  gr_float *kphHMNum;
-  gr_float *kdissH2IINum;
+//  gr_float *kphHMNum;
+//  gr_float *kdissH2IINum;
 
 
 } grackle_field_data;

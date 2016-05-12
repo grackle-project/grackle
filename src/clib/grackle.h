@@ -46,9 +46,8 @@ int _solve_chemistry(chemistry_data *my_chemistry,
                      gr_float *DI_density, gr_float *DII_density, gr_float *HDI_density,
                      gr_float *e_density, gr_float *metal_density,
                      gr_float *volumetric_heating_rate, gr_float *specific_heating_rate,
-                     gr_float *photogamma, gr_float *kphHINum, gr_float *kphHeINum,
-                     gr_float *kphHeINum, gr_float *kphHeIINum, gr_float *kdissH2INum,
-                     gr_float *kphHMNum, gr_float *kdissH2IINum);
+                     gr_float *gammaNum, gr_float *kphHINum, gr_float *kphHeINum,
+                     gr_float *kphHeIINum, gr_float *kdissH2INum);
 
 int calculate_cooling_time(code_units *my_units,
                            grackle_field_data *my_fields,
@@ -65,11 +64,8 @@ int _calculate_cooling_time(chemistry_data *my_chemistry,
                             gr_float *H2I_density, gr_float *H2II_density,
                             gr_float *DI_density, gr_float *DII_density, gr_float *HDI_density,
                             gr_float *e_density, gr_float *metal_density,
-                            gr_float *cooling_time,
-                            gr_float *volumetric_heating_rate, gr_float *specific_heating_rate,
-                            gr_float *photogamma, gr_float *kphHINum, gr_float *kphHeINum,
-                            gr_float *kphHeIINum, gr_float *kdissH2INum, gr_float *kphHMNum,
-                            gr_float *kdissH2IINum);
+                            gr_float *cooling_time, gr_float *gammaNum,
+                            gr_float *volumetric_heating_rate, gr_float *specific_heating_rate);
 
 int calculate_gamma(code_units *my_units,
                     grackle_field_data *my_fields,

@@ -59,6 +59,9 @@ extern void FORTRAN_NAME(solve_rate_cool_g)(
 	double *gpldl, double *gphdl, double *HDltea, double *HDlowa,
 	double *gaHIa, double *gaH2a, double *gaHea, double *gaHpa, double *gaela,
 	double *h2ltea, double *gasgra,
+        int *iradtrans, int *iradcoupled, int *iradstep, int *irt_honly,
+        double *kphHI, double *kphHeI, double *kphHeII, double *kdissH2I,
+        double *photogamma, // AJE-RT
 	int *ierr,
 	int *ih2optical, int *iciecool, int *ithreebody, double *ciecoa,
  	int *icmbTfloor, int *iClHeat,
@@ -83,9 +86,8 @@ int _solve_chemistry(chemistry_data *my_chemistry,
                      gr_float *DI_density, gr_float *DII_density, gr_float *HDI_density,
                      gr_float *e_density, gr_float *metal_density,
                      gr_float *volumetric_heating_rate, gr_float *specific_heating_rate,
-                     gr_float *photogamma, gr_float *kphHINum, gr_float *kphHeINum,
-                     gr_float *kphHeIINum, gr_float *kdissH2INum, gr_float *kphHMNum,
-                     gr_float *kdissH2IINum)
+                     gr_float *gammaNum, gr_float *kphHINum, gr_float *kphHeINum,
+                     gr_float *kphHeIINum, gr_float *kdissH2INum)
 {
 
   /* Return if this doesn't concern us. */
@@ -171,6 +173,10 @@ int _solve_chemistry(chemistry_data *my_chemistry,
     my_chemistry->HDlte, my_chemistry->HDlow,
     my_chemistry->GAHI, my_chemistry->GAH2, my_chemistry->GAHe, my_chemistry->GAHp,
     my_chemistry->GAel, my_chemistry->H2LTE, my_chemistry->gas_grain,
+    &my_chemistry->use_radiative_transfer, &my_chemistry->radiative_transfer_coupled_rate_solver,
+    &my_chemistry->radiative_transfer_intermediate_step, &my_chemistry->radiative_transfer_hydrogen_only,
+    kphHINum, kphHeINum, kphHeIINum,
+    kdissH2INum, gammaNum, // AJE-RT
     &ierr,
     &my_chemistry->h2_optical_depth_approximation, &my_chemistry->cie_cooling, 
     &my_chemistry->three_body_rate, my_chemistry->cieco,
@@ -222,10 +228,9 @@ int solve_chemistry(code_units *my_units,
                        my_fields->e_density,   my_fields->metal_density,
                        my_fields->volumetric_heating_rate,
                        my_fields->specific_heating_rate,
-                       my_fields->photgamma, my_fields->kphHINum,
+                       my_fields->gammaNum, my_fields->kphHINum,
                        my_fields->kphHeINum, my_fields->kphHeIINum,
-                       my_fields->kdissH2INum, my_fields->kpHMNum
-                       my_fields->kdissH2IINum) == FAIL) {
+                       my_fields->kdissH2INum) == FAIL) {
     fprintf(stderr, "Error in _solve_chemistry.\n");
     return FAIL;
   }

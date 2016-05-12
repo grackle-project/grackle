@@ -50,6 +50,7 @@ extern void FORTRAN_NAME(cool_multi_time_g)(
 	double *gpldl, double *gphdl, double *HDltea, double *HDlowa,
 	double *gaHIa, double *gaH2a, double *gaHea, double *gaHpa, double *gaela,
 	double *h2ltea, double *gasgra,
+        int *iradtrans, double *photogamma, // AJE-RT
 	int *ih2optical, int *iciecool, double *ciecoa,
  	int *icmbTfloor, int *iClHeat, 
         long long *priGridRank, long long *priGridDim,
@@ -72,7 +73,7 @@ int _calculate_cooling_time(chemistry_data *my_chemistry,
                             gr_float *H2I_density, gr_float *H2II_density,
                             gr_float *DI_density, gr_float *DII_density, gr_float *HDI_density,
                             gr_float *e_density, gr_float *metal_density,
-                            gr_float *cooling_time,
+                            gr_float *cooling_time, gr_float *gammaNum,
                             gr_float *volumetric_heating_rate, gr_float *specific_heating_rate)
 {
  
@@ -145,6 +146,7 @@ int _calculate_cooling_time(chemistry_data *my_chemistry,
        my_chemistry->HDlte, my_chemistry->HDlow,
        my_chemistry->GAHI, my_chemistry->GAH2, my_chemistry->GAHe, my_chemistry->GAHp,
        my_chemistry->GAel, my_chemistry->H2LTE, my_chemistry->gas_grain,
+       &my_chemistry->use_radiative_transfer, gammaNum, // AJE-RT
        &my_chemistry->h2_optical_depth_approximation, 
        &my_chemistry->cie_cooling, my_chemistry->cieco,
        &my_chemistry->cmb_temperature_floor,
@@ -193,7 +195,7 @@ int calculate_cooling_time(code_units *my_units,
                               my_fields->DI_density, my_fields->DII_density,
                               my_fields->HDI_density,
                               my_fields->e_density, my_fields->metal_density,
-                              cooling_time,
+                              cooling_time, my_fields->gammaNum,
                               my_fields->volumetric_heating_rate,
                               my_fields->specific_heating_rate) == FAIL) {
     fprintf(stderr, "Error in _calculate_cooling_time.\n");

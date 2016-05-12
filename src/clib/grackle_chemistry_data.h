@@ -85,6 +85,16 @@ typedef struct
   int use_volumetric_heating_rate;
   int use_specific_heating_rate;
 
+
+               // AJE-RT
+  /* flags and parameters to signal that RT
+     is being used, and appropriate parameters
+     for setting RT solvers */
+  int use_radiative_transfer;
+  int radiative_transfer_coupled_rate_solver;
+  int radiative_transfer_intermediate_step;
+  int radiative_transfer_hydrogen_only;
+
   /***************************************
    *** radiation background parameters ***
    ***************************************/
