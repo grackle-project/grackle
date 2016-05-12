@@ -30,10 +30,10 @@
      &                ih2optical, iciecool, ciecoa, cieco,
      &                icmbTfloor, iClHeat, clEleFra,
      &                priGridRank, priGridDim,
-     &                priPar1, priPar2, priPar3,
+     &                priPar1, priPar2, priPar3, priPar4, priPar5,
      &                priDataSize, priCooling, priHeating, priMMW,
      &                metGridRank, metGridDim,
-     &                metPar1, metPar2, metPar3,
+     &                metPar1, metPar2, metPar3, metPar4, metPar5,
      &                metDataSize, metCooling, metHeating,
      &                clnew,
      &                itmask)
@@ -96,9 +96,11 @@
      &     metGridRank, metDataSize,
      &     priGridDim(priGridRank), metGridDim(metGridRank)
       real*8 priPar1(priGridDim(1)), priPar2(priGridDim(2)), 
-     &     priPar3(priGridDim(3)),
+     &     priPar3(priGridDim(3)), priPar4(priGridDim(4)),
+     &     priPar5(priGridDim(5)),
      &     metPar1(metGridDim(1)), metPar2(metGridDim(2)), 
-     &     metPar3(metGridDim(3)),
+     &     metPar3(metGridDim(3)), metPar4(metGridDim(4)),
+     &     metPar5(metGridDim(5)),
      &     priCooling(priDataSize), priHeating(priDataSize),
      &     priMMW(priDataSize),
      &     metCooling(metDataSize), metHeating(metDataSize)
@@ -764,7 +766,7 @@ c  new (correct) way: (april 4, 2007)
      &           logtem, edot, comp2, ispecies, dom, zr,
      &           icmbTfloor, iClHeat, 
      &           clEleFra, metGridRank, metGridDim,
-     &           metPar1, metPar2, metPar3,
+     &           metPar1, metPar2, metPar3, metPar4, metPar5,
      &           metDataSize, metCooling, metHeating, 
      &           itmask)
 

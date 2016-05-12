@@ -20,7 +20,7 @@
 #include "code_units.h"
 
 #define SMALL_LOG_VALUE -99.0
-#define CLOUDY_MAX_DIMENSION 3
+#define CLOUDY_MAX_DIMENSION 5
 
 extern int grackle_verbose;
 
@@ -89,7 +89,8 @@ int initialize_cloudy_data(chemistry_data *my_chemistry,
 
   if (H5Aexists(file_id, "old_style")) {
     my_chemistry->cloudy_data_new = 0;
-    fprintf(stderr, "Loading old-style Cloudy tables.\n");
+    if (grackle_verbose)
+      fprintf(stderr, "Loading old-style Cloudy tables.\n");
   }
 
   // Open cooling dataset and get grid dimensions.

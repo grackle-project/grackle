@@ -6,7 +6,7 @@
      &                logtem, edot, comp2, ispecies, dom, zr,
      &                icmbTfloor, iClHeat, 
      &                clEleFra, clGridRank, clGridDim,
-     &                clPar1, clPar2, clPar3,
+     &                clPar1, clPar2, clPar3, clPar4, clPar5,
      &                clDataSize, clCooling, clHeating, 
      &                itmask)
 
@@ -74,9 +74,8 @@
       integer*8 clGridRank, clDataSize, clGridDim(3)
       real*8 clEleFra
       real*8 clPar1(clGridDim(1)), clPar2(clGridDim(2)),
-     &     clPar3(clGridDim(3))
-c$$$           clPar4(clGridDim(4)),
-c$$$     &     clPar5(clGridDim(5))
+     &     clPar3(clGridDim(3)), clPar4(clGridDim(4)),
+     &     clPar5(clGridDim(5))
       real*8 clCooling(clDataSize), clHeating(clDataSize)
 
 !  Iteration mask
@@ -100,29 +99,29 @@ c$$$     &     clPar5(clGridDim(5))
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
 !=======================================================================
 
-      inv_log10 = 1._RKIND / log(10._RKIND)
+      inv_log10 = 1._DKIND / log(10._DKIND)
       log10_tCMB = log10(comp2)
 
 !     Calculate parameter value slopes
 
       dclPar(1) = (clPar1(clGridDim(1)) - clPar1(1)) / 
-     &     REAL(clGridDim(1) - 1, RKIND)
+     &     real(clGridDim(1) - 1, DKIND)
       if (clGridRank > 1) then
          dclPar(2) = (clPar2(clGridDim(2)) - clPar2(1)) / 
-     &        REAL(clGridDim(2) - 1, RKIND)
+     &        real(clGridDim(2) - 1, DKIND)
       endif
       if (clGridRank > 2) then
          dclPar(3) = (clPar3(clGridDim(3)) - clPar3(1)) / 
-     &        REAL(clGridDim(3) - 1, RKIND)
+     &        real(clGridDim(3) - 1, DKIND)
       endif
-c$$$      if (clGridRank > 3) then
-c$$$         dclPar(4) = (clPar4(clGridDim(4)) - clPar4(1)) / 
-c$$$     &        REAL(clGridDim(4) - 1, RKIND)
-c$$$      endif
-c$$$      if (clGridRank > 4) then
-c$$$         dclPar(5) = (clPar5(clGridDim(5)) - clPar5(1)) / 
-c$$$     &        REAL(clGridDim(5) - 1, RKIND)
-c$$$      endif
+      if (clGridRank > 3) then
+         dclPar(4) = (clPar4(clGridDim(4)) - clPar4(1)) /
+     &        real(clGridDim(4) - 1, DKIND)
+      endif
+      if (clGridRank > 4) then
+         dclPar(5) = (clPar5(clGridDim(5)) - clPar5(1)) /
+     &        real(clGridDim(5) - 1, DKIND)
+      endif
 
       do i=is+1, ie+1
          if ( itmask(i) ) then
@@ -153,18 +152,18 @@ c$$$      endif
             
             if (clGridRank > 3) then
 
-               e_frac(i) = 2._RKIND * de(i,j,k) / 
-     &              (d(i,j,k) * (1._RKIND + fh(i)))
+               e_frac(i) = 2._DKIND * de(i,j,k) /
+     &              (d(i,j,k) * (1._DKIND + fh(i)))
 !           Make sure electron fraction is never above 1 
 !           which can give bad cooling/heating values when 
 !           extrapolating in the Cloudy data.
-               log_e_frac(i) = min(log10(e_frac(i)), 0._RKIND)
+               log_e_frac(i) = min(log10(e_frac(i)), 0._DKIND)
 
 !           Get extra electrons contributed by metals
 
-               cl_e_frac(i) = e_frac(i) * 
-     &              (1._RKIND + (2._RKIND * clEleFra * metallicity(i) * 
-     &              fh(i)) / (1._RKIND + fh(i)))
+               cl_e_frac(i) = e_frac(i) *
+     &              (1._DKIND + (2._DKIND * clEleFra * metallicity(i) *
+     &              fh(i)) / (1._DKIND + fh(i)))
 
             endif
 
@@ -175,16 +174,16 @@ c$$$      endif
                call interpolate_1D_old(
      &              log10tem(i), clGridDim, clPar1,
      &              dclPar(1), clDataSize, clCooling, log_cool(i))
-               edot_met(i) = -10._RKIND**log_cool(i)
+               edot_met(i) = -10._DKIND**log_cool(i)
 
 !     Ignore CMB term if T >> T_CMB
                if ((icmbTfloor == 1) .and. 
-     &              ((log10tem(i) - log10_tCMB) < 2._RKIND)) then
+     &              ((log10tem(i) - log10_tCMB) < 2._DKIND)) then
                   call interpolate_1D_old(
      &                 log10_tCMB, clGridDim, clPar1, 
      &                 dclPar(1), clDataSize, clCooling, 
      &                 log_cool_cmb(i))
-                  edot_met(i) = edot_met(i) + 10._RKIND**log_cool_cmb(i)
+                  edot_met(i) = edot_met(i) + 10._DKIND**log_cool_cmb(i)
                endif
 
                if (iClHeat == 1) then
@@ -192,7 +191,7 @@ c$$$      endif
      &                 log10tem(i), clGridDim, clPar1, 
      &                 dclPar(1), clDataSize, clHeating, 
      &                 log_heat(i))
-                  edot_met(i) = edot_met(i) + 10._RKIND**log_heat(i)
+                  edot_met(i) = edot_met(i) + 10._DKIND**log_heat(i)
                endif
 
 !           Interpolate over density and temperature.
@@ -201,7 +200,7 @@ c$$$      endif
      &              log_n_h(i), log10tem(i), clGridDim,
      &              clPar1, dclPar(1), clPar2, dclPar(2),
      &              clDataSize, clCooling, log_cool(i))
-               edot_met(i) = -10._RKIND**log_cool(i)
+               edot_met(i) = -10._DKIND**log_cool(i)
 
 !     Ignore CMB term if T >> T_CMB
                if ((icmbTfloor == 1) .and. 
@@ -210,7 +209,7 @@ c$$$      endif
      &                 log_n_h(i), log10_tCMB, clGridDim,
      &                 clPar1, dclPar(1), clPar2, dclPar(2),
      &                 clDataSize, clCooling, log_cool_cmb(i))
-                  edot_met(i) = edot_met(i) + 10._RKIND**log_cool_cmb(i)
+                  edot_met(i) = edot_met(i) + 10._DKIND**log_cool_cmb(i)
                endif
 
                if (iClHeat == 1) then
@@ -218,7 +217,7 @@ c$$$      endif
      &                 log_n_h(i), log10tem(i), clGridDim,
      &              clPar1, dclPar(1), clPar2, dclPar(2),
      &              clDataSize, clHeating, log_heat(i))
-                  edot_met(i) = edot_met(i) + 10._RKIND**log_heat(i)
+                  edot_met(i) = edot_met(i) + 10._DKIND**log_heat(i)
                endif
 
 !           Interpolate over density, metallicity, and temperature.
@@ -229,18 +228,18 @@ c$$$      endif
      &              clPar1, dclPar(1), clPar2, dclPar(2),
      &              clPar3, dclPar(3),
      &              clDataSize, clCooling, log_cool(i))
-               edot_met(i) = -10._RKIND**log_cool(i)
+               edot_met(i) = -10._DKIND**log_cool(i)
 
 !     Ignore CMB term if T >> T_CMB
                if ((icmbTfloor == 1) .and. 
-     &              ((log10tem(i) - log10_tCMB) < 2._RKIND)) then
+     &              ((log10tem(i) - log10_tCMB) < 2._DKIND)) then
                   call interpolate_3D_old(
      &                 log_n_h(i), log_Z(i), log10_tCMB,
      &                 clGridDim,
      &                 clPar1, dclPar(1), clPar2, dclPar(2),
      &                 clPar3, dclPar(3),
      &                 clDataSize, clCooling, log_cool_cmb(i))
-                  edot_met(i) = edot_met(i) + 10._RKIND**log_cool_cmb(i)
+                  edot_met(i) = edot_met(i) + 10._DKIND**log_cool_cmb(i)
                endif
 
                if (iClHeat == 1) then
@@ -250,76 +249,76 @@ c$$$      endif
      &                 clPar1, dclPar(1), clPar2, dclPar(2),
      &                 clPar3, dclPar(3),
      &                 clDataSize, clHeating, log_heat(i))
-                  edot_met(i) = edot_met(i) + 10._RKIND**log_heat(i)
+                  edot_met(i) = edot_met(i) + 10._DKIND**log_heat(i)
                endif
 
-c$$$!           Interpolate over density, metallicity, electron fraction, and temperature.
-c$$$            else if (clGridRank == 4) then
-c$$$               call interpolate_4D_old(
-c$$$     &              log_n_h(i), log_Z(i), 
-c$$$     &              log_e_frac(i), log10tem(i), clGridDim,
-c$$$     &              clPar1, dclPar(1), clPar2, dclPar(2),
-c$$$     &              clPar3, dclPar(3), clPar4, dclPar(4),
-c$$$     &              clDataSize, clCooling, log_cool(i))
-c$$$               edot_met(i) = -10._RKIND**log_cool(i)
-c$$$
-c$$$!     Ignore CMB term if T >> T_CMB
-c$$$               if ((icmbTfloor == 1) .and. 
-c$$$     &              ((log10tem(i) - log10_tCMB) < 2._RKIND)) then
-c$$$                  call interpolate_4D_old(
-c$$$     &                 log_n_h(i), log_Z(i),
-c$$$     &                 log_e_frac(i), log10_tCMB, clGridDim,
-c$$$     &                 clPar1, dclPar(1), clPar2, dclPar(2),
-c$$$     &                 clPar3, dclPar(3), clPar4, dclPar(4),
-c$$$     &                 clDataSize, clCooling, log_cool_cmb(i))
-c$$$                  edot_met(i) = edot_met(i) + 10._RKIND**log_cool_cmb(i)
-c$$$               endif
-c$$$
-c$$$               if (iClHeat == 1) then
-c$$$                  call interpolate_4D_old(
-c$$$     &                 log_n_h(i), log_Z(i), 
-c$$$     &                 log_e_frac(i), log10tem(i), clGridDim,
-c$$$     &                 clPar1, dclPar(1), clPar2, dclPar(2),
-c$$$     &                 clPar3, dclPar(3), clPar4, dclPar(4),
-c$$$     &                 clDataSize, clHeating, log_heat(i))
-c$$$                  edot_met(i) = edot_met(i) + 10._RKIND**log_heat(i)
-c$$$               endif
-c$$$
-c$$$!           Interpolate over density, metallicity, electron fraction, redshift, 
-c$$$!           and temperature.
-c$$$            else
-c$$$               call interpolate_5D_old(
-c$$$     &              log_n_h(i), log_Z(i), 
-c$$$     &              log_e_frac(i), zr, log10tem(i), clGridDim,
-c$$$     &              clPar1, dclPar(1), clPar2, dclPar(2),
-c$$$     &              clPar3, dclPar(3), clPar4, dclPar(4),
-c$$$     &              clPar5, dclPar(5),
-c$$$     &              clDataSize, clCooling, log_cool(i))
-c$$$               edot_met(i) = -10._RKIND**log_cool(i)
-c$$$
-c$$$!     Ignore CMB term if T >> T_CMB
-c$$$               if ((icmbTfloor == 1) .and. 
-c$$$     &              ((log10tem(i) - log10_tCMB) < 2._RKIND)) then
-c$$$                  call interpolate_5D_old(
-c$$$     &                 log_n_h(i), log_Z(i), 
-c$$$     &                 log_e_frac(i), zr, log10_tCMB, clGridDim,
-c$$$     &                 clPar1, dclPar(1), clPar2, dclPar(2),
-c$$$     &                 clPar3, dclPar(3), clPar4, dclPar(4),
-c$$$     &                 clPar5, dclPar(5),
-c$$$     &                 clDataSize, clCooling, log_cool_cmb(i))
-c$$$                  edot_met(i) = edot_met(i) + 10._RKIND**log_cool_cmb(i)
-c$$$               endif
-c$$$
-c$$$               if (iClHeat == 1) then
-c$$$                  call interpolate_5D_old(
-c$$$     &                 log_n_h(i), log_Z(i), 
-c$$$     &                 log_e_frac(i), zr, log10tem(i), clGridDim,
-c$$$     &                 clPar1, dclPar(1), clPar2, dclPar(2),
-c$$$     &                 clPar3, dclPar(3), clPar4, dclPar(4),
-c$$$     &                 clPar5, dclPar(5),
-c$$$     &                 clDataSize, clHeating, log_heat(i))
-c$$$                  edot_met(i) = edot_met(i) + 10._RKIND**log_heat(i)
-c$$$               endif
+!           Interpolate over density, metallicity, electron fraction, and temperature.
+            else if (clGridRank == 4) then
+               call interpolate_4D_old(
+     &              log_n_h(i), log_Z(i),
+     &              log_e_frac(i), log10tem(i), clGridDim,
+     &              clPar1, dclPar(1), clPar2, dclPar(2),
+     &              clPar3, dclPar(3), clPar4, dclPar(4),
+     &              clDataSize, clCooling, log_cool(i))
+               edot_met(i) = -10._DKIND**log_cool(i)
+
+!     Ignore CMB term if T >> T_CMB
+               if ((icmbTfloor == 1) .and.
+     &              ((log10tem(i) - log10_tCMB) < 2._DKIND)) then
+                  call interpolate_4D_old(
+     &                 log_n_h(i), log_Z(i),
+     &                 log_e_frac(i), log10_tCMB, clGridDim,
+     &                 clPar1, dclPar(1), clPar2, dclPar(2),
+     &                 clPar3, dclPar(3), clPar4, dclPar(4),
+     &                 clDataSize, clCooling, log_cool_cmb(i))
+                  edot_met(i) = edot_met(i) + 10._DKIND**log_cool_cmb(i)
+               endif
+
+               if (iClHeat == 1) then
+                  call interpolate_4D_old(
+     &                 log_n_h(i), log_Z(i),
+     &                 log_e_frac(i), log10tem(i), clGridDim,
+     &                 clPar1, dclPar(1), clPar2, dclPar(2),
+     &                 clPar3, dclPar(3), clPar4, dclPar(4),
+     &                 clDataSize, clHeating, log_heat(i))
+                  edot_met(i) = edot_met(i) + 10._DKIND**log_heat(i)
+               endif
+
+!           Interpolate over density, metallicity, electron fraction, redshift,
+!           and temperature.
+            else
+               call interpolate_5D_old(
+     &              log_n_h(i), log_Z(i),
+     &              log_e_frac(i), zr, log10tem(i), clGridDim,
+     &              clPar1, dclPar(1), clPar2, dclPar(2),
+     &              clPar3, dclPar(3), clPar4, dclPar(4),
+     &              clPar5, dclPar(5),
+     &              clDataSize, clCooling, log_cool(i))
+               edot_met(i) = -10._DKIND**log_cool(i)
+
+!     Ignore CMB term if T >> T_CMB
+               if ((icmbTfloor == 1) .and.
+     &              ((log10tem(i) - log10_tCMB) < 2._DKIND)) then
+                  call interpolate_5D_old(
+     &                 log_n_h(i), log_Z(i),
+     &                 log_e_frac(i), zr, log10_tCMB, clGridDim,
+     &                 clPar1, dclPar(1), clPar2, dclPar(2),
+     &                 clPar3, dclPar(3), clPar4, dclPar(4),
+     &                 clPar5, dclPar(5),
+     &                 clDataSize, clCooling, log_cool_cmb(i))
+                  edot_met(i) = edot_met(i) + 10._DKIND**log_cool_cmb(i)
+               endif
+
+               if (iClHeat == 1) then
+                  call interpolate_5D_old(
+     &                 log_n_h(i), log_Z(i),
+     &                 log_e_frac(i), zr, log10tem(i), clGridDim,
+     &                 clPar1, dclPar(1), clPar2, dclPar(2),
+     &                 clPar3, dclPar(3), clPar4, dclPar(4),
+     &                 clPar5, dclPar(5),
+     &                 clDataSize, clHeating, log_heat(i))
+                  edot_met(i) = edot_met(i) + 10._DKIND**log_heat(i)
+               endif
 
             endif
 
