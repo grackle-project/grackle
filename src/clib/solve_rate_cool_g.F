@@ -1734,7 +1734,8 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
      &             +      k19(i)* H2II(i,j,k)* HM(i,j,k)/2._DKIND
      &             + 2._DKIND*k31   * H2I(i,j,k)/2._DKIND
             if (iradtrans .eq. 1)
-     &          scoef = scoef+ 2._DKIND* kdissH2I(i,j,k)* H2I(i,j,k)/2._DKIND !AJE-RT
+     &          scoef = scoef+ 2._DKIND* kdissH2I(i,j,k)
+     &                        * H2I(i,j,k)/2._DKIND !AJE-RT
             acoef  =      k1(i) * de(i,j,k)
      &             +      k7(i) * de(i,j,k)  
      &             +      k8(i) * HM(i,j,k)
@@ -1770,7 +1771,8 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
      &             +    k57(i) * HI(i,j,k) * HI(i,j,k)
      &             +    k58(i) * HI(i,j,k) * HeI(i,j,k)/4._DKIND
      &             + k24shield(i)*HI(i,j,k)
-            if (iradtrans .eq. 1) scoef = scoef + kphHI(i,j,k) * HI(i,j,k) ! AJE-RT
+            if (iradtrans .eq. 1) 
+     &         scoef = scoef + kphHI(i,j,k) * HI(i,j,k) ! AJE-RT
 
             acoef  =    k2(i)  * de(i,j,k)
      &             +    k9(i)  * HI(i,j,k)
