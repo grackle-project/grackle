@@ -12,6 +12,7 @@
 ########################################################################
 
 import numpy as np
+import os
 
 from pygrackle import \
     chemistry_data, \
@@ -26,6 +27,11 @@ from pygrackle.utilities.testing import \
 def test_proper_comoving_units():
     "Make sure proper and comoving units systems give the same answer."
 
+    grackle_dir = os.path.dirname(os.path.dirname(os.path.dirname(
+        os.path.dirname(os.path.abspath(__file__)))))
+    data_file_path = os.sep.join(
+        [grackle_dir, "input", "CloudyData_UVB=HM2012.h5"])
+
     my_random_state = np.random.RandomState(7921)
     for current_redshift in [0., 1., 3., 6., 9.]:
 
@@ -36,7 +42,7 @@ def test_proper_comoving_units():
         chem_c.primordial_chemistry = 1
         chem_c.metal_cooling = 1
         chem_c.UVbackground = 1
-        chem_c.grackle_data_file = "../../input/CloudyData_UVB=HM2012.h5"
+        chem_c.grackle_data_file = data_file_path
         set_cosmology_units(chem_c,
                             current_redshift=current_redshift,
                             initial_redshift=99.)
@@ -55,7 +61,7 @@ def test_proper_comoving_units():
         chem_p.primordial_chemistry = 1
         chem_p.metal_cooling = 1
         chem_p.UVbackground = 1
-        chem_p.grackle_data_file = "../../input/CloudyData_UVB=HM2012.h5"
+        chem_p.grackle_data_file = data_file_path
         chem_p.comoving_coordinates = 0
         chem_p.a_units = 1.0
         # Set the proper units to be of similar magnitude to the
@@ -88,6 +94,11 @@ def test_proper_comoving_units():
 def test_proper_comoving_units_tabular():
     "Make sure proper and comoving units systems give the same answer with tabular cooling."
 
+    grackle_dir = os.path.dirname(os.path.dirname(os.path.dirname(
+        os.path.dirname(os.path.abspath(__file__)))))
+    data_file_path = os.sep.join(
+        [grackle_dir, "input", "CloudyData_UVB=HM2012.h5"])
+
     my_random_state = np.random.RandomState(19650909)
     for current_redshift in [0., 1., 3., 6., 9.]:
 
@@ -98,7 +109,7 @@ def test_proper_comoving_units_tabular():
         chem_c.primordial_chemistry = 0
         chem_c.metal_cooling = 1
         chem_c.UVbackground = 1
-        chem_c.grackle_data_file = "../../input/CloudyData_UVB=HM2012.h5"
+        chem_c.grackle_data_file = data_file_path
         set_cosmology_units(chem_c,
                             current_redshift=current_redshift,
                             initial_redshift=99.)
@@ -117,7 +128,7 @@ def test_proper_comoving_units_tabular():
         chem_p.primordial_chemistry = 0
         chem_p.metal_cooling = 1
         chem_p.UVbackground = 1
-        chem_p.grackle_data_file = "../../input/CloudyData_UVB=HM2012.h5"
+        chem_p.grackle_data_file = data_file_path
         chem_p.comoving_coordinates = 0
         chem_p.a_units = 1.0
         # Set the proper units to be of similar magnitude to the
@@ -150,6 +161,11 @@ def test_proper_comoving_units_tabular():
 def test_proper_units():
     "Make sure two different proper units systems give the same answer."
 
+    grackle_dir = os.path.dirname(os.path.dirname(os.path.dirname(
+        os.path.dirname(os.path.abspath(__file__)))))
+    data_file_path = os.sep.join(
+        [grackle_dir, "input", "CloudyData_UVB=HM2012.h5"])
+
     my_random_state = np.random.RandomState(20150725)
     for current_redshift in [0., 1., 3.]:
 
@@ -160,7 +176,7 @@ def test_proper_units():
         chem_1.primordial_chemistry = 1
         chem_1.metal_cooling = 1
         chem_1.UVbackground = 1
-        chem_1.grackle_data_file = "../../input/CloudyData_UVB=HM2012.h5"
+        chem_1.grackle_data_file = data_file_path
         chem_1.comoving_coordinates = 0
         chem_1.a_units = 1.0
         chem_1.density_units = random_logscale(-1, 1, random_state=my_random_state)
@@ -182,7 +198,7 @@ def test_proper_units():
         chem_2.primordial_chemistry = 1
         chem_2.metal_cooling = 1
         chem_2.UVbackground = 1
-        chem_2.grackle_data_file = "../../input/CloudyData_UVB=HM2012.h5"
+        chem_2.grackle_data_file = data_file_path
         chem_2.comoving_coordinates = 0
         chem_2.a_units = 1.0
         chem_2.density_units = random_logscale(-28, -26, random_state=my_random_state)
