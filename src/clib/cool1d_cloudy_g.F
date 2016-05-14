@@ -265,7 +265,8 @@
 !=======================================================================
 !////////////////////  SUBROUTINE INTERPOLATE_1D  \\\\\\\\\\\\\\\\\\\\\\
 
-      subroutine interpolate_1D_g(input1, gridDim, gridPar1, dgridPar1, 
+      subroutine interpolate_1D_g(
+     &     input1, gridDim, gridPar1, dgridPar1, 
      &     dataSize, dataField, value)
 
       implicit NONE
@@ -305,7 +306,8 @@
 !=======================================================================
 !////////////////////  SUBROUTINE INTERPOLATE_2D  \\\\\\\\\\\\\\\\\\\\\\
 
-      subroutine interpolate_2D_g(input1, input2, gridDim, 
+      subroutine interpolate_2D_g(
+     &     input1, input2, gridDim, 
      &     gridPar1, dgridPar1,
      &     gridPar2, dgridPar2,
      &     dataSize, dataField, value)
@@ -365,7 +367,8 @@
 !=======================================================================
 !////////////////////  SUBROUTINE INTERPOLATE_3D  \\\\\\\\\\\\\\\\\\\\\\
 
-      subroutine interpolate_3D_g(input1, input2, input3, gridDim,
+      subroutine interpolate_3D_g(
+     &     input1, input2, input3, gridDim,
      &     gridPar1, dgridPar1,
      &     gridPar2, dgridPar2,
      &     gridPar3, dgridPar3,
@@ -444,7 +447,8 @@
 !     ahead of time because it is the redshift and will not 
 !     change for the entire grid.
 !
-      subroutine interpolate_3Dz_g(input1, input2, input3, gridDim,
+      subroutine interpolate_3Dz_g(
+     &     input1, input2, input3, gridDim,
      &     gridPar1, dgridPar1,
      &     gridPar2, index2,
      &     gridPar3, dgridPar3,
@@ -455,7 +459,6 @@
 #include "grackle_fortran_types.def"
 
 !  General Arguments
-
       integer*8 dataSize, index2
       integer*8 gridDim(3)
       real*8 input1, input2, input3, value
@@ -536,7 +539,8 @@
 !     slice in the datacube before the redshift where 
 !     the UV background turns on.
 !
-      subroutine interpolate_2Df3D_g(input1, input3, gridDim,
+      subroutine interpolate_2Df3D_g(
+     &     input1, input3, gridDim,
      &     gridPar1, dgridPar1,
      &     index2,
      &     gridPar3, dgridPar3,

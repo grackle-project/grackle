@@ -171,7 +171,7 @@
 
 !           Interpolate over temperature.
             if (clGridRank == 1) then
-               call interpolate_1D_old(
+               call interpolate_1D_g(
      &              log10tem(i), clGridDim, clPar1,
      &              dclPar(1), clDataSize, clCooling, log_cool(i))
                edot_met(i) = -10._DKIND**log_cool(i)
@@ -179,7 +179,7 @@
 !     Ignore CMB term if T >> T_CMB
                if ((icmbTfloor == 1) .and. 
      &              ((log10tem(i) - log10_tCMB) < 2._DKIND)) then
-                  call interpolate_1D_old(
+                  call interpolate_1D_g(
      &                 log10_tCMB, clGridDim, clPar1, 
      &                 dclPar(1), clDataSize, clCooling, 
      &                 log_cool_cmb(i))
@@ -187,7 +187,7 @@
                endif
 
                if (iClHeat == 1) then
-                  call interpolate_1D_old(
+                  call interpolate_1D_g(
      &                 log10tem(i), clGridDim, clPar1, 
      &                 dclPar(1), clDataSize, clHeating, 
      &                 log_heat(i))
@@ -196,7 +196,7 @@
 
 !           Interpolate over density and temperature.
             else if (clGridRank == 2) then
-               call interpolate_2D_old(
+               call interpolate_2D_g(
      &              log_n_h(i), log10tem(i), clGridDim,
      &              clPar1, dclPar(1), clPar2, dclPar(2),
      &              clDataSize, clCooling, log_cool(i))
@@ -205,7 +205,7 @@
 !     Ignore CMB term if T >> T_CMB
                if ((icmbTfloor == 1) .and. 
      &              ((log10tem(i) - log10_tCMB) < 2.0)) then
-                  call interpolate_2D_old(
+                  call interpolate_2D_g(
      &                 log_n_h(i), log10_tCMB, clGridDim,
      &                 clPar1, dclPar(1), clPar2, dclPar(2),
      &                 clDataSize, clCooling, log_cool_cmb(i))
@@ -213,7 +213,7 @@
                endif
 
                if (iClHeat == 1) then
-               call interpolate_2D_old(
+               call interpolate_2D_g(
      &                 log_n_h(i), log10tem(i), clGridDim,
      &              clPar1, dclPar(1), clPar2, dclPar(2),
      &              clDataSize, clHeating, log_heat(i))
@@ -222,7 +222,7 @@
 
 !           Interpolate over density, metallicity, and temperature.
             else if (clGridRank == 3) then
-               call interpolate_3D_old(
+               call interpolate_3D_g(
      &              log_n_h(i), log_Z(i), log10tem(i),
      &              clGridDim,
      &              clPar1, dclPar(1), clPar2, dclPar(2),
@@ -233,7 +233,7 @@
 !     Ignore CMB term if T >> T_CMB
                if ((icmbTfloor == 1) .and. 
      &              ((log10tem(i) - log10_tCMB) < 2._DKIND)) then
-                  call interpolate_3D_old(
+                  call interpolate_3D_g(
      &                 log_n_h(i), log_Z(i), log10_tCMB,
      &                 clGridDim,
      &                 clPar1, dclPar(1), clPar2, dclPar(2),
@@ -243,7 +243,7 @@
                endif
 
                if (iClHeat == 1) then
-                  call interpolate_3D_old(
+                  call interpolate_3D_g(
      &                 log_n_h(i), log_Z(i), log10tem(i),
      &                 clGridDim,
      &                 clPar1, dclPar(1), clPar2, dclPar(2),
@@ -254,7 +254,7 @@
 
 !           Interpolate over density, metallicity, electron fraction, and temperature.
             else if (clGridRank == 4) then
-               call interpolate_4D_old(
+               call interpolate_4D_g(
      &              log_n_h(i), log_Z(i),
      &              log_e_frac(i), log10tem(i), clGridDim,
      &              clPar1, dclPar(1), clPar2, dclPar(2),
@@ -265,7 +265,7 @@
 !     Ignore CMB term if T >> T_CMB
                if ((icmbTfloor == 1) .and.
      &              ((log10tem(i) - log10_tCMB) < 2._DKIND)) then
-                  call interpolate_4D_old(
+                  call interpolate_4D_g(
      &                 log_n_h(i), log_Z(i),
      &                 log_e_frac(i), log10_tCMB, clGridDim,
      &                 clPar1, dclPar(1), clPar2, dclPar(2),
@@ -275,7 +275,7 @@
                endif
 
                if (iClHeat == 1) then
-                  call interpolate_4D_old(
+                  call interpolate_4D_g(
      &                 log_n_h(i), log_Z(i),
      &                 log_e_frac(i), log10tem(i), clGridDim,
      &                 clPar1, dclPar(1), clPar2, dclPar(2),
@@ -287,7 +287,7 @@
 !           Interpolate over density, metallicity, electron fraction, redshift,
 !           and temperature.
             else
-               call interpolate_5D_old(
+               call interpolate_5D_g(
      &              log_n_h(i), log_Z(i),
      &              log_e_frac(i), zr, log10tem(i), clGridDim,
      &              clPar1, dclPar(1), clPar2, dclPar(2),
@@ -299,7 +299,7 @@
 !     Ignore CMB term if T >> T_CMB
                if ((icmbTfloor == 1) .and.
      &              ((log10tem(i) - log10_tCMB) < 2._DKIND)) then
-                  call interpolate_5D_old(
+                  call interpolate_5D_g(
      &                 log_n_h(i), log_Z(i),
      &                 log_e_frac(i), zr, log10_tCMB, clGridDim,
      &                 clPar1, dclPar(1), clPar2, dclPar(2),
@@ -310,7 +310,7 @@
                endif
 
                if (iClHeat == 1) then
-                  call interpolate_5D_old(
+                  call interpolate_5D_g(
      &                 log_n_h(i), log_Z(i),
      &                 log_e_frac(i), zr, log10tem(i), clGridDim,
      &                 clPar1, dclPar(1), clPar2, dclPar(2),
@@ -335,186 +335,9 @@
       end
 
 !=======================================================================
-!////////////////////  SUBROUTINE INTERPOLATE_1D  \\\\\\\\\\\\\\\\\\\\\\
-
-      subroutine interpolate_1D_old(
-     &     input1, gridDim, gridPar1, dgridPar1, 
-     &     dataSize, dataField, value)
-
-      implicit NONE
-#include "grackle_fortran_types.def"
-
-!  General Arguments
-
-      integer*8 dataSize
-      integer*8 gridDim(1)
-      real*8 input1, value
-      real*8 gridPar1(gridDim(1)), dgridPar1
-      real*8 dataField(dataSize)
-
-!  Locals
-
-      integer*8 index1
-      real*8 slope
-
-!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
-!=======================================================================
-
-!     Calculate interpolation index
-
-      index1 = min(gridDim(1)-1, max(1,
-     &     int((input1-gridPar1(1))/dgridPar1,DIKIND)+1))
-
-!     Interpolate over parameter 1
-
-      slope = (dataField(index1+1) - dataField(index1)) /
-     &     (gridPar1(index1+1) - gridPar1(index1))
-
-      value = (input1 - gridPar1(index1)) * slope + dataField(index1)
-
-      return
-      end
-
-!=======================================================================
-!////////////////////  SUBROUTINE INTERPOLATE_2D  \\\\\\\\\\\\\\\\\\\\\\
-
-      subroutine interpolate_2D_old(
-     &     input1, input2, gridDim, 
-     &     gridPar1, dgridPar1,
-     &     gridPar2, dgridPar2,
-     &     dataSize, dataField, value)
-
-      implicit NONE
-#include "grackle_fortran_types.def"
-
-!  General Arguments
-
-      integer*8 dataSize
-      integer*8 gridDim(2)
-      real*8 input1, input2, value
-      real*8 gridPar1(gridDim(1)), dgridPar1,
-     &     gridPar2(gridDim(2)), dgridPar2
-      real*8 dataField(dataSize)
-
-!  Locals
-
-      integer*8 index1, index2, int_index, q
-      real*8 slope, value2(2)
-
-!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
-!=======================================================================
-
-!     Calculate interpolation indices
-
-      index1 = min(gridDim(1)-1, max(1,
-     &     int((input1-gridPar1(1))/dgridPar1,DIKIND)+1))
-      index2 = min(gridDim(2)-1, max(1,
-     &     int((input2-gridPar2(1))/dgridPar2,DIKIND)+1))
-
-      do q=1, 2
-
-!     interpolate over parameter 2
-
-         int_index = (q+index1-2) * gridDim(2) + index2
-
-         slope = (dataField(int_index+1) - dataField(int_index)) /
-     &        (gridPar2(index2+1) - gridPar2(index2))
-
-         value2(q) = (input2 - gridPar2(index2)) * slope + 
-     &        dataField(int_index)
-
-      enddo
-
-!     interpolate over parameter 1
-
-      slope = (value2(2) - value2(1)) / 
-     &     (gridPar1(index1+1) - gridPar1(index1))
-
-      value = (input1 - gridPar1(index1)) * slope + value2(1)
-
-      return
-      end
-
-!=======================================================================
-!////////////////////  SUBROUTINE INTERPOLATE_3D  \\\\\\\\\\\\\\\\\\\\\\
-
-      subroutine interpolate_3D_old(
-     &     input1, input2, input3, gridDim,
-     &     gridPar1, dgridPar1,
-     &     gridPar2, dgridPar2,
-     &     gridPar3, dgridPar3,
-     &     dataSize, dataField, value)
-
-      implicit NONE
-#include "grackle_fortran_types.def"
-
-!  General Arguments
-
-      integer*8 dataSize
-      integer*8 gridDim(3)
-      real*8 input1, input2, input3, value
-      real*8 gridPar1(gridDim(1)), dgridPar1,
-     &     gridPar2(gridDim(2)), dgridPar2,
-     &     gridPar3(gridDim(3)), dgridPar3
-      real*8 dataField(dataSize)
-
-!  Locals
-
-      integer*8 index1, index2, index3, int_index, q, w
-      real*8 slope, value3(2), value2(2)
-
-!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
-!=======================================================================
-
-!     Calculate interpolation indices
-
-      index1 = min(gridDim(1)-1, max(1,
-     &     int((input1-gridPar1(1))/dgridPar1,DIKIND)+1))
-      index2 = min(gridDim(2)-1, max(1,
-     &     int((input2-gridPar2(1))/dgridPar2,DIKIND)+1))
-      index3 = min(gridDim(3)-1, max(1,
-     &     int((input3-gridPar3(1))/dgridPar3,DIKIND)+1))
-
-      do q=1, 2
-
-         do w=1, 2
-
-!     interpolate over parameter 3
-
-            int_index = ((q+index1-2) * gridDim(2) + (w+index2-2)) * 
-     &           gridDim(3) + index3
-
-            slope = (dataField(int_index+1) - dataField(int_index)) /
-     &           (gridPar3(index3+1) - gridPar3(index3))
-
-            value3(w) = (input3 - gridPar3(index3)) * slope +
-     &           dataField(int_index)
-
-         enddo
-
-!     interpolate over parameter 2
-
-         slope = (value3(2) - value3(1)) / 
-     &        (gridPar2(index2+1) - gridPar2(index2))
-
-         value2(q) = (input2 - gridPar2(index2)) * slope + value3(1)
-
-      enddo
-
-!     interpolate over parameter 1
-
-      slope = (value2(2) - value2(1)) /
-     &     (gridPar1(index1+1) - gridPar1(index1))
-
-      value = (input1 - gridPar1(index1)) * slope + value2(1)
-
-      return
-      end
-
-!=======================================================================
 !////////////////////  SUBROUTINE INTERPOLATE_4D  \\\\\\\\\\\\\\\\\\\\\\
 
-      subroutine interpolate_4D_old(
+      subroutine interpolate_4D_g(
      &     input1, input2, input3, input4, 
      &     gridDim,
      &     gridPar1, dgridPar1,
@@ -607,7 +430,7 @@
 !=======================================================================
 !////////////////////  SUBROUTINE INTERPOLATE_5D  \\\\\\\\\\\\\\\\\\\\\\
 
-      subroutine interpolate_5D_old(
+      subroutine interpolate_5D_g(
      &     input1, input2, input3, input4, input5,
      &     gridDim,
      &     gridPar1, dgridPar1,
