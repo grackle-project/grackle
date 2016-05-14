@@ -88,7 +88,7 @@
 
 !  Slice locals
 
-      real*8 fh(in), log_n_h(in),
+      real*8 log_n_h(in),
      &       log_cool(in), log_cool_cmb(in), log_heat(in),
      &       edot_met(in), log10tem(in)
 
@@ -118,10 +118,6 @@
          if ( itmask(i) ) then
 
             log10tem(i) = logtem(i) * inv_log10
-
-!           Calcualte H mass fraction
-
-            fh(i) = rhoH(i) / d(i,j,k)
 
 !           Calculate proper log(n_H)
 
