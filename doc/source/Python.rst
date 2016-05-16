@@ -9,13 +9,13 @@ Python packages:
 
  - `Cython <http://www.cython.org/>`__
 
- - flake8
+ - flake8 (only required for the test suite)
 
  - `matplotlib <http://matplotlib.org/>`__
 
  - `NumPy <http://www.numpy.org/>`__
 
- - py.test
+ - py.test (only required for the test suite)
 
  - `yt <http://yt-project.org/>`__
 
