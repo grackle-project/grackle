@@ -256,10 +256,5 @@ wrong during linking.
     Pressure = 3.345738e+34.
     gamma = 1.666645e+00.
 
-Now it's time to integrate grackle into your simulation code: :ref:`integration`
-
-Testing
--------
-
-Grackle also contains a test suite to verify that everything is running correctly.
-See :ref:`testing`.
+In order to verify that Grackle is fully functional, try :ref:`running the
+test suite <testing>`.
