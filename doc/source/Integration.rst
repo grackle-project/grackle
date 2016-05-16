@@ -14,21 +14,30 @@ The grackle source code contains examples for C, C++, and Fortran codes.
 They are located in the **src/example** directory and detail different uses 
 of the grackle library.
 
-    * **c_example.c** - full functionality C example that uses the units and chemistry data structures.
+    * **c_example.c** - full functionality C example that uses the units
+      and chemistry data structures.
 
-    * **c_table_example.c** - tabulated cooling only (no chemistry) C example that uses the units and chemistry data structures.
+    * **c_table_example.c** - tabulated cooling only (no chemistry) C example
+      that uses the units and chemistry data structures.
 
-    * **c_example_nostruct.c** - full functionality C example that uses the :c:func:`initialize_grackle_` function instead of data structures.
+    * **c_example_nostruct.c** - full functionality C example that uses the
+      :c:func:`initialize_grackle_` function instead of data structures.
 
-    * **c_table_example_nostruct.c** - tabulated cooling only (no chemistry) C example that uses the :c:func:`initialize_grackle_` function instead of data structures.
+    * **c_table_example_nostruct.c** - tabulated cooling only (no chemistry)
+      C example that uses the :c:func:`initialize_grackle_` function instead
+      of data structures.
 
-    * **cxx_example.C** - full functionality C++ example that uses the units and chemistry data structures.
+    * **cxx_example.C** - full functionality C++ example that uses the units
+      and chemistry data structures.
 
-    * **cxx_table_example.C** - tabulated cooling only (no chemistry) C++ example that uses the units and chemistry data structures.
+    * **cxx_table_example.C** - tabulated cooling only (no chemistry) C++
+      example that uses the units and chemistry data structures.
 
-    * **fortran_example.F** - full functionality Fortran example that uses the :c:func:`initialize_grackle_` function.
+    * **fortran_example.F** - full functionality Fortran example that uses
+      the :c:func:`initialize_grackle_` function.
 
-    * **fortran_table_example.F** - tabulated cooling only (no chemistry) Fortran example that uses the :c:func:`initialize_grackle_` function.
+    * **fortran_table_example.F** - tabulated cooling only (no chemistry)
+      Fortran example that uses the :c:func:`initialize_grackle_` function.
 
 Once you have already installed the grackle library, you can build the examples 
 by typing *make* and the name of the file without extension.  For example, to 
@@ -53,17 +62,26 @@ Header Files
 
 Six header files are installed with the grackle library.  They are:
 
-    * **grackle.h** - the primary header file, containing declarations for all the available functions and data structures.  This is the only header file that needs to be included for C and C++ codes.
+    * **grackle.h** - the primary header file, containing declarations for all
+      the available functions and data structures.  This is the only header
+      file that needs to be included for C and C++ codes.
 
-    * **grackle_types.h** - defines the variable type :c:type:`gr_float` to be used for the baryon fields passed to the grackle functions.  This can be either a 4 or 8 byte float, allowing the code to be easily configured for either single or double precision baryon fields.
+    * **grackle_types.h** - defines the variable type :c:type:`gr_float` to be
+      used for the baryon fields passed to the grackle functions.  This can be
+      either a 4 or 8 byte float, allowing the code to be easily configured for
+      either single or double precision baryon fields.
 
-    * **grackle_fortran_types.def** - similar to **grackle_types.h**, but used with Fortran codes.  This defines the variable type :c:type:`R_PREC` as either real\*4 or real\*8.
+    * **grackle_fortran_types.def** - similar to **grackle_types.h**, but used
+      with Fortran codes.  This defines the variable type :c:type:`R_PREC` as
+      either real\*4 or real\*8.
 
     * **grackle_macros.h** - contains some macros used internally.
 
-    * **chemistry_data.h** - defines the primary data structure which all run time parameters as well as the chemistry, cooling, and UV background data.
+    * **chemistry_data.h** - defines the primary data structure which all run
+      time parameters as well as the chemistry, cooling, and UV background data.
 
-    * **code_units.h** - defines the structure containing conversions from code units to CGS.
+    * **code_units.h** - defines the structure containing conversions from code
+      units to CGS.
 
 The only source file that needs to be included in your simulation code is 
 **grackle.h**.  Since this is a C++ example and the Grackle is pure C, we 
@@ -80,27 +98,32 @@ Data Types
 
 The grackle library provides a configurable variable type to control the 
 precision of the baryon fields passed to the grackle functions.  For C and 
-C++ codes, this is :c:type:`gr_float`.  For Fortran codes, this is :c:type:`R_PREC`.  
-The precision of these types can be configured with the *precision* compile 
-option.  Compile with *precision-32* to make :c:type:`gr_float` and :c:type:`R_PREC` a 4 
-byte float (*float* for C/C++ and *real\*4* for Fortran).  Compile with 
-*precision-64* to make :c:type:`gr_float` and :c:type:`R_PREC` an 8 byte float (*double* 
-for C/C++ and *real\*8* for Fortran).
+C++ codes, this is :c:type:`gr_float`.  For Fortran codes, this is
+:c:type:`R_PREC`.  The precision of these types can be configured with the      
+*precision* compile option.  Compile with *precision-32* to make
+:c:type:`gr_float` and :c:type:`R_PREC` a 4 byte float (*float* for C/C++
+and *real\*4* for Fortran).  Compile with *precision-64* to make
+:c:type:`gr_float` and :c:type:`R_PREC` an 8 byte float (*double* for C/C++
+and *real\*8* for Fortran).
 
 .. c:type:: gr_float
 
-   Floating point type used for the baryon fields.  This is of type *float* if compiled with *precision-32* and type double if compiled with *precision-64*.
+   Floating point type used for the baryon fields.  This is of type *float*
+   if compiled with *precision-32* and type double if compiled with
+   *precision-64*.
 
 .. c:type:: R_PREC
 
-   The Fortran analog of :c:type:`gr_float`.  This is of type *real\*4* if compiled with *precision-32* and type *real\*8* if compiled with *precision-64*.
+   The Fortran analog of :c:type:`gr_float`.  This is of type *real\*4* if
+   compiled with *precision-32* and type *real\*8* if compiled with
+   *precision-64*.
 
 Enabling Output
 ---------------
 
-By default, grackle will not print anything but error messages.  However, a short 
-summary of the running configuration can be printed by setting ``grackle_verbose`` 
-to 1.
+By default, grackle will not print anything but error messages.  However,
+a short summary of the running configuration can be printed by setting
+``grackle_verbose`` to 1.
 
 .. code-block:: c++
 
@@ -110,13 +133,13 @@ to 1.
 Code Units
 ----------
 
-**It is strongly recommended to use comoving coordinates with any cosmological 
-simulation.**  
-The *code_units* structure contains conversions from code units to CGS.  
-If *comoving_coordinates* is set to 0, it is assumed that the fields 
-passed into the solver are in the proper frame.  All of the units 
-(density, length, time, velocity, and expansion factor) must be set.  When using 
-the proper frame, *a_units* (units for the expansion factor) must be set to 1.0.
+**It is strongly recommended to use comoving coordinates with any
+cosmological simulation.**  The *code_units* structure contains
+conversions from code units to CGS.  If *comoving_coordinates* is set to
+0, it is assumed that the fields passed into the solver are in the
+proper frame.  All of the units (density, length, time, velocity, and
+expansion factor) must be set.  When using the proper frame, *a_units*
+(units for the expansion factor) must be set to 1.0.
 
 .. c:type:: code_units
 
@@ -124,19 +147,24 @@ the proper frame, *a_units* (units for the expansion factor) must be set to 1.0.
 
 .. c:var:: int comoving_coordinates
 
-   If set to 1, the incoming field data is assumed to be in the comoving frame.  If set to 0, the incoming field data is assumed to be in the proper frame.
+   If set to 1, the incoming field data is assumed to be in the comoving
+   frame.  If set to 0, the incoming field data is assumed to be in the
+   proper frame.
 
 .. c:var:: double density_units
 
-   Conversion factor to be multiplied by density fields to return densities in proper g/cm\ :sup:`3`\.
+   Conversion factor to be multiplied by density fields to return
+   densities in proper g/cm\ :sup:`3`\.
 
 .. c:var:: double length_units
 
-   Conversion factor to be multiplied by length variables to return lengths in proper cm.
+   Conversion factor to be multiplied by length variables to return
+   lengths in proper cm.
 
 .. c:var:: double time_units
 
-   Conversion factor to be multiplied by time variables to return times in s.
+   Conversion factor to be multiplied by time variables to return
+   times in s.
 
 .. c:var:: double velocity_units
 
@@ -144,7 +172,8 @@ the proper frame, *a_units* (units for the expansion factor) must be set to 1.0.
 
 .. c:var:: double a_units
 
-   Conversion factor to be multiplied by the expansion factor such that a\ :sub:`true`\  = a\ :sub:`code`\ * :c:data:`a_units`.
+   Conversion factor to be multiplied by the expansion factor such that
+   a\ :sub:`true`\  = a\ :sub:`code`\ * :c:data:`a_units`.
 
 .. code-block:: c++
 
@@ -161,7 +190,8 @@ passed to the solver are in the comoving frame.  Hence, the units must
 convert from code units in the **comoving** frame to CGS in the **proper** 
 frame.  
 
-.. note:: With *comoving_coordinate* set to 1, velocity units need to be defined in the following way.
+.. note:: With *comoving_coordinate* set to 1, velocity units need to be
+   defined in the following way.
 
 .. code-block:: c++
 
@@ -188,7 +218,8 @@ available parameters.  The function will return an integer indicating success
 
 .. c:type:: chemistry_data
 
-   This structure holds all grackle run time parameter and all chemistry and cooling data arrays.
+   This structure holds all grackle run time parameter and all chemistry and
+   cooling data arrays.
 
 .. code-block:: c++
 
@@ -285,7 +316,9 @@ created.
   // for metal_cooling = 1
   metal_density = new gr_float[field_size];
 
-.. note:: The electron mass density should be scaled by the ratio of the proton mass to the electron mass such that the electron density in the code is the electron number density times the **proton** mass.
+.. note:: The electron mass density should be scaled by the ratio of the
+   proton mass to the electron mass such that the electron density in the
+   code is the electron number density times the **proton** mass.
 
 Calling the Available Functions
 -------------------------------
@@ -419,7 +452,8 @@ field arrays for the chemistry species densities.  See the
 **c_table_example_nostruct.c**, and **fortran_table_example.F** files in the 
 **src/example** directory for examples.
 
-.. note:: No simplified function is available for the calculation of the gamma field since gamma is only altered in Grackle by the presence of H\ :sub:`2`\.
+.. note:: No simplified function is available for the calculation of the gamma
+   field since gamma is only altered in Grackle by the presence of H\ :sub:`2`\.
 
 Solve the Cooling
 +++++++++++++++++
