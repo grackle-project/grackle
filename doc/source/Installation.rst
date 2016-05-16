@@ -25,9 +25,9 @@ Downloading
 -----------
 
 Grackle is available in a mercurial repository 
-`here <https://bitbucket.org/grackle/grackle>`_.  The mercurial site 
-is `here <http://mercurial.selenic.com/>`_ and an excellent tutorial can be 
-found `here <http://hginit.com/>`_.  With mercurial 
+`here <https://bitbucket.org/grackle/grackle>`__.  The mercurial site 
+is `here <http://mercurial.selenic.com/>`__ and an excellent tutorial can be 
+found `here <http://hginit.com/>`__.  With mercurial 
 installed, grackle can be obtained with the following command:
 
 .. highlight:: none
@@ -114,8 +114,9 @@ home directory.
 Compiler Settings
 +++++++++++++++++
 
-There are two compile options available for setting the precision of 
-baryon fields and optimization.  To see them, type:
+There are three compile options available for setting the precision of 
+baryon fields, compiler optimization, and enabling OpenMP.  To see them,
+type:
 
 .. highlight:: none
 
@@ -128,6 +129,7 @@ baryon fields and optimization.  To see them, type:
 
    CONFIG_PRECISION  [precision-{32,64}]                     : 64
    CONFIG_OPT  [opt-{warn,debug,high,aggressive}]            : high
+   CONFIG_OMP  [omp-{on,off}]                                : off
 
 For example, to change the optimization to high, type:
 
