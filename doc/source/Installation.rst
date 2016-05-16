@@ -111,6 +111,8 @@ chose ``Make.mach.darwin``, type:
 Custom make files can be saved and loaded from a **.grackle** directory in the 
 home directory.
 
+.. _compiler-settings:
+
 Compiler Settings
 +++++++++++++++++
 

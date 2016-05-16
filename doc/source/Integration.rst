@@ -7,6 +7,8 @@ This document follows the example files, **cxx_example.C** and
 **cxx_table_example.C**.  For a list of all available functions, see the 
 :ref:`reference`.
 
+.. _examples:
+
 Example Executables
 -------------------
 
@@ -32,6 +34,10 @@ of the grackle library.
 
     * **cxx_table_example.C** - tabulated cooling only (no chemistry) C++
       example that uses the units and chemistry data structures.
+
+    * **cxx_omp_example.C** - C++ example using both the non-equilibrium
+      and tabulated solvers wth OpenMP.  Run the executable with the -h
+      flag to see a full list of options.
 
     * **fortran_example.F** - full functionality Fortran example that uses
       the :c:func:`initialize_grackle_` function.
@@ -256,6 +262,31 @@ set to 1.  The initializing function will return an integer indicating success
   }
 
 The Grackle is now ready to be used.
+
+.. _openmp:
+
+Running with OpenMP
+-------------------
+
+As of version 2.2, Grackle can be run with OpenMP parallelism.  To do this,
+the library must first be compiled with OpenMP support enabled by issuing the
+command, "make omp-on", before compiling.  See :ref:`compiler-settings` for
+more information on how to change settings.
+
+For an example of how to compile your code with OpenMP, see the
+**cxx_table_example.C** code example (:ref:`examples`).  Once your code has
+been compiled with OpenMP enabled, the number of threads used can be controlled
+by setting the :c:data:`omp_nthreads` parameter, stored in the ``grackle_data``
+struct.
+
+.. code-block:: c++
+
+   // 8 threads per process
+   grackle_data.omp_nthreads = 8;
+
+If not set, this parameter will be set to the maximum number of threads
+possible, as determined by the system or as configured by setting the
+``OMP_NUM_THREADS`` environment variable.
 
 Creating the Necessary Fields
 -----------------------------

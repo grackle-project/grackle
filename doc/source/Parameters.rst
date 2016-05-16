@@ -153,6 +153,14 @@ For all on/off integer flags, 0 is off and 1 is on.
    & Rees (2000) <http://adsabs.harvard.edu/abs/2000ApJ...534...11H>`_.
    Default: 0.
 
+.. c:var:: int omp_nthreads
+
+   Sets the number of OpenMP threads.  If not set, this will be set to
+   the maximum number of threads possible, as determined by the system
+   or as configured by setting the ``OMP_NUM_THREADS`` environment
+   variable.  Note, Grackle must be compiled with OpenMP support
+   enabled.  See :ref:`openmp`.
+
 Data Files
 ----------
 
