@@ -140,11 +140,11 @@ Code Units
 ----------
 
 **It is strongly recommended to use comoving coordinates with any
-cosmological simulation.**  The *code_units* structure contains
-conversions from code units to CGS.  If *comoving_coordinates* is set to
+cosmological simulation.**  The :c:data:`code_units` structure contains
+conversions from code units to CGS.  If :c:data:`comoving_coordinates` is set to
 0, it is assumed that the fields passed into the solver are in the
 proper frame.  All of the units (density, length, time, velocity, and
-expansion factor) must be set.  When using the proper frame, *a_units*
+expansion factor) must be set.  When using the proper frame, :c:data:`a_units`
 (units for the expansion factor) must be set to 1.0.
 
 .. c:type:: code_units
@@ -191,12 +191,12 @@ expansion factor) must be set.  When using the proper frame, *a_units*
   my_units.velocity_units = my_units.length_units / my_units.time_units;
   my_units.a_units = 1.0;            // units for the expansion factor
 
-If *comoving_coordinates* is set to 1, it is assumed that the fields being 
+If :c:data:`comoving_coordinates` is set to 1, it is assumed that the fields being 
 passed to the solver are in the comoving frame.  Hence, the units must 
 convert from code units in the **comoving** frame to CGS in the **proper** 
 frame.  
 
-.. note:: With *comoving_coordinate* set to 1, velocity units need to be
+.. note:: With :c:data:`comoving_coordinate` set to 1, velocity units need to be
    defined in the following way.
 
 .. code-block:: c++
@@ -216,7 +216,7 @@ The main Grackle header file contains a structure of type :c:type:`chemistry_dat
 called ``grackle_data``, which 
 contains all of the parameters that control the behavior of the solver as well as 
 all of the actual chemistry and cooling rate data.  The routine, 
-*set_default_chemistry_parameters* is responsible for the initial setup of this 
+:c:func:`set_default_chemistry_parameters` is responsible for the initial setup of this 
 structure and for setting of all the default parameter values.  The parameters can 
 then be set to their desired values.  See :ref:`parameters` for a full list of the 
 available parameters.  The function will return an integer indicating success 
@@ -242,7 +242,7 @@ available parameters.  The function will return an integer indicating success
   grackle_data.grackle_data_file = "CloudyData_UVB=HM2012.h5"; // data file
 
 Once the desired parameters have been set, the chemistry and cooling rates 
-must be initialized with the *initialize_chemistry_data*.  This function 
+must be initialized with the :c:func:`initialize_chemistry_data`.  This function 
 also requires the initial value of the expansion factor for setting internal 
 units.  If the simulation is not cosmological, the expansion factor should be 
 set to 1.  The initializing function will return an integer indicating success 
@@ -291,7 +291,7 @@ possible, as determined by the system or as configured by setting the
 Creating the Necessary Fields
 -----------------------------
 
-With the *code_units* and *chemistry_data* structures ready, the only thing 
+With the :c:data:`code_units` and :c:data:`chemistry_data` structures ready, the only thing 
 left is to create the arrays to carry the species densities.  Pointers for all 
 fields must be created, but the arrays only need to be allocated if the fields 
 are going to be used by the chemistry network.  Variables containing the 
@@ -357,7 +357,7 @@ Calling the Available Functions
 There are five functions available, one to solve the chemistry and cooling 
 and four others to calculate the cooling time, temperature, pressure, and the 
 ratio of the specific heats (gamma).  The arguments required are the 
-*code_units* structure, the value of the expansion factor, the field size and 
+:c:data:`code_units` structure, the value of the expansion factor, the field size and 
 dimension variables, and the field arrays themselves.  For the chemistry solving 
 routine, a timestep must also be given.  For the four field calculator routines, 
 the array to be filled with the field values must be created and passed as an 
@@ -476,7 +476,7 @@ Pure Tabulated Mode
 -------------------
 
 If you only intend to run simulations using the fully tabulated cooling 
-(*primordial_chemistry* set to 0), then a simplified set of functions are 
+(:c:data:`primordial_chemistry` set to 0), then a simplified set of functions are 
 available.  These functions do not require pointers to be given for the 
 field arrays for the chemistry species densities.  See the 
 **cxx_table_example.C**, **c_table_example.c**, 
