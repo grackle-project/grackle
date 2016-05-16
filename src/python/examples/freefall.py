@@ -12,6 +12,7 @@
 ########################################################################
 
 from matplotlib import pyplot
+import os
 import yt
 
 from pygrackle import \
@@ -36,10 +37,19 @@ if __name__=="__main__":
     my_chemistry.use_grackle = 1
     my_chemistry.with_radiative_cooling = 1
     my_chemistry.primordial_chemistry = 3
-    my_chemistry.metal_cooling = 0
     my_chemistry.UVbackground = 0
     my_chemistry.Gamma = 5. / 3.
     my_chemistry.CaseBRecombination = 0
+
+    if os.environ.get("METAL_COOLING", 0) == "1":
+        my_chemistry.metal_cooling = int(os.environ["METAL_COOLING"])
+        grackle_dir = os.path.dirname(os.path.dirname(os.path.dirname(
+            os.path.dirname(os.path.abspath(__file__)))))
+        my_chemistry.grackle_data_file = os.sep.join(
+            [grackle_dir, "input", "cloudy_metals_2008_3D.h5"])
+        my_chemistry.h2_on_dust = 1
+    else:
+        my_chemistry.metal_cooling = 0
 
     # Set units
     my_chemistry.comoving_coordinates = 0 # proper units
@@ -77,7 +87,8 @@ if __name__=="__main__":
         fc["DII"][:] = tiny_number * fc["density"]
         fc["HDI"][:] = tiny_number * fc["density"]
     if my_chemistry.metal_cooling == 1:
-        fc["metal"][:] = 0.0 * fc["density"]
+        fc["metal"][:] = 1e-3 * my_chemistry.SolarMetalFractionByMass * \
+            fc["density"]
     fc["energy"][:] = initial_temperature / \
         fc.chemistry_data.temperature_units
     fc["x-velocity"][:] = 0.0
@@ -108,9 +119,14 @@ if __name__=="__main__":
     p2, = pyplot.loglog(data["density"], data["H2I"] / data["density"],
                         color="red")
     pyplot.ylabel("H$_{2}$ fraction")
-
     pyplot.legend([p1, p2], ["T", "f$_{H2}$"], loc="upper left")
-    pyplot.savefig("freefall.png")
+
+    if os.environ.get("METAL_COOLING", 0) == "1":
+        output = "freefall_metal"
+    else:
+        output = "freefall"
+
+    pyplot.savefig("%s.png" % output)
 
     # save data arrays as a yt dataset
-    yt.save_as_dataset({}, "freefall.h5", data)
+    yt.save_as_dataset({}, "%s.h5" % output, data)

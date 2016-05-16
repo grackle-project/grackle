@@ -20,7 +20,7 @@
 #include "code_units.h"
 
 #define SMALL_LOG_VALUE -99.0
-#define CLOUDY_MAX_DIMENSION 3
+#define CLOUDY_MAX_DIMENSION 5
 
 extern int grackle_verbose;
 
@@ -87,6 +87,12 @@ int initialize_cloudy_data(chemistry_data *my_chemistry,
   file_id = H5Fopen(my_chemistry->grackle_data_file, 
                     H5F_ACC_RDONLY, H5P_DEFAULT);
 
+  if (H5Aexists(file_id, "old_style")) {
+    my_chemistry->cloudy_data_new = 0;
+    if (grackle_verbose)
+      fprintf(stderr, "Loading old-style Cloudy tables.\n");
+  }
+
   // Open cooling dataset and get grid dimensions.
 
   sprintf(parameter_name, "/CoolingRates/%s/Cooling", group_name);
@@ -108,7 +114,7 @@ int initialize_cloudy_data(chemistry_data *my_chemistry,
     fprintf(stderr,"Failed to read Rank attribute in Cooling dataset.\n");
     return FAIL;
   }
-  my_cloudy->grid_rank = (int) temp_int;
+  my_cloudy->grid_rank = (long long) temp_int;
   if (grackle_verbose)
     fprintf(stderr,"Cloudy cooling grid rank: %lld.\n", my_cloudy->grid_rank);
   status = H5Aclose(attr_id);
@@ -132,7 +138,7 @@ int initialize_cloudy_data(chemistry_data *my_chemistry,
   if (grackle_verbose)
     fprintf(stderr,"Cloudy cooling grid dimensions:");
   for (q = 0;q < my_cloudy->grid_rank;q++) {
-    my_cloudy->grid_dimension[q] = (int) temp_int_arr[q];
+    my_cloudy->grid_dimension[q] = (long long) temp_int_arr[q];
     if (grackle_verbose)
       fprintf(stderr," %lld", my_cloudy->grid_dimension[q]);
   }

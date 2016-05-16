@@ -30,12 +30,14 @@ OBJS_CONFIG_LIB = \
         colh2diss_g.lo \
         coll_rates_g.lo \
         cool1d_cloudy_g.lo \
+        cool1d_cloudy_old_tables_g.lo \
         cool1d_multi_g.lo \
         cool_multi_time_g.lo \
         initialize_chemistry_data.lo \
         initialize_cloudy_data.lo \
         initialize_grackle.lo \
         initialize_UVbackground_data.lo \
+        interpolators_g.lo \
         set_default_chemistry_parameters.lo \
         solve_chemistry.lo \
         solve_chemistry_table.lo \
