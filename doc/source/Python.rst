@@ -37,6 +37,9 @@ directory and running ``python setup.py install``.
     ~/grackle $ cd src/python
     ~/grackle/src/python $ python setup.py install
 
+.. note:: Pygrackle can only be run when Grackle is compiled without OpenMP.
+   See :ref:`openmp`.
+
 Running the Example Scripts
 ---------------------------
 
