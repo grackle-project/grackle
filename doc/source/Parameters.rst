@@ -88,10 +88,54 @@ For all on/off integer flags, 0 is off and 1 is on.
 Data Files
 ----------
 
-These files contain the metal heating and cooling rates and the UV background photo-heating and photo-ionization rates.  For all three files, the number density range is -10 < log\ :sub:`10` (n\ :sub:`H` / cm\ :sup:`-3`) < 4 and the temperature range is 1 < log\ :sub:`10` (T / K) < 9.  Extrapolation is performed when outside of the data range.  All data files are located in the **input** directory in the source.
+All data files are located in the **input** directory in the source.
 
- - **CloudyData_noUVB.h5** - metal cooling rates for collisional ionization equilibrium.
+The first three files contain the heating and cooling rates for both
+primordial and metal species as well as the UV background photo-heating
+and photo-ionization rates.  For all three files, the valid density and
+temperature range is given below.  Extrapolation is performed when
+outside of the data range.  The metal cooling rates are stored for
+solar metallicity and scaled linearly with the metallicity of the gas.
 
- - **CloudyData_UVB=FG2011.h5** - metal heating and cooling rates and UV background rates from the work of `Faucher-Giguere et. al. (2009) <http://adsabs.harvard.edu/abs/2009ApJ...703.1416F>`_, updated in 2011.  The maxmimum redshift is 10.6.  Above that, collisional ionization equilibrium is assumed.
+Valid range:
 
- - **CloudyData_UVB=HM2012.h5** - metal heating and cooling rates and UV background rates from the work of `Haardt & Madau (2012) <http://adsabs.harvard.edu/abs/2012ApJ...746..125H>`_.  The maximum redshift is 15.13.  Above that, collisional ionization equilibrium is assumed.
+ - number density: -10 < log\ :sub:`10` (n\ :sub:`H` / cm\ :sup:`-3`) < 4
+
+ - temperature: the temperature range is 1 < log\ :sub:`10` (T / K) < 9.
+
+Data files:
+
+ - **CloudyData_noUVB.h5** - cooling rates for collisional ionization
+   equilibrium.
+
+ - **CloudyData_UVB=FG2011.h5** - heating and cooling rates and UV
+   background rates from the work of `Faucher-Giguere et. al. (2009)
+   <http://adsabs.harvard.edu/abs/2009ApJ...703.1416F>`_, updated in 2011.
+   The maxmimum redshift is 10.6.  Above that, collisional ionization
+   equilibrium is assumed.
+
+ - **CloudyData_UVB=HM2012.h5** - heating and cooling rates and UV
+   background rates from the work of `Haardt & Madau (2012)
+   <http://adsabs.harvard.edu/abs/2012ApJ...746..125H>`_.  The maximum
+   redshift is 15.13.  Above that, collisional ionization equilibrium is
+   assumed.
+
+The final file includes only metal cooling rates under collisional
+ionization equilibrium, i.e., no incident radiation field.  This table
+extends to higher densities and also varies in metallicity rather than
+scaling proportional to the solar value.  This captures the
+thermalization of metal coolants occuring at high densities, making this
+table more appropriate for simulations of collapsing gas-clouds.
+
+Valid range:
+
+ - number density: -6 < log\ :sub:`10` (n\ :sub:`H` / cm\ :sup:`-3`) < 12
+
+ - metallicity: -6 < log\ :sub:`10` (Z / Z\ :sub:`sun`) < 1
+
+ - temperature: the temperature range is 1 < log\ :sub:`10` (T / K) < 8.
+
+Data file:
+
+ - **cloudy_metals_2008_3D.h5** - collisional ionization equilibrium,
+   metal cooling rates only.
