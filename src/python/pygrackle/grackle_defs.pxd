@@ -18,7 +18,7 @@ cdef extern from "grackle_chemistry_data.h":
         int photoelectric_heating
         int CaseBRecombination
         int UVbackground
-        float SolarMetalFractionByMass
+        double SolarMetalFractionByMass
         double k24
         double k25
         double k26

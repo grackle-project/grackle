@@ -1,3 +1,25 @@
+== Version 2.2 ==
+_Release date - May 18, 2016_
+
+  * New feature: Added OpenMP support.
+  * New feature: Added test suite and continuous integration testing.
+  * New feature: Added support for old-style Cloudy tables used in Enzo's
+	Cloudy cooling routine.  Added cooling table for high density
+	metal cooling, cloudy_metals_2008_3D.h5.
+  * Enhancement: Many primordial chemistry updates: updated reactions
+	rates for H ionization, H- formation/destruction, H2 dissociation,
+	H2+ formation, H2 LTE cooling, and HD low density cooling.  Added
+	reactions for collisional ionization of H by H and H by He.
+  * Enhancement: Refactored and improved pygrackle interface.
+  * Bugfix: Fixed conversion of comoving to proper coordinates in
+	calculation of temperature field in tabulated mode.  This only
+	affected calls to calculate_temperature in tabulated mode, but not
+	the actual cooling solver.
+  * Removed code for old collisional rates.
+  * Reduced size of row temporary variables in chemistry/cooling solver.
+  * Fixed makefiles for TACC Stampede and NCSA Blue Waters.
+  * Moderate documentation improvements.
+
 == Version 2.1 ==
 _Release date - Jun 3, 2015_
 
