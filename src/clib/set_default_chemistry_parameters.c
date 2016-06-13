@@ -22,6 +22,7 @@
 int grackle_verbose = FALSE;
 
 chemistry_data grackle_data;
+chemistry_data_storage grackle_rates;
 
 chemistry_data _set_default_chemistry_parameters(void);
 
@@ -58,20 +59,6 @@ chemistry_data _set_default_chemistry_parameters(void)
 
   my_chemistry.UVbackground                   = 0;
 
-  my_chemistry.UVbackground_table.Nz     = 0;
-  my_chemistry.UVbackground_table.z      = NULL;
-  my_chemistry.UVbackground_table.k24    = NULL;
-  my_chemistry.UVbackground_table.k25    = NULL;
-  my_chemistry.UVbackground_table.k26    = NULL;
-  my_chemistry.UVbackground_table.k27    = NULL;
-  my_chemistry.UVbackground_table.k28    = NULL;
-  my_chemistry.UVbackground_table.k29    = NULL;
-  my_chemistry.UVbackground_table.k30    = NULL;
-  my_chemistry.UVbackground_table.k31    = NULL;
-  my_chemistry.UVbackground_table.piHI   = NULL;
-  my_chemistry.UVbackground_table.piHeII = NULL;
-  my_chemistry.UVbackground_table.piHeI  = NULL;
-
   my_chemistry.UVbackground_redshift_on      = 7.0;
   my_chemistry.UVbackground_redshift_off     = 0.0;
   my_chemistry.UVbackground_redshift_fullon  = 6.0;
@@ -101,16 +88,12 @@ chemistry_data _set_default_chemistry_parameters(void)
   my_chemistry.ipiht                        = 1;
   my_chemistry.TemperatureStart             = 1.0;
   my_chemistry.TemperatureEnd               = 1.0e9;
-  my_chemistry.comp_xray                    = 0;
-  my_chemistry.temp_xray                    = 0;
   my_chemistry.CaseBRecombination           = 0; // default to case A rates
   my_chemistry.NumberOfDustTemperatureBins  = 250;
   my_chemistry.DustTemperatureStart         = 1.0;
   my_chemistry.DustTemperatureEnd           = 1500.0;
 
-  my_chemistry.cloudy_metal.grid_rank       = 0;
   my_chemistry.cloudy_electron_fraction_factor = 9.153959e-3; // Cloudy 07.02 abundances
-  my_chemistry.cloudy_data_new              = 1;
 
 //number of OpenMP threads
 # ifdef _OPENMP

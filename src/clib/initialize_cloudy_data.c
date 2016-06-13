@@ -25,6 +25,7 @@ extern int grackle_verbose;
 
 // Initialize Cloudy cooling data
 int initialize_cloudy_data(chemistry_data *my_chemistry,
+                           chemistry_data_storage *my_rates,
                            cloudy_data *my_cloudy, char *group_name,
                            code_units *my_units, int read_data)
 {
@@ -88,7 +89,7 @@ int initialize_cloudy_data(chemistry_data *my_chemistry,
                     H5F_ACC_RDONLY, H5P_DEFAULT);
 
   if (H5Aexists(file_id, "old_style")) {
-    my_chemistry->cloudy_data_new = 0;
+    my_rates->cloudy_data_new = 0;
     if (grackle_verbose)
       fprintf(stderr, "Loading old-style Cloudy tables.\n");
   }
