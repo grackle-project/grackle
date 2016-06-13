@@ -20,10 +20,12 @@
 #include "phys_constants.h"
 
 extern chemistry_data grackle_data;
+extern chemistry_data_storage grackle_rates;
 
 /* function prototypes */
 
 int update_UVbackground_rates(chemistry_data *my_chemistry,
+                              chemistry_data_storage *my_rates,
                               code_units *my_units);
  
 extern void FORTRAN_NAME(cool_multi_time_g)(
@@ -65,6 +67,7 @@ extern void FORTRAN_NAME(cool_multi_time_g)(
         int *iVheat, int *iMheat, gr_float *Vheat, gr_float *Mheat);
 
 int _calculate_cooling_time(chemistry_data *my_chemistry,
+                            chemistry_data_storage *my_rates,
                             code_units *my_units,
                             int grid_rank, int *grid_dimension,
                             int *grid_start, int *grid_end,
@@ -87,7 +90,7 @@ int _calculate_cooling_time(chemistry_data *my_chemistry,
   /* Update UV background rates. */
 
   if (my_chemistry->UVbackground == 1) {
-    if (update_UVbackground_rates(my_chemistry, my_units) == FAIL) {
+    if (update_UVbackground_rates(my_chemistry, my_rates, my_units) == FAIL) {
       fprintf(stderr, "Error in update_UVbackground_rates.\n");
       return FAIL;
     }
@@ -134,47 +137,47 @@ int _calculate_cooling_time(chemistry_data *my_chemistry,
        &co_density_units, &my_units->time_units,
        &my_chemistry->Gamma, &my_chemistry->HydrogenFractionByMass,
        &my_chemistry->SolarMetalFractionByMass,
-       my_chemistry->ceHI, my_chemistry->ceHeI, my_chemistry->ceHeII, my_chemistry->ciHI,
-       my_chemistry->ciHeI, my_chemistry->ciHeIS, my_chemistry->ciHeII, my_chemistry->reHII,
-       my_chemistry->reHeII1, my_chemistry->reHeII2, my_chemistry->reHeIII, 
-       my_chemistry->brem, &my_chemistry->comp, &my_chemistry->gammah,
-       &my_chemistry->comp_xray, &my_chemistry->temp_xray,
-       &my_chemistry->piHI, &my_chemistry->piHeI, &my_chemistry->piHeII,
+       my_rates->ceHI, my_rates->ceHeI, my_rates->ceHeII, my_rates->ciHI,
+       my_rates->ciHeI, my_rates->ciHeIS, my_rates->ciHeII, my_rates->reHII,
+       my_rates->reHeII1, my_rates->reHeII2, my_rates->reHeIII,
+       my_rates->brem, &my_rates->comp, &my_rates->gammah,
+       &my_rates->comp_xray, &my_rates->temp_xray,
+       &my_rates->piHI, &my_rates->piHeI, &my_rates->piHeII,
        HM_density, H2I_density, H2II_density,
        DI_density, DII_density, HDI_density, metal_density,
-       my_chemistry->hyd01k, my_chemistry->h2k01, my_chemistry->vibh,
-       my_chemistry->roth, my_chemistry->rotl,
-       my_chemistry->GP99LowDensityLimit, my_chemistry->GP99HighDensityLimit,
-       my_chemistry->HDlte, my_chemistry->HDlow,
-       my_chemistry->GAHI, my_chemistry->GAH2, my_chemistry->GAHe, my_chemistry->GAHp,
-       my_chemistry->GAel, my_chemistry->H2LTE, my_chemistry->gas_grain,
+       my_rates->hyd01k, my_rates->h2k01, my_rates->vibh,
+       my_rates->roth, my_rates->rotl,
+       my_rates->GP99LowDensityLimit, my_rates->GP99HighDensityLimit,
+       my_rates->HDlte, my_rates->HDlow,
+       my_rates->GAHI, my_rates->GAH2, my_rates->GAHe, my_rates->GAHp,
+       my_rates->GAel, my_rates->H2LTE, my_rates->gas_grain,
        &my_chemistry->h2_optical_depth_approximation, 
-       &my_chemistry->cie_cooling, my_chemistry->cieco,
+       &my_chemistry->cie_cooling, my_rates->cieco,
        &my_chemistry->cmb_temperature_floor,
        &my_chemistry->UVbackground,
        &my_chemistry->cloudy_electron_fraction_factor,
-       &my_chemistry->cloudy_primordial.grid_rank,
-       my_chemistry->cloudy_primordial.grid_dimension,
-       my_chemistry->cloudy_primordial.grid_parameters[0],
-       my_chemistry->cloudy_primordial.grid_parameters[1],
-       my_chemistry->cloudy_primordial.grid_parameters[2],
-       my_chemistry->cloudy_primordial.grid_parameters[3],
-       my_chemistry->cloudy_primordial.grid_parameters[4],
-       &my_chemistry->cloudy_primordial.data_size,
-       my_chemistry->cloudy_primordial.cooling_data, 
-       my_chemistry->cloudy_primordial.heating_data,
-       my_chemistry->cloudy_primordial.mmw_data,
-       &my_chemistry->cloudy_metal.grid_rank,
-       my_chemistry->cloudy_metal.grid_dimension,
-       my_chemistry->cloudy_metal.grid_parameters[0],
-       my_chemistry->cloudy_metal.grid_parameters[1],
-       my_chemistry->cloudy_metal.grid_parameters[2],
-       my_chemistry->cloudy_metal.grid_parameters[3],
-       my_chemistry->cloudy_metal.grid_parameters[4],
-       &my_chemistry->cloudy_metal.data_size,
-       my_chemistry->cloudy_metal.cooling_data,
-       my_chemistry->cloudy_metal.heating_data,
-       &my_chemistry->cloudy_data_new,
+       &my_rates->cloudy_primordial.grid_rank,
+       my_rates->cloudy_primordial.grid_dimension,
+       my_rates->cloudy_primordial.grid_parameters[0],
+       my_rates->cloudy_primordial.grid_parameters[1],
+       my_rates->cloudy_primordial.grid_parameters[2],
+       my_rates->cloudy_primordial.grid_parameters[3],
+       my_rates->cloudy_primordial.grid_parameters[4],
+       &my_rates->cloudy_primordial.data_size,
+       my_rates->cloudy_primordial.cooling_data, 
+       my_rates->cloudy_primordial.heating_data,
+       my_rates->cloudy_primordial.mmw_data,
+       &my_rates->cloudy_metal.grid_rank,
+       my_rates->cloudy_metal.grid_dimension,
+       my_rates->cloudy_metal.grid_parameters[0],
+       my_rates->cloudy_metal.grid_parameters[1],
+       my_rates->cloudy_metal.grid_parameters[2],
+       my_rates->cloudy_metal.grid_parameters[3],
+       my_rates->cloudy_metal.grid_parameters[4],
+       &my_rates->cloudy_metal.data_size,
+       my_rates->cloudy_metal.cooling_data,
+       my_rates->cloudy_metal.heating_data,
+       &my_rates->cloudy_data_new,
        &my_chemistry->use_volumetric_heating_rate,
        &my_chemistry->use_specific_heating_rate,
        volumetric_heating_rate, specific_heating_rate);
@@ -187,8 +190,7 @@ int calculate_cooling_time(code_units *my_units,
                            gr_float *cooling_time)
 {
 
-  if (_calculate_cooling_time(&grackle_data,
-                              my_units,
+  if (_calculate_cooling_time(&grackle_data, &grackle_rates, my_units,
                               my_fields->grid_rank, my_fields->grid_dimension,
                               my_fields->grid_start, my_fields->grid_end,
                               my_fields->density, my_fields->internal_energy,

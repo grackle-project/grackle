@@ -23,8 +23,10 @@
 #endif
 
 extern chemistry_data grackle_data;
+extern chemistry_data_storage grackle_rates;
 
 int _calculate_pressure(chemistry_data *my_chemistry,
+                        chemistry_data_storage *my_rates,
                         code_units *my_units,
                         int grid_rank, int *grid_dimension,
                         int *grid_start, int *grid_end,
@@ -115,7 +117,7 @@ int calculate_pressure(code_units *my_units,
                        grackle_field_data *my_fields,
                        gr_float *pressure)
 {
-  if (_calculate_pressure(&grackle_data, my_units,
+  if (_calculate_pressure(&grackle_data, &grackle_rates, my_units,
                           my_fields->grid_rank, my_fields->grid_dimension,
                           my_fields->grid_start, my_fields->grid_end,
                           my_fields->density, my_fields->internal_energy,

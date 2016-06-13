@@ -23,8 +23,10 @@
 #endif
 
 extern chemistry_data grackle_data;
+extern chemistry_data_storage grackle_rates;
 
 int _calculate_temperature(chemistry_data *my_chemistry,
+                           chemistry_data_storage *my_rates,
                            code_units *my_units,
                            int grid_rank, int *grid_dimension,
                            int *grid_start, int *grid_end,
@@ -37,6 +39,7 @@ int _calculate_temperature(chemistry_data *my_chemistry,
                            gr_float *temperature);
 
 int _calculate_gamma(chemistry_data *my_chemistry,
+                     chemistry_data_storage *my_rates,
                      code_units *my_units,
                      int grid_rank, int *grid_dimension,
                      int *grid_start, int *grid_end,
@@ -67,7 +70,7 @@ int _calculate_gamma(chemistry_data *my_chemistry,
 
     /* Compute the temperature first. */
  
-    if (_calculate_temperature(my_chemistry, my_units,
+    if (_calculate_temperature(my_chemistry, my_rates, my_units,
                                grid_rank, grid_dimension,
                                grid_start, grid_end,
                                density, internal_energy,
@@ -129,8 +132,7 @@ int calculate_gamma(code_units *my_units,
                     grackle_field_data *my_fields,
                     gr_float *my_gamma)
 {
-  if (_calculate_gamma(&grackle_data,
-                       my_units,
+  if (_calculate_gamma(&grackle_data, &grackle_rates, my_units,
                        my_fields->grid_rank, my_fields->grid_dimension,
                        my_fields->grid_start, my_fields->grid_end,
                        my_fields->density, my_fields->internal_energy,

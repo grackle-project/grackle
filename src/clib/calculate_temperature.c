@@ -23,7 +23,8 @@
 #endif
 
 extern chemistry_data grackle_data;
- 
+extern chemistry_data_storage grackle_rates;
+
 /* Set the mean molecular mass. */
  
 #define MU_METAL 16.0
@@ -46,6 +47,7 @@ extern void FORTRAN_NAME(calc_temp_cloudy_g)(
  	long long *priDataSize, double *priMMW);
 
 int _calculate_pressure(chemistry_data *my_chemistry,
+                        chemistry_data_storage *my_rates,
                         code_units *my_units,
                         int grid_rank, int *grid_dimension,
                         int *grid_start, int *grid_end,
@@ -58,6 +60,7 @@ int _calculate_pressure(chemistry_data *my_chemistry,
                         gr_float *pressure);
 
 int _calculate_temperature_table(chemistry_data *my_chemistry,
+                                 chemistry_data_storage *my_rates,
                                  code_units *my_units,
                                  int grid_rank, int *grid_dimension,
                                  int *grid_start, int *grid_end,
@@ -66,6 +69,7 @@ int _calculate_temperature_table(chemistry_data *my_chemistry,
                                  gr_float *temperature);
  
 int _calculate_temperature(chemistry_data *my_chemistry,
+                           chemistry_data_storage *my_rates,
                            code_units *my_units,
                            int grid_rank, int *grid_dimension,
                            int *grid_start, int *grid_end,
@@ -84,19 +88,20 @@ int _calculate_temperature(chemistry_data *my_chemistry,
   /* Compute the pressure first. */
  
   if (my_chemistry->primordial_chemistry > 0) {
-  if (_calculate_pressure(my_chemistry, my_units,
-                          grid_rank, grid_dimension,
-                          grid_start, grid_end,
-                          density, internal_energy,
-                          HI_density, HII_density, HM_density,
-                          HeI_density, HeII_density, HeIII_density,
-                          H2I_density, H2II_density,
-                          DI_density, DII_density, HDI_density,
-                          e_density, metal_density,
-                          temperature) == FAIL) {
-    fprintf(stderr, "Error in calculate_pressure.\n");
-    return FAIL;
-  }}
+    if (_calculate_pressure(my_chemistry, my_rates, my_units,
+                            grid_rank, grid_dimension,
+                            grid_start, grid_end,
+                            density, internal_energy,
+                            HI_density, HII_density, HM_density,
+                            HeI_density, HeII_density, HeIII_density,
+                            H2I_density, H2II_density,
+                            DI_density, DII_density, HDI_density,
+                            e_density, metal_density,
+                            temperature) == FAIL) {
+      fprintf(stderr, "Error in calculate_pressure.\n");
+      return FAIL;
+    }
+  }
  
   /* Compute the size of the fields. */
  
@@ -112,7 +117,7 @@ int _calculate_temperature(chemistry_data *my_chemistry,
   double inv_metal_mol = 1.0 / MU_METAL;
   
   if (my_chemistry->primordial_chemistry == 0) {
-    if (_calculate_temperature_table(my_chemistry, my_units,
+    if (_calculate_temperature_table(my_chemistry, my_rates, my_units,
                                      grid_rank, grid_dimension,
                                      grid_start, grid_end,
                                      density, internal_energy,
@@ -158,6 +163,7 @@ int _calculate_temperature(chemistry_data *my_chemistry,
 }
 
 int _calculate_temperature_table(chemistry_data *my_chemistry,
+                                 chemistry_data_storage *my_rates,
                                  code_units *my_units,
                                  int grid_rank, int *grid_dimension,
                                  int *grid_start, int *grid_end,
@@ -213,13 +219,13 @@ int _calculate_temperature_table(chemistry_data *my_chemistry,
         &temperature_units, &co_length_units, &my_units->a_units, 
         &co_density_units, &my_units->time_units,
         &my_chemistry->Gamma, &my_chemistry->HydrogenFractionByMass,
-        &my_chemistry->cloudy_primordial.grid_rank,
-        my_chemistry->cloudy_primordial.grid_dimension,
-        my_chemistry->cloudy_primordial.grid_parameters[0],
-        my_chemistry->cloudy_primordial.grid_parameters[1],
-        my_chemistry->cloudy_primordial.grid_parameters[2],
-        &my_chemistry->cloudy_primordial.data_size,
-        my_chemistry->cloudy_primordial.mmw_data);
+        &my_rates->cloudy_primordial.grid_rank,
+        my_rates->cloudy_primordial.grid_dimension,
+        my_rates->cloudy_primordial.grid_parameters[0],
+        my_rates->cloudy_primordial.grid_parameters[1],
+        my_rates->cloudy_primordial.grid_parameters[2],
+        &my_rates->cloudy_primordial.data_size,
+        my_rates->cloudy_primordial.mmw_data);
 
   return SUCCESS;
 }
@@ -228,7 +234,7 @@ int calculate_temperature(code_units *my_units,
                           grackle_field_data *my_fields,
                           gr_float *temperature)
 {
-  if (_calculate_temperature(&grackle_data, my_units,
+  if (_calculate_temperature(&grackle_data, &grackle_rates, my_units,
                              my_fields->grid_rank, my_fields->grid_dimension,
                              my_fields->grid_start, my_fields->grid_end,
                              my_fields->density, my_fields->internal_energy,
