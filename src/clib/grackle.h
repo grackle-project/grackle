@@ -29,6 +29,7 @@ chemistry_data _set_default_chemistry_parameters(void);
 int initialize_chemistry_data(code_units *my_units);
 
 int _initialize_chemistry_data(chemistry_data *my_chemistry, 
+
                                code_units *my_units);
 
 int solve_chemistry(code_units *my_units,
@@ -36,6 +37,7 @@ int solve_chemistry(code_units *my_units,
                     double dt_value);
 
 int _solve_chemistry(chemistry_data *my_chemistry,
+                     chemistry_data_storage *my_rates,
                      code_units *my_units, double dt_value,
                      int grid_rank, int *grid_dimension,
                      int *grid_start, int *grid_end,
@@ -53,6 +55,7 @@ int calculate_cooling_time(code_units *my_units,
                            gr_float *cooling_time);
 
 int _calculate_cooling_time(chemistry_data *my_chemistry,
+                            chemistry_data_storage *my_rates,
                             code_units *my_units,
                             int grid_rank, int *grid_dimension,
                             int *grid_start, int *grid_end,
@@ -71,6 +74,7 @@ int calculate_gamma(code_units *my_units,
                     gr_float *my_gamma);
 
 int _calculate_gamma(chemistry_data *my_chemistry,
+                     chemistry_data_storage *my_rates,
                      code_units *my_units,
                      int grid_rank, int *grid_dimension,
                      int *grid_start, int *grid_end,
@@ -87,6 +91,7 @@ int calculate_pressure(code_units *my_units,
                        gr_float *pressure);
 
 int _calculate_pressure(chemistry_data *my_chemistry,
+                        chemistry_data_storage *my_rates,
                         code_units *my_units,
                         int grid_rank, int *grid_dimension,
                         int *grid_start, int *grid_end,
@@ -103,6 +108,7 @@ int calculate_temperature(code_units *my_units,
                           gr_float *temperature);
 
 int _calculate_temperature(chemistry_data *my_chemistry,
+                           chemistry_data_storage *my_rates,
                            code_units *my_units,
                            int grid_rank, int *grid_dimension,
                            int *grid_start, int *grid_end,
