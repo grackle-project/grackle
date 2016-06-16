@@ -49,18 +49,21 @@ int main(int argc, char *argv[])
   my_units.a_value = 1. / (1. + initial_redshift) / my_units.a_units;
 
   // Second, create a chemistry object for parameters and rate data.
-  if (set_default_chemistry_parameters() == 0) {
+  chemistry_data my_grackle_data;
+  if (set_default_chemistry_parameters(&my_grackle_data) == 0) {
     fprintf(stderr, "Error in set_default_chemistry_parameters.\n");
     return EXIT_FAILURE;
   }
 
   // Set parameter values for chemistry.
-  grackle_data.use_grackle = 1;            // chemistry on
-  grackle_data.with_radiative_cooling = 1; // cooling on
-  grackle_data.primordial_chemistry = 3;   // molecular network with H, He, D
-  grackle_data.metal_cooling = 1;          // metal cooling on
-  grackle_data.UVbackground = 1;           // UV background on
-  grackle_data.grackle_data_file = "../../input/CloudyData_UVB=HM2012.h5"; // data file
+
+  
+  my_grackle_data.use_grackle = 1;            // chemistry on
+  my_grackle_data.with_radiative_cooling = 1; // cooling on
+  my_grackle_data.primordial_chemistry = 3;   // molecular network with H, He, D
+  my_grackle_data.metal_cooling = 1;          // metal cooling on
+  my_grackle_data.UVbackground = 1;           // UV background on
+  my_grackle_data.grackle_data_file = "../../input/CloudyData_UVB=HM2012.h5"; // data file
 
   // Finally, initialize the chemistry object.
   if (initialize_chemistry_data(&my_units) == 0) {
@@ -126,10 +129,10 @@ int main(int argc, char *argv[])
 
   for (i = 0;i < field_size;i++) {
     my_fields.density[i] = 1.0;
-    my_fields.HI_density[i] = grackle_data.HydrogenFractionByMass * my_fields.density[i];
+    my_fields.HI_density[i] = my_grackle_data.HydrogenFractionByMass * my_fields.density[i];
     my_fields.HII_density[i] = tiny_number * my_fields.density[i];
     my_fields.HM_density[i] = tiny_number * my_fields.density[i];
-    my_fields.HeI_density[i] = (1.0 - grackle_data.HydrogenFractionByMass) *
+    my_fields.HeI_density[i] = (1.0 - my_grackle_data.HydrogenFractionByMass) *
       my_fields.density[i];
     my_fields.HeII_density[i] = tiny_number * my_fields.density[i];
     my_fields.HeIII_density[i] = tiny_number * my_fields.density[i];
@@ -140,7 +143,7 @@ int main(int argc, char *argv[])
     my_fields.HDI_density[i] = tiny_number * my_fields.density[i];
     my_fields.e_density[i] = tiny_number * my_fields.density[i];
     // solar metallicity
-    my_fields.metal_density[i] = grackle_data.SolarMetalFractionByMass *
+    my_fields.metal_density[i] = my_grackle_data.SolarMetalFractionByMass *
       my_fields.density[i];
 
     my_fields.x_velocity[i] = 0.0;

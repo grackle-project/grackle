@@ -22,7 +22,7 @@ extern int grackle_verbose;
 extern chemistry_data *grackle_data;
 extern chemistry_data_storage grackle_rates;
 
-int set_default_chemistry_parameters(void);
+int set_default_chemistry_parameters(chemistry_data *my_grackle);
 
 chemistry_data _set_default_chemistry_parameters(void);
 
