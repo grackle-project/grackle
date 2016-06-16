@@ -103,9 +103,3 @@ chemistry_data _set_default_chemistry_parameters(void)
 
   return my_chemistry;
 }
-
-//int set_default_chemistry_parameters_(chemistry_data *my_grackle)
-//{
-//  set_default_chemistry_parameters(my_grackle);
-//  return SUCCESS;
-//}
