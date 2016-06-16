@@ -237,16 +237,3 @@ int solve_chemistry(code_units *my_units,
   return SUCCESS;
 }
 
-/* Fortran interface */
-
-int solve_chemistry_(code_units *my_units,
-		     grackle_field_data *my_fields,
-		     double *dt_value)
-{
-  printf("here\n");
-  //  printf("dt_value = %g\n", *dt_value);
-  printf("metal = %g\n", my_fields->metal_density[0]);
-
-  return SUCCESS;
-}
-    
