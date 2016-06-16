@@ -18,7 +18,7 @@
 #include "grackle_chemistry_data.h"
 #include "phys_constants.h"
 
-extern chemistry_data grackle_data;
+extern chemistry_data *grackle_data;
 extern chemistry_data_storage grackle_rates;
 
 /* function prototypes */
@@ -214,7 +214,7 @@ int solve_chemistry(code_units *my_units,
                     grackle_field_data *my_fields,
                     double dt_value)
 {
-  if (_solve_chemistry(&grackle_data, &grackle_rates,
+  if (_solve_chemistry(grackle_data, &grackle_rates,
                        my_units, dt_value,
                        my_fields->grid_rank,   my_fields->grid_dimension,
                        my_fields->grid_start,  my_fields->grid_end,
@@ -236,3 +236,17 @@ int solve_chemistry(code_units *my_units,
   }
   return SUCCESS;
 }
+
+/* Fortran interface */
+
+int solve_chemistry_(code_units *my_units,
+		     grackle_field_data *my_fields,
+		     double *dt_value)
+{
+  printf("here\n");
+  //  printf("dt_value = %g\n", *dt_value);
+  printf("metal = %g\n", my_fields->metal_density[0]);
+
+  return SUCCESS;
+}
+    

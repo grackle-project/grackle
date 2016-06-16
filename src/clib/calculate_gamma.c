@@ -22,7 +22,7 @@
 #include <omp.h>
 #endif
 
-extern chemistry_data grackle_data;
+extern chemistry_data *grackle_data;
 extern chemistry_data_storage grackle_rates;
 
 int _calculate_temperature(chemistry_data *my_chemistry,
@@ -132,7 +132,7 @@ int calculate_gamma(code_units *my_units,
                     grackle_field_data *my_fields,
                     gr_float *my_gamma)
 {
-  if (_calculate_gamma(&grackle_data, &grackle_rates, my_units,
+  if (_calculate_gamma(grackle_data, &grackle_rates, my_units,
                        my_fields->grid_rank, my_fields->grid_dimension,
                        my_fields->grid_start, my_fields->grid_end,
                        my_fields->density, my_fields->internal_energy,

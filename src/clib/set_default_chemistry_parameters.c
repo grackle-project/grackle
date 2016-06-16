@@ -21,14 +21,15 @@
 
 int grackle_verbose = FALSE;
 
-chemistry_data grackle_data;
+chemistry_data *grackle_data = NULL;
 chemistry_data_storage grackle_rates;
 
 chemistry_data _set_default_chemistry_parameters(void);
 
-int set_default_chemistry_parameters(void)
+int set_default_chemistry_parameters(chemistry_data *my_grackle)
 {
-  grackle_data = _set_default_chemistry_parameters();
+  *my_grackle = _set_default_chemistry_parameters();
+  grackle_data = my_grackle;
   return SUCCESS;
 }
 
@@ -102,3 +103,9 @@ chemistry_data _set_default_chemistry_parameters(void)
 
   return my_chemistry;
 }
+
+//int set_default_chemistry_parameters_(chemistry_data *my_grackle)
+//{
+//  set_default_chemistry_parameters(my_grackle);
+//  return SUCCESS;
+//}

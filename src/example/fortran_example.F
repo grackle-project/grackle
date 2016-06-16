@@ -1,16 +1,13 @@
       program fortran_example
 
+      USE ISO_C_BINDING
       implicit None
 #include "grackle_fortran_types.def"
+#include "grackle_fortran_interface.def"
 
       integer iresult, i
 
-      integer initialize_grackle,
-     &     solve_chemistry,
-     &     calculate_cooling_time,
-     &     calculate_temperature,
-     &     calculate_pressure,
-     &     calculate_gamma
+c     Define constants
 
       real*8 mh, kboltz, fH
       R_PREC tiny_number
@@ -21,15 +18,8 @@
 
 c     Initialization parameters
 
-      integer comoving_coordinates, use_grackle,
-     &     with_radiative_cooling, primordial_chemistry,
-     &     metal_cooling, UVbackground, h2_on_dust, 
-     &     cmb_temperature_floor
-
-      real*8 density_units, length_units, time_units, velocity_units,
-     &     a_units, a_value, initial_redshift, my_gamma
-
-      character*36 grackle_data_file
+      real*8 initial_redshift
+      character(len=80), TARGET :: filename
 
 c     Field data arrays
 
@@ -38,7 +28,7 @@ c     Field data arrays
 
       real*8 temperature_units, dt
 
-      R_PREC density(field_size), energy(field_size),
+      R_PREC, TARGET :: density(field_size), energy(field_size),
      &     x_velocity(field_size), y_velocity(field_size),
      &     z_velocity(field_size),
      &     HI_density(field_size), HII_density(field_size),
@@ -52,64 +42,58 @@ c     Field data arrays
      &     volumetric_heating_rate(field_size),
      &     specific_heating_rate(field_size)
 
-      R_PREC cooling_time(field_size), gamma(field_size),
+      R_PREC, TARGET :: cooling_time(field_size), gamma(field_size),
      &     pressure(field_size), temperature(field_Size)
 
 c     Grid size and dimension
 c     grid_start and grid_end are used to ignore ghost zones.
 
-      integer grid_rank, grid_dimension(3), 
+      INTEGER, TARGET :: grid_rank, grid_dimension(3), 
      &     grid_start(3), grid_end(3)
+
+c     Define storage for grackle units, fields and parameter data
+
+      TYPE (grackle_units) :: my_units
+      TYPE (grackle_field_data) :: my_fields
+      TYPE (grackle_chemistry_data) :: grackle_data
 
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 
+c     Create a grackle chemistry object for parameters and set defaults
+  
+      iresult = set_default_chemistry_parameters(grackle_data)
+
 c     Set parameters
 
-c     chemistry on
-      use_grackle = 1
-c     cooling on
-      with_radiative_cooling = 1
-c     molecular network with H, He, D
-      primordial_chemistry = 3
-c     metal cooling on
-      metal_cooling = 1
-c     UV background on
-      UVbackground = 1
+      grackle_data%use_grackle = 1            ! chemistry on
+      grackle_data%with_radiative_cooling = 1 ! cooling on
+      grackle_data%primordial_chemistry = 3   ! network with H, He, D
+      grackle_data%metal_cooling = 1          ! metal cooling on
+      grackle_data%UVbackground = 1           ! UV background on
 c     cooling data for Haardt & Madau 2012 background
-      grackle_data_file = "../../input/CloudyData_UVB=HM2012.h5"
-c     no dust
-      h2_on_dust = 0
-c     include CMB cooling floor
-      cmb_temperature_floor = 1
-c     set adiabatic index
-      my_gamma = 5./3.;
+      filename = "../../input/CloudyData_UVB=HM2012.h5"//C_NULL_CHAR
+      grackle_data%grackle_data_file = C_LOC(filename(1:1))
+      grackle_data%h2_on_dust = 0             ! no dust
+      grackle_data%cmb_temperature_floor = 1  ! include CMB cooling floor
+      grackle_data%Gamma = 5./3.;          ! monoatomic gas
 
 c     Set units
 
-      comoving_coordinates = 0
-      density_units = 1.67d-24
-      length_units = 1.0d0
-      time_units = 1.0d12
-      velocity_units = length_units / time_units
-      a_units = 1.0d0
+      my_units%comoving_coordinates = 0
+      my_units%density_units = 1.67d-24
+      my_units%length_units = 1.0d0
+      my_units%time_units = 1.0d12
+      my_units%velocity_units = my_units%length_units / my_units%time_units
+      my_units%a_units = 1.0d0
 
 c     Set initial expansion factor (for internal units).
 c     Set expansion factor to 1 for non-cosmological simulation.
       initial_redshift = 0.;
-      a_value = 1. / (1. + initial_redshift);
+      my_units%a_value = 1. / (1. + initial_redshift);
 
 c     Initialize the Grackle
 
-      iresult = initialize_grackle(
-     &     comoving_coordinates,
-     &     density_units, length_units,
-     &     time_units, velocity_units,
-     &     a_units, a_value,
-     &     use_grackle, with_radiative_cooling,
-     &     grackle_data_file,
-     &     primordial_chemistry, metal_cooling,
-     &     UVbackground, h2_on_dust,
-     &     cmb_temperature_floor, my_gamma)
+      iresult = initialize_chemistry_data(my_units)
 
 c     Set field arrays
 
@@ -127,7 +111,8 @@ c     0-based
 
 c     set temperature units
       temperature_units =  mh *
-     &     (a_units * length_units / time_units)**2 / kboltz
+     &     (my_units%a_units * my_units%length_units / 
+     &      my_units%time_units)**2 / kboltz
 
       do i = 1,field_size
          density(i) = 1.0
@@ -156,107 +141,61 @@ c        initilize internal energy (here 1000 K for no reason)
          volumetric_heating_rate(i) = 0.0
          specific_heating_rate(i) = 0.0
       enddo
+c
+c     Fill in structure to be passed to Grackle
+c
+      my_fields%grid_rank = 1
+      my_fields%grid_dimension = C_LOC(grid_dimension)
+      my_fields%grid_start = C_LOC(grid_start)
+      my_fields%grid_end = C_LOC(grid_end)
 
+      my_fields%density = C_LOC(density)
+      my_fields%HI_density = C_LOC(HI_density)
+      my_fields%HII_density = C_LOC(HII_density)
+      my_fields%HM_density = C_LOC(HM_density)
+      my_fields%HeI_density = C_LOC(HeI_density)
+      my_fields%HeII_density = C_LOC(HeII_density)
+      my_fields%HeIII_density = C_LOC(HeIII_density)
+      my_fields%H2I_density = C_LOC(H2I_density)
+      my_fields%H2II_density = C_LOC(H2II_density)
+      my_fields%DI_density = C_LOC(DI_density)
+      my_fields%DII_density = C_LOC(DII_density)
+      my_fields%HDI_density = C_LOC(HDI_density)
+      my_fields%e_density = C_LOC(e_density)
+      my_fields%metal_density = C_LOC(metal_density)
+      my_fields%internal_energy = C_LOC(energy)
+      my_fields%x_velocity = C_LOC(x_velocity)
+      my_fields%y_velocity = C_LOC(y_velocity)
+      my_fields%z_velocity = C_LOC(z_velocity)
+      my_fields%volumetric_heating_rate = C_LOC(volumetric_heating_rate)
+      my_fields%specific_heating_rate = C_LOC(specific_heating_rate)
 c
 c     Calling the chemistry solver
 c     These routines can now be called during the simulation.
-c
-
+      
 c     Evolving the chemistry.
 
-c     some timestep
-      dt = 3.15e7 * 1e6 / time_units
-
-      iresult = solve_chemistry(
-     &     comoving_coordinates,
-     &     density_units, length_units,
-     &     time_units, velocity_units,
-     &     a_units, a_value, dt,
-     &     grid_rank, grid_dimension,
-     &     grid_start, grid_end,
-     &     density, energy,
-     &     x_velocity, y_velocity, z_velocity,
-     &     HI_density, HII_density, HM_density,
-     &     HeI_density, HeII_density, HeIII_density,
-     &     H2I_density, H2II_density,
-     &     DI_density, DII_density, HDI_density,
-     &     e_density, metal_density,
-     &     volumetric_heating_rate,
-     &     specific_heating_rate)
+      dt = 3.15e7 * 1e6 / my_units%time_units    ! some timestep
+      iresult = solve_chemistry(my_units, my_fields, dt)
 
 c     Calculate cooling time.
 
-      iresult = calculate_cooling_time(
-     &     comoving_coordinates,
-     &     density_units, length_units,
-     &     time_units, velocity_units,
-     &     a_units, a_value,
-     &     grid_rank, grid_dimension,
-     &     grid_start, grid_end,
-     &     density, energy,
-     &     x_velocity, y_velocity, z_velocity,
-     &     HI_density, HII_density, HM_density,
-     &     HeI_density, HeII_density, HeIII_density,
-     &     H2I_density, H2II_density,
-     &     DI_density, DII_density, HDI_density,
-     &     e_density, metal_density, cooling_time,
-     &     volumetric_heating_rate,
-     &     specific_heating_rate)
-
-      write(*,*) "Cooling time = ", (cooling_time(1) * time_units), "s."
+      iresult = calculate_cooling_time(my_units, my_fields, cooling_time)
+      write(*,*) "Cooling time = ", (cooling_time(1) * my_units%time_units), "s."
 
 c     Calculate temperature.
 
-      iresult = calculate_temperature(
-     &     comoving_coordinates,
-     &     density_units, length_units,
-     &     time_units, velocity_units,
-     &     a_units, a_value,
-     &     grid_rank, grid_dimension,
-     &     grid_start, grid_end,
-     &     density, energy,
-     &     HI_density, HII_density, HM_density,
-     &     HeI_density, HeII_density, HeIII_density,
-     &     H2I_density, H2II_density,
-     &     DI_density, DII_density, HDI_density,
-     &     e_density, metal_density, temperature)
-
+      iresult = calculate_temperature(my_units, my_fields, temperature)
       write(*,*) "Temperature = ", temperature(1), "K."
 
 c     Calcualte pressure.
 
-      iresult = calculate_pressure(
-     &     comoving_coordinates,
-     &     density_units, length_units,
-     &     time_units, velocity_units,
-     &     a_units, a_value,
-     &     grid_rank, grid_dimension,
-     &     grid_start, grid_end,
-     &     density, energy,
-     &     HI_density, HII_density, HM_density,
-     &     HeI_density, HeII_density, HeIII_density,
-     &     H2I_density, H2II_density,
-     &     DI_density, DII_density, HDI_density,
-     &     e_density, metal_density, pressure)
-
+      iresult = calculate_pressure(my_units, my_fields, pressure)
       write(*,*) "Pressure = ", pressure(1)
 
 c     Calculate gamma.
 
-      iresult = calculate_gamma(
-     &     comoving_coordinates,
-     &     density_units, length_units,
-     &     time_units, velocity_units,
-     &     a_units, a_value,
-     &     grid_rank, grid_dimension,
-     &     grid_start, grid_end,
-     &     density, energy,
-     &     HI_density, HII_density, HM_density,
-     &     HeI_density, HeII_density, HeIII_density,
-     &     H2I_density, H2II_density,
-     &     DI_density, DII_density, HDI_density,
-     &     e_density, metal_density, gamma)
-
+      iresult = calculate_gamma(my_units, my_fields, gamma)
       write(*,*) "Gamma = ", gamma(1)
 
       end program fortran_example

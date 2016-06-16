@@ -19,7 +19,7 @@
 #include "grackle_chemistry_data.h"
 #include "phys_constants.h"
 
-extern chemistry_data grackle_data;
+extern chemistry_data *grackle_data;
 extern chemistry_data_storage grackle_rates;
 
 /* function prototypes */
@@ -190,7 +190,7 @@ int calculate_cooling_time(code_units *my_units,
                            gr_float *cooling_time)
 {
 
-  if (_calculate_cooling_time(&grackle_data, &grackle_rates, my_units,
+  if (_calculate_cooling_time(grackle_data, &grackle_rates, my_units,
                               my_fields->grid_rank, my_fields->grid_dimension,
                               my_fields->grid_start, my_fields->grid_end,
                               my_fields->density, my_fields->internal_energy,

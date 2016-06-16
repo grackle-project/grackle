@@ -22,7 +22,7 @@
 #include <omp.h>
 #endif
 
-extern chemistry_data grackle_data;
+extern chemistry_data *grackle_data;
 extern chemistry_data_storage grackle_rates;
 
 /* Set the mean molecular mass. */
@@ -234,7 +234,7 @@ int calculate_temperature(code_units *my_units,
                           grackle_field_data *my_fields,
                           gr_float *temperature)
 {
-  if (_calculate_temperature(&grackle_data, &grackle_rates, my_units,
+  if (_calculate_temperature(grackle_data, &grackle_rates, my_units,
                              my_fields->grid_rank, my_fields->grid_dimension,
                              my_fields->grid_start, my_fields->grid_end,
                              my_fields->density, my_fields->internal_energy,

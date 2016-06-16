@@ -25,7 +25,7 @@
 
 extern int grackle_verbose;
 
-extern chemistry_data grackle_data;
+extern chemistry_data *grackle_data;
 extern chemistry_data_storage grackle_rates;
 
 void auto_show_config(FILE *fp);
@@ -316,10 +316,11 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
 
 int initialize_chemistry_data(code_units *my_units)
 {
-  if (_initialize_chemistry_data(&grackle_data, &grackle_rates,
+  if (_initialize_chemistry_data(grackle_data, &grackle_rates,
                                  my_units) == FAIL) {
     fprintf(stderr, "Error in _initialize_chemistry_data.\n");
     return FAIL;
   }
   return SUCCESS;
 }
+
