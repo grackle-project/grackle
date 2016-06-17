@@ -83,7 +83,8 @@ c     Set units
       my_units%density_units = 1.67d-24
       my_units%length_units = 1.0d0
       my_units%time_units = 1.0d12
-      my_units%velocity_units = my_units%length_units / my_units%time_units
+      my_units%velocity_units = my_units%length_units / 
+     &     my_units%time_units
       my_units%a_units = 1.0d0
 
 c     Set initial expansion factor (for internal units).
@@ -93,6 +94,7 @@ c     Set expansion factor to 1 for non-cosmological simulation.
 
 c     Initialize the Grackle
 
+      write(6,*) "metal_cooling:", grackle_data%metal_cooling
       iresult = initialize_chemistry_data(my_units)
 
 c     Set field arrays
@@ -180,8 +182,9 @@ c     Evolving the chemistry.
 
 c     Calculate cooling time.
 
-      iresult = calculate_cooling_time(my_units, my_fields, cooling_time)
-      write(*,*) "Cooling time = ", (cooling_time(1) * my_units%time_units), "s."
+      iresult = calculate_cooling_time(my_units, my_fields,cooling_time)
+      write(*,*) "Cooling time = ", (cooling_time(1) * 
+     &     my_units%time_units), "s."
 
 c     Calculate temperature.
 

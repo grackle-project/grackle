@@ -21,7 +21,6 @@ c In addition, here we define the Fortran 90 interfaces to the C routines
 c   using the 2003 Fortran C interoperability features.  Note that some
 c   care must be taken defining matching types.
 
-
 c     This is the fortran definition of grackle_units
 
       TYPE, BIND(C) :: grackle_units
@@ -111,21 +110,24 @@ cc       INTEGER(C_INT) :: omp_nthreads // not supported in fortran
 c     The following define the fortran interfaces to the C routines
 
       INTERFACE
-         INTEGER(C_INT) FUNCTION set_default_chemistry_parameters(my_grackle) bind(C)
+         INTEGER(C_INT) FUNCTION set_default_chemistry_parameters
+     &        (my_grackle) bind(C)
             IMPORT
             TYPE(grackle_chemistry_data), INTENT(INOUT) :: my_grackle
          END FUNCTION set_default_chemistry_parameters
       END INTERFACE
 
       INTERFACE
-         INTEGER(C_INT) FUNCTION initialize_chemistry_data(my_units) bind(C)
+         INTEGER(C_INT) FUNCTION initialize_chemistry_data(my_units) 
+     &        bind(C)
             IMPORT
             TYPE(grackle_units), INTENT(INOUT) :: my_units
          END FUNCTION initialize_chemistry_data
       END INTERFACE
 
       INTERFACE
-         INTEGER(C_INT) FUNCTION solve_chemistry(my_units, my_fields, dt) bind(C)
+         INTEGER(C_INT) FUNCTION solve_chemistry
+     &        (my_units, my_fields, dt) bind(C)
             IMPORT
             TYPE(grackle_units), INTENT(IN) :: my_units
             TYPE(grackle_field_data), INTENT(IN) :: my_fields
@@ -134,7 +136,8 @@ c     The following define the fortran interfaces to the C routines
       END INTERFACE
 
       INTERFACE
-         INTEGER(C_INT) FUNCTION calculate_cooling_time(my_units, my_fields, cooling_time) bind(C)
+         INTEGER(C_INT) FUNCTION calculate_cooling_time(my_units, 
+     &        my_fields, cooling_time) bind(C)
             IMPORT
             TYPE(grackle_units), INTENT(IN) :: my_units
             TYPE(grackle_field_data), INTENT(IN) :: my_fields
@@ -143,7 +146,8 @@ c     The following define the fortran interfaces to the C routines
       END INTERFACE
 
       INTERFACE
-         INTEGER(C_INT) FUNCTION calculate_temperature(my_units, my_fields, temperature) bind(C)
+         INTEGER(C_INT) FUNCTION calculate_temperature(my_units, 
+     &        my_fields, temperature) bind(C)
             IMPORT
             TYPE(grackle_units), INTENT(IN) :: my_units
             TYPE(grackle_field_data), INTENT(IN) :: my_fields
@@ -152,7 +156,8 @@ c     The following define the fortran interfaces to the C routines
       END INTERFACE
 
       INTERFACE
-         INTEGER(C_INT) FUNCTION calculate_pressure(my_units, my_fields, pressure) bind(C)
+         INTEGER(C_INT) FUNCTION calculate_pressure(my_units, my_fields, 
+     &        pressure) bind(C)
             IMPORT
             TYPE(grackle_units), INTENT(IN) :: my_units
             TYPE(grackle_field_data), INTENT(IN) :: my_fields
@@ -161,7 +166,8 @@ c     The following define the fortran interfaces to the C routines
       END INTERFACE
 
       INTERFACE
-         INTEGER(C_INT) FUNCTION calculate_gamma(my_units, my_fields, gamma) bind(C)
+         INTEGER(C_INT) FUNCTION calculate_gamma(my_units, my_fields, 
+     &        gamma) bind(C)
             IMPORT
             TYPE(grackle_units), INTENT(IN) :: my_units
             TYPE(grackle_field_data), INTENT(IN) :: my_fields
