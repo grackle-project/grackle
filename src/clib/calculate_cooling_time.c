@@ -50,6 +50,8 @@ extern void FORTRAN_NAME(cool_multi_time_g)(
 	double *gpldl, double *gphdl, double *HDltea, double *HDlowa,
 	double *gaHIa, double *gaH2a, double *gaHea, double *gaHpa, double *gaela,
 	double *h2ltea, double *gasgra,
+        int *iradshield, double *avgsighp, double *avgsighep, double *avgsighe2p,
+        double *k24,
         int *iradtrans, double *photogamma, // AJE-RT
 	int *ih2optical, int *iciecool, double *ciecoa,
  	int *icmbTfloor, int *iClHeat, 
@@ -109,6 +111,28 @@ int _calculate_cooling_time(chemistry_data *my_chemistry,
       POW(my_units->a_value * my_units->a_units, 3);
   }
 
+  /* update shielding factors for self-shielding */
+
+  float shielding_factor = my_units->grid_dx * my_units->length_units;
+
+  my_chemistry->hi_ph_shield_factor   = my_chemistry->hi_ph_avg_cross_section*shielding_factor;
+  my_chemistry->hei_ph_shield_factor  = my_chemistry->hei_ph_avg_cross_section*shielding_factor;
+  my_chemistry->heii_ph_shield_factor = my_chemistry->heii_ph_avg_cross_section*shielding_factor;
+
+  my_chemistry->hi_pi_shield_factor   = my_chemistry->hi_pi_avg_cross_section*shielding_factor;
+  my_chemistry->hei_pi_shield_factor  = my_chemistry->hei_pi_avg_cross_section*shielding_factor;
+  my_chemistry->heii_pi_shield_factor = my_chemistry->heii_pi_avg_cross_section*shielding_factor;
+
+  if (my_chemistry->self_shielding_method == 1){
+    my_chemistry->hi_ph_shield_factor *= shielding_factor;
+    my_chemistry->hi_pi_shield_factor *= shielding_factor;
+  } else if (my_chemistry->self_shielding_method == 2){
+    // for this method, factors are CGS Cross sections
+    my_chemistry->hi_ph_shield_factor *= 1.0;
+    my_chemistry->hi_pi_shield_factor *= 1.0;
+  }
+
+
   /* Calculate temperature units. */
 
   double temperature_units = mh * POW(my_units->velocity_units, 2) / kboltz;
@@ -146,6 +170,9 @@ int _calculate_cooling_time(chemistry_data *my_chemistry,
        my_chemistry->HDlte, my_chemistry->HDlow,
        my_chemistry->GAHI, my_chemistry->GAH2, my_chemistry->GAHe, my_chemistry->GAHp,
        my_chemistry->GAel, my_chemistry->H2LTE, my_chemistry->gas_grain,
+       &my_chemistry->self_shielding_method, &my_chemistry->hi_ph_shield_factor,
+       &my_chemistry->hei_ph_shield_factor, &my_chemistry->heii_ph_shield_factor,
+       &my_chemistry->k24,
        &my_chemistry->use_radiative_transfer, gammaNum, // AJE-RT
        &my_chemistry->h2_optical_depth_approximation, 
        &my_chemistry->cie_cooling, my_chemistry->cieco,

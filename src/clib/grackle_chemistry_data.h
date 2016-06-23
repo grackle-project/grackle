@@ -95,6 +95,25 @@ typedef struct
   int radiative_transfer_intermediate_step;
   int radiative_transfer_hydrogen_only;
 
+  /* flag for approximiate self-shielding as well
+     as spectrum averaged photo heating and
+     photo ionization shielding factors */
+  int self_shielding_method;
+  double hi_ph_shield_factor;
+  double hei_ph_shield_factor;
+  double heii_ph_shield_factor;
+  double hi_pi_shield_factor;
+  double hei_pi_shield_factor;
+  double heii_pi_shield_factor;
+
+  double hi_ph_avg_cross_section;
+  double hei_ph_avg_cross_section;
+  double heii_ph_avg_cross_section;
+  double hi_pi_avg_cross_section;
+  double hei_pi_avg_cross_section;
+  double heii_pi_avg_cross_section;
+
+
   /***************************************
    *** radiation background parameters ***
    ***************************************/

@@ -28,6 +28,9 @@
      &                gpldla, gphdla, hdltea, hdlowa,
      &                gaHIa, gaH2a, gaHea, gaHpa, gaela, 
      &                h2ltea, gasgra, 
+     &                iradshield, avgsighp_heating, avgsighep_heating,
+     &                avgsighe2p_heating, avgsighp_ionizing, 
+     &                avgsighep_ionizing, avgsighe2p_ionizing,
      &                iradtrans, iradcoupled, iradstep,
      &                irt_honly, kphHI, kphHeI, kphHeII, kdissH2I,
      &                photogamma,
@@ -82,6 +85,7 @@
 !    idust    - flag for H2 formation on dust grains
 !    ih2co    - flag to include H2 cooling (1 = on, 0 = off)
 !    ipiht    - flag to include photoionization heating (1 = on, 0 = off)
+!    iradshield - flag for curde radiative shielding correction
 !    iradtrans - flag to include radiative transfer (1 = on, 0 = off)
 !    iradcoupled - flag to indicate coupled radiative transfer
 !    iradstep  - flag to indicate intermediate coupled radiative transfer timestep
@@ -144,7 +148,7 @@
      &        iexpand, ih2co, ipiht, ispecies, imetal, idim,
      &        ierr, imcool, idust, 
      &        igammah, ih2optical, iciecool, ithreebody,
-     &        ndratec, iVheat, iMheat,
+     &        ndratec, iVheat, iMheat, iradshield,
      &        iradtrans, iradcoupled, iradstep, irt_honly ! AJE-RT
       real*8  dt, aye, temstart, temend, gamma,
      &        utim, uxyz, uaye, urho, utem, fh, dtoh, z_solar, 
@@ -179,6 +183,9 @@
      &        reHeII2a(nratec), reHeIIIa(nratec), brema(nratec),
      &        compa, piHI, piHeI, piHeII, comp_xraya, comp_temp,
      &        gammaha 
+
+      real*8  avgsighp_heating, avgsighep_heating, avgsighe2p_heating,
+     &        avgsighp_ionizing, avgsighep_ionizing, avgsighe2p_ionizing
 
 !  Chemistry tables (rates as a function of temperature)
 
@@ -429,6 +436,8 @@ c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 fo
      &                reHII, reHeII1, reHeII2, reHeIII, brem,
      &                indixe, t1, t2, logtem, tdef, edot,
      &                tgas, tgasold, p2d, tdust, metallicity, rhoH, 
+     &                iradshield, avgsighp_heating, avgsighep_heating,
+     &                avgsighe2p_heating, k24,
      &                iradtrans, photogamma, ! AJE-RT
      &                ih2optical, iciecool, ciecoa, cieco,
      &                icmbTfloor, iClHeat, 
@@ -448,7 +457,7 @@ c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 fo
 
             call lookup_cool_rates1d_g(temstart, temend, nratec, j, k,
      &               is, ie, ithreebody,
-     &               in, jn, kn, ispecies, idust, 
+     &               in, jn, kn, ispecies, idust, iradshield,
      &               tgas, HI, HII, HeI, HeII, tdust, metallicity, 
      &               k1a, k2a, k3a, k4a, k5a, k6a, k7a, k8a, k9a, k10a,
      &               k11a, k12a, k13a, k13dda, k14a, k15a, k16a,
@@ -456,7 +465,8 @@ c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 fo
      &               k50a, k51a, k52a, k53a, k54a, k55a, k56a, 
      &               k57a, k58a, ndratec, dtemstart, dtemend, h2dusta, 
      &               ncrna, ncrd1a, ncrd2a, 
-     &               piHI, piHeI,
+     &               avgsighp_ionizing, avgsighep_ionizing,
+     &               avgsighe2p_ionizing, piHI, piHeI,
      &               k1, k2, k3, k4, k5, k6, k7, k8, k9, k10,
      &               k11, k12, k13, k14, k15, k16, k17, k18,
      &               k19, k22, k24, k25, k26, 
@@ -966,7 +976,7 @@ c -------------------------------------------------------------------
 
       subroutine lookup_cool_rates1d_g(temstart, temend, nratec, j, k,
      &                is, ie, ithreebody,
-     &                in, jn, kn, ispecies, idust,
+     &                in, jn, kn, ispecies, idust, iradshield,
      &                tgas1d, HI, HII, HeI, HeII, tdust, metallicity, 
      &                k1a, k2a, k3a, k4a, k5a, k6a, k7a, k8a, k9a, k10a,
      &                k11a, k12a, k13a, k13dda, k14a, k15a, k16a,
@@ -974,7 +984,8 @@ c -------------------------------------------------------------------
      &                k50a, k51a, k52a, k53a, k54a, k55a, k56a, k57a,
      &                k58a, ndratec, dtemstart, dtemend, h2dusta, 
      &                ncrna, ncrd1a, ncrd2a,
-     &                piHI, piHeI,
+     &                avgsighp_ionizing, avgsighep_ionizing,
+     &                avgsighe2p_ionizing, piHI, piHeI,
      &                k1, k2, k3, k4, k5, k6, k7, k8, k9, k10,
      &                k11, k12, k13, k14, k15, k16, k17, k18,
      &                k19, k22, k24, k25, k26,
@@ -992,7 +1003,7 @@ c -------------------------------------------------------------------
 
       integer is, ie, nratec,
      &        in, jn, kn, ispecies, ithreebody, j, k,
-     &        idust, ndratec
+     &        idust, ndratec, iradshield
       real*8 temstart, temend, tgas1d(in), dom,
      &       dtemstart, dtemend
       real*8 coolunit, tbase1
@@ -1010,7 +1021,8 @@ c -------------------------------------------------------------------
      &       k58a(nratec), k13dda(nratec, 14), h2dusta(nratec, ndratec), 
      &       ncrna(nratec), ncrd1a(nratec), ncrd2a(nratec),
      &       k24, k25, k26,
-     &       piHI, piHeI
+     &       piHI, piHeI,
+     &       avgsighp_ionizing, avgsighep_ionizing, avgsighe2p_ionizing
 
 !     Density fields
 
@@ -1053,6 +1065,8 @@ c -------------------------------------------------------------------
       real*8 factor, x, logtem0, logtem9, dlogtem, nh,
      &       d_logtem0, d_logtem9, d_dlogtem
       real*8 k13_CID, k13_DT
+
+      real*8 nSSh, nratio
 
 !     Set log values of start and end of lookup tables
 
@@ -1243,6 +1257,45 @@ c -------------------------------------------------------------------
             k26shield(i) = k26
          endif
       enddo
+
+      if (iradshield == 1) then
+!
+!     approximate self shielding
+!
+        do i = is+1, ie+1
+          if (itmask(i)) then
+             k24shield(i) = 
+     & k24shield(i)*exp(-HI(i,j,k)*avgsighp_ionizing*dom)
+             k25shield(i) =
+     & k25shield(i)*exp(-0.25_DKIND*HeII(i,j,k)*avgsighe2p_ionizing*dom)
+             k26shield(i) =
+     & k26shield(i)*exp(-0.25_DKIND*HeI(i,j,k)*avgsighep_ionizing*dom)
+          endif
+        enddo
+
+      else if (iradshield == 2) then
+!
+!     Better self shielding in HI from Rahmati et. al. 2013
+!     approximate self shielding in HeI and HeII
+!
+        do i = is+1, ie+1
+          if (itmask(i)) then
+            nSSh = 6.73e-3_DKIND *
+     &        (avgsighp_ionizing/2.49e-18_DKIND)**(-2._DKIND/3._DKIND) *
+     &        (tgas1d(i)/1.0e4_DKIND)**(0.17_DKIND) *
+     &        (k24/tbase1/1.0e-12_DKIND)**(2.0_DKIND/3.0_DKIND)
+            nratio = HI(i,j,k)*dom/nSSh
+            k24shield(i)=k24shield(i)*(0.98_DKIND*
+     &            (1.0_DKIND+nratio**(1.64_DKIND))**(-2.28_DKIND) +
+     &             0.02_DKIND*(1.0_DKIND+nratio)**(-0.84_DKIND))
+
+            k25shield(i) = 
+     & k25shield(i)*exp(-0.25_DKIND*HeII(i,j,k)*avgsighe2p_ionizing*dom)
+            k26shield(i) = 
+     & k26shield(i)*exp(-0.25_DKIND*HeI(i,j,k)*avgsighep_ionizing*dom)
+          endif
+        enddo
+      endif
 
 #ifdef SECONDARY_IONIZATION_NOT_YET_IMPLEMENTED
 !        If using a high-energy radiation field, then account for

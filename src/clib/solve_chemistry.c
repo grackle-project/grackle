@@ -59,6 +59,9 @@ extern void FORTRAN_NAME(solve_rate_cool_g)(
 	double *gpldl, double *gphdl, double *HDltea, double *HDlowa,
 	double *gaHIa, double *gaH2a, double *gaHea, double *gaHpa, double *gaela,
 	double *h2ltea, double *gasgra,
+        int *iradshield, double *avgsighp_heating, double *agbsighep_heating,
+        double *avgsighe2p_heating, double *avgsighp_ionizing,
+        double *avgsighep_ionizing, double *avgsighe2p_ionizing,
         int *iradtrans, int *iradcoupled, int *iradstep, int *irt_honly,
         double *kphHI, double *kphHeI, double *kphHeII, double *kdissH2I,
         double *photogamma, // AJE-RT
@@ -122,6 +125,29 @@ int _solve_chemistry(chemistry_data *my_chemistry,
       POW(my_units->a_value * my_units->a_units, 3);
   }
 
+  /* update shielding factors for self-shielding */
+
+  float shielding_factor = my_units->grid_dx * my_units->length_units;
+
+  my_chemistry->hi_ph_shield_factor   = my_chemistry->hi_ph_avg_cross_section*shielding_factor;
+  my_chemistry->hei_ph_shield_factor  = my_chemistry->hei_ph_avg_cross_section*shielding_factor;
+  my_chemistry->heii_ph_shield_factor = my_chemistry->heii_ph_avg_cross_section*shielding_factor;
+
+  my_chemistry->hi_pi_shield_factor   = my_chemistry->hi_pi_avg_cross_section*shielding_factor;
+  my_chemistry->hei_pi_shield_factor  = my_chemistry->hei_pi_avg_cross_section*shielding_factor;
+  my_chemistry->heii_pi_shield_factor = my_chemistry->heii_pi_avg_cross_section*shielding_factor;
+
+  if (my_chemistry->self_shielding_method == 1){
+    my_chemistry->hi_ph_shield_factor *= shielding_factor;
+    my_chemistry->hi_pi_shield_factor *= shielding_factor;
+  } else if (my_chemistry->self_shielding_method == 2){
+    // for this method, factors are CGS Cross sections
+    my_chemistry->hi_ph_shield_factor *= 1.0;
+    my_chemistry->hi_pi_shield_factor *= 1.0;
+  }
+
+
+
   /* Calculate temperature units. */
 
   double temperature_units =  mh * POW(my_units->velocity_units, 2) / kboltz;
@@ -173,6 +199,10 @@ int _solve_chemistry(chemistry_data *my_chemistry,
     my_chemistry->HDlte, my_chemistry->HDlow,
     my_chemistry->GAHI, my_chemistry->GAH2, my_chemistry->GAHe, my_chemistry->GAHp,
     my_chemistry->GAel, my_chemistry->H2LTE, my_chemistry->gas_grain,
+    &my_chemistry->self_shielding_method, &my_chemistry->hi_ph_shield_factor,
+    &my_chemistry->hei_ph_shield_factor, &my_chemistry->heii_ph_shield_factor,
+    &my_chemistry->hi_pi_shield_factor, &my_chemistry->hei_pi_shield_factor,
+    &my_chemistry->heii_pi_shield_factor,
     &my_chemistry->use_radiative_transfer, &my_chemistry->radiative_transfer_coupled_rate_solver,
     &my_chemistry->radiative_transfer_intermediate_step, &my_chemistry->radiative_transfer_hydrogen_only,
     kphHINum, kphHeINum, kphHeIINum,

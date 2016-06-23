@@ -19,7 +19,8 @@
      &                gpldla, gphdla, hdltea, hdlowa,
      &                gaHIa, gaH2a, gaHea, gaHpa, gaela,
      &                h2ltea, gasgra,
-     &                iradtrans, photogamma, ! AJE-RT
+     &                iradshield, avgsighp, avgsighep, avgsighe2p,
+     &                k24, iradtrans, photogamma, ! AJE-RT
      &                ih2optical, iciecool, ciecoa, 
      &                icmbTfloor, iClHeat,
      &                priGridRank, priGridDim,
@@ -59,7 +60,7 @@
       integer in, jn, kn, is, js, ks, ie, je, ke, nratec, 
      &        iexpand, ih2co, ipiht, ispecies, imetal, idim,
      &        imcool, idust, igammah, ih2optical, iciecool,
-     &        iVheat, iMheat, iradtrans ! AJE-RT
+     &        iVheat, iMheat, iradtrans, iradshield ! AJE-RT
       real*8  aye, temstart, temend,
      &        utem, uxyz, uaye, urho, utim,
      &        gamma, fh, z_solar
@@ -83,7 +84,7 @@
      &        ciHeIIa(nratec), reHIIa(nratec), reHeII1a(nratec), 
      &        reHeII2a(nratec), reHeIIIa(nratec), brema(nratec),
      &        compa, piHI, piHeI, piHeII, comp_xraya, comp_temp,
-     &        gammaha
+     &        gammaha, avgsighp, avgsighep, avgsighe2p, k24
 
 !  Cloudy cooling data
 
@@ -254,7 +255,8 @@
      &                reHII, reHeII1, reHeII2, reHeIII, brem,
      &                indixe, t1, t2, logtem, tdef, edot,
      &                tgas, tgasold, p2d, tdust, metallicity, rhoH,
-     &                iradtrans, photogamma, ! AJE-RT
+     &                iradshield, avgsighp, avgsighep, avgsighe2p,
+     &                k24, iradtrans, photogamma, ! AJE-RT
      &                ih2optical, iciecool, ciecoa, cieco,
      &                icmbTfloor, iClHeat, 
      &                priGridRank, priGridDim,
