@@ -129,11 +129,11 @@ int _solve_chemistry(chemistry_data *my_chemistry,
 
   float shielding_factor = my_units->grid_dx * my_units->length_units;
 
-  my_chemistry->hi_ph_shield_factor   = my_chemistry->hi_ph_avg_cross_section*shielding_factor;
+  my_chemistry->hi_ph_shield_factor   = my_chemistry->hi_ph_avg_cross_section;
   my_chemistry->hei_ph_shield_factor  = my_chemistry->hei_ph_avg_cross_section*shielding_factor;
   my_chemistry->heii_ph_shield_factor = my_chemistry->heii_ph_avg_cross_section*shielding_factor;
 
-  my_chemistry->hi_pi_shield_factor   = my_chemistry->hi_pi_avg_cross_section*shielding_factor;
+  my_chemistry->hi_pi_shield_factor   = my_chemistry->hi_pi_avg_cross_section;
   my_chemistry->hei_pi_shield_factor  = my_chemistry->hei_pi_avg_cross_section*shielding_factor;
   my_chemistry->heii_pi_shield_factor = my_chemistry->heii_pi_avg_cross_section*shielding_factor;
 
