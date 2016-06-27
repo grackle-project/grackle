@@ -1295,6 +1295,39 @@ c -------------------------------------------------------------------
      & k26shield(i)*exp(-0.25_DKIND*HeI(i,j,k)*avgsighep_ionizing*dom)
           endif
         enddo
+
+      else if (iradshield == 3) then
+!
+!     Using Rahmati et. al. 2013 in both HI and HeI. Nothing in HeII
+!
+        do i = is+1, ie+1
+          if (itmask(i)) then
+            nSSh = 6.73e-3_DKIND *
+     &        (avgsighp_ionizing/2.49e-18_DKIND)**(-2._DKIND/3._DKIND) *
+     &        (tgas1d(i)/1.0e4_DKIND)**(0.17_DKIND) *
+     &        (k24/tbase1/1.0e-12_DKIND)**(2.0_DKIND/3.0_DKIND)
+            nratio = HI(i,j,k)*dom/nSSh
+            k24shield(i)=k24shield(i)*(0.98_DKIND*
+     &            (1.0_DKIND+nratio**(1.64_DKIND))**(-2.28_DKIND) +
+     &             0.02_DKIND*(1.0_DKIND+nratio)**(-0.84_DKIND))
+
+!
+!     Do the same for HeI
+!
+            nSSh = 6.73e-3_DKIND *
+     &        (avgsighep_ionizing/2.49e-18_DKIND)**(-2._DKIND/3._DKIND) *
+     &        (tgas1d(i)/1.0e4_DKIND)**(0.17_DKIND) *
+     &        (k26/tbase1/1.0e-12_DKIND)**(2.0_DKIND/3.0_DKIND)
+            nratio = HeI(i,j,k)*dom/nSSh
+            k26shield(i)=k26shield(i)*(0.98_DKIND*
+     &            (1.0_DKIND+nratio**(1.64_DKIND))**(-2.28_DKIND) +
+     &             0.02_DKIND*(1.0_DKIND+nratio)**(-0.84_DKIND))
+
+            k25shield(i) =
+     & k25shield(i)*exp(-0.25_DKIND*HeII(i,j,k)*avgsighe2p_ionizing*dom)
+          endif
+        enddo
+
       endif
 
 #ifdef SECONDARY_IONIZATION_NOT_YET_IMPLEMENTED

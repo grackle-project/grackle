@@ -20,7 +20,7 @@
      &                gaHIa, gaH2a, gaHea, gaHpa, gaela,
      &                h2ltea, gasgra,
      &                iradshield, avgsighp, avgsighep, avgsighe2p,
-     &                k24, iradtrans, photogamma, ! AJE-RT
+     &                k24, k26, iradtrans, photogamma, ! AJE-RT
      &                ih2optical, iciecool, ciecoa, 
      &                icmbTfloor, iClHeat,
      &                priGridRank, priGridDim,
@@ -84,7 +84,7 @@
      &        ciHeIIa(nratec), reHIIa(nratec), reHeII1a(nratec), 
      &        reHeII2a(nratec), reHeIIIa(nratec), brema(nratec),
      &        compa, piHI, piHeI, piHeII, comp_xraya, comp_temp,
-     &        gammaha, avgsighp, avgsighep, avgsighe2p, k24
+     &        gammaha, avgsighp, avgsighep, avgsighe2p, k24, k26
 
 !  Cloudy cooling data
 
@@ -256,7 +256,7 @@
      &                indixe, t1, t2, logtem, tdef, edot,
      &                tgas, tgasold, p2d, tdust, metallicity, rhoH,
      &                iradshield, avgsighp, avgsighep, avgsighe2p,
-     &                k24, iradtrans, photogamma, ! AJE-RT
+     &                k24, k26, iradtrans, photogamma, ! AJE-RT
      &                ih2optical, iciecool, ciecoa, cieco,
      &                icmbTfloor, iClHeat, 
      &                priGridRank, priGridDim,

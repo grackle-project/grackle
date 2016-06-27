@@ -28,7 +28,7 @@
      &                indixe, t1, t2, logtem, tdef, edot,
      &                tgas, tgasold, p2d, tdust, metallicity, rhoH,
      &                iradshield, avgsighp, avgsighep, avgsighe2p,
-     &                k24, iradtrans, photogamma, ! AJE-RT 
+     &                k24, k26, iradtrans, photogamma, ! AJE-RT 
      &                ih2optical, iciecool, ciecoa, cieco,
      &                icmbTfloor, iClHeat, 
      &                priGridRank, priGridDim,
@@ -92,7 +92,7 @@
      &        reHeII2a(nratec), reHeIIIa(nratec), brema(nratec),
      &        compa, piHI, piHeI, piHeII, comp_xraya, comp_temp,
      &        gammaha, gammaha_eff, avgsighp, avgsighep, avgsighe2p,
-     &        k24
+     &        k24, k26
 
 !  Cloudy cooling data
 
@@ -124,7 +124,7 @@
      &       hdlte1, hdlow1, gamma2, x, fudge, fH2,
      &       gphdl1, dom_inv, tau, ciefudge,
      &       coolunit, dbase1, tbase1, xbase1, rtunits,
-     &       nH2, nother, myde, nSSh, nratio
+     &       nH2, nother, myde, nSSh, nratio, nssh_he, nratio_he
 
 !  Slice locals
  
@@ -744,6 +744,45 @@ c  new (correct) way: (april 4, 2007)
      &              )/dom
            endif
         enddo
+
+      else if (iradshield == 3) then
+!
+!     Rahmati et. al. 2013 for HI (as above) and HeI.
+!     Exponential for HeII
+!
+
+        do i = is+1, ie+1
+           if ( itmask(i) ) then
+!            HI
+             nSSh = 6.73e-3_DKIND *
+     &         (avgsighp/2.49e-18_DKIND)**(-2._DKIND/3._DKIND)*
+     &         (tgas(i)/1.0e4_DKIND)**(0.17_DKIND)*
+     &         (k24/tbase1/1.0e-12_DKIND)**(2._DKIND/3._DKIND)
+             nratio = HI(i,j,k)*dom/nSSh
+
+!            HeI
+             nSSh_he = 6.73e-3_DKIND *
+     &         (avgsighep/2.49e-18_DKIND)**(-2._DKIND/3._DKIND)*
+     &         (tgas(i)/1.0e4_DKIND)**(0.17_DKIND)*
+     &         (k26/tbase1/1.0e-12_DKIND)**(2._DKIND/3._DKIND)
+             nratio_he = HeI(i,j,k)*dom/nSSh_he
+
+             edot(i) = edot(i) + real(ipiht, DKIND)*(
+     &            + piHi * HI (i,j,k)*
+     &       (0.98_DKIND*(1._DKIND+nratio**(1.64_DKIND))**(-2.28_DKIND)+
+     &                    0.02_DKIND*(1._DKIND+nratio)**(-0.84_DKIND))
+     &            + piHeI * HeI(i,j,k)*
+     &       (0.98_DKIND*(1._DKIND+nratio_he**(1.64_DKIND))**(-2.28_DKIND)+
+     &                    0.02_DKIND*(1._DKIND+nratio_he)**(-0.84_DKIND))
+     &            + piHeII*HeII(i,j,k)*0.25_DKIND*
+     &               exp(-avgsighe2p*0.25_DKIND*HeII(i,j,k)*dom)
+     &              )/dom
+           endif
+        enddo
+
+
+
+
 
       endif
 

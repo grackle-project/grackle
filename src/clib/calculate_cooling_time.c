@@ -51,7 +51,7 @@ extern void FORTRAN_NAME(cool_multi_time_g)(
 	double *gaHIa, double *gaH2a, double *gaHea, double *gaHpa, double *gaela,
 	double *h2ltea, double *gasgra,
         int *iradshield, double *avgsighp, double *avgsighep, double *avgsighe2p,
-        double *k24,
+        double *k24, double *k26,
         int *iradtrans, double *photogamma, // AJE-RT
 	int *ih2optical, int *iciecool, double *ciecoa,
  	int *icmbTfloor, int *iClHeat, 
@@ -172,7 +172,7 @@ int _calculate_cooling_time(chemistry_data *my_chemistry,
        my_chemistry->GAel, my_chemistry->H2LTE, my_chemistry->gas_grain,
        &my_chemistry->self_shielding_method, &my_chemistry->hi_ph_shield_factor,
        &my_chemistry->hei_ph_shield_factor, &my_chemistry->heii_ph_shield_factor,
-       &my_chemistry->k24,
+       &my_chemistry->k24, &my_chemistry->k26,
        &my_chemistry->use_radiative_transfer, gammaNum, // AJE-RT
        &my_chemistry->h2_optical_depth_approximation, 
        &my_chemistry->cie_cooling, my_chemistry->cieco,
