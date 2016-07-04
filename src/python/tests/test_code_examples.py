@@ -21,7 +21,8 @@ examples_path = os.path.join(os.path.dirname(current_path), "../..", "example")
 
 code_examples = ["c_example",
                  "cxx_example",
-                 "cxx_omp_example"]
+                 "cxx_omp_example",
+                 "fortran_example"]
 
 
 def run_command(command, cwd, env):

@@ -94,7 +94,10 @@ c     Set expansion factor to 1 for non-cosmological simulation.
 
 c     Initialize the Grackle
 
-      write(6,*) "metal_cooling:", grackle_data%metal_cooling
+      write(6,*) "primordial_chemistry:",
+     &     grackle_data%primordial_chemistry
+      write(6,*) "metal_cooling:",
+     &     grackle_data%metal_cooling
       iresult = initialize_chemistry_data(my_units)
 
 c     Set field arrays
