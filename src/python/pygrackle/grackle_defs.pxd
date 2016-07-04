@@ -19,6 +19,8 @@ cdef extern from "grackle_chemistry_data.h":
         int CaseBRecombination
         int UVbackground
         double SolarMetalFractionByMass
+
+    ctypedef struct c_chemistry_data_storage "chemistry_data_storage":
         double k24
         double k25
         double k26
@@ -42,10 +44,12 @@ cdef extern from "grackle.h":
     c_chemistry_data _set_default_chemistry_parameters()
 
     int _initialize_chemistry_data(c_chemistry_data *my_chemistry,
+                                   c_chemistry_data_storage *my_rates,
                                    c_code_units *my_units)
 
     int c_solve_chemistry "_solve_chemistry"(
                 c_chemistry_data *my_chemistry,
+                c_chemistry_data_storage *my_rates,
                 c_code_units *my_units,
                 double dt_value,
                 int grid_rank,
@@ -75,6 +79,7 @@ cdef extern from "grackle.h":
 
     int c_calculate_cooling_time "_calculate_cooling_time"(
                 c_chemistry_data *my_chemistry,
+                c_chemistry_data_storage *my_rates,
                 c_code_units *my_units,
                 int grid_rank,
                 int *grid_dimension,
@@ -104,6 +109,7 @@ cdef extern from "grackle.h":
 
     int c_calculate_gamma "_calculate_gamma"(
                 c_chemistry_data *my_chemistry,
+                c_chemistry_data_storage *my_rates,
                 c_code_units *my_units,
                 int grid_rank,
                 int *grid_dimension,
@@ -128,6 +134,7 @@ cdef extern from "grackle.h":
 
     int c_calculate_pressure "_calculate_pressure"(
                 c_chemistry_data *my_chemistry,
+                c_chemistry_data_storage *my_rates,
                 c_code_units *my_units,
                 int grid_rank,
                 int *grid_dimension,
@@ -152,6 +159,7 @@ cdef extern from "grackle.h":
 
     int c_calculate_temperature "_calculate_temperature"(
                 c_chemistry_data *my_chemistry,
+                c_chemistry_data_storage *my_rates,
                 c_code_units *my_units,
                 int grid_rank,
                 int *grid_dimension,

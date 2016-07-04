@@ -29,7 +29,7 @@ chemistry_data _set_default_chemistry_parameters(void);
 int initialize_chemistry_data(code_units *my_units);
 
 int _initialize_chemistry_data(chemistry_data *my_chemistry, 
-
+                               chemistry_data_storage *my_rates,
                                code_units *my_units);
 
 int solve_chemistry(code_units *my_units,
