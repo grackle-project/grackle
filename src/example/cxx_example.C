@@ -50,13 +50,15 @@ int main(int argc, char *argv[])
   // Set expansion factor to 1 for non-cosmological simulation.
   my_units.a_value = 1. / (1. + initial_redshift) / my_units.a_units;
 
-  // Second, create a chemistry object for parameters and rate data.
+  // Second, create a chemistry object for parameters.
   chemistry_data my_grackle_data;
   if (set_default_chemistry_parameters(&my_grackle_data) == 0) {
     fprintf(stderr, "Error in set_default_chemistry_parameters.\n");
     return EXIT_FAILURE;
   }
   // Set parameter values for chemistry.
+  // Access the parameter storage with the struct you've created
+  // or with the grackle_data pointer declared in grackle.h (see further below).
   my_grackle_data.use_grackle = 1;            // chemistry on
   my_grackle_data.with_radiative_cooling = 1; // cooling on
   my_grackle_data.primordial_chemistry = 3;   // molecular network with H, He, D
@@ -127,11 +129,11 @@ int main(int argc, char *argv[])
   int i;
   for (i = 0;i < field_size;i++) {
     my_fields.density[i] = 1.0;
-    my_fields.HI_density[i] = my_grackle_data.HydrogenFractionByMass *
+    my_fields.HI_density[i] = grackle_data->HydrogenFractionByMass *
       my_fields.density[i];
     my_fields.HII_density[i] = tiny_number * my_fields.density[i];
     my_fields.HM_density[i] = tiny_number * my_fields.density[i];
-    my_fields.HeI_density[i] = (1.0 - my_grackle_data.HydrogenFractionByMass) *
+    my_fields.HeI_density[i] = (1.0 - grackle_data->HydrogenFractionByMass) *
       my_fields.density[i];
     my_fields.HeII_density[i] = tiny_number * my_fields.density[i];
     my_fields.HeIII_density[i] = tiny_number * my_fields.density[i];
@@ -142,7 +144,7 @@ int main(int argc, char *argv[])
     my_fields.HDI_density[i] = tiny_number * my_fields.density[i];
     my_fields.e_density[i] = tiny_number * my_fields.density[i];
     // solar metallicity
-    my_fields.metal_density[i] = my_grackle_data.SolarMetalFractionByMass *
+    my_fields.metal_density[i] = grackle_data->SolarMetalFractionByMass *
       my_fields.density[i];
 
     my_fields.x_velocity[i] = 0.0;

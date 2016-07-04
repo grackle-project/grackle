@@ -150,21 +150,24 @@ int main(int argc, char *argv[])
   // Set expansion factor to 1 for non-cosmological simulation.
   my_units.a_value = 1. / (1. + initial_redshift) / my_units.a_units;
 
-  // Second, create a chemistry object for parameters and rate data.
-  if (set_default_chemistry_parameters() == 0) {
+  // Second, create a chemistry object for parameters.
+  chemistry_data my_grackle_data;
+  if (set_default_chemistry_parameters(&my_grackle_data) == 0) {
     fprintf( stderr, "Error in set_default_chemistry_parameters.\n" );
     return 0;
   }
 
   // Set parameter values for chemistry.
-  grackle_data.use_grackle            = 1;          // chemistry on
-  grackle_data.with_radiative_cooling = 1;          // cooling on
-  grackle_data.primordial_chemistry   = 0;          // fully tabulated cooling
-  grackle_data.metal_cooling          = 1;          // metal cooling on
-  grackle_data.UVbackground           = 1;          // UV background on
-  grackle_data.grackle_data_file      = "../../input/CloudyData_UVB=HM2012.h5"; // data file
+  // Access the parameter storage with the struct you've created
+  // or with the grackle_data pointer declared in grackle.h.
+  grackle_data->use_grackle            = 1;          // chemistry on
+  grackle_data->with_radiative_cooling = 1;          // cooling on
+  grackle_data->primordial_chemistry   = 0;          // fully tabulated cooling
+  grackle_data->metal_cooling          = 1;          // metal cooling on
+  grackle_data->UVbackground           = 1;          // UV background on
+  grackle_data->grackle_data_file      = "../../input/CloudyData_UVB=HM2012.h5"; // data file
 # ifdef _OPENMP
-  grackle_data.omp_nthreads           = NThread;    // number of OpenMP threads
+  grackle_data->omp_nthreads           = NThread;    // number of OpenMP threads
                                                     // (remove this line if Grackle is not compiled with OpenMP support)
 # endif
 
@@ -277,7 +280,7 @@ int main(int argc, char *argv[])
   for (int i=0; i<N3; i++)
   {
     my_fields_t1.density      [i] = D0*FLUC(FAmp);
-    my_fields_t1.metal_density[i] = grackle_data.SolarMetalFractionByMass *
+    my_fields_t1.metal_density[i] = grackle_data->SolarMetalFractionByMass *
       my_fields_t1.density[i] * FLUC(FAmp);
     my_fields_t1.x_velocity   [i] = 0.0; // velocity are not useful currently
     my_fields_t1.y_velocity   [i] = 0.0;
@@ -415,7 +418,7 @@ int main(int argc, char *argv[])
   *********************************************************************/
 
   // Set parameter values for chemistry and initialize the chemistry object again
-  grackle_data.primordial_chemistry = 3;  // molecular network with H, He, D
+  grackle_data->primordial_chemistry = 3;  // molecular network with H, He, D
 
   if ( initialize_chemistry_data(&my_units) == 0 ) {
     fprintf( stderr, "Error in initialize_chemistry_data.\n" );
@@ -714,7 +717,7 @@ float InvokeGrackle( const Routine_t Routine, const int NThread, const int NIter
 
   // set the number of OpenMP thread
   // Note that for real applications one does not need to invoke "omp_set_num_threads"
-  // explicitly. Instead one should set "grackle_data.omp_nthreads" and then call
+  // explicitly. Instead one should set "grackle_data->omp_nthreads" and then call
   // "initialize_chemistry_data".
 # ifdef _OPENMP
   omp_set_num_threads( NThread );
@@ -735,7 +738,7 @@ float InvokeGrackle( const Routine_t Routine, const int NThread, const int NIter
         for (int i=0; i<NCell; i++)
         {
           my_fields->density      [i] = D0*FLUC(FAmp);
-          my_fields->metal_density[i] = grackle_data.SolarMetalFractionByMass *
+          my_fields->metal_density[i] = grackle_data->SolarMetalFractionByMass *
             my_fields->density[i] * FLUC(FAmp);
         }
 
@@ -751,7 +754,7 @@ float InvokeGrackle( const Routine_t Routine, const int NThread, const int NIter
         for (int i=0; i<NCell; i++)
         {
           my_fields->density      [i] = D0*FLUC(FAmp);
-          my_fields->metal_density[i] = grackle_data.SolarMetalFractionByMass *
+          my_fields->metal_density[i] = grackle_data->SolarMetalFractionByMass *
             my_fields->density[i] * FLUC(FAmp);
         }
 
@@ -764,7 +767,7 @@ float InvokeGrackle( const Routine_t Routine, const int NThread, const int NIter
         for (int i=0; i<NCell; i++)
         {
           my_fields->density      [i] = D0*FLUC(FAmp);
-          my_fields->metal_density[i] = grackle_data.SolarMetalFractionByMass *
+          my_fields->metal_density[i] = grackle_data->SolarMetalFractionByMass *
             my_fields->density[i] * FLUC(FAmp);
         }
 
@@ -781,14 +784,14 @@ float InvokeGrackle( const Routine_t Routine, const int NThread, const int NIter
         for (int i=0; i<NCell; i++)
         {
           my_fields->density      [i] = D0*FLUC(FAmp);
-          my_fields->metal_density[i] = grackle_data.SolarMetalFractionByMass *
+          my_fields->metal_density[i] = grackle_data->SolarMetalFractionByMass *
             my_fields->density[i] * FLUC(FAmp);
         }
 
         // initialize the fields to be updated
         for (int i=0; i<NCell; i++)
         {
-          my_fields->HI_density   [i] = grackle_data.HydrogenFractionByMass * my_fields->density[i];
+          my_fields->HI_density   [i] = grackle_data->HydrogenFractionByMass * my_fields->density[i];
           my_fields->HeI_density  [i] = my_fields->density[i] - my_fields->HI_density[i];
           my_fields->HII_density  [i] = tiny_number * my_fields->density[i];
           my_fields->HM_density   [i] = tiny_number * my_fields->density[i];
@@ -812,7 +815,7 @@ float InvokeGrackle( const Routine_t Routine, const int NThread, const int NIter
         for (int i=0; i<NCell; i++)
         {
           my_fields->density      [i] = D0*FLUC(FAmp);
-          my_fields->metal_density[i] = grackle_data.SolarMetalFractionByMass *
+          my_fields->metal_density[i] = grackle_data->SolarMetalFractionByMass *
             my_fields->density[i] * FLUC(FAmp);
         }
 
