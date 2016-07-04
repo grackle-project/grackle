@@ -134,7 +134,8 @@ c     set temperature units
          HDI_density(i) = tiny_number * density(i)
          e_density(i) = tiny_number * density(i)
 c        solar metallicity
-         metal_density(i) = 0.0204 * density(i)
+         metal_density(i) = grackle_data%SolarMetalFractionByMass *
+     &        density(i)
 
          x_velocity(i) = 0.0
          y_velocity(i) = 0.0
