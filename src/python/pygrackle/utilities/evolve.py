@@ -130,7 +130,7 @@ def calculate_collapse_factor(pressure, density):
     return force_factor
 
 def evolve_constant_density(fc, final_temperature=None,
-                            final_time=None, safety_factor=0.01):
+                            final_time=None, safety_factor=0.01, verbose=True):
     my_chemistry = fc.chemistry_data
 
     if final_temperature is None and final_time is None:
@@ -149,7 +149,8 @@ def evolve_constant_density(fc, final_temperature=None,
             break
 
         fc.calculate_temperature()
-        print "Evolve constant density - t: %e yr, rho: %e g/cm^3, T: %e K." % \
+        if verbose:
+            print "Evolve constant density - t: %e yr, rho: %e g/cm^3, T: %e K." % \
             (current_time * my_chemistry.time_units / sec_per_year,
              fc["density"][0] * my_chemistry.density_units,
              fc["temperature"][0])
