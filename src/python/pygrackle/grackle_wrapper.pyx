@@ -122,6 +122,67 @@ cdef class chemistry_data:
         def __set__(self, val):
             self.data.SolarMetalFractionByMass = val
 
+    property use_volumetric_heating_rate:
+        def __get__(self):
+            return self.data.use_volumetric_heating_rate
+        def __set__(self, val):
+            self.data.use_volumetric_heating_rate = val
+
+    property use_specific_heating_rate:
+        def __get__(self):
+            return self.data.use_specific_heating_rate
+        def __set__(self, val):
+            self.data.use_specific_heating_rate = val
+
+    property use_radiative_transfer:
+        def __get__(self):
+            return self.data.use_radiative_transfer
+        def __set__(self, val):
+            self.data.use_radiative_transfer = val
+
+    property self_shielding_method:
+        def __get__(self):
+            return self.data.self_shielding_method
+        def __set__(self, val):
+            self.data.self_shielding_method = val
+
+    property hi_ph_avg_cross_section:
+        def __get__(self):
+            return self.data.hi_ph_avg_cross_section
+        def __set__(self, val):
+            self.data.hi_ph_avg_cross_section = val
+
+    property hei_ph_avg_cross_section:
+        def __get__(self):
+            return self.data.hei_ph_avg_cross_section
+        def __set__(self, val):
+            self.data.hei_ph_avg_cross_section = val
+
+    property heii_ph_avg_cross_section:
+        def __get__(self):
+            return self.data.heii_ph_avg_cross_section
+        def __set__(self, val):
+            self.data.heii_ph_avg_cross_section = val
+
+    property hi_pi_avg_cross_section:
+        def __get__(self):
+            return self.data.hi_pi_avg_cross_section
+        def __set__(self, val):
+            self.data.hi_pi_avg_cross_section = val
+
+    property hei_pi_avg_cross_section:
+        def __get__(self):
+            return self.data.hei_pi_avg_cross_section
+        def __set__(self, val):
+            self.data.hei_pi_avg_cross_section = val
+
+    property heii_pi_avg_cross_section:
+        def __get__(self):
+            return self.data.heii_pi_avg_cross_section
+        def __set__(self, val):
+            self.data.heii_pi_avg_cross_section = val
+    
+
     property k24:
         def __get__(self):
             return self.data.k24
@@ -263,6 +324,11 @@ def solve_chemistry(fc, my_dt):
     cdef gr_float *metal_density = get_field(fc, "metal")
     cdef gr_float *volumetric_heating_rate = get_field(fc, "volumetric_heating_rate")
     cdef gr_float *specific_heating_rate = get_field(fc, "specific_heating_rate")
+    cdef gr_float *gammaNum = get_field(fc, "gammaNum")
+    cdef gr_float *kphHINum = get_field(fc, "kphHINum")
+    cdef gr_float *kphHeINum = get_field(fc, "kphHeINum")
+    cdef gr_float *kphHeIINum = get_field(fc, "kphHeIINum")
+    cdef gr_float *kdissH2INum = get_field(fc, "kdissH2INum")
 
     c_solve_chemistry (
                 &my_chemistry,
@@ -291,7 +357,12 @@ def solve_chemistry(fc, my_dt):
                 e_density,
                 metal_density,
                 volumetric_heating_rate,
-                specific_heating_rate)
+                specific_heating_rate,
+                gammaNum,
+                kphHINum,
+                kphHeINum,
+                kphHeIINum,
+                kdissH2INum)
     
 def calculate_cooling_time(fc):
     cdef int grid_rank = 1
@@ -329,6 +400,7 @@ def calculate_cooling_time(fc):
     cdef gr_float *e_density = get_field(fc, "de")
     cdef gr_float *metal_density = get_field(fc, "metal")
     cdef gr_float *cooling_time = get_field(fc, "cooling_time")
+    cdef gr_float *gammaNum = get_field(fc, "gammaNum")
     cdef gr_float *volumetric_heating_rate = get_field(fc, "volumetric_heating_rate")
     cdef gr_float *specific_heating_rate = get_field(fc, "specific_heating_rate")
 
@@ -358,6 +430,7 @@ def calculate_cooling_time(fc):
                 e_density,
                 metal_density,
                 cooling_time,
+                gammaNum,
                 volumetric_heating_rate,
                 specific_heating_rate)
 

@@ -37,6 +37,8 @@ _fluid_names[2] = _fluid_names[1] + \
 _fluid_names[3] = _fluid_names[2] + \
   ["DI", "DII", "HDI"]
 
+_rad_trans_names = ['gammaNum', 'kphHINum', 'kphHeINum', 'kphHeIINum', 'kdissH2Num']
+
 class FluidContainer(dict):
     def __init__(self, chemistry_data, n_vals, dtype="float64",
                  itype="int64"):
@@ -47,6 +49,9 @@ class FluidContainer(dict):
         for fluid in _fluid_names[self.chemistry_data.primordial_chemistry] + \
             _nd_fields:
             self._setup_fluid(fluid)
+        if self.chemistry_data.use_radiative_transfer:
+            for fluid in _rad_trans_names:
+                self._setup_fluid(fluid)
 
     def _setup_fluid(self, fluid_name):
         self[fluid_name] = np.zeros(self.n_vals, self.dtype)
