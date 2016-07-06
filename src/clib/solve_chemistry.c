@@ -129,21 +129,25 @@ int _solve_chemistry(chemistry_data *my_chemistry,
 
   float shielding_factor = my_units->grid_dx * my_units->length_units;
 
-  my_chemistry->hi_ph_shield_factor   = my_chemistry->hi_ph_avg_cross_section;
+  my_chemistry->hi_ph_shield_factor   = my_chemistry->hi_ph_avg_cross_section*shielding_factor;
   my_chemistry->hei_ph_shield_factor  = my_chemistry->hei_ph_avg_cross_section*shielding_factor;
   my_chemistry->heii_ph_shield_factor = my_chemistry->heii_ph_avg_cross_section*shielding_factor;
 
-  my_chemistry->hi_pi_shield_factor   = my_chemistry->hi_pi_avg_cross_section;
+  my_chemistry->hi_pi_shield_factor   = my_chemistry->hi_pi_avg_cross_section*shielding_factor;
   my_chemistry->hei_pi_shield_factor  = my_chemistry->hei_pi_avg_cross_section*shielding_factor;
   my_chemistry->heii_pi_shield_factor = my_chemistry->heii_pi_avg_cross_section*shielding_factor;
 
-  if (my_chemistry->self_shielding_method == 1){
-    my_chemistry->hi_ph_shield_factor *= shielding_factor;
-    my_chemistry->hi_pi_shield_factor *= shielding_factor;
-  } else if (my_chemistry->self_shielding_method == 2){
-    // for this method, factors are CGS Cross sections
-    my_chemistry->hi_ph_shield_factor *= 1.0;
-    my_chemistry->hi_pi_shield_factor *= 1.0;
+  if (my_chemistry->self_shielding_method == 2){
+    // for this method, HI factors are CGS Cross sections
+    my_chemistry->hi_ph_shield_factor = my_chemistry->hi_ph_avg_cross_section;
+    my_chemistry->hi_pi_shield_factor = my_chemistry->hi_pi_avg_cross_section;
+  } else if (my_chemistry->self_shielding_method == 3){
+    // CGS cross sections for HI and HeI - not HeII
+    my_chemistry->hi_ph_shield_factor = my_chemistry->hi_ph_avg_cross_section;
+    my_chemistry->hi_pi_shield_factor = my_chemistry->hi_pi_avg_cross_section;
+
+    my_chemistry->hei_ph_shield_factor = my_chemistry->hei_ph_avg_cross_section;
+    my_chemistry->hei_pi_shield_factor = my_chemistry->hei_pi_avg_cross_section;
   }
 
 

@@ -437,7 +437,8 @@ c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 fo
      &                indixe, t1, t2, logtem, tdef, edot,
      &                tgas, tgasold, p2d, tdust, metallicity, rhoH, 
      &                iradshield, avgsighp_heating, avgsighep_heating,
-     &                avgsighe2p_heating, k24, k26,
+     &                avgsighe2p_heating, avgsighp_ionizing,
+     &                avgsighep_ionizing, avgsighe2p_ionizing, k24, k26,
      &                iradtrans, photogamma, ! AJE-RT
      &                ih2optical, iciecool, ciecoa, cieco,
      &                icmbTfloor, iClHeat, 
@@ -1312,7 +1313,7 @@ c -------------------------------------------------------------------
      &             0.02_DKIND*(1.0_DKIND+nratio)**(-0.84_DKIND))
 
 !
-!     Do the same for HeI
+!     Apply same equations to HeI (assumes HeI closely follows HI)
 !
             nSSh = 6.73e-3_DKIND *
      &        (avgsighep_ionizing/2.49e-18_DKIND)**(-2._DKIND/3._DKIND) *
