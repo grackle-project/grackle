@@ -221,6 +221,13 @@ be set to their desired values by accessing ``grackle_data``.  See
    This structure holds all grackle run-time parameters, which are listed in
    :ref:`parameters`.
 
+.. c:type:: chemistry_data_storage
+
+   This structure holds all chemistry and cooling rate arrays.  All functions
+   described here make use of an internally stored instance of this type.
+   The user will not normally encounter this data type, except when using the
+   :ref:`internal_functions`.
+
 .. code-block:: c++
 
   chemistry_data my_grackle_data;
@@ -472,6 +479,8 @@ not intend to use.
 .. note:: The electron mass density should be scaled by the ratio of the
    proton mass to the electron mass such that the electron density in the
    code is the electron number density times the **proton** mass.
+
+.. _functions:
 
 Calling the Available Functions
 -------------------------------
