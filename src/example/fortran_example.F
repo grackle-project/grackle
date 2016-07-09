@@ -2,8 +2,7 @@
 
       USE ISO_C_BINDING
       implicit None
-#include "grackle_fortran_types.def"
-#include "grackle_fortran_interface.def"
+#include "grackle.def"
 
       integer iresult, i
 
