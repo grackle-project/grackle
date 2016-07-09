@@ -164,6 +164,16 @@ expansion factor) must be set.  When using the proper frame, :c:data:`a_units`
    Conversion factor to be multiplied by the expansion factor such that
    a\ :sub:`true`\  = a\ :sub:`code`\ * :c:data:`a_units`.
 
+.. c:var:: double a_value
+
+   The current value of the expansion factor in units of :c:data:`a_units`.
+   The conversion from redshift to expansion factor in code units is given
+   by :c:data:`a_value` = 1 / (1 + z) / :c:data:`a_units`.  If the
+   simulation is not cosmological, :c:data:`a_value` should be set to 1.
+   Note, if :c:data:`a_value` is set to something other than 1 in a
+   non-cosmological simulation, all redshift dependent chemistry and
+   cooling terms will be set corresponding to the redshift given.
+
 .. code-block:: c++
 
   code_units my_units;
@@ -173,6 +183,7 @@ expansion factor) must be set.  When using the proper frame, :c:data:`a_units`
   my_units.time_units = 3.15569e13;  // 1 Myr
   my_units.velocity_units = my_units.length_units / my_units.time_units;
   my_units.a_units = 1.0;            // units for the expansion factor
+  my_units.a_value = 1. / (1. + current_redshift) / my_units.a_units;
 
 If :c:data:`comoving_coordinates` is set to 1, it is assumed that the fields being 
 passed to the solver are in the comoving frame.  Hence, the units must 
@@ -195,24 +206,26 @@ densities to stay close to 1.0.
 Chemistry Data
 --------------
 
-The main Grackle header file contains a structure of type :c:type:`chemistry_data` 
-called ``grackle_data``, which 
-contains all of the parameters that control the behavior of the solver as well as 
-all of the actual chemistry and cooling rate data.  The routine, 
-:c:func:`set_default_chemistry_parameters` is responsible for the initial setup of this 
-structure and for setting of all the default parameter values.  The parameters can 
-then be set to their desired values.  See :ref:`parameters` for a full list of the 
-available parameters.  The function will return an integer indicating success 
-(1) or failure (0).
+The main Grackle header file contains a structure of type
+:c:type:`chemistry_data` called ``grackle_data``, which contains all of the
+parameters that control the behavior of the solver.  The routine,
+:c:func:`set_default_chemistry_parameters` is responsible for the initial setup
+of this structure and for setting of all the default parameter values.  This
+function must be handed a pointer to an instance of :c:type:`chemistry_data`,
+which will then be attached to ``grackle_data``.  The function will return an
+integer indicating success (1) or failure (0).  After this, parameters can then
+be set to their desired values by accessing ``grackle_data``.  See
+:ref:`parameters` for a full list of the available parameters.
 
 .. c:type:: chemistry_data
 
-   This structure holds all grackle run time parameter and all chemistry and
-   cooling data arrays.
+   This structure holds all grackle run-time parameters, which are listed in
+   :ref:`parameters`.
 
 .. code-block:: c++
 
-  if (set_default_chemistry_parameters() == 0) {
+  chemistry_data my_grackle_data;
+  if (set_default_chemistry_parameters(&my_grackle_data) == 0) {
     fprintf(stderr, "Error in set_default_chemistry_parameters.\n");
   }
 
@@ -225,11 +238,9 @@ available parameters.  The function will return an integer indicating success
   grackle_data.grackle_data_file = "CloudyData_UVB=HM2012.h5"; // data file
 
 Once the desired parameters have been set, the chemistry and cooling rates 
-must be initialized with the :c:func:`initialize_chemistry_data`.  This function 
-also requires the initial value of the expansion factor for setting internal 
-units.  If the simulation is not cosmological, the expansion factor should be 
-set to 1.  The initializing function will return an integer indicating success 
-(1) or failure (0).
+must be initialized by calling :c:func:`initialize_chemistry_data` with a
+pointer to the :c:data:`code_units` struct created earlier.  This function
+will return an integer indicating success (1) or failure (0).
 
 .. code-block:: c++
 
@@ -239,7 +250,7 @@ set to 1.  The initializing function will return an integer indicating success
   double a_value = 1. / (1. + initial_redshift) / my_units.a_units;
 
   // Finally, initialize the chemistry object.
-  if (initialize_chemistry_data(&my_units, a_value) == 0) {
+  if (initialize_chemistry_data(&my_units) == 0) {
     fprintf(stderr, "Error in initialize_chemistry_data.\n");
     return 0;
   }
@@ -257,7 +268,7 @@ command, "make omp-on", before compiling.  See :ref:`compiler-settings` for
 more information on how to change settings.
 
 For an example of how to compile your code with OpenMP, see the
-**cxx_table_example.C** code example (:ref:`examples`).  Once your code has
+**cxx_omp_example.C** code example (:ref:`examples`).  Once your code has
 been compiled with OpenMP enabled, the number of threads used can be controlled
 by setting the :c:data:`omp_nthreads` parameter, stored in the ``grackle_data``
 struct.
