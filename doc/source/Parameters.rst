@@ -27,9 +27,7 @@ For all on/off integer flags, 0 is off and 1 is on.
 
     - 0: no chemistry network.  Radiative cooling for primordial
       species is solved by interpolating from lookup tables
-      calculated with Cloudy.  A simplified set of functions are
-      available (though not required) for use in this mode.  For more
-      information, see :ref:`tabulated-mode`.
+      calculated with Cloudy.
     - 1: 6-species atomic H and He.  Active species: H, H\ :sup:`+`,
       He, He\ :sup:`+`, \ :sup:`++`, e\ :sup:`-`.
     - 2: 9-species network including atomic species above and species
@@ -152,6 +150,18 @@ For all on/off integer flags, 0 is off and 1 is on.
    absorption (giving a sawtooth pattern), taken from `Haiman & Abel,
    & Rees (2000) <http://adsabs.harvard.edu/abs/2000ApJ...534...11H>`_.
    Default: 0.
+
+.. c:var:: int use_volumetric_heating_rate
+
+   Flag to signal that an array of volumetric heating rates is being
+   provided in the :c:data:`volumetric_heating_rate` field of the
+   :c:data:`grackle_field_data` struct.  Default: 0.
+
+.. c:var:: int use_specific_heating_rate
+
+   Flag to signal that an array of specific heating rates is being
+   provided in the :c:data:`specific_heating_rate` field of the
+   :c:data:`grackle_field_data` struct.  Default: 0.
 
 .. c:var:: int omp_nthreads
 
