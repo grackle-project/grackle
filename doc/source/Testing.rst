@@ -39,11 +39,12 @@ or from the **src/python** directory by typing ``py.test``:
   collected 13 items
 
   tests/test_chemistry.py ...
+  tests/test_code_examples.py ....
   tests/test_examples.py ........
   tests/test_flake8.py .
   tests/test_primordial.py .
 
-  ================================== 13 passed in 26.18 seconds ==================================
+  ================================== 17 passed in 68.83 seconds ==================================
 
 Now it's time to :ref:`integrate grackle into your simulation code
 <integration>`.
