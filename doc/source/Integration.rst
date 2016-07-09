@@ -3,9 +3,12 @@
 Adding Grackle to Your Simulation Code
 ======================================
 
-This document follows the example files, **cxx_example.C** and 
-**cxx_table_example.C**.  For a list of all available functions, see the 
-:ref:`reference`.
+The majority of this document follows the implementation of Grackle in
+a C++ simulation code.  For more information on adding Grackle to a
+Fortran code, see :ref:`fortran`.  Full implementation examples for
+C, C++, and Fortran are also available in the Grackle source.  See
+:ref:`examples` for more information.  For a list of all available
+functions, see the :ref:`reference`.
 
 .. _examples:
 
@@ -13,37 +16,16 @@ Example Executables
 -------------------
 
 The grackle source code contains examples for C, C++, and Fortran codes.  
-They are located in the **src/example** directory and detail different uses 
-of the grackle library.
+They are located in the **src/example** directory and provide examples
+of calling all of grackle's functions.
 
-    * **c_example.c** - full functionality C example that uses the units
-      and chemistry data structures.
+    * **c_example.c** - C example
 
-    * **c_table_example.c** - tabulated cooling only (no chemistry) C example
-      that uses the units and chemistry data structures.
+    * **cxx_example.C** - C++ example
 
-    * **c_example_nostruct.c** - full functionality C example that uses the
-      :c:func:`initialize_grackle_` function instead of data structures.
+    * **cxx_omp_example.C** - C++ example using OpenMP
 
-    * **c_table_example_nostruct.c** - tabulated cooling only (no chemistry)
-      C example that uses the :c:func:`initialize_grackle_` function instead
-      of data structures.
-
-    * **cxx_example.C** - full functionality C++ example that uses the units
-      and chemistry data structures.
-
-    * **cxx_table_example.C** - tabulated cooling only (no chemistry) C++
-      example that uses the units and chemistry data structures.
-
-    * **cxx_omp_example.C** - C++ example using both the non-equilibrium
-      and tabulated solvers wth OpenMP.  Run the executable with the -h
-      flag to see a full list of options.
-
-    * **fortran_example.F** - full functionality Fortran example that uses
-      the :c:func:`initialize_grackle_` function.
-
-    * **fortran_table_example.F** - tabulated cooling only (no chemistry)
-      Fortran example that uses the :c:func:`initialize_grackle_` function.
+    * **fortran_example.F** - Fortran example
 
 Once you have already installed the grackle library, you can build the examples 
 by typing *make* and the name of the file without extension.  For example, to 
@@ -57,41 +39,41 @@ To run the example, make sure to add the path to the directory containing
 the installed **libgrackle.so** to your LD_LIBRARY_PATH (or 
 DYLD_LIBRARY_PATH on Mac).
 
-This document follows **cxx_example.C**, which details the use of the 
-full-featured grackle functions.  The table examples illustrate 
-the use of the Grackle with fully tabulated cooling functions only.  In 
-this mode, a simplified set of functions are available.  For information 
-on these, see :ref:`tabulated-mode`.
-
 Header Files
 ------------
 
-Six header files are installed with the grackle library.  They are:
+Seven header files are installed with the grackle library.  They are:
 
     * **grackle.h** - the primary header file, containing declarations for all
       the available functions and data structures.  This is the only header
       file that needs to be included for C and C++ codes.
 
-    * **grackle_types.h** - defines the variable type :c:type:`gr_float` to be
-      used for the baryon fields passed to the grackle functions.  This can be
-      either a 4 or 8 byte float, allowing the code to be easily configured for
-      either single or double precision baryon fields.
+    * **grackle.def** - the header file to be used in Fortran codes.  Only
+      this file needs to be included.
+
+    * **grackle_types.h** - defines the variable type :c:type:`gr_float`, the
+      field structure :c:type:`grackle_field_data`, and the units structure
+      :c:type:`code_units`.
+
+    * **grackle_chemistry_data.h** - defines the :c:type:`chemistry_data`
+      structure, which stores all Grackle run-time parameters and the
+      :c:type:`chemistry_data_storage` structure, which stores all chemistry
+      and cooling rate data.
 
     * **grackle_fortran_types.def** - similar to **grackle_types.h**, but used
       with Fortran codes.  This defines the variable type :c:type:`R_PREC` as
       either real\*4 or real\*8.
 
+    * **grackle_fortran_interface.def** - defines the Fortran interface,
+      including the Fortran analogs of :c:type:`grackle_field_data`,
+      :c:type:`code_units`, and :c:type:`grackle_chemistry_data`.
+
     * **grackle_macros.h** - contains some macros used internally.
 
-    * **chemistry_data.h** - defines the primary data structure which all run
-      time parameters as well as the chemistry, cooling, and UV background data.
-
-    * **code_units.h** - defines the structure containing conversions from code
-      units to CGS.
-
-The only source file that needs to be included in your simulation code is 
-**grackle.h**.  Since this is a C++ example and the Grackle is pure C, we 
-must surround the include with the 'extern "C"' directive.
+For C and C++ codes, the only source file that needs to be included in your
+simulation code is **grackle.h**.  For Fortran, use **grackle.def**.  Since
+Grackle is written in C, including **grackle.h** in a C++ code requires the
+*extern "C"* directive.
 
 .. code-block:: c++
 
@@ -129,7 +111,8 @@ Enabling Output
 
 By default, grackle will not print anything but error messages.  However,
 a short summary of the running configuration can be printed by setting
-``grackle_verbose`` to 1.
+``grackle_verbose`` to 1.  In a parallel code, it is recommended that
+output only be enabled for the root process.
 
 .. code-block:: c++
 
@@ -470,87 +453,7 @@ Calculating the Gamma Field
     return 0;
   }
 
-.. _tabulated-mode:
+.. _fortran:
 
-Pure Tabulated Mode
--------------------
-
-If you only intend to run simulations using the fully tabulated cooling 
-(:c:data:`primordial_chemistry` set to 0), then a simplified set of functions are 
-available.  These functions do not require pointers to be given for the 
-field arrays for the chemistry species densities.  See the 
-**cxx_table_example.C**, **c_table_example.c**, 
-**c_table_example_nostruct.c**, and **fortran_table_example.F** files in the 
-**src/example** directory for examples.
-
-.. note:: No simplified function is available for the calculation of the gamma
-   field since gamma is only altered in Grackle by the presence of H\ :sub:`2`\.
-
-Solve the Cooling
-+++++++++++++++++
-
-.. code-block:: c++
-
-  // some timestep (one million years)
-  double dt = 3.15e7 * 1e6 / my_units.time_units;
-
-  if (solve_chemistry_table(&my_units, a_value, dt,
-                            grid_rank, grid_dimension,
-                            grid_start, grid_end,
-                            density, energy,
-                            x_velocity, y_velocity, z_velocity,
-                            metal_density) == 0) {
-    fprintf(stderr, "Error in solve_chemistry.\n");
-    return 0;
-  }
-
-Calculating the Cooling Time
-++++++++++++++++++++++++++++
-
-.. code-block:: c++
-
-  gr_float *cooling_time;
-  cooling_time = new gr_float[field_size];
-  if (calculate_cooling_time_table(&my_units, a_value,
-                                   grid_rank, grid_dimension,
-                                   grid_start, grid_end,
-                                   density, energy,
-                                   x_velocity, y_velocity, z_velocity,
-                                   metal_density, 
-                                   cooling_time) == 0) {
-    fprintf(stderr, "Error in calculate_cooling_time.\n");
-    return 0;
-  }
-
-Calculating the Temperature Field
-+++++++++++++++++++++++++++++++++
-
-.. code-block:: c++
-
-  gr_float *temperature;
-  temperature = new gr_float[field_size];
-  if (calculate_temperature_table(&my_units, a_value,
-                                  grid_rank, grid_dimension,
-                                  grid_start, grid_end,
-                                  density, energy,
-                                  metal_density, 
-                                  temperature) == 0) {
-    fprintf(stderr, "Error in calculate_temperature.\n");
-    return 0;
-  }
-
-Calculating the Pressure Field
-++++++++++++++++++++++++++++++
-
-.. code-block:: c++
-
-  gr_float *pressure;
-  pressure = new gr_float[field_size];
-  if (calculate_pressure_table(&my_units, a_value,
-                               grid_rank, grid_dimension,
-                               grid_start, grid_end,
-                               density, energy,
-                               pressure) == 0) {
-    fprintf(stderr, "Error in calculate_pressure.\n");
-    return 0;
-  }
+The Fortran Interface
+---------------------
