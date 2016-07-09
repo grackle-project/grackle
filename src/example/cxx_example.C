@@ -115,7 +115,6 @@ int main(int argc, char *argv[])
   // for metal_cooling = 1
   my_fields.metal_density   = new gr_float[field_size];
 
-  // set constant heating rate terms (set as NULL pointers if not wanted)
   // volumetric heating rate (provide in units [erg s^-1 cm^-3])
   my_fields.volumetric_heating_rate = new gr_float[field_size];
   // specific heating rate (provide in units [egs s^-1 g^-1]

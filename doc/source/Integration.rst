@@ -4,8 +4,7 @@ Adding Grackle to Your Simulation Code
 ======================================
 
 The majority of this document follows the implementation of Grackle in
-a C++ simulation code.  For more information on adding Grackle to a
-Fortran code, see :ref:`fortran`.  Full implementation examples for
+a C++ simulation code.  Full implementation examples for
 C, C++, and Fortran are also available in the Grackle source.  See
 :ref:`examples` for more information.  For a list of all available
 functions, see the :ref:`reference`.
@@ -285,61 +284,190 @@ possible, as determined by the system or as configured by setting the
 Creating the Necessary Fields
 -----------------------------
 
-With the :c:data:`code_units` and :c:data:`chemistry_data` structures ready, the only thing 
-left is to create the arrays to carry the species densities.  Pointers for all 
-fields must be created, but the arrays only need to be allocated if the fields 
-are going to be used by the chemistry network.  Variables containing the 
-dimensionality of the data, the active dimensions (not including the ghost 
-zones), and the starting and ending indices for each dimensions must also be 
-created.
+As of version 3.0, the various density and energy fields are passed to
+Grackle's functions using a struct of type :c:data:`grackle_field_data`.
+The struct contains information about the size and shape of the field arrays
+and pointers to all field arrays.
+
+.. c:type:: grackle_field_data
+
+   This structure is used to pass field data to Grackle's functions.  It
+   contains the following members:
+
+.. c:var:: int grid_rank
+
+   The active dimensions (not including ignored boundary zones) of the field
+   arrays.
+
+.. c:var:: int* grid_dimension
+
+   This should point to an array of size :c:data:`grid_rank`.  This stores
+   the size of the field arrays in each dimension.
+
+.. c:var:: int* grid_start
+
+   This should point to an array of size :c:data:`grid_rank`.  This stores
+   the starting value in each dimension for the field data.  This can be
+   used to ignore boundary cells in grid data.
+
+.. c:var:: int* grid_end
+
+   This should point to an array of size :c:data:`grid_rank`.  This stores
+   the end value in each dimension for the field data.  This can be used
+   to ignore boundary cells in grid data.
+
+.. c:var:: gr_float* density
+
+   Pointer to the density field array.
+
+.. c:var:: gr_float* HI_density
+
+   Pointer to the HI density field array.  Used when
+   :c:data:`primordial_chemistry` is set to 1, 2, or 3.
+
+.. c:var:: gr_float* HII_density
+
+   Pointer to the HII density field array.  Used when
+   :c:data:`primordial_chemistry` is set to 1, 2, or 3.
+
+.. c:var:: gr_float* HM_density
+
+   Pointer to the H\ :sup:`-`\  density field array.  Used when
+   :c:data:`primordial_chemistry` is set to 2 or 3.
+
+.. c:var:: gr_float* HeI_density
+
+   Pointer to the HeI density field array.  Used when
+   :c:data:`primordial_chemistry` is set to 1, 2, or 3.
+
+.. c:var:: gr_float* HeII_density
+
+   Pointer to the HeII density field array.  Used when
+   :c:data:`primordial_chemistry` is set to 1, 2, or 3.
+
+.. c:var:: gr_float* HeIII_density
+
+   Pointer to the HeIII density field array.  Used when
+   :c:data:`primordial_chemistry` is set to 1, 2, or 3.
+
+.. c:var:: gr_float* H2I_density
+
+   Pointer to the H\ :sub:`2`\  density field array.  Used when
+   :c:data:`primordial_chemistry` is set to 2 or 3.
+
+.. c:var:: gr_float* H2II_density
+
+   Pointer to the H\ :sub:`2`\ \ :sup:`+`\  density field
+   array.  Used when :c:data:`primordial_chemistry` is set to
+   2 or 3.
+
+.. c:var:: gr_float* DI_density
+
+   Pointer to the DI density field array.  Used when
+   :c:data:`primordial_chemistry` is set to 3.
+
+.. c:var:: gr_float* DII_density
+
+   Pointer to the DII density field array.  Used when
+   :c:data:`primordial_chemistry` is set to 3.
+
+.. c:var:: gr_float* HDI_density
+
+   Pointer to the HD density field array.  Used when
+   :c:data:`primordial_chemistry` is set to 3.
+
+.. c:var:: gr_float* e_density
+
+   Pointer to the electron density field array.  Used when
+   :c:data:`primordial_chemistry` is set to 1, 2, or 3.  Note,
+   the electron mass density should be scaled by the ratio of the
+   proton mass to the electron mass such that the electron density
+   in the code is the electron number density times the **proton**
+   mass.
+
+.. c:var:: gr_float* metal_density
+
+   Pointer to the metal density field array.  Used when
+   :c:data:`metal_cooling` is set to 1.
+
+.. c:var:: gr_float* internal_energy
+
+   Pointer to the internal energy field array.
+
+.. c:var:: gr_float* x_velocity
+
+   Pointer to the x-velocity field array.  Currently not used.
+
+.. c:var:: gr_float* y_velocity
+
+   Pointer to the y-velocity field array.  Currently not used.
+
+.. c:var:: gr_float* z_velocity
+
+   Pointer to the z-velocity field array.  Currently not used.
+
+.. c:var:: gr_float* volumetric_heating_rate
+
+   Pointer to values containing volumetric heating rates.  Rates
+   should be in units of erg/s/cm\ :sup:`3`\.  Used when
+   :c:data:`use_volumetric_heating_rate` is set to 1.
+
+.. c:var:: gr_float* specific_heating_rate
+
+   Pointer to values containing specific heating rates.  Rates
+   should be in units of erg/s/g.  Used when
+   :c:data:`use_specific_heating_rate` is set to 1.
+
+It is not necessary to attach a pointer to any field that you do
+not intend to use.
 
 .. code-block:: c++
 
-  // Allocate field arrays.
-  gr_float *density, *energy, *x_velocity, *y_velocity, *z_velocity,
-    *HI_density, *HII_density, *HM_density,
-    *HeI_density, *HeII_density, *HeIII_density,
-    *H2I_density, *H2II_density,
-    *DI_density, *DII_density, *HDI_density,
-    *e_density, *metal_density;
+  // Create struct for storing grackle field data
+  grackle_field_data my_fields;
 
   // Set grid dimension and size.
   // grid_start and grid_end are used to ignore ghost zones.
-  int field_size = 10;
-  int grid_rank = 3;
-  // If grid rank is less than 3, set the other dimensions to 1 and  
-  // start indices and end indices to 0.
-  int grid_dimension[3], grid_start[3], grid_end[3];
+  int field_size = 1;
+  my_fields.grid_rank = 3;
+  my_fields.grid_dimension = new int[3];
+  my_fields.grid_start = new int[3];
+  my_fields.grid_end = new int[3];
   for (int i = 0;i < 3;i++) {
-    grid_dimension[i] = 1; // the active dimension not including ghost zones.
-    grid_start[i] = 0;
-    grid_end[i] = 0;
+    my_fields.grid_dimension[i] = 1;
+    my_fields.grid_start[i] = 0;
+    my_fields.grid_end[i] = 0;
   }
-  grid_dimension[0] = field_size;
-  grid_end[0] = field_size - 1;
+  my_fields.grid_dimension[0] = field_size;
+  my_fields.grid_end[0] = field_size - 1;
 
-  density       = new gr_float[field_size];
-  energy        = new gr_float[field_size];
-  x_velocity    = new gr_float[field_size];
-  y_velocity    = new gr_float[field_size];
-  z_velocity    = new gr_float[field_size];
+  // Set field arrays.
+  my_fields.density         = new gr_float[field_size];
+  my_fields.internal_energy = new gr_float[field_size];
+  my_fields.x_velocity      = new gr_float[field_size];
+  my_fields.y_velocity      = new gr_float[field_size];
+  my_fields.z_velocity      = new gr_float[field_size];
   // for primordial_chemistry >= 1
-  HI_density    = new gr_float[field_size];
-  HII_density   = new gr_float[field_size];
-  HeI_density   = new gr_float[field_size];
-  HeII_density  = new gr_float[field_size];
-  HeIII_density = new gr_float[field_size];
-  e_density     = new gr_float[field_size];
+  my_fields.HI_density      = new gr_float[field_size];
+  my_fields.HII_density     = new gr_float[field_size];
+  my_fields.HeI_density     = new gr_float[field_size];
+  my_fields.HeII_density    = new gr_float[field_size];
+  my_fields.HeIII_density   = new gr_float[field_size];
+  my_fields.e_density       = new gr_float[field_size];
   // for primordial_chemistry >= 2
-  HM_density    = new gr_float[field_size];
-  H2I_density   = new gr_float[field_size];
-  H2II_density  = new gr_float[field_size];
+  my_fields.HM_density      = new gr_float[field_size];
+  my_fields.H2I_density     = new gr_float[field_size];
+  my_fields.H2II_density    = new gr_float[field_size];
   // for primordial_chemistry >= 3
-  DI_density    = new gr_float[field_size];
-  DII_density   = new gr_float[field_size];
-  HDI_density   = new gr_float[field_size];
+  my_fields.DI_density      = new gr_float[field_size];
+  my_fields.DII_density     = new gr_float[field_size];
+  my_fields.HDI_density     = new gr_float[field_size];
   // for metal_cooling = 1
-  metal_density = new gr_float[field_size];
+  my_fields.metal_density   = new gr_float[field_size];
+  // volumetric heating rate (provide in units [erg s^-1 cm^-3])
+  my_fields.volumetric_heating_rate = new gr_float[field_size];
+  // specific heating rate (provide in units [egs s^-1 g^-1]
+  my_fields.specific_heating_rate = new gr_float[field_size];
 
 .. note:: The electron mass density should be scaled by the ratio of the
    proton mass to the electron mass such that the electron density in the
@@ -351,11 +479,10 @@ Calling the Available Functions
 There are five functions available, one to solve the chemistry and cooling 
 and four others to calculate the cooling time, temperature, pressure, and the 
 ratio of the specific heats (gamma).  The arguments required are the 
-:c:data:`code_units` structure, the value of the expansion factor, the field size and 
-dimension variables, and the field arrays themselves.  For the chemistry solving 
-routine, a timestep must also be given.  For the four field calculator routines, 
-the array to be filled with the field values must be created and passed as an 
-argument as well.
+:c:data:`code_units` structure and the :c:data:`grackle_field_data` struct.
+For the chemistry solving routine, a timestep must also be given.  For the
+four field calculator routines, the array to be filled with the field values
+must be created and passed as an argument as well.
 
 Solve the Chemistry and Cooling
 +++++++++++++++++++++++++++++++
@@ -365,16 +492,7 @@ Solve the Chemistry and Cooling
   // some timestep (one million years)
   double dt = 3.15e7 * 1e6 / my_units.time_units;
 
-  if (solve_chemistry(&my_units, a_value, dt,
-                      grid_rank, grid_dimension,
-                      grid_start, grid_end,
-                      density, energy,
-                      x_velocity, y_velocity, z_velocity,
-                      HI_density, HII_density, HM_density,
-                      HeI_density, HeII_density, HeIII_density,
-                      H2I_density, H2II_density,
-                      DI_density, DII_density, HDI_density,
-                      e_density, metal_density) == 0) {
+  if (solve_chemistry(&my_units, &my_fields, dt) == 0) {
     fprintf(stderr, "Error in solve_chemistry.\n");
     return 0;
   }
@@ -386,16 +504,7 @@ Calculating the Cooling Time
 
   gr_float *cooling_time;
   cooling_time = new gr_float[field_size];
-  if (calculate_cooling_time(&my_units, a_value,
-                             grid_rank, grid_dimension,
-                             grid_start, grid_end,
-                             density, energy,
-                             x_velocity, y_velocity, z_velocity,
-                             HI_density, HII_density, HM_density,
-                             HeI_density, HeII_density, HeIII_density,
-                             H2I_density, H2II_density,
-                             DI_density, DII_density, HDI_density,
-                             e_density, metal_density, 
+  if (calculate_cooling_time(&my_units, &my_fields,
                              cooling_time) == 0) {
     fprintf(stderr, "Error in calculate_cooling_time.\n");
     return 0;
@@ -408,18 +517,10 @@ Calculating the Temperature Field
 
   gr_float *temperature;
   temperature = new gr_float[field_size];
-  if (calculate_temperature(&my_units, a_value,
-                            grid_rank, grid_dimension,
-                            grid_start, grid_end,
-                            density, energy,
-                            HI_density, HII_density, HM_density,
-                            HeI_density, HeII_density, HeIII_density,
-                            H2I_density, H2II_density,
-                            DI_density, DII_density, HDI_density,
-                            e_density, metal_density, 
+  if (calculate_temperature(&my_units, &my_fields,
                             temperature) == 0) {
     fprintf(stderr, "Error in calculate_temperature.\n");
-    return 0;
+    return EXIT_FAILURE;
   }
 
 Calculating the Pressure Field
@@ -429,18 +530,10 @@ Calculating the Pressure Field
 
   gr_float *pressure;
   pressure = new gr_float[field_size];
-  if (calculate_pressure(&my_units, a_value,
-                         grid_rank, grid_dimension,
-                         grid_start, grid_end,
-                         density, energy,
-                         HI_density, HII_density, HM_density,
-                         HeI_density, HeII_density, HeIII_density,
-                         H2I_density, H2II_density,
-                         DI_density, DII_density, HDI_density,
-                         e_density, metal_density,
+  if (calculate_pressure(&my_units, &my_fields,
                          pressure) == 0) {
     fprintf(stderr, "Error in calculate_pressure.\n");
-    return 0;
+    return EXIT_FAILURE;
   }
 
 Calculating the Gamma Field
@@ -450,21 +543,8 @@ Calculating the Gamma Field
 
   gr_float *gamma;
   gamma = new gr_float[field_size];
-  if (calculate_gamma(&my_units, a_value,
-                      grid_rank, grid_dimension,
-                      grid_start, grid_end,
-                      density, energy,
-                      HI_density, HII_density, HM_density,
-                      HeI_density, HeII_density, HeIII_density,
-                      H2I_density, H2II_density,
-                      DI_density, DII_density, HDI_density,
-                      e_density, metal_density,
+  if (calculate_gamma(&my_units, &my_fields,
                       gamma) == 0) {
     fprintf(stderr, "Error in calculate_gamma.\n");
-    return 0;
+    return EXIT_FAILURE;
   }
-
-.. _fortran:
-
-The Fortran Interface
----------------------
