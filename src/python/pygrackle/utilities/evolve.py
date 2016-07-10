@@ -130,7 +130,8 @@ def calculate_collapse_factor(pressure, density):
     return force_factor
 
 def evolve_constant_density(fc, final_temperature=None,
-                            final_time=None, safety_factor=0.01, verbose=True):
+                            final_time=None, safety_factor=0.01, verbose=True,
+                            ignore_time_evolution = False):
     my_chemistry = fc.chemistry_data
 
     if final_temperature is None and final_time is None:
@@ -156,6 +157,30 @@ def evolve_constant_density(fc, final_temperature=None,
              fc["temperature"][0])
         fc.solve_chemistry(dt)
 
+        if not ignore_time_evolution: # save time evolution of fields
+            for field in fc.density_fields:
+                data[field].append(fc[field][0] * my_chemistry.density_units)
+            data["energy"].append(fc["energy"][0])
+            fc.calculate_temperature()
+            data["temperature"].append(fc["temperature"][0])
+            fc.calculate_pressure()
+            data["pressure"].append(fc["pressure"][0])
+            data["time"].append(current_time * my_chemistry.time_units)
+
+        elif current_time <= 1.0E-20: # else, save only first timestep
+            for field in fc.density_fields:
+                data[field].append(fc[field][0] * my_chemistry.density_units)
+            data["energy"].append(fc["energy"][0])
+            fc.calculate_temperature()
+            data["temperature"].append(fc["temperature"][0])
+            fc.calculate_pressure()
+            data["pressure"].append(fc["pressure"][0])
+            data["time"].append(current_time * my_chemistry.time_units)
+
+
+        current_time += dt
+
+    if ignore_time_evolution: # save final timestep
         for field in fc.density_fields:
             data[field].append(fc[field][0] * my_chemistry.density_units)
         data["energy"].append(fc["energy"][0])
@@ -164,7 +189,7 @@ def evolve_constant_density(fc, final_temperature=None,
         fc.calculate_pressure()
         data["pressure"].append(fc["pressure"][0])
         data["time"].append(current_time * my_chemistry.time_units)
-        current_time += dt
+
 
     for field in data:
         if field in fc.density_fields:

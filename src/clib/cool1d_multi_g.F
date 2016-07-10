@@ -740,10 +740,10 @@ c  new (correct) way: (april 4, 2007)
      &            + piHi * HI (i,j,k)*
      &       (0.98_DKIND*(1._DKIND+nratio**(1.64_DKIND))**(-2.28_DKIND)+
      &                    0.02_DKIND*(1._DKIND+nratio)**(-0.84_DKIND))
-     &            + piHeI * HeI(i,j,k)*0.25_DKIND*
-     &               exp(-avgsighep_heating*0.25_DKIND*HeI(i,j,k)*dom)
-     &            + piHeII*HeII(i,j,k)*0.25_DKIND*
-     &               exp(-avgsighe2p_heating*0.25_DKIND*HeII(i,j,k)*dom)
+!     &            + piHeI * HeI(i,j,k)*0.25_DKIND*
+!     &               exp(-avgsighep_heating*0.25_DKIND*HeI(i,j,k)*dom)
+!     &            + piHeII*HeII(i,j,k)*0.25_DKIND*
+!     &               exp(-avgsighe2p_heating*0.25_DKIND*HeII(i,j,k)*dom)
      &              )/dom
            endif
         enddo
@@ -780,8 +780,8 @@ c  new (correct) way: (april 4, 2007)
      &            + piHeI * HeI(i,j,k)*
      &       (0.98_DKIND*(1._DKIND+nratio_he**(1.64_DKIND))**(-2.28_DKIND)+
      &                    0.02_DKIND*(1._DKIND+nratio_he)**(-0.84_DKIND))
-     &            + piHeII*HeII(i,j,k)*0.25_DKIND*
-     &               exp(-avgsighe2p_heating*0.25_DKIND*HeII(i,j,k)*dom)
+!     &            + piHeII*HeII(i,j,k)*0.25_DKIND*
+!     &               exp(-avgsighe2p_heating*0.25_DKIND*HeII(i,j,k)*dom)
      &              )/dom
            endif
         enddo

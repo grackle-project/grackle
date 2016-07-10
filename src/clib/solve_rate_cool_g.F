@@ -1290,10 +1290,10 @@ c -------------------------------------------------------------------
      &            (1.0_DKIND+nratio**(1.64_DKIND))**(-2.28_DKIND) +
      &             0.02_DKIND*(1.0_DKIND+nratio)**(-0.84_DKIND))
 
-            k25shield(i) = 
-     & k25shield(i)*exp(-0.25_DKIND*HeII(i,j,k)*avgsighe2p_ionizing*dom)
-            k26shield(i) = 
-     & k26shield(i)*exp(-0.25_DKIND*HeI(i,j,k)*avgsighep_ionizing*dom)
+            k25shield(i) = 0.0_DKIND
+!     & k25shield(i)*exp(-0.25_DKIND*HeII(i,j,k)*avgsighe2p_ionizing*dom)
+            k26shield(i) = 0.0_DKIND
+!     & k26shield(i)*exp(-0.25_DKIND*HeI(i,j,k)*avgsighep_ionizing*dom)
           endif
         enddo
 
@@ -1324,8 +1324,8 @@ c -------------------------------------------------------------------
      &            (1.0_DKIND+nratio**(1.64_DKIND))**(-2.28_DKIND) +
      &             0.02_DKIND*(1.0_DKIND+nratio)**(-0.84_DKIND))
 
-            k25shield(i) =
-     & k25shield(i)*exp(-0.25_DKIND*HeII(i,j,k)*avgsighe2p_ionizing*dom)
+            k25shield(i) = 0.0_DKIND
+!     & k25shield(i)*exp(-0.25_DKIND*HeII(i,j,k)*avgsighe2p_ionizing*dom)
           endif
         enddo
 
