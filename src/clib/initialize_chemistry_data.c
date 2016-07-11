@@ -31,6 +31,7 @@ extern chemistry_data_storage grackle_rates;
 void auto_show_config(FILE *fp);
 void auto_show_flags(FILE *fp);
 void auto_show_version(FILE *fp);
+void show_parameters(FILE *fp, chemistry_data *my_chemistry);
 
 int initialize_cloudy_data(chemistry_data *my_chemistry,
                            chemistry_data_storage *my_rates,
@@ -91,6 +92,8 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
     auto_show_config(fptr);
     fprintf(fptr, "Grackle build flags:\n");
     auto_show_flags(fptr);
+    fprintf(fptr, "Grackle run-time parameters:\n");
+    show_parameters(fptr, my_chemistry);
     fclose(fptr);
 
     auto_show_version(stderr);
@@ -324,3 +327,82 @@ int initialize_chemistry_data(code_units *my_units)
   return SUCCESS;
 }
 
+void show_parameters(FILE *fp, chemistry_data *my_chemistry)
+{
+  fprintf(fp, "use_grackle                       = %d\n",
+          my_chemistry->use_grackle);
+  fprintf(fp, "with_radiative_cooling            = %d\n",
+          my_chemistry->with_radiative_cooling);
+  fprintf(fp, "primordial_chemistry              = %d\n",
+          my_chemistry->primordial_chemistry);
+  fprintf(fp, "metal_cooling                     = %d\n",
+          my_chemistry->metal_cooling);
+  fprintf(fp, "UVbackground                      = %d\n",
+          my_chemistry->UVbackground);
+  fprintf(fp, "grackle_data_file                 = %s\n",
+          my_chemistry->grackle_data_file);
+  fprintf(fp, "cmb_temperature_floor             = %d\n",
+          my_chemistry->cmb_temperature_floor);
+  fprintf(fp, "Gamma                             = %g\n",
+          my_chemistry->Gamma);
+  fprintf(fp, "h2_on_dust                        = %d\n",
+          my_chemistry->h2_on_dust);
+  fprintf(fp, "photoelectric_heating             = %d\n",
+          my_chemistry->photoelectric_heating);
+  fprintf(fp, "photoelectric_heating_rate        = %g\n",
+          my_chemistry->photoelectric_heating_rate);
+  fprintf(fp, "use_volumetric_heating_rate       = %d\n",
+          my_chemistry->use_volumetric_heating_rate);
+  fprintf(fp, "use_specific_heating_rate         = %d\n",
+          my_chemistry->use_specific_heating_rate);
+  fprintf(fp, "three_body_rate                   = %d\n",
+          my_chemistry->three_body_rate);
+  fprintf(fp, "cie_cooling                       = %d\n",
+          my_chemistry->cie_cooling);
+  fprintf(fp, "h2_optical_depth_approximation    = %d\n",
+          my_chemistry->h2_optical_depth_approximation);
+  fprintf(fp, "ih2co                             = %d\n",
+          my_chemistry->ih2co);
+  fprintf(fp, "ipiht                             = %d\n",
+          my_chemistry->ipiht);
+  fprintf(fp, "HydrogenFractionByMass            = %g\n",
+          my_chemistry->HydrogenFractionByMass);
+  fprintf(fp, "DeuteriumToHydrogenRatio          = %g\n",
+          my_chemistry->DeuteriumToHydrogenRatio);
+  fprintf(fp, "SolarMetalFractionByMass          = %g\n",
+          my_chemistry->SolarMetalFractionByMass);
+  fprintf(fp, "NumberOfTemperatureBins           = %d\n",
+          my_chemistry->NumberOfTemperatureBins);
+  fprintf(fp, "CaseBRecombination                = %d\n",
+          my_chemistry->CaseBRecombination);
+  fprintf(fp, "TemperatureStart                  = %g\n",
+          my_chemistry->TemperatureStart);
+  fprintf(fp, "TemperatureEnd                    = %g\n",
+          my_chemistry->TemperatureEnd);
+  fprintf(fp, "NumberOfDustTemperatureBins       = %d\n",
+          my_chemistry->NumberOfDustTemperatureBins);
+  fprintf(fp, "DustTemperatureStart              = %g\n",
+          my_chemistry->DustTemperatureStart);
+  fprintf(fp, "DustTemperatureEnd                = %g\n",
+          my_chemistry->DustTemperatureEnd);
+  fprintf(fp, "Compton_xray_heating              = %d\n",
+          my_chemistry->Compton_xray_heating);
+  fprintf(fp, "LWbackground_sawtooth_suppression = %d\n",
+          my_chemistry->LWbackground_sawtooth_suppression);
+  fprintf(fp, "LWbackground_intensity            = %g\n",
+          my_chemistry->LWbackground_intensity);
+  fprintf(fp, "UVbackground_redshift_on          = %g\n",
+          my_chemistry->UVbackground_redshift_on);
+  fprintf(fp, "UVbackground_redshift_off         = %g\n",
+          my_chemistry->UVbackground_redshift_off);
+  fprintf(fp, "UVbackground_redshift_fullon      = %g\n",
+          my_chemistry->UVbackground_redshift_fullon);
+  fprintf(fp, "UVbackground_redshift_drop        = %g\n",
+          my_chemistry->UVbackground_redshift_drop);
+  fprintf(fp, "cloudy_electron_fraction_factor   = %g\n",
+          my_chemistry->cloudy_electron_fraction_factor);
+# ifdef _OPENMP
+  fprintf(fp, "omp_nthreads                      = %d\n",
+          my_chemistry->omp_nthreads);
+# endif
+}
