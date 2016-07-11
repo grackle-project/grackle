@@ -712,13 +712,13 @@ c  new (correct) way: (april 4, 2007)
         do i = is+1, ie+1
            if (itmask(i)) then
              edot(i) = edot(i) + real(ipiht,DKIND)*(
-     &                 + piHI *HI(i,j,k)*
-     &                    exp(-avgsighp_heating*HI(i,j,k)*dom)
-     &                 + piHeI *HeI(i,j,k)*0.25_DKIND*
-     &                    exp(-avgsighep_heating*0.25_DKIND*HeI(i,j,k)*dom)
-     &                 + piHeII*HeII(i,j,k)*0.25_DKIND*
-     &                    exp(-avgsighe2p_heating*0.25_DKIND*HeII(i,j,k)*dom)
-     &                 )/dom
+     &            + piHI *HI(i,j,k)*
+     &              exp(-avgsighp_heating*HI(i,j,k)*dom)
+     &            + piHeI *HeI(i,j,k)*0.25_DKIND*
+     &              exp(-avgsighep_heating*0.25_DKIND*HeI(i,j,k)*dom)
+     &            + piHeII*HeII(i,j,k)*0.25_DKIND*
+     &              exp(-avgsighe2p_heating*0.25_DKIND*HeII(i,j,k)*dom)
+     &             )/dom
            endif
         enddo
 
@@ -768,21 +768,21 @@ c  new (correct) way: (april 4, 2007)
 !            HeI self shielding ratio
 !
              nSSh_he = 6.73e-3_DKIND *
-     &         (avgsighep_ionizing/2.49e-18_DKIND)**(-2._DKIND/3._DKIND)*
-     &         (tgas(i)/1.0e4_DKIND)**(0.17_DKIND)*
-     &         (k26/tbase1/1.0e-12_DKIND)**(2._DKIND/3._DKIND)
+     &        (avgsighep_ionizing/2.49e-18_DKIND)**(-2._DKIND/3._DKIND)*
+     &        (tgas(i)/1.0e4_DKIND)**(0.17_DKIND)*
+     &        (k26/tbase1/1.0e-12_DKIND)**(2._DKIND/3._DKIND)
              nratio_he = HeI(i,j,k)*dom/nSSh_he
 
              edot(i) = edot(i) + real(ipiht, DKIND)*(
      &            + piHi * HI (i,j,k)*
-     &       (0.98_DKIND*(1._DKIND+nratio**(1.64_DKIND))**(-2.28_DKIND)+
-     &                    0.02_DKIND*(1._DKIND+nratio)**(-0.84_DKIND))
-     &            + piHeI * HeI(i,j,k)*
-     &       (0.98_DKIND*(1._DKIND+nratio_he**(1.64_DKIND))**(-2.28_DKIND)+
-     &                    0.02_DKIND*(1._DKIND+nratio_he)**(-0.84_DKIND))
+     &    (0.98_DKIND*(1._DKIND+nratio**(1.64_DKIND))**(-2.28_DKIND)+
+     &                   0.02_DKIND*(1._DKIND+nratio)**(-0.84_DKIND))
+     &           + piHeI * HeI(i,j,k)*
+     &    (0.98_DKIND*(1._DKIND+nratio_he**(1.64_DKIND))**(-2.28_DKIND)+
+     &                 0.02_DKIND*(1._DKIND+nratio_he)**(-0.84_DKIND))
 !     &            + piHeII*HeII(i,j,k)*0.25_DKIND*
 !     &               exp(-avgsighe2p_heating*0.25_DKIND*HeII(i,j,k)*dom)
-     &              )/dom
+     &           )/dom
            endif
         enddo
 
