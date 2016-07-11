@@ -36,7 +36,7 @@ int initialize_UVbackground_data(chemistry_data *my_chemistry,
 
 
   if (grackle_verbose)
-    fprintf(stderr, "Initializing UV background.\n");
+    fprintf(stdout, "Initializing UV background.\n");
 
 
   // Read in UV background data from hdf5 file.
@@ -46,7 +46,7 @@ int initialize_UVbackground_data(chemistry_data *my_chemistry,
   herr_t      h5_error = -1;
 
   if (grackle_verbose)
-    fprintf(stderr, "Reading UV background data from %s.\n", 
+    fprintf(stdout, "Reading UV background data from %s.\n",
             my_chemistry->grackle_data_file);
   file_id = H5Fopen(my_chemistry->grackle_data_file, 
                     H5F_ACC_RDONLY, H5P_DEFAULT);
@@ -240,9 +240,9 @@ int initialize_UVbackground_data(chemistry_data *my_chemistry,
 
   // Print out some information about the dataset just read in.
   if (grackle_verbose) {
-    fprintf(stderr, "UV background information:\n");
-    fprintf(stderr, "  %s\n",info_string);
-    fprintf(stderr, "  z_min = %6.3f\n  z_max = %6.3f\n",
+    fprintf(stdout, "UV background information:\n");
+    fprintf(stdout, "  %s\n",info_string);
+    fprintf(stdout, "  z_min = %6.3f\n  z_max = %6.3f\n",
             my_rates->UVbackground_table.zmin,
             my_rates->UVbackground_table.zmax);
   }
@@ -254,9 +254,9 @@ int initialize_UVbackground_data(chemistry_data *my_chemistry,
   my_chemistry->UVbackground_redshift_drop   = my_rates->UVbackground_table.zmin;
 
   if (grackle_verbose) {
-    fprintf(stderr, "Setting UVbackground_redshift_on to %f.\n",
+    fprintf(stdout, "Setting UVbackground_redshift_on to %f.\n",
             my_chemistry->UVbackground_redshift_on);
-    fprintf(stderr, "Setting UVbackground_redshift_off to %f.\n",
+    fprintf(stdout, "Setting UVbackground_redshift_off to %f.\n",
             my_chemistry->UVbackground_redshift_off);
   }
 

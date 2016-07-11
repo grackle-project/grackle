@@ -14,6 +14,7 @@
 #include <stdlib.h> 
 #include <string.h>
 #include <stdio.h>
+#include <time.h>
 #include <math.h>
 #include "grackle_macros.h"
 #include "grackle_types.h"
@@ -86,7 +87,15 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
 # endif
 
   if (grackle_verbose) {
+    time_t timer;
+    char tstr[80];
+    struct tm* tm_info;
+    time(&timer);
+    tm_info = localtime(&timer);
+    strftime(tstr, 26, "%Y-%m-%d %H:%M:%S", tm_info);
+
     FILE *fptr = fopen("GRACKLE_INFO", "w");
+    fprintf(fptr, "%s\n", tstr);
     auto_show_version(fptr);
     fprintf(fptr, "Grackle build options:\n");
     auto_show_config(fptr);
@@ -96,12 +105,10 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
     show_parameters(fptr, my_chemistry);
     fclose(fptr);
 
-    auto_show_version(stderr);
-    fprintf(stderr, "Initializing grackle data.\n");
-    fprintf(stderr, "with_radiative_cooling: %d.\n", my_chemistry->with_radiative_cooling);
-    fprintf(stderr, "primordial_chemistry: %d.\n", my_chemistry->primordial_chemistry);
-    fprintf(stderr, "metal_cooling: %d.\n", my_chemistry->metal_cooling);
-    fprintf(stderr, "UVbackground: %d.\n", my_chemistry->UVbackground);
+    auto_show_version(stdout);
+    fprintf(stdout, "Initializing grackle data.\n");
+    fprintf(stdout, "Grackle run-time parameters:\n");
+    show_parameters(stdout, my_chemistry);
 
 #   ifdef _OPENMP
     int omp_nthread, omp_chunk_size;
@@ -112,16 +119,16 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
 #   pragma omp master
     { omp_nthread = omp_get_num_threads(); }
 
-    fprintf( stderr, "OpenMP: on\n" );
-    fprintf( stderr, "  num_threads: %d\n", omp_nthread );
-    fprintf( stderr, "  schedule: %s\n", ( omp_schedule == omp_sched_static  ) ? "static"  :
+    fprintf( stdout, "OpenMP: on\n" );
+    fprintf( stdout, "  num_threads: %d\n", omp_nthread );
+    fprintf( stdout, "  schedule: %s\n", ( omp_schedule == omp_sched_static  ) ? "static"  :
                                          ( omp_schedule == omp_sched_dynamic ) ? "dynamic" :
                                          ( omp_schedule == omp_sched_guided  ) ? "guided"  :
                                          ( omp_schedule == omp_sched_auto    ) ? "auto"    :
                                                                                  "unknown" );
-    fprintf( stderr, "  chunk size: %d\n", omp_chunk_size );
+    fprintf( stdout, "  chunk size: %d\n", omp_chunk_size );
 #   else
-    fprintf( stderr, "OpenMP: off\n" );
+    fprintf( stdout, "OpenMP: off\n" );
 #   endif
   }
 
