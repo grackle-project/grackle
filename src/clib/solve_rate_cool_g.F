@@ -1304,7 +1304,7 @@ c -------------------------------------------------------------------
         do i = is+1, ie+1
           if (itmask(i)) then
             nSSh = 6.73e-3_DKIND *
-     &        (avgsighp_ionizing/2.49e-18_DKIND)**(-2._DKIND/3._DKIND) *
+     &        (avgsighp_ionizing/2.49e-18_DKIND)**(-2._DKIND/3._DKIND)*
      &        (tgas1d(i)/1.0e4_DKIND)**(0.17_DKIND) *
      &        (k24/tbase1/1.0e-12_DKIND)**(2.0_DKIND/3.0_DKIND)
             nratio = HI(i,j,k)*dom/nSSh
@@ -1316,8 +1316,8 @@ c -------------------------------------------------------------------
 !     Apply same equations to HeI (assumes HeI closely follows HI)
 !
             nSSh = 6.73e-3_DKIND *
-     &        (avgsighep_ionizing/2.49e-18_DKIND)**(-2._DKIND/3._DKIND) *
-     &        (tgas1d(i)/1.0e4_DKIND)**(0.17_DKIND) *
+     &        (avgsighep_ionizing/2.49e-18_DKIND)**(-2._DKIND/3._DKIND)*
+     &        (tgas1d(i)/1.0e4_DKIND)**(0.17_DKIND)*
      &        (k26/tbase1/1.0e-12_DKIND)**(2.0_DKIND/3.0_DKIND)
             nratio = HeI(i,j,k)*dom/nSSh
             k26shield(i)=k26shield(i)*(0.98_DKIND*
@@ -1820,8 +1820,8 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
      &             + 2._DKIND*k18(i)* H2II(i,j,k)* de(i,j,k)/2._DKIND
      &             +      k19(i)* H2II(i,j,k)* HM(i,j,k)/2._DKIND
      &             + 2._DKIND*k31   * H2I(i,j,k)/2._DKIND
-            if (iradtrans .eq. 1)
-     &          scoef = scoef+ 2._DKIND* kdissH2I(i,j,k)* H2I(i,j,k)/2._DKIND !AJE-RT
+            if (iradtrans .eq. 1) ! AJE-RT
+     &      scoef = scoef+2._DKIND* kdissH2I(i,j,k)* H2I(i,j,k)/2._DKIND
             acoef  =      k1(i) * de(i,j,k)
      &             +      k7(i) * de(i,j,k)  
      &             +      k8(i) * HM(i,j,k)
@@ -1857,7 +1857,8 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
      &             +    k57(i) * HI(i,j,k) * HI(i,j,k)
      &             +    k58(i) * HI(i,j,k) * HeI(i,j,k)/4._DKIND
      &             + k24shield(i)*HI(i,j,k)
-            if (iradtrans .eq. 1) scoef = scoef + kphHI(i,j,k) * HI(i,j,k) ! AJE-RT
+            if (iradtrans .eq. 1) 
+     &          scoef = scoef + kphHI(i,j,k) * HI(i,j,k) ! AJE-RT
 
             acoef  =    k2(i)  * de(i,j,k)
      &             +    k9(i)  * HI(i,j,k)
