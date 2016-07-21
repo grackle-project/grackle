@@ -25,9 +25,9 @@ Downloading
 -----------
 
 Grackle is available in a mercurial repository 
-`here <https://bitbucket.org/grackle/grackle>`_.  The mercurial site 
-is `here <http://mercurial.selenic.com/>`_ and an excellent tutorial can be 
-found `here <http://hginit.com/>`_.  With mercurial 
+`here <https://bitbucket.org/grackle/grackle>`__.  The mercurial site 
+is `here <http://mercurial.selenic.com/>`__ and an excellent tutorial can be 
+found `here <http://hginit.com/>`__.  With mercurial 
 installed, grackle can be obtained with the following command:
 
 .. highlight:: none
@@ -111,11 +111,14 @@ chose ``Make.mach.darwin``, type:
 Custom make files can be saved and loaded from a **.grackle** directory in the 
 home directory.
 
+.. _compiler-settings:
+
 Compiler Settings
 +++++++++++++++++
 
-There are two compile options available for setting the precision of 
-baryon fields and optimization.  To see them, type:
+There are three compile options available for setting the precision of 
+baryon fields, compiler optimization, and enabling OpenMP.  To see them,
+type:
 
 .. highlight:: none
 
@@ -128,6 +131,7 @@ baryon fields and optimization.  To see them, type:
 
    CONFIG_PRECISION  [precision-{32,64}]                     : 64
    CONFIG_OPT  [opt-{warn,debug,high,aggressive}]            : high
+   CONFIG_OMP  [omp-{on,off}]                                : off
 
 For example, to change the optimization to high, type:
 
@@ -220,10 +224,10 @@ wrong during linking.
     Success!
   
     ~/grackle/src/example $ ./cxx_example
-    
-    The Grackle Version 2.1
+
+    The Grackle Version 2.2
     Mercurial Branch   default
-    Mercurial Revision 98538c5ba2d5
+    Mercurial Revision b4650914153d
 
     Initializing grackle data.
     with_radiative_cooling: 1.
@@ -252,4 +256,5 @@ wrong during linking.
     Pressure = 3.345738e+34.
     gamma = 1.666645e+00.
 
-Now it's time to integrate grackle into your simulation code: :ref:`integration`
+In order to verify that Grackle is fully functional, try :ref:`running the
+test suite <testing>`.

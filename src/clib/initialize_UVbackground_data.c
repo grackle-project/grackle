@@ -24,7 +24,8 @@ extern int grackle_verbose;
 int read_dataset(hid_t file_id, char *dset_name, double *buffer);
 
 // Initialize UV Background data
-int initialize_UVbackground_data(chemistry_data *my_chemistry)
+int initialize_UVbackground_data(chemistry_data *my_chemistry,
+                                 chemistry_data_storage *my_rates)
 {
   long long Nz;
 
@@ -35,7 +36,7 @@ int initialize_UVbackground_data(chemistry_data *my_chemistry)
 
 
   if (grackle_verbose)
-    fprintf(stderr, "Initializing UV background.\n");
+    fprintf(stdout, "Initializing UV background.\n");
 
 
   // Read in UV background data from hdf5 file.
@@ -45,7 +46,7 @@ int initialize_UVbackground_data(chemistry_data *my_chemistry)
   herr_t      h5_error = -1;
 
   if (grackle_verbose)
-    fprintf(stderr, "Reading UV background data from %s.\n", 
+    fprintf(stdout, "Reading UV background data from %s.\n",
             my_chemistry->grackle_data_file);
   file_id = H5Fopen(my_chemistry->grackle_data_file, 
                     H5F_ACC_RDONLY, H5P_DEFAULT);
@@ -106,24 +107,24 @@ int initialize_UVbackground_data(chemistry_data *my_chemistry)
 
 
   // Now allocate memory for UV background table.
-  my_chemistry->UVbackground_table.Nz = Nz;
+  my_rates->UVbackground_table.Nz = Nz;
 
-  my_chemistry->UVbackground_table.z = malloc(Nz * sizeof(double));
-  my_chemistry->UVbackground_table.k24 = malloc(Nz * sizeof(double));
-  my_chemistry->UVbackground_table.k25 = malloc(Nz * sizeof(double));
-  my_chemistry->UVbackground_table.k26 = malloc(Nz * sizeof(double));
+  my_rates->UVbackground_table.z = malloc(Nz * sizeof(double));
+  my_rates->UVbackground_table.k24 = malloc(Nz * sizeof(double));
+  my_rates->UVbackground_table.k25 = malloc(Nz * sizeof(double));
+  my_rates->UVbackground_table.k26 = malloc(Nz * sizeof(double));
 
   if (my_chemistry->primordial_chemistry > 1) {
-    my_chemistry->UVbackground_table.k27 = malloc(Nz * sizeof(double));
-    my_chemistry->UVbackground_table.k28 = malloc(Nz * sizeof(double));
-    my_chemistry->UVbackground_table.k29 = malloc(Nz * sizeof(double));
-    my_chemistry->UVbackground_table.k30 = malloc(Nz * sizeof(double));
-    my_chemistry->UVbackground_table.k31 = malloc(Nz * sizeof(double));
+    my_rates->UVbackground_table.k27 = malloc(Nz * sizeof(double));
+    my_rates->UVbackground_table.k28 = malloc(Nz * sizeof(double));
+    my_rates->UVbackground_table.k29 = malloc(Nz * sizeof(double));
+    my_rates->UVbackground_table.k30 = malloc(Nz * sizeof(double));
+    my_rates->UVbackground_table.k31 = malloc(Nz * sizeof(double));
   }    
 
-  my_chemistry->UVbackground_table.piHI = malloc(Nz * sizeof(double));
-  my_chemistry->UVbackground_table.piHeII = malloc(Nz * sizeof(double));
-  my_chemistry->UVbackground_table.piHeI = malloc(Nz * sizeof(double));
+  my_rates->UVbackground_table.piHI = malloc(Nz * sizeof(double));
+  my_rates->UVbackground_table.piHeII = malloc(Nz * sizeof(double));
+  my_rates->UVbackground_table.piHeI = malloc(Nz * sizeof(double));
 
 
   // Now read everything.
@@ -131,7 +132,7 @@ int initialize_UVbackground_data(chemistry_data *my_chemistry)
 
   // *** Redshift ***
   if(! read_dataset(file_id, "/UVBRates/z",
-                    my_chemistry->UVbackground_table.z) ) {
+                    my_rates->UVbackground_table.z) ) {
     fprintf(stderr, "Error reading dataset 'z' in %s.\n",
             my_chemistry->grackle_data_file);
     return FAIL;
@@ -139,7 +140,7 @@ int initialize_UVbackground_data(chemistry_data *my_chemistry)
 
   // *** k24 ***
   if(! read_dataset(file_id, "/UVBRates/Chemistry/k24",
-                    my_chemistry->UVbackground_table.k24) ) {
+                    my_rates->UVbackground_table.k24) ) {
     fprintf(stderr, "Error reading dataset '/UVBRates/Chemistry/k24' in %s.\n",
             my_chemistry->grackle_data_file);
     return FAIL;
@@ -147,7 +148,7 @@ int initialize_UVbackground_data(chemistry_data *my_chemistry)
 
   // *** k25 ***
   if(! read_dataset(file_id, "/UVBRates/Chemistry/k25",
-                    my_chemistry->UVbackground_table.k25) ) {
+                    my_rates->UVbackground_table.k25) ) {
     fprintf(stderr, "Error reading dataset '/UVBRates/Chemistry/k25' in %s.\n",
             my_chemistry->grackle_data_file);
     return FAIL;
@@ -155,7 +156,7 @@ int initialize_UVbackground_data(chemistry_data *my_chemistry)
 
   // *** k26 ***
   if(! read_dataset(file_id, "/UVBRates/Chemistry/k26",
-                    my_chemistry->UVbackground_table.k26) ) {
+                    my_rates->UVbackground_table.k26) ) {
     fprintf(stderr, "Error reading dataset '/UVBRates/Chemistry/k26' in %s.\n",
             my_chemistry->grackle_data_file);
     return FAIL;
@@ -165,7 +166,7 @@ int initialize_UVbackground_data(chemistry_data *my_chemistry)
 
     // *** k27 ***
     if(! read_dataset(file_id, "/UVBRates/Chemistry/k27",
-                      my_chemistry->UVbackground_table.k27) ) {
+                      my_rates->UVbackground_table.k27) ) {
       fprintf(stderr, "Error reading dataset '/UVBRates/Chemistry/k27' in %s.\n",
               my_chemistry->grackle_data_file);
       return FAIL;      
@@ -173,7 +174,7 @@ int initialize_UVbackground_data(chemistry_data *my_chemistry)
 
     // *** k28 ***
     if(! read_dataset(file_id, "/UVBRates/Chemistry/k28",
-                      my_chemistry->UVbackground_table.k28) ) {
+                      my_rates->UVbackground_table.k28) ) {
       fprintf(stderr, "Error reading dataset '/UVBRates/Chemistry/k28' in %s.\n",
               my_chemistry->grackle_data_file);
       return FAIL;      
@@ -181,7 +182,7 @@ int initialize_UVbackground_data(chemistry_data *my_chemistry)
 
     // *** k29 ***
     if(! read_dataset(file_id, "/UVBRates/Chemistry/k29",
-                      my_chemistry->UVbackground_table.k29) ) {
+                      my_rates->UVbackground_table.k29) ) {
       fprintf(stderr, "Error reading dataset '/UVBRates/Chemistry/k29' in %s.\n",
               my_chemistry->grackle_data_file);
       return FAIL;      
@@ -189,7 +190,7 @@ int initialize_UVbackground_data(chemistry_data *my_chemistry)
 
     // *** k30 ***
     if(! read_dataset(file_id, "/UVBRates/Chemistry/k30",
-                      my_chemistry->UVbackground_table.k30) ) {
+                      my_rates->UVbackground_table.k30) ) {
       fprintf(stderr, "Error reading dataset '/UVBRates/Chemistry/k30' in %s.\n",
               my_chemistry->grackle_data_file);
       return FAIL;      
@@ -197,7 +198,7 @@ int initialize_UVbackground_data(chemistry_data *my_chemistry)
 
     // *** k31 ***
     if(! read_dataset(file_id, "/UVBRates/Chemistry/k31",
-                      my_chemistry->UVbackground_table.k31) ) {
+                      my_rates->UVbackground_table.k31) ) {
       fprintf(stderr, "Error reading dataset '/UVBRates/Chemistry/k31' in %s.\n",
               my_chemistry->grackle_data_file);
       return FAIL;      
@@ -207,7 +208,7 @@ int initialize_UVbackground_data(chemistry_data *my_chemistry)
 
   // *** piHI ***
   if(! read_dataset(file_id, "/UVBRates/Photoheating/piHI",
-                    my_chemistry->UVbackground_table.piHI) ) {
+                    my_rates->UVbackground_table.piHI) ) {
     fprintf(stderr, "Error reading dataset '/UVBRates/Photoheating/piHI' in %s.\n",
             my_chemistry->grackle_data_file);
     return FAIL;
@@ -215,7 +216,7 @@ int initialize_UVbackground_data(chemistry_data *my_chemistry)
 
   // *** piHeII ***
   if(! read_dataset(file_id, "/UVBRates/Photoheating/piHeII",
-                    my_chemistry->UVbackground_table.piHeII) ) {
+                    my_rates->UVbackground_table.piHeII) ) {
     fprintf(stderr, "Error reading dataset '/UVBRates/Photoheating/piHeII' in %s.\n",
             my_chemistry->grackle_data_file);
     return FAIL;
@@ -223,7 +224,7 @@ int initialize_UVbackground_data(chemistry_data *my_chemistry)
 
   // *** piHeI ***
   if(! read_dataset(file_id, "/UVBRates/Photoheating/piHeI",
-                    my_chemistry->UVbackground_table.piHeI) ) {
+                    my_rates->UVbackground_table.piHeI) ) {
     fprintf(stderr, "Error reading dataset '/UVBRates/Photoheating/piHeI' in %s.\n",
             my_chemistry->grackle_data_file);
     return FAIL;
@@ -234,28 +235,28 @@ int initialize_UVbackground_data(chemistry_data *my_chemistry)
 
 
   // Get min/max of redshift vector
-  my_chemistry->UVbackground_table.zmin = my_chemistry->UVbackground_table.z[0];
-  my_chemistry->UVbackground_table.zmax = my_chemistry->UVbackground_table.z[Nz-1];
+  my_rates->UVbackground_table.zmin = my_rates->UVbackground_table.z[0];
+  my_rates->UVbackground_table.zmax = my_rates->UVbackground_table.z[Nz-1];
 
   // Print out some information about the dataset just read in.
   if (grackle_verbose) {
-    fprintf(stderr, "UV background information:\n");
-    fprintf(stderr, "  %s\n",info_string);
-    fprintf(stderr, "  z_min = %6.3f\n  z_max = %6.3f\n",
-            my_chemistry->UVbackground_table.zmin,
-            my_chemistry->UVbackground_table.zmax);
+    fprintf(stdout, "UV background information:\n");
+    fprintf(stdout, "  %s\n",info_string);
+    fprintf(stdout, "  z_min = %6.3f\n  z_max = %6.3f\n",
+            my_rates->UVbackground_table.zmin,
+            my_rates->UVbackground_table.zmax);
   }
 
   // Set redshift on/off flags from data.
-  my_chemistry->UVbackground_redshift_on     = my_chemistry->UVbackground_table.z[Nz-1];
-  my_chemistry->UVbackground_redshift_fullon = my_chemistry->UVbackground_table.z[Nz-1];
-  my_chemistry->UVbackground_redshift_off    = my_chemistry->UVbackground_table.zmin;
-  my_chemistry->UVbackground_redshift_drop   = my_chemistry->UVbackground_table.zmin;
+  my_chemistry->UVbackground_redshift_on     = my_rates->UVbackground_table.z[Nz-1];
+  my_chemistry->UVbackground_redshift_fullon = my_rates->UVbackground_table.z[Nz-1];
+  my_chemistry->UVbackground_redshift_off    = my_rates->UVbackground_table.zmin;
+  my_chemistry->UVbackground_redshift_drop   = my_rates->UVbackground_table.zmin;
 
   if (grackle_verbose) {
-    fprintf(stderr, "Setting UVbackground_redshift_on to %f.\n",
+    fprintf(stdout, "Setting UVbackground_redshift_on to %f.\n",
             my_chemistry->UVbackground_redshift_on);
-    fprintf(stderr, "Setting UVbackground_redshift_off to %f.\n",
+    fprintf(stdout, "Setting UVbackground_redshift_off to %f.\n",
             my_chemistry->UVbackground_redshift_off);
   }
 

@@ -21,13 +21,14 @@ cimport numpy as np
 
 cdef class chemistry_data:
     cdef c_chemistry_data data
+    cdef c_chemistry_data_storage rates
     cdef c_code_units units
 
     def __cinit__(self):
         self.data = _set_default_chemistry_parameters()
 
     def initialize(self):
-        ret =  _initialize_chemistry_data(&self.data, &self.units)
+        ret =  _initialize_chemistry_data(&self.data, &self.rates, &self.units)
         if ret is None:
             raise RuntimeError("Error initializing chemistry")
         return ret
@@ -185,51 +186,51 @@ cdef class chemistry_data:
 
     property k24:
         def __get__(self):
-            return self.data.k24
+            return self.rates.k24
         def __set__(self, val):
-            self.data.k24 = val
+            self.rates.k24 = val
 
     property k25:
         def __get__(self):
-            return self.data.k25
+            return self.rates.k25
         def __set__(self, val):
-            self.data.k25 = val
+            self.rates.k25 = val
 
     property k26:
         def __get__(self):
-            return self.data.k26
+            return self.rates.k26
         def __set__(self, val):
-            self.data.k26 = val
+            self.rates.k26 = val
 
     property k27:
         def __get__(self):
-            return self.data.k27
+            return self.rates.k27
         def __set__(self, val):
-            self.data.k27 = val
+            self.rates.k27 = val
 
     property k28:
         def __get__(self):
-            return self.data.k28
+            return self.rates.k28
         def __set__(self, val):
-            self.data.k28 = val
+            self.rates.k28 = val
 
     property k29:
         def __get__(self):
-            return self.data.k29
+            return self.rates.k29
         def __set__(self, val):
-            self.data.k29 = val
+            self.rates.k29 = val
 
     property k30:
         def __get__(self):
-             return self.data.k30
+             return self.rates.k30
         def __set__(self, val):
-             self.data.k30 = val
+             self.rates.k30 = val
 
     property k31:
         def __get__(self):
-             return self.data.k31
+             return self.rates.k31
         def __set__(self, val):
-             self.data.k31 = val
+             self.rates.k31 = val
 
     property comoving_coordinates:
         def __get__(self):
@@ -303,6 +304,7 @@ def solve_chemistry(fc, my_dt):
 
     cdef chemistry_data chem_data = fc.chemistry_data
     cdef c_chemistry_data my_chemistry = chem_data.data
+    cdef c_chemistry_data_storage my_rates = chem_data.rates
     cdef c_code_units my_units = chem_data.units
     cdef gr_float *density = get_field(fc, "density")
     cdef gr_float *internal_energy = get_field(fc, "energy")
@@ -332,6 +334,7 @@ def solve_chemistry(fc, my_dt):
 
     c_solve_chemistry (
                 &my_chemistry,
+                &my_rates,
                 &my_units,
                 dt_value,
                 grid_rank,
@@ -380,6 +383,7 @@ def calculate_cooling_time(fc):
 
     cdef chemistry_data chem_data = fc.chemistry_data
     cdef c_chemistry_data my_chemistry = chem_data.data
+    cdef c_chemistry_data_storage my_rates = chem_data.rates
     cdef c_code_units my_units = chem_data.units
     cdef gr_float *density = get_field(fc, "density")
     cdef gr_float *internal_energy = get_field(fc, "energy")
@@ -406,6 +410,7 @@ def calculate_cooling_time(fc):
 
     c_calculate_cooling_time (
                 &my_chemistry,
+                &my_rates,
                 &my_units,
                 grid_rank,
                 &grid_dimension,
@@ -449,6 +454,7 @@ def calculate_gamma(fc):
 
     cdef chemistry_data chem_data = fc.chemistry_data
     cdef c_chemistry_data my_chemistry = chem_data.data
+    cdef c_chemistry_data_storage my_rates = chem_data.rates
     cdef c_code_units my_units = chem_data.units
     cdef gr_float *density = get_field(fc, "density")
     cdef gr_float *internal_energy = get_field(fc, "energy")
@@ -469,6 +475,7 @@ def calculate_gamma(fc):
     
     c_calculate_gamma (
                 &my_chemistry,
+                &my_rates,
                 &my_units,
                 grid_rank,
                 &grid_dimension,
@@ -506,6 +513,7 @@ def calculate_pressure(fc):
 
     cdef chemistry_data chem_data = fc.chemistry_data
     cdef c_chemistry_data my_chemistry = chem_data.data
+    cdef c_chemistry_data_storage my_rates = chem_data.rates
     cdef c_code_units my_units = chem_data.units
     cdef gr_float *density = get_field(fc, "density")
     cdef gr_float *internal_energy = get_field(fc, "energy")
@@ -526,6 +534,7 @@ def calculate_pressure(fc):
     
     c_calculate_pressure (
                 &my_chemistry,
+                &my_rates,
                 &my_units,
                 grid_rank,
                 &grid_dimension,
@@ -563,6 +572,7 @@ def calculate_temperature(fc):
 
     cdef chemistry_data chem_data = fc.chemistry_data
     cdef c_chemistry_data my_chemistry = chem_data.data
+    cdef c_chemistry_data_storage my_rates = chem_data.rates
     cdef c_code_units my_units = chem_data.units
     cdef gr_float *density = get_field(fc, "density")
     cdef gr_float *internal_energy = get_field(fc, "energy")
@@ -583,6 +593,7 @@ def calculate_temperature(fc):
 
     c_calculate_temperature(
                 &my_chemistry,
+                &my_rates,
                 &my_units,
                 grid_rank,
                 &grid_dimension,

@@ -19,12 +19,13 @@
 #include "grackle_chemistry_data.h"
 
 #define SMALL_LOG_VALUE -99.0
-#define CLOUDY_MAX_DIMENSION 3
+#define CLOUDY_MAX_DIMENSION 5
 
 extern int grackle_verbose;
 
 // Initialize Cloudy cooling data
 int initialize_cloudy_data(chemistry_data *my_chemistry,
+                           chemistry_data_storage *my_rates,
                            cloudy_data *my_cloudy, char *group_name,
                            code_units *my_units, int read_data)
 {
@@ -51,8 +52,8 @@ int initialize_cloudy_data(chemistry_data *my_chemistry,
   }
 
   if (grackle_verbose) {
-    fprintf(stderr,"Initializing Cloudy cooling: %s.\n", group_name);
-    fprintf(stderr,"cloudy_table_file: %s.\n",my_chemistry->grackle_data_file);
+    fprintf(stdout,"Initializing Cloudy cooling: %s.\n", group_name);
+    fprintf(stdout,"cloudy_table_file: %s.\n",my_chemistry->grackle_data_file);
   }
 
   /* Get conversion units. */
@@ -87,6 +88,12 @@ int initialize_cloudy_data(chemistry_data *my_chemistry,
   file_id = H5Fopen(my_chemistry->grackle_data_file, 
                     H5F_ACC_RDONLY, H5P_DEFAULT);
 
+  if (H5Aexists(file_id, "old_style")) {
+    my_rates->cloudy_data_new = 0;
+    if (grackle_verbose)
+      fprintf(stdout, "Loading old-style Cloudy tables.\n");
+  }
+
   // Open cooling dataset and get grid dimensions.
 
   sprintf(parameter_name, "/CoolingRates/%s/Cooling", group_name);
@@ -108,9 +115,9 @@ int initialize_cloudy_data(chemistry_data *my_chemistry,
     fprintf(stderr,"Failed to read Rank attribute in Cooling dataset.\n");
     return FAIL;
   }
-  my_cloudy->grid_rank = (int) temp_int;
+  my_cloudy->grid_rank = (long long) temp_int;
   if (grackle_verbose)
-    fprintf(stderr,"Cloudy cooling grid rank: %lld.\n", my_cloudy->grid_rank);
+    fprintf(stdout,"Cloudy cooling grid rank: %lld.\n", my_cloudy->grid_rank);
   status = H5Aclose(attr_id);
   if (attr_id == h5_error) {
     fprintf(stderr,"Failed to close Rank attribute in Cooling dataset.\n");
@@ -130,14 +137,14 @@ int initialize_cloudy_data(chemistry_data *my_chemistry,
     return FAIL;
   }
   if (grackle_verbose)
-    fprintf(stderr,"Cloudy cooling grid dimensions:");
+    fprintf(stdout,"Cloudy cooling grid dimensions:");
   for (q = 0;q < my_cloudy->grid_rank;q++) {
-    my_cloudy->grid_dimension[q] = (int) temp_int_arr[q];
+    my_cloudy->grid_dimension[q] = (long long) temp_int_arr[q];
     if (grackle_verbose)
-      fprintf(stderr," %lld", my_cloudy->grid_dimension[q]);
+      fprintf(stdout," %lld", my_cloudy->grid_dimension[q]);
   }
   if (grackle_verbose)
-    fprintf(stderr,".\n");
+    fprintf(stdout,".\n");
   status = H5Aclose(attr_id);
   if (attr_id == h5_error) {
     fprintf(stderr,"Failed to close Dimension attribute in Cooling dataset.\n");
@@ -183,7 +190,7 @@ int initialize_cloudy_data(chemistry_data *my_chemistry,
 
     }
     if (grackle_verbose)
-      fprintf(stderr,"%s: %"GSYM" to %"GSYM" (%lld steps).\n",parameter_name,
+      fprintf(stdout,"%s: %"GSYM" to %"GSYM" (%lld steps).\n",parameter_name,
               my_cloudy->grid_parameters[q][0],
               my_cloudy->grid_parameters[q][my_cloudy->grid_dimension[q]-1],
               my_cloudy->grid_dimension[q]);
@@ -206,7 +213,7 @@ int initialize_cloudy_data(chemistry_data *my_chemistry,
 
   status = H5Dread(dset_id, HDF5_R8, H5S_ALL, H5S_ALL, H5P_DEFAULT, temp_data);
   if (grackle_verbose)
-    fprintf(stderr,"Reading Cloudy Cooling dataset.\n");
+    fprintf(stdout,"Reading Cloudy Cooling dataset.\n");
   if (status == h5_error) {
     fprintf(stderr,"Failed to read Cooling dataset.\n");
     return FAIL;
@@ -243,7 +250,7 @@ int initialize_cloudy_data(chemistry_data *my_chemistry,
 
     status = H5Dread(dset_id, HDF5_R8, H5S_ALL, H5S_ALL, H5P_DEFAULT, temp_data);
     if (grackle_verbose)
-      fprintf(stderr,"Reading Cloudy Heating dataset.\n");
+      fprintf(stdout,"Reading Cloudy Heating dataset.\n");
     if (status == h5_error) {
       fprintf(stderr,"Failed to read Heating dataset.\n");
       return FAIL;
@@ -283,7 +290,7 @@ int initialize_cloudy_data(chemistry_data *my_chemistry,
     status = H5Dread(dset_id, HDF5_R8, H5S_ALL, H5S_ALL, H5P_DEFAULT,
                      my_cloudy->mmw_data);
     if (grackle_verbose)
-      fprintf(stderr,"Reading Cloudy MMW dataset.\n");
+      fprintf(stdout,"Reading Cloudy MMW dataset.\n");
     if (status == h5_error) {
       fprintf(stderr,"Failed to read MMW dataset.\n");
       return FAIL;

@@ -7,15 +7,17 @@ Welcome to grackle's documentation!
 ===================================
 
 Grackle is a chemistry and radiative cooling library for astrophysical 
-simulations with interfaces for C, C++, and Fortran codes.  It is a 
-generalized and trimmed down version of the chemistry network of the 
-`Enzo <http://enzo-project.org>`_ simulation code.  Grackle provides:
+simulations and models.  Grackle has interfaces for C, C++, Fortran, and
+Python codes and provides:
 
 - two options for primordial chemistry and cooling:
 
-   1. non-equilibrium primordial chemistry network for atomic H, D, and He as well as H\ :sub:`2`\  and HD, including H\ :sub:`2`\  formation on dust grains.
+   1. non-equilibrium primordial chemistry network for atomic H, D, and He
+      as well as H\ :sub:`2`\  and HD, including H\ :sub:`2`\  formation on
+      dust grains.
 
-   2. tabulated H and He cooling rates calculated with the photo-ionization code, `Cloudy <http://nublado.org>`_.
+   2. tabulated H and He cooling rates calculated with the photo-ionization
+      code, `Cloudy <http://nublado.org>`_.
 
 - tabulated metal cooling rates calculated with `Cloudy <http://nublado.org>`_.
 
@@ -24,6 +26,8 @@ generalized and trimmed down version of the chemistry network of the
    1. `Faucher-Giguere et al. (2009) <http://adsabs.harvard.edu/abs/2009ApJ...703.1416F>`_.
 
    2. `Haardt & Madau (2012) <http://adsabs.harvard.edu/abs/2012ApJ...746..125H>`_.
+
+- support for user-provided arrays of volumetric and specific heating rates.
 
 The Grackle provides functions to update chemistry species; solve radiative 
 cooling and update internal energy; and calculate cooling time, temperature, 
@@ -52,7 +56,7 @@ Citing grackle
 --------------
 
 The Grackle library was born out of the chemistry and cooling routines of the 
-`Enzo <http://enzo-project.org/>`_ simulation code.  As such, all of those who 
+`Enzo <http://enzo-project.org/>`__ simulation code.  As such, all of those who 
 have contributed to Enzo development, and especially to the chemistry and 
 cooling, have contributed to the Grackle.  There is currently no paper that 
 specifically presents the Grackle library on its own, but the functionality 

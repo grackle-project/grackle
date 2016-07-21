@@ -14,65 +14,48 @@
 #ifndef __CHEMISTRY_DATA_H__
 #define __CHEMISTRY_DATA_H__
 
+/**********************************
+ *** Grackle runtime parameters ***
+ **********************************/
 typedef struct
 {
 
-  // Rank of dataset.
-  long long grid_rank;
+  /* grackle on/off flag
+     0) off, 1) on */
+  int use_grackle;
 
-  // Dimension of dataset.
-  long long *grid_dimension;
+  /* include cooling in chemistry solver
+     0) no, 1) yes */
+  int with_radiative_cooling;
 
-  // Dataset parameter values.
-  double **grid_parameters;
+  /* chemistry network
+     0) tabulated cooling (no chemistry)
+     1) HI, HII, HeI, HeII, HeIII, e
+     2) + H2, H2I+, H-
+     3) + D, D+, HD */
+  int primordial_chemistry;
 
-  // Heating values
-  double *heating_data;
+  /* metal cooling on/off
+     0) off, 1) on */
+  int metal_cooling;
 
-  // Cooling values
-  double *cooling_data;
+  /* add heating from UV background model
+     0) off, 1) on */
+  int UVbackground;
 
-  // Mean Molecular Weight values
-  double *mmw_data;
-
-  // Length of 1D flattened data
-  long long data_size;
-
-} cloudy_data;
-
-typedef struct 
-{
-
-  // adiabatic index
-  double Gamma;
-
-  // HDF5 file containing Cloudy cooling table and UV background
+  /* data file containing cooling and UV background tables */
   char *grackle_data_file;
 
-
-  /****************************************
-   *** chemistry and cooling parameters ***
-   ****************************************/
-
-  int use_grackle;  // 0) grackle off, 1) grackle on
-  int with_radiative_cooling; // include cooling in chemistry solver
-                                 // 0) no, 1) yes
-  int primordial_chemistry; // 1) HI, HII, HeI, HeII, HeIII, e
-                               // 2) + H2, H2I+, H-
-                               // 3) + D, D+, HD
-  int metal_cooling;        // 0) off, 1) on using Cloudy tables
-  int h2_on_dust;  // H2 formation on dust
-                      // not well tested, should be left off for now
-
-  // Use a CMB temperature floor.
+  /* Use a CMB temperature floor
+     0) no, 1) yes */
   int cmb_temperature_floor;
 
-  /* additional H2 chemistry parameters
-     best left unchanged. */
-  
-  int three_body_rate;
-  int cie_cooling;
-  int h2_optical_depth_approximation;
+  /* adiabatic index */
+  double Gamma;
+
+  /* H2 formation on dust grains and dust cooling
+     0) off, 1) on */
+  int h2_on_dust;
 
   /* photo-electric heating from irradiated dust */
 
@@ -85,6 +68,38 @@ typedef struct
   int use_volumetric_heating_rate;
   int use_specific_heating_rate;
 
+  /* additional chemistry solver parameters */
+  int three_body_rate;
+  int cie_cooling;
+  int h2_optical_depth_approximation;
+  int ih2co; // flag for H2 cooling (0-off/1-on)
+  int ipiht; // flag for photoionization cooling
+  double HydrogenFractionByMass;
+  double DeuteriumToHydrogenRatio;
+  double SolarMetalFractionByMass;
+  int NumberOfTemperatureBins;
+  int CaseBRecombination;
+  double TemperatureStart;
+  double TemperatureEnd;
+  int NumberOfDustTemperatureBins;
+  double DustTemperatureStart;
+  double DustTemperatureEnd;
+
+  /* additional radiation background parameters */
+  int Compton_xray_heating;
+  int LWbackground_sawtooth_suppression;
+  double LWbackground_intensity;   // [in units of 10^21 erg/s/cm^2/Hz/sr]
+  double UVbackground_redshift_on;
+  double UVbackground_redshift_off;
+  double UVbackground_redshift_fullon;
+  double UVbackground_redshift_drop;
+
+  /* Factor to account for extra electrons from metals.
+     Only for old-style Cloudy tables.
+     f = SUM { A_i * i }, for i = 3 to N.
+     N = Atomic number of heaviest element in cooling model.
+     For solar abundance patters and N = 30 (Zn), f = 9.153959e-3. */
+  double cloudy_electron_fraction_factor;
 
                // AJE-RT
   /* flags and parameters to signal that RT
@@ -114,13 +129,48 @@ typedef struct
   double heii_pi_avg_cross_section;
 
 
-  /***************************************
-   *** radiation background parameters ***
-   ***************************************/
+  /* number of OpenMP threads, if supported */
+# ifdef _OPENMP
+  int omp_nthreads;
+# endif
 
-  int UVbackground;
+} chemistry_data;
 
-  struct UVBtable {
+/*****************************
+ *** Cooling table storage ***
+ *****************************/
+typedef struct
+{
+
+  // Rank of dataset.
+  long long grid_rank;
+
+  // Dimension of dataset.
+  long long *grid_dimension;
+
+  // Dataset parameter values.
+  double **grid_parameters;
+
+  // Heating values
+  double *heating_data;
+
+  // Cooling values
+  double *cooling_data;
+
+  // Mean Molecular Weight values
+  double *mmw_data;
+
+  // Length of 1D flattened data
+  long long data_size;
+
+} cloudy_data;
+
+/**********************************
+ *** UVbackground table storage ***
+ **********************************/
+
+typedef struct{
+
     long long Nz;
 
     double zmin, zmax;    
@@ -138,29 +188,20 @@ typedef struct
     double *piHI;
     double *piHeII;
     double *piHeI;
-  } UVbackground_table;
 
-  double UVbackground_redshift_on;
-  double UVbackground_redshift_off;
-  double UVbackground_redshift_fullon;
-  double UVbackground_redshift_drop;
+} UVBtable;
 
-  int Compton_xray_heating;
+/******************************************
+ *** Chemistry and cooling data storage ***
+ ******************************************/
+typedef struct
+{
 
-  double LWbackground_intensity;   // [in units of 10^21 erg/s/cm^2/Hz/sr]
-  int LWbackground_sawtooth_suppression;
-
-  /**************************************
-   *** primordial chemistry rate data ***
-   **************************************/
-
-  int NumberOfTemperatureBins;   
-  int CaseBRecombination;
-  double TemperatureStart;        // range of temperature in K
-  double TemperatureEnd;
+  /**********************************
+   * primordial chemistry rate data *
+   **********************************/
 
   /* 6 species rates */
-
   double *k1;
   double *k2;
   double *k3;
@@ -169,7 +210,6 @@ typedef struct
   double *k6;
 
   /* 9 species rates (including H2) */
-
   double *k7;
   double *k8;
   double *k9;
@@ -187,18 +227,15 @@ typedef struct
   double *k21;  /* currently not used */
   double *k22;  /* 3-body H2 formation */
   double *k23;  /* H2-H2 dissociation */
-
   double *k13dd;  /* density dependent version of k13 (collisional H2
                     dissociation); actually 7 functions instead of 1. */
 
   /* Radiative rates for 6-species (for external field). */
-
   double k24;
   double k25;
   double k26;
 
   /* Radiative rates for 9-species (for external field). */
-
   double k27;
   double k28;
   double k29;
@@ -206,7 +243,6 @@ typedef struct
   double k31;
 
   /* 12 species rates (with Deuterium). */
-
   double *k50;
   double *k51;
   double *k52;
@@ -216,37 +252,23 @@ typedef struct
   double *k56;
 
   /* New H-ionizing reactions, used for 6, 9 & 12 species chemistry */
-
   double *k57;
   double *k58;
 
-  /* H2 formation on dust. */
-
-  int NumberOfDustTemperatureBins;   
-  double DustTemperatureStart;        // range of temperature in K
-  double DustTemperatureEnd;
-  double *h2dust;                     // function of Tgas and Tdust
+  /* H2 formation on dust grains */
+  double *h2dust;
 
   /* Chemical heating from H2 formation. */
   /* numerator and denominator of Eq 23 of Omukai ea. 2000. */
-
   double *n_cr_n;
   double *n_cr_d1;
   double *n_cr_d2;
 
-  /********************
-   *** cooling data ***
-   ********************/
-
-  int ih2co;                     // flag for H2 cooling (0-off/1-on)
-  int ipiht;                     // flag for photoionization cooling
-
-  double HydrogenFractionByMass;
-  double DeuteriumToHydrogenRatio;
-  double SolarMetalFractionByMass;
+  /********************************
+   * primordial cooling rate data *
+   ********************************/
 
   /* 6 species rates */
-
   double *ceHI;                   // collisional excitation rates
   double *ceHeI;
   double *ceHeII;
@@ -265,7 +287,6 @@ typedef struct
   double gammah;                  // Photoelectric heating (code units)
 
   /* radiative rates (external field). */
-
   double piHI;                    // photo-ionization cooling
   double piHeI;                   //    (no temperature dependance)
   double piHeII;
@@ -274,13 +295,11 @@ typedef struct
        The first five are for the Lepp & Shull rates.
        The next two are for the (better) Galli & Palla 1999 rates. 
        The selection is controlled by a flag in cool1d_multi_g.F. */
-
   double *hyd01k;
   double *h2k01;
   double *vibh;
   double *roth;
   double *rotl;
-
   double *GP99LowDensityLimit;
   double *GP99HighDensityLimit;
 
@@ -295,7 +314,6 @@ typedef struct
   double *H2LTE;
 
   /* 12 species rates (including HD) */
-
   double *HDlte;
   double *HDlow;
 
@@ -305,27 +323,18 @@ typedef struct
   /* Gas/grain energy transfer. */
   double *gas_grain;
 
-  // Primordial cooling data
+  /* UV background data */
+  UVBtable UVbackground_table;
 
+  /* Primordial cooling table */
   cloudy_data cloudy_primordial;
 
-  // Metal cooling data
-
+  /* Metal cooling table */
   cloudy_data cloudy_metal;
 
-  // Factor to account for extra electrons from metals.
-  /* 
-     f = SUM { A_i * i }, for i = 3 to N.
-     N = Atomic number of heaviest element in cooling model.
-     For solar abundance patters and N = 30 (Zn), f = 9.153959e-3.
-   */
-  double cloudy_electron_fraction_factor;
+  /* New/old cloudy data flag */
+  int cloudy_data_new;
 
-  // number of OpenMP threads if supported
-# ifdef _OPENMP
-  int omp_nthreads;
-# endif
-
-} chemistry_data;
+} chemistry_data_storage;
 
 #endif

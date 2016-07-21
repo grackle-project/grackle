@@ -1,0 +1,16 @@
+!=======================================================================
+!
+!
+! Grackle fortran interface and data types
+!
+!
+! Copyright (c) 2013, Enzo/Grackle Development Team.
+!
+! Distributed under the terms of the Enzo Public Licence.
+!
+! The full license is in the file LICENSE, distributed with this
+! software.
+!=======================================================================
+
+#include "grackle_fortran_types.def"
+#include "grackle_fortran_interface.def"
