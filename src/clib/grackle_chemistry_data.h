@@ -114,19 +114,10 @@ typedef struct
      as spectrum averaged photo heating and
      photo ionization shielding factors */
   int self_shielding_method;
-  double hi_ph_shield_factor;
-  double hei_ph_shield_factor;
-  double heii_ph_shield_factor;
-  double hi_pi_shield_factor;
-  double hei_pi_shield_factor;
-  double heii_pi_shield_factor;
 
-  double hi_ph_avg_cross_section;
-  double hei_ph_avg_cross_section;
-  double heii_ph_avg_cross_section;
-  double hi_pi_avg_cross_section;
-  double hei_pi_avg_cross_section;
-  double heii_pi_avg_cross_section;
+  double hi_avg_crs;
+  double hei_avg_crs;
+  double heii_avg_crs;
 
 
   /* number of OpenMP threads, if supported */
@@ -188,6 +179,10 @@ typedef struct{
     double *piHI;
     double *piHeII;
     double *piHeI;
+
+    double *crsHI;
+    double *crsHeII;
+    double *crsHeI;
 
 } UVBtable;
 

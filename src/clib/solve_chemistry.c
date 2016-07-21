@@ -61,9 +61,7 @@ extern void FORTRAN_NAME(solve_rate_cool_g)(
 	double *gpldl, double *gphdl, double *HDltea, double *HDlowa,
 	double *gaHIa, double *gaH2a, double *gaHea, double *gaHpa, double *gaela,
 	double *h2ltea, double *gasgra,
-        int *iradshield, double *avgsighp_heating, double *agbsighep_heating,
-        double *avgsighe2p_heating, double *avgsighp_ionizing,
-        double *avgsighep_ionizing, double *avgsighe2p_ionizing,
+        int *iradshield, double *avgsighi, double *avgsighei, double *avgsigheii,
         int *iradtrans, int *iradcoupled, int *iradstep, int *irt_honly,
         double *kphHI, double *kphHeI, double *kphHeII, double *kdissH2I,
         double *photogamma, // AJE-RT
@@ -131,33 +129,6 @@ int _solve_chemistry(chemistry_data *my_chemistry,
       POW(my_units->a_value * my_units->a_units, 3);
   }
 
-  /* update shielding factors for self-shielding */
-
-  float shielding_factor = my_units->grid_dx * my_units->length_units;
-
-  my_chemistry->hi_ph_shield_factor   = my_chemistry->hi_ph_avg_cross_section*shielding_factor;
-  my_chemistry->hei_ph_shield_factor  = my_chemistry->hei_ph_avg_cross_section*shielding_factor;
-  my_chemistry->heii_ph_shield_factor = my_chemistry->heii_ph_avg_cross_section*shielding_factor;
-
-  my_chemistry->hi_pi_shield_factor   = my_chemistry->hi_pi_avg_cross_section*shielding_factor;
-  my_chemistry->hei_pi_shield_factor  = my_chemistry->hei_pi_avg_cross_section*shielding_factor;
-  my_chemistry->heii_pi_shield_factor = my_chemistry->heii_pi_avg_cross_section*shielding_factor;
-
-  if (my_chemistry->self_shielding_method == 2){
-    // for this method, HI factors are CGS Cross sections
-    my_chemistry->hi_ph_shield_factor = my_chemistry->hi_ph_avg_cross_section;
-    my_chemistry->hi_pi_shield_factor = my_chemistry->hi_pi_avg_cross_section;
-  } else if (my_chemistry->self_shielding_method == 3){
-    // CGS cross sections for HI and HeI - not HeII
-    my_chemistry->hi_ph_shield_factor = my_chemistry->hi_ph_avg_cross_section;
-    my_chemistry->hi_pi_shield_factor = my_chemistry->hi_pi_avg_cross_section;
-
-    my_chemistry->hei_ph_shield_factor = my_chemistry->hei_ph_avg_cross_section;
-    my_chemistry->hei_pi_shield_factor = my_chemistry->hei_pi_avg_cross_section;
-  }
-
-
-
   /* Calculate temperature units. */
 
   double temperature_units =  mh * POW(my_units->velocity_units, 2) / kboltz;
@@ -209,10 +180,8 @@ int _solve_chemistry(chemistry_data *my_chemistry,
     my_rates->HDlte, my_rates->HDlow,
     my_rates->GAHI, my_rates->GAH2, my_rates->GAHe, my_rates->GAHp,
     my_rates->GAel, my_rates->H2LTE, my_rates->gas_grain,
-    &my_chemistry->self_shielding_method, &my_chemistry->hi_ph_shield_factor,
-    &my_chemistry->hei_ph_shield_factor, &my_chemistry->heii_ph_shield_factor,
-    &my_chemistry->hi_pi_shield_factor, &my_chemistry->hei_pi_shield_factor,
-    &my_chemistry->heii_pi_shield_factor,
+    &my_chemistry->self_shielding_method, &my_chemistry->hi_avg_crs,
+    &my_chemistry->hei_avg_crs, &my_chemistry->heii_avg_crs,
     &my_chemistry->use_radiative_transfer, &my_chemistry->radiative_transfer_coupled_rate_solver,
     &my_chemistry->radiative_transfer_intermediate_step, &my_chemistry->radiative_transfer_hydrogen_only,
     kphHINum, kphHeINum, kphHeIINum,

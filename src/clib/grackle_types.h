@@ -80,7 +80,6 @@ typedef struct
   double velocity_units;
   double a_units;
   double a_value;
-  double grid_dx;
 
 } code_units;
 

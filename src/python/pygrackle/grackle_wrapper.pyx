@@ -147,43 +147,6 @@ cdef class chemistry_data:
         def __set__(self, val):
             self.data.self_shielding_method = val
 
-    property hi_ph_avg_cross_section:
-        def __get__(self):
-            return self.data.hi_ph_avg_cross_section
-        def __set__(self, val):
-            self.data.hi_ph_avg_cross_section = val
-
-    property hei_ph_avg_cross_section:
-        def __get__(self):
-            return self.data.hei_ph_avg_cross_section
-        def __set__(self, val):
-            self.data.hei_ph_avg_cross_section = val
-
-    property heii_ph_avg_cross_section:
-        def __get__(self):
-            return self.data.heii_ph_avg_cross_section
-        def __set__(self, val):
-            self.data.heii_ph_avg_cross_section = val
-
-    property hi_pi_avg_cross_section:
-        def __get__(self):
-            return self.data.hi_pi_avg_cross_section
-        def __set__(self, val):
-            self.data.hi_pi_avg_cross_section = val
-
-    property hei_pi_avg_cross_section:
-        def __get__(self):
-            return self.data.hei_pi_avg_cross_section
-        def __set__(self, val):
-            self.data.hei_pi_avg_cross_section = val
-
-    property heii_pi_avg_cross_section:
-        def __get__(self):
-            return self.data.heii_pi_avg_cross_section
-        def __set__(self, val):
-            self.data.heii_pi_avg_cross_section = val
-    
-
     property k24:
         def __get__(self):
             return self.rates.k24

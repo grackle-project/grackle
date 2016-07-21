@@ -23,12 +23,9 @@ cdef extern from "grackle_chemistry_data.h":
         int use_specific_heating_rate
         int use_radiative_transfer
         int self_shielding_method
-        float hi_ph_avg_cross_section
-        float hei_ph_avg_cross_section
-        float heii_ph_avg_cross_section
-        float hi_pi_avg_cross_section
-        float hei_pi_avg_cross_section
-        float heii_pi_avg_cross_section
+        double hi_avg_crs
+        double hei_avg_crs
+        double heii_avg_crs
 
     ctypedef struct c_chemistry_data_storage "chemistry_data_storage":
         double k24

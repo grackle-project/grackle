@@ -104,20 +104,11 @@ chemistry_data _set_default_chemistry_parameters(void)
 
   /* aprroximate self-shielding and cross sections */
   my_chemistry.self_shielding_method                  = 0;
-  my_chemistry.hi_ph_shield_factor                    = 0.0;
-  my_chemistry.hei_ph_shield_factor                   = 0.0;
-  my_chemistry.heii_ph_shield_factor                  = 0.0;
-  my_chemistry.hi_pi_shield_factor                    = 0.0;
-  my_chemistry.hei_pi_shield_factor                   = 0.0;
-  my_chemistry.heii_pi_shield_factor                  = 0.0;
 
   /* cross sections are in cgs */
-  my_chemistry.hi_ph_avg_cross_section                = 2.49E-18;
-  my_chemistry.hei_ph_avg_cross_section               = 0.0;
-  my_chemistry.heii_ph_avg_cross_section              = 0.0;
-  my_chemistry.hi_pi_avg_cross_section                = 2.49E-18;
-  my_chemistry.hei_pi_avg_cross_section               = 0.0;
-  my_chemistry.heii_pi_avg_cross_section              = 0.0;
+  my_chemistry.hi_avg_crs                = 0.0;
+  my_chemistry.hei_avg_crs               = 0.0;
+  my_chemistry.heii_avg_crs              = 0.0;
 
 
 //number of OpenMP threads

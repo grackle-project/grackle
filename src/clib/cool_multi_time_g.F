@@ -19,9 +19,7 @@
      &                gpldla, gphdla, hdltea, hdlowa,
      &                gaHIa, gaH2a, gaHea, gaHpa, gaela,
      &                h2ltea, gasgra,
-     &                iradshield, avgsighp_heating, avgsighep_heating,
-     &                avgsighe2p_heating, avgsighp_ionizing, 
-     &                avgsighep_ionizing, avgsighe2p_ionizing,
+     &                iradshield, avgsighi, avgsighei, avgsigheii,
      &                k24, k26, iradtrans, photogamma, ! AJE-RT
      &                ih2optical, iciecool, ciecoa, 
      &                icmbTfloor, iClHeat, clEleFra,
@@ -87,10 +85,8 @@
      &        ciHeIIa(nratec), reHIIa(nratec), reHeII1a(nratec), 
      &        reHeII2a(nratec), reHeIIIa(nratec), brema(nratec),
      &        compa, piHI, piHeI, piHeII, comp_xraya, comp_temp,
-     &        gammaha, avgsighp_heating, avgsighep_heating,
-     &        avgsighe2p_heating, avgsighp_ionizing, avgsighep_ionizing,
-     &        avgsighe2p_ionizing, k24, k26
-
+     &        gammaha, avgsighi, avgsighei, avgsigheii,
+     &        k24, k26
 !  Cloudy cooling data
 
       integer icmbTfloor, iClHeat
@@ -262,9 +258,7 @@
      &                reHII, reHeII1, reHeII2, reHeIII, brem,
      &                indixe, t1, t2, logtem, tdef, edot,
      &                tgas, tgasold, p2d, tdust, metallicity, rhoH,
-     &                iradshield, avgsighp_heating, avgsighep_heating,
-     &                avgsighe2p_heating, avgsighp_ionizing,
-     &                avgsighep_ionizing, avgsighe2p_ionizing,
+     &                iradshield, avgsighi, avgsighei, avgsigheii,
      &                k24, k26, iradtrans, photogamma, ! AJE-RT
      &                ih2optical, iciecool, ciecoa, cieco,
      &                icmbTfloor, iClHeat, clEleFra,

@@ -28,9 +28,7 @@
      &                gpldla, gphdla, hdltea, hdlowa,
      &                gaHIa, gaH2a, gaHea, gaHpa, gaela, 
      &                h2ltea, gasgra, 
-     &                iradshield, avgsighp_heating, avgsighep_heating,
-     &                avgsighe2p_heating, avgsighp_ionizing, 
-     &                avgsighep_ionizing, avgsighe2p_ionizing,
+     &                iradshield, avgsighi, avgsighei, avgsigheii,
      &                iradtrans, iradcoupled, iradstep,
      &                irt_honly, kphHI, kphHeI, kphHeII, kdissH2I,
      &                photogamma,
@@ -185,8 +183,7 @@
      &        compa, piHI, piHeI, piHeII, comp_xraya, comp_temp,
      &        gammaha 
 
-      real*8  avgsighp_heating, avgsighep_heating, avgsighe2p_heating,
-     &        avgsighp_ionizing, avgsighep_ionizing, avgsighe2p_ionizing
+      real*8  avgsighi, avgsighei, avgsigheii
 
 !  Chemistry tables (rates as a function of temperature)
 
@@ -439,9 +436,8 @@ c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 fo
      &                reHII, reHeII1, reHeII2, reHeIII, brem,
      &                indixe, t1, t2, logtem, tdef, edot,
      &                tgas, tgasold, p2d, tdust, metallicity, rhoH, 
-     &                iradshield, avgsighp_heating, avgsighep_heating,
-     &                avgsighe2p_heating, avgsighp_ionizing,
-     &                avgsighep_ionizing, avgsighe2p_ionizing, k24, k26,
+     &                iradshield, avgsighi, avgsighei, avgsigheii,
+     &                k24, k26,
      &                iradtrans, photogamma, ! AJE-RT
      &                ih2optical, iciecool, ciecoa, cieco,
      &                icmbTfloor, iClHeat, clEleFra,
@@ -469,8 +465,7 @@ c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 fo
      &               k50a, k51a, k52a, k53a, k54a, k55a, k56a, 
      &               k57a, k58a, ndratec, dtemstart, dtemend, h2dusta, 
      &               ncrna, ncrd1a, ncrd2a, 
-     &               avgsighp_ionizing, avgsighep_ionizing,
-     &               avgsighe2p_ionizing, piHI, piHeI,
+     &               avgsighi, avgsighei, avgsigheii, piHI, piHeI,
      &               k1, k2, k3, k4, k5, k6, k7, k8, k9, k10,
      &               k11, k12, k13, k14, k15, k16, k17, k18,
      &               k19, k22, k24, k25, k26, 
@@ -988,8 +983,7 @@ c -------------------------------------------------------------------
      &                k50a, k51a, k52a, k53a, k54a, k55a, k56a, k57a,
      &                k58a, ndratec, dtemstart, dtemend, h2dusta, 
      &                ncrna, ncrd1a, ncrd2a,
-     &                avgsighp_ionizing, avgsighep_ionizing,
-     &                avgsighe2p_ionizing, piHI, piHeI,
+     &                avgsighi, avgsighei, avgsigheii, piHI, piHeI,
      &                k1, k2, k3, k4, k5, k6, k7, k8, k9, k10,
      &                k11, k12, k13, k14, k15, k16, k17, k18,
      &                k19, k22, k24, k25, k26,
@@ -1026,7 +1020,7 @@ c -------------------------------------------------------------------
      &       ncrna(nratec), ncrd1a(nratec), ncrd2a(nratec),
      &       k24, k25, k26,
      &       piHI, piHeI,
-     &       avgsighp_ionizing, avgsighep_ionizing, avgsighe2p_ionizing
+     &       avgsighi, avgsighei, avgsigheii
 
 !     Density fields
 
@@ -1264,28 +1258,13 @@ c -------------------------------------------------------------------
 
       if (iradshield == 1) then
 !
-!     approximate self shielding
-!
-        do i = is+1, ie+1
-          if (itmask(i)) then
-             k24shield(i) = 
-     & k24shield(i)*exp(-HI(i,j,k)*avgsighp_ionizing*dom)
-             k25shield(i) =
-     & k25shield(i)*exp(-0.25_DKIND*HeII(i,j,k)*avgsighe2p_ionizing*dom)
-             k26shield(i) =
-     & k26shield(i)*exp(-0.25_DKIND*HeI(i,j,k)*avgsighep_ionizing*dom)
-          endif
-        enddo
-
-      else if (iradshield == 2) then
-!
-!     Better self shielding in HI from Rahmati et. al. 2013
-!     approximate self shielding in HeI and HeII
+!     Self shielding in HI from Rahmati et. al. 2013
+!     Optically thin HeI and HeII
 !
         do i = is+1, ie+1
           if (itmask(i)) then
             nSSh = 6.73e-3_DKIND *
-     &        (avgsighp_ionizing/2.49e-18_DKIND)**(-2._DKIND/3._DKIND) *
+     &        (avgsighi /2.49e-18_DKIND)**(-2._DKIND/3._DKIND) *
      &        (tgas1d(i)/1.0e4_DKIND)**(0.17_DKIND) *
      &        (k24/tbase1/1.0e-12_DKIND)**(2.0_DKIND/3.0_DKIND)
             nratio = HI(i,j,k)*dom/nSSh
@@ -1293,24 +1272,24 @@ c -------------------------------------------------------------------
      &            (1.0_DKIND+nratio**(1.64_DKIND))**(-2.28_DKIND) +
      &             0.02_DKIND*(1.0_DKIND+nratio)**(-0.84_DKIND))
 
-            k25shield(i) = 0.0_DKIND
-!     & k25shield(i)*exp(-0.25_DKIND*HeII(i,j,k)*avgsighe2p_ionizing*dom)
-            k26shield(i) = 0.0_DKIND
-!     & k26shield(i)*exp(-0.25_DKIND*HeI(i,j,k)*avgsighep_ionizing*dom)
+             k25shield(i) = k25
+             k26shield(i) = k26
           endif
         enddo
 
-      else if (iradshield == 3) then
+      else if (iradshield == 2) then
 !
-!     Using Rahmati et. al. 2013 in both HI and HeI. Nothing in HeII
+!     Self shielding in HI from Rahmati et. al. 2013
+!     HeI self-shielding following HI method in above
 !
         do i = is+1, ie+1
           if (itmask(i)) then
             nSSh = 6.73e-3_DKIND *
-     &        (avgsighp_ionizing/2.49e-18_DKIND)**(-2._DKIND/3._DKIND)*
+     &        (avgsighi/2.49e-18_DKIND)**(-2._DKIND/3._DKIND) *
      &        (tgas1d(i)/1.0e4_DKIND)**(0.17_DKIND) *
      &        (k24/tbase1/1.0e-12_DKIND)**(2.0_DKIND/3.0_DKIND)
             nratio = HI(i,j,k)*dom/nSSh
+
             k24shield(i)=k24shield(i)*(0.98_DKIND*
      &            (1.0_DKIND+nratio**(1.64_DKIND))**(-2.28_DKIND) +
      &             0.02_DKIND*(1.0_DKIND+nratio)**(-0.84_DKIND))
@@ -1319,16 +1298,52 @@ c -------------------------------------------------------------------
 !     Apply same equations to HeI (assumes HeI closely follows HI)
 !
             nSSh = 6.73e-3_DKIND *
-     &        (avgsighep_ionizing/2.49e-18_DKIND)**(-2._DKIND/3._DKIND)*
+     &        (avgsighei/2.49e-18_DKIND)**(-2._DKIND/3._DKIND)*
      &        (tgas1d(i)/1.0e4_DKIND)**(0.17_DKIND)*
      &        (k26/tbase1/1.0e-12_DKIND)**(2.0_DKIND/3.0_DKIND)
             nratio = HeI(i,j,k)*dom/nSSh
+
             k26shield(i)=k26shield(i)*(0.98_DKIND*
      &            (1.0_DKIND+nratio**(1.64_DKIND))**(-2.28_DKIND) +
      &             0.02_DKIND*(1.0_DKIND+nratio)**(-0.84_DKIND))
 
+            k25shield(i) = k25
+          endif
+        enddo
+
+      else if (iradshield == 3) then
+!
+!     Same as above for HI and HeI
+!     Ignore heating / ionization from HeII entirely
+!
+        do i = is+1, ie+1
+          if (itmask(i)) then
+            nSSh = 6.73e-3_DKIND *
+     &        (avgsighi/2.49e-18_DKIND)**(-2._DKIND/3._DKIND)*
+     &        (tgas1d(i)/1.0e4_DKIND)**(0.17_DKIND) *
+     &        (k24/tbase1/1.0e-12_DKIND)**(2.0_DKIND/3.0_DKIND)
+            nratio = HI(i,j,k)*dom/nSSh
+
+            k24shield(i)=k24shield(i)*(0.98_DKIND*
+     &            (1.0_DKIND+nratio**(1.64_DKIND))**(-2.28_DKIND) +
+     &             0.02_DKIND*(1.0_DKIND+nratio)**(-0.84_DKIND))
+
+!
+!     Apply same equations to HeI (assumes HeI closely follows HI)
+!
+            nSSh = 6.73e-3_DKIND *
+     &        (avgsighei/2.49e-18_DKIND)**(-2._DKIND/3._DKIND)*
+     &        (tgas1d(i)/1.0e4_DKIND)**(0.17_DKIND)*
+     &        (k26/tbase1/1.0e-12_DKIND)**(2.0_DKIND/3.0_DKIND)
+            nratio = HeI(i,j,k)*dom/nSSh
+
+            k26shield(i)=k26shield(i)*(0.98_DKIND*
+     &            (1.0_DKIND+nratio**(1.64_DKIND))**(-2.28_DKIND) +
+     &             0.02_DKIND*(1.0_DKIND+nratio)**(-0.84_DKIND))
+
+
             k25shield(i) = 0.0_DKIND
-!     & k25shield(i)*exp(-0.25_DKIND*HeII(i,j,k)*avgsighe2p_ionizing*dom)
+
           endif
         enddo
 
