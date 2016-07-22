@@ -115,11 +115,6 @@ typedef struct
      photo ionization shielding factors */
   int self_shielding_method;
 
-  double hi_avg_crs;
-  double hei_avg_crs;
-  double heii_avg_crs;
-
-
   /* number of OpenMP threads, if supported */
 # ifdef _OPENMP
   int omp_nthreads;
@@ -329,6 +324,11 @@ typedef struct
 
   /* New/old cloudy data flag */
   int cloudy_data_new;
+
+  /* gray averaged cross sections for UVB self shielding */
+  double hi_avg_crs;
+  double heii_avg_crs;
+  double hei_avg_crs;
 
 } chemistry_data_storage;
 

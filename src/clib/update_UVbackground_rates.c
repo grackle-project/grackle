@@ -153,19 +153,19 @@ int update_UVbackground_rates(chemistry_data *my_chemistry,
   // *** crsHI ***
   slope = (my_rates->UVbackground_table.crsHI[index] -
            my_rates->UVbackground_table.crsHI[index-1]) / (zvec[index] - zvec[index-1]);
-  my_chemistry->hi_avg_crs = (Redshift - zvec[index-1]) * slope +
+  my_rates->hi_avg_crs = (Redshift - zvec[index-1]) * slope +
     my_rates->UVbackground_table.crsHI[index-1];
 
   // *** crsHeI ***
   slope = (my_rates->UVbackground_table.crsHeI[index] -
            my_rates->UVbackground_table.crsHeI[index-1]) / (zvec[index] - zvec[index-1]);
-  my_chemistry->hei_avg_crs = (Redshift - zvec[index-1]) * slope +
+  my_rates->hei_avg_crs = (Redshift - zvec[index-1]) * slope +
     my_rates->UVbackground_table.crsHeI[index-1];
 
   // *** crsHeII ***
   slope = (my_rates->UVbackground_table.crsHeII[index] -
            my_rates->UVbackground_table.crsHeII[index-1]) / (zvec[index] - zvec[index-1]);
-  my_chemistry->heii_avg_crs = (Redshift - zvec[index-1]) * slope +
+  my_rates->heii_avg_crs = (Redshift - zvec[index-1]) * slope +
     my_rates->UVbackground_table.crsHeII[index-1];
 
 

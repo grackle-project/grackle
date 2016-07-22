@@ -215,5 +215,5 @@ int main(int argc, char *argv[])
 
   fprintf(stderr, "gamma = %g.\n", gamma[0]);
 
-  return EXIT_SUCCESS;
+  return 1;
 }

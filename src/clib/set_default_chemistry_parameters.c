@@ -105,12 +105,6 @@ chemistry_data _set_default_chemistry_parameters(void)
   /* aprroximate self-shielding and cross sections */
   my_chemistry.self_shielding_method                  = 0;
 
-  /* cross sections are in cgs */
-  my_chemistry.hi_avg_crs                = 0.0;
-  my_chemistry.hei_avg_crs               = 0.0;
-  my_chemistry.heii_avg_crs              = 0.0;
-
-
 //number of OpenMP threads
 # ifdef _OPENMP
   my_chemistry.omp_nthreads = omp_get_max_threads(); // maximum allowed number
