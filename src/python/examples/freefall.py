@@ -38,6 +38,7 @@ if __name__=="__main__":
     my_chemistry.with_radiative_cooling = 1
     my_chemistry.primordial_chemistry = 3
     my_chemistry.UVbackground = 0
+    my_chemistry.self_shielding_method = 0
     my_chemistry.Gamma = 5. / 3.
     my_chemistry.CaseBRecombination = 0
 
