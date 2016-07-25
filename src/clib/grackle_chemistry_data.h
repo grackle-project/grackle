@@ -101,7 +101,6 @@ typedef struct
      For solar abundance patters and N = 30 (Zn), f = 9.153959e-3. */
   double cloudy_electron_fraction_factor;
 
-               // AJE-RT
   /* flags and parameters to signal that RT
      is being used, and appropriate parameters
      for setting RT solvers */

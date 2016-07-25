@@ -96,13 +96,13 @@ chemistry_data _set_default_chemistry_parameters(void)
 
   my_chemistry.cloudy_electron_fraction_factor = 9.153959e-3; // Cloudy 07.02 abundances
 
-  /* radiative transfer parameters AJE-RT */
+  /* radiative transfer parameters */
   my_chemistry.use_radiative_transfer                 = 0;
   my_chemistry.radiative_transfer_coupled_rate_solver = 0;
   my_chemistry.radiative_transfer_intermediate_step   = 0;
   my_chemistry.radiative_transfer_hydrogen_only       = 0;
 
-  /* aprroximate self-shielding and cross sections */
+  /* aprroximate self-shielding */
   my_chemistry.self_shielding_method                  = 0;
 
 //number of OpenMP threads

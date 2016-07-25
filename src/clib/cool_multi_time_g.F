@@ -20,7 +20,7 @@
      &                gaHIa, gaH2a, gaHea, gaHpa, gaela,
      &                h2ltea, gasgra,
      &                iradshield, avgsighi, avgsighei, avgsigheii,
-     &                k24, k26, iradtrans, photogamma, ! AJE-RT
+     &                k24, k26, iradtrans, photogamma,
      &                ih2optical, iciecool, ciecoa, 
      &                icmbTfloor, iClHeat, clEleFra,
      &                priGridRank, priGridDim,
@@ -60,7 +60,7 @@
       integer in, jn, kn, is, js, ks, ie, je, ke, nratec, 
      &        iexpand, ih2co, ipiht, ispecies, imetal, idim,
      &        imcool, idust, igammah, ih2optical, iciecool,
-     &        clnew, iVheat, iMheat, iradtrans, iradshield ! AJE-RT
+     &        clnew, iVheat, iMheat, iradtrans, iradshield
 
       real*8  aye, temstart, temend,
      &        utem, uxyz, uaye, urho, utim,
@@ -73,7 +73,7 @@
      &        DI(in,jn,kn),  DII(in,jn,kn),  HDI(in,jn,kn),
      &        metal(in,jn,kn), Vheat(in,jn,kn), Mheat(in,jn,kn),
      &        cooltime(in,jn,kn)
-      real*8  photogamma(in,jn,kn) ! AJE-RT
+      real*8  photogamma(in,jn,kn)
       real*8  hyd01ka(nratec), h2k01a(nratec), vibha(nratec), 
      &        rotha(nratec), rotla(nratec), gpldla(nratec),
      &        gphdla(nratec), hdltea(nratec), hdlowa(nratec),
@@ -259,7 +259,7 @@
      &                indixe, t1, t2, logtem, tdef, edot,
      &                tgas, tgasold, p2d, tdust, metallicity, rhoH,
      &                iradshield, avgsighi, avgsighei, avgsigheii,
-     &                k24, k26, iradtrans, photogamma, ! AJE-RT
+     &                k24, k26, iradtrans, photogamma,
      &                ih2optical, iciecool, ciecoa, cieco,
      &                icmbTfloor, iClHeat, clEleFra,
      &                priGridRank, priGridDim,

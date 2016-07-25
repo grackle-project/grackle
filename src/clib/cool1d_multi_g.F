@@ -29,7 +29,7 @@
      &                tgas, tgasold, p2d, tdust, metallicity, rhoH,
      &                iradshield, avgsighi, avgsighei,
      &                avgsigheii,
-     &                k24, k26, iradtrans, photogamma, ! AJE-RT 
+     &                k24, k26, iradtrans, photogamma,
      &                ih2optical, iciecool, ciecoa, cieco,
      &                icmbTfloor, iClHeat, clEleFra,
      &                priGridRank, priGridDim,
@@ -69,7 +69,7 @@
       integer in, jn, kn, is, ie, j, k, nratec, idim,
      &        iexpand, ih2co, ipiht, ispecies, imcool, idust, 
      &        imetal, igammah, ih2optical, iciecool, clnew,
-     &        iVheat, iMheat, iradtrans, iradshield ! AJE-RT
+     &        iVheat, iMheat, iradtrans, iradshield
 
       real*8  aye, temstart, temend, z_solar,
      &        utem, uxyz, uaye, urho, utim,
@@ -81,7 +81,7 @@
      &        HM(in,jn,kn),  H2I(in,jn,kn), H2II(in,jn,kn),
      &        DI(in,jn,kn),  DII(in,jn,kn), HDI(in,jn,kn),
      &        metal(in,jn,kn), Vheat(in,jn,kn), Mheat(in,jn,kn)
-      real*8  photogamma(in,jn,kn) ! AJE-RT
+      real*8  photogamma(in,jn,kn)
       real*8  hyd01ka(nratec), h2k01a(nratec), vibha(nratec), 
      &        rotha(nratec), rotla(nratec), gpldla(nratec),
      &        gphdla(nratec), hdltea(nratec), hdlowa(nratec),
@@ -122,7 +122,7 @@
 
 !  Locals
 
-      integer i, iter, ti, iradfield  ! AJE-RT
+      integer i, iter, ti, iradfield
       real*8 dom, qq, vibl, logtem0, logtem9, dlogtem, zr,
      &       comp1, comp2, 
      &       hdlte1, hdlow1, gamma2, x, fudge, fH2,
@@ -173,7 +173,7 @@
       coolunit = (uaye**5 * xbase1**2 * mh**2) / (tbase1**3 * dbase1)
       zr       = 1._DKIND/(aye*uaye) - 1._DKIND
       fudge    = 1._DKIND
-      iradfield = -1 ! AJE-RT
+      iradfield = -1
 
 !     Set compton cooling coefficients (and temperature)
 
@@ -859,7 +859,7 @@ c  new (correct) way: (april 4, 2007)
 
       endif
  
-!     Photoheating from radiative transfer AJE-RT
+!     Photoheating from radiative transfer
 
       if (iradtrans .eq. 1) then
 c     for radiative transfer, convert from eV/s*TimeUnits to coolunits
