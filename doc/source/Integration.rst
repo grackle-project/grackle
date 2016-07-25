@@ -230,18 +230,20 @@ be set to their desired values by accessing ``grackle_data``.  See
 
 .. code-block:: c++
 
-  chemistry_data my_grackle_data;
-  if (set_default_chemistry_parameters(&my_grackle_data) == 0) {
+  chemistry_data *my_grackle_data;
+  my_grackle_data = new chemistry_data;
+  if (set_default_chemistry_parameters(my_grackle_data) == 0) {
     fprintf(stderr, "Error in set_default_chemistry_parameters.\n");
   }
 
   // Set parameter values for chemistry.
-  grackle_data.use_grackle = 1;            // chemistry on
-  grackle_data.with_radiative_cooling = 1; // cooling on
-  grackle_data.primordial_chemistry = 3;   // molecular network with H, He, D
-  grackle_data.metal_cooling = 1;          // metal cooling on
-  grackle_data.UVbackground = 1;           // UV background on
-  grackle_data.grackle_data_file = "CloudyData_UVB=HM2012.h5"; // data file
+  // Now access the global copy of the chemistry_data struct (grackle_data).
+  grackle_data->use_grackle = 1;            // chemistry on
+  grackle_data->with_radiative_cooling = 1; // cooling on
+  grackle_data->primordial_chemistry = 3;   // molecular network with H, He, D
+  grackle_data->metal_cooling = 1;          // metal cooling on
+  grackle_data->UVbackground = 1;           // UV background on
+  grackle_data->grackle_data_file = "CloudyData_UVB=HM2012.h5"; // data file
 
 Once the desired parameters have been set, the chemistry and cooling rates 
 must be initialized by calling :c:func:`initialize_chemistry_data` with a
@@ -282,7 +284,7 @@ struct.
 .. code-block:: c++
 
    // 8 threads per process
-   grackle_data.omp_nthreads = 8;
+   grackle_data->omp_nthreads = 8;
 
 If not set, this parameter will be set to the maximum number of threads
 possible, as determined by the system or as configured by setting the
