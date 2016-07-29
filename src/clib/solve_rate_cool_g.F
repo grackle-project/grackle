@@ -83,11 +83,15 @@
 !    idust    - flag for H2 formation on dust grains
 !    ih2co    - flag to include H2 cooling (1 = on, 0 = off)
 !    ipiht    - flag to include photoionization heating (1 = on, 0 = off)
-!    iradshield - flag for curde radiative shielding correction
+!    iradshield - flag for approximate self-shielding of UV background
+!    avgsighi   - spectrum averaged ionization crs for HI for use with shielding
+!    avgsighei  - spectrum averaged ionization crs for HeI for use with shielding
+!    avgsigheii - spectrum averaged ionization crs for HeII for use with shielding
 !    iradtrans - flag to include radiative transfer (1 = on, 0 = off)
 !    iradcoupled - flag to indicate coupled radiative transfer
 !    iradstep  - flag to indicate intermediate coupled radiative transfer timestep
-!
+!    irt_honly - flag to indicate applying RT ionization and heating to HI only
+
 !    fh       - Hydrogen mass fraction (typically 0.76)
 !    dtoh     - Deuterium to H mass ratio
 !    z_solar  - Solar metal mass fraction

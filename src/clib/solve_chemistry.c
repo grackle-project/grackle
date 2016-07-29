@@ -93,8 +93,8 @@ int _solve_chemistry(chemistry_data *my_chemistry,
                      gr_float *DI_density, gr_float *DII_density, gr_float *HDI_density,
                      gr_float *e_density, gr_float *metal_density,
                      gr_float *volumetric_heating_rate, gr_float *specific_heating_rate,
-                     gr_float *gammaNum, gr_float *kphHINum, gr_float *kphHeINum,
-                     gr_float *kphHeIINum, gr_float *kdissH2INum)
+                     gr_float *RT_heating_rate, gr_float *RT_HI_ionization_rate, gr_float *RT_HeI_ionization_rate,
+                     gr_float *RT_HeII_ionization_rate, gr_float *RT_H2_dissociation_rate)
 {
 
   /* Return if this doesn't concern us. */
@@ -184,8 +184,8 @@ int _solve_chemistry(chemistry_data *my_chemistry,
     &my_rates->hei_avg_crs, &my_rates->heii_avg_crs,
     &my_chemistry->use_radiative_transfer, &my_chemistry->radiative_transfer_coupled_rate_solver,
     &my_chemistry->radiative_transfer_intermediate_step, &my_chemistry->radiative_transfer_hydrogen_only,
-    kphHINum, kphHeINum, kphHeIINum,
-    kdissH2INum, gammaNum, // AJE-RT
+    RT_HI_ionization_rate, RT_HeI_ionization_rate, RT_HeII_ionization_rate,
+    RT_H2_dissociation_rate, RT_heating_rate, // AJE-RT
     &ierr,
     &my_chemistry->h2_optical_depth_approximation, &my_chemistry->cie_cooling, 
     &my_chemistry->three_body_rate, my_rates->cieco,
@@ -243,9 +243,9 @@ int solve_chemistry(code_units *my_units,
                        my_fields->e_density,   my_fields->metal_density,
                        my_fields->volumetric_heating_rate,
                        my_fields->specific_heating_rate,
-                       my_fields->gammaNum, my_fields->kphHINum,
-                       my_fields->kphHeINum, my_fields->kphHeIINum,
-                       my_fields->kdissH2INum) == FAIL) {
+                       my_fields->RT_heating_rate, my_fields->RT_HI_ionization_rate,
+                       my_fields->RT_HeI_ionization_rate, my_fields->RT_HeII_ionization_rate,
+                       my_fields->RT_H2_dissociation_rate) == FAIL) {
     fprintf(stderr, "Error in _solve_chemistry.\n");
     return FAIL;
   }

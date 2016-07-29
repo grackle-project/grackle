@@ -792,6 +792,7 @@ c  new (correct) way: (april 4, 2007)
      &        (k26/tbase1/1.0e-12_DKIND)**(2._DKIND/3._DKIND)
              nratio_he = HeI(i,j,k)*dom/nSSh_he
 
+
              edot(i) = edot(i) + real(ipiht, DKIND)*(
      &              piHi * HI (i,j,k)*
      &    (0.98_DKIND*(1._DKIND+nratio**(1.64_DKIND))**(-2.28_DKIND)+
@@ -799,17 +800,12 @@ c  new (correct) way: (april 4, 2007)
      &           + piHeI * HeI(i,j,k)*
      &    (0.98_DKIND*(1._DKIND+nratio_he**(1.64_DKIND))**(-2.28_DKIND)+
      &                 0.02_DKIND*(1._DKIND+nratio_he)**(-0.84_DKIND))
-! 
-!       Ignoring HeII heating entirely
-!
-!     &            + piHeII*HeII(i,j,k)*0.25_DKIND
      &           )/dom
+!
+!          Ignoring HeII heating (HeII heating rate -> 0)
+!
            endif
         enddo
-
-
-
-
 
       endif
 

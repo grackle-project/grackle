@@ -81,7 +81,7 @@ int _calculate_cooling_time(chemistry_data *my_chemistry,
                             gr_float *H2I_density, gr_float *H2II_density,
                             gr_float *DI_density, gr_float *DII_density, gr_float *HDI_density,
                             gr_float *e_density, gr_float *metal_density,
-                            gr_float *cooling_time, gr_float *gammaNum,
+                            gr_float *cooling_time, gr_float *RT_heating_rate,
                             gr_float *volumetric_heating_rate, gr_float *specific_heating_rate)
 {
  
@@ -158,7 +158,7 @@ int _calculate_cooling_time(chemistry_data *my_chemistry,
        &my_chemistry->self_shielding_method, &my_rates->hi_avg_crs,
        &my_rates->hei_avg_crs, &my_rates->heii_avg_crs,
        &my_rates->k24, &my_rates->k26,
-       &my_chemistry->use_radiative_transfer, gammaNum,
+       &my_chemistry->use_radiative_transfer, RT_heating_rate,
        &my_chemistry->h2_optical_depth_approximation,
        &my_chemistry->cie_cooling, my_rates->cieco,
        &my_chemistry->cmb_temperature_floor,
@@ -212,7 +212,7 @@ int calculate_cooling_time(code_units *my_units,
                               my_fields->DI_density, my_fields->DII_density,
                               my_fields->HDI_density,
                               my_fields->e_density, my_fields->metal_density,
-                              cooling_time, my_fields->gammaNum,
+                              cooling_time, my_fields->RT_heating_rate,
                               my_fields->volumetric_heating_rate,
                               my_fields->specific_heating_rate) == FAIL) {
     fprintf(stderr, "Error in _calculate_cooling_time.\n");
