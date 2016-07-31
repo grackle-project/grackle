@@ -37,7 +37,9 @@ _fluid_names[2] = _fluid_names[1] + \
 _fluid_names[3] = _fluid_names[2] + \
   ["DI", "DII", "HDI"]
 
-_rad_trans_names = ['gammaNum', 'kphHINum', 'kphHeINum', 'kphHeIINum', 'kdissH2Num']
+_rad_trans_names = ['RT_heating_rate', 'RT_HI_ionization_rate',
+                    'RT_HeI_ionization_rate', 'RT_HeII_ionization_rate',
+                    'RT_H2_dissociation_rate']
 
 class FluidContainer(dict):
     def __init__(self, chemistry_data, n_vals, dtype="float64",
