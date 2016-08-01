@@ -643,8 +643,8 @@ c
           reHIIa(i)   = 3.435d-30 * ttt * lambdaHI**1.970
      &                / (1.d0 + (lambdaHI/2.25d0)**0.376)**3.720 
      &                / coolunit
-          reHeIIa(i)  = 1.26d-14 * kboltz * ttt * lambdaHeII**0.75d0 
-     &                / coolunit
+          reHeII1a(i)  = 1.26d-14 * kb * ttt * lambdaHeII**0.75
+     &                 / coolunit
           reHeIIIa(i) = 8.d0 * 3.435d-30 * ttt * lambdaHeIII**1.970
      &                / (1.d0 + (lambdaHeIII/2.25d0)**0.376)**3.720 
      &                / coolunit
@@ -652,7 +652,7 @@ c
           reHIIa(i)   = 1.778d-29 * ttt * lambdaHI**1.965
      &                / (1.d0 + (lambdaHI/0.541d0)**0.502)**2.697 
      &                / coolunit
-          reHeIIa(i)  = 3d-14 * kboltz * ttt * lambdaHeII**0.654d0 
+          reHeII1a(i) = 3d-14 * kb * ttt * lambdaHeII**0.654d0 
      &                / coolunit
           reHeIIIa(i) = 8.d0 * 1.778d-29 * ttt * lambdaHeIII**1.965
      &                / (1.d0 + (lambdaHeIII/0.541d0)**0.502)**2.697 
