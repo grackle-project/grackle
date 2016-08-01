@@ -197,7 +197,8 @@ c
      &     xx, dum, tbase1, xbase1, kunit, coolunit,
      &     dbase1, dlogtem, kunit_3bdy, cierate,
      &     grain_coef, d_ttt, d_logttt, d_dlogtem,
-     &     ttt2, d_ttt2, tk9
+     &     ttt2, d_ttt2, tk9, lambdaHI, lambdaHeII,
+     &     lambdaHeIII
       real*8 tm, HDLR, HDLV, lt, t3, lt3
 c
 c\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////////
@@ -632,18 +633,37 @@ c
         ciHeISa(i)  = tiny
       endif
 c
-c    c) Recombinations (Cen 1992)
+c    c) Recombinations (from Hui & Gnedin 1997 except where noted)
 c
       if ( ireco .eq. 1 ) then
-        reHIIa(i)   = 8.70d-27*sqrt(ttt)*(ttt/1000.d0)**(-0.2d0)
-     &              / (1.d0 + (ttt/1.0d6)**(0.7d0)) / coolunit
-        reHeII1a(i) = 1.55d-26*ttt**0.3647d0 / coolunit
+        lambdaHI    = 2.d0 * 157807.d0 / ttt
+        lambdaHeII  = 2.d0 * 285335.d0 / ttt
+        lambdaHeIII = 2.d0 * 631515.d0 / ttt
+        if (casebrates .eq. 1) then
+          reHIIa(i)   = 3.435d-30 * ttt * lambdaHI**1.970
+     &                / (1.d0 + (lambdaHI/2.25d0)**0.376)**3.720 
+     &                / coolunit
+          reHeIIa(i)  = 1.26d-14 * kboltz * ttt * lambdaHeII**0.75d0 
+     &                / coolunit
+          reHeIIIa(i) = 8.d0 * 3.435d-30 * ttt * lambdaHeIII**1.970
+     &                / (1.d0 + (lambdaHeIII/2.25d0)**0.376)**3.720 
+     &                / coolunit
+        else
+          reHIIa(i)   = 1.778d-29 * ttt * lambdaHI**1.965
+     &                / (1.d0 + (lambdaHI/0.541d0)**0.502)**2.697 
+     &                / coolunit
+          reHeIIa(i)  = 3d-14 * kboltz * ttt * lambdaHeII**0.654d0 
+     &                / coolunit
+          reHeIIIa(i) = 8.d0 * 1.778d-29 * ttt * lambdaHeIII**1.965
+     &                / (1.d0 + (lambdaHeIII/0.541d0)**0.502)**2.697 
+     &                / coolunit
+        endif
+c Dielectronic recombination: rate from Cen (1992). Same rate regardless
+c of whether we have case A or case B.
         reHeII2a(i) = 1.24d-13*ttt**(-1.5d0)
      &              *exp(-min(log(dhuge),470000.d0/ttt))
      &              *(1.d0+0.3d0*exp(-min(log(dhuge),94000.d0/ttt))) 
      &              / coolunit
-        reHeIIIa(i) = 3.48d-26*sqrt(ttt)*(ttt/1000.d0)**(-0.2d0)
-     &              / (1.d0 + (ttt/1.d6)**(0.7d0)) / coolunit
       else
         reHIIa(i)   = tiny
         reHeII1a(i) = tiny
