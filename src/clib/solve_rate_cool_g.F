@@ -1725,7 +1725,8 @@ c
      &             + k57(i)*HIp(i)*HIp(i)
      &             + k58(i)*HIp(i)*HeI(i,j,k)/4._DKIND
      &             + k24shield(i)*HIp(i)
-            if (iradtrans .eq. 1) scoef = scoef + kphHI(i,j,k)*HIp(i)
+            if (iradtrans .eq. 1) 
+     &          scoef = scoef + kphHI(i,j,k)*HIp(i)
             acoef  = k2(i)*de (i,j,k)
             HIIp(i) = (scoef*dtit(i) + HII(i,j,k))/
      &           (1._DKIND +acoef*dtit(i))
@@ -1803,7 +1804,7 @@ c
      &          + k25shield(i)
      
          if ( (iradtrans .eq. 1) .and. (irt_honly .eq. 0))
-     &       scoef = scoef + kphHeII(i,j,k) * HeIIp(i)
+     &       acoef = acoef + kphHeII(i,j,k)
 
          HeIIp(i)  = ( scoef*dtit(i) + HeII(i,j,k) )
      &              / ( 1._DKIND + acoef*dtit(i) )
@@ -1812,6 +1813,8 @@ c
 
          scoef   = k5(i)*HeIIp(i)*de(i,j,k)
      &           + k25shield(i)*HeIIp(i)
+         if ((iradtrans .eq. 1) .and. (irt_honly .eq. 0))
+     &       scoef = scoef + kphHeII(i,j,k) * HeIIp(i)
          acoef   = k6(i)*de(i,j,k)
          HeIIIp(i)  = ( scoef*dtit(i) + HeIII(i,j,k) )
      &                / ( 1._DKIND + acoef*dtit(i) )
