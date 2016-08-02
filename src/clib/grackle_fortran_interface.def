@@ -110,7 +110,7 @@ c     This is the fortran definition of grackle_chemistry_dadta
          REAL(C_DOUBLE) :: UVbackground_redshift_fullon
          REAL(C_DOUBLE) :: UVbackground_redshift_drop
          REAL(C_DOUBLE) :: cloudy_electron_fraction_factor
-         INTEGER(C_INT) :: use_radiative_transfer;
+         INTEGER(C_INT) :: use_radiative_transfer
          INTEGER(C_INT) :: radiative_transfer_coupled_rate_solver
          INTEGER(C_INT) :: radiative_transfer_intermediate_step
          INTEGER(C_INT) :: radiative_transfer_hydrogen_only
