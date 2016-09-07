@@ -862,7 +862,7 @@ c     for radiative transfer, convert from eV/s*TimeUnits to coolunits
           rtunits = ev2erg / utim / coolunit / dom 
           do i = is + 1, ie + 1
             if (itmask(i)) then
-              edot(i) = edot(i) + float(ipiht) * photogamma(i,j,k)
+              edot(i) = edot(i) + real(ipiht, DKIND) * photogamma(i,j,k)
      &                          * rtunits * HI(i,j,k)
 c              if (photogamma(i,j,k) .gt. 0) then
 c                print*, i,j,k,edot(i), photogamma(i,j,k), rtunits,dom,
