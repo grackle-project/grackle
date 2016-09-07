@@ -168,11 +168,11 @@ For all on/off integer flags, 0 is off and 1 is on.
    Flag to signal that arrays of ionization and heating rates from
    radiative transfer solutions are being provided. Only
    available if c:var:`primordial chemistry` is enabled. HI, HeI, and
-   HeII ionization arrays are provided in :c:data:`kphHINum`,
-   :c:data:`kphHeINum`, and :c:data:`kphHeIINum` fields respectively of
+   HeII ionization arrays are provided in :c:data:`RT_HI_ionization_rate`,
+   :c:data:`RT_HeI_ionization_rate`, and :c:data:`RT_HeII_ionization_rate` fields respectively of
    the :c:data:`grackle_field_data` struct. Associated heating rate
-   is provided in the :c:data:`gammaNum` field, and H2 photodissociation
-   rate can also be provided in the :c:data:`kdissH2INum` field when 
+   is provided in the :c:data:`RT_heating_rate` field, and H2 photodissociation
+   rate can also be provided in the :c:data:`RT_H2_dissociation_rate` field when 
    :c:var:`primordial chemistry` is set to either 2 or 3. Default: 0.
 
 .. c:var:: radiative_transfer_coupled_rate_solver
