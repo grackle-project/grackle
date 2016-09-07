@@ -1798,7 +1798,7 @@ c
      &          + k26shield(i)*HeIp(i)
      
          if ( (iradtrans .eq. 1) .and. (irt_honly .eq. 0))
-     &       scoef = scoef + kphHei(i,j,k)*HeIp(i)
+     &       scoef = scoef + kphHeI(i,j,k)*HeIp(i)
 
          acoef  = k4(i)*de(i,j,k) + k5(i)*de(i,j,k)
      &          + k25shield(i)
