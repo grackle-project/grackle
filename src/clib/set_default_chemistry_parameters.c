@@ -102,7 +102,7 @@ chemistry_data _set_default_chemistry_parameters(void)
   my_chemistry.radiative_transfer_intermediate_step   = 0;
   my_chemistry.radiative_transfer_hydrogen_only       = 0;
 
-  /* aprroximate self-shielding */
+  /* approximate self-shielding */
   my_chemistry.self_shielding_method                  = 0;
 
 //number of OpenMP threads
