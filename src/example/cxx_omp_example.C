@@ -150,9 +150,10 @@ int main(int argc, char *argv[])
   // Set expansion factor to 1 for non-cosmological simulation.
   my_units.a_value = 1. / (1. + initial_redshift) / my_units.a_units;
 
-  // Second, create a chemistry object for parameters.
-  chemistry_data my_grackle_data;
-  if (set_default_chemistry_parameters(&my_grackle_data) == 0) {
+  // Second, create a chemistry object for parameters.  This needs to be a pointer.
+  chemistry_data *my_grackle_data;
+  my_grackle_data = new chemistry_data;
+  if (set_default_chemistry_parameters(my_grackle_data) == 0) {
     fprintf( stderr, "Error in set_default_chemistry_parameters.\n" );
     return 0;
   }
