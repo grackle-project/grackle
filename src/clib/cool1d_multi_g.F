@@ -869,9 +869,13 @@ c                print*, i,j,k,edot(i), photogamma(i,j,k), rtunits,dom,
 c      $                 aye, utim, coolunit, d(i,j,k), hi(i,j,k), tgas(i)
 c              endif
               if (edot(i) .ne. edot(i)) then
+#ifdef _OPENMP
+!$omp critical
                   write(6,*) 'NaN in edot[2]: ', i,j,k, edot(i),
      &                photogamma(i,j,k), HI(i,j,k), de(i,j,k), d(i,j,k),
      &                e(i,j,k), p2d(i), tgas(i), dom, urho, aye, mh
+!$omp end critical
+#endif
               endif
 
             endif
