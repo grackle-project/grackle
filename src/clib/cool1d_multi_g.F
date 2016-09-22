@@ -488,7 +488,7 @@
 c            gphdl1 = gphdl(i)/dom
             gphdl1 = h2lte(i)/dom
             edot(i) = edot(i) - real(ih2co, DKIND)*fudge*H2I(i,j,k)*
-     &           gphdl(i)/(1._DKIND + gphdl1/galdl(i)) / (2._DKIND*dom)
+     &           h2lte(i)/(1._DKIND + gphdl1/galdl(i)) / (2._DKIND*dom)
 
             end if
          enddo
