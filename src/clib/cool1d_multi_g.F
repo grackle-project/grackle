@@ -480,8 +480,10 @@
             else
                 fudge = 1._DKIND
             endif
-            galdl(i) = gaHI(i) * HI(i,j,k)  + gaH2(i) * H2I(i,j,k)
-     &               + gaHe(i) * HeI(i,j,k) + gaHp(i) * HII(i,j,k)
+            galdl(i) = gaHI(i) * HI(i,j,k)  
+     &               + gaH2(i) * H2I(i,j,k) / 2._DKIND
+     &               + gaHe(i) * HeI(i,j,k) / 4._DKIND
+     &               + gaHp(i) * HII(i,j,k)
      &               + gael(i) * de(i,j,k)
 c            gphdl1 = gphdl(i)/dom
             gphdl1 = h2lte(i)/dom
