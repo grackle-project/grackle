@@ -11,5 +11,4 @@ from .evolve import \
     calculate_collapse_factor
 
 from .units import \
-    set_cosmology_units, \
-    get_cooling_units
+    set_cosmology_units
