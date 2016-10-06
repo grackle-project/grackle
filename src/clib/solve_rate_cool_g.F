@@ -1303,7 +1303,8 @@ c -------------------------------------------------------------------
      &        (avgsighei/2.49e-18_DKIND)**(-2._DKIND/3._DKIND)*
      &        (tgas1d(i)/1.0e4_DKIND)**(0.17_DKIND)*
      &        (k26/tbase1/1.0e-12_DKIND)**(2.0_DKIND/3.0_DKIND)
-            nratio = (HeI(i,j,k) + HeII(i,j,k) + HeIII(i,j,k))*dom/nSSh
+            nratio = 0.25_DKIND*
+     &           (HeI(i,j,k) + HeII(i,j,k) + HeIII(i,j,k))*dom/nSSh
 
             k26shield(i)=k26shield(i)*(0.98_DKIND*
      &            (1.0_DKIND+nratio**(1.64_DKIND))**(-2.28_DKIND) +
@@ -1337,7 +1338,8 @@ c -------------------------------------------------------------------
      &        (avgsighei/2.49e-18_DKIND)**(-2._DKIND/3._DKIND)*
      &        (tgas1d(i)/1.0e4_DKIND)**(0.17_DKIND)*
      &        (k26/tbase1/1.0e-12_DKIND)**(2.0_DKIND/3.0_DKIND)
-            nratio = (HeI(i,j,k) + HeII(i,j,k) + HeIII(i,j,k))*dom/nSSh
+            nratio = 0.25_DKIND *
+     &            (HeI(i,j,k) + HeII(i,j,k) + HeIII(i,j,k))*dom/nSSh
 
             k26shield(i)=k26shield(i)*(0.98_DKIND*
      &            (1.0_DKIND+nratio**(1.64_DKIND))**(-2.28_DKIND) +
