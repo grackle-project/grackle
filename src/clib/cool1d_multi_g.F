@@ -719,7 +719,7 @@ c  new (correct) way: (april 4, 2007)
      &         (avgsighi /2.49e-18_DKIND)**(-2._DKIND/3._DKIND)*
      &         (tgas(i)/1.0e4_DKIND)**(0.17_DKIND)*
      &         (k24/tbase1/1.0e-12_DKIND)**(2._DKIND/3._DKIND)
-             nratio = HI(i,j,k)*dom/nSSh
+             nratio = (HI(i,j,k) + HII(i,j,k))*dom/nSSh
 
              edot(i) = edot(i) + real(ipiht,DKIND)*(
      &              piHI  *HI  (i,j,k)*
@@ -746,7 +746,7 @@ c  new (correct) way: (april 4, 2007)
      &         (avgsighi/2.49e-18_DKIND)**(-2._DKIND/3._DKIND)*
      &         (tgas(i)/1.0e4_DKIND)**(0.17_DKIND)*
      &         (k24/tbase1/1.0e-12_DKIND)**(2._DKIND/3._DKIND)
-             nratio = HI(i,j,k)*dom/nSSh
+             nratio = (HI(i,j,k) + HII(i,j,k))*dom/nSSh
 
 !
 !            HeI self shielding ratio
@@ -755,7 +755,8 @@ c  new (correct) way: (april 4, 2007)
      &        (avgsighei/ 2.49e-18_DKIND)**(-2._DKIND/3._DKIND)*
      &        (tgas(i)/1.0e4_DKIND)**(0.17_DKIND)*
      &        (k26/tbase1/1.0e-12_DKIND)**(2._DKIND/3._DKIND)
-             nratio_he = HeI(i,j,k)*dom/nSSh_he
+             nratio_he = 
+     &            (HeI(i,j,k) + HeII(i,j,k) + HeIII(i,j,k))*dom/nSSh_he
 
              edot(i) = edot(i) + real(ipiht, DKIND)*(
      &              piHi * HI(i,j,k)*
@@ -784,7 +785,7 @@ c  new (correct) way: (april 4, 2007)
      &         (avgsighi /2.49e-18_DKIND)**(-2._DKIND/3._DKIND)*
      &         (tgas(i)/1.0e4_DKIND)**(0.17_DKIND)*
      &         (k24/tbase1/1.0e-12_DKIND)**(2._DKIND/3._DKIND)
-             nratio = HI(i,j,k)*dom/nSSh
+             nratio = (HI(i,j,k) + HII(i,j,k))*dom/nSSh
 !
 !            HeI self shielding ratio
 !
@@ -792,7 +793,8 @@ c  new (correct) way: (april 4, 2007)
      &        (avgsighei /2.49e-18_DKIND)**(-2._DKIND/3._DKIND)*
      &        (tgas(i)/1.0e4_DKIND)**(0.17_DKIND)*
      &        (k26/tbase1/1.0e-12_DKIND)**(2._DKIND/3._DKIND)
-             nratio_he = HeI(i,j,k)*dom/nSSh_he
+             nratio_he = 
+     &          (HeI(i,j,k) + HeII(i,j,k) + HeIII(i,j,k))*dom/nSSh_he
 
 
              edot(i) = edot(i) + real(ipiht, DKIND)*(

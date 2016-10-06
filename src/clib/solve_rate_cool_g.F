@@ -460,7 +460,7 @@ c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 fo
             call lookup_cool_rates1d_g(temstart, temend, nratec, j, k,
      &               is, ie, ithreebody,
      &               in, jn, kn, ispecies, idust, iradshield,
-     &               tgas, HI, HII, HeI, HeII, tdust, metallicity, 
+     &               tgas, HI, HII, HeI, HeII, HeIII, tdust, metallicity, 
      &               k1a, k2a, k3a, k4a, k5a, k6a, k7a, k8a, k9a, k10a,
      &               k11a, k12a, k13a, k13dda, k14a, k15a, k16a,
      &               k17a, k18a, k19a, k22a,
@@ -978,7 +978,7 @@ c -------------------------------------------------------------------
       subroutine lookup_cool_rates1d_g(temstart, temend, nratec, j, k,
      &                is, ie, ithreebody,
      &                in, jn, kn, ispecies, idust, iradshield,
-     &                tgas1d, HI, HII, HeI, HeII, tdust, metallicity, 
+     &                tgas1d, HI, HII, HeI, HeII, HeIII, tdust, metallicity, 
      &                k1a, k2a, k3a, k4a, k5a, k6a, k7a, k8a, k9a, k10a,
      &                k11a, k12a, k13a, k13dda, k14a, k15a, k16a,
      &                k17a, k18a, k19a, k22a,
@@ -1027,7 +1027,7 @@ c -------------------------------------------------------------------
 !     Density fields
 
       R_PREC  HI(in,jn,kn),   HII(in,jn,kn),
-     &        HeI(in,jn,kn), HeII(in,jn,kn)
+     &        HeI(in,jn,kn), HeII(in,jn,kn), HeIII(in,jn,kn)
 
 !     Returned rate values
 
@@ -1269,7 +1269,7 @@ c -------------------------------------------------------------------
      &        (avgsighi /2.49e-18_DKIND)**(-2._DKIND/3._DKIND) *
      &        (tgas1d(i)/1.0e4_DKIND)**(0.17_DKIND) *
      &        (k24/tbase1/1.0e-12_DKIND)**(2.0_DKIND/3.0_DKIND)
-            nratio = HI(i,j,k)*dom/nSSh
+            nratio = (HI(i,j,k) + HII(i,j,k))*dom/nSSh
             k24shield(i)=k24shield(i)*(0.98_DKIND*
      &            (1.0_DKIND+nratio**(1.64_DKIND))**(-2.28_DKIND) +
      &             0.02_DKIND*(1.0_DKIND+nratio)**(-0.84_DKIND))
@@ -1290,7 +1290,7 @@ c -------------------------------------------------------------------
      &        (avgsighi/2.49e-18_DKIND)**(-2._DKIND/3._DKIND) *
      &        (tgas1d(i)/1.0e4_DKIND)**(0.17_DKIND) *
      &        (k24/tbase1/1.0e-12_DKIND)**(2.0_DKIND/3.0_DKIND)
-            nratio = HI(i,j,k)*dom/nSSh
+            nratio = (HI(i,j,k) + HII(i,j,k))*dom/nSSh
 
             k24shield(i)=k24shield(i)*(0.98_DKIND*
      &            (1.0_DKIND+nratio**(1.64_DKIND))**(-2.28_DKIND) +
@@ -1303,7 +1303,7 @@ c -------------------------------------------------------------------
      &        (avgsighei/2.49e-18_DKIND)**(-2._DKIND/3._DKIND)*
      &        (tgas1d(i)/1.0e4_DKIND)**(0.17_DKIND)*
      &        (k26/tbase1/1.0e-12_DKIND)**(2.0_DKIND/3.0_DKIND)
-            nratio = HeI(i,j,k)*dom/nSSh
+            nratio = (HeI(i,j,k) + HeII(i,j,k) + HeIII(i,j,k))*dom/nSSh
 
             k26shield(i)=k26shield(i)*(0.98_DKIND*
      &            (1.0_DKIND+nratio**(1.64_DKIND))**(-2.28_DKIND) +
@@ -1324,7 +1324,7 @@ c -------------------------------------------------------------------
      &        (avgsighi/2.49e-18_DKIND)**(-2._DKIND/3._DKIND)*
      &        (tgas1d(i)/1.0e4_DKIND)**(0.17_DKIND) *
      &        (k24/tbase1/1.0e-12_DKIND)**(2.0_DKIND/3.0_DKIND)
-            nratio = HI(i,j,k)*dom/nSSh
+            nratio = (HI(i,j,k) + HII(i,j,k))*dom/nSSh
 
             k24shield(i)=k24shield(i)*(0.98_DKIND*
      &            (1.0_DKIND+nratio**(1.64_DKIND))**(-2.28_DKIND) +
@@ -1337,7 +1337,7 @@ c -------------------------------------------------------------------
      &        (avgsighei/2.49e-18_DKIND)**(-2._DKIND/3._DKIND)*
      &        (tgas1d(i)/1.0e4_DKIND)**(0.17_DKIND)*
      &        (k26/tbase1/1.0e-12_DKIND)**(2.0_DKIND/3.0_DKIND)
-            nratio = HeI(i,j,k)*dom/nSSh
+            nratio = (HeI(i,j,k) + HeII(i,j,k) + HeIII(i,j,k))*dom/nSSh
 
             k26shield(i)=k26shield(i)*(0.98_DKIND*
      &            (1.0_DKIND+nratio**(1.64_DKIND))**(-2.28_DKIND) +
