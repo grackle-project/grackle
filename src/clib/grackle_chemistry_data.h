@@ -174,6 +174,7 @@ typedef struct{
     double *piHeII;
     double *piHeI;
 
+    // spectrum averaged absorption cross sections
     double *crsHI;
     double *crsHeII;
     double *crsHeI;
