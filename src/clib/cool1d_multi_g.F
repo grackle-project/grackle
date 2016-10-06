@@ -709,7 +709,8 @@ c  new (correct) way: (april 4, 2007)
 
       else if (iradshield == 1) then
 !
-!     approximate self shielding using Rahmati et. al. 2013
+!     approximate self shielding using Eq. 13 and 14 from
+!     Rahmati et. al. 2013 (MNRAS, 430, 2427-2445)
 !     to shield HI, while leaving HeI and HeII optically thin
 !
 
@@ -733,7 +734,8 @@ c  new (correct) way: (april 4, 2007)
 
       else if (iradshield == 2)  then
 !
-!     Better self-shielding in HI from Rahmati et. al. 2013
+!     Better self-shielding in HI using Eq. 13 and 14 from
+!     Rahmati et. al. 2013 (MNRAS, 430, 2427-2445)
 !     approximate self shielding in HeI and HeII
 !
 
@@ -772,8 +774,9 @@ c  new (correct) way: (april 4, 2007)
 
       else if (iradshield == 3) then
 !
-!     Rahmati et. al. 2013 for HI and HeI as above, but 
-!     completely ignoring HeII entirely
+!     shielding using Eq. 13 and 14 from
+!     Rahmati et. al. 2013 (MNRAS, 430, 2427-2445)
+!     in HI and HeI, but ignoring HeII heating entirely
 !
 
         do i = is+1, ie+1

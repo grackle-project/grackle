@@ -1260,8 +1260,9 @@ c -------------------------------------------------------------------
 
       if (iradshield == 1) then
 !
-!     Self shielding in HI from Rahmati et. al. 2013
-!     Optically thin HeI and HeII
+!     approximate self shielding using Eq. 13 and 14 from
+!     Rahmati et. al. 2013 (MNRAS, 430, 2427-2445)
+!     to shield HI, while leaving HeI and HeII optically thin
 !
         do i = is+1, ie+1
           if (itmask(i)) then
@@ -1281,8 +1282,9 @@ c -------------------------------------------------------------------
 
       else if (iradshield == 2) then
 !
-!     Self shielding in HI from Rahmati et. al. 2013
-!     HeI self-shielding following HI method in above
+!     Better self-shielding in HI using Eq. 13 and 14 from
+!     Rahmati et. al. 2013 (MNRAS, 430, 2427-2445)
+!     approximate self shielding in HeI and HeII
 !
         do i = is+1, ie+1
           if (itmask(i)) then
@@ -1316,8 +1318,9 @@ c -------------------------------------------------------------------
 
       else if (iradshield == 3) then
 !
-!     Same as above for HI and HeI
-!     Ignore heating / ionization from HeII entirely
+!     shielding using Eq. 13 and 14 from
+!     Rahmati et. al. 2013 (MNRAS, 430, 2427-2445)
+!     in HI and HeI, but ignoring HeII heating entirely
 !
         do i = is+1, ie+1
           if (itmask(i)) then
