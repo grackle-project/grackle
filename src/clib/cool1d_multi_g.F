@@ -127,7 +127,7 @@
      &       comp1, comp2, 
      &       hdlte1, hdlow1, gamma2, x, fudge, fH2,
      &       gphdl1, dom_inv, tau, ciefudge,
-     &       coolunit, dbase1, tbase1, xbase1, rtunits,
+     &       coolunit, dbase1, tbase1, xbase1,
      &       nH2, nother, myde, nSSh, nratio, nssh_he, nratio_he
 
 !  Slice locals
@@ -865,14 +865,12 @@ c  new (correct) way: (april 4, 2007)
 !     Photoheating from radiative transfer
 
       if (iradtrans .eq. 1) then
-c     for radiative transfer, convert from eV/s*TimeUnits to coolunits
-          rtunits = ev2erg / utim / coolunit / dom 
           do i = is + 1, ie + 1
             if (itmask(i)) then
               edot(i) = edot(i) + real(ipiht, DKIND) * photogamma(i,j,k)
-     &                          * rtunits * HI(i,j,k)
+     &                          / coolunit * HI(i,j,k) / dom
 c              if (photogamma(i,j,k) .gt. 0) then
-c                print*, i,j,k,edot(i), photogamma(i,j,k), rtunits,dom,
+c                print*, i,j,k,edot(i), photogamma(i,j,k), dom,
 c      $                 aye, utim, coolunit, d(i,j,k), hi(i,j,k), tgas(i)
 c              endif
               if (edot(i) .ne. edot(i)) then
