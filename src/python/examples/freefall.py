@@ -40,6 +40,8 @@ if __name__=="__main__":
     my_chemistry.UVbackground = 0
     my_chemistry.Gamma = 5. / 3.
     my_chemistry.CaseBRecombination = 0
+    my_chemistry.cie_cooling = 1
+    my_chemistry.h2_optical_depth_approximation = 1
 
     if os.environ.get("METAL_COOLING", 0) == "1":
         my_chemistry.metal_cooling = int(os.environ["METAL_COOLING"])

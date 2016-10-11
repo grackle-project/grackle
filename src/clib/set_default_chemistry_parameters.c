@@ -49,8 +49,8 @@ chemistry_data _set_default_chemistry_parameters(void)
   my_chemistry.grackle_data_file              = "";
 
   my_chemistry.three_body_rate                = 0;   // ABN02
-  my_chemistry.cie_cooling                    = 1;
-  my_chemistry.h2_optical_depth_approximation = 1;
+  my_chemistry.cie_cooling                    = 0;
+  my_chemistry.h2_optical_depth_approximation = 0;
 
   my_chemistry.photoelectric_heating          = 0;
   my_chemistry.photoelectric_heating_rate     = 8.5e-26;  // ergs cm-3 s-1
