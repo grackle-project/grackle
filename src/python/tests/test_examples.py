@@ -15,6 +15,7 @@
 import contextlib
 import glob
 import os
+import pytest
 import shutil
 import subprocess
 import tempfile
@@ -22,14 +23,6 @@ import yt
 
 from pygrackle.utilities.testing import \
     assert_allclose
-
-current_path = os.path.abspath(__file__)
-
-EXAMPLES_GLOB = [os.path.dirname(
-    os.path.dirname(current_path)), 'examples', '*.py']
-
-python_examples = glob.glob(os.sep.join(EXAMPLES_GLOB))
-
 
 @contextlib.contextmanager
 def temporary_directory():
@@ -41,9 +34,28 @@ def temporary_directory():
         os.chdir(curdir)
         shutil.rmtree(tmpdir)
 
+current_path = os.path.abspath(__file__)
 
-def example_test(example_path, primordial_chemistry=None,
-                 metal_cooling=None):
+EXAMPLES_GLOB = [os.path.dirname(
+    os.path.dirname(current_path)), 'examples', '*.py']
+
+python_examples = glob.glob(os.sep.join(EXAMPLES_GLOB))
+
+path_args = []
+            
+for example_path in python_examples:
+    if 'cooling_rate.py' in example_path:
+        for i in range(4):
+            path_args.append((example_path, i, None))
+    elif 'freefall.py' in example_path:
+        for i in range(2):
+            path_args.append((example_path, None, i))
+    else:
+        path_args.append((example_path, None, None))
+
+@pytest.mark.parametrize('example_path,primordial_chemistry,metal_cooling',
+                         path_args)
+def test_examples(example_path, primordial_chemistry, metal_cooling):
     env = dict(os.environ)
     if primordial_chemistry is not None:
         env['PRIMORDIAL_CHEM'] = str(primordial_chemistry)
@@ -81,15 +93,3 @@ def example_test(example_path, primordial_chemistry=None,
 
         for field_name in ds_old.field_list:
             assert_allclose(ad_old[field_name].v, ad_new[field_name].v)
-
-
-def test_examples():
-    for example_path in python_examples:
-        if 'cooling_rate.py' in example_path:
-            for i in range(4):
-                yield example_test, example_path, i
-        elif 'freefall.py' in example_path:
-            for i in range(2):
-                yield example_test, example_path, None, i
-        else:
-            yield example_test, example_path
