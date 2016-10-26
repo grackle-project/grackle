@@ -13,6 +13,7 @@
 ########################################################################
 
 import os
+import pytest
 import subprocess
 
 current_path = os.path.abspath(__file__)
@@ -35,7 +36,8 @@ def run_command(command, cwd, env):
                            'and the following output: %s' %
                            (command, er.returncode, er.output))
 
-def code_example_test(example):
+@pytest.mark.parametrize("example", code_examples)
+def test_code_examples(example):
     env = dict(os.environ)
     curdir = os.getcwd()
     os.chdir(examples_path)
@@ -53,7 +55,3 @@ def code_example_test(example):
     run_command(command, examples_path, env)
     
     os.chdir(curdir)
-
-def test_code_examples():
-    for example in code_examples:
-        yield code_example_test, example

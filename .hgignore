@@ -39,6 +39,10 @@ src/example/c_example_nostruct
 src/example/c_table_example_nostruct
 src/example/fortran_example
 src/example/fortran_table_example
+src/example/GRACKLE_INFO
+src/example/Table__OMP_Performance
+src/example/flake8.out
+src/example/*.png
 src/python/build/*
 src/python/*.png
 src/python/flake8.out

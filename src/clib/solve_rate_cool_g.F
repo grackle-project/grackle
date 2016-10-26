@@ -355,7 +355,7 @@ c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 fo
 !$omp&   hyd01k, h2k01, vibh, roth, rotl,
 !$omp&   gpldl, gphdl, hdlte, hdlow, cieco,
 !$omp&   itmask )
-#endif // #ifdef _OPENMP
+#endif
       do t = 0, dk*dj-1
         k = t/dj      + ks+1
         j = mod(t,dj) + js+1
