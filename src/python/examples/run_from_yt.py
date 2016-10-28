@@ -35,6 +35,7 @@ my_chemistry = chemistry_data()
 my_chemistry.use_grackle = 1
 my_chemistry.primordial_chemistry = 1
 my_chemistry.metal_cooling = 1
+my_chemistry.self_shielding_method = 0
 grackle_dir = os.path.dirname(os.path.dirname(os.path.dirname(
     os.path.dirname(os.path.abspath(__file__)))))
 my_chemistry.grackle_data_file = os.sep.join(

@@ -163,6 +163,54 @@ For all on/off integer flags, 0 is off and 1 is on.
    provided in the :c:data:`specific_heating_rate` field of the
    :c:data:`grackle_field_data` struct.  Default: 0.
 
+.. c:var:: use_radiative_transfer
+
+   Flag to signal that arrays of ionization and heating rates from
+   radiative transfer solutions are being provided. Only
+   available if c:var:`primordial chemistry` is enabled. HI, HeI, and
+   HeII ionization arrays are provided in :c:data:`RT_HI_ionization_rate`,
+   :c:data:`RT_HeI_ionization_rate`, and :c:data:`RT_HeII_ionization_rate` fields respectively of
+   the :c:data:`grackle_field_data` struct. Associated heating rate
+   is provided in the :c:data:`RT_heating_rate` field, and H2 photodissociation
+   rate can also be provided in the :c:data:`RT_H2_dissociation_rate` field when 
+   :c:var:`primordial chemistry` is set to either 2 or 3. Default: 0.
+
+.. c:var:: radiative_transfer_coupled_rate_solver
+
+   Flag that must be enabled to couple the passed radiative transfer
+   fields to the chemistry solver. Default: 0.
+
+.. c:var:: radiative_transfer_intermediate_step
+
+   Flag to enable intermediate stepping in applying radiative transfer
+   fields to chemistry solver. Default: 0.
+
+.. c:var:: radiative_transfer_hydrogen_only
+
+   Flag to only use hydrogen ionization and heating rates from the 
+   radiative transfer solutions. Default: 0.
+
+.. c:var:: self_shielding_method
+
+   Switch to enable approximate self-shielding from the UV background.
+   All three of the below methods incorporate Eq. 13 and 14 from 
+   Rahmati et. al. 2013 <http://adsabs.harvard.edu/abs/2013MNRAS.430.2427R>`_.
+   These equations involve using the spectrum averaged photoabsorption cross
+   for the given species (HI or HeI). These redshift dependent values are
+   pre-computed for the HM2012 and FG2011 UV backgrounds and included in 
+   their respective cooling data tables. Care is advised in blindly using
+   any of these methods.
+   Default: 0.
+   
+     - 0: No self shielding. Elements are optically thin to the UV background.
+     - 1: Approximate self-shielding in HI only. HeI and HeII are left 
+          as optically thin.
+     - 2: Approximate self-shielding in both HI and HeI. HeII remains
+          optically thin.
+     - 3: Approximate self-shielding in both HI and HeI, but ignoring
+          HeII ionization and heating from the UV background entirely (setting
+          HeII rates to zero). 
+          
 .. c:var:: int omp_nthreads
 
    Sets the number of OpenMP threads.  If not set, this will be set to

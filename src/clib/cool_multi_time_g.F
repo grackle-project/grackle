@@ -18,7 +18,9 @@
      &                hyd01ka, h2k01a, vibha, rotha, rotla,
      &                gpldla, gphdla, hdltea, hdlowa,
      &                gaHIa, gaH2a, gaHea, gaHpa, gaela,
-     &                h2ltea, gasgra, 
+     &                h2ltea, gasgra,
+     &                iradshield, avgsighi, avgsighei, avgsigheii,
+     &                k24, k26, iradtrans, photogamma,
      &                ih2optical, iciecool, ciecoa, 
      &                icmbTfloor, iClHeat, clEleFra,
      &                priGridRank, priGridDim,
@@ -58,7 +60,8 @@
       integer in, jn, kn, is, js, ks, ie, je, ke, nratec, 
      &        iexpand, ih2co, ipiht, ispecies, imetal, idim,
      &        imcool, idust, igammah, ih2optical, iciecool,
-     &        clnew, iVheat, iMheat
+     &        clnew, iVheat, iMheat, iradtrans, iradshield
+
       real*8  aye, temstart, temend,
      &        utem, uxyz, uaye, urho, utim,
      &        gamma, fh, z_solar, clEleFra
@@ -70,6 +73,7 @@
      &        DI(in,jn,kn),  DII(in,jn,kn),  HDI(in,jn,kn),
      &        metal(in,jn,kn), Vheat(in,jn,kn), Mheat(in,jn,kn),
      &        cooltime(in,jn,kn)
+      real*8  photogamma(in,jn,kn)
       real*8  hyd01ka(nratec), h2k01a(nratec), vibha(nratec), 
      &        rotha(nratec), rotla(nratec), gpldla(nratec),
      &        gphdla(nratec), hdltea(nratec), hdlowa(nratec),
@@ -81,8 +85,8 @@
      &        ciHeIIa(nratec), reHIIa(nratec), reHeII1a(nratec), 
      &        reHeII2a(nratec), reHeIIIa(nratec), brema(nratec),
      &        compa, piHI, piHeI, piHeII, comp_xraya, comp_temp,
-     &        gammaha
-
+     &        gammaha, avgsighi, avgsighei, avgsigheii,
+     &        k24, k26
 !  Cloudy cooling data
 
       integer icmbTfloor, iClHeat
@@ -254,6 +258,8 @@
      &                reHII, reHeII1, reHeII2, reHeIII, brem,
      &                indixe, t1, t2, logtem, tdef, edot,
      &                tgas, tgasold, p2d, tdust, metallicity, rhoH,
+     &                iradshield, avgsighi, avgsighei, avgsigheii,
+     &                k24, k26, iradtrans, photogamma,
      &                ih2optical, iciecool, ciecoa, cieco,
      &                icmbTfloor, iClHeat, clEleFra,
      &                priGridRank, priGridDim,

@@ -227,6 +227,9 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
     my_rates->piHI = 0;
     my_rates->piHeII = 0;
     my_rates->piHeI = 0;
+    my_rates->hi_avg_crs   = 0.0;
+    my_rates->heii_avg_crs = 0.0;
+    my_rates->hei_avg_crs  = 0.0;
 
   }
 
@@ -315,6 +318,9 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
   my_rates->UVbackground_table.piHI   = NULL;
   my_rates->UVbackground_table.piHeII = NULL;
   my_rates->UVbackground_table.piHeI  = NULL;
+  my_rates->UVbackground_table.crsHI  = NULL;
+  my_rates->UVbackground_table.crsHeII = NULL;
+  my_rates->UVbackground_table.crsHeI = NULL;
 
   if (initialize_UVbackground_data(my_chemistry, my_rates) == FAIL) {
     fprintf(stderr, "Error in initialize_UVbackground_data.\n");

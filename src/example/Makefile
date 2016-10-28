@@ -76,7 +76,7 @@ LDFLAGS += $(ASSEMBLE_OMP_FLAGS)
 OBJS_CONFIG_LIB = cxx_grackle.o
 
 GRACKLE_INCLUDE = -I$(MACH_INSTALL_PREFIX)/include
-GRACKLE_LIB = -L$(MACH_INSTALL_PREFIX)/lib -lgrackle
+GRACKLE_LIB = -L$(MACH_INSTALL_PREFIX)/lib  -lgrackle
 
 #-----------------------------------------------------------------------
 # C++ EXAMPLE

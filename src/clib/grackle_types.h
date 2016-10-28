@@ -58,6 +58,12 @@ typedef struct
   gr_float *volumetric_heating_rate;
   gr_float *specific_heating_rate;
 
+  gr_float *RT_heating_rate;
+  gr_float *RT_HI_ionization_rate;
+  gr_float *RT_HeI_ionization_rate;
+  gr_float *RT_HeII_ionization_rate;
+  gr_float *RT_H2_dissociation_rate;
+
 } grackle_field_data;
 
 typedef struct

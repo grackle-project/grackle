@@ -123,6 +123,30 @@ cdef class chemistry_data:
         def __set__(self, val):
             self.data.SolarMetalFractionByMass = val
 
+    property use_volumetric_heating_rate:
+        def __get__(self):
+            return self.data.use_volumetric_heating_rate
+        def __set__(self, val):
+            self.data.use_volumetric_heating_rate = val
+
+    property use_specific_heating_rate:
+        def __get__(self):
+            return self.data.use_specific_heating_rate
+        def __set__(self, val):
+            self.data.use_specific_heating_rate = val
+
+    property use_radiative_transfer:
+        def __get__(self):
+            return self.data.use_radiative_transfer
+        def __set__(self, val):
+            self.data.use_radiative_transfer = val
+
+    property self_shielding_method:
+        def __get__(self):
+            return self.data.self_shielding_method
+        def __set__(self, val):
+            self.data.self_shielding_method = val
+
     property k24:
         def __get__(self):
             return self.rates.k24
@@ -265,6 +289,11 @@ def solve_chemistry(fc, my_dt):
     cdef gr_float *metal_density = get_field(fc, "metal")
     cdef gr_float *volumetric_heating_rate = get_field(fc, "volumetric_heating_rate")
     cdef gr_float *specific_heating_rate = get_field(fc, "specific_heating_rate")
+    cdef gr_float *RT_heating_rate = get_field(fc, "RT_heating_rate")
+    cdef gr_float *RT_HI_ionization_rate = get_field(fc, "RT_HI_ionization_rate")
+    cdef gr_float *RT_HeI_ionization_rate = get_field(fc, "RT_HeI_ionization_rate")
+    cdef gr_float *RT_HeII_ionization_rate = get_field(fc, "RT_HeII_ionization_rate")
+    cdef gr_float *RT_H2_dissociation_rate = get_field(fc, "RT_H2_dissociation_rate")
 
     c_solve_chemistry (
                 &my_chemistry,
@@ -294,7 +323,12 @@ def solve_chemistry(fc, my_dt):
                 e_density,
                 metal_density,
                 volumetric_heating_rate,
-                specific_heating_rate)
+                specific_heating_rate,
+                RT_heating_rate,
+                RT_HI_ionization_rate,
+                RT_HeI_ionization_rate,
+                RT_HeII_ionization_rate,
+                RT_H2_dissociation_rate)
     
 def calculate_cooling_time(fc):
     cdef int grid_rank = 1
@@ -333,6 +367,7 @@ def calculate_cooling_time(fc):
     cdef gr_float *e_density = get_field(fc, "de")
     cdef gr_float *metal_density = get_field(fc, "metal")
     cdef gr_float *cooling_time = get_field(fc, "cooling_time")
+    cdef gr_float *RT_heating_rate = get_field(fc, "RT_heating_rate")
     cdef gr_float *volumetric_heating_rate = get_field(fc, "volumetric_heating_rate")
     cdef gr_float *specific_heating_rate = get_field(fc, "specific_heating_rate")
 
@@ -363,6 +398,7 @@ def calculate_cooling_time(fc):
                 e_density,
                 metal_density,
                 cooling_time,
+                RT_heating_rate,
                 volumetric_heating_rate,
                 specific_heating_rate)
 

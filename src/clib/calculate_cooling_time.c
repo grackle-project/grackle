@@ -52,6 +52,9 @@ extern void FORTRAN_NAME(cool_multi_time_g)(
 	double *gpldl, double *gphdl, double *HDltea, double *HDlowa,
 	double *gaHIa, double *gaH2a, double *gaHea, double *gaHpa, double *gaela,
 	double *h2ltea, double *gasgra,
+        int *iradshield, double *avgsighi, double *avgsighei, double *avgsigheii,
+        double *k24, double *k26,
+        int *iradtrans, double *photogamma,
 	int *ih2optical, int *iciecool, double *ciecoa,
  	int *icmbTfloor, int *iClHeat, double *clEleFra,
         long long *priGridRank, long long *priGridDim,
@@ -78,7 +81,7 @@ int _calculate_cooling_time(chemistry_data *my_chemistry,
                             gr_float *H2I_density, gr_float *H2II_density,
                             gr_float *DI_density, gr_float *DII_density, gr_float *HDI_density,
                             gr_float *e_density, gr_float *metal_density,
-                            gr_float *cooling_time,
+                            gr_float *cooling_time, gr_float *RT_heating_rate,
                             gr_float *volumetric_heating_rate, gr_float *specific_heating_rate)
 {
  
@@ -113,6 +116,7 @@ int _calculate_cooling_time(chemistry_data *my_chemistry,
     co_density_units = my_units->density_units /
       POW(my_units->a_value * my_units->a_units, 3);
   }
+
 
   /* Calculate temperature units. */
 
@@ -151,7 +155,11 @@ int _calculate_cooling_time(chemistry_data *my_chemistry,
        my_rates->HDlte, my_rates->HDlow,
        my_rates->GAHI, my_rates->GAH2, my_rates->GAHe, my_rates->GAHp,
        my_rates->GAel, my_rates->H2LTE, my_rates->gas_grain,
-       &my_chemistry->h2_optical_depth_approximation, 
+       &my_chemistry->self_shielding_method, &my_rates->hi_avg_crs,
+       &my_rates->hei_avg_crs, &my_rates->heii_avg_crs,
+       &my_rates->k24, &my_rates->k26,
+       &my_chemistry->use_radiative_transfer, RT_heating_rate,
+       &my_chemistry->h2_optical_depth_approximation,
        &my_chemistry->cie_cooling, my_rates->cieco,
        &my_chemistry->cmb_temperature_floor,
        &my_chemistry->UVbackground,
@@ -204,7 +212,7 @@ int calculate_cooling_time(code_units *my_units,
                               my_fields->DI_density, my_fields->DII_density,
                               my_fields->HDI_density,
                               my_fields->e_density, my_fields->metal_density,
-                              cooling_time,
+                              cooling_time, my_fields->RT_heating_rate,
                               my_fields->volumetric_heating_rate,
                               my_fields->specific_heating_rate) == FAIL) {
     fprintf(stderr, "Error in _calculate_cooling_time.\n");

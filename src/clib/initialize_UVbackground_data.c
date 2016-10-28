@@ -126,6 +126,10 @@ int initialize_UVbackground_data(chemistry_data *my_chemistry,
   my_rates->UVbackground_table.piHeII = malloc(Nz * sizeof(double));
   my_rates->UVbackground_table.piHeI = malloc(Nz * sizeof(double));
 
+  my_rates->UVbackground_table.crsHI   = malloc(Nz * sizeof(double));
+  my_rates->UVbackground_table.crsHeII = malloc(Nz * sizeof(double));
+  my_rates->UVbackground_table.crsHeI  = malloc(Nz * sizeof(double));
+
 
   // Now read everything.
 
@@ -230,7 +234,32 @@ int initialize_UVbackground_data(chemistry_data *my_chemistry,
     return FAIL;
   }
 
-  
+
+  // *** crsHI ***
+  if(! read_dataset(file_id, "/UVBRates/CrossSections/hi_avg_crs",
+                    my_rates->UVbackground_table.crsHI) ) {
+    fprintf(stderr, "Error reading dataset '/UVBRates/CrossSections/hi_avg_crs' in %s.\n",
+            my_chemistry->grackle_data_file);
+    return FAIL;
+  }
+
+  // *** crsHeII ***
+  if(! read_dataset(file_id, "/UVBRates/CrossSections/heii_avg_crs",
+                    my_rates->UVbackground_table.crsHeII) ) {
+    fprintf(stderr, "Error reading dataset '/UVBRates/CrossSections/heii_avg_crs' in %s.\n",
+            my_chemistry->grackle_data_file);
+    return FAIL;
+  }
+
+  // *** crsHeI ***
+  if(! read_dataset(file_id, "/UVBRates/CrossSections/hei_avg_crs",
+                    my_rates->UVbackground_table.crsHeI) ) {
+    fprintf(stderr, "Error reading dataset '/UVBRates/CrossSections/hei_avg_crs' in %s.\n",
+            my_chemistry->grackle_data_file);
+    return FAIL;
+  }
+
+
   H5Fclose(file_id);
 
 

@@ -19,6 +19,13 @@ cdef extern from "grackle_chemistry_data.h":
         int CaseBRecombination
         int UVbackground
         double SolarMetalFractionByMass
+        int use_volumetric_heating_rate
+        int use_specific_heating_rate
+        int use_radiative_transfer
+        int self_shielding_method
+        double hi_avg_crs
+        double hei_avg_crs
+        double heii_avg_crs
 
     ctypedef struct c_chemistry_data_storage "chemistry_data_storage":
         double k24
@@ -75,7 +82,12 @@ cdef extern from "grackle.h":
                 gr_float *e_density,
                 gr_float *metal_density,
                 gr_float *volumetric_heating_rate,
-                gr_float *specific_heating_rate)
+                gr_float *specific_heating_rate,
+                gr_float *RT_heating_rate,
+                gr_float *RT_HI_ionization_rate,
+                gr_float *RT_HeI_ionization_rate,
+                gr_float *RT_HeII_ionization_rate,
+                gr_float *RT_H2_dissociation_rate)
 
     int c_calculate_cooling_time "_calculate_cooling_time"(
                 c_chemistry_data *my_chemistry,
@@ -104,6 +116,7 @@ cdef extern from "grackle.h":
                 gr_float *e_density,
                 gr_float *metal_density,
                 gr_float *cooling_time,
+                gr_float *RT_heating_rate,
                 gr_float *volumetric_heating_rate,
                 gr_float *specific_heating_rate)
 

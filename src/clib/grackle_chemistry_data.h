@@ -101,6 +101,19 @@ typedef struct
      For solar abundance patters and N = 30 (Zn), f = 9.153959e-3. */
   double cloudy_electron_fraction_factor;
 
+  /* flags and parameters to signal that RT
+     is being used, and appropriate parameters
+     for setting RT solvers */
+  int use_radiative_transfer;
+  int radiative_transfer_coupled_rate_solver;
+  int radiative_transfer_intermediate_step;
+  int radiative_transfer_hydrogen_only;
+
+  /* flag for approximiate self-shielding as well
+     as spectrum averaged photo heating and
+     photo ionization shielding factors */
+  int self_shielding_method;
+
   /* number of OpenMP threads, if supported */
 # ifdef _OPENMP
   int omp_nthreads;
@@ -140,8 +153,8 @@ typedef struct
 /**********************************
  *** UVbackground table storage ***
  **********************************/
-typedef struct
-{
+
+typedef struct{
 
     long long Nz;
 
@@ -160,6 +173,11 @@ typedef struct
     double *piHI;
     double *piHeII;
     double *piHeI;
+
+    // spectrum averaged absorption cross sections
+    double *crsHI;
+    double *crsHeII;
+    double *crsHeI;
 
 } UVBtable;
 
@@ -306,6 +324,11 @@ typedef struct
 
   /* New/old cloudy data flag */
   int cloudy_data_new;
+
+  /* gray averaged cross sections for UVB self shielding */
+  double hi_avg_crs;
+  double heii_avg_crs;
+  double hei_avg_crs;
 
 } chemistry_data_storage;
 
