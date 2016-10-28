@@ -1,3 +1,4 @@
+
 .. _integration:
 
 Adding Grackle to Your Simulation Code
@@ -426,6 +427,37 @@ and pointers to all field arrays.
    Pointer to values containing specific heating rates.  Rates
    should be in units of erg/s/g.  Used when
    :c:data:`use_specific_heating_rate` is set to 1.
+
+.. c:var:: gr_float *RT_heating_rate
+
+   Pointer to the radiation transfer heating rate field.  Rates
+   should be in units of erg/s/cm\ :sup:`3`\.  Used when
+   :c:data:`use_radiative_transfer` is set to 1.
+
+.. c:var:: gr_float *RT_HI_ionization_rate
+
+   Pointer to the HI photo-ionization rate field used with
+   radiative transfer.  Rates should be in units of 1/s.
+   Used when :c:data:`use_radiative_transfer` is set to 1.
+
+.. c:var:: gr_float *RT_HeI_ionization_rate
+
+   Pointer to the HeI photo-ionization rate field used with
+   radiative transfer.  Rates should be in units of 1/s.
+   Used when :c:data:`use_radiative_transfer` is set to 1.
+
+.. c:var:: gr_float *RT_HeII_ionization_rate
+
+   Pointer to the HeII photo-ionization rate field used with
+   radiative transfer.  Rates should be in units of 1/s.
+   Used when :c:data:`use_radiative_transfer` is set to 1.
+
+.. c:var:: gr_float *RT_H2_dissociation_rate
+
+   Pointer to the H\ :sub:`2`\  photo-dissociation rate field
+   used with radiative transfer.  Rates should be in units of
+   1/s.  Used when :c:data:`use_radiative_transfer` is set to 1
+   and :c:data:`primordial_chemistry` is either 2 or 3.
 
 It is not necessary to attach a pointer to any field that you do
 not intend to use.
