@@ -437,27 +437,31 @@ and pointers to all field arrays.
 .. c:var:: gr_float *RT_HI_ionization_rate
 
    Pointer to the HI photo-ionization rate field used with
-   radiative transfer.  Rates should be in units of 1/s.
-   Used when :c:data:`use_radiative_transfer` is set to 1.
+   radiative transfer.  Rates should be in units of
+   1/:c:data:`time_units`.  Used when
+   :c:data:`use_radiative_transfer` is set to 1.
 
 .. c:var:: gr_float *RT_HeI_ionization_rate
 
    Pointer to the HeI photo-ionization rate field used with
-   radiative transfer.  Rates should be in units of 1/s.
-   Used when :c:data:`use_radiative_transfer` is set to 1.
+   radiative transfer.  Rates should be in units of
+   1/:c:data:`time_units`.  Used when
+   :c:data:`use_radiative_transfer` is set to 1.
 
 .. c:var:: gr_float *RT_HeII_ionization_rate
 
    Pointer to the HeII photo-ionization rate field used with
-   radiative transfer.  Rates should be in units of 1/s.
-   Used when :c:data:`use_radiative_transfer` is set to 1.
+   radiative transfer.  Rates should be in units of
+   1/:c:data:`time_units`.  Used when
+   :c:data:`use_radiative_transfer` is set to 1.
 
 .. c:var:: gr_float *RT_H2_dissociation_rate
 
    Pointer to the H\ :sub:`2`\  photo-dissociation rate field
    used with radiative transfer.  Rates should be in units of
-   1/s.  Used when :c:data:`use_radiative_transfer` is set to 1
-   and :c:data:`primordial_chemistry` is either 2 or 3.
+   1/:c:data:`time_units`.  Used when
+   :c:data:`use_radiative_transfer` is set to 1 and
+   :c:data:`primordial_chemistry` is either 2 or 3.
 
 It is not necessary to attach a pointer to any field that you do
 not intend to use.
