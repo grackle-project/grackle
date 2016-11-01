@@ -44,8 +44,8 @@ Contents:
    Parameters.rst
    Reference.rst
    Python.rst
-   Contributing.rst           
    Conduct.rst
+   Contributing.rst           
 
 Help
 ----
@@ -59,7 +59,8 @@ Contributing
 
 Development of Grackle happens in the open on Bitbucket `here
 <https://bitbucket.org/grackle/grackle>`_.  We welcome new contributors.
-Please, see the :ref:`conduct`.
+Please, see the :ref:`conduct`.  For a guide to developing Grackle, see
+:ref:`contributing-code`.
 
 Citing grackle
 --------------
