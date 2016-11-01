@@ -44,6 +44,7 @@ Contents:
    Parameters.rst
    Reference.rst
    Python.rst
+   Contributing.rst           
 
 Help
 ----
