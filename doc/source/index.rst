@@ -65,27 +65,20 @@ Please, see the :ref:`conduct`.  For a guide to developing Grackle, see
 Citing grackle
 --------------
 
+The Grackle method paper can be found
+`here <https://arxiv.org/abs/1610.09591>`__.
+
 The Grackle library was born out of the chemistry and cooling routines of the 
 `Enzo <http://enzo-project.org/>`__ simulation code.  As such, all of those who 
 have contributed to Enzo development, and especially to the chemistry and 
-cooling, have contributed to the Grackle.  There is currently no paper that 
-specifically presents the Grackle library on its own, but the functionality 
-was fully described in the `Enzo method paper 
-<http://adsabs.harvard.edu/abs/2013arXiv1307.2265T>`_.  The Grackle was 
-originally designed for the `AGORA Project 
-<https://sites.google.com/site/santacruzcomparisonproject/>`_ and first referred 
-to by name in the `AGORA method paper 
-<http://adsabs.harvard.edu/abs/2013arXiv1308.2669K>`_.
+cooling, have contributed to the Grackle.
 
 If you used the Grackle library in your work, please cite it as "the Grackle 
-chemistry and cooling library (`The Enzo Collaboration et al. 2014 
-<http://adsabs.harvard.edu/abs/2014ApJS..211...19B>`_; `Kim, J. et al. 2014 
-<http://adsabs.harvard.edu/abs/2014ApJS..210...14K>`_)."  Also, please add a 
-footnote to `https://grackle.readthedocs.org/ <https://grackle.readthedocs.org/>`_.
+chemistry and cooling library (`Smith et al. 2016
+<https://arxiv.org/abs/1610.09591>`_)."  Also, please add a footnote to
+`https://grackle.readthedocs.org/ <https://grackle.readthedocs.org/>`_.
 
-  The Enzo Collaboration, Bryan, G. L., Norman, M. L., et al. 2014, ApJS, 211, 19
 
-  Kim, J.-h., Abel, T., Agertz, O., et al. 2014, ApJS, 210, 14
 
 Search
 ------
