@@ -147,8 +147,7 @@ for using mercurial:
   discussion from process from BitBucket's website, even if your pull request
   is merged.
 * You should only need one fork. See :ref:`sharing-changes` for a description of
-  the basic workflow and :ref:`multiple-PRs` for a discussion about what to do
-  when you want to have multiple open pull requests at the same time.
+  the basic workflow.
 
 .. _sharing-changes:
 
