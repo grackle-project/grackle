@@ -4,7 +4,7 @@
 Grackle Community Code of Conduct
 =================================
 
-The community of participants in open source Scientific projects is
+The community of participants in open source scientific projects is
 made up of members from around the globe with a diverse set of skills,
 personalities, and experiences. It is through these differences that
 our community experiences success and continued growth. We expect
