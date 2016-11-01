@@ -12,7 +12,7 @@ hear from you.
 
 .. note:: If you already know how to use the `mercurial version control system
    <http://mercurial-scm.org>`_ and are comfortable with handling it yourself,
-   the quickest way to contribute to yt is to `fork us on BitBucket
+   the quickest way to contribute to Grackle is to `fork us on BitBucket
    <http://bitbucket.org/grackle/grackle/fork>`_, make your changes, push the
    changes to your fork and issue a `pull request
    <http://bitbucket.org/grackle/grackle/pull-requests>`_.  The rest of this
@@ -25,7 +25,7 @@ Keep in touch, and happy hacking!
 Open Issues
 -----------
 
-If you're interested in participating in grackle development, take a look at the
+If you're interested in participating in Grackle development, take a look at the
 `issue tracker on bitbucket <https://bitbucket.org/grackle/issues>`_. If you are
 encountering a bug that is not already tracked there, please `open a new issue
 <https://bitbucket.org/grackle/grackle/issues/new>`_.
@@ -51,7 +51,7 @@ package, which we'll happily link to in the Grackle documentation.
 How To Get The Source Code For Editing
 ++++++++++++++++++++++++++++++++++++++
 
-Grackle is hosted on BitBucket, and you can see all of the yt repositories at
+Grackle is hosted on BitBucket, and you can see all of the Grackle repositories at
 http://bitbucket.org/grackle/. In order to modify the source code for Grackle,
 we ask that you make a "fork" of the main Grackle repository on bitbucket.  A
 fork is simply an exact copy of the main repository (along with its history)
@@ -74,7 +74,7 @@ This downloads that new forked repository to your local machine, so that you can
 access it, read it, make modifications, etc.  It will put the repository in a
 local directory of the same name as the repository in the current working
 directory. You should also run the following command, to make sure you have the
-most up-to-date version of grackle checked out in your working directory.
+most up-to-date version of Grackle checked out in your working directory.
 
 .. code-block:: bash
 
@@ -155,7 +155,7 @@ for using mercurial:
 Making and Sharing Changes
 --------------------------
 
-The simplest way to submit changes to yt is to do the following:
+The simplest way to submit changes to Grackle is to do the following:
 
 * Build Grackle from the mercurial repository
 * Navigate to the root of the Grackle repository
@@ -168,9 +168,9 @@ The simplest way to submit changes to yt is to do the following:
 Here's a more detailed flowchart of how to submit changes.
 
 #. Edit the source file you are interested in and test your changes.
-#. Fork grackle on BitBucket.  (This step only has to be done once.)  You can do
+#. Fork Grackle on BitBucket.  (This step only has to be done once.)  You can do
    this at: https://bitbucket.org/grackle/grackle/fork.  Call this repository
-   yt.
+   grackle.
 #. Create a bookmark to track your work. For example: ``hg bookmark
    my-first-pull-request``
 #. Commit these changes, using ``hg commit``.  This can take an argument
@@ -186,7 +186,7 @@ Here's a more detailed flowchart of how to submit changes.
    code, add a test. Commit these changes as well.
 #. Push your changes to your new fork using the command::
 
-      hg push -B my-first-pull-request https://bitbucket.org/YourUsername/yt/
+      hg push -B my-first-pull-request https://bitbucket.org/YourUsername/grackle/
 
    Where you should substitute the name of the bookmark you are working on for
    ``my-first-pull-request``. If you end up doing considerable development, you
@@ -219,6 +219,6 @@ straightforward.
 #. Commit those changes to your local repository.
 #. Push the changes to your fork:
 
-      hg push https://bitbucket.org/YourUsername/yt/
+      hg push https://bitbucket.org/YourUsername/grackle/
 
 #. Your pull request will be automatically updated.
