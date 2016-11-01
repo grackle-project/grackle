@@ -44,6 +44,7 @@ Contents:
    Parameters.rst
    Reference.rst
    Python.rst
+   Conduct.rst
 
 Help
 ----
@@ -51,6 +52,13 @@ Help
 If you have any questions, please join the `Grackle Users Google Group
 <https://groups.google.com/forum/#!forum/grackle-cooling-users>`_.  Feel 
 free to post any questions or ideas for development.
+
+Contributing
+------------
+
+Development of Grackle happens in the open on Bitbucket `here
+<https://bitbucket.org/grackle/grackle>`_.  We welcome new contributors.
+Please, see the :ref:`conduct`.
 
 Citing grackle
 --------------
