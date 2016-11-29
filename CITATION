@@ -1,10 +1,7 @@
 If you used the Grackle library in your work, please cite it as 
-“the Grackle chemistry and cooling library (The Enzo Collaboration et al. 2014;
-Kim, J. et al. 2014).”
+“the Grackle chemistry and cooling library (Smith et al. 2016).”
 
-    The Enzo Collaboration, Bryan, G. L., Norman, M. L., et al. 2014, ApJS, 211, 19
-
-    Kim, J.-h., Abel, T., Agertz, O., et al. 2014, ApJS, 210, 14
+    Smith, B.D., Bryan, G.L., Glover, S.C.O., et al. 2016, arXiv:1610.09591 
 
 Also, please add a footnote to:
 
@@ -12,64 +9,20 @@ https://grackle.readthedocs.org/
 
 For LaTex and BibTex users:
 
-\bibitem[The Enzo Collaboration et al.(2014)]{2014ApJS..211...19B} Bryan, G.~L., Norman, 
-M.~L., O'Shea, B.~W., et al.\ 2014, \apjs, 211, 19 
+\bibitem[Smith et al.(2016)]{2016arXiv161009591S} Smith, B.~D., Bryan, G.~L., Glover, S.~C.~O., et al.\ 2016, arXiv:1610.09591
 
-\bibitem[Kim et al.(2014)]{2014ApJS..210...14K} Kim, J.-h., Abel, T., 
-Agertz, O., et al.\ 2014, \apjs, 210, 14 
-
-@ARTICLE{2014ApJS..211...19B,
-   author = {{The Enzo Collaboration} {Bryan}, G.~L. and {Norman}, M.~L. and 
-        {O'Shea}, B.~W. and {Abel}, T. and 
-	{Wise}, J.~H. and {Turk}, M.~J. and {Reynolds}, D.~R. and {Collins}, D.~C. and 
-	{Wang}, P. and {Skillman}, S.~W. and {Smith}, B. and {Harkness}, R.~P. and 
-	{Bordner}, J. and {Kim}, J.-h. and {Kuhlen}, M. and {Xu}, H. and 
-	{Goldbaum}, N. and {Hummels}, C. and {Kritsuk}, A.~G. and {Tasker}, E. and 
-	{Skory}, S. and {Simpson}, C.~M. and {Hahn}, O. and {Oishi}, J.~S. and 
-	{So}, G.~C. and {Zhao}, F. and {Cen}, R. and {Li}, Y. and {The Enzo Collaboration}
-	},
-    title = "{ENZO: An Adaptive Mesh Refinement Code for Astrophysics}",
-  journal = {\apjs},
+@ARTICLE{2016arXiv161009591S,
+   author = {{Smith}, B.~D. and {Bryan}, G.~L. and {Glover}, S.~C.~O. and 
+	{Goldbaum}, N.~J. and {Turk}, M.~J. and {Regan}, J. and {Wise}, J.~H. and 
+	{Schive}, H.-Y. and {Abel}, T. and {Emerick}, A. and {O'Shea}, B.~W. and 
+	{Anninos}, P. and {Hummels}, C.~B. and {Khochfar}, S.},
+    title = "{Grackle: a Chemistry and Cooling Library for Astrophysics}",
+  journal = {ArXiv e-prints},
 archivePrefix = "arXiv",
-   eprint = {1307.2265},
- primaryClass = "astro-ph.IM",
- keywords = {hydrodynamics, methods: numerical },
-     year = 2014,
-    month = apr,
-   volume = 211,
-      eid = {19},
-    pages = {19},
-      doi = {10.1088/0067-0049/211/2/19},
-   adsurl = {http://adsabs.harvard.edu/abs/2014ApJS..211...19B},
-  adsnote = {Provided by the SAO/NASA Astrophysics Data System}
-}
-
-@ARTICLE{2014ApJS..210...14K,
-   author = {{Kim}, J.-h. and {Abel}, T. and {Agertz}, O. and {Bryan}, G.~L. and 
-	{Ceverino}, D. and {Christensen}, C. and {Conroy}, C. and {Dekel}, A. and 
-	{Gnedin}, N.~Y. and {Goldbaum}, N.~J. and {Guedes}, J. and {Hahn}, O. and 
-	{Hobbs}, A. and {Hopkins}, P.~F. and {Hummels}, C.~B. and {Iannuzzi}, F. and 
-	{Keres}, D. and {Klypin}, A. and {Kravtsov}, A.~V. and {Krumholz}, M.~R. and 
-	{Kuhlen}, M. and {Leitner}, S.~N. and {Madau}, P. and {Mayer}, L. and 
-	{Moody}, C.~E. and {Nagamine}, K. and {Norman}, M.~L. and {Onorbe}, J. and 
-	{O'Shea}, B.~W. and {Pillepich}, A. and {Primack}, J.~R. and 
-	{Quinn}, T. and {Read}, J.~I. and {Robertson}, B.~E. and {Rocha}, M. and 
-	{Rudd}, D.~H. and {Shen}, S. and {Smith}, B.~D. and {Szalay}, A.~S. and 
-	{Teyssier}, R. and {Thompson}, R. and {Todoroki}, K. and {Turk}, M.~J. and 
-	{Wadsley}, J.~W. and {Wise}, J.~H. and {Zolotov}, A. and {AGORA Collaboration29}, f.~t.
-	},
-    title = "{The AGORA High-resolution Galaxy Simulations Comparison Project}",
-  journal = {\apjs},
-archivePrefix = "arXiv",
-   eprint = {1308.2669},
- primaryClass = "astro-ph.GA",
- keywords = {cosmology: theory, dark matter, galaxies: formation, galaxies: evolution, hydrodynamics, methods: numerical},
-     year = 2014,
-    month = jan,
-   volume = 210,
-      eid = {14},
-    pages = {14},
-      doi = {10.1088/0067-0049/210/1/14},
-   adsurl = {http://adsabs.harvard.edu/abs/2014ApJS..210...14K},
+   eprint = {1610.09591},
+ keywords = {Astrophysics - Cosmology and Nongalactic Astrophysics, Astrophysics - Astrophysics of Galaxies, Astrophysics - Instrumentation and Methods for Astrophysics},
+     year = 2016,
+    month = oct,
+   adsurl = {http://adsabs.harvard.edu/abs/2016arXiv161009591S},
   adsnote = {Provided by the SAO/NASA Astrophysics Data System}
 }

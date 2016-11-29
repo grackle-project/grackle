@@ -23,7 +23,7 @@ MACH_FILE  = Make.mach.ncsa-bluewaters-gnu
 # Install paths (local variables)
 #-----------------------------------------------------------------------
 
-LOCAL_HDF5_INSTALL   = /opt/cray/hdf5/1.8.14/gnu/4.9
+LOCAL_HDF5_INSTALL   = /opt/cray/hdf5/1.8.16/gnu/4.9
 
 #-----------------------------------------------------------------------
 # Compiler settings
@@ -86,7 +86,7 @@ MACH_INCLUDES         = $(LOCAL_INCLUDES_HDF5)
 #-----------------------------------------------------------------------
 
 LOCAL_LIBS_HDF5   = -L$(LOCAL_HDF5_INSTALL)/lib -lhdf5 -lz # HDF5 libraries
-LOCAL_LIBS_MACH   =
+LOCAL_LIBS_MACH   = -lgfortran
 
 MACH_LIBS         = $(LOCAL_LIBS_HDF5) $(LOCAL_LIBS_MACH)
 
@@ -94,6 +94,6 @@ MACH_LIBS         = $(LOCAL_LIBS_HDF5) $(LOCAL_LIBS_MACH)
 # Installation
 #-----------------------------------------------------------------------
 
-MACH_INSTALL_PREFIX = $(HOME)/local/gnu/grackle
+MACH_INSTALL_PREFIX = $(HOME)/local
 MACH_INSTALL_LIB_DIR =
 MACH_INSTALL_INCLUDE_DIR =

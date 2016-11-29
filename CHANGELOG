@@ -1,3 +1,20 @@
+== Version 3.0 ==
+_Release date - Nov 1, 2016_
+
+  * New feature: New API with fields arrays provided in a struct.
+  * New feature: Added support for radiation transfer fields.
+  * New feature: Added atomic self-shielding of UV backgrounds.
+  * New feature: Added support for providing arrays of volumetric and
+	specific heating rates.
+  * Enhcancement: added Case B recombination cooling rates and updated
+	Case A rates.
+  * Enhancement: updated testing framework to use pytest parametrized
+	tests.
+  * Bugfix: fixed kunit normalization for k4 Case B recombination rate.
+  * Bugfix: fixed scaling of low-density H2 cooling rate and use newer H2
+	LTE rate in all appropriate places.
+  * Significant documentation updates and improvements.
+
 == Version 2.2 ==
 _Release date - May 18, 2016_
 
