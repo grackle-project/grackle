@@ -1917,7 +1917,7 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
      &          scoef = scoef + kphHI(i,j,k) * HIp(i)
      &                + kphHeI(i,j,k)  * HeIp(i)  / 4._DKIND
      &                + kphHeII(i,j,k) * HeIIp(i) / 4._DKIND
-            if ( (iradtrans .eq. 1) .and. (irt_honly .eq. 0) )
+            if ( (iradtrans .eq. 1) .and. (irt_honly .eq. 1) )
      &          scoef = scoef + kphHI(i,j,k) * HIp(i)
 
             acoef = - (k1(i) *HI(i,j,k)    - k2(i)*HII(i,j,k)
