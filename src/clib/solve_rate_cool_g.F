@@ -491,7 +491,8 @@ c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 fo
      &                     k50, k51, k52, k53, k54, k55, k56, k57, k58, 
      &                     h2dust, ncrn, ncrd1, ncrd2, rhoH, 
      &                     k24shield, k25shield, k26shield,
-     &                     iradtrans, irt_honly, kphHI, kphHeI, kphHeII, kdissH2I,
+     &                     iradtrans, irt_honly, 
+     &                     kphHI, kphHeI, kphHeII, kdissH2I,
      &                     itmask, edot, chunit, dom)
 
 !           Find timestep that keeps relative chemical changes below 10%
@@ -723,7 +724,8 @@ c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 fo
      &                     HIp, HIIp, HeIp, HeIIp, HeIIIp, dep,
      &                     HMp, H2Ip, H2IIp, DIp, DIIp, HDIp,
      &                     dedot_prev, HIdot_prev,
-     &                     iradtrans, irt_honly, kphHI, kphHeI, kphHeII, kdissH2I,
+     &                     iradtrans, irt_honly, 
+     &                     kphHI, kphHeI, kphHeII, kdissH2I,
      &                     itmask)
 
             endif
@@ -1020,7 +1022,7 @@ c -------------------------------------------------------------------
      &       k17a(nratec), k18a(nratec), k19a(nratec), k22a(nratec),
      &       k50a(nratec), k51a(nratec), k52a(nratec), k53a(nratec),
      &       k54a(nratec), k55a(nratec), k56a(nratec), k57a(nratec),
-     &       k58a(nratec), k13dda(nratec, 14), h2dusta(nratec, ndratec), 
+     &       k58a(nratec), k13dda(nratec, 14), h2dusta(nratec, ndratec),
      &       ncrna(nratec), ncrd1a(nratec), ncrd2a(nratec),
      &       k24, k25, k26,
      &       piHI, piHeI,
@@ -1433,7 +1435,8 @@ c
      &                     k50, k51, k52, k53, k54, k55, k56, k57, k58, 
      &                     h2dust, ncrn, ncrd1, ncrd2, rhoH, 
      &                     k24shield, k25shield, k26shield,
-     &                     iradtrans, irt_honly, kphHI, kphHeI, kphHeII, kdissH2I,
+     &                     iradtrans, irt_honly, 
+     &                     kphHI, kphHeI, kphHeII, kdissH2I,
      &                     itmask, edot, chunit, dom)
 
 ! -------------------------------------------------------------------
@@ -1648,7 +1651,8 @@ c
      &                     HIp, HIIp, HeIp, HeIIp, HeIIIp, dep,
      &                     HMp, H2Ip, H2IIp, DIp, DIIp, HDIp,
      &                     dedot_prev, HIdot_prev,
-     &                     iradtrans, irt_honly, kphHI, kphHeI, kphHeII, kdissH2I,
+     &                     iradtrans, irt_honly,
+     &                     kphHI, kphHeI, kphHeII, kdissH2I,
      &                     itmask)
 c -------------------------------------------------------------------
 
