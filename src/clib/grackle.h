@@ -38,7 +38,7 @@ int solve_chemistry(code_units *my_units,
 
 int _solve_chemistry(chemistry_data *my_chemistry,
                      chemistry_data_storage *my_rates,
-                     code_units *my_units, double dt_value,
+                     code_units *my_units, double dt_value, double dx_value,
                      int grid_rank, int *grid_dimension,
                      int *grid_start, int *grid_end,
                      gr_float *density, gr_float *internal_energy,

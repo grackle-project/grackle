@@ -35,6 +35,8 @@ typedef struct
   int *grid_start;
   int *grid_end;
 
+  gr_float grid_dx;
+
   gr_float *density;
   gr_float *HI_density;
   gr_float *HII_density;
