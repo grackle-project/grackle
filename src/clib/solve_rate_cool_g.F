@@ -983,8 +983,8 @@ c -------------------------------------------------------------------
 !   of temperature.
 
       subroutine lookup_cool_rates1d_g(temstart, temend, nratec, j, k,
-     &                is, ie, ithreebody,
-     &                in, jn, kn, ispecies, idust, iH2shield, iradshield,
+     &                is, ie, ithreebody, in, jn, kn,
+     &                ispecies, idust, iH2shield, iradshield,
      &                tgas1d, d, HI, HII, HeI, HeII, HeIII, H2I, tdust,
      &                metallicity,
      &                k1a, k2a, k3a, k4a, k5a, k6a, k7a, k8a, k9a, k10a,
