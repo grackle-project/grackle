@@ -114,6 +114,9 @@ typedef struct
      photo ionization shielding factors */
   int self_shielding_method;
 
+  /* flag for Wolcott-Green+ 2011 H2 self-shielding */
+  int H2_self_shielding;
+
   /* number of OpenMP threads, if supported */
 # ifdef _OPENMP
   int omp_nthreads;

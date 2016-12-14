@@ -27,8 +27,8 @@
      &                hyd01ka, h2k01a, vibha, rotha, rotla, 
      &                gpldla, gphdla, hdltea, hdlowa,
      &                gaHIa, gaH2a, gaHea, gaHpa, gaela, 
-     &                h2ltea, gasgra, 
-     &                iradshield, avgsighi, avgsighei, avgsigheii,
+     &                h2ltea, gasgra, iH2shield, iradshield,
+     &                avgsighi, avgsighei, avgsigheii,
      &                iradtrans, iradcoupled, iradstep,
      &                irt_honly, kphHI, kphHeI, kphHeII, kdissH2I,
      &                photogamma,
@@ -83,6 +83,7 @@
 !    idust    - flag for H2 formation on dust grains
 !    ih2co    - flag to include H2 cooling (1 = on, 0 = off)
 !    ipiht    - flag to include photoionization heating (1 = on, 0 = off)
+!    iH2shield - flag for approximate self-shielding of H2 (Wolcott-Green+ 2011)
 !    iradshield - flag for approximate self-shielding of UV background
 !    avgsighi   - spectrum averaged ionization crs for HI for use with shielding
 !    avgsighei  - spectrum averaged ionization crs for HeI for use with shielding
@@ -150,7 +151,7 @@
      &        iexpand, ih2co, ipiht, ispecies, imetal, idim,
      &        ierr, imcool, idust, 
      &        igammah, ih2optical, iciecool, ithreebody,
-     &        ndratec, clnew, iVheat, iMheat, iradshield,
+     &        ndratec, clnew, iVheat, iMheat, iH2shield, iradshield,
      &        iradtrans, iradcoupled, iradstep, irt_honly
 
       real*8  dx, dt, aye, temstart, temend, gamma,
@@ -461,7 +462,7 @@ c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 fo
 
             call lookup_cool_rates1d_g(temstart, temend, nratec, j, k,
      &               is, ie, ithreebody,
-     &               in, jn, kn, ispecies, idust, iradshield,
+     &               in, jn, kn, ispecies, idust, iH2shield, iradshield,
      &               tgas, d, HI, HII, HeI, HeII, HeIII, H2I, tdust,
      &               metallicity,
      &               k1a, k2a, k3a, k4a, k5a, k6a, k7a, k8a, k9a, k10a,
@@ -495,7 +496,7 @@ c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 fo
      &                     h2dust, ncrn, ncrd1, ncrd2, rhoH, 
      &                     k24shield, k25shield, k26shield, k31shield,
      &                     iradtrans, irt_honly, 
-     &                     kphHI, kphHeI, kphHeII, kdissH2I,
+     &                     kphHI, kphHeI, kphHeII,
      &                     itmask, edot, chunit, dom)
 
 !           Find timestep that keeps relative chemical changes below 10%
@@ -983,7 +984,7 @@ c -------------------------------------------------------------------
 
       subroutine lookup_cool_rates1d_g(temstart, temend, nratec, j, k,
      &                is, ie, ithreebody,
-     &                in, jn, kn, ispecies, idust, iradshield,
+     &                in, jn, kn, ispecies, idust, iH2shield, iradshield,
      &                tgas1d, d, HI, HII, HeI, HeII, HeIII, H2I, tdust,
      &                metallicity,
      &                k1a, k2a, k3a, k4a, k5a, k6a, k7a, k8a, k9a, k10a,
@@ -1012,7 +1013,7 @@ c -------------------------------------------------------------------
 
       integer is, ie, nratec,
      &        in, jn, kn, ispecies, ithreebody, j, k,
-     &        idust, ndratec, iradshield, iradtrans
+     &        idust, ndratec, iH2shield, iradshield, iradtrans
       real*8 temstart, temend, tgas1d(in), dom,
      &       dtemstart, dtemend
       real*8 coolunit, tbase1, xbase1, dx_cgs
@@ -1274,7 +1275,7 @@ c -------------------------------------------------------------------
       enddo
 
 !
-!     H2 self-shielding (Sobolev-like, spherically averaged, WOlcot-Green+ 2011)
+!     H2 self-shielding (Sobolev-like, spherically averaged, Wolcott-Green+ 2011)
 !
 
       if (ispecies .gt. 1) then
@@ -1293,7 +1294,7 @@ c -------------------------------------------------------------------
 
       endif
 
-      if (iradshield .gt. 0) then
+      if (iH2shield == 1) then
          do i = is+1, ie+1
             if (itmask(i)) then
                divrhoa(1) = d(i+1, j  , k  ) - d(i,j,k)
