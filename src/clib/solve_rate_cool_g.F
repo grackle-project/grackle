@@ -302,7 +302,12 @@
 c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 formed
       chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 formed
 
-      dx_cgs = dx * xbase1
+      if (iH2shield .eq. 1) then
+          dx_cgs = dx * xbase1
+      else
+          dx_cgs = 0._DKIND
+      endif
+
       dlogtem = (log(temend) - log(temstart))/real(nratec-1, DKIND)
 
 !  Convert densities from comoving to proper
