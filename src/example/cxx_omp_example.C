@@ -189,11 +189,13 @@ int main(int argc, char *argv[])
   my_fields_t1.grid_dimension = new int[grid_rank];
   my_fields_t1.grid_start = new int[grid_rank];
   my_fields_t1.grid_end = new int[grid_rank];
+  my_fields_t1.grid_dx = 0.0; // used only for H2 self-shielding approximation
 
   my_fields_tN.grid_rank = grid_rank;
   my_fields_tN.grid_dimension = new int[grid_rank];
   my_fields_tN.grid_start = new int[grid_rank];
   my_fields_tN.grid_end = new int[grid_rank];
+  my_fields_tN.grid_dx = 0.0; // used only for H2 self-shielding approximation
 
   // If grid rank is less than 3, set the other dimensions,
   // start indices, and end indices to 0.

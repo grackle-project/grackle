@@ -92,6 +92,7 @@ int main(int argc, char *argv[])
   }
   my_fields.grid_dimension[0] = field_size;
   my_fields.grid_end[0] = field_size - 1;
+  my_fields.grid_dx = 0.0; // used only for H2 self-shielding approximation
 
   my_fields.density         = new gr_float[field_size];
   my_fields.internal_energy = new gr_float[field_size];

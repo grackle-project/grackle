@@ -84,6 +84,7 @@ int main(int argc, char *argv[])
   my_fields.grid_dimension = malloc(field_size * sizeof(int));
   my_fields.grid_start = malloc(field_size * sizeof(int));
   my_fields.grid_end = malloc(field_size * sizeof(int));
+  my_fields.grid_dx = 0.0; // used only for H2 self-shielding approximation
 
   int i;
   for (i = 0;i < 3;i++) {

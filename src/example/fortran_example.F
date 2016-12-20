@@ -46,9 +46,12 @@ c     Field data arrays
 
 c     Grid size and dimension
 c     grid_start and grid_end are used to ignore ghost zones.
+c     grid_dx is used in H2 self-shielding approximation only
 
       INTEGER, TARGET :: grid_rank, grid_dimension(3), 
      &     grid_start(3), grid_end(3)
+
+      real*8 grid_dx
 
 c     Define storage for grackle units, fields and parameter data
 
@@ -109,6 +112,7 @@ c     start indices, and end indices to 0.
          grid_start(i) = 0
          grid_end(i) = 0
       enddo
+      grid_dx = 0.0
       grid_dimension(1) = field_size
 c     0-based
       grid_end(1) = field_size - 1
@@ -153,6 +157,7 @@ c
       my_fields%grid_dimension = C_LOC(grid_dimension)
       my_fields%grid_start = C_LOC(grid_start)
       my_fields%grid_end = C_LOC(grid_end)
+      my_fields%grid_dx  = grid_dx
 
       my_fields%density = C_LOC(density)
       my_fields%HI_density = C_LOC(HI_density)
