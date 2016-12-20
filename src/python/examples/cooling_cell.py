@@ -47,6 +47,7 @@ if __name__ == "__main__":
     my_chemistry.metal_cooling = 1
     my_chemistry.UVbackground = 1
     my_chemistry.self_shielding_method = 0
+    my_chemistry.H2_self_shielding = 0
     grackle_dir = os.path.dirname(os.path.dirname(
         os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
     my_chemistry.grackle_data_file = os.sep.join(

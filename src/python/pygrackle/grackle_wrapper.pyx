@@ -147,6 +147,12 @@ cdef class chemistry_data:
         def __set__(self, val):
             self.data.self_shielding_method = val
 
+    property H2_self_shielding:
+        def __get__(self):
+            return self.data.H2_self_shielding
+        def __set__(self):
+            self.data.H2_self_shielding = val
+
     property k24:
         def __get__(self):
             return self.rates.k24
@@ -263,6 +269,8 @@ def solve_chemistry(fc, my_dt):
     grid_start = <int *> ref_gs.data
     grid_end = <int *> ref_ge.data
 
+    cdef double grid_dx = <double> 0.0
+
     cdef double dt_value = <double> my_dt
 
     cdef chemistry_data chem_data = fc.chemistry_data
@@ -300,6 +308,7 @@ def solve_chemistry(fc, my_dt):
                 &my_rates,
                 &my_units,
                 dt_value,
+                grid_dx,
                 grid_rank,
                 &grid_dimension,
                 grid_start,
