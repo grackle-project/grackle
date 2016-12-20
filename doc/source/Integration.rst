@@ -326,6 +326,13 @@ and pointers to all field arrays.
    the end value in each dimension for the field data.  This can be used
    to ignore boundary cells in grid data.
 
+.. c:var:: gr_float* grid_dx
+
+   This is the grid cell width in c:data:`length_units`. This is currently
+   used only in computing approximate H2 self-shielding when H2 is tracked
+   (c:data:`primordial_chemistry` >= 2) and c:data:`H2_self_shielding` is 
+   set to 1.
+
 .. c:var:: gr_float* density
 
    Pointer to the density field array.
@@ -478,6 +485,7 @@ not intend to use.
   my_fields.grid_dimension = new int[3];
   my_fields.grid_start = new int[3];
   my_fields.grid_end = new int[3];
+  my_fields.grid_dx  = 1.0; // only matters if H2 self-shielding is used
   for (int i = 0;i < 3;i++) {
     my_fields.grid_dimension[i] = 1;
     my_fields.grid_start[i] = 0;
@@ -513,6 +521,17 @@ not intend to use.
   my_fields.volumetric_heating_rate = new gr_float[field_size];
   // specific heating rate (provide in units [egs s^-1 g^-1]
   my_fields.specific_heating_rate = new gr_float[field_size];
+  // heating rate from radiative transfer calculations (provide in units [erg s^-1 cm^-3]
+  my_fields.RT_heating_rate = new gr_float[field_size];
+  // HI ionization rate from radiative transfer calculations (provide in units of [ 1/time_units ]
+  my_fields.RT_HI_ionization_rate = new gr_float[field_size];
+  // HeI ionization rate from radiative transfer calculations (provide in units of [1/time_units]
+  my_fields.RT_HeI_ionization_rate = new gr_float[field_size];
+  // HeII ionization rate from radiative transfer calculations (provide in units of [1/time_units]
+  my_fields.RT_HeII_ionization_rate = new gr_float[field_size];
+  // H2 dissociation rate from radiative transfer calculations (provide in units of [1/time_units]
+  my_fields.RT_H2_dissociation_rate = new gr_float[field_size];
+
 
 .. note:: The electron mass density should be scaled by the ratio of the
    proton mass to the electron mass such that the electron density in the
