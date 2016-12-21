@@ -39,7 +39,12 @@ c     Field data arrays
      &     HDI_density(field_size),
      &     e_density(field_size), metal_density(field_size),
      &     volumetric_heating_rate(field_size),
-     &     specific_heating_rate(field_size)
+     &     specific_heating_rate(field_size),
+     &     RT_HI_ionization_rate(field_size), 
+     &     RT_HeI_ionization_rate(field_size),
+     &     RT_HeII_ionization_rate(field_size),
+     &     RT_H2_dissociation_rate(field_size),
+     &     RT_heating_rate(field_size)
 
       R_PREC, TARGET :: cooling_time(field_size), gamma(field_size),
      &     pressure(field_size), temperature(field_Size)
@@ -149,6 +154,11 @@ c        initilize internal energy (here 1000 K for no reason)
 
          volumetric_heating_rate(i) = 0.0
          specific_heating_rate(i) = 0.0
+         RT_HI_ionization_rate(i) = 0.0
+         RT_HeI_ionization_rate(i) = 0.0
+         RT_HeII_ionization_rate(i) = 0.0
+         RT_H2_dissociation_rate(i) = 0.0
+         RT_heating_rate(i) = 0.0
       enddo
 c
 c     Fill in structure to be passed to Grackle
@@ -177,8 +187,15 @@ c
       my_fields%x_velocity = C_LOC(x_velocity)
       my_fields%y_velocity = C_LOC(y_velocity)
       my_fields%z_velocity = C_LOC(z_velocity)
-      my_fields%volumetric_heating_rate = C_LOC(volumetric_heating_rate)
+      my_fields%volumetric_heating_rate = 
+     &                                C_LOC(volumetric_heating_rate)
       my_fields%specific_heating_rate = C_LOC(specific_heating_rate)
+      my_fields%RT_HI_ionization_rate = C_LOC(RT_HI_ionization_rate)
+      my_fields%RT_HeI_ionization_rate = C_LOC(RT_HeI_ionization_rate)
+      my_fields%RT_HeII_ionization_rate = 
+     &                                  C_LOC(RT_HeII_ionization_rate)
+      my_fields%RT_H2_dissociation_rate = C_LOC(RT_H2_dissociation_rate)
+      my_fields%RT_heating_rate = C_LOC(RT_heating_rate)
 c
 c     Calling the chemistry solver
 c     These routines can now be called during the simulation.

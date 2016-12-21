@@ -235,6 +235,11 @@ int main(int argc, char *argv[])
   my_fields_t1.HDI_density      = new gr_float[N3];
   my_fields_t1.volumetric_heating_rate = NULL;
   my_fields_t1.specific_heating_rate   = NULL;
+  my_fields_t1.RT_HI_ionization_rate   = NULL;
+  my_fields_t1.RT_HeI_ionization_rate  = NULL;
+  my_fields_t1.RT_HeII_ionization_rate = NULL;
+  my_fields_t1.RT_H2_dissociation_rate = NULL;
+  my_fields_t1.RT_heating_rate         = NULL;
 
   cooling_time_t1  = new gr_float[N3];
   temperature_t1   = new gr_float[N3];
@@ -262,6 +267,11 @@ int main(int argc, char *argv[])
   my_fields_tN.HDI_density      = new gr_float[N3];
   my_fields_tN.volumetric_heating_rate = NULL;
   my_fields_tN.specific_heating_rate   = NULL;
+  my_fields_tN.RT_HI_ionization_rate   = NULL;
+  my_fields_tN.RT_HeI_ionization_rate  = NULL;
+  my_fields_tN.RT_HeII_ionization_rate = NULL;
+  my_fields_tN.RT_H2_dissociation_rate = NULL;
+  my_fields_tN.RT_heating_rate         = NULL;
 
   cooling_time_tN  = new gr_float[N3];
   temperature_tN   = new gr_float[N3];

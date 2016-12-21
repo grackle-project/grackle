@@ -122,6 +122,14 @@ int main(int argc, char *argv[])
   // specific heating rate (provide in units [egs s^-1 g^-1]
   my_fields.specific_heating_rate = new gr_float[field_size];
 
+  // radiative transfer ionization / dissociation rate fields (provided in units of [1/s])
+  my_fields.RT_HI_ionization_rate = new gr_float[field_size];
+  my_fields.RT_HeI_ionization_rate = new gr_float[field_size];
+  my_fields.RT_HeII_ionization_rate = new gr_float[field_size];
+  my_fields.RT_H2_dissociation_rate = new gr_float[field_size];
+  // radiative transfer heating rate (provide in units [erg s^-1 cm^-3])
+  my_fields.RT_heating_rate = new gr_float[field_size];
+
   // set temperature units
   double temperature_units = mh * pow(my_units.a_units * 
                                       my_units.length_units /
@@ -157,6 +165,12 @@ int main(int argc, char *argv[])
 
     my_fields.volumetric_heating_rate[i] = 0.0;
     my_fields.specific_heating_rate[i] = 0.0;
+
+    my_fields.RT_HI_ionization_rate[i] = 0.0;
+    my_fields.RT_HeI_ionization_rate[i] = 0.0;
+    my_fields.RT_HeII_ionization_rate[i] = 0.0;
+    my_fields.RT_H2_dissociation_rate[i] = 0.0;
+    my_fields.RT_heating_rate[i] = 0.0;
   }
 
   /*********************************************************************

@@ -123,6 +123,14 @@ int main(int argc, char *argv[])
   // specific heating rate (provide in units [egs s^-1 g^-1]
   my_fields.specific_heating_rate = malloc(field_size * sizeof(gr_float));
 
+  // radiative transfer ionization / dissociation rate fields (provide in units [1/s])
+  my_fields.RT_HI_ionization_rate = malloc(field_size * sizeof(gr_float));
+  my_fields.RT_HeI_ionization_rate = malloc(field_size * sizeof(gr_float));
+  my_fields.RT_HeII_ionization_rate = malloc(field_size * sizeof(gr_float));
+  my_fields.RT_H2_dissociation_rate = malloc(field_size * sizeof(gr_float));
+  // radiative transfer heating rate field (provide in units [erg s^-1 cm^-3])
+  my_fields.RT_heating_rate = malloc(field_size * sizeof(gr_float));
+
   // set temperature units
   double temperature_units =  mh * pow(my_units.a_units * 
                                          my_units.length_units /
@@ -156,6 +164,12 @@ int main(int argc, char *argv[])
 
     my_fields.volumetric_heating_rate[i] = 0.0;
     my_fields.specific_heating_rate[i] = 0.0;
+
+    my_fields.RT_HI_ionization_rate[i] = 0.0;
+    my_fields.RT_HeI_ionization_rate[i] = 0.0;
+    my_fields.RT_HeII_ionization_rate[i] = 0.0;
+    my_fields.RT_H2_dissociation_rate[i] = 0.0;
+    my_fields.RT_heating_rate[i] = 0.0;
   }
 
   /*********************************************************************
