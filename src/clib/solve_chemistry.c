@@ -129,6 +129,14 @@ int _solve_chemistry(chemistry_data *my_chemistry,
       POW(my_units->a_value * my_units->a_units, 3);
   }
 
+  /* Error checking for H2 shielding approximation */
+  if (my_chemistry->H2_self_shielding && grid_rank != 3){
+    fprintf(stderr, "Error in solve_chemistry: H2 self shielding approximation "
+                    "is turned on, yet is only valid for 3D Cartesian grids. "
+                    "grid_rank is currently %i \n.", grid_rank);
+    return FAIL;
+  }
+
   /* Calculate temperature units. */
 
   double temperature_units =  mh * POW(my_units->velocity_units, 2) / kboltz;
