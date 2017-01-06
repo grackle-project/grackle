@@ -23,9 +23,6 @@ cdef extern from "grackle_chemistry_data.h":
         int use_specific_heating_rate
         int use_radiative_transfer
         int self_shielding_method
-        double hi_avg_crs
-        double hei_avg_crs
-        double heii_avg_crs
 
     ctypedef struct c_chemistry_data_storage "chemistry_data_storage":
         double k24
@@ -36,6 +33,9 @@ cdef extern from "grackle_chemistry_data.h":
         double k29
         double k30
         double k31
+        double hi_avg_crs
+        double hei_avg_crs
+        double heii_avg_crs
 
 cdef extern from "grackle_types.h":
     ctypedef struct c_code_units "code_units":
