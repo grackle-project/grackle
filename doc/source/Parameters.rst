@@ -196,7 +196,7 @@ For all on/off integer flags, 0 is off and 1 is on.
    Switch to enable approximate H2 self-shielding from both the UV
    background dissociation rate and the H2 dissociation rate 
    given by :c:data:`RT_H2_dissociation_rate` (if present). This
-   approximation is taken from
+   is a Sobolev-like, spherically averaged method from
    `Wolcott-Green et. al. 2011 <http://adsabs.harvard.edu/abs/2011MNRAS.418..838W>`_
    and is only valid for Cartesian grid codes in 3D.
    Default: 0.
