@@ -59,6 +59,7 @@ cdef extern from "grackle.h":
                 c_chemistry_data_storage *my_rates,
                 c_code_units *my_units,
                 double dt_value,
+                double grid_dx,
                 int grid_rank,
                 int *grid_dimension,
                 int *grid_start,

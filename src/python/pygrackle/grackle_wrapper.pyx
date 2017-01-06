@@ -150,7 +150,7 @@ cdef class chemistry_data:
     property H2_self_shielding:
         def __get__(self):
             return self.data.H2_self_shielding
-        def __set__(self):
+        def __set__(self, val):
             self.data.H2_self_shielding = val
 
     property k24:
