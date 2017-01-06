@@ -23,6 +23,7 @@ cdef extern from "grackle_chemistry_data.h":
         int use_specific_heating_rate
         int use_radiative_transfer
         int self_shielding_method
+        int H2_self_shielding
 
     ctypedef struct c_chemistry_data_storage "chemistry_data_storage":
         double k24
