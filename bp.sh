@@ -11,7 +11,7 @@ sudo apt-get install csh libhdf5-serial-dev gfortran
 cd $BITBUCKET_CLONE_DIR
 hg up tip
 
-./configure
+csh configure
 cd src/clib
 make machine-linux-gnu
 make
