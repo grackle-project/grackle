@@ -6,16 +6,20 @@ conda install -q -y mercurial cython h5py matplotlib sympy numpy pytest flake8 y
 
 # install OS dependencies
 sudo apt-get update
-sudo apt-get install csh libhdf5-serial-dev gfortran
+sudo apt-get install csh libhdf5-serial-dev gfortran libtool
 
 cd $BITBUCKET_CLONE_DIR
 hg up tip
 
-csh configure
+echo $PATH
+
+./configure
 cd src/clib
 make machine-linux-gnu
 make
-cd ..
-make build-python
-cd python
+mkdir -p $HOME/local
+make install
+export LD_LIBRARY_PATH=$HOME/local/lib:$LD_LIBRARY_PATH
+cd ../python
+python setup.py develop
 make test
