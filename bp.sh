@@ -8,6 +8,9 @@ conda install -q -y mercurial cython h5py matplotlib sympy numpy pytest flake8 y
 sudo apt-get update
 sudo apt-get install -y csh libhdf5-serial-dev gfortran libtool
 
+echo "backend : Agg" > $HOME/matplotlibrc
+export MATPLOTLIBRC=$HOME
+
 cd $BITBUCKET_CLONE_DIR
 hg up tip
 
