@@ -8,6 +8,11 @@ conda install -q -y mercurial cython h5py matplotlib sympy numpy pytest flake8 y
 sudo apt-get update
 sudo apt-get install -y csh libhdf5-serial-dev gfortran libtool
 
+# download test dataset
+wget --quiet http://yt-project.org/data/IsolatedGalaxy.tar.gz
+tar xzf IsolatedGalaxy.tar.gz
+export YT_DATA_DIR=$PWD
+
 echo "backend : Agg" > $HOME/matplotlibrc
 export MATPLOTLIBRC=$HOME
 
