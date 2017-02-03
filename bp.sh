@@ -6,12 +6,10 @@ conda install -q -y mercurial cython h5py matplotlib sympy numpy pytest flake8 y
 
 # install OS dependencies
 sudo apt-get update
-sudo apt-get install csh libhdf5-serial-dev gfortran libtool
+sudo apt-get install -y csh libhdf5-serial-dev gfortran libtool
 
 cd $BITBUCKET_CLONE_DIR
 hg up tip
-
-echo $PATH
 
 ./configure
 cd src/clib
