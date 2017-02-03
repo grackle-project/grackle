@@ -1,5 +1,3 @@
-[![Build Status](https://drone.io/bitbucket.org/grackle/grackle/status.png)](https://drone.io/bitbucket.org/grackle/grackle/latest)
-
 Welcome to the grackle chemistry and cooling library for astrophysical 
 simulations!
 
