@@ -1340,14 +1340,19 @@ c -------------------------------------------------------------------
 !
         do i = is+1, ie+1
           if (itmask(i)) then
-            nSSh = 6.73e-3_DKIND *
-     &        (avgsighi /2.49e-18_DKIND)**(-2._DKIND/3._DKIND) *
-     &        (tgas1d(i)/1.0e4_DKIND)**(0.17_DKIND) *
-     &        (k24/tbase1/1.0e-12_DKIND)**(2.0_DKIND/3.0_DKIND)
-            nratio = (HI(i,j,k) + HII(i,j,k))*dom/nSSh
-            k24shield(i)=k24shield(i)*(0.98_DKIND*
-     &            (1.0_DKIND+nratio**(1.64_DKIND))**(-2.28_DKIND) +
-     &             0.02_DKIND*(1.0_DKIND+nratio)**(-0.84_DKIND))
+             if (k24 .lt. tiny8) then
+                k24shield(i) = 0._DKIND
+             else
+                nSSh = 6.73e-3_DKIND *
+     &           (avgsighi /2.49e-18_DKIND)**(-2._DKIND/3._DKIND) *
+     &           (tgas1d(i)/1.0e4_DKIND)**(0.17_DKIND) *
+     &           (k24/tbase1/1.0e-12_DKIND)**(2.0_DKIND/3.0_DKIND)
+                nratio = (HI(i,j,k) + HII(i,j,k))*dom/nSSh
+
+                k24shield(i)=k24shield(i)*(0.98_DKIND*
+     &           (1.0_DKIND+nratio**(1.64_DKIND))**(-2.28_DKIND) +
+     &            0.02_DKIND*(1.0_DKIND+nratio)**(-0.84_DKIND))
+             endif
 
              k25shield(i) = k25
              k26shield(i) = k26
@@ -1362,29 +1367,37 @@ c -------------------------------------------------------------------
 !
         do i = is+1, ie+1
           if (itmask(i)) then
-            nSSh = 6.73e-3_DKIND *
-     &        (avgsighi/2.49e-18_DKIND)**(-2._DKIND/3._DKIND) *
-     &        (tgas1d(i)/1.0e4_DKIND)**(0.17_DKIND) *
-     &        (k24/tbase1/1.0e-12_DKIND)**(2.0_DKIND/3.0_DKIND)
-            nratio = (HI(i,j,k) + HII(i,j,k))*dom/nSSh
+             if (k24 .lt. tiny8) then
+                k24shield(i) = 0._DKIND
+             else
+                nSSh = 6.73e-3_DKIND *
+     &           (avgsighi/2.49e-18_DKIND)**(-2._DKIND/3._DKIND) *
+     &           (tgas1d(i)/1.0e4_DKIND)**(0.17_DKIND) *
+     &           (k24/tbase1/1.0e-12_DKIND)**(2.0_DKIND/3.0_DKIND)
+                nratio = (HI(i,j,k) + HII(i,j,k))*dom/nSSh
 
-            k24shield(i)=k24shield(i)*(0.98_DKIND*
-     &            (1.0_DKIND+nratio**(1.64_DKIND))**(-2.28_DKIND) +
-     &             0.02_DKIND*(1.0_DKIND+nratio)**(-0.84_DKIND))
+                k24shield(i)=k24shield(i)*(0.98_DKIND*
+     &           (1.0_DKIND+nratio**(1.64_DKIND))**(-2.28_DKIND) +
+     &            0.02_DKIND*(1.0_DKIND+nratio)**(-0.84_DKIND))
+             endif
 
 !
 !     Apply same equations to HeI (assumes HeI closely follows HI)
 !
-            nSSh = 6.73e-3_DKIND *
-     &        (avgsighei/2.49e-18_DKIND)**(-2._DKIND/3._DKIND)*
-     &        (tgas1d(i)/1.0e4_DKIND)**(0.17_DKIND)*
-     &        (k26/tbase1/1.0e-12_DKIND)**(2.0_DKIND/3.0_DKIND)
-            nratio = 0.25_DKIND*
+             if (k26 .lt. tiny8) then
+                k26shield(i) = 0._DKIND
+             else
+                nSSh = 6.73e-3_DKIND *
+     &           (avgsighei/2.49e-18_DKIND)**(-2._DKIND/3._DKIND)*
+     &           (tgas1d(i)/1.0e4_DKIND)**(0.17_DKIND)*
+     &           (k26/tbase1/1.0e-12_DKIND)**(2.0_DKIND/3.0_DKIND)
+                nratio = 0.25_DKIND*
      &           (HeI(i,j,k) + HeII(i,j,k) + HeIII(i,j,k))*dom/nSSh
 
-            k26shield(i)=k26shield(i)*(0.98_DKIND*
-     &            (1.0_DKIND+nratio**(1.64_DKIND))**(-2.28_DKIND) +
-     &             0.02_DKIND*(1.0_DKIND+nratio)**(-0.84_DKIND))
+                k26shield(i)=k26shield(i)*(0.98_DKIND*
+     &           (1.0_DKIND+nratio**(1.64_DKIND))**(-2.28_DKIND) +
+     &            0.02_DKIND*(1.0_DKIND+nratio)**(-0.84_DKIND))
+             endif
 
             k25shield(i) = k25
           endif
@@ -1398,30 +1411,36 @@ c -------------------------------------------------------------------
 !
         do i = is+1, ie+1
           if (itmask(i)) then
-            nSSh = 6.73e-3_DKIND *
-     &        (avgsighi/2.49e-18_DKIND)**(-2._DKIND/3._DKIND)*
-     &        (tgas1d(i)/1.0e4_DKIND)**(0.17_DKIND) *
-     &        (k24/tbase1/1.0e-12_DKIND)**(2.0_DKIND/3.0_DKIND)
-            nratio = (HI(i,j,k) + HII(i,j,k))*dom/nSSh
+             if (k24 .lt. tiny8) then
+                k24shield(i) = 0._DKIND
+             else
+                nSSh = 6.73e-3_DKIND *
+     &           (avgsighi/2.49e-18_DKIND)**(-2._DKIND/3._DKIND)*
+     &           (tgas1d(i)/1.0e4_DKIND)**(0.17_DKIND) *
+     &           (k24/tbase1/1.0e-12_DKIND)**(2.0_DKIND/3.0_DKIND)
+                nratio = (HI(i,j,k) + HII(i,j,k))*dom/nSSh
 
-            k24shield(i)=k24shield(i)*(0.98_DKIND*
-     &            (1.0_DKIND+nratio**(1.64_DKIND))**(-2.28_DKIND) +
-     &             0.02_DKIND*(1.0_DKIND+nratio)**(-0.84_DKIND))
-
+                k24shield(i)=k24shield(i)*(0.98_DKIND*
+     &           (1.0_DKIND+nratio**(1.64_DKIND))**(-2.28_DKIND) +
+     &            0.02_DKIND*(1.0_DKIND+nratio)**(-0.84_DKIND))
+             endif
 !
 !     Apply same equations to HeI (assumes HeI closely follows HI)
 !
-            nSSh = 6.73e-3_DKIND *
-     &        (avgsighei/2.49e-18_DKIND)**(-2._DKIND/3._DKIND)*
-     &        (tgas1d(i)/1.0e4_DKIND)**(0.17_DKIND)*
-     &        (k26/tbase1/1.0e-12_DKIND)**(2.0_DKIND/3.0_DKIND)
-            nratio = 0.25_DKIND *
-     &            (HeI(i,j,k) + HeII(i,j,k) + HeIII(i,j,k))*dom/nSSh
+             if (k26 .lt. tiny8) then
+                k26shield(i) = 0._DKIND
+             else
+                nSSh = 6.73e-3_DKIND *
+     &           (avgsighei/2.49e-18_DKIND)**(-2._DKIND/3._DKIND)*
+     &           (tgas1d(i)/1.0e4_DKIND)**(0.17_DKIND)*
+     &           (k26/tbase1/1.0e-12_DKIND)**(2.0_DKIND/3.0_DKIND)
+                nratio = 0.25_DKIND *
+     &           (HeI(i,j,k) + HeII(i,j,k) + HeIII(i,j,k))*dom/nSSh
 
-            k26shield(i)=k26shield(i)*(0.98_DKIND*
-     &            (1.0_DKIND+nratio**(1.64_DKIND))**(-2.28_DKIND) +
-     &             0.02_DKIND*(1.0_DKIND+nratio)**(-0.84_DKIND))
-
+                k26shield(i)=k26shield(i)*(0.98_DKIND*
+     &           (1.0_DKIND+nratio**(1.64_DKIND))**(-2.28_DKIND) +
+     &            0.02_DKIND*(1.0_DKIND+nratio)**(-0.84_DKIND))
+             endif
 
             k25shield(i) = 0.0_DKIND
 

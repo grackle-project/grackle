@@ -128,7 +128,8 @@
      &       hdlte1, hdlow1, gamma2, x, fudge, fH2,
      &       gphdl1, dom_inv, tau, ciefudge,
      &       coolunit, dbase1, tbase1, xbase1,
-     &       nH2, nother, myde, nSSh, nratio, nssh_he, nratio_he
+     &       nH2, nother, myde, nSSh, nratio, nssh_he, nratio_he,
+     &       fSShHI, fSShHeI
 
 !  Slice locals
  
@@ -716,16 +717,23 @@ c  new (correct) way: (april 4, 2007)
 
         do i = is+1, ie+1
            if (itmask(i)) then
-             nSSh = 6.73e-3_DKIND *
-     &         (avgsighi /2.49e-18_DKIND)**(-2._DKIND/3._DKIND)*
-     &         (tgas(i)/1.0e4_DKIND)**(0.17_DKIND)*
-     &         (k24/tbase1/1.0e-12_DKIND)**(2._DKIND/3._DKIND)
-             nratio = (HI(i,j,k) + HII(i,j,k))*dom/nSSh
+              if (k24 .lt. tiny8) then
+                 fSShHI = 1._DKIND
+              else
+                 nSSh = 6.73e-3_DKIND *
+     &            (avgsighi /2.49e-18_DKIND)**(-2._DKIND/3._DKIND)*
+     &            (tgas(i)/1.0e4_DKIND)**(0.17_DKIND)*
+     &            (k24/tbase1/1.0e-12_DKIND)**(2._DKIND/3._DKIND)
+                 nratio = (HI(i,j,k) + HII(i,j,k))*dom/nSSh
+                 fSShHI =
+     &            0.98_DKIND*(1._DKIND+
+     &            nratio**(1.64_DKIND))**(-2.28_DKIND) +
+     &            0.02_DKIND*(1._DKIND+
+     &            nratio)**(-0.84_DKIND)
+              endif
 
              edot(i) = edot(i) + real(ipiht,DKIND)*(
-     &              piHI  *HI  (i,j,k)*
-     &       (0.98_DKIND*(1._DKIND+nratio**(1.64_DKIND))**(-2.28_DKIND)+
-     &                    0.02_DKIND*(1._DKIND+nratio)**(-0.84_DKIND))
+     &              piHI  *HI  (i,j,k)* fSShHI
      &            + piHeI * HeI(i,j,k)*0.25_DKIND*
      &            + piHeII*HeII(i,j,k)*0.25_DKIND
      &             )/dom
@@ -744,29 +752,42 @@ c  new (correct) way: (april 4, 2007)
 !
 !            HI self shielding ratio
 !
-             nSSh = 6.73e-3_DKIND * 
-     &         (avgsighi/2.49e-18_DKIND)**(-2._DKIND/3._DKIND)*
-     &         (tgas(i)/1.0e4_DKIND)**(0.17_DKIND)*
-     &         (k24/tbase1/1.0e-12_DKIND)**(2._DKIND/3._DKIND)
-             nratio = (HI(i,j,k) + HII(i,j,k))*dom/nSSh
-
+              if (k24 .lt. tiny8) then
+                 fSShHI = 1._DKIND
+              else
+                 nSSh = 6.73e-3_DKIND *
+     &            (avgsighi/2.49e-18_DKIND)**(-2._DKIND/3._DKIND)*
+     &            (tgas(i)/1.0e4_DKIND)**(0.17_DKIND)*
+     &            (k24/tbase1/1.0e-12_DKIND)**(2._DKIND/3._DKIND)
+                 nratio = (HI(i,j,k) + HII(i,j,k))*dom/nSSh
+                 fSShHI =
+     &            0.98_DKIND*(1._DKIND+
+     &             nratio**(1.64_DKIND))**(-2.28_DKIND)+
+     &            0.02_DKIND*(1._DKIND+
+     &             nratio)**(-0.84_DKIND)
+              endif
 !
 !            HeI self shielding ratio
 !
-             nSSh_he = 6.73e-3_DKIND *
-     &        (avgsighei/ 2.49e-18_DKIND)**(-2._DKIND/3._DKIND)*
-     &        (tgas(i)/1.0e4_DKIND)**(0.17_DKIND)*
-     &        (k26/tbase1/1.0e-12_DKIND)**(2._DKIND/3._DKIND)
-             nratio_he = 0.25_DKIND*
+              if (k26 .lt. tiny8) then
+                 fSShHeI = 1._DKIND
+              else
+                 nSSh_he = 6.73e-3_DKIND *
+     &            (avgsighei/ 2.49e-18_DKIND)**(-2._DKIND/3._DKIND)*
+     &            (tgas(i)/1.0e4_DKIND)**(0.17_DKIND)*
+     &            (k26/tbase1/1.0e-12_DKIND)**(2._DKIND/3._DKIND)
+                 nratio_he = 0.25_DKIND*
      &            (HeI(i,j,k) + HeII(i,j,k) + HeIII(i,j,k))*dom/nSSh_he
+                 fSShHeI =
+     &            0.98_DKIND*(1._DKIND+
+     &             nratio_he**(1.64_DKIND))**(-2.28_DKIND)+
+     &            0.02_DKIND*(1._DKIND+
+     &             nratio_he)**(-0.84_DKIND)
+              endif
 
              edot(i) = edot(i) + real(ipiht, DKIND)*(
-     &              piHi * HI(i,j,k)*
-     &       (0.98_DKIND*(1._DKIND+nratio**(1.64_DKIND))**(-2.28_DKIND)+
-     &                    0.02_DKIND*(1._DKIND+nratio)**(-0.84_DKIND))
-     &            + piHeI * HeI(i,j,k)*0.25_DKIND*
-     &    (0.98_DKIND*(1._DKIND+nratio_he**(1.64_DKIND))**(-2.28_DKIND)+
-     &                 0.02_DKIND*(1._DKIND+nratio_he)**(-0.84_DKIND))
+     &              piHi * HI(i,j,k)* fSShHI
+     &            + piHeI * HeI(i,j,k)*0.25_DKIND* fSShHeI
      &            + piHeII*HeII(i,j,k)*0.25_DKIND
      &              )/dom
            endif
@@ -784,29 +805,42 @@ c  new (correct) way: (april 4, 2007)
 !
 !            HI self shielding ratio
 !
-             nSSh = 6.73e-3_DKIND *
-     &         (avgsighi /2.49e-18_DKIND)**(-2._DKIND/3._DKIND)*
-     &         (tgas(i)/1.0e4_DKIND)**(0.17_DKIND)*
-     &         (k24/tbase1/1.0e-12_DKIND)**(2._DKIND/3._DKIND)
-             nratio = (HI(i,j,k) + HII(i,j,k))*dom/nSSh
+              if (k24 .lt. tiny8) then
+                 fSShHI = 1._DKIND
+              else
+                 nSSh = 6.73e-3_DKIND *
+     &            (avgsighi /2.49e-18_DKIND)**(-2._DKIND/3._DKIND)*
+     &            (tgas(i)/1.0e4_DKIND)**(0.17_DKIND)*
+     &            (k24/tbase1/1.0e-12_DKIND)**(2._DKIND/3._DKIND)
+                 nratio = (HI(i,j,k) + HII(i,j,k))*dom/nSSh
+                 fSShHI =
+     &            0.98_DKIND*(1._DKIND+
+     &             nratio**(1.64_DKIND))**(-2.28_DKIND)+
+     &            0.02_DKIND*(1._DKIND+
+     &             nratio)**(-0.84_DKIND)
+              endif
 !
 !            HeI self shielding ratio
 !
-             nSSh_he = 6.73e-3_DKIND *
-     &        (avgsighei /2.49e-18_DKIND)**(-2._DKIND/3._DKIND)*
-     &        (tgas(i)/1.0e4_DKIND)**(0.17_DKIND)*
-     &        (k26/tbase1/1.0e-12_DKIND)**(2._DKIND/3._DKIND)
-             nratio_he = 0.25_DKIND*
-     &          (HeI(i,j,k) + HeII(i,j,k) + HeIII(i,j,k))*dom/nSSh_he
-
+              if (k26 .lt. tiny8) then
+                 fSShHeI = 1._DKIND
+              else
+                 nSSh_he = 6.73e-3_DKIND *
+     &            (avgsighei /2.49e-18_DKIND)**(-2._DKIND/3._DKIND)*
+     &            (tgas(i)/1.0e4_DKIND)**(0.17_DKIND)*
+     &            (k26/tbase1/1.0e-12_DKIND)**(2._DKIND/3._DKIND)
+                 nratio_he = 0.25_DKIND*
+     &            (HeI(i,j,k) + HeII(i,j,k) + HeIII(i,j,k))*dom/nSSh_he
+                 fSShHeI =
+     &            0.98_DKIND*(1._DKIND+
+     &             nratio_he**(1.64_DKIND))**(-2.28_DKIND)+
+     &            0.02_DKIND*(1._DKIND+
+     &             nratio_he)**(-0.84_DKIND)
+              endif
 
              edot(i) = edot(i) + real(ipiht, DKIND)*(
-     &              piHi * HI (i,j,k)*
-     &    (0.98_DKIND*(1._DKIND+nratio**(1.64_DKIND))**(-2.28_DKIND)+
-     &                   0.02_DKIND*(1._DKIND+nratio)**(-0.84_DKIND))
-     &           + piHeI * HeI(i,j,k)*
-     &    (0.98_DKIND*(1._DKIND+nratio_he**(1.64_DKIND))**(-2.28_DKIND)+
-     &                 0.02_DKIND*(1._DKIND+nratio_he)**(-0.84_DKIND))
+     &              piHi * HI (i,j,k)* fSShHI
+     &           + piHeI * HeI(i,j,k)* fSShHeI
      &           )/dom
 !
 !          Ignoring HeII heating (HeII heating rate -> 0)
