@@ -49,13 +49,13 @@ int update_UVbackground_rates(chemistry_data *my_chemistry,
       Redshift >= my_chemistry->UVbackground_redshift_off) {
 
     if (Redshift > my_chemistry->UVbackground_redshift_fullon)
-      Ramp = 0.5 - 0.5*tanh(15.0*(Redshift - 0.5*
-	    (my_chemistry->UVbackground_redshift_on+my_chemistry->UVbackground_redshift_fullon)));
+      Ramp = 0.5 - 0.5 * tanh(15.0 * (Redshift - 0.5 *
+        (my_chemistry->UVbackground_redshift_on +
+         my_chemistry->UVbackground_redshift_fullon)));
     else if (Redshift < my_chemistry->UVbackground_redshift_drop)
-      Ramp = (Redshift - my_chemistry->UVbackground_redshift_off + 
-	      (my_chemistry->UVbackground_redshift_drop - Redshift)) /
-             (my_chemistry->UVbackground_redshift_drop - 
-	      my_chemistry->UVbackground_redshift_off);
+      Ramp = 0.5 - 0.5 * tanh(15.0 * (0.5 *
+        (my_chemistry->UVbackground_redshift_drop +
+         my_chemistry->UVbackground_redshift_off) - Redshift));
     else
       Ramp = 1.0;
 
