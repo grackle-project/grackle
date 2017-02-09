@@ -276,17 +276,34 @@ int initialize_UVbackground_data(chemistry_data *my_chemistry,
             my_rates->UVbackground_table.zmax);
   }
 
-  // Set redshift on/off flags from data.
-  my_chemistry->UVbackground_redshift_on     = my_rates->UVbackground_table.z[Nz-1];
-  my_chemistry->UVbackground_redshift_fullon = my_rates->UVbackground_table.z[Nz-1];
-  my_chemistry->UVbackground_redshift_off    = my_rates->UVbackground_table.zmin;
-  my_chemistry->UVbackground_redshift_drop   = my_rates->UVbackground_table.zmin;
-
-  if (grackle_verbose) {
-    fprintf(stdout, "Setting UVbackground_redshift_on to %f.\n",
-            my_chemistry->UVbackground_redshift_on);
-    fprintf(stdout, "Setting UVbackground_redshift_off to %f.\n",
-            my_chemistry->UVbackground_redshift_off);
+  // Set redshift on/off flags from data if not set.
+  if (my_chemistry->UVbackground_redshift_on <= FLOAT_UNDEFINED) {
+    my_chemistry->UVbackground_redshift_on =
+      my_rates->UVbackground_table.zmax;
+    if (grackle_verbose)
+      fprintf(stdout, "Setting UVbackground_redshift_on to %f.\n",
+              my_chemistry->UVbackground_redshift_on);
+  }
+  if (my_chemistry->UVbackground_redshift_fullon <= FLOAT_UNDEFINED) {
+    my_chemistry->UVbackground_redshift_fullon =
+      my_rates->UVbackground_table.zmax;
+    if (grackle_verbose)
+      fprintf(stdout, "Setting UVbackground_redshift_fullon to %f.\n",
+              my_chemistry->UVbackground_redshift_fullon);
+  }
+  if (my_chemistry->UVbackground_redshift_drop <= FLOAT_UNDEFINED) {
+    my_chemistry->UVbackground_redshift_drop =
+      my_rates->UVbackground_table.zmin;
+    if (grackle_verbose)
+      fprintf(stdout, "Setting UVbackground_redshift_drop to %f.\n",
+              my_chemistry->UVbackground_redshift_drop);
+  }
+  if (my_chemistry->UVbackground_redshift_off <= FLOAT_UNDEFINED) {
+    my_chemistry->UVbackground_redshift_off =
+      my_rates->UVbackground_table.zmin;
+    if (grackle_verbose)
+      fprintf(stdout, "Setting UVbackground_redshift_off to %f.\n",
+              my_chemistry->UVbackground_redshift_off);
   }
 
   return SUCCESS;

@@ -60,10 +60,10 @@ chemistry_data _set_default_chemistry_parameters(void)
 
   my_chemistry.UVbackground                   = 0;
 
-  my_chemistry.UVbackground_redshift_on      = 7.0;
-  my_chemistry.UVbackground_redshift_off     = 0.0;
-  my_chemistry.UVbackground_redshift_fullon  = 6.0;
-  my_chemistry.UVbackground_redshift_drop    = 0.0;
+  my_chemistry.UVbackground_redshift_on      = FLOAT_UNDEFINED;
+  my_chemistry.UVbackground_redshift_off     = FLOAT_UNDEFINED;
+  my_chemistry.UVbackground_redshift_fullon  = FLOAT_UNDEFINED;
+  my_chemistry.UVbackground_redshift_drop    = FLOAT_UNDEFINED;
 
   my_chemistry.Compton_xray_heating   = 0;
 
