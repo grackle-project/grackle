@@ -73,6 +73,49 @@ For all on/off integer flags, 0 is off and 1 is on.
    used must be specified with the :c:data:`grackle_data_file` parameter.
    Default: 0.
 
+.. c:var:: float UVbackground_redshift_on
+
+   Used in combination with :c:data:`UVbackground_redshift_fullon`,
+   :c:data:`UVbackground_redshift_drop`, and
+   :c:data:`UVbackground_redshift_off` to set an attenuation factor for the
+   photo-heating and photo-ionization rates of the UV background model.
+   See the figure below for an illustration its behavior.  If not set,
+   this parameter will be set to the highest redshift of the UV background
+   data being used.
+
+.. c:var:: float UVbackground_redshift_fullon
+
+   Used in combination with :c:data:`UVbackground_redshift_on`,
+   :c:data:`UVbackground_redshift_drop`, and
+   :c:data:`UVbackground_redshift_off` to set an attenuation factor for the
+   photo-heating and photo-ionization rates of the UV background model.
+   See the figure below for an illustration its behavior.  If not set,
+   this parameter will be set to the highest redshift of the UV background
+   data being used.
+
+.. c:var:: float UVbackground_redshift_drop
+
+   Used in combination with :c:data:`UVbackground_redshift_on`,
+   :c:data:`UVbackground_redshift_fullon`, and
+   :c:data:`UVbackground_redshift_off` to set an attenuation factor for the
+   photo-heating and photo-ionization rates of the UV background model.
+   See the figure below for an illustration its behavior.  If not set,
+   this parameter will be set to the lowest redshift of the UV background
+   data being used.
+
+.. c:var:: float UVbackground_redshift_off
+
+   Used in combination with :c:data:`UVbackground_redshift_on`,
+   :c:data:`UVbackground_redshift_fullon`, and
+   :c:data:`UVbackground_redshift_drop` to set an attenuation factor for the
+   photo-heating and photo-ionization rates of the UV background model.
+   See the figure below for an illustration its behavior.  If not set,
+   this parameter will be set to the lowest redshift of the UV background
+   data being used.
+
+.. image:: _images/ramp.png
+   :width: 300
+
 .. c:var:: char* grackle_data_file
 
    Path to the data file containing the metal cooling and UV background
