@@ -34,6 +34,7 @@ def temporary_directory():
         os.chdir(curdir)
         shutil.rmtree(tmpdir)
 
+
 current_path = os.path.abspath(__file__)
 
 EXAMPLES_GLOB = [os.path.dirname(

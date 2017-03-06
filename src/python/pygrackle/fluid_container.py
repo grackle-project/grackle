@@ -127,6 +127,7 @@ class NotAGrid(Exception):
     def __str__(self):
         return "This routine needs a yt grid."
 
+
 _grackle_to_yt = {
     'density': ('gas', 'density'),
     'HI': ('gas', 'H_p0_density'),

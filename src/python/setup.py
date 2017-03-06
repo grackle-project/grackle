@@ -40,6 +40,7 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('pygrackle', 'pygrackle')
     return config
 
+
 setup(
     name="pygrackle",
     version="0.1",
