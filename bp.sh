@@ -28,4 +28,5 @@ make install
 export LD_LIBRARY_PATH=$HOME/local/lib:$LD_LIBRARY_PATH
 cd ../python
 python setup.py develop
-make test
+cd ../
+py.test python/tests
