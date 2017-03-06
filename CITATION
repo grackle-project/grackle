@@ -1,28 +1,31 @@
 If you used the Grackle library in your work, please cite it as 
-“the Grackle chemistry and cooling library (Smith et al. 2016).”
+“the Grackle chemistry and cooling library (Smith et al. 2017).”
 
-    Smith, B.D., Bryan, G.L., Glover, S.C.O., et al. 2016, arXiv:1610.09591 
+    Smith, B.D., Bryan, G.L., Glover, S.C.O., et al. 2017, MNRAS, 466, 2217
 
 Also, please add a footnote to:
 
-https://grackle.readthedocs.org/
+https://grackle.readthedocs.io/
 
 For LaTex and BibTex users:
 
-\bibitem[Smith et al.(2016)]{2016arXiv161009591S} Smith, B.~D., Bryan, G.~L., Glover, S.~C.~O., et al.\ 2016, arXiv:1610.09591
+\bibitem[Smith et al.(2017)]{2017MNRAS.466.2217S} Smith, B.~D., Bryan, G.~L., Glover, S.~C.~O., et al.\ 2017, \mnras, 466, 2217
 
-@ARTICLE{2016arXiv161009591S,
+@ARTICLE{2017MNRAS.466.2217S,
    author = {{Smith}, B.~D. and {Bryan}, G.~L. and {Glover}, S.~C.~O. and 
 	{Goldbaum}, N.~J. and {Turk}, M.~J. and {Regan}, J. and {Wise}, J.~H. and 
 	{Schive}, H.-Y. and {Abel}, T. and {Emerick}, A. and {O'Shea}, B.~W. and 
 	{Anninos}, P. and {Hummels}, C.~B. and {Khochfar}, S.},
-    title = "{Grackle: a Chemistry and Cooling Library for Astrophysics}",
-  journal = {ArXiv e-prints},
+    title = "{GRACKLE: a chemistry and cooling library for astrophysics}",
+  journal = {\mnras},
 archivePrefix = "arXiv",
    eprint = {1610.09591},
- keywords = {Astrophysics - Cosmology and Nongalactic Astrophysics, Astrophysics - Astrophysics of Galaxies, Astrophysics - Instrumentation and Methods for Astrophysics},
-     year = 2016,
-    month = oct,
-   adsurl = {http://adsabs.harvard.edu/abs/2016arXiv161009591S},
+ keywords = {astrochemistry, methods: numerical, galaxies: formation},
+     year = 2017,
+    month = apr,
+   volume = 466,
+    pages = {2217-2234},
+      doi = {10.1093/mnras/stw3291},
+   adsurl = {http://adsabs.harvard.edu/abs/2017MNRAS.466.2217S},
   adsnote = {Provided by the SAO/NASA Astrophysics Data System}
 }
