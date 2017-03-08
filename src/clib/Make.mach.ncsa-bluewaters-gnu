@@ -23,7 +23,7 @@ MACH_FILE  = Make.mach.ncsa-bluewaters-gnu
 # Install paths (local variables)
 #-----------------------------------------------------------------------
 
-LOCAL_HDF5_INSTALL   = /opt/cray/hdf5/1.8.16/gnu/4.9
+LOCAL_HDF5_INSTALL   = $(HDF5_ROOT)
 
 #-----------------------------------------------------------------------
 # Compiler settings
