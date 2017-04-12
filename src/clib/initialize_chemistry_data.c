@@ -414,6 +414,18 @@ void show_parameters(FILE *fp, chemistry_data *my_chemistry)
           my_chemistry->UVbackground_redshift_drop);
   fprintf(fp, "cloudy_electron_fraction_factor   = %g\n",
           my_chemistry->cloudy_electron_fraction_factor);
+  fprintf(fp, "use_radiative_transfer            = %d\n",
+          my_chemistry->use_radiative_transfer);
+  fprintf(fp, "radiative_transfer_coupled_rate_solver = %d\n",
+          my_chemistry->radiative_transfer_coupled_rate_solver);
+  fprintf(fp, "radiative_transfer_intermediate_step = %d\n",
+          my_chemistry->radiative_transfer_intermediate_step);
+  fprintf(fp, "radiative_transfer_hydrogen_only  = %d\n",
+          my_chemistry->radiative_transfer_hydrogen_only);
+  fprintf(fp, "self_shielding_method             = %d\n",
+          my_chemistry->self_shielding_method);
+  fprintf(fp, "H2_self_shielding                 = %d\n",
+          my_chemistry->H2_self_shielding);
 # ifdef _OPENMP
   fprintf(fp, "omp_nthreads                      = %d\n",
           my_chemistry->omp_nthreads);
