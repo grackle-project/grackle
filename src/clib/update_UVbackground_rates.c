@@ -151,7 +151,7 @@ int update_UVbackground_rates(chemistry_data *my_chemistry,
   //
 
   // *** crsHI ***
-  if (my_chemistry.self_shielding_method > 0){
+  if (my_chemistry->self_shielding_method > 0){
     slope = (my_rates->UVbackground_table.crsHI[index] -
              my_rates->UVbackground_table.crsHI[index-1]) / (zvec[index] - zvec[index-1]);
     my_rates->hi_avg_crs = (Redshift - zvec[index-1]) * slope +
