@@ -587,7 +587,9 @@ c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 fo
                 if (d(i,j,k)*dom.gt.1e18_DKIND.and.i.eq.4) then
 #ifdef _OPENMP
 !$omp critical
+#endif
                   write(0,*) HI(i,j,k)/heq, edot(i), tgas(i)
+#ifdef _OPENMP
 !$omp end critical
 #endif
                 endif
@@ -606,6 +608,7 @@ c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 fo
      &             abs((dt-ttot(i))/dt) .gt. 1.0e-3_DKIND) then
 #ifdef _OPENMP
 !$omp critical
+#endif
                   write(4,1000) iter,i,j,k,dtit(i),
      &              ttot(i),dt,de(i,j,k),dedot(i),HI(i,j,k),HIdot(i),
      &              tgas(i), dedot_prev(i), HIdot_prev(i)
@@ -630,6 +633,7 @@ c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 fo
      &               +      k19(i)*H2II(i,j,k)  *HM(i,j,k)/2._DKIND,
      &               -      k57(i)*HI(i,j,k)    *HI(i,j,k),
      &               -      k58(i)*HI(i,j,k)    *HeI(i,j,k)/4._DKIND
+#ifdef _OPENMP
 !$omp end critical
 #endif
                endif
@@ -670,9 +674,11 @@ c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 fo
                if (dtit(i) .ne. dtit(i)) then
 #ifdef _OPENMP
 !$omp critical
+#endif
                  write(6,*) 'HUGE dtit :: ', energy, edot(i), dtit(i),
      &                      dt, ttot(i), abs(0.1_DKIND*energy/edot(i)), 
      &                      real(abs(0.1_DKIND*energy/edot(i)), DKIND)
+#ifdef _OPENMP
 !$omp end critical
 #endif
                endif
@@ -685,8 +691,10 @@ c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 fo
      &              abs((dt-ttot(i))/dt) .gt. 1.0e-3_DKIND) then
 #ifdef _OPENMP
 !$omp critical
+#endif
                  write(3,2000) i,j,k,iter,e(i,j,k),edot(i),tgas(i),
      &             energy,de(i,j,k),ttot(i),d(i,j,k),e(i,j,k),dtit(i)
+#ifdef _OPENMP
 !$omp end critical
 #endif
                endif
@@ -706,7 +714,9 @@ c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 fo
                if (e(i,j,k) .ne. e(i,j,k)) then
 #ifdef _OPENMP
 !$omp critical
+#endif
                     write(3,*) edot(i),d(i,j,k),dtit(i)
+#ifdef _OPENMP
 !$omp end critical
 #endif
                endif
@@ -765,6 +775,7 @@ c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 fo
          if (iter .gt. itmax) then
 #ifdef _OPENMP
 !$omp critical
+#endif
 	    write(0,*) 'inside if statement solve rate cool:',is,ie
             write(6,*) 'MULTI_COOL iter > ',itmax,' at j,k =',j,k
             write(0,*) 'FATAL error (2) in MULTI_COOL'
@@ -773,6 +784,7 @@ c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 fo
             write(0,'((16(1pe8.1)))') (ttot(i),i=is+1,ie+1)
             write(0,'((16(1pe8.1)))') (edot(i),i=is+1,ie+1)
             write(0,'((16(l3)))') (itmask(i),i=is+1,ie+1)
+#ifdef _OPENMP
 !$omp end critical
 #endif
 c            WARNING_MESSAGE
@@ -781,7 +793,9 @@ c            WARNING_MESSAGE
          if (iter .gt. itmax/2) then
 #ifdef _OPENMP
 !$omp critical
+#endif
             write(6,*) 'MULTI_COOL iter,j,k =',iter,j,k
+#ifdef _OPENMP
 !$omp end critical
 #endif
          end if
@@ -1812,9 +1826,11 @@ c -------------------------------------------------------------------
             if (HIp(i) .ne. HIp(i)) then
 #ifdef _OPENMP
 !$omp critical
+#endif
                write(*,*) 'HUGE HIp! :: ', i, j, k, HIp(i), HI(i,j,k),
      $              HII(i,j,k), de(i,j,k), kphHI(i,j,k),
      $              scoef, acoef, dtit(i)
+#ifdef _OPENMP
 !$omp end critical
 #endif
 c               ERROR_MESSAGE
@@ -1835,11 +1851,13 @@ c
             if (HIIp(i) .le. 0._DKIND) then  !#####
 #ifdef _OPENMP
 !$omp critical
+#endif
                write(*,*) 'negative HIIp! :: ', i, j, k, HIIp(i), 
      $              scoef, dtit(i), HII(i,j,k), acoef,
      $              k2(i), de(i,j,k),
      $              kphHI(i,j,k), HIp(i),
      $              k24shield(i)
+#ifdef _OPENMP
 !$omp end critical
 #endif
             endif
@@ -1966,9 +1984,11 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
             if (HIp(i) .ne. HIp(i)) then
 #ifdef _OPENMP
 !$omp critical
+#endif
                write(*,*) 'HUGE HIp! :: ', i, j, k, HIp(i), HI(i,j,k),
      $              HII(i,j,k), de(i,j,k), H2I(i,j,k),
      $              kphHI(i,j,k)
+#ifdef _OPENMP
 !$omp end critical
 #endif
             endif
@@ -2163,7 +2183,9 @@ c
       if (HI(i,j,k) .ne. HI(i,j,k)) then
 #ifdef _OPENMP
 !$omp critical
+#endif
          write(*,*) 'HUGE HI! :: ', i, j, k, HI(i,j,k)
+#ifdef _OPENMP
 !$omp end critical
 #endif
       endif
