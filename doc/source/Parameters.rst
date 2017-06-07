@@ -264,6 +264,11 @@ For all on/off integer flags, 0 is off and 1 is on.
           HeII ionization and heating from the UV background entirely (setting
           HeII rates to zero). 
 
+   These methods only work in conjunction with using updated Cloudy
+   cooling tables, denoted with "_shielding". These tables properly account
+   for the decrease in metal line cooling rates in self-shielded regions,
+   which can be significant. 
+
 .. c:var:: int omp_nthreads
 
    Sets the number of OpenMP threads.  If not set, this will be set to
@@ -306,6 +311,20 @@ Data files:
    <http://adsabs.harvard.edu/abs/2012ApJ...746..125H>`_.  The maximum
    redshift is 15.13.  Above that, collisional ionization equilibrium is
    assumed.
+
+To use the self-shielding approximation (see ``self_shielding_method''),
+one must properly account for the change in metal line cooling rates in
+self-shielded regions. Using the optically thin tables described above can
+result in an order of magnitude overestimation in the net cooling rate at
+certain densities. We have re-computed these tables by constructing
+Jeans-length depth models in Cloudy at each density - temperature pair, 
+tabulating the cooling and heating rates from the core of each of these
+clouds. In addition, these tables contain the spectrum averaged absorption
+cross sections needed for the Rahmati et. al. 2013 self-shielding 
+approximations. Currently only the HM2012 table has been recomputed. 
+
+ - **CloudyData_UVB=HM2012_shielded.h5** - updated heating and cooling
+   rates with the HM2012 UV background, accounting for self-shielding.
 
 The final file includes only metal cooling rates under collisional
 ionization equilibrium, i.e., no incident radiation field.  This table
