@@ -319,7 +319,8 @@ result in an order of magnitude overestimation in the net cooling rate at
 certain densities. We have re-computed these tables by constructing
 Jeans-length depth models in Cloudy at each density - temperature pair, 
 tabulating the cooling and heating rates from the core of each of these
-clouds. In addition, these tables contain the spectrum averaged absorption
+clouds. These models enforce a maximum depth of 100 pc.
+In addition, these tables contain the spectrum averaged absorption
 cross sections needed for the Rahmati et. al. 2013 self-shielding 
 approximations. Currently only the HM2012 table has been recomputed. 
 
