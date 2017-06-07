@@ -312,7 +312,7 @@ Data files:
    redshift is 15.13.  Above that, collisional ionization equilibrium is
    assumed.
 
-To use the self-shielding approximation (see ``self_shielding_method''),
+To use the self-shielding approximation (see ``self_shielding_method``),
 one must properly account for the change in metal line cooling rates in
 self-shielded regions. Using the optically thin tables described above can
 result in an order of magnitude overestimation in the net cooling rate at
