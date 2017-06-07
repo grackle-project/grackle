@@ -1813,7 +1813,7 @@ c -------------------------------------------------------------------
 #ifdef _OPENMP
 !$omp critical
                write(*,*) 'HUGE HIp! :: ', i, j, k, HIp(i), HI(i,j,k),
-     $              HII(i,j,k), de(i,j,k), kphHI(i,j,k)
+     $              HII(i,j,k), de(i,j,k), kphHI(i,j,k),
      $              scoef, acoef, dtit(i)
 !$omp end critical
 #endif
@@ -1967,7 +1967,7 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
 #ifdef _OPENMP
 !$omp critical
                write(*,*) 'HUGE HIp! :: ', i, j, k, HIp(i), HI(i,j,k),
-     $              HII(i,j,k), de(i,j,k), H2I(i,j,k), kdissH2I(i,j,k),
+     $              HII(i,j,k), de(i,j,k), H2I(i,j,k),
      $              kphHI(i,j,k)
 !$omp end critical
 #endif
