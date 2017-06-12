@@ -199,7 +199,7 @@ frame.
     (my_units.length_units / a_value) / my_units.time_units; // since u = a * dx/dt
 
 For an example of using comoving units, see the units system in the 
-`Enzo <http://enzo-project.org/>`_ code.  For cosmological simualations, a 
+`Enzo <http://enzo-project.org/>`_ code.  For cosmological simulations, a
 comoving unit system is preferred, though not required, since it allows the 
 densities to stay close to 1.0.
 
@@ -252,11 +252,6 @@ pointer to the :c:data:`code_units` struct created earlier.  This function
 will return an integer indicating success (1) or failure (0).
 
 .. code-block:: c++
-
-  // Set initial expansion factor (for internal units).
-  // Set expansion factor to 1 for non-cosmological simulation.
-  double initial_redshift = 100.;
-  double a_value = 1. / (1. + initial_redshift) / my_units.a_units;
 
   // Finally, initialize the chemistry object.
   if (initialize_chemistry_data(&my_units) == 0) {
