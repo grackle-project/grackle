@@ -426,10 +426,12 @@
          if (edot(i) .ne. edot(i)) then
 #ifdef _OPENMP
 !$omp critical
+#endif
             write(6,*) 'NaN in edot[1]: ', i, j, k, edot(i), 
      &           HI(i,j,k), HII(i,j,k), HeI(i,j,k), HeII(i,j,k), 
      &           HeIII(i,j,k), de(i,j,k), d(i,j,k), 
      &           tgas(i), p2d(i)
+#ifdef _OPENMP
 !$omp end critical
 #endif
          endif
@@ -910,9 +912,11 @@ c              endif
               if (edot(i) .ne. edot(i)) then
 #ifdef _OPENMP
 !$omp critical
+#endif
                   write(6,*) 'NaN in edot[2]: ', i,j,k, edot(i),
      &                photogamma(i,j,k), HI(i,j,k), de(i,j,k), d(i,j,k),
      &                e(i,j,k), p2d(i), tgas(i), dom, urho, aye, mh
+#ifdef _OPENMP
 !$omp end critical
 #endif
               endif
