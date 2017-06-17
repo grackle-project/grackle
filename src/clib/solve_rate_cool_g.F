@@ -756,7 +756,7 @@ c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 fo
             do i = is+1, ie+1
                ttot(i) = min(ttot(i) + dtit(i), dt)
                if (abs(dt-ttot(i)) .lt.
-     &              0.001_DKIND*dt) itmask(i) = .false.
+     &              tolerance*dt) itmask(i) = .false.
                if (ttot(i).lt.ttmin) ttmin = ttot(i)
             enddo
 
