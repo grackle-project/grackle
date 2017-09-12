@@ -736,7 +736,7 @@ c  new (correct) way: (april 4, 2007)
 
              edot(i) = edot(i) + real(ipiht,DKIND)*(
      &              piHI  *HI  (i,j,k)* fSShHI
-     &            + piHeI * HeI(i,j,k)*0.25_DKIND*
+     &            + piHeI * HeI(i,j,k)*0.25_DKIND
      &            + piHeII*HeII(i,j,k)*0.25_DKIND
      &             )/dom
            endif
