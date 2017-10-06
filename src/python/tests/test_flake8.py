@@ -9,10 +9,8 @@ def test_flake8():
     if os.path.exists(output_file):
         os.remove(output_file)
     output_string = "--output-file=%s" % output_file
-    config_string = "--config=%s" % os.path.join(
-        python_grackle_dir, 'setup.cfg')
     subprocess.call(
-        ['flake8', output_string, config_string, python_grackle_dir])
+        ['flake8', output_string, python_grackle_dir])
 
     with open(output_file) as f:
         flake8_output = f.readlines()
