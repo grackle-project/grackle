@@ -63,9 +63,10 @@ def evolve_freefall(fc, final_density, safety_factor=0.01,
                                 (0.5 * freefall_time_constant * dt *
                                  np.power((1 - force_factor), 0.5))), -2.)
 
-        print "Evolve Freefall - t: %e yr, rho: %e g/cm^3, T: %e K." % \
-            ((current_time * my_chemistry.time_units / sec_per_year),
-             (fc["density"][0] * my_chemistry.density_units), fc["temperature"][0])
+        print("Evolve Freefall - t: %e yr, rho: %e g/cm^3, T: %e K." %
+              ((current_time * my_chemistry.time_units / sec_per_year),
+               (fc["density"][0] * my_chemistry.density_units),
+               fc["temperature"][0]))
 
         # use this to multiply by elemental densities if you are tracking those
         density_ratio = new_density / fc["density"][0]
@@ -149,10 +150,10 @@ def evolve_constant_density(fc, final_temperature=None,
             break
 
         fc.calculate_temperature()
-        print "Evolve constant density - t: %e yr, rho: %e g/cm^3, T: %e K." % \
-            (current_time * my_chemistry.time_units / sec_per_year,
-             fc["density"][0] * my_chemistry.density_units,
-             fc["temperature"][0])
+        print("Evolve constant density - t: %e yr, rho: %e g/cm^3, T: %e K." %
+              (current_time * my_chemistry.time_units / sec_per_year,
+               fc["density"][0] * my_chemistry.density_units,
+               fc["temperature"][0]))
         fc.solve_chemistry(dt)
 
         for field in fc.density_fields:

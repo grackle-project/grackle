@@ -41,6 +41,11 @@ _rad_trans_names = ['RT_heating_rate', 'RT_HI_ionization_rate',
                     'RT_HeI_ionization_rate', 'RT_HeII_ionization_rate',
                     'RT_H2_dissociation_rate']
 
+try:
+    xrange
+except NameError:
+    xrange = range
+
 class FluidContainer(dict):
     def __init__(self, chemistry_data, n_vals, dtype="float64",
                  itype="int64"):
@@ -182,8 +187,8 @@ def grid_to_grackle(chemistry_data, grid, update = True):
     for f1, f2, conv in _needed_fields(fc):
         if f2 not in fields:
             raise FieldNotFound(f2)
-    for j in xrange(grid.ActiveDimensions[1]):
-        for k in xrange(grid.ActiveDimensions[2]):
+    for j in range(grid.ActiveDimensions[1]):
+        for k in range(grid.ActiveDimensions[2]):
             for f1, f2, conv in _needed_fields(fc):
                 fc[f1][:] = grid[f2][:,j,k] / conv
             yield fc

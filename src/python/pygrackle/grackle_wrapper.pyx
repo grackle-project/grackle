@@ -103,6 +103,8 @@ cdef class chemistry_data:
         def __get__(self):
             return self.data.grackle_data_file
         def __set__(self, val):
+            if isinstance(val, str):
+                val = val.encode('utf-8')
             self.data.grackle_data_file = val
 
     property CaseBRecombination:
