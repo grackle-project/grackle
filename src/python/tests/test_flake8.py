@@ -10,11 +10,15 @@ def test_flake8():
         os.remove(output_file)
     output_string = "--output-file=%s" % output_file
     config_string = "--config=%s" % os.path.join(
-        os.path.dirname(python_grackle_dir), 'setup.cfg')
-    subprocess.call(['flake8', output_string, config_string, python_grackle_dir])
+        python_grackle_dir, 'setup.cfg')
+    subprocess.call(
+        ['flake8', output_string, config_string, python_grackle_dir])
 
     with open(output_file) as f:
         flake8_output = f.readlines()
     if flake8_output != []:
         raise AssertionError(
             "flake8 found style errors:\n\n%s" % "\n".join(flake8_output))
+
+    if os.path.exists(output_file):
+        os.remove(output_file)
