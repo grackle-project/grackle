@@ -60,6 +60,10 @@ class FluidContainer(dict):
             for fluid in _rad_trans_names:
                 self._setup_fluid(fluid)
 
+        for htype in ["specific", "volumetric"]:
+            if getattr(self.chemistry_data, "use_%s_heating_rate" % htype, 0):
+                self._setup_fluid("%s_heating_rate" % htype)
+
     def _setup_fluid(self, fluid_name):
         self[fluid_name] = np.zeros(self.n_vals, self.dtype)
 
