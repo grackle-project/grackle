@@ -94,7 +94,8 @@ int _solve_chemistry(chemistry_data *my_chemistry,
                      gr_float *e_density, gr_float *metal_density,
                      gr_float *volumetric_heating_rate, gr_float *specific_heating_rate,
                      gr_float *RT_heating_rate, gr_float *RT_HI_ionization_rate, gr_float *RT_HeI_ionization_rate,
-                     gr_float *RT_HeII_ionization_rate, gr_float *RT_H2_dissociation_rate)
+                     gr_float *RT_HeII_ionization_rate, gr_float *RT_H2_dissociation_rate,
+                     gr_float *H2_self_shielding_length)
 {
 
   /* Return if this doesn't concern us. */
@@ -254,7 +255,8 @@ int solve_chemistry(code_units *my_units,
                        my_fields->specific_heating_rate,
                        my_fields->RT_heating_rate, my_fields->RT_HI_ionization_rate,
                        my_fields->RT_HeI_ionization_rate, my_fields->RT_HeII_ionization_rate,
-                       my_fields->RT_H2_dissociation_rate) == FAIL) {
+                       my_fields->RT_H2_dissociation_rate,
+                       my_fields->H2_self_shielding_length) == FAIL) {
     fprintf(stderr, "Error in _solve_chemistry.\n");
     return FAIL;
   }

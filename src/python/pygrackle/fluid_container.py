@@ -28,6 +28,7 @@ _nd_fields   = ["energy",
                 "x-velocity", "y-velocity", "z-velocity",
                 "temperature", "pressure",
                 "gamma", "cooling_time"]
+
 _fluid_names = {}
 _fluid_names[0] = _base_fluids
 _fluid_names[1] = _fluid_names[0] + \
@@ -40,6 +41,10 @@ _fluid_names[3] = _fluid_names[2] + \
 _rad_trans_names = ['RT_heating_rate', 'RT_HI_ionization_rate',
                     'RT_HeI_ionization_rate', 'RT_HeII_ionization_rate',
                     'RT_H2_dissociation_rate']
+
+_extra_fields = {}
+_extra_fields[2] = ["H2_self_shielding_length"]
+_extra_fields[3] = _extra_fields[2] + []
 
 try:
     xrange
@@ -54,7 +59,8 @@ class FluidContainer(dict):
         self.chemistry_data = chemistry_data
         self.n_vals = n_vals
         for fluid in _fluid_names[self.chemistry_data.primordial_chemistry] + \
-            _nd_fields:
+          _extra_fields.get(self.chemistry_data.primordial_chemistry, []) + \
+          _nd_fields:
             self._setup_fluid(fluid)
         if self.chemistry_data.use_radiative_transfer:
             for fluid in _rad_trans_names:

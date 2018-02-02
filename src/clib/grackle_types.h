@@ -66,6 +66,8 @@ typedef struct
   gr_float *RT_HeII_ionization_rate;
   gr_float *RT_H2_dissociation_rate;
 
+  gr_float *H2_self_shielding_length;
+
 } grackle_field_data;
 
 typedef struct
