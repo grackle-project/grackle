@@ -64,7 +64,7 @@ extern void FORTRAN_NAME(solve_rate_cool_g)(
         int *iradshield, double *avgsighi, double *avgsighei, double *avgsigheii,
         int *iradtrans, int *iradcoupled, int *iradstep, int *irt_honly,
         gr_float *kphHI, gr_float *kphHeI, gr_float *kphHeII, gr_float *kdissH2I,
-        gr_float *photogamma,
+        gr_float *photogamma, gr_float *xH2shield,
 	int *ierr,
 	int *ih2optical, int *iciecool, int *ithreebody, double *ciecoa,
  	int *icmbTfloor, int *iClHeat, double *clEleFra,
@@ -131,7 +131,7 @@ int _solve_chemistry(chemistry_data *my_chemistry,
   }
 
   /* Error checking for H2 shielding approximation */
-  if (my_chemistry->H2_self_shielding && grid_rank != 3){
+  if (my_chemistry->H2_self_shielding == 1 && grid_rank != 3){
     fprintf(stderr, "Error in solve_chemistry: H2 self shielding approximation "
                     "is turned on, yet is only valid for 3D Cartesian grids. "
                     "grid_rank is currently %i \n.", grid_rank);
@@ -195,7 +195,7 @@ int _solve_chemistry(chemistry_data *my_chemistry,
     &my_chemistry->use_radiative_transfer, &my_chemistry->radiative_transfer_coupled_rate_solver,
     &my_chemistry->radiative_transfer_intermediate_step, &my_chemistry->radiative_transfer_hydrogen_only,
     RT_HI_ionization_rate, RT_HeI_ionization_rate, RT_HeII_ionization_rate,
-    RT_H2_dissociation_rate, RT_heating_rate,
+    RT_H2_dissociation_rate, RT_heating_rate, H2_self_shielding_length,
     &ierr,
     &my_chemistry->h2_optical_depth_approximation, &my_chemistry->cie_cooling,
     &my_chemistry->three_body_rate, my_rates->cieco,
