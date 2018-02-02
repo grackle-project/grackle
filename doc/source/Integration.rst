@@ -323,9 +323,9 @@ and pointers to all field arrays.
 
 .. c:var:: gr_float* grid_dx
 
-   This is the grid cell width in c:data:`length_units`. This is currently
+   This is the grid cell width in :c:data:`length_units`. This is currently
    used only in computing approximate H2 self-shielding when H2 is tracked
-   (c:data:`primordial_chemistry` >= 2) and c:data:`H2_self_shielding` is 
+   (:c:data:`primordial_chemistry` >= 2) and :c:data:`H2_self_shielding` is
    set to 1.
 
 .. c:var:: gr_float* density
