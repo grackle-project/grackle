@@ -236,13 +236,18 @@ For all on/off integer flags, 0 is off and 1 is on.
 
 .. c:var:: H2_self_shielding
 
-   Switch to enable approximate H2 self-shielding from both the UV
-   background dissociation rate and the H2 dissociation rate 
-   given by :c:data:`RT_H2_dissociation_rate` (if present). This
-   is a Sobolev-like, spherically averaged method from
-   `Wolcott-Green et. al. 2011 <http://adsabs.harvard.edu/abs/2011MNRAS.418..838W>`_
-   and is only valid for Cartesian grid codes in 3D.
-   Default: 0.
+   Switch to enable approximate H\ :sub:`2`\  self-shielding from both the UV
+   background dissociation rate and the H\ :sub:`2`\  dissociation rate
+   given by :c:data:`RT_H2_dissociation_rate` (if present).  Three options
+   exist for the length scale used in calculating the H\ :sub:`2`\  column
+   density. Default: 0.
+
+    - 1: Use a Sobolev-like, spherically averaged method from
+      `Wolcott-Green et. al. 2011 <http://adsabs.harvard.edu/abs/2011MNRAS.418..838W>`_.
+      This option is only valid for Cartesian grid codes in 3D.
+    - 2: Supply an array of lengths using the :c:data:`H2_self_shielding_length`
+      field.
+    - 3: Use the local Jeans length.
 
 .. c:var:: self_shielding_method
 
