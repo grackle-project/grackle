@@ -26,7 +26,7 @@
      &                ceHI, ceHeI, ceHeII, ciHI, ciHeI, ciHeIS, ciHeII,
      &                reHII, reHeII1, reHeII2, reHeIII, brem,
      &                indixe, t1, t2, logtem, tdef, edot,
-     &                tgas, tgasold, p2d, tdust, metallicity, rhoH,
+     &                tgas, tgasold, mmw, p2d, tdust, metallicity, rhoH,
      &                iradshield, avgsighi, avgsighei,
      &                avgsigheii,
      &                k24, k26, iradtrans, photogamma,
@@ -135,10 +135,8 @@
  
       integer*8 indixe(in)
       real*8 t1(in), t2(in), logtem(in), tdef(in), p2d(in),
-     &       tgas(in), tgasold(in), tdust(in), rhoH(in), nh(in),
-     &       metallicity(in), edot(in)
-
-      real*8  mmw(in)
+     &       tgas(in), tgasold(in), mmw(in), tdust(in), rhoH(in),
+     &       nh(in), metallicity(in), edot(in)
 
 !  Cooling/heating slice locals
 
@@ -255,6 +253,7 @@
 
          do i = is+1, ie+1
             if ( itmask(i) ) then
+               mmw(i) = d(i,j,k) / tgas(i)
                tgas(i) = max(p2d(i)*utem/tgas(i), temstart)
             end if
          enddo
