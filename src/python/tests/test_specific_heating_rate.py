@@ -12,7 +12,6 @@
 ########################################################################
 
 import numpy as np
-import yt
 
 from pygrackle import \
     chemistry_data, \
@@ -43,7 +42,7 @@ def container_setup(density=mass_hydrogen_cgs,
     my_chemistry.comoving_coordinates = 1
     my_chemistry.a_units = 1.0
     my_chemistry.a_value = 1.0 / (1.0 + current_redshift) / \
-        my_chemistry.a_units
+      my_chemistry.a_units
     my_chemistry.density_units = mass_hydrogen_cgs * \
       (1 + current_redshift)**3
     my_chemistry.length_units = cm_per_mpc         # 1 Mpc in cm
@@ -164,14 +163,13 @@ def test_specific_heating_rate_a_units():
     fc = container_setup(density=0.5*mass_hydrogen_cgs,
                          current_redshift=redshift)
     heating_rate = get_heating_rate(fc)
-    a_units = fc.chemistry_data.a_units
     velocity_units = fc.chemistry_data.velocity_units
 
     myrand = np.random.RandomState(seed=8675309)
 
     for i in range(6):
-        new_a_units = random_logscale(-0.5, 0.5, random_state=myrand)[0]
-        fc.chemistry_data.a_units = new_a_units
+        fc.chemistry_data.a_units = \
+          random_logscale(-0.5, 0.5, random_state=myrand)[0]
         fc.chemistry_data.a_value = 1.0 / (1.0 + redshift) / \
           fc.chemistry_data.a_units
         new_velocity_units = fc.chemistry_data.a_units * \
@@ -186,6 +184,5 @@ def test_specific_heating_rate_a_units():
                             1.0, decimal=1,
                             err_msg="\nViolates a_units constraint!")
 
-        a_units = new_a_units
         velocity_units = new_velocity_units
         heating_rate = new_heating_rate
