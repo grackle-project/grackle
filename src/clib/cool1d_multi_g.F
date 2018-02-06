@@ -975,8 +975,8 @@ c              endif
 
       do i = is+1, ie+1
          if ( itmask(i) ) then
-            edot(i) = edot(i) + (
-     &           Mheat(i,j,k) * d(i,j,k)**2 / coolunit)
+            edot(i) = edot(i) + Mheat(i,j,k) * d(i,j,k) * mh
+     &          / coolunit / dom
          end if
       enddo
 
