@@ -34,6 +34,7 @@ def temporary_directory():
         os.chdir(curdir)
         shutil.rmtree(tmpdir)
 
+
 no_output_file = ["run_from_yt"]
 
 current_path = os.path.abspath(__file__)
