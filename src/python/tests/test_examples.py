@@ -35,6 +35,8 @@ def temporary_directory():
         shutil.rmtree(tmpdir)
 
 
+no_output_file = ["run_from_yt"]
+
 current_path = os.path.abspath(__file__)
 
 EXAMPLES_GLOB = [os.path.dirname(
@@ -75,19 +77,23 @@ def test_examples(example_path, primordial_chemistry, metal_cooling):
                                (command, er.returncode, er.output))
 
         example_base = os.path.split(example_path)[1].strip('.py')
-        possible_file = '.'.join([example_base, 'h5'])
-
-        if not os.path.exists(os.sep.join([tmpdir, possible_file])):
+        if example_base in no_output_file:
             return
+        if primordial_chemistry is not None:
+            example_base += ".pc%d" % primordial_chemistry
+        if metal_cooling is not None:
+            example_base += "_metal"
+        answer_filename = '.'.join([example_base, 'h5'])
+
+        if not os.path.exists(os.sep.join([tmpdir, answer_filename])):
+            raise RuntimeError(
+                "Missing answer file: %s." % answer_filename)
 
         answer_path = os.sep.join([os.path.dirname(
             os.path.abspath(__file__)), 'example_answers'])
-        if primordial_chemistry is not None:
-            example_base = example_base + 'pc%s' % primordial_chemistry
-        answer_name = '.'.join([example_base, 'h5'])
 
-        ds_old = yt.load(os.sep.join([answer_path, answer_name]))
-        ds_new = yt.load(os.sep.join([tmpdir, answer_name]))
+        ds_old = yt.load(os.sep.join([answer_path, answer_filename]))
+        ds_new = yt.load(os.sep.join([tmpdir, answer_filename]))
 
         ad_old = ds_old.data
         ad_new = ds_new.data
