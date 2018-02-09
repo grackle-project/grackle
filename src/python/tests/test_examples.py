@@ -81,7 +81,7 @@ def test_examples(example_path, primordial_chemistry, metal_cooling):
             return
         if primordial_chemistry is not None:
             example_base += ".pc%d" % primordial_chemistry
-        if metal_cooling is not None:
+        if metal_cooling is not None and metal_cooling > 0:
             example_base += "_metal"
         answer_filename = '.'.join([example_base, 'h5'])
 
