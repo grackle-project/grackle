@@ -252,7 +252,7 @@
             endif
 
             edot(i) = edot(i) + 
-     &           (edot_met(i) * rhoH(i) * d(i,j,k))
+     &           (edot_met(i) * rhoH(i) * rhoH(i))
 
          end if
       enddo
