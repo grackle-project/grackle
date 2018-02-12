@@ -150,7 +150,7 @@
 !$omp&   indixe,
 !$omp&   t1, t2, logtem, tdef, p2d,
 !$omp&   tgas, tgasold,
-!$omp&   tdust, metallicity, rhoH,
+!$omp&   tdust, metallicity, rhoH, mmw,
 !$omp&   edot,
 !$omp&   ceHI, ceHeI, ceHeII,
 !$omp&   ciHI, ciHeI, ciHeIS, ciHeII,

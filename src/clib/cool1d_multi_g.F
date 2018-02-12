@@ -224,7 +224,7 @@
 
          do i = is+1, ie+1
             if ( itmask(i) ) then
-               tgas(i) = 
+               mmw(i) =
      &              (HeI(i,j,k) + HeII(i,j,k) + HeIII(i,j,k))/4._DKIND +
      &              HI(i,j,k) + HII(i,j,k) + de(i,j,k)
                rhoH(i) = HI(i,j,k) + HII(i,j,k)
@@ -236,7 +236,7 @@
          if (ispecies .gt. 1) then
             do i = is+1, ie+1
                if ( itmask(i) ) then
-                  tgas(i) = tgas(i) +
+                  mmw(i) = mmw(i) +
      &                 HM(i,j,k) + (H2I(i,j,k) + H2II(i,j,k))/2._DKIND
                   rhoH(i) = rhoH(i) + H2I(i,j,k) + H2II(i,j,k)
                end if
@@ -247,14 +247,14 @@
 
          if (imetal .eq. 1) then
             do i = is+1, ie+1
-               tgas(i) = tgas(i) + metal(i,j,k)/mu_metal
+               mmw(i) = mmw(i) + metal(i,j,k)/mu_metal
             enddo
          endif
 
          do i = is+1, ie+1
             if ( itmask(i) ) then
-               mmw(i) = d(i,j,k) / tgas(i)
-               tgas(i) = max(p2d(i)*utem/tgas(i), temstart)
+               tgas(i) = max(p2d(i)*utem/mmw(i), temstart)
+               mmw(i) = d(i,j,k) / mmw(i)
             end if
          enddo
 
