@@ -132,9 +132,11 @@ int _solve_chemistry(chemistry_data *my_chemistry,
 
   /* Error checking for H2 shielding approximation */
   if (my_chemistry->H2_self_shielding == 1 && grid_rank != 3){
-    fprintf(stderr, "Error in solve_chemistry: H2 self shielding approximation "
-                    "is turned on, yet is only valid for 3D Cartesian grids. "
-                    "grid_rank is currently %i \n.", grid_rank);
+    fprintf(stderr, "Error in solve_chemistry: H2 self-shielding option 1 "
+                    "will only work for 3D Cartesian grids. Use option 2 "
+                    "to provide an array of shielding lengths with "
+                    "H2_self_shielding_length or option 3 to use the "
+                    "local Jeans length.");
     return FAIL;
   }
 
