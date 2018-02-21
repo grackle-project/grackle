@@ -26,7 +26,7 @@
      &                ceHI, ceHeI, ceHeII, ciHI, ciHeI, ciHeIS, ciHeII,
      &                reHII, reHeII1, reHeII2, reHeIII, brem,
      &                indixe, t1, t2, logtem, tdef, edot,
-     &                tgas, tgasold, p2d, tdust, metallicity, rhoH,
+     &                tgas, tgasold, mmw, p2d, tdust, metallicity, rhoH,
      &                iradshield, avgsighi, avgsighei,
      &                avgsigheii,
      &                k24, k26, iradtrans, photogamma,
@@ -135,10 +135,8 @@
  
       integer*8 indixe(in)
       real*8 t1(in), t2(in), logtem(in), tdef(in), p2d(in),
-     &       tgas(in), tgasold(in), tdust(in), rhoH(in), nh(in),
-     &       metallicity(in), edot(in)
-
-      real*8  mmw(in)
+     &       tgas(in), tgasold(in), mmw(in), tdust(in), rhoH(in),
+     &       nh(in), metallicity(in), edot(in)
 
 !  Cooling/heating slice locals
 
@@ -226,7 +224,7 @@
 
          do i = is+1, ie+1
             if ( itmask(i) ) then
-               tgas(i) = 
+               mmw(i) =
      &              (HeI(i,j,k) + HeII(i,j,k) + HeIII(i,j,k))/4._DKIND +
      &              HI(i,j,k) + HII(i,j,k) + de(i,j,k)
                rhoH(i) = HI(i,j,k) + HII(i,j,k)
@@ -238,7 +236,7 @@
          if (ispecies .gt. 1) then
             do i = is+1, ie+1
                if ( itmask(i) ) then
-                  tgas(i) = tgas(i) +
+                  mmw(i) = mmw(i) +
      &                 HM(i,j,k) + (H2I(i,j,k) + H2II(i,j,k))/2._DKIND
                   rhoH(i) = rhoH(i) + H2I(i,j,k) + H2II(i,j,k)
                end if
@@ -249,13 +247,14 @@
 
          if (imetal .eq. 1) then
             do i = is+1, ie+1
-               tgas(i) = tgas(i) + metal(i,j,k)/mu_metal
+               mmw(i) = mmw(i) + metal(i,j,k)/mu_metal
             enddo
          endif
 
          do i = is+1, ie+1
             if ( itmask(i) ) then
-               tgas(i) = max(p2d(i)*utem/tgas(i), temstart)
+               tgas(i) = max(p2d(i)*utem/mmw(i), temstart)
+               mmw(i) = d(i,j,k) / mmw(i)
             end if
          enddo
 

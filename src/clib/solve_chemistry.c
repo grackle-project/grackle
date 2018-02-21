@@ -64,7 +64,7 @@ extern void FORTRAN_NAME(solve_rate_cool_g)(
         int *iradshield, double *avgsighi, double *avgsighei, double *avgsigheii,
         int *iradtrans, int *iradcoupled, int *iradstep, int *irt_honly,
         gr_float *kphHI, gr_float *kphHeI, gr_float *kphHeII, gr_float *kdissH2I,
-        gr_float *photogamma,
+        gr_float *photogamma, gr_float *xH2shield,
 	int *ierr,
 	int *ih2optical, int *iciecool, int *ithreebody, double *ciecoa,
  	int *icmbTfloor, int *iClHeat, double *clEleFra,
@@ -94,7 +94,8 @@ int _solve_chemistry(chemistry_data *my_chemistry,
                      gr_float *e_density, gr_float *metal_density,
                      gr_float *volumetric_heating_rate, gr_float *specific_heating_rate,
                      gr_float *RT_heating_rate, gr_float *RT_HI_ionization_rate, gr_float *RT_HeI_ionization_rate,
-                     gr_float *RT_HeII_ionization_rate, gr_float *RT_H2_dissociation_rate)
+                     gr_float *RT_HeII_ionization_rate, gr_float *RT_H2_dissociation_rate,
+                     gr_float *H2_self_shielding_length)
 {
 
   /* Return if this doesn't concern us. */
@@ -130,10 +131,12 @@ int _solve_chemistry(chemistry_data *my_chemistry,
   }
 
   /* Error checking for H2 shielding approximation */
-  if (my_chemistry->H2_self_shielding && grid_rank != 3){
-    fprintf(stderr, "Error in solve_chemistry: H2 self shielding approximation "
-                    "is turned on, yet is only valid for 3D Cartesian grids. "
-                    "grid_rank is currently %i \n.", grid_rank);
+  if (my_chemistry->H2_self_shielding == 1 && grid_rank != 3){
+    fprintf(stderr, "Error in solve_chemistry: H2 self-shielding option 1 "
+                    "will only work for 3D Cartesian grids. Use option 2 "
+                    "to provide an array of shielding lengths with "
+                    "H2_self_shielding_length or option 3 to use the "
+                    "local Jeans length.");
     return FAIL;
   }
 
@@ -194,7 +197,7 @@ int _solve_chemistry(chemistry_data *my_chemistry,
     &my_chemistry->use_radiative_transfer, &my_chemistry->radiative_transfer_coupled_rate_solver,
     &my_chemistry->radiative_transfer_intermediate_step, &my_chemistry->radiative_transfer_hydrogen_only,
     RT_HI_ionization_rate, RT_HeI_ionization_rate, RT_HeII_ionization_rate,
-    RT_H2_dissociation_rate, RT_heating_rate,
+    RT_H2_dissociation_rate, RT_heating_rate, H2_self_shielding_length,
     &ierr,
     &my_chemistry->h2_optical_depth_approximation, &my_chemistry->cie_cooling,
     &my_chemistry->three_body_rate, my_rates->cieco,
@@ -254,7 +257,8 @@ int solve_chemistry(code_units *my_units,
                        my_fields->specific_heating_rate,
                        my_fields->RT_heating_rate, my_fields->RT_HI_ionization_rate,
                        my_fields->RT_HeI_ionization_rate, my_fields->RT_HeII_ionization_rate,
-                       my_fields->RT_H2_dissociation_rate) == FAIL) {
+                       my_fields->RT_H2_dissociation_rate,
+                       my_fields->H2_self_shielding_length) == FAIL) {
     fprintf(stderr, "Error in _solve_chemistry.\n");
     return FAIL;
   }

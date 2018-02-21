@@ -89,7 +89,8 @@ cdef extern from "grackle.h":
                 gr_float *RT_HI_ionization_rate,
                 gr_float *RT_HeI_ionization_rate,
                 gr_float *RT_HeII_ionization_rate,
-                gr_float *RT_H2_dissociation_rate)
+                gr_float *RT_H2_dissociation_rate,
+                gr_float *H2_self_shielding_length)
 
     int c_calculate_cooling_time "_calculate_cooling_time"(
                 c_chemistry_data *my_chemistry,
