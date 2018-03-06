@@ -260,12 +260,14 @@ For all on/off integer flags, 0 is off and 1 is on.
    their respective cooling data tables. Default: 0
 
    Care is advised in using any of these methods. The default behavior is to
-   include no self-shielding, but this is not necessarily a correct assumption
+   apply no self-shielding, but this is not necessarily the proper assumption,
    depending on the use case. If the user desires to turn on self-shielding,
    we strongly advise using option 3. None of these options are completely
-   correct in practice, but option 3 produces the most reasonable results for
-   the redshift evolution of the neutral fraction as a function of density,
-   as based on test simulations. Each option is described below.
+   correct in practice, but option 3 has produced the most reasonable results
+   in test simulations. Repeating the analysis of Rahmati et. al. 2013 to
+   directly parameterize HeI and HeII self-shielding behavior would be a valuable
+   avenue of future research in developing a more complete self-shielding model.
+   Each self-shielding option is described below.
 
      - 0: No self shielding. Elements are optically thin to the UV background.
      - 1: Approximate self-shielding in HI only. HeI and HeII are left 
