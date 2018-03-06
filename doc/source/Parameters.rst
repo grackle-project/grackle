@@ -252,8 +252,15 @@ For all on/off integer flags, 0 is off and 1 is on.
    These equations involve using the spectrum averaged photoabsorption cross
    for the given species (HI or HeI). These redshift dependent values are
    pre-computed for the HM2012 and FG2011 UV backgrounds and included in
-   their respective cooling data tables. Care is advised in using any of
-   these methods.  Default: 0.
+   their respective cooling data tables. Default: 0
+
+   Care is advised in using any of these methods. The default behavior is to
+   include no self-shielding, but this is not necessarily a correct assumption
+   depending on the use case. If the user desires to turn on self-shielding,
+   we strongly advise using option 3. None of these options are completely
+   correct in practice, but option 3 produces the most reasonable results for
+   the redshift evolution of the neutral fraction as a function of density,
+   as based on test simulations. Each option is described below.
 
      - 0: No self shielding. Elements are optically thin to the UV background.
      - 1: Approximate self-shielding in HI only. HeI and HeII are left 
