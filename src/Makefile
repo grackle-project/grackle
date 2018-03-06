@@ -1,7 +1,7 @@
 build:
 	$(MAKE) -C clib
 build-python:
-	cd python && python setup.py build_ext -i
+	$(MAKE) -C python build
 clean:
 	$(MAKE) -C clib  clean
 	$(MAKE) -C python clean

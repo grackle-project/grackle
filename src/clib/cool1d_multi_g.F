@@ -26,7 +26,7 @@
      &                ceHI, ceHeI, ceHeII, ciHI, ciHeI, ciHeIS, ciHeII,
      &                reHII, reHeII1, reHeII2, reHeIII, brem,
      &                indixe, t1, t2, logtem, tdef, edot,
-     &                tgas, tgasold, p2d, tdust, metallicity, rhoH,
+     &                tgas, tgasold, mmw, p2d, tdust, metallicity, rhoH,
      &                iradshield, avgsighi, avgsighei,
      &                avgsigheii,
      &                k24, k26, iradtrans, photogamma,
@@ -80,8 +80,8 @@
      &        HeI(in,jn,kn), HeII(in,jn,kn), HeIII(in,jn,kn),
      &        HM(in,jn,kn),  H2I(in,jn,kn), H2II(in,jn,kn),
      &        DI(in,jn,kn),  DII(in,jn,kn), HDI(in,jn,kn),
-     &        metal(in,jn,kn), Vheat(in,jn,kn), Mheat(in,jn,kn)
-      real*8  photogamma(in,jn,kn)
+     &        metal(in,jn,kn), Vheat(in,jn,kn), Mheat(in,jn,kn),
+     &        photogamma(in,jn,kn)
       real*8  hyd01ka(nratec), h2k01a(nratec), vibha(nratec), 
      &        rotha(nratec), rotla(nratec), gpldla(nratec),
      &        gphdla(nratec), hdltea(nratec), hdlowa(nratec),
@@ -135,10 +135,8 @@
  
       integer*8 indixe(in)
       real*8 t1(in), t2(in), logtem(in), tdef(in), p2d(in),
-     &       tgas(in), tgasold(in), tdust(in), rhoH(in), nh(in),
-     &       metallicity(in), edot(in)
-
-      real*8  mmw(in)
+     &       tgas(in), tgasold(in), mmw(in), tdust(in), rhoH(in),
+     &       nh(in), metallicity(in), edot(in)
 
 !  Cooling/heating slice locals
 
@@ -226,7 +224,7 @@
 
          do i = is+1, ie+1
             if ( itmask(i) ) then
-               tgas(i) = 
+               mmw(i) =
      &              (HeI(i,j,k) + HeII(i,j,k) + HeIII(i,j,k))/4._DKIND +
      &              HI(i,j,k) + HII(i,j,k) + de(i,j,k)
                rhoH(i) = HI(i,j,k) + HII(i,j,k)
@@ -238,7 +236,7 @@
          if (ispecies .gt. 1) then
             do i = is+1, ie+1
                if ( itmask(i) ) then
-                  tgas(i) = tgas(i) +
+                  mmw(i) = mmw(i) +
      &                 HM(i,j,k) + (H2I(i,j,k) + H2II(i,j,k))/2._DKIND
                   rhoH(i) = rhoH(i) + H2I(i,j,k) + H2II(i,j,k)
                end if
@@ -249,13 +247,14 @@
 
          if (imetal .eq. 1) then
             do i = is+1, ie+1
-               tgas(i) = tgas(i) + metal(i,j,k)/mu_metal
+               mmw(i) = mmw(i) + metal(i,j,k)/mu_metal
             enddo
          endif
 
          do i = is+1, ie+1
             if ( itmask(i) ) then
-               tgas(i) = max(p2d(i)*utem/tgas(i), temstart)
+               tgas(i) = max(p2d(i)*utem/mmw(i), temstart)
+               mmw(i) = d(i,j,k) / mmw(i)
             end if
          enddo
 
@@ -736,7 +735,7 @@ c  new (correct) way: (april 4, 2007)
 
              edot(i) = edot(i) + real(ipiht,DKIND)*(
      &              piHI  *HI  (i,j,k)* fSShHI
-     &            + piHeI * HeI(i,j,k)*0.25_DKIND*
+     &            + piHeI * HeI(i,j,k)*0.25_DKIND
      &            + piHeII*HeII(i,j,k)*0.25_DKIND
      &             )/dom
            endif
@@ -963,9 +962,7 @@ c              endif
 
       do i = is+1, ie+1
          if ( itmask(i) ) then
-            edot(i) = edot(i) + (
-     &           Vheat(i,j,k) * d(i,j,k) / coolunit
-     &           ) / dom
+            edot(i) = edot(i) + Vheat(i,j,k) / coolunit / dom**2
          end if
       enddo
 
@@ -975,8 +972,8 @@ c              endif
 
       do i = is+1, ie+1
          if ( itmask(i) ) then
-            edot(i) = edot(i) + (
-     &           Mheat(i,j,k) * d(i,j,k)**2 / coolunit)
+            edot(i) = edot(i) + Mheat(i,j,k) * d(i,j,k) * mh
+     &          / coolunit / dom
          end if
       enddo
 

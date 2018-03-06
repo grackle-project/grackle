@@ -31,7 +31,7 @@
      &                avgsighi, avgsighei, avgsigheii,
      &                iradtrans, iradcoupled, iradstep,
      &                irt_honly, kphHI, kphHeI, kphHeII, kdissH2I,
-     &                photogamma,
+     &                photogamma, xH2shield,
      &                ierr,
      &                ih2optical, iciecool, ithreebody, ciecoa, 
      &                icmbTfloor, iClHeat, clEleFra,
@@ -173,6 +173,10 @@
       R_PREC  kphHI(in,jn,kn), kphHeI(in,jn,kn), kphHeII(in,jn,kn),
      &        kdissH2I(in,jn,kn), photogamma(in,jn,kn)
 
+! H2 self-shielding length-scale field
+
+      R_PREC  xH2shield(in,jn,kn)
+
 !  Cooling tables (coolings rates as a function of temperature)
 
       real*8  hyd01ka(nratec), h2k01a(nratec), vibha(nratec), 
@@ -235,8 +239,8 @@
       parameter (tolerance = 1.0e-10_RKIND)
 #endif
 
-      real*8 mh
-      parameter (mh = mass_h)
+      real*8 mh, pi
+      parameter (mh = mass_h, pi = pi_val)
 
 !  Locals
 
@@ -245,14 +249,15 @@
       real*8 ttmin, dom, energy, comp1, comp2
       real*8 coolunit, dbase1, tbase1, xbase1, chunit, uvel
       real*8 heq1, heq2, eqk221, eqk222, eqk131, eqk132,
-     &       eqt1, eqt2, eqtdef, dheq, heq, dlogtem, dx_cgs
+     &       eqt1, eqt2, eqtdef, dheq, heq, dlogtem, dx_cgs,
+     &       c_ljeans
 
 !  row temporaries
 
       integer*8 indixe(in)
       real*8 t1(in), t2(in), logtem(in), tdef(in),
      &       dtit(in), ttot(in), p2d(in), tgas(in), tgasold(in),
-     &       tdust(in), metallicity(in), rhoH(in), olddtit
+     &       tdust(in), metallicity(in), rhoH(in), mmw(in), olddtit
 
 !  Rate equation row temporaries
 
@@ -302,11 +307,9 @@
 c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 formed
       chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 formed
 
-      if (iH2shield .eq. 1) then
-          dx_cgs = dx * xbase1
-      else
-          dx_cgs = 0._DKIND
-      endif
+      dx_cgs = dx * xbase1
+      c_ljeans = sqrt((gamma * pi * kboltz) /
+     &     (GravConst * mh * dbase1))
 
       dlogtem = (log(temend) - log(temstart))/real(nratec-1, DKIND)
 
@@ -343,7 +346,7 @@ c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 fo
 !$omp&   indixe,
 !$omp&   t1, t2, logtem, tdef,
 !$omp&   dtit, ttot, p2d, tgas, tgasold,
-!$omp&   tdust, metallicity, rhoH, olddtit,
+!$omp&   tdust, metallicity, rhoH, mmw, olddtit,
 !$omp&   HIp, HIIp, HeIp, HeIIp, HeIIIp,
 !$omp&   HMp, H2Ip, H2IIp,
 !$omp&   dep, dedot,HIdot, dedot_prev,
@@ -445,7 +448,7 @@ c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 fo
      &                ceHI, ceHeI, ceHeII, ciHI, ciHeI, ciHeIS, ciHeII,
      &                reHII, reHeII1, reHeII2, reHeIII, brem,
      &                indixe, t1, t2, logtem, tdef, edot,
-     &                tgas, tgasold, p2d, tdust, metallicity, rhoH, 
+     &                tgas, tgasold, mmw, p2d, tdust, metallicity, rhoH,
      &                iradshield, avgsighi, avgsighei, avgsigheii,
      &                k24, k26,
      &                iradtrans, photogamma,
@@ -468,8 +471,8 @@ c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 fo
             call lookup_cool_rates1d_g(temstart, temend, nratec, j, k,
      &               is, ie, ithreebody,
      &               in, jn, kn, ispecies, idust, iH2shield, iradshield,
-     &               tgas, d, HI, HII, HeI, HeII, HeIII, H2I, tdust,
-     &               metallicity,
+     &               tgas, mmw, d, HI, HII, HeI, HeII, HeIII, H2I,
+     &               tdust, metallicity,
      &               k1a, k2a, k3a, k4a, k5a, k6a, k7a, k8a, k9a, k10a,
      &               k11a, k12a, k13a, k13dda, k14a, k15a, k16a,
      &               k17a, k18a, k19a, k22a,
@@ -484,8 +487,8 @@ c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 fo
      &               k58, k13dd, k24shield, k25shield, k26shield,
      &               k31shield, h2dust, ncrn, ncrd1, ncrd2, 
      &               t1, t2, tdef, logtem, indixe, 
-     &               dom, coolunit, tbase1, xbase1, dx_cgs, 
-     &               iradtrans, kdissH2I, itmask)
+     &               dom, coolunit, tbase1, xbase1, dx_cgs, c_ljeans,
+     &               iradtrans, kdissH2I, xH2shield, itmask)
 
 !           Compute dedot and HIdot, the rates of change of de and HI
 !             (should add itmask to this call)
@@ -756,7 +759,7 @@ c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 fo
             do i = is+1, ie+1
                ttot(i) = min(ttot(i) + dtit(i), dt)
                if (abs(dt-ttot(i)) .lt.
-     &              0.001_DKIND*dt) itmask(i) = .false.
+     &              tolerance*dt) itmask(i) = .false.
                if (ttot(i).lt.ttmin) ttmin = ttot(i)
             enddo
 
@@ -1004,8 +1007,8 @@ c -------------------------------------------------------------------
       subroutine lookup_cool_rates1d_g(temstart, temend, nratec, j, k,
      &                is, ie, ithreebody, in, jn, kn,
      &                ispecies, idust, iH2shield, iradshield,
-     &                tgas1d, d, HI, HII, HeI, HeII, HeIII, H2I, tdust,
-     &                metallicity,
+     &                tgas1d, mmw, d, HI, HII, HeI, HeII, HeIII, H2I,
+     &                tdust, metallicity,
      &                k1a, k2a, k3a, k4a, k5a, k6a, k7a, k8a, k9a, k10a,
      &                k11a, k12a, k13a, k13dda, k14a, k15a, k16a,
      &                k17a, k18a, k19a, k22a,
@@ -1021,8 +1024,8 @@ c -------------------------------------------------------------------
      &                k31shield,
      &                h2dust, ncrn, ncrd1, ncrd2,
      &                t1, t2, tdef, logtem, indixe, 
-     &                dom, coolunit, tbase1, xbase1, dx_cgs,
-     &                iradtrans, kdissH2I, itmask)
+     &                dom, coolunit, tbase1, xbase1, dx_cgs, c_ljeans,
+     &                iradtrans, kdissH2I, xH2shield, itmask)
 ! -------------------------------------------------------------------
 
       implicit NONE
@@ -1033,9 +1036,9 @@ c -------------------------------------------------------------------
       integer is, ie, nratec,
      &        in, jn, kn, ispecies, ithreebody, j, k,
      &        idust, ndratec, iH2shield, iradshield, iradtrans
-      real*8 temstart, temend, tgas1d(in), dom,
+      real*8 temstart, temend, tgas1d(in), mmw(in), dom,
      &       dtemstart, dtemend
-      real*8 coolunit, tbase1, xbase1, dx_cgs
+      real*8 coolunit, tbase1, xbase1, dx_cgs, c_ljeans
       logical itmask(in)
 
 !     Chemistry rates as a function of temperature
@@ -1060,7 +1063,12 @@ c -------------------------------------------------------------------
      &        H2I(in,jn,kn)
 
 !     Radiation fields
+
       R_PREC kdissH2I(in,jn,kn)
+
+!     H2 self-shielding length-scale field
+
+      R_PREC  xH2shield(in,jn,kn)
 
 !     Returned rate values
 
@@ -1098,7 +1106,7 @@ c -------------------------------------------------------------------
       integer i, n1
       real*8 factor, x, logtem0, logtem9, dlogtem, nh,
      &       d_logtem0, d_logtem9, d_dlogtem, divrho, N_H2,
-     &       f_shield, b_doppler, l_sobolev
+     &       f_shield, b_doppler, l_H2shield
       real*8 k13_CID, k13_DT
 
       real*8 nSSh, nratio
@@ -1313,9 +1321,13 @@ c -------------------------------------------------------------------
 
       endif
 
-      if (iH2shield == 1) then
+      if (iH2shield .gt. 0) then
          do i = is+1, ie+1
             if (itmask(i)) then
+
+!              Calculate a Sobolev-like length assuming a 3D grid.
+               if (iH2shield == 1) then
+
                divrhoa(1) = d(i+1, j  , k  ) - d(i,j,k)
                divrhoa(2) = d(i-1, j  , k  ) - d(i,j,k)
                divrhoa(3) = d(i  , j+1, k  ) - d(i,j,k)
@@ -1330,8 +1342,22 @@ c -------------------------------------------------------------------
                   endif
                enddo
 !              (rho / divrho) is the Sobolev-like length in cell widths
-               l_sobolev = min(dx_cgs * d(i,j,k) / abs(divrho), xbase1)
-               N_H2 = dom*H2I(i,j,k) * l_sobolev
+               l_H2shield = min(dx_cgs * d(i,j,k) / abs(divrho), xbase1)
+
+!              User-supplied length-scale field.
+               else if (iH2shield == 2) then
+                  l_H2shield = xH2shield(i,j,k) * xbase1
+
+!              Jeans Length
+               else if (iH2shield == 3) then
+                  l_H2shield = c_ljeans *
+     &                 sqrt(tgas1d(i) / (d(i,j,k) * mmw(i)))
+
+               else
+                  l_H2shield = 0._RKIND
+               endif
+
+               N_H2 = dom*H2I(i,j,k) * l_H2shield
 
                x = 2.0E-15_DKIND * N_H2
                b_doppler = 1E-5_DKIND *

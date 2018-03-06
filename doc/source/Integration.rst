@@ -323,9 +323,9 @@ and pointers to all field arrays.
 
 .. c:var:: gr_float* grid_dx
 
-   This is the grid cell width in c:data:`length_units`. This is currently
+   This is the grid cell width in :c:data:`length_units`. This is currently
    used only in computing approximate H2 self-shielding when H2 is tracked
-   (c:data:`primordial_chemistry` >= 2) and c:data:`H2_self_shielding` is 
+   (:c:data:`primordial_chemistry` >= 2) and :c:data:`H2_self_shielding` is
    set to 1.
 
 .. c:var:: gr_float* density
@@ -464,6 +464,14 @@ and pointers to all field arrays.
    1/:c:data:`time_units`.  Used when
    :c:data:`use_radiative_transfer` is set to 1 and
    :c:data:`primordial_chemistry` is either 2 or 3.
+
+.. c:var:: gr_float *H2_self_shielding_length
+
+   Pointer to a field containing lengths to be used for
+   calculating molecular hydrogen column denisty for
+   H2\ :sub:`2`\ self-shielding.  Used when
+   :c:data:`H2_self_shielding` is set to 2.  Field data
+   should be in :c:data:`length_units`.
 
 It is not necessary to attach a pointer to any field that you do
 not intend to use.

@@ -81,7 +81,7 @@ int main(int argc, char *argv[])
   // grid_start and grid_end are used to ignore ghost zones.
   int field_size = 1;
   my_fields.grid_rank = 3;
-  my_fields.grid_dimension = malloc(field_size * sizeof(int));
+  my_fields.grid_dimension = malloc(my_fields.grid_rank * sizeof(int));
   my_fields.grid_start = malloc(field_size * sizeof(int));
   my_fields.grid_end = malloc(field_size * sizeof(int));
   my_fields.grid_dx = 0.0; // used only for H2 self-shielding approximation

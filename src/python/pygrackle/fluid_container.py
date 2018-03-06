@@ -28,6 +28,7 @@ _nd_fields   = ["energy",
                 "x-velocity", "y-velocity", "z-velocity",
                 "temperature", "pressure",
                 "gamma", "cooling_time"]
+
 _fluid_names = {}
 _fluid_names[0] = _base_fluids
 _fluid_names[1] = _fluid_names[0] + \
@@ -41,6 +42,15 @@ _rad_trans_names = ['RT_heating_rate', 'RT_HI_ionization_rate',
                     'RT_HeI_ionization_rate', 'RT_HeII_ionization_rate',
                     'RT_H2_dissociation_rate']
 
+_extra_fields = {}
+_extra_fields[2] = ["H2_self_shielding_length"]
+_extra_fields[3] = _extra_fields[2] + []
+
+try:
+    xrange
+except NameError:
+    xrange = range
+
 class FluidContainer(dict):
     def __init__(self, chemistry_data, n_vals, dtype="float64",
                  itype="int64"):
@@ -49,11 +59,16 @@ class FluidContainer(dict):
         self.chemistry_data = chemistry_data
         self.n_vals = n_vals
         for fluid in _fluid_names[self.chemistry_data.primordial_chemistry] + \
-            _nd_fields:
+        _extra_fields.get(self.chemistry_data.primordial_chemistry, []) + \
+        _nd_fields:
             self._setup_fluid(fluid)
         if self.chemistry_data.use_radiative_transfer:
             for fluid in _rad_trans_names:
                 self._setup_fluid(fluid)
+
+        for htype in ["specific", "volumetric"]:
+            if getattr(self.chemistry_data, "use_%s_heating_rate" % htype, 0):
+                self._setup_fluid("%s_heating_rate" % htype)
 
     def _setup_fluid(self, fluid_name):
         self[fluid_name] = np.zeros(self.n_vals, self.dtype)
@@ -182,8 +197,8 @@ def grid_to_grackle(chemistry_data, grid, update = True):
     for f1, f2, conv in _needed_fields(fc):
         if f2 not in fields:
             raise FieldNotFound(f2)
-    for j in xrange(grid.ActiveDimensions[1]):
-        for k in xrange(grid.ActiveDimensions[2]):
+    for j in range(grid.ActiveDimensions[1]):
+        for k in range(grid.ActiveDimensions[2]):
             for f1, f2, conv in _needed_fields(fc):
                 fc[f1][:] = grid[f2][:,j,k] / conv
             yield fc

@@ -45,6 +45,9 @@ if __name__ == "__main__":
     my_chemistry.grackle_data_file = os.sep.join(
         [grackle_dir, "input", "CloudyData_UVB=HM2012.h5"])
 
+    my_chemistry.use_specific_heating_rate = 1
+    my_chemistry.use_volumetric_heating_rate = 1
+
     # Set units
     my_chemistry.comoving_coordinates = 0 # proper units
     my_chemistry.a_units = 1.0
@@ -63,6 +66,9 @@ if __name__ == "__main__":
     fc = setup_fluid_container(my_chemistry,
                                temperature=temperature,
                                converge=True)
+
+    fc["specific_heating_rate"][:] = 0.
+    fc["volumetric_heating_rate"][:] = 0.
 
     fc.calculate_temperature()
     fc.calculate_cooling_time()

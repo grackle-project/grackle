@@ -103,6 +103,8 @@ cdef class chemistry_data:
         def __get__(self):
             return self.data.grackle_data_file
         def __set__(self, val):
+            if isinstance(val, str):
+                val = val.encode('utf-8')
             self.data.grackle_data_file = val
 
     property CaseBRecombination:
@@ -302,6 +304,7 @@ def solve_chemistry(fc, my_dt):
     cdef gr_float *RT_HeI_ionization_rate = get_field(fc, "RT_HeI_ionization_rate")
     cdef gr_float *RT_HeII_ionization_rate = get_field(fc, "RT_HeII_ionization_rate")
     cdef gr_float *RT_H2_dissociation_rate = get_field(fc, "RT_H2_dissociation_rate")
+    cdef gr_float *H2_self_shielding_length = get_field(fc, "H2_self_shielding_length")
 
     c_solve_chemistry (
                 &my_chemistry,
@@ -337,7 +340,8 @@ def solve_chemistry(fc, my_dt):
                 RT_HI_ionization_rate,
                 RT_HeI_ionization_rate,
                 RT_HeII_ionization_rate,
-                RT_H2_dissociation_rate)
+                RT_H2_dissociation_rate,
+                H2_self_shielding_length)
     
 def calculate_cooling_time(fc):
     cdef int grid_rank = 1

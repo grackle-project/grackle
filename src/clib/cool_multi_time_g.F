@@ -115,7 +115,7 @@
  
       integer*8 indixe(in)
       real*8 t1(in), t2(in), logtem(in), tdef(in), p2d(in),
-     &       tgas(in), tgasold(in),
+     &       tgas(in), tgasold(in), mmw(in),
      &       tdust(in), metallicity(in), rhoH(in)
       real*8 edot(in)
 
@@ -150,7 +150,7 @@
 !$omp&   indixe,
 !$omp&   t1, t2, logtem, tdef, p2d,
 !$omp&   tgas, tgasold,
-!$omp&   tdust, metallicity, rhoH,
+!$omp&   tdust, metallicity, rhoH, mmw,
 !$omp&   edot,
 !$omp&   ceHI, ceHeI, ceHeII,
 !$omp&   ciHI, ciHeI, ciHeIS, ciHeII,
@@ -257,7 +257,7 @@
      &                ceHI, ceHeI, ceHeII, ciHI, ciHeI, ciHeIS, ciHeII,
      &                reHII, reHeII1, reHeII2, reHeIII, brem,
      &                indixe, t1, t2, logtem, tdef, edot,
-     &                tgas, tgasold, p2d, tdust, metallicity, rhoH,
+     &                tgas, tgasold, mmw, p2d, tdust, metallicity, rhoH,
      &                iradshield, avgsighi, avgsighei, avgsigheii,
      &                k24, k26, iradtrans, photogamma,
      &                ih2optical, iciecool, ciecoa, cieco,

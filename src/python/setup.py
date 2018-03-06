@@ -56,6 +56,6 @@ setup(
         'matplotlib',
     ],
     cmdclass={'build_ext': build_ext},
-    license="BSD",
+    license="BSD 3-clause",
     ext_modules=cython_extensions
 )
