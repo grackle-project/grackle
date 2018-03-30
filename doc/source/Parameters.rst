@@ -262,21 +262,25 @@ For all on/off integer flags, 0 is off and 1 is on.
    Care is advised in using any of these methods. The default behavior is to
    apply no self-shielding, but this is not necessarily the proper assumption,
    depending on the use case. If the user desires to turn on self-shielding,
-   we strongly advise using option 3. None of these options are completely
-   correct in practice, but option 3 has produced the most reasonable results
+   we strongly advise using option 3. All options include HI self-shielding, and
+   vary only in treatment of HeI and HeII. In options 2 and 3, we approximately
+   account for HeI self-shielding by applying the Rahmati et. al. 2013 relations,
+   which are only strictly valid for HI, to HeI under the assumption that it behaves 
+   similarly to HI. None of these options are completely correct in practice,
+   but option 3 has produced the most reasonable results
    in test simulations. Repeating the analysis of Rahmati et. al. 2013 to
    directly parameterize HeI and HeII self-shielding behavior would be a valuable
    avenue of future research in developing a more complete self-shielding model.
    Each self-shielding option is described below.
 
      - 0: No self shielding. Elements are optically thin to the UV background.
-     - 1: Approximate self-shielding in HI only. HeI and HeII are left 
-          as optically thin.
+     - 1: Not Recommended. Approximate self-shielding in HI only. 
+          HeI and HeII are left as optically thin.
      - 2: Approximate self-shielding in both HI and HeI. HeII remains
           optically thin.
      - 3: Approximate self-shielding in both HI and HeI, but ignoring
-          HeII ionization and heating from the UV background entirely (setting
-          HeII rates to zero). 
+          HeII ionization and heating from the UV background entirely
+          (HeII ionization and heating rates are set to zero). 
 
    These methods only work in conjunction with using updated Cloudy
    cooling tables, denoted with "_shielding". These tables properly account
