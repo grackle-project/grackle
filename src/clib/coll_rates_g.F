@@ -189,15 +189,21 @@ c     for temperatures in the range 1 < T < 32000 K. At higher temperatures,
 c     we keep the value of the rate coefficient constant; note that its 
 c     behaviour in this regime is unlikely to be important
 c
-      IF (T .GT. 3.2e4_DKIND) THEN
-        tk9 = 3.2e4_DKIND
+      IF (T .LT. 30.0_DKIND) THEN
+        k9 = 2.10e-20_DKIND * (T/30.0_DKIND)**(-0.15_DKIND) / kunit
       ELSE
-        tk9 = T
-      ENDIF
-      k9 = 1d1**(-18.20_DKIND  - 3.194_DKIND * log10(tk9)
+        IF (T .GT. 3.2e4_DKIND) THEN
+          tk9 = 3.2e4_DKIND
+        ELSE
+          tk9 = T
+        ENDIF
+
+        k9 = 1d1**(-18.20_DKIND  - 3.194_DKIND * log10(tk9)
      &          + 1.786_DKIND  * log10(tk9)**2
      &          - 0.2072_DKIND * log10(tk9)**3 ) / kunit
-      
+
+      ENDIF
+
       k10 = 6.0e-10_DKIND / kunit
       
       IF (T_eV .GT. 0.3_DKIND) THEN
