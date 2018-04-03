@@ -1,3 +1,45 @@
+== Version 3.1 ==
+_Release date - ENTER DATE, 2018_
+
+  * New feature: New metal cooling tables that include atomic
+	self-shielding corrections for both Haardt & Madau and
+	Faucher-Giguere tables.  These tables have “_shielded” appended to
+	the filenames.
+  * New feature: H2 self-shielding of Lyman-Werner radiation using the
+	Wolcott-Green et al. (2011) model. Length scales for H2 column
+	density can be calculated using 1) neighboring grid zones (grid
+	codes only), 2) a user-supplied array of lengths, or 3) the local
+	Jeans length.
+  * Enhancement: pygrackle Python wrapper now compatible with Python 3.
+	Pygrackle works with Python 3.4 and later. Python 2.7 is still
+	supported.
+  * Enhancement: Added low-temperature (T < 30 K) term to (HI + HII ->
+	H2II + p) rate.
+  * Enhancement: Allow UV background parameters, UVbackground_redshift_on,
+	UVbackground_redshift_fullon, UVbackground_redshift_drop, and
+	UVbackground_redshift_on, to be user-settable and make
+	redshift-dependent ramping factor symmetric in redshift.
+  * Enhancement: Single consistent tolerance value used in solver.
+  * Enhancement: Volumetric and specific heating arrays now setable from
+	Python interface.
+  * Enhancement: Automated testing using Bitbucket Pipelines.
+  * Enhancement: New/updated make files for NCSA Blue Waters and Caltech
+	Wheeler.
+  * Bugfix: Fixed scaling and unit conversion issues with volumetric and
+	specific heating rate arrays and added tests.
+  * Bugfix: Fixed scaling issue of metal cooling rates.  Metal cooling
+	rates will change by a factor of (1 / 0.76).
+  * Bugfix: Source code format fixes for radiative transfer fields.
+  * Bugfix: Fixed issue where NaNs occurred in atomic self-shielding when
+	redshift is greater than turn-on redshift for UV background.
+  * Bugfix: Fixed OpenMP compilation errors.
+  * Bugfix: Fixed memory allocation in C example.
+  * Bugfix: Fixed precision issues with radiation transfer field
+	variables.
+  * Bugfix: Fixed bug in answer testing where some tests were not being
+	properly compared to existing answers.
+  * Documentation improvements.
+
 == Version 3.0 ==
 _Release date - Nov 1, 2016_
 
@@ -6,7 +48,7 @@ _Release date - Nov 1, 2016_
   * New feature: Added atomic self-shielding of UV backgrounds.
   * New feature: Added support for providing arrays of volumetric and
 	specific heating rates.
-  * Enhcancement: added Case B recombination cooling rates and updated
+  * Enhancement: added Case B recombination cooling rates and updated
 	Case A rates.
   * Enhancement: updated testing framework to use pytest parametrized
 	tests.
