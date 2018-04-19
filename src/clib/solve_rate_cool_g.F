@@ -1395,12 +1395,12 @@ c -------------------------------------------------------------------
 !               Compute the total Hydrogen number density
                 nratio = (HI(i,j,k) + HII(i,j,k))
                 if (ispecies .gt. 1) then
-                  nratio = nratio + HM(i,j,k) +
-     &                        2.0_DKIND*(H2I(i,j,k) + H2II(i,j,k))
+                  nratio = nratio + HM(i,j,k) + H2I(i,j,k) + H2II(i,j,k)
 
                   if (ispecies .gt. 2) then
-                    nratio = nratio + DI(i,j,k) + DII(i,j,k) +
-     &                          2.0_DKIND*HDI(i,j,k)
+                    nratio = nratio + 
+     &                          0.5_DKIND*(DI(i,j,k) + DII(i,j,k)) +
+     &                          2.0_DKIND*HDI(i,j,k)/3.0_DKIND
                   endif
                 endif
 
@@ -1435,12 +1435,12 @@ c -------------------------------------------------------------------
 !               Compute the total Hydrogen number density
                 nratio = (HI(i,j,k) + HII(i,j,k))
                 if (ispecies .gt. 1) then
-                  nratio = nratio + HM(i,j,k) +
-     &                        2.0_DKIND*(H2I(i,j,k) + H2II(i,j,k))
+                  nratio = nratio + HM(i,j,k) + H2I(i,j,k) + H2II(i,j,k) 
 
                   if (ispecies .gt. 2) then
-                    nratio = nratio + DI(i,j,k) + DII(i,j,k) +
-     &                          2.0_DKIND*HDI(i,j,k)
+                    nratio = nratio + 
+     &                          0.5_DKIND*(DI(i,j,k) + DII(i,j,k)) +
+     &                          2.0_DKIND*HDI(i,j,k)/3.0_DKIND
                   endif
                 endif
 
@@ -1492,12 +1492,12 @@ c -------------------------------------------------------------------
 !               Compute the total Hydrogen number density
                 nratio = (HI(i,j,k) + HII(i,j,k))
                 if (ispecies .gt. 1) then
-                  nratio = nratio + HM(i,j,k) +
-     &                        2.0_DKIND*(H2I(i,j,k) + H2II(i,j,k))
+                  nratio = nratio + HM(i,j,k) + H2I(i,j,k) + H2II(i,j,k) 
 
                   if (ispecies .gt. 2) then
-                    nratio = nratio + DI(i,j,k) + DII(i,j,k) +
-     &                          2.0_DKIND*HDI(i,j,k)
+                    nratio = nratio + 
+     &                          0.5_DKIND*(DI(i,j,k) + DII(i,j,k)) +
+     &                          2.0_DKIND*HDI(i,j,k)/3.0_DKIND
                   endif
                 endif
 
