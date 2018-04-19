@@ -471,7 +471,8 @@ c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 fo
             call lookup_cool_rates1d_g(temstart, temend, nratec, j, k,
      &               is, ie, ithreebody,
      &               in, jn, kn, ispecies, idust, iH2shield, iradshield,
-     &               tgas, mmw, d, HI, HII, HeI, HeII, HeIII, H2I,
+     &               tgas, mmw, d, HI, HII, HeI, HeII, HeIII, 
+     &               HM, H2I, H2II, DI, DII, HDI,
      &               tdust, metallicity,
      &               k1a, k2a, k3a, k4a, k5a, k6a, k7a, k8a, k9a, k10a,
      &               k11a, k12a, k13a, k13dda, k14a, k15a, k16a,
@@ -1007,7 +1008,8 @@ c -------------------------------------------------------------------
       subroutine lookup_cool_rates1d_g(temstart, temend, nratec, j, k,
      &                is, ie, ithreebody, in, jn, kn,
      &                ispecies, idust, iH2shield, iradshield,
-     &                tgas1d, mmw, d, HI, HII, HeI, HeII, HeIII, H2I,
+     &                tgas1d, mmw, d, HI, HII, HeI, HeII, HeIII,
+     &                HM, H2I, H2II, DI, DII, HDI,
      &                tdust, metallicity,
      &                k1a, k2a, k3a, k4a, k5a, k6a, k7a, k8a, k9a, k10a,
      &                k11a, k12a, k13a, k13dda, k14a, k15a, k16a,
@@ -1060,7 +1062,8 @@ c -------------------------------------------------------------------
 
       R_PREC  d(in,jn,kn), HI(in,jn,kn),   HII(in,jn,kn),
      &        HeI(in,jn,kn), HeII(in,jn,kn), HeIII(in,jn,kn),
-     &        H2I(in,jn,kn)
+     &        HM(in,jn,kn), H2I(in,jn,kn), H2II(in,jn,kn),
+     &        DI(in,jn,kn), DII(in,jn,kn), HDI(in,jn,kn)	
 
 !     Radiation fields
 
@@ -1387,7 +1390,21 @@ c -------------------------------------------------------------------
      &           (avgsighi /2.49e-18_DKIND)**(-2._DKIND/3._DKIND) *
      &           (tgas1d(i)/1.0e4_DKIND)**(0.17_DKIND) *
      &           (k24/tbase1/1.0e-12_DKIND)**(2.0_DKIND/3.0_DKIND)
-                nratio = (HI(i,j,k) + HII(i,j,k))*dom/nSSh
+
+
+!               Compute the total Hydrogen number density
+                nratio = (HI(i,j,k) + HII(i,j,k))
+                if (ispecies .gt. 1) then
+                  nratio = nratio + HM(i,j,k) +
+     &                        2.0_DKIND*(H2I(i,j,k) + H2II(i,j,k))
+
+                  if (ispecies .gt. 2) then
+                    nratio = nratio + DI(i,j,k) + DII(i,j,k) +
+     &                          2.0_DKIND*HDI(i,j,k)
+                  endif
+                endif
+
+                nratio = nratio*dom/nSSh
 
                 k24shield(i)=k24shield(i)*(0.98_DKIND*
      &           (1.0_DKIND+nratio**(1.64_DKIND))**(-2.28_DKIND) +
@@ -1414,7 +1431,20 @@ c -------------------------------------------------------------------
      &           (avgsighi/2.49e-18_DKIND)**(-2._DKIND/3._DKIND) *
      &           (tgas1d(i)/1.0e4_DKIND)**(0.17_DKIND) *
      &           (k24/tbase1/1.0e-12_DKIND)**(2.0_DKIND/3.0_DKIND)
-                nratio = (HI(i,j,k) + HII(i,j,k))*dom/nSSh
+
+!               Compute the total Hydrogen number density
+                nratio = (HI(i,j,k) + HII(i,j,k))
+                if (ispecies .gt. 1) then
+                  nratio = nratio + HM(i,j,k) +
+     &                        2.0_DKIND*(H2I(i,j,k) + H2II(i,j,k))
+
+                  if (ispecies .gt. 2) then
+                    nratio = nratio + DI(i,j,k) + DII(i,j,k) +
+     &                          2.0_DKIND*HDI(i,j,k)
+                  endif
+                endif
+
+                nratio = nratio*dom/nSSh
 
                 k24shield(i)=k24shield(i)*(0.98_DKIND*
      &           (1.0_DKIND+nratio**(1.64_DKIND))**(-2.28_DKIND) +
@@ -1458,7 +1488,20 @@ c -------------------------------------------------------------------
      &           (avgsighi/2.49e-18_DKIND)**(-2._DKIND/3._DKIND)*
      &           (tgas1d(i)/1.0e4_DKIND)**(0.17_DKIND) *
      &           (k24/tbase1/1.0e-12_DKIND)**(2.0_DKIND/3.0_DKIND)
-                nratio = (HI(i,j,k) + HII(i,j,k))*dom/nSSh
+
+!               Compute the total Hydrogen number density
+                nratio = (HI(i,j,k) + HII(i,j,k))
+                if (ispecies .gt. 1) then
+                  nratio = nratio + HM(i,j,k) +
+     &                        2.0_DKIND*(H2I(i,j,k) + H2II(i,j,k))
+
+                  if (ispecies .gt. 2) then
+                    nratio = nratio + DI(i,j,k) + DII(i,j,k) +
+     &                          2.0_DKIND*HDI(i,j,k)
+                  endif
+                endif
+
+                nratio = nratio*dom/nSSh
 
                 k24shield(i)=k24shield(i)*(0.98_DKIND*
      &           (1.0_DKIND+nratio**(1.64_DKIND))**(-2.28_DKIND) +
