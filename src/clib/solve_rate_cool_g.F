@@ -266,6 +266,7 @@
      &       dep(in), dedot(in),HIdot(in), dedot_prev(in),
      &       DIp(in), DIIp(in), HDIp(in), HIdot_prev(in),
      &       k24shield(in), k25shield(in), k26shield(in),
+     &       k28shield(in), k29shield(in), k30shield(in),
      &       k31shield(in),
      &       k1 (in), k2 (in), k3 (in), k4 (in), k5 (in),
      &       k6 (in), k7 (in), k8 (in), k9 (in), k10(in),
@@ -483,9 +484,10 @@ c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 fo
      &               avgsighi, avgsighei, avgsigheii, piHI, piHeI,
      &               k1, k2, k3, k4, k5, k6, k7, k8, k9, k10,
      &               k11, k12, k13, k14, k15, k16, k17, k18,
-     &               k19, k22, k24, k25, k26, k31,
+     &               k19, k22, k24, k25, k26, k28, k29, k30, k31,
      &               k50, k51, k52, k53, k54, k55, k56, k57,
      &               k58, k13dd, k24shield, k25shield, k26shield,
+     &               k28shield, k29shield, k30shield,
      &               k31shield, h2dust, ncrn, ncrd1, ncrd2, 
      &               t1, t2, tdef, logtem, indixe, 
      &               dom, coolunit, tbase1, xbase1, dx_cgs, c_ljeans,
@@ -503,7 +505,8 @@ c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 fo
      &                     k24, k25, k26, k27, k28, k29, k30,
      &                     k50, k51, k52, k53, k54, k55, k56, k57, k58, 
      &                     h2dust, ncrn, ncrd1, ncrd2, rhoH, 
-     &                     k24shield, k25shield, k26shield, k31shield,
+     &                     k24shield, k25shield, k26shield, 
+     &                     k28shield, k29shield, k30shield, k31shield,
      &                     iradtrans, irt_honly, 
      &                     kphHI, kphHeI, kphHeII,
      &                     itmask, edot, chunit, dom)
@@ -743,7 +746,8 @@ c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 fo
      &                     k24, k25, k26, k27, k28, k29, k30,
      &                     k50, k51, k52, k53, k54, k55, k56, k57, k58, 
      &                     h2dust, rhoH,
-     &                     k24shield, k25shield, k26shield, k31shield,
+     &                     k24shield, k25shield, k26shield, 
+     &                     k28shield, k29shield, k30shield, k31shield,
      &                     HIp, HIIp, HeIp, HeIIp, HeIIIp, dep,
      &                     HMp, H2Ip, H2IIp, DIp, DIIp, HDIp,
      &                     dedot_prev, HIdot_prev,
@@ -1020,10 +1024,10 @@ c -------------------------------------------------------------------
      &                avgsighi, avgsighei, avgsigheii, piHI, piHeI,
      &                k1, k2, k3, k4, k5, k6, k7, k8, k9, k10,
      &                k11, k12, k13, k14, k15, k16, k17, k18,
-     &                k19, k22, k24, k25, k26, k31,
+     &                k19, k22, k24, k25, k26, k28, k29, k30, k31,
      &                k50, k51, k52, k53, k54, k55, k56, k57,
      &                k58, k13dd, k24shield, k25shield, k26shield,
-     &                k31shield,
+     &                k28shield, k29shield, k30shield, k31shield,
      &                h2dust, ncrn, ncrd1, ncrd2,
      &                t1, t2, tdef, logtem, indixe, 
      &                dom, coolunit, tbase1, xbase1, dx_cgs, c_ljeans,
@@ -1054,7 +1058,7 @@ c -------------------------------------------------------------------
      &       k54a(nratec), k55a(nratec), k56a(nratec), k57a(nratec),
      &       k58a(nratec), k13dda(nratec, 14), h2dusta(nratec, ndratec),
      &       ncrna(nratec), ncrd1a(nratec), ncrd2a(nratec),
-     &       k24, k25, k26, k31,
+     &       k24, k25, k26, k28, k29, k30, k31,
      &       piHI, piHeI,
      &       avgsighi, avgsighei, avgsigheii
 
@@ -1084,6 +1088,7 @@ c -------------------------------------------------------------------
      &       k13dd(in, 14), h2dust(in), 
      &       ncrn(in), ncrd1(in), ncrd2(in),
      &       k24shield(in), k25shield(in), k26shield(in),
+     &       k28shield(in), k29shield(in), k30shield(in),
      &       k31shield(in)
 
 !     1D temporaries (passed in)
@@ -1301,6 +1306,9 @@ c -------------------------------------------------------------------
             k24shield(i) = k24
             k25shield(i) = k25
             k26shield(i) = k26
+            k28shield(i) = k28
+            k29shield(i) = k29
+            k30shield(i) = k30
          endif
       enddo
 
@@ -1381,6 +1389,9 @@ c -------------------------------------------------------------------
 !     Rahmati et. al. 2013 (MNRAS, 430, 2427-2445)
 !     to shield HI, while leaving HeI and HeII optically thin
 !
+!       Attenuate radiation rates for direct H2 ionization (15.4 eV)
+!       using same scaling. (rate k29)
+!
         do i = is+1, ie+1
           if (itmask(i)) then
              if (k24 .lt. tiny8) then
@@ -1411,6 +1422,15 @@ c -------------------------------------------------------------------
      &            0.02_DKIND*(1.0_DKIND+nratio)**(-0.84_DKIND))
              endif
 
+!     Scale H2 direct ionization radiation
+             if (k29 .lt. tiny8) then
+               k29shield(i) = 0._DKIND
+             else
+               k29shield(i) = k29shield(i)*(0.98_DKIND*
+     &           (1.0_DKIND+nratio**(1.64_DKIND))**(-2.28_DKIND) +
+     &           0.02_DKIND*(1.0_DKIND+nratio)**(-0.84_DKIND))
+             endif
+
              k25shield(i) = k25
              k26shield(i) = k26
           endif
@@ -1422,6 +1442,13 @@ c -------------------------------------------------------------------
 !     Rahmati et. al. 2013 (MNRAS, 430, 2427-2445)
 !     approximate self shielding in HeI and HeII
 !
+!       Attenuate radiation rates for direct H2 ionization (15.4 eV)
+!       using same scaling as HI. (rate k29)
+!
+!       Attenuate radiation rates for H2+ dissociation (30 eV)
+!       using same scaling as HeII. (rate k28 and k30)
+!
+
         do i = is+1, ie+1
           if (itmask(i)) then
              if (k24 .lt. tiny8) then
@@ -1451,6 +1478,15 @@ c -------------------------------------------------------------------
      &            0.02_DKIND*(1.0_DKIND+nratio)**(-0.84_DKIND))
              endif
 
+!     Scale H2 direct ionization radiation
+             if (k29 .lt. tiny8) then
+               k29shield(i) = 0._DKIND
+             else
+               k29shield(i) = k29shield(i)*(0.98_DKIND*
+     &           (1.0_DKIND+nratio**(1.64_DKIND))**(-2.28_DKIND) +
+     &           0.02_DKIND*(1.0_DKIND+nratio)**(-0.84_DKIND))
+             endif
+
 !
 !     Apply same equations to HeI (assumes HeI closely follows HI)
 !
@@ -1468,6 +1504,24 @@ c -------------------------------------------------------------------
      &           (1.0_DKIND+nratio**(1.64_DKIND))**(-2.28_DKIND) +
      &            0.02_DKIND*(1.0_DKIND+nratio)**(-0.84_DKIND))
              endif
+
+!     Scale H2+ dissociation radiation
+             if (k28 .lt. tiny8) then
+                 k28shield(i) = 0.0_DKIND
+             else
+                 k28shield(i) = k28shield(i)*(0.98_DKIND*
+     &           (1.0_DKIND+nratio**(1.64_DKIND))**(-2.28_DKIND) +
+     &            0.02_DKIND*(1.0_DKIND+nratio)**(-0.84_DKIND))
+             endif
+
+             if (k30 .lt. tiny8) then                 
+                 k30shield(i) = 0.0_DKIND
+             else
+                 k30shield(i) = k30shield(i)*(0.98_DKIND*
+     &           (1.0_DKIND+nratio**(1.64_DKIND))**(-2.28_DKIND) +
+     &            0.02_DKIND*(1.0_DKIND+nratio)**(-0.84_DKIND))
+             endif
+
 
             k25shield(i) = k25
           endif
@@ -1507,6 +1561,16 @@ c -------------------------------------------------------------------
      &           (1.0_DKIND+nratio**(1.64_DKIND))**(-2.28_DKIND) +
      &            0.02_DKIND*(1.0_DKIND+nratio)**(-0.84_DKIND))
              endif
+
+!     Scale H2 direct ionization radiation
+             if (k29 .lt. tiny8) then
+               k29shield(i) = 0._DKIND
+             else
+               k29shield(i) = k29shield(i)*(0.98_DKIND*
+     &           (1.0_DKIND+nratio**(1.64_DKIND))**(-2.28_DKIND) +
+     &           0.02_DKIND*(1.0_DKIND+nratio)**(-0.84_DKIND))
+             endif
+
 !
 !     Apply same equations to HeI (assumes HeI closely follows HI)
 !
@@ -1525,7 +1589,24 @@ c -------------------------------------------------------------------
      &            0.02_DKIND*(1.0_DKIND+nratio)**(-0.84_DKIND))
              endif
 
-            k25shield(i) = 0.0_DKIND
+!     Scale H2+ dissociation radiation
+             if (k28 .lt. tiny8) then                 
+                 k28shield(i) = 0.0_DKIND
+             else
+                 k28shield(i) = k28shield(i)*(0.98_DKIND*
+     &           (1.0_DKIND+nratio**(1.64_DKIND))**(-2.28_DKIND) +
+     &            0.02_DKIND*(1.0_DKIND+nratio)**(-0.84_DKIND))
+             endif
+
+             if (k30 .lt. tiny8) then
+                 k30shield(i) = 0.0_DKIND
+             else
+                 k30shield(i) = k30shield(i)*(0.98_DKIND*
+     &           (1.0_DKIND+nratio**(1.64_DKIND))**(-2.28_DKIND) +
+     &            0.02_DKIND*(1.0_DKIND+nratio)**(-0.84_DKIND))
+             endif
+
+             k25shield(i) = 0.0_DKIND
 
           endif
         enddo
@@ -1606,7 +1687,8 @@ c
      &                     k24, k25, k26, k27, k28, k29, k30,
      &                     k50, k51, k52, k53, k54, k55, k56, k57, k58, 
      &                     h2dust, ncrn, ncrd1, ncrd2, rhoH, 
-     &                     k24shield, k25shield, k26shield, k31shield,
+     &                     k24shield, k25shield, k26shield, 
+     &                     k28shield, k29shield, k30shield, k31shield,
      &                     iradtrans, irt_honly, 
      &                     kphHI, kphHeI, kphHeII,
      &                     itmask, edot, chunit, dom)
@@ -1646,6 +1728,7 @@ c
      &       k55(in), k56(in), k57(in), k58(in), h2dust(in), 
      &       ncrn(in), ncrd1(in), ncrd2(in), rhoH(in), 
      &       k24shield(in), k25shield(in), k26shield(in),
+     &       k28shield(in), k29shield(in), k30shield(in),
      &       k31shield(in),
      &       k24, k25, k26, k27, k28, k29, k30
 
@@ -1820,7 +1903,8 @@ c
      &                     k24, k25, k26, k27, k28, k29, k30,
      &                     k50, k51, k52, k53, k54, k55, k56, k57, k58,
      &                     h2dust, rhoH,
-     &                     k24shield, k25shield, k26shield, k31shield,
+     &                     k24shield, k25shield, k26shield, 
+     &                     k28shield, k29shield, k30shield, k31shield,
      &                     HIp, HIIp, HeIp, HeIIp, HeIIIp, dep,
      &                     HMp, H2Ip, H2IIp, DIp, DIIp, HDIp,
      &                     dedot_prev, HIdot_prev,
@@ -1861,6 +1945,7 @@ c -------------------------------------------------------------------
      &       k55(in), k56(in), k57(in), k58(in), 
      &       h2dust(in), rhoH(in),
      &       k24shield(in), k25shield(in), k26shield(in),
+     &       k28shield(in), k29shield(in), k30shield(in),
      &       k31shield(in),
      &       k24, k25, k26, k27, k28, k29, k30
 
@@ -2119,7 +2204,7 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
      &            +       k22(i) * HI(i,j,k) * (HI(i,j,k))**2._DKIND)
             acoef = ( k13(i)*HI(i,j,k) + k11(i)*HII(i,j,k)
      &              + k12(i)*de(i,j,k) )
-     &              + k29 + k31shield(i)
+     &              + k29shield(i) + k31shield(i)
 
             if (idust .gt. 0) then
                scoef = scoef + 2._DKIND * h2dust(i) *
@@ -2145,11 +2230,11 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
             H2IIp(i) = 2._DKIND*( k9 (i)*HIp(i)*HIIp(i)
      &                    +   k11(i)*H2Ip(i)/2._DKIND*HIIp(i)
      &                    +   k17(i)*HMp(i)*HIIp(i)
-     &                    + k29*H2Ip(i)
+     &                    + k29shield(i)*H2Ip(i)
      &                    )
      &                 /  ( k10(i)*HIp(i) + k18(i)*dep(i)
      &                    + k19(i)*HMp(i)
-     &                    + (k28+k30)
+     &                    + (k28shield(i)+k30shield(i))
      &                    )
 
          endif                  ! itmask
