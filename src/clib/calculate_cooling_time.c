@@ -193,12 +193,14 @@ int _calculate_cooling_time(chemistry_data *my_chemistry,
   return SUCCESS;
 }
 
-int calculate_cooling_time(code_units *my_units,
-                           grackle_field_data *my_fields,
-                           gr_float *cooling_time)
+int __calculate_cooling_time(chemistry_data *my_chemistry,
+                             chemistry_data_storage *my_rates,
+                             code_units *my_units,
+                             grackle_field_data *my_fields,
+                             gr_float *cooling_time)
 {
 
-  if (_calculate_cooling_time(grackle_data, &grackle_rates, my_units,
+  if (_calculate_cooling_time(my_chemistry, my_rates, my_units,
                               my_fields->grid_rank, my_fields->grid_dimension,
                               my_fields->grid_start, my_fields->grid_end,
                               my_fields->density, my_fields->internal_energy,
@@ -216,6 +218,18 @@ int calculate_cooling_time(code_units *my_units,
                               my_fields->volumetric_heating_rate,
                               my_fields->specific_heating_rate) == FAIL) {
     fprintf(stderr, "Error in _calculate_cooling_time.\n");
+    return FAIL;
+  }
+  return SUCCESS;
+}
+
+int calculate_cooling_time(code_units *my_units,
+                           grackle_field_data *my_fields,
+                           gr_float *cooling_time)
+{
+  if (__calculate_cooling_time(grackle_data, &grackle_rates, my_units,
+                               my_fields, cooling_time) == FAIL) {
+    fprintf(stderr, "Error in __calculate_cooling_time.\n");
     return FAIL;
   }
   return SUCCESS;

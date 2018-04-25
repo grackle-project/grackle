@@ -36,6 +36,12 @@ int solve_chemistry(code_units *my_units,
                     grackle_field_data *my_fields,
                     double dt_value);
 
+int __solve_chemistry(chemistry_data *my_chemistry,
+                      chemistry_data_storage *my_rates,
+                      code_units *my_units,
+                      grackle_field_data *my_fields,
+                      double dt_value);
+
 int _solve_chemistry(chemistry_data *my_chemistry,
                      chemistry_data_storage *my_rates,
                      code_units *my_units, double dt_value, double dx_value,
@@ -57,6 +63,12 @@ int calculate_cooling_time(code_units *my_units,
                            grackle_field_data *my_fields,
                            gr_float *cooling_time);
 
+int __calculate_cooling_time(chemistry_data *my_chemistry,
+                             chemistry_data_storage *my_rates,
+                             code_units *my_units,
+                             grackle_field_data *my_fields,
+                             gr_float *cooling_time);
+
 int _calculate_cooling_time(chemistry_data *my_chemistry,
                             chemistry_data_storage *my_rates,
                             code_units *my_units,
@@ -76,6 +88,12 @@ int calculate_gamma(code_units *my_units,
                     grackle_field_data *my_fields,
                     gr_float *my_gamma);
 
+int __calculate_gamma(chemistry_data *my_chemistry,
+                      chemistry_data_storage *my_rates,
+                      code_units *my_units,
+                      grackle_field_data *my_fields,
+                      gr_float *my_gamma);
+
 int _calculate_gamma(chemistry_data *my_chemistry,
                      chemistry_data_storage *my_rates,
                      code_units *my_units,
@@ -93,6 +111,12 @@ int calculate_pressure(code_units *my_units,
                        grackle_field_data *my_fields,
                        gr_float *pressure);
 
+int __calculate_pressure(chemistry_data *my_chemistry,
+                         chemistry_data_storage *my_rates,
+                         code_units *my_units,
+                         grackle_field_data *my_fields,
+                         gr_float *pressure);
+
 int _calculate_pressure(chemistry_data *my_chemistry,
                         chemistry_data_storage *my_rates,
                         code_units *my_units,
@@ -109,6 +133,12 @@ int _calculate_pressure(chemistry_data *my_chemistry,
 int calculate_temperature(code_units *my_units,
                           grackle_field_data *my_fields,
                           gr_float *temperature);
+
+int __calculate_temperature(chemistry_data *my_chemistry,
+                            chemistry_data_storage *my_rates,
+                            code_units *my_units,
+                            grackle_field_data *my_fields,
+                            gr_float *temperature);
 
 int _calculate_temperature(chemistry_data *my_chemistry,
                            chemistry_data_storage *my_rates,

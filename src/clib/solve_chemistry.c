@@ -234,11 +234,13 @@ int _solve_chemistry(chemistry_data *my_chemistry,
 
 }
 
-int solve_chemistry(code_units *my_units,
-                    grackle_field_data *my_fields,
-                    double dt_value)
+int __solve_chemistry(chemistry_data *my_chemistry,
+                      chemistry_data_storage *my_rates,
+                      code_units *my_units,
+                      grackle_field_data *my_fields,
+                      double dt_value)
 {
-  if (_solve_chemistry(grackle_data, &grackle_rates,
+  if (_solve_chemistry(my_chemistry, my_rates,
                        my_units, dt_value, my_fields->grid_dx,
                        my_fields->grid_rank,   my_fields->grid_dimension,
                        my_fields->grid_start,  my_fields->grid_end,
@@ -265,3 +267,14 @@ int solve_chemistry(code_units *my_units,
   return SUCCESS;
 }
 
+int solve_chemistry(code_units *my_units,
+                    grackle_field_data *my_fields,
+                    double dt_value)
+{
+  if (__solve_chemistry(grackle_data, &grackle_rates,
+                        my_units, my_fields, dt_value) == FAIL) {
+    fprintf(stderr, "Error in __solve_chemistry.\n");
+    return FAIL;
+  }
+  return SUCCESS;
+}
