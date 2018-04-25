@@ -287,6 +287,13 @@ For all on/off integer flags, 0 is off and 1 is on.
    for the decrease in metal line cooling rates in self-shielded regions,
    which can be significant. 
 
+   For consistency, when ``primordial_chemistry > 2``, the self-shielding
+   attenutation factors calculated for HI and HeI are applied to the 
+   H\ :sub:`2`\ ionization (15.4 eV) and H\ :sub:`2`\ :sup:`+` dissociation
+   rates (30 eV) respectively. These reaction rates are distinct from the
+   H\ :sub:`2`\ self-shielding computed using the ``H2_self_shielding``
+   flag.
+
 .. c:var:: int omp_nthreads
 
    Sets the number of OpenMP threads.  If not set, this will be set to
