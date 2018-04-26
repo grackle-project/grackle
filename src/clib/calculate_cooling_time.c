@@ -193,11 +193,11 @@ int _calculate_cooling_time(chemistry_data *my_chemistry,
   return SUCCESS;
 }
 
-int __calculate_cooling_time(chemistry_data *my_chemistry,
-                             chemistry_data_storage *my_rates,
-                             code_units *my_units,
-                             grackle_field_data *my_fields,
-                             gr_float *cooling_time)
+int local_calculate_cooling_time(chemistry_data *my_chemistry,
+                                 chemistry_data_storage *my_rates,
+                                 code_units *my_units,
+                                 grackle_field_data *my_fields,
+                                 gr_float *cooling_time)
 {
 
   if (_calculate_cooling_time(my_chemistry, my_rates, my_units,
@@ -227,9 +227,9 @@ int calculate_cooling_time(code_units *my_units,
                            grackle_field_data *my_fields,
                            gr_float *cooling_time)
 {
-  if (__calculate_cooling_time(grackle_data, &grackle_rates, my_units,
-                               my_fields, cooling_time) == FAIL) {
-    fprintf(stderr, "Error in __calculate_cooling_time.\n");
+  if (local_calculate_cooling_time(grackle_data, &grackle_rates, my_units,
+                                   my_fields, cooling_time) == FAIL) {
+    fprintf(stderr, "Error in local_calculate_cooling_time.\n");
     return FAIL;
   }
   return SUCCESS;
