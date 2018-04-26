@@ -553,6 +553,13 @@ For the chemistry solving routine, a timestep must also be given.  For the
 four field calculator routines, the array to be filled with the field values
 must be created and passed as an argument as well.
 
+The examples below make use of Grackle's :ref:`primary_functions`, where
+the parameters and rate data are stored in instances of the
+:c:data:`chemistry_data` and :c:data:`chemistry_data_storage` structs
+declared in **grackle.h**.  Alternatively, a set of :ref:`local_functions`
+require these structs to be provided as arguments, allowing for explicitly
+thread-safe code.
+
 Solve the Chemistry and Cooling
 +++++++++++++++++++++++++++++++
 
