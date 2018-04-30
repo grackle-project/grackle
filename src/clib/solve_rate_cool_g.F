@@ -1394,45 +1394,44 @@ c -------------------------------------------------------------------
 !
         do i = is+1, ie+1
           if (itmask(i)) then
-             if (k24 .lt. tiny8) then
-                k24shield(i) = 0._DKIND
-             else
-                nSSh = 6.73e-3_DKIND *
+            nSSh = 6.73e-3_DKIND *
      &           (avgsighi /2.49e-18_DKIND)**(-2._DKIND/3._DKIND) *
      &           (tgas1d(i)/1.0e4_DKIND)**(0.17_DKIND) *
      &           (k24/tbase1/1.0e-12_DKIND)**(2.0_DKIND/3.0_DKIND)
 
+!           Compute the total Hydrogen number density
+            nratio = (HI(i,j,k) + HII(i,j,k))
+            if (ispecies .gt. 1) then
+              nratio = nratio + HM(i,j,k) + H2I(i,j,k) + H2II(i,j,k)
 
-!               Compute the total Hydrogen number density
-                nratio = (HI(i,j,k) + HII(i,j,k))
-                if (ispecies .gt. 1) then
-                  nratio = nratio + HM(i,j,k) + H2I(i,j,k) + H2II(i,j,k)
+              if (ispecies .gt. 2) then
+                nratio = nratio +
+     &                      0.5_DKIND*(DI(i,j,k) + DII(i,j,k)) +
+     &                      2.0_DKIND*HDI(i,j,k)/3.0_DKIND
+              endif
+            endif
 
-                  if (ispecies .gt. 2) then
-                    nratio = nratio + 
-     &                          0.5_DKIND*(DI(i,j,k) + DII(i,j,k)) +
-     &                          2.0_DKIND*HDI(i,j,k)/3.0_DKIND
-                  endif
-                endif
+            nratio = nratio*dom/nSSh
 
-                nratio = nratio*dom/nSSh
-
-                k24shield(i)=k24shield(i)*(0.98_DKIND*
+            f_shield = (0.98_DKIND*
      &           (1.0_DKIND+nratio**(1.64_DKIND))**(-2.28_DKIND) +
      &            0.02_DKIND*(1.0_DKIND+nratio)**(-0.84_DKIND))
-             endif
+
+            if (k24 .lt. tiny8) then
+              k24shield(i) = 0._DKIND
+            else
+              k24shield(i) = k24shield(i)*f_shield
+            endif
 
 !     Scale H2 direct ionization radiation
-             if (k29 .lt. tiny8) then
-               k29shield(i) = 0._DKIND
-             else
-               k29shield(i) = k29shield(i)*(0.98_DKIND*
-     &           (1.0_DKIND+nratio**(1.64_DKIND))**(-2.28_DKIND) +
-     &           0.02_DKIND*(1.0_DKIND+nratio)**(-0.84_DKIND))
-             endif
+            if (k29 .lt. tiny8) then
+              k29shield(i) = 0._DKIND
+            else
+              k29shield(i) = k29shield(i)*f_shield
+            endif
 
-             k25shield(i) = k25
-             k26shield(i) = k26
+            k25shield(i) = k25
+            k26shield(i) = k26
           endif
         enddo
 
@@ -1451,77 +1450,77 @@ c -------------------------------------------------------------------
 
         do i = is+1, ie+1
           if (itmask(i)) then
-             if (k24 .lt. tiny8) then
-                k24shield(i) = 0._DKIND
-             else
-                nSSh = 6.73e-3_DKIND *
-     &           (avgsighi/2.49e-18_DKIND)**(-2._DKIND/3._DKIND) *
+            nSSh = 6.73e-3_DKIND *
+     &           (avgsighi /2.49e-18_DKIND)**(-2._DKIND/3._DKIND) *
      &           (tgas1d(i)/1.0e4_DKIND)**(0.17_DKIND) *
      &           (k24/tbase1/1.0e-12_DKIND)**(2.0_DKIND/3.0_DKIND)
 
-!               Compute the total Hydrogen number density
-                nratio = (HI(i,j,k) + HII(i,j,k))
-                if (ispecies .gt. 1) then
-                  nratio = nratio + HM(i,j,k) + H2I(i,j,k) + H2II(i,j,k) 
+!           Compute the total Hydrogen number density
 
-                  if (ispecies .gt. 2) then
-                    nratio = nratio + 
-     &                          0.5_DKIND*(DI(i,j,k) + DII(i,j,k)) +
-     &                          2.0_DKIND*HDI(i,j,k)/3.0_DKIND
-                  endif
-                endif
+            nratio = (HI(i,j,k) + HII(i,j,k))
+            if (ispecies .gt. 1) then
+              nratio = nratio + HM(i,j,k) + H2I(i,j,k) + H2II(i,j,k)
 
-                nratio = nratio*dom/nSSh
+              if (ispecies .gt. 2) then
+                nratio = nratio +
+     &                      0.5_DKIND*(DI(i,j,k) + DII(i,j,k)) +
+     &                      2.0_DKIND*HDI(i,j,k)/3.0_DKIND
+              endif
+            endif
 
-                k24shield(i)=k24shield(i)*(0.98_DKIND*
+            nratio = nratio*dom/nSSh
+
+            f_shield = (0.98_DKIND*
      &           (1.0_DKIND+nratio**(1.64_DKIND))**(-2.28_DKIND) +
      &            0.02_DKIND*(1.0_DKIND+nratio)**(-0.84_DKIND))
+
+            if (k24 .lt. tiny8) then
+               k24shield(i) = 0._DKIND
+            else
+               k24shield(i) = k24shield(i)*f_shield
              endif
 
 !     Scale H2 direct ionization radiation
-             if (k29 .lt. tiny8) then
-               k29shield(i) = 0._DKIND
-             else
-               k29shield(i) = k29shield(i)*(0.98_DKIND*
-     &           (1.0_DKIND+nratio**(1.64_DKIND))**(-2.28_DKIND) +
-     &           0.02_DKIND*(1.0_DKIND+nratio)**(-0.84_DKIND))
-             endif
+            if (k29 .lt. tiny8) then
+              k29shield(i) = 0._DKIND
+            else
+              k29shield(i) = k29shield(i)*f_shield
+            endif
 
 !
 !     Apply same equations to HeI (assumes HeI closely follows HI)
 !
-             if (k26 .lt. tiny8) then
-                k26shield(i) = 0._DKIND
-             else
-                nSSh = 6.73e-3_DKIND *
+            nSSh = 6.73e-3_DKIND *
      &           (avgsighei/2.49e-18_DKIND)**(-2._DKIND/3._DKIND)*
      &           (tgas1d(i)/1.0e4_DKIND)**(0.17_DKIND)*
      &           (k26/tbase1/1.0e-12_DKIND)**(2.0_DKIND/3.0_DKIND)
-                nratio = 0.25_DKIND*
+     
+            nratio = 0.25_DKIND*
      &           (HeI(i,j,k) + HeII(i,j,k) + HeIII(i,j,k))*dom/nSSh
 
-                k26shield(i)=k26shield(i)*(0.98_DKIND*
+            f_shield = (0.98_DKIND*
      &           (1.0_DKIND+nratio**(1.64_DKIND))**(-2.28_DKIND) +
      &            0.02_DKIND*(1.0_DKIND+nratio)**(-0.84_DKIND))
-             endif
+
+
+            if (k26 .lt. tiny8) then
+               k26shield(i) = 0._DKIND
+            else
+               k26shield(i) = k26shield(i)
+            endif
 
 !     Scale H2+ dissociation radiation
-             if (k28 .lt. tiny8) then
-                 k28shield(i) = 0.0_DKIND
-             else
-                 k28shield(i) = k28shield(i)*(0.98_DKIND*
-     &           (1.0_DKIND+nratio**(1.64_DKIND))**(-2.28_DKIND) +
-     &            0.02_DKIND*(1.0_DKIND+nratio)**(-0.84_DKIND))
-             endif
+            if (k28 .lt. tiny8) then
+                k28shield(i) = 0.0_DKIND
+            else
+                k28shield(i) = k28shield(i)*f_shield
+            endif
 
-             if (k30 .lt. tiny8) then                 
-                 k30shield(i) = 0.0_DKIND
-             else
-                 k30shield(i) = k30shield(i)*(0.98_DKIND*
-     &           (1.0_DKIND+nratio**(1.64_DKIND))**(-2.28_DKIND) +
-     &            0.02_DKIND*(1.0_DKIND+nratio)**(-0.84_DKIND))
-             endif
-
+            if (k30 .lt. tiny8) then                 
+                k30shield(i) = 0.0_DKIND
+            else
+                k30shield(i) = k30shield(i)*f_shield
+            endif
 
             k25shield(i) = k25
           endif
@@ -1535,78 +1534,77 @@ c -------------------------------------------------------------------
 !
         do i = is+1, ie+1
           if (itmask(i)) then
-             if (k24 .lt. tiny8) then
-                k24shield(i) = 0._DKIND
-             else
-                nSSh = 6.73e-3_DKIND *
-     &           (avgsighi/2.49e-18_DKIND)**(-2._DKIND/3._DKIND)*
+            nSSh = 6.73e-3_DKIND *
+     &           (avgsighi /2.49e-18_DKIND)**(-2._DKIND/3._DKIND) *
      &           (tgas1d(i)/1.0e4_DKIND)**(0.17_DKIND) *
      &           (k24/tbase1/1.0e-12_DKIND)**(2.0_DKIND/3.0_DKIND)
 
-!               Compute the total Hydrogen number density
-                nratio = (HI(i,j,k) + HII(i,j,k))
-                if (ispecies .gt. 1) then
-                  nratio = nratio + HM(i,j,k) + H2I(i,j,k) + H2II(i,j,k) 
+!           Compute the total Hydrogen number density
+            nratio = (HI(i,j,k) + HII(i,j,k))
+            if (ispecies .gt. 1) then
+              nratio = nratio + HM(i,j,k) + H2I(i,j,k) + H2II(i,j,k)
 
-                  if (ispecies .gt. 2) then
-                    nratio = nratio + 
-     &                          0.5_DKIND*(DI(i,j,k) + DII(i,j,k)) +
-     &                          2.0_DKIND*HDI(i,j,k)/3.0_DKIND
-                  endif
-                endif
+              if (ispecies .gt. 2) then
+                nratio = nratio +
+     &                      0.5_DKIND*(DI(i,j,k) + DII(i,j,k)) +
+     &                      2.0_DKIND*HDI(i,j,k)/3.0_DKIND
+              endif
+            endif
 
-                nratio = nratio*dom/nSSh
+            nratio = nratio*dom/nSSh
 
-                k24shield(i)=k24shield(i)*(0.98_DKIND*
+            f_shield = (0.98_DKIND*
      &           (1.0_DKIND+nratio**(1.64_DKIND))**(-2.28_DKIND) +
      &            0.02_DKIND*(1.0_DKIND+nratio)**(-0.84_DKIND))
-             endif
+
+            if (k24 .lt. tiny8) then
+               k24shield(i) = 0._DKIND
+            else
+               k24shield(i)=k24shield(i)*f_shield
+            endif
 
 !     Scale H2 direct ionization radiation
-             if (k29 .lt. tiny8) then
-               k29shield(i) = 0._DKIND
-             else
-               k29shield(i) = k29shield(i)*(0.98_DKIND*
-     &           (1.0_DKIND+nratio**(1.64_DKIND))**(-2.28_DKIND) +
-     &           0.02_DKIND*(1.0_DKIND+nratio)**(-0.84_DKIND))
-             endif
+            if (k29 .lt. tiny8) then
+              k29shield(i) = 0._DKIND
+            else
+              k29shield(i) = k29shield(i)*f_shield
+            endif
 
 !
 !     Apply same equations to HeI (assumes HeI closely follows HI)
 !
-             if (k26 .lt. tiny8) then
-                k26shield(i) = 0._DKIND
-             else
-                nSSh = 6.73e-3_DKIND *
+            nSSh = 6.73e-3_DKIND *
      &           (avgsighei/2.49e-18_DKIND)**(-2._DKIND/3._DKIND)*
      &           (tgas1d(i)/1.0e4_DKIND)**(0.17_DKIND)*
      &           (k26/tbase1/1.0e-12_DKIND)**(2.0_DKIND/3.0_DKIND)
-                nratio = 0.25_DKIND *
+
+            nratio = 0.25_DKIND*
      &           (HeI(i,j,k) + HeII(i,j,k) + HeIII(i,j,k))*dom/nSSh
 
-                k26shield(i)=k26shield(i)*(0.98_DKIND*
+            f_shield = (0.98_DKIND*
      &           (1.0_DKIND+nratio**(1.64_DKIND))**(-2.28_DKIND) +
      &            0.02_DKIND*(1.0_DKIND+nratio)**(-0.84_DKIND))
-             endif
+
+            if (k26 .lt. tiny8) then
+              k26shield(i) = 0._DKIND
+            else
+              k26shield(i) = k26shield(i)*f_shield
+            endif
 
 !     Scale H2+ dissociation radiation
-             if (k28 .lt. tiny8) then                 
-                 k28shield(i) = 0.0_DKIND
-             else
-                 k28shield(i) = k28shield(i)*(0.98_DKIND*
-     &           (1.0_DKIND+nratio**(1.64_DKIND))**(-2.28_DKIND) +
-     &            0.02_DKIND*(1.0_DKIND+nratio)**(-0.84_DKIND))
-             endif
+            if (k28 .lt. tiny8) then                 
+              k28shield(i) = 0.0_DKIND
+            else
+              k28shield(i) = k28shield(i)*f_shield
+            endif
 
-             if (k30 .lt. tiny8) then
-                 k30shield(i) = 0.0_DKIND
-             else
-                 k30shield(i) = k30shield(i)*(0.98_DKIND*
-     &           (1.0_DKIND+nratio**(1.64_DKIND))**(-2.28_DKIND) +
-     &            0.02_DKIND*(1.0_DKIND+nratio)**(-0.84_DKIND))
-             endif
+            if (k30 .lt. tiny8) then
+              k30shield(i) = 0.0_DKIND
+            else
+              k30shield(i) = k30shield(i)*f_shield
+            endif
 
-             k25shield(i) = 0.0_DKIND
+            k25shield(i) = 0.0_DKIND
 
           endif
         enddo
