@@ -113,11 +113,13 @@ int _calculate_pressure(chemistry_data *my_chemistry,
   return SUCCESS;
 }
 
-int calculate_pressure(code_units *my_units,
-                       grackle_field_data *my_fields,
-                       gr_float *pressure)
+int local_calculate_pressure(chemistry_data *my_chemistry,
+                             chemistry_data_storage *my_rates,
+                             code_units *my_units,
+                             grackle_field_data *my_fields,
+                             gr_float *pressure)
 {
-  if (_calculate_pressure(grackle_data, &grackle_rates, my_units,
+  if (_calculate_pressure(my_chemistry, my_rates, my_units,
                           my_fields->grid_rank, my_fields->grid_dimension,
                           my_fields->grid_start, my_fields->grid_end,
                           my_fields->density, my_fields->internal_energy,
@@ -131,6 +133,18 @@ int calculate_pressure(code_units *my_units,
                           my_fields->e_density, my_fields->metal_density,
                           pressure) == FAIL) {
     fprintf(stderr, "Error in _calculate_pressure.\n");
+    return FAIL;
+  }
+  return SUCCESS;
+}
+
+int calculate_pressure(code_units *my_units,
+                       grackle_field_data *my_fields,
+                       gr_float *pressure)
+{
+  if (local_calculate_pressure(grackle_data, &grackle_rates, my_units,
+                               my_fields, pressure) == FAIL) {
+    fprintf(stderr, "Error in local_calculate_pressure.\n");
     return FAIL;
   }
   return SUCCESS;
