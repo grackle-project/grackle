@@ -128,11 +128,13 @@ int _calculate_gamma(chemistry_data *my_chemistry,
   return SUCCESS;
 }
 
-int calculate_gamma(code_units *my_units,
-                    grackle_field_data *my_fields,
-                    gr_float *my_gamma)
+int local_calculate_gamma(chemistry_data *my_chemistry,
+                          chemistry_data_storage *my_rates,
+                          code_units *my_units,
+                          grackle_field_data *my_fields,
+                          gr_float *my_gamma)
 {
-  if (_calculate_gamma(grackle_data, &grackle_rates, my_units,
+  if (_calculate_gamma(my_chemistry, my_rates, my_units,
                        my_fields->grid_rank, my_fields->grid_dimension,
                        my_fields->grid_start, my_fields->grid_end,
                        my_fields->density, my_fields->internal_energy,
@@ -144,6 +146,18 @@ int calculate_gamma(code_units *my_units,
                        my_fields->e_density, my_fields->metal_density,
                        my_gamma) == FAIL) {
     fprintf(stderr, "Error in _calculate_gamma.\n");
+    return FAIL;
+  }
+  return SUCCESS;
+}
+
+int calculate_gamma(code_units *my_units,
+                    grackle_field_data *my_fields,
+                    gr_float *my_gamma)
+{
+  if (local_calculate_gamma(grackle_data, &grackle_rates, my_units,
+                            my_fields, my_gamma) == FAIL) {
+    fprintf(stderr, "Error in local_calculate_gamma.\n");
     return FAIL;
   }
   return SUCCESS;

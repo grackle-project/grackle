@@ -230,11 +230,13 @@ int _calculate_temperature_table(chemistry_data *my_chemistry,
   return SUCCESS;
 }
 
-int calculate_temperature(code_units *my_units,
-                          grackle_field_data *my_fields,
-                          gr_float *temperature)
+int local_calculate_temperature(chemistry_data *my_chemistry,
+                                chemistry_data_storage *my_rates,
+                                code_units *my_units,
+                                grackle_field_data *my_fields,
+                                gr_float *temperature)
 {
-  if (_calculate_temperature(grackle_data, &grackle_rates, my_units,
+  if (_calculate_temperature(my_chemistry, my_rates, my_units,
                              my_fields->grid_rank, my_fields->grid_dimension,
                              my_fields->grid_start, my_fields->grid_end,
                              my_fields->density, my_fields->internal_energy,
@@ -247,7 +249,19 @@ int calculate_temperature(code_units *my_units,
                              my_fields->HDI_density,
                              my_fields->e_density, my_fields->metal_density,
                              temperature) == FAIL) {
-    fprintf(stderr, "Error in calculate_temperature.\n");
+    fprintf(stderr, "Error in _calculate_temperature.\n");
+    return FAIL;
+  }
+  return SUCCESS;
+}
+
+int calculate_temperature(code_units *my_units,
+                          grackle_field_data *my_fields,
+                          gr_float *temperature)
+{
+  if (local_calculate_temperature(grackle_data, &grackle_rates, my_units,
+                                  my_fields, temperature) == FAIL) {
+    fprintf(stderr, "Error in local_calculate_temperature.\n");
     return FAIL;
   }
   return SUCCESS;

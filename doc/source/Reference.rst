@@ -3,12 +3,19 @@
 API Reference
 =============
 
-Grackle has two versions of most functions.  The :ref:`primary_functions`,
-discussed in :ref:`functions`, make use of the :c:data:`grackle_field_data`
-struct and internally stored instances :c:data:`chemistry_data` and
-:c:data:`chemistry_data_storage` structs.  A set of :ref:`internal_functions`
-also exist and require the user to provide their own instances of the
-:c:data:`chemistry_data` and :c:data:`chemistry_data_storage`.
+Grackle has three versions of most functions.
+
+1. The :ref:`primary_functions`, discussed in :ref:`functions`, make
+   use of internally stored instances of the :c:data:`chemistry_data`
+   and :c:data:`chemistry_data_storage` structs declared in **grackle.h**.
+
+2. :ref:`local_functions` require pointers to :c:data:`chemistry_data`
+   and :c:data:`chemistry_data_storage` instances to be provided as
+   arguments.  These are explicity thread-safe as they use no global data.
+
+3. :ref:`internal_functions` take pointers to individual field arrays
+   instead of using the :c:data:`grackle_field_data` struct.  These are
+   mainly used by the Python interface.
 
 .. _primary_functions:
 
@@ -86,13 +93,87 @@ Primary Functions
    :rtype: int
    :returns: 1 (success) or 0 (failure)
 
+.. _local_functions:
+
+Local Functions
+---------------
+
+These can be used to create explicitly thread-safe code or to call
+the various functions with different parameter values within a
+single code.  The :c:data:`chemistry_data` and
+:c:data:`chemistry_data_storage` structs should be setup using the
+initialization functions discussed in :ref:`internal_functions`.
+
+.. c:function:: int local_solve_chemistry(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, code_units *my_units, grackle_field_data *my_fields, double dt_value);
+
+   Evolves the species densities and internal energies over a given timestep
+   by solving the chemistry and cooling rate equations.
+
+   :param chemistry_data* my_chemistry: the structure returned by :c:func:`_set_default_chemistry_parameters`
+   :param chemistry_data_storage* my_rates: chemistry and cooling rate data structure
+   :param code_units* my_units: code units conversions
+   :param grackle_field_data* my_fields: field data storage
+   :param double dt_value: the integration timestep in code units
+   :rtype: int
+   :returns: 1 (success) or 0 (failure)
+
+.. c:function:: int local_calculate_cooling_time(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, code_units *my_units, grackle_field_data *my_fields, gr_float *cooling_time);
+
+   Calculates the instantaneous cooling time.
+
+   :param chemistry_data* my_chemistry: the structure returned by :c:func:`_set_default_chemistry_parameters`
+   :param chemistry_data_storage* my_rates: chemistry and cooling rate data structure
+   :param code_units* my_units: code units conversions
+   :param grackle_field_data* my_fields: field data storage
+   :param gr_float* cooling_time: array which will be filled with the calculated cooling time values
+   :rtype: int
+   :returns: 1 (success) or 0 (failure)
+
+.. c:function:: int local_calculate_gamma(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, code_units *my_units, grackle_field_data *my_fields, gr_float *my_gamma);
+
+   Calculates the effective adiabatic index.  This is only useful with
+   :c:data:`primordial_chemistry` >= 2 as the only thing that alters gamma from the single
+   value is H\ :sub:`2`.
+
+   :param chemistry_data* my_chemistry: the structure returned by :c:func:`_set_default_chemistry_parameters`
+   :param chemistry_data_storage* my_rates: chemistry and cooling rate data structure
+   :param code_units* my_units: code units conversions
+   :param grackle_field_data* my_fields: field data storage
+   :param gr_float* my_gamma: array which will be filled with the calculated gamma values
+   :rtype: int
+   :returns: 1 (success) or 0 (failure)
+
+.. c:function:: int local_calculate_pressure(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, code_units *my_units, grackle_field_data *my_fields, gr_float *pressure);
+
+   Calculates the gas pressure.
+
+   :param chemistry_data* my_chemistry: the structure returned by :c:func:`_set_default_chemistry_parameters`
+   :param chemistry_data_storage* my_rates: chemistry and cooling rate data structure
+   :param code_units* my_units: code units conversions
+   :param grackle_field_data* my_fields: field data storage
+   :param gr_float* pressure: array which will be filled with the calculated pressure values
+   :rtype: int
+   :returns: 1 (success) or 0 (failure)
+
+.. c:function:: int local_calculate_temperature(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, code_units *my_units, grackle_field_data *my_fields, gr_float *temperature);
+
+   Calculates the gas temperature.
+
+   :param chemistry_data* my_chemistry: the structure returned by :c:func:`_set_default_chemistry_parameters`
+   :param chemistry_data_storage* my_rates: chemistry and cooling rate data structure
+   :param code_units* my_units: code units conversions
+   :param grackle_field_data* my_fields: field data storage
+   :param gr_float* temperature: array which will be filled with the calculated temperature values
+   :rtype: int
+   :returns: 1 (success) or 0 (failure)
+
 .. _internal_functions:
 
 Internal Functions
 ------------------
 
-These functions are mostly for internal use, but can also be used to call the various
-functions with different parameter values within a single code.
+These functions are mostly for internal use.  The initialization functions
+described here can be used in conjunction with the :ref:`local_functions`.
 
 .. c:function:: chemistry_data _set_default_chemistry_parameters(void);
 
