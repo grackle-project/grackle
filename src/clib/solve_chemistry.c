@@ -25,6 +25,7 @@ extern chemistry_data_storage grackle_rates;
 
 int update_UVbackground_rates(chemistry_data *my_chemistry,
                               chemistry_data_storage *my_rates,
+                              photo_rate_storage *my_uvb_rates,
                               code_units *my_units);
 
 extern void FORTRAN_NAME(solve_rate_cool_g)(
@@ -104,9 +105,11 @@ int _solve_chemistry(chemistry_data *my_chemistry,
     return SUCCESS;
 
   /* Update UV background rates. */
+  photo_rate_storage my_uvb_rates;
 
   if (my_chemistry->UVbackground == 1) {
-    if (update_UVbackground_rates(my_chemistry, my_rates, my_units) == FAIL) {
+    if (update_UVbackground_rates(my_chemistry, my_rates,
+                                  &my_uvb_rates, my_units) == FAIL) {
       fprintf(stderr, "Error in update_UVbackground_rates.\n");
       return FAIL;
     }
@@ -169,8 +172,8 @@ int _solve_chemistry(chemistry_data *my_chemistry,
     my_rates->k11, my_rates->k12, my_rates->k13, my_rates->k13dd,
     my_rates->k14, my_rates->k15, my_rates->k16,
     my_rates->k17, my_rates->k18, my_rates->k19, my_rates->k22,
-    &my_rates->k24, &my_rates->k25, &my_rates->k26, &my_rates->k27,
-    &my_rates->k28, &my_rates->k29, &my_rates->k30, &my_rates->k31,
+    &my_uvb_rates.k24, &my_uvb_rates.k25, &my_uvb_rates.k26, &my_uvb_rates.k27,
+    &my_uvb_rates.k28, &my_uvb_rates.k29, &my_uvb_rates.k30, &my_uvb_rates.k31,
     my_rates->k50, my_rates->k51, my_rates->k52, my_rates->k53,
     my_rates->k54, my_rates->k55, my_rates->k56,
     my_rates->k57, my_rates->k58,
@@ -181,8 +184,8 @@ int _solve_chemistry(chemistry_data *my_chemistry,
     my_rates->ciHeI, my_rates->ciHeIS, my_rates->ciHeII, my_rates->reHII,
     my_rates->reHeII1, my_rates->reHeII2, my_rates->reHeIII, my_rates->brem,
     &my_rates->comp, &my_rates->gammah,
-    &my_rates->comp_xray, &my_rates->temp_xray,
-    &my_rates->piHI, &my_rates->piHeI, &my_rates->piHeII,
+    &my_uvb_rates.comp_xray, &my_uvb_rates.temp_xray,
+    &my_uvb_rates.piHI, &my_uvb_rates.piHeI, &my_uvb_rates.piHeII,
     HM_density, H2I_density, H2II_density,
     DI_density, DII_density, HDI_density, metal_density,
     my_rates->hyd01k, my_rates->h2k01, my_rates->vibh,
@@ -192,8 +195,8 @@ int _solve_chemistry(chemistry_data *my_chemistry,
     my_rates->GAHI, my_rates->GAH2, my_rates->GAHe, my_rates->GAHp,
     my_rates->GAel, my_rates->H2LTE, my_rates->gas_grain,
     &my_chemistry->H2_self_shielding,
-    &my_chemistry->self_shielding_method, &my_rates->hi_avg_crs,
-    &my_rates->hei_avg_crs, &my_rates->heii_avg_crs,
+    &my_chemistry->self_shielding_method, &my_uvb_rates.crsHI,
+    &my_uvb_rates.crsHeI, &my_uvb_rates.crsHeII,
     &my_chemistry->use_radiative_transfer, &my_chemistry->radiative_transfer_coupled_rate_solver,
     &my_chemistry->radiative_transfer_intermediate_step, &my_chemistry->radiative_transfer_hydrogen_only,
     RT_HI_ionization_rate, RT_HeI_ionization_rate, RT_HeII_ionization_rate,
