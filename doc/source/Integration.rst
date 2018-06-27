@@ -433,8 +433,10 @@ and pointers to all field arrays.
 .. c:var:: gr_float *RT_heating_rate
 
    Pointer to the radiation transfer heating rate field.  Rates
-   should be in units of erg/s/cm\ :sup:`3`\.  Used when
-   :c:data:`use_radiative_transfer` is set to 1.
+   should be in units of (erg/s/cm\ :sup:`3`\) / n\ :sub:`HI`\, where
+   n\ :sub:`HI`\  is the neutral hydrogen number density. Heating rates
+   for additional species are currently not yet supported.
+   Used when :c:data:`use_radiative_transfer` is set to 1.
 
 .. c:var:: gr_float *RT_HI_ionization_rate
 

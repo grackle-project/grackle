@@ -172,8 +172,11 @@ For all on/off integer flags, 0 is off and 1 is on.
 
 .. c:var:: int photoelectric_heating_rate
 
-   If :c:data:`photoelectric_heating` enabled, the heating rate in
-   units of erg cm\ :sup:`-3` s\ :sup:`-1`.  Default: 8.5e-26.
+   If :c:data:`photoelectric_heating` is enabled, the heating rate in
+   units of (erg cm\ :sup:`-3` s\ :sup:`-1`) n\ :sup:`-1`\, where n is
+   the total hydrogen number density. In other words, this is the
+   volumetric heating rate at a hydrogen number density of 
+   n = 1 cm\ :sup:`-3`\. Default: 8.5e-26.
 
 .. c:var:: int Compton_xray_heating
 
