@@ -114,6 +114,24 @@ int _solve_chemistry(chemistry_data *my_chemistry,
       return FAIL;
     }
   }
+  else {
+    my_uvb_rates.k24       = my_rates->k24;
+    my_uvb_rates.k25       = my_rates->k25;
+    my_uvb_rates.k26       = my_rates->k26;
+    my_uvb_rates.k27       = my_rates->k27;
+    my_uvb_rates.k28       = my_rates->k28;
+    my_uvb_rates.k29       = my_rates->k29;
+    my_uvb_rates.k30       = my_rates->k30;
+    my_uvb_rates.k31       = my_rates->k31;
+    my_uvb_rates.piHI      = my_rates->piHI;
+    my_uvb_rates.piHeI     = my_rates->piHeI;
+    my_uvb_rates.piHeII    = my_rates->piHeII;
+    my_uvb_rates.crsHI     = my_rates->crsHI;
+    my_uvb_rates.crsHeI    = my_rates->crsHeI;
+    my_uvb_rates.crsHeII   = my_rates->crsHeII;
+    my_uvb_rates.comp_xray = my_rates->comp_xray;
+    my_uvb_rates.temp_xray = my_rates->temp_xray;
+  }
 
   /* Check for a metal field. */
 

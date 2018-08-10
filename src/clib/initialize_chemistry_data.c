@@ -216,6 +216,23 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
     my_rates->n_cr_d1 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
     my_rates->n_cr_d2 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
 
+    my_rates->k24 = 0;
+    my_rates->k25 = 0;
+    my_rates->k26 = 0;
+    my_rates->k27 = 0;
+    my_rates->k28 = 0;
+    my_rates->k29 = 0;
+    my_rates->k30 = 0;
+    my_rates->k31 = 0;
+    my_rates->piHI = 0;
+    my_rates->piHeII = 0;
+    my_rates->piHeI = 0;
+    my_rates->crsHI = 0;
+    my_rates->crsHeI = 0;
+    my_rates->crsHeII = 0;
+    my_rates->comp_xray = 0;
+    my_rates->temp_xray = 0;
+
   }
 
   int ioutput = 0;

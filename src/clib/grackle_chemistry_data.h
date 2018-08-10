@@ -226,6 +226,18 @@ typedef struct
   double *k13dd;  /* density dependent version of k13 (collisional H2
                     dissociation); actually 7 functions instead of 1. */
 
+  /* Radiative rates for 6-species (for external field). */
+  double k24;
+  double k25;
+  double k26;
+
+  /* Radiative rates for 9-species (for external field). */
+  double k27;
+  double k28;
+  double k29;
+  double k30;
+  double k31;
+
   /* 12 species rates (with Deuterium). */
   double *k50;
   double *k51;
@@ -266,7 +278,19 @@ typedef struct
   double *reHeIII;
   double *brem;                   // free-free (Bremsstrahlung)
   double comp;                    // Compton cooling
+  double comp_xray;               // X-ray compton heating coefficient
+  double temp_xray;               // X-ray compton heating temperature (K)
   double gammah;                  // Photoelectric heating (code units)
+
+  /* radiative rates (external field). */
+  double piHI;                    // photo-ionization cooling
+  double piHeI;                   //    (no temperature dependance)
+  double piHeII;
+
+  // spectrum averaged absorption cross sections
+  double crsHI;
+  double crsHeI;
+  double crsHeII;
 
   /* 9 species rates (including H2) 
        The first five are for the Lepp & Shull rates.
