@@ -86,14 +86,14 @@ suggest-clean:
 show-version:
 	@echo
 	@echo "The Grackle Version $(LIB_RELEASE_VERSION)"
-	@echo "Mercurial Branch   `$(SVN) identify -b`"
-	@echo "Mercurial Revision `$(SVN) identify -i`"
+	@echo "Git Branch   `git rev-parse --abbrev-ref HEAD`"
+	@echo "Git Revision `git rev-parse HEAD`"
 	@echo
 
 #-----------------------------------------------------------------------
 
 show-diff:
-	@$(SVN) diff
+	@git diff
 
 #-----------------------------------------------------------------------
 .PHONY: default

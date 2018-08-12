@@ -34,7 +34,6 @@
 SHELL       = /bin/bash
 OUTPUT      = out.compile
 VERBOSE     = 0
-SVN         = hg
 GRACKLE_DIR = .
 DEFAULT_INSTALL_PREFIX = /usr/local
 
