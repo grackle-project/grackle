@@ -18,10 +18,6 @@ env:
   global:
     YT_DATA_DIR=$HOME/yt_test
 
-matrix:
-  include:
-    - python: 2.7
-
 before_install:
   - |
     echo "backend : Agg" > $HOME/matplotlibrc
@@ -47,14 +43,45 @@ install:
     ./configure
     cd src/clib
     make machine-linux-gnu
+    if [[ $TRAVIS_BUILD_STAGE_NAME = "Omp" ]]; then
+      make omp-on
+    fi
     make
     mkdir -p $HOME/local
     make install
     export LD_LIBRARY_PATH=$HOME/local/lib:$LD_LIBRARY_PATH
-    cd ../python
-    python setup.py develop
+    if [[ $TRAVIS_BUILD_STAGE_NAME != "Omp" ]]; then
+      cd ../python
+      python setup.py develop
+    fi
     cd ../
 
-script:
-  - |
-    py.test python/tests
+jobs:
+  include:
+    - stage: tests
+      name: "tests with Python 2.7"
+      python: 2.7
+      script: py.test python/tests
+
+    - stage: tests
+      name: "tests with Python 3.5"
+      python: 3.5
+      script: py.test python/tests
+
+    - stage: tests
+      name: "tests with Python 3.6"
+      python: 3.6
+      script: py.test python/tests
+
+    - stage: omp
+      name: "Code example tests with OpenMP"
+      python: 3.6
+      before_install: skip
+      script:
+        - |
+          export OMP_NUM_THREADS=4
+          py.test python/tests/test_code_examples.py
+
+stages:
+  - tests
+  - omp
