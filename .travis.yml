@@ -1,0 +1,60 @@
+language: python
+sudo: false
+cache:
+  directories:
+    - $HOME/.ccache  # https://github.com/travis-ci/travis-ci/issues/5853
+  pip: true
+
+addons:
+  apt:
+    update: true
+    packages:
+      - csh
+      - libhdf5-serial-dev
+      - gfortran
+      - libtool
+
+env:
+  global:
+    YT_DATA_DIR=$HOME/yt_test
+
+matrix:
+  include:
+    - python: 2.7
+
+before_install:
+  - |
+    echo "backend : Agg" > $HOME/matplotlibrc
+    export MATPLOTLIBRC=$HOME
+    # Download test data
+    mkdir -p $YT_DATA_DIR
+    pushd $YT_DATA_DIR
+    wget --quiet http://yt-project.org/data/IsolatedGalaxy.tar.gz
+    tar xzf IsolatedGalaxy.tar.gz
+    popd
+
+install:
+  - |
+    # setup environment
+    ccache -s
+    # Upgrade pip and setuptools and wheel to get clean install
+    pip install --upgrade pip
+    pip install --upgrade wheel
+    pip install --upgrade setuptools
+    # Install dependencies
+    pip install numpy cython h5py matplotlib fastcache flake8 pytest yt
+    # Install Grackle
+    ./configure
+    cd src/clib
+    make machine-linux-gnu
+    make
+    mkdir -p $HOME/local
+    make install
+    export LD_LIBRARY_PATH=$HOME/local/lib:$LD_LIBRARY_PATH
+    cd ../python
+    python setup.py develop
+    cd ../
+
+script:
+  - |
+    py.test python/tests
