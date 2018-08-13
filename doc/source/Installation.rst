@@ -24,17 +24,17 @@ also be installed:
 Downloading
 -----------
 
-Grackle is available in a mercurial repository 
-`here <https://bitbucket.org/grackle/grackle>`__.  The mercurial site 
-is `here <http://mercurial.selenic.com/>`__ and an excellent tutorial can be 
-found `here <http://hginit.com/>`__.  With mercurial 
-installed, grackle can be obtained with the following command:
+Grackle is available in a git repository
+`here <https://github.com/grackle-project/grackle>`__. Excellent guides
+to git and GitHub are available at
+`guides.github.com <https://guides.github.com/>`__. To clone the Grackle
+repo, do the following:
 
 .. highlight:: none
 
 ::
 
-    ~ $ hg clone https://bitbucket.org/grackle/grackle
+    ~ $ git clone https://github.com/grackle-project/grackle
 
 Building
 --------

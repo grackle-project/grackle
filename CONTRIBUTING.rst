@@ -6,17 +6,14 @@ How to Develop Grackle
 Grackle is a community project!
 
 We are very happy to accept patches, features, and bugfixes from any member of
-the community!  Grackle is developed using mercurial, primarily because it
-enables very easy and straightforward submission of changesets.  We're eager to
-hear from you.
+the community!  Grackle is developed using Git, primarily because of how well
+it enables open-source, community contribution. We're eager to hear from you.
 
-.. note:: If you already know how to use the `mercurial version control system
-   <http://mercurial-scm.org>`_ and are comfortable with handling it yourself,
-   the quickest way to contribute to Grackle is to `fork us on BitBucket
-   <http://bitbucket.org/grackle/grackle/fork>`_, make your changes, push the
-   changes to your fork and issue a `pull request
-   <http://bitbucket.org/grackle/grackle/pull-requests>`_.  The rest of this
-   document is just an explanation of how to do that.
+.. note:: If you are already familiar with Git and `GitHub <https://github.com>`_,
+   the best way to contribute is to fork the `main Grackle repository
+   <https://github.com/grackle-project/grackle>`__, make your changes, push them
+   to your fork, and issue a pull request. The rest of this document is just an
+   explanation of how to do that.
 
 Keep in touch, and happy hacking!
 
@@ -26,18 +23,20 @@ Open Issues
 -----------
 
 If you're interested in participating in Grackle development, take a look at the
-`issue tracker on bitbucket <https://bitbucket.org/grackle/issues>`_. If you are
-encountering a bug that is not already tracked there, please `open a new issue
-<https://bitbucket.org/grackle/grackle/issues/new>`_.
+`issue tracker on GitHub <https://github.com/grackle-project/grackle/issues>`_.
+If you are encountering a bug that is not already tracked there, please `open a
+new issue <https://github.com/grackle-project/grackle/issues/new>`__.
 
-Submitting Changes
-------------------
+Contributing to Grackle with Git and Github
+-------------------------------------------
 
 We provide a brief introduction to submitting changes here.  We encourage
-contributions from any user.  While we do not discuss version control, mercurial
-or the advanced usage of BitBucket in detail here, we do provide an outline of
-how to submit changes and we are happy to provide further assistance or
-guidance on the mailing list.
+contributions from any user. If you are new to Git and/or GitHub, there are
+excellent guides available at `guides.github.com <https://guides.github.com/>`_,
+specifically the `Git Handbook
+<https://guides.github.com/introduction/git-handbook/>`__, and the `GitHub
+Hello World <https://guides.github.com/activities/hello-world/>`__. We are also
+happy to provide guidance on the mailing list or in our slack channel.
 
 Licensing
 +++++++++
@@ -51,43 +50,52 @@ package, which we'll happily link to in the Grackle documentation.
 How To Get The Source Code For Editing
 ++++++++++++++++++++++++++++++++++++++
 
-Grackle is hosted on BitBucket, and you can see all of the Grackle repositories at
-http://bitbucket.org/grackle/. In order to modify the source code for Grackle,
-we ask that you make a "fork" of the main Grackle repository on bitbucket.  A
+Grackle is hosted on GitHub, and you can see all of the Grackle repositories at
+https://github.com/grackle-project/. In order to modify the source code for Grackle,
+we ask that you make a "fork" of the main Grackle repository on GitHub.  A
 fork is simply an exact copy of the main repository (along with its history)
 that you will now own and can make modifications as you please.  You can create
-a personal fork by visiting the Grackle bitbucket webpage at
-https://bitbucket.org/grackle/grackle/ .  After logging in, you should see an
-option near the top right labeled "fork".  Click this option, and then click the
-fork repository button on the subsequent page.  You now have a forked copy of
+a personal fork by visiting the Grackle GitHub webpage at
+https://github.com/grackle-project/grackle/.  After logging in, you should see an
+option near the top right labeled "fork".  You now have a forked copy of
 the Grackle repository for your own personal modification.
 
-This forked copy exists on the bitbucket repository, so in order to access
+This forked copy exists on GitHub under your username, so in order to access
 it locally, follow the instructions at the top of that webpage for that
-forked repository, namely run at a local command line:
+forked repository:
 
 .. code-block:: bash
 
-   $ hg clone http://bitbucket.org/<USER>/<REPOSITORY_NAME>
+   $ git clone http://bitbucket.org/<USER>/<REPOSITORY_NAME>
 
 This downloads that new forked repository to your local machine, so that you can
 access it, read it, make modifications, etc.  It will put the repository in a
 local directory of the same name as the repository in the current working
-directory. You should also run the following command, to make sure you have the
-most up-to-date version of Grackle checked out in your working directory.
+directory.
 
 .. code-block:: bash
 
-   $ hg update default
+   $ cd grackle
 
-You can see any past state of the code by using the hg log command.
-For example, the following command would show you the last 5 changesets
+Verify that you are on the master branch of Grackle by running:
+
+.. code-block:: bash
+
+   $ git branch
+
+If you're not on the master branch, you can get to it with:
+
+.. code-block:: bash
+
+   $ git checkout master
+
+You can see any past state of the code by using the git log command.
+For example, the following command would show you the last 5 revisions
 (modifications to the code) that were submitted to that repository.
 
 .. code-block:: bash
 
-   $ cd <REPOSITORY_NAME>
-   $ hg log -l 5
+   $ git log -n 5
 
 Using the revision specifier (the number or hash identifier next to each
 changeset), you can update the local repository to any past state of the
@@ -95,59 +103,7 @@ code (a previous changeset or version) by executing the command:
 
 .. code-block:: bash
 
-   $ hg update revision_specifier
-
-.. _mercurial-with-grackle:
-
-How to Use Mercurial with Grackle
----------------------------------
-
-If you're new to Mercurial, these three resources are pretty great for learning
-the ins and outs:
-
-* http://hginit.com/
-* http://book.mercurial-scm.org
-* http://mercurial-scm.org/
-* http://mercurial-scm.org/wiki
-
-The commands that are essential for using mercurial include:
-
-* ``hg help`` which provides help for any mercurial command. For example, you
-  can learn more about the ``log`` command by doing ``hg help log``. Other useful
-  topics to use with ``hg help`` are ``hg help glossary``, ``hg help config``,
-  ``hg help extensions``, and ``hg help revsets``.
-* ``hg commit`` which commits changes in the working directory to the
-  repository, creating a new "changeset object."
-* ``hg add`` which adds a new file to be tracked by mercurial.  This does
-  not change the working directory.
-* ``hg pull`` which pulls (from an optional path specifier) changeset
-  objects from a remote source.  The working directory is not modified.
-* ``hg push`` which sends (to an optional path specifier) changeset objects
-  to a remote source.  The working directory is not modified.
-* ``hg log`` which shows a log of all changeset objects in the current
-  repository.  Use ``-G`` to show a graph of changeset objects and their
-  relationship.
-* ``hg update`` which (with an optional "revision" specifier) updates the
-  state of the working directory to match a changeset object in the
-  repository.
-* ``hg merge`` which combines two changesets to make a union of their lines
-  of development.  This updates the working directory.
-
-We are happy to asnswers questions about mercurial use on on the mailing list to
-walk you through any troubles you might have.  Here are some general suggestions
-for using mercurial:
-
-* Named branches are to be avoided.  Try using bookmarks (``see hg help
-  bookmark``) to track work.  (`More info about bookmarks is available on the
-  mercurial wiki <http://mercurial-scm.org/wiki/Bookmarks>`_)
-* Make sure you set a username in your ``~/.hgrc`` before you commit any
-  changes!  All of the tutorials above will describe how to do this as one of
-  the very first steps.
-* Please avoid deleting your Grackle forks, as that deletes the pull request
-  discussion from process from BitBucket's website, even if your pull request
-  is merged.
-* You should only need one fork. See :ref:`sharing-changes` for a description of
-  the basic workflow.
+   $ git checkout revision_specifier
 
 .. _sharing-changes:
 
@@ -156,57 +112,54 @@ Making and Sharing Changes
 
 The simplest way to submit changes to Grackle is to do the following:
 
-* Build Grackle from the mercurial repository
-* Navigate to the root of the Grackle repository
-* Make some changes and commit them
-* Fork the `Grackle repository on BitBucket
-  <https://bitbucket.org/grackle/grackle>`_
-* Push the changesets to your fork
-* Issue a pull request.
+#. Fork the main repository.
+#. Clone your fork.
+#. Make some changes and commit them.
+#. Push the changesets to your fork.
+#. Issue a pull request.
 
 Here's a more detailed flowchart of how to submit changes.
 
+#. Fork Grackle on GitHub.  (This step only has to be done once.)  You can do
+   this by clicking on the **fork** button in the top-right corner of `the main
+   repository <https://github.com/grackle-project/grackle>`__.
+#. Create a new branch in which to make your changes by doing ``git
+   checkout -b <new branch name>``. This will make it easy to move back and
+   forth between the main branch of the code and your changes.
 #. Edit the source file you are interested in and test your changes.
-#. Fork Grackle on BitBucket.  (This step only has to be done once.)  You can do
-   this at: https://bitbucket.org/grackle/grackle/fork.  Call this repository
-   grackle.
-#. Create a bookmark to track your work. For example: ``hg bookmark
-   my-first-pull-request``
-#. Commit these changes, using ``hg commit``.  This can take an argument
-   which is a series of filenames, if you have some changes you do not want
-   to commit.
+#. Use ``git add <files>`` to stage files to be committed.
+#. Commit your changes with ``git commit``. This will open a text editor so you
+   can write a commit message. To add your message inline, do
+   ``git commit -m "<commit message>"``. You can list specific file to be
+   committed.
 #. Remember that this is a large development effort and to keep the code
    accessible to everyone, good documentation is a must.  Add in source code
-   comments for what you are doing.  Add in docstrings
-   if you are adding a new function or class or keyword to a function.
-   Add documentation to the appropriate section of the online docs so that
-   people other than yourself know how to use your new code.
+   comments for what you are doing.  Add documentation to the appropriate
+   section of the online docs so that people other than yourself know how
+   to use your new code.
 #. If your changes include new functionality or cover an untested area of the
    code, add a test. Commit these changes as well.
 #. Push your changes to your new fork using the command::
 
-      hg push -B my-first-pull-request https://bitbucket.org/YourUsername/grackle/
-
-   Where you should substitute the name of the bookmark you are working on for
-   ``my-first-pull-request``. If you end up doing considerable development, you
-   can set an alias in the file ``.hg/hgrc`` to point to this path.
+      $ git push origin <branch name>
 
    .. note::
      Note that the above approach uses HTTPS as the transfer protocol
-     between your machine and BitBucket.  If you prefer to use SSH - or
+     between your machine and GitHub.  If you prefer to use SSH - or
      perhaps you're behind a proxy that doesn't play well with SSL via
-     HTTPS - you may want to set up an `SSH key`_ on BitBucket.  Then, you use
-     the syntax ``ssh://hg@bitbucket.org/YourUsername/grackle``, or equivalent,
-     in place of ``https://bitbucket.org/YourUsername/grackle`` in Mercurial
-     commands. For consistency, all commands we list in this document use the
-     HTTPS protocol.
+     HTTPS - you may want to set up an `SSH key
+     <https://help.github.com/articles/connecting-to-github-with-ssh/>`__
+     on GitHub.  Then, you use
+     the syntax ``ssh://git@github.com/<USER>/grackle``, or equivalent, in
+     place of ``https://github.com/<USER>/grackle`` in git commands.
+     For consistency, all commands we list in this document will use the HTTPS
+     protocol.
 
-     .. _SSH key: https://confluence.atlassian.com/display/BITBUCKET/Set+up+SSH+for+Mercurial
-
-#. Issue a pull request at
-   https://bitbucket.org/YourUsername/grackle/pull-request/new
-   A pull request is an automated way of asking people to review and accept the
-   modifications you have made to your personal version of the code.
+#. Issue a pull request by going to the main repository and clicking on the
+   green button that says **Compare & pull request**. This will open up a page
+   that will allow you to enter a description of the changes to be merged. Once
+   submitted, a series of automated tests will run and their status will be
+   reported on the pull request page.
 
 During the course of your pull request you may be asked to make changes.  These
 changes may be related to style issues, correctness issues, or requesting
@@ -214,10 +167,53 @@ tests.  The process for responding to pull request code review is relatively
 straightforward.
 
 #. Make requested changes, or leave a comment on the pull request page on
-   Bitbucket indicating why you don't think they should be made.
+   GitHub indicating why you don't think they should be made.
 #. Commit those changes to your local repository.
-#. Push the changes to your fork:
+#. Push the changes to your fork::
 
-      hg push https://bitbucket.org/YourUsername/grackle/
+      $ git push origin <branch name>
 
 #. Your pull request will be automatically updated.
+
+Once your pull request has been accepted, you can safely delete your
+branch::
+
+      $ git branch --delete <branch name>
+
+Updating Your Branch
+++++++++++++++++++++
+
+If your branch or pull request has been open for some time, it may be useful
+to keep it up to date with the latest changes from the main repository. This
+can be done by `rebasing your changes <https://git-scm.com/docs/git-rebase>`__.
+Before doing this, you will need to be able to pull the latest changes from
+the main repository.
+
+#. Add the main repository as a remote::
+
+      $ git remote add grackle https://github.com/grackle-project/grackle
+
+   You can verify that it has been added by doing ``git remote -v``. This
+   only needs to be done once.
+
+#. Go back to the master branch and pull the changes::
+
+      $ git checkout master
+      $ git pull grackle master
+
+#. Return to your branch and rebase your changes onto the head of the master
+   branch::
+
+      $ git checkout <branch name>
+      $ git rebase master
+
+This should go smoothly unless changes have been made to the same lines in
+the source, in which case you will need to fix conflicts. After rebasing,
+you will get an error when trying to push your branch to your fork. This is
+because you have changed the order of commits and git does not like that.
+In this case, you will need to add "-f" to your push command to force
+the changes to be accepted.::
+
+      $ git push -f origin <branch name>
+
+Have fun!
