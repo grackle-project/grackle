@@ -3,6 +3,7 @@ sudo: false
 cache:
   directories:
     - $HOME/.ccache  # https://github.com/travis-ci/travis-ci/issues/5853
+    - $YT_DATA_DIR
   pip: true
 
 addons:
@@ -22,12 +23,15 @@ before_install:
   - |
     echo "backend : Agg" > $HOME/matplotlibrc
     export MATPLOTLIBRC=$HOME
-    # Download test data
-    mkdir -p $YT_DATA_DIR
-    pushd $YT_DATA_DIR
-    wget --quiet http://yt-project.org/data/IsolatedGalaxy.tar.gz
-    tar xzf IsolatedGalaxy.tar.gz
-    popd
+    if [ ! -d $YT_DATA_DIR/IsolatedGalaxy ]; then
+      # Download test data
+      mkdir -p $YT_DATA_DIR
+      pushd $YT_DATA_DIR
+      wget --quiet http://yt-project.org/data/IsolatedGalaxy.tar.gz
+      tar xzf IsolatedGalaxy.tar.gz
+      rm IsolatedGalaxy.tar.gz
+      popd
+    fi
 
 install:
   - |
