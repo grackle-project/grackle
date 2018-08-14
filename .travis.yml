@@ -77,6 +77,25 @@ jobs:
       python: 3.6
       script: py.test python/tests
 
+    - stage: docs
+      name: "docs build test"
+      python: 3.6
+      before_install: skip
+      install:
+        - |
+          # setup environment
+          ccache -s
+          # Upgrade pip and setuptools and wheel to get clean install
+          pip install --upgrade pip
+          pip install --upgrade wheel
+          pip install --upgrade setuptools
+          # Install dependencies
+          pip install sphinx
+      script:
+        - |
+          cd doc/source
+          python -m sphinx -M html "." "_build" -W
+
     - stage: omp
       name: "Code example tests with OpenMP"
       python: 3.6
@@ -89,3 +108,4 @@ jobs:
 stages:
   - tests
   - omp
+  - docs
