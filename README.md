@@ -1,3 +1,9 @@
+# Grackle
+
+[![Users' Mailing List](https://img.shields.io/badge/Users-List-lightgrey.svg)](https://groups.google.com/forum/#!forum/grackle-cooling-users)
+[![Build Status](https://travis-ci.org/grackle-project/grackle.svg?branch=master)](https://travis-ci.org/grackle-project/grackle)
+[![Documentation Status](https://readthedocs.org/projects/grackle/badge/?version=latest)](https://grackle.readthedocs.io/en/latest/?badge=latest)
+
 Welcome to the grackle chemistry and cooling library for astrophysical 
 simulations!
 
