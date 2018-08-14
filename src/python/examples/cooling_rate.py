@@ -40,10 +40,9 @@ if __name__ == "__main__":
     my_chemistry.UVbackground = 1
     my_chemistry.self_shielding_method = 0
     my_chemistry.H2_self_shielding = 0
-    grackle_dir = os.path.dirname(os.path.dirname(os.path.dirname(
-        os.path.dirname(os.path.abspath(__file__)))))
-    my_chemistry.grackle_data_file = os.sep.join(
-        [grackle_dir, "input", "CloudyData_UVB=HM2012.h5"])
+    my_dir = os.path.dirname(os.path.abspath(__file__))
+    my_chemistry.grackle_data_file = os.path.join(
+        my_dir, "..", "..", "..", "input", "CloudyData_UVB=HM2012.h5")
 
     my_chemistry.use_specific_heating_rate = 1
     my_chemistry.use_volumetric_heating_rate = 1
