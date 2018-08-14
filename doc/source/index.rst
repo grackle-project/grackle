@@ -45,22 +45,18 @@ Contents:
    Reference.rst
    Python.rst
    Conduct.rst
-   Contributing.rst           
+   Contributing.rst
+   Help.rst
 
-Help
-----
-
-If you have any questions, please join the `Grackle Users Google Group
-<https://groups.google.com/forum/#!forum/grackle-cooling-users>`_.  Feel 
-free to post any questions or ideas for development.
+.. include:: Help.rst
 
 Contributing
 ------------
 
-Development of Grackle happens in the open on Bitbucket `here
-<https://bitbucket.org/grackle/grackle>`_.  We welcome new contributors.
-Please, see the :ref:`conduct`.  For a guide to developing Grackle, see
-:ref:`contributing-code`.
+Development of Grackle happens in the open on GitHub `here
+<https://github.com/grackle-project/grackle>`__.  We welcome new
+contributors. Please, see the :ref:`conduct`.  For a guide to developing
+Grackle, see :ref:`contributing-code`.
 
 Citing grackle
 --------------
