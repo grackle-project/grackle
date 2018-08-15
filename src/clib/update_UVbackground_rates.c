@@ -33,11 +33,11 @@ int update_UVbackground_rates(chemistry_data *my_chemistry,
       my_chemistry->primordial_chemistry == 0)
     return SUCCESS;
 
-  /* Return if redshift is outside of table (rates should be all zero). */
+  /* Return if redshift is outside of on/off redshifts. */
 
   double Redshift = 1.0 / (my_units->a_value * my_units->a_units) - 1;
-  if ( (Redshift < my_rates->UVbackground_table.zmin) ||
-       (Redshift > my_rates->UVbackground_table.zmax) )
+  if ( (Redshift < my_chemistry->UVbackground_redshift_off) ||
+       (Redshift > my_chemistry->UVbackground_redshift_on) )
     return SUCCESS;
 
   /* ------------------------------------------------------------------ */
