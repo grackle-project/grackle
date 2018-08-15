@@ -1,9 +1,15 @@
 Help
 ----
 
+Mailing List
+~~~~~~~~~~~~
+
 If you have any questions, please join the `Grackle Users Google Group
 <https://groups.google.com/forum/#!forum/grackle-cooling-users>`_.  Feel
 free to post any questions or ideas for development.
+
+Slack Channel
+~~~~~~~~~~~~~
 
 We also use `Slack <https://slack.com/>`__ for lower latency discussions.
 If you'd like help in real time, this is the place.
