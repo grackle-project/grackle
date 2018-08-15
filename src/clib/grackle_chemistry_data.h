@@ -177,13 +177,13 @@ typedef struct
     double *k31;
 
     double *piHI;
-    double *piHeII;
     double *piHeI;
+    double *piHeII;
 
     // spectrum averaged absorption cross sections
     double *crsHI;
-    double *crsHeII;
     double *crsHeI;
+    double *crsHeII;
 
 } UVBtable;
 
@@ -357,13 +357,13 @@ typedef struct
     double k31;
 
     double piHI;
-    double piHeII;
     double piHeI;
+    double piHeII;
 
     // spectrum averaged absorption cross sections
     double crsHI;
-    double crsHeII;
     double crsHeI;
+    double crsHeII;
 
     // X-ray compton heating coefficient
     double comp_xray;
