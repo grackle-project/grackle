@@ -94,12 +94,37 @@ int _calculate_cooling_time(chemistry_data *my_chemistry,
   /* Update UV background rates. */
   photo_rate_storage my_uvb_rates;
 
+  my_uvb_rates.k24 = my_uvb_rates.k25 = my_uvb_rates.k26 =
+    my_uvb_rates.k27 = my_uvb_rates.k28 = my_uvb_rates.k29 =
+    my_uvb_rates.k30 = my_uvb_rates.k31 = my_uvb_rates.piHI =
+    my_uvb_rates.piHeI = my_uvb_rates.piHeII = my_uvb_rates.crsHI =
+    my_uvb_rates.crsHeI = my_uvb_rates.crsHeII =
+    my_uvb_rates.comp_xray = my_uvb_rates.temp_xray = 0.;
+
   if (my_chemistry->UVbackground == 1) {
     if (update_UVbackground_rates(my_chemistry, my_rates,
                                   &my_uvb_rates, my_units) == FAIL) {
       fprintf(stderr, "Error in update_UVbackground_rates.\n");
       return FAIL;
     }
+  }
+  else {
+    my_uvb_rates.k24       = my_rates->k24;
+    my_uvb_rates.k25       = my_rates->k25;
+    my_uvb_rates.k26       = my_rates->k26;
+    my_uvb_rates.k27       = my_rates->k27;
+    my_uvb_rates.k28       = my_rates->k28;
+    my_uvb_rates.k29       = my_rates->k29;
+    my_uvb_rates.k30       = my_rates->k30;
+    my_uvb_rates.k31       = my_rates->k31;
+    my_uvb_rates.piHI      = my_rates->piHI;
+    my_uvb_rates.piHeI     = my_rates->piHeI;
+    my_uvb_rates.piHeII    = my_rates->piHeII;
+    my_uvb_rates.crsHI     = my_rates->crsHI;
+    my_uvb_rates.crsHeI    = my_rates->crsHeI;
+    my_uvb_rates.crsHeII   = my_rates->crsHeII;
+    my_uvb_rates.comp_xray = my_rates->comp_xray;
+    my_uvb_rates.temp_xray = my_rates->temp_xray;
   }
 
   /* Check for a metal field. */
