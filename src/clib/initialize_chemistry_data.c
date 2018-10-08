@@ -227,9 +227,11 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
     my_rates->piHI = 0;
     my_rates->piHeII = 0;
     my_rates->piHeI = 0;
-    my_rates->hi_avg_crs   = 0.0;
-    my_rates->heii_avg_crs = 0.0;
-    my_rates->hei_avg_crs  = 0.0;
+    my_rates->crsHI = 0;
+    my_rates->crsHeI = 0;
+    my_rates->crsHeII = 0;
+    my_rates->comp_xray = 0;
+    my_rates->temp_xray = 0;
 
   }
 
@@ -303,8 +305,6 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
   }
 
   /* Initialize UV Background data. */
-  my_rates->comp_xray                 = 0;
-  my_rates->temp_xray                 = 0;
   my_rates->UVbackground_table.Nz     = 0;
   my_rates->UVbackground_table.z      = NULL;
   my_rates->UVbackground_table.k24    = NULL;

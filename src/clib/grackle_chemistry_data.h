@@ -157,16 +157,19 @@ typedef struct
  *** UVbackground table storage ***
  **********************************/
 
-typedef struct{
+typedef struct
+{
 
     long long Nz;
 
     double zmin, zmax;    
     double *z;
 
+    /* Radiative rates for 6-species. */
     double *k24;
     double *k25;
     double *k26;
+    /* Radiative rates for 9-species. */
     double *k27;
     double *k28;
     double *k29;
@@ -174,13 +177,13 @@ typedef struct{
     double *k31;
 
     double *piHI;
-    double *piHeII;
     double *piHeI;
+    double *piHeII;
 
     // spectrum averaged absorption cross sections
     double *crsHI;
-    double *crsHeII;
     double *crsHeI;
+    double *crsHeII;
 
 } UVBtable;
 
@@ -284,6 +287,11 @@ typedef struct
   double piHeI;                   //    (no temperature dependance)
   double piHeII;
 
+  // spectrum averaged absorption cross sections
+  double crsHI;
+  double crsHeI;
+  double crsHeII;
+
   /* 9 species rates (including H2) 
        The first five are for the Lepp & Shull rates.
        The next two are for the (better) Galli & Palla 1999 rates. 
@@ -328,11 +336,40 @@ typedef struct
   /* New/old cloudy data flag */
   int cloudy_data_new;
 
-  /* gray averaged cross sections for UVB self shielding */
-  double hi_avg_crs;
-  double heii_avg_crs;
-  double hei_avg_crs;
-
 } chemistry_data_storage;
+
+/**************************
+ *** photo-rate storage ***
+ **************************/
+
+typedef struct
+{
+
+    /* Radiative rates for 6-species. */
+    double k24;
+    double k25;
+    double k26;
+    /* Radiative rates for 9-species. */
+    double k27;
+    double k28;
+    double k29;
+    double k30;
+    double k31;
+
+    double piHI;
+    double piHeI;
+    double piHeII;
+
+    // spectrum averaged absorption cross sections
+    double crsHI;
+    double crsHeI;
+    double crsHeII;
+
+    // X-ray compton heating coefficient
+    double comp_xray;
+    // X-ray compton heating temperature (K)
+    double temp_xray;
+
+} photo_rate_storage;
 
 #endif
