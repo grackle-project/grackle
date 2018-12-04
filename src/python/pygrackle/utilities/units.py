@@ -17,7 +17,7 @@ def set_cosmology_units(my_units, hubble_constant=0.704,
                         omega_matter=0.268, omega_lambda=0.732,
                         current_redshift=0.0, initial_redshift=0.0,
                         comoving_box_size=1.0):
-    """
+    r"""
     Set cosmological units like Enzo.
 
     Greg Bryan's note on cosmology units:
