@@ -671,8 +671,8 @@ c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 fo
 
                if (tgas(i) .le. 1.01_DKIND*temstart .and.
      &              edot(i) .lt. 0._DKIND) 
-     &              edot(i) = tiny8
-	       if (abs(edot(i)) .lt. tiny8) edot(i) = tiny8
+     &              edot(i) = 0._DKIND
+	       if (abs(edot(i)) .lt. tiny8) edot(i) = 0._DKIND
 
 !              Compute timestep for 10% change
 
