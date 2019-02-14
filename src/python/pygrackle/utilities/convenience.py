@@ -54,6 +54,8 @@ def setup_fluid_container(my_chemistry,
     increasing temperature from 10 K to 1e9 K.  Optionally, iterate the
     chemistry solver until the species fractions converge.  Return
     the fluid container.
+
+    The input are expected to be in CGS.
     """
 
     rval = my_chemistry.initialize()
