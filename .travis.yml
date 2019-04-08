@@ -46,7 +46,7 @@ install:
     # Install Grackle
     ./configure
     cd src/clib
-    make machine-linux-gnu
+    make machine-travis-ci
     if [[ $TRAVIS_BUILD_STAGE_NAME = "Omp" ]]; then
       make omp-on
     fi
