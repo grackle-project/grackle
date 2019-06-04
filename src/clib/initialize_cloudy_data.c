@@ -315,9 +315,12 @@ int initialize_cloudy_data(chemistry_data *my_chemistry,
 }
 
 int _free_cloudy_data(cloudy_data *my_cloudy, chemistry_data *my_chemistry, int primordial) {
-  for(int i = 0; i < my_cloudy->grid_rank; i++) {
+  int i;
+
+  for(i = 0; i < my_cloudy->grid_rank; i++) {
     GRACKLE_FREE(my_cloudy->grid_parameters[i]);
   }
+
   GRACKLE_FREE(my_cloudy->grid_parameters);
   GRACKLE_FREE(my_cloudy->grid_dimension);
   GRACKLE_FREE(my_cloudy->cooling_data);
