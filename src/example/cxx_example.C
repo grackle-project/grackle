@@ -232,7 +232,7 @@ int main(int argc, char *argv[])
 
   fprintf(stderr, "gamma = %le.\n", gamma[0]);
 
-  free_chemistry_data(my_grackle_data, &grackle_rates);
+  _free_chemistry_data(my_grackle_data, &grackle_rates);
 
   return EXIT_SUCCESS;
 }

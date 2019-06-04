@@ -34,7 +34,7 @@ void auto_show_flags(FILE *fp);
 void auto_show_version(FILE *fp);
 void show_parameters(FILE *fp, chemistry_data *my_chemistry);
 
-int free_cloudy_data(cloudy_data *my_cloudy, chemistry_data *my_chemistry, int primordial);
+int _free_cloudy_data(cloudy_data *my_cloudy, chemistry_data *my_chemistry, int primordial);
 int initialize_cloudy_data(chemistry_data *my_chemistry,
                            chemistry_data_storage *my_rates,
                            cloudy_data *my_cloudy, char *group_name,
@@ -434,8 +434,8 @@ void show_parameters(FILE *fp, chemistry_data *my_chemistry)
 }
 
 
-int free_chemistry_data(chemistry_data *my_chemistry,
-			chemistry_data_storage *my_rates) {
+int _free_chemistry_data(chemistry_data *my_chemistry,
+			 chemistry_data_storage *my_rates) {
   if (my_chemistry->primordial_chemistry > 0) {
     GRACKLE_FREE(my_rates->ceHI);
     GRACKLE_FREE(my_rates->ceHeI);
@@ -509,8 +509,8 @@ int free_chemistry_data(chemistry_data *my_chemistry,
 
 
 
-  free_cloudy_data(&my_rates->cloudy_primordial, my_chemistry, /* primordial */ 1);
-  free_cloudy_data(&my_rates->cloudy_metal, my_chemistry, /* primordial */ 0);
+  _free_cloudy_data(&my_rates->cloudy_primordial, my_chemistry, /* primordial */ 1);
+  _free_cloudy_data(&my_rates->cloudy_metal, my_chemistry, /* primordial */ 0);
   
   GRACKLE_FREE(my_rates->UVbackground_table.z);
   GRACKLE_FREE(my_rates->UVbackground_table.k24);
