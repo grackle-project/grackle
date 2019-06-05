@@ -19,6 +19,14 @@
 /
 ************************************************************************/
 
+#define GRACKLE_FREE(p)				\
+  {						\
+    if (p != NULL) {				\
+      free(p);					\
+      p = NULL;					\
+    }						\
+  }						\
+
 #ifdef CONFIG_THROW_ABORT
 #define GRACKLE_FAIL(A) raise(SIGABRT);
 #define GRACKLE_VFAIL(A, ...) raise(SIGABRT);

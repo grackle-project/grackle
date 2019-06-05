@@ -34,6 +34,7 @@ void auto_show_flags(FILE *fp);
 void auto_show_version(FILE *fp);
 void show_parameters(FILE *fp, chemistry_data *my_chemistry);
 
+int _free_cloudy_data(cloudy_data *my_cloudy, chemistry_data *my_chemistry, int primordial);
 int initialize_cloudy_data(chemistry_data *my_chemistry,
                            chemistry_data_storage *my_rates,
                            cloudy_data *my_cloudy, char *group_name,
@@ -430,4 +431,108 @@ void show_parameters(FILE *fp, chemistry_data *my_chemistry)
   fprintf(fp, "omp_nthreads                      = %d\n",
           my_chemistry->omp_nthreads);
 # endif
+}
+
+
+int _free_chemistry_data(chemistry_data *my_chemistry,
+			 chemistry_data_storage *my_rates) {
+  if (my_chemistry->primordial_chemistry > 0) {
+    GRACKLE_FREE(my_rates->ceHI);
+    GRACKLE_FREE(my_rates->ceHeI);
+    GRACKLE_FREE(my_rates->ceHeII);
+    GRACKLE_FREE(my_rates->ciHI);
+    GRACKLE_FREE(my_rates->ciHeI);
+    GRACKLE_FREE(my_rates->ciHeIS);
+    GRACKLE_FREE(my_rates->ciHeII);
+    GRACKLE_FREE(my_rates->reHII);
+    GRACKLE_FREE(my_rates->reHeII1);
+    GRACKLE_FREE(my_rates->reHeII2);
+    GRACKLE_FREE(my_rates->reHeIII);
+    GRACKLE_FREE(my_rates->brem);
+    GRACKLE_FREE(my_rates->hyd01k);
+    GRACKLE_FREE(my_rates->h2k01);
+    GRACKLE_FREE(my_rates->vibh);
+    GRACKLE_FREE(my_rates->roth);
+    GRACKLE_FREE(my_rates->rotl);
+    GRACKLE_FREE(my_rates->GP99LowDensityLimit);
+    GRACKLE_FREE(my_rates->GP99HighDensityLimit);
+
+    GRACKLE_FREE(my_rates->HDlte);
+    GRACKLE_FREE(my_rates->HDlow);
+    GRACKLE_FREE(my_rates->cieco);
+    GRACKLE_FREE(my_rates->GAHI);
+    GRACKLE_FREE(my_rates->GAH2);
+    GRACKLE_FREE(my_rates->GAHe);
+    GRACKLE_FREE(my_rates->GAHp);
+    GRACKLE_FREE(my_rates->GAel);
+    GRACKLE_FREE(my_rates->H2LTE);
+    GRACKLE_FREE(my_rates->gas_grain);
+
+    GRACKLE_FREE(my_rates->k1);
+    GRACKLE_FREE(my_rates->k2);
+    GRACKLE_FREE(my_rates->k3);
+    GRACKLE_FREE(my_rates->k4);
+    GRACKLE_FREE(my_rates->k5);
+    GRACKLE_FREE(my_rates->k6);
+    GRACKLE_FREE(my_rates->k7);
+    GRACKLE_FREE(my_rates->k8);
+    GRACKLE_FREE(my_rates->k9);
+    GRACKLE_FREE(my_rates->k10);
+    GRACKLE_FREE(my_rates->k11);
+    GRACKLE_FREE(my_rates->k12);
+    GRACKLE_FREE(my_rates->k13);
+    GRACKLE_FREE(my_rates->k13dd);
+    GRACKLE_FREE(my_rates->k14);
+    GRACKLE_FREE(my_rates->k15);
+    GRACKLE_FREE(my_rates->k16);
+    GRACKLE_FREE(my_rates->k17);
+    GRACKLE_FREE(my_rates->k18);
+    GRACKLE_FREE(my_rates->k19);
+    GRACKLE_FREE(my_rates->k20);
+    GRACKLE_FREE(my_rates->k21);
+    GRACKLE_FREE(my_rates->k22);
+    GRACKLE_FREE(my_rates->k23);
+    GRACKLE_FREE(my_rates->k50);
+    GRACKLE_FREE(my_rates->k51);
+    GRACKLE_FREE(my_rates->k52);
+    GRACKLE_FREE(my_rates->k53);
+    GRACKLE_FREE(my_rates->k54);
+    GRACKLE_FREE(my_rates->k55);
+    GRACKLE_FREE(my_rates->k56);
+    GRACKLE_FREE(my_rates->k57);
+    GRACKLE_FREE(my_rates->k58);
+    GRACKLE_FREE(my_rates->h2dust);
+    GRACKLE_FREE(my_rates->n_cr_n);
+    GRACKLE_FREE(my_rates->n_cr_d1);
+    GRACKLE_FREE(my_rates->n_cr_d2);
+  }
+
+
+
+  _free_cloudy_data(&my_rates->cloudy_primordial, my_chemistry, /* primordial */ 1);
+  _free_cloudy_data(&my_rates->cloudy_metal, my_chemistry, /* primordial */ 0);
+  
+  GRACKLE_FREE(my_rates->UVbackground_table.z);
+  GRACKLE_FREE(my_rates->UVbackground_table.k24);
+  GRACKLE_FREE(my_rates->UVbackground_table.k25);
+  GRACKLE_FREE(my_rates->UVbackground_table.k26);
+
+  if (my_chemistry->primordial_chemistry > 1) {
+    GRACKLE_FREE(my_rates->UVbackground_table.k27);
+    GRACKLE_FREE(my_rates->UVbackground_table.k28);
+    GRACKLE_FREE(my_rates->UVbackground_table.k29);
+    GRACKLE_FREE(my_rates->UVbackground_table.k30);
+    GRACKLE_FREE(my_rates->UVbackground_table.k31);
+  }
+
+  GRACKLE_FREE(my_rates->UVbackground_table.piHI);
+  GRACKLE_FREE(my_rates->UVbackground_table.piHeII);
+  GRACKLE_FREE(my_rates->UVbackground_table.piHeI);
+
+  if (my_chemistry->self_shielding_method > 0){    
+    GRACKLE_FREE(my_rates->UVbackground_table.crsHI);
+    GRACKLE_FREE(my_rates->UVbackground_table.crsHeII);
+    GRACKLE_FREE(my_rates->UVbackground_table.crsHeI);
+  }
+
 }

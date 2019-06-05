@@ -153,4 +153,6 @@ int _calculate_temperature(chemistry_data *my_chemistry,
                            gr_float *e_density, gr_float *metal_density,
                            gr_float *temperature);
 
+int _free_chemistry_data(chemistry_data *my_chemistry, chemistry_data_storage *my_rates);
+
 #endif

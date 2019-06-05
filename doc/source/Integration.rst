@@ -626,3 +626,12 @@ Calculating the Gamma Field
     fprintf(stderr, "Error in calculate_gamma.\n");
     return EXIT_FAILURE;
   }
+
+Cleaning the memory
+-------------------
+
+.. code-block:: c++
+
+  _free_chemistry_data(my_grackle_data, &grackle_rates);
+
+Grackle is using global structures and therefore the global structure ``grackle_rates`` needs also to be released.
