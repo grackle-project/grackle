@@ -81,7 +81,7 @@
      &        HM(in,jn,kn),  H2I(in,jn,kn), H2II(in,jn,kn),
      &        DI(in,jn,kn),  DII(in,jn,kn), HDI(in,jn,kn),
      &        metal(in,jn,kn), Vheat(in,jn,kn), Mheat(in,jn,kn),
-     &        photogamma(in,jn,kn), tauart(in,jn,kn), betaart(in,jn,kn)  !tauart betaart CYNTHIA 
+     &        photogamma(in,jn,kn), tauart(in,jn,kn), betaart(in,jn,kn) 
       real*8  hyd01ka(nratec), h2k01a(nratec), vibha(nratec), 
      &        rotha(nratec), rotla(nratec), gpldla(nratec),
      &        gphdla(nratec), hdltea(nratec), hdlowa(nratec),
@@ -119,7 +119,7 @@
       parameter (mh = mass_h)      !DPC
       parameter (mu_metal = 16._DKIND)    ! approx. mean molecular weight of metals
       parameter (ti_max = 20)
-      parameter (nth = 1e10_DKIND)  ! CYNTHIA
+      parameter (nth = 1e10_DKIND) 
 
 !  Locals
 
@@ -981,7 +981,7 @@ c              endif
       endif
 
 
-!!           CYNTHIA
+
       do i = is+1, ie+1
          if ( itmask(i) ) then
             tauart(i,j,k) = (HI(i,j,k)/nth)**2  
@@ -990,7 +990,7 @@ c              endif
          end if
       enddo
 
-!!          CYNTHIA
+
 
 
 !     Set tgasold
