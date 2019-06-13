@@ -81,7 +81,7 @@
      &        HM(in,jn,kn),  H2I(in,jn,kn), H2II(in,jn,kn),
      &        DI(in,jn,kn),  DII(in,jn,kn), HDI(in,jn,kn),
      &        metal(in,jn,kn), Vheat(in,jn,kn), Mheat(in,jn,kn),
-     &        photogamma(in,jn,kn)
+     &        photogamma(in,jn,kn), tauart(in,jn,kn), betaart(in,jn,kn)  !tauart betaart CYNTHIA 
       real*8  hyd01ka(nratec), h2k01a(nratec), vibha(nratec), 
      &        rotha(nratec), rotla(nratec), gpldla(nratec),
      &        gphdla(nratec), hdltea(nratec), hdlowa(nratec),
@@ -115,10 +115,11 @@
 !  Parameters
 
       integer ti_max
-      real*8 mh, mu_metal
+      real*8 mh, mu_metal, nth
       parameter (mh = mass_h)      !DPC
       parameter (mu_metal = 16._DKIND)    ! approx. mean molecular weight of metals
       parameter (ti_max = 20)
+      parameter (nth = 1e10_DKIND)  ! CYNTHIA
 
 !  Locals
 
@@ -136,8 +137,8 @@
       integer*8 indixe(in)
       real*8 t1(in), t2(in), logtem(in), tdef(in), p2d(in),
      &       tgas(in), tgasold(in), mmw(in), tdust(in), rhoH(in),
-     &       nh(in), metallicity(in), edot(in)
-
+     &       nh(in), metallicity(in), edot(in)  
+ 
 !  Cooling/heating slice locals
 
       real*8 ceHI(in), ceHeI(in), ceHeII(in),
@@ -978,6 +979,19 @@ c              endif
       enddo
 
       endif
+
+
+!!           CYNTHIA
+      do i = is+1, ie+1
+         if ( itmask(i) ) then
+            tauart(i,j,k) = (HI(i,j,k)/nth)**2  
+            betaart(i,j,k) =(1._DKIND-exp(-tauart(i,j,k)))/tauart(i,j,k)
+            edot(i) = edot(i)*betaart(i,j,k)
+         end if
+      enddo
+
+!!          CYNTHIA
+
 
 !     Set tgasold
 
