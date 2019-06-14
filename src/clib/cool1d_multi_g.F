@@ -981,12 +981,12 @@ c              endif
       endif
 
 
-!
+
       do i = is+1, ie+1
          if ( itmask(i) ) then
-            tauart(i,j,k) = (HI(i,j,k)*dom/nth)**2  
-            betaart(i,j,k) =(1._DKIND-exp(-tauart(i,j,k)))/tauart(i,j,k)
-            edot(i) = edot(i)*betaart(i,j,k)
+            tauart(i) = (HI(i,j,k)*dom/nth)**2  
+            betaart(i) =(1._DKIND-exp(-tauart(i)))/tauart(i)
+            edot(i) = edot(i)*betaart(i)
          end if
       enddo
 
