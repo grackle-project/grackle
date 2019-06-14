@@ -217,6 +217,11 @@ For all on/off integer flags, 0 is off and 1 is on.
    <https://ui.adsabs.harvard.edu/abs/1998ApJ...507..732B/abstract>`_
    multiplied by 2 for the mass of Deuterium).
 
+.. c:var:: float SolarMetalFractionByMass
+
+   The fraction of total gas mass in metals for a solar composition.
+   Default: 0.01295 (consistent with the default abundances in the Cloudy code).
+
 .. c:var:: int use_volumetric_heating_rate
 
    Flag to signal that an array of volumetric heating rates is being
