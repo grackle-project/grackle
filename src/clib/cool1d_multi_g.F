@@ -81,7 +81,7 @@
      &        HM(in,jn,kn),  H2I(in,jn,kn), H2II(in,jn,kn),
      &        DI(in,jn,kn),  DII(in,jn,kn), HDI(in,jn,kn),
      &        metal(in,jn,kn), Vheat(in,jn,kn), Mheat(in,jn,kn),
-     &        photogamma(in,jn,kn), tauart(in,jn,kn), betaart(in,jn,kn) 
+     &        photogamma(in,jn,kn) 
       real*8  hyd01ka(nratec), h2k01a(nratec), vibha(nratec), 
      &        rotha(nratec), rotla(nratec), gpldla(nratec),
      &        gphdla(nratec), hdltea(nratec), hdlowa(nratec),
@@ -144,7 +144,7 @@
       real*8 ceHI(in), ceHeI(in), ceHeII(in),
      &       ciHI(in), ciHeI(in), ciHeIS(in), ciHeII(in),
      &       reHII(in), reHeII1(in), reHeII2(in), reHeIII(in),
-     &       brem(in), cieco(in),
+     &       brem(in), cieco(in), tauart(in), betaart(in),
      &       hyd01k(in), h2k01(in), vibh(in), roth(in), rotl(in),
      &       gpldl(in), gphdl(in), hdlte(in), hdlow(in),
      &       gaHI(in), gaH2(in), gaHe(in), gaHp(in), gael(in),
@@ -981,10 +981,10 @@ c              endif
       endif
 
 
-
+!
       do i = is+1, ie+1
          if ( itmask(i) ) then
-            tauart(i,j,k) = (HI(i,j,k)/nth)**2  
+            tauart(i,j,k) = (HI(i,j,k)*dom/nth)**2  
             betaart(i,j,k) =(1._DKIND-exp(-tauart(i,j,k)))/tauart(i,j,k)
             edot(i) = edot(i)*betaart(i,j,k)
          end if
