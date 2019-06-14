@@ -197,6 +197,26 @@ For all on/off integer flags, 0 is off and 1 is on.
    & Rees (2000) <http://adsabs.harvard.edu/abs/2000ApJ...534...11H>`_.
    Default: 0.
 
+.. c:var:: float HydrogenFractionByMass
+
+   The fraction by mass of Hydrogen in the metal-free portion of the
+   gas (i.e., just the H and He). In the non-equilibrium solver, this is
+   used to ensure consistency in the densities of the individual species.
+   In tabulated mode, this is used to calculate the H number density from
+   the total gas density, which is a parameter of the heating/cooling tables.
+   When using the non-equilibrium solver, a sensible default is 0.76.
+   However, the tables for tabulated mode were created assuming
+   n\ :sub:`He`/n\ :sub:`H` = 0.1, which corresponds to an H mass fraction of
+   about 0.716. When running in tabulated mode, this parameter will automatically
+   be changed to this value. Default: 0.76.
+
+.. c:var:: float DeuteriumToHydrogenRatio
+
+   The ratio by mass of Deuterium to Hydrogen. Default: 6.8e-5 (the value
+   from `Burles & Tytler (1998)
+   <https://ui.adsabs.harvard.edu/abs/1998ApJ...507..732B/abstract>`_
+   multiplied by 2 for the mass of Deuterium).
+
 .. c:var:: int use_volumetric_heating_rate
 
    Flag to signal that an array of volumetric heating rates is being
