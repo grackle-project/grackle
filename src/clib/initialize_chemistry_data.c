@@ -140,6 +140,15 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
     return FAIL;
   }
 
+  if (my_chemistry->primordial_chemistry == 0) {
+    /* In fully tabulated mode, set H mass fraction according to
+       the abundances in Cloudy, which assumes n_He / n_H = 0.1.
+       This gives a value of about 0.716. Using the default value
+       of 0.76 will result in negative electron densities at low
+       temperature. Below, we set X = 1 / (1 + m_He * n_He / n_H). */
+    my_chemistry->HydrogenFractionByMass = 1. / (1. + 0.1 * 3.971);
+  }
+
   /* Allocate CoolData space for rates. */
 
   if (my_chemistry->primordial_chemistry > 0) {

@@ -887,6 +887,7 @@ c  new (correct) way: (april 4, 2007)
      &                 (d(i,j,k) * mu_metal)
                endif
                myde = d(i,j,k) * myde / mmw(i)
+               myde = max(myde, 0._DKIND)
 
                edot(i) = edot(i) 
      &              - comp1*(tgas(i)-comp2)*myde*dom_inv
