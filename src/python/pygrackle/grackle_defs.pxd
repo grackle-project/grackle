@@ -10,6 +10,7 @@ cdef extern from "grackle_chemistry_data.h":
         int primordial_chemistry
         int metal_cooling
         int h2_on_dust
+        int use_dust_density_field
         int cmb_temperature_floor
         char *grackle_data_file
         int three_body_rate
@@ -19,6 +20,7 @@ cdef extern from "grackle_chemistry_data.h":
         int CaseBRecombination
         int UVbackground
         double SolarMetalFractionByMass
+        double local_dust_fraction_by_mass
         int use_volumetric_heating_rate
         int use_specific_heating_rate
         int use_radiative_transfer
@@ -83,6 +85,7 @@ cdef extern from "grackle.h":
                 gr_float *HDI_density,
                 gr_float *e_density,
                 gr_float *metal_density,
+                gr_float *dust_density,
                 gr_float *volumetric_heating_rate,
                 gr_float *specific_heating_rate,
                 gr_float *RT_heating_rate,
@@ -118,6 +121,7 @@ cdef extern from "grackle.h":
                 gr_float *HDI_density,
                 gr_float *e_density,
                 gr_float *metal_density,
+                gr_float *dust_density,
                 gr_float *cooling_time,
                 gr_float *RT_heating_rate,
                 gr_float *volumetric_heating_rate,
