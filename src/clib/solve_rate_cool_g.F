@@ -6,11 +6,11 @@
       subroutine solve_rate_cool_g(icool, d, e, u, v, w, de,
      &                HI, HII, HeI, HeII, HeIII,
      &                in, jn, kn, nratec, iexpand, 
-     &                ispecies, imetal, imcool, idust, idim,
+     &                ispecies, imetal, imcool, idust, ifdust, idim,
      &                is, js, ks, ie, je, ke, ih2co, ipiht, igammah,
      &                dx, dt, aye, temstart, temend, 
      &                utem, uxyz, uaye, urho, utim,
-     &                gamma, fh, dtoh, z_solar,
+     &                gamma, fh, dtoh, z_solar, fgr,
      &                k1a, k2a, k3a, k4a, k5a, k6a, k7a, k8a, k9a, k10a,
      &                k11a, k12a, k13a, k13dda, k14a, k15a,
      &                k16a, k17a, k18a, k19a, k22a,
@@ -23,7 +23,7 @@
      &                ciHeISa, ciHeIIa, reHIIa, reHeII1a, 
      &                reHeII2a, reHeIIIa, brema, compa, gammaha,
      &                comp_xraya, comp_temp, piHI, piHeI, piHeII,
-     &                HM, H2I, H2II, DI, DII, HDI, metal,
+     &                HM, H2I, H2II, DI, DII, HDI, metal, dust,
      &                hyd01ka, h2k01a, vibha, rotha, rotla, 
      &                gpldla, gphdla, hdltea, hdlowa,
      &                gaHIa, gaH2a, gaHea, gaHpa, gaela, 
@@ -71,6 +71,8 @@
 !    HM       - H- density field
 !    H2I      - H_2 (molecular H) density field
 !    H2II     - H_2+ density field
+!    metal    - metal density field
+!    dust     - dust density field
 !    kph*     - photoionization fields
 !    gamma*   - photoheating fields
 !
@@ -81,6 +83,7 @@
 !    imetal   - flag if metal field is active (0 = no, 1 = yes)
 !    imcool   - flag if there is metal cooling
 !    idust    - flag for H2 formation on dust grains
+!    ifdust   - flag if a dust density field is present
 !    ih2co    - flag to include H2 cooling (1 = on, 0 = off)
 !    ipiht    - flag to include photoionization heating (1 = on, 0 = off)
 !    iH2shield - flag for approximate self-shielding of H2 (Wolcott-Green+ 2011)
@@ -96,6 +99,7 @@
 !    fh       - Hydrogen mass fraction (typically 0.76)
 !    dtoh     - Deuterium to H mass ratio
 !    z_solar  - Solar metal mass fraction
+!    fgr      - the local dust to gas ratio (by mass)
 !    dt       - timestep to integrate over
 !    aye      - expansion factor (in code units)
 !
@@ -149,14 +153,14 @@
 
       integer icool, in, jn, kn, is, js, ks, ie, je, ke, nratec, 
      &        iexpand, ih2co, ipiht, ispecies, imetal, idim,
-     &        ierr, imcool, idust, 
+     &        ierr, imcool, idust, ifdust,
      &        igammah, ih2optical, iciecool, ithreebody,
      &        ndratec, clnew, iVheat, iMheat, iH2shield, iradshield,
      &        iradtrans, iradcoupled, iradstep, irt_honly
 
       real*8  dx, dt, aye, temstart, temend, gamma,
      &        utim, uxyz, uaye, urho, utem, fh, dtoh, z_solar, 
-     &        dtemstart, dtemend, clEleFra
+     &        fgr, dtemstart, dtemend, clEleFra
 
 !  Density, energy and velocity fields fields
 
@@ -166,7 +170,8 @@
      &        DI(in,jn,kn),  DII(in,jn,kn), HDI(in,jn,kn),
      &        d(in,jn,kn),     e(in,jn,kn),
      &        u(in,jn,kn),    v(in,jn,kn),     w(in,jn,kn),
-     &        metal(in,jn,kn), Vheat(in,jn,kn), Mheat(in,jn,kn)
+     &        metal(in,jn,kn), dust(in,jn,kn),
+     &        Vheat(in,jn,kn), Mheat(in,jn,kn)
 
 !  Radiative transfer fields
 
@@ -431,9 +436,9 @@ c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 fo
             call cool1d_multi_g(
      &                d, e, u, v, w, de, HI, HII, HeI, HeII, HeIII,
      &                in, jn, kn, nratec, 
-     &                iexpand, ispecies, imetal, imcool, idust, idim,
-     &                is, ie, j, k, ih2co, ipiht, iter, igammah,
-     &                aye, temstart, temend, z_solar,
+     &                iexpand, ispecies, imetal, imcool, idust, ifdust,
+     &                idim, is, ie, j, k, ih2co, ipiht, iter, igammah,
+     &                aye, temstart, temend, z_solar, fgr,
      &                utem, uxyz, uaye, urho, utim,
      &                gamma, fh,
      &                ceHIa, ceHeIa, ceHeIIa, ciHIa, ciHeIa, 
@@ -441,7 +446,7 @@ c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 fo
      &                reHeII2a, reHeIIIa, brema, compa, gammaha,
      &                comp_xraya, comp_temp,
      &                piHI, piHeI, piHeII, comp1, comp2,
-     &                HM, H2I, H2II, DI, DII, HDI, metal,
+     &                HM, H2I, H2II, DI, DII, HDI, metal, dust,
      &                hyd01ka, h2k01a, vibha, rotha, rotla,
      &                hyd01k, h2k01, vibh, roth, rotl,
      &                gpldla, gphdla, gpldl, gphdl,

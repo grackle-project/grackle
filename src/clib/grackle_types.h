@@ -51,6 +51,7 @@ typedef struct
   gr_float *HDI_density;
   gr_float *e_density;
   gr_float *metal_density;
+  gr_float *dust_density;
 
   gr_float *internal_energy;
   gr_float *x_velocity;

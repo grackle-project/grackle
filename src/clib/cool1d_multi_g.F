@@ -6,9 +6,9 @@
       subroutine cool1d_multi_g(
      &                d, e, u, v, w, de, HI, HII, HeI, HeII, HeIII,
      &                in, jn, kn, nratec, 
-     &                iexpand, ispecies, imetal, imcool, idust, idim, 
-     &                is, ie, j, k, ih2co, ipiht, iter, igammah,
-     &                aye, temstart, temend, z_solar,
+     &                iexpand, ispecies, imetal, imcool, idust, ifdust,
+     &                idim, is, ie, j, k, ih2co, ipiht, iter, igammah,
+     &                aye, temstart, temend, z_solar, fgr,
      &                utem, uxyz, uaye, urho, utim,
      &                gamma, fh,
      &                ceHIa, ceHeIa, ceHeIIa, ciHIa, ciHeIa, 
@@ -16,7 +16,7 @@
      &                reHeII2a, reHeIIIa, brema, compa, gammaha,
      &                comp_xraya, comp_temp,
      &                piHI, piHeI, piHeII, comp1, comp2,
-     &                HM, H2I, H2II, DI, DII, HDI, metal,
+     &                HM, H2I, H2II, DI, DII, HDI, metal, dust,
      &                hyd01ka, h2k01a, vibha, rotha, rotla,
      &                hyd01k, h2k01, vibh, roth, rotl,
      &                gpldla, gphdla, gpldl, gphdl,
@@ -67,11 +67,11 @@
 !  Arguments
 
       integer in, jn, kn, is, ie, j, k, nratec, idim,
-     &        iexpand, ih2co, ipiht, ispecies, imcool, idust, 
+     &        iexpand, ih2co, ipiht, ispecies, imcool, idust, ifdust,
      &        imetal, igammah, ih2optical, iciecool, clnew,
      &        iVheat, iMheat, iradtrans, iradshield
 
-      real*8  aye, temstart, temend, z_solar,
+      real*8  aye, temstart, temend, z_solar, fgr,
      &        utem, uxyz, uaye, urho, utim,
      &        gamma, fh, clEleFra
       R_PREC  d(in,jn,kn),    e(in,jn,kn),
@@ -80,7 +80,8 @@
      &        HeI(in,jn,kn), HeII(in,jn,kn), HeIII(in,jn,kn),
      &        HM(in,jn,kn),  H2I(in,jn,kn), H2II(in,jn,kn),
      &        DI(in,jn,kn),  DII(in,jn,kn), HDI(in,jn,kn),
-     &        metal(in,jn,kn), Vheat(in,jn,kn), Mheat(in,jn,kn),
+     &        metal(in,jn,kn), dust(in,jn,kn),
+     &        Vheat(in,jn,kn), Mheat(in,jn,kn),
      &        photogamma(in,jn,kn)
       real*8  hyd01ka(nratec), h2k01a(nratec), vibha(nratec), 
      &        rotha(nratec), rotla(nratec), gpldla(nratec),

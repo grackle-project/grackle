@@ -373,6 +373,8 @@ void show_parameters(FILE *fp, chemistry_data *my_chemistry)
           my_chemistry->Gamma);
   fprintf(fp, "h2_on_dust                        = %d\n",
           my_chemistry->h2_on_dust);
+  fprintf(fp, "use_dust_density_field            = %d\n",
+          my_chemistry->use_dust_density_field);
   fprintf(fp, "photoelectric_heating             = %d\n",
           my_chemistry->photoelectric_heating);
   fprintf(fp, "photoelectric_heating_rate        = %g\n",

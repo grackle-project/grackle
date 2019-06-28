@@ -57,6 +57,9 @@ typedef struct
      0) off, 1) on */
   int h2_on_dust;
 
+  /* Flag to supply a dust density field */
+  int use_dust_density_field;
+
   /* photo-electric heating from irradiated dust */
 
   int photoelectric_heating;
