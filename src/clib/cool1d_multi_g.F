@@ -202,11 +202,21 @@
 
       if (ispecies .eq. 0) then
 
-         do i = is+1, ie+1
-            if ( itmask(i) ) then
-               rhoH(i) = fh * d(i,j,k)
-            endif
-         enddo
+!     fh is H mass fraction in metal-free gas.
+
+         if (imetal .eq. 1) then
+            do i = is+1, ie+1
+               if ( itmask(i) ) then
+                  rhoH(i) = fh * (d(i,j,k) - metal(i,j,k))
+               endif
+            enddo
+         else
+            do i = is+1, ie+1
+               if ( itmask(i) ) then
+                  rhoH(i) = fh * d(i,j,k)
+               endif
+            enddo
+         endif
 
          call calc_temp1d_cloudy_g(d, metal, e, rhoH,
      &        in, jn, kn, is, ie, j, k,
@@ -247,7 +257,9 @@
 
          if (imetal .eq. 1) then
             do i = is+1, ie+1
-               mmw(i) = mmw(i) + metal(i,j,k)/mu_metal
+               if ( itmask(i) ) then
+                  mmw(i) = mmw(i) + metal(i,j,k)/mu_metal
+               end if
             enddo
          endif
 
@@ -887,6 +899,7 @@ c  new (correct) way: (april 4, 2007)
      &                 (d(i,j,k) * mu_metal)
                endif
                myde = d(i,j,k) * myde / mmw(i)
+               myde = max(myde, 0._DKIND)
 
                edot(i) = edot(i) 
      &              - comp1*(tgas(i)-comp2)*myde*dom_inv
