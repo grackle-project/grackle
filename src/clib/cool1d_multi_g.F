@@ -137,7 +137,7 @@
       integer*8 indixe(in)
       real*8 t1(in), t2(in), logtem(in), tdef(in), p2d(in),
      &       tgas(in), tgasold(in), mmw(in), tdust(in), rhoH(in),
-     &       nh(in), metallicity(in), edot(in)
+     &       nh(in), metallicity(in), dust2gas(in), edot(in)
 
 !  Cooling/heating slice locals
 
@@ -685,7 +685,7 @@ c  new (correct) way: (april 4, 2007)
             if ( itmask(i) ) then
                gasgr(i) = gasgra(indixe(i)) + tdef(i)
      &              *(gasgra(indixe(i)+1) -gasgra(indixe(i)))
-               gasgr_tdust(i) = gasgr(i) * coolunit / mh
+               gasgr_tdust(i) = fgr * gasgr(i) * coolunit / mh
             endif
          enddo
 
@@ -694,13 +694,29 @@ c  new (correct) way: (april 4, 2007)
          call calc_tdust_1d_g(tdust, tgas, nh, gasgr_tdust, 
      &           itmask, comp2, in, is, ie, j, k)
 
+!     Calculate dust to gas ratio
+
+         if (ifdust .gt. 0) then
+            do i = is+1, ie+1
+               if ( itmask(i) ) then
+                  dust2gas(i) = dust(i,j,k) / d(i,j,k)
+               endif
+            enddo
+         else
+            do i = is+1, ie+1
+               if ( itmask(i) ) then
+                  dust2gas(i) = fgr * metallicity(i)
+               endif
+            enddo
+         endif
+
 !     Calculate cooling rate
 
          do i = is+1, ie+1
             if ( itmask(i) ) then
                edot(i) = edot(i) - 
      &              gasgr(i) * (tgas(i) - tdust(i)) * 
-     &              metallicity(i) * rhoH(i) * rhoH(i)
+     &              dust2gas(i) * rhoH(i) * rhoH(i)
             endif
          enddo
 
