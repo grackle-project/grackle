@@ -262,7 +262,8 @@
       integer*8 indixe(in)
       real*8 t1(in), t2(in), logtem(in), tdef(in),
      &       dtit(in), ttot(in), p2d(in), tgas(in), tgasold(in),
-     &       tdust(in), metallicity(in), rhoH(in), mmw(in), olddtit
+     &       tdust(in), metallicity(in), dust2gas(in),
+     &       rhoH(in), mmw(in), olddtit
 
 !  Rate equation row temporaries
 
@@ -456,7 +457,8 @@ c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 fo
      &                ceHI, ceHeI, ceHeII, ciHI, ciHeI, ciHeIS, ciHeII,
      &                reHII, reHeII1, reHeII2, reHeIII, brem,
      &                indixe, t1, t2, logtem, tdef, edot,
-     &                tgas, tgasold, mmw, p2d, tdust, metallicity, rhoH,
+     &                tgas, tgasold, mmw, p2d, tdust, metallicity,
+     &                dust2gas, rhoH,
      &                iradshield, avgsighi, avgsighei, avgsigheii,
      &                k24, k26,
      &                iradtrans, photogamma,
@@ -481,7 +483,7 @@ c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 fo
      &               in, jn, kn, ispecies, idust, iH2shield, iradshield,
      &               tgas, mmw, d, HI, HII, HeI, HeII, HeIII, 
      &               HM, H2I, H2II, DI, DII, HDI,
-     &               tdust, metallicity,
+     &               tdust, dust2gas,
      &               k1a, k2a, k3a, k4a, k5a, k6a, k7a, k8a, k9a, k10a,
      &               k11a, k12a, k13a, k13dda, k14a, k15a, k16a,
      &               k17a, k18a, k19a, k22a,
@@ -1021,7 +1023,7 @@ c -------------------------------------------------------------------
      &                ispecies, idust, iH2shield, iradshield,
      &                tgas1d, mmw, d, HI, HII, HeI, HeII, HeIII,
      &                HM, H2I, H2II, DI, DII, HDI,
-     &                tdust, metallicity,
+     &                tdust, dust2gas,
      &                k1a, k2a, k3a, k4a, k5a, k6a, k7a, k8a, k9a, k10a,
      &                k11a, k12a, k13a, k13dda, k14a, k15a, k16a,
      &                k17a, k18a, k19a, k22a,
@@ -1102,7 +1104,7 @@ c -------------------------------------------------------------------
 
       integer*8 indixe(in)
       real*8 t1(in), t2(in), logtem(in), tdef(in),
-     &       tdust(in), metallicity(in)
+     &       tdust(in), dust2gas(in)
 
 !     1D temporaries (not passed in)
 
@@ -1298,9 +1300,9 @@ c -------------------------------------------------------------------
                   h2dust(i) = dusti1(i) + 
      &                 (dusti2(i) - dusti1(i))*d_tdef(i)
 
-!                 Multiply by metallicity
+!                 Multiply by dust to gas ratio
 
-                  h2dust(i) = h2dust(i) * metallicity(i)
+                  h2dust(i) = h2dust(i) * dust2gas(i)
 
                endif
             endif

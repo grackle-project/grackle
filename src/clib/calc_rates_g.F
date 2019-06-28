@@ -196,7 +196,7 @@ c
       real*8 logttt, ttt, tev, logtev, 
      &     xx, dum, tbase1, xbase1, kunit, coolunit,
      &     dbase1, dlogtem, kunit_3bdy, cierate,
-     &     grain_coef, d_ttt, d_logttt, d_dlogtem,
+     &     grain_coef, fgr, d_ttt, d_logttt, d_dlogtem,
      &     ttt2, d_ttt2, tk9, lambdaHI, lambdaHeII,
      &     lambdaHeIII
       real*8 tm, HDLR, HDLV, lt, t3, lt3
@@ -262,7 +262,8 @@ c
 c  4) Energy transfer from gas to dust grains, following equation 2.15
 c     of Hollenbach & McKee (1989).
 c     Normalize to the HM89 dust to gas ratio.
-      grain_coef = 1.2d-31 * 1.0d3**(-0.5d0) / 0.009387d0
+      fgr = 0.009387d0
+      grain_coef = 1.2d-31 * 1.0d3**(-0.5d0) / fgr
 c
 c  Compute log spacing in temperature
 c
@@ -550,7 +551,7 @@ c
 c
 c     k23 from Omukai (2000).
 c
-           h2dusta(i,j) = 6.0d-17 * (ttt / 300.0d0)**(0.5d0) *
+           h2dusta(i,j) = 6.0d-17 / fgr * (ttt / 300.0d0)**(0.5d0) *
      &          ((1.0d0 + exp(7.5d2 * ((1.0d0 / 75.0d0) - 
      &                                (1.0d0 / d_ttt))))**(-1.0d0)) *
      &          ((1.0d0 + (4.0d-2 * (ttt + d_ttt)**(0.5d0)) + 
@@ -559,7 +560,7 @@ c
 c
 c     Equation 3.8 from Hollenbach & McKee (1979).
 c
-c           h2dusta(i,j) = 3.0d-17 * ttt2**0.5d0 /
+c           h2dusta(i,j) = 3.0d-17 / fgr * ttt2**0.5d0 /
 c     &          (1.0d0 + 
 c     &           (0.4d0 * (ttt2 + d_ttt2)**0.5d0) +
 c     &           (0.2d0 * ttt2) +
