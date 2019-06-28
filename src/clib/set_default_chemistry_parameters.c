@@ -84,6 +84,12 @@ chemistry_data _set_default_chemistry_parameters(void)
   */
   my_chemistry.SolarMetalFractionByMass     = 0.01295; // Cloudy v13 abundances
 
+  /*
+    The dust to gas ratio in local molecular clouds.
+     Table 2 from Pollack et al. (1994).
+  */
+  my_chemistry.local_dust_fraction_by_mass  = 0.009387;
+
   my_chemistry.NumberOfTemperatureBins      = 600;
   my_chemistry.ih2co                        = 1;
   my_chemistry.ipiht                        = 1;

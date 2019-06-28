@@ -77,6 +77,7 @@ typedef struct
   double HydrogenFractionByMass;
   double DeuteriumToHydrogenRatio;
   double SolarMetalFractionByMass;
+  double local_dust_fraction_by_mass;
   int NumberOfTemperatureBins;
   int CaseBRecombination;
   double TemperatureStart;
