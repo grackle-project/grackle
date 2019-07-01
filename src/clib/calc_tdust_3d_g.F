@@ -62,6 +62,7 @@
 !  Locals
 
       integer i, j, k
+      integer t, dj, dk
       real*8  trad, zr, logtem0, logtem9, dlogtem,
      &        coolunit, dbase1, tbase1, xbase1
 
@@ -96,66 +97,77 @@
 
       trad = 2.73_RKIND * (1._RKIND + zr)
 
-!     Loop over slices (in the k-direction)
+!  Loop over zones, and do an entire i-column in one go
+      dk = ke - ks + 1
+      dj = je - js + 1
 
-      do k = ks+1, ke+1
-         do j = js+1, je+1
+! parallelize the k and j loops with OpenMP
+! flat j and k loops for better parallelism
+#ifdef _OPENMP
+!$omp parallel do schedule(runtime) private(
+!$omp&   i, j, k,
+!$omp&   indixe,
+!$omp&   t1, t2, logtem, tdef,
+!$omp&   tgas, tdust, nh, gasgr,
+!$omp&   itmask )
+#endif
+      do t = 0, dk*dj-1
+        k = t/dj      + ks+1
+        j = mod(t,dj) + js+1
 
-            do i = is+1, ie+1
+        do i = is+1, ie+1
 
 !     Set itmask to all true
 
-               itmask(i) = .true.
+           itmask(i) = .true.
 
 !     Compute hydrogen number density
 
-               nh(i) = HI(i,j,k) + HII(i,j,k)
-               if (ispecies .gt. 1) then
-                  nh(i) = nh(i) + H2I(i,j,k) + H2II(i,j,k)
-               endif
+           nh(i) = HI(i,j,k) + HII(i,j,k)
+           if (ispecies .gt. 1) then
+              nh(i) = nh(i) + H2I(i,j,k) + H2II(i,j,k)
+           endif
 
 !     We have not converted to proper, so use urho and not dom
 
-               nh(i) = nh(i) * urho / mh
+           nh(i) = nh(i) * urho / mh
 
 !     Compute log temperature and truncate if above/below table max/min
 
-               tgas(i)   = gas_temp(i,j,k)
-               logtem(i) = log(tgas(i))
-               logtem(i) = max(logtem(i), logtem0)
-               logtem(i) = min(logtem(i), logtem9)
+           tgas(i)   = gas_temp(i,j,k)
+           logtem(i) = log(tgas(i))
+           logtem(i) = max(logtem(i), logtem0)
+           logtem(i) = min(logtem(i), logtem9)
 
 !     Compute index into the table and precompute parts of linear interp
 
-               indixe(i) = min(nratec-1,
-     &              max(1,int((logtem(i)-logtem0)/dlogtem,DIKIND)+1))
-               t1(i) = (logtem0 + (indixe(i) - 1)*dlogtem)
-               t2(i) = (logtem0 + (indixe(i)    )*dlogtem)
-               tdef(i) = (logtem(i) - t1(i)) / (t2(i) - t1(i))
+           indixe(i) = min(nratec-1,
+     &          max(1,int((logtem(i)-logtem0)/dlogtem,DIKIND)+1))
+           t1(i) = (logtem0 + (indixe(i) - 1)*dlogtem)
+           t2(i) = (logtem0 + (indixe(i)    )*dlogtem)
+           tdef(i) = (logtem(i) - t1(i)) / (t2(i) - t1(i))
 
 !     Lookup values and do a linear temperature in log(T)
 !     Convert back to cgs
 
-               gasgr(i) = gasgra(indixe(i)) + tdef(i)
-     &              *(gasgra(indixe(i)+1) -gasgra(indixe(i)))
-               gasgr(i) = gasgr(i) * fgr * coolunit / mh
+           gasgr(i) = gasgra(indixe(i)) + tdef(i)
+     &          *(gasgra(indixe(i)+1) -gasgra(indixe(i)))
+           gasgr(i) = gasgr(i) * fgr * coolunit / mh
 
-            enddo
+        enddo
 
 !     --- Compute dust temperature in a slice ---
 
-            call calc_tdust_1d_g(tdust, tgas, nh, gasgr, 
-     &           itmask, trad, in, is, ie, j, k)
+        call calc_tdust_1d_g(tdust, tgas, nh, gasgr,
+     &       itmask, trad, in, is, ie, j, k)
 
 !     Copy slice values back to grid
 
-            do i = is+1, ie+1
-               dust_temp(i,j,k) = tdust(i)
-            enddo
+        do i = is+1, ie+1
+           dust_temp(i,j,k) = tdust(i)
+        enddo
 
-         enddo
       enddo
 
       return
       end
-
