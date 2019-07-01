@@ -33,7 +33,7 @@ extern "C" {
 
 // Grackle routines (TAB for tabulated cooling; CHE for non-equilibrium chemistry)
 enum Routine_t { TAB_COOL=1, TAB_TIME=2, TAB_TEMP=3, TAB_PRES=4,
-                 CHE_COOL=5, CHE_TIME=6, CHE_TEMP=7, CHE_PRES=8, CHE_GAMA=9 };
+                 CHE_COOL=5, CHE_TIME=6, CHE_TEMP=7, CHE_PRES=8, CHE_GAMA=9, CHE_DUST=10 };
 
 // function prototypes
 float InvokeGrackle( const Routine_t Routine, const int NThread, const int NIter, const int NCell,
@@ -125,6 +125,7 @@ int main(int argc, char *argv[])
   float T_TempC_t1=0.0, T_TempC_tN=0.0;
   float T_PresC_t1=0.0, T_PresC_tN=0.0;
   float T_GamaC_t1=0.0, T_GamaC_tN=0.0;
+  float T_DustC_t1=0.0, T_DustC_tN=0.0;
 
 
   // Disable output
@@ -211,8 +212,8 @@ int main(int argc, char *argv[])
   }
 
   // Allocate field arrays. (t1/tN for single-/multi-thread results)
-  gr_float *energy_t1, *cooling_time_t1, *temperature_t1, *pressure_t1, *gamma_t1;
-  gr_float *energy_tN, *cooling_time_tN, *temperature_tN, *pressure_tN, *gamma_tN;
+  gr_float *energy_t1, *cooling_time_t1, *temperature_t1, *pressure_t1, *gamma_t1, *dust_temperature_t1;
+  gr_float *energy_tN, *cooling_time_tN, *temperature_tN, *pressure_tN, *gamma_tN, *dust_temperature_tN;
 
   my_fields_t1.density          = new gr_float[N3];
   my_fields_t1.x_velocity       = new gr_float[N3];
@@ -245,6 +246,7 @@ int main(int argc, char *argv[])
   temperature_t1   = new gr_float[N3];
   pressure_t1      = new gr_float[N3];
   gamma_t1         = new gr_float[N3];
+  dust_temperature_t1 = new gr_float[N3];
 
   my_fields_tN.density          = my_fields_t1.density;
   my_fields_tN.x_velocity       = my_fields_t1.x_velocity;
@@ -277,6 +279,7 @@ int main(int argc, char *argv[])
   temperature_tN   = new gr_float[N3];
   pressure_tN      = new gr_float[N3];
   gamma_tN         = new gr_float[N3];
+  dust_temperature_tN = new gr_float[N3];
 
   // set temperature units and other constants
   const double temperature_units = mh * pow(my_units.a_units *
@@ -597,7 +600,34 @@ int main(int argc, char *argv[])
     CompareResult( Field_t1, Field_tN, N3, NField );
   }
 
+  // 2-6. Calculate dust temperature
+  fprintf( stdout, "Calculating dust temperature (non-equilibrium chemistry) ...\n" ); fflush( stdout );
 
+  // single-thread
+  if ( Mode != 2 )
+  {
+    T_DustC_t1
+      = InvokeGrackle( CHE_DUST, 1, NIter, N3, RSeed, D0, T0, FAmp,
+                       &my_units, &my_fields_t1, dt, dust_temperature_t1 );
+  }
+
+  // multi-thread
+  if ( Mode != 1 )
+  {
+    T_DustC_tN
+      = InvokeGrackle( CHE_DUST, NThread, NIter, N3, RSeed, D0, T0, FAmp,
+                       &my_units, &my_fields_tN, dt, dust_temperature_tN );
+  }
+
+  // check results
+  if ( Mode == 3 )
+  {
+    const int NField = 1;
+    const gr_float *Field_t1[NField] = { dust_temperature_t1 };
+    const gr_float *Field_tN[NField] = { dust_temperature_tN };
+
+    CompareResult( Field_t1, Field_tN, N3, NField );
+  }
 
   // record header
   if ( fopen(FileName,"r") == NULL )
@@ -613,6 +643,7 @@ int main(int argc, char *argv[])
     fprintf( File, "#Temp        = temperature\n" );
     fprintf( File, "#Pres        = pressure\n" );
     fprintf( File, "#Gama        = ratio of specific heat (gamma)\n" );
+    fprintf( File, "#Dust        = dust temperature\n" );
     fprintf( File, "#Ratio       = multi-thread performance / single-thread performance\n" );
     fprintf( File, "\n" );
     fprintf( File, "#T/C         = for tabulated / 12-species chemistry network\n" );
@@ -632,6 +663,8 @@ int main(int argc, char *argv[])
              "TempC_t1", "TempC_tN", "Ratio", "PresC_t1", "PresC_tN", "Ratio" );
     fprintf( File, "  %8s  %8s  %8s",
              "GamaC_t1", "GamaC_tN", "Ratio" );
+    fprintf( File, "  %8s  %8s  %8s",
+             "DustC_t1", "DustC_tN", "Ratio" );
     fprintf( File, "\n" );
 
     fclose( File );
@@ -652,6 +685,8 @@ int main(int argc, char *argv[])
            N3/T_PresC_t1, N3/T_PresC_tN, T_PresC_t1/T_PresC_tN );
   fprintf( File, "  %8.2e  %8.2e  %8.2e",
            N3/T_GamaC_t1, N3/T_GamaC_tN, T_GamaC_t1/T_GamaC_tN );
+  fprintf( File, "  %8.2e  %8.2e  %8.2e",
+           N3/T_DustC_t1, N3/T_DustC_tN, T_DustC_t1/T_DustC_tN );
   fprintf( File, "\n" );
   fclose( File );
 
@@ -680,6 +715,7 @@ int main(int argc, char *argv[])
   delete [] temperature_t1;
   delete [] pressure_t1;
   delete [] gamma_t1;
+  delete [] dust_temperature_t1;
 
   delete [] my_fields_tN.HI_density;
   delete [] my_fields_tN.HII_density;
@@ -698,6 +734,7 @@ int main(int argc, char *argv[])
   delete [] temperature_tN;
   delete [] pressure_tN;
   delete [] gamma_tN;
+  delete [] dust_temperature_tN;
 
   return EXIT_SUCCESS;
 
@@ -845,6 +882,10 @@ float InvokeGrackle( const Routine_t Routine, const int NThread, const int NIter
 
       case CHE_GAMA:
         ChkErr = calculate_gamma( my_units, my_fields, output );
+        break;
+
+      case CHE_DUST:
+        ChkErr = calculate_dust_temperature( my_units, my_fields, output );
         break;
 
       default:
