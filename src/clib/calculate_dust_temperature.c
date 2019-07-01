@@ -74,6 +74,9 @@ int _calculate_dust_temperature(chemistry_data *my_chemistry,
   if (!my_chemistry->use_grackle)
     return SUCCESS;
 
+  if (my_chemistry->primordial_chemistry < 1)
+    return SUCCESS;
+
   double co_length_units, co_density_units;
   if (my_units->comoving_coordinates == TRUE) {
     co_length_units = my_units->length_units;
