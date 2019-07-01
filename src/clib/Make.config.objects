@@ -16,6 +16,7 @@ OBJS_CONFIG_LIB = \
         auto_show_flags.lo \
         auto_show_version.lo \
         calculate_cooling_time.lo \
+        calculate_dust_temperature.lo \
         calculate_gamma.lo \
         calculate_pressure.lo \
         calculate_temperature.lo \
@@ -23,6 +24,7 @@ OBJS_CONFIG_LIB = \
         calc_temp_cloudy_g.lo \
         calc_rates_g.lo \
         calc_tdust_1d_g.lo \
+        calc_tdust_3d_g.lo \
         cie_thin_cooling_rate_g.lo \
         colh2diss_g.lo \
         coll_rates_g.lo \

@@ -231,5 +231,16 @@ int main(int argc, char *argv[])
 
   fprintf(stderr, "gamma = %g.\n", gamma[0]);
 
+  // Calculate dust temperature.
+  gr_float *dust_temperature;
+  dust_temperature = malloc(field_size * sizeof(gr_float));
+  if (calculate_dust_temperature(&my_units, &my_fields,
+                      dust_temperature) == 0) {
+    fprintf(stderr, "Error in calculate_dust_temperature.\n");
+    return EXIT_FAILURE;
+  }
+
+  fprintf(stderr, "dust_temperature = %g.\n", dust_temperature[0]);
+
   return EXIT_SUCCESS;
 }
