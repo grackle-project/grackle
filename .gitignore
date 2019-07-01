@@ -7,8 +7,6 @@ syntax: glob
 *.lo
 *.o
 *.lo
-*.f
-*.f90
 *~
 *.pyc
 *.exe
