@@ -222,7 +222,7 @@ For all on/off integer flags, 0 is off and 1 is on.
    The fraction of total gas mass in metals for a solar composition.
    Default: 0.01295 (consistent with the default abundances in the Cloudy code).
 
-.. c:var:: float local_dust_fraction_by_mass
+.. c:var:: float local_dust_to_gas_ratio
 
    The ratio of total dust mass to gas mass in the local Universe.
    Default: 0.009387 (from `Pollack et al. 1994
@@ -232,7 +232,7 @@ For all on/off integer flags, 0 is off and 1 is on.
 
    Flag to provide the dust density as a field using the :c:data:`dust_density`
    pointer in the :c:type:`grackle_field_data` struct. If set to 0, the dust
-   density takes the value of :c:data:`local_dust_fraction_by_mass` multiplied
+   density takes the value of :c:data:`local_dust_to_gas_ratio` multiplied
    by the metallicity. Default: 0.
 
 .. c:var:: int use_volumetric_heating_rate

@@ -98,7 +98,7 @@ if __name__=="__main__":
             my_chemistry.SolarMetalFractionByMass
     if my_chemistry.use_dust_density_field:
         fc["dust"][:] = metallicity * fc["density"] * \
-            my_chemistry.local_dust_fraction_by_mass
+            my_chemistry.local_dust_to_gas_ratio
     fc["energy"][:] = initial_temperature / \
         fc.chemistry_data.temperature_units
     fc["x-velocity"][:] = 0.0

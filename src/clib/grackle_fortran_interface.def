@@ -98,7 +98,7 @@ c     This is the fortran definition of grackle_chemistry_dadta
          REAL(C_DOUBLE) :: HydrogenFractionByMass
          REAL(C_DOUBLE) :: DeuteriumToHydrogenRatio
          REAL(C_DOUBLE) :: SolarMetalFractionByMass
-         REAL(C_DOUBLE) :: local_dust_fraction_by_mass;
+         REAL(C_DOUBLE) :: local_dust_to_gas_ratio;
          INTEGER(C_INT) :: NumberOfTemperatureBins
          INTEGER(C_INT) :: CaseBRecombination
          REAL(C_DOUBLE) :: TemperatureStart

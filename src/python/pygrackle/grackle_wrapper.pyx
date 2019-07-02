@@ -131,11 +131,11 @@ cdef class chemistry_data:
         def __set__(self, val):
             self.data.SolarMetalFractionByMass = val
 
-    property local_dust_fraction_by_mass:
+    property local_dust_to_gas_ratio:
         def __get__(self):
-            return self.data.local_dust_fraction_by_mass
+            return self.data.local_dust_to_gas_ratio
         def __set__(self, val):
-            self.data.local_dust_fraction_by_mass = val
+            self.data.local_dust_to_gas_ratio = val
 
     property use_volumetric_heating_rate:
         def __get__(self):

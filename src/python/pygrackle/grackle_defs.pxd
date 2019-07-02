@@ -20,7 +20,7 @@ cdef extern from "grackle_chemistry_data.h":
         int CaseBRecombination
         int UVbackground
         double SolarMetalFractionByMass
-        double local_dust_fraction_by_mass
+        double local_dust_to_gas_ratio
         int use_volumetric_heating_rate
         int use_specific_heating_rate
         int use_radiative_transfer

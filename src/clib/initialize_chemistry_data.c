@@ -399,8 +399,8 @@ void show_parameters(FILE *fp, chemistry_data *my_chemistry)
           my_chemistry->DeuteriumToHydrogenRatio);
   fprintf(fp, "SolarMetalFractionByMass          = %g\n",
           my_chemistry->SolarMetalFractionByMass);
-  fprintf(fp, "local_dust_fraction_by_mass       = %g\n",
-          my_chemistry->local_dust_fraction_by_mass);
+  fprintf(fp, "local_dust_to_gas_ratio           = %g\n",
+          my_chemistry->local_dust_to_gas_ratio);
   fprintf(fp, "NumberOfTemperatureBins           = %d\n",
           my_chemistry->NumberOfTemperatureBins);
   fprintf(fp, "CaseBRecombination                = %d\n",

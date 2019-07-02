@@ -89,7 +89,7 @@ chemistry_data _set_default_chemistry_parameters(void)
     The dust to gas ratio in local molecular clouds.
      Table 2 from Pollack et al. (1994).
   */
-  my_chemistry.local_dust_fraction_by_mass  = 0.009387;
+  my_chemistry.local_dust_to_gas_ratio      = 0.009387;
 
   my_chemistry.NumberOfTemperatureBins      = 600;
   my_chemistry.ih2co                        = 1;
