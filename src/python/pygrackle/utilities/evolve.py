@@ -49,6 +49,9 @@ def evolve_freefall(fc, final_density, safety_factor=0.01,
         fc.calculate_pressure()
         data["pressure"].append(fc["pressure"][0])
         data["time"].append(current_time * my_chemistry.time_units)
+        if fc.chemistry_data.h2_on_dust:
+            fc.calculate_dust_temperature()
+            data["dust_temperature"].append(fc["dust_temperature"][0])
 
         # compute the new density using the modified
         # free-fall collapse as per Omukai et al. (2005)
@@ -91,7 +94,7 @@ def evolve_freefall(fc, final_density, safety_factor=0.01,
             data[field] = yt.YTArray(data[field], "erg/g")
         elif field == "time":
             data[field] = yt.YTArray(data[field], "s")
-        elif field == "temperature":
+        elif field in ["dust_temperature", "temperature"]:
             data[field] = yt.YTArray(data[field], "K")
         elif field == "pressure":
             data[field] = yt.YTArray(data[field], "dyne/cm**2")

@@ -116,15 +116,22 @@ if __name__=="__main__":
                            safety_factor=safety_factor)
 
     # make a plot of rho/f_H2 vs. T
-    p1, = pyplot.loglog(data["density"], data["temperature"], color="black")
+    plots = pyplot.loglog(data["density"], data["temperature"],
+                          color="black", label="T$_{gas}$")
+    if os.environ.get("METAL_COOLING", 0) == "1":
+        plots.extend(
+            pyplot.loglog(data["density"], data["dust_temperature"],
+                          color="black", linestyle="--", label="T$_{dust}$"))
     pyplot.xlabel("$\\rho$ [g/cm$^{3}$]")
     pyplot.ylabel("T [K]")
 
     pyplot.twinx()
-    p2, = pyplot.loglog(data["density"], data["H2I"] / data["density"],
-                        color="red")
+    plots.extend(
+        pyplot.loglog(data["density"], data["H2I"] / data["density"],
+                      color="red", label="f$_{H2}$"))
     pyplot.ylabel("H$_{2}$ fraction")
-    pyplot.legend([p1, p2], ["T", "f$_{H2}$"], loc="upper left")
+    pyplot.legend(plots, [plot.get_label() for plot in plots],
+                  loc="lower right")
 
     if os.environ.get("METAL_COOLING", 0) == "1":
         output = "freefall_metal"
