@@ -632,6 +632,19 @@ Calculating the Gamma Field
     return EXIT_FAILURE;
   }
 
+Calculating the Dust Temperature Field
+++++++++++++++++++++++++++++++++++++++
+
+.. code-block:: c++
+
+  gr_float *dust_temperature;
+  dust_temperature = new gr_float[field_size];
+  if (calculate_dust_temperature(&my_units, &my_fields,
+                            dust_temperature) == 0) {
+    fprintf(stderr, "Error in calculate_dust_temperature.\n");
+    return EXIT_FAILURE;
+  }
+
 Cleaning the memory
 -------------------
 
