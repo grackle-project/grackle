@@ -56,6 +56,7 @@ c     This is the fortran definition of grackle_field_data
          TYPE(C_PTR) :: HDI_density
          TYPE(C_PTR) :: e_density
          TYPE(C_PTR) :: metal_density
+         TYPE(C_PTR) :: dust_density
 
          TYPE(C_PTR) :: internal_energy
          TYPE(C_PTR) :: x_velocity
@@ -84,6 +85,7 @@ c     This is the fortran definition of grackle_chemistry_dadta
          INTEGER(C_INT) :: cmb_temperature_floor
          REAL(C_DOUBLE) :: Gamma
          INTEGER(C_INT) :: h2_on_dust
+         INTEGER(C_INT) :: use_dust_density_field
          INTEGER(C_INT) :: photoelectric_heating
          REAL(C_DOUBLE) :: photoelectric_heating_rate
          INTEGER(C_INT) :: use_volumetric_heating_rate
@@ -96,6 +98,7 @@ c     This is the fortran definition of grackle_chemistry_dadta
          REAL(C_DOUBLE) :: HydrogenFractionByMass
          REAL(C_DOUBLE) :: DeuteriumToHydrogenRatio
          REAL(C_DOUBLE) :: SolarMetalFractionByMass
+         REAL(C_DOUBLE) :: local_dust_fraction_by_mass;
          INTEGER(C_INT) :: NumberOfTemperatureBins
          INTEGER(C_INT) :: CaseBRecombination
          REAL(C_DOUBLE) :: TemperatureStart
@@ -185,4 +188,14 @@ c     The following define the fortran interfaces to the C routines
             TYPE(grackle_field_data), INTENT(IN) :: my_fields
             REAL(C_DOUBLE), INTENT(OUT) :: gamma(*)
          END FUNCTION calculate_gamma
+      END INTERFACE
+
+      INTERFACE
+         INTEGER(C_INT) FUNCTION calculate_dust_temperature(my_units,
+     &        my_fields, dust_temperature) bind(C)
+            IMPORT
+            TYPE(grackle_units), INTENT(IN) :: my_units
+            TYPE(grackle_field_data), INTENT(IN) :: my_fields
+            REAL(C_DOUBLE), INTENT(OUT) :: dust_temperature(*)
+         END FUNCTION calculate_dust_temperature
       END INTERFACE

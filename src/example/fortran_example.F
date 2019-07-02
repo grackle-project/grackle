@@ -38,6 +38,7 @@ c     Field data arrays
      &     DI_density(field_size), DII_density(field_size),
      &     HDI_density(field_size),
      &     e_density(field_size), metal_density(field_size),
+     &     dust_density(field_size),
      &     volumetric_heating_rate(field_size),
      &     specific_heating_rate(field_size),
      &     RT_HI_ionization_rate(field_size), 
@@ -47,7 +48,8 @@ c     Field data arrays
      &     RT_heating_rate(field_size)
 
       R_PREC, TARGET :: cooling_time(field_size), gamma(field_size),
-     &     pressure(field_size), temperature(field_Size)
+     &     pressure(field_size), temperature(field_Size),
+     &     dust_temperature(field_Size)
 
 c     Grid size and dimension
 c     grid_start and grid_end are used to ignore ghost zones.
@@ -144,6 +146,8 @@ c     set temperature units
 c        solar metallicity
          metal_density(i) = grackle_data%SolarMetalFractionByMass *
      &        density(i)
+         dust_density(i) = grackle_data%local_dust_fraction_by_mass *
+     &        density(i)
 
          x_velocity(i) = 0.0
          y_velocity(i) = 0.0
@@ -225,5 +229,11 @@ c     Calculate gamma.
 
       iresult = calculate_gamma(my_units, my_fields, gamma)
       write(*,*) "Gamma = ", gamma(1)
+
+c     Calculate dust temperature.
+
+      iresult = calculate_dust_temperature(my_units, my_fields,
+     &     dust_temperature)
+      write(*,*) "Dust temperature = ", dust_temperature(1), "K."
 
       end program fortran_example
