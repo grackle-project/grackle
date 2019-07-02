@@ -51,6 +51,8 @@ if __name__=="__main__":
         my_chemistry.grackle_data_file = os.path.join(
             my_dir, "..", "..", "..", "input", "cloudy_metals_2008_3D.h5")
         my_chemistry.h2_on_dust = 1
+        my_chemistry.use_dust_density_field = 1
+        metallicity = 1e-3
     else:
         my_chemistry.metal_cooling = 0
 
@@ -92,8 +94,11 @@ if __name__=="__main__":
         fc["DII"][:] = tiny_number * fc["density"]
         fc["HDI"][:] = tiny_number * fc["density"]
     if my_chemistry.metal_cooling == 1:
-        fc["metal"][:] = 1e-3 * my_chemistry.SolarMetalFractionByMass * \
-            fc["density"]
+        fc["metal"][:] = metallicity * fc["density"] * \
+            my_chemistry.SolarMetalFractionByMass
+    if my_chemistry.use_dust_density_field:
+        fc["dust"][:] = metallicity * fc["density"] * \
+            my_chemistry.local_dust_fraction_by_mass
     fc["energy"][:] = initial_temperature / \
         fc.chemistry_data.temperature_units
     fc["x-velocity"][:] = 0.0

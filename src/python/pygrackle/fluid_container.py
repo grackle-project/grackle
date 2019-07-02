@@ -24,7 +24,7 @@ from pygrackle.grackle_wrapper import \
 from pygrackle.utilities.physical_constants import \
     mass_hydrogen_cgs
 
-_base_fluids = ["density", "metal"]
+_base_fluids = ["density", "metal", "dust"]
 _nd_fields   = ["energy",
                 "x-velocity", "y-velocity", "z-velocity",
                 "temperature", "dust_temperature", "pressure",
@@ -162,6 +162,7 @@ _grackle_to_yt = {
     'HDI': ('gas', 'HD_p0_density'),
     'de': ('gas', 'El_density'),
     'metal': ('gas', 'metal_density'),
+    'dust': ('gas', 'dust_density'),
     'x-velocity': ('gas', 'velocity_x'),
     'y-velocity': ('gas', 'velocity_y'),
     'z-velocity': ('gas', 'velocity_z'),
