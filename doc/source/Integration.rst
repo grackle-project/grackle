@@ -402,6 +402,11 @@ and pointers to all field arrays.
    Pointer to the metal density field array.  Used when
    :c:data:`metal_cooling` is set to 1.
 
+.. c:var:: gr_float* dust_density
+
+   Pointer to the dust density field array.  Used when
+   :c:data:`use_dust_density_field` is set to 1.
+
 .. c:var:: gr_float* internal_energy
 
    Pointer to the internal energy field array.
