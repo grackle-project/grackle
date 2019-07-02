@@ -607,3 +607,62 @@ def calculate_temperature(fc):
                 e_density,
                 metal_density,
                 temperature)
+
+def calculate_dust_temperature(fc):
+    cdef int grid_rank = 1
+    cdef int grid_dimension
+    grid_dimension = fc["density"].shape[0]
+    cdef np.ndarray ref_gs, ref_ge
+    ref_gs = np.zeros(3, dtype="int64")
+    ref_ge = np.zeros(3, dtype="int64")
+    ref_ge[0] = grid_dimension -1
+    cdef int *grid_start
+    cdef int *grid_end
+    grid_start = <int *> ref_gs.data
+    grid_end = <int *> ref_ge.data
+
+    cdef chemistry_data chem_data = fc.chemistry_data
+    cdef c_chemistry_data my_chemistry = chem_data.data
+    cdef c_chemistry_data_storage my_rates = chem_data.rates
+    cdef c_code_units my_units = chem_data.units
+    cdef gr_float *density = get_field(fc, "density")
+    cdef gr_float *internal_energy = get_field(fc, "energy")
+    cdef gr_float *HI_density = get_field(fc, "HI")
+    cdef gr_float *HII_density = get_field(fc, "HII")
+    cdef gr_float *HM_density = get_field(fc, "HM")
+    cdef gr_float *HeI_density = get_field(fc, "HeI")
+    cdef gr_float *HeII_density = get_field(fc, "HeII")
+    cdef gr_float *HeIII_density = get_field(fc, "HeIII")
+    cdef gr_float *H2I_density = get_field(fc, "H2I")
+    cdef gr_float *H2II_density = get_field(fc, "H2II")
+    cdef gr_float *DI_density = get_field(fc, "DI")
+    cdef gr_float *DII_density = get_field(fc, "DII")
+    cdef gr_float *HDI_density = get_field(fc, "HDI")
+    cdef gr_float *e_density = get_field(fc, "de")
+    cdef gr_float *metal_density = get_field(fc, "metal")
+    cdef gr_float *dust_temperature = get_field(fc, "dust_temperature")
+
+    c_calculate_dust_temperature(
+                &my_chemistry,
+                &my_rates,
+                &my_units,
+                grid_rank,
+                &grid_dimension,
+                grid_start,
+                grid_end,
+                density,
+                internal_energy,
+                HI_density,
+                HII_density,
+                HM_density,
+                HeI_density,
+                HeII_density,
+                HeIII_density,
+                H2I_density,
+                H2II_density,
+                DI_density,
+                DII_density,
+                HDI_density,
+                e_density,
+                metal_density,
+                dust_temperature)

@@ -18,6 +18,7 @@ from pygrackle.grackle_wrapper import \
     calculate_gamma, \
     calculate_pressure, \
     calculate_temperature, \
+    calculate_dust_temperature, \
     solve_chemistry
 
 from pygrackle.utilities.physical_constants import \
@@ -26,7 +27,7 @@ from pygrackle.utilities.physical_constants import \
 _base_fluids = ["density", "metal"]
 _nd_fields   = ["energy",
                 "x-velocity", "y-velocity", "z-velocity",
-                "temperature", "pressure",
+                "temperature", "dust_temperature", "pressure",
                 "gamma", "cooling_time"]
 
 _fluid_names = {}
@@ -128,6 +129,9 @@ class FluidContainer(dict):
     def calculate_temperature(self):
         calculate_temperature(self)
 
+    def calculate_dust_temperature(self):
+        calculate_dust_temperature(self)
+
     def solve_chemistry(self, dt):
         solve_chemistry(self, dt)
 
@@ -164,7 +168,7 @@ _grackle_to_yt = {
     'energy': ('gas', 'thermal_energy'),
 }
 
-_skip = ("pressure", "temperature", "cooling_time", "gamma")
+_skip = ("pressure", "temperature", "dust_temperature", "cooling_time", "gamma")
 
 _yt_to_grackle = dict((b, a) for a, b in _grackle_to_yt.items())
 
