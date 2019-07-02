@@ -169,7 +169,8 @@ _grackle_to_yt = {
     'energy': ('gas', 'thermal_energy'),
 }
 
-_skip = ("pressure", "temperature", "dust_temperature", "cooling_time", "gamma")
+_skip = ("pressure", "temperature", "dust_temperature", "cooling_time", "gamma",
+         "dust")
 
 _yt_to_grackle = dict((b, a) for a, b in _grackle_to_yt.items())
 
