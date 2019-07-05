@@ -75,7 +75,7 @@ if __name__ == "__main__":
     density_proper = fc["density"] / \
         (my_chemistry.a_units *
          my_chemistry.a_value)**(3*my_chemistry.comoving_coordinates)
-    cooling_rate = fc.cooling_units * fc["energy"] / \
+    cooling_rate = fc.chemistry_data.cooling_units * fc["energy"] / \
         np.abs(fc["cooling_time"]) / density_proper
 
     data = {}
