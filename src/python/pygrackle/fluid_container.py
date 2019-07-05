@@ -20,6 +20,9 @@ from pygrackle.grackle_wrapper import \
     calculate_temperature, \
     solve_chemistry
 
+from pygrackle.utilities.misc import \
+    issue_deprecation_warning
+
 from pygrackle.utilities.physical_constants import \
     mass_hydrogen_cgs
 
@@ -75,21 +78,11 @@ class FluidContainer(dict):
 
     @property
     def cooling_units(self):
-        tbase1 = self.chemistry_data.time_units
-        if self.chemistry_data.comoving_coordinates:
-            xbase1 = self.chemistry_data.length_units / \
-                (self.chemistry_data.a_value * self.chemistry_data.a_units)
-            dbase1 = self.chemistry_data.density_units * \
-                (self.chemistry_data.a_value * self.chemistry_data.a_units)**3
-        else:
-            xbase1 = self.chemistry_data.length_units / \
-                self.chemistry_data.a_units
-            dbase1 = self.chemistry_data.density_units * \
-                self.chemistry_data.a_units**3
-
-        coolunit = (self.chemistry_data.a_units**5 * xbase1**2 *
-                    mass_hydrogen_cgs**2) / (tbase1**3 * dbase1)
-        return coolunit
+        warn = 'The cooling_units attribute is deprecated.\n' + \
+          'For example, instead of fc.cooling_units, ' + \
+          'use fc.chemistry_data.cooling_units.'
+        issue_deprecation_warning(warn)
+        return self.chemistry_data.cooling_units
 
     @property
     def density_fields(self):

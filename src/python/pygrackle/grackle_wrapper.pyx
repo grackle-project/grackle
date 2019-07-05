@@ -250,6 +250,24 @@ cdef class chemistry_data:
             return mass_hydrogen_cgs * \
               self.velocity_units**2 / boltzmann_constant_cgs
 
+    property cooling_units:
+        def __get__(self):
+            tbase1 = self.time_units
+            if self.comoving_coordinates:
+                xbase1 = self.length_units / \
+                    (self.a_value * self.a_units)
+                dbase1 = self.density_units * \
+                    (self.a_value * self.a_units)**3
+            else:
+                xbase1 = self.length_units / \
+                    self.a_units
+                dbase1 = self.density_units * \
+                    self.a_units**3
+
+            coolunit = (self.a_units**5 * xbase1**2 *
+                        mass_hydrogen_cgs**2) / (tbase1**3 * dbase1)
+            return coolunit
+
 cdef gr_float* get_field(fc, name):
     cdef np.ndarray rv = fc.get(name, None)
     if rv is None:
