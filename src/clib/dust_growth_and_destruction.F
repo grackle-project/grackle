@@ -140,5 +140,7 @@
      &                            - dM(n)) / (Density(i,j,k) - dM(1))
       enddo
 
+      fgr(i,j,k) = dust_Density(i,j,k) / Density(i,j,k)
+
       return
       end ! end of dust growth and destruction module
