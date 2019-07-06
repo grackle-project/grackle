@@ -64,7 +64,7 @@
 !   main routine for dust growth and destruction
 !////////////////////////////////////////////////////////////
       subroutine dust_growth_and_destruction(in, jn, kn, i, j, k,
-     &              Density, dust_Density, fgr, Tgas,
+     &              Density, dust_Density, Tgas,
      &              Metallicity, dust_Metallicity, SNe_ThisTimeStep,
      &              tau_dest, tau_sput, 
      &              SolarAbundances, 
@@ -76,7 +76,7 @@
      &       SolarAbundances(NUM_METAL_SPECIES), 
      &       time_units, dens_units, len_units, dtime
       R_PREC Density(in,jn,kn), Tgas(in,jn,kn),
-     &       dust_Density(in,jn,kn), fgr(in,jn,kn)
+     &       dust_Density(in,jn,kn),
      &       Metallicity(NUM_METAL_SPECIES,in,jn,kn), 
      &       SNe_ThisTimeStep(in,jn,kn),
      &       dust_Metallicity(NUM_METAL_SPECIES,in,jn,kn)
@@ -139,8 +139,6 @@
           Metallicity(n,i,j,k) = (Metallicity(n,i,j,k) * Density(i,j,k) 
      &                            - dM(n)) / (Density(i,j,k) - dM(1))
       enddo
-
-      fgr(i,j,k) = dust_Density(i,j,k) / Density(i,j,k)
 
       return
       end ! end of dust growth and destruction module
