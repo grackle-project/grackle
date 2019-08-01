@@ -13,7 +13,7 @@ addons:
       - csh
       - libhdf5-serial-dev
       - gfortran
-      - libtool
+      - libtool-bin
 
 env:
   global:
