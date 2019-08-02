@@ -250,6 +250,24 @@ cdef class chemistry_data:
             return mass_hydrogen_cgs * \
               self.velocity_units**2 / boltzmann_constant_cgs
 
+    property cooling_units:
+        def __get__(self):
+            tbase1 = self.time_units
+            if self.comoving_coordinates:
+                xbase1 = self.length_units / \
+                    (self.a_value * self.a_units)
+                dbase1 = self.density_units * \
+                    (self.a_value * self.a_units)**3
+            else:
+                xbase1 = self.length_units / \
+                    self.a_units
+                dbase1 = self.density_units * \
+                    self.a_units**3
+
+            coolunit = (self.a_units**5 * xbase1**2 *
+                        mass_hydrogen_cgs**2) / (tbase1**3 * dbase1)
+            return coolunit
+
 cdef gr_float* get_field(fc, name):
     cdef np.ndarray rv = fc.get(name, None)
     if rv is None:
@@ -258,336 +276,227 @@ cdef gr_float* get_field(fc, name):
         return <gr_float *> rv.data
 
 def solve_chemistry(fc, my_dt):
-    cdef int grid_rank = 1
-    cdef int grid_dimension
-    grid_dimension = fc["density"].shape[0]
-
-    cdef np.ndarray ref_gs, ref_ge
-    ref_gs = np.zeros(3, dtype="int64")
-    ref_ge = np.zeros(3, dtype="int64")
-    ref_ge[0] = grid_dimension - 1
-    cdef int *grid_start
-    cdef int *grid_end
-    grid_start = <int *> ref_gs.data
-    grid_end = <int *> ref_ge.data
-
-    cdef double grid_dx = <double> 0.0
-
     cdef double dt_value = <double> my_dt
 
     cdef chemistry_data chem_data = fc.chemistry_data
     cdef c_chemistry_data my_chemistry = chem_data.data
     cdef c_chemistry_data_storage my_rates = chem_data.rates
     cdef c_code_units my_units = chem_data.units
-    cdef gr_float *density = get_field(fc, "density")
-    cdef gr_float *internal_energy = get_field(fc, "energy")
-    cdef gr_float *x_velocity = get_field(fc, "x-velocity")
-    cdef gr_float *y_velocity = get_field(fc, "y-velocity")
-    cdef gr_float *z_velocity = get_field(fc, "z-velocity")
-    cdef gr_float *HI_density = get_field(fc, "HI")
-    cdef gr_float *HII_density = get_field(fc, "HII")
-    cdef gr_float *HM_density = get_field(fc, "HM")
-    cdef gr_float *HeI_density = get_field(fc, "HeI")
-    cdef gr_float *HeII_density = get_field(fc, "HeII")
-    cdef gr_float *HeIII_density = get_field(fc, "HeIII")
-    cdef gr_float *H2I_density = get_field(fc, "H2I")
-    cdef gr_float *H2II_density = get_field(fc, "H2II")
-    cdef gr_float *DI_density = get_field(fc, "DI")
-    cdef gr_float *DII_density = get_field(fc, "DII")
-    cdef gr_float *HDI_density = get_field(fc, "HDI")
-    cdef gr_float *e_density = get_field(fc, "de")
-    cdef gr_float *metal_density = get_field(fc, "metal")
-    cdef gr_float *volumetric_heating_rate = get_field(fc, "volumetric_heating_rate")
-    cdef gr_float *specific_heating_rate = get_field(fc, "specific_heating_rate")
-    cdef gr_float *RT_heating_rate = get_field(fc, "RT_heating_rate")
-    cdef gr_float *RT_HI_ionization_rate = get_field(fc, "RT_HI_ionization_rate")
-    cdef gr_float *RT_HeI_ionization_rate = get_field(fc, "RT_HeI_ionization_rate")
-    cdef gr_float *RT_HeII_ionization_rate = get_field(fc, "RT_HeII_ionization_rate")
-    cdef gr_float *RT_H2_dissociation_rate = get_field(fc, "RT_H2_dissociation_rate")
-    cdef gr_float *H2_self_shielding_length = get_field(fc, "H2_self_shielding_length")
 
-    c_solve_chemistry (
-                &my_chemistry,
-                &my_rates,
-                &my_units,
-                dt_value,
-                grid_dx,
-                grid_rank,
-                &grid_dimension,
-                grid_start,
-                grid_end,
-                density,
-                internal_energy,
-                x_velocity,
-                y_velocity,
-                z_velocity,
-                HI_density,
-                HII_density,
-                HM_density,
-                HeI_density,
-                HeII_density,
-                HeIII_density,
-                H2I_density,
-                H2II_density,
-                DI_density,
-                DII_density,
-                HDI_density,
-                e_density,
-                metal_density,
-                volumetric_heating_rate,
-                specific_heating_rate,
-                RT_heating_rate,
-                RT_HI_ionization_rate,
-                RT_HeI_ionization_rate,
-                RT_HeII_ionization_rate,
-                RT_H2_dissociation_rate,
-                H2_self_shielding_length)
-    
-def calculate_cooling_time(fc):
-    cdef int grid_rank = 1
     cdef int grid_dimension
     grid_dimension = fc["density"].shape[0]
-
     cdef np.ndarray ref_gs, ref_ge
-    ref_gs = np.zeros(3, dtype="int64")
-    ref_ge = np.zeros(3, dtype="int64")
-    ref_ge[0] = grid_dimension -1 
-    cdef int *grid_start
-    cdef int *grid_end
-    grid_start = <int *> ref_gs.data
-    grid_end = <int *> ref_ge.data
+    ref_gs = np.zeros(3, dtype="int32")
+    ref_ge = np.zeros(3, dtype="int32")
+    ref_ge[0] = grid_dimension -1
 
+    cdef c_field_data my_fields
+    my_fields.grid_rank = 1
+    my_fields.grid_dimension = &grid_dimension
+    my_fields.grid_start = <int *> ref_gs.data
+    my_fields.grid_end = <int *> ref_ge.data
+    my_fields.density = get_field(fc, "density")
+    my_fields.internal_energy = get_field(fc, "energy")
+    my_fields.HI_density = get_field(fc, "HI")
+    my_fields.HII_density = get_field(fc, "HII")
+    my_fields.HM_density = get_field(fc, "HM")
+    my_fields.HeI_density = get_field(fc, "HeI")
+    my_fields.HeII_density = get_field(fc, "HeII")
+    my_fields.HeIII_density = get_field(fc, "HeIII")
+    my_fields.H2I_density = get_field(fc, "H2I")
+    my_fields.H2II_density = get_field(fc, "H2II")
+    my_fields.DI_density = get_field(fc, "DI")
+    my_fields.DII_density = get_field(fc, "DII")
+    my_fields.HDI_density = get_field(fc, "HDI")
+    my_fields.e_density = get_field(fc, "de")
+    my_fields.metal_density = get_field(fc, "metal")
+    my_fields.RT_heating_rate = get_field(fc, "RT_heating_rate")
+    my_fields.volumetric_heating_rate = get_field(fc, "volumetric_heating_rate")
+    my_fields.specific_heating_rate = get_field(fc, "specific_heating_rate")
+
+    c_local_solve_chemistry(
+        &my_chemistry,
+        &my_rates,
+        &my_units,
+        &my_fields,
+        my_dt)
+
+def calculate_cooling_time(fc):
     cdef chemistry_data chem_data = fc.chemistry_data
     cdef c_chemistry_data my_chemistry = chem_data.data
     cdef c_chemistry_data_storage my_rates = chem_data.rates
     cdef c_code_units my_units = chem_data.units
-    cdef gr_float *density = get_field(fc, "density")
-    cdef gr_float *internal_energy = get_field(fc, "energy")
-    cdef gr_float *x_velocity = get_field(fc, "x-velocity")
-    cdef gr_float *y_velocity = get_field(fc, "y-velocity")
-    cdef gr_float *z_velocity = get_field(fc, "z-velocity")
-    cdef gr_float *HI_density = get_field(fc, "HI")
-    cdef gr_float *HII_density = get_field(fc, "HII")
-    cdef gr_float *HM_density = get_field(fc, "HM")
-    cdef gr_float *HeI_density = get_field(fc, "HeI")
-    cdef gr_float *HeII_density = get_field(fc, "HeII")
-    cdef gr_float *HeIII_density = get_field(fc, "HeIII")
-    cdef gr_float *H2I_density = get_field(fc, "H2I")
-    cdef gr_float *H2II_density = get_field(fc, "H2II")
-    cdef gr_float *DI_density = get_field(fc, "DI")
-    cdef gr_float *DII_density = get_field(fc, "DII")
-    cdef gr_float *HDI_density = get_field(fc, "HDI")
-    cdef gr_float *e_density = get_field(fc, "de")
-    cdef gr_float *metal_density = get_field(fc, "metal")
-    cdef gr_float *cooling_time = get_field(fc, "cooling_time")
-    cdef gr_float *RT_heating_rate = get_field(fc, "RT_heating_rate")
-    cdef gr_float *volumetric_heating_rate = get_field(fc, "volumetric_heating_rate")
-    cdef gr_float *specific_heating_rate = get_field(fc, "specific_heating_rate")
 
-    c_calculate_cooling_time (
-                &my_chemistry,
-                &my_rates,
-                &my_units,
-                grid_rank,
-                &grid_dimension,
-                grid_start,
-                grid_end,
-                density,
-                internal_energy,
-                x_velocity,
-                y_velocity,
-                z_velocity,
-                HI_density,
-                HII_density,
-                HM_density,
-                HeI_density,
-                HeII_density,
-                HeIII_density,
-                H2I_density,
-                H2II_density,
-                DI_density,
-                DII_density,
-                HDI_density,
-                e_density,
-                metal_density,
-                cooling_time,
-                RT_heating_rate,
-                volumetric_heating_rate,
-                specific_heating_rate)
+    cdef int grid_dimension
+    grid_dimension = fc["density"].shape[0]
+    cdef np.ndarray ref_gs, ref_ge
+    ref_gs = np.zeros(3, dtype="int32")
+    ref_ge = np.zeros(3, dtype="int32")
+    ref_ge[0] = grid_dimension -1
+
+    cdef c_field_data my_fields
+    my_fields.grid_rank = 1
+    my_fields.grid_dimension = &grid_dimension
+    my_fields.grid_start = <int *> ref_gs.data
+    my_fields.grid_end = <int *> ref_ge.data
+    my_fields.density = get_field(fc, "density")
+    my_fields.internal_energy = get_field(fc, "energy")
+    my_fields.HI_density = get_field(fc, "HI")
+    my_fields.HII_density = get_field(fc, "HII")
+    my_fields.HM_density = get_field(fc, "HM")
+    my_fields.HeI_density = get_field(fc, "HeI")
+    my_fields.HeII_density = get_field(fc, "HeII")
+    my_fields.HeIII_density = get_field(fc, "HeIII")
+    my_fields.H2I_density = get_field(fc, "H2I")
+    my_fields.H2II_density = get_field(fc, "H2II")
+    my_fields.DI_density = get_field(fc, "DI")
+    my_fields.DII_density = get_field(fc, "DII")
+    my_fields.HDI_density = get_field(fc, "HDI")
+    my_fields.e_density = get_field(fc, "de")
+    my_fields.metal_density = get_field(fc, "metal")
+    my_fields.RT_heating_rate = get_field(fc, "RT_heating_rate")
+    my_fields.volumetric_heating_rate = get_field(fc, "volumetric_heating_rate")
+    my_fields.specific_heating_rate = get_field(fc, "specific_heating_rate")
+    cdef gr_float *cooling_time = get_field(fc, "cooling_time")
+
+    c_local_calculate_cooling_time(
+        &my_chemistry,
+        &my_rates,
+        &my_units,
+        &my_fields,
+        cooling_time)
 
 def calculate_gamma(fc):
-    cdef int grid_rank = 1
-    cdef int grid_dimension
-    grid_dimension = fc["density"].shape[0]
-    cdef np.ndarray ref_gs, ref_ge
-    ref_gs = np.zeros(3, dtype="int64")
-    ref_ge = np.zeros(3, dtype="int64")
-    ref_ge[0] = grid_dimension -1 
-    cdef int *grid_start
-    cdef int *grid_end
-    grid_start = <int *> ref_gs.data
-    grid_end = <int *> ref_ge.data
-
     cdef chemistry_data chem_data = fc.chemistry_data
     cdef c_chemistry_data my_chemistry = chem_data.data
     cdef c_chemistry_data_storage my_rates = chem_data.rates
     cdef c_code_units my_units = chem_data.units
-    cdef gr_float *density = get_field(fc, "density")
-    cdef gr_float *internal_energy = get_field(fc, "energy")
-    cdef gr_float *HI_density = get_field(fc, "HI")
-    cdef gr_float *HII_density = get_field(fc, "HII")
-    cdef gr_float *HM_density = get_field(fc, "HM")
-    cdef gr_float *HeI_density = get_field(fc, "HeI")
-    cdef gr_float *HeII_density = get_field(fc, "HeII")
-    cdef gr_float *HeIII_density = get_field(fc, "HeIII")
-    cdef gr_float *H2I_density = get_field(fc, "H2I")
-    cdef gr_float *H2II_density = get_field(fc, "H2II")
-    cdef gr_float *DI_density = get_field(fc, "DI")
-    cdef gr_float *DII_density = get_field(fc, "DII")
-    cdef gr_float *HDI_density = get_field(fc, "HDI")
-    cdef gr_float *e_density = get_field(fc, "de")
-    cdef gr_float *metal_density = get_field(fc, "metal")
+
+    cdef int grid_dimension
+    grid_dimension = fc["density"].shape[0]
+    cdef np.ndarray ref_gs, ref_ge
+    ref_gs = np.zeros(3, dtype="int32")
+    ref_ge = np.zeros(3, dtype="int32")
+    ref_ge[0] = grid_dimension -1
+
+    cdef c_field_data my_fields
+    my_fields.grid_rank = 1
+    my_fields.grid_dimension = &grid_dimension
+    my_fields.grid_start = <int *> ref_gs.data
+    my_fields.grid_end = <int *> ref_ge.data
+    my_fields.density = get_field(fc, "density")
+    my_fields.internal_energy = get_field(fc, "energy")
+    my_fields.HI_density = get_field(fc, "HI")
+    my_fields.HII_density = get_field(fc, "HII")
+    my_fields.HM_density = get_field(fc, "HM")
+    my_fields.HeI_density = get_field(fc, "HeI")
+    my_fields.HeII_density = get_field(fc, "HeII")
+    my_fields.HeIII_density = get_field(fc, "HeIII")
+    my_fields.H2I_density = get_field(fc, "H2I")
+    my_fields.H2II_density = get_field(fc, "H2II")
+    my_fields.DI_density = get_field(fc, "DI")
+    my_fields.DII_density = get_field(fc, "DII")
+    my_fields.HDI_density = get_field(fc, "HDI")
+    my_fields.e_density = get_field(fc, "de")
+    my_fields.metal_density = get_field(fc, "metal")
+    my_fields.RT_heating_rate = get_field(fc, "RT_heating_rate")
+    my_fields.volumetric_heating_rate = get_field(fc, "volumetric_heating_rate")
+    my_fields.specific_heating_rate = get_field(fc, "specific_heating_rate")
     cdef gr_float *gamma = get_field(fc, "gamma")
-    
-    c_calculate_gamma (
-                &my_chemistry,
-                &my_rates,
-                &my_units,
-                grid_rank,
-                &grid_dimension,
-                grid_start,
-                grid_end,
-                density,
-                internal_energy,
-                HI_density,
-                HII_density,
-                HM_density,
-                HeI_density,
-                HeII_density,
-                HeIII_density,
-                H2I_density,
-                H2II_density,
-                DI_density,
-                DII_density,
-                HDI_density,
-                e_density,
-                metal_density,
-                gamma)
-    
-def calculate_pressure(fc):
-    cdef int grid_rank = 1
-    cdef int grid_dimension
-    grid_dimension = fc["density"].shape[0]
-    cdef np.ndarray ref_gs, ref_ge
-    ref_gs = np.zeros(3, dtype="int64")
-    ref_ge = np.zeros(3, dtype="int64")
-    ref_ge[0] = grid_dimension -1 
-    cdef int *grid_start
-    cdef int *grid_end
-    grid_start = <int *> ref_gs.data
-    grid_end = <int *> ref_ge.data
 
+    c_local_calculate_gamma(
+        &my_chemistry,
+        &my_rates,
+        &my_units,
+        &my_fields,
+        gamma)
+
+def calculate_pressure(fc):
     cdef chemistry_data chem_data = fc.chemistry_data
     cdef c_chemistry_data my_chemistry = chem_data.data
     cdef c_chemistry_data_storage my_rates = chem_data.rates
     cdef c_code_units my_units = chem_data.units
-    cdef gr_float *density = get_field(fc, "density")
-    cdef gr_float *internal_energy = get_field(fc, "energy")
-    cdef gr_float *HI_density = get_field(fc, "HI")
-    cdef gr_float *HII_density = get_field(fc, "HII")
-    cdef gr_float *HM_density = get_field(fc, "HM")
-    cdef gr_float *HeI_density = get_field(fc, "HeI")
-    cdef gr_float *HeII_density = get_field(fc, "HeII")
-    cdef gr_float *HeIII_density = get_field(fc, "HeIII")
-    cdef gr_float *H2I_density = get_field(fc, "H2I")
-    cdef gr_float *H2II_density = get_field(fc, "H2II")
-    cdef gr_float *DI_density = get_field(fc, "DI")
-    cdef gr_float *DII_density = get_field(fc, "DII")
-    cdef gr_float *HDI_density = get_field(fc, "HDI")
-    cdef gr_float *e_density = get_field(fc, "de")
-    cdef gr_float *metal_density = get_field(fc, "metal")
+
+    cdef int grid_dimension
+    grid_dimension = fc["density"].shape[0]
+    cdef np.ndarray ref_gs, ref_ge
+    ref_gs = np.zeros(3, dtype="int32")
+    ref_ge = np.zeros(3, dtype="int32")
+    ref_ge[0] = grid_dimension -1
+
+    cdef c_field_data my_fields
+    my_fields.grid_rank = 1
+    my_fields.grid_dimension = &grid_dimension
+    my_fields.grid_start = <int *> ref_gs.data
+    my_fields.grid_end = <int *> ref_ge.data
+    my_fields.density = get_field(fc, "density")
+    my_fields.internal_energy = get_field(fc, "energy")
+    my_fields.HI_density = get_field(fc, "HI")
+    my_fields.HII_density = get_field(fc, "HII")
+    my_fields.HM_density = get_field(fc, "HM")
+    my_fields.HeI_density = get_field(fc, "HeI")
+    my_fields.HeII_density = get_field(fc, "HeII")
+    my_fields.HeIII_density = get_field(fc, "HeIII")
+    my_fields.H2I_density = get_field(fc, "H2I")
+    my_fields.H2II_density = get_field(fc, "H2II")
+    my_fields.DI_density = get_field(fc, "DI")
+    my_fields.DII_density = get_field(fc, "DII")
+    my_fields.HDI_density = get_field(fc, "HDI")
+    my_fields.e_density = get_field(fc, "de")
+    my_fields.metal_density = get_field(fc, "metal")
+    my_fields.RT_heating_rate = get_field(fc, "RT_heating_rate")
+    my_fields.volumetric_heating_rate = get_field(fc, "volumetric_heating_rate")
+    my_fields.specific_heating_rate = get_field(fc, "specific_heating_rate")
     cdef gr_float *pressure = get_field(fc, "pressure")
-    
-    c_calculate_pressure (
-                &my_chemistry,
-                &my_rates,
-                &my_units,
-                grid_rank,
-                &grid_dimension,
-                grid_start,
-                grid_end,
-                density,
-                internal_energy,
-                HI_density,
-                HII_density,
-                HM_density,
-                HeI_density,
-                HeII_density,
-                HeIII_density,
-                H2I_density,
-                H2II_density,
-                DI_density,
-                DII_density,
-                HDI_density,
-                e_density,
-                metal_density,
-                pressure)
+
+    c_local_calculate_pressure(
+        &my_chemistry,
+        &my_rates,
+        &my_units,
+        &my_fields,
+        pressure)
 
 def calculate_temperature(fc):
-    cdef int grid_rank = 1
-    cdef int grid_dimension
-    grid_dimension = fc["density"].shape[0]
-    cdef np.ndarray ref_gs, ref_ge
-    ref_gs = np.zeros(3, dtype="int64")
-    ref_ge = np.zeros(3, dtype="int64")
-    ref_ge[0] = grid_dimension -1 
-    cdef int *grid_start
-    cdef int *grid_end
-    grid_start = <int *> ref_gs.data
-    grid_end = <int *> ref_ge.data
-
     cdef chemistry_data chem_data = fc.chemistry_data
     cdef c_chemistry_data my_chemistry = chem_data.data
     cdef c_chemistry_data_storage my_rates = chem_data.rates
     cdef c_code_units my_units = chem_data.units
-    cdef gr_float *density = get_field(fc, "density")
-    cdef gr_float *internal_energy = get_field(fc, "energy")
-    cdef gr_float *HI_density = get_field(fc, "HI")
-    cdef gr_float *HII_density = get_field(fc, "HII")
-    cdef gr_float *HM_density = get_field(fc, "HM")
-    cdef gr_float *HeI_density = get_field(fc, "HeI")
-    cdef gr_float *HeII_density = get_field(fc, "HeII")
-    cdef gr_float *HeIII_density = get_field(fc, "HeIII")
-    cdef gr_float *H2I_density = get_field(fc, "H2I")
-    cdef gr_float *H2II_density = get_field(fc, "H2II")
-    cdef gr_float *DI_density = get_field(fc, "DI")
-    cdef gr_float *DII_density = get_field(fc, "DII")
-    cdef gr_float *HDI_density = get_field(fc, "HDI")
-    cdef gr_float *e_density = get_field(fc, "de")
-    cdef gr_float *metal_density = get_field(fc, "metal")
+
+    cdef int grid_dimension
+    grid_dimension = fc["density"].shape[0]
+    cdef np.ndarray ref_gs, ref_ge
+    ref_gs = np.zeros(3, dtype="int32")
+    ref_ge = np.zeros(3, dtype="int32")
+    ref_ge[0] = grid_dimension -1
+
+    cdef c_field_data my_fields
+    my_fields.grid_rank = 1
+    my_fields.grid_dimension = &grid_dimension
+    my_fields.grid_start = <int *> ref_gs.data
+    my_fields.grid_end = <int *> ref_ge.data
+    my_fields.density = get_field(fc, "density")
+    my_fields.internal_energy = get_field(fc, "energy")
+    my_fields.HI_density = get_field(fc, "HI")
+    my_fields.HII_density = get_field(fc, "HII")
+    my_fields.HM_density = get_field(fc, "HM")
+    my_fields.HeI_density = get_field(fc, "HeI")
+    my_fields.HeII_density = get_field(fc, "HeII")
+    my_fields.HeIII_density = get_field(fc, "HeIII")
+    my_fields.H2I_density = get_field(fc, "H2I")
+    my_fields.H2II_density = get_field(fc, "H2II")
+    my_fields.DI_density = get_field(fc, "DI")
+    my_fields.DII_density = get_field(fc, "DII")
+    my_fields.HDI_density = get_field(fc, "HDI")
+    my_fields.e_density = get_field(fc, "de")
+    my_fields.metal_density = get_field(fc, "metal")
+    my_fields.RT_heating_rate = get_field(fc, "RT_heating_rate")
+    my_fields.volumetric_heating_rate = get_field(fc, "volumetric_heating_rate")
+    my_fields.specific_heating_rate = get_field(fc, "specific_heating_rate")
     cdef gr_float *temperature = get_field(fc, "temperature")
 
-    c_calculate_temperature(
-                &my_chemistry,
-                &my_rates,
-                &my_units,
-                grid_rank,
-                &grid_dimension,
-                grid_start,
-                grid_end,
-                density,
-                internal_energy,
-                HI_density,
-                HII_density,
-                HM_density,
-                HeI_density,
-                HeII_density,
-                HeIII_density,
-                H2I_density,
-                H2II_density,
-                DI_density,
-                DII_density,
-                HDI_density,
-                e_density,
-                metal_density,
-                temperature)
+    c_local_calculate_temperature(
+        &my_chemistry,
+        &my_rates,
+        &my_units,
+        &my_fields,
+        temperature)
