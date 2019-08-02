@@ -31,13 +31,8 @@ def test_proper_comoving_units():
 
     grackle_dir = os.path.dirname(os.path.dirname(os.path.dirname(
         os.path.dirname(os.path.abspath(__file__)))))
-    data_file_path = os.sep.join(
-        [grackle_dir, "input", "CloudyData_UVB=HM2012.h5"])
-
-    grackle_dir = os.path.dirname(os.path.dirname(os.path.dirname(
-        os.path.dirname(os.path.abspath(__file__)))))
-    data_file_path = os.sep.join(
-        [grackle_dir, "input", "CloudyData_UVB=HM2012.h5"])
+    data_file_path = bytearray(os.sep.join(
+        [grackle_dir, "input", "CloudyData_UVB=HM2012.h5"]), 'utf-8')
 
     my_random_state = np.random.RandomState(7921)
     for current_redshift in [0., 1., 3., 6., 9.]:
@@ -105,13 +100,8 @@ def test_proper_comoving_units_tabular():
 
     grackle_dir = os.path.dirname(os.path.dirname(os.path.dirname(
         os.path.dirname(os.path.abspath(__file__)))))
-    data_file_path = os.sep.join(
-        [grackle_dir, "input", "CloudyData_UVB=HM2012.h5"])
-
-    grackle_dir = os.path.dirname(os.path.dirname(os.path.dirname(
-        os.path.dirname(os.path.abspath(__file__)))))
-    data_file_path = os.sep.join(
-        [grackle_dir, "input", "CloudyData_UVB=HM2012.h5"])
+    data_file_path = bytearray(os.sep.join(
+        [grackle_dir, "input", "CloudyData_UVB=HM2012.h5"]), 'utf-8')
 
     my_random_state = np.random.RandomState(19650909)
     for current_redshift in [0., 1., 3., 6., 9.]:
@@ -178,13 +168,8 @@ def test_proper_units():
 
     grackle_dir = os.path.dirname(os.path.dirname(os.path.dirname(
         os.path.dirname(os.path.abspath(__file__)))))
-    data_file_path = os.sep.join(
-        [grackle_dir, "input", "CloudyData_UVB=HM2012.h5"])
-
-    grackle_dir = os.path.dirname(os.path.dirname(os.path.dirname(
-        os.path.dirname(os.path.abspath(__file__)))))
-    data_file_path = os.sep.join(
-        [grackle_dir, "input", "CloudyData_UVB=HM2012.h5"])
+    data_file_path = bytearray(os.sep.join(
+        [grackle_dir, "input", "CloudyData_UVB=HM2012.h5"]), 'utf-8')
 
     my_random_state = np.random.RandomState(20150725)
     for current_redshift in [0., 1., 3.]:
