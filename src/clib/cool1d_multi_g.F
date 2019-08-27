@@ -905,7 +905,7 @@ c  new (correct) way: (april 4, 2007)
             if ( tgas(i) > 2.d4 ) then
                gammaha_eff = 0 
             else
-               gammaha_eff = gammaha * dust2gas(i) / 0.009387d0
+               gammaha_eff = gammaha * dust2gas(i) / fgr
             endif
 
 !     Calculate electron density from mean molecular weight
