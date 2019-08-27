@@ -132,6 +132,7 @@ if __name__=="__main__":
     else:
         output = "freefall"
 
+    pyplot.tight_layout()
     pyplot.savefig("%s.png" % output)
 
     # save data arrays as a yt dataset
