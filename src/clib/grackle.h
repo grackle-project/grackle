@@ -94,20 +94,6 @@ int local_calculate_dust_temperature(chemistry_data *my_chemistry,
                                      grackle_field_data *my_fields,
                                      gr_float *dust_temperature);
 
-int _calculate_dust_temperature(chemistry_data *my_chemistry,
-                                chemistry_data_storage *my_rates,
-                                code_units *my_units,
-                                int grid_rank, int *grid_dimension,
-                                int *grid_start, int *grid_end,
-                                gr_float *density, gr_float *internal_energy,
-                                gr_float *HI_density, gr_float *HII_density,
-                                gr_float *HM_density, gr_float *HeI_density,
-                                gr_float *HeII_density, gr_float *HeIII_density,
-                                gr_float *H2I_density, gr_float *H2II_density,
-                                gr_float *DI_density, gr_float *DII_density,
-                                gr_float *HDI_density, gr_float *e_density,
-                                gr_float *metal_density, gr_float *dust_temperature);
-
 int calculate_gamma(code_units *my_units,
                     grackle_field_data *my_fields,
                     gr_float *my_gamma);

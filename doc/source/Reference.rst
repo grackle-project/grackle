@@ -336,21 +336,3 @@ described here can be used in conjunction with the :ref:`local_functions`.
    This function has been deprecated. Please use calculate_temperature or local_calculate_temperature.
 
    Calculates the gas temperature.
-
-.. c:function:: int _calculate_dust_temperature(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, code_units *my_units, int grid_rank, int *grid_dimension, int *grid_start, int *grid_end, gr_float *density, gr_float *internal_energy, gr_float *HI_density, gr_float *HII_density, gr_float *HM_density, gr_float *HeI_density, gr_float *HeII_density, gr_float *HeIII_density, gr_float *H2I_density, gr_float *H2II_density, gr_float *DI_density, gr_float *DII_density, gr_float *HDI_density, gr_float *e_density, gr_float *metal_density, gr_float *dust_temperature);
-
-   :param chemistry_data* my_chemistry: the structure returned by :c:func:`_set_default_chemistry_parameters`
-   :param chemistry_data_storage* my_rates: chemistry and cooling rate data structure
-   :param code_units* my_units: code units conversions
-   :param int grid_rank: the dimensionality of the grid
-   :param int* grid_dimension: array holding the size of the baryon field in each dimension
-   :param int* grid_start: array holding the starting indices in each dimension of the active portion of the baryon fields.  This is used to ignore ghost zones
-   :param int* grid_end: array holding the ending indices in each dimension of the active portion of the baryon fields.  This is used to ignore ghost zones.
-   :param gr_float* density: array containing the density values in code units
-   :param gr_float* internal_energy: array containing the specific internal energy values in code units corresponding to *erg/g*
-   :param gr_float* HI_density, HII_density, HM_density, HeI_density, HeII_density, HeIII_density, H2I_density, H2II_density, DI_density, DII_density, HDI_density, e_density, metal_density: arrays containing the species densities in code units equivalent those of the density array
-   :param gr_float* dust_temperature: array which will be filled with the calculated dust temperature values
-   :rtype: int
-   :returns: 1 (success) or 0 (failure)
-
-   Calculates the dust temperature.
