@@ -49,8 +49,9 @@ if __name__ == "__main__":
     my_chemistry.self_shielding_method = 0
     my_chemistry.H2_self_shielding = 0
     my_dir = os.path.dirname(os.path.abspath(__file__))
-    my_chemistry.grackle_data_file = os.path.join(
-        my_dir, "..", "..", "..", "input", "CloudyData_UVB=HM2012.h5")
+    grackle_data_file = bytearray(os.path.join(
+        my_dir, "..", "..", "..", "input", "CloudyData_UVB=HM2012.h5"), 'utf-8')
+    my_chemistry.grackle_data_file = grackle_data_file
 
     # Set units
     my_chemistry.comoving_coordinates = 0 # proper units

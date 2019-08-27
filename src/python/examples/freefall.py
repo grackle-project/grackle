@@ -48,8 +48,9 @@ if __name__=="__main__":
     if os.environ.get("METAL_COOLING", 0) == "1":
         my_chemistry.metal_cooling = int(os.environ["METAL_COOLING"])
         my_dir = os.path.dirname(os.path.abspath(__file__))
-        my_chemistry.grackle_data_file = os.path.join(
-            my_dir, "..", "..", "..", "input", "cloudy_metals_2008_3D.h5")
+        grackle_data_file = bytearray(os.path.join(
+            my_dir, "..", "..", "..", "input", "cloudy_metals_2008_3D.h5"), 'utf-8')
+        my_chemistry.grackle_data_file = grackle_data_file
         my_chemistry.h2_on_dust = 1
         my_chemistry.use_dust_density_field = 1
         metallicity = 1e-3

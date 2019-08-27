@@ -25,39 +25,25 @@
 extern chemistry_data *grackle_data;
 extern chemistry_data_storage grackle_rates;
 
-int _calculate_temperature(chemistry_data *my_chemistry,
-                           chemistry_data_storage *my_rates,
-                           code_units *my_units,
-                           int grid_rank, int *grid_dimension,
-                           int *grid_start, int *grid_end,
-                           gr_float *density, gr_float *internal_energy,
-                           gr_float *HI_density, gr_float *HII_density, gr_float *HM_density,
-                           gr_float *HeI_density, gr_float *HeII_density, gr_float *HeIII_density,
-                           gr_float *H2I_density, gr_float *H2II_density,
-                           gr_float *DI_density, gr_float *DII_density, gr_float *HDI_density,
-                           gr_float *e_density, gr_float *metal_density,
-                           gr_float *temperature);
+int local_calculate_temperature(chemistry_data *my_chemistry,
+                                chemistry_data_storage *my_rates,
+                                code_units *my_units,
+                                grackle_field_data *my_fields,
+                                gr_float *temperature);
 
-int _calculate_gamma(chemistry_data *my_chemistry,
-                     chemistry_data_storage *my_rates,
-                     code_units *my_units,
-                     int grid_rank, int *grid_dimension,
-                     int *grid_start, int *grid_end,
-                     gr_float *density, gr_float *internal_energy,
-                     gr_float *HI_density, gr_float *HII_density, gr_float *HM_density,
-                     gr_float *HeI_density, gr_float *HeII_density, gr_float *HeIII_density,
-                     gr_float *H2I_density, gr_float *H2II_density,
-                     gr_float *DI_density, gr_float *DII_density, gr_float *HDI_density,
-                     gr_float *e_density, gr_float *metal_density,
-                     gr_float *my_gamma)
+int local_calculate_gamma(chemistry_data *my_chemistry,
+                          chemistry_data_storage *my_rates,
+                          code_units *my_units,
+                          grackle_field_data *my_fields,
+                          gr_float *my_gamma)
 {
 
   if (!my_chemistry->use_grackle)
     return SUCCESS;
  
   int i, dim, size = 1;
-  for (dim = 0; dim < grid_rank; dim++)
-    size *= grid_dimension[dim];
+  for (dim = 0; dim < my_fields->grid_rank; dim++)
+    size *= my_fields->grid_dimension[dim];
   
   /* If molecular hydrogen is not being used, just use monotonic.
      (this should not really be called, but provide it just in case). */
@@ -70,17 +56,9 @@ int _calculate_gamma(chemistry_data *my_chemistry,
 
     /* Compute the temperature first. */
  
-    if (_calculate_temperature(my_chemistry, my_rates, my_units,
-                               grid_rank, grid_dimension,
-                               grid_start, grid_end,
-                               density, internal_energy,
-                               HI_density, HII_density, HM_density,
-                               HeI_density, HeII_density, HeIII_density,
-                               H2I_density, H2II_density,
-                               DI_density, DII_density, HDI_density,
-                               e_density, metal_density,
-                               my_gamma) == FAIL) {
-      fprintf(stderr, "Error in calculate_gamma.\n");
+    if (local_calculate_temperature(my_chemistry, my_rates, my_units,
+                                    my_fields, my_gamma) == FAIL) {
+      fprintf(stderr, "Error in local_calculate_temperature.\n");
       return FAIL;
     }
 
@@ -99,11 +77,12 @@ int _calculate_gamma(chemistry_data *my_chemistry,
       /* Compute relative number abundence of molecular hydrogen. */
  
       number_density =
-        0.25 * (HeI_density[i] + HeII_density[i] + HeIII_density[i]) +
-        HI_density[i] + HII_density[i] + HM_density[i] +
-        e_density[i];
+        0.25 * (my_fields->HeI_density[i] + my_fields->HeII_density[i] +
+                my_fields->HeIII_density[i]) +
+        my_fields->HI_density[i] + my_fields->HII_density[i] +
+        my_fields->HM_density[i] + my_fields->e_density[i];
  
-      nH2 = 0.5 * (H2I_density[i]  + H2II_density[i]);
+      nH2 = 0.5 * (my_fields->H2I_density[i] + my_fields->H2II_density[i]);
  
       /* Only do full computation if there is a reasonable amount of H2.
          The second term in GammaH2Inverse accounts for the vibrational
@@ -128,24 +107,44 @@ int _calculate_gamma(chemistry_data *my_chemistry,
   return SUCCESS;
 }
 
-int local_calculate_gamma(chemistry_data *my_chemistry,
-                          chemistry_data_storage *my_rates,
-                          code_units *my_units,
-                          grackle_field_data *my_fields,
-                          gr_float *my_gamma)
+int _calculate_gamma(chemistry_data *my_chemistry,
+                     chemistry_data_storage *my_rates,
+                     code_units *my_units,
+                     int grid_rank, int *grid_dimension,
+                     int *grid_start, int *grid_end,
+                     gr_float *density, gr_float *internal_energy,
+                     gr_float *HI_density, gr_float *HII_density, gr_float *HM_density,
+                     gr_float *HeI_density, gr_float *HeII_density, gr_float *HeIII_density,
+                     gr_float *H2I_density, gr_float *H2II_density,
+                     gr_float *DI_density, gr_float *DII_density, gr_float *HDI_density,
+                     gr_float *e_density, gr_float *metal_density,
+                     gr_float *my_gamma)
 {
-  if (_calculate_gamma(my_chemistry, my_rates, my_units,
-                       my_fields->grid_rank, my_fields->grid_dimension,
-                       my_fields->grid_start, my_fields->grid_end,
-                       my_fields->density, my_fields->internal_energy,
-                       my_fields->HI_density, my_fields->HII_density, my_fields->HM_density,
-                       my_fields->HeI_density, my_fields->HeII_density,
-                       my_fields->HeIII_density,
-                       my_fields->H2I_density, my_fields->H2II_density,
-                       my_fields->DI_density, my_fields->DII_density, my_fields->HDI_density,
-                       my_fields->e_density, my_fields->metal_density,
-                       my_gamma) == FAIL) {
-    fprintf(stderr, "Error in _calculate_gamma.\n");
+
+  grackle_field_data my_fields;
+  my_fields.grid_rank                = grid_rank;
+  my_fields.grid_dimension           = grid_dimension;
+  my_fields.grid_start               = grid_start;
+  my_fields.grid_end                 = grid_end;
+  my_fields.density                  = density;
+  my_fields.internal_energy          = internal_energy;
+  my_fields.HI_density               = HI_density;
+  my_fields.HII_density              = HII_density;
+  my_fields.HM_density               = HM_density;
+  my_fields.HeI_density              = HeI_density;
+  my_fields.HeII_density             = HeII_density;
+  my_fields.HeIII_density            = HeIII_density;
+  my_fields.H2I_density              = H2I_density;
+  my_fields.H2II_density             = H2II_density;
+  my_fields.DI_density               = DI_density;
+  my_fields.DII_density              = DII_density;
+  my_fields.HDI_density              = HDI_density;
+  my_fields.e_density                = e_density;
+  my_fields.metal_density            = metal_density;
+
+  if (local_calculate_gamma(my_chemistry, my_rates, my_units,
+                       &my_fields, my_gamma) == FAIL) {
+    fprintf(stderr, "Error in local_calculate_gamma.\n");
     return FAIL;
   }
   return SUCCESS;
