@@ -353,7 +353,7 @@ c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 fo
 !$omp&   indixe,
 !$omp&   t1, t2, logtem, tdef,
 !$omp&   dtit, ttot, p2d, tgas, tgasold,
-!$omp&   tdust, metallicity, rhoH, mmw, olddtit,
+!$omp&   tdust, metallicity, dust2gas, rhoH, mmw, olddtit,
 !$omp&   HIp, HIIp, HeIp, HeIIp, HeIIIp,
 !$omp&   HMp, H2Ip, H2IIp,
 !$omp&   dep, dedot,HIdot, dedot_prev,
