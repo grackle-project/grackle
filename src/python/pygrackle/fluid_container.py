@@ -165,7 +165,7 @@ _grackle_to_yt = {
 }
 
 _skip = ("pressure", "temperature", "dust_temperature",
-        "cooling_time", "gamma", "mu", "nH")
+         "cooling_time", "gamma", "mu", "nH")
 
 _yt_to_grackle = dict((b, a) for a, b in _grackle_to_yt.items())
 
