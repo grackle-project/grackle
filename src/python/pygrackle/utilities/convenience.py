@@ -87,10 +87,10 @@ def setup_fluid_container(my_chemistry,
         fc["HDI"][:] = tiny_number * fc["density"]
     fc["metal"][:] = metal_mass_fraction * fc["density"]
 
+    fc.calculate_mean_molecular_weight()
     fc["energy"] = temperature / \
         fc.chemistry_data.temperature_units / \
-        fc.calculate_mean_molecular_weight() / \
-        (my_chemistry.Gamma - 1.0)
+        fc["mu"] / (my_chemistry.Gamma - 1.0)
     fc["x-velocity"][:] = 0.0
     fc["y-velocity"][:] = 0.0
     fc["z-velocity"][:] = 0.0
@@ -110,9 +110,9 @@ def setup_fluid_container(my_chemistry,
             if field in fc:
                 fc_last[field] = np.copy(fc[field])
         fc.solve_chemistry(dt)
-        mu = fc.calculate_mean_molecular_weight()
+        fc.calculate_mean_molecular_weight()
         fc["energy"] = temperature / \
-            fc.chemistry_data.temperature_units / mu / \
+            fc.chemistry_data.temperature_units / fc["mu"] / \
             (my_chemistry.Gamma - 1.0)
         converged = check_convergence(fc, fc_last, tol=tolerance)
         if converged:

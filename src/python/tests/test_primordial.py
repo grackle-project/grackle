@@ -59,7 +59,8 @@ def test_equilibrium():
     t_sort = np.argsort(fc["temperature"])
     t_cool = fc["cooling_time"][t_sort] * my_chem.time_units
     my_T = fc["temperature"][t_sort]
-    my_nH = fc.calculate_hydrogen_number_density().mean()
+    fc.calculate_hydrogen_number_density()
+    my_nH = fc["nH"].mean()
 
     cooling_rate_eq = -1*total_cooling(my_T, my_nH) / my_nH**2
     cooling_rate_g = fc["energy"][t_sort] / t_cool * fc["density"] * \

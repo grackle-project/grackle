@@ -280,6 +280,14 @@ cdef class chemistry_data:
                         mass_hydrogen_cgs**2) / (tbase1**3 * dbase1)
             return coolunit
 
+    property energy_units:
+        def __get__(self):
+            return self.velocity_units**2
+
+    property pressure_units:
+        def __get__(self):
+            return self.density_units * self.energy_units
+
 cdef gr_float* get_field(fc, name):
     cdef np.ndarray rv = fc.get(name, None)
     if rv is None:

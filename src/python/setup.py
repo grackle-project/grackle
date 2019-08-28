@@ -51,9 +51,11 @@ setup(
         'cython',
     ],
     install_requires=[
+        'h5py',
         'setuptools',
         'numpy',
         'matplotlib',
+        'yt>=3.4.0',
     ],
     cmdclass={'build_ext': build_ext},
     license="BSD 3-clause",

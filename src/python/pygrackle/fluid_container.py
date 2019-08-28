@@ -31,7 +31,7 @@ _base_fluids = ["density", "metal", "dust"]
 _nd_fields   = ["energy",
                 "x-velocity", "y-velocity", "z-velocity",
                 "temperature", "dust_temperature", "pressure",
-                "gamma", "cooling_time"]
+                "gamma", "cooling_time", "mu", "nH"]
 
 _fluid_names = {}
 _fluid_names[0] = _base_fluids
@@ -92,23 +92,25 @@ class FluidContainer(dict):
     def calculate_hydrogen_number_density(self):
         my_chemistry = self.chemistry_data
         if my_chemistry.primordial_chemistry == 0:
-            return my_chemistry.HydrogenFractionByMass * \
+            self["nH"] = my_chemistry.HydrogenFractionByMass * \
               self["density"] * my_chemistry.density_units / mass_hydrogen_cgs
+            return
         nH = self["HI"] + self["HII"]
         if my_chemistry.primordial_chemistry > 1:
             nH += self["HM"] + self["H2I"] + self["H2II"]
         if my_chemistry.primordial_chemistry > 2:
             nH += self["HDI"] / 2.
-        return nH * my_chemistry.density_units / mass_hydrogen_cgs
+        self["nH"] = nH * my_chemistry.density_units / mass_hydrogen_cgs
 
     def calculate_mean_molecular_weight(self):
         my_chemistry = self.chemistry_data
         if (self["energy"] == 0).all():
-            return np.ones(self["energy"].size)
+            self["mu"] = np.ones(self["energy"].size)
+            return
         self.calculate_temperature()
-        return (self["temperature"] / \
-                (self["energy"] * (my_chemistry.Gamma - 1.) *
-                 self.chemistry_data.temperature_units))
+        self["mu"] = self["temperature"] / \
+          (self["energy"] * (my_chemistry.Gamma - 1.) *
+           self.chemistry_data.temperature_units)
 
     def calculate_cooling_time(self):
         calculate_cooling_time(self)
@@ -162,8 +164,8 @@ _grackle_to_yt = {
     'energy': ('gas', 'thermal_energy'),
 }
 
-_skip = ("pressure", "temperature", "dust_temperature", "cooling_time", "gamma",
-         "dust")
+_skip = ("pressure", "temperature", "dust_temperature",
+        "cooling_time", "gamma", "mu", "nH")
 
 _yt_to_grackle = dict((b, a) for a, b in _grackle_to_yt.items())
 
