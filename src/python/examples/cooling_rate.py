@@ -84,9 +84,11 @@ if __name__ == "__main__":
     for field in fc.density_fields:
         data[field] = yt.YTArray(fc[field][t_sort] *
                                  my_chemistry.density_units, "g/cm**3")
-    data["energy"]       = yt.YTArray(fc["energy"][t_sort], "erg/g")
-    data["temperature"]  = yt.YTArray(fc["temperature"][t_sort], "K")
-    data["pressure"]     = yt.YTArray(fc["pressure"][t_sort], "dyne/cm**2")
+    data["energy"] = yt.YTArray(
+        fc["energy"][t_sort] * my_chemistry.energy_units, "erg/g")
+    data["temperature"] = yt.YTArray(fc["temperature"][t_sort], "K")
+    data["pressure"] = yt.YTArray(
+        fc["pressure"][t_sort] * my_chemistry.pressure_units, "dyne/cm**2")
     data["cooling_time"] = yt.YTArray(fc["cooling_time"][t_sort], "s")
     data["cooling_rate"] = yt.YTArray(cooling_rate[t_sort], "erg*cm**3/s")
 
@@ -102,5 +104,6 @@ if __name__ == "__main__":
     else:
         ds_name = 'cooling_rate.h5'
         im_name = 'cooling_rate.png'
+    pyplot.tight_layout()
     pyplot.savefig(im_name)
     yt.save_as_dataset({}, ds_name, data)

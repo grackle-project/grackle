@@ -7,17 +7,19 @@ Grackle comes with a Python interface, called Pygrackle, which provides
 access to all of Grackle's functionality.  Pygrackle requires the following
 Python packages:
 
- - `Cython <http://www.cython.org/>`__
+ - `Cython <https://cython.org/>`__
 
  - flake8 (only required for the test suite)
 
- - `matplotlib <http://matplotlib.org/>`__
+ - `h5py <https://www.h5py.org/>`__
 
- - `NumPy <http://www.numpy.org/>`__
+ - `matplotlib <https://matplotlib.org/>`__
+
+ - `NumPy <https://www.numpy.org/>`__
 
  - py.test (only required for the test suite)
 
- - `yt <http://yt-project.org/>`__
+ - `yt <https://yt-project.org/>`__
 
 The easiest thing to do is follow the instructions for installing yt,
 which will provide you with Cython, matplotlib, and NumPy.  Flake8 and
@@ -28,14 +30,14 @@ Installing Pygrackle
 
 Once the Grackle library has been built and the above dependencies have been
 installed, Pygrackle can be installed by moving into the **src/python**
-directory and running ``python setup.py install``.
+directory and running ``pip install -e .``.
 
 .. highlight:: none
 
 ::
 
     ~/grackle $ cd src/python
-    ~/grackle/src/python $ python setup.py install
+    ~/grackle/src/python $ pip install -e .
 
 .. note:: Pygrackle can only be run when Grackle is compiled without OpenMP.
    See :ref:`openmp`.

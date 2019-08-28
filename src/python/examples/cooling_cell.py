@@ -110,15 +110,13 @@ if __name__ == "__main__":
     pyplot.xlabel("Time [Myr]")
     pyplot.ylabel("T [K]")
 
-    data["mu"] = data["temperature"] / \
-        (data["energy"] * (my_chemistry.Gamma - 1.) *
-         fc.chemistry_data.temperature_units)
     pyplot.twinx()
     p2, = pyplot.semilogx(data["time"].to("Myr"), data["mu"],
                           color="red", label="$\\mu$")
     pyplot.ylabel("$\\mu$")
     pyplot.legend([p1,p2],["T","$\\mu$"], fancybox=True,
                   loc="center left")
+    pyplot.tight_layout()
     pyplot.savefig("cooling_cell.png")
 
     # save data arrays as a yt dataset
