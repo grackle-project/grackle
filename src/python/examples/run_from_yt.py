@@ -43,25 +43,19 @@ grackle_data_file = bytearray(os.path.join(
 my_chemistry.grackle_data_file = grackle_data_file
 
 my_chemistry.comoving_coordinates = 0
-my_chemistry.density_units = 1.67e-24
-my_chemistry.length_units = 1.0
-my_chemistry.time_units = 1.0e12
+my_chemistry.density_units = (ds.mass_unit / ds.length_unit**3).d
+my_chemistry.length_units = ds.length_unit.d
+my_chemistry.time_units = ds.time_unit.d
+my_chemistry.velocity_units = (ds.length_unit / ds.time_unit).d
 my_chemistry.a_units = 1.0
 my_chemistry.a_value = 1.0
-
-energy_units = (my_chemistry.length_units /
-                my_chemistry.time_units)**2.0
-
-gravitational_constant = (
-    4.0 * 3.1415926 * 6.6726e-8 * my_chemistry.density_units *
-    my_chemistry.time_units**2)
 
 my_chemistry.initialize()
 
 g = ds.index.grids[0]
 old = dict((f, g[f].copy()) for f in ds.field_list)
 
-dt = 1e12
+dt = ds.quan(1, 'Myr').to('code_time').d
 for fc in grid_to_grackle(my_chemistry, g):
     fc.solve_chemistry(dt)
 
