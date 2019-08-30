@@ -27,7 +27,7 @@ from pygrackle.utilities.misc import \
 from pygrackle.utilities.physical_constants import \
     mass_hydrogen_cgs
 
-_base_fluids = ["density", "metal"]
+_base_fluids = ["density", "metal", "dust"]
 _nd_fields   = ["energy",
                 "x-velocity", "y-velocity", "z-velocity",
                 "temperature", "dust_temperature", "pressure",
@@ -73,9 +73,6 @@ class FluidContainer(dict):
         for htype in ["specific", "volumetric"]:
             if getattr(self.chemistry_data, "use_%s_heating_rate" % htype, 0):
                 self._setup_fluid("%s_heating_rate" % htype)
-
-        if self.chemistry_data.use_dust_density_field:
-            self._setup_fluid("dust")
 
     def _setup_fluid(self, fluid_name):
         self[fluid_name] = np.zeros(self.n_vals, self.dtype)
@@ -167,7 +164,7 @@ _grackle_to_yt = {
     'energy': ('gas', 'thermal_energy'),
 }
 
-_skip = ("pressure", "temperature", "dust_temperature",
+_skip = ("pressure", "temperature", "dust_temperature", "dust",
          "cooling_time", "gamma", "mu", "nH")
 
 _yt_to_grackle = dict((b, a) for a, b in _grackle_to_yt.items())
