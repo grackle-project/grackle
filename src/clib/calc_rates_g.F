@@ -10,7 +10,7 @@ c
      &             ceHIa, ceHeIa, ceHeIIa, ciHIa, ciHeIa, 
      &             ciHeISa, ciHeIIa, reHIIa, reHeII1a, 
      &             reHeII2a, reHeIIIa, brema, compa, 
-     &             gammahacgs, gammaha,
+     &             gammahacgs, gammaha, dust_PE,
      &             hyd01ka, h2k01a, vibha, rotha, rotla, 
      &             gpldl, gphdl, hdltea, hdlowa, ciecoa,
      &             gaHIa, gaH2a, gaHea, gaHpa, gaela, h2ltea, gasgra,
@@ -144,7 +144,7 @@ c
      &        gaHIa(nratec), gaH2a(nratec), gaHea(nratec), 
      &        gaHpa(nratec), gaela(nratec), h2ltea(nratec),
      &        gasgra(nratec), ciecoa(nratec),
-     &        compa, gammaha, gammahacgs,
+     &        compa, gammaha, gammahacgs, dust_PE,
      &        k1a (nratec), k2a (nratec), k3a (nratec), k4a (nratec), 
      &        k5a (nratec), k6a (nratec), k7a (nratec), k8a (nratec), 
      &        k9a (nratec), k10a(nratec), k11a(nratec), k12a(nratec), 
@@ -916,7 +916,9 @@ c     j) Photoelectric heating by UV-irradiated dust (Wolfire 1995)
 c        Default is 8.5e-26 for epsilon=0.05, G_0=1.7 (rate in erg s^-1 cm^-3)
 c
       gammaha   = gammahacgs / coolunit
-
+c
+c     The coefficient in the photo-electric heating term from the above rate.
+      dust_PE   = 1.d-24 / coolunit
 c
 c     Write out cooling rate data
 c

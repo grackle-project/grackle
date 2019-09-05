@@ -39,14 +39,15 @@ chemistry_data _set_default_chemistry_parameters(void)
   chemistry_data my_chemistry;
 
   my_chemistry.Gamma                          = 5./3.;
-  my_chemistry.use_grackle                    = FALSE;  // off
+  my_chemistry.use_grackle                    = FALSE;
   my_chemistry.with_radiative_cooling         = TRUE;
-  my_chemistry.primordial_chemistry           = FALSE;  // off
+  my_chemistry.primordial_chemistry           = 0;
+  my_chemistry.dust_chemistry                 = 0;
   my_chemistry.metal_cooling                  = FALSE;
   my_chemistry.h2_on_dust                     = FALSE;
   my_chemistry.use_dust_density_field         = FALSE;
 
-  my_chemistry.cmb_temperature_floor          = TRUE;   // use CMB floor.
+  my_chemistry.cmb_temperature_floor          = TRUE;
   my_chemistry.grackle_data_file              = "";
 
   my_chemistry.three_body_rate                = 0;   // ABN02
@@ -55,6 +56,7 @@ chemistry_data _set_default_chemistry_parameters(void)
 
   my_chemistry.photoelectric_heating          = 0;
   my_chemistry.photoelectric_heating_rate     = 8.5e-26;  // ergs cm-3 s-1
+  my_chemistry.interstellar_radiation_field   = 1.7;
 
   my_chemistry.use_volumetric_heating_rate    = 0;
   my_chemistry.use_specific_heating_rate      = 0;

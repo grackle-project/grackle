@@ -52,7 +52,7 @@ extern void FORTRAN_NAME(calc_rates_g)(
      double *ceHIa, double *ceHeIa, double *ceHeIIa, double *ciHIa, double *ciHeIa,
      double *ciHeISa, double *ciHeIIa, double *reHIIa, double *reHeII1a,
      double *reHeII2a, double *reHeIIIa, double *brema, double *compa, 
-     double *gammahacgs, double *gammaha,
+     double *gammahacgs, double *gammaha, double *dust_PE,
      double *hyd01ka, double *h2k01a, double *vibha, double *rotha, double *rotla,
      double *gpldl, double *gphdl, double *hdlte, double *hdlow, double *cieco,
      double *gaHIa, double *gaH2a, double *gaHea, double *gaHpa, double *gaela, 
@@ -233,6 +233,7 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
         my_rates->reHeII1,
      my_rates->reHeII2, my_rates->reHeIII, my_rates->brem, &my_rates->comp, 
      &my_chemistry->photoelectric_heating_rate, &my_rates->gammah,
+     &my_rates->dust_PE_heat,
      my_rates->hyd01k, my_rates->h2k01, my_rates->vibh, my_rates->roth,
         my_rates->rotl,
      my_rates->GP99LowDensityLimit, my_rates->GP99HighDensityLimit,
@@ -361,6 +362,8 @@ void show_parameters(FILE *fp, chemistry_data *my_chemistry)
           my_chemistry->with_radiative_cooling);
   fprintf(fp, "primordial_chemistry              = %d\n",
           my_chemistry->primordial_chemistry);
+  fprintf(fp, "dust_chemistry                    = %d\n",
+          my_chemistry->dust_chemistry);
   fprintf(fp, "metal_cooling                     = %d\n",
           my_chemistry->metal_cooling);
   fprintf(fp, "UVbackground                      = %d\n",
