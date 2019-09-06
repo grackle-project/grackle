@@ -133,7 +133,7 @@
      &       hdlte1, hdlow1, gamma2, x, fudge, fH2,
      &       gphdl1, dom_inv, tau, ciefudge,
      &       coolunit, dbase1, tbase1, xbase1,
-     &       nH2, nother, myde, nSSh, nratio, nssh_he, nratio_he,
+     &       nH2, nother, nSSh, nratio, nssh_he, nratio_he,
      &       fSShHI, fSShHeI
 
 !  Slice locals
@@ -141,7 +141,7 @@
       integer*8 indixe(in)
       real*8 t1(in), t2(in), logtem(in), tdef(in), p2d(in),
      &       tgas(in), tgasold(in), mmw(in), tdust(in), rhoH(in),
-     &       nh(in), metallicity(in), dust2gas(in), edot(in)
+     &       nh(in), metallicity(in), dust2gas(in), edot(in), myde(in)
 
 !  Cooling/heating slice locals
 
@@ -156,10 +156,15 @@
 
 !  Iteration mask
 
-      logical itmask(in)
+      logical itmask(in), anydust, anyPE
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
 !=======================================================================
+
+!     Set flag for dust-related options
+
+      anydust = (idust .gt. 0) .or. (idustall .gt. 0)
+      anyPE = (igammah .gt. 0) .or. (idustall .gt. 0)
 
 !     Set log values of start and end of lookup tables
 
@@ -243,6 +248,7 @@
      &              (HeI(i,j,k) + HeII(i,j,k) + HeIII(i,j,k))/4._DKIND +
      &              HI(i,j,k) + HII(i,j,k) + de(i,j,k)
                rhoH(i) = HI(i,j,k) + HII(i,j,k)
+               myde(i) = de(i,j,k)
             end if
          enddo
 
@@ -392,11 +398,6 @@
 
       do i = is+1, ie+1
          if ( itmask(i) ) then
-         if ( tgas(i) > 2.d4 ) then
-            gammaha_eff = 0 
-         else
-            gammaha_eff = gammaha
-         endif
          edot(i) = (
 
 !                    Collisional excitations
@@ -419,23 +420,10 @@
      &             - reHeII2(i)*HeII (i,j,k)*de(i,j,k)/4._DKIND      ! re of HeII
      &             - reHeIII(i)*HeIII(i,j,k)*de(i,j,k)/4._DKIND      ! re of HeIII
 
-!                    Compton cooling or heating
-
-     &             - comp1*(tgas(i)-comp2)*de(i,j,k)*dom_inv
-
-!                    X-ray compton heating
-
-     &             - comp_xraya*(tgas(i)-comp_temp)*de(i,j,k)*dom_inv
-
 !                    Bremsstrahlung
 
      &             - brem(i)*(HII(i,j,k)+HeII(i,j,k)/4._DKIND +
      &           HeIII(i,j,k)) * de(i,j,k)
-
-!                    Photoelectric heating by UV-irradiated dust
-
-     &             + real(igammah, DKIND) * gammaha_eff *
-     &           (HI(i,j,k) + HII(i,j,k)) * dom_inv
 
      &             )
 
@@ -679,9 +667,27 @@ c  new (correct) way: (april 4, 2007)
          enddo
       endif
 
+!     Calculate dust to gas ratio
+
+      if (anyPE) then
+         if (ifdust .gt. 0) then
+            do i = is+1, ie+1
+               if ( itmask(i) ) then
+                  dust2gas(i) = dust(i,j,k) / d(i,j,k)
+               endif
+            enddo
+         else
+            do i = is+1, ie+1
+               if ( itmask(i) ) then
+                  dust2gas(i) = fgr * metallicity(i)
+               endif
+            enddo
+         endif
+      endif
+
 !     --- Gas to grain heat transfer ---
 
-      if (idust .gt. 0) then
+      if (anydust) then
 
 !     Look up gas/grain heat transfer rates
 
@@ -697,22 +703,6 @@ c  new (correct) way: (april 4, 2007)
 
          call calc_tdust_1d_g(tdust, tgas, nh, gasgr_tdust, 
      &           itmask, comp2, in, is, ie, j, k)
-
-!     Calculate dust to gas ratio
-
-         if (ifdust .gt. 0) then
-            do i = is+1, ie+1
-               if ( itmask(i) ) then
-                  dust2gas(i) = dust(i,j,k) / d(i,j,k)
-               endif
-            enddo
-         else
-            do i = is+1, ie+1
-               if ( itmask(i) ) then
-                  dust2gas(i) = fgr * metallicity(i)
-               endif
-            enddo
-         endif
 
 !     Calculate cooling rate
 
@@ -901,35 +891,61 @@ c  new (correct) way: (april 4, 2007)
      &        priDataSize, priCooling, priHeating,
      &        itmask)
 
-!     Compton cooling or heating/photoelectric heating
+!     Calculate electron density from mean molecular weight
 
          do i = is+1, ie+1
             if ( itmask(i) ) then
-            if ( tgas(i) > 2.d4 ) then
-               gammaha_eff = 0 
-            else
-               gammaha_eff = gammaha * dust2gas(i) / fgr
-            endif
 
-!     Calculate electron density from mean molecular weight
-
-               myde = 1 - mmw(i) * (3.0_DKIND * fh + 1.0_DKIND) /
+               myde(i) = 1 - mmw(i) * (3.0_DKIND * fh + 1.0_DKIND) /
      &              4.0_DKIND
                if (imetal .eq. 1) then
-                  myde = myde - mmw(i) * metal(i,j,k) / 
+                  myde(i) = myde(i) - mmw(i) * metal(i,j,k) /
      &                 (d(i,j,k) * mu_metal)
                endif
-               myde = d(i,j,k) * myde / mmw(i)
-               myde = max(myde, 0._DKIND)
-
-               edot(i) = edot(i) 
-     &              - comp1*(tgas(i)-comp2)*myde*dom_inv
-     &              + real(igammah, DKIND)*gammaha_eff*rhoH(i)*dom_inv
+               myde(i) = d(i,j,k) * myde(i) / mmw(i)
+               myde(i) = max(myde(i), 0._DKIND)
 
             end if
          enddo
 
       endif
+
+!     Photo-electric heating by UV-irradiated dust
+
+      if (igammah .gt. 0) then
+
+          do i = is + 1, ie + 1
+             if (itmask(i)) then
+
+                if ( tgas(i) > 2.d4 ) then
+                   gammaha_eff = 0
+                else
+                   gammaha_eff = gammaha * dust2gas(i) / fgr
+                endif
+                edot(i) = edot(i) + gammaha_eff * rhoH(i) * dom_inv
+
+            endif
+         enddo
+
+      endif
+
+!     Compton cooling or heating and X-ray compton heating
+
+      do i = is + 1, ie + 1
+         if (itmask(i)) then
+
+            edot(i) = edot(i)
+
+!                  Compton cooling or heating
+
+     &           - comp1      * (tgas(i) - comp2)     * myde(i)*dom_inv
+
+!                  X-ray compton heating
+
+     &           - comp_xraya * (tgas(i) - comp_temp) * myde(i)*dom_inv
+
+         endif
+      enddo
  
 !     Photoheating from radiative transfer
 
@@ -938,10 +954,7 @@ c  new (correct) way: (april 4, 2007)
             if (itmask(i)) then
               edot(i) = edot(i) + real(ipiht, DKIND) * photogamma(i,j,k)
      &                          / coolunit * HI(i,j,k) / dom
-c              if (photogamma(i,j,k) .gt. 0) then
-c                print*, i,j,k,edot(i), photogamma(i,j,k), dom,
-c      $                 aye, utim, coolunit, d(i,j,k), hi(i,j,k), tgas(i)
-c              endif
+
               if (edot(i) .ne. edot(i)) then
 #ifdef _OPENMP
 !$omp critical
