@@ -6,7 +6,8 @@
       subroutine cool1d_multi_g(
      &                d, e, u, v, w, de, HI, HII, HeI, HeII, HeIII,
      &                in, jn, kn, nratec, 
-     &                iexpand, ispecies, imetal, imcool, idust, ifdust,
+     &                iexpand, ispecies, imetal, imcool,
+     &                idust, idustall, ifdust,
      &                idim, is, ie, j, k, ih2co, ipiht, iter, igammah,
      &                aye, temstart, temend, z_solar, fgr,
      &                utem, uxyz, uaye, urho, utim,
@@ -14,6 +15,7 @@
      &                ceHIa, ceHeIa, ceHeIIa, ciHIa, ciHeIa, 
      &                ciHeISa, ciHeIIa, reHIIa, reHeII1a, 
      &                reHeII2a, reHeIIIa, brema, compa, gammaha,
+     &                dust_PE, isrf,
      &                comp_xraya, comp_temp,
      &                piHI, piHeI, piHeII, comp1, comp2,
      &                HM, H2I, H2II, DI, DII, HDI, metal, dust,
@@ -68,7 +70,8 @@
 !  Arguments
 
       integer in, jn, kn, is, ie, j, k, nratec, idim,
-     &        iexpand, ih2co, ipiht, ispecies, imcool, idust, ifdust,
+     &        iexpand, ih2co, ipiht, ispecies, imcool,
+     &        idust, idustall, ifdust,
      &        imetal, igammah, ih2optical, iciecool, clnew,
      &        iVheat, iMheat, iradtrans, iradshield
 
@@ -95,7 +98,7 @@
      &        ciHeIIa(nratec), reHIIa(nratec), reHeII1a(nratec), 
      &        reHeII2a(nratec), reHeIIIa(nratec), brema(nratec),
      &        compa, piHI, piHeI, piHeII, comp_xraya, comp_temp,
-     &        gammaha, gammaha_eff, avgsighi, avgsighei,
+     &        gammaha, dust_PE, isrf, gammaha_eff, avgsighi, avgsighei,
      &        avgsigheii, k24, k26
 
 !  Cloudy cooling data

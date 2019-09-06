@@ -5,7 +5,8 @@
      &                d, e, u, v, w, de, HI, HII, HeI, HeII, HeIII,
      &                  cooltime,
      &                in, jn, kn, nratec, iexpand, 
-     &                ispecies, imetal, imcool, idust, ifdust, idim,
+     &                ispecies, imetal, imcool, idust,
+     &                idustall,ifdust, idim,
      &                is, js, ks, ie, je, ke, ih2co, ipiht, igammah,
      &                aye, temstart, temend,
      &                utem, uxyz, uaye, urho, utim,
@@ -13,6 +14,7 @@
      &                ceHIa, ceHeIa, ceHeIIa, ciHIa, ciHeIa, 
      &                ciHeISa, ciHeIIa, reHIIa, reHeII1a, 
      &                reHeII2a, reHeIIIa, brema, compa, gammaha,
+     &                dust_PE, isrf,
      &                comp_xraya, comp_temp, piHI, piHeI, piHeII,
      &                HM, H2I, H2II, DI, DII, HDI, metal, dust,
      &                hyd01ka, h2k01a, vibha, rotha, rotla,
@@ -59,7 +61,8 @@
 
       integer in, jn, kn, is, js, ks, ie, je, ke, nratec, 
      &        iexpand, ih2co, ipiht, ispecies, imetal, idim,
-     &        imcool, idust, ifdust, igammah, ih2optical, iciecool,
+     &        imcool, idust, idustall,
+     &        ifdust, igammah, ih2optical, iciecool,
      &        clnew, iVheat, iMheat, iradtrans, iradshield
 
       real*8  aye, temstart, temend,
@@ -86,7 +89,7 @@
      &        ciHeIIa(nratec), reHIIa(nratec), reHeII1a(nratec), 
      &        reHeII2a(nratec), reHeIIIa(nratec), brema(nratec),
      &        compa, piHI, piHeI, piHeII, comp_xraya, comp_temp,
-     &        gammaha, avgsighi, avgsighei, avgsigheii,
+     &        gammaha, dust_PE, isrf, avgsighi, avgsighei, avgsigheii,
      &        k24, k26
 !  Cloudy cooling data
 
@@ -238,7 +241,8 @@
          call cool1d_multi_g(     
      &                d, e, u, v, w, de, HI, HII, HeI, HeII, HeIII,
      &                in, jn, kn, nratec, 
-     &                iexpand, ispecies, imetal, imcool, idust, ifdust,
+     &                iexpand, ispecies, imetal, imcool,
+     &                idust, idustall, ifdust,
      &                idim, is, ie, j, k, ih2co, ipiht, 1, igammah,
      &                aye, temstart, temend, z_solar, fgr,
      &                utem, uxyz, uaye, urho, utim,
@@ -246,6 +250,7 @@
      &                ceHIa, ceHeIa, ceHeIIa, ciHIa, ciHeIa, 
      &                ciHeISa, ciHeIIa, reHIIa, reHeII1a, 
      &                reHeII2a, reHeIIIa, brema, compa, gammaha,
+     &                dust_PE, isrf,
      &                comp_xraya, comp_temp,
      &                piHI, piHeI, piHeII, comp1, comp2,
      &                HM, H2I, H2II, DI, DII, HDI, metal, dust,
