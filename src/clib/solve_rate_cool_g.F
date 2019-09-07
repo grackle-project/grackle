@@ -22,8 +22,7 @@
      &                ncrna, ncrd1a, ncrd2a,
      &                ceHIa, ceHeIa, ceHeIIa, ciHIa, ciHeIa, 
      &                ciHeISa, ciHeIIa, reHIIa, reHeII1a, 
-     &                reHeII2a, reHeIIIa, brema, compa, gammaha,
-     &                dust_PE, isrf,
+     &                reHeII2a, reHeIIIa, brema, compa, gammaha, isrf,
      &                comp_xraya, comp_temp, piHI, piHeI, piHeII,
      &                HM, H2I, H2II, DI, DII, HDI, metal, dust,
      &                hyd01ka, h2k01a, vibha, rotha, rotla, 
@@ -198,7 +197,7 @@
      &        ciHeIIa(nratec), reHIIa(nratec), reHeII1a(nratec), 
      &        reHeII2a(nratec), reHeIIIa(nratec), brema(nratec),
      &        compa, piHI, piHeI, piHeII, comp_xraya, comp_temp,
-     &        gammaha, dust_PE, isrf
+     &        gammaha, isrf
 
       real*8  avgsighi, avgsighei, avgsigheii
 
@@ -453,8 +452,7 @@ c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 fo
      &                ceHIa, ceHeIa, ceHeIIa, ciHIa, ciHeIa, 
      &                ciHeISa, ciHeIIa, reHIIa, reHeII1a, 
      &                reHeII2a, reHeIIIa, brema, compa, gammaha,
-     &                dust_PE, isrf,
-     &                comp_xraya, comp_temp,
+     &                isrf, comp_xraya, comp_temp,
      &                piHI, piHeI, piHeII, comp1, comp2,
      &                HM, H2I, H2II, DI, DII, HDI, metal, dust,
      &                hyd01ka, h2k01a, vibha, rotha, rotla,

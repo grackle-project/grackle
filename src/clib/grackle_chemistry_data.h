@@ -343,12 +343,7 @@ typedef struct
    *******************************/
 
   // Photo-electric heating (code units)
-  // used when setting rate manually
   double gammah;
-
-  // Photo-electric heating (code units)
-  // used when calculating rate from G0, T, ne
-  double dust_PE_heat;
 
   /* Gas/grain energy transfer. */
   double *gas_grain;
