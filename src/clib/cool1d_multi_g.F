@@ -15,7 +15,7 @@
      &                ceHIa, ceHeIa, ceHeIIa, ciHIa, ciHeIa, 
      &                ciHeISa, ciHeIIa, reHIIa, reHeII1a, 
      &                reHeII2a, reHeIIIa, brema, compa, gammaha,
-     &                isrf, comp_xraya, comp_temp,
+     &                isrf, regra, comp_xraya, comp_temp,
      &                piHI, piHeI, piHeII, comp1, comp2,
      &                HM, H2I, H2II, DI, DII, HDI, metal, dust,
      &                hyd01ka, h2k01a, vibha, rotha, rotla,
@@ -97,7 +97,7 @@
      &        ciHeIIa(nratec), reHIIa(nratec), reHeII1a(nratec), 
      &        reHeII2a(nratec), reHeIIIa(nratec), brema(nratec),
      &        compa, piHI, piHeI, piHeII, comp_xraya, comp_temp,
-     &        gammaha, isrf, avgsighi, avgsighei,
+     &        gammaha, isrf, regra(nratec), avgsighi, avgsighei,
      &        avgsigheii, k24, k26
 
 !  Cloudy cooling data
@@ -133,7 +133,7 @@
      &       gphdl1, dom_inv, tau, ciefudge,
      &       coolunit, dbase1, tbase1, xbase1,
      &       nH2, nother, nSSh, nratio, nssh_he, nratio_he,
-     &       fSShHI, fSShHeI, pe_eps, pe_X
+     &       fSShHI, fSShHeI, pe_eps, pe_X, grbeta
 
 !  Slice locals
  
@@ -152,7 +152,8 @@
      &       hyd01k(in), h2k01(in), vibh(in), roth(in), rotl(in),
      &       gpldl(in), gphdl(in), hdlte(in), hdlow(in),
      &       gaHI(in), gaH2(in), gaHe(in), gaHp(in), gael(in),
-     &       h2lte(in), galdl(in), gasgr(in), gasgr_tdust(in)
+     &       h2lte(in), galdl(in), gasgr(in), gasgr_tdust(in),
+     &       regr(in)
 
 !  Iteration mask
 
@@ -961,6 +962,28 @@ c  new (correct) way: (april 4, 2007)
      &               dom_inv * dust2gas(i) / fgr
             endif
          enddo
+      endif
+
+!     Electron recombination onto dust grains (eqn. 9 of Wolfire 1995)
+
+      if (idustall .gt. 0) then
+
+          do i = is + 1, ie + 1
+             if (itmask(i)) then
+                regr(i) = regra(indixe(i)) + tdef(i)
+     &               *(regra(indixe(i)+1) -regra(indixe(i)))
+             endif
+          enddo
+
+          do i = is + 1, ie + 1
+             if (itmask(i)) then
+                grbeta = 0.74_DKIND * tgas(i)**-0.068_DKIND
+                edot(i) = edot(i) -
+     &               regr(i) * (isrf * dom_inv / myde(i))**grbeta *
+     &               myde(i) * rhoH(i)
+             endif
+          enddo
+
       endif
 
 !     Compton cooling or heating and X-ray compton heating

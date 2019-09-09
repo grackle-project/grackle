@@ -45,14 +45,14 @@ int initialize_UVbackground_data(chemistry_data *my_chemistry,
                                  chemistry_data_storage *my_rates);
 
 extern void FORTRAN_NAME(calc_rates_g)(
-     int *ispecies, int *igammah,
+     int *ispecies, int *igammah, int *idustall,
      int *nratec, double *aye, double *temstart, double *temend, 
      int *casebrates, int *threebody,
      double *uxyz, double *uaye, double *urho, double *utim,
      double *ceHIa, double *ceHeIa, double *ceHeIIa, double *ciHIa, double *ciHeIa,
      double *ciHeISa, double *ciHeIIa, double *reHIIa, double *reHeII1a,
      double *reHeII2a, double *reHeIIIa, double *brema, double *compa, 
-     double *gammahacgs, double *gammaha,
+     double *gammahacgs, double *gammaha, double *regra,
      double *hyd01ka, double *h2k01a, double *vibha, double *rotha, double *rotla,
      double *gpldl, double *gphdl, double *hdlte, double *hdlow, double *cieco,
      double *gaHIa, double *gaH2a, double *gaHea, double *gaHpa, double *gaela, 
@@ -214,6 +214,10 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
 
   }
 
+  if (my_chemistry->dust_chemistry > 0) {
+    my_rates->regr = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+  }
+
   int ioutput = 0;
 
   double co_length_units, co_density_units;
@@ -232,6 +236,7 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
  
   FORTRAN_NAME(calc_rates_g)(
      &my_chemistry->primordial_chemistry, &my_chemistry->photoelectric_heating,
+     &my_chemistry->dust_chemistry,
      &my_chemistry->NumberOfTemperatureBins, &my_units->a_value,
      &my_chemistry->TemperatureStart, &my_chemistry->TemperatureEnd,
      &my_chemistry->CaseBRecombination, &my_chemistry->three_body_rate,
@@ -242,7 +247,7 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
      my_rates->ciHeIS, my_rates->ciHeII, my_rates->reHII,
         my_rates->reHeII1,
      my_rates->reHeII2, my_rates->reHeIII, my_rates->brem, &my_rates->comp, 
-     &my_chemistry->photoelectric_heating_rate, &my_rates->gammah,
+     &my_chemistry->photoelectric_heating_rate, &my_rates->gammah, my_rates->regr,
      my_rates->hyd01k, my_rates->h2k01, my_rates->vibh, my_rates->roth,
         my_rates->rotl,
      my_rates->GP99LowDensityLimit, my_rates->GP99HighDensityLimit,

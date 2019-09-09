@@ -343,6 +343,9 @@ typedef struct
   // Photo-electric heating (code units)
   double gammah;
 
+  // Electron recombination onto dust grains
+  double *regr;
+
   /* Gas/grain energy transfer. */
   double *gas_grain;
 

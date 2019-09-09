@@ -3,14 +3,14 @@ c=======================================================================
 c//////////////////////  SUBROUTINE CALC_RATES_G  \\\\\\\\\\\\\\\\\\\\\\\
 c
       subroutine calc_rates_g(
-     &             ispecies, igammah,
+     &             ispecies, igammah, idustall,
      &             nratec, aye, temstart, temend,
      &             casebrates, threebody,
      &             uxyz, uaye, urho, utim,
      &             ceHIa, ceHeIa, ceHeIIa, ciHIa, ciHeIa, 
      &             ciHeISa, ciHeIIa, reHIIa, reHeII1a, 
      &             reHeII2a, reHeIIIa, brema, compa, 
-     &             gammahacgs, gammaha,
+     &             gammahacgs, gammaha, regra,
      &             hyd01ka, h2k01a, vibha, rotha, rotla, 
      &             gpldl, gphdl, hdltea, hdlowa, ciecoa,
      &             gaHIa, gaH2a, gaHea, gaHpa, gaela, h2ltea, gasgra,
@@ -131,7 +131,8 @@ c
 c
 c  Arguments
 c
-      integer ispecies, igammah, nratec, casebrates, threebody, ndratec
+      integer ispecies, igammah, idustall, nratec, casebrates,
+     &        threebody, ndratec
       real*8  aye, temstart, temend, dtemstart, dtemend
       real*8  uxyz, uaye, urho, utim
       real*8  ceHIa(nratec), ceHeIa(nratec), ceHeIIa(nratec),
@@ -143,7 +144,7 @@ c
      &        gphdl(nratec), hdltea(nratec), hdlowa(nratec),
      &        gaHIa(nratec), gaH2a(nratec), gaHea(nratec), 
      &        gaHpa(nratec), gaela(nratec), h2ltea(nratec),
-     &        gasgra(nratec), ciecoa(nratec),
+     &        gasgra(nratec), ciecoa(nratec), regra(nratec),
      &        compa, gammaha, gammahacgs,
      &        k1a (nratec), k2a (nratec), k3a (nratec), k4a (nratec), 
      &        k5a (nratec), k6a (nratec), k7a (nratec), k8a (nratec), 
@@ -198,7 +199,7 @@ c
      &     dbase1, dlogtem, kunit_3bdy, cierate,
      &     grain_coef, fgr, d_ttt, d_logttt, d_dlogtem,
      &     ttt2, d_ttt2, tk9, lambdaHI, lambdaHeII,
-     &     lambdaHeIII
+     &     lambdaHeIII, grbeta
       real*8 tm, HDLR, HDLV, lt, t3, lt3
 c
 c\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////////
@@ -903,6 +904,15 @@ c     h) Energy transfer from gas to dust grains, following
 c        equation 2.15 of Hollenbach & McKee (1989)
       gasgra(i) = grain_coef * (ttt**0.5d0) * 
      &     (1.0d0 - (0.8d0 * exp(-75.0d0 / ttt))) / coolunit
+c
+c     Electron recombination onto dust grains
+c     Eqn. 9 from Wolfire et al. (1995)
+c
+      if (idustall .gt. 0) then
+         grbeta = 0.74_DKIND / ttt**0.068_DKIND
+         regra(i) = 4.65d-30 * ttt**(0.94_DKIND + 0.5_DKIND * grbeta) /
+     &        coolunit
+      endif
 c
       enddo
 
