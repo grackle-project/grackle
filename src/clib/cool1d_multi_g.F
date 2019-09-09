@@ -28,7 +28,7 @@
      &                reHII, reHeII1, reHeII2, reHeIII, brem,
      &                indixe, t1, t2, logtem, tdef, edot,
      &                tgas, tgasold, mmw, p2d, tdust, metallicity,
-     &                dust2gas, rhoH,
+     &                dust2gas, rhoH, mynh, myde, gammaha_eff,
      &                iradshield, avgsighi, avgsighei,
      &                avgsigheii,
      &                k24, k26, iradtrans, photogamma,
@@ -140,8 +140,8 @@
       integer*8 indixe(in)
       real*8 t1(in), t2(in), logtem(in), tdef(in), p2d(in),
      &       tgas(in), tgasold(in), mmw(in), tdust(in), rhoH(in),
-     &       nh(in), metallicity(in), dust2gas(in), edot(in), myde(in),
-     &       gammaha_eff(in)
+     &       mynh(in), metallicity(in), dust2gas(in), edot(in),
+     &       myde(in), gammaha_eff(in)
 
 !  Cooling/heating slice locals
 
@@ -323,7 +323,7 @@
 
       do i = is+1, ie+1
          if ( itmask(i) ) then
-            nh(i) = rhoH(i) * dom
+            mynh(i) = rhoH(i) * dom
          end if
       enddo
 
@@ -701,7 +701,7 @@ c  new (correct) way: (april 4, 2007)
 
 !     Compute dust temperature
 
-         call calc_tdust_1d_g(tdust, tgas, nh, gasgr_tdust, 
+         call calc_tdust_1d_g(tdust, tgas, mynh, gasgr_tdust,
      &           itmask, comp2, in, is, ie, j, k)
 
 !     Calculate cooling rate

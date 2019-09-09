@@ -265,7 +265,8 @@
       real*8 t1(in), t2(in), logtem(in), tdef(in),
      &       dtit(in), ttot(in), p2d(in), tgas(in), tgasold(in),
      &       tdust(in), metallicity(in), dust2gas(in),
-     &       rhoH(in), mmw(in), olddtit
+     &       rhoH(in), mmw(in), mynh(in), myde(in), gammaha_eff(in),
+     &       olddtit
 
 !  Rate equation row temporaries
 
@@ -359,7 +360,8 @@ c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 fo
 !$omp&   indixe,
 !$omp&   t1, t2, logtem, tdef,
 !$omp&   dtit, ttot, p2d, tgas, tgasold,
-!$omp&   tdust, metallicity, dust2gas, rhoH, mmw, olddtit,
+!$omp&   tdust, metallicity, dust2gas, rhoH, mmw,
+!$omp&   mynh, myde, gammaha_eff, olddtit,
 !$omp&   HIp, HIIp, HeIp, HeIIp, HeIIIp,
 !$omp&   HMp, H2Ip, H2IIp,
 !$omp&   dep, dedot,HIdot, dedot_prev,
@@ -465,7 +467,7 @@ c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 fo
      &                reHII, reHeII1, reHeII2, reHeIII, brem,
      &                indixe, t1, t2, logtem, tdef, edot,
      &                tgas, tgasold, mmw, p2d, tdust, metallicity,
-     &                dust2gas, rhoH,
+     &                dust2gas, rhoH, mynh, myde, gammaha_eff,
      &                iradshield, avgsighi, avgsighei, avgsigheii,
      &                k24, k26,
      &                iradtrans, photogamma,
