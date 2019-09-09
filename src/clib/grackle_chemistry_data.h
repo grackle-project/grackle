@@ -71,10 +71,8 @@ typedef struct
   int use_dust_density_field;
 
   /* photo-electric heating from irradiated dust */
-
-  // parameters for setting PE heating rate as a constant
   int photoelectric_heating;
-  double photoelectric_heating_rate; // in CGS
+  double photoelectric_heating_rate;
 
   // local FUV interstellar radiation field in Habing units
   double interstellar_radiation_field;

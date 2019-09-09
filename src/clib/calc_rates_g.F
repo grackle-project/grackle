@@ -3,7 +3,7 @@ c=======================================================================
 c//////////////////////  SUBROUTINE CALC_RATES_G  \\\\\\\\\\\\\\\\\\\\\\\
 c
       subroutine calc_rates_g(
-     &             ispecies,
+     &             ispecies, igammah,
      &             nratec, aye, temstart, temend,
      &             casebrates, threebody,
      &             uxyz, uaye, urho, utim,
@@ -131,7 +131,7 @@ c
 c
 c  Arguments
 c
-      integer ispecies, nratec, casebrates, threebody, ndratec
+      integer ispecies, igammah, nratec, casebrates, threebody, ndratec
       real*8  aye, temstart, temend, dtemstart, dtemend
       real*8  uxyz, uaye, urho, utim
       real*8  ceHIa(nratec), ceHeIa(nratec), ceHeIIa(nratec),
@@ -915,7 +915,13 @@ c
 c     j) Photoelectric heating by UV-irradiated dust (Wolfire 1995)
 c        Default is 8.5e-26 for epsilon=0.05, G_0=1.7 (rate in erg s^-1 cm^-3)
 c
-      gammaha   = gammahacgs / coolunit
+      if (igammah .le. 1) then
+         gammaha = gammahacgs / coolunit
+      else
+c        igamma set to 2 or 3
+c        User to specify G_0, epsilon set to 0.05 or calculated directly.
+         gammaha = 1.d-24 / coolunit
+      endif
 c
 c     Write out cooling rate data
 c

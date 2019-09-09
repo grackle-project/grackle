@@ -97,7 +97,7 @@
      &        ciHeIIa(nratec), reHIIa(nratec), reHeII1a(nratec), 
      &        reHeII2a(nratec), reHeIIIa(nratec), brema(nratec),
      &        compa, piHI, piHeI, piHeII, comp_xraya, comp_temp,
-     &        gammaha, isrf, gammaha_eff, avgsighi, avgsighei,
+     &        gammaha, isrf, avgsighi, avgsighei,
      &        avgsigheii, k24, k26
 
 !  Cloudy cooling data
@@ -133,14 +133,15 @@
      &       gphdl1, dom_inv, tau, ciefudge,
      &       coolunit, dbase1, tbase1, xbase1,
      &       nH2, nother, nSSh, nratio, nssh_he, nratio_he,
-     &       fSShHI, fSShHeI
+     &       fSShHI, fSShHeI, pe_eps, pe_X
 
 !  Slice locals
  
       integer*8 indixe(in)
       real*8 t1(in), t2(in), logtem(in), tdef(in), p2d(in),
      &       tgas(in), tgasold(in), mmw(in), tdust(in), rhoH(in),
-     &       nh(in), metallicity(in), dust2gas(in), edot(in), myde(in)
+     &       nh(in), metallicity(in), dust2gas(in), edot(in), myde(in),
+     &       gammaha_eff(in)
 
 !  Cooling/heating slice locals
 
@@ -155,7 +156,7 @@
 
 !  Iteration mask
 
-      logical itmask(in), anydust, anyPE
+      logical itmask(in), anydust
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
 !=======================================================================
@@ -163,7 +164,6 @@
 !     Set flag for dust-related options
 
       anydust = (idust .gt. 0) .or. (idustall .gt. 0)
-      anyPE = (igammah .gt. 0) .or. (idustall .gt. 0)
 
 !     Set log values of start and end of lookup tables
 
@@ -668,7 +668,7 @@ c  new (correct) way: (april 4, 2007)
 
 !     Calculate dust to gas ratio
 
-      if (anyPE) then
+      if (anydust .or. (igammah .gt. 0)) then
          if (ifdust .gt. 0) then
             do i = is+1, ie+1
                if ( itmask(i) ) then
@@ -911,21 +911,56 @@ c  new (correct) way: (april 4, 2007)
 
 !     Photo-electric heating by UV-irradiated dust
 
-      if (igammah .gt. 0) then
+      if (igammah .eq. 1) then
 
           do i = is + 1, ie + 1
              if (itmask(i)) then
-
                 if ( tgas(i) > 2.d4 ) then
-                   gammaha_eff = 0._DKIND
+                   gammaha_eff(i) = 0._DKIND
                 else
-                   gammaha_eff = gammaha * dust2gas(i) / fgr
+                   gammaha_eff(i) = gammaha
                 endif
-                edot(i) = edot(i) + gammaha_eff * rhoH(i) * dom_inv
-
             endif
          enddo
 
+!     Use eqn. 1 of Wolfire et al. (1995)
+      else if (igammah .eq. 2) then
+
+          do i = is + 1, ie + 1
+             if (itmask(i)) then
+                if ( tgas(i) > 2.d4 ) then
+                   gammaha_eff(i) = 0._DKIND
+                else
+!                  Assume constant epsilon = 0.05.
+                   gammaha_eff(i) = gammaha * 0.05_DKIND * isrf
+                endif
+            endif
+         enddo
+
+!     Full calculation of epsilon (eqn. 2 of Wolfire 1995)
+      else if (igammah .eq. 3) then
+
+          do i = is + 1, ie + 1
+             if (itmask(i)) then
+                pe_X = isrf * dom_inv * sqrt(tgas(i)) / myde(i)
+                pe_eps =
+     &               (4.9d-2 /
+     &                (1._DKIND + (pe_X / 1925._DKIND)**0.73_DKIND)) +
+     &               ((3.7d-2 * (tgas(i) / 1.d4)**0.7_DKIND) /
+     &                (1._DKIND + (pe_X / 5000._DKIND)))
+                gammaha_eff(i) = gammaha * pe_eps * isrf
+             endif
+          enddo
+
+      endif
+
+      if (igammah .gt. 0) then
+          do i = is + 1, ie + 1
+             if (itmask(i)) then
+                edot(i) = edot(i) + gammaha_eff(i) * rhoH(i) *
+     &               dom_inv * dust2gas(i) / fgr
+            endif
+         enddo
       endif
 
 !     Compton cooling or heating and X-ray compton heating

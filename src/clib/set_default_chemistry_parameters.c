@@ -50,12 +50,13 @@ chemistry_data _set_default_chemistry_parameters(void)
   my_chemistry.cmb_temperature_floor          = TRUE;
   my_chemistry.grackle_data_file              = "";
 
-  my_chemistry.three_body_rate                = 0;   // ABN02
+  my_chemistry.three_body_rate                = 0;
   my_chemistry.cie_cooling                    = 0;
   my_chemistry.h2_optical_depth_approximation = 0;
 
   my_chemistry.photoelectric_heating          = 0;
-  my_chemistry.photoelectric_heating_rate     = 8.5e-26;  // ergs cm-3 s-1
+  // epsilon=0.05, G_0=1.7 (in erg s^-1 cm^-3)
+  my_chemistry.photoelectric_heating_rate     = 8.5e-26;
   my_chemistry.interstellar_radiation_field   = 1.7;
 
   my_chemistry.use_volumetric_heating_rate    = 0;

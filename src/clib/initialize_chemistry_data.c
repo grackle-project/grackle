@@ -45,7 +45,7 @@ int initialize_UVbackground_data(chemistry_data *my_chemistry,
                                  chemistry_data_storage *my_rates);
 
 extern void FORTRAN_NAME(calc_rates_g)(
-     int *ispecies,
+     int *ispecies, int *igammah,
      int *nratec, double *aye, double *temstart, double *temend, 
      int *casebrates, int *threebody,
      double *uxyz, double *uaye, double *urho, double *utim,
@@ -75,6 +75,16 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
   if (grackle_verbose) {
     auto_show_version(stdout);
     fprintf(stdout, "Initializing grackle data.\n");
+  }
+
+  // Activate photo-electric heating when using dust_chemistry.
+  if (my_chemistry->dust_chemistry > 0 &&
+      my_chemistry->photoelectric_heating == 0) {
+    my_chemistry->photoelectric_heating = 2;
+
+    if (grackle_verbose) {
+      fprintf(stdout, "Dust chemistry enabled, setting photoelectric_heating to 2.\n");
+    }
   }
 
 //initialize OpenMP
@@ -221,10 +231,10 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
   /* Call FORTRAN routine to do the hard work. */
  
   FORTRAN_NAME(calc_rates_g)(
-     &my_chemistry->primordial_chemistry,
-     &my_chemistry->NumberOfTemperatureBins, &my_units->a_value, &my_chemistry->TemperatureStart,
-        &my_chemistry->TemperatureEnd,
-        &my_chemistry->CaseBRecombination, &my_chemistry->three_body_rate,
+     &my_chemistry->primordial_chemistry, &my_chemistry->photoelectric_heating,
+     &my_chemistry->NumberOfTemperatureBins, &my_units->a_value,
+     &my_chemistry->TemperatureStart, &my_chemistry->TemperatureEnd,
+     &my_chemistry->CaseBRecombination, &my_chemistry->three_body_rate,
      &co_length_units, &my_units->a_units, 
      &co_density_units, &my_units->time_units,
      my_rates->ceHI, my_rates->ceHeI, my_rates->ceHeII, my_rates->ciHI,
