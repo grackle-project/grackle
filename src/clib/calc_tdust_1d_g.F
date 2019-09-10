@@ -56,6 +56,10 @@
 
       real*8 t_subl
       parameter(t_subl = 1.5e3_DKIND) ! grain sublimation temperature
+      real*8 radf
+      parameter(radf = 4._DKIND * sigma_sb)
+      real*8 kgr1
+      parameter(kgr1 = 4.0e-4_DKIND)
       real*8 tol, bi_tol, minpert, gamma_isrf
       parameter(tol = 1.e-5_DKIND, bi_tol = 1.e-3_DKIND, 
      &     minpert = 1.e-10_DKIND)
@@ -109,7 +113,8 @@
                nm_itmask(i) = .false.
                nm_done = nm_done + 1
             else
-               tdustnow(i) = 0.5_DKIND * (trad + tgas(i))
+               tdustnow(i) = max(trad,
+     &              (gamma_isrf / radf / kgr1)**0.17_DKIND)
                pert(i) = pert_i
             endif
 
