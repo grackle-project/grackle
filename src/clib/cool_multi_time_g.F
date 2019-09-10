@@ -120,7 +120,8 @@
       real*8 t1(in), t2(in), logtem(in), tdef(in), p2d(in),
      &       tgas(in), tgasold(in), mmw(in),
      &       tdust(in), metallicity(in), dust2gas(in), rhoH(in),
-     &       mynh(in), myde(in), gammaha_eff(in)
+     &       mynh(in), myde(in), gammaha_eff(in),
+     &       gasgr_tdust(in), regr(in)
       real*8 edot(in)
 
 !  Cooling/heating slice locals
@@ -155,7 +156,7 @@
 !$omp&   t1, t2, logtem, tdef, p2d,
 !$omp&   tgas, tgasold,
 !$omp&   tdust, metallicity, dust2gas, rhoH, mmw,
-!$omp&   mynh, myde, gammaha_eff, edot,
+!$omp&   mynh, myde, gammaha_eff, gasgr_tdust, regr, edot,
 !$omp&   ceHI, ceHeI, ceHeII,
 !$omp&   ciHI, ciHeI, ciHeIS, ciHeII,
 !$omp&   reHII, reHeII1, reHeII2, reHeIII,
@@ -219,7 +220,7 @@
 !$omp&   t1, t2, logtem, tdef, p2d,
 !$omp&   tgas, tgasold,
 !$omp&   tdust, metallicity, dust2gas, rhoH, mmw,
-!$omp&   mynh, myde, gammaha_eff, edot,
+!$omp&   mynh, myde, gammaha_eff, gasgr_tdust, regr, edot,
 !$omp&   ceHI, ceHeI, ceHeII,
 !$omp&   ciHI, ciHeI, ciHeIS, ciHeII,
 !$omp&   reHII, reHeII1, reHeII2, reHeIII,
@@ -263,7 +264,8 @@
      &                reHII, reHeII1, reHeII2, reHeIII, brem,
      &                indixe, t1, t2, logtem, tdef, edot,
      &                tgas, tgasold, mmw, p2d, tdust, metallicity,
-     &                dust2gas, rhoH, mynh, myde, gammaha_eff,
+     &                dust2gas, rhoH, mynh, myde,
+     &                gammaha_eff, gasgr_tdust, regr,
      &                iradshield, avgsighi, avgsighei, avgsigheii,
      &                k24, k26, iradtrans, photogamma,
      &                ih2optical, iciecool, ciecoa, cieco,
@@ -305,7 +307,7 @@
 !$omp&   t1, t2, logtem, tdef, p2d,
 !$omp&   tgas, tgasold,
 !$omp&   tdust, metallicity, dust2gas, rhoH, mmw,
-!$omp&   mynh, myde, gammaha_eff, edot,
+!$omp&   mynh, myde, gammaha_eff, gasgr_tdust, regr, edot,
 !$omp&   ceHI, ceHeI, ceHeII,
 !$omp&   ciHI, ciHeI, ciHeIS, ciHeII,
 !$omp&   reHII, reHeII1, reHeII2, reHeIII,
