@@ -549,6 +549,8 @@ c
            d_logttt = log(dtemstart) + real(j-1, 8)*d_dlogtem
            d_ttt = exp(d_logttt)
            d_ttt2 = d_ttt / 1.0d2
+#define USE_OMUKAI_2000
+#ifdef  USE_OMUKAI_2000
 c
 c     k23 from Omukai (2000).
 c
@@ -558,15 +560,16 @@ c
      &          ((1.0d0 + (4.0d-2 * (ttt + d_ttt)**(0.5d0)) + 
      &           (2.0d-3 * ttt) + 
      &           (8.0d-6 * ttt**(2.0d0)))**(-1.0d0)) / kunit
+#else
 c
 c     Equation 3.8 from Hollenbach & McKee (1979).
 c
-c           h2dusta(i,j) = 3.0d-17 / fgr * ttt2**0.5d0 /
-c     &          (1.0d0 + 
-c     &           (0.4d0 * (ttt2 + d_ttt2)**0.5d0) +
-c     &           (0.2d0 * ttt2) +
-c     &           (8.0d-2 * ttt2**2.0d0)) / kunit
-c
+           h2dusta(i,j) = 3.0d-17 / fgr * ttt2**0.5d0 /
+     &          (1.0d0 +
+     &          (0.4d0 * (ttt2 + d_ttt2)**0.5d0) +
+     &          (0.2d0 * ttt2) +
+     &          (8.0d-2 * ttt2**2.0d0)) / kunit
+#endif /* USE_OMUKAI_2000 */
         enddo
 c
 c       H2 formation heating terms from Equation 23 of Omukai (2000).
