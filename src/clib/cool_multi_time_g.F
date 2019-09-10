@@ -14,7 +14,8 @@
      &                ceHIa, ceHeIa, ceHeIIa, ciHIa, ciHeIa, 
      &                ciHeISa, ciHeIIa, reHIIa, reHeII1a, 
      &                reHeII2a, reHeIIIa, brema, compa, gammaha, isrf,
-     &                regra, comp_xraya, comp_temp, piHI, piHeI, piHeII,
+     &                regra, gamma_isrfa,
+     &                comp_xraya, comp_temp, piHI, piHeI, piHeII,
      &                HM, H2I, H2II, DI, DII, HDI, metal, dust,
      &                hyd01ka, h2k01a, vibha, rotha, rotla,
      &                gpldla, gphdla, hdltea, hdlowa,
@@ -88,7 +89,8 @@
      &        ciHeIIa(nratec), reHIIa(nratec), reHeII1a(nratec), 
      &        reHeII2a(nratec), reHeIIIa(nratec), brema(nratec),
      &        compa, piHI, piHeI, piHeII, comp_xraya, comp_temp,
-     &        gammaha, isrf, regra, avgsighi, avgsighei, avgsigheii,
+     &        gammaha, isrf, regra, gamma_isrfa,
+     &        avgsighi, avgsighei, avgsigheii,
      &        k24, k26
 !  Cloudy cooling data
 
@@ -251,7 +253,7 @@
      &                ceHIa, ceHeIa, ceHeIIa, ciHIa, ciHeIa, 
      &                ciHeISa, ciHeIIa, reHIIa, reHeII1a, 
      &                reHeII2a, reHeIIIa, brema, compa, gammaha,
-     &                isrf, regra, comp_xraya, comp_temp,
+     &                isrf, regra, gamma_isrfa, comp_xraya, comp_temp,
      &                piHI, piHeI, piHeII, comp1, comp2,
      &                HM, H2I, H2II, DI, DII, HDI, metal, dust,
      &                hyd01ka, h2k01a, vibha, rotha, rotla,

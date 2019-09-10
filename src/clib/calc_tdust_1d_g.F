@@ -4,7 +4,7 @@
 !////////////////////  SUBROUTINE CALC_TDUST_1D_G  \\\\\\\\\\\\\\\\\\\\\
 
       subroutine calc_tdust_1d_g(
-     &     tdust, tgas, nh, gasgr, itmask, 
+     &     tdust, tgas, nh, gasgr, gamma_isrfa, isrf, itmask,
      &     trad, in, is, ie, j, k)
 
 !  CALCULATE EQUILIBRIUM DUST TEMPERATURE
@@ -24,6 +24,8 @@
 !     tgas     - gas temperature
 !     nh       - H number density
 !     gasgr    - gas/grain heat transfer rate
+!     gamma_isrfa - heating from interstellar radiation field
+!     isrf     - interstellar radiation field in Habing units
 !
 !     trad     - CMB temperature
 !
@@ -44,7 +46,7 @@
       integer in, is, ie, j, k
 
       real*8 tdust(in), tgas(in), nh(in), gasgr(in)
-      real*8 trad
+      real*8 gamma_isrfa, isrf, trad
 
 !  Iteration mask
 
@@ -54,7 +56,7 @@
 
       real*8 t_subl
       parameter(t_subl = 1.5e3_DKIND) ! grain sublimation temperature
-      real*8 tol, bi_tol, minpert
+      real*8 tol, bi_tol, minpert, gamma_isrf
       parameter(tol = 1.e-5_DKIND, bi_tol = 1.e-3_DKIND, 
      &     minpert = 1.e-10_DKIND)
       integer itmax, bi_itmax
@@ -81,6 +83,7 @@
 
       trad  = max(1._DKIND, trad)
       trad4 = trad**4
+      gamma_isrf = isrf * gamma_isrfa
 
 !     Set total cells for calculation
 
@@ -142,10 +145,10 @@
 !     Calculate heating/cooling balance
 
          call calc_gr_balance_g(tdustnow, tgas, kgr, trad4, gasgr,
-     &        nh, nm_itmask, sol, in, is, ie)
+     &        gamma_isrf, nh, nm_itmask, sol, in, is, ie)
 
          call calc_gr_balance_g(tdplus, tgas, kgrplus, trad4, gasgr,
-     &        nh, nm_itmask, solplus, in, is, ie)
+     &        gamma_isrf, nh, nm_itmask, solplus, in, is, ie)
 
          do i = is+1, ie+1
             if ( nm_itmask(i) ) then
@@ -218,7 +221,7 @@
      &           in, is, ie, t_subl)
 
             call calc_gr_balance_g(bi_t_mid, tgas, kgr, trad4, gasgr,
-     &           nh, bi_itmask, sol, in, is, ie)
+     &           gamma_isrf, nh, bi_itmask, sol, in, is, ie)
 
             do i = is+1, ie+1
                if ( bi_itmask(i) ) then
@@ -379,7 +382,7 @@ c               ERROR_MESSAGE
 !////////////////////  SUBROUTINE CALC_GR_BALANCE  \\\\\\\\\\\\\\\\\\\\\
 
       subroutine calc_gr_balance_g(
-     &     tdust, tgas, kgr, trad4, gasgr, nh,
+     &     tdust, tgas, kgr, trad4, gasgr, gamma_isrf, nh,
      &     itmask, sol, in, is, ie)
 
 !  CALCULATE GRAIN HEAT BALANCE
@@ -399,6 +402,7 @@ c               ERROR_MESSAGE
 !     kgr      - grain opacity
 !     trad4    - CMB temperature to 4th power
 !     gasgr    - gas/grain heat transfer rate
+!     gamma_isrf - heating from interstellar radiation field
 !     nh       - hydrogen number density
 !
 !     is,ie    - start and end indices of active region (zero based)
@@ -419,7 +423,8 @@ c               ERROR_MESSAGE
 !  Arguments
 
       integer in, is, ie
-      real*8 tdust(in), tgas(in), kgr(in), gasgr(in), nh(in), trad4
+      real*8 tdust(in), tgas(in), kgr(in), gasgr(in), nh(in), trad4,
+     &     gamma_isrf
 
 !  Iteration mask
 
@@ -444,7 +449,7 @@ c               ERROR_MESSAGE
       do i = is+1, ie+1
          if ( itmask(i) ) then
 
-            sol(i) = radf * kgr(i) *
+            sol(i) = gamma_isrf + radf * kgr(i) *
      &           (trad4 - tdust(i)**4) +
      &           (gasgr(i) * nh(i) *
      &           (tgas(i) - tdust(i)))

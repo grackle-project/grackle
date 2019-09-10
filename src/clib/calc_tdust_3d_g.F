@@ -14,6 +14,7 @@
      &     ie, je, ke, 
      &     aye, temstart, temend,
      &     fgr, gasgra,
+     &     gamma_isrfa, isrf,
      &     utem, uxyz, uaye,
      &     urho, utim,
      &     gas_temp, dust_temp)
@@ -44,7 +45,7 @@
       integer in, jn, kn, is, js, ks, ie, je, ke, nratec,
      &        iexpand, ispecies, idim
       real*8  aye, temstart, temend,
-     &        utem, uxyz, uaye, urho, utim, fgr
+     &        utem, uxyz, uaye, urho, utim, fgr, isrf
       R_PREC  d(in,jn,kn),
      &     de(in,jn,kn),   HI(in,jn,kn),   HII(in,jn,kn),
      &     HeI(in,jn,kn), HeII(in,jn,kn), HeIII(in,jn,kn),
@@ -52,7 +53,7 @@
      &     gas_temp(in,jn,kn), dust_temp(in,jn,kn)
 
 !  Chemistry tables
-      real*8  gasgra(nratec)
+      real*8  gasgra(nratec), gamma_isrfa
 
 !  Parameters
 
@@ -159,6 +160,7 @@
 !     --- Compute dust temperature in a slice ---
 
         call calc_tdust_1d_g(tdust, tgas, nh, gasgr,
+     &       gamma_isrfa, isrf,
      &       itmask, trad, in, is, ie, j, k)
 
 !     Copy slice values back to grid

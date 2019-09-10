@@ -346,6 +346,9 @@ typedef struct
   // Electron recombination onto dust grains
   double *regr;
 
+  // Heating of dust by interstellar radiation field
+  double gamma_isrf;
+
   /* Gas/grain energy transfer. */
   double *gas_grain;
 

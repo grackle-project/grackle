@@ -10,7 +10,7 @@ c
      &             ceHIa, ceHeIa, ceHeIIa, ciHIa, ciHeIa, 
      &             ciHeISa, ciHeIIa, reHIIa, reHeII1a, 
      &             reHeII2a, reHeIIIa, brema, compa, 
-     &             gammahacgs, gammaha, regra,
+     &             gammahacgs, gammaha, regra, gamma_isrfa,
      &             hyd01ka, h2k01a, vibha, rotha, rotla, 
      &             gpldl, gphdl, hdltea, hdlowa, ciecoa,
      &             gaHIa, gaH2a, gaHea, gaHpa, gaela, h2ltea, gasgra,
@@ -145,7 +145,7 @@ c
      &        gaHIa(nratec), gaH2a(nratec), gaHea(nratec), 
      &        gaHpa(nratec), gaela(nratec), h2ltea(nratec),
      &        gasgra(nratec), ciecoa(nratec), regra(nratec),
-     &        compa, gammaha, gammahacgs,
+     &        gamma_isrfa, compa, gammaha, gammahacgs,
      &        k1a (nratec), k2a (nratec), k3a (nratec), k4a (nratec), 
      &        k5a (nratec), k6a (nratec), k7a (nratec), k8a (nratec), 
      &        k9a (nratec), k10a(nratec), k11a(nratec), k12a(nratec), 
@@ -935,6 +935,12 @@ c        igamma set to 2 or 3
 c        User to specify G_0, epsilon set to 0.05 or calculated directly.
          gammaha = 1.d-24 / coolunit
       endif
+c
+c     Heating of dust by interstellar radiation field.
+c     Eqn. B15 of Krumholz (2014)
+c     Don't normalize by coolunit since tdust calculation is done in CGS.
+c
+      gamma_isrfa = 3.9d-24 / mh / fgr
 c
 c     Write out cooling rate data
 c
