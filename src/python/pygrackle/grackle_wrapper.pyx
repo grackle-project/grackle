@@ -33,12 +33,6 @@ cdef class chemistry_data:
             raise RuntimeError("Error initializing chemistry")
         return ret
 
-    property Gamma:
-        def __get__(self):
-            return self.data.Gamma
-        def __set__(self, val):
-            self.data.Gamma = val
-
     property use_grackle:
         def __get__(self):
             return self.data.use_grackle
@@ -57,11 +51,43 @@ cdef class chemistry_data:
         def __set__(self, val):
             self.data.primordial_chemistry = val
 
+    property dust_chemistry:
+        def __get__(self):
+            return self.data.dust_chemistry
+        def __set__(self, val):
+            self.data.dust_chemistry = val
+
     property metal_cooling:
         def __get__(self):
             return self.data.metal_cooling
         def __set__(self, val):
             self.data.metal_cooling = val
+
+    property UVbackground:
+        def __get__(self):
+            return self.data.UVbackground
+        def __set__(self, val):
+            self.data.UVbackground = val
+
+    property grackle_data_file:
+        def __get__(self):
+            return self.data.grackle_data_file
+        def __set__(self, val):
+            if isinstance(val, str):
+                val = val.encode('utf-8')
+            self.data.grackle_data_file = val
+
+    property cmb_temperature_floor:
+        def __get__(self):
+            return self.data.cmb_temperature_floor
+        def __set__(self, val):
+            self.data.cmb_temperature_floor = val
+
+    property Gamma:
+        def __get__(self):
+            return self.data.Gamma
+        def __set__(self, val):
+            self.data.Gamma = val
 
     property h2_on_dust:
         def __get__(self):
@@ -75,11 +101,35 @@ cdef class chemistry_data:
         def __set__(self, val):
             self.data.use_dust_density_field = val
 
-    property cmb_temperature_floor:
+    property photoelectric_heating:
         def __get__(self):
-            return self.data.cmb_temperature_floor
+            return self.data.photoelectric_heating
         def __set__(self, val):
-            self.data.cmb_temperature_floor = val
+            self.data.photoelectric_heating = val
+
+    property photoelectric_heating_rate:
+        def __get__(self):
+            return self.data.photoelectric_heating_rate
+        def __set__(self, val):
+            self.data.photoelectric_heating_rate = val
+
+    property interstellar_radiation_field:
+        def __get__(self):
+            return self.data.interstellar_radiation_field
+        def __set__(self, val):
+            self.data.interstellar_radiation_field = val
+
+    property use_volumetric_heating_rate:
+        def __get__(self):
+            return self.data.use_volumetric_heating_rate
+        def __set__(self, val):
+            self.data.use_volumetric_heating_rate = val
+
+    property use_specific_heating_rate:
+        def __get__(self):
+            return self.data.use_specific_heating_rate
+        def __set__(self, val):
+            self.data.use_specific_heating_rate = val
 
     property three_body_rate:
         def __get__(self):
@@ -99,31 +149,29 @@ cdef class chemistry_data:
         def __set__(self, val):
             self.data.h2_optical_depth_approximation = val
 
-    property photoelectric_heating:
+    property ih2co:
         def __get__(self):
-            return self.data.photoelectric_heating
+            return self.data.ih2co
         def __set__(self, val):
-            self.data.photoelectric_heating = val
+            self.data.ih2co = val
 
-    property grackle_data_file:
+    property ipiht:
         def __get__(self):
-            return self.data.grackle_data_file
+            return self.data.ipiht
         def __set__(self, val):
-            if isinstance(val, str):
-                val = val.encode('utf-8')
-            self.data.grackle_data_file = val
+            self.data.ipiht = val
 
-    property CaseBRecombination:
+    property HydrogenFractionByMass:
         def __get__(self):
-            return self.data.CaseBRecombination
+            return self.data.HydrogenFractionByMass
         def __set__(self, val):
-            self.data.CaseBRecombination = val
+            self.data.HydrogenFractionByMass = val
 
-    property UVbackground:
+    property DeuteriumToHydrogenRatio:
         def __get__(self):
-            return self.data.UVbackground
+            return self.data.DeuteriumToHydrogenRatio
         def __set__(self, val):
-            self.data.UVbackground = val
+            self.data.DeuteriumToHydrogenRatio = val
 
     property SolarMetalFractionByMass:
         def __get__(self):
@@ -137,23 +185,125 @@ cdef class chemistry_data:
         def __set__(self, val):
             self.data.local_dust_to_gas_ratio = val
 
-    property use_volumetric_heating_rate:
+    property NumberOfTemperatureBins:
         def __get__(self):
-            return self.data.use_volumetric_heating_rate
+            return self.data.NumberOfTemperatureBins
         def __set__(self, val):
-            self.data.use_volumetric_heating_rate = val
+            self.data.NumberOfTemperatureBins = val
 
-    property use_specific_heating_rate:
+    property CaseBRecombination:
         def __get__(self):
-            return self.data.use_specific_heating_rate
+            return self.data.CaseBRecombination
         def __set__(self, val):
-            self.data.use_specific_heating_rate = val
+            self.data.CaseBRecombination = val
+
+    property TemperatureStart:
+        def __get__(self):
+            return self.data.TemperatureStart
+        def __set__(self, val):
+            self.data.TemperatureStart = val
+
+    property TemperatureEnd:
+        def __get__(self):
+            return self.data.TemperatureEnd
+        def __set__(self, val):
+            self.data.TemperatureEnd = val
+
+    property NumberOfDustTemperatureBins:
+        def __get__(self):
+            return self.data.NumberOfDustTemperatureBins
+        def __set__(self, val):
+            self.data.NumberOfDustTemperatureBins = val
+
+    property DustTemperatureStart:
+        def __get__(self):
+            return self.data.DustTemperatureStart
+        def __set__(self, val):
+            self.data.DustTemperatureStart = val
+
+    property DustTemperatureEnd:
+        def __get__(self):
+            return self.data.DustTemperatureEnd
+        def __set__(self, val):
+            self.data.DustTemperatureEnd = val
+
+    property Compton_xray_heating:
+        def __get__(self):
+            return self.data.Compton_xray_heating
+        def __set__(self, val):
+            self.data.Compton_xray_heating = val
+
+    property LWbackground_sawtooth_suppression:
+        def __get__(self):
+            return self.data.LWbackground_sawtooth_suppression
+        def __set__(self, val):
+            self.data.LWbackground_sawtooth_suppression = val
+
+    property LWbackground_intensity:
+        def __get__(self):
+            return self.data.LWbackground_intensity
+        def __set__(self, val):
+            self.data.LWbackground_intensity = val
+
+    property  UVbackground_intensity:
+        def __get__(self):
+            return self.data. UVbackground_intensity
+        def __set__(self, val):
+            self.data. UVbackground_intensity = val
+
+    property  UVbackground_on:
+        def __get__(self):
+            return self.data. UVbackground_on
+        def __set__(self, val):
+            self.data. UVbackground_on = val
+
+    property  UVbackground_off:
+        def __get__(self):
+            return self.data. UVbackground_off
+        def __set__(self, val):
+            self.data. UVbackground_off = val
+
+    property  UVbackground_fullon:
+        def __get__(self):
+            return self.data. UVbackground_fullon
+        def __set__(self, val):
+            self.data. UVbackground_fullon = val
+
+    property  UVbackground_drop:
+        def __get__(self):
+            return self.data. UVbackground_drop
+        def __set__(self, val):
+            self.data. UVbackground_drop = val
+
+    property  cloudy_electron_fraction_factor:
+        def __get__(self):
+            return self.data. cloudy_electron_fraction_factor
+        def __set__(self, val):
+            self.data. cloudy_electron_fraction_factor = val
 
     property use_radiative_transfer:
         def __get__(self):
             return self.data.use_radiative_transfer
         def __set__(self, val):
             self.data.use_radiative_transfer = val
+
+    property radiative_transfer_coupled_rate_solver:
+        def __get__(self):
+            return self.data.radiative_transfer_coupled_rate_solver
+        def __set__(self, val):
+            self.data.radiative_transfer_coupled_rate_solver = val
+
+    property radiative_transfer_intermediate_step:
+        def __get__(self):
+            return self.data.radiative_transfer_intermediate_step
+        def __set__(self, val):
+            self.data.radiative_transfer_intermediate_step = val
+
+    property radiative_transfer_hydrogen_only:
+        def __get__(self):
+            return self.data.radiative_transfer_hydrogen_only
+        def __set__(self, val):
+            self.data.radiative_transfer_hydrogen_only = val
 
     property self_shielding_method:
         def __get__(self):

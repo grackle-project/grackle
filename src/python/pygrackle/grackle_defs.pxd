@@ -4,26 +4,50 @@ cdef extern from "grackle_types.h":
 
 cdef extern from "grackle_chemistry_data.h":
     ctypedef struct c_chemistry_data "chemistry_data":
-        double Gamma
         int use_grackle
         int with_radiative_cooling
         int primordial_chemistry
+        int dust_chemistry
         int metal_cooling
+        int UVbackground
+        char *grackle_data_file
+        int cmb_temperature_floor
+        double Gamma
         int h2_on_dust
         int use_dust_density_field
-        int cmb_temperature_floor
-        char *grackle_data_file
+        int photoelectric_heating
+        double photoelectric_heating_rate
+        double interstellar_radiation_field
+        int use_volumetric_heating_rate
+        int use_specific_heating_rate
         int three_body_rate
         int cie_cooling
         int h2_optical_depth_approximation
-        int photoelectric_heating
-        int CaseBRecombination
-        int UVbackground
+        int ih2co
+        int ipiht
+        double HydrogenFractionByMass
+        double DeuteriumToHydrogenRatio
         double SolarMetalFractionByMass
         double local_dust_to_gas_ratio
-        int use_volumetric_heating_rate
-        int use_specific_heating_rate
+        int NumberOfTemperatureBins
+        int CaseBRecombination
+        double TemperatureStart
+        double TemperatureEnd
+        int NumberOfDustTemperatureBins
+        double DustTemperatureStart
+        double DustTemperatureEnd
+        int Compton_xray_heating
+        int LWbackground_sawtooth_suppression
+        double LWbackground_intensity
+        double UVbackground_redshift_on
+        double UVbackground_redshift_off
+        double UVbackground_redshift_fullon
+        double UVbackground_redshift_drop
+        double cloudy_electron_fraction_factor
         int use_radiative_transfer
+        int radiative_transfer_coupled_rate_solver
+        int radiative_transfer_intermediate_step
+        int radiative_transfer_hydrogen_only
         int self_shielding_method
         int H2_self_shielding
 
