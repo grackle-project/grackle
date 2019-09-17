@@ -95,9 +95,12 @@ Primary Functions
 
 .. c:function:: int calculate_dust_temperature(code_units *my_units, grackle_field_data *my_fields, gr_float *dust_temperature);
 
-   Calculates the dust temperature. For a description of how the dust
-   temperature is calculated, see Section 4.3 of `Smith et al. (2017)
-   <http://ui.adsabs.harvard.edu/abs/2017MNRAS.466.2217S>`__.
+   Calculates the dust temperature. The dust temperature calculation is
+   modified from its original version (Section 4.3 of `Smith et al. 2017
+   <http://ui.adsabs.harvard.edu/abs/2017MNRAS.466.2217S>`__) to also
+   include the heating of dust grains by the interstellar radiation field
+   following equation B15 of `Krumholz (2014)
+   <https://ui.adsabs.harvard.edu/abs/2014MNRAS.437.1662K/abstract>`__.
 
    :param code_units* my_units: code units conversions
    :param grackle_field_data* my_fields: field data storage
