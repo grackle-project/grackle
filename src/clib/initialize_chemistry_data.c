@@ -77,14 +77,24 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
     fprintf(stdout, "Initializing grackle data.\n");
   }
 
-  // Activate photo-electric heating when using dust_chemistry.
-  if (my_chemistry->dust_chemistry > 0 &&
-      my_chemistry->photoelectric_heating == 0) {
-    my_chemistry->photoelectric_heating = 2;
+  // Activate dust chemistry machinery.
+  if (my_chemistry->dust_chemistry > 0) {
 
-    if (grackle_verbose) {
-      fprintf(stdout, "Dust chemistry enabled, setting photoelectric_heating to 2.\n");
+    if (my_chemistry->photoelectric_heating == 0) {
+      my_chemistry->photoelectric_heating = 2;
+      if (grackle_verbose) {
+        fprintf(stdout, "Dust chemistry enabled, setting photoelectric_heating to 2.\n");
+      }
     }
+
+    if (my_chemistry->primordial_chemistry > 1 &&
+        my_chemistry->h2_on_dust == 0) {
+      my_chemistry->h2_on_dust = 1;
+      if (grackle_verbose) {
+        fprintf(stdout, "Dust chemistry enabled, setting h2_on_dust to 1.\n");
+      }
+    }
+
   }
 
 //initialize OpenMP
@@ -397,6 +407,8 @@ void show_parameters(FILE *fp, chemistry_data *my_chemistry)
           my_chemistry->photoelectric_heating);
   fprintf(fp, "photoelectric_heating_rate        = %g\n",
           my_chemistry->photoelectric_heating_rate);
+  fprintf(fp, "interstellar_radiation_field      = %g\n",
+          my_chemistry->interstellar_radiation_field);
   fprintf(fp, "use_volumetric_heating_rate       = %d\n",
           my_chemistry->use_volumetric_heating_rate);
   fprintf(fp, "use_specific_heating_rate         = %d\n",
