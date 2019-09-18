@@ -203,6 +203,11 @@
                   metal(i,j,k) = metal(i,j,k)/real(aye**3, RKIND)
                enddo
             endif
+            if (ifdust .eq. 1) then
+               do i = is+1, ie+1
+                  dust(i,j,k) = dust(i,j,k)/real(aye**3, RKIND)
+               enddo
+            endif
       enddo
 #ifdef _OPENMP
 !$omp end parallel do
@@ -352,6 +357,11 @@
             if (imetal .eq. 1) then
                do i = is+1, ie+1
                   metal(i,j,k) = metal(i,j,k)*real(aye**3, RKIND)
+               enddo
+            endif
+            if (ifdust .eq. 1) then
+               do i = is+1, ie+1
+                  dust(i,j,k) = dust(i,j,k)*real(aye**3, RKIND)
                enddo
             endif
       enddo

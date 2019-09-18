@@ -333,9 +333,9 @@ c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 fo
       if (iexpand .eq. 1) then
 
          call scale_fields_g(d, de, HI, HII, HeI, HeII, HeIII,
-     &                  HM, H2I, H2II, DI, DII, HDI, metal,
+     &                  HM, H2I, H2II, DI, DII, HDI, metal, dust,
      &                  is, ie, js, je, ks, ke,
-     &                  in, jn, kn, ispecies, imetal, aye**(-3))
+     &                  in, jn, kn, ispecies, imetal, ifdust, aye**(-3))
 
       endif
 
@@ -843,9 +843,9 @@ c            WARNING_MESSAGE
       if (iexpand .eq. 1) then
 
          call scale_fields_g(d, de, HI, HII, HeI, HeII, HeIII,
-     &                  HM, H2I, H2II, DI, DII, HDI, metal,
+     &                  HM, H2I, H2II, DI, DII, HDI, metal, dust,
      &                  is, ie, js, je, ks, ke,
-     &                  in, jn, kn, ispecies, imetal, aye**3)
+     &                  in, jn, kn, ispecies, imetal, ifdust, aye**3)
 
       endif
 
@@ -868,9 +868,10 @@ c -----------------------------------------------------------
 !     proper densities (and back again).
 
       subroutine scale_fields_g(d, de, HI, HII, HeI, HeII, HeIII,
-     &                        HM, H2I, H2II, DI, DII, HDI, metal,
+     &                        HM, H2I, H2II, DI, DII, HDI, metal, dust,
      &                        is, ie, js, je, ks, ke,
-     &                        in, jn, kn, ispecies, imetal, factor)
+     &                        in, jn, kn, ispecies, imetal, ifdust,
+     &                        factor)
 c -------------------------------------------------------------------
 
       implicit NONE
@@ -878,12 +879,13 @@ c -------------------------------------------------------------------
 
 !     Arguments
 
-      integer in, jn, kn, is, ie, js, je, ks, ke, ispecies, imetal
+      integer in, jn, kn, is, ie, js, je, ks, ke, ispecies, imetal,
+     &        ifdust
       R_PREC  de(in,jn,kn),   HI(in,jn,kn),   HII(in,jn,kn),
      &        HeI(in,jn,kn), HeII(in,jn,kn), HeIII(in,jn,kn),
      &        HM(in,jn,kn),  H2I(in,jn,kn), H2II(in,jn,kn),
      &        DI(in,jn,kn),  DII(in,jn,kn), HDI(in,jn,kn),
-     &        d(in,jn,kn),metal(in,jn,kn)
+     &        d(in,jn,kn),   metal(in,jn,kn), dust(in,jn,kn)
       real*8 factor
 
 !     locals
@@ -941,6 +943,15 @@ c -------------------------------------------------------------------
             do j = js+1, je+1
                do i = is+1, ie+1
                   metal(i,j,k) = metal(i,j,k)*factor
+               enddo
+            enddo
+         enddo
+      endif
+      if (ifdust .eq. 1) then
+         do k = ks+1, ke+1
+            do j = js+1, je+1
+               do i = is+1, ie+1
+                  dust(i,j,k) = dust(i,j,k)*factor
                enddo
             enddo
          enddo
