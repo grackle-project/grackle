@@ -59,7 +59,7 @@ int local_calculate_dust_temperature(chemistry_data *my_chemistry,
   if (!my_chemistry->use_grackle)
     return SUCCESS;
 
-  if (my_chemistry->dust_chemistry < 1)
+  if (my_chemistry->dust_chemistry < 1 && my_chemistry->h2_on_dust < 1)
     return SUCCESS;
 
   double co_length_units, co_density_units;

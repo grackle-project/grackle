@@ -103,7 +103,7 @@ Primary Functions
    following equation B15 of `Krumholz (2014)
    <https://ui.adsabs.harvard.edu/abs/2014MNRAS.437.1662K/abstract>`__.
 
-   Using this function requires :c:data:`dust_chemistry` > 0.
+   Using this function requires :c:data:`dust_chemistry` > 0 or :c:data:`h2_on_dust` > 0.
 
    :param code_units* my_units: code units conversions
    :param grackle_field_data* my_fields: field data storage
