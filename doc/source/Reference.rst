@@ -13,9 +13,10 @@ Grackle has three versions of most functions.
    and :c:data:`chemistry_data_storage` instances to be provided as
    arguments.  These are explicity thread-safe as they use no global data.
 
-3. :ref:`internal_functions` take pointers to individual field arrays
+3. (Deprecated) :ref:`internal_functions` take pointers to individual field arrays
    instead of using the :c:data:`grackle_field_data` struct.  These are
-   mainly used by the Python interface.
+   mainly used by the Python interface. These functions have been deprecated
+   and will be removed in a future version.
 
 .. _primary_functions:
 
@@ -101,6 +102,8 @@ Primary Functions
    include the heating of dust grains by the interstellar radiation field
    following equation B15 of `Krumholz (2014)
    <https://ui.adsabs.harvard.edu/abs/2014MNRAS.437.1662K/abstract>`__.
+
+   Using this function requires :c:data:`dust_chemistry` > 0.
 
    :param code_units* my_units: code units conversions
    :param grackle_field_data* my_fields: field data storage

@@ -62,6 +62,9 @@ For all on/off integer flags, 0 is off and 1 is on.
         #. H\ :sub:`2`\  formation on dust (sets :c:data:`h2_on_dust` to 1
            if :c:data:`primordial_chemistry` > 1).
 
+        Setting :c:data:`dust_chemistry` greater than 0 requires
+        :c:data:`metal_cooling` to be enabled.
+
 .. note:: Other values for :c:data:`photoelectric_heating` may also be used
    in conjunction with setting the :c:data:`dust_chemistry` parameter. It will
    only be changed to 2 if set to its default value of 0 first.

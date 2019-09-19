@@ -80,6 +80,11 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
   // Activate dust chemistry machinery.
   if (my_chemistry->dust_chemistry > 0) {
 
+    if (my_chemistry->metal_cooling < 1) {
+      fprintf(stderr, "ERROR: dust_chemistry > 0 requires metal_cooling > 0.\n");
+      return FAIL;
+    }
+
     if (my_chemistry->photoelectric_heating == 0) {
       my_chemistry->photoelectric_heating = 2;
       if (grackle_verbose) {
