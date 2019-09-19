@@ -166,6 +166,7 @@ int main(int argc, char *argv[])
   grackle_data->with_radiative_cooling = 1;          // cooling on
   grackle_data->primordial_chemistry   = 0;          // fully tabulated cooling
   grackle_data->metal_cooling          = 1;          // metal cooling on
+  grackle_data->dust_chemistry         = 1;          // dust processes
   grackle_data->UVbackground           = 1;          // UV background on
   grackle_data->grackle_data_file      = "../../input/CloudyData_UVB=HM2012.h5"; // data file
 # ifdef _OPENMP

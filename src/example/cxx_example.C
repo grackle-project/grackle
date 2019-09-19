@@ -63,6 +63,7 @@ int main(int argc, char *argv[])
   grackle_data->use_grackle = 1;            // chemistry on
   grackle_data->with_radiative_cooling = 1; // cooling on
   grackle_data->primordial_chemistry = 3;   // molecular network with H, He, D
+  grackle_data->dust_chemistry = 1;
   grackle_data->metal_cooling = 1;          // metal cooling on
   grackle_data->UVbackground = 1;           // UV background on
   grackle_data->grackle_data_file = "../../input/CloudyData_UVB=HM2012.h5"; // data file
@@ -212,6 +213,8 @@ int main(int argc, char *argv[])
 
   // Calculate pressure.
   gr_float *pressure;
+  double pressure_units = my_units.density_units *
+    pow(my_units.velocity_units, 2);
   pressure = new gr_float[field_size];
   if (calculate_pressure(&my_units, &my_fields,
                          pressure) == 0) {
@@ -219,7 +222,7 @@ int main(int argc, char *argv[])
     return EXIT_FAILURE;
   }
 
-  fprintf(stderr, "Pressure = %le.\n", pressure[0]);
+  fprintf(stderr, "Pressure = %le dyne/cm^2.\n", pressure[0]*pressure_units);
 
   // Calculate gamma.
   gr_float *gamma;
@@ -241,7 +244,7 @@ int main(int argc, char *argv[])
     return EXIT_FAILURE;
   }
 
-  fprintf(stderr, "dust_temperature = %g.\n", dust_temperature[0]);
+  fprintf(stderr, "dust_temperature = %g K.\n", dust_temperature[0]);
 
   _free_chemistry_data(my_grackle_data, &grackle_rates);
 

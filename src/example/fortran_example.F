@@ -25,7 +25,7 @@ c     Field data arrays
       integer field_size
       parameter (field_size = 1)
 
-      real*8 temperature_units, dt
+      real*8 temperature_units, pressure_units, dt
 
       R_PREC, TARGET :: density(field_size), energy(field_size),
      &     x_velocity(field_size), y_velocity(field_size),
@@ -77,6 +77,7 @@ c     Set parameters
       grackle_data%use_grackle = 1            ! chemistry on
       grackle_data%with_radiative_cooling = 1 ! cooling on
       grackle_data%primordial_chemistry = 3   ! network with H, He, D
+      grackle_data%dust_chemistry = 1         ! dust processes
       grackle_data%metal_cooling = 1          ! metal cooling on
       grackle_data%UVbackground = 1           ! UV background on
 c     cooling data for Haardt & Madau 2012 background
@@ -222,8 +223,10 @@ c     Calculate temperature.
 
 c     Calcualte pressure.
 
+      pressure_units = my_units%density_units *
+     &     my_units%velocity_units**2
       iresult = calculate_pressure(my_units, my_fields, pressure)
-      write(*,*) "Pressure = ", pressure(1)
+      write(*,*) "Pressure = ", pressure(1)*pressure_units, "dyne/cm^2."
 
 c     Calculate gamma.
 
