@@ -3,7 +3,7 @@ c=======================================================================
 c//////////////////////  SUBROUTINE CALC_RATES_G  \\\\\\\\\\\\\\\\\\\\\\\
 c
       subroutine calc_rates_g(
-     &             ispecies, igammah, idustall,
+     &             ispecies, igammah, idust, idustall,
      &             nratec, aye, temstart, temend,
      &             casebrates, threebody,
      &             uxyz, uaye, urho, utim,
@@ -131,7 +131,7 @@ c
 c
 c  Arguments
 c
-      integer ispecies, igammah, idustall, nratec, casebrates,
+      integer ispecies, igammah, idust, idustall, nratec, casebrates,
      &        threebody, ndratec
       real*8  aye, temstart, temend, dtemstart, dtemend
       real*8  uxyz, uaye, urho, utim
@@ -201,9 +201,14 @@ c
      &     ttt2, d_ttt2, tk9, lambdaHI, lambdaHeII,
      &     lambdaHeIII, grbeta
       real*8 tm, HDLR, HDLV, lt, t3, lt3
+      logical anydust
 c
 c\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////////
 c=======================================================================
+c     Set flag for dust-related options
+c
+      anydust = (idust .gt. 0) .or. (idustall .gt. 0)
+c
 c
 c  Get conversion units
 c
@@ -358,7 +363,6 @@ c
         gaHpa(i)    = tiny
         gaela(i)    = tiny
         h2ltea(i)   = tiny
-        gasgra(i)   = tiny
       enddo
 c
 c  Fill in tables over the range temstart to temend
@@ -903,23 +907,46 @@ c
       ciecoa(i) = cierate * (mh/2.0d0) / coolunit
 c      write(6,*), "thin: ", ttt, cierate * 1e14*mh*2
 c
-c     h) Energy transfer from gas to dust grains, following 
-c        equation 2.15 of Hollenbach & McKee (1989)
-      gasgra(i) = grain_coef * (ttt**0.5d0) * 
-     &     (1.0d0 - (0.8d0 * exp(-75.0d0 / ttt))) / coolunit
+      enddo
+
+c     end if (ispecies .gt. 0) then
+      endif
+c
+c     Dust-related processes
+c
+      if (anydust) then
+c
+c     Compute log spacing in temperature
+c
+         ttt    = temstart
+         logttt = log(ttt)
+         dlogtem= (log(temend) - log(temstart))/real(nratec-1, 8)
+
+         do i = 1, nratec
+c
+c     Compute temperature of this bin (in eV)
+c
+            logttt = log(temstart) + real(i-1, 8)*dlogtem
+            ttt = exp(logttt)
+c
+c     Energy transfer from gas to dust grains, following
+c     equation 2.15 of Hollenbach & McKee (1989)
+c
+            gasgra(i) = grain_coef * (ttt**0.5d0) *
+     &           (1.0d0 - (0.8d0 * exp(-75.0d0 / ttt))) / coolunit
 c
 c     Electron recombination onto dust grains
 c     Eqn. 9 from Wolfire et al. (1995)
 c
-      if (idustall .gt. 0) then
-         grbeta = 0.74_DKIND / ttt**0.068_DKIND
-         regra(i) = 4.65d-30 * ttt**(0.94_DKIND + 0.5_DKIND * grbeta) /
-     &        coolunit
-      endif
-c
-      enddo
+            grbeta = 0.74_DKIND / ttt**0.068_DKIND
+            regra(i) = 4.65d-30 *
+     &           ttt**(0.94_DKIND + 0.5_DKIND * grbeta) /
+     &           coolunit
+
+         enddo
 
       endif
+
 c
 c     i) Compton cooling (Peebles 1971)
 c

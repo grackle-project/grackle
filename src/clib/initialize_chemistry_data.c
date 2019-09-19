@@ -45,7 +45,7 @@ int initialize_UVbackground_data(chemistry_data *my_chemistry,
                                  chemistry_data_storage *my_rates);
 
 extern void FORTRAN_NAME(calc_rates_g)(
-     int *ispecies, int *igammah, int *idustall,
+     int *ispecies, int *igammah, int *idust, int *idustall,
      int *nratec, double *aye, double *temstart, double *temend, 
      int *casebrates, int *threebody,
      double *uxyz, double *uaye, double *urho, double *utim,
@@ -162,7 +162,6 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
     my_rates->GAHp    = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
     my_rates->GAel    = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
     my_rates->H2LTE   =  malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->gas_grain = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
 
   /* Allocate space in my_rates for rates. */
  
@@ -224,8 +223,9 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
 
   }
 
-  if (my_chemistry->dust_chemistry > 0) {
-    my_rates->regr = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+  if (my_chemistry->h2_on_dust > 0 || my_chemistry->dust_chemistry > 0) {
+    my_rates->gas_grain = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->regr      = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
   }
 
   int ioutput = 0;
@@ -243,10 +243,10 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
   }
 
   /* Call FORTRAN routine to do the hard work. */
- 
+
   FORTRAN_NAME(calc_rates_g)(
      &my_chemistry->primordial_chemistry, &my_chemistry->photoelectric_heating,
-     &my_chemistry->dust_chemistry,
+     &my_chemistry->h2_on_dust, &my_chemistry->dust_chemistry,
      &my_chemistry->NumberOfTemperatureBins, &my_units->a_value,
      &my_chemistry->TemperatureStart, &my_chemistry->TemperatureEnd,
      &my_chemistry->CaseBRecombination, &my_chemistry->three_body_rate,
