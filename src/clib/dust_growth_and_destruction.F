@@ -1,7 +1,3 @@
-! Density must be in [CGS], if not, covert the unit before calling routines here
-! Mass must be in code units
-! Timescales are in code units
-
 #include "dust_evol.h"
 #define NUM_METAL_SPECIES 11
 
@@ -114,14 +110,14 @@
       if (SNe_ThisTimeStep(i,j,k) .le. 0.0)
           dMs = 0.0
       else
-          dMs = min(dust_Mass(i,j,k)/tau_dest(i,j,k)*dtime,
-     &          dust_Mass(i,j,k))
-      if (dMs .ge. dust_Mass(i,j,k)) then
+          dMs = min(dust_Density(i,j,k)/tau_dest(i,j,k)*dtime,
+     &          dust_Density(i,j,k))
+      if (dMs .ge. dust_Density(i,j,k)) then
           write (*,*) "WARNING: dMs >= Mdust SNe shock destruction:", 
      &                SNe_ThisTimeStep(i,j,k), tau_dest(i,j,k)
       else
-          dMs = dMs + dust_Mass(i,j,k) / tau_sput(i,j,k) * 3.0 * dtime
-          dMs = min(dMs,dust_Mass(i,j,k))
+          dMs = dMs + dust_Density(i,j,k) / tau_sput(i,j,k) * 3.0 * dtime
+          dMs = min(dMs,dust_Density(i,j,k))
       endif
       do n=0+1,NUM_METAL_SPECIES
           dM(n) = dM(n) - dust_Metallicity(n,i,j,k) * dMs
