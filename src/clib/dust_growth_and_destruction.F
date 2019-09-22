@@ -1,5 +1,5 @@
-#include "dust_evol.h"
-#define NUM_METAL_SPECIES 11
+#include "phys_const.def"
+#include "dust_evol.def"
 
 !////////////////////////////////////////////////////////////
 ! calculate characteristic timescales used for subcycling
@@ -11,14 +11,15 @@
      &              SolarAbundances,
      &              time_units, dens_units, len_units, dtime)
       implicit NONE
+#include "grackle_fortran_types.def"
 
       integer in, jn, kn, i, j, k
-      real*8 tau_accr(in), tau_dest(in), tau_sput(in)
+      real*8 tau_accr(in), tau_dest(in), tau_sput(in),
      &       SolarAbundances(NUM_METAL_SPECIES),
      &       time_units, dens_units, len_units, dtime
-      R_PREC Density(in,jn,kn), Tgas(in,jn,kn)
+      R_PREC Density(in,jn,kn), Tgas(in,jn,kn),
      &       dust_Density(in,jn,kn), 
-     &       Metallicity(NUM_METAL_SPECIES,in,jn,kn), 
+     &       Metallicity(NUM_METAL_SPECIES,in,jn,kn),
      &       SNe_ThisTimeStep(in,jn,kn)
     
 !   local variables
@@ -35,20 +36,21 @@
       tau_accr0 = tau_ref * (DUST_GROWTH_DENSREF / dens_units) 
      &            / Density(i,j,k) * (DUST_GROWTH_TREF/Tgas(i,j,k))**0.5
       tau_accr(i) = 1.d+20
-      do n=1+1,NUM_METAL_SPECIES ! CHECK FORTRAN ARRAY INDEX, if i remember correctly it starts at 1 instead of 0
+      do n=1+1,NUM_METAL_SPECIES
           tau_accr(i) = min(tau_accr0 * (SolarAbundances(n)
-     &                  / Metallicity(n,i,j,k)),tau_accr(i,j,k))
+     &                  / Metallicity(n,i,j,k)),tau_accr(i))
+      enddo
 
 !   destruction by SN shocks
-      if (SNe_ThisTimeStep.le.0.0) then ! CHECK float type
+      if (SNe_ThisTimeStep(i,j,k).le.0.0) then
           tau_dest(i) = 1.d+20
       else
-          tau_dest(i) = Density/(Ms100*SNe_ThisTimeStep(i,j,k)
+          tau_dest(i) = Density(i,j,k)/(Ms100*SNe_ThisTimeStep(i,j,k)
      &                      *DUST_DESTRUCTION_EFF) * dtime
       endif
 
 !   destruction by thermal sputtering
-      tau_sput(i,j,k) = 1.7e8 * SEC_PER_YEAR / time_units
+      tau_sput(i) = 1.7e8 * SEC_PER_YEAR / time_units
      &                  * (DUST_GRAINSIZE/0.1) * (1e-27/Density(i,j,k))
      &                  * ((2e6/Tgas(i,j,k))**2.5+1.0) ! Tsai & Mathews (1995)
 
@@ -64,11 +66,12 @@
      &              Metallicity, dust_Metallicity, SNe_ThisTimeStep,
      &              tau_dest, tau_sput, 
      &              SolarAbundances, 
-     &              time_units, dens_units, len_units dtime)
+     &              time_units, dens_units, len_units, dtime)
       implicit NONE
+#include "grackle_fortran_types.def"
 !   arguments
       integer in, jn, kn, i, j, k
-      real*8 tau_dest(in,jn,kn), tau_sput(in,jn,kn)
+      real*8 tau_dest(in), tau_sput(in),
      &       SolarAbundances(NUM_METAL_SPECIES), 
      &       time_units, dens_units, len_units, dtime
       R_PREC Density(in,jn,kn), Tgas(in,jn,kn),
@@ -80,15 +83,15 @@
 !   local variables
       integer n
       real*8 tau_ref, Ms100, tau_accr0, tau_accr
-      R_PREC dM(NUM_METAL_SPECIES) = 0, dMs,
-     &       Mmet(NUM_METAL_SPECIES) = 0 ,Mdust[NUM_METAL_SPECIES]
+      R_PREC dM(NUM_METAL_SPECIES), dMs,
+     &       Mmet(NUM_METAL_SPECIES),Mdust(NUM_METAL_SPECIES)
 
       Ms100 = 6800.0*SNE_COEFF
      &        *(100.0/SNE_SHOCKSPEED)*(100.0/SNE_SHOCKSPEED)
      &        * SolarMass / (dens_units * len_units**3) ! gas mass shocked per SNe (Sedov-Taylor)
       tau_ref = DUST_GROWTH_TAUREF * 1e9 * SEC_PER_YEAR / time_units
 
-      do n=1+1,NUM_METAL_SPECIES ! CHECK FORTRAN ARRAY INDEX, if i remember correctly it starts at 1 instead of 0 
+      do n=0+1,NUM_METAL_SPECIES 
           Mdust(n) = dust_Metallicity(n,i,j,k) * dust_Density(i,j,k)
           dM(n) = 0.
       enddo
@@ -101,22 +104,23 @@
           tau_accr = tau_accr0 * (SolarAbundances(n) 
      &               / Metallicity(n,i,j,k))
           dM(n) = dM(n) + min((1 - Mdust(n) / Mmet(n)) 
-     &            * (Mdust(n)/tau_accr) * dtime_sub,
+     &            * (Mdust(n)/tau_accr) * dtime,
      &            Mmet(n) - Mdust(n)) ! growth capped by gas in a single cell
           dM(1) = dM(1) + dM(n)
       enddo
 
 !   SNe shock and thermal sputtering
-      if (SNe_ThisTimeStep(i,j,k) .le. 0.0)
+      if (SNe_ThisTimeStep(i,j,k) .le. 0.0) then
           dMs = 0.0
       else
-          dMs = min(dust_Density(i,j,k)/tau_dest(i,j,k)*dtime,
+          dMs = min(dust_Density(i,j,k)/tau_dest(i)*dtime,
      &          dust_Density(i,j,k))
+      endif
       if (dMs .ge. dust_Density(i,j,k)) then
           write (*,*) "WARNING: dMs >= Mdust SNe shock destruction:", 
-     &                SNe_ThisTimeStep(i,j,k), tau_dest(i,j,k)
+     &                SNe_ThisTimeStep(i,j,k), tau_dest(i)
       else
-          dMs = dMs + dust_Density(i,j,k) / tau_sput(i,j,k) * 3.0 * dtime
+          dMs = dMs + dust_Density(i,j,k) / tau_sput(i) *3.0* dtime
           dMs = min(dMs,dust_Density(i,j,k))
       endif
       do n=0+1,NUM_METAL_SPECIES
