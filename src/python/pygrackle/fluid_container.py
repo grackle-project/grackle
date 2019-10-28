@@ -103,12 +103,16 @@ class FluidContainer(dict):
 
     def calculate_mean_molecular_weight(self):
         my_chemistry = self.chemistry_data
+
         if (self["energy"] == 0).all():
-            # Check that density fields have been set
+            # Check that density fields have been set. Allow metals to be 0.
             density_set = True
-            for field in self.density_fields:
+            field_list = self.density_fields
+            field_list.remove('metal')
+            for field in field_list:
                 if (self[field] == 0).all():
                     density_set = False
+
             if not density_set:
                 # Set mu to 1
                 self["mu"] = np.ones(self["energy"].size)
@@ -123,6 +127,7 @@ class FluidContainer(dict):
                     nden += self["HM"]+(self["H2I"]+self["H2II"])/2.
                 self["mu"] = self["density"]/nden
                 return
+
         # If energy has been set, calculate mu from the energy
         self.calculate_temperature()
         self["mu"] = self["temperature"] / \
