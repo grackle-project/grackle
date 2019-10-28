@@ -104,8 +104,26 @@ class FluidContainer(dict):
     def calculate_mean_molecular_weight(self):
         my_chemistry = self.chemistry_data
         if (self["energy"] == 0).all():
-            self["mu"] = np.ones(self["energy"].size)
-            return
+            # Check that density fields have been set
+            density_set = True
+            for field in self.density_fields:
+                if (self[field] == 0).all():
+                    density_set = False
+            if not density_set:
+                # Set mu to 1
+                self["mu"] = np.ones(self["energy"].size)
+                return
+            else:
+                # Calculate mu from the species densities; ignore deuterium
+                nden = self["metal"]/16.
+                if self.chemistry_data.primordial_chemistry > 0:
+                    nden += self["HI"]+self["HII"]+self["de"] + \
+                            (self["HeI"]+self["HeII"]+self["HeIII"])/4.
+                if self.chemistry_data.primordial_chemistry > 1:
+                    nden += self["HM"]+(self["H2I"]+self["H2II"])/2.
+                self["mu"] = self["density"]/nden
+                return
+        # If energy has been set, calculate mu from the energy
         self.calculate_temperature()
         self["mu"] = self["temperature"] / \
           (self["energy"] * (my_chemistry.Gamma - 1.) *
