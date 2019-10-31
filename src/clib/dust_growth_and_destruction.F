@@ -129,7 +129,10 @@
       integer n
       real*8 tau_ref, Ms100, tau_accr0, tau_accr
       R_PREC dM(NUM_METAL_SPECIES), dMs,
-     &       Mmet(NUM_METAL_SPECIES),Mdust(NUM_METAL_SPECIES)
+     &       Mmet(NUM_METAL_SPECIES),Mdust(NUM_METAL_SPECIES),
+     &       dens_proper
+
+      dens_proper = dens_units * aye**3
 
 !     copy metallicites into a single array
       metpt(1) = Metallicity1(i,j,k)
@@ -166,7 +169,7 @@
       enddo
 
 !   metals accreted from gas to dust
-      tau_accr0 = tau_ref * (DUST_GROWTH_DENSREF/dens_units
+      tau_accr0 = tau_ref * (DUST_GROWTH_DENSREF/dens_proper
      &            /Density(i,j,k)) * (DUST_GROWTH_TREF/Tgas(i,j,k))**0.5
       do n=1+1,NUM_METAL_SPECIES
           Mmet(n) = metpt(n) * Density(i,j,k) + Mdust(n)
