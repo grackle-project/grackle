@@ -100,14 +100,14 @@
      &     SNe_ThisTimeStep,
      &     tau_dest, tau_sput,
      &     SolarAbundances,
-     &     time_units, dens_units, len_units, dtime, metpt, dmetpt)
+     &     time_units, dens_units, len_units, aye, dtime, metpt, dmetpt)
       implicit NONE
 #include "grackle_fortran_types.def"
 !   arguments
       integer in, jn, kn, i, j, k
       real*8 tau_dest(in), tau_sput(in),
      &       SolarAbundances(NUM_METAL_SPECIES), 
-     &       time_units, dens_units, len_units, dtime
+     &       time_units, dens_units, len_units, aye, dtime
       R_PREC Density(in,jn,kn), Tgas(in,jn,kn),
      &       Metallicity1(in,jn,kn), Metallicity2(in,jn,kn),
      &       Metallicity3(in,jn,kn), Metallicity4(in,jn,kn),
