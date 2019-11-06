@@ -202,7 +202,7 @@
 !   recalculate metallicity
       dust_Density(i,j,k) = dust_Density(i,j,k) + dM(1)
       do n=0+1,NUM_METAL_SPECIES
-          if (dust_Density(i,j,k) .lt. 0.0) then 
+          if (dust_Density(i,j,k) .gt. 0.0) then
               dmetpt(n) =  (dM(n) + Mdust(n))
      &        / dust_Density(i,j,k)  ! SNe shocks on neighbors are ignored
           else
