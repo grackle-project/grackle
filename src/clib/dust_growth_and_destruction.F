@@ -163,7 +163,7 @@
       tau_ref = DUST_GROWTH_TAUREF * 1e9 * SEC_PER_YEAR / time_units
 
       do n=0+1,NUM_METAL_SPECIES 
-          Mdust(n) = dmetpt(n) * dust_Density(i,j,k)
+          Mdust(n) = dmetpt(n) * Density(i,j,k)
           dM(n) = 0.
       enddo
 
@@ -204,7 +204,7 @@
       do n=0+1,NUM_METAL_SPECIES
           if (dust_Density(i,j,k) .gt. 0.0) then
               dmetpt(n) =  (dM(n) + Mdust(n))
-     &        / dust_Density(i,j,k)  ! SNe shocks on neighbors are ignored
+     &        / Density(i,j,k)  ! SNe shocks on neighbors are ignored
           else
               dmetpt(n) = 0.0
           endif
