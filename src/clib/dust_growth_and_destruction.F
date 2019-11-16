@@ -41,30 +41,30 @@
 
 !   growth
       tau_accr0 = tau_ref * (DUST_GROWTH_DENSREF / dens_proper)
-     &            / Density(i,j,k) * (DUST_GROWTH_TREF/Tgas(i,j,k))**0.5
+     &     * (DUST_GROWTH_TREF/Tgas(i,j,k))**0.5
       tau_accr(i) = 1.d+20
       tau_accr(i) = min(tau_accr0 * (SolarAbundances(1)
-     &     / (gas_metal1(i,j,k) / Density(i,j,k))),tau_accr(i))
+     &     / gas_metal1(i,j,k)), tau_accr(i))
       tau_accr(i) = min(tau_accr0 * (SolarAbundances(2)
-     &     / (gas_metal2(i,j,k) / Density(i,j,k))),tau_accr(i))
+     &     / gas_metal2(i,j,k)), tau_accr(i))
       tau_accr(i) = min(tau_accr0 * (SolarAbundances(3)
-     &     / (gas_metal3(i,j,k) / Density(i,j,k))),tau_accr(i))
+     &     / gas_metal3(i,j,k)), tau_accr(i))
       tau_accr(i) = min(tau_accr0 * (SolarAbundances(4)
-     &     / (gas_metal4(i,j,k) / Density(i,j,k))),tau_accr(i))
+     &     / gas_metal4(i,j,k)), tau_accr(i))
       tau_accr(i) = min(tau_accr0 * (SolarAbundances(5)
-     &     / (gas_metal5(i,j,k) / Density(i,j,k))),tau_accr(i))
+     &     / gas_metal5(i,j,k)), tau_accr(i))
       tau_accr(i) = min(tau_accr0 * (SolarAbundances(6)
-     &     / (gas_metal6(i,j,k) / Density(i,j,k))),tau_accr(i))
+     &     / gas_metal6(i,j,k)), tau_accr(i))
       tau_accr(i) = min(tau_accr0 * (SolarAbundances(7)
-     &     / (gas_metal7(i,j,k) / Density(i,j,k))),tau_accr(i))
+     &     / gas_metal7(i,j,k)), tau_accr(i))
       tau_accr(i) = min(tau_accr0 * (SolarAbundances(8)
-     &     / (gas_metal8(i,j,k) / Density(i,j,k))),tau_accr(i))
+     &     / gas_metal8(i,j,k)), tau_accr(i))
       tau_accr(i) = min(tau_accr0 * (SolarAbundances(9)
-     &     / (gas_metal9(i,j,k) / Density(i,j,k))),tau_accr(i))
+     &     / gas_metal9(i,j,k)), tau_accr(i))
       tau_accr(i) = min(tau_accr0 * (SolarAbundances(10)
-     &     / (gas_metal10(i,j,k) / Density(i,j,k))),tau_accr(i))
+     &     / gas_metal10(i,j,k)), tau_accr(i))
       tau_accr(i) = min(tau_accr0 * (SolarAbundances(11)
-     &     / (gas_metal11(i,j,k) / Density(i,j,k))),tau_accr(i))
+     &     / gas_metal11(i,j,k)), tau_accr(i))
 
 !   destruction by SN shocks
       if (SNe_ThisTimeStep(i,j,k).le.0.0) then
