@@ -87,7 +87,7 @@
 !   main routine for dust growth and destruction
 !////////////////////////////////////////////////////////////
       subroutine dust_growth_and_destruction(in, jn, kn, i, j, k,
-     &     Density, dust_Density, metal_Density, Tgas,
+     &     dust_Density, metal_Density, Tgas,
      &     gas_metal1, gas_metal2, gas_metal3,
      &     gas_metal4, gas_metal5, gas_metal6,
      &     gas_metal7, gas_metal8, gas_metal9,
@@ -107,7 +107,7 @@
       real*8 tau_dest(in), tau_sput(in),
      &       SolarAbundances(NUM_METAL_SPECIES), 
      &       time_units, dens_units, len_units, aye, dtime
-      R_PREC Density(in,jn,kn), Tgas(in,jn,kn),
+      R_PREC Tgas(in,jn,kn),
      &       gas_metal1(in,jn,kn), gas_metal2(in,jn,kn),
      &       gas_metal3(in,jn,kn), gas_metal4(in,jn,kn),
      &       gas_metal5(in,jn,kn), gas_metal6(in,jn,kn),
