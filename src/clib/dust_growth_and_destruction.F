@@ -134,28 +134,28 @@
       dens_proper = dens_units * aye**3
 
 !     copy metallicites into a single array
-      metpt(1) = gas_metal1(i,j,k) / Density(i,j,k)
-      metpt(2) = gas_metal2(i,j,k) / Density(i,j,k)
-      metpt(3) = gas_metal3(i,j,k) / Density(i,j,k)
-      metpt(4) = gas_metal4(i,j,k) / Density(i,j,k)
-      metpt(5) = gas_metal5(i,j,k) / Density(i,j,k)
-      metpt(6) = gas_metal6(i,j,k) / Density(i,j,k)
-      metpt(7) = gas_metal7(i,j,k) / Density(i,j,k)
-      metpt(8) = gas_metal8(i,j,k) / Density(i,j,k)
-      metpt(9) = gas_metal9(i,j,k) / Density(i,j,k)
-      metpt(10) = gas_metal10(i,j,k) / Density(i,j,k)
-      metpt(11) = gas_metal11(i,j,k) / Density(i,j,k)
-      dmetpt(1) = dust_metal1(i,j,k) / Density(i,j,k)
-      dmetpt(2) = dust_metal2(i,j,k) / Density(i,j,k)
-      dmetpt(3) = dust_metal3(i,j,k) / Density(i,j,k)
-      dmetpt(4) = dust_metal4(i,j,k) / Density(i,j,k)
-      dmetpt(5) = dust_metal5(i,j,k) / Density(i,j,k)
-      dmetpt(6) = dust_metal6(i,j,k) / Density(i,j,k)
-      dmetpt(7) = dust_metal7(i,j,k) / Density(i,j,k)
-      dmetpt(8) = dust_metal8(i,j,k) / Density(i,j,k)
-      dmetpt(9) = dust_metal9(i,j,k) / Density(i,j,k)
-      dmetpt(10) = dust_metal10(i,j,k) / Density(i,j,k)
-      dmetpt(11) = dust_metal11(i,j,k) / Density(i,j,k)
+      metpt(1) = gas_metal1(i,j,k)
+      metpt(2) = gas_metal2(i,j,k)
+      metpt(3) = gas_metal3(i,j,k)
+      metpt(4) = gas_metal4(i,j,k)
+      metpt(5) = gas_metal5(i,j,k)
+      metpt(6) = gas_metal6(i,j,k)
+      metpt(7) = gas_metal7(i,j,k)
+      metpt(8) = gas_metal8(i,j,k)
+      metpt(9) = gas_metal9(i,j,k)
+      metpt(10) = gas_metal10(i,j,k)
+      metpt(11) = gas_metal11(i,j,k)
+      dmetpt(1) = dust_metal1(i,j,k)
+      dmetpt(2) = dust_metal2(i,j,k)
+      dmetpt(3) = dust_metal3(i,j,k)
+      dmetpt(4) = dust_metal4(i,j,k)
+      dmetpt(5) = dust_metal5(i,j,k)
+      dmetpt(6) = dust_metal6(i,j,k)
+      dmetpt(7) = dust_metal7(i,j,k)
+      dmetpt(8) = dust_metal8(i,j,k)
+      dmetpt(9) = dust_metal9(i,j,k)
+      dmetpt(10) = dust_metal10(i,j,k)
+      dmetpt(11) = dust_metal11(i,j,k)
 
       Ms100 = 6800.0*SNE_COEFF
      &        *(100.0/SNE_SHOCKSPEED)*(100.0/SNE_SHOCKSPEED)
@@ -163,17 +163,16 @@
       tau_ref = DUST_GROWTH_TAUREF * 1e9 * SEC_PER_YEAR / time_units
 
       do n=0+1,NUM_METAL_SPECIES 
-          Mdust(n) = dmetpt(n) * Density(i,j,k)
+          Mdust(n) = dmetpt(n)
           dM(n) = 0.
       enddo
 
 !   metals accreted from gas to dust
-      tau_accr0 = tau_ref * (DUST_GROWTH_DENSREF/dens_proper
-     &            /Density(i,j,k)) * (DUST_GROWTH_TREF/Tgas(i,j,k))**0.5
+      tau_accr0 = tau_ref * (DUST_GROWTH_DENSREF/dens_proper)
+     &     * (DUST_GROWTH_TREF/Tgas(i,j,k))**0.5
       do n=1+1,NUM_METAL_SPECIES
-          Mmet(n) = metpt(n) * Density(i,j,k) + Mdust(n)
-          tau_accr = tau_accr0 * (SolarAbundances(n) 
-     &               / metpt(n))
+          Mmet(n) = metpt(n) + Mdust(n)
+          tau_accr = tau_accr0 * SolarAbundances(n) / metpt(n)
           dM(n) = dM(n) + min((1 - Mdust(n) / Mmet(n)) 
      &            * (Mdust(n)/tau_accr) * dtime,
      &            Mmet(n) - Mdust(n)) ! growth capped by gas in a single cell
@@ -203,38 +202,36 @@
       metal_Density(i,j,k) = metal_Density(i,j,k) - dM(1)
       do n=0+1,NUM_METAL_SPECIES
           if (dust_Density(i,j,k) .gt. 0.0) then
-              dmetpt(n) =  (dM(n) + Mdust(n))
-     &        / Density(i,j,k)  ! SNe shocks on neighbors are ignored
+              dmetpt(n) = dM(n) + Mdust(n) ! SNe shocks on neighbors are ignored
           else
               dmetpt(n) = 0.0
           endif
-          metpt(n) = (metpt(n) * Density(i,j,k)
-     &                            - dM(n)) / (Density(i,j,k) - dM(1))
+          metpt(n) = (metpt(n) - dM(n)) / (Density(i,j,k) - dM(1))
       enddo
 
 !     copy metallicites back into fields arrays
-      gas_metal1(i,j,k) = metpt(1) * Density(i,j,k)
-      gas_metal2(i,j,k) = metpt(2) * Density(i,j,k)
-      gas_metal3(i,j,k) = metpt(3) * Density(i,j,k)
-      gas_metal4(i,j,k) = metpt(4) * Density(i,j,k)
-      gas_metal5(i,j,k) = metpt(5) * Density(i,j,k)
-      gas_metal6(i,j,k) = metpt(6) * Density(i,j,k)
-      gas_metal7(i,j,k) = metpt(7) * Density(i,j,k)
-      gas_metal8(i,j,k) = metpt(8) * Density(i,j,k)
-      gas_metal9(i,j,k) = metpt(9) * Density(i,j,k)
-      gas_metal10(i,j,k) = metpt(10) * Density(i,j,k)
-      gas_metal11(i,j,k) = metpt(11) * Density(i,j,k)
-      dust_metal1(i,j,k) = dmetpt(1) * Density(i,j,k)
-      dust_metal2(i,j,k) = dmetpt(2) * Density(i,j,k)
-      dust_metal3(i,j,k) = dmetpt(3) * Density(i,j,k)
-      dust_metal4(i,j,k) = dmetpt(4) * Density(i,j,k)
-      dust_metal5(i,j,k) = dmetpt(5) * Density(i,j,k)
-      dust_metal6(i,j,k) = dmetpt(6) * Density(i,j,k)
-      dust_metal7(i,j,k) = dmetpt(7) * Density(i,j,k)
-      dust_metal8(i,j,k) = dmetpt(8) * Density(i,j,k)
-      dust_metal9(i,j,k) = dmetpt(9) * Density(i,j,k)
-      dust_metal10(i,j,k) = dmetpt(10) * Density(i,j,k)
-      dust_metal11(i,j,k) = dmetpt(11) * Density(i,j,k)
+      gas_metal1(i,j,k) = metpt(1)
+      gas_metal2(i,j,k) = metpt(2)
+      gas_metal3(i,j,k) = metpt(3)
+      gas_metal4(i,j,k) = metpt(4)
+      gas_metal5(i,j,k) = metpt(5)
+      gas_metal6(i,j,k) = metpt(6)
+      gas_metal7(i,j,k) = metpt(7)
+      gas_metal8(i,j,k) = metpt(8)
+      gas_metal9(i,j,k) = metpt(9)
+      gas_metal10(i,j,k) = metpt(10)
+      gas_metal11(i,j,k) = metpt(11)
+      dust_metal1(i,j,k) = dmetpt(1)
+      dust_metal2(i,j,k) = dmetpt(2)
+      dust_metal3(i,j,k) = dmetpt(3)
+      dust_metal4(i,j,k) = dmetpt(4)
+      dust_metal5(i,j,k) = dmetpt(5)
+      dust_metal6(i,j,k) = dmetpt(6)
+      dust_metal7(i,j,k) = dmetpt(7)
+      dust_metal8(i,j,k) = dmetpt(8)
+      dust_metal9(i,j,k) = dmetpt(9)
+      dust_metal10(i,j,k) = dmetpt(10)
+      dust_metal11(i,j,k) = dmetpt(11)
 
       return
       end ! end of dust growth and destruction module
