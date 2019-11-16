@@ -128,7 +128,7 @@
       integer n
       real*8 tau_ref, Ms100, tau_accr0, tau_accr
       R_PREC dM(NUM_METAL_SPECIES), dMs,
-     &       Mmet(NUM_METAL_SPECIES),Mdust(NUM_METAL_SPECIES),
+     &       Mmet(NUM_METAL_SPECIES),
      &       dens_proper
 
       dens_proper = dens_units * aye**3
@@ -163,7 +163,6 @@
       tau_ref = DUST_GROWTH_TAUREF * 1e9 * SEC_PER_YEAR / time_units
 
       do n=0+1,NUM_METAL_SPECIES 
-          Mdust(n) = dmetpt(n)
           dM(n) = 0.
       enddo
 
@@ -171,11 +170,11 @@
       tau_accr0 = tau_ref * (DUST_GROWTH_DENSREF/dens_proper)
      &     * (DUST_GROWTH_TREF/Tgas(i,j,k))**0.5
       do n=1+1,NUM_METAL_SPECIES
-          Mmet(n) = metpt(n) + Mdust(n)
+          Mmet(n) = metpt(n) + dmetpt(n)
           tau_accr = tau_accr0 * SolarAbundances(n) / metpt(n)
-          dM(n) = dM(n) + min((1 - Mdust(n) / Mmet(n)) 
-     &            * (Mdust(n)/tau_accr) * dtime,
-     &            Mmet(n) - Mdust(n)) ! growth capped by gas in a single cell
+          dM(n) = dM(n) + min((1 - dmetpt(n) / Mmet(n))
+     &            * (dmetpt(n)/tau_accr) * dtime,
+     &            Mmet(n) - dmetpt(n)) ! growth capped by gas in a single cell
           dM(1) = dM(1) + dM(n)
       enddo
 
@@ -202,7 +201,7 @@
       metal_Density(i,j,k) = metal_Density(i,j,k) - dM(1)
       do n=0+1,NUM_METAL_SPECIES
           if (dust_Density(i,j,k) .gt. 0.0) then
-              dmetpt(n) = dM(n) + Mdust(n) ! SNe shocks on neighbors are ignored
+              dmetpt(n) = dM(n) + dmetpt(n) ! SNe shocks on neighbors are ignored
           else
               dmetpt(n) = 0.0
           endif
