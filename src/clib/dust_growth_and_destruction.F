@@ -206,7 +206,7 @@
           else
               dmetpt(n) = 0.0
           endif
-          metpt(n) = (metpt(n) - dM(n)) / (Density(i,j,k) - dM(1))
+          metpt(n) = metpt(n) - dM(n)
       enddo
 
 !     copy metallicites back into fields arrays
