@@ -6,10 +6,10 @@
 !////////////////////////////////////////////////////////////
       subroutine dust_tau_for_timestep(in, jn, kn, i, j, k,
      &              Density, Tgas,
-     &              Metallicity1, Metallicity2, Metallicity3,
-     &              Metallicity4, Metallicity5, Metallicity6,
-     &              Metallicity7, Metallicity8, Metallicity9,
-     &              Metallicity10, Metallicity11, SNe_ThisTimeStep,
+     &              gas_metal1, gas_metal2, gas_metal3,
+     &              gas_metal4, gas_metal5, gas_metal6,
+     &              gas_metal7, gas_metal8, gas_metal9,
+     &              gas_metal10, gas_metal11, SNe_ThisTimeStep,
      &              tau_accr, tau_dest, tau_sput,
      &              SolarAbundances,
      &              time_units, dens_units, len_units, aye, dtime)
@@ -21,12 +21,12 @@
      &       SolarAbundances(NUM_METAL_SPECIES),
      &       time_units, dens_units, len_units, aye, dtime
       R_PREC Density(in,jn,kn), Tgas(in,jn,kn),
-     &       Metallicity1(in,jn,kn), Metallicity2(in,jn,kn),
-     &       Metallicity3(in,jn,kn), Metallicity4(in,jn,kn),
-     &       Metallicity5(in,jn,kn), Metallicity6(in,jn,kn),
-     &       Metallicity7(in,jn,kn), Metallicity8(in,jn,kn),
-     &       Metallicity9(in,jn,kn), Metallicity10(in,jn,kn),
-     &       Metallicity11(in,jn,kn), SNe_ThisTimeStep(in,jn,kn)
+     &       gas_metal1(in,jn,kn), gas_metal2(in,jn,kn),
+     &       gas_metal3(in,jn,kn), gas_metal4(in,jn,kn),
+     &       gas_metal5(in,jn,kn), gas_metal6(in,jn,kn),
+     &       gas_metal7(in,jn,kn), gas_metal8(in,jn,kn),
+     &       gas_metal9(in,jn,kn), gas_metal10(in,jn,kn),
+     &       gas_metal11(in,jn,kn), SNe_ThisTimeStep(in,jn,kn)
     
 !   local variables
       real*8 tau_ref, Ms100, tau_accr0, dens_proper
@@ -44,27 +44,27 @@
      &            / Density(i,j,k) * (DUST_GROWTH_TREF/Tgas(i,j,k))**0.5
       tau_accr(i) = 1.d+20
       tau_accr(i) = min(tau_accr0 * (SolarAbundances(1)
-     &     / (Metallicity1(i,j,k) / Density(i,j,k))),tau_accr(i))
+     &     / (gas_metal1(i,j,k) / Density(i,j,k))),tau_accr(i))
       tau_accr(i) = min(tau_accr0 * (SolarAbundances(2)
-     &     / (Metallicity2(i,j,k) / Density(i,j,k))),tau_accr(i))
+     &     / (gas_metal2(i,j,k) / Density(i,j,k))),tau_accr(i))
       tau_accr(i) = min(tau_accr0 * (SolarAbundances(3)
-     &     / (Metallicity3(i,j,k) / Density(i,j,k))),tau_accr(i))
+     &     / (gas_metal3(i,j,k) / Density(i,j,k))),tau_accr(i))
       tau_accr(i) = min(tau_accr0 * (SolarAbundances(4)
-     &     / (Metallicity4(i,j,k) / Density(i,j,k))),tau_accr(i))
+     &     / (gas_metal4(i,j,k) / Density(i,j,k))),tau_accr(i))
       tau_accr(i) = min(tau_accr0 * (SolarAbundances(5)
-     &     / (Metallicity5(i,j,k) / Density(i,j,k))),tau_accr(i))
+     &     / (gas_metal5(i,j,k) / Density(i,j,k))),tau_accr(i))
       tau_accr(i) = min(tau_accr0 * (SolarAbundances(6)
-     &     / (Metallicity6(i,j,k) / Density(i,j,k))),tau_accr(i))
+     &     / (gas_metal6(i,j,k) / Density(i,j,k))),tau_accr(i))
       tau_accr(i) = min(tau_accr0 * (SolarAbundances(7)
-     &     / (Metallicity7(i,j,k) / Density(i,j,k))),tau_accr(i))
+     &     / (gas_metal7(i,j,k) / Density(i,j,k))),tau_accr(i))
       tau_accr(i) = min(tau_accr0 * (SolarAbundances(8)
-     &     / (Metallicity8(i,j,k) / Density(i,j,k))),tau_accr(i))
+     &     / (gas_metal8(i,j,k) / Density(i,j,k))),tau_accr(i))
       tau_accr(i) = min(tau_accr0 * (SolarAbundances(9)
-     &     / (Metallicity9(i,j,k) / Density(i,j,k))),tau_accr(i))
+     &     / (gas_metal9(i,j,k) / Density(i,j,k))),tau_accr(i))
       tau_accr(i) = min(tau_accr0 * (SolarAbundances(10)
-     &     / (Metallicity10(i,j,k) / Density(i,j,k))),tau_accr(i))
+     &     / (gas_metal10(i,j,k) / Density(i,j,k))),tau_accr(i))
       tau_accr(i) = min(tau_accr0 * (SolarAbundances(11)
-     &     / (Metallicity11(i,j,k) / Density(i,j,k))),tau_accr(i))
+     &     / (gas_metal11(i,j,k) / Density(i,j,k))),tau_accr(i))
 
 !   destruction by SN shocks
       if (SNe_ThisTimeStep(i,j,k).le.0.0) then
@@ -88,14 +88,14 @@
 !////////////////////////////////////////////////////////////
       subroutine dust_growth_and_destruction(in, jn, kn, i, j, k,
      &     Density, dust_Density, metal_Density, Tgas,
-     &     Metallicity1, Metallicity2, Metallicity3,
-     &     Metallicity4, Metallicity5, Metallicity6,
-     &     Metallicity7, Metallicity8, Metallicity9,
-     &     Metallicity10, Metallicity11,
-     &     dust_Metallicity1, dust_Metallicity2, dust_Metallicity3,
-     &     dust_Metallicity4, dust_Metallicity5, dust_Metallicity6,
-     &     dust_Metallicity7, dust_Metallicity8, dust_Metallicity9,
-     &     dust_Metallicity10, dust_Metallicity11,
+     &     gas_metal1, gas_metal2, gas_metal3,
+     &     gas_metal4, gas_metal5, gas_metal6,
+     &     gas_metal7, gas_metal8, gas_metal9,
+     &     gas_metal10, gas_metal11,
+     &     dust_metal1, dust_metal2, dust_metal3,
+     &     dust_metal4, dust_metal5, dust_metal6,
+     &     dust_metal7, dust_metal8, dust_metal9,
+     &     dust_metal10, dust_metal11,
      &     SNe_ThisTimeStep,
      &     tau_dest, tau_sput,
      &     SolarAbundances,
@@ -108,18 +108,18 @@
      &       SolarAbundances(NUM_METAL_SPECIES), 
      &       time_units, dens_units, len_units, aye, dtime
       R_PREC Density(in,jn,kn), Tgas(in,jn,kn),
-     &       Metallicity1(in,jn,kn), Metallicity2(in,jn,kn),
-     &       Metallicity3(in,jn,kn), Metallicity4(in,jn,kn),
-     &       Metallicity5(in,jn,kn), Metallicity6(in,jn,kn),
-     &       Metallicity7(in,jn,kn), Metallicity8(in,jn,kn),
-     &       Metallicity9(in,jn,kn), Metallicity10(in,jn,kn),
-     &       Metallicity11(in,jn,kn),
-     &       dust_Metallicity1(in,jn,kn), dust_Metallicity2(in,jn,kn),
-     &       dust_Metallicity3(in,jn,kn), dust_Metallicity4(in,jn,kn),
-     &       dust_Metallicity5(in,jn,kn), dust_Metallicity6(in,jn,kn),
-     &       dust_Metallicity7(in,jn,kn), dust_Metallicity8(in,jn,kn),
-     &       dust_Metallicity9(in,jn,kn), dust_Metallicity10(in,jn,kn),
-     &       dust_Metallicity11(in,jn,kn),
+     &       gas_metal1(in,jn,kn), gas_metal2(in,jn,kn),
+     &       gas_metal3(in,jn,kn), gas_metal4(in,jn,kn),
+     &       gas_metal5(in,jn,kn), gas_metal6(in,jn,kn),
+     &       gas_metal7(in,jn,kn), gas_metal8(in,jn,kn),
+     &       gas_metal9(in,jn,kn), gas_metal10(in,jn,kn),
+     &       gas_metal11(in,jn,kn),
+     &       dust_metal1(in,jn,kn), dust_metal2(in,jn,kn),
+     &       dust_metal3(in,jn,kn), dust_metal4(in,jn,kn),
+     &       dust_metal5(in,jn,kn), dust_metal6(in,jn,kn),
+     &       dust_metal7(in,jn,kn), dust_metal8(in,jn,kn),
+     &       dust_metal9(in,jn,kn), dust_metal10(in,jn,kn),
+     &       dust_metal11(in,jn,kn),
      &       metal_Density(in,jn,kn), dust_Density(in,jn,kn),
      &       SNe_ThisTimeStep(in,jn,kn),
      &       metpt(NUM_METAL_SPECIES), dmetpt(NUM_METAL_SPECIES)
@@ -134,28 +134,28 @@
       dens_proper = dens_units * aye**3
 
 !     copy metallicites into a single array
-      metpt(1) = Metallicity1(i,j,k) / Density(i,j,k)
-      metpt(2) = Metallicity2(i,j,k) / Density(i,j,k)
-      metpt(3) = Metallicity3(i,j,k) / Density(i,j,k)
-      metpt(4) = Metallicity4(i,j,k) / Density(i,j,k)
-      metpt(5) = Metallicity5(i,j,k) / Density(i,j,k)
-      metpt(6) = Metallicity6(i,j,k) / Density(i,j,k)
-      metpt(7) = Metallicity7(i,j,k) / Density(i,j,k)
-      metpt(8) = Metallicity8(i,j,k) / Density(i,j,k)
-      metpt(9) = Metallicity9(i,j,k) / Density(i,j,k)
-      metpt(10) = Metallicity10(i,j,k) / Density(i,j,k)
-      metpt(11) = Metallicity11(i,j,k) / Density(i,j,k)
-      dmetpt(1) = dust_Metallicity1(i,j,k) / Density(i,j,k)
-      dmetpt(2) = dust_Metallicity2(i,j,k) / Density(i,j,k)
-      dmetpt(3) = dust_Metallicity3(i,j,k) / Density(i,j,k)
-      dmetpt(4) = dust_Metallicity4(i,j,k) / Density(i,j,k)
-      dmetpt(5) = dust_Metallicity5(i,j,k) / Density(i,j,k)
-      dmetpt(6) = dust_Metallicity6(i,j,k) / Density(i,j,k)
-      dmetpt(7) = dust_Metallicity7(i,j,k) / Density(i,j,k)
-      dmetpt(8) = dust_Metallicity8(i,j,k) / Density(i,j,k)
-      dmetpt(9) = dust_Metallicity9(i,j,k) / Density(i,j,k)
-      dmetpt(10) = dust_Metallicity10(i,j,k) / Density(i,j,k)
-      dmetpt(11) = dust_Metallicity11(i,j,k) / Density(i,j,k)
+      metpt(1) = gas_metal1(i,j,k) / Density(i,j,k)
+      metpt(2) = gas_metal2(i,j,k) / Density(i,j,k)
+      metpt(3) = gas_metal3(i,j,k) / Density(i,j,k)
+      metpt(4) = gas_metal4(i,j,k) / Density(i,j,k)
+      metpt(5) = gas_metal5(i,j,k) / Density(i,j,k)
+      metpt(6) = gas_metal6(i,j,k) / Density(i,j,k)
+      metpt(7) = gas_metal7(i,j,k) / Density(i,j,k)
+      metpt(8) = gas_metal8(i,j,k) / Density(i,j,k)
+      metpt(9) = gas_metal9(i,j,k) / Density(i,j,k)
+      metpt(10) = gas_metal10(i,j,k) / Density(i,j,k)
+      metpt(11) = gas_metal11(i,j,k) / Density(i,j,k)
+      dmetpt(1) = dust_metal1(i,j,k) / Density(i,j,k)
+      dmetpt(2) = dust_metal2(i,j,k) / Density(i,j,k)
+      dmetpt(3) = dust_metal3(i,j,k) / Density(i,j,k)
+      dmetpt(4) = dust_metal4(i,j,k) / Density(i,j,k)
+      dmetpt(5) = dust_metal5(i,j,k) / Density(i,j,k)
+      dmetpt(6) = dust_metal6(i,j,k) / Density(i,j,k)
+      dmetpt(7) = dust_metal7(i,j,k) / Density(i,j,k)
+      dmetpt(8) = dust_metal8(i,j,k) / Density(i,j,k)
+      dmetpt(9) = dust_metal9(i,j,k) / Density(i,j,k)
+      dmetpt(10) = dust_metal10(i,j,k) / Density(i,j,k)
+      dmetpt(11) = dust_metal11(i,j,k) / Density(i,j,k)
 
       Ms100 = 6800.0*SNE_COEFF
      &        *(100.0/SNE_SHOCKSPEED)*(100.0/SNE_SHOCKSPEED)
@@ -213,28 +213,28 @@
       enddo
 
 !     copy metallicites back into fields arrays
-      Metallicity1(i,j,k) = metpt(1) * Density(i,j,k)
-      Metallicity2(i,j,k) = metpt(2) * Density(i,j,k)
-      Metallicity3(i,j,k) = metpt(3) * Density(i,j,k)
-      Metallicity4(i,j,k) = metpt(4) * Density(i,j,k)
-      Metallicity5(i,j,k) = metpt(5) * Density(i,j,k)
-      Metallicity6(i,j,k) = metpt(6) * Density(i,j,k)
-      Metallicity7(i,j,k) = metpt(7) * Density(i,j,k)
-      Metallicity8(i,j,k) = metpt(8) * Density(i,j,k)
-      Metallicity9(i,j,k) = metpt(9) * Density(i,j,k)
-      Metallicity10(i,j,k) = metpt(10) * Density(i,j,k)
-      Metallicity11(i,j,k) = metpt(11) * Density(i,j,k)
-      dust_Metallicity1(i,j,k) = dmetpt(1) * Density(i,j,k)
-      dust_Metallicity2(i,j,k) = dmetpt(2) * Density(i,j,k)
-      dust_Metallicity3(i,j,k) = dmetpt(3) * Density(i,j,k)
-      dust_Metallicity4(i,j,k) = dmetpt(4) * Density(i,j,k)
-      dust_Metallicity5(i,j,k) = dmetpt(5) * Density(i,j,k)
-      dust_Metallicity6(i,j,k) = dmetpt(6) * Density(i,j,k)
-      dust_Metallicity7(i,j,k) = dmetpt(7) * Density(i,j,k)
-      dust_Metallicity8(i,j,k) = dmetpt(8) * Density(i,j,k)
-      dust_Metallicity9(i,j,k) = dmetpt(9) * Density(i,j,k)
-      dust_Metallicity10(i,j,k) = dmetpt(10) * Density(i,j,k)
-      dust_Metallicity11(i,j,k) = dmetpt(11) * Density(i,j,k)
+      gas_metal1(i,j,k) = metpt(1) * Density(i,j,k)
+      gas_metal2(i,j,k) = metpt(2) * Density(i,j,k)
+      gas_metal3(i,j,k) = metpt(3) * Density(i,j,k)
+      gas_metal4(i,j,k) = metpt(4) * Density(i,j,k)
+      gas_metal5(i,j,k) = metpt(5) * Density(i,j,k)
+      gas_metal6(i,j,k) = metpt(6) * Density(i,j,k)
+      gas_metal7(i,j,k) = metpt(7) * Density(i,j,k)
+      gas_metal8(i,j,k) = metpt(8) * Density(i,j,k)
+      gas_metal9(i,j,k) = metpt(9) * Density(i,j,k)
+      gas_metal10(i,j,k) = metpt(10) * Density(i,j,k)
+      gas_metal11(i,j,k) = metpt(11) * Density(i,j,k)
+      dust_metal1(i,j,k) = dmetpt(1) * Density(i,j,k)
+      dust_metal2(i,j,k) = dmetpt(2) * Density(i,j,k)
+      dust_metal3(i,j,k) = dmetpt(3) * Density(i,j,k)
+      dust_metal4(i,j,k) = dmetpt(4) * Density(i,j,k)
+      dust_metal5(i,j,k) = dmetpt(5) * Density(i,j,k)
+      dust_metal6(i,j,k) = dmetpt(6) * Density(i,j,k)
+      dust_metal7(i,j,k) = dmetpt(7) * Density(i,j,k)
+      dust_metal8(i,j,k) = dmetpt(8) * Density(i,j,k)
+      dust_metal9(i,j,k) = dmetpt(9) * Density(i,j,k)
+      dust_metal10(i,j,k) = dmetpt(10) * Density(i,j,k)
+      dust_metal11(i,j,k) = dmetpt(11) * Density(i,j,k)
 
       return
       end ! end of dust growth and destruction module
