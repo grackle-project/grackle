@@ -107,8 +107,7 @@ class FluidContainer(dict):
         if (self["energy"] == 0).all():
             # Check that density fields have been set. Allow metals to be 0.
             density_set = True
-            field_list = self.density_fields
-            field_list.remove('metal')
+            
             for field in self.density_fields:
                 if field == 'metal':
                     continue
