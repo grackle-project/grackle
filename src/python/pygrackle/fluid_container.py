@@ -109,7 +109,9 @@ class FluidContainer(dict):
             density_set = True
             field_list = self.density_fields
             field_list.remove('metal')
-            for field in field_list:
+            for field in self.density_fields:
+                if field == 'metal':
+                    continue
                 if (self[field] == 0).all():
                     density_set = False
 
