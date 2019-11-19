@@ -109,7 +109,7 @@ class FluidContainer(dict):
             self.calculate_temperature()
             self["mu"] = self["temperature"] / \
                 (self["energy"] * (my_chemistry.Gamma - 1.) *
-                self.chemistry_data.temperature_units)
+                 self.chemistry_data.temperature_units)
             return
     
             
