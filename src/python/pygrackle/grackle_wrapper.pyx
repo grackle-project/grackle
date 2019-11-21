@@ -113,6 +113,12 @@ cdef class chemistry_data:
         def __set__(self, val):
             self.data.photoelectric_heating_rate = val
 
+    property use_isrf_field:
+        def __get__(self):
+            return self.data.use_isrf_field
+        def __set__(self, val):
+            self.data.use_isrf_field = val
+
     property interstellar_radiation_field:
         def __get__(self):
             return self.data.interstellar_radiation_field

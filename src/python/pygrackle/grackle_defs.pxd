@@ -17,6 +17,7 @@ cdef extern from "grackle_chemistry_data.h":
         int use_dust_density_field
         int photoelectric_heating
         double photoelectric_heating_rate
+        int use_isrf_field
         double interstellar_radiation_field
         int use_volumetric_heating_rate
         int use_specific_heating_rate
@@ -107,6 +108,7 @@ cdef extern from "grackle_types.h":
       gr_float *RT_HeII_ionization_rate;
       gr_float *RT_H2_dissociation_rate;
       gr_float *H2_self_shielding_length;
+      gr_float *isrf_habing;
 
 cdef extern from "grackle.h":
     c_chemistry_data _set_default_chemistry_parameters()
