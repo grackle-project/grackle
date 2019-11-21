@@ -61,6 +61,7 @@ int main(int argc, char *argv[])
   // Access the parameter storage with the struct you've created
   // or with the grackle_data pointer declared in grackle.h (see further below).
   grackle_data->use_grackle = 1;            // chemistry on
+  grackle_data->use_isrf_field = 1;
   grackle_data->with_radiative_cooling = 1; // cooling on
   grackle_data->primordial_chemistry = 3;   // molecular network with H, He, D
   grackle_data->dust_chemistry = 1;
@@ -131,6 +132,9 @@ int main(int argc, char *argv[])
   // radiative transfer heating rate (provide in units [erg s^-1 cm^-3])
   my_fields.RT_heating_rate = new gr_float[field_size];
 
+  // interstellar radiation field strength
+  my_fields.isrf_habing = new gr_float[field_size];
+
   // set temperature units
   double temperature_units = mh * pow(my_units.a_units * 
                                       my_units.length_units /
@@ -172,6 +176,8 @@ int main(int argc, char *argv[])
     my_fields.RT_HeII_ionization_rate[i] = 0.0;
     my_fields.RT_H2_dissociation_rate[i] = 0.0;
     my_fields.RT_heating_rate[i] = 0.0;
+
+    my_fields.isrf_habing[i] = grackle_data->interstellar_radiation_field;
   }
 
   /*********************************************************************
