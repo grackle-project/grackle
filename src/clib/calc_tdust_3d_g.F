@@ -112,7 +112,7 @@
 !$omp&   i, j, k,
 !$omp&   indixe,
 !$omp&   t1, t2, logtem, tdef,
-!$omp&   tgas, tdust, nh, gasgr,
+!$omp&   tgas, tdust, nh, gasgr, myisrf,
 !$omp&   itmask )
 #endif
       do t = 0, dk*dj-1
