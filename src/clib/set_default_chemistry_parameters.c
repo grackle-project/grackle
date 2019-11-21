@@ -54,7 +54,7 @@ chemistry_data _set_default_chemistry_parameters(void)
   my_chemistry.cie_cooling                    = 0;
   my_chemistry.h2_optical_depth_approximation = 0;
 
-  my_chemistry.photoelectric_heating          = 0;
+  my_chemistry.photoelectric_heating          = -1; // unset
   // epsilon=0.05, G_0=1.7 (in erg s^-1 cm^-3)
   my_chemistry.photoelectric_heating_rate     = 8.5e-26;
   my_chemistry.interstellar_radiation_field   = 1.7;

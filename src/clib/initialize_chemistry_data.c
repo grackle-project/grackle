@@ -85,7 +85,7 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
       return FAIL;
     }
 
-    if (my_chemistry->photoelectric_heating == 0) {
+    if (my_chemistry->photoelectric_heating < 0) {
       my_chemistry->photoelectric_heating = 2;
       if (grackle_verbose) {
         fprintf(stdout, "Dust chemistry enabled, setting photoelectric_heating to 2.\n");
@@ -100,6 +100,11 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
       }
     }
 
+  }
+
+  // Default photo-electric heating to off if unset.
+  if (my_chemistry->photoelectric_heating < 0) {
+    my_chemistry->photoelectric_heating = 0;
   }
 
 //initialize OpenMP
