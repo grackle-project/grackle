@@ -74,6 +74,9 @@ typedef struct
   int photoelectric_heating;
   double photoelectric_heating_rate;
 
+  /* Flag to supply a field for the interstellar radiation field */
+  int use_isrf_field;
+
   // local FUV interstellar radiation field in Habing units
   double interstellar_radiation_field;
 

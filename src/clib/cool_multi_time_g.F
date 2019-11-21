@@ -31,7 +31,8 @@
      &                metGridRank, metGridDim,
      &                metPar1, metPar2, metPar3, metPar4, metPar5,
      &                metDataSize, metCooling, metHeating, clnew,
-     &                iVheat, iMheat, Vheat, Mheat)
+     &                iVheat, iMheat, Vheat, Mheat,
+     &                iisrffield, isrf_habing)
 
 !  SOLVE RADIATIVE COOLING/HEATING EQUATIONS
 !
@@ -63,7 +64,8 @@
      &        iexpand, ih2co, ipiht, ispecies, imetal, idim,
      &        imcool, idust, idustall,
      &        idustfield, igammah, ih2optical, iciecool,
-     &        clnew, iVheat, iMheat, iradtrans, iradshield
+     &        clnew, iVheat, iMheat, iradtrans, iradshield,
+     &        iisrffield
 
       real*8  aye, temstart, temend,
      &        utem, uxyz, uaye, urho, utim,
@@ -76,6 +78,7 @@
      &        DI(in,jn,kn),  DII(in,jn,kn),  HDI(in,jn,kn),
      &        metal(in,jn,kn), dust(in,jn,kn),
      &        Vheat(in,jn,kn), Mheat(in,jn,kn),
+     &        isrf_habing(in,jn,kn),
      &        cooltime(in,jn,kn)
       real*8  photogamma(in,jn,kn)
       real*8  hyd01ka(nratec), h2k01a(nratec), vibha(nratec), 
@@ -284,7 +287,7 @@
      &                metPar1, metPar2, metPar3, metPar4, metPar5,
      &                metDataSize, metCooling, metHeating, clnew,
      &                iVheat, iMheat, Vheat, Mheat,
-     &                itmask)
+     &                iisrffield, isrf_habing, itmask)
 
 !        Compute the cooling time on the slice
 !          (the gamma used here is the same as used to calculate the pressure

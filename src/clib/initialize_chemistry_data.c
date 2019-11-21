@@ -417,6 +417,8 @@ void show_parameters(FILE *fp, chemistry_data *my_chemistry)
           my_chemistry->photoelectric_heating);
   fprintf(fp, "photoelectric_heating_rate        = %g\n",
           my_chemistry->photoelectric_heating_rate);
+  fprintf(fp, "use_isrf_field                    = %d\n",
+          my_chemistry->use_isrf_field);
   fprintf(fp, "interstellar_radiation_field      = %g\n",
           my_chemistry->interstellar_radiation_field);
   fprintf(fp, "use_volumetric_heating_rate       = %d\n",

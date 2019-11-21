@@ -42,6 +42,7 @@
      &                metPar1, metPar2, metPar3, metPar4, metPar5,
      &                metDataSize, metCooling, metHeating, clnew,
      &                iVheat, iMheat, Vheat, Mheat,
+     &                iisrffield, isrf_habing,
      &                itmask)
 
 !  SOLVE RADIATIVE COOLING/HEATING EQUATIONS
@@ -73,7 +74,8 @@
      &        iexpand, ih2co, ipiht, ispecies, imcool,
      &        idust, idustall, idustfield,
      &        imetal, igammah, ih2optical, iciecool, clnew,
-     &        iVheat, iMheat, iradtrans, iradshield
+     &        iVheat, iMheat, iradtrans, iradshield,
+     &        iisrffield
 
       real*8  aye, temstart, temend, z_solar, fgr,
      &        utem, uxyz, uaye, urho, utim,
@@ -86,7 +88,7 @@
      &        DI(in,jn,kn),  DII(in,jn,kn), HDI(in,jn,kn),
      &        metal(in,jn,kn), dust(in,jn,kn),
      &        Vheat(in,jn,kn), Mheat(in,jn,kn),
-     &        photogamma(in,jn,kn)
+     &        photogamma(in,jn,kn), isrf_habing(in,jn,kn)
       real*8  hyd01ka(nratec), h2k01a(nratec), vibha(nratec), 
      &        rotha(nratec), rotla(nratec), gpldla(nratec),
      &        gphdla(nratec), hdltea(nratec), hdlowa(nratec),
@@ -154,7 +156,7 @@
      &       gpldl(in), gphdl(in), hdlte(in), hdlow(in),
      &       gaHI(in), gaH2(in), gaHe(in), gaHp(in), gael(in),
      &       h2lte(in), galdl(in), gasgr(in), gasgr_tdust(in),
-     &       regr(in)
+     &       regr(in), myisrf(in)
 
 !  Iteration mask
 
@@ -700,6 +702,24 @@ c  new (correct) way: (april 4, 2007)
          endif
       endif
 
+!     Calculate interstellar radiation field
+
+      if (anydust .or. (igammah .gt. 1)) then
+         if (iisrffield .gt. 0) then
+            do i = is+1, ie+1
+               if ( itmask(i) ) then
+                  myisrf(i) = isrf_habing(i,j,k)
+               endif
+            enddo
+         else
+            do i = is+1, ie+1
+               if ( itmask(i) ) then
+                  myisrf(i) = isrf
+               endif
+            enddo
+         endif
+      endif
+
 !     --- Gas to grain heat transfer ---
 
       if (anydust) then
@@ -717,7 +737,7 @@ c  new (correct) way: (april 4, 2007)
 !     Compute dust temperature
 
          call calc_tdust_1d_g(tdust, tgas, mynh, gasgr_tdust,
-     &        gamma_isrfa, isrf, itmask, comp2, in, is, ie, j, k)
+     &        gamma_isrfa, myisrf, itmask, comp2, in, is, ie, j, k)
 
 !     Calculate cooling rate
 
@@ -948,7 +968,7 @@ c  new (correct) way: (april 4, 2007)
                    gammaha_eff(i) = 0._DKIND
                 else
 !                  Assume constant epsilon = 0.05.
-                   gammaha_eff(i) = gammaha * 0.05_DKIND * isrf
+                   gammaha_eff(i) = gammaha * 0.05_DKIND * myisrf(i)
                 endif
             endif
          enddo
@@ -958,13 +978,13 @@ c  new (correct) way: (april 4, 2007)
 
           do i = is + 1, ie + 1
              if (itmask(i)) then
-                pe_X = isrf * dom_inv * sqrt(tgas(i)) / myde(i)
+                pe_X = myisrf(i) * dom_inv * sqrt(tgas(i)) / myde(i)
                 pe_eps =
      &               (4.9d-2 /
      &                (1._DKIND + (pe_X / 1925._DKIND)**0.73_DKIND)) +
      &               ((3.7d-2 * (tgas(i) / 1.d4)**0.7_DKIND) /
      &                (1._DKIND + (pe_X / 5000._DKIND)))
-                gammaha_eff(i) = gammaha * pe_eps * isrf
+                gammaha_eff(i) = gammaha * pe_eps * myisrf(i)
              endif
           enddo
 
@@ -994,7 +1014,7 @@ c  new (correct) way: (april 4, 2007)
              if (itmask(i)) then
                 grbeta = 0.74_DKIND * tgas(i)**-0.068_DKIND
                 edot(i) = edot(i) -
-     &               regr(i) * (isrf * dom_inv / myde(i))**grbeta *
+     &               regr(i) * (myisrf(i)*dom_inv / myde(i))**grbeta *
      &               myde(i) * rhoH(i)
              endif
           enddo

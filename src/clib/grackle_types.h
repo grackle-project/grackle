@@ -69,6 +69,8 @@ typedef struct
 
   gr_float *H2_self_shielding_length;
 
+  gr_float *isrf_habing;
+
 } grackle_field_data;
 
 typedef struct

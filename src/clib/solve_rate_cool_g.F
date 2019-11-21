@@ -43,7 +43,8 @@
      &                metGridRank, metGridDim,
      &                metPar1, metPar2, metPar3, metPar4, metPar5,
      &                metDataSize, metCooling, metHeating, clnew,
-     &                iVheat, iMheat, Vheat, Mheat)
+     &                iVheat, iMheat, Vheat, Mheat,
+     &                iisrffield, isrf_habing)
 
 !
 !  SOLVE MULTI-SPECIES RATE EQUATIONS AND RADIATIVE COOLING
@@ -87,6 +88,7 @@
 !    idust    - flag for H2 formation on dust grains
 !    idustall - flag for dust (0 - none, 1 - heating/cooling + H2 form.)
 !    idustfield - flag if a dust density field is present
+!    iisrffield - flag if a field for the interstellar radiation field is present
 !    ih2co    - flag to include H2 cooling (1 = on, 0 = off)
 !    ipiht    - flag to include photoionization heating (1 = on, 0 = off)
 !    iH2shield - flag for approximate self-shielding of H2 (Wolcott-Green+ 2011)
@@ -159,7 +161,8 @@
      &        ierr, imcool, idust, idustall, idustfield,
      &        igammah, ih2optical, iciecool, ithreebody,
      &        ndratec, clnew, iVheat, iMheat, iH2shield, iradshield,
-     &        iradtrans, iradcoupled, iradstep, irt_honly
+     &        iradtrans, iradcoupled, iradstep, irt_honly,
+     &        iisrffield
 
       real*8  dx, dt, aye, temstart, temend, gamma,
      &        utim, uxyz, uaye, urho, utem, fh, dtoh, z_solar, 
@@ -181,9 +184,13 @@
       R_PREC  kphHI(in,jn,kn), kphHeI(in,jn,kn), kphHeII(in,jn,kn),
      &        kdissH2I(in,jn,kn), photogamma(in,jn,kn)
 
-! H2 self-shielding length-scale field
+!  H2 self-shielding length-scale field
 
       R_PREC  xH2shield(in,jn,kn)
+
+!  Interstellar radiation field for dust heating
+
+      R_PREC  isrf_habing(in,jn,kn)
 
 !  Cooling tables (coolings rates as a function of temperature)
 
@@ -483,7 +490,7 @@ c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 fo
      &                metPar1, metPar2, metPar3, metPar4, metPar5,
      &                metDataSize, metCooling, metHeating, clnew,
      &                iVheat, iMheat, Vheat, Mheat,
-     &                itmask)
+     &                iisrffield, isrf_habing, itmask)
 
             if (ispecies .gt. 0) then
 

@@ -47,7 +47,8 @@ extern void FORTRAN_NAME(calc_tdust_3d_g)(
         double *gamma_isrfa, double *isrf,
 	double *utem, double *uxyz, double *uaye,
 	double *urho, double *utim,
-	gr_float *gas_temp, gr_float *dust_temp);
+	gr_float *gas_temp, gr_float *dust_temp,
+        int *iisrffield, gr_float* isrf_habing);
 
 int local_calculate_dust_temperature(chemistry_data *my_chemistry,
                                      chemistry_data_storage *my_rates,
@@ -128,7 +129,9 @@ int local_calculate_dust_temperature(chemistry_data *my_chemistry,
        &co_density_units,
        &my_units->time_units,
        temperature,
-       dust_temperature);
+       dust_temperature,
+       &my_chemistry->use_isrf_field,
+       my_fields->isrf_habing);
 
   free(temperature);
 

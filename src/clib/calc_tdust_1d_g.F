@@ -45,8 +45,8 @@
 
       integer in, is, ie, j, k
 
-      real*8 tdust(in), tgas(in), nh(in), gasgr(in)
-      real*8 gamma_isrfa, isrf, trad
+      real*8 tdust(in), tgas(in), nh(in), gasgr(in), isrf(in)
+      real*8 gamma_isrfa, trad
 
 !  Iteration mask
 
@@ -60,7 +60,7 @@
       parameter(radf = 4._DKIND * sigma_sb)
       real*8 kgr1
       parameter(kgr1 = 4.0e-4_DKIND)
-      real*8 tol, bi_tol, minpert, gamma_isrf
+      real*8 tol, bi_tol, minpert, gamma_isrf(in)
       parameter(tol = 1.e-5_DKIND, bi_tol = 1.e-3_DKIND, 
      &     minpert = 1.e-10_DKIND)
       integer itmax, bi_itmax
@@ -87,7 +87,6 @@
 
       trad  = max(1._DKIND, trad)
       trad4 = trad**4
-      gamma_isrf = isrf * gamma_isrfa
 
 !     Set total cells for calculation
 
@@ -96,6 +95,12 @@
       c_total = ie - is + 1
 
 !     Set local iteration mask and initial guess
+
+      do i = is+1, ie+1
+         if ( itmask(i) ) then
+            gamma_isrf(i) = isrf(i) * gamma_isrfa
+         endif
+      enddo
 
       do i = is+1, ie+1
          nm_itmask(i) = itmask(i)
@@ -114,7 +119,7 @@
                nm_done = nm_done + 1
             else
                tdustnow(i) = max(trad,
-     &              (gamma_isrf / radf / kgr1)**0.17_DKIND)
+     &              (gamma_isrf(i) / radf / kgr1)**0.17_DKIND)
                pert(i) = pert_i
             endif
 
@@ -429,7 +434,7 @@ c               ERROR_MESSAGE
 
       integer in, is, ie
       real*8 tdust(in), tgas(in), kgr(in), gasgr(in), nh(in), trad4,
-     &     gamma_isrf
+     &     gamma_isrf(in)
 
 !  Iteration mask
 
@@ -454,7 +459,7 @@ c               ERROR_MESSAGE
       do i = is+1, ie+1
          if ( itmask(i) ) then
 
-            sol(i) = gamma_isrf + radf * kgr(i) *
+            sol(i) = gamma_isrf(i) + radf * kgr(i) *
      &           (trad4 - tdust(i)**4) +
      &           (gasgr(i) * nh(i) *
      &           (tgas(i) - tdust(i)))

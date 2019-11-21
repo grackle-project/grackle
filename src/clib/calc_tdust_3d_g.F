@@ -17,7 +17,8 @@
      &     gamma_isrfa, isrf,
      &     utem, uxyz, uaye,
      &     urho, utim,
-     &     gas_temp, dust_temp)
+     &     gas_temp, dust_temp,
+     &     iisrffield, isrf_habing)
 
 !  COMPUTE THE DUST TEMPERATURE
 !
@@ -43,14 +44,15 @@
 !  Arguments
 
       integer in, jn, kn, is, js, ks, ie, je, ke, nratec,
-     &        iexpand, ispecies, idim
+     &        iexpand, ispecies, idim, iisrffield
       real*8  aye, temstart, temend,
      &        utem, uxyz, uaye, urho, utim, fgr, isrf
       R_PREC  d(in,jn,kn),
      &     de(in,jn,kn),   HI(in,jn,kn),   HII(in,jn,kn),
      &     HeI(in,jn,kn), HeII(in,jn,kn), HeIII(in,jn,kn),
      &     HM(in,jn,kn),  H2I(in,jn,kn), H2II(in,jn,kn),
-     &     gas_temp(in,jn,kn), dust_temp(in,jn,kn)
+     &     gas_temp(in,jn,kn), dust_temp(in,jn,kn),
+     &     isrf_habing(in,jn,kn)
 
 !  Chemistry tables
       real*8  gasgra(nratec), gamma_isrfa
@@ -71,7 +73,8 @@
  
       integer indixe(in)
       R_PREC  t1(in), t2(in), logtem(in), tdef(in), 
-     &     tgas(in), tdust(in), nh(in), gasgr(in)
+     &     tgas(in), tdust(in), nh(in), gasgr(in),
+     &     myisrf(in)
           
 !  Iteration mask for multi_cool
 
@@ -122,6 +125,14 @@
 
            itmask(i) = .true.
 
+!     Compute interstellar radiation field
+
+           if (iisrffield .gt. 0) then
+              myisrf(i) = isrf_habing(i,j,k)
+           else
+              myisrf(i) = isrf
+           endif
+
 !     Compute hydrogen number density
 
            nh(i) = HI(i,j,k) + HII(i,j,k)
@@ -160,7 +171,7 @@
 !     --- Compute dust temperature in a slice ---
 
         call calc_tdust_1d_g(tdust, tgas, nh, gasgr,
-     &       gamma_isrfa, isrf,
+     &       gamma_isrfa, myisrf,
      &       itmask, trad, in, is, ie, j, k)
 
 !     Copy slice values back to grid
