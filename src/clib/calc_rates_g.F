@@ -75,7 +75,8 @@ c    casebrates = use case-B recombination rates for k2, k4 and k6
 c
 c  RATES:
 c
-c  Reaction rate numbering agrees with Abel et al. (1997).
+c     The reaction are described in Abel et al. (1997).
+c     WARNING: not all the numbering are consistent with this paper.
 c
 c ------- 1:    HI    + e   -> HII   + 2e
 c ------- 2:    HII   + e   -> H     + p

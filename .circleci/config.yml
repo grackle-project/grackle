@@ -29,7 +29,7 @@ commands:
     parameters:
       omp:
         type: string
-        default: false
+        default: 'false'
     steps:
       - run: |
           source $HOME/venv/bin/activate
@@ -74,7 +74,7 @@ commands:
     parameters:
       omp:
         type: string
-        default: false
+        default: 'false'
     steps:
       - run: |
           source $BASH_ENV
