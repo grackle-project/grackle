@@ -226,6 +226,13 @@ For all on/off integer flags, 0 is off and 1 is on.
    volumetric heating rate at a hydrogen number density of 
    n = 1 cm\ :sup:`-3`\. Default: 8.5e-26.
 
+.. c:var:: int use_isrf_field
+
+   Flag to provide the strength of the interstellar radiation field
+   as a field array using the :c:data:`isrf_habing` pointer. If set
+   to 0, then the interstellar radiation field strength will be a
+   constant set by :c:data:`interstellar_radiation_field`.
+
 .. c:var:: float interstellar_radiation_field
 
    The strength of the interstellar radiation field in `Habing

@@ -480,6 +480,15 @@ and pointers to all field arrays.
    :c:data:`H2_self_shielding` is set to 2.  Field data
    should be in :c:data:`length_units`.
 
+.. c:var:: gr_float *isrf_habing
+
+   Pointer to a field containing values of the strength
+   of the insterstellar radiation field used in the
+   calculation of dust heating. This is used when
+   :c:data:`use_isrf_field` is set to 1. The units
+   of this field should be the same as those of the
+   :c:data:`interstellar_radiation_field` parameter.
+
 It is not necessary to attach a pointer to any field that you do
 not intend to use.
 
