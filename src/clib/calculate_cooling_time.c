@@ -35,7 +35,7 @@ extern void FORTRAN_NAME(cool_multi_time_g)(
 	gr_float *cooltime,
 	int *in, int *jn, int *kn, int *nratec, int *iexpand,
         int *ispecies, int *imetal, int *imcool, int *idust, int *idustall,
-        int *ifdust, int *idim,
+        int *idustfield, int *idim,
 	int *is, int *js, int *ks, int *ie, int *je, int *ke, 
         int *ih2co, int *ipiht, int *igammah,
 	double *aye, double *temstart, double *temend,

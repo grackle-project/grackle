@@ -34,7 +34,7 @@ extern void FORTRAN_NAME(solve_rate_cool_g)(
 	gr_float *HI, gr_float *HII, gr_float *HeI, gr_float *HeII, gr_float *HeIII,
 	int *in, int *jn, int *kn, int *nratec, int *iexpand,
         int *ispecies, int *imetal, int *imcool, int *idust, int *idustall,
-        int *ifdust, int *idim,
+        int *idustfield, int *idim,
 	int *is, int *js, int *ks, int *ie, int *je, int *ke,
         int *ih2co, int *ipiht, int *igammah,
 	double *dx, double *dt, double *aye, double *temstart, double *temend,

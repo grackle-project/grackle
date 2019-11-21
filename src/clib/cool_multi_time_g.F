@@ -6,7 +6,7 @@
      &                  cooltime,
      &                in, jn, kn, nratec, iexpand, 
      &                ispecies, imetal, imcool, idust,
-     &                idustall,ifdust, idim,
+     &                idustall, idustfield, idim,
      &                is, js, ks, ie, je, ke, ih2co, ipiht, igammah,
      &                aye, temstart, temend,
      &                utem, uxyz, uaye, urho, utim,
@@ -62,7 +62,7 @@
       integer in, jn, kn, is, js, ks, ie, je, ke, nratec, 
      &        iexpand, ih2co, ipiht, ispecies, imetal, idim,
      &        imcool, idust, idustall,
-     &        ifdust, igammah, ih2optical, iciecool,
+     &        idustfield, igammah, ih2optical, iciecool,
      &        clnew, iVheat, iMheat, iradtrans, iradshield
 
       real*8  aye, temstart, temend,
@@ -203,7 +203,7 @@
                   metal(i,j,k) = metal(i,j,k)/real(aye**3, RKIND)
                enddo
             endif
-            if (ifdust .eq. 1) then
+            if (idustfield .eq. 1) then
                do i = is+1, ie+1
                   dust(i,j,k) = dust(i,j,k)/real(aye**3, RKIND)
                enddo
@@ -250,7 +250,7 @@
      &                d, e, u, v, w, de, HI, HII, HeI, HeII, HeIII,
      &                in, jn, kn, nratec, 
      &                iexpand, ispecies, imetal, imcool,
-     &                idust, idustall, ifdust,
+     &                idust, idustall, idustfield,
      &                idim, is, ie, j, k, ih2co, ipiht, 1, igammah,
      &                aye, temstart, temend, z_solar, fgr,
      &                utem, uxyz, uaye, urho, utim,
@@ -359,7 +359,7 @@
                   metal(i,j,k) = metal(i,j,k)*real(aye**3, RKIND)
                enddo
             endif
-            if (ifdust .eq. 1) then
+            if (idustfield .eq. 1) then
                do i = is+1, ie+1
                   dust(i,j,k) = dust(i,j,k)*real(aye**3, RKIND)
                enddo

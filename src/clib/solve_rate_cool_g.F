@@ -7,7 +7,7 @@
      &                HI, HII, HeI, HeII, HeIII,
      &                in, jn, kn, nratec, iexpand, 
      &                ispecies, imetal, imcool, idust,
-     &                idustall, ifdust, idim,
+     &                idustall, idustfield, idim,
      &                is, js, ks, ie, je, ke, ih2co, ipiht, igammah,
      &                dx, dt, aye, temstart, temend, 
      &                utem, uxyz, uaye, urho, utim,
@@ -86,7 +86,7 @@
 !    imcool   - flag if there is metal cooling
 !    idust    - flag for H2 formation on dust grains
 !    idustall - flag for dust (0 - none, 1 - heating/cooling + H2 form.)
-!    ifdust   - flag if a dust density field is present
+!    idustfield - flag if a dust density field is present
 !    ih2co    - flag to include H2 cooling (1 = on, 0 = off)
 !    ipiht    - flag to include photoionization heating (1 = on, 0 = off)
 !    iH2shield - flag for approximate self-shielding of H2 (Wolcott-Green+ 2011)
@@ -156,7 +156,7 @@
 
       integer icool, in, jn, kn, is, js, ks, ie, je, ke, nratec, 
      &        iexpand, ih2co, ipiht, ispecies, imetal, idim,
-     &        ierr, imcool, idust, idustall, ifdust,
+     &        ierr, imcool, idust, idustall, idustfield,
      &        igammah, ih2optical, iciecool, ithreebody,
      &        ndratec, clnew, iVheat, iMheat, iH2shield, iradshield,
      &        iradtrans, iradcoupled, iradstep, irt_honly
@@ -335,7 +335,8 @@ c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 fo
          call scale_fields_g(d, de, HI, HII, HeI, HeII, HeIII,
      &                  HM, H2I, H2II, DI, DII, HDI, metal, dust,
      &                  is, ie, js, je, ks, ke,
-     &                  in, jn, kn, ispecies, imetal, ifdust, aye**(-3))
+     &                  in, jn, kn, ispecies, imetal, idustfield,
+     &                  aye**(-3))
 
       endif
 
@@ -447,7 +448,7 @@ c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 fo
      &                d, e, u, v, w, de, HI, HII, HeI, HeII, HeIII,
      &                in, jn, kn, nratec, 
      &                iexpand, ispecies, imetal, imcool,
-     &                idust, idustall, ifdust,
+     &                idust, idustall, idustfield,
      &                idim, is, ie, j, k, ih2co, ipiht, iter, igammah,
      &                aye, temstart, temend, z_solar, fgr,
      &                utem, uxyz, uaye, urho, utim,
@@ -845,7 +846,8 @@ c            WARNING_MESSAGE
          call scale_fields_g(d, de, HI, HII, HeI, HeII, HeIII,
      &                  HM, H2I, H2II, DI, DII, HDI, metal, dust,
      &                  is, ie, js, je, ks, ke,
-     &                  in, jn, kn, ispecies, imetal, ifdust, aye**3)
+     &                  in, jn, kn, ispecies, imetal, idustfield,
+     &                  aye**3)
 
       endif
 
@@ -870,7 +872,7 @@ c -----------------------------------------------------------
       subroutine scale_fields_g(d, de, HI, HII, HeI, HeII, HeIII,
      &                        HM, H2I, H2II, DI, DII, HDI, metal, dust,
      &                        is, ie, js, je, ks, ke,
-     &                        in, jn, kn, ispecies, imetal, ifdust,
+     &                        in, jn, kn, ispecies, imetal, idustfield,
      &                        factor)
 c -------------------------------------------------------------------
 
@@ -880,7 +882,7 @@ c -------------------------------------------------------------------
 !     Arguments
 
       integer in, jn, kn, is, ie, js, je, ks, ke, ispecies, imetal,
-     &        ifdust
+     &        idustfield
       R_PREC  de(in,jn,kn),   HI(in,jn,kn),   HII(in,jn,kn),
      &        HeI(in,jn,kn), HeII(in,jn,kn), HeIII(in,jn,kn),
      &        HM(in,jn,kn),  H2I(in,jn,kn), H2II(in,jn,kn),
@@ -947,7 +949,7 @@ c -------------------------------------------------------------------
             enddo
          enddo
       endif
-      if (ifdust .eq. 1) then
+      if (idustfield .eq. 1) then
          do k = ks+1, ke+1
             do j = js+1, je+1
                do i = is+1, ie+1
