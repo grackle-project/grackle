@@ -67,7 +67,7 @@ For all on/off integer flags, 0 is off and 1 is on.
 
 .. note:: Other values for :c:data:`photoelectric_heating` may also be used
    in conjunction with setting the :c:data:`dust_chemistry` parameter. It will
-   only be changed to 2 if set to its default value of 0 first.
+   only be changed to 2 if unset.
 
 .. c:var:: int h2_on_dust
 
@@ -209,6 +209,14 @@ For all on/off integer flags, 0 is off and 1 is on.
     - 3: similar to option 1, except the value of epsilon is calculated
       directly from equation 2 of `Wolfire et al. (1995)
       <https://ui.adsabs.harvard.edu/abs/1995ApJ...443..152W/abstract>`__.
+
+
+.. note:: With :c:data:`primordial_chemistry` > 0, the electron density
+   used to calculate epsilon for :c:data:`photoelectric_heating` = 3
+   only considers the contribution from primordial species, ignoring that
+   of metals and dust grains, and so is most likely underestimated at low
+   temperatures. In practice, epsilon is reasonably approximated as a
+   constant of 0.05 in this regime.
 
 .. c:var:: int photoelectric_heating_rate
 
