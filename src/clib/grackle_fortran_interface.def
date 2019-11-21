@@ -71,6 +71,10 @@ c     This is the fortran definition of grackle_field_data
          TYPE(C_PTR) :: RT_HeI_ionization_rate
          TYPE(C_PTR) :: RT_HeII_ionization_rate
          TYPE(C_PTR) :: RT_H2_dissociation_rate
+
+         TYPE(C_PTR) :: H2_self_shielding_length
+
+         TYPE(C_PTR) :: isrf_habing
       END TYPE
 
 c     This is the fortran definition of grackle_chemistry_dadta
@@ -89,6 +93,7 @@ c     This is the fortran definition of grackle_chemistry_dadta
          INTEGER(C_INT) :: use_dust_density_field
          INTEGER(C_INT) :: photoelectric_heating
          REAL(C_DOUBLE) :: photoelectric_heating_rate
+         INTEGER(C_INT) :: use_isrf_field
          REAL(C_DOUBLE) :: interstellar_radiation_field
          INTEGER(C_INT) :: use_volumetric_heating_rate
          INTEGER(C_INT) :: use_specific_heating_rate
