@@ -4,24 +4,51 @@ cdef extern from "grackle_types.h":
 
 cdef extern from "grackle_chemistry_data.h":
     ctypedef struct c_chemistry_data "chemistry_data":
-        double Gamma
         int use_grackle
         int with_radiative_cooling
         int primordial_chemistry
+        int dust_chemistry
         int metal_cooling
-        int h2_on_dust
-        int cmb_temperature_floor
+        int UVbackground
         char *grackle_data_file
+        int cmb_temperature_floor
+        double Gamma
+        int h2_on_dust
+        int use_dust_density_field
+        int photoelectric_heating
+        double photoelectric_heating_rate
+        int use_isrf_field
+        double interstellar_radiation_field
+        int use_volumetric_heating_rate
+        int use_specific_heating_rate
         int three_body_rate
         int cie_cooling
         int h2_optical_depth_approximation
-        int photoelectric_heating
-        int CaseBRecombination
-        int UVbackground
+        int ih2co
+        int ipiht
+        double HydrogenFractionByMass
+        double DeuteriumToHydrogenRatio
         double SolarMetalFractionByMass
-        int use_volumetric_heating_rate
-        int use_specific_heating_rate
+        double local_dust_to_gas_ratio
+        int NumberOfTemperatureBins
+        int CaseBRecombination
+        double TemperatureStart
+        double TemperatureEnd
+        int NumberOfDustTemperatureBins
+        double DustTemperatureStart
+        double DustTemperatureEnd
+        int Compton_xray_heating
+        int LWbackground_sawtooth_suppression
+        double LWbackground_intensity
+        double UVbackground_redshift_on
+        double UVbackground_redshift_off
+        double UVbackground_redshift_fullon
+        double UVbackground_redshift_drop
+        double cloudy_electron_fraction_factor
         int use_radiative_transfer
+        int radiative_transfer_coupled_rate_solver
+        int radiative_transfer_intermediate_step
+        int radiative_transfer_hydrogen_only
         int self_shielding_method
         int H2_self_shielding
 
@@ -68,6 +95,7 @@ cdef extern from "grackle_types.h":
       gr_float *HDI_density;
       gr_float *e_density;
       gr_float *metal_density;
+      gr_float *dust_density;
       gr_float *internal_energy;
       gr_float *x_velocity;
       gr_float *y_velocity;
@@ -80,6 +108,7 @@ cdef extern from "grackle_types.h":
       gr_float *RT_HeII_ionization_rate;
       gr_float *RT_H2_dissociation_rate;
       gr_float *H2_self_shielding_length;
+      gr_float *isrf_habing;
 
 cdef extern from "grackle.h":
     c_chemistry_data _set_default_chemistry_parameters()
@@ -122,3 +151,10 @@ cdef extern from "grackle.h":
                 c_code_units *my_units,
                 c_field_data *my_fields,
                 gr_float *temperature)
+
+    int c_local_calculate_dust_temperature "local_calculate_dust_temperature"(
+                c_chemistry_data *my_chemistry,
+                c_chemistry_data_storage *my_rates,
+                c_code_units *my_units,
+                c_field_data *my_fields,
+                gr_float *dust_temperature)

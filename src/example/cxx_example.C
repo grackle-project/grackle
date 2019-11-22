@@ -61,8 +61,10 @@ int main(int argc, char *argv[])
   // Access the parameter storage with the struct you've created
   // or with the grackle_data pointer declared in grackle.h (see further below).
   grackle_data->use_grackle = 1;            // chemistry on
+  grackle_data->use_isrf_field = 1;
   grackle_data->with_radiative_cooling = 1; // cooling on
   grackle_data->primordial_chemistry = 3;   // molecular network with H, He, D
+  grackle_data->dust_chemistry = 1;
   grackle_data->metal_cooling = 1;          // metal cooling on
   grackle_data->UVbackground = 1;           // UV background on
   grackle_data->grackle_data_file = "../../input/CloudyData_UVB=HM2012.h5"; // data file
@@ -130,6 +132,9 @@ int main(int argc, char *argv[])
   // radiative transfer heating rate (provide in units [erg s^-1 cm^-3])
   my_fields.RT_heating_rate = new gr_float[field_size];
 
+  // interstellar radiation field strength
+  my_fields.isrf_habing = new gr_float[field_size];
+
   // set temperature units
   double temperature_units = mh * pow(my_units.a_units * 
                                       my_units.length_units /
@@ -171,6 +176,8 @@ int main(int argc, char *argv[])
     my_fields.RT_HeII_ionization_rate[i] = 0.0;
     my_fields.RT_H2_dissociation_rate[i] = 0.0;
     my_fields.RT_heating_rate[i] = 0.0;
+
+    my_fields.isrf_habing[i] = grackle_data->interstellar_radiation_field;
   }
 
   /*********************************************************************
@@ -212,6 +219,8 @@ int main(int argc, char *argv[])
 
   // Calculate pressure.
   gr_float *pressure;
+  double pressure_units = my_units.density_units *
+    pow(my_units.velocity_units, 2);
   pressure = new gr_float[field_size];
   if (calculate_pressure(&my_units, &my_fields,
                          pressure) == 0) {
@@ -219,7 +228,7 @@ int main(int argc, char *argv[])
     return EXIT_FAILURE;
   }
 
-  fprintf(stderr, "Pressure = %le.\n", pressure[0]);
+  fprintf(stderr, "Pressure = %le dyne/cm^2.\n", pressure[0]*pressure_units);
 
   // Calculate gamma.
   gr_float *gamma;
@@ -231,6 +240,17 @@ int main(int argc, char *argv[])
   }
 
   fprintf(stderr, "gamma = %le.\n", gamma[0]);
+
+    // Calculate dust temperature.
+  gr_float *dust_temperature;
+  dust_temperature = new gr_float[field_size];
+  if (calculate_dust_temperature(&my_units, &my_fields,
+                                 dust_temperature) == 0) {
+    fprintf(stderr, "Error in calculate_dust_temperature.\n");
+    return EXIT_FAILURE;
+  }
+
+  fprintf(stderr, "dust_temperature = %g K.\n", dust_temperature[0]);
 
   _free_chemistry_data(my_grackle_data, &grackle_rates);
 

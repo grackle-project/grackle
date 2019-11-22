@@ -45,14 +45,14 @@ int initialize_UVbackground_data(chemistry_data *my_chemistry,
                                  chemistry_data_storage *my_rates);
 
 extern void FORTRAN_NAME(calc_rates_g)(
-     int *ispecies,
+     int *ispecies, int *igammah, int *idust, int *idustall,
      int *nratec, double *aye, double *temstart, double *temend, 
      int *casebrates, int *threebody,
      double *uxyz, double *uaye, double *urho, double *utim,
      double *ceHIa, double *ceHeIa, double *ceHeIIa, double *ciHIa, double *ciHeIa,
      double *ciHeISa, double *ciHeIIa, double *reHIIa, double *reHeII1a,
      double *reHeII2a, double *reHeIIIa, double *brema, double *compa, 
-     double *gammahacgs, double *gammaha,
+     double *gammahacgs, double *gammaha, double *regra, double *gamma_isrfa,
      double *hyd01ka, double *h2k01a, double *vibha, double *rotha, double *rotla,
      double *gpldl, double *gphdl, double *hdlte, double *hdlow, double *cieco,
      double *gaHIa, double *gaH2a, double *gaHea, double *gaHpa, double *gaela, 
@@ -75,6 +75,36 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
   if (grackle_verbose) {
     auto_show_version(stdout);
     fprintf(stdout, "Initializing grackle data.\n");
+  }
+
+  // Activate dust chemistry machinery.
+  if (my_chemistry->dust_chemistry > 0) {
+
+    if (my_chemistry->metal_cooling < 1) {
+      fprintf(stderr, "ERROR: dust_chemistry > 0 requires metal_cooling > 0.\n");
+      return FAIL;
+    }
+
+    if (my_chemistry->photoelectric_heating < 0) {
+      my_chemistry->photoelectric_heating = 2;
+      if (grackle_verbose) {
+        fprintf(stdout, "Dust chemistry enabled, setting photoelectric_heating to 2.\n");
+      }
+    }
+
+    if (my_chemistry->primordial_chemistry > 1 &&
+        my_chemistry->h2_on_dust == 0) {
+      my_chemistry->h2_on_dust = 1;
+      if (grackle_verbose) {
+        fprintf(stdout, "Dust chemistry enabled, setting h2_on_dust to 1.\n");
+      }
+    }
+
+  }
+
+  // Default photo-electric heating to off if unset.
+  if (my_chemistry->photoelectric_heating < 0) {
+    my_chemistry->photoelectric_heating = 0;
   }
 
 //initialize OpenMP
@@ -142,7 +172,6 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
     my_rates->GAHp    = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
     my_rates->GAel    = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
     my_rates->H2LTE   =  malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->gas_grain = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
 
   /* Allocate space in my_rates for rates. */
  
@@ -204,6 +233,11 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
 
   }
 
+  if (my_chemistry->h2_on_dust > 0 || my_chemistry->dust_chemistry > 0) {
+    my_rates->gas_grain = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->regr      = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+  }
+
   int ioutput = 0;
 
   double co_length_units, co_density_units;
@@ -219,12 +253,13 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
   }
 
   /* Call FORTRAN routine to do the hard work. */
- 
+
   FORTRAN_NAME(calc_rates_g)(
-     &my_chemistry->primordial_chemistry,
-     &my_chemistry->NumberOfTemperatureBins, &my_units->a_value, &my_chemistry->TemperatureStart,
-        &my_chemistry->TemperatureEnd,
-        &my_chemistry->CaseBRecombination, &my_chemistry->three_body_rate,
+     &my_chemistry->primordial_chemistry, &my_chemistry->photoelectric_heating,
+     &my_chemistry->h2_on_dust, &my_chemistry->dust_chemistry,
+     &my_chemistry->NumberOfTemperatureBins, &my_units->a_value,
+     &my_chemistry->TemperatureStart, &my_chemistry->TemperatureEnd,
+     &my_chemistry->CaseBRecombination, &my_chemistry->three_body_rate,
      &co_length_units, &my_units->a_units, 
      &co_density_units, &my_units->time_units,
      my_rates->ceHI, my_rates->ceHeI, my_rates->ceHeII, my_rates->ciHI,
@@ -232,7 +267,8 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
      my_rates->ciHeIS, my_rates->ciHeII, my_rates->reHII,
         my_rates->reHeII1,
      my_rates->reHeII2, my_rates->reHeIII, my_rates->brem, &my_rates->comp, 
-     &my_chemistry->photoelectric_heating_rate, &my_rates->gammah,
+     &my_chemistry->photoelectric_heating_rate, &my_rates->gammah, my_rates->regr,
+     &my_rates->gamma_isrf,
      my_rates->hyd01k, my_rates->h2k01, my_rates->vibh, my_rates->roth,
         my_rates->rotl,
      my_rates->GP99LowDensityLimit, my_rates->GP99HighDensityLimit,
@@ -361,6 +397,8 @@ void show_parameters(FILE *fp, chemistry_data *my_chemistry)
           my_chemistry->with_radiative_cooling);
   fprintf(fp, "primordial_chemistry              = %d\n",
           my_chemistry->primordial_chemistry);
+  fprintf(fp, "dust_chemistry                    = %d\n",
+          my_chemistry->dust_chemistry);
   fprintf(fp, "metal_cooling                     = %d\n",
           my_chemistry->metal_cooling);
   fprintf(fp, "UVbackground                      = %d\n",
@@ -373,10 +411,16 @@ void show_parameters(FILE *fp, chemistry_data *my_chemistry)
           my_chemistry->Gamma);
   fprintf(fp, "h2_on_dust                        = %d\n",
           my_chemistry->h2_on_dust);
+  fprintf(fp, "use_dust_density_field            = %d\n",
+          my_chemistry->use_dust_density_field);
   fprintf(fp, "photoelectric_heating             = %d\n",
           my_chemistry->photoelectric_heating);
   fprintf(fp, "photoelectric_heating_rate        = %g\n",
           my_chemistry->photoelectric_heating_rate);
+  fprintf(fp, "use_isrf_field                    = %d\n",
+          my_chemistry->use_isrf_field);
+  fprintf(fp, "interstellar_radiation_field      = %g\n",
+          my_chemistry->interstellar_radiation_field);
   fprintf(fp, "use_volumetric_heating_rate       = %d\n",
           my_chemistry->use_volumetric_heating_rate);
   fprintf(fp, "use_specific_heating_rate         = %d\n",
@@ -397,6 +441,8 @@ void show_parameters(FILE *fp, chemistry_data *my_chemistry)
           my_chemistry->DeuteriumToHydrogenRatio);
   fprintf(fp, "SolarMetalFractionByMass          = %g\n",
           my_chemistry->SolarMetalFractionByMass);
+  fprintf(fp, "local_dust_to_gas_ratio           = %g\n",
+          my_chemistry->local_dust_to_gas_ratio);
   fprintf(fp, "NumberOfTemperatureBins           = %d\n",
           my_chemistry->NumberOfTemperatureBins);
   fprintf(fp, "CaseBRecombination                = %d\n",

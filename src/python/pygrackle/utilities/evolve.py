@@ -156,6 +156,9 @@ def add_to_data(fc, data, current_time=None):
     data["pressure"].append(fc["pressure"][0] * fc.chemistry_data.pressure_units)
     fc.calculate_mean_molecular_weight()
     data["mu"].append(fc["mu"][0])
+    if fc.chemistry_data.h2_on_dust:
+        fc.calculate_dust_temperature()
+        data["dust_temperature"].append(fc["dust_temperature"][0])
     if current_time is not None:
         data["time"].append(current_time * fc.chemistry_data.time_units)
 
@@ -171,7 +174,7 @@ def create_data_arrays(fc, data):
             data[field] = YTArray(data[field], "erg/g")
         elif field == "time":
             data[field] = YTArray(data[field], "s")
-        elif field == "temperature":
+        elif "temperature" in field:
             data[field] = YTArray(data[field], "K")
         elif field == "pressure":
             data[field] = YTArray(data[field], "dyne/cm**2")

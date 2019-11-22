@@ -25,7 +25,7 @@ c     Field data arrays
       integer field_size
       parameter (field_size = 1)
 
-      real*8 temperature_units, dt
+      real*8 temperature_units, pressure_units, dt
 
       R_PREC, TARGET :: density(field_size), energy(field_size),
      &     x_velocity(field_size), y_velocity(field_size),
@@ -38,6 +38,7 @@ c     Field data arrays
      &     DI_density(field_size), DII_density(field_size),
      &     HDI_density(field_size),
      &     e_density(field_size), metal_density(field_size),
+     &     dust_density(field_size),
      &     volumetric_heating_rate(field_size),
      &     specific_heating_rate(field_size),
      &     RT_HI_ionization_rate(field_size), 
@@ -47,7 +48,8 @@ c     Field data arrays
      &     RT_heating_rate(field_size)
 
       R_PREC, TARGET :: cooling_time(field_size), gamma(field_size),
-     &     pressure(field_size), temperature(field_Size)
+     &     pressure(field_size), temperature(field_Size),
+     &     dust_temperature(field_Size)
 
 c     Grid size and dimension
 c     grid_start and grid_end are used to ignore ghost zones.
@@ -75,6 +77,7 @@ c     Set parameters
       grackle_data%use_grackle = 1            ! chemistry on
       grackle_data%with_radiative_cooling = 1 ! cooling on
       grackle_data%primordial_chemistry = 3   ! network with H, He, D
+      grackle_data%dust_chemistry = 1         ! dust processes
       grackle_data%metal_cooling = 1          ! metal cooling on
       grackle_data%UVbackground = 1           ! UV background on
 c     cooling data for Haardt & Madau 2012 background
@@ -143,6 +146,8 @@ c     set temperature units
          e_density(i) = tiny_number * density(i)
 c        solar metallicity
          metal_density(i) = grackle_data%SolarMetalFractionByMass *
+     &        density(i)
+         dust_density(i) = grackle_data%local_dust_to_gas_ratio *
      &        density(i)
 
          x_velocity(i) = 0.0
@@ -218,12 +223,20 @@ c     Calculate temperature.
 
 c     Calcualte pressure.
 
+      pressure_units = my_units%density_units *
+     &     my_units%velocity_units**2
       iresult = calculate_pressure(my_units, my_fields, pressure)
-      write(*,*) "Pressure = ", pressure(1)
+      write(*,*) "Pressure = ", pressure(1)*pressure_units, "dyne/cm^2."
 
 c     Calculate gamma.
 
       iresult = calculate_gamma(my_units, my_fields, gamma)
       write(*,*) "Gamma = ", gamma(1)
+
+c     Calculate dust temperature.
+
+      iresult = calculate_dust_temperature(my_units, my_fields,
+     &     dust_temperature)
+      write(*,*) "Dust temperature = ", dust_temperature(1), "K."
 
       end program fortran_example

@@ -45,6 +45,30 @@ For all on/off integer flags, 0 is off and 1 is on.
    and advect baryon fields for each of the species used by that
    particular option.
 
+.. c:var:: int dust_chemistry
+
+   Flag to control additional dust cooling and chemistry processes.
+   Default: 0.
+
+   - 0: no dust-related processes included.
+   - 1: adds the following processes:
+
+        #. photo-electric heating (sets :c:data:`photoelectric_heating` to 2).
+        #. cooling from electron recombination onto dust (equation 9 from
+           `Wolfire et al. 1995
+           <https://ui.adsabs.harvard.edu/abs/1995ApJ...443..152W/abstract>`__).
+           Both the photo-electric heating and recombination cooling are scaled
+           by the value of the :c:data:`interstellar_radiation_field`.
+        #. H\ :sub:`2`\  formation on dust (sets :c:data:`h2_on_dust` to 1
+           if :c:data:`primordial_chemistry` > 1).
+
+        Setting :c:data:`dust_chemistry` greater than 0 requires
+        :c:data:`metal_cooling` to be enabled.
+
+.. note:: Other values for :c:data:`photoelectric_heating` may also be used
+   in conjunction with setting the :c:data:`dust_chemistry` parameter. It will
+   only be changed to 2 if unset.
+
 .. c:var:: int h2_on_dust
 
    Flag to enable H\ :sub:`2` formation on dust grains, dust cooling, and
@@ -166,9 +190,33 @@ For all on/off integer flags, 0 is off and 1 is on.
 
 .. c:var:: int photoelectric_heating
 
-   Flag to enable a spatially uniform heating term approximating
-   photo-electric heating from dust from `Tasker & Bryan (2008)
-   <http://adsabs.harvard.edu/abs/2008ApJ...673..810T>`_.  Default: 0.
+   Flag to enable photo-electric heating from irradiated dust grains.
+   Default: 0.
+
+    - 0: no photo-electric heating.
+    - 1: a spatially uniform heating term from `Tasker & Bryan (2008)
+      <http://adsabs.harvard.edu/abs/2008ApJ...673..810T>`__. The exact
+      heating rate used must be specified with the
+      :c:data:`photoelectric_heating_rate` parameter. For temperatures
+      above 20,000 K, the photo-electric heating rate is set to 0.
+    - 2: similar to option 1, except the heating rate is calculated
+      using equation 1 of `Wolfire et al. (1995)
+      <https://ui.adsabs.harvard.edu/abs/1995ApJ...443..152W/abstract>`__
+      and the user must supply the intensity of the interstellar radiation
+      field with the :c:data:`interstellar_radiation_field` parameter. The
+      value of epsilon is taken as a constant equal to 0.05 for gas below
+      20,000 K and 0 otherwise.
+    - 3: similar to option 1, except the value of epsilon is calculated
+      directly from equation 2 of `Wolfire et al. (1995)
+      <https://ui.adsabs.harvard.edu/abs/1995ApJ...443..152W/abstract>`__.
+
+
+.. note:: With :c:data:`primordial_chemistry` > 0, the electron density
+   used to calculate epsilon for :c:data:`photoelectric_heating` = 3
+   only considers the contribution from primordial species, ignoring that
+   of metals and dust grains, and so is most likely underestimated at low
+   temperatures. In practice, epsilon is reasonably approximated as a
+   constant of 0.05 in this regime.
 
 .. c:var:: int photoelectric_heating_rate
 
@@ -177,6 +225,24 @@ For all on/off integer flags, 0 is off and 1 is on.
    the total hydrogen number density. In other words, this is the
    volumetric heating rate at a hydrogen number density of 
    n = 1 cm\ :sup:`-3`\. Default: 8.5e-26.
+
+.. c:var:: int use_isrf_field
+
+   Flag to provide the strength of the interstellar radiation field
+   as a field array using the :c:data:`isrf_habing` pointer. If set
+   to 0, then the interstellar radiation field strength will be a
+   constant set by :c:data:`interstellar_radiation_field`.
+
+.. c:var:: float interstellar_radiation_field
+
+   The strength of the interstellar radiation field in `Habing
+   <https://ui.adsabs.harvard.edu/abs/1968BAN....19..421H/abstract>`__
+   units. A value of 1 corresponds to a mean intensity of 1.6x10\ :sup:`-3`
+   erg s\ :sup:`-1` cm\ :sup:`-2`. This value is used to compute the
+   dust photo-electric heating (if :c:data:`photoelectric_heating` > 1),
+   recombination cooling (if :c:data:`dust_chemistry` > 0), and heating of
+   the dust grains for the calculation of the dust temperature.
+   Default: 1.7.
 
 .. c:var:: int Compton_xray_heating
 
@@ -221,6 +287,19 @@ For all on/off integer flags, 0 is off and 1 is on.
 
    The fraction of total gas mass in metals for a solar composition.
    Default: 0.01295 (consistent with the default abundances in the Cloudy code).
+
+.. c:var:: float local_dust_to_gas_ratio
+
+   The ratio of total dust mass to gas mass in the local Universe.
+   Default: 0.009387 (from `Pollack et al. 1994
+   <https://ui.adsabs.harvard.edu/abs/1994ApJ...421..615P/abstract>`_).
+
+.. c:var:: int use_dust_density_field
+
+   Flag to provide the dust density as a field using the :c:data:`dust_density`
+   pointer in the :c:type:`grackle_field_data` struct. If set to 0, the dust
+   density takes the value of :c:data:`local_dust_to_gas_ratio` multiplied
+   by the metallicity. Default: 0.
 
 .. c:var:: int use_volumetric_heating_rate
 

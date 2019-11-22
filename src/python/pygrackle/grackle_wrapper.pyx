@@ -33,12 +33,6 @@ cdef class chemistry_data:
             raise RuntimeError("Error initializing chemistry")
         return ret
 
-    property Gamma:
-        def __get__(self):
-            return self.data.Gamma
-        def __set__(self, val):
-            self.data.Gamma = val
-
     property use_grackle:
         def __get__(self):
             return self.data.use_grackle
@@ -57,11 +51,43 @@ cdef class chemistry_data:
         def __set__(self, val):
             self.data.primordial_chemistry = val
 
+    property dust_chemistry:
+        def __get__(self):
+            return self.data.dust_chemistry
+        def __set__(self, val):
+            self.data.dust_chemistry = val
+
     property metal_cooling:
         def __get__(self):
             return self.data.metal_cooling
         def __set__(self, val):
             self.data.metal_cooling = val
+
+    property UVbackground:
+        def __get__(self):
+            return self.data.UVbackground
+        def __set__(self, val):
+            self.data.UVbackground = val
+
+    property grackle_data_file:
+        def __get__(self):
+            return self.data.grackle_data_file
+        def __set__(self, val):
+            if isinstance(val, str):
+                val = val.encode('utf-8')
+            self.data.grackle_data_file = val
+
+    property cmb_temperature_floor:
+        def __get__(self):
+            return self.data.cmb_temperature_floor
+        def __set__(self, val):
+            self.data.cmb_temperature_floor = val
+
+    property Gamma:
+        def __get__(self):
+            return self.data.Gamma
+        def __set__(self, val):
+            self.data.Gamma = val
 
     property h2_on_dust:
         def __get__(self):
@@ -69,11 +95,47 @@ cdef class chemistry_data:
         def __set__(self, val):
             self.data.h2_on_dust = val
 
-    property cmb_temperature_floor:
+    property use_dust_density_field:
         def __get__(self):
-            return self.data.cmb_temperature_floor
+            return self.data.use_dust_density_field
         def __set__(self, val):
-            self.data.cmb_temperature_floor = val
+            self.data.use_dust_density_field = val
+
+    property photoelectric_heating:
+        def __get__(self):
+            return self.data.photoelectric_heating
+        def __set__(self, val):
+            self.data.photoelectric_heating = val
+
+    property photoelectric_heating_rate:
+        def __get__(self):
+            return self.data.photoelectric_heating_rate
+        def __set__(self, val):
+            self.data.photoelectric_heating_rate = val
+
+    property use_isrf_field:
+        def __get__(self):
+            return self.data.use_isrf_field
+        def __set__(self, val):
+            self.data.use_isrf_field = val
+
+    property interstellar_radiation_field:
+        def __get__(self):
+            return self.data.interstellar_radiation_field
+        def __set__(self, val):
+            self.data.interstellar_radiation_field = val
+
+    property use_volumetric_heating_rate:
+        def __get__(self):
+            return self.data.use_volumetric_heating_rate
+        def __set__(self, val):
+            self.data.use_volumetric_heating_rate = val
+
+    property use_specific_heating_rate:
+        def __get__(self):
+            return self.data.use_specific_heating_rate
+        def __set__(self, val):
+            self.data.use_specific_heating_rate = val
 
     property three_body_rate:
         def __get__(self):
@@ -93,31 +155,29 @@ cdef class chemistry_data:
         def __set__(self, val):
             self.data.h2_optical_depth_approximation = val
 
-    property photoelectric_heating:
+    property ih2co:
         def __get__(self):
-            return self.data.photoelectric_heating
+            return self.data.ih2co
         def __set__(self, val):
-            self.data.photoelectric_heating = val
+            self.data.ih2co = val
 
-    property grackle_data_file:
+    property ipiht:
         def __get__(self):
-            return self.data.grackle_data_file
+            return self.data.ipiht
         def __set__(self, val):
-            if isinstance(val, str):
-                val = val.encode('utf-8')
-            self.data.grackle_data_file = val
+            self.data.ipiht = val
 
-    property CaseBRecombination:
+    property HydrogenFractionByMass:
         def __get__(self):
-            return self.data.CaseBRecombination
+            return self.data.HydrogenFractionByMass
         def __set__(self, val):
-            self.data.CaseBRecombination = val
+            self.data.HydrogenFractionByMass = val
 
-    property UVbackground:
+    property DeuteriumToHydrogenRatio:
         def __get__(self):
-            return self.data.UVbackground
+            return self.data.DeuteriumToHydrogenRatio
         def __set__(self, val):
-            self.data.UVbackground = val
+            self.data.DeuteriumToHydrogenRatio = val
 
     property SolarMetalFractionByMass:
         def __get__(self):
@@ -125,23 +185,131 @@ cdef class chemistry_data:
         def __set__(self, val):
             self.data.SolarMetalFractionByMass = val
 
-    property use_volumetric_heating_rate:
+    property local_dust_to_gas_ratio:
         def __get__(self):
-            return self.data.use_volumetric_heating_rate
+            return self.data.local_dust_to_gas_ratio
         def __set__(self, val):
-            self.data.use_volumetric_heating_rate = val
+            self.data.local_dust_to_gas_ratio = val
 
-    property use_specific_heating_rate:
+    property NumberOfTemperatureBins:
         def __get__(self):
-            return self.data.use_specific_heating_rate
+            return self.data.NumberOfTemperatureBins
         def __set__(self, val):
-            self.data.use_specific_heating_rate = val
+            self.data.NumberOfTemperatureBins = val
+
+    property CaseBRecombination:
+        def __get__(self):
+            return self.data.CaseBRecombination
+        def __set__(self, val):
+            self.data.CaseBRecombination = val
+
+    property TemperatureStart:
+        def __get__(self):
+            return self.data.TemperatureStart
+        def __set__(self, val):
+            self.data.TemperatureStart = val
+
+    property TemperatureEnd:
+        def __get__(self):
+            return self.data.TemperatureEnd
+        def __set__(self, val):
+            self.data.TemperatureEnd = val
+
+    property NumberOfDustTemperatureBins:
+        def __get__(self):
+            return self.data.NumberOfDustTemperatureBins
+        def __set__(self, val):
+            self.data.NumberOfDustTemperatureBins = val
+
+    property DustTemperatureStart:
+        def __get__(self):
+            return self.data.DustTemperatureStart
+        def __set__(self, val):
+            self.data.DustTemperatureStart = val
+
+    property DustTemperatureEnd:
+        def __get__(self):
+            return self.data.DustTemperatureEnd
+        def __set__(self, val):
+            self.data.DustTemperatureEnd = val
+
+    property Compton_xray_heating:
+        def __get__(self):
+            return self.data.Compton_xray_heating
+        def __set__(self, val):
+            self.data.Compton_xray_heating = val
+
+    property LWbackground_sawtooth_suppression:
+        def __get__(self):
+            return self.data.LWbackground_sawtooth_suppression
+        def __set__(self, val):
+            self.data.LWbackground_sawtooth_suppression = val
+
+    property LWbackground_intensity:
+        def __get__(self):
+            return self.data.LWbackground_intensity
+        def __set__(self, val):
+            self.data.LWbackground_intensity = val
+
+    property  UVbackground_intensity:
+        def __get__(self):
+            return self.data. UVbackground_intensity
+        def __set__(self, val):
+            self.data. UVbackground_intensity = val
+
+    property  UVbackground_on:
+        def __get__(self):
+            return self.data. UVbackground_on
+        def __set__(self, val):
+            self.data. UVbackground_on = val
+
+    property  UVbackground_off:
+        def __get__(self):
+            return self.data. UVbackground_off
+        def __set__(self, val):
+            self.data. UVbackground_off = val
+
+    property  UVbackground_fullon:
+        def __get__(self):
+            return self.data. UVbackground_fullon
+        def __set__(self, val):
+            self.data. UVbackground_fullon = val
+
+    property  UVbackground_drop:
+        def __get__(self):
+            return self.data. UVbackground_drop
+        def __set__(self, val):
+            self.data. UVbackground_drop = val
+
+    property  cloudy_electron_fraction_factor:
+        def __get__(self):
+            return self.data. cloudy_electron_fraction_factor
+        def __set__(self, val):
+            self.data. cloudy_electron_fraction_factor = val
 
     property use_radiative_transfer:
         def __get__(self):
             return self.data.use_radiative_transfer
         def __set__(self, val):
             self.data.use_radiative_transfer = val
+
+    property radiative_transfer_coupled_rate_solver:
+        def __get__(self):
+            return self.data.radiative_transfer_coupled_rate_solver
+        def __set__(self, val):
+            self.data.radiative_transfer_coupled_rate_solver = val
+
+    property radiative_transfer_intermediate_step:
+        def __get__(self):
+            return self.data.radiative_transfer_intermediate_step
+        def __set__(self, val):
+            self.data.radiative_transfer_intermediate_step = val
+
+    property radiative_transfer_hydrogen_only:
+        def __get__(self):
+            return self.data.radiative_transfer_hydrogen_only
+        def __set__(self, val):
+            self.data.radiative_transfer_hydrogen_only = val
 
     property self_shielding_method:
         def __get__(self):
@@ -318,6 +486,7 @@ def solve_chemistry(fc, my_dt):
     my_fields.HDI_density = get_field(fc, "HDI")
     my_fields.e_density = get_field(fc, "de")
     my_fields.metal_density = get_field(fc, "metal")
+    my_fields.dust_density = get_field(fc, "dust")
     my_fields.RT_heating_rate = get_field(fc, "RT_heating_rate")
     my_fields.volumetric_heating_rate = get_field(fc, "volumetric_heating_rate")
     my_fields.specific_heating_rate = get_field(fc, "specific_heating_rate")
@@ -362,6 +531,7 @@ def calculate_cooling_time(fc):
     my_fields.HDI_density = get_field(fc, "HDI")
     my_fields.e_density = get_field(fc, "de")
     my_fields.metal_density = get_field(fc, "metal")
+    my_fields.dust_density = get_field(fc, "dust")
     my_fields.RT_heating_rate = get_field(fc, "RT_heating_rate")
     my_fields.volumetric_heating_rate = get_field(fc, "volumetric_heating_rate")
     my_fields.specific_heating_rate = get_field(fc, "specific_heating_rate")
@@ -407,6 +577,7 @@ def calculate_gamma(fc):
     my_fields.HDI_density = get_field(fc, "HDI")
     my_fields.e_density = get_field(fc, "de")
     my_fields.metal_density = get_field(fc, "metal")
+    my_fields.dust_density = get_field(fc, "dust")
     my_fields.RT_heating_rate = get_field(fc, "RT_heating_rate")
     my_fields.volumetric_heating_rate = get_field(fc, "volumetric_heating_rate")
     my_fields.specific_heating_rate = get_field(fc, "specific_heating_rate")
@@ -452,6 +623,7 @@ def calculate_pressure(fc):
     my_fields.HDI_density = get_field(fc, "HDI")
     my_fields.e_density = get_field(fc, "de")
     my_fields.metal_density = get_field(fc, "metal")
+    my_fields.dust_density = get_field(fc, "dust")
     my_fields.RT_heating_rate = get_field(fc, "RT_heating_rate")
     my_fields.volumetric_heating_rate = get_field(fc, "volumetric_heating_rate")
     my_fields.specific_heating_rate = get_field(fc, "specific_heating_rate")
@@ -497,6 +669,7 @@ def calculate_temperature(fc):
     my_fields.HDI_density = get_field(fc, "HDI")
     my_fields.e_density = get_field(fc, "de")
     my_fields.metal_density = get_field(fc, "metal")
+    my_fields.dust_density = get_field(fc, "dust")
     my_fields.RT_heating_rate = get_field(fc, "RT_heating_rate")
     my_fields.volumetric_heating_rate = get_field(fc, "volumetric_heating_rate")
     my_fields.specific_heating_rate = get_field(fc, "specific_heating_rate")
@@ -508,3 +681,49 @@ def calculate_temperature(fc):
         &my_units,
         &my_fields,
         temperature)
+
+def calculate_dust_temperature(fc):
+    cdef chemistry_data chem_data = fc.chemistry_data
+    cdef c_chemistry_data my_chemistry = chem_data.data
+    cdef c_chemistry_data_storage my_rates = chem_data.rates
+    cdef c_code_units my_units = chem_data.units
+
+    cdef int grid_dimension
+    grid_dimension = fc["density"].shape[0]
+    cdef np.ndarray ref_gs, ref_ge
+    ref_gs = np.zeros(3, dtype="int32")
+    ref_ge = np.zeros(3, dtype="int32")
+    ref_ge[0] = grid_dimension -1
+
+    cdef c_field_data my_fields
+    my_fields.grid_rank = 1
+    my_fields.grid_dimension = &grid_dimension
+    my_fields.grid_start = <int *> ref_gs.data
+    my_fields.grid_end = <int *> ref_ge.data
+    my_fields.density = get_field(fc, "density")
+    my_fields.internal_energy = get_field(fc, "energy")
+    my_fields.HI_density = get_field(fc, "HI")
+    my_fields.HII_density = get_field(fc, "HII")
+    my_fields.HM_density = get_field(fc, "HM")
+    my_fields.HeI_density = get_field(fc, "HeI")
+    my_fields.HeII_density = get_field(fc, "HeII")
+    my_fields.HeIII_density = get_field(fc, "HeIII")
+    my_fields.H2I_density = get_field(fc, "H2I")
+    my_fields.H2II_density = get_field(fc, "H2II")
+    my_fields.DI_density = get_field(fc, "DI")
+    my_fields.DII_density = get_field(fc, "DII")
+    my_fields.HDI_density = get_field(fc, "HDI")
+    my_fields.e_density = get_field(fc, "de")
+    my_fields.metal_density = get_field(fc, "metal")
+    my_fields.dust_density = get_field(fc, "dust")
+    my_fields.RT_heating_rate = get_field(fc, "RT_heating_rate")
+    my_fields.volumetric_heating_rate = get_field(fc, "volumetric_heating_rate")
+    my_fields.specific_heating_rate = get_field(fc, "specific_heating_rate")
+    cdef gr_float *dust_temperature = get_field(fc, "dust_temperature")
+
+    c_local_calculate_dust_temperature(
+        &my_chemistry,
+        &my_rates,
+        &my_units,
+        &my_fields,
+        dust_temperature)
