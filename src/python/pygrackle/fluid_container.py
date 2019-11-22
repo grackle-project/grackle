@@ -104,14 +104,41 @@ class FluidContainer(dict):
 
     def calculate_mean_molecular_weight(self):
         my_chemistry = self.chemistry_data
-        if (self["energy"] == 0).all():
-            self["mu"] = np.ones(self["energy"].size)
-            return
-        self.calculate_temperature()
-        self["mu"] = self["temperature"] / \
-          (self["energy"] * (my_chemistry.Gamma - 1.) *
-           self.chemistry_data.temperature_units)
 
+        # If energy has been set, calculate mu from the energy
+        if not (self["energy"] == 0).all():
+            self.calculate_temperature()
+            self["mu"] = self["temperature"] / \
+                (self["energy"] * (my_chemistry.Gamma - 1.) *
+                 self.chemistry_data.temperature_units)
+            return
+    
+            
+        # Default to mu=1
+        self["mu"] = np.ones(self["energy"].size)
+
+        if self.chemistry_data.primordial_chemistry == 0:
+            return # mu=1
+        
+        # Check that (chemistry) density fields have been set.
+        # Allow metals to be 0
+        for field in self.density_fields:
+            if field == 'metal':
+                continue
+            if (self[field] == 0).all():
+                return
+
+        # Calculate mu from the species densities; ignore deuterium
+        nden = self["metal"]/16.
+        nden += self["HI"]+self["HII"]+self["de"] + \
+            (self["HeI"]+self["HeII"]+self["HeIII"])/4.
+            
+        if self.chemistry_data.primordial_chemistry > 1:
+            nden += self["HM"]+(self["H2I"]+self["H2II"])/2.
+            
+        self["mu"] = self["density"]/nden
+
+        
     def calculate_cooling_time(self):
         calculate_cooling_time(self)
 
