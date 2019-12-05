@@ -89,7 +89,8 @@ if __name__ == "__main__":
     data["temperature"] = yt.YTArray(fc["temperature"][t_sort], "K")
     data["pressure"] = yt.YTArray(
         fc["pressure"][t_sort] * my_chemistry.pressure_units, "dyne/cm**2")
-    data["cooling_time"] = yt.YTArray(fc["cooling_time"][t_sort], "s")
+    data["cooling_time"] = yt.YTArray(
+        fc["cooling_time"][t_sort] * my_chemistry.time_units, "s")
     data["cooling_rate"] = yt.YTArray(cooling_rate[t_sort], "erg*cm**3/s")
 
     pyplot.loglog(data["temperature"], data["cooling_rate"],
