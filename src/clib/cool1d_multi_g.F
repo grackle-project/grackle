@@ -1012,7 +1012,7 @@ c  new (correct) way: (april 4, 2007)
 
           do i = is + 1, ie + 1
              if (itmask(i)) then
-                grbeta = 0.74_DKIND * tgas(i)**-0.068_DKIND
+                grbeta = 0.74_DKIND / tgas(i)**0.068_DKIND
                 edot(i) = edot(i) -
      &               regr(i) * (myisrf(i)*dom_inv / myde(i))**grbeta *
      &               myde(i) * rhoH(i)
