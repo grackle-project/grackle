@@ -186,3 +186,20 @@ workflows:
        - docs-build:
            name: "Docs build"
            tag: "3.7.2"
+
+   weekly:
+     triggers:
+       - schedule:
+           cron: "0 0 * * 1"
+           filters:
+            branches:
+              only:
+                - master
+     jobs:
+       - test-suite:
+           name: "Python 3.7 tests"
+           tag: "3.7.2"
+
+       - docs-build:
+           name: "Docs build"
+           tag: "3.7.2"
