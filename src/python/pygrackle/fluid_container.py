@@ -31,7 +31,8 @@ _base_fluids = ["density", "metal", "dust"]
 _nd_fields   = ["energy",
                 "x-velocity", "y-velocity", "z-velocity",
                 "temperature", "dust_temperature", "pressure",
-                "gamma", "cooling_time", "mu", "nH"]
+                "gamma", "cooling_time", "mu", "nH",
+                "mean_molecular_weight"]
 
 _fluid_names = {}
 _fluid_names[0] = _base_fluids
@@ -192,7 +193,7 @@ _grackle_to_yt = {
 }
 
 _skip = ("pressure", "temperature", "dust_temperature", "dust",
-         "cooling_time", "gamma", "mu", "nH")
+         "cooling_time", "gamma", "mu", "nH", "mean_molecular_weight")
 
 _yt_to_grackle = dict((b, a) for a, b in _grackle_to_yt.items())
 
