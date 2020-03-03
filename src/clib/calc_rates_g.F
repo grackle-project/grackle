@@ -762,6 +762,30 @@ c
       tm  = min(tm, 1.d4)
       lt3 = log10(tm / 1.d3)  
 
+#define USE_LIQUE2015
+#ifdef USE_LIQUE2015
+c
+c     Revised low density H2 cooling rate due to H collisions, based on
+c     Lique (2015, MNRAS, 453, 810). This fit is accurate to within ~5% over the temperature
+c     range 100 < T < 5000 K. Lique (2015) doesn't present data above 5000 K, so at higher
+c     temperatures the rate has been calculated assuming that the de-excitation rate
+c     coefficients have the same values that they have at 5000 K. Lique also doesn't give
+c     rates for T < 100 K, but since we don't expect H2 cooling to be important there, it
+c     should be OK to just set the rate to zero.
+c
+      if (tm .lt. 1e2) then
+         gaHIa(i) = 0.0
+      else
+         gaHIa(i) = 10.d0**(-24.07950609
+     &          + 4.54182810 * lt3
+     &          - 2.40206896 * lt3**2
+     &          - 0.75355292 * lt3**3
+     &          + 4.69258178 * lt3**4
+     &          - 2.79573574 * lt3**5
+     &          - 3.14766075 * lt3**6
+     &          + 2.50751333 * lt3**7) / coolunit
+      endif
+#else
       if (tm .lt. 1e2) then
         gaHIa(i) = 10.d0**(-16.818342d0
      &         + 37.383713d0 * lt3
@@ -784,6 +808,7 @@ c
      &         - 5.5108047d0 * lt3**4
      &         + 1.5538288d0 * lt3**5) / coolunit
       endif
+#endif
 c
 c Excitation by H2
 c
