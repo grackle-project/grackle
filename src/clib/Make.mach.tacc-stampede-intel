@@ -20,7 +20,7 @@ MACH_FILE  = Make.mach.tacc-stampede-intel
 #-----------------------------------------------------------------------
 
 LOCAL_HDF5_INSTALL = $(TACC_HDF5_DIR)
-LOCAL_FC_INSTALL    = /opt/apps/intel/13/composer_xe_2013.2.146/compiler/lib/intel64
+LOCAL_FC_INSTALL   = $(TACC_INTEL_LIB)
 
 #-----------------------------------------------------------------------
 # Compiler settings
@@ -64,8 +64,12 @@ MACH_LDFLAGS  = -lifcore -lifport -lpthread -ldl # Linker flags
 
 MACH_OPT_WARN        = # Flags for verbose compiler warnings
 MACH_OPT_DEBUG       = -g -O0 # Flags for debugging
-MACH_OPT_HIGH        = -O2 # Flags for high conservative optimization
-MACH_OPT_AGGRESSIVE  = -O3 -Mfptrap -Mflushz -fastsse -Mdaz -Mnontemporal -Mnofprelaxed -Mvect=altcode,assoc,prefetch -Kieee # Flags for aggressive optimization
+MACH_OPT_HIGH        = -O2 -xCORE-AVX2
+# use -xMIC-AVX512  (without -xCORE-AVX2) to build for KNL nodes
+# use -xCORE-AVX512 (without -xCORE-AVX2) to build for SKX nodes
+# use -xCORE-AVX2 -axCORE-AVX512,MIC-AVX512 to build a single binary for both
+#     node types that dispatches optimal code path at execution
+MACH_OPT_AGGRESSIVE  = -O3 -xCORE-AVX2 -Mfptrap -Mflushz -fastsse -Mdaz -Mnontemporal -Mnofprelaxed -Mvect=altcode,assoc,prefetch -Kieee # Flags for aggressive optimization
 
 #-----------------------------------------------------------------------
 # Includes

@@ -15,7 +15,7 @@ from pygrackle.utilities.physical_constants import \
     boltzmann_constant_cgs, \
     mass_hydrogen_cgs
 
-from grackle_defs cimport *
+from .grackle_defs cimport *
 import numpy as np
 cimport numpy as np
 
