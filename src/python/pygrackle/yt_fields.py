@@ -110,26 +110,22 @@ def prepare_grackle_data(ds, parameters=None):
         raise RuntimeError(
             "Simulation type not supported: %s." % sim_type)
 
-    my_chemistry = chemistry_data()
-    for gpar, dpar in par_map.items():
-        val = ds.parameters.get(dpar)
-        if val is None:
-            continue
-        if isinstance(val, str):
-            sval = bytearray(val, 'utf-8')
-            setattr(my_chemistry, gpar, sval)
-        else:
-            setattr(my_chemistry, gpar, val)
-
-    my_chemistry.use_grackle = 1
+    all_parameters = \
+      dict([(gpar, ds.parameters[dpar])
+            for gpar, dpar in par_map.items()
+            if dpar in ds.parameters])
+    all_parameters['use_grackle'] = 1
 
     if parameters is None:
         parameters = {}
-    for gpar, val in parameters.items():
+    all_parameters.update(parameters)
+
+    my_chemistry = chemistry_data()
+    for gpar, val in all_parameters.items():
         if val is None:
             continue
         if isinstance(val, str):
-            sval = bytearray(val, 'utf-8')
+            sval = bytes(val, 'utf-8')
             setattr(my_chemistry, gpar, sval)
         else:
             setattr(my_chemistry, gpar, val)
@@ -187,7 +183,7 @@ def _total_metal_density(field, data):
 def add_grackle_fields(ds, parameters=None):
     ds.add_field(('gas', 'total_metal_density'),
                  function=_total_metal_density,
-                 units='code_mass / code_length**3',
+                 units='g/cm**3',
                  sampling_type='cell')
 
     prepare_grackle_data(ds, parameters=parameters)
