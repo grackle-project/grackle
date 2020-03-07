@@ -53,26 +53,26 @@ _parameter_map[EnzoDataset] = {
 }
 
 _field_map = {
-    'density': (('gas', 'density'), 'density_units'),
-    'HI': (('gas', 'H_p0_density'), 'density_units'),
-    'HII': (('gas', 'H_p1_density'), 'density_units'),
-    'HM': (('gas', 'H_m1_density'), 'density_units'),
-    'HeI': (('gas', 'He_p0_density'), 'density_units'),
-    'HeII': (('gas', 'He_p1_density'), 'density_units'),
-    'HeIII': (('gas', 'He_p2_density'), 'density_units'),
-    'H2I': (('gas', 'H2_p0_density'), 'density_units'),
-    'H2II': (('gas', 'H2_p1_density'), 'density_units'),
-    'DI': (('gas', 'D_p0_density'), 'density_units'),
-    'DII': (('gas', 'D_p1_density'), 'density_units'),
-    'HDI': (('gas', 'HD_p0_density'), 'density_units'),
-    'de': (('gas', 'El_density'), 'density_units'),
-    'metal': (('gas', 'total_metal_density'), 'density_units'),
-    'dust': (('gas', 'dust_density'), 'density_units'),
-    'x-velocity': (('gas', 'velocity_x'), 'velocity_units'),
-    'y-velocity': (('gas', 'velocity_y'), 'velocity_units'),
-    'z-velocity': (('gas', 'velocity_z'), 'velocity_units'),
-    'energy': (('gas', 'thermal_energy'), 'energy_units'),
-    'RT_heating_rate': (('gas', 'photo_gamma'), '')
+    'density': (('gas', 'density'), 'code_mass / code_length**3'),
+    'HI': (('gas', 'H_p0_density'), 'code_mass / code_length**3'),
+    'HII': (('gas', 'H_p1_density'), 'code_mass / code_length**3'),
+    'HM': (('gas', 'H_m1_density'), 'code_mass / code_length**3'),
+    'HeI': (('gas', 'He_p0_density'), 'code_mass / code_length**3'),
+    'HeII': (('gas', 'He_p1_density'), 'code_mass / code_length**3'),
+    'HeIII': (('gas', 'He_p2_density'), 'code_mass / code_length**3'),
+    'H2I': (('gas', 'H2_p0_density'), 'code_mass / code_length**3'),
+    'H2II': (('gas', 'H2_p1_density'), 'code_mass / code_length**3'),
+    'DI': (('gas', 'D_p0_density'), 'code_mass / code_length**3'),
+    'DII': (('gas', 'D_p1_density'), 'code_mass / code_length**3'),
+    'HDI': (('gas', 'HD_p0_density'), 'code_mass / code_length**3'),
+    'de': (('gas', 'El_density'), 'code_mass / code_length**3'),
+    'metal': (('gas', 'total_metal_density'), 'code_mass / code_length**3'),
+    'dust': (('gas', 'dust_density'), 'code_mass / code_length**3'),
+    'x-velocity': (('gas', 'velocity_x'), 'code_velocity'),
+    'y-velocity': (('gas', 'velocity_y'), 'code_velocity'),
+    'z-velocity': (('gas', 'velocity_z'), 'code_velocity'),
+    'energy': (('gas', 'thermal_energy'), 'code_velocity**2'),
+    'RT_heating_rate': (('gas', 'photo_gamma'), 'erg/s')
 }
 
 def _data_to_fc(data, size=None, fc=None):
@@ -89,10 +89,7 @@ def _data_to_fc(data, size=None, fc=None):
             continue
 
         fields.append(gfield)
-        fdata = data[yfield].copy()
-        if units:
-            conv = getattr(fc.chemistry_data, units, 1)
-            fdata /= conv
+        fdata = data[yfield].to(units)
 
         if flatten:
             fdata = fdata.flatten()
