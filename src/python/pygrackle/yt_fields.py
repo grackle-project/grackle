@@ -137,6 +137,7 @@ def prepare_grackle_data(ds, parameters=None):
     my_chemistry.initialize()
     ds.grackle_data = my_chemistry
 
+
 _grackle_fields = {
     'cooling_time': 'code_time',
     'dust_temperature': 'K',
