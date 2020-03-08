@@ -146,16 +146,31 @@ The resulting dataset can be analyzed similarly as above.
    [   99.94958248   100.61345564   101.28160228 ...,  1728.89321898
      1729.32604568  1729.75744287] K
 
-Simulation Dataset Example
-++++++++++++++++++++++++++
+Using Grackle with yt
++++++++++++++++++++++
 
-This provides an example of using the grackle library for calculating chemistry and 
-cooling quantities for a pre-existing simulation dataset.  To run this example, you 
-must also download the *IsolatedGalaxy* dataset from the `yt sample data page
-<http://yt-project.org/data/>`_.
+This example illustrates how Grackle functionality can be called using
+simulation datasets loaded with `yt <https://yt-project.org/>`__ as input.
 
-.. highlight:: none
+.. code-block:: python
 
-::
+    python -i yt_grackle.py
+    >>> print (sp['gas', 'grackle_cooling_time'].to('Myr'))
+    [-5.33399975 -5.68132287 -6.04043746 ... -0.44279721 -0.37466095
+     -0.19981158] Myr
+    >>> print (sp['gas', 'grackle_temperature'])
+    [12937.90890302 12953.99126155 13234.96820101 ... 11824.51319307
+     11588.16161462 10173.0168747 ] K
 
-    python run_from_yt.py
+Through ``pygrackle``, the following ``yt`` fields are defined:
+
+- ``('gas', 'grackle_cooling_time')``
+- ``('gas', 'grackle_gamma')``
+- ``('gas', 'grackle_molecular_weight')``
+- ``('gas', 'grackle_pressure')``
+- ``('gas', 'grackle_temperature')``
+- ``('gas', 'grackle_dust_temperature')``
+
+These fields are created after calling the ``add_grackle_fields`` function.
+This function will initialize Grackle with settings from parameters in the
+loaded dataset. Optionally, parameters can be specified manually to override.
