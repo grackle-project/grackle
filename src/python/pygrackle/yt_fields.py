@@ -75,6 +75,23 @@ _field_map = {
     'RT_heating_rate': (('gas', 'photo_gamma'), 'erg/s')
 }
 
+def _get_needed_fields(my_chemistry):
+    fields = ['density', 'energy'] + \
+      ['%s-velocity' % ax for ax in 'xyz']
+    if my_chemistry.primordial_chemistry > 0:
+        fields += ['HI', 'HII', 'HeI', 'HeII', 'HeIII', 'de']
+    if my_chemistry.primordial_chemistry > 1:
+        fields += ['HM', 'H2I', 'H2II']
+    if my_chemistry.primordial_chemistry > 2:
+        fields += ['DI', 'DII', 'HDI']
+    if my_chemistry.metal_cooling == 1:
+        fields += ['metal']
+    if my_chemistry.use_dust_density_field == 1:
+        fields += ['dust']
+    if my_chemistry.use_radiative_transfer == 1:
+        fields += ['RT_heating_rate']
+    return fields
+
 def _data_to_fc(data, size=None, fc=None):
     if size is None:
         size = data['gas', 'density'].size
@@ -83,12 +100,9 @@ def _data_to_fc(data, size=None, fc=None):
 
     flatten = len(data['gas', 'density'].shape) > 1
 
-    fields = []
-    for gfield, (yfield, units) in _field_map.items():
-        if yfield not in data.ds.field_info:
-            continue
-
-        fields.append(gfield)
+    fields = _get_needed_fields(fc.chemistry_data)
+    for gfield in fields:
+        yfield, units = _field_map[gfield]
         fdata = data[yfield].to(units)
 
         if flatten:
@@ -98,7 +112,7 @@ def _data_to_fc(data, size=None, fc=None):
     if 'de' in fc:
         fc['de'] *= (mp/me)
 
-    return fc, fields
+    return fc
 
 def prepare_grackle_data(ds, parameters=None):
     sim_type = type(ds)
@@ -154,7 +168,7 @@ def _grackle_field(field, data):
     if not hasattr(data.ds, "grackle_data"):
         raise RuntimeError("Grackle has not been initialized.")
 
-    fc, _ = _data_to_fc(data)
+    fc = _data_to_fc(data)
     if not isinstance(data, FieldDetector):
         func = "calculate_%s" % gfield
         getattr(fc, func)()
