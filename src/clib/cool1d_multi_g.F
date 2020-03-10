@@ -1046,6 +1046,7 @@ c  new (correct) way: (april 4, 2007)
             if (itmask(i)) then
               edot(i) = edot(i) + real(ipiht, DKIND) * photogamma(i,j,k)
      &                          / coolunit * HI(i,j,k) / dom
+
               if (edot(i) .ne. edot(i)) then
 #ifdef _OPENMP
 !$omp critical
