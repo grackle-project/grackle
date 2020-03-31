@@ -22,7 +22,8 @@ commands:
           pip install --upgrade pip
           pip install --upgrade wheel
           pip install --upgrade setuptools
-          pip install Cython numpy h5py matplotlib fastcache flake8 pytest yt
+          pip install Cython numpy
+          pip install h5py matplotlib fastcache flake8 pytest yt
 
   install-grackle:
     description: "Install grackle."
@@ -125,13 +126,13 @@ jobs:
 
       - restore_cache:
           name: "Restore dependencies cache."
-          key: dependencies-python-<< parameters.tag >>-v1
+          key: dependencies-python-<< parameters.tag >>-v2
 
       - install-dependencies
 
       - save_cache:
           name: "Save dependencies cache"
-          key: dependencies-python-<< parameters.tag >>-v1
+          key: dependencies-python-<< parameters.tag >>-v2
           paths:
             - ~/.cache/pip
             - ~/venv
@@ -173,19 +174,15 @@ workflows:
      jobs:
        - test-suite:
            name: "Python 3.5 tests"
-           tag: "3.5.7"
+           tag: "3.5.9"
 
        - test-suite:
-           name: "Python 3.6 tests"
-           tag: "3.6.8"
-
-       - test-suite:
-           name: "Python 3.7 tests"
-           tag: "3.7.2"
+           name: "Python 3.8 tests"
+           tag: "3.8.2"
 
        - docs-build:
            name: "Docs build"
-           tag: "3.7.2"
+           tag: "3.8.2"
 
    weekly:
      triggers:
@@ -197,9 +194,21 @@ workflows:
                 - master
      jobs:
        - test-suite:
+           name: "Python 3.5 tests"
+           tag: "3.5.9"
+
+       - test-suite:
+           name: "Python 3.6 tests"
+           tag: "3.6.10"
+
+       - test-suite:
            name: "Python 3.7 tests"
-           tag: "3.7.2"
+           tag: "3.7.7"
+
+       - test-suite:
+           name: "Python 3.8 tests"
+           tag: "3.8.2"
 
        - docs-build:
            name: "Docs build"
-           tag: "3.7.2"
+           tag: "3.8.2"
