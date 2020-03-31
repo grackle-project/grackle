@@ -251,41 +251,41 @@ cdef class chemistry_data:
         def __set__(self, val):
             self.data.LWbackground_intensity = val
 
-    property  UVbackground_intensity:
+    property UVbackground_intensity:
         def __get__(self):
-            return self.data. UVbackground_intensity
+            return self.data.UVbackground_intensity
         def __set__(self, val):
-            self.data. UVbackground_intensity = val
+            self.data.UVbackground_intensity = val
 
-    property  UVbackground_on:
+    property UVbackground_redshift_on:
         def __get__(self):
-            return self.data. UVbackground_on
+            return self.data.UVbackground_redshift_on
         def __set__(self, val):
-            self.data. UVbackground_on = val
+            self.data.UVbackground_redshift_on = val
 
-    property  UVbackground_off:
+    property UVbackground_redshift_off:
         def __get__(self):
-            return self.data. UVbackground_off
+            return self.data.UVbackground_redshift_off
         def __set__(self, val):
-            self.data. UVbackground_off = val
+            self.data.UVbackground_redshift_off = val
 
-    property  UVbackground_fullon:
+    property UVbackground_redshift_fullon:
         def __get__(self):
-            return self.data. UVbackground_fullon
+            return self.data.UVbackground_redshift_fullon
         def __set__(self, val):
-            self.data. UVbackground_fullon = val
+            self.data.UVbackground_redshift_fullon = val
 
-    property  UVbackground_drop:
+    property UVbackground_redshift_drop:
         def __get__(self):
-            return self.data. UVbackground_drop
+            return self.data.UVbackground_redshift_drop
         def __set__(self, val):
-            self.data. UVbackground_drop = val
+            self.data.UVbackground_redshift_drop = val
 
-    property  cloudy_electron_fraction_factor:
+    property cloudy_electron_fraction_factor:
         def __get__(self):
-            return self.data. cloudy_electron_fraction_factor
+            return self.data.cloudy_electron_fraction_factor
         def __set__(self, val):
-            self.data. cloudy_electron_fraction_factor = val
+            self.data.cloudy_electron_fraction_factor = val
 
     property use_radiative_transfer:
         def __get__(self):
@@ -518,6 +518,9 @@ def calculate_cooling_time(fc):
     my_fields.grid_end = <int *> ref_ge.data
     my_fields.density = get_field(fc, "density")
     my_fields.internal_energy = get_field(fc, "energy")
+    my_fields.x_velocity = get_field(fc, "x-velocity")
+    my_fields.y_velocity = get_field(fc, "y-velocity")
+    my_fields.z_velocity = get_field(fc, "z-velocity")
     my_fields.HI_density = get_field(fc, "HI")
     my_fields.HII_density = get_field(fc, "HII")
     my_fields.HM_density = get_field(fc, "HM")
@@ -564,6 +567,9 @@ def calculate_gamma(fc):
     my_fields.grid_end = <int *> ref_ge.data
     my_fields.density = get_field(fc, "density")
     my_fields.internal_energy = get_field(fc, "energy")
+    my_fields.x_velocity = get_field(fc, "x-velocity")
+    my_fields.y_velocity = get_field(fc, "y-velocity")
+    my_fields.z_velocity = get_field(fc, "z-velocity")
     my_fields.HI_density = get_field(fc, "HI")
     my_fields.HII_density = get_field(fc, "HII")
     my_fields.HM_density = get_field(fc, "HM")
@@ -610,6 +616,9 @@ def calculate_pressure(fc):
     my_fields.grid_end = <int *> ref_ge.data
     my_fields.density = get_field(fc, "density")
     my_fields.internal_energy = get_field(fc, "energy")
+    my_fields.x_velocity = get_field(fc, "x-velocity")
+    my_fields.y_velocity = get_field(fc, "y-velocity")
+    my_fields.z_velocity = get_field(fc, "z-velocity")
     my_fields.HI_density = get_field(fc, "HI")
     my_fields.HII_density = get_field(fc, "HII")
     my_fields.HM_density = get_field(fc, "HM")
@@ -656,6 +665,9 @@ def calculate_temperature(fc):
     my_fields.grid_end = <int *> ref_ge.data
     my_fields.density = get_field(fc, "density")
     my_fields.internal_energy = get_field(fc, "energy")
+    my_fields.x_velocity = get_field(fc, "x-velocity")
+    my_fields.y_velocity = get_field(fc, "y-velocity")
+    my_fields.z_velocity = get_field(fc, "z-velocity")
     my_fields.HI_density = get_field(fc, "HI")
     my_fields.HII_density = get_field(fc, "HII")
     my_fields.HM_density = get_field(fc, "HM")
@@ -702,6 +714,9 @@ def calculate_dust_temperature(fc):
     my_fields.grid_end = <int *> ref_ge.data
     my_fields.density = get_field(fc, "density")
     my_fields.internal_energy = get_field(fc, "energy")
+    my_fields.x_velocity = get_field(fc, "x-velocity")
+    my_fields.y_velocity = get_field(fc, "y-velocity")
+    my_fields.z_velocity = get_field(fc, "z-velocity")
     my_fields.HI_density = get_field(fc, "HI")
     my_fields.HII_density = get_field(fc, "HII")
     my_fields.HM_density = get_field(fc, "HM")

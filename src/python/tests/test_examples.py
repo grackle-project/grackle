@@ -16,6 +16,7 @@ import contextlib
 import glob
 import os
 import pytest
+import re
 import shutil
 import subprocess
 import tempfile
@@ -35,7 +36,7 @@ def temporary_directory():
         shutil.rmtree(tmpdir)
 
 
-no_output_file = ["run_from_yt"]
+no_output_file = ["yt_grackle"]
 
 current_path = os.path.abspath(__file__)
 
@@ -76,7 +77,7 @@ def test_examples(example_path, primordial_chemistry, metal_cooling):
                                'and the following output: %s' %
                                (command, er.returncode, er.output))
 
-        example_base = os.path.split(example_path)[1].strip('.py')
+        example_base = re.sub(r'\.py$', '', os.path.basename(example_path))
         if example_base in no_output_file:
             return
         if primordial_chemistry is not None:

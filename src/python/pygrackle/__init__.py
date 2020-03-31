@@ -3,7 +3,7 @@
 # Pygrackle imports
 #
 #
-# Copyright (c) 2016, Grackle Development Team.
+# Copyright (c) Grackle Development Team. All rights reserved.
 #
 # Distributed under the terms of the Enzo Public Licence.
 #
@@ -12,8 +12,7 @@
 ########################################################################
 
 from .fluid_container import \
-    FluidContainer, \
-    grid_to_grackle
+    FluidContainer
 
 from .grackle_wrapper import \
     chemistry_data
@@ -28,3 +27,5 @@ from .utilities.evolve import \
 from .utilities.units import \
     set_cosmology_units
 
+from .yt_fields import \
+    add_grackle_fields
