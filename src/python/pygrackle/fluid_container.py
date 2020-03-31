@@ -103,8 +103,6 @@ class FluidContainer(dict):
         self["nH"] = nH * my_chemistry.density_units / mass_hydrogen_cgs
 
     def calculate_mean_molecular_weight(self):
-        my_chemistry = self.chemistry_data
-
         # If energy has been set, calculate mu from the energy
         if not (self["energy"] == 0).all():
             self.calculate_temperature()
