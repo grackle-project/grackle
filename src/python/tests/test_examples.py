@@ -35,7 +35,7 @@ def temporary_directory():
         shutil.rmtree(tmpdir)
 
 
-no_output_file = ["run_from_yt"]
+no_output_file = ["yt_grackle"]
 
 current_path = os.path.abspath(__file__)
 
