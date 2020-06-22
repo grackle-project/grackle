@@ -117,6 +117,17 @@ int _calculate_gamma(chemistry_data *my_chemistry,
                      gr_float *HeI_density, gr_float *HeII_density, gr_float *HeIII_density,
                      gr_float *H2I_density, gr_float *H2II_density,
                      gr_float *DI_density, gr_float *DII_density, gr_float *HDI_density,
+//#ifdef GRACKLE_MD
+                     gr_float *DM_density, gr_float *HDII_density, gr_float *HeHII_density,
+                     gr_float *CI_density,  gr_float *CII_density,  gr_float *CO_density,  gr_float *CO2_density,
+                     gr_float *OI_density,  gr_float *OH_density,  gr_float *H2O_density,  gr_float *O2_density,
+                     gr_float *SiI_density,  gr_float *SiOI_density,  gr_float *SiO2I_density,
+                     gr_float *CH_density,  gr_float *CH2_density,  gr_float *COII_density,  gr_float *OII_density,
+                     gr_float *OHII_density,  gr_float *H2OII_density,  gr_float *H3OII_density,  gr_float *O2II_density,
+                     gr_float *Mg_density,  gr_float *Al_density,  gr_float *S_density,  gr_float *Fe_density,
+                     gr_float *SiM_density,  gr_float *FeM_density,  gr_float *Mg2SiO4_density,  gr_float *MgSiO3_density,  gr_float *Fe3O4_density,
+                     gr_float *AC_density,  gr_float *SiO2D_density,  gr_float *MgO_density,  gr_float *FeS_density,  gr_float *Al2O3_density,
+//#endif
                      gr_float *e_density, gr_float *metal_density,
                      gr_float *my_gamma)
 {
@@ -139,6 +150,44 @@ int _calculate_gamma(chemistry_data *my_chemistry,
   my_fields.DI_density               = DI_density;
   my_fields.DII_density              = DII_density;
   my_fields.HDI_density              = HDI_density;
+#ifdef GRACKLE_MD
+  my_fields.DM_density               = DM_density;
+  my_fields.HDII_density             = HDII_density;
+  my_fields.HeHII_density            = HeHII_density;
+  my_fields.CI_density               = CI_density;
+  my_fields.CII_density              = CII_density;
+  my_fields.CO_density               = CO_density;
+  my_fields.CO2_density              = CO2_density;
+  my_fields.OI_density               = OI_density;
+  my_fields.OH_density               = OH_density;
+  my_fields.H2O_density              = H2O_density;
+  my_fields.O2_density               = O2_density;
+  my_fields.SiI_density              = SiI_density;
+  my_fields.SiOI_density             = SiOI_density;
+  my_fields.SiO2I_density            = SiO2I_density;
+  my_fields.CH_density               = CH_density;
+  my_fields.CH2_density              = CH2_density;
+  my_fields.COII_density             = COII_density;
+  my_fields.OII_density              = OII_density;
+  my_fields.OHII_density             = OHII_density;
+  my_fields.H2OII_density            = H2OII_density;
+  my_fields.H3OII_density            = H3OII_density;
+  my_fields.O2II_density             = O2II_density;
+  my_fields.Mg_density               = Mg_density;
+  my_fields.Al_density               = Al_density;
+  my_fields.S_density                = S_density;
+  my_fields.Fe_density               = Fe_density;
+  my_fields.SiM_density              = SiM_density;
+  my_fields.FeM_density              = FeM_density;
+  my_fields.Mg2SiO4_density          = Mg2SiO4_density;
+  my_fields.MgSiO3_density           = MgSiO3_density;
+  my_fields.Fe3O4_density            = Fe3O4_density;
+  my_fields.AC_density               = AC_density;
+  my_fields.SiO2D_density            = SiO2D_density;
+  my_fields.MgO_density              = MgO_density;
+  my_fields.FeS_density              = FeS_density;
+  my_fields.Al2O3_density            = Al2O3_density;
+#endif
   my_fields.e_density                = e_density;
   my_fields.metal_density            = metal_density;
 

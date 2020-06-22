@@ -23,8 +23,14 @@ OBJS_CONFIG_LIB = \
         calc_temp1d_cloudy_g.lo \
         calc_temp_cloudy_g.lo \
         calc_rates_g.lo \
+        calc_rates_md.lo \
+        calc_rates_dust_pop3_c30.lo \
+        calc_rates_dust_pop3_f13.lo \
+        lookup_cool_rates0d.lo \
         calc_tdust_1d_g.lo \
         calc_tdust_3d_g.lo \
+        calc_grain_size_increment_1d.lo \
+        lookup_dust_rates1d.lo \
         cie_thin_cooling_rate_g.lo \
         colh2diss_g.lo \
         coll_rates_g.lo \
@@ -39,4 +45,5 @@ OBJS_CONFIG_LIB = \
         set_default_chemistry_parameters.lo \
         solve_chemistry.lo \
         solve_rate_cool_g.lo \
-        update_UVbackground_rates.lo 
+        update_UVbackground_rates.lo \
+        gaussj_g.lo

@@ -413,6 +413,17 @@ c
 c       Normalize by dividing by kunit
         k13dda(i,8) = k13dda(i,8) - log10(kunit)
 c
+!!#define USE_PALLA_SALPETER_STAHLER1983
+!!#if defined(GRACKLE_MD) && defined(USE_PALLA_SALPETER_STAHLER1983)
+!!      if(threebody.eq.1) then
+!!        k13dda(i,1) = log10(1.12d-10 * exp(-7.035d4/ttt) / kunit)
+!!        k13dda(i,2) = log10(6.5d-7/sqrt(ttt)
+!!   &                * exp(-5.2d4/ttt)*(1.d0-exp(-6.d3/ttt)) / kunit)
+!!        k13dda(i,3) = 1.d1**(4.d0 - 0.416d0 * log10(ttt/1.d4)
+!!   &                - 0.327d0 * log10(ttt/1.d4)**2)
+!!      endif
+!!#endif
+c
 c       ------ 3-body H2 rate ----
 c       The first bit is my fit to A.E. Orel 1987, J.Chem.Phys., 87, 
 c       314. I then match it to the T^-1 of Palla etal (1983) 
@@ -483,6 +494,16 @@ c       55) HD  +  H  -> H2 +  D
 c       56) D   +  H- -> HD +  e-
 c      [57) D-  +  H  -> HD +  e-]  included by multiply 56 by 2
 c
+#define USE_STANCIL_LEPP_DALGARNO1998
+#if defined(GRACKLE_MD) && defined(USE_STANCIL_LEPP_DALGARNO1998)
+        k50a(i) = 1.0d-9 * exp(-41.d0/ttt) / kunit
+        k51a(i) = 1.0d-9 / kunit
+        k52a(i) = 2.1d-9 / kunit
+        k53a(i) = 1.0d-9 * exp(-464.d0/ttt) / kunit
+        k54a(i) = 7.5d-11 * exp(-3820.d0/ttt) / kunit
+        k55a(i) = 7.5d-11 * exp(-4240.d0/ttt) / kunit
+        k56a(i) = 1.5d-9 * (ttt/3.d2)**(-0.1d0) / kunit
+#else
         if (ttt .le. 2d5) then
 c Fit from Savin (2002), valid for T < 2e5 K; at higher T, we extrapolate
           k50a(i) = (2.0d-10 * ttt**0.402d0 * exp(-3.71d1/ttt)
@@ -525,6 +546,7 @@ c to avoid producing an anomalously large rate coefficient
 c Same as for H- + H; measurements by Miller et al (2012) suggest
 c that there is no significant isotope effect for this reaction
         k56a(i) = k8a(i)
+#endif
 c
 c       ------ New H ionization rates -----
 c
