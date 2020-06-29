@@ -2096,32 +2096,32 @@ int calc_opacity_prim  (chemistry_data *my_chemistry, chemistry_data_storage *my
 int calc_rates_dust_local(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double kunit, double coolunit)
 {
 
-  my_chemistry->   CarbonFractionToMetalByMass = 1.69793e-01;
-  my_chemistry->   OxygenFractionToMetalByMass = 4.15646e-01;
-  my_chemistry->MagnesiumFractionToMetalByMass = 3.19126e-02;
-  my_chemistry->AluminiumFractionToMetalByMass = 2.85361e-03;
-  my_chemistry->  SiliconFractionToMetalByMass = 3.50363e-02;
-  my_chemistry->   SulfurFractionToMetalByMass = 2.06909e-02;
-  my_chemistry->     IronFractionToMetalByMass = 6.15987e-02;
+  my_chemistry->loc_XC  =   1.69793e-01;
+  my_chemistry->loc_XO  =   4.15646e-01;
+  my_chemistry->loc_XMg =   3.19126e-02;
+  my_chemistry->loc_XAl =   2.85361e-03;
+  my_chemistry->loc_XSi =   3.50363e-02;
+  my_chemistry->loc_XS  =   2.06909e-02;
+  my_chemistry->loc_XFe =   6.15987e-02;
 
-  my_chemistry->   CarbonCondensationRate = 7.20000e-01;
-  my_chemistry->   OxygenCondensationRate = 4.60000e-01;
-  my_chemistry->MagnesiumCondensationRate = 1.00000e+00;
-  my_chemistry->AluminiumCondensationRate = 0.00000e+00;
-  my_chemistry->  SiliconCondensationRate = 9.00000e-01;
-  my_chemistry->   SulfurCondensationRate = 1.00000e+00;
-  my_chemistry->     IronCondensationRate = 1.00000e+00;
+  my_chemistry->loc_fC  =   4.75421e-02;
+  my_chemistry->loc_fO  =   2.24449e-01;
+  my_chemistry->loc_fMg =   1.00000e-10;
+  my_chemistry->loc_fAl =   2.85361e-03;
+  my_chemistry->loc_fSi =   3.50363e-03;
+  my_chemistry->loc_fS  =   1.00000e-10;
+  my_chemistry->loc_fFe =   1.00000e-10;
 
-  my_chemistry->MetSiliconFractionToMetalByMass = 1.0e-10;
-  my_chemistry->   MetIronFractionToMetalByMass = 1.0e-10;
-  my_chemistry->ForsteriteFractionToMetalByMass = 1.0e-10;
-  my_chemistry-> EnstatiteFractionToMetalByMass = 1.0e-10;
-  my_chemistry-> MagnetiteFractionToMetalByMass = 1.0e-10;
-  my_chemistry->   ACarbonFractionToMetalByMass = 1.0e-10;
-  my_chemistry->    SilicaFractionToMetalByMass = 1.0e-10;
-  my_chemistry->  MagnesiaFractionToMetalByMass = 1.0e-10;
-  my_chemistry->  TroiliteFractionToMetalByMass = 1.0e-10;
-  my_chemistry->   AluminaFractionToMetalByMass = 1.0e-10;
+  my_chemistry->loc_fSiM     = 1.0e-10;
+  my_chemistry->loc_fFeM     = 1.0e-10;
+  my_chemistry->loc_fMg2SiO4 = 1.0e-10;
+  my_chemistry->loc_fMgSiO3  = 1.0e-10;
+  my_chemistry->loc_fFe3O4   = 1.0e-10;
+  my_chemistry->loc_fAC      = 1.0e-10;
+  my_chemistry->loc_fSiO2D   = 1.0e-10;
+  my_chemistry->loc_fMgO     = 1.0e-10;
+  my_chemistry->loc_fFeS     = 1.0e-10;
+  my_chemistry->loc_fAl2O3   = 1.0e-10;
 
   int    ND = 20, NT = 35;
   double D0 =-26.0, T0 = 0.0;

@@ -19733,13 +19733,13 @@ int calc_rates_dust_pop3_f13(chemistry_data *my_chemistry, chemistry_data_storag
   my_chemistry->F13_XS  =   0.00000e+00;
   my_chemistry->F13_XFe =   8.90341e-06;
 
-  my_chemistry->F13_fC  =   2.62302e-01;
-  my_chemistry->F13_fO  =   8.96809e-15;
-  my_chemistry->F13_fMg =   4.47954e-12;
-  my_chemistry->F13_fAl =   1.67485e-10;
-  my_chemistry->F13_fSi =   7.87159e-11;
+  my_chemistry->F13_fC  =   4.93693e-01;
+  my_chemistry->F13_fO  =   3.30556e-01;
+  my_chemistry->F13_fMg =   1.86824e-04;
+  my_chemistry->F13_fAl =   1.97017e-07;
+  my_chemistry->F13_fSi =   1.30184e-05;
   my_chemistry->F13_fS  =   0.00000e+00;
-  my_chemistry->F13_fFe =   5.56387e-10;
+  my_chemistry->F13_fFe =   8.90341e-06;
 
   my_chemistry->F13_fSiM     =   0.00000e+00;
   my_chemistry->F13_fFeM     =   6.31648e-26;

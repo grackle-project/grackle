@@ -76,10 +76,9 @@
      &              , grain_D, grain_T, grain_dD, grain_dT
      &              , Tgrain, Ograin, Lgrain
      &              , impop3
+     &              , metal_loc, metal_C30, metal_F13
      &              , C30_XC , C30_XO, C30_XMg, C30_XAl
      &              , C30_XSi, C30_XS, C30_XFe
-     &              , C30_fC , C30_fO, C30_fMg, C30_fAl
-     &              , C30_fSi, C30_fS, C30_fFe
      &              , C30_fSiM, C30_fFeM, C30_fMg2SiO4, C30_fMgSiO3
      &              , C30_fFe3O4, C30_fAC, C30_fSiO2D, C30_fMgO
      &              , C30_fFeS, C30_fAl2O3
@@ -108,8 +107,6 @@
      &              , LC30_FeS, LC30_Al2O3
      &              , F13_XC , F13_XO, F13_XMg, F13_XAl
      &              , F13_XSi, F13_XS, F13_XFe
-     &              , F13_fC , F13_fO, F13_fMg, F13_fAl
-     &              , F13_fSi, F13_fS, F13_fFe
      &              , F13_fSiM, F13_fFeM, F13_fMg2SiO4, F13_fMgSiO3
      &              , F13_fFe3O4, F13_fAC, F13_fSiO2D, F13_fMgO
      &              , F13_fFeS, F13_fAl2O3
@@ -189,6 +186,10 @@
      &        isrf_habing(in,jn,kn),
      &        cooltime(in,jn,kn)
       real*8  photogamma(in,jn,kn)
+#ifdef GRACKLE_MD
+       R_PREC metal_loc(in,jn,kn)
+     &      , metal_C30(in,jn,kn), metal_F13(in,jn,kn)
+#endif
       real*8  hyd01ka(nratec), h2k01a(nratec), vibha(nratec), 
      &        rotha(nratec), rotla(nratec), gpldla(nratec),
      &        gphdla(nratec), hdltea(nratec), hdlowa(nratec),
@@ -252,8 +253,6 @@
       integer impop3
       real*8  C30_XC , C30_XO, C30_XMg, C30_XAl
      &      , C30_XSi, C30_XS, C30_XFe
-      real*8  C30_fC , C30_fO, C30_fMg, C30_fAl
-     &      , C30_fSi, C30_fS, C30_fFe
       real*8  C30_fSiM, C30_fFeM, C30_fMg2SiO4, C30_fMgSiO3
      &      , C30_fFe3O4, C30_fAC, C30_fSiO2D, C30_fMgO
      &      , C30_fFeS, C30_fAl2O3
@@ -288,8 +287,6 @@
      &      , LC30_FeS(C30_Size), LC30_Al2O3(C30_Size)
       real*8  F13_XC , F13_XO, F13_XMg, F13_XAl
      &      , F13_XSi, F13_XS, F13_XFe
-      real*8  F13_fC , F13_fO, F13_fMg, F13_fAl
-     &      , F13_fSi, F13_fS, F13_fFe
       real*8  F13_fSiM, F13_fFeM, F13_fMg2SiO4, F13_fMgSiO3
      &      , F13_fFe3O4, F13_fAC, F13_fSiO2D, F13_fMgO
      &      , F13_fFeS, F13_fAl2O3
@@ -560,10 +557,9 @@
      &              , grain_D, grain_T, grain_dD, grain_dT
      &              , Tgrain, Ograin, Lgrain
      &              , impop3
+     &              , metal_loc, metal_C30, metal_F13
      &              , C30_XC , C30_XO, C30_XMg, C30_XAl
      &              , C30_XSi, C30_XS, C30_XFe
-     &              , C30_fC , C30_fO, C30_fMg, C30_fAl
-     &              , C30_fSi, C30_fS, C30_fFe
      &              , C30_fSiM, C30_fFeM, C30_fMg2SiO4, C30_fMgSiO3
      &              , C30_fFe3O4, C30_fAC, C30_fSiO2D, C30_fMgO
      &              , C30_fFeS, C30_fAl2O3
@@ -592,8 +588,6 @@
      &              , LC30_FeS, LC30_Al2O3
      &              , F13_XC , F13_XO, F13_XMg, F13_XAl
      &              , F13_XSi, F13_XS, F13_XFe
-     &              , F13_fC , F13_fO, F13_fMg, F13_fAl
-     &              , F13_fSi, F13_fS, F13_fFe
      &              , F13_fSiM, F13_fFeM, F13_fMg2SiO4, F13_fMgSiO3
      &              , F13_fFe3O4, F13_fAC, F13_fSiO2D, F13_fMgO
      &              , F13_fFeS, F13_fAl2O3

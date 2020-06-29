@@ -109,36 +109,15 @@ typedef struct
   double local_dust_to_gas_ratio;
 
 //#ifdef GRACKLE_MD
-  /* metal abundance */
-  double    CarbonFractionToMetalByMass;
-  double    OxygenFractionToMetalByMass;
-  double MagnesiumFractionToMetalByMass;
-  double AluminiumFractionToMetalByMass;
-  double   SiliconFractionToMetalByMass;
-  double    SulfurFractionToMetalByMass;
-  double      IronFractionToMetalByMass;
+  /* metal/dust abundance */
 
-  double    CarbonCondensationRate;
-  double    OxygenCondensationRate;
-  double MagnesiumCondensationRate;
-  double AluminiumCondensationRate;
-  double   SiliconCondensationRate;
-  double    SulfurCondensationRate;
-  double      IronCondensationRate;
+  /* Local ISM (Pollack et al. 1994) */
+  double loc_XC , loc_XO , loc_XMg, loc_XAl, loc_XSi, loc_XS , loc_XFe;
+  double loc_fC , loc_fO , loc_fMg, loc_fAl, loc_fSi, loc_fS , loc_fFe;
+  double loc_fSiM    , loc_fFeM    , loc_fMg2SiO4, loc_fMgSiO3 , loc_fFe3O4  
+       , loc_fAC     , loc_fSiO2D  , loc_fMgO    , loc_fFeS    , loc_fAl2O3;
 
-  /* dust abundance */
-  double MetSiliconFractionToMetalByMass;
-  double    MetIronFractionToMetalByMass;
-  double ForsteriteFractionToMetalByMass;
-  double  EnstatiteFractionToMetalByMass;
-  double  MagnetiteFractionToMetalByMass;
-  double    ACarbonFractionToMetalByMass;
-  double     SilicaFractionToMetalByMass;
-  double   MagnesiaFractionToMetalByMass;
-  double   TroiliteFractionToMetalByMass;
-  double    AluminaFractionToMetalByMass;
-
-  /* Pop III dust data */
+  /* Pop III SN */
   /* normal CCSN 30 Msun */
   double C30_XC , C30_XO , C30_XMg, C30_XAl, C30_XSi, C30_XS , C30_XFe;
   double C30_fC , C30_fO , C30_fMg, C30_fAl, C30_fSi, C30_fS , C30_fFe;

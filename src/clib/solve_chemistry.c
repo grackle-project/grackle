@@ -94,10 +94,10 @@ extern void FORTRAN_NAME(solve_rate_cool_g)(
       , gr_float *Mg, gr_float *Al, gr_float *S, gr_float *Fe
       , gr_float *SiM, gr_float *FeM, gr_float *Mg2SiO4, gr_float *MgSiO3, gr_float *Fe3O4
       , gr_float *AC, gr_float *SiO2D, gr_float *MgO, gr_float *FeS, gr_float *Al2O3
-      , double *CtoZ, double *OtoZ, double *MgtoZ, double *AltoZ, double *SitoZ
-      , double *StoZ, double *FetoZ
-      , double *fconC, double *fconO, double *fconMg, double *fconAl, double *fconSi
-      , double *fconS, double *fconFe
+      , double *loc_XC , double *loc_XO, double *loc_XMg, double *loc_XAl
+      , double *loc_XSi, double *loc_XS, double *loc_XFe
+      , double *loc_fC , double *loc_fO, double *loc_fMg, double *loc_fAl
+      , double *loc_fSi, double *loc_fS, double *loc_fFe
       , double *k125a, double *k129a, double *k130a, double *k131a, double *k132a
       , double *k133a, double *k134a, double *k135a, double *k136a, double *k137a
       , double *k148a, double *k149a, double *k150a, double *k151a, double *k152a
@@ -142,6 +142,7 @@ extern void FORTRAN_NAME(solve_rate_cool_g)(
       , double *grain_D, double *grain_T, double *grain_dD, double *grain_dT
       , double *Hgrain, double *Tgrain, double *Ograin, double *Lgrain
       , int *impop3
+      , gr_float *metal_loc, gr_float *metal_C30, gr_float *metal_F13
       , double *C30_XC , double *C30_XO, double *C30_XMg, double *C30_XAl
       , double *C30_XSi, double *C30_XS, double *C30_XFe
       , double *C30_fC , double *C30_fO, double *C30_fMg, double *C30_fAl
@@ -531,20 +532,20 @@ int local_solve_chemistry(chemistry_data *my_chemistry,
   , my_fields->MgO_density
   , my_fields->FeS_density
   , my_fields->Al2O3_density
-  ,&my_chemistry->   CarbonFractionToMetalByMass
-  ,&my_chemistry->   OxygenFractionToMetalByMass
-  ,&my_chemistry->MagnesiumFractionToMetalByMass
-  ,&my_chemistry->AluminiumFractionToMetalByMass
-  ,&my_chemistry->  SiliconFractionToMetalByMass
-  ,&my_chemistry->   SulfurFractionToMetalByMass
-  ,&my_chemistry->     IronFractionToMetalByMass
-  ,&my_chemistry->   CarbonCondensationRate
-  ,&my_chemistry->   OxygenCondensationRate
-  ,&my_chemistry->MagnesiumCondensationRate
-  ,&my_chemistry->AluminiumCondensationRate
-  ,&my_chemistry->  SiliconCondensationRate
-  ,&my_chemistry->   SulfurCondensationRate
-  ,&my_chemistry->     IronCondensationRate
+  ,&my_chemistry->loc_XC 
+  ,&my_chemistry->loc_XO 
+  ,&my_chemistry->loc_XMg
+  ,&my_chemistry->loc_XAl
+  ,&my_chemistry->loc_XSi
+  ,&my_chemistry->loc_XS 
+  ,&my_chemistry->loc_XFe
+  ,&my_chemistry->loc_fC 
+  ,&my_chemistry->loc_fO 
+  ,&my_chemistry->loc_fMg
+  ,&my_chemistry->loc_fAl
+  ,&my_chemistry->loc_fSi
+  ,&my_chemistry->loc_fS 
+  ,&my_chemistry->loc_fFe
   , my_rates->k125
   , my_rates->k129
   , my_rates->k130
@@ -692,6 +693,9 @@ int local_solve_chemistry(chemistry_data *my_chemistry,
   , my_rates->Ograin
   , my_rates->Lgrain
   ,&my_chemistry->metal_pop3
+  , my_fields->metal_loc
+  , my_fields->metal_C30
+  , my_fields->metal_F13
   ,&my_chemistry->C30_XC 
   ,&my_chemistry->C30_XO 
   ,&my_chemistry->C30_XMg
@@ -962,6 +966,9 @@ int _solve_chemistry(chemistry_data *my_chemistry,
                      gr_float *AC_density,  gr_float *SiO2D_density,  gr_float *MgO_density,  gr_float *FeS_density,  gr_float *Al2O3_density,
 //#endif
                      gr_float *e_density, gr_float *metal_density, gr_float *dust_density,
+//#ifdef GRACKLE_MD
+                     gr_float *metal_loc, gr_float *metal_C30, gr_float *metal_F13, 
+//#endif
                      gr_float *volumetric_heating_rate, gr_float *specific_heating_rate,
                      gr_float *RT_heating_rate, gr_float *RT_HI_ionization_rate, gr_float *RT_HeI_ionization_rate,
                      gr_float *RT_HeII_ionization_rate, gr_float *RT_H2_dissociation_rate,
@@ -1031,6 +1038,11 @@ int _solve_chemistry(chemistry_data *my_chemistry,
   my_fields.e_density                = e_density;
   my_fields.metal_density            = metal_density;
   my_fields.dust_density             = dust_density;
+#ifdef GRACKLE_MD
+  my_fields.metal_loc                = metal_loc;
+  my_fields.metal_C30                = metal_C30;
+  my_fields.metal_F13                = metal_F13;
+#endif
   my_fields.volumetric_heating_rate  = volumetric_heating_rate;
   my_fields.specific_heating_rate    = specific_heating_rate;
   my_fields.RT_heating_rate          = RT_heating_rate;

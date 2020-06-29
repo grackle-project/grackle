@@ -108,6 +108,7 @@
      &      , FSN2_MgSiO3(in), FSN2_Fe3O4(in), FSN2_AC(in)
      &      , FSN2_SiO2D(in), FSN2_MgO(in), FSN2_FeS(in)
      &      , FSN2_Al2O3(in)
+      integer i;
 
 
       call calc_grain_size_increment_species_1d(
@@ -311,7 +312,7 @@
                n_SN2 = 0.d0
             endif
             
-            if ( (d_SN1 + d_SN2) .gt. 0.d0 ) then
+            if ( (d_SN1 + d_SN2) .gt. 1.e-20 ) then
                coef0 = d_SN1 + d_SN2 - gr(i,j,k)
                coef1 = n_SN1 * SN1_a0gr
      &               + n_SN2 * SN2_a0gr

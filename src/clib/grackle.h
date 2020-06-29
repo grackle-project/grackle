@@ -65,6 +65,9 @@ int _solve_chemistry(chemistry_data *my_chemistry,
                      gr_float *AC_density,  gr_float *SiO2D_density,  gr_float *MgO_density,  gr_float *FeS_density,  gr_float *Al2O3_density,
 //#endif
                      gr_float *e_density, gr_float *metal_density, gr_float *dust_density,
+//#ifdef GRACKLE_MD
+                     gr_float *metal_loc, gr_float *metal_C30, gr_float *metal_F13, 
+//#endif
                      gr_float *volumetric_heating_rate, gr_float *specific_heating_rate,
                      gr_float *RT_heating_rate, gr_float *RT_HI_ionization_rate, gr_float *RT_HeI_ionization_rate,
                      gr_float *RT_HeII_ionization_rate, gr_float *RT_H2_dissociation_rate,

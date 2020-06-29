@@ -116,10 +116,9 @@ extern void FORTRAN_NAME(cool_multi_time_g)(
       , double *grain_D, double *grain_T, double *grain_dD, double *grain_dT
       , double *Tgrain, double *Ograin, double *Lgrain
       , int *impop3
+      , gr_float *metal_loc, gr_float *metal_C30, gr_float *metal_F13
       , double *C30_XC , double *C30_XO, double *C30_XMg, double *C30_XAl
       , double *C30_XSi, double *C30_XS, double *C30_XFe
-      , double *C30_fC , double *C30_fO, double *C30_fMg, double *C30_fAl
-      , double *C30_fSi, double *C30_fS, double *C30_fFe
       , double *C30_fSiM, double *C30_fFeM, double *C30_fMg2SiO4, double *C30_fMgSiO3
       , double *C30_fFe3O4, double *C30_fAC, double *C30_fSiO2D, double *C30_fMgO
       , double *C30_fFeS, double *C30_fAl2O3
@@ -148,8 +147,6 @@ extern void FORTRAN_NAME(cool_multi_time_g)(
       , double *LC30_FeS, double *LC30_Al2O3
       , double *F13_XC , double *F13_XO, double *F13_XMg, double *F13_XAl
       , double *F13_XSi, double *F13_XS, double *F13_XFe
-      , double *F13_fC , double *F13_fO, double *F13_fMg, double *F13_fAl
-      , double *F13_fSi, double *F13_fS, double *F13_fFe
       , double *F13_fSiM, double *F13_fFeM, double *F13_fMg2SiO4, double *F13_fMgSiO3
       , double *F13_fFe3O4, double *F13_fAC, double *F13_fSiO2D, double *F13_fMgO
       , double *F13_fFeS, double *F13_fAl2O3
@@ -513,6 +510,9 @@ int local_calculate_cooling_time(chemistry_data *my_chemistry,
      , my_rates->Ograin
      , my_rates->Lgrain
      ,&my_chemistry->metal_pop3
+     , my_fields->metal_loc
+     , my_fields->metal_C30
+     , my_fields->metal_F13
      ,&my_chemistry->C30_XC 
      ,&my_chemistry->C30_XO 
      ,&my_chemistry->C30_XMg
@@ -520,13 +520,6 @@ int local_calculate_cooling_time(chemistry_data *my_chemistry,
      ,&my_chemistry->C30_XSi
      ,&my_chemistry->C30_XS 
      ,&my_chemistry->C30_XFe
-     ,&my_chemistry->C30_fC 
-     ,&my_chemistry->C30_fO 
-     ,&my_chemistry->C30_fMg
-     ,&my_chemistry->C30_fAl
-     ,&my_chemistry->C30_fSi
-     ,&my_chemistry->C30_fS 
-     ,&my_chemistry->C30_fFe
      ,&my_chemistry->C30_fSiM    
      ,&my_chemistry->C30_fFeM    
      ,&my_chemistry->C30_fMg2SiO4
@@ -620,13 +613,6 @@ int local_calculate_cooling_time(chemistry_data *my_chemistry,
      ,&my_chemistry->F13_XSi
      ,&my_chemistry->F13_XS 
      ,&my_chemistry->F13_XFe
-     ,&my_chemistry->F13_fC 
-     ,&my_chemistry->F13_fO 
-     ,&my_chemistry->F13_fMg
-     ,&my_chemistry->F13_fAl
-     ,&my_chemistry->F13_fSi
-     ,&my_chemistry->F13_fS 
-     ,&my_chemistry->F13_fFe
      ,&my_chemistry->F13_fSiM    
      ,&my_chemistry->F13_fFeM    
      ,&my_chemistry->F13_fMg2SiO4

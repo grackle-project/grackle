@@ -25343,13 +25343,13 @@ int calc_rates_dust_pop3_c30(chemistry_data *my_chemistry, chemistry_data_storag
   my_chemistry->C30_XS  =   3.70455e-02;
   my_chemistry->C30_XFe =   1.45822e-02;
 
-  my_chemistry->C30_fC  =   1.23856e-02;
-  my_chemistry->C30_fO  =   5.05172e-03;
-  my_chemistry->C30_fMg =   2.76156e-02;
-  my_chemistry->C30_fAl =   3.55890e-09;
-  my_chemistry->C30_fSi =   4.41759e-01;
-  my_chemistry->C30_fS  =   4.43429e-03;
-  my_chemistry->C30_fFe =   1.32558e-01;
+  my_chemistry->C30_fC  =   4.93773e-02;
+  my_chemistry->C30_fO  =   7.29130e-01;
+  my_chemistry->C30_fMg =   3.76731e-02;
+  my_chemistry->C30_fAl =   8.61678e-04;
+  my_chemistry->C30_fSi =   4.01269e-02;
+  my_chemistry->C30_fS  =   3.68812e-02;
+  my_chemistry->C30_fFe =   1.26492e-02;
 
   my_chemistry->C30_fSiM     =   2.91389e-02;
   my_chemistry->C30_fFeM     =   1.93065e-03;

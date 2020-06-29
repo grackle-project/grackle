@@ -488,6 +488,8 @@ void show_parameters(FILE *fp, chemistry_data *my_chemistry)
 #ifdef GRACKLE_MD
   fprintf(fp, "metal_chemistry                   = %d\n",
           my_chemistry->metal_chemistry);
+  fprintf(fp, "metal_pop3                        = %d\n",
+          my_chemistry->metal_pop3);
   fprintf(fp, "grain_growth                      = %d\n",
           my_chemistry->grain_growth);
 #endif
