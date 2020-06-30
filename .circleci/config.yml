@@ -92,14 +92,14 @@ commands:
             rm IsolatedGalaxy.tar.gz
 
   run-tests:
-    description: "Compile enzo and run tests."
+    description: "Run all tests."
     parameters:
       omp:
         type: string
         default: 'false'
     steps:
       - run:
-          name: "Compile enzo and run tests."
+          name: "Run all tests."
           command: |
             source $BASH_ENV
             source $HOME/venv/bin/activate
