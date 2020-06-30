@@ -25,6 +25,17 @@ commands:
           pip install Cython numpy
           pip install h5py matplotlib fastcache flake8 pytest yt
 
+  lint:
+    description: "Lint."
+    steps:
+      - run:
+          name: "Lint."
+          command: |
+            source $BASH_ENV
+            source $HOME/venv/bin/activate
+            cd src/python
+            flake8 pygrackle examples tests
+
   install-grackle:
     description: "Install grackle."
     parameters:
@@ -136,6 +147,8 @@ jobs:
           paths:
             - ~/.cache/pip
             - ~/venv
+
+      - lint
 
       - download-test-data
 
