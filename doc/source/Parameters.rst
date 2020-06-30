@@ -330,7 +330,7 @@ solar metallicity and scaled linearly with the metallicity of the gas.
 
 Valid range:
 
- - number density: -10 < log\ :sub:`10` (n\ :sub:`H` / cm\ :sup:`-3`) < 4
+ - number density: -10 < log\ :sub:`10` (n\ :sub:`H` / cm\ :sup:`3`) < 4
 
  - temperature: the temperature range is 1 < log\ :sub:`10` (T / K) < 9.
 
@@ -350,6 +350,10 @@ Data files:
    <http://adsabs.harvard.edu/abs/2012ApJ...746..125H>`_.  The maximum
    redshift is 15.13.  Above that, collisional ionization equilibrium is
    assumed.
+
+The file **CloudyData_UVB=HM2012_high_density.h5** is the same than
+**CloudyData_UVB=HM2012.h5** but goes to higher density (:math:`10^{10}`
+atom / cm3) and was computed with a more recent version of Cloudy (17.06).
 
 To use the self-shielding approximation (see ``self_shielding_method``),
 one must properly account for the change in metal line cooling rates in
