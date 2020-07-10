@@ -1,4 +1,3 @@
-#ifdef SWITCH_TO_NR_SCHEME
 #include "phys_const.def"
 #define CORRECTED_BY_CHIAKI2020MAY
 
@@ -56,7 +55,6 @@
      &               dom, coolunit, tbase1, xbase1, dx_cgs, c_ljeans,
      &               kphHI, kphHeI, kphHeII, kdissH2I, 
      &               photogamma, xH2shield, chunit, itmask
-#ifdef GRACKLE_MD
      &             , imchem, igrgr
      &             , k125a, k129a, k130a, k131a, k132a
      &             , k133a, k134a, k135a, k136a, k137a
@@ -101,7 +99,7 @@
      &             , grain_N, grain_Size
      &             , grain_D, grain_T, grain_dD, grain_dT
      &             , Hgrain, Tgrain, Ograin, Lgrain
-     &             , immulti, impop3, idspecies, itdspecies, idsub
+     &             , immulti, impop3, idspecies, itdmulti, idsub
      &             , metal_loc, metal_C30, metal_F13
      &             , loc_fFeM, loc_fMg2SiO4, loc_fMgSiO3, loc_fFeS
      &             , loc_freforg, loc_fvolorg, loc_fH2Oice
@@ -130,7 +128,6 @@
      &             , tAC, tSiO2D, tMgO, tFeS, tAl2O3
      &             , treforg, tvolorg, tH2Oice
      &             , gasgr2a, gamma_isrf2a
-#endif
      &             , imp_eng)
 
 c -------------------------------------------------------------------
@@ -146,9 +143,7 @@ c -------------------------------------------------------------------
      &        igammah, ih2optical, iciecool, ithreebody,
      &        ndratec, clnew, iVheat, iMheat, iH2shield, iradshield,
      &        iradtrans, irt_honly, iisrffield
-#ifdef GRACKLE_MD
      &       ,imchem, igrgr
-#endif
       logical itmask, anydust
 
       real*8  dx_cgs, aye, temstart, temend, gamma,
@@ -156,19 +151,13 @@ c -------------------------------------------------------------------
      &        fgr, dtemstart, dtemend, clEleFra
 
 !  Density, energy and velocity fields fields
-#ifdef GRACKLE_MD
       integer, parameter :: i_eng = 52
-#else
-      integer, parameter :: i_eng = 13
-#endif
       real*8  dsp(i_eng), dspdot(i_eng)
       R_PREC  d, e, u, v, w,
      &        metal, dust,
      &        Vheat, Mheat
-#ifdef GRACKLE_MD
        R_PREC metal_loc
      &      , metal_C30, metal_F13
-#endif
 
 !  Radiative transfer fields
 
@@ -213,7 +202,6 @@ c -------------------------------------------------------------------
      &       k13dda(nratec, 14), h2dusta(nratec, ndratec),
      &       ncrna(nratec), ncrd1a(nratec), ncrd2a(nratec),
      &       k24, k25, k26, k27, k28, k29, k30, k31
-#ifdef GRACKLE_MD
        real*8  k125a(nratec), k129a(nratec), k130a(nratec)
      &       , k131a(nratec), k132a(nratec), k133a(nratec)
      &       , k134a(nratec), k135a(nratec), k136a(nratec)
@@ -234,7 +222,6 @@ c -------------------------------------------------------------------
      &       , kz48a(nratec), kz49a(nratec), kz50a(nratec)
      &       , kz51a(nratec), kz52a(nratec), kz53a(nratec)
      &       , kz54a(nratec)
-#endif
 
 !  Cloudy cooling data
 
@@ -306,7 +293,6 @@ c -------------------------------------------------------------------
      &       k55, k56, k57, k58,
      &       k13dd(14), h2dust,
      &       ncrn, ncrd1, ncrd2
-#ifdef GRACKLE_MD
       R_PREC DM , HDII , HeHII 
      &     , CI   , CII    , CO
      &     , CO2  , OI     , OH
@@ -333,7 +319,6 @@ c -------------------------------------------------------------------
      &     , kz40, kz41, kz42, kz43, kz44
      &     , kz45, kz46, kz47, kz48, kz49
      &     , kz50, kz51, kz52, kz53, kz54
-#endif
 
 !  Cooling/heating row locals
 
@@ -343,7 +328,6 @@ c -------------------------------------------------------------------
      &       brem, edot
       real*8 hyd01k, h2k01, vibh, roth, rotl,
      &       gpldl, gphdl, hdlte, hdlow, cieco
-#ifdef GRACKLE_MD
        real*8  cieY06a(nratec)
        integer LH2_N(3), LH2_Size
        real*8  LH2_D(LH2_N(1)), LH2_T(LH2_N(2)), LH2_H(LH2_N(3))
@@ -378,7 +362,7 @@ c -------------------------------------------------------------------
      &       , grain_dD, grain_dT
      &       , Hgrain(grain_Size), Tgrain(grain_Size)
      &       , Ograin(grain_Size), Lgrain(grain_Size)
-      integer immulti, impop3, idspecies, itdspecies, idsub
+      integer immulti, impop3, idspecies, itdmulti, idsub
       real*8  loc_fFeM, loc_fMg2SiO4, loc_fMgSiO3, loc_fFeS
      &      , loc_freforg, loc_fvolorg, loc_fH2Oice
       real*8  loc_r0FeM(3), loc_r0Mg2SiO4(3), loc_r0MgSiO3(3)
@@ -423,7 +407,7 @@ c -------------------------------------------------------------------
      &      , tAl2O3    
      &      , treforg    , tvolorg    , tH2Oice    
       real*8  gasgr2a(nratec), gamma_isrf2a
-#endif
+
 !     locals
 
       integer imp_eng
@@ -452,7 +436,6 @@ c -------------------------------------------------------------------
           DII     = dsp(11)
           HDI     = dsp(12)
       endif
-#ifdef GRACKLE_MD
       if ( ispecies .gt. 3 ) then
           DM      = dsp(13)
           HDII    = dsp(14)
@@ -500,7 +483,6 @@ c -------------------------------------------------------------------
           H2Oice  = dsp(51)
       endif
       endif
-#endif
       e     = dsp(i_eng)
 
 !     Compute the cooling rate, tgas, tdust, and metallicity for this row
@@ -546,7 +528,6 @@ c -------------------------------------------------------------------
      &                metDataSize, metCooling, metHeating, clnew,
      &                iVheat, iMheat, Vheat, Mheat,
      &                iisrffield, isrf_habing, itmask
-#ifdef GRACKLE_MD
      &              , imchem, igrgr
      &              , DM, HDII, HeHII
      &              , CI, CII, CO, CO2
@@ -589,7 +570,7 @@ c -------------------------------------------------------------------
      &              , grain_N, grain_Size
      &              , grain_D, grain_T, grain_dD, grain_dT
      &              , Tgrain, Ograin, Lgrain
-     &              , immulti, impop3, idspecies, itdspecies, idsub
+     &              , immulti, impop3, idspecies, itdmulti, idsub
      &              , metal_loc, metal_C30, metal_F13
      &              , loc_fFeM, loc_fMg2SiO4, loc_fMgSiO3, loc_fFeS
      &              , loc_freforg, loc_fvolorg, loc_fH2Oice
@@ -617,7 +598,6 @@ c -------------------------------------------------------------------
      &              , tAC, tSiO2D, tMgO, tFeS, tAl2O3
      &              , treforg, tvolorg, tH2Oice
      &              , gasgr2a, gamma_isrf2a
-#endif
      &  )
 
       endif
@@ -651,7 +631,6 @@ c -------------------------------------------------------------------
      &                t1, t2, tdef, logtem, indixe, 
      &                dom, coolunit, tbase1, xbase1, dx_cgs, c_ljeans,
      &                iradtrans, kdissH2I, xH2shield, itmask
-#ifdef GRACKLE_MD
      &              , fh, metal
      &              , DM, HDII, HeHII, imetal, imchem, igrgr
      &              , CI, CII, CO, CO2
@@ -690,7 +669,7 @@ c -------------------------------------------------------------------
      &              , grain_N, grain_Size
      &              , grain_D, grain_T, grain_dD, grain_dT
      &              , Hgrain
-     &              , immulti, impop3, idspecies, itdspecies, idsub
+     &              , immulti, impop3, idspecies, itdmulti, idsub
      &              , metal_loc, metal_C30, metal_F13
      &              , loc_fFeM, loc_fMg2SiO4, loc_fMgSiO3, loc_fFeS
      &              , loc_freforg, loc_fvolorg, loc_fH2Oice
@@ -721,7 +700,6 @@ c -------------------------------------------------------------------
      &              , tSiM, tFeM, tMg2SiO4, tMgSiO3, tFe3O4
      &              , tAC, tSiO2D, tMgO, tFeS, tAl2O3
      &              , treforg, tvolorg, tH2Oice
-#endif
      &      )
 
 !           Compute dedot and HIdot, the rates of change of de and HI
@@ -822,7 +800,6 @@ c
 
          if ( (iradtrans .eq. 1) .and. (irt_honly .eq. 0))
      &       acoef = acoef + kphHeI       
-#ifdef GRACKLE_MD
          if (ispecies .gt. 3) then
             scoef = scoef +  4._DKIND * ( 0._DKIND
      &          + k152    * HeHII        *    HI        /  5._DKIND
@@ -833,7 +810,6 @@ c
      &          + k149    *   HII       
      &          + k150    *  H2II        /  2._DKIND
          endif
-#endif
           dspdot(4) = dspdot(4) + (scoef - acoef * HeI)
 
 !        5) HeII
@@ -850,12 +826,10 @@ c
 
          if ( (iradtrans .eq. 1) .and. (irt_honly .eq. 0))
      &       acoef = acoef + kphHeII       
-#ifdef GRACKLE_MD
          if (ispecies .gt. 3) then
             acoef = acoef
      &          + k151    *    HI       
          endif
-#endif
           dspdot(5) = dspdot(5) + (scoef - acoef * HeII)
 
 !       6) HeIII
@@ -912,7 +886,6 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
      &               + k55    * HDI        / 3._DKIND
             endif
 
-#ifdef GRACKLE_MD
             if (ispecies .gt. 3) then
                scoef = scoef
      &             + k131    *  HDII        *    de        /  3._DKIND
@@ -963,7 +936,6 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
      &             + kz39    *   OII        / 16._DKIND
      &             + kz43    *  COII        / 28._DKIND
             endif
-#endif 
           dspdot(2) = dspdot(2) + (scoef - acoef * HI)
 
 
@@ -993,7 +965,6 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
      &               + k53    * HDI        / 3._DKIND
             endif
 
-#ifdef GRACKLE_MD
             if (ispecies .gt. 3) then
                scoef = scoef
      &             + k125    *  HDII        *    HI        /  3._DKIND
@@ -1014,7 +985,6 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
      &             + kz35    *   H2O        / 18._DKIND
      &             + kz36    *    O2        / 32._DKIND
             endif
-#endif
           dspdot(3) = dspdot(3) + (scoef - acoef * HII)
 
 !     
@@ -1054,7 +1024,6 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
      &               + k2     * DII        / 2._DKIND
             endif
 
-#ifdef GRACKLE_MD
             if (ispecies .gt. 3) then
                scoef = scoef
      &             + k137    *    DM        *    HI        /  2._DKIND
@@ -1075,7 +1044,6 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
      &             + kz49    * H3OII        / 19._DKIND
      &             + kz50    *  O2II        / 32._DKIND
             endif
-#endif
           dspdot(1) = dspdot(1) + (scoef - acoef * de)
 
 
@@ -1104,7 +1072,6 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
      &               + k54    * DI         / 2._DKIND
             endif
 
-#ifdef GRACKLE_MD
             if (metal .gt. 1.d-9 * d) then
             if (imchem .eq. 1) then
                scoef = scoef +  2._DKIND * ( 0._DKIND
@@ -1134,7 +1101,6 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
      &           )
             endif
             endif
-#endif
           dspdot(8) = dspdot(8) + (scoef - acoef * H2I)
 
 
@@ -1151,14 +1117,12 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
      &               + k56    * DI         / 2._DKIND
             endif
 
-#ifdef GRACKLE_MD
             if (ispecies .gt. 3) then
                scoef = scoef
      &             + k136    *    DM        *    HI        /  2._DKIND
                acoef = acoef
      &             + k135    *    DI        /  2._DKIND
             endif
-#endif
           dspdot(7) = dspdot(7) + (scoef - acoef * HM)
 
 
@@ -1173,7 +1137,6 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
             acoef =         k10   *HI     + k18   *de    
      &                    + k19   *HM    
      &                    + (k28shield   +k30shield   )
-#ifdef GRACKLE_MD
             if (ispecies .gt. 3) then
                scoef = scoef +  2._DKIND * ( 0._DKIND
      &             + k152    * HeHII        *    HI        /  5._DKIND
@@ -1181,7 +1144,6 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
                acoef = acoef
      &             + k150    *   HeI        /  4._DKIND
             endif
-#endif
           dspdot(9) = dspdot(9) + (scoef - acoef * H2II)
 
       endif ! (ispecies .gt. 1) then
@@ -1203,7 +1165,6 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
      &             +    k56    * HM       
      &             + k24shield   
             if (iradtrans .eq. 1) acoef = acoef + kphHI       
-#ifdef GRACKLE_MD
             if (ispecies .gt. 3) then
                scoef = scoef +  2._DKIND * ( 0._DKIND
      &             + k131    *  HDII        *    de        /  3._DKIND
@@ -1216,7 +1177,6 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
      &             + k132    *    de       
      &             + k135    *    HM       
             endif
-#endif
             dspdot(10) = dspdot(10) + (scoef - acoef * DI)
                                                     
 
@@ -1234,13 +1194,11 @@ c
             acoef =    k2     * de       
      &            +    k51    * HI       
      &            +    k52    * H2I       /2._DKIND
-#ifdef GRACKLE_MD
             if (ispecies .gt. 3) then
                acoef = acoef
      &             + k130    *    HI       
      &             + k133    *    DM        /  2._DKIND
             endif
-#endif
             dspdot(11) = dspdot(11) + (scoef - acoef * DII)
 
 
@@ -1249,27 +1207,22 @@ c
             scoef = 3._DKIND*(k52    * DII       *
      &           H2I       /2._DKIND/2._DKIND
      &           + k54    * DI        * H2I       /2._DKIND/2._DKIND
-#ifdef GRACKLE_MD
+!!   &           + 2._DKIND*k56    * DI        * HM       /2._DKIND
+                       !! corrected by GC202005
      &           +          k56    * DI        * HM       /2._DKIND
-#else
-     &           + 2._DKIND*k56    * DI        * HM       /2._DKIND
-#endif
      &                 )
             acoef  =    k53    * HII       
      &             +    k55    * HI       
-#ifdef GRACKLE_MD
             if (ispecies .gt. 3) then
                scoef = scoef +  3._DKIND * ( 0._DKIND
      &             + k125    *  HDII        *    HI        /  3._DKIND
      &             + k137    *    DM        *    HI        /  2._DKIND
      &             )
             endif
-#endif
             dspdot(12) = dspdot(12) + (scoef - acoef * HDI)
 
       endif
 
-#ifdef GRACKLE_MD
 !  --- (D2) Now do extra 3-species for minor primordial species ---
 !     
       if (ispecies .gt. 3) then
@@ -1794,59 +1747,6 @@ C***** H2Oice **********
 
 
       endif
-#endif
 
-!#ifdef JIKKEN
-!!          dspdot(14) =
-!!   &    - dspdot(10) / 2._DKIND * 3.d0
-!!   &    - dspdot(11) / 2._DKIND * 3.d0
-!!   &    - dspdot(12) 
-!!   &    - dspdot(13) / 2._DKIND * 3.d0
-
-!!          dspdot( 1) =
-!!   &      dspdot( 3)
-!!   &    + dspdot( 5) / 4._DKIND
-!!   &    + dspdot( 6) / 4._DKIND * 2.d0
-!!   &    - dspdot( 7)
-!!   &    + dspdot( 9) / 2._DKIND
-!!   &    + dspdot(11) / 2._DKIND
-!!   &    - dspdot(13) / 2._DKIND
-!!   &    + dspdot(14) / 3._DKIND
-!!   &    + dspdot(15) / 5._DKIND
-!!#endif
-
-      if (output.eq.0) then
-!!!     write(*,*) 'CHECKA', d*dom, tgas
-!!!  &    , de/d
-!!!  &    , DM/d/2.d0
-!!!  &    , HDII/d/3.d0
-!!!     write(*,*) 'CHECKB', d*dom, tgas
-!!!  &    , dspdot( 1)/d*dtit
-!!!  &    , dspdot(13)/d*dtit/2.d0
-!!!  &    , dspdot(14)/d*dtit/3.d0
-!       write(*,*) 0.75*d*dom
-!    &    , dspdot( 1) * dom            / tbase1
-!    &    , dspdot( 3) * dom            / tbase1
-!    &    , dspdot( 5) * dom / 4._DKIND / tbase1
-!    &    , dspdot( 6) * dom / 2._DKIND / tbase1
-!    &    , dspdot( 7) * dom            / tbase1
-!    &    , dspdot( 9) * dom / 2._DKIND / tbase1
-!    &    , dspdot(11) * dom / 2._DKIND / tbase1
-!    &    , dspdot(13) * dom / 2._DKIND / tbase1
-!    &    , dspdot(14) * dom / 3._DKIND / tbase1
-!    &    , dspdot(15) * dom / 5._DKIND / tbase1
-!!      write(*,'(E23.15,6E13.5)') 0.75*d*dom
-!!   &    , dspdot(10)/0.75/d/ 2._DKIND * dtit
-!!   &    , dspdot(11)/0.75/d/ 2._DKIND * dtit
-!!   &    , dspdot(12)/0.75/d/ 3._DKIND * dtit
-!!   &    , dspdot(13)/0.75/d/ 2._DKIND * dtit
-!!   &    , dspdot(14)/0.75/d/ 3._DKIND * dtit
-!!   &    , dspdot(10)/0.75/d/ 2._DKIND * dtit
-!!   &    + dspdot(11)/0.75/d/ 2._DKIND * dtit
-!!   &    + dspdot(12)/0.75/d/ 3._DKIND * dtit
-!!   &    + dspdot(13)/0.75/d/ 2._DKIND * dtit
-!!   &    + dspdot(14)/0.75/d/ 3._DKIND * dtit
-      endif
       return
       end
-#endif

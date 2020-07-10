@@ -73,7 +73,6 @@ extern void FORTRAN_NAME(cool_multi_time_g)(
         double *metHeating, int *clnew,
         int *iVheat, int *iMheat, gr_float *Vheat, gr_float *Mheat,
         int *iisrffield, gr_float* isrf_habing
-#ifdef GRACKLE_MD
       , int *imchem, int *igrgr
       , gr_float *DM, gr_float *HDII, gr_float *HeHII
       , gr_float *CI, gr_float *CII, gr_float *CO, gr_float *CO2
@@ -116,7 +115,7 @@ extern void FORTRAN_NAME(cool_multi_time_g)(
       , int *grain_N, int *grain_Size
       , double *grain_D, double *grain_T, double *grain_dD, double *grain_dT
       , double *Tgrain, double *Ograin, double *Lgrain
-      , int *immulti, int *impop3, int *idspecies, int *itdspecies, int *idsub
+      , int *immulti, int *impop3, int *idspecies, int *itdmulti, int *idsub
       , gr_float *metal_loc, gr_float *metal_C30, gr_float *metal_F13
       , double *loc_fFeM    , double *loc_fMg2SiO4, double *loc_fMgSiO3 , double *loc_fFeS
       , double *loc_freforg , double *loc_fvolorg , double *loc_fH2Oice
@@ -138,7 +137,6 @@ extern void FORTRAN_NAME(cool_multi_time_g)(
       , double *F13_kpFeM, double *F13_kpMg2SiO4, double *F13_kpMgSiO3, double *F13_kpFe3O4
       , double *F13_kpAC , double *F13_kpSiO2D , double *F13_kpAl2O3 
       , double *gasgr2a, double *gamma_isrf2a
-#endif
         );
 
 int local_calculate_cooling_time(chemistry_data *my_chemistry,
@@ -346,7 +344,6 @@ int local_calculate_cooling_time(chemistry_data *my_chemistry,
        my_fields->specific_heating_rate,
        &my_chemistry->use_isrf_field,
        my_fields->isrf_habing
-#ifdef GRACKLE_MD
      ,&my_chemistry->metal_chemistry
      ,&my_chemistry->grain_growth
      , my_fields->DM_density
@@ -480,7 +477,7 @@ int local_calculate_cooling_time(chemistry_data *my_chemistry,
      ,&my_chemistry->multi_metals
      ,&my_chemistry->metal_pop3
      ,&my_chemistry->dust_species
-     ,&my_chemistry->dust_temperature_species
+     ,&my_chemistry->dust_temperature_multi
      ,&my_chemistry->dust_sublimation
      , my_fields->metal_loc
      , my_fields->metal_C30
@@ -560,7 +557,6 @@ int local_calculate_cooling_time(chemistry_data *my_chemistry,
      , my_rates->F13_kpAl2O3  
      , my_rates->gas_grain2
      ,&my_rates->gamma_isrf2
-#endif
     );
  
   return SUCCESS;

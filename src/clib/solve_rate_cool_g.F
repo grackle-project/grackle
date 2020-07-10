@@ -100,7 +100,7 @@
      &              , grain_N, grain_Size
      &              , grain_D, grain_T, grain_dD, grain_dT
      &              , Hgrain, Tgrain, Ograin, Lgrain
-     &              , immulti, impop3, idspecies, itdspecies, idsub
+     &              , immulti, impop3, idspecies, itdmulti, idsub
      &              , metal_loc, metal_C30, metal_F13
      &              , loc_XC , loc_XO, loc_XMg, loc_XAl
      &              , loc_XSi, loc_XS, loc_XFe
@@ -350,7 +350,7 @@
      &       , grain_dD, grain_dT
      &       , Hgrain(grain_Size), Tgrain(grain_Size)
      &       , Ograin(grain_Size), Lgrain(grain_Size)
-      integer immulti, impop3, idspecies, itdspecies, idsub
+      integer immulti, impop3, idspecies, itdmulti, idsub
       real*8  loc_XC , loc_XO, loc_XMg, loc_XAl
      &      , loc_XSi, loc_XS, loc_XFe
       real*8  loc_fC , loc_fO, loc_fMg, loc_fAl
@@ -555,25 +555,21 @@
 !  Iteration mask
 
       logical itmask(in), anydust
-#ifdef SWITCH_TO_NR_SCHEME
       logical itmask_tmp(in), itmask_nr(in)
       integer itr, imp_eng, itr_time
       integer nsp, isp, jsp, id
       real*8  dspj, err, err_max
-#ifdef CHEM_DEBUG
-      integer ierr_max
-#endif
       integer,parameter   :: i_eng = 52
       real*8  dsp(i_eng), dsp0(i_eng), dsp1(i_eng)
      &      , dspdot(i_eng), dspdot1(i_eng)
      &      , ddsp(i_eng), der(i_eng,i_eng)
       integer,allocatable :: idsp(:)
       real*8, allocatable :: mtrx(:,:), vec(:)
+      real*8, parameter   :: eps = 1.d-4
 #ifdef CHEM_DEBUG
+      integer ierr_max
 !     real*8, allocatable :: dummtrx(:,:), dumvec(:)
 !     real*8 vecDtot
-#endif
-      real*8, parameter   :: eps = 1.d-4
 #endif
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
@@ -626,7 +622,7 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
      &                   , SiM, FeM, Mg2SiO4, MgSiO3, Fe3O4
      &                   , AC, SiO2D, MgO, FeS, Al2O3
      &                   , reforg, volorg, H2Oice
-     &                   , immulti, impop3, idspecies, itdspecies, idsub
+     &                   , immulti, impop3, idspecies, itdmulti, idsub
      &                   , metal_loc, metal_C30, metal_F13
      &                   , loc_XC, loc_XO, loc_XMg, loc_XAl, loc_XSi
      &                   , loc_XS, loc_XFe
@@ -662,7 +658,7 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
      &                  SiM, FeM, Mg2SiO4, MgSiO3, Fe3O4,
      &                  AC, SiO2D, MgO, FeS, Al2O3,
      &                  reforg, volorg, H2Oice,
-     &                  immulti, impop3, idspecies, itdspecies, idsub,
+     &                  immulti, impop3, idspecies, itdmulti, idsub,
      &                  metal_loc, metal_C30, metal_F13,
      &                  is, ie, js, je, ks, ke,
      &                  in, jn, kn, ispecies, imetal, idustfield,
@@ -685,7 +681,7 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
      &                     SiM, FeM, Mg2SiO4, MgSiO3, Fe3O4,
      &                     AC, SiO2D, MgO, FeS, Al2O3,
      &                     reforg, volorg, H2Oice,
-     &                     immulti, impop3, idspecies, itdspecies,
+     &                     immulti, impop3, idspecies, itdmulti,
      &                     idsub,
      &                     metal_loc, metal_C30, metal_F13,
      &                     is, ie, js, je, ks, ke,
@@ -874,7 +870,7 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
      &              , grain_N, grain_Size
      &              , grain_D, grain_T, grain_dD, grain_dT
      &              , Tgrain, Ograin, Lgrain
-     &              , immulti, impop3, idspecies, itdspecies, idsub
+     &              , immulti, impop3, idspecies, itdmulti, idsub
      &              , metal_loc, metal_C30, metal_F13
      &              , loc_fFeM, loc_fMg2SiO4, loc_fMgSiO3, loc_fFeS
      &              , loc_freforg, loc_fvolorg, loc_fH2Oice
@@ -972,7 +968,7 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
      &              , grain_N, grain_Size
      &              , grain_D, grain_T, grain_dD, grain_dT
      &              , Hgrain
-     &              , immulti, impop3, idspecies, itdspecies, idsub
+     &              , immulti, impop3, idspecies, itdmulti, idsub
      &              , metal_loc, metal_C30, metal_F13
      &              , loc_fFeM, loc_fMg2SiO4, loc_fMgSiO3, loc_fFeS
      &              , loc_freforg, loc_fvolorg, loc_fH2Oice
@@ -1025,7 +1021,6 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
      &                     itmask, edot, chunit, dom
      &                          )
 
-#ifdef SWITCH_TO_NR_SCHEME
 !           move itmask temporary array
 !           then split cells with low densities
 !              => Gauss-Seidel scheme
@@ -1054,7 +1049,6 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
 
             endif
             enddo
-#endif
 
 !           Find timestep that keeps relative chemical changes below 10%
 
@@ -1192,10 +1186,10 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
  1000          format(i5,3(i3,1x),1p,11(e11.3))
  1100          format(1p,22(e11.3))
 #endif /* WRITE_COOLING_DEBUG */
-#ifdef SWITCH_TO_NR_SCHEME
+
             else if (itmask_nr(i)) then
                dtit(i) = dt - ttot(i);
-#endif
+
             else               ! itmask
                dtit(i) = dt;
             endif
@@ -1343,7 +1337,7 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
      &           )
 !!          write(*,*) 'CHECKS', d(1,1,1), Fe(1,1,1)
 
-#ifdef SWITCH_TO_NR_SCHEME
+!           Start Newton-Raphson scheme
             do i = is+1, ie+1
             if (itmask_nr(i)) then
 
@@ -1682,7 +1676,7 @@ CCCC           endif
      & , grain_N, grain_Size
      & , grain_D, grain_T, grain_dD, grain_dT
      & , Hgrain, Tgrain, Ograin, Lgrain
-     & , immulti, impop3, idspecies, itdspecies, idsub
+     & , immulti, impop3, idspecies, itdmulti, idsub
      & , metal_loc(i,j,k), metal_C30(i,j,k), metal_F13(i,j,k)
      & , loc_fFeM, loc_fMg2SiO4, loc_fMgSiO3, loc_fFeS
      & , loc_freforg, loc_fvolorg, loc_fH2Oice
@@ -1831,7 +1825,7 @@ CCCC           endif
      & , grain_N, grain_Size
      & , grain_D, grain_T, grain_dD, grain_dT
      & , Hgrain, Tgrain, Ograin, Lgrain
-     & , immulti, impop3, idspecies, itdspecies, idsub
+     & , immulti, impop3, idspecies, itdmulti, idsub
      & , metal_loc(i,j,k), metal_C30(i,j,k), metal_F13(i,j,k)
      & , loc_fFeM, loc_fMg2SiO4, loc_fMgSiO3, loc_fFeS
      & , loc_freforg, loc_fvolorg, loc_fH2Oice
@@ -2100,18 +2094,16 @@ CCCC           endif
 
             endif
             enddo
-#endif
+
             endif ! if (ispecies .gt. 0) then
 
 !!          write(*,*) 'CHECK6', d(1,1,1), FeM(1,1,1)/d(1,1,1)/56.d0
 
-#ifdef SWITCH_TO_NR_SCHEME
 !           return itmask
             do i = is+1, ie+1
                itmask(i) = itmask_tmp(i)
             enddo
 !!!         write(*,*) 'j', de, HI, HII
-#endif
 
 !           Add the timestep to the elapsed time for each cell and find
 !            minimum elapsed time step in this row
@@ -2206,7 +2198,7 @@ c            WARNING_MESSAGE
      &                  SiM, FeM, Mg2SiO4, MgSiO3, Fe3O4,
      &                  AC, SiO2D, MgO, FeS, Al2O3,
      &                  reforg, volorg, H2Oice,
-     &                  immulti, impop3, idspecies, itdspecies, idsub,
+     &                  immulti, impop3, idspecies, itdmulti, idsub,
      &                  metal_loc, metal_C30, metal_F13,
      &                  is, ie, js, je, ks, ke,
      &                  in, jn, kn, ispecies, imetal, idustfield,
@@ -2235,7 +2227,7 @@ c            WARNING_MESSAGE
      &                   , SiM, FeM, Mg2SiO4, MgSiO3, Fe3O4
      &                   , AC, SiO2D, MgO, FeS, Al2O3
      &                   , reforg, volorg, H2Oice
-     &                   , immulti, impop3, idspecies, itdspecies, idsub
+     &                   , immulti, impop3, idspecies, itdmulti, idsub
      &                   , metal_loc, metal_C30, metal_F13
      &                   , loc_XC, loc_XO, loc_XMg, loc_XAl, loc_XSi
      &                   , loc_XS, loc_XFe
@@ -2275,7 +2267,7 @@ c -----------------------------------------------------------
      &                        SiM, FeM, Mg2SiO4, MgSiO3, Fe3O4,
      &                        AC, SiO2D, MgO, FeS, Al2O3,
      &                        reforg, volorg, H2Oice,
-     &                        immulti, impop3, idspecies, itdspecies,
+     &                        immulti, impop3, idspecies, itdmulti,
      &                        idsub,
      &                        metal_loc, metal_C30, metal_F13,
      &                        is, ie, js, je, ks, ke,
@@ -2310,7 +2302,7 @@ c -------------------------------------------------------------------
      &      , SiO2D(in,jn,kn), MgO(in,jn,kn), FeS(in,jn,kn)
      &      , Al2O3(in,jn,kn)
      &      , reforg(in,jn,kn), volorg(in,jn,kn), H2Oice(in,jn,kn)
-      integer immulti, impop3, idspecies, itdspecies, idsub
+      integer immulti, impop3, idspecies, itdmulti, idsub
        R_PREC metal_loc(in,jn,kn)
      &      , metal_C30(in,jn,kn), metal_F13(in,jn,kn)
       real*8 factor
@@ -2427,7 +2419,13 @@ c -------------------------------------------------------------------
                      volorg(i,j,k)  = volorg(i,j,k)*factor
                      H2Oice(i,j,k)  = H2Oice(i,j,k)*factor
                   endif
+#ifdef SMBH_RAD
+                  if(idspecies .eq. 1) then
+                     MgSiO3(i,j,k)  = MgSiO3(i,j,k)*factor
+                     AC(i,j,k)      = AC(i,j,k)*factor
                   endif
+#endif
+                  endif ! metal
                enddo
             enddo
          enddo
@@ -2461,7 +2459,7 @@ c -----------------------------------------------------------
      &                           SiM, FeM, Mg2SiO4, MgSiO3, Fe3O4,
      &                           AC, SiO2D, MgO, FeS, Al2O3,
      &                           reforg, volorg, H2Oice,
-     &                           immulti, impop3, idspecies, itdspecies,
+     &                           immulti, impop3, idspecies, itdmulti,
      &                           idsub,
      &                           metal_loc, metal_C30, metal_F13,
      &                           is, ie, js, je, ks, ke,
@@ -2495,7 +2493,7 @@ c -------------------------------------------------------------------
      &      , SiO2D(in,jn,kn), MgO(in,jn,kn), FeS(in,jn,kn)
      &      , Al2O3(in,jn,kn)
      &      , reforg(in,jn,kn), volorg(in,jn,kn), H2Oice(in,jn,kn)
-      integer immulti, impop3, idspecies, itdspecies, idsub
+      integer immulti, impop3, idspecies, itdmulti, idsub
        R_PREC metal_loc(in,jn,kn)
      &      , metal_C30(in,jn,kn), metal_F13(in,jn,kn)
 
@@ -2605,6 +2603,12 @@ c -------------------------------------------------------------------
                      volorg(i,j,k)  = max(volorg(i,j,k), tiny)
                      H2Oice(i,j,k)  = max(H2Oice(i,j,k), tiny)
                   endif
+#ifdef SMBH_RAD
+                  if(idspecies .eq. 1) then
+                     MgSiO3(i,j,k)  = max(MgSiO3(i,j,k), tiny)
+                     AC(i,j,k)      = max(AC(i,j,k), tiny)
+                  endif
+#endif
                   endif
                enddo
             enddo
@@ -2682,7 +2686,7 @@ c -------------------------------------------------------------------
      &              , grain_N, grain_Size
      &              , grain_D, grain_T, grain_dD, grain_dT
      &              , Hgrain
-     &              , immulti, impop3, idspecies, itdspecies, idsub
+     &              , immulti, impop3, idspecies, itdmulti, idsub
      &              , metal_loc, metal_C30, metal_F13
      &              , loc_fFeM, loc_fMg2SiO4, loc_fMgSiO3, loc_fFeS
      &              , loc_freforg, loc_fvolorg, loc_fH2Oice
@@ -2853,7 +2857,7 @@ c -------------------------------------------------------------------
        integer grain_N(2), grain_Size
        real*8  grain_D(grain_N(1)), grain_T(grain_N(2))
      &       , grain_dD, grain_dT, Hgrain(grain_Size)
-      integer immulti, impop3, idspecies, itdspecies, idsub
+      integer immulti, impop3, idspecies, itdmulti, idsub
       real*8  loc_fFeM, loc_fMg2SiO4, loc_fMgSiO3, loc_fFeS
      &      , loc_freforg, loc_fvolorg, loc_fH2Oice
       real*8  loc_r0FeM(3), loc_r0Mg2SiO4(3), loc_r0MgSiO3(3)
@@ -3367,7 +3371,7 @@ c -------------------------------------------------------------------
          do i = is+1, ie+1
             if (itmask(i)) then
 
-               if (itdspecies .eq. 0) then
+               if (itdmulti .eq. 0) then
 
                   d_logtem(i) = log(tdust(i))
                   call interpolate_2D_g(
@@ -3409,7 +3413,7 @@ c -------------------------------------------------------------------
 !                 write(*,*) h2MgSiO3   , sgH2Oice  (i)
 !!                write(*,*) 'b', h2dust(i)
 
-               else ! itdspecies
+               else ! itdmulti
 
                   d_logtem(i) = log(tSiM     (i))
                   call interpolate_2D_g(
@@ -3507,7 +3511,7 @@ c -------------------------------------------------------------------
 !                 write(*,*) h2H2Oice   , sgH2Oice  (i)
 !!!               write(*,*) 'b', h2dust(i)
 
-               endif ! itdspecies
+               endif ! itdmulti
 
             endif
          enddo
@@ -5613,7 +5617,7 @@ C***** H2Oice **********
      &                      , SiM, FeM, Mg2SiO4, MgSiO3, Fe3O4
      &                      , AC, SiO2D, MgO, FeS, Al2O3
      &                      , reforg, volorg, H2Oice
-     &                      , immulti, impop3, idspecies, itdspecies
+     &                      , immulti, impop3, idspecies, itdmulti
      &                      , idsub
      &                      , metal_loc, metal_C30, metal_F13
      &                      , loc_XC, loc_XO, loc_XMg, loc_XAl, loc_XSi
@@ -5659,7 +5663,7 @@ C***** H2Oice **********
      &      , SiO2D(in,jn,kn), MgO(in,jn,kn), FeS(in,jn,kn)
      &      , Al2O3(in,jn,kn)
      &      , reforg(in,jn,kn), volorg(in,jn,kn), H2Oice(in,jn,kn)
-      integer immulti, impop3, idspecies, itdspecies, idsub
+      integer immulti, impop3, idspecies, itdmulti, idsub
        R_PREC metal_loc(in,jn,kn)
      &      , metal_C30(in,jn,kn), metal_F13(in,jn,kn)
       real*8  loc_XC , loc_XO, loc_XMg, loc_XAl

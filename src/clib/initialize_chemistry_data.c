@@ -506,8 +506,8 @@ void show_parameters(FILE *fp, chemistry_data *my_chemistry)
           my_chemistry->metal_pop3);
   fprintf(fp, "dust_species                      = %d\n",
           my_chemistry->dust_species);
-  fprintf(fp, "dust_temperature_species          = %d\n",
-          my_chemistry->dust_temperature_species);
+  fprintf(fp, "dust_temperature_multi            = %d\n",
+          my_chemistry->dust_temperature_multi);
   fprintf(fp, "dust_sublimation                  = %d\n",
           my_chemistry->dust_sublimation);
   fprintf(fp, "grain_growth                      = %d\n",

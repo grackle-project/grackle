@@ -32,7 +32,6 @@ OBJS_CONFIG_LIB = \
         calc_tdust_1d_g.lo \
         calc_tdust_3d_g.lo \
         calc_grain_size_increment_1d.lo \
-        lookup_dust_rates1d.lo \
         cie_thin_cooling_rate_g.lo \
         colh2diss_g.lo \
         coll_rates_g.lo \

@@ -1,4 +1,3 @@
-#ifdef GRACKLE_MD
 #include "phys_const.def"
 
 !     Compute grain size increment
@@ -672,4 +671,3 @@
 
       return
       end
-#endif

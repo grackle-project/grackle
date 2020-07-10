@@ -54,7 +54,7 @@ extern void FORTRAN_NAME(calc_tdust_3d_g)(
       , gr_float *SiM, gr_float *FeM, gr_float *Mg2SiO4, gr_float *MgSiO3, gr_float *Fe3O4
       , gr_float *AC, gr_float *SiO2D, gr_float *MgO, gr_float *FeS, gr_float *Al2O3
       , gr_float *reforg, gr_float *volorg, gr_float *H2Oice
-      , int *immulti, int *impop3, int *idspecies, int *itdspecies, int *idsub
+      , int *immulti, int *impop3, int *idspecies, int *itdmulti, int *idsub
       , gr_float *metal_loc, gr_float *metal_C30, gr_float *metal_F13
       , double *loc_fFeM    , double *loc_fMg2SiO4, double *loc_fMgSiO3 , double *loc_fFeS
       , double *loc_freforg , double *loc_fvolorg , double *loc_fH2Oice
@@ -203,7 +203,7 @@ int local_calculate_dust_temperature(chemistry_data *my_chemistry,
      ,&my_chemistry->multi_metals
      ,&my_chemistry->metal_pop3
      ,&my_chemistry->dust_species
-     ,&my_chemistry->dust_temperature_species
+     ,&my_chemistry->dust_temperature_multi
      ,&my_chemistry->dust_sublimation
      , my_fields->metal_loc
      , my_fields->metal_C30

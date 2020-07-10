@@ -443,7 +443,7 @@ c       Normalize by dividing by kunit
         k13dda(i,8) = k13dda(i,8) - log10(kunit)
 c
 !!#define USE_PALLA_SALPETER_STAHLER1983
-!!#if defined(GRACKLE_MD) && defined(USE_PALLA_SALPETER_STAHLER1983)
+!!#ifdef USE_PALLA_SALPETER_STAHLER1983
 !!      if(threebody.eq.1) then
 !!        k13dda(i,1) = log10(1.12d-10 * exp(-7.035d4/ttt) / kunit)
 !!        k13dda(i,2) = log10(6.5d-7/sqrt(ttt)
@@ -524,7 +524,7 @@ c       56) D   +  H- -> HD +  e-
 c      [57) D-  +  H  -> HD +  e-]  included by multiply 56 by 2
 c
 #define USE_STANCIL_LEPP_DALGARNO1998
-#if defined(GRACKLE_MD) && defined(USE_STANCIL_LEPP_DALGARNO1998)
+#ifdef USE_STANCIL_LEPP_DALGARNO1998
         k50a(i) = 1.0d-9 * exp(-41.d0/ttt) / kunit
         k51a(i) = 1.0d-9 / kunit
         k52a(i) = 2.1d-9 / kunit
@@ -1056,7 +1056,7 @@ c
 c     Energy transfer rate from gas to dust grains per unit cross-section
 c     of grains, following equation 5 of Chiaki et al. (2015)
 c
-            gasgr2a(i) = f_vel * vH_avr(i) * 2.d0 * kb
+            gasgr2a(i) = f_vel * 4.d0 * vH_avr(i) * 2.d0 * kb
      &                 * mh / coolunit
 c           Later multiplied by sigma_gr / mass_gr
 c           for arbitrary size distribution

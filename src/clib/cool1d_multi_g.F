@@ -44,7 +44,6 @@
      &                iVheat, iMheat, Vheat, Mheat,
      &                iisrffield, isrf_habing,
      &                itmask
-#ifdef GRACKLE_MD
      &              , imchem, igrgr
      &              , DM, HDII, HeHII
      &              , CI, CII, CO, CO2
@@ -87,7 +86,7 @@
      &              , grain_N, grain_Size
      &              , grain_D, grain_T, grain_dD, grain_dT
      &              , Tgrain, Ograin, Lgrain
-     &              , immulti, impop3, idspecies, itdspecies, idsub
+     &              , immulti, impop3, idspecies, itdmulti, idsub
      &              , metal_loc, metal_C30, metal_F13
      &              , loc_fFeM, loc_fMg2SiO4, loc_fMgSiO3, loc_fFeS
      &              , loc_freforg, loc_fvolorg, loc_fH2Oice
@@ -115,7 +114,6 @@
      &              , tAC, tSiO2D, tMgO, tFeS, tAl2O3
      &              , treforg, tvolorg, tH2Oice
      &              , gasgr2a, gamma_isrf2a
-#endif
      &            )
 
 !  SOLVE RADIATIVE COOLING/HEATING EQUATIONS
@@ -149,9 +147,7 @@
      &        imetal, igammah, ih2optical, iciecool, clnew,
      &        iVheat, iMheat, iradtrans, iradshield,
      &        iisrffield
-#ifdef GRACKLE_MD
      &       ,imchem, igrgr
-#endif
 
       real*8  aye, temstart, temend, z_solar, fgr,
      &        utem, uxyz, uaye, urho, utim,
@@ -165,7 +161,6 @@
      &        metal(in,jn,kn), dust(in,jn,kn),
      &        Vheat(in,jn,kn), Mheat(in,jn,kn),
      &        photogamma(in,jn,kn), isrf_habing(in,jn,kn)
-#ifdef GRACKLE_MD
      &      , DM(in,jn,kn)   , HDII(in,jn,kn)   , HeHII(in,jn,kn)
      &      , CI(in,jn,kn)   , CII(in,jn,kn)    , CO(in,jn,kn)
      &      , CO2(in,jn,kn)  , OI(in,jn,kn)     , OH(in,jn,kn)
@@ -182,7 +177,6 @@
      &      , reforg(in,jn,kn), volorg(in,jn,kn), H2Oice(in,jn,kn)
        R_PREC metal_loc(in,jn,kn)
      &      , metal_C30(in,jn,kn), metal_F13(in,jn,kn)
-#endif
       real*8  hyd01ka(nratec), h2k01a(nratec), vibha(nratec), 
      &        rotha(nratec), rotla(nratec), gpldla(nratec),
      &        gphdla(nratec), hdltea(nratec), hdlowa(nratec),
@@ -251,7 +245,6 @@
      &       gaHI(in), gaH2(in), gaHe(in), gaHp(in), gael(in),
      &       h2lte(in), galdl(in), gasgr(in), gasgr_tdust(in),
      &       regr(in), myisrf(in)
-#ifdef GRACKLE_MD
        integer iden, item, itab
        real*8  cieY06a(nratec), cieY06(in)
        integer LH2_N(3), LH2_Size
@@ -286,7 +279,7 @@
        real*8  grain_D(grain_N(1)), grain_T(grain_N(2))
      &       , grain_dD, grain_dT, Tgrain(grain_Size)
      &       , Ograin(grain_Size), Lgrain(grain_Size)
-      integer immulti, impop3, idspecies, itdspecies, idsub
+      integer immulti, impop3, idspecies, itdmulti, idsub
       real*8  loc_fFeM, loc_fMg2SiO4, loc_fMgSiO3, loc_fFeS
      &      , loc_freforg, loc_fvolorg, loc_fH2Oice
       real*8  loc_r0FeM(3), loc_r0Mg2SiO4(3), loc_r0MgSiO3(3)
@@ -374,13 +367,10 @@
      &      , gisrfSiO2D(in), gisrfMgO(in), gisrfFeS(in)
      &      , gisrfAl2O3(in)
      &      , gisrfreforg(in), gisrfvolorg(in), gisrfH2Oice(in)
-#endif
 !  Iteration mask
 
       logical itmask(in), anydust, interp
-#ifdef GRACKLE_MD
       logical itmask_line(in), itmask_tmp(in)
-#endif
 #ifdef CALCULATE_TGAS_SELF_CONSISTENTLY
       integer iter_tgas
       real*8  tgas_err, tgas0
@@ -585,8 +575,6 @@
          enddo
       endif
 
-#ifdef GRACKLE_MD
-
 !     Compute log densities
 
       logdom = log10(dom)
@@ -624,7 +612,6 @@
 
           endif
       enddo
-#endif
      
       do i = is+1, ie+1
          if ( itmask(i) ) then
@@ -750,7 +737,7 @@
 
       if (ispecies .gt. 1) then
 #define USE_CHIAKI_WISE2019
-#if defined(GRACKLE_MD) && defined(USE_CHIAKI_WISE2019)
+#ifdef USE_CHIAKI_WISE2019
 
       do i = is+1, ie+1
       if ( itmask(i) ) then
@@ -960,7 +947,7 @@ c               Matt's attempt at a second exponentialier cutoff
                 ciefudge = ciefudge*min((1.-exp(-tau))/tau,1._DKIND)
 c               ciefudge, which is applied to the continuum, is applied to edot
 #define USE_YOSHIDA06
-#if defined(GRACKLE_MD) && defined(USE_YOSHIDA06)
+#ifdef USE_YOSHIDA06
                 cieY06(i) = cieY06a(indixe(i)) + tdef(i)
      &             *(cieY06a(indixe(i)+1) - cieY06a(indixe(i)))
                 LCIE(i) = - cieY06(i) * (H2I(i,j,k)/2.d0)**2
@@ -980,7 +967,7 @@ c               ciefudge, which is applied to the continuum, is applied to edot
 
       if (ispecies .gt. 2) then
 #define USE_CHIAKI_WISE2019
-#if defined(GRACKLE_MD) && defined(USE_CHIAKI_WISE2019)
+#ifdef USE_CHIAKI_WISE2019
       do i = is+1, ie+1
       if ( itmask(i) ) then
 
@@ -1160,7 +1147,7 @@ c  new (correct) way: (april 4, 2007)
 
          else ! idspecies
 
-            if (itdspecies .eq. 0) then
+            if (itdmulti .eq. 0) then
             
                mygisrf(i) = gamma_isrf2a * sgtot(i)
                !! in UV, absorption coefficient Q ~ 1 (Goldsmith 2001)
@@ -1218,14 +1205,13 @@ c  new (correct) way: (april 4, 2007)
 
                fac = coolunit / mh 
 
-               if ( itdspecies .eq. 0 ) then
+               if ( itdmulti .eq. 0 ) then
 
                gasgr(i) = fv2k * sgtot(i)
 
                gasgr_tdust(i) = gasgr(i) * fac
 !              write(*,*) 'b', gasgr(i) 
 !    &                 , gasgr_tdust(i) , dust2gas(i)
-
                  
                else
 
@@ -1276,7 +1262,7 @@ c  new (correct) way: (april 4, 2007)
 
 !     Compute dust temperature
 
-         if (itdspecies .eq. 0) then
+         if (itdmulti .eq. 0) then
 
             call calc_tdust_1d_g(tdust, tgas, mynh, gasgr_tdust,
      &           mygisrf, myisrf, itmask, comp2, in, is, ie, j, k
@@ -1372,7 +1358,7 @@ c  new (correct) way: (april 4, 2007)
 
             else ! idspecies
 
-               if (itdspecies .eq. 0) then
+               if (itdmulti .eq. 0) then
                    Ldst(i) = - gasgr(i) * (tgas(i) - tdust(i))
      &                * d(i,j,k) * rhoH(i)
 
@@ -1427,7 +1413,7 @@ c  new (correct) way: (april 4, 2007)
          do i = is+1, ie+1
             if ( itmask(i) ) then
 
-            if (itdspecies .eq. 0) then
+            if (itdmulti .eq. 0) then
 
                alphad(i) = kptot(i)
 
@@ -1780,7 +1766,7 @@ c  new (correct) way: (april 4, 2007)
 !     --- Cloudy metal cooling and heating ---
 
       if (imcool .eq. 1) then
-#ifdef GRACKLE_MD
+
       if (imchem .eq. 1) then
 
 !     --- C/O fine-structure, metal molecular rotational cooling for low temperatures ---
@@ -1876,7 +1862,6 @@ c  new (correct) way: (april 4, 2007)
          enddo
 
       endif ! imchem
-#endif
 
          if (clnew .eq. 1) then
 
@@ -1904,7 +1889,6 @@ c  new (correct) way: (april 4, 2007)
 
          endif
 
-#ifdef GRACKLE_MD
       if (imchem .eq. 1) then
 
          itmask = itmask_tmp
@@ -1992,7 +1976,6 @@ c  new (correct) way: (april 4, 2007)
 
       endif ! imchem
 
-#endif
       endif ! imcool
 
 !     Add user-provided volumetric and/or specific heating terms
@@ -2018,8 +2001,6 @@ c  new (correct) way: (april 4, 2007)
 
       endif
 
-#ifdef GRACKLE_MD
-
 !     Continuum opacity
 
       do i = is+1, ie+1
@@ -2033,7 +2014,6 @@ c  new (correct) way: (april 4, 2007)
             endif
          end if
       enddo
-#endif
 
 !     Set tgasold
 
@@ -2044,10 +2024,10 @@ c  new (correct) way: (april 4, 2007)
       enddo
 
 !!!!! output cooling rate for debug
-      edotunit = coolunit*dom/mh ! = vbase1**2 / tbase1
-      do i = is+1, ie+1
-         if ( itmask(i) ) then
-         if((i.eq.1).and.(j.eq.1).and.(k.eq.1)) then
+!     edotunit = coolunit*dom/mh ! = vbase1**2 / tbase1
+!     do i = is+1, ie+1
+!        if ( itmask(i) ) then
+!        if((i.eq.1).and.(j.eq.1).and.(k.eq.1)) then
 
 !        write(*,'(16E12.5)') d(i,j,k)*dom
 !    &      , tSiM     (i), tFeM     (i), tMg2SiO4 (i)
@@ -2087,9 +2067,9 @@ c  new (correct) way: (april 4, 2007)
 !    &           , LCIE(i)/d(i,j,k)*edotunit * exp(-tau_con(i))
 !    &           , tau_con(i)
 
-         endif
-         endif
-      enddo
+!        endif
+!        endif
+!     enddo
 
       return
       end

@@ -83,7 +83,6 @@ extern void FORTRAN_NAME(solve_rate_cool_g)(
         double *metHeating, int *clnew,
         int *iVheat, int *iMheat, gr_float *Vheat, gr_float *Mheat,
         int *iisrffield, gr_float* isrf_habing
-#ifdef GRACKLE_MD
       , int *imchem, int *igrgr
       , gr_float *DM, gr_float *HDII, gr_float *HeHII
       , gr_float *CI, gr_float *CII, gr_float *CO, gr_float *CO2
@@ -138,7 +137,7 @@ extern void FORTRAN_NAME(solve_rate_cool_g)(
       , int *grain_N, int *grain_Size
       , double *grain_D, double *grain_T, double *grain_dD, double *grain_dT
       , double *Hgrain, double *Tgrain, double *Ograin, double *Lgrain
-      , int *immulti, int *impop3, int *idspecies, int *itdspecies, int *idsub
+      , int *immulti, int *impop3, int *idspecies, int *itdmulti, int *idsub
       , gr_float *metal_loc, gr_float *metal_C30, gr_float *metal_F13
       , double *loc_XC , double *loc_XO, double *loc_XMg, double *loc_XAl
       , double *loc_XSi, double *loc_XS, double *loc_XFe
@@ -172,7 +171,6 @@ extern void FORTRAN_NAME(solve_rate_cool_g)(
       , double *F13_kpFeM, double *F13_kpMg2SiO4, double *F13_kpMgSiO3, double *F13_kpFe3O4
       , double *F13_kpAC , double *F13_kpSiO2D , double *F13_kpAl2O3 
       , double *h2dustSa, double *h2dustCa, double *gasgr2a, double *gamma_isrf2a, double *grogra
-#endif
         );
 
 int local_solve_chemistry(chemistry_data *my_chemistry,
@@ -450,7 +448,6 @@ int local_solve_chemistry(chemistry_data *my_chemistry,
     my_fields->specific_heating_rate,
     &my_chemistry->use_isrf_field,
     my_fields->isrf_habing
-#ifdef GRACKLE_MD
   ,&my_chemistry->metal_chemistry
   ,&my_chemistry->grain_growth
   , my_fields->DM_density
@@ -641,7 +638,7 @@ int local_solve_chemistry(chemistry_data *my_chemistry,
   ,&my_chemistry->multi_metals
   ,&my_chemistry->metal_pop3
   ,&my_chemistry->dust_species
-  ,&my_chemistry->dust_temperature_species
+  ,&my_chemistry->dust_temperature_multi
   ,&my_chemistry->dust_sublimation
   , my_fields->metal_loc
   , my_fields->metal_C30
@@ -766,7 +763,6 @@ int local_solve_chemistry(chemistry_data *my_chemistry,
   , my_rates->gas_grain2
   ,&my_rates->gamma_isrf2
   , my_rates->grogr
-#endif
   );
 
   return SUCCESS;
@@ -784,7 +780,6 @@ int _solve_chemistry(chemistry_data *my_chemistry,
                      gr_float *HeI_density, gr_float *HeII_density, gr_float *HeIII_density,
                      gr_float *H2I_density, gr_float *H2II_density,
                      gr_float *DI_density, gr_float *DII_density, gr_float *HDI_density,
-//#ifdef GRACKLE_MD
                      gr_float *DM_density, gr_float *HDII_density, gr_float *HeHII_density,
                      gr_float *CI_density,  gr_float *CII_density,  gr_float *CO_density,  gr_float *CO2_density,
                      gr_float *OI_density,  gr_float *OH_density,  gr_float *H2O_density,  gr_float *O2_density,
@@ -795,11 +790,8 @@ int _solve_chemistry(chemistry_data *my_chemistry,
                      gr_float *SiM_density,  gr_float *FeM_density,  gr_float *Mg2SiO4_density,  gr_float *MgSiO3_density,  gr_float *Fe3O4_density,
                      gr_float *AC_density,  gr_float *SiO2D_density,  gr_float *MgO_density,  gr_float *FeS_density,  gr_float *Al2O3_density,
                      gr_float *reforg_density, gr_float *volorg_density, gr_float *H2Oice_density,
-//#endif
                      gr_float *e_density, gr_float *metal_density, gr_float *dust_density,
-//#ifdef GRACKLE_MD
                      gr_float *metal_loc, gr_float *metal_C30, gr_float *metal_F13, 
-//#endif
                      gr_float *volumetric_heating_rate, gr_float *specific_heating_rate,
                      gr_float *RT_heating_rate, gr_float *RT_HI_ionization_rate, gr_float *RT_HeI_ionization_rate,
                      gr_float *RT_HeII_ionization_rate, gr_float *RT_H2_dissociation_rate,
@@ -828,7 +820,6 @@ int _solve_chemistry(chemistry_data *my_chemistry,
   my_fields.DI_density               = DI_density;
   my_fields.DII_density              = DII_density;
   my_fields.HDI_density              = HDI_density;
-#ifdef GRACKLE_MD
   my_fields.DM_density               = DM_density;
   my_fields.HDII_density             = HDII_density;
   my_fields.HeHII_density            = HeHII_density;
@@ -868,15 +859,12 @@ int _solve_chemistry(chemistry_data *my_chemistry,
   my_fields.reforg_density           = reforg_density;
   my_fields.volorg_density           = volorg_density;
   my_fields.H2Oice_density           = H2Oice_density;
-#endif
   my_fields.e_density                = e_density;
   my_fields.metal_density            = metal_density;
   my_fields.dust_density             = dust_density;
-#ifdef GRACKLE_MD
   my_fields.metal_loc                = metal_loc;
   my_fields.metal_C30                = metal_C30;
   my_fields.metal_F13                = metal_F13;
-#endif
   my_fields.volumetric_heating_rate  = volumetric_heating_rate;
   my_fields.specific_heating_rate    = specific_heating_rate;
   my_fields.RT_heating_rate          = RT_heating_rate;

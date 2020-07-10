@@ -40,9 +40,7 @@ MACH_LIBTOOL   = libtool
 # Machine-dependent defines
 #-----------------------------------------------------------------------
 
-MACH_DEFINES   = -DLINUX -DH5_USE_16_API -fPIC \
-     -DSWITCH_TO_NR_SCHEME \
-     -DGRACKLE_MD
+MACH_DEFINES   = -DLINUX -DH5_USE_16_API -fPIC
 
 #-----------------------------------------------------------------------
 # Compiler flag settings

@@ -33,7 +33,6 @@
      &                metDataSize, metCooling, metHeating, clnew,
      &                iVheat, iMheat, Vheat, Mheat,
      &                iisrffield, isrf_habing
-#ifdef GRACKLE_MD
      &              , imchem, igrgr
      &              , DM, HDII, HeHII
      &              , CI, CII, CO, CO2
@@ -76,7 +75,7 @@
      &              , grain_N, grain_Size
      &              , grain_D, grain_T, grain_dD, grain_dT
      &              , Tgrain, Ograin, Lgrain
-     &              , immulti, impop3, idspecies, itdspecies, idsub
+     &              , immulti, impop3, idspecies, itdmulti, idsub
      &              , metal_loc, metal_C30, metal_F13
      &              , loc_fFeM, loc_fMg2SiO4, loc_fMgSiO3, loc_fFeS
      &              , loc_freforg, loc_fvolorg, loc_fH2Oice
@@ -101,7 +100,6 @@
      &              , F13_kpFeM, F13_kpMg2SiO4, F13_kpMgSiO3
      &              , F13_kpFe3O4, F13_kpAC, F13_kpSiO2D, F13_kpAl2O3
      &              , gasgr2a, gamma_isrf2a
-#endif
      &           )
 
 !  SOLVE RADIATIVE COOLING/HEATING EQUATIONS
@@ -136,9 +134,7 @@
      &        idustfield, igammah, ih2optical, iciecool,
      &        clnew, iVheat, iMheat, iradtrans, iradshield,
      &        iisrffield
-#ifdef GRACKLE_MD
      &       ,imchem, igrgr
-#endif
 
       real*8  aye, temstart, temend,
      &        utem, uxyz, uaye, urho, utim,
@@ -154,10 +150,8 @@
      &        isrf_habing(in,jn,kn),
      &        cooltime(in,jn,kn)
       real*8  photogamma(in,jn,kn)
-#ifdef GRACKLE_MD
        R_PREC metal_loc(in,jn,kn)
      &      , metal_C30(in,jn,kn), metal_F13(in,jn,kn)
-#endif
       real*8  hyd01ka(nratec), h2k01a(nratec), vibha(nratec), 
      &        rotha(nratec), rotla(nratec), gpldla(nratec),
      &        gphdla(nratec), hdltea(nratec), hdlowa(nratec),
@@ -172,7 +166,6 @@
      &        gammaha, isrf, regra, gamma_isrfa,
      &        avgsighi, avgsighei, avgsigheii,
      &        k24, k26
-#ifdef GRACKLE_MD
        R_PREC DM(in,jn,kn)   , HDII(in,jn,kn)   , HeHII(in,jn,kn)
      &      , CI(in,jn,kn)   , CII(in,jn,kn)    , CO(in,jn,kn)
      &      , CO2(in,jn,kn)  , OI(in,jn,kn)     , OH(in,jn,kn)
@@ -220,7 +213,7 @@
        real*8  grain_D(grain_N(1)), grain_T(grain_N(2))
      &       , grain_dD, grain_dT, Tgrain(grain_Size)
      &       , Ograin(grain_Size), Lgrain(grain_Size)
-      integer immulti, impop3, idspecies, itdspecies, idsub
+      integer immulti, impop3, idspecies, itdmulti, idsub
       real*8  loc_fFeM, loc_fMg2SiO4, loc_fMgSiO3, loc_fFeS
      &      , loc_freforg, loc_fvolorg, loc_fH2Oice
       real*8  loc_r0FeM(3), loc_r0Mg2SiO4(3), loc_r0MgSiO3(3)
@@ -259,7 +252,6 @@
      &      , tAl2O3(in)
      &      , treforg(in), tvolorg(in), tH2Oice(in)
       real*8  gasgr2a(nratec), gamma_isrf2a
-#endif
 
 !  Cloudy cooling data
 
@@ -457,7 +449,6 @@
      &                metDataSize, metCooling, metHeating, clnew,
      &                iVheat, iMheat, Vheat, Mheat,
      &                iisrffield, isrf_habing, itmask
-#ifdef GRACKLE_MD
      &              , imchem, igrgr
      &              , DM, HDII, HeHII
      &              , CI, CII, CO, CO2
@@ -500,7 +491,7 @@
      &              , grain_N, grain_Size
      &              , grain_D, grain_T, grain_dD, grain_dT
      &              , Tgrain, Ograin, Lgrain
-     &              , immulti, impop3, idspecies, itdspecies, idsub
+     &              , immulti, impop3, idspecies, itdmulti, idsub
      &              , metal_loc, metal_C30, metal_F13
      &              , loc_fFeM, loc_fMg2SiO4, loc_fMgSiO3, loc_fFeS
      &              , loc_freforg, loc_fvolorg, loc_fH2Oice
@@ -528,7 +519,6 @@
      &              , tAC, tSiO2D, tMgO, tFeS, tAl2O3
      &              , treforg, tvolorg, tH2Oice
      &              , gasgr2a, gamma_isrf2a
-#endif
      &            )
 
 !        Compute the cooling time on the slice

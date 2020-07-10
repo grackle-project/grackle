@@ -49,7 +49,6 @@ typedef struct
   gr_float *DI_density;
   gr_float *DII_density;
   gr_float *HDI_density;
-//#ifdef GRACKLE_MD
   gr_float *DM_density;
   gr_float *HDII_density;
   gr_float *HeHII_density;
@@ -89,15 +88,12 @@ typedef struct
   gr_float *reforg_density;
   gr_float *volorg_density;
   gr_float *H2Oice_density;
-//#endif
   gr_float *e_density;
   gr_float *metal_density;
   gr_float *dust_density;
-//#ifdef GRACKLE_MD
   gr_float *metal_loc;
   gr_float *metal_C30;
   gr_float *metal_F13;
-//#endif
 
   gr_float *internal_energy;
   gr_float *x_velocity;

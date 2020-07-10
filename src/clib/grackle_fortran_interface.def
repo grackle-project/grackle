@@ -54,7 +54,6 @@ c     This is the fortran definition of grackle_field_data
          TYPE(C_PTR) :: DI_density
          TYPE(C_PTR) :: DII_density
          TYPE(C_PTR) :: HDI_density
-cc#ifdef GRACKLE_MD
          TYPE(C_PTR) :: DM_density
          TYPE(C_PTR) :: HDII_density
          TYPE(C_PTR) :: HeHII_density
@@ -91,7 +90,6 @@ cc#ifdef GRACKLE_MD
          TYPE(C_PTR) :: MgO_density 
          TYPE(C_PTR) :: FeS_density 
          TYPE(C_PTR) :: Al2O3_density
-cc#endif
          TYPE(C_PTR) :: e_density
          TYPE(C_PTR) :: metal_density
          TYPE(C_PTR) :: dust_density
@@ -129,10 +127,8 @@ c     This is the fortran definition of grackle_chemistry_dadta
          REAL(C_DOUBLE) :: Gamma
          INTEGER(C_INT) :: h2_on_dust
          INTEGER(C_INT) :: use_dust_density_field
-cc#ifdef GRACKLE_MD
          INTEGER(C_INT) :: metal_chemistry
          INTEGER(C_INT) :: grain_growth
-cc#endif
          INTEGER(C_INT) :: photoelectric_heating
          REAL(C_DOUBLE) :: photoelectric_heating_rate
          INTEGER(C_INT) :: use_isrf_field
@@ -148,7 +144,6 @@ cc#endif
          REAL(C_DOUBLE) :: DeuteriumToHydrogenRatio
          REAL(C_DOUBLE) :: SolarMetalFractionByMass
          REAL(C_DOUBLE) :: local_dust_to_gas_ratio;
-cc#ifdef GRACKLE_MD
          REAL(C_DOUBLE) ::    CarbonFractionToMetalByMass
          REAL(C_DOUBLE) ::    OxygenFractionToMetalByMass
          REAL(C_DOUBLE) :: MagnesiumFractionToMetalByMass
@@ -175,7 +170,7 @@ cc#ifdef GRACKLE_MD
          REAL(C_DOUBLE) ::   MagnesiaFractionToMetalByMass
          REAL(C_DOUBLE) ::   TroiliteFractionToMetalByMass
          REAL(C_DOUBLE) ::    AluminaFractionToMetalByMass
-cc#endif
+
          INTEGER(C_INT) :: NumberOfTemperatureBins
          INTEGER(C_INT) :: CaseBRecombination
          REAL(C_DOUBLE) :: TemperatureStart

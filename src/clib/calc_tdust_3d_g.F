@@ -24,7 +24,7 @@
      &   , SiM, FeM, Mg2SiO4, MgSiO3, Fe3O4
      &   , AC, SiO2D, MgO, FeS, Al2O3
      &   , reforg, volorg, H2Oice
-     &   , immulti, impop3, idspecies, itdspecies, idsub
+     &   , immulti, impop3, idspecies, itdmulti, idsub
      &   , metal_loc, metal_C30, metal_F13
      &   , loc_fFeM, loc_fMg2SiO4, loc_fMgSiO3, loc_fFeS
      &   , loc_freforg, loc_fvolorg, loc_fH2Oice
@@ -87,7 +87,6 @@
      &     HM(in,jn,kn),  H2I(in,jn,kn), H2II(in,jn,kn),
      &     gas_temp(in,jn,kn), dust_temp(in,jn,kn),
      &     isrf_habing(in,jn,kn)
-#ifdef GRACKLE_MD
        real*8 dom
        real*8 z_solar, metallicity(in), dust2gas(in)
        R_PREC metal(in,jn,kn), dust(in,jn,kn)
@@ -106,12 +105,11 @@
      &      , SiO2D(in,jn,kn), MgO(in,jn,kn), FeS(in,jn,kn)
      &      , Al2O3(in,jn,kn)
      &      , reforg(in,jn,kn), volorg(in,jn,kn), H2Oice(in,jn,kn)
-#endif
 
 !  Chemistry tables
       real*8  gasgra(nratec), gamma_isrfa
       integer imetal, idustfield, igrgr
-      integer immulti, impop3, idspecies, itdspecies, idsub
+      integer immulti, impop3, idspecies, itdmulti, idsub
       real*8  loc_fFeM, loc_fMg2SiO4, loc_fMgSiO3, loc_fFeS
      &      , loc_freforg, loc_fvolorg, loc_fH2Oice
       real*8  loc_r0FeM(3), loc_r0Mg2SiO4(3), loc_r0MgSiO3(3)
@@ -305,53 +303,48 @@
         k = t/dj      + ks+1
         j = mod(t,dj) + js+1
 
-#ifdef GRACKLE_MD
-
 !     Compute grain size increment
 
       if ( (idustfield .gt. 0) .and. (idspecies .gt. 0) ) then
-!!         if (impop3 .gt. 0) then
 
-            call calc_grain_size_increment_1d(
-     &                igrgr, itmask
-     &              , in, jn, kn, is, ie, j, k, dom, d
-     &              , SiM, FeM, Mg2SiO4, MgSiO3, Fe3O4
-     &              , AC, SiO2D, MgO, FeS, Al2O3
-     &              , reforg, volorg, H2Oice
-     &              , metal, metal_loc, metal_C30, metal_F13
-     &              , loc_fFeM, loc_fMg2SiO4, loc_fMgSiO3, loc_fFeS
-     &              , loc_freforg, loc_fvolorg, loc_fH2Oice
-     &              , loc_r0FeM, loc_r0Mg2SiO4, loc_r0MgSiO3, loc_r0FeS
-     &              , loc_r0reforg, loc_r0volorg, loc_r0H2Oice 
-     &              , C30_fSiM, C30_fFeM, C30_fMg2SiO4, C30_fMgSiO3
-     &              , C30_fAC, C30_fSiO2D, C30_fMgO
-     &              , C30_fFeS, C30_fAl2O3
-     &              , C30_r0SiM, C30_r0FeM, C30_r0Mg2SiO4
-     &              , C30_r0MgSiO3, C30_r0AC, C30_r0SiO2D
-     &              , C30_r0MgO, C30_r0FeS, C30_r0Al2O3
-     &              , F13_fFeM, F13_fMg2SiO4, F13_fMgSiO3
-     &              , F13_fFe3O4, F13_fAC, F13_fSiO2D, F13_fAl2O3
-     &              , F13_r0FeM, F13_r0Mg2SiO4, F13_r0MgSiO3
-     &              , F13_r0Fe3O4, F13_r0AC, F13_r0SiO2D, F13_r0Al2O3
-     &              , gr_N, gr_Size, gr_dT, gr_Td
-     &              , loc_kpFeM, loc_kpMg2SiO4, loc_kpMgSiO3, loc_kpFeS
-     &              , loc_kpreforg, loc_kpvolorg, loc_kpH2Oice
-     &              , C30_kpSiM, C30_kpFeM, C30_kpMg2SiO4
-     &              , C30_kpMgSiO3, C30_kpAC, C30_kpSiO2D
-     &              , C30_kpMgO, C30_kpFeS, C30_kpAl2O3
-     &              , F13_kpFeM, F13_kpMg2SiO4, F13_kpMgSiO3
-     &              , F13_kpFe3O4, F13_kpAC, F13_kpSiO2D, F13_kpAl2O3
-     &              , sgSiM, sgFeM, sgMg2SiO4, sgMgSiO3, sgFe3O4, sgAC
-     &              , sgSiO2D, sgMgO, sgFeS, sgAl2O3
-     &              , sgreforg, sgvolorg, sgH2Oice, sgtot
-     &              , alSiM, alFeM, alMg2SiO4, alMgSiO3, alFe3O4, alAC
-     &              , alSiO2D, alMgO, alFeS, alAl2O3
-     &              , alreforg, alvolorg, alH2Oice, altot
-     &            )
+         call calc_grain_size_increment_1d(
+     &             igrgr, itmask
+     &           , in, jn, kn, is, ie, j, k, dom, d
+     &           , SiM, FeM, Mg2SiO4, MgSiO3, Fe3O4
+     &           , AC, SiO2D, MgO, FeS, Al2O3
+     &           , reforg, volorg, H2Oice
+     &           , metal, metal_loc, metal_C30, metal_F13
+     &           , loc_fFeM, loc_fMg2SiO4, loc_fMgSiO3, loc_fFeS
+     &           , loc_freforg, loc_fvolorg, loc_fH2Oice
+     &           , loc_r0FeM, loc_r0Mg2SiO4, loc_r0MgSiO3, loc_r0FeS
+     &           , loc_r0reforg, loc_r0volorg, loc_r0H2Oice 
+     &           , C30_fSiM, C30_fFeM, C30_fMg2SiO4, C30_fMgSiO3
+     &           , C30_fAC, C30_fSiO2D, C30_fMgO
+     &           , C30_fFeS, C30_fAl2O3
+     &           , C30_r0SiM, C30_r0FeM, C30_r0Mg2SiO4
+     &           , C30_r0MgSiO3, C30_r0AC, C30_r0SiO2D
+     &           , C30_r0MgO, C30_r0FeS, C30_r0Al2O3
+     &           , F13_fFeM, F13_fMg2SiO4, F13_fMgSiO3
+     &           , F13_fFe3O4, F13_fAC, F13_fSiO2D, F13_fAl2O3
+     &           , F13_r0FeM, F13_r0Mg2SiO4, F13_r0MgSiO3
+     &           , F13_r0Fe3O4, F13_r0AC, F13_r0SiO2D, F13_r0Al2O3
+     &           , gr_N, gr_Size, gr_dT, gr_Td
+     &           , loc_kpFeM, loc_kpMg2SiO4, loc_kpMgSiO3, loc_kpFeS
+     &           , loc_kpreforg, loc_kpvolorg, loc_kpH2Oice
+     &           , C30_kpSiM, C30_kpFeM, C30_kpMg2SiO4
+     &           , C30_kpMgSiO3, C30_kpAC, C30_kpSiO2D
+     &           , C30_kpMgO, C30_kpFeS, C30_kpAl2O3
+     &           , F13_kpFeM, F13_kpMg2SiO4, F13_kpMgSiO3
+     &           , F13_kpFe3O4, F13_kpAC, F13_kpSiO2D, F13_kpAl2O3
+     &           , sgSiM, sgFeM, sgMg2SiO4, sgMgSiO3, sgFe3O4, sgAC
+     &           , sgSiO2D, sgMgO, sgFeS, sgAl2O3
+     &           , sgreforg, sgvolorg, sgH2Oice, sgtot
+     &           , alSiM, alFeM, alMg2SiO4, alMgSiO3, alFe3O4, alAC
+     &           , alSiO2D, alMgO, alFeS, alAl2O3
+     &           , alreforg, alvolorg, alH2Oice, altot
+     &         )
 
-!!       endif
       endif
-#endif
 
         do i = is+1, ie+1
 
@@ -400,7 +393,7 @@
 
 !     Compute interstellar radiation field
 
-!!       if (impop3 .eq. 0 ) then
+         if (idspecies .eq. 0 ) then
             if (idustfield .gt. 0) then
                mygisrf(i) = gamma_isrfa
      &                    * fgr / dust2gas(i) * metallicity(i)
@@ -409,13 +402,15 @@
             else
                mygisrf(i) = gamma_isrfa
             endif
-!!       else
-            if (itdspecies .eq. 0) then
+
+         else ! idspecies
+
+            if (itdmulti .eq. 0) then
             
                mygisrf(i) = gamma_isrf2a * sgtot(i)
                !! in UV, absorption coefficient Q ~ 1 (Goldsmith 2001)
                !! so we use the geometrical cross-section of grains [cgs]
-!!             write(*,*) 'b', mygisrf(i) / metallicity(i)
+!!             write(*,*) 'b', mygisrf(i) / dust2gas(i)
 
             else
 
@@ -435,7 +430,7 @@
 
             endif
 
-!!!      endif
+         endif
 
 !     Compute hydrogen number density
 
@@ -466,7 +461,7 @@
 !     Lookup values and do a linear temperature in log(T)
 !     Convert back to cgs
 
-!!!!!       if(impop3 .eq. 0) then
+            if(idspecies .eq. 0) then
 
                gasgr(i) = gasgra(indixe(i)) + tdef(i)
      &              *(gasgra(indixe(i)+1) -gasgra(indixe(i)))
@@ -477,14 +472,14 @@
                     !! apply to (idustfield .eq. 1) GC20200701
 !!             write(*,*) 'a', gasgr(i)
 
-!!!!!       else
+            else
 
                fv2k    = gasgr2a(indixe(i)) + tdef(i)
      &              *(gasgr2a(indixe(i)+1) -gasgr2a(indixe(i)))
                  
-               fac = 1.d0 / d(i,j,k) / metallicity(i) * coolunit / mh
+               fac = coolunit / mh
 
-               if ( itdspecies .eq. 0 ) then
+               if ( itdmulti .eq. 0 ) then
 
                gasgr(i) = fv2k * sgtot(i)
 
@@ -508,36 +503,36 @@
                gasvolorg  (i) = fv2k * sgvolorg  (i)
                gasH2Oice  (i) = fv2k * sgH2Oice  (i)
 
-               gasSiM     (i) = gasSiM     (i)*SiM     (i,j,k)*fac
-               gasFeM     (i) = gasFeM     (i)*FeM     (i,j,k)*fac
-               gasMg2SiO4 (i) = gasMg2SiO4 (i)*Mg2SiO4 (i,j,k)*fac
-               gasMgSiO3  (i) = gasMgSiO3  (i)*MgSiO3  (i,j,k)*fac
-               gasFe3O4   (i) = gasFe3O4   (i)*Fe3O4   (i,j,k)*fac
-               gasAC      (i) = gasAC      (i)*AC      (i,j,k)*fac
-               gasSiO2D   (i) = gasSiO2D   (i)*SiO2D   (i,j,k)*fac
-               gasMgO     (i) = gasMgO     (i)*MgO     (i,j,k)*fac
-               gasFeS     (i) = gasFeS     (i)*FeS     (i,j,k)*fac
-               gasAl2O3   (i) = gasAl2O3   (i)*Al2O3   (i,j,k)*fac
-               gasreforg  (i) = gasreforg  (i)*reforg  (i,j,k)*fac
-               gasvolorg  (i) = gasvolorg  (i)*volorg  (i,j,k)*fac
-               gasH2Oice  (i) = gasH2Oice  (i)*H2Oice  (i,j,k)*fac
+               gasSiM     (i) = gasSiM     (i) * fac
+               gasFeM     (i) = gasFeM     (i) * fac
+               gasMg2SiO4 (i) = gasMg2SiO4 (i) * fac
+               gasMgSiO3  (i) = gasMgSiO3  (i) * fac
+               gasFe3O4   (i) = gasFe3O4   (i) * fac
+               gasAC      (i) = gasAC      (i) * fac
+               gasSiO2D   (i) = gasSiO2D   (i) * fac
+               gasMgO     (i) = gasMgO     (i) * fac
+               gasFeS     (i) = gasFeS     (i) * fac
+               gasAl2O3   (i) = gasAl2O3   (i) * fac
+               gasreforg  (i) = gasreforg  (i) * fac
+               gasvolorg  (i) = gasvolorg  (i) * fac
+               gasH2Oice  (i) = gasH2Oice  (i) * fac
 
                endif
 
-!!!!!       endif
+            endif
 
 
         enddo
 
 !     --- Compute dust temperature in a slice ---
 
-         if (itdspecies .eq. 0) then
+         if (itdmulti .eq. 0) then
 
             call calc_tdust_1d_g(tdust, tgas, nh, gasgr,
      &           mygisrf, myisrf, itmask, trad, in, is, ie, j, k
      &         , gr_N, gr_Size, gr_dT, gr_Td, altot, kptot)
 
-            write(*,*) tdust
+!!          write(*,*) tdust
 
          else
 
@@ -598,7 +593,7 @@
 !     Copy slice values back to grid
 
         do i = is+1, ie+1
-           if (itdspecies .gt. 0) then
+           if (itdmulti .gt. 0) then
                 SiM_temp(i,j,k) = tSiM     (i)
                 FeM_temp(i,j,k) = tFeM     (i)
             Mg2SiO4_temp(i,j,k) = tMg2SiO4 (i)

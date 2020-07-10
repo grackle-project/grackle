@@ -118,7 +118,6 @@ int _calculate_pressure(chemistry_data *my_chemistry,
                         gr_float *HeI_density, gr_float *HeII_density, gr_float *HeIII_density,
                         gr_float *H2I_density, gr_float *H2II_density,
                         gr_float *DI_density, gr_float *DII_density, gr_float *HDI_density,
-//#ifdef GRACKLE_MD
                         gr_float *DM_density, gr_float *HDII_density, gr_float *HeHII_density,
                         gr_float *CI_density,  gr_float *CII_density,  gr_float *CO_density,  gr_float *CO2_density,
                         gr_float *OI_density,  gr_float *OH_density,  gr_float *H2O_density,  gr_float *O2_density,
@@ -129,7 +128,6 @@ int _calculate_pressure(chemistry_data *my_chemistry,
                         gr_float *SiM_density,  gr_float *FeM_density,  gr_float *Mg2SiO4_density,  gr_float *MgSiO3_density,  gr_float *Fe3O4_density,
                         gr_float *AC_density,  gr_float *SiO2D_density,  gr_float *MgO_density,  gr_float *FeS_density,  gr_float *Al2O3_density,
                         gr_float *reforg_density, gr_float *volorg_density, gr_float *H2Oice_density,
-//#endif
                         gr_float *e_density, gr_float *metal_density,
                         gr_float *pressure)
 {
@@ -152,7 +150,6 @@ int _calculate_pressure(chemistry_data *my_chemistry,
   my_fields.DI_density               = DI_density;
   my_fields.DII_density              = DII_density;
   my_fields.HDI_density              = HDI_density;
-#ifdef GRACKLE_MD
   my_fields.DM_density               = DM_density;
   my_fields.HDII_density             = HDII_density;
   my_fields.HeHII_density            = HeHII_density;
@@ -192,7 +189,6 @@ int _calculate_pressure(chemistry_data *my_chemistry,
   my_fields.reforg_density           = reforg_density;
   my_fields.volorg_density           = volorg_density;
   my_fields.H2Oice_density           = H2Oice_density;
-#endif
   my_fields.e_density                = e_density;
   my_fields.metal_density            = metal_density;
 
