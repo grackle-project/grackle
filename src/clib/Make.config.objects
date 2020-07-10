@@ -23,9 +23,11 @@ OBJS_CONFIG_LIB = \
         calc_temp1d_cloudy_g.lo \
         calc_temp_cloudy_g.lo \
         calc_rates_g.lo \
-        calc_rates_md.lo \
-        calc_rates_dust_pop3_c30.lo \
-        calc_rates_dust_pop3_f13.lo \
+        calc_rates_metal.lo \
+        calc_rates_dust.lo \
+        calc_rates_dust_loc.lo \
+        calc_rates_dust_C30.lo \
+        calc_rates_dust_F13.lo \
         lookup_cool_rates0d.lo \
         calc_tdust_1d_g.lo \
         calc_tdust_3d_g.lo \

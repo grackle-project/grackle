@@ -63,6 +63,7 @@ int _solve_chemistry(chemistry_data *my_chemistry,
                      gr_float *Mg_density,  gr_float *Al_density,  gr_float *S_density,  gr_float *Fe_density,
                      gr_float *SiM_density,  gr_float *FeM_density,  gr_float *Mg2SiO4_density,  gr_float *MgSiO3_density,  gr_float *Fe3O4_density,
                      gr_float *AC_density,  gr_float *SiO2D_density,  gr_float *MgO_density,  gr_float *FeS_density,  gr_float *Al2O3_density,
+                     gr_float *reforg, gr_float *volorg, gr_float *H2Oice,
 //#endif
                      gr_float *e_density, gr_float *metal_density, gr_float *dust_density,
 //#ifdef GRACKLE_MD
@@ -104,6 +105,7 @@ int _calculate_cooling_time(chemistry_data *my_chemistry,
                             gr_float *Mg_density,  gr_float *Al_density,  gr_float *S_density,  gr_float *Fe_density,
                             gr_float *SiM_density,  gr_float *FeM_density,  gr_float *Mg2SiO4_density,  gr_float *MgSiO3_density,  gr_float *Fe3O4_density,
                             gr_float *AC_density,  gr_float *SiO2D_density,  gr_float *MgO_density,  gr_float *FeS_density,  gr_float *Al2O3_density,
+                            gr_float *reforg, gr_float *volorg, gr_float *H2Oice,
 //#endif
                             gr_float *e_density, gr_float *metal_density, gr_float *dust_density,
                             gr_float *cooling_time, gr_float *RT_heating_rate,
@@ -111,13 +113,39 @@ int _calculate_cooling_time(chemistry_data *my_chemistry,
 
 int calculate_dust_temperature(code_units *my_units,
                                grackle_field_data *my_fields,
-                               gr_float *dust_temperature);
+                               gr_float *dust_temperature
+                             , gr_float *SiM_temperature
+                             , gr_float *FeM_temperature
+                             , gr_float *Mg2SiO4_temperature
+                             , gr_float *MgSiO3_temperature
+                             , gr_float *Fe3O4_temperature
+                             , gr_float *AC_temperature
+                             , gr_float *SiO2D_temperature
+                             , gr_float *MgO_temperature
+                             , gr_float *FeS_temperature
+                             , gr_float *Al2O3_temperature
+                             , gr_float *reforg_temperature
+                             , gr_float *volorg_temperature
+                             , gr_float *H2Oice_temperature );
 
 int local_calculate_dust_temperature(chemistry_data *my_chemistry,
                                      chemistry_data_storage *my_rates,
                                      code_units *my_units,
                                      grackle_field_data *my_fields,
-                                     gr_float *dust_temperature);
+                                     gr_float *dust_temperature
+                                   , gr_float *SiM_temperature
+                                   , gr_float *FeM_temperature
+                                   , gr_float *Mg2SiO4_temperature
+                                   , gr_float *MgSiO3_temperature
+                                   , gr_float *Fe3O4_temperature
+                                   , gr_float *AC_temperature
+                                   , gr_float *SiO2D_temperature
+                                   , gr_float *MgO_temperature
+                                   , gr_float *FeS_temperature
+                                   , gr_float *Al2O3_temperature
+                                   , gr_float *reforg_temperature
+                                   , gr_float *volorg_temperature
+                                   , gr_float *H2Oice_temperature );
 
 int calculate_gamma(code_units *my_units,
                     grackle_field_data *my_fields,
@@ -149,6 +177,7 @@ int _calculate_gamma(chemistry_data *my_chemistry,
                      gr_float *Mg_density,  gr_float *Al_density,  gr_float *S_density,  gr_float *Fe_density,
                      gr_float *SiM_density,  gr_float *FeM_density,  gr_float *Mg2SiO4_density,  gr_float *MgSiO3_density,  gr_float *Fe3O4_density,
                      gr_float *AC_density,  gr_float *SiO2D_density,  gr_float *MgO_density,  gr_float *FeS_density,  gr_float *Al2O3_density,
+                     gr_float *reforg, gr_float *volorg, gr_float *H2Oice,
 //#endif
                      gr_float *e_density, gr_float *metal_density,
                      gr_float *my_gamma) __attribute__ ((deprecated));
@@ -183,6 +212,7 @@ int _calculate_pressure(chemistry_data *my_chemistry,
                         gr_float *Mg_density,  gr_float *Al_density,  gr_float *S_density,  gr_float *Fe_density,
                         gr_float *SiM_density,  gr_float *FeM_density,  gr_float *Mg2SiO4_density,  gr_float *MgSiO3_density,  gr_float *Fe3O4_density,
                         gr_float *AC_density,  gr_float *SiO2D_density,  gr_float *MgO_density,  gr_float *FeS_density,  gr_float *Al2O3_density,
+                        gr_float *reforg, gr_float *volorg, gr_float *H2Oice,
 //#endif
                         gr_float *e_density, gr_float *metal_density,
                         gr_float *pressure) __attribute__ ((deprecated));
@@ -217,6 +247,7 @@ int _calculate_temperature(chemistry_data *my_chemistry,
                            gr_float *Mg_density,  gr_float *Al_density,  gr_float *S_density,  gr_float *Fe_density,
                            gr_float *SiM_density,  gr_float *FeM_density,  gr_float *Mg2SiO4_density,  gr_float *MgSiO3_density,  gr_float *Fe3O4_density,
                            gr_float *AC_density,  gr_float *SiO2D_density,  gr_float *MgO_density,  gr_float *FeS_density,  gr_float *Al2O3_density,
+                           gr_float *reforg, gr_float *volorg, gr_float *H2Oice,
 //#endif
                            gr_float *e_density, gr_float *metal_density,
                            gr_float *temperature) __attribute__ ((deprecated));

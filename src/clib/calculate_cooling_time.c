@@ -84,6 +84,7 @@ extern void FORTRAN_NAME(cool_multi_time_g)(
       , gr_float *Mg, gr_float *Al, gr_float *S, gr_float *Fe
       , gr_float *SiM, gr_float *FeM, gr_float *Mg2SiO4, gr_float *MgSiO3, gr_float *Fe3O4
       , gr_float *AC, gr_float *SiO2D, gr_float *MgO, gr_float *FeS, gr_float *Al2O3
+      , gr_float *reforg, gr_float *volorg, gr_float *H2Oice
       , double *cieY06
       , int *LH2_N, int *LH2_Size
       , double *LH2_D, double *LH2_T, double *LH2_H
@@ -115,64 +116,28 @@ extern void FORTRAN_NAME(cool_multi_time_g)(
       , int *grain_N, int *grain_Size
       , double *grain_D, double *grain_T, double *grain_dD, double *grain_dT
       , double *Tgrain, double *Ograin, double *Lgrain
-      , int *impop3
+      , int *immulti, int *impop3, int *idspecies, int *itdspecies, int *idsub
       , gr_float *metal_loc, gr_float *metal_C30, gr_float *metal_F13
-      , double *C30_XC , double *C30_XO, double *C30_XMg, double *C30_XAl
-      , double *C30_XSi, double *C30_XS, double *C30_XFe
+      , double *loc_fFeM    , double *loc_fMg2SiO4, double *loc_fMgSiO3 , double *loc_fFeS
+      , double *loc_freforg , double *loc_fvolorg , double *loc_fH2Oice
+      , double *loc_r0FeM    , double *loc_r0Mg2SiO4, double *loc_r0MgSiO3 , double *loc_r0FeS
+      , double *loc_r0reforg , double *loc_r0volorg , double *loc_r0H2Oice 
       , double *C30_fSiM, double *C30_fFeM, double *C30_fMg2SiO4, double *C30_fMgSiO3
-      , double *C30_fFe3O4, double *C30_fAC, double *C30_fSiO2D, double *C30_fMgO
-      , double *C30_fFeS, double *C30_fAl2O3
+      , double *C30_fAC, double *C30_fSiO2D, double *C30_fMgO, double *C30_fFeS, double *C30_fAl2O3
       , double *C30_r0SiM, double *C30_r0FeM, double *C30_r0Mg2SiO4, double *C30_r0MgSiO3
-      , double *C30_r0Fe3O4, double *C30_r0AC, double *C30_r0SiO2D, double *C30_r0MgO
-      , double *C30_r0FeS, double *C30_r0Al2O3
-      , double *C30_a0SiM, double *C30_a0FeM, double *C30_a0Mg2SiO4, double *C30_a0MgSiO3
-      , double *C30_a0Fe3O4, double *C30_a0AC, double *C30_a0SiO2D, double *C30_a0MgO
-      , double *C30_a0FeS, double *C30_a0Al2O3
-      , double *C30_v0SiM, double *C30_v0FeM, double *C30_v0Mg2SiO4, double *C30_v0MgSiO3
-      , double *C30_v0Fe3O4, double *C30_v0AC, double *C30_v0SiO2D, double *C30_v0MgO
-      , double *C30_v0FeS, double *C30_v0Al2O3
-      , int *C30_N, int *C30_Size
-      , double *C30_D, double *C30_T, double *C30_dD, double *C30_dT
-      , double *C30_RSiM, double *C30_RFeM, double *C30_RMg2SiO4, double *C30_RMgSiO3
-      , double *C30_RFe3O4, double *C30_RAC, double *C30_RSiO2D, double *C30_RMgO
-      , double *C30_RFeS, double *C30_RAl2O3
-      , double *C30_dRSiM, double *C30_dRFeM, double *C30_dRMg2SiO4, double *C30_dRMgSiO3
-      , double *C30_dRFe3O4, double *C30_dRAC, double *C30_dRSiO2D, double *C30_dRMgO
-      , double *C30_dRFeS, double *C30_dRAl2O3
-      , double *OC30_SiM, double *OC30_FeM, double *OC30_Mg2SiO4, double *OC30_MgSiO3
-      , double *OC30_Fe3O4, double *OC30_AC, double *OC30_SiO2D, double *OC30_MgO
-      , double *OC30_FeS, double *OC30_Al2O3
-      , double *LC30_SiM, double *LC30_FeM, double *LC30_Mg2SiO4, double *LC30_MgSiO3
-      , double *LC30_Fe3O4, double *LC30_AC, double *LC30_SiO2D, double *LC30_MgO
-      , double *LC30_FeS, double *LC30_Al2O3
-      , double *F13_XC , double *F13_XO, double *F13_XMg, double *F13_XAl
-      , double *F13_XSi, double *F13_XS, double *F13_XFe
-      , double *F13_fSiM, double *F13_fFeM, double *F13_fMg2SiO4, double *F13_fMgSiO3
-      , double *F13_fFe3O4, double *F13_fAC, double *F13_fSiO2D, double *F13_fMgO
-      , double *F13_fFeS, double *F13_fAl2O3
-      , double *F13_r0SiM, double *F13_r0FeM, double *F13_r0Mg2SiO4, double *F13_r0MgSiO3
-      , double *F13_r0Fe3O4, double *F13_r0AC, double *F13_r0SiO2D, double *F13_r0MgO
-      , double *F13_r0FeS, double *F13_r0Al2O3
-      , double *F13_a0SiM, double *F13_a0FeM, double *F13_a0Mg2SiO4, double *F13_a0MgSiO3
-      , double *F13_a0Fe3O4, double *F13_a0AC, double *F13_a0SiO2D, double *F13_a0MgO
-      , double *F13_a0FeS, double *F13_a0Al2O3
-      , double *F13_v0SiM, double *F13_v0FeM, double *F13_v0Mg2SiO4, double *F13_v0MgSiO3
-      , double *F13_v0Fe3O4, double *F13_v0AC, double *F13_v0SiO2D, double *F13_v0MgO
-      , double *F13_v0FeS, double *F13_v0Al2O3
-      , int *F13_N, int *F13_Size
-      , double *F13_D, double *F13_T, double *F13_dD, double *F13_dT
-      , double *F13_RSiM, double *F13_RFeM, double *F13_RMg2SiO4, double *F13_RMgSiO3
-      , double *F13_RFe3O4, double *F13_RAC, double *F13_RSiO2D, double *F13_RMgO
-      , double *F13_RFeS, double *F13_RAl2O3
-      , double *F13_dRSiM, double *F13_dRFeM, double *F13_dRMg2SiO4, double *F13_dRMgSiO3
-      , double *F13_dRFe3O4, double *F13_dRAC, double *F13_dRSiO2D, double *F13_dRMgO
-      , double *F13_dRFeS, double *F13_dRAl2O3
-      , double *OF13_SiM, double *OF13_FeM, double *OF13_Mg2SiO4, double *OF13_MgSiO3
-      , double *OF13_Fe3O4, double *OF13_AC, double *OF13_SiO2D, double *OF13_MgO
-      , double *OF13_FeS, double *OF13_Al2O3
-      , double *LF13_SiM, double *LF13_FeM, double *LF13_Mg2SiO4, double *LF13_MgSiO3
-      , double *LF13_Fe3O4, double *LF13_AC, double *LF13_SiO2D, double *LF13_MgO
-      , double *LF13_FeS, double *LF13_Al2O3
+      , double *C30_r0AC, double *C30_r0SiO2D, double *C30_r0MgO, double *C30_r0FeS, double *C30_r0Al2O3
+      , double *F13_fFeM, double *F13_fMg2SiO4, double *F13_fMgSiO3, double *F13_fFe3O4
+      , double *F13_fAC , double *F13_fSiO2D , double *F13_fAl2O3
+      , double *F13_r0FeM, double *F13_r0Mg2SiO4, double *F13_r0MgSiO3, double *F13_r0Fe3O4
+      , double *F13_r0AC , double *F13_r0SiO2D , double *F13_r0Al2O3 
+      , int *gr_N, int *gr_Size, double *gr_dT, double *gr_Td
+      , double *loc_kpFeM    , double *loc_kpMg2SiO4, double *loc_kpMgSiO3 , double *loc_kpFeS
+      , double *loc_kpreforg , double *loc_kpvolorg , double *loc_kpH2Oice 
+      , double *C30_kpSiM, double *C30_kpFeM, double *C30_kpMg2SiO4, double *C30_kpMgSiO3
+      , double *C30_kpAC, double *C30_kpSiO2D, double *C30_kpMgO, double *C30_kpFeS, double *C30_kpAl2O3
+      , double *F13_kpFeM, double *F13_kpMg2SiO4, double *F13_kpMgSiO3, double *F13_kpFe3O4
+      , double *F13_kpAC , double *F13_kpSiO2D , double *F13_kpAl2O3 
+      , double *gasgr2a, double *gamma_isrf2a
 #endif
         );
 
@@ -420,6 +385,9 @@ int local_calculate_cooling_time(chemistry_data *my_chemistry,
      , my_fields->MgO_density
      , my_fields->FeS_density
      , my_fields->Al2O3_density
+     , my_fields->reforg_density
+     , my_fields->volorg_density
+     , my_fields->H2Oice_density
      , my_rates->cieY06
      , my_rates->LH2_N
      ,&my_rates->LH2_Size
@@ -509,196 +477,89 @@ int local_calculate_cooling_time(chemistry_data *my_chemistry,
      , my_rates->Tgrain
      , my_rates->Ograin
      , my_rates->Lgrain
+     ,&my_chemistry->multi_metals
      ,&my_chemistry->metal_pop3
+     ,&my_chemistry->dust_species
+     ,&my_chemistry->dust_temperature_species
+     ,&my_chemistry->dust_sublimation
      , my_fields->metal_loc
      , my_fields->metal_C30
      , my_fields->metal_F13
-     ,&my_chemistry->C30_XC 
-     ,&my_chemistry->C30_XO 
-     ,&my_chemistry->C30_XMg
-     ,&my_chemistry->C30_XAl
-     ,&my_chemistry->C30_XSi
-     ,&my_chemistry->C30_XS 
-     ,&my_chemistry->C30_XFe
+     ,&my_chemistry->loc_fFeM    
+     ,&my_chemistry->loc_fMg2SiO4
+     ,&my_chemistry->loc_fMgSiO3 
+     ,&my_chemistry->loc_fFeS
+     ,&my_chemistry->loc_freforg 
+     ,&my_chemistry->loc_fvolorg 
+     ,&my_chemistry->loc_fH2Oice
+     , my_chemistry->loc_r0FeM    
+     , my_chemistry->loc_r0Mg2SiO4
+     , my_chemistry->loc_r0MgSiO3 
+     , my_chemistry->loc_r0FeS
+     , my_chemistry->loc_r0reforg 
+     , my_chemistry->loc_r0volorg 
+     , my_chemistry->loc_r0H2Oice 
      ,&my_chemistry->C30_fSiM    
      ,&my_chemistry->C30_fFeM    
      ,&my_chemistry->C30_fMg2SiO4
      ,&my_chemistry->C30_fMgSiO3 
-     ,&my_chemistry->C30_fFe3O4  
-     ,&my_chemistry->C30_fAC     
-     ,&my_chemistry->C30_fSiO2D  
-     ,&my_chemistry->C30_fMgO    
-     ,&my_chemistry->C30_fFeS    
-     ,&my_chemistry->C30_fAl2O3  
-     ,&my_rates->C30_r0SiM    
-     ,&my_rates->C30_r0FeM    
-     ,&my_rates->C30_r0Mg2SiO4
-     ,&my_rates->C30_r0MgSiO3 
-     ,&my_rates->C30_r0Fe3O4  
-     ,&my_rates->C30_r0AC     
-     ,&my_rates->C30_r0SiO2D  
-     ,&my_rates->C30_r0MgO    
-     ,&my_rates->C30_r0FeS    
-     ,&my_rates->C30_r0Al2O3  
-     ,&my_rates->C30_a0SiM    
-     ,&my_rates->C30_a0FeM    
-     ,&my_rates->C30_a0Mg2SiO4
-     ,&my_rates->C30_a0MgSiO3 
-     ,&my_rates->C30_a0Fe3O4  
-     ,&my_rates->C30_a0AC     
-     ,&my_rates->C30_a0SiO2D  
-     ,&my_rates->C30_a0MgO    
-     ,&my_rates->C30_a0FeS    
-     ,&my_rates->C30_a0Al2O3  
-     ,&my_rates->C30_v0SiM    
-     ,&my_rates->C30_v0FeM    
-     ,&my_rates->C30_v0Mg2SiO4
-     ,&my_rates->C30_v0MgSiO3 
-     ,&my_rates->C30_v0Fe3O4  
-     ,&my_rates->C30_v0AC     
-     ,&my_rates->C30_v0SiO2D  
-     ,&my_rates->C30_v0MgO    
-     ,&my_rates->C30_v0FeS    
-     ,&my_rates->C30_v0Al2O3  
-     , my_rates->C30_N
-     ,&my_rates->C30_Size
-     , my_rates->C30_D
-     , my_rates->C30_T
-     ,&my_rates->C30_dD
-     ,&my_rates->C30_dT
-     , my_rates->C30_RSiM    
-     , my_rates->C30_RFeM    
-     , my_rates->C30_RMg2SiO4
-     , my_rates->C30_RMgSiO3 
-     , my_rates->C30_RFe3O4  
-     , my_rates->C30_RAC     
-     , my_rates->C30_RSiO2D  
-     , my_rates->C30_RMgO    
-     , my_rates->C30_RFeS    
-     , my_rates->C30_RAl2O3  
-     ,&my_rates->C30_dRSiM    
-     ,&my_rates->C30_dRFeM    
-     ,&my_rates->C30_dRMg2SiO4
-     ,&my_rates->C30_dRMgSiO3 
-     ,&my_rates->C30_dRFe3O4  
-     ,&my_rates->C30_dRAC     
-     ,&my_rates->C30_dRSiO2D  
-     ,&my_rates->C30_dRMgO    
-     ,&my_rates->C30_dRFeS    
-     ,&my_rates->C30_dRAl2O3  
-     , my_rates->OC30_SiM    
-     , my_rates->OC30_FeM    
-     , my_rates->OC30_Mg2SiO4
-     , my_rates->OC30_MgSiO3 
-     , my_rates->OC30_Fe3O4  
-     , my_rates->OC30_AC     
-     , my_rates->OC30_SiO2D  
-     , my_rates->OC30_MgO    
-     , my_rates->OC30_FeS    
-     , my_rates->OC30_Al2O3  
-     , my_rates->LC30_SiM    
-     , my_rates->LC30_FeM    
-     , my_rates->LC30_Mg2SiO4
-     , my_rates->LC30_MgSiO3 
-     , my_rates->LC30_Fe3O4  
-     , my_rates->LC30_AC     
-     , my_rates->LC30_SiO2D  
-     , my_rates->LC30_MgO    
-     , my_rates->LC30_FeS    
-     , my_rates->LC30_Al2O3  
-     ,&my_chemistry->F13_XC 
-     ,&my_chemistry->F13_XO 
-     ,&my_chemistry->F13_XMg
-     ,&my_chemistry->F13_XAl
-     ,&my_chemistry->F13_XSi
-     ,&my_chemistry->F13_XS 
-     ,&my_chemistry->F13_XFe
-     ,&my_chemistry->F13_fSiM    
+     ,&my_chemistry->C30_fAC
+     ,&my_chemistry->C30_fSiO2D
+     ,&my_chemistry->C30_fMgO
+     ,&my_chemistry->C30_fFeS
+     ,&my_chemistry->C30_fAl2O3
+     , my_chemistry->C30_r0SiM    
+     , my_chemistry->C30_r0FeM    
+     , my_chemistry->C30_r0Mg2SiO4
+     , my_chemistry->C30_r0MgSiO3 
+     , my_chemistry->C30_r0AC
+     , my_chemistry->C30_r0SiO2D
+     , my_chemistry->C30_r0MgO
+     , my_chemistry->C30_r0FeS
+     , my_chemistry->C30_r0Al2O3
      ,&my_chemistry->F13_fFeM    
      ,&my_chemistry->F13_fMg2SiO4
      ,&my_chemistry->F13_fMgSiO3 
-     ,&my_chemistry->F13_fFe3O4  
-     ,&my_chemistry->F13_fAC     
-     ,&my_chemistry->F13_fSiO2D  
-     ,&my_chemistry->F13_fMgO    
-     ,&my_chemistry->F13_fFeS    
+     ,&my_chemistry->F13_fFe3O4
+     ,&my_chemistry->F13_fAC
+     ,&my_chemistry->F13_fSiO2D
      ,&my_chemistry->F13_fAl2O3  
-     ,&my_rates->F13_r0SiM    
-     ,&my_rates->F13_r0FeM    
-     ,&my_rates->F13_r0Mg2SiO4
-     ,&my_rates->F13_r0MgSiO3 
-     ,&my_rates->F13_r0Fe3O4  
-     ,&my_rates->F13_r0AC     
-     ,&my_rates->F13_r0SiO2D  
-     ,&my_rates->F13_r0MgO    
-     ,&my_rates->F13_r0FeS    
-     ,&my_rates->F13_r0Al2O3  
-     ,&my_rates->F13_a0SiM    
-     ,&my_rates->F13_a0FeM    
-     ,&my_rates->F13_a0Mg2SiO4
-     ,&my_rates->F13_a0MgSiO3 
-     ,&my_rates->F13_a0Fe3O4  
-     ,&my_rates->F13_a0AC     
-     ,&my_rates->F13_a0SiO2D  
-     ,&my_rates->F13_a0MgO    
-     ,&my_rates->F13_a0FeS    
-     ,&my_rates->F13_a0Al2O3  
-     ,&my_rates->F13_v0SiM    
-     ,&my_rates->F13_v0FeM    
-     ,&my_rates->F13_v0Mg2SiO4
-     ,&my_rates->F13_v0MgSiO3 
-     ,&my_rates->F13_v0Fe3O4  
-     ,&my_rates->F13_v0AC     
-     ,&my_rates->F13_v0SiO2D  
-     ,&my_rates->F13_v0MgO    
-     ,&my_rates->F13_v0FeS    
-     ,&my_rates->F13_v0Al2O3  
-     , my_rates->F13_N
-     ,&my_rates->F13_Size
-     , my_rates->F13_D
-     , my_rates->F13_T
-     ,&my_rates->F13_dD
-     ,&my_rates->F13_dT
-     , my_rates->F13_RSiM    
-     , my_rates->F13_RFeM    
-     , my_rates->F13_RMg2SiO4
-     , my_rates->F13_RMgSiO3 
-     , my_rates->F13_RFe3O4  
-     , my_rates->F13_RAC     
-     , my_rates->F13_RSiO2D  
-     , my_rates->F13_RMgO    
-     , my_rates->F13_RFeS    
-     , my_rates->F13_RAl2O3  
-     ,&my_rates->F13_dRSiM    
-     ,&my_rates->F13_dRFeM    
-     ,&my_rates->F13_dRMg2SiO4
-     ,&my_rates->F13_dRMgSiO3 
-     ,&my_rates->F13_dRFe3O4  
-     ,&my_rates->F13_dRAC     
-     ,&my_rates->F13_dRSiO2D  
-     ,&my_rates->F13_dRMgO    
-     ,&my_rates->F13_dRFeS    
-     ,&my_rates->F13_dRAl2O3  
-     , my_rates->OF13_SiM    
-     , my_rates->OF13_FeM    
-     , my_rates->OF13_Mg2SiO4
-     , my_rates->OF13_MgSiO3 
-     , my_rates->OF13_Fe3O4  
-     , my_rates->OF13_AC     
-     , my_rates->OF13_SiO2D  
-     , my_rates->OF13_MgO    
-     , my_rates->OF13_FeS    
-     , my_rates->OF13_Al2O3  
-     , my_rates->LF13_SiM    
-     , my_rates->LF13_FeM    
-     , my_rates->LF13_Mg2SiO4
-     , my_rates->LF13_MgSiO3 
-     , my_rates->LF13_Fe3O4  
-     , my_rates->LF13_AC     
-     , my_rates->LF13_SiO2D  
-     , my_rates->LF13_MgO    
-     , my_rates->LF13_FeS    
-     , my_rates->LF13_Al2O3  
+     , my_chemistry->F13_r0FeM    
+     , my_chemistry->F13_r0Mg2SiO4
+     , my_chemistry->F13_r0MgSiO3 
+     , my_chemistry->F13_r0Fe3O4
+     , my_chemistry->F13_r0AC
+     , my_chemistry->F13_r0SiO2D
+     , my_chemistry->F13_r0Al2O3  
+     , my_rates->gr_N
+     ,&my_rates->gr_Size
+     ,&my_rates->gr_dT
+     , my_rates->gr_Td
+     , my_rates->loc_kpFeM    
+     , my_rates->loc_kpMg2SiO4
+     , my_rates->loc_kpMgSiO3 
+     , my_rates->loc_kpFeS
+     , my_rates->loc_kpreforg 
+     , my_rates->loc_kpvolorg 
+     , my_rates->loc_kpH2Oice 
+     , my_rates->C30_kpSiM    
+     , my_rates->C30_kpFeM    
+     , my_rates->C30_kpMg2SiO4 
+     , my_rates->C30_kpMgSiO3
+     , my_rates->C30_kpAC     
+     , my_rates->C30_kpSiO2D
+     , my_rates->C30_kpMgO    
+     , my_rates->C30_kpFeS    
+     , my_rates->C30_kpAl2O3  
+     , my_rates->F13_kpFeM    
+     , my_rates->F13_kpMg2SiO4
+     , my_rates->F13_kpMgSiO3 
+     , my_rates->F13_kpFe3O4
+     , my_rates->F13_kpAC     
+     , my_rates->F13_kpSiO2D  
+     , my_rates->F13_kpAl2O3  
+     , my_rates->gas_grain2
+     ,&my_rates->gamma_isrf2
 #endif
     );
  
@@ -716,7 +577,6 @@ int _calculate_cooling_time(chemistry_data *my_chemistry,
                             gr_float *HeI_density, gr_float *HeII_density, gr_float *HeIII_density,
                             gr_float *H2I_density, gr_float *H2II_density,
                             gr_float *DI_density, gr_float *DII_density, gr_float *HDI_density,
-//#ifdef GRACKLE_MD
                             gr_float *DM_density, gr_float *HDII_density, gr_float *HeHII_density,
                             gr_float *CI_density,  gr_float *CII_density,  gr_float *CO_density,  gr_float *CO2_density,
                             gr_float *OI_density,  gr_float *OH_density,  gr_float *H2O_density,  gr_float *O2_density,
@@ -726,7 +586,7 @@ int _calculate_cooling_time(chemistry_data *my_chemistry,
                             gr_float *Mg_density,  gr_float *Al_density,  gr_float *S_density,  gr_float *Fe_density,
                             gr_float *SiM_density,  gr_float *FeM_density,  gr_float *Mg2SiO4_density,  gr_float *MgSiO3_density,  gr_float *Fe3O4_density,
                             gr_float *AC_density,  gr_float *SiO2D_density,  gr_float *MgO_density,  gr_float *FeS_density,  gr_float *Al2O3_density,
-//#endif
+                            gr_float *reforg_density, gr_float *volorg_density, gr_float *H2Oice_density,
                             gr_float *e_density, gr_float *metal_density, gr_float *dust_density,
                             gr_float *cooling_time, gr_float *RT_heating_rate,
                             gr_float *volumetric_heating_rate, gr_float *specific_heating_rate)
@@ -753,7 +613,6 @@ int _calculate_cooling_time(chemistry_data *my_chemistry,
   my_fields.DI_density               = DI_density;
   my_fields.DII_density              = DII_density;
   my_fields.HDI_density              = HDI_density;
-#ifdef GRACKLE_MD
   my_fields.DM_density               = DM_density;
   my_fields.HDII_density             = HDII_density;
   my_fields.HeHII_density            = HeHII_density;
@@ -790,7 +649,9 @@ int _calculate_cooling_time(chemistry_data *my_chemistry,
   my_fields.MgO_density              = MgO_density;
   my_fields.FeS_density              = FeS_density;
   my_fields.Al2O3_density            = Al2O3_density;
-#endif
+  my_fields.reforg_density           = reforg_density;
+  my_fields.volorg_density           = volorg_density;
+  my_fields.H2Oice_density           = H2Oice_density;
   my_fields.e_density                = e_density;
   my_fields.metal_density            = metal_density;
   my_fields.dust_density             = dust_density;

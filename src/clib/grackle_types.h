@@ -86,6 +86,9 @@ typedef struct
   gr_float *MgO_density; 
   gr_float *FeS_density; 
   gr_float *Al2O3_density;
+  gr_float *reforg_density;
+  gr_float *volorg_density;
+  gr_float *H2Oice_density;
 //#endif
   gr_float *e_density;
   gr_float *metal_density;

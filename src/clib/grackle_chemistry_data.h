@@ -77,8 +77,22 @@ typedef struct
   /* Flag to solve grain growth reactions */
   int grain_growth;
 
-  /* Flag to use pop III metal */
+  /* Flag to solve multiple metal sources */
+  int multi_metals;
+
+  /* Select pop III metal/dust model
+         For multi_metals = 0, select a dust model
+         For multi_metals > 0, select a set of dust models */
   int metal_pop3;
+
+  /* Flag to solve multiple grain species */
+  int dust_species;
+
+  /* Flag to solve temperatures of multiple grain species */
+  int dust_temperature_species;
+
+  /* Flag to supply dust sublimation */
+  int dust_sublimation;
 //#endif
 
   /* photo-electric heating from irradiated dust */
@@ -114,21 +128,27 @@ typedef struct
   /* Local ISM (Pollack et al. 1994) */
   double loc_XC , loc_XO , loc_XMg, loc_XAl, loc_XSi, loc_XS , loc_XFe;
   double loc_fC , loc_fO , loc_fMg, loc_fAl, loc_fSi, loc_fS , loc_fFe;
-  double loc_fSiM    , loc_fFeM    , loc_fMg2SiO4, loc_fMgSiO3 , loc_fFe3O4  
-       , loc_fAC     , loc_fSiO2D  , loc_fMgO    , loc_fFeS    , loc_fAl2O3;
+  double loc_fFeM    , loc_fMg2SiO4, loc_fMgSiO3 , loc_fFeS  
+       , loc_freforg , loc_fvolorg , loc_fH2Oice ;
+  double *loc_r0FeM    , *loc_r0Mg2SiO4, *loc_r0MgSiO3 , *loc_r0FeS    
+       , *loc_r0reforg , *loc_r0volorg , *loc_r0H2Oice ;
 
   /* Pop III SN */
   /* normal CCSN 30 Msun */
   double C30_XC , C30_XO , C30_XMg, C30_XAl, C30_XSi, C30_XS , C30_XFe;
   double C30_fC , C30_fO , C30_fMg, C30_fAl, C30_fSi, C30_fS , C30_fFe;
-  double C30_fSiM    , C30_fFeM    , C30_fMg2SiO4, C30_fMgSiO3 , C30_fFe3O4  
+  double C30_fSiM    , C30_fFeM    , C30_fMg2SiO4, C30_fMgSiO3
        , C30_fAC     , C30_fSiO2D  , C30_fMgO    , C30_fFeS    , C30_fAl2O3;
+  double *C30_r0SiM    , *C30_r0FeM    , *C30_r0Mg2SiO4, *C30_r0MgSiO3
+       , *C30_r0AC     , *C30_r0SiO2D  , *C30_r0MgO    , *C30_r0FeS    , *C30_r0Al2O3;
 
   /* faint SN 13 Msun */
   double F13_XC , F13_XO , F13_XMg, F13_XAl, F13_XSi, F13_XS , F13_XFe;
   double F13_fC , F13_fO , F13_fMg, F13_fAl, F13_fSi, F13_fS , F13_fFe;
-  double F13_fSiM    , F13_fFeM    , F13_fMg2SiO4, F13_fMgSiO3 , F13_fFe3O4  
-       , F13_fAC     , F13_fSiO2D  , F13_fMgO    , F13_fFeS    , F13_fAl2O3;
+  double F13_fFeM    , F13_fMg2SiO4, F13_fMgSiO3 , F13_fFe3O4  
+       , F13_fAC     , F13_fSiO2D  , F13_fAl2O3;
+  double *F13_r0FeM    , *F13_r0Mg2SiO4, *F13_r0MgSiO3 , *F13_r0Fe3O4
+       , *F13_r0AC     , *F13_r0SiO2D  , *F13_r0Al2O3;
 //#endif
 
   int NumberOfTemperatureBins;
@@ -369,6 +389,11 @@ typedef struct
 
   /* H2 formation on dust grains */
   double *h2dust;
+  double *h2dustS;
+  double *h2dustC;
+
+  /* Grain growth rate */
+  double *grogr;
 
   /* Chemical heating from H2 formation. */
   /* numerator and denominator of Eq 23 of Omukai ea. 2000. */
@@ -448,9 +473,13 @@ typedef struct
 
   // Heating of dust by interstellar radiation field
   double gamma_isrf;
+  // for arbitrary grain size distribution
+  double gamma_isrf2;
 
   /* Gas/grain energy transfer. */
   double *gas_grain;
+  // for arbitrary grain size distribution
+  double *gas_grain2;
 
 //#ifdef GRACKLE_MD
   /* CIE cooling rate (Yoshida et al. 2006) */
@@ -488,50 +517,34 @@ typedef struct
   double *grain_D, *grain_T, grain_dD, grain_dT;
   double *Hgrain, *Tgrain, *Ograin, *Lgrain;
 
+  /* Dust model */
+  int    *gr_N, gr_Size;
+  double gr_dT, *gr_Td;
+
+  /* Local ISM (Pollack et al. 1994) */
+//double loc_dfFeM    , loc_dfMg2SiO4, loc_dfMgSiO3 , loc_dfFeS    
+//     , loc_dfreforg , loc_dfvolorg , loc_dfH2Oice ;
+//double *loc_fdFeM    , *loc_fdMg2SiO4, *loc_fdMgSiO3 , *loc_fdFeS    
+//     , *loc_fdreforg , *loc_fdvolorg , *loc_fdH2Oice ;
+  double *loc_kpFeM    , *loc_kpMg2SiO4, *loc_kpMgSiO3 , *loc_kpFeS    
+       , *loc_kpreforg , *loc_kpvolorg , *loc_kpH2Oice ;
+
+
   /* Pop III dust model */
-  /* normal CCSN 30 Msun */
-  double C30_r0SiM    , C30_r0FeM    , C30_r0Mg2SiO4, C30_r0MgSiO3 , C30_r0Fe3O4
-       , C30_r0AC     , C30_r0SiO2D  , C30_r0MgO    , C30_r0FeS    , C30_r0Al2O3;
-  double C30_a0SiM    , C30_a0FeM    , C30_a0Mg2SiO4, C30_a0MgSiO3 , C30_a0Fe3O4
-       , C30_a0AC     , C30_a0SiO2D  , C30_a0MgO    , C30_a0FeS    , C30_a0Al2O3;
-  double C30_v0SiM    , C30_v0FeM    , C30_v0Mg2SiO4, C30_v0MgSiO3 , C30_v0Fe3O4
-       , C30_v0AC     , C30_v0SiO2D  , C30_v0MgO    , C30_v0FeS    , C30_v0Al2O3;
-  int *C30_N, C30_Size;
-  double *C30_D, *C30_T, C30_dD, C30_dT;
-  double *C30_RSiM    , *C30_RFeM    , *C30_RMg2SiO4, *C30_RMgSiO3 , *C30_RFe3O4  
-       , *C30_RAC     , *C30_RSiO2D  , *C30_RMgO    , *C30_RFeS    , *C30_RAl2O3;
-  double C30_dRSiM    , C30_dRFeM    , C30_dRMg2SiO4, C30_dRMgSiO3 , C30_dRFe3O4  
-       , C30_dRAC     , C30_dRSiO2D  , C30_dRMgO    , C30_dRFeS    , C30_dRAl2O3;
-  double *HC30_SiM    , *HC30_FeM    , *HC30_Mg2SiO4, *HC30_MgSiO3 , *HC30_Fe3O4  
-       , *HC30_AC     , *HC30_SiO2D  , *HC30_MgO    , *HC30_FeS    , *HC30_Al2O3;
-  double *OC30_SiM    , *OC30_FeM    , *OC30_Mg2SiO4, *OC30_MgSiO3 , *OC30_Fe3O4  
-       , *OC30_AC     , *OC30_SiO2D  , *OC30_MgO    , *OC30_FeS    , *OC30_Al2O3;
-  double *LC30_SiM    , *LC30_FeM    , *LC30_Mg2SiO4, *LC30_MgSiO3 , *LC30_Fe3O4  
-       , *LC30_AC     , *LC30_SiO2D  , *LC30_MgO    , *LC30_FeS    , *LC30_Al2O3;
-  double *KC30_SiM    , *KC30_FeM    , *KC30_Mg2SiO4, *KC30_MgSiO3 , *KC30_Fe3O4  
-       , *KC30_AC     , *KC30_SiO2D  , *KC30_MgO    , *KC30_FeS    , *KC30_Al2O3;
+//double C30_dfSiM    , C30_dfFeM    , C30_dfMg2SiO4, C30_dfMgSiO3
+//     , C30_dfAC     , C30_dfSiO2D  , C30_dfMgO    , C30_dfFeS    , C30_dfAl2O3;
+//double *C30_fdSiM    , *C30_fdFeM    , *C30_fdMg2SiO4, *C30_fdMgSiO3
+//     , *C30_fdAC     , *C30_fdSiO2D  , *C30_fdMgO    , *C30_fdFeS    , *C30_fdAl2O3;
+  double *C30_kpSiM    , *C30_kpFeM    , *C30_kpMg2SiO4, *C30_kpMgSiO3
+       , *C30_kpAC     , *C30_kpSiO2D  , *C30_kpMgO    , *C30_kpFeS    , *C30_kpAl2O3;
 
   /* faint SN 13 Msun */
-  double F13_r0SiM    , F13_r0FeM    , F13_r0Mg2SiO4, F13_r0MgSiO3 , F13_r0Fe3O4
-       , F13_r0AC     , F13_r0SiO2D  , F13_r0MgO    , F13_r0FeS    , F13_r0Al2O3;
-  double F13_a0SiM    , F13_a0FeM    , F13_a0Mg2SiO4, F13_a0MgSiO3 , F13_a0Fe3O4
-       , F13_a0AC     , F13_a0SiO2D  , F13_a0MgO    , F13_a0FeS    , F13_a0Al2O3;
-  double F13_v0SiM    , F13_v0FeM    , F13_v0Mg2SiO4, F13_v0MgSiO3 , F13_v0Fe3O4
-       , F13_v0AC     , F13_v0SiO2D  , F13_v0MgO    , F13_v0FeS    , F13_v0Al2O3;
-  int *F13_N, F13_Size;
-  double *F13_D, *F13_T, F13_dD, F13_dT;
-  double *F13_RSiM    , *F13_RFeM    , *F13_RMg2SiO4, *F13_RMgSiO3 , *F13_RFe3O4  
-       , *F13_RAC     , *F13_RSiO2D  , *F13_RMgO    , *F13_RFeS    , *F13_RAl2O3;
-  double F13_dRSiM    , F13_dRFeM    , F13_dRMg2SiO4, F13_dRMgSiO3 , F13_dRFe3O4  
-       , F13_dRAC     , F13_dRSiO2D  , F13_dRMgO    , F13_dRFeS    , F13_dRAl2O3;
-  double *HF13_SiM    , *HF13_FeM    , *HF13_Mg2SiO4, *HF13_MgSiO3 , *HF13_Fe3O4  
-       , *HF13_AC     , *HF13_SiO2D  , *HF13_MgO    , *HF13_FeS    , *HF13_Al2O3;
-  double *OF13_SiM    , *OF13_FeM    , *OF13_Mg2SiO4, *OF13_MgSiO3 , *OF13_Fe3O4  
-       , *OF13_AC     , *OF13_SiO2D  , *OF13_MgO    , *OF13_FeS    , *OF13_Al2O3;
-  double *LF13_SiM    , *LF13_FeM    , *LF13_Mg2SiO4, *LF13_MgSiO3 , *LF13_Fe3O4  
-       , *LF13_AC     , *LF13_SiO2D  , *LF13_MgO    , *LF13_FeS    , *LF13_Al2O3;
-  double *KF13_SiM    , *KF13_FeM    , *KF13_Mg2SiO4, *KF13_MgSiO3 , *KF13_Fe3O4  
-       , *KF13_AC     , *KF13_SiO2D  , *KF13_MgO    , *KF13_FeS    , *KF13_Al2O3;
+//double F13_dfFeM    , F13_dfMg2SiO4, F13_dfMgSiO3 , F13_dfFe3O4  
+//     , F13_dfAC     , F13_dfSiO2D  , F13_dfAl2O3;
+//double *F13_fdFeM    , *F13_fdMg2SiO4, *F13_fdMgSiO3 , *F13_fdFe3O4  
+//     , *F13_fdAC     , *F13_fdSiO2D  , *F13_fdAl2O3;
+  double *F13_kpFeM    , *F13_kpMg2SiO4, *F13_kpMgSiO3 , *F13_kpFe3O4  
+       , *F13_kpAC     , *F13_kpSiO2D  , *F13_kpAl2O3;
 //#endif
 
   /* UV background data */

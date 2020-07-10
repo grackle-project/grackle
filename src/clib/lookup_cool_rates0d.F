@@ -101,76 +101,35 @@
      &             , grain_N, grain_Size
      &             , grain_D, grain_T, grain_dD, grain_dT
      &             , Hgrain, Tgrain, Ograin, Lgrain
-     &             , impop3
+     &             , immulti, impop3, idspecies, itdspecies, idsub
      &             , metal_loc, metal_C30, metal_F13
-     &             , C30_XC , C30_XO, C30_XMg, C30_XAl
-     &             , C30_XSi, C30_XS, C30_XFe
+     &             , loc_fFeM, loc_fMg2SiO4, loc_fMgSiO3, loc_fFeS
+     &             , loc_freforg, loc_fvolorg, loc_fH2Oice
+     &             , loc_r0FeM, loc_r0Mg2SiO4, loc_r0MgSiO3, loc_r0FeS
+     &             , loc_r0reforg, loc_r0volorg, loc_r0H2Oice 
      &             , C30_fSiM, C30_fFeM, C30_fMg2SiO4, C30_fMgSiO3
-     &             , C30_fFe3O4, C30_fAC, C30_fSiO2D, C30_fMgO
+     &             , C30_fAC, C30_fSiO2D, C30_fMgO
      &             , C30_fFeS, C30_fAl2O3
-     &             , C30_r0SiM, C30_r0FeM, C30_r0Mg2SiO4, C30_r0MgSiO3
-     &             , C30_r0Fe3O4, C30_r0AC, C30_r0SiO2D, C30_r0MgO
-     &             , C30_r0FeS, C30_r0Al2O3
-     &             , C30_a0SiM, C30_a0FeM, C30_a0Mg2SiO4, C30_a0MgSiO3
-     &             , C30_a0Fe3O4, C30_a0AC, C30_a0SiO2D, C30_a0MgO
-     &             , C30_a0FeS, C30_a0Al2O3
-     &             , C30_v0SiM, C30_v0FeM, C30_v0Mg2SiO4, C30_v0MgSiO3
-     &             , C30_v0Fe3O4, C30_v0AC, C30_v0SiO2D, C30_v0MgO
-     &             , C30_v0FeS, C30_v0Al2O3
-     &             , C30_N, C30_Size
-     &             , C30_D, C30_T, C30_dD, C30_dT
-     &             , C30_RSiM, C30_RFeM, C30_RMg2SiO4, C30_RMgSiO3
-     &             , C30_RFe3O4, C30_RAC, C30_RSiO2D, C30_RMgO
-     &             , C30_RFeS, C30_RAl2O3
-     &             , C30_dRSiM, C30_dRFeM, C30_dRMg2SiO4, C30_dRMgSiO3
-     &             , C30_dRFe3O4, C30_dRAC, C30_dRSiO2D, C30_dRMgO
-     &             , C30_dRFeS, C30_dRAl2O3
-     &             , HC30_SiM, HC30_FeM, HC30_Mg2SiO4, HC30_MgSiO3
-     &             , HC30_Fe3O4, HC30_AC, HC30_SiO2D, HC30_MgO
-     &             , HC30_FeS, HC30_Al2O3
-     &             , OC30_SiM, OC30_FeM, OC30_Mg2SiO4, OC30_MgSiO3
-     &             , OC30_Fe3O4, OC30_AC, OC30_SiO2D, OC30_MgO
-     &             , OC30_FeS, OC30_Al2O3
-     &             , LC30_SiM, LC30_FeM, LC30_Mg2SiO4, LC30_MgSiO3
-     &             , LC30_Fe3O4, LC30_AC, LC30_SiO2D, LC30_MgO
-     &             , LC30_FeS, LC30_Al2O3
-     &             , KC30_SiM, KC30_FeM, KC30_Mg2SiO4, KC30_MgSiO3
-     &             , KC30_Fe3O4, KC30_AC, KC30_SiO2D, KC30_MgO
-     &             , KC30_FeS, KC30_Al2O3
-     &             , F13_XC , F13_XO, F13_XMg, F13_XAl
-     &             , F13_XSi, F13_XS, F13_XFe
-     &             , F13_fSiM, F13_fFeM, F13_fMg2SiO4, F13_fMgSiO3
-     &             , F13_fFe3O4, F13_fAC, F13_fSiO2D, F13_fMgO
-     &             , F13_fFeS, F13_fAl2O3
-     &             , F13_r0SiM, F13_r0FeM, F13_r0Mg2SiO4, F13_r0MgSiO3
-     &             , F13_r0Fe3O4, F13_r0AC, F13_r0SiO2D, F13_r0MgO
-     &             , F13_r0FeS, F13_r0Al2O3
-     &             , F13_a0SiM, F13_a0FeM, F13_a0Mg2SiO4, F13_a0MgSiO3
-     &             , F13_a0Fe3O4, F13_a0AC, F13_a0SiO2D, F13_a0MgO
-     &             , F13_a0FeS, F13_a0Al2O3
-     &             , F13_v0SiM, F13_v0FeM, F13_v0Mg2SiO4, F13_v0MgSiO3
-     &             , F13_v0Fe3O4, F13_v0AC, F13_v0SiO2D, F13_v0MgO
-     &             , F13_v0FeS, F13_v0Al2O3
-     &             , F13_N, F13_Size
-     &             , F13_D, F13_T, F13_dD, F13_dT
-     &             , F13_RSiM, F13_RFeM, F13_RMg2SiO4, F13_RMgSiO3
-     &             , F13_RFe3O4, F13_RAC, F13_RSiO2D, F13_RMgO
-     &             , F13_RFeS, F13_RAl2O3
-     &             , F13_dRSiM, F13_dRFeM, F13_dRMg2SiO4, F13_dRMgSiO3
-     &             , F13_dRFe3O4, F13_dRAC, F13_dRSiO2D, F13_dRMgO
-     &             , F13_dRFeS, F13_dRAl2O3
-     &             , HF13_SiM, HF13_FeM, HF13_Mg2SiO4, HF13_MgSiO3
-     &             , HF13_Fe3O4, HF13_AC, HF13_SiO2D, HF13_MgO
-     &             , HF13_FeS, HF13_Al2O3
-     &             , OF13_SiM, OF13_FeM, OF13_Mg2SiO4, OF13_MgSiO3
-     &             , OF13_Fe3O4, OF13_AC, OF13_SiO2D, OF13_MgO
-     &             , OF13_FeS, OF13_Al2O3
-     &             , LF13_SiM, LF13_FeM, LF13_Mg2SiO4, LF13_MgSiO3
-     &             , LF13_Fe3O4, LF13_AC, LF13_SiO2D, LF13_MgO
-     &             , LF13_FeS, LF13_Al2O3
-     &             , KF13_SiM, KF13_FeM, KF13_Mg2SiO4, KF13_MgSiO3
-     &             , KF13_Fe3O4, KF13_AC, KF13_SiO2D, KF13_MgO
-     &             , KF13_FeS, KF13_Al2O3
+     &             , C30_r0SiM, C30_r0FeM, C30_r0Mg2SiO4
+     &             , C30_r0MgSiO3, C30_r0AC, C30_r0SiO2D
+     &             , C30_r0MgO, C30_r0FeS, C30_r0Al2O3
+     &             , F13_fFeM, F13_fMg2SiO4, F13_fMgSiO3
+     &             , F13_fFe3O4, F13_fAC, F13_fSiO2D, F13_fAl2O3
+     &             , F13_r0FeM, F13_r0Mg2SiO4, F13_r0MgSiO3
+     &             , F13_r0Fe3O4, F13_r0AC, F13_r0SiO2D, F13_r0Al2O3
+     &             , gr_N, gr_Size, gr_dT, gr_Td
+     &             , loc_kpFeM, loc_kpMg2SiO4, loc_kpMgSiO3, loc_kpFeS
+     &             , loc_kpreforg, loc_kpvolorg, loc_kpH2Oice
+     &             , C30_kpSiM, C30_kpFeM, C30_kpMg2SiO4
+     &             , C30_kpMgSiO3, C30_kpAC, C30_kpSiO2D
+     &             , C30_kpMgO, C30_kpFeS, C30_kpAl2O3
+     &             , F13_kpFeM, F13_kpMg2SiO4, F13_kpMgSiO3
+     &             , F13_kpFe3O4, F13_kpAC, F13_kpSiO2D, F13_kpAl2O3
+     &             , h2dustSa, h2dustCa, grogra
+     &             , tSiM, tFeM, tMg2SiO4, tMgSiO3, tFe3O4
+     &             , tAC, tSiO2D, tMgO, tFeS, tAl2O3
+     &             , treforg, tvolorg, tH2Oice
+     &             , gasgr2a, gamma_isrf2a
 #endif
      &             , imp_eng)
 
@@ -198,7 +157,7 @@ c -------------------------------------------------------------------
 
 !  Density, energy and velocity fields fields
 #ifdef GRACKLE_MD
-      integer, parameter :: i_eng = 49
+      integer, parameter :: i_eng = 52
 #else
       integer, parameter :: i_eng = 13
 #endif
@@ -348,7 +307,7 @@ c -------------------------------------------------------------------
      &       k13dd(14), h2dust,
      &       ncrn, ncrd1, ncrd2
 #ifdef GRACKLE_MD
-      real*8 DM , HDII , HeHII 
+      R_PREC DM , HDII , HeHII 
      &     , CI   , CII    , CO
      &     , CO2  , OI     , OH
      &     , H2O  , O2     , SiI
@@ -356,10 +315,12 @@ c -------------------------------------------------------------------
      &     , CH2  , COII   , OII
      &     , OHII , H2OII  , H3OII
      &     , O2II , Mg     , Al
-     &     , S    , Fe     , SiM
-     &     , FeM  , Mg2SiO4, MgSiO3
-     &     , Fe3O4, AC     , SiO2D
-     &     , MgO  , FeS    , Al2O3
+     &     , S    , Fe     
+      R_PREC  SiM, FeM, Mg2SiO4
+     &      , MgSiO3, Fe3O4, AC
+     &      , SiO2D, MgO, FeS
+     &      , Al2O3
+     &      , reforg, volorg, H2Oice
       real*8 k125, k129, k130, k131, k132
      &     , k133, k134, k135, k136, k137
      &     , k148, k149, k150, k151, k152
@@ -417,97 +378,51 @@ c -------------------------------------------------------------------
      &       , grain_dD, grain_dT
      &       , Hgrain(grain_Size), Tgrain(grain_Size)
      &       , Ograin(grain_Size), Lgrain(grain_Size)
-      integer impop3
-      real*8  C30_XC , C30_XO, C30_XMg, C30_XAl
-     &      , C30_XSi, C30_XS, C30_XFe
+      integer immulti, impop3, idspecies, itdspecies, idsub
+      real*8  loc_fFeM, loc_fMg2SiO4, loc_fMgSiO3, loc_fFeS
+     &      , loc_freforg, loc_fvolorg, loc_fH2Oice
+      real*8  loc_r0FeM(3), loc_r0Mg2SiO4(3), loc_r0MgSiO3(3)
+     &      , loc_r0FeS(3), loc_r0reforg(3), loc_r0volorg(3)
+     &      , loc_r0H2Oice(3)
       real*8  C30_fSiM, C30_fFeM, C30_fMg2SiO4, C30_fMgSiO3
-     &      , C30_fFe3O4, C30_fAC, C30_fSiO2D, C30_fMgO
-     &      , C30_fFeS, C30_fAl2O3
-      real*8  C30_r0SiM, C30_r0FeM, C30_r0Mg2SiO4, C30_r0MgSiO3
-     &      , C30_r0Fe3O4, C30_r0AC, C30_r0SiO2D, C30_r0MgO
-     &      , C30_r0FeS, C30_r0Al2O3
-      real*8  C30_a0SiM, C30_a0FeM, C30_a0Mg2SiO4, C30_a0MgSiO3
-     &      , C30_a0Fe3O4, C30_a0AC, C30_a0SiO2D, C30_a0MgO
-     &      , C30_a0FeS, C30_a0Al2O3
-      real*8  C30_v0SiM, C30_v0FeM, C30_v0Mg2SiO4, C30_v0MgSiO3
-     &      , C30_v0Fe3O4, C30_v0AC, C30_v0SiO2D, C30_v0MgO
-     &      , C30_v0FeS, C30_v0Al2O3
-      integer C30_N(3), C30_Size
-      real*8  C30_D(C30_N(1)), C30_T(C30_N(2)), C30_dD, C30_dT
-      real*8  C30_RSiM(C30_N(3)), C30_RFeM(C30_N(3))
-     &      , C30_RMg2SiO4(C30_N(3)), C30_RMgSiO3(C30_N(3))
-     &      , C30_RFe3O4(C30_N(3)), C30_RAC(C30_N(3))
-     &      , C30_RSiO2D(C30_N(3)), C30_RMgO(C30_N(3))
-     &      , C30_RFeS(C30_N(3)), C30_RAl2O3(C30_N(3))
-      real*8  C30_dRSiM, C30_dRFeM, C30_dRMg2SiO4, C30_dRMgSiO3
-     &      , C30_dRFe3O4, C30_dRAC, C30_dRSiO2D, C30_dRMgO
-     &      , C30_dRFeS, C30_dRAl2O3
-      real*8  HC30_SiM(C30_Size), HC30_FeM(C30_Size)
-     &      , HC30_Mg2SiO4(C30_Size), HC30_MgSiO3(C30_Size)
-     &      , HC30_Fe3O4(C30_Size), HC30_AC(C30_Size)
-     &      , HC30_SiO2D(C30_Size), HC30_MgO(C30_Size)
-     &      , HC30_FeS(C30_Size), HC30_Al2O3(C30_Size)
-      real*8  OC30_SiM(C30_Size), OC30_FeM(C30_Size)
-     &      , OC30_Mg2SiO4(C30_Size), OC30_MgSiO3(C30_Size)
-     &      , OC30_Fe3O4(C30_Size), OC30_AC(C30_Size)
-     &      , OC30_SiO2D(C30_Size), OC30_MgO(C30_Size)
-     &      , OC30_FeS(C30_Size), OC30_Al2O3(C30_Size)
-      real*8  LC30_SiM(C30_Size), LC30_FeM(C30_Size)
-     &      , LC30_Mg2SiO4(C30_Size), LC30_MgSiO3(C30_Size)
-     &      , LC30_Fe3O4(C30_Size), LC30_AC(C30_Size)
-     &      , LC30_SiO2D(C30_Size), LC30_MgO(C30_Size)
-     &      , LC30_FeS(C30_Size), LC30_Al2O3(C30_Size)
-      real*8  KC30_SiM(C30_Size), KC30_FeM(C30_Size)
-     &      , KC30_Mg2SiO4(C30_Size), KC30_MgSiO3(C30_Size)
-     &      , KC30_Fe3O4(C30_Size), KC30_AC(C30_Size)
-     &      , KC30_SiO2D(C30_Size), KC30_MgO(C30_Size)
-     &      , KC30_FeS(C30_Size), KC30_Al2O3(C30_Size)
-      real*8  F13_XC , F13_XO, F13_XMg, F13_XAl
-     &      , F13_XSi, F13_XS, F13_XFe
-      real*8  F13_fSiM, F13_fFeM, F13_fMg2SiO4, F13_fMgSiO3
-     &      , F13_fFe3O4, F13_fAC, F13_fSiO2D, F13_fMgO
-     &      , F13_fFeS, F13_fAl2O3
-      real*8  F13_r0SiM, F13_r0FeM, F13_r0Mg2SiO4, F13_r0MgSiO3
-     &      , F13_r0Fe3O4, F13_r0AC, F13_r0SiO2D, F13_r0MgO
-     &      , F13_r0FeS, F13_r0Al2O3
-      real*8  F13_a0SiM, F13_a0FeM, F13_a0Mg2SiO4, F13_a0MgSiO3
-     &      , F13_a0Fe3O4, F13_a0AC, F13_a0SiO2D, F13_a0MgO
-     &      , F13_a0FeS, F13_a0Al2O3
-      real*8  F13_v0SiM, F13_v0FeM, F13_v0Mg2SiO4, F13_v0MgSiO3
-     &      , F13_v0Fe3O4, F13_v0AC, F13_v0SiO2D, F13_v0MgO
-     &      , F13_v0FeS, F13_v0Al2O3
-      integer F13_N(3), F13_Size
-      real*8  F13_D(F13_N(1)), F13_T(F13_N(2)), F13_dD, F13_dT
-      real*8  F13_RSiM(F13_N(3)), F13_RFeM(F13_N(3))
-     &      , F13_RMg2SiO4(F13_N(3)), F13_RMgSiO3(F13_N(3))
-     &      , F13_RFe3O4(F13_N(3)), F13_RAC(F13_N(3))
-     &      , F13_RSiO2D(F13_N(3)), F13_RMgO(F13_N(3))
-     &      , F13_RFeS(F13_N(3)), F13_RAl2O3(F13_N(3))
-      real*8  F13_dRSiM, F13_dRFeM, F13_dRMg2SiO4, F13_dRMgSiO3
-     &      , F13_dRFe3O4, F13_dRAC, F13_dRSiO2D, F13_dRMgO
-     &      , F13_dRFeS, F13_dRAl2O3
-      real*8  HF13_SiM(F13_Size), HF13_FeM(F13_Size)
-     &      , HF13_Mg2SiO4(F13_Size), HF13_MgSiO3(F13_Size)
-     &      , HF13_Fe3O4(F13_Size), HF13_AC(F13_Size)
-     &      , HF13_SiO2D(F13_Size), HF13_MgO(F13_Size)
-     &      , HF13_FeS(F13_Size), HF13_Al2O3(F13_Size)
-      real*8  OF13_SiM(F13_Size), OF13_FeM(F13_Size)
-     &      , OF13_Mg2SiO4(F13_Size), OF13_MgSiO3(F13_Size)
-     &      , OF13_Fe3O4(F13_Size), OF13_AC(F13_Size)
-     &      , OF13_SiO2D(F13_Size), OF13_MgO(F13_Size)
-     &      , OF13_FeS(F13_Size), OF13_Al2O3(F13_Size)
-      real*8  LF13_SiM(F13_Size), LF13_FeM(F13_Size)
-     &      , LF13_Mg2SiO4(F13_Size), LF13_MgSiO3(F13_Size)
-     &      , LF13_Fe3O4(F13_Size), LF13_AC(F13_Size)
-     &      , LF13_SiO2D(F13_Size), LF13_MgO(F13_Size)
-     &      , LF13_FeS(F13_Size), LF13_Al2O3(F13_Size)
-      real*8  KF13_SiM(F13_Size), KF13_FeM(F13_Size)
-     &      , KF13_Mg2SiO4(F13_Size), KF13_MgSiO3(F13_Size)
-     &      , KF13_Fe3O4(F13_Size), KF13_AC(F13_Size)
-     &      , KF13_SiO2D(F13_Size), KF13_MgO(F13_Size)
-     &      , KF13_FeS(F13_Size), KF13_Al2O3(F13_Size)
-      real*8  kd0    , kd1    , kd2    , kd3    , kd4    
-     &      , kd5    , kd6    , kd7    , kd8    , kd9    
+     &      , C30_fAC, C30_fSiO2D, C30_fMgO, C30_fFeS, C30_fAl2O3
+      real*8  C30_r0SiM(3), C30_r0FeM(3), C30_r0Mg2SiO4(3)
+     &      , C30_r0MgSiO3(3), C30_r0AC(3), C30_r0SiO2D(3)
+     &      , C30_r0MgO(3), C30_r0FeS(3), C30_r0Al2O3(3)
+      real*8  F13_fFeM, F13_fMg2SiO4, F13_fMgSiO3
+     &      , F13_fFe3O4, F13_fAC, F13_fSiO2D, F13_fAl2O3
+      real*8  F13_r0FeM(3), F13_r0Mg2SiO4(3), F13_r0MgSiO3(3)
+     &      , F13_r0Fe3O4(3), F13_r0AC(3), F13_r0SiO2D(3)
+     &      , F13_r0Al2O3(3)
+      integer gr_N(2), gr_Size
+      real*8  gr_dT, gr_Td(gr_N(2))
+      real*8  loc_kpFeM(gr_Size), loc_kpMg2SiO4(gr_Size)
+     &      , loc_kpMgSiO3(gr_Size), loc_kpFeS(gr_Size)
+     &      , loc_kpreforg(gr_Size), loc_kpvolorg(gr_Size)
+     &      , loc_kpH2Oice(gr_Size)
+      real*8  C30_kpSiM(gr_Size), C30_kpFeM(gr_Size)
+     &      , C30_kpMg2SiO4(gr_Size), C30_kpMgSiO3(gr_Size)
+     &      , C30_kpFe3O4(gr_Size), C30_kpAC(gr_Size)
+     &      , C30_kpSiO2D(gr_Size), C30_kpMgO(gr_Size)
+     &      , C30_kpFeS(gr_Size), C30_kpAl2O3(gr_Size)
+      real*8  F13_kpFeM(gr_Size)
+     &      , F13_kpMg2SiO4(gr_Size), F13_kpMgSiO3(gr_Size)
+     &      , F13_kpFe3O4(gr_Size), F13_kpAC(gr_Size)
+     &      , F13_kpSiO2D(gr_Size), F13_kpAl2O3(gr_Size)
+      real*8  h2dustSa(nratec, ndratec), h2dustCa(nratec, ndratec)
+      real*8  grogra(nratec)
+      real*8  kdSiM    , kdFeM    , kdMg2SiO4    
+     &      , kdMgSiO3    , kdFe3O4    , kdAC    
+     &      , kdSiO2D    , kdMgO    , kdFeS    
+     &      , kdAl2O3
+     &      , kdreforg    , kdvolorg    , kdH2Oice    
+!     grain temperature
+      real*8  tSiM    , tFeM    , tMg2SiO4    
+     &      , tMgSiO3    , tFe3O4    , tAC    
+     &      , tSiO2D    , tMgO    , tFeS    
+     &      , tAl2O3    
+     &      , treforg    , tvolorg    , tH2Oice    
+      real*8  gasgr2a(nratec), gamma_isrf2a
 #endif
 !     locals
 
@@ -564,8 +479,8 @@ c -------------------------------------------------------------------
           H2OII   = dsp(32)
           H3OII   = dsp(33)
           O2II    = dsp(34)
-      endif
-      if ( igrgr .eq. 1 ) then
+!!    endif
+!!    if ( igrgr .eq. 1 ) then
           Mg      = dsp(35)
           Al      = dsp(36)
           S       = dsp(37)
@@ -580,6 +495,9 @@ c -------------------------------------------------------------------
           MgO     = dsp(46)
           FeS     = dsp(47)
           Al2O3   = dsp(48)
+          reforg  = dsp(49)
+          volorg  = dsp(50)
+          H2Oice  = dsp(51)
       endif
       endif
 #endif
@@ -639,6 +557,7 @@ c -------------------------------------------------------------------
      &              , Mg, Al, S, Fe
      &              , SiM, FeM, Mg2SiO4, MgSiO3, Fe3O4
      &              , AC, SiO2D, MgO, FeS, Al2O3
+     &              , reforg, volorg, H2Oice
      &              , cieY06a
      &              , LH2_N, LH2_Size
      &              , LH2_D, LH2_T, LH2_H
@@ -670,64 +589,34 @@ c -------------------------------------------------------------------
      &              , grain_N, grain_Size
      &              , grain_D, grain_T, grain_dD, grain_dT
      &              , Tgrain, Ograin, Lgrain
-     &              , impop3
+     &              , immulti, impop3, idspecies, itdspecies, idsub
      &              , metal_loc, metal_C30, metal_F13
-     &              , C30_XC , C30_XO, C30_XMg, C30_XAl
-     &              , C30_XSi, C30_XS, C30_XFe
+     &              , loc_fFeM, loc_fMg2SiO4, loc_fMgSiO3, loc_fFeS
+     &              , loc_freforg, loc_fvolorg, loc_fH2Oice
+     &              , loc_r0FeM, loc_r0Mg2SiO4, loc_r0MgSiO3, loc_r0FeS
+     &              , loc_r0reforg, loc_r0volorg, loc_r0H2Oice 
      &              , C30_fSiM, C30_fFeM, C30_fMg2SiO4, C30_fMgSiO3
-     &              , C30_fFe3O4, C30_fAC, C30_fSiO2D, C30_fMgO
+     &              , C30_fAC, C30_fSiO2D, C30_fMgO
      &              , C30_fFeS, C30_fAl2O3
-     &              , C30_r0SiM, C30_r0FeM, C30_r0Mg2SiO4, C30_r0MgSiO3
-     &              , C30_r0Fe3O4, C30_r0AC, C30_r0SiO2D, C30_r0MgO
-     &              , C30_r0FeS, C30_r0Al2O3
-     &              , C30_a0SiM, C30_a0FeM, C30_a0Mg2SiO4, C30_a0MgSiO3
-     &              , C30_a0Fe3O4, C30_a0AC, C30_a0SiO2D, C30_a0MgO
-     &              , C30_a0FeS, C30_a0Al2O3
-     &              , C30_v0SiM, C30_v0FeM, C30_v0Mg2SiO4, C30_v0MgSiO3
-     &              , C30_v0Fe3O4, C30_v0AC, C30_v0SiO2D, C30_v0MgO
-     &              , C30_v0FeS, C30_v0Al2O3
-     &              , C30_N, C30_Size
-     &              , C30_D, C30_T, C30_dD, C30_dT
-     &              , C30_RSiM, C30_RFeM, C30_RMg2SiO4, C30_RMgSiO3
-     &              , C30_RFe3O4, C30_RAC, C30_RSiO2D, C30_RMgO
-     &              , C30_RFeS, C30_RAl2O3
-     &              , C30_dRSiM, C30_dRFeM, C30_dRMg2SiO4, C30_dRMgSiO3
-     &              , C30_dRFe3O4, C30_dRAC, C30_dRSiO2D, C30_dRMgO
-     &              , C30_dRFeS, C30_dRAl2O3
-     &              , OC30_SiM, OC30_FeM, OC30_Mg2SiO4, OC30_MgSiO3
-     &              , OC30_Fe3O4, OC30_AC, OC30_SiO2D, OC30_MgO
-     &              , OC30_FeS, OC30_Al2O3
-     &              , LC30_SiM, LC30_FeM, LC30_Mg2SiO4, LC30_MgSiO3
-     &              , LC30_Fe3O4, LC30_AC, LC30_SiO2D, LC30_MgO
-     &              , LC30_FeS, LC30_Al2O3
-     &              , F13_XC , F13_XO, F13_XMg, F13_XAl
-     &              , F13_XSi, F13_XS, F13_XFe
-     &              , F13_fSiM, F13_fFeM, F13_fMg2SiO4, F13_fMgSiO3
-     &              , F13_fFe3O4, F13_fAC, F13_fSiO2D, F13_fMgO
-     &              , F13_fFeS, F13_fAl2O3
-     &              , F13_r0SiM, F13_r0FeM, F13_r0Mg2SiO4, F13_r0MgSiO3
-     &              , F13_r0Fe3O4, F13_r0AC, F13_r0SiO2D, F13_r0MgO
-     &              , F13_r0FeS, F13_r0Al2O3
-     &              , F13_a0SiM, F13_a0FeM, F13_a0Mg2SiO4, F13_a0MgSiO3
-     &              , F13_a0Fe3O4, F13_a0AC, F13_a0SiO2D, F13_a0MgO
-     &              , F13_a0FeS, F13_a0Al2O3
-     &              , F13_v0SiM, F13_v0FeM, F13_v0Mg2SiO4, F13_v0MgSiO3
-     &              , F13_v0Fe3O4, F13_v0AC, F13_v0SiO2D, F13_v0MgO
-     &              , F13_v0FeS, F13_v0Al2O3
-     &              , F13_N, F13_Size
-     &              , F13_D, F13_T, F13_dD, F13_dT
-     &              , F13_RSiM, F13_RFeM, F13_RMg2SiO4, F13_RMgSiO3
-     &              , F13_RFe3O4, F13_RAC, F13_RSiO2D, F13_RMgO
-     &              , F13_RFeS, F13_RAl2O3
-     &              , F13_dRSiM, F13_dRFeM, F13_dRMg2SiO4, F13_dRMgSiO3
-     &              , F13_dRFe3O4, F13_dRAC, F13_dRSiO2D, F13_dRMgO
-     &              , F13_dRFeS, F13_dRAl2O3
-     &              , OF13_SiM, OF13_FeM, OF13_Mg2SiO4, OF13_MgSiO3
-     &              , OF13_Fe3O4, OF13_AC, OF13_SiO2D, OF13_MgO
-     &              , OF13_FeS, OF13_Al2O3
-     &              , LF13_SiM, LF13_FeM, LF13_Mg2SiO4, LF13_MgSiO3
-     &              , LF13_Fe3O4, LF13_AC, LF13_SiO2D, LF13_MgO
-     &              , LF13_FeS, LF13_Al2O3
+     &              , C30_r0SiM, C30_r0FeM, C30_r0Mg2SiO4
+     &              , C30_r0MgSiO3, C30_r0AC, C30_r0SiO2D
+     &              , C30_r0MgO, C30_r0FeS, C30_r0Al2O3
+     &              , F13_fFeM, F13_fMg2SiO4, F13_fMgSiO3
+     &              , F13_fFe3O4, F13_fAC, F13_fSiO2D, F13_fAl2O3
+     &              , F13_r0FeM, F13_r0Mg2SiO4, F13_r0MgSiO3
+     &              , F13_r0Fe3O4, F13_r0AC, F13_r0SiO2D, F13_r0Al2O3
+     &              , gr_N, gr_Size, gr_dT, gr_Td
+     &              , loc_kpFeM, loc_kpMg2SiO4, loc_kpMgSiO3, loc_kpFeS
+     &              , loc_kpreforg, loc_kpvolorg, loc_kpH2Oice
+     &              , C30_kpSiM, C30_kpFeM, C30_kpMg2SiO4
+     &              , C30_kpMgSiO3, C30_kpAC, C30_kpSiO2D
+     &              , C30_kpMgO, C30_kpFeS, C30_kpAl2O3
+     &              , F13_kpFeM, F13_kpMg2SiO4, F13_kpMgSiO3
+     &              , F13_kpFe3O4, F13_kpAC, F13_kpSiO2D, F13_kpAl2O3
+     &              , tSiM, tFeM, tMg2SiO4, tMgSiO3, tFe3O4
+     &              , tAC, tSiO2D, tMgO, tFeS, tAl2O3
+     &              , treforg, tvolorg, tH2Oice
+     &              , gasgr2a, gamma_isrf2a
 #endif
      &  )
 
@@ -773,6 +662,7 @@ c -------------------------------------------------------------------
      &              , Mg, Al, S, Fe
      &              , SiM, FeM, Mg2SiO4, MgSiO3, Fe3O4
      &              , AC, SiO2D, MgO, FeS, Al2O3
+     &              , reforg, volorg, H2Oice
      &              , k125a, k129a, k130a, k131a, k132a
      &              , k133a, k134a, k135a, k136a, k137a
      &              , k148a, k149a, k150a, k151a, k152a
@@ -800,65 +690,37 @@ c -------------------------------------------------------------------
      &              , grain_N, grain_Size
      &              , grain_D, grain_T, grain_dD, grain_dT
      &              , Hgrain
-     &              , impop3
+     &              , immulti, impop3, idspecies, itdspecies, idsub
      &              , metal_loc, metal_C30, metal_F13
-     &              , C30_XC , C30_XO, C30_XMg, C30_XAl
-     &              , C30_XSi, C30_XS, C30_XFe
+     &              , loc_fFeM, loc_fMg2SiO4, loc_fMgSiO3, loc_fFeS
+     &              , loc_freforg, loc_fvolorg, loc_fH2Oice
+     &              , loc_r0FeM, loc_r0Mg2SiO4, loc_r0MgSiO3, loc_r0FeS
+     &              , loc_r0reforg, loc_r0volorg, loc_r0H2Oice 
      &              , C30_fSiM, C30_fFeM, C30_fMg2SiO4, C30_fMgSiO3
-     &              , C30_fFe3O4, C30_fAC, C30_fSiO2D, C30_fMgO
+     &              , C30_fAC, C30_fSiO2D, C30_fMgO
      &              , C30_fFeS, C30_fAl2O3
-     &              , C30_r0SiM, C30_r0FeM, C30_r0Mg2SiO4, C30_r0MgSiO3
-     &              , C30_r0Fe3O4, C30_r0AC, C30_r0SiO2D, C30_r0MgO
-     &              , C30_r0FeS, C30_r0Al2O3
-     &              , C30_a0SiM, C30_a0FeM, C30_a0Mg2SiO4, C30_a0MgSiO3
-     &              , C30_a0Fe3O4, C30_a0AC, C30_a0SiO2D, C30_a0MgO
-     &              , C30_a0FeS, C30_a0Al2O3
-     &              , C30_v0SiM, C30_v0FeM, C30_v0Mg2SiO4, C30_v0MgSiO3
-     &              , C30_v0Fe3O4, C30_v0AC, C30_v0SiO2D, C30_v0MgO
-     &              , C30_v0FeS, C30_v0Al2O3
-     &              , C30_N, C30_Size
-     &              , C30_D, C30_T, C30_dD, C30_dT
-     &              , C30_RSiM, C30_RFeM, C30_RMg2SiO4, C30_RMgSiO3
-     &              , C30_RFe3O4, C30_RAC, C30_RSiO2D, C30_RMgO
-     &              , C30_RFeS, C30_RAl2O3
-     &              , C30_dRSiM, C30_dRFeM, C30_dRMg2SiO4, C30_dRMgSiO3
-     &              , C30_dRFe3O4, C30_dRAC, C30_dRSiO2D, C30_dRMgO
-     &              , C30_dRFeS, C30_dRAl2O3
-     &              , HC30_SiM, HC30_FeM, HC30_Mg2SiO4, HC30_MgSiO3
-     &              , HC30_Fe3O4, HC30_AC, HC30_SiO2D, HC30_MgO
-     &              , HC30_FeS, HC30_Al2O3
-     &              , KC30_SiM, KC30_FeM, KC30_Mg2SiO4, KC30_MgSiO3
-     &              , KC30_Fe3O4, KC30_AC, KC30_SiO2D, KC30_MgO
-     &              , KC30_FeS, KC30_Al2O3
-     &              , F13_XC , F13_XO, F13_XMg, F13_XAl
-     &              , F13_XSi, F13_XS, F13_XFe
-     &              , F13_fSiM, F13_fFeM, F13_fMg2SiO4, F13_fMgSiO3
-     &              , F13_fFe3O4, F13_fAC, F13_fSiO2D, F13_fMgO
-     &              , F13_fFeS, F13_fAl2O3
-     &              , F13_r0SiM, F13_r0FeM, F13_r0Mg2SiO4, F13_r0MgSiO3
-     &              , F13_r0Fe3O4, F13_r0AC, F13_r0SiO2D, F13_r0MgO
-     &              , F13_r0FeS, F13_r0Al2O3
-     &              , F13_a0SiM, F13_a0FeM, F13_a0Mg2SiO4, F13_a0MgSiO3
-     &              , F13_a0Fe3O4, F13_a0AC, F13_a0SiO2D, F13_a0MgO
-     &              , F13_a0FeS, F13_a0Al2O3
-     &              , F13_v0SiM, F13_v0FeM, F13_v0Mg2SiO4, F13_v0MgSiO3
-     &              , F13_v0Fe3O4, F13_v0AC, F13_v0SiO2D, F13_v0MgO
-     &              , F13_v0FeS, F13_v0Al2O3
-     &              , F13_N, F13_Size
-     &              , F13_D, F13_T, F13_dD, F13_dT
-     &              , F13_RSiM, F13_RFeM, F13_RMg2SiO4, F13_RMgSiO3
-     &              , F13_RFe3O4, F13_RAC, F13_RSiO2D, F13_RMgO
-     &              , F13_RFeS, F13_RAl2O3
-     &              , F13_dRSiM, F13_dRFeM, F13_dRMg2SiO4, F13_dRMgSiO3
-     &              , F13_dRFe3O4, F13_dRAC, F13_dRSiO2D, F13_dRMgO
-     &              , F13_dRFeS, F13_dRAl2O3
-     &              , HF13_SiM, HF13_FeM, HF13_Mg2SiO4, HF13_MgSiO3
-     &              , HF13_Fe3O4, HF13_AC, HF13_SiO2D, HF13_MgO
-     &              , HF13_FeS, HF13_Al2O3
-     &              , KF13_SiM, KF13_FeM, KF13_Mg2SiO4, KF13_MgSiO3
-     &              , KF13_Fe3O4, KF13_AC, KF13_SiO2D, KF13_MgO
-     &              , KF13_FeS, KF13_Al2O3
-     &              , kd0, kd1, kd2, kd3, kd4, kd5, kd6, kd7, kd8, kd9
+     &              , C30_r0SiM, C30_r0FeM, C30_r0Mg2SiO4
+     &              , C30_r0MgSiO3, C30_r0AC, C30_r0SiO2D
+     &              , C30_r0MgO, C30_r0FeS, C30_r0Al2O3
+     &              , F13_fFeM, F13_fMg2SiO4, F13_fMgSiO3
+     &              , F13_fFe3O4, F13_fAC, F13_fSiO2D, F13_fAl2O3
+     &              , F13_r0FeM, F13_r0Mg2SiO4, F13_r0MgSiO3
+     &              , F13_r0Fe3O4, F13_r0AC, F13_r0SiO2D, F13_r0Al2O3
+     &              , gr_N, gr_Size, gr_dT, gr_Td
+     &              , loc_kpFeM, loc_kpMg2SiO4, loc_kpMgSiO3, loc_kpFeS
+     &              , loc_kpreforg, loc_kpvolorg, loc_kpH2Oice
+     &              , C30_kpSiM, C30_kpFeM, C30_kpMg2SiO4
+     &              , C30_kpMgSiO3, C30_kpAC, C30_kpSiO2D
+     &              , C30_kpMgO, C30_kpFeS, C30_kpAl2O3
+     &              , F13_kpFeM, F13_kpMg2SiO4, F13_kpMgSiO3
+     &              , F13_kpFe3O4, F13_kpAC, F13_kpSiO2D, F13_kpAl2O3
+     &              , h2dustSa, h2dustCa, rhoH, grogra
+     &              , kdSiM, kdFeM, kdMg2SiO4
+     &              , kdMgSiO3, kdFe3O4, kdAC, kdSiO2D, kdMgO, kdFeS
+     &              , kdAl2O3, kdreforg, kdvolorg, kdH2Oice
+     &              , tSiM, tFeM, tMg2SiO4, tMgSiO3, tFe3O4
+     &              , tAC, tSiO2D, tMgO, tFeS, tAl2O3
+     &              , treforg, tvolorg, tH2Oice
 #endif
      &      )
 
@@ -880,7 +742,8 @@ c -------------------------------------------------------------------
      &                     k28shield, k29shield, k30shield, k31shield,
      &                     iradtrans, irt_honly,
      &                     kphHI, kphHeI, kphHeII,
-     &                     itmask, edot, chunit, dom)
+     &                     itmask, edot, chunit, dom
+     &                         )
       endif
 
 
@@ -1037,11 +900,7 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
             if (iradtrans .eq. 1) acoef = acoef + kphHI       
 
             if (anydust) then
-#ifdef GRACKLE_MD
-               acoef = acoef + 2._DKIND * h2dust   
-#else
                acoef = acoef + 2._DKIND * h2dust    * rhoH   
-#endif
             endif
 !           contribution of minor species
             if (ispecies .gt. 2) then
@@ -1231,13 +1090,8 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
      &              + k29shield    + k31shield   
 
             if (anydust) then
-#ifdef GRACKLE_MD
-               scoef = scoef + 2._DKIND * h2dust    *
-     &              HI        
-#else
                scoef = scoef + 2._DKIND * h2dust    *
      &              HI        * rhoH   
-#endif
             endif
 !           contribution of minor species
             if (ispecies .gt. 2) then
@@ -1272,11 +1126,11 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
             endif
             if(igrgr .eq. 1) then
                scoef = scoef + 2._DKIND * (
-     &               kd2    * 3._DKIND
-     &             + kd3    * 2._DKIND
-     &             + kd4    * 4._DKIND
-     &             + kd7   
-     &             + kd9    * 3._DKIND
+     &               kdMg2SiO4     * 3._DKIND
+     &             + kdMgSiO3      * 2._DKIND
+     &             + kdFe3O4       * 4._DKIND
+     &             + kdMgO        
+     &             + kdAl2O3       * 3._DKIND
      &           )
             endif
             endif
@@ -1481,7 +1335,7 @@ C***** CI **********
      &             + kz51    *   H2I        /  2._DKIND
                if(igrgr .eq. 1) then
                  acoef = acoef 
-     &         + kd5    / CI        * 12._DKIND      
+     &         + kdAC          / CI        * 12._DKIND      
                endif
 
             dspdot(16) = dspdot(16) + (scoef - acoef * CI)
@@ -1585,11 +1439,11 @@ C***** H2O **********
      &             + kz35    *   HII       
                if(igrgr .eq. 1) then
                  acoef = acoef 
-     &         + kd2    / H2O        * 18._DKIND * 3._DKIND
-     &         + kd3    / H2O        * 18._DKIND * 2._DKIND
-     &         + kd4    / H2O        * 18._DKIND * 4._DKIND
-     &         + kd7    / H2O        * 18._DKIND
-     &         + kd9    / H2O        * 18._DKIND * 3._DKIND
+     &         + kdMg2SiO4     / H2O        * 18._DKIND * 3._DKIND
+     &         + kdMgSiO3      / H2O        * 18._DKIND * 2._DKIND
+     &         + kdFe3O4       / H2O        * 18._DKIND * 4._DKIND
+     &         + kdMgO         / H2O        * 18._DKIND
+     &         + kdAl2O3       / H2O        * 18._DKIND * 3._DKIND
                endif
 
             dspdot(22) = dspdot(22) + (scoef - acoef * H2O)
@@ -1620,7 +1474,7 @@ C***** SiI **********
      &             + kz53    *    O2        / 32._DKIND
             if (igrgr .eq. 1) then
                acoef = acoef 
-     &         + kd0    / SiI        * 28._DKIND
+     &         + kdSiM         / SiI        * 28._DKIND
             endif
 
             dspdot(24) = dspdot(24) + (scoef - acoef * SiI)
@@ -1636,8 +1490,8 @@ C***** SiOI **********
      &             + kz54    *    OH        / 17._DKIND
                if(igrgr .eq. 1) then
                  acoef = acoef 
-     &         + kd2    / SiOI        * 44._DKIND
-     &         + kd3    / SiOI        * 44._DKIND
+     &         + kdMg2SiO4     / SiOI        * 44._DKIND
+     &         + kdMgSiO3      / SiOI        * 44._DKIND
                endif
 
             dspdot(25) = dspdot(25) + (scoef - acoef * SiOI)
@@ -1651,7 +1505,7 @@ C***** SiO2I **********
                acoef = 0._DKIND
                if(igrgr .eq. 1) then
                  acoef = acoef 
-     &         + kd6    / SiO2I        * 60._DKIND
+     &         + kdSiO2D       / SiO2I        * 60._DKIND
                endif
 
             dspdot(26) = dspdot(26) + (scoef - acoef * SiO2I)
@@ -1769,9 +1623,9 @@ C***** Mg **********
                scoef = 0._DKIND
                acoef = 0._DKIND
                  acoef = acoef 
-     &         + kd2    / Mg        * 24._DKIND * 2._DKIND
-     &         + kd3    / Mg        * 24._DKIND
-     &         + kd7    / Mg        * 24._DKIND
+     &         + kdMg2SiO4     / Mg        * 24._DKIND * 2._DKIND
+     &         + kdMgSiO3      / Mg        * 24._DKIND
+     &         + kdMgO         / Mg        * 24._DKIND
 
             dspdot(35) = dspdot(35) + (scoef - acoef * Mg)
 
@@ -1781,7 +1635,7 @@ C***** Al **********
                scoef = 0._DKIND 
                acoef = 0._DKIND
                  acoef = acoef 
-     &         + kd9    / Al        * 27._DKIND * 2._DKIND
+     &         + kdAl2O3       / Al        * 27._DKIND * 2._DKIND
 
             dspdot(36) = dspdot(36) + (scoef - acoef * Al)
 
@@ -1791,7 +1645,7 @@ C***** S  **********
                scoef = 0._DKIND 
                acoef = 0._DKIND
                  acoef = acoef 
-     &         + kd8    / S        * 32._DKIND
+     &         + kdFeS         / S        * 32._DKIND
 
             dspdot(37) = dspdot(37) + (scoef - acoef * S)
 
@@ -1801,9 +1655,9 @@ C***** Fe **********
                scoef = 0._DKIND 
                acoef = 0._DKIND
                  acoef = acoef 
-     &         + kd1    / Fe        * 56._DKIND
-     &         + kd4    / Fe        * 56._DKIND * 3._DKIND
-     &         + kd8    / Fe        * 56._DKIND
+     &         + kdFeM         / Fe        * 56._DKIND
+     &         + kdFe3O4       / Fe        * 56._DKIND * 3._DKIND
+     &         + kdFeS         / Fe        * 56._DKIND
 
             dspdot(38) = dspdot(38) + (scoef - acoef * Fe)
 
@@ -1812,7 +1666,7 @@ C***** Fe **********
 C***** SiM **********
                scoef = 0._DKIND
                  scoef = scoef 
-     &         + kd0    * 28._DKIND
+     &         + kdSiM         * 28._DKIND
                acoef = 0._DKIND
 
             dspdot(39) = dspdot(39) + (scoef - acoef * SiM)
@@ -1822,7 +1676,7 @@ C***** SiM **********
 C***** FeM **********
                scoef = 0._DKIND
                  scoef = scoef 
-     &         + kd1    * 56._DKIND
+     &         + kdFeM         * 56._DKIND
                acoef = 0._DKIND
 
             dspdot(40) = dspdot(40) + (scoef - acoef * FeM)
@@ -1832,7 +1686,7 @@ C***** FeM **********
 C***** Mg2SiO4 **********
                scoef = 0._DKIND
                  scoef = scoef 
-     &         + kd2    * 140._DKIND
+     &         + kdMg2SiO4     * 140._DKIND
                acoef = 0._DKIND
 
             dspdot(41) = dspdot(41) + (scoef - acoef * Mg2SiO4)
@@ -1842,7 +1696,7 @@ C***** Mg2SiO4 **********
 C***** MgSiO3 **********
                scoef = 0._DKIND 
                  scoef = scoef 
-     &         + kd3    * 100._DKIND
+     &         + kdMgSiO3      * 100._DKIND
                acoef = 0._DKIND
 
             dspdot(42) = dspdot(42) + (scoef - acoef * MgSiO3)
@@ -1852,7 +1706,7 @@ C***** MgSiO3 **********
 C***** Fe3O4 **********
                scoef = 0._DKIND 
                  scoef = scoef 
-     &         + kd4    * 232._DKIND
+     &         + kdFe3O4       * 232._DKIND
                acoef = 0._DKIND
 
             dspdot(43) = dspdot(43) + (scoef - acoef * Fe3O4)
@@ -1862,7 +1716,7 @@ C***** Fe3O4 **********
 C***** AC **********
                scoef = 0._DKIND 
                  scoef = scoef 
-     &         + kd5    * 12._DKIND
+     &         + kdAC          * 12._DKIND
                acoef = 0._DKIND
 
             dspdot(44) = dspdot(44) + (scoef - acoef * AC)
@@ -1872,7 +1726,7 @@ C***** AC **********
 C***** SiO2D **********
                scoef = 0._DKIND 
                  scoef = scoef 
-     &         + kd6    * 60._DKIND
+     &         + kdSiO2D       * 60._DKIND
                acoef = 0._DKIND
 
             dspdot(45) = dspdot(45) + (scoef - acoef * SiO2D)
@@ -1882,7 +1736,7 @@ C***** SiO2D **********
 C***** MgO **********
                scoef = 0._DKIND 
                  scoef = scoef 
-     &         + kd7    * 40._DKIND
+     &         + kdMgO         * 40._DKIND
                acoef = 0._DKIND
 
             dspdot(46) = dspdot(46) + (scoef - acoef * MgO)
@@ -1892,7 +1746,7 @@ C***** MgO **********
 C***** FeS **********
                scoef = 0._DKIND 
                  scoef = scoef 
-     &         + kd8    * 88._DKIND
+     &         + kdFeS         * 88._DKIND
                acoef = 0._DKIND
 
             dspdot(47) = dspdot(47) + (scoef - acoef * FeS)
@@ -1902,10 +1756,41 @@ C***** FeS **********
 C***** Al2O3 **********
                scoef = 0._DKIND 
                  scoef = scoef 
-     &         + kd9    * 102._DKIND
+     &         + kdAl2O3       * 102._DKIND
                acoef = 0._DKIND
 
             dspdot(48) = dspdot(48) + (scoef - acoef * Al2O3)
+
+
+
+C***** reforg **********
+               scoef = 0._DKIND 
+                 scoef = scoef 
+     &         + kdreforg      * 22.68_DKIND
+               acoef = 0._DKIND
+
+            dspdot(49) = dspdot(49) + (scoef - acoef * reforg)
+
+
+
+C***** volorg **********
+               scoef = 0._DKIND 
+                 scoef = scoef 
+     &         + kdvolorg      * 32._DKIND
+               acoef = 0._DKIND
+
+            dspdot(50) = dspdot(50) + (scoef - acoef * volorg)
+
+
+
+C***** H2Oice **********
+               scoef = 0._DKIND 
+                 scoef = scoef 
+     &         + kdH2Oice      * 18._DKIND
+               acoef = 0._DKIND
+
+            dspdot(51) = dspdot(51) + (scoef - acoef * H2Oice)
+
 
 
       endif

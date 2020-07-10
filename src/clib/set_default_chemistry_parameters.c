@@ -49,7 +49,11 @@ chemistry_data _set_default_chemistry_parameters(void)
 #ifdef GRACKLE_MD
   my_chemistry.metal_chemistry                = FALSE;
   my_chemistry.grain_growth                   = FALSE;
-  my_chemistry.metal_pop3                     = FALSE;
+  my_chemistry.multi_metals                   = FALSE;
+  my_chemistry.metal_pop3                     = 0;
+  my_chemistry.dust_species                   = FALSE;
+  my_chemistry.dust_temperature_species       = FALSE;
+  my_chemistry.dust_sublimation               = TRUE;
 #endif
 
   my_chemistry.cmb_temperature_floor          = TRUE;

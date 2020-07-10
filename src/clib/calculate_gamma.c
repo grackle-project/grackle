@@ -127,6 +127,7 @@ int _calculate_gamma(chemistry_data *my_chemistry,
                      gr_float *Mg_density,  gr_float *Al_density,  gr_float *S_density,  gr_float *Fe_density,
                      gr_float *SiM_density,  gr_float *FeM_density,  gr_float *Mg2SiO4_density,  gr_float *MgSiO3_density,  gr_float *Fe3O4_density,
                      gr_float *AC_density,  gr_float *SiO2D_density,  gr_float *MgO_density,  gr_float *FeS_density,  gr_float *Al2O3_density,
+                     gr_float *reforg_density, gr_float *volorg_density, gr_float *H2Oice_density,
 //#endif
                      gr_float *e_density, gr_float *metal_density,
                      gr_float *my_gamma)
@@ -187,6 +188,9 @@ int _calculate_gamma(chemistry_data *my_chemistry,
   my_fields.MgO_density              = MgO_density;
   my_fields.FeS_density              = FeS_density;
   my_fields.Al2O3_density            = Al2O3_density;
+  my_fields.reforg_density           = reforg_density;
+  my_fields.volorg_density           = volorg_density;
+  my_fields.H2Oice_density           = H2Oice_density;
 #endif
   my_fields.e_density                = e_density;
   my_fields.metal_density            = metal_density;

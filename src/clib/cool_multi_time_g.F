@@ -44,6 +44,7 @@
      &              , Mg, Al, S, Fe
      &              , SiM, FeM, Mg2SiO4, MgSiO3, Fe3O4
      &              , AC, SiO2D, MgO, FeS, Al2O3
+     &              , reforg, volorg, H2Oice
      &              , cieY06a
      &              , LH2_N, LH2_Size
      &              , LH2_D, LH2_T, LH2_H
@@ -75,64 +76,31 @@
      &              , grain_N, grain_Size
      &              , grain_D, grain_T, grain_dD, grain_dT
      &              , Tgrain, Ograin, Lgrain
-     &              , impop3
+     &              , immulti, impop3, idspecies, itdspecies, idsub
      &              , metal_loc, metal_C30, metal_F13
-     &              , C30_XC , C30_XO, C30_XMg, C30_XAl
-     &              , C30_XSi, C30_XS, C30_XFe
+     &              , loc_fFeM, loc_fMg2SiO4, loc_fMgSiO3, loc_fFeS
+     &              , loc_freforg, loc_fvolorg, loc_fH2Oice
+     &              , loc_r0FeM, loc_r0Mg2SiO4, loc_r0MgSiO3, loc_r0FeS
+     &              , loc_r0reforg, loc_r0volorg, loc_r0H2Oice 
      &              , C30_fSiM, C30_fFeM, C30_fMg2SiO4, C30_fMgSiO3
-     &              , C30_fFe3O4, C30_fAC, C30_fSiO2D, C30_fMgO
+     &              , C30_fAC, C30_fSiO2D, C30_fMgO
      &              , C30_fFeS, C30_fAl2O3
-     &              , C30_r0SiM, C30_r0FeM, C30_r0Mg2SiO4, C30_r0MgSiO3
-     &              , C30_r0Fe3O4, C30_r0AC, C30_r0SiO2D, C30_r0MgO
-     &              , C30_r0FeS, C30_r0Al2O3
-     &              , C30_a0SiM, C30_a0FeM, C30_a0Mg2SiO4, C30_a0MgSiO3
-     &              , C30_a0Fe3O4, C30_a0AC, C30_a0SiO2D, C30_a0MgO
-     &              , C30_a0FeS, C30_a0Al2O3
-     &              , C30_v0SiM, C30_v0FeM, C30_v0Mg2SiO4, C30_v0MgSiO3
-     &              , C30_v0Fe3O4, C30_v0AC, C30_v0SiO2D, C30_v0MgO
-     &              , C30_v0FeS, C30_v0Al2O3
-     &              , C30_N, C30_Size
-     &              , C30_D, C30_T, C30_dD, C30_dT
-     &              , C30_RSiM, C30_RFeM, C30_RMg2SiO4, C30_RMgSiO3
-     &              , C30_RFe3O4, C30_RAC, C30_RSiO2D, C30_RMgO
-     &              , C30_RFeS, C30_RAl2O3
-     &              , C30_dRSiM, C30_dRFeM, C30_dRMg2SiO4, C30_dRMgSiO3
-     &              , C30_dRFe3O4, C30_dRAC, C30_dRSiO2D, C30_dRMgO
-     &              , C30_dRFeS, C30_dRAl2O3
-     &              , OC30_SiM, OC30_FeM, OC30_Mg2SiO4, OC30_MgSiO3
-     &              , OC30_Fe3O4, OC30_AC, OC30_SiO2D, OC30_MgO
-     &              , OC30_FeS, OC30_Al2O3
-     &              , LC30_SiM, LC30_FeM, LC30_Mg2SiO4, LC30_MgSiO3
-     &              , LC30_Fe3O4, LC30_AC, LC30_SiO2D, LC30_MgO
-     &              , LC30_FeS, LC30_Al2O3
-     &              , F13_XC , F13_XO, F13_XMg, F13_XAl
-     &              , F13_XSi, F13_XS, F13_XFe
-     &              , F13_fSiM, F13_fFeM, F13_fMg2SiO4, F13_fMgSiO3
-     &              , F13_fFe3O4, F13_fAC, F13_fSiO2D, F13_fMgO
-     &              , F13_fFeS, F13_fAl2O3
-     &              , F13_r0SiM, F13_r0FeM, F13_r0Mg2SiO4, F13_r0MgSiO3
-     &              , F13_r0Fe3O4, F13_r0AC, F13_r0SiO2D, F13_r0MgO
-     &              , F13_r0FeS, F13_r0Al2O3
-     &              , F13_a0SiM, F13_a0FeM, F13_a0Mg2SiO4, F13_a0MgSiO3
-     &              , F13_a0Fe3O4, F13_a0AC, F13_a0SiO2D, F13_a0MgO
-     &              , F13_a0FeS, F13_a0Al2O3
-     &              , F13_v0SiM, F13_v0FeM, F13_v0Mg2SiO4, F13_v0MgSiO3
-     &              , F13_v0Fe3O4, F13_v0AC, F13_v0SiO2D, F13_v0MgO
-     &              , F13_v0FeS, F13_v0Al2O3
-     &              , F13_N, F13_Size
-     &              , F13_D, F13_T, F13_dD, F13_dT
-     &              , F13_RSiM, F13_RFeM, F13_RMg2SiO4, F13_RMgSiO3
-     &              , F13_RFe3O4, F13_RAC, F13_RSiO2D, F13_RMgO
-     &              , F13_RFeS, F13_RAl2O3
-     &              , F13_dRSiM, F13_dRFeM, F13_dRMg2SiO4, F13_dRMgSiO3
-     &              , F13_dRFe3O4, F13_dRAC, F13_dRSiO2D, F13_dRMgO
-     &              , F13_dRFeS, F13_dRAl2O3
-     &              , OF13_SiM, OF13_FeM, OF13_Mg2SiO4, OF13_MgSiO3
-     &              , OF13_Fe3O4, OF13_AC, OF13_SiO2D, OF13_MgO
-     &              , OF13_FeS, OF13_Al2O3
-     &              , LF13_SiM, LF13_FeM, LF13_Mg2SiO4, LF13_MgSiO3
-     &              , LF13_Fe3O4, LF13_AC, LF13_SiO2D, LF13_MgO
-     &              , LF13_FeS, LF13_Al2O3
+     &              , C30_r0SiM, C30_r0FeM, C30_r0Mg2SiO4
+     &              , C30_r0MgSiO3, C30_r0AC, C30_r0SiO2D
+     &              , C30_r0MgO, C30_r0FeS, C30_r0Al2O3
+     &              , F13_fFeM, F13_fMg2SiO4, F13_fMgSiO3
+     &              , F13_fFe3O4, F13_fAC, F13_fSiO2D, F13_fAl2O3
+     &              , F13_r0FeM, F13_r0Mg2SiO4, F13_r0MgSiO3
+     &              , F13_r0Fe3O4, F13_r0AC, F13_r0SiO2D, F13_r0Al2O3
+     &              , gr_N, gr_Size, gr_dT, gr_Td
+     &              , loc_kpFeM, loc_kpMg2SiO4, loc_kpMgSiO3, loc_kpFeS
+     &              , loc_kpreforg, loc_kpvolorg, loc_kpH2Oice
+     &              , C30_kpSiM, C30_kpFeM, C30_kpMg2SiO4
+     &              , C30_kpMgSiO3, C30_kpAC, C30_kpSiO2D
+     &              , C30_kpMgO, C30_kpFeS, C30_kpAl2O3
+     &              , F13_kpFeM, F13_kpMg2SiO4, F13_kpMgSiO3
+     &              , F13_kpFe3O4, F13_kpAC, F13_kpSiO2D, F13_kpAl2O3
+     &              , gasgr2a, gamma_isrf2a
 #endif
      &           )
 
@@ -213,10 +181,12 @@
      &      , CH2(in,jn,kn)  , COII(in,jn,kn)   , OII(in,jn,kn)
      &      , OHII(in,jn,kn) , H2OII(in,jn,kn)  , H3OII(in,jn,kn)
      &      , O2II(in,jn,kn) , Mg(in,jn,kn)     , Al(in,jn,kn)
-     &      , S(in,jn,kn)    , Fe(in,jn,kn)     , SiM(in,jn,kn)
-     &      , FeM(in,jn,kn)  , Mg2SiO4(in,jn,kn), MgSiO3(in,jn,kn)
-     &      , Fe3O4(in,jn,kn), AC(in,jn,kn)     , SiO2D(in,jn,kn)
-     &      , MgO(in,jn,kn)  , FeS(in,jn,kn)    , Al2O3(in,jn,kn)
+     &      , S(in,jn,kn)    , Fe(in,jn,kn)
+      R_PREC  SiM(in,jn,kn), FeM(in,jn,kn), Mg2SiO4(in,jn,kn)
+     &      , MgSiO3(in,jn,kn), Fe3O4(in,jn,kn), AC(in,jn,kn)
+     &      , SiO2D(in,jn,kn), MgO(in,jn,kn), FeS(in,jn,kn)
+     &      , Al2O3(in,jn,kn)
+     &      , reforg(in,jn,kn), volorg(in,jn,kn), H2Oice(in,jn,kn)
        real*8  cieY06a(nratec)
        integer LH2_N(3), LH2_Size
        real*8  LH2_D(LH2_N(1)), LH2_T(LH2_N(2)), LH2_H(LH2_N(3))
@@ -250,75 +220,45 @@
        real*8  grain_D(grain_N(1)), grain_T(grain_N(2))
      &       , grain_dD, grain_dT, Tgrain(grain_Size)
      &       , Ograin(grain_Size), Lgrain(grain_Size)
-      integer impop3
-      real*8  C30_XC , C30_XO, C30_XMg, C30_XAl
-     &      , C30_XSi, C30_XS, C30_XFe
+      integer immulti, impop3, idspecies, itdspecies, idsub
+      real*8  loc_fFeM, loc_fMg2SiO4, loc_fMgSiO3, loc_fFeS
+     &      , loc_freforg, loc_fvolorg, loc_fH2Oice
+      real*8  loc_r0FeM(3), loc_r0Mg2SiO4(3), loc_r0MgSiO3(3)
+     &      , loc_r0FeS(3), loc_r0reforg(3), loc_r0volorg(3)
+     &      , loc_r0H2Oice(3)
       real*8  C30_fSiM, C30_fFeM, C30_fMg2SiO4, C30_fMgSiO3
-     &      , C30_fFe3O4, C30_fAC, C30_fSiO2D, C30_fMgO
+     &      , C30_fAC, C30_fSiO2D, C30_fMgO
      &      , C30_fFeS, C30_fAl2O3
-      real*8  C30_r0SiM, C30_r0FeM, C30_r0Mg2SiO4, C30_r0MgSiO3
-     &      , C30_r0Fe3O4, C30_r0AC, C30_r0SiO2D, C30_r0MgO
-     &      , C30_r0FeS, C30_r0Al2O3
-      real*8  C30_a0SiM, C30_a0FeM, C30_a0Mg2SiO4, C30_a0MgSiO3
-     &      , C30_a0Fe3O4, C30_a0AC, C30_a0SiO2D, C30_a0MgO
-     &      , C30_a0FeS, C30_a0Al2O3
-      real*8  C30_v0SiM, C30_v0FeM, C30_v0Mg2SiO4, C30_v0MgSiO3
-     &      , C30_v0Fe3O4, C30_v0AC, C30_v0SiO2D, C30_v0MgO
-     &      , C30_v0FeS, C30_v0Al2O3
-      integer C30_N(3), C30_Size
-      real*8  C30_D(C30_N(1)), C30_T(C30_N(2)), C30_dD, C30_dT
-      real*8  C30_RSiM(C30_N(3)), C30_RFeM(C30_N(3))
-     &      , C30_RMg2SiO4(C30_N(3)), C30_RMgSiO3(C30_N(3))
-     &      , C30_RFe3O4(C30_N(3)), C30_RAC(C30_N(3))
-     &      , C30_RSiO2D(C30_N(3)), C30_RMgO(C30_N(3))
-     &      , C30_RFeS(C30_N(3)), C30_RAl2O3(C30_N(3))
-      real*8  C30_dRSiM, C30_dRFeM, C30_dRMg2SiO4, C30_dRMgSiO3
-     &      , C30_dRFe3O4, C30_dRAC, C30_dRSiO2D, C30_dRMgO
-     &      , C30_dRFeS, C30_dRAl2O3
-      real*8  OC30_SiM(C30_Size), OC30_FeM(C30_Size)
-     &      , OC30_Mg2SiO4(C30_Size), OC30_MgSiO3(C30_Size)
-     &      , OC30_Fe3O4(C30_Size), OC30_AC(C30_Size)
-     &      , OC30_SiO2D(C30_Size), OC30_MgO(C30_Size)
-     &      , OC30_FeS(C30_Size), OC30_Al2O3(C30_Size)
-      real*8  LC30_SiM(C30_Size), LC30_FeM(C30_Size)
-     &      , LC30_Mg2SiO4(C30_Size), LC30_MgSiO3(C30_Size)
-     &      , LC30_Fe3O4(C30_Size), LC30_AC(C30_Size)
-     &      , LC30_SiO2D(C30_Size), LC30_MgO(C30_Size)
-     &      , LC30_FeS(C30_Size), LC30_Al2O3(C30_Size)
-      real*8  F13_XC , F13_XO, F13_XMg, F13_XAl
-     &      , F13_XSi, F13_XS, F13_XFe
-      real*8  F13_fSiM, F13_fFeM, F13_fMg2SiO4, F13_fMgSiO3
-     &      , F13_fFe3O4, F13_fAC, F13_fSiO2D, F13_fMgO
-     &      , F13_fFeS, F13_fAl2O3
-      real*8  F13_r0SiM, F13_r0FeM, F13_r0Mg2SiO4, F13_r0MgSiO3
-     &      , F13_r0Fe3O4, F13_r0AC, F13_r0SiO2D, F13_r0MgO
-     &      , F13_r0FeS, F13_r0Al2O3
-      real*8  F13_a0SiM, F13_a0FeM, F13_a0Mg2SiO4, F13_a0MgSiO3
-     &      , F13_a0Fe3O4, F13_a0AC, F13_a0SiO2D, F13_a0MgO
-     &      , F13_a0FeS, F13_a0Al2O3
-      real*8  F13_v0SiM, F13_v0FeM, F13_v0Mg2SiO4, F13_v0MgSiO3
-     &      , F13_v0Fe3O4, F13_v0AC, F13_v0SiO2D, F13_v0MgO
-     &      , F13_v0FeS, F13_v0Al2O3
-      integer F13_N(3), F13_Size
-      real*8  F13_D(F13_N(1)), F13_T(F13_N(2)), F13_dD, F13_dT
-      real*8  F13_RSiM(F13_N(3)), F13_RFeM(F13_N(3))
-     &      , F13_RMg2SiO4(F13_N(3)), F13_RMgSiO3(F13_N(3))
-     &      , F13_RFe3O4(F13_N(3)), F13_RAC(F13_N(3))
-     &      , F13_RSiO2D(F13_N(3)), F13_RMgO(F13_N(3))
-     &      , F13_RFeS(F13_N(3)), F13_RAl2O3(F13_N(3))
-      real*8  F13_dRSiM, F13_dRFeM, F13_dRMg2SiO4, F13_dRMgSiO3
-     &      , F13_dRFe3O4, F13_dRAC, F13_dRSiO2D, F13_dRMgO
-     &      , F13_dRFeS, F13_dRAl2O3
-      real*8  OF13_SiM(F13_Size), OF13_FeM(F13_Size)
-     &      , OF13_Mg2SiO4(F13_Size), OF13_MgSiO3(F13_Size)
-     &      , OF13_Fe3O4(F13_Size), OF13_AC(F13_Size)
-     &      , OF13_SiO2D(F13_Size), OF13_MgO(F13_Size)
-     &      , OF13_FeS(F13_Size), OF13_Al2O3(F13_Size)
-      real*8  LF13_SiM(F13_Size), LF13_FeM(F13_Size)
-     &      , LF13_Mg2SiO4(F13_Size), LF13_MgSiO3(F13_Size)
-     &      , LF13_Fe3O4(F13_Size), LF13_AC(F13_Size)
-     &      , LF13_SiO2D(F13_Size), LF13_MgO(F13_Size)
-     &      , LF13_FeS(F13_Size), LF13_Al2O3(F13_Size)
+      real*8  C30_r0SiM(3), C30_r0FeM(3), C30_r0Mg2SiO4(3)
+     &      , C30_r0MgSiO3(3), C30_r0AC(3), C30_r0SiO2D(3)
+     &      , C30_r0MgO(3), C30_r0FeS(3), C30_r0Al2O3(3)
+      real*8  F13_fFeM, F13_fMg2SiO4, F13_fMgSiO3
+     &      , F13_fFe3O4, F13_fAC, F13_fSiO2D, F13_fAl2O3
+      real*8  F13_r0FeM(3), F13_r0Mg2SiO4(3), F13_r0MgSiO3(3)
+     &      , F13_r0Fe3O4(3), F13_r0AC(3), F13_r0SiO2D(3)
+     &      , F13_r0Al2O3(3)
+      integer gr_N(2), gr_Size
+      real*8  gr_dT, gr_Td(gr_N(2))
+      real*8  loc_kpFeM(gr_Size), loc_kpMg2SiO4(gr_Size)
+     &      , loc_kpMgSiO3(gr_Size), loc_kpFeS(gr_Size)
+     &      , loc_kpreforg(gr_Size), loc_kpvolorg(gr_Size)
+     &      , loc_kpH2Oice(gr_Size)
+      real*8  C30_kpSiM(gr_Size), C30_kpFeM(gr_Size)
+     &      , C30_kpMg2SiO4(gr_Size), C30_kpMgSiO3(gr_Size)
+     &      , C30_kpFe3O4(gr_Size), C30_kpAC(gr_Size)
+     &      , C30_kpSiO2D(gr_Size), C30_kpMgO(gr_Size)
+     &      , C30_kpFeS(gr_Size), C30_kpAl2O3(gr_Size)
+      real*8  F13_kpFeM(gr_Size)
+     &      , F13_kpMg2SiO4(gr_Size), F13_kpMgSiO3(gr_Size)
+     &      , F13_kpFe3O4(gr_Size), F13_kpAC(gr_Size)
+     &      , F13_kpSiO2D(gr_Size), F13_kpAl2O3(gr_Size)
+!     grain temperature
+      real*8  tSiM(in), tFeM(in), tMg2SiO4(in)
+     &      , tMgSiO3(in), tFe3O4(in), tAC(in)
+     &      , tSiO2D(in), tMgO(in), tFeS(in)
+     &      , tAl2O3(in)
+     &      , treforg(in), tvolorg(in), tH2Oice(in)
+      real*8  gasgr2a(nratec), gamma_isrf2a
 #endif
 
 !  Cloudy cooling data
@@ -437,6 +377,9 @@
                   dust(i,j,k) = dust(i,j,k)/real(aye**3, RKIND)
                enddo
             endif
+            if (imchem .eq. 1) then
+!!!!!!!!!!!!   CHANGE-ME
+            endif
       enddo
 #ifdef _OPENMP
 !$omp end parallel do
@@ -525,6 +468,7 @@
      &              , Mg, Al, S, Fe
      &              , SiM, FeM, Mg2SiO4, MgSiO3, Fe3O4
      &              , AC, SiO2D, MgO, FeS, Al2O3
+     &              , reforg, volorg, H2Oice
      &              , cieY06a
      &              , LH2_N, LH2_Size
      &              , LH2_D, LH2_T, LH2_H
@@ -556,64 +500,34 @@
      &              , grain_N, grain_Size
      &              , grain_D, grain_T, grain_dD, grain_dT
      &              , Tgrain, Ograin, Lgrain
-     &              , impop3
+     &              , immulti, impop3, idspecies, itdspecies, idsub
      &              , metal_loc, metal_C30, metal_F13
-     &              , C30_XC , C30_XO, C30_XMg, C30_XAl
-     &              , C30_XSi, C30_XS, C30_XFe
+     &              , loc_fFeM, loc_fMg2SiO4, loc_fMgSiO3, loc_fFeS
+     &              , loc_freforg, loc_fvolorg, loc_fH2Oice
+     &              , loc_r0FeM, loc_r0Mg2SiO4, loc_r0MgSiO3, loc_r0FeS
+     &              , loc_r0reforg, loc_r0volorg, loc_r0H2Oice 
      &              , C30_fSiM, C30_fFeM, C30_fMg2SiO4, C30_fMgSiO3
-     &              , C30_fFe3O4, C30_fAC, C30_fSiO2D, C30_fMgO
+     &              , C30_fAC, C30_fSiO2D, C30_fMgO
      &              , C30_fFeS, C30_fAl2O3
-     &              , C30_r0SiM, C30_r0FeM, C30_r0Mg2SiO4, C30_r0MgSiO3
-     &              , C30_r0Fe3O4, C30_r0AC, C30_r0SiO2D, C30_r0MgO
-     &              , C30_r0FeS, C30_r0Al2O3
-     &              , C30_a0SiM, C30_a0FeM, C30_a0Mg2SiO4, C30_a0MgSiO3
-     &              , C30_a0Fe3O4, C30_a0AC, C30_a0SiO2D, C30_a0MgO
-     &              , C30_a0FeS, C30_a0Al2O3
-     &              , C30_v0SiM, C30_v0FeM, C30_v0Mg2SiO4, C30_v0MgSiO3
-     &              , C30_v0Fe3O4, C30_v0AC, C30_v0SiO2D, C30_v0MgO
-     &              , C30_v0FeS, C30_v0Al2O3
-     &              , C30_N, C30_Size
-     &              , C30_D, C30_T, C30_dD, C30_dT
-     &              , C30_RSiM, C30_RFeM, C30_RMg2SiO4, C30_RMgSiO3
-     &              , C30_RFe3O4, C30_RAC, C30_RSiO2D, C30_RMgO
-     &              , C30_RFeS, C30_RAl2O3
-     &              , C30_dRSiM, C30_dRFeM, C30_dRMg2SiO4, C30_dRMgSiO3
-     &              , C30_dRFe3O4, C30_dRAC, C30_dRSiO2D, C30_dRMgO
-     &              , C30_dRFeS, C30_dRAl2O3
-     &              , OC30_SiM, OC30_FeM, OC30_Mg2SiO4, OC30_MgSiO3
-     &              , OC30_Fe3O4, OC30_AC, OC30_SiO2D, OC30_MgO
-     &              , OC30_FeS, OC30_Al2O3
-     &              , LC30_SiM, LC30_FeM, LC30_Mg2SiO4, LC30_MgSiO3
-     &              , LC30_Fe3O4, LC30_AC, LC30_SiO2D, LC30_MgO
-     &              , LC30_FeS, LC30_Al2O3
-     &              , F13_XC , F13_XO, F13_XMg, F13_XAl
-     &              , F13_XSi, F13_XS, F13_XFe
-     &              , F13_fSiM, F13_fFeM, F13_fMg2SiO4, F13_fMgSiO3
-     &              , F13_fFe3O4, F13_fAC, F13_fSiO2D, F13_fMgO
-     &              , F13_fFeS, F13_fAl2O3
-     &              , F13_r0SiM, F13_r0FeM, F13_r0Mg2SiO4, F13_r0MgSiO3
-     &              , F13_r0Fe3O4, F13_r0AC, F13_r0SiO2D, F13_r0MgO
-     &              , F13_r0FeS, F13_r0Al2O3
-     &              , F13_a0SiM, F13_a0FeM, F13_a0Mg2SiO4, F13_a0MgSiO3
-     &              , F13_a0Fe3O4, F13_a0AC, F13_a0SiO2D, F13_a0MgO
-     &              , F13_a0FeS, F13_a0Al2O3
-     &              , F13_v0SiM, F13_v0FeM, F13_v0Mg2SiO4, F13_v0MgSiO3
-     &              , F13_v0Fe3O4, F13_v0AC, F13_v0SiO2D, F13_v0MgO
-     &              , F13_v0FeS, F13_v0Al2O3
-     &              , F13_N, F13_Size
-     &              , F13_D, F13_T, F13_dD, F13_dT
-     &              , F13_RSiM, F13_RFeM, F13_RMg2SiO4, F13_RMgSiO3
-     &              , F13_RFe3O4, F13_RAC, F13_RSiO2D, F13_RMgO
-     &              , F13_RFeS, F13_RAl2O3
-     &              , F13_dRSiM, F13_dRFeM, F13_dRMg2SiO4, F13_dRMgSiO3
-     &              , F13_dRFe3O4, F13_dRAC, F13_dRSiO2D, F13_dRMgO
-     &              , F13_dRFeS, F13_dRAl2O3
-     &              , OF13_SiM, OF13_FeM, OF13_Mg2SiO4, OF13_MgSiO3
-     &              , OF13_Fe3O4, OF13_AC, OF13_SiO2D, OF13_MgO
-     &              , OF13_FeS, OF13_Al2O3
-     &              , LF13_SiM, LF13_FeM, LF13_Mg2SiO4, LF13_MgSiO3
-     &              , LF13_Fe3O4, LF13_AC, LF13_SiO2D, LF13_MgO
-     &              , LF13_FeS, LF13_Al2O3
+     &              , C30_r0SiM, C30_r0FeM, C30_r0Mg2SiO4
+     &              , C30_r0MgSiO3, C30_r0AC, C30_r0SiO2D
+     &              , C30_r0MgO, C30_r0FeS, C30_r0Al2O3
+     &              , F13_fFeM, F13_fMg2SiO4, F13_fMgSiO3
+     &              , F13_fFe3O4, F13_fAC, F13_fSiO2D, F13_fAl2O3
+     &              , F13_r0FeM, F13_r0Mg2SiO4, F13_r0MgSiO3
+     &              , F13_r0Fe3O4, F13_r0AC, F13_r0SiO2D, F13_r0Al2O3
+     &              , gr_N, gr_Size, gr_dT, gr_Td
+     &              , loc_kpFeM, loc_kpMg2SiO4, loc_kpMgSiO3, loc_kpFeS
+     &              , loc_kpreforg, loc_kpvolorg, loc_kpH2Oice
+     &              , C30_kpSiM, C30_kpFeM, C30_kpMg2SiO4
+     &              , C30_kpMgSiO3, C30_kpAC, C30_kpSiO2D
+     &              , C30_kpMgO, C30_kpFeS, C30_kpAl2O3
+     &              , F13_kpFeM, F13_kpMg2SiO4, F13_kpMgSiO3
+     &              , F13_kpFe3O4, F13_kpAC, F13_kpSiO2D, F13_kpAl2O3
+     &              , tSiM, tFeM, tMg2SiO4, tMgSiO3, tFe3O4
+     &              , tAC, tSiO2D, tMgO, tFeS, tAl2O3
+     &              , treforg, tvolorg, tH2Oice
+     &              , gasgr2a, gamma_isrf2a
 #endif
      &            )
 
@@ -694,6 +608,9 @@
                do i = is+1, ie+1
                   dust(i,j,k) = dust(i,j,k)*real(aye**3, RKIND)
                enddo
+            endif
+            if (imchem .eq. 1) then
+!!!!!!!!!!!    CHANGE-ME
             endif
       enddo
 #ifdef _OPENMP
