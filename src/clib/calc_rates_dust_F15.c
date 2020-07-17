@@ -17,82 +17,63 @@
 
 extern int grackle_verbose;
 
-int calc_rates_dust_F15(chemistry_data *my_chemistry, chemistry_data_storage *my_rates)
+int calc_rates_dust_F15(int iSN, chemistry_data *my_chemistry, chemistry_data_storage *my_rates)
 {
 
   int NTd, Nmom;
-  double Td0;
-  double dTd;
-  int iTd, imom, itab;
+  int iTd, imom, itab0, itab;
 
-  my_chemistry->F15_r0FeM      = malloc(3 * sizeof(double));
-  my_chemistry->F15_r0Mg2SiO4  = malloc(3 * sizeof(double));
-  my_chemistry->F15_r0MgSiO3   = malloc(3 * sizeof(double));
-  my_chemistry->F15_r0Fe3O4    = malloc(3 * sizeof(double));
-  my_chemistry->F15_r0AC       = malloc(3 * sizeof(double));
-  my_chemistry->F15_r0SiO2D    = malloc(3 * sizeof(double));
-  my_chemistry->F15_r0Al2O3    = malloc(3 * sizeof(double));
+  my_chemistry->SN0_XC [iSN] =   6.46299e-01;
+  my_chemistry->SN0_XO [iSN] =   3.53548e-01;
+  my_chemistry->SN0_XMg[iSN] =   1.29204e-04;
+  my_chemistry->SN0_XAl[iSN] =   2.22729e-07;
+  my_chemistry->SN0_XSi[iSN] =   1.32242e-05;
+  my_chemistry->SN0_XS [iSN] =   0.00000e+00;
+  my_chemistry->SN0_XFe[iSN] =   9.66658e-06;
 
-  my_chemistry->F15_XC  =   6.46299e-01;
-  my_chemistry->F15_XO  =   3.53548e-01;
-  my_chemistry->F15_XMg =   1.29204e-04;
-  my_chemistry->F15_XAl =   2.22729e-07;
-  my_chemistry->F15_XSi =   1.32242e-05;
-  my_chemistry->F15_XS  =   0.00000e+00;
-  my_chemistry->F15_XFe =   9.66658e-06;
+  my_chemistry->SN0_fC [iSN] =   4.57071e-01;
+  my_chemistry->SN0_fO [iSN] =   3.53548e-01;
+  my_chemistry->SN0_fMg[iSN] =   1.29204e-04;
+  my_chemistry->SN0_fAl[iSN] =   2.22729e-07;
+  my_chemistry->SN0_fSi[iSN] =   1.32242e-05;
+  my_chemistry->SN0_fS [iSN] =   0.00000e+00;
+  my_chemistry->SN0_fFe[iSN] =   9.66658e-06;
 
-  my_chemistry->F15_fC  =   4.57071e-01;
-  my_chemistry->F15_fO  =   3.53548e-01;
-  my_chemistry->F15_fMg =   1.29204e-04;
-  my_chemistry->F15_fAl =   2.22729e-07;
-  my_chemistry->F15_fSi =   1.32242e-05;
-  my_chemistry->F15_fS  =   0.00000e+00;
-  my_chemistry->F15_fFe =   9.66658e-06;
+  my_chemistry->SN0_fFeM     [iSN] =   1.53361e-25;
+  my_chemistry->SN0_fMg2SiO4 [iSN] =   1.56864e-15;
+  my_chemistry->SN0_fMgSiO3  [iSN] =   2.13810e-14;
+  my_chemistry->SN0_fFe3O4   [iSN] =   1.22287e-14;
+  my_chemistry->SN0_fAC      [iSN] =   1.89229e-01;
+  my_chemistry->SN0_fSiO2D   [iSN] =   1.47463e-15;
+  my_chemistry->SN0_fAl2O3   [iSN] =   2.15191e-16;
 
-  my_chemistry->F15_fFeM     =   1.53361e-25;
-  my_chemistry->F15_fMg2SiO4 =   1.56864e-15;
-  my_chemistry->F15_fMgSiO3  =   2.13810e-14;
-  my_chemistry->F15_fFe3O4   =   1.22287e-14;
-  my_chemistry->F15_fAC      =   1.89229e-01;
-  my_chemistry->F15_fSiO2D   =   1.47463e-15;
-  my_chemistry->F15_fAl2O3   =   2.15191e-16;
+  itab0 = 3 * iSN;
+  my_chemistry->SN0_r0FeM     [itab0 + 0] =   4.02634e-08;
+  my_chemistry->SN0_r0Mg2SiO4 [itab0 + 0] =   4.03318e-08;
+  my_chemistry->SN0_r0MgSiO3  [itab0 + 0] =   4.03159e-08;
+  my_chemistry->SN0_r0Fe3O4   [itab0 + 0] =   4.03301e-08;
+  my_chemistry->SN0_r0AC      [itab0 + 0] =   1.14540e-05;
+  my_chemistry->SN0_r0SiO2D   [itab0 + 0] =   4.03146e-08;
+  my_chemistry->SN0_r0Al2O3   [itab0 + 0] =   4.03146e-08;
 
-  my_chemistry->F15_r0FeM     [0] =   4.02634e-08;
-  my_chemistry->F15_r0Mg2SiO4 [0] =   4.03318e-08;
-  my_chemistry->F15_r0MgSiO3  [0] =   4.03159e-08;
-  my_chemistry->F15_r0Fe3O4   [0] =   4.03301e-08;
-  my_chemistry->F15_r0AC      [0] =   1.14540e-05;
-  my_chemistry->F15_r0SiO2D   [0] =   4.03146e-08;
-  my_chemistry->F15_r0Al2O3   [0] =   4.03146e-08;
+  my_chemistry->SN0_r0FeM     [itab0 + 1] =   1.66860e-15;
+  my_chemistry->SN0_r0Mg2SiO4 [itab0 + 1] =   1.67341e-15;
+  my_chemistry->SN0_r0MgSiO3  [itab0 + 1] =   1.67184e-15;
+  my_chemistry->SN0_r0Fe3O4   [itab0 + 1] =   1.67324e-15;
+  my_chemistry->SN0_r0AC      [itab0 + 1] =   1.60512e-10;
+  my_chemistry->SN0_r0SiO2D   [itab0 + 1] =   1.67171e-15;
+  my_chemistry->SN0_r0Al2O3   [itab0 + 1] =   1.67171e-15;
 
-  my_chemistry->F15_r0FeM     [1] =   1.66860e-15;
-  my_chemistry->F15_r0Mg2SiO4 [1] =   1.67341e-15;
-  my_chemistry->F15_r0MgSiO3  [1] =   1.67184e-15;
-  my_chemistry->F15_r0Fe3O4   [1] =   1.67324e-15;
-  my_chemistry->F15_r0AC      [1] =   1.60512e-10;
-  my_chemistry->F15_r0SiO2D   [1] =   1.67171e-15;
-  my_chemistry->F15_r0Al2O3   [1] =   1.67171e-15;
-
-  my_chemistry->F15_r0FeM     [2] =   7.10566e-23;
-  my_chemistry->F15_r0Mg2SiO4 [2] =   7.13397e-23;
-  my_chemistry->F15_r0MgSiO3  [2] =   7.12201e-23;
-  my_chemistry->F15_r0Fe3O4   [2] =   7.13269e-23;
-  my_chemistry->F15_r0AC      [2] =   2.55303e-15;
-  my_chemistry->F15_r0SiO2D   [2] =   7.12105e-23;
-  my_chemistry->F15_r0Al2O3   [2] =   7.12106e-23;
+  my_chemistry->SN0_r0FeM     [itab0 + 2] =   7.10566e-23;
+  my_chemistry->SN0_r0Mg2SiO4 [itab0 + 2] =   7.13397e-23;
+  my_chemistry->SN0_r0MgSiO3  [itab0 + 2] =   7.12201e-23;
+  my_chemistry->SN0_r0Fe3O4   [itab0 + 2] =   7.13269e-23;
+  my_chemistry->SN0_r0AC      [itab0 + 2] =   2.55303e-15;
+  my_chemistry->SN0_r0SiO2D   [itab0 + 2] =   7.12105e-23;
+  my_chemistry->SN0_r0Al2O3   [itab0 + 2] =   7.12106e-23;
 
   NTd =            35;
-  Td0 =     0.0000000;
-  dTd =     0.1000000;
  Nmom =             4;
-
-  my_rates->F15_kpFeM      = malloc(NTd * Nmom * sizeof(double));
-  my_rates->F15_kpMg2SiO4  = malloc(NTd * Nmom * sizeof(double));
-  my_rates->F15_kpMgSiO3   = malloc(NTd * Nmom * sizeof(double));
-  my_rates->F15_kpFe3O4    = malloc(NTd * Nmom * sizeof(double));
-  my_rates->F15_kpAC       = malloc(NTd * Nmom * sizeof(double));
-  my_rates->F15_kpSiO2D    = malloc(NTd * Nmom * sizeof(double));
-  my_rates->F15_kpAl2O3    = malloc(NTd * Nmom * sizeof(double));
 
   double F15_kpFeM[] = 
   {  1.23614e-05,   4.98551e-13,   2.06942e-20,   8.82572e-28,
@@ -354,17 +335,19 @@ int calc_rates_dust_F15(chemistry_data *my_chemistry, chemistry_data_storage *my
      1.81893e+01,   7.33293e-07,   3.04073e-14,   1.29527e-21  };
 
 
-  itab = 0;
+  itab0 = Nmom * NTd * iSN;
+  itab  = 0;
   for(imom = 0; imom < Nmom; imom++) {
     for(iTd = 0; iTd < NTd; iTd++) {
-      my_rates->F15_kpFeM     [itab] = F15_kpFeM     [itab];
-      my_rates->F15_kpMg2SiO4 [itab] = F15_kpMg2SiO4 [itab];
-      my_rates->F15_kpMgSiO3  [itab] = F15_kpMgSiO3  [itab];
-      my_rates->F15_kpFe3O4   [itab] = F15_kpFe3O4   [itab];
-      my_rates->F15_kpAC      [itab] = F15_kpAC      [itab];
-      my_rates->F15_kpSiO2D   [itab] = F15_kpSiO2D   [itab];
-      my_rates->F15_kpAl2O3   [itab] = F15_kpAl2O3   [itab];
-      itab++;
+      my_rates->SN0_kpFeM     [itab0] = F15_kpFeM     [itab];
+      my_rates->SN0_kpMg2SiO4 [itab0] = F15_kpMg2SiO4 [itab];
+      my_rates->SN0_kpMgSiO3  [itab0] = F15_kpMgSiO3  [itab];
+      my_rates->SN0_kpFe3O4   [itab0] = F15_kpFe3O4   [itab];
+      my_rates->SN0_kpAC      [itab0] = F15_kpAC      [itab];
+      my_rates->SN0_kpSiO2D   [itab0] = F15_kpSiO2D   [itab];
+      my_rates->SN0_kpAl2O3   [itab0] = F15_kpAl2O3   [itab];
+      itab0++;
+      itab ++;
     }
   }
 

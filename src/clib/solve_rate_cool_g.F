@@ -100,42 +100,26 @@
      &              , grain_N, grain_Size
      &              , grain_D, grain_T, grain_dD, grain_dT
      &              , Hgrain, Tgrain, Ograin, Lgrain
-     &              , immulti, impop3, idspecies, itdmulti, idsub
+     &              , immulti, imabund, idspecies, itdmulti, idsub
      &              , metal_loc, metal_C30, metal_F13
-     &              , loc_XC , loc_XO, loc_XMg, loc_XAl
-     &              , loc_XSi, loc_XS, loc_XFe
-     &              , loc_fC , loc_fO, loc_fMg, loc_fAl
-     &              , loc_fSi, loc_fS, loc_fFe
-     &              , C30_XC , C30_XO, C30_XMg, C30_XAl
-     &              , C30_XSi, C30_XS, C30_XFe
-     &              , C30_fC , C30_fO, C30_fMg, C30_fAl
-     &              , C30_fSi, C30_fS, C30_fFe
-     &              , F13_XC , F13_XO, F13_XMg, F13_XAl
-     &              , F13_XSi, F13_XS, F13_XFe
-     &              , F13_fC , F13_fO, F13_fMg, F13_fAl
-     &              , F13_fSi, F13_fS, F13_fFe
-     &              , loc_fFeM, loc_fMg2SiO4, loc_fMgSiO3, loc_fFeS
-     &              , loc_freforg, loc_fvolorg, loc_fH2Oice
-     &              , loc_r0FeM, loc_r0Mg2SiO4, loc_r0MgSiO3, loc_r0FeS
-     &              , loc_r0reforg, loc_r0volorg, loc_r0H2Oice 
-     &              , C30_fSiM, C30_fFeM, C30_fMg2SiO4, C30_fMgSiO3
-     &              , C30_fAC, C30_fSiO2D, C30_fMgO
-     &              , C30_fFeS, C30_fAl2O3
-     &              , C30_r0SiM, C30_r0FeM, C30_r0Mg2SiO4
-     &              , C30_r0MgSiO3, C30_r0AC, C30_r0SiO2D
-     &              , C30_r0MgO, C30_r0FeS, C30_r0Al2O3
-     &              , F13_fFeM, F13_fMg2SiO4, F13_fMgSiO3
-     &              , F13_fFe3O4, F13_fAC, F13_fSiO2D, F13_fAl2O3
-     &              , F13_r0FeM, F13_r0Mg2SiO4, F13_r0MgSiO3
-     &              , F13_r0Fe3O4, F13_r0AC, F13_r0SiO2D, F13_r0Al2O3
+     &              , SN0_N
+     &              , SN0_XC , SN0_XO, SN0_XMg, SN0_XAl
+     &              , SN0_XSi, SN0_XS, SN0_XFe
+     &              , SN0_fC , SN0_fO, SN0_fMg, SN0_fAl
+     &              , SN0_fSi, SN0_fS, SN0_fFe
+     &              , SN0_fSiM, SN0_fFeM, SN0_fMg2SiO4, SN0_fMgSiO3
+     &              , SN0_fFe3O4, SN0_fAC, SN0_fSiO2D, SN0_fMgO
+     &              , SN0_fFeS, SN0_fAl2O3
+     &              , SN0_freforg, SN0_fvolorg, SN0_fH2Oice
+     &              , SN0_r0SiM, SN0_r0FeM, SN0_r0Mg2SiO4, SN0_r0MgSiO3
+     &              , SN0_r0Fe3O4, SN0_r0AC, SN0_r0SiO2D, SN0_r0MgO
+     &              , SN0_r0FeS, SN0_r0Al2O3
+     &              , SN0_r0reforg, SN0_r0volorg, SN0_r0H2Oice
      &              , gr_N, gr_Size, gr_dT, gr_Td
-     &              , loc_kpFeM, loc_kpMg2SiO4, loc_kpMgSiO3, loc_kpFeS
-     &              , loc_kpreforg, loc_kpvolorg, loc_kpH2Oice
-     &              , C30_kpSiM, C30_kpFeM, C30_kpMg2SiO4
-     &              , C30_kpMgSiO3, C30_kpAC, C30_kpSiO2D
-     &              , C30_kpMgO, C30_kpFeS, C30_kpAl2O3
-     &              , F13_kpFeM, F13_kpMg2SiO4, F13_kpMgSiO3
-     &              , F13_kpFe3O4, F13_kpAC, F13_kpSiO2D, F13_kpAl2O3
+     &              , SN0_kpSiM, SN0_kpFeM, SN0_kpMg2SiO4, SN0_kpMgSiO3
+     &              , SN0_kpFe3O4, SN0_kpAC, SN0_kpSiO2D, SN0_kpMgO
+     &              , SN0_kpFeS, SN0_kpAl2O3
+     &              , SN0_kpreforg, SN0_kpvolorg, SN0_kpH2Oice
      &              , h2dustSa, h2dustCa, gasgr2a, gamma_isrf2a, grogra
      &          )
 
@@ -350,50 +334,36 @@
      &       , grain_dD, grain_dT
      &       , Hgrain(grain_Size), Tgrain(grain_Size)
      &       , Ograin(grain_Size), Lgrain(grain_Size)
-      integer immulti, impop3, idspecies, itdmulti, idsub
-      real*8  loc_XC , loc_XO, loc_XMg, loc_XAl
-     &      , loc_XSi, loc_XS, loc_XFe
-      real*8  loc_fC , loc_fO, loc_fMg, loc_fAl
-     &      , loc_fSi, loc_fS, loc_fFe
-      real*8  C30_XC , C30_XO, C30_XMg, C30_XAl
-     &      , C30_XSi, C30_XS, C30_XFe
-      real*8  C30_fC , C30_fO, C30_fMg, C30_fAl
-     &      , C30_fSi, C30_fS, C30_fFe
-      real*8  F13_XC , F13_XO, F13_XMg, F13_XAl
-     &      , F13_XSi, F13_XS, F13_XFe
-      real*8  F13_fC , F13_fO, F13_fMg, F13_fAl
-     &      , F13_fSi, F13_fS, F13_fFe
-      real*8  loc_fFeM, loc_fMg2SiO4, loc_fMgSiO3, loc_fFeS
-     &      , loc_freforg, loc_fvolorg, loc_fH2Oice
-      real*8  loc_r0FeM(3), loc_r0Mg2SiO4(3), loc_r0MgSiO3(3)
-     &      , loc_r0FeS(3), loc_r0reforg(3), loc_r0volorg(3)
-     &      , loc_r0H2Oice(3)
-      real*8  C30_fSiM, C30_fFeM, C30_fMg2SiO4, C30_fMgSiO3
-     &      , C30_fAC, C30_fSiO2D, C30_fMgO
-     &      , C30_fFeS, C30_fAl2O3
-      real*8  C30_r0SiM(3), C30_r0FeM(3), C30_r0Mg2SiO4(3)
-     &      , C30_r0MgSiO3(3), C30_r0AC(3), C30_r0SiO2D(3)
-     &      , C30_r0MgO(3), C30_r0FeS(3), C30_r0Al2O3(3)
-      real*8  F13_fFeM, F13_fMg2SiO4, F13_fMgSiO3
-     &      , F13_fFe3O4, F13_fAC, F13_fSiO2D, F13_fAl2O3
-      real*8  F13_r0FeM(3), F13_r0Mg2SiO4(3), F13_r0MgSiO3(3)
-     &      , F13_r0Fe3O4(3), F13_r0AC(3), F13_r0SiO2D(3)
-     &      , F13_r0Al2O3(3)
+      integer immulti, imabund, idspecies, itdmulti, idsub
+      integer SN0_N
+      real*8  SN0_XC (SN0_N), SN0_XO(SN0_N), SN0_XMg(SN0_N)
+     &      , SN0_XAl(SN0_N), SN0_XSi(SN0_N), SN0_XS(SN0_N)
+     &      , SN0_XFe(SN0_N)
+      real*8  SN0_fC (SN0_N), SN0_fO(SN0_N), SN0_fMg(SN0_N)
+     &      , SN0_fAl(SN0_N), SN0_fSi(SN0_N), SN0_fS(SN0_N)
+     &      , SN0_fFe(SN0_N)
+      real*8  SN0_fSiM(SN0_N), SN0_fFeM(SN0_N), SN0_fMg2SiO4(SN0_N)
+     &      , SN0_fMgSiO3(SN0_N), SN0_fFe3O4(SN0_N), SN0_fAC(SN0_N)
+     &      , SN0_fSiO2D(SN0_N), SN0_fMgO(SN0_N), SN0_fFeS(SN0_N)
+     &      , SN0_fAl2O3(SN0_N)
+     &      , SN0_freforg(SN0_N), SN0_fvolorg(SN0_N), SN0_fH2Oice(SN0_N)
+      real*8  SN0_r0SiM(3,SN0_N), SN0_r0FeM(3,SN0_N)
+     &      , SN0_r0Mg2SiO4(3,SN0_N), SN0_r0MgSiO3(3,SN0_N)
+     &      , SN0_r0Fe3O4(3,SN0_N), SN0_r0AC(3,SN0_N)
+     &      , SN0_r0SiO2D(3,SN0_N), SN0_r0MgO(3,SN0_N)
+     &      , SN0_r0FeS(3,SN0_N), SN0_r0Al2O3(3,SN0_N)
+     &      , SN0_r0reforg(3,SN0_N)
+     &      , SN0_r0volorg(3,SN0_N), SN0_r0H2Oice(3,SN0_N)
+!     opacity table
       integer gr_N(2), gr_Size
       real*8  gr_dT, gr_Td(gr_N(2))
-      real*8  loc_kpFeM(gr_Size), loc_kpMg2SiO4(gr_Size)
-     &      , loc_kpMgSiO3(gr_Size), loc_kpFeS(gr_Size)
-     &      , loc_kpreforg(gr_Size), loc_kpvolorg(gr_Size)
-     &      , loc_kpH2Oice(gr_Size)
-      real*8  C30_kpSiM(gr_Size), C30_kpFeM(gr_Size)
-     &      , C30_kpMg2SiO4(gr_Size), C30_kpMgSiO3(gr_Size)
-     &      , C30_kpFe3O4(gr_Size), C30_kpAC(gr_Size)
-     &      , C30_kpSiO2D(gr_Size), C30_kpMgO(gr_Size)
-     &      , C30_kpFeS(gr_Size), C30_kpAl2O3(gr_Size)
-      real*8  F13_kpFeM(gr_Size)
-     &      , F13_kpMg2SiO4(gr_Size), F13_kpMgSiO3(gr_Size)
-     &      , F13_kpFe3O4(gr_Size), F13_kpAC(gr_Size)
-     &      , F13_kpSiO2D(gr_Size), F13_kpAl2O3(gr_Size)
+      real*8  SN0_kpSiM(gr_Size,SN0_N), SN0_kpFeM(gr_Size,SN0_N)
+     &      , SN0_kpMg2SiO4(gr_Size,SN0_N), SN0_kpMgSiO3(gr_Size,SN0_N)
+     &      , SN0_kpFe3O4(gr_Size,SN0_N), SN0_kpAC(gr_Size,SN0_N)
+     &      , SN0_kpSiO2D(gr_Size,SN0_N), SN0_kpMgO(gr_Size,SN0_N)
+     &      , SN0_kpFeS(gr_Size,SN0_N), SN0_kpAl2O3(gr_Size,SN0_N)
+     &      , SN0_kpreforg(gr_Size,SN0_N)
+     &      , SN0_kpvolorg(gr_Size,SN0_N), SN0_kpH2Oice(gr_Size,SN0_N)
       real*8  gasgr2a(nratec), gamma_isrf2a
 
       real*8  avgsighi, avgsighei, avgsigheii
@@ -622,20 +592,13 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
      &                   , SiM, FeM, Mg2SiO4, MgSiO3, Fe3O4
      &                   , AC, SiO2D, MgO, FeS, Al2O3
      &                   , reforg, volorg, H2Oice
-     &                   , immulti, impop3, idspecies, itdmulti, idsub
+     &                   , immulti, imabund, idspecies, itdmulti, idsub
      &                   , metal_loc, metal_C30, metal_F13
-     &                   , loc_XC, loc_XO, loc_XMg, loc_XAl, loc_XSi
-     &                   , loc_XS, loc_XFe
-     &                   , loc_fC, loc_fO, loc_fMg, loc_fAl, loc_fSi
-     &                   , loc_fS, loc_fFe
-     &                   , C30_XC, C30_XO, C30_XMg, C30_XAl, C30_XSi
-     &                   , C30_XS, C30_XFe
-     &                   , C30_fC, C30_fO, C30_fMg, C30_fAl, C30_fSi
-     &                   , C30_fS, C30_fFe
-     &                   , F13_XC, F13_XO, F13_XMg, F13_XAl, F13_XSi
-     &                   , F13_XS, F13_XFe
-     &                   , F13_fC, F13_fO, F13_fMg, F13_fAl, F13_fSi
-     &                   , F13_fS, F13_fFe
+     &                   , SN0_N
+     &                   , SN0_XC, SN0_XO, SN0_XMg, SN0_XAl, SN0_XSi
+     &                   , SN0_XS, SN0_XFe
+     &                   , SN0_fC, SN0_fO, SN0_fMg, SN0_fAl, SN0_fSi
+     &                   , SN0_fS, SN0_fFe
      &                      )
 #endif
 
@@ -647,45 +610,44 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
 
          call scale_fields_g(d, de, HI, HII, HeI, HeII, HeIII,
      &                  HM, H2I, H2II, DI, DII, HDI, metal, dust,
-     &                  imchem, igrgr,
-     &                  DM, HDII, HeHII,
-     &                  CI, CII, CO, CO2,
-     &                  OI, OH, H2O, O2,
-     &                  SiI, SiOI, SiO2I,
-     &                  CH, CH2, COII, OII,
-     &                  OHII, H2OII, H3OII, O2II,
-     &                  Mg, Al, S, Fe,
-     &                  SiM, FeM, Mg2SiO4, MgSiO3, Fe3O4,
-     &                  AC, SiO2D, MgO, FeS, Al2O3,
-     &                  reforg, volorg, H2Oice,
-     &                  immulti, impop3, idspecies, itdmulti, idsub,
-     &                  metal_loc, metal_C30, metal_F13,
      &                  is, ie, js, je, ks, ke,
      &                  in, jn, kn, ispecies, imetal, idustfield,
-     &                  aye**(-3))
+     &                  aye**(-3)
+     &                , DM, HDII, HeHII
+     &                , imabund, imchem, idspecies, immulti
+     &                , igrgr, idsub
+     &                , CI, CII, CO, CO2
+     &                , OI, OH, H2O, O2
+     &                , SiI, SiOI, SiO2I
+     &                , CH, CH2, COII, OII
+     &                , OHII, H2OII, H3OII, O2II
+     &                , Mg, Al, S, Fe
+     &                , SiM, FeM, Mg2SiO4, MgSiO3, Fe3O4
+     &                , AC, SiO2D, MgO, FeS, Al2O3
+     &                , reforg, volorg, H2Oice
+     &                , metal_loc, metal_C30, metal_F13)
 
       endif
 
 !!          write(*,*) 'CHECK1', d(1,1,1), FeM(1,1,1)/d(1,1,1)/56.d0
 #ifdef ABUNDANCE_CORRECTION
       call ceiling_species_g(d, de, HI, HII, HeI, HeII, HeIII,
-     &                     HM, H2I, H2II, DI, DII, HDI, metal,
-     &                     imchem, igrgr,
-     &                     DM, HDII, HeHII,
-     &                     CI, CII, CO, CO2,
-     &                     OI, OH, H2O, O2,
-     &                     SiI, SiOI, SiO2I,
-     &                     CH, CH2, COII, OII,
-     &                     OHII, H2OII, H3OII, O2II,
-     &                     Mg, Al, S, Fe,
-     &                     SiM, FeM, Mg2SiO4, MgSiO3, Fe3O4,
-     &                     AC, SiO2D, MgO, FeS, Al2O3,
-     &                     reforg, volorg, H2Oice,
-     &                     immulti, impop3, idspecies, itdmulti,
-     &                     idsub,
-     &                     metal_loc, metal_C30, metal_F13,
+     &                     HM, H2I, H2II, DI, DII, HDI, metal, dust,
      &                     is, ie, js, je, ks, ke,
-     &                     in, jn, kn, ispecies, imetal)
+     &                     in, jn, kn, ispecies, imetal, idustfield
+     &                   , DM, HDII, HeHII
+     &                   , imabund, imchem, idspecies, immulti
+     &                   , igrgr, idsub
+     &                   , CI, CII, CO, CO2
+     &                   , OI, OH, H2O, O2
+     &                   , SiI, SiOI, SiO2I
+     &                   , CH, CH2, COII, OII
+     &                   , OHII, H2OII, H3OII, O2II
+     &                   , Mg, Al, S, Fe
+     &                   , SiM, FeM, Mg2SiO4, MgSiO3, Fe3O4
+     &                   , AC, SiO2D, MgO, FeS, Al2O3
+     &                   , reforg, volorg, H2Oice
+     &                   , metal_loc, metal_C30, metal_F13)
 #endif
 !!          write(*,*) 'CHECK2', d(1,1,1), FeM(1,1,1)/d(1,1,1)/56.d0
 
@@ -870,30 +832,22 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
      &              , grain_N, grain_Size
      &              , grain_D, grain_T, grain_dD, grain_dT
      &              , Tgrain, Ograin, Lgrain
-     &              , immulti, impop3, idspecies, itdmulti, idsub
+     &              , immulti, imabund, idspecies, itdmulti, idsub
      &              , metal_loc, metal_C30, metal_F13
-     &              , loc_fFeM, loc_fMg2SiO4, loc_fMgSiO3, loc_fFeS
-     &              , loc_freforg, loc_fvolorg, loc_fH2Oice
-     &              , loc_r0FeM, loc_r0Mg2SiO4, loc_r0MgSiO3, loc_r0FeS
-     &              , loc_r0reforg, loc_r0volorg, loc_r0H2Oice 
-     &              , C30_fSiM, C30_fFeM, C30_fMg2SiO4, C30_fMgSiO3
-     &              , C30_fAC, C30_fSiO2D, C30_fMgO
-     &              , C30_fFeS, C30_fAl2O3
-     &              , C30_r0SiM, C30_r0FeM, C30_r0Mg2SiO4
-     &              , C30_r0MgSiO3, C30_r0AC, C30_r0SiO2D
-     &              , C30_r0MgO, C30_r0FeS, C30_r0Al2O3
-     &              , F13_fFeM, F13_fMg2SiO4, F13_fMgSiO3
-     &              , F13_fFe3O4, F13_fAC, F13_fSiO2D, F13_fAl2O3
-     &              , F13_r0FeM, F13_r0Mg2SiO4, F13_r0MgSiO3
-     &              , F13_r0Fe3O4, F13_r0AC, F13_r0SiO2D, F13_r0Al2O3
+     &              , SN0_N
+     &              , SN0_fSiM, SN0_fFeM, SN0_fMg2SiO4, SN0_fMgSiO3
+     &              , SN0_fFe3O4, SN0_fAC, SN0_fSiO2D, SN0_fMgO
+     &              , SN0_fFeS, SN0_fAl2O3
+     &              , SN0_freforg, SN0_fvolorg, SN0_fH2Oice
+     &              , SN0_r0SiM, SN0_r0FeM, SN0_r0Mg2SiO4, SN0_r0MgSiO3
+     &              , SN0_r0Fe3O4, SN0_r0AC, SN0_r0SiO2D, SN0_r0MgO
+     &              , SN0_r0FeS, SN0_r0Al2O3
+     &              , SN0_r0reforg, SN0_r0volorg, SN0_r0H2Oice
      &              , gr_N, gr_Size, gr_dT, gr_Td
-     &              , loc_kpFeM, loc_kpMg2SiO4, loc_kpMgSiO3, loc_kpFeS
-     &              , loc_kpreforg, loc_kpvolorg, loc_kpH2Oice
-     &              , C30_kpSiM, C30_kpFeM, C30_kpMg2SiO4
-     &              , C30_kpMgSiO3, C30_kpAC, C30_kpSiO2D
-     &              , C30_kpMgO, C30_kpFeS, C30_kpAl2O3
-     &              , F13_kpFeM, F13_kpMg2SiO4, F13_kpMgSiO3
-     &              , F13_kpFe3O4, F13_kpAC, F13_kpSiO2D, F13_kpAl2O3
+     &              , SN0_kpSiM, SN0_kpFeM, SN0_kpMg2SiO4, SN0_kpMgSiO3
+     &              , SN0_kpFe3O4, SN0_kpAC, SN0_kpSiO2D, SN0_kpMgO
+     &              , SN0_kpFeS, SN0_kpAl2O3
+     &              , SN0_kpreforg, SN0_kpvolorg, SN0_kpH2Oice
      &              , tSiM, tFeM, tMg2SiO4, tMgSiO3, tFe3O4
      &              , tAC, tSiO2D, tMgO, tFeS, tAl2O3
      &              , treforg, tvolorg, tH2Oice
@@ -968,31 +922,23 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
      &              , grain_N, grain_Size
      &              , grain_D, grain_T, grain_dD, grain_dT
      &              , Hgrain
-     &              , immulti, impop3, idspecies, itdmulti, idsub
+     &              , immulti, imabund, idspecies, itdmulti, idsub
      &              , metal_loc, metal_C30, metal_F13
-     &              , loc_fFeM, loc_fMg2SiO4, loc_fMgSiO3, loc_fFeS
-     &              , loc_freforg, loc_fvolorg, loc_fH2Oice
-     &              , loc_r0FeM, loc_r0Mg2SiO4, loc_r0MgSiO3, loc_r0FeS
-     &              , loc_r0reforg, loc_r0volorg, loc_r0H2Oice 
-     &              , C30_fSiM, C30_fFeM, C30_fMg2SiO4, C30_fMgSiO3
-     &              , C30_fAC, C30_fSiO2D, C30_fMgO
-     &              , C30_fFeS, C30_fAl2O3
-     &              , C30_r0SiM, C30_r0FeM, C30_r0Mg2SiO4
-     &              , C30_r0MgSiO3, C30_r0AC, C30_r0SiO2D
-     &              , C30_r0MgO, C30_r0FeS, C30_r0Al2O3
-     &              , F13_fFeM, F13_fMg2SiO4, F13_fMgSiO3
-     &              , F13_fFe3O4, F13_fAC, F13_fSiO2D, F13_fAl2O3
-     &              , F13_r0FeM, F13_r0Mg2SiO4, F13_r0MgSiO3
-     &              , F13_r0Fe3O4, F13_r0AC, F13_r0SiO2D, F13_r0Al2O3
+     &              , SN0_N
+     &              , SN0_fSiM, SN0_fFeM, SN0_fMg2SiO4, SN0_fMgSiO3
+     &              , SN0_fFe3O4, SN0_fAC, SN0_fSiO2D, SN0_fMgO
+     &              , SN0_fFeS, SN0_fAl2O3
+     &              , SN0_freforg, SN0_fvolorg, SN0_fH2Oice
+     &              , SN0_r0SiM, SN0_r0FeM, SN0_r0Mg2SiO4, SN0_r0MgSiO3
+     &              , SN0_r0Fe3O4, SN0_r0AC, SN0_r0SiO2D, SN0_r0MgO
+     &              , SN0_r0FeS, SN0_r0Al2O3
+     &              , SN0_r0reforg, SN0_r0volorg, SN0_r0H2Oice
      &              , gr_N, gr_Size, gr_dT, gr_Td
-     &              , loc_kpFeM, loc_kpMg2SiO4, loc_kpMgSiO3, loc_kpFeS
-     &              , loc_kpreforg, loc_kpvolorg, loc_kpH2Oice
-     &              , C30_kpSiM, C30_kpFeM, C30_kpMg2SiO4
-     &              , C30_kpMgSiO3, C30_kpAC, C30_kpSiO2D
-     &              , C30_kpMgO, C30_kpFeS, C30_kpAl2O3
-     &              , F13_kpFeM, F13_kpMg2SiO4, F13_kpMgSiO3
-     &              , F13_kpFe3O4, F13_kpAC, F13_kpSiO2D, F13_kpAl2O3
-     &              , h2dustSa, h2dustCa, rhoH, grogra
+     &              , SN0_kpSiM, SN0_kpFeM, SN0_kpMg2SiO4, SN0_kpMgSiO3
+     &              , SN0_kpFe3O4, SN0_kpAC, SN0_kpSiO2D, SN0_kpMgO
+     &              , SN0_kpFeS, SN0_kpAl2O3
+     &              , SN0_kpreforg, SN0_kpvolorg, SN0_kpH2Oice
+     &              , h2dustSa, h2dustCa, rhoH, grogra, dt
      &              , kdSiM, kdFeM, kdMg2SiO4
      &              , kdMgSiO3, kdFe3O4, kdAC, kdSiO2D, kdMgO, kdFeS
      &              , kdAl2O3, kdreforg, kdvolorg, kdH2Oice
@@ -1299,7 +1245,8 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
      &                     iradtrans, irt_honly, 
      &                     kphHI, kphHeI, kphHeII,
      &                     itmask
-     &                   , DM, HDII, HeHII, imetal, metal, imchem, igrgr
+     &                   , DM, HDII, HeHII, imetal, metal
+     &                   , imchem, idspecies, igrgr, idsub
      &                   , CI, CII, CO, CO2
      &                   , OI, OH, H2O, O2
      &                   , SiI, SiOI, SiO2I
@@ -1370,9 +1317,18 @@ CCCC           endif
                if (ispecies .gt. 2) nsp = nsp + 3
                if (ispecies .gt. 3) nsp = nsp + 3
                if (metal(i,j,k) .gt. 1.d-9 * d(i,j,k)) then
-!!               if (imchem .eq. 1) nsp = nsp + 19
-!!               if (igrgr  .eq. 1) nsp = nsp + 14
-                 if (imchem .eq. 1) nsp = nsp + 36
+               if (imchem .eq. 1) then
+                  nsp = nsp + 19
+                  if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1) ) then
+                    if (idspecies .gt. 0) nsp = nsp + 1
+                    if (idspecies .gt. 1) nsp = nsp + 3
+                  endif
+               endif
+               if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1) ) then
+                  if (idspecies .gt. 0) nsp = nsp + 2
+                  if (idspecies .gt. 1) nsp = nsp + 8
+                  if (idspecies .gt. 2) nsp = nsp + 3
+               endif
                endif
                nsp = nsp + imp_eng
                allocate(idsp(nsp))
@@ -1427,25 +1383,37 @@ CCCC           endif
                   dsp(32) = H2OII(i,j,k)
                   dsp(33) = H3OII(i,j,k)
                   dsp(34) = O2II(i,j,k)
-!!             endif
-!!             if ( igrgr .eq. 1 ) then
+                  if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1) ) then
+                  if (idspecies .gt. 0) then
                   dsp(35) = Mg(i,j,k)
+                  endif
+                  if (idspecies .gt. 1) then
                   dsp(36) = Al(i,j,k)
                   dsp(37) = S(i,j,k)
                   dsp(38) = Fe(i,j,k)
-                  dsp(39) = SiM(i,j,k)
-                  dsp(40) = FeM(i,j,k)
-                  dsp(41) = Mg2SiO4(i,j,k)
-                  dsp(42) = MgSiO3(i,j,k)
-                  dsp(43) = Fe3O4(i,j,k)
-                  dsp(44) = AC(i,j,k)
+                  endif
+                  endif
+               endif
+               if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1) ) then
+               if (idspecies .gt. 0) then
+                  dsp(39) = MgSiO3(i,j,k)
+                  dsp(40) = AC(i,j,k)
+               endif
+               if (idspecies .gt. 1) then
+                  dsp(41) = SiM(i,j,k)
+                  dsp(42) = FeM(i,j,k)
+                  dsp(43) = Mg2SiO4(i,j,k)
+                  dsp(44) = Fe3O4(i,j,k)
                   dsp(45) = SiO2D(i,j,k)
                   dsp(46) = MgO(i,j,k)
                   dsp(47) = FeS(i,j,k)
                   dsp(48) = Al2O3(i,j,k)
+               endif
+               if (idspecies .gt. 2) then
                   dsp(49) = reforg(i,j,k) 
                   dsp(50) = volorg(i,j,k) 
                   dsp(51) = H2Oice(i,j,k) 
+               endif
                endif
                endif
                dsp(i_eng) = e(i,j,k)
@@ -1476,18 +1444,46 @@ CCCC           endif
                   enddo
                endif
                if (metal(i,j,k) .gt. 1.d-9 * d(i,j,k)) then
-               if (imchem .eq. 1) then
-                  do isp = 16, 34
-                     id = id + 1
-                     idsp(id) = isp
-                  enddo
-!!             endif
-!!             if (igrgr .eq. 1) then
-                  do isp = 35, 51
-                     id = id + 1
-                     idsp(id) = isp
-                  enddo
-               endif
+                  if (imchem .eq. 1) then
+                     do isp = 16, 34
+                        id = id + 1
+                        idsp(id) = isp
+                     enddo
+                     if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1) ) then
+                        if (idspecies .gt. 0) then
+                           do isp = 35, 35
+                              id = id + 1
+                              idsp(id) = isp
+                           enddo
+                        endif
+                        if (idspecies .gt. 1) then
+                           do isp = 36, 38
+                              id = id + 1
+                              idsp(id) = isp
+                           enddo
+                        endif
+                     endif
+                  endif
+                  if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1) ) then
+                     if (idspecies .gt. 0) then
+                        do isp = 39, 40
+                           id = id + 1
+                           idsp(id) = isp
+                        enddo
+                     endif
+                     if (idspecies .gt. 1) then
+                        do isp = 41, 48
+                           id = id + 1
+                           idsp(id) = isp
+                        enddo
+                     endif
+                     if (idspecies .gt. 2) then
+                        do isp = 49, 51
+                           id = id + 1
+                           idsp(id) = isp
+                        enddo
+                     endif
+                  endif
                endif
                if ( imp_eng .eq.1 ) then
                   id = id + 1
@@ -1532,17 +1528,29 @@ CCCC           endif
                         write(6,*) CH(i,j,k), CH2(i,j,k), COII(i,j,k)
                         write(6,*) OII(i,j,k), OHII(i,j,k), H2OII(i,j,k)
      &                           , H3OII(i,j,k), O2II(i,j,k)
-!!                   endif
-!!                   if ( igrgr .eq. 1 ) then
-                        write(6,*) Mg(i,j,k), Al(i,j,k)
-     &                           , S(i,j,k), Fe(i,j,k)
+                        if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1) ) then
+                        if (idspecies .gt. 0) then
+                        write(6,*) Mg(i,j,k)
+                        endif
+                        if (idspecies .gt. 1) then
+                        write(6,*) Al(i,j,k), S(i,j,k), Fe(i,j,k)
+                        endif
+                        endif
+                     endif
+                     if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1) ) then
+                     if (idspecies .gt. 0) then
+                        write(6,*) MgSiO3(i,j,k), AC(i,j,k)
+                     endif
+                     if (idspecies .gt. 1) then
                         write(6,*) SiM(i,j,k), FeM(i,j,k)
-     &                           , Mg2SiO4(i,j,k), MgSiO3(i,j,k)
-     &                           , Fe3O4(i,j,k)
-                        write(6,*) AC(i,j,k), SiO2D(i,j,k), MgO(i,j,k)
+     &                           , Mg2SiO4(i,j,k), Fe3O4(i,j,k)
+                        write(6,*) SiO2D(i,j,k), MgO(i,j,k)
      &                           , FeS(i,j,k), Al2O3(i,j,k)
+                     endif
+                     if (idspecies .gt. 2) then
                         write(6,*) reforg(i,j,k)
      &                           , volorg(i,j,k), H2Oice(i,j,k)
+                     endif
                      endif
                      endif
                      if ( imetal .eq. 1 ) then
@@ -1676,30 +1684,22 @@ CCCC           endif
      & , grain_N, grain_Size
      & , grain_D, grain_T, grain_dD, grain_dT
      & , Hgrain, Tgrain, Ograin, Lgrain
-     & , immulti, impop3, idspecies, itdmulti, idsub
+     & , immulti, imabund, idspecies, itdmulti, idsub
      & , metal_loc(i,j,k), metal_C30(i,j,k), metal_F13(i,j,k)
-     & , loc_fFeM, loc_fMg2SiO4, loc_fMgSiO3, loc_fFeS
-     & , loc_freforg, loc_fvolorg, loc_fH2Oice
-     & , loc_r0FeM, loc_r0Mg2SiO4, loc_r0MgSiO3, loc_r0FeS
-     & , loc_r0reforg, loc_r0volorg, loc_r0H2Oice 
-     & , C30_fSiM, C30_fFeM, C30_fMg2SiO4, C30_fMgSiO3
-     & , C30_fAC, C30_fSiO2D, C30_fMgO
-     & , C30_fFeS, C30_fAl2O3
-     & , C30_r0SiM, C30_r0FeM, C30_r0Mg2SiO4
-     & , C30_r0MgSiO3, C30_r0AC, C30_r0SiO2D
-     & , C30_r0MgO, C30_r0FeS, C30_r0Al2O3
-     & , F13_fFeM, F13_fMg2SiO4, F13_fMgSiO3
-     & , F13_fFe3O4, F13_fAC, F13_fSiO2D, F13_fAl2O3
-     & , F13_r0FeM, F13_r0Mg2SiO4, F13_r0MgSiO3
-     & , F13_r0Fe3O4, F13_r0AC, F13_r0SiO2D, F13_r0Al2O3
+     & , SN0_N
+     & , SN0_fSiM, SN0_fFeM, SN0_fMg2SiO4, SN0_fMgSiO3
+     & , SN0_fFe3O4, SN0_fAC, SN0_fSiO2D, SN0_fMgO
+     & , SN0_fFeS, SN0_fAl2O3
+     & , SN0_freforg, SN0_fvolorg, SN0_fH2Oice
+     & , SN0_r0SiM, SN0_r0FeM, SN0_r0Mg2SiO4, SN0_r0MgSiO3
+     & , SN0_r0Fe3O4, SN0_r0AC, SN0_r0SiO2D, SN0_r0MgO
+     & , SN0_r0FeS, SN0_r0Al2O3
+     & , SN0_r0reforg, SN0_r0volorg, SN0_r0H2Oice
      & , gr_N, gr_Size, gr_dT, gr_Td
-     & , loc_kpFeM, loc_kpMg2SiO4, loc_kpMgSiO3, loc_kpFeS
-     & , loc_kpreforg, loc_kpvolorg, loc_kpH2Oice
-     & , C30_kpSiM, C30_kpFeM, C30_kpMg2SiO4
-     & , C30_kpMgSiO3, C30_kpAC, C30_kpSiO2D
-     & , C30_kpMgO, C30_kpFeS, C30_kpAl2O3
-     & , F13_kpFeM, F13_kpMg2SiO4, F13_kpMgSiO3
-     & , F13_kpFe3O4, F13_kpAC, F13_kpSiO2D, F13_kpAl2O3
+     & , SN0_kpSiM, SN0_kpFeM, SN0_kpMg2SiO4, SN0_kpMgSiO3
+     & , SN0_kpFe3O4, SN0_kpAC, SN0_kpSiO2D, SN0_kpMgO
+     & , SN0_kpFeS, SN0_kpAl2O3
+     & , SN0_kpreforg, SN0_kpvolorg, SN0_kpH2Oice
      & , h2dustSa, h2dustCa, grogra
      & , tSiM(i), tFeM(i), tMg2SiO4(i), tMgSiO3(i), tFe3O4(i)
      & , tAC(i), tSiO2D(i), tMgO(i), tFeS(i), tAl2O3(i)
@@ -1825,30 +1825,22 @@ CCCC           endif
      & , grain_N, grain_Size
      & , grain_D, grain_T, grain_dD, grain_dT
      & , Hgrain, Tgrain, Ograin, Lgrain
-     & , immulti, impop3, idspecies, itdmulti, idsub
+     & , immulti, imabund, idspecies, itdmulti, idsub
      & , metal_loc(i,j,k), metal_C30(i,j,k), metal_F13(i,j,k)
-     & , loc_fFeM, loc_fMg2SiO4, loc_fMgSiO3, loc_fFeS
-     & , loc_freforg, loc_fvolorg, loc_fH2Oice
-     & , loc_r0FeM, loc_r0Mg2SiO4, loc_r0MgSiO3, loc_r0FeS
-     & , loc_r0reforg, loc_r0volorg, loc_r0H2Oice 
-     & , C30_fSiM, C30_fFeM, C30_fMg2SiO4, C30_fMgSiO3
-     & , C30_fAC, C30_fSiO2D, C30_fMgO
-     & , C30_fFeS, C30_fAl2O3
-     & , C30_r0SiM, C30_r0FeM, C30_r0Mg2SiO4
-     & , C30_r0MgSiO3, C30_r0AC, C30_r0SiO2D
-     & , C30_r0MgO, C30_r0FeS, C30_r0Al2O3
-     & , F13_fFeM, F13_fMg2SiO4, F13_fMgSiO3
-     & , F13_fFe3O4, F13_fAC, F13_fSiO2D, F13_fAl2O3
-     & , F13_r0FeM, F13_r0Mg2SiO4, F13_r0MgSiO3
-     & , F13_r0Fe3O4, F13_r0AC, F13_r0SiO2D, F13_r0Al2O3
+     & , SN0_N
+     & , SN0_fSiM, SN0_fFeM, SN0_fMg2SiO4, SN0_fMgSiO3
+     & , SN0_fFe3O4, SN0_fAC, SN0_fSiO2D, SN0_fMgO
+     & , SN0_fFeS, SN0_fAl2O3
+     & , SN0_freforg, SN0_fvolorg, SN0_fH2Oice
+     & , SN0_r0SiM, SN0_r0FeM, SN0_r0Mg2SiO4, SN0_r0MgSiO3
+     & , SN0_r0Fe3O4, SN0_r0AC, SN0_r0SiO2D, SN0_r0MgO
+     & , SN0_r0FeS, SN0_r0Al2O3
+     & , SN0_r0reforg, SN0_r0volorg, SN0_r0H2Oice
      & , gr_N, gr_Size, gr_dT, gr_Td
-     & , loc_kpFeM, loc_kpMg2SiO4, loc_kpMgSiO3, loc_kpFeS
-     & , loc_kpreforg, loc_kpvolorg, loc_kpH2Oice
-     & , C30_kpSiM, C30_kpFeM, C30_kpMg2SiO4
-     & , C30_kpMgSiO3, C30_kpAC, C30_kpSiO2D
-     & , C30_kpMgO, C30_kpFeS, C30_kpAl2O3
-     & , F13_kpFeM, F13_kpMg2SiO4, F13_kpMgSiO3
-     & , F13_kpFe3O4, F13_kpAC, F13_kpSiO2D, F13_kpAl2O3
+     & , SN0_kpSiM, SN0_kpFeM, SN0_kpMg2SiO4, SN0_kpMgSiO3
+     & , SN0_kpFe3O4, SN0_kpAC, SN0_kpSiO2D, SN0_kpMgO
+     & , SN0_kpFeS, SN0_kpAl2O3
+     & , SN0_kpreforg, SN0_kpvolorg, SN0_kpH2Oice
      & , h2dustSa, h2dustCa, grogra
      & , tSiM(i), tFeM(i), tMg2SiO4(i), tMgSiO3(i), tFe3O4(i)
      & , tAC(i), tSiO2D(i), tMgO(i), tFeS(i), tAl2O3(i)
@@ -2001,68 +1993,80 @@ CCCC           endif
                enddo
 
                if ( ispecies .gt. 0 ) then
-                   de(i,j,k)      = dsp( 1)
-                   HI(i,j,k)      = dsp( 2)
-                   HII(i,j,k)     = dsp( 3)
-                   HeI(i,j,k)     = dsp( 4)
-                   HeII(i,j,k)    = dsp( 5)
-                   HeIII(i,j,k)   = dsp( 6)
+                  de(i,j,k)      = dsp( 1)
+                  HI(i,j,k)      = dsp( 2)
+                  HII(i,j,k)     = dsp( 3)
+                  HeI(i,j,k)     = dsp( 4)
+                  HeII(i,j,k)    = dsp( 5)
+                  HeIII(i,j,k)   = dsp( 6)
                endif
                if ( ispecies .gt. 1 ) then
-                   HM(i,j,k)      = dsp( 7)
-                   H2I(i,j,k)     = dsp( 8)
-                   H2II(i,j,k)    = dsp( 9)
+                  HM(i,j,k)      = dsp( 7)
+                  H2I(i,j,k)     = dsp( 8)
+                  H2II(i,j,k)    = dsp( 9)
                endif
                if ( ispecies .gt. 2 ) then
-                   DI(i,j,k)      = dsp(10)
-                   DII(i,j,k)     = dsp(11)
-                   HDI(i,j,k)     = dsp(12)
+                  DI(i,j,k)      = dsp(10)
+                  DII(i,j,k)     = dsp(11)
+                  HDI(i,j,k)     = dsp(12)
                endif
                if ( ispecies .gt. 3 ) then
-                   DM(i,j,k)      = dsp(13)
-                   HDII(i,j,k)    = dsp(14)
-                   HeHII(i,j,k)   = dsp(15)
+                  DM(i,j,k)      = dsp(13)
+                  HDII(i,j,k)    = dsp(14)
+                  HeHII(i,j,k)   = dsp(15)
                endif
                if (metal(i,j,k) .gt. 1.d-9 * d(i,j,k)) then
                if ( imchem .eq. 1 ) then
-                   CI(i,j,k)      = dsp(16)
-                   CII(i,j,k)     = dsp(17)
-                   CO(i,j,k)      = dsp(18)
-                   CO2(i,j,k)     = dsp(19)
-                   OI(i,j,k)      = dsp(20)
-                   OH(i,j,k)      = dsp(21)
-                   H2O(i,j,k)     = dsp(22)
-                   O2(i,j,k)      = dsp(23)
-                   SiI(i,j,k)     = dsp(24)
-                   SiOI(i,j,k)    = dsp(25)
-                   SiO2I(i,j,k)   = dsp(26)
-                   CH(i,j,k)      = dsp(27)
-                   CH2(i,j,k)     = dsp(28)
-                   COII(i,j,k)    = dsp(29)
-                   OII(i,j,k)     = dsp(30)
-                   OHII(i,j,k)    = dsp(31)
-                   H2OII(i,j,k)   = dsp(32)
-                   H3OII(i,j,k)   = dsp(33)
-                   O2II(i,j,k)    = dsp(34)
-!!             endif
-!!             if ( igrgr .eq. 1 ) then
-                   Mg(i,j,k)      = dsp(35)
-                   Al(i,j,k)      = dsp(36)
-                   S(i,j,k)       = dsp(37)
-                   Fe(i,j,k)      = dsp(38)
-                   SiM(i,j,k)     = dsp(39)
-                   FeM(i,j,k)     = dsp(40)
-                   Mg2SiO4(i,j,k) = dsp(41)
-                   MgSiO3(i,j,k)  = dsp(42)
-                   Fe3O4(i,j,k)   = dsp(43)
-                   AC(i,j,k)      = dsp(44)
-                   SiO2D(i,j,k)   = dsp(45)
-                   MgO(i,j,k)     = dsp(46)
-                   FeS(i,j,k)     = dsp(47)
-                   Al2O3(i,j,k)   = dsp(48)
-                   reforg(i,j,k)  = dsp(49)
-                   volorg(i,j,k)  = dsp(50)
-                   H2Oice(i,j,k)  = dsp(51)
+                  CI(i,j,k)      = dsp(16)
+                  CII(i,j,k)     = dsp(17)
+                  CO(i,j,k)      = dsp(18)
+                  CO2(i,j,k)     = dsp(19)
+                  OI(i,j,k)      = dsp(20)
+                  OH(i,j,k)      = dsp(21)
+                  H2O(i,j,k)     = dsp(22)
+                  O2(i,j,k)      = dsp(23)
+                  SiI(i,j,k)     = dsp(24)
+                  SiOI(i,j,k)    = dsp(25)
+                  SiO2I(i,j,k)   = dsp(26)
+                  CH(i,j,k)      = dsp(27)
+                  CH2(i,j,k)     = dsp(28)
+                  COII(i,j,k)    = dsp(29)
+                  OII(i,j,k)     = dsp(30)
+                  OHII(i,j,k)    = dsp(31)
+                  H2OII(i,j,k)   = dsp(32)
+                  H3OII(i,j,k)   = dsp(33)
+                  O2II(i,j,k)    = dsp(34)
+                  if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1 ) ) then
+                  if (idspecies .gt. 0) then
+                  Mg(i,j,k)      = dsp(35)
+                  endif
+                  if (idspecies .gt. 1) then
+                  Al(i,j,k)      = dsp(36)
+                  S(i,j,k)       = dsp(37)
+                  Fe(i,j,k)      = dsp(38)
+                  endif
+                  endif
+               endif
+               if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1 ) ) then
+               if (idspecies .gt. 0) then
+                  MgSiO3(i,j,k)  = dsp(39)
+                  AC(i,j,k)      = dsp(40)
+               endif
+               if (idspecies .gt. 1) then
+                  SiM(i,j,k)     = dsp(41)
+                  FeM(i,j,k)     = dsp(42)
+                  Mg2SiO4(i,j,k) = dsp(43)
+                  Fe3O4(i,j,k)   = dsp(44)
+                  SiO2D(i,j,k)   = dsp(45)
+                  MgO(i,j,k)     = dsp(46)
+                  FeS(i,j,k)     = dsp(47)
+                  Al2O3(i,j,k)   = dsp(48)
+               endif
+               if (idspecies .gt. 2) then
+                  reforg(i,j,k)  = dsp(49)
+                  volorg(i,j,k)  = dsp(50)
+                  H2Oice(i,j,k)  = dsp(51)
+               endif
                endif
                endif
 
@@ -2187,22 +2191,22 @@ c            WARNING_MESSAGE
 
          call scale_fields_g(d, de, HI, HII, HeI, HeII, HeIII,
      &                  HM, H2I, H2II, DI, DII, HDI, metal, dust,
-     &                  imchem, igrgr,
-     &                  DM, HDII, HeHII,
-     &                  CI, CII, CO, CO2,
-     &                  OI, OH, H2O, O2,
-     &                  SiI, SiOI, SiO2I,
-     &                  CH, CH2, COII, OII,
-     &                  OHII, H2OII, H3OII, O2II,
-     &                  Mg, Al, S, Fe,
-     &                  SiM, FeM, Mg2SiO4, MgSiO3, Fe3O4,
-     &                  AC, SiO2D, MgO, FeS, Al2O3,
-     &                  reforg, volorg, H2Oice,
-     &                  immulti, impop3, idspecies, itdmulti, idsub,
-     &                  metal_loc, metal_C30, metal_F13,
      &                  is, ie, js, je, ks, ke,
      &                  in, jn, kn, ispecies, imetal, idustfield,
-     &                  aye**3)
+     &                  aye**(-3)
+     &                , DM, HDII, HeHII
+     &                , imabund, imchem, idspecies, immulti
+     &                , igrgr, idsub
+     &                , CI, CII, CO, CO2
+     &                , OI, OH, H2O, O2
+     &                , SiI, SiOI, SiO2I
+     &                , CH, CH2, COII, OII
+     &                , OHII, H2OII, H3OII, O2II
+     &                , Mg, Al, S, Fe
+     &                , SiM, FeM, Mg2SiO4, MgSiO3, Fe3O4
+     &                , AC, SiO2D, MgO, FeS, Al2O3
+     &                , reforg, volorg, H2Oice
+     &                , metal_loc, metal_C30, metal_F13)
 
       endif
 
@@ -2227,20 +2231,13 @@ c            WARNING_MESSAGE
      &                   , SiM, FeM, Mg2SiO4, MgSiO3, Fe3O4
      &                   , AC, SiO2D, MgO, FeS, Al2O3
      &                   , reforg, volorg, H2Oice
-     &                   , immulti, impop3, idspecies, itdmulti, idsub
+     &                   , immulti, imabund, idspecies, itdmulti, idsub
      &                   , metal_loc, metal_C30, metal_F13
-     &                   , loc_XC, loc_XO, loc_XMg, loc_XAl, loc_XSi
-     &                   , loc_XS, loc_XFe
-     &                   , loc_fC, loc_fO, loc_fMg, loc_fAl, loc_fSi
-     &                   , loc_fS, loc_fFe
-     &                   , C30_XC, C30_XO, C30_XMg, C30_XAl, C30_XSi
-     &                   , C30_XS, C30_XFe
-     &                   , C30_fC, C30_fO, C30_fMg, C30_fAl, C30_fSi
-     &                   , C30_fS, C30_fFe
-     &                   , F13_XC, F13_XO, F13_XMg, F13_XAl, F13_XSi
-     &                   , F13_XS, F13_XFe
-     &                   , F13_fC, F13_fO, F13_fMg, F13_fAl, F13_fSi
-     &                   , F13_fS, F13_fFe
+     &                   , SN0_N
+     &                   , SN0_XC, SN0_XO, SN0_XMg, SN0_XAl, SN0_XSi
+     &                   , SN0_XS, SN0_XFe
+     &                   , SN0_fC, SN0_fO, SN0_fMg, SN0_fAl, SN0_fSi
+     &                   , SN0_fS, SN0_fFe
      &                      )
 #endif
 
@@ -2256,23 +2253,22 @@ c -----------------------------------------------------------
 
       subroutine scale_fields_g(d, de, HI, HII, HeI, HeII, HeIII,
      &                        HM, H2I, H2II, DI, DII, HDI, metal, dust,
-     &                        imchem, igrgr,
-     &                        DM, HDII, HeHII,
-     &                        CI, CII, CO, CO2,
-     &                        OI, OH, H2O, O2,
-     &                        SiI, SiOI, SiO2I,
-     &                        CH, CH2, COII, OII,
-     &                        OHII, H2OII, H3OII, O2II,
-     &                        Mg, Al, S, Fe,
-     &                        SiM, FeM, Mg2SiO4, MgSiO3, Fe3O4,
-     &                        AC, SiO2D, MgO, FeS, Al2O3,
-     &                        reforg, volorg, H2Oice,
-     &                        immulti, impop3, idspecies, itdmulti,
-     &                        idsub,
-     &                        metal_loc, metal_C30, metal_F13,
      &                        is, ie, js, je, ks, ke,
      &                        in, jn, kn, ispecies, imetal, idustfield,
-     &                        factor)
+     &                        factor
+     &                      , DM, HDII, HeHII
+     &                      , imabund, imchem, idspecies, immulti
+     &                      , igrgr, idsub
+     &                      , CI, CII, CO, CO2
+     &                      , OI, OH, H2O, O2
+     &                      , SiI, SiOI, SiO2I
+     &                      , CH, CH2, COII, OII
+     &                      , OHII, H2OII, H3OII, O2II
+     &                      , Mg, Al, S, Fe
+     &                      , SiM, FeM, Mg2SiO4, MgSiO3, Fe3O4
+     &                      , AC, SiO2D, MgO, FeS, Al2O3
+     &                      , reforg, volorg, H2Oice
+     &                      , metal_loc, metal_C30, metal_F13)
 c -------------------------------------------------------------------
 
       implicit NONE
@@ -2282,12 +2278,12 @@ c -------------------------------------------------------------------
 
       integer in, jn, kn, is, ie, js, je, ks, ke, ispecies, imetal,
      &        idustfield
+     &      , imabund, imchem, idspecies, immulti, igrgr, idsub
       R_PREC  de(in,jn,kn),   HI(in,jn,kn),   HII(in,jn,kn),
      &        HeI(in,jn,kn), HeII(in,jn,kn), HeIII(in,jn,kn),
      &        HM(in,jn,kn),  H2I(in,jn,kn), H2II(in,jn,kn),
      &        DI(in,jn,kn),  DII(in,jn,kn), HDI(in,jn,kn),
      &        d(in,jn,kn),   metal(in,jn,kn), dust(in,jn,kn)
-       integer imchem, igrgr
        R_PREC DM(in,jn,kn), HDII(in,jn,kn), HeHII(in,jn,kn)
      &      , CI(in,jn,kn)   , CII(in,jn,kn)    , CO(in,jn,kn)
      &      , CO2(in,jn,kn)  , OI(in,jn,kn)     , OH(in,jn,kn)
@@ -2302,7 +2298,6 @@ c -------------------------------------------------------------------
      &      , SiO2D(in,jn,kn), MgO(in,jn,kn), FeS(in,jn,kn)
      &      , Al2O3(in,jn,kn)
      &      , reforg(in,jn,kn), volorg(in,jn,kn), H2Oice(in,jn,kn)
-      integer immulti, impop3, idspecies, itdmulti, idsub
        R_PREC metal_loc(in,jn,kn)
      &      , metal_C30(in,jn,kn), metal_F13(in,jn,kn)
       real*8 factor
@@ -2399,33 +2394,18 @@ c -------------------------------------------------------------------
                      H2OII(i,j,k)   = H2OII(i,j,k)*factor
                      H3OII(i,j,k)   = H3OII(i,j,k)*factor
                      O2II(i,j,k)    = O2II(i,j,k)*factor
-!!                endif
-!!                if (igrgr .eq. 1) then
+                     if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1 ) ) then
+                     if (idspecies .gt. 0) then
                      Mg(i,j,k)      = Mg(i,j,k)*factor
+                     endif
+                     if (idspecies .gt. 1) then
                      Al(i,j,k)      = Al(i,j,k)*factor
                      S(i,j,k)       = S(i,j,k)*factor
                      Fe(i,j,k)      = Fe(i,j,k)*factor
-                     SiM(i,j,k)     = SiM(i,j,k)*factor
-                     FeM(i,j,k)     = FeM(i,j,k)*factor
-                     Mg2SiO4(i,j,k) = Mg2SiO4(i,j,k)*factor
-                     MgSiO3(i,j,k)  = MgSiO3(i,j,k)*factor
-                     Fe3O4(i,j,k)   = Fe3O4(i,j,k)*factor
-                     AC(i,j,k)      = AC(i,j,k)*factor
-                     SiO2D(i,j,k)   = SiO2D(i,j,k)*factor
-                     MgO(i,j,k)     = MgO(i,j,k)*factor
-                     FeS(i,j,k)     = FeS(i,j,k)*factor
-                     Al2O3(i,j,k)   = Al2O3(i,j,k)*factor
-                     reforg(i,j,k)  = reforg(i,j,k)*factor
-                     volorg(i,j,k)  = volorg(i,j,k)*factor
-                     H2Oice(i,j,k)  = H2Oice(i,j,k)*factor
+                     endif
+                     endif
                   endif
-#ifdef SMBH_RAD
-                  if(idspecies .eq. 1) then
-                     MgSiO3(i,j,k)  = MgSiO3(i,j,k)*factor
-                     AC(i,j,k)      = AC(i,j,k)*factor
                   endif
-#endif
-                  endif ! metal
                enddo
             enddo
          enddo
@@ -2435,6 +2415,29 @@ c -------------------------------------------------------------------
             do j = js+1, je+1
                do i = is+1, ie+1
                   dust(i,j,k) = dust(i,j,k)*factor
+                  if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1 ) ) then
+                  if (metal(i,j,k) .gt. 1.d-9 * d(i,j,k)) then
+                  if (idspecies .gt. 0) then
+                     MgSiO3(i,j,k)  = MgSiO3(i,j,k)*factor
+                     AC(i,j,k)      = AC(i,j,k)*factor
+                  endif
+                  if (idspecies .gt. 1) then
+                     SiM(i,j,k)     = SiM(i,j,k)*factor
+                     FeM(i,j,k)     = FeM(i,j,k)*factor
+                     Mg2SiO4(i,j,k) = Mg2SiO4(i,j,k)*factor
+                     Fe3O4(i,j,k)   = Fe3O4(i,j,k)*factor
+                     SiO2D(i,j,k)   = SiO2D(i,j,k)*factor
+                     MgO(i,j,k)     = MgO(i,j,k)*factor
+                     FeS(i,j,k)     = FeS(i,j,k)*factor
+                     Al2O3(i,j,k)   = Al2O3(i,j,k)*factor
+                  endif
+                  if (idspecies .gt. 2) then
+                     reforg(i,j,k)  = reforg(i,j,k)*factor
+                     volorg(i,j,k)  = volorg(i,j,k)*factor
+                     H2Oice(i,j,k)  = H2Oice(i,j,k)*factor
+                  endif
+                  endif
+                  endif
                enddo
             enddo
          enddo
@@ -2447,23 +2450,22 @@ c -----------------------------------------------------------
 !   This routine ensures that the species aren't below tiny.
 
       subroutine ceiling_species_g(d, de, HI, HII, HeI, HeII, HeIII,
-     &                           HM, H2I, H2II, DI, DII, HDI, metal,
-     &                           imchem, igrgr,
-     &                           DM, HDII, HeHII,
-     &                           CI, CII, CO, CO2,
-     &                           OI, OH, H2O, O2,
-     &                           SiI, SiOI, SiO2I,
-     &                           CH, CH2, COII, OII,
-     &                           OHII, H2OII, H3OII, O2II,
-     &                           Mg, Al, S, Fe,
-     &                           SiM, FeM, Mg2SiO4, MgSiO3, Fe3O4,
-     &                           AC, SiO2D, MgO, FeS, Al2O3,
-     &                           reforg, volorg, H2Oice,
-     &                           immulti, impop3, idspecies, itdmulti,
-     &                           idsub,
-     &                           metal_loc, metal_C30, metal_F13,
-     &                           is, ie, js, je, ks, ke,
-     &                           in, jn, kn, ispecies, imetal)
+     &                     HM, H2I, H2II, DI, DII, HDI, metal, dust,
+     &                     is, ie, js, je, ks, ke,
+     &                     in, jn, kn, ispecies, imetal, idustfield
+     &                   , DM, HDII, HeHII
+     &                   , imabund, imchem, idspecies, immulti
+     &                   , igrgr, idsub
+     &                   , CI, CII, CO, CO2
+     &                   , OI, OH, H2O, O2
+     &                   , SiI, SiOI, SiO2I
+     &                   , CH, CH2, COII, OII
+     &                   , OHII, H2OII, H3OII, O2II
+     &                   , Mg, Al, S, Fe
+     &                   , SiM, FeM, Mg2SiO4, MgSiO3, Fe3O4
+     &                   , AC, SiO2D, MgO, FeS, Al2O3
+     &                   , reforg, volorg, H2Oice
+     &                   , metal_loc, metal_C30, metal_F13)
 c -------------------------------------------------------------------
 
       implicit NONE
@@ -2472,13 +2474,14 @@ c -------------------------------------------------------------------
 !     Arguments
 
       integer in, jn, kn, is, ie, js, je, ks, ke, ispecies, imetal
+     &      , idustfield
       R_PREC  d(in,jn,kn),
      &        de(in,jn,kn),   HI(in,jn,kn),   HII(in,jn,kn),
      &        HeI(in,jn,kn), HeII(in,jn,kn), HeIII(in,jn,kn),
      &        HM(in,jn,kn),  H2I(in,jn,kn), H2II(in,jn,kn),
      &        DI(in,jn,kn),  DII(in,jn,kn), HDI(in,jn,kn),
-     &        metal(in,jn,kn)
-       integer imchem, igrgr
+     &        metal(in,jn,kn), dust(in,jn,kn)
+      integer imabund, imchem, idspecies, immulti, igrgr, idsub
        R_PREC DM(in,jn,kn), HDII(in,jn,kn), HeHII(in,jn,kn)
      &      , CI(in,jn,kn)   , CII(in,jn,kn)    , CO(in,jn,kn)
      &      , CO2(in,jn,kn)  , OI(in,jn,kn)     , OH(in,jn,kn)
@@ -2493,7 +2496,6 @@ c -------------------------------------------------------------------
      &      , SiO2D(in,jn,kn), MgO(in,jn,kn), FeS(in,jn,kn)
      &      , Al2O3(in,jn,kn)
      &      , reforg(in,jn,kn), volorg(in,jn,kn), H2Oice(in,jn,kn)
-      integer immulti, impop3, idspecies, itdmulti, idsub
        R_PREC metal_loc(in,jn,kn)
      &      , metal_C30(in,jn,kn), metal_F13(in,jn,kn)
 
@@ -2583,32 +2585,49 @@ c -------------------------------------------------------------------
                      H2OII(i,j,k)   = max(H2OII(i,j,k), tiny)
                      H3OII(i,j,k)   = max(H3OII(i,j,k), tiny)
                      O2II(i,j,k)    = max(O2II(i,j,k), tiny)
-!!                endif
-!!                if (igrgr .eq. 1) then
+                     if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1 ) ) then
+                     if (idspecies .gt. 0) then
                      Mg(i,j,k)      = max(Mg(i,j,k), tiny)
+                     endif
+                     if (idspecies .gt. 1) then
                      Al(i,j,k)      = max(Al(i,j,k), tiny)
                      S(i,j,k)       = max(S(i,j,k), tiny)
                      Fe(i,j,k)      = max(Fe(i,j,k), tiny)
+                     endif
+                     endif
+                  endif
+                  endif
+               enddo
+            enddo
+         enddo
+      endif
+      if (idustfield .eq. 1) then
+         do k = ks+1, ke+1
+            do j = js+1, je+1
+               do i = is+1, ie+1
+                  dust(i,j,k)       = max(dust(k,j,k), tiny)
+                  if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1 ) ) then
+                  if (metal(i,j,k) .gt. 1.d-9 * d(i,j,k)) then
+                  if (idspecies .gt. 0) then
+                     MgSiO3(i,j,k)  = max(MgSiO3(i,j,k), tiny)
+                     AC(i,j,k)      = max(AC(i,j,k), tiny)
+                  endif
+                  if (idspecies .gt. 1) then
                      SiM(i,j,k)     = max(SiM(i,j,k), tiny)
                      FeM(i,j,k)     = max(FeM(i,j,k), tiny)
                      Mg2SiO4(i,j,k) = max(Mg2SiO4(i,j,k), tiny)
-                     MgSiO3(i,j,k)  = max(MgSiO3(i,j,k), tiny)
                      Fe3O4(i,j,k)   = max(Fe3O4(i,j,k), tiny)
-                     AC(i,j,k)      = max(AC(i,j,k), tiny)
                      SiO2D(i,j,k)   = max(SiO2D(i,j,k), tiny)
                      MgO(i,j,k)     = max(MgO(i,j,k), tiny)
                      FeS(i,j,k)     = max(FeS(i,j,k), tiny)
                      Al2O3(i,j,k)   = max(Al2O3(i,j,k), tiny)
+                  endif
+                  if (idspecies .gt. 2) then
                      reforg(i,j,k)  = max(reforg(i,j,k), tiny)
                      volorg(i,j,k)  = max(volorg(i,j,k), tiny)
                      H2Oice(i,j,k)  = max(H2Oice(i,j,k), tiny)
                   endif
-#ifdef SMBH_RAD
-                  if(idspecies .eq. 1) then
-                     MgSiO3(i,j,k)  = max(MgSiO3(i,j,k), tiny)
-                     AC(i,j,k)      = max(AC(i,j,k), tiny)
                   endif
-#endif
                   endif
                enddo
             enddo
@@ -2686,31 +2705,23 @@ c -------------------------------------------------------------------
      &              , grain_N, grain_Size
      &              , grain_D, grain_T, grain_dD, grain_dT
      &              , Hgrain
-     &              , immulti, impop3, idspecies, itdmulti, idsub
+     &              , immulti, imabund, idspecies, itdmulti, idsub
      &              , metal_loc, metal_C30, metal_F13
-     &              , loc_fFeM, loc_fMg2SiO4, loc_fMgSiO3, loc_fFeS
-     &              , loc_freforg, loc_fvolorg, loc_fH2Oice
-     &              , loc_r0FeM, loc_r0Mg2SiO4, loc_r0MgSiO3, loc_r0FeS
-     &              , loc_r0reforg, loc_r0volorg, loc_r0H2Oice 
-     &              , C30_fSiM, C30_fFeM, C30_fMg2SiO4, C30_fMgSiO3
-     &              , C30_fAC, C30_fSiO2D, C30_fMgO
-     &              , C30_fFeS, C30_fAl2O3
-     &              , C30_r0SiM, C30_r0FeM, C30_r0Mg2SiO4
-     &              , C30_r0MgSiO3, C30_r0AC, C30_r0SiO2D
-     &              , C30_r0MgO, C30_r0FeS, C30_r0Al2O3
-     &              , F13_fFeM, F13_fMg2SiO4, F13_fMgSiO3
-     &              , F13_fFe3O4, F13_fAC, F13_fSiO2D, F13_fAl2O3
-     &              , F13_r0FeM, F13_r0Mg2SiO4, F13_r0MgSiO3
-     &              , F13_r0Fe3O4, F13_r0AC, F13_r0SiO2D, F13_r0Al2O3
+     &              , SN0_N
+     &              , SN0_fSiM, SN0_fFeM, SN0_fMg2SiO4, SN0_fMgSiO3
+     &              , SN0_fFe3O4, SN0_fAC, SN0_fSiO2D, SN0_fMgO
+     &              , SN0_fFeS, SN0_fAl2O3
+     &              , SN0_freforg, SN0_fvolorg, SN0_fH2Oice
+     &              , SN0_r0SiM, SN0_r0FeM, SN0_r0Mg2SiO4, SN0_r0MgSiO3
+     &              , SN0_r0Fe3O4, SN0_r0AC, SN0_r0SiO2D, SN0_r0MgO
+     &              , SN0_r0FeS, SN0_r0Al2O3
+     &              , SN0_r0reforg, SN0_r0volorg, SN0_r0H2Oice
      &              , gr_N, gr_Size, gr_dT, gr_Td
-     &              , loc_kpFeM, loc_kpMg2SiO4, loc_kpMgSiO3, loc_kpFeS
-     &              , loc_kpreforg, loc_kpvolorg, loc_kpH2Oice
-     &              , C30_kpSiM, C30_kpFeM, C30_kpMg2SiO4
-     &              , C30_kpMgSiO3, C30_kpAC, C30_kpSiO2D
-     &              , C30_kpMgO, C30_kpFeS, C30_kpAl2O3
-     &              , F13_kpFeM, F13_kpMg2SiO4, F13_kpMgSiO3
-     &              , F13_kpFe3O4, F13_kpAC, F13_kpSiO2D, F13_kpAl2O3
-     &              , h2dustSa, h2dustCa, rhoH, grogra
+     &              , SN0_kpSiM, SN0_kpFeM, SN0_kpMg2SiO4, SN0_kpMgSiO3
+     &              , SN0_kpFe3O4, SN0_kpAC, SN0_kpSiO2D, SN0_kpMgO
+     &              , SN0_kpFeS, SN0_kpAl2O3
+     &              , SN0_kpreforg, SN0_kpvolorg, SN0_kpH2Oice
+     &              , h2dustSa, h2dustCa, rhoH, grogra, dt
      &              , kdSiM, kdFeM, kdMg2SiO4
      &              , kdMgSiO3, kdFe3O4, kdAC, kdSiO2D, kdMgO, kdFeS
      &              , kdAl2O3, kdreforg, kdvolorg, kdH2Oice
@@ -2857,38 +2868,30 @@ c -------------------------------------------------------------------
        integer grain_N(2), grain_Size
        real*8  grain_D(grain_N(1)), grain_T(grain_N(2))
      &       , grain_dD, grain_dT, Hgrain(grain_Size)
-      integer immulti, impop3, idspecies, itdmulti, idsub
-      real*8  loc_fFeM, loc_fMg2SiO4, loc_fMgSiO3, loc_fFeS
-     &      , loc_freforg, loc_fvolorg, loc_fH2Oice
-      real*8  loc_r0FeM(3), loc_r0Mg2SiO4(3), loc_r0MgSiO3(3)
-     &      , loc_r0FeS(3), loc_r0reforg(3), loc_r0volorg(3)
-     &      , loc_r0H2Oice(3)
-      real*8  C30_fSiM, C30_fFeM, C30_fMg2SiO4, C30_fMgSiO3
-     &      , C30_fAC, C30_fSiO2D, C30_fMgO
-     &      , C30_fFeS, C30_fAl2O3
-      real*8  C30_r0SiM(3), C30_r0FeM(3), C30_r0Mg2SiO4(3)
-     &      , C30_r0MgSiO3(3), C30_r0AC(3), C30_r0SiO2D(3)
-     &      , C30_r0MgO(3), C30_r0FeS(3), C30_r0Al2O3(3)
-      real*8  F13_fFeM, F13_fMg2SiO4, F13_fMgSiO3
-     &      , F13_fFe3O4, F13_fAC, F13_fSiO2D, F13_fAl2O3
-      real*8  F13_r0FeM(3), F13_r0Mg2SiO4(3), F13_r0MgSiO3(3)
-     &      , F13_r0Fe3O4(3), F13_r0AC(3), F13_r0SiO2D(3)
-     &      , F13_r0Al2O3(3)
+      integer immulti, imabund, idspecies, itdmulti, idsub
+      integer SN0_N
+      real*8  SN0_fSiM(SN0_N), SN0_fFeM(SN0_N), SN0_fMg2SiO4(SN0_N)
+     &      , SN0_fMgSiO3(SN0_N), SN0_fFe3O4(SN0_N), SN0_fAC(SN0_N)
+     &      , SN0_fSiO2D(SN0_N), SN0_fMgO(SN0_N), SN0_fFeS(SN0_N)
+     &      , SN0_fAl2O3(SN0_N)
+     &      , SN0_freforg(SN0_N), SN0_fvolorg(SN0_N), SN0_fH2Oice(SN0_N)
+      real*8  SN0_r0SiM(3,SN0_N), SN0_r0FeM(3,SN0_N)
+     &      , SN0_r0Mg2SiO4(3,SN0_N), SN0_r0MgSiO3(3,SN0_N)
+     &      , SN0_r0Fe3O4(3,SN0_N), SN0_r0AC(3,SN0_N)
+     &      , SN0_r0SiO2D(3,SN0_N), SN0_r0MgO(3,SN0_N)
+     &      , SN0_r0FeS(3,SN0_N), SN0_r0Al2O3(3,SN0_N)
+     &      , SN0_r0reforg(3,SN0_N)
+     &      , SN0_r0volorg(3,SN0_N), SN0_r0H2Oice(3,SN0_N)
+!     opacity table
       integer gr_N(2), gr_Size
       real*8  gr_dT, gr_Td(gr_N(2))
-      real*8  loc_kpFeM(gr_Size), loc_kpMg2SiO4(gr_Size)
-     &      , loc_kpMgSiO3(gr_Size), loc_kpFeS(gr_Size)
-     &      , loc_kpreforg(gr_Size), loc_kpvolorg(gr_Size)
-     &      , loc_kpH2Oice(gr_Size)
-      real*8  C30_kpSiM(gr_Size), C30_kpFeM(gr_Size)
-     &      , C30_kpMg2SiO4(gr_Size), C30_kpMgSiO3(gr_Size)
-     &      , C30_kpFe3O4(gr_Size), C30_kpAC(gr_Size)
-     &      , C30_kpSiO2D(gr_Size), C30_kpMgO(gr_Size)
-     &      , C30_kpFeS(gr_Size), C30_kpAl2O3(gr_Size)
-      real*8  F13_kpFeM(gr_Size)
-     &      , F13_kpMg2SiO4(gr_Size), F13_kpMgSiO3(gr_Size)
-     &      , F13_kpFe3O4(gr_Size), F13_kpAC(gr_Size)
-     &      , F13_kpSiO2D(gr_Size), F13_kpAl2O3(gr_Size)
+      real*8  SN0_kpSiM(gr_Size,SN0_N), SN0_kpFeM(gr_Size,SN0_N)
+     &      , SN0_kpMg2SiO4(gr_Size,SN0_N), SN0_kpMgSiO3(gr_Size,SN0_N)
+     &      , SN0_kpFe3O4(gr_Size,SN0_N), SN0_kpAC(gr_Size,SN0_N)
+     &      , SN0_kpSiO2D(gr_Size,SN0_N), SN0_kpMgO(gr_Size,SN0_N)
+     &      , SN0_kpFeS(gr_Size,SN0_N), SN0_kpAl2O3(gr_Size,SN0_N)
+     &      , SN0_kpreforg(gr_Size,SN0_N)
+     &      , SN0_kpvolorg(gr_Size,SN0_N), SN0_kpH2Oice(gr_Size,SN0_N)
       real*8  log_kh2, log_kgg
 !     grain growth
       real*8  sgSiM(in), sgFeM(in), sgMg2SiO4(in)
@@ -2912,7 +2915,8 @@ c -------------------------------------------------------------------
      &      , h2SiO2D, h2MgO, h2FeS
      &      , h2Al2O3
      &      , h2reforg, h2volorg, h2H2Oice
-      real*8  grogra(nratec)
+!     grain growth/sublimation
+      real*8  grogra(nratec), dt
       real*8  kdSiM(in), kdFeM(in), kdMg2SiO4(in)
      &      , kdMgSiO3(in), kdFe3O4(in), kdAC(in)
      &      , kdSiO2D(in), kdMgO(in), kdFeS(in)
@@ -3234,34 +3238,26 @@ c -------------------------------------------------------------------
       if ( (anydust) .and. (idspecies .gt. 0) ) then
 
          call calc_grain_size_increment_1d(
-     &             igrgr, itmask
+     &             immulti, imabund, idspecies, igrgr, itmask
      &           , in, jn, kn, is, ie, j, k, dom, d
      &           , SiM, FeM, Mg2SiO4, MgSiO3, Fe3O4
      &           , AC, SiO2D, MgO, FeS, Al2O3
      &           , reforg, volorg, H2Oice
      &           , metal, metal_loc, metal_C30, metal_F13
-     &           , loc_fFeM, loc_fMg2SiO4, loc_fMgSiO3, loc_fFeS
-     &           , loc_freforg, loc_fvolorg, loc_fH2Oice
-     &           , loc_r0FeM, loc_r0Mg2SiO4, loc_r0MgSiO3, loc_r0FeS
-     &           , loc_r0reforg, loc_r0volorg, loc_r0H2Oice 
-     &           , C30_fSiM, C30_fFeM, C30_fMg2SiO4, C30_fMgSiO3
-     &           , C30_fAC, C30_fSiO2D, C30_fMgO
-     &           , C30_fFeS, C30_fAl2O3
-     &           , C30_r0SiM, C30_r0FeM, C30_r0Mg2SiO4
-     &           , C30_r0MgSiO3, C30_r0AC, C30_r0SiO2D
-     &           , C30_r0MgO, C30_r0FeS, C30_r0Al2O3
-     &           , F13_fFeM, F13_fMg2SiO4, F13_fMgSiO3
-     &           , F13_fFe3O4, F13_fAC, F13_fSiO2D, F13_fAl2O3
-     &           , F13_r0FeM, F13_r0Mg2SiO4, F13_r0MgSiO3
-     &           , F13_r0Fe3O4, F13_r0AC, F13_r0SiO2D, F13_r0Al2O3
+     &           , SN0_N
+     &           , SN0_fSiM, SN0_fFeM, SN0_fMg2SiO4, SN0_fMgSiO3
+     &           , SN0_fFe3O4, SN0_fAC, SN0_fSiO2D, SN0_fMgO
+     &           , SN0_fFeS, SN0_fAl2O3
+     &           , SN0_freforg, SN0_fvolorg, SN0_fH2Oice
+     &           , SN0_r0SiM, SN0_r0FeM, SN0_r0Mg2SiO4, SN0_r0MgSiO3
+     &           , SN0_r0Fe3O4, SN0_r0AC, SN0_r0SiO2D, SN0_r0MgO
+     &           , SN0_r0FeS, SN0_r0Al2O3
+     &           , SN0_r0reforg, SN0_r0volorg, SN0_r0H2Oice
      &           , gr_N, gr_Size, gr_dT, gr_Td
-     &           , loc_kpFeM, loc_kpMg2SiO4, loc_kpMgSiO3, loc_kpFeS
-     &           , loc_kpreforg, loc_kpvolorg, loc_kpH2Oice
-     &           , C30_kpSiM, C30_kpFeM, C30_kpMg2SiO4
-     &           , C30_kpMgSiO3, C30_kpAC, C30_kpSiO2D
-     &           , C30_kpMgO, C30_kpFeS, C30_kpAl2O3
-     &           , F13_kpFeM, F13_kpMg2SiO4, F13_kpMgSiO3
-     &           , F13_kpFe3O4, F13_kpAC, F13_kpSiO2D, F13_kpAl2O3
+     &           , SN0_kpSiM, SN0_kpFeM, SN0_kpMg2SiO4, SN0_kpMgSiO3
+     &           , SN0_kpFe3O4, SN0_kpAC, SN0_kpSiO2D, SN0_kpMgO
+     &           , SN0_kpFeS, SN0_kpAl2O3
+     &           , SN0_kpreforg, SN0_kpvolorg, SN0_kpH2Oice
      &           , sgSiM, sgFeM, sgMg2SiO4, sgMgSiO3, sgFe3O4, sgAC
      &           , sgSiO2D, sgMgO, sgFeS, sgAl2O3
      &           , sgreforg, sgvolorg, sgH2Oice, sgtot
@@ -3373,6 +3369,7 @@ c -------------------------------------------------------------------
 
                if (itdmulti .eq. 0) then
 
+                  if (idspecies .gt. 0) then
                   d_logtem(i) = log(tdust(i))
                   call interpolate_2D_g(
      &              d_logtem(i), logtem(i), int8(d_N), d_Td, d_dTd, 
@@ -3382,134 +3379,121 @@ c -------------------------------------------------------------------
      &              d_logtem(i), logtem(i), int8(d_N), d_Td, d_dTd, 
      &              d_Tg, d_dTg, int8(d_Size), h2dustCa, h2AC     )
 
-                  h2dust(i) = (
-     &               h2MgSiO3   * sgSiM     (i)
-     &             + h2MgSiO3   * sgFeM     (i)
-     &             + h2MgSiO3   * sgMg2SiO4 (i)
-     &             + h2MgSiO3   * sgMgSiO3  (i)
-     &             + h2MgSiO3   * sgFe3O4   (i)
-     &             + h2AC       * sgAC      (i)
-     &             + h2MgSiO3   * sgSiO2D   (i)
-     &             + h2MgSiO3   * sgMgO     (i)
-     &             + h2MgSiO3   * sgFeS     (i)
-     &             + h2MgSiO3   * sgAl2O3   (i)
-     &             + h2MgSiO3   * sgreforg  (i)
-     &             + h2MgSiO3   * sgvolorg  (i)
-     &             + h2MgSiO3   * sgH2Oice  (i)
-     &                ) 
-
-!                 write(*,*) h2MgSiO3   , sgSiM     (i)
-!                 write(*,*) h2MgSiO3   , sgFeM     (i)
-!                 write(*,*) h2MgSiO3   , sgMg2SiO4 (i)
-!                 write(*,*) h2MgSiO3   , sgMgSiO3  (i)
-!                 write(*,*) h2MgSiO3   , sgFe3O4   (i)
-!                 write(*,*) h2AC       , sgAC      (i)
-!                 write(*,*) h2MgSiO3   , sgSiO2D   (i)
-!                 write(*,*) h2MgSiO3   , sgMgO     (i)
-!                 write(*,*) h2MgSiO3   , sgFeS     (i)
-!                 write(*,*) h2MgSiO3   , sgAl2O3   (i)
-!                 write(*,*) h2MgSiO3   , sgreforg  (i)
-!                 write(*,*) h2MgSiO3   , sgvolorg  (i)
-!                 write(*,*) h2MgSiO3   , sgH2Oice  (i)
-!!                write(*,*) 'b', h2dust(i)
+                     h2dust(i) = h2MgSiO3   * sgMgSiO3  (i)
+     &                         + h2AC       * sgAC      (i)
+                  endif
+                  if (idspecies .gt. 1) then
+                     h2dust(i) = h2dust(i)
+     &                         + h2MgSiO3   * sgSiM     (i)
+     &                         + h2MgSiO3   * sgFeM     (i)
+     &                         + h2MgSiO3   * sgMg2SiO4 (i)
+     &                         + h2MgSiO3   * sgFe3O4   (i)
+     &                         + h2MgSiO3   * sgSiO2D   (i)
+     &                         + h2MgSiO3   * sgMgO     (i)
+     &                         + h2MgSiO3   * sgFeS     (i)
+     &                         + h2MgSiO3   * sgAl2O3   (i)
+                  endif
+                  if (idspecies .gt. 2) then
+                     h2dust(i) = h2dust(i)
+     &                         + h2MgSiO3   * sgreforg  (i)
+     &                         + h2MgSiO3   * sgvolorg  (i)
+     &                         + h2MgSiO3   * sgH2Oice  (i)
+                  endif
 
                else ! itdmulti
 
-                  d_logtem(i) = log(tSiM     (i))
-                  call interpolate_2D_g(
-     &              d_logtem(i), logtem(i), int8(d_N), d_Td, d_dTd, 
-     &              d_Tg, d_dTg, int8(d_Size), h2dustSa, h2SiM     )
+                  if (idspecies .gt. 0) then
+                     d_logtem(i) = log(tMgSiO3  (i))
+                     call interpolate_2D_g(
+     &                 d_logtem(i), logtem(i), int8(d_N), d_Td, d_dTd,
+     &                 d_Tg, d_dTg, int8(d_Size), h2dustSa, h2MgSiO3  )
+                 
+                     d_logtem(i) = log(tAC      (i))
+                     call interpolate_2D_g(
+     &                 d_logtem(i), logtem(i), int8(d_N), d_Td, d_dTd,
+     &                 d_Tg, d_dTg, int8(d_Size), h2dustCa, h2AC      )
+                  endif
 
-                  d_logtem(i) = log(tFeM     (i))
-                  call interpolate_2D_g(
-     &              d_logtem(i), logtem(i), int8(d_N), d_Td, d_dTd,
-     &              d_Tg, d_dTg, int8(d_Size), h2dustSa, h2FeM     )
-              
-                  d_logtem(i) = log(tMg2SiO4 (i))
-                  call interpolate_2D_g(
-     &              d_logtem(i), logtem(i), int8(d_N), d_Td, d_dTd,
-     &              d_Tg, d_dTg, int8(d_Size), h2dustSa, h2Mg2SiO4 )
-              
-                  d_logtem(i) = log(tMgSiO3  (i))
-                  call interpolate_2D_g(
-     &              d_logtem(i), logtem(i), int8(d_N), d_Td, d_dTd,
-     &              d_Tg, d_dTg, int8(d_Size), h2dustSa, h2MgSiO3  )
-              
-                  d_logtem(i) = log(tFe3O4   (i))
-                  call interpolate_2D_g(
-     &              d_logtem(i), logtem(i), int8(d_N), d_Td, d_dTd,
-     &              d_Tg, d_dTg, int8(d_Size), h2dustSa, h2Fe3O4   )
-              
-                  d_logtem(i) = log(tAC      (i))
-                  call interpolate_2D_g(
-     &              d_logtem(i), logtem(i), int8(d_N), d_Td, d_dTd,
-     &              d_Tg, d_dTg, int8(d_Size), h2dustCa, h2AC      )
-              
-                  d_logtem(i) = log(tSiO2D   (i))
-                  call interpolate_2D_g(
-     &              d_logtem(i), logtem(i), int8(d_N), d_Td, d_dTd,
-     &              d_Tg, d_dTg, int8(d_Size), h2dustSa, h2SiO2D   )
-              
-                  d_logtem(i) = log(tMgO     (i))
-                  call interpolate_2D_g(
-     &              d_logtem(i), logtem(i), int8(d_N), d_Td, d_dTd,
-     &              d_Tg, d_dTg, int8(d_Size), h2dustSa, h2MgO     )
-              
-                  d_logtem(i) = log(tFeS     (i))
-                  call interpolate_2D_g(
-     &              d_logtem(i), logtem(i), int8(d_N), d_Td, d_dTd,
-     &              d_Tg, d_dTg, int8(d_Size), h2dustSa, h2FeS     )
-              
-                  d_logtem(i) = log(tAl2O3   (i))
-                  call interpolate_2D_g(
-     &              d_logtem(i), logtem(i), int8(d_N), d_Td, d_dTd,
-     &              d_Tg, d_dTg, int8(d_Size), h2dustSa, h2Al2O3   )
-              
-                  d_logtem(i) = log(treforg  (i))
-                  call interpolate_2D_g(
-     &              d_logtem(i), logtem(i), int8(d_N), d_Td, d_dTd,
-     &              d_Tg, d_dTg, int8(d_Size), h2dustSa, h2reforg  )
-              
-                  d_logtem(i) = log(tvolorg  (i))
-                  call interpolate_2D_g(
-     &              d_logtem(i), logtem(i), int8(d_N), d_Td, d_dTd,
-     &              d_Tg, d_dTg, int8(d_Size), h2dustSa, h2volorg  )
-              
-                  d_logtem(i) = log(tH2Oice  (i))
-                  call interpolate_2D_g(
-     &              d_logtem(i), logtem(i), int8(d_N), d_Td, d_dTd, 
-     &              d_Tg, d_dTg, int8(d_Size), h2dustSa, h2H2Oice  )
-              
-                  h2dust(i) = (
-     &               h2SiM      * sgSiM     (i)
-     &             + h2FeM      * sgFeM     (i)
-     &             + h2Mg2SiO4  * sgMg2SiO4 (i)
-     &             + h2MgSiO3   * sgMgSiO3  (i)
-     &             + h2Fe3O4    * sgFe3O4   (i)
-     &             + h2AC       * sgAC      (i)
-     &             + h2SiO2D    * sgSiO2D   (i)
-     &             + h2MgO      * sgMgO     (i)
-     &             + h2FeS      * sgFeS     (i)
-     &             + h2Al2O3    * sgAl2O3   (i)
-     &             + h2reforg   * sgreforg  (i)
-     &             + h2volorg   * sgvolorg  (i)
-     &             + h2H2Oice   * sgH2Oice  (i)
-     &                )
+                  if (idspecies .gt. 1) then
+                     d_logtem(i) = log(tSiM     (i))
+                     call interpolate_2D_g(
+     &                 d_logtem(i), logtem(i), int8(d_N), d_Td, d_dTd, 
+     &                 d_Tg, d_dTg, int8(d_Size), h2dustSa, h2SiM     )
+             
+                     d_logtem(i) = log(tFeM     (i))
+                     call interpolate_2D_g(
+     &                 d_logtem(i), logtem(i), int8(d_N), d_Td, d_dTd,
+     &                 d_Tg, d_dTg, int8(d_Size), h2dustSa, h2FeM     )
+                 
+                     d_logtem(i) = log(tMg2SiO4 (i))
+                     call interpolate_2D_g(
+     &                 d_logtem(i), logtem(i), int8(d_N), d_Td, d_dTd,
+     &                 d_Tg, d_dTg, int8(d_Size), h2dustSa, h2Mg2SiO4 )
+                 
+                     d_logtem(i) = log(tFe3O4   (i))
+                     call interpolate_2D_g(
+     &                 d_logtem(i), logtem(i), int8(d_N), d_Td, d_dTd,
+     &                 d_Tg, d_dTg, int8(d_Size), h2dustSa, h2Fe3O4   )
+                 
+                     d_logtem(i) = log(tSiO2D   (i))
+                     call interpolate_2D_g(
+     &                 d_logtem(i), logtem(i), int8(d_N), d_Td, d_dTd,
+     &                 d_Tg, d_dTg, int8(d_Size), h2dustSa, h2SiO2D   )
+                 
+                     d_logtem(i) = log(tMgO     (i))
+                     call interpolate_2D_g(
+     &                 d_logtem(i), logtem(i), int8(d_N), d_Td, d_dTd,
+     &                 d_Tg, d_dTg, int8(d_Size), h2dustSa, h2MgO     )
+                 
+                     d_logtem(i) = log(tFeS     (i))
+                     call interpolate_2D_g(
+     &                 d_logtem(i), logtem(i), int8(d_N), d_Td, d_dTd,
+     &                 d_Tg, d_dTg, int8(d_Size), h2dustSa, h2FeS     )
+                 
+                     d_logtem(i) = log(tAl2O3   (i))
+                     call interpolate_2D_g(
+     &                 d_logtem(i), logtem(i), int8(d_N), d_Td, d_dTd,
+     &                 d_Tg, d_dTg, int8(d_Size), h2dustSa, h2Al2O3   )
+                  endif
 
-!                 write(*,*) h2SiM      , sgSiM     (i)
-!                 write(*,*) h2FeM      , sgFeM     (i)
-!                 write(*,*) h2Mg2SiO4  , sgMg2SiO4 (i)
-!                 write(*,*) h2MgSiO3   , sgMgSiO3  (i)
-!                 write(*,*) h2Fe3O4    , sgFe3O4   (i)
-!                 write(*,*) h2AC       , sgAC      (i)
-!                 write(*,*) h2SiO2D    , sgSiO2D   (i)
-!                 write(*,*) h2MgO      , sgMgO     (i)
-!                 write(*,*) h2FeS      , sgFeS     (i)
-!                 write(*,*) h2Al2O3    , sgAl2O3   (i)
-!                 write(*,*) h2reforg   , sgreforg  (i)
-!                 write(*,*) h2volorg   , sgvolorg  (i)
-!                 write(*,*) h2H2Oice   , sgH2Oice  (i)
-!!!               write(*,*) 'b', h2dust(i)
+                  if (idspecies .gt. 2) then
+                     d_logtem(i) = log(treforg  (i))
+                     call interpolate_2D_g(
+     &                 d_logtem(i), logtem(i), int8(d_N), d_Td, d_dTd,
+     &                 d_Tg, d_dTg, int8(d_Size), h2dustSa, h2reforg  )
+                 
+                     d_logtem(i) = log(tvolorg  (i))
+                     call interpolate_2D_g(
+     &                 d_logtem(i), logtem(i), int8(d_N), d_Td, d_dTd,
+     &                 d_Tg, d_dTg, int8(d_Size), h2dustSa, h2volorg  )
+                 
+                     d_logtem(i) = log(tH2Oice  (i))
+                     call interpolate_2D_g(
+     &                 d_logtem(i), logtem(i), int8(d_N), d_Td, d_dTd, 
+     &                 d_Tg, d_dTg, int8(d_Size), h2dustSa, h2H2Oice  )
+                  endif
+              
+                  if (idspecies .gt. 0) then
+                     h2dust(i) = h2MgSiO3   * sgMgSiO3  (i)
+     &                         + h2AC       * sgAC      (i)
+                  endif
+                  if (idspecies .gt. 1) then
+                     h2dust(i) = h2dust(i)
+     &                         + h2SiM      * sgSiM     (i)
+     &                         + h2FeM      * sgFeM     (i)
+     &                         + h2Mg2SiO4  * sgMg2SiO4 (i)
+     &                         + h2Fe3O4    * sgFe3O4   (i)
+     &                         + h2SiO2D    * sgSiO2D   (i)
+     &                         + h2MgO      * sgMgO     (i)
+     &                         + h2FeS      * sgFeS     (i)
+     &                         + h2Al2O3    * sgAl2O3   (i)
+                  endif
+                  if (idspecies .gt. 2) then
+                     h2dust(i) = h2dust(i)
+     &                         + h2reforg   * sgreforg  (i)
+     &                         + h2volorg   * sgvolorg  (i)
+     &                         + h2H2Oice   * sgH2Oice  (i)
+                  endif
 
                endif ! itdmulti
 
@@ -3518,86 +3502,152 @@ c -------------------------------------------------------------------
 
 !     Compute grain growth rate
 
-         if(igrgr .eq. 1) then
-
          do i = is+1, ie+1
             if (itmask(i)) then
 
-            if (igrgr .eq. 0) then
+            if (igrgr .eq. 1) then
 
-            kdSiM     (i) = 0.0
-            kdFeM     (i) = 0.0
-            kdMg2SiO4 (i) = 0.0
-            kdMgSiO3  (i) = 0.0
-            kdFe3O4   (i) = 0.0
-            kdAC      (i) = 0.0
-            kdSiO2D   (i) = 0.0
-            kdMgO     (i) = 0.0
-            kdFeS     (i) = 0.0
-            kdAl2O3   (i) = 0.0
-            kdreforg  (i) = 0.0
-            kdvolorg  (i) = 0.0
-            kdH2Oice  (i) = 0.0
+               if (idspecies .gt. 0) then
+               call interpolate_1D_g(
+     &              logtem(i), int8(nratec), d_Tg, d_dTg,
+     &              int8(nratec), grogra, kd)
+            
+               kdMgSiO3  (i) = kd * sgMgSiO3  (i) * d(i,j,k)
+     &          * min( Mg  (i,j,k) / 24._DKIND**1.5_DKIND
+     &               , SiOI(i,j,k) / 44._DKIND**1.5_DKIND
+     &               , H2O (i,j,k) / 18._DKIND**1.5_DKIND / 2._DKIND )
+!!             if ( idsub .eq. 1 )
+!!   &            kdMgSiO3  (i) = kdMgSiO3  (i) * ( 1.d0 -  
+!!   &           sqrt(tMgSiO3 (i) / tgas1d(i))
+!!   &         * exp(-min(37.2400d4/tgas1d(i) - 104.872d0, 5.d1)) / (
+!!   &           (     Mg  (i,j,k)*dom/24._DKIND * kboltz*tgas1d(i))
+!!   &         * (     SiOI(i,j,k)*dom/44._DKIND * kboltz*tgas1d(i))
+!!   &         * (2.d0*H2O (i,j,k)*dom/18._DKIND * kboltz*tgas1d(i))
+!!   &         / (1.d0*H2I (i,j,k)*dom/ 2._DKIND * kboltz*tgas1d(i))
+!!   &            ) )
+!!             Formulation from Nozawa et al. (2003, 2012)
+            
+               kdAC      (i) = kd * sgAC      (i) * d(i,j,k)
+     &          *      CI(i,j,k) / 12._DKIND**1.5_DKIND
+               endif
 
-            else
-
-            call interpolate_1D_g(
-     &           logtem(i), int8(nratec), d_Tg, d_dTg,
-     &           int8(nratec), grogra, kd)
-
-            kdSiM     (i) = kd * sgSiM     (i) * d(i,j,k)
-     &       *      SiI(i,j,k) / 28._DKIND**1.5_DKIND
-
-            kdFeM     (i) = kd * sgFeM     (i) * d(i,j,k)
-     &       *      Fe(i,j,k) / 56._DKIND**1.5_DKIND
-
-            kdMg2SiO4 (i) = kd * sgMg2SiO4 (i) * d(i,j,k)
-     &       * min( Mg  (i,j,k) / 24._DKIND**1.5_DKIND / 2._DKIND
-     &            , SiOI(i,j,k) / 44._DKIND**1.5_DKIND
-     &            , H2O (i,j,k) / 18._DKIND**1.5_DKIND / 3._DKIND )
-
-            kdMgSiO3  (i) = kd * sgMgSiO3  (i) * d(i,j,k)
-     &       * min( Mg  (i,j,k) / 24._DKIND**1.5_DKIND
-     &            , SiOI(i,j,k) / 44._DKIND**1.5_DKIND
-     &            , H2O (i,j,k) / 18._DKIND**1.5_DKIND / 2._DKIND )
-
-            kdFe3O4   (i) = kd * sgFe3O4   (i) * d(i,j,k)
-     &       * min( Fe  (i,j,k) / 56._DKIND**1.5_DKIND / 3._DKIND
-     &            , H2O (i,j,k) / 18._DKIND**1.5_DKIND / 4._DKIND )
-
-            kdAC      (i) = kd * sgAC      (i) * d(i,j,k)
-     &       *      CI(i,j,k) / 12._DKIND**1.5_DKIND
-
-            kdSiO2D   (i) = kd * sgSiO2D   (i) * d(i,j,k)
-     &       *      SiO2I(i,j,k) / 60._DKIND**1.5_DKIND
-
-            kdMgO     (i) = kd * sgMgO     (i) * d(i,j,k)
-     &       * min( Mg  (i,j,k) / 24._DKIND**1.5_DKIND
-     &            , H2O (i,j,k) / 18._DKIND**1.5_DKIND )
-
-            kdFeS     (i) = kd * sgFeS     (i) * d(i,j,k)
-     &       * min( S (i,j,k) / 32._DKIND**1.5_DKIND
-     &            , Fe(i,j,k) / 56._DKIND**1.5_DKIND )
-
-            kdAl2O3   (i) = kd * sgAl2O3   (i) * d(i,j,k)
-     &       * min( Al (i,j,k) / 27._DKIND**1.5_DKIND / 2._DKIND
-     &            , H2O(i,j,k) / 18._DKIND**1.5_DKIND / 3._DKIND )
+               if (idspecies .gt. 1) then
+               kdSiM     (i) = kd * sgSiM     (i) * d(i,j,k)
+     &          *      SiI(i,j,k) / 28._DKIND**1.5_DKIND
+            
+               kdFeM     (i) = kd * sgFeM     (i) * d(i,j,k)
+     &          *      Fe(i,j,k) / 56._DKIND**1.5_DKIND
+            
+               kdMg2SiO4 (i) = kd * sgMg2SiO4 (i) * d(i,j,k)
+     &          * min( Mg  (i,j,k) / 24._DKIND**1.5_DKIND / 2._DKIND
+     &               , SiOI(i,j,k) / 44._DKIND**1.5_DKIND
+     &               , H2O (i,j,k) / 18._DKIND**1.5_DKIND / 3._DKIND )
+            
+               kdFe3O4   (i) = kd * sgFe3O4   (i) * d(i,j,k)
+     &          * min( Fe  (i,j,k) / 56._DKIND**1.5_DKIND / 3._DKIND
+     &               , H2O (i,j,k) / 18._DKIND**1.5_DKIND / 4._DKIND )
+            
+               kdSiO2D   (i) = kd * sgSiO2D   (i) * d(i,j,k)
+     &          *      SiO2I(i,j,k) / 60._DKIND**1.5_DKIND
+            
+               kdMgO     (i) = kd * sgMgO     (i) * d(i,j,k)
+     &          * min( Mg  (i,j,k) / 24._DKIND**1.5_DKIND
+     &               , H2O (i,j,k) / 18._DKIND**1.5_DKIND )
+            
+               kdFeS     (i) = kd * sgFeS     (i) * d(i,j,k)
+     &          * min( S (i,j,k) / 32._DKIND**1.5_DKIND
+     &               , Fe(i,j,k) / 56._DKIND**1.5_DKIND )
+            
+               kdAl2O3   (i) = kd * sgAl2O3   (i) * d(i,j,k)
+     &          * min( Al (i,j,k) / 27._DKIND**1.5_DKIND / 2._DKIND
+     &               , H2O(i,j,k) / 18._DKIND**1.5_DKIND / 3._DKIND )
+               endif
 
       ! We do not consider the growth of refractory organics, volatile
       ! organics, and water ice because their sublimation temperatures
       ! are low (100-600 K). They sublimate before the growth occurs.
-            kdreforg  (i) = 0.d0
+               if (idspecies .gt. 2) then
+                  kdreforg  (i) = 0.d0
+                  kdvolorg  (i) = 0.d0
+                  kdH2Oice  (i) = 0.d0
+               endif
 
-            kdvolorg  (i) = 0.d0
+            endif
 
-            kdH2Oice  (i) = 0.d0
+            if (idsub .eq. 1) then
+
+               if (idspecies .gt. 0) then
+                  kdMgSiO3  (i) = 0.d0
+                  kdAC      (i) = 0.d0
+               endif
+               if (idspecies .gt. 1) then
+                  kdSiM     (i) = 0.d0
+                  kdFeM     (i) = 0.d0
+                  kdMg2SiO4 (i) = 0.d0
+                  kdFe3O4   (i) = 0.d0
+                  kdSiO2D   (i) = 0.d0
+                  kdMgO     (i) = 0.d0
+                  kdFeS     (i) = 0.d0
+                  kdAl2O3   (i) = 0.d0
+               endif
+               if (idspecies .gt. 2) then
+                  kdreforg  (i) = 0.d0
+                  kdvolorg  (i) = 0.d0
+                  kdH2Oice  (i) = 0.d0
+               endif
+
+               if (idspecies .gt. 0) then
+                  if (tMgSiO3  (i) .gt. 1222.d0) then
+                     kdMgSiO3  (i) = (tiny8 - MgSiO3  (i,j,k)) / dt
+                  endif
+                  if (tAC      (i) .gt. 1800.d0) then
+                     kdAC      (i) = (tiny8 - AC      (i,j,k)) / dt
+                  endif
+               endif
+
+               if (idspecies .gt. 1) then
+                  if (tSiM     (i) .gt. 1500.d0) then
+                     kdSiM     (i) = (tiny8 - SiM     (i,j,k)) / dt
+                  endif
+                  if (tFeM     (i) .gt. 1500.d0) then
+                     kdFeM     (i) = (tiny8 - FeM     (i,j,k)) / dt
+                  endif
+                  if (tMg2SiO4 (i) .gt. 1277.d0) then
+                     kdMg2SiO4 (i) = (tiny8 - Mg2SiO4 (i,j,k)) / dt
+                  endif
+                  if (tFe3O4   (i) .gt. 1500.d0) then
+                     kdFe3O4   (i) = (tiny8 - Fe3O4   (i,j,k)) / dt
+                  endif
+                  if (tSiO2D   (i) .gt. 1500.d0) then
+                     kdSiO2D   (i) = (tiny8 - SiO2D   (i,j,k)) / dt
+                  endif
+                  if (tMgO     (i) .gt. 1500.d0) then
+                     kdMgO     (i) = (tiny8 - MgO     (i,j,k)) / dt
+                  endif
+                  if (tFeS     (i) .gt. 680.d0) then
+                     kdFeS     (i) = (tiny8 - FeS     (i,j,k)) / dt
+                  endif
+                  if (tAl2O3   (i) .gt. 1500.d0) then
+                     kdAl2O3   (i) = (tiny8 - Al2O3   (i,j,k)) / dt
+                  endif
+               endif
+
+               if (idspecies .gt. 2) then
+                  if (treforg  (i) .gt. 575.d0) then
+                     kdreforg  (i) = (tiny8 - reforg  (i,j,k)) / dt
+                  endif
+                  if (tvolorg  (i) .gt. 375.d0) then
+                     kdvolorg  (i) = (tiny8 - volorg  (i,j,k)) / dt
+                  endif
+                  if (tH2Oice  (i) .gt. 153.d0) then
+                     kdH2Oice  (i) = (tiny8 - H2Oice  (i,j,k)) / dt
+                  endif
+               endif
 
             endif
 
-            endif
+            endif ! itmask
          enddo
-
-         endif
 
          endif !! idspecies
 
@@ -4249,7 +4299,8 @@ CCCCC          = vbase1**2 * mh / dom / tbase1
      &                     iradtrans, irt_honly,
      &                     kphHI, kphHeI, kphHeII,
      &                     itmask
-     &                   , DM, HDII, HeHII, imetal, metal, imchem, igrgr
+     &                   , DM, HDII, HeHII, imetal, metal
+     &                   , imchem, idspecies, igrgr, idsub
      &                   , CI, CII, CO, CO2
      &                   , OI, OH, H2O, O2
      &                   , SiI, SiOI, SiO2I
@@ -4304,7 +4355,7 @@ c -------------------------------------------------------------------
      &        d(in,jn,kn),
      &        HM(in,jn,kn),  H2I(in,jn,kn), H2II(in,jn,kn),
      &        DI(in,jn,kn),  DII(in,jn,kn), HDI(in,jn,kn)
-       integer imetal, imchem, igrgr
+       integer imetal, imchem, igrgr, idspecies, idsub
        R_PREC metal(in,jn,kn)
        R_PREC DM(in,jn,kn)   , HDII(in,jn,kn)   , HeHII(in,jn,kn)
      &      , CI(in,jn,kn)   , CII(in,jn,kn)    , CO(in,jn,kn)
@@ -4795,14 +4846,24 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
      &             + kz42(i) * H2OII(i,j,k) / 18._DKIND
      &             + kz51(i) *    CI(i,j,k) / 12._DKIND
             endif
-            if(igrgr .eq. 1) then
-               scoef = scoef + 2._DKIND * (
-     &               kdMg2SiO4 (i) * 3._DKIND
-     &             + kdMgSiO3  (i) * 2._DKIND
-     &             + kdFe3O4   (i) * 4._DKIND
-     &             + kdMgO     (i)
-     &             + kdAl2O3   (i) * 3._DKIND
-     &           )
+            if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1) ) then
+               if (idspecies .gt. 0) then
+                  scoef = scoef + 2._DKIND *
+     &                  kdMgSiO3  (i) * 2._DKIND
+
+               endif
+               if (idspecies .gt. 1) then
+                  scoef = scoef + 2._DKIND * (
+     &                  kdMg2SiO4 (i) * 3._DKIND
+     &                + kdFe3O4   (i) * 4._DKIND
+     &                + kdMgO     (i)
+     &                + kdAl2O3   (i) * 3._DKIND
+     &              )
+               endif
+               if (idspecies .gt. 2) then
+                    acoef = acoef
+     &            + kdvolorg  (i) / H2I(i,j,k) * 2._DKIND * 2._DKIND
+               endif
             endif
             endif
             H2Ip(i) = ( scoef*dtit(i) + H2I(i,j,k) )
@@ -5007,9 +5068,11 @@ C***** CI **********
      &             + kz28(i) *    OH(i,j,k) / 17._DKIND
      &             + kz29(i) *    O2(i,j,k) / 32._DKIND
      &             + kz51(i) *   H2I(i,j,k) /  2._DKIND
-               if(igrgr .eq. 1) then
-                 acoef = acoef 
-     &         + kdAC      (i) / CI(i,j,k) * 12._DKIND
+               if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1) ) then
+               if (idspecies .gt. 0) then
+                    acoef = acoef 
+     &            + kdAC      (i) / CI(i,j,k) * 12._DKIND
+               endif
                endif
 
             CIp(i)   = ( scoef*dtit(i) + CI(i,j,k) )
@@ -5038,6 +5101,13 @@ C***** CO **********
      &            )
                acoef = 0._DKIND
      &             + kz26(i) *    OH(i,j,k) / 17._DKIND
+               if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1) ) then
+               if (idspecies .gt. 2) then
+                    acoef = acoef
+     &            + kdreforg  (i) / CO(i,j,k) * 17._DKIND * 0.5_DKIND
+     &            + kdvolorg  (i) / CO(i,j,k) * 17._DKIND
+               endif
+               endif
 
             COp(i)   = ( scoef*dtit(i) + CO(i,j,k) )
      &                 / ( 1._DKIND + acoef*dtit(i) )
@@ -5111,13 +5181,22 @@ C***** H2O **********
                acoef = 0._DKIND
      &             + kz18(i) *    HI(i,j,k)
      &             + kz35(i) *   HII(i,j,k)
-               if(igrgr .eq. 1) then
-                 acoef = acoef 
-     &         + kdMg2SiO4 (i) / H2O(i,j,k) * 18._DKIND * 3._DKIND
-     &         + kdMgSiO3  (i) / H2O(i,j,k) * 18._DKIND * 2._DKIND
-     &         + kdFe3O4   (i) / H2O(i,j,k) * 18._DKIND * 4._DKIND
-     &         + kdMgO     (i) / H2O(i,j,k) * 18._DKIND
-     &         + kdAl2O3   (i) / H2O(i,j,k) * 18._DKIND * 3._DKIND
+               if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1) ) then
+               if (idspecies .gt. 0) then
+                    acoef = acoef
+     &            + kdMgSiO3  (i) / H2O(i,j,k) * 18._DKIND * 2._DKIND
+               endif
+               if (idspecies .gt. 1) then
+                    acoef = acoef
+     &            + kdMg2SiO4 (i) / H2O(i,j,k) * 18._DKIND * 3._DKIND
+     &            + kdFe3O4   (i) / H2O(i,j,k) * 18._DKIND * 4._DKIND
+     &            + kdMgO     (i) / H2O(i,j,k) * 18._DKIND
+     &            + kdAl2O3   (i) / H2O(i,j,k) * 18._DKIND * 3._DKIND
+               endif
+               if (idspecies .gt. 2) then
+                    acoef = acoef
+     &            + kdH2Oice  (i) / H2O(i,j,k) * 18._DKIND
+               endif
                endif
 
             H2Op(i)   = ( scoef*dtit(i) + H2O(i,j,k) )
@@ -5146,10 +5225,12 @@ C***** SiI **********
                acoef = 0._DKIND
      &             + kz52(i) *    OH(i,j,k) / 17._DKIND
      &             + kz53(i) *    O2(i,j,k) / 32._DKIND
-            if (igrgr .eq. 1) then
-               acoef = acoef 
-     &         + kdSiM     (i) / SiI(i,j,k) * 28._DKIND
-            endif
+               if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1) ) then
+               if (idspecies .gt. 1) then
+                     acoef = acoef 
+     &               + kdSiM     (i) / SiI(i,j,k) * 28._DKIND
+               endif
+               endif
 
             SiIp(i)   = ( scoef*dtit(i) + SiI(i,j,k) )
      &                 / ( 1._DKIND + acoef*dtit(i) )
@@ -5162,10 +5243,15 @@ C***** SiOI **********
      &            )
                acoef = 0._DKIND
      &             + kz54(i) *    OH(i,j,k) / 17._DKIND
-               if(igrgr .eq. 1) then
-                 acoef = acoef 
-     &         + kdMg2SiO4 (i) / SiOI(i,j,k) * 44._DKIND
-     &         + kdMgSiO3  (i) / SiOI(i,j,k) * 44._DKIND
+               if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1) ) then
+               if (idspecies .gt. 0) then
+                       acoef = acoef 
+     &               + kdMgSiO3  (i) / SiOI(i,j,k) * 44._DKIND
+               endif
+               if (idspecies .gt. 1) then
+                       acoef = acoef 
+     &               + kdMg2SiO4 (i) / SiOI(i,j,k) * 44._DKIND
+               endif
                endif
 
             SiOIp(i)   = ( scoef*dtit(i) + SiOI(i,j,k) )
@@ -5177,9 +5263,11 @@ C***** SiO2I **********
      &             + kz54(i) *  SiOI(i,j,k) *    OH(i,j,k) / 748._DKIND
      &            )
                acoef = 0._DKIND
-               if(igrgr .eq. 1) then
-                 acoef = acoef 
-     &         + kdSiO2D   (i) / SiO2I(i,j,k) * 60._DKIND
+               if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1) ) then
+               if (idspecies .gt. 1) then
+                       acoef = acoef 
+     &               + kdSiO2D   (i) / SiO2I(i,j,k) * 60._DKIND
+               endif
                endif
 
             SiO2Ip(i)   = ( scoef*dtit(i) + SiO2I(i,j,k) )
@@ -5208,6 +5296,12 @@ C***** CH2 **********
      &            )
                acoef = 0._DKIND
      &             + kz16(i) *    HI(i,j,k)
+               if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1) ) then
+               if (idspecies .gt. 2) then
+                       acoef = acoef 
+     &               + kdreforg  (i) / CH2(i,j,k) * 14._DKIND * 0.5_DKIND
+               endif
+               endif
 
             CH2p(i)   = ( scoef*dtit(i) + CH2(i,j,k) )
      &                 / ( 1._DKIND + acoef*dtit(i) )
@@ -5288,30 +5382,25 @@ C***** O2II **********
      &                 / ( 1._DKIND + acoef*dtit(i) )
 
 
-         endif
-         endif                  ! itmask
-         enddo
-      endif
-
-!  --- (D4) Now do dust species ---
-!     
-      if (igrgr .eq. 1) then
-         do i = is+1, ie+1
-            if (itmask(i)) then
-            if (metal(i,j,k) .gt. 1.d-9 * d(i,j,k)) then
-
+            if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1) ) then
+            if (idspecies .gt. 0) then
 C***** Mg **********
                scoef = 0._DKIND
                acoef = 0._DKIND
                  acoef = acoef 
-     &         + kdMg2SiO4 (i) / Mg(i,j,k) * 24._DKIND * 2._DKIND
      &         + kdMgSiO3  (i) / Mg(i,j,k) * 24._DKIND
-     &         + kdMgO     (i) / Mg(i,j,k) * 24._DKIND
+               if (idspecies .gt. 1) then
+                    acoef = acoef 
+     &            + kdMg2SiO4 (i) / Mg(i,j,k) * 24._DKIND * 2._DKIND
+     &            + kdMgO     (i) / Mg(i,j,k) * 24._DKIND
+               endif
 
             Mgp(i)   = ( scoef*dtit(i) + Mg(i,j,k) )
      &                 / ( 1._DKIND + acoef*dtit(i) )
 
+            endif
 
+            if (idspecies .gt. 1) then
 C***** Al **********
                scoef = 0._DKIND 
                acoef = 0._DKIND
@@ -5343,7 +5432,44 @@ C***** Fe **********
             Fep(i)   = ( scoef*dtit(i) + Fe(i,j,k) )
      &                 / ( 1._DKIND + acoef*dtit(i) )
 
+            endif
+            endif
 
+         endif
+         endif                  ! itmask
+         enddo
+      endif
+
+!  --- (D4) Now do dust species ---
+!     
+         if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1) ) then
+         do i = is+1, ie+1
+            if (itmask(i)) then
+            if (metal(i,j,k) .gt. 1.d-9 * d(i,j,k)) then
+
+            if (idspecies .gt. 0) then
+C***** MgSiO3 **********
+               scoef = 0._DKIND 
+                 scoef = scoef 
+     &         + kdMgSiO3  (i) * 100._DKIND
+               acoef = 0._DKIND
+
+            MgSiO3p(i)   = ( scoef*dtit(i) + MgSiO3(i,j,k) )
+     &                 / ( 1._DKIND + acoef*dtit(i) )
+
+
+C***** AC **********
+               scoef = 0._DKIND 
+                 scoef = scoef 
+     &         + kdAC      (i) * 12._DKIND
+               acoef = 0._DKIND
+
+            ACp(i)   = ( scoef*dtit(i) + AC(i,j,k) )
+     &                 / ( 1._DKIND + acoef*dtit(i) )
+
+            endif
+
+            if (idspecies .gt. 1) then
 C***** SiM **********
                scoef = 0._DKIND
                  scoef = scoef 
@@ -5374,16 +5500,6 @@ C***** Mg2SiO4 **********
      &                 / ( 1._DKIND + acoef*dtit(i) )
 
 
-C***** MgSiO3 **********
-               scoef = 0._DKIND 
-                 scoef = scoef 
-     &         + kdMgSiO3  (i) * 100._DKIND
-               acoef = 0._DKIND
-
-            MgSiO3p(i)   = ( scoef*dtit(i) + MgSiO3(i,j,k) )
-     &                 / ( 1._DKIND + acoef*dtit(i) )
-
-
 C***** Fe3O4 **********
                scoef = 0._DKIND 
                  scoef = scoef 
@@ -5391,16 +5507,6 @@ C***** Fe3O4 **********
                acoef = 0._DKIND
 
             Fe3O4p(i)   = ( scoef*dtit(i) + Fe3O4(i,j,k) )
-     &                 / ( 1._DKIND + acoef*dtit(i) )
-
-
-C***** AC **********
-               scoef = 0._DKIND 
-                 scoef = scoef 
-     &         + kdAC      (i) * 12._DKIND
-               acoef = 0._DKIND
-
-            ACp(i)   = ( scoef*dtit(i) + AC(i,j,k) )
      &                 / ( 1._DKIND + acoef*dtit(i) )
 
 
@@ -5443,7 +5549,9 @@ C***** Al2O3 **********
             Al2O3p(i)   = ( scoef*dtit(i) + Al2O3(i,j,k) )
      &                 / ( 1._DKIND + acoef*dtit(i) )
 
+            endif
 
+            if (idspecies .gt. 2) then
 C***** reforg **********
                scoef = 0._DKIND 
                  scoef = scoef 
@@ -5473,6 +5581,7 @@ C***** H2Oice **********
             H2Oicep(i)   = ( scoef*dtit(i) + H2Oice(i,j,k) )
      &                 / ( 1._DKIND + acoef*dtit(i) )
 
+            endif
 
          endif
          endif                  ! itmask
@@ -5556,27 +5665,40 @@ C***** H2Oice **********
             H2OII(i,j,k)   = max(real(H2OIIp(i)  , RKIND), tiny)
             H3OII(i,j,k)   = max(real(H3OIIp(i)  , RKIND), tiny)
             O2II(i,j,k)    = max(real(O2IIp(i)   , RKIND), tiny)
-         endif
-
-         if (   (igrgr .eq. 1) 
-     &    .and. (metal(i,j,k) .gt. 1.d-9 * d(i,j,k)) ) then ! do not remove
+            if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1) ) then
+            if (idspecies .gt. 0) then
             Mg(i,j,k)      = max(real(Mgp(i)     , RKIND), tiny)
+            endif
+            if (idspecies .gt. 1) then
             Al(i,j,k)      = max(real(Alp(i)     , RKIND), tiny)
             S(i,j,k)       = max(real(Sp(i)      , RKIND), tiny)
             Fe(i,j,k)      = max(real(Fep(i)     , RKIND), tiny)
+            endif
+            endif
+         endif
+
+         if ( metal(i,j,k) .gt. 1.d-9 * d(i,j,k) ) then ! do not remove
+         if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1) ) then
+         if (idspecies .gt. 0) then
+            MgSiO3(i,j,k)  = max(real(MgSiO3p(i) , RKIND), tiny)
+            AC(i,j,k)      = max(real(ACp(i)     , RKIND), tiny)
+         endif
+         if (idspecies .gt. 1) then
             SiM(i,j,k)     = max(real(SiMp(i)    , RKIND), tiny)
             FeM(i,j,k)     = max(real(FeMp(i)    , RKIND), tiny)
             Mg2SiO4(i,j,k) = max(real(Mg2SiO4p(i), RKIND), tiny)
-            MgSiO3(i,j,k)  = max(real(MgSiO3p(i) , RKIND), tiny)
             Fe3O4(i,j,k)   = max(real(Fe3O4p(i)  , RKIND), tiny)
-            AC(i,j,k)      = max(real(ACp(i)     , RKIND), tiny)
             SiO2D(i,j,k)   = max(real(SiO2Dp(i)  , RKIND), tiny)
             MgO(i,j,k)     = max(real(MgOp(i)    , RKIND), tiny)
             FeS(i,j,k)     = max(real(FeSp(i)    , RKIND), tiny)
             Al2O3(i,j,k)   = max(real(Al2O3p(i)  , RKIND), tiny)
+         endif
+         if (idspecies .gt. 2) then
             reforg(i,j,k)  = max(real(reforgp(i)  , RKIND), tiny)
             volorg(i,j,k)  = max(real(volorgp(i)  , RKIND), tiny)
             H2Oice(i,j,k)  = max(real(H2Oicep(i)  , RKIND), tiny)
+         endif
+         endif
          endif
 
       endif                     ! itmask
@@ -5603,36 +5725,28 @@ C***** H2Oice **********
 !     insure conservation of particle number and charge.
 
       subroutine make_consistent_g(de, HI, HII, HeI, HeII, HeIII,
-     &                        HM, H2I, H2II, DI, DII, HDI, metal, d,
-     &                        is, ie, js, je, ks, ke,
-     &                        in, jn, kn, ispecies, imetal, fh, dtoh
-     &                      , imchem, igrgr, dom
-     &                      , DM, HDII, HeHII
-     &                      , CI, CII, CO, CO2
-     &                      , OI, OH, H2O, O2
-     &                      , SiI, SiOI, SiO2I
-     &                      , CH, CH2, COII, OII
-     &                      , OHII, H2OII, H3OII, O2II
-     &                      , Mg, Al, S, Fe
-     &                      , SiM, FeM, Mg2SiO4, MgSiO3, Fe3O4
-     &                      , AC, SiO2D, MgO, FeS, Al2O3
-     &                      , reforg, volorg, H2Oice
-     &                      , immulti, impop3, idspecies, itdmulti
-     &                      , idsub
-     &                      , metal_loc, metal_C30, metal_F13
-     &                      , loc_XC, loc_XO, loc_XMg, loc_XAl, loc_XSi
-     &                      , loc_XS, loc_XFe
-     &                      , loc_fC, loc_fO, loc_fMg, loc_fAl, loc_fSi
-     &                      , loc_fS, loc_fFe
-     &                      , C30_XC, C30_XO, C30_XMg, C30_XAl, C30_XSi
-     &                      , C30_XS, C30_XFe
-     &                      , C30_fC, C30_fO, C30_fMg, C30_fAl, C30_fSi
-     &                      , C30_fS, C30_fFe
-     &                      , F13_XC, F13_XO, F13_XMg, F13_XAl, F13_XSi
-     &                      , F13_XS, F13_XFe
-     &                      , F13_fC, F13_fO, F13_fMg, F13_fAl, F13_fSi
-     &                      , F13_fS, F13_fFe
-     &                            )
+     &                     HM, H2I, H2II, DI, DII, HDI, metal, 
+     &                     d, is, ie, js, je, ks, ke,
+     &                     in, jn, kn, ispecies, imetal, fh, dtoh
+     &                   , imchem, igrgr, dom
+     &                   , DM, HDII, HeHII
+     &                   , CI, CII, CO, CO2
+     &                   , OI, OH, H2O, O2
+     &                   , SiI, SiOI, SiO2I
+     &                   , CH, CH2, COII, OII
+     &                   , OHII, H2OII, H3OII, O2II
+     &                   , Mg, Al, S, Fe
+     &                   , SiM, FeM, Mg2SiO4, MgSiO3, Fe3O4
+     &                   , AC, SiO2D, MgO, FeS, Al2O3
+     &                   , reforg, volorg, H2Oice
+     &                   , immulti, imabund, idspecies, itdmulti, idsub
+     &                   , metal_loc, metal_C30, metal_F13
+     &                   , SN0_N
+     &                   , SN0_XC, SN0_XO, SN0_XMg, SN0_XAl, SN0_XSi
+     &                   , SN0_XS, SN0_XFe
+     &                   , SN0_fC, SN0_fO, SN0_fMg, SN0_fAl, SN0_fSi
+     &                   , SN0_fS, SN0_fFe
+     &                      )
 ! -------------------------------------------------------------------
 
       implicit NONE
@@ -5663,21 +5777,16 @@ C***** H2Oice **********
      &      , SiO2D(in,jn,kn), MgO(in,jn,kn), FeS(in,jn,kn)
      &      , Al2O3(in,jn,kn)
      &      , reforg(in,jn,kn), volorg(in,jn,kn), H2Oice(in,jn,kn)
-      integer immulti, impop3, idspecies, itdmulti, idsub
+      integer immulti, imabund, idspecies, itdmulti, idsub
        R_PREC metal_loc(in,jn,kn)
      &      , metal_C30(in,jn,kn), metal_F13(in,jn,kn)
-      real*8  loc_XC , loc_XO, loc_XMg, loc_XAl
-     &      , loc_XSi, loc_XS, loc_XFe
-      real*8  loc_fC , loc_fO, loc_fMg, loc_fAl
-     &      , loc_fSi, loc_fS, loc_fFe
-      real*8  C30_XC , C30_XO, C30_XMg, C30_XAl
-     &      , C30_XSi, C30_XS, C30_XFe
-      real*8  C30_fC , C30_fO, C30_fMg, C30_fAl
-     &      , C30_fSi, C30_fS, C30_fFe
-      real*8  F13_XC , F13_XO, F13_XMg, F13_XAl
-     &      , F13_XSi, F13_XS, F13_XFe
-      real*8  F13_fC , F13_fO, F13_fMg, F13_fAl
-     &      , F13_fSi, F13_fS, F13_fFe
+      integer SN0_N
+      real*8  SN0_XC (SN0_N), SN0_XO(SN0_N), SN0_XMg(SN0_N)
+     &      , SN0_XAl(SN0_N), SN0_XSi(SN0_N), SN0_XS(SN0_N)
+     &      , SN0_XFe(SN0_N)
+      real*8  SN0_fC (SN0_N), SN0_fO(SN0_N), SN0_fMg(SN0_N)
+     &      , SN0_fAl(SN0_N), SN0_fSi(SN0_N), SN0_fS(SN0_N)
+     &      , SN0_fFe(SN0_N)
 
 !     locals
 
@@ -5700,6 +5809,9 @@ C***** H2Oice **********
      &     , correctSid, correctSd, correctFed
       R_PREC correctZ
       R_PREC tinymetal
+      integer iSN, nSN, iSN0
+      integer SN_i(SN0_N)
+      R_PREC  SN_metal(in, SN0_N)
       real*8 Ct(in), Ot(in), Mgt(in), Alt(in)
      &     , Sit(in), St(in), Fet(in)
       real*8 Cg(in), Og(in), Mgg(in), Alg(in)
@@ -5767,64 +5879,76 @@ C***** H2Oice **********
          enddo
       endif
 
-      if(immulti .gt. 0) then
+      if(imchem .gt. 0) then
+         if(immulti .eq. 0) then
+            iSN0 = imabund + 1
+            do i = is+1, ie+1
+                Ct(i) = SN0_XC (iSN0) * metal(i,j,k)
+                Ot(i) = SN0_XO (iSN0) * metal(i,j,k)
+               Mgt(i) = SN0_XMg(iSN0) * metal(i,j,k)
+               Alt(i) = SN0_XAl(iSN0) * metal(i,j,k)
+               Sit(i) = SN0_XSi(iSN0) * metal(i,j,k)
+                St(i) = SN0_XS (iSN0) * metal(i,j,k)
+               Fet(i) = SN0_XFe(iSN0) * metal(i,j,k)
+         
+                Cg(i) = SN0_fC (iSN0) * metal(i,j,k)
+                Og(i) = SN0_fO (iSN0) * metal(i,j,k)
+               Mgg(i) = SN0_fMg(iSN0) * metal(i,j,k)
+               Alg(i) = SN0_fAl(iSN0) * metal(i,j,k)
+               Sig(i) = SN0_fSi(iSN0) * metal(i,j,k)
+                Sg(i) = SN0_fS (iSN0) * metal(i,j,k)
+               Feg(i) = SN0_fFe(iSN0) * metal(i,j,k)
+            enddo
+         
+         else
+         
+            do i = is+1, ie+1
+               totalZ = metal_loc(i,j,k)
+     &                + metal_C30(i,j,k)
+     &                + metal_F13(i,j,k)
+               correctZ = metal(i,j,k) / totalZ
+               metal_loc(i,j,k) = metal_loc(i,j,k) * correctZ
+               metal_C30(i,j,k) = metal_C30(i,j,k) * correctZ
+               metal_F13(i,j,k) = metal_F13(i,j,k) * correctZ
+            enddo
+            
+            nSN = 3
+            SN_i(1) = 1; SN_metal(:,1) = metal_loc(:,j,k)
+            SN_i(2) = 5; SN_metal(:,2) = metal_C30(:,j,k)
+            SN_i(3) = 6; SN_metal(:,3) = metal_F13(:,j,k)
+         
+            do i = is+1, ie+1
+                Ct(i) = 0._DKIND;  Cg(i) = 0._DKIND
+                Ot(i) = 0._DKIND;  Og(i) = 0._DKIND
+               Mgt(i) = 0._DKIND; Mgg(i) = 0._DKIND
+               Alt(i) = 0._DKIND; Alg(i) = 0._DKIND
+               Sit(i) = 0._DKIND; Sig(i) = 0._DKIND
+                St(i) = 0._DKIND;  Sg(i) = 0._DKIND
+               Fet(i) = 0._DKIND; Feg(i) = 0._DKIND
+               do iSN = 1, nSN
+                  iSN0 = SN_i(iSN)
+
+                   Ct(i) =  Ct(i) + SN0_XC (iSN0) * SN_metal(i,iSN0)
+                   Ot(i) =  Ot(i) + SN0_XO (iSN0) * SN_metal(i,iSN0)
+                  Mgt(i) = Mgt(i) + SN0_XMg(iSN0) * SN_metal(i,iSN0)
+                  Alt(i) = Alt(i) + SN0_XAl(iSN0) * SN_metal(i,iSN0)
+                  Sit(i) = Sit(i) + SN0_XSi(iSN0) * SN_metal(i,iSN0)
+                   St(i) =  St(i) + SN0_XS (iSN0) * SN_metal(i,iSN0)
+                  Fet(i) = Fet(i) + SN0_XFe(iSN0) * SN_metal(i,iSN0)
+
+                   Cg(i) =  Cg(i) + SN0_fC (iSN0) * SN_metal(i,iSN0)
+                   Og(i) =  Og(i) + SN0_fO (iSN0) * SN_metal(i,iSN0)
+                  Mgg(i) = Mgg(i) + SN0_fMg(iSN0) * SN_metal(i,iSN0)
+                  Alg(i) = Alg(i) + SN0_fAl(iSN0) * SN_metal(i,iSN0)
+                  Sig(i) = Sig(i) + SN0_fSi(iSN0) * SN_metal(i,iSN0)
+                   Sg(i) =  Sg(i) + SN0_fS (iSN0) * SN_metal(i,iSN0)
+                  Feg(i) = Feg(i) + SN0_fFe(iSN0) * SN_metal(i,iSN0)
+               enddo
+            enddo
+            
+         endif
+            
          do i = is+1, ie+1
-            totalZ = metal_loc(i,j,k)
-     &             + metal_C30(i,j,k)
-     &             + metal_F13(i,j,k)
-            correctZ = metal(i,j,k) / totalZ
-            metal_loc(i,j,k) = metal_loc(i,j,k) * correctZ
-            metal_C30(i,j,k) = metal_C30(i,j,k) * correctZ
-            metal_F13(i,j,k) = metal_F13(i,j,k) * correctZ
-         
-             Ct(i) =          loc_XC  * metal_loc(i,j,k)
-             Ot(i) =          loc_XO  * metal_loc(i,j,k)
-            Mgt(i) =          loc_XMg * metal_loc(i,j,k)
-            Alt(i) =          loc_XAl * metal_loc(i,j,k)
-            Sit(i) =          loc_XSi * metal_loc(i,j,k)
-             St(i) =          loc_XS  * metal_loc(i,j,k)
-            Fet(i) =          loc_XFe * metal_loc(i,j,k)
-         
-             Ct(i) =  Ct(i) + C30_XC  * metal_C30(i,j,k)
-             Ot(i) =  Ot(i) + C30_XO  * metal_C30(i,j,k)
-            Mgt(i) = Mgt(i) + C30_XMg * metal_C30(i,j,k)
-            Alt(i) = Alt(i) + C30_XAl * metal_C30(i,j,k)
-            Sit(i) = Sit(i) + C30_XSi * metal_C30(i,j,k)
-             St(i) =  St(i) + C30_XS  * metal_C30(i,j,k)
-            Fet(i) = Fet(i) + C30_XFe * metal_C30(i,j,k)
-         
-             Ct(i) =  Ct(i) + F13_XC  * metal_F13(i,j,k)
-             Ot(i) =  Ot(i) + F13_XO  * metal_F13(i,j,k)
-            Mgt(i) = Mgt(i) + F13_XMg * metal_F13(i,j,k)
-            Alt(i) = Alt(i) + F13_XAl * metal_F13(i,j,k)
-            Sit(i) = Sit(i) + F13_XSi * metal_F13(i,j,k)
-             St(i) =  St(i) + F13_XS  * metal_F13(i,j,k)
-            Fet(i) = Fet(i) + F13_XFe * metal_F13(i,j,k)
-         
-             Cg(i) =          loc_fC  * metal_loc(i,j,k)
-             Og(i) =          loc_fO  * metal_loc(i,j,k)
-            Mgg(i) =          loc_fMg * metal_loc(i,j,k)
-            Alg(i) =          loc_fAl * metal_loc(i,j,k)
-            Sig(i) =          loc_fSi * metal_loc(i,j,k)
-             Sg(i) =          loc_fS  * metal_loc(i,j,k)
-            Feg(i) =          loc_fFe * metal_loc(i,j,k)
-         
-             Cg(i) =  Cg(i) + C30_fC  * metal_C30(i,j,k)
-             Og(i) =  Og(i) + C30_fO  * metal_C30(i,j,k)
-            Mgg(i) = Mgg(i) + C30_fMg * metal_C30(i,j,k)
-            Alg(i) = Alg(i) + C30_fAl * metal_C30(i,j,k)
-            Sig(i) = Sig(i) + C30_fSi * metal_C30(i,j,k)
-             Sg(i) =  Sg(i) + C30_fS  * metal_C30(i,j,k)
-            Feg(i) = Feg(i) + C30_fFe * metal_C30(i,j,k)
-         
-             Cg(i) =  Cg(i) + F13_fC  * metal_F13(i,j,k)
-             Og(i) =  Og(i) + F13_fO  * metal_F13(i,j,k)
-            Mgg(i) = Mgg(i) + F13_fMg * metal_F13(i,j,k)
-            Alg(i) = Alg(i) + F13_fAl * metal_F13(i,j,k)
-            Sig(i) = Sig(i) + F13_fSi * metal_F13(i,j,k)
-             Sg(i) =  Sg(i) + F13_fS  * metal_F13(i,j,k)
-            Feg(i) = Feg(i) + F13_fFe * metal_F13(i,j,k)
-         
              Cd(i) =  Ct(i) -  Cg(i)
              Od(i) =  Ot(i) -  Og(i)
             Mgd(i) = Mgt(i) - Mgg(i)
@@ -5833,9 +5957,7 @@ C***** H2Oice **********
              Sd(i) =  St(i) -  Sg(i)
             Fed(i) = Fet(i) - Feg(i)
          enddo
-      endif
 
-      if (imchem .eq. 1) then
          do i = is+1, ie+1
          if (metal(i,j,k) .gt. 1.d-9 * d(i,j,k)) then
             OH   (i,j,k) = abs(OH   (i,j,k))
@@ -5937,30 +6059,37 @@ C***** H2Oice **********
             H2OII(i,j,k)   = abs(H2OII(i,j,k)  )
             H3OII(i,j,k)   = abs(H3OII(i,j,k)  )
             O2II(i,j,k)    = abs(O2II(i,j,k)   )
-         if (igrgr .eq. 1) then
+         if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1) ) then
+         if (idspecies .gt. 0) then
             Mg(i,j,k)      = abs(Mg(i,j,k)     )
+            MgSiO3(i,j,k)  = abs(MgSiO3(i,j,k) )
+            AC(i,j,k)      = abs(AC(i,j,k)     )
+         endif
+         if (idspecies .gt. 1) then
             Al(i,j,k)      = abs(Al(i,j,k)     )
             S(i,j,k)       = abs(S(i,j,k)      )
             Fe(i,j,k)      = abs(Fe(i,j,k)     )
             SiM(i,j,k)     = abs(SiM(i,j,k)    )
             FeM(i,j,k)     = abs(FeM(i,j,k)    )
             Mg2SiO4(i,j,k) = abs(Mg2SiO4(i,j,k))
-            MgSiO3(i,j,k)  = abs(MgSiO3(i,j,k) )
             Fe3O4(i,j,k)   = abs(Fe3O4(i,j,k)  )
-            AC(i,j,k)      = abs(AC(i,j,k)     )
             SiO2D(i,j,k)   = abs(SiO2D(i,j,k)  )
             MgO(i,j,k)     = abs(MgO(i,j,k)    )
             FeS(i,j,k)     = abs(FeS(i,j,k)    )
             Al2O3(i,j,k)   = abs(Al2O3(i,j,k)  )
+         endif
+         if (idspecies .gt. 2) then
             reforg(i,j,k)  = abs(reforg(i,j,k)  )
             volorg(i,j,k)  = abs(volorg(i,j,k)  )
             H2Oice(i,j,k)  = abs(H2Oice(i,j,k)  )
          endif
+         endif
 
-         if (d(i,j,k)*dom .lt. 1.e6_DKIND) then
-!!       if (d(i,j,k)*dom .lt. 
-!!   &    min(1.e6_DKIND/(metal(i,j,k)/d(i,j,k)/0.02d-4)**2
-!!   &       ,1.e6_DKIND)) then
+!!       if (d(i,j,k)*dom .lt. 1.e6_DKIND) then
+         if (d(i,j,k)*dom .lt. 
+     &    min(1.e6_DKIND/(metal(i,j,k)/d(i,j,k)/0.02d-4)**2
+     &       ,1.e6_DKIND)) then
+
             totalOg = 16._DKIND/28._DKIND*   CO(i,j,k)
      &              + 32._DKIND/44._DKIND*  CO2(i,j,k)
      &              +                        OI(i,j,k)
@@ -5990,28 +6119,42 @@ C***** H2Oice **********
             H2OII(i,j,k) = H2OII(i,j,k)*correctOg
             H3OII(i,j,k) = H3OII(i,j,k)*correctOg
              O2II(i,j,k) =  O2II(i,j,k)*correctOg
-         if (igrgr .eq. 1) then
-            totalOd = 64._DKIND/140._DKIND*Mg2SiO4(i,j,k)
-     &              + 48._DKIND/100._DKIND* MgSiO3(i,j,k)
+         if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1) ) then
+         if (idspecies .gt. 0) then
+            totalOd = 48._DKIND/100._DKIND* MgSiO3(i,j,k)
+         endif
+         if (idspecies .gt. 1) then
+            totalOd = totalOd
+     &              +  64._DKIND/140._DKIND*Mg2SiO4(i,j,k)
      &              + 64._DKIND/232._DKIND*  Fe3O4(i,j,k)  
      &              + 32._DKIND/ 60._DKIND*  SiO2D(i,j,k)  
      &              + 16._DKIND/ 40._DKIND*    MgO(i,j,k)    
      &              + 48._DKIND/102._DKIND*  Al2O3(i,j,k)  
+         endif
+         if (idspecies .gt. 2) then
+            totalOd = totalOd
      &              +  8._DKIND/22.68_DKIND*reforg(i,j,k)
      &              + 16._DKIND/32._DKIND  *volorg(i,j,k)
      &              + 16._DKIND/18._DKIND  *H2Oice(i,j,k)
+         endif
 !!          write(*,*) 'Od ', totalOd/metal(i,j,k)
 !!   &             ,   Od(i)/metal(i,j,k)
             correctOd = real(Od(i)/totalOd, RKIND)
-            Mg2SiO4(i,j,k) = Mg2SiO4(i,j,k)*correctOd
+         if (idspecies .gt. 0) then
              MgSiO3(i,j,k) =  MgSiO3(i,j,k)*correctOd
+         endif
+         if (idspecies .gt. 1) then
+            Mg2SiO4(i,j,k) = Mg2SiO4(i,j,k)*correctOd
               Fe3O4(i,j,k) =   Fe3O4(i,j,k)*correctOd
               SiO2D(i,j,k) =   SiO2D(i,j,k)*correctOd
                 MgO(i,j,k) =     MgO(i,j,k)*correctOd
               Al2O3(i,j,k) =   Al2O3(i,j,k)*correctOd
+         endif
+         if (idspecies .gt. 2) then
              reforg(i,j,k) =  reforg(i,j,k)*correctOd
              volorg(i,j,k) =  volorg(i,j,k)*correctOd
              H2Oice(i,j,k) =  H2Oice(i,j,k)*correctOd
+         endif
          endif
   
             totalCg =                       CI(i,j,k)
@@ -6029,14 +6172,23 @@ C***** H2Oice **********
                CH(i,j,k) =   CH(i,j,k)*correctCg
               CH2(i,j,k) =  CH2(i,j,k)*correctCg
              COII(i,j,k) = COII(i,j,k)*correctCg
-         if (igrgr .eq. 1) then
+         if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1) ) then
+         if (idspecies .gt. 0) then
             totalCd =                           AC(i,j,k)
+         endif
+         if (idspecies .gt. 2) then
+            totalCd = totalCd
      &              + 12._DKIND/22.68_DKIND*reforg(i,j,k)
      &              + 12._DKIND/32._DKIND  *volorg(i,j,k)
+         endif
             correctCd = real(Cd(i)/totalCd, RKIND)
+         if (idspecies .gt. 0) then
                 AC(i,j,k) =     AC(i,j,k)*correctCd
+         endif
+         if (idspecies .gt. 2) then
             reforg(i,j,k) = reforg(i,j,k)*correctCd
             volorg(i,j,k) = volorg(i,j,k)*correctCd
+         endif
          endif
             
             totalSig =                        SiI(i,j,k)
@@ -6048,21 +6200,31 @@ C***** H2Oice **********
               SiI(i,j,k) =   SiI(i,j,k)*correctSig
              SiOI(i,j,k) =  SiOI(i,j,k)*correctSig
             SiO2I(i,j,k) = SiO2I(i,j,k)*correctSig
-         if (igrgr .eq. 1) then
-            totalSid =                          SiM(i,j,k)
+         if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1) ) then
+         if (idspecies .gt. 0) then
+            totalSid = 28._DKIND/100._DKIND* MgSiO3(i,j,k)
+         endif
+         if (idspecies .gt. 1) then
+            totalSid = totalSid
+     &               +                          SiM(i,j,k)
      &               + 28._DKIND/140._DKIND*Mg2SiO4(i,j,k)
-     &               + 28._DKIND/100._DKIND* MgSiO3(i,j,k)
      &               + 28._DKIND/ 60._DKIND*  SiO2D(i,j,k)
+         endif
 !!          write(*,*) 'Sid', totalSid/metal(i,j,k)
 !!   &                      , Sid(i)/metal(i,j,k)
             correctSid = real(Sid(i)/totalSid, RKIND)
+         if (idspecies .gt. 0) then
+             MgSiO3(i,j,k) =  MgSiO3(i,j,k)*correctSid
+         endif
+         if (idspecies .gt. 1) then
                 SiM(i,j,k) =     SiM(i,j,k)*correctSid
             Mg2SiO4(i,j,k) = Mg2SiO4(i,j,k)*correctSid
-             MgSiO3(i,j,k) =  MgSiO3(i,j,k)*correctSid
               SiO2D(i,j,k) =   SiO2D(i,j,k)*correctSid
          endif
+         endif
 
-         if (igrgr .eq. 1) then
+         if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1) ) then
+         if (idspecies .gt. 1) then
             totalFeg = Fe(i,j,k)
             correctFeg = real(Feg(i)/totalFeg, RKIND)
             Fe(i,j,k) =    Fe(i,j,k)*correctFeg
@@ -6076,28 +6238,37 @@ C***** H2Oice **********
               FeM(i,j,k) =   FeM(i,j,k)*correctFed
             Fe3O4(i,j,k) = Fe3O4(i,j,k)*correctFed
               FeS(i,j,k) =   FeS(i,j,k)*correctFed
+         endif
 
+         if (idspecies .gt. 0) then
             totalMgg =                   Mg(i,j,k)
 !!          write(*,*) 'Mgg', totalMgg/metal(i,j,k)
 !!   &                      , Mgg(i)/metal(i,j,k)
             correctMgg = real( Mgg(i)/totalMgg, RKIND)
             Mg(i,j,k)      = Mg(i,j,k)     *correctMgg
-
-            totalMgd = 48._DKIND/140._DKIND*Mg2SiO4(i,j,k)
-     &               + 24._DKIND/100._DKIND* MgSiO3(i,j,k) 
+            totalMgd = 24._DKIND/100._DKIND* MgSiO3(i,j,k) 
+            if (idspecies .gt. 1) then
+            totalMgd = totalMgd
+     &               + 48._DKIND/140._DKIND*Mg2SiO4(i,j,k)
      &               + 24._DKIND/ 40._DKIND*    MgO(i,j,k)    
+            endif
 !!          write(*,*) 'Mgd', totalMgd/metal(i,j,k)
 !!   &                      , Mgd(i)/metal(i,j,k)
             correctMgd = real( Mgd(i)/totalMgd, RKIND)
-            Mg2SiO4(i,j,k) = Mg2SiO4(i,j,k)*correctMgd
             MgSiO3(i,j,k)  = MgSiO3(i,j,k) *correctMgd
+            if (idspecies .gt. 1) then
+            Mg2SiO4(i,j,k) = Mg2SiO4(i,j,k)*correctMgd
             MgO(i,j,k)     = MgO(i,j,k)    *correctMgd
+            endif
+         endif
 
+         if (idspecies .gt. 1) then
               S(i,j,k) =                         Sg(i)
             FeS(i,j,k) = 88._DKIND / 32._DKIND * Sd(i)
 
                Al(i,j,k) =                         Alg(i)
             Al2O3(i,j,k) =  102._DKIND/54._DKIND * Ald(i)
+         endif
          endif
 
          else ! d(i,j,k)
@@ -6116,19 +6287,27 @@ C***** H2Oice **********
      &              + 16._DKIND/18._DKIND*H2OII(i,j,k)
      &              + 16._DKIND/19._DKIND*H3OII(i,j,k)
      &              +                      O2II(i,j,k)
-         if (igrgr .eq. 1) then
+         if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1) ) then
+         if (idspecies .gt. 0) then
+            totalO  = totalO
+     &              + 48._DKIND/100._DKIND* MgSiO3(i,j,k)
+         endif
+         if (idspecies .gt. 1) then
             totalO  = totalO
      &              + 64._DKIND/140._DKIND*Mg2SiO4(i,j,k)
-     &              + 48._DKIND/100._DKIND* MgSiO3(i,j,k)
      &              + 64._DKIND/232._DKIND*  Fe3O4(i,j,k)  
      &              + 32._DKIND/ 60._DKIND*  SiO2D(i,j,k)  
      &              + 16._DKIND/ 40._DKIND*    MgO(i,j,k)    
      &              + 48._DKIND/102._DKIND*  Al2O3(i,j,k)  
+         endif
+         if (idspecies .gt. 2) then
+            totalO  = totalO
      &              +  8._DKIND/22.68_DKIND*reforg(i,j,k)
      &              + 16._DKIND/32._DKIND  *volorg(i,j,k)
      &              + 16._DKIND/18._DKIND  *H2Oice(i,j,k)
          endif
-         if(igrgr .eq. 0) then
+         endif
+         if ( ( igrgr .eq. 0 ) .and. ( idsub .eq. 0) ) then
             correctO  = real(Og(i)/ totalO, RKIND)
                CO(i,j,k)     =    CO(i,j,k)*correctO
               CO2(i,j,k)     =   CO2(i,j,k)*correctO
@@ -6160,15 +6339,21 @@ C***** H2Oice **********
             H2OII(i,j,k)     = H2OII(i,j,k)*correctO
             H3OII(i,j,k)     = H3OII(i,j,k)*correctO
              O2II(i,j,k)     =  O2II(i,j,k)*correctO
-            Mg2SiO4(i,j,k) = Mg2SiO4(i,j,k)*correctO 
+         if (idspecies .gt. 0) then
              MgSiO3(i,j,k) =  MgSiO3(i,j,k)*correctO 
+         endif
+         if (idspecies .gt. 1) then
+            Mg2SiO4(i,j,k) = Mg2SiO4(i,j,k)*correctO 
               Fe3O4(i,j,k) =   Fe3O4(i,j,k)*correctO 
               SiO2D(i,j,k) =   SiO2D(i,j,k)*correctO 
                 MgO(i,j,k) =     MgO(i,j,k)*correctO 
               Al2O3(i,j,k) =   Al2O3(i,j,k)*correctO 
+         endif
+         if (idspecies .gt. 2) then
              reforg(i,j,k) =  reforg(i,j,k)*correctO 
              volorg(i,j,k) =  volorg(i,j,k)*correctO 
              H2Oice(i,j,k) =  H2Oice(i,j,k)*correctO 
+         endif
          endif
   
             totalC  =                           CI(i,j,k)
@@ -6178,13 +6363,18 @@ C***** H2Oice **********
      &              + 12._DKIND/13._DKIND    *  CH(i,j,k)
      &              + 12._DKIND/14._DKIND    * CH2(i,j,k)
      &              + 12._DKIND/28._DKIND    *COII(i,j,k)
-         if (igrgr .eq. 1) then
+         if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1 ) ) then
+         if (idspecies .gt. 0) then
             totalC  = totalC
      &              +                           AC(i,j,k)
+         endif
+         if (idspecies .gt. 2) then
+            totalC  = totalC
      &              + 12._DKIND/22.68_DKIND*reforg(i,j,k)
      &              + 12._DKIND/32._DKIND  *volorg(i,j,k)
          endif
-         if (igrgr .eq. 0) then
+         endif
+         if ( ( igrgr .eq. 0 ) .and. ( idsub .eq. 0 ) ) then
             correctC = real(Cg(i)/ totalC, RKIND)
                CI(i,j,k) =   CI(i,j,k)*correctC
               CII(i,j,k) =  CII(i,j,k)*correctC
@@ -6202,22 +6392,31 @@ C***** H2Oice **********
                CH(i,j,k) =     CH(i,j,k)*correctC
               CH2(i,j,k) =    CH2(i,j,k)*correctC
              COII(i,j,k) =   COII(i,j,k)*correctC
+         if (idspecies .gt. 0) then
                AC(i,j,k) =     AC(i,j,k)*correctC
+         endif
+         if (idspecies .gt. 2) then
            reforg(i,j,k) = reforg(i,j,k)*correctC
            volorg(i,j,k) = volorg(i,j,k)*correctC
+         endif
          endif
             
             totalSi =                       SiI(i,j,k)
      &              + 28._DKIND/ 44._DKIND*SiOI(i,j,k)
      &              + 28._DKIND/ 60._DKIND*SiO2I(i,j,k)
-         if (igrgr .eq. 1) then
+         if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1 ) ) then
+         if (idspecies .gt. 0) then
+            totalSi = totalSi
+     &              + 28._DKIND/100._DKIND* MgSiO3(i,j,k)
+         endif
+         if (idspecies .gt. 1) then
             totalSi = totalSi
      &              +                          SiM(i,j,k)
      &              + 28._DKIND/140._DKIND*Mg2SiO4(i,j,k)
-     &              + 28._DKIND/100._DKIND* MgSiO3(i,j,k)
      &              + 28._DKIND/ 60._DKIND*  SiO2D(i,j,k)
          endif
-         if (igrgr .eq. 0) then
+         endif
+         if ( ( igrgr .eq. 0 ) .and. ( idsub .eq. 0 ) ) then
             correctSi = real(Sig(i)/totalSi, RKIND)
                 SiI(i,j,k) =   SiI(i,j,k)*correctSi
                SiOI(i,j,k) =  SiOI(i,j,k)*correctSi
@@ -6229,13 +6428,18 @@ C***** H2Oice **********
                 SiI(i,j,k) =   SiI(i,j,k)*correctSi
                SiOI(i,j,k) =  SiOI(i,j,k)*correctSi
               SiO2I(i,j,k) = SiO2I(i,j,k)*correctSi
+         if (idspecies .gt. 0) then
+             MgSiO3(i,j,k) =  MgSiO3(i,j,k)*correctSi
+         endif
+         if (idspecies .gt. 1) then
                 SiM(i,j,k) =     SiM(i,j,k)*correctSi
             Mg2SiO4(i,j,k) = Mg2SiO4(i,j,k)*correctSi
-             MgSiO3(i,j,k) =  MgSiO3(i,j,k)*correctSi
               SiO2D(i,j,k) =   SiO2D(i,j,k)*correctSi
          endif
+         endif
 
-         if (igrgr .eq. 1) then
+         if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1 ) ) then
+         if (idspecies .gt. 1) then
             totalFe =                         Fe(i,j,k)     
      &              +                        FeM(i,j,k)  
      &              +168._DKIND/232._DKIND*Fe3O4(i,j,k)
@@ -6245,19 +6449,28 @@ C***** H2Oice **********
             FeM(i,j,k)   =   FeM(i,j,k)*correctFe
             Fe3O4(i,j,k) = Fe3O4(i,j,k)*correctFe
             FeS(i,j,k)   =   FeS(i,j,k)*correctFe
+         endif
 
+         if (idspecies .gt. 0) then
             totalMg =                           Mg(i,j,k)     
-     &              + 48._DKIND/140._DKIND*Mg2SiO4(i,j,k)
      &              + 24._DKIND/100._DKIND* MgSiO3(i,j,k) 
+            if (idspecies .gt. 1) then
+            totalMg = totalMg
+     &              + 48._DKIND/140._DKIND*Mg2SiO4(i,j,k)
      &              + 24._DKIND/ 40._DKIND*    MgO(i,j,k)    
+            endif
 !!          write(*,*) 'Mgt', totalMg/metal(i,j,k)
 !!   &                      , Mgt(i)/metal(i,j,k)
             correctMg = real( Mgt(i)/totalMg, RKIND)
                  Mg(i,j,k) =      Mg(i,j,k)*correctMg
-            Mg2SiO4(i,j,k) = Mg2SiO4(i,j,k)*correctMg
              MgSiO3(i,j,k) =  MgSiO3(i,j,k)*correctMg
+            if (idspecies .gt. 1) then
+            Mg2SiO4(i,j,k) = Mg2SiO4(i,j,k)*correctMg
                 MgO(i,j,k) =     MgO(i,j,k)*correctMg
+            endif
+         endif
 
+         if (idspecies .gt. 1) then
             totalS  =                        S(i,j,k)  
      &              + 32._DKIND/ 88._DKIND*FeS(i,j,k)
             correctS  = real(  St(i)/totalS , RKIND)
@@ -6269,6 +6482,7 @@ C***** H2Oice **********
             correctAl = real( Alt(i)/totalAl, RKIND)
                Al(i,j,k) =    Al(i,j,k)*correctAl
             Al2O3(i,j,k) = Al2O3(i,j,k)*correctAl
+         endif
          endif
 
          endif ! d(i,j,k)
@@ -6293,24 +6507,30 @@ C***** H2Oice **********
             H2OII(i,j,k)   = max(H2OII(i,j,k), tinymetal)
             H3OII(i,j,k)   = max(H3OII(i,j,k), tinymetal)
             O2II(i,j,k)    = max(O2II(i,j,k), tinymetal)
-         if (igrgr .eq. 1) then
+         if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1 ) ) then
+         if (idspecies .gt. 0) then
             Mg(i,j,k)      = max(Mg(i,j,k), tinymetal)
+            MgSiO3(i,j,k)  = max(MgSiO3(i,j,k), tinymetal)
+            AC(i,j,k)      = max(AC(i,j,k), tinymetal)
+         endif
+         if (idspecies .gt. 1) then
             Al(i,j,k)      = max(Al(i,j,k), tinymetal)
             S(i,j,k)       = max(S(i,j,k), tinymetal)
             Fe(i,j,k)      = max(Fe(i,j,k), tinymetal)
             SiM(i,j,k)     = max(SiM(i,j,k), tinymetal)
             FeM(i,j,k)     = max(FeM(i,j,k), tinymetal)
             Mg2SiO4(i,j,k) = max(Mg2SiO4(i,j,k), tinymetal)
-            MgSiO3(i,j,k)  = max(MgSiO3(i,j,k), tinymetal)
             Fe3O4(i,j,k)   = max(Fe3O4(i,j,k), tinymetal)
-            AC(i,j,k)      = max(AC(i,j,k), tinymetal)
             SiO2D(i,j,k)   = max(SiO2D(i,j,k), tinymetal)
             MgO(i,j,k)     = max(MgO(i,j,k), tinymetal)
             FeS(i,j,k)     = max(FeS(i,j,k), tinymetal)
             Al2O3(i,j,k)   = max(Al2O3(i,j,k), tinymetal)
+         endif
+         if (idspecies .gt. 2) then
             reforg(i,j,k)  = max(reforg(i,j,k), tinymetal)
             volorg(i,j,k)  = max(volorg(i,j,k), tinymetal)
             H2Oice(i,j,k)  = max(H2Oice(i,j,k), tinymetal)
+         endif
          endif
 
       endif

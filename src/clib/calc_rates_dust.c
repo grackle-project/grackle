@@ -17,13 +17,41 @@
 
 extern int grackle_verbose;
 
-int calc_rates_dust_loc(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double kunit, double coolunit);
+int calc_rates_dust_loc (int iSN, chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double kunit, double coolunit);
+int calc_rates_dust_C13 (int iSN, chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double kunit, double coolunit);
+int calc_rates_dust_C20 (int iSN, chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double kunit, double coolunit);
+int calc_rates_dust_C25 (int iSN, chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double kunit, double coolunit);
+int calc_rates_dust_C30 (int iSN, chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double kunit, double coolunit);
+int calc_rates_dust_F13 (int iSN, chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double kunit, double coolunit);
+int calc_rates_dust_F15 (int iSN, chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double kunit, double coolunit);
+int calc_rates_dust_F50 (int iSN, chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double kunit, double coolunit);
+int calc_rates_dust_F80 (int iSN, chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double kunit, double coolunit);
+int calc_rates_dust_P170(int iSN, chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double kunit, double coolunit);
+int calc_rates_dust_P200(int iSN, chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double kunit, double coolunit);
+int calc_rates_dust_Y19 (int iSN, chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double kunit, double coolunit);
 
 
 int calc_rates_dust(chemistry_data *my_chemistry,
                     chemistry_data_storage *my_rates,
                     code_units *my_units)
 {
+
+//-------kdMgSiO3  :    Mg   +    SiO + 2H2O -> MgSiO3  + 2H2I
+//-------kdAC      :    C                    -> AC      
+                                 
+//-------kdSiM     :    Si                   -> SiM     
+//-------kdFeM     :    Fe                   -> FeM     
+//-------kdMg2SiO4 :   2Mg   +    SiO + 3H2O -> Mg2SiO4 + 3H2I
+//-------kdFe3O4   :   3Fe   +   4H2O        -> Fe3O4   + 4H2I
+//-------kdSiO2D   :    SiO2                 -> SiO2D   
+//-------kdMgO     :    Mg   +    H2O        -> MgO     +  H2I
+//-------kdFeS     :    Fe   +    S          -> FeS     
+//-------kdAl2O3   :   2Al   +   3H2O        -> Al2O3   + 3H2I
+                     
+//-------kdreforg  : 0.5CO   + 0.5CH2 + 1.2N -> reforg (C:H:O:N = 1:1:0.5:1.2)
+//-------kdvolorg  :    CO   +   2H2I        -> volorg (CH3OH)
+//-------kdH2Oice  :    H2O                  -> H2Oice
+
 
       double co_length_units, co_density_units;
       if (my_units->comoving_coordinates == TRUE) {
@@ -152,10 +180,109 @@ int calc_rates_dust(chemistry_data *my_chemistry,
 // Initialize constants to tiny
 //
       int ifunc;
-      int NTd, Nfd, Nmom;
+      int NSN, NTd, Nfd, Nmom;
       double Td0, fd0;
       double dTd;
-      int iTd, ifd, itab;
+      int iSN, iTd, imom, itab;
+
+      NSN = 12;
+      my_chemistry->SN0_N = NSN;
+
+      my_chemistry->SN0_XC  = malloc(NSN * sizeof(double));
+      my_chemistry->SN0_XO  = malloc(NSN * sizeof(double));
+      my_chemistry->SN0_XMg = malloc(NSN * sizeof(double));
+      my_chemistry->SN0_XAl = malloc(NSN * sizeof(double));
+      my_chemistry->SN0_XSi = malloc(NSN * sizeof(double));
+      my_chemistry->SN0_XS  = malloc(NSN * sizeof(double));
+      my_chemistry->SN0_XFe = malloc(NSN * sizeof(double));
+
+      my_chemistry->SN0_fC  = malloc(NSN * sizeof(double));
+      my_chemistry->SN0_fO  = malloc(NSN * sizeof(double));
+      my_chemistry->SN0_fMg = malloc(NSN * sizeof(double));
+      my_chemistry->SN0_fAl = malloc(NSN * sizeof(double));
+      my_chemistry->SN0_fSi = malloc(NSN * sizeof(double));
+      my_chemistry->SN0_fS  = malloc(NSN * sizeof(double));
+      my_chemistry->SN0_fFe = malloc(NSN * sizeof(double));
+
+      my_chemistry->SN0_fSiM      = malloc(NSN * sizeof(double));
+      my_chemistry->SN0_fFeM      = malloc(NSN * sizeof(double));
+      my_chemistry->SN0_fMg2SiO4  = malloc(NSN * sizeof(double));
+      my_chemistry->SN0_fMgSiO3   = malloc(NSN * sizeof(double));
+      my_chemistry->SN0_fFe3O4    = malloc(NSN * sizeof(double));
+      my_chemistry->SN0_fAC       = malloc(NSN * sizeof(double));
+      my_chemistry->SN0_fSiO2D    = malloc(NSN * sizeof(double));
+      my_chemistry->SN0_fMgO      = malloc(NSN * sizeof(double));
+      my_chemistry->SN0_fFeS      = malloc(NSN * sizeof(double));
+      my_chemistry->SN0_fAl2O3    = malloc(NSN * sizeof(double));
+      my_chemistry->SN0_freforg   = malloc(NSN * sizeof(double));
+      my_chemistry->SN0_fvolorg   = malloc(NSN * sizeof(double));
+      my_chemistry->SN0_fH2Oice   = malloc(NSN * sizeof(double));
+
+      for(iSN = 0; iSN < NSN; iSN++) {
+        my_chemistry->SN0_XC [iSN] = 0.0;
+        my_chemistry->SN0_XO [iSN] = 0.0;
+        my_chemistry->SN0_XMg[iSN] = 0.0;
+        my_chemistry->SN0_XAl[iSN] = 0.0;
+        my_chemistry->SN0_XSi[iSN] = 0.0;
+        my_chemistry->SN0_XS [iSN] = 0.0;
+        my_chemistry->SN0_XFe[iSN] = 0.0;
+
+        my_chemistry->SN0_fC [iSN] = 0.0;
+        my_chemistry->SN0_fO [iSN] = 0.0;
+        my_chemistry->SN0_fMg[iSN] = 0.0;
+        my_chemistry->SN0_fAl[iSN] = 0.0;
+        my_chemistry->SN0_fSi[iSN] = 0.0;
+        my_chemistry->SN0_fS [iSN] = 0.0;
+        my_chemistry->SN0_fFe[iSN] = 0.0;
+
+        my_chemistry->SN0_fSiM     [iSN] = 0.0;
+        my_chemistry->SN0_fFeM     [iSN] = 0.0;
+        my_chemistry->SN0_fMg2SiO4 [iSN] = 0.0;
+        my_chemistry->SN0_fMgSiO3  [iSN] = 0.0;
+        my_chemistry->SN0_fFe3O4   [iSN] = 0.0;
+        my_chemistry->SN0_fAC      [iSN] = 0.0;
+        my_chemistry->SN0_fSiO2D   [iSN] = 0.0;
+        my_chemistry->SN0_fMgO     [iSN] = 0.0;
+        my_chemistry->SN0_fFeS     [iSN] = 0.0;
+        my_chemistry->SN0_fAl2O3   [iSN] = 0.0;
+        my_chemistry->SN0_freforg  [iSN] = 0.0;
+        my_chemistry->SN0_fvolorg  [iSN] = 0.0;
+        my_chemistry->SN0_fH2Oice  [iSN] = 0.0;
+      }
+
+      my_chemistry->SN0_r0SiM      = malloc(NSN * 3 * sizeof(double));
+      my_chemistry->SN0_r0FeM      = malloc(NSN * 3 * sizeof(double));
+      my_chemistry->SN0_r0Mg2SiO4  = malloc(NSN * 3 * sizeof(double));
+      my_chemistry->SN0_r0MgSiO3   = malloc(NSN * 3 * sizeof(double));
+      my_chemistry->SN0_r0Fe3O4    = malloc(NSN * 3 * sizeof(double));
+      my_chemistry->SN0_r0AC       = malloc(NSN * 3 * sizeof(double));
+      my_chemistry->SN0_r0SiO2D    = malloc(NSN * 3 * sizeof(double));
+      my_chemistry->SN0_r0MgO      = malloc(NSN * 3 * sizeof(double));
+      my_chemistry->SN0_r0FeS      = malloc(NSN * 3 * sizeof(double));
+      my_chemistry->SN0_r0Al2O3    = malloc(NSN * 3 * sizeof(double));
+      my_chemistry->SN0_r0reforg   = malloc(NSN * 3 * sizeof(double));
+      my_chemistry->SN0_r0volorg   = malloc(NSN * 3 * sizeof(double));
+      my_chemistry->SN0_r0H2Oice   = malloc(NSN * 3 * sizeof(double));
+
+      itab = 0;
+      for(iSN = 0; iSN < NSN; iSN++) {
+        for(imom = 0; imom < 3; imom++) {
+          my_chemistry->SN0_r0SiM     [itab] = 0.0;
+          my_chemistry->SN0_r0FeM     [itab] = 0.0;
+          my_chemistry->SN0_r0Mg2SiO4 [itab] = 0.0;
+          my_chemistry->SN0_r0MgSiO3  [itab] = 0.0;
+          my_chemistry->SN0_r0Fe3O4   [itab] = 0.0;
+          my_chemistry->SN0_r0AC      [itab] = 0.0;
+          my_chemistry->SN0_r0SiO2D   [itab] = 0.0;
+          my_chemistry->SN0_r0MgO     [itab] = 0.0;
+          my_chemistry->SN0_r0FeS     [itab] = 0.0;
+          my_chemistry->SN0_r0Al2O3   [itab] = 0.0;
+          my_chemistry->SN0_r0reforg  [itab] = 0.0;
+          my_chemistry->SN0_r0volorg  [itab] = 0.0;
+          my_chemistry->SN0_r0H2Oice  [itab] = 0.0;
+          itab++;
+        }
+      }
 
       NTd =            35;
       Td0 =     0.0000000;
@@ -172,9 +299,54 @@ int calc_rates_dust(chemistry_data *my_chemistry,
       for(iTd = 0; iTd < NTd; iTd++)
         my_rates->gr_Td[iTd] = Td0 + (double)iTd * dTd;
 
-      ifunc = calc_rates_dust_loc(my_chemistry, my_rates, kunit, coolunit);
-      ifunc = calc_rates_dust_C30(my_chemistry, my_rates, kunit, coolunit);
-      ifunc = calc_rates_dust_F13(my_chemistry, my_rates, kunit, coolunit);
+      my_rates->SN0_kpSiM      = malloc(NSN * Nmom * NTd * sizeof(double));
+      my_rates->SN0_kpFeM      = malloc(NSN * Nmom * NTd * sizeof(double));
+      my_rates->SN0_kpMg2SiO4  = malloc(NSN * Nmom * NTd * sizeof(double));
+      my_rates->SN0_kpMgSiO3   = malloc(NSN * Nmom * NTd * sizeof(double));
+      my_rates->SN0_kpFe3O4    = malloc(NSN * Nmom * NTd * sizeof(double));
+      my_rates->SN0_kpAC       = malloc(NSN * Nmom * NTd * sizeof(double));
+      my_rates->SN0_kpSiO2D    = malloc(NSN * Nmom * NTd * sizeof(double));
+      my_rates->SN0_kpMgO      = malloc(NSN * Nmom * NTd * sizeof(double));
+      my_rates->SN0_kpFeS      = malloc(NSN * Nmom * NTd * sizeof(double));
+      my_rates->SN0_kpAl2O3    = malloc(NSN * Nmom * NTd * sizeof(double));
+      my_rates->SN0_kpreforg   = malloc(NSN * Nmom * NTd * sizeof(double));
+      my_rates->SN0_kpvolorg   = malloc(NSN * Nmom * NTd * sizeof(double));
+      my_rates->SN0_kpH2Oice   = malloc(NSN * Nmom * NTd * sizeof(double));
+
+      itab = 0;
+      for(iSN = 0; iSN < NSN; iSN++) {
+        for(imom = 0; imom < Nmom; imom++) {
+          for(iTd = 0; iTd < NTd; iTd++) {
+            my_rates->SN0_kpSiM     [itab] = 0.0;
+            my_rates->SN0_kpFeM     [itab] = 0.0;
+            my_rates->SN0_kpMg2SiO4 [itab] = 0.0;
+            my_rates->SN0_kpMgSiO3  [itab] = 0.0;
+            my_rates->SN0_kpFe3O4   [itab] = 0.0;
+            my_rates->SN0_kpAC      [itab] = 0.0;
+            my_rates->SN0_kpSiO2D   [itab] = 0.0;
+            my_rates->SN0_kpMgO     [itab] = 0.0;
+            my_rates->SN0_kpFeS     [itab] = 0.0;
+            my_rates->SN0_kpAl2O3   [itab] = 0.0;
+            my_rates->SN0_kpreforg  [itab] = 0.0;
+            my_rates->SN0_kpvolorg  [itab] = 0.0;
+            my_rates->SN0_kpH2Oice  [itab] = 0.0;
+            itab++;
+          }
+        }
+      }
+
+      ifunc = calc_rates_dust_loc ( 0, my_chemistry, my_rates, kunit, coolunit);
+      ifunc = calc_rates_dust_C13 ( 1, my_chemistry, my_rates, kunit, coolunit);
+      ifunc = calc_rates_dust_C20 ( 2, my_chemistry, my_rates, kunit, coolunit);
+      ifunc = calc_rates_dust_C25 ( 3, my_chemistry, my_rates, kunit, coolunit);
+      ifunc = calc_rates_dust_C30 ( 4, my_chemistry, my_rates, kunit, coolunit);
+      ifunc = calc_rates_dust_F13 ( 5, my_chemistry, my_rates, kunit, coolunit);
+      ifunc = calc_rates_dust_F15 ( 6, my_chemistry, my_rates, kunit, coolunit);
+      ifunc = calc_rates_dust_F50 ( 7, my_chemistry, my_rates, kunit, coolunit);
+      ifunc = calc_rates_dust_F80 ( 8, my_chemistry, my_rates, kunit, coolunit);
+      ifunc = calc_rates_dust_P170( 9, my_chemistry, my_rates, kunit, coolunit);
+      ifunc = calc_rates_dust_P200(10, my_chemistry, my_rates, kunit, coolunit);
+      ifunc = calc_rates_dust_Y19 (11, my_chemistry, my_rates, kunit, coolunit);
 
   return SUCCESS;
 }

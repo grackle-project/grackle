@@ -82,7 +82,7 @@ typedef struct
   /* Select pop III metal/dust model
          For multi_metals = 0, select a dust model
          For multi_metals > 0, select a set of dust models */
-  int metal_pop3;
+  int metal_abundances;
 
   /* Flag to solve multiple grain species */
   int dust_species;
@@ -122,30 +122,15 @@ typedef struct
 
   /* metal/dust abundance */
 
-  /* Local ISM (Pollack et al. 1994) */
-  double loc_XC , loc_XO , loc_XMg, loc_XAl, loc_XSi, loc_XS , loc_XFe;
-  double loc_fC , loc_fO , loc_fMg, loc_fAl, loc_fSi, loc_fS , loc_fFe;
-  double loc_fFeM    , loc_fMg2SiO4, loc_fMgSiO3 , loc_fFeS  
-       , loc_freforg , loc_fvolorg , loc_fH2Oice ;
-  double *loc_r0FeM    , *loc_r0Mg2SiO4, *loc_r0MgSiO3 , *loc_r0FeS    
-       , *loc_r0reforg , *loc_r0volorg , *loc_r0H2Oice ;
-
-  /* Pop III SN */
-  /* normal CCSN 30 Msun */
-  double C30_XC , C30_XO , C30_XMg, C30_XAl, C30_XSi, C30_XS , C30_XFe;
-  double C30_fC , C30_fO , C30_fMg, C30_fAl, C30_fSi, C30_fS , C30_fFe;
-  double C30_fSiM    , C30_fFeM    , C30_fMg2SiO4, C30_fMgSiO3
-       , C30_fAC     , C30_fSiO2D  , C30_fMgO    , C30_fFeS    , C30_fAl2O3;
-  double *C30_r0SiM    , *C30_r0FeM    , *C30_r0Mg2SiO4, *C30_r0MgSiO3
-       , *C30_r0AC     , *C30_r0SiO2D  , *C30_r0MgO    , *C30_r0FeS    , *C30_r0Al2O3;
-
-  /* faint SN 13 Msun */
-  double F13_XC , F13_XO , F13_XMg, F13_XAl, F13_XSi, F13_XS , F13_XFe;
-  double F13_fC , F13_fO , F13_fMg, F13_fAl, F13_fSi, F13_fS , F13_fFe;
-  double F13_fFeM    , F13_fMg2SiO4, F13_fMgSiO3 , F13_fFe3O4  
-       , F13_fAC     , F13_fSiO2D  , F13_fAl2O3;
-  double *F13_r0FeM    , *F13_r0Mg2SiO4, *F13_r0MgSiO3 , *F13_r0Fe3O4
-       , *F13_r0AC     , *F13_r0SiO2D  , *F13_r0Al2O3;
+  int     SN0_N;
+  double *SN0_XC , *SN0_XO , *SN0_XMg, *SN0_XAl, *SN0_XSi, *SN0_XS , *SN0_XFe;
+  double *SN0_fC , *SN0_fO , *SN0_fMg, *SN0_fAl, *SN0_fSi, *SN0_fS , *SN0_fFe;
+  double *SN0_fSiM, *SN0_fFeM, *SN0_fMg2SiO4, *SN0_fMgSiO3, *SN0_fFe3O4
+       , *SN0_fAC, *SN0_fSiO2D, *SN0_fMgO, *SN0_fFeS, *SN0_fAl2O3
+       , *SN0_freforg , *SN0_fvolorg , *SN0_fH2Oice;
+  double *SN0_r0SiM, *SN0_r0FeM, *SN0_r0Mg2SiO4, *SN0_r0MgSiO3, *SN0_r0Fe3O4
+       , *SN0_r0AC, *SN0_r0SiO2D, *SN0_r0MgO, *SN0_r0FeS, *SN0_r0Al2O3
+       , *SN0_r0reforg , *SN0_r0volorg , *SN0_r0H2Oice;
 
   int NumberOfTemperatureBins;
   int CaseBRecombination;
@@ -513,18 +498,9 @@ typedef struct
   /* Dust model */
   int    *gr_N, gr_Size;
   double gr_dT, *gr_Td;
-
-  /* Local ISM (Pollack et al. 1994) */
-  double *loc_kpFeM    , *loc_kpMg2SiO4, *loc_kpMgSiO3 , *loc_kpFeS    
-       , *loc_kpreforg , *loc_kpvolorg , *loc_kpH2Oice ;
-
-  /* Pop III dust model */
-  double *C30_kpSiM    , *C30_kpFeM    , *C30_kpMg2SiO4, *C30_kpMgSiO3
-       , *C30_kpAC     , *C30_kpSiO2D  , *C30_kpMgO    , *C30_kpFeS    , *C30_kpAl2O3;
-
-  /* faint SN 13 Msun */
-  double *F13_kpFeM    , *F13_kpMg2SiO4, *F13_kpMgSiO3 , *F13_kpFe3O4  
-       , *F13_kpAC     , *F13_kpSiO2D  , *F13_kpAl2O3;
+  double *SN0_kpSiM, *SN0_kpFeM, *SN0_kpMg2SiO4, *SN0_kpMgSiO3, *SN0_kpFe3O4
+       , *SN0_kpAC, *SN0_kpSiO2D, *SN0_kpMgO, *SN0_kpFeS, *SN0_kpAl2O3
+       , *SN0_kpreforg , *SN0_kpvolorg , *SN0_kpH2Oice;
 
   /* UV background data */
   UVBtable UVbackground_table;

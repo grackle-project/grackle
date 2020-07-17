@@ -17,76 +17,59 @@
 
 extern int grackle_verbose;
 
-int calc_rates_dust_P200(chemistry_data *my_chemistry, chemistry_data_storage *my_rates)
+int calc_rates_dust_P200(int iSN, chemistry_data *my_chemistry, chemistry_data_storage *my_rates)
 {
 
   int NTd, Nmom;
-  double Td0;
-  double dTd;
-  int iTd, imom, itab;
+  int iTd, imom, itab0, itab;
 
-  my_chemistry->P200_r0SiM      = malloc(3 * sizeof(double));
-  my_chemistry->P200_r0FeM      = malloc(3 * sizeof(double));
-  my_chemistry->P200_r0Mg2SiO4  = malloc(3 * sizeof(double));
-  my_chemistry->P200_r0AC       = malloc(3 * sizeof(double));
-  my_chemistry->P200_r0SiO2D    = malloc(3 * sizeof(double));
-  my_chemistry->P200_r0MgO      = malloc(3 * sizeof(double));
+  my_chemistry->SN0_XC [iSN] =   3.65050e-02;
+  my_chemistry->SN0_XO [iSN] =   4.88552e-01;
+  my_chemistry->SN0_XMg[iSN] =   2.69665e-02;
+  my_chemistry->SN0_XAl[iSN] =   1.36872e-04;
+  my_chemistry->SN0_XSi[iSN] =   1.87324e-01;
+  my_chemistry->SN0_XS [iSN] =   1.15582e-01;
+  my_chemistry->SN0_XFe[iSN] =   6.79294e-02;
 
-  my_chemistry->P200_XC  =   3.65050e-02;
-  my_chemistry->P200_XO  =   4.88552e-01;
-  my_chemistry->P200_XMg =   2.69665e-02;
-  my_chemistry->P200_XAl =   1.36872e-04;
-  my_chemistry->P200_XSi =   1.87324e-01;
-  my_chemistry->P200_XS  =   1.15582e-01;
-  my_chemistry->P200_XFe =   6.79294e-02;
+  my_chemistry->SN0_fC [iSN] =   3.64677e-02;
+  my_chemistry->SN0_fO [iSN] =   4.88307e-01;
+  my_chemistry->SN0_fMg[iSN] =   2.69665e-02;
+  my_chemistry->SN0_fAl[iSN] =   1.36872e-04;
+  my_chemistry->SN0_fSi[iSN] =   1.87051e-01;
+  my_chemistry->SN0_fS [iSN] =   1.15582e-01;
+  my_chemistry->SN0_fFe[iSN] =   6.75026e-02;
 
-  my_chemistry->P200_fC  =   3.64677e-02;
-  my_chemistry->P200_fO  =   4.88307e-01;
-  my_chemistry->P200_fMg =   2.69665e-02;
-  my_chemistry->P200_fAl =   1.36872e-04;
-  my_chemistry->P200_fSi =   1.87051e-01;
-  my_chemistry->P200_fS  =   1.15582e-01;
-  my_chemistry->P200_fFe =   6.75026e-02;
+  my_chemistry->SN0_fSiM     [iSN] =   5.90622e-05;
+  my_chemistry->SN0_fFeM     [iSN] =   4.26809e-04;
+  my_chemistry->SN0_fMg2SiO4 [iSN] =   4.08246e-15;
+  my_chemistry->SN0_fAC      [iSN] =   3.72287e-05;
+  my_chemistry->SN0_fSiO2D   [iSN] =   4.59330e-04;
+  my_chemistry->SN0_fMgO     [iSN] =   5.38389e-09;
 
-  my_chemistry->P200_fSiM     =   5.90622e-05;
-  my_chemistry->P200_fFeM     =   4.26809e-04;
-  my_chemistry->P200_fMg2SiO4 =   4.08246e-15;
-  my_chemistry->P200_fAC      =   3.72287e-05;
-  my_chemistry->P200_fSiO2D   =   4.59330e-04;
-  my_chemistry->P200_fMgO     =   5.38389e-09;
+  itab0 = 3 * iSN;
+  my_chemistry->SN0_r0SiM     [itab0 + 0] =   8.86269e-07;
+  my_chemistry->SN0_r0FeM     [itab0 + 0] =   2.02272e-06;
+  my_chemistry->SN0_r0Mg2SiO4 [itab0 + 0] =   1.42189e-05;
+  my_chemistry->SN0_r0AC      [itab0 + 0] =   7.46096e-07;
+  my_chemistry->SN0_r0SiO2D   [itab0 + 0] =   1.73471e-05;
+  my_chemistry->SN0_r0MgO     [itab0 + 0] =   1.26307e-05;
 
-  my_chemistry->P200_r0SiM     [0] =   8.86269e-07;
-  my_chemistry->P200_r0FeM     [0] =   2.02272e-06;
-  my_chemistry->P200_r0Mg2SiO4 [0] =   1.42189e-05;
-  my_chemistry->P200_r0AC      [0] =   7.46096e-07;
-  my_chemistry->P200_r0SiO2D   [0] =   1.73471e-05;
-  my_chemistry->P200_r0MgO     [0] =   1.26307e-05;
+  my_chemistry->SN0_r0SiM     [itab0 + 1] =   1.71166e-12;
+  my_chemistry->SN0_r0FeM     [itab0 + 1] =   5.41308e-12;
+  my_chemistry->SN0_r0Mg2SiO4 [itab0 + 1] =   2.04834e-10;
+  my_chemistry->SN0_r0AC      [itab0 + 1] =   9.32091e-13;
+  my_chemistry->SN0_r0SiO2D   [itab0 + 1] =   3.08556e-10;
+  my_chemistry->SN0_r0MgO     [itab0 + 1] =   1.59673e-10;
 
-  my_chemistry->P200_r0SiM     [1] =   1.71166e-12;
-  my_chemistry->P200_r0FeM     [1] =   5.41308e-12;
-  my_chemistry->P200_r0Mg2SiO4 [1] =   2.04834e-10;
-  my_chemistry->P200_r0AC      [1] =   9.32091e-13;
-  my_chemistry->P200_r0SiO2D   [1] =   3.08556e-10;
-  my_chemistry->P200_r0MgO     [1] =   1.59673e-10;
-
-  my_chemistry->P200_r0SiM     [2] =   5.46663e-18;
-  my_chemistry->P200_r0FeM     [2] =   2.06248e-17;
-  my_chemistry->P200_r0Mg2SiO4 [2] =   2.98805e-15;
-  my_chemistry->P200_r0AC      [2] =   1.99556e-18;
-  my_chemistry->P200_r0SiO2D   [2] =   5.66409e-15;
-  my_chemistry->P200_r0MgO     [2] =   2.02075e-15;
+  my_chemistry->SN0_r0SiM     [itab0 + 2] =   5.46663e-18;
+  my_chemistry->SN0_r0FeM     [itab0 + 2] =   2.06248e-17;
+  my_chemistry->SN0_r0Mg2SiO4 [itab0 + 2] =   2.98805e-15;
+  my_chemistry->SN0_r0AC      [itab0 + 2] =   1.99556e-18;
+  my_chemistry->SN0_r0SiO2D   [itab0 + 2] =   5.66409e-15;
+  my_chemistry->SN0_r0MgO     [itab0 + 2] =   2.02075e-15;
 
   NTd =            35;
-  Td0 =     0.0000000;
-  dTd =     0.1000000;
  Nmom =             4;
-
-  my_rates->P200_kpSiM      = malloc(NTd * Nmom * sizeof(double));
-  my_rates->P200_kpFeM      = malloc(NTd * Nmom * sizeof(double));
-  my_rates->P200_kpMg2SiO4  = malloc(NTd * Nmom * sizeof(double));
-  my_rates->P200_kpAC       = malloc(NTd * Nmom * sizeof(double));
-  my_rates->P200_kpSiO2D    = malloc(NTd * Nmom * sizeof(double));
-  my_rates->P200_kpMgO      = malloc(NTd * Nmom * sizeof(double));
 
   double P200_kpSiM[] = 
   {  1.54645e-01,   1.37048e-07,   2.64662e-13,   8.45209e-19,
@@ -311,16 +294,18 @@ int calc_rates_dust_P200(chemistry_data *my_chemistry, chemistry_data_storage *m
      9.36317e+00,   1.18251e-04,   1.49468e-09,   1.89126e-14  };
 
 
-  itab = 0;
+  itab0 = Nmom * NTd * iSN;
+  itab  = 0;
   for(imom = 0; imom < Nmom; imom++) {
     for(iTd = 0; iTd < NTd; iTd++) {
-      my_rates->P200_kpSiM     [itab] = P200_kpSiM     [itab];
-      my_rates->P200_kpFeM     [itab] = P200_kpFeM     [itab];
-      my_rates->P200_kpMg2SiO4 [itab] = P200_kpMg2SiO4 [itab];
-      my_rates->P200_kpAC      [itab] = P200_kpAC      [itab];
-      my_rates->P200_kpSiO2D   [itab] = P200_kpSiO2D   [itab];
-      my_rates->P200_kpMgO     [itab] = P200_kpMgO     [itab];
-      itab++;
+      my_rates->SN0_kpSiM     [itab0] = P200_kpSiM     [itab];
+      my_rates->SN0_kpFeM     [itab0] = P200_kpFeM     [itab];
+      my_rates->SN0_kpMg2SiO4 [itab0] = P200_kpMg2SiO4 [itab];
+      my_rates->SN0_kpAC      [itab0] = P200_kpAC      [itab];
+      my_rates->SN0_kpSiO2D   [itab0] = P200_kpSiO2D   [itab];
+      my_rates->SN0_kpMgO     [itab0] = P200_kpMgO     [itab];
+      itab0++;
+      itab ++;
     }
   }
 

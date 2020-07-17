@@ -17,52 +17,43 @@
 
 extern int grackle_verbose;
 
-int calc_rates_dust_Y19(chemistry_data *my_chemistry, chemistry_data_storage *my_rates)
+int calc_rates_dust_Y19(int iSN, chemistry_data *my_chemistry, chemistry_data_storage *my_rates)
 {
 
   int NTd, Nmom;
-  double Td0;
-  double dTd;
-  int iTd, imom, itab;
+  int iTd, imom, itab0, itab;
 
-  my_chemistry->Y19_r0MgSiO3   = malloc(3 * sizeof(double));
-  my_chemistry->Y19_r0AC       = malloc(3 * sizeof(double));
+  my_chemistry->SN0_XC [iSN] =   2.50000e-01;
+  my_chemistry->SN0_XO [iSN] =   2.93867e-01;
+  my_chemistry->SN0_XMg[iSN] =   6.00000e-02;
+  my_chemistry->SN0_XAl[iSN] =   2.85361e-03;
+  my_chemistry->SN0_XSi[iSN] =   7.00000e-02;
+  my_chemistry->SN0_XS [iSN] =   1.58191e-02;
+  my_chemistry->SN0_XFe[iSN] =   6.64078e-02;
 
-  my_chemistry->Y19_XC  =   2.50000e-01;
-  my_chemistry->Y19_XO  =   2.93867e-01;
-  my_chemistry->Y19_XMg =   6.00000e-02;
-  my_chemistry->Y19_XAl =   2.85361e-03;
-  my_chemistry->Y19_XSi =   7.00000e-02;
-  my_chemistry->Y19_XS  =   1.58191e-02;
-  my_chemistry->Y19_XFe =   6.64078e-02;
+  my_chemistry->SN0_fC [iSN] =   0.00000e+00;
+  my_chemistry->SN0_fO [iSN] =   1.73867e-01;
+  my_chemistry->SN0_fMg[iSN] =   0.00000e+00;
+  my_chemistry->SN0_fAl[iSN] =   2.85361e-03;
+  my_chemistry->SN0_fSi[iSN] =   0.00000e+00;
+  my_chemistry->SN0_fS [iSN] =   1.58191e-02;
+  my_chemistry->SN0_fFe[iSN] =   6.64078e-02;
 
-  my_chemistry->Y19_fC  =   0.00000e+00;
-  my_chemistry->Y19_fO  =   1.73867e-01;
-  my_chemistry->Y19_fMg =   0.00000e+00;
-  my_chemistry->Y19_fAl =   2.85361e-03;
-  my_chemistry->Y19_fSi =   0.00000e+00;
-  my_chemistry->Y19_fS  =   1.58191e-02;
-  my_chemistry->Y19_fFe =   6.64078e-02;
+  my_chemistry->SN0_fMgSiO3  [iSN] =   2.50000e-01;
+  my_chemistry->SN0_fAC      [iSN] =   2.50000e-01;
 
-  my_chemistry->Y19_fMgSiO3  =   2.50000e-01;
-  my_chemistry->Y19_fAC      =   2.50000e-01;
+  itab0 = 3 * iSN;
+  my_chemistry->SN0_r0MgSiO3  [itab0 + 0] =   1.00000e-05;
+  my_chemistry->SN0_r0AC      [itab0 + 0] =   1.00000e-05;
 
-  my_chemistry->Y19_r0MgSiO3  [0] =   1.00000e-05;
-  my_chemistry->Y19_r0AC      [0] =   1.00000e-05;
+  my_chemistry->SN0_r0MgSiO3  [itab0 + 1] =   1.00000e-10;
+  my_chemistry->SN0_r0AC      [itab0 + 1] =   1.00000e-10;
 
-  my_chemistry->Y19_r0MgSiO3  [1] =   1.00000e-10;
-  my_chemistry->Y19_r0AC      [1] =   1.00000e-10;
-
-  my_chemistry->Y19_r0MgSiO3  [2] =   1.00000e-15;
-  my_chemistry->Y19_r0AC      [2] =   1.00000e-15;
+  my_chemistry->SN0_r0MgSiO3  [itab0 + 2] =   1.00000e-15;
+  my_chemistry->SN0_r0AC      [itab0 + 2] =   1.00000e-15;
 
   NTd =            35;
-  Td0 =     0.0000000;
-  dTd =     0.1000000;
  Nmom =             4;
-
-  my_rates->Y19_kpMgSiO3   = malloc(NTd * Nmom * sizeof(double));
-  my_rates->Y19_kpAC       = malloc(NTd * Nmom * sizeof(double));
 
   double Y19_kpMgSiO3[] = 
   {  2.19890e-02,   2.19890e-07,   2.19890e-12,   2.19890e-17,
@@ -139,12 +130,14 @@ int calc_rates_dust_Y19(chemistry_data *my_chemistry, chemistry_data_storage *my
      2.18634e+03,   2.18634e-02,   2.18634e-07,   2.18634e-12  };
 
 
-  itab = 0;
+  itab0 = Nmom * NTd * iSN;
+  itab  = 0;
   for(imom = 0; imom < Nmom; imom++) {
     for(iTd = 0; iTd < NTd; iTd++) {
-      my_rates->Y19_kpMgSiO3  [itab] = Y19_kpMgSiO3  [itab];
-      my_rates->Y19_kpAC      [itab] = Y19_kpAC      [itab];
-      itab++;
+      my_rates->SN0_kpMgSiO3  [itab0] = Y19_kpMgSiO3  [itab];
+      my_rates->SN0_kpAC      [itab0] = Y19_kpAC      [itab];
+      itab0++;
+      itab ++;
     }
   }
 

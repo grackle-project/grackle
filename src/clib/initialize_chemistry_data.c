@@ -502,8 +502,8 @@ void show_parameters(FILE *fp, chemistry_data *my_chemistry)
           my_chemistry->metal_chemistry);
   fprintf(fp, "multi_metals                      = %d\n",
           my_chemistry->multi_metals);
-  fprintf(fp, "metal_pop3                        = %d\n",
-          my_chemistry->metal_pop3);
+  fprintf(fp, "metal_abundances                  = %d\n",
+          my_chemistry->metal_abundances);
   fprintf(fp, "dust_species                      = %d\n",
           my_chemistry->dust_species);
   fprintf(fp, "dust_temperature_multi            = %d\n",

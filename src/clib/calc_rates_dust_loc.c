@@ -17,82 +17,63 @@
 
 extern int grackle_verbose;
 
-int calc_rates_dust_loc(chemistry_data *my_chemistry, chemistry_data_storage *my_rates)
+int calc_rates_dust_loc(int iSN, chemistry_data *my_chemistry, chemistry_data_storage *my_rates)
 {
 
   int NTd, Nmom;
-  double Td0;
-  double dTd;
-  int iTd, imom, itab;
+  int iTd, imom, itab0, itab;
 
-  my_chemistry->loc_r0FeM      = malloc(3 * sizeof(double));
-  my_chemistry->loc_r0Mg2SiO4  = malloc(3 * sizeof(double));
-  my_chemistry->loc_r0MgSiO3   = malloc(3 * sizeof(double));
-  my_chemistry->loc_r0FeS      = malloc(3 * sizeof(double));
-  my_chemistry->loc_r0reforg   = malloc(3 * sizeof(double));
-  my_chemistry->loc_r0volorg   = malloc(3 * sizeof(double));
-  my_chemistry->loc_r0H2Oice   = malloc(3 * sizeof(double));
+  my_chemistry->SN0_XC [iSN] =   1.69793e-01;
+  my_chemistry->SN0_XO [iSN] =   4.15646e-01;
+  my_chemistry->SN0_XMg[iSN] =   3.19126e-02;
+  my_chemistry->SN0_XAl[iSN] =   2.85361e-03;
+  my_chemistry->SN0_XSi[iSN] =   3.50363e-02;
+  my_chemistry->SN0_XS [iSN] =   2.06909e-02;
+  my_chemistry->SN0_XFe[iSN] =   6.15987e-02;
 
-  my_chemistry->loc_XC  =   1.69793e-01;
-  my_chemistry->loc_XO  =   4.15646e-01;
-  my_chemistry->loc_XMg =   3.19126e-02;
-  my_chemistry->loc_XAl =   2.85361e-03;
-  my_chemistry->loc_XSi =   3.50363e-02;
-  my_chemistry->loc_XS  =   2.06909e-02;
-  my_chemistry->loc_XFe =   6.15987e-02;
+  my_chemistry->SN0_fC [iSN] =   4.75421e-02;
+  my_chemistry->SN0_fO [iSN] =   2.44400e-01;
+  my_chemistry->SN0_fMg[iSN] =   0.00000e+00;
+  my_chemistry->SN0_fAl[iSN] =   2.85361e-03;
+  my_chemistry->SN0_fSi[iSN] =   1.29344e-02;
+  my_chemistry->SN0_fS [iSN] =   0.00000e+00;
+  my_chemistry->SN0_fFe[iSN] =   3.21053e-02;
 
-  my_chemistry->loc_fC  =   4.75421e-02;
-  my_chemistry->loc_fO  =   2.44400e-01;
-  my_chemistry->loc_fMg =   0.00000e+00;
-  my_chemistry->loc_fAl =   2.85361e-03;
-  my_chemistry->loc_fSi =   1.29344e-02;
-  my_chemistry->loc_fS  =   0.00000e+00;
-  my_chemistry->loc_fFe =   3.21053e-02;
+  my_chemistry->SN0_fFeM     [iSN] =   1.26500e-02;
+  my_chemistry->SN0_fMg2SiO4 [iSN] =   7.72550e-02;
+  my_chemistry->SN0_fMgSiO3  [iSN] =   2.34078e-02;
+  my_chemistry->SN0_fFeS     [iSN] =   2.84500e-02;
+  my_chemistry->SN0_freforg  [iSN] =   1.76500e-01;
+  my_chemistry->SN0_fvolorg  [iSN] =   3.01000e-02;
+  my_chemistry->SN0_fH2Oice  [iSN] =   5.95000e-02;
 
-  my_chemistry->loc_fFeM     =   1.26500e-02;
-  my_chemistry->loc_fMg2SiO4 =   7.72550e-02;
-  my_chemistry->loc_fMgSiO3  =   2.34078e-02;
-  my_chemistry->loc_fFeS     =   2.84500e-02;
-  my_chemistry->loc_freforg  =   1.76500e-01;
-  my_chemistry->loc_fvolorg  =   3.01000e-02;
-  my_chemistry->loc_fH2Oice  =   5.95000e-02;
+  itab0 = 3 * iSN;
+  my_chemistry->SN0_r0FeM     [itab0 + 0] =   5.96513e-07;
+  my_chemistry->SN0_r0Mg2SiO4 [itab0 + 0] =   5.96513e-07;
+  my_chemistry->SN0_r0MgSiO3  [itab0 + 0] =   5.96513e-07;
+  my_chemistry->SN0_r0FeS     [itab0 + 0] =   5.96513e-07;
+  my_chemistry->SN0_r0reforg  [itab0 + 0] =   5.96513e-07;
+  my_chemistry->SN0_r0volorg  [itab0 + 0] =   5.96513e-07;
+  my_chemistry->SN0_r0H2Oice  [itab0 + 0] =   5.96513e-07;
 
-  my_chemistry->loc_r0FeM     [0] =   5.96513e-07;
-  my_chemistry->loc_r0Mg2SiO4 [0] =   5.96513e-07;
-  my_chemistry->loc_r0MgSiO3  [0] =   5.96513e-07;
-  my_chemistry->loc_r0FeS     [0] =   5.96513e-07;
-  my_chemistry->loc_r0reforg  [0] =   5.96513e-07;
-  my_chemistry->loc_r0volorg  [0] =   5.96513e-07;
-  my_chemistry->loc_r0H2Oice  [0] =   5.96513e-07;
+  my_chemistry->SN0_r0FeM     [itab0 + 1] =   6.07277e-13;
+  my_chemistry->SN0_r0Mg2SiO4 [itab0 + 1] =   6.07277e-13;
+  my_chemistry->SN0_r0MgSiO3  [itab0 + 1] =   6.07277e-13;
+  my_chemistry->SN0_r0FeS     [itab0 + 1] =   6.07277e-13;
+  my_chemistry->SN0_r0reforg  [itab0 + 1] =   6.07277e-13;
+  my_chemistry->SN0_r0volorg  [itab0 + 1] =   6.07277e-13;
+  my_chemistry->SN0_r0H2Oice  [itab0 + 1] =   6.07277e-13;
 
-  my_chemistry->loc_r0FeM     [1] =   6.07277e-13;
-  my_chemistry->loc_r0Mg2SiO4 [1] =   6.07277e-13;
-  my_chemistry->loc_r0MgSiO3  [1] =   6.07277e-13;
-  my_chemistry->loc_r0FeS     [1] =   6.07277e-13;
-  my_chemistry->loc_r0reforg  [1] =   6.07277e-13;
-  my_chemistry->loc_r0volorg  [1] =   6.07277e-13;
-  my_chemistry->loc_r0H2Oice  [1] =   6.07277e-13;
-
-  my_chemistry->loc_r0FeM     [2] =   4.67041e-18;
-  my_chemistry->loc_r0Mg2SiO4 [2] =   4.67041e-18;
-  my_chemistry->loc_r0MgSiO3  [2] =   4.67041e-18;
-  my_chemistry->loc_r0FeS     [2] =   4.67041e-18;
-  my_chemistry->loc_r0reforg  [2] =   4.67041e-18;
-  my_chemistry->loc_r0volorg  [2] =   4.67041e-18;
-  my_chemistry->loc_r0H2Oice  [2] =   4.67041e-18;
+  my_chemistry->SN0_r0FeM     [itab0 + 2] =   4.67041e-18;
+  my_chemistry->SN0_r0Mg2SiO4 [itab0 + 2] =   4.67041e-18;
+  my_chemistry->SN0_r0MgSiO3  [itab0 + 2] =   4.67041e-18;
+  my_chemistry->SN0_r0FeS     [itab0 + 2] =   4.67041e-18;
+  my_chemistry->SN0_r0reforg  [itab0 + 2] =   4.67041e-18;
+  my_chemistry->SN0_r0volorg  [itab0 + 2] =   4.67041e-18;
+  my_chemistry->SN0_r0H2Oice  [itab0 + 2] =   4.67041e-18;
 
   NTd =            35;
-  Td0 =     0.0000000;
-  dTd =     0.1000000;
  Nmom =             4;
-
-  my_rates->loc_kpFeM      = malloc(NTd * Nmom * sizeof(double));
-  my_rates->loc_kpMg2SiO4  = malloc(NTd * Nmom * sizeof(double));
-  my_rates->loc_kpMgSiO3   = malloc(NTd * Nmom * sizeof(double));
-  my_rates->loc_kpFeS      = malloc(NTd * Nmom * sizeof(double));
-  my_rates->loc_kpreforg   = malloc(NTd * Nmom * sizeof(double));
-  my_rates->loc_kpvolorg   = malloc(NTd * Nmom * sizeof(double));
-  my_rates->loc_kpH2Oice   = malloc(NTd * Nmom * sizeof(double));
 
   double loc_kpFeM[] = 
   {  1.30430e-04,   5.31340e-10,   1.98301e-14,   1.59852e-18,
@@ -354,17 +335,19 @@ int calc_rates_dust_loc(chemistry_data *my_chemistry, chemistry_data_storage *my
      1.01107e+03,   6.03856e-04,   6.47683e-10,   8.49295e-15  };
 
 
-  itab = 0;
+  itab0 = Nmom * NTd * iSN;
+  itab  = 0;
   for(imom = 0; imom < Nmom; imom++) {
     for(iTd = 0; iTd < NTd; iTd++) {
-      my_rates->loc_kpFeM     [itab] = loc_kpFeM     [itab];
-      my_rates->loc_kpMg2SiO4 [itab] = loc_kpMg2SiO4 [itab];
-      my_rates->loc_kpMgSiO3  [itab] = loc_kpMgSiO3  [itab];
-      my_rates->loc_kpFeS     [itab] = loc_kpFeS     [itab];
-      my_rates->loc_kpreforg  [itab] = loc_kpreforg  [itab];
-      my_rates->loc_kpvolorg  [itab] = loc_kpvolorg  [itab];
-      my_rates->loc_kpH2Oice  [itab] = loc_kpH2Oice  [itab];
-      itab++;
+      my_rates->SN0_kpFeM     [itab0] = loc_kpFeM     [itab];
+      my_rates->SN0_kpMg2SiO4 [itab0] = loc_kpMg2SiO4 [itab];
+      my_rates->SN0_kpMgSiO3  [itab0] = loc_kpMgSiO3  [itab];
+      my_rates->SN0_kpFeS     [itab0] = loc_kpFeS     [itab];
+      my_rates->SN0_kpreforg  [itab0] = loc_kpreforg  [itab];
+      my_rates->SN0_kpvolorg  [itab0] = loc_kpvolorg  [itab];
+      my_rates->SN0_kpH2Oice  [itab0] = loc_kpH2Oice  [itab];
+      itab0++;
+      itab ++;
     }
   }
 

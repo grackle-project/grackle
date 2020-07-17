@@ -54,27 +54,19 @@ extern void FORTRAN_NAME(calc_tdust_3d_g)(
       , gr_float *SiM, gr_float *FeM, gr_float *Mg2SiO4, gr_float *MgSiO3, gr_float *Fe3O4
       , gr_float *AC, gr_float *SiO2D, gr_float *MgO, gr_float *FeS, gr_float *Al2O3
       , gr_float *reforg, gr_float *volorg, gr_float *H2Oice
-      , int *immulti, int *impop3, int *idspecies, int *itdmulti, int *idsub
+      , int *immulti, int *imabund, int *idspecies, int *itdmulti, int *idsub
       , gr_float *metal_loc, gr_float *metal_C30, gr_float *metal_F13
-      , double *loc_fFeM    , double *loc_fMg2SiO4, double *loc_fMgSiO3 , double *loc_fFeS
-      , double *loc_freforg , double *loc_fvolorg , double *loc_fH2Oice
-      , double *loc_r0FeM    , double *loc_r0Mg2SiO4, double *loc_r0MgSiO3 , double *loc_r0FeS
-      , double *loc_r0reforg , double *loc_r0volorg , double *loc_r0H2Oice 
-      , double *C30_fSiM, double *C30_fFeM, double *C30_fMg2SiO4, double *C30_fMgSiO3
-      , double *C30_fAC, double *C30_fSiO2D, double *C30_fMgO, double *C30_fFeS, double *C30_fAl2O3
-      , double *C30_r0SiM, double *C30_r0FeM, double *C30_r0Mg2SiO4, double *C30_r0MgSiO3
-      , double *C30_r0AC, double *C30_r0SiO2D, double *C30_r0MgO, double *C30_r0FeS, double *C30_r0Al2O3
-      , double *F13_fFeM, double *F13_fMg2SiO4, double *F13_fMgSiO3, double *F13_fFe3O4
-      , double *F13_fAC , double *F13_fSiO2D , double *F13_fAl2O3
-      , double *F13_r0FeM, double *F13_r0Mg2SiO4, double *F13_r0MgSiO3, double *F13_r0Fe3O4
-      , double *F13_r0AC , double *F13_r0SiO2D , double *F13_r0Al2O3 
+      , int *SN0_N
+      , double *SN0_fSiM, double *SN0_fFeM, double *SN0_fMg2SiO4, double *SN0_fMgSiO3, double *SN0_fFe3O4
+      , double *SN0_fAC, double *SN0_fSiO2D, double *SN0_fMgO, double *SN0_fFeS, double *SN0_fAl2O3
+      , double *SN0_freforg , double *SN0_fvolorg , double *SN0_fH2Oice
+      , double *SN0_r0SiM, double *SN0_r0FeM, double *SN0_r0Mg2SiO4, double *SN0_r0MgSiO3, double *SN0_r0Fe3O4
+      , double *SN0_r0AC, double *SN0_r0SiO2D, double *SN0_r0MgO, double *SN0_r0FeS, double *SN0_r0Al2O3
+      , double *SN0_r0reforg , double *SN0_r0volorg , double *SN0_r0H2Oice
       , int *gr_N, int *gr_Size, double *gr_dT, double *gr_Td
-      , double *loc_kpFeM    , double *loc_kpMg2SiO4, double *loc_kpMgSiO3 , double *loc_kpFeS
-      , double *loc_kpreforg , double *loc_kpvolorg , double *loc_kpH2Oice 
-      , double *C30_kpSiM, double *C30_kpFeM, double *C30_kpMg2SiO4, double *C30_kpMgSiO3
-      , double *C30_kpAC, double *C30_kpSiO2D, double *C30_kpMgO, double *C30_kpFeS, double *C30_kpAl2O3
-      , double *F13_kpFeM, double *F13_kpMg2SiO4, double *F13_kpMgSiO3, double *F13_kpFe3O4
-      , double *F13_kpAC , double *F13_kpSiO2D , double *F13_kpAl2O3
+      , double *SN0_kpSiM, double *SN0_kpFeM, double *SN0_kpMg2SiO4, double *SN0_kpMgSiO3, double *SN0_kpFe3O4
+      , double *SN0_kpAC, double *SN0_kpSiO2D, double *SN0_kpMgO, double *SN0_kpFeS, double *SN0_kpAl2O3
+      , double *SN0_kpreforg , double *SN0_kpvolorg , double *SN0_kpH2Oice
       , double *gasgr2a, double *gamma_isrf2a
       , gr_float *SiM_temp, gr_float *FeM_temp, gr_float *Mg2SiO4_temp, gr_float *MgSiO3_temp, gr_float *Fe3O4_temp
       , gr_float *AC_temp, gr_float *SiO2D_temp, gr_float *MgO_temp, gr_float *FeS_temp, gr_float *Al2O3_temp
@@ -201,86 +193,57 @@ int local_calculate_dust_temperature(chemistry_data *my_chemistry,
      , my_fields->volorg_density
      , my_fields->H2Oice_density
      ,&my_chemistry->multi_metals
-     ,&my_chemistry->metal_pop3
+     ,&my_chemistry->metal_abundances
      ,&my_chemistry->dust_species
      ,&my_chemistry->dust_temperature_multi
      ,&my_chemistry->dust_sublimation
      , my_fields->metal_loc
      , my_fields->metal_C30
      , my_fields->metal_F13
-     ,&my_chemistry->loc_fFeM    
-     ,&my_chemistry->loc_fMg2SiO4
-     ,&my_chemistry->loc_fMgSiO3 
-     ,&my_chemistry->loc_fFeS
-     ,&my_chemistry->loc_freforg 
-     ,&my_chemistry->loc_fvolorg 
-     ,&my_chemistry->loc_fH2Oice
-     , my_chemistry->loc_r0FeM    
-     , my_chemistry->loc_r0Mg2SiO4
-     , my_chemistry->loc_r0MgSiO3 
-     , my_chemistry->loc_r0FeS
-     , my_chemistry->loc_r0reforg 
-     , my_chemistry->loc_r0volorg 
-     , my_chemistry->loc_r0H2Oice 
-     ,&my_chemistry->C30_fSiM    
-     ,&my_chemistry->C30_fFeM    
-     ,&my_chemistry->C30_fMg2SiO4
-     ,&my_chemistry->C30_fMgSiO3 
-     ,&my_chemistry->C30_fAC
-     ,&my_chemistry->C30_fSiO2D
-     ,&my_chemistry->C30_fMgO
-     ,&my_chemistry->C30_fFeS
-     ,&my_chemistry->C30_fAl2O3
-     , my_chemistry->C30_r0SiM    
-     , my_chemistry->C30_r0FeM    
-     , my_chemistry->C30_r0Mg2SiO4
-     , my_chemistry->C30_r0MgSiO3 
-     , my_chemistry->C30_r0AC
-     , my_chemistry->C30_r0SiO2D
-     , my_chemistry->C30_r0MgO
-     , my_chemistry->C30_r0FeS
-     , my_chemistry->C30_r0Al2O3
-     ,&my_chemistry->F13_fFeM    
-     ,&my_chemistry->F13_fMg2SiO4
-     ,&my_chemistry->F13_fMgSiO3 
-     ,&my_chemistry->F13_fFe3O4
-     ,&my_chemistry->F13_fAC
-     ,&my_chemistry->F13_fSiO2D
-     ,&my_chemistry->F13_fAl2O3  
-     , my_chemistry->F13_r0FeM    
-     , my_chemistry->F13_r0Mg2SiO4
-     , my_chemistry->F13_r0MgSiO3 
-     , my_chemistry->F13_r0Fe3O4
-     , my_chemistry->F13_r0AC
-     , my_chemistry->F13_r0SiO2D
-     , my_chemistry->F13_r0Al2O3  
+     ,&my_chemistry->SN0_N
+     , my_chemistry->SN0_fSiM    
+     , my_chemistry->SN0_fFeM    
+     , my_chemistry->SN0_fMg2SiO4
+     , my_chemistry->SN0_fMgSiO3 
+     , my_chemistry->SN0_fFe3O4
+     , my_chemistry->SN0_fAC
+     , my_chemistry->SN0_fSiO2D
+     , my_chemistry->SN0_fMgO
+     , my_chemistry->SN0_fFeS
+     , my_chemistry->SN0_fAl2O3  
+     , my_chemistry->SN0_freforg 
+     , my_chemistry->SN0_fvolorg 
+     , my_chemistry->SN0_fH2Oice
+     , my_chemistry->SN0_r0SiM    
+     , my_chemistry->SN0_r0FeM    
+     , my_chemistry->SN0_r0Mg2SiO4
+     , my_chemistry->SN0_r0MgSiO3 
+     , my_chemistry->SN0_r0Fe3O4
+     , my_chemistry->SN0_r0AC
+     , my_chemistry->SN0_r0SiO2D
+     , my_chemistry->SN0_r0MgO
+     , my_chemistry->SN0_r0FeS
+     , my_chemistry->SN0_r0Al2O3  
+     , my_chemistry->SN0_r0reforg 
+     , my_chemistry->SN0_r0volorg 
+     , my_chemistry->SN0_r0H2Oice
      , my_rates->gr_N
      ,&my_rates->gr_Size
      ,&my_rates->gr_dT
      , my_rates->gr_Td
-     , my_rates->loc_kpFeM    
-     , my_rates->loc_kpMg2SiO4
-     , my_rates->loc_kpMgSiO3 
-     , my_rates->loc_kpFeS
-     , my_rates->loc_kpreforg 
-     , my_rates->loc_kpvolorg 
-     , my_rates->loc_kpH2Oice 
-     , my_rates->C30_kpSiM    
-     , my_rates->C30_kpFeM    
-     , my_rates->C30_kpMg2SiO4 
-     , my_rates->C30_kpMgSiO3
-     , my_rates->C30_kpAC     
-     , my_rates->C30_kpSiO2D
-     , my_rates->C30_kpMgO    
-     , my_rates->C30_kpFeS    
-     , my_rates->C30_kpAl2O3  
-     , my_rates->F13_kpFeM    
-     , my_rates->F13_kpMg2SiO4
-     , my_rates->F13_kpMgSiO3 
-     , my_rates->F13_kpFe3O4
-     , my_rates->F13_kpAC     
-     , my_rates->F13_kpSiO2D  
-     , my_rates->F13_kpAl2O3  
+     , my_rates->SN0_kpSiM    
+     , my_rates->SN0_kpFeM    
+     , my_rates->SN0_kpMg2SiO4
+     , my_rates->SN0_kpMgSiO3 
+     , my_rates->SN0_kpFe3O4
+     , my_rates->SN0_kpAC
+     , my_rates->SN0_kpSiO2D
+     , my_rates->SN0_kpMgO
+     , my_rates->SN0_kpFeS
+     , my_rates->SN0_kpAl2O3  
+     , my_rates->SN0_kpreforg 
+     , my_rates->SN0_kpvolorg 
+     , my_rates->SN0_kpH2Oice
      , my_rates->gas_grain2
      ,&my_rates->gamma_isrf2
      , SiM_temperature
