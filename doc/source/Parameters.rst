@@ -353,7 +353,7 @@ Data files:
 
 The file **CloudyData_UVB=HM2012_high_density.h5** is the same than
 **CloudyData_UVB=HM2012.h5** but goes to higher density (:math:`10^{10}`
-atom / cm3) and was computed with a more recent version of Cloudy (17.06).
+atom / cm:sup:`3`) and was computed with a more recent version of Cloudy (17.06).
 
 To use the self-shielding approximation (see ``self_shielding_method``),
 one must properly account for the change in metal line cooling rates in
