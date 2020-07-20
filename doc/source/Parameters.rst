@@ -330,7 +330,7 @@ solar metallicity and scaled linearly with the metallicity of the gas.
 
 Valid range:
 
- - number density: -10 < log\ :sub:`10` (n\ :sub:`H` / cm\ :sup:`3`) < 4
+ - number density: -10 < log\ :sub:`10` (n\ :sub:`H` / cm\ :sup:`-3`) < 4
 
  - temperature: the temperature range is 1 < log\ :sub:`10` (T / K) < 9.
 
