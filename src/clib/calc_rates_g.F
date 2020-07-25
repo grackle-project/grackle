@@ -442,16 +442,16 @@ c
 c       Normalize by dividing by kunit
         k13dda(i,8) = k13dda(i,8) - log10(kunit)
 c
-!!#define USE_PALLA_SALPETER_STAHLER1983
-!!#ifdef USE_PALLA_SALPETER_STAHLER1983
-!!      if(threebody.eq.1) then
-!!        k13dda(i,1) = log10(1.12d-10 * exp(-7.035d4/ttt) / kunit)
-!!        k13dda(i,2) = log10(6.5d-7/sqrt(ttt)
-!!   &                * exp(-5.2d4/ttt)*(1.d0-exp(-6.d3/ttt)) / kunit)
-!!        k13dda(i,3) = 1.d1**(4.d0 - 0.416d0 * log10(ttt/1.d4)
-!!   &                - 0.327d0 * log10(ttt/1.d4)**2)
-!!      endif
-!!#endif
+#define USE_PALLA_SALPETER_STAHLER1983
+#ifdef USE_PALLA_SALPETER_STAHLER1983
+        if(threebody.eq.1) then
+          k13dda(i,1) = log10(1.12d-10 * exp(-7.035d4/ttt) / kunit)
+          k13dda(i,2) = log10(6.5d-7/sqrt(ttt)
+     &                * exp(-5.2d4/ttt)*(1.d0-exp(-6.d3/ttt)) / kunit)
+          k13dda(i,3) = 1.d1**(4.d0 - 0.416d0 * log10(ttt/1.d4)
+     &                - 0.327d0 * log10(ttt/1.d4)**2)
+        endif
+#endif
 c
 c       ------ 3-body H2 rate ----
 c       The first bit is my fit to A.E. Orel 1987, J.Chem.Phys., 87, 

@@ -295,9 +295,19 @@
 
         enddo
 
+!     Iteration mask for metal-rich cells
+
+         if (imetal .eq. 1) then
+             do i = is+1, ie + 1
+                if (metal(i,j,k) .lt. 1.e-9_DKIND * d(i,j,k)) then
+                   itmask(i) = .false.
+                endif
+             enddo
+         endif
+
 !     Compute grain size increment
 
-        if ( (idustfield .gt. 0) .and. (idspecies .gt. 0) ) then
+      if ( (idustfield .gt. 0) .and. (idspecies .gt. 0) ) then
 
          call calc_grain_size_increment_1d(
      &             immulti, imabund, idspecies, igrgr, itmask
@@ -331,6 +341,7 @@
         endif
 
         do i = is+1, ie+1
+        if(itmask(i)) then
 !     Calculate metallicity
 
            if (imetal .eq. 1) then
@@ -502,7 +513,7 @@
 
             endif
 
-
+        endif ! itmask
         enddo
 
 !     --- Compute dust temperature in a slice ---
@@ -582,6 +593,7 @@
 !     Copy slice values back to grid
 
         do i = is+1, ie+1
+        if (itmask(i)) then
            if (itdmulti .eq. 0) then
               dust_temp(i,j,k) = tdust(i)
            else
@@ -605,6 +617,7 @@
              H2Oice_temp(i,j,k) = tH2Oice  (i)
              endif
            endif
+        endif ! itmask
         enddo
 
       enddo

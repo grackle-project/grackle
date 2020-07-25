@@ -143,8 +143,9 @@
                nm_itmask(i) = .false.
                nm_done = nm_done + 1
             else
-               tdustnow(i) = max(trad,
-     &              (gamma_isrf(i) / radf / kgr1)**0.17_DKIND)
+!!             tdustnow(i) = max(trad,
+!!   &              (gamma_isrf(i) / radf / kgr1)**0.17_DKIND)
+               tdustnow(i) = trad
                pert(i) = pert_i
             endif
 
@@ -163,8 +164,10 @@
          do i = is+1, ie+1
             if ( nm_itmask(i) ) then
 
+!!       write(*,*) 'ee1', i
                tdplus(i) = max(1.e-3_DKIND, ((1._DKIND + pert(i))
      &              * tdustnow(i)))
+!!       write(*,*) 'ee2', i, pert(i), tdustnow(i)
 
             endif
          enddo
@@ -413,9 +416,10 @@ c               ERROR_MESSAGE
             logalsp1(:) = logalsp(:,i)
        
             call interpolate_1D_g(
-     &           log10(tdust(i)), gr_N, gr_Td, gr_dT,
-     &           gr_Size, logalsp1, logkgr)
+     &           log10(tdust(i)), int8(gr_N), gr_Td, gr_dT,
+     &           int8(gr_Size), logalsp1, logkgr)
             kgr(i) = 10._DKIND**logkgr
+!!          write(*,*) 'fff', i, kgr(i)
 
 !     Temperature dependence from Dopcke et al. (2011).
 !     Normalized to Omukai (2000).

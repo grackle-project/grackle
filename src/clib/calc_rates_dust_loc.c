@@ -23,19 +23,19 @@ int calc_rates_dust_loc(int iSN, chemistry_data *my_chemistry, chemistry_data_st
   int NTd, Nmom;
   int iTd, imom, itab0, itab;
 
-  my_chemistry->SN0_XC [iSN] =   1.69793e-01;
-  my_chemistry->SN0_XO [iSN] =   4.15646e-01;
-  my_chemistry->SN0_XMg[iSN] =   3.19126e-02;
+  my_chemistry->SN0_XC [iSN] =   1.41454e-01;
+  my_chemistry->SN0_XO [iSN] =   3.90720e-01;
+  my_chemistry->SN0_XMg[iSN] =   3.24795e-02;
   my_chemistry->SN0_XAl[iSN] =   2.85361e-03;
-  my_chemistry->SN0_XSi[iSN] =   3.50363e-02;
-  my_chemistry->SN0_XS [iSN] =   2.06909e-02;
-  my_chemistry->SN0_XFe[iSN] =   6.15987e-02;
+  my_chemistry->SN0_XSi[iSN] =   3.48573e-02;
+  my_chemistry->SN0_XS [iSN] =   1.03455e-02;
+  my_chemistry->SN0_XFe[iSN] =   6.28599e-02;
 
-  my_chemistry->SN0_fC [iSN] =   4.75421e-02;
-  my_chemistry->SN0_fO [iSN] =   2.44400e-01;
-  my_chemistry->SN0_fMg[iSN] =   0.00000e+00;
+  my_chemistry->SN0_fC [iSN] =   3.67798e-02;
+  my_chemistry->SN0_fO [iSN] =   2.13971e-01;
+  my_chemistry->SN0_fMg[iSN] =   3.74153e-04;
   my_chemistry->SN0_fAl[iSN] =   2.85361e-03;
-  my_chemistry->SN0_fSi[iSN] =   1.29344e-02;
+  my_chemistry->SN0_fSi[iSN] =   1.28521e-02;
   my_chemistry->SN0_fS [iSN] =   0.00000e+00;
   my_chemistry->SN0_fFe[iSN] =   3.21053e-02;
 

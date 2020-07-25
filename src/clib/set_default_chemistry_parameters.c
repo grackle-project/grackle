@@ -50,7 +50,7 @@ chemistry_data _set_default_chemistry_parameters(void)
   my_chemistry.metal_chemistry                = FALSE;
   my_chemistry.grain_growth                   = FALSE;
   my_chemistry.multi_metals                   = FALSE;
-  my_chemistry.metal_abundances               = FALSE;
+  my_chemistry.metal_abundances               = 0;
   my_chemistry.dust_species                   = 0;
   my_chemistry.dust_temperature_multi         = FALSE;
   my_chemistry.dust_sublimation               = TRUE;

@@ -1,5 +1,4 @@
 #include "phys_const.def"
-#define CHEM_DEBUG
 
 !=======================================================================
 !///////////////////  SUBROUTINE SOLVE_RATE_COOL_G  \\\\\\\\\\\\\\\\\\\\\
@@ -526,6 +525,7 @@
 
       logical itmask(in), anydust
       logical itmask_tmp(in), itmask_nr(in)
+      logical itmask_metal(in)
       integer itr, imp_eng, itr_time
       integer nsp, isp, jsp, id
       real*8  dspj, err, err_max
@@ -536,11 +536,12 @@
       integer,allocatable :: idsp(:)
       real*8, allocatable :: mtrx(:,:), vec(:)
       real*8, parameter   :: eps = 1.d-4
-#ifdef CHEM_DEBUG
-      integer ierr_max
-!     real*8, allocatable :: dummtrx(:,:), dumvec(:)
-!     real*8 vecDtot
-#endif
+
+!  Debug
+C     integer ierr_max
+C     real*8, allocatable :: dummtrx(:,:), dumvec(:)
+C     real*8 vecDtot
+
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
 !=======================================================================
@@ -629,7 +630,6 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
 
       endif
 
-!!          write(*,*) 'CHECK1', d(1,1,1), FeM(1,1,1)/d(1,1,1)/56.d0
 #ifdef ABUNDANCE_CORRECTION
       call ceiling_species_g(d, de, HI, HII, HeI, HeII, HeIII,
      &                     HM, H2I, H2II, DI, DII, HDI, metal, dust,
@@ -649,7 +649,6 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
      &                   , reforg, volorg, H2Oice
      &                   , metal_loc, metal_C30, metal_F13)
 #endif
-!!          write(*,*) 'CHECK2', d(1,1,1), FeM(1,1,1)/d(1,1,1)/56.d0
 
 
 !  Loop over zones, and do an entire i-column in one go
@@ -729,6 +728,19 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
                enddo
             endif
          endif ! end rad trans check (divergent from original code)
+
+!     Iteration mask for metal-rich cells
+         do i = is+1, ie+1
+            itmask_metal(i) = .false.
+         enddo
+         if (imetal .eq. 1) then
+             do i = is+1, ie + 1
+                itmask_metal(i) = itmask(i)
+                if (metal(i,j,k) .lt. 1.e-9_DKIND * d(i,j,k)) then
+                   itmask_metal(i) = .false.
+                endif
+             enddo
+         endif
           
 
 
@@ -747,6 +759,15 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
                   dtit(i) = huge8
                endif
             enddo
+
+!           do i = is+1, ie+1
+!              if (itmask(i)) then
+!                 delH2Itrial = 0.1_DKIND * H2I(i,j,k)
+!                 H2I(i,j,k) = H2I(i,j,k) - delH2Itrial
+!                 HI (i,j,k) = HI (i,j,k) + delH2Itrial
+!                 write(*,*) HI(i,j,k)/d(i,j,k), H2I(i,j,k)/d(i,j,k)
+!              endif
+!           enddo
 
 !           Compute the cooling rate, tgas, tdust, and metallicity for this row
 
@@ -853,7 +874,6 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
      &              , treforg, tvolorg, tH2Oice
      &              , gasgr2a, gamma_isrf2a
      &          )
-
 
             if (ispecies .gt. 0) then
 
@@ -964,7 +984,7 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
      &                     k28shield, k29shield, k30shield, k31shield,
      &                     iradtrans, irt_honly, 
      &                     kphHI, kphHeI, kphHeII,
-     &                     itmask, edot, chunit, dom
+     &                     itmask, edot, chunit, dom, metal
      &                          )
 
 !           move itmask temporary array
@@ -1200,7 +1220,7 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
             enddo   ! end loop over i
 
 !           Update total and gas energy
-!!          write(*,*) 'CHECK4', d(1,1,1), FeM(1,1,1)/d(1,1,1)/56.d0
+
             if (icool .eq. 1) then
             do i = is+1, ie+1
                if (itmask(i)) then
@@ -1221,7 +1241,6 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
             endif               ! itmask
             enddo
             endif
-!!          write(*,*) 'CHECK5', d(1,1,1), FeM(1,1,1)/d(1,1,1)/56.d0
 
             if (ispecies .gt. 0) then
 
@@ -1282,41 +1301,36 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
      &                   , kdAC, kdSiO2D, kdMgO, kdFeS, kdAl2O3
      &                   , kdreforg, kdvolorg, kdH2Oice
      &           )
-!!          write(*,*) 'CHECKS', d(1,1,1), Fe(1,1,1)
 
 !           Start Newton-Raphson scheme
             do i = is+1, ie+1
             if (itmask_nr(i)) then
 
-!!             if((i.eq.12).and.(j.eq.6).and.(k.eq.6))
-!              if( ((j-1) + (k-1)*jn)*in+i .eq. 1410 )
-!    &            write(*,*) 'CHECKa', d(i,j,k)*dom, tgas(i)
-!    &              , de (i,j,k)/d(i,j,k)
-!    &              , HI (i,j,k)/d(i,j,k)
-!    &              , H2I(i,j,k)/d(i,j,k)
-
-               if (   (d(i,j,k)*dom .gt. 1.d7)
-     &           .and.(tgas(i) .gt. 1650.d0) ) then
+               if (    (d(i,j,k)*dom .gt. 1.d7)
+     &         .and. ( (tgas(i) .gt. 1650.d0)
+     &             .or.( (e(i,j,k) .ne. e(i,j,k))
+     &               .or.(e(i,j,k) .le. 1._DKIND)
+     &                 ) ) ) then
                   imp_eng = 1
                else
                   imp_eng = 0
                endif
 
-!           If density and temperature are low, update total and gas energy
+!           If density and temperature are low, update gas energy explicitly
 
-CCCC           if (icool .eq. 1) then
-CCCC              if (imp_eng .eq. 0) then
-CCCC                 e(i,j,k)  = e(i,j,k) +
-CCCC &                    real(edot(i)/d(i,j,k)*dtit(i), RKIND)
-CCCC              endif
-CCCC           endif
+               if (icool .eq. 1) then
+                  if (imp_eng .eq. 0) then
+                     e(i,j,k)  = e(i,j,k) +
+     &                    real(edot(i)/d(i,j,k)*dtit(i), RKIND)
+                  endif
+               endif
 
 !              initialize arrays
                if (ispecies .gt. 0) nsp = 6
                if (ispecies .gt. 1) nsp = nsp + 3
                if (ispecies .gt. 2) nsp = nsp + 3
                if (ispecies .gt. 3) nsp = nsp + 3
-               if (metal(i,j,k) .gt. 1.d-9 * d(i,j,k)) then
+               if (itmask_metal(i)) then
                if (imchem .eq. 1) then
                   nsp = nsp + 19
                   if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1) ) then
@@ -1334,10 +1348,8 @@ CCCC           endif
                allocate(idsp(nsp))
                allocate(mtrx(nsp,nsp))
                allocate(vec(nsp))
-#ifdef CHEM_DEBUG
 !              allocate(dummtrx(nsp,nsp))
 !              allocate(dumvec(nsp))
-#endif
 
                if ( ispecies .gt. 0 ) then
                   dsp( 1) = de(i,j,k)
@@ -1362,7 +1374,7 @@ CCCC           endif
                   dsp(14) = HDII(i,j,k)
                   dsp(15) = HeHII(i,j,k)
                endif
-               if (metal(i,j,k) .gt. 1.d-9 * d(i,j,k)) then
+               if ( itmask_metal(i) ) then
                if ( imchem .eq. 1 ) then
                   dsp(16) = CI(i,j,k)
                   dsp(17) = CII(i,j,k)
@@ -1443,7 +1455,7 @@ CCCC           endif
                      idsp(id) = isp
                   enddo
                endif
-               if (metal(i,j,k) .gt. 1.d-9 * d(i,j,k)) then
+               if (itmask_metal(i)) then
                   if (imchem .eq. 1) then
                      do isp = 16, 34
                         id = id + 1
@@ -1500,94 +1512,86 @@ CCCC           endif
 
                   ! if timestep becomes too short, do not update
 
-                  if(itr_time .gt. 5) then
-                     write(6,*) 'DO NOT CONVERGE '
-                     write(6,*) i,j,k, d(i,j,k)*dom, tgas(i)
-                     write(6,*) aye, utem, uxyz, uaye, urho, utim
-                     write(6,*) dt, d(i,j,k), e(i,j,k)
-                     if ( ispecies .gt. 0 ) then
-                        write(6,*) de(i,j,k), HI(i,j,k), HII(i,j,k)
-     &                           , HeI(i,j,k), HeII(i,j,k), HeIII(i,j,k)
-                     endif
-                     if ( ispecies .gt. 1 ) then
-                        write(6,*) HM(i,j,k), H2I(i,j,k), H2II(i,j,k)
-                     endif
-                     if ( ispecies .gt. 2 ) then
-                        write(6,*) DI(i,j,k), DII(i,j,k), HDI(i,j,k)
-                     endif
-                     if ( ispecies .gt. 3 ) then
-                        write(6,*) DM(i,j,k), HDII(i,j,k), HeHII(i,j,k)
-                     endif
-                     if (metal(i,j,k) .gt. 1.d-9 * d(i,j,k)) then
-                     if ( imchem .eq. 1 ) then
-                        write(6,*) CI(i,j,k), CII(i,j,k), CO(i,j,k)
-     &                           , CO2(i,j,k)
-                        write(6,*) OI(i,j,k), OH(i,j,k), H2O(i,j,k)
-     &                           , O2(i,j,k)
-                        write(6,*) SiI(i,j,k), SiOI(i,j,k), SiO2I(i,j,k)
-                        write(6,*) CH(i,j,k), CH2(i,j,k), COII(i,j,k)
-                        write(6,*) OII(i,j,k), OHII(i,j,k), H2OII(i,j,k)
-     &                           , H3OII(i,j,k), O2II(i,j,k)
-                        if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1) ) then
-                        if (idspecies .gt. 0) then
-                        write(6,*) Mg(i,j,k)
-                        endif
-                        if (idspecies .gt. 1) then
-                        write(6,*) Al(i,j,k), S(i,j,k), Fe(i,j,k)
-                        endif
-                        endif
-                     endif
-                     if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1) ) then
-                     if (idspecies .gt. 0) then
-                        write(6,*) MgSiO3(i,j,k), AC(i,j,k)
-                     endif
-                     if (idspecies .gt. 1) then
-                        write(6,*) SiM(i,j,k), FeM(i,j,k)
-     &                           , Mg2SiO4(i,j,k), Fe3O4(i,j,k)
-                        write(6,*) SiO2D(i,j,k), MgO(i,j,k)
-     &                           , FeS(i,j,k), Al2O3(i,j,k)
-                     endif
-                     if (idspecies .gt. 2) then
-                        write(6,*) reforg(i,j,k)
-     &                           , volorg(i,j,k), H2Oice(i,j,k)
-                     endif
-                     endif
-                     endif
-                     if ( imetal .eq. 1 ) then
-                        write(6,*) metal(i,j,k)
-                     endif
-                     if (iradtrans .eq. 1) then
-                        write(6,*) kphHI(i,j,k), kphHeI(i,j,k)
-     &                           , kphHeII(i,j,k), kdissH2I(i,j,k)
-     &                           , photogamma(i,j,k)
-                     endif
+C                 if(itr_time .gt. 5) then
+C                    write(6,*) 'DO NOT CONVERGE '
+C    &                        , i,j,k, d(i,j,k)*dom, tgas(i)
+!                    write(6,*) aye, utem, uxyz, uaye, urho, utim
+!                    write(6,*) dt, d(i,j,k), e(i,j,k)
+!                    if ( imetal .eq. 1 ) then
+!                       write(6,*) metal(i,j,k)
+!                    endif
+!                    if ( idustfield .eq. 1 ) then
+!                       write(6,*) dust(i,j,k)
+!                    endif
+!                    if ( ispecies .gt. 0 ) then
+!                       write(6,*) de(i,j,k), HI(i,j,k), HII(i,j,k)
+!    &                           , HeI(i,j,k), HeII(i,j,k), HeIII(i,j,k)
+!                    endif
+!                    if ( ispecies .gt. 1 ) then
+!                       write(6,*) HM(i,j,k), H2I(i,j,k), H2II(i,j,k)
+!                    endif
+!                    if ( ispecies .gt. 2 ) then
+!                       write(6,*) DI(i,j,k), DII(i,j,k), HDI(i,j,k)
+!                    endif
+!                    if ( ispecies .gt. 3 ) then
+!                       write(6,*) DM(i,j,k), HDII(i,j,k), HeHII(i,j,k)
+!                    endif
+!                    if ( itmask_metal(i) ) then
+!                    if ( imchem .eq. 1 ) then
+!                       write(6,*) CI(i,j,k), CII(i,j,k), CO(i,j,k)
+!    &                           , CO2(i,j,k)
+!                       write(6,*) OI(i,j,k), OH(i,j,k), H2O(i,j,k)
+!    &                           , O2(i,j,k)
+!                       write(6,*) SiI(i,j,k), SiOI(i,j,k), SiO2I(i,j,k)
+!                       write(6,*) CH(i,j,k), CH2(i,j,k), COII(i,j,k)
+!                       write(6,*) OII(i,j,k), OHII(i,j,k), H2OII(i,j,k)
+!    &                           , H3OII(i,j,k), O2II(i,j,k)
+!                       if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1) ) then
+!                       if (idspecies .gt. 0) then
+!                       write(6,*) Mg(i,j,k)
+!                       endif
+!                       if (idspecies .gt. 1) then
+!                       write(6,*) Al(i,j,k), S(i,j,k), Fe(i,j,k)
+!                       endif
+!                       endif
+!                    endif
+!                    if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1) ) then
+!                    if (idspecies .gt. 0) then
+!                       write(6,*) MgSiO3(i,j,k), AC(i,j,k)
+!                    endif
+!                    if (idspecies .gt. 1) then
+!                       write(6,*) SiM(i,j,k), FeM(i,j,k)
+!    &                           , Mg2SiO4(i,j,k), Fe3O4(i,j,k)
+!                       write(6,*) SiO2D(i,j,k), MgO(i,j,k)
+!    &                           , FeS(i,j,k), Al2O3(i,j,k)
+!                    endif
+!                    if (idspecies .gt. 2) then
+!                       write(6,*) reforg(i,j,k)
+!    &                           , volorg(i,j,k), H2Oice(i,j,k)
+!                    endif
+!                    endif
+!                    endif
+!                    if (iradtrans .eq. 1) then
+!                       write(6,*) kphHI(i,j,k), kphHeI(i,j,k)
+!    &                           , kphHeII(i,j,k), kdissH2I(i,j,k)
+!    &                           , photogamma(i,j,k)
+!                    endif
+!                    stop
 
-                     stop
-                     dtit(i) = huge8
-                     ttot(i) = huge8
-                     go to 9997
-                  endif
+C                    dtit(i) = huge8
+C                    ttot(i) = huge8
+C                    go to 9997
+C                 endif
 
                   dsp = dsp0
                   ddsp = 0.d0
 
-!!             if((i.eq.12).and.(j.eq.6).and.(k.eq.6))
-!              if( ((j-1) + (k-1)*jn)*in+i .eq. 1410 )
-!    &            write(*,*) 'CHECKb', d(i,j,k)*dom, tgas(i)
-!    &              , dsp( 1)/d(i,j,k)
-!    &              , dsp( 2)/d(i,j,k)
-!    &              , dsp( 8)/d(i,j,k)
-
-!                 iteration to solve ODEs
+!                 Iteration to solve ODEs
                   err_max=1.d2
                   itr=0
                   do while ((itr.lt.20) .and. (err_max.gt.1.d-8))
 
-!!                  write(*,*) 'A', 0.75*d(i,j,k)*dom, itr_time, itr
-!!                  write(*,*) 'a', idsp, dtit(i)/dt
-!!                  write(*,*) 'a', dsp/d(i,j,k)
-
-            call lookup_cool_rates0d(itr_time+itr, dtit(i),
+            call lookup_cool_rates0d(itr, dtit(i),
      &   d(i,j,k), u(i,j,k), v(i,j,k), w(i,j,k), 
      &   nsp, dsp, dspdot, nratec, 
      &   iexpand, ispecies, imetal, imcool,
@@ -1706,17 +1710,6 @@ CCCC           endif
      & , treforg(i), tvolorg(i), tH2Oice(i)
      & , gasgr2a, gamma_isrf2a
      & , imp_eng)
-
-!!!            if((i.eq.10).and.(j.eq.10).and.(k.eq.7)) then
-!!!               write(*,*) 'CHECKc', d(i,j,k)*dom, tgas(i)
-!!!  &              , dspdot( 1)/d(i,j,k)*dtit(i)
-!!!  &              , dspdot( 2)/d(i,j,k)*dtit(i)
-!!!  &              , dspdot( 3)/d(i,j,k)*dtit(i)
-!!!               write(*,*) 'CHECKd', d(i,j,k)*dom, tgas(i)
-!!!  &              , (dsp( 1)+dspdot( 1)*dtit(i))/d(i,j,k)
-!!!  &              , (dsp( 2)+dspdot( 2)*dtit(i))/d(i,j,k)
-!!!  &              , (dsp( 3)+dspdot( 3)*dtit(i))/d(i,j,k)
-!!!             endif
 
                     do jsp = 1, nsp
                       dspj = eps * dsp(idsp(jsp))
@@ -1848,8 +1841,6 @@ CCCC           endif
      & , gasgr2a, gamma_isrf2a
      & , imp_eng)
 
-!!!                   write(*,*) 'g', d(i,j,k)*dom, tgas, dspdot1(1:15)
-
                       do isp = 1, nsp
                         if ( (dsp(idsp(isp)).eq.0.d0)
      &                 .and. (dspdot1(idsp(isp))
@@ -1863,11 +1854,6 @@ CCCC           endif
                       enddo
 
                     enddo ! jsp
-
-!!                  write(*,*) 'h'
-!!                  do jsp = 1, 13
-!!                    write(*,*) der(:,jsp)
-!!                  enddo
 
                     do isp = 1, nsp
                       do jsp = 1, nsp
@@ -1886,67 +1872,45 @@ CCCC           endif
      &                       - ddsp(idsp(isp))
                     enddo
 
-#ifdef CHEM_DEBUG
-!                   if((i.eq.1).and.(j.eq.1).and.(k.eq.1)) then
-!                !!!   write(*,'(A6,16E10.2)') "CHECKd", vec(idsp(:))
-!                !!!   dummtrx = mtrx
-!                !!!   dumvec  = vec
-!                      vecDtot =
-!    &                     vec(10)/0.75/d(i,j,k)/ 2._DKIND
-!    &                   + vec(11)/0.75/d(i,j,k)/ 2._DKIND
-!    &                   + vec(12)/0.75/d(i,j,k)/ 3._DKIND
-!    &                   + vec(13)/0.75/d(i,j,k)/ 2._DKIND
-!    &                   + vec(14)/0.75/d(i,j,k)/ 3._DKIND
-!                   endif
-#endif
+!                   to get more accuracy
+                    do isp = 1, nsp
+                      vec(isp) = vec(isp)/d(i,j,k)
+                    enddo
+
+C                   if((i.eq.1).and.(j.eq.1).and.(k.eq.1)) then
+C                      write(*,'(A6,16E10.2)') vec(idsp(:))
+C                      dummtrx = mtrx
+C                      dumvec  = vec
+C                   endif
 
                     call gaussj_g(nsp, mtrx, vec, ierr)
                     if(ierr .eq. 1) then
                       go to 9998
                     endif
 
-#ifdef CHEM_DEBUG
-!                   if((i.eq.1).and.(j.eq.1).and.(k.eq.1)) then
-!!!                    do isp = 1, nsp
-!!!                      do jsp = 1, nsp
-!!!                        dumvec(isp) = dumvec(isp)
-!!!  &                       - dummtrx(isp,jsp)*vec(jsp)
-!!!                      enddo
-!!!                    enddo
-!!!                    write(*,'(17E10.2)') 0.75*d(i,j,k)*dom
-!!!  &                     , dumvec(idsp(:))
-!                     if((itr_time.eq.0).and.(itr.eq.0)) 
-!    &                 write(*,*) 0.75*d(i,j,k)*dom
-!    &                , dspdot(10)/0.75/d(i,j,k)/ 2._DKIND*dtit(i)
-!    &                + dspdot(11)/0.75/d(i,j,k)/ 2._DKIND*dtit(i)
-!    &                + dspdot(12)/0.75/d(i,j,k)/ 3._DKIND*dtit(i)
-!    &                + dspdot(13)/0.75/d(i,j,k)/ 2._DKIND*dtit(i)
-!    &                + dspdot(14)/0.75/d(i,j,k)/ 3._DKIND*dtit(i)
-!    &                   , vecDtot
-!    &                   , vec(10)/0.75/d(i,j,k)/ 2._DKIND
-!    &                   + vec(11)/0.75/d(i,j,k)/ 2._DKIND
-!    &                   + vec(12)/0.75/d(i,j,k)/ 3._DKIND
-!    &                   + vec(13)/0.75/d(i,j,k)/ 2._DKIND
-!    &                   + vec(14)/0.75/d(i,j,k)/ 3._DKIND
-!                   endif
-#endif
+C                   if((i.eq.1).and.(j.eq.1).and.(k.eq.1)) then
+C                      do isp = 1, nsp
+C                        do jsp = 1, nsp
+C                          dumvec(isp) = dumvec(isp)
+C    &                       - dummtrx(isp,jsp)*vec(jsp)
+C                        enddo
+C                      enddo
+C                      write(*,'(17E10.2)') d(i,j,k)*dom
+C    &                     , dumvec(idsp(:))
+C                   endif
+
+!                   multiply with density again
+                    do isp = 1, nsp
+                      vec(isp) = vec(isp)*d(i,j,k)
+                    enddo
 
                     do isp = 1, nsp
                       ddsp(idsp(isp)) = ddsp(idsp(isp)) + vec(isp)
                       dsp(idsp(isp))  = dsp(idsp(isp))  + vec(isp)
                     enddo
 
-!!             if((i.eq.12).and.(j.eq.6).and.(k.eq.6))
-!              if( ((j-1) + (k-1)*jn)*in+i .eq. 1410 )
-!    &            write(*,*) 'CHECKf', d(i,j,k)*dom, tgas(i)
-!    &              , dsp( 1)/d(i,j,k)
-!    &              , dsp( 2)/d(i,j,k)
-!    &              , dsp( 8)/d(i,j,k)
-
                     err_max = 0.d0
-#ifdef CHEM_DEBUG
-                    ierr_max = 0
-#endif
+C                   ierr_max = 0
                     do isp = 1, nsp
                       if(dsp(idsp(isp)) .gt. tiny8) then
                         err = dabs(vec(isp) / dsp(idsp(isp)))
@@ -1955,36 +1919,91 @@ CCCC           endif
                       endif
                       if(err .gt. err_max) then
                         err_max = err
-#ifdef CHEM_DEBUG
-                        ierr_max = idsp(isp)
-#endif
+C                       ierr_max = idsp(isp)
                       endif
                     enddo
-#ifdef CHEM_DEBUG
-!                   write(*,*) 0.75*d(i,j,k)*dom, tgas(i)
-!    &                   , itr_time, itr
-!    &                   , ierr_max
-!    &                   , dsp(ierr_max)/d(i,j,k)/0.75_DKIND
-!!   &                   , (dsp(idsp(isp))/d(i,j,k), isp=1,nsp)
-!!   &                   , dsp(2)/d(i,j,k)/0.75_DKIND
-!!   &                   , dsp(8)/d(i,j,k)/0.75_DKIND/2._DKIND
-#endif
+
                     itr=itr+1
                   enddo
 
 9998              continue
 
-#ifdef UNUSED
-                  if ( itr .ge. 20 ) then
-                    ierr = 1
+C             TEST OUTPUT
+!                 write(6,*) ' '
+C                 write(6,*) '#', imp_eng, itr_time, ttot(i), dtit(i)
+C                 write(6,*) i,j,k, d(i,j,k)*dom, tgas(i)
+!                 if ( imetal .eq. 1 ) then
+!                    write(6,*) metal(i,j,k)/d(i,j,k)
+!                 endif
+!                 if ( idustfield .eq. 1 ) then
+!                    write(6,*) dust(i,j,k)/d(i,j,k)
+!                 endif
+C                 if ( ispecies .gt. 0 ) then
+C                    write(6,*) (dsp(isp)/d(i,j,k), isp= 1, 6)
+C                 endif
+C                 if ( ispecies .gt. 1 ) then
+C                    write(6,*) (dsp(isp)/d(i,j,k), isp= 7, 9)
+C                 endif
+!                 if ( ispecies .gt. 2 ) then
+!                    write(6,*) (dsp(isp)/d(i,j,k), isp= 10, 12)
+!                 endif
+!                 if ( ispecies .gt. 3 ) then
+!                    write(6,*) (dsp(isp)/d(i,j,k), isp= 13, 15)
+!                 endif
+!                 if ( itmask_metal(i) ) then
+!                 if ( imchem .eq. 1 ) then
+!                    write(6,*) (dsp(isp)/d(i,j,k), isp= 16, 19)
+!                    write(6,*) (dsp(isp)/d(i,j,k), isp= 20, 23)
+!                    write(6,*) (dsp(isp)/d(i,j,k), isp= 24, 26)
+!                    write(6,*) (dsp(isp)/d(i,j,k), isp= 27, 29)
+!                    write(6,*) (dsp(isp)/d(i,j,k), isp= 30, 34)
+!                    if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1) ) then
+!                    if (idspecies .gt. 0) then
+!                    write(6,*) (dsp(isp)/d(i,j,k), isp= 35, 35)
+!                    endif
+!                    if (idspecies .gt. 1) then
+!                    write(6,*) (dsp(isp)/d(i,j,k), isp= 36, 38)
+!                    endif
+!                    endif
+!                 endif
+!                 if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1) ) then
+!                 if (idspecies .gt. 0) then
+!                    write(6,*) (dsp(isp)/d(i,j,k), isp= 39, 40)
+!                 endif
+!                 if (idspecies .gt. 1) then
+!                    write(6,*) (dsp(isp)/d(i,j,k), isp= 41, 44)
+!                    write(6,*) (dsp(isp)/d(i,j,k), isp= 45, 48)
+!                 endif
+!                 if (idspecies .gt. 2) then
+!                    write(6,*) (dsp(isp)/d(i,j,k), isp= 49, 51)
+!                 endif
+!                 endif
+!                 endif
+!                 if (iradtrans .eq. 1) then
+!                    write(6,*) kphHI(i,j,k), kphHeI(i,j,k)
+!    &                        , kphHeII(i,j,k), kdissH2I(i,j,k)
+!    &                        , photogamma(i,j,k)
+!                 endif
+
+!             Check if the fractions are valid after an iteration
+!                 if ( itr .ge. 20 ) then
+!                   ierr = 1
+!                 endif
+                  if (icool .eq. 1) then
+                     if (imp_eng .eq. 0) then
+                        if ( (e(i,j,k) .ne. e(i,j,k))
+     &                  .or. (e(i,j,k) .le. 0._DKIND) ) then
+                           ierr = 1
+                        endif
+                     else
+                        do isp = 1, nsp
+                           if ( (dsp(isp) .ne. dsp(isp))
+     &                     .or. (dsp(isp) .le. 0._DKIND) ) then
+                              ierr = 1
+                           endif
+                        enddo
+                     endif
                   endif
-                  do isp = 1, nsp
-                    if (  ( dsp(idsp(isp)) .lt. 0.d0 ) 
-     &               .or. ( dsp(idsp(isp)) .ne. dsp(idsp(isp)) ) ) then
-                      ierr = 1
-                    endif
-                  enddo
-#endif
                   if(ierr .eq. 1) then
                      dtit(i) = 0.5d0*dtit(i)
                   endif
@@ -2015,7 +2034,7 @@ CCCC           endif
                   HDII(i,j,k)    = dsp(14)
                   HeHII(i,j,k)   = dsp(15)
                endif
-               if (metal(i,j,k) .gt. 1.d-9 * d(i,j,k)) then
+               if ( itmask_metal(i) ) then
                if ( imchem .eq. 1 ) then
                   CI(i,j,k)      = dsp(16)
                   CII(i,j,k)     = dsp(17)
@@ -2072,42 +2091,24 @@ CCCC           endif
 
                e(i,j,k)     = dsp(i_eng)
 
-               if (icool .eq. 1) then
-                  if (imp_eng .eq. 0) then
-                     e(i,j,k)  = e(i,j,k) +
-     &                    real(edot(i)/d(i,j,k)*dtit(i), RKIND)
-                  endif
-               endif
-
 9997           continue
 
                deallocate(idsp)
                deallocate(vec)
                deallocate(mtrx)
-#ifdef CHEM_DEBUG
+
 !              deallocate(dumvec)
 !              deallocate(dummtrx)
-#endif
-
-!!             if((i.eq.12).and.(j.eq.6).and.(k.eq.6))
-!              if( ((j-1) + (k-1)*jn)*in+i .eq. 1410 )
-!    &            write(*,*) 'CHECKg', d(i,j,k)*dom, e(i,j,k)
-!    &              ,  de(i,j,k)/d(i,j,k)
-!    &              ,  HI(i,j,k)/d(i,j,k)
-!    &              , H2I(i,j,k)/d(i,j,k)
 
             endif
             enddo
 
             endif ! if (ispecies .gt. 0) then
 
-!!          write(*,*) 'CHECK6', d(1,1,1), FeM(1,1,1)/d(1,1,1)/56.d0
-
 !           return itmask
             do i = is+1, ie+1
                itmask(i) = itmask_tmp(i)
             enddo
-!!!         write(*,*) 'j', de, HI, HII
 
 !           Add the timestep to the elapsed time for each cell and find
 !            minimum elapsed time step in this row
@@ -2119,7 +2120,6 @@ CCCC           endif
      &              tolerance*dt) itmask(i) = .false.
                if (ttot(i).lt.ttmin) ttmin = ttot(i)
             enddo
-!!!         write(*,*) 'k', de, HI, HII
 
 !           If all cells are done (on this slice), then exit
 
@@ -2130,23 +2130,6 @@ CCCC           endif
          enddo ! end of 'do iter = 1, itmax'
 
  9999    continue
-!!          write(*,*) 'l', de, HI, HII
-!        do i = is+1, ie+1
-!!!         if(tgas(i) .lt. 1.d1) then
-!!!           write(*,*) 'LOWTEMP'
-!           if(d(i,j,k)*dom .gt. 5.d5) then
-!             write(*,*) 'HIGHDENSa'
-!!!         if((d(i,j,k)*dom .gt. 5.d5)
-!!!  &   .and. (tgas(i) .lt. 2.d2) ) then
-!!!           write(*,*) 'STRANGE'
-!           if( ((j-1) + (k-1)*jn)*in+i .eq. 1410 ) then
-!             write(*,*) 'HIGHDENSa'
-!    &         ,((j-1) + (k-1)*jn)*in+i
-!    &         , d(i,j,k)*dom, e(i,j,k)
-!    &         , kphHI(i,j,k)
-!    &         , kdissH2I(i,j,k)
-!           endif
-!        enddo
 
 !       Abort if iteration count exceeds maximum
 
@@ -2214,7 +2197,6 @@ c            WARNING_MESSAGE
 
 !     Correct the species to ensure consistency (i.e. type conservation)
 
-!!          write(*,*) 'CHECK7', d(1,1,1), FeM(1,1,1)/d(1,1,1)/56.d0
 #ifdef ABUNDANCE_CORRECTION
       call make_consistent_g(de, HI, HII, HeI, HeII, HeIII,
      &                     HM, H2I, H2II, DI, DII, HDI, metal, 
@@ -2242,8 +2224,7 @@ c            WARNING_MESSAGE
 #endif
 
       endif
-!!          write(*,*) 'CHECK8', d(1,1,1), FeM(1,1,1)/d(1,1,1)/56.d0
-            flush(6)
+
       return
       end
 
@@ -2938,6 +2919,7 @@ c -------------------------------------------------------------------
       parameter (mh = mass_h)      !DPC
 
       real*8 nSSh, nratio
+      logical itmask_metal(in)
 
 !     debug
       integer item
@@ -3193,52 +3175,30 @@ c -------------------------------------------------------------------
      &            (kz53a(indixe(i)+1) -kz53a(indixe(i)))*tdef(i)
             kz54(i) = kz54a(indixe(i)) +
      &            (kz54a(indixe(i)+1) -kz54a(indixe(i)))*tdef(i)
-#define CHEM_TEMPO
-#ifdef CHEM_TEMPO
-!!!!!!!!!! He-baring
-!!!!!!!!!!  k3(i) = 0.d0
-!!!!!!!!!!  k4(i) = 0.d0
-!!!!!!!!!!  k5(i) = 0.d0
-!!!!!!!!!!  k6(i) = 0.d0
-!!!!!!!!!!  k58(i) = 0.d0
-!!!!!!!!!!  k148(i) = 0.d0
-!!!!!!!!!!  k149(i) = 0.d0
-!!!!!!!!!!  k150(i) = 0.d0
-!!!!!!!!!!  k151(i) = 0.d0
-!!!!!!!!!!  k152(i) = 0.d0
-!!!!!!!!!!  k153(i) = 0.d0
-
-!!!!!!!!!! C-baring
-!!!!        kz15(i) = 0.d0
-!!!!        kz16(i) = 0.d0
-!!!!        kz20(i) = 0.d0
-!!!!        kz23(i) = 0.d0
-!!          kz26(i) = 0.d0
-!!!!        kz27(i) = 0.d0
-!!          kz28(i) = 0.d0
-!!          kz29(i) = 0.d0
-!!          kz32(i) = 0.d0
-!!          kz37(i) = 0.d0
-!!          kz38(i) = 0.d0!!!!!
-!!          kz43(i) = 0.d0
-!!!!        kz44(i) = 0.d0
-!!!!        kz51(i) = 0.d0
-
-!!!!!!!!!! H3OII
-!!          kz42(i) = 0.d0
-!!          kz48(i) = 0.d0
-!!          kz49(i) = 0.d0
-#endif
          endif
          enddo
       endif
+
+!     Iteration mask for metal-rich cells
+
+         do i = is+1, ie+1
+            itmask_metal(i) = .false.
+         enddo
+         if (imetal .eq. 1) then
+             do i = is+1, ie + 1
+                itmask_metal(i) = itmask(i)
+                if (metal(i,j,k) .lt. 1.e-9_DKIND * d(i,j,k)) then
+                   itmask_metal(i) = .false.
+                endif
+             enddo
+         endif
 
 !     Compute grain size increment
 
       if ( (anydust) .and. (idspecies .gt. 0) ) then
 
          call calc_grain_size_increment_1d(
-     &             immulti, imabund, idspecies, igrgr, itmask
+     &             immulti, imabund, idspecies, igrgr, itmask_metal
      &           , in, jn, kn, is, ie, j, k, dom, d
      &           , SiM, FeM, Mg2SiO4, MgSiO3, Fe3O4
      &           , AC, SiO2D, MgO, FeS, Al2O3
@@ -3304,7 +3264,7 @@ c -------------------------------------------------------------------
          if(idspecies .eq. 0) then
 
          do i = is+1, ie+1
-            if (itmask(i)) then
+            if (itmask_metal(i)) then
 
 !              Assume dust melting at T > 1500 K
 
@@ -3365,7 +3325,7 @@ c -------------------------------------------------------------------
          enddo
 
          do i = is+1, ie+1
-            if (itmask(i)) then
+            if (itmask_metal(i)) then
 
                if (itdmulti .eq. 0) then
 
@@ -3503,7 +3463,7 @@ c -------------------------------------------------------------------
 !     Compute grain growth rate
 
          do i = is+1, ie+1
-            if (itmask(i)) then
+            if (itmask_metal(i)) then
 
             if (igrgr .eq. 1) then
 
@@ -3596,57 +3556,111 @@ c -------------------------------------------------------------------
                   kdH2Oice  (i) = 0.d0
                endif
 
-               if (idspecies .gt. 0) then
-                  if (tMgSiO3  (i) .gt. 1222.d0) then
-                     kdMgSiO3  (i) = (tiny8 - MgSiO3  (i,j,k)) / dt
-                  endif
-                  if (tAC      (i) .gt. 1800.d0) then
-                     kdAC      (i) = (tiny8 - AC      (i,j,k)) / dt
-                  endif
-               endif
+               if (itdmulti .eq. 0) then
 
-               if (idspecies .gt. 1) then
-                  if (tSiM     (i) .gt. 1500.d0) then
-                     kdSiM     (i) = (tiny8 - SiM     (i,j,k)) / dt
+                  if (idspecies .gt. 0) then
+                     if (tdust    (i) .gt. 1222.d0) then
+                        kdMgSiO3  (i) = (tiny8 - MgSiO3  (i,j,k)) / dt
+                     endif
+                     if (tdust    (i) .gt. 1800.d0) then
+                        kdAC      (i) = (tiny8 - AC      (i,j,k)) / dt
+                     endif
                   endif
-                  if (tFeM     (i) .gt. 1500.d0) then
-                     kdFeM     (i) = (tiny8 - FeM     (i,j,k)) / dt
+                  
+                  if (idspecies .gt. 1) then
+                     if (tdust    (i) .gt. 1500.d0) then
+                        kdSiM     (i) = (tiny8 - SiM     (i,j,k)) / dt
+                     endif
+                     if (tdust    (i) .gt. 1500.d0) then
+                        kdFeM     (i) = (tiny8 - FeM     (i,j,k)) / dt
+                     endif
+                     if (tdust    (i) .gt. 1277.d0) then
+                        kdMg2SiO4 (i) = (tiny8 - Mg2SiO4 (i,j,k)) / dt
+                     endif
+                     if (tdust    (i) .gt. 1500.d0) then
+                        kdFe3O4   (i) = (tiny8 - Fe3O4   (i,j,k)) / dt
+                     endif
+                     if (tdust    (i) .gt. 1500.d0) then
+                        kdSiO2D   (i) = (tiny8 - SiO2D   (i,j,k)) / dt
+                     endif
+                     if (tdust    (i) .gt. 1500.d0) then
+                        kdMgO     (i) = (tiny8 - MgO     (i,j,k)) / dt
+                     endif
+                     if (tdust    (i) .gt. 680.d0) then
+                        kdFeS     (i) = (tiny8 - FeS     (i,j,k)) / dt
+                     endif
+                     if (tdust    (i) .gt. 1500.d0) then
+                        kdAl2O3   (i) = (tiny8 - Al2O3   (i,j,k)) / dt
+                     endif
                   endif
-                  if (tMg2SiO4 (i) .gt. 1277.d0) then
-                     kdMg2SiO4 (i) = (tiny8 - Mg2SiO4 (i,j,k)) / dt
+                  
+                  if (idspecies .gt. 2) then
+                     if (tdust    (i) .gt. 575.d0) then
+                        kdreforg  (i) = (tiny8 - reforg  (i,j,k)) / dt
+                     endif
+                     if (tdust    (i) .gt. 375.d0) then
+                        kdvolorg  (i) = (tiny8 - volorg  (i,j,k)) / dt
+                     endif
+                     if (tdust    (i) .gt. 153.d0) then
+                        kdH2Oice  (i) = (tiny8 - H2Oice  (i,j,k)) / dt
+                     endif
                   endif
-                  if (tFe3O4   (i) .gt. 1500.d0) then
-                     kdFe3O4   (i) = (tiny8 - Fe3O4   (i,j,k)) / dt
-                  endif
-                  if (tSiO2D   (i) .gt. 1500.d0) then
-                     kdSiO2D   (i) = (tiny8 - SiO2D   (i,j,k)) / dt
-                  endif
-                  if (tMgO     (i) .gt. 1500.d0) then
-                     kdMgO     (i) = (tiny8 - MgO     (i,j,k)) / dt
-                  endif
-                  if (tFeS     (i) .gt. 680.d0) then
-                     kdFeS     (i) = (tiny8 - FeS     (i,j,k)) / dt
-                  endif
-                  if (tAl2O3   (i) .gt. 1500.d0) then
-                     kdAl2O3   (i) = (tiny8 - Al2O3   (i,j,k)) / dt
-                  endif
-               endif
 
-               if (idspecies .gt. 2) then
-                  if (treforg  (i) .gt. 575.d0) then
-                     kdreforg  (i) = (tiny8 - reforg  (i,j,k)) / dt
+               else
+
+                  if (idspecies .gt. 0) then
+                     if (tMgSiO3  (i) .gt. 1222.d0) then
+                        kdMgSiO3  (i) = (tiny8 - MgSiO3  (i,j,k)) / dt
+                     endif
+                     if (tAC      (i) .gt. 1800.d0) then
+                        kdAC      (i) = (tiny8 - AC      (i,j,k)) / dt
+                     endif
                   endif
-                  if (tvolorg  (i) .gt. 375.d0) then
-                     kdvolorg  (i) = (tiny8 - volorg  (i,j,k)) / dt
+                  
+                  if (idspecies .gt. 1) then
+                     if (tSiM     (i) .gt. 1500.d0) then
+                        kdSiM     (i) = (tiny8 - SiM     (i,j,k)) / dt
+                     endif
+                     if (tFeM     (i) .gt. 1500.d0) then
+                        kdFeM     (i) = (tiny8 - FeM     (i,j,k)) / dt
+                     endif
+                     if (tMg2SiO4 (i) .gt. 1277.d0) then
+                        kdMg2SiO4 (i) = (tiny8 - Mg2SiO4 (i,j,k)) / dt
+                     endif
+                     if (tFe3O4   (i) .gt. 1500.d0) then
+                        kdFe3O4   (i) = (tiny8 - Fe3O4   (i,j,k)) / dt
+                     endif
+                     if (tSiO2D   (i) .gt. 1500.d0) then
+                        kdSiO2D   (i) = (tiny8 - SiO2D   (i,j,k)) / dt
+                     endif
+                     if (tMgO     (i) .gt. 1500.d0) then
+                        kdMgO     (i) = (tiny8 - MgO     (i,j,k)) / dt
+                     endif
+                     if (tFeS     (i) .gt. 680.d0) then
+                        kdFeS     (i) = (tiny8 - FeS     (i,j,k)) / dt
+                     endif
+                     if (tAl2O3   (i) .gt. 1500.d0) then
+                        kdAl2O3   (i) = (tiny8 - Al2O3   (i,j,k)) / dt
+                     endif
                   endif
-                  if (tH2Oice  (i) .gt. 153.d0) then
-                     kdH2Oice  (i) = (tiny8 - H2Oice  (i,j,k)) / dt
+                  
+                  if (idspecies .gt. 2) then
+                     if (treforg  (i) .gt. 575.d0) then
+                        kdreforg  (i) = (tiny8 - reforg  (i,j,k)) / dt
+                     endif
+                     if (tvolorg  (i) .gt. 375.d0) then
+                        kdvolorg  (i) = (tiny8 - volorg  (i,j,k)) / dt
+                     endif
+                     if (tH2Oice  (i) .gt. 153.d0) then
+                        kdH2Oice  (i) = (tiny8 - H2Oice  (i,j,k)) / dt
+                     endif
                   endif
+
                endif
 
             endif
 
-            endif ! itmask
+            endif ! itmask_metal
          enddo
 
          endif !! idspecies
@@ -3978,20 +3992,20 @@ c
                endif
                enddo
             endif
-!!#define USE_PALLA_SALPETER_STAHLER1983
-!!#ifdef USE_PALLA_SALPETER_STAHLER1983
-!!          if (ispecies .gt. 1 .and. ithreebody .eq. 1) then
-!!             do i = is+1, ie+1
-!!                if (itmask(i)) then
-!!                nh = (HI(i,j,k) + H2I(i,j,k)/2._DKIND)*dom
-!!                k13ind = 1._DKIND / (1._DKIND + nh / k13dd(i,3))
-!!                k13(i) = 10._DKIND**(
-!!   &                     (1._DKIND-k13ind) * k13dd(i,2)
-!!   &                             + k13ind  * k13dd(i,1) )
-!!                endif
-!!             enddo
-!!          endif
-!!#endif
+!#define USE_PALLA_SALPETER_STAHLER1983
+!#ifdef USE_PALLA_SALPETER_STAHLER1983
+!           if (ispecies .gt. 1 .and. ithreebody .eq. 1) then
+!              do i = is+1, ie+1
+!                 if (itmask(i)) then
+!                 nh = (HI(i,j,k) + H2I(i,j,k)/2._DKIND)*dom
+!                 k13ind = 1._DKIND / (1._DKIND + nh / k13dd(i,3))
+!                 k13(i) = 10._DKIND**(
+!    &                     (1._DKIND-k13ind) * k13dd(i,2)
+!    &                             + k13ind  * k13dd(i,1) )
+!                 endif
+!              enddo
+!           endif
+!#endif
 #endif /*  USE_DENSITY_DEPENDENT_H2_DISSOCIATION_RATE */
 !!    if(itmask(1))
 !!   &   write(*,'(A1,36E9.1)') 'c',
@@ -4024,7 +4038,7 @@ c
      &                     k28shield, k29shield, k30shield, k31shield,
      &                     iradtrans, irt_honly, 
      &                     kphHI, kphHeI, kphHeII,
-     &                     itmask, edot, chunit, dom
+     &                     itmask, edot, chunit, dom, metal
      &                          )
 
 ! -------------------------------------------------------------------
@@ -4046,6 +4060,7 @@ c
      &        HeI(in,jn,kn), HeII(in,jn,kn), HeIII(in,jn,kn),
      &        d(in,jn,kn),
      &        HM(in,jn,kn),  H2I(in,jn,kn), H2II(in,jn,kn)
+      R_PREC  metal(in,jn,kn)
 
 !      Radiative Transfer Fields
       R_PREC  kphHI(in,jn,kn), kphHeI(in,jn,kn), kphHeII(in,jn,kn)
@@ -4131,9 +4146,10 @@ c
 !     Add H2 formation on dust grains
 
             if (anydust) then
+            if (metal(i,j,k) .gt. 1.e-9_DKIND * d(i,j,k)) then
                HIdot(i) = HIdot(i) 
      &              - 2._DKIND * h2dust(i) * rhoH(i) * HI(i,j,k)
-                                                  ! correct GC20200701
+            endif            ! correct GC20200701
             endif
 
 !     Compute the electron density rate-of-change
@@ -4156,6 +4172,17 @@ c
      &               + (k24shield(i)*HI(i,j,k)
      &               +  k25shield(i)*HeII(i,j,k)/4._DKIND
      &               +  k26shield(i)*HeI(i,j,k)/4._DKIND)
+
+!     HII, HeII, HeIII recombination heating
+
+            edot(i) = edot(i) - chunit * (
+     &    13.6_DKIND*( k1(i) * HI(i,j,k)   * de(i,j,k)
+     &               - k2(i) * HII(i,j,k)  * de(i,j,k)          )
+     &  + 24.6_DKIND*( k3(i) * HeI(i,j,k)  * de(i,j,k)/4._DKIND
+     &               - k4(i) * HeII(i,j,k) * de(i,j,k)/4._DKIND )
+     &  + 79.0_DKIND*( k5(i) * HeII(i,j,k) * de(i,j,k)/4._DKIND
+     &               - k6(i) * HeIII(i,j,k)* de(i,j,k)/4._DKIND )
+     &            )
 
 !     H2 formation heating
 
@@ -4181,9 +4208,11 @@ c
 
 
             if (anydust) then
+            if (metal(i,j,k) .gt. 1.e-9_DKIND * d(i,j,k)) then
                H2delta(i) = H2delta(i) + 
      &              h2dust(i) * HI(i,j,k) * rhoH(i) * 
      &              (0.2_DKIND + 4.2_DKIND * h2heatfac(i))
+            endif
             endif
 
 !            H2dmag = abs(H2delta)/(
@@ -4197,54 +4226,18 @@ c
 !     &       + H2I(i,j,k)*( k21(i) * HI(i,j,k)**2.0_DKIND
 !     &                    - k23(i) * H2I(i,j,k))
 !H * (k22 * H^2 - k13 * H_2) + H_2 * (k21 * H^2 - k23 * H_2) */
-#ifdef CHEM_DEBUG
-CCCCC chunit = (1.60218e-12_DKIND)/(2._DKIND*(xbase1/tbase1)**2*mh)   ! 1 eV per H2 formed
-CCCCC    dom = 1.333333333333333
-CCCCC    tbase1 = 1406663214374408.5
-CCCCC    xbase1 = 8.4155002150553872E+020
-CCCCC    coolunit*dom/mh = vbase**2 / tbase1 =  2.5444239786382621E-004
-CCCCC coolunit = (uaye**5 * xbase1**2 * mh**2) / (tbase1**3 * dbase1)
-CCCCC          = vbase1**2 * mh / dom / tbase1
-!        if((i.eq.1).and.(j.eq.1).and.(k.eq.1)) then
-!!!         write(*,*)
-!!!  &     d(i,j,k)
-!!!  &   , k22(i) * 0.75**3 * dom / 1406663214374408.5
-!!!  &   , HI(i,j,k) / 0.75
-!!!  &   , k22(i) * HI(i,j,k)**3 / 0.75 /1406663214374408.5
-!!          write(*,*)
-!!   &     d(i,j,k)
-!!   &   , 4.48_DKIND*(1.60218e-12_DKIND)
-!!   &   , k22(i) * HI(i,j,k)**3 / 0.75 /1406663214374408.5
-!!   &   , h2heatfac(i)
-!!   &   , 4.48_DKIND*(1.60218e-12_DKIND) ! erg
-!!   &   * k22(i) * HI(i,j,k)**3 / 0.75 /1406663214374408.5 ! /cc/s
-!!   &   * h2heatfac(i)
-!!   &   / (d(i,j,k) / 0.75 * 1.6726d-24) ! / (g/cc)
-!!   &   , HI(i,j,k) *
-!!   &      (  4.48_DKIND * k22(i) * HI(i,j,k)**2._DKIND )
-!!   &       * h2heatfac(i)
-!!   &       /d(i,j,k)*1.60218e-12_DKIND
-!!   &        / 2._DKIND / 1.6726d-24 / 1406663214374408.5
-!           write(*,*)
-!    &     d(i,j,k)
-!    &   , h2heatfac(i)
-!    &   , HI(i,j,k) *
-!    &      (  3.53_DKIND * k8 (i) * HM(i,j,k) )
-!    &       * h2heatfac(i)
-!    &       *chunit/d(i,j,k)*2.5444239786382621E-004
-!    &   , HI(i,j,k) *
-!    &      (  4.48_DKIND * k22(i) * HI(i,j,k)**2._DKIND )
-!    &       * h2heatfac(i)
-!    &       *chunit/d(i,j,k)*2.5444239786382621E-004
-!    &   , HI(i,j,k) *
-!    &      (- 4.48_DKIND * k13(i) * H2I(i,j,k)/2._DKIND )
-!    &       *chunit/d(i,j,k)*2.5444239786382621E-004
-!    &   , h2dust(i) * HI(i,j,k) * 
-!    &     (0.2_DKIND + 4.2_DKIND * h2heatfac(i))
-!    &       *chunit/d(i,j,k)*2.5444239786382621E-004
-!    &   , chunit*H2delta(i)/d(i,j,k)*2.5444239786382621E-004
-!        endif
-#endif
+
+!        write(*,*)
+!    &     d(i,j,k)*dom
+!    &   ,  3.53_DKIND * k8 (i) * HM(i,j,k) * HI(i,j,k)
+!    &       * h2heatfac(i)*chunit/d(i,j,k)
+!    &   ,  4.48_DKIND * k22(i) * HI(i,j,k)**2._DKIND * HI(i,j,k)
+!    &       * h2heatfac(i)*chunit/d(i,j,k)
+!    &   ,- 4.48_DKIND * k13(i) * H2I(i,j,k)/2._DKIND * HI(i,j,k)
+!    &       *chunit/d(i,j,k)
+!    &   ,(0.2_DKIND + 4.2_DKIND * h2heatfac(i)) * h2dust(i) * HI(i,j,k)
+!    &       *rhoH(i) * chunit/d(i,j,k)
+
          endif                  ! itmask
          enddo
       endif
@@ -4431,6 +4424,21 @@ c -------------------------------------------------------------------
 
       integer i
       real*8 scoef, acoef
+      logical itmask_metal(in)
+
+!     Iteration mask for metal-rich cells
+
+      do i = is+1, ie+1
+         itmask_metal(i) = .false.
+      enddo
+      if (imetal .eq. 1) then
+          do i = is+1, ie + 1
+             itmask_metal(i) = itmask(i)
+             if (metal(i,j,k) .lt. 1.e-9_DKIND * d(i,j,k)) then
+                itmask_metal(i) = .false.
+             endif
+          enddo
+      endif
 
 !   A) the 6-species integrator
 !      
@@ -4614,7 +4622,9 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
             if (iradtrans .eq. 1) acoef = acoef + kphHI(i,j,k)
 
             if (anydust) then
+            if(itmask_metal(i)) then
                acoef = acoef + 2._DKIND * h2dust(i) * rhoH(i)
+            endif
             endif
 #ifdef CONTRIBUTION_OF_MINOR_SPECIES
             if (ispecies .gt. 2) then
@@ -4641,10 +4651,8 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
      &             + k151(i) *  HeII(i,j,k) /  4._DKIND
      &             + k152(i) * HeHII(i,j,k) /  5._DKIND
             endif
-!!!         if((i.eq.10).and.(j.eq.10).and.(k.eq.7))
-!!!  &        write(*,*) 'HI e', scoef, acoef
-            if (   (imchem .eq. 1) 
-     &       .and. (metal(i,j,k) .gt. 1.d-9 * d(i,j,k)) ) then
+
+            if ( (imchem .eq. 1) .and. (itmask_metal(i)) ) then
                scoef = scoef
      &             + kz20(i) *    CI(i,j,k) *   H2I(i,j,k) / 24._DKIND
      &             + kz21(i) *    OI(i,j,k) *   H2I(i,j,k) / 32._DKIND
@@ -4678,8 +4686,6 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
      &             + kz39(i) *   OII(i,j,k) / 16._DKIND
      &             + kz43(i) *  COII(i,j,k) / 28._DKIND
             endif
-!!!         if((i.eq.10).and.(j.eq.10).and.(k.eq.7))
-!!!  &        write(*,*) 'HI f', scoef, acoef
             HIp(i)  = ( scoef*dtit(i) + HI(i,j,k) ) / 
      &                      ( 1. + acoef*dtit(i) )
             if (HIp(i) .ne. HIp(i)) then
@@ -4729,8 +4735,8 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
      &             + k148(i) *   HeI(i,j,k) /  4._DKIND
      &             + k149(i) *   HeI(i,j,k) /  4._DKIND
             endif
-            if (   (imchem .eq. 1) 
-     &       .and. (metal(i,j,k) .gt. 1.d-9 * d(i,j,k)) ) then
+
+            if ( (imchem .eq. 1) .and. (itmask_metal(i)) ) then
                scoef = scoef
      &             + kz39(i) *   OII(i,j,k) *    HI(i,j,k) / 16._DKIND
      &             + kz43(i) *  COII(i,j,k) *    HI(i,j,k) / 28._DKIND
@@ -4787,8 +4793,8 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
      &             + k132(i) *    DI(i,j,k) /  2._DKIND
      &             + k153(i) * HeHII(i,j,k) /  5._DKIND
             endif
-            if (   (imchem .eq. 1) 
-     &       .and. (metal(i,j,k) .gt. 1.d-9 * d(i,j,k)) ) then
+
+            if ( (imchem .eq. 1) .and. (itmask_metal(i)) ) then
                scoef = scoef
                acoef = acoef
      &             + kz44(i) *   CII(i,j,k) / 12._DKIND
@@ -4813,8 +4819,10 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
      &              + k29shield(i) + k31shield(i)
 
             if (anydust) then
+            if(itmask_metal(i)) then
                scoef = scoef + 2._DKIND * h2dust(i) *
      &              HI(i,j,k) * rhoH(i)
+            endif
             endif
 #ifdef CONTRIBUTION_OF_MINOR_SPECIES
             if (ispecies .gt. 2) then
@@ -4827,8 +4835,7 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
      &               + k54(i) * DI (i,j,k) / 2._DKIND
             endif
 #endif
-            if (metal(i,j,k) .gt. 1.d-9 * d(i,j,k)) then
-            if (imchem .eq. 1) then
+            if ( (imchem .eq. 1) .and. (itmask_metal(i)) ) then
                scoef = scoef +  2._DKIND * ( 0._DKIND
      &             + kz15(i) *    HI(i,j,k) *    CH(i,j,k) / 13._DKIND
      &             + kz16(i) *    HI(i,j,k) *   CH2(i,j,k) / 14._DKIND
@@ -4845,8 +4852,7 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
      &             + kz41(i) *  OHII(i,j,k) / 17._DKIND
      &             + kz42(i) * H2OII(i,j,k) / 18._DKIND
      &             + kz51(i) *    CI(i,j,k) / 12._DKIND
-            endif
-            if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1) ) then
+               if ((igrgr .eq. 1) .or. (idsub .eq. 1)) then
                if (idspecies .gt. 0) then
                   scoef = scoef + 2._DKIND *
      &                  kdMgSiO3  (i) * 2._DKIND
@@ -4864,7 +4870,7 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
                     acoef = acoef
      &            + kdvolorg  (i) / H2I(i,j,k) * 2._DKIND * 2._DKIND
                endif
-            endif
+               endif
             endif
             H2Ip(i) = ( scoef*dtit(i) + H2I(i,j,k) )
      &                / ( 1._DKIND + acoef*dtit(i) )
@@ -4981,6 +4987,8 @@ c
             scoef = 3._DKIND*(k52(i) * DII(i,j,k)* 
      &           H2I(i,j,k)/2._DKIND/2._DKIND
      &           + k54(i) * DI(i,j,k) * H2I(i,j,k)/2._DKIND/2._DKIND
+!!   &           + 2._DKIND*k56(i) * DI(i,j,k) * HM(i,j,k)/2._DKIND
+                       !! corrected by GC202005
      &           +          k56(i) * DI(i,j,k) * HM(i,j,k)/2._DKIND
      &                 )
             acoef  =    k53(i) * HII(i,j,k)
@@ -5054,8 +5062,7 @@ c
 !     
       if (imchem .eq. 1) then
          do i = is+1, ie+1
-            if (itmask(i)) then
-            if (metal(i,j,k) .gt. 1.d-9 * d(i,j,k)) then
+            if (itmask_metal(i)) then
 
 C***** CI **********
                scoef = 0._DKIND + 12._DKIND * ( 0._DKIND
@@ -5339,7 +5346,6 @@ C***** OHII **********
      &            )
                acoef = 0._DKIND
      &             + kz41(i) *   H2I(i,j,k) /  2._DKIND
-!!   &             + kz45(i) *    de(i,j,k)
 
             OHIIp(i)   = ( scoef*dtit(i) + OHII(i,j,k) )
      &                 / ( 1._DKIND + acoef*dtit(i) )
@@ -5435,17 +5441,15 @@ C***** Fe **********
             endif
             endif
 
-         endif
-         endif                  ! itmask
+            endif ! itmask_metal
          enddo
-      endif
+      endif ! imchem
 
 !  --- (D4) Now do dust species ---
 !     
-         if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1) ) then
+      if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1) ) then
          do i = is+1, ie+1
-            if (itmask(i)) then
-            if (metal(i,j,k) .gt. 1.d-9 * d(i,j,k)) then
+            if (itmask_metal(i)) then
 
             if (idspecies .gt. 0) then
 C***** MgSiO3 **********
@@ -5583,10 +5587,9 @@ C***** H2Oice **********
 
             endif
 
-         endif
-         endif                  ! itmask
+            endif ! itmask_metal
          enddo
-      endif
+      endif ! igrgr or idsub
 
 !   --- (E) Set densities from 1D temps to 3D fields ---
 
@@ -5615,8 +5618,7 @@ C***** H2Oice **********
          if (ispecies .gt. 3)
      &        de(i,j,k) = de(i,j,k) - DM(i,j,k)/2._RKIND
      &             + HDII(i,j,k)/3._RKIND + HeHII(i,j,k)/5._RKIND
-         if (   (imchem .eq. 1) 
-     &    .and. (metal(i,j,k) .gt. 1.d-9 * d(i,j,k)) )
+         if ( (imchem .eq. 1) .and. (itmask_metal(i)) )
      &        de(i,j,k) = de(i,j,k)
      &             + CII(i,j,k)/12._RKIND + COII(i,j,k)/28._RKIND
      &             + OII(i,j,k)/16._RKIND + OHII(i,j,k)/17._RKIND
@@ -5644,8 +5646,7 @@ C***** H2Oice **********
             HeHII(i,j,k) = max(real(HeHIIp(i), RKIND), tiny)
          endif
 
-         if (   (imchem .eq. 1) 
-     &    .and. (metal(i,j,k) .gt. 1.d-9 * d(i,j,k)) ) then ! do not remove
+         if ( (imchem .eq. 1) .and. (itmask_metal(i)) ) then
             CI(i,j,k)      = max(real(CIp(i)     , RKIND), tiny)
             CII(i,j,k)     = max(real(CIIp(i)    , RKIND), tiny)
             CO(i,j,k)      = max(real(COp(i)     , RKIND), tiny)
@@ -5675,9 +5676,7 @@ C***** H2Oice **********
             Fe(i,j,k)      = max(real(Fep(i)     , RKIND), tiny)
             endif
             endif
-         endif
 
-         if ( metal(i,j,k) .gt. 1.d-9 * d(i,j,k) ) then ! do not remove
          if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1) ) then
          if (idspecies .gt. 0) then
             MgSiO3(i,j,k)  = max(real(MgSiO3p(i) , RKIND), tiny)
@@ -5699,7 +5698,7 @@ C***** H2Oice **********
             H2Oice(i,j,k)  = max(real(H2Oicep(i)  , RKIND), tiny)
          endif
          endif
-         endif
+         endif ! imchem
 
       endif                     ! itmask
 !     
@@ -5818,6 +5817,7 @@ C***** H2Oice **********
      &     , Sig(in), Sg(in), Feg(in)
       real*8 Cd(in), Od(in), Mgd(in), Ald(in)
      &     , Sid(in), Sd(in), Fed(in)
+      logical itmask_metal(in)
 
 !     Loop over all zones
 
@@ -5877,6 +5877,19 @@ C***** H2Oice **********
             totalHe(i) = totalHe(i)
      &           + 4._DKIND/5._DKIND*HeHII(i,j,k)
          enddo
+      endif
+
+!     Iteration mask for metal-rich cells
+
+      do i = is+1, ie + 1
+         itmask_metal(i) = .false.
+      enddo
+      if (imetal .eq. 1) then
+          do i = is+1, ie + 1
+             if (metal(i,j,k) .gt. 1.e-9_DKIND * d(i,j,k)) then
+                itmask_metal(i) = .true.
+             endif
+          enddo
       endif
 
       if(imchem .gt. 0) then
@@ -5959,7 +5972,7 @@ C***** H2Oice **********
          enddo
 
          do i = is+1, ie+1
-         if (metal(i,j,k) .gt. 1.d-9 * d(i,j,k)) then
+         if (itmask_metal(i)) then
             OH   (i,j,k) = abs(OH   (i,j,k))
             H2O  (i,j,k) = abs(H2O  (i,j,k))
             CH   (i,j,k) = abs(CH   (i,j,k))
@@ -6038,8 +6051,7 @@ C***** H2Oice **********
 
       if (imchem .eq. 1) then
       do i = is+1, ie+1
-      if (metal(i,j,k) .gt. 1.d-9 * d(i,j,k)) then
-
+         if (itmask_metal(i)) then
             CI(i,j,k)      = abs(CI(i,j,k)     )
             CII(i,j,k)     = abs(CII(i,j,k)    )
             CO(i,j,k)      = abs(CO(i,j,k)     )
@@ -6059,7 +6071,13 @@ C***** H2Oice **********
             H2OII(i,j,k)   = abs(H2OII(i,j,k)  )
             H3OII(i,j,k)   = abs(H3OII(i,j,k)  )
             O2II(i,j,k)    = abs(O2II(i,j,k)   )
-         if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1) ) then
+         endif
+      enddo
+      endif
+
+      if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1) ) then
+      do i = is+1, ie+1
+         if (itmask_metal(i)) then
          if (idspecies .gt. 0) then
             Mg(i,j,k)      = abs(Mg(i,j,k)     )
             MgSiO3(i,j,k)  = abs(MgSiO3(i,j,k) )
@@ -6084,7 +6102,12 @@ C***** H2Oice **********
             H2Oice(i,j,k)  = abs(H2Oice(i,j,k)  )
          endif
          endif
+      enddo
+      endif
 
+      if (imchem .eq. 1) then
+      do i = is+1, ie+1
+      if (itmask_metal(i)) then
 !!       if (d(i,j,k)*dom .lt. 1.e6_DKIND) then
          if (d(i,j,k)*dom .lt. 
      &    min(1.e6_DKIND/(metal(i,j,k)/d(i,j,k)/0.02d-4)**2
@@ -6137,8 +6160,6 @@ C***** H2Oice **********
      &              + 16._DKIND/32._DKIND  *volorg(i,j,k)
      &              + 16._DKIND/18._DKIND  *H2Oice(i,j,k)
          endif
-!!          write(*,*) 'Od ', totalOd/metal(i,j,k)
-!!   &             ,   Od(i)/metal(i,j,k)
             correctOd = real(Od(i)/totalOd, RKIND)
          if (idspecies .gt. 0) then
              MgSiO3(i,j,k) =  MgSiO3(i,j,k)*correctOd
@@ -6194,8 +6215,6 @@ C***** H2Oice **********
             totalSig =                        SiI(i,j,k)
      &               + 28._DKIND/ 44._DKIND* SiOI(i,j,k)
      &               + 28._DKIND/ 60._DKIND*SiO2I(i,j,k)
-!!          write(*,*) 'Sig', totalSig/metal(i,j,k)
-!!   &                      , Sig(i)/metal(i,j,k)
             correctSig = real(Sig(i)/totalSig, RKIND)
               SiI(i,j,k) =   SiI(i,j,k)*correctSig
              SiOI(i,j,k) =  SiOI(i,j,k)*correctSig
@@ -6210,8 +6229,6 @@ C***** H2Oice **********
      &               + 28._DKIND/140._DKIND*Mg2SiO4(i,j,k)
      &               + 28._DKIND/ 60._DKIND*  SiO2D(i,j,k)
          endif
-!!          write(*,*) 'Sid', totalSid/metal(i,j,k)
-!!   &                      , Sid(i)/metal(i,j,k)
             correctSid = real(Sid(i)/totalSid, RKIND)
          if (idspecies .gt. 0) then
              MgSiO3(i,j,k) =  MgSiO3(i,j,k)*correctSid
@@ -6232,8 +6249,6 @@ C***** H2Oice **********
             totalFed =                        FeM(i,j,k)
      &               +168._DKIND/232._DKIND*Fe3O4(i,j,k)
      &               + 56._DKIND/ 88._DKIND*  FeS(i,j,k)
-!!          write(*,*) 'Fed', (totalFed)/metal(i,j,k)
-!!   &              , (Fed(i))/metal(i,j,k)
             correctFed = real(Fed(i)/totalFed, RKIND)
               FeM(i,j,k) =   FeM(i,j,k)*correctFed
             Fe3O4(i,j,k) = Fe3O4(i,j,k)*correctFed
@@ -6242,8 +6257,6 @@ C***** H2Oice **********
 
          if (idspecies .gt. 0) then
             totalMgg =                   Mg(i,j,k)
-!!          write(*,*) 'Mgg', totalMgg/metal(i,j,k)
-!!   &                      , Mgg(i)/metal(i,j,k)
             correctMgg = real( Mgg(i)/totalMgg, RKIND)
             Mg(i,j,k)      = Mg(i,j,k)     *correctMgg
             totalMgd = 24._DKIND/100._DKIND* MgSiO3(i,j,k) 
@@ -6252,8 +6265,6 @@ C***** H2Oice **********
      &               + 48._DKIND/140._DKIND*Mg2SiO4(i,j,k)
      &               + 24._DKIND/ 40._DKIND*    MgO(i,j,k)    
             endif
-!!          write(*,*) 'Mgd', totalMgd/metal(i,j,k)
-!!   &                      , Mgd(i)/metal(i,j,k)
             correctMgd = real( Mgd(i)/totalMgd, RKIND)
             MgSiO3(i,j,k)  = MgSiO3(i,j,k) *correctMgd
             if (idspecies .gt. 1) then
@@ -6422,8 +6433,6 @@ C***** H2Oice **********
                SiOI(i,j,k) =  SiOI(i,j,k)*correctSi
               SiO2I(i,j,k) = SiO2I(i,j,k)*correctSi
          else
-!!          write(*,*) 'Sit', (totalSi)/metal(i,j,k)
-!!   &              , (Sit(i))/metal(i,j,k)
             correctSi = real(Sit(i)/totalSi, RKIND)
                 SiI(i,j,k) =   SiI(i,j,k)*correctSi
                SiOI(i,j,k) =  SiOI(i,j,k)*correctSi
@@ -6459,8 +6468,6 @@ C***** H2Oice **********
      &              + 48._DKIND/140._DKIND*Mg2SiO4(i,j,k)
      &              + 24._DKIND/ 40._DKIND*    MgO(i,j,k)    
             endif
-!!          write(*,*) 'Mgt', totalMg/metal(i,j,k)
-!!   &                      , Mgt(i)/metal(i,j,k)
             correctMg = real( Mgt(i)/totalMg, RKIND)
                  Mg(i,j,k) =      Mg(i,j,k)*correctMg
              MgSiO3(i,j,k) =  MgSiO3(i,j,k)*correctMg
@@ -6548,8 +6555,7 @@ C***** H2Oice **********
      &        - DM   (i,j,k)/2._RKIND
      &        + HDII (i,j,k)/3._RKIND
      &        + HeHII(i,j,k)/5._RKIND
-         if ( (imchem .eq. 1)
-     &  .and. (metal(i,j,k) .gt. 1.d-9 * d(i,j,k)) )
+         if ( (imchem .eq. 1) .and. (itmask_metal(i)) )
      &      de(i,j,k) = de(i,j,k)
      &        + CII  (i,j,k)/12._RKIND
      &        + COII (i,j,k)/28._RKIND

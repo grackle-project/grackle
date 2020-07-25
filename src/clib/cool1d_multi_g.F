@@ -355,6 +355,8 @@
 
       logical itmask(in), anydust, interp
       logical itmask_line(in), itmask_tmp(in)
+      logical itmask_metal(in)
+!!#define CALCULATE_TGAS_SELF_CONSISTENTLY
 #ifdef CALCULATE_TGAS_SELF_CONSISTENTLY
       integer iter_tgas
       real*8  tgas_err, tgas0
@@ -697,20 +699,18 @@
      &             )
 
 
-#ifdef UNUSED
-         if (edot(i) .ne. edot(i)) then
-#ifdef _OPENMP
-!$omp critical
-#endif
-            write(6,*) 'NaN in edot[1]: ', i, j, k, edot(i), 
-     &           HI(i,j,k), HII(i,j,k), HeI(i,j,k), HeII(i,j,k), 
-     &           HeIII(i,j,k), de(i,j,k), d(i,j,k), 
-     &           tgas(i), p2d(i)
-#ifdef _OPENMP
-!$omp end critical
-#endif
-         endif
-#endif         
+!!       if (edot(i) .ne. edot(i)) then
+!!#ifdef _OPENMP
+!!!$omp critical
+!!#endif
+!!          write(6,*) 'NaN in edot[1]: ', i, j, k, edot(i), 
+!!   &           HI(i,j,k), HII(i,j,k), HeI(i,j,k), HeII(i,j,k), 
+!!   &           HeIII(i,j,k), de(i,j,k), d(i,j,k), 
+!!   &           tgas(i), p2d(i)
+!!#ifdef _OPENMP
+!!!$omp end critical
+!!#endif
+!!       endif
 
          end if
       enddo
@@ -1015,12 +1015,26 @@ c  new (correct) way: (april 4, 2007)
 #endif /* USE_CHIAKI_WISE2019 */ 
       endif
 
+!     Iteration mask for metal-rich cells
+
+         do i = is+1, ie+1
+            itmask_metal(i) = .false.
+         enddo
+         if (imetal .eq. 1) then
+             do i = is+1, ie + 1
+                itmask_metal(i) = itmask(i)
+                if (metal(i,j,k) .lt. 1.e-9_DKIND * d(i,j,k)) then
+                   itmask_metal(i) = .false.
+                endif
+             enddo
+         endif
+
 !     Compute grain size increment
 
       if ( (idustfield .gt. 0) .and. (idspecies .gt. 0) ) then
 
          call calc_grain_size_increment_1d(
-     &             immulti, imabund, idspecies, igrgr, itmask
+     &             immulti, imabund, idspecies, igrgr, itmask_metal
      &           , in, jn, kn, is, ie, j, k, dom, d
      &           , SiM, FeM, Mg2SiO4, MgSiO3, Fe3O4
      &           , AC, SiO2D, MgO, FeS, Al2O3
@@ -1054,7 +1068,7 @@ c  new (correct) way: (april 4, 2007)
 
       if ( (idustfield .gt. 0) .and. (idspecies .gt. 0) ) then
          do i = is+1, ie+1
-            if ( itmask(i) ) then
+            if ( itmask_metal(i) ) then
             if (idspecies .gt. 0) then
                dust(i,j,k) = MgSiO3  (i,j,k)
      &                     + AC      (i,j,k)
@@ -1083,13 +1097,13 @@ c  new (correct) way: (april 4, 2007)
       if (anydust .or. (igammah .gt. 0)) then
          if (idustfield .gt. 0) then
             do i = is+1, ie+1
-               if ( itmask(i) ) then
+               if ( itmask_metal(i) ) then
                   dust2gas(i) = dust(i,j,k) / d(i,j,k)
                endif
             enddo
          else
             do i = is+1, ie+1
-               if ( itmask(i) ) then
+               if ( itmask_metal(i) ) then
                   dust2gas(i) = fgr * metallicity(i)
                endif
             enddo
@@ -1101,13 +1115,13 @@ c  new (correct) way: (april 4, 2007)
       if (anydust .or. (igammah .gt. 1)) then
          if (iisrffield .gt. 0) then
             do i = is+1, ie+1
-               if ( itmask(i) ) then
+               if ( itmask_metal(i) ) then
                   myisrf(i) = isrf_habing(i,j,k)
                endif
             enddo
          else
             do i = is+1, ie+1
-               if ( itmask(i) ) then
+               if ( itmask_metal(i) ) then
                   myisrf(i) = isrf
                endif
             enddo
@@ -1116,14 +1130,13 @@ c  new (correct) way: (april 4, 2007)
 
       if (anydust .or. (igammah .gt. 1)) then
       do i = is+1, ie+1
-         if ( itmask(i) ) then
+         if ( itmask_metal(i) ) then
 
          if (idspecies .eq. 0 ) then
             if (idustfield .gt. 0) then
                mygisrf(i) = gamma_isrfa
      &                    * fgr / dust2gas(i) * metallicity(i)
                !! correct with the depletion or enhancement of condensation rate.
-!!             write(*,*) 'a', mygisrf(i)
             else
                mygisrf(i) = gamma_isrfa
             endif
@@ -1133,10 +1146,8 @@ c  new (correct) way: (april 4, 2007)
             if (itdmulti .eq. 0) then
             
                mygisrf(i) = gamma_isrf2a * sgtot(i)
-!!             write(*,*) d(i,j,k), gamma_isrf2a, sgtot(i)
                !! in UV, absorption coefficient Q ~ 1 (Goldsmith 2001)
                !! so we use the geometrical cross-section of grains [cgs]
-!!             write(*,*) 'b', mygisrf(i) / dust2gas(i)
 
             else
 
@@ -1176,7 +1187,7 @@ c  new (correct) way: (april 4, 2007)
 !     Look up gas/grain heat transfer rates
 
          do i = is+1, ie+1
-            if ( itmask(i) ) then
+            if ( itmask_metal(i) ) then
 
             if(idspecies .eq. 0) then
 
@@ -1201,8 +1212,6 @@ c  new (correct) way: (april 4, 2007)
                gasgr(i) = fv2k * sgtot(i)
 
                gasgr_tdust(i) = gasgr(i) * fac
-!              write(*,*) 'b', gasgr(i) 
-!    &                 , gasgr_tdust(i) , dust2gas(i)
                  
                else
 
@@ -1253,86 +1262,84 @@ c  new (correct) way: (april 4, 2007)
             endif
          enddo
 
-!!       do i = is+1, ie+1
-!!          if ( itmask(i) ) then
-!!             do item = 1, gr_N(2)
-!!                write(*,*) 1.d1**gr_Td(item)
-!!   &                 , altot(item,i) / metallicity(i)
-!!             enddo
-!!          endif
-!!       enddo
-
-
 !     Compute dust temperature
 
          if (itdmulti .eq. 0) then
 
             call calc_tdust_1d_g(tdust, tgas, mynh, gasgr_tdust,
-     &           mygisrf, myisrf, itmask, comp2, in, is, ie, j, k
+     &           mygisrf, myisrf, itmask_metal, comp2, in, is, ie, j, k
      &         , gr_N, gr_Size, gr_dT, gr_Td, altot, kptot)
-!!          write(*,*) 'bbt', gasgr_tdust, mygisrf, myisrf
-!!   &         , tdust, kptot
 
          else
 
             if (idspecies .gt. 0) then
             call calc_tdust_1d_g(tMgSiO3  , tgas, mynh, gasgr_tMgSiO3  ,
-     &           gisrfMgSiO3  , myisrf, itmask, comp2, in, is, ie, j, k
+     &           gisrfMgSiO3  , myisrf, itmask_metal, comp2, 
+     &           in, is, ie, j, k
      &         , gr_N, gr_Size, gr_dT, gr_Td, alMgSiO3  , kpMgSiO3  )
-!!          write(*,*) 'bbS',gasgr_tMgSiO3, gisrfMgSiO3, myisrf
-!!   &        , tMgSiO3, kpMgSiO3
           
             call calc_tdust_1d_g(tAC      , tgas, mynh, gasgr_tAC      ,
-     &           gisrfAC      , myisrf, itmask, comp2, in, is, ie, j, k
+     &           gisrfAC      , myisrf, itmask_metal, comp2, 
+     &           in, is, ie, j, k
      &         , gr_N, gr_Size, gr_dT, gr_Td, alAC      , kpAC      )
-!!          write(*,*) d, gasgr_tAC    , gisrfAC    , myisrf
             endif
 
             if (idspecies .gt. 1) then
             call calc_tdust_1d_g(tSiM     , tgas, mynh, gasgr_tSiM     ,
-     &           gisrfSiM     , myisrf, itmask, comp2, in, is, ie, j, k
+     &           gisrfSiM     , myisrf, itmask_metal, comp2, 
+     &           in, is, ie, j, k
      &         , gr_N, gr_Size, gr_dT, gr_Td, alSiM     , kpSiM     )
           
             call calc_tdust_1d_g(tFeM     , tgas, mynh, gasgr_tFeM     ,
-     &           gisrfFeM     , myisrf, itmask, comp2, in, is, ie, j, k
+     &           gisrfFeM     , myisrf, itmask_metal, comp2, 
+     &           in, is, ie, j, k
      &         , gr_N, gr_Size, gr_dT, gr_Td, alFeM     , kpFeM     )
           
             call calc_tdust_1d_g(tMg2SiO4 , tgas, mynh, gasgr_tMg2SiO4 ,
-     &           gisrfMg2SiO4 , myisrf, itmask, comp2, in, is, ie, j, k
+     &           gisrfMg2SiO4 , myisrf, itmask_metal, comp2, 
+     &           in, is, ie, j, k
      &         , gr_N, gr_Size, gr_dT, gr_Td, alMg2SiO4 , kpMg2SiO4 )
           
             call calc_tdust_1d_g(tFe3O4   , tgas, mynh, gasgr_tFe3O4   ,
-     &           gisrfFe3O4   , myisrf, itmask, comp2, in, is, ie, j, k
+     &           gisrfFe3O4   , myisrf, itmask_metal, comp2, 
+     &           in, is, ie, j, k
      &         , gr_N, gr_Size, gr_dT, gr_Td, alFe3O4   , kpFe3O4   )
           
             call calc_tdust_1d_g(tSiO2D   , tgas, mynh, gasgr_tSiO2D   ,
-     &           gisrfSiO2D   , myisrf, itmask, comp2, in, is, ie, j, k
+     &           gisrfSiO2D   , myisrf, itmask_metal, comp2, 
+     &           in, is, ie, j, k
      &         , gr_N, gr_Size, gr_dT, gr_Td, alSiO2D   , kpSiO2D   )
           
             call calc_tdust_1d_g(tMgO     , tgas, mynh, gasgr_tMgO     ,
-     &           gisrfMgO     , myisrf, itmask, comp2, in, is, ie, j, k
+     &           gisrfMgO     , myisrf, itmask_metal, comp2, 
+     &           in, is, ie, j, k
      &         , gr_N, gr_Size, gr_dT, gr_Td, alMgO     , kpMgO     )
           
             call calc_tdust_1d_g(tFeS     , tgas, mynh, gasgr_tFeS     ,
-     &           gisrfFeS     , myisrf, itmask, comp2, in, is, ie, j, k
+     &           gisrfFeS     , myisrf, itmask_metal, comp2, 
+     &           in, is, ie, j, k
      &         , gr_N, gr_Size, gr_dT, gr_Td, alFeS     , kpFeS     )
           
             call calc_tdust_1d_g(tAl2O3   , tgas, mynh, gasgr_tAl2O3   ,
-     &           gisrfAl2O3   , myisrf, itmask, comp2, in, is, ie, j, k
+     &           gisrfAl2O3   , myisrf, itmask_metal, comp2, 
+     &           in, is, ie, j, k
      &         , gr_N, gr_Size, gr_dT, gr_Td, alAl2O3   , kpAl2O3   )
             endif
 
             if (idspecies .gt. 2) then
             call calc_tdust_1d_g(treforg  , tgas, mynh, gasgr_treforg  ,
-     &           gisrfreforg  , myisrf, itmask, comp2, in, is, ie, j, k
+     &           gisrfreforg  , myisrf, itmask_metal, comp2, 
+     &           in, is, ie, j, k
      &         , gr_N, gr_Size, gr_dT, gr_Td, alreforg  , kpreforg  )
           
             call calc_tdust_1d_g(tvolorg  , tgas, mynh, gasgr_tvolorg  ,
-     &           gisrfvolorg  , myisrf, itmask, comp2, in, is, ie, j, k
+     &           gisrfvolorg  , myisrf, itmask_metal, comp2, 
+     &           in, is, ie, j, k
      &         , gr_N, gr_Size, gr_dT, gr_Td, alvolorg  , kpvolorg  )
           
             call calc_tdust_1d_g(tH2Oice  , tgas, mynh, gasgr_tH2Oice  ,
-     &           gisrfH2Oice  , myisrf, itmask, comp2, in, is, ie, j, k
+     &           gisrfH2Oice  , myisrf, itmask_metal, comp2, 
+     &           in, is, ie, j, k
      &         , gr_N, gr_Size, gr_dT, gr_Td, alH2Oice  , kpH2Oice  )
             endif
 
@@ -1341,7 +1348,7 @@ c  new (correct) way: (april 4, 2007)
 !     Calculate dust cooling rate
 
          do i = is+1, ie+1
-            if ( itmask(i) ) then
+            if ( itmask_metal(i) ) then
 
             if (idspecies .eq. 0) then
 
@@ -1349,21 +1356,11 @@ c  new (correct) way: (april 4, 2007)
      &              gasgr(i) * (tgas(i) - tdust(i)) * 
      &              dust2gas(i) * rhoH(i) * rhoH(i)
 
-!               write(*,*) 'a', gasgr(i) / metallicity(i) / fgr
-!    &              * dust2gas(i) * rhoH(i)
-!    &              ,  tgas(i) , tdust(i)  
-!    &              , rhoH(i)
-
             else ! idspecies
 
                if (itdmulti .eq. 0) then
                    Ldst(i) = - gasgr(i) * (tgas(i) - tdust(i))
      &                * d(i,j,k) * rhoH(i)
-
-!!                 write(*,*) 'b', gasgr(i)
-!!   &              , (tgas(i)-tdust(i))
-!!   &              , d(i,j,k)
-!!   &              , rhoH(i)
                else
 
                if (idspecies .gt. 0) then
@@ -1371,11 +1368,6 @@ c  new (correct) way: (april 4, 2007)
      &                gasMgSiO3  (i) * (tgas(i) - tMgSiO3  (i))
      &              + gasAC      (i) * (tgas(i) - tAC      (i))
      &              ) * d(i,j,k) * rhoH(i)
-!!                 write(*,*) 'b', gasgr(i)
-!!   &              , (tgas(i)-tMgSiO3  (i))
-!!   &              , (tgas(i)-tAC      (i))
-!!   &              , d(i,j,k)
-!!   &              , rhoH(i)
                endif
 
                if (idspecies .gt. 1) then
@@ -1421,19 +1413,16 @@ c  new (correct) way: (april 4, 2007)
      &        alphap_T, alphap_dT, int8(alphap_Size), 
      &        alphap_Data, log_a)
               alpha(i) = 1.d1**log_a
-
          endif
       enddo
 
       if (anydust) then
          do i = is+1, ie+1
-            if ( itmask(i) ) then
+            if ( itmask_metal(i) ) then
 
             if (itdmulti .eq. 0) then
 
                alphad(i) = kptot(i)
-!!             write(*,*) d(i,j,k)
-!!   &                  , kptot     (i)
 
             else
 
@@ -1458,21 +1447,9 @@ c  new (correct) way: (april 4, 2007)
      &                   + kpvolorg  (i)
      &                   + kpH2Oice  (i)
                endif
-!!             write(*,*) d(i,j,k)
-!!   &                  , kpSiM     (i)
-!!   &                  , kpFeM     (i)
-!!   &                  , kpMg2SiO4 (i)
-!!   &                  , kpMgSiO3  (i)
-!!   &                  , kpFe3O4   (i)
-!!   &                  , kpAC      (i)
-!!   &                  , kpSiO2D   (i)
-!!   &                  , kpMgO     (i)
-!!   &                  , kpFeS     (i)
-!!   &                  , kpAl2O3   (i)
             endif
 
-!!          write(*,*) tdust(i), alphad(i), d(i,j,k)*dom*mh
-            alphad(i) = alphad(i) * d(i,j,k)*dom*mh
+            alpha(i) = alpha(i) + alphad(i) * d(i,j,k)*dom*mh
 
             endif
          enddo
@@ -1481,7 +1458,7 @@ c  new (correct) way: (april 4, 2007)
 
       do i = is+1, ie+1
          if ( itmask(i) ) then
-         tau_con(i) = (alpha(i) + alphad(i)) * lshield_con(i)
+         tau_con(i) = alpha(i) * lshield_con(i)
          endif
       enddo
 
@@ -1781,19 +1758,17 @@ c  new (correct) way: (april 4, 2007)
               edot(i) = edot(i) + real(ipiht, DKIND) * photogamma(i,j,k)
      &                          / coolunit * HI(i,j,k) / dom
 
-#ifdef UNUSED
-              if (edot(i) .ne. edot(i)) then
-#ifdef _OPENMP
-!$omp critical
-#endif
-                  write(6,*) 'NaN in edot[2]: ', i,j,k, edot(i),
-     &                photogamma(i,j,k), HI(i,j,k), de(i,j,k), d(i,j,k),
-     &                e(i,j,k), p2d(i), tgas(i), dom, urho, aye, mh
-#ifdef _OPENMP
-!$omp end critical
-#endif
-              endif
-#endif
+!!            if (edot(i) .ne. edot(i)) then
+!!#ifdef _OPENMP
+!!!$omp critical
+!!#endif
+!!                write(6,*) 'NaN in edot[2]: ', i,j,k, edot(i),
+!!   &                photogamma(i,j,k), HI(i,j,k), de(i,j,k), d(i,j,k),
+!!   &                e(i,j,k), p2d(i), tgas(i), dom, urho, aye, mh
+!!#ifdef _OPENMP
+!!!$omp end critical
+!!#endif
+!!            endif
 
             endif
           enddo
@@ -2063,49 +2038,56 @@ c  new (correct) way: (april 4, 2007)
 !     edotunit = coolunit*dom/mh ! = vbase1**2 / tbase1
 !     do i = is+1, ie+1
 !        if ( itmask(i) ) then
-!        if((i.eq.1).and.(j.eq.1).and.(k.eq.1)) then
-
-!        write(*,'(16E12.5)') d(i,j,k)*dom
-!    &      , tSiM     (i), tFeM     (i), tMg2SiO4 (i)
-!    &      , tMgSiO3  (i), tFe3O4   (i), tAC      (i)
-!    &      , tSiO2D   (i), tMgO     (i), tFeS     (i)
-!    &      , tAl2O3   (i),               treforg  (i)
-!    &      , tvolorg  (i), tH2Oice  (i), tdust    (i)
-!    &      , tgas(i)
-!        write(*,'(15E12.5)') d(i,j,k)*dom
-!    &      , sgSiM     (i), sgFeM     (i), sgMg2SiO4 (i)
-!    &      , sgMgSiO3  (i), sgFe3O4   (i), sgAC      (i)
-!    &      , sgSiO2D   (i), sgMgO     (i), sgFeS     (i)
-!    &      , sgAl2O3   (i),                sgreforg  (i)
-!    &      , sgvolorg  (i), sgH2Oice  (i), sgtot     (i)
-!        do item = 1, gr_N(2)
-!          write(*,'(F5.2, 14E9.2)') gr_Td(item)
-!    &      , alSiM(item,i), alFeM(item,i)
-!    &      , alMg2SiO4(item,i), alMgSiO3(item,i)
-!    &      , alFe3O4(item,i), alAC(item,i)
-!    &      , alSiO2D(item,i), alMgO(item,i)
-!    &      , alFeS(item,i), alAl2O3(item,i)
-!    &      , alreforg(item,i)
-!    &      , alvolorg(item,i), alH2Oice(item,i)
-!    &      , altot(item,i)
-!        enddo
 
 !     write(*,*)   d(i,j,k)*dom, tgas(i)
-!    &           , LH2 (i)/d(i,j,k)*edotunit * exp(-tau_con(i))
-!    &           , LHD (i)/d(i,j,k)*edotunit * exp(-tau_con(i))
-!    &           , LCI (i)/d(i,j,k)*edotunit * exp(-tau_con(i))
-!    &           , LCII(i)/d(i,j,k)*edotunit * exp(-tau_con(i))
-!    &           , LOI (i)/d(i,j,k)*edotunit * exp(-tau_con(i))
-!    &           , LCO (i)/d(i,j,k)*edotunit * exp(-tau_con(i))
-!    &           , LOH (i)/d(i,j,k)*edotunit * exp(-tau_con(i))
-!    &           , LH2O(i)/d(i,j,k)*edotunit * exp(-tau_con(i))
-!    &           , Ldst(i)/d(i,j,k)*edotunit * exp(-tau_con(i))
-!    &           , LCIE(i)/d(i,j,k)*edotunit * exp(-tau_con(i))
+!    &           , LH2 (i)/d(i,j,k)*edotunit
+!    &           , LHD (i)/d(i,j,k)*edotunit
+!    &           , LCI (i)/d(i,j,k)*edotunit
+!    &           , LCII(i)/d(i,j,k)*edotunit
+!    &           , LOI (i)/d(i,j,k)*edotunit
+!    &           , LCO (i)/d(i,j,k)*edotunit
+!    &           , LOH (i)/d(i,j,k)*edotunit
+!    &           , LH2O(i)/d(i,j,k)*edotunit
+!    &           , Ldst(i)/d(i,j,k)*edotunit
+!    &           , LCIE(i)/d(i,j,k)*edotunit
 !    &           , tau_con(i)
 
 !        endif
-!        endif
 !     enddo
+!     stop
+
+!!    do i = is+1, ie+1
+!!       if ( itmask(i) ) then
+!!       if((i.eq.1).and.(j.eq.1).and.(k.eq.1)) then
+
+!!       write(*,'(16E12.5)') d(i,j,k)*dom
+!!   &      , tSiM     (i), tFeM     (i), tMg2SiO4 (i)
+!!   &      , tMgSiO3  (i), tFe3O4   (i), tAC      (i)
+!!   &      , tSiO2D   (i), tMgO     (i), tFeS     (i)
+!!   &      , tAl2O3   (i),               treforg  (i)
+!!   &      , tvolorg  (i), tH2Oice  (i), tdust    (i)
+!!   &      , tgas(i)
+!!       write(*,'(15E12.5)') d(i,j,k)*dom
+!!   &      , sgSiM     (i), sgFeM     (i), sgMg2SiO4 (i)
+!!   &      , sgMgSiO3  (i), sgFe3O4   (i), sgAC      (i)
+!!   &      , sgSiO2D   (i), sgMgO     (i), sgFeS     (i)
+!!   &      , sgAl2O3   (i),                sgreforg  (i)
+!!   &      , sgvolorg  (i), sgH2Oice  (i), sgtot     (i)
+!!       do item = 1, gr_N(2)
+!!         write(*,'(F5.2, 14E9.2)') gr_Td(item)
+!!   &      , alSiM(item,i), alFeM(item,i)
+!!   &      , alMg2SiO4(item,i), alMgSiO3(item,i)
+!!   &      , alFe3O4(item,i), alAC(item,i)
+!!   &      , alSiO2D(item,i), alMgO(item,i)
+!!   &      , alFeS(item,i), alAl2O3(item,i)
+!!   &      , alreforg(item,i)
+!!   &      , alvolorg(item,i), alH2Oice(item,i)
+!!   &      , altot(item,i)
+!!       enddo
+
+!!       endif
+!!       endif
+!!    enddo
 
       return
       end
