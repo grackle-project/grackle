@@ -1306,14 +1306,30 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
             do i = is+1, ie+1
             if (itmask_nr(i)) then
 
-               if (    (d(i,j,k)*dom .gt. 1.d7)
-     &         .and. ( (tgas(i) .gt. 1650.d0)
-     &             .or.( (e(i,j,k) .ne. e(i,j,k))
-     &               .or.(e(i,j,k) .le. 1._DKIND)
-     &                 ) ) ) then
+!              if (    (d(i,j,k)*dom .gt. 1.d7)
+!    &         .and. ( (tgas(i) .gt. 1650.d0)
+!    &             .or.( (e(i,j,k) .ne. e(i,j,k))
+!    &               .or.(e(i,j,k) .le. 0._DKIND)
+!    &                 ) ) ) then
+!                 imp_eng = 1
+!              else
+!                 imp_eng = 0
+!              endif
+
+               if ( (d(i,j,k)*dom .gt. 1.d7)
+     &         .and.(tgas(i) .gt. 1650.d0) ) then
                   imp_eng = 1
                else
                   imp_eng = 0
+               endif
+
+               if (icool .eq. 1) then
+                  if (imp_eng .eq. 0) then
+                     if ( e(i,j,k) + real(edot(i)/d(i,j,k)*dtit(i)
+     &                         , RKIND) .le. 0._DKIND) then
+                        imp_eng = 1
+                     endif
+                  endif
                endif
 
 !           If density and temperature are low, update gas energy explicitly
@@ -1997,8 +2013,8 @@ C                 endif
                         endif
                      else
                         do isp = 1, nsp
-                           if ( (dsp(isp) .ne. dsp(isp))
-     &                     .or. (dsp(isp) .le. 0._DKIND) ) then
+                           if ( (dsp(idsp(isp)) .ne. dsp(idsp(isp)))
+     &                     .or. (dsp(idsp(isp)) .le. 0._DKIND) ) then
                               ierr = 1
                            endif
                         enddo
@@ -5305,8 +5321,8 @@ C***** CH2 **********
      &             + kz16(i) *    HI(i,j,k)
                if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1) ) then
                if (idspecies .gt. 2) then
-                       acoef = acoef 
-     &               + kdreforg  (i) / CH2(i,j,k) * 14._DKIND * 0.5_DKIND
+                    acoef = acoef 
+     &            + kdreforg  (i) / CH2(i,j,k) * 14._DKIND * 0.5_DKIND
                endif
                endif
 

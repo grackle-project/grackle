@@ -22,8 +22,8 @@
 #rsync -truv lab:/home/genchiaki/grackle/src/clib/set_default_chemistry_parameters.c _set_default_chemistry_parameters.c
 #rsync -truv lab:/home/genchiaki/grackle/src/clib/solve_chemistry.c                  _solve_chemistry.c
 #rsync -truv lab:/home/genchiaki/grackle/src/clib/solve_rate_cool_g.F                _solve_rate_cool_g.F
- rsync -truv lab:/home/genchiaki/grackle/src/clib/gaussj_g.F                          gaussj_g.F
- rsync -truv lab:/home/genchiaki/grackle/src/clib/Make.config.objects                _Make.config.objects
+#rsync -truv lab:/home/genchiaki/grackle/src/clib/gaussj_g.F                          gaussj_g.F
+#rsync -truv lab:/home/genchiaki/grackle/src/clib/Make.config.objects                _Make.config.objects
 
 #mv       _calc_rates_g.F                      calc_rates_g.F
 #mv       _calculate_cooling_time.c            calculate_cooling_time.c

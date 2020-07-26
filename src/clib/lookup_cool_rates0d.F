@@ -1589,8 +1589,8 @@ C***** CH2 **********
      &             + kz16    *    HI       
                if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1) ) then
                if (idspecies .gt. 2) then
-                       acoef = acoef 
-     &               + kdreforg      / CH2        * 14._DKIND * 0.5_DKIND
+                    acoef = acoef 
+     &            + kdreforg      / CH2        * 14._DKIND * 0.5_DKIND
                endif
                endif
 
