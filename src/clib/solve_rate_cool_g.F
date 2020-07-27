@@ -564,7 +564,11 @@ C     real*8 vecDtot
       uvel     = uxyz / utim
 c     chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 formed
 c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 formed
-      chunit = (1.60218e-12_DKIND)/((xbase1/tbase1)**2*mh)   ! 1 eV per REACTION GC202002
+      if (iexpand .eq. 0) then
+         chunit = (1.60218e-12_DKIND)/((xbase1/tbase1)**2*mh)
+      else
+         chunit = (1.60218e-12_DKIND)/(uvel*uvel*mh)
+      endif     ! 1 eV per REACTION GC202007
 
       dx_cgs = dx * xbase1
       c_ljeans = sqrt((gamma * pi * kboltz) /
@@ -2370,7 +2374,7 @@ c -------------------------------------------------------------------
                      metal_C30(i,j,k) = metal_C30(i,j,k)*factor
                      metal_F13(i,j,k) = metal_F13(i,j,k)*factor
                   endif
-                  if (metal(i,j,k) .gt. 1.d-9 * d(i,j,k)) then
+!!                if (metal(i,j,k) .gt. 1.d-9 * d(i,j,k)) then
                   if (imchem .eq. 1) then
                      CI(i,j,k)      = CI(i,j,k)*factor
                      CII(i,j,k)     = CII(i,j,k)*factor
@@ -2402,7 +2406,7 @@ c -------------------------------------------------------------------
                      endif
                      endif
                   endif
-                  endif
+!!                endif
                enddo
             enddo
          enddo
@@ -2413,7 +2417,7 @@ c -------------------------------------------------------------------
                do i = is+1, ie+1
                   dust(i,j,k) = dust(i,j,k)*factor
                   if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1 ) ) then
-                  if (metal(i,j,k) .gt. 1.d-9 * d(i,j,k)) then
+!!                if (metal(i,j,k) .gt. 1.d-9 * d(i,j,k)) then
                   if (idspecies .gt. 0) then
                      MgSiO3(i,j,k)  = MgSiO3(i,j,k)*factor
                      AC(i,j,k)      = AC(i,j,k)*factor
@@ -2433,7 +2437,7 @@ c -------------------------------------------------------------------
                      volorg(i,j,k)  = volorg(i,j,k)*factor
                      H2Oice(i,j,k)  = H2Oice(i,j,k)*factor
                   endif
-                  endif
+!!                endif
                   endif
                enddo
             enddo
@@ -2561,7 +2565,7 @@ c -------------------------------------------------------------------
                      metal_F13(i,j,k) = min(max(metal_F13(i,j,k), tiny),
      &                 0.9_RKIND*d(i,j,k))
                   endif
-                  if (metal(i,j,k) .gt. 1.d-9 * d(i,j,k)) then
+!!                if (metal(i,j,k) .gt. 1.d-9 * d(i,j,k)) then
                   if (imchem .eq. 1) then
                      CI(i,j,k)      = max(CI(i,j,k), tiny)
                      CII(i,j,k)     = max(CII(i,j,k), tiny)
@@ -2593,7 +2597,7 @@ c -------------------------------------------------------------------
                      endif
                      endif
                   endif
-                  endif
+!!                endif
                enddo
             enddo
          enddo
@@ -2604,7 +2608,7 @@ c -------------------------------------------------------------------
                do i = is+1, ie+1
                   dust(i,j,k)       = max(dust(k,j,k), tiny)
                   if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1 ) ) then
-                  if (metal(i,j,k) .gt. 1.d-9 * d(i,j,k)) then
+!!                if (metal(i,j,k) .gt. 1.d-9 * d(i,j,k)) then
                   if (idspecies .gt. 0) then
                      MgSiO3(i,j,k)  = max(MgSiO3(i,j,k), tiny)
                      AC(i,j,k)      = max(AC(i,j,k), tiny)
@@ -2624,7 +2628,7 @@ c -------------------------------------------------------------------
                      volorg(i,j,k)  = max(volorg(i,j,k), tiny)
                      H2Oice(i,j,k)  = max(H2Oice(i,j,k), tiny)
                   endif
-                  endif
+!!                endif
                   endif
                enddo
             enddo
@@ -4243,19 +4247,29 @@ c
 !     &                    - k23(i) * H2I(i,j,k))
 !H * (k22 * H^2 - k13 * H_2) + H_2 * (k21 * H^2 - k23 * H_2) */
 
-!        write(*,*)
-!    &     d(i,j,k)*dom
-!    &   ,  3.53_DKIND * k8 (i) * HM(i,j,k) * HI(i,j,k)
-!    &       * h2heatfac(i)*chunit/d(i,j,k)
-!    &   ,  4.48_DKIND * k22(i) * HI(i,j,k)**2._DKIND * HI(i,j,k)
-!    &       * h2heatfac(i)*chunit/d(i,j,k)
-!    &   ,- 4.48_DKIND * k13(i) * H2I(i,j,k)/2._DKIND * HI(i,j,k)
-!    &       *chunit/d(i,j,k)
-!    &   ,(0.2_DKIND + 4.2_DKIND * h2heatfac(i)) * h2dust(i) * HI(i,j,k)
-!    &       *rhoH(i) * chunit/d(i,j,k)
-
          endif                  ! itmask
          enddo
+
+!!!!! output cooling rate for debug
+!        open(11,file='nH.dat',status='unknown',form='formatted'
+!    &      , access='append')
+!        do i = is+1, ie+1
+!        if (itmask(i)) then
+!           write(11,*)
+!    &        d(i,j,k)*dom
+!    &      , chunit * H2delta(i) * atten / d(i,j,k)
+!    &   !  ,  3.53_DKIND * k8 (i) * HM(i,j,k) * HI(i,j,k)
+!    &   !      * h2heatfac(i)*chunit/d(i,j,k)
+!    &   !  ,  4.48_DKIND * k22(i) * HI(i,j,k)**2._DKIND * HI(i,j,k)
+!    &   !      * h2heatfac(i)*chunit/d(i,j,k)
+!    &   !  ,- 4.48_DKIND * k13(i) * H2I(i,j,k)/2._DKIND * HI(i,j,k)
+!    &   !      *chunit/d(i,j,k)
+!    &   !  ,(0.2_DKIND + 4.2_DKIND * h2heatfac(i)) * h2dust(i) * HI(i,j,k)
+!    &   !      *rhoH(i) * chunit/d(i,j,k)
+!        endif
+!        enddo
+!        close(11)
+
       endif
 
 !     Add photo-ionization rates if needed

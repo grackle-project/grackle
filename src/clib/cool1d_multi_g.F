@@ -611,6 +611,22 @@
          endif
       enddo
 
+!     initialize arrays
+      do i = is+1, ie+1
+         if ( itmask(i) ) then
+           LH2 (i) = 0.d0
+           LHD (i) = 0.d0
+           LCI (i) = 0.d0
+           LCII(i) = 0.d0
+           LOI (i) = 0.d0
+           LCO (i) = 0.d0
+           LOH (i) = 0.d0
+           LH2O(i) = 0.d0
+           Ldst(i) = 0.d0
+           LCIE(i) = 0.d0
+         endif
+      enddo
+
 !     Compute interpolation indices
 
       if (interp) then
@@ -2036,25 +2052,28 @@ c  new (correct) way: (april 4, 2007)
 
 !!!!! output cooling rate for debug
 !     edotunit = coolunit*dom/mh ! = vbase1**2 / tbase1
+!     open(10,file='nL.dat',status='unknown',form='formatted'
+!    &      , access='append')
+!     write(10,*) '#', edotunit
 !     do i = is+1, ie+1
 !        if ( itmask(i) ) then
 
-!     write(*,*)   d(i,j,k)*dom, tgas(i)
-!    &           , LH2 (i)/d(i,j,k)*edotunit
-!    &           , LHD (i)/d(i,j,k)*edotunit
-!    &           , LCI (i)/d(i,j,k)*edotunit
-!    &           , LCII(i)/d(i,j,k)*edotunit
-!    &           , LOI (i)/d(i,j,k)*edotunit
-!    &           , LCO (i)/d(i,j,k)*edotunit
-!    &           , LOH (i)/d(i,j,k)*edotunit
-!    &           , LH2O(i)/d(i,j,k)*edotunit
-!    &           , Ldst(i)/d(i,j,k)*edotunit
-!    &           , LCIE(i)/d(i,j,k)*edotunit
-!    &           , tau_con(i)
+!     write(10,*)   d(i,j,k)*dom, tgas(i)
+!    &            , LH2 (i)/d(i,j,k)
+!    &            , LHD (i)/d(i,j,k)
+!    &            , LCI (i)/d(i,j,k)
+!    &            , LCII(i)/d(i,j,k)
+!    &            , LOI (i)/d(i,j,k)
+!    &            , LCO (i)/d(i,j,k)
+!    &            , LOH (i)/d(i,j,k)
+!    &            , LH2O(i)/d(i,j,k)
+!    &            , Ldst(i)/d(i,j,k)
+!    &            , LCIE(i)/d(i,j,k)
+!    &            , tau_con(i)
 
 !        endif
 !     enddo
-!     stop
+!     close(10)
 
 !!    do i = is+1, ie+1
 !!       if ( itmask(i) ) then
