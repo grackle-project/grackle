@@ -2196,7 +2196,7 @@ c            WARNING_MESSAGE
      &                  HM, H2I, H2II, DI, DII, HDI, metal, dust,
      &                  is, ie, js, je, ks, ke,
      &                  in, jn, kn, ispecies, imetal, idustfield,
-     &                  aye**(-3)
+     &                  aye**3
      &                , DM, HDII, HeHII
      &                , imabund, imchem, idspecies, immulti
      &                , igrgr, idsub
