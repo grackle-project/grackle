@@ -5706,6 +5706,7 @@ C***** H2Oice **********
             Fe(i,j,k)      = max(real(Fep(i)     , RKIND), tiny)
             endif
             endif
+         endif
 
          if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1) ) then
          if (idspecies .gt. 0) then
@@ -5728,7 +5729,6 @@ C***** H2Oice **********
             H2Oice(i,j,k)  = max(real(H2Oicep(i)  , RKIND), tiny)
          endif
          endif
-         endif ! imchem
 
       endif                     ! itmask
 !     
@@ -6101,6 +6101,16 @@ C***** H2Oice **********
             H2OII(i,j,k)   = abs(H2OII(i,j,k)  )
             H3OII(i,j,k)   = abs(H3OII(i,j,k)  )
             O2II(i,j,k)    = abs(O2II(i,j,k)   )
+            if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1) ) then
+               if (idspecies .gt. 0) then
+                  Mg(i,j,k)      = abs(Mg(i,j,k)     )
+               endif
+               if (idspecies .gt. 1) then
+                  Al(i,j,k)      = abs(Al(i,j,k)     )
+                  S(i,j,k)       = abs(S(i,j,k)      )
+                  Fe(i,j,k)      = abs(Fe(i,j,k)     )
+               endif
+            endif
          endif
       enddo
       endif
@@ -6109,14 +6119,10 @@ C***** H2Oice **********
       do i = is+1, ie+1
          if (itmask_metal(i)) then
          if (idspecies .gt. 0) then
-            Mg(i,j,k)      = abs(Mg(i,j,k)     )
             MgSiO3(i,j,k)  = abs(MgSiO3(i,j,k) )
             AC(i,j,k)      = abs(AC(i,j,k)     )
          endif
          if (idspecies .gt. 1) then
-            Al(i,j,k)      = abs(Al(i,j,k)     )
-            S(i,j,k)       = abs(S(i,j,k)      )
-            Fe(i,j,k)      = abs(Fe(i,j,k)     )
             SiM(i,j,k)     = abs(SiM(i,j,k)    )
             FeM(i,j,k)     = abs(FeM(i,j,k)    )
             Mg2SiO4(i,j,k) = abs(Mg2SiO4(i,j,k))
