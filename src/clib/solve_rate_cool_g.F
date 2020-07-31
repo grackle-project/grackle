@@ -583,10 +583,10 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
 #define ABUNDANCE_CORRECTION
 #ifdef ABUNDANCE_CORRECTION
       call make_consistent_g(de, HI, HII, HeI, HeII, HeIII,
-     &                     HM, H2I, H2II, DI, DII, HDI, metal, 
+     &                     HM, H2I, H2II, DI, DII, HDI, metal, dust,
      &                     d, is, ie, js, je, ks, ke,
      &                     in, jn, kn, ispecies, imetal, fh, dtoh
-     &                   , imchem, igrgr, dom
+     &                   , idustfield, imchem, igrgr, dom
      &                   , DM, HDII, HeHII
      &                   , CI, CII, CO, CO2
      &                   , OI, OH, H2O, O2
@@ -2219,10 +2219,10 @@ c            WARNING_MESSAGE
 
 #ifdef ABUNDANCE_CORRECTION
       call make_consistent_g(de, HI, HII, HeI, HeII, HeIII,
-     &                     HM, H2I, H2II, DI, DII, HDI, metal, 
+     &                     HM, H2I, H2II, DI, DII, HDI, metal, dust,
      &                     d, is, ie, js, je, ks, ke,
      &                     in, jn, kn, ispecies, imetal, fh, dtoh
-     &                   , imchem, igrgr, dom
+     &                   , idustfield, imchem, igrgr, dom
      &                   , DM, HDII, HeHII
      &                   , CI, CII, CO, CO2
      &                   , OI, OH, H2O, O2
@@ -5754,10 +5754,10 @@ C***** H2Oice **********
 !     insure conservation of particle number and charge.
 
       subroutine make_consistent_g(de, HI, HII, HeI, HeII, HeIII,
-     &                     HM, H2I, H2II, DI, DII, HDI, metal, 
+     &                     HM, H2I, H2II, DI, DII, HDI, metal, dust,
      &                     d, is, ie, js, je, ks, ke,
      &                     in, jn, kn, ispecies, imetal, fh, dtoh
-     &                   , imchem, igrgr, dom
+     &                   , idustfield, imchem, igrgr, dom
      &                   , DM, HDII, HeHII
      &                   , CI, CII, CO, CO2
      &                   , OI, OH, H2O, O2
@@ -5784,10 +5784,10 @@ C***** H2Oice **********
 !     Arguments
 
       integer in, jn, kn, is, ie, js, je, ks, ke, ispecies, imetal
-      integer imchem, igrgr
+      integer idustfield, imchem, igrgr
       R_PREC  de(in,jn,kn),   HI(in,jn,kn),   HII(in,jn,kn),
      &        HeI(in,jn,kn), HeII(in,jn,kn), HeIII(in,jn,kn),
-     &        d(in,jn,kn), metal(in,jn,kn),
+     &        d(in,jn,kn), metal(in,jn,kn), dust(in,jn,kn),
      &        HM(in,jn,kn),  H2I(in,jn,kn), H2II(in,jn,kn),
      &        DI(in,jn,kn),  DII(in,jn,kn), HDI(in,jn,kn)
       real*8 fh, dtoh
@@ -6579,6 +6579,34 @@ C***** H2Oice **********
       endif
       enddo
       endif ! imchem
+
+      if ( (idustfield .gt. 0) .and. (idspecies .gt. 0) ) then
+         do i = is+1, ie+1
+            if ( itmask_metal(i) ) then
+            if (idspecies .gt. 0) then
+               dust(i,j,k) = MgSiO3  (i,j,k)
+     &                     + AC      (i,j,k)
+            endif
+            if (idspecies .gt. 1) then
+               dust(i,j,k) = dust(i,j,k)
+     &                     + SiM     (i,j,k)
+     &                     + FeM     (i,j,k)
+     &                     + Mg2SiO4 (i,j,k)
+     &                     + Fe3O4   (i,j,k)
+     &                     + SiO2D   (i,j,k)
+     &                     + MgO     (i,j,k)
+     &                     + FeS     (i,j,k)
+     &                     + Al2O3   (i,j,k)
+            endif
+            if (idspecies .gt. 2) then
+               dust(i,j,k) = dust(i,j,k)
+     &                     + reforg  (i,j,k)
+     &                     + volorg  (i,j,k)
+     &                     + H2Oice  (i,j,k)
+            endif
+            endif
+         enddo
+      endif
 
 !       Set the electron density
 
