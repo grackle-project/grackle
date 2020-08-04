@@ -5847,7 +5847,7 @@ C***** H2Oice **********
      &     , Sig(in), Sg(in), Feg(in)
       real*8 Cd(in), Od(in), Mgd(in), Ald(in)
      &     , Sid(in), Sd(in), Fed(in)
-      logical itmask_metal(in)
+!     logical itmask_metal(in)
 
 !     Loop over all zones
 
@@ -5911,16 +5911,16 @@ C***** H2Oice **********
 
 !     Iteration mask for metal-rich cells
 
-      do i = is+1, ie + 1
-         itmask_metal(i) = .false.
-      enddo
-      if (imetal .eq. 1) then
-          do i = is+1, ie + 1
-             if (metal(i,j,k) .gt. 1.e-9_DKIND * d(i,j,k)) then
-                itmask_metal(i) = .true.
-             endif
-          enddo
-      endif
+!     do i = is+1, ie + 1
+!        itmask_metal(i) = .false.
+!     enddo
+!     if (imetal .eq. 1) then
+!         do i = is+1, ie + 1
+!            if (metal(i,j,k) .gt. 1.e-9_DKIND * d(i,j,k)) then
+!               itmask_metal(i) = .true.
+!            endif
+!         enddo
+!     endif
 
       if(imchem .gt. 0) then
          if(immulti .eq. 0) then
@@ -6002,7 +6002,7 @@ C***** H2Oice **********
          enddo
 
          do i = is+1, ie+1
-         if (itmask_metal(i)) then
+!        if (itmask_metal(i)) then
             OH   (i,j,k) = abs(OH   (i,j,k))
             H2O  (i,j,k) = abs(H2O  (i,j,k))
             CH   (i,j,k) = abs(CH   (i,j,k))
@@ -6018,7 +6018,7 @@ C***** H2Oice **********
      &        + OHII (i,j,k)/17._DKIND
      &        + H2OII(i,j,k)/18._DKIND*2._DKIND
      &        + H3OII(i,j,k)/19._DKIND*3._DKIND
-         endif
+!        endif
          enddo
       endif
 
@@ -6081,7 +6081,7 @@ C***** H2Oice **********
 
       if (imchem .eq. 1) then
       do i = is+1, ie+1
-         if (itmask_metal(i)) then
+!        if (itmask_metal(i)) then
             CI(i,j,k)      = abs(CI(i,j,k)     )
             CII(i,j,k)     = abs(CII(i,j,k)    )
             CO(i,j,k)      = abs(CO(i,j,k)     )
@@ -6111,13 +6111,13 @@ C***** H2Oice **********
                   Fe(i,j,k)      = abs(Fe(i,j,k)     )
                endif
             endif
-         endif
+!        endif
       enddo
       endif
 
       if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1) ) then
       do i = is+1, ie+1
-         if (itmask_metal(i)) then
+!        if (itmask_metal(i)) then
          if (idspecies .gt. 0) then
             MgSiO3(i,j,k)  = abs(MgSiO3(i,j,k) )
             AC(i,j,k)      = abs(AC(i,j,k)     )
@@ -6137,13 +6137,13 @@ C***** H2Oice **********
             volorg(i,j,k)  = abs(volorg(i,j,k)  )
             H2Oice(i,j,k)  = abs(H2Oice(i,j,k)  )
          endif
-         endif
+!        endif
       enddo
       endif
 
       if (imchem .eq. 1) then
       do i = is+1, ie+1
-      if (itmask_metal(i)) then
+!     if (itmask_metal(i)) then
 !!       if (d(i,j,k)*dom .lt. 1.e6_DKIND) then
          if (d(i,j,k)*dom .lt. 
      &    min(1.e6_DKIND/(metal(i,j,k)/d(i,j,k)/0.02d-4)**2
@@ -6576,13 +6576,13 @@ C***** H2Oice **********
          endif
          endif
 
-      endif
+!     endif
       enddo
       endif ! imchem
 
       if ( (idustfield .gt. 0) .and. (idspecies .gt. 0) ) then
          do i = is+1, ie+1
-            if ( itmask_metal(i) ) then
+!           if ( itmask_metal(i) ) then
             if (idspecies .gt. 0) then
                dust(i,j,k) = MgSiO3  (i,j,k)
      &                     + AC      (i,j,k)
@@ -6604,7 +6604,7 @@ C***** H2Oice **********
      &                     + volorg  (i,j,k)
      &                     + H2Oice  (i,j,k)
             endif
-            endif
+!           endif
          enddo
       endif
 
@@ -6619,8 +6619,9 @@ C***** H2Oice **********
      &        - DM   (i,j,k)/2._RKIND
      &        + HDII (i,j,k)/3._RKIND
      &        + HeHII(i,j,k)/5._RKIND
-         if ( (imchem .eq. 1) .and. (itmask_metal(i)) )
-     &      de(i,j,k) = de(i,j,k)
+         if (imchem .eq. 1) then
+!        if (itmask_metal(i)) then
+            de(i,j,k) = de(i,j,k)
      &        + CII  (i,j,k)/12._RKIND
      &        + COII (i,j,k)/28._RKIND
      &        + OII  (i,j,k)/16._RKIND
@@ -6628,6 +6629,8 @@ C***** H2Oice **********
      &        + H2OII(i,j,k)/18._RKIND
      &        + H3OII(i,j,k)/19._RKIND
      &        + O2II (i,j,k)/32._RKIND
+!        endif
+         endif
       enddo
 
       enddo  ! end loop over j
