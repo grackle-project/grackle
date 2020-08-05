@@ -564,11 +564,9 @@ C     real*8 vecDtot
       uvel     = uxyz / utim
 c     chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 formed
 c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 formed
-      if (iexpand .eq. 0) then
-         chunit = (1.60218e-12_DKIND)/((xbase1/tbase1)**2*mh)
-      else
-         chunit = (1.60218e-12_DKIND)/(uvel*uvel*mh)
-      endif     ! 1 eV per REACTION GC202007
+      chunit = (1.60218e-12_DKIND)/((xbase1/tbase1)**2*mh)
+                ! 1 eV per REACTION (Feb 2020, Gen Chiaki)
+                ! correct the dependency on aye (May 2020, Gen Chiaki)
 
       dx_cgs = dx * xbase1
       c_ljeans = sqrt((gamma * pi * kboltz) /
@@ -764,15 +762,6 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
                endif
             enddo
 
-!           do i = is+1, ie+1
-!              if (itmask(i)) then
-!                 delH2Itrial = 0.1_DKIND * H2I(i,j,k)
-!                 H2I(i,j,k) = H2I(i,j,k) - delH2Itrial
-!                 HI (i,j,k) = HI (i,j,k) + delH2Itrial
-!                 write(*,*) HI(i,j,k)/d(i,j,k), H2I(i,j,k)/d(i,j,k)
-!              endif
-!           enddo
-
 !           Compute the cooling rate, tgas, tdust, and metallicity for this row
 
             call cool1d_multi_g(
@@ -878,6 +867,18 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
      &              , treforg, tvolorg, tH2Oice
      &              , gasgr2a, gamma_isrf2a
      &          )
+!           open(10,file='nL.dat',status='unknown',form='formatted'
+!    &            , access='append')
+!           do i = is+1, ie+1
+!              if ( itmask(i) ) then
+!          
+!              write(10,*)
+!    &             d(i,j,k)*dom
+!    &           , tgas(i)
+!          
+!              endif
+!           enddo
+!           close(10)
 
             if (ispecies .gt. 0) then
 
@@ -4255,6 +4256,7 @@ c
 !    &      , access='append')
 !        do i = is+1, ie+1
 !        if (itmask(i)) then
+!        if (d(i,j,k)*dom .gt. 1.d-1) then
 !           write(11,*)
 !    &        d(i,j,k)*dom
 !    &      , chunit * H2delta(i) * atten / d(i,j,k)
@@ -4266,6 +4268,7 @@ c
 !    &   !      *chunit/d(i,j,k)
 !    &   !  ,(0.2_DKIND + 4.2_DKIND * h2heatfac(i)) * h2dust(i) * HI(i,j,k)
 !    &   !      *rhoH(i) * chunit/d(i,j,k)
+!        endif
 !        endif
 !        enddo
 !        close(11)

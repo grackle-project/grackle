@@ -2054,25 +2054,27 @@ c  new (correct) way: (april 4, 2007)
 !     edotunit = coolunit*dom/mh ! = vbase1**2 / tbase1
 !     open(10,file='nL.dat',status='unknown',form='formatted'
 !    &      , access='append')
-!     write(10,*) '#', edotunit
 !     do i = is+1, ie+1
 !        if ( itmask(i) ) then
+!        if (d(i,j,k)*dom .gt. 1.d-1) then
 
-!     write(10,'(13E13.5)')
-!    &    d(i,j,k)*dom
-!    &  , tgas(i)
-!    &  , LH2 (i)/d(i,j,k)
-!    &  , LHD (i)/d(i,j,k)
-!    &  , LCI (i)/d(i,j,k)
-!    &  , LCII(i)/d(i,j,k)
-!    &  , LOI (i)/d(i,j,k)
-!    &  , LCO (i)/d(i,j,k)
-!    &  , LOH (i)/d(i,j,k)
-!    &  , LH2O(i)/d(i,j,k)
-!    &  , Ldst(i)/d(i,j,k)
-!    &  , LCIE(i)/d(i,j,k)
-!    &  , tau_con(i)
+!        write(10,'(14E13.5)')
+!    &       d(i,j,k)*dom
+!    &     , tgas(i)
+!    &     , LH2 (i)/d(i,j,k)
+!    &     , LHD (i)/d(i,j,k)
+!    &     , LCI (i)/d(i,j,k)
+!    &     , LCII(i)/d(i,j,k)
+!    &     , LOI (i)/d(i,j,k)
+!    &     , LCO (i)/d(i,j,k)
+!    &     , LOH (i)/d(i,j,k)
+!    &     , LH2O(i)/d(i,j,k)
+!    &     , Ldst(i)/d(i,j,k)
+!    &     , LCIE(i)/d(i,j,k)
+!    &     , tau_con(i)
+!    &     , edotunit
 
+!        endif
 !        endif
 !     enddo
 !     close(10)
