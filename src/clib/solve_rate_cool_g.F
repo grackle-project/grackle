@@ -441,6 +441,7 @@
       integer t, dj, dk
       real*8 ttmin, dom, energy, comp1, comp2
       real*8 coolunit, dbase1, tbase1, xbase1, chunit, uvel
+     &     , vbase1
       real*8 heq1, heq2, eqk221, eqk222, eqk131, eqk132,
      &       eqt1, eqt2, eqtdef, dheq, heq, dlogtem, dx_cgs,
      &       c_ljeans
@@ -558,15 +559,19 @@ C     real*8 vecDtot
 
       dom      = urho*(aye**3)/mh
       tbase1   = utim
-      xbase1   = uxyz/(aye*uaye)    ! uxyz is [x]*a      = [x]*[a]*a'        '
-      dbase1   = urho*(aye*uaye)**3 ! urho is [dens]/a^3 = [dens]/([a]*a')^3 '
+      xbase1   = uxyz/(aye*uaye)    ! uxyz is [x]*a      = [x]*[a]*a
+      dbase1   = urho*(aye*uaye)**3 ! urho is [dens]/a^3 = [dens]/([a]*a')^3
+
       coolunit = (uaye**5 * xbase1**2 * mh**2) / (tbase1**3 * dbase1)
       uvel     = uxyz / utim
+      vbase1   = uvel*sqrt(aye*uaye) ! uvel is [vel]/a^0.5 = [vel]/([a]*a')^0.5
 c     chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 formed
 c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 formed
-      chunit = (1.60218e-12_DKIND)/((xbase1/tbase1)**2*mh)
-                ! 1 eV per REACTION (Feb 2020, Gen Chiaki)
-                ! correct the dependency on aye (May 2020, Gen Chiaki)
+      if (iexpand .eq. 0) then
+         chunit = (1.60218e-12_DKIND)/((xbase1/tbase1)**2*mh)
+      else      ! correct the dependency on aye (May 2020, Gen Chiaki)
+         chunit = (1.60218e-12_DKIND)/(vbase1*vbase1*mh)
+      endif     ! 1 eV per REACTION (Feb 2020, Gen Chiaki)
 
       dx_cgs = dx * xbase1
       c_ljeans = sqrt((gamma * pi * kboltz) /
@@ -4252,26 +4257,27 @@ c
          enddo
 
 !!!!! output cooling rate for debug
-!        open(11,file='nH.dat',status='unknown',form='formatted'
-!    &      , access='append')
-!        do i = is+1, ie+1
-!        if (itmask(i)) then
-!        if (d(i,j,k)*dom .gt. 1.d-1) then
-!           write(11,*)
-!    &        d(i,j,k)*dom
-!    &      , chunit * H2delta(i) * atten / d(i,j,k)
-!    &   !  ,  3.53_DKIND * k8 (i) * HM(i,j,k) * HI(i,j,k)
-!    &   !      * h2heatfac(i)*chunit/d(i,j,k)
-!    &   !  ,  4.48_DKIND * k22(i) * HI(i,j,k)**2._DKIND * HI(i,j,k)
-!    &   !      * h2heatfac(i)*chunit/d(i,j,k)
-!    &   !  ,- 4.48_DKIND * k13(i) * H2I(i,j,k)/2._DKIND * HI(i,j,k)
-!    &   !      *chunit/d(i,j,k)
-!    &   !  ,(0.2_DKIND + 4.2_DKIND * h2heatfac(i)) * h2dust(i) * HI(i,j,k)
-!    &   !      *rhoH(i) * chunit/d(i,j,k)
-!        endif
-!        endif
-!        enddo
-!        close(11)
+         open(11,file='nH.dat',status='unknown',form='formatted'
+     & !    , access='append'
+     &       )
+         do i = is+1, ie+1
+         if (itmask(i)) then
+         if (d(i,j,k)*dom .gt. 1.d-1) then
+            write(11,'(6E13.5)')
+     &        d(i,j,k)*dom
+     &      , chunit * H2delta(i) * atten / d(i,j,k)
+     &      , 3.53_DKIND * k8 (i) * HM(i,j,k) * HI(i,j,k)
+     &         * h2heatfac(i) * chunit / d(i,j,k)
+     &      , 4.48_DKIND * k22(i) * HI(i,j,k)**2._DKIND * HI(i,j,k)
+     &         * h2heatfac(i) * chunit / d(i,j,k)
+     &      ,-4.48_DKIND * k13(i) * H2I(i,j,k)/2._DKIND * HI(i,j,k)
+     &                        *chunit / d(i,j,k)
+     &      ,(0.2_DKIND + 4.2_DKIND * h2heatfac(i)) * h2dust(i)
+     &         * HI(i,j,k) * rhoH(i) * chunit / d(i,j,k)
+         endif
+         endif
+         enddo
+         close(11)
 
       endif
 
