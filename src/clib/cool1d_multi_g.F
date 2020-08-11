@@ -363,6 +363,8 @@
 #endif /* NOT important */
 !     debug
       real*8  edotunit
+      integer i_max
+      R_PREC  d_max
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
 !=======================================================================
@@ -2051,34 +2053,42 @@ c  new (correct) way: (april 4, 2007)
       enddo
 
 !!!!! output cooling rate for debug
-!     edotunit = coolunit*dom/mh ! = vbase1**2 / tbase1
-!     open(10,file='nL.dat',status='unknown',form='formatted'
-!    & !    , access='append'
-!    &    )
+!     d_max = 0._DKIND
 !     do i = is+1, ie+1
-!        if ( itmask(i) ) then
-!        if (d(i,j,k)*dom .gt. 1.d-1) then
-
-!        write(10,'(14E13.5)')
-!    &       d(i,j,k)*dom
-!    &     , tgas(i)
-!    &     , LH2 (i)/d(i,j,k)
-!    &     , LHD (i)/d(i,j,k)
-!    &     , LCI (i)/d(i,j,k)
-!    &     , LCII(i)/d(i,j,k)
-!    &     , LOI (i)/d(i,j,k)
-!    &     , LCO (i)/d(i,j,k)
-!    &     , LOH (i)/d(i,j,k)
-!    &     , LH2O(i)/d(i,j,k)
-!    &     , Ldst(i)/d(i,j,k)
-!    &     , LCIE(i)/d(i,j,k)
-!    &     , tau_con(i)
-!    &     , edotunit
-
+!     if (itmask(i)) then
+!        if (d(i,j,k) .gt. d_max) then
+!           i_max = i
+!           d_max = d(i,j,k)
 !        endif
-!        endif
+!     endif
 !     enddo
-!     close(10)
+
+!     if (d_max * dom .gt. 1.e9_DKIND) then
+C       !edotunit = coolunit*dom/mh ! = vbase1**2 / tbase1
+C        open(10,file='nL.dat',status='unknown',form='formatted'
+C    &         , access='append'
+C    &       )
+C        do i = is+1, ie+1
+C           if ( itmask(i) ) then
+C              write(10,'(13E13.5)')
+C    &             d(i,j,k)*dom
+C    &           , tgas(i)
+C    &           , LH2 (i)/d(i,j,k)
+C    &           , LHD (i)/d(i,j,k)
+C    &           , LCI (i)/d(i,j,k)
+C    &           , LCII(i)/d(i,j,k)
+C    &           , LOI (i)/d(i,j,k)
+C    &           , LCO (i)/d(i,j,k)
+C    &           , LOH (i)/d(i,j,k)
+C    &           , LH2O(i)/d(i,j,k)
+C    &           , Ldst(i)/d(i,j,k)
+C    &           , LCIE(i)/d(i,j,k)
+C    &           , tau_con(i)
+C    &  !        , edotunit
+C           endif
+C        enddo
+C        close(10)
+!     endif
 
 !!    do i = is+1, ie+1
 !!       if ( itmask(i) ) then

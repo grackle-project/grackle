@@ -14,7 +14,7 @@
 #=======================================================================
 
 MACH_TEXT  = CfCA aterui with cray compilers. \
-	     Do this: module load hdf5
+	     Do this: module load cray-hdf5
 MACH_VALID = 1
 MACH_FILE  = Make.mach.ATERUI
 
@@ -39,7 +39,7 @@ MACH_LIBTOOL   = libtool
 # Machine-dependent defines
 #-----------------------------------------------------------------------
 
-MACH_DEFINES   = -DH5_USE_16_API -std=c11 -h fp3 -Wno-unknown-pragmas
+MACH_DEFINES   = -DLINUX -DH5_USE_16_API -std=c11 -h fp3 -Wno-unknown-pragmas
 
 #-----------------------------------------------------------------------
 # Compiler flag settings
@@ -83,6 +83,6 @@ MACH_LIBS         = $(LOCAL_LIBS_HDF5) $(LOCAL_LIBS_MACH)
 # Installation
 #-----------------------------------------------------------------------
 
-MACH_INSTALL_PREFIX = $(HOME)/usr/local
+MACH_INSTALL_PREFIX = /work/nakazatoyr/usr/local
 MACH_INSTALL_LIB_DIR =
 MACH_INSTALL_INCLUDE_DIR =
