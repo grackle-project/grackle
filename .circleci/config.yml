@@ -27,7 +27,8 @@ commands:
             pip install --upgrade wheel
             pip install --upgrade setuptools
             pip install Cython numpy
-            pip install h5py matplotlib fastcache flake8 pytest yt
+            pip install 'matplotlib<3.3.0'
+            pip install h5py fastcache flake8 pytest yt
 
   lint:
     description: "Lint."
@@ -151,13 +152,13 @@ jobs:
 
       - restore_cache:
           name: "Restore dependencies cache."
-          key: dependencies-python-<< parameters.tag >>-v2
+          key: dependencies-python-<< parameters.tag >>-v3
 
       - install-dependencies
 
       - save_cache:
           name: "Save dependencies cache"
-          key: dependencies-python-<< parameters.tag >>-v2
+          key: dependencies-python-<< parameters.tag >>-v3
           paths:
             - ~/.cache/pip
             - ~/venv
@@ -200,16 +201,16 @@ workflows:
    tests:
      jobs:
        - test-suite:
-           name: "Python 3.5 tests"
-           tag: "3.5.9"
+           name: "Python 3.6 tests"
+           tag: "3.6.11"
 
        - test-suite:
            name: "Python 3.8 tests"
-           tag: "3.8.2"
+           tag: "3.8.5"
 
        - docs-build:
            name: "Docs build"
-           tag: "3.8.2"
+           tag: "3.8.5"
 
    weekly:
      triggers:
@@ -221,21 +222,17 @@ workflows:
                 - master
      jobs:
        - test-suite:
-           name: "Python 3.5 tests"
-           tag: "3.5.9"
-
-       - test-suite:
            name: "Python 3.6 tests"
-           tag: "3.6.10"
+           tag: "3.6.11"
 
        - test-suite:
            name: "Python 3.7 tests"
-           tag: "3.7.7"
+           tag: "3.7.8"
 
        - test-suite:
            name: "Python 3.8 tests"
-           tag: "3.8.2"
+           tag: "3.8.5"
 
        - docs-build:
            name: "Docs build"
-           tag: "3.8.2"
+           tag: "3.8.5"
