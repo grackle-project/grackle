@@ -65,5 +65,6 @@ setup(
     ],
     cmdclass={'build_ext': build_ext},
     license="BSD 3-clause",
-    ext_modules=cython_extensions
+    ext_modules=cython_extensions,
+    python_requires='>=3.6'
 )
