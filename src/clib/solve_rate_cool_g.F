@@ -1027,6 +1027,17 @@ C    &   , coolunit*dom/mh ! = vbase1**2 / tbase1
             endif
             enddo
 
+            do i = is+1, ie+1
+            if (itmask_nr(i)) then
+               if ( (d(i,j,k)*dom .gt. 1.d7)
+     &         .and.(tgas(i) .gt. 1650.d0) ) then
+                  imp_eng = 1
+               else
+                  imp_eng = 0
+               endif
+            endif
+            enddo
+
 !           Find timestep that keeps relative chemical changes below 10%
 
             do i = is+1, ie+1
@@ -1164,11 +1175,15 @@ C    &   , coolunit*dom/mh ! = vbase1**2 / tbase1
  1100          format(1p,22(e11.3))
 #endif /* WRITE_COOLING_DEBUG */
 
-            else if (itmask_nr(i)) then
-               dtit(i) = dt - ttot(i);
+            else if ((itmask_nr(i)).and.(imp_eng.eq.0)) then
+               dtit(i) = min(abs(0.1_DKIND*e(i,j,k)/edot(i)*d(i,j,k)),
+     &              dt-ttot(i), 0.5_DKIND*dt)
+
+            else if ((itmask_nr(i)).and.(imp_eng.eq.1)) then
+               dtit(i) = dt - ttot(i)
 
             else               ! itmask
-               dtit(i) = dt;
+               dtit(i) = dt
             endif
             enddo               ! end loop over i
 
@@ -1316,32 +1331,6 @@ C    &   , coolunit*dom/mh ! = vbase1**2 / tbase1
 !           Start Newton-Raphson scheme
             do i = is+1, ie+1
             if (itmask_nr(i)) then
-
-!              if (    (d(i,j,k)*dom .gt. 1.d7)
-!    &         .and. ( (tgas(i) .gt. 1650.d0)
-!    &             .or.( (e(i,j,k) .ne. e(i,j,k))
-!    &               .or.(e(i,j,k) .le. 0._DKIND)
-!    &                 ) ) ) then
-!                 imp_eng = 1
-!              else
-!                 imp_eng = 0
-!              endif
-
-               if ( (d(i,j,k)*dom .gt. 1.d7)
-     &         .and.(tgas(i) .gt. 1650.d0) ) then
-                  imp_eng = 1
-               else
-                  imp_eng = 0
-               endif
-
-               if (icool .eq. 1) then
-                  if (imp_eng .eq. 0) then
-                     if ( e(i,j,k) + real(edot(i)/d(i,j,k)*dtit(i)
-     &                         , RKIND) .le. 0._DKIND) then
-                        imp_eng = 1
-                     endif
-                  endif
-               endif
 
 !           If density and temperature are low, update gas energy explicitly
 
@@ -1529,91 +1518,24 @@ C    &   , coolunit*dom/mh ! = vbase1**2 / tbase1
                   idsp(id) = i_eng
                endif
 
+!              Save arrays at ttot(i)
+
                dsp0 = dsp
                ddsp = 0.d0
 
-!              iteration to timestep
+!              Search for the timestep for which chemistry converges
+
                ierr=1
                itr_time=0
                do while ((ierr.eq.1))
 
-                  ! if timestep becomes too short, do not update
-
-C                 if(itr_time .gt. 5) then
-C                    write(6,*) 'DO NOT CONVERGE '
-C    &                        , i,j,k, d(i,j,k)*dom, tgas(i)
-!                    write(6,*) aye, utem, uxyz, uaye, urho, utim
-!                    write(6,*) dt, d(i,j,k), e(i,j,k)
-!                    if ( imetal .eq. 1 ) then
-!                       write(6,*) metal(i,j,k)
-!                    endif
-!                    if ( idustfield .eq. 1 ) then
-!                       write(6,*) dust(i,j,k)
-!                    endif
-!                    if ( ispecies .gt. 0 ) then
-!                       write(6,*) de(i,j,k), HI(i,j,k), HII(i,j,k)
-!    &                           , HeI(i,j,k), HeII(i,j,k), HeIII(i,j,k)
-!                    endif
-!                    if ( ispecies .gt. 1 ) then
-!                       write(6,*) HM(i,j,k), H2I(i,j,k), H2II(i,j,k)
-!                    endif
-!                    if ( ispecies .gt. 2 ) then
-!                       write(6,*) DI(i,j,k), DII(i,j,k), HDI(i,j,k)
-!                    endif
-!                    if ( ispecies .gt. 3 ) then
-!                       write(6,*) DM(i,j,k), HDII(i,j,k), HeHII(i,j,k)
-!                    endif
-!                    if ( itmask_metal(i) ) then
-!                    if ( imchem .eq. 1 ) then
-!                       write(6,*) CI(i,j,k), CII(i,j,k), CO(i,j,k)
-!    &                           , CO2(i,j,k)
-!                       write(6,*) OI(i,j,k), OH(i,j,k), H2O(i,j,k)
-!    &                           , O2(i,j,k)
-!                       write(6,*) SiI(i,j,k), SiOI(i,j,k), SiO2I(i,j,k)
-!                       write(6,*) CH(i,j,k), CH2(i,j,k), COII(i,j,k)
-!                       write(6,*) OII(i,j,k), OHII(i,j,k), H2OII(i,j,k)
-!    &                           , H3OII(i,j,k), O2II(i,j,k)
-!                       if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1) ) then
-!                       if (idspecies .gt. 0) then
-!                       write(6,*) Mg(i,j,k)
-!                       endif
-!                       if (idspecies .gt. 1) then
-!                       write(6,*) Al(i,j,k), S(i,j,k), Fe(i,j,k)
-!                       endif
-!                       endif
-!                    endif
-!                    if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1) ) then
-!                    if (idspecies .gt. 0) then
-!                       write(6,*) MgSiO3(i,j,k), AC(i,j,k)
-!                    endif
-!                    if (idspecies .gt. 1) then
-!                       write(6,*) SiM(i,j,k), FeM(i,j,k)
-!    &                           , Mg2SiO4(i,j,k), Fe3O4(i,j,k)
-!                       write(6,*) SiO2D(i,j,k), MgO(i,j,k)
-!    &                           , FeS(i,j,k), Al2O3(i,j,k)
-!                    endif
-!                    if (idspecies .gt. 2) then
-!                       write(6,*) reforg(i,j,k)
-!    &                           , volorg(i,j,k), H2Oice(i,j,k)
-!                    endif
-!                    endif
-!                    endif
-!                    if (iradtrans .eq. 1) then
-!                       write(6,*) kphHI(i,j,k), kphHeI(i,j,k)
-!    &                           , kphHeII(i,j,k), kdissH2I(i,j,k)
-!    &                           , photogamma(i,j,k)
-!                    endif
-!                    stop
-
-C                    dtit(i) = huge8
-C                    ttot(i) = huge8
-C                    go to 9997
-C                 endif
+!                 If not converge, restore arrays at ttot(i)
 
                   dsp = dsp0
                   ddsp = 0.d0
 
 !                 Iteration to solve ODEs
+
                   err_max=1.d2
                   itr=0
                   do while ((itr.lt.20) .and. (err_max.gt.1.d-8))
@@ -1955,74 +1877,11 @@ C                       ierr_max = idsp(isp)
 
 9998              continue
 
-C             TEST OUTPUT
-!                 write(6,*) ' '
-C                 write(6,*) '#', imp_eng, itr_time, ttot(i), dtit(i)
-C                 write(6,*) i,j,k, d(i,j,k)*dom, tgas(i)
-!                 if ( imetal .eq. 1 ) then
-!                    write(6,*) metal(i,j,k)/d(i,j,k)
-!                 endif
-!                 if ( idustfield .eq. 1 ) then
-!                    write(6,*) dust(i,j,k)/d(i,j,k)
-!                 endif
-C                 if ( ispecies .gt. 0 ) then
-C                    write(6,*) (dsp(isp)/d(i,j,k), isp= 1, 6)
-C                 endif
-C                 if ( ispecies .gt. 1 ) then
-C                    write(6,*) (dsp(isp)/d(i,j,k), isp= 7, 9)
-C                 endif
-!                 if ( ispecies .gt. 2 ) then
-!                    write(6,*) (dsp(isp)/d(i,j,k), isp= 10, 12)
-!                 endif
-!                 if ( ispecies .gt. 3 ) then
-!                    write(6,*) (dsp(isp)/d(i,j,k), isp= 13, 15)
-!                 endif
-!                 if ( itmask_metal(i) ) then
-!                 if ( imchem .eq. 1 ) then
-!                    write(6,*) (dsp(isp)/d(i,j,k), isp= 16, 19)
-!                    write(6,*) (dsp(isp)/d(i,j,k), isp= 20, 23)
-!                    write(6,*) (dsp(isp)/d(i,j,k), isp= 24, 26)
-!                    write(6,*) (dsp(isp)/d(i,j,k), isp= 27, 29)
-!                    write(6,*) (dsp(isp)/d(i,j,k), isp= 30, 34)
-!                    if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1) ) then
-!                    if (idspecies .gt. 0) then
-!                    write(6,*) (dsp(isp)/d(i,j,k), isp= 35, 35)
-!                    endif
-!                    if (idspecies .gt. 1) then
-!                    write(6,*) (dsp(isp)/d(i,j,k), isp= 36, 38)
-!                    endif
-!                    endif
-!                 endif
-!                 if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1) ) then
-!                 if (idspecies .gt. 0) then
-!                    write(6,*) (dsp(isp)/d(i,j,k), isp= 39, 40)
-!                 endif
-!                 if (idspecies .gt. 1) then
-!                    write(6,*) (dsp(isp)/d(i,j,k), isp= 41, 44)
-!                    write(6,*) (dsp(isp)/d(i,j,k), isp= 45, 48)
-!                 endif
-!                 if (idspecies .gt. 2) then
-!                    write(6,*) (dsp(isp)/d(i,j,k), isp= 49, 51)
-!                 endif
-!                 endif
-!                 endif
-!                 if (iradtrans .eq. 1) then
-!                    write(6,*) kphHI(i,j,k), kphHeI(i,j,k)
-!    &                        , kphHeII(i,j,k), kdissH2I(i,j,k)
-!    &                        , photogamma(i,j,k)
-!                 endif
 
 !             Check if the fractions are valid after an iteration
-!                 if ( itr .ge. 20 ) then
-!                   ierr = 1
-!                 endif
+
                   if (icool .eq. 1) then
-                     if (imp_eng .eq. 0) then
-                        if ( (e(i,j,k) .ne. e(i,j,k))
-     &                  .or. (e(i,j,k) .le. 0._DKIND) ) then
-                           ierr = 1
-                        endif
-                     else
+                     if (imp_eng .eq. 1) then
                         do isp = 1, nsp
                            if ( (dsp(idsp(isp)) .ne. dsp(idsp(isp)))
      &                     .or. (dsp(idsp(isp)) .le. 0._DKIND) ) then
