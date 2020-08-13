@@ -526,7 +526,7 @@
       logical itmask(in), anydust
       logical itmask_tmp(in), itmask_nr(in)
       logical itmask_metal(in)
-      integer itr, imp_eng, itr_time
+      integer itr, imp_eng(in), itr_time
       integer nsp, isp, jsp, id
       real*8  dspj, err, err_max
       integer,parameter   :: i_eng = 52
@@ -1031,9 +1031,9 @@ C    &   , coolunit*dom/mh ! = vbase1**2 / tbase1
             if (itmask_nr(i)) then
                if ( (d(i,j,k)*dom .gt. 1.d7)
      &         .and.(tgas(i) .gt. 1650.d0) ) then
-                  imp_eng = 1
+                  imp_eng(i) = 1
                else
-                  imp_eng = 0
+                  imp_eng(i) = 0
                endif
             endif
             enddo
@@ -1175,11 +1175,11 @@ C    &   , coolunit*dom/mh ! = vbase1**2 / tbase1
  1100          format(1p,22(e11.3))
 #endif /* WRITE_COOLING_DEBUG */
 
-            else if ((itmask_nr(i)).and.(imp_eng.eq.0)) then
+            else if ((itmask_nr(i)).and.(imp_eng(i).eq.0)) then
                dtit(i) = min(abs(0.1_DKIND*e(i,j,k)/edot(i)*d(i,j,k)),
      &              dt-ttot(i), 0.5_DKIND*dt)
 
-            else if ((itmask_nr(i)).and.(imp_eng.eq.1)) then
+            else if ((itmask_nr(i)).and.(imp_eng(i).eq.1)) then
                dtit(i) = dt - ttot(i)
 
             else               ! itmask
@@ -1335,7 +1335,7 @@ C    &   , coolunit*dom/mh ! = vbase1**2 / tbase1
 !           If density and temperature are low, update gas energy explicitly
 
                if (icool .eq. 1) then
-                  if (imp_eng .eq. 0) then
+                  if (imp_eng(i) .eq. 0) then
                      e(i,j,k)  = e(i,j,k) +
      &                    real(edot(i)/d(i,j,k)*dtit(i), RKIND)
                   endif
@@ -1360,7 +1360,7 @@ C    &   , coolunit*dom/mh ! = vbase1**2 / tbase1
                   if (idspecies .gt. 2) nsp = nsp + 3
                endif
                endif
-               nsp = nsp + imp_eng
+               nsp = nsp + imp_eng(i)
                allocate(idsp(nsp))
                allocate(mtrx(nsp,nsp))
                allocate(vec(nsp))
@@ -1513,7 +1513,7 @@ C    &   , coolunit*dom/mh ! = vbase1**2 / tbase1
                      endif
                   endif
                endif
-               if ( imp_eng .eq.1 ) then
+               if ( imp_eng(i) .eq.1 ) then
                   id = id + 1
                   idsp(id) = i_eng
                endif
@@ -1658,7 +1658,7 @@ C    &   , coolunit*dom/mh ! = vbase1**2 / tbase1
      & , tAC(i), tSiO2D(i), tMgO(i), tFeS(i), tAl2O3(i)
      & , treforg(i), tvolorg(i), tH2Oice(i)
      & , gasgr2a, gamma_isrf2a
-     & , imp_eng)
+     & , imp_eng(i))
 
                     do jsp = 1, nsp
                       dspj = eps * dsp(idsp(jsp))
@@ -1788,7 +1788,7 @@ C    &   , coolunit*dom/mh ! = vbase1**2 / tbase1
      & , tAC(i), tSiO2D(i), tMgO(i), tFeS(i), tAl2O3(i)
      & , treforg(i), tvolorg(i), tH2Oice(i)
      & , gasgr2a, gamma_isrf2a
-     & , imp_eng)
+     & , imp_eng(i))
 
                       do isp = 1, nsp
                         if ( (dsp(idsp(isp)).eq.0.d0)
@@ -1881,7 +1881,7 @@ C                       ierr_max = idsp(isp)
 !             Check if the fractions are valid after an iteration
 
                   if (icool .eq. 1) then
-                     if (imp_eng .eq. 1) then
+                     if (imp_eng(i) .eq. 1) then
                         do isp = 1, nsp
                            if ( (dsp(idsp(isp)) .ne. dsp(idsp(isp)))
      &                     .or. (dsp(idsp(isp)) .le. 0._DKIND) ) then
