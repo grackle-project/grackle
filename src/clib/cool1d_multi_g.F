@@ -2070,8 +2070,6 @@ C    &         , access='append'
 C    &       )
 C        do i = is+1, ie+1
 C           if ( itmask(i) ) then
-C           if ( (d(i,j,k)*dom .gt. 1.0d8)
-C    &      .and.(d(i,j,k)*dom .lt. 1.5d8) ) then
 C              write(10,'(13E13.5)')
 C    &             d(i,j,k)*dom
 C    &           , tgas(i)
@@ -2087,7 +2085,6 @@ C    &           , Ldst(i)/d(i,j,k)
 C    &           , LCIE(i)/d(i,j,k)
 C    &           , tau_con(i)
 C    &  !        , edotunit
-C           endif
 C           endif
 C        enddo
 C        close(10)

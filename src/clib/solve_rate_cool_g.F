@@ -1013,12 +1013,10 @@ C    &   , coolunit*dom/mh ! = vbase1**2 / tbase1
 !!             if (d(i,j,k)*dom .gt.
 !!   &          min(1.e6_DKIND/(metal(i,j,k)/d(i,j,k)/0.02d-4)**2
 !!   &             ,1.e6_DKIND)) then
-               if (
-     &         ( ( metal(i,j,k) .gt. 1.e-9_DKIND * d(i,j,k) )
-     &      .and.( d(i,j,k)*dom .gt. 1.e6_DKIND) ) .or.
-     &         ( ( metal(i,j,k) .le. 1.e-9_DKIND * d(i,j,k) )
-     &      .and.( d(i,j,k)*dom .gt. 1.e8_DKIND) )
-     &            ) then
+               if ( ( ( metal(i,j,k) .gt. 1.e-9_DKIND * d(i,j,k) )
+     &          .and. ( d(i,j,k)*dom .gt. 1.e6_DKIND) )
+     &         .or. ( ( metal(i,j,k) .le. 1.e-9_DKIND * d(i,j,k) )
+     &          .and. ( d(i,j,k)*dom .gt. 1.e8_DKIND) ) ) then
                   itmask(i) = .false.
                else
                   itmask_nr(i) = .false.
@@ -1880,15 +1878,13 @@ C                       ierr_max = idsp(isp)
 
 !             Check if the fractions are valid after an iteration
 
-                  if (icool .eq. 1) then
-                     if (imp_eng(i) .eq. 1) then
-                        do isp = 1, nsp
-                           if ( (dsp(idsp(isp)) .ne. dsp(idsp(isp)))
-     &                     .or. (dsp(idsp(isp)) .le. 0._DKIND) ) then
-                              ierr = 1
-                           endif
-                        enddo
-                     endif
+                  if( (ispecies .gt. 0) .and. (icool .eq. 1) ) then
+                     do isp = 1, nsp
+                        if ( (dsp(idsp(isp)) .ne. dsp(idsp(isp)))
+     &                  .or. (dsp(idsp(isp)) .le. 0._DKIND) ) then
+                           ierr = 1
+                        endif
+                     enddo
                   endif
                   if(ierr .eq. 1) then
                      dtit(i) = 0.5d0*dtit(i)
@@ -1976,8 +1972,6 @@ C                       ierr_max = idsp(isp)
                endif
 
                e(i,j,k)     = dsp(i_eng)
-
-9997           continue
 
                deallocate(idsp)
                deallocate(vec)
@@ -2107,6 +2101,24 @@ c            WARNING_MESSAGE
      &                   , SN0_fC, SN0_fO, SN0_fMg, SN0_fAl, SN0_fSi
      &                   , SN0_fS, SN0_fFe
      &                      )
+
+      call ceiling_species_g(d, de, HI, HII, HeI, HeII, HeIII,
+     &                     HM, H2I, H2II, DI, DII, HDI, metal, dust,
+     &                     is, ie, js, je, ks, ke,
+     &                     in, jn, kn, ispecies, imetal, idustfield
+     &                   , DM, HDII, HeHII
+     &                   , imabund, imchem, idspecies, immulti
+     &                   , igrgr, idsub
+     &                   , CI, CII, CO, CO2
+     &                   , OI, OH, H2O, O2
+     &                   , SiI, SiOI, SiO2I
+     &                   , CH, CH2, COII, OII
+     &                   , OHII, H2OII, H3OII, O2II
+     &                   , Mg, Al, S, Fe
+     &                   , SiM, FeM, Mg2SiO4, MgSiO3, Fe3O4
+     &                   , AC, SiO2D, MgO, FeS, Al2O3
+     &                   , reforg, volorg, H2Oice
+     &                   , metal_loc, metal_C30, metal_F13)
 #endif
 
       endif
@@ -6032,10 +6044,14 @@ C***** H2Oice **********
       if (imchem .eq. 1) then
       do i = is+1, ie+1
 !     if (itmask_metal(i)) then
-!!       if (d(i,j,k)*dom .lt. 1.e6_DKIND) then
-         if (d(i,j,k)*dom .lt. 
-     &    min(1.e6_DKIND/(metal(i,j,k)/d(i,j,k)/0.02d-4)**2
-     &       ,1.e6_DKIND)) then
+!        if (d(i,j,k)*dom .lt. 1.e6_DKIND) then
+!!       if (d(i,j,k)*dom .lt. 
+!!   &    min(1.e6_DKIND/(metal(i,j,k)/d(i,j,k)/0.02d-4)**2
+!!   &       ,1.e6_DKIND)) then
+         if ( ( ( metal(i,j,k) .gt. 1.e-9_DKIND * d(i,j,k) )
+     &    .and. ( d(i,j,k)*dom .lt. 1.e6_DKIND) )
+     &   .or. ( ( metal(i,j,k) .le. 1.e-9_DKIND * d(i,j,k) )
+     &    .and. ( d(i,j,k)*dom .lt. 1.e8_DKIND) ) ) then
 
             totalOg = 16._DKIND/28._DKIND*   CO(i,j,k)
      &              + 32._DKIND/44._DKIND*  CO2(i,j,k)
