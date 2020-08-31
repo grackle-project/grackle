@@ -55,7 +55,9 @@ extern void FORTRAN_NAME(calc_tdust_3d_g)(
       , gr_float *AC, gr_float *SiO2D, gr_float *MgO, gr_float *FeS, gr_float *Al2O3
       , gr_float *reforg, gr_float *volorg, gr_float *H2Oice
       , int *immulti, int *imabund, int *idspecies, int *itdmulti, int *idsub
-      , gr_float *metal_loc, gr_float *metal_C30, gr_float *metal_F13
+      , gr_float *metal_loc, gr_float *metal_C13, gr_float *metal_C20, gr_float *metal_C25, gr_float *metal_C30
+      , gr_float *metal_F13, gr_float *metal_F15, gr_float *metal_F50, gr_float *metal_F80
+      , gr_float *metal_P170, gr_float *metal_P200, gr_float *metal_Y19
       , int *SN0_N
       , double *SN0_fSiM, double *SN0_fFeM, double *SN0_fMg2SiO4, double *SN0_fMgSiO3, double *SN0_fFe3O4
       , double *SN0_fAC, double *SN0_fSiO2D, double *SN0_fMgO, double *SN0_fFeS, double *SN0_fAl2O3
@@ -198,8 +200,17 @@ int local_calculate_dust_temperature(chemistry_data *my_chemistry,
      ,&my_chemistry->dust_temperature_multi
      ,&my_chemistry->dust_sublimation
      , my_fields->metal_loc
+     , my_fields->metal_C13
+     , my_fields->metal_C20
+     , my_fields->metal_C25
      , my_fields->metal_C30
      , my_fields->metal_F13
+     , my_fields->metal_F15
+     , my_fields->metal_F50
+     , my_fields->metal_F80
+     , my_fields->metal_P170
+     , my_fields->metal_P200
+     , my_fields->metal_Y19
      ,&my_chemistry->SN0_N
      , my_chemistry->SN0_fSiM    
      , my_chemistry->SN0_fFeM    

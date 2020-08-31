@@ -100,7 +100,10 @@
      &              , grain_D, grain_T, grain_dD, grain_dT
      &              , Hgrain, Tgrain, Ograin, Lgrain
      &              , immulti, imabund, idspecies, itdmulti, idsub
-     &              , metal_loc, metal_C30, metal_F13
+     &              , metal_loc
+     &              , metal_C13, metal_C20, metal_C25, metal_C30
+     &              , metal_F13, metal_F15, metal_F50, metal_F80
+     &              , metal_P170, metal_P200, metal_Y19
      &              , SN0_N
      &              , SN0_XC , SN0_XO, SN0_XMg, SN0_XAl
      &              , SN0_XSi, SN0_XS, SN0_XFe
@@ -270,7 +273,12 @@
      &      , Al2O3(in,jn,kn)
      &      , reforg(in,jn,kn), volorg(in,jn,kn), H2Oice(in,jn,kn)
        R_PREC metal_loc(in,jn,kn)
-     &      , metal_C30(in,jn,kn), metal_F13(in,jn,kn)
+     &      , metal_C13(in,jn,kn), metal_C20(in,jn,kn)
+     &      , metal_C25(in,jn,kn), metal_C30(in,jn,kn)
+     &      , metal_F13(in,jn,kn), metal_F15(in,jn,kn)
+     &      , metal_F50(in,jn,kn), metal_F80(in,jn,kn)
+     &      , metal_P170(in,jn,kn), metal_P200(in,jn,kn)
+     &      , metal_Y19(in,jn,kn)
 
 !  Radiative transfer fields
 
@@ -602,7 +610,10 @@ C    &   , coolunit*dom/mh ! = vbase1**2 / tbase1
      &                   , AC, SiO2D, MgO, FeS, Al2O3
      &                   , reforg, volorg, H2Oice
      &                   , immulti, imabund, idspecies, itdmulti, idsub
-     &                   , metal_loc, metal_C30, metal_F13
+     &                   , metal_loc
+     &                   , metal_C13, metal_C20, metal_C25, metal_C30
+     &                   , metal_F13, metal_F15, metal_F50, metal_F80
+     &                   , metal_P170, metal_P200, metal_Y19
      &                   , SN0_N
      &                   , SN0_XC, SN0_XO, SN0_XMg, SN0_XAl, SN0_XSi
      &                   , SN0_XS, SN0_XFe
@@ -634,7 +645,10 @@ C    &   , coolunit*dom/mh ! = vbase1**2 / tbase1
      &                , SiM, FeM, Mg2SiO4, MgSiO3, Fe3O4
      &                , AC, SiO2D, MgO, FeS, Al2O3
      &                , reforg, volorg, H2Oice
-     &                , metal_loc, metal_C30, metal_F13)
+     &                , metal_loc
+     &                , metal_C13, metal_C20, metal_C25, metal_C30
+     &                , metal_F13, metal_F15, metal_F50, metal_F80
+     &                , metal_P170, metal_P200, metal_Y19)
 
       endif
 
@@ -655,7 +669,10 @@ C    &   , coolunit*dom/mh ! = vbase1**2 / tbase1
      &                   , SiM, FeM, Mg2SiO4, MgSiO3, Fe3O4
      &                   , AC, SiO2D, MgO, FeS, Al2O3
      &                   , reforg, volorg, H2Oice
-     &                   , metal_loc, metal_C30, metal_F13)
+     &                   , metal_loc
+     &                   , metal_C13, metal_C20, metal_C25, metal_C30
+     &                   , metal_F13, metal_F15, metal_F50, metal_F80
+     &                   , metal_P170, metal_P200, metal_Y19)
 #endif
 
 
@@ -853,7 +870,10 @@ C    &   , coolunit*dom/mh ! = vbase1**2 / tbase1
      &              , grain_D, grain_T, grain_dD, grain_dT
      &              , Tgrain, Ograin, Lgrain
      &              , immulti, imabund, idspecies, itdmulti, idsub
-     &              , metal_loc, metal_C30, metal_F13
+     &              , metal_loc
+     &              , metal_C13, metal_C20, metal_C25, metal_C30
+     &              , metal_F13, metal_F15, metal_F50, metal_F80
+     &              , metal_P170, metal_P200, metal_Y19
      &              , SN0_N
      &              , SN0_fSiM, SN0_fFeM, SN0_fMg2SiO4, SN0_fMgSiO3
      &              , SN0_fFe3O4, SN0_fAC, SN0_fSiO2D, SN0_fMgO
@@ -954,7 +974,10 @@ C    &   , coolunit*dom/mh ! = vbase1**2 / tbase1
      &              , grain_D, grain_T, grain_dD, grain_dT
      &              , Hgrain
      &              , immulti, imabund, idspecies, itdmulti, idsub
-     &              , metal_loc, metal_C30, metal_F13
+     &              , metal_loc
+     &              , metal_C13, metal_C20, metal_C25, metal_C30
+     &              , metal_F13, metal_F15, metal_F50, metal_F80
+     &              , metal_P170, metal_P200, metal_Y19
      &              , SN0_N
      &              , SN0_fSiM, SN0_fFeM, SN0_fMg2SiO4, SN0_fMgSiO3
      &              , SN0_fFe3O4, SN0_fAC, SN0_fSiO2D, SN0_fMgO
@@ -1009,17 +1032,20 @@ C    &   , coolunit*dom/mh ! = vbase1**2 / tbase1
             do i = is+1, ie+1
             if ( itmask_tmp(i) ) then
 
-!              if (d(i,j,k)*dom .gt. 1.e6_DKIND) then
-!!             if (d(i,j,k)*dom .gt.
+!              if (d(i,j,k)*dom .lt. 1.e6_DKIND) then
+!!             if (d(i,j,k)*dom .lt.
 !!   &          min(1.e6_DKIND/(metal(i,j,k)/d(i,j,k)/0.02d-4)**2
 !!   &             ,1.e6_DKIND)) then
-               if ( ( ( metal(i,j,k) .gt. 1.e-9_DKIND * d(i,j,k) )
-     &          .and. ( d(i,j,k)*dom .gt. 1.e6_DKIND) )
-     &         .or. ( ( metal(i,j,k) .le. 1.e-9_DKIND * d(i,j,k) )
-     &          .and. ( d(i,j,k)*dom .gt. 1.e8_DKIND) ) ) then
-                  itmask(i) = .false.
-               else
+               if ( ( (imetal .eq. 0)
+     &          .and. (d(i,j,k)*dom .lt. 1.e8_DKIND) )
+     &         .or. ( (imetal .eq. 1)
+     &          .and. ( ( (metal(i,j,k) .le. 1.e-9_DKIND * d(i,j,k))
+     &              .and. (d(i,j,k)*dom .lt. 1.e8_DKIND) )
+     &             .or. ( (metal(i,j,k) .gt. 1.e-9_DKIND * d(i,j,k))
+     &              .and. (d(i,j,k)*dom .lt. 1.e6_DKIND) ) ) ) ) then
                   itmask_nr(i) = .false.
+               else
+                  itmask(i) = .false.
                endif
 
             endif
@@ -1636,7 +1662,10 @@ C    &   , coolunit*dom/mh ! = vbase1**2 / tbase1
      & , grain_D, grain_T, grain_dD, grain_dT
      & , Hgrain, Tgrain, Ograin, Lgrain
      & , immulti, imabund, idspecies, itdmulti, idsub
-     & , metal_loc(i,j,k), metal_C30(i,j,k), metal_F13(i,j,k)
+     & , metal_loc(i,j,k), metal_C13(i,j,k), metal_C20(i,j,k)
+     & , metal_C25(i,j,k), metal_C30(i,j,k), metal_F13(i,j,k)
+     & , metal_F15(i,j,k), metal_F50(i,j,k), metal_F80(i,j,k)
+     & , metal_P170(i,j,k), metal_P200(i,j,k), metal_Y19(i,j,k)
      & , SN0_N
      & , SN0_fSiM, SN0_fFeM, SN0_fMg2SiO4, SN0_fMgSiO3
      & , SN0_fFe3O4, SN0_fAC, SN0_fSiO2D, SN0_fMgO
@@ -1766,7 +1795,10 @@ C    &   , coolunit*dom/mh ! = vbase1**2 / tbase1
      & , grain_D, grain_T, grain_dD, grain_dT
      & , Hgrain, Tgrain, Ograin, Lgrain
      & , immulti, imabund, idspecies, itdmulti, idsub
-     & , metal_loc(i,j,k), metal_C30(i,j,k), metal_F13(i,j,k)
+     & , metal_loc(i,j,k), metal_C13(i,j,k), metal_C20(i,j,k)
+     & , metal_C25(i,j,k), metal_C30(i,j,k), metal_F13(i,j,k)
+     & , metal_F15(i,j,k), metal_F50(i,j,k), metal_F80(i,j,k)
+     & , metal_P170(i,j,k), metal_P200(i,j,k), metal_Y19(i,j,k)
      & , SN0_N
      & , SN0_fSiM, SN0_fFeM, SN0_fMg2SiO4, SN0_fMgSiO3
      & , SN0_fFe3O4, SN0_fAC, SN0_fSiO2D, SN0_fMgO
@@ -2069,7 +2101,10 @@ c            WARNING_MESSAGE
      &                , SiM, FeM, Mg2SiO4, MgSiO3, Fe3O4
      &                , AC, SiO2D, MgO, FeS, Al2O3
      &                , reforg, volorg, H2Oice
-     &                , metal_loc, metal_C30, metal_F13)
+     &                , metal_loc
+     &                , metal_C13, metal_C20, metal_C25, metal_C30
+     &                , metal_F13, metal_F15, metal_F50, metal_F80
+     &                , metal_P170, metal_P200, metal_Y19)
 
       endif
 
@@ -2094,7 +2129,10 @@ c            WARNING_MESSAGE
      &                   , AC, SiO2D, MgO, FeS, Al2O3
      &                   , reforg, volorg, H2Oice
      &                   , immulti, imabund, idspecies, itdmulti, idsub
-     &                   , metal_loc, metal_C30, metal_F13
+     &                   , metal_loc
+     &                   , metal_C13, metal_C20, metal_C25, metal_C30
+     &                   , metal_F13, metal_F15, metal_F50, metal_F80
+     &                   , metal_P170, metal_P200, metal_Y19
      &                   , SN0_N
      &                   , SN0_XC, SN0_XO, SN0_XMg, SN0_XAl, SN0_XSi
      &                   , SN0_XS, SN0_XFe
@@ -2118,7 +2156,10 @@ c            WARNING_MESSAGE
      &                   , SiM, FeM, Mg2SiO4, MgSiO3, Fe3O4
      &                   , AC, SiO2D, MgO, FeS, Al2O3
      &                   , reforg, volorg, H2Oice
-     &                   , metal_loc, metal_C30, metal_F13)
+     &                   , metal_loc
+     &                   , metal_C13, metal_C20, metal_C25, metal_C30
+     &                   , metal_F13, metal_F15, metal_F50, metal_F80
+     &                   , metal_P170, metal_P200, metal_Y19)
 #endif
 
       endif
@@ -2147,7 +2188,10 @@ c -----------------------------------------------------------
      &                      , SiM, FeM, Mg2SiO4, MgSiO3, Fe3O4
      &                      , AC, SiO2D, MgO, FeS, Al2O3
      &                      , reforg, volorg, H2Oice
-     &                      , metal_loc, metal_C30, metal_F13)
+     &                      , metal_loc
+     &                      , metal_C13, metal_C20, metal_C25, metal_C30
+     &                      , metal_F13, metal_F15, metal_F50, metal_F80
+     &                      , metal_P170, metal_P200, metal_Y19)
 c -------------------------------------------------------------------
 
       implicit NONE
@@ -2178,7 +2222,12 @@ c -------------------------------------------------------------------
      &      , Al2O3(in,jn,kn)
      &      , reforg(in,jn,kn), volorg(in,jn,kn), H2Oice(in,jn,kn)
        R_PREC metal_loc(in,jn,kn)
-     &      , metal_C30(in,jn,kn), metal_F13(in,jn,kn)
+     &      , metal_C13(in,jn,kn), metal_C20(in,jn,kn)
+     &      , metal_C25(in,jn,kn), metal_C30(in,jn,kn)
+     &      , metal_F13(in,jn,kn), metal_F15(in,jn,kn)
+     &      , metal_F50(in,jn,kn), metal_F80(in,jn,kn)
+     &      , metal_P170(in,jn,kn), metal_P200(in,jn,kn)
+     &      , metal_Y19(in,jn,kn)
       real*8 factor
 
 !     locals
@@ -2249,8 +2298,17 @@ c -------------------------------------------------------------------
                   metal(i,j,k) = metal(i,j,k)*factor
                   if (immulti .gt. 0) then
                      metal_loc(i,j,k) = metal_loc(i,j,k)*factor
+                     metal_C13(i,j,k) = metal_C13(i,j,k)*factor
+                     metal_C20(i,j,k) = metal_C20(i,j,k)*factor
+                     metal_C25(i,j,k) = metal_C25(i,j,k)*factor
                      metal_C30(i,j,k) = metal_C30(i,j,k)*factor
                      metal_F13(i,j,k) = metal_F13(i,j,k)*factor
+                     metal_F15(i,j,k) = metal_F15(i,j,k)*factor
+                     metal_F50(i,j,k) = metal_F50(i,j,k)*factor
+                     metal_F80(i,j,k) = metal_F80(i,j,k)*factor
+                     metal_P170(i,j,k)=metal_P170(i,j,k)*factor
+                     metal_P200(i,j,k)=metal_P200(i,j,k)*factor
+                     metal_Y19(i,j,k) = metal_Y19(i,j,k)*factor
                   endif
 !!                if (metal(i,j,k) .gt. 1.d-9 * d(i,j,k)) then
                   if (imchem .eq. 1) then
@@ -2344,7 +2402,10 @@ c -----------------------------------------------------------
      &                   , SiM, FeM, Mg2SiO4, MgSiO3, Fe3O4
      &                   , AC, SiO2D, MgO, FeS, Al2O3
      &                   , reforg, volorg, H2Oice
-     &                   , metal_loc, metal_C30, metal_F13)
+     &                   , metal_loc
+     &                   , metal_C13, metal_C20, metal_C25, metal_C30
+     &                   , metal_F13, metal_F15, metal_F50, metal_F80
+     &                   , metal_P170, metal_P200, metal_Y19)
 c -------------------------------------------------------------------
 
       implicit NONE
@@ -2376,7 +2437,12 @@ c -------------------------------------------------------------------
      &      , Al2O3(in,jn,kn)
      &      , reforg(in,jn,kn), volorg(in,jn,kn), H2Oice(in,jn,kn)
        R_PREC metal_loc(in,jn,kn)
-     &      , metal_C30(in,jn,kn), metal_F13(in,jn,kn)
+     &      , metal_C13(in,jn,kn), metal_C20(in,jn,kn)
+     &      , metal_C25(in,jn,kn), metal_C30(in,jn,kn)
+     &      , metal_F13(in,jn,kn), metal_F15(in,jn,kn)
+     &      , metal_F50(in,jn,kn), metal_F80(in,jn,kn)
+     &      , metal_P170(in,jn,kn), metal_P200(in,jn,kn)
+     &      , metal_Y19(in,jn,kn)
 
 !     locals
 
@@ -2438,9 +2504,27 @@ c -------------------------------------------------------------------
                   if( immulti .gt. 0 ) then
                      metal_loc(i,j,k) = min(max(metal_loc(i,j,k), tiny),
      &                 0.9_RKIND*d(i,j,k))
+                     metal_C13(i,j,k) = min(max(metal_C13(i,j,k), tiny),
+     &                 0.9_RKIND*d(i,j,k))
+                     metal_C20(i,j,k) = min(max(metal_C20(i,j,k), tiny),
+     &                 0.9_RKIND*d(i,j,k))
+                     metal_C25(i,j,k) = min(max(metal_C25(i,j,k), tiny),
+     &                 0.9_RKIND*d(i,j,k))
                      metal_C30(i,j,k) = min(max(metal_C30(i,j,k), tiny),
      &                 0.9_RKIND*d(i,j,k))
                      metal_F13(i,j,k) = min(max(metal_F13(i,j,k), tiny),
+     &                 0.9_RKIND*d(i,j,k))
+                     metal_F15(i,j,k) = min(max(metal_F15(i,j,k), tiny),
+     &                 0.9_RKIND*d(i,j,k))
+                     metal_F50(i,j,k) = min(max(metal_F50(i,j,k), tiny),
+     &                 0.9_RKIND*d(i,j,k))
+                     metal_F80(i,j,k) = min(max(metal_F80(i,j,k), tiny),
+     &                 0.9_RKIND*d(i,j,k))
+                     metal_P170(i,j,k)=min(max(metal_P170(i,j,k), tiny),
+     &                 0.9_RKIND*d(i,j,k))
+                     metal_P200(i,j,k)=min(max(metal_P200(i,j,k), tiny),
+     &                 0.9_RKIND*d(i,j,k))
+                     metal_Y19(i,j,k) = min(max(metal_Y19(i,j,k), tiny),
      &                 0.9_RKIND*d(i,j,k))
                   endif
 !!                if (metal(i,j,k) .gt. 1.d-9 * d(i,j,k)) then
@@ -2585,7 +2669,10 @@ c -------------------------------------------------------------------
      &              , grain_D, grain_T, grain_dD, grain_dT
      &              , Hgrain
      &              , immulti, imabund, idspecies, itdmulti, idsub
-     &              , metal_loc, metal_C30, metal_F13
+     &              , metal_loc
+     &              , metal_C13, metal_C20, metal_C25, metal_C30
+     &              , metal_F13, metal_F15, metal_F50, metal_F80
+     &              , metal_P170, metal_P200, metal_Y19
      &              , SN0_N
      &              , SN0_fSiM, SN0_fFeM, SN0_fMg2SiO4, SN0_fMgSiO3
      &              , SN0_fFe3O4, SN0_fAC, SN0_fSiO2D, SN0_fMgO
@@ -2666,7 +2753,12 @@ c -------------------------------------------------------------------
      &        DI(in,jn,kn), DII(in,jn,kn), HDI(in,jn,kn)
        R_PREC metal(in,jn,kn)
        R_PREC metal_loc(in,jn,kn)
-     &      , metal_C30(in,jn,kn), metal_F13(in,jn,kn)
+     &      , metal_C13(in,jn,kn), metal_C20(in,jn,kn)
+     &      , metal_C25(in,jn,kn), metal_C30(in,jn,kn)
+     &      , metal_F13(in,jn,kn), metal_F15(in,jn,kn)
+     &      , metal_F50(in,jn,kn), metal_F80(in,jn,kn)
+     &      , metal_P170(in,jn,kn), metal_P200(in,jn,kn)
+     &      , metal_Y19(in,jn,kn)
        R_PREC DM(in,jn,kn)   , HDII(in,jn,kn)   , HeHII(in,jn,kn)
      &      , CI(in,jn,kn)   , CII(in,jn,kn)    , CO(in,jn,kn)
      &      , CO2(in,jn,kn)  , OI(in,jn,kn)     , OH(in,jn,kn)
@@ -3101,7 +3193,10 @@ c -------------------------------------------------------------------
      &           , SiM, FeM, Mg2SiO4, MgSiO3, Fe3O4
      &           , AC, SiO2D, MgO, FeS, Al2O3
      &           , reforg, volorg, H2Oice
-     &           , metal, metal_loc, metal_C30, metal_F13
+     &           , metal, metal_loc
+     &           , metal_C13, metal_C20, metal_C25, metal_C30
+     &           , metal_F13, metal_F15, metal_F50, metal_F80
+     &           , metal_P170, metal_P200, metal_Y19
      &           , SN0_N
      &           , SN0_fSiM, SN0_fFeM, SN0_fMg2SiO4, SN0_fMgSiO3
      &           , SN0_fFe3O4, SN0_fAC, SN0_fSiO2D, SN0_fMgO
@@ -5669,7 +5764,10 @@ C***** H2Oice **********
      &                   , AC, SiO2D, MgO, FeS, Al2O3
      &                   , reforg, volorg, H2Oice
      &                   , immulti, imabund, idspecies, itdmulti, idsub
-     &                   , metal_loc, metal_C30, metal_F13
+     &                   , metal_loc
+     &                   , metal_C13, metal_C20, metal_C25, metal_C30
+     &                   , metal_F13, metal_F15, metal_F50, metal_F80
+     &                   , metal_P170, metal_P200, metal_Y19
      &                   , SN0_N
      &                   , SN0_XC, SN0_XO, SN0_XMg, SN0_XAl, SN0_XSi
      &                   , SN0_XS, SN0_XFe
@@ -5708,7 +5806,12 @@ C***** H2Oice **********
      &      , reforg(in,jn,kn), volorg(in,jn,kn), H2Oice(in,jn,kn)
       integer immulti, imabund, idspecies, itdmulti, idsub
        R_PREC metal_loc(in,jn,kn)
-     &      , metal_C30(in,jn,kn), metal_F13(in,jn,kn)
+     &      , metal_C13(in,jn,kn), metal_C20(in,jn,kn)
+     &      , metal_C25(in,jn,kn), metal_C30(in,jn,kn)
+     &      , metal_F13(in,jn,kn), metal_F15(in,jn,kn)
+     &      , metal_F50(in,jn,kn), metal_F80(in,jn,kn)
+     &      , metal_P170(in,jn,kn), metal_P200(in,jn,kn)
+     &      , metal_Y19(in,jn,kn)
       integer SN0_N
       real*8  SN0_XC (SN0_N), SN0_XO(SN0_N), SN0_XMg(SN0_N)
      &      , SN0_XAl(SN0_N), SN0_XSi(SN0_N), SN0_XS(SN0_N)
@@ -5847,18 +5950,40 @@ C***** H2Oice **********
          
             do i = is+1, ie+1
                totalZ = metal_loc(i,j,k)
-     &                + metal_C30(i,j,k)
-     &                + metal_F13(i,j,k)
+     &           + metal_C13(i,j,k) + metal_C20(i,j,k)
+     &           + metal_C25(i,j,k) + metal_C30(i,j,k)
+     &           + metal_F13(i,j,k) + metal_F15(i,j,k)
+     &           + metal_F50(i,j,k) + metal_F80(i,j,k)
+     &           + metal_P170(i,j,k)+ metal_P200(i,j,k)
+     &           + metal_Y19(i,j,k)
                correctZ = metal(i,j,k) / totalZ
                metal_loc(i,j,k) = metal_loc(i,j,k) * correctZ
+               metal_C13(i,j,k) = metal_C13(i,j,k) * correctZ
+               metal_C20(i,j,k) = metal_C20(i,j,k) * correctZ
+               metal_C25(i,j,k) = metal_C25(i,j,k) * correctZ
                metal_C30(i,j,k) = metal_C30(i,j,k) * correctZ
                metal_F13(i,j,k) = metal_F13(i,j,k) * correctZ
+               metal_F15(i,j,k) = metal_F15(i,j,k) * correctZ
+               metal_F50(i,j,k) = metal_F50(i,j,k) * correctZ
+               metal_F80(i,j,k) = metal_F80(i,j,k) * correctZ
+               metal_P170(i,j,k)= metal_P170(i,j,k)* correctZ
+               metal_P200(i,j,k)= metal_P200(i,j,k)* correctZ
+               metal_Y19(i,j,k) = metal_Y19(i,j,k) * correctZ
             enddo
             
-            nSN = 3
-            SN_i(1) = 1; SN_metal(:,1) = metal_loc(:,j,k)
-            SN_i(2) = 5; SN_metal(:,2) = metal_C30(:,j,k)
-            SN_i(3) = 6; SN_metal(:,3) = metal_F13(:,j,k)
+            nSN = 11
+            SN_i( 1) = 1; SN_metal(:, 1) = metal_loc(:,j,k)
+            SN_i( 2) = 2; SN_metal(:, 2) = metal_C13(:,j,k)
+            SN_i( 3) = 3; SN_metal(:, 3) = metal_C20(:,j,k)
+            SN_i( 4) = 4; SN_metal(:, 4) = metal_C25(:,j,k)
+            SN_i( 5) = 5; SN_metal(:, 5) = metal_C30(:,j,k)
+            SN_i( 6) = 6; SN_metal(:, 6) = metal_F13(:,j,k)
+            SN_i( 7) = 7; SN_metal(:, 7) = metal_F15(:,j,k)
+            SN_i( 8) = 8; SN_metal(:, 8) = metal_F50(:,j,k)
+            SN_i( 9) = 9; SN_metal(:, 9) = metal_F80(:,j,k)
+            SN_i(10) =10; SN_metal(:,10) = metal_P170(:,j,k)
+            SN_i(11) =11; SN_metal(:,11) = metal_P200(:,j,k)
+            SN_i(12) =12; SN_metal(:,12) = metal_Y19(:,j,k)
          
             do i = is+1, ie+1
                 Ct(i) = 0._DKIND;  Cg(i) = 0._DKIND
@@ -5871,21 +5996,21 @@ C***** H2Oice **********
                do iSN = 1, nSN
                   iSN0 = SN_i(iSN)
 
-                   Ct(i) =  Ct(i) + SN0_XC (iSN0) * SN_metal(i,iSN0)
-                   Ot(i) =  Ot(i) + SN0_XO (iSN0) * SN_metal(i,iSN0)
-                  Mgt(i) = Mgt(i) + SN0_XMg(iSN0) * SN_metal(i,iSN0)
-                  Alt(i) = Alt(i) + SN0_XAl(iSN0) * SN_metal(i,iSN0)
-                  Sit(i) = Sit(i) + SN0_XSi(iSN0) * SN_metal(i,iSN0)
-                   St(i) =  St(i) + SN0_XS (iSN0) * SN_metal(i,iSN0)
-                  Fet(i) = Fet(i) + SN0_XFe(iSN0) * SN_metal(i,iSN0)
+                   Ct(i) =  Ct(i) + SN0_XC (iSN0) * SN_metal(i,iSN)
+                   Ot(i) =  Ot(i) + SN0_XO (iSN0) * SN_metal(i,iSN)
+                  Mgt(i) = Mgt(i) + SN0_XMg(iSN0) * SN_metal(i,iSN)
+                  Alt(i) = Alt(i) + SN0_XAl(iSN0) * SN_metal(i,iSN)
+                  Sit(i) = Sit(i) + SN0_XSi(iSN0) * SN_metal(i,iSN)
+                   St(i) =  St(i) + SN0_XS (iSN0) * SN_metal(i,iSN)
+                  Fet(i) = Fet(i) + SN0_XFe(iSN0) * SN_metal(i,iSN)
 
-                   Cg(i) =  Cg(i) + SN0_fC (iSN0) * SN_metal(i,iSN0)
-                   Og(i) =  Og(i) + SN0_fO (iSN0) * SN_metal(i,iSN0)
-                  Mgg(i) = Mgg(i) + SN0_fMg(iSN0) * SN_metal(i,iSN0)
-                  Alg(i) = Alg(i) + SN0_fAl(iSN0) * SN_metal(i,iSN0)
-                  Sig(i) = Sig(i) + SN0_fSi(iSN0) * SN_metal(i,iSN0)
-                   Sg(i) =  Sg(i) + SN0_fS (iSN0) * SN_metal(i,iSN0)
-                  Feg(i) = Feg(i) + SN0_fFe(iSN0) * SN_metal(i,iSN0)
+                   Cg(i) =  Cg(i) + SN0_fC (iSN0) * SN_metal(i,iSN)
+                   Og(i) =  Og(i) + SN0_fO (iSN0) * SN_metal(i,iSN)
+                  Mgg(i) = Mgg(i) + SN0_fMg(iSN0) * SN_metal(i,iSN)
+                  Alg(i) = Alg(i) + SN0_fAl(iSN0) * SN_metal(i,iSN)
+                  Sig(i) = Sig(i) + SN0_fSi(iSN0) * SN_metal(i,iSN)
+                   Sg(i) =  Sg(i) + SN0_fS (iSN0) * SN_metal(i,iSN)
+                  Feg(i) = Feg(i) + SN0_fFe(iSN0) * SN_metal(i,iSN)
                enddo
             enddo
             
@@ -6048,10 +6173,13 @@ C***** H2Oice **********
 !!       if (d(i,j,k)*dom .lt. 
 !!   &    min(1.e6_DKIND/(metal(i,j,k)/d(i,j,k)/0.02d-4)**2
 !!   &       ,1.e6_DKIND)) then
-         if ( ( ( metal(i,j,k) .gt. 1.e-9_DKIND * d(i,j,k) )
-     &    .and. ( d(i,j,k)*dom .lt. 1.e6_DKIND) )
-     &   .or. ( ( metal(i,j,k) .le. 1.e-9_DKIND * d(i,j,k) )
-     &    .and. ( d(i,j,k)*dom .lt. 1.e8_DKIND) ) ) then
+         if ( ( (imetal .eq. 0)
+     &    .and. (d(i,j,k)*dom .lt. 1.e8_DKIND) )
+     &   .or. ( (imetal .eq. 1)
+     &    .and. ( ( (metal(i,j,k) .le. 1.e-9_DKIND * d(i,j,k))
+     &        .and. (d(i,j,k)*dom .lt. 1.e8_DKIND) )
+     &       .or. ( (metal(i,j,k) .gt. 1.e-9_DKIND * d(i,j,k))
+     &        .and. (d(i,j,k)*dom .lt. 1.e6_DKIND) ) ) ) ) then
 
             totalOg = 16._DKIND/28._DKIND*   CO(i,j,k)
      &              + 32._DKIND/44._DKIND*  CO2(i,j,k)

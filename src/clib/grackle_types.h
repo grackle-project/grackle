@@ -92,8 +92,17 @@ typedef struct
   gr_float *metal_density;
   gr_float *dust_density;
   gr_float *metal_loc;
+  gr_float *metal_C13;
+  gr_float *metal_C20;
+  gr_float *metal_C25;
   gr_float *metal_C30;
   gr_float *metal_F13;
+  gr_float *metal_F15;
+  gr_float *metal_F50;
+  gr_float *metal_F80;
+  gr_float *metal_P170;
+  gr_float *metal_P200;
+  gr_float *metal_Y19;
 
   gr_float *internal_energy;
   gr_float *x_velocity;

@@ -8,7 +8,10 @@
      &              , SiM, FeM, Mg2SiO4, MgSiO3, Fe3O4
      &              , AC, SiO2D, MgO, FeS, Al2O3
      &              , reforg, volorg, H2Oice
-     &              , metal, metal_loc, metal_C30, metal_F13
+     &              , metal, metal_loc
+     &              , metal_C13, metal_C20, metal_C25, metal_C30
+     &              , metal_F13, metal_F15, metal_F50, metal_F80
+     &              , metal_P170, metal_P200, metal_Y19
      &              , SN0_N
      &              , SN0_fSiM, SN0_fFeM, SN0_fMg2SiO4, SN0_fMgSiO3
      &              , SN0_fFe3O4, SN0_fAC, SN0_fSiO2D, SN0_fMgO
@@ -48,7 +51,12 @@
      &      , reforg(in,jn,kn), volorg(in,jn,kn), H2Oice(in,jn,kn)
       R_PREC  metal(in,jn,kn)
      &      , metal_loc(in,jn,kn)
-     &      , metal_C30(in,jn,kn), metal_F13(in,jn,kn)
+     &      , metal_C13(in,jn,kn), metal_C20(in,jn,kn)
+     &      , metal_C25(in,jn,kn), metal_C30(in,jn,kn)
+     &      , metal_F13(in,jn,kn), metal_F15(in,jn,kn)
+     &      , metal_F50(in,jn,kn), metal_F80(in,jn,kn)
+     &      , metal_P170(in,jn,kn), metal_P200(in,jn,kn)
+     &      , metal_Y19(in,jn,kn)
 !     table
       integer SN0_N
       real*8  SN0_fSiM(SN0_N), SN0_fFeM(SN0_N), SN0_fMg2SiO4(SN0_N)
@@ -135,10 +143,55 @@
          SN_i(1) = imabund + 1
          SN_metal(:,1) = metal(:,j,k)
       else
-         nSN = 3
-         SN_i(1) = 1; SN_metal(:,1) = metal_loc(:,j,k)
-         SN_i(2) = 5; SN_metal(:,2) = metal_C30(:,j,k)
-         SN_i(3) = 6; SN_metal(:,3) = metal_F13(:,j,k)
+         nSN = 0
+         if(maxval(metal_loc(:,j,k) /metal(:,j,k)) .gt. 0.01_DKIND) then
+            nSN = nSN + 1
+            SN_i(nSN) =  1; SN_metal(:,nSN) = metal_loc(:,j,k)
+         endif
+         if(maxval(metal_C13(:,j,k) /metal(:,j,k)) .gt. 0.01_DKIND) then
+            nSN = nSN + 1
+            SN_i(nSN) =  2; SN_metal(:,nSN) = metal_C13(:,j,k)
+         endif
+         if(maxval(metal_C20(:,j,k) /metal(:,j,k)) .gt. 0.01_DKIND) then
+            nSN = nSN + 1
+            SN_i(nSN) =  3; SN_metal(:,nSN) = metal_C20(:,j,k)
+         endif
+         if(maxval(metal_C25(:,j,k) /metal(:,j,k)) .gt. 0.01_DKIND) then
+            nSN = nSN + 1
+            SN_i(nSN) =  4; SN_metal(:,nSN) = metal_C25(:,j,k)
+         endif
+         if(maxval(metal_C30(:,j,k) /metal(:,j,k)) .gt. 0.01_DKIND) then
+            nSN = nSN + 1
+            SN_i(nSN) =  5; SN_metal(:,nSN) = metal_C30(:,j,k)
+         endif
+         if(maxval(metal_F13(:,j,k) /metal(:,j,k)) .gt. 0.01_DKIND) then
+            nSN = nSN + 1
+            SN_i(nSN) =  6; SN_metal(:,nSN) = metal_F13(:,j,k)
+         endif
+         if(maxval(metal_F15(:,j,k) /metal(:,j,k)) .gt. 0.01_DKIND) then
+            nSN = nSN + 1
+            SN_i(nSN) =  7; SN_metal(:,nSN) = metal_F15(:,j,k)
+         endif
+         if(maxval(metal_F50(:,j,k) /metal(:,j,k)) .gt. 0.01_DKIND) then
+            nSN = nSN + 1
+            SN_i(nSN) =  8; SN_metal(:,nSN) = metal_F50(:,j,k)
+         endif
+         if(maxval(metal_F80(:,j,k) /metal(:,j,k)) .gt. 0.01_DKIND) then
+            nSN = nSN + 1
+            SN_i(nSN) =  9; SN_metal(:,nSN) = metal_F80(:,j,k)
+         endif
+         if(maxval(metal_P170(:,j,k)/metal(:,j,k)) .gt. 0.01_DKIND) then
+            nSN = nSN + 1
+            SN_i(nSN) = 10; SN_metal(:,nSN) = metal_P170(:,j,k)
+         endif
+         if(maxval(metal_P200(:,j,k)/metal(:,j,k)) .gt. 0.01_DKIND) then
+            nSN = nSN + 1
+            SN_i(nSN) = 11; SN_metal(:,nSN) = metal_P200(:,j,k)
+         endif
+         if(maxval(metal_Y19(:,j,k) /metal(:,j,k)) .gt. 0.01_DKIND) then
+            nSN = nSN + 1
+            SN_i(nSN) = 12; SN_metal(:,nSN) = metal_Y19(:,j,k)
+         endif
       endif
          
       do iSN = 1, nSN

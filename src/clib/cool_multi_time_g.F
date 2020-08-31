@@ -76,7 +76,10 @@
      &              , grain_D, grain_T, grain_dD, grain_dT
      &              , Tgrain, Ograin, Lgrain
      &              , immulti, imabund, idspecies, itdmulti, idsub
-     &              , metal_loc, metal_C30, metal_F13
+     &              , metal_loc
+     &              , metal_C13, metal_C20, metal_C25, metal_C30
+     &              , metal_F13, metal_F15, metal_F50, metal_F80
+     &              , metal_P170, metal_P200, metal_Y19
      &              , SN0_N
      &              , SN0_fSiM, SN0_fFeM, SN0_fMg2SiO4, SN0_fMgSiO3
      &              , SN0_fFe3O4, SN0_fAC, SN0_fSiO2D, SN0_fMgO
@@ -143,7 +146,12 @@
      &        cooltime(in,jn,kn)
       real*8  photogamma(in,jn,kn)
        R_PREC metal_loc(in,jn,kn)
-     &      , metal_C30(in,jn,kn), metal_F13(in,jn,kn)
+     &      , metal_C13(in,jn,kn), metal_C20(in,jn,kn)
+     &      , metal_C25(in,jn,kn), metal_C30(in,jn,kn)
+     &      , metal_F13(in,jn,kn), metal_F15(in,jn,kn)
+     &      , metal_F50(in,jn,kn), metal_F80(in,jn,kn)
+     &      , metal_P170(in,jn,kn), metal_P200(in,jn,kn)
+     &      , metal_Y19(in,jn,kn)
       real*8  hyd01ka(nratec), h2k01a(nratec), vibha(nratec), 
      &        rotha(nratec), rotla(nratec), gpldla(nratec),
      &        gphdla(nratec), hdltea(nratec), hdlowa(nratec),
@@ -476,7 +484,10 @@
      &              , grain_D, grain_T, grain_dD, grain_dT
      &              , Tgrain, Ograin, Lgrain
      &              , immulti, imabund, idspecies, itdmulti, idsub
-     &              , metal_loc, metal_C30, metal_F13
+     &              , metal_loc
+     &              , metal_C13, metal_C20, metal_C25, metal_C30
+     &              , metal_F13, metal_F15, metal_F50, metal_F80
+     &              , metal_P170, metal_P200, metal_Y19
      &              , SN0_N
      &              , SN0_fSiM, SN0_fFeM, SN0_fMg2SiO4, SN0_fMgSiO3
      &              , SN0_fFe3O4, SN0_fAC, SN0_fSiO2D, SN0_fMgO

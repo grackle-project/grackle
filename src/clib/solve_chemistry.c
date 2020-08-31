@@ -138,7 +138,9 @@ extern void FORTRAN_NAME(solve_rate_cool_g)(
       , double *grain_D, double *grain_T, double *grain_dD, double *grain_dT
       , double *Hgrain, double *Tgrain, double *Ograin, double *Lgrain
       , int *immulti, int *imabund, int *idspecies, int *itdmulti, int *idsub
-      , gr_float *metal_loc, gr_float *metal_C30, gr_float *metal_F13
+      , gr_float *metal_loc, gr_float *metal_C13, gr_float *metal_C20, gr_float *metal_C25, gr_float *metal_C30
+      , gr_float *metal_F13, gr_float *metal_F15, gr_float *metal_F50, gr_float *metal_F80
+      , gr_float *metal_P170, gr_float *metal_P200, gr_float *metal_Y19
       , int *SN0_N
       , double *SN0_XC , double *SN0_XO, double *SN0_XMg, double *SN0_XAl
       , double *SN0_XSi, double *SN0_XS, double *SN0_XFe
@@ -625,8 +627,17 @@ int local_solve_chemistry(chemistry_data *my_chemistry,
   ,&my_chemistry->dust_temperature_multi
   ,&my_chemistry->dust_sublimation
   , my_fields->metal_loc
+  , my_fields->metal_C13
+  , my_fields->metal_C20
+  , my_fields->metal_C25
   , my_fields->metal_C30
   , my_fields->metal_F13
+  , my_fields->metal_F15
+  , my_fields->metal_F50
+  , my_fields->metal_F80
+  , my_fields->metal_P170
+  , my_fields->metal_P200
+  , my_fields->metal_Y19
   ,&my_chemistry->SN0_N
   , my_chemistry->SN0_XC 
   , my_chemistry->SN0_XO
@@ -718,7 +729,9 @@ int _solve_chemistry(chemistry_data *my_chemistry,
                      gr_float *AC_density,  gr_float *SiO2D_density,  gr_float *MgO_density,  gr_float *FeS_density,  gr_float *Al2O3_density,
                      gr_float *reforg_density, gr_float *volorg_density, gr_float *H2Oice_density,
                      gr_float *e_density, gr_float *metal_density, gr_float *dust_density,
-                     gr_float *metal_loc, gr_float *metal_C30, gr_float *metal_F13, 
+                     gr_float *metal_loc, gr_float *metal_C13, gr_float *metal_C20, gr_float *metal_C25, gr_float *metal_C30,
+                     gr_float *metal_F13, gr_float *metal_F15, gr_float *metal_F50, gr_float *metal_F80,
+                     gr_float *metal_P170, gr_float *metal_P200, gr_float *metal_Y19,
                      gr_float *volumetric_heating_rate, gr_float *specific_heating_rate,
                      gr_float *RT_heating_rate, gr_float *RT_HI_ionization_rate, gr_float *RT_HeI_ionization_rate,
                      gr_float *RT_HeII_ionization_rate, gr_float *RT_H2_dissociation_rate,
@@ -790,8 +803,17 @@ int _solve_chemistry(chemistry_data *my_chemistry,
   my_fields.metal_density            = metal_density;
   my_fields.dust_density             = dust_density;
   my_fields.metal_loc                = metal_loc;
+  my_fields.metal_C13                = metal_C13;
+  my_fields.metal_C20                = metal_C20;
+  my_fields.metal_C25                = metal_C25;
   my_fields.metal_C30                = metal_C30;
   my_fields.metal_F13                = metal_F13;
+  my_fields.metal_F15                = metal_F15;
+  my_fields.metal_F50                = metal_F50;
+  my_fields.metal_F80                = metal_F80;
+  my_fields.metal_P170               = metal_P170;
+  my_fields.metal_P200               = metal_P200;
+  my_fields.metal_Y19                = metal_Y19;
   my_fields.volumetric_heating_rate  = volumetric_heating_rate;
   my_fields.specific_heating_rate    = specific_heating_rate;
   my_fields.RT_heating_rate          = RT_heating_rate;

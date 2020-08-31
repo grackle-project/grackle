@@ -100,7 +100,10 @@
      &             , grain_D, grain_T, grain_dD, grain_dT
      &             , Hgrain, Tgrain, Ograin, Lgrain
      &             , immulti, imabund, idspecies, itdmulti, idsub
-     &             , metal_loc, metal_C30, metal_F13
+     &             , metal_loc
+     &             , metal_C13, metal_C20, metal_C25, metal_C30
+     &             , metal_F13, metal_F15, metal_F50, metal_F80
+     &             , metal_P170, metal_P200, metal_Y19
      &             , SN0_N
      &             , SN0_fSiM, SN0_fFeM, SN0_fMg2SiO4, SN0_fMgSiO3
      &             , SN0_fFe3O4, SN0_fAC, SN0_fSiO2D, SN0_fMgO
@@ -149,7 +152,12 @@ c -------------------------------------------------------------------
      &        metal, dust,
      &        Vheat, Mheat
        R_PREC metal_loc
-     &      , metal_C30, metal_F13
+     &      , metal_C13          , metal_C20          
+     &      , metal_C25          , metal_C30          
+     &      , metal_F13          , metal_F15          
+     &      , metal_F50          , metal_F80          
+     &      , metal_P170          , metal_P200          
+     &      , metal_Y19          
 
 !  Radiative transfer fields
 
@@ -579,7 +587,10 @@ c -------------------------------------------------------------------
      &              , grain_D, grain_T, grain_dD, grain_dT
      &              , Tgrain, Ograin, Lgrain
      &              , immulti, imabund, idspecies, itdmulti, idsub
-     &              , metal_loc, metal_C30, metal_F13
+     &              , metal_loc
+     &              , metal_C13, metal_C20, metal_C25, metal_C30
+     &              , metal_F13, metal_F15, metal_F50, metal_F80
+     &              , metal_P170, metal_P200, metal_Y19
      &              , SN0_N
      &              , SN0_fSiM, SN0_fFeM, SN0_fMg2SiO4, SN0_fMgSiO3
      &              , SN0_fFe3O4, SN0_fAC, SN0_fSiO2D, SN0_fMgO
@@ -669,7 +680,10 @@ c -------------------------------------------------------------------
      &              , grain_D, grain_T, grain_dD, grain_dT
      &              , Hgrain
      &              , immulti, imabund, idspecies, itdmulti, idsub
-     &              , metal_loc, metal_C30, metal_F13
+     &              , metal_loc
+     &              , metal_C13, metal_C20, metal_C25, metal_C30
+     &              , metal_F13, metal_F15, metal_F50, metal_F80
+     &              , metal_P170, metal_P200, metal_Y19
      &              , SN0_N
      &              , SN0_fSiM, SN0_fFeM, SN0_fMg2SiO4, SN0_fMgSiO3
      &              , SN0_fFe3O4, SN0_fAC, SN0_fSiO2D, SN0_fMgO
