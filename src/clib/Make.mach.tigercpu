@@ -15,7 +15,7 @@ MACH_TEXT  = tigercpu
 MACH_VALID = 1
 
 #	please load these modules:
-#	module load intel/19.1/64/19.1.1.217 hdf5/intel-17.0/intel-mpi/1.10.0
+#	module load intel/19.1/64/19.1.1.217 hdf5/intel-16.0/1.8.16
 
 #-----------------------------------------------------------------------
 # Install paths (local variables)
@@ -73,7 +73,7 @@ MACH_INCLUDES         = $(LOCAL_INCLUDES_HDF5)
 # Libraries
 #-----------------------------------------------------------------------
 
-LOCAL_LIBS_HDF5 = -L$(LOCAL_HDF5_INSTALL)/lib -lhdf5 -lz # HDF5 libraries
+LOCAL_LIBS_HDF5 = -L$(LOCAL_HDF5_INSTALL)/lib64 -lhdf5 -lz # HDF5 libraries
 LOCAL_LIBS_MACH	= -L$(LOCAL_COMPILER)/lib/intel64 -lcilkrts -lifcore -lifport # Machine-dependent libraries
 
 MACH_LIBS = $(LOCAL_LIBS_HDF5) $(LOCAL_LIBS_MACH)
