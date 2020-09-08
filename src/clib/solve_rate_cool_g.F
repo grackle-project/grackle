@@ -2499,33 +2499,20 @@ c -------------------------------------------------------------------
          do k = ks+1, ke+1
             do j = js+1, je+1
                do i = is+1, ie+1
-                  metal(i,j,k) = min(max(metal(i,j,k), tiny),
-     &                 0.9_RKIND*d(i,j,k))
+                  metal(i,j,k) = max(metal(i,j,k), tiny)
                   if( immulti .gt. 0 ) then
-                     metal_loc(i,j,k) = min(max(metal_loc(i,j,k), tiny),
-     &                 0.9_RKIND*d(i,j,k))
-                     metal_C13(i,j,k) = min(max(metal_C13(i,j,k), tiny),
-     &                 0.9_RKIND*d(i,j,k))
-                     metal_C20(i,j,k) = min(max(metal_C20(i,j,k), tiny),
-     &                 0.9_RKIND*d(i,j,k))
-                     metal_C25(i,j,k) = min(max(metal_C25(i,j,k), tiny),
-     &                 0.9_RKIND*d(i,j,k))
-                     metal_C30(i,j,k) = min(max(metal_C30(i,j,k), tiny),
-     &                 0.9_RKIND*d(i,j,k))
-                     metal_F13(i,j,k) = min(max(metal_F13(i,j,k), tiny),
-     &                 0.9_RKIND*d(i,j,k))
-                     metal_F15(i,j,k) = min(max(metal_F15(i,j,k), tiny),
-     &                 0.9_RKIND*d(i,j,k))
-                     metal_F50(i,j,k) = min(max(metal_F50(i,j,k), tiny),
-     &                 0.9_RKIND*d(i,j,k))
-                     metal_F80(i,j,k) = min(max(metal_F80(i,j,k), tiny),
-     &                 0.9_RKIND*d(i,j,k))
-                     metal_P170(i,j,k)=min(max(metal_P170(i,j,k), tiny),
-     &                 0.9_RKIND*d(i,j,k))
-                     metal_P200(i,j,k)=min(max(metal_P200(i,j,k), tiny),
-     &                 0.9_RKIND*d(i,j,k))
-                     metal_Y19(i,j,k) = min(max(metal_Y19(i,j,k), tiny),
-     &                 0.9_RKIND*d(i,j,k))
+                     metal_loc(i,j,k) = max(metal_loc(i,j,k), tiny)
+                     metal_C13(i,j,k) = max(metal_C13(i,j,k), tiny)
+                     metal_C20(i,j,k) = max(metal_C20(i,j,k), tiny)
+                     metal_C25(i,j,k) = max(metal_C25(i,j,k), tiny)
+                     metal_C30(i,j,k) = max(metal_C30(i,j,k), tiny)
+                     metal_F13(i,j,k) = max(metal_F13(i,j,k), tiny)
+                     metal_F15(i,j,k) = max(metal_F15(i,j,k), tiny)
+                     metal_F50(i,j,k) = max(metal_F50(i,j,k), tiny)
+                     metal_F80(i,j,k) = max(metal_F80(i,j,k), tiny)
+                     metal_P170(i,j,k)= max(metal_P170(i,j,k),tiny)
+                     metal_P200(i,j,k)= max(metal_P200(i,j,k),tiny)
+                     metal_Y19(i,j,k) = max(metal_Y19(i,j,k), tiny)
                   endif
 !!                if (metal(i,j,k) .gt. 1.d-9 * d(i,j,k)) then
                   if (imchem .eq. 1) then
@@ -5947,7 +5934,7 @@ C***** H2Oice **********
             enddo
          
          else
-         
+
             do i = is+1, ie+1
                totalZ = metal_loc(i,j,k)
      &           + metal_C13(i,j,k) + metal_C20(i,j,k)
@@ -5970,8 +5957,8 @@ C***** H2Oice **********
                metal_P200(i,j,k)= metal_P200(i,j,k)* correctZ
                metal_Y19(i,j,k) = metal_Y19(i,j,k) * correctZ
             enddo
-            
-            nSN = 11
+
+            nSN = 12
             SN_i( 1) = 1; SN_metal(:, 1) = metal_loc(:,j,k)
             SN_i( 2) = 2; SN_metal(:, 2) = metal_C13(:,j,k)
             SN_i( 3) = 3; SN_metal(:, 3) = metal_C20(:,j,k)
