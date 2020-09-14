@@ -1095,33 +1095,33 @@ c  new (correct) way: (april 4, 2007)
 
 !     Calculate dust to gas ratio
 
-      if ( (idustfield .gt. 0) .and. (idspecies .gt. 0) ) then
-         do i = is+1, ie+1
-            if ( itmask_metal(i) ) then
-            if (idspecies .gt. 0) then
-               dust(i,j,k) = MgSiO3  (i,j,k)
-     &                     + AC      (i,j,k)
-            endif
-            if (idspecies .gt. 1) then
-               dust(i,j,k) = dust(i,j,k)
-     &                     + SiM     (i,j,k)
-     &                     + FeM     (i,j,k)
-     &                     + Mg2SiO4 (i,j,k)
-     &                     + Fe3O4   (i,j,k)
-     &                     + SiO2D   (i,j,k)
-     &                     + MgO     (i,j,k)
-     &                     + FeS     (i,j,k)
-     &                     + Al2O3   (i,j,k)
-            endif
-            if (idspecies .gt. 2) then
-               dust(i,j,k) = dust(i,j,k)
-     &                     + reforg  (i,j,k)
-     &                     + volorg  (i,j,k)
-     &                     + H2Oice  (i,j,k)
-            endif
-            endif
-         enddo
-      endif
+C     if ( (idustfield .gt. 0) .and. (idspecies .gt. 0) ) then
+C        do i = is+1, ie+1
+C           if ( itmask_metal(i) ) then
+C           if (idspecies .gt. 0) then
+C              dust(i,j,k) = MgSiO3  (i,j,k)
+C    &                     + AC      (i,j,k)
+C           endif
+C           if (idspecies .gt. 1) then
+C              dust(i,j,k) = dust(i,j,k)
+C    &                     + SiM     (i,j,k)
+C    &                     + FeM     (i,j,k)
+C    &                     + Mg2SiO4 (i,j,k)
+C    &                     + Fe3O4   (i,j,k)
+C    &                     + SiO2D   (i,j,k)
+C    &                     + MgO     (i,j,k)
+C    &                     + FeS     (i,j,k)
+C    &                     + Al2O3   (i,j,k)
+C           endif
+C           if (idspecies .gt. 2) then
+C              dust(i,j,k) = dust(i,j,k)
+C    &                     + reforg  (i,j,k)
+C    &                     + volorg  (i,j,k)
+C    &                     + H2Oice  (i,j,k)
+C           endif
+C           endif
+C        enddo
+C     endif
 
       if (anydust .or. (igammah .gt. 0)) then
          if (idustfield .gt. 0) then

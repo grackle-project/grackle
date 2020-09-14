@@ -324,46 +324,120 @@
         k = t/dj      + ks+1
         j = mod(t,dj) + js+1
 
-            do i = is+1, ie+1
-               d(i,j,k)     = d(i,j,k)/real(aye**3, RKIND)
-            enddo
-            if (ispecies .gt. 0) then
-               do i = is+1, ie+1
-                  de(i,j,k)    = de(i,j,k)/real(aye**3, RKIND)
-                  HI(i,j,k)    = HI(i,j,k)/real(aye**3, RKIND)
-                  HII(i,j,k)   = HII(i,j,k)/real(aye**3, RKIND)
-                  HeI(i,j,k)   = HeI(i,j,k)/real(aye**3, RKIND)
-                  HeII(i,j,k)  = HeII(i,j,k)/real(aye**3, RKIND)
-                  HeIII(i,j,k) = HeIII(i,j,k)/real(aye**3, RKIND)
-               enddo
-            endif
-            if (ispecies .gt. 1) then
-               do i = is+1, ie+1
-                  HM(i,j,k)   = HM(i,j,k)/real(aye**3, RKIND)
-                  H2I(i,j,k)  = H2I(i,j,k)/real(aye**3, RKIND)
-                  H2II(i,j,k) = H2II(i,j,k)/real(aye**3, RKIND)
-               enddo
-            endif
-            if (ispecies .gt. 2) then
-               do i = is+1, ie+1
-                  DI(i,j,k)  = DI(i,j,k)/real(aye**3, RKIND)
-                  DII(i,j,k) = DII(i,j,k)/real(aye**3, RKIND)
-                  HDI(i,j,k) = HDI(i,j,k)/real(aye**3, RKIND)
-               enddo
-            endif
-            if (imetal .eq. 1) then
-               do i = is+1, ie+1
-                  metal(i,j,k) = metal(i,j,k)/real(aye**3, RKIND)
-               enddo
-            endif
-            if (idustfield .eq. 1) then
-               do i = is+1, ie+1
-                  dust(i,j,k) = dust(i,j,k)/real(aye**3, RKIND)
-               enddo
-            endif
-            if (imchem .eq. 1) then
-!!!!!!!!!!!!   CHANGE-ME
-            endif
+        do i = is+1, ie+1
+           d(i,j,k)     = d(i,j,k)/real(aye**3, RKIND)
+        enddo
+        if (ispecies .gt. 0) then
+           do i = is+1, ie+1
+              de(i,j,k)    = de(i,j,k)/real(aye**3, RKIND)
+              HI(i,j,k)    = HI(i,j,k)/real(aye**3, RKIND)
+              HII(i,j,k)   = HII(i,j,k)/real(aye**3, RKIND)
+              HeI(i,j,k)   = HeI(i,j,k)/real(aye**3, RKIND)
+              HeII(i,j,k)  = HeII(i,j,k)/real(aye**3, RKIND)
+              HeIII(i,j,k) = HeIII(i,j,k)/real(aye**3, RKIND)
+           enddo
+        endif
+        if (ispecies .gt. 1) then
+           do i = is+1, ie+1
+              HM(i,j,k)   = HM(i,j,k)/real(aye**3, RKIND)
+              H2I(i,j,k)  = H2I(i,j,k)/real(aye**3, RKIND)
+              H2II(i,j,k) = H2II(i,j,k)/real(aye**3, RKIND)
+           enddo
+        endif
+        if (ispecies .gt. 2) then
+           do i = is+1, ie+1
+              DI(i,j,k)  = DI(i,j,k)/real(aye**3, RKIND)
+              DII(i,j,k) = DII(i,j,k)/real(aye**3, RKIND)
+              HDI(i,j,k) = HDI(i,j,k)/real(aye**3, RKIND)
+           enddo
+        endif
+        if (ispecies .gt. 3) then
+           do i = is+1, ie+1
+              DM(i,j,k)      = DM(i,j,k)/real(aye**3, RKIND)
+              HDII(i,j,k)    = HDII(i,j,k)/real(aye**3, RKIND)
+              HeHII(i,j,k)   = HeHII(i,j,k)/real(aye**3, RKIND)
+           enddo
+        endif
+        if (imetal .eq. 1) then
+           do i = is+1, ie+1
+              metal(i,j,k) = metal(i,j,k)/real(aye**3, RKIND)
+              if (immulti .gt. 0) then
+                 metal_loc(i,j,k) = metal_loc(i,j,k)/real(aye**3, RKIND)
+                 metal_C13(i,j,k) = metal_C13(i,j,k)/real(aye**3, RKIND)
+                 metal_C20(i,j,k) = metal_C20(i,j,k)/real(aye**3, RKIND)
+                 metal_C25(i,j,k) = metal_C25(i,j,k)/real(aye**3, RKIND)
+                 metal_C30(i,j,k) = metal_C30(i,j,k)/real(aye**3, RKIND)
+                 metal_F13(i,j,k) = metal_F13(i,j,k)/real(aye**3, RKIND)
+                 metal_F15(i,j,k) = metal_F15(i,j,k)/real(aye**3, RKIND)
+                 metal_F50(i,j,k) = metal_F50(i,j,k)/real(aye**3, RKIND)
+                 metal_F80(i,j,k) = metal_F80(i,j,k)/real(aye**3, RKIND)
+                 metal_P170(i,j,k)=metal_P170(i,j,k)/real(aye**3, RKIND)
+                 metal_P200(i,j,k)=metal_P200(i,j,k)/real(aye**3, RKIND)
+                 metal_Y19(i,j,k) = metal_Y19(i,j,k)/real(aye**3, RKIND)
+              endif
+!!            if (metal(i,j,k) .gt. 1.d-9 * d(i,j,k)) then
+              if (imchem .eq. 1) then
+                 CI(i,j,k)      = CI(i,j,k)/real(aye**3, RKIND)
+                 CII(i,j,k)     = CII(i,j,k)/real(aye**3, RKIND)
+                 CO(i,j,k)      = CO(i,j,k)/real(aye**3, RKIND)
+                 CO2(i,j,k)     = CO2(i,j,k)/real(aye**3, RKIND)
+                 OI(i,j,k)      = OI(i,j,k)/real(aye**3, RKIND)
+                 OH(i,j,k)      = OH(i,j,k)/real(aye**3, RKIND)
+                 H2O(i,j,k)     = H2O(i,j,k)/real(aye**3, RKIND)
+                 O2(i,j,k)      = O2(i,j,k)/real(aye**3, RKIND)
+                 SiI(i,j,k)     = SiI(i,j,k)/real(aye**3, RKIND)
+                 SiOI(i,j,k)    = SiOI(i,j,k)/real(aye**3, RKIND)
+                 SiO2I(i,j,k)   = SiO2I(i,j,k)/real(aye**3, RKIND)
+                 CH(i,j,k)      = CH(i,j,k)/real(aye**3, RKIND)
+                 CH2(i,j,k)     = CH2(i,j,k)/real(aye**3, RKIND)
+                 COII(i,j,k)    = COII(i,j,k)/real(aye**3, RKIND)
+                 OII(i,j,k)     = OII(i,j,k)/real(aye**3, RKIND)
+                 OHII(i,j,k)    = OHII(i,j,k)/real(aye**3, RKIND)
+                 H2OII(i,j,k)   = H2OII(i,j,k)/real(aye**3, RKIND)
+                 H3OII(i,j,k)   = H3OII(i,j,k)/real(aye**3, RKIND)
+                 O2II(i,j,k)    = O2II(i,j,k)/real(aye**3, RKIND)
+                 if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1 ) ) then
+                 if (idspecies .gt. 0) then
+                 Mg(i,j,k)      = Mg(i,j,k)/real(aye**3, RKIND)
+                 endif
+                 if (idspecies .gt. 1) then
+                 Al(i,j,k)      = Al(i,j,k)/real(aye**3, RKIND)
+                 S(i,j,k)       = S(i,j,k)/real(aye**3, RKIND)
+                 Fe(i,j,k)      = Fe(i,j,k)/real(aye**3, RKIND)
+                 endif
+                 endif
+              endif
+!!            endif
+           enddo
+        endif
+        if (idustfield .eq. 1) then
+           do i = is+1, ie+1
+              dust(i,j,k) = dust(i,j,k)/real(aye**3, RKIND)
+              if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1 ) ) then
+!!            if (metal(i,j,k) .gt. 1.d-9 * d(i,j,k)) then
+              if (idspecies .gt. 0) then
+                 MgSiO3(i,j,k)  = MgSiO3(i,j,k)/real(aye**3, RKIND)
+                 AC(i,j,k)      = AC(i,j,k)/real(aye**3, RKIND)
+              endif
+              if (idspecies .gt. 1) then
+                 SiM(i,j,k)     = SiM(i,j,k)/real(aye**3, RKIND)
+                 FeM(i,j,k)     = FeM(i,j,k)/real(aye**3, RKIND)
+                 Mg2SiO4(i,j,k) = Mg2SiO4(i,j,k)/real(aye**3, RKIND)
+                 Fe3O4(i,j,k)   = Fe3O4(i,j,k)/real(aye**3, RKIND)
+                 SiO2D(i,j,k)   = SiO2D(i,j,k)/real(aye**3, RKIND)
+                 MgO(i,j,k)     = MgO(i,j,k)/real(aye**3, RKIND)
+                 FeS(i,j,k)     = FeS(i,j,k)/real(aye**3, RKIND)
+                 Al2O3(i,j,k)   = Al2O3(i,j,k)/real(aye**3, RKIND)
+              endif
+              if (idspecies .gt. 2) then
+                 reforg(i,j,k)  = reforg(i,j,k)/real(aye**3, RKIND)
+                 volorg(i,j,k)  = volorg(i,j,k)/real(aye**3, RKIND)
+                 H2Oice(i,j,k)  = H2Oice(i,j,k)/real(aye**3, RKIND)
+              endif
+!!            endif
+              endif
+           enddo
+        endif
       enddo
 #ifdef _OPENMP
 !$omp end parallel do
@@ -549,46 +623,120 @@
         k = t/dj      + ks+1
         j = mod(t,dj) + js+1
 
-            do i = is+1, ie+1
-               d(i,j,k)     = d(i,j,k)*real(aye**3, RKIND)
-            enddo
-            if (ispecies .gt. 0) then
-               do i = is+1, ie+1
-                  de(i,j,k)    = de(i,j,k)*real(aye**3, RKIND)
-                  HI(i,j,k)    = HI(i,j,k)*real(aye**3, RKIND)
-                  HII(i,j,k)   = HII(i,j,k)*real(aye**3, RKIND)
-                  HeI(i,j,k)   = HeI(i,j,k)*real(aye**3, RKIND)
-                  HeII(i,j,k)  = HeII(i,j,k)*real(aye**3, RKIND)
-                  HeIII(i,j,k) = HeIII(i,j,k)*real(aye**3, RKIND)
-               enddo
-            endif
-            if (ispecies .gt. 1) then
-               do i = is+1, ie+1
-                  HM(i,j,k)   = HM(i,j,k)*real(aye**3, RKIND)
-                  H2I(i,j,k)  = H2I(i,j,k)*real(aye**3, RKIND)
-                  H2II(i,j,k) = H2II(i,j,k)*real(aye**3, RKIND)
-               enddo
-            endif
-            if (ispecies .gt. 2) then
-               do i = is+1, ie+1
-                  DI(i,j,k)  = DI(i,j,k)*real(aye**3, RKIND)
-                  DII(i,j,k) = DII(i,j,k)*real(aye**3, RKIND)
-                  HDI(i,j,k) = HDI(i,j,k)*real(aye**3, RKIND)
-               enddo
-            endif
-            if (imetal .eq. 1) then
-               do i = is+1, ie+1
-                  metal(i,j,k) = metal(i,j,k)*real(aye**3, RKIND)
-               enddo
-            endif
-            if (idustfield .eq. 1) then
-               do i = is+1, ie+1
-                  dust(i,j,k) = dust(i,j,k)*real(aye**3, RKIND)
-               enddo
-            endif
-            if (imchem .eq. 1) then
-!!!!!!!!!!!    CHANGE-ME
-            endif
+        do i = is+1, ie+1
+           d(i,j,k)     = d(i,j,k)*real(aye**3, RKIND)
+        enddo
+        if (ispecies .gt. 0) then
+           do i = is+1, ie+1
+              de(i,j,k)    = de(i,j,k)*real(aye**3, RKIND)
+              HI(i,j,k)    = HI(i,j,k)*real(aye**3, RKIND)
+              HII(i,j,k)   = HII(i,j,k)*real(aye**3, RKIND)
+              HeI(i,j,k)   = HeI(i,j,k)*real(aye**3, RKIND)
+              HeII(i,j,k)  = HeII(i,j,k)*real(aye**3, RKIND)
+              HeIII(i,j,k) = HeIII(i,j,k)*real(aye**3, RKIND)
+           enddo
+        endif
+        if (ispecies .gt. 1) then
+           do i = is+1, ie+1
+              HM(i,j,k)   = HM(i,j,k)*real(aye**3, RKIND)
+              H2I(i,j,k)  = H2I(i,j,k)*real(aye**3, RKIND)
+              H2II(i,j,k) = H2II(i,j,k)*real(aye**3, RKIND)
+           enddo
+        endif
+        if (ispecies .gt. 2) then
+           do i = is+1, ie+1
+              DI(i,j,k)  = DI(i,j,k)*real(aye**3, RKIND)
+              DII(i,j,k) = DII(i,j,k)*real(aye**3, RKIND)
+              HDI(i,j,k) = HDI(i,j,k)*real(aye**3, RKIND)
+           enddo
+        endif
+        if (ispecies .gt. 3) then
+           do i = is+1, ie+1
+              DM(i,j,k)      = DM(i,j,k)*real(aye**3, RKIND)
+              HDII(i,j,k)    = HDII(i,j,k)*real(aye**3, RKIND)
+              HeHII(i,j,k)   = HeHII(i,j,k)*real(aye**3, RKIND)
+           enddo
+        endif
+        if (imetal .eq. 1) then
+           do i = is+1, ie+1
+              metal(i,j,k) = metal(i,j,k)*real(aye**3, RKIND)
+              if (immulti .gt. 0) then
+                 metal_loc(i,j,k) = metal_loc(i,j,k)*real(aye**3, RKIND)
+                 metal_C13(i,j,k) = metal_C13(i,j,k)*real(aye**3, RKIND)
+                 metal_C20(i,j,k) = metal_C20(i,j,k)*real(aye**3, RKIND)
+                 metal_C25(i,j,k) = metal_C25(i,j,k)*real(aye**3, RKIND)
+                 metal_C30(i,j,k) = metal_C30(i,j,k)*real(aye**3, RKIND)
+                 metal_F13(i,j,k) = metal_F13(i,j,k)*real(aye**3, RKIND)
+                 metal_F15(i,j,k) = metal_F15(i,j,k)*real(aye**3, RKIND)
+                 metal_F50(i,j,k) = metal_F50(i,j,k)*real(aye**3, RKIND)
+                 metal_F80(i,j,k) = metal_F80(i,j,k)*real(aye**3, RKIND)
+                 metal_P170(i,j,k)=metal_P170(i,j,k)*real(aye**3, RKIND)
+                 metal_P200(i,j,k)=metal_P200(i,j,k)*real(aye**3, RKIND)
+                 metal_Y19(i,j,k) = metal_Y19(i,j,k)*real(aye**3, RKIND)
+              endif
+!!            if (metal(i,j,k) .gt. 1.d-9 * d(i,j,k)) then
+              if (imchem .eq. 1) then
+                 CI(i,j,k)      = CI(i,j,k)*real(aye**3, RKIND)
+                 CII(i,j,k)     = CII(i,j,k)*real(aye**3, RKIND)
+                 CO(i,j,k)      = CO(i,j,k)*real(aye**3, RKIND)
+                 CO2(i,j,k)     = CO2(i,j,k)*real(aye**3, RKIND)
+                 OI(i,j,k)      = OI(i,j,k)*real(aye**3, RKIND)
+                 OH(i,j,k)      = OH(i,j,k)*real(aye**3, RKIND)
+                 H2O(i,j,k)     = H2O(i,j,k)*real(aye**3, RKIND)
+                 O2(i,j,k)      = O2(i,j,k)*real(aye**3, RKIND)
+                 SiI(i,j,k)     = SiI(i,j,k)*real(aye**3, RKIND)
+                 SiOI(i,j,k)    = SiOI(i,j,k)*real(aye**3, RKIND)
+                 SiO2I(i,j,k)   = SiO2I(i,j,k)*real(aye**3, RKIND)
+                 CH(i,j,k)      = CH(i,j,k)*real(aye**3, RKIND)
+                 CH2(i,j,k)     = CH2(i,j,k)*real(aye**3, RKIND)
+                 COII(i,j,k)    = COII(i,j,k)*real(aye**3, RKIND)
+                 OII(i,j,k)     = OII(i,j,k)*real(aye**3, RKIND)
+                 OHII(i,j,k)    = OHII(i,j,k)*real(aye**3, RKIND)
+                 H2OII(i,j,k)   = H2OII(i,j,k)*real(aye**3, RKIND)
+                 H3OII(i,j,k)   = H3OII(i,j,k)*real(aye**3, RKIND)
+                 O2II(i,j,k)    = O2II(i,j,k)*real(aye**3, RKIND)
+                 if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1 ) ) then
+                 if (idspecies .gt. 0) then
+                 Mg(i,j,k)      = Mg(i,j,k)*real(aye**3, RKIND)
+                 endif
+                 if (idspecies .gt. 1) then
+                 Al(i,j,k)      = Al(i,j,k)*real(aye**3, RKIND)
+                 S(i,j,k)       = S(i,j,k)*real(aye**3, RKIND)
+                 Fe(i,j,k)      = Fe(i,j,k)*real(aye**3, RKIND)
+                 endif
+                 endif
+              endif
+!!            endif
+           enddo
+        endif
+        if (idustfield .eq. 1) then
+           do i = is+1, ie+1
+              dust(i,j,k) = dust(i,j,k)*real(aye**3, RKIND)
+              if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1 ) ) then
+!!            if (metal(i,j,k) .gt. 1.d-9 * d(i,j,k)) then
+              if (idspecies .gt. 0) then
+                 MgSiO3(i,j,k)  = MgSiO3(i,j,k)*real(aye**3, RKIND)
+                 AC(i,j,k)      = AC(i,j,k)*real(aye**3, RKIND)
+              endif
+              if (idspecies .gt. 1) then
+                 SiM(i,j,k)     = SiM(i,j,k)*real(aye**3, RKIND)
+                 FeM(i,j,k)     = FeM(i,j,k)*real(aye**3, RKIND)
+                 Mg2SiO4(i,j,k) = Mg2SiO4(i,j,k)*real(aye**3, RKIND)
+                 Fe3O4(i,j,k)   = Fe3O4(i,j,k)*real(aye**3, RKIND)
+                 SiO2D(i,j,k)   = SiO2D(i,j,k)*real(aye**3, RKIND)
+                 MgO(i,j,k)     = MgO(i,j,k)*real(aye**3, RKIND)
+                 FeS(i,j,k)     = FeS(i,j,k)*real(aye**3, RKIND)
+                 Al2O3(i,j,k)   = Al2O3(i,j,k)*real(aye**3, RKIND)
+              endif
+              if (idspecies .gt. 2) then
+                 reforg(i,j,k)  = reforg(i,j,k)*real(aye**3, RKIND)
+                 volorg(i,j,k)  = volorg(i,j,k)*real(aye**3, RKIND)
+                 H2Oice(i,j,k)  = H2Oice(i,j,k)*real(aye**3, RKIND)
+              endif
+!!            endif
+              endif
+           enddo
+        endif
       enddo
 #ifdef _OPENMP
 !$omp end parallel do

@@ -49,7 +49,7 @@ extern void FORTRAN_NAME(calc_tdust_3d_g)(
 	double *urho, double *utim,
 	gr_float *gas_temp, gr_float *dust_temp,
         int *iisrffield, gr_float* isrf_habing
-      , int *imetal, int *idustfield, int *igrgr
+      , int *imetal, int *imchem, int *idustfield, int *igrgr
       , double *z_solar, gr_float *metal, gr_float *dust
       , gr_float *SiM, gr_float *FeM, gr_float *Mg2SiO4, gr_float *MgSiO3, gr_float *Fe3O4
       , gr_float *AC, gr_float *SiO2D, gr_float *MgO, gr_float *FeS, gr_float *Al2O3
@@ -176,6 +176,7 @@ int local_calculate_dust_temperature(chemistry_data *my_chemistry,
        &my_chemistry->use_isrf_field,
        my_fields->isrf_habing
      ,&metal_field_present
+     ,&my_chemistry->metal_chemistry
      ,&my_chemistry->use_dust_density_field
      ,&my_chemistry->grain_growth
      ,&my_chemistry->SolarMetalFractionByMass

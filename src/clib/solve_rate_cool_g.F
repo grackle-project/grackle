@@ -1888,6 +1888,18 @@ C                   endif
                       dsp(idsp(isp))  = dsp(idsp(isp))  + vec(isp)
                     enddo
 
+                    if (imp_eng(i) .eq. 1) then
+                    if( (ispecies .gt. 0) .and. (icool .eq. 1) ) then
+                       do isp = 1, nsp
+                          if ( (dsp(idsp(isp)) .ne. dsp(idsp(isp)))
+     &                    .or. (dsp(idsp(isp)) .le. 0._DKIND) ) then
+                             ierr = 1
+                             go to 9997
+                          endif
+                       enddo
+                    endif
+                    endif
+
                     err_max = 0.d0
 C                   ierr_max = 0
                     do isp = 1, nsp
@@ -1906,6 +1918,7 @@ C                       ierr_max = idsp(isp)
                   enddo
 
 9998              continue
+9997              continue
 
 
 !             Check if the fractions are valid after an iteration
@@ -2499,21 +2512,21 @@ c -------------------------------------------------------------------
          do k = ks+1, ke+1
             do j = js+1, je+1
                do i = is+1, ie+1
-                  metal(i,j,k) = max(metal(i,j,k), tiny)
-                  if( immulti .gt. 0 ) then
-                     metal_loc(i,j,k) = max(metal_loc(i,j,k), tiny)
-                     metal_C13(i,j,k) = max(metal_C13(i,j,k), tiny)
-                     metal_C20(i,j,k) = max(metal_C20(i,j,k), tiny)
-                     metal_C25(i,j,k) = max(metal_C25(i,j,k), tiny)
-                     metal_C30(i,j,k) = max(metal_C30(i,j,k), tiny)
-                     metal_F13(i,j,k) = max(metal_F13(i,j,k), tiny)
-                     metal_F15(i,j,k) = max(metal_F15(i,j,k), tiny)
-                     metal_F50(i,j,k) = max(metal_F50(i,j,k), tiny)
-                     metal_F80(i,j,k) = max(metal_F80(i,j,k), tiny)
-                     metal_P170(i,j,k)= max(metal_P170(i,j,k),tiny)
-                     metal_P200(i,j,k)= max(metal_P200(i,j,k),tiny)
-                     metal_Y19(i,j,k) = max(metal_Y19(i,j,k), tiny)
-                  endif
+C                 metal(i,j,k) = max(metal(i,j,k), tiny)
+C                 if( immulti .gt. 0 ) then
+C                    metal_loc(i,j,k) = max(metal_loc(i,j,k), tiny)
+C                    metal_C13(i,j,k) = max(metal_C13(i,j,k), tiny)
+C                    metal_C20(i,j,k) = max(metal_C20(i,j,k), tiny)
+C                    metal_C25(i,j,k) = max(metal_C25(i,j,k), tiny)
+C                    metal_C30(i,j,k) = max(metal_C30(i,j,k), tiny)
+C                    metal_F13(i,j,k) = max(metal_F13(i,j,k), tiny)
+C                    metal_F15(i,j,k) = max(metal_F15(i,j,k), tiny)
+C                    metal_F50(i,j,k) = max(metal_F50(i,j,k), tiny)
+C                    metal_F80(i,j,k) = max(metal_F80(i,j,k), tiny)
+C                    metal_P170(i,j,k)= max(metal_P170(i,j,k),tiny)
+C                    metal_P200(i,j,k)= max(metal_P200(i,j,k),tiny)
+C                    metal_Y19(i,j,k) = max(metal_Y19(i,j,k), tiny)
+C                 endif
 !!                if (metal(i,j,k) .gt. 1.d-9 * d(i,j,k)) then
                   if (imchem .eq. 1) then
                      CI(i,j,k)      = max(CI(i,j,k), tiny)
@@ -2555,7 +2568,7 @@ c -------------------------------------------------------------------
          do k = ks+1, ke+1
             do j = js+1, je+1
                do i = is+1, ie+1
-                  dust(i,j,k)       = max(dust(k,j,k), tiny)
+                  dust(i,j,k)       = max(dust(i,j,k), tiny)
                   if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1 ) ) then
 !!                if (metal(i,j,k) .gt. 1.d-9 * d(i,j,k)) then
                   if (idspecies .gt. 0) then
@@ -5935,28 +5948,28 @@ C***** H2Oice **********
          
          else
 
-            do i = is+1, ie+1
-               totalZ = metal_loc(i,j,k)
-     &           + metal_C13(i,j,k) + metal_C20(i,j,k)
-     &           + metal_C25(i,j,k) + metal_C30(i,j,k)
-     &           + metal_F13(i,j,k) + metal_F15(i,j,k)
-     &           + metal_F50(i,j,k) + metal_F80(i,j,k)
-     &           + metal_P170(i,j,k)+ metal_P200(i,j,k)
-     &           + metal_Y19(i,j,k)
-               correctZ = metal(i,j,k) / totalZ
-               metal_loc(i,j,k) = metal_loc(i,j,k) * correctZ
-               metal_C13(i,j,k) = metal_C13(i,j,k) * correctZ
-               metal_C20(i,j,k) = metal_C20(i,j,k) * correctZ
-               metal_C25(i,j,k) = metal_C25(i,j,k) * correctZ
-               metal_C30(i,j,k) = metal_C30(i,j,k) * correctZ
-               metal_F13(i,j,k) = metal_F13(i,j,k) * correctZ
-               metal_F15(i,j,k) = metal_F15(i,j,k) * correctZ
-               metal_F50(i,j,k) = metal_F50(i,j,k) * correctZ
-               metal_F80(i,j,k) = metal_F80(i,j,k) * correctZ
-               metal_P170(i,j,k)= metal_P170(i,j,k)* correctZ
-               metal_P200(i,j,k)= metal_P200(i,j,k)* correctZ
-               metal_Y19(i,j,k) = metal_Y19(i,j,k) * correctZ
-            enddo
+C           do i = is+1, ie+1
+C              totalZ = metal_loc(i,j,k)
+C    &           + metal_C13(i,j,k) + metal_C20(i,j,k)
+C    &           + metal_C25(i,j,k) + metal_C30(i,j,k)
+C    &           + metal_F13(i,j,k) + metal_F15(i,j,k)
+C    &           + metal_F50(i,j,k) + metal_F80(i,j,k)
+C    &           + metal_P170(i,j,k)+ metal_P200(i,j,k)
+C    &           + metal_Y19(i,j,k)
+C              correctZ = metal(i,j,k) / totalZ
+C              metal_loc(i,j,k) = metal_loc(i,j,k) * correctZ
+C              metal_C13(i,j,k) = metal_C13(i,j,k) * correctZ
+C              metal_C20(i,j,k) = metal_C20(i,j,k) * correctZ
+C              metal_C25(i,j,k) = metal_C25(i,j,k) * correctZ
+C              metal_C30(i,j,k) = metal_C30(i,j,k) * correctZ
+C              metal_F13(i,j,k) = metal_F13(i,j,k) * correctZ
+C              metal_F15(i,j,k) = metal_F15(i,j,k) * correctZ
+C              metal_F50(i,j,k) = metal_F50(i,j,k) * correctZ
+C              metal_F80(i,j,k) = metal_F80(i,j,k) * correctZ
+C              metal_P170(i,j,k)= metal_P170(i,j,k)* correctZ
+C              metal_P200(i,j,k)= metal_P200(i,j,k)* correctZ
+C              metal_Y19(i,j,k) = metal_Y19(i,j,k) * correctZ
+C           enddo
 
             nSN = 12
             SN_i( 1) = 1; SN_metal(:, 1) = metal_loc(:,j,k)
@@ -6599,33 +6612,33 @@ C***** H2Oice **********
       enddo
       endif ! imchem
 
-      if ( (idustfield .gt. 0) .and. (idspecies .gt. 0) ) then
-         do i = is+1, ie+1
-!           if ( itmask_metal(i) ) then
-            if (idspecies .gt. 0) then
-               dust(i,j,k) = MgSiO3  (i,j,k)
-     &                     + AC      (i,j,k)
-            endif
-            if (idspecies .gt. 1) then
-               dust(i,j,k) = dust(i,j,k)
-     &                     + SiM     (i,j,k)
-     &                     + FeM     (i,j,k)
-     &                     + Mg2SiO4 (i,j,k)
-     &                     + Fe3O4   (i,j,k)
-     &                     + SiO2D   (i,j,k)
-     &                     + MgO     (i,j,k)
-     &                     + FeS     (i,j,k)
-     &                     + Al2O3   (i,j,k)
-            endif
-            if (idspecies .gt. 2) then
-               dust(i,j,k) = dust(i,j,k)
-     &                     + reforg  (i,j,k)
-     &                     + volorg  (i,j,k)
-     &                     + H2Oice  (i,j,k)
-            endif
-!           endif
-         enddo
-      endif
+C     if ( (idustfield .gt. 0) .and. (idspecies .gt. 0) ) then
+C        do i = is+1, ie+1
+C!          if ( itmask_metal(i) ) then
+C           if (idspecies .gt. 0) then
+C              dust(i,j,k) = MgSiO3  (i,j,k)
+C    &                     + AC      (i,j,k)
+C           endif
+C           if (idspecies .gt. 1) then
+C              dust(i,j,k) = dust(i,j,k)
+C    &                     + SiM     (i,j,k)
+C    &                     + FeM     (i,j,k)
+C    &                     + Mg2SiO4 (i,j,k)
+C    &                     + Fe3O4   (i,j,k)
+C    &                     + SiO2D   (i,j,k)
+C    &                     + MgO     (i,j,k)
+C    &                     + FeS     (i,j,k)
+C    &                     + Al2O3   (i,j,k)
+C           endif
+C           if (idspecies .gt. 2) then
+C              dust(i,j,k) = dust(i,j,k)
+C    &                     + reforg  (i,j,k)
+C    &                     + volorg  (i,j,k)
+C    &                     + H2Oice  (i,j,k)
+C           endif
+C!          endif
+C        enddo
+C     endif
 
 !       Set the electron density
 

@@ -1,8 +1,7 @@
       subroutine gaussj_g(n,a,b,ierr)
-      integer m,n,nmax
+      integer m,n
       real*8 a(n,n),b(n)
-      parameter (nmax=50)
-      integer i,icol,irow,j,k,l,ll,indxc(nmax),indxr(nmax),ipiv(nmax)
+      integer i,icol,irow,j,k,l,ll,indxc(n),indxr(n),ipiv(n)
       real*8 big,dum,pivinv
       do 11 j=1,n
         ipiv(j)=0
