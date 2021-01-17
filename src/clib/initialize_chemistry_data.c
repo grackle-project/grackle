@@ -584,6 +584,15 @@ void show_parameters(FILE *fp, chemistry_data *my_chemistry)
           my_chemistry->self_shielding_method);
   fprintf(fp, "H2_self_shielding                 = %d\n",
           my_chemistry->H2_self_shielding);
+  fprintf(fp, "radiative_transfer_H2II_diss      = %d\n",
+          my_chemistry->radiative_transfer_H2II_diss);
+  fprintf(fp, "radiative_transfer_HDI_diss       = %d\n",
+          my_chemistry->radiative_transfer_HDI_diss);
+  fprintf(fp, "radiative_transfer_metal_ion      = %d\n",
+          my_chemistry->radiative_transfer_metal_ion);
+  fprintf(fp, "radiative_transfer_metal_diss     = %d\n",
+          my_chemistry->radiative_transfer_metal_diss);
+
 # ifdef _OPENMP
   fprintf(fp, "omp_nthreads                      = %d\n",
           my_chemistry->omp_nthreads);

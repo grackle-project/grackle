@@ -123,6 +123,8 @@
      &              , SN0_kpFeS, SN0_kpAl2O3
      &              , SN0_kpreforg, SN0_kpvolorg, SN0_kpH2Oice
      &              , h2dustSa, h2dustCa, gasgr2a, gamma_isrf2a, grogra
+     &              , idissHDI, kdissHDI, iionZ, kphCI, kphOI
+     &              , idissZ, kdissCO, kdissOH, kdissH2O
      &          )
 
 !
@@ -284,6 +286,10 @@
 
       R_PREC  kphHI(in,jn,kn), kphHeI(in,jn,kn), kphHeII(in,jn,kn),
      &        kdissH2I(in,jn,kn), photogamma(in,jn,kn)
+
+      integer idissHDI, iionZ, idissZ
+      R_PREC  kdissHDI(in,jn,kn), kphCI(in,jn,kn), kphOI(in,jn,kn),
+     &        kdissCO(in,jn,kn), kdissOH(in,jn,kn), kdissH2O(in,jn,kn)
 
 !  H2 self-shielding length-scale field
 
@@ -1019,6 +1025,9 @@ C    &   , coolunit*dom/mh ! = vbase1**2 / tbase1
      &                     iradtrans, irt_honly, 
      &                     kphHI, kphHeI, kphHeII,
      &                     itmask, edot, chunit, dom, metal
+     &                   , HDI, imchem, CI, OI, OH, CO, H2O
+     &                   , idissHDI, kdissHDI, iionZ, kphCI, kphOI
+     &                   , idissZ, kdissCO, kdissOH, kdissH2O
      &                          )
 
 !           move itmask temporary array
@@ -1350,6 +1359,8 @@ C    &   , coolunit*dom/mh ! = vbase1**2 / tbase1
      &                   , kdSiM, kdFeM, kdMg2SiO4, kdMgSiO3, kdFe3O4
      &                   , kdAC, kdSiO2D, kdMgO, kdFeS, kdAl2O3
      &                   , kdreforg, kdvolorg, kdH2Oice
+     &                   , idissHDI, kdissHDI, iionZ, kphCI, kphOI
+     &                   , idissZ, kdissCO, kdissOH, kdissH2O
      &           )
 
 !           Start Newton-Raphson scheme
@@ -1685,7 +1696,10 @@ C    &   , coolunit*dom/mh ! = vbase1**2 / tbase1
      & , tAC(i), tSiO2D(i), tMgO(i), tFeS(i), tAl2O3(i)
      & , treforg(i), tvolorg(i), tH2Oice(i)
      & , gasgr2a, gamma_isrf2a
-     & , imp_eng(i))
+     & , imp_eng(i)
+     & , idissHDI, kdissHDI(i,j,k), iionZ, kphCI(i,j,k), kphOI(i,j,k)
+     & , idissZ, kdissCO(i,j,k), kdissOH(i,j,k), kdissH2O(i,j,k)
+     &   )
 
                     do jsp = 1, nsp
                       dspj = eps * dsp(idsp(jsp))
@@ -1818,7 +1832,10 @@ C    &   , coolunit*dom/mh ! = vbase1**2 / tbase1
      & , tAC(i), tSiO2D(i), tMgO(i), tFeS(i), tAl2O3(i)
      & , treforg(i), tvolorg(i), tH2Oice(i)
      & , gasgr2a, gamma_isrf2a
-     & , imp_eng(i))
+     & , imp_eng(i)
+     & , idissHDI, kdissHDI(i,j,k), iionZ, kphCI(i,j,k), kphOI(i,j,k)
+     & , idissZ, kdissCO(i,j,k), kdissOH(i,j,k), kdissH2O(i,j,k)
+     &   )
 
                       do isp = 1, nsp
                         if ( (dsp(idsp(isp)).eq.0.d0)
@@ -4032,6 +4049,9 @@ c
      &                     iradtrans, irt_honly, 
      &                     kphHI, kphHeI, kphHeII,
      &                     itmask, edot, chunit, dom, metal
+     &                   , HDI, imchem, CI, OI, OH, CO, H2O
+     &                   , idissHDI, kdissHDI, iionZ, kphCI, kphOI
+     &                   , idissZ, kdissCO, kdissOH, kdissH2O
      &                          )
 
 ! -------------------------------------------------------------------
@@ -4057,6 +4077,14 @@ c
 
 !      Radiative Transfer Fields
       R_PREC  kphHI(in,jn,kn), kphHeI(in,jn,kn), kphHeII(in,jn,kn)
+
+      R_PREC  HDI(in,jn,kn)
+      integer imchem
+      R_PREC  CI(in,jn,kn), OI(in,jn,kn),
+     &        CO(in,jn,kn), OH(in,jn,kn), H2O(in,jn,kn)
+      integer idissHDI, iionZ, idissZ
+      R_PREC  kdissHDI(in,jn,kn), kphCI(in,jn,kn), kphOI(in,jn,kn),
+     &        kdissCO(in,jn,kn), kdissOH(in,jn,kn), kdissH2O(in,jn,kn)
 
       real*8 chunit
 
@@ -4287,6 +4315,32 @@ C           close(11)
                endif
             enddo
          endif
+         if ((ispecies .gt. 2).and.(idissHDI .gt. 0)) then
+            do i = is+1, ie+1
+               if (itmask(i)) then
+                  HIdot(i) = HIdot(i)
+     &              + kdissHDI(i,j,k) * HDI(i,j,k)/3.0_DKIND
+               endif
+            enddo
+         endif
+         if ((imchem .gt. 0).and.(iionZ .gt. 0)) then
+            do i = is+1, ie+1
+               if (itmask(i)) then
+                  dedot(i) = dedot(i)
+     &              + kphCI(i,j,k) * CI(i,j,k)/12.0_DKIND
+     &              + kphOI(i,j,k) * OI(i,j,k)/16.0_DKIND
+               endif
+            enddo
+         endif
+         if ((imchem .gt. 0).and.(idissZ .gt. 0)) then
+            do i = is+1, ie+1
+               if (itmask(i)) then
+                  HIdot(i) = HIdot(i)
+     &              + kdissOH (i,j,k) * OH(i,j,k) /17.0_DKIND
+     &              + kdissH2O(i,j,k) * H2O(i,j,k)/18.0_DKIND
+               endif
+            enddo
+         endif
       endif
 
       
@@ -4353,6 +4407,8 @@ C           close(11)
      &                   , kdSiM, kdFeM, kdMg2SiO4, kdMgSiO3, kdFe3O4
      &                   , kdAC, kdSiO2D, kdMgO, kdFeS, kdAl2O3
      &                   , kdreforg, kdvolorg, kdH2Oice
+     &                   , idissHDI, kdissHDI, iionZ, kphCI, kphOI
+     &                   , idissZ, kdissCO, kdissOH, kdissH2O
      &           )
 c -------------------------------------------------------------------
 
@@ -4392,6 +4448,10 @@ c -------------------------------------------------------------------
 
 !     Radiation Fields
       R_PREC  kphHI(in,jn,kn), kphHeI(in,jn,kn), kphHeII(in,jn,kn)
+
+      integer idissHDI, iionZ, idissZ
+      R_PREC  kdissHDI(in,jn,kn), kphCI(in,jn,kn), kphOI(in,jn,kn),
+     &        kdissCO(in,jn,kn), kdissOH(in,jn,kn), kdissH2O(in,jn,kn)
 
 
 !     Rate values
@@ -4645,6 +4705,19 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
      &             + k24shield(i)
 
             if (iradtrans .eq. 1) acoef = acoef + kphHI(i,j,k)
+            if (iradtrans .eq. 1) then
+               if ((ispecies .gt. 2).and.(idissHDI .gt. 0)) then
+                  scoef = scoef
+     &              + kdissHDI(i,j,k) * HDI(i,j,k)/3.0_DKIND
+               endif
+               if ((imchem .eq. 1) .and. (itmask_metal(i))) then
+               if (idissZ .gt. 0) then
+                  scoef = scoef
+     &              + kdissOH (i,j,k) * OH(i,j,k) /17.0_DKIND
+     &              + kdissH2O(i,j,k) * H2O(i,j,k)/18.0_DKIND
+               endif
+               endif
+            endif
 
             if (anydust) then
             if(itmask_metal(i)) then
@@ -4792,6 +4865,15 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
      &                + kphHeII(i,j,k) * HeIIp(i) / 4._DKIND
             if ( (iradtrans .eq. 1) .and. (irt_honly .eq. 1) )
      &          scoef = scoef + kphHI(i,j,k) * HIp(i)
+            if (iradtrans .eq. 1) then
+               if ((imchem .eq. 1) .and. (itmask_metal(i))) then
+               if (iionZ .gt. 0) then
+                  scoef = scoef
+     &              + kphCI(i,j,k) * CI(i,j,k)/12.0_DKIND
+     &              + kphOI(i,j,k) * OI(i,j,k)/16.0_DKIND
+               endif
+               endif
+            endif
 
             acoef = - (k1(i) *HI(i,j,k)    - k2(i)*HII(i,j,k)
      &              +  k3(i) *HeI(i,j,k)/4._DKIND -
@@ -4983,6 +5065,12 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
      &             + k132(i) *    de(i,j,k)
      &             + k135(i) *    HM(i,j,k)
             endif
+            if (iradtrans .eq. 1) then
+               if (idissHDI .gt. 0) then
+                  scoef = scoef
+     &              + 2._DKIND * kdissHDI(i,j,k) * HDI(i,j,k)/3.0_DKIND
+               endif
+            endif
             DIp(i)    = ( scoef*dtit(i) + DI(i,j,k) ) / 
      &                  ( 1._DKIND + acoef*dtit(i) )
 
@@ -5018,6 +5106,12 @@ c
      &                 )
             acoef  =    k53(i) * HII(i,j,k)
      &             +    k55(i) * HI(i,j,k)
+            if (iradtrans .eq. 1) then
+               if (idissHDI .gt. 0) then
+                  acoef = acoef
+     &              + kdissHDI(i,j,k)
+               endif
+            endif
             if (ispecies .gt. 3) then
                scoef = scoef +  3._DKIND * ( 0._DKIND
      &             + k125(i) *  HDII(i,j,k) *    HI(i,j,k) /  3._DKIND
@@ -5106,6 +5200,16 @@ C***** CI **********
      &            + kdAC      (i) / CI(i,j,k) * 12._DKIND
                endif
                endif
+               if (iradtrans .eq. 1) then
+                  if (iionZ .gt. 0) then
+                     acoef = acoef
+     &                 + kphCI(i,j,k)
+                  endif
+                  if (idissZ .gt. 0) then
+                     scoef = scoef + 12._DKIND *
+     &                   kdissCO (i,j,k) * CO(i,j,k) /28.0_DKIND
+                  endif
+               endif
 
             CIp(i)   = ( scoef*dtit(i) + CI(i,j,k) )
      &                 / ( 1._DKIND + acoef*dtit(i) )
@@ -5118,6 +5222,12 @@ C***** CII **********
      &             + kz37(i) *    OH(i,j,k) / 17._DKIND
      &             + kz38(i) *    O2(i,j,k) / 32._DKIND
      &             + kz44(i) *    de(i,j,k)
+               if (iradtrans .eq. 1) then
+                  if (iionZ .gt. 0) then
+                     scoef = scoef
+     &                 + kphCI(i,j,k) * CI(i,j,k)
+                  endif
+               endif
 
             CIIp(i)   = ( scoef*dtit(i) + CII(i,j,k) )
      &                 / ( 1._DKIND + acoef*dtit(i) )
@@ -5139,6 +5249,12 @@ C***** CO **********
      &            + kdreforg  (i) / CO(i,j,k) * 17._DKIND * 0.5_DKIND
      &            + kdvolorg  (i) / CO(i,j,k) * 17._DKIND
                endif
+               endif
+               if (iradtrans .eq. 1) then
+                  if (idissZ .gt. 0) then
+                     acoef = acoef
+     &                 + kdissCO (i,j,k)
+                  endif
                endif
 
             COp(i)   = ( scoef*dtit(i) + CO(i,j,k) )
@@ -5174,6 +5290,17 @@ C***** OI **********
      &             + kz31(i) *    OI(i,j,k) / 8._DKIND
      &             + kz32(i) *    CH(i,j,k) / 13._DKIND
      &             + kz33(i) *    OH(i,j,k) / 17._DKIND
+               if (iradtrans .eq. 1) then
+                  if (iionZ .gt. 0) then
+                     acoef = acoef
+     &                 + kphOI(i,j,k)
+                  endif
+                  if (idissZ .gt. 0) then
+                     scoef = scoef + 16._DKIND *
+     &                 ( kdissOH (i,j,k) * OH(i,j,k) /17.0_DKIND
+     &                 + kdissCO (i,j,k) * CO(i,j,k) /28.0_DKIND)
+                  endif
+               endif
 
             OIp(i)   = ( scoef*dtit(i) + OI(i,j,k) )
      &                 / ( 1._DKIND + acoef*dtit(i) )
@@ -5199,6 +5326,14 @@ C***** OH **********
      &             + kz37(i) *   CII(i,j,k) / 12._DKIND
      &             + kz52(i) *   SiI(i,j,k) / 28._DKIND
      &             + kz54(i) *  SiOI(i,j,k) / 44._DKIND
+               if (iradtrans .eq. 1) then
+                  if (idissZ .gt. 0) then
+                     acoef = acoef
+     &                 + kdissOH (i,j,k)
+                     scoef = scoef + 17._DKIND *
+     &                   kdissH2O(i,j,k) * H2O(i,j,k)/18.0_DKIND
+                  endif
+               endif
 
             OHp(i)   = ( scoef*dtit(i) + OH(i,j,k) )
      &                 / ( 1._DKIND + acoef*dtit(i) )
@@ -5229,6 +5364,12 @@ C***** H2O **********
                     acoef = acoef
      &            + kdH2Oice  (i) / H2O(i,j,k) * 18._DKIND
                endif
+               endif
+               if (iradtrans .eq. 1) then
+                  if (idissZ .gt. 0) then
+                     acoef = acoef
+     &                 + kdissH2O(i,j,k)
+                  endif
                endif
 
             H2Op(i)   = ( scoef*dtit(i) + H2O(i,j,k) )
@@ -5359,6 +5500,12 @@ C***** OII **********
      &             + kz39(i) *    HI(i,j,k)
      &             + kz40(i) *   H2I(i,j,k) /  2._DKIND
      &             + kz45(i) *    de(i,j,k)
+               if (iradtrans .eq. 1) then
+                  if (iionZ .gt. 0) then
+                     scoef = scoef
+     &                 + kphOI(i,j,k) * OI(i,j,k)
+                  endif
+               endif
 
             OIIp(i)   = ( scoef*dtit(i) + OII(i,j,k) )
      &                 / ( 1._DKIND + acoef*dtit(i) )

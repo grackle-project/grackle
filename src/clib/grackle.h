@@ -69,7 +69,9 @@ int _solve_chemistry(chemistry_data *my_chemistry,
                      gr_float *metal_P170, gr_float *metal_P200, gr_float *metal_Y19,
                      gr_float *volumetric_heating_rate, gr_float *specific_heating_rate,
                      gr_float *RT_heating_rate, gr_float *RT_HI_ionization_rate, gr_float *RT_HeI_ionization_rate,
-                     gr_float *RT_HeII_ionization_rate, gr_float *RT_H2_dissociation_rate,
+                     gr_float *RT_HeII_ionization_rate, gr_float *RT_H2_dissociation_rate, gr_float *RT_HDI_dissociation_rate, 
+                     gr_float *RT_CI_ionization_rate, gr_float *RT_OI_ionization_rate,
+                     gr_float *RT_CO_dissociation_rate, gr_float *RT_OH_dissociation_rate, gr_float *RT_H2O_dissociation_rate, 
                      gr_float *H2_self_shielding_length) __attribute__ ((deprecated));
 
 int calculate_cooling_time(code_units *my_units,

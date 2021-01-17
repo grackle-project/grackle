@@ -157,6 +157,8 @@ extern void FORTRAN_NAME(solve_rate_cool_g)(
       , double *SN0_kpAC, double *SN0_kpSiO2D, double *SN0_kpMgO, double *SN0_kpFeS, double *SN0_kpAl2O3
       , double *SN0_kpreforg , double *SN0_kpvolorg , double *SN0_kpH2Oice
       , double *h2dustSa, double *h2dustCa, double *gasgr2a, double *gamma_isrf2a, double *grogra
+      , int *idissHDI, gr_float *kdissHDI, int *iionZ, gr_float *kphCI, gr_float *kphOI
+      , int *idissZ, gr_float *kdissCO, gr_float *kdissOH, gr_float *kdissH2O
         );
 
 int local_solve_chemistry(chemistry_data *my_chemistry,
@@ -701,6 +703,15 @@ int local_solve_chemistry(chemistry_data *my_chemistry,
   , my_rates->gas_grain2
   ,&my_rates->gamma_isrf2
   , my_rates->grogr
+  ,&my_chemistry->radiative_transfer_HDI_diss
+  , my_fields->RT_HDI_dissociation_rate
+  ,&my_chemistry->radiative_transfer_metal_ion
+  , my_fields->RT_CI_ionization_rate
+  , my_fields->RT_OI_ionization_rate
+  ,&my_chemistry->radiative_transfer_metal_diss
+  , my_fields->RT_CO_dissociation_rate
+  , my_fields->RT_OH_dissociation_rate
+  , my_fields->RT_H2O_dissociation_rate
   );
 
   return SUCCESS;
@@ -734,7 +745,9 @@ int _solve_chemistry(chemistry_data *my_chemistry,
                      gr_float *metal_P170, gr_float *metal_P200, gr_float *metal_Y19,
                      gr_float *volumetric_heating_rate, gr_float *specific_heating_rate,
                      gr_float *RT_heating_rate, gr_float *RT_HI_ionization_rate, gr_float *RT_HeI_ionization_rate,
-                     gr_float *RT_HeII_ionization_rate, gr_float *RT_H2_dissociation_rate,
+                     gr_float *RT_HeII_ionization_rate, gr_float *RT_H2_dissociation_rate, gr_float *RT_HDI_dissociation_rate, 
+                     gr_float *RT_CI_ionization_rate, gr_float *RT_OI_ionization_rate,
+                     gr_float *RT_CO_dissociation_rate, gr_float *RT_OH_dissociation_rate, gr_float *RT_H2O_dissociation_rate, 
                      gr_float *H2_self_shielding_length)
 {
 
@@ -821,6 +834,12 @@ int _solve_chemistry(chemistry_data *my_chemistry,
   my_fields.RT_HeI_ionization_rate   = RT_HeI_ionization_rate;
   my_fields.RT_HeII_ionization_rate  = RT_HeII_ionization_rate;
   my_fields.RT_H2_dissociation_rate  = RT_H2_dissociation_rate;
+  my_fields.RT_HDI_dissociation_rate = RT_HDI_dissociation_rate;
+  my_fields.RT_CI_ionization_rate    = RT_CI_ionization_rate;
+  my_fields.RT_OI_ionization_rate    = RT_OI_ionization_rate;
+  my_fields.RT_CO_dissociation_rate  = RT_CO_dissociation_rate;
+  my_fields.RT_OH_dissociation_rate  = RT_OH_dissociation_rate;
+  my_fields.RT_H2O_dissociation_rate = RT_H2O_dissociation_rate;
   my_fields.H2_self_shielding_length = H2_self_shielding_length;
 
   if (local_solve_chemistry(my_chemistry, my_rates,

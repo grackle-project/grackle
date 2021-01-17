@@ -123,7 +123,10 @@
      &             , tAC, tSiO2D, tMgO, tFeS, tAl2O3
      &             , treforg, tvolorg, tH2Oice
      &             , gasgr2a, gamma_isrf2a
-     &             , imp_eng)
+     &             , imp_eng
+     &             , idissHDI, kdissHDI, iionZ, kphCI, kphOI
+     &             , idissZ, kdissCO, kdissOH, kdissH2O
+     &         )
 
 c -------------------------------------------------------------------
 
@@ -163,6 +166,10 @@ c -------------------------------------------------------------------
 
       R_PREC  kphHI, kphHeI, kphHeII,
      &        kdissH2I, photogamma
+
+      integer idissHDI, iionZ, idissZ
+      R_PREC  kdissHDI, kphCI, kphOI,
+     &        kdissCO, kdissOH, kdissH2O
 
 !  H2 self-shielding length-scale field
 
@@ -726,6 +733,9 @@ c -------------------------------------------------------------------
      &                     iradtrans, irt_honly,
      &                     kphHI, kphHeI, kphHeII,
      &                     itmask, edot, chunit, dom, metal
+     &                   , HDI, imchem, CI, OI, OH, CO, H2O
+     &                   , idissHDI, kdissHDI, iionZ, kphCI, kphOI
+     &                   , idissZ, kdissCO, kdissOH, kdissH2O
      &                         )
       endif
 
@@ -918,6 +928,19 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
      &             + k24shield   
 
             if (iradtrans .eq. 1) acoef = acoef + kphHI       
+            if (iradtrans .eq. 1) then
+               if ((ispecies .gt. 2).and.(idissHDI .gt. 0)) then
+                  scoef = scoef
+     &              + kdissHDI        * HDI       /3.0_DKIND
+               endif
+               if ((imchem .eq. 1) .and. (itmask_metal   )) then
+               if (idissZ .gt. 0) then
+                  scoef = scoef
+     &              + kdissOH         * OH        /17.0_DKIND
+     &              + kdissH2O        * H2O       /18.0_DKIND
+               endif
+               endif
+            endif
 
             if (anydust) then
             if(itmask_metal   ) then
@@ -1065,6 +1088,15 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
      &                + kphHeII        * HeII     / 4._DKIND
             if ( (iradtrans .eq. 1) .and. (irt_honly .eq. 1) )
      &          scoef = scoef + kphHI        * HI    
+            if (iradtrans .eq. 1) then
+               if ((imchem .eq. 1) .and. (itmask_metal   )) then
+               if (iionZ .gt. 0) then
+                  scoef = scoef
+     &              + kphCI        * CI       /12.0_DKIND
+     &              + kphOI        * OI       /16.0_DKIND
+               endif
+               endif
+            endif
 
             acoef = - (k1    *HI           - k2   *HII       
      &              +  k3    *HeI       /4._DKIND -
@@ -1256,6 +1288,12 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
      &             + k132    *    de       
      &             + k135    *    HM       
             endif
+            if (iradtrans .eq. 1) then
+               if (idissHDI .gt. 0) then
+                  scoef = scoef
+     &              + 2._DKIND * kdissHDI        * HDI       /3.0_DKIND
+               endif
+            endif
             dspdot(10) = dspdot(10) + (scoef - acoef * DI)
                                                     
 
@@ -1291,6 +1329,12 @@ c
      &                 )
             acoef  =    k53    * HII       
      &             +    k55    * HI       
+            if (iradtrans .eq. 1) then
+               if (idissHDI .gt. 0) then
+                  acoef = acoef
+     &              + kdissHDI       
+               endif
+            endif
             if (ispecies .gt. 3) then
                scoef = scoef +  3._DKIND * ( 0._DKIND
      &             + k125    *  HDII        *    HI        /  3._DKIND
@@ -1379,6 +1423,16 @@ C***** CI **********
      &            + kdAC          / CI        * 12._DKIND      
                endif
                endif
+               if (iradtrans .eq. 1) then
+                  if (iionZ .gt. 0) then
+                     acoef = acoef
+     &                 + kphCI       
+                  endif
+                  if (idissZ .gt. 0) then
+                     scoef = scoef + 12._DKIND *
+     &                   kdissCO         * CO        /28.0_DKIND
+                  endif
+               endif
 
             dspdot(16) = dspdot(16) + (scoef - acoef * CI)
 
@@ -1391,6 +1445,12 @@ C***** CII **********
      &             + kz37    *    OH        / 17._DKIND
      &             + kz38    *    O2        / 32._DKIND
      &             + kz44    *    de       
+               if (iradtrans .eq. 1) then
+                  if (iionZ .gt. 0) then
+                     scoef = scoef
+     &                 + kphCI        * CI       
+                  endif
+               endif
 
             dspdot(17) = dspdot(17) + (scoef - acoef * CII)
 
@@ -1412,6 +1472,12 @@ C***** CO **********
      &            + kdreforg      / CO        * 17._DKIND * 0.5_DKIND
      &            + kdvolorg      / CO        * 17._DKIND
                endif
+               endif
+               if (iradtrans .eq. 1) then
+                  if (idissZ .gt. 0) then
+                     acoef = acoef
+     &                 + kdissCO        
+                  endif
                endif
 
             dspdot(18) = dspdot(18) + (scoef - acoef * CO)
@@ -1447,6 +1513,17 @@ C***** OI **********
      &             + kz31    *    OI        / 8._DKIND
      &             + kz32    *    CH        / 13._DKIND
      &             + kz33    *    OH        / 17._DKIND
+               if (iradtrans .eq. 1) then
+                  if (iionZ .gt. 0) then
+                     acoef = acoef
+     &                 + kphOI       
+                  endif
+                  if (idissZ .gt. 0) then
+                     scoef = scoef + 16._DKIND *
+     &                 ( kdissOH         * OH        /17.0_DKIND
+     &                 + kdissCO         * CO        /28.0_DKIND)
+                  endif
+               endif
 
             dspdot(20) = dspdot(20) + (scoef - acoef * OI)
 
@@ -1472,6 +1549,14 @@ C***** OH **********
      &             + kz37    *   CII        / 12._DKIND
      &             + kz52    *   SiI        / 28._DKIND
      &             + kz54    *  SiOI        / 44._DKIND
+               if (iradtrans .eq. 1) then
+                  if (idissZ .gt. 0) then
+                     acoef = acoef
+     &                 + kdissOH        
+                     scoef = scoef + 17._DKIND *
+     &                   kdissH2O        * H2O       /18.0_DKIND
+                  endif
+               endif
 
             dspdot(21) = dspdot(21) + (scoef - acoef * OH)
 
@@ -1502,6 +1587,12 @@ C***** H2O **********
                     acoef = acoef
      &            + kdH2Oice      / H2O        * 18._DKIND
                endif
+               endif
+               if (iradtrans .eq. 1) then
+                  if (idissZ .gt. 0) then
+                     acoef = acoef
+     &                 + kdissH2O       
+                  endif
                endif
 
             dspdot(22) = dspdot(22) + (scoef - acoef * H2O)
@@ -1632,6 +1723,12 @@ C***** OII **********
      &             + kz39    *    HI       
      &             + kz40    *   H2I        /  2._DKIND
      &             + kz45    *    de       
+               if (iradtrans .eq. 1) then
+                  if (iionZ .gt. 0) then
+                     scoef = scoef
+     &                 + kphOI        * OI       
+                  endif
+               endif
 
             dspdot(30) = dspdot(30) + (scoef - acoef * OII)
 

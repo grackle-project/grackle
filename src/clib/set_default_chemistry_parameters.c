@@ -120,6 +120,10 @@ chemistry_data _set_default_chemistry_parameters(void)
   my_chemistry.radiative_transfer_coupled_rate_solver = 0;
   my_chemistry.radiative_transfer_intermediate_step   = 0;
   my_chemistry.radiative_transfer_hydrogen_only       = 0;
+  my_chemistry.radiative_transfer_H2II_diss           = 1;
+  my_chemistry.radiative_transfer_HDI_diss            = 1;
+  my_chemistry.radiative_transfer_metal_ion           = 1;
+  my_chemistry.radiative_transfer_metal_diss          = 1;
 
   /* approximate self-shielding */
   my_chemistry.self_shielding_method                  = 0;

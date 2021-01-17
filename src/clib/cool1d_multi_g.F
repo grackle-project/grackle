@@ -225,6 +225,7 @@
      &       coolunit, dbase1, tbase1, xbase1,
      &       nH2, nother, nSSh, nratio, nssh_he, nratio_he,
      &       fSShHI, fSShHeI, pe_eps, pe_X, grbeta
+      integer itd
 
 !  Slice locals
  
@@ -1291,6 +1292,31 @@ C     endif
             endif
          enddo
 
+         if (idspecies .eq. 0) then
+            do itd = 1, gr_N(2)
+               do i = is+1, ie + 1
+               if(itmask_metal(i)) then
+                  altot(itd,i)=
+     &                (SN0_kpFeM    (4*itd,1)*SN0_fFeM    (1)
+     &                /SN0_r0FeM    (3    ,1)
+     &                +SN0_kpMg2SiO4(4*itd,1)*SN0_fMg2SiO4(1)
+     &                /SN0_r0Mg2SiO4(3    ,1)
+     &                +SN0_kpMgSiO3 (4*itd,1)*SN0_fMgSiO3 (1)
+     &                /SN0_r0MgSiO3 (3    ,1)
+     &                +SN0_kpFeS    (4*itd,1)*SN0_fFeS    (1)
+     &                /SN0_r0FeS    (3    ,1)
+     &                +SN0_kpreforg (4*itd,1)*SN0_freforg (1)
+     &                /SN0_r0reforg (3    ,1)
+     &                +SN0_kpvolorg (4*itd,1)*SN0_fvolorg (1)
+     &                /SN0_r0volorg (3    ,1)
+     &                +SN0_kpH2Oice (4*itd,1)*SN0_fH2Oice (1)
+     &                /SN0_r0H2Oice (3    ,1))
+     &                  * metal(i,j,k) / d(i,j,k)
+               endif
+               enddo
+            enddo
+         endif
+
 !     Compute dust temperature
 
          if (itdmulti .eq. 0) then
@@ -1381,7 +1407,7 @@ C     endif
 
             if (idspecies .eq. 0) then
 
-               edot(i) = edot(i) - 
+               Ldst(i) =         - 
      &              gasgr(i) * (tgas(i) - tdust(i)) * 
      &              dust2gas(i) * rhoH(i) * rhoH(i)
 
@@ -1421,10 +1447,10 @@ C     endif
                endif
                endif
 
-               edot(i) = edot(i) + Ldst(i)
-
 
             endif ! idspecies
+
+            edot(i) = edot(i) + Ldst(i)
 
             endif
          enddo

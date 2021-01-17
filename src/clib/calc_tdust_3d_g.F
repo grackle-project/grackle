@@ -196,6 +196,7 @@
       integer t, dj, dk
       real*8  trad, zr, logtem0, logtem9, dlogtem,
      &        coolunit, dbase1, tbase1, xbase1
+      integer itd
 
 !  Slice locals
  
@@ -593,6 +594,31 @@ C          endif
 
         endif ! itmask
         enddo
+
+         if (idspecies .eq. 0) then
+            do itd = 1, gr_N(2)
+               do i = is+1, ie + 1
+               if(itmask(i)) then
+                  altot(itd,i)=
+     &                (SN0_kpFeM    (4*itd,1)*SN0_fFeM    (1)
+     &                /SN0_r0FeM    (3    ,1)
+     &                +SN0_kpMg2SiO4(4*itd,1)*SN0_fMg2SiO4(1)
+     &                /SN0_r0Mg2SiO4(3    ,1)
+     &                +SN0_kpMgSiO3 (4*itd,1)*SN0_fMgSiO3 (1)
+     &                /SN0_r0MgSiO3 (3    ,1)
+     &                +SN0_kpFeS    (4*itd,1)*SN0_fFeS    (1)
+     &                /SN0_r0FeS    (3    ,1)
+     &                +SN0_kpreforg (4*itd,1)*SN0_freforg (1)
+     &                /SN0_r0reforg (3    ,1)
+     &                +SN0_kpvolorg (4*itd,1)*SN0_fvolorg (1)
+     &                /SN0_r0volorg (3    ,1)
+     &                +SN0_kpH2Oice (4*itd,1)*SN0_fH2Oice (1)
+     &                /SN0_r0H2Oice (3    ,1))
+     &                  * metal(i,j,k) / d(i,j,k)
+               endif
+               enddo
+            enddo
+         endif
 
 !     --- Compute dust temperature in a slice ---
 
