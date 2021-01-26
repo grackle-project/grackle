@@ -214,7 +214,8 @@
 !     Add metal species to mean molecular weight
 
                   if (imetal .eq. 1) then
-                     munew = d(i,j,k) / (d(i,j,k) / munew +
+                     munew = d(i,j,k) /
+     &                    ((d(i,j,k) - metal(i,j,k))/ munew +
      &                    metal(i,j,k) / mu_metal)
                      tgas(i) = tgas(i) * munew / muold
                   endif

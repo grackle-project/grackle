@@ -21,7 +21,8 @@ from pygrackle import \
 
 from pygrackle.utilities.testing import \
     random_logscale, \
-    assert_rel_equal
+    assert_rel_equal, \
+    assert_array_less
 
 
 def test_proper_comoving_units():
@@ -226,3 +227,54 @@ def test_proper_units():
               "z = %f with min/max = %f/%f.") %
              (current_redshift, (t_cool_1/t_cool_2).min(),
               (t_cool_1/t_cool_2).max()) + comp))
+
+
+def test_tabulated_mmw_metal_dependence():
+    """
+    Make sure that increasing the metal mass fraction of a gas increases the
+    mean molecular weight, when run in tabulated mode.
+    """
+
+    grackle_dir = os.path.dirname(os.path.dirname(os.path.dirname(
+        os.path.dirname(os.path.abspath(__file__)))))
+    data_file_path = bytearray(os.sep.join(
+        [grackle_dir, "input", "CloudyData_UVB=HM2012.h5"]), 'utf-8')
+
+    my_random_state = np.random.RandomState(723466)
+    density_units = random_logscale(-28, -26, random_state=my_random_state)
+    length_units = random_logscale(0, 2, random_state=my_random_state)
+    time_units = random_logscale(0, 2, random_state=my_random_state)
+    velocity_units = length_units / time_units
+
+    current_redshift = 0.
+
+    mmw_vals = []
+
+    for metal_mass_frac in [0.,0.02041]:
+
+        # proper units
+        my_chem = chemistry_data()
+        my_chem.use_grackle = 1
+        my_chem.with_radiative_cooling = 0
+        my_chem.primordial_chemistry = 0
+        my_chem.metal_cooling = 1
+        my_chem.UVbackground = 1
+        my_chem.grackle_data_file = data_file_path
+        my_chem.comoving_coordinates = 0
+        my_chem.a_units = 1.0
+        my_chem.a_value = 1.0 / (1.0 + current_redshift) / my_chem.a_units
+        my_chem.density_units = density_units
+        my_chem.length_units = length_units
+        my_chem.time_units = time_units
+        my_chem.velocity_units = velocity_units
+        fc = setup_fluid_container(my_chem, converge=False,
+                                   metal_mass_fraction=metal_mass_frac)
+        fc.calculate_mean_molecular_weight()
+        mmw_vals.append(fc['mu'])
+
+    mmw_no_metals, mmw_with_metals = mmw_vals
+
+    assert_array_less(
+        mmw_no_metals, mmw_with_metals,
+        ("The mmw didn't increase when the metal fraction of the gas was "
+         "increased (for primordial_chemisty=0)"))
