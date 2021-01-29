@@ -23,9 +23,11 @@ cdef class chemistry_data:
     cdef c_chemistry_data data
     cdef c_chemistry_data_storage rates
     cdef c_code_units units
+    cdef object data_file_path
 
     def __cinit__(self):
         self.data = _set_default_chemistry_parameters()
+        self.data_file_path = None
 
     def initialize(self):
         ret =  _initialize_chemistry_data(&self.data, &self.rates, &self.units)
@@ -71,11 +73,19 @@ cdef class chemistry_data:
 
     property grackle_data_file:
         def __get__(self):
-            return self.data.grackle_data_file
+            # ensure that the underlying bytearray can't be modified (if it
+            # grows/shrinks the `char*` allocation can be invalidated)
+            return bytes(self.data.grackle_data_file)
         def __set__(self, val):
-            if isinstance(val, str):
-                val = val.encode('utf-8')
-            self.data.grackle_data_file = val
+            # when Cython converts a bytearray to `char*`, the lifetime of the
+            # `char*` allocation is tied to the lifetime of the original
+            # bytearray object. We need to make sure that the bytearray object
+            # isn't garbage collected for as long as the `char*` allocation is
+            # in use. We do this by storing the bytearray as an attribute
+            self.data_file_path = val
+            if isinstance(self.data_file_path, str):
+                self.data_file_path = self.data_file_path.encode('utf-8')
+            self.data.grackle_data_file = self.data_file_path
 
     property cmb_temperature_floor:
         def __get__(self):
