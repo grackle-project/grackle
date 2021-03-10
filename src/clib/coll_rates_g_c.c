@@ -189,8 +189,6 @@ void coll_rates_g_c(int temperatureBinIndex, double T, double kUnit, chemistry_d
 
     //*Calculate k11, k12 and k13. These are dependent upon temperature and there are two schemes for the calculation of k11.
     if ( T_ev > 0.3) {
-        //! NEED TO UNCOMMENT
-        /*
         //k11 is calculated by using either Savin 2004 or Abel et al. 1997. The parameter to control this is within the chemistry_data struct.
         if (userChemistry->useSavin2004 == 1) {
             userRates->k11[temperatureBinIndex] = ( exp(-21237.15/T) * \
@@ -228,7 +226,6 @@ void coll_rates_g_c(int temperatureBinIndex, double T, double kUnit, chemistry_d
         userRates->k11[temperatureBinIndex] = tiny;
         userRates->k12[temperatureBinIndex] = tiny;
         userRates->k13[temperatureBinIndex] = tiny;
-    */
     }
 
     //*Calculate k14 (dependant on temperature).

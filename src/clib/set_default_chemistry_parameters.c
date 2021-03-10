@@ -54,6 +54,9 @@ chemistry_data _set_default_chemistry_parameters(void)
   my_chemistry.cie_cooling                    = 0;
   my_chemistry.h2_optical_depth_approximation = 0;
 
+  //k11 calculation method.
+  my_chemistry.useSavin2004                   = 1;
+
   //h2dust calculation method.
   my_chemistry.useOmukai2000                  = 1;
 
