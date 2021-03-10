@@ -136,6 +136,18 @@ typedef struct
   /* flag for Wolcott-Green+ 2011 H2 self-shielding */
   int H2_self_shielding;
 
+  /* flag to select which formula for calculating h2dust you want to use. Setting to 1 will use Omukai 2000, 0 will use Hollenbach & McKee (1979) */ 
+  int useOmukai2000;
+
+  /* flag to select which formula for calculating low density H2 cooling rate due to H collisions. Setting to 1 will use Lique 1025 */
+  int useLique2015;
+  
+  /* flags specific to calc_rates_g (1 is on, 0 is off) -- will be set to default values if unspecified  */
+  int crg_coolExi; //Collisional excitation
+  int crg_collIon; //Collisional ionisation
+  int crg_recomCool; //Recombination cooling
+  int crg_bremCool; //Bremsstrahlung cooling
+
   /* number of OpenMP threads, if supported */
 # ifdef _OPENMP
   int omp_nthreads;
