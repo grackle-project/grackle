@@ -8,14 +8,14 @@
 #include "grackle_chemistry_data.h"
 
 //Function definition.
-void writeRates(char fileNameSuffix[100], chemistry_data *my_chemistry, chemistry_data_storage *my_rates) {
-    FILE * fp;
+int writeRates(chemistry_data *my_chemistry, chemistry_data_storage *my_rates) {
+    FILE *fp;
+    char fileExtension[5] = ".txt";
+
     //* Write k1-k58 rates.
-    char fileName[100] = "k1-k58_rates_";
-    char fileExtension[4] = ".txt";
-    strcat(fileName, fileNameSuffix);
-    strcat(fileName, fileExtension);
-    fp = fopen(fileName, "w+");
+    char fileName1[100] = "k1-k58_rates_";
+    strcat(fileName1, fileExtension);
+    fp = fopen(fileName1, "w");
     for (int line = 0; line < my_chemistry->NumberOfTemperatureBins; line++) {
         fprintf(fp, "%d,", my_rates->k1[line]);
         fprintf(fp, "%d,", my_rates->k2[line]);
@@ -54,10 +54,9 @@ void writeRates(char fileNameSuffix[100], chemistry_data *my_chemistry, chemistr
     fclose(fp);
 
     //*Write H2 formation heating terms.
-    fileName[100] = "H2formHeating_rates_";
-    strcat(fileName, fileNameSuffix);
-    strcat(fileName, fileExtension);
-    fp = fopen(fileName, "w+");
+    char fileName2[100] = "H2formHeating_rates_";
+    strcat(fileName2, fileExtension);
+    fp = fopen(fileName2, "w");
     for (int line = 0; line < my_chemistry->NumberOfTemperatureBins; line++) {
         fprintf(fp, "%d,", my_rates->n_cr_n[line]);
         fprintf(fp, "%d,", my_rates->n_cr_d1[line]);
@@ -67,10 +66,9 @@ void writeRates(char fileNameSuffix[100], chemistry_data *my_chemistry, chemistr
     fclose(fp);
 
     //*Write cooling and heating rates.
-    fileName[100] = "coolingAndHeating_rates_";
-    strcat(fileName, fileNameSuffix);
-    strcat(fileName, fileExtension);
-    fp = fopen(fileName, "w+");
+    char fileName3[100] = "coolingAndHeating_rates_";
+    strcat(fileName3, fileExtension);
+    fp = fopen(fileName3, "w");
     for (int line = 0; line < my_chemistry->NumberOfTemperatureBins; line++) {
         fprintf(fp, "%d,", my_rates->ceHI[line]);
         fprintf(fp, "%d,", my_rates->ceHeI[line]);
@@ -90,10 +88,9 @@ void writeRates(char fileNameSuffix[100], chemistry_data *my_chemistry, chemistr
     fclose(fp);
 
     //*Write molecular hydrogen cooling rates.
-    fileName[100] = "molecHydrogenCooling_rates_";
-    strcat(fileName, fileNameSuffix);
-    strcat(fileName, fileExtension);
-    fp = fopen(fileName, "w+");
+    char fileName4[100] = "molecHydrogenCooling_rates_";
+    strcat(fileName4, fileExtension);
+    fp = fopen(fileName4, "w");
     for (int line = 0; line < my_chemistry->NumberOfTemperatureBins; line++) {
         fprintf(fp, "%d,", my_rates->hyd01k[line]);
         fprintf(fp, "%d,", my_rates->h2k01[line]);
@@ -108,10 +105,9 @@ void writeRates(char fileNameSuffix[100], chemistry_data *my_chemistry, chemistr
     fclose(fp);
 
     //*Write low density rates.
-    fileName[100] = "lowDensity_rates_";
-    strcat(fileName, fileNameSuffix);
-    strcat(fileName, fileExtension);
-    fp = fopen(fileName, "w+");
+    char fileName5[100] = "lowDensity_rates_";
+    strcat(fileName5, fileExtension);
+    fp = fopen(fileName5, "w");
     for (int line = 0; line < my_chemistry->NumberOfTemperatureBins; line++) {
         fprintf(fp, "%d,", my_rates->GAHI[line]);
         fprintf(fp, "%d,", my_rates->GAH2[line]);
@@ -125,10 +121,9 @@ void writeRates(char fileNameSuffix[100], chemistry_data *my_chemistry, chemistr
     fclose(fp);
 
     //*Write k13dd.
-    fileName[100] = "k13dd_";
-    strcat(fileName, fileNameSuffix);
-    strcat(fileName, fileExtension);
-    fp = fopen(fileName, "w+");
+    char fileName6[100] = "k13dd_";
+    strcat(fileName6, fileExtension);
+    fp = fopen(fileName6, "w");
     for (int line = 0; line < my_chemistry->NumberOfTemperatureBins; line++) {
         for (int col = 0; col < 14; col++) {
             fprintf(fp, "%d,", my_rates->k13dd[line + col*my_chemistry->NumberOfTemperatureBins]);
@@ -138,15 +133,16 @@ void writeRates(char fileNameSuffix[100], chemistry_data *my_chemistry, chemistr
     fclose(fp);
 
     //*Write h2dust.
-    fileName[100] = "h2dust_";
-    strcat(fileName, fileNameSuffix);
-    strcat(fileName, fileExtension);
-    fp = fopen(fileName, "w+");
+    char fileName7[100] = "h2dust_";
+    strcat(fileName7, fileExtension);
+    fp = fopen(fileName7, "w");
     for (int line = 0; line < my_chemistry->NumberOfTemperatureBins; line++) {
         for (int col = 0; col < my_chemistry->NumberOfDustTemperatureBins; col++) {
-            fprintf(fp, "%d,", my_rates->k13dd[line + col*my_chemistry->NumberOfTemperatureBins]);
+            fprintf(fp, "%d,", my_rates->h2dust[line + col*my_chemistry->NumberOfTemperatureBins]);
         }
         fprintf(fp, "\n");
     }
     fclose(fp);
+
+    return SUCCESS;
 }

@@ -70,6 +70,8 @@ extern void FORTRAN_NAME(calc_rates_g)(
 int calc_rates_g_c(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, code_units *my_units, 
                 double co_length_units, double co_density_units);
 
+int writeRates(chemistry_data *my_chemistry, chemistry_data_storage *my_rates);
+
 int _initialize_chemistry_data(chemistry_data *my_chemistry,
                                chemistry_data_storage *my_rates,
                                code_units *my_units)
@@ -256,7 +258,9 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
   }
 
   //* Call calc_rates_g to compute rate tables. If use Fortran == 1 then it uses the legacy fortran code, if not it uses new c code.
+  //* If saveResults = 1 then the results from calc_rates_g are saved in text files.
   int useFortran = 0;
+  int saveResults = 1;
   /* Call FORTRAN routine to do the hard work. */
   if (useFortran == 1) {
         FORTRAN_NAME(calc_rates_g)(
@@ -292,7 +296,12 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
         my_rates->n_cr_n, my_rates->n_cr_d1, my_rates->n_cr_d2, 
         &ioutput);
   } else { // Call c function to do the hard work.
-          calc_rates_g_c(my_chemistry, my_rates, my_units, co_length_units, co_density_units);
+        calc_rates_g_c(my_chemistry, my_rates, my_units, co_length_units, co_density_units);
+  }
+  if (saveResults == 1) {
+          if (writeRates(my_chemistry, my_rates) != 1) { //! Calling writeRates results in 'illegal hardware instruction' error.
+                printf("Writing to results to file failed.");
+          }
   }
 
   /* Initialize Cloudy cooling. */
