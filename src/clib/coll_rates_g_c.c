@@ -64,20 +64,21 @@ void coll_rates_g_c(int temperatureBinIndex, double T, double kUnit, chemistry_d
 
     //*The formulae for the collisional rates rely on the temperature in various forms, these are calculated now for convenience.
     double logT = log(T);
-    double T_ev = T/11605;
+    double T_ev = T/11605.0;
     double logT_ev = log(T_ev);
 
 
     //*Calculate k1, k3, k4 and k5. These depend on the temperature.
-    userRates->k1[temperatureBinIndex] = exp( -32.71396786 \
-                        + 13.536556*logT_ev \
-                        - 5.73932875*pow(logT_ev, 2) \
-                        + 1.56315498*pow(logT_ev, 3) \
-                        - 0.2877056*pow(logT_ev, 4) \
-                        + 0.0348255977*pow(logT_ev, 5) \
-                        - 0.00263197617*pow(logT_ev, 6) \
-                        + 0.000111954395*pow(logT_ev, 7) \
-                        - 0.00000203914985*pow(logT_ev, 8)) / kUnit;
+    //k1
+    userRates->k1[temperatureBinIndex] = exp( -32.71396786375 \
+                        + 13.53655609057*logT_ev \
+                        - 5.739328757388*pow(logT_ev, 2) \
+                        + 1.563154982022*pow(logT_ev, 3) \
+                        - 0.2877056004391*pow(logT_ev, 4) \
+                        + 0.03482559773736999*pow(logT_ev, 5) \
+                        - 0.00263197617559*pow(logT_ev, 6) \
+                        + 0.0001119543953861*pow(logT_ev, 7) \
+                        - 2.039149852002e-6*pow(logT_ev, 8)) / kUnit;
 
     if (T_ev > 0.8) {
         //k3.

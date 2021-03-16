@@ -414,13 +414,13 @@ int calc_rates_g_c(chemistry_data *userChemistry, chemistry_data_storage *userRa
         // If T > 1e4 K use fixed value for k52 to avoid numerical issues with fitting function.
         // In this limit this reaction is not expected to be important anyway.
         if (binTemp <= 1e4) {
-            userRates->k52[i] = 1.0e-9 * (0.417 + 0.846 * log10(binTemp) \ 
+            userRates->k52[i] = 1.0e-9 * (0.417 + 0.846 * log10(binTemp) \
                                 - 0.137 * pow(log10(binTemp), 2)) / kUnit;
         } else {
             userRates->k52[i] = 1.609e-9 / kUnit;
         }   
 
-        userRates->k53[i] = 1.1e-9 * exp(-4.8832/binTemp) / kUnit;
+        userRates->k53[i] = 1.1e-9 * exp(-4.88e2/binTemp) / kUnit;
 
         //k54
         // Fit from Clark et al (2011), which is based on data in Mielke et al (2003).
@@ -481,14 +481,13 @@ int calc_rates_g_c(chemistry_data *userChemistry, chemistry_data_storage *userRa
                 userRates->h2dust[i + userChemistry->NumberOfTemperatureBins*j] = 6.0e-17 / fgr * pow(binTemp / 300.0, 0.5) * \
                                                         (pow(1.0 + exp(7.5e2 * ((1.0 / 75.0) - (1.0 / dust_binTemp))), -1.0)) * \
                                                         (pow(1.0 + (4.0e-2 * pow(binTemp + dust_binTemp, 0.5)) + 
-                                                        (2.0e-3 *binTemp) + (8.0e-6 * pow(binTemp, 2.0)), -1.0)) / kUnit;
+                                                        (2.0e-3 * binTemp) + (8.0e-6 * pow(binTemp, 2.0)), -1.0)) / kUnit;
             } else {
                 //Equation 3.8 from Hollenbach & McKee (1979).
                 userRates->h2dust[i + userChemistry->NumberOfTemperatureBins*j] = 3.0e-17 / fgr * pow(binTemp2, 0.5) / \
                                                                     (1.0 + 0.4 * pow(binTemp2 + dust_binTemp2, 0.5) + \
                                                                     0.2 * dust_binTemp2 + 8.0e-2 * pow(dust_binTemp2, 2.0)) / kUnit;
             }
-            
         } // End of loop over dust temperature bins.
 
         //H2 formation heating terms from Equation 23, Omuaki (2000).
@@ -556,10 +555,10 @@ int calc_rates_g_c(chemistry_data *userChemistry, chemistry_data_storage *userRa
                     userRates->reHII[i] = 1.778e-29 * binTemp * pow(lambdaHI, 1.965) \
                                         / pow(1.0 + pow(lambdaHI/0.541, 0.502), 2.697) \
                                         / coolingUnits; 
-                    userRates->reHeII1[i] = 3e-14 * kboltz * binTemp * pow(lambdaHeII, 0.654) \ 
+                    userRates->reHeII1[i] = 3e-14 * kboltz * binTemp * pow(lambdaHeII, 0.654) \
                                         / coolingUnits;
                     userRates->reHeIII[i] = 8.0 * 1.778e-29 * binTemp * pow(lambdaHeIII, 1.965) \
-                                        / pow(1.0 + pow(lambdaHeIII/0.541, 0.502), 2.697) \ 
+                                        / pow(1.0 + pow(lambdaHeIII/0.541, 0.502), 2.697) \
                                         / coolingUnits;
                 }
 
@@ -578,7 +577,7 @@ int calc_rates_g_c(chemistry_data *userChemistry, chemistry_data_storage *userRa
             //* d) Bremsstrahlung (Black, 1981 and Spitzer & Hart, 1979)
             if ( userChemistry->crg_bremCool == 1 ) {
                 userRates->brem[i] = 1.43e-27 * sqrt(binTemp) \
-                            * (1.1 + 0.34 * exp(-pow(5.5 - log10(binTemp), 2) / 3.0)) \ 
+                            * (1.1 + 0.34 * exp(-pow(5.5 - log10(binTemp), 2) / 3.0)) \
                             / coolingUnits;
             } else {
                 userRates->brem[i] = tiny;
@@ -783,15 +782,13 @@ int calc_rates_g_c(chemistry_data *userChemistry, chemistry_data_storage *userRa
             userRates->HDlow[i] = pow(10.0, userRates->HDlow[i]) / coolingUnits;
 
             //* g) CIE cooling (Ripamonti & Abel, 2003).
-
-            //Get cooling rate.
-            double cie_rate = cie_thin_cooling_rate_g_c(binTemp);
             
             //Below explanation originally written by Matt Turk:
             //  The above function returns the rate with units of ergs * s^-1 * cm^3 * gram^-1 *
             //  (gram in H2 molecules)^-1. To reproduce equation 5 in RA04, divide c_t_c_r by mh,
             // so to get erg/s cm^3 we multiply by mh. Divide by 2 for the H2 mass --> number.
-            userRates->cieco[i] = cie_rate * (mh/2.0) / coolingUnits;
+            double cierate = cie_thin_cooling_rate_g_c(binTemp);
+            userRates->cieco[i] =  cierate * (mh/2.0) / coolingUnits;
 
         } //End of loop over temperature bins.
     } //End of primordial_chemistry if statement.
@@ -834,7 +831,18 @@ int calc_rates_g_c(chemistry_data *userChemistry, chemistry_data_storage *userRa
     //(Equation B15, Krumholz, 2014)
     //Don't normalize by coolunit since tdust calculation is done in CGS.
     userRates->gamma_isrf = 3.9e-24 / mh / fgr;
-    
+
+    /* //! Code that saves temperatures of all bins. Used only for testing. 
+    FILE *fp;
+    fp = fopen("temperatures.txt", "w");
+    for (int i = 0; i < userChemistry->NumberOfTemperatureBins; i++) {
+        //Bin temperature.
+        double logBinTemp = log(TempStart) + abs(i)*dlogTemp;
+        double binTemp = exp(logBinTemp);
+        fprintf(fp, "%E \n", binTemp);
+    }
+    fclose(fp);
+    */     
 
     return SUCCESS;
 //End of function definition.

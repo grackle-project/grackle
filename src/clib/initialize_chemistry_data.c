@@ -243,7 +243,7 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
     my_rates->regr      = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
   }
 
-  int ioutput = 0;
+  int ioutput = 0; 
 
   double co_length_units, co_density_units;
   if (my_units->comoving_coordinates == TRUE) {
@@ -263,6 +263,7 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
   int saveResults = 1;
   /* Call FORTRAN routine to do the hard work. */
   if (useFortran == 1) {
+        printf("\n Using fortran to calculate rates \n");
         FORTRAN_NAME(calc_rates_g)(
         &my_chemistry->primordial_chemistry, &my_chemistry->photoelectric_heating,
         &my_chemistry->h2_on_dust, &my_chemistry->dust_chemistry,
@@ -296,11 +297,12 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
         my_rates->n_cr_n, my_rates->n_cr_d1, my_rates->n_cr_d2, 
         &ioutput);
   } else { // Call c function to do the hard work.
+        printf("\n Using c to calculate rates \n");
         calc_rates_g_c(my_chemistry, my_rates, my_units, co_length_units, co_density_units);
   }
   if (saveResults == 1) {
           if (writeRates(my_chemistry, my_rates) != 1) { //! Calling writeRates results in 'illegal hardware instruction' error.
-                printf("Writing to results to file failed.");
+                printf("\n Writing to results to file failed \n");
           }
   }
 

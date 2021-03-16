@@ -1033,5 +1033,18 @@ c
 
       endif
 
+c
+c     Code written by Ewan Jones. Saves temperatures of bins.
+c
+c      open(10, file='temperatures.txt', status='unknown')
+c
+c      do i=1, nratec
+c         logttt = log(temstart) + real(i-1, 8)*dlogtem
+c         ttt = exp(logttt)
+c         write(10,*) ttt
+c      enddo
+c
+c      close(10)
+
       return
       end
