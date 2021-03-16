@@ -70,7 +70,7 @@ extern void FORTRAN_NAME(calc_rates_g)(
 int calc_rates_g_c(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, code_units *my_units, 
                 double co_length_units, double co_density_units);
 
-int writeRates(chemistry_data *my_chemistry, chemistry_data_storage *my_rates);
+int writeRates(char language[50], chemistry_data *my_chemistry, chemistry_data_storage *my_rates);
 
 int _initialize_chemistry_data(chemistry_data *my_chemistry,
                                chemistry_data_storage *my_rates,
@@ -259,11 +259,13 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
 
   //* Call calc_rates_g to compute rate tables. If use Fortran == 1 then it uses the legacy fortran code, if not it uses new c code.
   //* If saveResults = 1 then the results from calc_rates_g are saved in text files.
-  int useFortran = 0;
+  int useFortran = 1;
   int saveResults = 1;
   /* Call FORTRAN routine to do the hard work. */
+  char language[50] = "";
   if (useFortran == 1) {
         printf("\n Using fortran to calculate rates \n");
+        strcpy(language, "fortran");
         FORTRAN_NAME(calc_rates_g)(
         &my_chemistry->primordial_chemistry, &my_chemistry->photoelectric_heating,
         &my_chemistry->h2_on_dust, &my_chemistry->dust_chemistry,
@@ -298,10 +300,11 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
         &ioutput);
   } else { // Call c function to do the hard work.
         printf("\n Using c to calculate rates \n");
+        strcpy(language, "c");
         calc_rates_g_c(my_chemistry, my_rates, my_units, co_length_units, co_density_units);
   }
   if (saveResults == 1) {
-          if (writeRates(my_chemistry, my_rates) != 1) { //! Calling writeRates results in 'illegal hardware instruction' error.
+          if (writeRates(language, my_chemistry, my_rates) != 1) { //! Calling writeRates results in 'illegal hardware instruction' error.
                 printf("\n Writing to results to file failed \n");
           }
   }
