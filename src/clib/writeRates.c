@@ -78,19 +78,19 @@ int writeRates(char language[50], chemistry_data *my_chemistry, chemistry_data_s
     strcat(fileName3, "coolingAndHeating_rates.txt");
     fp = fopen(fileName3, "w");
     for (int line = 0; line < my_chemistry->NumberOfTemperatureBins; line++) {
-        fprintf(fp, "%.12e,", my_rates->ceHI[line]);
-        fprintf(fp, "%.12e,", my_rates->ceHeI[line]);
-        fprintf(fp, "%.12e,", my_rates->ceHeII[line]);
-        fprintf(fp, "%.12e,", my_rates->ciHI[line]);
-        fprintf(fp, "%.12e,", my_rates->ciHeI[line]);
-        fprintf(fp, "%.12e,", my_rates->ciHI[line]);
-        fprintf(fp, "%.12e,", my_rates->ciHeIS[line]);
-        fprintf(fp, "%.12e,", my_rates->ciHeII[line]);
-        fprintf(fp, "%.12e,", my_rates->reHII[line]);
-        fprintf(fp, "%.12e,", my_rates->reHeII1[line]);
-        fprintf(fp, "%.12e,", my_rates->reHeII2[line]);
-        fprintf(fp, "%.12e,", my_rates->reHeIII[line]);
-        fprintf(fp, "%.12e,", my_rates->brem[line]);
+        fprintf(fp, "%.12e,", my_rates->ceHI[line]); //0
+        fprintf(fp, "%.12e,", my_rates->ceHeI[line]); //1
+        fprintf(fp, "%.12e,", my_rates->ceHeII[line]); //2
+        fprintf(fp, "%.12e,", my_rates->ciHI[line]); //3
+        fprintf(fp, "%.12e,", my_rates->ciHeI[line]); //4
+        fprintf(fp, "%.12e,", my_rates->ciHI[line]); //5
+        fprintf(fp, "%.12e,", my_rates->ciHeIS[line]); //6
+        fprintf(fp, "%.12e,", my_rates->ciHeII[line]); //7
+        fprintf(fp, "%.12e,", my_rates->reHII[line]); //8
+        fprintf(fp, "%.12e,", my_rates->reHeII1[line]); //9
+        fprintf(fp, "%.12e,", my_rates->reHeII2[line]); //10
+        fprintf(fp, "%.12e,", my_rates->reHeIII[line]); //11
+        fprintf(fp, "%.12e,", my_rates->brem[line]); //12
         fprintf(fp, "\n");
     }
     fclose(fp);
@@ -119,12 +119,12 @@ int writeRates(char language[50], chemistry_data *my_chemistry, chemistry_data_s
     strcat(fileName5, "lowDensity_rates.txt");
     fp = fopen(fileName5, "w");
     for (int line = 0; line < my_chemistry->NumberOfTemperatureBins; line++) {
-        fprintf(fp, "%.12e,", my_rates->GAHI[line]);
-        fprintf(fp, "%.12e,", my_rates->GAH2[line]);
-        fprintf(fp, "%.12e,", my_rates->GAHe[line]);
-        fprintf(fp, "%.12e,", my_rates->GAHp[line]);
-        fprintf(fp, "%.12e,", my_rates->GAel[line]);
-        fprintf(fp, "%.12e,", my_rates->H2LTE[line]);
+        fprintf(fp, "%.12e,", my_rates->GAHI[line]); //0
+        fprintf(fp, "%.12e,", my_rates->GAH2[line]); //1
+        fprintf(fp, "%.12e,", my_rates->GAHe[line]); //2
+        fprintf(fp, "%.12e,", my_rates->GAHp[line]); //3
+        fprintf(fp, "%.12e,", my_rates->GAel[line]); //4
+        fprintf(fp, "%.12e,", my_rates->H2LTE[line]); //5
         fprintf(fp, "\n");
     }
     fclose(fp);

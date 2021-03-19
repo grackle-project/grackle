@@ -1,6 +1,6 @@
-Ouptuts compared on --> 2021-03-16 17:34:20 
+Ouptuts compared on --> 2021-03-17 11:45:19 
 ______________________________ 
-DISCREPANCIES FOUND IN K1-K58_RATES_.TXT 
+DISCREPANCIES FOUND IN K1-K58_RATES.TXT 
 ______________________________ 
 Line 0: 
  -Element 25. C value: 4.163463835466e+02. Fortran value 4.163463792618e+02. Discrepancy 1.0291430844110712e-08 
@@ -974,13 +974,13 @@ Line 265:
  -Element 25. C value: 1.611015672561e+03. Fortran value 1.611015817629e+03. Discrepancy 9.004753296058086e-08 
 Line 266: 
  -Element 25. C value: 1.607309903551e+03. Fortran value 1.607310049512e+03. Discrepancy 9.081073069140686e-08 
-Ouptuts compared on --> 2021-03-16 17:34:20 
+Ouptuts compared on --> 2021-03-17 11:45:19 
 ______________________________ 
-DISCREPANCIES FOUND IN H2FORMHEATING_RATES_.TXT 
+DISCREPANCIES FOUND IN H2FORMHEATING_RATES.TXT 
 ______________________________ 
-Ouptuts compared on --> 2021-03-16 17:34:20 
+Ouptuts compared on --> 2021-03-17 11:45:19 
 ______________________________ 
-DISCREPANCIES FOUND IN COOLINGANDHEATING_RATES_.TXT 
+DISCREPANCIES FOUND IN COOLINGANDHEATING_RATES.TXT 
 ______________________________ 
 Line 0: 
  -Element 8. C value: 1.056100284907e+34. Fortran value 1.056101515763e+34. Discrepancy 1.1654712938664332e-06 
@@ -3382,13 +3382,13 @@ Line 599:
  -Element 8. C value: 1.315675340330e+33. Fortran value 1.315674969688e+33. Discrepancy 2.817123562925649e-07 
 Line 599: 
  -Element 11. C value: 1.508695160212e+35. Fortran value 1.508694793304e+35. Discrepancy 2.431955836847414e-07 
-Ouptuts compared on --> 2021-03-16 17:34:20 
+Ouptuts compared on --> 2021-03-17 11:45:19 
 ______________________________ 
-DISCREPANCIES FOUND IN MOLECHYDROGENCOOLING_RATES_.TXT 
+DISCREPANCIES FOUND IN MOLECHYDROGENCOOLING_RATES.TXT 
 ______________________________ 
-Ouptuts compared on --> 2021-03-16 17:34:20 
+Ouptuts compared on --> 2021-03-17 11:45:19 
 ______________________________ 
-DISCREPANCIES FOUND IN LOWDENSITY_RATES_.TXT 
+DISCREPANCIES FOUND IN LOWDENSITY_RATES.TXT 
 ______________________________ 
 Line 134: 
  -Element 0. C value: 2.989030637479e+31. Fortran value 2.989032290135e+31. Discrepancy 5.529067067853412e-07 
@@ -5254,11 +5254,11 @@ Line 599:
  -Element 0. C value: 2.184337603392e+38. Fortran value 2.184338046216e+38. Discrepancy 2.0272686320527914e-07 
 Line 599: 
  -Element 3. C value: 7.058712901356e+38. Fortran value 7.058707572088e+38. Discrepancy 7.549914658007391e-07 
-Ouptuts compared on --> 2021-03-16 17:34:20 
+Ouptuts compared on --> 2021-03-17 11:45:19 
 ______________________________ 
-DISCREPANCIES FOUND IN K13DD_.TXT 
+DISCREPANCIES FOUND IN K13DD.TXT 
 ______________________________ 
-Ouptuts compared on --> 2021-03-16 17:34:20 
+Ouptuts compared on --> 2021-03-17 11:45:19 
 ______________________________ 
-DISCREPANCIES FOUND IN H2DUST_.TXT 
+DISCREPANCIES FOUND IN H2DUST.TXT 
 ______________________________ 

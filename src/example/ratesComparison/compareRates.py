@@ -7,7 +7,7 @@ showUniqueRates = True
 #?-----------------------------------------------
 
 #Names of files which rates are stored in.
-fileNames = ["k1-k58_rates_.txt", "H2formHeating_rates_.txt", "coolingAndHeating_rates_.txt", "molecHydrogenCooling_rates_.txt", "lowDensity_rates_.txt", "k13dd_.txt", "h2dust_.txt"]
+fileNames = ["k1-k58_rates.txt", "H2formHeating_rates.txt", "coolingAndHeating_rates.txt", "molecHydrogenCooling_rates.txt", "lowDensity_rates.txt", "k13dd.txt", "h2dust.txt"]
 
 #File which detailed discrepancy data will be written to.
 f = open("discrepanyLog.txt", "w+")
