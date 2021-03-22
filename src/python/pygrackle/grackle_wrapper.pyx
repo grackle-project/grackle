@@ -606,19 +606,19 @@ cdef class chemistry_data:
             cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.reHII)
             return np.asarray(memview)
 
-    property reHII1:
+    property reHeII1:
         def __get__(self):
-            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.reHII1)
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.reHeII1)
             return np.asarray(memview)
 
-    property reHII2:
+    property reHeII2:
         def __get__(self):
-            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.reHII2)
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.reHeII2)
             return np.asarray(memview)
 
-    property reHIII:
+    property reHeIII:
         def __get__(self):
-            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.reHIII)
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.reHeIII)
             return np.asarray(memview)
 
     property brem:
@@ -781,24 +781,6 @@ cdef class chemistry_data:
         def __get__(self):
             cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.gas_grain)
             return np.asarray(memview)
-    
-    property high_avg_crs:
-        def __get__(self):
-            return self.rates.high_avg_crs
-        def __set__(self, val):
-            self.rates.high_avg_crs = val
-
-    property hei_avg_crs:
-        def __get__(self):
-            return self.rates.hei_avg_crs
-        def __set__(self, val):
-            self.rates.hei_avg_crs = val
-
-    property heii_avg_crs:
-        def __get__(self):
-            return self.rates.heii_avg_crs
-        def __set__(self, val):
-            self.rates.heii_avg_crs = val
 
     property comoving_coordinates:
         def __get__(self):
