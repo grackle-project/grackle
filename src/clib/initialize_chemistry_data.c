@@ -260,11 +260,11 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
   //* Call calc_rates_g to compute rate tables. If use Fortran == 1 then it uses the legacy fortran code, if not it uses new c code.
   //* If saveResults = 1 then the results from calc_rates_g are saved in text files.
   int useFortran = 1;
-  int saveResults = 1;
+  int saveResults = 0;
   /* Call FORTRAN routine to do the hard work. */
   char language[50] = "";
   if (useFortran == 1) {
-        printf("\n Using fortran to calculate rates \n");
+        //printf("\n Using fortran to calculate rates \n");
         strcpy(language, "fortran");
         FORTRAN_NAME(calc_rates_g)(
         &my_chemistry->primordial_chemistry, &my_chemistry->photoelectric_heating,
@@ -299,7 +299,7 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
         my_rates->n_cr_n, my_rates->n_cr_d1, my_rates->n_cr_d2, 
         &ioutput);
   } else { // Call c function to do the hard work.
-        printf("\n Using c to calculate rates \n");
+        //printf("\n Using c to calculate rates \n");
         strcpy(language, "c");
         calc_rates_g_c(my_chemistry, my_rates, my_units, co_length_units, co_density_units);
   }
