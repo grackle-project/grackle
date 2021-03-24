@@ -259,7 +259,7 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
 
   //* Call calc_rates_g to compute rate tables. If use Fortran == 1 then it uses the legacy fortran code, if not it uses new c code.
   //* If saveResults = 1 then the results from calc_rates_g are saved in text files.
-  int useFortran = 1;
+  int useFortran = 0;
   int saveResults = 0;
   /* Call FORTRAN routine to do the hard work. */
   char language[50] = "";

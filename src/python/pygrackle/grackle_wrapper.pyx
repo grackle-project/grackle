@@ -780,7 +780,7 @@ cdef class chemistry_data:
     property gas_grain:
         def __get__(self):
             cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.gas_grain)
-            return np.asarray(memview)                                               
+            return np.asarray(memview)
 
     property comoving_coordinates:
         def __get__(self):
