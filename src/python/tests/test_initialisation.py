@@ -33,6 +33,8 @@ def test_rate_initialisation():
     #* Initialise chemistry_data instance
     my_chemistry = chemistry_data()
 
+    print("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut sit amet tincidunt tellus. Nullam placerat tincidunt sagittis. Phasellus elit ipsum, bibendum eget massa vitae, dictum blandit erat. Sed imperdiet interdum risus nec elementum. Phasellus pharetra, nulla eu hendrerit eleifend, dolor neque volutpat tortor, finibus volutpat risus ante vel enim. Quisque nec felis vel ex sagittis semper. Nulla cursus est ligula, at sagittis tellus ornare at. Maecenas vitae erat nec urna pretium porttitor ultrices ut magna. Aenean eu lacinia mi. Ut bibendum, ex in congue volutpat, lectus dolor iaculis risus, a porttitor est mi a lectus. Fusce turpis massa, maximus sit amet turpis eget, ultricies sollicitudin nisi. Mauris venenatis a ex et ullamcorper. Sed vestibulum luctus tincidunt.")
+
     #* Set parameters
     my_chemistry.use_grackle = 1
     my_chemistry.with_radiative_cooling = 0
@@ -73,30 +75,26 @@ def test_rate_initialisation():
     #* Write rate coefficients to a hdf5 file if user specified such.
     if writeHDF5:
         #If file already exists delete it so that the new one can be created.
-        if os.path.exists("initialised_rates.hdf5"):
-            os.remove("initialised_rates.hdf5")
+        if os.path.exists("initialised_rates.h5"):
+            os.remove("initialised_rates.h5")
 
         #Write the file.
-        f = h5py.File("initialised_rates.hdf5", "w-")
+        f = h5py.File("initialised_rates.h5", "w-")
         for rate_key in testRates:
             f.create_dataset(rate_key, data=testRates[rate_key])
         f.close()
-
+    print("\n", type(my_chemistry.h2dust), type(my_chemistry.k1), "\n")
     #* Compare rates with the correct ones which are stored and check they are in agreement.
-    passTest = True
-    correctRates = h5py.File("tests/example_answers/correct_rates.hdf5", "r")
+    correctRates = h5py.File("tests/example_answers/correct_rates.h5", "r")
     for rate_key in testRates:
-        if np.allclose(correctRates[rate_key], testRates[rate_key], atol=1e-10) == False:
-            print("{} does not agree with correct rates.".format(rate_key))
-            passTest = False
+        assert(np.allclose(correctRates[rate_key], testRates[rate_key], atol=1e-10))
 
     print("--------------------------------TEST----------------------------------")
     print("\n", testRates["k1"], "\n")
     print("\n", testRates["h2dust"], "\n")
     print("\n", testRates["cieco"], "\n")
 
-    
-    assert(passTest == True)
+
 
     
 
