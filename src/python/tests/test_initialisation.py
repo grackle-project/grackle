@@ -89,6 +89,12 @@ def test_rate_initialisation():
         if np.allclose(correctRates[rate_key], testRates[rate_key], atol=1e-10) == False:
             print("{} does not agree with correct rates.".format(rate_key))
             passTest = False
+
+    print("--------------------------------TEST----------------------------------")
+    print("\n", testRates["k1"], "\n")
+    print("\n", testRates["h2dust"], "\n")
+    print("\n", testRates["cieco"], "\n")
+
     
     assert(passTest == True)
 
