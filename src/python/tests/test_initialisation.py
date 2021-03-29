@@ -33,8 +33,6 @@ def test_rate_initialisation():
     #* Initialise chemistry_data instance
     my_chemistry = chemistry_data()
 
-    print("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut sit amet tincidunt tellus. Nullam placerat tincidunt sagittis. Phasellus elit ipsum, bibendum eget massa vitae, dictum blandit erat. Sed imperdiet interdum risus nec elementum. Phasellus pharetra, nulla eu hendrerit eleifend, dolor neque volutpat tortor, finibus volutpat risus ante vel enim. Quisque nec felis vel ex sagittis semper. Nulla cursus est ligula, at sagittis tellus ornare at. Maecenas vitae erat nec urna pretium porttitor ultrices ut magna. Aenean eu lacinia mi. Ut bibendum, ex in congue volutpat, lectus dolor iaculis risus, a porttitor est mi a lectus. Fusce turpis massa, maximus sit amet turpis eget, ultricies sollicitudin nisi. Mauris venenatis a ex et ullamcorper. Sed vestibulum luctus tincidunt.")
-
     #* Set parameters
     my_chemistry.use_grackle = 1
     my_chemistry.with_radiative_cooling = 0
@@ -87,7 +85,7 @@ def test_rate_initialisation():
     #* Compare rates with the correct ones which are stored and check they are in agreement.
     correctRates = h5py.File("tests/example_answers/correct_rates.h5", "r")
     for rate_key in testRates:
-        assert(np.allclose(correctRates[rate_key], testRates[rate_key], atol=1e-10))
+        assert np.allclose(correctRates[rate_key], testRates[rate_key], atol=1e-10), "Rate Coefficient {} does not agree.".format(rate_key)
 
     print("--------------------------------TEST----------------------------------")
     print("\n", testRates["k1"], "\n")
