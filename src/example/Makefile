@@ -185,7 +185,7 @@ fortran_example: $(MODULES) fortran_example.o
 .F.o:
 	@rm -f $@
 	@echo "Compiling $<"
-	-@($(FC) -c -o $@ $(DEFINES) $(FFLAGS) $(INCLUDES) $(GRACKLE_INCLUDE) $*.F) >& $(OUTPUT)
+	-@($(FC) -c -o $@ $(DEFINES) $(FFLAGS) -O1 $(INCLUDES) $(GRACKLE_INCLUDE) $*.F) >& $(OUTPUT)
 	@(if [ ! -e $@ ]; then \
              echo; \
              echo "$(FC) -c -o $@ $(DEFINES) $(FFLAGS) $(INCLUDES) $(GRACKLE_INCLUDE) $*.F"; \

@@ -1,3 +1,4 @@
+import sys
 from setuptools import setup, find_packages
 from setuptools.command.build_ext import build_ext as _build_ext
 from setuptools.extension import Extension
@@ -16,6 +17,11 @@ cython_extensions = [
     ),
 ]
 
+# on some platforms the cython bindings don't work unless the
+# language_level matches the python version. To specify the level
+# see https://stackoverflow.com/a/58116368
+for e in cython_extensions:
+    e.cython_directives = {'language_level': sys.version_info[0]}
 
 class build_ext(_build_ext):
     # subclass setuptools extension builder to avoid importing numpy
@@ -59,5 +65,6 @@ setup(
     ],
     cmdclass={'build_ext': build_ext},
     license="BSD 3-clause",
-    ext_modules=cython_extensions
+    ext_modules=cython_extensions,
+    python_requires='>=3.6'
 )

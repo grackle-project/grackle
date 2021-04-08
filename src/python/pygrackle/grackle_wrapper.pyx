@@ -15,7 +15,7 @@ from pygrackle.utilities.physical_constants import \
     boltzmann_constant_cgs, \
     mass_hydrogen_cgs
 
-from grackle_defs cimport *
+from .grackle_defs cimport *
 import numpy as np
 cimport numpy as np
 
@@ -23,9 +23,11 @@ cdef class chemistry_data:
     cdef c_chemistry_data data
     cdef c_chemistry_data_storage rates
     cdef c_code_units units
+    cdef object data_file_path
 
     def __cinit__(self):
         self.data = _set_default_chemistry_parameters()
+        self.data_file_path = None
 
     def initialize(self):
         ret =  _initialize_chemistry_data(&self.data, &self.rates, &self.units)
@@ -71,11 +73,19 @@ cdef class chemistry_data:
 
     property grackle_data_file:
         def __get__(self):
-            return self.data.grackle_data_file
+            # ensure that the underlying bytearray can't be modified (if it
+            # grows/shrinks the `char*` allocation can be invalidated)
+            return bytes(self.data.grackle_data_file)
         def __set__(self, val):
-            if isinstance(val, str):
-                val = val.encode('utf-8')
-            self.data.grackle_data_file = val
+            # when Cython converts a bytearray to `char*`, the lifetime of the
+            # `char*` allocation is tied to the lifetime of the original
+            # bytearray object. We need to make sure that the bytearray object
+            # isn't garbage collected for as long as the `char*` allocation is
+            # in use. We do this by storing the bytearray as an attribute
+            self.data_file_path = val
+            if isinstance(self.data_file_path, str):
+                self.data_file_path = self.data_file_path.encode('utf-8')
+            self.data.grackle_data_file = self.data_file_path
 
     property cmb_temperature_floor:
         def __get__(self):
@@ -251,41 +261,41 @@ cdef class chemistry_data:
         def __set__(self, val):
             self.data.LWbackground_intensity = val
 
-    property  UVbackground_intensity:
+    property UVbackground_intensity:
         def __get__(self):
-            return self.data. UVbackground_intensity
+            return self.data.UVbackground_intensity
         def __set__(self, val):
-            self.data. UVbackground_intensity = val
+            self.data.UVbackground_intensity = val
 
-    property  UVbackground_on:
+    property UVbackground_redshift_on:
         def __get__(self):
-            return self.data. UVbackground_on
+            return self.data.UVbackground_redshift_on
         def __set__(self, val):
-            self.data. UVbackground_on = val
+            self.data.UVbackground_redshift_on = val
 
-    property  UVbackground_off:
+    property UVbackground_redshift_off:
         def __get__(self):
-            return self.data. UVbackground_off
+            return self.data.UVbackground_redshift_off
         def __set__(self, val):
-            self.data. UVbackground_off = val
+            self.data.UVbackground_redshift_off = val
 
-    property  UVbackground_fullon:
+    property UVbackground_redshift_fullon:
         def __get__(self):
-            return self.data. UVbackground_fullon
+            return self.data.UVbackground_redshift_fullon
         def __set__(self, val):
-            self.data. UVbackground_fullon = val
+            self.data.UVbackground_redshift_fullon = val
 
-    property  UVbackground_drop:
+    property UVbackground_redshift_drop:
         def __get__(self):
-            return self.data. UVbackground_drop
+            return self.data.UVbackground_redshift_drop
         def __set__(self, val):
-            self.data. UVbackground_drop = val
+            self.data.UVbackground_redshift_drop = val
 
-    property  cloudy_electron_fraction_factor:
+    property cloudy_electron_fraction_factor:
         def __get__(self):
-            return self.data. cloudy_electron_fraction_factor
+            return self.data.cloudy_electron_fraction_factor
         def __set__(self, val):
-            self.data. cloudy_electron_fraction_factor = val
+            self.data.cloudy_electron_fraction_factor = val
 
     property use_radiative_transfer:
         def __get__(self):
@@ -518,6 +528,9 @@ def calculate_cooling_time(fc):
     my_fields.grid_end = <int *> ref_ge.data
     my_fields.density = get_field(fc, "density")
     my_fields.internal_energy = get_field(fc, "energy")
+    my_fields.x_velocity = get_field(fc, "x-velocity")
+    my_fields.y_velocity = get_field(fc, "y-velocity")
+    my_fields.z_velocity = get_field(fc, "z-velocity")
     my_fields.HI_density = get_field(fc, "HI")
     my_fields.HII_density = get_field(fc, "HII")
     my_fields.HM_density = get_field(fc, "HM")
@@ -564,6 +577,9 @@ def calculate_gamma(fc):
     my_fields.grid_end = <int *> ref_ge.data
     my_fields.density = get_field(fc, "density")
     my_fields.internal_energy = get_field(fc, "energy")
+    my_fields.x_velocity = get_field(fc, "x-velocity")
+    my_fields.y_velocity = get_field(fc, "y-velocity")
+    my_fields.z_velocity = get_field(fc, "z-velocity")
     my_fields.HI_density = get_field(fc, "HI")
     my_fields.HII_density = get_field(fc, "HII")
     my_fields.HM_density = get_field(fc, "HM")
@@ -610,6 +626,9 @@ def calculate_pressure(fc):
     my_fields.grid_end = <int *> ref_ge.data
     my_fields.density = get_field(fc, "density")
     my_fields.internal_energy = get_field(fc, "energy")
+    my_fields.x_velocity = get_field(fc, "x-velocity")
+    my_fields.y_velocity = get_field(fc, "y-velocity")
+    my_fields.z_velocity = get_field(fc, "z-velocity")
     my_fields.HI_density = get_field(fc, "HI")
     my_fields.HII_density = get_field(fc, "HII")
     my_fields.HM_density = get_field(fc, "HM")
@@ -656,6 +675,9 @@ def calculate_temperature(fc):
     my_fields.grid_end = <int *> ref_ge.data
     my_fields.density = get_field(fc, "density")
     my_fields.internal_energy = get_field(fc, "energy")
+    my_fields.x_velocity = get_field(fc, "x-velocity")
+    my_fields.y_velocity = get_field(fc, "y-velocity")
+    my_fields.z_velocity = get_field(fc, "z-velocity")
     my_fields.HI_density = get_field(fc, "HI")
     my_fields.HII_density = get_field(fc, "HII")
     my_fields.HM_density = get_field(fc, "HM")
@@ -702,6 +724,9 @@ def calculate_dust_temperature(fc):
     my_fields.grid_end = <int *> ref_ge.data
     my_fields.density = get_field(fc, "density")
     my_fields.internal_energy = get_field(fc, "energy")
+    my_fields.x_velocity = get_field(fc, "x-velocity")
+    my_fields.y_velocity = get_field(fc, "y-velocity")
+    my_fields.z_velocity = get_field(fc, "z-velocity")
     my_fields.HI_density = get_field(fc, "HI")
     my_fields.HII_density = get_field(fc, "HII")
     my_fields.HM_density = get_field(fc, "HM")
