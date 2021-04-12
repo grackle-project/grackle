@@ -168,6 +168,9 @@ typedef struct
   int radiative_transfer_metal_ion;
   int radiative_transfer_metal_diss;
 
+  /* flag to H2 self-shielding in hydro code */
+  int radiative_transfer_use_H2_shielding;
+
   /* flag for approximiate self-shielding as well
      as spectrum averaged photo heating and
      photo ionization shielding factors */

@@ -158,7 +158,7 @@ extern void FORTRAN_NAME(solve_rate_cool_g)(
       , double *SN0_kpreforg , double *SN0_kpvolorg , double *SN0_kpH2Oice
       , double *h2dustSa, double *h2dustCa, double *gasgr2a, double *gamma_isrf2a, double *grogra
       , int *idissHDI, gr_float *kdissHDI, int *iionZ, gr_float *kphCI, gr_float *kphOI
-      , int *idissZ, gr_float *kdissCO, gr_float *kdissOH, gr_float *kdissH2O
+      , int *idissZ, gr_float *kdissCO, gr_float *kdissOH, gr_float *kdissH2O, int *iuseH2shield
         );
 
 int local_solve_chemistry(chemistry_data *my_chemistry,
@@ -712,6 +712,7 @@ int local_solve_chemistry(chemistry_data *my_chemistry,
   , my_fields->RT_CO_dissociation_rate
   , my_fields->RT_OH_dissociation_rate
   , my_fields->RT_H2O_dissociation_rate
+  ,&my_chemistry->radiative_transfer_use_H2_shielding
   );
 
   return SUCCESS;

@@ -125,7 +125,7 @@
      &             , gasgr2a, gamma_isrf2a
      &             , imp_eng
      &             , idissHDI, kdissHDI, iionZ, kphCI, kphOI
-     &             , idissZ, kdissCO, kdissOH, kdissH2O
+     &             , idissZ, kdissCO, kdissOH, kdissH2O, iuseH2shield
      &         )
 
 c -------------------------------------------------------------------
@@ -170,6 +170,7 @@ c -------------------------------------------------------------------
       integer idissHDI, iionZ, idissZ
       R_PREC  kdissHDI, kphCI, kphOI,
      &        kdissCO, kdissOH, kdissH2O
+      integer iuseH2shield
 
 !  H2 self-shielding length-scale field
 
@@ -711,7 +712,7 @@ c -------------------------------------------------------------------
      &              , kdAl2O3, kdreforg, kdvolorg, kdH2Oice
      &              , tSiM, tFeM, tMg2SiO4, tMgSiO3, tFe3O4
      &              , tAC, tSiO2D, tMgO, tFeS, tAl2O3
-     &              , treforg, tvolorg, tH2Oice
+     &              , treforg, tvolorg, tH2Oice, iuseH2shield
      &      )
 
 !           Compute dedot and HIdot, the rates of change of de and HI

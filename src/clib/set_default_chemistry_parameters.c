@@ -124,6 +124,7 @@ chemistry_data _set_default_chemistry_parameters(void)
   my_chemistry.radiative_transfer_HDI_diss            = 1;
   my_chemistry.radiative_transfer_metal_ion           = 1;
   my_chemistry.radiative_transfer_metal_diss          = 1;
+  my_chemistry.radiative_transfer_use_H2_shielding    = 0;
 
   /* approximate self-shielding */
   my_chemistry.self_shielding_method                  = 0;

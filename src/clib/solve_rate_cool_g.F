@@ -124,7 +124,7 @@
      &              , SN0_kpreforg, SN0_kpvolorg, SN0_kpH2Oice
      &              , h2dustSa, h2dustCa, gasgr2a, gamma_isrf2a, grogra
      &              , idissHDI, kdissHDI, iionZ, kphCI, kphOI
-     &              , idissZ, kdissCO, kdissOH, kdissH2O
+     &              , idissZ, kdissCO, kdissOH, kdissH2O, iuseH2shield
      &          )
 
 !
@@ -290,6 +290,7 @@
       integer idissHDI, iionZ, idissZ
       R_PREC  kdissHDI(in,jn,kn), kphCI(in,jn,kn), kphOI(in,jn,kn),
      &        kdissCO(in,jn,kn), kdissOH(in,jn,kn), kdissH2O(in,jn,kn)
+      integer iuseH2shield
 
 !  H2 self-shielding length-scale field
 
@@ -1004,7 +1005,7 @@ C    &   , coolunit*dom/mh ! = vbase1**2 / tbase1
      &              , kdAl2O3, kdreforg, kdvolorg, kdH2Oice
      &              , tSiM, tFeM, tMg2SiO4, tMgSiO3, tFe3O4
      &              , tAC, tSiO2D, tMgO, tFeS, tAl2O3
-     &              , treforg, tvolorg, tH2Oice
+     &              , treforg, tvolorg, tH2Oice, iuseH2shield
      &      )
 
 !           Compute dedot and HIdot, the rates of change of de and HI
@@ -1699,6 +1700,7 @@ C    &   , coolunit*dom/mh ! = vbase1**2 / tbase1
      & , imp_eng(i)
      & , idissHDI, kdissHDI(i,j,k), iionZ, kphCI(i,j,k), kphOI(i,j,k)
      & , idissZ, kdissCO(i,j,k), kdissOH(i,j,k), kdissH2O(i,j,k)
+     & , iuseH2shield
      &   )
 
                     do jsp = 1, nsp
@@ -1835,6 +1837,7 @@ C    &   , coolunit*dom/mh ! = vbase1**2 / tbase1
      & , imp_eng(i)
      & , idissHDI, kdissHDI(i,j,k), iionZ, kphCI(i,j,k), kphOI(i,j,k)
      & , idissZ, kdissCO(i,j,k), kdissOH(i,j,k), kdissH2O(i,j,k)
+     & , iuseH2shield
      &   )
 
                       do isp = 1, nsp
@@ -2710,7 +2713,7 @@ C                 endif
      &              , kdAl2O3, kdreforg, kdvolorg, kdH2Oice
      &              , tSiM, tFeM, tMg2SiO4, tMgSiO3, tFe3O4
      &              , tAC, tSiO2D, tMgO, tFeS, tAl2O3
-     &              , treforg, tvolorg, tH2Oice
+     &              , treforg, tvolorg, tH2Oice, iuseH2shield
      &      )
 ! -------------------------------------------------------------------
 
@@ -2795,6 +2798,7 @@ C                 endif
 !     Radiation fields
 
       R_PREC kdissH2I(in,jn,kn)
+      integer iuseH2shield
 
 !     H2 self-shielding length-scale field
 
@@ -3694,13 +3698,17 @@ C                 endif
 !
 
       if (ispecies .gt. 1) then
-      if (iradtrans == 0) then
+!     If radiative transfer for LW photons have been already solved in
+!     your hydro code, add kdissH2I later
+      if (iradtrans == 0 .or. iuseH2shield == 1) then
+C        write(*,*) 'kdissH2I not included'
          do i = is+1, ie+1
             if (itmask(i)) then
                k31shield(i) = k31
             endif 
          enddo
       else
+C        write(*,*) 'kdissH2I included'
          do i = is+1, ie+1
             if (itmask(i)) then
                k31shield(i) = k31 + kdissH2I(i,j,k)
@@ -3758,7 +3766,17 @@ C                 endif
             endif
          enddo
       endif
+!     If radiative transfer for LW photons have been already solved in
+!     your hydro code, add kdissH2I here
+      if (iradtrans == 1 .and. iuseH2shield == 1) then
+C        write(*,*) 'kdissH2I included'
+         do i = is+1, ie+1
+            if (itmask(i)) then
+               k31shield(i) = k31shield(i) + kdissH2I(i,j,k)
+            endif 
+         enddo
       endif
+      endif ! ispecies .gt. 1
 
       if (iradshield > 0) then
 !     Compute shielding factors
