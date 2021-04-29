@@ -54,7 +54,7 @@ double cie_thin_cooling_rate_g_c(double T){
     int ind;
     for (int i = 0; i <= 200; i++) {
         // Calculate working index.
-        ind = (int) (maxInd + minInd) / 2;
+        ind = (maxInd + minInd) / 2;
 
         // Update extreme indices.
         if (T >= t_cie_c[ind]) {

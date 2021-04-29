@@ -180,30 +180,11 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
 
   /* Allocate space in my_rates for rates. */
  
-    my_rates->k1 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
     my_rates->k2 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->k3 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->k4 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->k5 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->k6 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->k7 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->k8 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->k9 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->k10 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->k11 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->k12 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->k13 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
     my_rates->k13dd = malloc(14 * my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->k14 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->k15 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->k16 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->k17 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->k18 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->k19 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
     my_rates->k20 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
     my_rates->k21 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
     my_rates->k22 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->k23 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
     my_rates->k50 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
     my_rates->k51 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
     my_rates->k52 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));

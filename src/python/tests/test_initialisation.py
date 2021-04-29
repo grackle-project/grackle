@@ -27,8 +27,6 @@ def test_rate_initialisation():
     If writeHDF5 is set to true, all rate coefficients calculated in the initialisation routine will 
     be saved into a hdf5 file. This should be used for testing and is not meant for frequent use.
     """
-    #* This should be False in all use cases. Set to True only for testing.
-    writeHDF5 = False
 
     #* Initialise chemistry_data instance
     my_chemistry = chemistry_data()
@@ -52,49 +50,40 @@ def test_rate_initialisation():
     my_fluidContainer = setup_fluid_container(my_chemistry, temperature=np.logspace(4.5, 9, 200),
                         converge=True, tolerance=1e-6, max_iterations=np.inf)
     
-    #* Dictionary of all rate variables which will be checked.
-    testRates = {"k1": my_chemistry.k1, "k2": my_chemistry.k2, "k3": my_chemistry.k3, "k4": my_chemistry.k4, "k5": my_chemistry.k5,
-                "k6": my_chemistry.k6, "k7": my_chemistry.k7, "k8": my_chemistry.k8, "k9": my_chemistry.k9, "k10": my_chemistry.k10,
-                "k11": my_chemistry.k1, "k12": my_chemistry.k12, "k13": my_chemistry.k13, "k14": my_chemistry.k14, "k15": my_chemistry.k15,
-                "k16": my_chemistry.k16,"k17": my_chemistry.k17, "k18": my_chemistry.k18, "k19": my_chemistry.k19, "k20": my_chemistry.k20,
-                "k21": my_chemistry.k21, "k22": my_chemistry.k22, "k23": my_chemistry.k23, "k24": my_chemistry.k24, "k25": my_chemistry.k25,
-                "k26": my_chemistry.k26, "k27": my_chemistry.k27, "k28": my_chemistry.k28, "k29": my_chemistry.k29, "k30": my_chemistry.k30,
-                "k31": my_chemistry.k31, "k50": my_chemistry.k50, "k51": my_chemistry.k51, "k52": my_chemistry.k52, "k53": my_chemistry.k53,
-                "k54": my_chemistry.k54,"k55": my_chemistry.k55, "k56": my_chemistry.k56, "k57": my_chemistry.k57, "k58": my_chemistry.k58,
-                "n_cr_n": my_chemistry.n_cr_n, "n_cr_d1": my_chemistry.n_cr_d1, "n_cr_d2": my_chemistry.n_cr_d2, "ceHI": my_chemistry.ceHI,
-                "ceHeI": my_chemistry.ceHeI, "ceHeII": my_chemistry.ceHeII, "ciHI": my_chemistry.ciHI, "ciHeI": my_chemistry.ciHeI,
-                "ciHeIS": my_chemistry.ciHeIS, "ciHeII": my_chemistry.ciHeII, "reHII": my_chemistry.reHII,"reHeII1": my_chemistry.reHeII1,
-                "reHeII2": my_chemistry.reHeII2,"reHeIII": my_chemistry.reHeIII, "brem": my_chemistry.brem, "hyd01k": my_chemistry.hyd01k,
-                "h2k01": my_chemistry.h2k01, "vibh": my_chemistry.vibh, "orth": my_chemistry.roth, "rotl": my_chemistry.rotl,
-                "HDlte": my_chemistry.HDlte, "HDlow": my_chemistry.HDlow,"cieco": my_chemistry.cieco, "GAHI": my_chemistry.GAHI,
-                "GAH2": my_chemistry.GAH2, "GAHe": my_chemistry.GAHe, "GAHp": my_chemistry.GAHp, "GAel": my_chemistry.GAel,
-                "H2LTE": my_chemistry.H2LTE, "k13dd": my_chemistry.k13dd, "h2dust": my_chemistry.h2dust}
+    #* List of all rate variable names which will be checked.
+    testRates = ["k1", "k2", "k3", "k4", "k5", "k6", "k7", "k8", "k9", "k10", "k11", "k12", "k13",
+                 "k14", "k15", "k16","k17", "k18", "k19", "k20", "k21", "k22", "k23", "k24", "k25",
+                 "k26", "k27", "k28", "k29", "k30", "k31", "k50", "k51", "k52", "k53", "k54", "k55",
+                 "k56", "k57", "k58", "n_cr_n", "n_cr_d1", "n_cr_d2", "ceHI", "ceHeI", "ceHeII",
+                 "ciHI", "ciHeI", "ciHeIS", "ciHeII", "reHII", "reHeII1", "reHeII2","reHeIII", "brem",
+                 "hyd01k", "h2k01", "vibh", "roth", "rotl", "HDlte", "HDlow","cieco", "GAHI", "GAH2",
+                 "GAHe", "GAHp", "GAel", "H2LTE", "k13dd", "h2dust"]
 
-    #* Write rate coefficients to a hdf5 file if user specified such.
-    if writeHDF5:
-        #If file already exists delete it so that the new one can be created.
-        if os.path.exists("initialised_rates.h5"):
-            os.remove("initialised_rates.h5")
+    #* Write initialised rates to hdf5 file
+    #If file already exists delete it so that the new one can be created.
+    if os.path.exists("initialised_rates.h5"):
+        os.remove("initialised_rates.h5")
+    #Write the file.
+    f = h5py.File("initialised_rates.h5", "w-")
+    for rate_name in testRates:
+        f.create_dataset(rate_name, data=getattr(my_chemistry, rate_name))
+    f.close()
 
-        #Write the file.
-        f = h5py.File("initialised_rates.h5", "w-")
-        for rate_key in testRates:
-            f.create_dataset(rate_key, data=testRates[rate_key])
-        f.close()
-    print("\n", type(my_chemistry.h2dust), type(my_chemistry.k1), "\n")
     #* Compare rates with the correct ones which are stored and check they are in agreement.
-    correctRates = h5py.File("tests/example_answers/correct_rates.h5", "r")
-    for rate_key in testRates:
-        assert np.allclose(correctRates[rate_key], testRates[rate_key], atol=1e-10), "Rate Coefficient {} does not agree.".format(rate_key)
+    correctRates = h5py.File("example_answers/correct_rates.h5", "r")
+    initialisedRates = h5py.File("initialised_rates.h5", "r")
+    for rate_name in testRates:
+        assert np.allclose(correctRates[rate_name], initialisedRates[rate_name], atol=1e-10), \
+               f"Rate Coefficient {rate_name} does not agree."
 
     print("--------------------------------TEST----------------------------------")
-    print("\n", testRates["k1"], "\n")
-    print("\n", testRates["h2dust"], "\n")
-    print("\n", testRates["cieco"], "\n")
+    print("\n", initialisedRates["k1"], "\n")
+    print("\n", initialisedRates["h2dust"], "\n")
+    print("\n", initialisedRates["cieco"], "\n")
 
 
 
-    
+test_rate_initialisation()
 
         
 
