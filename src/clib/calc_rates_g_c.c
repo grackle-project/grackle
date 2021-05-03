@@ -85,366 +85,355 @@
 
 #include "grackle_macros.h"
 #include "grackle_types.h"
+#include "rate_functions.h"
 #include "grackle_chemistry_data.h"
 #include "phys_constants.h"
 
-//* Prototypes for functions used in calc_rates_g_c.c
-//Multispecies collisional rates
-int coll_rates_g_c(int Tbin_index, double T, double kUnit, chemistry_data *my_chemistry,
-                    chemistry_data_storage *my_rates);
-//Optically thin CIE cooling rate
-double cie_thin_cooling_rate_g_c(double T);
-//Density-dependent H2  dissociation rate
-int colh2diss_g_c(int Tbin_index, double T, int idt, chemistry_data *my_chemistry,
-                   chemistry_data_storage *my_rates);
+//Define the type of a generic rate function.
+typedef double (*rate_function)(double, double, chemistry_data*);
 
-//* Definition of the function.
+//Define a function which is able to add a rate to the calculation.
+int add_reaction_rate(double **rate_ptr, double logT_start, double d_logT, rate_function my_function,
+                        double units, chemistry_data *my_chemistry)
+{
+    //Allocate memory for rate.
+    rate_ptr = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+
+    double T, logT;
+    //Calculate rate at each temperature.
+    for (int i = 0; i < my_chemistry->NumberOfTemperatureBins; i++){
+        //Set rate to tiny for safety.
+        *rate_ptr[i] = tiny;
+
+        //Calculate bin temperature.
+        logT = logT_start + i*d_logT;
+        T = exp(logT);
+
+        //Calculate rate and store.
+        *rate_ptr[i] = my_function(T, units, my_chemistry);
+    }
+    return SUCCESS;
+}
+
+//Define a function which will calculate the k13dd rates.
+int add_k13dd_reaction_rate(double logT_start, double d_logT, double units,
+                                chemistry_data_storage *my_rates, chemistry_data *my_chemistry)
+{
+    double T, logT;
+    for (int idt=0; idt < 2; idt++) {
+        for (int i = 0; i < my_chemistry->NumberOfTemperatureBins; i++){
+
+            //Calculate bin temperature.
+            logT = logT_start + i*d_logT;
+            T = exp(logT);
+
+            //Calculate rate and store.
+            k13dd_rate(T, idt,  units, my_rates->k13dd, my_chemistry);
+        }
+    }
+    return SUCCESS;
+}
+
+//Define a functin which will calculate h2dust rates.
+int add_h2dust_reaction_rate(double logT_start, double d_logT, double logT_start_dust, double d_logT_dust,
+                                double units, chemistry_data_storage *my_rates, chemistry_data *my_chemistry)
+{
+    double T, T_dust, logT, logT_dust;
+    for (int i = 0; i < my_chemistry->NumberOfTemperatureBins; i++)
+    {   
+        //Calculate bin temperature.
+        logT = logT_start + i*d_logT;
+        T = exp(logT);
+
+        for (int j = 0; j < my_chemistry->NumberOfDustTemperatureBins; j++)
+        {
+            //Calculate dust bin temperature.
+            logT_dust = logT_start_dust + j*d_logT;
+            T_dust = exp(logT_dust);
+
+            //Calculate rate and store.
+            my_rates->h2dust[i + my_chemistry->NumberOfTemperatureBins*j] = h2dust_rate(T, T_dust, units, my_chemistry);
+        }
+    }
+}
+
+//Definition of the calc_rates function.
 int calc_rates_g_c(chemistry_data *my_chemistry, chemistry_data_storage *my_rates,
-                   code_units *my_units, double co_length_unit, double co_density_unit){
-
+                   code_units *my_units, double co_length_unit, double co_density_unit)
+{
+    //* Set various constant parameters that will be used throughout.
+    //! Not using these anymore, their values are hardcoded.
+    //double tevk = 1.1605e4; //Kelvin to eV conversion factor
+    //double dhuge = 1.0e30; //Comparison value
     
-    //* Compute rates for primordial chemistry.
-    //All rates are calculated if primordial_chemistry > 0 as it is more convenient and there
-    //is not much cost to doing it this way as this code only has to run once.
-    if (my_chemistry->primordial_chemistry > 0) {
-        //Initialise constants to tiny.
-        for (int i = 0; i < my_chemistry->NumberOfTemperatureBins; i++) {
-            my_rates->k2[i] = tiny;
-            my_rates->k20[i] = tiny;
-            my_rates->k21[i] = tiny;
-            my_rates->k22[i] = tiny;
-            my_rates->k50[i] = tiny;
-            my_rates->k51[i] = tiny;
-            my_rates->k52[i] = tiny;
-            my_rates->k53[i] = tiny;
-            my_rates->k54[i] = tiny;
-            my_rates->k55[i] = tiny;
-            my_rates->k56[i] = tiny;
-            my_rates->k57[i] = tiny;
-            my_rates->k58[i] = tiny;
-
-            //k13dd and h2dust were originally 2D arrays in the fortran code: I use 1D arrays here with the following mappings,
-            //k13dd:
-            //  {k13dd(0,0), k13dd(1,0), ... k13dd(NumberOfTemperatureBins, 0), k13dd(0,1), 2D(1,1)..., k13dd(NumberOfTemperatureBins, 13)}
-            //h2dust:
-            //  {h2dust(0,0), h2dust(1,0), ... h2dust(NumberOfTemperatureBins, 0), h2dust(0,1), 2D(1,1)..., h2dust(NumberOfTemperatureBins, NumberOfDustTemperatureBins)}
-            //where k13dd(i,j) and h2dust(i,j) are the elements in the corresponding 2D arrays.
-            for (int j = 0; j < 14; j++) {
-                my_rates->k13dd[i + my_chemistry->NumberOfTemperatureBins*j] = tiny;
-            }
-            for (int j = 0; j < my_chemistry->NumberOfDustTemperatureBins; j++) {
-                my_rates->h2dust[i + my_chemistry->NumberOfTemperatureBins*j] = tiny;
-            }
-
-            my_rates->n_cr_n[i]  = tiny;
-            my_rates->n_cr_d1[i] = tiny;
-            my_rates->n_cr_d2[i] = tiny;
-
-            my_rates->ceHI[i]    = tiny;
-            my_rates->ceHeI[i]   = tiny;
-            my_rates->ceHeII[i]  = tiny;
-            my_rates->ciHI[i]    = tiny;
-            my_rates->ciHeI[i]   = tiny;
-            my_rates->ciHeIS[i]  = tiny;
-            my_rates->ciHeII[i]  = tiny;
-            my_rates->reHII[i]   = tiny;
-            my_rates->reHeII1[i] = tiny;
-            my_rates->reHeII2[i] = tiny;
-            my_rates->reHeIII[i] = tiny;
-            my_rates->brem[i]    = tiny;
-            my_rates->comp       = tiny;
-
-            my_rates->hyd01k[i]  = tiny;
-            my_rates->h2k01[i]   = tiny;
-            my_rates->vibh[i]    = tiny;
-            my_rates->roth[i]    = tiny;
-            my_rates->rotl[i]    = tiny;
-            my_rates->HDlte[i]   = tiny;
-            my_rates->HDlow[i]   = tiny;
-            my_rates->cieco[i]   = tiny;
-
-            my_rates->GAHI[i]    = tiny;
-            my_rates->GAH2[i]    = tiny;
-            my_rates->GAHe[i]    = tiny;
-            my_rates->GAHp[i]    = tiny;
-            my_rates->GAel[i]    = tiny;
-            my_rates->H2LTE[i]   = tiny;
-        } //End of parameter initialisation for loop.
-
-    //* Populate tables for values between the specificed start and end temperatures.
-    //* _____________________________________________________________________________
-
-    // Declare all variables used within loops.
-    double logBinTemp, binTemp, binTemp2, binTemp_eV, logBinTemp_eV, dust_logBinTemp, dust_binTemp, dust_binTemp2,
-           lambdaHI, lambdaHeII, lambdaHeIII, par_x, par_dum, tm, lt, t3, HDLR, HDLV, lt3, cierate;
-    
-    //* 1) Rate Coefficients (excluding the external radiation field)
-    //Loop over temperature bins.
-    for (int i = 0; i < my_chemistry->NumberOfTemperatureBins; i++) {
-        //Calculate convenient temperature parameters for this bin (in eV).
-        logBinTemp = logTempStart + i*dlogTemp;
-        binTemp = exp(logBinTemp);
-        binTemp2 = binTemp / 1.0e2;
-        binTemp_eV = binTemp / tevk;
-        logBinTemp_eV = log(binTemp_eV);
-
-        
-
-        //H2 formation on dust grains requires loop over the dust temperature.
-        for (int j = 0; j < my_chemistry->NumberOfDustTemperatureBins; j++) {
-            //Compute dust temperature for this bin.
-            dust_logBinTemp = dust_logTempStart + j*dust_dlogTemp;
-            dust_binTemp = exp(dust_logBinTemp);
-            dust_binTemp2 = dust_binTemp / 1.0e2;
-
-            //h2dust
-            // The method used to calculate this is dependent upon what the user has selected
-            // By default Omukai 2000 will be used.
-            if (my_chemistry->h2dust_rate == 1) {
-                //k23 from Omukai (2000).
-                my_rates->h2dust[i + my_chemistry->NumberOfTemperatureBins*j] = 6.0e-17 / fgr * pow(binTemp / 300.0, 0.5) *
-                                                        (pow(1.0 + exp(7.5e2 * ((1.0 / 75.0) - (1.0 / dust_binTemp))), -1.0)) *
-                                                        (pow(1.0 + (4.0e-2 * pow(binTemp + dust_binTemp, 0.5)) + 
-                                                        (2.0e-3 * binTemp) + (8.0e-6 * pow(binTemp, 2.0)), -1.0)) / kUnit;
-            } else {
-                //Equation 3.8 from Hollenbach & McKee (1979).
-                my_rates->h2dust[i + my_chemistry->NumberOfTemperatureBins*j] = 3.0e-17 / fgr * pow(binTemp2, 0.5) /
-                                                                    (1.0 + 0.4 * pow(binTemp2 + dust_binTemp2, 0.5) +
-                                                                    0.2 * dust_binTemp2 + 8.0e-2 * pow(dust_binTemp2, 2.0)) / kUnit;
-            }
-        } // End of loop over dust temperature bins.
-
-        } //End of loop over temperature bins.
-
-
-
-
-
-        for (int i = 0; i < my_chemistry->NumberOfTemperatureBins; i++) {
-            
-
-
-            //* e) Molecular hydrogen cooling
-
-           
-         
-
-            //------Calculate Galli & Palla (1999) Rates------ 
-            //             (as fit by Tom Abel)
-
-            //Constrain temperature.
-            tm = fmax(binTemp, 13.0); //no cooling below 13 Kelvin
-            tm = fmin(tm, 1.0e5); //fixes numerics
-            lt = log10(tm);
-
-            //Low density limit (Galli & Palla).
-            my_rates->GP99LowDensityLimit[i] = pow(10.0, -103.0 + 97.59*lt - 48.05*pow(lt, 2) + 10.8*pow(lt, 3)
-                                                - 0.9032*pow(lt, 4)) / coolingUnits;
-
-            //High density limit from HM79.
-            t3 = tm/1000.0;
-            HDLR = (9.5e-22*pow(t3, 3.76)) / (1.0 + 0.12*pow(t3, 2.1)) *
-                        exp(-pow((0.13/t3), 3)) + 3.0e-24 * exp(-0.51/t3);
-            HDLV = 6.7e-19*exp(-5.86/t3) + 1.6e-18*exp(-11.7/t3);
-            my_rates->GP99HighDensityLimit[i] = (HDLR + HDLV) / coolingUnits;
-
-            //------Low density rates (Glover & Abel, 2008)------
-            
-            //Excitation by HI.
-            //Constrain temperature.
-            tm  = fmax(binTemp, 10.0);
-            tm  = fmin(tm, 1.0e4);
-            lt3 = log10(tm / 1.0e3);
-
-            //Calculate rate using method specified in chemistry_data struct.
-            if (my_chemistry->h2_h_cooling_rate == 1) {
-                if (tm < 1e2) {
-                    my_rates->GAHI[i] = 0.0;
-                } else {
-                    my_rates->GAHI[i] = pow(10.0, -24.07950609
-                                    + 4.54182810 * lt3
-                                    - 2.40206896 * pow(lt3, 2)
-                                    - 0.75355292 * pow(lt3, 3)
-                                    + 4.69258178 * pow(lt3, 4)
-                                    - 2.79573574 * pow(lt3, 5)
-                                    - 3.14766075 * pow(lt3, 6)
-                                    + 2.50751333 * pow(lt3, 7)) / coolingUnits;
-                }
-            } else {
-                if (tm < 1.0e2) {
-                    my_rates->GAHI[i] = pow(10.0, -16.818342
-                                    + 37.383713 * lt3
-                                    + 58.145166 * pow(lt3, 2)
-                                    + 48.656103 * pow(lt3, 3)
-                                    + 20.159831 * pow(lt3, 4)
-                                    + 3.8479610 * pow(lt3, 5)) / coolingUnits;
-                } else if (tm < 1.0e3) {
-                    my_rates->GAHI[i] = pow(10.0, -24.311209
-                                    + 3.5692468 * lt3
-                                    - 11.332860 * pow(lt3, 2)
-                                    - 27.850082 * pow(lt3, 3)
-                                    - 21.328264 * pow(lt3, 4)
-                                    - 4.2519023 * pow(lt3, 5)) / coolingUnits;
-                } else {
-                    my_rates->GAHI[i] = pow(10.0, -24.311209
-                                    + 4.6450521 * lt3
-                                    - 3.7209846 * pow(lt3, 2)
-                                    + 5.9369081 * pow(lt3, 3)
-                                    - 5.5108047 * pow(lt3, 4)
-                                    + 1.5538288 * pow(lt3, 5)) / coolingUnits;
-                }
-            }
-
-            //Excitation by H2.
-            my_rates->GAH2[i] = pow(10.0, -23.962112
-                                + 2.09433740  * lt3
-                                - 0.77151436 * pow(lt3, 2)
-                                + 0.43693353 * pow(lt3, 3)
-                                - 0.14913216 * pow(lt3, 4)
-                                - 0.033638326 * pow(lt3, 5)) / coolingUnits;
-
-            //Excitation by He.
-            my_rates->GAHe[i] = pow(10.0, -23.689237
-                            + 2.1892372  * lt3
-                            - 0.81520438 * pow(lt3, 2)
-                            + 0.29036281 * pow(lt3, 3)
-                            - 0.16596184 * pow(lt3, 4)
-                            + 0.19191375 * pow(lt3, 5)) / coolingUnits;
-
-            //Excitation by HII.
-            //Collisional excitation rates from Honvault et al (2011, Phys. Rev. Lett., 107, 023201) and 
-            //Honvault et al (2012, Phys. Rev. Lett., 108, 109903).
-            my_rates->GAHp[i] = pow(10.0, -22.089523
-                            + 1.5714711   * lt3
-                            + 0.015391166 * pow(lt3, 2)
-                            - 0.23619985  * pow(lt3, 3)
-                            - 0.51002221  * pow(lt3, 4)
-                            + 0.32168730  * pow(lt3, 5)) / coolingUnits;
-
-            //Excitation by electrons.
-            //Based on data from  Yoon et al (2008, J. Phys. Chem. Ref. Data, 37, 913).
-            if (tm < 100.0) {
-                my_rates->GAel[i] = 0.0;
-            } else if (tm < 500.0) {
-                my_rates->GAel[i] = pow(10.0, -21.928796
-                                + 16.815730 * lt3
-                                + 96.743155 * pow(lt3, 2)
-                                + 343.19180 * pow(lt3, 3)
-                                + 734.71651 * pow(lt3, 4)
-                                + 983.67576 * pow(lt3, 5)
-                                + 801.81247 * pow(lt3, 6)
-                                + 364.14446 * pow(lt3, 7)
-                                + 70.609154 * pow(lt3, 8)) / coolingUnits;
-            } else {
-                my_rates->GAel[i] = pow(10.0, -22.921189
-                                + 1.6802758  * lt3
-                                + 0.93310622 * pow(lt3, 2)
-                                + 4.0406627  * pow(lt3, 3)
-                                - 4.7274036  * pow(lt3, 4)
-                                - 8.8077017  * pow(lt3, 5)
-                                + 8.9167183  * pow(lt3, 6)
-                                + 6.4380698  * pow(lt3, 7)
-                                - 6.3701156  * pow(lt3, 8)) / coolingUnits;
-            }
-
-            //------New fit to LTE rate------ 
-            //from Glover (2015, MNRAS, 451, 2082)
-            if (tm < 1.0e2) {
-                //Simple extrapolation as H2 cooling insignificant at these temperatures.
-                my_rates->H2LTE[i] = 7.0e-27 * pow(tm, 1.5) * exp(-512.0/tm) / coolingUnits;
-            } else {
-                my_rates->H2LTE[i] = pow(10.0, -20.584225
-                                + 5.0194035 * lt3
-                                - 1.5738805 * pow(lt3, 2)
-                                - 4.7155769 * pow(lt3, 3)
-                                + 2.4714161 * pow(lt3, 4)
-                                + 5.4710750 * pow(lt3, 5)
-                                - 3.9467356 * pow(lt3, 6)
-                                - 2.2148338 * pow(lt3, 7)
-                                + 1.8161874 * pow(lt3, 8)) / coolingUnits;
-            }
-
-
-
-
-            //* f) HD cooling.
-            //HD cooling function has units of ergs cm^3 / s
-
-            //Fit from Coppola et al 2011. LTE (ergs/s) -> hdlte (ergs cm3/s)
-            //Constain temperature.
-            tm  = fmax(binTemp, 10.0);
-            tm  = fmin(tm, 3.0e4);
-            //Calculate rate.
-            my_rates->HDlte[i] = -55.5725 + 56.649 * log10(tm)
-                            - 37.9102  * pow(log10(tm), 2)
-                            + 12.698   * pow(log10(tm), 3)
-                            - 2.02424  * pow(log10(tm), 4)
-                            + 0.122393 * pow(log10(tm), 5);
-            my_rates->HDlte[i] = pow(10.0, fmin(my_rates->HDlte[i], 0.0)) / coolingUnits;
-
-            //Rate based on (Wrathmall, Gusdorf & Flower, 2007) HD-H collisional excitation rates.
-            //Constrain temperature.
-            tm = fmax(binTemp, 1.0e1);
-            tm = fmin(tm, 6.0e3);
-            //Calculate rate.
-            my_rates->HDlow[i] = -23.175780  + 1.5035261 * log10(tm/1.0e3)
-                            + 0.40871403  * pow(log10(tm/1.0e3), 2)
-                            + 0.17849311  * pow(log10(tm/1.0e3), 3)
-                            - 0.077291388 * pow(log10(tm/1.0e3), 4)
-                            + 0.10031326 * pow(log10(tm/1.0e3), 5);
-            my_rates->HDlow[i] = pow(10.0, my_rates->HDlow[i]) / coolingUnits;
-
-            //* g) CIE cooling (Ripamonti & Abel, 2003).
-            
-            //Below explanation originally written by Matt Turk:
-            //  The above function returns the rate with units of ergs * s^-1 * cm^3 * gram^-1 *
-            //  (gram in H2 molecules)^-1. To reproduce equation 5 in RA04, divide c_t_c_r by mh,
-            // so to get erg/s cm^3 we multiply by mh. Divide by 2 for the H2 mass --> number.
-            cierate = cie_thin_cooling_rate_g_c(binTemp);
-            my_rates->cieco[i] =  cierate * (mh/2.0) / coolingUnits;
-
-        } //End of loop over temperature bins.
-    } //End of primordial_chemistry if statement.
-
-    //* Dust-related Processes.
-    if (anyDust == TRUE) {
-        //Loop over temperature bins.
-        for (int i = 0; i < my_chemistry->NumberOfTemperatureBins; i++) {
-            //Calculate bin temperature (eV).
-            double logBinTemp = logTempStart + abs(i)*dlogTemp;
-            double binTemp = exp(logBinTemp);
-
-            //Energy transfer from gas to dust grains.
-            //(Equation 2.15, Hollenbach & McKee, 1989)
-            my_rates->gas_grain[i] = grainCoeff * pow(binTemp, 0.5) *
-                                   (1.0 - 0.8 * exp(-75.0/binTemp)) / coolingUnits;
-
-            //Electron recombination onto dust grains.
-            //(Equation 9, Wolfire et al., 1995)
-
-            double grbeta = 0.74 / pow(binTemp, 0.068);
-            my_rates->regr[i] = 4.65e-30 * pow(binTemp, 0.94 + 0.5 * grbeta)
-                              / coolingUnits;
-        } //End of loop over temperature bins.
-    } //End of anyDust if statement.
-
-
-    //* i) Compton cooling (Peebles 1971).
-    my_rates->comp = 5.65e-36 / coolingUnits;
-
-    //* j) Photoelectric heating by UV-irradiated dust (Wolfire 1995).
-    //Default is 8.5e-26 for epsilon=0.05, G_0=1.7 (rate in erg s^-1 cm^-3).
-    if (my_chemistry->photoelectric_heating <= 1) {
-         my_rates->gammah = my_chemistry->photoelectric_heating_rate / coolingUnits;
-    } else { //photoelectric_heating set to 2 or 3
-        //User to specify G_0, epsilon set to 0.05 or calculated directly.
-        my_rates->gammah = 1.0e-24 / coolingUnits;
+    //* Set the flag for dust calculations.
+    int anyDust;
+    if ( my_chemistry->h2_on_dust > 0 || my_chemistry->dust_chemistry > 0) {
+        anyDust = TRUE;
+    } else {
+        anyDust = FALSE;
     }
 
+    //* Obtain the conversion factors which convert between code and physical units. We define a_value = 1 at z = zInit such that a = a_value * [a].
+    double timeBase1 = my_units->time_units;
+    double lengthBase1 = co_length_unit/(my_units->a_value * my_units->a_units);
+    double densityBase1 = co_density_unit*pow(my_units->a_value * my_units->a_units, 3);
+
+    /*
+    * 1) Set the dimensions of the non-radiative rate coefficients.
+    * 
+    *   --Following explanation taken from original fortran code--
+    * 
+    * 
+    *   Note that we have included the units that convert density to 
+    *   number density, so the rate equations should look like:
+    * 
+    *       d(d0~)/dt~ = k~ * d1~ * d2~ / a~^3
+    * 
+    *   where k~ is the dimenionless rate coefficients and d0-2~ are three
+    *   dimensionless densities (i.e. d = [dens]*d~) and a~ is the 
+    *   dimensionless expansion coefficient.
+    * 
+    *   rate eqn        : delta(n0)  = k  * n1        * n2        * dt     / a^3
+    *   rate eqn units  : [dens]/mh  = k  * [dens]/mh * [dens]/mh * [time] / [a]^3
+    *   rate eqn dimless: delta(n0~) = k~ * n1~       * n2~       * dt~    / a~^3
+    * 
+    *   So, k = [k] * k~  where [k] = ( [a]^3 * mh ) / ( [dens] * [time] ) [~]
+    *   
+    *   Reminder: the number densities here are normalized with [dens] which is not
+    *   a constant (it has a factor a^3), so the number densities must be converted
+    *   from comoving to proper.
+    */ 
+    double kUnit = (pow(my_units->a_units, 3) * mh) / (densityBase1 * timeBase1);
+    double kUnit_3Bdy = kUnit * (pow(my_units->a_units, 3) * mh) / densityBase1;
+
+    /*
+    * 2) Set the dimensions of the cooling coefficients.
+    * 
+    *   --Following explanation taken from original fortran code--
+    * 
+    * 
+    *   This equation has a rho because e is the specific energy, not energy/unit volume).
+    * 
+    *   delta(e)  = L     * n1        * n2        * dt     / dens   / a^3
+    *   [e]       = L     * [dens]/mh * [dens]/mh * [time] / [dens] / [a]^3
+    *   delta(e~) = L~    * n1~       * n2~       * dt~    / dens~  / a~^3 [~]
+    * 
+    *   So, L = [L] * L~ where [L] = [e] * mh**2 * [a]^3 / ([dens] * [time]) [~]
+    *   but [e] = ([a]*[x])**2 / [time]**2, and [a] = 1 / (1 + zri)
+    *   
+    *   Therefore, [L] = ([a]**5 * [x]**2 * mh**2) / ([dens] * [time]**3)
+    * 
+    * 
+    *   Note: some of the coffiecients have only one power of n.  These do not have the /a^3
+    *   factor, also they have units:
+    *     
+    *     [L1] = ([a]**2 * [x]**2 * mh) / [time]**3  =  [L] * [dens] * [a]**3 / mh
+    *       
+    *   This is done through the dom variable in cool.src (some have three powers of n and they
+    *   are different by the reciprocal of the above factor multiplying [L]).
+    * 
+    */
+    double coolingUnits = (pow(my_units->a_value, 5) * pow(lengthBase1, 2) * pow(mh, 2))
+                          / (densityBase1 * pow(timeBase1, 3));
+
+    //* 3) Units for radiative transfer coefficients are 1/[time].
+
+    //* Compute log spacing in temperature.
+    double logT_start = log(my_chemistry->TemperatureStart);
+    double d_logT = (log(my_chemistry->TemperatureEnd) - logT_start)
+                           / (my_chemistry->NumberOfTemperatureBins - 1);
+
+    //* Compute log spacing in dust temperature.
+    double logT_start_dust = log(my_chemistry->DustTemperatureStart);
+    double d_logT_dust = (log(my_chemistry->DustTemperatureEnd) - logT_start_dust)
+                                / (my_chemistry->NumberOfDustTemperatureBins - 1);
+    
+    //* Compute rates for primordial chemistry.
+
+    //* 1) Rate Coefficients (excluding the external radiation field)
+    if (my_chemistry->primordial_chemistry > 0){ 
+        //--------Calculate multispecies collissional rates--------
+        add_reaction_rate(&my_rates->k1, logT_start, d_logT, k1_rate, kUnit, my_chemistry);
+        add_reaction_rate(&my_rates->k3, logT_start, d_logT, k3_rate, kUnit, my_chemistry);
+        add_reaction_rate(&my_rates->k4, logT_start, d_logT, k4_rate, kUnit, my_chemistry);
+        add_reaction_rate(&my_rates->k2, logT_start, d_logT, k2_rate, kUnit, my_chemistry);
+        add_reaction_rate(&my_rates->k5, logT_start, d_logT, k5_rate, kUnit, my_chemistry);
+        add_reaction_rate(&my_rates->k6, logT_start, d_logT, k6_rate, kUnit, my_chemistry);
+        add_reaction_rate(&my_rates->k7, logT_start, d_logT, k7_rate, kUnit, my_chemistry);
+        add_reaction_rate(&my_rates->k8, logT_start, d_logT, k8_rate, kUnit, my_chemistry);
+        add_reaction_rate(&my_rates->k9, logT_start, d_logT, k9_rate, kUnit, my_chemistry);
+        add_reaction_rate(&my_rates->k10, logT_start, d_logT, k10_rate, kUnit, my_chemistry);
+        add_reaction_rate(&my_rates->k11, logT_start, d_logT, k11_rate, kUnit, my_chemistry);
+        add_reaction_rate(&my_rates->k12, logT_start, d_logT, k12_rate, kUnit, my_chemistry);
+        add_reaction_rate(&my_rates->k14, logT_start, d_logT, k14_rate, kUnit, my_chemistry);
+        add_reaction_rate(&my_rates->k15, logT_start, d_logT, k15_rate, kUnit, my_chemistry);
+        add_reaction_rate(&my_rates->k16, logT_start, d_logT, k16_rate, kUnit, my_chemistry);
+        add_reaction_rate(&my_rates->k17, logT_start, d_logT, k17_rate, kUnit, my_chemistry);
+        add_reaction_rate(&my_rates->k18, logT_start, d_logT, k18_rate, kUnit, my_chemistry);
+        add_reaction_rate(&my_rates->k19, logT_start, d_logT, k19_rate, kUnit, my_chemistry);
+        add_reaction_rate(&my_rates->k23, logT_start, d_logT, k23_rate, kUnit, my_chemistry);
+
+        //--------Calculate coefficients for density-dependent collisional H2 dissociation rate--------
+        //
+        // idt = 0 calculates coefficients for direct collisional dissociation idt = 1 
+        // calculates coefficients for dissociative tunneling as prescribed in 
+        // (Martin et al, 1996, ApJ, 461, 265). Code is ran with both values of idt
+        // so that coefficients for both cases are calculated.
+        // 
+        // Results are stored within the k13dd array in chemistry_data_storage. The coefficients
+        // corresponding to idt=0 come first, followed by those corresponding to idt=1. There are
+        // seven coefficients for each case, and each coefficient has a value at each temperature bin.
+        // Therefore the array is structured as follows:
+        // k13dd = {coeff1(idt=0, Tbin1), coeff1(idt=0, Tbin2), ..., coeff1(idt=0, TbinFinal), coeff2(idt=0, Tbin1), ..., 
+        //          coeff7(idt=0, TbinFinal), coeff1(idt=1, Tbin1), ..., coeff7(idt=1, TbinFinal)}
+        add_k13dd_reaction_rate(logT_start, d_logT, kUnit, my_rates, my_chemistry);
+
+        //--------Calculate 3-body H2 rate--------
+
+        // Calculated by the same method as done in the original code. First is the fit to 
+        // A.E. Orel 1987, J.Chem.Phys., 87, 314, which is matched to the 1/T of 
+        // Palla etal (1983) -- which is four times smaller than the Palla rate.
+        
+        //Varying threebody and corresponding collisional dissociation rates from Simon.
+        add_reaction_rate(&my_rates->k13, logT_start, d_logT, k13_rate, kUnit, my_chemistry);
+        add_reaction_rate(&my_rates->k21, logT_start, d_logT, k21_rate, kUnit, my_chemistry);
+        add_reaction_rate(&my_rates->k22, logT_start, d_logT, k22_rate, kUnit, my_chemistry);
+        //Normalisation //! Check that this is a sensible way of doing this.
+        for (int i=0; i < my_chemistry->NumberOfDustTemperatureBins; i++) {
+            my_rates->k13[i] = my_rates->k13[i] / kUnit;
+            my_rates->k21[i] =  my_rates->k21[i] / kUnit_3Bdy;
+            my_rates->k22[i] = my_rates->k22[i] / kUnit_3Bdy;
+        }
+
+        //--------Deuterium Rates--------
+        add_reaction_rate(&my_rates->k50, logT_start, d_logT, k50_rate, kUnit, my_chemistry);
+        add_reaction_rate(&my_rates->k51, logT_start, d_logT, k51_rate, kUnit, my_chemistry);
+        add_reaction_rate(&my_rates->k52, logT_start, d_logT, k52_rate, kUnit, my_chemistry);
+        add_reaction_rate(&my_rates->k53, logT_start, d_logT, k53_rate, kUnit, my_chemistry);
+        add_reaction_rate(&my_rates->k54, logT_start, d_logT, k54_rate, kUnit, my_chemistry);
+        add_reaction_rate(&my_rates->k55, logT_start, d_logT, k55_rate, kUnit, my_chemistry);
+        add_reaction_rate(&my_rates->k56, logT_start, d_logT, k56_rate, kUnit, my_chemistry);
+
+        //--------New H Ionization Rates--------
+        add_reaction_rate(&my_rates->k57, logT_start, d_logT, k57_rate, kUnit, my_chemistry);
+        add_reaction_rate(&my_rates->k58, logT_start, d_logT, k58_rate, kUnit, my_chemistry);
+
+        //H2 formation on dust grains requires loop over the dust temperature.
+        add_h2dust_reaction_rate(logT_start, d_logT, logT_start_dust, d_logT_dust, kUnit, my_rates, my_chemistry);
+
+        //H2 formation heating terms from Equation 23, Omuaki (2000).
+        add_reaction_rate(&my_rates->n_cr_n, logT_start, d_logT, n_cr_n_rate, kUnit, my_chemistry);
+        add_reaction_rate(&my_rates->n_cr_d1, logT_start, d_logT, n_cr_d1_rate, kUnit, my_chemistry);
+        add_reaction_rate(&my_rates->n_cr_d2, logT_start, d_logT, n_cr_d2_rate, kUnit, my_chemistry);
+
+        //* 2) Cooling and heating Rates (excluding external radiation field)
+
+        //* a) Collisional excitations (Black 1981; Cen 1992).
+
+        add_reaction_rate(&my_rates->ceHI, logT_start, d_logT, ceHI_rate, coolingUnits, my_chemistry);
+        add_reaction_rate(&my_rates->ceHeI, logT_start, d_logT, ceHeI_rate, coolingUnits, my_chemistry);
+        add_reaction_rate(&my_rates->ceHeII, logT_start, d_logT, ceHeII_rate, coolingUnits, my_chemistry);
+
+        //* b) Collisional ionizations (Cen 1992, Abel 1996).
+
+        add_reaction_rate(&my_rates->ciHeIS, logT_start, d_logT, ciHeIS_rate, coolingUnits, my_chemistry);
+        //Collisional ionizations. Polynomial fits from Tom Abel.
+        //! Check definition for the three below. Big problems.
+        add_reaction_rate(&my_rates->ciHI, logT_start, d_logT, ciHI_rate, kUnit / coolingUnits, my_chemistry);
+        add_reaction_rate(&my_rates->ciHeI, logT_start, d_logT, ciHeI_rate, kUnit / coolingUnits, my_chemistry);
+        add_reaction_rate(&my_rates->ciHeII, logT_start, d_logT, ciHeII_rate, kUnit / coolingUnits, my_chemistry);
+
+        //* c) Recombinations (Hui & Gnedin 1997, except where noted).
+
+        add_reaction_rate(&my_rates->reHII, logT_start, d_logT, reHII_rate, coolingUnits, my_chemistry);
+        add_reaction_rate(&my_rates->reHeII1, logT_start, d_logT, reHeII1_rate, coolingUnits, my_chemistry);
+        //Dielectronic recombination (Cen, 1992).
+        add_reaction_rate(&my_rates->reHeII2, logT_start, d_logT, reHeII2_rate, coolingUnits, my_chemistry);
+        add_reaction_rate(&my_rates->reHeIII, logT_start, d_logT, reHeIII_rate, coolingUnits, my_chemistry);
+
+        //* d) Bremsstrahlung (Black, 1981 and Spitzer & Hart, 1979)
+        add_reaction_rate(&my_rates->brem, logT_start, d_logT, brem_rate, coolingUnits, my_chemistry);
+
+        //* e) Molecular hydrogen cooling
+
+        //------Calculate Lepp & Shull rates------
+
+        add_reaction_rate(&my_rates->vibh, logT_start, d_logT, vibh_rate, coolingUnits, my_chemistry);
+        add_reaction_rate(&my_rates->hyd01k, logT_start, d_logT, hyd01k_rate, coolingUnits, my_chemistry);
+        add_reaction_rate(&my_rates->h2k01, logT_start, d_logT, h2k01_rate, coolingUnits, my_chemistry);
+        add_reaction_rate(&my_rates->rotl, logT_start, d_logT, rotl_rate, coolingUnits, my_chemistry);
+        add_reaction_rate(&my_rates->roth, logT_start, d_logT, roth_rate, coolingUnits, my_chemistry);
+         
+        //------Calculate Galli & Palla (1999) Rates------ 
+        //             (as fit by Tom Abel)
+        
+        //Low density limit (Galli & Palla).
+        add_reaction_rate(&my_rates->GP99LowDensityLimit, logT_start, d_logT, GP99LowDensityLimit_rate, coolingUnits, my_chemistry);
+        //High density limit from HM79.
+        add_reaction_rate(&my_rates->GP99HighDensityLimit, logT_start, d_logT, GP99HighDensityLimit_rate, coolingUnits, my_chemistry);
+
+        //------Low density rates (Glover & Abel, 2008)------
+
+        //Excitation by HI.
+        add_reaction_rate(&my_rates->GAHI, logT_start, d_logT, GAHI_rate, coolingUnits, my_chemistry);
+        //Excitation by H2.
+        add_reaction_rate(&my_rates->GAH2, logT_start, d_logT, GAH2_rate, coolingUnits, my_chemistry);
+        //Excitation by He.
+        add_reaction_rate(&my_rates->GAHe, logT_start, d_logT, GAHe_rate, coolingUnits, my_chemistry);
+        //Excitation by HII.
+        //Collisional excitation rates from Honvault et al (2011, Phys. Rev. Lett., 107, 023201) and 
+        //Honvault et al (2012, Phys. Rev. Lett., 108, 109903).
+        add_reaction_rate(&my_rates->GAHp, logT_start, d_logT, GAHp_rate, coolingUnits, my_chemistry);
+        //Excitation by electrons.
+        //Based on data from  Yoon et al (2008, J. Phys. Chem. Ref. Data, 37, 913).
+        add_reaction_rate(&my_rates->GAel, logT_start, d_logT, GAel_rate, coolingUnits, my_chemistry);
+        //------New fit to LTE rate------ 
+        //from Glover (2015, MNRAS, 451, 2082)
+        add_reaction_rate(&my_rates->H2LTE, logT_start, d_logT, H2LTE_rate, coolingUnits, my_chemistry);
+
+        //* f) HD cooling.
+
+        //HD cooling function has units of ergs cm^3 / s
+        //Fit from Coppola et al 2011. LTE (ergs/s) -> hdlte (ergs cm3/s)
+        add_reaction_rate(&my_rates->HDlte, logT_start, d_logT, HDlte_rate, coolingUnits, my_chemistry);
+        //Rate based on (Wrathmall, Gusdorf & Flower, 2007) HD-H collisional excitation rates.
+        add_reaction_rate(&my_rates->HDlow, logT_start, d_logT, HDlow_rate, coolingUnits, my_chemistry);
+
+        //* g) CIE cooling (Ripamonti & Abel, 2003).
+
+        //Below explanation originally written by Matt Turk:
+        //  The above function returns the rate with units of ergs * s^-1 * cm^3 * gram^-1 *
+        //  (gram in H2 molecules)^-1. To reproduce equation 5 in RA04, divide c_t_c_r by mh,
+        //  so to get erg/s cm^3 we multiply by mh. Divide by 2 for the H2 mass --> number.
+        add_reaction_rate(&my_rates->cieco, logT_start, d_logT, cieco_rate, coolingUnits, my_chemistry); 
+
+    }//End of primordial chemistry if-statement.
+
+    //* Dust-related processes.
+    if (anyDust == TRUE) {
+
+        //Energy transfer from gas to dust grains.
+        //(Equation 2.15, Hollenbach & McKee, 1989)
+        add_reaction_rate(&my_rates->gas_grain, logT_start, d_logT, gasGrain_rate, coolingUnits, my_chemistry); 
+
+        //Electron recombination onto dust grains.
+        //(Equation 9, Wolfire et al., 1995)
+        add_reaction_rate(&my_rates->regr, logT_start, d_logT, regr_rate, coolingUnits, my_chemistry); 
+
+    }//End of anyDust if-statement.
+
+    //* i) Compton cooling (Peebles 1971).
+    add_reaction_rate(&my_rates->comp, logT_start, d_logT, comp_rate, coolingUnits, my_chemistry); 
+
+    //* j) Photoelectric heating by UV-irradiated dust (Wolfire 1995).
+
+    add_reaction_rate(&my_rates->gammah, logT_start, d_logT, gammah_rate, coolingUnits, my_chemistry); 
     //Heating of dust by interstellar radiation field.
     //(Equation B15, Krumholz, 2014)
-    //Don't normalize by coolunit since tdust calculation is done in CGS.
-    my_rates->gamma_isrf = 3.9e-24 / mh / fgr;
+    add_reaction_rate(&my_rates->gamma_isrf, logT_start, d_logT, gamma_isrf_rate, coolingUnits, my_chemistry); 
+
+
 
     /* //! Code that saves temperatures of all bins. Used only for testing. 
     FILE *fp;
@@ -458,7 +447,7 @@ int calc_rates_g_c(chemistry_data *my_chemistry, chemistry_data_storage *my_rate
     fclose(fp);
     */     
 
-    return SUCCESS;
-//End of function definition.
+
+   return SUCCESS;
+   //End of function definition.
 }
-     

@@ -41,7 +41,6 @@ OBJS_CONFIG_LIB = \
         solve_rate_cool_g.lo \
         update_UVbackground_rates.lo \
         cie_thin_cooling_rate_g_c.lo \
-        colh2diss_g_c.lo \
-        coll_rates_g_c.lo \
+        rate_functions.c \
         calc_rates_g_c.lo \
         writeRates.lo \
