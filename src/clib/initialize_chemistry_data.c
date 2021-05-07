@@ -285,7 +285,7 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
         calc_rates_g_c(my_chemistry, my_rates, my_units, co_length_units, co_density_units);
   }
   if (saveResults == 1) {
-          if (writeRates(language, my_chemistry, my_rates) != 1) { //! Calling writeRates results in 'illegal hardware instruction' error.
+          if (writeRates(language, my_chemistry, my_rates) != 1) { 
                 printf("\n Writing to results to file failed \n");
           }
   }

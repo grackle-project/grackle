@@ -85,7 +85,7 @@
 
 #include "grackle_macros.h"
 #include "grackle_types.h"
-#include "rate_functions.h"
+#include "grackle_rate_functions.h"
 #include "grackle_chemistry_data.h"
 #include "phys_constants.h"
 
@@ -116,19 +116,21 @@ int add_reaction_rate(double **rate_ptr, double logT_start, double d_logT, rate_
 }
 
 //Define a function which will calculate the k13dd rates.
-int add_k13dd_reaction_rate(double logT_start, double d_logT, double units,
-                                chemistry_data_storage *my_rates, chemistry_data *my_chemistry)
+int add_k13dd_reaction_rate(double **arrayPointer, double logT_start, double d_logT, double units,
+                                 chemistry_data *my_chemistry)
 {
-    double T, logT;
-    for (int idt=0; idt < 2; idt++) {
-        for (int i = 0; i < my_chemistry->NumberOfTemperatureBins; i++){
+    //Allocate array memory to the pointer.
+    arrayPointer = malloc(14 * my_chemistry->NumberOfTemperatureBins * sizeof(double));
 
+    double T, logT;
+    //Calculate k13dd for both idt = 0 & 1. Store in array.
+    for (int idt = 0; idt < 3; idt++){
+        for (int i = 0; i < my_chemistry->NumberOfTemperatureBins; i++){
             //Calculate bin temperature.
             logT = logT_start + i*d_logT;
             T = exp(logT);
 
-            //Calculate rate and store.
-            k13dd_rate(T, idt,  units, my_rates->k13dd, my_chemistry);
+            k13dd_rate(T, i, idt, units, *arrayPointer, my_chemistry);
         }
     }
     return SUCCESS;
@@ -287,7 +289,7 @@ int calc_rates_g_c(chemistry_data *my_chemistry, chemistry_data_storage *my_rate
         // Therefore the array is structured as follows:
         // k13dd = {coeff1(idt=0, Tbin1), coeff1(idt=0, Tbin2), ..., coeff1(idt=0, TbinFinal), coeff2(idt=0, Tbin1), ..., 
         //          coeff7(idt=0, TbinFinal), coeff1(idt=1, Tbin1), ..., coeff7(idt=1, TbinFinal)}
-        add_k13dd_reaction_rate(logT_start, d_logT, kUnit, my_rates, my_chemistry);
+        add_k13dd_reaction_rate(&my_rates->k13dd, logT_start, d_logT, kUnit, my_chemistry);
 
         //--------Calculate 3-body H2 rate--------
 
@@ -339,10 +341,9 @@ int calc_rates_g_c(chemistry_data *my_chemistry, chemistry_data_storage *my_rate
 
         add_reaction_rate(&my_rates->ciHeIS, logT_start, d_logT, ciHeIS_rate, coolingUnits, my_chemistry);
         //Collisional ionizations. Polynomial fits from Tom Abel.
-        //! Check definition for the three below. Big problems.
-        add_reaction_rate(&my_rates->ciHI, logT_start, d_logT, ciHI_rate, kUnit / coolingUnits, my_chemistry);
-        add_reaction_rate(&my_rates->ciHeI, logT_start, d_logT, ciHeI_rate, kUnit / coolingUnits, my_chemistry);
-        add_reaction_rate(&my_rates->ciHeII, logT_start, d_logT, ciHeII_rate, kUnit / coolingUnits, my_chemistry);
+        add_reaction_rate(&my_rates->ciHI, logT_start, d_logT, ciHI_rate, coolingUnits, my_chemistry);
+        add_reaction_rate(&my_rates->ciHeI, logT_start, d_logT, ciHeI_rate, coolingUnits, my_chemistry);
+        add_reaction_rate(&my_rates->ciHeII, logT_start, d_logT, ciHeII_rate, coolingUnits, my_chemistry);
 
         //* c) Recombinations (Hui & Gnedin 1997, except where noted).
 

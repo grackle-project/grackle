@@ -56,38 +56,6 @@ double k1_rate(double T, double units, chemistry_data *my_chemistry)
     return k1;
 }
 
-//Calculation of k2.
-double k2_rate(double T, double units, chemistry_data *my_chemistry)
-{
-    if (my_chemistry->CaseBRecombination == 1) {
-        if (T < 1.0e9) {
-            return 4.881357e-6*pow(T, -1.5) \
-                * pow((1.0 + 1.14813e2*pow(T, -0.407)), -2.242) / units;
-        } else {
-            return tiny;
-        }  
-    } else {
-        if (T > 5500) {
-            //Convert temperature to appropriate form.
-            double T_ev = T / tevk;
-            double logT_ev = log(T_ev);
-
-            return exp( -28.61303380689232 \
-                - 0.7241125657826851*logT_ev \
-                - 0.02026044731984691*pow(logT_ev, 2) \
-                - 0.002380861877349834*pow(logT_ev, 3) \
-                - 0.0003212605213188796*pow(logT_ev, 4) \
-                - 0.00001421502914054107*pow(logT_ev, 5) \
-                + 4.989108920299513e-6*pow(logT_ev, 6) \
-                + 5.755614137575758e-7*pow(logT_ev, 7) \
-                - 1.856767039775261e-8*pow(logT_ev, 8) \
-                - 3.071135243196595e-9*pow(logT_ev, 9)) / units;
-        } else {
-            return k4_rate(T, units, my_chemistry);
-        }
-    }
-}
-
 //Calculation of k3.
 double k3_rate(double T, double units, chemistry_data *my_chemistry)
 {
@@ -133,6 +101,38 @@ double k4_rate(double T, double units, chemistry_data *my_chemistry)
         k4 = 3.92e-13/pow(T_ev, 0.6353) / units;
     }
     return k4;
+}
+
+//Calculation of k2. Depends on k4.
+double k2_rate(double T, double units, chemistry_data *my_chemistry)
+{
+    if (my_chemistry->CaseBRecombination == 1) {
+        if (T < 1.0e9) {
+            return 4.881357e-6*pow(T, -1.5) \
+                * pow((1.0 + 1.14813e2*pow(T, -0.407)), -2.242) / units;
+        } else {
+            return tiny;
+        }  
+    } else {
+        if (T > 5500) {
+            //Convert temperature to appropriate form.
+            double T_ev = T / tevk;
+            double logT_ev = log(T_ev);
+
+            return exp( -28.61303380689232 \
+                - 0.7241125657826851*logT_ev \
+                - 0.02026044731984691*pow(logT_ev, 2) \
+                - 0.002380861877349834*pow(logT_ev, 3) \
+                - 0.0003212605213188796*pow(logT_ev, 4) \
+                - 0.00001421502914054107*pow(logT_ev, 5) \
+                + 4.989108920299513e-6*pow(logT_ev, 6) \
+                + 5.755614137575758e-7*pow(logT_ev, 7) \
+                - 1.856767039775261e-8*pow(logT_ev, 8) \
+                - 3.071135243196595e-9*pow(logT_ev, 9)) / units;
+        } else {
+            return k4_rate(T, units, my_chemistry);
+        }
+    }
 }
 
 //Calculation of k5.
@@ -248,8 +248,8 @@ double k11_rate(double T, double units, chemistry_data *my_chemistry)
                 + 0.0004138398421504563*pow(logT_ev, 7)
                 - 9.36345888928611e-6*pow(logT_ev, 8)) / units;
         } else {
-            fprintf(stderr, 'k11_rate flag set to unknown value. This must be either 1 \
-                             or 2 but was set to %d.\n', my_chemistry->k11_rate);
+            fprintf(stderr, "k11_rate flag set to unknown value. This must be either 1 \
+                             or 2 but was set to %d \n", my_chemistry->k11_rate);
             exit(0);
         }
     } else {
@@ -313,139 +313,137 @@ double k13_rate(double T, double units, chemistry_data *my_chemistry)
             return 2.2e-6 * pow(T, -0.565) * exp(-5.2e4/T); 
         }
     } else {
-        fprintf(stderr, 'three_body_rate has been set to an unknown value: %d.\n',
+        fprintf(stderr, "three_body_rate has been set to an unknown value: %d \n",
             my_chemistry->three_body_rate);
         exit(0);
     }
 }
 
-//Calculation of k13dd. Returns a pointer to an array of results. //! Check that I have handled this at all correctly. Not sure if I should do malloc, the loop over i or if I derference and return properly. In short I am bad.
-double* k13dd_rate(double T, int idt, double units, double *k13dd_results, chemistry_data *my_chemistry)
-{
-    for (int i; i < my_chemistry->NumberOfTemperatureBins; i++) {
-        //*Define variables for each of the rates and give them a preliminary value.
-        double f1 = tiny;
-        double f2 = tiny;
-        double f3 = tiny;
-        double f4 = tiny;
-        double f5 = 1.0;
-        double f6 = 1.0;
-        double f7 = 0.0;
+//Calculation of k13dd for a given idt (0 or 1), array to store results in and temperature.
+void k13dd_rate(double T, int T_bin_ind, int idt, double units, double *k13dd_results, chemistry_data *my_chemistry)
+{   
+    //*Define variables for each of the rates and give them a preliminary value.
+    double f1 = tiny;
+    double f2 = tiny;
+    double f3 = tiny;
+    double f4 = tiny;
+    double f5 = 1.0;
+    double f6 = 1.0;
+    double f7 = 0.0;
 
-        //*Define an array which will hold 21 fitting parameters necessary for calculating the rates.
-        double fitParam[21];
+    //*Define an array which will hold 21 fitting parameters necessary for calculating the rates.
+    double fitParam[21];
 
-        //*The gas temperature cannot be smaller than 500 Kelvin or larger than 1*e6 Kelvin.
-        //Note that data and fits are only accurate for temperatures below 5*e5 Kelvin, but collisional dissociation by electrons 
-        //dominates above this limit anyway so it is of minor significance.
-        if (T <= 500.0) {
-            T = 500.0;
-        }
-        if (T >= 1.0e6) {
-            T = 1.0e6;
-        }
-
-        //*Set the values of the fitting parameters depending on the value of the idt flag.
-        if (idt == 0) {
-            fitParam[0]   =   -1.784239e2;
-            fitParam[1]   =   -6.842243e1;
-            fitParam[2]   =    4.320243e1;
-            fitParam[3]   =   -4.633167e0;
-            fitParam[4]   =    6.970086e1;
-            fitParam[5]   =    4.087038e4;
-            fitParam[6]   =   -2.370570e4;
-            fitParam[7]   =    1.288953e2;
-            fitParam[8]   =   -5.391334e1;
-            fitParam[9]   =    5.315517e0;
-            fitParam[10]  =   -1.973427e1;
-            fitParam[11]  =    1.678095e4;
-            fitParam[12]  =   -2.578611e4;
-            fitParam[13]  =    1.482123e1;
-            fitParam[14]  =   -4.890915e0;
-            fitParam[15]  =    4.749030e-1;
-            fitParam[16]  =   -1.338283e2;
-            fitParam[17]  =   -1.164408e0;
-            fitParam[18]  =    8.227443e-1;
-            fitParam[19]  =    5.864073e-1;
-            fitParam[20]  =   -2.056313e0;
-        } else if (idt == 1) {
-            fitParam[0]   =   -1.427664e+02;
-            fitParam[1]   =    4.270741e+01;
-            fitParam[2]   =   -2.027365e+00;
-            fitParam[3]   =   -2.582097e-01;
-            fitParam[4]   =    2.136094e+01;
-            fitParam[5]   =    2.753531e+04;
-            fitParam[6]   =   -2.146779e+04;
-            fitParam[7]   =    6.034928e+01;
-            fitParam[8]   =   -2.743096e+01;
-            fitParam[9]   =    2.676150e+00;
-            fitParam[10]  =   -1.128215e+01;
-            fitParam[11]  =    1.425455e+04;
-            fitParam[12]  =   -2.312520e+04;
-            fitParam[13]  =    9.305564e+00;
-            fitParam[14]  =   -2.464009e+00;
-            fitParam[15]  =    1.985955e-01;
-            fitParam[16]  =    7.430600e+02;
-            fitParam[17]  =   -1.174242e+00;
-            fitParam[18]  =    7.502286e-01;
-            fitParam[19]  =    2.358848e-01;
-            fitParam[20]  =    2.937507e+00;
-        } else {
-            //Print error message if value of idt is invalid and return failure.
-            fprintf(stderr, 'idt has been set to an unknown value. Expected 0 or 1, received %d.\n', idt);
-            exit(0);
-        }
-
-        //Define log10 of the temperature for convenience in the following calculations.
-        double logT = log10(T);
-
-        //*Calculate parameters needed to obtain the rates by using the fitting parameters.
-        //High density limit.
-        double a = fitParam[0] + fitParam[1]*logT + fitParam[2]*pow(logT, 2) + fitParam[3]*pow(logT, 3)
-                + fitParam[4]*log10(1.0 + fitParam[5]/T);
-        double a1 = fitParam[6]/T;
-        //Low density limit.
-        double b = fitParam[7] + fitParam[8]*logT + fitParam[9]*pow(logT, 2)
-                + fitParam[10]*log10(1.0 + fitParam[11]/T); 
-        double b1 = fitParam[12]/T;
-        //Critical density.
-        double c = fitParam[13] + fitParam[14]*logT + fitParam[15]*pow(logT, 2) + fitParam[16]/T;
-        double c1 = fitParam[17] + c;
-        double d = fitParam[18] + fitParam[19]*exp(-T/1850.0) + fitParam[20]*exp(-T/440.0);
-
-        //*Calculate the rates from the parameters above.
-        f1 = a;
-        f2 = a - b;
-        f3 = a1;
-        f4 = a1 - b1;
-        f5 = pow(10.0, c);
-        f6 = pow(10.0, c1);
-        f7 = d;
-        
-        //* Store the rates within k13dd in the position prescribed by the Tbin_index and rateIndex.
-        //Get the number of temperature bins for which the computations are being computed.
-        int noTempBins = my_chemistry->NumberOfTemperatureBins;
-        //Store the rates appropriately.
-        k13dd_results[i + noTempBins*(idt*7)] = f1;
-        k13dd_results[i + noTempBins*(1 + idt*7)] = f2;
-        k13dd_results[i + noTempBins*(2 + idt*7)] = f3;
-        k13dd_results[i + noTempBins*(3 + idt*7)] = f4;
-        k13dd_results[i + noTempBins*(4 + idt*7)] = f5;
-        k13dd_results[i + noTempBins*(5 + idt*7)] = f6;
-        k13dd_results[i + noTempBins*(6 + idt*7)] = f7;
-
-        //Normalise the rates.
-        if (idt == 0) {
-            k13dd_results[i] -= log10(units);
-        } else if (idt == 1) {
-            k13dd_results[i + 7*my_chemistry->NumberOfTemperatureBins] -= log10(units);
-        } else {
-            fprintf(stderr, "Invalid value encountered for idt when calculating k13dd. \
-                Expecting either 0 or 1 but got %d", idt);
-            exit(0);
-        }
+    //*The gas temperature cannot be smaller than 500 Kelvin or larger than 1*e6 Kelvin.
+    //Note that data and fits are only accurate for temperatures below 5*e5 Kelvin, but collisional dissociation by electrons 
+    //dominates above this limit anyway so it is of minor significance.
+    if (T <= 500.0) {
+        T = 500.0;
     }
-    return(k13dd_results);
+    if (T >= 1.0e6) {
+        T = 1.0e6;
+    }
+
+    //*Set the values of the fitting parameters depending on the value of the idt flag.
+    if (idt == 0) {
+        fitParam[0]   =   -1.784239e2;
+        fitParam[1]   =   -6.842243e1;
+        fitParam[2]   =    4.320243e1;
+        fitParam[3]   =   -4.633167e0;
+        fitParam[4]   =    6.970086e1;
+        fitParam[5]   =    4.087038e4;
+        fitParam[6]   =   -2.370570e4;
+        fitParam[7]   =    1.288953e2;
+        fitParam[8]   =   -5.391334e1;
+        fitParam[9]   =    5.315517e0;
+        fitParam[10]  =   -1.973427e1;
+        fitParam[11]  =    1.678095e4;
+        fitParam[12]  =   -2.578611e4;
+        fitParam[13]  =    1.482123e1;
+        fitParam[14]  =   -4.890915e0;
+        fitParam[15]  =    4.749030e-1;
+        fitParam[16]  =   -1.338283e2;
+        fitParam[17]  =   -1.164408e0;
+        fitParam[18]  =    8.227443e-1;
+        fitParam[19]  =    5.864073e-1;
+        fitParam[20]  =   -2.056313e0;
+    } else if (idt == 1) {
+        fitParam[0]   =   -1.427664e+02;
+        fitParam[1]   =    4.270741e+01;
+        fitParam[2]   =   -2.027365e+00;
+        fitParam[3]   =   -2.582097e-01;
+        fitParam[4]   =    2.136094e+01;
+        fitParam[5]   =    2.753531e+04;
+        fitParam[6]   =   -2.146779e+04;
+        fitParam[7]   =    6.034928e+01;
+        fitParam[8]   =   -2.743096e+01;
+        fitParam[9]   =    2.676150e+00;
+        fitParam[10]  =   -1.128215e+01;
+        fitParam[11]  =    1.425455e+04;
+        fitParam[12]  =   -2.312520e+04;
+        fitParam[13]  =    9.305564e+00;
+        fitParam[14]  =   -2.464009e+00;
+        fitParam[15]  =    1.985955e-01;
+        fitParam[16]  =    7.430600e+02;
+        fitParam[17]  =   -1.174242e+00;
+        fitParam[18]  =    7.502286e-01;
+        fitParam[19]  =    2.358848e-01;
+        fitParam[20]  =    2.937507e+00;
+    } else {
+        //Print error message if value of idt is invalid and return failure.
+        fprintf(stderr, "idt has been set to an unknown value. Expected 0 or 1, received %d \n", idt);
+        exit(0);
+    }
+
+    //Define log10 of the temperature for convenience in the following calculations.
+    double logT = log10(T);
+
+    //*Calculate parameters needed to obtain the rates by using the fitting parameters.
+    //High density limit.
+    double a = fitParam[0] + fitParam[1]*logT + fitParam[2]*pow(logT, 2) + fitParam[3]*pow(logT, 3)
+            + fitParam[4]*log10(1.0 + fitParam[5]/T);
+    double a1 = fitParam[6]/T;
+    //Low density limit.
+    double b = fitParam[7] + fitParam[8]*logT + fitParam[9]*pow(logT, 2)
+            + fitParam[10]*log10(1.0 + fitParam[11]/T); 
+    double b1 = fitParam[12]/T;
+    //Critical density.
+    double c = fitParam[13] + fitParam[14]*logT + fitParam[15]*pow(logT, 2) + fitParam[16]/T;
+    double c1 = fitParam[17] + c;
+    double d = fitParam[18] + fitParam[19]*exp(-T/1850.0) + fitParam[20]*exp(-T/440.0);
+
+    //*Calculate the rates from the parameters above.
+    f1 = a;
+    f2 = a - b;
+    f3 = a1;
+    f4 = a1 - b1;
+    f5 = pow(10.0, c);
+    f6 = pow(10.0, c1);
+    f7 = d;
+    
+    //* Store the rates within k13dd in the position prescribed by the Tbin_index and rateIndex.
+    //Get the number of temperature bins for which the computations are being computed.
+    int noTempBins = my_chemistry->NumberOfTemperatureBins;
+    //Store the rates appropriately.
+    k13dd_results[T_bin_ind + noTempBins*(idt*7)] = f1;
+    k13dd_results[T_bin_ind + noTempBins*(1 + idt*7)] = f2;
+    k13dd_results[T_bin_ind + noTempBins*(2 + idt*7)] = f3;
+    k13dd_results[T_bin_ind + noTempBins*(3 + idt*7)] = f4;
+    k13dd_results[T_bin_ind + noTempBins*(4 + idt*7)] = f5;
+    k13dd_results[T_bin_ind + noTempBins*(5 + idt*7)] = f6;
+    k13dd_results[T_bin_ind + noTempBins*(6 + idt*7)] = f7;
+
+    //Normalise the rates.
+    if (idt == 0) {
+        k13dd_results[T_bin_ind] -= log10(units);
+    } else if (idt == 1) {
+        k13dd_results[T_bin_ind + 7*my_chemistry->NumberOfTemperatureBins] -= log10(units);
+    } else {
+        fprintf(stderr, "Invalid value encountered for idt when calculating k13dd. \
+            Expecting either 0 or 1 but got %d", idt);
+        exit(0);
+    }
+    
 }
 
 //Calculation of k14.
@@ -563,7 +561,7 @@ double k22_rate(double T, double units, chemistry_data *my_chemistry)
         //Rate from Forrey (2013)
         return (6e-32 / pow(T, 0.25)) + (2e-31 / pow(T, 0.5));
     } else {
-        fprintf(stderr, 'three_body_rate has been set to an unknown value: %d.\n',
+        fprintf(stderr, "three_body_rate has been set to an unknown value: %d \n",
             my_chemistry->three_body_rate);
         exit(0);
     }
@@ -573,7 +571,7 @@ double k22_rate(double T, double units, chemistry_data *my_chemistry)
 double k23_rate(double T, double units, chemistry_data *my_chemistry)
 {
     double k23;
-    k23 = ( (8.125e-8/sqrt(T)) * exp(-52000.0/T) * (1.0 - exp(-6000.0/T)) ) / kUnit;
+    k23 = ( (8.125e-8/sqrt(T)) * exp(-52000.0/T) * (1.0 - exp(-6000.0/T)) ) / units;
     k23 = max(tiny, k23);
     return k23;
 }
@@ -772,34 +770,34 @@ double ciHeIS_rate(double T, double units, chemistry_data *my_chemistry)
     }
 }
 
-//Calculation of ciHI. //! Problem here with the units. Might have to make this one unique.
+//Calculation of ciHI.
 double ciHI_rate(double T, double units, chemistry_data *my_chemistry)
 {
     //Collisional ionization. Polynomial fit from Tom Abel.
     if (my_chemistry->collisional_ionisation_rates == 1){
-        return 2.18e-11 * k1_rate(T, kUnit, coolingUnits, my_chemistry) * units;
+        return 2.18e-11 * k1_rate(T, 1, my_chemistry) * 1/units;
     } else {
         return tiny;
     }
 }
 
-//Calculation of ciHeI. //! Problem here with the units. Might have to make this one unique.
+//Calculation of ciHeI.
 double ciHeI_rate(double T, double units, chemistry_data *my_chemistry)
 {
     //Collisional ionization. Polynomial fit from Tom Abel.
     if (my_chemistry->collisional_ionisation_rates == 1){
-        return 3.94e-11 * k3_rate(T, kUnit, coolingUnits, my_chemistry) * units;
+        return 3.94e-11 * k3_rate(T, 1, my_chemistry) * 1/units;
     } else {
         return tiny;
     }
 }
 
-//Calculation of ciHeII. //! Problem here with the units. Might have to make this one unique.
+//Calculation of ciHeII.
 double ciHeII_rate(double T, double units, chemistry_data *my_chemistry)
 {
     //Collisional ionization. Polynomial fit from Tom Abel.
     if (my_chemistry->collisional_ionisation_rates == 1){
-        return 8.72e-11 * k5_rate(T, kUnit, coolingUnits, my_chemistry) * units; 
+        return 8.72e-11 * k5_rate(T, 1, my_chemistry) * 1/units; 
     } else {
         return tiny;
     }
@@ -849,7 +847,8 @@ double reHeII1_rate(double T, double units, chemistry_data *my_chemistry)
 }
 
 //Calculation of reHII2.
-double reHeII2_rate(double T, double units, chemistry_data *my_chemistry){
+double reHeII2_rate(double T, double units, chemistry_data *my_chemistry)
+{
     //Dielectronic recombination (Cen, 1992).
     if (my_chemistry->recombination_cooling_rates == 1){
         return 1.24e-13 * pow(T, -1.5)

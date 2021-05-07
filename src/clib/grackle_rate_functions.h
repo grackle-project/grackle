@@ -1,6 +1,9 @@
 // Header file containing all rate function declarations.
 #include "grackle_chemistry_data.h"
 
+#ifndef RATE_FUNCTIONS_H
+#define RATE_FUNCTIONS_H
+
 double k1_rate(double T, double units,  chemistry_data *my_chemistry);
 double k2_rate(double T, double units,  chemistry_data *my_chemistry);
 double k3_rate(double T, double units,  chemistry_data *my_chemistry);
@@ -15,7 +18,7 @@ double k11_rate(double T, double units,  chemistry_data *my_chemistry);
 double k12_rate(double T, double units,  chemistry_data *my_chemistry);
 double k13_rate(double T, double units,  chemistry_data *my_chemistry);
 
-double* k13dd_rate(double T, int idt, double units, double *k13dd_results, chemistry_data *my_chemistry);
+void k13dd_rate(double T, int T_bin_ind, int idt, double units, double *k13dd_results, chemistry_data *my_chemistry);
 
 double k14_rate(double T, double units,  chemistry_data *my_chemistry);
 double k15_rate(double T, double units,  chemistry_data *my_chemistry);
@@ -84,3 +87,5 @@ double comp_rate(double T, double units, chemistry_data *my_chemistry);
 
 double gammah_rate(double T, double units, chemistry_data *my_chemistry);
 double gamma_isrf_rate(double T, double units, chemistry_data *my_chemistry);
+
+#endif
