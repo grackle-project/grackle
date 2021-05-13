@@ -97,20 +97,20 @@ int add_reaction_rate(double **rate_ptr, double logT_start, double d_logT, rate_
                         double units, chemistry_data *my_chemistry)
 {
     //Allocate memory for rate.
-    rate_ptr = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    *rate_ptr = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
 
     double T, logT;
     //Calculate rate at each temperature.
     for (int i = 0; i < my_chemistry->NumberOfTemperatureBins; i++){
         //Set rate to tiny for safety.
-        *rate_ptr[i] = tiny;
+        (*rate_ptr)[i] = tiny;
 
         //Calculate bin temperature.
         logT = logT_start + i*d_logT;
         T = exp(logT);
 
         //Calculate rate and store.
-        *rate_ptr[i] = my_function(T, units, my_chemistry);
+        (*rate_ptr)[i] = my_function(T, units, my_chemistry);
     }
     return SUCCESS;
 }
@@ -120,11 +120,11 @@ int add_k13dd_reaction_rate(double **arrayPointer, double logT_start, double d_l
                                  chemistry_data *my_chemistry)
 {
     //Allocate array memory to the pointer.
-    arrayPointer = malloc(14 * my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    *arrayPointer = malloc(14 * my_chemistry->NumberOfTemperatureBins * sizeof(double));
 
     double T, logT;
     //Calculate k13dd for both idt = 0 & 1. Store in array.
-    for (int idt = 0; idt < 3; idt++){
+    for (int idt = 0; idt < 2; idt++){
         for (int i = 0; i < my_chemistry->NumberOfTemperatureBins; i++){
             //Calculate bin temperature.
             logT = logT_start + i*d_logT;
@@ -140,7 +140,13 @@ int add_k13dd_reaction_rate(double **arrayPointer, double logT_start, double d_l
 int add_h2dust_reaction_rate(double logT_start, double d_logT, double logT_start_dust, double d_logT_dust,
                                 double units, chemistry_data_storage *my_rates, chemistry_data *my_chemistry)
 {
+    //Allocate memory for h2dust.
+    my_rates->h2dust = malloc(my_chemistry->NumberOfTemperatureBins * my_chemistry->NumberOfDustTemperatureBins
+                        * sizeof(double));
+
+
     double T, T_dust, logT, logT_dust;
+    //Calculate h2dust.
     for (int i = 0; i < my_chemistry->NumberOfTemperatureBins; i++)
     {   
         //Calculate bin temperature.
@@ -448,7 +454,7 @@ int calc_rates_g_c(chemistry_data *my_chemistry, chemistry_data_storage *my_rate
     fclose(fp);
     */     
 
-
+   printf("\n\n IT WORKED!!!!!!!!!!!!!! \n\n");
    return SUCCESS;
    //End of function definition.
 }
