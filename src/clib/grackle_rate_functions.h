@@ -18,7 +18,7 @@ double k11_rate(double T, double units,  chemistry_data *my_chemistry);
 double k12_rate(double T, double units,  chemistry_data *my_chemistry);
 double k13_rate(double T, double units,  chemistry_data *my_chemistry);
 
-void k13dd_rate(double T, int T_bin_ind, int idt, double units, double *k13dd_results, chemistry_data *my_chemistry);
+void k13dd_rate(double T, double units, double *k13dd_results, chemistry_data *my_chemistry);
 
 double k14_rate(double T, double units,  chemistry_data *my_chemistry);
 double k15_rate(double T, double units,  chemistry_data *my_chemistry);

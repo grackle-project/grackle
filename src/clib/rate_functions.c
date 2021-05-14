@@ -319,8 +319,9 @@ double k13_rate(double T, double units, chemistry_data *my_chemistry)
     }
 }
 
-//Calculation of k13dd for a given idt (0 or 1), array to store results in and temperature.
-void k13dd_rate(double T, int T_bin_ind, int idt, double units, double *k13dd_results, chemistry_data *my_chemistry)
+//Calculates 7 k13dd coefficients for given idt (0 or 1).
+//This is an internal function not meant to be accessed by the user -- use k13dd_rate.
+void _k13dd_rate(double T, int idt, double units, double *k13dd_results, chemistry_data *my_chemistry)
 {   
     //*Define variables for each of the rates and give them a preliminary value.
     double f1 = tiny;
@@ -425,27 +426,27 @@ void k13dd_rate(double T, int T_bin_ind, int idt, double units, double *k13dd_re
     //Get the number of temperature bins for which the computations are being computed.
     int noTempBins = my_chemistry->NumberOfTemperatureBins;
     //Store the rates appropriately.
-    k13dd_results[T_bin_ind + noTempBins*(idt*7)] = f1;
-    k13dd_results[T_bin_ind + noTempBins*(1 + idt*7)] = f2;
-    k13dd_results[T_bin_ind + noTempBins*(2 + idt*7)] = f3;
-    k13dd_results[T_bin_ind + noTempBins*(3 + idt*7)] = f4;
-    k13dd_results[T_bin_ind + noTempBins*(4 + idt*7)] = f5;
-    k13dd_results[T_bin_ind + noTempBins*(5 + idt*7)] = f6;
-    k13dd_results[T_bin_ind + noTempBins*(6 + idt*7)] = f7;
+    k13dd_results[idt*7] = f1;
+    k13dd_results[1 + idt*7] = f2;
+    k13dd_results[2 + idt*7] = f3;
+    k13dd_results[3 + idt*7] = f4;
+    k13dd_results[4 + idt*7] = f5;
+    k13dd_results[5 + idt*7] = f6;
+    k13dd_results[6 + idt*7] = f7;
 
     //Normalise the rates.
-    if (idt == 0) {
-        k13dd_results[T_bin_ind] -= log10(units);
-    } else if (idt == 1) {
-        k13dd_results[T_bin_ind + 7*my_chemistry->NumberOfTemperatureBins] -= log10(units);
-    } else {
-        fprintf(stderr, "Invalid value encountered for idt when calculating k13dd. \
-            Expecting either 0 or 1 but got %d", idt);
-        exit(0);
+    for (int i = 0; i < 7; i++){
+        k13dd_results[i + idt*7] -= log10(units);
     }
-    
 }
 
+//Calculation of k13dd. k13dd_results is a pointer to an array of length 14 * sizeof(double).
+void k13dd_rate(double T, double units, double *k13dd_results, chemistry_data *my_chemistry)
+{
+    for (int idt = 0; idt < 2; idt++){
+        _k13dd_rate(T, idt, units, k13dd_results, my_chemistry);
+    }
+}
 //Calculation of k14.
 double k14_rate(double T, double units, chemistry_data *my_chemistry)
 {
