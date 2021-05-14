@@ -474,8 +474,7 @@ int calc_rates_g_c(chemistry_data *my_chemistry, chemistry_data_storage *my_rate
     }
     fclose(fp);
     */     
-
-   printf("\n\n IT WORKED AGAIN!!!!!!!!!!!!!! \n\n");
+   
    return SUCCESS;
    //End of function definition.
 }

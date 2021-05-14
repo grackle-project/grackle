@@ -70,10 +70,11 @@ def test_rate_initialisation():
     f.close()
 
     #* Add any rate names you want to skip checking here. This is only for testing purposes.
-    exceptRates = ["k11", "ciHeI", "ciHeII", "roth"]
+    exceptRates = []
+    #exceptRates = ["k11", "ciHeI", "ciHeII", "roth"]
 
     #* Compare rates with the correct ones which are stored and check they are in agreement.
-    correctRates = h5py.File("example_answers/correct_rates.h5", "r")
+    correctRates = h5py.File("tests/example_answers/correct_rates.h5", "r")
     initialisedRates = h5py.File("initialised_rates.h5", "r")
     for rate_name in testRates:
         if rate_name in exceptRates:
@@ -81,20 +82,3 @@ def test_rate_initialisation():
         else:
             assert np.allclose(correctRates[rate_name], initialisedRates[rate_name], atol=1e-10),\
                                 f"Rate Coefficient {rate_name} does not agree."
-
-
-test_rate_initialisation()
-
-        
-
-
-
-    
-
-
-
-    
-
-            
-
-
