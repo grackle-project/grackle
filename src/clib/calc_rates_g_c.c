@@ -301,6 +301,7 @@ int calc_rates_g_c(chemistry_data *my_chemistry, chemistry_data_storage *my_rate
         add_reaction_rate(&my_rates->k17, k17_rate, kUnit, my_chemistry);
         add_reaction_rate(&my_rates->k18, k18_rate, kUnit, my_chemistry);
         add_reaction_rate(&my_rates->k19, k19_rate, kUnit, my_chemistry);
+        add_reaction_rate(&my_rates->k20, k20_rate, kUnit, my_chemistry);
         add_reaction_rate(&my_rates->k23, k23_rate, kUnit, my_chemistry);
 
         //--------Calculate coefficients for density-dependent collisional H2 dissociation rate--------

@@ -26,6 +26,7 @@ double k16_rate(double T, double units,  chemistry_data *my_chemistry);
 double k17_rate(double T, double units,  chemistry_data *my_chemistry);
 double k18_rate(double T, double units,  chemistry_data *my_chemistry);
 double k19_rate(double T, double units,  chemistry_data *my_chemistry);
+double k20_rate(double T, double units,  chemistry_data *my_chemistry);
 double k21_rate(double T, double units,  chemistry_data *my_chemistry);
 double k22_rate(double T, double units,  chemistry_data *my_chemistry);
 double k23_rate(double T, double units,  chemistry_data *my_chemistry);

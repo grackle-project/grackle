@@ -75,20 +75,40 @@ def test_rate_initialisation():
     f.close()
     print("\n\n\n", os.getcwd(), __file__, "\n\n\n")
 
-    #* Add any rate names you want to skip checking here. Testing purposes only.
-    #exceptRates = ["ciHeI", "ciHeII", "k20"]
-    exceptRates = ["ciHeI", "ciHeII", "k20"]
-
     #* Compare rates with the correct ones which are stored and check they are in agreement.
-    with open("LOCATION.txt", "w+") as f:
-        f.write(os.getcwd())
-        f.write(__file__)
-    f.close()
+    
     correctRates = h5py.File("example_answers/correct_rates.h5", "r")
     initialisedRates = h5py.File("initialised_rates.h5", "r")
     for rate_name in testRates:
-        if rate_name in exceptRates:
-            None
+        #Check these three rates to a different tolerance as their tiny values will have slight
+        #difference when compared to the old code.
+        if rate_name in ["ciHI", "ciHeI", "ciHeII"]:
+            largeValuePresent = 0
+            with open(f"{rate_name}_discrepancies.txt", "w+") as f:
+                f.write(f'\n --------{rate_name}--------- \n')
+                for i, correctRate in enumerate(correctRates[rate_name]):
+                    initialisedRate = initialisedRates[rate_name][i]
+                    if np.isclose(correctRate, initialisedRate, atol=1e-10) == False:
+                        dif = abs(correctRate - initialisedRate) / correctRate
+                        if rate_name == "ciHI":
+                            corrRate = "k1"
+                        elif rate_name == "ciHeI":
+                            corrRate = "k3"
+                        elif rate_name == "ciHeII":
+                            corrRate = "k5"
+                        if correctRates[corrRate][i] == 1e-20:
+                            istiny = 'tiny'
+                        else:
+                            largeValuePresent = 1
+                            istiny = 'large'
+                        f.write(f'{i}: {corrRate} is {istiny}    {correctRate}   {initialisedRate}   {dif} \n')
+                if largeValuePresent == 1:
+                    modifier = "one or more"
+                else:
+                    modifier = "no"
+                f.write(f"\n'\n -----There are {modifier} large values present----- \n\n")
+            
+        #Check rates agree to what we deem is an acceptable relative tolerance.
         else:
             assert np.allclose(correctRates[rate_name], initialisedRates[rate_name], atol=1e-10),\
                                 f"Rate Coefficient {rate_name} does not agree."

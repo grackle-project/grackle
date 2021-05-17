@@ -62,9 +62,8 @@ double k3_rate(double T, double units, chemistry_data *my_chemistry)
     double T_ev = T/11605.0;
     double logT_ev = log(T_ev);
 
-    double k3;
     if (T_ev > 0.8){
-        k3 = exp( -44.09864886561001
+        return exp( -44.09864886561001
                 + 23.91596563469*logT_ev
                 - 10.75323019821*pow(logT_ev, 2)
                 + 3.058038757198*pow(logT_ev, 3)
@@ -74,9 +73,8 @@ double k3_rate(double T, double units, chemistry_data *my_chemistry)
                 + 0.0002067236157507*pow(logT_ev, 7)
                 - 3.649161410833e-6*pow(logT_ev, 8)) / units;
     } else {
-        k3 = tiny;
+        return tiny;
     }
-    return k3;
 }   
 
 //Calculation of k4.
@@ -88,19 +86,17 @@ double k4_rate(double T, double units, chemistry_data *my_chemistry)
     double k4;
     //If case B recombination on.
     if (my_chemistry->CaseBRecombination == 1){
-        k4 = 1.26e-14 * pow(5.7067e5/T, 0.75) / units;
-        return k4;
+        return 1.26e-14 * pow(5.7067e5/T, 0.75) / units;
     }
 
     //If case B recombination off.
     if (T_ev > 0.8){
-        k4 = (1.54e-9*(1.0 + 0.3 / exp(8.099328789667/T_ev))
+        return (1.54e-9*(1.0 + 0.3 / exp(8.099328789667/T_ev))
              / (exp(40.49664394833662/T_ev)*pow(T_ev, 1.5))
              + 3.92e-13/pow(T_ev, 0.6353)) / units;
     } else {
-        k4 = 3.92e-13/pow(T_ev, 0.6353) / units;
+        return 3.92e-13/pow(T_ev, 0.6353) / units;
     }
-    return k4;
 }
 
 //Calculation of k2. Depends on k4.
@@ -529,6 +525,12 @@ double k18_rate(double T, double units, chemistry_data *my_chemistry)
 double k19_rate(double T, double units, chemistry_data *my_chemistry)
 {
     return 5.e-7 * sqrt(100.0/T) / units;
+}
+
+//Calculation of k20. This is not currently used in the code.
+double k20_rate(double T, double units, chemistry_data *my_chemistry)
+{
+    return tiny;
 }
 
 //Calculation of k21.
