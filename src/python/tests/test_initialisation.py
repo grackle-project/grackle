@@ -28,6 +28,11 @@ def test_rate_initialisation():
     be saved into a hdf5 file. This should be used for testing and is not meant for frequent use.
     """
 
+    #* Navigate to the directory where the file is located.
+    filePath = os.path.abspath(__file__)
+    dirPath = os.path.dirname(filePath)
+    os.chdir(dirPath)
+
     #* Initialise chemistry_data instance
     my_chemistry = chemistry_data()
 
@@ -65,16 +70,21 @@ def test_rate_initialisation():
         os.remove("initialised_rates.h5")
     #Write the file.
     f = h5py.File("initialised_rates.h5", "w-")
-    for rate_name in testRates:
-        f.create_dataset(rate_name, data=getattr(my_chemistry, rate_name))
+    for rate_key in testRates:
+        f.create_dataset(rate_key, data=getattr(my_chemistry, rate_key))
     f.close()
+    print("\n\n\n", os.getcwd(), __file__, "\n\n\n")
 
-    #* Add any rate names you want to skip checking here. This is only for testing purposes.
-    exceptRates = []
-    #exceptRates = ["k11", "ciHeI", "ciHeII", "roth"]
+    #* Add any rate names you want to skip checking here. Testing purposes only.
+    #exceptRates = ["ciHeI", "ciHeII", "k20"]
+    exceptRates = ["ciHeI", "ciHeII", "k20"]
 
     #* Compare rates with the correct ones which are stored and check they are in agreement.
-    correctRates = h5py.File("tests/example_answers/correct_rates.h5", "r")
+    with open("LOCATION.txt", "w+") as f:
+        f.write(os.getcwd())
+        f.write(__file__)
+    f.close()
+    correctRates = h5py.File("example_answers/correct_rates.h5", "r")
     initialisedRates = h5py.File("initialised_rates.h5", "r")
     for rate_name in testRates:
         if rate_name in exceptRates:
@@ -82,3 +92,6 @@ def test_rate_initialisation():
         else:
             assert np.allclose(correctRates[rate_name], initialisedRates[rate_name], atol=1e-10),\
                                 f"Rate Coefficient {rate_name} does not agree."
+
+
+#test_rate_initialisation()
