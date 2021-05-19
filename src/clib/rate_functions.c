@@ -704,7 +704,7 @@ double h2dust_rate(double T, double T_dust, double units, chemistry_data *my_che
     } else {
         //Equation 3.8 from Hollenbach & McKee (1979).
         return 3.0e-17 / fgr * pow(T_2, 0.5) / (1.0 + 0.4 * pow(T_2 + T_dust_2, 0.5)
-                + 0.2 * T_dust_2 + 8.0e-2 * pow(T_dust_2, 2.0)) / units;
+                + 0.2 * T__2 + 8.0e-2 * pow(T_2, 2.0)) / units;
     }
 }
 
