@@ -26,6 +26,13 @@ cdef extern from "grackle_chemistry_data.h":
         int h2_optical_depth_approximation
         int ih2co
         int ipiht
+        int k11_rate
+        int h2dust_rate
+        int h2_h_cooling_rate
+        int collisional_excitation_rates
+        int collisional_ionisation_rates
+        int recombination_cooling_rates
+        int bremsstrahlung_cooling_rates
         double HydrogenFractionByMass
         double DeuteriumToHydrogenRatio
         double SolarMetalFractionByMass

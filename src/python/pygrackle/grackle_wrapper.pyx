@@ -159,6 +159,48 @@ cdef class chemistry_data:
         def __set__(self, val):
             self.data.cie_cooling = val
 
+    property k11_rate:
+        def __get__(self):
+            return self.data.k11_rate
+        def __set__(self, val):
+            self.data.k11_rate = val
+
+    property h2dust_rate:
+        def __get__(self):
+            return self.data.h2dust_rate
+        def __set__(self, val):
+            self.data.h2dust_rate = val
+
+    property h2_h_cooling_rate:
+        def __get__(self):
+            return self.data.h2_h_cooling_rate
+        def __set__(self, val):
+            self.data.h2_h_cooling_rate = val
+
+    property collisional_excitation_rates:
+        def __get__(self):
+            return self.data.collisional_excitation_rates
+        def __set__(self, val):
+            self.data.collisional_excitation_rates = val
+
+    property collisional_ionisation_rates:
+        def __get__(self):
+            return self.data.collisional_ionisation_rates
+        def __set__(self, val):
+            self.data.collisional_ionisation_rates = val
+
+    property recombination_cooling_rates:
+        def __get__(self):
+            return self.data.recombination_cooling_rates
+        def __set__(self, val):
+            self.data.recombination_cooling_rates = val
+
+    property bremsstrahlung_cooling_rates:
+        def __get__(self):
+            return self.data.bremsstrahlung_cooling_rates
+        def __set__(self, val):
+            self.data.bremsstrahlung_cooling_rates = val
+
     property h2_optical_depth_approximation:
         def __get__(self):
             return self.data.h2_optical_depth_approximation
