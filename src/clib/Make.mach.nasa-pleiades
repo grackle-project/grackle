@@ -4,8 +4,8 @@
 #
 # DESCRIPTION: Makefile settings for NASA's pleiades
 #
-#    modules: comp-intel/2013.5.192,
-#	      A local serial hdf5 install (e.g. the one that comes with yt)
+#    modules: comp-intel/2020.4.304,
+#	       hdf5/1.8.18_serial 
 #
 # AUTHOR:      Nathan Goldbaum
 # DATE:        2014-04-24
@@ -43,7 +43,7 @@ MACH_LD_NOMPI  = icc
 # Install paths (local variables)
 #-----------------------------------------------------------------------
 
-LOCAL_HDF5_INSTALL   = $(YT_DEST)
+LOCAL_HDF5_INSTALL   = /nasa/hdf5/1.8.18_serial
 LOCAL_PYTHON_INSTALL = $(YT_DEST)
 LOCAL_COMPILER_DIR    = /nasa/intel/Compiler/2020.2.254/
 
