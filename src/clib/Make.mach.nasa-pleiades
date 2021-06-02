@@ -9,6 +9,11 @@
 #
 # AUTHOR:      Nathan Goldbaum
 # DATE:        2014-04-24
+#
+#
+# MODIFIED:   Molly Peeples
+# DATE:       2021-06-02
+#
 #=======================================================================
 
 MACH_TEXT  = NASA Pleiades
@@ -17,8 +22,8 @@ MACH_FILE  = Make.mach.nasa-pleiades
 
 MACHINE_NOTES = "MACHINE_NOTES for Pleiades at NASA: \
 	The following modules are needed to compile: \
-	    comp-intel/2013.5.192 and \
-	    a serial hdf5 (the one that comes with yt should work) "
+	    comp-intel/2020.4.304 and \
+	    hdf5/1.8.18_serial  "
 
 #-----------------------------------------------------------------------
 # Compiler settings
@@ -40,7 +45,7 @@ MACH_LD_NOMPI  = icc
 
 LOCAL_HDF5_INSTALL   = $(YT_DEST)
 LOCAL_PYTHON_INSTALL = $(YT_DEST)
-LOCAL_COMPILER_DIR    = /nasa/intel/Compiler/2013.5.192/
+LOCAL_COMPILER_DIR    = /nasa/intel/Compiler/2020.2.254/
 
 #-----------------------------------------------------------------------
 # Machine-dependent defines
