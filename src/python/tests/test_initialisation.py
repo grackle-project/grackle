@@ -16,6 +16,27 @@ from pygrackle import chemistry_data, setup_fluid_container
 #* Import necessary constants from grackle.
 from pygrackle.utilities.physical_constants import mass_hydrogen_cgs
 
+#* Function which returns chemistry_data instance with default initialisation settings.
+def get_defChem():
+    #* Initialise chemistry_data instance
+    my_chemistry = chemistry_data()
+
+    #* Set parameters
+    my_chemistry.use_grackle = 1
+    my_chemistry.with_radiative_cooling = 0
+    my_chemistry.primordial_chemistry = 1
+    my_chemistry.metal_cooling = 0
+    my_chemistry.UVbackground = 0
+    my_chemistry.comoving_coordinates = 0
+    my_chemistry.a_units = 1.0
+    my_chemistry.a_value = 1.0
+    my_chemistry.density_units = mass_hydrogen_cgs
+    my_chemistry.length_units = 1.0
+    my_chemistry.time_units = 1.0
+    my_chemistry.velocity_units = my_chemistry.length_units / my_chemistry.time_units
+
+    return my_chemistry
+
 #* Function which sets parameters for a given parameter set.
 def set_parameters(parSet, my_chemistry):
     #Default parameter set.
@@ -109,23 +130,6 @@ def test_rate_initialisation(printParameters=False, printOOMdiscrepanices=False)
     dirPath = os.path.dirname(filePath)
     os.chdir(dirPath)
 
-    #* Initialise chemistry_data instance
-    my_chemistry = chemistry_data()
-
-    #* Set parameters
-    my_chemistry.use_grackle = 1
-    my_chemistry.with_radiative_cooling = 0
-    my_chemistry.primordial_chemistry = 1
-    my_chemistry.metal_cooling = 0
-    my_chemistry.UVbackground = 0
-    my_chemistry.comoving_coordinates = 0
-    my_chemistry.a_units = 1.0
-    my_chemistry.a_value = 1.0
-    my_chemistry.density_units = mass_hydrogen_cgs
-    my_chemistry.length_units = 1.0
-    my_chemistry.time_units = 1.0
-    my_chemistry.velocity_units = my_chemistry.length_units / my_chemistry.time_units
-    
     #* List of all rate variable names which will be checked.
     testRates = ["k1", "k2", "k3", "k4", "k5", "k6", "k7", "k8", "k9", "k10", "k11", "k12", "k13",
                  "k14", "k15", "k16","k17", "k18", "k19", "k20", "k21", "k22", "k23", "k24", "k25",
@@ -145,6 +149,7 @@ def test_rate_initialisation(printParameters=False, printOOMdiscrepanices=False)
     #Iterate over parameter sets.
     parSets = [1,2,3,4,5,6]
     for parSet in parSets:
+        my_chemistry = get_defChem()
         #Set chemistry parameters.
         if set_parameters(parSet, my_chemistry):
             if printParameters:
