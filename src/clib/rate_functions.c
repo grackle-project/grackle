@@ -271,48 +271,60 @@ double k12_rate(double T, double units, chemistry_data *my_chemistry)
 
 //Calculation of k13. //! Check I have handled this correctly.
 double k13_rate(double T, double units, chemistry_data *my_chemistry)
-{
-    if (my_chemistry->three_body_rate == 0) { //! Added this if statement as this bit always calculated and was then overwritten.
-        double T_ev = T / 11605.0;
+{   
+    double k13;
+    switch (my_chemistry->three_body_rate) {
 
-        double k13;
-        if ( T_ev > 0.3) {
-            k13 = 1.0670825e-10*pow(T_ev, 2.012)
-                / ( exp(4.463/T_ev) * pow((1.0 + 0.2472*T_ev), 3.512) )
-                / units;       
-        } else {
-            k13 = tiny;
-        }
-        return k13;
-    //! Following if statements are from 3-body rate
-    } else if (my_chemistry->three_body_rate == 1) {
-        //Inverse of PSS83 three-body rate
-        return (5.24e-7 / pow(T, 0.485)) * exp(-5.2e4 / T);
-    } else if (my_chemistry->three_body_rate == 2) {
-        //Inverse of CW83 rate
-        return 8.4e-11 * pow(T, 0.515) * exp(-5.2e4 / T);
-    } else if (my_chemistry->three_body_rate == 3) {
-        //Rate from JGC67, used by FH07 to construct their three-body rate
-        return (1.38e-4 / pow(T, 1.025)) * exp(-5.2e4 / T);
-    } else if (my_chemistry->three_body_rate == 4) {
-        //High density limiting rate from MSM96
-        return pow(1e1 ,(-178.4239 - 68.42243 * log10(T)
-                        + 43.20243 * pow(log10(T), 2)
-                        - 4.633167 * pow(log10(T), 3) 
-                        + 69.70086 * log10(1.0 + 40870.38 / T)
-                        - (23705.7 / T)));
-    } else if (my_chemistry->three_body_rate == 5) {
-        //From detailed balance from Forrey rate
-        if (T <= 3000.0) {
-            return 2.4e-8 * exp(-5.2e4/T);
-        } else {
-            return 2.2e-6 * pow(T, -0.565) * exp(-5.2e4/T); 
-        }
-    } else {
-        fprintf(stderr, "three_body_rate has been set to an unknown value: %d \n",
-            my_chemistry->three_body_rate);
-        exit(0);
+        case 0:
+            double T_ev = T / 11605.0;
+
+            if ( T_ev > 0.3) {
+                k13 = 1.0670825e-10*pow(T_ev, 2.012)
+                    / ( exp(4.463/T_ev) * pow((1.0 + 0.2472*T_ev), 3.512) );       
+            } else {
+                k13 = tiny;
+            }
+            break;
+
+        case 1:
+            //Inverse of PSS83 three-body rate
+            k13 = (5.24e-7 / pow(T, 0.485)) * exp(-5.2e4 / T);
+            break;
+
+        case 2:
+            //Inverse of CW83 rate
+            k13 = 8.4e-11 * pow(T, 0.515) * exp(-5.2e4 / T);
+            break;
+
+        case 3:
+            //Rate from JGC67, used by FH07 to construct their three-body rate
+            k13 = (1.38e-4 / pow(T, 1.025)) * exp(-5.2e4 / T);
+            break;
+
+        case 4:
+            //High density limiting rate from MSM96
+            k13 = pow(1e1 ,(-178.4239 - 68.42243 * log10(T)
+                            + 43.20243 * pow(log10(T), 2)
+                            - 4.633167 * pow(log10(T), 3) 
+                            + 69.70086 * log10(1.0 + 40870.38 / T)
+                            - (23705.7 / T)));
+            break;
+
+        case 5:
+            //From detailed balance from Forrey rate
+            if (T <= 3000.0) {
+                k13 = 2.4e-8 * exp(-5.2e4/T);
+            } else {
+                k13 = 2.2e-6 * pow(T, -0.565) * exp(-5.2e4/T); 
+            }
+            break;
+        
+        default:
+            fprintf(stderr, "three_body_rate has been set to an unknown value: %d \n",
+                my_chemistry->three_body_rate);
+            exit(0);
     }
+    return k13 / units;
 }
 
 //Calculates 7 k13dd coefficients for given idt (0 or 1).
@@ -536,39 +548,54 @@ double k20_rate(double T, double units, chemistry_data *my_chemistry)
 
 //Calculation of k21.
 double k21_rate(double T, double units, chemistry_data *my_chemistry){
-    return 2.8e-31 * pow(T, -0.6);
+    return 2.8e-31 * pow(T, -0.6) / units;
 }
 
 //Calculation of k22. 
 double k22_rate(double T, double units, chemistry_data *my_chemistry)
 {   
     double k22;
-    if (my_chemistry->three_body_rate == 0) {
-        if (T <= 300.0) {
-            return 1.3e-32 * pow(T/300.0, -0.38);
-        } else {
-            return 1.3e-32 * pow(T/300.0, -1.0);
-        }
-    } else if (my_chemistry->three_body_rate == 1) {
-        //PSS83 three-body rate
-        return 5.5e-29 / T;
-    } else if (my_chemistry->three_body_rate == 2) {
-        //CW83 three-body rate
-        return 8.8e-33;
-    } else if (my_chemistry->three_body_rate == 3) {
-        //FH07 three-body rate
-        return 1.44e-26 / pow(T, 1.54);
-    } else if (my_chemistry->three_body_rate == 4) {
-        //Rate from Glover (2008), derived by detailed balance from MSM96
-        return 7.7e-31 / pow(T, 0.464);
-    } else if (my_chemistry->three_body_rate == 5) {
-        //Rate from Forrey (2013)
-        return (6e-32 / pow(T, 0.25)) + (2e-31 / pow(T, 0.5));
-    } else {
-        fprintf(stderr, "three_body_rate has been set to an unknown value: %d \n",
-            my_chemistry->three_body_rate);
-        exit(0);
+    switch (my_chemistry->three_body_rate) {
+
+        case 0:
+            if (T <= 300.0) {
+                k22 = 1.3e-32 * pow(T/300.0, -0.38);
+            } else {
+                k22 = 1.3e-32 * pow(T/300.0, -1.0);
+            }
+            break;
+
+        case 1:
+            //PSS83 three-body rate
+            k22 = 5.5e-29 / T;
+            break;
+
+        case 2:
+            //CW83 three-body rate
+            k22 = 8.8e-33;
+            break;
+
+        case 3:
+            //FH07 three-body rate
+            k22 = 1.44e-26 / pow(T, 1.54);
+            break;
+
+        case 4:
+            //Rate from Glover (2008), derived by detailed balance from MSM96
+            k22 = 7.7e-31 / pow(T, 0.464);
+            break;
+    
+        case 5:
+            //Rate from Forrey (2013)
+            return (6e-32 / pow(T, 0.25)) + (2e-31 / pow(T, 0.5));
+            break;
+
+        default:
+            fprintf(stderr, "three_body_rate has been set to an unknown value: %d \n",
+                my_chemistry->three_body_rate);
+            exit(0);
     }
+    return k22 / units;
 }
 
 //Calculation of k23.

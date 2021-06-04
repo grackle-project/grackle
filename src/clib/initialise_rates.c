@@ -322,15 +322,9 @@ int initialise_rates(chemistry_data *my_chemistry, chemistry_data_storage *my_ra
         
         //Varying threebody and corresponding collisional dissociation rates from Simon.
         add_reaction_rate(&my_rates->k13, k13_rate, kUnit, my_chemistry);
-        add_reaction_rate(&my_rates->k21, k21_rate, kUnit, my_chemistry);
-        add_reaction_rate(&my_rates->k22, k22_rate, kUnit, my_chemistry);
-        //Normalisation //! Issues with units here.
-        for (int i=0; i < my_chemistry->NumberOfDustTemperatureBins; i++) {
-            my_rates->k13[i] = my_rates->k13[i] / kUnit;
-            my_rates->k21[i] =  my_rates->k21[i] / kUnit_3Bdy;
-            my_rates->k22[i] = my_rates->k22[i] / kUnit_3Bdy;
-        }
-
+        add_reaction_rate(&my_rates->k21, k21_rate, kUnit_3Bdy, my_chemistry);
+        add_reaction_rate(&my_rates->k22, k22_rate, kUnit_3Bdy, my_chemistry);
+        
         //--------Deuterium Rates--------
         add_reaction_rate(&my_rates->k50, k50_rate, kUnit, my_chemistry);
         add_reaction_rate(&my_rates->k51, k51_rate, kUnit, my_chemistry);
