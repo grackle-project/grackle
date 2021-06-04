@@ -269,14 +269,16 @@ double k12_rate(double T, double units, chemistry_data *my_chemistry)
     return k12;
 }
 
-//Calculation of k13. //! Check I have handled this correctly.
+//Calculation of k13.
 double k13_rate(double T, double units, chemistry_data *my_chemistry)
 {   
+    double T_ev = T / 11605.0;
+
     double k13;
     switch (my_chemistry->three_body_rate) {
 
         case 0:
-            double T_ev = T / 11605.0;
+            
 
             if ( T_ev > 0.3) {
                 k13 = 1.0670825e-10*pow(T_ev, 2.012)

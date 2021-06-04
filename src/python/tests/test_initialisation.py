@@ -85,7 +85,7 @@ def set_parameters(parSet, my_chemistry):
 #* Function which prints the values of the parameter set in use.
 def print_parameter_set(my_chemistry):
     parameters = ["CaseBRecombination", "k11_rate", "three_body_rate", "h2dust_rate", "collisional_excitation_rates",\
-                    "collisional_excitation_rates", "recombination_cooling_rates", "bremsstrahlung_cooling_rates",\
+                    "collisional_ionisation_rates", "recombination_cooling_rates", "bremsstrahlung_cooling_rates",\
                     "h2_h_cooling_rate", "photoelectric_heating"]
     for parameter in parameters:
         print(parameter + ":", getattr(my_chemistry, parameter))
@@ -182,6 +182,6 @@ def test_rate_initialisation(printParameters=False, printOOMdiscrepanices=False)
         for parSet in parSets:
             rate_name = rate_key + f"_{parSet}"
             #Check rates agree to what we deem is an acceptable relative tolerance.
-            assert np.allclose(correctRates[rate_name], initialisedRates[rate_name], atol=1e-10),\
+            assert np.allclose(correctRates[rate_name], initialisedRates[rate_name], rtol=1e-7, atol=0),\
                                 f"Rate Coefficient {rate_name} does not agree. \n \t Correct rate:\
                                     {correctRates[rate_name][300]} \n \t Initialised rate: {initialisedRates[rate_name][300]} \n"
