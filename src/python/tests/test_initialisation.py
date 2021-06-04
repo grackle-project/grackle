@@ -7,7 +7,7 @@
 ########################################################################
 
 import h5py
-import numpy as np 
+import numpy as np
 import os
 
 #* Import necessary functions from grackle.
@@ -94,7 +94,7 @@ def oom_discrepancies(rateName, parameterSet, rateFile1, rateFile2):
 
 
 #* Function which tests that the rates have been initialised correctly for each parameter set.
-def test_rate_initialisation(printParameters=False):
+def test_rate_initialisation(printParameters=False, printOOMdiscrepanices=False):
     """
     Test that the rate tables are initialized correctly.
 
@@ -135,8 +135,6 @@ def test_rate_initialisation(printParameters=False):
                  "hyd01k", "h2k01", "vibh", "roth", "rotl", "HDlte", "HDlow","cieco", "GAHI", "GAH2",
                  "GAHe", "GAHp", "GAel", "H2LTE", "k13dd", "h2dust"]
 
-    parSets = [1,2,3,4,5,6]
-
     #* Calculate rates for each parameter set and write to hdf5 file
     #If file already exists delete it so that the new one can be created.
     if os.path.exists("initialised_rates.h5"):
@@ -145,6 +143,7 @@ def test_rate_initialisation(printParameters=False):
     f = h5py.File("initialised_rates.h5", "w-")
 
     #Iterate over parameter sets.
+    parSets = [1,2,3,4,5,6]
     for parSet in parSets:
         #Set chemistry parameters.
         if set_parameters(parSet, my_chemistry):
@@ -169,21 +168,15 @@ def test_rate_initialisation(printParameters=False):
     correctRates = h5py.File("example_answers/correct_rates.h5", "r")
     initialisedRates = h5py.File("initialised_rates.h5", "r")
     
-    print(oom_discrepancies('k13', 3, correctRates, initialisedRates))
+    #Print order-of-magnitude of discrepancies found.
+    if printOOMdiscrepanices:
+        print(oom_discrepancies('k13', 3, correctRates, initialisedRates))
 
-    with open("tiny_value_discrepancies.txt", "w+") as f:
-        for rate_key in testRates:
-            for parSet in parSets:
-                rate_name = rate_key + f"_{parSet}"
-    
-                #Check rates agree to what we deem is an acceptable relative tolerance.
-                assert np.allclose(correctRates[rate_name], initialisedRates[rate_name], atol=1e-10),\
-                                    f"Rate Coefficient {rate_name} does not agree. \n \t Correct rate:\
-                                        {correctRates[rate_name][300]} \n \t Initialised rate: {initialisedRates[rate_name][300]} \n"
-
-
-
-
-test_rate_initialisation()
-
-
+    #Check all rates for each parameter set.
+    for rate_key in testRates:
+        for parSet in parSets:
+            rate_name = rate_key + f"_{parSet}"
+            #Check rates agree to what we deem is an acceptable relative tolerance.
+            assert np.allclose(correctRates[rate_name], initialisedRates[rate_name], atol=1e-10),\
+                                f"Rate Coefficient {rate_name} does not agree. \n \t Correct rate:\
+                                    {correctRates[rate_name][300]} \n \t Initialised rate: {initialisedRates[rate_name][300]} \n"
