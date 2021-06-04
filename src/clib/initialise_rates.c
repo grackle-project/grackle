@@ -196,15 +196,10 @@ int add_h2dust_reaction_rate(double **rate_ptr, double units, chemistry_data *my
     }
 }
 
-//Definition of the calc_rates function.
+//Definition of the initialise_rates function.
 int initialise_rates(chemistry_data *my_chemistry, chemistry_data_storage *my_rates,
                    code_units *my_units, double co_length_unit, double co_density_unit)
-{
-    //* Set various constant parameters that will be used throughout.
-    //! Not using these anymore, their values are hardcoded.
-    //double tevk = 1.1605e4; //Kelvin to eV conversion factor
-    //double dhuge = 1.0e30; //Comparison value
-    
+{ 
     //* Set the flag for dust calculations.
     int anyDust;
     if ( my_chemistry->h2_on_dust > 0 || my_chemistry->dust_chemistry > 0) {
@@ -215,8 +210,8 @@ int initialise_rates(chemistry_data *my_chemistry, chemistry_data_storage *my_ra
 
     //* Obtain the conversion factors which convert between code and physical units. We define a_value = 1 at z = zInit such that a = a_value * [a].
     double timeBase1 = my_units->time_units;
-    double lengthBase1 = co_length_unit/(my_units->a_value * my_units->a_units);
-    double densityBase1 = co_density_unit*pow(my_units->a_value * my_units->a_units, 3);
+    double lengthBase1 = co_length_unit / (my_units->a_value * my_units->a_units);
+    double densityBase1 = co_density_unit * pow(my_units->a_value * my_units->a_units, 3);
 
     /*
     * 1) Set the dimensions of the non-radiative rate coefficients.
@@ -329,7 +324,7 @@ int initialise_rates(chemistry_data *my_chemistry, chemistry_data_storage *my_ra
         add_reaction_rate(&my_rates->k13, k13_rate, kUnit, my_chemistry);
         add_reaction_rate(&my_rates->k21, k21_rate, kUnit, my_chemistry);
         add_reaction_rate(&my_rates->k22, k22_rate, kUnit, my_chemistry);
-        //Normalisation //! Check that this is a sensible way of doing this.
+        //Normalisation //! Issues with units here.
         for (int i=0; i < my_chemistry->NumberOfDustTemperatureBins; i++) {
             my_rates->k13[i] = my_rates->k13[i] / kUnit;
             my_rates->k21[i] =  my_rates->k21[i] / kUnit_3Bdy;
@@ -462,20 +457,7 @@ int initialise_rates(chemistry_data *my_chemistry, chemistry_data_storage *my_ra
     //(Equation B15, Krumholz, 2014)
     add_reaction_rate(&my_rates->gamma_isrf, gamma_isrf_rate, coolingUnits, my_chemistry); 
 
-
-
-    /* //! Code that saves temperatures of all bins. Used only for testing. 
-    FILE *fp;
-    fp = fopen("temperatures.txt", "w");
-    for (int i = 0; i < my_chemistry->NumberOfTemperatureBins; i++) {
-        //Bin temperature.
-        logBinTemp = log(TempStart) + abs(i)*dlogTemp;
-        binTemp = exp(logBinTemp);
-        fprintf(fp, "%E \n", binTemp);
-    }
-    fclose(fp);
-    */     
-   
-   return SUCCESS;
-   //End of function definition.
+    
+    //End of function definition.
+    return SUCCESS;
 }

@@ -38,7 +38,7 @@ double cie_thin_cooling_rate_g_c(double T);
 // Calculation of k1.
 double k1_rate(double T, double units, chemistry_data *my_chemistry)
 {
-    double T_ev = T/11605.0;
+    double T_ev = T / 11605.0;
     double logT_ev = log(T_ev);
 
     double k1 = exp( -32.71396786375
@@ -59,7 +59,7 @@ double k1_rate(double T, double units, chemistry_data *my_chemistry)
 //Calculation of k3.
 double k3_rate(double T, double units, chemistry_data *my_chemistry)
 {
-    double T_ev = T/11605.0;
+    double T_ev = T / 11605.0;
     double logT_ev = log(T_ev);
 
     if (T_ev > 0.8){
@@ -80,7 +80,7 @@ double k3_rate(double T, double units, chemistry_data *my_chemistry)
 //Calculation of k4.
 double k4_rate(double T, double units, chemistry_data *my_chemistry)
 {
-    double T_ev = T/11605.0;
+    double T_ev = T / 11605.0;
     double logT_ev = log(T_ev);
 
     double k4;
@@ -134,7 +134,7 @@ double k2_rate(double T, double units, chemistry_data *my_chemistry)
 //Calculation of k5.
 double k5_rate(double T, double units, chemistry_data *my_chemistry)
 {
-    double T_ev = T/11605.0;
+    double T_ev = T / 11605.0;
     double logT_ev = log(T_ev);
 
     double k5;
@@ -217,7 +217,7 @@ double k10_rate(double T, double units, chemistry_data *my_chemistry)
 double k11_rate(double T, double units, chemistry_data *my_chemistry)
 {
     double logT = log(T);
-    double T_ev = T/11605.0;
+    double T_ev = T / 11605.0;
     double logT_ev = log(T_ev);
 
     double k11;
@@ -257,7 +257,7 @@ double k11_rate(double T, double units, chemistry_data *my_chemistry)
 //Calculation of k12.
 double k12_rate(double T, double units, chemistry_data *my_chemistry)
 {
-    double T_ev = T/11605.0;
+    double T_ev = T / 11605.0;
     
     double k12;
     if ( T_ev > 0.3) {
@@ -273,7 +273,7 @@ double k12_rate(double T, double units, chemistry_data *my_chemistry)
 double k13_rate(double T, double units, chemistry_data *my_chemistry)
 {
     if (my_chemistry->three_body_rate == 0) { //! Added this if statement as this bit always calculated and was then overwritten.
-        double T_ev = T/11605.0;
+        double T_ev = T / 11605.0;
 
         double k13;
         if ( T_ev > 0.3) {
@@ -443,10 +443,11 @@ void k13dd_rate(double T, double units, double *k13dd_results, chemistry_data *m
         _k13dd_rate(T, idt, units, k13dd_results, my_chemistry);
     }
 }
+
 //Calculation of k14.
 double k14_rate(double T, double units, chemistry_data *my_chemistry)
 {
-    double T_ev = T/11605.0;
+    double T_ev = T / 11605.0;
     double logT_ev = log(T_ev);
 
     double k14;
@@ -469,7 +470,7 @@ double k14_rate(double T, double units, chemistry_data *my_chemistry)
 //Calculation of k15.
 double k15_rate(double T, double units, chemistry_data *my_chemistry)
 {
-    double T_ev = T/11605.0;
+    double T_ev = T / 11605.0;
     double logT_ev = log(T_ev);
     
     double k15;
@@ -733,8 +734,8 @@ double n_cr_d2_rate(double T, double units, chemistry_data *my_chemistry)
 double ceHI_rate(double T, double units, chemistry_data *my_chemistry)
 {
     if (my_chemistry->collisional_excitation_rates == 1){
-        return 7.5e-19*exp(-fmin(log(dhuge), 118348.0/T))
-                / ( 1.0 + sqrt(T/1.0e5) ) / units;
+        return 7.5e-19*exp( -fmin(log(dhuge), 118348.0 / T) )
+                / ( 1.0 + sqrt(T / 1.0e5) ) / units;
     } else {
         return tiny;
     }
@@ -855,8 +856,8 @@ double reHeII2_rate(double T, double units, chemistry_data *my_chemistry)
     //Dielectronic recombination (Cen, 1992).
     if (my_chemistry->recombination_cooling_rates == 1){
         return 1.24e-13 * pow(T, -1.5)
-                * exp(-fmin(log(dhuge), 470000.0/T))
-                * ( 1.0 + 0.3*exp(-fmin(log(dhuge), 94000.0/T))) 
+                * exp( -fmin(log(dhuge), 470000.0 / T) )
+                * ( 1.0 + 0.3 * exp( -fmin(log(dhuge), 94000.0 / T) ) ) 
                 / units;
     } else {
         return tiny;
@@ -874,11 +875,11 @@ double reHeIII_rate(double T, double units, chemistry_data *my_chemistry)
         //These depend on if the user has chosen recombination case A or B.
         if (my_chemistry->CaseBRecombination == 1) {
             return 8.0 * 3.435e-30 * T * pow(lambdaHeIII, 1.970)
-                    / pow(1.0 + pow(lambdaHeIII/2.25, 0.376), 3.720) 
+                    / pow(1.0 + pow(lambdaHeIII / 2.25, 0.376), 3.720) 
                     / units;
         } else {
             return 8.0 * 1.778e-29 * T * pow(lambdaHeIII, 1.965)
-                    / pow(1.0 + pow(lambdaHeIII/0.541, 0.502), 2.697)
+                    / pow(1.0 + pow(lambdaHeIII / 0.541, 0.502), 2.697)
                     / units;
         }
     } else {
@@ -891,7 +892,7 @@ double brem_rate(double T, double units, chemistry_data *my_chemistry)
 {
     if (my_chemistry->bremsstrahlung_cooling_rates == 1){
         return 1.43e-27 * sqrt(T)
-                * (1.1 + 0.34 * exp(-pow(5.5 - log10(T), 2) / 3.0))
+                * ( 1.1 + 0.34 * exp( -pow(5.5 - log10(T), 2) / 3.0) )
                 / units;
     } else {
         return tiny;
@@ -904,12 +905,12 @@ double vibh_rate(double T, double units, chemistry_data *my_chemistry)
     //Dummy parameter used in the calculation.
     double par_dum;
     if (T > 1635.0) {
-        par_dum = 1.0e-12 * sqrt(T) * exp(-1000.0/T);
+        par_dum = 1.0e-12 * sqrt(T) * exp(-1000.0 / T);
     } else {
-        par_dum = 1.4e-13 * exp((T/125.0) - pow(T/577.0, 2));
+        par_dum = 1.4e-13 * exp( (T / 125.0) - pow(T / 577.0, 2) );
     }
 
-    return 1.1e-18 * exp(-fmin(log(dhuge),6744.0/T)) / units;
+    return 1.1e-18 * exp( -fmin(log(dhuge), 6744.0 / T) ) / units;
 }
 
 //Calculation of hyd01k.
@@ -918,12 +919,12 @@ double hyd01k_rate(double T, double units, chemistry_data *my_chemistry)
     //Dummy parameter used in the calculation.
     double par_dum;
     if (T > 1635.0) {
-        par_dum = 1.0e-12 * sqrt(T) * exp(-1000.0/T);
+        par_dum = 1.0e-12 * sqrt(T) * exp(-1000.0 / T);
     } else {
-        par_dum = 1.4e-13 * exp((T/125.0) - pow(T/577.0, 2));
+        par_dum = 1.4e-13 * exp( (T / 125.0) - pow(T / 577.0, 2) );
     }
 
-    return par_dum * exp(-fmin(log(dhuge), 8.152e-13/(kboltz*T)))
+    return par_dum * exp( -fmin( log(dhuge), 8.152e-13 / (kboltz * T) ) )
             / units;
 }
             
@@ -939,12 +940,12 @@ double h2k01_rate(double T, double units, chemistry_data *my_chemistry)
 //Calculation of rotl.
 double rotl_rate(double T, double units, chemistry_data *my_chemistry)
 {
-    double par_x = log10(T/1.0e4); //Parameter used in the following calculation.
+    double par_x = log10(T / 1.0e4); //Parameter used in the following calculation.
 
     if (T > 4031.0) {
-        return 1.38e-22 * exp(-9243.0/T) / units;
+        return 1.38e-22 * exp(-9243.0 / T) / units;
     } else {
-        return pow(10.0, -22.9 - 0.553*par_x - 1.148*pow(par_x, 2)) / units;
+        return pow(10.0, -22.9 - 0.553 * par_x - 1.148 * pow(par_x, 2)) / units;
     }
 }
 
@@ -954,7 +955,7 @@ double roth_rate(double T, double units, chemistry_data *my_chemistry)
     double par_x = log10(T/1.0e4); //Parameter used in the following calculation.
 
     if(T > 1087.0) {
-        return 3.9e-19 * exp(-6118.0/T) / units;
+        return 3.9e-19 * exp(-6118.0 / T) / units;
     } else {
         return pow(10.0, -19.24 + 0.474*par_x - 1.247*pow(par_x, 2)) / units;
     }
@@ -978,12 +979,12 @@ double GP99HighDensityLimit_rate(double T, double units, chemistry_data *my_chem
     //Constrain temperature.
     double tm = fmax(T, 13.0); //no cooling below 13 Kelvin
     tm = fmin(tm, 1.0e5); //fixes numerics
-    double t3 = tm/1000.0;
+    double t3 = tm / 1000.0;
 
     //Simplify formula for clarity.
-    double HDLR = (9.5e-22*pow(t3, 3.76)) / (1.0 + 0.12*pow(t3, 2.1)) *
-            exp(-pow((0.13/t3), 3)) + 3.0e-24 * exp(-0.51/t3);
-    double HDLV = 6.7e-19*exp(-5.86/t3) + 1.6e-18*exp(-11.7/t3);
+    double HDLR = ( 9.5e-22*pow(t3, 3.76) ) / ( 1.0 + 0.12*pow(t3, 2.1) ) *
+            exp( -pow((0.13 / t3), 3) ) + 3.0e-24 * exp(-0.51 / t3);
+    double HDLV = 6.7e-19*exp(-5.86 / t3) + 1.6e-18*exp(-11.7 / t3);
 
     return (HDLR + HDLV) / units;
 }
@@ -1127,7 +1128,7 @@ double H2LTE_rate(double T, double units, chemistry_data *my_chemistry)
 
     if (tm < 1.0e2) {
         //Simple extrapolation as H2 cooling insignificant at these temperatures.
-        return 7.0e-27 * pow(tm, 1.5) * exp(-512.0/tm) / units;
+        return 7.0e-27 * pow(tm, 1.5) * exp(-512.0 / tm) / units;
     } else {
         return pow(10.0, -20.584225
                 + 5.0194035 * lt3
@@ -1194,7 +1195,7 @@ double gasGrain_rate(double T, double units, chemistry_data *my_chemistry)
     double grainCoeff = 1.2e-31 * pow(1.0e3, -0.5) / fgr;
 
     return grainCoeff * pow(T, 0.5) *
-            (1.0 - 0.8 * exp(-75.0/T)) / units;
+            ( 1.0 - 0.8 * exp(-75.0 / T) ) / units;
 }
 
 //Calculation of regr.
