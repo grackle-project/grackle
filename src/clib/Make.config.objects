@@ -22,12 +22,8 @@ OBJS_CONFIG_LIB = \
         calculate_temperature.lo \
         calc_temp1d_cloudy_g.lo \
         calc_temp_cloudy_g.lo \
-        calc_rates_g.lo \
         calc_tdust_1d_g.lo \
         calc_tdust_3d_g.lo \
-        cie_thin_cooling_rate_g.lo \
-        colh2diss_g.lo \
-        coll_rates_g.lo \
         cool1d_cloudy_g.lo \
         cool1d_cloudy_old_tables_g.lo \
         cool1d_multi_g.lo \
@@ -42,5 +38,5 @@ OBJS_CONFIG_LIB = \
         update_UVbackground_rates.lo \
         cie_thin_cooling_rate_g_c.lo \
         rate_functions.lo \
-        calc_rates_g_c.lo \
+        initialise_rates.lo \
         writeRates.lo \

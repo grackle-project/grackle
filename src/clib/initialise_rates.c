@@ -197,7 +197,7 @@ int add_h2dust_reaction_rate(double **rate_ptr, double units, chemistry_data *my
 }
 
 //Definition of the calc_rates function.
-int calc_rates_g_c(chemistry_data *my_chemistry, chemistry_data_storage *my_rates,
+int initialise_rates(chemistry_data *my_chemistry, chemistry_data_storage *my_rates,
                    code_units *my_units, double co_length_unit, double co_density_unit)
 {
     //* Set various constant parameters that will be used throughout.

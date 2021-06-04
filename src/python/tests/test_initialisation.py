@@ -70,6 +70,30 @@ def print_parameter_set(my_chemistry):
     for parameter in parameters:
         print(parameter + ":", getattr(my_chemistry, parameter))
 
+#* Function which tells you unique order of magnitude discrepancies for a given rate between two hdf5 files.
+def oom_discrepancies(rateName, parameterSet, rateFile1, rateFile2):
+    name = rateName + f'_{parameterSet}'
+    rates1 = rateFile1[name]
+    rates2 = rateFile2[name]
+
+    uniqueDiscrepancies = {}
+    #Check each rate coefficient and calculate OOM discrepancy.
+    for i in range(len(rates1)):
+        if rates1[i] == 0 or rates2[i] == 0:
+            None
+        else:
+            relDisc = abs(rates1[i] - rates2[i]) / rates1[i]
+            if relDisc == 0:
+                None
+            else:
+                DiscOOM = np.floor(np.log10(relDisc))
+                if f'e^{DiscOOM}' not in uniqueDiscrepancies:
+                    uniqueDiscrepancies[f'e^{DiscOOM}'] = []
+                uniqueDiscrepancies[f'e^{DiscOOM}'].append(i)
+
+    return uniqueDiscrepancies
+
+
 #* Function which tests that the rates have been initialised correctly for each parameter set.
 def test_rate_initialisation(printParameters=False):
     """
@@ -142,46 +166,25 @@ def test_rate_initialisation(printParameters=False):
     #Close the file.
     f.close()
 
-
-    #* Compare rates with the correct ones which are stored and check they are in agreement.
-    
+    #* Compare rates with the correct ones which are stored and check they are in agreement
     correctRates = h5py.File("example_answers/correct_rates.h5", "r")
     initialisedRates = h5py.File("initialised_rates.h5", "r")
+    
+    print(oom_discrepancies('k13', 3, correctRates, initialisedRates))
+
     with open("tiny_value_discrepancies.txt", "w+") as f:
         for rate_key in testRates:
             for parSet in parSets:
                 rate_name = rate_key + f"_{parSet}"
-                #Check these three rates to a different tolerance as their tiny values will have slight
-                #difference when compared to the old code.
-                if rate_name.split("_")[0] in ["ciHI", "ciHeI", "ciHeII"]:
-                    largeValuePresent = 0
-                    f.write(f'\n --------{rate_name}--------- \n')
-                    for i, correctRate in enumerate(correctRates[rate_name]):
-                        initialisedRate = initialisedRates[rate_name][i]
-                        if np.isclose(correctRate, initialisedRate, atol=1e-10) == False:
-                            dif = abs(correctRate - initialisedRate) / correctRate
-                            if rate_name == "ciHI":
-                                corrRate = "k1"
-                            elif rate_name == "ciHeI":
-                                corrRate = "k3"
-                            elif rate_name == "ciHeII":
-                                corrRate = "k5"
-                            if correctRates[corrRate][i] == 1e-20:
-                                istiny = 'tiny'
-                            else:
-                                largeValuePresent = 1
-                                istiny = 'large'
-                            f.write(f'{i}: {corrRate} is {istiny}    {correctRate}   {initialisedRate}   {dif} \n')
-                    if largeValuePresent == 1:
-                        modifier = "one or more"
-                    else:
-                        modifier = "no"
-                    f.write(f"\n'\n -----There are {modifier} large values present----- \n\n")
-                    
+    
                 #Check rates agree to what we deem is an acceptable relative tolerance.
-                else:
-                    assert np.allclose(correctRates[rate_name], initialisedRates[rate_name], atol=1e-10),\
-                                        f"Rate Coefficient {rate_name} does not agree."
+                assert np.allclose(correctRates[rate_name], initialisedRates[rate_name], atol=1e-10),\
+                                    f"Rate Coefficient {rate_name} does not agree. \n \t Correct rate:\
+                                        {correctRates[rate_name][300]} \n \t Initialised rate: {initialisedRates[rate_name][300]} \n"
 
 
-#test_rate_initialisation()
+
+
+test_rate_initialisation()
+
+

@@ -37,9 +37,9 @@ MACH_FILE  = Make.mach.darwin
 
 LOCAL_PACKAGES       = /usr/local
 
-LOCAL_FC_INSTALL     = /usr/local/gfortran
-LOCAL_HDF5_INSTALL   = /usr/local/Cellar/hdf5/1.12.0_1
-LOCAL_SZIP_INSTALL   = /usr/local/Cellar/szip/2.1.1_1
+LOCAL_FC_INSTALL     = /usr/local
+LOCAL_HDF5_INSTALL   = /usr/local/hdf5
+LOCAL_SZIP_INSTALL   = $(LOCAL_PACKAGES)
 
 #-----------------------------------------------------------------------
 # Compiler settings
@@ -47,13 +47,13 @@ LOCAL_SZIP_INSTALL   = /usr/local/Cellar/szip/2.1.1_1
 
 MACH_CPP       = /usr/bin/cpp
 
-MACH_CC_NOMPI  = gcc-10  # C compiler when not using MPI
+MACH_CC_NOMPI  = gcc  # C compiler when not using MPI
 MACH_CXX_NOMPI = g++ # C++ compiler when not using MPI
 MACH_FC_NOMPI  = gfortran # Fortran 77 compiler when not using MPI
 MACH_F90_NOMPI = gfortran # Fortran 90 compiler when not using MPI
 MACH_LD_NOMPI  = gcc # Linker when not using MPI
 
-MACH_LIBTOOL   = /usr/local/Cellar/libtool/2.4.6_2/bin/glibtool
+MACH_LIBTOOL   = glibtool
 
 #-----------------------------------------------------------------------
 # Machine-dependent defines
@@ -107,6 +107,6 @@ MACH_LIBS        = $(LOCAL_LIBS_HDF5) $(LOCAL_LIBS_MACH)
 # Installation
 #-----------------------------------------------------------------------
 
-MACH_INSTALL_PREFIX = /usr/local
+MACH_INSTALL_PREFIX = $(HOME)/local
 MACH_INSTALL_LIB_DIR =
 MACH_INSTALL_INCLUDE_DIR =

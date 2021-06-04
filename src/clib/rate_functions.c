@@ -233,7 +233,7 @@ double k11_rate(double T, double units, chemistry_data *my_chemistry)
                 + 3.9731542e-10 * pow(logT, 5)
                 - 1.8171411e-11 * pow(logT, 6)
                 + 3.5311932e-13 * pow(logT, 7))) / units;
-        } else if (my_chemistry->k11_rate == 2) {
+        } else if (my_chemistry->k11_rate == 0) {
             k11 = exp( -24.24914687731536
                 + 3.400824447095291*logT_ev
                 - 3.898003964650152*pow(logT_ev, 2)
@@ -245,7 +245,7 @@ double k11_rate(double T, double units, chemistry_data *my_chemistry)
                 - 9.36345888928611e-6*pow(logT_ev, 8)) / units;
         } else {
             fprintf(stderr, "k11_rate flag set to unknown value. This must be either 1 \
-                             or 2 but was set to %d \n", my_chemistry->k11_rate);
+                             or 0 but was set to %d \n", my_chemistry->k11_rate);
             exit(0);
         }
     } else {
@@ -704,7 +704,7 @@ double h2dust_rate(double T, double T_dust, double units, chemistry_data *my_che
     } else {
         //Equation 3.8 from Hollenbach & McKee (1979).
         return 3.0e-17 / fgr * pow(T_2, 0.5) / (1.0 + 0.4 * pow(T_2 + T_dust_2, 0.5)
-                + 0.2 * T__2 + 8.0e-2 * pow(T_2, 2.0)) / units;
+                + 0.2 * T_2 + 8.0e-2 * pow(T_2, 2.0)) / units;
     }
 }
 
@@ -778,7 +778,7 @@ double ciHI_rate(double T, double units, chemistry_data *my_chemistry)
 {
     //Collisional ionization. Polynomial fit from Tom Abel.
     if (my_chemistry->collisional_ionisation_rates == 1){
-        return 2.18e-11 * k1_rate(T, 1, my_chemistry) * 1/units;
+        return 2.18e-11 * k1_rate(T, 1, my_chemistry) / units;
     } else {
         return tiny;
     }
@@ -789,7 +789,7 @@ double ciHeI_rate(double T, double units, chemistry_data *my_chemistry)
 {
     //Collisional ionization. Polynomial fit from Tom Abel.
     if (my_chemistry->collisional_ionisation_rates == 1){
-        return 3.94e-11 * k3_rate(T, 1, my_chemistry) * 1/units;
+        return 3.94e-11 * k3_rate(T, 1, my_chemistry) / units;
     } else {
         return tiny;
     }
@@ -800,7 +800,7 @@ double ciHeII_rate(double T, double units, chemistry_data *my_chemistry)
 {
     //Collisional ionization. Polynomial fit from Tom Abel.
     if (my_chemistry->collisional_ionisation_rates == 1){
-        return 8.72e-11 * k5_rate(T, 1, my_chemistry) * 1/units; 
+        return 8.72e-11 * k5_rate(T, 1, my_chemistry) / units; 
     } else {
         return tiny;
     }
