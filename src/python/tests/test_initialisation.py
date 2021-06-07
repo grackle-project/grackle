@@ -41,7 +41,7 @@ def get_defChem():
 def set_parameters(parSet, my_chemistry):
     #Default parameter set.
     my_chemistry.CaseBRecombination = 0
-    my_chemistry.k11_rate = 1
+    my_chemistry.h2_charge_exchange_rate = 1
     my_chemistry.h2dust_rate = 1
     my_chemistry.collisional_excitation_rates = 1
     my_chemistry.collisional_ionisation_rates = 1
@@ -55,7 +55,7 @@ def set_parameters(parSet, my_chemistry):
     #Alternate parameter set.
     elif parSet == 2:
         my_chemistry.CaseBRecombination = 1
-        my_chemistry.k11_rate = 0
+        my_chemistry.h2_charge_exchange_rate = 0
         my_chemistry.three_body_rate = 1
         my_chemistry.h2dust_rate = 0
         my_chemistry.collisional_excitation_rates = 0
@@ -136,15 +136,12 @@ def test_rate_initialisation(printParameters=False, printOOMdiscrepanices=False)
                  "k26", "k27", "k28", "k29", "k30", "k31", "k50", "k51", "k52", "k53", "k54", "k55",
                  "k56", "k57", "k58", "n_cr_n", "n_cr_d1", "n_cr_d2", "ceHI", "ceHeI", "ceHeII",
                  "ciHI", "ciHeI", "ciHeIS", "ciHeII", "reHII", "reHeII1", "reHeII2","reHeIII", "brem",
-                 "hyd01k", "h2k01", "vibh", "roth", "rotl", "HDlte", "HDlow","cieco", "GAHI", "GAH2",
+                 "hyd01k", "h2k01", "vibh", "roth", "rotl", "HDlte", "HDlow", "cieco", "GAHI", "GAH2",
                  "GAHe", "GAHp", "GAel", "H2LTE", "k13dd", "h2dust"]
 
     #* Calculate rates for each parameter set and write to hdf5 file
-    #If file already exists delete it so that the new one can be created.
-    if os.path.exists("initialised_rates.h5"):
-        os.remove("initialised_rates.h5")
-    #Create and open file.
-    f = h5py.File("initialised_rates.h5", "w-")
+    #Create and open file. If the file already exists this will overwrite it.
+    f = h5py.File("initialised_rates.h5", "w")
 
     #Iterate over parameter sets.
     parSets = [1,2,3,4,5,6]

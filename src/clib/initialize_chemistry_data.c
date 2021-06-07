@@ -44,7 +44,7 @@ int initialize_cloudy_data(chemistry_data *my_chemistry,
 int initialize_UVbackground_data(chemistry_data *my_chemistry,
                                  chemistry_data_storage *my_rates);
 
-int initialise_rates(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, code_units *my_units, 
+int initialize_rates(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, code_units *my_units, 
                 double co_length_units, double co_density_units);
 
 
@@ -137,7 +137,7 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
   }
 
   //* Call initialise_rates to compute rate tables.
-  initialise_rates(my_chemistry, my_rates, my_units, co_length_units, co_density_units);
+  initialize_rates(my_chemistry, my_rates, my_units, co_length_units, co_density_units);
 
   /* Initialize Cloudy cooling. */
   my_rates->cloudy_data_new = 1;

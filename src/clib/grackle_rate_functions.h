@@ -79,6 +79,7 @@ double H2LTE_rate(double T, double units, chemistry_data *my_chemistry);
 double HDlte_rate(double T, double units, chemistry_data *my_chemistry);
 
 double HDlow_rate(double T, double units, chemistry_data *my_chemistry);
+double cie_thin_cooling_rate(double T);
 double cieco_rate(double T, double units, chemistry_data *my_chemistry);
 
 double gasGrain_rate(double T, double units, chemistry_data *my_chemistry);

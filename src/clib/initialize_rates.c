@@ -197,7 +197,7 @@ int add_h2dust_reaction_rate(double **rate_ptr, double units, chemistry_data *my
 }
 
 //Definition of the initialise_rates function.
-int initialise_rates(chemistry_data *my_chemistry, chemistry_data_storage *my_rates,
+int initialize_rates(chemistry_data *my_chemistry, chemistry_data_storage *my_rates,
                    code_units *my_units, double co_length_unit, double co_density_unit)
 { 
     //* Set the flag for dust calculations.

@@ -11,10 +11,6 @@
  * Set "units" parameter = 1 for cgs unit outputs.
 **********************************************************************/
 
-//Function prototype for cie rate coefficient. 
-//Definition of this can be found within cie_thin_cooling_rate_g_c.c
-double cie_thin_cooling_rate_g_c(double T);
-
 //* Macro definitions for constants.
 //Kelvin to eV conversion factor
 #ifndef tevk
@@ -32,6 +28,7 @@ double cie_thin_cooling_rate_g_c(double T);
 #include "grackle_macros.h"
 #include "grackle_types.h"
 #include "grackle_chemistry_data.h"
+#include "cie_thin_cooling_rate_tables.h"
 #include "phys_constants.h"
 
 
@@ -223,7 +220,7 @@ double k11_rate(double T, double units, chemistry_data *my_chemistry)
     double k11;
     if ( T_ev > 0.3) {
         //k11 is calculated by using either Savin 2004 or Abel et al. 1997. The parameter to control this is within the chemistry_data struct.
-        if (my_chemistry->k11_rate == 1) {
+        if (my_chemistry->h2_charge_exchange_rate == 1) {
             k11 = ( exp(-21237.15/T) *
                 (- 3.3232183e-07
                 + 3.3735382e-07 * logT
@@ -233,7 +230,7 @@ double k11_rate(double T, double units, chemistry_data *my_chemistry)
                 + 3.9731542e-10 * pow(logT, 5)
                 - 1.8171411e-11 * pow(logT, 6)
                 + 3.5311932e-13 * pow(logT, 7))) / units;
-        } else if (my_chemistry->k11_rate == 0) {
+        } else if (my_chemistry->h2_charge_exchange_rate == 0) {
             k11 = exp( -24.24914687731536
                 + 3.400824447095291*logT_ev
                 - 3.898003964650152*pow(logT_ev, 2)
@@ -245,7 +242,7 @@ double k11_rate(double T, double units, chemistry_data *my_chemistry)
                 - 9.36345888928611e-6*pow(logT_ev, 8)) / units;
         } else {
             fprintf(stderr, "k11_rate flag set to unknown value. This must be either 1 \
-                             or 0 but was set to %d \n", my_chemistry->k11_rate);
+                             or 0 but was set to %d \n", my_chemistry->h2_charge_exchange_rate);
             exit(0);
         }
     } else {
@@ -1207,10 +1204,48 @@ double HDlow_rate(double T, double units, chemistry_data *my_chemistry)
     return pow(10.0, HDlow) / units;
 }
 
+//Calculation of cie_thin_cooling_rate.
+double cie_thin_cooling_rate(double T){
+
+    //* Compute rough extrapolations for extreme temperatures.
+    // Low temperatures extrapolated with fourth power.
+    if (T <= t_cie_c[0]) {
+        return cie_table_c[0]*pow(T/t_cie_c[0], 4);
+    }
+    // High temperatures extrapolated with third power.
+    if (T >= t_cie_c[287]) {
+        return cie_table_c[287]*pow(T/t_cie_c[287], 3);
+    }
+
+    //* Compute CIE cooling rate for moderate temperatures.
+    // Maximal and minimal indices in the cie tables.
+    int minInd = 0;
+    int maxInd = 287;
+    int ind;
+    for (int i = 0; i <= 200; i++) {
+        // Calculate working index.
+        ind = (maxInd + minInd) / 2;
+
+        // Update extreme indices.
+        if (T >= t_cie_c[ind]) {
+            minInd = ind;
+        } else {
+            maxInd = ind;
+        }
+
+        // Return rate after convergence of indices.
+        if ( (maxInd - minInd) <= 1 ) {
+            return (cie_table_c[maxInd] * ( T - t_cie_c[minInd] ) 
+                   + cie_table_c[minInd] * ( t_cie_c[maxInd] - T))
+                   / ( t_cie_c[maxInd] - t_cie_c[minInd] );
+        }
+    }
+}
+
 //Calculation of cieco.
 double cieco_rate(double T, double units, chemistry_data *my_chemistry)
 {
-    double cierate = cie_thin_cooling_rate_g_c(T);
+    double cierate = cie_thin_cooling_rate(T);
 
     return cierate * (mh/2.0) / units;
 }

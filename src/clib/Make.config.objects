@@ -36,7 +36,5 @@ OBJS_CONFIG_LIB = \
         solve_chemistry.lo \
         solve_rate_cool_g.lo \
         update_UVbackground_rates.lo \
-        cie_thin_cooling_rate_g_c.lo \
         rate_functions.lo \
-        initialise_rates.lo \
-        writeRates.lo \
+        initialize_rates.lo \
