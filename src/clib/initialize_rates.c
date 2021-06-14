@@ -268,7 +268,7 @@ int initialize_rates(chemistry_data *my_chemistry, chemistry_data_storage *my_ra
     *   are different by the reciprocal of the above factor multiplying [L]).
     * 
     */
-    double coolingUnits = (pow(my_units->a_value, 5) * pow(lengthBase1, 2) * pow(mh, 2))
+    double coolingUnits = (pow(my_units->a_units, 5) * pow(lengthBase1, 2) * pow(mh, 2))
                           / (densityBase1 * pow(timeBase1, 3));
 
     //* 3) Units for radiative transfer coefficients are 1/[time].
