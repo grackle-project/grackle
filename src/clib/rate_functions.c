@@ -781,7 +781,7 @@ double ceHeI_rate(double T, double units, chemistry_data *my_chemistry)
 //Calculation of ceHeII.
 double ceHeII_rate(double T, double units, chemistry_data *my_chemistry)
 {
-    if (my_chemistry->collisional_excitation_rates = 1){
+    if (my_chemistry->collisional_excitation_rates == 1){
         return 5.54e-17*exp(-fmin(log(dhuge), 473638.0/T))
                 * pow(T, -0.3970) / ( 1.0 + sqrt(T/1.0e5) ) / units;
     } else {
