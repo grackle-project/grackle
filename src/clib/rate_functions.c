@@ -586,7 +586,7 @@ double k22_rate(double T, double units, chemistry_data *my_chemistry)
     
         case 5:
             //Rate from Forrey (2013)
-            return (6e-32 / pow(T, 0.25)) + (2e-31 / pow(T, 0.5));
+            k22 = (6e-32 / pow(T, 0.25)) + (2e-31 / pow(T, 0.5));
             break;
 
         default:

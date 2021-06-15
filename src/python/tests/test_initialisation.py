@@ -179,8 +179,6 @@ def test_rate_initialisation(printParameters=False, printOOMdiscrepanices=False)
         for parSet in parSets:
             rate_name = rate_key + f"_{parSet}"
             #Check rates agree to what we deem is an acceptable relative tolerance.
-            assert np.allclose(correctRates[rate_name], initialisedRates[rate_name], rtol=1e-7, atol=0),\
-                                f"Rate Coefficient {rate_name} does not agree. \n \t Correct rate:\
-                                    {correctRates[rate_name][300]} \n \t Initialised rate: {initialisedRates[rate_name][300]} \n"
-
-test_rate_initialisation(printOOMdiscrepanices=True)
+            assert np.allclose(correctRates[rate_name], initialisedRates[rate_name], rtol=1e-7),\
+                                f"Rate Coefficient {rate_name} does not agree. \n Correct rate:\
+                                    {correctRates[rate_name][300]} \n Initialised rate: {initialisedRates[rate_name][300]} \n"
