@@ -433,18 +433,13 @@ void _k13dd_rate(double T, int idt, double units, double *k13dd_results, chemist
     //Get the number of temperature bins for which the computations are being computed.
     int noTempBins = my_chemistry->NumberOfTemperatureBins;
     //Store the rates appropriately.
-    k13dd_results[idt*7] = f1;
-    k13dd_results[1 + idt*7] = f2;
-    k13dd_results[2 + idt*7] = f3;
-    k13dd_results[3 + idt*7] = f4;
-    k13dd_results[4 + idt*7] = f5;
-    k13dd_results[5 + idt*7] = f6;
-    k13dd_results[6 + idt*7] = f7;
-
-    //Normalise the rates.
-    for (int i = 0; i < 7; i++){
-        k13dd_results[i + idt*7] -= log10(units);
-    }
+    k13dd_results[idt*7] = f1 - log10(units);
+    k13dd_results[1 + idt*7] = f2 - log10(units);
+    k13dd_results[2 + idt*7] = f3 - log10(units);
+    k13dd_results[3 + idt*7] = f4 - log10(units);
+    k13dd_results[4 + idt*7] = f5 - log10(units);
+    k13dd_results[5 + idt*7] = f6 - log10(units);
+    k13dd_results[6 + idt*7] = f7 - log10(units);
 }
 
 //Calculation of k13dd. k13dd_results is a pointer to an array of length 14 * sizeof(double).
