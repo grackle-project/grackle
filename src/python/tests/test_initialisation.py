@@ -9,6 +9,7 @@
 import h5py
 import numpy as np
 import os
+from os.path import expanduser
 
 #* Import necessary functions from grackle.
 from pygrackle import chemistry_data, setup_fluid_container
@@ -84,7 +85,7 @@ def set_parameters(parSet, my_chemistry):
 
 #* Function which prints the values of the parameter set in use.
 def print_parameter_set(my_chemistry):
-    parameters = ["CaseBRecombination", "k11_rate", "three_body_rate", "h2dust_rate", "collisional_excitation_rates",\
+    parameters = ["CaseBRecombination", "h2_charge_exchange_rate", "three_body_rate", "h2dust_rate", "collisional_excitation_rates",\
                     "collisional_ionisation_rates", "recombination_cooling_rates", "bremsstrahlung_cooling_rates",\
                     "h2_h_cooling_rate", "photoelectric_heating"]
     for parameter in parameters:
@@ -115,7 +116,7 @@ def oom_discrepancies(rateName, parameterSet, rateFile1, rateFile2):
 
 
 #* Function which tests that the rates have been initialised correctly for each parameter set.
-def test_rate_initialisation(printParameters=False, printOOMdiscrepanices=False):
+def test_rate_initialisation(printParameters=False, printOOMdiscrepanices=False, testCustomFiles=False):
     """
     Test that the rate tables are initialized correctly.
 
@@ -172,7 +173,14 @@ def test_rate_initialisation(printParameters=False, printOOMdiscrepanices=False)
     
     #Print order-of-magnitude of discrepancies found.
     if printOOMdiscrepanices:
-        print(oom_discrepancies('k13', 3, correctRates, initialisedRates))
+        #print(oom_discrepancies('k13', 3, correctRates, initialisedRates)) Add rates in this format as necessary.
+        None
+
+    #! Delete when code is working.
+    if testCustomFiles:
+        correctRates     = h5py.File(expanduser("~") + "/Desktop/old.h5", "r")
+        initialisedRates = h5py.File(expanduser("~") + "/Desktop/new.h5", "r")
+
 
     #Check all rates for each parameter set.
     for rate_key in testRates:
@@ -182,3 +190,6 @@ def test_rate_initialisation(printParameters=False, printOOMdiscrepanices=False)
             assert np.allclose(correctRates[rate_name], initialisedRates[rate_name], rtol=1e-7),\
                                 f"Rate Coefficient {rate_name} does not agree. \n Correct rate:\
                                     {correctRates[rate_name][300]} \n Initialised rate: {initialisedRates[rate_name][300]} \n"
+
+
+test_rate_initialisation(testCustomFiles=True, printParameters=True)
