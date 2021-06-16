@@ -116,7 +116,7 @@ def oom_discrepancies(rateName, parameterSet, rateFile1, rateFile2):
 
 
 #* Function which tests that the rates have been initialised correctly for each parameter set.
-def test_rate_initialisation(printParameters=False, printOOMdiscrepanices=False, testCustomFiles=False):
+def test_rate_initialisation(printParameters=False, printOOMdiscrepanices=False, testCustomFile=False):
     """
     Test that the rate tables are initialized correctly.
 
@@ -168,7 +168,13 @@ def test_rate_initialisation(printParameters=False, printOOMdiscrepanices=False,
     f.close()
 
     #* Compare rates with the correct ones which are stored and check they are in agreement
-    correctRates = h5py.File("example_answers/correct_rates.h5", "r")
+    #! Delete if statement when code is working.
+    if testCustomFile:
+        correctRatesName = "Pre-refactored"
+        correctRates = h5py.File(expanduser("~") + "/Desktop/pre-refactored_results.h5", "r")
+    else:
+        correctRatesName = "Correct"
+        correctRates = h5py.File("example_answers/correct_rates.h5", "r")
     initialisedRates = h5py.File("initialised_rates.h5", "r")
     
     #Print order-of-magnitude of discrepancies found.
@@ -176,20 +182,14 @@ def test_rate_initialisation(printParameters=False, printOOMdiscrepanices=False,
         #print(oom_discrepancies('k13', 3, correctRates, initialisedRates)) Add rates in this format as necessary.
         None
 
-    #! Delete when code is working.
-    if testCustomFiles:
-        correctRates     = h5py.File(expanduser("~") + "/Desktop/old.h5", "r")
-        initialisedRates = h5py.File(expanduser("~") + "/Desktop/new.h5", "r")
-
-
     #Check all rates for each parameter set.
     for rate_key in testRates:
         for parSet in parSets:
             rate_name = rate_key + f"_{parSet}"
             #Check rates agree to what we deem is an acceptable relative tolerance.
             assert np.allclose(correctRates[rate_name], initialisedRates[rate_name], rtol=1e-7),\
-                                f"Rate Coefficient {rate_name} does not agree. \n Correct rate:\
+                                f"Rate Coefficient {rate_name} does not agree. \n {correctRatesName} rate:\
                                     {correctRates[rate_name][300]} \n Initialised rate: {initialisedRates[rate_name][300]} \n"
 
 
-test_rate_initialisation(testCustomFiles=True, printParameters=True)
+test_rate_initialisation(testCustomFile=True, printParameters=True)
