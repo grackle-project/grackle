@@ -275,8 +275,6 @@ double k13_rate(double T, double units, chemistry_data *my_chemistry)
     switch (my_chemistry->three_body_rate) {
 
         case 0:
-            
-
             if ( T_ev > 0.3) {
                 k13 = 1.0670825e-10*pow(T_ev, 2.012)
                     / ( exp(4.463/T_ev) * pow((1.0 + 0.2472*T_ev), 3.512) );       
