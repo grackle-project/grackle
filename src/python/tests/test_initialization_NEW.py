@@ -16,7 +16,6 @@ from pygrackle import chemistry_data, setup_fluid_container
 
 #* Import necessary constants from grackle.
 from pygrackle.utilities.physical_constants import mass_hydrogen_cgs
-from python.tests.test_initialisation import test_rate_initialisation
 
 #* Function which returns chemistry_data instance with default initialisation settings.
 def get_defChem():
@@ -125,6 +124,10 @@ def write_init_rates(rateNames):
 
 #* Function which checks that rates have been initialised correctly.
 def test_initialization(rateNames, inputFile="initialised_rates.h5", correctFile="example_answers/correct_rates.h5", atol=0, rtol=1e-7):
+    #* Write initialized rates if other file not specified.
+    if inputFile == "initialised_rates.h5":
+        write_init_rates(rateNames)
+
     #* Open both files.
     testFile = h5py.File(inputFile, "r")
     correctFile = h5py.File(correctFile, "r")
@@ -133,7 +136,7 @@ def test_initialization(rateNames, inputFile="initialised_rates.h5", correctFile
     incorrectRates = open("incorrectRates.txt", "w+")
     for parSet in [1,2,3,4,5,6]:
         for rateName in rateNames:
-            rate = rateNames + f"_{parSet}"
+            rate = rateName + f"_{parSet}"
             testRates = testFile[rate]
             correctRates = correctFile[rate]
             rateDiscrepancy = False
@@ -158,4 +161,5 @@ rates = "k1,k3,k4,k2,k5,k6,k7,k8,k9,k10,k11,k12,k14,k15,k16,k17,k18,k19,k20,k23,
         "GAHI,GAH2,GAHe,GAHp,GAel,H2LTE,HDlte,HDlow,cieco,gas_grain,regr,comp,gammah,"\
         "gamma_isrf".split(',')
 
-test_rate_initialisation(rates)
+
+test_initialization(rates)

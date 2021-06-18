@@ -810,6 +810,8 @@ cdef class chemistry_data:
 
     property regr:
         def __get__(self):
+            if not self.dust_chemistry and not self.h2_on_dust:
+                return 0
             cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.regr)
             return np.asarray(memview)
 
@@ -821,6 +823,8 @@ cdef class chemistry_data:
 
     property gas_grain:
         def __get__(self):
+            if not self.dust_chemistry and not self.h2_on_dust:
+                return 0
             cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.gas_grain)
             return np.asarray(memview)
 
