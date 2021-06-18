@@ -6,10 +6,10 @@
 #
 ########################################################################
 
+from collections import defaultdict
 import h5py
 import numpy as np
 import os
-from os.path import expanduser
 
 #* Import necessary functions from grackle.
 from pygrackle import chemistry_data, setup_fluid_container
@@ -133,19 +133,37 @@ def test_initialization(rateNames, inputFile="initialised_rates.h5", correctFile
     correctFile = h5py.File(correctFile, "r")
 
     #* Check each rate
-    incorrectRates = open("incorrectRates.txt", "w+")
+    incorrectRates = open(os.path.expanduser("~") + "/Desktop/incorrectRates.txt", "w+")
     for parSet in [1,2,3,4,5,6]:
         for rateName in rateNames:
             rate = rateName + f"_{parSet}"
             testRates = testFile[rate]
             correctRates = correctFile[rate]
             rateDiscrepancy = False
-            for i, testVal in enumerate(testRates):
-                if testVal != correctRates[i]:
-                    print(rate + f"INCORRECT AT INDEX {i}")
-                    rateDiscrepancy = True
-                if rateDiscrepancy:
-                    incorrectRates.write(rate + "\n")
+            discrepantRates = defaultdict(list)
+            #Try and except here is for the regr and gas_grain, which can be scalar 0 if dust physics not enabled.
+            try:
+                for i, testVal in enumerate(testRates):
+                    if testVal != correctRates[i]:
+                        rateDiscrepancy = True
+                        relErr = abs(correctRates[i] - testVal) / correctRates[i]
+                        discrepantRates[rate].append((i, testVal, correctRates[i], relErr))
+            except TypeError:
+                if rateName in ["gas_grain","regr"]:
+                    print(rate + " not initialized.")
+                #These can be initialized to 0.
+                else:
+                    if testRates != correctRates:
+                        rateDiscrepancy = True
+                        discrepantRates[rate].append((i, testRates, correctRates, None))
+            
+            if rateDiscrepancy:
+                incorrectRates.write("---" + rate + "---" + "\n\n")
+                for disc in discrepantRates[rate]:
+                    if disc[3] == None:
+                        incorrectRates.write(f"Index: {disc[0]} \t InitVal: {disc[1]} \t CorrVal: {disc[2]} \t RelErr: {disc[3]} \n")
+                    else:
+                        incorrectRates.write(f"Index: {disc[0]} \t InitVal: {disc[1]} \t CorrVal: {disc[2]} \t RelErr: {disc[3]:.5e} \n")
     
     #Close the files
     incorrectRates.close()
@@ -161,5 +179,5 @@ rates = "k1,k3,k4,k2,k5,k6,k7,k8,k9,k10,k11,k12,k14,k15,k16,k17,k18,k19,k20,k23,
         "GAHI,GAH2,GAHe,GAHp,GAel,H2LTE,HDlte,HDlow,cieco,gas_grain,regr,comp,gammah,"\
         "gamma_isrf".split(',')
 
-
-test_initialization(rates)
+correctFilePath = os.path.expanduser("~") + "/Desktop/FIXED_debugging_rates.h5"
+test_initialization(rates, correctFile=correctFilePath)
