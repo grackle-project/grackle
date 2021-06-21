@@ -279,7 +279,7 @@ double k13_rate(double T, double units, chemistry_data *my_chemistry)
                 k13 = 1.0670825e-10*pow(T_ev, 2.012)
                     / ( exp(4.463/T_ev) * pow((1.0 + 0.2472*T_ev), 3.512) );       
             } else {
-                k13 = tiny;
+                k13 = tiny * units;
             }
             break;
 

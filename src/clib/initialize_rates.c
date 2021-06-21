@@ -82,6 +82,8 @@
 #include <stdlib.h> 
 #include <stdio.h>
 #include <math.h>
+//!
+#include <string.h>
 
 #include "grackle_macros.h"
 #include "grackle_types.h"

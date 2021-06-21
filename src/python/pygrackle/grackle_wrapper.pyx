@@ -492,7 +492,7 @@ cdef class chemistry_data:
     
     property k13dd:
         def __get__(self):
-            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.k13dd)
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins*14]>(<double*> self.rates.k13dd)
             return np.asarray(memview)
 
     property k24:
@@ -590,7 +590,7 @@ cdef class chemistry_data:
 
     property h2dust:
         def __get__(self):
-            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.h2dust)
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins*self.NumberOfDustTemperatureBins]>(<double*> self.rates.h2dust)
             return np.asarray(memview)
 
     property n_cr_n:
