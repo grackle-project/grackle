@@ -191,5 +191,3 @@ def test_rate_initialisation(printParameters=False, printOOMdiscrepanices=False,
                                 f"Rate Coefficient {rate_name} does not agree. \n {correctRatesName} rate:\
                                     {correctRates[rate_name][300]} \n Initialised rate: {initialisedRates[rate_name][300]} \n"
 
-
-test_rate_initialisation(testCustomFile=True, printParameters=True)

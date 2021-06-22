@@ -82,8 +82,6 @@
 #include <stdlib.h> 
 #include <stdio.h>
 #include <math.h>
-//!
-#include <string.h>
 
 #include "grackle_macros.h"
 #include "grackle_types.h"
@@ -158,7 +156,7 @@ int add_k13dd_reaction_rate(double **rate_ptr, double units, chemistry_data *my_
         //Obtain 14 coefficients at this temperature and place them in results array.
         k13dd_rate(T, units, temp_array, my_chemistry);
         for (int j = 0; j < 14; j++){
-            (*rate_ptr)[i + my_chemistry->NumberOfTemperatureBins*(j)] = temp_array[j];
+            (*rate_ptr)[i + (my_chemistry->NumberOfTemperatureBins * j)] = temp_array[j];
         }
     }
     //Delete temporary array.

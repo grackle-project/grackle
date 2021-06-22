@@ -379,6 +379,7 @@ void _k13dd_rate(double T, int idt, double units, double *k13dd_results, chemist
         fitParam[2]   =   -2.027365e+00;
         fitParam[3]   =   -2.582097e-01;
         fitParam[4]   =    2.136094e+01;
+        fitParam[0]   =   -1.427664e+02;
         fitParam[5]   =    2.753531e+04;
         fitParam[6]   =   -2.146779e+04;
         fitParam[7]   =    6.034928e+01;
@@ -402,19 +403,20 @@ void _k13dd_rate(double T, int idt, double units, double *k13dd_results, chemist
     }
 
     //Define log10 of the temperature for convenience in the following calculations.
-    double logT = log10(T);
+    double log10_T = log10(T);
 
     //*Calculate parameters needed to obtain the rates by using the fitting parameters.
     //High density limit.
-    double a = fitParam[0] + fitParam[1]*logT + fitParam[2]*pow(logT, 2) + fitParam[3]*pow(logT, 3)
-            + fitParam[4]*log10(1.0 + fitParam[5]/T);
+    double a = fitParam[0] + fitParam[1]*log10_T + fitParam[2]*pow(log10_T, 2) \
+               + fitParam[3]*pow(log10_T, 3) + fitParam[4]*log10(1.0 + fitParam[5]/T);
     double a1 = fitParam[6]/T;
     //Low density limit.
-    double b = fitParam[7] + fitParam[8]*logT + fitParam[9]*pow(logT, 2)
-            + fitParam[10]*log10(1.0 + fitParam[11]/T); 
+    double b = fitParam[7] + fitParam[8]*log10_T + fitParam[9]*pow(log10_T, 2) \
+               + fitParam[10]*log10(1.0 + fitParam[11]/T); 
     double b1 = fitParam[12]/T;
     //Critical density.
-    double c = fitParam[13] + fitParam[14]*logT + fitParam[15]*pow(logT, 2) + fitParam[16]/T;
+    double c = fitParam[13] + fitParam[14]*log10_T + fitParam[15]*pow(log10_T, 2) \
+               + fitParam[16]/T;
     double c1 = fitParam[17] + c;
     double d = fitParam[18] + fitParam[19]*exp(-T/1850.0) + fitParam[20]*exp(-T/440.0);
 
@@ -427,17 +429,14 @@ void _k13dd_rate(double T, int idt, double units, double *k13dd_results, chemist
     f6 = pow(10.0, c1);
     f7 = d;
     
-    //* Store the rates within k13dd in the position prescribed by the Tbin_index and rateIndex.
-    //Get the number of temperature bins for which the computations are being computed.
-    int noTempBins = my_chemistry->NumberOfTemperatureBins;
-    //Store the rates appropriately.
+    //*Store the rates appropriately.
     k13dd_results[idt*7] = f1 - log10(units);
-    k13dd_results[1 + idt*7] = f2 - log10(units);
-    k13dd_results[2 + idt*7] = f3 - log10(units);
-    k13dd_results[3 + idt*7] = f4 - log10(units);
-    k13dd_results[4 + idt*7] = f5 - log10(units);
-    k13dd_results[5 + idt*7] = f6 - log10(units);
-    k13dd_results[6 + idt*7] = f7 - log10(units);
+    k13dd_results[1 + idt*7] = f2;
+    k13dd_results[2 + idt*7] = f3;
+    k13dd_results[3 + idt*7] = f4;
+    k13dd_results[4 + idt*7] = f5;
+    k13dd_results[5 + idt*7] = f6;
+    k13dd_results[6 + idt*7] = f7;
 }
 
 //Calculation of k13dd. k13dd_results is a pointer to an array of length 14 * sizeof(double).
