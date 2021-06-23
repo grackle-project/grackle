@@ -118,15 +118,6 @@ if __name__=="__main__":
         fc, final_temperature=cooling_temperature,
         safety_factor=safety_factor)
 
-    #! DELETE THIS WHEN FIXED
-    f = open(os.path.expanduser("~") + "/Desktop/evolve_constant_densityDEBUG_newC.txt", "w+")
-    f.write("H2I \t \t \t \t \t \t density \t \t \t \t \t \t temperature \n")
-    for i, dens in enumerate(data0["density"]):
-        H2I = data0["H2I"][i]
-        temp = data0["temperature"][i]
-        f.write(f"{H2I} \t \t {dens} \t \t {temp} \n")
-    f.close()
-
     # evolve density and temperature according to free-fall collapse
     data = evolve_freefall(fc, final_density,
                            safety_factor=safety_factor)
@@ -156,15 +147,6 @@ if __name__=="__main__":
 
     pyplot.tight_layout()
     pyplot.savefig("%s.png" % output)
-
-    #! DELETE THIS WHEN FIXED
-    f = open(os.path.expanduser("~") + "/Desktop/freefallDEBUG_newC.txt", "w+")
-    f.write("H2I \t \t \t \t \t \t density \t \t \t \t \t \t temperature \n")
-    for i, dens in enumerate(data["density"]):
-        H2I = data["H2I"][i]
-        temp = data["temperature"][i]
-        f.write(f"{H2I} \t \t {dens} \t \t {temp} \n")
-    f.close()
 
     # save data arrays as a yt dataset
     yt.save_as_dataset({}, "%s.h5" % output, data)
