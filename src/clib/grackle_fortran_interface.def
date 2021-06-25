@@ -77,7 +77,7 @@ c     This is the fortran definition of grackle_field_data
          TYPE(C_PTR) :: isrf_habing
       END TYPE
 
-c     This is the fortran definition of grackle_chemistry_dadta
+c     This is the fortran definition of grackle_chemistry_data
 
       TYPE, BIND(C) :: grackle_chemistry_data
          INTEGER(C_INT) :: use_grackle
@@ -126,6 +126,14 @@ c     This is the fortran definition of grackle_chemistry_dadta
          INTEGER(C_INT) :: radiative_transfer_intermediate_step
          INTEGER(C_INT) :: radiative_transfer_hydrogen_only
          INTEGER(C_INT) :: self_shielding_method
+         INTEGER(C_INT) :: H2_self_shielding
+         INTEGER(C_INT) :: h2_charge_exchange_rate
+         INTEGER(C_INT) :: h2dust_rate
+         INTEGER(C_INT) :: h2_h_cooling_rate
+         INTEGER(C_INT) :: collisional_excitation_rates
+         INTEGER(C_INT) :: collisional_ionisation_rates
+         INTEGER(C_INT) :: recombination_cooling_rates
+         INTEGER(C_INT) :: bremsstrahlung_cooling_rates
 cc       INTEGER(C_INT) :: omp_nthreads // not supported in fortran
       END TYPE
 

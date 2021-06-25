@@ -6,16 +6,15 @@
 #
 ########################################################################
 
+#Standard modules
 import h5py
 import numpy as np
 import os
-from os.path import expanduser
-
-#* Import necessary functions from grackle.
-from pygrackle import chemistry_data, setup_fluid_container
-
-#* Import necessary constants from grackle.
+#Chemistry_data struct from grackle
+from pygrackle import chemistry_data
+#Necessary constants from grackle
 from pygrackle.utilities.physical_constants import mass_hydrogen_cgs
+
 
 #* Function which returns chemistry_data instance with default initialisation settings.
 def get_defChem():
@@ -83,44 +82,12 @@ def set_parameters(parSet, my_chemistry):
     else:
         return False
 
-#* Function which prints the values of the parameter set in use.
-def print_parameter_set(my_chemistry):
-    parameters = ["CaseBRecombination", "h2_charge_exchange_rate", "three_body_rate", "h2dust_rate", "collisional_excitation_rates",\
-                    "collisional_ionisation_rates", "recombination_cooling_rates", "bremsstrahlung_cooling_rates",\
-                    "h2_h_cooling_rate", "photoelectric_heating"]
-    for parameter in parameters:
-        print(parameter + ":", getattr(my_chemistry, parameter))
-
-#* Function which tells you unique order of magnitude discrepancies for a given rate between two hdf5 files.
-def oom_discrepancies(rateName, parameterSet, rateFile1, rateFile2):
-    name = rateName + f'_{parameterSet}'
-    rates1 = rateFile1[name]
-    rates2 = rateFile2[name]
-
-    uniqueDiscrepancies = {}
-    #Check each rate coefficient and calculate OOM discrepancy.
-    for i in range(len(rates1)):
-        if rates1[i] == 0 or rates2[i] == 0:
-            None
-        else:
-            relDisc = abs(rates1[i] - rates2[i]) / rates1[i]
-            if relDisc == 0:
-                None
-            else:
-                DiscOOM = np.floor(np.log10(relDisc))
-                if f'e^{DiscOOM}' not in uniqueDiscrepancies:
-                    uniqueDiscrepancies[f'e^{DiscOOM}'] = []
-                uniqueDiscrepancies[f'e^{DiscOOM}'].append(i)
-
-    return uniqueDiscrepancies
-
-
 #* Function which tests that the rates have been initialised correctly for each parameter set.
 def test_rate_initialisation(printParameters=False, printOOMdiscrepanices=False, testCustomFile=False):
     """
     Test that the rate tables are initialized correctly.
 
-    If writeHDF5 is set to true, all rate coefficients calculated in the initialisation routine will 
+    If writeHDF5 is set to true, all rate coefficients calculated in the initialisation routine will
     be saved into a hdf5 file. This should be used for testing and is not meant for frequent use.
 
     printParameters (bool) --> If set to True will print the parameter settings for each parameter set.
@@ -142,23 +109,19 @@ def test_rate_initialisation(printParameters=False, printOOMdiscrepanices=False,
 
     #* Calculate rates for each parameter set and write to hdf5 file
     #Create and open file. If the file already exists this will overwrite it.
-    f = h5py.File("initialised_rates.h5", "w")
+    f = h5py.File("rate_coefficients.h5", "w")
 
     #Iterate over parameter sets.
     parSets = [1,2,3,4,5,6]
     for parSet in parSets:
         my_chemistry = get_defChem()
         #Set chemistry parameters.
-        if set_parameters(parSet, my_chemistry):
-            if printParameters:
-                print(f"---Parameter Set {parSet}---\n")
-                print_parameter_set(my_chemistry)
-            #Initialise the rate coefficients.
-            my_fluidContainer = setup_fluid_container(my_chemistry, temperature=np.logspace(4.5, 9, 200),
-                                converge=True, tolerance=1e-6, max_iterations=np.inf)
-        else:
-            print("Invalid parameter set encountered.")
-            exit()
+        if not set_parameters(parSet, my_chemistry):
+            raise RuntimeError("Invalid parameter set encountered.")
+        
+        #Initialise the rate coefficients.
+        if not my_chemistry.initialize():
+            raise RuntimeError("Failed to initialize chemistry_data")
 
         #Write rates to file.
         for rate_key in testRates:
@@ -167,27 +130,14 @@ def test_rate_initialisation(printParameters=False, printOOMdiscrepanices=False,
     #Close the file.
     f.close()
 
-    #* Compare rates with the correct ones which are stored and check they are in agreement
-    #! Delete if statement when code is working.
-    if testCustomFile:
-        correctRatesName = "Pre-refactored"
-        correctRates = h5py.File(expanduser("~") + "/Desktop/pre-refactored_results.h5", "r")
-    else:
-        correctRatesName = "Correct"
-        correctRates = h5py.File("example_answers/correct_rates.h5", "r")
-    initialisedRates = h5py.File("initialised_rates.h5", "r")
-    
-    #Print order-of-magnitude of discrepancies found.
-    if printOOMdiscrepanices:
-        #print(oom_discrepancies('k13', 3, correctRates, initialisedRates)) Add rates in this format as necessary.
-        None
+    #* Compare rates with the expected (correct) ones which are stored and check they are in agreement
+    expectedRates = h5py.File("example_answers/rate_coefficients.h5", "r")
+    initialisedRates = h5py.File("rate_coefficients.h5", "r")
 
     #Check all rates for each parameter set.
     for rate_key in testRates:
         for parSet in parSets:
             rate_name = rate_key + f"_{parSet}"
             #Check rates agree to what we deem is an acceptable relative tolerance.
-            assert np.allclose(correctRates[rate_name], initialisedRates[rate_name], rtol=1e-7),\
-                                f"Rate Coefficient {rate_name} does not agree. \n {correctRatesName} rate:\
-                                    {correctRates[rate_name][300]} \n Initialised rate: {initialisedRates[rate_name][300]} \n"
-
+            assert np.allclose(expectedRates[rate_name], initialisedRates[rate_name], rtol=1e-7),\
+                                f"Rate Coefficients for {rate_name} do not agree."
