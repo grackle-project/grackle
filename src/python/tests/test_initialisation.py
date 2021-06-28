@@ -49,8 +49,9 @@ def set_parameters(parSet, my_chemistry):
     my_chemistry.bremsstrahlung_cooling_rates = 1
     my_chemistry.h2_h_cooling_rate == 1
     my_chemistry.photoelectric_heating = -1
+    my_chemistry.dust_chemistry = 0
+    my_chemistry.three_body_rate = 0
     if parSet == 1:
-        my_chemistry.three_body_rate = 0
         return True
     #Alternate parameter set.
     elif parSet == 2:
@@ -77,6 +78,12 @@ def set_parameters(parSet, my_chemistry):
         return True
     elif parSet == 6:
         my_chemistry.three_body_rate = 5
+        return True
+    # Default parameter set with dust chemistry enabled.
+    elif parSet == 7:
+        my_chemistry.grackle_data_file = "/Users/ewan/Documents/PhD_Codes/grackle/grackle_data_files/input/cloudy_metals_2008_3D.h5"
+        my_chemistry.dust_chemistry = 1
+        my_chemistry.metal_cooling = 1
         return True
     #Invalid parameter set.
     else:
@@ -111,8 +118,7 @@ def test_rate_initialisation(printParameters=False, printOOMdiscrepanices=False,
     f = h5py.File("rate_coefficients.h5", "w")
 
     #Iterate over parameter sets.
-    parSets = [1,2,3,4,5,6]
-    for parSet in parSets:
+    for parSet in [1,2,3,4,5,6,7]:
         my_chemistry = get_defChem()
         #Set chemistry parameters.
         if not set_parameters(parSet, my_chemistry):
@@ -122,9 +128,15 @@ def test_rate_initialisation(printParameters=False, printOOMdiscrepanices=False,
         if not my_chemistry.initialize():
             raise RuntimeError("Failed to initialize chemistry_data")
 
-        #Write rates to file.
-        for rate_key in testRates:
-            f.create_dataset(rate_key + f"_{parSet}", data=getattr(my_chemistry, rate_key))
+        #If the parameter set is 7 (dust enabled) then only write those that depend on the dust setting.
+        if parSet == 7:
+            f.create_dataset("gas_grain", data=getattr(my_chemistry, "gas_grain"))
+            f.create_dataset("regr", data=getattr(my_chemistry, "regr"))
+        else:
+            #Write rates to file.
+            for rate_key in testRates:
+                if not rate_key in "regr,gas_grain".split(","):
+                    f.create_dataset(rate_key + f"_{parSet}", data=getattr(my_chemistry, rate_key))
 
     #Close the file.
     f.close()
@@ -134,9 +146,23 @@ def test_rate_initialisation(printParameters=False, printOOMdiscrepanices=False,
     initialisedRates = h5py.File("rate_coefficients.h5", "r")
 
     #Check all rates for each parameter set.
+    dust_check = False
     for rate_key in testRates:
-        for parSet in parSets:
-            rate_name = rate_key + f"_{parSet}"
-            #Check rates agree to what we deem is an acceptable relative tolerance.
-            assert np.allclose(expectedRates[rate_name], initialisedRates[rate_name], rtol=1e-7),\
-                                f"Rate Coefficients for {rate_name} do not agree."
+        for parSet in [1,2,3,4,5,6]:
+            #Check dust-enabled parameters individually and only once.
+            if rate_key in "regr,gas_grain".split(","):
+                if not dust_check:
+                    #Check gas_grain and regr which only write for parameter set 7.
+                    dust_check = True
+                    for rate_key in "regr,gas_grain".split(","):
+                        assert np.allclose(expectedRates[rate_key], initialisedRates[rate_key], rtol=1e-7),\
+                                                f"Rate Coefficients for {rate_name} do not agree."
+            else:
+                rate_name = rate_key + f"_{parSet}"
+                #Check rates agree to what we deem is an acceptable relative tolerance.
+                assert np.allclose(expectedRates[rate_name], initialisedRates[rate_name], rtol=1e-7),\
+                                    f"Rate Coefficients for {rate_name} do not agree."
+
+    #Close files.
+    expectedRates.close()
+    initialisedRates.close()
