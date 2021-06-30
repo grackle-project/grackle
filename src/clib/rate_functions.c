@@ -852,7 +852,6 @@ double reHeII1_rate(double T, double units, chemistry_data *my_chemistry)
 {
     if (my_chemistry->recombination_cooling_rates == 1){
         //Define parameters used in the calculations.
-        double lambdaHI    = 2.0 * 157807.0 / T;
         double lambdaHeII  = 2.0 * 285335.0 / T;
 
         //These depend on if the user has chosen recombination case A or B.
@@ -887,7 +886,6 @@ double reHeIII_rate(double T, double units, chemistry_data *my_chemistry)
 {
     if (my_chemistry->recombination_cooling_rates == 1){
         //Define parameters used in the calculations.
-        double lambdaHeII  = 2.0 * 285335.0 / T;
         double lambdaHeIII = 2.0 * 631515.0 / T;
 
         //These depend on if the user has chosen recombination case A or B.
