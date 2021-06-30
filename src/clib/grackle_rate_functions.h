@@ -85,9 +85,8 @@ double cieco_rate(double T, double units, chemistry_data *my_chemistry);
 double gasGrain_rate(double T, double units, chemistry_data *my_chemistry);
 double regr_rate(double T, double units, chemistry_data *my_chemistry);
 
-double comp_rate(double T, double units, chemistry_data *my_chemistry);
-
-double gammah_rate(double T, double units, chemistry_data *my_chemistry);
-double gamma_isrf_rate(double T, double units, chemistry_data *my_chemistry);
+double comp_rate(double units, chemistry_data *my_chemistry);
+double gammah_rate(double units, chemistry_data *my_chemistry);
+double gamma_isrf_rate(double units, chemistry_data *my_chemistry);
 
 #endif

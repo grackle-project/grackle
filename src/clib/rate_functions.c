@@ -1262,14 +1262,16 @@ double regr_rate(double T, double units, chemistry_data *my_chemistry)
     return  4.65e-30 * pow(T, 0.94 + 0.5 * grbeta) / units;
 }
 
+//The below rates are scalar -- they have no temperature dependence.
+
 //Calculation of comp.
-double comp_rate(double T, double units, chemistry_data *my_chemistry)
+double comp_rate(double units, chemistry_data *my_chemistry)
 {
     return 5.65e-36 / units;
 }
 
 //Calculation of gammah.
-double gammah_rate(double T, double units, chemistry_data *my_chemistry)
+double gammah_rate(double units, chemistry_data *my_chemistry)
 {
     //Default is 8.5e-26 for epsilon=0.05, G_0=1.7 (rate in erg s^-1 cm^-3).
     if (my_chemistry->photoelectric_heating <= 1) {
@@ -1281,7 +1283,7 @@ double gammah_rate(double T, double units, chemistry_data *my_chemistry)
 }
 
 //Calculation of gamma_isrf.
-double gamma_isrf_rate(double T, double units, chemistry_data *my_chemistry)
+double gamma_isrf_rate(double units, chemistry_data *my_chemistry)
 {   
     //Parameter definition.
     double fgr = 0.009387;

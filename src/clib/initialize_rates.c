@@ -89,6 +89,9 @@
 #include "grackle_chemistry_data.h"
 #include "phys_constants.h"
 
+//Define the type of a scalar rate function.
+typedef double (*scalar_rate_function)(double, chemistry_data*);
+
 //Define the type of a generic rate function.
 typedef double (*rate_function)(double, double, chemistry_data*);
 
@@ -106,6 +109,16 @@ void logT_spacing_dust(double *logT_start_dust, double *d_logT_dust, chemistry_d
     *logT_start_dust = log(my_chemistry->DustTemperatureStart);
     *d_logT_dust = (log(my_chemistry->DustTemperatureEnd) - *logT_start_dust)
                                 / (my_chemistry->NumberOfDustTemperatureBins - 1);
+}
+
+//Define a fucntion which is able to add a scalar rate to the calculation.
+int add_scalar_reaction_rate(double *rate_ptr, scalar_rate_function my_function, double units,
+                        chemistry_data *my_chemistry)
+{
+    //As these are scalar they have no temperature-dependence.
+    (*rate_ptr) = my_function(units, my_chemistry);
+
+    return SUCCESS;
 }
 
 //Define a function which is able to add a rate to the calculation.
@@ -441,15 +454,17 @@ int initialize_rates(chemistry_data *my_chemistry, chemistry_data_storage *my_ra
 
     }//End of anyDust if-statement.
 
+    //Below rates are scalar -- temperature independent.
+
     //* i) Compton cooling (Peebles 1971).
-    add_reaction_rate(&my_rates->comp, comp_rate, coolingUnits, my_chemistry); 
+    add_scalar_reaction_rate(&my_rates->comp, comp_rate, coolingUnits, my_chemistry); 
 
     //* j) Photoelectric heating by UV-irradiated dust (Wolfire 1995).
 
-    add_reaction_rate(&my_rates->gammah, gammah_rate, coolingUnits, my_chemistry); 
+    add_scalar_reaction_rate(&my_rates->gammah, gammah_rate, coolingUnits, my_chemistry); 
     //Heating of dust by interstellar radiation field.
     //(Equation B15, Krumholz, 2014)
-    add_reaction_rate(&my_rates->gamma_isrf, gamma_isrf_rate, coolingUnits, my_chemistry); 
+    add_scalar_reaction_rate(&my_rates->gamma_isrf, gamma_isrf_rate, coolingUnits, my_chemistry); 
 
     
     //End of function definition.
