@@ -89,8 +89,16 @@ def set_parameters(parSet, my_chemistry):
     else:
         return False
 
+#Same formula as used for numpy all close but for use with scalar rates.
+def scalar_close(val1, val2, atol=0, rtol=1e-7):
+    if abs(val1 - val2) <= atol + rtol * abs(val2):
+        return True
+    else:
+        return False
+
 #* Function which tests that the rates have been initialised correctly for each parameter set.
-def test_rate_initialisation(printParameters=False, printOOMdiscrepanices=False, testCustomFile=False):
+def test_rate_initialisation(printParameters=False, printOOMdiscrepanices=False, testCustomFile=False, parSets=[1,2,3,4,5,6,7], 
+                                fileName="rate_coefficients.h5", noAssert=False):
     """
     Test that the rate tables are initialized correctly.
 
@@ -115,10 +123,10 @@ def test_rate_initialisation(printParameters=False, printOOMdiscrepanices=False,
 
     #* Calculate rates for each parameter set and write to hdf5 file
     #Create and open file. If the file already exists this will overwrite it.
-    f = h5py.File("rate_coefficients.h5", "w")
+    f = h5py.File(fileName, "w")
 
     #Iterate over parameter sets.
-    for parSet in [1,2,3,4,5,6,7]:
+    for parSet in parSets:
         my_chemistry = get_defChem()
         #Set chemistry parameters.
         if not set_parameters(parSet, my_chemistry):
@@ -145,24 +153,31 @@ def test_rate_initialisation(printParameters=False, printOOMdiscrepanices=False,
     expectedRates = h5py.File("example_answers/rate_coefficients.h5", "r")
     initialisedRates = h5py.File("rate_coefficients.h5", "r")
 
-    #Check all rates for each parameter set.
-    dust_check = False
+    #Used to skip assert, testing only.
+    if noAssert:
+        return
+
+    #*Check all rates for each parameter set.
+    #All rates except dust parameters
     for rate_key in testRates:
-        for parSet in [1,2,3,4,5,6]:
+        for parSet in parSets:
             #Check dust-enabled parameters individually and only once.
-            if rate_key in "regr,gas_grain".split(","):
-                if not dust_check:
-                    #Check gas_grain and regr which only write for parameter set 7.
-                    dust_check = True
-                    for rate_key in "regr,gas_grain".split(","):
-                        assert np.allclose(expectedRates[rate_key], initialisedRates[rate_key], rtol=1e-7),\
-                                                f"Rate Coefficients for {rate_name} do not agree."
+            if rate_key in "regr,gas_grain".split(",") or parSet == 7:
+                None
+            #Check scalar parameters using specific function.
+            elif rate_key in "comp,gammah,gamma_isrf":
+                rate_name = rate_key + f"_{parSet}"
+                assert scalar_close(expectedRates[rate_name][()], initialisedRates[rate_name][()], rtol=1e-7, atol=0)
             else:
                 rate_name = rate_key + f"_{parSet}"
                 #Check rates agree to what we deem is an acceptable relative tolerance.
-                assert np.allclose(expectedRates[rate_name], initialisedRates[rate_name], rtol=1e-7),\
+                assert np.allclose(expectedRates[rate_name], initialisedRates[rate_name], rtol=1e-7, atol=0),\
                                     f"Rate Coefficients for {rate_name} do not agree."
+    #Dust parameters.
+    for rate_key in "regr,gas_grain".split(","):
+        assert np.allclose(expectedRates[rate_key], initialisedRates[rate_key], rtol=1e-7, atol=0),\
+                                f"Rate Coefficients for {rate_name} do not agree."
 
     #Close files.
     expectedRates.close()
-    initialisedRates.close()
+    initialisedRates.close()    
