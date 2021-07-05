@@ -47,7 +47,7 @@ def set_parameters(parSet, my_chemistry):
     my_chemistry.collisional_ionisation_rates = 1
     my_chemistry.recombination_cooling_rates = 1
     my_chemistry.bremsstrahlung_cooling_rates = 1
-    my_chemistry.h2_h_cooling_rate == 1
+    my_chemistry.h2_h_cooling_rate = 1
     my_chemistry.photoelectric_heating = -1
     my_chemistry.dust_chemistry = 0
     my_chemistry.three_body_rate = 0
