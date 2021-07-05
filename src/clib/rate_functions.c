@@ -277,7 +277,7 @@ double k13_rate(double T, double units, chemistry_data *my_chemistry)
         case 0:
             if ( T_ev > 0.3) {
                 k13 = 1.0670825e-10*pow(T_ev, 2.012)
-                    / ( exp(4.463/T_ev) * pow((1.0 + 0.2472*T_ev), 3.512) );       
+                    / ( exp(4.463/T_ev) * pow((1.0 + 0.2472*T_ev), 3.512) ); 
             } else {
                 k13 = tiny * units;
             }
@@ -704,7 +704,7 @@ double k58_rate(double T, double units, chemistry_data *my_chemistry)
 //Calculation of h2dust.
 double h2dust_rate(double T, double T_dust, double units, chemistry_data *my_chemistry)
 {
-    //Defined at the top of calc_rates but pasted here for ease.
+    //Defined at the top of initialize_rates but pasted here for ease.
     double fgr = 0.009387;
 
     //Calculate convenient temperature parameters for this bin (in eV).
@@ -714,17 +714,29 @@ double h2dust_rate(double T, double T_dust, double units, chemistry_data *my_che
     //h2dust
     // The method used to calculate this is dependent upon what the user has selected
     // By default Omukai 2000 will be used.
+    double h2dust;
     if (my_chemistry->h2dust_rate == 1) {
         //k23 from Omukai (2000).
-        return 6.0e-17 / fgr * pow(T / 300.0, 0.5) * 
+
+        h2dust = 6.0e-17 / fgr * pow(T / 300.0, 0.5) * 
                 (pow(1.0 + exp(7.5e2 * ((1.0 / 75.0) - (1.0 / T_dust))), -1.0)) *
                 (pow(1.0 + (4.0e-2 * pow(T + T_dust, 0.5))
-                + (2.0e-3 * T) + (8.0e-6 * pow(T, 2.0)), -1.0)) / units;
+                + (2.0e-3 * T) + (8.0e-6 * pow(T, 2.0)), -1.0));
+        
+        //double f_a = 1.0 / (1.0 + exp(7.5e2 * ((1.0/75.0) - (1.0/T_dust))));
+
+        //h2dust = (6.0e-17 * pow(T/300.0, 0.5) * f_a / fgr) / (1.0 + 4.0e-2*pow(T + T_dust, 0.5)
+                    //+ 2.0e-3*T + 8.0e-6*pow(T, 2.0));
     } else {
         //Equation 3.8 from Hollenbach & McKee (1979).
-        return 3.0e-17 / fgr * pow(T_2, 0.5) / (1.0 + 0.4 * pow(T_2 + T_dust_2, 0.5)
-                + 0.2 * T_2 + 8.0e-2 * pow(T_2, 2.0)) / units;
+
+        h2dust = 3.0e-17 / fgr * pow(T_2, 0.5) / (1.0 + 0.4 * pow(T_2 + T_dust_2, 0.5)
+                + 0.2 * T_2 + 8.0e-2 * pow(T_2, 2.0));
+
+        //h2dust = (3.0e-17 * pow(T_2, 0.5) / fgr) / (1.0 + 0.4*pow(T_2 + T_dust_2, 0.5)
+                    //+ 0.2*T_2 + 8.0e-2*pow(T_2, 2.0));
     }
+    return h2dust / units;
 }
 
 //Calculation of n_cr_n.
