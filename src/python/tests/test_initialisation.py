@@ -84,7 +84,11 @@ def set_parameters(parSet, my_chemistry):
         return True
     # Default parameter set with dust chemistry enabled.
     elif parSet == 7:
-        my_chemistry.grackle_data_file = "/Users/ewan/Documents/PhD_Codes/grackle/grackle_data_files/input/cloudy_metals_2008_3D.h5"
+        #Load required data file.
+        current_path = os.path.abspath(__file__)
+        data_file_path = os.path.join(os.path.dirname(current_path), "../../../grackle_data_files/input", "cloudy_metals_2008_3D.h5")
+        my_chemistry.grackle_data_file = data_file_path
+        #Set parameters.
         my_chemistry.dust_chemistry = 1
         my_chemistry.metal_cooling = 1
         return True
