@@ -71,7 +71,7 @@ _field_map = {
     'x-velocity': (('gas', 'velocity_x'), 'code_velocity'),
     'y-velocity': (('gas', 'velocity_y'), 'code_velocity'),
     'z-velocity': (('gas', 'velocity_z'), 'code_velocity'),
-    'energy': (('gas', 'thermal_energy'), 'code_velocity**2'),
+    'energy': (('gas', 'specific_thermal_energy'), 'code_velocity**2'),
     'RT_heating_rate': (('gas', 'photo_gamma'), 'erg/s')
 }
 
@@ -200,7 +200,7 @@ def add_grackle_fields(ds, parameters=None):
 
     prepare_grackle_data(ds, parameters=parameters)
     for field, units in _grackle_fields.items():
-        fname = "grackle_%s" % field
+        fname = f"grackle_{field}"
         funits = str(ds.quan(1, units).in_cgs().units)
-        ds.add_field(fname, function=_grackle_field,
+        ds.add_field(('gas', fname), function=_grackle_field,
                      sampling_type="cell", units=funits)

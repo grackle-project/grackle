@@ -73,9 +73,9 @@ def test_examples(example_path, primordial_chemistry, metal_cooling):
                 command.split(' '), stderr=subprocess.STDOUT,
                 cwd=tmpdir, env=env)
         except subprocess.CalledProcessError as er:
-            raise RuntimeError('Command %s failed with return code %s '
-                               'and the following output: %s' %
-                               (command, er.returncode, er.output))
+            raise RuntimeError(
+                f"Command {command} failed with return code {er.returncode} "
+                "and the following output: {er.output}")
 
         example_base = re.sub(r'\.py$', '', os.path.basename(example_path))
         if example_base in no_output_file:
