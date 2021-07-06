@@ -8,13 +8,13 @@
 
 #Standard modules
 import h5py
-import numpy as np
 import os
+
 #Chemistry_data struct from grackle
 from pygrackle import chemistry_data
 #Necessary constants from grackle
 from pygrackle.utilities.physical_constants import mass_hydrogen_cgs
-
+from pygrackle.utilities.testing import assert_allclose
 
 #* Function which returns chemistry_data instance with default initialisation settings.
 def get_defChem():
@@ -97,15 +97,8 @@ def set_parameters(parSet, my_chemistry):
     else:
         return False
 
-#Same formula as used for numpy all close but for use with scalar rates.
-def scalar_close(val1, val2, atol=0, rtol=1e-7):
-    if abs(val1 - val2) <= atol + rtol * abs(val2):
-        return True
-    else:
-        return False
-
 #* Function which tests that the rates have been initialised correctly for each parameter set.
-def test_rate_initialisation(printParameters=False, printOOMdiscrepanices=False, testCustomFile=False, parSets=[1,2,3,4,5,6,7], 
+def test_rate_initialisation(printParameters=False, printOOMdiscrepanices=False, testCustomFile=False, parSets=[1,2,3,4,5,6,7],
                                 fileName="rate_coefficients.h5", noAssert=False):
     """
     Test that the rate tables are initialized correctly.
@@ -151,7 +144,7 @@ def test_rate_initialisation(printParameters=False, printOOMdiscrepanices=False,
         else:
             #Write rates to file.
             for rate_key in testRates:
-                if not rate_key in "regr,gas_grain".split(","):
+                if rate_key not in "regr,gas_grain".split(","):
                     f.create_dataset(rate_key + f"_{parSet}", data=getattr(my_chemistry, rate_key))
 
     #Close the file.
@@ -172,20 +165,18 @@ def test_rate_initialisation(printParameters=False, printOOMdiscrepanices=False,
             #Check dust-enabled parameters individually and only once.
             if rate_key in "regr,gas_grain".split(",") or parSet == 7:
                 None
-            #Check scalar parameters using specific function.
-            elif rate_key in "comp,gammah,gamma_isrf":
-                rate_name = rate_key + f"_{parSet}"
-                assert scalar_close(expectedRates[rate_name][()], initialisedRates[rate_name][()], rtol=1e-7, atol=0)
             else:
                 rate_name = rate_key + f"_{parSet}"
                 #Check rates agree to what we deem is an acceptable relative tolerance.
-                assert np.allclose(expectedRates[rate_name], initialisedRates[rate_name], rtol=1e-7, atol=0),\
-                                    f"Rate Coefficients for {rate_name} do not agree."
+                assert_allclose(expectedRates[rate_name][()], initialisedRates[rate_name][()], rtol=1e-7, atol=0,
+                                err_msg=f"Rate Coefficients for {rate_name} do not agree.")
+                                    
     #Dust parameters.
     for rate_key in "regr,gas_grain".split(","):
-        assert np.allclose(expectedRates[rate_key], initialisedRates[rate_key], rtol=1e-7, atol=0),\
-                                f"Rate Coefficients for {rate_name} do not agree."
+        assert_allclose(expectedRates[rate_key][()], initialisedRates[rate_key][()], rtol=1e-7, atol=0,
+                                err_msg=f"Rate Coefficients for {rate_key} do not agree.")
+        
 
     #Close files.
     expectedRates.close()
-    initialisedRates.close()    
+    initialisedRates.close()
