@@ -5,7 +5,9 @@
 
       subroutine calc_tdust_1d_g(
      &     tdust, tgas, nh, gasgr, gamma_isrfa, isrf, itmask,
-     &     trad, in, is, ie, j, k)
+     &     trad, in, is, ie, j, k
+     &   , gr_N, gr_Size, gr_dT, gr_Td, alsp, kgr
+     &   )
 
 !  CALCULATE EQUILIBRIUM DUST TEMPERATURE
 !
@@ -46,7 +48,15 @@
       integer in, is, ie, j, k
 
       real*8 tdust(in), tgas(in), nh(in), gasgr(in), isrf(in)
-      real*8 gamma_isrfa, trad
+      real*8 gamma_isrfa(in), trad
+
+!  opacity table of a grain species
+      integer gr_N(2), gr_Size
+      real*8  gr_dT, gr_Td(gr_N(2))
+      R_PREC  alsp(gr_N(2),in)
+      R_PREC logalsp(gr_N(2),in)
+      integer Td_N(1), Td_Size
+      real*8  logkgr
 
 !  Iteration mask
 
@@ -55,11 +65,15 @@
 !  Parameters
 
       real*8 t_subl
-      parameter(t_subl = 1.5e3_DKIND) ! grain sublimation temperature
+!!!!  parameter(t_subl = 1.5e3_DKIND) ! grain sublimation temperature
+      parameter(t_subl = 5.e3_DKIND) ! do not use now
       real*8 radf
       parameter(radf = 4._DKIND * sigma_sb)
       real*8 kgr1
-      parameter(kgr1 = 4.0e-4_DKIND)
+!!    parameter(kgr1 = 4.0e-4_DKIND / 0.009387d0)
+!!       !! should be normalized with local fgr. [GC20200701]
+!!       !! But anyway this value is valid only for Td < 50 K (Omukai 2000).
+!!       !! We should discard this.
       real*8 tol, bi_tol, minpert, gamma_isrf(in)
       parameter(tol = 1.e-5_DKIND, bi_tol = 1.e-3_DKIND, 
      &     minpert = 1.e-10_DKIND)
@@ -82,11 +96,22 @@
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
 !=======================================================================
+!!    write(*,*) 'aa', gasgr, gamma_isrfa, isrf
 
       pert_i = 1.e-3_DKIND
 
       trad  = max(1._DKIND, trad)
       trad4 = trad**4
+
+!     \sum rho_SN kappa_SN / \sum rho_SN ndust_SN
+
+      Td_N(1) = gr_N(2)
+      Td_Size = gr_N(2)
+      do i = is+1, ie+1
+         if ( itmask(i) ) then
+            logalsp(:,i) = log10(alsp(:,i))
+         endif
+      enddo
 
 !     Set total cells for calculation
 
@@ -98,7 +123,7 @@
 
       do i = is+1, ie+1
          if ( itmask(i) ) then
-            gamma_isrf(i) = isrf(i) * gamma_isrfa
+            gamma_isrf(i) = isrf(i) * gamma_isrfa(i)
          endif
       enddo
 
@@ -118,8 +143,9 @@
                nm_itmask(i) = .false.
                nm_done = nm_done + 1
             else
-               tdustnow(i) = max(trad,
-     &              (gamma_isrf(i) / radf / kgr1)**0.17_DKIND)
+!!             tdustnow(i) = max(trad,
+!!   &              (gamma_isrf(i) / radf / kgr1)**0.17_DKIND)
+               tdustnow(i) = trad
                pert(i) = pert_i
             endif
 
@@ -138,8 +164,10 @@
          do i = is+1, ie+1
             if ( nm_itmask(i) ) then
 
+!!       write(*,*) 'ee1', i
                tdplus(i) = max(1.e-3_DKIND, ((1._DKIND + pert(i))
      &              * tdustnow(i)))
+!!       write(*,*) 'ee2', i, pert(i), tdustnow(i)
 
             endif
          enddo
@@ -147,10 +175,12 @@
 !     Calculate grain opacities
 
          call calc_kappa_gr_g(tdustnow, kgr, nm_itmask,
-     &        in, is, ie, t_subl)
+     &        in, is, ie, t_subl
+     &      , Td_N, Td_Size, gr_dT, gr_Td, logalsp)
 
          call calc_kappa_gr_g(tdplus, kgrplus, nm_itmask,
-     &        in, is, ie, t_subl)
+     &        in, is, ie, t_subl
+     &      , Td_N, Td_Size, gr_dT, gr_Td, logalsp)
 
 !     Calculate heating/cooling balance
 
@@ -228,7 +258,8 @@
             enddo
 
             call calc_kappa_gr_g(bi_t_mid, kgr, bi_itmask,
-     &           in, is, ie, t_subl)
+     &           in, is, ie, t_subl
+     &         , Td_N, Td_Size, gr_dT, gr_Td, logalsp)
 
             call calc_gr_balance_g(bi_t_mid, tgas, kgr, trad4, gasgr,
      &           gamma_isrf, nh, bi_itmask, sol, in, is, ie)
@@ -309,7 +340,8 @@ c               ERROR_MESSAGE
 !////////////////////  SUBROUTINE CALC_KAPPA_GR_G  \\\\\\\\\\\\\\\\\\\\\
 
       subroutine calc_kappa_gr_g(
-     &     tdust, kgr, itmask, in, is, ie, t_subl)
+     &     tdust, kgr, itmask, in, is, ie, t_subl
+     &   , gr_N, gr_Size, gr_dT, gr_Td, logalsp)
 
 !  CALCULATE GRAIN PLANK MEAN OPACITY
 !
@@ -353,12 +385,23 @@ c               ERROR_MESSAGE
 
 !  Parameters
 
-      real*8 kgr1, kgr200
-      parameter(kgr1 = 4.0e-4_DKIND, kgr200 = 16.0_DKIND)
+!!    real*8 kgr1, kgr200
+!!    parameter(kgr1 = 4.0e-4_DKIND / 0.009387d0
+!!   &        , kgr200 = 16.0_DKIND / 0.009387d0)
+!!       !! should be normalized with local fgr. [GC20200701]
+!!       !! But anyway this value is valid only for Td < 50 K (Omukai 2000).
+!!       !! We should discard this.
+
+!  Opacity table
+
+      integer gr_N(1), gr_Size
+      real*8  gr_dT, gr_Td(gr_N(1))
+      R_PREC  logalsp(gr_N(1),in)
 
 !  Locals
 
       integer i
+      R_PREC  logalsp1(gr_Size), logkgr
 
 !  Slice Locals
 
@@ -370,17 +413,29 @@ c               ERROR_MESSAGE
       do i = is+1, ie+1
          if ( itmask(i) ) then
 
+            logalsp1(:) = logalsp(:,i)
+       
+            call interpolate_1D_g(
+     &           log10(tdust(i)), int8(gr_N), gr_Td, gr_dT,
+     &           int8(gr_Size), logalsp1, logkgr)
+            kgr(i) = 10._DKIND**logkgr
+!!          write(*,*) 'fff', i, kgr(i)
+
 !     Temperature dependence from Dopcke et al. (2011).
 !     Normalized to Omukai (2000).
 
-            if (tdust(i) .lt. 200._DKIND) then
-               kgr(i) = kgr1 * tdust(i)**2
-            else if (tdust(i) .lt. t_subl) then
-               kgr(i) = kgr200
-            else
-               kgr(i) = max(tiny, 
-     &              (kgr200 * (tdust(i) / 1.5e3_DKIND)**(-12)))
-            endif
+!!          if (tdust(i) .lt. 200._DKIND) then
+!!             kgr(i) = kgr1 * tdust(i)**2
+!!          else if (tdust(i) .lt. t_subl) then
+!!             kgr(i) = kgr200
+!!          else
+!!             kgr(i) = max(tiny, 
+!!   &              (kgr200 * (tdust(i) / 1.5e3_DKIND)**(-12)))
+!!          endif
+C
+c     This approximation kgr1 * tgr^2 is valid only for 
+c             Tgr < 50 K (Omukai 2000).
+c     We better use the table of kappa valid for 1 < Tgr < 3000 K.
 
          endif
       enddo
@@ -463,6 +518,15 @@ c               ERROR_MESSAGE
      &           (trad4 - tdust(i)**4) +
      &           (gasgr(i) * nh(i) *
      &           (tgas(i) - tdust(i)))
+       ! emission/absorption rate per unit grain mass [erg/s/g]
+       ! for Z = Zsun (default)
+!!          write(*,*) 'cc4'
+!!          write(*,*) gamma_isrf(i), radf, kgr(i)
+!!          write(*,*) trad4, tdust(i)
+!!          write(*,*) gasgr(i), nh(i)
+!!          write(*,*) tgas(i), tdust(i)
+!!          write(*,*) sol(i)
+!!          write(*,*) ' '
 
          endif
       enddo

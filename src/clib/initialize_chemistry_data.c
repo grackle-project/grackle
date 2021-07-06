@@ -33,7 +33,12 @@ void auto_show_config(FILE *fp);
 void auto_show_flags(FILE *fp);
 void auto_show_version(FILE *fp);
 void show_parameters(FILE *fp, chemistry_data *my_chemistry);
-
+int calc_rates_metal(chemistry_data *my_chemistry,
+                     chemistry_data_storage *my_rates,
+                     code_units *my_units);
+int calc_rates_dust(chemistry_data *my_chemistry,
+                    chemistry_data_storage *my_rates,
+                    code_units *my_units);
 int _free_cloudy_data(cloudy_data *my_cloudy, chemistry_data *my_chemistry, int primordial);
 int initialize_cloudy_data(chemistry_data *my_chemistry,
                            chemistry_data_storage *my_rates,
@@ -56,7 +61,7 @@ extern void FORTRAN_NAME(calc_rates_g)(
      double *hyd01ka, double *h2k01a, double *vibha, double *rotha, double *rotla,
      double *gpldl, double *gphdl, double *hdlte, double *hdlow, double *cieco,
      double *gaHIa, double *gaH2a, double *gaHea, double *gaHpa, double *gaela, 
-     double *h2ltea, double *gasgr, 
+     double *h2ltea, double *gasgra,
      double *k1a, double *k2a, double *k3a, double *k4a, double *k5a, double *k6a,
      double *k7a, double *k8a, double *k9a, double *k10a,
      double *k11a, double *k12a, double *k13a, double *k13dda, double *k14a,
@@ -65,7 +70,8 @@ extern void FORTRAN_NAME(calc_rates_g)(
      double *k50, double *k51, double *k52, double *k53, double *k54, double *k55,
      double *k56, double *k57, double *k58, int *ndratec, double *dtemstart, 
      double *dtemend, double *h2dusta, double *ncrca, double *ncrd1a, double *ncrd2a, 
-     int *ioutput);
+     int *ioutput
+   , double *h2dustSa, double *h2dustCa, double *gasgr2a, double *gamma_isrf2a, double *grogra);
 
 int _initialize_chemistry_data(chemistry_data *my_chemistry,
                                chemistry_data_storage *my_rates,
@@ -208,11 +214,77 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
     my_rates->k56 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
     my_rates->k57 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
     my_rates->k58 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+
+    my_rates->k125 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->k129 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->k130 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->k131 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->k132 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->k133 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->k134 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->k135 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->k136 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->k137 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->k148 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->k149 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->k150 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->k151 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->k152 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->k153 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+
+    my_rates->kz15 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz16 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz17 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz18 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz19 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz20 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz21 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz22 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz23 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz24 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz25 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz26 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz27 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz28 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz29 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz30 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz31 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz32 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz33 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz34 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz35 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz36 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz37 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz38 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz39 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz40 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz41 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz42 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz43 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz44 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz45 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz46 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz47 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz48 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz49 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz50 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz51 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz52 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz53 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz54 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+
+    my_rates->cieY06  = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+
     my_rates->h2dust = malloc(my_chemistry->NumberOfTemperatureBins *
                               my_chemistry->NumberOfDustTemperatureBins * sizeof(double));
     my_rates->n_cr_n = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
     my_rates->n_cr_d1 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
     my_rates->n_cr_d2 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->h2dustS = malloc(my_chemistry->NumberOfTemperatureBins *
+                      my_chemistry->NumberOfDustTemperatureBins * sizeof(double));
+    my_rates->h2dustC = malloc(my_chemistry->NumberOfTemperatureBins *
+                              my_chemistry->NumberOfDustTemperatureBins * sizeof(double));
+    my_rates->grogr   = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
 
     my_rates->k24 = 0;
     my_rates->k25 = 0;
@@ -236,6 +308,7 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
   if (my_chemistry->h2_on_dust > 0 || my_chemistry->dust_chemistry > 0) {
     my_rates->gas_grain = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
     my_rates->regr      = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->gas_grain2 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
   }
 
   int ioutput = 0;
@@ -274,7 +347,7 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
      my_rates->GP99LowDensityLimit, my_rates->GP99HighDensityLimit,
         my_rates->HDlte, my_rates->HDlow, my_rates->cieco,
      my_rates->GAHI, my_rates->GAH2, my_rates->GAHe, my_rates->GAHp,
-     my_rates->GAel, my_rates->H2LTE, my_rates->gas_grain, 
+     my_rates->GAel, my_rates->H2LTE, my_rates->gas_grain,
      my_rates->k1, my_rates->k2, my_rates->k3, my_rates->k4, my_rates->k5,
         my_rates->k6, my_rates->k7, my_rates->k8, my_rates->k9, my_rates->k10,
      my_rates->k11, my_rates->k12, my_rates->k13, my_rates->k13dd, my_rates->k14,
@@ -285,7 +358,19 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
      &my_chemistry->NumberOfDustTemperatureBins, &my_chemistry->DustTemperatureStart, 
      &my_chemistry->DustTemperatureEnd, my_rates->h2dust, 
      my_rates->n_cr_n, my_rates->n_cr_d1, my_rates->n_cr_d2, 
-     &ioutput);
+     &ioutput
+   , my_rates->h2dustS, my_rates->h2dustC, my_rates->gas_grain2, &my_rates->gamma_isrf2, my_rates->grogr);
+
+  /* Metal chemistry rates */
+  if (calc_rates_metal(my_chemistry, my_rates, my_units) == FAIL) {
+    fprintf(stderr, "Error in calc_rates_metal.\n");
+    return FAIL;
+  }
+  /* Dust rates */
+  if (calc_rates_dust(my_chemistry, my_rates, my_units) == FAIL) {
+    fprintf(stderr, "Error in calc_rates_dust.\n");
+    return FAIL;
+  }
 
   /* Initialize Cloudy cooling. */
   my_rates->cloudy_data_new = 1;
@@ -413,6 +498,20 @@ void show_parameters(FILE *fp, chemistry_data *my_chemistry)
           my_chemistry->h2_on_dust);
   fprintf(fp, "use_dust_density_field            = %d\n",
           my_chemistry->use_dust_density_field);
+  fprintf(fp, "metal_chemistry                   = %d\n",
+          my_chemistry->metal_chemistry);
+  fprintf(fp, "multi_metals                      = %d\n",
+          my_chemistry->multi_metals);
+  fprintf(fp, "metal_abundances                  = %d\n",
+          my_chemistry->metal_abundances);
+  fprintf(fp, "dust_species                      = %d\n",
+          my_chemistry->dust_species);
+  fprintf(fp, "dust_temperature_multi            = %d\n",
+          my_chemistry->dust_temperature_multi);
+  fprintf(fp, "dust_sublimation                  = %d\n",
+          my_chemistry->dust_sublimation);
+  fprintf(fp, "grain_growth                      = %d\n",
+          my_chemistry->grain_growth);
   fprintf(fp, "photoelectric_heating             = %d\n",
           my_chemistry->photoelectric_heating);
   fprintf(fp, "photoelectric_heating_rate        = %g\n",
@@ -485,6 +584,15 @@ void show_parameters(FILE *fp, chemistry_data *my_chemistry)
           my_chemistry->self_shielding_method);
   fprintf(fp, "H2_self_shielding                 = %d\n",
           my_chemistry->H2_self_shielding);
+  fprintf(fp, "radiative_transfer_H2II_diss      = %d\n",
+          my_chemistry->radiative_transfer_H2II_diss);
+  fprintf(fp, "radiative_transfer_HDI_diss       = %d\n",
+          my_chemistry->radiative_transfer_HDI_diss);
+  fprintf(fp, "radiative_transfer_metal_ion      = %d\n",
+          my_chemistry->radiative_transfer_metal_ion);
+  fprintf(fp, "radiative_transfer_metal_diss     = %d\n",
+          my_chemistry->radiative_transfer_metal_diss);
+
 # ifdef _OPENMP
   fprintf(fp, "omp_nthreads                      = %d\n",
           my_chemistry->omp_nthreads);
@@ -525,6 +633,7 @@ int _free_chemistry_data(chemistry_data *my_chemistry,
     GRACKLE_FREE(my_rates->GAel);
     GRACKLE_FREE(my_rates->H2LTE);
     GRACKLE_FREE(my_rates->gas_grain);
+    GRACKLE_FREE(my_rates->gas_grain2);
 
     GRACKLE_FREE(my_rates->k1);
     GRACKLE_FREE(my_rates->k2);
@@ -563,6 +672,9 @@ int _free_chemistry_data(chemistry_data *my_chemistry,
     GRACKLE_FREE(my_rates->n_cr_n);
     GRACKLE_FREE(my_rates->n_cr_d1);
     GRACKLE_FREE(my_rates->n_cr_d2);
+    GRACKLE_FREE(my_rates->h2dustS);
+    GRACKLE_FREE(my_rates->h2dustC);
+    GRACKLE_FREE(my_rates->grogr);
   }
 
 

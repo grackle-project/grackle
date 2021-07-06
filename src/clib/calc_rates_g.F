@@ -19,9 +19,9 @@ c
      &             k18a, k19a, k20a, k21a, k22a, k23a,
      &             k50a, k51a, k52a, k53a, k54a, k55a, k56a,
      &             k57a, k58a, 
-     &             ndratec, dtemstart, dtemend, h2dusta, 
+     &             ndratec, dtemstart, dtemend, h2dusta,
      &             ncrna, ncrd1a, ncrd2a, ioutput
-     &                     )
+     &           , h2dustSa, h2dustCa, gasgr2a, gamma_isrf2a, grogra)
 c
 c  COMPUTE MULTISPECIES RATE LOOKUP TABLE
 c
@@ -159,6 +159,8 @@ c
      &        k13dda(nratec, 14),
      &        h2dusta(nratec, ndratec),
      &        ncrna(nratec), ncrd1a(nratec), ncrd2a(nratec)
+     &      , h2dustSa(nratec, ndratec), h2dustCa(nratec, ndratec)
+     &      , gasgr2a(nratec), gamma_isrf2a, grogra(nratec)
       integer ioutput
 c
 c  Parameters
@@ -172,6 +174,15 @@ c
      &           tevk = 1.1605d+4, mh = mass_h, 
      &           pi=pi_val, tiny_cgs = 1.0d-37, 
      &           dhuge = 1.0d+30, kb = kboltz)
+
+c  H2 formation rate on grain surfaces (Cazaux & Tielens 2002)
+      real*8 f_vel, vH_avr(nratec), S_H, bHP_aPC, epsilon_H2
+      real*8 E_HC_Silicate, E_HP_Silicate, E_S_Silicate
+     &     , E_HC_AmCarbon, E_HP_AmCarbon, E_S_AmCarbon
+      parameter (E_HC_Silicate = 200.d0, E_HP_Silicate = 650.d0
+     &         , E_S_Silicate = 3.d4
+     &         , E_HC_AmCarbon = 250.d0, E_HP_AmCarbon = 800.d0
+     &         , E_S_AmCarbon = 3.d4) ! Kelvin
 
 c
 c         Set various cutoff values in eV.
@@ -270,7 +281,23 @@ c  4) Energy transfer from gas to dust grains, following equation 2.15
 c     of Hollenbach & McKee (1989).
 c     Normalize to the HM89 dust to gas ratio.
       fgr = 0.009387d0
-      grain_coef = 1.2d-31 * 1.0d3**(-0.5d0) / fgr
+!!!!  grain_coef = 1.2d-31 * 1.0d3**(-0.5d0) / fgr
+!!!!                !! gives heat treansfer rate per unit grain mass
+c     The rate depends on mass fraction and size distributino of grains.
+c     The heat transfer rate (Hollenbach & McKee 1989) is for MRN size 
+c     distribution from 0.01 um to 0.25 um.
+c     The ISRF heating rate (Krumholz 2014) used here is for a uniform 
+c     grain size distribution (a = 0.17 um), and optical depth (Omukai 2000)
+c     is for a MRN-like broken power-law.
+c     GC racalculate these rates for Omukai's dust model.
+      grain_coef = 2.57033e-32 * 1.0d3**(-0.5d0) / fgr
+c
+      f_vel = 0.5d0 / sqrt(2.d0) + 0.0833333 / sqrt(4.d0)
+c     Hollenbach & McKee (1989) considered the contribution of other species
+c     than protons and charged grains, but we now consider only H2 and He 
+c     and neglect charged grains (Schneidef et al. 2006).
+
+c
 c
 c  Compute log spacing in temperature
 c
@@ -329,6 +356,8 @@ c
 c
         do j = 1, ndratec
            h2dusta(i,j) = tiny
+           h2dustSa(i,j) = tiny
+           h2dustCa(i,j) = tiny
         enddo
 c
         ncrna(i)  = tiny
@@ -413,6 +442,17 @@ c
 c       Normalize by dividing by kunit
         k13dda(i,8) = k13dda(i,8) - log10(kunit)
 c
+#define USE_PALLA_SALPETER_STAHLER1983
+#ifdef USE_PALLA_SALPETER_STAHLER1983
+        if(threebody.eq.1) then
+          k13dda(i,1) = log10(1.12d-10 * exp(-7.035d4/ttt) / kunit)
+          k13dda(i,2) = log10(6.5d-7/sqrt(ttt)
+     &                * exp(-5.2d4/ttt)*(1.d0-exp(-6.d3/ttt)) / kunit)
+          k13dda(i,3) = 1.d1**(4.d0 - 0.416d0 * log10(ttt/1.d4)
+     &                - 0.327d0 * log10(ttt/1.d4)**2)
+        endif
+#endif
+c
 c       ------ 3-body H2 rate ----
 c       The first bit is my fit to A.E. Orel 1987, J.Chem.Phys., 87, 
 c       314. I then match it to the T^-1 of Palla etal (1983) 
@@ -483,6 +523,16 @@ c       55) HD  +  H  -> H2 +  D
 c       56) D   +  H- -> HD +  e-
 c      [57) D-  +  H  -> HD +  e-]  included by multiply 56 by 2
 c
+#define USE_STANCIL_LEPP_DALGARNO1998
+#ifdef USE_STANCIL_LEPP_DALGARNO1998
+        k50a(i) = 1.0d-9 * exp(-41.d0/ttt) / kunit
+        k51a(i) = 1.0d-9 / kunit
+        k52a(i) = 2.1d-9 / kunit
+        k53a(i) = 1.0d-9 * exp(-464.d0/ttt) / kunit
+        k54a(i) = 7.5d-11 * exp(-3820.d0/ttt) / kunit
+        k55a(i) = 7.5d-11 * exp(-4240.d0/ttt) / kunit
+        k56a(i) = 1.5d-9 * (ttt/3.d2)**(-0.1d0) / kunit
+#else
         if (ttt .le. 2d5) then
 c Fit from Savin (2002), valid for T < 2e5 K; at higher T, we extrapolate
           k50a(i) = (2.0d-10 * ttt**0.402d0 * exp(-3.71d1/ttt)
@@ -525,6 +575,7 @@ c to avoid producing an anomalously large rate coefficient
 c Same as for H- + H; measurements by Miller et al (2012) suggest
 c that there is no significant isotope effect for this reaction
         k56a(i) = k8a(i)
+#endif
 c
 c       ------ New H ionization rates -----
 c
@@ -543,6 +594,14 @@ c
           k57a(i) = tiny
           k58a(i) = tiny
         endif
+c
+c     Grain growth rate
+c     later need to be multiplied by sqrt(molecular mass)
+c
+      vH_avr(i) = sqrt( kb * ttt / 2.d0 / pi / mh )
+      grogra(i) = 4.d0 * vH_avr(i) * mh / kunit
+c     The factor 4 because gas-phase molecules are accreted onto the entire 
+c     surface area of grains.
 c
 c     H2 formation on dust grains.
 c     Loop over dust temperature.
@@ -575,6 +634,35 @@ c
      &          (0.2d0 * ttt2) +
      &          (8.0d-2 * ttt2**2.0d0)) / kunit
 #endif /* USE_OMUKAI_2000 */
+
+c  H2 formation rate on grain surfaces (Cazaux & Tielens 2002)
+c  For each grain species.
+c          sticking probability
+           S_H = ( 1.d0 + 0.4d0*( (ttt + d_ttt)/100.d0 )**0.5d0
+     &                  + 0.2d0*(ttt/100.d0)
+     &                  + 0.08d0*(ttt/100.d0)**2.d0 )**(-1.d0)
+c          For silicate grains
+           bHP_aPC = 1.d0/4.d0
+     &      * ( 1.d0 + sqrt( (E_HC_Silicate - E_S_Silicate)
+     &                     / (E_HP_Silicate - E_S_Silicate) ) )**2.d0
+     &      * exp(-E_S_Silicate / d_ttt)
+           epsilon_H2 = (1.d0 + bHP_aPC)**(-1.d0)
+           h2dustSa(i,j) = 0.5d0 * 4.d0 * vH_avr(i) * S_H * epsilon_H2
+     &                    * mh / kunit
+c          The factor 4 because H atoms are accreted onto the entire 
+c          surface area of grains.
+c
+c          For carbonaceons grains
+           bHP_aPC = 1.d0/4.d0
+     &      * ( 1.d0 + sqrt( (E_HC_AmCarbon - E_S_AmCarbon)
+     &                     / (E_HP_AmCarbon - E_S_AmCarbon) ) )**2.d0
+     &      * exp(-E_S_AmCarbon / d_ttt)
+           epsilon_H2 = (1.d0 + bHP_aPC)**(-1.d0)
+           h2dustCa(i,j) = 0.5d0 * 4.d0 * vH_avr(i) * S_H * epsilon_H2
+     &                   * mh  / kunit
+c          The factor 4 because H atoms are accreted onto the entire 
+c          surface area of grains.
+
         enddo
 c
 c       H2 formation heating terms from Equation 23 of Omukai (2000).
@@ -958,8 +1046,20 @@ c
 c     Energy transfer from gas to dust grains, following
 c     equation 2.15 of Hollenbach & McKee (1989)
 c
-            gasgra(i) = grain_coef * (ttt**0.5d0) *
-     &           (1.0d0 - (0.8d0 * exp(-75.0d0 / ttt))) / coolunit
+!!!!        gasgra(i) = grain_coef * (ttt**0.5d0) *
+!!!! &           (1.0d0 - (0.8d0 * exp(-75.0d0 / ttt))) / coolunit
+            gasgra(i) = grain_coef * f_vel * (ttt**0.5d0) / coolunit
+c               sigma_gr / mass_gr * f_vel * v_th * 2 kb
+c           sigma_gr and mass_gr are average cross-section and mass of a grain
+c           for Omukai (2000) dust model.
+c
+c     Energy transfer rate from gas to dust grains per unit cross-section
+c     of grains, following equation 5 of Chiaki et al. (2015)
+c
+            gasgr2a(i) = f_vel * 4.d0 * vH_avr(i) * 2.d0 * kb
+     &                 * mh / coolunit
+c           Later multiplied by sigma_gr / mass_gr
+c           for arbitrary size distribution
 c
 c     Electron recombination onto dust grains
 c     Eqn. 9 from Wolfire et al. (1995)
@@ -993,7 +1093,17 @@ c     Heating of dust by interstellar radiation field.
 c     Eqn. B15 of Krumholz (2014)
 c     Don't normalize by coolunit since tdust calculation is done in CGS.
 c
-      gamma_isrfa = 3.9d-24 / mh / fgr
+!!!!  gamma_isrfa = 3.9d-24 / mh / fgr
+c     For uniform grain size (Goldsmith 2001; Krumholz 2014)
+      gamma_isrfa = 8.60892e-24 / (2.d0 * mh) / fgr
+c           F_isrf sigma_gr / mass_gr
+c     For MRN-like broken power low size distribution (Omukai 2000) 
+c     The factor 2 to cancel out the molecular mass of H2.
+c
+      gamma_isrf2a = 5.3d-3
+c     MW interstellar radiation field (Goldsmith 2001)
+c     Later multiplied by total grain cross-section per unit dust mass
+c     for arbitrary size distribution
 c
 c     Write out cooling rate data
 c
