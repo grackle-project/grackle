@@ -67,7 +67,7 @@ def test_examples(example_path, primordial_chemistry, metal_cooling):
         env['METAL_COOLING'] = str(metal_cooling)
     python_executable = 'python'
     with temporary_directory() as tmpdir:
-        command = '%s %s' % (python_executable, example_path)
+        command = f'{python_executable} {example_path}'
         try:
             subprocess.check_output(
                 command.split(' '), stderr=subprocess.STDOUT,
@@ -75,7 +75,7 @@ def test_examples(example_path, primordial_chemistry, metal_cooling):
         except subprocess.CalledProcessError as er:
             raise RuntimeError(
                 f"Command {command} failed with return code {er.returncode} "
-                "and the following output: {er.output}")
+                f"and the following output: {er.output}")
 
         example_base = re.sub(r'\.py$', '', os.path.basename(example_path))
         if example_base in no_output_file:
@@ -88,7 +88,7 @@ def test_examples(example_path, primordial_chemistry, metal_cooling):
 
         if not os.path.exists(os.sep.join([tmpdir, answer_filename])):
             raise RuntimeError(
-                "Missing answer file: %s." % answer_filename)
+                f"Missing answer file: {answer_filename}.")
 
         answer_path = os.sep.join([os.path.dirname(
             os.path.abspath(__file__)), 'example_answers'])
@@ -101,4 +101,4 @@ def test_examples(example_path, primordial_chemistry, metal_cooling):
 
         for field_name in ds_old.field_list:
             assert_allclose(ad_old[field_name].v, ad_new[field_name].v,
-                            err_msg="Field mismatch: %s." % str(field_name))
+                            err_msg=f"Field mismatch: {str(field_name)}.")
