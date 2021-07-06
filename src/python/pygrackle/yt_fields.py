@@ -71,7 +71,7 @@ _field_map = {
     'x-velocity': (('gas', 'velocity_x'), 'code_velocity'),
     'y-velocity': (('gas', 'velocity_y'), 'code_velocity'),
     'z-velocity': (('gas', 'velocity_z'), 'code_velocity'),
-    'energy': (('gas', 'specific_thermal_energy'), 'code_velocity**2'),
+    'energy': (('gas', 'thermal_energy'), 'code_velocity**2'),
     'RT_heating_rate': (('gas', 'photo_gamma'), 'erg/s')
 }
 
