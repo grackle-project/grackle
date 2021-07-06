@@ -86,7 +86,8 @@ def set_parameters(parSet, my_chemistry):
     elif parSet == 7:
         #Load required data file.
         current_path = os.path.abspath(__file__)
-        data_file_path = os.path.join(os.path.dirname(current_path), "../../../grackle_data_files/input", "cloudy_metals_2008_3D.h5")
+        dirs = "..,..,..,grackle_data_files,input,cloudy_metals_2008_3D.h5".split(",")
+        data_file_path = os.path.join(os.path.dirname(current_path), *dirs)
         my_chemistry.grackle_data_file = data_file_path
         #Set parameters.
         my_chemistry.dust_chemistry = 1
