@@ -81,16 +81,14 @@ def test_proper_comoving_units():
         t_sort_p = np.argsort(fc_p["temperature"])
         t_cool_p = fc_p["cooling_time"][t_sort_p] * chem_p.time_units
 
-        comp = "\nDU1: %e, LU1: %e, TU1: %e - DU2: %e, LU2: %e, TU2L %e." % \
-            (chem_p.density_units, chem_p.length_units, chem_p.time_units,
-             chem_c.density_units, chem_c.length_units, chem_c.time_units)
+        comp = f"\nDU1: {chem_p.density_units:e}, LU1: {chem_p.length_units:e}, " + \
+          f"TU1: {chem_p.time_units:e} - DU2: {chem_c.density_units:e}, " + \
+          f"LU2: {chem_c.length_units:e}, TU2 {chem_c.time_units:e}."
 
-        assert_rel_equal(
-            t_cool_p, t_cool_c, 4,
-            (("Proper and comoving cooling times disagree for " +
-              "z = %f with min/max = %f/%f.") %
-             (current_redshift, (t_cool_p / t_cool_c).min(),
-              (t_cool_p / t_cool_c).max()) + comp))
+        rat = t_cool_p / t_cool_c
+        err_msg = "Proper and comoving cooling times disagree for " + \
+          f"z = {current_redshift} with min/max = {rat.min()}/{rat.max()}." + comp
+        assert_rel_equal(t_cool_p, t_cool_c, 4, err_msg=err_msg)
 
 
 def test_proper_comoving_units_tabular():
@@ -150,16 +148,14 @@ def test_proper_comoving_units_tabular():
         t_sort_p = np.argsort(fc_p["temperature"])
         t_cool_p = fc_p["cooling_time"][t_sort_p] * chem_p.time_units
 
-        comp = "\nDU1: %e, LU1: %e, TU1: %e - DU2: %e, LU2: %e, TU2L %e." % \
-            (chem_p.density_units, chem_p.length_units, chem_p.time_units,
-             chem_c.density_units, chem_c.length_units, chem_c.time_units)
+        comp = f"\nDU1: {chem_p.density_units:e}, LU1: {chem_p.length_units:e}, " + \
+          f"TU1: {chem_p.time_units:e} - DU2: {chem_c.density_units:e}, " + \
+          f"LU2: {chem_c.length_units:e}, TU2 {chem_c.time_units:e}."
 
-        assert_rel_equal(
-            t_cool_p, t_cool_c, 4,
-            (("Proper and comoving tabular cooling times disagree for " +
-              "z = %f with min/max = %f/%f.\n") %
-             (current_redshift, (t_cool_p / t_cool_c).min(),
-              (t_cool_p / t_cool_c).max()) + comp))
+        rat = t_cool_p / t_cool_c
+        err_msg = "Proper and comoving tabules cooling times disagree for " + \
+          f"z = {current_redshift} with min/max = {rat.min()}/{rat.max()}." + comp
+        assert_rel_equal(t_cool_p, t_cool_c, 4, err_msg=err_msg)
 
 
 def test_proper_units():
@@ -217,16 +213,14 @@ def test_proper_units():
         t_sort_2 = np.argsort(fc_2["temperature"])
         t_cool_2 = fc_2["cooling_time"][t_sort_2] * chem_2.time_units
 
-        comp = "\nDU1: %e, LU1: %e, TU1: %e - DU2: %e, LU2: %e, TU2L %e." % \
-            (chem_1.density_units, chem_1.length_units, chem_1.time_units,
-             chem_2.density_units, chem_2.length_units, chem_2.time_units)
+        comp = f"\nDU1: {chem_1.density_units:e}, LU1: {chem_1.length_units:e}, " + \
+          f"TU1: {chem_1.time_units:e} - DU2: {chem_2.density_units:e}, " + \
+          f"LU2: {chem_2.length_units:e}, TU2 {chem_2.time_units:e}."
 
-        assert_rel_equal(
-            t_cool_1, t_cool_2, 4,
-            (("Different proper unit system cooling times disagree for " +
-              "z = %f with min/max = %f/%f.") %
-             (current_redshift, (t_cool_1/t_cool_2).min(),
-              (t_cool_1/t_cool_2).max()) + comp))
+        rat = t_cool_1 / t_cool_2
+        err_msg = "Different proper unit system cooling times disagree for " + \
+          f"z = {current_redshift} with min/max = {rat.min()}/{rat.max()}." + comp
+        assert_rel_equal(t_cool_1, t_cool_2, 4, err_msg=err_msg)
 
 
 def test_tabulated_mmw_metal_dependence():

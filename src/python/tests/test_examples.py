@@ -67,28 +67,28 @@ def test_examples(example_path, primordial_chemistry, metal_cooling):
         env['METAL_COOLING'] = str(metal_cooling)
     python_executable = 'python'
     with temporary_directory() as tmpdir:
-        command = '%s %s' % (python_executable, example_path)
+        command = f'{python_executable} {example_path}'
         try:
             subprocess.check_output(
                 command.split(' '), stderr=subprocess.STDOUT,
                 cwd=tmpdir, env=env)
         except subprocess.CalledProcessError as er:
-            raise RuntimeError('Command %s failed with return code %s '
-                               'and the following output: %s' %
-                               (command, er.returncode, er.output))
+            raise RuntimeError(
+                f"Command {command} failed with return code {er.returncode} "
+                f"and the following output: {er.output}")
 
         example_base = re.sub(r'\.py$', '', os.path.basename(example_path))
         if example_base in no_output_file:
             return
         if primordial_chemistry is not None:
-            example_base += ".pc%d" % primordial_chemistry
+            example_base += f".pc{primordial_chemistry:d}"
         if metal_cooling is not None and metal_cooling > 0:
             example_base += "_metal"
         answer_filename = '.'.join([example_base, 'h5'])
 
         if not os.path.exists(os.sep.join([tmpdir, answer_filename])):
             raise RuntimeError(
-                "Missing answer file: %s." % answer_filename)
+                f"Missing answer file: {answer_filename}.")
 
         answer_path = os.sep.join([os.path.dirname(
             os.path.abspath(__file__)), 'example_answers'])
@@ -101,4 +101,4 @@ def test_examples(example_path, primordial_chemistry, metal_cooling):
 
         for field_name in ds_old.field_list:
             assert_allclose(ad_old[field_name].v, ad_new[field_name].v,
-                            err_msg="Field mismatch: %s." % str(field_name))
+                            err_msg=f"Field mismatch: {str(field_name)}.")
