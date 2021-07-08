@@ -136,11 +136,11 @@ typedef struct
   /* flag for Wolcott-Green+ 2011 H2 self-shielding */
   int H2_self_shielding;
 
-  /* flag to select which formula for calculating k11 you want to use. Setting to 1 will use Savin 2004, 0 will use Abel et al. 1997  */
+  /* flag to select which formula for calculating k11 you want to use. Setting to 1 will use Savin 2004, 2 will use Abel et al. 1997  */
   int h2_charge_exchange_rate;
 
   /* flag to select which formula for calculating h2dust you want to use. Setting to 1 will use Omukai 2000, 2 will use Hollenbach & McKee (1979) */ 
-  int h2dust_rate;
+  int h2_dust_rate;
 
   /* flag to select which formula for calculating low density H2 cooling rate due to H collisions. Setting to 1 will use Lique 2015 */
   int h2_h_cooling_rate;

@@ -165,11 +165,11 @@ cdef class chemistry_data:
         def __set__(self, val):
             self.data.h2_charge_exchange_rate = val
 
-    property h2dust_rate:
+    property h2_dust_rate:
         def __get__(self):
-            return self.data.h2dust_rate
+            return self.data.h2_dust_rate
         def __set__(self, val):
-            self.data.h2dust_rate = val
+            self.data.h2_dust_rate = val
 
     property h2_h_cooling_rate:
         def __get__(self):

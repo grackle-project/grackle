@@ -205,7 +205,6 @@ int add_h2dust_reaction_rate(double **rate_ptr, double units, chemistry_data *my
 
             //Calculate rate and store.
             (*rate_ptr)[i + my_chemistry->NumberOfTemperatureBins*j] = h2dust_rate(T, T_dust, units, my_chemistry);
-            //(*rate_ptr)[i*my_chemistry->NumberOfDustTemperatureBins + j] = h2dust_rate(T, T_dust, units, my_chemistry);
         }
     }
 }

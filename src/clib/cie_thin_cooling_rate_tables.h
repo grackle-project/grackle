@@ -4,7 +4,8 @@
  * 
  * These arrays contain data neccessary for calculating the CIE optically thin
  * cooling rate. The data here is taken from the original Grackle fortran
- * subroutine which calculated the CIE rate.
+ * subroutine which calculated the CIE rate -- the comments for which can be
+ * found alongside the cie_thin_cooling_rate_function within rate_functions.c
  * 
  */
 /*******************************************************************************/

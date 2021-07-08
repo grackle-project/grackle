@@ -27,7 +27,7 @@ cdef extern from "grackle_chemistry_data.h":
         int ih2co
         int ipiht
         int h2_charge_exchange_rate
-        int h2dust_rate
+        int h2_dust_rate
         int h2_h_cooling_rate
         int collisional_excitation_rates
         int collisional_ionisation_rates

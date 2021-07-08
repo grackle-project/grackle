@@ -42,7 +42,7 @@ def set_parameters(parSet, my_chemistry):
     #Default parameter set.
     my_chemistry.CaseBRecombination = 0
     my_chemistry.h2_charge_exchange_rate = 1
-    my_chemistry.h2dust_rate = 1
+    my_chemistry.h2_dust_rate = 1
     my_chemistry.collisional_excitation_rates = 1
     my_chemistry.collisional_ionisation_rates = 1
     my_chemistry.recombination_cooling_rates = 1
@@ -56,9 +56,9 @@ def set_parameters(parSet, my_chemistry):
     #Alternate parameter set.
     elif parSet == 2:
         my_chemistry.CaseBRecombination = 1
-        my_chemistry.h2_charge_exchange_rate = 0
+        my_chemistry.h2_charge_exchange_rate = 2
         my_chemistry.three_body_rate = 1
-        my_chemistry.h2dust_rate = 0
+        my_chemistry.h2_dust_rate = 0
         my_chemistry.collisional_excitation_rates = 0
         my_chemistry.collisional_ionisation_rates = 0
         my_chemistry.recombination_cooling_rates = 0

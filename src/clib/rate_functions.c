@@ -230,7 +230,7 @@ double k11_rate(double T, double units, chemistry_data *my_chemistry)
                 + 3.9731542e-10 * pow(logT, 5)
                 - 1.8171411e-11 * pow(logT, 6)
                 + 3.5311932e-13 * pow(logT, 7))) / units;
-        } else if (my_chemistry->h2_charge_exchange_rate == 0) {
+        } else if (my_chemistry->h2_charge_exchange_rate == 2) {
             k11 = exp( -24.24914687731536
                 + 3.400824447095291*logT_ev
                 - 3.898003964650152*pow(logT_ev, 2)
@@ -242,7 +242,7 @@ double k11_rate(double T, double units, chemistry_data *my_chemistry)
                 - 9.36345888928611e-6*pow(logT_ev, 8)) / units;
         } else {
             fprintf(stderr, "k11_rate flag set to unknown value. This must be either 1 \
-                             or 0 but was set to %d \n", my_chemistry->h2_charge_exchange_rate);
+                             or 2 but was set to %d \n", my_chemistry->h2_charge_exchange_rate);
             exit(0);
         }
     } else {
@@ -715,7 +715,7 @@ double h2dust_rate(double T, double T_dust, double units, chemistry_data *my_che
     // The method used to calculate this is dependent upon what the user has selected
     // By default Omukai 2000 will be used.
     double h2dust;
-    if (my_chemistry->h2dust_rate == 1) {
+    if (my_chemistry->h2_dust_rate == 1) {
         //k23 from Omukai (2000).
 
         h2dust = 6.0e-17 / fgr * pow(T / 300.0, 0.5) * 

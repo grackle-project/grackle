@@ -128,7 +128,7 @@ c     This is the fortran definition of grackle_chemistry_data
          INTEGER(C_INT) :: self_shielding_method
          INTEGER(C_INT) :: H2_self_shielding
          INTEGER(C_INT) :: h2_charge_exchange_rate
-         INTEGER(C_INT) :: h2dust_rate
+         INTEGER(C_INT) :: h2_dust_rate
          INTEGER(C_INT) :: h2_h_cooling_rate
          INTEGER(C_INT) :: collisional_excitation_rates
          INTEGER(C_INT) :: collisional_ionisation_rates
