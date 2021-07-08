@@ -31,7 +31,7 @@
  * Rate Coefficients:
  *   --All rates are labelled as in Abel et al., 1996 (astro-ph/9608040)--
  *   @  k1  @     HI + e --> HII + 2e
- *   @  k2  @     HI + e --> HI + photon
+ *   @  k2  @     HII + e --> HI + photon
  *   @  k3  @     HeI + e --> HeII + 2e
  *   @  k4  @     HeII + e --> HeI + photon
  *   @  k5  @     HeII + e --> HeIII + 2e
@@ -71,7 +71,7 @@
  *   @  k57 @     HI + HI --> HII + HI + e
  *   @  k58 @     HI + HeI --> HII + HeI + e
  *   
- *   @  h2dust @     2H + grain --> H2 + grain  //(Hollenback and McKee 1989, Equation 3.8) 
+ *   @  h2dust @     2H + grain --> H2 + grain
  * 
  * 
  * 

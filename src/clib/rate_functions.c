@@ -32,7 +32,7 @@
 #include "phys_constants.h"
 
 
-// Calculation of k1.
+// Calculation of k1 (HI + e --> HII + 2e)
 double k1_rate(double T, double units, chemistry_data *my_chemistry)
 {
     double T_ev = T / 11605.0;
@@ -53,7 +53,7 @@ double k1_rate(double T, double units, chemistry_data *my_chemistry)
     return k1;
 }
 
-//Calculation of k3.
+//Calculation of k3 (HeI + e --> HeII + 2e)
 double k3_rate(double T, double units, chemistry_data *my_chemistry)
 {
     double T_ev = T / 11605.0;
@@ -74,7 +74,7 @@ double k3_rate(double T, double units, chemistry_data *my_chemistry)
     }
 }   
 
-//Calculation of k4.
+//Calculation of k4 (HeII + e --> HeI + photon)
 double k4_rate(double T, double units, chemistry_data *my_chemistry)
 {
     double T_ev = T / 11605.0;
@@ -96,7 +96,7 @@ double k4_rate(double T, double units, chemistry_data *my_chemistry)
     }
 }
 
-//Calculation of k2. Depends on k4.
+//Calculation of k2 (HII + e --> HI + photon)
 double k2_rate(double T, double units, chemistry_data *my_chemistry)
 {
     if (my_chemistry->CaseBRecombination == 1) {
@@ -128,7 +128,7 @@ double k2_rate(double T, double units, chemistry_data *my_chemistry)
     }
 }
 
-//Calculation of k5.
+//Calculation of k5 (HeII + e --> HeIII + 2e)
 double k5_rate(double T, double units, chemistry_data *my_chemistry)
 {
     double T_ev = T / 11605.0;
@@ -151,7 +151,7 @@ double k5_rate(double T, double units, chemistry_data *my_chemistry)
     return k5;
 }
 
-//Calculation of k6.
+//Calculation of k6 (HeIII + e --> HeII + photon)
 double k6_rate(double T, double units, chemistry_data *my_chemistry)
 {
     double k6;
@@ -170,14 +170,14 @@ double k6_rate(double T, double units, chemistry_data *my_chemistry)
     return k6;
 }
 
-//Calculation of k7.
+//Calculation of k7 (HI + e --> HM + photon)
 double k7_rate(double T, double units, chemistry_data *my_chemistry)
 {
     //Fit --> Stancil, Lepp & Dalgarno (1998, ApJ, 509, 1). Based on photodetachment cross-section --> Wishart (1979, MNRAS, 187, P59).
     return 3.0e-16*pow(T/3.0e2, 0.95) * exp(-T/9.32e3) / units;
 }
 
-//Calculation of k8.
+//Calculation of k8 (HI + HM --> H2I* + e)
 double k8_rate(double T, double units, chemistry_data *my_chemistry)
 {
     //Fit based on experimental measurements --> Kreckel et al (2010, Science, 329, 69).
@@ -186,7 +186,7 @@ double k8_rate(double T, double units, chemistry_data *my_chemistry)
                 / units;
 }
 
-//Calculation of k9.
+//Calculation of k9 (HI + HII --> H2II + photon)
 double k9_rate(double T, double units, chemistry_data *my_chemistry)
 {
     double k9;
@@ -204,13 +204,13 @@ double k9_rate(double T, double units, chemistry_data *my_chemistry)
     return k9;
 }
 
-//Calculation of k10.
+//Calculation of k10 (H2II + HI --> H2I* + HII)
 double k10_rate(double T, double units, chemistry_data *my_chemistry)
 {
     return 6.0e-10 / units;
 }
 
-//Calculation of k11.
+//Calculation of k11 (H2I + HII --> H2II + HI)
 double k11_rate(double T, double units, chemistry_data *my_chemistry)
 {
     double logT = log(T);
@@ -251,7 +251,7 @@ double k11_rate(double T, double units, chemistry_data *my_chemistry)
     return k11;
 }
 
-//Calculation of k12.
+//Calculation of k12 (H2I + e --> 2HI + e)
 double k12_rate(double T, double units, chemistry_data *my_chemistry)
 {
     double T_ev = T / 11605.0;
@@ -266,7 +266,7 @@ double k12_rate(double T, double units, chemistry_data *my_chemistry)
     return k12;
 }
 
-//Calculation of k13.
+//Calculation of k13 (H2I + HI --> 3HI)
 double k13_rate(double T, double units, chemistry_data *my_chemistry)
 {   
     double T_ev = T / 11605.0;
@@ -447,7 +447,7 @@ void k13dd_rate(double T, double units, double *k13dd_results, chemistry_data *m
     }
 }
 
-//Calculation of k14.
+//Calculation of k14 (HM + e --> HI + 2e)
 double k14_rate(double T, double units, chemistry_data *my_chemistry)
 {
     double T_ev = T / 11605.0;
@@ -470,7 +470,7 @@ double k14_rate(double T, double units, chemistry_data *my_chemistry)
     return k14;
 }
 
-//Calculation of k15.
+//Calculation of k15 (HM + HI --> 2HI + e)
 double k15_rate(double T, double units, chemistry_data *my_chemistry)
 {
     double T_ev = T / 11605.0;
@@ -494,14 +494,14 @@ double k15_rate(double T, double units, chemistry_data *my_chemistry)
     return k15;
 }
 
-//Calculation of k16.
+//Calculation of k16 (HM + HI --> 2HI)
 double k16_rate(double T, double units, chemistry_data *my_chemistry)
 {
     //Fit --> Croft et al (1999, MNRAS, 304, 327). Based on cross-section --> Fussen & Kubach (1986, J. Phys. B, 18 L31).
     return 2.4e-6*(1.0 + T/2.0e4) / sqrt(T) / units;
 }
 
-//Calculation of k17.
+//Calculation of k17 (HM + HI --> H2I + e)
 double k17_rate(double T, double units, chemistry_data *my_chemistry)
 {
      double k17;
@@ -513,7 +513,7 @@ double k17_rate(double T, double units, chemistry_data *my_chemistry)
     return k17;
 }
 
-//Calculation of k18.
+//Calculation of k18 (H2I + e --> 2HI)
 double k18_rate(double T, double units, chemistry_data *my_chemistry)
 {
     double k18;
@@ -525,24 +525,24 @@ double k18_rate(double T, double units, chemistry_data *my_chemistry)
     return k18;
 }
 
-//Calculation of k19.
+//Calculation of k19 (H2I + HM --> H2I + HI)
 double k19_rate(double T, double units, chemistry_data *my_chemistry)
 {
     return 5.e-7 * sqrt(100.0/T) / units;
 }
 
-//Calculation of k20. This is not currently used in the code.
+//Calculation of k20 (This is not currently used in the code)
 double k20_rate(double T, double units, chemistry_data *my_chemistry)
 {
     return tiny;
 }
 
-//Calculation of k21.
+//Calculation of k21 (2HI + H2I --> H2I + H2I)
 double k21_rate(double T, double units, chemistry_data *my_chemistry){
     return 2.8e-31 * pow(T, -0.6) / units;
 }
 
-//Calculation of k22. 
+//Calculation of k22 (2HI + HI --> H2I + HI)
 double k22_rate(double T, double units, chemistry_data *my_chemistry)
 {   
     double k22;
@@ -598,7 +598,7 @@ double k23_rate(double T, double units, chemistry_data *my_chemistry)
     return k23;
 }
 
-//Calculation of k50.
+//Calculation of k50 (HII + DI --> HI + DII)
 double k50_rate(double T, double units, chemistry_data *my_chemistry)
 {
     //Fit taken from Savin (2002) which is valid for T < 2e5 K.
@@ -611,7 +611,7 @@ double k50_rate(double T, double units, chemistry_data *my_chemistry)
     }
 }
         
-//Calculation of k51.
+//Calculation of k51 (HI + DII --> HII + DI)
 double k51_rate(double T, double units, chemistry_data *my_chemistry)
 {
     // Fit taken from Savin (2002) which is valid for T < 2e5 K.
@@ -619,7 +619,7 @@ double k51_rate(double T, double units, chemistry_data *my_chemistry)
                         + 2.03e-9 * pow(T, -0.332)) / units;
 }
 
-//Calculation of k52.
+//Calculation of k52 (H2I + DII --> HDI + HII)
 double k52_rate(double T, double units, chemistry_data *my_chemistry)
 {
     // Fits from Galli & Palla (2002) to calculations by Gerlich (1982).
@@ -632,14 +632,14 @@ double k52_rate(double T, double units, chemistry_data *my_chemistry)
     }   
 }
 
-//Calculation of k53.
+//Calculation of k53 (HDI + HII --> H2I + DII)
 double k53_rate(double T, double units, chemistry_data *my_chemistry)
 {
     // Fits from Galli & Palla (2002) to calculations by Gerlich (1982).
     return 1.1e-9 * exp(-4.88e2/T) / units;
 }
 
-//Calculation of k54.
+//Calculation of k54 (H2I + DI --> HDI + HI)
 double k54_rate(double T, double units, chemistry_data *my_chemistry)
 {
     // Fit from Clark et al (2011), which is based on data in Mielke et al (2003).
@@ -654,7 +654,7 @@ double k54_rate(double T, double units, chemistry_data *my_chemistry)
     }
 }
 
-//Calculation of k55.
+//Calculation of k55 (HDI + HI --> H2I + DI)
 double k55_rate(double T, double units, chemistry_data *my_chemistry)
 {
     // Fit from Galli & Palla (2002), which is based on Shavitt (1959).
@@ -668,16 +668,16 @@ double k55_rate(double T, double units, chemistry_data *my_chemistry)
     }
 }
 
-//Calculation of k56.
+//Calculation of k56 (DI + HM --> HDI + e)
 double k56_rate(double T, double units, chemistry_data *my_chemistry)
 {
-    // This is the same as HM + HI. 
+    // This is the same as DM + HI --> HDI + e 
     // Measurements from Miller et al (2012) suggest there is no significant isotope effect
     // for this reaction.
     return k8_rate(T, units, my_chemistry);
 }
         
-//Calculation of k57.
+//Calculation of k57 (HI + HI --> HII + HI + e)
 double k57_rate(double T, double units, chemistry_data *my_chemistry)
 {
     // These rate coefficients are from Lenzuni, Chernoff & Salpeter (1991).
@@ -689,7 +689,7 @@ double k57_rate(double T, double units, chemistry_data *my_chemistry)
     }
 }
 
-//Calculation of k58.
+//Calculation of k58 (HI + HeI --> HII + HeI + e)
 double k58_rate(double T, double units, chemistry_data *my_chemistry)
 {
     // These rate coefficients are from Lenzuni, Chernoff & Salpeter (1991).
@@ -701,7 +701,7 @@ double k58_rate(double T, double units, chemistry_data *my_chemistry)
     }
 }
 
-//Calculation of h2dust.
+//Calculation of h2dust (2H + grain --> H2 + grain)
 double h2dust_rate(double T, double T_dust, double units, chemistry_data *my_chemistry)
 {
     //Defined at the top of initialize_rates but pasted here for ease.
@@ -723,18 +723,12 @@ double h2dust_rate(double T, double T_dust, double units, chemistry_data *my_che
                 (pow(1.0 + (4.0e-2 * pow(T + T_dust, 0.5))
                 + (2.0e-3 * T) + (8.0e-6 * pow(T, 2.0)), -1.0));
         
-        //double f_a = 1.0 / (1.0 + exp(7.5e2 * ((1.0/75.0) - (1.0/T_dust))));
-
-        //h2dust = (6.0e-17 * pow(T/300.0, 0.5) * f_a / fgr) / (1.0 + 4.0e-2*pow(T + T_dust, 0.5)
-                    //+ 2.0e-3*T + 8.0e-6*pow(T, 2.0));
     } else {
         //Equation 3.8 from Hollenbach & McKee (1979).
 
         h2dust = 3.0e-17 / fgr * pow(T_2, 0.5) / (1.0 + 0.4 * pow(T_2 + T_dust_2, 0.5)
                 + 0.2 * T_2 + 8.0e-2 * pow(T_2, 2.0));
 
-        //h2dust = (3.0e-17 * pow(T_2, 0.5) / fgr) / (1.0 + 0.4*pow(T_2 + T_dust_2, 0.5)
-                    //+ 0.2*T_2 + 8.0e-2*pow(T_2, 2.0));
     }
     return h2dust / units;
 }
@@ -1020,6 +1014,22 @@ double GP99HighDensityLimit_rate(double T, double units, chemistry_data *my_chem
 //Calculation of GAHI.
 double GAHI_rate(double T, double units, chemistry_data *my_chemistry)
 {
+    /* -- Comments from original code -- 
+    h2_h_cooling_rate == 1 :
+
+        Revised low density H2 cooling rate due to H collisions, based on
+        Lique (2015, MNRAS, 453, 810). This fit is accurate to within ~5% over the temperature
+        range 100 < T < 5000 K. Lique (2015) doesn't present data above 5000 K, so at higher
+        temperatures the rate has been calculated assuming that the de-excitation rate
+        coefficients have the same values that they have at 5000 K. Lique also doesn't give
+        rates for T < 100 K, but since we don't expect H2 cooling to be important there, it
+        should be OK to just set the rate to zero.
+
+    h2_h_cooling_rate == 2:
+
+        Formula from Glover and Abel 2008.
+    */
+
     //Constrain temperature.
     double tm  = fmax(T, 10.0);
     tm  = fmin(tm, 1.0e4);
@@ -1039,7 +1049,7 @@ double GAHI_rate(double T, double units, chemistry_data *my_chemistry)
                             - 3.14766075 * pow(lt3, 6)
                             + 2.50751333 * pow(lt3, 7)) / units;
         }
-    } else {
+    } else if (my_chemistry->h2_h_cooling_rate == 2) {
         if (tm < 1.0e2) {
             return pow(10.0, -16.818342
                             + 37.383713 * lt3
@@ -1062,6 +1072,11 @@ double GAHI_rate(double T, double units, chemistry_data *my_chemistry)
                             - 5.5108047 * pow(lt3, 4)
                             + 1.5538288 * pow(lt3, 5)) / units;
         }
+    } else {
+        fprintf(stderr, "h2_h_cooling_rate must be 1 or 2, it has been set \
+                to %d \n", my_chemistry->h2_h_cooling_rate);
+        exit(0);
+
     }
 }
 

@@ -63,7 +63,7 @@ def set_parameters(parSet, my_chemistry):
         my_chemistry.collisional_ionisation_rates = 0
         my_chemistry.recombination_cooling_rates = 0
         my_chemistry.bremsstrahlung_cooling_rates = 0
-        my_chemistry.h2_h_cooling_rate = 0
+        my_chemistry.h2_h_cooling_rate = 2
         my_chemistry.photoelectric_heating = 2
         return True
     #Default parameter sets with other three_body_rate values.
@@ -180,3 +180,5 @@ def test_rate_initialisation(printParameters=False, printOOMdiscrepanices=False,
     #Close files.
     expectedRates.close()
     initialisedRates.close()
+
+test_rate_initialisation()

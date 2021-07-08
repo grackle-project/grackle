@@ -133,19 +133,25 @@ typedef struct
      photo ionization shielding factors */
   int self_shielding_method;
 
-  /* flag for Wolcott-Green+ 2011 H2 self-shielding */
+  /* flag for Wolcott-Green+ 2011 H2 self-shielding. Can be set to either 0,1,2 or 3.
+     These determine the length scale used in the calculation of the H2 column density.
+     Please refer to the grackle documentation for specifics. */
   int H2_self_shielding;
 
-  /* flag to select which formula for calculating k11 you want to use. Setting to 1 will use Savin 2004, 2 will use Abel et al. 1997  */
+  /* flag to select which formula for calculating k11 you want to use. 
+     Setting to 1 will use Savin 2004, 2 will use Abel et al. 1997  */
   int h2_charge_exchange_rate;
 
-  /* flag to select which formula for calculating h2dust you want to use. Setting to 1 will use Omukai 2000, 2 will use Hollenbach & McKee (1979) */ 
+  /* flag to select which formula for calculating h2dust you want to use. 
+     Setting to 1 will use Omukai 2000, 2 will use Hollenbach & McKee (1979) */ 
   int h2_dust_rate;
 
-  /* flag to select which formula for calculating low density H2 cooling rate due to H collisions. Setting to 1 will use Lique 2015 */
+  /* flag to select which formula for calculating low density H2 cooling rate 
+     due to H collisions. Setting to 1 will use Lique 2015, 2 will use Glover and Abel 2008 */
   int h2_h_cooling_rate;
   
-  /* flags specific to calc_rates_g (1 is on, 0 is off) -- will be set to default values if unspecified  */
+  /* flags specific to calc_rates_g (1 is on, 0 is off) -- will be set to default values 
+     if unspecified  */
   int collisional_excitation_rates; //Collisional excitation
   int collisional_ionisation_rates; //Collisional ionisation
   int recombination_cooling_rates; //Recombination cooling
