@@ -1209,6 +1209,23 @@ double HDlow_rate(double T, double units, chemistry_data *my_chemistry)
 //Calculation of cie_thin_cooling_rate.
 double cie_thin_cooling_rate(double T){
 
+    /* 
+    *  Comments found in the original fortran code:
+    * 
+    *     Compute optically thin cooling rate due to CIE cooling
+    *     as discussed in Ripamonti and Abel 2003.
+    * 
+    *     input: temp is temperature in Kelvin
+    * 
+    *     output: total CIE cooling rate (including H2-H2 and He-H2)
+    *             in erg per second times cm^3 per gram per (gram in H2 molecules).
+    * 
+    *      Hence to get cooling rate in erg/s cm^-3 one has to multiply by the total mass 
+    *      density and the mass density in H2 molecules (*rho*rho_H2). This again is an 
+    *      approximation in that it assumes large H2 fractions (greater than 0.5). Currently
+    *      it is not clear what happens in the regime where H2 becomes mostly dissociated.
+    */
+
     //* Compute rough extrapolations for extreme temperatures.
     // Low temperatures extrapolated with fourth power.
     if (T <= t_cie_c[0]) {
