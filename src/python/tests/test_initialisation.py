@@ -37,6 +37,7 @@ def get_defChem():
 
     return my_chemistry
 
+
 #* Function which sets parameters for a given parameter set.
 def set_parameters(parSet, my_chemistry):
     #Default parameter set.
@@ -96,6 +97,7 @@ def set_parameters(parSet, my_chemistry):
     #Invalid parameter set.
     else:
         return False
+
 
 #* Function which tests that the rates have been initialised correctly for each parameter set.
 def test_rate_initialisation(printParameters=False, printOOMdiscrepanices=False, testCustomFile=False, parSets=[1,2,3,4,5,6,7],
@@ -180,5 +182,3 @@ def test_rate_initialisation(printParameters=False, printOOMdiscrepanices=False,
     #Close files.
     expectedRates.close()
     initialisedRates.close()
-
-test_rate_initialisation()
