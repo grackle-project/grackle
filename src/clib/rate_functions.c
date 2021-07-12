@@ -219,7 +219,7 @@ double k11_rate(double T, double units, chemistry_data *my_chemistry)
 
     double k11;
     if ( T_ev > 0.3) {
-        //k11 is calculated by using either Savin 2004 or Abel et al. 1997. The parameter to control this is within the chemistry_data struct.
+        //k11 is calculated by using either Savin 2004 or Abel et al. 1996. The parameter to control this is within the chemistry_data struct.
         if (my_chemistry->h2_charge_exchange_rate == 1) {
             k11 = ( exp(-21237.15/T) *
                 (- 3.3232183e-07

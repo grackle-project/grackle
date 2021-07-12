@@ -139,7 +139,7 @@ typedef struct
   int H2_self_shielding;
 
   /* flag to select which formula for calculating k11 you want to use. 
-     Setting to 1 will use Savin 2004, 2 will use Abel et al. 1997  */
+     Setting to 1 will use Savin 2004, 2 will use Abel et al. 1996  */
   int h2_charge_exchange_rate;
 
   /* flag to select which formula for calculating h2dust you want to use. 
