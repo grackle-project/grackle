@@ -54,6 +54,21 @@ chemistry_data _set_default_chemistry_parameters(void)
   my_chemistry.cie_cooling                    = 0;
   my_chemistry.h2_optical_depth_approximation = 0;
 
+  //k11 calculation method.
+  my_chemistry.h2_charge_exchange_rate        = 1;
+
+  //h2dust calculation method.
+  my_chemistry.h2_dust_rate                    = 1;
+
+  //low density H2 cooling rate due to H collisions calculation method.
+  my_chemistry.h2_h_cooling_rate              = 1;
+
+  //flags specific to calc_rates_g_c methods.
+  my_chemistry.collisional_excitation_rates   = 1;
+  my_chemistry.collisional_ionisation_rates   = 1;
+  my_chemistry.recombination_cooling_rates    = 1;
+  my_chemistry.bremsstrahlung_cooling_rates   = 1;
+
   my_chemistry.photoelectric_heating          = -1; // unset
   // epsilon=0.05, G_0=1.7 (in erg s^-1 cm^-3)
   my_chemistry.photoelectric_heating_rate     = 8.5e-26;

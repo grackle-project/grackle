@@ -412,6 +412,57 @@ For all on/off integer flags, 0 is off and 1 is on.
    H\ :sub:`2`\ self-shielding computed using the ``H2_self_shielding``
    flag.
 
+.. c:var:: int h2_charge_exchange_rate
+
+   Flag which selects the formula used for calculating the ``k11`` rate 
+   coefficient. Default: 1.
+
+      - 1: Equation 4 from `Savin et. al., 2004 <https://arxiv.org/abs/astro-ph/0404288>`_.
+      - 2: Table 3, Equation 11 from `Abel et. al., 1996 <https://arxiv.org/abs/astro-ph/9608040>`_.
+
+.. c:var:: int h2_dust_rate
+
+   Flag which selects the formula used for calculating the ``h2dust`` rate
+   coefficient. Default: 1.
+
+      - 1: Table 1, Equation 23 from `Omukai, 2000 <https://arxiv.org/abs/astro-ph/0003212>`_.
+      - 2: Equation 3.8 from `Hollenbach & McKee, 1979 <https://ui.adsabs.harvard.edu/abs/1979ApJS...41..555H/abstract>`_.
+
+.. c:var:: int h2_h_cooling_rate
+
+   Flag which selects the formula for calculating the ``GAHI`` rate coefficient.
+   Default: 1.
+
+      - 1: Equation based on `Lique, 2015 <https://academic.oup.com/mnras/article/453/1/810/1752438>`_. 
+      - 2: Equation 40 with fitting coefficients found in Table 8, from `Glover & Abel, 2008 <https://arxiv.org/abs/0803.1768>`_.
+
+   Notes on setting 1:
+      This fit is accurate to within ~5% over the temperature range 100 < T < 5000 K. Lique (2015)
+      doesn't present data above 5000 K, so at higher temperatures the rate has been calculated
+      assuming that the de-excitation rate coefficients have the same values that they have at 5000 K.
+      Lique also doesn't give rates for T < 100 K, but since we don't expect H2 cooling to be important
+      there, it should be OK to just set the rate to zero.
+
+.. c:var:: int collisional_excitation_rates
+
+   On/off flag to toggle calculation of rate coefficients corresponding to collisional excitations 
+   (``ceHI``, ``ceHeI`` and ``ceHeII``). Default: 1
+
+.. c:var:: int collisional_ionisation_rates
+
+   On/off flag to toggle calculation of rate coefficients corresponding to collisional ionisations 
+   (``ciHeIS``, ``ciHI``, ``ciHeI`` and ``ciHeII``). Default: 1
+
+.. c:var:: int recombination_cooling_rates
+
+   On/off flag to toggle calculation of rate coefficients corresponding to recombination cooling 
+   (``reHII``, ``reHeII1``, ``reHeII2`` and ``reHeIII``). Default: 1
+
+.. c:var:: int bremsstrahlung_cooling_rates
+
+   On/off flag to toggle calculation of rate coefficients corresponding to bremsstrahlung cooling 
+   (``brem``). Default: 1
+
 .. c:var:: int omp_nthreads
 
    Sets the number of OpenMP threads.  If not set, this will be set to
