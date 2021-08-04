@@ -1,5 +1,8 @@
 .. _rate-functions:
 
+.. role:: c_inline(code)
+   :language: c
+
 Rate Functions
 =========================
 
@@ -26,7 +29,7 @@ identically:
 
 .. code-block:: c
 
-    {RATE_NAME}_rate(double T, double units, chemistry_data *my_chemistry);
+    double {RATE_NAME}_rate(double T, double units, chemistry_data *my_chemistry);
 
 where {RATE_NAME} is the name of the coefficient you wish to calculate.
 
@@ -111,6 +114,74 @@ the following:
 where we have created an array of reHII coefficients for both settings of ``chemistry_data.CaseBRecombination``
 over the same temperature range.
 
+The k13dd Rate Function
+-------------------------
+
+Structure
+^^^^^^^^^^
+
+The k13dd rate function, which describes the density-dependent dissociation of molecular hydrogen, is similar
+in form to the general rate functions, the only difference being its additional input parameter. This is a pointer
+to an array of length :c_inline: `14 * sizeof(double)`, which will hold the outputs of the function. The function
+always calculates fourteen rate parameters, the first seven of which correspond to direct collisional dissociation,
+whilst the latter seven correspond to dissociative tunneling -- please see
+`Martin, Schwarz & Mandy, 1996 <http://adsabs.harvard.edu/pdf/1996ApJ...461..265M>`_ for further details on how 
+these are calculated. The structure of the function is then:
+
+.. code-block:: c
+
+    void k13dd_rate(double T, double units, double *results_array, chemistry_data *my_chemistry);
 
 
+Inputs
+""""""""
 
+.. c:var:: double T
+
+    Temperature at which you would like the coefficient to be calculated.
+
+.. c:var:: double units
+
+    Unit conversion factor -- will return results in cgs units when set to 1.
+
+.. c:var:: double *results_array
+
+    Pointer to array of length :c_inline: `14 * sizeof(double)` in which the calculated rate coefficients will
+    be stored.
+
+.. c:var:: chemistry_data *my_chemistry
+
+    Pointer to the chemistry_data struct containing the parameters for your calculations.
+
+
+Outputs
+"""""""""
+
+.. c:var:: None
+
+    Results are stored within results_array, function itself is void.
+
+Examples
+^^^^^^^^^^
+
+Example 1
+""""""""""
+
+Suppose we would like to print the rate coefficients for the dissociation of molecular hydrogen via the 
+tunneling process at a temperature of 1e5 K. Given we have already configured our chemistry parameters
+within a ``chemistry_data`` struct named ``my_chemistry``, we can obtain the coefficients by the following:
+
+.. code-block:: c
+
+    #include "rate_coefficients.h"
+
+    // Create array pointer for result storage with the correct memory allocation.
+    double *results = malloc(14 * sizeof(double));
+
+    // Call the function at the desired temperature, getting results in cgs units.
+    k13dd_rate(1e5, 1., results, *my_chemistry);
+
+    // Print the results corresponding to dissociative tunneling.
+    for (int i = 7; i < 14; i++) {
+        printf((*results)[i]);
+    }
