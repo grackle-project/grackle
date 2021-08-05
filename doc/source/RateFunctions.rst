@@ -61,17 +61,18 @@ Examples
 Example 1
 """"""""""
 
-Suppose we wish to check the value of the ``k1`` rate coefficient at a temperature of 1000 K.
+Suppose we wish to print the value of the ``k1`` rate coefficient at a temperature of 1000 K.
 Given we have already configured our chemistry parameters within a ``chemistry_data`` struct
 named ``my_chemistry``, we can obtain the result by simply calling the function as follows:
 
 .. code-block:: c 
 
-    #include "rate_coefficients.h"
+    #include "grackle_rate_functions.h"
 
-    double result = k1_rate(1000., 1., *my_chemistry);
+    double result = k1_rate(1e3, 1., &my_chemistry);
+    printf("k1 %e", result);
 
-where our result will be returned in cgs units.
+where our result is in cgs units.
 
 Example 2
 """"""""""
@@ -84,17 +85,17 @@ the following:
 
 .. code-block:: c
 
-    #include "rate_coefficients.h"
+    #include "grackle_rate_functions.h"
 
-    // Define temperature range to calculate coefficients over
-    double tempStart = 10;
-    double tempEnd = 1e8:
+    /// Define temperature range to calculate coefficients over
+    double tempStart = 1e1;
+    double tempEnd = 1e8;
     double numTemps = 1e3;
     double tempSpacing = (tempEnd - tempStart) / numTemps;
 
     // Create arrays for results storage
-    double caseAResults[numTemps];
-    double caseBResults[numTemps];
+    double caseAResults[(int) numTemps];
+    double caseBResults[(int) numTemps];
 
     // Set value of my_chemistry.CaseBRecombination
     for (int caseB = 0; caseB < 2; caseB++) {
@@ -104,9 +105,9 @@ the following:
             double temp = tempStart + i*tempSpacing;
             // Store results in appropriate array
             if (caseB == 0) {
-                caseAResults[i] = reHII_rate(temp, 1., *my_chemistry);
+                caseAResults[i] = reHII_rate(temp, 1., &my_chemistry);
             } else {
-                caseBResults[i] = reHII_rate(temp, 1., *my_chemistry);
+                caseBResults[i] = reHII_rate(temp, 1., &my_chemistry);
             }
         }
     }
@@ -120,9 +121,9 @@ The k13dd Rate Function
 Structure
 ^^^^^^^^^^
 
-The k13dd rate function, which describes the density-dependent dissociation of molecular hydrogen, is similar
+The ``k13dd`` rate function, which describes the density-dependent dissociation of molecular hydrogen, is similar
 in form to the general rate functions, the only difference being its additional input parameter. This is a pointer
-to an array of length :c_inline:`14 * sizeof(double)`, which will hold the outputs of the function. The function
+to an array of length ``14 * sizeof(double)``, which will hold the outputs of the function. The function
 always calculates fourteen rate parameters, the first seven of which correspond to direct collisional dissociation,
 whilst the latter seven correspond to dissociative tunneling -- please see
 `Martin, Schwarz & Mandy, 1996 <http://adsabs.harvard.edu/pdf/1996ApJ...461..265M>`_ for further details on how 
@@ -171,17 +172,17 @@ within a ``chemistry_data`` struct named ``my_chemistry``, we can obtain the coe
 
 .. code-block:: c
 
-    #include "rate_coefficients.h"
+    #include "grackle_rate_functions.h"
 
-    // Create array pointer for result storage with the correct memory allocation.
-    double *results = malloc(14 * sizeof(double));
+    // Create an array of the correct size for result storage.
+    double results[14];
 
     // Call the function at the desired temperature, getting results in cgs units.
-    k13dd_rate(1e5, 1., results, *my_chemistry);
+    k13dd_rate(1e5, 1., &results, &my_chemistry);
 
     // Print the results corresponding to dissociative tunneling.
     for (int i = 7; i < 14; i++) {
-        printf((*results)[i]);
+        printf("k13dd %e", results[i]);
     }
 
 The h2dust Rate Function
@@ -190,9 +191,9 @@ The h2dust Rate Function
 Structure
 ^^^^^^^^^^
 
-The h2dust rate function, which describes the formation of molecular hydrogen on dust grains, is similar
+The ``h2dust`` rate function, which describes the formation of molecular hydrogen on dust grains, is similar
 in form to the general rate functions, the only difference being its additional input parameter; a
-:c_inline:`double` which represents the dust temperature. The function returns a double just as the
+``double`` which represents the dust temperature. The function returns a ``double`` just as the
 general rate function, its structure is then:
 
 .. code-block:: c
@@ -231,29 +232,27 @@ Examples
 Example 1
 """"""""""
 
-Suppose we would like to calculate the h2dust rate coefficients for a gas temperature of 1e4 K, with a 
+Suppose we would like to calculate the ``h2dust`` rate coefficients for a gas temperature of 1e4 K, with a 
 varying dust temperature. Given we have already configured our chemistry parameters within a ``chemistry_data``
 struct named ``my_chemistry``, we can obtain the coefficients by the following:
 
-
-
 .. code-block:: c
 
-    #include "rate_coefficients.h"
+    #include "grackle_rate_functions.h"
 
-    // Define dust temperature range to calculate coefficients over
-    double tempStart_dust = 10;
-    double tempEnd_dust = 1e6:
+    // Define dust temperature range to calculate coefficients over.
+    double tempStart_dust = 1e1;
+    double tempEnd_dust = 1e6;
     double numTemps_dust = 1e3;
-    double tempSpacing_dust = (tempEnd_dust - tempStart_dust) / numTemp_dust;
+    double tempSpacing_dust = (tempEnd_dust - tempStart_dust) / numTemps_dust;
 
-    // Create arrays for results storage
-    double h2dust_results[numTemp_dust];
+    // Create array for results storage.
+    double h2dust_results[(int) numTemps_dust];
 
     // Loop over dust temperatures.
-    for (i=0; i < numTemps_dust; i++){
+    for (int i=0; i < numTemps_dust; i++){
         double temp_dust = tempStart_dust + i*tempSpacing_dust;
-        h2dust_results[i] = h2dust_rate(1e4, temp_dust, 1., *my_chemistry);
+        h2dust_results[i] = h2dust_rate(1e4, temp_dust, 1., &my_chemistry);
     }
     
 The Scalar Rate Functions
@@ -261,8 +260,8 @@ The Scalar Rate Functions
 
 Structure
 ^^^^^^^^^^
-The scalar rate functions (comp, gammah, gamma_isrf) are simpler than the general rate functions
-due to their temperature independence. They require only two inputs and return a single double,
+The scalar rate functions (``comp``, ``gammah``, ``gamma_isrf``) are simpler than the general rate functions
+due to their temperature independence. They require only two inputs and return a single ``double``,
 their structure is as follows:
 
 .. code-block:: c
