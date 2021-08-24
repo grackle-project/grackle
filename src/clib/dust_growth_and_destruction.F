@@ -18,7 +18,7 @@
 
       integer in, jn, kn, i, j, k
       real*8 tau_accr(in), tau_dest(in), tau_sput(in),
-     &       z_solar, SolarAbundances(NUM_METAL_SPECIES),
+     &       z_solar, SolarAbundances(NUM_METAL_SPECIES_GRACKLE),
      &       time_units, dens_units, len_units, aye, dtime
       R_PREC Density(in,jn,kn), Tgas(in,jn,kn), metal_Density(in,jn,kn),
      &       gas_metal1(in,jn,kn), gas_metal2(in,jn,kn),
@@ -105,7 +105,7 @@
 !   arguments
       integer in, jn, kn, i, j, k
       real*8 tau_dest(in), tau_sput(in),
-     &       z_solar, SolarAbundances(NUM_METAL_SPECIES),
+     &       z_solar, SolarAbundances(NUM_METAL_SPECIES_GRACKLE),
      &       time_units, dens_units, len_units, aye, dtime
       R_PREC Tgas(in,jn,kn),
      &       gas_metal1(in,jn,kn), gas_metal2(in,jn,kn),
@@ -120,13 +120,13 @@
      &       dust_metal9(in,jn,kn), dust_metal10(in,jn,kn),
      &       metal_Density(in,jn,kn), dust_Density(in,jn,kn),
      &       SNe_ThisTimeStep(in,jn,kn),
-     &       metpt(NUM_METAL_SPECIES+1), dmetpt(NUM_METAL_SPECIES+1)
+     &       metpt(NUM_METAL_SPECIES_GRACKLE+1), dmetpt(NUM_METAL_SPECIES_GRACKLE+1)
 
 !   local variables
       integer n
       real*8 tau_ref, Ms100, tau_accr0, tau_accr
-      R_PREC dM(NUM_METAL_SPECIES+1), dMs,
-     &       Mmet(NUM_METAL_SPECIES+1),
+      R_PREC dM(NUM_METAL_SPECIES_GRACKLE+1), dMs,
+     &       Mmet(NUM_METAL_SPECIES_GRACKLE+1),
      &       dens_proper
 
       dens_proper = dens_units * aye**3
@@ -160,14 +160,14 @@
      &        * SolarMass / (dens_units * len_units**3) ! gas mass shocked per SNe (Sedov-Taylor)
       tau_ref = DUST_GROWTH_TAUREF * 1e9 * SEC_PER_YEAR / time_units
 
-      do n=0+1,NUM_METAL_SPECIES+1
+      do n=0+1,NUM_METAL_SPECIES_GRACKLE+1
           dM(n) = 0.
       enddo
 
 !   metals accreted from gas to dust
       tau_accr0 = tau_ref * (DUST_GROWTH_DENSREF/dens_proper)
      &     * (DUST_GROWTH_TREF/Tgas(i,j,k))**0.5
-      do n=1+1,NUM_METAL_SPECIES+1
+      do n=1+1,NUM_METAL_SPECIES_GRACKLE+1
           Mmet(n) = metpt(n) + dmetpt(n)
           tau_accr = tau_accr0 * SolarAbundances(n-1) / metpt(n)
           dM(n) = dM(n) + min((1 - dmetpt(n) / Mmet(n))
@@ -190,12 +190,12 @@
           dMs = dMs + dust_Density(i,j,k) / tau_sput(i) *3.0* dtime
           dMs = min(dMs,dust_Density(i,j,k))
       endif
-      do n=0+1,NUM_METAL_SPECIES+1
+      do n=0+1,NUM_METAL_SPECIES_GRACKLE+1
           dM(n) = dM(n) - dmetpt(n) * dMs
       enddo
 
 !   recalculate metallicity
-      do n=0+1,NUM_METAL_SPECIES+1
+      do n=0+1,NUM_METAL_SPECIES_GRACKLE+1
           if (dust_Density(i,j,k) .gt. 0.0) then
               dmetpt(n) = dM(n) + dmetpt(n) ! SNe shocks on neighbors are ignored
           else
