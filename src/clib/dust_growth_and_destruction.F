@@ -124,6 +124,7 @@
 
 !   local variables
       integer n
+      character(80) :: userinp
       real*8 tau_ref, Ms100, tau_accr0, tau_accr
       R_PREC dM(NUM_METAL_SPECIES_GRACKLE+1), dMs,
      &       Mmet(NUM_METAL_SPECIES_GRACKLE+1),
@@ -173,6 +174,13 @@
           dM(n) = dM(n) + min((1 - dmetpt(n) / Mmet(n))
      &            * (dmetpt(n)/tau_accr) * dtime,
      &            Mmet(n) - dmetpt(n)) ! growth capped by gas in a single cell
+
+          if (dM(n) .ne. dM(n)) then
+              write(*,*) "dM at index", n, 
+     &                   "calculated as NaN in line 174 of dust model", dM(n)
+              read(*,*) userinp
+          endif 
+
           dM(1) = dM(1) + dM(n)
       enddo
 
@@ -192,6 +200,13 @@
       endif
       do n=0+1,NUM_METAL_SPECIES_GRACKLE+1
           dM(n) = dM(n) - dmetpt(n) * dMs
+
+          if (dM(n) .ne. dM(n)) then
+            write(*,*) "dM at index", n, 
+     &                 "calculated as NaN in line 202 of dust model", dM(n)
+            read(*,*) userinp
+        endif 
+          
       enddo
 
 !   recalculate metallicity
@@ -201,8 +216,11 @@
           else
               dmetpt(n) = 0.0
           endif
-          metpt(n) = metpt(n) - dM(n)
+          metpt(n) = metpt(n) - dM(n) 
+
       enddo
+
+      
 
 !     copy metallicites back into fields arrays
       metal_Density(i,j,k) = metpt(1)
