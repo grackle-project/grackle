@@ -171,6 +171,27 @@
       do n=1+1,NUM_METAL_SPECIES_GRACKLE+1
           Mmet(n) = metpt(n) + dmetpt(n)
           tau_accr = tau_accr0 * SolarAbundances(n-1) / metpt(n)
+
+          if (dmetpt(n) .ne. dmetpt(n)) then
+            write(*,*) "dmetpt at index", n, 
+     &                 "calculated as NaN in line 174 of dust model", dmetpt(n)
+          endif 
+
+          if (Mmet(n) .ne. Mmet(n)) then
+            write(*,*) "Mmet at index", n, 
+     &                 "calculated as NaN in line 174 of dust model", Mmet(n)
+          endif 
+
+          if (tau_accr .ne. tau_accr) then
+            write(*,*) "tau_accr",
+     &                 "calculated as NaN in line 174 of dust model", tau_accr
+          endif 
+
+          if (dtime .ne. dtime) then
+            write(*,*) "dtime",
+     &                 "calculated as NaN in line 174 of dust model", dtime
+          endif 
+
           dM(n) = dM(n) + min((1 - dmetpt(n) / Mmet(n))
      &            * (dmetpt(n)/tau_accr) * dtime,
      &            Mmet(n) - dmetpt(n)) ! growth capped by gas in a single cell
