@@ -212,9 +212,11 @@
           dMs = min(dust_Density(i,j,k)/tau_dest(i)*dtime,
      &          dust_Density(i,j,k))
       endif
-      if (dMs .gt. dust_Density(i,j,k)) then
-          write (*,*) "WARNING: dMs >= Mdust SNe shock destruction:", 
+      if (dMs .ge. dust_Density(i,j,k)) then
+            if (dMs .gt. dust_Density(i,j,k)) then
+                  write (*,*) "WARNING: dMs > Mdust SNe shock destruction:", 
      &                SNe_ThisTimeStep(i,j,k), tau_dest(i)
+            endif
       else
           dMs = dMs + dust_Density(i,j,k) / tau_sput(i) *3.0* dtime
           dMs = min(dMs,dust_Density(i,j,k))
