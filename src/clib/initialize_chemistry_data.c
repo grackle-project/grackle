@@ -335,6 +335,8 @@ void show_parameters(FILE *fp, chemistry_data *my_chemistry)
           my_chemistry->radiative_transfer_hydrogen_only);
   fprintf(fp, "self_shielding_method             = %d\n",
           my_chemistry->self_shielding_method);
+  fprintf(fp, "H2_custom_shielding               = %d\n",
+          my_chemistry->H2_custom_shielding);
   fprintf(fp, "H2_self_shielding                 = %d\n",
           my_chemistry->H2_self_shielding);
 # ifdef _OPENMP

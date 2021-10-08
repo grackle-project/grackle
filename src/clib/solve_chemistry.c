@@ -82,7 +82,8 @@ extern void FORTRAN_NAME(solve_rate_cool_g)(
  	long long *metDataSize, double *metCooling,
         double *metHeating, int *clnew,
         int *iVheat, int *iMheat, gr_float *Vheat, gr_float *Mheat,
-        int *iisrffield, gr_float* isrf_habing);
+        int *iisrffield, gr_float* isrf_habing, 
+        int *iH2shieldcustom, gr_float* f_shield_custom);
 
 int local_solve_chemistry(chemistry_data *my_chemistry,
                           chemistry_data_storage *my_rates,
@@ -358,7 +359,9 @@ int local_solve_chemistry(chemistry_data *my_chemistry,
     my_fields->volumetric_heating_rate,
     my_fields->specific_heating_rate,
     &my_chemistry->use_isrf_field,
-    my_fields->isrf_habing);
+    my_fields->isrf_habing, 
+    &my_chemistry->H2_custom_shielding,
+    my_fields->H2_custom_shielding_factor);
 
   return SUCCESS;
 

@@ -131,6 +131,7 @@ chemistry_data _set_default_chemistry_parameters(void)
   /* approximate self-shielding */
   my_chemistry.self_shielding_method                  = 0;
   my_chemistry.H2_self_shielding                      = 0;
+  my_chemistry.H2_custom_shielding                    = 0;
 
 //number of OpenMP threads
 # ifdef _OPENMP
