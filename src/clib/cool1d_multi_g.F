@@ -1001,7 +1001,7 @@ c  new (correct) way: (april 4, 2007)
 
 !     Electron recombination onto dust grains (eqn. 9 of Wolfire 1995)
 
-      if ((idustall .gt. 0) .or. (idustrec .gr. 0)) then
+      if ((idustall .gt. 0) .or. (idustrec .gt. 0)) then
 
           do i = is + 1, ie + 1
              if (itmask(i)) then
