@@ -70,6 +70,9 @@ typedef struct
   /* Flag to supply a dust density field */
   int use_dust_density_field;
 
+  /* Flag for enabling recombination cooling on grains */
+  int dust_recombination_cooling;
+
   /* photo-electric heating from irradiated dust */
   int photoelectric_heating;
   double photoelectric_heating_rate;

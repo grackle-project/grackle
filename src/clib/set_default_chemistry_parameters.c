@@ -69,6 +69,7 @@ chemistry_data _set_default_chemistry_parameters(void)
   my_chemistry.recombination_cooling_rates    = 1;
   my_chemistry.bremsstrahlung_cooling_rates   = 1;
 
+  my_chemistry.dust_recombination_cooling     = -1; // unset
   my_chemistry.photoelectric_heating          = -1; // unset
   // epsilon=0.05, G_0=1.7 (in erg s^-1 cm^-3)
   my_chemistry.photoelectric_heating_rate     = 8.5e-26;
