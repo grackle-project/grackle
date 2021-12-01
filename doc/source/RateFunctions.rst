@@ -42,7 +42,9 @@ Inputs
 
 .. c:var:: double units
 
-    Unit conversion factor -- will return results in cgs units when set to 1.
+    The calculated rate will be divided through by this number; thereby facilitating
+    the use of arbitrary units. If set to 1, the rate will be calculated in CGS units
+    -- the units in which the rate equation is defined.
 
 .. c:var:: chemistry_data *my_chemistry
 
@@ -142,7 +144,9 @@ Inputs
 
 .. c:var:: double units
 
-    Unit conversion factor -- will return results in cgs units when set to 1.
+    The calculated rate will be divided through by this number; thereby facilitating
+    the use of arbitrary units. If set to 1, the rate will be calculated in CGS units
+    -- the units in which the rate equation is defined.
 
 .. c:var:: double *results_array
 
@@ -213,7 +217,9 @@ Inputs
 
 .. c:var:: double units
 
-    Unit conversion factor -- will return results in cgs units when set to 1.
+    The calculated rate will be divided through by this number; thereby facilitating
+    the use of arbitrary units. If set to 1, the rate will be calculated in CGS units
+    -- the units in which the rate equation is defined.
 
 .. c:var:: chemistry_data *my_chemistry
 
@@ -277,7 +283,9 @@ Inputs
 
 .. c:var:: double units
 
-    Unit conversion factor -- will return results in cgs units when set to 1.
+    The calculated rate will be divided through by this number; thereby facilitating
+    the use of arbitrary units. If set to 1, the rate will be calculated in CGS units
+    -- the units in which the rate equation is defined.
 
 .. c:var:: chemistry_data *my_chemistry
 
