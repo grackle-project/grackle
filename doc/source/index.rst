@@ -42,6 +42,7 @@ Contents:
    Testing.rst
    Integration.rst
    Parameters.rst
+   RateFunctions.rst
    Reference.rst
    Python.rst
    Conduct.rst
