@@ -5,7 +5,7 @@
 ! calculate characteristic timescales used for subcycling
 !////////////////////////////////////////////////////////////
       subroutine dust_tau_for_timestep(in, jn, kn, i, j, k,
-     &              Density, Tgas, metal_Density,
+     &              Density, Tgas, Tdust, metal_Density,
      &              gas_metal1, gas_metal2, gas_metal3,
      &              gas_metal4, gas_metal5, gas_metal6,
      &              gas_metal7, gas_metal8, gas_metal9,
@@ -20,7 +20,7 @@
       real*8 tau_accr(in), tau_dest(in), tau_sput(in),
      &       z_solar, SolarAbundances(NUM_METAL_SPECIES_GRACKLE),
      &       time_units, dens_units, len_units, aye, dtime
-      R_PREC Density(in,jn,kn), Tgas(in,jn,kn), metal_Density(in,jn,kn),
+      R_PREC Density(in,jn,kn), Tgas(in,jn,kn), Tdust(in,jn,kn), metal_Density(in,jn,kn),
      &       gas_metal1(in,jn,kn), gas_metal2(in,jn,kn),
      &       gas_metal3(in,jn,kn), gas_metal4(in,jn,kn),
      &       gas_metal5(in,jn,kn), gas_metal6(in,jn,kn),
@@ -41,7 +41,7 @@
 
 !   growth
       tau_accr0 = tau_ref * (DUST_GROWTH_DENSREF / dens_proper)
-     &     * (DUST_GROWTH_TREF/Tgas(i,j,k))**0.5
+     &     * (Tdust(i,j,k)/Tgas(i,j,k))**0.5
       tau_accr(i) = 1.d+20
       tau_accr(i) = min(tau_accr0 * (z_solar
      &     / metal_Density(i,j,k)), tau_accr(i))
@@ -87,7 +87,7 @@
 !   main routine for dust growth and destruction
 !////////////////////////////////////////////////////////////
       subroutine dust_growth_and_destruction(in, jn, kn, i, j, k,
-     &     dust_Density, metal_Density, Tgas,
+     &     dust_Density, metal_Density, Tgas, Tdust,
      &     gas_metal1, gas_metal2, gas_metal3,
      &     gas_metal4, gas_metal5, gas_metal6,
      &     gas_metal7, gas_metal8, gas_metal9,
@@ -107,7 +107,7 @@
       real*8 tau_dest(in), tau_sput(in),
      &       z_solar, SolarAbundances(NUM_METAL_SPECIES_GRACKLE),
      &       time_units, dens_units, len_units, aye, dtime
-      R_PREC Tgas(in,jn,kn),
+      R_PREC Tgas(in,jn,kn), Tdust(in,jn,kn),
      &       gas_metal1(in,jn,kn), gas_metal2(in,jn,kn),
      &       gas_metal3(in,jn,kn), gas_metal4(in,jn,kn),
      &       gas_metal5(in,jn,kn), gas_metal6(in,jn,kn),
@@ -167,7 +167,7 @@
 
 !   metals accreted from gas to dust
       tau_accr0 = tau_ref * (DUST_GROWTH_DENSREF/dens_proper)
-     &     * (DUST_GROWTH_TREF/Tgas(i,j,k))**0.5
+     &     * (Tdust(i,j,k)/Tgas(i,j,k))**0.5
       do n=1+1,NUM_METAL_SPECIES_GRACKLE+1
           Mmet(n) = metpt(n) + dmetpt(n)
           tau_accr = tau_accr0 * SolarAbundances(n-1) / metpt(n)
