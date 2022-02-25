@@ -1428,18 +1428,20 @@ c -------------------------------------------------------------------
                ngas_touse = d(i,j,k) * dom / mmw(i)
                ngas_touse = min(ngas_touse,1E7_DKIND)
 
-               aWG2019 = (0.8711_DKIND * log10(tgas_touse) - 1.928_DKIND) * 
-     &                 exp(-0.2856_DKIND * log10(ngas_touse)) +
-     &                 (-0.9639_DKIND * log10(tgas_touse) + 3.892_DKIND)
+               aWG2019 = (0.8711_DKIND *
+     &              log10(tgas_touse) - 1.928_DKIND) *
+     &              exp(-0.2856_DKIND * log10(ngas_touse)) +
+     &              (-0.9639_DKIND * log10(tgas_touse) + 3.892_DKIND)
 
                x = 2.0E-15_DKIND * N_H2
                b_doppler = 1E-5_DKIND *
      &                 sqrt(2._DKIND * kboltz *
      &                      tgas1d(i) / mass_h)
-!              f_shield = 0.965_DKIND / (1._DKIND + x/b_doppler)**1.1+
-               f_shield = 0.965_DKIND / (1._DKIND + x/b_doppler)**aWG2019+
-     &           0.035_DKIND * exp(-8.5E-4_DKIND * sqrt(1._DKIND +x))/
-     &           sqrt(1._DKIND + x)
+               f_shield = 0.965_DKIND /
+     &              (1._DKIND + x/b_doppler)**aWG2019 +
+     &              0.035_DKIND * exp(-8.5e-4_DKIND *
+     &              sqrt(1._DKIND + x)) /
+     &              sqrt(1._DKIND + x)
 
 ! avoid f>1
                f_shield = min(f_shield, 1._DKIND)
