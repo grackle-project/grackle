@@ -391,7 +391,7 @@ c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 fo
 !$omp&   brem, edot,
 !$omp&   hyd01k, h2k01, vibh, roth, rotl,
 !$omp&   gpldl, gphdl, hdlte, hdlow, cieco,
-!$omp&   itmask,
+!$omp&   itmask )
 #endif
       do t = 0, dk*dj-1
         k = t/dj      + ks+1
@@ -1166,11 +1166,6 @@ c -------------------------------------------------------------------
       real*8 tgas_touse, ngas_touse, aWG2019
 
       real*8 nSSh, nratio
-
-#ifdef _OPENMP
-!$omp&   l_H2shield, divrho, N_H2, tgas_touse, ngas_touse,
-!$omp&   b_doppler, f_shield, aWG2019 )
-#endif
 
 !     Set log values of start and end of lookup tables
 
