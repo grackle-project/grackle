@@ -64,7 +64,7 @@ if __name__ == "__main__":
 
     if my_chemistry.comoving_coordinates:
         # velocity units for comoving coordinates
-        my_chemistry.velocity_units = my_chemistry.a_units * \
+        my_chemistry.velocity_units = \
           (my_chemistry.length_units / my_chemistry.a_value) / \
           my_chemistry.time_units
     else:
