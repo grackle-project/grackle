@@ -480,6 +480,12 @@ and pointers to all field arrays.
    :c:data:`H2_self_shielding` is set to 2.  Field data
    should be in :c:data:`length_units`.
 
+.. c:var:: gr_float *H2_custom_shielding_factor
+
+   Pointer to a field containing attenuation factors to 
+   be multiplied with the H\ :sub:`2`\ dissociation rate.
+   Used when the :c:data:`H2_custom_shielding` flag is set.
+
 .. c:var:: gr_float *isrf_habing
 
    Pointer to a field containing values of the strength

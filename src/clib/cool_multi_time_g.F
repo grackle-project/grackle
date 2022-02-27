@@ -6,7 +6,7 @@
      &                  cooltime,
      &                in, jn, kn, nratec, iexpand, 
      &                ispecies, imetal, imcool, idust,
-     &                idustall, idustfield, idim,
+     &                idustall, idustfield, idustrec, idim,
      &                is, js, ks, ie, je, ke, ih2co, ipiht, igammah,
      &                aye, temstart, temend,
      &                utem, uxyz, uaye, urho, utim,
@@ -63,7 +63,7 @@
       integer in, jn, kn, is, js, ks, ie, je, ke, nratec, 
      &        iexpand, ih2co, ipiht, ispecies, imetal, idim,
      &        imcool, idust, idustall,
-     &        idustfield, igammah, ih2optical, iciecool,
+     &        idustfield, idustrec, igammah, ih2optical, iciecool,
      &        clnew, iVheat, iMheat, iradtrans, iradshield,
      &        iisrffield
 
@@ -72,7 +72,7 @@
      &        gamma, fh, z_solar, fgr, clEleFra
       R_PREC  d(in,jn,kn),   e(in,jn,kn),
      &        u(in,jn,kn),   v(in,jn,kn),    w(in,jn,kn),
-     &        de(in,jn,kn),  HI(in,jn,kn),   HII(in,jn,kn),
+     &        de(in,jn,kn),  HI(in,jn,kn),   HII(in,jn,kn), idustrec,
      &        HeI(in,jn,kn), HeII(in,jn,kn), HeIII(in,jn,kn),
      &        HM(in,jn,kn),  H2I(in,jn,kn),  H2II(in,jn,kn),
      &        DI(in,jn,kn),  DII(in,jn,kn),  HDI(in,jn,kn),
@@ -253,7 +253,7 @@
      &                d, e, u, v, w, de, HI, HII, HeI, HeII, HeIII,
      &                in, jn, kn, nratec, 
      &                iexpand, ispecies, imetal, imcool,
-     &                idust, idustall, idustfield,
+     &                idust, idustall, idustfield, idustrec,
      &                idim, is, ie, j, k, ih2co, ipiht, 1, igammah,
      &                aye, temstart, temend, z_solar, fgr,
      &                utem, uxyz, uaye, urho, utim,
