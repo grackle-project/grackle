@@ -72,7 +72,7 @@
      &        gamma, fh, z_solar, fgr, clEleFra
       R_PREC  d(in,jn,kn),   e(in,jn,kn),
      &        u(in,jn,kn),   v(in,jn,kn),    w(in,jn,kn),
-     &        de(in,jn,kn),  HI(in,jn,kn),   HII(in,jn,kn), idustrec,
+     &        de(in,jn,kn),  HI(in,jn,kn),   HII(in,jn,kn),
      &        HeI(in,jn,kn), HeII(in,jn,kn), HeIII(in,jn,kn),
      &        HM(in,jn,kn),  H2I(in,jn,kn),  H2II(in,jn,kn),
      &        DI(in,jn,kn),  DII(in,jn,kn),  HDI(in,jn,kn),
