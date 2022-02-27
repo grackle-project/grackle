@@ -61,9 +61,16 @@ if __name__ == "__main__":
     my_chemistry.density_units = mass_hydrogen_cgs # rho = 1.0 is 1.67e-24 g
     my_chemistry.length_units = cm_per_mpc         # 1 Mpc in cm
     my_chemistry.time_units = sec_per_Myr          # 1 Myr in s
-    my_chemistry.velocity_units = my_chemistry.a_units * \
-        (my_chemistry.length_units / my_chemistry.a_value) / \
-        my_chemistry.time_units
+
+    if my_chemistry.comoving_coordinates:
+        # velocity units for comoving coordinates
+        my_chemistry.velocity_units = my_chemistry.a_units * \
+          (my_chemistry.length_units / my_chemistry.a_value) / \
+          my_chemistry.time_units
+    else:
+        # velocity units for proper coordinates
+        my_chemistry.velocity_units = my_chemistry.length_units / \
+          my_chemistry.time_units
 
     rval = my_chemistry.initialize()
 
