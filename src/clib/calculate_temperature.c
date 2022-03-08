@@ -46,6 +46,8 @@ extern void FORTRAN_NAME(calc_temp_cloudy_g)(
         double *priPar1, double *priPar2, double *priPar3, 
  	long long *priDataSize, double *priMMW);
 
+double get_temperature_units(code_units *my_units);
+
 int local_calculate_pressure(chemistry_data *my_chemistry,
                              chemistry_data_storage *my_rates,
                              code_units *my_units,
@@ -86,7 +88,7 @@ int local_calculate_temperature(chemistry_data *my_chemistry,
 
   /* Calculate temperature units. */
 
-  double temperature_units =  mh * POW(my_units->velocity_units, 2) / kboltz;
+  double temperature_units = get_temperature_units(my_units);
 
   double number_density, tiny_number = 1.-20;
   double inv_metal_mol = 1.0 / MU_METAL;
@@ -176,7 +178,7 @@ int local_calculate_temperature_table(chemistry_data *my_chemistry,
 
   /* Calculate temperature units. */
 
-  double temperature_units = mh * POW(my_units->velocity_units, 2) / kboltz;
+  double temperature_units = get_temperature_units(my_units);
 
   FORTRAN_NAME(calc_temp_cloudy_g)(
         my_fields->density,

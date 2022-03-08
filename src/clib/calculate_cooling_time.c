@@ -24,6 +24,8 @@ extern chemistry_data_storage grackle_rates;
 
 /* function prototypes */
 
+double get_temperature_units(code_units *my_units);
+
 int update_UVbackground_rates(chemistry_data *my_chemistry,
                               chemistry_data_storage *my_rates,
                               photo_rate_storage *my_uvb_rates,
@@ -142,7 +144,7 @@ int local_calculate_cooling_time(chemistry_data *my_chemistry,
 
   /* Calculate temperature units. */
 
-  double temperature_units = mh * POW(my_units->velocity_units, 2) / kboltz;
+  double temperature_units = get_temperature_units(my_units);
 
   /* Call the fortran routine to solve cooling equations. */
 
