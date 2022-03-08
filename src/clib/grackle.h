@@ -22,6 +22,12 @@ extern int grackle_verbose;
 extern chemistry_data *grackle_data;
 extern chemistry_data_storage grackle_rates;
 
+double get_velocity_units(code_units *my_units);
+
+void set_velocity_units(code_units *my_units);
+
+double get_temperature_units(code_units *my_units);
+
 int set_default_chemistry_parameters(chemistry_data *my_grackle);
 
 chemistry_data _set_default_chemistry_parameters(void);
