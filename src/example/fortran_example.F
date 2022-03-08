@@ -93,14 +93,13 @@ c     Set units
       my_units%density_units = 1.67d-24
       my_units%length_units = 1.0d0
       my_units%time_units = 1.0d12
-      my_units%velocity_units = my_units%length_units / 
-     &     my_units%time_units
       my_units%a_units = 1.0d0
 
 c     Set initial expansion factor (for internal units).
 c     Set expansion factor to 1 for non-cosmological simulation.
       initial_redshift = 0.;
       my_units%a_value = 1. / (1. + initial_redshift);
+      call set_velocity_units(my_units)
 
 c     Initialize the Grackle
 
@@ -125,10 +124,7 @@ c     start indices, and end indices to 0.
 c     0-based
       grid_end(1) = field_size - 1
 
-c     set temperature units
-      temperature_units =  mh *
-     &     (my_units%a_units * my_units%length_units / 
-     &      my_units%time_units)**2 / kboltz
+      temperature_units = get_temperature_units(my_units)
 
       do i = 1,field_size
          density(i) = 1.0
