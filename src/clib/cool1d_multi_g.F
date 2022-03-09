@@ -7,7 +7,7 @@
      &                d, e, u, v, w, de, HI, HII, HeI, HeII, HeIII,
      &                in, jn, kn, nratec, 
      &                iexpand, ispecies, imetal, imcool,
-     &                idust, idustall, idustfield,
+     &                idust, idustall, idustfield, idustrec,
      &                idim, is, ie, j, k, ih2co, ipiht, iter, igammah,
      &                aye, temstart, temend, z_solar, fgr,
      &                utem, uxyz, uaye, urho, utim,
@@ -72,7 +72,7 @@
 
       integer in, jn, kn, is, ie, j, k, nratec, idim,
      &        iexpand, ih2co, ipiht, ispecies, imcool,
-     &        idust, idustall, idustfield,
+     &        idust, idustall, idustfield, idustrec,
      &        imetal, igammah, ih2optical, iciecool, clnew,
      &        iVheat, iMheat, iradtrans, iradshield,
      &        iisrffield
@@ -167,7 +167,7 @@
 
 !     Set flag for dust-related options
 
-      anydust = (idust .gt. 0) .or. (idustall .gt. 0)
+      anydust = (idust .gt. 0) .or. (idustall .gt. 0) .or. (idustrec .gt. 0)
 
 !     Set flag for needing interpolation variables
 
@@ -1001,7 +1001,7 @@ c  new (correct) way: (april 4, 2007)
 
 !     Electron recombination onto dust grains (eqn. 9 of Wolfire 1995)
 
-      if (idustall .gt. 0) then
+      if ((idustall .gt. 0) .or. (idustrec .gt. 0)) then
 
           do i = is + 1, ie + 1
              if (itmask(i)) then
@@ -1015,7 +1015,7 @@ c  new (correct) way: (april 4, 2007)
                 grbeta = 0.74_DKIND / tgas(i)**0.068_DKIND
                 edot(i) = edot(i) -
      &               regr(i) * (myisrf(i)*dom_inv / myde(i))**grbeta *
-     &               myde(i) * rhoH(i)
+     &               myde(i) * rhoH(i) * dust2gas(i) / fgr
              endif
           enddo
 

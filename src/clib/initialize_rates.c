@@ -215,7 +215,7 @@ int initialize_rates(chemistry_data *my_chemistry, chemistry_data_storage *my_ra
 { 
     //* Set the flag for dust calculations.
     int anyDust;
-    if ( my_chemistry->h2_on_dust > 0 || my_chemistry->dust_chemistry > 0) {
+    if ( my_chemistry->h2_on_dust > 0 || my_chemistry->dust_chemistry > 0 || my_chemistry->dust_recombination_cooling > 0) {
         anyDust = TRUE;
     } else {
         anyDust = FALSE;

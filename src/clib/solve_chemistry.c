@@ -36,7 +36,7 @@ extern void FORTRAN_NAME(solve_rate_cool_g)(
         int *ispecies, int *imetal, int *imcool, int *idust, int *idustall,
         int *idustfield, int *idim,
 	int *is, int *js, int *ks, int *ie, int *je, int *ke,
-        int *ih2co, int *ipiht, int *igammah,
+        int *ih2co, int *ipiht, int *idustrec, int *igammah,
 	double *dx, double *dt, double *aye, double *temstart, double *temend,
 	double *utem, double *uxyz, double *uaye, double *urho, double *utim,
 	double *gamma, double *fh, double *dtoh, double *z_solar, double *fgr,
@@ -82,7 +82,8 @@ extern void FORTRAN_NAME(solve_rate_cool_g)(
  	long long *metDataSize, double *metCooling,
         double *metHeating, int *clnew,
         int *iVheat, int *iMheat, gr_float *Vheat, gr_float *Mheat,
-        int *iisrffield, gr_float* isrf_habing);
+        int *iisrffield, gr_float* isrf_habing, 
+        int *iH2shieldcustom, gr_float* f_shield_custom);
 
 int local_solve_chemistry(chemistry_data *my_chemistry,
                           chemistry_data_storage *my_rates,
@@ -201,6 +202,7 @@ int local_solve_chemistry(chemistry_data *my_chemistry,
     my_fields->grid_end+2,
     &my_chemistry->ih2co,
     &my_chemistry->ipiht,
+    &my_chemistry->dust_recombination_cooling,
     &my_chemistry->photoelectric_heating,
     &(my_fields->grid_dx),
     &dt_value,
@@ -358,7 +360,9 @@ int local_solve_chemistry(chemistry_data *my_chemistry,
     my_fields->volumetric_heating_rate,
     my_fields->specific_heating_rate,
     &my_chemistry->use_isrf_field,
-    my_fields->isrf_habing);
+    my_fields->isrf_habing, 
+    &my_chemistry->H2_custom_shielding,
+    my_fields->H2_custom_shielding_factor);
 
   return SUCCESS;
 

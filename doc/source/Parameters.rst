@@ -210,6 +210,14 @@ For all on/off integer flags, 0 is off and 1 is on.
       directly from equation 2 of `Wolfire et al. (1995)
       <https://ui.adsabs.harvard.edu/abs/1995ApJ...443..152W/abstract>`__.
 
+.. c:var:: int dust_recombination_cooling
+
+   Flag to enable recombination cooling onto dust grains using 
+   equation 9 of `Wolfire et al. (1995) 
+   <https://ui.adsabs.harvard.edu/abs/1995ApJ...443..152W/abstract>`__
+   rescaled by the local dust-to-gas ratio. This option is automatically 
+   set by :c:data:`h2_on_dust` > 0 or :c:data:`dust_chemistry` > 0.
+   Default: 0.
 
 .. note:: With :c:data:`primordial_chemistry` > 0, the electron density
    used to calculate epsilon for :c:data:`photoelectric_heating` = 3
@@ -366,6 +374,18 @@ For all on/off integer flags, 0 is off and 1 is on.
     - 2: Supply an array of lengths using the :c:data:`H2_self_shielding_length`
       field.
     - 3: Use the local Jeans length.
+
+.. c:var:: int H2_custom_shielding
+
+   Flag to enable the user to provide an additional field which acts as 
+   an additional attenuation factor for both the UV background dissociation 
+   rate and the H\ :sub:`2`\  dissociation rate given by 
+   :c:data:`RT_H2_dissociation_rate` (if present), that is separate from the 
+   :c:data:`H2_self_shielding` attenuation factor. 
+   The factor, which is intended to be unspecific can e.g. be used in order 
+   to include grain size dependent dust extinction or any other user-specific 
+   source of attenuation.
+   Default: 0.
 
 .. c:var:: int self_shielding_method
 

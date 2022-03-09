@@ -69,6 +69,7 @@ chemistry_data _set_default_chemistry_parameters(void)
   my_chemistry.recombination_cooling_rates    = 1;
   my_chemistry.bremsstrahlung_cooling_rates   = 1;
 
+  my_chemistry.dust_recombination_cooling     = -1; // unset
   my_chemistry.photoelectric_heating          = -1; // unset
   // epsilon=0.05, G_0=1.7 (in erg s^-1 cm^-3)
   my_chemistry.photoelectric_heating_rate     = 8.5e-26;
@@ -131,6 +132,7 @@ chemistry_data _set_default_chemistry_parameters(void)
   /* approximate self-shielding */
   my_chemistry.self_shielding_method                  = 0;
   my_chemistry.H2_self_shielding                      = 0;
+  my_chemistry.H2_custom_shielding                    = 0;
 
 //number of OpenMP threads
 # ifdef _OPENMP

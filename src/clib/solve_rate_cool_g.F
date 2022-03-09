@@ -8,7 +8,7 @@
      &                in, jn, kn, nratec, iexpand, 
      &                ispecies, imetal, imcool, idust,
      &                idustall, idustfield, idim,
-     &                is, js, ks, ie, je, ke, ih2co, ipiht, igammah,
+     &                is, js, ks, ie, je, ke, ih2co, ipiht, idustrec, igammah,
      &                dx, dt, aye, temstart, temend, 
      &                utem, uxyz, uaye, urho, utim,
      &                gamma, fh, dtoh, z_solar, fgr,
@@ -44,7 +44,8 @@
      &                metPar1, metPar2, metPar3, metPar4, metPar5,
      &                metDataSize, metCooling, metHeating, clnew,
      &                iVheat, iMheat, Vheat, Mheat,
-     &                iisrffield, isrf_habing)
+     &                iisrffield, isrf_habing, 
+     &                iH2shieldcustom, f_shield_custom)
 
 !
 !  SOLVE MULTI-SPECIES RATE EQUATIONS AND RADIATIVE COOLING
@@ -78,6 +79,7 @@
 !    dust     - dust density field
 !    kph*     - photoionization fields
 !    gamma*   - photoheating fields
+!    f_shield_custom - custom H2 shielding factor
 !
 !    is,ie    - start and end indices of active region (zero based)
 !    iexpand  - comoving coordinates flag (0 = off, 1 = on)
@@ -91,6 +93,7 @@
 !    iisrffield - flag if a field for the interstellar radiation field is present
 !    ih2co    - flag to include H2 cooling (1 = on, 0 = off)
 !    ipiht    - flag to include photoionization heating (1 = on, 0 = off)
+!    idustrec - flag to include dust recombination cooling (1 = on, -1 = off)
 !    iH2shield - flag for approximate self-shielding of H2 (Wolcott-Green+ 2011)
 !    iradshield - flag for approximate self-shielding of UV background
 !    avgsighi   - spectrum averaged ionization crs for HI for use with shielding
@@ -100,6 +103,7 @@
 !    iradcoupled - flag to indicate coupled radiative transfer
 !    iradstep  - flag to indicate intermediate coupled radiative transfer timestep
 !    irt_honly - flag to indicate applying RT ionization and heating to HI only
+!    iH2shieldcustom - flag to indicate a custom H2 shielding factor is provided
 
 !    fh       - Hydrogen mass fraction (typically 0.76)
 !    dtoh     - Deuterium to H mass ratio
@@ -158,11 +162,11 @@
 
       integer icool, in, jn, kn, is, js, ks, ie, je, ke, nratec, 
      &        iexpand, ih2co, ipiht, ispecies, imetal, idim,
-     &        ierr, imcool, idust, idustall, idustfield,
+     &        ierr, imcool, idust, idustall, idustfield, idustrec,
      &        igammah, ih2optical, iciecool, ithreebody,
      &        ndratec, clnew, iVheat, iMheat, iH2shield, iradshield,
      &        iradtrans, iradcoupled, iradstep, irt_honly,
-     &        iisrffield
+     &        iisrffield, iH2shieldcustom
 
       real*8  dx, dt, aye, temstart, temend, gamma,
      &        utim, uxyz, uaye, urho, utem, fh, dtoh, z_solar, 
@@ -191,6 +195,10 @@
 !  Interstellar radiation field for dust heating
 
       R_PREC  isrf_habing(in,jn,kn)
+
+!  Custom H2 shielding factor
+
+      R_PREC f_shield_custom(in, jn, kn)
 
 !  Cooling tables (coolings rates as a function of temperature)
 
@@ -455,7 +463,7 @@ c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 fo
      &                d, e, u, v, w, de, HI, HII, HeI, HeII, HeIII,
      &                in, jn, kn, nratec, 
      &                iexpand, ispecies, imetal, imcool,
-     &                idust, idustall, idustfield,
+     &                idust, idustall, idustfield, idustrec,
      &                idim, is, ie, j, k, ih2co, ipiht, iter, igammah,
      &                aye, temstart, temend, z_solar, fgr,
      &                utem, uxyz, uaye, urho, utim,
@@ -520,7 +528,8 @@ c      chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 fo
      &               k31shield, h2dust, ncrn, ncrd1, ncrd2, 
      &               t1, t2, tdef, logtem, indixe, 
      &               dom, coolunit, tbase1, xbase1, dx_cgs, c_ljeans,
-     &               iradtrans, kdissH2I, xH2shield, itmask)
+     &               iradtrans, kdissH2I, xH2shield, iH2shieldcustom, 
+     &               f_shield_custom,  itmask)
 
 !           Compute dedot and HIdot, the rates of change of de and HI
 !             (should add itmask to this call)
@@ -1074,7 +1083,8 @@ c -------------------------------------------------------------------
      &                h2dust, ncrn, ncrd1, ncrd2,
      &                t1, t2, tdef, logtem, indixe, 
      &                dom, coolunit, tbase1, xbase1, dx_cgs, c_ljeans,
-     &                iradtrans, kdissH2I, xH2shield, itmask)
+     &                iradtrans, kdissH2I, xH2shield, iH2shieldcustom, 
+     &                f_shield_custom, itmask)
 ! -------------------------------------------------------------------
 
       implicit NONE
@@ -1084,7 +1094,8 @@ c -------------------------------------------------------------------
 
       integer is, ie, nratec,
      &        in, jn, kn, ispecies, ithreebody, j, k,
-     &        ndratec, iH2shield, iradshield, iradtrans
+     &        ndratec, iH2shield, iradshield, iradtrans, 
+     &        iH2shieldcustom
       real*8 temstart, temend, tgas1d(in), mmw(in), dom,
      &       dtemstart, dtemend
       real*8 coolunit, tbase1, xbase1, dx_cgs, c_ljeans
@@ -1119,6 +1130,10 @@ c -------------------------------------------------------------------
 !     H2 self-shielding length-scale field
 
       R_PREC  xH2shield(in,jn,kn)
+
+!  Custom H2 shielding factor
+
+      R_PREC f_shield_custom(in, jn, kn)
 
 !     Returned rate values
 
@@ -1424,6 +1439,15 @@ c -------------------------------------------------------------------
                k31shield(i) = f_shield * k31shield(i)
             endif
          enddo
+      endif
+
+!     Custom H2 shielding
+      if (iH2shieldcustom .gt. 0) then
+        do i = is+1, ie+1
+            if (itmask(i)) then
+              k31shield(i) = f_shield_custom(i,j,k) * k31shield(i)
+            endif
+        enddo
       endif
       endif
 
