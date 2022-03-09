@@ -1176,6 +1176,10 @@ c -------------------------------------------------------------------
      &       f_shield, b_doppler, l_H2shield
       real*8 k13_CID, k13_DT
 
+!     locals for H2 self-shielding as WG+19
+
+      real*8 tgas_touse, ngas_touse, aWG2019
+
       real*8 nSSh, nratio
 
 !     Set log values of start and end of lookup tables
@@ -1429,13 +1433,32 @@ c -------------------------------------------------------------------
 
                N_H2 = dom*H2I(i,j,k) * l_H2shield
 
+! update: self-shielding following Wolcott-Green & Haiman (2019)
+! range of validity: T=100-8000 K, n<=1e7 cm^-3
+
+               tgas_touse = max(tgas1d(i),1E2_DKIND)
+               tgas_touse = min(tgas_touse,8E3_DKIND)
+               ngas_touse = d(i,j,k) * dom / mmw(i)
+               ngas_touse = min(ngas_touse,1E7_DKIND)
+
+               aWG2019 = (0.8711_DKIND *
+     &              log10(tgas_touse) - 1.928_DKIND) *
+     &              exp(-0.2856_DKIND * log10(ngas_touse)) +
+     &              (-0.9639_DKIND * log10(tgas_touse) + 3.892_DKIND)
+
                x = 2.0E-15_DKIND * N_H2
                b_doppler = 1E-5_DKIND *
      &                 sqrt(2._DKIND * kboltz *
      &                      tgas1d(i) / mass_h)
-               f_shield = 0.965_DKIND / (1._DKIND + x/b_doppler)**1.1+
-     &           0.035_DKIND * exp(-8.5E-4_DKIND * sqrt(1._DKIND +x))/
-     &           sqrt(1._DKIND + x)
+               f_shield = 0.965_DKIND /
+     &              (1._DKIND + x/b_doppler)**aWG2019 +
+     &              0.035_DKIND * exp(-8.5e-4_DKIND *
+     &              sqrt(1._DKIND + x)) /
+     &              sqrt(1._DKIND + x)
+
+! avoid f>1
+               f_shield = min(f_shield, 1._DKIND)
+
                k31shield(i) = f_shield * k31shield(i)
             endif
          enddo
