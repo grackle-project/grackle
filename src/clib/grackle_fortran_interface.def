@@ -91,6 +91,7 @@ c     This is the fortran definition of grackle_chemistry_data
          REAL(C_DOUBLE) :: Gamma
          INTEGER(C_INT) :: h2_on_dust
          INTEGER(C_INT) :: use_dust_density_field
+         INTEGER(C_INT) :: dust_recombination_cooling
          INTEGER(C_INT) :: photoelectric_heating
          REAL(C_DOUBLE) :: photoelectric_heating_rate
          INTEGER(C_INT) :: use_isrf_field
@@ -127,6 +128,7 @@ c     This is the fortran definition of grackle_chemistry_data
          INTEGER(C_INT) :: radiative_transfer_hydrogen_only
          INTEGER(C_INT) :: self_shielding_method
          INTEGER(C_INT) :: H2_self_shielding
+         INTEGER(C_INT) :: H2_custom_shielding
          INTEGER(C_INT) :: h2_charge_exchange_rate
          INTEGER(C_INT) :: h2_dust_rate
          INTEGER(C_INT) :: h2_h_cooling_rate

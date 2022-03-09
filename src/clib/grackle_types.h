@@ -68,6 +68,7 @@ typedef struct
   gr_float *RT_H2_dissociation_rate;
 
   gr_float *H2_self_shielding_length;
+  gr_float *H2_custom_shielding_factor;
 
   gr_float *isrf_habing;
 

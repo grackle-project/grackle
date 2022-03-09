@@ -27,9 +27,7 @@ commands:
             pip install --upgrade pip
             pip install --upgrade wheel
             pip install --upgrade setuptools
-            pip install Cython numpy
-            pip install 'matplotlib<3.3.0'
-            pip install h5py fastcache flake8 pytest yt
+            pip install flake8
 
   lint:
     description: "Lint."
@@ -64,7 +62,7 @@ commands:
             make
             make install
             cd ../python
-            python setup.py develop
+            pip install -e .[dev]
 
   install-docs-dependencies:
     description: "Install dependencies for docs build."
@@ -133,7 +131,7 @@ executors:
         type: string
         default: latest
     docker:
-      - image: circleci/python:<< parameters.tag >>
+      - image: cimg/python:<< parameters.tag >>
 
 jobs:
   test-suite:
@@ -150,22 +148,8 @@ jobs:
     steps:
       - checkout
       - set-env
-
-      - restore_cache:
-          name: "Restore dependencies cache."
-          key: dependencies-python-<< parameters.tag >>-v3
-
       - install-dependencies
-
-      - save_cache:
-          name: "Save dependencies cache"
-          key: dependencies-python-<< parameters.tag >>-v3
-          paths:
-            - ~/.cache/pip
-            - ~/venv
-
       - lint
-
       - download-test-data
 
       - install-grackle:
@@ -202,16 +186,12 @@ workflows:
    tests:
      jobs:
        - test-suite:
-           name: "Python 3.6 tests"
-           tag: "3.6.11"
-
-       - test-suite:
-           name: "Python 3.8 tests"
-           tag: "3.8.5"
+           name: "Python 3.7 tests"
+           tag: "3.7.12"
 
        - docs-build:
            name: "Docs build"
-           tag: "3.8.5"
+           tag: "3.7.12"
 
    weekly:
      triggers:
@@ -223,17 +203,9 @@ workflows:
                 - master
      jobs:
        - test-suite:
-           name: "Python 3.6 tests"
-           tag: "3.6.11"
-
-       - test-suite:
            name: "Python 3.7 tests"
-           tag: "3.7.8"
-
-       - test-suite:
-           name: "Python 3.8 tests"
-           tag: "3.8.5"
+           tag: "3.7.12"
 
        - docs-build:
            name: "Docs build"
-           tag: "3.8.5"
+           tag: "3.7.12"

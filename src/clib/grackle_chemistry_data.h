@@ -70,6 +70,9 @@ typedef struct
   /* Flag to supply a dust density field */
   int use_dust_density_field;
 
+  /* Flag for enabling recombination cooling on grains */
+  int dust_recombination_cooling;
+
   /* photo-electric heating from irradiated dust */
   int photoelectric_heating;
   double photoelectric_heating_rate;
@@ -137,6 +140,10 @@ typedef struct
      These determine the length scale used in the calculation of the H2 column density.
      Please refer to the grackle documentation for specifics. */
   int H2_self_shielding;
+
+  /* flag for custom H2-shielding factor. The factor is provided as an additional field 
+     by the user and is multiplied to the rate for radiative H2 dissocitation */
+  int H2_custom_shielding;
 
   /* flag to select which formula for calculating k11 you want to use. 
      Setting to 1 will use Savin 2004, 2 will use Abel et al. 1996  */

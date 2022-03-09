@@ -73,6 +73,13 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
       }
     }
 
+    if (my_chemistry->dust_recombination_cooling < 0) {
+      my_chemistry->dust_recombination_cooling = 1;
+      if (grackle_verbose) {
+        fprintf(stdout, "Dust chemistry enabled, setting dust_recombination_cooling to 1.\n");
+      }
+    }
+
     if (my_chemistry->primordial_chemistry > 1 &&
         my_chemistry->h2_on_dust == 0) {
       my_chemistry->h2_on_dust = 1;
@@ -119,7 +126,7 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
     my_chemistry->HydrogenFractionByMass = 1. / (1. + 0.1 * 3.971);
   }
 
-  if (my_chemistry->h2_on_dust > 0 || my_chemistry->dust_chemistry > 0) {
+  if (my_chemistry->h2_on_dust > 0 || my_chemistry->dust_chemistry > 0 || my_chemistry->dust_recombination_cooling > 0) {
     my_rates->gas_grain = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
     my_rates->regr      = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
   }
@@ -265,6 +272,8 @@ void show_parameters(FILE *fp, chemistry_data *my_chemistry)
           my_chemistry->h2_on_dust);
   fprintf(fp, "use_dust_density_field            = %d\n",
           my_chemistry->use_dust_density_field);
+  fprintf(fp, "dust_recombination_cooling        = %d\n",
+          my_chemistry->dust_recombination_cooling);
   fprintf(fp, "photoelectric_heating             = %d\n",
           my_chemistry->photoelectric_heating);
   fprintf(fp, "photoelectric_heating_rate        = %g\n",
@@ -335,6 +344,8 @@ void show_parameters(FILE *fp, chemistry_data *my_chemistry)
           my_chemistry->radiative_transfer_hydrogen_only);
   fprintf(fp, "self_shielding_method             = %d\n",
           my_chemistry->self_shielding_method);
+  fprintf(fp, "H2_custom_shielding               = %d\n",
+          my_chemistry->H2_custom_shielding);
   fprintf(fp, "H2_self_shielding                 = %d\n",
           my_chemistry->H2_self_shielding);
 # ifdef _OPENMP
