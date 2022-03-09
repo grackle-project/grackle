@@ -46,6 +46,11 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('pygrackle', 'pygrackle')
     return config
 
+dev_requirements = [
+    'flake8',
+    'pytest',
+    'sphinx',
+]
 
 setup(
     name="pygrackle",
@@ -57,14 +62,17 @@ setup(
         'cython',
     ],
     install_requires=[
+        'cython',
         'h5py',
-        'setuptools',
         'numpy',
         'matplotlib',
-        'yt>=3.4.0',
+        'yt>=4.0.2',
     ],
     cmdclass={'build_ext': build_ext},
     license="BSD 3-clause",
     ext_modules=cython_extensions,
-    python_requires='>=3.6'
+    extras_require={
+          'dev': dev_requirements,
+    },
+    python_requires='>=3.7'
 )
