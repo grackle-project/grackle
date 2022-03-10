@@ -18,7 +18,7 @@ commands:
       - run:
           name: "Install dependencies."
           command: |
-            git submodule update --init
+            git submodule update --init --remote
             source $BASH_ENV
             sudo apt update
             sudo apt install -y libhdf5-serial-dev gfortran libtool-bin

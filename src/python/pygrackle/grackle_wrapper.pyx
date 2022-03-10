@@ -35,6 +35,12 @@ cdef class chemistry_data:
             raise RuntimeError("Error initializing chemistry")
         return ret
 
+    def set_velocity_units(self):
+        set_velocity_units(&self.units)
+
+    def get_velocity_units(self):
+        return get_velocity_units(&self.units)
+
     property use_grackle:
         def __get__(self):
             return self.data.use_grackle
@@ -872,8 +878,7 @@ cdef class chemistry_data:
 
     property temperature_units:
         def __get__(self):
-            return mass_hydrogen_cgs * \
-              self.velocity_units**2 / boltzmann_constant_cgs
+            return get_temperature_units(&self.units)
 
     property cooling_units:
         def __get__(self):

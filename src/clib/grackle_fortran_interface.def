@@ -142,6 +142,29 @@ cc       INTEGER(C_INT) :: omp_nthreads // not supported in fortran
 c     The following define the fortran interfaces to the C routines
 
       INTERFACE
+         REAL(C_DOUBLE) FUNCTION get_temperature_units(my_units)
+     &        bind(C)
+            IMPORT
+            TYPE(grackle_units), INTENT(IN) :: my_units
+         END FUNCTION get_temperature_units
+      END INTERFACE
+
+      INTERFACE
+         REAL(C_DOUBLE) FUNCTION get_velocity_units(my_units)
+     &        bind(C)
+            IMPORT
+            TYPE(grackle_units), INTENT(IN) :: my_units
+         END FUNCTION get_velocity_units
+      END INTERFACE
+
+      INTERFACE
+         SUBROUTINE set_velocity_units(my_units) bind(C)
+            IMPORT
+            TYPE(grackle_units), INTENT(INOUT) :: my_units
+         END SUBROUTINE set_velocity_units
+      END INTERFACE
+
+      INTERFACE
          INTEGER(C_INT) FUNCTION set_default_chemistry_parameters
      &        (my_grackle) bind(C)
             IMPORT

@@ -218,6 +218,12 @@ cdef extern from "grackle_types.h":
 cdef extern from "grackle.h":
     c_chemistry_data _set_default_chemistry_parameters()
 
+    void set_velocity_units(c_code_units *my_units)
+
+    double get_velocity_units(c_code_units *my_units)
+
+    double get_temperature_units(c_code_units *my_units)
+
     int _initialize_chemistry_data(c_chemistry_data *my_chemistry,
                                    c_chemistry_data_storage *my_rates,
                                    c_code_units *my_units)

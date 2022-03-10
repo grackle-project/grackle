@@ -25,6 +25,8 @@
 extern chemistry_data *grackle_data;
 extern chemistry_data_storage grackle_rates;
 
+double get_temperature_units(code_units *my_units);
+
 int local_calculate_pressure(chemistry_data *my_chemistry,
                              chemistry_data_storage *my_rates,
                              code_units *my_units,
@@ -58,7 +60,7 @@ int local_calculate_pressure(chemistry_data *my_chemistry,
  
     /* Calculate temperature units. */
 
-    double temperature_units =  mh * POW(my_units->velocity_units, 2) / kboltz;
+    double temperature_units = get_temperature_units(my_units);
 
     double number_density, nH2, GammaH2Inverse,
       GammaInverse = 1.0/(my_chemistry->Gamma-1.0), x, Gamma1, temp;
