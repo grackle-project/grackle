@@ -167,7 +167,8 @@
 
 !     Set flag for dust-related options
 
-      anydust = (idust .gt. 0) .or. (idustall .gt. 0) .or. (idustrec .gt. 0)
+      anydust = (idust .gt. 0) .or. (idustall .gt. 0) .or.
+     &          (idustrec .gt. 0)
 
 !     Set flag for needing interpolation variables
 
