@@ -68,14 +68,13 @@ int update_UVbackground_rates(chemistry_data *my_chemistry,
   // find interpolation index
   double *zvec = my_rates->UVbackground_table.z;
   double slope;
-  double zvec_grad = log10((1+zvec[index]) / (1+zvec[index-1]));
-  double redshift_grad = log10((1+Redshift) / (1+zvec[index-1]));
   int index=0;
   while (Redshift > zvec[index])
     index++;
   if(index == 0) index=1;
   if(index == my_rates->UVbackground_table.Nz) index--;
-
+  double zvec_grad = log10((1+zvec[index]) / (1+zvec[index-1]));
+  double redshift_grad = log10((1+Redshift) / (1+zvec[index-1]));
   // printf("index = %d, %.3f <= %.3f <= %.3f\n",index,zvec[index-1],Redshift,zvec[index]);
 
   // *** k24 ***
