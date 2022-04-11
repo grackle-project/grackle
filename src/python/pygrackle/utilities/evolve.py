@@ -13,7 +13,7 @@
 
 from collections import defaultdict
 import numpy as np
-import yt
+from yt import YTArray
 
 from .physical_constants import \
     gravitational_constant_cgs, \
@@ -41,14 +41,7 @@ def evolve_freefall(fc, final_density, safety_factor=0.01,
                     (32. * gravitational_constant *
                      fc["density"][0])), 0.5)
 
-        for field in fc.density_fields:
-            data[field].append(fc[field][0] * my_chemistry.density_units)
-        data["energy"].append(fc["energy"][0])
-        fc.calculate_temperature()
-        data["temperature"].append(fc["temperature"][0])
-        fc.calculate_pressure()
-        data["pressure"].append(fc["pressure"][0])
-        data["time"].append(current_time * my_chemistry.time_units)
+        add_to_data(fc, data, current_time)
 
         # compute the new density using the modified
         # free-fall collapse as per Omukai et al. (2005)
@@ -84,20 +77,7 @@ def evolve_freefall(fc, final_density, safety_factor=0.01,
         # update time
         current_time += dt
 
-    for field in data:
-        if field in fc.density_fields:
-            data[field] = yt.YTArray(data[field], "g/cm**3")
-        elif field == "energy":
-            data[field] = yt.YTArray(data[field], "erg/g")
-        elif field == "time":
-            data[field] = yt.YTArray(data[field], "s")
-        elif field == "temperature":
-            data[field] = yt.YTArray(data[field], "K")
-        elif field == "pressure":
-            data[field] = yt.YTArray(data[field], "dyne/cm**2")
-        else:
-            data[field] = np.array(data[field])
-
+    data = create_data_arrays(fc, data)
     return data
 
 def calculate_collapse_factor(pressure, density):
@@ -156,27 +136,48 @@ def evolve_constant_density(fc, final_temperature=None,
                fc["temperature"][0]))
         fc.solve_chemistry(dt)
 
-        for field in fc.density_fields:
-            data[field].append(fc[field][0] * my_chemistry.density_units)
-        data["energy"].append(fc["energy"][0])
-        fc.calculate_temperature()
-        data["temperature"].append(fc["temperature"][0])
-        fc.calculate_pressure()
-        data["pressure"].append(fc["pressure"][0])
-        data["time"].append(current_time * my_chemistry.time_units)
+        add_to_data(fc, data, current_time)
         current_time += dt
+
+    data = create_data_arrays(fc, data)
+    return data
+
+def add_to_data(fc, data, current_time=None):
+    """
+    Add current fluid container values to the data structure.
+    """
+
+    for field in fc.density_fields:
+        data[field].append(fc[field][0] * fc.chemistry_data.density_units)
+    data["energy"].append(fc["energy"][0] * fc.chemistry_data.energy_units)
+    fc.calculate_temperature()
+    data["temperature"].append(fc["temperature"][0])
+    fc.calculate_pressure()
+    data["pressure"].append(fc["pressure"][0] * fc.chemistry_data.pressure_units)
+    fc.calculate_mean_molecular_weight()
+    data["mu"].append(fc["mu"][0])
+    if fc.chemistry_data.h2_on_dust:
+        fc.calculate_dust_temperature()
+        data["dust_temperature"].append(fc["dust_temperature"][0])
+    if current_time is not None:
+        data["time"].append(current_time * fc.chemistry_data.time_units)
+
+def create_data_arrays(fc, data):
+    """
+    Turn lists of values into array with proper cgs units.
+    """
 
     for field in data:
         if field in fc.density_fields:
-            data[field] = yt.YTArray(data[field], "g/cm**3")
+            data[field] = YTArray(data[field], "g/cm**3")
         elif field == "energy":
-            data[field] = yt.YTArray(data[field], "erg/g")
+            data[field] = YTArray(data[field], "erg/g")
         elif field == "time":
-            data[field] = yt.YTArray(data[field], "s")
-        elif field == "temperature":
-            data[field] = yt.YTArray(data[field], "K")
+            data[field] = YTArray(data[field], "s")
+        elif "temperature" in field:
+            data[field] = YTArray(data[field], "K")
         elif field == "pressure":
-            data[field] = yt.YTArray(data[field], "dyne/cm**2")
+            data[field] = YTArray(data[field], "dyne/cm**2")
         else:
             data[field] = np.array(data[field])
     return data

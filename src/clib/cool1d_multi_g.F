@@ -6,17 +6,18 @@
       subroutine cool1d_multi_g(
      &                d, e, u, v, w, de, HI, HII, HeI, HeII, HeIII,
      &                in, jn, kn, nratec, 
-     &                iexpand, ispecies, imetal, imcool, idust, idim, 
-     &                is, ie, j, k, ih2co, ipiht, iter, igammah,
-     &                aye, temstart, temend, z_solar,
+     &                iexpand, ispecies, imetal, imcool,
+     &                idust, idustall, idustfield, idustrec,
+     &                idim, is, ie, j, k, ih2co, ipiht, iter, igammah,
+     &                aye, temstart, temend, z_solar, fgr,
      &                utem, uxyz, uaye, urho, utim,
      &                gamma, fh,
      &                ceHIa, ceHeIa, ceHeIIa, ciHIa, ciHeIa, 
      &                ciHeISa, ciHeIIa, reHIIa, reHeII1a, 
      &                reHeII2a, reHeIIIa, brema, compa, gammaha,
-     &                comp_xraya, comp_temp,
+     &                isrf, regra, gamma_isrfa, comp_xraya, comp_temp,
      &                piHI, piHeI, piHeII, comp1, comp2,
-     &                HM, H2I, H2II, DI, DII, HDI, metal,
+     &                HM, H2I, H2II, DI, DII, HDI, metal, dust,
      &                hyd01ka, h2k01a, vibha, rotha, rotla,
      &                hyd01k, h2k01, vibh, roth, rotl,
      &                gpldla, gphdla, gpldl, gphdl,
@@ -26,7 +27,9 @@
      &                ceHI, ceHeI, ceHeII, ciHI, ciHeI, ciHeIS, ciHeII,
      &                reHII, reHeII1, reHeII2, reHeIII, brem,
      &                indixe, t1, t2, logtem, tdef, edot,
-     &                tgas, tgasold, mmw, p2d, tdust, metallicity, rhoH,
+     &                tgas, tgasold, mmw, p2d, tdust, metallicity,
+     &                dust2gas, rhoH, mynh, myde,
+     &                gammaha_eff, gasgr_tdust, regr,
      &                iradshield, avgsighi, avgsighei,
      &                avgsigheii,
      &                k24, k26, iradtrans, photogamma,
@@ -39,6 +42,7 @@
      &                metPar1, metPar2, metPar3, metPar4, metPar5,
      &                metDataSize, metCooling, metHeating, clnew,
      &                iVheat, iMheat, Vheat, Mheat,
+     &                iisrffield, isrf_habing,
      &                itmask)
 
 !  SOLVE RADIATIVE COOLING/HEATING EQUATIONS
@@ -67,11 +71,13 @@
 !  Arguments
 
       integer in, jn, kn, is, ie, j, k, nratec, idim,
-     &        iexpand, ih2co, ipiht, ispecies, imcool, idust, 
+     &        iexpand, ih2co, ipiht, ispecies, imcool,
+     &        idust, idustall, idustfield, idustrec,
      &        imetal, igammah, ih2optical, iciecool, clnew,
-     &        iVheat, iMheat, iradtrans, iradshield
+     &        iVheat, iMheat, iradtrans, iradshield,
+     &        iisrffield
 
-      real*8  aye, temstart, temend, z_solar,
+      real*8  aye, temstart, temend, z_solar, fgr,
      &        utem, uxyz, uaye, urho, utim,
      &        gamma, fh, clEleFra
       R_PREC  d(in,jn,kn),    e(in,jn,kn),
@@ -80,8 +86,9 @@
      &        HeI(in,jn,kn), HeII(in,jn,kn), HeIII(in,jn,kn),
      &        HM(in,jn,kn),  H2I(in,jn,kn), H2II(in,jn,kn),
      &        DI(in,jn,kn),  DII(in,jn,kn), HDI(in,jn,kn),
-     &        metal(in,jn,kn), Vheat(in,jn,kn), Mheat(in,jn,kn),
-     &        photogamma(in,jn,kn)
+     &        metal(in,jn,kn), dust(in,jn,kn),
+     &        Vheat(in,jn,kn), Mheat(in,jn,kn),
+     &        photogamma(in,jn,kn), isrf_habing(in,jn,kn)
       real*8  hyd01ka(nratec), h2k01a(nratec), vibha(nratec), 
      &        rotha(nratec), rotla(nratec), gpldla(nratec),
      &        gphdla(nratec), hdltea(nratec), hdlowa(nratec),
@@ -93,8 +100,8 @@
      &        ciHeIIa(nratec), reHIIa(nratec), reHeII1a(nratec), 
      &        reHeII2a(nratec), reHeIIIa(nratec), brema(nratec),
      &        compa, piHI, piHeI, piHeII, comp_xraya, comp_temp,
-     &        gammaha, gammaha_eff, avgsighi, avgsighei,
-     &        avgsigheii, k24, k26
+     &        gammaha, isrf, regra(nratec), gamma_isrfa,
+     &        avgsighi, avgsighei, avgsigheii, k24, k26
 
 !  Cloudy cooling data
 
@@ -128,15 +135,16 @@
      &       hdlte1, hdlow1, gamma2, x, fudge, fH2,
      &       gphdl1, dom_inv, tau, ciefudge,
      &       coolunit, dbase1, tbase1, xbase1,
-     &       nH2, nother, myde, nSSh, nratio, nssh_he, nratio_he,
-     &       fSShHI, fSShHeI
+     &       nH2, nother, nSSh, nratio, nssh_he, nratio_he,
+     &       fSShHI, fSShHeI, pe_eps, pe_X, grbeta
 
 !  Slice locals
  
       integer*8 indixe(in)
       real*8 t1(in), t2(in), logtem(in), tdef(in), p2d(in),
      &       tgas(in), tgasold(in), mmw(in), tdust(in), rhoH(in),
-     &       nh(in), metallicity(in), edot(in)
+     &       mynh(in), metallicity(in), dust2gas(in), edot(in),
+     &       myde(in), gammaha_eff(in)
 
 !  Cooling/heating slice locals
 
@@ -147,14 +155,23 @@
      &       hyd01k(in), h2k01(in), vibh(in), roth(in), rotl(in),
      &       gpldl(in), gphdl(in), hdlte(in), hdlow(in),
      &       gaHI(in), gaH2(in), gaHe(in), gaHp(in), gael(in),
-     &       h2lte(in), galdl(in), gasgr(in), gasgr_tdust(in)
+     &       h2lte(in), galdl(in), gasgr(in), gasgr_tdust(in),
+     &       regr(in), myisrf(in)
 
 !  Iteration mask
 
-      logical itmask(in)
+      logical itmask(in), anydust, interp
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
 !=======================================================================
+
+!     Set flag for dust-related options
+
+      anydust = (idust .gt. 0) .or. (idustall .gt. 0) .or. (idustrec .gt. 0)
+
+!     Set flag for needing interpolation variables
+
+      interp = (ispecies .gt. 0) .or. (idustall .gt. 0)
 
 !     Set log values of start and end of lookup tables
 
@@ -202,11 +219,21 @@
 
       if (ispecies .eq. 0) then
 
-         do i = is+1, ie+1
-            if ( itmask(i) ) then
-               rhoH(i) = fh * d(i,j,k)
-            endif
-         enddo
+!     fh is H mass fraction in metal-free gas.
+
+         if (imetal .eq. 1) then
+            do i = is+1, ie+1
+               if ( itmask(i) ) then
+                  rhoH(i) = fh * (d(i,j,k) - metal(i,j,k))
+               endif
+            enddo
+         else
+            do i = is+1, ie+1
+               if ( itmask(i) ) then
+                  rhoH(i) = fh * d(i,j,k)
+               endif
+            enddo
+         endif
 
          call calc_temp1d_cloudy_g(d, metal, e, rhoH,
      &        in, jn, kn, is, ie, j, k,
@@ -228,6 +255,7 @@
      &              (HeI(i,j,k) + HeII(i,j,k) + HeIII(i,j,k))/4._DKIND +
      &              HI(i,j,k) + HII(i,j,k) + de(i,j,k)
                rhoH(i) = HI(i,j,k) + HII(i,j,k)
+               myde(i) = de(i,j,k)
             end if
          enddo
 
@@ -247,7 +275,9 @@
 
          if (imetal .eq. 1) then
             do i = is+1, ie+1
-               mmw(i) = mmw(i) + metal(i,j,k)/mu_metal
+               if ( itmask(i) ) then
+                  mmw(i) = mmw(i) + metal(i,j,k)/mu_metal
+               end if
             enddo
          endif
 
@@ -300,7 +330,7 @@
 
       do i = is+1, ie+1
          if ( itmask(i) ) then
-            nh(i) = rhoH(i) * dom
+            mynh(i) = rhoH(i) * dom
          end if
       enddo
 
@@ -326,20 +356,30 @@
          endif
       enddo
 
-!     --- 6 species cooling ---
+!     Compute interpolation indices
 
-      if (ispecies .gt. 0) then
+      if (interp) then
+         do i = is+1, ie+1
+            if ( itmask(i) ) then
 
-      do i = is+1, ie+1
-         if ( itmask(i) ) then
-
-!        Compute index into the table and precompute parts of linear interp
+!     Compute index into the table and precompute parts of linear interp
 
          indixe(i) = min(nratec-1,
      &           max(1,int((logtem(i)-logtem0)/dlogtem, DIKIND)+1))
          t1(i) = (logtem0 + (indixe(i) - 1)*dlogtem)
          t2(i) = (logtem0 + (indixe(i)    )*dlogtem)
          tdef(i) = (logtem(i) - t1(i)) / (t2(i) - t1(i))
+
+            endif
+         enddo
+      endif
+
+!     --- 6 species cooling ---
+
+      if (ispecies .gt. 0) then
+
+      do i = is+1, ie+1
+         if ( itmask(i) ) then
 
 !        Lookup cooling values and do a linear temperature in log(T)
 
@@ -375,11 +415,6 @@
 
       do i = is+1, ie+1
          if ( itmask(i) ) then
-         if ( tgas(i) > 2.d4 ) then
-            gammaha_eff = 0 
-         else
-            gammaha_eff = gammaha
-         endif
          edot(i) = (
 
 !                    Collisional excitations
@@ -402,23 +437,10 @@
      &             - reHeII2(i)*HeII (i,j,k)*de(i,j,k)/4._DKIND      ! re of HeII
      &             - reHeIII(i)*HeIII(i,j,k)*de(i,j,k)/4._DKIND      ! re of HeIII
 
-!                    Compton cooling or heating
-
-     &             - comp1*(tgas(i)-comp2)*de(i,j,k)*dom_inv
-
-!                    X-ray compton heating
-
-     &             - comp_xraya*(tgas(i)-comp_temp)*de(i,j,k)*dom_inv
-
 !                    Bremsstrahlung
 
      &             - brem(i)*(HII(i,j,k)+HeII(i,j,k)/4._DKIND +
      &           HeIII(i,j,k)) * de(i,j,k)
-
-!                    Photoelectric heating by UV-irradiated dust
-
-     &             + real(igammah, DKIND) * gammaha_eff *
-     &           (HI(i,j,k) + HII(i,j,k)) * dom_inv
 
      &             )
 
@@ -662,9 +684,45 @@ c  new (correct) way: (april 4, 2007)
          enddo
       endif
 
+!     Calculate dust to gas ratio
+
+      if (anydust .or. (igammah .gt. 0)) then
+         if (idustfield .gt. 0) then
+            do i = is+1, ie+1
+               if ( itmask(i) ) then
+                  dust2gas(i) = dust(i,j,k) / d(i,j,k)
+               endif
+            enddo
+         else
+            do i = is+1, ie+1
+               if ( itmask(i) ) then
+                  dust2gas(i) = fgr * metallicity(i)
+               endif
+            enddo
+         endif
+      endif
+
+!     Calculate interstellar radiation field
+
+      if (anydust .or. (igammah .gt. 1)) then
+         if (iisrffield .gt. 0) then
+            do i = is+1, ie+1
+               if ( itmask(i) ) then
+                  myisrf(i) = isrf_habing(i,j,k)
+               endif
+            enddo
+         else
+            do i = is+1, ie+1
+               if ( itmask(i) ) then
+                  myisrf(i) = isrf
+               endif
+            enddo
+         endif
+      endif
+
 !     --- Gas to grain heat transfer ---
 
-      if (idust .gt. 0) then
+      if (anydust) then
 
 !     Look up gas/grain heat transfer rates
 
@@ -672,14 +730,14 @@ c  new (correct) way: (april 4, 2007)
             if ( itmask(i) ) then
                gasgr(i) = gasgra(indixe(i)) + tdef(i)
      &              *(gasgra(indixe(i)+1) -gasgra(indixe(i)))
-               gasgr_tdust(i) = gasgr(i) * coolunit / mh
+               gasgr_tdust(i) = fgr * gasgr(i) * coolunit / mh
             endif
          enddo
 
 !     Compute dust temperature
 
-         call calc_tdust_1d_g(tdust, tgas, nh, gasgr_tdust, 
-     &           itmask, comp2, in, is, ie, j, k)
+         call calc_tdust_1d_g(tdust, tgas, mynh, gasgr_tdust,
+     &        gamma_isrfa, myisrf, itmask, comp2, in, is, ie, j, k)
 
 !     Calculate cooling rate
 
@@ -687,7 +745,7 @@ c  new (correct) way: (april 4, 2007)
             if ( itmask(i) ) then
                edot(i) = edot(i) - 
      &              gasgr(i) * (tgas(i) - tdust(i)) * 
-     &              metallicity(i) * rhoH(i) * rhoH(i)
+     &              dust2gas(i) * rhoH(i) * rhoH(i)
             endif
          enddo
 
@@ -868,34 +926,118 @@ c  new (correct) way: (april 4, 2007)
      &        priDataSize, priCooling, priHeating,
      &        itmask)
 
-!     Compton cooling or heating/photoelectric heating
+!     Calculate electron density from mean molecular weight
 
          do i = is+1, ie+1
             if ( itmask(i) ) then
-            if ( tgas(i) > 2.d4 ) then
-               gammaha_eff = 0 
-            else
-               gammaha_eff = gammaha
-            endif
 
-!     Calculate electron density from mean molecular weight
-
-               myde = 1 - mmw(i) * (3.0_DKIND * fh + 1.0_DKIND) /
+               myde(i) = 1 - mmw(i) * (3.0_DKIND * fh + 1.0_DKIND) /
      &              4.0_DKIND
                if (imetal .eq. 1) then
-                  myde = myde - mmw(i) * metal(i,j,k) / 
+                  myde(i) = myde(i) - mmw(i) * metal(i,j,k) /
      &                 (d(i,j,k) * mu_metal)
                endif
-               myde = d(i,j,k) * myde / mmw(i)
-
-               edot(i) = edot(i) 
-     &              - comp1*(tgas(i)-comp2)*myde*dom_inv
-     &              + real(igammah, DKIND)*gammaha_eff*rhoH(i)*dom_inv
+               myde(i) = d(i,j,k) * myde(i) / mmw(i)
+               myde(i) = max(myde(i), 0._DKIND)
 
             end if
          enddo
 
       endif
+
+!     Photo-electric heating by UV-irradiated dust
+
+      if (igammah .eq. 1) then
+
+          do i = is + 1, ie + 1
+             if (itmask(i)) then
+                if ( tgas(i) > 2.d4 ) then
+                   gammaha_eff(i) = 0._DKIND
+                else
+                   gammaha_eff(i) = gammaha
+                endif
+            endif
+         enddo
+
+!     Use eqn. 1 of Wolfire et al. (1995)
+      else if (igammah .eq. 2) then
+
+          do i = is + 1, ie + 1
+             if (itmask(i)) then
+                if ( tgas(i) > 2.d4 ) then
+                   gammaha_eff(i) = 0._DKIND
+                else
+!                  Assume constant epsilon = 0.05.
+                   gammaha_eff(i) = gammaha * 0.05_DKIND * myisrf(i)
+                endif
+            endif
+         enddo
+
+!     Full calculation of epsilon (eqn. 2 of Wolfire 1995)
+      else if (igammah .eq. 3) then
+
+          do i = is + 1, ie + 1
+             if (itmask(i)) then
+                pe_X = myisrf(i) * dom_inv * sqrt(tgas(i)) / myde(i)
+                pe_eps =
+     &               (4.9d-2 /
+     &                (1._DKIND + (pe_X / 1925._DKIND)**0.73_DKIND)) +
+     &               ((3.7d-2 * (tgas(i) / 1.d4)**0.7_DKIND) /
+     &                (1._DKIND + (pe_X / 5000._DKIND)))
+                gammaha_eff(i) = gammaha * pe_eps * myisrf(i)
+             endif
+          enddo
+
+      endif
+
+      if (igammah .gt. 0) then
+          do i = is + 1, ie + 1
+             if (itmask(i)) then
+                edot(i) = edot(i) + gammaha_eff(i) * rhoH(i) *
+     &               dom_inv * dust2gas(i) / fgr
+            endif
+         enddo
+      endif
+
+!     Electron recombination onto dust grains (eqn. 9 of Wolfire 1995)
+
+      if ((idustall .gt. 0) .or. (idustrec .gt. 0)) then
+
+          do i = is + 1, ie + 1
+             if (itmask(i)) then
+                regr(i) = regra(indixe(i)) + tdef(i)
+     &               *(regra(indixe(i)+1) -regra(indixe(i)))
+             endif
+          enddo
+
+          do i = is + 1, ie + 1
+             if (itmask(i)) then
+                grbeta = 0.74_DKIND / tgas(i)**0.068_DKIND
+                edot(i) = edot(i) -
+     &               regr(i) * (myisrf(i)*dom_inv / myde(i))**grbeta *
+     &               myde(i) * rhoH(i) * dust2gas(i) / fgr
+             endif
+          enddo
+
+      endif
+
+!     Compton cooling or heating and X-ray compton heating
+
+      do i = is + 1, ie + 1
+         if (itmask(i)) then
+
+            edot(i) = edot(i)
+
+!                  Compton cooling or heating
+
+     &           - comp1      * (tgas(i) - comp2)     * myde(i)*dom_inv
+
+!                  X-ray compton heating
+
+     &           - comp_xraya * (tgas(i) - comp_temp) * myde(i)*dom_inv
+
+         endif
+      enddo
  
 !     Photoheating from radiative transfer
 
@@ -904,10 +1046,7 @@ c  new (correct) way: (april 4, 2007)
             if (itmask(i)) then
               edot(i) = edot(i) + real(ipiht, DKIND) * photogamma(i,j,k)
      &                          / coolunit * HI(i,j,k) / dom
-c              if (photogamma(i,j,k) .gt. 0) then
-c                print*, i,j,k,edot(i), photogamma(i,j,k), dom,
-c      $                 aye, utim, coolunit, d(i,j,k), hi(i,j,k), tgas(i)
-c              endif
+
               if (edot(i) .ne. edot(i)) then
 #ifdef _OPENMP
 !$omp critical

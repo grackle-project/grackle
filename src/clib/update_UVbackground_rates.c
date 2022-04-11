@@ -240,7 +240,7 @@ int update_UVbackground_rates(chemistry_data *my_chemistry,
      0.0). */
 
   if (my_chemistry->LWbackground_intensity > 0.0) 
-    my_uvb_rates->k31 = 1.13e8 * my_chemistry->LWbackground_intensity *
+    my_uvb_rates->k31 = 1.38e-12 * my_chemistry->LWbackground_intensity *
       my_units->time_units;
   
   /* LWbackground_sawtooth_suppression is supposed to account for the

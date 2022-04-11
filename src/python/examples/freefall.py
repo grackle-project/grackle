@@ -44,13 +44,17 @@ if __name__=="__main__":
     my_chemistry.CaseBRecombination = 0
     my_chemistry.cie_cooling = 1
     my_chemistry.h2_optical_depth_approximation = 1
+    my_chemistry.interstellar_radiation_field = 0.
 
     if os.environ.get("METAL_COOLING", 0) == "1":
         my_chemistry.metal_cooling = int(os.environ["METAL_COOLING"])
         my_dir = os.path.dirname(os.path.abspath(__file__))
-        my_chemistry.grackle_data_file = os.path.join(
-            my_dir, "..", "..", "..", "input", "cloudy_metals_2008_3D.h5")
+        grackle_data_file = bytearray(os.path.join(
+            my_dir, "..", "..", "..", "input", "cloudy_metals_2008_3D.h5"), 'utf-8')
+        my_chemistry.grackle_data_file = grackle_data_file
         my_chemistry.h2_on_dust = 1
+        my_chemistry.use_dust_density_field = 1
+        metallicity = 1e-3
     else:
         my_chemistry.metal_cooling = 0
 
@@ -62,9 +66,7 @@ if __name__=="__main__":
     my_chemistry.density_units  = mass_hydrogen_cgs # rho = 1.0 is 1.67e-24 g
     my_chemistry.length_units   = cm_per_mpc        # 1 Mpc in cm
     my_chemistry.time_units     = sec_per_Myr       # 1 Myr in s
-    my_chemistry.velocity_units = my_chemistry.a_units * \
-        (my_chemistry.length_units / my_chemistry.a_value) / \
-        my_chemistry.time_units
+    my_chemistry.set_velocity_units()
 
     # set initial density and temperature
     initial_temperature = 50000. # start the gas at this temperature
@@ -92,8 +94,11 @@ if __name__=="__main__":
         fc["DII"][:] = tiny_number * fc["density"]
         fc["HDI"][:] = tiny_number * fc["density"]
     if my_chemistry.metal_cooling == 1:
-        fc["metal"][:] = 1e-3 * my_chemistry.SolarMetalFractionByMass * \
-            fc["density"]
+        fc["metal"][:] = metallicity * fc["density"] * \
+            my_chemistry.SolarMetalFractionByMass
+    if my_chemistry.use_dust_density_field:
+        fc["dust"][:] = metallicity * fc["density"] * \
+            my_chemistry.local_dust_to_gas_ratio
     fc["energy"][:] = initial_temperature / \
         fc.chemistry_data.temperature_units
     fc["x-velocity"][:] = 0.0
@@ -116,21 +121,29 @@ if __name__=="__main__":
                            safety_factor=safety_factor)
 
     # make a plot of rho/f_H2 vs. T
-    p1, = pyplot.loglog(data["density"], data["temperature"], color="black")
+    plots = pyplot.loglog(data["density"], data["temperature"],
+                          color="black", label="T$_{gas}$")
+    if os.environ.get("METAL_COOLING", 0) == "1":
+        plots.extend(
+            pyplot.loglog(data["density"], data["dust_temperature"],
+                          color="black", linestyle="--", label="T$_{dust}$"))
     pyplot.xlabel("$\\rho$ [g/cm$^{3}$]")
     pyplot.ylabel("T [K]")
 
     pyplot.twinx()
-    p2, = pyplot.loglog(data["density"], data["H2I"] / data["density"],
-                        color="red")
+    plots.extend(
+        pyplot.loglog(data["density"], data["H2I"] / data["density"],
+                      color="red", label="f$_{H2}$"))
     pyplot.ylabel("H$_{2}$ fraction")
-    pyplot.legend([p1, p2], ["T", "f$_{H2}$"], loc="upper left")
+    pyplot.legend(plots, [plot.get_label() for plot in plots],
+                  loc="lower right")
 
     if os.environ.get("METAL_COOLING", 0) == "1":
         output = "freefall_metal"
     else:
         output = "freefall"
 
+    pyplot.tight_layout()
     pyplot.savefig("%s.png" % output)
 
     # save data arrays as a yt dataset

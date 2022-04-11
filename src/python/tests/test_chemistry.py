@@ -21,7 +21,8 @@ from pygrackle import \
 
 from pygrackle.utilities.testing import \
     random_logscale, \
-    assert_rel_equal
+    assert_rel_equal, \
+    assert_array_less
 
 
 def test_proper_comoving_units():
@@ -31,13 +32,8 @@ def test_proper_comoving_units():
 
     grackle_dir = os.path.dirname(os.path.dirname(os.path.dirname(
         os.path.dirname(os.path.abspath(__file__)))))
-    data_file_path = os.sep.join(
-        [grackle_dir, "input", "CloudyData_UVB=HM2012.h5"])
-
-    grackle_dir = os.path.dirname(os.path.dirname(os.path.dirname(
-        os.path.dirname(os.path.abspath(__file__)))))
-    data_file_path = os.sep.join(
-        [grackle_dir, "input", "CloudyData_UVB=HM2012.h5"])
+    data_file_path = bytearray(os.sep.join(
+        [grackle_dir, "input", "CloudyData_UVB=HM2012.h5"]), 'utf-8')
 
     my_random_state = np.random.RandomState(7921)
     for current_redshift in [0., 1., 3., 6., 9.]:
@@ -85,16 +81,14 @@ def test_proper_comoving_units():
         t_sort_p = np.argsort(fc_p["temperature"])
         t_cool_p = fc_p["cooling_time"][t_sort_p] * chem_p.time_units
 
-        comp = "\nDU1: %e, LU1: %e, TU1: %e - DU2: %e, LU2: %e, TU2L %e." % \
-            (chem_p.density_units, chem_p.length_units, chem_p.time_units,
-             chem_c.density_units, chem_c.length_units, chem_c.time_units)
+        comp = f"\nDU1: {chem_p.density_units:e}, LU1: {chem_p.length_units:e}, " + \
+          f"TU1: {chem_p.time_units:e} - DU2: {chem_c.density_units:e}, " + \
+          f"LU2: {chem_c.length_units:e}, TU2 {chem_c.time_units:e}."
 
-        assert_rel_equal(
-            t_cool_p, t_cool_c, 4,
-            (("Proper and comoving cooling times disagree for " +
-              "z = %f with min/max = %f/%f.") %
-             (current_redshift, (t_cool_p / t_cool_c).min(),
-              (t_cool_p / t_cool_c).max()) + comp))
+        rat = t_cool_p / t_cool_c
+        err_msg = "Proper and comoving cooling times disagree for " + \
+          f"z = {current_redshift} with min/max = {rat.min()}/{rat.max()}." + comp
+        assert_rel_equal(t_cool_p, t_cool_c, 4, err_msg=err_msg)
 
 
 def test_proper_comoving_units_tabular():
@@ -105,13 +99,8 @@ def test_proper_comoving_units_tabular():
 
     grackle_dir = os.path.dirname(os.path.dirname(os.path.dirname(
         os.path.dirname(os.path.abspath(__file__)))))
-    data_file_path = os.sep.join(
-        [grackle_dir, "input", "CloudyData_UVB=HM2012.h5"])
-
-    grackle_dir = os.path.dirname(os.path.dirname(os.path.dirname(
-        os.path.dirname(os.path.abspath(__file__)))))
-    data_file_path = os.sep.join(
-        [grackle_dir, "input", "CloudyData_UVB=HM2012.h5"])
+    data_file_path = bytearray(os.sep.join(
+        [grackle_dir, "input", "CloudyData_UVB=HM2012.h5"]), 'utf-8')
 
     my_random_state = np.random.RandomState(19650909)
     for current_redshift in [0., 1., 3., 6., 9.]:
@@ -159,16 +148,14 @@ def test_proper_comoving_units_tabular():
         t_sort_p = np.argsort(fc_p["temperature"])
         t_cool_p = fc_p["cooling_time"][t_sort_p] * chem_p.time_units
 
-        comp = "\nDU1: %e, LU1: %e, TU1: %e - DU2: %e, LU2: %e, TU2L %e." % \
-            (chem_p.density_units, chem_p.length_units, chem_p.time_units,
-             chem_c.density_units, chem_c.length_units, chem_c.time_units)
+        comp = f"\nDU1: {chem_p.density_units:e}, LU1: {chem_p.length_units:e}, " + \
+          f"TU1: {chem_p.time_units:e} - DU2: {chem_c.density_units:e}, " + \
+          f"LU2: {chem_c.length_units:e}, TU2 {chem_c.time_units:e}."
 
-        assert_rel_equal(
-            t_cool_p, t_cool_c, 4,
-            (("Proper and comoving tabular cooling times disagree for " +
-              "z = %f with min/max = %f/%f.\n") %
-             (current_redshift, (t_cool_p / t_cool_c).min(),
-              (t_cool_p / t_cool_c).max()) + comp))
+        rat = t_cool_p / t_cool_c
+        err_msg = "Proper and comoving tabules cooling times disagree for " + \
+          f"z = {current_redshift} with min/max = {rat.min()}/{rat.max()}." + comp
+        assert_rel_equal(t_cool_p, t_cool_c, 4, err_msg=err_msg)
 
 
 def test_proper_units():
@@ -178,13 +165,8 @@ def test_proper_units():
 
     grackle_dir = os.path.dirname(os.path.dirname(os.path.dirname(
         os.path.dirname(os.path.abspath(__file__)))))
-    data_file_path = os.sep.join(
-        [grackle_dir, "input", "CloudyData_UVB=HM2012.h5"])
-
-    grackle_dir = os.path.dirname(os.path.dirname(os.path.dirname(
-        os.path.dirname(os.path.abspath(__file__)))))
-    data_file_path = os.sep.join(
-        [grackle_dir, "input", "CloudyData_UVB=HM2012.h5"])
+    data_file_path = bytearray(os.sep.join(
+        [grackle_dir, "input", "CloudyData_UVB=HM2012.h5"]), 'utf-8')
 
     my_random_state = np.random.RandomState(20150725)
     for current_redshift in [0., 1., 3.]:
@@ -231,13 +213,62 @@ def test_proper_units():
         t_sort_2 = np.argsort(fc_2["temperature"])
         t_cool_2 = fc_2["cooling_time"][t_sort_2] * chem_2.time_units
 
-        comp = "\nDU1: %e, LU1: %e, TU1: %e - DU2: %e, LU2: %e, TU2L %e." % \
-            (chem_1.density_units, chem_1.length_units, chem_1.time_units,
-             chem_2.density_units, chem_2.length_units, chem_2.time_units)
+        comp = f"\nDU1: {chem_1.density_units:e}, LU1: {chem_1.length_units:e}, " + \
+          f"TU1: {chem_1.time_units:e} - DU2: {chem_2.density_units:e}, " + \
+          f"LU2: {chem_2.length_units:e}, TU2 {chem_2.time_units:e}."
 
-        assert_rel_equal(
-            t_cool_1, t_cool_2, 4,
-            (("Different proper unit system cooling times disagree for " +
-              "z = %f with min/max = %f/%f.") %
-             (current_redshift, (t_cool_1/t_cool_2).min(),
-              (t_cool_1/t_cool_2).max()) + comp))
+        rat = t_cool_1 / t_cool_2
+        err_msg = "Different proper unit system cooling times disagree for " + \
+          f"z = {current_redshift} with min/max = {rat.min()}/{rat.max()}." + comp
+        assert_rel_equal(t_cool_1, t_cool_2, 4, err_msg=err_msg)
+
+
+def test_tabulated_mmw_metal_dependence():
+    """
+    Make sure that increasing the metal mass fraction of a gas increases the
+    mean molecular weight, when run in tabulated mode.
+    """
+
+    grackle_dir = os.path.dirname(os.path.dirname(os.path.dirname(
+        os.path.dirname(os.path.abspath(__file__)))))
+    data_file_path = bytearray(os.sep.join(
+        [grackle_dir, "input", "CloudyData_UVB=HM2012.h5"]), 'utf-8')
+
+    my_random_state = np.random.RandomState(723466)
+    density_units = random_logscale(-28, -26, random_state=my_random_state)
+    length_units = random_logscale(0, 2, random_state=my_random_state)
+    time_units = random_logscale(0, 2, random_state=my_random_state)
+    velocity_units = length_units / time_units
+
+    current_redshift = 0.
+
+    mmw_vals = []
+
+    for metal_mass_frac in [0.,0.02041]:
+
+        # proper units
+        my_chem = chemistry_data()
+        my_chem.use_grackle = 1
+        my_chem.with_radiative_cooling = 0
+        my_chem.primordial_chemistry = 0
+        my_chem.metal_cooling = 1
+        my_chem.UVbackground = 1
+        my_chem.grackle_data_file = data_file_path
+        my_chem.comoving_coordinates = 0
+        my_chem.a_units = 1.0
+        my_chem.a_value = 1.0 / (1.0 + current_redshift) / my_chem.a_units
+        my_chem.density_units = density_units
+        my_chem.length_units = length_units
+        my_chem.time_units = time_units
+        my_chem.velocity_units = velocity_units
+        fc = setup_fluid_container(my_chem, converge=False,
+                                   metal_mass_fraction=metal_mass_frac)
+        fc.calculate_mean_molecular_weight()
+        mmw_vals.append(fc['mu'])
+
+    mmw_no_metals, mmw_with_metals = mmw_vals
+
+    assert_array_less(
+        mmw_no_metals, mmw_with_metals,
+        ("The mmw didn't increase when the metal fraction of the gas was "
+         "increased (for primordial_chemisty=0)"))

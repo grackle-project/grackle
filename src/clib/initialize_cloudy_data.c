@@ -313,3 +313,21 @@ int initialize_cloudy_data(chemistry_data *my_chemistry,
 
   return SUCCESS;
 }
+
+int _free_cloudy_data(cloudy_data *my_cloudy, chemistry_data *my_chemistry, int primordial) {
+  int i;
+
+  for(i = 0; i < my_cloudy->grid_rank; i++) {
+    GRACKLE_FREE(my_cloudy->grid_parameters[i]);
+  }
+
+  GRACKLE_FREE(my_cloudy->grid_parameters);
+  GRACKLE_FREE(my_cloudy->grid_dimension);
+  GRACKLE_FREE(my_cloudy->cooling_data);
+  if (my_chemistry->UVbackground == 1) {
+    GRACKLE_FREE(my_cloudy->heating_data);
+  }
+  if (my_chemistry->primordial_chemistry == 0 && primordial) {
+    GRACKLE_FREE(my_cloudy->mmw_data);
+  }
+}

@@ -41,8 +41,9 @@ if __name__ == "__main__":
     my_chemistry.self_shielding_method = 0
     my_chemistry.H2_self_shielding = 0
     my_dir = os.path.dirname(os.path.abspath(__file__))
-    my_chemistry.grackle_data_file = os.path.join(
-        my_dir, "..", "..", "..", "input", "CloudyData_UVB=HM2012.h5")
+    grackle_data_file = bytearray(os.path.join(
+        my_dir, "..", "..", "..", "input", "CloudyData_UVB=HM2012.h5"), 'utf-8')
+    my_chemistry.grackle_data_file = grackle_data_file
 
     my_chemistry.use_specific_heating_rate = 1
     my_chemistry.use_volumetric_heating_rate = 1
@@ -55,9 +56,7 @@ if __name__ == "__main__":
     my_chemistry.density_units = mass_hydrogen_cgs # rho = 1.0 is 1.67e-24 g
     my_chemistry.length_units = cm_per_mpc         # 1 Mpc in cm
     my_chemistry.time_units = sec_per_Myr          # 1 Gyr in s
-    my_chemistry.velocity_units = my_chemistry.a_units * \
-        (my_chemistry.length_units / my_chemistry.a_value) / \
-        my_chemistry.time_units
+    my_chemistry.set_velocity_units()
 
     # Call convenience function for setting up a fluid container.
     # This container holds the solver parameters, units, and fields.
@@ -75,7 +74,7 @@ if __name__ == "__main__":
     density_proper = fc["density"] / \
         (my_chemistry.a_units *
          my_chemistry.a_value)**(3*my_chemistry.comoving_coordinates)
-    cooling_rate = fc.cooling_units * fc["energy"] / \
+    cooling_rate = fc.chemistry_data.cooling_units * fc["energy"] / \
         np.abs(fc["cooling_time"]) / density_proper
 
     data = {}
@@ -83,9 +82,11 @@ if __name__ == "__main__":
     for field in fc.density_fields:
         data[field] = yt.YTArray(fc[field][t_sort] *
                                  my_chemistry.density_units, "g/cm**3")
-    data["energy"]       = yt.YTArray(fc["energy"][t_sort], "erg/g")
-    data["temperature"]  = yt.YTArray(fc["temperature"][t_sort], "K")
-    data["pressure"]     = yt.YTArray(fc["pressure"][t_sort], "dyne/cm**2")
+    data["energy"] = yt.YTArray(
+        fc["energy"][t_sort] * my_chemistry.energy_units, "erg/g")
+    data["temperature"] = yt.YTArray(fc["temperature"][t_sort], "K")
+    data["pressure"] = yt.YTArray(
+        fc["pressure"][t_sort] * my_chemistry.pressure_units, "dyne/cm**2")
     data["cooling_time"] = yt.YTArray(fc["cooling_time"][t_sort], "s")
     data["cooling_rate"] = yt.YTArray(cooling_rate[t_sort], "erg*cm**3/s")
 
@@ -101,5 +102,6 @@ if __name__ == "__main__":
     else:
         ds_name = 'cooling_rate.h5'
         im_name = 'cooling_rate.png'
+    pyplot.tight_layout()
     pyplot.savefig(im_name)
     yt.save_as_dataset({}, ds_name, data)

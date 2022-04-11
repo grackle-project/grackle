@@ -39,21 +39,42 @@ chemistry_data _set_default_chemistry_parameters(void)
   chemistry_data my_chemistry;
 
   my_chemistry.Gamma                          = 5./3.;
-  my_chemistry.use_grackle                    = FALSE;  // off
+  my_chemistry.use_grackle                    = FALSE;
   my_chemistry.with_radiative_cooling         = TRUE;
-  my_chemistry.primordial_chemistry           = FALSE;  // off
+  my_chemistry.primordial_chemistry           = 0;
+  my_chemistry.dust_chemistry                 = 0;
   my_chemistry.metal_cooling                  = FALSE;
   my_chemistry.h2_on_dust                     = FALSE;
+  my_chemistry.use_dust_density_field         = FALSE;
 
-  my_chemistry.cmb_temperature_floor          = TRUE;   // use CMB floor.
+  my_chemistry.cmb_temperature_floor          = TRUE;
   my_chemistry.grackle_data_file              = "";
 
-  my_chemistry.three_body_rate                = 0;   // ABN02
+  my_chemistry.three_body_rate                = 0;
   my_chemistry.cie_cooling                    = 0;
   my_chemistry.h2_optical_depth_approximation = 0;
 
-  my_chemistry.photoelectric_heating          = 0;
-  my_chemistry.photoelectric_heating_rate     = 8.5e-26;  // ergs cm-3 s-1
+  //k11 calculation method.
+  my_chemistry.h2_charge_exchange_rate        = 1;
+
+  //h2dust calculation method.
+  my_chemistry.h2_dust_rate                    = 1;
+
+  //low density H2 cooling rate due to H collisions calculation method.
+  my_chemistry.h2_h_cooling_rate              = 1;
+
+  //flags specific to calc_rates_g_c methods.
+  my_chemistry.collisional_excitation_rates   = 1;
+  my_chemistry.collisional_ionisation_rates   = 1;
+  my_chemistry.recombination_cooling_rates    = 1;
+  my_chemistry.bremsstrahlung_cooling_rates   = 1;
+
+  my_chemistry.dust_recombination_cooling     = -1; // unset
+  my_chemistry.photoelectric_heating          = -1; // unset
+  // epsilon=0.05, G_0=1.7 (in erg s^-1 cm^-3)
+  my_chemistry.photoelectric_heating_rate     = 8.5e-26;
+  my_chemistry.use_isrf_field                 = 0;
+  my_chemistry.interstellar_radiation_field   = 1.7;
 
   my_chemistry.use_volumetric_heating_rate    = 0;
   my_chemistry.use_specific_heating_rate      = 0;
@@ -84,6 +105,12 @@ chemistry_data _set_default_chemistry_parameters(void)
   */
   my_chemistry.SolarMetalFractionByMass     = 0.01295; // Cloudy v13 abundances
 
+  /*
+    The dust to gas ratio in local molecular clouds.
+     Table 2 from Pollack et al. (1994).
+  */
+  my_chemistry.local_dust_to_gas_ratio      = 0.009387;
+
   my_chemistry.NumberOfTemperatureBins      = 600;
   my_chemistry.ih2co                        = 1;
   my_chemistry.ipiht                        = 1;
@@ -105,6 +132,7 @@ chemistry_data _set_default_chemistry_parameters(void)
   /* approximate self-shielding */
   my_chemistry.self_shielding_method                  = 0;
   my_chemistry.H2_self_shielding                      = 0;
+  my_chemistry.H2_custom_shielding                    = 0;
 
 //number of OpenMP threads
 # ifdef _OPENMP

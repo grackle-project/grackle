@@ -1,7 +1,7 @@
 # Grackle
 
 [![Users' Mailing List](https://img.shields.io/badge/Users-List-lightgrey.svg)](https://groups.google.com/forum/#!forum/grackle-cooling-users)
-[![Build Status](https://travis-ci.org/grackle-project/grackle.svg?branch=master)](https://travis-ci.org/grackle-project/grackle)
+[![CircleCI](https://circleci.com/gh/grackle-project/grackle/tree/master.svg?style=svg)](https://circleci.com/gh/grackle-project/grackle/tree/master)
 [![Documentation Status](https://readthedocs.org/projects/grackle/badge/?version=latest)](https://grackle.readthedocs.io/en/latest/?badge=latest)
 
 Grackle is a chemistry and radiative cooling library for astrophysical

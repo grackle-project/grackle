@@ -4,7 +4,7 @@
 !////////////////////  SUBROUTINE CALC_TDUST_1D_G  \\\\\\\\\\\\\\\\\\\\\
 
       subroutine calc_tdust_1d_g(
-     &     tdust, tgas, nh, gasgr, itmask, 
+     &     tdust, tgas, nh, gasgr, gamma_isrfa, isrf, itmask,
      &     trad, in, is, ie, j, k)
 
 !  CALCULATE EQUILIBRIUM DUST TEMPERATURE
@@ -24,6 +24,8 @@
 !     tgas     - gas temperature
 !     nh       - H number density
 !     gasgr    - gas/grain heat transfer rate
+!     gamma_isrfa - heating from interstellar radiation field
+!     isrf     - interstellar radiation field in Habing units
 !
 !     trad     - CMB temperature
 !
@@ -43,8 +45,8 @@
 
       integer in, is, ie, j, k
 
-      real*8 tdust(in), tgas(in), nh(in), gasgr(in)
-      real*8 trad
+      real*8 tdust(in), tgas(in), nh(in), gasgr(in), isrf(in)
+      real*8 gamma_isrfa, trad
 
 !  Iteration mask
 
@@ -52,10 +54,13 @@
 
 !  Parameters
 
-      real*8 radf, t_subl
-      parameter(radf = 4._DKIND * sigma_sb)
+      real*8 t_subl
       parameter(t_subl = 1.5e3_DKIND) ! grain sublimation temperature
-      real*8 tol, bi_tol, minpert
+      real*8 radf
+      parameter(radf = 4._DKIND * sigma_sb)
+      real*8 kgr1
+      parameter(kgr1 = 4.0e-4_DKIND)
+      real*8 tol, bi_tol, minpert, gamma_isrf(in)
       parameter(tol = 1.e-5_DKIND, bi_tol = 1.e-3_DKIND, 
      &     minpert = 1.e-10_DKIND)
       integer itmax, bi_itmax
@@ -92,6 +97,12 @@
 !     Set local iteration mask and initial guess
 
       do i = is+1, ie+1
+         if ( itmask(i) ) then
+            gamma_isrf(i) = isrf(i) * gamma_isrfa
+         endif
+      enddo
+
+      do i = is+1, ie+1
          nm_itmask(i) = itmask(i)
          bi_itmask(i) = itmask(i)
          if ( nm_itmask(i) ) then
@@ -107,7 +118,8 @@
                nm_itmask(i) = .false.
                nm_done = nm_done + 1
             else
-               tdustnow(i) = 0.5_DKIND * (trad + tgas(i))
+               tdustnow(i) = max(trad,
+     &              (gamma_isrf(i) / radf / kgr1)**0.17_DKIND)
                pert(i) = pert_i
             endif
 
@@ -134,26 +146,24 @@
 
 !     Calculate grain opacities
 
-         call calc_kappa_gr_g(tdustnow, kgr, nm_itmask, 
+         call calc_kappa_gr_g(tdustnow, kgr, nm_itmask,
      &        in, is, ie, t_subl)
 
-         call calc_kappa_gr_g(tdplus, kgrplus, nm_itmask, 
+         call calc_kappa_gr_g(tdplus, kgrplus, nm_itmask,
      &        in, is, ie, t_subl)
+
+!     Calculate heating/cooling balance
+
+         call calc_gr_balance_g(tdustnow, tgas, kgr, trad4, gasgr,
+     &        gamma_isrf, nh, nm_itmask, sol, in, is, ie)
+
+         call calc_gr_balance_g(tdplus, tgas, kgrplus, trad4, gasgr,
+     &        gamma_isrf, nh, nm_itmask, solplus, in, is, ie)
 
          do i = is+1, ie+1
             if ( nm_itmask(i) ) then
 
 !     Use Newton's method to solve for Tdust
-
-               sol(i) = radf * kgr(i) * 
-     &              (trad4 - tdustnow(i)**4) +
-     &              (gasgr(i) * nh(i) * 
-     &              (tgas(i) - tdustnow(i)))
-
-               solplus(i) = radf * kgrplus(i) * 
-     &              (trad4 - tdplus(i)**4) +
-     &              (gasgr(i) * nh(i) * 
-     &              (tgas(i) - tdplus(i)))
 
                slope(i) = (solplus(i) - sol(i)) / 
      &              (pert(i) * tdustnow(i))
@@ -214,12 +224,18 @@
                      bi_t_mid(i) = min(bi_t_mid(i), t_subl)
                   endif
 
-                  call calc_kappa_gr_g(bi_t_mid, kgr, bi_itmask, 
-     &                 in, is, ie, t_subl)
-                  sol(i) = radf * kgr(i) * 
-     &                 (trad4 - bi_t_mid(i)**4) +
-     &                 (gasgr(i) * nh(i) * 
-     &                 (tgas(i) - bi_t_mid(i)))
+               endif
+            enddo
+
+            call calc_kappa_gr_g(bi_t_mid, kgr, bi_itmask,
+     &           in, is, ie, t_subl)
+
+            call calc_gr_balance_g(bi_t_mid, tgas, kgr, trad4, gasgr,
+     &           gamma_isrf, nh, bi_itmask, sol, in, is, ie)
+
+            do i = is+1, ie+1
+               if ( bi_itmask(i) ) then
+
                   if (sol(i) .gt. 0._DKIND) then
                      tdustnow(i) = bi_t_mid(i)
                   else
@@ -235,7 +251,7 @@
 !     Check for all cells converged
                   if (c_done .ge. c_total) go to 666
 
-!     if ( nm_itmask(i) )
+!     if ( bi_itmask(i) )
                endif
 
 !     End loop over slice
@@ -365,6 +381,88 @@ c               ERROR_MESSAGE
                kgr(i) = max(tiny, 
      &              (kgr200 * (tdust(i) / 1.5e3_DKIND)**(-12)))
             endif
+
+         endif
+      enddo
+
+      return
+      end
+
+!=======================================================================
+!////////////////////  SUBROUTINE CALC_GR_BALANCE  \\\\\\\\\\\\\\\\\\\\\
+
+      subroutine calc_gr_balance_g(
+     &     tdust, tgas, kgr, trad4, gasgr, gamma_isrf, nh,
+     &     itmask, sol, in, is, ie)
+
+!  CALCULATE GRAIN HEAT BALANCE
+!
+!  written by: Britton Smith
+!  date:       September, 2019
+!  modified1:
+!
+!  PURPOSE:
+!    Calculate grain heating/cooling balance
+!
+!  INPUTS:
+!     in       - i dimension of 3D fields
+!
+!     tdust    - dust temperature
+!     tgas     - gas temperature
+!     kgr      - grain opacity
+!     trad4    - CMB temperature to 4th power
+!     gasgr    - gas/grain heat transfer rate
+!     gamma_isrf - heating from interstellar radiation field
+!     nh       - hydrogen number density
+!
+!     is,ie    - start and end indices of active region (zero based)
+!
+!     itmask   - iteration mask
+!
+!
+!  OUTPUTS:
+!     sol      - heating/cooling balance (heating - cooling)
+!
+!  PARAMETERS:
+!
+!-----------------------------------------------------------------------
+
+      implicit NONE
+#include "grackle_fortran_types.def"
+
+!  Arguments
+
+      integer in, is, ie
+      real*8 tdust(in), tgas(in), kgr(in), gasgr(in), nh(in), trad4,
+     &     gamma_isrf(in)
+
+!  Iteration mask
+
+      logical itmask(in)
+
+!  Parameters
+
+      real*8 radf
+      parameter(radf = 4._DKIND * sigma_sb)
+
+!  Locals
+
+      integer i
+
+!  Slice Locals
+
+      real*8 sol(in)
+
+!\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
+!=======================================================================
+
+      do i = is+1, ie+1
+         if ( itmask(i) ) then
+
+            sol(i) = gamma_isrf(i) + radf * kgr(i) *
+     &           (trad4 - tdust(i)**4) +
+     &           (gasgr(i) * nh(i) *
+     &           (tgas(i) - tdust(i)))
 
          endif
       enddo

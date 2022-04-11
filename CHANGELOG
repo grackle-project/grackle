@@ -1,3 +1,24 @@
+== Version 3.1.1 ==
+_Release date - Jul 1, 2019_
+
+  * Enhancement: add function for clearing locally declared grackle data
+	struct.
+  * Enhancement: added API for Grackle functionality using local data
+	structures.
+  * Enhancement: added/enhanced documentation for various runtime
+	parameters.
+  * Enhancement: added make file for ORNL Summit.
+  * Bugfix: make sure all parameters correctly printed after
+	initialization.
+  * Bugfix: correct H mass fraction for tabulated cooling mode.
+  * Bugfix: fix memory allocation in C example.
+  * Bugfix: fix scaling of H2 photo-dissociation rate by Lyman-Werner
+	intensity.
+  * Bugfix: fix thread-safety issue with updating UVB rates.
+  * Bugfix: OpenMP private variable list updated.
+  * Bugfix: correct H number density calculation for self-shielding.
+  * Bugfix: fix scaling of H2 and H2+ rates from UV background.
+
 == Version 3.1 ==
 _Release date - Apr 3, 2018_
 

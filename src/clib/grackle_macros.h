@@ -19,6 +19,14 @@
 /
 ************************************************************************/
 
+#define GRACKLE_FREE(p)				\
+  {						\
+    if (p != NULL) {				\
+      free(p);					\
+      p = NULL;					\
+    }						\
+  }						\
+
 #ifdef CONFIG_THROW_ABORT
 #define GRACKLE_FAIL(A) raise(SIGABRT);
 #define GRACKLE_VFAIL(A, ...) raise(SIGABRT);
@@ -95,6 +103,14 @@
 #define FLOAT_UNDEFINED  -99999.0
 #define INT_UNDEFINED    -99999
 #define MAX_LINE_LENGTH                   512
+
+#ifndef tiny
+#define tiny 1.0e-20
+#endif
+
+#ifndef huge
+#define huge 1.0e20
+#endif
 
 /* Macro definitions (things C should have) */
 

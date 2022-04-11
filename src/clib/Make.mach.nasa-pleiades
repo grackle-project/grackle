@@ -4,11 +4,16 @@
 #
 # DESCRIPTION: Makefile settings for NASA's pleiades
 #
-#    modules: comp-intel/2013.5.192,
-#	      A local serial hdf5 install (e.g. the one that comes with yt)
+#    modules: comp-intel/2020.4.304,
+#	       hdf5/1.8.18_serial 
 #
 # AUTHOR:      Nathan Goldbaum
 # DATE:        2014-04-24
+#
+#
+# MODIFIED:   Molly Peeples
+# DATE:       2021-06-02
+#
 #=======================================================================
 
 MACH_TEXT  = NASA Pleiades
@@ -17,8 +22,8 @@ MACH_FILE  = Make.mach.nasa-pleiades
 
 MACHINE_NOTES = "MACHINE_NOTES for Pleiades at NASA: \
 	The following modules are needed to compile: \
-	    comp-intel/2013.5.192 and \
-	    a serial hdf5 (the one that comes with yt should work) "
+	    comp-intel/2020.4.304 and \
+	    hdf5/1.8.18_serial  "
 
 #-----------------------------------------------------------------------
 # Compiler settings
@@ -38,9 +43,9 @@ MACH_LD_NOMPI  = icc
 # Install paths (local variables)
 #-----------------------------------------------------------------------
 
-LOCAL_HDF5_INSTALL   = $(YT_DEST)
+LOCAL_HDF5_INSTALL   = /nasa/hdf5/1.8.18_serial
 LOCAL_PYTHON_INSTALL = $(YT_DEST)
-LOCAL_COMPILER_DIR    = /nasa/intel/Compiler/2013.5.192/
+LOCAL_COMPILER_DIR    = /nasa/intel/Compiler/2020.2.254/
 
 #-----------------------------------------------------------------------
 # Machine-dependent defines
@@ -52,6 +57,7 @@ MACH_DEFINES = -DLINUX -DH5_USE_16_API -fPIC
 # Compiler flag settings
 #-----------------------------------------------------------------------
 
+MACH_LIBTOOL = /usr/bin/libtool 
 MACH_OMPFLAGS = # OpenMP flags
 MACH_CPPFLAGS = -P -traditional
 MACH_CFLAGS   = -mp1 -prec_div -fp_port -align # C compiler flags

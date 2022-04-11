@@ -22,6 +22,12 @@ extern int grackle_verbose;
 extern chemistry_data *grackle_data;
 extern chemistry_data_storage grackle_rates;
 
+double get_velocity_units(code_units *my_units);
+
+void set_velocity_units(code_units *my_units);
+
+double get_temperature_units(code_units *my_units);
+
 int set_default_chemistry_parameters(chemistry_data *my_grackle);
 
 chemistry_data _set_default_chemistry_parameters(void);
@@ -53,11 +59,11 @@ int _solve_chemistry(chemistry_data *my_chemistry,
                      gr_float *HeI_density, gr_float *HeII_density, gr_float *HeIII_density,
                      gr_float *H2I_density, gr_float *H2II_density,
                      gr_float *DI_density, gr_float *DII_density, gr_float *HDI_density,
-                     gr_float *e_density, gr_float *metal_density,
+                     gr_float *e_density, gr_float *metal_density, gr_float *dust_density,
                      gr_float *volumetric_heating_rate, gr_float *specific_heating_rate,
                      gr_float *RT_heating_rate, gr_float *RT_HI_ionization_rate, gr_float *RT_HeI_ionization_rate,
                      gr_float *RT_HeII_ionization_rate, gr_float *RT_H2_dissociation_rate,
-                     gr_float *H2_self_shielding_length);
+                     gr_float *H2_self_shielding_length) __attribute__ ((deprecated));
 
 int calculate_cooling_time(code_units *my_units,
                            grackle_field_data *my_fields,
@@ -80,9 +86,19 @@ int _calculate_cooling_time(chemistry_data *my_chemistry,
                             gr_float *HeI_density, gr_float *HeII_density, gr_float *HeIII_density,
                             gr_float *H2I_density, gr_float *H2II_density,
                             gr_float *DI_density, gr_float *DII_density, gr_float *HDI_density,
-                            gr_float *e_density, gr_float *metal_density,
+                            gr_float *e_density, gr_float *metal_density, gr_float *dust_density,
                             gr_float *cooling_time, gr_float *RT_heating_rate,
-                            gr_float *volumetric_heating_rate, gr_float *specific_heating_rate);
+                            gr_float *volumetric_heating_rate, gr_float *specific_heating_rate) __attribute__ ((deprecated));
+
+int calculate_dust_temperature(code_units *my_units,
+                               grackle_field_data *my_fields,
+                               gr_float *dust_temperature);
+
+int local_calculate_dust_temperature(chemistry_data *my_chemistry,
+                                     chemistry_data_storage *my_rates,
+                                     code_units *my_units,
+                                     grackle_field_data *my_fields,
+                                     gr_float *dust_temperature);
 
 int calculate_gamma(code_units *my_units,
                     grackle_field_data *my_fields,
@@ -105,7 +121,7 @@ int _calculate_gamma(chemistry_data *my_chemistry,
                      gr_float *H2I_density, gr_float *H2II_density,
                      gr_float *DI_density, gr_float *DII_density, gr_float *HDI_density,
                      gr_float *e_density, gr_float *metal_density,
-                     gr_float *my_gamma);
+                     gr_float *my_gamma) __attribute__ ((deprecated));
 
 int calculate_pressure(code_units *my_units,
                        grackle_field_data *my_fields,
@@ -128,7 +144,7 @@ int _calculate_pressure(chemistry_data *my_chemistry,
                         gr_float *H2I_density, gr_float *H2II_density,
                         gr_float *DI_density, gr_float *DII_density, gr_float *HDI_density,
                         gr_float *e_density, gr_float *metal_density,
-                        gr_float *pressure);
+                        gr_float *pressure) __attribute__ ((deprecated));
 
 int calculate_temperature(code_units *my_units,
                           grackle_field_data *my_fields,
@@ -151,6 +167,8 @@ int _calculate_temperature(chemistry_data *my_chemistry,
                            gr_float *H2I_density, gr_float *H2II_density,
                            gr_float *DI_density, gr_float *DII_density, gr_float *HDI_density,
                            gr_float *e_density, gr_float *metal_density,
-                           gr_float *temperature);
+                           gr_float *temperature) __attribute__ ((deprecated));
+
+int _free_chemistry_data(chemistry_data *my_chemistry, chemistry_data_storage *my_rates);
 
 #endif

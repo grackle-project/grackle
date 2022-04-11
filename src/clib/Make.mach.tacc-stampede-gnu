@@ -26,6 +26,7 @@ MACH_CXX_NOMPI = g++ # C++ compiler
 MACH_FC_NOMPI  = gfortran # Fortran 77
 MACH_F90_NOMPI = gfortran # Fortran 90
 MACH_LD_NOMPI  = gfortran # Linker
+MACH_LIBTOOL   = libtool
 
 #-----------------------------------------------------------------------
 # Machine-dependent defines
@@ -63,7 +64,6 @@ MACH_OPT_AGGRESSIVE  = -O3 -g
 #-----------------------------------------------------------------------
 
 LOCAL_HDF5_INSTALL = $(TACC_HDF5_DIR)
-LOCAL_FC_INSTALL = 
 
 LOCAL_INCLUDES_HDF5   = -I$(LOCAL_HDF5_INSTALL)/include # HDF5 includes
 MACH_INCLUDES         = $(LOCAL_INCLUDES_HDF5)
@@ -73,7 +73,7 @@ MACH_INCLUDES         = $(LOCAL_INCLUDES_HDF5)
 #-----------------------------------------------------------------------
 
 LOCAL_LIBS_HDF5   = -L$(LOCAL_HDF5_INSTALL)/lib -lhdf5 # HDF5 libraries
-LOCAL_LIBS_MACH   = -L$(LOCAL_FC_INSTALL) -lm # Machine-dependent libraries
+LOCAL_LIBS_MACH   = -lm # Machine-dependent libraries
 
 MACH_LIBS         = $(LOCAL_LIBS_HDF5) $(LOCAL_LIBS_MACH)
 

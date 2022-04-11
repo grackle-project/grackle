@@ -49,8 +49,9 @@ if __name__ == "__main__":
     my_chemistry.self_shielding_method = 0
     my_chemistry.H2_self_shielding = 0
     my_dir = os.path.dirname(os.path.abspath(__file__))
-    my_chemistry.grackle_data_file = os.path.join(
-        my_dir, "..", "..", "..", "input", "CloudyData_UVB=HM2012.h5")
+    grackle_data_file = bytearray(os.path.join(
+        my_dir, "..", "..", "..", "input", "CloudyData_UVB=HM2012.h5"), 'utf-8')
+    my_chemistry.grackle_data_file = grackle_data_file
 
     # Set units
     my_chemistry.comoving_coordinates = 0 # proper units
@@ -60,9 +61,7 @@ if __name__ == "__main__":
     my_chemistry.density_units = mass_hydrogen_cgs # rho = 1.0 is 1.67e-24 g
     my_chemistry.length_units = cm_per_mpc         # 1 Mpc in cm
     my_chemistry.time_units = sec_per_Myr          # 1 Myr in s
-    my_chemistry.velocity_units = my_chemistry.a_units * \
-        (my_chemistry.length_units / my_chemistry.a_value) / \
-        my_chemistry.time_units
+    my_chemistry.set_velocity_units()
 
     rval = my_chemistry.initialize()
 
@@ -109,15 +108,13 @@ if __name__ == "__main__":
     pyplot.xlabel("Time [Myr]")
     pyplot.ylabel("T [K]")
 
-    data["mu"] = data["temperature"] / \
-        (data["energy"] * (my_chemistry.Gamma - 1.) *
-         fc.chemistry_data.temperature_units)
     pyplot.twinx()
     p2, = pyplot.semilogx(data["time"].to("Myr"), data["mu"],
                           color="red", label="$\\mu$")
     pyplot.ylabel("$\\mu$")
     pyplot.legend([p1,p2],["T","$\\mu$"], fancybox=True,
                   loc="center left")
+    pyplot.tight_layout()
     pyplot.savefig("cooling_cell.png")
 
     # save data arrays as a yt dataset

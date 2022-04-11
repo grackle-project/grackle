@@ -59,7 +59,8 @@ def test_equilibrium():
     t_sort = np.argsort(fc["temperature"])
     t_cool = fc["cooling_time"][t_sort] * my_chem.time_units
     my_T = fc["temperature"][t_sort]
-    my_nH = fc.calculate_hydrogen_number_density().mean()
+    fc.calculate_hydrogen_number_density()
+    my_nH = fc["nH"].mean()
 
     cooling_rate_eq = -1*total_cooling(my_T, my_nH) / my_nH**2
     cooling_rate_g = fc["energy"][t_sort] / t_cool * fc["density"] * \
@@ -130,28 +131,33 @@ def test_equilibrium():
     test_precision = 1
 
     # test the cooling rates
-    cool_ratio = cooling_rate_eq / cooling_rate_g
-    assert_rel_equal(cooling_rate_eq, cooling_rate_g, test_precision,
-                     "Equilibrium cooling rates disagree with min/max = %f/%f." %
-                     (cool_ratio.min(), cool_ratio.max()))
+    rat = cooling_rate_eq / cooling_rate_g
+    assert_rel_equal(
+        cooling_rate_eq, cooling_rate_g, test_precision,
+        f"Equilibrium cooling rates disagree with min/max = {rat.min()}/{rat.max()}.")
 
     # test the ionization balance
-    assert_rel_equal(fHI_eq, fHI_g, test_precision,
-                     "HI fractions disagree with min/max = %f/%f." %
-                     ((fHI_eq / fHI_g).min(), (fHI_eq / fHI_g).max()))
+    rat = fHI_eq / fHI_g
+    assert_rel_equal(
+        fHI_eq, fHI_g, test_precision,
+        f"HI fractions disagree with min/max = {rat.min()}/{rat.max()}.")
 
-    assert_rel_equal(fHII_eq, fHII_g, test_precision,
-                     "HII fractions disagree with min/max = %f/%f." %
-                     ((fHII_eq / fHII_g).min(), (fHII_eq / fHII_g).max()))
+    rat = fHII_eq / fHII_g
+    assert_rel_equal(
+        fHII_eq, fHII_g, test_precision,
+        f"HII fractions disagree with min/max = {rat.min()}/{rat.max()}.")
 
-    assert_rel_equal(fHeI_eq, fHeI_g, test_precision,
-                     "HeI fractions disagree with min/max = %f/%f." %
-                     ((fHeI_eq / fHeI_g).min(), (fHeI_eq / fHeI_g).max()))
+    rat = fHeI_eq / fHeI_g
+    assert_rel_equal(
+        fHeI_eq, fHeI_g, test_precision,
+        f"HeI fractions disagree with min/max = {rat.min()}/{rat.max()}.")
 
-    assert_rel_equal(fHeII_eq, fHeII_g, test_precision,
-                     "HeII fractions disagree with min/max = %f/%f." %
-                     ((fHeII_eq / fHeII_g).min(), (fHeII_eq / fHeII_g).max()))
+    rat = fHeII_eq / fHeII_g
+    assert_rel_equal(
+        fHeII_eq, fHeII_g, test_precision,
+        f"HeII fractions disagree with min/max = {rat.min()}/{rat.max()}.")
 
-    assert_rel_equal(fHeIII_eq, fHeIII_g, test_precision,
-                     "HeIII fractions disagree with min/max = %f/%f." %
-                     ((fHeIII_eq / fHeIII_g).min(), (fHeIII_eq / fHeIII_g).max()))
+    rat = fHeIII_eq / fHeIII_g
+    assert_rel_equal(
+        fHeIII_eq, fHeIII_g, test_precision,
+        f"HeIII fractions disagree with min/max = {rat.min()}/{rat.max()}.")

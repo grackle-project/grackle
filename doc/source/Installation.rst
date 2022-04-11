@@ -36,6 +36,16 @@ repo, do the following:
 
     ~ $ git clone https://github.com/grackle-project/grackle
 
+Additional files containing cooling tables and test results are stored in
+a submodule linked to the Grackle repository. To get these, run the
+following command from anywhere within the repository:
+
+.. highlight:: none
+
+::
+
+    ~ $ git submodule update --init
+
 Building
 --------
 

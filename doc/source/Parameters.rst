@@ -45,6 +45,30 @@ For all on/off integer flags, 0 is off and 1 is on.
    and advect baryon fields for each of the species used by that
    particular option.
 
+.. c:var:: int dust_chemistry
+
+   Flag to control additional dust cooling and chemistry processes.
+   Default: 0.
+
+   - 0: no dust-related processes included.
+   - 1: adds the following processes:
+
+        #. photo-electric heating (sets :c:data:`photoelectric_heating` to 2).
+        #. cooling from electron recombination onto dust (equation 9 from
+           `Wolfire et al. 1995
+           <https://ui.adsabs.harvard.edu/abs/1995ApJ...443..152W/abstract>`__).
+           Both the photo-electric heating and recombination cooling are scaled
+           by the value of the :c:data:`interstellar_radiation_field`.
+        #. H\ :sub:`2`\  formation on dust (sets :c:data:`h2_on_dust` to 1
+           if :c:data:`primordial_chemistry` > 1).
+
+        Setting :c:data:`dust_chemistry` greater than 0 requires
+        :c:data:`metal_cooling` to be enabled.
+
+.. note:: Other values for :c:data:`photoelectric_heating` may also be used
+   in conjunction with setting the :c:data:`dust_chemistry` parameter. It will
+   only be changed to 2 if unset.
+
 .. c:var:: int h2_on_dust
 
    Flag to enable H\ :sub:`2` formation on dust grains, dust cooling, and
@@ -166,9 +190,41 @@ For all on/off integer flags, 0 is off and 1 is on.
 
 .. c:var:: int photoelectric_heating
 
-   Flag to enable a spatially uniform heating term approximating
-   photo-electric heating from dust from `Tasker & Bryan (2008)
-   <http://adsabs.harvard.edu/abs/2008ApJ...673..810T>`_.  Default: 0.
+   Flag to enable photo-electric heating from irradiated dust grains.
+   Default: 0.
+
+    - 0: no photo-electric heating.
+    - 1: a spatially uniform heating term from `Tasker & Bryan (2008)
+      <http://adsabs.harvard.edu/abs/2008ApJ...673..810T>`__. The exact
+      heating rate used must be specified with the
+      :c:data:`photoelectric_heating_rate` parameter. For temperatures
+      above 20,000 K, the photo-electric heating rate is set to 0.
+    - 2: similar to option 1, except the heating rate is calculated
+      using equation 1 of `Wolfire et al. (1995)
+      <https://ui.adsabs.harvard.edu/abs/1995ApJ...443..152W/abstract>`__
+      and the user must supply the intensity of the interstellar radiation
+      field with the :c:data:`interstellar_radiation_field` parameter. The
+      value of epsilon is taken as a constant equal to 0.05 for gas below
+      20,000 K and 0 otherwise.
+    - 3: similar to option 1, except the value of epsilon is calculated
+      directly from equation 2 of `Wolfire et al. (1995)
+      <https://ui.adsabs.harvard.edu/abs/1995ApJ...443..152W/abstract>`__.
+
+.. c:var:: int dust_recombination_cooling
+
+   Flag to enable recombination cooling onto dust grains using 
+   equation 9 of `Wolfire et al. (1995) 
+   <https://ui.adsabs.harvard.edu/abs/1995ApJ...443..152W/abstract>`__
+   rescaled by the local dust-to-gas ratio. This option is automatically 
+   set by :c:data:`h2_on_dust` > 0 or :c:data:`dust_chemistry` > 0.
+   Default: 0.
+
+.. note:: With :c:data:`primordial_chemistry` > 0, the electron density
+   used to calculate epsilon for :c:data:`photoelectric_heating` = 3
+   only considers the contribution from primordial species, ignoring that
+   of metals and dust grains, and so is most likely underestimated at low
+   temperatures. In practice, epsilon is reasonably approximated as a
+   constant of 0.05 in this regime.
 
 .. c:var:: int photoelectric_heating_rate
 
@@ -177,6 +233,24 @@ For all on/off integer flags, 0 is off and 1 is on.
    the total hydrogen number density. In other words, this is the
    volumetric heating rate at a hydrogen number density of 
    n = 1 cm\ :sup:`-3`\. Default: 8.5e-26.
+
+.. c:var:: int use_isrf_field
+
+   Flag to provide the strength of the interstellar radiation field
+   as a field array using the :c:data:`isrf_habing` pointer. If set
+   to 0, then the interstellar radiation field strength will be a
+   constant set by :c:data:`interstellar_radiation_field`.
+
+.. c:var:: float interstellar_radiation_field
+
+   The strength of the interstellar radiation field in `Habing
+   <https://ui.adsabs.harvard.edu/abs/1968BAN....19..421H/abstract>`__
+   units. A value of 1 corresponds to a mean intensity of 1.6x10\ :sup:`-3`
+   erg s\ :sup:`-1` cm\ :sup:`-2`. This value is used to compute the
+   dust photo-electric heating (if :c:data:`photoelectric_heating` > 1),
+   recombination cooling (if :c:data:`dust_chemistry` > 0), and heating of
+   the dust grains for the calculation of the dust temperature.
+   Default: 1.7.
 
 .. c:var:: int Compton_xray_heating
 
@@ -196,6 +270,44 @@ For all on/off integer flags, 0 is off and 1 is on.
    absorption (giving a sawtooth pattern), taken from `Haiman & Abel,
    & Rees (2000) <http://adsabs.harvard.edu/abs/2000ApJ...534...11H>`_.
    Default: 0.
+
+.. c:var:: float HydrogenFractionByMass
+
+   The fraction by mass of Hydrogen in the metal-free portion of the
+   gas (i.e., just the H and He). In the non-equilibrium solver, this is
+   used to ensure consistency in the densities of the individual species.
+   In tabulated mode, this is used to calculate the H number density from
+   the total gas density, which is a parameter of the heating/cooling tables.
+   When using the non-equilibrium solver, a sensible default is 0.76.
+   However, the tables for tabulated mode were created assuming
+   n\ :sub:`He`/n\ :sub:`H` = 0.1, which corresponds to an H mass fraction of
+   about 0.716. When running in tabulated mode, this parameter will automatically
+   be changed to this value. Default: 0.76.
+
+.. c:var:: float DeuteriumToHydrogenRatio
+
+   The ratio by mass of Deuterium to Hydrogen. Default: 6.8e-5 (the value
+   from `Burles & Tytler (1998)
+   <https://ui.adsabs.harvard.edu/abs/1998ApJ...507..732B/abstract>`_
+   multiplied by 2 for the mass of Deuterium).
+
+.. c:var:: float SolarMetalFractionByMass
+
+   The fraction of total gas mass in metals for a solar composition.
+   Default: 0.01295 (consistent with the default abundances in the Cloudy code).
+
+.. c:var:: float local_dust_to_gas_ratio
+
+   The ratio of total dust mass to gas mass in the local Universe.
+   Default: 0.009387 (from `Pollack et al. 1994
+   <https://ui.adsabs.harvard.edu/abs/1994ApJ...421..615P/abstract>`_).
+
+.. c:var:: int use_dust_density_field
+
+   Flag to provide the dust density as a field using the :c:data:`dust_density`
+   pointer in the :c:type:`grackle_field_data` struct. If set to 0, the dust
+   density takes the value of :c:data:`local_dust_to_gas_ratio` multiplied
+   by the metallicity. Default: 0.
 
 .. c:var:: int use_volumetric_heating_rate
 
@@ -257,11 +369,26 @@ For all on/off integer flags, 0 is off and 1 is on.
    density. Default: 0.
 
     - 1: Use a Sobolev-like, spherically averaged method from
-      `Wolcott-Green et. al. 2011 <http://adsabs.harvard.edu/abs/2011MNRAS.418..838W>`_.
+      `Wolcott-Green \& Haiman (2019)
+      <https://ui.adsabs.harvard.edu/abs/2019MNRAS.484.2467W/>`__. Prior to
+      Grackle version 3.2, this option used the method of `Wolcott-Green et. al.
+      (2011) <https://ui.adsabs.harvard.edu/abs/2011MNRAS.418..838W/>`__.
       This option is only valid for Cartesian grid codes in 3D.
     - 2: Supply an array of lengths using the :c:data:`H2_self_shielding_length`
       field.
     - 3: Use the local Jeans length.
+
+.. c:var:: int H2_custom_shielding
+
+   Flag to enable the user to provide an additional field which acts as 
+   an additional attenuation factor for both the UV background dissociation 
+   rate and the H\ :sub:`2`\  dissociation rate given by 
+   :c:data:`RT_H2_dissociation_rate` (if present), that is separate from the 
+   :c:data:`H2_self_shielding` attenuation factor. 
+   The factor, which is intended to be unspecific can e.g. be used in order 
+   to include grain size dependent dust extinction or any other user-specific 
+   source of attenuation.
+   Default: 0.
 
 .. c:var:: int self_shielding_method
 
@@ -308,6 +435,57 @@ For all on/off integer flags, 0 is off and 1 is on.
    H\ :sub:`2`\ self-shielding computed using the ``H2_self_shielding``
    flag.
 
+.. c:var:: int h2_charge_exchange_rate
+
+   Flag which selects the formula used for calculating the ``k11`` rate 
+   coefficient. Default: 1.
+
+      - 1: Equation 4 from `Savin et. al., 2004 <https://arxiv.org/abs/astro-ph/0404288>`_.
+      - 2: Table 3, Equation 11 from `Abel et. al., 1996 <https://arxiv.org/abs/astro-ph/9608040>`_.
+
+.. c:var:: int h2_dust_rate
+
+   Flag which selects the formula used for calculating the ``h2dust`` rate
+   coefficient. Default: 1.
+
+      - 1: Table 1, Equation 23 from `Omukai, 2000 <https://arxiv.org/abs/astro-ph/0003212>`_.
+      - 2: Equation 3.8 from `Hollenbach & McKee, 1979 <https://ui.adsabs.harvard.edu/abs/1979ApJS...41..555H/abstract>`_.
+
+.. c:var:: int h2_h_cooling_rate
+
+   Flag which selects the formula for calculating the ``GAHI`` rate coefficient.
+   Default: 1.
+
+      - 1: Equation based on `Lique, 2015 <https://academic.oup.com/mnras/article/453/1/810/1752438>`_. 
+      - 2: Equation 40 with fitting coefficients found in Table 8, from `Glover & Abel, 2008 <https://arxiv.org/abs/0803.1768>`_.
+
+   Notes on setting 1:
+      This fit is accurate to within ~5% over the temperature range 100 < T < 5000 K. Lique (2015)
+      doesn't present data above 5000 K, so at higher temperatures the rate has been calculated
+      assuming that the de-excitation rate coefficients have the same values that they have at 5000 K.
+      Lique also doesn't give rates for T < 100 K, but since we don't expect H2 cooling to be important
+      there, it should be OK to just set the rate to zero.
+
+.. c:var:: int collisional_excitation_rates
+
+   On/off flag to toggle calculation of rate coefficients corresponding to collisional excitations 
+   (``ceHI``, ``ceHeI`` and ``ceHeII``). Default: 1
+
+.. c:var:: int collisional_ionisation_rates
+
+   On/off flag to toggle calculation of rate coefficients corresponding to collisional ionisations 
+   (``ciHeIS``, ``ciHI``, ``ciHeI`` and ``ciHeII``). Default: 1
+
+.. c:var:: int recombination_cooling_rates
+
+   On/off flag to toggle calculation of rate coefficients corresponding to recombination cooling 
+   (``reHII``, ``reHeII1``, ``reHeII2`` and ``reHeIII``). Default: 1
+
+.. c:var:: int bremsstrahlung_cooling_rates
+
+   On/off flag to toggle calculation of rate coefficients corresponding to bremsstrahlung cooling 
+   (``brem``). Default: 1
+
 .. c:var:: int omp_nthreads
 
    Sets the number of OpenMP threads.  If not set, this will be set to
@@ -350,6 +528,11 @@ Data files:
    <http://adsabs.harvard.edu/abs/2012ApJ...746..125H>`_.  The maximum
    redshift is 15.13.  Above that, collisional ionization equilibrium is
    assumed.
+
+ - **CloudyData_UVB=HM2012_high_density.h5** - same as
+   **CloudyData_UVB=HM2012.h5** but goes to higher density (10\ :sup:`10`
+   atom / cm\ :sup:`3`) and was computed with a more recent version of
+   Cloudy (17.06).
 
 To use the self-shielding approximation (see ``self_shielding_method``),
 one must properly account for the change in metal line cooling rates in

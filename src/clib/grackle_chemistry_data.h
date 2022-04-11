@@ -35,6 +35,16 @@ typedef struct
      3) + D, D+, HD */
   int primordial_chemistry;
 
+  /* dust chemistry and cooling
+     0) no dust chemistry or cooling
+     1) basic dust treatment
+        - photo-electric heating
+        - recombination cooling
+        - with primordial_chemistry > 1:
+          - H2 formation on dust grains
+          - gas/grain heat transfer */
+  int dust_chemistry;
+
   /* metal cooling on/off
      0) off, 1) on */
   int metal_cooling;
@@ -57,10 +67,21 @@ typedef struct
      0) off, 1) on */
   int h2_on_dust;
 
-  /* photo-electric heating from irradiated dust */
+  /* Flag to supply a dust density field */
+  int use_dust_density_field;
 
+  /* Flag for enabling recombination cooling on grains */
+  int dust_recombination_cooling;
+
+  /* photo-electric heating from irradiated dust */
   int photoelectric_heating;
-  double photoelectric_heating_rate; // in CGS
+  double photoelectric_heating_rate;
+
+  /* Flag to supply a field for the interstellar radiation field */
+  int use_isrf_field;
+
+  // local FUV interstellar radiation field in Habing units
+  double interstellar_radiation_field;
 
   /* flags to signal that arrays of volumetric or
      specific heating rates are being provided */
@@ -77,6 +98,7 @@ typedef struct
   double HydrogenFractionByMass;
   double DeuteriumToHydrogenRatio;
   double SolarMetalFractionByMass;
+  double local_dust_to_gas_ratio;
   int NumberOfTemperatureBins;
   int CaseBRecombination;
   double TemperatureStart;
@@ -114,8 +136,33 @@ typedef struct
      photo ionization shielding factors */
   int self_shielding_method;
 
-  /* flag for Wolcott-Green+ 2011 H2 self-shielding */
+  /* flag for Wolcott-Green+ 2011 H2 self-shielding. Can be set to either 0,1,2 or 3.
+     These determine the length scale used in the calculation of the H2 column density.
+     Please refer to the grackle documentation for specifics. */
   int H2_self_shielding;
+
+  /* flag for custom H2-shielding factor. The factor is provided as an additional field 
+     by the user and is multiplied to the rate for radiative H2 dissocitation */
+  int H2_custom_shielding;
+
+  /* flag to select which formula for calculating k11 you want to use. 
+     Setting to 1 will use Savin 2004, 2 will use Abel et al. 1996  */
+  int h2_charge_exchange_rate;
+
+  /* flag to select which formula for calculating h2dust you want to use. 
+     Setting to 1 will use Omukai 2000, 2 will use Hollenbach & McKee (1979) */ 
+  int h2_dust_rate;
+
+  /* flag to select which formula for calculating low density H2 cooling rate 
+     due to H collisions. Setting to 1 will use Lique 2015, 2 will use Glover and Abel 2008 */
+  int h2_h_cooling_rate;
+  
+  /* flags specific to calc_rates_g (1 is on, 0 is off) -- will be set to default values 
+     if unspecified  */
+  int collisional_excitation_rates; //Collisional excitation
+  int collisional_ionisation_rates; //Collisional ionisation
+  int recombination_cooling_rates; //Recombination cooling
+  int bremsstrahlung_cooling_rates; //Bremsstrahlung cooling
 
   /* number of OpenMP threads, if supported */
 # ifdef _OPENMP
@@ -280,7 +327,6 @@ typedef struct
   double comp;                    // Compton cooling
   double comp_xray;               // X-ray compton heating coefficient
   double temp_xray;               // X-ray compton heating temperature (K)
-  double gammah;                  // Photoelectric heating (code units)
 
   /* radiative rates (external field). */
   double piHI;                    // photo-ionization cooling
@@ -320,6 +366,19 @@ typedef struct
 
   /* CIE cooling */
   double *cieco;
+
+  /*******************************
+   * dust chemistry/cooling data *
+   *******************************/
+
+  // Photo-electric heating (code units)
+  double gammah;
+
+  // Electron recombination onto dust grains
+  double *regr;
+
+  // Heating of dust by interstellar radiation field
+  double gamma_isrf;
 
   /* Gas/grain energy transfer. */
   double *gas_grain;

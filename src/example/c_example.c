@@ -43,10 +43,10 @@ int main(int argc, char *argv[])
   my_units.density_units = 1.67e-24;
   my_units.length_units = 1.0;
   my_units.time_units = 1.0e12;
-  my_units.velocity_units = my_units.length_units / my_units.time_units;
   my_units.a_units = 1.0; // units for the expansion factor
   // Set expansion factor to 1 for non-cosmological simulation.
   my_units.a_value = 1. / (1. + initial_redshift) / my_units.a_units;
+  set_velocity_units(&my_units);
 
   // Second, create a chemistry object for parameters.  This needs to be a pointer.
   chemistry_data *my_grackle_data;
@@ -62,6 +62,7 @@ int main(int argc, char *argv[])
   grackle_data->use_grackle = 1;            // chemistry on
   grackle_data->with_radiative_cooling = 1; // cooling on
   grackle_data->primordial_chemistry = 3;   // molecular network with H, He, D
+  grackle_data->dust_chemistry = 1;         // dust processes
   grackle_data->metal_cooling = 1;          // metal cooling on
   grackle_data->UVbackground = 1;           // UV background on
   grackle_data->grackle_data_file = "../../input/CloudyData_UVB=HM2012.h5"; // data file
@@ -82,8 +83,8 @@ int main(int argc, char *argv[])
   int field_size = 1;
   my_fields.grid_rank = 3;
   my_fields.grid_dimension = malloc(my_fields.grid_rank * sizeof(int));
-  my_fields.grid_start = malloc(field_size * sizeof(int));
-  my_fields.grid_end = malloc(field_size * sizeof(int));
+  my_fields.grid_start = malloc(my_fields.grid_rank * sizeof(int));
+  my_fields.grid_end = malloc(my_fields.grid_rank * sizeof(int));
   my_fields.grid_dx = 0.0; // used only for H2 self-shielding approximation
 
   int i;
@@ -132,9 +133,7 @@ int main(int argc, char *argv[])
   my_fields.RT_heating_rate = malloc(field_size * sizeof(gr_float));
 
   // set temperature units
-  double temperature_units =  mh * pow(my_units.a_units * 
-                                         my_units.length_units /
-                                         my_units.time_units, 2) / kboltz;
+  double temperature_units = get_temperature_units(&my_units);
 
   for (i = 0;i < field_size;i++) {
     my_fields.density[i] = 1.0;
@@ -211,6 +210,8 @@ int main(int argc, char *argv[])
 
   // Calculate pressure.
   gr_float *pressure;
+  double pressure_units = my_units.density_units *
+    pow(my_units.velocity_units, 2);
   pressure = malloc(field_size * sizeof(gr_float));
   if (calculate_pressure(&my_units, &my_fields,
                          pressure) == 0) {
@@ -218,7 +219,7 @@ int main(int argc, char *argv[])
     return EXIT_FAILURE;
   }
 
-  fprintf(stderr, "Pressure = %g.\n", pressure[0]);
+  fprintf(stderr, "Pressure = %le dyne/cm^2.\n", pressure[0]*pressure_units);
 
   // Calculate gamma.
   gr_float *gamma;
@@ -230,6 +231,17 @@ int main(int argc, char *argv[])
   }
 
   fprintf(stderr, "gamma = %g.\n", gamma[0]);
+
+  // Calculate dust temperature.
+  gr_float *dust_temperature;
+  dust_temperature = malloc(field_size * sizeof(gr_float));
+  if (calculate_dust_temperature(&my_units, &my_fields,
+                      dust_temperature) == 0) {
+    fprintf(stderr, "Error in calculate_dust_temperature.\n");
+    return EXIT_FAILURE;
+  }
+
+  fprintf(stderr, "dust_temperature = %g K.\n", dust_temperature[0]);
 
   return EXIT_SUCCESS;
 }
