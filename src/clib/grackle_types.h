@@ -92,12 +92,13 @@ typedef struct
   int i_start;
   int i_end;
   int i_dim;
+
   int j_start;
-  int j_end; /* can be removed */
   int j_dim;
+  /* j_end isn't needed */
+
   int k_start;
-  int k_end; /* can be removed */
-  int k_dim; /* can be removed */
+  /* k_end & k_dim aren't needed */
 
   int num_j_inds;
   int outer_ind_size;
