@@ -48,6 +48,8 @@ extern void FORTRAN_NAME(calc_temp_cloudy_g)(
 
 double get_temperature_units(code_units *my_units);
 
+grackle_index_helper _build_index_helper(const grackle_field_data *my_fields);
+
 int local_calculate_pressure(chemistry_data *my_chemistry,
                              chemistry_data_storage *my_rates,
                              code_units *my_units,
@@ -79,12 +81,6 @@ int local_calculate_temperature(chemistry_data *my_chemistry,
       return FAIL;
     }
   }
- 
-  /* Compute the size of the fields. */
- 
-  int i, dim, size = 1;
-  for (dim = 0; dim < my_fields->grid_rank; dim++)
-    size *= my_fields->grid_dimension[dim];
 
   /* Calculate temperature units. */
 
@@ -102,38 +98,55 @@ int local_calculate_temperature(chemistry_data *my_chemistry,
     return SUCCESS;
   }
 
- /* Compute temperature with mu calculated directly. */
- 
+  /* Compute properties used to index the field. */
+  const grackle_index_helper ind_helper = _build_index_helper(my_fields);
+  int outer_ind, i, j, k, index;
+
+  /* Compute temperature with mu calculated directly. */
+
+  /* parallelize the k and j loops with OpenMP
+   * (these loops are flattened them for better parallelism) */
 # ifdef _OPENMP
-# pragma omp parallel for schedule( runtime ) private( i, number_density )
+# pragma omp parallel for schedule( runtime ) \
+  private( outer_ind, i, j, k, index, number_density )
 # endif
-  for (i = 0; i < size; i++) {
- 
-    if (my_chemistry->primordial_chemistry > 0) {
-      number_density =
-        0.25 * (my_fields->HeI_density[i] + my_fields->HeII_density[i] +
-                my_fields->HeIII_density[i]) +
-        my_fields->HI_density[i] + my_fields->HII_density[i] +
-        my_fields->e_density[i];
-    }
+  for (outer_ind = 0; outer_ind < ind_helper.outer_ind_size; outer_ind++){
 
-    /* Add in H2. */
- 
-    if (my_chemistry->primordial_chemistry > 1) {
-      number_density += my_fields->HM_density[i] +
-        0.5 * (my_fields->H2I_density[i] + my_fields->H2II_density[i]);
-    }
+    k = (outer_ind / ind_helper.num_j_inds) + ind_helper.k_start;
+    j = (outer_ind % ind_helper.num_j_inds) + ind_helper.j_start;
 
-    if (my_fields->metal_density != NULL) {
-      number_density += my_fields->metal_density[i] * inv_metal_mol;
-    }
+    for (i = ind_helper.i_start; i <= ind_helper.i_end; i++) {
+      index = i + ind_helper.i_dim * (j + ind_helper.j_dim * k);
  
-    /* Ignore deuterium. */
+      if (my_chemistry->primordial_chemistry > 0) {
+	number_density =
+	  0.25 * (my_fields->HeI_density[index] +
+		  my_fields->HeII_density[index] +
+		  my_fields->HeIII_density[index]) +
+	  my_fields->HI_density[index] + my_fields->HII_density[index] +
+	  my_fields->e_density[index];
+      }
+
+      /* Add in H2. */
  
-    temperature[i] *= temperature_units / max(number_density, tiny_number);
-    temperature[i] = max(temperature[i], MINIMUM_TEMPERATURE);
-  }
+      if (my_chemistry->primordial_chemistry > 1) {
+	number_density += my_fields->HM_density[index] +
+	  0.5 * (my_fields->H2I_density[index] +
+		 my_fields->H2II_density[index]);
+      }
+
+      if (my_fields->metal_density != NULL) {
+	number_density += my_fields->metal_density[index] * inv_metal_mol;
+      }
  
+      /* Ignore deuterium. */
+ 
+      temperature[index] *= temperature_units / max(number_density,
+						    tiny_number);
+      temperature[index] = max(temperature[index], MINIMUM_TEMPERATURE);
+    } // end: loop over i
+  } // end: loop over outer_ind
+
   return SUCCESS;
 }
 
@@ -151,12 +164,6 @@ int local_calculate_temperature_table(chemistry_data *my_chemistry,
     fprintf(stderr, "ERROR: this function requires primordial_chemistry set to 0.\n");
     return FAIL;
   }
- 
-  /* Compute the size of the fields. */
- 
-  int i, dim, size = 1;
-  for (dim = 0; dim < my_fields->grid_rank; dim++)
-    size *= my_fields->grid_dimension[dim];
 
   /* Check for a metal field. */
 
