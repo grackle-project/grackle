@@ -87,4 +87,21 @@ typedef struct
 
 } code_units;
 
+typedef struct
+{
+  int i_start;
+  int i_end;
+  int i_dim;
+  int j_start;
+  int j_end; /* can be removed */
+  int j_dim;
+  int k_start;
+  int k_end; /* can be removed */
+  int k_dim; /* can be removed */
+
+  int num_j_inds;
+  int outer_ind_size;
+
+} grackle_index_helper;
+
 #endif
