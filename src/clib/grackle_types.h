@@ -87,4 +87,13 @@ typedef struct
 
 } code_units;
 
+typedef struct
+{
+
+  const char* version;
+  const char* branch;
+  const char* revision;
+
+} grackle_version;
+
 #endif

@@ -194,7 +194,7 @@ verbose: VERBOSE = 1
 #-----------------------------------------------------------------------
 
 .PHONY: autogen
-autogen: auto_show_config.c auto_show_flags.c auto_show_version.c
+autogen: auto_show_config.c auto_show_flags.c auto_get_version.c
 
 # Force update of auto_show_config.c
 
@@ -210,12 +210,12 @@ auto_show_flags.c:
 	-@$(MAKE) -s show-flags  >& temp.show-flags
 	-@awk 'BEGIN {print "#include <stdio.h>\nvoid auto_show_flags(FILE *fp) {"}; {print "   fprintf (fp,\""$$0"\\n\");"}; END {print "}"}' < temp.show-flags > auto_show_flags.c
 
-# Force update of auto_show_version.c
+# Force update of auto_get_version.c
 
-.PHONY: auto_show_version.c
-auto_show_version.c:
+.PHONY: auto_get_version.c
+auto_get_version.c:
 	-@$(MAKE) -s show-version  >& temp.show-version
-	-@awk 'BEGIN {print "#include <stdio.h>\nvoid auto_show_version(FILE *fp) {"}; {print "   fprintf (fp,\""$$0"\\n\");"}; END {print "}"}' < temp.show-version > auto_show_version.c
+	-@awk 'BEGIN {print "#include <stdio.h>\n#include \"grackle_types.h\"\n\ngrackle_version get_grackle_version() {\n  grackle_version out;" }; { if (NF > 0) { print "  out." tolower($$(NF-1)) " = \"" $$(NF) "\";" } }; END { print "  return out;\n}"}' < temp.show-version > auto_get_version.c
 
 #-----------------------------------------------------------------------
 # Generate dependency file
