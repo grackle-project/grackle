@@ -215,7 +215,28 @@ auto_show_flags.c:
 .PHONY: auto_get_version.c
 auto_get_version.c:
 	-@$(MAKE) -s show-version  >& temp.show-version
-	-@awk 'BEGIN {print "#include <stdio.h>\n#include \"grackle_types.h\"\n\ngrackle_version get_grackle_version() {\n  grackle_version out;" }; { if (NF > 0) { print "  out." tolower($$(NF-1)) " = \"" $$(NF) "\";" } }; END { print "  return out;\n}"}' < temp.show-version > auto_get_version.c
+	-@(if [ -f $@ ]; then rm $@; fi) # delete the file if it already exists
+
+	-@echo '#include <stdio.h>'                                                             >> $@
+	-@echo '#include "grackle_types.h"'                                                     >> $@
+	-@echo ''                                                                               >> $@
+	-@echo '// the following macros are auto-generated:'                                    >> $@
+
+	-@awk '{ if (NF > 0) { print "#define AUTO_" toupper($$(NF-1)) " \"" $$(NF) "\"" } };' < temp.show-version >> auto_get_version.c
+
+	-@echo ''                                                                               >> $@
+	-@echo '// test that ensures that all macros were correctly defined:'                   >> $@
+	-@echo '#if !(defined(AUTO_VERSION) && defined(AUTO_BRANCH) && defined(AUTO_REVISION))' >> $@
+	-@echo '#error "Something went wrong while auto-generating macros"'                     >> $@
+	-@echo '#endif'                                                                         >> $@
+	-@echo ''                                                                               >> $@
+	-@echo 'grackle_version get_grackle_version() {'                                        >> $@
+	-@echo '  grackle_version out;'                                                         >> $@
+	-@echo '  out.version = AUTO_VERSION;'                                                  >> $@
+	-@echo '  out.branch = AUTO_BRANCH;'                                                    >> $@
+	-@echo '  out.revision = AUTO_REVISION;'                                                >> $@
+	-@echo '  return out;'                                                                  >> $@
+	-@echo '}'                                                                              >> $@
 
 #-----------------------------------------------------------------------
 # Generate dependency file
