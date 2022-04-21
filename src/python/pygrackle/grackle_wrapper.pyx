@@ -1204,3 +1204,10 @@ def calculate_dust_temperature(fc):
         &my_units,
         &my_fields,
         dust_temperature)
+
+def get_grackle_version():
+    cdef c_grackle_version version_struct = c_get_grackle_version()
+    # all members of version_struct are string literals (i.e. don't call free)
+    return {"version" : version_struct.version.decode('UTF-8'),
+            "branch" : version_struct.branch.decode('UTF-8'),
+            "revision" : version_struct.revision.decode('UTF-8')}
