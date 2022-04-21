@@ -669,3 +669,49 @@ Cleaning the memory
   _free_chemistry_data(my_grackle_data, &grackle_rates);
 
 Grackle is using global structures and therefore the global structure ``grackle_rates`` needs also to be released.
+
+Querying library version information
+------------------------------------
+
+A struct of type :c:data:`grackle_version` is used to hold version
+information about the version of Grackle that is being used. The
+struct contains information about the version number and particular
+git revision.
+
+.. c:type:: grackle_version
+
+   This structure is used to organize version information for the
+   library.
+
+.. c:var:: const* char version
+
+   Specifies the version of the library using this template:
+   ``<MAJOR>.<MINOR>(.<MICRO>)(.dev<DEV_NUM>)``. In this template
+   ``<MAJOR>``, ``<MINOR>``, and ``<MICRO>`` correspond to a major,
+   minor, and micro version numbers (the micro version number is
+   omitted if it's zero). The final section can specify a
+   development version. For concreteness, some example versions are
+   provided in increasing order: ``"3.0"``, ``"3.1"``, ``"3.1.1"``,
+   ``"3.1.2"``, ``"3.2.dev1"``, ``"3.2.dev2"``, ``"3.2"``.
+
+.. c:var:: const* char branch
+
+   Specifies the name of the git branch that the library was compiled
+   from.
+
+.. c:var:: const* char revision
+
+   Specifies the hash identifying the git commit that the library was
+   compiled from.
+
+The :c:func:`get_grackle_version` function is used to retrieve a
+properly intialized :c:data:`grackle_version` object. The following
+code snippet illustrates how one might query and print this
+information:
+
+.. code-block:: c++
+
+  grackle_version gversion = get_grackle_version();
+  printf ("The Grackle Version: %s\n", gversion.version);
+  printf ("Git Branch:   %s\n", gversion.branch);
+  printf ("Git Revision: %s\n", gversion.revision);
