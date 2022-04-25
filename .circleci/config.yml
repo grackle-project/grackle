@@ -75,7 +75,7 @@ commands:
             pip install --upgrade pip
             pip install --upgrade wheel
             pip install --upgrade setuptools
-            pip install 'sphinx<3.0'
+            pip install 'sphinx<3.0' 'Jinja2<3.1'
 
   download-test-data:
     description: "Download test data."
