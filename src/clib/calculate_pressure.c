@@ -79,7 +79,7 @@ int local_calculate_pressure(chemistry_data *my_chemistry,
   
 #   ifdef _OPENMP
 #   pragma omp parallel for schedule( runtime ) \
-    private( outer_ind, i, j, k, ind, \
+    private( outer_ind, i, j, k, index, \
              number_density, nH2, GammaH2Inverse, x, Gamma1, temp )
 #   endif
     for (outer_ind = 0; outer_ind < ind_helper.outer_ind_size; outer_ind++){
