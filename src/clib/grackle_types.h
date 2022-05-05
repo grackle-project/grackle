@@ -87,22 +87,4 @@ typedef struct
 
 } code_units;
 
-typedef struct
-{
-  int i_start;
-  int i_end;
-  int i_dim;
-
-  int j_start;
-  int j_dim;
-  /* j_end isn't needed */
-
-  int k_start;
-  /* k_end & k_dim aren't needed */
-
-  int num_j_inds;
-  int outer_ind_size;
-
-} grackle_index_helper;
-
 #endif

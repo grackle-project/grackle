@@ -18,6 +18,7 @@
 #include "grackle_types.h"
 #include "grackle_chemistry_data.h"
 #include "phys_constants.h"
+#include "index_helper.h"
 #ifdef _OPENMP
 #include <omp.h>
 #endif
@@ -47,8 +48,6 @@ extern void FORTRAN_NAME(calc_temp_cloudy_g)(
  	long long *priDataSize, double *priMMW);
 
 double get_temperature_units(code_units *my_units);
-
-grackle_index_helper _build_index_helper(const grackle_field_data *my_fields);
 
 int local_calculate_pressure(chemistry_data *my_chemistry,
                              chemistry_data_storage *my_rates,
@@ -100,7 +99,7 @@ int local_calculate_temperature(chemistry_data *my_chemistry,
 
   /* Compute properties used to index the field. */
   const grackle_index_helper ind_helper = _build_index_helper(my_fields);
-  int outer_ind, i, j, k, index;
+  int outer_ind, index;
 
   /* Compute temperature with mu calculated directly. */
 
@@ -108,15 +107,13 @@ int local_calculate_temperature(chemistry_data *my_chemistry,
    * (these loops are flattened them for better parallelism) */
 # ifdef _OPENMP
 # pragma omp parallel for schedule( runtime ) \
-  private( outer_ind, i, j, k, index, number_density )
+  private( outer_ind, index, number_density )
 # endif
   for (outer_ind = 0; outer_ind < ind_helper.outer_ind_size; outer_ind++){
 
-    k = (outer_ind / ind_helper.num_j_inds) + ind_helper.k_start;
-    j = (outer_ind % ind_helper.num_j_inds) + ind_helper.j_start;
+    const grackle_index_range range = _inner_range(outer_ind, &ind_helper);
 
-    for (i = ind_helper.i_start; i <= ind_helper.i_end; i++) {
-      index = i + ind_helper.i_dim * (j + ind_helper.j_dim * k);
+    for (index = range.start; index <= range.end; index++) {
  
       if (my_chemistry->primordial_chemistry > 0) {
 	number_density =

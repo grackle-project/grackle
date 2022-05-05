@@ -18,6 +18,7 @@
 #include "grackle_types.h"
 #include "grackle_chemistry_data.h"
 #include "phys_constants.h"
+#include "index_helper.h"
 #ifdef _OPENMP
 #include <omp.h>
 #endif
@@ -44,17 +45,16 @@ int local_calculate_gamma(chemistry_data *my_chemistry,
     return SUCCESS;
  
   const grackle_index_helper ind_helper = _build_index_helper(my_fields);
-  int outer_ind, i, j, k, index;
+  int outer_ind, index;
   
   /* If molecular hydrogen is not being used, just use monotonic.
      (this should not really be called, but provide it just in case). */
 
   for (outer_ind = 0; outer_ind < ind_helper.outer_ind_size; outer_ind++){
-    k = (outer_ind / ind_helper.num_j_inds) + ind_helper.k_start;
-    j = (outer_ind % ind_helper.num_j_inds) + ind_helper.j_start;
 
-    for (i = ind_helper.i_start; i <= ind_helper.i_end; i++) {
-      index = i + ind_helper.i_dim * (j + ind_helper.j_dim * k);
+    const grackle_index_range range = _inner_range(outer_ind, &ind_helper);
+
+    for (index = range.start; index <= range.end; index++) {
       my_gamma[index] = my_chemistry->Gamma;
     }
   }
@@ -79,15 +79,13 @@ int local_calculate_gamma(chemistry_data *my_chemistry,
      * (these loops are flattened them for better parallelism) */
 #   ifdef _OPENMP
 #   pragma omp parallel for schedule( runtime ) \
-    private( outer_ind, i, j, k, index, x, nH2, number_density, GammaH2Inverse )
+    private( outer_ind, index, x, nH2, number_density, GammaH2Inverse )
 #   endif
     for (outer_ind = 0; outer_ind < ind_helper.outer_ind_size; outer_ind++){
 
-      k = (outer_ind / ind_helper.num_j_inds) + ind_helper.k_start;
-      j = (outer_ind % ind_helper.num_j_inds) + ind_helper.j_start;
+      const grackle_index_range range = _inner_range(outer_ind, &ind_helper);
 
-      for (i = ind_helper.i_start; i <= ind_helper.i_end; i++) {
-	index = i + ind_helper.i_dim * (j + ind_helper.j_dim * k);
+      for (index = range.start; index <= range.end; index++) {
  
 	/* Compute relative number abundence of molecular hydrogen. */
  
