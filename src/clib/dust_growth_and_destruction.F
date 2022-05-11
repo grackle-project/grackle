@@ -16,6 +16,7 @@
       implicit NONE
 #include "grackle_fortran_types.def"
 
+      character(80) :: userinp
       integer in, jn, kn, i, j, k
       real*8 tau_accr(in), tau_dest(in), tau_sput(in),
      &       z_solar, SolarAbundances(NUM_METAL_SPECIES_GRACKLE),
@@ -65,6 +66,33 @@
      &     / gas_metal9(i,j,k)), tau_accr(i))
       tau_accr(i) = min(tau_accr0 * (SolarAbundances(10)
      &     / gas_metal10(i,j,k)), tau_accr(i))
+
+      if (tau_accr(i) .le. 0) then
+            write(*,*) "-- tau_accr neagative! --", tau_accr(i)
+            write(*,*) "tau_accr0=", tau_accr0
+            write(*,*) "metal_density=", metal_density(i,j,k)
+            write(*,*) "gas_metal1=", gas_metal1(i,j,k)
+            write(*,*) "gas_metal2=", gas_metal2(i,j,k)
+            write(*,*) "gas_metal3=", gas_metal3(i,j,k)
+            write(*,*) "gas_metal4=", gas_metal4(i,j,k)
+            write(*,*) "gas_metal5=", gas_metal5(i,j,k)
+            write(*,*) "gas_metal6=", gas_metal6(i,j,k)
+            write(*,*) "gas_metal7=", gas_metal7(i,j,k)
+            write(*,*) "gas_metal8=", gas_metal8(i,j,k)
+            write(*,*) "gas_metal9=", gas_metal9(i,j,k)
+            write(*,*) "gas_metal10=", gas_metal10(i,j,k)
+            write(*,*) "SolarAbundances1=", SolarAbundances(1)
+            write(*,*) "SolarAbundances2=", SolarAbundances(2)
+            write(*,*) "SolarAbundances3=", SolarAbundances(3)
+            write(*,*) "SolarAbundances4=", SolarAbundances(4)
+            write(*,*) "SolarAbundances5=", SolarAbundances(5)
+            write(*,*) "SolarAbundances6=", SolarAbundances(6)
+            write(*,*) "SolarAbundances7=", SolarAbundances(7)
+            write(*,*) "SolarAbundances8=", SolarAbundances(8)
+            write(*,*) "SolarAbundances9=", SolarAbundances(9)
+            write(*,*) "SolarAbundances10=", SolarAbundances(10)
+            read(*,*) userinp
+      endif
 
 !   destruction by SN shocks
       if (SNe_ThisTimeStep(i,j,k).le.0.0) then
@@ -228,22 +256,27 @@
             write(*,*) "dM at index", n, 
      &                 "calculated as NaN in line 202 of dust model", dM(n)
             read(*,*) userinp
-        endif 
-          
+        endif         
       enddo
 
 !   recalculate metallicity
-      do n=0+1,NUM_METAL_SPECIES_GRACKLE+1
-          if (dust_Density(i,j,k) .gt. 0.0) then
+      do n=0+1,NUM_METAL_SPECIES_GRACKLE+1         
+          if (dust_density(i,j,k) .gt. 0.0) then
+!         make sure that only 90% of the gaseous metals can become dust
+!         this also ensures that the metal density > 0
+              dM(n) = min(0.9 * metpt(n), dM(n))
               dmetpt(n) = dM(n) + dmetpt(n) ! SNe shocks on neighbors are ignored
           else
               dmetpt(n) = 0.0
           endif
-          metpt(n) = metpt(n) - dM(n) 
-
+          metpt(n) = metpt(n) - dM(n)
       enddo
 
-      
+      if (metpt(1) .lt. 0) then
+            write(*,*) "metpt(1)=", metpt(1),
+     &      "dM(1)=", dM(1)
+            read(*,*) userinp
+      endif
 
 !     copy metallicites back into fields arrays
       metal_Density(i,j,k) = metpt(1)
