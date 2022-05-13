@@ -50,6 +50,7 @@ dev_requirements = [
     'flake8',
     'pytest',
     'sphinx',
+    'packaging'
 ]
 
 setup(

@@ -12,6 +12,7 @@
 ########################################################################
 
 from pygrackle.grackle_wrapper import get_grackle_version
+from packaging.version import Version, InvalidVersion
 
 import os
 import subprocess
@@ -59,32 +60,57 @@ def test_get_grackle_version():
     # perform the easy checks
     results = get_grackle_version()
     if (len(results) != 3):
-        raise ValueError(
+        raise RuntimeError(
             "get_grackle_version should return a dictionary with the 3 items"
         )
     elif results['branch'] != branch:
-        raise ValueError(
+        raise RuntimeError(
             f"expected get_grackle_version()['branch'] to be '{branch}', not "
             f"'{results['branch']}'"
         )
     elif results['revision'] != revision:
-        raise ValueError(
+        raise RuntimeError(
             f"expected get_grackle_version()['revision'] to be '{revision}', "
             f"not '{results['revision']}'"
         )
 
-    # now compare version numbers (currently we just check that both versions
-    # are identical if the git-tag was updated in the most recent release. in
-    # all other cases we simply require that the versions are different)
+    # Check the formatting of the version strings (given by the tag of the most
+    # recently tagged commit and given by get_grackle_version()['version'])
+
+    description_string_pairs = [
+        ("get_grackle_version()['version']", results['revision']),
+        ("the tag of the most recently tagged commit", latest_tagged_version)
+    ]
+
+    version_objects = []
+    for description, str_val in description_string_pairs:
+        try:
+            # parse is fairly permissive about the file format
+            version_objects.append(Version(str_val))
+        except InvalidVersion:
+            raise RuntimeError(
+                f"The value given by {description}, {str_val!r}, doesn't have "
+                "the expected formatting."
+            )
+        # Could add checks enforce other conventions here
+
+    rslt_version_obj, latest_tagged_version_obj = version_objects
+
+    # now check the consistency between the version numbers
     if tagged_on_current_revision:
         if results['version'] != latest_tagged_version:
-            raise ValueError(
+            raise RuntimeError(
                 "expected get_grackle_version()['version'] to be "
-                "'{latest_tagged_version}', not '{results['version']}'"
+                f"{latest_tagged_version!r}, not {results['version']!r}.\n\n"
+                "Did you tag a commit with a new version number & forget to "
+                "update the version used by the Makefile?"
             )
-    elif results['version'] == latest_tagged_version:
-        raise ValueError(
-            f"expected get_grackle_version()['version'] to be different from "
-            f"'{latest_tagged_version}', since that version is associated with "
-            "a different commit."
+    elif latest_tagged_version_obj >= rslt_version_obj:
+        raise RuntimeError(
+            "Something is wrong. The version number given by "
+            f"get_grackle_version()['version'], {results['version']!r}, must "
+            "exceed the version number encoded in the tag of the most recently "
+            f"tagged git commit, {latest_tagged_version!r}.\n\n"
+            "Did you update the version used by the Makefile & forget to "
+            "update the commit's tag?"
         )
