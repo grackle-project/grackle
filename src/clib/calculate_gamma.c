@@ -115,7 +115,7 @@ int local_calculate_gamma(chemistry_data *my_chemistry,
 	my_gamma[index] = 1.0 + (nH2 + number_density) /
 	  (nH2 * GammaH2Inverse + number_density * GammaInverse);
  
-      } // end: loop over i
+      } // end: loop over index
     } // end: loop over outer_ind
  
   } // end: if (my_chemistry->primordial_chemistry > 1)
