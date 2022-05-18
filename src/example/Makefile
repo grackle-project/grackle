@@ -115,6 +115,24 @@ cxx_omp_example: $(MODULES) cxx_omp_example.o
          fi)
 
 #-----------------------------------------------------------------------
+# C++ GRID EXAMPLE
+#-----------------------------------------------------------------------
+
+cxx_grid_example: $(MODULES) cxx_grid_example.o
+	@rm -f $@
+	@echo "Linking"
+	-@$(CXX) $(LDFLAGS) -o cxx_grid_example cxx_grid_example.o $(LIBS) $(GRACKLE_LIB) >& $(OUTPUT)
+	@(if [ -e $@ ]; then \
+             echo "Success!"; \
+         else \
+             echo "$(CXX) $(LDFLAGS) -o cxx_grid_example cxx_grid_example.o $(LIBS) $(GRACKLE_LIB)" >> temp1; \
+             cat temp1 $(OUTPUT) > temp2; \
+             rm -f temp1; \
+             mv -f temp2 $(OUTPUT); \
+             echo "Failed! See $(OUTPUT) for error messages"; \
+         fi)
+
+#-----------------------------------------------------------------------
 # PURE C EXAMPLE
 #-----------------------------------------------------------------------
 
@@ -218,7 +236,7 @@ help:
 #-----------------------------------------------------------------------
 
 clean:
-	-@rm -f *.o *.mod *.f *.f90 *~ *.exe $(OUTPUT) cxx_example cxx_omp_example c_example fortran_example
+	-@rm -f *.o *.mod *.f *.f90 *~ *.exe $(OUTPUT) cxx_example cxx_omp_example cxx_grid_example c_example fortran_example
 
 #-----------------------------------------------------------------------
 # Include configuration targets

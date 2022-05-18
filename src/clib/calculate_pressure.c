@@ -18,6 +18,7 @@
 #include "grackle_types.h"
 #include "grackle_chemistry_data.h"
 #include "phys_constants.h"
+#include "index_helper.h"
 #ifdef _OPENMP
 #include <omp.h>
 #endif
@@ -38,24 +39,31 @@ int local_calculate_pressure(chemistry_data *my_chemistry,
     return SUCCESS;
 
   double tiny_number = 1.e-20;
-  int i, dim, size = 1;
-  for (dim = 0; dim < my_fields->grid_rank; dim++)
-    size *= my_fields->grid_dimension[dim];
+  const grackle_index_helper ind_helper = _build_index_helper(my_fields);
+  int outer_ind, index;
 
+  /* parallelize the k and j loops with OpenMP
+   * (these loops are flattened them for better parallelism) */
 # ifdef _OPENMP
-# pragma omp parallel for schedule( runtime ) private( i )
+# pragma omp parallel for schedule( runtime ) private( outer_ind, index )
 # endif
-  for (i = 0; i < size; i++) {
+  for (outer_ind = 0; outer_ind < ind_helper.outer_ind_size; outer_ind++){
+
+    const grackle_index_range range = _inner_range(outer_ind, &ind_helper);
+
+    for (index = range.start; index <= range.end; index++) {
+
+      pressure[index] = ((my_chemistry->Gamma - 1.0) *
+			 my_fields->density[index] *
+			 my_fields->internal_energy[index]);
  
-    pressure[i] = (my_chemistry->Gamma - 1.0) * my_fields->density[i] *
-      my_fields->internal_energy[i];
- 
-    if (pressure[i] < tiny_number)
-      pressure[i] = tiny_number;
-  }
-  
+      if (pressure[index] < tiny_number)
+        pressure[index] = tiny_number;
+    } // end: loop over i
+  } // end: loop over outer_ind
+
   /* Correct for Gamma from H2. */
- 
+
   if (my_chemistry->primordial_chemistry > 1) {
  
     /* Calculate temperature units. */
@@ -67,43 +75,52 @@ int local_calculate_pressure(chemistry_data *my_chemistry,
   
 #   ifdef _OPENMP
 #   pragma omp parallel for schedule( runtime ) \
-    private( i, number_density, nH2, GammaH2Inverse, x, Gamma1, temp )
+    private( outer_ind, index, \
+             number_density, nH2, GammaH2Inverse, x, Gamma1, temp )
 #   endif
-    for (i = 0; i < size; i++) {
- 
-      number_density =
-        0.25 * (my_fields->HeI_density[i] + my_fields->HeII_density[i] +
-                my_fields->HeIII_density[i]) +
-        my_fields->HI_density[i] + my_fields->HII_density[i] +
-        my_fields->HM_density[i] + my_fields->e_density[i];
- 
-      nH2 = 0.5 * (my_fields->H2I_density[i] + my_fields->H2II_density[i]);
- 
-      /* First, approximate temperature. */
- 
-      if (number_density == 0)
-	number_density = tiny_number;
-      temp = max(temperature_units * pressure[i] / (number_density + nH2), 1);
- 
-      /* Only do full computation if there is a reasonable amount of H2.
-	 The second term in GammaH2Inverse accounts for the vibrational
-	 degrees of freedom. */
- 
-      GammaH2Inverse = 0.5*5.0;
-      if (nH2 / number_density > 1e-3) {
-        x = 6100.0 / temp;
-	if (x < 10.0)
-	  GammaH2Inverse = 0.5*(5 + 2.0 * x*x * exp(x)/POW(exp(x)-1.0,2));
-      }
- 
-      Gamma1 = 1.0 + (nH2 + number_density) /
-	             (nH2 * GammaH2Inverse + number_density * GammaInverse);
+    for (int outer_ind = 0; outer_ind < ind_helper.outer_ind_size; outer_ind++){
+
+      const grackle_index_range range = _inner_range(outer_ind, &ind_helper);
+
+      for (index = range.start; index <= range.end; index++) {
+
+        number_density =
+          0.25 * (my_fields->HeI_density[index] +
+		  my_fields->HeII_density[index] +
+                  my_fields->HeIII_density[index]) +
+          my_fields->HI_density[index] + my_fields->HII_density[index] +
+          my_fields->HM_density[index] + my_fields->e_density[index];
+
+        nH2 = 0.5 * (my_fields->H2I_density[index] +
+		     my_fields->H2II_density[index]);
+
+        /* First, approximate temperature. */
+
+        if (number_density == 0)
+          number_density = tiny_number;
+        temp = max(temperature_units * pressure[index] / (number_density + nH2),
+		   1);
+
+        /* Only do full computation if there is a reasonable amount of H2.
+	   The second term in GammaH2Inverse accounts for the vibrational
+	   degrees of freedom. */
+
+        GammaH2Inverse = 0.5*5.0;
+        if (nH2 / number_density > 1e-3) {
+          x = 6100.0 / temp;
+	  if (x < 10.0)
+	    GammaH2Inverse = 0.5*(5 + 2.0 * x*x * exp(x)/POW(exp(x)-1.0,2));
+        }
+
+	Gamma1 = 1.0 + (nH2 + number_density) /
+	               (nH2 * GammaH2Inverse + number_density * GammaInverse);
 	
-      /* Correct pressure with improved Gamma. */
+	/* Correct pressure with improved Gamma. */
  
-      pressure[i] *= (Gamma1 - 1.0) / (my_chemistry->Gamma - 1.0);
+	pressure[index] *= (Gamma1 - 1.0) / (my_chemistry->Gamma - 1.0);
  
-    } // end: loop over i
+      } // end: loop over i
+    } // end: loop over outer_ind
  
   } // end: if (my_chemistry->primordial_chemistry > 1)
  
