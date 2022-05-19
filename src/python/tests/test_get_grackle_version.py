@@ -66,19 +66,21 @@ def test_get_grackle_version():
     elif results['branch'] != branch:
         raise RuntimeError(
             f"expected get_grackle_version()['branch'] to be '{branch}', not "
-            f"'{results['branch']}'"
+            f"'{results['branch']}'. Was a different branch of the repository "
+            "checked out when the c library was compiled?"
         )
     elif results['revision'] != revision:
         raise RuntimeError(
             f"expected get_grackle_version()['revision'] to be '{revision}', "
-            f"not '{results['revision']}'"
+            f"not '{results['revision']}'. Was a different revision of the "
+            "repository checked out when the c library was compiled?"
         )
 
     # Check the formatting of the version strings (given by the tag of the most
     # recently tagged commit and given by get_grackle_version()['version'])
 
     description_string_pairs = [
-        ("get_grackle_version()['version']", results['revision']),
+        ("get_grackle_version()['version']", results['version']),
         ("the tag of the most recently tagged commit", latest_tagged_version)
     ]
 
