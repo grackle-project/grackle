@@ -17,6 +17,8 @@ Python packages:
 
  - `NumPy <https://www.numpy.org/>`__
 
+ - packaging (only required for the test suite)
+
  - py.test (only required for the test suite)
 
  - `yt <https://yt-project.org/>`__

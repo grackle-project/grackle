@@ -171,4 +171,6 @@ int _calculate_temperature(chemistry_data *my_chemistry,
 
 int _free_chemistry_data(chemistry_data *my_chemistry, chemistry_data_storage *my_rates);
 
+grackle_version get_grackle_version();
+
 #endif
