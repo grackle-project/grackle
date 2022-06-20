@@ -86,9 +86,15 @@ suggest-clean:
 show-version:
 	@echo
 	@echo "The Grackle Version $(LIB_RELEASE_VERSION)"
-	@echo "Git Branch   `git rev-parse --abbrev-ref HEAD`"
-	@echo "Git Revision `git rev-parse HEAD`"
-	@echo
+	@USEGIT=`command -v git &> /dev/null && git status &> /dev/null && \
+	         echo "1"`; \
+	if [ "$${USEGIT}" == "1" ]; then \
+	     echo "Git Branch   `git rev-parse --abbrev-ref HEAD`"; \
+	     echo "Git Revision `git rev-parse HEAD`"; \
+	else \
+	     echo "Git Branch N/A"; \
+	     echo "Git Revision N/A"; \
+	fi
 
 #-----------------------------------------------------------------------
 
