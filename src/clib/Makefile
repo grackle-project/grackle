@@ -230,7 +230,7 @@ auto_get_version.c:
 	-@echo '#error "Something went wrong while auto-generating macros"'                     >> $@
 	-@echo '#endif'                                                                         >> $@
 	-@echo ''                                                                               >> $@
-	-@echo 'grackle_version get_grackle_version() {'                                        >> $@
+	-@echo 'grackle_version get_grackle_version(void) {'                                    >> $@
 	-@echo '  grackle_version out;'                                                         >> $@
 	-@echo '  out.version = AUTO_VERSION;'                                                  >> $@
 	-@echo '  out.branch = AUTO_BRANCH;'                                                    >> $@
