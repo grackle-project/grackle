@@ -91,7 +91,7 @@
             write(*,*) "SolarAbundances8=", SolarAbundances(8)
             write(*,*) "SolarAbundances9=", SolarAbundances(9)
             write(*,*) "SolarAbundances10=", SolarAbundances(10)
-            read(*,*) userinp
+            call exit(74)
       endif
 
 !   destruction by SN shocks
@@ -158,6 +158,10 @@
      &       Mmet(NUM_METAL_SPECIES_GRACKLE+1),
      &       dens_proper
 
+!   debug variables
+      real*8 dM_tau_accr
+      R_PREC total_density_init, total_density_final 
+
       dens_proper = dens_units * aye**3
 
 !     copy metallicites into a single array
@@ -183,6 +187,8 @@
       dmetpt(9) = dust_metal8(i,j,k)
       dmetpt(10) = dust_metal9(i,j,k)
       dmetpt(11) = dust_metal10(i,j,k)
+
+      total_density_init = metpt(1) + dmetpt(1)
 
       Ms100 = 6800.0*SNE_COEFF
      &        *(100.0/SNE_SHOCKSPEED)*(100.0/SNE_SHOCKSPEED)
@@ -233,6 +239,8 @@
           dM(1) = dM(1) + dM(n)
       enddo
 
+      dM_tau_accr = dM(1)
+
 !   SNe shock and thermal sputtering
       if (SNe_ThisTimeStep(i,j,k) .le. 0.0) then
           dMs = 0.0
@@ -256,26 +264,56 @@
             write(*,*) "dM at index", n, 
      &                 "calculated as NaN in line 202 of dust model", dM(n)
             read(*,*) userinp
-        endif         
+          endif
       enddo
-
+    
 !   recalculate metallicity
-      do n=0+1,NUM_METAL_SPECIES_GRACKLE+1         
-          if (dust_density(i,j,k) .gt. 0.0) then
-!         make sure that only 90% of the gaseous metals can become dust
-!         this also ensures that the metal density > 0
-              dM(n) = min(0.9 * metpt(n), dM(n))
-              dmetpt(n) = dM(n) + dmetpt(n) ! SNe shocks on neighbors are ignored
+      do n=0+1,NUM_METAL_SPECIES_GRACKLE+1 
+!        1. Place conditions on dM such that mass is conserved but dust and gas
+!        mass cannot be negative
+!        2. Make sure that only 90% of the gaseous metals can become dust
+          dM(n) = max(-1*dmetpt(n), dM(n))
+          dM(n) = min(0.9 * metpt(n), dM(n))
+
+!         Transfer metals between gaseous and dust phase only if dust present
+          if (dust_Density(i,j,k) .gt. 0.0) then
+              dmetpt(n) = dmetpt(n) + dM(n)
+              metpt(n) = metpt(n) - dM(n)
           else
               dmetpt(n) = 0.0
           endif
-          metpt(n) = metpt(n) - dM(n)
+!        surely this should be only happen if you add to the dust metallicity,
+!        else you are removing gas metallicity and breaking conservation
+      !     metpt(n) = metpt(n) - dM(n)
       enddo
 
       if (metpt(1) .lt. 0) then
             write(*,*) "metpt(1)=", metpt(1),
      &      "dM(1)=", dM(1)
             read(*,*) userinp
+      endif
+
+      if (dmetpt(1) .lt. 0) then
+            write(*,*) "final metal density = ", metpt(1)
+            write(*,*) "inital metal density   = ", metal_Density(i,j,k)
+            write(*,*) "DELTA metal density   = ", -1*dM(1)
+            write(*,*) "final dust density = ", dmetpt(1)
+            write(*,*) "initial dust density = ", dust_Density(i,j,k)
+            write(*,*) "DELTA dust density = ", dM(1)
+            write(*,*) "------------"
+            write(*,*) "dM_tau_accr = ", dM_tau_accr
+            call exit(21)
+      endif
+
+      total_density_final = metpt(1) + dmetpt(1)
+
+      if (abs(total_density_final - total_density_init) .gt. 1d-8) then
+            write(*,*) "Total dust + metal density not conserved!"
+            write(*,*) "Initial value --> ", total_density_init
+            write(*,*) "Final value --> ", total_density_final
+            write(*,*) "dmetpt = ", dmetpt(1), ", metpt = ", metpt(1), ", dM = ", dM(1)
+            write(*,*) "Ending run!!"
+            call exit(21)
       endif
 
 !     copy metallicites back into fields arrays
