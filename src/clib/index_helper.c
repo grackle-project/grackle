@@ -14,6 +14,20 @@
 #include "grackle_types.h"
 #include "index_helper.h"
 
+// to help the compiler optimize the associated for-loops, this function:
+//   - is implemented inline
+//   - returns results as a struct rather than by modifying pointer arguments
+grackle_index_range _inner_range(int outer_index,
+                                        const grackle_index_helper* ind_helper)
+{
+  int k = (outer_index / ind_helper->num_j_inds) + ind_helper->k_start;
+  int j = (outer_index % ind_helper->num_j_inds) + ind_helper->j_start;
+  int outer_offset = ind_helper->i_dim * (j + ind_helper->j_dim * k);
+  grackle_index_range out = {ind_helper->i_start + outer_offset,
+                             ind_helper->i_end + outer_offset};
+  return out;
+}
+
 grackle_index_helper _build_index_helper(const grackle_field_data *my_fields)
 {
   grackle_index_helper out;
