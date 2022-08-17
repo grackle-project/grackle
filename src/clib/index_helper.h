@@ -54,8 +54,8 @@ typedef struct
 // to help the compiler optimize the associated for-loops, this function:
 //   - is implemented inline
 //   - returns results as a struct rather than by modifying pointer arguments
-inline grackle_index_range _inner_range(int outer_index,
-                                        const grackle_index_helper* ind_helper)
+static inline grackle_index_range _inner_range(int outer_index, 
+                                               const grackle_index_helper* ind_helper)
 {
   int k = (outer_index / ind_helper->num_j_inds) + ind_helper->k_start;
   int j = (outer_index % ind_helper->num_j_inds) + ind_helper->j_start;
