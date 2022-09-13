@@ -115,7 +115,7 @@
 !   main routine for dust growth and destruction
 !////////////////////////////////////////////////////////////
       subroutine dust_growth_and_destruction(in, jn, kn, i, j, k,
-     &     dust_Density, metal_Density, Tgas, Tdust,
+     &     gas_Density, dust_Density, metal_Density, Tgas, Tdust,
      &     gas_metal1, gas_metal2, gas_metal3,
      &     gas_metal4, gas_metal5, gas_metal6,
      &     gas_metal7, gas_metal8, gas_metal9,
@@ -134,7 +134,7 @@
       integer in, jn, kn, i, j, k
       real*8 tau_dest(in), tau_sput(in),
      &       z_solar, SolarAbundances(NUM_METAL_SPECIES_GRACKLE),
-     &       time_units, dens_units, len_units, aye, dtime
+     &       time_units, dens_units, len_units, aye, dtime, dM_conserv
       R_PREC Tgas(in,jn,kn), Tdust(in,jn,kn),
      &       gas_metal1(in,jn,kn), gas_metal2(in,jn,kn),
      &       gas_metal3(in,jn,kn), gas_metal4(in,jn,kn),
@@ -147,7 +147,7 @@
      &       dust_metal7(in,jn,kn), dust_metal8(in,jn,kn),
      &       dust_metal9(in,jn,kn), dust_metal10(in,jn,kn),
      &       metal_Density(in,jn,kn), dust_Density(in,jn,kn),
-     &       SNe_ThisTimeStep(in,jn,kn),
+     &       gas_Density(in,jn,kn), SNe_ThisTimeStep(in,jn,kn),
      &       metpt(NUM_METAL_SPECIES_GRACKLE+1), dmetpt(NUM_METAL_SPECIES_GRACKLE+1)
 
 !   local variables
@@ -276,16 +276,23 @@
           dM(n) = min(0.9 * metpt(n), dM(n))
 
 !         Transfer metals between gaseous and dust phase only if dust present
+          dM_conserv = 0.0
           if (dust_Density(i,j,k) .gt. 0.0) then
               dmetpt(n) = dmetpt(n) + dM(n)
               metpt(n) = metpt(n) - dM(n)
           else
-              dmetpt(n) = 0.0
+!             If dust density is <= 0 then makes sure metals are conserved accordingly
+              dM_conserv = dmetpt(n)
+              dmetpt(n) = dmetpt(n) - dM_conserv
+              metpt(n) = metpt(n) + dM_conserv
           endif
 !        surely this should be only happen if you add to the dust metallicity,
 !        else you are removing gas metallicity and breaking conservation
       !     metpt(n) = metpt(n) - dM(n)
       enddo
+
+!     update gas density to account for changes in metal density
+      gas_Density(i,j,k) = gas_Density(i,j,k) + (metpt(1) - metal_Density(i,j,k))
 
       if (metpt(1) .lt. 0) then
             write(*,*) "metpt(1)=", metpt(1),
