@@ -2,7 +2,7 @@
 #
 # FILE:        Make.mach.linux-gnu
 #
-# DESCRIPTION: Makefile settings for a machine running Ubuntu
+# DESCRIPTION: Makefile settings for a machine running Ubuntu 8.04
 #
 # AUTHOR:      Rick Wagner (rick@ucsd.edu)
 #
@@ -13,13 +13,17 @@
 #
 #=======================================================================
 
-MACH_TEXT  = Use apt-get to install libhdf5-serial-dev gfortran
+MACH_TEXT  = Georgia Tech HIVE (GNU)
 MACH_VALID = 1
-MACH_FILE  = Make.mach.linux-gnu
+MACH_FILE  = Make.mach.hive-gcc
 
 #-----------------------------------------------------------------------
 # Install paths (local variables)
 #-----------------------------------------------------------------------
+
+LOCAL_HDF5_INSTALL = $(HOME)/usr/local/
+#LOCAL_HDF5_INSTALL = /storage/home/hhive1/jw254/local/
+#LOCAL_HDF5_INSTALL = /usr/local/pacerepov1/hdf5/1.8.19/mvapich2-2.1/intel-15.0
 
 #-----------------------------------------------------------------------
 # Compiler settings
@@ -42,7 +46,6 @@ MACH_DEFINES   = -DLINUX -DH5_USE_16_API -fPIC
 # Compiler flag settings
 #-----------------------------------------------------------------------
 
-MACH_OMPFLAGS = #-fopenmp
 MACH_CPPFLAGS = -P -traditional
 MACH_CFLAGS   = 
 MACH_CXXFLAGS = 

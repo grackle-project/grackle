@@ -2,7 +2,7 @@
 #
 # FILE:        Make.mach.linux-gnu
 #
-# DESCRIPTION: Makefile settings for a machine running Ubuntu
+# DESCRIPTION: Makefile settings for a machine running Ubuntu 8.04
 #
 # AUTHOR:      Rick Wagner (rick@ucsd.edu)
 #
@@ -13,23 +13,27 @@
 #
 #=======================================================================
 
-MACH_TEXT  = Use apt-get to install libhdf5-serial-dev gfortran
+MACH_TEXT  = Georgia Tech HIVE (INTEL)
 MACH_VALID = 1
-MACH_FILE  = Make.mach.linux-gnu
+MACH_FILE  = Make.mach.hive-intel
 
 #-----------------------------------------------------------------------
 # Install paths (local variables)
 #-----------------------------------------------------------------------
 
+LOCAL_HDF5_INSTALL = $(HOME)/usr/local/
+#LOCAL_HDF5_INSTALL = /storage/home/hhive1/jw254/local/
+#LOCAL_HDF5_INSTALL = /usr/local/pacerepov1/hdf5/1.8.19/mvapich2-2.1/intel-15.0
+
 #-----------------------------------------------------------------------
 # Compiler settings
 #-----------------------------------------------------------------------
 
-MACH_CC_NOMPI  = gcc # C compiler
-MACH_CXX_NOMPI = g++ # C++ compiler
-MACH_FC_NOMPI  = gfortran # Fortran 77
-MACH_F90_NOMPI = gfortran # Fortran 90
-MACH_LD_NOMPI  = gcc # Linker
+MACH_CC_NOMPI  = mpiicc # C compiler
+MACH_CXX_NOMPI = mpiicpc # C++ compiler
+MACH_FC_NOMPI  = mpiifort # Fortran 77
+MACH_F90_NOMPI = mpiifort # Fortran 90
+MACH_LD_NOMPI  = mpiicc # Linker
 MACH_LIBTOOL   = libtool
 
 #-----------------------------------------------------------------------
@@ -42,13 +46,12 @@ MACH_DEFINES   = -DLINUX -DH5_USE_16_API -fPIC
 # Compiler flag settings
 #-----------------------------------------------------------------------
 
-MACH_OMPFLAGS = #-fopenmp
 MACH_CPPFLAGS = -P -traditional
 MACH_CFLAGS   = 
 MACH_CXXFLAGS = 
-MACH_FFLAGS   = -fno-second-underscore -ffixed-line-length-132
-MACH_F90FLAGS = -fno-second-underscore
-MACH_LDFLAGS  = 
+MACH_FFLAGS   = -132
+MACH_F90FLAGS = 
+MACH_LDFLAGS  = -lifcore -lifport -lpthread -ldl
 
 #-----------------------------------------------------------------------
 # Optimization flags

@@ -47,6 +47,14 @@ chemistry_data _set_default_chemistry_parameters(void)
   my_chemistry.h2_on_dust                     = FALSE;
   my_chemistry.use_dust_density_field         = FALSE;
 
+  my_chemistry.metal_chemistry                = FALSE;
+  my_chemistry.grain_growth                   = FALSE;
+  my_chemistry.multi_metals                   = FALSE;
+  my_chemistry.metal_abundances               = 0;
+  my_chemistry.dust_species                   = 0;
+  my_chemistry.dust_temperature_multi         = FALSE;
+  my_chemistry.dust_sublimation               = TRUE;
+
   my_chemistry.cmb_temperature_floor          = TRUE;
   my_chemistry.grackle_data_file              = "";
 
@@ -127,6 +135,11 @@ chemistry_data _set_default_chemistry_parameters(void)
   my_chemistry.radiative_transfer_coupled_rate_solver = 0;
   my_chemistry.radiative_transfer_intermediate_step   = 0;
   my_chemistry.radiative_transfer_hydrogen_only       = 0;
+  my_chemistry.radiative_transfer_H2II_diss           = 1;
+  my_chemistry.radiative_transfer_HDI_diss            = 1;
+  my_chemistry.radiative_transfer_metal_ion           = 1;
+  my_chemistry.radiative_transfer_metal_diss          = 1;
+  my_chemistry.radiative_transfer_use_H2_shielding    = 0;
 
   /* approximate self-shielding */
   my_chemistry.self_shielding_method                  = 0;

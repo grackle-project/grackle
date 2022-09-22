@@ -33,7 +33,12 @@ void auto_show_config(FILE *fp);
 void auto_show_flags(FILE *fp);
 void auto_show_version(FILE *fp);
 void show_parameters(FILE *fp, chemistry_data *my_chemistry);
-
+int calc_rates_metal(chemistry_data *my_chemistry,
+                     chemistry_data_storage *my_rates,
+                     code_units *my_units);
+int calc_rates_dust(chemistry_data *my_chemistry,
+                    chemistry_data_storage *my_rates,
+                    code_units *my_units);
 int _free_cloudy_data(cloudy_data *my_cloudy, chemistry_data *my_chemistry, int primordial);
 int initialize_cloudy_data(chemistry_data *my_chemistry,
                            chemistry_data_storage *my_rates,
@@ -122,6 +127,7 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
   if (my_chemistry->h2_on_dust > 0 || my_chemistry->dust_chemistry > 0) {
     my_rates->gas_grain = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
     my_rates->regr      = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->gas_grain2 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
   }
 
   double co_length_units, co_density_units;
@@ -138,6 +144,17 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
 
   //* Call initialise_rates to compute rate tables.
   initialize_rates(my_chemistry, my_rates, my_units, co_length_units, co_density_units);
+
+  /* Metal chemistry rates */
+  if (calc_rates_metal(my_chemistry, my_rates, my_units) == FAIL) {
+    fprintf(stderr, "Error in calc_rates_metal.\n");
+    return FAIL;
+  }
+  /* Dust rates */
+  if (calc_rates_dust(my_chemistry, my_rates, my_units) == FAIL) {
+    fprintf(stderr, "Error in calc_rates_dust.\n");
+    return FAIL;
+  }
 
   /* Initialize Cloudy cooling. */
   my_rates->cloudy_data_new = 1;
@@ -265,6 +282,20 @@ void show_parameters(FILE *fp, chemistry_data *my_chemistry)
           my_chemistry->h2_on_dust);
   fprintf(fp, "use_dust_density_field            = %d\n",
           my_chemistry->use_dust_density_field);
+  fprintf(fp, "metal_chemistry                   = %d\n",
+          my_chemistry->metal_chemistry);
+  fprintf(fp, "multi_metals                      = %d\n",
+          my_chemistry->multi_metals);
+  fprintf(fp, "metal_abundances                  = %d\n",
+          my_chemistry->metal_abundances);
+  fprintf(fp, "dust_species                      = %d\n",
+          my_chemistry->dust_species);
+  fprintf(fp, "dust_temperature_multi            = %d\n",
+          my_chemistry->dust_temperature_multi);
+  fprintf(fp, "dust_sublimation                  = %d\n",
+          my_chemistry->dust_sublimation);
+  fprintf(fp, "grain_growth                      = %d\n",
+          my_chemistry->grain_growth);
   fprintf(fp, "photoelectric_heating             = %d\n",
           my_chemistry->photoelectric_heating);
   fprintf(fp, "photoelectric_heating_rate        = %g\n",
@@ -337,6 +368,15 @@ void show_parameters(FILE *fp, chemistry_data *my_chemistry)
           my_chemistry->self_shielding_method);
   fprintf(fp, "H2_self_shielding                 = %d\n",
           my_chemistry->H2_self_shielding);
+  fprintf(fp, "radiative_transfer_H2II_diss      = %d\n",
+          my_chemistry->radiative_transfer_H2II_diss);
+  fprintf(fp, "radiative_transfer_HDI_diss       = %d\n",
+          my_chemistry->radiative_transfer_HDI_diss);
+  fprintf(fp, "radiative_transfer_metal_ion      = %d\n",
+          my_chemistry->radiative_transfer_metal_ion);
+  fprintf(fp, "radiative_transfer_metal_diss     = %d\n",
+          my_chemistry->radiative_transfer_metal_diss);
+
 # ifdef _OPENMP
   fprintf(fp, "omp_nthreads                      = %d\n",
           my_chemistry->omp_nthreads);
@@ -377,6 +417,7 @@ int _free_chemistry_data(chemistry_data *my_chemistry,
     GRACKLE_FREE(my_rates->GAel);
     GRACKLE_FREE(my_rates->H2LTE);
     GRACKLE_FREE(my_rates->gas_grain);
+    GRACKLE_FREE(my_rates->gas_grain2);
 
     GRACKLE_FREE(my_rates->k1);
     GRACKLE_FREE(my_rates->k2);
@@ -415,6 +456,9 @@ int _free_chemistry_data(chemistry_data *my_chemistry,
     GRACKLE_FREE(my_rates->n_cr_n);
     GRACKLE_FREE(my_rates->n_cr_d1);
     GRACKLE_FREE(my_rates->n_cr_d2);
+    GRACKLE_FREE(my_rates->h2dustS);
+    GRACKLE_FREE(my_rates->h2dustC);
+    GRACKLE_FREE(my_rates->grogr);
   }
 
 
