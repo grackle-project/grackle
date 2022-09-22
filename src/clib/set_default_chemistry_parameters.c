@@ -145,6 +145,12 @@ chemistry_data _set_default_chemistry_parameters(void)
   my_chemistry.self_shielding_method                  = 0;
   my_chemistry.H2_self_shielding                      = 0;
 
+  /* alternative k13dd calculation scheme */
+  my_chemistry.use_palla_salpeter_stahler_1983        = 0;
+  my_chemistry.use_stancil_lepp_dalgarno_1998         = 0;
+  my_chemistry.use_omukai_gas_grain                   = 0;
+  my_chemistry.use_uniform_grain_dist_gamma_isrf      = 0;
+
 //number of OpenMP threads
 # ifdef _OPENMP
   my_chemistry.omp_nthreads = omp_get_max_threads(); // maximum allowed number

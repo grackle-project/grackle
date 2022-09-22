@@ -437,6 +437,15 @@ void _k13dd_rate(double T, int idt, double units, double *k13dd_results, chemist
     k13dd_results[4 + idt*7] = f5;
     k13dd_results[5 + idt*7] = f6;
     k13dd_results[6 + idt*7] = f7;
+
+    //* Modify some of the rates if alternative scheme selected
+    if (my_chemistry->three_body_rate){
+        k13dd_results[idt*7]     = log10(1.12e-10 * exp(-7.035e4 / T) / units);
+        k13dd_results[1 + idt*7] = log10(6.5e-7 / sqrt(T) * exp(-5.2e4 / T) *
+                                         (1. - exp(-6.3e3 / T)) / units);
+        k13dd_results[2 + idt*7] = pow(1.0e1, (4.0 - 0.416 * log10(T / 1.0e4) -
+                                       0.327 * pow(log10(T / 1.0e4),2)));
+    }
 }
 
 //Calculation of k13dd. k13dd_results is a pointer to an array of length 14 * sizeof(double).
@@ -601,80 +610,108 @@ double k23_rate(double T, double units, chemistry_data *my_chemistry)
 //Calculation of k50 (HII + DI --> HI + DII)
 double k50_rate(double T, double units, chemistry_data *my_chemistry)
 {
-    //Fit taken from Savin (2002) which is valid for T < 2e5 K.
-    //We extrapolate for higher temperatures.
-    if (T <= 2.0e5) {
-        return (2.0e-10 * pow(T, 0.402) * exp(-3.71e1/T)
-                    - 3.31e-17 * pow(T, 1.48)) / units;
+    if (my_chemistry->use_stancil_lepp_dalgarno_1998){
+        return 1.0e-9 * exp(-41.0 / T) / units;
     } else {
-        return 2.5e-8 * pow(T/2.0e5, 0.402) / units;
+        //Fit taken from Savin (2002) which is valid for T < 2e5 K.
+        //We extrapolate for higher temperatures.
+        if (T <= 2.0e5) {
+            return (2.0e-10 * pow(T, 0.402) * exp(-3.71e1/T)
+                        - 3.31e-17 * pow(T, 1.48)) / units;
+        } else {
+            return 2.5e-8 * pow(T/2.0e5, 0.402) / units;
+        }
     }
 }
         
 //Calculation of k51 (HI + DII --> HII + DI)
 double k51_rate(double T, double units, chemistry_data *my_chemistry)
-{
-    // Fit taken from Savin (2002) which is valid for T < 2e5 K.
-    return (2.06e-10 * pow(T, 0.396) * exp(-3.30e1/T)
-                        + 2.03e-9 * pow(T, -0.332)) / units;
+{   
+    if (my_chemistry->use_stancil_lepp_dalgarno_1998){
+        return 1.0e-9 / units;
+    } else {
+        // Fit taken from Savin (2002) which is valid for T < 2e5 K.
+        return (2.06e-10 * pow(T, 0.396) * exp(-3.30e1/T)
+                            + 2.03e-9 * pow(T, -0.332)) / units;
+    }
 }
 
 //Calculation of k52 (H2I + DII --> HDI + HII)
 double k52_rate(double T, double units, chemistry_data *my_chemistry)
 {
-    // Fits from Galli & Palla (2002) to calculations by Gerlich (1982).
-    // If T > 1e4 K use fixed value for k52 to avoid numerical issues with fitting function.
-    // In this limit this reaction is not expected to be important anyway.
-    if (T <= 1e4) {
-    return 1.0e-9 * (0.417 + 0.846 * log10(T) - 0.137 * pow(log10(T), 2)) / units;
+    if (my_chemistry->use_stancil_lepp_dalgarno_1998){
+        return 2.1e-9 / units;
     } else {
-        return 1.609e-9 / units;
-    }   
+        // Fits from Galli & Palla (2002) to calculations by Gerlich (1982).
+        // If T > 1e4 K use fixed value for k52 to avoid numerical issues with fitting function.
+        // In this limit this reaction is not expected to be important anyway.
+        if (T <= 1e4) {
+        return 1.0e-9 * (0.417 + 0.846 * log10(T) - 0.137 * pow(log10(T), 2)) / units;
+        } else {
+            return 1.609e-9 / units;
+        }
+    }
 }
 
 //Calculation of k53 (HDI + HII --> H2I + DII)
 double k53_rate(double T, double units, chemistry_data *my_chemistry)
 {
-    // Fits from Galli & Palla (2002) to calculations by Gerlich (1982).
-    return 1.1e-9 * exp(-4.88e2/T) / units;
+    if (my_chemistry->use_stancil_lepp_dalgarno_1998){
+        return 1.0e-9 * exp(-464.0 / T) / units;
+    } else {
+        // Fits from Galli & Palla (2002) to calculations by Gerlich (1982).
+        return 1.1e-9 * exp(-4.88e2/T) / units;
+    }
 }
 
 //Calculation of k54 (H2I + DI --> HDI + HI)
 double k54_rate(double T, double units, chemistry_data *my_chemistry)
 {
-    // Fit from Clark et al (2011), which is based on data in Mielke et al (2003).
-    if (T <= 2.0e3) {
-        return pow(1.0e1, (-5.64737e1 + 5.88886 * log10(T)
-                            + 7.19692  * pow(log10(T), 2)
-                            + 2.25069  * pow(log10(T), 3)
-                            - 2.16903  * pow(log10(T), 4)
-                            + 3.17887e-1 * pow(log10(T), 5)));
+    if (my_chemistry->use_stancil_lepp_dalgarno_1998){
+        return 7.5e-11 * exp(-3820.0 / T) / units;
     } else {
-        return 3.17e-10 * exp(-5.207e3 / T);
+        // Fit from Clark et al (2011), which is based on data in Mielke et al (2003).
+        if (T <= 2.0e3) {
+            return pow(1.0e1, (-5.64737e1 + 5.88886 * log10(T)
+                                + 7.19692  * pow(log10(T), 2)
+                                + 2.25069  * pow(log10(T), 3)
+                                - 2.16903  * pow(log10(T), 4)
+                                + 3.17887e-1 * pow(log10(T), 5)));
+        } else {
+            return 3.17e-10 * exp(-5.207e3 / T);
+        }
     }
 }
 
 //Calculation of k55 (HDI + HI --> H2I + DI)
 double k55_rate(double T, double units, chemistry_data *my_chemistry)
 {
-    // Fit from Galli & Palla (2002), which is based on Shavitt (1959).
-    // Fit has been modified at low temperature to avoid creating an 
-    // anomalously large rate coefficient -- as suggested by Ripamonti (2007)
-    // and McGreer & Bryan (2008).
-    if (T <= 2.0e2) {
-        return 1.08e-22 / units;
+    if (my_chemistry->use_stancil_lepp_dalgarno_1998){
+        return 7.5e-11 * exp(-4240.0 / T) / units;
     } else {
-        return 5.25e-11 * exp(-4.43e3/T + 1.739e5/pow(T, 2)) / units;
+        // Fit from Galli & Palla (2002), which is based on Shavitt (1959).
+        // Fit has been modified at low temperature to avoid creating an 
+        // anomalously large rate coefficient -- as suggested by Ripamonti (2007)
+        // and McGreer & Bryan (2008).
+        if (T <= 2.0e2) {
+            return 1.08e-22 / units;
+        } else {
+            return 5.25e-11 * exp(-4.43e3/T + 1.739e5/pow(T, 2)) / units;
+        }
     }
 }
 
 //Calculation of k56 (DI + HM --> HDI + e)
 double k56_rate(double T, double units, chemistry_data *my_chemistry)
 {
-    // This is the same as DM + HI --> HDI + e 
-    // Measurements from Miller et al (2012) suggest there is no significant isotope effect
-    // for this reaction.
-    return k8_rate(T, units, my_chemistry);
+    if (my_chemistry->use_stancil_lepp_dalgarno_1998){
+        return 1.5e-9 * pow(T / 3.0e2, -0.1) / units;
+    } else {
+        // This is the same as DM + HI --> HDI + e 
+        // Measurements from Miller et al (2012) suggest there is no significant isotope effect
+        // for this reaction.
+        return k8_rate(T, units, my_chemistry);
+    }
 }
         
 //Calculation of k57 (HI + HI --> HII + HI + e)
@@ -1287,14 +1324,44 @@ double cieco_rate(double T, double units, chemistry_data *my_chemistry)
 //Calculation of gas_grain.
 double gasGrain_rate(double T, double units, chemistry_data *my_chemistry)
 {
-    //Calculate energy transfer from gas to dust grains (Equation 2.15, Hollenbach & McKee, 1989).
-    //Normalize to the HM89 dust-to-gas ratio.
+    double grain_coef;
     double fgr = 0.009387;
-    double grainCoeff = 1.2e-31 * pow(1.0e3, -0.5) / fgr;
+    if (my_chemistry->use_omukai_gas_grain){
+        /*
+        The rate depends on mass fraction and size distributino of grains.
+        The heat transfer rate (Hollenbach & McKee 1989) is for MRN size 
+        distribution from 0.01 um to 0.25 um.
+        The ISRF heating rate (Krumholz 2014) used here is for a uniform 
+        grain size distribution (a = 0.17 um), and optical depth (Omukai 2000)
+        is for a MRN-like broken power-law.
+        GC racalculate these rates for Omukai's dust model.
+        */
+        grain_coef = 2.57033e-32 * pow(1.033,-0.5) / fgr;
+        double f_vel = 0.5 / sqrt(2.0) + 0.0833333 / sqrt(4.0);
+        // Hollenbach & McKee (1989) considered the contribution of other species
+        // than protons and charged grains, but we now consider only H2 and He 
+        // and neglect charged grains (Schneidef et al. 2006).
+        return grain_coef * f_vel * pow(T, 0.5) / units;
+    } else {
+        //Calculate energy transfer from gas to dust grains (Equation 2.15, Hollenbach & McKee, 1989).
+        //Normalize to the HM89 dust-to-gas ratio.
+        grain_coef = 1.2e-31 * pow(1.0e3, -0.5) / fgr;
 
-    return grainCoeff * pow(T, 0.5) *
-            ( 1.0 - 0.8 * exp(-75.0 / T) ) / units;
+        return grain_coef * pow(T, 0.5) * (1.0 - 0.8 * exp(-75.0 / T)) / units;
+    }
 }
+
+//Calculation of gas_grain2.
+double gasGrain2_rate(double T, double units, chemistry_data *my_chemistry)
+{
+    //Variables.
+    double f_vel = 0.5 / sqrt(2.0) + 0.0833333 / sqrt(4.0);
+    double vH_avg = sqrt(kboltz * T / 2.0 / pi / mh);
+
+    return f_vel * 4.0 * vH_avg * 2.0 * kboltz * mh / units;
+    //Later multiplied by sigma_gr / mass_gr for arbitrary size distribution.
+}
+
 
 //Calculation of regr.
 double regr_rate(double T, double units, chemistry_data *my_chemistry)
@@ -1330,10 +1397,76 @@ double gamma_isrf_rate(double units, chemistry_data *my_chemistry)
     //Parameter definition.
     double fgr = 0.009387;
 
-    //(Equation B15, Krumholz, 2014)
-    //Don't normalize by coolunit since tdust calculation is done in CGS.
-    return 3.9e-24 / mh / fgr;
+    if (my_chemistry->use_uniform_grain_dist_gamma_isrf){
+        //For uniform grain size (Goldsmith 2001; Krumholz 2014)
+        return 8.60892e-24 / (2.0 * mh) / fgr;
+        //F_isrf sigma_gr / mass_gr
+        //For MRN-like broken power low size distribution (Omukai 2000) 
+        //The factor 2 to cancel out the molecular mass of H2.
+    } else {
+        //(Equation B15, Krumholz, 2014)
+        //Don't normalize by coolunit since tdust calculation is done in CGS.
+        return 3.9e-24 / mh / fgr;
+    }
+
 }
 
+//Calculation of gamma_isrf2.
+double gamma_isrf2_rate(double units, chemistry_data *my_chemistry)
+{
+    return 5.3e-3;
+    //MW interstellar radiation field (Goldsmith 2001)
+    //Later multiplied by total grain cross-section per unit dust mass
+    //for arbitrary size distribution
+}
 
+//Calculation of grain growth rate.
+double grain_growth_rate(double T, double units, chemistry_data *my_chemistry)
+{
+    double vH_avg = sqrt( kboltz * T / 2.0 / pi / mh);
+    return 4.0 * vH_avg * mh / units;
+    // Factor of 4 because gas-phase molecules are accreted
+    // onto the entire surface area of grains.
+}
 
+//Calculation of H2 formation rate on Sa grain surfaces. (Cazaux & Tielens 2002)
+double h2dust_Sa_rate(double T, double T_dust, double units, chemistry_data *my_chemistry)
+{
+    // Constants. 
+    double E_HC_Silicate = 200.0, E_HP_Silicate = 650.0, E_S_Silicate = 3.0e4;
+
+    // Sticking probability.
+    double S_H = pow(1.0 + 0.4*pow((T + T_dust)/100.0, 0.5) + 0.2 * (T/100.0) +
+                 0.08*pow(T/100.0,2.0), -1.0);
+
+    // Calculate variables.
+    double bHP_aPC = 1.0/4.0 * pow(1.0 + sqrt((E_HC_Silicate - E_S_Silicate) /
+                     (E_HP_Silicate - E_S_Silicate)), 2.0) * exp(-E_S_Silicate / T_dust);
+    double epsilon_H2 = pow(1.0 + bHP_aPC, -1.0);
+    double vH_avg = sqrt( kboltz * T / 2.0 / pi / mh);
+
+    return 0.5 * 4.0 * vH_avg * S_H * epsilon_H2 * mh / units;
+    // Factor of 4 because gas-phase molecules are accreted
+    // onto the entire surface area of grains.
+}
+
+//Calculation of H2 formation rate on Ca grain surfaces. (Cazaux & Tielens 2002)
+double h2dust_Ca_rate(double T, double T_dust, double units, chemistry_data *my_chemistry)
+{
+    // Constants.
+    double E_HC_AmCarbon = 250.0, E_HP_AmCarbon = 800.0, E_S_AmCarbon = 3.0e4;
+
+    // Sticking probability.
+    double S_H = pow(1.0 + 0.4*pow((T + T_dust)/100.0, 0.5) + 0.2 * (T/100.0) +
+                 0.08*pow(T/100.0,2.0), -1.0);
+
+    // Calculate variables.
+    double bHP_aPC = 1.0/4.0 * pow(1.0 + sqrt((E_HC_AmCarbon - E_S_AmCarbon) /
+                     (E_HP_AmCarbon - E_S_AmCarbon)), 2.0) * exp(-E_S_AmCarbon / T_dust);
+    double epsilon_H2 = pow(1.0 + bHP_aPC, -1.0);
+    double vH_avg = sqrt( kboltz * T / 2.0 / pi / mh);
+
+    return 0.5 * 4.0 * vH_avg * S_H * epsilon_H2 * mh / units;
+    // Factor of 4 because gas-phase molecules are accreted
+    // onto the entire surface area of grains.
+}
