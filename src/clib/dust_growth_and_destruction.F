@@ -233,7 +233,6 @@
           if (dM(n) .ne. dM(n)) then
               write(*,*) "dM at index", n, 
      &                   "calculated as NaN in line 174 of dust model", dM(n)
-              read(*,*) userinp
           endif 
 
           dM(1) = dM(1) + dM(n)
@@ -263,7 +262,6 @@
           if (dM(n) .ne. dM(n)) then
             write(*,*) "dM at index", n, 
      &                 "calculated as NaN in line 202 of dust model", dM(n)
-            read(*,*) userinp
           endif
       enddo
     
@@ -297,7 +295,6 @@
       if (metpt(1) .lt. 0) then
             write(*,*) "metpt(1)=", metpt(1),
      &      "dM(1)=", dM(1)
-            read(*,*) userinp
       endif
 
       if (dmetpt(1) .lt. 0) then
