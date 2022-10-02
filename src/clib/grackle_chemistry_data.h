@@ -406,7 +406,7 @@ typedef struct
   double *h2dustC;
 
   /* Grain growth rate */
-  double *grogr;
+  double *grain_growth;
 
   /* Chemical heating from H2 formation. */
   /* numerator and denominator of Eq 23 of Omukai ea. 2000. */

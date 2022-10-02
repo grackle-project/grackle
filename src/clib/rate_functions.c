@@ -1429,8 +1429,8 @@ double grain_growth_rate(double T, double units, chemistry_data *my_chemistry)
     // onto the entire surface area of grains.
 }
 
-//Calculation of H2 formation rate on Sa grain surfaces. (Cazaux & Tielens 2002)
-double h2dust_Sa_rate(double T, double T_dust, double units, chemistry_data *my_chemistry)
+//Calculation of H2 formation rate on S grain surfaces. (Cazaux & Tielens 2002)
+double h2dust_S_rate(double T, double T_dust, double units, chemistry_data *my_chemistry)
 {
     // Constants. 
     double E_HC_Silicate = 200.0, E_HP_Silicate = 650.0, E_S_Silicate = 3.0e4;
@@ -1450,8 +1450,8 @@ double h2dust_Sa_rate(double T, double T_dust, double units, chemistry_data *my_
     // onto the entire surface area of grains.
 }
 
-//Calculation of H2 formation rate on Ca grain surfaces. (Cazaux & Tielens 2002)
-double h2dust_Ca_rate(double T, double T_dust, double units, chemistry_data *my_chemistry)
+//Calculation of H2 formation rate on C grain surfaces. (Cazaux & Tielens 2002)
+double h2dust_C_rate(double T, double T_dust, double units, chemistry_data *my_chemistry)
 {
     // Constants.
     double E_HC_AmCarbon = 250.0, E_HP_AmCarbon = 800.0, E_S_AmCarbon = 3.0e4;

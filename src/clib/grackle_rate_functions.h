@@ -41,6 +41,8 @@ double k57_rate(double T, double units,  chemistry_data *my_chemistry);
 double k58_rate(double T, double units,  chemistry_data *my_chemistry);
 
 double h2dust_rate(double T, double T_dust, double units, chemistry_data *my_chemistry);
+double h2dust_C_rate(double T, double T_dust, double units, chemistry_data *my_chemistry);
+double h2dust_S_rate(double T, double T_dust, double units, chemistry_data *my_chemistry);
 
 double n_cr_n_rate(double T, double units,  chemistry_data *my_chemistry);
 double n_cr_d1_rate(double T, double units,  chemistry_data *my_chemistry);
@@ -83,10 +85,13 @@ double cie_thin_cooling_rate(double T);
 double cieco_rate(double T, double units, chemistry_data *my_chemistry);
 
 double gasGrain_rate(double T, double units, chemistry_data *my_chemistry);
+double gasGrain2_rate(double T, double units, chemistry_data *my_chemistry);
 double regr_rate(double T, double units, chemistry_data *my_chemistry);
+double grain_growth_rate(double T, double units, chemistry_data *my_chemistry);
 
 double comp_rate(double units, chemistry_data *my_chemistry);
 double gammah_rate(double units, chemistry_data *my_chemistry);
 double gamma_isrf_rate(double units, chemistry_data *my_chemistry);
+double gammah_isrf2_rate(double units, chemistry_data *my_chemistry);
 
 #endif

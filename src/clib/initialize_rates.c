@@ -178,7 +178,7 @@ int add_k13dd_reaction_rate(double **rate_ptr, double units, chemistry_data *my_
     return SUCCESS;
 }
     
-//Define a functin which will calculate h2dust rates.
+//Define a function which will calculate h2dust rates.
 int add_h2dust_reaction_rate(double **rate_ptr, double units, chemistry_data *my_chemistry)
 {
     //Allocate memory for h2dust.
@@ -205,6 +205,68 @@ int add_h2dust_reaction_rate(double **rate_ptr, double units, chemistry_data *my
 
             //Calculate rate and store.
             (*rate_ptr)[i + my_chemistry->NumberOfTemperatureBins*j] = h2dust_rate(T, T_dust, units, my_chemistry);
+        }
+    }
+}
+
+// Define a function which will calculate h2dust_C rates.
+int add_h2dust_C_reaction_rate(double **rate_ptr, double units, chemistry_data *my_chemistry)
+{
+    //Allocate memory for h2dust.
+    *rate_ptr = malloc(my_chemistry->NumberOfTemperatureBins * my_chemistry->NumberOfDustTemperatureBins
+                        * sizeof(double));
+
+    //Calculate temperature spacing.
+    double T, logT, logT_start, d_logT, T_dust, logT_dust, logT_start_dust, d_logT_dust;
+    logT_spacing(&logT_start, &d_logT, my_chemistry);
+    logT_spacing_dust(&logT_start_dust, &d_logT_dust, my_chemistry);
+    
+    //Calculate h2dust.
+    for (int i = 0; i < my_chemistry->NumberOfTemperatureBins; i++)
+    {   
+        //Calculate bin temperature.
+        logT = logT_start + i*d_logT;
+        T = exp(logT);
+
+        for (int j = 0; j < my_chemistry->NumberOfDustTemperatureBins; j++)
+        {
+            //Calculate dust bin temperature.
+            logT_dust = logT_start_dust + j*d_logT_dust;
+            T_dust = exp(logT_dust);
+
+            //Calculate rate and store.
+            (*rate_ptr)[i + my_chemistry->NumberOfTemperatureBins*j] = h2dust_C_rate(T, T_dust, units, my_chemistry);
+        }
+    }
+}
+
+// Define a function which will calculate h2dust_S rates.
+int add_h2dust_S_reaction_rate(double **rate_ptr, double units, chemistry_data *my_chemistry)
+{
+    //Allocate memory for h2dust.
+    *rate_ptr = malloc(my_chemistry->NumberOfTemperatureBins * my_chemistry->NumberOfDustTemperatureBins
+                        * sizeof(double));
+
+    //Calculate temperature spacing.
+    double T, logT, logT_start, d_logT, T_dust, logT_dust, logT_start_dust, d_logT_dust;
+    logT_spacing(&logT_start, &d_logT, my_chemistry);
+    logT_spacing_dust(&logT_start_dust, &d_logT_dust, my_chemistry);
+    
+    //Calculate h2dust.
+    for (int i = 0; i < my_chemistry->NumberOfTemperatureBins; i++)
+    {   
+        //Calculate bin temperature.
+        logT = logT_start + i*d_logT;
+        T = exp(logT);
+
+        for (int j = 0; j < my_chemistry->NumberOfDustTemperatureBins; j++)
+        {
+            //Calculate dust bin temperature.
+            logT_dust = logT_start_dust + j*d_logT_dust;
+            T_dust = exp(logT_dust);
+
+            //Calculate rate and store.
+            (*rate_ptr)[i + my_chemistry->NumberOfTemperatureBins*j] = h2dust_S_rate(T, T_dust, units, my_chemistry);
         }
     }
 }
@@ -466,7 +528,22 @@ int initialize_rates(chemistry_data *my_chemistry, chemistry_data_storage *my_ra
     //(Equation B15, Krumholz, 2014)
     add_scalar_reaction_rate(&my_rates->gamma_isrf, gamma_isrf_rate, coolingUnits, my_chemistry); 
 
-    
+    //* This handles all primordial_chemistry == 4 rates
+    if (my_chemistry->primordial_chemistry >= 4){
+        //H2 formation on dust grains with C and S compositions
+        add_h2dust_C_reaction_rate(&my_rates->h2dustC, coolingUnits, my_chemistry);
+        add_h2dust_S_reaction_rate(&my_rates->h2dustS, coolingUnits, my_chemistry);
+
+        //Heating of dust by interstellar radiation field, with an arbitrary grain size distribution 
+        add_scalar_reaction_rate(&my_rates->gamma_isrf2, coolingUnits, my_chemistry);
+
+        //Gas-grain energy transfer, with an arbitrary grain size distribution
+        add_reaction_rate(&my_rates->gas_grain2, coolingUnits, my_chemistry);
+
+        //Grain growth rate
+        add_reaction_rate(&my_rates->grain_growth, coolingUnits, my_chemistry);
+    }
+
     //End of function definition.
     return SUCCESS;
 }
