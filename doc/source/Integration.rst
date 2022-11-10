@@ -126,8 +126,9 @@ Code Units
 cosmological simulation.**  The :c:data:`code_units` structure contains
 conversions from code units to CGS.  If :c:data:`comoving_coordinates` is set to
 0, it is assumed that the fields passed into the solver are in the
-proper frame.  All of the units (density, length, time, velocity, and
-expansion factor) must be set.  When using the proper frame, :c:data:`a_units`
+proper frame. Units for length, time, and the expansion factor must be set
+manually. Units for velocity are then set by calling
+:c:data:`set_velocity_units`. When using the proper frame, :c:data:`a_units`
 (units for the expansion factor) must be set to 1.0.
 
 .. c:type:: code_units
@@ -158,11 +159,15 @@ expansion factor) must be set.  When using the proper frame, :c:data:`a_units`
 .. c:var:: double velocity_units
 
    Conversion factor to be multiplied by velocities to return proper cm/s.
+   This should be set units the :c:data:`set_velocity_units` function. Note,
+   units of specific energy (i.e., conversion to erg/g) are then defined
+   as :c:data:`velocity_units`\ :sup:`2` (velocity units squared).
 
 .. c:var:: double a_units
 
    Conversion factor to be multiplied by the expansion factor such that
-   a\ :sub:`true`\  = a\ :sub:`code`\ * :c:data:`a_units`.
+   a\ :sub:`true`\  = a\ :sub:`code`\ * :c:data:`a_units`. When using
+   proper coordinates, :c:data:`a_units` must be set to 1.
 
 .. c:var:: double a_value
 
@@ -181,22 +186,15 @@ expansion factor) must be set.  When using the proper frame, :c:data:`a_units`
   my_units.density_units = 1.67e-24; // 1 m_H/cc
   my_units.length_units = 3.086e21;  // 1 kpc
   my_units.time_units = 3.15569e13;  // 1 Myr
-  my_units.velocity_units = my_units.length_units / my_units.time_units;
   my_units.a_units = 1.0;            // units for the expansion factor
   my_units.a_value = 1. / (1. + current_redshift) / my_units.a_units;
+  // set velocity units
+  set_velocity_units(&my_units);
 
 If :c:data:`comoving_coordinates` is set to 1, it is assumed that the fields being 
-passed to the solver are in the comoving frame.  Hence, the units must 
+passed to the solver are in the comoving frame. Hence, the units must
 convert from code units in the **comoving** frame to CGS in the **proper** 
 frame.  
-
-.. note:: With :c:data:`comoving_coordinate` set to 1, velocity units need to be
-   defined in the following way.
-
-.. code-block:: c++
-
-  my_units.velocity_units = my_units.a_units * 
-    (my_units.length_units / a_value) / my_units.time_units; // since u = a * dx/dt
 
 For an example of using comoving units, see the units system in the 
 `Enzo <http://enzo-project.org/>`_ code.  For cosmological simulations, a
@@ -409,7 +407,10 @@ and pointers to all field arrays.
 
 .. c:var:: gr_float* internal_energy
 
-   Pointer to the internal energy field array.
+   Pointer to the internal energy field array. Internal energies should be
+   in units of :c:data:`velocity_units`\ :sup:`2` (velocity units squared).
+   This can be converted to and from a temperature by using the
+   :c:data:`get_temperature_units` function.
 
 .. c:var:: gr_float* x_velocity
 
@@ -479,6 +480,12 @@ and pointers to all field arrays.
    H2\ :sub:`2`\ self-shielding.  Used when
    :c:data:`H2_self_shielding` is set to 2.  Field data
    should be in :c:data:`length_units`.
+
+.. c:var:: gr_float *H2_custom_shielding_factor
+
+   Pointer to a field containing attenuation factors to 
+   be multiplied with the H\ :sub:`2`\ dissociation rate.
+   Used when the :c:data:`H2_custom_shielding` flag is set.
 
 .. c:var:: gr_float *isrf_habing
 
@@ -662,3 +669,49 @@ Cleaning the memory
   _free_chemistry_data(my_grackle_data, &grackle_rates);
 
 Grackle is using global structures and therefore the global structure ``grackle_rates`` needs also to be released.
+
+Querying library version information
+------------------------------------
+
+A struct of type :c:data:`grackle_version` is used to hold version
+information about the version of Grackle that is being used. The
+struct contains information about the version number and particular
+git revision.
+
+.. c:type:: grackle_version
+
+   This structure is used to organize version information for the
+   library.
+
+.. c:var:: const* char version
+
+   Specifies the version of the library using this template:
+   ``<MAJOR>.<MINOR>(.<MICRO>)(.dev<DEV_NUM>)``. In this template
+   ``<MAJOR>``, ``<MINOR>``, and ``<MICRO>`` correspond to a major,
+   minor, and micro version numbers (the micro version number is
+   omitted if it's zero). The final section can specify a
+   development version. For concreteness, some example versions are
+   provided in increasing order: ``"3.0"``, ``"3.1"``, ``"3.1.1"``,
+   ``"3.1.2"``, ``"3.2.dev1"``, ``"3.2.dev2"``, ``"3.2"``.
+
+.. c:var:: const* char branch
+
+   Specifies the name of the git branch that the library was compiled
+   from.
+
+.. c:var:: const* char revision
+
+   Specifies the hash identifying the git commit that the library was
+   compiled from.
+
+The :c:func:`get_grackle_version` function is used to retrieve a
+properly intialized :c:data:`grackle_version` object. The following
+code snippet illustrates how one might query and print this
+information:
+
+.. code-block:: c++
+
+  grackle_version gversion = get_grackle_version();
+  printf ("The Grackle Version: %s\n", gversion.version);
+  printf ("Git Branch:   %s\n", gversion.branch);
+  printf ("Git Revision: %s\n", gversion.revision);

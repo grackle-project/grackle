@@ -23,6 +23,8 @@ extern chemistry_data_storage grackle_rates;
 
 /* function prototypes */
 
+double get_temperature_units(code_units *my_units);
+
 int update_UVbackground_rates(chemistry_data *my_chemistry,
                               chemistry_data_storage *my_rates,
                               photo_rate_storage *my_uvb_rates,
@@ -36,7 +38,7 @@ extern void FORTRAN_NAME(solve_rate_cool_g)(
         int *ispecies, int *imetal, int *imcool, int *idust, int *idustall,
         int *idustfield, int *idim,
 	int *is, int *js, int *ks, int *ie, int *je, int *ke,
-        int *ih2co, int *ipiht, int *igammah,
+        int *ih2co, int *ipiht, int *idustrec, int *igammah,
 	double *dx, double *dt, double *aye, double *temstart, double *temend,
 	double *utem, double *uxyz, double *uaye, double *urho, double *utim,
 	double *gamma, double *fh, double *dtoh, double *z_solar, double *fgr,
@@ -239,7 +241,7 @@ int local_solve_chemistry(chemistry_data *my_chemistry,
 
   /* Calculate temperature units. */
 
-  double temperature_units =  mh * POW(my_units->velocity_units, 2) / kboltz;
+  double temperature_units = get_temperature_units(my_units);
 
   /* Call the fortran routine to solve cooling equations. */
 
@@ -278,6 +280,7 @@ int local_solve_chemistry(chemistry_data *my_chemistry,
     my_fields->grid_end+2,
     &my_chemistry->ih2co,
     &my_chemistry->ipiht,
+    &my_chemistry->dust_recombination_cooling,
     &my_chemistry->photoelectric_heating,
     &(my_fields->grid_dx),
     &dt_value,

@@ -41,6 +41,43 @@ Primary Functions
    :rtype: int
    :returns: 1 (success) or 0 (failure)
 
+.. c:function:: void set_velocity_units(code_units *my_units);
+
+   Sets the :c:data:`velocity_units` value of the input ``my_units``
+   :c:data:`code_units` struct. For proper coordinates, velocity units are equal
+   to :c:data:`length_units` / :c:data:`time_units`. For comoving coordinates,
+   velocity units are equal to (:c:data:`length_units` / :c:data:`a_value`) /
+   :c:data:`time_units`.
+
+   :param code_units* my_units: code units conversions
+
+.. c:function:: double get_velocity_units(code_units *my_units);
+
+   Returns the appropriate value for velocity units given the values of
+   :c:data:`length_units`, :c:data:`a_value`, and :c:data:`time_units`
+   in the input ``my_units`` :c:data:`code_units` struct. For proper coordinates,
+   velocity units are equal to :c:data:`length_units` / :c:data:`time_units`.
+   For comoving coordinates, velocity units are equal to (:c:data:`length_units`
+   / :c:data:`a_value`) / :c:data:`time_units`. Note, this function only returns
+   a value, but does not set it in the struct. To set the value in the struct, use
+   :c:data:`set_velocity_units`.
+
+   :param code_units* my_units: code units conversions
+   :rtype: double
+   :returns: velocity_units
+
+.. c:function:: double get_temperature_units(code_units *my_units);
+
+   Returns the conversion factor between specific internal energy and temperature
+   assuming gamma (the adiabatic index) = 1, such that temperature in K is equal to
+   :c:data:`internal_energy` * ``temperature_units``. This unit conversion is
+   defined as m\ :sub:`H` * :c:data:`velocity_units`\ :sup:`2` / k\ :sub:`b`,
+   where m\ :sub:`H` is the Hydrogen mass and k\ :sub:`b` is the Boltzmann constant.
+
+   :param code_units* my_units: code units conversions
+   :rtype: double
+   :returns: temperature_units
+
 .. c:function:: int solve_chemistry(code_units *my_units, grackle_field_data *my_fields, double dt_value);
 
    Evolves the species densities and internal energies over a given timestep 
@@ -110,6 +147,13 @@ Primary Functions
    :param gr_float* dust_temperature: array which will be filled with the calculated dust temperature values
    :rtype: int
    :returns: 1 (success) or 0 (failure)
+
+.. c:function:: grackle_version get_grackle_version();
+
+   Constructs and returns a :c:type:`grackle_version` struct that
+   encodes the version information for the library.
+
+   :rtype: `grackle_version`
 
 .. _local_functions:
 

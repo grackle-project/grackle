@@ -56,9 +56,7 @@ if __name__ == "__main__":
     my_chemistry.density_units = mass_hydrogen_cgs # rho = 1.0 is 1.67e-24 g
     my_chemistry.length_units = cm_per_mpc         # 1 Mpc in cm
     my_chemistry.time_units = sec_per_Myr          # 1 Gyr in s
-    my_chemistry.velocity_units = my_chemistry.a_units * \
-        (my_chemistry.length_units / my_chemistry.a_value) / \
-        my_chemistry.time_units
+    my_chemistry.set_velocity_units()
 
     # Call convenience function for setting up a fluid container.
     # This container holds the solver parameters, units, and fields.

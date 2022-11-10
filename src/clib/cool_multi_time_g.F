@@ -6,7 +6,7 @@
      &                  cooltime,
      &                in, jn, kn, nratec, iexpand, 
      &                ispecies, imetal, imcool, idust,
-     &                idustall, idustfield, idim,
+     &                idustall, idustfield, idustrec, idim,
      &                is, js, ks, ie, je, ke, ih2co, ipiht, igammah,
      &                aye, temstart, temend,
      &                utem, uxyz, uaye, urho, utim,
@@ -126,7 +126,7 @@
       integer in, jn, kn, is, js, ks, ie, je, ke, nratec, 
      &        iexpand, ih2co, ipiht, ispecies, imetal, idim,
      &        imcool, idust, idustall,
-     &        idustfield, igammah, ih2optical, iciecool,
+     &        idustfield, idustrec, igammah, ih2optical, iciecool,
      &        clnew, iVheat, iMheat, iradtrans, iradshield,
      &        iisrffield
      &       ,imchem, igrgr
@@ -480,7 +480,7 @@
      &                d, e, u, v, w, de, HI, HII, HeI, HeII, HeIII,
      &                in, jn, kn, nratec, 
      &                iexpand, ispecies, imetal, imcool,
-     &                idust, idustall, idustfield,
+     &                idust, idustall, idustfield, idustrec,
      &                idim, is, ie, j, k, ih2co, ipiht, 1, igammah,
      &                aye, temstart, temend, z_solar, fgr,
      &                utem, uxyz, uaye, urho, utim,

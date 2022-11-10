@@ -27,6 +27,8 @@ extern chemistry_data_storage grackle_rates;
 
 /* function prototypes */
 
+double get_temperature_units(code_units *my_units);
+
 int local_calculate_temperature(chemistry_data *my_chemistry,
                                 chemistry_data_storage *my_rates,
                                 code_units *my_units,
@@ -117,7 +119,7 @@ int local_calculate_dust_temperature(chemistry_data *my_chemistry,
     co_density_units = my_units->density_units /
       POW(my_units->a_value * my_units->a_units, 3);
   }
-  double temperature_units = mh * POW(my_units->velocity_units, 2) / kboltz;
+  double temperature_units = get_temperature_units(my_units);
 
   /* Compute the size of the fields. */
  

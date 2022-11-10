@@ -181,6 +181,10 @@ typedef struct
      Please refer to the grackle documentation for specifics. */
   int H2_self_shielding;
 
+  /* flag for custom H2-shielding factor. The factor is provided as an additional field 
+     by the user and is multiplied to the rate for radiative H2 dissocitation */
+  int H2_custom_shielding;
+
   /* flag to select which formula for calculating k11 you want to use. 
      Setting to 1 will use Savin 2004, 2 will use Abel et al. 1996  */
   int h2_charge_exchange_rate;

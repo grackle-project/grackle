@@ -24,6 +24,8 @@ extern chemistry_data_storage grackle_rates;
 
 /* function prototypes */
 
+double get_temperature_units(code_units *my_units);
+
 int update_UVbackground_rates(chemistry_data *my_chemistry,
                               chemistry_data_storage *my_rates,
                               photo_rate_storage *my_uvb_rates,
@@ -35,7 +37,7 @@ extern void FORTRAN_NAME(cool_multi_time_g)(
 	gr_float *cooltime,
 	int *in, int *jn, int *kn, int *nratec, int *iexpand,
         int *ispecies, int *imetal, int *imcool, int *idust, int *idustall,
-        int *idustfield, int *idim,
+        int *idustfield, int *idustrec, int *idim,
 	int *is, int *js, int *ks, int *ie, int *je, int *ke, 
         int *ih2co, int *ipiht, int *igammah,
 	double *aye, double *temstart, double *temend,
@@ -201,7 +203,7 @@ int local_calculate_cooling_time(chemistry_data *my_chemistry,
 
   /* Calculate temperature units. */
 
-  double temperature_units = mh * POW(my_units->velocity_units, 2) / kboltz;
+  double temperature_units = get_temperature_units(my_units);
 
   /* Call the fortran routine to solve cooling equations. */
 
@@ -229,6 +231,7 @@ int local_calculate_cooling_time(chemistry_data *my_chemistry,
        &my_chemistry->h2_on_dust,
        &my_chemistry->dust_chemistry,
        &my_chemistry->use_dust_density_field,
+       &my_chemistry->dust_recombination_cooling,
        &(my_fields->grid_rank),
        my_fields->grid_start,
        my_fields->grid_start+1,

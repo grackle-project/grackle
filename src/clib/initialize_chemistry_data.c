@@ -11,7 +11,7 @@
 / software.
 ************************************************************************/
 
-#include <stdlib.h> 
+#include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #include <time.h>
@@ -31,7 +31,7 @@ extern chemistry_data_storage grackle_rates;
 
 void auto_show_config(FILE *fp);
 void auto_show_flags(FILE *fp);
-void auto_show_version(FILE *fp);
+grackle_version get_grackle_version();
 void show_parameters(FILE *fp, chemistry_data *my_chemistry);
 int calc_rates_metal(chemistry_data *my_chemistry,
                      chemistry_data_storage *my_rates,
@@ -52,6 +52,15 @@ int initialize_UVbackground_data(chemistry_data *my_chemistry,
 int initialize_rates(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, code_units *my_units, 
                 double co_length_units, double co_density_units);
 
+static void show_version(FILE *fp)
+{
+  grackle_version gversion = get_grackle_version();
+  fprintf (fp, "\n");
+  fprintf (fp, "The Grackle Version %s\n", gversion.version);
+  fprintf (fp, "Git Branch   %s\n", gversion.branch);
+  fprintf (fp, "Git Revision %s\n", gversion.revision);
+  fprintf (fp, "\n");
+}
 
 int _initialize_chemistry_data(chemistry_data *my_chemistry,
                                chemistry_data_storage *my_rates,
@@ -59,7 +68,7 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
 {
 
   if (grackle_verbose) {
-    auto_show_version(stdout);
+    show_version(stdout);
     fprintf(stdout, "Initializing grackle data.\n");
   }
 
@@ -75,6 +84,13 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
       my_chemistry->photoelectric_heating = 2;
       if (grackle_verbose) {
         fprintf(stdout, "Dust chemistry enabled, setting photoelectric_heating to 2.\n");
+      }
+    }
+
+    if (my_chemistry->dust_recombination_cooling < 0) {
+      my_chemistry->dust_recombination_cooling = 1;
+      if (grackle_verbose) {
+        fprintf(stdout, "Dust chemistry enabled, setting dust_recombination_cooling to 1.\n");
       }
     }
 
@@ -124,7 +140,7 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
     my_chemistry->HydrogenFractionByMass = 1. / (1. + 0.1 * 3.971);
   }
 
-  if (my_chemistry->h2_on_dust > 0 || my_chemistry->dust_chemistry > 0) {
+  if (my_chemistry->h2_on_dust > 0 || my_chemistry->dust_chemistry > 0 || my_chemistry->dust_recombination_cooling > 0) {
     my_rates->gas_grain = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
     my_rates->regr      = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
     my_rates->gas_grain2 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
@@ -211,7 +227,7 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
 
     FILE *fptr = fopen("GRACKLE_INFO", "w");
     fprintf(fptr, "%s\n", tstr);
-    auto_show_version(fptr);
+    show_version(fptr);
     fprintf(fptr, "Grackle build options:\n");
     auto_show_config(fptr);
     fprintf(fptr, "Grackle build flags:\n");
@@ -366,6 +382,8 @@ void show_parameters(FILE *fp, chemistry_data *my_chemistry)
           my_chemistry->radiative_transfer_hydrogen_only);
   fprintf(fp, "self_shielding_method             = %d\n",
           my_chemistry->self_shielding_method);
+  fprintf(fp, "H2_custom_shielding               = %d\n",
+          my_chemistry->H2_custom_shielding);
   fprintf(fp, "H2_self_shielding                 = %d\n",
           my_chemistry->H2_self_shielding);
   fprintf(fp, "radiative_transfer_H2II_diss      = %d\n",

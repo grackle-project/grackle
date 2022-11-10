@@ -126,6 +126,7 @@ typedef struct
   gr_float *RT_H2O_dissociation_rate;
 
   gr_float *H2_self_shielding_length;
+  gr_float *H2_custom_shielding_factor;
 
   gr_float *isrf_habing;
 
@@ -143,5 +144,14 @@ typedef struct
   double a_value;
 
 } code_units;
+
+typedef struct
+{
+
+  const char* version;
+  const char* branch;
+  const char* revision;
+
+} grackle_version;
 
 #endif

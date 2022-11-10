@@ -8,7 +8,8 @@
      &                in, jn, kn, nratec, iexpand, 
      &                ispecies, imetal, imcool, idust,
      &                idustall, idustfield, idim,
-     &                is, js, ks, ie, je, ke, ih2co, ipiht, igammah,
+     &                is, js, ks, ie, je, ke, ih2co, ipiht, idustrec,
+     &                igammah,
      &                dx, dt, aye, temstart, temend, 
      &                utem, uxyz, uaye, urho, utim,
      &                gamma, fh, dtoh, z_solar, fgr,
@@ -159,6 +160,7 @@
 !    dust     - dust density field
 !    kph*     - photoionization fields
 !    gamma*   - photoheating fields
+!    f_shield_custom - custom H2 shielding factor
 !
 !    is,ie    - start and end indices of active region (zero based)
 !    iexpand  - comoving coordinates flag (0 = off, 1 = on)
@@ -172,6 +174,7 @@
 !    iisrffield - flag if a field for the interstellar radiation field is present
 !    ih2co    - flag to include H2 cooling (1 = on, 0 = off)
 !    ipiht    - flag to include photoionization heating (1 = on, 0 = off)
+!    idustrec - flag to include dust recombination cooling (1 = on, -1 = off)
 !    iH2shield - flag for approximate self-shielding of H2 (Wolcott-Green+ 2011)
 !    iradshield - flag for approximate self-shielding of UV background
 !    avgsighi   - spectrum averaged ionization crs for HI for use with shielding
@@ -181,6 +184,7 @@
 !    iradcoupled - flag to indicate coupled radiative transfer
 !    iradstep  - flag to indicate intermediate coupled radiative transfer timestep
 !    irt_honly - flag to indicate applying RT ionization and heating to HI only
+!    iH2shieldcustom - flag to indicate a custom H2 shielding factor is provided
 
 !    fh       - Hydrogen mass fraction (typically 0.76)
 !    dtoh     - Deuterium to H mass ratio
@@ -239,7 +243,7 @@
 
       integer icool, in, jn, kn, is, js, ks, ie, je, ke, nratec, 
      &        iexpand, ih2co, ipiht, ispecies, imetal, idim,
-     &        ierr, imcool, idust, idustall, idustfield,
+     &        ierr, imcool, idust, idustall, idustfield, idustrec,
      &        igammah, ih2optical, iciecool, ithreebody,
      &        ndratec, clnew, iVheat, iMheat, iH2shield, iradshield,
      &        iradtrans, iradcoupled, iradstep, irt_honly,
@@ -299,6 +303,10 @@
 !  Interstellar radiation field for dust heating
 
       R_PREC  isrf_habing(in,jn,kn)
+
+!  Custom H2 shielding factor
+
+      R_PREC f_shield_custom(in, jn, kn)
 
 !  Cooling tables (coolings rates as a function of temperature)
 
@@ -798,7 +806,7 @@ C    &   , coolunit*dom/mh ! = vbase1**2 / tbase1
      &                d, e, u, v, w, de, HI, HII, HeI, HeII, HeIII,
      &                in, jn, kn, nratec, 
      &                iexpand, ispecies, imetal, imcool,
-     &                idust, idustall, idustfield,
+     &                idust, idustall, idustfield, idustrec,
      &                idim, is, ie, j, k, ih2co, ipiht, iter, igammah,
      &                aye, temstart, temend, z_solar, fgr,
      &                utem, uxyz, uaye, urho, utim,
@@ -1113,7 +1121,8 @@ C    &   , coolunit*dom/mh ! = vbase1**2 / tbase1
      &              dt-ttot(i), 0.5_DKIND*dt)
 
                if (d(i,j,k)*dom .gt. 1e8_DKIND .and. 
-     &              edot(i) .gt. 0._DKIND) then
+     &              edot(i) .gt. 0._DKIND      .and.
+     &             ispecies .gt. 1) then
 !              Equilibrium value for H is:
 !              H = (-1._DKIND / (4*k22)) * (k13 - sqrt(8 k13 k22 rho + k13^2))
 !              We now want this to change by 10% or less, but we're only
@@ -2724,7 +2733,8 @@ C                 endif
 
       integer is, ie, nratec,
      &        in, jn, kn, ispecies, ithreebody, j, k,
-     &        ndratec, iH2shield, iradshield, iradtrans
+     &        ndratec, iH2shield, iradshield, iradtrans, 
+     &        iH2shieldcustom
       real*8 temstart, temend, tgas1d(in), mmw(in), dom,
      &       dtemstart, dtemend
       real*8 coolunit, tbase1, xbase1, dx_cgs, c_ljeans
@@ -2803,6 +2813,10 @@ C                 endif
 !     H2 self-shielding length-scale field
 
       R_PREC  xH2shield(in,jn,kn)
+
+!  Custom H2 shielding factor
+
+      R_PREC f_shield_custom(in, jn, kn)
 
 !     Returned rate values
 
@@ -2928,6 +2942,10 @@ C                 endif
       real*8  kd
       real*8 fh, mh
       parameter (mh = mass_h)      !DPC
+
+!     locals for H2 self-shielding as WG+19
+
+      real*8 tgas_touse, ngas_touse, aWG2019
 
       real*8 nSSh, nratio
       logical itmask_metal(in)
@@ -3755,13 +3773,32 @@ C        write(*,*) 'kdissH2I included'
 
                N_H2 = dom*H2I(i,j,k) * l_H2shield
 
+! update: self-shielding following Wolcott-Green & Haiman (2019)
+! range of validity: T=100-8000 K, n<=1e7 cm^-3
+
+               tgas_touse = max(tgas1d(i),1E2_DKIND)
+               tgas_touse = min(tgas_touse,8E3_DKIND)
+               ngas_touse = d(i,j,k) * dom / mmw(i)
+               ngas_touse = min(ngas_touse,1E7_DKIND)
+
+               aWG2019 = (0.8711_DKIND *
+     &              log10(tgas_touse) - 1.928_DKIND) *
+     &              exp(-0.2856_DKIND * log10(ngas_touse)) +
+     &              (-0.9639_DKIND * log10(tgas_touse) + 3.892_DKIND)
+
                x = 2.0E-15_DKIND * N_H2
                b_doppler = 1E-5_DKIND *
      &                 sqrt(2._DKIND * kboltz *
      &                      tgas1d(i) / mass_h)
-               f_shield = 0.965_DKIND / (1._DKIND + x/b_doppler)**1.1+
-     &           0.035_DKIND * exp(-8.5E-4_DKIND * sqrt(1._DKIND +x))/
-     &           sqrt(1._DKIND + x)
+               f_shield = 0.965_DKIND /
+     &              (1._DKIND + x/b_doppler)**aWG2019 +
+     &              0.035_DKIND * exp(-8.5e-4_DKIND *
+     &              sqrt(1._DKIND + x)) /
+     &              sqrt(1._DKIND + x)
+
+! avoid f>1
+               f_shield = min(f_shield, 1._DKIND)
+
                k31shield(i) = f_shield * k31shield(i)
             endif
          enddo
