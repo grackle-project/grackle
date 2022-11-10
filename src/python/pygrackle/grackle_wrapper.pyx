@@ -111,6 +111,48 @@ cdef class chemistry_data:
         def __set__(self, val):
             self.data.use_dust_density_field = val
 
+    property metal_chemistry:
+        def __get__(self):
+            return self.data.metal_chemistry
+        def __set__(self, val):
+            self.data.metal_chemistry = val
+
+    property grain_growth:
+        def __get__(self):
+            return self.data.grain_growth
+        def __set__(self, val):
+            self.data.grain_growth = val
+
+    property multi_metals:
+        def __get__(self):
+            return self.data.multi_metals
+        def __set__(self, val):
+            self.data.multi_metals = val
+
+    property metal_abundances:
+        def __get__(self):
+            return self.data.metal_abundances
+        def __set__(self, val):
+            self.data.metal_abundances = val
+
+    property dust_species:
+        def __get__(self):
+            return self.data.dust_species
+        def __set__(self, val):
+            self.data.dust_species = val
+
+    property dust_temperature_multi:
+        def __get__(self):
+            return self.data.dust_temperature_multi
+        def __set__(self, val):
+            self.data.dust_temperature_multi = val
+
+    property dust_sublimation:
+        def __get__(self):
+            return self.data.dust_sublimation
+        def __set__(self, val):
+            self.data.dust_sublimation = val
+
     property photoelectric_heating:
         def __get__(self):
             return self.data.photoelectric_heating
@@ -158,6 +200,12 @@ cdef class chemistry_data:
             return self.data.cie_cooling
         def __set__(self, val):
             self.data.cie_cooling = val
+
+    property h2_optical_depth_approximation:
+        def __get__(self):
+            return self.data.h2_optical_depth_approximation
+        def __set__(self, val):
+            self.data.h2_optical_depth_approximation = val
 
     property h2_charge_exchange_rate:
         def __get__(self):
@@ -302,12 +350,6 @@ cdef class chemistry_data:
             return self.data.LWbackground_intensity
         def __set__(self, val):
             self.data.LWbackground_intensity = val
-
-    property UVbackground_intensity:
-        def __get__(self):
-            return self.data.UVbackground_intensity
-        def __set__(self, val):
-            self.data.UVbackground_intensity = val
 
     property UVbackground_redshift_on:
         def __get__(self):
@@ -587,6 +629,10 @@ cdef class chemistry_data:
         def __get__(self):
             cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.k58)
             return np.asarray(memview)
+
+    property k125:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.k132)
 
     property h2dust:
         def __get__(self):

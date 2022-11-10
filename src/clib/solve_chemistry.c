@@ -702,7 +702,7 @@ int local_solve_chemistry(chemistry_data *my_chemistry,
   , my_rates->h2dustC
   , my_rates->gas_grain2
   ,&my_rates->gamma_isrf2
-  , my_rates->grogr
+  , my_rates->grain_growth
   ,&my_chemistry->radiative_transfer_HDI_diss
   , my_fields->RT_HDI_dissociation_rate
   ,&my_chemistry->radiative_transfer_metal_ion

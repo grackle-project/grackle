@@ -535,13 +535,13 @@ int initialize_rates(chemistry_data *my_chemistry, chemistry_data_storage *my_ra
         add_h2dust_S_reaction_rate(&my_rates->h2dustS, coolingUnits, my_chemistry);
 
         //Heating of dust by interstellar radiation field, with an arbitrary grain size distribution 
-        add_scalar_reaction_rate(&my_rates->gamma_isrf2, coolingUnits, my_chemistry);
+        add_scalar_reaction_rate(&my_rates->gamma_isrf2, gammah_isrf2_rate, coolingUnits, my_chemistry);
 
         //Gas-grain energy transfer, with an arbitrary grain size distribution
-        add_reaction_rate(&my_rates->gas_grain2, coolingUnits, my_chemistry);
+        add_reaction_rate(&my_rates->gas_grain2, gasGrain2_rate, coolingUnits, my_chemistry);
 
         //Grain growth rate
-        add_reaction_rate(&my_rates->grain_growth, coolingUnits, my_chemistry);
+        add_reaction_rate(&my_rates->grain_growth, grain_growth_rate, coolingUnits, my_chemistry);
     }
 
     //End of function definition.
@@ -609,17 +609,10 @@ int initialize_rates(chemistry_data *my_chemistry, chemistry_data_storage *my_ra
 
     my_rates->cieY06  = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
 
-    my_rates->h2dust = malloc(my_chemistry->NumberOfTemperatureBins *
-                              my_chemistry->NumberOfDustTemperatureBins * sizeof(double));
     my_rates->n_cr_n = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
     my_rates->n_cr_d1 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
     my_rates->n_cr_d2 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->h2dustS = malloc(my_chemistry->NumberOfTemperatureBins *
-                      my_chemistry->NumberOfDustTemperatureBins * sizeof(double));
-    my_rates->h2dustC = malloc(my_chemistry->NumberOfTemperatureBins *
-                              my_chemistry->NumberOfDustTemperatureBins * sizeof(double));
-    my_rates->grogr   = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-
+    
     my_rates->k24 = 0;
     my_rates->k25 = 0;
     my_rates->k26 = 0;
@@ -636,4 +629,4 @@ int initialize_rates(chemistry_data *my_chemistry, chemistry_data_storage *my_ra
     my_rates->crsHeII = 0;
     my_rates->comp_xray = 0;
     my_rates->temp_xray = 0;
-/*
+*/

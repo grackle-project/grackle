@@ -204,7 +204,18 @@
       R_PREC  t1(in), t2(in), logtem(in), tdef(in), 
      &     tgas(in), tdust(in), nh(in), gasgr(in),
      &     myisrf(in)
-          
+
+!  Additional slice locals
+      R_PREC brem(in), ceHeI(in), ceHeII(in), ceHI(in),
+     & cieco(in), ciHeI(in), ciHeII(in), ciHeIS(in),
+     & ciHI(in), comp1(in), comp2(in), edot(in),
+     & energy(in), gammaha_eff(in), gasgr_tdust(in),
+     & gphdl(in), gpldl(in), h2k01(in), hdlow(in),
+     & hdlte(in), hyd01k(in), mmw(in), myde(in),
+     & mynh(in), p2d(in), regr(in), reHeII1(in),
+     & reHeIII(in), reHII(in), rhoH(in), reHeII(in),
+     & reHeII2(in), roth(in), rotl(in), tgasold(in),
+     & vibh(in)
 !  Iteration mask for multi_cool
 
       logical itmask(in)

@@ -458,7 +458,7 @@ int _free_chemistry_data(chemistry_data *my_chemistry,
     GRACKLE_FREE(my_rates->n_cr_d2);
     GRACKLE_FREE(my_rates->h2dustS);
     GRACKLE_FREE(my_rates->h2dustC);
-    GRACKLE_FREE(my_rates->grogr);
+    GRACKLE_FREE(my_rates->grain_growth);
   }
 
 
