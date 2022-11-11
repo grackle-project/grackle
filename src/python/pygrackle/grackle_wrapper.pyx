@@ -117,6 +117,12 @@ cdef class chemistry_data:
         def __set__(self, val):
             self.data.use_dust_density_field = val
 
+    property dust_recombination_cooling:
+        def __get__(self):
+            return self.data.dust_recombination_cooling
+        def __set__(self, val):
+            self.data.dust_recombination_cooling = val
+
     property metal_chemistry:
         def __get__(self):
             return self.data.metal_chemistry
@@ -213,54 +219,6 @@ cdef class chemistry_data:
         def __set__(self, val):
             self.data.h2_optical_depth_approximation = val
 
-    property h2_charge_exchange_rate:
-        def __get__(self):
-            return self.data.h2_charge_exchange_rate
-        def __set__(self, val):
-            self.data.h2_charge_exchange_rate = val
-
-    property h2_dust_rate:
-        def __get__(self):
-            return self.data.h2_dust_rate
-        def __set__(self, val):
-            self.data.h2_dust_rate = val
-
-    property h2_h_cooling_rate:
-        def __get__(self):
-            return self.data.h2_h_cooling_rate
-        def __set__(self, val):
-            self.data.h2_h_cooling_rate = val
-
-    property collisional_excitation_rates:
-        def __get__(self):
-            return self.data.collisional_excitation_rates
-        def __set__(self, val):
-            self.data.collisional_excitation_rates = val
-
-    property collisional_ionisation_rates:
-        def __get__(self):
-            return self.data.collisional_ionisation_rates
-        def __set__(self, val):
-            self.data.collisional_ionisation_rates = val
-
-    property recombination_cooling_rates:
-        def __get__(self):
-            return self.data.recombination_cooling_rates
-        def __set__(self, val):
-            self.data.recombination_cooling_rates = val
-
-    property bremsstrahlung_cooling_rates:
-        def __get__(self):
-            return self.data.bremsstrahlung_cooling_rates
-        def __set__(self, val):
-            self.data.bremsstrahlung_cooling_rates = val
-
-    property h2_optical_depth_approximation:
-        def __get__(self):
-            return self.data.h2_optical_depth_approximation
-        def __set__(self, val):
-            self.data.h2_optical_depth_approximation = val
-
     property ih2co:
         def __get__(self):
             return self.data.ih2co
@@ -296,6 +254,252 @@ cdef class chemistry_data:
             return self.data.local_dust_to_gas_ratio
         def __set__(self, val):
             self.data.local_dust_to_gas_ratio = val
+
+    property SN0_N:
+        def __get__(self):
+            return self.data.SN0_N
+        def __set__(self, val):
+            self.data.SN0_N = val
+
+    property SN0_XC:
+        def __get__(self):
+            return self.data.SN0_XC
+        def __set__(self, val):
+            self.data.SN0_XC = val
+
+    property SN0_X0:
+        def __get__(self):
+            return self.data.SN0_X0
+        def __set__(self, val):
+            self.data.SN0_X0 = val
+
+    property SN0_XMg:
+        def __get__(self):
+            return self.data.SN0_XMg
+        def __set__(self, val):
+            self.data.SN0_XMg = val
+
+    property SN0_XAl:
+        def __get__(self):
+            return self.data.SN0_XAl
+        def __set__(self, val):
+            self.data.SN0_XAl = val
+    
+    property SN0_XSi:
+        def __get__(self):
+            return self.data.SN0_XSi
+        def __set__(self, val):
+            self.data.SN0_XSi = val
+    
+    property SN0_XS:
+        def __get__(self):
+            return self.data.SN0_XS
+        def __set__(self, val):
+            self.data.SN0_XS = val
+
+    property SN0_XFe:
+        def __get__(self):
+            return self.data.SN0_XFe
+        def __set__(self, val):
+            self.data.SN0_XFe = val
+
+    property SN0_fC:
+        def __get__(self):
+            return self.data.SN0_fC
+        def __set__(self, val):
+            self.data.SN0_fC = val
+
+    property SN0_fO:
+        def __get__(self):
+            return self.data.SN0_fO
+        def __set__(self, val):
+            self.data.SN0_fO  = val
+
+    property SN0_fMg:
+        def __get__(self):
+            return self.data.SN0_fMg
+        def __set__(self, val):
+            self.data.SN0_fMg  = val
+   
+    property SN0_fAl:
+        def __get__(self):
+            return self.data.SN0_fAl
+        def __set__(self, val):
+            self.data.SN0_fAl  = val
+
+    property SN0_fSi:
+        def __get__(self):
+            return self.data.SN0_fSi
+        def __set__(self, val):
+            self.data.SN0_fSi  = val
+
+    property SN0_fS:
+        def __get__(self):
+            return self.data.SN0_fS
+        def __set__(self, val):
+            self.data.SN0_fS = val
+
+    property SN0_fFe:
+        def __get__(self):
+            return self.data.SN0_fFe
+        def __set__(self, val):
+            self.data.SN0_fFe = val
+
+    property SN0_fSiM:
+        def __get__(self):
+            return self.data.SN0_fSiM
+        def __set__(self, val):
+            self.data.SN0_fSiM = val
+
+    property SN0_fFeM:
+        def __get__(self):
+            return self.data.SN0_fFeM
+        def __set__(self, val):
+            self.data.SN0_fFeM = val
+
+    property SN0_fMg2SiO4:
+        def __get__(self):
+            return self.data.SN0_fMg2SiO4
+        def __set__(self, val):
+            self.data.SN0_fMg2SiO4 = val
+
+    property SN0_fMgSiO3:
+        def __get__(self):
+            return self.data.SN0_fMgSiO3
+        def __set__(self, val):
+            self.data.SN0_fMgSiO3 = val
+
+    property SN0_fFe3O4:
+        def __get__(self):
+            return self.data.SN0_fFe3O4
+        def __set__(self, val):
+            self.data.SN0_fFe3O4 = val
+
+    property SN0_fAC:
+        def __get__(self):
+            return self.data.SN0_fAC
+        def __set__(self, val):
+            self.data.SN0_fAC = val
+
+    property SN0_fSiO2D:
+        def __get__(self):
+            return self.data.SN0_fSiO2D
+        def __set__(self, val):
+            self.data.SN0_fSiO2D = val
+
+    property SN0_fMgO:
+        def __get__(self):
+            return self.data.SN0_fMgO
+        def __set__(self, val):
+            self.data.SN0_fMgO = val
+
+    property SN0_fFeS:
+        def __get__(self):
+            return self.data.SN0_fFeS
+        def __set__(self, val):
+            self.data.SN0_fFeS = val
+
+    property SN0_fAl2O3:
+        def __get__(self):
+            return self.data.SN0_fAl2O3
+        def __set__(self, val):
+            self.data.SN0_fAl2O3 = val
+
+    property SN0_freforg:
+        def __get__(self):
+            return self.data.SN0_freforg
+        def __set__(self, val):
+            self.data.SN0_freforg = val
+
+    property SN0_fvolorg:
+        def __get__(self):
+            return self.data.SN0_fvolorg
+        def __set__(self, val):
+            self.data.SN0_fvolorg = val
+
+    property SN0_fH2Oice:
+        def __get__(self):
+            return self.data.SN0_fH2Oice
+        def __set__(self, val):
+            self.data.SN0_fH2Oice = val
+
+    property SN0_r0SiM:
+        def __get__(self):
+            return self.data.SN0_r0SiM
+        def __set__(self, val):
+            self.data.SN0_r0SiM = val
+
+    property SN0_r0FeM:
+        def __get__(self):
+            return self.data.SN0_r0FeM
+        def __set__(self, val):
+            self.data.SN0_r0FeM = val
+
+    property SN0_r0Mg2SiO4:
+        def __get__(self):
+            return self.data.SN0_r0Mg2SiO4
+        def __set__(self, val):
+            self.data.SN0_r0Mg2SiO4 = val
+
+    property SN0_r0MgSiO3:
+        def __get__(self):
+            return self.data.SN0_r0MgSiO3
+        def __set__(self, val):
+            self.data.SN0_r0MgSiO3 = val
+
+    property SN0_r0Fe3O4:
+        def __get__(self):
+            return self.data.SN0_r0Fe3O4
+        def __set__(self, val):
+            self.data.SN0_r0Fe3O4 = val
+
+    property SN0_r0AC:
+        def __get__(self):
+            return self.data.SN0_r0AC
+        def __set__(self, val):
+            self.data.SN0_r0AC = val
+
+    property SN0_r0SiO2D:
+        def __get__(self):
+            return self.data.SN0_r0SiO2D
+        def __set__(self, val):
+            self.data.SN0_r0SiO2D = val
+
+    property SN0_r0MgO:
+        def __get__(self):
+            return self.data.SN0_r0MgO
+        def __set__(self, val):
+            self.data.SN0_r0MgO = val
+
+    property SN0_r0FeS:
+        def __get__(self):
+            return self.data.SN0_r0FeS
+        def __set__(self, val):
+            self.data.SN0_r0FeS = val
+
+    property SN0_r0Al2O3:
+        def __get__(self):
+            return self.data.SN0_r0Al2O3
+        def __set__(self, val):
+            self.data.SN0_r0Al2O3 = val
+
+    property SN0_r0reforg:
+        def __get__(self):
+            return self.data.SN0_r0reforg
+        def __set__(self, val):
+            self.data.SN0_r0reforg = val
+
+    property SN0_r0volorg:
+        def __get__(self):
+            return self.data.SN0_r0volorg
+        def __set__(self, val):
+            self.data.SN0_r0volorg = val
+
+    property SN0_r0H2Oice:
+        def __get__(self):
+            return self.data.SN0_r0H2Oice
+        def __set__(self, val):
+            self.data.SN0_r0H2Oice = val        
 
     property NumberOfTemperatureBins:
         def __get__(self):
@@ -338,7 +542,7 @@ cdef class chemistry_data:
             return self.data.DustTemperatureEnd
         def __set__(self, val):
             self.data.DustTemperatureEnd = val
-
+    
     property Compton_xray_heating:
         def __get__(self):
             return self.data.Compton_xray_heating
@@ -411,6 +615,36 @@ cdef class chemistry_data:
         def __set__(self, val):
             self.data.radiative_transfer_hydrogen_only = val
 
+    property radiative_transfer_H2II_diss:
+        def __get__(self):
+            return self.data.radiative_transfer_H2II_diss
+        def __set__(self, val):
+            self.data.radiative_transfer_H2II_diss = val
+
+    property radiative_transfer_HDI_diss:
+        def __get__(self):
+            return self.data.radiative_transfer_HDI_diss
+        def __set__(self, val):
+            self.data.radiative_transfer_HDI_diss = val
+
+    property radiative_transfer_metal_ion:
+        def __get__(self):
+            return self.data.radiative_transfer_metal_ion
+        def __set__(self, val):
+            self.data.radiative_transfer_metal_ion = val
+
+    property radiative_transfer_metal_diss:
+        def __get__(self):
+            return self.data.radiative_transfer_metal_diss
+        def __set__(self, val):
+            self.data.radiative_transfer_metal_diss = val
+
+    property radiative_transfer_use_H2_shielding:
+        def __get__(self):
+            return self.data.radiative_transfer_use_H2_shielding
+        def __set__(self, val):
+            self.data.radiative_transfer_use_H2_shielding = val
+
     property self_shielding_method:
         def __get__(self):
             return self.data.self_shielding_method
@@ -422,6 +656,80 @@ cdef class chemistry_data:
             return self.data.H2_self_shielding
         def __set__(self, val):
             self.data.H2_self_shielding = val
+
+    property H2_custon_shielding:
+        def __get__(self):
+            return self.data.H2_custon_shielding
+        def __set__(self, val):
+            self.data.H2_custon_shielding = val
+
+    property h2_charge_exchange_rate:
+        def __get__(self):
+            return self.data.h2_charge_exchange_rate
+        def __set__(self, val):
+            self.data.h2_charge_exchange_rate = val
+
+    property h2_dust_rate:
+        def __get__(self):
+            return self.data.h2_dust_rate
+        def __set__(self, val):
+            self.data.h2_dust_rate = val
+
+    property h2_h_cooling_rate:
+        def __get__(self):
+            return self.data.h2_h_cooling_rate
+        def __set__(self, val):
+            self.data.h2_h_cooling_rate = val
+
+    property collisional_excitation_rates:
+        def __get__(self):
+            return self.data.collisional_excitation_rates
+        def __set__(self, val):
+            self.data.collisional_excitation_rates = val
+
+    property collisional_ionisation_rates:
+        def __get__(self):
+            return self.data.collisional_ionisation_rates
+        def __set__(self, val):
+            self.data.collisional_ionisation_rates = val
+
+    property recombination_cooling_rates:
+        def __get__(self):
+            return self.data.recombination_cooling_rates
+        def __set__(self, val):
+            self.data.recombination_cooling_rates = val
+
+    property bremsstrahlung_cooling_rates:
+        def __get__(self):
+            return self.data.bremsstrahlung_cooling_rates
+        def __set__(self, val):
+            self.data.bremsstrahlung_cooling_rates = val
+
+    property use_palla_salpeter_stahler_1983:
+        def __get__(self):
+            return self.data.use_palla_salpeter_stahler_1983
+        def __set__(self, val):
+            self.data.use_palla_salpeter_stahler_1983 = val
+
+    property use_stancil_lepp_dalgarno_1998:
+        def __get__(self):
+            return self.data.use_stancil_lepp_dalgarno_1998
+        def __set__(self, val):
+            self.data.use_stancil_lepp_dalgarno_1998 = val
+
+    property use_omukai_gas_grain:
+        def __get__(self):
+            return self.data.use_omukai_gas_grain
+        def __set__(self, val):
+            self.data.use_omukai_gas_grain = val
+
+    property use_uniform_grain_dist_gamma_isrf:
+        def __get__(self):
+            return self.data.use_uniform_grain_dist_gamma_isrf
+        def __set__(self, val):
+            self.data.use_uniform_grain_dist_gamma_isrf = val
+
+
 
     property k1:
         def __get__(self):
@@ -638,12 +946,250 @@ cdef class chemistry_data:
 
     property k125:
         def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.k125)
+
+    property k129:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.k129)
+
+    property k130:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.k130)
+
+    property k131:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.k131)
+
+    property k131:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.k131)
+
+    property k132:
+        def __get__(self):
             cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.k132)
+
+    property k133:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.k133)
+
+    property k134:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.k134)
+
+    property k135:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.k135)
+
+    property k136:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.k136)
+
+    property k137:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.k137)
+
+    property k148:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.k148)
+
+    property k149:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.k149)
+
+    property k150:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.k150)
+
+    property k151:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.k151)
+
+    property k152:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.k152)
+
+    property k153:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.k153)
+
+    property kz15:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.kz15)
+
+    property kz16:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.kz16)
+
+    property kz17:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.kz17)
+
+    property kz18:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.kz18)
+
+    property kz19:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.kz19)
+
+    property kz20:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.kz20)
+
+    property kz21:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.kz21)
+
+    property kz22:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.kz22)
+
+    property kz23:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.kz23)
+
+    property kz24:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.kz24)
+
+    property kz25:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.kz25)
+
+    property kz26:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.kz26)
+
+    property kz27:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.kz27)
+
+    property kz28:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.kz28)
+
+    property kz29:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.kz29)
+
+    property kz30:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.kz30)
+
+    property kz31:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.kz31)
+
+    property kz32:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.kz32)
+
+    property kz33:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.kz33)
+
+    property kz34:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.kz34)
+
+    property kz35:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.kz35)
+
+    property kz36:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.kz36)
+
+    property kz37:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.kz37)
+
+    property kz38:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.kz38)
+
+    property kz39:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.kz39)
+
+    property kz40:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.kz40)
+
+    property kz41:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.kz41)
+
+    property kz42:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.kz42)
+
+    property kz43:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.kz43)
+
+    property kz44:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.kz44)
+
+    property kz45:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.kz45)
+
+    property kz46:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.kz46)
+
+    property kz47:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.kz47)
+
+    property kz48:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.kz48)
+
+    property kz49:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.kz49)
+
+    property kz50:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.kz50)
+
+    property kz51:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.kz51)
+
+    property kz52:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.kz52)
+
+    property kz53:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.kz53)
+
+    property kz54:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.kz54)
 
     property h2dust:
         def __get__(self):
             cdef double[:] memview = <double[:self.NumberOfTemperatureBins*self.NumberOfDustTemperatureBins]>(<double*> self.rates.h2dust)
             return np.asarray(memview)
+
+    property h2dustS:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins*self.NumberOfDustTemperatureBins]>(<double*> self.rates.h2dustS)
+            return np.asarray(memview)
+
+    property h2dustC:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins*self.NumberOfDustTemperatureBins]>(<double*> self.rates.h2dustC)
+            return np.asarray(memview)
+
+    property grain_growth:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.grain_growth)
 
     property n_cr_n:
         def __get__(self):
@@ -873,11 +1419,604 @@ cdef class chemistry_data:
         def __set__(self, val):
             self.rates.gamma_isrf = val
 
+    property gamma_isrf2:
+        def __get__(self):
+            return self.rates.gamma_isrf2
+        def __set__(self, val):
+            self.rates.gamma_isrf2 = val
+
     property gas_grain:
         def __get__(self):
             if not self.dust_chemistry and not self.h2_on_dust:
                 return 0
             cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.gas_grain)
+            return np.asarray(memview)
+
+    property gas_grain2:
+        def __get__(self):
+            if not self.dust_chemistry and not self.h2_on_dust:
+                return 0
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.gas_grain2)
+            return np.asarray(memview)
+
+    property cieY06:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.cieY06)
+            return np.asarray(memview)
+
+    property LH2_N:
+        def __get__(self):
+            cdef int[:] memview = <int[:self.NumberOfTemperatureBins]>(<int*> self.rates.LH2_N)
+            return np.asarray(memview)
+
+    property LH2_Size:
+        def __get__(self):
+            return self.rates.LH2_Size
+        def __set__(self, val):
+            self.rates.LH2_Size = val
+
+    property LH2_D:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.LH2_D)
+            return np.asarray(memview)
+
+    property LH2_T:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.LH2_T)
+            return np.asarray(memview)
+
+    property LH2_H:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.LH2_H)
+            return np.asarray(memview)
+
+    property LH2_dD:
+        def __get__(self):
+            return self.rates.LH2_dD
+        def __set__(self, val):
+            self.rates.LH2_dD = val
+
+    property LH2_LH2_dT:
+        def __get__(self):
+            return self.rates.LH2_LH2_dT
+        def __set__(self, val):
+            self.rates.LH2_LH2_dT = val
+
+    property LH2_dH:
+        def __get__(self):
+            return self.rates.LH2_dH
+        def __set__(self, val):
+            self.rates.LH2_dH = val
+
+    property LH2_L:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.LH2_L)
+            return np.asarray(memview)
+
+    property LHD_N:
+        def __get__(self):
+            cdef int[:] memview = <int[:self.NumberOfTemperatureBins]>(<int*> self.rates.LHD_N)
+            return np.asarray(memview)
+
+    property LHD_Size:
+        def __get__(self):
+            return self.rates.LHD_Size
+        def __set__(self, val):
+            self.rates.LHD_Size = val
+
+    property LHD_D:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.LHD_D)
+            return np.asarray(memview)
+
+    property LHD_T:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.LHD_T)
+            return np.asarray(memview)
+
+    property LHD_H:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.LHD_H)
+            return np.asarray(memview)
+
+    property LHD_dD:
+        def __get__(self):
+            return self.rates.LHD_dD
+        def __set__(self, val):
+            self.rates.LHD_dD = val
+
+    property LHD_dT:
+        def __get__(self):
+            return self.rates.LHD_dT
+        def __set__(self, val):
+            self.rates.LHD_dT = val
+
+    property LHD_dH:
+        def __get__(self):
+            return self.rates.LHD_dH
+        def __set__(self, val):
+            self.rates.LHD_dH = val
+    
+    property LHD_L:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.LHD_L)
+            return np.asarray(memview)
+
+    property LCI_N:
+        def __get__(self):
+            cdef int[:] memview = <int[:self.NumberOfTemperatureBins]>(<int*> self.rates.LCI_N)
+            return np.asarray(memview)
+
+    property LCI_Size:
+        def __get__(self):
+            return self.rates.LCI_Size
+        def __set__(self, val):
+            self.rates.LCI_Size = val
+
+    property LCI_D:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.LCI_D)
+            return np.asarray(memview)
+
+    property LCI_T:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.LCI_T)
+            return np.asarray(memview)
+
+    property LCI_H:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.LCI_H)
+            return np.asarray(memview)
+
+    property LCI_dD:
+        def __get__(self):
+            return self.rates.LCI_dD
+        def __set__(self, val):
+            self.rates.LCI_dD = val
+
+    property LCI_dT:
+        def __get__(self):
+            return self.rates.LCI_dT
+        def __set__(self, val):
+            self.rates.LCI_dT = val
+
+    property LCI_dH:
+        def __get__(self):
+            return self.rates.LCI_dH
+        def __set__(self, val):
+            self.rates.LCI_dH = val
+
+    property LCI_L:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.LCI_L)
+            return np.asarray(memview)
+
+    property LCII_N:
+        def __get__(self):
+            cdef int[:] memview = <int[:self.NumberOfTemperatureBins]>(<int*> self.rates.LCII_N)
+            return np.asarray(memview)
+
+    property LCII_Size:
+        def __get__(self):
+            return self.rates.LCII_Size
+        def __set__(self, val):
+            self.rates.LCII_Size = val
+
+    property LCII_D:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.LCII_D)
+            return np.asarray(memview)
+
+    property LCII_T:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.LCII_T)
+            return np.asarray(memview)
+
+    property LCII_H:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.LCII_H)
+            return np.asarray(memview)
+
+    property LCII_dD:
+        def __get__(self):
+            return self.rates.LCII_dD
+        def __set__(self, val):
+            self.rates.LCII_dD = val
+
+    property LCII_dT:
+        def __get__(self):
+            return self.rates.LCII_dT
+        def __set__(self, val):
+            self.rates.LCII_dT = val
+
+    property LCII_dH:
+        def __get__(self):
+            return self.rates.LCII_dH
+        def __set__(self, val):
+            self.rates.LCII_dH = val
+
+    property LCII_L:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.LCII_L)
+            return np.asarray(memview)
+
+    property LOI_N:
+        def __get__(self):
+            cdef int[:] memview = <int[:self.NumberOfTemperatureBins]>(<int*> self.rates.LOI_N)
+            return np.asarray(memview)
+
+    property LOI_Size:
+        def __get__(self):
+            return self.rates.LOI_Size
+        def __set__(self, val):
+            self.rates.LOI_Size = val
+  
+    property LOI_D:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.LOI_D)
+            return np.asarray(memview)
+
+    property LOI_T:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.LOI_T)
+            return np.asarray(memview)
+
+    property LOI_H:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.LOI_H)
+            return np.asarray(memview)
+
+    property LOI_dD:
+        def __get__(self):
+            return self.rates.LOI_dD
+        def __set__(self, val):
+            self.rates.LOI_dD = val
+
+    property LOI_dT:
+        def __get__(self):
+            return self.rates.LOI_dT
+        def __set__(self, val):
+            self.rates.LOI_dT = val
+
+    property LOI_dH:
+        def __get__(self):
+            return self.rates.LOI_dH
+        def __set__(self, val):
+            self.rates.LOI_dH = val
+
+    property LOI_L:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.LOI_L)
+            return np.asarray(memview)
+
+    property LCO_N:
+        def __get__(self):
+            cdef int[:] memview = <int[:self.NumberOfTemperatureBins]>(<int*> self.rates.LCO_N)
+            return np.asarray(memview)
+
+    property LCO_Size:
+        def __get__(self):
+            return self.rates.LCO_Size
+        def __set__(self, val):
+            self.rates.LCO_Size = val
+
+    property LCO_D:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.LCO_D)
+            return np.asarray(memview)
+
+    property LCO_T:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.LCO_T)
+            return np.asarray(memview)
+
+    property LCO_H:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.LCO_H)
+            return np.asarray(memview)
+
+    property LCO_dD:
+        def __get__(self):
+            return self.rates.LCO_dD
+        def __set__(self, val):
+            self.rates.LCO_dD = val
+
+    property LCO_dT:
+        def __get__(self):
+            return self.rates.LCO_dT
+        def __set__(self, val):
+            self.rates.LCO_dT = val
+
+    property LCO_dH:
+        def __get__(self):
+            return self.rates.LCO_dH
+        def __set__(self, val):
+            self.rates.LCO_dH = val
+
+    property LCO_L:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.LCO_L)
+            return np.asarray(memview)
+
+    property LOH_N:
+        def __get__(self):
+            cdef int[:] memview = <int[:self.NumberOfTemperatureBins]>(<int*> self.rates.LOH_N)
+            return np.asarray(memview)
+
+    property LOH_Size:
+        def __get__(self):
+            return self.rates.LOH_Size
+        def __set__(self, val):
+            self.rates.LOH_Size = val
+
+    property LOH_D:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.LOH_D)
+            return np.asarray(memview)
+
+    property LOH_T:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.LOH_T)
+            return np.asarray(memview)
+
+    property LOH_H:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.LOH_H)
+            return np.asarray(memview)
+
+    property LOH_dD:
+        def __get__(self):
+            return self.rates.LOH_dD
+        def __set__(self, val):
+            self.rates.LOH_dD = val
+
+    property LOH_dT:
+        def __get__(self):
+            return self.rates.LOH_dT
+        def __set__(self, val):
+            self.rates.LOH_dT = val
+
+    property LOH_dH:
+        def __get__(self):
+            return self.rates.LOH_dH
+        def __set__(self, val):
+            self.rates.LOH_dH = val
+
+    property LOH_L:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.LOH_L)
+            return np.asarray(memview)
+
+    property LH2O_N:
+        def __get__(self):
+            cdef int[:] memview = <int[:self.NumberOfTemperatureBins]>(<int*> self.rates.LH2O_N)
+            return np.asarray(memview)
+
+    property LH2O_Size:
+        def __get__(self):
+            return self.rates.LH2O_Size
+        def __set__(self, val):
+            self.rates.LH2O_Size = val
+
+    property LH2O_D:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.LH2O_D)
+            return np.asarray(memview)
+
+    property LH2O_T:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.LH2O_T)
+            return np.asarray(memview)
+
+    property LH2O_H:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.LH2O_H)
+            return np.asarray(memview)
+
+    property LH2O_dD:
+        def __get__(self):
+            return self.rates.LH2O_dD
+        def __set__(self, val):
+            self.rates.LH2O_dD = val
+
+    property LH2O_dT:
+        def __get__(self):
+            return self.rates.LH2O_dT
+        def __set__(self, val):
+            self.rates.LH2O_dT = val
+
+    property LH2O_dH:
+        def __get__(self):
+            return self.rates.LH2O_dH
+        def __set__(self, val):
+            self.rates.LH2O_dH = val
+
+    property LH2O_L:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.LH2O_L)
+            return np.asarray(memview)
+
+    property alphap_N:
+        def __get__(self):
+            cdef int[:] memview = <int[:self.NumberOfTemperatureBins]>(<int*> self.rates.alphap_N)
+            return np.asarray(memview)
+
+    property alphap_Size:
+        def __get__(self):
+            return self.rates.alphap_Size
+        def __set__(self, val):
+            self.rates.alphap_Size = val
+
+    property alphap_D:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.alphap_D)
+            return np.asarray(memview)
+
+    property alphap_T:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.alphap_T)
+            return np.asarray(memview)
+
+    property alphap_dD:
+        def __get__(self):
+            return self.rates.alphap_dD
+        def __set__(self, val):
+            self.rates.alphap_dD = val
+
+    property alphap_dT:
+        def __get__(self):
+            return self.rates.alphap_dT
+        def __set__(self, val):
+            self.rates.alphap_dT = val
+
+    property alphap_Data:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.alphap_Data)
+            return np.asarray(memview)
+
+    property grain_N:
+        def __get__(self):
+            cdef int[:] memview = <int[:self.NumberOfTemperatureBins]>(<int*> self.rates.grain_N)
+            return np.asarray(memview)
+
+    property grain_Size:
+        def __get__(self):
+            return self.rates.grain_Size
+        def __set__(self, val):
+            self.rates.grain_Size = val
+
+    property grain_D:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.grain_D)
+            return np.asarray(memview)
+
+    property grain_T:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.grain_T)
+            return np.asarray(memview)
+
+    property grain_dD:
+        def __get__(self):
+            return self.rates.grain_dD
+        def __set__(self, val):
+            self.rates.grain_dD = val
+
+    property grain_dT:
+        def __get__(self):
+            return self.rates.grain_dT
+        def __set__(self, val):
+            self.rates.grain_dT = val
+
+    property Hgrain:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.Hgrain)
+            return np.asarray(memview)
+
+    property Tgrain:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.Tgrain)
+            return np.asarray(memview)
+
+    property Ograin:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.Ograin)
+            return np.asarray(memview)
+
+    property Lgrain:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.Lgrain)
+            return np.asarray(memview)
+
+    property gr_N:
+        def __get__(self):
+            cdef int[:] memview = <int[:self.NumberOfTemperatureBins]>(<int*> self.rates.gr_N)
+            return np.asarray(memview)
+
+    property gr_Size:
+        def __get__(self):
+            return self.rates.gr_Size
+        def __set__(self, val):
+            self.rates.gr_Size = val
+
+    property gr_dT:
+        def __get__(self):
+            return self.rates.gr_dT
+        def __set__(self, val):
+            self.rates.gr_dT = val
+
+    property gr_Td:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.gr_Td)
+            return np.asarray(memview)
+
+    property SN0_kpSiM:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.SN0_kpSiM)
+            return np.asarray(memview)
+
+    property SN0_kpSiM:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.SN0_kpSiM)
+            return np.asarray(memview)
+
+    property SN0_kpFeM:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.SN0_kpFeM)
+            return np.asarray(memview)
+
+    property SN0_kpMg2SiO4:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.SN0_kpMg2SiO4)
+            return np.asarray(memview)
+
+    property SN0_kpMgSiO3:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.SN0_kpMgSiO3)
+            return np.asarray(memview)
+
+    property SN0_kpFe304:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.SN0_kpFe304)
+            return np.asarray(memview)
+
+    property SN0_kpAC:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.SN0_kpAC)
+            return np.asarray(memview)
+
+    property SN0_kpSiO2D:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.SN0_kpSiO2D)
+            return np.asarray(memview)
+
+    property SN0_kpMgO:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.SN0_kpMgO)
+            return np.asarray(memview)
+
+    property SN0_kpFeS:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.SN0_kpFeS)
+            return np.asarray(memview)
+
+    property SN0_kpAl2O3:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.SN0_kpAl2O3)
+            return np.asarray(memview)
+
+    property SN0_kpreforg:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.SN0_kpreforg)
+            return np.asarray(memview)
+
+    property SN0_kpvolorg:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.SN0_kpvolorg)
+            return np.asarray(memview)
+
+    property SN0_kpH2Oice:
+        def __get__(self):
+            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.SN0_kpH2Oice)
             return np.asarray(memview)
 
     property comoving_coordinates:

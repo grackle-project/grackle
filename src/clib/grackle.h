@@ -120,39 +120,13 @@ int _calculate_cooling_time(chemistry_data *my_chemistry,
 
 int calculate_dust_temperature(code_units *my_units,
                                grackle_field_data *my_fields,
-                               gr_float *dust_temperature
-                             , gr_float *SiM_temperature
-                             , gr_float *FeM_temperature
-                             , gr_float *Mg2SiO4_temperature
-                             , gr_float *MgSiO3_temperature
-                             , gr_float *Fe3O4_temperature
-                             , gr_float *AC_temperature
-                             , gr_float *SiO2D_temperature
-                             , gr_float *MgO_temperature
-                             , gr_float *FeS_temperature
-                             , gr_float *Al2O3_temperature
-                             , gr_float *reforg_temperature
-                             , gr_float *volorg_temperature
-                             , gr_float *H2Oice_temperature );
+                               gr_float *dust_temperature);
 
 int local_calculate_dust_temperature(chemistry_data *my_chemistry,
                                      chemistry_data_storage *my_rates,
                                      code_units *my_units,
                                      grackle_field_data *my_fields,
-                                     gr_float *dust_temperature
-                                   , gr_float *SiM_temperature
-                                   , gr_float *FeM_temperature
-                                   , gr_float *Mg2SiO4_temperature
-                                   , gr_float *MgSiO3_temperature
-                                   , gr_float *Fe3O4_temperature
-                                   , gr_float *AC_temperature
-                                   , gr_float *SiO2D_temperature
-                                   , gr_float *MgO_temperature
-                                   , gr_float *FeS_temperature
-                                   , gr_float *Al2O3_temperature
-                                   , gr_float *reforg_temperature
-                                   , gr_float *volorg_temperature
-                                   , gr_float *H2Oice_temperature );
+                                     gr_float *dust_temperature);
 
 int calculate_gamma(code_units *my_units,
                     grackle_field_data *my_fields,

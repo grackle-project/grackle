@@ -80,20 +80,7 @@ int local_calculate_dust_temperature(chemistry_data *my_chemistry,
                                      chemistry_data_storage *my_rates,
                                      code_units *my_units,
                                      grackle_field_data *my_fields,
-                                     gr_float *dust_temperature
-                                   , gr_float *SiM_temperature
-                                   , gr_float *FeM_temperature
-                                   , gr_float *Mg2SiO4_temperature
-                                   , gr_float *MgSiO3_temperature
-                                   , gr_float *Fe3O4_temperature
-                                   , gr_float *AC_temperature
-                                   , gr_float *SiO2D_temperature
-                                   , gr_float *MgO_temperature
-                                   , gr_float *FeS_temperature
-                                   , gr_float *Al2O3_temperature
-                                   , gr_float *reforg_temperature
-                                   , gr_float *volorg_temperature
-                                   , gr_float *H2Oice_temperature )
+                                     gr_float *dust_temperature)
 {
 
   if (!my_chemistry->use_grackle)
@@ -260,19 +247,19 @@ int local_calculate_dust_temperature(chemistry_data *my_chemistry,
      , my_rates->SN0_kpH2Oice
      , my_rates->gas_grain2
      ,&my_rates->gamma_isrf2
-     , SiM_temperature
-     , FeM_temperature
-     , Mg2SiO4_temperature
-     , MgSiO3_temperature
-     , Fe3O4_temperature
-     , AC_temperature
-     , SiO2D_temperature
-     , MgO_temperature
-     , FeS_temperature
-     , Al2O3_temperature
-     , reforg_temperature
-     , volorg_temperature
-     , H2Oice_temperature
+     , my_fields->SiM_temperature
+     , my_fields->FeM_temperature
+     , my_fields->Mg2SiO4_temperature
+     , my_fields->MgSiO3_temperature
+     , my_fields->Fe3O4_temperature
+     , my_fields->AC_temperature
+     , my_fields->SiO2D_temperature
+     , my_fields->MgO_temperature
+     , my_fields->FeS_temperature
+     , my_fields->Al2O3_temperature
+     , my_fields->reforg_temperature
+     , my_fields->volorg_temperature
+     , my_fields->H2Oice_temperature
    );
 
   free(temperature);
@@ -282,37 +269,11 @@ int local_calculate_dust_temperature(chemistry_data *my_chemistry,
 
 int calculate_dust_temperature(code_units *my_units,
                                grackle_field_data *my_fields,
-                               gr_float *dust_temperature
-                             , gr_float *SiM_temperature
-                             , gr_float *FeM_temperature
-                             , gr_float *Mg2SiO4_temperature
-                             , gr_float *MgSiO3_temperature
-                             , gr_float *Fe3O4_temperature
-                             , gr_float *AC_temperature
-                             , gr_float *SiO2D_temperature
-                             , gr_float *MgO_temperature
-                             , gr_float *FeS_temperature
-                             , gr_float *Al2O3_temperature
-                             , gr_float *reforg_temperature
-                             , gr_float *volorg_temperature
-                             , gr_float *H2Oice_temperature )
+                               gr_float *dust_temperature)
 {
   if (local_calculate_dust_temperature(
           grackle_data, &grackle_rates, my_units,
-          my_fields, dust_temperature
-                   , SiM_temperature
-                   , FeM_temperature
-                   , Mg2SiO4_temperature
-                   , MgSiO3_temperature
-                   , Fe3O4_temperature
-                   , AC_temperature
-                   , SiO2D_temperature
-                   , MgO_temperature
-                   , FeS_temperature
-                   , Al2O3_temperature
-                   , reforg_temperature
-                   , volorg_temperature
-                   , H2Oice_temperature ) == FAIL) {
+          my_fields, dust_temperature) == FAIL) {
     fprintf(stderr, "Error in local_calculate_dust_temperature.\n");
     return FAIL;
   }

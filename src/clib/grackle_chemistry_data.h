@@ -70,6 +70,9 @@ typedef struct
   /* Flag to supply a dust density field */
   int use_dust_density_field;
 
+  /* Flag for dust recombination cooling */
+  int dust_recombination_cooling;
+
   /* Flag to solve metal chemistry */
   int metal_chemistry;
 

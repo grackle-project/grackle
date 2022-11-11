@@ -26,6 +26,8 @@ cdef extern from "grackle_chemistry_data.h":
 
         int use_dust_density_field
 
+        int dust_recombination_cooling
+
         int metal_chemistry
 
         int grain_growth
