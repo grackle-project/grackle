@@ -137,6 +137,8 @@ cdef extern from "grackle_chemistry_data.h":
 
         int H2_self_shielding
 
+        int H2_custom_shielding
+
         int h2_charge_exchange_rate
 
         int h2_dust_rate
@@ -263,7 +265,7 @@ cdef extern from "grackle_chemistry_data.h":
         double *h2dustS
         double *h2dustC
 
-        double *grain_growth
+        double *grain_growth_rate
 
         double *n_cr_n
         double *n_cr_d1
@@ -415,9 +417,9 @@ cdef extern from "grackle_chemistry_data.h":
         double *grain_T
         double grain_dD
         double grain_dT
-        double *Hgrai
-        double *Tgrai
-        double *Ograi
+        double *Hgrain
+        double *Tgrain
+        double *Ograin
         double *Lgrain
 
         int *gr_N

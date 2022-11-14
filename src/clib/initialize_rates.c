@@ -541,7 +541,7 @@ int initialize_rates(chemistry_data *my_chemistry, chemistry_data_storage *my_ra
         add_reaction_rate(&my_rates->gas_grain2, gasGrain2_rate, coolingUnits, my_chemistry);
 
         //Grain growth rate
-        add_reaction_rate(&my_rates->grain_growth, grain_growth_rate, coolingUnits, my_chemistry);
+        add_reaction_rate(&my_rates->grain_growth_rate, grain_growth_rate, coolingUnits, my_chemistry);
     }
 
     //End of function definition.
