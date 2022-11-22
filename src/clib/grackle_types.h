@@ -19,11 +19,13 @@
 /
 ************************************************************************/
 
-#ifdef CONFIG_BFLOAT_4
+#include "grackle_float.h"
+
+#if defined CONFIG_BFLOAT_4 || defined GRACKLE_FLOAT_4
 #define gr_float float
 #endif
 
-#ifdef CONFIG_BFLOAT_8
+#if defined CONFIG_BFLOAT_8 || defined GRACKLE_FLOAT_8
 #define gr_float double
 #endif
 
