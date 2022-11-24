@@ -11,8 +11,8 @@
 / software.
 ************************************************************************/
 
-#ifndef __GRACKLE_TYPES_H_
-#define __GRACKLE_TYPES_H_
+#ifndef __GRACKLE_TYPES_H__
+#define __GRACKLE_TYPES_H__
 /***********************************************************************
 /  
 / VARIABLE TYPES

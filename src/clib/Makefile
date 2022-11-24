@@ -198,8 +198,8 @@ autogen: config_type auto_show_config.c auto_show_flags.c auto_get_version.c
 
 .PHONY: config_type
 config_type:
-	-@echo "#ifndef __GRACKLE_FLOAT_H_" > grackle_float.h
-	-@echo "#define __GRACKLE_FLOAT_H_" >> grackle_float.h
+	-@echo "#ifndef __GRACKLE_FLOAT_H__" > grackle_float.h
+	-@echo "#define __GRACKLE_FLOAT_H__" >> grackle_float.h
 	-@echo "#define $(PRECISION_DEFINE)" >> grackle_float.h
 	-@echo "#endif" >> grackle_float.h
 
