@@ -253,12 +253,12 @@
       integer itmax
       parameter (itmax = 10000)
 
-#ifdef CONFIG_BFLOAT_4
+#ifdef GRACKLE_FLOAT_4
       R_PREC tolerance
       parameter (tolerance = 1.0e-05_RKIND)
 #endif
 
-#ifdef CONFIG_BFLOAT_8
+#ifdef GRACKLE_FLOAT_8
       R_PREC tolerance
       parameter (tolerance = 1.0e-10_RKIND)
 #endif

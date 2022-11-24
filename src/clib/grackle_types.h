@@ -21,12 +21,16 @@
 
 #include "grackle_float.h"
 
-#if defined CONFIG_BFLOAT_4 || defined GRACKLE_FLOAT_4
+#ifdef GRACKLE_FLOAT_4
 #define gr_float float
 #endif
 
-#if defined CONFIG_BFLOAT_8 || defined GRACKLE_FLOAT_8
+#ifdef GRACKLE_FLOAT_8
 #define gr_float double
+#endif
+
+#if defined(GRACKLE_FLOAT_4) == defined(GRACKLE_FLOAT_8)
+#error "Both GRACKLE_FLOAT_4 and GRACKLE_FLOAT_8 are defined. Only one can be defined."
 #endif
 
 typedef struct
