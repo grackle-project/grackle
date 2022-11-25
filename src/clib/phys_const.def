@@ -1,5 +1,5 @@
 
-#ifdef CONFIG_BFLOAT_4
+#ifdef GRACKLE_FLOAT_4
 
 #define kboltz       1.3806504e-16
 #define mass_h       1.67262171e-24   
@@ -15,7 +15,9 @@
 #define kpc          3.0857e21
 #define pc           3.0857e18
 
-#else
+#endif
+
+#ifdef GRACKLE_FLOAT_8
 
 #define kboltz       1.3806504d-16
 #define mass_h       1.67262171d-24   

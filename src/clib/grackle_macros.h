@@ -71,12 +71,12 @@
 
 /* Precision-dependent definitions */
 
-#ifdef CONFIG_BFLOAT_4
+#ifdef GRACKLE_FLOAT_4
 #define FSYM "f"
 #define ESYM "e"
 #endif
 
-#ifdef CONFIG_BFLOAT_8
+#ifdef GRACKLE_FLOAT_8
 #define FSYM "lf"
 #define ESYM "le"
 #endif
