@@ -109,6 +109,10 @@ libgrackle.la: $(MODULES) autogen dep $(OBJS_LIB) MACHNOTES
 	else \
 	  $(LIBTOOL) --mode=link --tag=CC $(LD) $(LDFLAGS) -o $@ $(OBJS_LIB) $(LIBS) -rpath $(INSTALL_LIB_DIR) -release $(LIB_RELEASE_VERSION) ; \
 	fi)
+	@(if [ $(ASSEMBLE_PRECISION_NUMBER) == "4" ]; then \
+	  echo "WARNING: Grackle compiled with precision-32."; \
+	  echo "Using Grackle in single precision is known to produce unreliable results in certain conditions. Compiling in double precision (precision-64) is recommended."; \
+	fi)
 
 MACHNOTES: 
 	@echo $(MACHINE_NOTES)
