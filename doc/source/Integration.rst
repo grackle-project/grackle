@@ -147,7 +147,7 @@ recommendations on choosing appropriate units.
 .. c:var:: int comoving_coordinates
 
    If set to 1, the incoming field data is assumed to be in the comoving
-   frame.  If set to 0, the incoming field data is assumed to be in the
+   frame. If set to 0, the incoming field data is assumed to be in the
    proper frame.
 
 .. c:var:: double density_units
@@ -587,13 +587,14 @@ not intend to use.
 Calling the Available Functions
 -------------------------------
 
-There are five functions available, one to solve the chemistry and cooling 
-and four others to calculate the cooling time, temperature, pressure, and the 
-ratio of the specific heats (gamma).  The arguments required are the 
-:c:data:`code_units` structure and the :c:data:`grackle_field_data` struct.
-For the chemistry solving routine, a timestep must also be given.  For the
-four field calculator routines, the array to be filled with the field values
-must be created and passed as an argument as well.
+There are six functions available, one to solve the chemistry and cooling
+and five others to calculate the cooling time, temperature, pressure,
+ratio of the specific heats (gamma), and dust temperature. The
+arguments required are the :c:data:`code_units` structure and the
+:c:data:`grackle_field_data` struct. For the chemistry solving
+routine, a timestep must also be given. For the four field calculator
+routines, the array to be filled with the field values must be created
+and passed as an argument as well.
 
 The examples below make use of Grackle's :ref:`primary_functions`, where
 the parameters and rate data are stored in instances of the
@@ -603,7 +604,7 @@ require these structs to be provided as arguments, allowing for explicitly
 thread-safe code.
 
 Solve the Chemistry and Cooling
-+++++++++++++++++++++++++++++++
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: c++
 
@@ -616,7 +617,7 @@ Solve the Chemistry and Cooling
   }
 
 Calculating the Cooling Time
-++++++++++++++++++++++++++++
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: c++
 
@@ -629,7 +630,7 @@ Calculating the Cooling Time
   }
 
 Calculating the Temperature Field
-+++++++++++++++++++++++++++++++++
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: c++
 
@@ -642,7 +643,7 @@ Calculating the Temperature Field
   }
 
 Calculating the Pressure Field
-++++++++++++++++++++++++++++++
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: c++
 
@@ -655,7 +656,7 @@ Calculating the Pressure Field
   }
 
 Calculating the Gamma Field
-+++++++++++++++++++++++++++
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: c++
 
@@ -668,7 +669,7 @@ Calculating the Gamma Field
   }
 
 Calculating the Dust Temperature Field
-++++++++++++++++++++++++++++++++++++++
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: c++
 
@@ -680,7 +681,7 @@ Calculating the Dust Temperature Field
     return EXIT_FAILURE;
   }
 
-Cleaning the memory
+Clearing the memory
 -------------------
 
 .. code-block:: c++
