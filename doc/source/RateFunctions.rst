@@ -80,7 +80,7 @@ Example 2
 """"""""""
 
 The rate coefficient ``reHII`` can be calculated via two different methods depending on the
-status of the ``CaseBRecombination`` parameter within the ``chemistry_data`` struct (named
+status of the :c:data:`CaseBRecombination` parameter within the ``chemistry_data`` struct (named
 ``my_chemistry`` in this example), which can take values of either 0 or 1. Suppose we wish to compare
 the results of each calculation method over an arbitrary temperature range, we can achieve this by
 the following:
