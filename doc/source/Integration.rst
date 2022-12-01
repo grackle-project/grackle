@@ -122,14 +122,23 @@ output only be enabled for the root process.
 Code Units
 ----------
 
-**It is strongly recommended to use comoving coordinates with any
-cosmological simulation.**  The :c:data:`code_units` structure contains
-conversions from code units to CGS.  If :c:data:`comoving_coordinates` is set to
-0, it is assumed that the fields passed into the solver are in the
-proper frame. Units for length, time, and the expansion factor must be set
+Many of the calculations involved in chemical reactions and radiative
+cooling include multiplications by density squared or even density
+cubed. With typical gas densities relevant to galaxy formation being
+of the order of one hydrogren atom per cubic centimeter (~10\
+:sup:`-24` g/cm\ :sup:`3`, give or take a few orders of
+magnitude), it is easy to end up with significant roundoff or
+underflow errors when quantities are stored in CGS units.
+
+The :c:data:`code_units` structure contains conversions from code
+units to CGS such that a value passed to Grackle multiplied by the
+appropriate code unit gives that value in CGS units. Units for
+density, length, time, and the expansion factor must be set
 manually. Units for velocity are then set by calling
-:c:data:`set_velocity_units`. When using the proper frame, :c:data:`a_units`
-(units for the expansion factor) must be set to 1.0.
+:c:data:`set_velocity_units`. When using the proper frame (i.e.,
+setting :c:data:`comoving_coordinates` to 0), :c:data:`a_units` (units
+for the expansion factor) must be set to 1.0. See below for
+recommendations on choosing appropriate units.
 
 .. c:type:: code_units
 
@@ -191,15 +200,25 @@ manually. Units for velocity are then set by calling
   // set velocity units
   set_velocity_units(&my_units);
 
-If :c:data:`comoving_coordinates` is set to 1, it is assumed that the fields being 
-passed to the solver are in the comoving frame. Hence, the units must
-convert from code units in the **comoving** frame to CGS in the **proper** 
-frame.  
+Choosing Appropriate Units
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-For an example of using comoving units, see the units system in the 
-`Enzo <http://enzo-project.org/>`_ code.  For cosmological simulations, a
-comoving unit system is preferred, though not required, since it allows the 
-densities to stay close to 1.0.
+The main consideration when setting code units is to keep density,
+length, and time values close to 1. Reasonable values for density,
+length, and time units are the hydrogen mass in g, 1 kpc to 1 Mpc in
+cm, and 1 Myr to 1 Gyr in s.
+
+For cosmological simulations, a comoving unit system is preferred,
+though not required, since it allows the densities to stay close to 1
+as the universe expands. If :c:data:`comoving_coordinates` is set to
+1, it is assumed that the fields being passed to the solver are in the
+comoving frame. Hence, the units must convert from code units in the
+**comoving** frame to CGS in the **proper** frame. If
+:c:data:`comoving_coordinates` is set to 0, it is assumed that the
+fields passed into the solver are in the proper frame. For an example
+of using comoving units, see the `cosmological unit system
+<https://github.com/enzo-project/enzo-dev/blob/main/src/enzo/CosmologyGetUnits.C>`__
+in the `Enzo <http://enzo-project.org/>`_ code.
 
 Chemistry Data
 --------------
