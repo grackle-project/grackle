@@ -46,7 +46,8 @@
      &                metDataSize, metCooling, metHeating, clnew,
      &                iVheat, iMheat, Vheat, Mheat,
      &                iisrffield, isrf_habing, 
-     &                iH2shieldcustom, f_shield_custom)
+     &                iH2shieldcustom, f_shield_custom,
+     &                itmax, exititmax)
 
 !
 !  SOLVE MULTI-SPECIES RATE EQUATIONS AND RADIATIVE COOLING
@@ -143,12 +144,13 @@
 !    iMheat      - flag for using specific heating rate
 !    Vheat       - array of volumetric heating rates
 !    Mheat       - array of specific heating rates
+!    itmax       - maximum allowed sub-cycle iterations
+!    exititmax   - flag to exit if max iterations exceeded
 !
 !  OUTPUTS:
 !    update chemical rate densities (HI, HII, etc)
 !
 !  PARAMETERS:
-!    itmax   - maximum allowed sub-cycle iterations
 !    mh      - H mass in cgs units
 !
 !-----------------------------------------------------------------------
@@ -167,7 +169,7 @@
      &        igammah, ih2optical, iciecool, ithreebody,
      &        ndratec, clnew, iVheat, iMheat, iH2shield, iradshield,
      &        iradtrans, iradcoupled, iradstep, irt_honly,
-     &        iisrffield, iH2shieldcustom
+     &        iisrffield, iH2shieldcustom, itmax, exititmax
 
       real*8  dx, dt, aye, temstart, temend, gamma,
      &        utim, uxyz, uaye, urho, utem, fh, dtoh, z_solar, 
@@ -249,9 +251,6 @@
      &     metCooling(metDataSize), metHeating(metDataSize)
 
 !  Parameters
-
-      integer itmax
-      parameter (itmax = 10000)
 
 #ifdef GRACKLE_FLOAT_4
       R_PREC tolerance
@@ -833,6 +832,11 @@
             write(0,'((16(1pe8.1)))') (ttot(i),i=is+1,ie+1)
             write(0,'((16(1pe8.1)))') (edot(i),i=is+1,ie+1)
             write(0,'((16(l3)))') (itmask(i),i=is+1,ie+1)
+
+            if (exititmax .eq. 1) then
+               ierr = 0
+               return
+            endif
 #ifdef _OPENMP
 !$omp end critical
 #endif
@@ -878,6 +882,8 @@ c            WARNING_MESSAGE
      &                     in, jn, kn, ispecies, imetal, fh, dtoh)
 
       endif
+
+      ierr = 1
 
       return
       end
