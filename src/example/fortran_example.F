@@ -1,3 +1,14 @@
+c     Problems relating to grackle_data%grackle_data_file arise when
+c     this program is compiled using certain versions of gfortran
+c     (including versions 9.2.1 & 9.4.0) with an optimization level of
+c     -O2 or higher.
+c
+c     In these cases, the compiler appears to make an aggressive
+c     optimization in which the program deallocates the `filename`
+c     variable before calls to certain grackle routines. This is
+c     problematic because grackle_data%grackle_data_file points to the
+c     address of the data held in `filename`
+
       program fortran_example
 
       USE ISO_C_BINDING
