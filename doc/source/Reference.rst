@@ -148,6 +148,13 @@ Primary Functions
    :rtype: int
    :returns: 1 (success) or 0 (failure)
 
+.. c:function:: grackle_version get_grackle_version();
+
+   Constructs and returns a :c:type:`grackle_version` struct that
+   encodes the version information for the library.
+
+   :rtype: `grackle_version`
+
 .. _local_functions:
 
 Local Functions

@@ -215,6 +215,11 @@ cdef extern from "grackle_types.h":
       gr_float *H2_self_shielding_length;
       gr_float *isrf_habing;
 
+    ctypedef struct c_grackle_version "grackle_version":
+      const char* version;
+      const char* branch;
+      const char* revision;
+
 cdef extern from "grackle.h":
     c_chemistry_data _set_default_chemistry_parameters()
 
@@ -269,3 +274,5 @@ cdef extern from "grackle.h":
                 c_code_units *my_units,
                 c_field_data *my_fields,
                 gr_float *dust_temperature)
+
+    c_grackle_version c_get_grackle_version "get_grackle_version"()

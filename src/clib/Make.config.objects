@@ -14,7 +14,7 @@
 OBJS_CONFIG_LIB = \
         auto_show_config.lo \
         auto_show_flags.lo \
-        auto_show_version.lo \
+        auto_get_version.lo \
         calculate_cooling_time.lo \
         calculate_dust_temperature.lo \
         calculate_gamma.lo \
@@ -29,6 +29,7 @@ OBJS_CONFIG_LIB = \
         cool1d_multi_g.lo \
         cool_multi_time_g.lo \
         grackle_units.lo \
+	index_helper.lo \
         initialize_chemistry_data.lo \
         initialize_cloudy_data.lo \
         initialize_UVbackground_data.lo \

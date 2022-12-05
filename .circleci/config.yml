@@ -28,6 +28,7 @@ commands:
             pip install --upgrade wheel
             pip install --upgrade setuptools
             pip install flake8
+            pip install packaging
 
   lint:
     description: "Lint."
@@ -75,7 +76,7 @@ commands:
             pip install --upgrade pip
             pip install --upgrade wheel
             pip install --upgrade setuptools
-            pip install 'sphinx<3.0'
+            pip install 'sphinx<3.0' 'Jinja2<3.1'
 
   download-test-data:
     description: "Download test data."
@@ -186,12 +187,12 @@ workflows:
    tests:
      jobs:
        - test-suite:
-           name: "Python 3.7 tests"
-           tag: "3.7.12"
+           name: "Python 3.8 tests"
+           tag: "3.8.14"
 
        - docs-build:
            name: "Docs build"
-           tag: "3.7.12"
+           tag: "3.8.14"
 
    weekly:
      triggers:
@@ -203,9 +204,9 @@ workflows:
                 - master
      jobs:
        - test-suite:
-           name: "Python 3.7 tests"
-           tag: "3.7.12"
+           name: "Python 3.8 tests"
+           tag: "3.8.14"
 
        - docs-build:
            name: "Docs build"
-           tag: "3.7.12"
+           tag: "3.8.14"

@@ -11,20 +11,26 @@
 / software.
 ************************************************************************/
 
-#ifndef __GRACKLE_TYPES_H_
-#define __GRACKLE_TYPES_H_
+#ifndef __GRACKLE_TYPES_H__
+#define __GRACKLE_TYPES_H__
 /***********************************************************************
 /  
 / VARIABLE TYPES
 /
 ************************************************************************/
 
-#ifdef CONFIG_BFLOAT_4
+#include "grackle_float.h"
+
+#ifdef GRACKLE_FLOAT_4
 #define gr_float float
 #endif
 
-#ifdef CONFIG_BFLOAT_8
+#ifdef GRACKLE_FLOAT_8
 #define gr_float double
+#endif
+
+#if defined(GRACKLE_FLOAT_4) == defined(GRACKLE_FLOAT_8)
+#error "Both GRACKLE_FLOAT_4 and GRACKLE_FLOAT_8 are defined. Only one can be defined."
 #endif
 
 typedef struct
@@ -86,5 +92,14 @@ typedef struct
   double a_value;
 
 } code_units;
+
+typedef struct
+{
+
+  const char* version;
+  const char* branch;
+  const char* revision;
+
+} grackle_version;
 
 #endif

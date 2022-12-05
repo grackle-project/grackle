@@ -12,14 +12,14 @@
 ! software.
 !=======================================================================
 
-#ifdef CONFIG_BFLOAT_4
+#ifdef GRACKLE_FLOAT_4
 #define tiny 1.e-20
 #define huge 1.e+20
 #define R_PREC real*4
       integer, parameter :: RKIND=4
 #endif
 
-#ifdef CONFIG_BFLOAT_8
+#ifdef GRACKLE_FLOAT_8
 #define tiny 1.d-20
 #define huge 1.d+20
 #define R_PREC real*8

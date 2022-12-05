@@ -109,6 +109,10 @@ libgrackle.la: $(MODULES) autogen dep $(OBJS_LIB) MACHNOTES
 	else \
 	  $(LIBTOOL) --mode=link --tag=CC $(LD) $(LDFLAGS) -o $@ $(OBJS_LIB) $(LIBS) -rpath $(INSTALL_LIB_DIR) -release $(LIB_RELEASE_VERSION) ; \
 	fi)
+	@(if [ $(ASSEMBLE_PRECISION_NUMBER) == "4" ]; then \
+	  echo "WARNING: Grackle compiled with precision-32."; \
+	  echo "Using Grackle in single precision is known to produce unreliable results in certain conditions. Compiling in double precision (precision-64) is recommended."; \
+	fi)
 
 MACHNOTES: 
 	@echo $(MACHINE_NOTES)
@@ -194,7 +198,14 @@ verbose: VERBOSE = 1
 #-----------------------------------------------------------------------
 
 .PHONY: autogen
-autogen: auto_show_config.c auto_show_flags.c auto_show_version.c
+autogen: config_type auto_show_config.c auto_show_flags.c auto_get_version.c
+
+.PHONY: config_type
+config_type:
+	-@echo "#ifndef __GRACKLE_FLOAT_H__" > grackle_float.h
+	-@echo "#define __GRACKLE_FLOAT_H__" >> grackle_float.h
+	-@echo "#define $(PRECISION_DEFINE)" >> grackle_float.h
+	-@echo "#endif" >> grackle_float.h
 
 # Force update of auto_show_config.c
 
@@ -210,12 +221,33 @@ auto_show_flags.c:
 	-@$(MAKE) -s show-flags  >& temp.show-flags
 	-@awk 'BEGIN {print "#include <stdio.h>\nvoid auto_show_flags(FILE *fp) {"}; {print "   fprintf (fp,\""$$0"\\n\");"}; END {print "}"}' < temp.show-flags > auto_show_flags.c
 
-# Force update of auto_show_version.c
+# Force update of auto_get_version.c
 
-.PHONY: auto_show_version.c
-auto_show_version.c:
+.PHONY: auto_get_version.c
+auto_get_version.c:
 	-@$(MAKE) -s show-version  >& temp.show-version
-	-@awk 'BEGIN {print "#include <stdio.h>\nvoid auto_show_version(FILE *fp) {"}; {print "   fprintf (fp,\""$$0"\\n\");"}; END {print "}"}' < temp.show-version > auto_show_version.c
+	-@(if [ -f $@ ]; then rm $@; fi) # delete the file if it already exists
+
+	-@echo '#include <stdio.h>'                                                             >> $@
+	-@echo '#include "grackle_types.h"'                                                     >> $@
+	-@echo ''                                                                               >> $@
+	-@echo '// the following macros are auto-generated:'                                    >> $@
+
+	-@awk '{ if (NF > 0) { print "#define AUTO_" toupper($$(NF-1)) " \"" $$(NF) "\"" } };' < temp.show-version >> auto_get_version.c
+
+	-@echo ''                                                                               >> $@
+	-@echo '// test that ensures that all macros were correctly defined:'                   >> $@
+	-@echo '#if !(defined(AUTO_VERSION) && defined(AUTO_BRANCH) && defined(AUTO_REVISION))' >> $@
+	-@echo '#error "Something went wrong while auto-generating macros"'                     >> $@
+	-@echo '#endif'                                                                         >> $@
+	-@echo ''                                                                               >> $@
+	-@echo 'grackle_version get_grackle_version(void) {'                                    >> $@
+	-@echo '  grackle_version out;'                                                         >> $@
+	-@echo '  out.version = AUTO_VERSION;'                                                  >> $@
+	-@echo '  out.branch = AUTO_BRANCH;'                                                    >> $@
+	-@echo '  out.revision = AUTO_REVISION;'                                                >> $@
+	-@echo '  return out;'                                                                  >> $@
+	-@echo '}'                                                                              >> $@
 
 #-----------------------------------------------------------------------
 # Generate dependency file
@@ -265,7 +297,7 @@ install:
 	@(if [ ! -d $(INSTALL_INCLUDE_DIR) ]; then \
 		mkdir $(INSTALL_INCLUDE_DIR); \
 	fi)
-	@cp grackle.h grackle_macros.h grackle_types.h grackle_chemistry_data.h grackle_rate_functions.h grackle.def grackle_fortran_types.def grackle_fortran_interface.def $(INSTALL_INCLUDE_DIR)
+	@cp grackle.h grackle_macros.h grackle_float.h grackle_types.h grackle_chemistry_data.h grackle_rate_functions.h grackle.def grackle_fortran_types.def grackle_fortran_interface.def $(INSTALL_INCLUDE_DIR)
 	@(if [ ! -d $(INSTALL_LIB_DIR) ]; then \
 		mkdir $(INSTALL_LIB_DIR); \
 	fi)
@@ -275,7 +307,7 @@ install:
 #-----------------------------------------------------------------------
 
 clean:
-	-@rm -f *.la .libs/* *.o *.lo DEPEND.bak *~ $(OUTPUT) *.exe auto_show*.c DEPEND out.make.DEPEND
+	-@rm -f *.la .libs/* *.o *.lo DEPEND.bak *~ $(OUTPUT) grackle_float.h *.exe auto_show*.c DEPEND out.make.DEPEND
 	-@touch DEPEND
 
 #-----------------------------------------------------------------------

@@ -8,7 +8,8 @@
      &                in, jn, kn, nratec, iexpand, 
      &                ispecies, imetal, imcool, idust,
      &                idustall, idustfield, idim,
-     &                is, js, ks, ie, je, ke, ih2co, ipiht, idustrec, igammah,
+     &                is, js, ks, ie, je, ke, ih2co, ipiht, idustrec,
+     &                igammah,
      &                dx, dt, aye, temstart, temend, 
      &                utem, uxyz, uaye, urho, utim,
      &                gamma, fh, dtoh, z_solar, fgr,
@@ -252,12 +253,12 @@
       integer itmax
       parameter (itmax = 10000)
 
-#ifdef CONFIG_BFLOAT_4
+#ifdef GRACKLE_FLOAT_4
       R_PREC tolerance
       parameter (tolerance = 1.0e-05_RKIND)
 #endif
 
-#ifdef CONFIG_BFLOAT_8
+#ifdef GRACKLE_FLOAT_8
       R_PREC tolerance
       parameter (tolerance = 1.0e-10_RKIND)
 #endif
@@ -590,7 +591,8 @@
      &              dt-ttot(i), 0.5_DKIND*dt)
 
                if (d(i,j,k)*dom .gt. 1e8_DKIND .and. 
-     &              edot(i) .gt. 0._DKIND) then
+     &              edot(i) .gt. 0._DKIND      .and.
+     &             ispecies .gt. 1) then
 !              Equilibrium value for H is:
 !              H = (-1._DKIND / (4*k22)) * (k13 - sqrt(8 k13 k22 rho + k13^2))
 !              We now want this to change by 10% or less, but we're only
@@ -1043,8 +1045,13 @@ c -------------------------------------------------------------------
          do k = ks+1, ke+1
             do j = js+1, je+1
                do i = is+1, ie+1
-                  metal(i,j,k) = min(max(metal(i,j,k), tiny),
-     &                 0.9_RKIND*d(i,j,k))
+                  metal(i,j,k) = max(metal(i,j,k), tiny)
+                  if (metal(i,j,k) .gt. d(i,j,k)) then
+                     write(6, *) 'WARNING: metal density exceeds ',
+     &                    'total density!'
+                     write(6, *) 'i, j, k, metal, density = ',
+     &                    i, j, k, metal(i,j,k), d(i,j,k)
+                  endif
                enddo
             enddo
          enddo

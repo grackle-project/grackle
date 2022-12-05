@@ -27,7 +27,8 @@ Make.config.override
 
 src/clib/auto_show_config.c
 src/clib/auto_show_flags.c
-src/clib/auto_show_version.c
+src/clib/auto_get_version.c
+src/clib/grackle_float.h
 src/clib/libgrackle.so
 src/example/cxx_example
 src/example/cxx_table_example

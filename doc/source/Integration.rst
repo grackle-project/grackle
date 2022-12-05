@@ -122,14 +122,23 @@ output only be enabled for the root process.
 Code Units
 ----------
 
-**It is strongly recommended to use comoving coordinates with any
-cosmological simulation.**  The :c:data:`code_units` structure contains
-conversions from code units to CGS.  If :c:data:`comoving_coordinates` is set to
-0, it is assumed that the fields passed into the solver are in the
-proper frame. Units for length, time, and the expansion factor must be set
+Many of the calculations involved in chemical reactions and radiative
+cooling include multiplications by density squared or even density
+cubed. With typical gas densities relevant to galaxy formation being
+of the order of one hydrogren atom per cubic centimeter (~10\
+:sup:`-24` g/cm\ :sup:`3`, give or take a few orders of
+magnitude), it is easy to end up with significant roundoff or
+underflow errors when quantities are stored in CGS units.
+
+The :c:data:`code_units` structure contains conversions from code
+units to CGS such that a value passed to Grackle multiplied by the
+appropriate code unit gives that value in CGS units. Units for
+density, length, time, and the expansion factor must be set
 manually. Units for velocity are then set by calling
-:c:data:`set_velocity_units`. When using the proper frame, :c:data:`a_units`
-(units for the expansion factor) must be set to 1.0.
+:c:data:`set_velocity_units`. When using the proper frame (i.e.,
+setting :c:data:`comoving_coordinates` to 0), :c:data:`a_units` (units
+for the expansion factor) must be set to 1.0. See below for
+recommendations on choosing appropriate units.
 
 .. c:type:: code_units
 
@@ -138,7 +147,7 @@ manually. Units for velocity are then set by calling
 .. c:var:: int comoving_coordinates
 
    If set to 1, the incoming field data is assumed to be in the comoving
-   frame.  If set to 0, the incoming field data is assumed to be in the
+   frame. If set to 0, the incoming field data is assumed to be in the
    proper frame.
 
 .. c:var:: double density_units
@@ -191,15 +200,25 @@ manually. Units for velocity are then set by calling
   // set velocity units
   set_velocity_units(&my_units);
 
-If :c:data:`comoving_coordinates` is set to 1, it is assumed that the fields being 
-passed to the solver are in the comoving frame. Hence, the units must
-convert from code units in the **comoving** frame to CGS in the **proper** 
-frame.  
+Choosing Appropriate Units
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-For an example of using comoving units, see the units system in the 
-`Enzo <http://enzo-project.org/>`_ code.  For cosmological simulations, a
-comoving unit system is preferred, though not required, since it allows the 
-densities to stay close to 1.0.
+The main consideration when setting code units is to keep density,
+length, and time values close to 1. Reasonable values for density,
+length, and time units are the hydrogen mass in g, 1 kpc to 1 Mpc in
+cm, and 1 Myr to 1 Gyr in s.
+
+For cosmological simulations, a comoving unit system is preferred,
+though not required, since it allows the densities to stay close to 1
+as the universe expands. If :c:data:`comoving_coordinates` is set to
+1, it is assumed that the fields being passed to the solver are in the
+comoving frame. Hence, the units must convert from code units in the
+**comoving** frame to CGS in the **proper** frame. If
+:c:data:`comoving_coordinates` is set to 0, it is assumed that the
+fields passed into the solver are in the proper frame. For an example
+of using comoving units, see the `cosmological unit system
+<https://github.com/enzo-project/enzo-dev/blob/main/src/enzo/CosmologyGetUnits.C>`__
+in the `Enzo <http://enzo-project.org/>`_ code.
 
 Chemistry Data
 --------------
@@ -568,13 +587,14 @@ not intend to use.
 Calling the Available Functions
 -------------------------------
 
-There are five functions available, one to solve the chemistry and cooling 
-and four others to calculate the cooling time, temperature, pressure, and the 
-ratio of the specific heats (gamma).  The arguments required are the 
-:c:data:`code_units` structure and the :c:data:`grackle_field_data` struct.
-For the chemistry solving routine, a timestep must also be given.  For the
-four field calculator routines, the array to be filled with the field values
-must be created and passed as an argument as well.
+There are six functions available, one to solve the chemistry and cooling
+and five others to calculate the cooling time, temperature, pressure,
+ratio of the specific heats (gamma), and dust temperature. The
+arguments required are the :c:data:`code_units` structure and the
+:c:data:`grackle_field_data` struct. For the chemistry solving
+routine, a timestep must also be given. For the four field calculator
+routines, the array to be filled with the field values must be created
+and passed as an argument as well.
 
 The examples below make use of Grackle's :ref:`primary_functions`, where
 the parameters and rate data are stored in instances of the
@@ -584,7 +604,7 @@ require these structs to be provided as arguments, allowing for explicitly
 thread-safe code.
 
 Solve the Chemistry and Cooling
-+++++++++++++++++++++++++++++++
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: c++
 
@@ -597,7 +617,7 @@ Solve the Chemistry and Cooling
   }
 
 Calculating the Cooling Time
-++++++++++++++++++++++++++++
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: c++
 
@@ -610,7 +630,7 @@ Calculating the Cooling Time
   }
 
 Calculating the Temperature Field
-+++++++++++++++++++++++++++++++++
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: c++
 
@@ -623,7 +643,7 @@ Calculating the Temperature Field
   }
 
 Calculating the Pressure Field
-++++++++++++++++++++++++++++++
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: c++
 
@@ -636,7 +656,7 @@ Calculating the Pressure Field
   }
 
 Calculating the Gamma Field
-+++++++++++++++++++++++++++
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: c++
 
@@ -649,7 +669,7 @@ Calculating the Gamma Field
   }
 
 Calculating the Dust Temperature Field
-++++++++++++++++++++++++++++++++++++++
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: c++
 
@@ -661,7 +681,7 @@ Calculating the Dust Temperature Field
     return EXIT_FAILURE;
   }
 
-Cleaning the memory
+Clearing the memory
 -------------------
 
 .. code-block:: c++
@@ -669,3 +689,49 @@ Cleaning the memory
   _free_chemistry_data(my_grackle_data, &grackle_rates);
 
 Grackle is using global structures and therefore the global structure ``grackle_rates`` needs also to be released.
+
+Querying library version information
+------------------------------------
+
+A struct of type :c:data:`grackle_version` is used to hold version
+information about the version of Grackle that is being used. The
+struct contains information about the version number and particular
+git revision.
+
+.. c:type:: grackle_version
+
+   This structure is used to organize version information for the
+   library.
+
+.. c:var:: const* char version
+
+   Specifies the version of the library using this template:
+   ``<MAJOR>.<MINOR>(.<MICRO>)(.dev<DEV_NUM>)``. In this template
+   ``<MAJOR>``, ``<MINOR>``, and ``<MICRO>`` correspond to a major,
+   minor, and micro version numbers (the micro version number is
+   omitted if it's zero). The final section can specify a
+   development version. For concreteness, some example versions are
+   provided in increasing order: ``"3.0"``, ``"3.1"``, ``"3.1.1"``,
+   ``"3.1.2"``, ``"3.2.dev1"``, ``"3.2.dev2"``, ``"3.2"``.
+
+.. c:var:: const* char branch
+
+   Specifies the name of the git branch that the library was compiled
+   from.
+
+.. c:var:: const* char revision
+
+   Specifies the hash identifying the git commit that the library was
+   compiled from.
+
+The :c:func:`get_grackle_version` function is used to retrieve a
+properly intialized :c:data:`grackle_version` object. The following
+code snippet illustrates how one might query and print this
+information:
+
+.. code-block:: c++
+
+  grackle_version gversion = get_grackle_version();
+  printf ("The Grackle Version: %s\n", gversion.version);
+  printf ("Git Branch:   %s\n", gversion.branch);
+  printf ("Git Revision: %s\n", gversion.revision);
