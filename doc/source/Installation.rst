@@ -151,6 +151,13 @@ For example, to change the optimization to high, type:
 
     ~/grackle/src/clib $ make opt-high
 
+.. warning::
+   Compiling Grackle in single precision (with ``make precision-32``) is **not**
+   recommended. Because of the high dynamic range involved in calculating many
+   chemistry and cooling rates, running Grackle in single precision can produce
+   unreliable results. This is especially true when running with
+   :c:data:`primordial_chemistry` >= 1.
+
 Custom settings can be saved for later use by typing:
 
 .. highlight:: none
