@@ -200,6 +200,9 @@ fortran_example: $(MODULES) fortran_example.o
              exit 1; \
           fi)
 
+# the following target uses -O1 optimization because problems can arise with
+# higher levels of optimization. A comment in fortran_example.F provides more
+# details about the problems
 .F.o:
 	@rm -f $@
 	@echo "Compiling $<"
