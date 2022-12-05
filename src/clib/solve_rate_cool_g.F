@@ -320,7 +320,7 @@
 
 !     Set error indicator
 
-      ierr = 0
+      ierr = 1
 
 !     Set flag for dust-related options
 
@@ -835,7 +835,6 @@
 
             if (exititmax .eq. 1) then
                ierr = 0
-               return
             endif
 #ifdef _OPENMP
 !$omp end critical
@@ -860,6 +859,12 @@ c            WARNING_MESSAGE
 !$omp end parallel do
 #endif
 
+!     If an error has been produced, return now.
+
+      if (ierr .eq. 0) then
+         return
+      endif
+
 !     Convert densities back to comoving from proper
 
       if (iexpand .eq. 1) then
@@ -882,8 +887,6 @@ c            WARNING_MESSAGE
      &                     in, jn, kn, ispecies, imetal, fh, dtoh)
 
       endif
-
-      ierr = 1
 
       return
       end
