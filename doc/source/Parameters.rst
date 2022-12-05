@@ -252,6 +252,20 @@ For all on/off integer flags, 0 is off and 1 is on.
    the dust grains for the calculation of the dust temperature.
    Default: 1.7.
 
+.. c:var:: int CaseBRecombination
+
+   Flag to use the Case B recombination rates (and associated cooling
+   rates) for H\ :sup:`+`, He\ :sup:`+`, and He\ :sup:`++` instead of
+   the Case A rates. Set to 1 for Case B and 0 for Case A. The Case A
+   rates include recombinations directly to the ground state (which
+   would result in emission of an ionizing photon) as well as
+   recombinations to excited states (which eventually reach the ground
+   state through lower energy transitions). The Case B rates exclude
+   recombinations directly to the ground state under the assumption
+   that the ionizing photon is reabsorbed. Hence, the Case B rates are
+   slightly lower than the Case A rates.
+   Default: 0.
+
 .. c:var:: int Compton_xray_heating
 
    Flag to enable Compton heating from an X-ray background following
