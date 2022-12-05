@@ -1045,8 +1045,13 @@ c -------------------------------------------------------------------
          do k = ks+1, ke+1
             do j = js+1, je+1
                do i = is+1, ie+1
-                  metal(i,j,k) = min(max(metal(i,j,k), tiny),
-     &                 0.9_RKIND*d(i,j,k))
+                  metal(i,j,k) = max(metal(i,j,k), tiny)
+                  if (metal(i,j,k) .gt. d(i,j,k)) then
+                     write(6, *) 'WARNING: metal density exceeds ',
+     &                    'total density!'
+                     write(6, *) 'i, j, k, metal, density = ',
+     &                    i, j, k, metal(i,j,k), d(i,j,k)
+                  endif
                enddo
             enddo
          enddo
