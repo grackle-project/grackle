@@ -251,9 +251,9 @@
 !     interpolate over parameter 2
 
          slope = (value3(2) - value3(1)) / 
-     &        log10((1+gridPar2(index2+1)) / (1+gridPar2(index2)))
+     &        log((1+gridPar2(index2+1)) / (1+gridPar2(index2)))
 
-         value2(q) = log10((1+input2) / (1+gridPar2(index2))) * slope +
+         value2(q) = log((1+input2) / (1+gridPar2(index2))) * slope +
      &        value3(1)
 
       enddo
