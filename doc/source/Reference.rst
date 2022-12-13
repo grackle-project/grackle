@@ -241,6 +241,51 @@ initialization functions discussed in :ref:`internal_functions`.
    :rtype: int
    :returns: 1 (success) or 0 (failure)
 
+.. _dynamic_api_functions:
+
+Dynamic Configuration Functions
++++++++++++++++++++++++++++++++
+
+The following functions are used to provide dynamic acces to members of the :c:data:`chemistry_data` struct. They will return ``NULL`` when ``my_chemistry`` is ``NULL``, ``param_name`` isn't a known parameter, or the ``param_name`` is not associated with type mentioned in function name.
+
+.. c:function:: int* local_chemistry_data_access_int(chemistry_data *my_chemistry, const char* param_name);
+
+   Returns the pointer to the member of ``my_chemistry`` associated with ``param_name``.
+
+   :param chemistry_data* my_chemistry: the structure returned by :c:func:`_set_default_chemistry_parameters`
+   :param const char* param_name: the name of the parameter to access.
+   :rtype: int*
+
+.. c:function:: double* local_chemistry_data_access_double(chemistry_data *my_chemistry, const char* param_name);
+
+   Returns the pointer to the member of ``my_chemistry`` associated with ``param_name``.
+
+   :param chemistry_data* my_chemistry: the structure returned by :c:func:`_set_default_chemistry_parameters`
+   :param const char* param_name: the name of the parameter to access.
+   :rtype: double*
+
+The following functions are used to query the name of the `i`th field of the :c:data:`chemistry_data` struct of a particular type.
+
+.. c:function:: const char* param_name_int(size_t i);
+
+   Query the name of the ith ``int`` field from :c:data:`chemistry_data`.
+
+   .. warning:: The order of parameters may change between different versions of Grackle.
+
+   :param size_t i: The index of the accessed parameter
+   :rtype: const char*
+   :returns: Pointer to the string-literal specifying the name. This is ``NULL``, if :c:data:`chemistry_data` has ``i`` or fewer ``int`` members
+   
+.. c:function:: const char* param_name_double(size_t i);
+
+   Query the name of the ith ``double`` field from :c:data:`chemistry_data`.
+
+   .. warning:: The order of parameters may change between different versions of Grackle.
+
+   :param size_t i: The index of the accessed parameter
+   :rtype: const char*
+   :returns: Pointer to the string-literal specifying the name. This is ``NULL``, if :c:data:`chemistry_data` has ``i`` or fewer ``double`` members.
+
 .. _internal_functions:
 
 Internal Functions

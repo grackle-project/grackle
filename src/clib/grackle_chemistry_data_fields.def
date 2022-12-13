@@ -1,0 +1,204 @@
+/***********************************************************************
+/
+/ this file lists properties for each field of the grackle_chemistry_data
+/ struct. This list is intended to be used with X-Macros in *.c files (to
+/ reduce the amount of code required to interact with these fields)
+/
+/ The following information is specified for each field:
+/    1. the field_name
+/    2. the field type (INT, DOUBLE, STRING)
+/    3. the field's default value
+/
+/ Copyright (c) 2013, Enzo/Grackle Development Team.
+/
+/ Distributed under the terms of the Enzo Public Licence.
+/
+/ The full license is in the file LICENSE, distributed with this
+/ software.
+************************************************************************/
+
+/* grackle on/off flag
+   0) off, 1) on */
+ENTRY(use_grackle, INT, FALSE)
+
+/* include cooling in chemistry solver
+   0) no, 1) yes */
+ENTRY(with_radiative_cooling, INT, TRUE)
+
+/* chemistry network
+   0) tabulated cooling (no chemistry)
+   1) HI, HII, HeI, HeII, HeIII, e
+   2) + H2, H2I+, H-
+   3) + D, D+, HD */
+ENTRY(primordial_chemistry, INT, 0)
+
+/* dust chemistry and cooling
+   0) no dust chemistry or cooling
+   1) basic dust treatment
+      - photo-electric heating
+      - recombination cooling
+      - with primordial_chemistry > 1:
+        - H2 formation on dust grains
+        - gas/grain heat transfer */
+ENTRY(dust_chemistry, INT, 0)
+
+/* metal cooling on/off
+   0) off, 1) on */
+ENTRY(metal_cooling, INT, FALSE)
+
+/* add heating from UV background model
+   0) off, 1) on */
+ENTRY(UVbackground, INT, 0)
+
+/* data file containing cooling and UV background tables */
+ENTRY(grackle_data_file, STRING, "")
+
+/* Use a CMB temperature floor
+   0) no, 1) yes */
+ENTRY(cmb_temperature_floor, INT, 1)
+
+/* adiabatic index */
+ENTRY(Gamma, DOUBLE, 5./3.)
+
+/* H2 formation on dust grains and dust cooling
+   0) off, 1) on */
+ENTRY(h2_on_dust, INT, FALSE)
+
+/* Flag to supply a dust density field */
+ENTRY(use_dust_density_field, INT, FALSE)
+
+/* Flag for enabling recombination cooling on grains */
+ENTRY(dust_recombination_cooling, INT, -1) // unset
+
+/* photo-electric heating from irradiated dust */
+ENTRY(photoelectric_heating, INT, -1) // unset
+
+/* the following comment was present in set_default_chemistry_parameters:
+   epsilon=0.05, G_0=1.7 (in erg s^-1 cm^-3) */
+ENTRY(photoelectric_heating_rate, DOUBLE, 8.5e-26)
+
+/* Flag to supply a field for the interstellar radiation field */
+ENTRY(use_isrf_field, INT, 0)
+
+/* local FUV interstellar radiation field in Habing units */
+ENTRY(interstellar_radiation_field, DOUBLE, 1.7)
+  
+/* flags to signal that arrays of volumetric or
+   specific heating rates are being provided */
+ENTRY(use_volumetric_heating_rate, INT, 0)
+ENTRY(use_specific_heating_rate, INT, 0)
+
+/* additional chemistry solver parameters */
+ENTRY(three_body_rate, INT, 0)
+ENTRY(cie_cooling, INT, 0)
+ENTRY(h2_optical_depth_approximation, INT, 0)
+
+/* flag for H2 cooling (0-off/1-on) */
+ENTRY(ih2co, INT, 1)
+
+/* flag for photoionization cooling */
+ENTRY(ipiht, INT, 1)
+
+ENTRY(HydrogenFractionByMass, DOUBLE, 0.76)
+
+/* The DToHRatio is by mass in the code, so multiply by 2.
+   - the default value comes from Burles & Tytler 1998 */
+ENTRY(DeuteriumToHydrogenRatio, DOUBLE, 2.0*3.4e-5)
+
+/* Up until version 2.1, the solar metal mass fraction was 0.02041.  
+   This is close to 0.0194 of Anders & Grevesse (1989), but significantly 
+   higher than the more recent value of 0.0122 from Asplund et al. (2005).
+   As of version 2.1, the solar metal mass fraction has been set to 0.01295, 
+   which is consistent with the abundances used in Cloudy when generating the 
+   cooling tables. */
+ENTRY(SolarMetalFractionByMass, DOUBLE, 0.01295) /* Cloudy v13 abundances */
+
+/* The dust to gas ratio in local molecular clouds.
+   Table 2 from Pollack et al. (1994). */
+ENTRY(local_dust_to_gas_ratio, DOUBLE, 0.009387)
+
+/* default to case A rates */
+ENTRY(CaseBRecombination, INT, 0)
+
+ENTRY(NumberOfTemperatureBins, INT, 600)
+ENTRY(TemperatureStart, DOUBLE, 1.0)
+ENTRY(TemperatureEnd, DOUBLE, 1.0e9)
+
+ENTRY(NumberOfDustTemperatureBins, INT, 250)
+ENTRY(DustTemperatureStart, DOUBLE, 1.0)
+ENTRY(DustTemperatureEnd, DOUBLE, 1500.0)
+
+/* additional radiation background parameters */
+
+ENTRY(Compton_xray_heating, INT, 0)
+
+ENTRY(LWbackground_sawtooth_suppression, INT, 0)
+
+/* [in units of 10^21 erg/s/cm^2/Hz/sr] */
+ENTRY(LWbackground_intensity, DOUBLE, 0.0)
+
+ENTRY(UVbackground_redshift_on, DOUBLE, FLOAT_UNDEFINED)
+ENTRY(UVbackground_redshift_off, DOUBLE, FLOAT_UNDEFINED)
+ENTRY(UVbackground_redshift_fullon, DOUBLE, FLOAT_UNDEFINED)
+ENTRY(UVbackground_redshift_drop, DOUBLE, FLOAT_UNDEFINED)
+
+/* Factor to account for extra electrons from metals.
+   Only for old-style Cloudy tables.
+   f = SUM { A_i * i }, for i = 3 to N.
+   N = Atomic number of heaviest element in cooling model.
+   For solar abundance patters and N = 30 (Zn), f = 9.153959e-3.
+   - this corresponds to Cloudy 07.02 abundances */
+ENTRY(cloudy_electron_fraction_factor, DOUBLE, 9.153959e-3)
+
+/* flags and parameters to signal that RT
+   is being used, and appropriate parameters
+   for setting RT solvers */
+ENTRY(use_radiative_transfer, INT, 0)
+ENTRY(radiative_transfer_coupled_rate_solver, INT, 0)
+ENTRY(radiative_transfer_intermediate_step, INT, 0)
+ENTRY(radiative_transfer_hydrogen_only, INT, 0)
+
+/* flag for approximiate self-shielding as well
+   as spectrum averaged photo heating and
+   photo ionization shielding factors */
+ENTRY(self_shielding_method, INT, 0)
+
+/* flag for Wolcott-Green+ 2011 H2 self-shielding. Can be set to 0,1,2 or 3.
+   These determine the length scale used in the calculation of the H2 column
+   density. Please refer to the grackle documentation for specifics. */
+ENTRY(H2_self_shielding, INT, 0)
+
+/* flag for custom H2-shielding factor. The factor is provided as an additional
+   field by the user and is multiplied to the rate for radiative H2
+   dissocitation */
+ENTRY(H2_custom_shielding, INT, 0)
+
+/* flag to select which formula for calculating k11 you want to use. 
+   Setting to 1 will use Savin 2004, 2 will use Abel et al. 1996  */
+ENTRY(h2_charge_exchange_rate, INT, 1)
+
+/* flag to select which formula for calculating h2dust you want to use. 
+   Setting to 1 will use Omukai 2000, 2 will use Hollenbach & McKee (1979) */
+ENTRY(h2_dust_rate, INT, 1)
+
+/* flag to select which formula for calculating low density H2 cooling rate 
+   due to H collisions. Setting to 1 will use Lique 2015, 2 will use Glover and
+   Abel 2008 */
+ENTRY(h2_h_cooling_rate, INT, 1)
+
+/* flags specific to calc_rates_g (1 is on, 0 is off) */
+ENTRY(collisional_excitation_rates, INT, 1) //Collisional excitation
+ENTRY(collisional_ionisation_rates, INT, 1) //Collisional ionisation
+ENTRY(recombination_cooling_rates, INT, 1) //Recombination cooling
+ENTRY(bremsstrahlung_cooling_rates, INT, 1) //Bremsstrahlung cooling
+
+/* maximum number of subcycle iterations for solve_chemistry */
+ENTRY(max_iterations, INT, 10000)
+
+/* flag to exit if max iterations exceeded */
+ENTRY(exit_after_iterations_exceeded, INT, FALSE)
+
+/* number of OpenMP threads, if supported */
+# ifdef _OPENMP
+ENTRY(omp_nthreads, INT, omp_get_max_threads())
+# endif

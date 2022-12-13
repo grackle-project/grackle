@@ -6,6 +6,8 @@ Parameters and Data Files
 Parameters
 ----------
 
+See :ref:`adding-new-params` for guidelines for adding new parameters.
+
 For all on/off integer flags, 0 is off and 1 is on.
 
 .. c:var:: int use_grackle
