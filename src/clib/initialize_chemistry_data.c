@@ -357,6 +357,10 @@ void show_parameters(FILE *fp, chemistry_data *my_chemistry)
           my_chemistry->H2_custom_shielding);
   fprintf(fp, "H2_self_shielding                 = %d\n",
           my_chemistry->H2_self_shielding);
+  fprintf(fp, "max_iterations                    = %d\n",
+          my_chemistry->max_iterations);
+  fprintf(fp, "exit_after_iterations_exceeded    = %d\n",
+          my_chemistry->exit_after_iterations_exceeded);
 # ifdef _OPENMP
   fprintf(fp, "omp_nthreads                      = %d\n",
           my_chemistry->omp_nthreads);
