@@ -1,5 +1,4 @@
 #include "phys_const.def"
-#include "dust_evol.def"
 
 !////////////////////////////////////////////////////////////
 ! calculate characteristic timescales used for subcycling
@@ -10,6 +9,10 @@
      &              gas_metal4, gas_metal5, gas_metal6,
      &              gas_metal7, gas_metal8, gas_metal9,
      &              gas_metal10, SNe_ThisTimeStep,
+     &              dust_destruction_eff,
+     &              sne_coeff, sne_shockspeed,
+     &              dust_grainsize, dust_growth_densref,
+     &              dust_growth_tauref,
      &              tau_accr, tau_dest, tau_sput,
      &              z_solar, SolarAbundances,
      &              time_units, dens_units, len_units, aye, dtime)
@@ -20,6 +23,9 @@
       integer in, jn, kn, i, j, k
       real*8 tau_accr(in), tau_dest(in), tau_sput(in),
      &       z_solar, SolarAbundances(NUM_METAL_SPECIES_GRACKLE),
+     &       dust_destruction_eff, sne_coeff, sne_shockspeed,
+     &       dust_grainsize, dust_growth_densref,
+     &       dust_growth_tauref,
      &       time_units, dens_units, len_units, aye, dtime
       R_PREC Density(in,jn,kn), Tgas(in,jn,kn), Tdust(in,jn,kn), metal_Density(in,jn,kn),
      &       gas_metal1(in,jn,kn), gas_metal2(in,jn,kn),
@@ -34,14 +40,14 @@
 
       dens_proper = dens_units * aye**3
 
-      Ms100 = 6800.0*SNE_COEFF
-     &        *(100.0/SNE_SHOCKSPEED)*(100.0/SNE_SHOCKSPEED)
+      Ms100 = 6800.0*sne_coeff
+     &        *(100.0/sne_shockspeed)*(100.0/sne_shockspeed)
      &        * SolarMass / (dens_units * len_units**3) ! gas mass shocked per SNe (Sedov-Taylor)
 ! check: 
-      tau_ref = DUST_GROWTH_TAUREF * 1e9 * SEC_PER_YEAR / time_units
+      tau_ref = dust_growth_tauref * 1e9 * SEC_PER_YEAR / time_units
 
 !   growth
-      tau_accr0 = tau_ref * (DUST_GROWTH_DENSREF / dens_proper)
+      tau_accr0 = tau_ref * (dust_growth_densref / dens_proper)
      &     * (Tdust(i,j,k)/Tgas(i,j,k))**0.5
       tau_accr(i) = 1.d+20
       tau_accr(i) = min(tau_accr0 * (z_solar
@@ -99,12 +105,12 @@
           tau_dest(i) = 1.d+20
       else
           tau_dest(i) = Density(i,j,k)/(Ms100*SNe_ThisTimeStep(i,j,k)
-     &                      *DUST_DESTRUCTION_EFF) * dtime
+     &                      *dust_destruction_eff) * dtime
       endif
 
 !   destruction by thermal sputtering
       tau_sput(i) = 1.7e8 * SEC_PER_YEAR / time_units
-     &     * (DUST_GRAINSIZE/0.1) * (1e-27/(dens_proper*Density(i,j,k)))
+     &     * (dust_grainsize/0.1) * (1e-27/(dens_proper*Density(i,j,k)))
      &     * ((2e6/Tgas(i,j,k))**2.5+1.0) ! Tsai & Mathews (1995)
 
       return
@@ -124,7 +130,10 @@
      &     dust_metal4, dust_metal5, dust_metal6,
      &     dust_metal7, dust_metal8, dust_metal9,
      &     dust_metal10,
-     &     SNe_ThisTimeStep,
+     &     SNe_ThisTimeStep, dust_destruction_eff,
+     &     sne_coeff, sne_shockspeed,
+     &     dust_grainsize, dust_growth_densref,
+     &     dust_growth_tauref,
      &     tau_dest, tau_sput,
      &     z_solar, SolarAbundances,
      &     time_units, dens_units, len_units, aye, dtime, metpt, dmetpt)
@@ -134,6 +143,9 @@
       integer in, jn, kn, i, j, k
       real*8 tau_dest(in), tau_sput(in),
      &       z_solar, SolarAbundances(NUM_METAL_SPECIES_GRACKLE),
+     &       dust_destruction_eff, sne_coeff, sne_shockspeed,
+     &       dust_grainsize, dust_growth_densref,
+     &       dust_growth_tauref,
      &       time_units, dens_units, len_units, aye, dtime, dM_conserv
       R_PREC Tgas(in,jn,kn), Tdust(in,jn,kn),
      &       gas_metal1(in,jn,kn), gas_metal2(in,jn,kn),
@@ -190,17 +202,17 @@
 
       total_density_init = metpt(1) + dmetpt(1)
 
-      Ms100 = 6800.0*SNE_COEFF
-     &        *(100.0/SNE_SHOCKSPEED)*(100.0/SNE_SHOCKSPEED)
+      Ms100 = 6800.0*sne_coeff
+     &        *(100.0/sne_shockspeed)*(100.0/sne_shockspeed)
      &        * SolarMass / (dens_units * len_units**3) ! gas mass shocked per SNe (Sedov-Taylor)
-      tau_ref = DUST_GROWTH_TAUREF * 1e9 * SEC_PER_YEAR / time_units
+      tau_ref = dust_growth_tauref * 1e9 * SEC_PER_YEAR / time_units
 
       do n=0+1,NUM_METAL_SPECIES_GRACKLE+1
           dM(n) = 0.
       enddo
 
 !   metals accreted from gas to dust
-      tau_accr0 = tau_ref * (DUST_GROWTH_DENSREF/dens_proper)
+      tau_accr0 = tau_ref * (dust_growth_densref/dens_proper)
      &     * (Tdust(i,j,k)/Tgas(i,j,k))**0.5
       do n=1+1,NUM_METAL_SPECIES_GRACKLE+1
           Mmet(n) = metpt(n) + dmetpt(n)
