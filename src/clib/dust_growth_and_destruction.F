@@ -1,4 +1,5 @@
 #include "phys_const.def"
+#include "dust_evol.def"
 
 !////////////////////////////////////////////////////////////
 ! calculate characteristic timescales used for subcycling
@@ -44,7 +45,7 @@
      &        *(100.0/sne_shockspeed)*(100.0/sne_shockspeed)
      &        * SolarMass / (dens_units * len_units**3) ! gas mass shocked per SNe (Sedov-Taylor)
 ! check: 
-      tau_ref = dust_growth_tauref * 1e9 * SEC_PER_YEAR / time_units
+      tau_ref = dust_growth_tauref * 1e9 * SEC_PER_YEAR_GRACKLE / time_units
 
 !   growth
       tau_accr0 = tau_ref * (dust_growth_densref / dens_proper)
@@ -109,7 +110,7 @@
       endif
 
 !   destruction by thermal sputtering
-      tau_sput(i) = 1.7e8 * SEC_PER_YEAR / time_units
+      tau_sput(i) = 1.7e8 * SEC_PER_YEAR_GRACKLE / time_units
      &     * (dust_grainsize/0.1) * (1e-27/(dens_proper*Density(i,j,k)))
      &     * ((2e6/Tgas(i,j,k))**2.5+1.0) ! Tsai & Mathews (1995)
 
@@ -205,7 +206,7 @@
       Ms100 = 6800.0*sne_coeff
      &        *(100.0/sne_shockspeed)*(100.0/sne_shockspeed)
      &        * SolarMass / (dens_units * len_units**3) ! gas mass shocked per SNe (Sedov-Taylor)
-      tau_ref = dust_growth_tauref * 1e9 * SEC_PER_YEAR / time_units
+      tau_ref = dust_growth_tauref * 1e9 * SEC_PER_YEAR_GRACKLE / time_units
 
       do n=0+1,NUM_METAL_SPECIES_GRACKLE+1
           dM(n) = 0.
