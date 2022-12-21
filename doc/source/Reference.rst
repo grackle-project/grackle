@@ -11,10 +11,10 @@ Grackle has three versions of most functions.
 
 2. :ref:`local_functions` require pointers to :c:data:`chemistry_data`
    and :c:data:`chemistry_data_storage` instances to be provided as
-   arguments.  These are explicity thread-safe as they use no global data.
+   arguments. These are explicity thread-safe as they use no global data.
 
 3. (Deprecated) :ref:`internal_functions` take pointers to individual field arrays
-   instead of using the :c:data:`grackle_field_data` struct.  These are
+   instead of using the :c:data:`grackle_field_data` struct. These are
    mainly used by the Python interface. These functions have been deprecated
    and will be removed in a future version.
 
@@ -25,7 +25,7 @@ Primary Functions
 
 .. c:function:: int set_default_chemistry_parameters(chemistry_data *my_grackle_data);
 
-   Initializes the ``grackle_data`` data structure.  This must be called 
+   Initializes the ``grackle_data`` data structure. This must be called
    before run-time parameters can be set.
 
    :param chemistry_data* my_grackle_data: run-time parameters
@@ -101,7 +101,7 @@ Primary Functions
 
 .. c:function:: int calculate_gamma(code_units *my_units, grackle_field_data *my_fields, gr_float *my_gamma);
 
-   Calculates the effective adiabatic index.  This is only useful with
+   Calculates the effective adiabatic index. This is only useful with
    :c:data:`primordial_chemistry` >= 2 as the only thing that alters gamma from the single
    value is H\ :sub:`2`.
 
@@ -162,7 +162,7 @@ Local Functions
 
 These can be used to create explicitly thread-safe code or to call
 the various functions with different parameter values within a
-single code.  The :c:data:`chemistry_data` and
+single code. The :c:data:`chemistry_data` and
 :c:data:`chemistry_data_storage` structs should be setup using the
 initialization functions discussed in :ref:`internal_functions`.
 
@@ -193,7 +193,7 @@ initialization functions discussed in :ref:`internal_functions`.
 
 .. c:function:: int local_calculate_gamma(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, code_units *my_units, grackle_field_data *my_fields, gr_float *my_gamma);
 
-   Calculates the effective adiabatic index.  This is only useful with
+   Calculates the effective adiabatic index. This is only useful with
    :c:data:`primordial_chemistry` >= 2 as the only thing that alters gamma from the single
    value is H\ :sub:`2`.
 
@@ -246,12 +246,12 @@ initialization functions discussed in :ref:`internal_functions`.
 Internal Functions
 ------------------
 
-These functions are mostly for internal use.  The initialization functions
+These functions are mostly for internal use. The initialization functions
 described here can be used in conjunction with the :ref:`local_functions`.
 
 .. c:function:: chemistry_data _set_default_chemistry_parameters(void);
 
-   Initializes and returns :c:type:`chemistry_data` data structure.  This must be
+   Initializes and returns :c:type:`chemistry_data` data structure. This must be
    called before run-time parameters can be set.
 
    :returns: data structure containing all run-time parameters and all chemistry and cooling data arrays
@@ -281,26 +281,26 @@ described here can be used in conjunction with the :ref:`local_functions`.
    :param double dt_value: the integration timestep in code units
    :param int grid_rank: the dimensionality of the grid
    :param int* grid_dimension: array holding the size of the baryon field in each dimension
-   :param int* grid_start: array holding the starting indices in each dimension of the active portion of the baryon fields.  This is used to ignore ghost zones
-   :param int* grid_end: array holding the ending indices in each dimension of the active portion of the baryon fields.  This is used to ignore ghost zones.
+   :param int* grid_start: array holding the starting indices in each dimension of the active portion of the baryon fields. This is used to ignore ghost zones
+   :param int* grid_end: array holding the ending indices in each dimension of the active portion of the baryon fields. This is used to ignore ghost zones.
    :param gr_float* density: array containing the density values in code units
    :param gr_float* internal_energy: array containing the specific internal energy values in code units corresponding to *erg/g*
    :param gr_float* x_velocity: array containing the x velocity values in code units
    :param gr_float* y_velocity: array containing the y velocity values in code units
    :param gr_float* z_velocity: array containing the z velocity values in code units
-   :param gr_float* HI_density: array containing the HI densities in code units equivalent those of the density array.  Used with :c:data:`primordial_chemistry` >= 1.
-   :param gr_float* HII_density: array containing the HII densities in code units equivalent those of the density array.  Used with :c:data:`primordial_chemistry` >= 1.
-   :param gr_float* HM_density: array containing the H\ :sup:`-`\  densities in code units equivalent those of the density array.  Used with :c:data:`primordial_chemistry` >= 2.
-   :param gr_float* HeI_density: array containing the HeI densities in code units equivalent those of the density array.  Used with :c:data:`primordial_chemistry` >= 1.
-   :param gr_float* HeII_density: array containing the HeII densities in code units equivalent those of the density array.  Used with :c:data:`primordial_chemistry` >= 1.
-   :param gr_float* HeIII_density: array containing the HeIII densities in code units equivalent those of the density array.  Used with :c:data:`primordial_chemistry` >= 1.
-   :param gr_float* H2I_density: array containing the H\ :sub:`2`:\  densities in code units equivalent those of the density array.  Used with :c:data:`primordial_chemistry` >= 2.
-   :param gr_float* H2II_density: array containing the H\ :sub:`2`:sup:`+`\ densities in code units equivalent those of the density array.  Used with :c:data:`primordial_chemistry` >= 2.
-   :param gr_float* DI_density: array containing the DI (deuterium) densities in code units equivalent those of the density array.  Used with :c:data:`primordial_chemistry` = 3.
-   :param gr_float* DII_density: array containing the DII densities in code units equivalent those of the density array.  Used with :c:data:`primordial_chemistry` = 3.
-   :param gr_float* HDI_density: array containing the HD densities in code units equivalent those of the density array.  Used with :c:data:`primordial_chemistry` = 3.
-   :param gr_float* e_density: array containing the e\ :sup:`-`\  densities in code units equivalent those of the density array but normalized to the ratio of the proton to electron mass.  Used with :c:data:`primordial_chemistry` >= 1.
-   :param gr_float* metal_density: array containing the metal densities in code units equivalent those of the density array.  Used with :c:data:`metal_cooling` = 1.
+   :param gr_float* HI_density: array containing the HI densities in code units equivalent those of the density array. Used with :c:data:`primordial_chemistry` >= 1.
+   :param gr_float* HII_density: array containing the HII densities in code units equivalent those of the density array. Used with :c:data:`primordial_chemistry` >= 1.
+   :param gr_float* HM_density: array containing the H\ :sup:`-`\  densities in code units equivalent those of the density array. Used with :c:data:`primordial_chemistry` >= 2.
+   :param gr_float* HeI_density: array containing the HeI densities in code units equivalent those of the density array. Used with :c:data:`primordial_chemistry` >= 1.
+   :param gr_float* HeII_density: array containing the HeII densities in code units equivalent those of the density array. Used with :c:data:`primordial_chemistry` >= 1.
+   :param gr_float* HeIII_density: array containing the HeIII densities in code units equivalent those of the density array. Used with :c:data:`primordial_chemistry` >= 1.
+   :param gr_float* H2I_density: array containing the H\ :sub:`2`:\  densities in code units equivalent those of the density array. Used with :c:data:`primordial_chemistry` >= 2.
+   :param gr_float* H2II_density: array containing the H\ :sub:`2`:sup:`+`\ densities in code units equivalent those of the density array. Used with :c:data:`primordial_chemistry` >= 2.
+   :param gr_float* DI_density: array containing the DI (deuterium) densities in code units equivalent those of the density array. Used with :c:data:`primordial_chemistry` = 3.
+   :param gr_float* DII_density: array containing the DII densities in code units equivalent those of the density array. Used with :c:data:`primordial_chemistry` = 3.
+   :param gr_float* HDI_density: array containing the HD densities in code units equivalent those of the density array. Used with :c:data:`primordial_chemistry` = 3.
+   :param gr_float* e_density: array containing the e\ :sup:`-`\  densities in code units equivalent those of the density array but normalized to the ratio of the proton to electron mass. Used with :c:data:`primordial_chemistry` >= 1.
+   :param gr_float* metal_density: array containing the metal densities in code units equivalent those of the density array. Used with :c:data:`metal_cooling` = 1.
    :rtype: int
    :returns: 1 (success) or 0 (failure)
 
@@ -315,12 +315,26 @@ described here can be used in conjunction with the :ref:`local_functions`.
    :param code_units* my_units: code units conversions
    :param int grid_rank: the dimensionality of the grid
    :param int* grid_dimension: array holding the size of the baryon field in each dimension
-   :param int* grid_start: array holding the starting indices in each dimension of the active portion of the baryon fields.  This is used to ignore ghost zones
-   :param int* grid_end: array holding the ending indices in each dimension of the active portion of the baryon fields.  This is used to ignore ghost zones.
+   :param int* grid_start: array holding the starting indices in each dimension of the active portion of the baryon fields. This is used to ignore ghost zones
+   :param int* grid_end: array holding the ending indices in each dimension of the active portion of the baryon fields. This is used to ignore ghost zones.
    :param gr_float* density: array containing the density values in code units
    :param gr_float* internal_energy: array containing the specific internal energy values in code units corresponding to *erg/g*
-   :param gr_float* x_velocity, y_velocity, z_velocity: arrays containing the x, y, and z velocity values in code units
-   :param gr_float* HI_density, HII_density, HM_density, HeI_density, HeII_density, HeIII_density, H2I_density, H2II_density, DI_density, DII_density, HDI_density, e_density, metal_density: arrays containing the species densities in code units equivalent those of the density array
+   :param gr_float* x_velocity: array containing the x velocity values in code units
+   :param gr_float* y_velocity: array containing the y velocity values in code units
+   :param gr_float* z_velocity: array containing the z velocity values in code units
+   :param gr_float* HI_density: array containing the HI densities in code units equivalent those of the density array. Used with :c:data:`primordial_chemistry` >= 1.
+   :param gr_float* HII_density: array containing the HII densities in code units equivalent those of the density array. Used with :c:data:`primordial_chemistry` >= 1.
+   :param gr_float* HM_density: array containing the H\ :sup:`-`\  densities in code units equivalent those of the density array. Used with :c:data:`primordial_chemistry` >= 2.
+   :param gr_float* HeI_density: array containing the HeI densities in code units equivalent those of the density array. Used with :c:data:`primordial_chemistry` >= 1.
+   :param gr_float* HeII_density: array containing the HeII densities in code units equivalent those of the density array. Used with :c:data:`primordial_chemistry` >= 1.
+   :param gr_float* HeIII_density: array containing the HeIII densities in code units equivalent those of the density array. Used with :c:data:`primordial_chemistry` >= 1.
+   :param gr_float* H2I_density: array containing the H\ :sub:`2`:\  densities in code units equivalent those of the density array. Used with :c:data:`primordial_chemistry` >= 2.
+   :param gr_float* H2II_density: array containing the H\ :sub:`2`:sup:`+`\ densities in code units equivalent those of the density array. Used with :c:data:`primordial_chemistry` >= 2.
+   :param gr_float* DI_density: array containing the DI (deuterium) densities in code units equivalent those of the density array. Used with :c:data:`primordial_chemistry` = 3.
+   :param gr_float* DII_density: array containing the DII densities in code units equivalent those of the density array. Used with :c:data:`primordial_chemistry` = 3.
+   :param gr_float* HDI_density: array containing the HD densities in code units equivalent those of the density array. Used with :c:data:`primordial_chemistry` = 3.
+   :param gr_float* e_density: array containing the e\ :sup:`-`\  densities in code units equivalent those of the density array but normalized to the ratio of the proton to electron mass. Used with :c:data:`primordial_chemistry` >= 1.
+   :param gr_float* metal_density: array containing the metal densities in code units equivalent those of the density array. Used with :c:data:`metal_cooling` = 1.
    :param gr_float* cooling_time: array which will be filled with the calculated cooling time values
    :rtype: int
    :returns: 1 (success) or 0 (failure)
@@ -329,7 +343,7 @@ described here can be used in conjunction with the :ref:`local_functions`.
 
    This function has been deprecated. Please use calculate_gamma or local_calculate_gamma.
 
-   Calculates the effective adiabatic index.  This is only useful with 
+   Calculates the effective adiabatic index. This is only useful with
    :c:data:`primordial_chemistry` >= 2 as the only thing that alters gamma from the single 
    value is H\ :sub:`2`.
 
@@ -338,11 +352,23 @@ described here can be used in conjunction with the :ref:`local_functions`.
    :param code_units* my_units: code units conversions
    :param int grid_rank: the dimensionality of the grid
    :param int* grid_dimension: array holding the size of the baryon field in each dimension
-   :param int* grid_start: array holding the starting indices in each dimension of the active portion of the baryon fields.  This is used to ignore ghost zones
-   :param int* grid_end: array holding the ending indices in each dimension of the active portion of the baryon fields.  This is used to ignore ghost zones.
+   :param int* grid_start: array holding the starting indices in each dimension of the active portion of the baryon fields. This is used to ignore ghost zones
+   :param int* grid_end: array holding the ending indices in each dimension of the active portion of the baryon fields. This is used to ignore ghost zones.
    :param gr_float* density: array containing the density values in code units
    :param gr_float* internal_energy: array containing the specific internal energy values in code units corresponding to *erg/g*
-   :param gr_float* HI_density, HII_density, HM_density, HeI_density, HeII_density, HeIII_density, H2I_density, H2II_density, DI_density, DII_density, HDI_density, e_density, metal_density: arrays containing the species densities in code units equivalent those of the density array
+   :param gr_float* HI_density: array containing the HI densities in code units equivalent those of the density array. Used with :c:data:`primordial_chemistry` >= 1.
+   :param gr_float* HII_density: array containing the HII densities in code units equivalent those of the density array. Used with :c:data:`primordial_chemistry` >= 1.
+   :param gr_float* HM_density: array containing the H\ :sup:`-`\  densities in code units equivalent those of the density array. Used with :c:data:`primordial_chemistry` >= 2.
+   :param gr_float* HeI_density: array containing the HeI densities in code units equivalent those of the density array. Used with :c:data:`primordial_chemistry` >= 1.
+   :param gr_float* HeII_density: array containing the HeII densities in code units equivalent those of the density array. Used with :c:data:`primordial_chemistry` >= 1.
+   :param gr_float* HeIII_density: array containing the HeIII densities in code units equivalent those of the density array. Used with :c:data:`primordial_chemistry` >= 1.
+   :param gr_float* H2I_density: array containing the H\ :sub:`2`:\  densities in code units equivalent those of the density array. Used with :c:data:`primordial_chemistry` >= 2.
+   :param gr_float* H2II_density: array containing the H\ :sub:`2`:sup:`+`\ densities in code units equivalent those of the density array. Used with :c:data:`primordial_chemistry` >= 2.
+   :param gr_float* DI_density: array containing the DI (deuterium) densities in code units equivalent those of the density array. Used with :c:data:`primordial_chemistry` = 3.
+   :param gr_float* DII_density: array containing the DII densities in code units equivalent those of the density array. Used with :c:data:`primordial_chemistry` = 3.
+   :param gr_float* HDI_density: array containing the HD densities in code units equivalent those of the density array. Used with :c:data:`primordial_chemistry` = 3.
+   :param gr_float* e_density: array containing the e\ :sup:`-`\  densities in code units equivalent those of the density array but normalized to the ratio of the proton to electron mass. Used with :c:data:`primordial_chemistry` >= 1.
+   :param gr_float* metal_density: array containing the metal densities in code units equivalent those of the density array. Used with :c:data:`metal_cooling` = 1.
    :param gr_float* my_gamma: array which will be filled with the calculated gamma values
    :rtype: int
    :returns: 1 (success) or 0 (failure)
@@ -358,11 +384,23 @@ described here can be used in conjunction with the :ref:`local_functions`.
    :param code_units* my_units: code units conversions
    :param int grid_rank: the dimensionality of the grid
    :param int* grid_dimension: array holding the size of the baryon field in each dimension
-   :param int* grid_start: array holding the starting indices in each dimension of the active portion of the baryon fields.  This is used to ignore ghost zones
-   :param int* grid_end: array holding the ending indices in each dimension of the active portion of the baryon fields.  This is used to ignore ghost zones.
+   :param int* grid_start: array holding the starting indices in each dimension of the active portion of the baryon fields. This is used to ignore ghost zones
+   :param int* grid_end: array holding the ending indices in each dimension of the active portion of the baryon fields. This is used to ignore ghost zones.
    :param gr_float* density: array containing the density values in code units
    :param gr_float* internal_energy: array containing the specific internal energy values in code units corresponding to *erg/g*
-   :param gr_float* HI_density, HII_density, HM_density, HeI_density, HeII_density, HeIII_density, H2I_density, H2II_density, DI_density, DII_density, HDI_density, e_density, metal_density: arrays containing the species densities in code units equivalent those of the density array
+   :param gr_float* HI_density: array containing the HI densities in code units equivalent those of the density array. Used with :c:data:`primordial_chemistry` >= 1.
+   :param gr_float* HII_density: array containing the HII densities in code units equivalent those of the density array. Used with :c:data:`primordial_chemistry` >= 1.
+   :param gr_float* HM_density: array containing the H\ :sup:`-`\  densities in code units equivalent those of the density array. Used with :c:data:`primordial_chemistry` >= 2.
+   :param gr_float* HeI_density: array containing the HeI densities in code units equivalent those of the density array. Used with :c:data:`primordial_chemistry` >= 1.
+   :param gr_float* HeII_density: array containing the HeII densities in code units equivalent those of the density array. Used with :c:data:`primordial_chemistry` >= 1.
+   :param gr_float* HeIII_density: array containing the HeIII densities in code units equivalent those of the density array. Used with :c:data:`primordial_chemistry` >= 1.
+   :param gr_float* H2I_density: array containing the H\ :sub:`2`:\  densities in code units equivalent those of the density array. Used with :c:data:`primordial_chemistry` >= 2.
+   :param gr_float* H2II_density: array containing the H\ :sub:`2`:sup:`+`\ densities in code units equivalent those of the density array. Used with :c:data:`primordial_chemistry` >= 2.
+   :param gr_float* DI_density: array containing the DI (deuterium) densities in code units equivalent those of the density array. Used with :c:data:`primordial_chemistry` = 3.
+   :param gr_float* DII_density: array containing the DII densities in code units equivalent those of the density array. Used with :c:data:`primordial_chemistry` = 3.
+   :param gr_float* HDI_density: array containing the HD densities in code units equivalent those of the density array. Used with :c:data:`primordial_chemistry` = 3.
+   :param gr_float* e_density: array containing the e\ :sup:`-`\  densities in code units equivalent those of the density array but normalized to the ratio of the proton to electron mass. Used with :c:data:`primordial_chemistry` >= 1.
+   :param gr_float* metal_density: array containing the metal densities in code units equivalent those of the density array. Used with :c:data:`metal_cooling` = 1.
    :param gr_float* pressure: array which will be filled with the calculated pressure values
    :rtype: int
    :returns: 1 (success) or 0 (failure)
@@ -374,11 +412,23 @@ described here can be used in conjunction with the :ref:`local_functions`.
    :param code_units* my_units: code units conversions
    :param int grid_rank: the dimensionality of the grid
    :param int* grid_dimension: array holding the size of the baryon field in each dimension
-   :param int* grid_start: array holding the starting indices in each dimension of the active portion of the baryon fields.  This is used to ignore ghost zones
-   :param int* grid_end: array holding the ending indices in each dimension of the active portion of the baryon fields.  This is used to ignore ghost zones.
+   :param int* grid_start: array holding the starting indices in each dimension of the active portion of the baryon fields. This is used to ignore ghost zones
+   :param int* grid_end: array holding the ending indices in each dimension of the active portion of the baryon fields. This is used to ignore ghost zones.
    :param gr_float* density: array containing the density values in code units
    :param gr_float* internal_energy: array containing the specific internal energy values in code units corresponding to *erg/g*
-   :param gr_float* HI_density, HII_density, HM_density, HeI_density, HeII_density, HeIII_density, H2I_density, H2II_density, DI_density, DII_density, HDI_density, e_density, metal_density: arrays containing the species densities in code units equivalent those of the density array
+   :param gr_float* HI_density: array containing the HI densities in code units equivalent those of the density array. Used with :c:data:`primordial_chemistry` >= 1.
+   :param gr_float* HII_density: array containing the HII densities in code units equivalent those of the density array. Used with :c:data:`primordial_chemistry` >= 1.
+   :param gr_float* HM_density: array containing the H\ :sup:`-`\  densities in code units equivalent those of the density array. Used with :c:data:`primordial_chemistry` >= 2.
+   :param gr_float* HeI_density: array containing the HeI densities in code units equivalent those of the density array. Used with :c:data:`primordial_chemistry` >= 1.
+   :param gr_float* HeII_density: array containing the HeII densities in code units equivalent those of the density array. Used with :c:data:`primordial_chemistry` >= 1.
+   :param gr_float* HeIII_density: array containing the HeIII densities in code units equivalent those of the density array. Used with :c:data:`primordial_chemistry` >= 1.
+   :param gr_float* H2I_density: array containing the H\ :sub:`2`:\  densities in code units equivalent those of the density array. Used with :c:data:`primordial_chemistry` >= 2.
+   :param gr_float* H2II_density: array containing the H\ :sub:`2`:sup:`+`\ densities in code units equivalent those of the density array. Used with :c:data:`primordial_chemistry` >= 2.
+   :param gr_float* DI_density: array containing the DI (deuterium) densities in code units equivalent those of the density array. Used with :c:data:`primordial_chemistry` = 3.
+   :param gr_float* DII_density: array containing the DII densities in code units equivalent those of the density array. Used with :c:data:`primordial_chemistry` = 3.
+   :param gr_float* HDI_density: array containing the HD densities in code units equivalent those of the density array. Used with :c:data:`primordial_chemistry` = 3.
+   :param gr_float* e_density: array containing the e\ :sup:`-`\  densities in code units equivalent those of the density array but normalized to the ratio of the proton to electron mass. Used with :c:data:`primordial_chemistry` >= 1.
+   :param gr_float* metal_density: array containing the metal densities in code units equivalent those of the density array. Used with :c:data:`metal_cooling` = 1.
    :param gr_float* temperature: array which will be filled with the calculated temperature values
    :rtype: int
    :returns: 1 (success) or 0 (failure)
