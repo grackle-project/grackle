@@ -703,7 +703,7 @@ git revision.
    This structure is used to organize version information for the
    library.
 
-.. c:var:: const* char version
+.. c:var:: const char* version
 
    Specifies the version of the library using this template:
    ``<MAJOR>.<MINOR>(.<MICRO>)(.dev<DEV_NUM>)``. In this template
@@ -714,12 +714,12 @@ git revision.
    provided in increasing order: ``"3.0"``, ``"3.1"``, ``"3.1.1"``,
    ``"3.1.2"``, ``"3.2.dev1"``, ``"3.2.dev2"``, ``"3.2"``.
 
-.. c:var:: const* char branch
+.. c:var:: const char* branch
 
    Specifies the name of the git branch that the library was compiled
    from.
 
-.. c:var:: const* char revision
+.. c:var:: const char* revision
 
    Specifies the hash identifying the git commit that the library was
    compiled from.
