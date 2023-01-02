@@ -749,7 +749,7 @@ Suppose Grackle is updated to have a new heating/cooling mechanism, and to allow
    * an ``int`` field called ``use_fancy_feature``
    * a ``double`` field called ``fancy_feature_param``
 
-Now suppose a downstream simulation code, written in ``c`` or ``c++``, wanted to support configuration of this feature. In this scenario, imagine that we have a a pointer to a :c:data:`chemistry_data` structure called ``my_grackle_data``.
+Now suppose a downstream simulation code, written in ``c`` or ``c++``, wanted to support configuration of this feature. In this scenario, imagine that we have a pointer to a :c:data:`chemistry_data` structure called ``my_grackle_data``.
 
 The obvious way to configure this feature is to include the following snippet in the simulation code:
 
@@ -760,7 +760,7 @@ The obvious way to configure this feature is to include the following snippet in
     my_grackle_data->fancy_feature_param = 5.0; // arbitrary value
   }
 
-Inclusion of the above snippet, will prevent the simulation code from compiling if the user has a version of Grackle installed in which :c:data:`chemistry_data` does not have the ``use_fancy_feature`` and ``fancy_feature_param`` fields. Consequently, such users will to update Grackle.
+However, inclusion of the above snippet will prevent the simulation code from compiling if the user has a version of Grackle installed in which :c:data:`chemistry_data` does not have the ``use_fancy_feature`` and ``fancy_feature_param`` fields. Consequently, such users will have to update Grackle.
 
   * This can be inconvenient when a user has no interest in using this new feature, but needs an unrelated feature/bugfix introduced to the code in a subsequent changeset
 

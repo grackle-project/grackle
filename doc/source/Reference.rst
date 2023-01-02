@@ -246,7 +246,7 @@ initialization functions discussed in :ref:`internal_functions`.
 Dynamic Configuration Functions
 +++++++++++++++++++++++++++++++
 
-The following functions are used to provide dynamic acces to members of the :c:data:`chemistry_data` struct. They will return ``NULL`` when ``my_chemistry`` is ``NULL``, ``param_name`` isn't a known parameter, or the ``param_name`` is not associated with type mentioned in function name.
+The following functions are used to provide dynamic access to members of the :c:data:`chemistry_data` struct. They will return ``NULL`` when ``my_chemistry`` is ``NULL``, ``param_name`` isn't a known parameter, or the ``param_name`` is not associated with the type mentioned in the function name.
 
 .. c:function:: int* local_chemistry_data_access_int(chemistry_data *my_chemistry, const char* param_name);
 
