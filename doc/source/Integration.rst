@@ -119,6 +119,8 @@ output only be enabled for the root process.
    // Enable output
    grackle_verbose = 1;
 
+.. _code-units:
+
 Code Units
 ----------
 
@@ -311,6 +313,30 @@ Grackle's functions using a struct of type :c:data:`grackle_field_data`.
 The struct contains information about the size and shape of the field arrays
 and pointers to all field arrays.
 
+.. _density-note:
+
+Note on Density Fields
+^^^^^^^^^^^^^^^^^^^^^^
+
+All density fields provided to Grackle should be mass densities, i.e.,
+the number density of a given species multiplied by its mass. The
+units should be such that the field value multiplied by
+:c:data:`density_units` results in a value with units of g/cm\
+:sup:`3`. See :ref:`code-units` for further discussion of Grackle unit
+systems.
+
+.. _e-density-note:
+
+Note on the Electron Density Field
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For largely historical reasons, the value of the electron density
+(provided in :c:data:`e_density`) should be the true value of the
+electron mass density multiplied by the ratio of the proton mass to
+the electron mass, i.e., :c:data:`e_density` = :math:`{\rho}`\ :sub:`e` * m\
+:sub:`p` / m\ :sub:`e`, where :math:`{\rho}`\ :sub:`e` is the true
+electron mass density in :c:data:`density_units` (see :ref:`density-note`).
+
 .. c:type:: grackle_field_data
 
    This structure is used to pass field data to Grackle's functions.  It
@@ -347,7 +373,7 @@ and pointers to all field arrays.
 
 .. c:var:: gr_float* density
 
-   Pointer to the density field array.
+   Pointer to the gas density field array.
 
 .. c:var:: gr_float* HI_density
 
@@ -410,9 +436,8 @@ and pointers to all field arrays.
    Pointer to the electron density field array.  Used when
    :c:data:`primordial_chemistry` is set to 1, 2, or 3.  Note,
    the electron mass density should be scaled by the ratio of the
-   proton mass to the electron mass such that the electron density
-   in the code is the electron number density times the **proton**
-   mass.
+   proton mass to the electron mass. See :ref:`e-density-note` for
+   more information.
 
 .. c:var:: gr_float* metal_density
 
