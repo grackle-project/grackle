@@ -794,4 +794,4 @@ There are a few points worth noting:
 
   * The highlighted functions can also be used in tandem with other functions described in :ref:`dynamic_api_functions` to simplify (de)serialization of :c:data:`chemistry_data`
 
-  * The dynamic API does not currently provide a function for configuring string parameters. This currently just affects one member of :c:data:`chemistry_data`: :c:data:`grackle_data_file`.
+  * For completeness, the dynamic API also provides an analogous a function for configuring string parameters.

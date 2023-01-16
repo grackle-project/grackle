@@ -264,6 +264,14 @@ The following functions are used to provide dynamic access to members of the :c:
    :param const char* param_name: the name of the parameter to access.
    :rtype: double*
 
+.. c:function:: char** local_chemistry_data_access_string(chemistry_data *my_chemistry, const char* param_name);
+
+   Returns the pointer to the member of ``my_chemistry`` associated with ``param_name``.
+
+   :param chemistry_data* my_chemistry: the structure returned by :c:func:`_set_default_chemistry_parameters`
+   :param const char* param_name: the name of the parameter to access.
+   :rtype: char**
+
 The following functions are used to query the name of the `i`th field of the :c:data:`chemistry_data` struct of a particular type.
 
 .. c:function:: const char* param_name_int(size_t i);
@@ -285,6 +293,16 @@ The following functions are used to query the name of the `i`th field of the :c:
    :param size_t i: The index of the accessed parameter
    :rtype: const char*
    :returns: Pointer to the string-literal specifying the name. This is ``NULL``, if :c:data:`chemistry_data` has ``i`` or fewer ``double`` members.
+
+.. c:function:: const char* param_name_string(size_t i);
+
+   Query the name of the ith ``string`` field from :c:data:`chemistry_data`.
+
+   .. warning:: The order of parameters may change between different versions of Grackle.
+
+   :param size_t i: The index of the accessed parameter
+   :rtype: const char*
+   :returns: Pointer to the string-literal specifying the name. This is ``NULL``, if :c:data:`chemistry_data` has ``i`` or fewer ``string`` members.
 
 .. _internal_functions:
 
