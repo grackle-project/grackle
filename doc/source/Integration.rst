@@ -794,4 +794,4 @@ There are a few points worth noting:
 
   * The highlighted functions can also be used in tandem with other functions described in :ref:`dynamic_api_functions` to simplify (de)serialization of :c:data:`chemistry_data`
 
-  * For completeness, the dynamic API also provides an analogous a function for configuring string parameters.
+  * For completeness, the dynamic API also provides an analogous function for configuring string parameters.

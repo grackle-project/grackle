@@ -272,7 +272,7 @@ The following functions are used to provide dynamic access to members of the :c:
    :param const char* param_name: the name of the parameter to access.
    :rtype: char**
 
-The following functions are used to query the name of the `i`th field of the :c:data:`chemistry_data` struct of a particular type.
+The following functions are used to query the name of the ith field of the :c:data:`chemistry_data` struct of a particular type.
 
 .. c:function:: const char* param_name_int(size_t i);
 
