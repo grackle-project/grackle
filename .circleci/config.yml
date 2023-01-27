@@ -144,6 +144,9 @@ jobs:
       name: python
       tag: << parameters.tag >>
 
+
+    resource_class: large
+
     working_directory: ~/grackle
 
     steps:
