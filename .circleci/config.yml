@@ -131,6 +131,8 @@ executors:
       tag:
         type: string
         default: latest
+    machine:
+      - image: ubuntu-2204
 
 jobs:
   test-suite:
@@ -138,8 +140,9 @@ jobs:
       tag:
         type: string
         default: latest
-    machine:
-      image: ubuntu-2204
+    executor:
+      name: python
+      tag: << parameters.tag >>
 
     working_directory: ~/grackle
 
