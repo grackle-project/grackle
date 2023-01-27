@@ -131,7 +131,7 @@ executors:
       tag:
         type: string
         default: latest
-    docker:
+    machine:
       - image: ubuntu-2204
 
 jobs:
