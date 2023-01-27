@@ -21,8 +21,8 @@ commands:
             git submodule update --init --remote
             source $BASH_ENV
             sudo apt update
-            sudo apt install -y libhdf5-serial-dev gfortran libtool-bin
-            python3 -m venv $HOME/venv
+            sudo apt install -y python3.8 python3-pip libhdf5-serial-dev gfortran libtool-bin
+            python3.8 -m venv $HOME/venv
             source $HOME/venv/bin/activate
             pip install --upgrade pip
             pip install --upgrade wheel
@@ -71,7 +71,7 @@ commands:
       - run:
           name: "Install dependencies for docs build."
           command: |
-            python3 -m venv $HOME/venv
+            python3.8 -m venv $HOME/venv
             source $HOME/venv/bin/activate
             pip install --upgrade pip
             pip install --upgrade wheel
@@ -132,7 +132,7 @@ executors:
         type: string
         default: latest
     docker:
-      - image: cimg/python:<< parameters.tag >>
+      - image: ubuntu-2204
 
 jobs:
   test-suite:
