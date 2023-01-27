@@ -132,7 +132,7 @@ executors:
         type: string
         default: latest
     machine:
-      image: ubuntu-2204
+      image: ubuntu-2204:current
 
 jobs:
   test-suite:
