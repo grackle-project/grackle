@@ -164,6 +164,12 @@ typedef struct
   int recombination_cooling_rates; //Recombination cooling
   int bremsstrahlung_cooling_rates; //Bremsstrahlung cooling
 
+  /* maximum number of subcycle iterations for solve_chemistry */
+  int max_iterations;
+
+  /* flag to exit if max iterations exceeded */
+  int exit_after_iterations_exceeded;
+
   /* number of OpenMP threads, if supported */
 # ifdef _OPENMP
   int omp_nthreads;

@@ -134,6 +134,10 @@ chemistry_data _set_default_chemistry_parameters(void)
   my_chemistry.H2_self_shielding                      = 0;
   my_chemistry.H2_custom_shielding                    = 0;
 
+  /* max subcycle iterations for solve_rate_cool and whether to exit if exceeded */
+  my_chemistry.max_iterations                 = 10000;
+  my_chemistry.exit_after_iterations_exceeded = FALSE;
+
 //number of OpenMP threads
 # ifdef _OPENMP
   my_chemistry.omp_nthreads = omp_get_max_threads(); // maximum allowed number
