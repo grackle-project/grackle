@@ -708,8 +708,8 @@
 
                if (tgas(i) .le. 1.01_DKIND*temstart .and.
      &              edot(i) .lt. 0._DKIND) 
-     &              edot(i) = 0._DKIND
-	       if (abs(edot(i)) .lt. tiny8) edot(i) = 0._DKIND
+     &              edot(i) = tiny8
+	       if (abs(edot(i)) .lt. tiny8) edot(i) = tiny8
 
 !              Compute timestep for 10% change
 
