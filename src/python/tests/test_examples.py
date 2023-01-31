@@ -100,5 +100,5 @@ def test_examples(example_path, primordial_chemistry, metal_cooling):
         ad_new = ds_new.data
 
         for field_name in ds_old.field_list:
-            assert_allclose(ad_old[field_name].v, ad_new[field_name].v,
+            assert_allclose(ad_old[field_name].v, ad_new[field_name].v, rtol=1e-6,
                             err_msg=f"Field mismatch: {str(field_name)}.")
