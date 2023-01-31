@@ -954,8 +954,8 @@ cdef class _wrapped_c_chemistry_data:
     #
     # - if _string_buffers DOES have an entry for <field>, then data.<field>
     #   points to the buffer of the Python bytes object given by
-    #   _string_buffers["<field>"]. Note that the string is always terminated
-    #   by character (the Python interface just hides if from users)
+    #   _string_buffers["<field>"]. In CPython, the string is always terminated
+    #   by a null character (the Python interface just hides if from users)
 
     def __cinit__(self):
         self.data = _set_default_chemistry_parameters()
