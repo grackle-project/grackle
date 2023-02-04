@@ -11,6 +11,8 @@
 # software.
 ########################################################################
 
+from numpy.testing import assert_raises
+
 from pygrackle import chemistry_data
 
 from pygrackle.grackle_wrapper import _wrapped_c_chemistry_data
@@ -45,15 +47,10 @@ def _test_dynamic_api(param_list, ok_vals, bad_vals, expected_output_type):
             else:
                 assert val == val_to_set
 
+        # confirm that setting param to invalid values will raise TypeError
         for val_to_set in bad_vals:
-            try:
+            with assert_raises(TypeError):
                 setattr(obj, param, val_to_set)
-                raise ValueError(
-                    f"expected a TypeError when setting '{param}' to "
-                    f"{val_to_set!r}"
-                )
-            except TypeError:
-                continue
 
 def test_dynamic_api_int():
     _test_dynamic_api(_wrapped_c_chemistry_data.int_keys(),
