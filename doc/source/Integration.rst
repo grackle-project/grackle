@@ -280,6 +280,8 @@ will return an integer indicating success (1) or failure (0).
 
 The Grackle is now ready to be used.
 
+As an aside, see :ref:`dynamic-api` for a description of an alternative approach for configuring a :c:type:`chemistry_data` struct. This other approach may provide additional compatability with multiple versions of Grackle, and in some cases may facillitate less-verbose, easier-to-maintain code.
+
 .. _openmp:
 
 Running with OpenMP
@@ -760,3 +762,61 @@ information:
   printf ("The Grackle Version: %s\n", gversion.version);
   printf ("Git Branch:   %s\n", gversion.branch);
   printf ("Git Revision: %s\n", gversion.revision);
+
+.. _dynamic-api:
+
+Dynamic configuration of Chemistry Data
+---------------------------------------
+
+The functions providing dynamic access to the fields of :c:data:`chemistry_data` are useful for maintaining backwards compatibility with older versions of Grackle (that also provide this API) as new fields get added to :c:data:`chemistry_data`. This is exemplified in the following scenario.
+
+Suppose Grackle is updated to have a new heating/cooling mechanism, and to allow users to control that mechanism two new fields are added to :c:data:`chemistry_data`:
+   * an ``int`` field called ``use_fancy_feature``
+   * a ``double`` field called ``fancy_feature_param``
+
+Now suppose a downstream simulation code, written in ``c`` or ``c++``, wanted to support configuration of this feature. In this scenario, imagine that we have a pointer to a :c:data:`chemistry_data` structure called ``my_grackle_data``.
+
+The obvious way to configure this feature is to include the following snippet in the simulation code:
+
+.. code-block:: c++
+
+  if (configure_fancy_feature) {
+    my_grackle_data->use_fancy_feature = 1;
+    my_grackle_data->fancy_feature_param = 5.0; // arbitrary value
+  }
+
+However, inclusion of the above snippet will prevent the simulation code from compiling if the user has a version of Grackle installed in which :c:data:`chemistry_data` does not have the ``use_fancy_feature`` and ``fancy_feature_param`` fields. Consequently, such users will have to update Grackle.
+
+  * This can be inconvenient when a user has no interest in using this new feature, but needs an unrelated feature/bugfix introduced to the code in a subsequent changeset
+
+  * This is especially inconvenient if a user is prototying a new feature in a custom Grackle branch in which the :c:data:`chemistry_data` struct is missing these fields.
+
+The following snippet shows how the dynamic access API can be used in the same way for versions of Grackle that include these parameters, and don't set the features in cases 
+
+.. code-block:: c++
+
+  if (configure_fancy_feature) {
+    int* use_fancy_feature = local_chemistry_data_access_int(
+      my_grackle_data, "use_fancy_feature"
+    );
+    double* fancy_feature_param = local_chemistry_data_access_double(
+      my_grackle_data, "fancy_feature_param"
+    );
+
+    if ((use_fancy_feature == NULL) || (fancy_feature_param == NULL)){
+      fprintf(stderr, "Update grackle version to use fancy feature\n");
+    } else {
+      *use_fancy_feature = 1;
+      *fancy_feature_param = 5.0;
+    }
+  }
+
+There are a few points worth noting:
+
+  * As the above snippets show, the dynamic api clearly produces more verbose code when configuring :c:data:`chemistry_data` field-by-field. However, in codes where users configure Grackle by specifying the name of fields in the :c:data:`chemistry_data` struct and the associated values in a parameter file, the dynamic API can facillitate MUCH less verbose code. Under certain implementations, it may not even be necessary to modify a simulation code to support newly-introduced grackle parameters.
+
+  * The dynamic API is slower than configuring :c:data:`chemistry_data` in the classic approach. However, this shouldn't be an issue since :c:data:`chemistry_data` is usually just configured once when the simulation code starts up.
+
+  * The highlighted functions can also be used in tandem with other functions described in :ref:`dynamic_api_functions` to simplify (de)serialization of :c:data:`chemistry_data`.
+
+  * For completeness, the dynamic API also provides an analogous function for configuring string parameters.

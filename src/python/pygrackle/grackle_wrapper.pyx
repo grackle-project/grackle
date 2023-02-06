@@ -20,17 +20,16 @@ import numpy as np
 cimport numpy as np
 
 cdef class chemistry_data:
-    cdef c_chemistry_data data
+    cdef _wrapped_c_chemistry_data data
     cdef c_chemistry_data_storage rates
     cdef c_code_units units
-    cdef object data_file_path
 
     def __cinit__(self):
-        self.data = _set_default_chemistry_parameters()
-        self.data_file_path = None
+        self.data = _wrapped_c_chemistry_data()
 
     def initialize(self):
-        ret =  _initialize_chemistry_data(&self.data, &self.rates, &self.units)
+        ret =  _initialize_chemistry_data(&self.data.data, &self.rates,
+                                          &self.units)
         if ret is None:
             raise RuntimeError("Error initializing chemistry")
         return ret
@@ -41,345 +40,60 @@ cdef class chemistry_data:
     def get_velocity_units(self):
         return get_velocity_units(&self.units)
 
-    property use_grackle:
-        def __get__(self):
-            return self.data.use_grackle
-        def __set__(self, val):
-            self.data.use_grackle = val
+    def __getattr__(self, name):
+        # This has been implemented to maintain backwards compatibility.
+        #
+        # This method is only called whan an attribute can't be found through
+        # the normal mechanism - this tries to retrieve name from self.data
+        try:
+            return self.data[name]
+        except:
+            # this method is expected to raise AttributeError when it fails
+            raise AttributeError(
+                f"'{type(self).__name__}' object has no attribute '{name}'"
+            )
 
-    property with_radiative_cooling:
-        def __get__(self):
-            return self.data.with_radiative_cooling
-        def __set__(self, val):
-            self.data.with_radiative_cooling = val
+    def __setattr__(self, name, value):
+        # This has been implemented to maintain backwards compatibility. This
+        # performs attribute assignment. It first tries to perform normal
+        # attribute assignment. If that fails, try to update a value contained
+        # by self.data
+        #
+        # Unlike with normal class objects, we can't just call
+        # super(chemistry_dat, self).__setattr__(name, value) to get default
+        # behavior. For extension classes, we need to manually implement the
+        # default behavior of __setattr__
+        #
+        # in CPython, the default behavior of __setattr__ is implemented by
+        # PyObject_GenericSetAttr (https://docs.python.org/3/c-api/object.html)
+        #
+        # For insight into how we implement this behavior, we can look to the
+        # python equivalent for PyObject_GenericGetAttr that is described at
+        # https://docs.python.org/3/howto/descriptor.html?highlight=descriptor%20howto#invocation-from-an-instance
 
-    property primordial_chemistry:
-        def __get__(self):
-            return self.data.primordial_chemistry
-        def __set__(self, val):
-            self.data.primordial_chemistry = val
+        # first, check for for a data descriptor (like a property) matching
+        # name in the dictionary of classes in the object’s MRO. If present, we
+        # modify it instead of other attributes
+        for base in type(self).__mro__:
+            cls_var = vars(base).get(name, None)
+            if cls_var is None:
+                continue
+            descr_setter = getattr(type(cls_var), '__set__', None)
+            if descr_setter is not None:
+                descr_setter(cls_var, self, value)
+                return # early exit
 
-    property dust_chemistry:
-        def __get__(self):
-            return self.data.dust_chemistry
-        def __set__(self, val):
-            self.data.dust_chemistry = val
+        # normally, we would now check self.__dict__ for an attribute
+        # called name, but that's not applicable for this class
 
-    property metal_cooling:
-        def __get__(self):
-            return self.data.metal_cooling
-        def __set__(self, val):
-            self.data.metal_cooling = val
-
-    property UVbackground:
-        def __get__(self):
-            return self.data.UVbackground
-        def __set__(self, val):
-            self.data.UVbackground = val
-
-    property grackle_data_file:
-        def __get__(self):
-            # ensure that the underlying bytearray can't be modified (if it
-            # grows/shrinks the `char*` allocation can be invalidated)
-            return bytes(self.data.grackle_data_file)
-        def __set__(self, val):
-            # when Cython converts a bytearray to `char*`, the lifetime of the
-            # `char*` allocation is tied to the lifetime of the original
-            # bytearray object. We need to make sure that the bytearray object
-            # isn't garbage collected for as long as the `char*` allocation is
-            # in use. We do this by storing the bytearray as an attribute
-            self.data_file_path = val
-            if isinstance(self.data_file_path, str):
-                self.data_file_path = self.data_file_path.encode('utf-8')
-            self.data.grackle_data_file = self.data_file_path
-
-    property cmb_temperature_floor:
-        def __get__(self):
-            return self.data.cmb_temperature_floor
-        def __set__(self, val):
-            self.data.cmb_temperature_floor = val
-
-    property Gamma:
-        def __get__(self):
-            return self.data.Gamma
-        def __set__(self, val):
-            self.data.Gamma = val
-
-    property h2_on_dust:
-        def __get__(self):
-            return self.data.h2_on_dust
-        def __set__(self, val):
-            self.data.h2_on_dust = val
-
-    property use_dust_density_field:
-        def __get__(self):
-            return self.data.use_dust_density_field
-        def __set__(self, val):
-            self.data.use_dust_density_field = val
-
-    property photoelectric_heating:
-        def __get__(self):
-            return self.data.photoelectric_heating
-        def __set__(self, val):
-            self.data.photoelectric_heating = val
-
-    property photoelectric_heating_rate:
-        def __get__(self):
-            return self.data.photoelectric_heating_rate
-        def __set__(self, val):
-            self.data.photoelectric_heating_rate = val
-
-    property use_isrf_field:
-        def __get__(self):
-            return self.data.use_isrf_field
-        def __set__(self, val):
-            self.data.use_isrf_field = val
-
-    property interstellar_radiation_field:
-        def __get__(self):
-            return self.data.interstellar_radiation_field
-        def __set__(self, val):
-            self.data.interstellar_radiation_field = val
-
-    property use_volumetric_heating_rate:
-        def __get__(self):
-            return self.data.use_volumetric_heating_rate
-        def __set__(self, val):
-            self.data.use_volumetric_heating_rate = val
-
-    property use_specific_heating_rate:
-        def __get__(self):
-            return self.data.use_specific_heating_rate
-        def __set__(self, val):
-            self.data.use_specific_heating_rate = val
-
-    property three_body_rate:
-        def __get__(self):
-            return self.data.three_body_rate
-        def __set__(self, val):
-            self.data.three_body_rate = val
-
-    property cie_cooling:
-        def __get__(self):
-            return self.data.cie_cooling
-        def __set__(self, val):
-            self.data.cie_cooling = val
-
-    property h2_charge_exchange_rate:
-        def __get__(self):
-            return self.data.h2_charge_exchange_rate
-        def __set__(self, val):
-            self.data.h2_charge_exchange_rate = val
-
-    property h2_dust_rate:
-        def __get__(self):
-            return self.data.h2_dust_rate
-        def __set__(self, val):
-            self.data.h2_dust_rate = val
-
-    property h2_h_cooling_rate:
-        def __get__(self):
-            return self.data.h2_h_cooling_rate
-        def __set__(self, val):
-            self.data.h2_h_cooling_rate = val
-
-    property collisional_excitation_rates:
-        def __get__(self):
-            return self.data.collisional_excitation_rates
-        def __set__(self, val):
-            self.data.collisional_excitation_rates = val
-
-    property collisional_ionisation_rates:
-        def __get__(self):
-            return self.data.collisional_ionisation_rates
-        def __set__(self, val):
-            self.data.collisional_ionisation_rates = val
-
-    property recombination_cooling_rates:
-        def __get__(self):
-            return self.data.recombination_cooling_rates
-        def __set__(self, val):
-            self.data.recombination_cooling_rates = val
-
-    property bremsstrahlung_cooling_rates:
-        def __get__(self):
-            return self.data.bremsstrahlung_cooling_rates
-        def __set__(self, val):
-            self.data.bremsstrahlung_cooling_rates = val
-
-    property h2_optical_depth_approximation:
-        def __get__(self):
-            return self.data.h2_optical_depth_approximation
-        def __set__(self, val):
-            self.data.h2_optical_depth_approximation = val
-
-    property ih2co:
-        def __get__(self):
-            return self.data.ih2co
-        def __set__(self, val):
-            self.data.ih2co = val
-
-    property ipiht:
-        def __get__(self):
-            return self.data.ipiht
-        def __set__(self, val):
-            self.data.ipiht = val
-
-    property HydrogenFractionByMass:
-        def __get__(self):
-            return self.data.HydrogenFractionByMass
-        def __set__(self, val):
-            self.data.HydrogenFractionByMass = val
-
-    property DeuteriumToHydrogenRatio:
-        def __get__(self):
-            return self.data.DeuteriumToHydrogenRatio
-        def __set__(self, val):
-            self.data.DeuteriumToHydrogenRatio = val
-
-    property SolarMetalFractionByMass:
-        def __get__(self):
-            return self.data.SolarMetalFractionByMass
-        def __set__(self, val):
-            self.data.SolarMetalFractionByMass = val
-
-    property local_dust_to_gas_ratio:
-        def __get__(self):
-            return self.data.local_dust_to_gas_ratio
-        def __set__(self, val):
-            self.data.local_dust_to_gas_ratio = val
-
-    property NumberOfTemperatureBins:
-        def __get__(self):
-            return self.data.NumberOfTemperatureBins
-        def __set__(self, val):
-            self.data.NumberOfTemperatureBins = val
-
-    property CaseBRecombination:
-        def __get__(self):
-            return self.data.CaseBRecombination
-        def __set__(self, val):
-            self.data.CaseBRecombination = val
-
-    property TemperatureStart:
-        def __get__(self):
-            return self.data.TemperatureStart
-        def __set__(self, val):
-            self.data.TemperatureStart = val
-
-    property TemperatureEnd:
-        def __get__(self):
-            return self.data.TemperatureEnd
-        def __set__(self, val):
-            self.data.TemperatureEnd = val
-
-    property NumberOfDustTemperatureBins:
-        def __get__(self):
-            return self.data.NumberOfDustTemperatureBins
-        def __set__(self, val):
-            self.data.NumberOfDustTemperatureBins = val
-
-    property DustTemperatureStart:
-        def __get__(self):
-            return self.data.DustTemperatureStart
-        def __set__(self, val):
-            self.data.DustTemperatureStart = val
-
-    property DustTemperatureEnd:
-        def __get__(self):
-            return self.data.DustTemperatureEnd
-        def __set__(self, val):
-            self.data.DustTemperatureEnd = val
-
-    property Compton_xray_heating:
-        def __get__(self):
-            return self.data.Compton_xray_heating
-        def __set__(self, val):
-            self.data.Compton_xray_heating = val
-
-    property LWbackground_sawtooth_suppression:
-        def __get__(self):
-            return self.data.LWbackground_sawtooth_suppression
-        def __set__(self, val):
-            self.data.LWbackground_sawtooth_suppression = val
-
-    property LWbackground_intensity:
-        def __get__(self):
-            return self.data.LWbackground_intensity
-        def __set__(self, val):
-            self.data.LWbackground_intensity = val
-
-    property UVbackground_intensity:
-        def __get__(self):
-            return self.data.UVbackground_intensity
-        def __set__(self, val):
-            self.data.UVbackground_intensity = val
-
-    property UVbackground_redshift_on:
-        def __get__(self):
-            return self.data.UVbackground_redshift_on
-        def __set__(self, val):
-            self.data.UVbackground_redshift_on = val
-
-    property UVbackground_redshift_off:
-        def __get__(self):
-            return self.data.UVbackground_redshift_off
-        def __set__(self, val):
-            self.data.UVbackground_redshift_off = val
-
-    property UVbackground_redshift_fullon:
-        def __get__(self):
-            return self.data.UVbackground_redshift_fullon
-        def __set__(self, val):
-            self.data.UVbackground_redshift_fullon = val
-
-    property UVbackground_redshift_drop:
-        def __get__(self):
-            return self.data.UVbackground_redshift_drop
-        def __set__(self, val):
-            self.data.UVbackground_redshift_drop = val
-
-    property cloudy_electron_fraction_factor:
-        def __get__(self):
-            return self.data.cloudy_electron_fraction_factor
-        def __set__(self, val):
-            self.data.cloudy_electron_fraction_factor = val
-
-    property use_radiative_transfer:
-        def __get__(self):
-            return self.data.use_radiative_transfer
-        def __set__(self, val):
-            self.data.use_radiative_transfer = val
-
-    property radiative_transfer_coupled_rate_solver:
-        def __get__(self):
-            return self.data.radiative_transfer_coupled_rate_solver
-        def __set__(self, val):
-            self.data.radiative_transfer_coupled_rate_solver = val
-
-    property radiative_transfer_intermediate_step:
-        def __get__(self):
-            return self.data.radiative_transfer_intermediate_step
-        def __set__(self, val):
-            self.data.radiative_transfer_intermediate_step = val
-
-    property radiative_transfer_hydrogen_only:
-        def __get__(self):
-            return self.data.radiative_transfer_hydrogen_only
-        def __set__(self, val):
-            self.data.radiative_transfer_hydrogen_only = val
-
-    property self_shielding_method:
-        def __get__(self):
-            return self.data.self_shielding_method
-        def __set__(self, val):
-            self.data.self_shielding_method = val
-
-    property H2_self_shielding:
-        def __get__(self):
-            return self.data.H2_self_shielding
-        def __set__(self, val):
-            self.data.H2_self_shielding = val
+        # finally we add our custom logic:
+        try:
+            self.data[name] = value
+            return # early exit
+        except KeyError:
+            raise AttributeError(
+                f"'{type(self).__name__}' object has no attribute '{name}'"
+            )
 
     property k1:
         def __get__(self):
@@ -917,7 +631,7 @@ def solve_chemistry(fc, my_dt):
     cdef double dt_value = <double> my_dt
 
     cdef chemistry_data chem_data = fc.chemistry_data
-    cdef c_chemistry_data my_chemistry = chem_data.data
+    cdef c_chemistry_data my_chemistry = chem_data.data.data
     cdef c_chemistry_data_storage my_rates = chem_data.rates
     cdef c_code_units my_units = chem_data.units
 
@@ -962,7 +676,7 @@ def solve_chemistry(fc, my_dt):
 
 def calculate_cooling_time(fc):
     cdef chemistry_data chem_data = fc.chemistry_data
-    cdef c_chemistry_data my_chemistry = chem_data.data
+    cdef c_chemistry_data my_chemistry = chem_data.data.data
     cdef c_chemistry_data_storage my_rates = chem_data.rates
     cdef c_code_units my_units = chem_data.units
 
@@ -1011,7 +725,7 @@ def calculate_cooling_time(fc):
 
 def calculate_gamma(fc):
     cdef chemistry_data chem_data = fc.chemistry_data
-    cdef c_chemistry_data my_chemistry = chem_data.data
+    cdef c_chemistry_data my_chemistry = chem_data.data.data
     cdef c_chemistry_data_storage my_rates = chem_data.rates
     cdef c_code_units my_units = chem_data.units
 
@@ -1060,7 +774,7 @@ def calculate_gamma(fc):
 
 def calculate_pressure(fc):
     cdef chemistry_data chem_data = fc.chemistry_data
-    cdef c_chemistry_data my_chemistry = chem_data.data
+    cdef c_chemistry_data my_chemistry = chem_data.data.data
     cdef c_chemistry_data_storage my_rates = chem_data.rates
     cdef c_code_units my_units = chem_data.units
 
@@ -1109,7 +823,7 @@ def calculate_pressure(fc):
 
 def calculate_temperature(fc):
     cdef chemistry_data chem_data = fc.chemistry_data
-    cdef c_chemistry_data my_chemistry = chem_data.data
+    cdef c_chemistry_data my_chemistry = chem_data.data.data
     cdef c_chemistry_data_storage my_rates = chem_data.rates
     cdef c_code_units my_units = chem_data.units
 
@@ -1158,7 +872,7 @@ def calculate_temperature(fc):
 
 def calculate_dust_temperature(fc):
     cdef chemistry_data chem_data = fc.chemistry_data
-    cdef c_chemistry_data my_chemistry = chem_data.data
+    cdef c_chemistry_data my_chemistry = chem_data.data.data
     cdef c_chemistry_data_storage my_rates = chem_data.rates
     cdef c_code_units my_units = chem_data.units
 
@@ -1211,3 +925,129 @@ def get_grackle_version():
     return {"version" : version_struct.version.decode('UTF-8'),
             "branch" : version_struct.branch.decode('UTF-8'),
             "revision" : version_struct.revision.decode('UTF-8')}
+
+cdef list _get_parameter_name_list(const char*(*get_param)(size_t)):
+    # the arg should be param_name_int, param_name_double, or param_name_string
+
+    cdef list out = []
+    cdef const char* tmp
+    cdef size_t i = 0
+    while True:
+        tmp = get_param(i)
+        if tmp is NULL:
+            return out
+        else:
+            out.append(tmp.decode('UTF-8'))
+            i+=1
+
+cdef class _wrapped_c_chemistry_data:
+
+    cdef c_chemistry_data data
+    cdef dict _string_buffers
+    # Each field in data that holds a string value, may have a corresponding
+    # entry in _string_buffers (the key matches the name of the field).
+    #
+    # - if _string_buffers DOESN'T have an entry for <field>, then data.<field>
+    #   must currently store a default value. Depending on the specifics of
+    #   <field>, data.<field> holds either a NULL pointer or a pointer to a
+    #   string literal (stored in the C library).
+    #
+    # - if _string_buffers DOES have an entry for <field>, then data.<field>
+    #   points to the buffer of the Python bytes object given by
+    #   _string_buffers["<field>"]. In CPython, the string is always terminated
+    #   by a null character (the Python interface just hides if from users)
+
+    def __cinit__(self):
+        self.data = _set_default_chemistry_parameters()
+        self._string_buffers = {}
+
+    def _access_struct_field(self, key, val = None):
+        """
+        Return a copy of the value of the field stored in the wrapped struct.
+
+        When val is not None, this function updates the stored value first (the
+        returned value is effectively a copy of val after some type coercion)
+        """
+        cdef c_chemistry_data* data_ptr = &self.data
+
+        # determine whether the field needs to be updated
+        update_field = (val is not None)
+
+        # coerce key to a bytes object and then get the analogous null
+        # terminated string to pass to the C functions
+        coerced_key = key.encode('ascii') if isinstance(key, str) else key
+        cdef char* _key = coerced_key # _key's lifetime is tied to coerced_key
+
+        # handle the case where key is an integer
+        cdef int* int_p = local_chemistry_data_access_int(data_ptr, _key)
+        if int_p is not NULL:
+            if update_field:
+                coerced_val = int(<int?>val)
+                if coerced_val != val: # prevent invalid assignment of a
+                                       # non-integer floating point
+                    raise TypeError("must be convertable to an int without a "
+                                    "loss of information.")
+                int_p[0] = <int>coerced_val
+            return int(int_p[0])
+
+        # handle the case where key is a double
+        cdef double* dbl_p = local_chemistry_data_access_double(data_ptr, _key)
+        if dbl_p is not NULL:
+            if update_field:
+                dbl_p[0] = <double?>val # <double?> cast performs type checking
+            return float(dbl_p[0])
+
+        # handle the case where key is a string
+        cdef char* tmp = NULL
+        cdef char** str_p = local_chemistry_data_access_string(data_ptr, _key)
+        if (str_p is not NULL): # this case requires additional care
+
+            if update_field:
+                # coerce val to a bytes object & store in self._string_buffers
+                if isinstance(val, str):
+                    self._string_buffers[key] = bytes(val.encode('ascii'))
+                elif isinstance(val, (bytes,bytearray)):
+                    self._string_buffers[key] = bytes(val)
+                else:
+                    raise TypeError(type(val))
+
+                assert b'\0' not in self._string_buffers[key] # sanity check
+                tmp = <bytes>self._string_buffers[key]
+                str_p[0] = tmp
+
+            elif (str_p[0] is NULL):
+                # handle the case where we are accessing a default field value
+                # and it was initialized to a NULL pointer
+                return None
+
+            # for simplicity, just return a new copy of the contained string.
+            # (this correctly handles the case where str_p[0] holds a pointer
+            # to a string literal managed by the c library)
+            return bytes(str_p[0])
+
+        raise KeyError(key) # the key is not recognized
+
+    def __getitem__(self, key):
+        return self._access_struct_field(key, val = None)
+
+    def __setitem__(self, key, value):
+        if value is None:
+            raise ValueError("Members of c_chemistry_data are not allowed to "
+                             "be assigned values of None")
+        self._access_struct_field(key, val = value)
+
+    @staticmethod
+    def int_keys(): return _get_parameter_name_list(param_name_int)
+
+    @staticmethod
+    def double_keys(): return _get_parameter_name_list(param_name_double)
+
+    @staticmethod
+    def string_keys(): return _get_parameter_name_list(param_name_string)
+
+    def __iter__(self):
+        return iter(self.int_keys() + self.double_keys() + self.string_keys())
+
+    def __len__(self):
+        return (len(self.int_keys()) + len(self.double_keys()) +
+                len(self.string_keys()))

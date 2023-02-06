@@ -257,114 +257,20 @@ int initialize_chemistry_data(code_units *my_units)
   return SUCCESS;
 }
 
-void show_parameters(FILE *fp, chemistry_data *my_chemistry)
-{
-  fprintf(fp, "use_grackle                       = %d\n",
-          my_chemistry->use_grackle);
-  fprintf(fp, "with_radiative_cooling            = %d\n",
-          my_chemistry->with_radiative_cooling);
-  fprintf(fp, "primordial_chemistry              = %d\n",
-          my_chemistry->primordial_chemistry);
-  fprintf(fp, "dust_chemistry                    = %d\n",
-          my_chemistry->dust_chemistry);
-  fprintf(fp, "metal_cooling                     = %d\n",
-          my_chemistry->metal_cooling);
-  fprintf(fp, "UVbackground                      = %d\n",
-          my_chemistry->UVbackground);
-  fprintf(fp, "grackle_data_file                 = %s\n",
-          my_chemistry->grackle_data_file);
-  fprintf(fp, "cmb_temperature_floor             = %d\n",
-          my_chemistry->cmb_temperature_floor);
-  fprintf(fp, "Gamma                             = %g\n",
-          my_chemistry->Gamma);
-  fprintf(fp, "h2_on_dust                        = %d\n",
-          my_chemistry->h2_on_dust);
-  fprintf(fp, "use_dust_density_field            = %d\n",
-          my_chemistry->use_dust_density_field);
-  fprintf(fp, "dust_recombination_cooling        = %d\n",
-          my_chemistry->dust_recombination_cooling);
-  fprintf(fp, "photoelectric_heating             = %d\n",
-          my_chemistry->photoelectric_heating);
-  fprintf(fp, "photoelectric_heating_rate        = %g\n",
-          my_chemistry->photoelectric_heating_rate);
-  fprintf(fp, "use_isrf_field                    = %d\n",
-          my_chemistry->use_isrf_field);
-  fprintf(fp, "interstellar_radiation_field      = %g\n",
-          my_chemistry->interstellar_radiation_field);
-  fprintf(fp, "use_volumetric_heating_rate       = %d\n",
-          my_chemistry->use_volumetric_heating_rate);
-  fprintf(fp, "use_specific_heating_rate         = %d\n",
-          my_chemistry->use_specific_heating_rate);
-  fprintf(fp, "three_body_rate                   = %d\n",
-          my_chemistry->three_body_rate);
-  fprintf(fp, "cie_cooling                       = %d\n",
-          my_chemistry->cie_cooling);
-  fprintf(fp, "h2_optical_depth_approximation    = %d\n",
-          my_chemistry->h2_optical_depth_approximation);
-  fprintf(fp, "ih2co                             = %d\n",
-          my_chemistry->ih2co);
-  fprintf(fp, "ipiht                             = %d\n",
-          my_chemistry->ipiht);
-  fprintf(fp, "HydrogenFractionByMass            = %g\n",
-          my_chemistry->HydrogenFractionByMass);
-  fprintf(fp, "DeuteriumToHydrogenRatio          = %g\n",
-          my_chemistry->DeuteriumToHydrogenRatio);
-  fprintf(fp, "SolarMetalFractionByMass          = %g\n",
-          my_chemistry->SolarMetalFractionByMass);
-  fprintf(fp, "local_dust_to_gas_ratio           = %g\n",
-          my_chemistry->local_dust_to_gas_ratio);
-  fprintf(fp, "NumberOfTemperatureBins           = %d\n",
-          my_chemistry->NumberOfTemperatureBins);
-  fprintf(fp, "CaseBRecombination                = %d\n",
-          my_chemistry->CaseBRecombination);
-  fprintf(fp, "TemperatureStart                  = %g\n",
-          my_chemistry->TemperatureStart);
-  fprintf(fp, "TemperatureEnd                    = %g\n",
-          my_chemistry->TemperatureEnd);
-  fprintf(fp, "NumberOfDustTemperatureBins       = %d\n",
-          my_chemistry->NumberOfDustTemperatureBins);
-  fprintf(fp, "DustTemperatureStart              = %g\n",
-          my_chemistry->DustTemperatureStart);
-  fprintf(fp, "DustTemperatureEnd                = %g\n",
-          my_chemistry->DustTemperatureEnd);
-  fprintf(fp, "Compton_xray_heating              = %d\n",
-          my_chemistry->Compton_xray_heating);
-  fprintf(fp, "LWbackground_sawtooth_suppression = %d\n",
-          my_chemistry->LWbackground_sawtooth_suppression);
-  fprintf(fp, "LWbackground_intensity            = %g\n",
-          my_chemistry->LWbackground_intensity);
-  fprintf(fp, "UVbackground_redshift_on          = %g\n",
-          my_chemistry->UVbackground_redshift_on);
-  fprintf(fp, "UVbackground_redshift_off         = %g\n",
-          my_chemistry->UVbackground_redshift_off);
-  fprintf(fp, "UVbackground_redshift_fullon      = %g\n",
-          my_chemistry->UVbackground_redshift_fullon);
-  fprintf(fp, "UVbackground_redshift_drop        = %g\n",
-          my_chemistry->UVbackground_redshift_drop);
-  fprintf(fp, "cloudy_electron_fraction_factor   = %g\n",
-          my_chemistry->cloudy_electron_fraction_factor);
-  fprintf(fp, "use_radiative_transfer            = %d\n",
-          my_chemistry->use_radiative_transfer);
-  fprintf(fp, "radiative_transfer_coupled_rate_solver = %d\n",
-          my_chemistry->radiative_transfer_coupled_rate_solver);
-  fprintf(fp, "radiative_transfer_intermediate_step = %d\n",
-          my_chemistry->radiative_transfer_intermediate_step);
-  fprintf(fp, "radiative_transfer_hydrogen_only  = %d\n",
-          my_chemistry->radiative_transfer_hydrogen_only);
-  fprintf(fp, "self_shielding_method             = %d\n",
-          my_chemistry->self_shielding_method);
-  fprintf(fp, "H2_custom_shielding               = %d\n",
-          my_chemistry->H2_custom_shielding);
-  fprintf(fp, "H2_self_shielding                 = %d\n",
-          my_chemistry->H2_self_shielding);
-  fprintf(fp, "max_iterations                    = %d\n",
-          my_chemistry->max_iterations);
-  fprintf(fp, "exit_after_iterations_exceeded    = %d\n",
-          my_chemistry->exit_after_iterations_exceeded);
-# ifdef _OPENMP
-  fprintf(fp, "omp_nthreads                      = %d\n",
-          my_chemistry->omp_nthreads);
-# endif
+// Define helpers for the show_parameters function
+static void _show_field_INT(FILE *fp, const char* field, int val)
+{ fprintf(fp, "%-33s = %d\n", field, val); }
+static void _show_field_DOUBLE(FILE *fp, const char* field, double val)
+{ fprintf(fp, "%-33s = %g\n", field, val); }
+static void _show_field_STRING(FILE *fp, const char* field, const char* val)
+{ fprintf(fp, "%-33s = %s\n", field, val); }
+
+// this function writes each field of my_chemistry to fp
+void show_parameters(FILE *fp, chemistry_data *my_chemistry){
+  #define ENTRY(FIELD, TYPE, DEFAULT_VAL) \
+    _show_field_ ## TYPE (fp, #FIELD, my_chemistry->FIELD);
+  #include "grackle_chemistry_data_fields.def"
+  #undef ENTRY
 }
 
 
