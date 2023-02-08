@@ -66,7 +66,6 @@
     endif
 
     PRECISION_DEFINE = GRACKLE_FLOAT_$(ASSEMBLE_PRECISION_NUMBER)
-    ASSEMBLE_PRECISION_DEFINES = -D$(PRECISION_DEFINE)
 
 #=======================================================================
 # COMPILERS
@@ -194,8 +193,7 @@
     LDOUTPUT_FLAGS = $(ASSEMBLE_LDOUTPUT_FLAGS)
 
     DEFINES = $(MACH_DEFINES) \
-              $(ASSEMBLE_IO_DEFINES) \
-              $(ASSEMBLE_PRECISION_DEFINES)
+              $(ASSEMBLE_IO_DEFINES)
 
     INCLUDES = $(MACH_INCLUDES) \
                $(MAKEFILE_INCLUDES)   -I.

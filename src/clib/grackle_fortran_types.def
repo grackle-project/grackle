@@ -12,6 +12,8 @@
 ! software.
 !=======================================================================
 
+#include "grackle_float.h"
+
 #ifdef GRACKLE_FLOAT_4
 #define tiny 1.e-20
 #define huge 1.e+20
