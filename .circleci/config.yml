@@ -27,8 +27,10 @@ commands:
             pip install --upgrade pip
             pip install --upgrade wheel
             pip install --upgrade setuptools
+            # the following dependencies are just used for testing
             pip install flake8
             pip install packaging
+            sudo apt install castxml
 
   lint:
     description: "Lint."
