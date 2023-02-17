@@ -73,78 +73,79 @@ int update_UVbackground_rates(chemistry_data *my_chemistry,
     index++;
   if(index == 0) index=1;
   if(index == my_rates->UVbackground_table.Nz) index--;
-
+  double zvec_grad = log((1+zvec[index]) / (1+zvec[index-1]));
+  double redshift_grad = log((1+Redshift) / (1+zvec[index-1]));
   // printf("index = %d, %.3f <= %.3f <= %.3f\n",index,zvec[index-1],Redshift,zvec[index]);
 
   // *** k24 ***
-  slope = (my_rates->UVbackground_table.k24[index] -
-           my_rates->UVbackground_table.k24[index-1]) / (zvec[index] - zvec[index-1]);
-  my_uvb_rates->k24 = (Redshift - zvec[index-1]) * slope +
-    my_rates->UVbackground_table.k24[index-1];
+  slope = log(my_rates->UVbackground_table.k24[index] /
+              my_rates->UVbackground_table.k24[index-1]) / zvec_grad;
+  my_uvb_rates->k24 = exp(redshift_grad * slope +
+			  log(my_rates->UVbackground_table.k24[index-1]));
 
   // *** k25 ***
-  slope = (my_rates->UVbackground_table.k25[index] -
-           my_rates->UVbackground_table.k25[index-1]) / (zvec[index] - zvec[index-1]);
-  my_uvb_rates->k25 = (Redshift - zvec[index-1]) * slope +
-    my_rates->UVbackground_table.k25[index-1];
+  slope = log(my_rates->UVbackground_table.k25[index] /
+              my_rates->UVbackground_table.k25[index-1]) / zvec_grad;
+  my_uvb_rates->k25 = exp(redshift_grad * slope +
+			  log(my_rates->UVbackground_table.k25[index-1]));
 
   // *** k26 ***
-  slope = (my_rates->UVbackground_table.k26[index] -
-           my_rates->UVbackground_table.k26[index-1]) / (zvec[index] - zvec[index-1]);
-  my_uvb_rates->k26 = (Redshift - zvec[index-1]) * slope +
-    my_rates->UVbackground_table.k26[index-1];
+  slope = log(my_rates->UVbackground_table.k26[index] /
+              my_rates->UVbackground_table.k26[index-1]) / zvec_grad;
+  my_uvb_rates->k26 = exp(redshift_grad * slope +
+			  log(my_rates->UVbackground_table.k26[index-1]));
 
   if (my_chemistry->primordial_chemistry > 1) {
 
     // *** k27 ***
-    slope = (my_rates->UVbackground_table.k27[index] -
-             my_rates->UVbackground_table.k27[index-1]) / (zvec[index] - zvec[index-1]);
-    my_uvb_rates->k27 = (Redshift - zvec[index-1]) * slope +
-      my_rates->UVbackground_table.k27[index-1];
+    slope = log(my_rates->UVbackground_table.k27[index] /
+                my_rates->UVbackground_table.k27[index-1]) / zvec_grad;
+    my_uvb_rates->k27 = exp(redshift_grad * slope +
+			    log(my_rates->UVbackground_table.k27[index-1]));
 
     // *** k28 ***
-    slope = (my_rates->UVbackground_table.k28[index] -
-             my_rates->UVbackground_table.k28[index-1]) / (zvec[index] - zvec[index-1]);
-    my_uvb_rates->k28 = (Redshift - zvec[index-1]) * slope +
-      my_rates->UVbackground_table.k28[index-1];
+    slope = log(my_rates->UVbackground_table.k28[index] /
+                my_rates->UVbackground_table.k28[index-1]) / zvec_grad;
+    my_uvb_rates->k28 = exp(redshift_grad * slope +
+			    log(my_rates->UVbackground_table.k28[index-1]));
 
     // *** k29 ***
-    slope = (my_rates->UVbackground_table.k29[index] -
-             my_rates->UVbackground_table.k29[index-1]) / (zvec[index] - zvec[index-1]);
-    my_uvb_rates->k29 = (Redshift - zvec[index-1]) * slope +
-      my_rates->UVbackground_table.k29[index-1];
+    slope = log(my_rates->UVbackground_table.k29[index] /
+                my_rates->UVbackground_table.k29[index-1]) / zvec_grad;
+    my_uvb_rates->k29 = exp(redshift_grad * slope +
+			    log(my_rates->UVbackground_table.k29[index-1]));
 
     // *** k30 ***
-    slope = (my_rates->UVbackground_table.k30[index] -
-             my_rates->UVbackground_table.k30[index-1]) / (zvec[index] - zvec[index-1]);
-    my_uvb_rates->k30 = (Redshift - zvec[index-1]) * slope +
-      my_rates->UVbackground_table.k30[index-1];
+    slope = log(my_rates->UVbackground_table.k30[index] /
+                my_rates->UVbackground_table.k30[index-1]) / zvec_grad;
+    my_uvb_rates->k30 = exp(redshift_grad * slope +
+			    log(my_rates->UVbackground_table.k30[index-1]));
 
     // *** k31 ***
-    slope = (my_rates->UVbackground_table.k31[index] -
-             my_rates->UVbackground_table.k31[index-1]) / (zvec[index] - zvec[index-1]);
-    my_uvb_rates->k31 = (Redshift - zvec[index-1]) * slope +
-      my_rates->UVbackground_table.k31[index-1];
+    slope = log(my_rates->UVbackground_table.k31[index] /
+                my_rates->UVbackground_table.k31[index-1]) / zvec_grad;
+    my_uvb_rates->k31 = exp(redshift_grad * slope +
+			    log(my_rates->UVbackground_table.k31[index-1]));
 
   }
 
   // *** piHI ***
-  slope = (my_rates->UVbackground_table.piHI[index] -
-           my_rates->UVbackground_table.piHI[index-1]) / (zvec[index] - zvec[index-1]);
-  my_uvb_rates->piHI = (Redshift - zvec[index-1]) * slope +
-    my_rates->UVbackground_table.piHI[index-1];
+  slope = log(my_rates->UVbackground_table.piHI[index] /
+              my_rates->UVbackground_table.piHI[index-1]) / zvec_grad;
+  my_uvb_rates->piHI = exp(redshift_grad * slope +
+			   log(my_rates->UVbackground_table.piHI[index-1]));
 
   // *** piHeII ***
-  slope = (my_rates->UVbackground_table.piHeII[index] -
-           my_rates->UVbackground_table.piHeII[index-1]) / (zvec[index] - zvec[index-1]);
-  my_uvb_rates->piHeII = (Redshift - zvec[index-1]) * slope +
-    my_rates->UVbackground_table.piHeII[index-1];
+  slope = log(my_rates->UVbackground_table.piHeII[index] /
+              my_rates->UVbackground_table.piHeII[index-1]) / zvec_grad;
+  my_uvb_rates->piHeII = exp(redshift_grad * slope +
+			     log(my_rates->UVbackground_table.piHeII[index-1]));
 
   // *** piHeI ***
-  slope = (my_rates->UVbackground_table.piHeI[index] -
-           my_rates->UVbackground_table.piHeI[index-1]) / (zvec[index] - zvec[index-1]);
-  my_uvb_rates->piHeI = (Redshift - zvec[index-1]) * slope +
-    my_rates->UVbackground_table.piHeI[index-1];
+  slope = log(my_rates->UVbackground_table.piHeI[index] /
+              my_rates->UVbackground_table.piHeI[index-1]) / zvec_grad;
+  my_uvb_rates->piHeI = exp(redshift_grad * slope +
+			    log(my_rates->UVbackground_table.piHeI[index-1]));
 
   //
   // Cross sections are read from table in cgs, and remain in cgs.
@@ -153,22 +154,22 @@ int update_UVbackground_rates(chemistry_data *my_chemistry,
 
   // *** crsHI ***
   if (my_chemistry->self_shielding_method > 0){
-    slope = (my_rates->UVbackground_table.crsHI[index] -
-             my_rates->UVbackground_table.crsHI[index-1]) / (zvec[index] - zvec[index-1]);
-    my_uvb_rates->crsHI = (Redshift - zvec[index-1]) * slope +
-      my_rates->UVbackground_table.crsHI[index-1];
+    slope = log(my_rates->UVbackground_table.crsHI[index] /
+                my_rates->UVbackground_table.crsHI[index-1]) / zvec_grad;
+    my_uvb_rates->crsHI = exp(redshift_grad * slope +
+			      log(my_rates->UVbackground_table.crsHI[index-1]));
 
     // *** crsHeI ***
-    slope = (my_rates->UVbackground_table.crsHeI[index] -
-             my_rates->UVbackground_table.crsHeI[index-1]) / (zvec[index] - zvec[index-1]);
-    my_uvb_rates->crsHeI = (Redshift - zvec[index-1]) * slope +
-      my_rates->UVbackground_table.crsHeI[index-1];
+    slope = log(my_rates->UVbackground_table.crsHeI[index] /
+                my_rates->UVbackground_table.crsHeI[index-1]) / zvec_grad;
+    my_uvb_rates->crsHeI = exp(redshift_grad * slope +
+			       log(my_rates->UVbackground_table.crsHeI[index-1]));
 
     // *** crsHeII ***
-    slope = (my_rates->UVbackground_table.crsHeII[index] -
-             my_rates->UVbackground_table.crsHeII[index-1]) / (zvec[index] - zvec[index-1]);
-    my_uvb_rates->crsHeII = (Redshift - zvec[index-1]) * slope +
-      my_rates->UVbackground_table.crsHeII[index-1];
+    slope = log(my_rates->UVbackground_table.crsHeII[index] /
+                my_rates->UVbackground_table.crsHeII[index-1]) / zvec_grad;
+    my_uvb_rates->crsHeII = exp(redshift_grad * slope +
+				log(my_rates->UVbackground_table.crsHeII[index-1]));
   }
 
   // Now convert the rates to code units.
@@ -215,7 +216,7 @@ int update_UVbackground_rates(chemistry_data *my_chemistry,
   my_uvb_rates->piHI /= CoolingUnits;
   my_uvb_rates->piHeII /= CoolingUnits;
   my_uvb_rates->piHeI /= CoolingUnits;
-  
+
   // Now apply the Ramp factor
   my_uvb_rates->k24 *= Ramp;
   my_uvb_rates->k25 *= Ramp;
@@ -226,7 +227,7 @@ int update_UVbackground_rates(chemistry_data *my_chemistry,
     my_uvb_rates->k29 *= Ramp;
     my_uvb_rates->k30 *= Ramp;
     my_uvb_rates->k31 *= Ramp;
-  } 
+  }
   my_uvb_rates->piHI *= Ramp;
   my_uvb_rates->piHeII *= Ramp;
   my_uvb_rates->piHeI *= Ramp;
