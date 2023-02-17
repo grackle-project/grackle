@@ -60,7 +60,10 @@ def query_struct_fields(struct_name, path):
 
     Note
     ----
-    pygccxml is a python module that can be used to simplify this function. But
+    pygccxml is a python module that can be used to simplify this function.
+    However, it doesn't look like that module has been updated recently. To try
+    to mitigate future potential module compatibility issues, we currently
+    choose not to use it.
     """
     assert _CASTXML_INSTALLED
 
@@ -104,8 +107,9 @@ def query_struct_fields(struct_name, path):
     assert root.tag == 'CastXML'
     if root.attrib['format'] not in ['1.1.0', '1.1.5']:
         warnings.warn(
-            "Code was tested against CastXML format vers 1.1.0 & 1.1.5. The "
-            f"file produced by CastXML uses version {root.attrib['format']}"
+            "Code was only tested against CastXML format versions 1.1.0 & "
+            "1.1.5. The file produced by CastXML uses version "
+            f"{root.attrib['format']}"
         )
 
     # under the root node, the children are listed in a flat structure can be
