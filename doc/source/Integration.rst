@@ -222,6 +222,8 @@ of using comoving units, see the `cosmological unit system
 <https://github.com/enzo-project/enzo-dev/blob/main/src/enzo/CosmologyGetUnits.C>`__
 in the `Enzo <http://enzo-project.org/>`_ code.
 
+.. _setup_data-storage:
+
 Chemistry Data
 --------------
 
@@ -713,7 +715,7 @@ Clearing the memory
 
 .. code-block:: c++
 
-  _free_chemistry_data(my_grackle_data, &grackle_rates);
+  free_chemistry_data(my_grackle_data, &grackle_rates);
 
 Grackle is using global structures and therefore the global structure ``grackle_rates`` needs also to be released.
 

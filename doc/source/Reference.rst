@@ -162,16 +162,119 @@ Local Functions
 
 These can be used to create explicitly thread-safe code or to call
 the various functions with different parameter values within a
-single code. The :c:data:`chemistry_data` and
-:c:data:`chemistry_data_storage` structs should be setup using the
-initialization functions discussed in :ref:`internal_functions`.
+single code.
+
+.. _local_setup_data-storage:
+
+Initializing/Configuring Chemistry Parameters and Storage
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+..
+   COMMENT BLOCK
+   This section helps simplify the description of the local function
+   (it provides a place for us to point people to when we talk about
+   expectations for how the arguments are initialized). Furthermore,
+   there currently isn't any other place where we currently provide
+   this sort of overview of using the local functions.
+
+   In reality this content probably fits better on the page about
+   "Adding Grackle to Your Simulation Code". However, this duplicates
+   a bunch of content related to using the global Primary functions.
+   Maybe we could use the sphinx_tabs extension...
+
+
+The approach for initializing/configuring the :c:data:`chemistry_data` and :c:data:`chemistry_data_storage` structs for use with the :ref:`local_functions` differs to some degree from the :ref:`previously described approach <setup_data-storage>` that is used with :ref:`primary_functions`.
+
+We highlight the steps down below.
+For the sake of argument let's imagine that the user is storing the chemistry data in a variable called ``my_chemistry``.
+
+1. First, the user should allocate ``my_chemistry`` and initialize the stored parameters with :c:func:`local_initialize_chemistry_parameters`.
+
+   .. code-block:: c++
+
+      chemistry_data * my_chemistry_data = new chemistry_data;
+      if (local_initialize_chemistry_parameters(my_chemistry_data) == 0) {
+         fprintf(stderr, "Error in local_initialize_chemistry_parameters.\n");
+      }
+
+2. Next, the user can configure the stored parameters.
+   They can do this by directly modifying the stored parameters (e.g. ``my_chemistry->use_grackle = 1``) or by using the :ref:`dynamic-api`.
+
+After the user has finished initializing ``my_chemistry``, and have configured an instance of :c:data:`code_units` (more detail provided :ref:`here <code-units>`), they can initialize an instance of :c:data:`chemistry_data_storage` with 
+:c:func:`local_initialize_chemistry_data`:
+
+.. code-block:: c++
+
+  chemistry_data_storage* my_rates = new chemistry_data_storage;
+  if (local_initialize_chemistry_data(my_chemistry, my_rates, &my_units) == 0) {
+    fprintf(stderr, "Error in local_initialize_chemistry_data.\n");
+    return 0;
+  }
+
+Configuration/Cleanup Functions
++++++++++++++++++++++++++++++++
+
+.. c:function:: int local_initialize_chemistry_parameters \
+                (chemistry_data *my_chemistry);
+
+   Initializes the parameters stored in the :c:type:`chemistry_data` data structure to their default values.
+   This should be called before run-time parameters are set.
+
+   This is the "local" counterpart to :c:func:`set_default_chemistry_parameters`.
+
+   :param chemistry_data \*my_chemistry: run-time parameters
+   :rtype: int
+   :returns: 1 (success) or 0 (failure)
+
+.. c:function:: int local_initialize_chemistry_data \
+                (chemistry_data *my_chemistry, \
+                chemistry_data_storage *my_rates, \
+                code_units *my_units);
+
+   Allocates storage for and initializes the values of all relevant chemistry and cooling rate data.
+   This data is stored within the provided :c:data:`chemistry_data_storage` struct.
+   This is the "local" counterpart to :c:func:`initialize_chemistry_data`.
+
+   This function should only be called after the user has finished configuring both ``my_chemistry`` and ``my_units``.
+   This function assumes that none of ``my_rates``'s members of pointer type hold valid memory addresses (i.e. where applicable, the function allocates fresh storage and makes no attempts to deallocate/reuse storage).
+
+   After calling this function, the user should avoid modifying any of the fields of ``my_chemistry`` or ``my_units``.
+   The **only** exception to this rule is that ``my_units``'s :c:var:`a_value` field may be mutated when using comoving units (i.e. ``my_units``'s :c:var:`comoving_coordinates` field is ``1``).
+
+   To deallocate any storage allocated by this function, use :c:func:`free_chemistry_data`.
+
+   :param chemistry_data \*my_chemistry: :ref:`fully configured <local_setup_data-storage>` run-time parameters
+   :param chemistry_data_storage \*my_rates: chemistry and cooling rate data structure
+   :param code_units \*my_units: code units conversions
+   :rtype: int
+   :returns: 1 (success) or 0 (failure)
+
+   .. note::
+      In addition to modifying the contents of ``my_rates``, this function may also mutate the values stored in ``my_chemistry`` to set them to "more sensible" values (based on other values stored in ``my_chemistry``).
+
+
+.. c:function:: int free_chemistry_data \
+                (chemistry_data *my_chemistry, \
+                chemistry_data_storage *my_rates);
+
+   Deallocates all data held by the members of ``my_rates`` allocated during its initialization in :c:func:`local_initialize_chemistry_data` (or :c:func:`initialize_chemistry_data`).
+   Issues may arise if ``my_chemistry`` was mutated between the initialization of ``my_rates`` and the call to this function.
+
+   :param chemistry_data \*my_chemistry: :ref:`fully configured <local_setup_data-storage>` run-time parameters
+   :param chemistry_data_storage \*my_rates: previously initialized chemistry and cooling rate data structure
+   :rtype: int
+   :returns: 1 (success) or 0 (failure)
+   
+
+Chemistry Functions
++++++++++++++++++++
 
 .. c:function:: int local_solve_chemistry(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, code_units *my_units, grackle_field_data *my_fields, double dt_value);
 
    Evolves the species densities and internal energies over a given timestep
    by solving the chemistry and cooling rate equations.
 
-   :param chemistry_data* my_chemistry: the structure returned by :c:func:`_set_default_chemistry_parameters`
+   :param chemistry_data* my_chemistry: :ref:`fully configured <local_setup_data-storage>` run-time parameters
    :param chemistry_data_storage* my_rates: chemistry and cooling rate data structure
    :param code_units* my_units: code units conversions
    :param grackle_field_data* my_fields: field data storage
@@ -183,7 +286,7 @@ initialization functions discussed in :ref:`internal_functions`.
 
    Calculates the instantaneous cooling time.
 
-   :param chemistry_data* my_chemistry: the structure returned by :c:func:`_set_default_chemistry_parameters`
+   :param chemistry_data* my_chemistry: :ref:`fully configured <local_setup_data-storage>` run-time parameters
    :param chemistry_data_storage* my_rates: chemistry and cooling rate data structure
    :param code_units* my_units: code units conversions
    :param grackle_field_data* my_fields: field data storage
@@ -197,7 +300,7 @@ initialization functions discussed in :ref:`internal_functions`.
    :c:data:`primordial_chemistry` >= 2 as the only thing that alters gamma from the single
    value is H\ :sub:`2`.
 
-   :param chemistry_data* my_chemistry: the structure returned by :c:func:`_set_default_chemistry_parameters`
+   :param chemistry_data* my_chemistry: :ref:`fully configured <local_setup_data-storage>` run-time parameters
    :param chemistry_data_storage* my_rates: chemistry and cooling rate data structure
    :param code_units* my_units: code units conversions
    :param grackle_field_data* my_fields: field data storage
@@ -209,7 +312,7 @@ initialization functions discussed in :ref:`internal_functions`.
 
    Calculates the gas pressure.
 
-   :param chemistry_data* my_chemistry: the structure returned by :c:func:`_set_default_chemistry_parameters`
+   :param chemistry_data* my_chemistry: :ref:`fully configured <local_setup_data-storage>` run-time parameters
    :param chemistry_data_storage* my_rates: chemistry and cooling rate data structure
    :param code_units* my_units: code units conversions
    :param grackle_field_data* my_fields: field data storage
@@ -221,7 +324,7 @@ initialization functions discussed in :ref:`internal_functions`.
 
    Calculates the gas temperature.
 
-   :param chemistry_data* my_chemistry: the structure returned by :c:func:`_set_default_chemistry_parameters`
+   :param chemistry_data* my_chemistry: :ref:`fully configured <local_setup_data-storage>` run-time parameters
    :param chemistry_data_storage* my_rates: chemistry and cooling rate data structure
    :param code_units* my_units: code units conversions
    :param grackle_field_data* my_fields: field data storage
@@ -233,7 +336,7 @@ initialization functions discussed in :ref:`internal_functions`.
 
    Calculates the dust temperature.
 
-   :param chemistry_data* my_chemistry: the structure returned by :c:func:`_set_default_chemistry_parameters`
+   :param chemistry_data* my_chemistry: :ref:`fully configured <local_setup_data-storage>` run-time parameters
    :param chemistry_data_storage* my_rates: chemistry and cooling rate data structure
    :param code_units* my_units: code units conversions
    :param grackle_field_data* my_fields: field data storage
@@ -252,7 +355,7 @@ The following functions are used to provide dynamic access to members of the :c:
 
    Returns the pointer to the member of ``my_chemistry`` associated with ``param_name``.
 
-   :param chemistry_data* my_chemistry: the structure returned by :c:func:`_set_default_chemistry_parameters`
+   :param chemistry_data* my_chemistry: :ref:`fully configured <local_setup_data-storage>` run-time parameters
    :param const char* param_name: the name of the parameter to access.
    :rtype: int*
 
@@ -260,7 +363,7 @@ The following functions are used to provide dynamic access to members of the :c:
 
    Returns the pointer to the member of ``my_chemistry`` associated with ``param_name``.
 
-   :param chemistry_data* my_chemistry: the structure returned by :c:func:`_set_default_chemistry_parameters`
+   :param chemistry_data* my_chemistry: :ref:`fully configured <local_setup_data-storage>` run-time parameters
    :param const char* param_name: the name of the parameter to access.
    :rtype: double*
 
@@ -268,7 +371,7 @@ The following functions are used to provide dynamic access to members of the :c:
 
    Returns the pointer to the member of ``my_chemistry`` associated with ``param_name``.
 
-   :param chemistry_data* my_chemistry: the structure returned by :c:func:`_set_default_chemistry_parameters`
+   :param chemistry_data* my_chemistry: :ref:`fully configured <local_setup_data-storage>` run-time parameters
    :param const char* param_name: the name of the parameter to access.
    :rtype: char**
 
@@ -314,10 +417,14 @@ described here can be used in conjunction with the :ref:`local_functions`.
 
 .. c:function:: chemistry_data _set_default_chemistry_parameters(void);
 
+   This function has been deprecated and will be removed in versions
+   of Grackle later than 3.2.
+   Please use :c:func:`set_default_chemistry_parameters` or :c:func:`local_initialize_chemistry_parameters`.
+
    Initializes and returns :c:type:`chemistry_data` data structure. This must be
    called before run-time parameters can be set.
 
-   :returns: data structure containing all run-time parameters and all chemistry and cooling data arrays
+   :returns: data structure containing all run-time parameters
    :rtype: :c:type:`chemistry_data`
 
 .. c:function:: int _initialize_chemistry_data(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, code_units *my_units);
