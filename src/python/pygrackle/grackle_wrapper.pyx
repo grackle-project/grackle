@@ -28,8 +28,8 @@ cdef class chemistry_data:
         self.data = _wrapped_c_chemistry_data()
 
     def initialize(self):
-        ret =  _initialize_chemistry_data(&self.data.data, &self.rates,
-                                          &self.units)
+        ret =  local_initialize_chemistry_data(&self.data.data, &self.rates,
+                                               &self.units)
         if ret is None:
             raise RuntimeError("Error initializing chemistry")
         return ret
@@ -958,7 +958,7 @@ cdef class _wrapped_c_chemistry_data:
     #   by a null character (the Python interface just hides if from users)
 
     def __cinit__(self):
-        self.data = _set_default_chemistry_parameters()
+        local_initialize_chemistry_parameters(&self.data)
         self._string_buffers = {}
 
     def _access_struct_field(self, key, val = None):

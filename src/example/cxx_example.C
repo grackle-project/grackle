@@ -250,7 +250,7 @@ int main(int argc, char *argv[])
 
   fprintf(stderr, "dust_temperature = %g K.\n", dust_temperature[0]);
 
-  _free_chemistry_data(my_grackle_data, &grackle_rates);
+  free_chemistry_data(my_grackle_data, &grackle_rates);
 
   return EXIT_SUCCESS;
 }

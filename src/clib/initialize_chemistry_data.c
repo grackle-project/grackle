@@ -57,9 +57,9 @@ static void show_version(FILE *fp)
   fprintf (fp, "\n");
 }
 
-int _initialize_chemistry_data(chemistry_data *my_chemistry,
-                               chemistry_data_storage *my_rates,
-                               code_units *my_units)
+int local_initialize_chemistry_data(chemistry_data *my_chemistry,
+                                    chemistry_data_storage *my_rates,
+                                    code_units *my_units)
 {
 
   if (grackle_verbose) {
@@ -249,15 +249,17 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
 
 int initialize_chemistry_data(code_units *my_units)
 {
-  if (_initialize_chemistry_data(grackle_data, &grackle_rates,
-                                 my_units) == FAIL) {
-    fprintf(stderr, "Error in _initialize_chemistry_data.\n");
+  if (local_initialize_chemistry_data(grackle_data, &grackle_rates,
+                                      my_units) == FAIL) {
+    fprintf(stderr, "Error in local_initialize_chemistry_data.\n");
     return FAIL;
   }
   return SUCCESS;
 }
 
 // Define helpers for the show_parameters function
+// NOTE: it's okay that these functions all begin with an underscore since they
+//       each have internal linkage (i.e. they are each declared static)
 static void _show_field_INT(FILE *fp, const char* field, int val)
 { fprintf(fp, "%-33s = %d\n", field, val); }
 static void _show_field_DOUBLE(FILE *fp, const char* field, double val)
@@ -274,8 +276,8 @@ void show_parameters(FILE *fp, chemistry_data *my_chemistry){
 }
 
 
-int _free_chemistry_data(chemistry_data *my_chemistry,
-			 chemistry_data_storage *my_rates) {
+int free_chemistry_data(chemistry_data *my_chemistry,
+			chemistry_data_storage *my_rates) {
   if (my_chemistry->primordial_chemistry > 0) {
     GRACKLE_FREE(my_rates->ceHI);
     GRACKLE_FREE(my_rates->ceHeI);
