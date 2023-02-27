@@ -1,3 +1,6 @@
+cdef extern from "grackle_macros.h":
+    cdef int GRACKLE_FAIL_VALUE "FAIL"
+
 cdef extern from "grackle_types.h":
     # This does not need to be exactly correct, only of the right basic type
     ctypedef float gr_float

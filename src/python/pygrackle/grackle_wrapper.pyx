@@ -737,14 +737,22 @@ def solve_chemistry(fc, my_dt):
     cdef int buf[7] # used for storage by members of my_fields
     cdef c_field_data my_fields = setup_field_data(fc, buf, False)
 
-    c_local_solve_chemistry(
+    cdef int ret = c_local_solve_chemistry(
         &my_chemistry,
         &my_rates,
         &my_units,
         &my_fields,
         my_dt)
 
-def calculate_cooling_time(fc):
+    if (ret == GRACKLE_FAIL_VALUE):
+        raise RuntimeError(f"Error occured within local_solve_chemistry")
+
+ctypedef int (*calc_prop_fn)(c_chemistry_data*, c_chemistry_data_storage*,
+			     c_code_units*, c_field_data*, gr_float*)
+
+cdef void _calculate_helper(object fc, object field_name, object func_name,
+                            calc_prop_fn func) except *:
+    # handle all of the setup before calling the function:
     cdef chemistry_data chem_data = fc.chemistry_data
     cdef c_chemistry_data my_chemistry = chem_data.data.data
     cdef c_chemistry_data_storage my_rates = chem_data.rates
@@ -752,87 +760,34 @@ def calculate_cooling_time(fc):
 
     cdef int buf[7] # used for storage by members of my_fields
     cdef c_field_data my_fields = setup_field_data(fc, buf, True)
+    cdef gr_float * output_field = get_field(fc, field_name)
 
-    cdef gr_float *cooling_time = get_field(fc, "cooling_time")
-
-    c_local_calculate_cooling_time(
-        &my_chemistry,
-        &my_rates,
-        &my_units,
-        &my_fields,
-        cooling_time)
+    # now actually call the function
+    cdef int ret = func(&my_chemistry, &my_rates, &my_units, &my_fields,
+                        output_field)
+    if (ret == GRACKLE_FAIL_VALUE):
+        raise RuntimeError(f"Error occured within {func_name}")
+    
+def calculate_cooling_time(fc):
+    _calculate_helper(fc, "cooling_time", "local_calculate_cooling_time",
+                      &c_local_calculate_cooling_time)
 
 def calculate_gamma(fc):
-    cdef chemistry_data chem_data = fc.chemistry_data
-    cdef c_chemistry_data my_chemistry = chem_data.data.data
-    cdef c_chemistry_data_storage my_rates = chem_data.rates
-    cdef c_code_units my_units = chem_data.units
-
-    cdef int buf[7] # used for storage by members of my_fields
-    cdef c_field_data my_fields = setup_field_data(fc, buf, True)
-
-    cdef gr_float *gamma = get_field(fc, "gamma")
-
-    c_local_calculate_gamma(
-        &my_chemistry,
-        &my_rates,
-        &my_units,
-        &my_fields,
-        gamma)
+    _calculate_helper(fc, "gamma", "local_calculate_gamma",
+                      &c_local_calculate_gamma)
 
 def calculate_pressure(fc):
-    cdef chemistry_data chem_data = fc.chemistry_data
-    cdef c_chemistry_data my_chemistry = chem_data.data.data
-    cdef c_chemistry_data_storage my_rates = chem_data.rates
-    cdef c_code_units my_units = chem_data.units
-
-    cdef int buf[7] # used for storage by members of my_fields
-    cdef c_field_data my_fields = setup_field_data(fc, buf, True)
-
-    cdef gr_float *pressure = get_field(fc, "pressure")
-
-    c_local_calculate_pressure(
-        &my_chemistry,
-        &my_rates,
-        &my_units,
-        &my_fields,
-        pressure)
+    _calculate_helper(fc, "pressure", "local_calculate_pressure",
+                      &c_local_calculate_pressure)
 
 def calculate_temperature(fc):
-    cdef chemistry_data chem_data = fc.chemistry_data
-    cdef c_chemistry_data my_chemistry = chem_data.data.data
-    cdef c_chemistry_data_storage my_rates = chem_data.rates
-    cdef c_code_units my_units = chem_data.units
-
-    cdef int buf[7] # used for storage by members of my_fields
-    cdef c_field_data my_fields = setup_field_data(fc, buf, True)
-
-    cdef gr_float *temperature = get_field(fc, "temperature")
-
-    c_local_calculate_temperature(
-        &my_chemistry,
-        &my_rates,
-        &my_units,
-        &my_fields,
-        temperature)
+    _calculate_helper(fc, "temperature", "local_calculate_temperature",
+                      &c_local_calculate_temperature)
 
 def calculate_dust_temperature(fc):
-    cdef chemistry_data chem_data = fc.chemistry_data
-    cdef c_chemistry_data my_chemistry = chem_data.data.data
-    cdef c_chemistry_data_storage my_rates = chem_data.rates
-    cdef c_code_units my_units = chem_data.units
-
-    cdef int buf[7] # used for storage by members of my_fields
-    cdef c_field_data my_fields = setup_field_data(fc, buf, True)
-
-    cdef gr_float *dust_temperature = get_field(fc, "dust_temperature")
-
-    c_local_calculate_dust_temperature(
-        &my_chemistry,
-        &my_rates,
-        &my_units,
-        &my_fields,
-        dust_temperature)
+    _calculate_helper(fc, "dust_temperature",
+                      "local_calculate_dust_temperature",
+                      &c_local_calculate_dust_temperature)
 
 def get_grackle_version():
     cdef c_grackle_version version_struct = c_get_grackle_version()
