@@ -239,4 +239,8 @@ cdef extern from "grackle.h":
                 c_field_data *my_fields,
                 gr_float *dust_temperature)
 
+    int c_free_chemistry_data "_free_chemistry_data" (
+        c_chemistry_data *my_chemistry,
+        c_chemistry_data_storage *my_rates)
+
     c_grackle_version c_get_grackle_version "get_grackle_version"()

@@ -11,6 +11,7 @@
 # software.
 ########################################################################
 
+import copy
 from pygrackle.utilities.physical_constants import \
     boltzmann_constant_cgs, \
     mass_hydrogen_cgs
@@ -23,15 +24,47 @@ cdef class chemistry_data:
     cdef _wrapped_c_chemistry_data data
     cdef c_chemistry_data_storage rates
     cdef c_code_units units
+    # When self.rates is uninitialized, the following is set to None. When
+    # self.initialize() is called, the following is set to a deepcopy of the
+    # instance of data from that moment in time. We do this because:
+    # - we need the unalterred copy of self.data for deallocation of self.rates
+    # - we need to let users mutate values stored in data at any time (for
+    #   backwards compatibility)
+    cdef object data_copy_from_init
 
     def __cinit__(self):
         self.data = _wrapped_c_chemistry_data()
+        self.data_copy_from_init = None
+
+    cdef void _try_uninitialize(self):
+        if self.data_copy_from_init is None:
+            return # nothing to uninitialize
+
+        c_free_chemistry_data(
+            &((<_wrapped_c_chemistry_data?>self.data_copy_from_init).data),
+            &self.rates)
+
+        self.data_copy_from_init = None
+
+    def __del__(self):
+        # only called in Python>=3.4 (in earlier versions, there will be a data
+        # leak). We define this instead of __dealloc__ to ensure that
+        # self.data_copy_from_init is still in a valid state
+        self._try_uninitialize()
 
     def initialize(self):
+        self._try_uninitialize() # if self.rates was already initialized,
+                                 # uninitialize it to avoid a memory leak
         ret =  _initialize_chemistry_data(&self.data.data, &self.rates,
                                           &self.units)
         if ret is None:
             raise RuntimeError("Error initializing chemistry")
+
+        # store a deepcopy of self.data to be used to deallocate self.rates
+        # later. It's important that we do this AFTER initializing self.rates
+        # because self.data may be mutated within that function
+        self.data_copy_from_init = copy.deepcopy(self.data)
+
         return ret
 
     def set_velocity_units(self):
@@ -1051,3 +1084,22 @@ cdef class _wrapped_c_chemistry_data:
     def __len__(self):
         return (len(self.int_keys()) + len(self.double_keys()) +
                 len(self.string_keys()))
+
+    def __deepcopy__(self, memo):
+        """
+        Custom deepcopy implementation. The memo dictionary is an opaque object
+        """
+
+        cdef _wrapped_c_chemistry_data out = _wrapped_c_chemistry_data()
+
+        # the following implementation would be faster and should work, but I
+        # have concerns that it could be broken easily:
+        #    out.data = self.data
+        #    for k in self.string_keys():
+        #        out[k] = self[k]
+        #    return out
+        #
+        # Our actual implementation is much more robust (harder to break):
+        for k in self:
+            out[k] = self[k]
+        return out
