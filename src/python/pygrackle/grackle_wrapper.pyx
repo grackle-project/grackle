@@ -16,6 +16,7 @@ from pygrackle.utilities.physical_constants import \
     boltzmann_constant_cgs, \
     mass_hydrogen_cgs
 
+from libc.limits cimport INT_MAX
 from .grackle_defs cimport *
 import numpy as np
 cimport numpy as np
@@ -660,28 +661,52 @@ cdef gr_float* get_field(fc, name):
     else:
         return <gr_float *> rv.data
 
-def solve_chemistry(fc, my_dt):
-    cdef double dt_value = <double> my_dt
+cdef c_field_data setup_field_data(object fc, int[::1] buf,
+                                   bint include_velocity) except *:
+    """
+    Helper function to setup an instance of the field_data struct. The
+    returned struct is only valid during the lifetimes of fc and buf.
+       - fc:  holds primary data used for setup
+       - buf: a contiguous typed memoryview holding at least 7 elements.
 
-    cdef chemistry_data chem_data = fc.chemistry_data
-    cdef c_chemistry_data my_chemistry = chem_data.data.data
-    cdef c_chemistry_data_storage my_rates = chem_data.rates
-    cdef c_code_units my_units = chem_data.units
+    Note: The way this function is declared causes cython to generate code to
+          check whether an Python Exception was raised every time this function
+          gets called. The runtime overhead should be of minimal concern
+    """
+    # load grid size and check for error
+    cdef Py_ssize_t grid_size = fc["density"].shape[0]
+    if <Py_ssize_t>(INT_MAX) < grid_size:
+        raise ValueError(
+            ("FluidContainer stores {} values. This function is only valid "
+             "for {} values or less").format(grid_size, int(INT_MAX))
+        )
 
-    cdef int grid_dimension
-    grid_dimension = fc["density"].shape[0]
-    cdef np.ndarray ref_gs, ref_ge
-    ref_gs = np.zeros(3, dtype="int32")
-    ref_ge = np.zeros(3, dtype="int32")
-    ref_ge[0] = grid_dimension -1
+    # buf is used to hold memory for grid_dimension, grid_start & grid_end
+    if buf.shape[0] < 7:
+        raise ValueError("buf must hold at least 7 elements")
 
+    # determine grid_dimension, grid_start and grid_end
+    cdef int* grid_dimension = &buf[0]
+    grid_dimension[0] = <int>(grid_size)
+
+    buf[1:7] = 0 # initialize all remaining buffer values to zero
+    cdef int* grid_start = &buf[1]
+    cdef int* grid_end = &buf[4]
+    grid_end[0] = <int>(grid_size) - 1
+
+    # now initialize my_fields
     cdef c_field_data my_fields
     my_fields.grid_rank = 1
-    my_fields.grid_dimension = &grid_dimension
-    my_fields.grid_start = <int *> ref_gs.data
-    my_fields.grid_end = <int *> ref_ge.data
+    my_fields.grid_dimension = grid_dimension
+    my_fields.grid_start = grid_start
+    my_fields.grid_end = grid_end
+
     my_fields.density = get_field(fc, "density")
     my_fields.internal_energy = get_field(fc, "energy")
+    if include_velocity:
+        my_fields.x_velocity = get_field(fc, "x-velocity")
+        my_fields.y_velocity = get_field(fc, "y-velocity")
+        my_fields.z_velocity = get_field(fc, "z-velocity")
     my_fields.HI_density = get_field(fc, "HI")
     my_fields.HII_density = get_field(fc, "HII")
     my_fields.HM_density = get_field(fc, "HM")
@@ -699,6 +724,18 @@ def solve_chemistry(fc, my_dt):
     my_fields.RT_heating_rate = get_field(fc, "RT_heating_rate")
     my_fields.volumetric_heating_rate = get_field(fc, "volumetric_heating_rate")
     my_fields.specific_heating_rate = get_field(fc, "specific_heating_rate")
+    return my_fields
+
+def solve_chemistry(fc, my_dt):
+    cdef double dt_value = <double> my_dt
+
+    cdef chemistry_data chem_data = fc.chemistry_data
+    cdef c_chemistry_data my_chemistry = chem_data.data.data
+    cdef c_chemistry_data_storage my_rates = chem_data.rates
+    cdef c_code_units my_units = chem_data.units
+
+    cdef int buf[7] # used for storage by members of my_fields
+    cdef c_field_data my_fields = setup_field_data(fc, buf, False)
 
     c_local_solve_chemistry(
         &my_chemistry,
@@ -713,40 +750,9 @@ def calculate_cooling_time(fc):
     cdef c_chemistry_data_storage my_rates = chem_data.rates
     cdef c_code_units my_units = chem_data.units
 
-    cdef int grid_dimension
-    grid_dimension = fc["density"].shape[0]
-    cdef np.ndarray ref_gs, ref_ge
-    ref_gs = np.zeros(3, dtype="int32")
-    ref_ge = np.zeros(3, dtype="int32")
-    ref_ge[0] = grid_dimension -1
+    cdef int buf[7] # used for storage by members of my_fields
+    cdef c_field_data my_fields = setup_field_data(fc, buf, True)
 
-    cdef c_field_data my_fields
-    my_fields.grid_rank = 1
-    my_fields.grid_dimension = &grid_dimension
-    my_fields.grid_start = <int *> ref_gs.data
-    my_fields.grid_end = <int *> ref_ge.data
-    my_fields.density = get_field(fc, "density")
-    my_fields.internal_energy = get_field(fc, "energy")
-    my_fields.x_velocity = get_field(fc, "x-velocity")
-    my_fields.y_velocity = get_field(fc, "y-velocity")
-    my_fields.z_velocity = get_field(fc, "z-velocity")
-    my_fields.HI_density = get_field(fc, "HI")
-    my_fields.HII_density = get_field(fc, "HII")
-    my_fields.HM_density = get_field(fc, "HM")
-    my_fields.HeI_density = get_field(fc, "HeI")
-    my_fields.HeII_density = get_field(fc, "HeII")
-    my_fields.HeIII_density = get_field(fc, "HeIII")
-    my_fields.H2I_density = get_field(fc, "H2I")
-    my_fields.H2II_density = get_field(fc, "H2II")
-    my_fields.DI_density = get_field(fc, "DI")
-    my_fields.DII_density = get_field(fc, "DII")
-    my_fields.HDI_density = get_field(fc, "HDI")
-    my_fields.e_density = get_field(fc, "de")
-    my_fields.metal_density = get_field(fc, "metal")
-    my_fields.dust_density = get_field(fc, "dust")
-    my_fields.RT_heating_rate = get_field(fc, "RT_heating_rate")
-    my_fields.volumetric_heating_rate = get_field(fc, "volumetric_heating_rate")
-    my_fields.specific_heating_rate = get_field(fc, "specific_heating_rate")
     cdef gr_float *cooling_time = get_field(fc, "cooling_time")
 
     c_local_calculate_cooling_time(
@@ -762,40 +768,9 @@ def calculate_gamma(fc):
     cdef c_chemistry_data_storage my_rates = chem_data.rates
     cdef c_code_units my_units = chem_data.units
 
-    cdef int grid_dimension
-    grid_dimension = fc["density"].shape[0]
-    cdef np.ndarray ref_gs, ref_ge
-    ref_gs = np.zeros(3, dtype="int32")
-    ref_ge = np.zeros(3, dtype="int32")
-    ref_ge[0] = grid_dimension -1
+    cdef int buf[7] # used for storage by members of my_fields
+    cdef c_field_data my_fields = setup_field_data(fc, buf, True)
 
-    cdef c_field_data my_fields
-    my_fields.grid_rank = 1
-    my_fields.grid_dimension = &grid_dimension
-    my_fields.grid_start = <int *> ref_gs.data
-    my_fields.grid_end = <int *> ref_ge.data
-    my_fields.density = get_field(fc, "density")
-    my_fields.internal_energy = get_field(fc, "energy")
-    my_fields.x_velocity = get_field(fc, "x-velocity")
-    my_fields.y_velocity = get_field(fc, "y-velocity")
-    my_fields.z_velocity = get_field(fc, "z-velocity")
-    my_fields.HI_density = get_field(fc, "HI")
-    my_fields.HII_density = get_field(fc, "HII")
-    my_fields.HM_density = get_field(fc, "HM")
-    my_fields.HeI_density = get_field(fc, "HeI")
-    my_fields.HeII_density = get_field(fc, "HeII")
-    my_fields.HeIII_density = get_field(fc, "HeIII")
-    my_fields.H2I_density = get_field(fc, "H2I")
-    my_fields.H2II_density = get_field(fc, "H2II")
-    my_fields.DI_density = get_field(fc, "DI")
-    my_fields.DII_density = get_field(fc, "DII")
-    my_fields.HDI_density = get_field(fc, "HDI")
-    my_fields.e_density = get_field(fc, "de")
-    my_fields.metal_density = get_field(fc, "metal")
-    my_fields.dust_density = get_field(fc, "dust")
-    my_fields.RT_heating_rate = get_field(fc, "RT_heating_rate")
-    my_fields.volumetric_heating_rate = get_field(fc, "volumetric_heating_rate")
-    my_fields.specific_heating_rate = get_field(fc, "specific_heating_rate")
     cdef gr_float *gamma = get_field(fc, "gamma")
 
     c_local_calculate_gamma(
@@ -811,40 +786,9 @@ def calculate_pressure(fc):
     cdef c_chemistry_data_storage my_rates = chem_data.rates
     cdef c_code_units my_units = chem_data.units
 
-    cdef int grid_dimension
-    grid_dimension = fc["density"].shape[0]
-    cdef np.ndarray ref_gs, ref_ge
-    ref_gs = np.zeros(3, dtype="int32")
-    ref_ge = np.zeros(3, dtype="int32")
-    ref_ge[0] = grid_dimension -1
+    cdef int buf[7] # used for storage by members of my_fields
+    cdef c_field_data my_fields = setup_field_data(fc, buf, True)
 
-    cdef c_field_data my_fields
-    my_fields.grid_rank = 1
-    my_fields.grid_dimension = &grid_dimension
-    my_fields.grid_start = <int *> ref_gs.data
-    my_fields.grid_end = <int *> ref_ge.data
-    my_fields.density = get_field(fc, "density")
-    my_fields.internal_energy = get_field(fc, "energy")
-    my_fields.x_velocity = get_field(fc, "x-velocity")
-    my_fields.y_velocity = get_field(fc, "y-velocity")
-    my_fields.z_velocity = get_field(fc, "z-velocity")
-    my_fields.HI_density = get_field(fc, "HI")
-    my_fields.HII_density = get_field(fc, "HII")
-    my_fields.HM_density = get_field(fc, "HM")
-    my_fields.HeI_density = get_field(fc, "HeI")
-    my_fields.HeII_density = get_field(fc, "HeII")
-    my_fields.HeIII_density = get_field(fc, "HeIII")
-    my_fields.H2I_density = get_field(fc, "H2I")
-    my_fields.H2II_density = get_field(fc, "H2II")
-    my_fields.DI_density = get_field(fc, "DI")
-    my_fields.DII_density = get_field(fc, "DII")
-    my_fields.HDI_density = get_field(fc, "HDI")
-    my_fields.e_density = get_field(fc, "de")
-    my_fields.metal_density = get_field(fc, "metal")
-    my_fields.dust_density = get_field(fc, "dust")
-    my_fields.RT_heating_rate = get_field(fc, "RT_heating_rate")
-    my_fields.volumetric_heating_rate = get_field(fc, "volumetric_heating_rate")
-    my_fields.specific_heating_rate = get_field(fc, "specific_heating_rate")
     cdef gr_float *pressure = get_field(fc, "pressure")
 
     c_local_calculate_pressure(
@@ -860,40 +804,9 @@ def calculate_temperature(fc):
     cdef c_chemistry_data_storage my_rates = chem_data.rates
     cdef c_code_units my_units = chem_data.units
 
-    cdef int grid_dimension
-    grid_dimension = fc["density"].shape[0]
-    cdef np.ndarray ref_gs, ref_ge
-    ref_gs = np.zeros(3, dtype="int32")
-    ref_ge = np.zeros(3, dtype="int32")
-    ref_ge[0] = grid_dimension -1
+    cdef int buf[7] # used for storage by members of my_fields
+    cdef c_field_data my_fields = setup_field_data(fc, buf, True)
 
-    cdef c_field_data my_fields
-    my_fields.grid_rank = 1
-    my_fields.grid_dimension = &grid_dimension
-    my_fields.grid_start = <int *> ref_gs.data
-    my_fields.grid_end = <int *> ref_ge.data
-    my_fields.density = get_field(fc, "density")
-    my_fields.internal_energy = get_field(fc, "energy")
-    my_fields.x_velocity = get_field(fc, "x-velocity")
-    my_fields.y_velocity = get_field(fc, "y-velocity")
-    my_fields.z_velocity = get_field(fc, "z-velocity")
-    my_fields.HI_density = get_field(fc, "HI")
-    my_fields.HII_density = get_field(fc, "HII")
-    my_fields.HM_density = get_field(fc, "HM")
-    my_fields.HeI_density = get_field(fc, "HeI")
-    my_fields.HeII_density = get_field(fc, "HeII")
-    my_fields.HeIII_density = get_field(fc, "HeIII")
-    my_fields.H2I_density = get_field(fc, "H2I")
-    my_fields.H2II_density = get_field(fc, "H2II")
-    my_fields.DI_density = get_field(fc, "DI")
-    my_fields.DII_density = get_field(fc, "DII")
-    my_fields.HDI_density = get_field(fc, "HDI")
-    my_fields.e_density = get_field(fc, "de")
-    my_fields.metal_density = get_field(fc, "metal")
-    my_fields.dust_density = get_field(fc, "dust")
-    my_fields.RT_heating_rate = get_field(fc, "RT_heating_rate")
-    my_fields.volumetric_heating_rate = get_field(fc, "volumetric_heating_rate")
-    my_fields.specific_heating_rate = get_field(fc, "specific_heating_rate")
     cdef gr_float *temperature = get_field(fc, "temperature")
 
     c_local_calculate_temperature(
@@ -909,40 +822,9 @@ def calculate_dust_temperature(fc):
     cdef c_chemistry_data_storage my_rates = chem_data.rates
     cdef c_code_units my_units = chem_data.units
 
-    cdef int grid_dimension
-    grid_dimension = fc["density"].shape[0]
-    cdef np.ndarray ref_gs, ref_ge
-    ref_gs = np.zeros(3, dtype="int32")
-    ref_ge = np.zeros(3, dtype="int32")
-    ref_ge[0] = grid_dimension -1
+    cdef int buf[7] # used for storage by members of my_fields
+    cdef c_field_data my_fields = setup_field_data(fc, buf, True)
 
-    cdef c_field_data my_fields
-    my_fields.grid_rank = 1
-    my_fields.grid_dimension = &grid_dimension
-    my_fields.grid_start = <int *> ref_gs.data
-    my_fields.grid_end = <int *> ref_ge.data
-    my_fields.density = get_field(fc, "density")
-    my_fields.internal_energy = get_field(fc, "energy")
-    my_fields.x_velocity = get_field(fc, "x-velocity")
-    my_fields.y_velocity = get_field(fc, "y-velocity")
-    my_fields.z_velocity = get_field(fc, "z-velocity")
-    my_fields.HI_density = get_field(fc, "HI")
-    my_fields.HII_density = get_field(fc, "HII")
-    my_fields.HM_density = get_field(fc, "HM")
-    my_fields.HeI_density = get_field(fc, "HeI")
-    my_fields.HeII_density = get_field(fc, "HeII")
-    my_fields.HeIII_density = get_field(fc, "HeIII")
-    my_fields.H2I_density = get_field(fc, "H2I")
-    my_fields.H2II_density = get_field(fc, "H2II")
-    my_fields.DI_density = get_field(fc, "DI")
-    my_fields.DII_density = get_field(fc, "DII")
-    my_fields.HDI_density = get_field(fc, "HDI")
-    my_fields.e_density = get_field(fc, "de")
-    my_fields.metal_density = get_field(fc, "metal")
-    my_fields.dust_density = get_field(fc, "dust")
-    my_fields.RT_heating_rate = get_field(fc, "RT_heating_rate")
-    my_fields.volumetric_heating_rate = get_field(fc, "volumetric_heating_rate")
-    my_fields.specific_heating_rate = get_field(fc, "specific_heating_rate")
     cdef gr_float *dust_temperature = get_field(fc, "dust_temperature")
 
     c_local_calculate_dust_temperature(
