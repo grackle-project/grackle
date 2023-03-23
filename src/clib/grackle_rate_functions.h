@@ -92,6 +92,6 @@ double grain_growth_rate(double T, double units, chemistry_data *my_chemistry);
 double comp_rate(double units, chemistry_data *my_chemistry);
 double gammah_rate(double units, chemistry_data *my_chemistry);
 double gamma_isrf_rate(double units, chemistry_data *my_chemistry);
-double gammah_isrf2_rate(double units, chemistry_data *my_chemistry);
+double gamma_isrf2_rate(double units, chemistry_data *my_chemistry);
 
 #endif

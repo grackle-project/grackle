@@ -42,6 +42,8 @@ _fluid_names[2] = _fluid_names[1] + \
   ["H2I", "H2II", "HM"]
 _fluid_names[3] = _fluid_names[2] + \
   ["DI", "DII", "HDI"]
+_fluid_names[4] = _fluid_names[3] + \
+  ["DM", "HDII", "HeHII"]
 
 _rad_trans_names = ['RT_heating_rate', 'RT_HI_ionization_rate',
                     'RT_HeI_ionization_rate', 'RT_HeII_ionization_rate',

@@ -1334,13 +1334,13 @@ double gasGrain_rate(double T, double units, chemistry_data *my_chemistry)
         The ISRF heating rate (Krumholz 2014) used here is for a uniform 
         grain size distribution (a = 0.17 um), and optical depth (Omukai 2000)
         is for a MRN-like broken power-law.
-        GC racalculate these rates for Omukai's dust model.
+        GC racalculated these rates for Omukai's dust model.
         */
         grain_coef = 2.57033e-32 * pow(1.033,-0.5) / fgr;
         double f_vel = 0.5 / sqrt(2.0) + 0.0833333 / sqrt(4.0);
         // Hollenbach & McKee (1989) considered the contribution of other species
         // than protons and charged grains, but we now consider only H2 and He 
-        // and neglect charged grains (Schneidef et al. 2006).
+        // and neglect charged grains (Schneider et al. 2006).
         return grain_coef * f_vel * pow(T, 0.5) / units;
     } else {
         //Calculate energy transfer from gas to dust grains (Equation 2.15, Hollenbach & McKee, 1989).

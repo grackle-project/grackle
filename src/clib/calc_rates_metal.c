@@ -26,6 +26,7 @@ int calc_coolrate_CO (chemistry_data *my_chemistry, chemistry_data_storage *my_r
 int calc_coolrate_OH (chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit);
 int calc_coolrate_H2O(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit);
 int calc_opacity_prim(chemistry_data *my_chemistry, chemistry_data_storage *my_rates);
+int allocate_rates_metal(chemistry_data *my_chemistry, chemistry_data_storage *my_rates);
 
 
 int calc_rates_metal(chemistry_data *my_chemistry,
@@ -211,11 +212,8 @@ int calc_rates_metal(chemistry_data *my_chemistry,
       if (ispecies == 0)
         return SUCCESS;
 
-//    printf("%13.5e %13.5e %13.5e\n"
-//     , tbase1
-//     , xbase1
-//     , dbase1
-//    );
+// Allocate rates
+      allocate_rates_metal(my_chemistry, my_rates);
 //
 // Initialize constants to tiny
 //
@@ -335,7 +333,12 @@ int calc_rates_metal(chemistry_data *my_chemistry,
         my_rates->kz18[i] = 6.83e-12 * pow(ttt300, 1.60) * exp(-9720.0/ttt);
         my_rates->kz19[i] = 3.30e-10 * exp(-8460.0/ttt);
         my_rates->kz20[i] = 6.64e-10 * exp(-11700.0/ttt);
-        my_rates->kz21[i] = 3.43e-13 * pow(ttt300, 2.67) * exp(-3160.0/ttt);
+        if(ttt < 1.0e7)
+            my_rates->kz21[i] = 3.43e-13 * pow(ttt300, 2.67) * exp(-3160.0/ttt);
+        else
+            my_rates->kz21[i] = 3.43e-13 * pow(1.0e7/300.0, 2.67) * exp(-3160.0/1.0e7);
+        // The rate comes from an experiment (297-3532 K).
+        // We refrain to extrapolate it to high temperatures.
         my_rates->kz22[i] = 7.00e-10 * exp(-232.0/ttt);
         my_rates->kz23[i] = 2.38e-10 * exp(-1760.0/ttt);
         my_rates->kz24[i] = 1.55e-12 * pow(ttt300, 1.60) * exp(-1660.0/ttt);
@@ -378,64 +381,64 @@ int calc_rates_metal(chemistry_data *my_chemistry,
 
       for (i = 0; i < nratec; i++) {
 //
-        my_rates->k125[i] /= kunit;
-        my_rates->k129[i] /= kunit;
-        my_rates->k130[i] /= kunit;
-        my_rates->k131[i] /= kunit;
-        my_rates->k132[i] /= kunit;
-        my_rates->k133[i] /= kunit;
-        my_rates->k134[i] /= kunit;
-        my_rates->k135[i] /= kunit;
-        my_rates->k136[i] /= kunit;
-        my_rates->k137[i] /= kunit;
-  
-        my_rates->k148[i] /= kunit;
-        my_rates->k149[i] /= kunit;
-        my_rates->k150[i] /= kunit;
-        my_rates->k151[i] /= kunit;
-        my_rates->k152[i] /= kunit;
-        my_rates->k153[i] /= kunit;
+        my_rates->k125[i] = fmax(my_rates->k125[i], tiny) / kunit;
+        my_rates->k129[i] = fmax(my_rates->k129[i], tiny) / kunit;
+        my_rates->k130[i] = fmax(my_rates->k130[i], tiny) / kunit;
+        my_rates->k131[i] = fmax(my_rates->k131[i], tiny) / kunit;
+        my_rates->k132[i] = fmax(my_rates->k132[i], tiny) / kunit;
+        my_rates->k133[i] = fmax(my_rates->k133[i], tiny) / kunit;
+        my_rates->k134[i] = fmax(my_rates->k134[i], tiny) / kunit;
+        my_rates->k135[i] = fmax(my_rates->k135[i], tiny) / kunit;
+        my_rates->k136[i] = fmax(my_rates->k136[i], tiny) / kunit;
+        my_rates->k137[i] = fmax(my_rates->k137[i], tiny) / kunit;
 
-        my_rates->kz15[i] /= kunit;
-        my_rates->kz16[i] /= kunit;
-        my_rates->kz17[i] /= kunit;
-        my_rates->kz18[i] /= kunit;
-        my_rates->kz19[i] /= kunit;
-        my_rates->kz20[i] /= kunit;
-        my_rates->kz21[i] /= kunit;
-        my_rates->kz22[i] /= kunit;
-        my_rates->kz23[i] /= kunit;
-        my_rates->kz24[i] /= kunit;
-        my_rates->kz25[i] /= kunit;
-        my_rates->kz26[i] /= kunit;
-        my_rates->kz27[i] /= kunit;
-        my_rates->kz28[i] /= kunit;
-        my_rates->kz29[i] /= kunit;
-        my_rates->kz30[i] /= kunit;
-        my_rates->kz31[i] /= kunit;
-        my_rates->kz32[i] /= kunit;
-        my_rates->kz33[i] /= kunit;
-        my_rates->kz34[i] /= kunit;
-        my_rates->kz35[i] /= kunit;
-        my_rates->kz36[i] /= kunit;
-        my_rates->kz37[i] /= kunit;
-        my_rates->kz38[i] /= kunit;
-        my_rates->kz39[i] /= kunit;
-        my_rates->kz40[i] /= kunit;
-        my_rates->kz41[i] /= kunit;
-        my_rates->kz42[i] /= kunit;
-        my_rates->kz43[i] /= kunit;
-        my_rates->kz44[i] /= kunit;
-        my_rates->kz45[i] /= kunit;
-        my_rates->kz46[i] /= kunit;
-        my_rates->kz47[i] /= kunit;
-        my_rates->kz48[i] /= kunit;
-        my_rates->kz49[i] /= kunit;
-        my_rates->kz50[i] /= kunit;
-        my_rates->kz51[i] /= kunit;
-        my_rates->kz52[i] /= kunit;
-        my_rates->kz53[i] /= kunit;
-        my_rates->kz54[i] /= kunit;
+        my_rates->k148[i] = fmax(my_rates->k148[i], tiny) / kunit;
+        my_rates->k149[i] = fmax(my_rates->k149[i], tiny) / kunit;
+        my_rates->k150[i] = fmax(my_rates->k150[i], tiny) / kunit;
+        my_rates->k151[i] = fmax(my_rates->k151[i], tiny) / kunit;
+        my_rates->k152[i] = fmax(my_rates->k152[i], tiny) / kunit;
+        my_rates->k153[i] = fmax(my_rates->k153[i], tiny) / kunit;
+
+        my_rates->kz15[i] = fmax(my_rates->kz15[i], tiny) / kunit;
+        my_rates->kz16[i] = fmax(my_rates->kz16[i], tiny) / kunit;
+        my_rates->kz17[i] = fmax(my_rates->kz17[i], tiny) / kunit;
+        my_rates->kz18[i] = fmax(my_rates->kz18[i], tiny) / kunit;
+        my_rates->kz19[i] = fmax(my_rates->kz19[i], tiny) / kunit;
+        my_rates->kz20[i] = fmax(my_rates->kz20[i], tiny) / kunit;
+        my_rates->kz21[i] = fmax(my_rates->kz21[i], tiny) / kunit;
+        my_rates->kz22[i] = fmax(my_rates->kz22[i], tiny) / kunit;
+        my_rates->kz23[i] = fmax(my_rates->kz23[i], tiny) / kunit;
+        my_rates->kz24[i] = fmax(my_rates->kz24[i], tiny) / kunit;
+        my_rates->kz25[i] = fmax(my_rates->kz25[i], tiny) / kunit;
+        my_rates->kz26[i] = fmax(my_rates->kz26[i], tiny) / kunit;
+        my_rates->kz27[i] = fmax(my_rates->kz27[i], tiny) / kunit;
+        my_rates->kz28[i] = fmax(my_rates->kz28[i], tiny) / kunit;
+        my_rates->kz29[i] = fmax(my_rates->kz29[i], tiny) / kunit;
+        my_rates->kz30[i] = fmax(my_rates->kz30[i], tiny) / kunit;
+        my_rates->kz31[i] = fmax(my_rates->kz31[i], tiny) / kunit;
+        my_rates->kz32[i] = fmax(my_rates->kz32[i], tiny) / kunit;
+        my_rates->kz33[i] = fmax(my_rates->kz33[i], tiny) / kunit;
+        my_rates->kz34[i] = fmax(my_rates->kz34[i], tiny) / kunit;
+        my_rates->kz35[i] = fmax(my_rates->kz35[i], tiny) / kunit;
+        my_rates->kz36[i] = fmax(my_rates->kz36[i], tiny) / kunit;
+        my_rates->kz37[i] = fmax(my_rates->kz37[i], tiny) / kunit;
+        my_rates->kz38[i] = fmax(my_rates->kz38[i], tiny) / kunit;
+        my_rates->kz39[i] = fmax(my_rates->kz39[i], tiny) / kunit;
+        my_rates->kz40[i] = fmax(my_rates->kz40[i], tiny) / kunit;
+        my_rates->kz41[i] = fmax(my_rates->kz41[i], tiny) / kunit;
+        my_rates->kz42[i] = fmax(my_rates->kz42[i], tiny) / kunit;
+        my_rates->kz43[i] = fmax(my_rates->kz43[i], tiny) / kunit;
+        my_rates->kz44[i] = fmax(my_rates->kz44[i], tiny) / kunit;
+        my_rates->kz45[i] = fmax(my_rates->kz45[i], tiny) / kunit;
+        my_rates->kz46[i] = fmax(my_rates->kz46[i], tiny) / kunit;
+        my_rates->kz47[i] = fmax(my_rates->kz47[i], tiny) / kunit;
+        my_rates->kz48[i] = fmax(my_rates->kz48[i], tiny) / kunit;
+        my_rates->kz49[i] = fmax(my_rates->kz49[i], tiny) / kunit;
+        my_rates->kz50[i] = fmax(my_rates->kz50[i], tiny) / kunit;
+        my_rates->kz51[i] = fmax(my_rates->kz51[i], tiny) / kunit;
+        my_rates->kz52[i] = fmax(my_rates->kz52[i], tiny) / kunit;
+        my_rates->kz53[i] = fmax(my_rates->kz53[i], tiny) / kunit;
+        my_rates->kz54[i] = fmax(my_rates->kz54[i], tiny) / kunit;
       }
 
       int ifunc;
@@ -2083,4 +2086,70 @@ int calc_opacity_prim  (chemistry_data *my_chemistry, chemistry_data_storage *my
   }
 
   return SUCCESS;
+}
+
+
+int allocate_rates_metal(chemistry_data *my_chemistry, chemistry_data_storage *my_rates)
+{
+    my_rates->k125 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->k129 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->k130 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->k131 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->k132 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->k133 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->k134 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->k135 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->k136 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->k137 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->k148 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->k149 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->k150 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->k151 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->k152 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->k153 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+
+    my_rates->kz15 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz16 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz17 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz18 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz19 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz20 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz21 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz22 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz23 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz24 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz25 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz26 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz27 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz28 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz29 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz30 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz31 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz32 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz33 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz34 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz35 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz36 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz37 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz38 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz39 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz40 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz41 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz42 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz43 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz44 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz45 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz46 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz47 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz48 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz49 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz50 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz51 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz52 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz53 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz54 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+
+    my_rates->cieY06  = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+
+    return SUCCESS;
 }

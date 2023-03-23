@@ -7,7 +7,7 @@
      &               d, u, v, w, 
      &               nsp, dsp, dspdot, nratec, 
      &               iexpand, ispecies, imetal, imcool,
-     &               idust, idustall, idustfield,
+     &               idust, idustall, idustfield, idustrec,
      &               ih2co, ipiht, iter, igammah,
      &               aye, temstart, temend, z_solar, fgr,
      &               utem, uxyz, uaye, urho, utim,
@@ -137,7 +137,7 @@ c -------------------------------------------------------------------
 
       integer output, nratec, nsp,
      &        iexpand, ih2co, ipiht, ispecies, imetal, idim,
-     &        imcool, idust, idustall, idustfield,
+     &        imcool, idust, idustall, idustfield, idustrec,
      &        igammah, ih2optical, iciecool, ithreebody,
      &        ndratec, clnew, iVheat, iMheat, iH2shield, iradshield,
      &        iradtrans, irt_honly, iisrffield
@@ -513,10 +513,10 @@ c -------------------------------------------------------------------
 
       if (imp_eng .eq. 1) then
             call cool1d_multi_g(
-     &                 d, e, u, v, w, de, HI, HII, HeI, HeII, HeIII,
+     &                d, e, u, v, w, de, HI, HII, HeI, HeII, HeIII,
      &                 1,  1,  1, nratec, 
      &                iexpand, ispecies, imetal, imcool,
-     &                idust, idustall, idustfield,
+     &                idust, idustall, idustfield, idustrec,
      &                   1,  0,  0, 1, 1, ih2co, ipiht, iter, igammah,
      &                aye, temstart, temend, z_solar, fgr,
      &                utem, uxyz, uaye, urho, utim,

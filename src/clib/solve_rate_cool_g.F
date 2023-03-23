@@ -561,9 +561,9 @@
       real*8, parameter   :: eps = 1.d-4
 
 !  Debug
-C     integer ierr_max
-C     real*8, allocatable :: dummtrx(:,:), dumvec(:)
-C     real*8 vecDtot
+c     integer ierr_max
+c     real*8, allocatable :: dummtrx(:,:), dumvec(:)
+c     real*8 vecDtot
 
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
@@ -1050,7 +1050,7 @@ C    &   , coolunit*dom/mh ! = vbase1**2 / tbase1
             do i = is+1, ie+1
             if ( itmask_tmp(i) ) then
 
-!              if (d(i,j,k)*dom .lt. 1.e6_DKIND) then
+c              if (d(i,j,k)*dom .lt. 1.e-2_DKIND) then
 !!             if (d(i,j,k)*dom .lt.
 !!   &          min(1.e6_DKIND/(metal(i,j,k)/d(i,j,k)/0.02d-4)**2
 !!   &             ,1.e6_DKIND)) then
@@ -1071,8 +1071,9 @@ C    &   , coolunit*dom/mh ! = vbase1**2 / tbase1
 
             do i = is+1, ie+1
             if (itmask_nr(i)) then
-               if ( (d(i,j,k)*dom .gt. 1.d7)
-     &         .and.(tgas(i) .gt. 1650.d0) ) then
+               if ( (icool .eq. 1) .and. (ispecies .gt. 1) .and.
+     &              ((d(i,j,k)*dom .gt. 1.d7)
+     &         .and.(tgas(i) .gt. 1650.d0)) ) then
                   imp_eng(i) = 1
                else
                   imp_eng(i) = 0
@@ -1409,8 +1410,8 @@ C    &   , coolunit*dom/mh ! = vbase1**2 / tbase1
                allocate(idsp(nsp))
                allocate(mtrx(nsp,nsp))
                allocate(vec(nsp))
-!              allocate(dummtrx(nsp,nsp))
-!              allocate(dumvec(nsp))
+c              allocate(dummtrx(nsp,nsp))
+c              allocate(dumvec(nsp))
 
                if ( ispecies .gt. 0 ) then
                   dsp( 1) = de(i,j,k)
@@ -1583,13 +1584,17 @@ C    &   , coolunit*dom/mh ! = vbase1**2 / tbase1
 
                   err_max=1.d2
                   itr=0
-                  do while ((itr.lt.20) .and. (err_max.gt.1.d-8))
+                  do while (err_max.gt.1.d-8)
+                    if(itr.ge.20) then
+                       ierr = 1
+                       go to 9996
+                    endif
 
             call lookup_cool_rates0d(itr, dtit(i),
      &   d(i,j,k), u(i,j,k), v(i,j,k), w(i,j,k), 
      &   nsp, dsp, dspdot, nratec, 
      &   iexpand, ispecies, imetal, imcool,
-     &   idust, idustall, idustfield,
+     &   idust, idustall, idustfield, idustrec,
      &   ih2co, ipiht, iter, igammah,
      &   aye, temstart, temend, z_solar, fgr,
      &   utem, uxyz, uaye, urho, utim,
@@ -1726,7 +1731,7 @@ C    &   , coolunit*dom/mh ! = vbase1**2 / tbase1
      &   d(i,j,k), u(i,j,k), v(i,j,k), w(i,j,k), 
      &   nsp, dsp1, dspdot1, nratec, 
      &   iexpand, ispecies, imetal, imcool,
-     &   idust, idustall, idustfield,
+     &   idust, idustall, idustfield, idustrec,
      &   ih2co, ipiht, iter, igammah,
      &   aye, temstart, temend, z_solar, fgr,
      &   utem, uxyz, uaye, urho, utim,
@@ -1885,27 +1890,28 @@ C    &   , coolunit*dom/mh ! = vbase1**2 / tbase1
                       vec(isp) = vec(isp)/d(i,j,k)
                     enddo
 
-C                   if((i.eq.1).and.(j.eq.1).and.(k.eq.1)) then
-C                      write(*,'(A6,16E10.2)') vec(idsp(:))
-C                      dummtrx = mtrx
-C                      dumvec  = vec
-C                   endif
+c                   if((i.eq.1).and.(j.eq.1).and.(k.eq.1)) then
+c                      write(*,'(a1,1p60e10.2)') 'a', d(i,j,k)*dom
+c    &                      , vec(idsp(:))
+c                      dummtrx = mtrx
+c                      dumvec  = vec
+c                   endif
 
                     call gaussj_g(nsp, mtrx, vec, ierr)
                     if(ierr .eq. 1) then
                       go to 9998
                     endif
 
-C                   if((i.eq.1).and.(j.eq.1).and.(k.eq.1)) then
-C                      do isp = 1, nsp
-C                        do jsp = 1, nsp
-C                          dumvec(isp) = dumvec(isp)
-C    &                       - dummtrx(isp,jsp)*vec(jsp)
-C                        enddo
-C                      enddo
-C                      write(*,'(17E10.2)') d(i,j,k)*dom
-C    &                     , dumvec(idsp(:))
-C                   endif
+c                   if((i.eq.1).and.(j.eq.1).and.(k.eq.1)) then
+c                      do isp = 1, nsp
+c                        do jsp = 1, nsp
+c                          dumvec(isp) = dumvec(isp)
+c    &                       - dummtrx(isp,jsp)*vec(jsp)
+c                        enddo
+c                      enddo
+c                      write(*,'(a1,1p60e10.2)') 'b', d(i,j,k)*dom
+c    &                     , dumvec(idsp(:))
+c                   endif
 
 !                   multiply with density again
                     do isp = 1, nsp
@@ -1930,7 +1936,7 @@ C                   endif
                     endif
 
                     err_max = 0.d0
-C                   ierr_max = 0
+c                   ierr_max = 0
                     do isp = 1, nsp
                       if(dsp(idsp(isp)) .gt. tiny8) then
                         err = dabs(vec(isp) / dsp(idsp(isp)))
@@ -1939,7 +1945,7 @@ C                   ierr_max = 0
                       endif
                       if(err .gt. err_max) then
                         err_max = err
-C                       ierr_max = idsp(isp)
+c                       ierr_max = idsp(isp)
                       endif
                     enddo
 
@@ -1948,7 +1954,12 @@ C                       ierr_max = idsp(isp)
 
 9998              continue
 9997              continue
+9996              continue
 
+!             if(itr.eq.20)
+!    &        write(*,'(A5, 1pe13.5, i3, 1pe13.5, i3, f13.7)') 'done'
+!    &           , d(i,j,k), itr, tgas(i), ierr_max
+!    &           , ttot(i)/dt*0.1
 
 !             Check if the fractions are valid after an iteration
 
@@ -2051,8 +2062,8 @@ C                       ierr_max = idsp(isp)
                deallocate(vec)
                deallocate(mtrx)
 
-!              deallocate(dumvec)
-!              deallocate(dummtrx)
+c              deallocate(dumvec)
+c              deallocate(dummtrx)
 
             endif
             enddo
@@ -3335,7 +3346,6 @@ C                 endif
 !                 Multiply by dust to gas ratio
 
                   h2dust(i) = h2dust(i) * dust2gas(i)
-!!                write(*,*) 'a', h2dust(i)
 
                endif
             endif
@@ -6042,7 +6052,6 @@ C***** H2Oice **********
       R_PREC correctCd, correctOd, correctMgd, correctAld
      &     , correctSid, correctSd, correctFed
       R_PREC correctZ
-      R_PREC tinymetal
       integer iSN, nSN, iSN0
       integer SN_i(SN0_N)
       R_PREC  SN_metal(in, SN0_N)
@@ -6371,7 +6380,7 @@ C           enddo
       if (imchem .eq. 1) then
       do i = is+1, ie+1
 !     if (itmask_metal(i)) then
-!        if (d(i,j,k)*dom .lt. 1.e6_DKIND) then
+c        if (d(i,j,k)*dom .lt. 1.e-2_DKIND) then
 !!       if (d(i,j,k)*dom .lt. 
 !!   &    min(1.e6_DKIND/(metal(i,j,k)/d(i,j,k)/0.02d-4)**2
 !!   &       ,1.e6_DKIND)) then
@@ -6764,51 +6773,50 @@ C           enddo
 
          endif ! d(i,j,k)
 
-            tinymetal = tiny8 * d(i,j,k)
-            CI(i,j,k)      = max(CI(i,j,k), tinymetal)
-            CII(i,j,k)     = max(CII(i,j,k), tinymetal)
-            CO(i,j,k)      = max(CO(i,j,k), tinymetal)
-            CO2(i,j,k)     = max(CO2(i,j,k), tinymetal)
-            OI(i,j,k)      = max(OI(i,j,k), tinymetal)
-            OH(i,j,k)      = max(OH(i,j,k), tinymetal)
-            H2O(i,j,k)     = max(H2O(i,j,k), tinymetal)
-            O2(i,j,k)      = max(O2(i,j,k), tinymetal)
-            SiI(i,j,k)     = max(SiI(i,j,k), tinymetal)
-            SiOI(i,j,k)    = max(SiOI(i,j,k), tinymetal)
-            SiO2I(i,j,k)   = max(SiO2I(i,j,k), tinymetal)
-            CH(i,j,k)      = max(CH(i,j,k), tinymetal)
-            CH2(i,j,k)     = max(CH2(i,j,k), tinymetal)
-            COII(i,j,k)    = max(COII(i,j,k), tinymetal)
-            OII(i,j,k)     = max(OII(i,j,k), tinymetal)
-            OHII(i,j,k)    = max(OHII(i,j,k), tinymetal)
-            H2OII(i,j,k)   = max(H2OII(i,j,k), tinymetal)
-            H3OII(i,j,k)   = max(H3OII(i,j,k), tinymetal)
-            O2II(i,j,k)    = max(O2II(i,j,k), tinymetal)
-         if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1 ) ) then
-         if (idspecies .gt. 0) then
-            Mg(i,j,k)      = max(Mg(i,j,k), tinymetal)
-            MgSiO3(i,j,k)  = max(MgSiO3(i,j,k), tinymetal)
-            AC(i,j,k)      = max(AC(i,j,k), tinymetal)
-         endif
-         if (idspecies .gt. 1) then
-            Al(i,j,k)      = max(Al(i,j,k), tinymetal)
-            S(i,j,k)       = max(S(i,j,k), tinymetal)
-            Fe(i,j,k)      = max(Fe(i,j,k), tinymetal)
-            SiM(i,j,k)     = max(SiM(i,j,k), tinymetal)
-            FeM(i,j,k)     = max(FeM(i,j,k), tinymetal)
-            Mg2SiO4(i,j,k) = max(Mg2SiO4(i,j,k), tinymetal)
-            Fe3O4(i,j,k)   = max(Fe3O4(i,j,k), tinymetal)
-            SiO2D(i,j,k)   = max(SiO2D(i,j,k), tinymetal)
-            MgO(i,j,k)     = max(MgO(i,j,k), tinymetal)
-            FeS(i,j,k)     = max(FeS(i,j,k), tinymetal)
-            Al2O3(i,j,k)   = max(Al2O3(i,j,k), tinymetal)
-         endif
-         if (idspecies .gt. 2) then
-            reforg(i,j,k)  = max(reforg(i,j,k), tinymetal)
-            volorg(i,j,k)  = max(volorg(i,j,k), tinymetal)
-            H2Oice(i,j,k)  = max(H2Oice(i,j,k), tinymetal)
-         endif
-         endif
+!           CI(i,j,k)      = max(CI(i,j,k), tiny)
+!           CII(i,j,k)     = max(CII(i,j,k), tiny)
+!           CO(i,j,k)      = max(CO(i,j,k), tiny)
+!           CO2(i,j,k)     = max(CO2(i,j,k), tiny)
+!           OI(i,j,k)      = max(OI(i,j,k), tiny)
+!           OH(i,j,k)      = max(OH(i,j,k), tiny)
+!           H2O(i,j,k)     = max(H2O(i,j,k), tiny)
+!           O2(i,j,k)      = max(O2(i,j,k), tiny)
+!           SiI(i,j,k)     = max(SiI(i,j,k), tiny)
+!           SiOI(i,j,k)    = max(SiOI(i,j,k), tiny)
+!           SiO2I(i,j,k)   = max(SiO2I(i,j,k), tiny)
+!           CH(i,j,k)      = max(CH(i,j,k), tiny)
+!           CH2(i,j,k)     = max(CH2(i,j,k), tiny)
+!           COII(i,j,k)    = max(COII(i,j,k), tiny)
+!           OII(i,j,k)     = max(OII(i,j,k), tiny)
+!           OHII(i,j,k)    = max(OHII(i,j,k), tiny)
+!           H2OII(i,j,k)   = max(H2OII(i,j,k), tiny)
+!           H3OII(i,j,k)   = max(H3OII(i,j,k), tiny)
+!           O2II(i,j,k)    = max(O2II(i,j,k), tiny)
+!        if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1 ) ) then
+!        if (idspecies .gt. 0) then
+!           Mg(i,j,k)      = max(Mg(i,j,k), tiny)
+!           MgSiO3(i,j,k)  = max(MgSiO3(i,j,k), tiny)
+!           AC(i,j,k)      = max(AC(i,j,k), tiny)
+!        endif
+!        if (idspecies .gt. 1) then
+!           Al(i,j,k)      = max(Al(i,j,k), tiny)
+!           S(i,j,k)       = max(S(i,j,k), tiny)
+!           Fe(i,j,k)      = max(Fe(i,j,k), tiny)
+!           SiM(i,j,k)     = max(SiM(i,j,k), tiny)
+!           FeM(i,j,k)     = max(FeM(i,j,k), tiny)
+!           Mg2SiO4(i,j,k) = max(Mg2SiO4(i,j,k), tiny)
+!           Fe3O4(i,j,k)   = max(Fe3O4(i,j,k), tiny)
+!           SiO2D(i,j,k)   = max(SiO2D(i,j,k), tiny)
+!           MgO(i,j,k)     = max(MgO(i,j,k), tiny)
+!           FeS(i,j,k)     = max(FeS(i,j,k), tiny)
+!           Al2O3(i,j,k)   = max(Al2O3(i,j,k), tiny)
+!        endif
+!        if (idspecies .gt. 2) then
+!           reforg(i,j,k)  = max(reforg(i,j,k), tiny)
+!           volorg(i,j,k)  = max(volorg(i,j,k), tiny)
+!           H2Oice(i,j,k)  = max(H2Oice(i,j,k), tiny)
+!        endif
+!        endif
 
 !     endif
       enddo

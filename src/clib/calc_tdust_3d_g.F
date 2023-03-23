@@ -606,30 +606,30 @@ C          endif
         endif ! itmask
         enddo
 
-         if (idspecies .eq. 0) then
-            do itd = 1, gr_N(2)
-               do i = is+1, ie + 1
-               if(itmask(i)) then
-                  altot(itd,i)=
-     &                (SN0_kpFeM    (4*itd,1)*SN0_fFeM    (1)
-     &                /SN0_r0FeM    (3    ,1)
-     &                +SN0_kpMg2SiO4(4*itd,1)*SN0_fMg2SiO4(1)
-     &                /SN0_r0Mg2SiO4(3    ,1)
-     &                +SN0_kpMgSiO3 (4*itd,1)*SN0_fMgSiO3 (1)
-     &                /SN0_r0MgSiO3 (3    ,1)
-     &                +SN0_kpFeS    (4*itd,1)*SN0_fFeS    (1)
-     &                /SN0_r0FeS    (3    ,1)
-     &                +SN0_kpreforg (4*itd,1)*SN0_freforg (1)
-     &                /SN0_r0reforg (3    ,1)
-     &                +SN0_kpvolorg (4*itd,1)*SN0_fvolorg (1)
-     &                /SN0_r0volorg (3    ,1)
-     &                +SN0_kpH2Oice (4*itd,1)*SN0_fH2Oice (1)
-     &                /SN0_r0H2Oice (3    ,1))
-     &                  * metal(i,j,k) / d(i,j,k)
-               endif
-               enddo
-            enddo
-         endif
+!        if (idspecies .eq. 0) then
+!           do itd = 1, gr_N(2)
+!              do i = is+1, ie + 1
+!              if(itmask(i)) then
+!                 altot(itd,i)=
+!    &                (SN0_kpFeM    (4*itd,1)*SN0_fFeM    (1)
+!    &                /SN0_r0FeM    (3    ,1)
+!    &                +SN0_kpMg2SiO4(4*itd,1)*SN0_fMg2SiO4(1)
+!    &                /SN0_r0Mg2SiO4(3    ,1)
+!    &                +SN0_kpMgSiO3 (4*itd,1)*SN0_fMgSiO3 (1)
+!    &                /SN0_r0MgSiO3 (3    ,1)
+!    &                +SN0_kpFeS    (4*itd,1)*SN0_fFeS    (1)
+!    &                /SN0_r0FeS    (3    ,1)
+!    &                +SN0_kpreforg (4*itd,1)*SN0_freforg (1)
+!    &                /SN0_r0reforg (3    ,1)
+!    &                +SN0_kpvolorg (4*itd,1)*SN0_fvolorg (1)
+!    &                /SN0_r0volorg (3    ,1)
+!    &                +SN0_kpH2Oice (4*itd,1)*SN0_fH2Oice (1)
+!    &                /SN0_r0H2Oice (3    ,1))
+!    &                  * metal(i,j,k) / d(i,j,k)
+!              endif
+!              enddo
+!           enddo
+!        endif
 
 !     --- Compute dust temperature in a slice ---
 
@@ -637,7 +637,7 @@ C          endif
 
             call calc_tdust_1d_g(tdust, tgas, nh, gasgr,
      &           mygisrf, myisrf, itmask, trad, in, is, ie, j, k
-     &         , gr_N, gr_Size, gr_dT, gr_Td, altot, kptot)
+     &         , gr_N, gr_Size, gr_dT, gr_Td, altot, kptot, idspecies)
 
 !!          write(*,*) tdust
 
@@ -646,61 +646,74 @@ C          endif
             if (idspecies .gt. 0) then
             call calc_tdust_1d_g(tMgSiO3  , tgas, nh, gasMgSiO3  ,
      &           gisrfMgSiO3  , myisrf, itmask, trad, in, is, ie, j, k
-     &         , gr_N, gr_Size, gr_dT, gr_Td, alMgSiO3  , kpMgSiO3  )
+     &         , gr_N, gr_Size, gr_dT, gr_Td, alMgSiO3  , kpMgSiO3 
+     &         , idspecies)
 !!          write(*,*) 'bb2', gasMgSiO3, gisrfMgSiO3, myisrf, tMgSiO3
           
             call calc_tdust_1d_g(tAC      , tgas, nh, gasAC      ,
      &           gisrfAC      , myisrf, itmask, trad, in, is, ie, j, k
-     &         , gr_N, gr_Size, gr_dT, gr_Td, alAC      , kpAC      )
+     &         , gr_N, gr_Size, gr_dT, gr_Td, alAC      , kpAC       
+     &         , idspecies)
 !!          write(*,*) 'bb2', gasAC    , gisrfAC    , myisrf, tAC
             endif
 
             if (idspecies .gt. 1) then
             call calc_tdust_1d_g(tSiM     , tgas, nh, gasSiM     ,
      &           gisrfSiM     , myisrf, itmask, trad, in, is, ie, j, k
-     &         , gr_N, gr_Size, gr_dT, gr_Td, alSiM     , kpSiM     )
+     &         , gr_N, gr_Size, gr_dT, gr_Td, alSiM     , kpSiM      
+     &         , idspecies)
           
             call calc_tdust_1d_g(tFeM     , tgas, nh, gasFeM     ,
      &           gisrfFeM     , myisrf, itmask, trad, in, is, ie, j, k
-     &         , gr_N, gr_Size, gr_dT, gr_Td, alFeM     , kpFeM     )
+     &         , gr_N, gr_Size, gr_dT, gr_Td, alFeM     , kpFeM      
+     &         , idspecies)
           
             call calc_tdust_1d_g(tMg2SiO4 , tgas, nh, gasMg2SiO4 ,
      &           gisrfMg2SiO4 , myisrf, itmask, trad, in, is, ie, j, k
-     &         , gr_N, gr_Size, gr_dT, gr_Td, alMg2SiO4 , kpMg2SiO4 )
+     &         , gr_N, gr_Size, gr_dT, gr_Td, alMg2SiO4 , kpMg2SiO4  
+     &         , idspecies)
           
             call calc_tdust_1d_g(tFe3O4   , tgas, nh, gasFe3O4   ,
      &           gisrfFe3O4   , myisrf, itmask, trad, in, is, ie, j, k
-     &         , gr_N, gr_Size, gr_dT, gr_Td, alFe3O4   , kpFe3O4   )
+     &         , gr_N, gr_Size, gr_dT, gr_Td, alFe3O4   , kpFe3O4    
+     &         , idspecies)
           
             call calc_tdust_1d_g(tSiO2D   , tgas, nh, gasSiO2D   ,
      &           gisrfSiO2D   , myisrf, itmask, trad, in, is, ie, j, k
-     &         , gr_N, gr_Size, gr_dT, gr_Td, alSiO2D   , kpSiO2D   )
+     &         , gr_N, gr_Size, gr_dT, gr_Td, alSiO2D   , kpSiO2D    
+     &         , idspecies)
           
             call calc_tdust_1d_g(tMgO     , tgas, nh, gasMgO     ,
      &           gisrfMgO     , myisrf, itmask, trad, in, is, ie, j, k
-     &         , gr_N, gr_Size, gr_dT, gr_Td, alMgO     , kpMgO     )
+     &         , gr_N, gr_Size, gr_dT, gr_Td, alMgO     , kpMgO      
+     &         , idspecies)
           
             call calc_tdust_1d_g(tFeS     , tgas, nh, gasFeS     ,
      &           gisrfFeS     , myisrf, itmask, trad, in, is, ie, j, k
-     &         , gr_N, gr_Size, gr_dT, gr_Td, alFeS     , kpFeS     )
+     &         , gr_N, gr_Size, gr_dT, gr_Td, alFeS     , kpFeS      
+     &         , idspecies)
           
             call calc_tdust_1d_g(tAl2O3   , tgas, nh, gasAl2O3   ,
      &           gisrfAl2O3   , myisrf, itmask, trad, in, is, ie, j, k
-     &         , gr_N, gr_Size, gr_dT, gr_Td, alAl2O3   , kpAl2O3   )
+     &         , gr_N, gr_Size, gr_dT, gr_Td, alAl2O3   , kpAl2O3    
+     &         , idspecies)
             endif
 
             if (idspecies .gt. 2) then
             call calc_tdust_1d_g(treforg  , tgas, nh, gasreforg  ,
      &           gisrfreforg  , myisrf, itmask, trad, in, is, ie, j, k
-     &         , gr_N, gr_Size, gr_dT, gr_Td, alreforg  , kpreforg  )
+     &         , gr_N, gr_Size, gr_dT, gr_Td, alreforg  , kpreforg   
+     &         , idspecies)
           
             call calc_tdust_1d_g(tvolorg  , tgas, nh, gasvolorg  ,
      &           gisrfvolorg  , myisrf, itmask, trad, in, is, ie, j, k
-     &         , gr_N, gr_Size, gr_dT, gr_Td, alvolorg  , kpvolorg  )
+     &         , gr_N, gr_Size, gr_dT, gr_Td, alvolorg  , kpvolorg   
+     &         , idspecies)
           
             call calc_tdust_1d_g(tH2Oice  , tgas, nh, gasH2Oice  ,
      &           gisrfH2Oice  , myisrf, itmask, trad, in, is, ie, j, k
-     &         , gr_N, gr_Size, gr_dT, gr_Td, alH2Oice  , kpH2Oice  )
+     &         , gr_N, gr_Size, gr_dT, gr_Td, alH2Oice  , kpH2Oice   
+     &         , idspecies)
             endif
 
          endif

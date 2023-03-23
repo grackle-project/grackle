@@ -472,6 +472,9 @@ cdef extern from "grackle_types.h":
       gr_float *DI_density;
       gr_float *DII_density;
       gr_float *HDI_density;
+      gr_float *DM_density;
+      gr_float *HDII_density;
+      gr_float *HeHII_density;
       gr_float *e_density;
       gr_float *metal_density;
       gr_float *dust_density;

@@ -531,17 +531,17 @@ int initialize_rates(chemistry_data *my_chemistry, chemistry_data_storage *my_ra
     //* This handles all primordial_chemistry == 4 rates
     if (my_chemistry->primordial_chemistry >= 4){
         //H2 formation on dust grains with C and S compositions
-        add_h2dust_C_reaction_rate(&my_rates->h2dustC, coolingUnits, my_chemistry);
-        add_h2dust_S_reaction_rate(&my_rates->h2dustS, coolingUnits, my_chemistry);
+        add_h2dust_C_reaction_rate(&my_rates->h2dustC, kUnit, my_chemistry);
+        add_h2dust_S_reaction_rate(&my_rates->h2dustS, kUnit, my_chemistry);
 
         //Heating of dust by interstellar radiation field, with an arbitrary grain size distribution 
-        add_scalar_reaction_rate(&my_rates->gamma_isrf2, gammah_isrf2_rate, coolingUnits, my_chemistry);
+        add_scalar_reaction_rate(&my_rates->gamma_isrf2, gamma_isrf2_rate, coolingUnits, my_chemistry);
 
         //Gas-grain energy transfer, with an arbitrary grain size distribution
         add_reaction_rate(&my_rates->gas_grain2, gasGrain2_rate, coolingUnits, my_chemistry);
 
         //Grain growth rate
-        add_reaction_rate(&my_rates->grain_growth_rate, grain_growth_rate, coolingUnits, my_chemistry);
+        add_reaction_rate(&my_rates->grain_growth_rate, grain_growth_rate, kUnit, my_chemistry);
     }
 
     //End of function definition.
