@@ -16,6 +16,7 @@
 
 #include "grackle_types.h"
 #include "grackle_chemistry_data.h"
+#include <cstddef>
 
 extern int grackle_verbose;
 
