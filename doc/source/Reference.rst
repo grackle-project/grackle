@@ -246,6 +246,12 @@ initialization functions discussed in :ref:`internal_functions`.
 Dynamic Configuration Functions
 +++++++++++++++++++++++++++++++
 
+.. c:function:: size_t grackle_num_params(const char* type_name)
+
+   Returns the number of parameters of a given type that are stored as members of the :c:data:`chemistry_data` struct.
+   The argument is expected to be ``"int"``, ``"double"``, or ``"string"``.
+   This will return ``0`` for any other argument
+
 The following functions are used to provide dynamic access to members of the :c:data:`chemistry_data` struct. They will return ``NULL`` when ``my_chemistry`` is ``NULL``, ``param_name`` isn't a known parameter, or the ``param_name`` is not associated with the type mentioned in the function name.
 
 .. c:function:: int* local_chemistry_data_access_int(chemistry_data *my_chemistry, const char* param_name);
