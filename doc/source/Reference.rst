@@ -192,15 +192,15 @@ For the sake of argument let's imagine that the user is storing the chemistry da
 
    .. code-block:: c++
 
-      chemistry_data * my_chemistry_data = new chemistry_data;
-      if (local_initialize_chemistry_parameters(my_chemistry_data) == 0) {
+      chemistry_data *my_chemistry = new chemistry_data;
+      if (local_initialize_chemistry_parameters(my_chemistry) == 0) {
          fprintf(stderr, "Error in local_initialize_chemistry_parameters.\n");
       }
 
 2. Next, the user can configure the stored parameters.
    They can do this by directly modifying the stored parameters (e.g. ``my_chemistry->use_grackle = 1``) or by using the :ref:`dynamic-api`.
 
-After the user has finished initializing ``my_chemistry``, and have configured an instance of :c:data:`code_units` (more detail provided :ref:`here <code-units>`), they can initialize an instance of :c:data:`chemistry_data_storage` with 
+After the user has finished initializing ``my_chemistry``, and has configured an instance of :c:data:`code_units` (more detail provided :ref:`here <code-units>`), they can initialize an instance of :c:data:`chemistry_data_storage` with 
 :c:func:`local_initialize_chemistry_data`:
 
 .. code-block:: c++
