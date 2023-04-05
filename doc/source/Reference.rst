@@ -41,6 +41,14 @@ Primary Functions
    :rtype: int
    :returns: 1 (success) or 0 (failure)
 
+.. c:function:: int free_chemistry_data ();
+
+   Deallocates all data allocations made during the call to :c:func:`initialize_chemistry_data`.
+   Issues may arise if the global ``grackle_data`` data structure was mutated between the call to :c:func:`initialize_chemistry_data` and the call to this function.
+
+   :rtype: int
+   :returns: 1 (success) or 0 (failure)
+
 .. c:function:: void set_velocity_units(code_units *my_units);
 
    Sets the :c:data:`velocity_units` value of the input ``my_units``
@@ -253,12 +261,14 @@ Configuration/Cleanup Functions
       In addition to modifying the contents of ``my_rates``, this function may also mutate the values stored in ``my_chemistry`` to set them to "more sensible" values (based on other values stored in ``my_chemistry``).
 
 
-.. c:function:: int free_chemistry_data \
+.. c:function:: int local_free_chemistry_data \
                 (chemistry_data *my_chemistry, \
                 chemistry_data_storage *my_rates);
 
    Deallocates all data held by the members of ``my_rates`` allocated during its initialization in :c:func:`local_initialize_chemistry_data` (or :c:func:`initialize_chemistry_data`).
    Issues may arise if ``my_chemistry`` was mutated between the initialization of ``my_rates`` and the call to this function.
+
+   This is the "local" counterpart to :c:func:`free_chemistry_data`.
 
    :param chemistry_data \*my_chemistry: :ref:`fully configured <local_setup_data-storage>` run-time parameters
    :param chemistry_data_storage \*my_rates: previously initialized chemistry and cooling rate data structure

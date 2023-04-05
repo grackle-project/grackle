@@ -715,7 +715,7 @@ Clearing the memory
 
 .. code-block:: c++
 
-  free_chemistry_data(my_grackle_data, &grackle_rates);
+  free_chemistry_data();
 
 Grackle is using global structures and therefore the global structure ``grackle_rates`` needs also to be released.
 

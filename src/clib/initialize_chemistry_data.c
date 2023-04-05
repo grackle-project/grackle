@@ -275,9 +275,16 @@ void show_parameters(FILE *fp, chemistry_data *my_chemistry){
   #undef ENTRY
 }
 
+int free_chemistry_data(void){
+  if (local_free_chemistry_data(grackle_data, &grackle_rates) == FAIL) {
+    fprintf(stderr, "Error in local_free_chemistry_data.\n");
+    return FAIL;
+  }
+  return SUCCESS;
+}
 
-int free_chemistry_data(chemistry_data *my_chemistry,
-			chemistry_data_storage *my_rates) {
+int local_free_chemistry_data(chemistry_data *my_chemistry,
+                              chemistry_data_storage *my_rates) {
   if (my_chemistry->primordial_chemistry > 0) {
     GRACKLE_FREE(my_rates->ceHI);
     GRACKLE_FREE(my_rates->ceHeI);

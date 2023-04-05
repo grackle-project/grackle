@@ -183,7 +183,9 @@ int _calculate_temperature(chemistry_data *my_chemistry,
                            gr_float *e_density, gr_float *metal_density,
                            gr_float *temperature) __attribute__ ((deprecated));
 
-int free_chemistry_data(chemistry_data *my_chemistry, chemistry_data_storage *my_rates);
+int free_chemistry_data(void);
+
+int local_free_chemistry_data(chemistry_data *my_chemistry, chemistry_data_storage *my_rates);
 
 grackle_version get_grackle_version(void);
 
@@ -211,7 +213,7 @@ _initialize_chemistry_data(chemistry_data *my_chemistry,
 inline __attribute__((deprecated)) int
 _free_chemistry_data (chemistry_data *my_chemistry,
                       chemistry_data_storage *my_rates)
-{ return free_chemistry_data(my_chemistry, my_rates); }
+{ return local_free_chemistry_data(my_chemistry, my_rates); }
 
 #endif /* OMIT_LEGACY_INTERNAL_GRACKLE_FUNC */
 

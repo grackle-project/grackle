@@ -41,7 +41,7 @@ cdef class chemistry_data:
         if self.data_copy_from_init is None:
             return # nothing to uninitialize
 
-        c_free_chemistry_data(
+        c_local_free_chemistry_data(
             &((<_wrapped_c_chemistry_data?>self.data_copy_from_init).data),
             &self.rates)
 
