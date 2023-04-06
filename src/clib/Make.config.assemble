@@ -138,12 +138,14 @@
 #-----------------------------------------------------------------------
 
     ERROR_OMP = 1
+    GRACKLE_USE_OMP = 0
 
     # Settings for enabling OpenMP
 
     ifeq ($(CONFIG_OMP),on)
         ERROR_OMP = 0
         ASSEMBLE_OMP_FLAGS = $(MACH_OMPFLAGS)
+        GRACKLE_USE_OMP = 1
     endif
 
     # Settings for disabling OpenMP
@@ -151,6 +153,7 @@
     ifeq ($(CONFIG_OMP),off)
         ERROR_OMP = 0
         ASSEMBLE_OMP_FLAGS =
+        GRACKLE_USE_OMP = 0
     endif
 
     # error if CONFIG_OMP is incorrect

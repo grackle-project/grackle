@@ -14,6 +14,12 @@
 #ifndef __CHEMISTRY_DATA_H__
 #define __CHEMISTRY_DATA_H__
 
+#include "grackle_config.h"
+
+#ifndef GRACKLE_USE_OMP
+#error "Something is wrong... The GRACKLE_USE_OMP macro is not defined. It should always have a value of 0 or 1"
+#endif
+
 /**********************************
  *** Grackle runtime parameters ***
  **********************************/
@@ -171,7 +177,7 @@ typedef struct
   int exit_after_iterations_exceeded;
 
   /* number of OpenMP threads, if supported */
-# ifdef _OPENMP
+# if GRACKLE_USE_OMP == 1
   int omp_nthreads;
 # endif
 

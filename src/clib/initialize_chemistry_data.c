@@ -24,6 +24,28 @@
 #include <omp.h>
 #endif
 
+// note: the _OPENMP macro is automatically defined by the compiler when OpenMP
+// is being used. However, this is only guaranteed to be defined while
+// compiling the Grackle libraries source files.
+//
+// In order to inform external programs linking agains Grackle whether Grackle
+// was configured with OpenMP (and to ensure that the fields of chemistry_data
+// structure that are conditionally defined when using Grackle are properly
+// defined in the external program), we also define GRACKLE_USE_OMP macro (with
+// a value of 0 or 1).
+//
+// For lack of a better place to do this, we perform a test here at compile
+// time to ensure that GRACKLE_USE_OMP has a value consistent with the presence
+// or absence of _OPENMP
+
+#ifndef GRACKLE_USE_OMP
+#error "The GRACKLE_USE_OMP macro is not defined. It should always have a value of 0 or 1."
+#elif defined(_OPENMP) && (GRACKLE_USE_OMP != 1)
+#error "when the _OPENMP macro is defined, the GRACKLE_USE_OMP macro must be equal to 1"
+#elif !defined(_OPENMP) && (GRACKLE_USE_OMP != 0)
+#error "when the _OPENMP macro isn't defined, the GRACKLE_USE_OMP macro must be equal to 0"
+#endif
+
 extern int grackle_verbose;
 
 extern chemistry_data *grackle_data;

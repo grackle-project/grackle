@@ -199,6 +199,6 @@ ENTRY(max_iterations, INT, 10000)
 ENTRY(exit_after_iterations_exceeded, INT, FALSE)
 
 /* number of OpenMP threads, if supported */
-# ifdef _OPENMP
+# if GRACKLE_USE_OMP == 1
 ENTRY(omp_nthreads, INT, omp_get_max_threads())
 # endif

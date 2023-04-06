@@ -205,6 +205,7 @@ config_header:
 	-@echo "#ifndef __GRACKLE_CONFIG_H__" > grackle_config.h
 	-@echo "#define __GRACKLE_CONFIG_H__" >> grackle_config.h
 	-@echo "#define $(PRECISION_DEFINE)" >> grackle_config.h
+	-@echo "#define GRACKLE_USE_OMP $(GRACKLE_USE_OMP)" >> grackle_config.h
 	-@echo "#endif" >> grackle_config.h
 
 # Force update of auto_show_config.c
