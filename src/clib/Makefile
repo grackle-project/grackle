@@ -198,14 +198,14 @@ verbose: VERBOSE = 1
 #-----------------------------------------------------------------------
 
 .PHONY: autogen
-autogen: config_type auto_show_config.c auto_show_flags.c auto_get_version.c
+autogen: config_header auto_show_config.c auto_show_flags.c auto_get_version.c
 
-.PHONY: config_type
-config_type:
-	-@echo "#ifndef __GRACKLE_FLOAT_H__" > grackle_float.h
-	-@echo "#define __GRACKLE_FLOAT_H__" >> grackle_float.h
-	-@echo "#define $(PRECISION_DEFINE)" >> grackle_float.h
-	-@echo "#endif" >> grackle_float.h
+.PHONY: config_header
+config_header:
+	-@echo "#ifndef __GRACKLE_CONFIG_H__" > grackle_config.h
+	-@echo "#define __GRACKLE_CONFIG_H__" >> grackle_config.h
+	-@echo "#define $(PRECISION_DEFINE)" >> grackle_config.h
+	-@echo "#endif" >> grackle_config.h
 
 # Force update of auto_show_config.c
 
@@ -297,7 +297,7 @@ install:
 	@(if [ ! -d $(INSTALL_INCLUDE_DIR) ]; then \
 		mkdir $(INSTALL_INCLUDE_DIR); \
 	fi)
-	@cp grackle.h grackle_macros.h grackle_float.h grackle_types.h grackle_chemistry_data.h grackle_rate_functions.h grackle.def grackle_fortran_types.def grackle_fortran_interface.def $(INSTALL_INCLUDE_DIR)
+	@cp grackle.h grackle_macros.h grackle_config.h grackle_types.h grackle_chemistry_data.h grackle_rate_functions.h grackle.def grackle_fortran_types.def grackle_fortran_interface.def $(INSTALL_INCLUDE_DIR)
 	@(if [ ! -d $(INSTALL_LIB_DIR) ]; then \
 		mkdir $(INSTALL_LIB_DIR); \
 	fi)
@@ -307,7 +307,7 @@ install:
 #-----------------------------------------------------------------------
 
 clean:
-	-@rm -f *.la .libs/* *.o *.lo DEPEND.bak *~ $(OUTPUT) grackle_float.h *.exe auto_show*.c DEPEND out.make.DEPEND
+	-@rm -f *.la .libs/* *.o *.lo DEPEND.bak *~ $(OUTPUT) grackle_config.h *.exe auto_show*.c DEPEND out.make.DEPEND
 	-@touch DEPEND
 
 #-----------------------------------------------------------------------

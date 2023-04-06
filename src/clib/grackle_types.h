@@ -19,7 +19,7 @@
 /
 ************************************************************************/
 
-#include "grackle_float.h"
+#include "grackle_config.h"
 
 #ifdef GRACKLE_FLOAT_4
 #define gr_float float

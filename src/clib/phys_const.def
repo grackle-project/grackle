@@ -1,4 +1,4 @@
-#include "grackle_float.h"
+#include "grackle_config.h"
 
 #ifdef GRACKLE_FLOAT_4
 
