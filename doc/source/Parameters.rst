@@ -6,6 +6,8 @@ Parameters and Data Files
 Parameters
 ----------
 
+See :ref:`adding-new-params` for guidelines for adding new parameters.
+
 For all on/off integer flags, 0 is off and 1 is on.
 
 .. c:var:: int use_grackle
@@ -252,6 +254,20 @@ For all on/off integer flags, 0 is off and 1 is on.
    the dust grains for the calculation of the dust temperature.
    Default: 1.7.
 
+.. c:var:: int CaseBRecombination
+
+   Flag to use the Case B recombination rates (and associated cooling
+   rates) for H\ :sup:`+`, He\ :sup:`+`, and He\ :sup:`++` instead of
+   the Case A rates. Set to 1 for Case B and 0 for Case A. The Case A
+   rates include recombinations directly to the ground state (which
+   would result in emission of an ionizing photon) as well as
+   recombinations to excited states (which eventually reach the ground
+   state through lower energy transitions). The Case B rates exclude
+   recombinations directly to the ground state under the assumption
+   that the ionizing photon is reabsorbed. Hence, the Case B rates are
+   slightly lower than the Case A rates.
+   Default: 0.
+
 .. c:var:: int Compton_xray_heating
 
    Flag to enable Compton heating from an X-ray background following
@@ -485,6 +501,33 @@ For all on/off integer flags, 0 is off and 1 is on.
 
    On/off flag to toggle calculation of rate coefficients corresponding to bremsstrahlung cooling 
    (``brem``). Default: 1
+
+.. c:var:: int max_iterations
+
+   The maximum subcycle iterations allowed when evolving the chemistry
+   network and internal energy in :c:func:`solve_chemistry`. The
+   default of 10000 should be sufficient in most situations. However,
+   certain physical conditions, such as dense gas that has been
+   photo-ionized, can lead to extremely short timesteps. In cases like
+   this, increasing the iteration limit by a factor of 10 or more is
+   enough to work through difficult conditions. For other situations
+   which are currently not well understood, this will not help. If you
+   encounter a situation where the iteration limit continues to be
+   exceeded for extremely high values, please report it. The behavior
+   of the code when the iteration limit is exceeded is controled by
+   the :c:data:`exit_after_iterations_exceeded` parameter. Default:
+   10000.
+
+.. c:var:: int exit_after_iterations_exceeded
+
+   Flag controlling the behavior when the maximum subcycle iterations
+   (set by :c:data:`max_iterations`) is exceeded in
+   :c:func:`solve_chemistry`. If set to 1, an error message will be
+   printed and the function will immediately exit with a return value
+   of 0, indicating failure. If set to 0, the message will be
+   produced and there will be no further integration, but the function
+   will proceed to a clean exit such that the simulation can be
+   continued. Default: 0.
 
 .. c:var:: int omp_nthreads
 

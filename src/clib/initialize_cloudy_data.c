@@ -12,6 +12,7 @@
 ************************************************************************/
 
 #include <stdlib.h>
+#include <string.h>
 #include <math.h>
 #include "hdf5.h"
 #include "grackle_macros.h"

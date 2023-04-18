@@ -44,8 +44,7 @@
      &                metGridRank, metGridDim,
      &                metPar1, metPar2, metPar3, metPar4, metPar5,
      &                metDataSize, metCooling, metHeating, clnew,
-     &                iVheat, iMheat, Vheat, Mheat,
-     &                iisrffield, isrf_habing
+     &                iVheat, iMheat, Vheat, Mheat
      &              , imchem, igrgr
      &              , DM, HDII, HeHII
      &              , CI, CII, CO, CO2
@@ -125,8 +124,10 @@
      &              , SN0_kpreforg, SN0_kpvolorg, SN0_kpH2Oice
      &              , h2dustSa, h2dustCa, gasgr2a, gamma_isrf2a, grogra
      &              , idissHDI, kdissHDI, iionZ, kphCI, kphOI
-     &              , idissZ, kdissCO, kdissOH, kdissH2O, iuseH2shield
-     &          )
+     &              , idissZ, kdissCO, kdissOH, kdissH2O, iuseH2shield,
+     &                iisrffield, isrf_habing, 
+     &                iH2shieldcustom, f_shield_custom,
+     &                itmax, exititmax)
 
 !
 !  SOLVE MULTI-SPECIES RATE EQUATIONS AND RADIATIVE COOLING
@@ -223,12 +224,13 @@
 !    iMheat      - flag for using specific heating rate
 !    Vheat       - array of volumetric heating rates
 !    Mheat       - array of specific heating rates
+!    itmax       - maximum allowed sub-cycle iterations
+!    exititmax   - flag to exit if max iterations exceeded
 !
 !  OUTPUTS:
 !    update chemical rate densities (HI, HII, etc)
 !
 !  PARAMETERS:
-!    itmax   - maximum allowed sub-cycle iterations
 !    mh      - H mass in cgs units
 !
 !-----------------------------------------------------------------------
@@ -247,8 +249,8 @@
      &        igammah, ih2optical, iciecool, ithreebody,
      &        ndratec, clnew, iVheat, iMheat, iH2shield, iradshield,
      &        iradtrans, iradcoupled, iradstep, irt_honly,
-     &        iisrffield
-     &       ,imchem, igrgr
+     &        imchem, igrgr,
+     &        iisrffield, iH2shieldcustom, itmax, exititmax
 
       real*8  dx, dt, aye, temstart, temend, gamma,
      &        utim, uxyz, uaye, urho, utem, fh, dtoh, z_solar, 
@@ -442,15 +444,12 @@
 
 !  Parameters
 
-      integer itmax
-      parameter (itmax = 10000)
-
-#ifdef CONFIG_BFLOAT_4
+#ifdef GRACKLE_FLOAT_4
       R_PREC tolerance
       parameter (tolerance = 1.0e-05_RKIND)
 #endif
 
-#ifdef CONFIG_BFLOAT_8
+#ifdef GRACKLE_FLOAT_8
       R_PREC tolerance
       parameter (tolerance = 1.0e-10_RKIND)
 #endif
@@ -571,7 +570,7 @@ c     real*8 vecDtot
 
 !     Set error indicator
 
-      ierr = 0
+      ierr = 1
 
 !     Set flag for dust-related options
 
@@ -2110,6 +2109,10 @@ c              deallocate(dummtrx)
             write(0,'((16(1pe8.1)))') (ttot(i),i=is+1,ie+1)
             write(0,'((16(1pe8.1)))') (edot(i),i=is+1,ie+1)
             write(0,'((16(l3)))') (itmask(i),i=is+1,ie+1)
+
+            if (exititmax .eq. 1) then
+               ierr = 0
+            endif
 #ifdef _OPENMP
 !$omp end critical
 #endif
@@ -2132,6 +2135,12 @@ c            WARNING_MESSAGE
 #ifdef _OPENMP
 !$omp end parallel do
 #endif
+
+!     If an error has been produced, return now.
+
+      if (ierr .eq. 0) then
+         return
+      endif
 
 !     Convert densities back to comoving from proper
 
@@ -2552,7 +2561,6 @@ c -------------------------------------------------------------------
          do k = ks+1, ke+1
             do j = js+1, je+1
                do i = is+1, ie+1
-C                 metal(i,j,k) = max(metal(i,j,k), tiny)
 C                 if( immulti .gt. 0 ) then
 C                    metal_loc(i,j,k) = max(metal_loc(i,j,k), tiny)
 C                    metal_C13(i,j,k) = max(metal_C13(i,j,k), tiny)
@@ -2631,6 +2639,12 @@ C                 endif
                      H2Oice(i,j,k)  = max(H2Oice(i,j,k), tiny)
                   endif
 !!                endif
+                  metal(i,j,k) = max(metal(i,j,k), tiny)
+                  if (metal(i,j,k) .gt. d(i,j,k)) then
+                     write(6, *) 'WARNING: metal density exceeds ',
+     &                    'total density!'
+                     write(6, *) 'i, j, k, metal, density = ',
+     &                    i, j, k, metal(i,j,k), d(i,j,k)
                   endif
                enddo
             enddo

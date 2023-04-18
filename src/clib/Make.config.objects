@@ -26,6 +26,7 @@ OBJS_CONFIG_LIB = \
         cool1d_cloudy_old_tables_g.lo \
         cool1d_multi_g.lo \
         cool_multi_time_g.lo \
+        dynamic_api.lo \
         grackle_units.lo \
 	index_helper.lo \
         initialize_chemistry_data.lo \

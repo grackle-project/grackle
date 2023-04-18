@@ -1,159 +1,15 @@
+cdef extern from "grackle_macros.h":
+    cdef int GRACKLE_FAIL_VALUE "FAIL"
+
 cdef extern from "grackle_types.h":
     # This does not need to be exactly correct, only of the right basic type
     ctypedef float gr_float
 
 cdef extern from "grackle_chemistry_data.h":
     ctypedef struct c_chemistry_data "chemistry_data":
-        int use_grackle
-
-        int with_radiative_cooling
-
-        int primordial_chemistry
-
-        int dust_chemistry
-
-        int metal_cooling
-
-        int UVbackground
-
-        char *grackle_data_file
-
-        int cmb_temperature_floor
-
-        double Gamma
-
-        int h2_on_dust
-
-        int use_dust_density_field
-
-        int dust_recombination_cooling
-
-        int metal_chemistry
-
-        int grain_growth
-
-        int multi_metals
-
-        int metal_abundances
-
-        int dust_species
-
-        int dust_temperature_multi
-
-        int dust_sublimation
-
-        int photoelectric_heating
-        double photoelectric_heating_rate
-
-        int use_isrf_field
-
-        double interstellar_radiation_field
-
-        int use_volumetric_heating_rate
-        int use_specific_heating_rate
-
-        int three_body_rate
-        int cie_cooling
-        int h2_optical_depth_approximation
-        int ih2co
-        int ipiht
-        double HydrogenFractionByMass
-        double DeuteriumToHydrogenRatio
-        double SolarMetalFractionByMass
-        double local_dust_to_gas_ratio
-
-        int SN0_N
-        double *SN0_XC 
-        double *SN0_XO 
-        double *SN0_XMg
-        double *SN0_XAl
-        double *SN0_XSi
-        double *SN0_XS 
-        double *SN0_XFe
-        double *SN0_fC 
-        double *SN0_fO 
-        double *SN0_fMg
-        double *SN0_fAl
-        double *SN0_fSi
-        double *SN0_fS 
-        double *SN0_fFe
-        double *SN0_fSiM
-        double *SN0_fFeM
-        double *SN0_fMg2SiO4
-        double *SN0_fMgSiO3
-        double *SN0_fFe3O4
-        double *SN0_fAC
-        double*SN0_fSiO2D
-        double*SN0_fMgO
-        double*SN0_fFeS
-        double*SN0_fAl2O3
-        double *SN0_freforg 
-        double*SN0_fvolorg 
-        double*SN0_fH2Oice
-        double *SN0_r0SiM
-        double *SN0_r0FeM
-        double *SN0_r0Mg2SiO4
-        double *SN0_r0MgSiO3
-        double *SN0_r0Fe3O4
-        double *SN0_r0AC
-        double*SN0_r0SiO2D
-        double*SN0_r0MgO
-        double*SN0_r0FeS
-        double*SN0_r0Al2O3
-        double *SN0_r0reforg 
-        double*SN0_r0volorg 
-        double*SN0_r0H2Oice
-
-        int NumberOfTemperatureBins
-        int CaseBRecombination
-        double TemperatureStart
-        double TemperatureEnd
-        int NumberOfDustTemperatureBins
-        double DustTemperatureStart
-        double DustTemperatureEnd
-
-        int Compton_xray_heating
-        int LWbackground_sawtooth_suppression
-        double LWbackground_intensity
-        double UVbackground_redshift_on
-        double UVbackground_redshift_off
-        double UVbackground_redshift_fullon
-        double UVbackground_redshift_drop
-
-        double cloudy_electron_fraction_factor
-
-        int use_radiative_transfer
-        int radiative_transfer_coupled_rate_solver
-        int radiative_transfer_intermediate_step
-        int radiative_transfer_hydrogen_only
-        int radiative_transfer_H2II_diss
-        int radiative_transfer_HDI_diss
-        int radiative_transfer_metal_ion
-        int radiative_transfer_metal_diss
-
-        int radiative_transfer_use_H2_shielding
-
-        int self_shielding_method
-
-        int H2_self_shielding
-
-        int H2_custom_shielding
-
-        int h2_charge_exchange_rate
-
-        int h2_dust_rate
-
-        int h2_h_cooling_rate
-
-        int collisional_excitation_rates
-        int collisional_ionisation_rates
-        int recombination_cooling_rates
-        int bremsstrahlung_cooling_rates
-
-        int use_palla_salpeter_stahler_1983
-        int use_stancil_lepp_dalgarno_1998
-        int use_omukai_gas_grain
-        int use_uniform_grain_dist_gamma_isrf
+        # no need to declare the members since there is no cython code that
+        # directly accesses the struct members (dynamic api is used instead)
+        pass
 
     ctypedef struct c_chemistry_data_storage "chemistry_data_storage":
         double *k1
@@ -510,6 +366,21 @@ cdef extern from "grackle.h":
                                    c_chemistry_data_storage *my_rates,
                                    c_code_units *my_units)
 
+    int* local_chemistry_data_access_int(c_chemistry_data *my_chemistry,
+                                         const char* param_name)
+
+    double* local_chemistry_data_access_double(c_chemistry_data *my_chemistry,
+                                               const char* param_name)
+
+    char** local_chemistry_data_access_string(c_chemistry_data *my_chemistry,
+                                              const char* param_name)
+
+    const char* param_name_int(size_t i)
+
+    const char* param_name_double(size_t i)
+
+    const char* param_name_string(size_t i)
+
     int c_local_solve_chemistry "local_solve_chemistry"(
                 c_chemistry_data *my_chemistry,
                 c_chemistry_data_storage *my_rates,
@@ -551,5 +422,9 @@ cdef extern from "grackle.h":
                 c_code_units *my_units,
                 c_field_data *my_fields,
                 gr_float *dust_temperature)
+
+    int c_free_chemistry_data "_free_chemistry_data" (
+        c_chemistry_data *my_chemistry,
+        c_chemistry_data_storage *my_rates)
 
     c_grackle_version c_get_grackle_version "get_grackle_version"()

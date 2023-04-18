@@ -16,6 +16,7 @@
 
 #include "grackle_types.h"
 #include "grackle_chemistry_data.h"
+#include <stddef.h>
 
 extern int grackle_verbose;
 
@@ -37,6 +38,19 @@ int initialize_chemistry_data(code_units *my_units);
 int _initialize_chemistry_data(chemistry_data *my_chemistry, 
                                chemistry_data_storage *my_rates,
                                code_units *my_units);
+
+int* local_chemistry_data_access_int(chemistry_data* my_chemistry,
+                                     const char* param_name);
+double* local_chemistry_data_access_double(chemistry_data* my_chemistry,
+                                           const char* param_name);
+char** local_chemistry_data_access_string(chemistry_data* my_chemistry,
+                                          const char* param_name);
+
+const char* param_name_int(size_t i);
+const char* param_name_double(size_t i);
+const char* param_name_string(size_t i);
+
+size_t grackle_num_params(const char* type_name);
 
 int solve_chemistry(code_units *my_units,
                     grackle_field_data *my_fields,

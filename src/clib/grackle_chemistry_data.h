@@ -213,6 +213,12 @@ typedef struct
   int use_omukai_gas_grain; //Alternative calculation scheme for gas_grain
   int use_uniform_grain_dist_gamma_isrf; //Alternative calculation scheme for gamma_isrf
 
+  /* maximum number of subcycle iterations for solve_chemistry */
+  int max_iterations;
+
+  /* flag to exit if max iterations exceeded */
+  int exit_after_iterations_exceeded;
+
   /* number of OpenMP threads, if supported */
 # ifdef _OPENMP
   int omp_nthreads;

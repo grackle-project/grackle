@@ -109,6 +109,10 @@ libgrackle.la: $(MODULES) autogen dep $(OBJS_LIB) MACHNOTES
 	else \
 	  $(LIBTOOL) --mode=link --tag=CC $(LD) $(LDFLAGS) -o $@ $(OBJS_LIB) $(LIBS) -rpath $(INSTALL_LIB_DIR) -release $(LIB_RELEASE_VERSION) ; \
 	fi)
+	@(if [ $(ASSEMBLE_PRECISION_NUMBER) == "4" ]; then \
+	  echo "WARNING: Grackle compiled with precision-32."; \
+	  echo "Using Grackle in single precision is known to produce unreliable results in certain conditions. Compiling in double precision (precision-64) is recommended."; \
+	fi)
 
 MACHNOTES: 
 	@echo $(MACHINE_NOTES)
@@ -194,7 +198,14 @@ verbose: VERBOSE = 1
 #-----------------------------------------------------------------------
 
 .PHONY: autogen
-autogen: auto_show_config.c auto_show_flags.c auto_get_version.c
+autogen: config_type auto_show_config.c auto_show_flags.c auto_get_version.c
+
+.PHONY: config_type
+config_type:
+	-@echo "#ifndef __GRACKLE_FLOAT_H__" > grackle_float.h
+	-@echo "#define __GRACKLE_FLOAT_H__" >> grackle_float.h
+	-@echo "#define $(PRECISION_DEFINE)" >> grackle_float.h
+	-@echo "#endif" >> grackle_float.h
 
 # Force update of auto_show_config.c
 
@@ -286,7 +297,7 @@ install:
 	@(if [ ! -d $(INSTALL_INCLUDE_DIR) ]; then \
 		mkdir $(INSTALL_INCLUDE_DIR); \
 	fi)
-	@cp grackle.h grackle_macros.h grackle_types.h grackle_chemistry_data.h grackle_rate_functions.h grackle.def grackle_fortran_types.def grackle_fortran_interface.def $(INSTALL_INCLUDE_DIR)
+	@cp grackle.h grackle_macros.h grackle_float.h grackle_types.h grackle_chemistry_data.h grackle_rate_functions.h grackle.def grackle_fortran_types.def grackle_fortran_interface.def $(INSTALL_INCLUDE_DIR)
 	@(if [ ! -d $(INSTALL_LIB_DIR) ]; then \
 		mkdir $(INSTALL_LIB_DIR); \
 	fi)
@@ -296,7 +307,7 @@ install:
 #-----------------------------------------------------------------------
 
 clean:
-	-@rm -f *.la .libs/* *.o *.lo DEPEND.bak *~ $(OUTPUT) *.exe auto_show*.c DEPEND out.make.DEPEND
+	-@rm -f *.la .libs/* *.o *.lo DEPEND.bak *~ $(OUTPUT) grackle_float.h *.exe auto_show*.c DEPEND out.make.DEPEND
 	-@touch DEPEND
 
 #-----------------------------------------------------------------------

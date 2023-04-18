@@ -200,6 +200,8 @@ c     This is the fortran definition of grackle_chemistry_data
          INTEGER(C_INT) :: collisional_ionisation_rates
          INTEGER(C_INT) :: recombination_cooling_rates
          INTEGER(C_INT) :: bremsstrahlung_cooling_rates
+         INTEGER(C_INT) :: max_iterations
+         INTEGER(C_INT) :: exit_after_iterations_exceeded
 cc       INTEGER(C_INT) :: omp_nthreads // not supported in fortran
       END TYPE
 

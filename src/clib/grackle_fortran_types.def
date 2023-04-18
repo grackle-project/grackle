@@ -12,22 +12,24 @@
 ! software.
 !=======================================================================
 
-#ifdef CONFIG_BFLOAT_4
+#include "grackle_float.h"
+
+#ifdef GRACKLE_FLOAT_4
 #define tiny 1.e-20
 #define huge 1.e+20
 #define R_PREC real*4
       integer, parameter :: RKIND=4
 #endif
 
-#ifdef CONFIG_BFLOAT_8
+#ifdef GRACKLE_FLOAT_8
 #define tiny 1.d-20
 #define huge 1.d+20
 #define R_PREC real*8
       integer, parameter :: RKIND=8
 #endif
 
-#define tiny8 1.d-20
-#define huge8 1.d+20
+#define tiny8 1.d-40
+#define huge8 1.d+40
 
       integer, parameter :: DKIND=8
       integer, parameter :: DIKIND=8
