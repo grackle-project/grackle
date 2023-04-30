@@ -20,6 +20,7 @@ OBJS_CONFIG_LIB = \
         calculate_gamma.lo \
         calculate_pressure.lo \
         calculate_temperature.lo \
+        calc_temp1d_cloudy_shim_g.lo \
         calc_temp1d_cloudy_g.lo \
         calc_temp_cloudy_g.lo \
         calc_tdust_1d_g.lo \

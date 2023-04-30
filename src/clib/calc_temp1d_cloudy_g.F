@@ -80,7 +80,7 @@
 
 !  Iteration mask
 
-      logical itmask(in)
+      integer*4 itmask(in)
 
 !  Parameters
 
@@ -150,14 +150,14 @@
       endif
 
       do i=is+1, ie+1
-         if ( itmask(i) ) then
+         if ( itmask(i) .ne. 0 ) then
 !              Calculate proper log(n_H)
                log_n_h(i) = log10(rhoH(i) * dom)
          endif
       enddo
 
       do i=is+1, ie+1
-         if ( itmask(i) ) then
+         if ( itmask(i) .ne. 0 ) then
             munew = 1._DKIND
             do ti = 1, ti_max
                muold = munew
