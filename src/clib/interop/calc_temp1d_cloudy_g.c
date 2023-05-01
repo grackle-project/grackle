@@ -66,9 +66,6 @@ void calc_temp1d_cloudy_g(
   const double mu_metal = 16.0;
   const int ti_max = 20;
 
-  double* log_n_h = malloc(sizeof(double)*in);
-  double* log10tem = malloc(sizeof(double)*in);
-
   gr_int64 end_int = 0;
   const double inv_log10 = 1.0 / log(10.0);
 
@@ -110,38 +107,36 @@ void calc_temp1d_cloudy_g(
     }
   }
 
-  for (int i = is + 1; i <= (ie + 1); i++) { // Calculate proper log(n_H)
-    if ( itmask[i-1] ) { log_n_h[i-1] = log10(rhoH[i-1] * dom); }
-  }
-
   for (int i = is + 1; i <= (ie + 1); i++) {
     if ( !itmask[i-1] ) { continue; }
+
+    const double log_n_h = log10(rhoH[i-1] * dom); // Calculate proper log(n_H)
+
+    const long long ind_3D = (i-1) + in *( (j-1) + jn * (k-1));
 
     double munew = 1.0;
     double muold;
     for (int ti = 1; ti <= ti_max; ti++) {
       muold = munew;
 
-      const long long ind_3D = (i-1) + in *( (j-1) + jn * (k-1));
-
       tgas[i-1] = max((gamma - 1.0) * e[ind_3D] * munew * utem, temstart);
       // the original version doesn't use log10*(tgas[i-1]) either
-      log10tem[i-1] = log(tgas[i-1]) * inv_log10;
+      const double log10tem = log(tgas[i-1]) * inv_log10;
 
-      // Call interpolation functions to get heating/cooling
+      // Call interpolation functions to get mmw
       if (clGridRank == 1) { // Interpolate over temperature.
-        interpolate_1d_g(log10tem[i-1], clGridDim,
+        interpolate_1d_g(log10tem, clGridDim,
                          clPar1, dclPar[0],
                          clDataSize, clMMW, &munew);
       } else if ( clGridRank == 2) { // Interpolate over density & temperature.
-        interpolate_2d_g(log_n_h[i-1], log10tem[i-1],
+        interpolate_2d_g(log_n_h, log10tem,
                          clGridDim,
                          clPar1, dclPar[0],
                          clPar2, dclPar[1],
                          clDataSize, clMMW, &munew);
       } else if (clGridRank == 3) { // Interpolate over density, redshift,
                                     // & temperature.
-        interpolate_3dz_g(log_n_h[i-1], zr, log10tem[i-1],
+        interpolate_3dz_g(log_n_h, zr, log10tem,
                           clGridDim,
                           clPar1, dclPar[0],
                           clPar2, zindex,
@@ -181,7 +176,4 @@ void calc_temp1d_cloudy_g(
     continue;
 
   }
-
-  free(log_n_h);
-  free(log10tem);
 }
