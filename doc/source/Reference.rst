@@ -246,8 +246,8 @@ Configuration/Cleanup Functions
    This function should only be called after the user has finished configuring both ``my_chemistry`` and ``my_units``.
    This function assumes that none of ``my_rates``'s members of pointer type hold valid memory addresses (i.e. where applicable, the function allocates fresh storage and makes no attempts to deallocate/reuse storage).
 
-   After calling this function, the user should avoid modifying any of the fields of ``my_chemistry`` or ``my_units``.
-   The **only** exception to this rule is that ``my_units``'s :c:var:`a_value` field may be mutated when using comoving units (i.e. ``my_units``'s :c:var:`comoving_coordinates` field is ``1``).
+   After calling this function, the user should avoid modifying any of the fields of ``my_chemistry``.
+   The user should also avoid modifying ``my_units`` in a way that modifies the internal cooling units (e.g. it's fine to mutate ``my_units``'s :c:var:`a_value` field when its :c:var:`comoving_coordinates` field is ``1``).
 
    To deallocate any storage allocated by this function, use :c:func:`free_chemistry_data`.
 
