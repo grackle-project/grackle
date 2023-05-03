@@ -73,6 +73,13 @@ include $(MAKE_CONFIG_OVERRIDE)
 -include $(HOME)/.grackle/Make.mach.$(CONFIG_MACHINE)
 
 #-----------------------------------------------------------------------
+# OTHER_DEFINES is used to specify a macro indicating that legacy
+# functions defined inline in the main header file should be omitted
+# while compiling the library
+#-----------------------------------------------------------------------
+OTHER_DEFINES = -DOMIT_LEGACY_INTERNAL_GRACKLE_FUNC
+
+#-----------------------------------------------------------------------
 # Make.config.assemble takes the settings in the Make.config.settings
 # and Make.config.override, and generates the appropriate make variables
 # required by this makefile.  E.g. $(CXX), $(CXXFLAGS), etc.

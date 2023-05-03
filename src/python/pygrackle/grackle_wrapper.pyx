@@ -41,7 +41,7 @@ cdef class chemistry_data:
         if self.data_copy_from_init is None:
             return # nothing to uninitialize
 
-        c_free_chemistry_data(
+        c_local_free_chemistry_data(
             &((<_wrapped_c_chemistry_data?>self.data_copy_from_init).data),
             &self.rates)
 
@@ -56,8 +56,8 @@ cdef class chemistry_data:
     def initialize(self):
         self._try_uninitialize() # if self.rates was already initialized,
                                  # uninitialize it to avoid a memory leak
-        ret =  _initialize_chemistry_data(&self.data.data, &self.rates,
-                                          &self.units)
+        ret =  local_initialize_chemistry_data(&self.data.data, &self.rates,
+                                               &self.units)
         if ret is None:
             raise RuntimeError("Error initializing chemistry")
 
@@ -828,7 +828,7 @@ cdef class _wrapped_c_chemistry_data:
     #   by a null character (the Python interface just hides if from users)
 
     def __cinit__(self):
-        self.data = _set_default_chemistry_parameters()
+        local_initialize_chemistry_parameters(&self.data)
         self._string_buffers = {}
 
     def _access_struct_field(self, key, val = None):

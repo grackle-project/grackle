@@ -172,8 +172,14 @@ cdef extern from "grackle_types.h":
       const char* branch;
       const char* revision;
 
+# define a macro to omit legacy grackle function defined in grackle.h
+cdef extern from *:
+    """
+    #define OMIT_LEGACY_INTERNAL_GRACKLE_FUNC
+    """
+
 cdef extern from "grackle.h":
-    c_chemistry_data _set_default_chemistry_parameters()
+    int local_initialize_chemistry_parameters(c_chemistry_data *my_chemistry)
 
     void set_velocity_units(c_code_units *my_units)
 
@@ -181,9 +187,9 @@ cdef extern from "grackle.h":
 
     double get_temperature_units(c_code_units *my_units)
 
-    int _initialize_chemistry_data(c_chemistry_data *my_chemistry,
-                                   c_chemistry_data_storage *my_rates,
-                                   c_code_units *my_units)
+    int local_initialize_chemistry_data(c_chemistry_data *my_chemistry,
+                                        c_chemistry_data_storage *my_rates,
+                                        c_code_units *my_units)
 
     int* local_chemistry_data_access_int(c_chemistry_data *my_chemistry,
                                          const char* param_name)
@@ -242,7 +248,7 @@ cdef extern from "grackle.h":
                 c_field_data *my_fields,
                 gr_float *dust_temperature)
 
-    int c_free_chemistry_data "_free_chemistry_data" (
+    int c_local_free_chemistry_data "local_free_chemistry_data" (
         c_chemistry_data *my_chemistry,
         c_chemistry_data_storage *my_rates)
 
