@@ -200,11 +200,11 @@ cdef extern from "grackle.h":
     char** local_chemistry_data_access_string(c_chemistry_data *my_chemistry,
                                               const char* param_name)
 
-    const char* param_name_int(size_t i)
+    const char* param_name_int(unsigned int i)
 
-    const char* param_name_double(size_t i)
+    const char* param_name_double(unsigned int i)
 
-    const char* param_name_string(size_t i)
+    const char* param_name_string(unsigned int i)
 
     int c_local_solve_chemistry "local_solve_chemistry"(
                 c_chemistry_data *my_chemistry,

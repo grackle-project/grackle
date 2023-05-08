@@ -359,7 +359,7 @@ Chemistry Functions
 Dynamic Configuration Functions
 +++++++++++++++++++++++++++++++
 
-.. c:function:: size_t grackle_num_params(const char* type_name)
+.. c:function:: unsigned int grackle_num_params(const char* type_name)
 
    Returns the number of parameters of a given type that are stored as members of the :c:data:`chemistry_data` struct.
    The argument is expected to be ``"int"``, ``"double"``, or ``"string"``.
@@ -393,33 +393,33 @@ The following functions are used to provide dynamic access to members of the :c:
 
 The following functions are used to query the name of the ith field of the :c:data:`chemistry_data` struct of a particular type.
 
-.. c:function:: const char* param_name_int(size_t i);
+.. c:function:: const char* param_name_int(unsigned int i);
 
    Query the name of the ith ``int`` field from :c:data:`chemistry_data`.
 
    .. warning:: The order of parameters may change between different versions of Grackle.
 
-   :param size_t i: The index of the accessed parameter
+   :param unsigned int i: The index of the accessed parameter
    :rtype: const char*
    :returns: Pointer to the string-literal specifying the name. This is ``NULL``, if :c:data:`chemistry_data` has ``i`` or fewer ``int`` members
    
-.. c:function:: const char* param_name_double(size_t i);
+.. c:function:: const char* param_name_double(unsigned int i);
 
    Query the name of the ith ``double`` field from :c:data:`chemistry_data`.
 
    .. warning:: The order of parameters may change between different versions of Grackle.
 
-   :param size_t i: The index of the accessed parameter
+   :param unsigned int i: The index of the accessed parameter
    :rtype: const char*
    :returns: Pointer to the string-literal specifying the name. This is ``NULL``, if :c:data:`chemistry_data` has ``i`` or fewer ``double`` members.
 
-.. c:function:: const char* param_name_string(size_t i);
+.. c:function:: const char* param_name_string(unsigned int i);
 
    Query the name of the ith ``string`` field from :c:data:`chemistry_data`.
 
    .. warning:: The order of parameters may change between different versions of Grackle.
 
-   :param size_t i: The index of the accessed parameter
+   :param unsigned int i: The index of the accessed parameter
    :rtype: const char*
    :returns: Pointer to the string-literal specifying the name. This is ``NULL``, if :c:data:`chemistry_data` has ``i`` or fewer ``string`` members.
 
