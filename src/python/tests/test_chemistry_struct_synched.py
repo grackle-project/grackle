@@ -183,10 +183,6 @@ def test_grackle_chemistry_field_synched():
 
         diff = ref_set.symmetric_difference(parameters)
         for parameter in diff:
-            if (parameter == 'omp_nthreads') and (param_type == 'int'):
-                # because omp_nthreads is only conditionally a field, handling
-                # it properly is more trouble than its worth...
-                continue
             if parameter in ref_set:
                 raise RuntimeError(
                     f"{parameter}, a {param_type} field of the chemistry_data "

@@ -105,7 +105,17 @@ int local_initialize_chemistry_data(chemistry_data *my_chemistry,
   }
 
 //initialize OpenMP
-# ifdef _OPENMP
+# ifndef _OPENMP
+  if (my_chemistry->omp_nthreads > 1) {
+    fprintf(stdout,
+            "omp_nthreads can't be set when Grackle isn't compiled with "
+            "OPENMP\n");
+  }
+# else _OPENMP
+  if (my_chemistry->omp_nthreads < 1) {
+    // this is the default behavior (unless the user intervenes)
+    my_chemistry->omp_nthreads = omp_get_max_threads();
+  }
 //number of threads
   omp_set_num_threads( my_chemistry->omp_nthreads );
 
