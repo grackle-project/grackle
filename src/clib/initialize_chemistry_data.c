@@ -110,6 +110,7 @@ int local_initialize_chemistry_data(chemistry_data *my_chemistry,
     fprintf(stdout,
             "omp_nthreads can't be set when Grackle isn't compiled with "
             "OPENMP\n");
+    return FAIL;
   }
 # else _OPENMP
   if (my_chemistry->omp_nthreads < 1) {
