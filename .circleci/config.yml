@@ -203,7 +203,7 @@ workflows:
            filters:
             branches:
               only:
-                - master
+                - main
      jobs:
        - test-suite:
            name: "Python 3.8 tests"
