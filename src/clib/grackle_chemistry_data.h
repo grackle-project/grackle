@@ -171,9 +171,7 @@ typedef struct
   int exit_after_iterations_exceeded;
 
   /* number of OpenMP threads, if supported */
-# ifdef _OPENMP
   int omp_nthreads;
-# endif
 
 } chemistry_data;
 
