@@ -796,12 +796,12 @@ def get_grackle_version():
             "branch" : version_struct.branch.decode('UTF-8'),
             "revision" : version_struct.revision.decode('UTF-8')}
 
-cdef list _get_parameter_name_list(const char*(*get_param)(size_t)):
+cdef list _get_parameter_name_list(const char*(*get_param)(unsigned int)):
     # the arg should be param_name_int, param_name_double, or param_name_string
 
     cdef list out = []
     cdef const char* tmp
-    cdef size_t i = 0
+    cdef unsigned int i = 0
     while True:
         tmp = get_param(i)
         if tmp is NULL:
