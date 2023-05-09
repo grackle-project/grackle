@@ -77,17 +77,17 @@ directory.
 
    $ cd grackle
 
-Verify that you are on the master branch of Grackle by running:
+Verify that you are on the main branch of Grackle by running:
 
 .. code-block:: bash
 
    $ git branch
 
-If you're not on the master branch, you can get to it with:
+If you're not on the main branch, you can get to it with:
 
 .. code-block:: bash
 
-   $ git checkout master
+   $ git checkout main
 
 You can see any past state of the code by using the git log command.
 For example, the following command would show you the last 5 revisions
@@ -196,16 +196,16 @@ the main repository.
    You can verify that it has been added by doing ``git remote -v``. This
    only needs to be done once.
 
-#. Go back to the master branch and pull the changes::
+#. Go back to the main branch and pull the changes::
 
-      $ git checkout master
-      $ git pull grackle master
+      $ git checkout main
+      $ git pull grackle main
 
-#. Return to your branch and rebase your changes onto the head of the master
+#. Return to your branch and rebase your changes onto the head of the main
    branch::
 
       $ git checkout <branch name>
-      $ git rebase master
+      $ git rebase main
 
 This should go smoothly unless changes have been made to the same lines in
 the source, in which case you will need to fix conflicts. After rebasing,
