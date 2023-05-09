@@ -116,14 +116,21 @@ char** local_chemistry_data_access_string(chemistry_data* my_chemistry,
 static const char* _param_name(size_t i, const param_list my_param_list)
 { return (i < my_param_list.len) ? my_param_list.entries[i].name : NULL; }
 
-const char* param_name_int(size_t i)    {return _param_name(i,_int_param_l);}
-const char* param_name_double(size_t i) {return _param_name(i,_double_param_l);}
-const char* param_name_string(size_t i) {return _param_name(i,_string_param_l);}
+const char* param_name_int(unsigned int i)
+{return _param_name(i,_int_param_l);}
+const char* param_name_double(unsigned int i)
+{return _param_name(i,_double_param_l);}
+const char* param_name_string(unsigned int i)
+{return _param_name(i,_string_param_l);}
 
 // function to query the number of parameters of chemistry_data of a given type
-size_t grackle_num_params(const char* type_name){
-  if (strcmp(type_name, "int") == 0)         { return _int_param_l.len; }
-  else if (strcmp(type_name, "double") == 0) { return _double_param_l.len; }
-  else if (strcmp(type_name, "string") == 0) { return _string_param_l.len; }
+unsigned int grackle_num_params(const char* type_name){
+  if (strcmp(type_name, "int") == 0) {
+    return (unsigned int)_int_param_l.len;
+  } else if (strcmp(type_name, "double") == 0) {
+    return (unsigned int) _double_param_l.len;
+  } else if (strcmp(type_name, "string") == 0) {
+    return (unsigned int) _string_param_l.len;
+  }
   return 0;
 }
