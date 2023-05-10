@@ -210,6 +210,11 @@ length, and time values close to 1. Reasonable values for density,
 length, and time units are the hydrogen mass in g, 1 kpc to 1 Mpc in
 cm, and 1 Myr to 1 Gyr in s.
 
+.. _comoving_coordinates:
+
+Comoving Coordinates
+^^^^^^^^^^^^^^^^^^^^
+
 For cosmological simulations, a comoving unit system is preferred,
 though not required, since it allows the densities to stay close to 1
 as the universe expands. If :c:data:`comoving_coordinates` is set to
@@ -221,6 +226,38 @@ fields passed into the solver are in the proper frame. For an example
 of using comoving units, see the `cosmological unit system
 <https://github.com/enzo-project/enzo-dev/blob/main/src/enzo/CosmologyGetUnits.C>`__
 in the `Enzo <http://enzo-project.org/>`_ code.
+
+As the unit system is designed to convert from the comoving to the
+proper frame, some of the values in the :c:data:`code_units` struct
+are expected to change with expansion factor (or redshift) while some
+others should remain constant. Units that should remain constant
+include :c:data:`time_units` and :c:data:`a_units`. Units that should
+vary are :c:data:`a_value` (obviously), :c:data:`length_units`, and
+:c:data:`density_units`. Moving forward in time,
+:c:data:`length_units` should be increasing proportional to
+:c:data:`a_value` and :c:data:`density_units` should be decreasing as
+:c:data:`a_value`:sup:`-3`.
+
+There are two important corollaries of the above behavior. First, the
+:c:data:`velocity_units` should remain constant. In comoving
+coordinates, velocity units are given by
+
+.. math::
+
+   VU = \frac{LU}{a\ TU},
+
+where VU is :c:data:`velocity_units`, a is :c:data:`a_value`, and TU
+is :c:data:`time_units`. Second, the internal unit for the cooling
+rate (equivalent to [erg s\ :sup:`-1` cm\ :sup:`+3`]) should remain
+constant. The cooling unit (CU) is given by
+
+.. math::
+
+   CU = \frac{VU^2\ m_H^2}{DU\ a^3\ TU},
+
+where DU is :c:data:`density_units` and m\ :sub:`H` is the hydrogen
+mass. The above definitions also hold for proper coordinates by
+setting a to 1.
 
 .. _setup_data-storage:
 
