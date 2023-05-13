@@ -42,4 +42,5 @@ OBJS_CONFIG_LIB = \
         utils.lo \
         interop/shims_g.lo \
         interop/calc_temp1d_cloudy_g.lo \
+        interop/cool1d_cloudy_g.lo \
         interop/interpolators_g.lo

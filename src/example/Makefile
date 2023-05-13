@@ -194,7 +194,7 @@ TEST_CALC_TEMP1D_CLOUDY_OBJ = \
 	utest_calc_temp1d_cloudy/test_calc_temp1d.o \
 	utest_calc_temp1d_cloudy/calc_temp1d_cloudy_g.o
 
-test_calc_temp1d_cloudy: $(TEST_CALC_TEMP1D_CLOUDY_OBJ)
+test_calc_temp1d_cloudy: $(TEST_CALC_TEMP1D_CLOUDY_OBJ) utest_helpers.hpp
 	@rm -f $@
 	@echo "Linking"
 	@($(CXX) $(LDFLAGS) -o test_calc_temp1d_cloudy $(TEST_CALC_TEMP1D_CLOUDY_OBJ) $(GRACKLE_LIB) $(LIBS) -lm) >& $(OUTPUT)
@@ -202,6 +202,27 @@ test_calc_temp1d_cloudy: $(TEST_CALC_TEMP1D_CLOUDY_OBJ)
              echo "Success!"; \
          else \
 	     echo "$(CXX) $(LDFLAGS) -o test_calc_temp1d_cloudy $(TEST_CALC_TEMP1D_CLOUDY_OBJ) $(GRACKLE_LIB) $(LIBS) -lm" >> temp1; \
+             cat temp1 $(OUTPUT) > temp2; \
+             rm -f temp1; \
+             mv -f temp2 $(OUTPUT); \
+             echo "Failed! See $(OUTPUT) for error messages"; \
+         fi)
+
+#-----------------------------------------------------------------------
+# Unit test for cool1d_cloudy
+#-----------------------------------------------------------------------
+
+TEST_COOL1D_CLOUDY_OBJ = \
+	utest_cool1d_cloudy/test_cool1d_cloudy.o
+
+test_cool1d_cloudy: $(TEST_COOL1D_CLOUDY_OBJ) utest_helpers.hpp
+	@rm -f $@
+	@echo "Linking"
+	@($(CXX) $(LDFLAGS) -o test_cool1d_cloudy $(TEST_COOL1D_CLOUDY_OBJ) $(GRACKLE_LIB) $(LIBS) -lm) >& $(OUTPUT)
+	@(if [ -e $@ ]; then \
+             echo "Success!"; \
+         else \
+	     echo "$(CXX) $(LDFLAGS) -o test_cool1d_cloudy $(TEST_COOL1D_CLOUDY_OBJ) $(GRACKLE_LIB) $(LIBS) -lm" >> temp1; \
              cat temp1 $(OUTPUT) > temp2; \
              rm -f temp1; \
              mv -f temp2 $(OUTPUT); \
@@ -301,7 +322,7 @@ help:
 #-----------------------------------------------------------------------
 
 clean:
-	-@rm -f *.o *.mod *.f *.f90 *~ *.exe utest_calc_temp1d_cloudy/*.o utest_interpolators/*.o $(OUTPUT) cxx_example cxx_omp_example cxx_grid_example c_example c_local_example fortran_example test_calc_temp1d_cloudy test_interpolators
+	-@rm -f *.o *.mod *.f *.f90 *~ *.exe utest_calc_temp1d_cloudy/*.o utest_cool1d_cloudy/*.o utest_interpolators/*.o $(OUTPUT) cxx_example cxx_omp_example cxx_grid_example c_example c_local_example fortran_example test_calc_temp1d_cloudy test_cool1d_cloudy test_interpolators
 
 #-----------------------------------------------------------------------
 # Include configuration targets

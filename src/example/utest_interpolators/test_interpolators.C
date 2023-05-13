@@ -73,49 +73,6 @@ void FORTRAN_NAME(interpolate_5d_g)(
 }
 
 
-// NOTE: this function has been backported to help with unit-testing.
-// Eventually, it will be implemented to help define the C version of
-// cool1d_cloudy_g
-//
-// helper function that retrieves index for redshift dimension (of cloudy
-// tables) via bisection
-// - the index is one-indexed
-// - the names of variables have not been changed for backwards compatibility
-//   (it may seem counter-intuitive that clGridDim[1] gives the length of
-//    clPar2, but that's because in Fortran you would access clGridDim(2) )
-// - NOTE: since we define this function in a header, we must declare it as
-//   static inline (in C++ we could just declare it as inline)
-static inline long long find_zindex(double zr, long long clGridRank,
-                                    const long long* clGridDim,
-                                    const double* clPar2){
-  if (clGridRank > 2){
-    long long zindex;
-    if (zr <= clPar2[0]) {
-      zindex = 1;
-    } else if (zr >= clPar2[clGridDim[1]-2]) {
-      zindex = clGridDim[1];
-    } else if (zr >= clPar2[clGridDim[1]-3]) {
-      zindex = clGridDim[1] - 2;
-    } else {
-      zindex = 1;
-      long long zhighpt = clGridDim[1] - 2;
-      while ((zhighpt - zindex) > 1) {
-        long long zmidpt = (long long)((zhighpt + zindex) / 2);
-        if (zr >= clPar2[zmidpt-1]){
-          zindex = zmidpt;
-        } else {
-          zhighpt = zmidpt;
-        }
-      }
-    }
-    return zindex;
-  } else {
-    return 1;
-  }
-}
-
-
-
 /// The idea here is to encapsulate an DataTable that can be used to execute
 /// one of the interpolation functions
 class InterpTable {
