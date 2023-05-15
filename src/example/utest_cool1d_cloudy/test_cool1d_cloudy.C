@@ -6,7 +6,7 @@
 extern "C" {
   #include "../../clib/interop/interop_funcs.h"
 
-  extern void FORTRAN_NAME(cool1d_cloudy_g)(
+  extern void FORTRAN_NAME(cool1d_cloudy_g_fortran)(
         const gr_float* d, // 3D arrays
         const double* rhoH, const gr_float* metallicity, // 1D array
         const int* in, const int* jn, const int* kn,
@@ -125,7 +125,7 @@ std::vector<double> run_test(DummyGrackleConfig& config,
   std::vector<double> edot(length, 0.0); // all outputs are set to 0
   // now we actually compute the cooling time
   if (use_fortran) {
-    FORTRAN_NAME(cool1d_cloudy_g)(
+    FORTRAN_NAME(cool1d_cloudy_g_fortran)(
         density.data(), // 3D arrays
         rhoH.data(), metallicity.data(), // 1D array
         &in, &jn, &kn, &is, &ie, &j, &k,

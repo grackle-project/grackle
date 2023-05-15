@@ -15,7 +15,7 @@
 #include <stdint.h> // int32_t
 #include <stdio.h>
 #include <math.h> // log, log10
-#include "grackle_chemistry_data.h"
+#include "../grackle_chemistry_data.h"
 #include "../phys_constants.h"
 #include "./interop_funcs.h"
 

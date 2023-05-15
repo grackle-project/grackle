@@ -60,7 +60,46 @@ c   2. grackle_fortran_types.def has already been included
           REAL(C_DOUBLE), INTENT(IN) :: clMMW(*)
           INTEGER(C_INT32_T), INTENT(IN) :: itmask(*)
         end subroutine calc_temp1d_cloudy_g
+      end interface
 
+      interface
+        subroutine cool1d_cloudy_g(d, rhoH, metallicity,
+     &                in, jn, kn, is, ie, j, k,
+     &                logtem, edot, comp2, dom, zr,
+     &                icmbTfloor, iClHeat, iZscale,
+     &                clGridRank, clGridDim,
+     &                clPar1, clPar2, clPar3,
+     &                clDataSize, clCooling, clHeating,
+     &                itmask)  bind(C)
+          IMPORT
+          R_PREC, INTENT(IN) :: d(*)
+          REAL(C_DOUBLE), INTENT(IN) :: rhoH(*)
+          REAL(C_DOUBLE), INTENT(IN) :: metallicity(*)
+          INTEGER(C_INT), VALUE, INTENT(IN) :: in
+          INTEGER(C_INT), VALUE, INTENT(IN) :: jn
+          INTEGER(C_INT), VALUE, INTENT(IN) :: kn
+          INTEGER(C_INT), VALUE, INTENT(IN) :: is
+          INTEGER(C_INT), VALUE, INTENT(IN) :: ie
+          INTEGER(C_INT), VALUE, INTENT(IN) :: j
+          INTEGER(C_INT), VALUE, INTENT(IN) :: k
+          REAL(C_DOUBLE), INTENT(IN) :: logtem(*)
+          REAL(C_DOUBLE), INTENT(OUT) :: edot(*)
+          REAL(C_DOUBLE), VALUE, INTENT(IN) :: comp2
+          REAL(C_DOUBLE), VALUE, INTENT(IN) :: dom
+          REAL(C_DOUBLE), VALUE, INTENT(IN) :: zr
+          INTEGER(C_INT), VALUE, INTENT(IN) :: icmbTfloor
+          INTEGER(C_INT), VALUE, INTENT(IN) :: iClHeat
+          INTEGER(C_INT), VALUE, INTENT(IN) :: iZscale
+          INTEGER(C_LONG_LONG), VALUE, INTENT(IN) :: clGridRank
+          INTEGER(C_LONG_LONG), INTENT(IN) :: clGridDim(*)
+          REAL(C_DOUBLE), INTENT(IN) :: clPar1(*)
+          REAL(C_DOUBLE), INTENT(IN) :: clPar2(*)
+          REAL(C_DOUBLE), INTENT(IN) :: clPar3(*)
+          INTEGER(C_LONG_LONG), VALUE, INTENT(IN) :: clDataSize
+          REAL(C_DOUBLE), INTENT(IN) :: clCooling(*)
+          REAL(C_DOUBLE), INTENT(IN) :: clHeating(*)
+          INTEGER(C_INT32_T), INTENT(IN) :: itmask(*)
+        end subroutine cool1d_cloudy_g
       end interface
 
       interface
