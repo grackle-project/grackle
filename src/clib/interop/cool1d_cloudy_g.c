@@ -32,11 +32,8 @@ void cool1d_cloudy_g(
         long long clDataSize, const double* clCooling, const double* clHeating,
         const int32_t* itmask)
 {
-  int get_heat = iClHeat;
-  long long zindex;
   const double inv_log10 = 1.0 / log(10.0);
   const double log10_tCMB = log10(comp2);
-  gr_int64 end_int = 0;
 
   // local slices
   double* log_n_h = malloc(sizeof(double)*in);
@@ -57,20 +54,18 @@ void cool1d_cloudy_g(
      ? ((clPar3[clGridDim[2]-1] - clPar3[0]) / (double)(clGridDim[2] - 1)) : 0
     };
 
+  // Calculate index for redshift dimension - intentionally kept 1-indexed
+  const long long zindex = find_zindex(zr, clGridRank, clGridDim, clPar2);
+  const gr_int64 end_int = ((clGridRank > 2) && (zindex == clGridDim[1]));
+  const int get_heat = ((clGridRank > 2) && (zindex == clGridDim[1]))
+    ? 0 : iClHeat;
+
   // do work
   for (int i = is + 1; i <= (ie + 1); i++) {
     if ( !itmask[i-1] ) { continue; }
 
     log10tem[i-1] = logtem[i-1] * inv_log10;
     log_n_h[i-1] = log10(rhoH[i-1] * dom); // Calculate proper log(n_H)
-
-    // Calculate index for redshift dimension - intentionally kept 1-indexed
-    // TODO: hoist this out of the loop
-    zindex = find_zindex(zr, clGridRank, clGridDim, clPar2);
-    if ((clGridRank > 2) && (zindex == clGridDim[1])){
-      end_int = 1;
-      get_heat = 0;
-    }
 
     // Call interpolation functions to get heating and cooling
     if (clGridRank == 1) { // Interpolate over temperature.
