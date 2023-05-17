@@ -245,12 +245,12 @@
 
       integer icool, in, jn, kn, is, js, ks, ie, je, ke, nratec, 
      &        iexpand, ih2co, ipiht, ispecies, imetal, idim,
-     &        ierr, imcool, idust, idustall, idustfield, idustrec,
+     &        ierror, imcool, idust, idustall, idustfield, idustrec,
      &        igammah, ih2optical, iciecool, ithreebody,
      &        ndratec, clnew, iVheat, iMheat, iH2shield, iradshield,
      &        iradtrans, iradcoupled, iradstep, irt_honly,
      &        imchem, igrgr,
-     &        iisrffield, iH2shieldcustom, itmax, exititmax
+     &        iisrffield, iH2shieldcustom, ierr, itmax, exititmax
 
       real*8  dx, dt, aye, temstart, temend, gamma,
      &        utim, uxyz, uaye, urho, utem, fh, dtoh, z_solar, 
@@ -1570,9 +1570,9 @@ c              allocate(dumvec(nsp))
 
 !              Search for the timestep for which chemistry converges
 
-               ierr=1
+               ierror=1
                itr_time=0
-               do while ((ierr.eq.1))
+               do while ((ierror.eq.1))
 
 !                 If not converge, restore arrays at ttot(i)
 
@@ -1585,7 +1585,7 @@ c              allocate(dumvec(nsp))
                   itr=0
                   do while (err_max.gt.1.d-8)
                     if(itr.ge.20) then
-                       ierr = 1
+                       ierror = 1
                        go to 9996
                     endif
 
@@ -1896,8 +1896,8 @@ c                      dummtrx = mtrx
 c                      dumvec  = vec
 c                   endif
 
-                    call gaussj_g(nsp, mtrx, vec, ierr)
-                    if(ierr .eq. 1) then
+                    call gaussj_g(nsp, mtrx, vec, ierror)
+                    if(ierror .eq. 1) then
                       go to 9998
                     endif
 
@@ -1927,7 +1927,7 @@ c                   endif
                        do isp = 1, nsp
                           if ( (dsp(idsp(isp)) .ne. dsp(idsp(isp)))
      &                    .or. (dsp(idsp(isp)) .le. 0._DKIND) ) then
-                             ierr = 1
+                             ierror = 1
                              go to 9997
                           endif
                        enddo
@@ -1966,11 +1966,11 @@ c                       ierr_max = idsp(isp)
                      do isp = 1, nsp
                         if ( (dsp(idsp(isp)) .ne. dsp(idsp(isp)))
      &                  .or. (dsp(idsp(isp)) .le. 0._DKIND) ) then
-                           ierr = 1
+                           ierror = 1
                         endif
                      enddo
                   endif
-                  if(ierr .eq. 1) then
+                  if(ierror .eq. 1) then
                      dtit(i) = 0.5d0*dtit(i)
                   endif
 

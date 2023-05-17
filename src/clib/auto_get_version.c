@@ -3,8 +3,8 @@
 
 // the following macros are auto-generated:
 #define AUTO_VERSION "3.2.dev2"
-#define AUTO_BRANCH "genchiaki_merge"
-#define AUTO_REVISION "ae8cf65665b3145d409df8dd5d3ce703bdb5ab75"
+#define AUTO_BRANCH "genmerge-0418"
+#define AUTO_REVISION "00bbbb0f9c9b2b907c6fb4a1be03f1e000d8c599"
 
 // test that ensures that all macros were correctly defined:
 #if !(defined(AUTO_VERSION) && defined(AUTO_BRANCH) && defined(AUTO_REVISION))
