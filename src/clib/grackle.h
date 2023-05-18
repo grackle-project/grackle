@@ -191,25 +191,29 @@ grackle_version get_grackle_version(void);
 // Below, we conditionally define a handful of deprecated functions to maintain
 // backwards compatibility. These functions were deprecated because externally
 // visible identifiers that begin with an underscore invoke undefined behavior
+// - note: to allow these functions to be called in simulation codes that are
+//         written in C, we need to label them as ``static inline`` (if they
+//         were ONLY ever used in C++, then we would just need to label them as
+//         ``inline``)
 
 #ifndef OMIT_LEGACY_INTERNAL_GRACKLE_FUNC
 
 #warning "The legacy functions, _initialize_chemistry_data, _set_default_chemistry_parameters & _free_chemistry_data will be removed after version 3.2. To avoid defining these function (and this message) define the OMIT_LEGACY_INTERNAL_GRACKLE_FUNC macro."
 
-inline __attribute__((deprecated)) chemistry_data
+static inline __attribute__((deprecated)) chemistry_data
 _set_default_chemistry_parameters(void) {
   chemistry_data my_chemistry;
   local_initialize_chemistry_parameters(&my_chemistry);
   return my_chemistry;
 }
 
-inline __attribute__((deprecated)) int
+static inline __attribute__((deprecated)) int
 _initialize_chemistry_data(chemistry_data *my_chemistry,
                            chemistry_data_storage *my_rates,
                            code_units *my_units)
 { return local_initialize_chemistry_data(my_chemistry, my_rates, my_units); }
 
-inline __attribute__((deprecated)) int
+static inline __attribute__((deprecated)) int
 _free_chemistry_data (chemistry_data *my_chemistry,
                       chemistry_data_storage *my_rates)
 { return local_free_chemistry_data(my_chemistry, my_rates); }
