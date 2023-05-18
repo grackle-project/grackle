@@ -187,6 +187,28 @@ fortran_example: $(MODULES) fortran_example.o
          fi)
 
 #-----------------------------------------------------------------------
+# Unit test for interpolators
+#-----------------------------------------------------------------------
+
+TEST_INTERPOLATORS_OBJ = \
+	utest_interpolators/test_interpolators.o \
+	utest_interpolators/interpolators_g.o
+
+test_interpolators: $(TEST_INTERPOLATORS_OBJ) utest_helpers.hpp
+	@rm -f $@
+	@echo "Linking"
+	@($(CXX) $(LDFLAGS) -o test_interpolators $(TEST_INTERPOLATORS_OBJ) $(GRACKLE_LIB) $(LIBS) -lm) >& $(OUTPUT)
+	@(if [ -e $@ ]; then \
+             echo "Success!"; \
+         else \
+	     echo "$(CXX) $(LDFLAGS) -o test_cool1d_cloudy $(TEST_COOL1D_CLOUDY_OBJ) $(GRACKLE_LIB) $(LIBS) -lm" >> temp1; \
+             cat temp1 $(OUTPUT) > temp2; \
+             rm -f temp1; \
+             mv -f temp2 $(OUTPUT); \
+             echo "Failed! See $(OUTPUT) for error messages"; \
+         fi)
+
+#-----------------------------------------------------------------------
 # Implicit rules
 #-----------------------------------------------------------------------
 
@@ -257,7 +279,7 @@ help:
 #-----------------------------------------------------------------------
 
 clean:
-	-@rm -f *.o *.mod *.f *.f90 *~ *.exe $(OUTPUT) cxx_example cxx_omp_example cxx_grid_example c_example c_local_example fortran_example
+	-@rm -f *.o *.mod *.f *.f90 *~ *.exe utest_interpolators/*.o $(OUTPUT) cxx_example cxx_omp_example cxx_grid_example c_example c_local_example fortran_example test_interpolators
 
 #-----------------------------------------------------------------------
 # Include configuration targets
