@@ -54,7 +54,7 @@ typedef struct
   int UVbackground;
 
   /* data file containing cooling and UV background tables */
-  char *grackle_data_file;
+  const char *grackle_data_file;
 
   /* Use a CMB temperature floor
      0) no, 1) yes */
@@ -220,9 +220,7 @@ typedef struct
   int exit_after_iterations_exceeded;
 
   /* number of OpenMP threads, if supported */
-# ifdef _OPENMP
   int omp_nthreads;
-# endif
 
 } chemistry_data;
 

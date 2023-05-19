@@ -16,7 +16,6 @@
 
 #include "grackle_types.h"
 #include "grackle_chemistry_data.h"
-#include <stddef.h>
 
 extern int grackle_verbose;
 
@@ -31,13 +30,13 @@ double get_temperature_units(code_units *my_units);
 
 int set_default_chemistry_parameters(chemistry_data *my_grackle);
 
-chemistry_data _set_default_chemistry_parameters(void);
+int local_initialize_chemistry_parameters(chemistry_data *my_chemistry);
 
 int initialize_chemistry_data(code_units *my_units);
 
-int _initialize_chemistry_data(chemistry_data *my_chemistry, 
-                               chemistry_data_storage *my_rates,
-                               code_units *my_units);
+int local_initialize_chemistry_data(chemistry_data *my_chemistry, 
+                                    chemistry_data_storage *my_rates,
+                                    code_units *my_units);
 
 int* local_chemistry_data_access_int(chemistry_data* my_chemistry,
                                      const char* param_name);
@@ -46,11 +45,11 @@ double* local_chemistry_data_access_double(chemistry_data* my_chemistry,
 char** local_chemistry_data_access_string(chemistry_data* my_chemistry,
                                           const char* param_name);
 
-const char* param_name_int(size_t i);
-const char* param_name_double(size_t i);
-const char* param_name_string(size_t i);
+const char* param_name_int(unsigned int i);
+const char* param_name_double(unsigned int i);
+const char* param_name_string(unsigned int i);
 
-size_t grackle_num_params(const char* type_name);
+unsigned int grackle_num_params(const char* type_name);
 
 int solve_chemistry(code_units *my_units,
                     grackle_field_data *my_fields,
@@ -241,8 +240,38 @@ int _calculate_temperature(chemistry_data *my_chemistry,
                            gr_float *e_density, gr_float *metal_density,
                            gr_float *temperature) __attribute__ ((deprecated));
 
-int _free_chemistry_data(chemistry_data *my_chemistry, chemistry_data_storage *my_rates);
+int free_chemistry_data(void);
+
+int local_free_chemistry_data(chemistry_data *my_chemistry, chemistry_data_storage *my_rates);
 
 grackle_version get_grackle_version(void);
+
+// Below, we conditionally define a handful of deprecated functions to maintain
+// backwards compatibility. These functions were deprecated because externally
+// visible identifiers that begin with an underscore invoke undefined behavior
+
+#ifndef OMIT_LEGACY_INTERNAL_GRACKLE_FUNC
+
+#warning "The legacy functions, _initialize_chemistry_data, _set_default_chemistry_parameters & _free_chemistry_data will be removed after version 3.2. To avoid defining these function (and this message) define the OMIT_LEGACY_INTERNAL_GRACKLE_FUNC macro."
+
+inline __attribute__((deprecated)) chemistry_data
+_set_default_chemistry_parameters(void) {
+  chemistry_data my_chemistry;
+  local_initialize_chemistry_parameters(&my_chemistry);
+  return my_chemistry;
+}
+
+inline __attribute__((deprecated)) int
+_initialize_chemistry_data(chemistry_data *my_chemistry,
+                           chemistry_data_storage *my_rates,
+                           code_units *my_units)
+{ return local_initialize_chemistry_data(my_chemistry, my_rates, my_units); }
+
+inline __attribute__((deprecated)) int
+_free_chemistry_data (chemistry_data *my_chemistry,
+                      chemistry_data_storage *my_rates)
+{ return local_free_chemistry_data(my_chemistry, my_rates); }
+
+#endif /* OMIT_LEGACY_INTERNAL_GRACKLE_FUNC */
 
 #endif

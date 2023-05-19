@@ -41,7 +41,7 @@ cdef class chemistry_data:
         if self.data_copy_from_init is None:
             return # nothing to uninitialize
 
-        c_free_chemistry_data(
+        c_local_free_chemistry_data(
             &((<_wrapped_c_chemistry_data?>self.data_copy_from_init).data),
             &self.rates)
 
@@ -56,8 +56,8 @@ cdef class chemistry_data:
     def initialize(self):
         self._try_uninitialize() # if self.rates was already initialized,
                                  # uninitialize it to avoid a memory leak
-        ret =  _initialize_chemistry_data(&self.data.data, &self.rates,
-                                          &self.units)
+        ret =  local_initialize_chemistry_data(&self.data.data, &self.rates,
+                                               &self.units)
         if ret is None:
             raise RuntimeError("Error initializing chemistry")
 
@@ -2208,12 +2208,12 @@ def get_grackle_version():
             "branch" : version_struct.branch.decode('UTF-8'),
             "revision" : version_struct.revision.decode('UTF-8')}
 
-cdef list _get_parameter_name_list(const char*(*get_param)(size_t)):
+cdef list _get_parameter_name_list(const char*(*get_param)(unsigned int)):
     # the arg should be param_name_int, param_name_double, or param_name_string
 
     cdef list out = []
     cdef const char* tmp
-    cdef size_t i = 0
+    cdef unsigned int i = 0
     while True:
         tmp = get_param(i)
         if tmp is NULL:
@@ -2240,7 +2240,7 @@ cdef class _wrapped_c_chemistry_data:
     #   by a null character (the Python interface just hides if from users)
 
     def __cinit__(self):
-        self.data = _set_default_chemistry_parameters()
+        local_initialize_chemistry_parameters(&self.data)
         self._string_buffers = {}
 
     def _access_struct_field(self, key, val = None):

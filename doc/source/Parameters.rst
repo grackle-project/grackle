@@ -589,6 +589,21 @@ In addition, these tables contain the spectrum averaged absorption
 cross sections needed for the Rahmati et. al. 2013 self-shielding 
 approximations. Currently only the HM2012 table has been recomputed. 
 
+.. note::
+   The cooling rates in the files below are known to have unphysically
+   high heating rates at low densities (see `Issue #7
+   <https://github.com/grackle-project/grackle_data_files/issues/7>`__
+   of `grackle_data_files
+   <https://github.com/grackle-project/grackle_data_files>`__). In
+   practice, this is primarily an issue when running with
+   :c:data:`primordial_chemistry` set to 0 (i.e., fully tabulated
+   cooling mode). While this issue also affects the metal cooling
+   rates, this component is negligible in the densities and
+   temperatures where this happens. As such, these can be used with
+   :c:data:`primordial_chemistry` >= 1 and
+   :c:data:`self_shielding_method` enabled. **It is not recommended to
+   use these files with primordial_chemistry set to 0.**
+
  - **CloudyData_UVB=HM2012_shielded.h5** - updated heating and cooling
    rates with the HM2012 UV background, accounting for self-shielding.
 

@@ -361,7 +361,7 @@ int check_if_grackle_mutates_ghost_zone(int primordial_chemistry,
     }
   }
 
-  _free_chemistry_data(my_grackle_data, &grackle_rates);
+  free_chemistry_data();
   delete my_grackle_data;
 
   delete[] my_fields.grid_dimension;

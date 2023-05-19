@@ -12,7 +12,6 @@ cython_extensions = [
         libraries=["grackle"],
         define_macros=[
             ("CONFIG_BFLOAT_8", True),
-            ("LARGE_INTS", True),
         ],
     ),
 ]
@@ -55,8 +54,31 @@ dev_requirements = [
 
 setup(
     name="pygrackle",
-    version="0.1",
+    version="1.0.0",
     description="A wrapper for the Grackle chemistry library",
+    keywords=["simulation", "chemistry", "cooling", "astronomy", "astrophysics"],
+    url="https://github.com/grackle-project/grackle",
+    project_urls={
+        'Homepage': 'https://github.com/grackle-project/grackle',
+        'Documentation': 'https://grackle.readthedocs.io/',
+        'Source': 'https://github.com/grackle-project/grackle',
+        'Tracker': 'https://github.com/grackle-project/grackle/issues'
+    },
+    include_package_data=True,
+    classifiers=[
+        "Development Status :: 5 - Production/Stable",
+        "Environment :: Console",
+        "Intended Audience :: Science/Research",
+        "Topic :: Scientific/Engineering :: Astronomy",
+        "License :: OSI Approved :: BSD License",
+        "Operating System :: MacOS :: MacOS X",
+        "Operating System :: POSIX :: Linux",
+        "Operating System :: Unix",
+        "Natural Language :: English",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+    ],
     packages=find_packages(),
     setup_requires=[
         'numpy',

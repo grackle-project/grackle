@@ -62,9 +62,9 @@ static void show_version(FILE *fp)
   fprintf (fp, "\n");
 }
 
-int _initialize_chemistry_data(chemistry_data *my_chemistry,
-                               chemistry_data_storage *my_rates,
-                               code_units *my_units)
+int local_initialize_chemistry_data(chemistry_data *my_chemistry,
+                                    chemistry_data_storage *my_rates,
+                                    code_units *my_units)
 {
 
   if (grackle_verbose) {
@@ -110,7 +110,18 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
   }
 
 //initialize OpenMP
-# ifdef _OPENMP
+# ifndef _OPENMP
+  if (my_chemistry->omp_nthreads > 1) {
+    fprintf(stdout,
+            "omp_nthreads can't be set when Grackle isn't compiled with "
+            "OPENMP\n");
+    return FAIL;
+  }
+# else _OPENMP
+  if (my_chemistry->omp_nthreads < 1) {
+    // this is the default behavior (unless the user intervenes)
+    my_chemistry->omp_nthreads = omp_get_max_threads();
+  }
 //number of threads
   omp_set_num_threads( my_chemistry->omp_nthreads );
 
@@ -266,15 +277,17 @@ int _initialize_chemistry_data(chemistry_data *my_chemistry,
 
 int initialize_chemistry_data(code_units *my_units)
 {
-  if (_initialize_chemistry_data(grackle_data, &grackle_rates,
-                                 my_units) == FAIL) {
-    fprintf(stderr, "Error in _initialize_chemistry_data.\n");
+  if (local_initialize_chemistry_data(grackle_data, &grackle_rates,
+                                      my_units) == FAIL) {
+    fprintf(stderr, "Error in local_initialize_chemistry_data.\n");
     return FAIL;
   }
   return SUCCESS;
 }
 
 // Define helpers for the show_parameters function
+// NOTE: it's okay that these functions all begin with an underscore since they
+//       each have internal linkage (i.e. they are each declared static)
 static void _show_field_INT(FILE *fp, const char* field, int val)
 { fprintf(fp, "%-33s = %d\n", field, val); }
 static void _show_field_DOUBLE(FILE *fp, const char* field, double val)
@@ -290,9 +303,16 @@ void show_parameters(FILE *fp, chemistry_data *my_chemistry){
   #undef ENTRY
 }
 
+int free_chemistry_data(void){
+  if (local_free_chemistry_data(grackle_data, &grackle_rates) == FAIL) {
+    fprintf(stderr, "Error in local_free_chemistry_data.\n");
+    return FAIL;
+  }
+  return SUCCESS;
+}
 
-int _free_chemistry_data(chemistry_data *my_chemistry,
-			 chemistry_data_storage *my_rates) {
+int local_free_chemistry_data(chemistry_data *my_chemistry,
+                              chemistry_data_storage *my_rates) {
   if (my_chemistry->primordial_chemistry > 0) {
     GRACKLE_FREE(my_rates->ceHI);
     GRACKLE_FREE(my_rates->ceHeI);
