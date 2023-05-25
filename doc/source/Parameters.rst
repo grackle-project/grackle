@@ -337,6 +337,15 @@ For all on/off integer flags, 0 is off and 1 is on.
    provided in the :c:data:`specific_heating_rate` field of the
    :c:data:`grackle_field_data` struct.  Default: 0.
 
+.. c:var:: int use_temperature_floor_field
+
+   Flag to enable the use of a field array providing a temperature
+   floor for each element. When set to 1, temperature floor values
+   should then be set using the :c:data:`temperature_floor` array
+   pointer. When enabled, no chemistry or cooling calculations will be
+   performed on an element with a temperature at or below the
+   specified value. Default: 0.
+
 .. c:var:: int use_radiative_transfer
 
    Flag to signal that arrays of ionization and heating rates from
