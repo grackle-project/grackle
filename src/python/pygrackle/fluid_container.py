@@ -32,7 +32,8 @@ _nd_fields   = ["energy",
                 "x-velocity", "y-velocity", "z-velocity",
                 "temperature", "dust_temperature", "pressure",
                 "gamma", "cooling_time", "mu", "nH",
-                "mean_molecular_weight"]
+                "mean_molecular_weight",
+                "temperature_floor"]
 
 _fluid_names = {}
 _fluid_names[0] = _base_fluids

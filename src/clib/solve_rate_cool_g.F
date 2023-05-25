@@ -45,6 +45,7 @@
      &                metPar1, metPar2, metPar3, metPar4, metPar5,
      &                metDataSize, metCooling, metHeating, clnew,
      &                iVheat, iMheat, Vheat, Mheat,
+     &                iTfloor, Tfloor,
      &                iisrffield, isrf_habing, 
      &                iH2shieldcustom, f_shield_custom,
      &                itmax, exititmax)
@@ -144,6 +145,8 @@
 !    iMheat      - flag for using specific heating rate
 !    Vheat       - array of volumetric heating rates
 !    Mheat       - array of specific heating rates
+!    iTfloor     - flag for using temperature floor field
+!    Tfloor      - array of temperature floor values
 !    itmax       - maximum allowed sub-cycle iterations
 !    exititmax   - flag to exit if max iterations exceeded
 !
@@ -167,7 +170,8 @@
      &        iexpand, ih2co, ipiht, ispecies, imetal, idim,
      &        ierr, imcool, idust, idustall, idustfield, idustrec,
      &        igammah, ih2optical, iciecool, ithreebody,
-     &        ndratec, clnew, iVheat, iMheat, iH2shield, iradshield,
+     &        ndratec, clnew, iVheat, iMheat, iTfloor,
+     &        iH2shield, iradshield,
      &        iradtrans, iradcoupled, iradstep, irt_honly,
      &        iisrffield, iH2shieldcustom, itmax, exititmax
 
@@ -184,7 +188,7 @@
      &        d(in,jn,kn),     e(in,jn,kn),
      &        u(in,jn,kn),    v(in,jn,kn),     w(in,jn,kn),
      &        metal(in,jn,kn), dust(in,jn,kn),
-     &        Vheat(in,jn,kn), Mheat(in,jn,kn)
+     &        Vheat(in,jn,kn), Mheat(in,jn,kn), Tfloor(in,jn,kn)
 
 !  Radiative transfer fields
 
@@ -497,6 +501,7 @@
      &                metPar1, metPar2, metPar3, metPar4, metPar5,
      &                metDataSize, metCooling, metHeating, clnew,
      &                iVheat, iMheat, Vheat, Mheat,
+     &                iTfloor, Tfloor,
      &                iisrffield, isrf_habing, itmask)
 
             if (ispecies .gt. 0) then

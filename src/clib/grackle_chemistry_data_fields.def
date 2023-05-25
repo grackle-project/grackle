@@ -88,6 +88,9 @@ ENTRY(interstellar_radiation_field, DOUBLE, 1.7)
 ENTRY(use_volumetric_heating_rate, INT, 0)
 ENTRY(use_specific_heating_rate, INT, 0)
 
+/* flag to use a field specifying a temperature floor */
+ENTRY(use_temperature_floor_field, INT, 0)
+
 /* additional chemistry solver parameters */
 ENTRY(three_body_rate, INT, 0)
 ENTRY(cie_cooling, INT, 0)

@@ -89,6 +89,10 @@ typedef struct
   int use_volumetric_heating_rate;
   int use_specific_heating_rate;
 
+  /* flag to use a field specifying a temperature floor */
+
+  int use_temperature_floor_field;
+
   /* additional chemistry solver parameters */
   int three_body_rate;
   int cie_cooling;
