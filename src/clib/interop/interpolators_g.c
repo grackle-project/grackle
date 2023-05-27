@@ -10,6 +10,35 @@
 typedef int64_t gr_int64;
 typedef int64_t gr_dint; // equivalent of int(val, DIKIND)
 
+// There is a huge potential for optimization in these functions. For example:
+//   - we could take advantage of the regular spacing between parameter values
+//     and precompute 1/dgridPar1, 1/dgridPar2, 1/dgridPar3, ... ahead of time.
+//     This would allow us to avoid a lot of expensive division operations
+//   - we could make these functions directly return the result (rather than
+//     returning through a pointer argument). This change generally helps with
+//     compiler optimizations.
+//   - we could restructure the ordering of the tables (maybe when we read them
+//     in?) so that we can further reduce the number of calls to the log
+//     function, which is generally very slow.
+
+/// helper function to interpolate along a single dimension
+///
+/// @note
+/// we could probably make this a 3 argument function where the second & third
+/// arguments each expect a pointer to a pair of values. The main reason I have
+/// avoided this right now is that it may interfere with vectorization
+///
+/// @note
+/// We may want to use some compiler specific extensions to force inlining of
+/// this function (OR define it as a macro)
+static inline double interp_(double x,
+                             double xref0, double xref1,
+                             double yref0, double yref1)
+{
+  double slope = (yref1 - yref0) / (xref1 - xref0);
+  return (x - xref0) * slope + yref0;
+}
+
 void interpolate_1d_g(double input1,
                       const gr_int64* gridDim, // 1 elements
                       const double* gridPar1, double dgridPar1,
@@ -21,10 +50,8 @@ void interpolate_1d_g(double input1,
                         max(1, (gr_dint)((input1-gridPar1[0])/dgridPar1)+1));
 
   // interpolate over parameter 1
-  double slope = (dataField[index1] - dataField[index1-1]) /
-    (gridPar1[index1] - gridPar1[index1-1]);
-
-  *value = (input1 - gridPar1[index1-1]) * slope + dataField[index1-1];
+  *value = interp_(input1, gridPar1[index1-1], gridPar1[index1],
+                   dataField[index1-1], dataField[index1]);
 }
 
 void interpolate_2d_g(double input1, double input2,
@@ -46,17 +73,12 @@ void interpolate_2d_g(double input1, double input2,
     // interpolate over parameter 2
     gr_int64 int_index = (q+index1-2) * gridDim[1] + index2;
 
-    double slope = (dataField[int_index] - dataField[int_index-1]) /
-      (gridPar2[index2] - gridPar2[index2-1]);
-
-    value2[q-1] = (input2 - gridPar2[index2-1]) * slope +
-      dataField[int_index-1];
+    value2[q-1] = interp_(input2, gridPar2[index2-1], gridPar2[index2],
+                          dataField[int_index-1], dataField[int_index]);
   }
 
-  double slope = (value2[1] - value2[0]) /
-    (gridPar1[index1] - gridPar1[index1-1]);
-
-  *value = (input1 - gridPar1[index1-1]) * slope + value2[0];
+  *value = interp_(input1, gridPar1[index1-1], gridPar1[index1],
+                   value2[0], value2[1]);
 }
 
 void interpolate_3d_g(double input1, double input2, double input3,
@@ -83,25 +105,18 @@ void interpolate_3d_g(double input1, double input2, double input3,
       gr_int64 int_index = ((q+index1-2) * gridDim[1] +
                             (w+index2-2)) * gridDim[2] + index3;
 
-      double slope = (dataField[int_index] - dataField[int_index-1]) /
-        (gridPar3[index3] - gridPar3[index3-1]);
-
-      value3[w-1] = (input3 - gridPar3[index3-1]) * slope +
-          dataField[int_index-1];
+      value3[w-1] = interp_(input3, gridPar3[index3-1], gridPar3[index3],
+                            dataField[int_index-1], dataField[int_index]);
     }
 
     // interpolate over parameter 2
-    double slope = (value3[1] - value3[0]) /
-      (gridPar2[index2] - gridPar2[index2-1]);
-
-    value2[q-1] = (input2 - gridPar2[index2-1]) * slope + value3[0];
+    value2[q-1] = interp_(input2, gridPar2[index2-1], gridPar2[index2],
+                          value3[0], value3[1]);
   }
 
   // interpolate over parameter 1
-  double slope = (value2[1] - value2[0]) /
-    (gridPar1[index1] - gridPar1[index1-1]);
-
-  *value = (input1 - gridPar1[index1-1]) * slope + value2[0];
+  *value = interp_(input1, gridPar1[index1-1], gridPar1[index1],
+                   value2[0], value2[1]);
 }
 
 void interpolate_4d_g(double input1, double input2, double input3,
@@ -131,37 +146,27 @@ void interpolate_4d_g(double input1, double input2, double input3,
       for (gr_int64 e=1; e <= 2; e++) {
 
         // interpolate over parameter 4
-
         gr_int64 int_index = (((q+index1-2) * gridDim[1] +
                                (w+index2-2)) * gridDim[2] +
                               (e+index3-2)) * gridDim[3] + index4;
 
-        double slope = (dataField[int_index] - dataField[int_index-1]) /
-          (gridPar4[index4] - gridPar4[index4-1]);
-
-        value4[e-1] = (input4 - gridPar4[index4-1]) * slope +
-          dataField[int_index-1];
+        value4[e-1] = interp_(input4, gridPar4[index4-1], gridPar4[index4],
+                              dataField[int_index-1], dataField[int_index]);
       }
 
       // interpolate over parameter 3
-      double slope = (value4[1] - value4[0]) /
-        (gridPar3[index3] - gridPar3[index3-1]);
-
-      value3[w-1] = (input3 - gridPar3[index3-1]) * slope + value4[0];
+      value3[w-1] = interp_(input3, gridPar3[index3-1], gridPar3[index3],
+                            value4[0], value4[1]);
     }
 
     // interpolate over parameter 2
-    double slope = (value3[1] - value3[0]) /
-      (gridPar2[index2] - gridPar2[index2-1]);
-
-    value2[q-1] = (input2 - gridPar2[index2-1]) * slope + value3[0];
+    value2[q-1] = interp_(input2, gridPar2[index2-1], gridPar2[index2],
+                          value3[0], value3[1]);
   }
 
   // interpolate over parameter 1
-  double slope = (value2[1] - value2[0]) /
-    (gridPar1[index1] - gridPar1[index1-1]);
-
-  *value = (input1 - gridPar1[index1-1]) * slope + value2[0];
+  *value = interp_(input1, gridPar1[index1-1], gridPar1[index1],
+                   value2[0], value2[1]);
 }
 
 void interpolate_5d_g(double input1, double input2, double input3,
@@ -215,43 +220,34 @@ void interpolate_5d_g(double input1, double input2, double input3,
     for (gr_int64 w=1; w <= 2; w++) {
       for (gr_int64 e=1; e <= 2; e++) {
         for (gr_int64 r=1; r <= 2; r++) {
+
           // interpolate over parameter 5
           gr_int64 int_index = ((((q+index1-2) * gridDim[1] + 
                                   (w+index2-2)) * gridDim[2] + (e+index3-2)) * 
                                 gridDim[3] + (r+index4-2)) * gridDim[4] +
                                 index5;
-          double slope = (dataField[int_index] - dataField[int_index-1]) /
-                         (gridPar5[index5] - gridPar5[index5-1]);
 
-          value5[r-1] = (input5 - gridPar5[index5-1]) * slope +
-            dataField[int_index-1];
+          value5[r-1] = interp_(input5, gridPar5[index5-1], gridPar5[index5],
+                                dataField[int_index-1], dataField[int_index]);
         }
 
         // interpolate over parameter 4
-        double slope = (value5[1] - value5[0]) /
-          (gridPar4[index4] - gridPar4[index4-1]);
-
-        value4[e-1] = (input4 - gridPar4[index4-1]) * slope + value5[0];
+        value4[e-1] = interp_(input4, gridPar4[index4-1], gridPar4[index4],
+                              value5[0], value5[1]);
       }
 
       // interpolate over parameter 3
-      double slope = (value4[1] - value4[0]) /
-        (gridPar3[index3] - gridPar3[index3-1]);
-
-      value3[w-1] = (input3 - gridPar3[index3-1]) * slope + value4[0];
+      value3[w-1] = interp_(input3, gridPar3[index3-1], gridPar3[index3],
+                            value4[0], value4[1]);
     }
 
     // interpolate over parameter 2
-    double slope = (value3[1] - value3[0]) /
-      (gridPar2[index2] - gridPar2[index2-1]);
-
-    value2[q-1] = (input2 - gridPar2[index2-1]) * slope + value3[0];
+    value2[q-1] = interp_(input2, gridPar2[index2-1], gridPar2[index2],
+                          value3[0], value3[1]);
   }
 
-  double slope = (value2[1] - value2[0]) /
-    (gridPar1[index1] - gridPar1[index1-1]);
-
-  *value = (input1 - gridPar1[index1-1]) * slope + value2[0];
+  *value = interp_(input1, gridPar1[index1-1], gridPar1[index1],
+                   value2[0], value2[1]);
 }
 
 
@@ -278,22 +274,16 @@ static double interpolate_2Df3D_g(double input1, double input3,
 
   for (gr_int64 q=1; q <= 2; q++) { // interpolate over parameter 3
 
-    // NOTE: if there's a bug, it's probably here!
     gr_int64 int_index = ((q+index1-2) * gridDim[1] + (index2-1)) *
       gridDim[2] + index3;
 
-    double slope = (dataField[int_index] - dataField[int_index-1]) /
-      (gridPar3[index3] - gridPar3[index3-1]);
-
-    value3[q-1] = (input3 - gridPar3[index3-1]) * slope +
-      dataField[int_index-1];
+    value3[q-1] = interp_(input3, gridPar3[index3-1], gridPar3[index1],
+                          dataField[int_index-1], dataField[int_index]);
   }
 
   // interpolate over parameter 1
-  double slope = (value3[1] - value3[0]) /
-    (gridPar1[index1] - gridPar1[index1-1]);
-
-  return (input1 - gridPar1[index1-1]) * slope + value3[0];
+  return interp_(input1, gridPar1[index1-1], gridPar1[index1],
+                 value3[0], value3[1]);
 }
 
 
@@ -330,11 +320,8 @@ void interpolate_3dz_g(double input1, double input2, double input3,
       gr_int64 int_index = ((q+index1-2) * gridDim[1] +
                             (w+index2-2)) * gridDim[2] + index3;
 
-      double slope = (dataField[int_index] - dataField[int_index-1]) /
-        (gridPar3[index3] - gridPar3[index3-1]);
-
-      value3[w-1] = (input3 - gridPar3[index3-1]) * slope +
-          dataField[int_index-1];
+      value3[w-1] = interp_(input3, gridPar3[index3-1], gridPar3[index3],
+                            dataField[int_index-1], dataField[int_index]);
     }
 
     // interpolate over parameter 2
@@ -345,25 +332,6 @@ void interpolate_3dz_g(double input1, double input2, double input3,
   }
 
   // interpolate over parameter 1
-  double slope = (value2[1] - value2[0]) /
-    (gridPar1[index1] - gridPar1[index1-1]);
-
-  *value = (input1 - gridPar1[index1-1]) * slope + value2[0];
+  *value = interp_(input1, gridPar1[index1-1], gridPar1[index1],
+                   value2[0], value2[1]);
 }
-
-
-// NOTE: we could probably abstract out the internals here
-// static inline calc_slope(const double* y_pair, const double* x_pair)
-// { return (y_pair[1] - y_pair[0]) / (x_pair[1] - x_pair[0]) };
-/*
-inline double interpolate_along_dim_(const double* y_val_pair,
-                                     const double* x_grid_vals,
-                                     gr_int64 lo_x_index,
-                                     double x_val,
-                                     double offset)
-{
-  double slope = (y_val_pair[1] - y_val_pair[0]) /
-    (x_grid_vals[lo_x_index+1] - x_grid_vals[lo_x_index]);
-  return (x_val - x_grid_vals[lo_x_index]) * slope + offset;
-}
-*/
