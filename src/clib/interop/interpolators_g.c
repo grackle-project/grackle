@@ -13,7 +13,7 @@ typedef int64_t gr_dint; // equivalent of int(val, DIKIND)
 void interpolate_1d_g(double input1,
                       const gr_int64* gridDim, // 1 elements
                       const double* gridPar1, double dgridPar1,
-                      const gr_int64* dataSize, const double* dataField,
+                      gr_int64 dataSize, const double* dataField,
                       double* value)
 {
 
@@ -31,7 +31,7 @@ void interpolate_2d_g(double input1, double input2,
                       const gr_int64* gridDim, // 2 elements
                       const double* gridPar1, double dgridPar1,
                       const double* gridPar2, double dgridPar2,
-                      const gr_int64* dataSize, const double* dataField,
+                      gr_int64 dataSize, const double* dataField,
                       double* value)
 {
   double value2[2];
@@ -64,7 +64,7 @@ void interpolate_3d_g(double input1, double input2, double input3,
                       const double* gridPar1, double dgridPar1,
                       const double* gridPar2, double dgridPar2,
                       const double* gridPar3, double dgridPar3,
-                      const gr_int64* dataSize, const double* dataField,
+                      gr_int64 dataSize, const double* dataField,
                       double* value)
 {
   double value3[2], value2[2];
@@ -111,7 +111,7 @@ void interpolate_4d_g(double input1, double input2, double input3,
                       const double* gridPar2, double dgridPar2,
                       const double* gridPar3, double dgridPar3,
                       const double* gridPar4, double dgridPar4,
-                      const gr_int64* dataSize, const double* dataField,
+                      gr_int64 dataSize, const double* dataField,
                       double* value)
 {
 
@@ -172,7 +172,7 @@ void interpolate_5d_g(double input1, double input2, double input3,
                       const double* gridPar3, double dgridPar3,
                       const double* gridPar4, double dgridPar4,
                       const double* gridPar5, double dgridPar5,
-                      const gr_int64* dataSize, const double* dataField,
+                      gr_int64 dataSize, const double* dataField,
                       double* value)
 {
   double value5[2], value4[2], value3[2], value2[2];
@@ -265,7 +265,7 @@ static double interpolate_2Df3D_g(double input1, double input3,
                                   const double* gridPar1, double dgridPar1,
                                   gr_int64 index2,
                                   const double* gridPar3, double dgridPar3,
-                                  const gr_int64 dataSize,
+                                  gr_int64 dataSize,
                                   const double* dataField)
 {
   double value3[2];
@@ -302,24 +302,20 @@ void interpolate_3dz_g(double input1, double input2, double input3,
                        const double* gridPar1, double dgridPar1,
                        const double* gridPar2, gr_int64 index2,
                        const double* gridPar3, double dgridPar3,
-                       const gr_int64* dataSize, const double* dataField,
-                       const gr_int64* end_int_p, double* value)
+                       gr_int64 dataSize, const double* dataField,
+                       gr_int64 end_int, double* value)
 {
-  // store some arguments that were passed by pointer
-  const gr_int64 end_int = *end_int_p;
-
   if (end_int == 1) {
     *value = interpolate_2Df3D_g(input1, input3,
                                  gridDim,
                                  gridPar1, dgridPar1,
                                  index2,
                                  gridPar3, dgridPar3,
-                                 *dataSize, dataField);
+                                 dataSize, dataField);
     return;
   }
 
-  double value3[2];
-  double value2[2];
+  double value3[2], value2[2];
 
   // Calculate interpolation indices
   gr_int64 index1 = min(gridDim[0]-1,
