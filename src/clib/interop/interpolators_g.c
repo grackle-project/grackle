@@ -68,13 +68,13 @@ void interpolate_2d_g(double input1, double input2,
   gr_int64 index2 = min(gridDim[1]-1,
                         max(1, (gr_dint)((input2-gridPar2[0])/dgridPar2)+1));
 
-  for (gr_int64 q=1; q <= 2; q++) {
+  for (gr_int64 q=0; q < 2; q++) {
 
     // interpolate over parameter 2
-    gr_int64 int_index = (q+index1-2) * gridDim[1] + index2;
+    gr_int64 int_index = (q+index1-1) * gridDim[1] + index2;
 
-    value2[q-1] = interp_(input2, gridPar2[index2-1], gridPar2[index2],
-                          dataField[int_index-1], dataField[int_index]);
+    value2[q] = interp_(input2, gridPar2[index2-1], gridPar2[index2],
+                        dataField[int_index-1], dataField[int_index]);
   }
 
   *value = interp_(input1, gridPar1[index1-1], gridPar1[index1],
@@ -98,20 +98,20 @@ void interpolate_3d_g(double input1, double input2, double input3,
   gr_int64 index3 = min(gridDim[2]-1,
                         max(1, (gr_dint)((input3-gridPar3[0])/dgridPar3)+1));
 
-  for (gr_int64 q=1; q <= 2; q++) {
-    for (gr_int64 w=1; w <= 2; w++) {
+  for (gr_int64 q = 0; q < 2; q++) {
+    for (gr_int64 w = 0; w < 2; w++) {
 
       // interpolate over parameter 3
-      gr_int64 int_index = ((q+index1-2) * gridDim[1] +
-                            (w+index2-2)) * gridDim[2] + index3;
+      gr_int64 int_index = ((q+index1-1) * gridDim[1] +
+                            (w+index2-1)) * gridDim[2] + index3;
 
-      value3[w-1] = interp_(input3, gridPar3[index3-1], gridPar3[index3],
-                            dataField[int_index-1], dataField[int_index]);
+      value3[w] = interp_(input3, gridPar3[index3-1], gridPar3[index3],
+                          dataField[int_index-1], dataField[int_index]);
     }
 
     // interpolate over parameter 2
-    value2[q-1] = interp_(input2, gridPar2[index2-1], gridPar2[index2],
-                          value3[0], value3[1]);
+    value2[q] = interp_(input2, gridPar2[index2-1], gridPar2[index2],
+                        value3[0], value3[1]);
   }
 
   // interpolate over parameter 1
@@ -141,27 +141,27 @@ void interpolate_4d_g(double input1, double input2, double input3,
   gr_int64 index4 = min(gridDim[3]-1,
                         max(1, (gr_dint)((input4-gridPar4[0])/dgridPar4)+1));
 
-  for (gr_int64 q=1; q <= 2; q++) {
-    for (gr_int64 w=1; w <= 2; w++) {
-      for (gr_int64 e=1; e <= 2; e++) {
+  for (gr_int64 q = 0; q < 2; q++) {
+    for (gr_int64 w = 0; w < 2; w++) {
+      for (gr_int64 e = 0; e < 2; e++) {
 
         // interpolate over parameter 4
-        gr_int64 int_index = (((q+index1-2) * gridDim[1] +
-                               (w+index2-2)) * gridDim[2] +
-                              (e+index3-2)) * gridDim[3] + index4;
+        gr_int64 int_index = (((q+index1-1) * gridDim[1] +
+                               (w+index2-1)) * gridDim[2] +
+                              (e+index3-1)) * gridDim[3] + index4;
 
-        value4[e-1] = interp_(input4, gridPar4[index4-1], gridPar4[index4],
-                              dataField[int_index-1], dataField[int_index]);
+        value4[e] = interp_(input4, gridPar4[index4-1], gridPar4[index4],
+                            dataField[int_index-1], dataField[int_index]);
       }
 
       // interpolate over parameter 3
-      value3[w-1] = interp_(input3, gridPar3[index3-1], gridPar3[index3],
-                            value4[0], value4[1]);
+      value3[w] = interp_(input3, gridPar3[index3-1], gridPar3[index3],
+                          value4[0], value4[1]);
     }
 
     // interpolate over parameter 2
-    value2[q-1] = interp_(input2, gridPar2[index2-1], gridPar2[index2],
-                          value3[0], value3[1]);
+    value2[q] = interp_(input2, gridPar2[index2-1], gridPar2[index2],
+                        value3[0], value3[1]);
   }
 
   // interpolate over parameter 1
@@ -216,34 +216,34 @@ void interpolate_5d_g(double input1, double input2, double input3,
                         max(1, (gr_dint)((input5-gridPar5[0])/dgridPar5)+1));
 
 
-  for (gr_int64 q=1; q <= 2; q++) {
-    for (gr_int64 w=1; w <= 2; w++) {
-      for (gr_int64 e=1; e <= 2; e++) {
-        for (gr_int64 r=1; r <= 2; r++) {
+  for (gr_int64 q = 0; q < 2; q++) {
+    for (gr_int64 w = 0; w < 2; w++) {
+      for (gr_int64 e = 0; e < 2; e++) {
+        for (gr_int64 r = 0; r < 2; r++) {
 
           // interpolate over parameter 5
-          gr_int64 int_index = ((((q+index1-2) * gridDim[1] + 
-                                  (w+index2-2)) * gridDim[2] + (e+index3-2)) * 
-                                gridDim[3] + (r+index4-2)) * gridDim[4] +
+          gr_int64 int_index = ((((q+index1-1) * gridDim[1] +
+                                  (w+index2-1)) * gridDim[2] + (e+index3-1)) *
+                                gridDim[3] + (r+index4-1)) * gridDim[4] +
                                 index5;
 
-          value5[r-1] = interp_(input5, gridPar5[index5-1], gridPar5[index5],
-                                dataField[int_index-1], dataField[int_index]);
+          value5[r] = interp_(input5, gridPar5[index5-1], gridPar5[index5],
+                              dataField[int_index-1], dataField[int_index]);
         }
 
         // interpolate over parameter 4
-        value4[e-1] = interp_(input4, gridPar4[index4-1], gridPar4[index4],
-                              value5[0], value5[1]);
+        value4[e] = interp_(input4, gridPar4[index4-1], gridPar4[index4],
+                            value5[0], value5[1]);
       }
 
       // interpolate over parameter 3
-      value3[w-1] = interp_(input3, gridPar3[index3-1], gridPar3[index3],
-                            value4[0], value4[1]);
+      value3[w] = interp_(input3, gridPar3[index3-1], gridPar3[index3],
+                          value4[0], value4[1]);
     }
 
     // interpolate over parameter 2
-    value2[q-1] = interp_(input2, gridPar2[index2-1], gridPar2[index2],
-                          value3[0], value3[1]);
+    value2[q] = interp_(input2, gridPar2[index2-1], gridPar2[index2],
+                        value3[0], value3[1]);
   }
 
   *value = interp_(input1, gridPar1[index1-1], gridPar1[index1],
@@ -272,13 +272,13 @@ static double interpolate_2Df3D_g(double input1, double input3,
   gr_int64 index3 = min(gridDim[2]-1,
                         max(1, (gr_dint)((input3-gridPar3[0])/dgridPar3)+1));
 
-  for (gr_int64 q=1; q <= 2; q++) { // interpolate over parameter 3
+  for (gr_int64 q = 0; q < 2; q++) { // interpolate over parameter 3
 
-    gr_int64 int_index = ((q+index1-2) * gridDim[1] + (index2-1)) *
+    gr_int64 int_index = ((q+index1-1) * gridDim[1] + (index2-1)) *
       gridDim[2] + index3;
 
-    value3[q-1] = interp_(input3, gridPar3[index3-1], gridPar3[index1],
-                          dataField[int_index-1], dataField[int_index]);
+    value3[q] = interp_(input3, gridPar3[index3-1], gridPar3[index1],
+                        dataField[int_index-1], dataField[int_index]);
   }
 
   // interpolate over parameter 1
@@ -313,22 +313,22 @@ void interpolate_3dz_g(double input1, double input2, double input3,
   gr_int64 index3 = min(gridDim[2]-1,
                         max(1, (gr_dint)((input3-gridPar3[0])/dgridPar3)+1));
 
-  for (gr_int64 q=1; q <= 2; q++) {
-    for (gr_int64 w=1; w <= 2; w++) {
+  for (gr_int64 q = 0; q < 2; q++) {
+    for (gr_int64 w = 0; w < 2; w++) {
 
       // interpolate over parameter 3
-      gr_int64 int_index = ((q+index1-2) * gridDim[1] +
-                            (w+index2-2)) * gridDim[2] + index3;
+      gr_int64 int_index = ((q+index1-1) * gridDim[1] +
+                            (w+index2-1)) * gridDim[2] + index3;
 
-      value3[w-1] = interp_(input3, gridPar3[index3-1], gridPar3[index3],
-                            dataField[int_index-1], dataField[int_index]);
+      value3[w] = interp_(input3, gridPar3[index3-1], gridPar3[index3],
+                          dataField[int_index-1], dataField[int_index]);
     }
 
     // interpolate over parameter 2
     double slope = (value3[1] - value3[0]) /
       log((1+gridPar2[index2]) / (1+gridPar2[index2-1]));
 
-    value2[q-1] = log((1+input2)/(1+gridPar2[index2-1])) * slope + value3[0];
+    value2[q] = log((1+input2)/(1+gridPar2[index2-1])) * slope + value3[0];
   }
 
   // interpolate over parameter 1
