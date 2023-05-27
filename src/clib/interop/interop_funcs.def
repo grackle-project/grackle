@@ -28,7 +28,7 @@ c   2. grackle_fortran_types.def has already been included
           REAL(C_DOUBLE), VALUE, INTENT(IN) :: input1
           INTEGER(C_LONG_LONG), INTENT(IN) :: gridDim(*)
           REAL(C_DOUBLE), INTENT(IN) :: gridPar1(*)
-          REAL(C_DOUBLE), INTENT(IN) :: dgridPar1
+          REAL(C_DOUBLE), VALUE, INTENT(IN) :: dgridPar1
           INTEGER(C_LONG_LONG), INTENT(IN) :: dataSize
           REAL(C_DOUBLE), INTENT(IN) :: dataField(*)
           REAL(C_DOUBLE), INTENT(OUT) :: value
@@ -46,9 +46,9 @@ c   2. grackle_fortran_types.def has already been included
           REAL(C_DOUBLE), VALUE, INTENT(IN) :: input2
           INTEGER(C_LONG_LONG), INTENT(IN) :: gridDim(*)
           REAL(C_DOUBLE), INTENT(IN) :: gridPar1(*)
-          REAL(C_DOUBLE), INTENT(IN) :: dgridPar1
+          REAL(C_DOUBLE), VALUE, INTENT(IN) :: dgridPar1
           REAL(C_DOUBLE), INTENT(IN) :: gridPar2(*)
-          REAL(C_DOUBLE), INTENT(IN) :: dgridPar2
+          REAL(C_DOUBLE), VALUE, INTENT(IN) :: dgridPar2
           INTEGER(C_LONG_LONG), INTENT(IN) :: dataSize
           REAL(C_DOUBLE), INTENT(IN) :: dataField(*)
           REAL(C_DOUBLE), INTENT(OUT) :: value
@@ -68,11 +68,11 @@ c   2. grackle_fortran_types.def has already been included
           REAL(C_DOUBLE), VALUE, INTENT(IN) :: input3
           INTEGER(C_LONG_LONG), INTENT(IN) :: gridDim(*)
           REAL(C_DOUBLE), INTENT(IN) :: gridPar1(*)
-          REAL(C_DOUBLE), INTENT(IN) :: dgridPar1
+          REAL(C_DOUBLE), VALUE, INTENT(IN) :: dgridPar1
           REAL(C_DOUBLE), INTENT(IN) :: gridPar2(*)
-          REAL(C_DOUBLE), INTENT(IN) :: dgridPar2
+          REAL(C_DOUBLE), VALUE, INTENT(IN) :: dgridPar2
           REAL(C_DOUBLE), INTENT(IN) :: gridPar3(*)
-          REAL(C_DOUBLE), INTENT(IN) :: dgridPar3
+          REAL(C_DOUBLE), VALUE, INTENT(IN) :: dgridPar3
           INTEGER(C_LONG_LONG), INTENT(IN) :: dataSize
           REAL(C_DOUBLE), INTENT(IN) :: dataField(*)
           REAL(C_DOUBLE), INTENT(OUT) :: value
@@ -93,11 +93,11 @@ c   2. grackle_fortran_types.def has already been included
           REAL(C_DOUBLE), VALUE, INTENT(IN) :: input3
           INTEGER(C_LONG_LONG), INTENT(IN) :: gridDim(*)
           REAL(C_DOUBLE), INTENT(IN) :: gridPar1(*)
-          REAL(C_DOUBLE), INTENT(IN) :: dgridPar1
+          REAL(C_DOUBLE), VALUE, INTENT(IN) :: dgridPar1
           REAL(C_DOUBLE), INTENT(IN) :: gridPar2(*)
-          INTEGER(C_LONG_LONG), INTENT(IN) :: index2
+          INTEGER(C_LONG_LONG), VALUE, INTENT(IN) :: index2
           REAL(C_DOUBLE), INTENT(IN) :: gridPar3(*)
-          REAL(C_DOUBLE), INTENT(IN) :: dgridPar3
+          REAL(C_DOUBLE), VALUE, INTENT(IN) :: dgridPar3
           INTEGER(C_LONG_LONG), INTENT(IN) :: dataSize
           REAL(C_DOUBLE), INTENT(IN) :: dataField(*)
           INTEGER(C_LONG_LONG), INTENT(IN) :: end_int
@@ -121,13 +121,13 @@ c   2. grackle_fortran_types.def has already been included
           REAL(C_DOUBLE), VALUE, INTENT(IN) :: input4
           INTEGER(C_LONG_LONG), INTENT(IN) :: gridDim(*)
           REAL(C_DOUBLE), INTENT(IN) :: gridPar1(*)
-          REAL(C_DOUBLE), INTENT(IN) :: dgridPar1
+          REAL(C_DOUBLE), VALUE, INTENT(IN) :: dgridPar1
           REAL(C_DOUBLE), INTENT(IN) :: gridPar2(*)
-          REAL(C_DOUBLE), INTENT(IN) :: dgridPar2
+          REAL(C_DOUBLE), VALUE, INTENT(IN) :: dgridPar2
           REAL(C_DOUBLE), INTENT(IN) :: gridPar3(*)
-          REAL(C_DOUBLE), INTENT(IN) :: dgridPar3
+          REAL(C_DOUBLE), VALUE, INTENT(IN) :: dgridPar3
           REAL(C_DOUBLE), INTENT(IN) :: gridPar4(*)
-          REAL(C_DOUBLE), INTENT(IN) :: dgridPar4
+          REAL(C_DOUBLE), VALUE, INTENT(IN) :: dgridPar4
           INTEGER(C_LONG_LONG), INTENT(IN) :: dataSize
           REAL(C_DOUBLE), INTENT(IN) :: dataField(*)
           REAL(C_DOUBLE), INTENT(OUT) :: value
@@ -152,15 +152,15 @@ c   2. grackle_fortran_types.def has already been included
           REAL(C_DOUBLE), VALUE, INTENT(IN) :: input5
           INTEGER(C_LONG_LONG), INTENT(IN) :: gridDim(*)
           REAL(C_DOUBLE), INTENT(IN) :: gridPar1(*)
-          REAL(C_DOUBLE), INTENT(IN) :: dgridPar1
+          REAL(C_DOUBLE), VALUE, INTENT(IN) :: dgridPar1
           REAL(C_DOUBLE), INTENT(IN) :: gridPar2(*)
-          REAL(C_DOUBLE), INTENT(IN) :: dgridPar2
+          REAL(C_DOUBLE), VALUE, INTENT(IN) :: dgridPar2
           REAL(C_DOUBLE), INTENT(IN) :: gridPar3(*)
-          REAL(C_DOUBLE), INTENT(IN) :: dgridPar3
+          REAL(C_DOUBLE), VALUE, INTENT(IN) :: dgridPar3
           REAL(C_DOUBLE), INTENT(IN) :: gridPar4(*)
-          REAL(C_DOUBLE), INTENT(IN) :: dgridPar4
+          REAL(C_DOUBLE), VALUE, INTENT(IN) :: dgridPar4
           REAL(C_DOUBLE), INTENT(IN) :: gridPar5(*)
-          REAL(C_DOUBLE), INTENT(IN) :: dgridPar5
+          REAL(C_DOUBLE), VALUE, INTENT(IN) :: dgridPar5
           INTEGER(C_LONG_LONG), INTENT(IN) :: dataSize
           REAL(C_DOUBLE), INTENT(IN) :: dataField(*)
           REAL(C_DOUBLE), INTENT(OUT) :: value

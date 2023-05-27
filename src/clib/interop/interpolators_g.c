@@ -12,12 +12,10 @@ typedef int64_t gr_dint; // equivalent of int(val, DIKIND)
 
 void interpolate_1d_g(double input1,
                       const gr_int64* gridDim, // 1 elements
-                      const double* gridPar1, const double* dgridPar1_p,
+                      const double* gridPar1, double dgridPar1,
                       const gr_int64* dataSize, const double* dataField,
                       double* value)
 {
-  // store some arguments that were passed by pointer
-  const double dgridPar1 = *dgridPar1_p;
 
   gr_int64 index1 = min(gridDim[0]-1,
                         max(1, (gr_dint)((input1-gridPar1[0])/dgridPar1)+1));
@@ -31,14 +29,11 @@ void interpolate_1d_g(double input1,
 
 void interpolate_2d_g(double input1, double input2,
                       const gr_int64* gridDim, // 2 elements
-                      const double* gridPar1, const double* dgridPar1_p,
-                      const double* gridPar2, const double* dgridPar2_p,
+                      const double* gridPar1, double dgridPar1,
+                      const double* gridPar2, double dgridPar2,
                       const gr_int64* dataSize, const double* dataField,
                       double* value)
 {
-  // store some arguments that were passed by pointer
-  const double dgridPar1 = *dgridPar1_p; const double dgridPar2 = *dgridPar2_p;
-
   double value2[2];
 
   gr_int64 index1 = min(gridDim[0]-1,
@@ -66,16 +61,12 @@ void interpolate_2d_g(double input1, double input2,
 
 void interpolate_3d_g(double input1, double input2, double input3,
                       const gr_int64* gridDim, // 3 elements
-                      const double* gridPar1, const double* dgridPar1_p,
-                      const double* gridPar2, const double* dgridPar2_p,
-                      const double* gridPar3, const double* dgridPar3_p,
+                      const double* gridPar1, double dgridPar1,
+                      const double* gridPar2, double dgridPar2,
+                      const double* gridPar3, double dgridPar3,
                       const gr_int64* dataSize, const double* dataField,
                       double* value)
 {
-  // store some arguments that were passed by pointer
-  const double dgridPar1 = *dgridPar1_p; const double dgridPar2 = *dgridPar2_p;
-  const double dgridPar3 = *dgridPar3_p;
-
   double value3[2], value2[2];
 
   gr_int64 index1 = min(gridDim[0]-1,
@@ -116,16 +107,13 @@ void interpolate_3d_g(double input1, double input2, double input3,
 void interpolate_4d_g(double input1, double input2, double input3,
                       double input4,
                       const gr_int64* gridDim, // 4 elements
-                      const double* gridPar1, const double* dgridPar1_p,
-                      const double* gridPar2, const double* dgridPar2_p,
-                      const double* gridPar3, const double* dgridPar3_p,
-                      const double* gridPar4, const double* dgridPar4_p,
+                      const double* gridPar1, double dgridPar1,
+                      const double* gridPar2, double dgridPar2,
+                      const double* gridPar3, double dgridPar3,
+                      const double* gridPar4, double dgridPar4,
                       const gr_int64* dataSize, const double* dataField,
                       double* value)
 {
-  // store some arguments that were passed by pointer
-  const double dgridPar1 = *dgridPar1_p; const double dgridPar2 = *dgridPar2_p;
-  const double dgridPar3 = *dgridPar3_p; const double dgridPar4 = *dgridPar4_p;
 
   double value4[2], value3[2], value2[2];
 
@@ -179,19 +167,14 @@ void interpolate_4d_g(double input1, double input2, double input3,
 void interpolate_5d_g(double input1, double input2, double input3,
                       double input4, double input5,
                       const gr_int64* gridDim, // 5 elements
-                      const double* gridPar1, const double* dgridPar1_p,
-                      const double* gridPar2, const double* dgridPar2_p,
-                      const double* gridPar3, const double* dgridPar3_p,
-                      const double* gridPar4, const double* dgridPar4_p,
-                      const double* gridPar5, const double* dgridPar5_p,
+                      const double* gridPar1, double dgridPar1,
+                      const double* gridPar2, double dgridPar2,
+                      const double* gridPar3, double dgridPar3,
+                      const double* gridPar4, double dgridPar4,
+                      const double* gridPar5, double dgridPar5,
                       const gr_int64* dataSize, const double* dataField,
                       double* value)
 {
-  // store some arguments that were passed by pointer
-  const double dgridPar1 = *dgridPar1_p; const double dgridPar2 = *dgridPar2_p;
-  const double dgridPar3 = *dgridPar3_p; const double dgridPar4 = *dgridPar4_p;
-  const double dgridPar5 = *dgridPar5_p;
-  
   double value5[2], value4[2], value3[2], value2[2];
 
   gr_int64 index1 = min(gridDim[0]-1,
@@ -316,17 +299,13 @@ static double interpolate_2Df3D_g(double input1, double input3,
 
 void interpolate_3dz_g(double input1, double input2, double input3,
                        const gr_int64* gridDim, // 3 elements
-                       const double* gridPar1, const double* dgridPar1_p,
-                       const double* gridPar2, const gr_int64* index2_p,
-                       const double* gridPar3, const double* dgridPar3_p,
+                       const double* gridPar1, double dgridPar1,
+                       const double* gridPar2, gr_int64 index2,
+                       const double* gridPar3, double dgridPar3,
                        const gr_int64* dataSize, const double* dataField,
                        const gr_int64* end_int_p, double* value)
 {
   // store some arguments that were passed by pointer
-  const double dgridPar1 = *dgridPar1_p;
-  const gr_int64 index2 = *index2_p;
-  const double dgridPar3 = *dgridPar3_p;
-
   const gr_int64 end_int = *end_int_p;
 
   if (end_int == 1) {
