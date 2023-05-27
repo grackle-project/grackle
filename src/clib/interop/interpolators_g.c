@@ -2,13 +2,8 @@
 
 #include <math.h> // log
 
-//#include "../grackle_macros"
-// we steal the following from  "../grackle_macros.h"
-#define max(A,B) ((A) > (B) ? (A) : (B))
-#define min(A,B) ((A) < (B) ? (A) : (B))
-
 typedef int64_t gr_int64;
-typedef int64_t gr_dint; // equivalent of int(val, DIKIND)
+typedef int64_t gr_dint;
 
 // There is a huge potential for optimization in these functions. For example:
 //   - we could take advantage of the regular spacing between parameter values
@@ -20,6 +15,18 @@ typedef int64_t gr_dint; // equivalent of int(val, DIKIND)
 //   - we could restructure the ordering of the tables (maybe when we read them
 //     in?) so that we can further reduce the number of calls to the log
 //     function, which is generally very slow.
+
+
+/// helper function that determines the 1-indexed interpolation index
+///
+/// This assumes that parameter is evenly spaced on the grid
+static inline gr_int64 get_index_(double input, gr_int64 parLen,
+                                  const double *gridPar, double dgridPar)
+{
+  gr_int64 index = (gr_int64)((input-gridPar[0])/dgridPar)+1;
+  gr_int64 index_with_floor = (index > 1) ? index : 1;
+  return ((parLen - 1) < index_with_floor) ? (parLen - 1) : index_with_floor;
+};
 
 /// helper function to interpolate along a single dimension
 ///
@@ -45,9 +52,7 @@ void interpolate_1d_g(double input1,
                       gr_int64 dataSize, const double* dataField,
                       double* value)
 {
-
-  gr_int64 index1 = min(gridDim[0]-1,
-                        max(1, (gr_dint)((input1-gridPar1[0])/dgridPar1)+1));
+  const gr_int64 index1 = get_index_(input1, gridDim[0], gridPar1, dgridPar1);
 
   // interpolate over parameter 1
   *value = interp_(input1, gridPar1[index1-1], gridPar1[index1],
@@ -63,10 +68,8 @@ void interpolate_2d_g(double input1, double input2,
 {
   double value2[2];
 
-  gr_int64 index1 = min(gridDim[0]-1,
-                        max(1, (gr_dint)((input1-gridPar1[0])/dgridPar1)+1));
-  gr_int64 index2 = min(gridDim[1]-1,
-                        max(1, (gr_dint)((input2-gridPar2[0])/dgridPar2)+1));
+  const gr_int64 index1 = get_index_(input1, gridDim[0], gridPar1, dgridPar1);
+  const gr_int64 index2 = get_index_(input2, gridDim[1], gridPar2, dgridPar2);
 
   for (gr_int64 q=0; q < 2; q++) {
 
@@ -91,12 +94,9 @@ void interpolate_3d_g(double input1, double input2, double input3,
 {
   double value3[2], value2[2];
 
-  gr_int64 index1 = min(gridDim[0]-1,
-                        max(1, (gr_dint)((input1-gridPar1[0])/dgridPar1)+1));
-  gr_int64 index2 = min(gridDim[1]-1,
-                        max(1, (gr_dint)((input2-gridPar2[0])/dgridPar2)+1));
-  gr_int64 index3 = min(gridDim[2]-1,
-                        max(1, (gr_dint)((input3-gridPar3[0])/dgridPar3)+1));
+  const gr_int64 index1 = get_index_(input1, gridDim[0], gridPar1, dgridPar1);
+  const gr_int64 index2 = get_index_(input2, gridDim[1], gridPar2, dgridPar2);
+  const gr_int64 index3 = get_index_(input3, gridDim[2], gridPar3, dgridPar3);
 
   for (gr_int64 q = 0; q < 2; q++) {
     for (gr_int64 w = 0; w < 2; w++) {
@@ -132,14 +132,10 @@ void interpolate_4d_g(double input1, double input2, double input3,
 
   double value4[2], value3[2], value2[2];
 
-  gr_int64 index1 = min(gridDim[0]-1,
-                        max(1, (gr_dint)((input1-gridPar1[0])/dgridPar1)+1));
-  gr_int64 index2 = min(gridDim[1]-1,
-                        max(1, (gr_dint)((input2-gridPar2[0])/dgridPar2)+1));
-  gr_int64 index3 = min(gridDim[2]-1,
-                        max(1, (gr_dint)((input3-gridPar3[0])/dgridPar3)+1));
-  gr_int64 index4 = min(gridDim[3]-1,
-                        max(1, (gr_dint)((input4-gridPar4[0])/dgridPar4)+1));
+  const gr_int64 index1 = get_index_(input1, gridDim[0], gridPar1, dgridPar1);
+  const gr_int64 index2 = get_index_(input2, gridDim[1], gridPar2, dgridPar2);
+  const gr_int64 index3 = get_index_(input3, gridDim[2], gridPar3, dgridPar3);
+  const gr_int64 index4 = get_index_(input4, gridDim[3], gridPar4, dgridPar4);
 
   for (gr_int64 q = 0; q < 2; q++) {
     for (gr_int64 w = 0; w < 2; w++) {
@@ -182,12 +178,9 @@ void interpolate_5d_g(double input1, double input2, double input3,
 {
   double value5[2], value4[2], value3[2], value2[2];
 
-  gr_int64 index1 = min(gridDim[0]-1,
-                        max(1, (gr_dint)((input1-gridPar1[0])/dgridPar1)+1));
-  gr_int64 index2 = min(gridDim[1]-1,
-                        max(1, (gr_dint)((input2-gridPar2[0])/dgridPar2)+1));
-  gr_int64 index3 = min(gridDim[2]-1,
-                        max(1, (gr_dint)((input3-gridPar3[0])/dgridPar3)+1));
+  const gr_int64 index1 = get_index_(input1, gridDim[0], gridPar1, dgridPar1);
+  const gr_int64 index2 = get_index_(input2, gridDim[1], gridPar2, dgridPar2);
+  const gr_int64 index3 = get_index_(input3, gridDim[2], gridPar3, dgridPar3);
 #define INDEX_4_BISECTION
 #ifdef INDEX_4_BISECTION
   // get index 4 with bisection, since not evenly spaced
@@ -209,12 +202,9 @@ void interpolate_5d_g(double input1, double input2, double input3,
     }
   }
 #else
-  gr_int64 index4 = min(gridDim[3]-1,
-                        max(1, (gr_dint)((input4-gridPar4[0])/dgridPar4)+1));
+  gr_int64 index4 = get_index_(input4, gridDim[3], gridPar4, dgridPar4);
 #endif /* INDEX_4_BISECTION */
-  gr_int64 index5 = min(gridDim[4]-1,
-                        max(1, (gr_dint)((input5-gridPar5[0])/dgridPar5)+1));
-
+  const gr_int64 index5 = get_index_(input5, gridDim[4], gridPar5, dgridPar5);
 
   for (gr_int64 q = 0; q < 2; q++) {
     for (gr_int64 w = 0; w < 2; w++) {
@@ -267,10 +257,8 @@ static double interpolate_2Df3D_g(double input1, double input3,
   double value3[2];
 
   // Calculate interpolation indices
-  gr_int64 index1 = min(gridDim[0]-1,
-                        max(1, (gr_dint)((input1-gridPar1[0])/dgridPar1)+1));
-  gr_int64 index3 = min(gridDim[2]-1,
-                        max(1, (gr_dint)((input3-gridPar3[0])/dgridPar3)+1));
+  const gr_int64 index1 = get_index_(input1, gridDim[0], gridPar1, dgridPar1);
+  const gr_int64 index3 = get_index_(input3, gridDim[2], gridPar3, dgridPar3);
 
   for (gr_int64 q = 0; q < 2; q++) { // interpolate over parameter 3
 
@@ -308,10 +296,8 @@ void interpolate_3dz_g(double input1, double input2, double input3,
   double value3[2], value2[2];
 
   // Calculate interpolation indices
-  gr_int64 index1 = min(gridDim[0]-1,
-                        max(1, (gr_dint)((input1-gridPar1[0])/dgridPar1)+1));
-  gr_int64 index3 = min(gridDim[2]-1,
-                        max(1, (gr_dint)((input3-gridPar3[0])/dgridPar3)+1));
+  const gr_int64 index1 = get_index_(input1, gridDim[0], gridPar1, dgridPar1);
+  const gr_int64 index3 = get_index_(input3, gridDim[2], gridPar3, dgridPar3);
 
   for (gr_int64 q = 0; q < 2; q++) {
     for (gr_int64 w = 0; w < 2; w++) {
