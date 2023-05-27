@@ -1,9 +1,19 @@
-#include <stdint.h>
+/***********************************************************************
+/
+/ Implement interpolation routines
+/
+/
+/ Copyright (c) 2013, Enzo/Grackle Development Team.
+/
+/ Distributed under the terms of the Enzo Public Licence.
+/
+/ The full license is in the file LICENSE, distributed with this
+/ software.
+************************************************************************/
 
 #include <math.h> // log
 
-typedef int64_t gr_int64;
-typedef int64_t gr_dint;
+#include "interop_funcs.h"
 
 // There is a huge potential for optimization in these functions. For example:
 //   - we could take advantage of the regular spacing between parameter values
@@ -193,7 +203,7 @@ void interpolate_5d_g(double input1, double input2, double input3,
     index4 = 1;
     gr_int64 highPt = gridDim[3];
     while ((highPt - index4) > 1) {
-      gr_int64 midPt = (gr_dint)((highPt + index4) / 2);
+      gr_int64 midPt = (gr_int64)((highPt + index4) / 2);
       if (input4 >= gridPar4[midPt-1]) {
         index4 = midPt;
       } else {
