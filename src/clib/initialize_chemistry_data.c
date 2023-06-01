@@ -395,4 +395,5 @@ int local_free_chemistry_data(chemistry_data *my_chemistry,
     GRACKLE_FREE(my_rates->UVbackground_table.crsHeI);
   }
 
+  return SUCCESS;
 }
