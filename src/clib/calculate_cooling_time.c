@@ -488,33 +488,33 @@ int local_calculate_cooling_time(chemistry_data *my_chemistry,
      , my_fields->metal_P170
      , my_fields->metal_P200
      , my_fields->metal_Y19
-     ,&my_chemistry->SN0_N
-     , my_chemistry->SN0_fSiM    
-     , my_chemistry->SN0_fFeM    
-     , my_chemistry->SN0_fMg2SiO4
-     , my_chemistry->SN0_fMgSiO3 
-     , my_chemistry->SN0_fFe3O4
-     , my_chemistry->SN0_fAC
-     , my_chemistry->SN0_fSiO2D
-     , my_chemistry->SN0_fMgO
-     , my_chemistry->SN0_fFeS
-     , my_chemistry->SN0_fAl2O3  
-     , my_chemistry->SN0_freforg 
-     , my_chemistry->SN0_fvolorg 
-     , my_chemistry->SN0_fH2Oice
-     , my_chemistry->SN0_r0SiM    
-     , my_chemistry->SN0_r0FeM    
-     , my_chemistry->SN0_r0Mg2SiO4
-     , my_chemistry->SN0_r0MgSiO3 
-     , my_chemistry->SN0_r0Fe3O4
-     , my_chemistry->SN0_r0AC
-     , my_chemistry->SN0_r0SiO2D
-     , my_chemistry->SN0_r0MgO
-     , my_chemistry->SN0_r0FeS
-     , my_chemistry->SN0_r0Al2O3  
-     , my_chemistry->SN0_r0reforg 
-     , my_chemistry->SN0_r0volorg 
-     , my_chemistry->SN0_r0H2Oice
+     ,&my_rates->SN0_N
+     , my_rates->SN0_fSiM    
+     , my_rates->SN0_fFeM    
+     , my_rates->SN0_fMg2SiO4
+     , my_rates->SN0_fMgSiO3 
+     , my_rates->SN0_fFe3O4
+     , my_rates->SN0_fAC
+     , my_rates->SN0_fSiO2D
+     , my_rates->SN0_fMgO
+     , my_rates->SN0_fFeS
+     , my_rates->SN0_fAl2O3  
+     , my_rates->SN0_freforg 
+     , my_rates->SN0_fvolorg 
+     , my_rates->SN0_fH2Oice
+     , my_rates->SN0_r0SiM    
+     , my_rates->SN0_r0FeM    
+     , my_rates->SN0_r0Mg2SiO4
+     , my_rates->SN0_r0MgSiO3 
+     , my_rates->SN0_r0Fe3O4
+     , my_rates->SN0_r0AC
+     , my_rates->SN0_r0SiO2D
+     , my_rates->SN0_r0MgO
+     , my_rates->SN0_r0FeS
+     , my_rates->SN0_r0Al2O3  
+     , my_rates->SN0_r0reforg 
+     , my_rates->SN0_r0volorg 
+     , my_rates->SN0_r0H2Oice
      , my_rates->gr_N
      ,&my_rates->gr_Size
      ,&my_rates->gr_dT

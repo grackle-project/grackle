@@ -907,18 +907,6 @@ C    &   , coolunit*dom/mh ! = vbase1**2 / tbase1
      &              , treforg, tvolorg, tH2Oice
      &              , gasgr2a, gamma_isrf2a
      &          )
-!           open(10,file='nL.dat',status='unknown',form='formatted'
-!    &            , access='append')
-!           do i = is+1, ie+1
-!              if ( itmask(i) ) then
-!          
-!              write(10,*)
-!    &             d(i,j,k)*dom
-!    &           , tgas(i)
-!          
-!              endif
-!           enddo
-!           close(10)
 
             if (ispecies .gt. 0) then
 
@@ -1955,10 +1943,6 @@ c                       ierr_max = idsp(isp)
 9997              continue
 9996              continue
 
-!             if(itr.eq.20)
-!    &        write(*,'(A5, 1pe13.5, i3, 1pe13.5, i3, f13.7)') 'done'
-!    &           , d(i,j,k), itr, tgas(i), ierr_max
-!    &           , ttot(i)/dt*0.1
 
 !             Check if the fractions are valid after an iteration
 
@@ -3284,34 +3268,10 @@ C                 endif
      &           , alreforg, alvolorg, alH2Oice, altot
      &         )
 
-!        write(*,'(15E10.3)')
-!    &        tSiM     (1), tFeM     (1), tMg2SiO4 (1)
-!    &      , tMgSiO3  (1), tFe3O4   (1), tAC      (1)
-!    &      , tSiO2D   (1), tMgO     (1), tFeS     (1)
-!    &      , tAl2O3   (1),               treforg  (1)
-!    &      , tvolorg  (1), tH2Oice  (1), tdust    (1)
-!        write(*,'(15E10.3)')
-!    &        sgSiM     (1), sgFeM     (1), sgMg2SiO4 (1)
-!    &      , sgMgSiO3  (1), sgFe3O4   (1), sgAC      (1)
-!    &      , sgSiO2D   (1), sgMgO     (1), sgFeS     (1)
-!    &      , sgAl2O3   (1)               , sgreforg  (1)
-!    &      , sgvolorg  (1), sgH2Oice  (1), sgtot     (1)
-!        do item = 1, gr_N(2)
-!          write(*,'(F5.2, 15E9.2)') gr_Td(item)
-!    &      , alSiM(item,1), alFeM(item,1)
-!    &      , alMg2SiO4(item,1), alMgSiO3(item,1)
-!    &      , alFe3O4(item,1), alAC(item,1)
-!    &      , alSiO2D(item,1), alMgO(item,1)
-!    &      , alFeS(item,1), alAl2O3(item,1)
-!    &      , alreforg(item,1)
-!    &      , alvolorg(item,1), alH2Oice(item,1)
-!    &      , altot(item,1)
-!        enddo
-
       endif
 
-
 !     Look-up for H2 formation on dust
+
       if (anydust) then
 
          d_logtem0 = log(dtemstart)
@@ -3723,6 +3683,7 @@ C                 endif
          endif !! idspecies
 
       endif
+
 !        Include approximate self-shielding factors if requested
 
       do i = is+1, ie+1
@@ -3744,14 +3705,12 @@ C                 endif
 !     If radiative transfer for LW photons have been already solved in
 !     your hydro code, add kdissH2I later
       if (iradtrans == 0 .or. iuseH2shield == 1) then
-C        write(*,*) 'kdissH2I not included'
          do i = is+1, ie+1
             if (itmask(i)) then
                k31shield(i) = k31
             endif 
          enddo
       else
-C        write(*,*) 'kdissH2I included'
          do i = is+1, ie+1
             if (itmask(i)) then
                k31shield(i) = k31 + kdissH2I(i,j,k)
@@ -3837,6 +3796,15 @@ C        write(*,*) 'kdissH2I included'
                k31shield(i) = k31shield(i) + kdissH2I(i,j,k)
             endif 
          enddo
+      endif
+
+!     Custom H2 shielding
+      if (iH2shieldcustom .gt. 0) then
+        do i = is+1, ie+1
+            if (itmask(i)) then
+              k31shield(i) = f_shield_custom(i,j,k) * k31shield(i)
+            endif
+        enddo
       endif
       endif ! ispecies .gt. 1
 
@@ -4097,15 +4065,6 @@ c
 !           endif
 !#endif
 #endif /*  USE_DENSITY_DEPENDENT_H2_DISSOCIATION_RATE */
-!!    if(itmask(1))
-!!   &   write(*,'(A1,36E9.1)') 'c',
-!!   &                     k1, k2, k3, k4, k5, k6, k7, k8, k9, k10, k11,
-!!   &                     k12, k13, k14, k15, k16, k17, k18, k19, k22,
-!!   &                     k24, k25, k26,      k28, k29, k30,
-!!   &                     k50, k51, k52, k53, k54, k55, k56, k57, k58
-!!!                                                       1    1
-!!    if(itmask(1))
-!!   &   write(*,*) 'c', k13, k22
 
       return
       end
@@ -4331,7 +4290,6 @@ c
 !     &       + H2I(i,j,k)*( k21(i) * HI(i,j,k)**2.0_DKIND
 !     &                    - k23(i) * H2I(i,j,k))
 !H * (k22 * H^2 - k13 * H_2) + H_2 * (k21 * H^2 - k23 * H_2) */
-
          endif                  ! itmask
          enddo
 

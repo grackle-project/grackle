@@ -23,34 +23,34 @@ int calc_rates_dust_Y19(int iSN, chemistry_data *my_chemistry, chemistry_data_st
   int NTd, Nmom;
   int iTd, imom, itab0, itab;
 
-  my_chemistry->SN0_XC [iSN] =   2.50000e-01;
-  my_chemistry->SN0_XO [iSN] =   2.93867e-01;
-  my_chemistry->SN0_XMg[iSN] =   6.00000e-02;
-  my_chemistry->SN0_XAl[iSN] =   2.85361e-03;
-  my_chemistry->SN0_XSi[iSN] =   7.00000e-02;
-  my_chemistry->SN0_XS [iSN] =   1.58191e-02;
-  my_chemistry->SN0_XFe[iSN] =   6.64078e-02;
+  my_rates->SN0_XC [iSN] =   2.50000e-01;
+  my_rates->SN0_XO [iSN] =   2.93867e-01;
+  my_rates->SN0_XMg[iSN] =   6.00000e-02;
+  my_rates->SN0_XAl[iSN] =   2.85361e-03;
+  my_rates->SN0_XSi[iSN] =   7.00000e-02;
+  my_rates->SN0_XS [iSN] =   1.58191e-02;
+  my_rates->SN0_XFe[iSN] =   6.64078e-02;
 
-  my_chemistry->SN0_fC [iSN] =   0.00000e+00;
-  my_chemistry->SN0_fO [iSN] =   1.73867e-01;
-  my_chemistry->SN0_fMg[iSN] =   0.00000e+00;
-  my_chemistry->SN0_fAl[iSN] =   2.85361e-03;
-  my_chemistry->SN0_fSi[iSN] =   0.00000e+00;
-  my_chemistry->SN0_fS [iSN] =   1.58191e-02;
-  my_chemistry->SN0_fFe[iSN] =   6.64078e-02;
+  my_rates->SN0_fC [iSN] =   0.00000e+00;
+  my_rates->SN0_fO [iSN] =   1.73867e-01;
+  my_rates->SN0_fMg[iSN] =   0.00000e+00;
+  my_rates->SN0_fAl[iSN] =   2.85361e-03;
+  my_rates->SN0_fSi[iSN] =   0.00000e+00;
+  my_rates->SN0_fS [iSN] =   1.58191e-02;
+  my_rates->SN0_fFe[iSN] =   6.64078e-02;
 
-  my_chemistry->SN0_fMgSiO3  [iSN] =   2.50000e-01;
-  my_chemistry->SN0_fAC      [iSN] =   2.50000e-01;
+  my_rates->SN0_fMgSiO3  [iSN] =   2.50000e-01;
+  my_rates->SN0_fAC      [iSN] =   2.50000e-01;
 
   itab0 = 3 * iSN;
-  my_chemistry->SN0_r0MgSiO3  [itab0 + 0] =   1.00000e-05;
-  my_chemistry->SN0_r0AC      [itab0 + 0] =   1.00000e-05;
+  my_rates->SN0_r0MgSiO3  [itab0 + 0] =   1.00000e-05;
+  my_rates->SN0_r0AC      [itab0 + 0] =   1.00000e-05;
 
-  my_chemistry->SN0_r0MgSiO3  [itab0 + 1] =   1.00000e-10;
-  my_chemistry->SN0_r0AC      [itab0 + 1] =   1.00000e-10;
+  my_rates->SN0_r0MgSiO3  [itab0 + 1] =   1.00000e-10;
+  my_rates->SN0_r0AC      [itab0 + 1] =   1.00000e-10;
 
-  my_chemistry->SN0_r0MgSiO3  [itab0 + 2] =   1.00000e-15;
-  my_chemistry->SN0_r0AC      [itab0 + 2] =   1.00000e-15;
+  my_rates->SN0_r0MgSiO3  [itab0 + 2] =   1.00000e-15;
+  my_rates->SN0_r0AC      [itab0 + 2] =   1.00000e-15;
 
   NTd =            35;
  Nmom =             4;

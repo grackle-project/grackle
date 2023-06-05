@@ -143,7 +143,6 @@
             else
                tdustnow(i) = max(trad,
      &              (gamma_isrf(i) / radf / kgr1)**0.17_DKIND)
-!!             write(*,*) 'init', tdustnow(i)
                pert(i) = pert_i
             endif
 
@@ -162,10 +161,8 @@
          do i = is+1, ie+1
             if ( nm_itmask(i) ) then
 
-!!       write(*,*) 'ee1', i
                tdplus(i) = max(1.e-3_DKIND, ((1._DKIND + pert(i))
      &              * tdustnow(i)))
-!!       write(*,*) 'ee2', i, pert(i), tdustnow(i)
 
             endif
          enddo
@@ -524,20 +521,6 @@ c             Tgr < 50 K (Omukai 2000).
      &           (tgas(i) - tdust(i)))
        ! emission/absorption rate per unit grain mass [erg/s/g]
        ! for Z = Zsun (default)
-!!          write(*,'(1p20e13.5)') tdust(i)
-!!   &             , gamma_isrf(i)
-!!   &             , radf * kgr(i) *
-!!   &           (trad4 - tdust(i)**4)
-!!   &             , (gasgr(i) * nh(i) *
-!!   &           (tgas(i) - tdust(i)))
-!!   &             , sol(i)
-!           write(*,*) 'cc4'
-!           write(*,*) gamma_isrf(i), radf, kgr(i)
-!           write(*,*) trad4, tdust(i)
-!           write(*,*) gasgr(i), nh(i)
-!           write(*,*) tgas(i), tdust(i)
-!           write(*,*) sol(i)
-!           write(*,*) ' '
 
          endif
       enddo

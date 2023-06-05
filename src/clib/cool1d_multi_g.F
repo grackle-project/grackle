@@ -697,6 +697,7 @@
       enddo
 
 !     Compute the cooling function
+
       do i = is+1, ie+1
          if ( itmask(i) ) then
          edot(i) = (
@@ -727,26 +728,26 @@
      &           HeIII(i,j,k)) * de(i,j,k)
 
      &             )
-
          Lpri(i) = edot(i)
-!!       if (edot(i) .ne. edot(i)) then
-!!#ifdef _OPENMP
-!!!$omp critical
-!!#endif
-!!          write(6,*) 'NaN in edot[1]: ', i, j, k, edot(i), 
-!!   &           HI(i,j,k), HII(i,j,k), HeI(i,j,k), HeII(i,j,k), 
-!!   &           HeIII(i,j,k), de(i,j,k), d(i,j,k), 
-!!   &           tgas(i), p2d(i)
-!!#ifdef _OPENMP
-!!!$omp end critical
-!!#endif
-!!       endif
 
+         if (edot(i) .ne. edot(i)) then
+#ifdef _OPENMP
+!$omp critical
+#endif
+            write(6,*) 'NaN in edot[1]: ', i, j, k, edot(i), 
+     &           HI(i,j,k), HII(i,j,k), HeI(i,j,k), HeII(i,j,k), 
+     &           HeIII(i,j,k), de(i,j,k), d(i,j,k), 
+     &           tgas(i), p2d(i)
+#ifdef _OPENMP
+!$omp end critical
+#endif
+         endif
+         
          end if
       enddo
 
       endif
-
+     
 !     --- H2 cooling ---
 
       if (ispecies .gt. 1) then
@@ -1003,7 +1004,7 @@ c               ciefudge, which is applied to the continuum, is applied to edot
 
          LHD(i) = - (L - G) / dom * HDI(i,j,k)/3.d0
          if (LHD(i) .ne. LHD(i)) LHD(i) = 0.d0
-         edot(i) = edot(i) + LHD(i) !!!! CAUTION !!!!
+         edot(i) = edot(i) + LHD(i)
 
       endif
       enddo
@@ -1095,34 +1096,6 @@ c  new (correct) way: (april 4, 2007)
 
 !     Calculate dust to gas ratio
 
-C     if ( (idustfield .gt. 0) .and. (idspecies .gt. 0) ) then
-C        do i = is+1, ie+1
-C           if ( itmask_metal(i) ) then
-C           if (idspecies .gt. 0) then
-C              dust(i,j,k) = MgSiO3  (i,j,k)
-C    &                     + AC      (i,j,k)
-C           endif
-C           if (idspecies .gt. 1) then
-C              dust(i,j,k) = dust(i,j,k)
-C    &                     + SiM     (i,j,k)
-C    &                     + FeM     (i,j,k)
-C    &                     + Mg2SiO4 (i,j,k)
-C    &                     + Fe3O4   (i,j,k)
-C    &                     + SiO2D   (i,j,k)
-C    &                     + MgO     (i,j,k)
-C    &                     + FeS     (i,j,k)
-C    &                     + Al2O3   (i,j,k)
-C           endif
-C           if (idspecies .gt. 2) then
-C              dust(i,j,k) = dust(i,j,k)
-C    &                     + reforg  (i,j,k)
-C    &                     + volorg  (i,j,k)
-C    &                     + H2Oice  (i,j,k)
-C           endif
-C           endif
-C        enddo
-C     endif
-
       if (anydust .or. (igammah .gt. 0)) then
          if (idustfield .gt. 0) then
             do i = is+1, ie+1
@@ -1138,8 +1111,6 @@ C     endif
             enddo
          endif
       endif
-!     if(d(1,1,1).gt.1.d14)
-!    &write(*,*) 'd', dust2gas(1)
 
 !     Calculate interstellar radiation field
 
@@ -1230,8 +1201,6 @@ C     endif
                gasgr_tdust(i) = (dust2gas(i) / metallicity(i))
      &                              * gasgr(i) * coolunit / mh
                     !! apply to (idustfield .eq. 1) GC20200701
-!     if(d(1,1,1).gt.1.d14)
-!    &         write(*,*) 'a', gasgr(i), gasgr_tdust(i)
 
             else ! idspecies
 
@@ -1295,31 +1264,6 @@ C     endif
             endif
          enddo
 
-!        if (idspecies .eq. 0) then
-!           do itd = 1, gr_N(2)
-!              do i = is+1, ie + 1
-!              if(itmask_metal(i)) then
-!                 altot(itd,i)=
-!    &                (SN0_kpFeM    (4*itd,1)*SN0_fFeM    (1)
-!    &                /SN0_r0FeM    (3    ,1)
-!    &                +SN0_kpMg2SiO4(4*itd,1)*SN0_fMg2SiO4(1)
-!    &                /SN0_r0Mg2SiO4(3    ,1)
-!    &                +SN0_kpMgSiO3 (4*itd,1)*SN0_fMgSiO3 (1)
-!    &                /SN0_r0MgSiO3 (3    ,1)
-!    &                +SN0_kpFeS    (4*itd,1)*SN0_fFeS    (1)
-!    &                /SN0_r0FeS    (3    ,1)
-!    &                +SN0_kpreforg (4*itd,1)*SN0_freforg (1)
-!    &                /SN0_r0reforg (3    ,1)
-!    &                +SN0_kpvolorg (4*itd,1)*SN0_fvolorg (1)
-!    &                /SN0_r0volorg (3    ,1)
-!    &                +SN0_kpH2Oice (4*itd,1)*SN0_fH2Oice (1)
-!    &                /SN0_r0H2Oice (3    ,1))
-!    &                  * metal(i,j,k) / d(i,j,k)
-!              endif
-!              enddo
-!           enddo
-!        endif
-
 !     Compute dust temperature
 
          if (itdmulti .eq. 0) then
@@ -1327,9 +1271,6 @@ C     endif
             call calc_tdust_1d_g(tdust, tgas, mynh, gasgr_tdust,
      &           mygisrf, myisrf, itmask_metal, comp2, in, is, ie, j, k
      &         , gr_N, gr_Size, gr_dT, gr_Td, altot, kptot, idspecies)
-!     if(d(1,1,1).gt.1.d6)
-!    &      write(*,*) 'T', d(1,1,1), tgas(1), tdust(1), mygisrf, myisrf
-!    &             , kptot(1),  4.0e-4_DKIND / 0.009387d0* tdust(1)**2
 
          else
 
@@ -1429,10 +1370,6 @@ C     endif
                Ldst(i) =         - 
      &              gasgr(i) * (tgas(i) - tdust(i)) * 
      &              dust2gas(i) * rhoH(i) * rhoH(i)
-!     if(d(1,1,1).gt.1.d13)
-!    &write(*,'(A2, 1p30e13.5)') 'L', Ldst(i),
-!    &              gasgr(i) ,  tgas(i) , tdust(i)  , 
-!    &              dust2gas(i) , rhoH(i) , rhoH(i)
 
             else ! idspecies
 
@@ -1491,7 +1428,6 @@ C     endif
      &        alphap_T, alphap_dT, int8(alphap_Size), 
      &        alphap_Data, log_a)
               alpha(i) = 1.d1**log_a
-!           write(*,*) logrho(i), logT(i), log_a-logrho(i)
          endif
       enddo
 
@@ -1541,12 +1477,8 @@ C     endif
       do i = is+1, ie+1
          if ( itmask(i) ) then
          tau_con(i) = alpha(i) * lshield_con(i)
-!        write(*,*) d(i,j,k)*dom*mh, tgas(i),alpha(i), lshield_con(i)
-!        write(*,*) tau_con(i)
          endif
       enddo
-!     if(d(1,1,1).gt.1.d14)
-!    &write(*,*) 't', alpha(1), alphad(1), tau_con(1)
 
 !     --- Compute (external) radiative heating terms ---
 !     Photoionization heating
@@ -1844,17 +1776,17 @@ C     endif
               edot(i) = edot(i) + real(ipiht, DKIND) * photogamma(i,j,k)
      &                          / coolunit * HI(i,j,k) / dom
 
-!!            if (edot(i) .ne. edot(i)) then
-!!#ifdef _OPENMP
-!!!$omp critical
-!!#endif
-!!                write(6,*) 'NaN in edot[2]: ', i,j,k, edot(i),
-!!   &                photogamma(i,j,k), HI(i,j,k), de(i,j,k), d(i,j,k),
-!!   &                e(i,j,k), p2d(i), tgas(i), dom, urho, aye, mh
-!!#ifdef _OPENMP
-!!!$omp end critical
-!!#endif
-!!            endif
+              if (edot(i) .ne. edot(i)) then
+#ifdef _OPENMP
+!$omp critical
+#endif
+                  write(6,*) 'NaN in edot[2]: ', i,j,k, edot(i),
+     &                photogamma(i,j,k), HI(i,j,k), de(i,j,k), d(i,j,k),
+     &                e(i,j,k), p2d(i), tgas(i), dom, urho, aye, mh
+#ifdef _OPENMP
+!$omp end critical
+#endif
+              endif
 
             endif
           enddo

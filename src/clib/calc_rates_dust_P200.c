@@ -23,50 +23,50 @@ int calc_rates_dust_P200(int iSN, chemistry_data *my_chemistry, chemistry_data_s
   int NTd, Nmom;
   int iTd, imom, itab0, itab;
 
-  my_chemistry->SN0_XC [iSN] =   3.65050e-02;
-  my_chemistry->SN0_XO [iSN] =   4.88552e-01;
-  my_chemistry->SN0_XMg[iSN] =   2.69665e-02;
-  my_chemistry->SN0_XAl[iSN] =   1.36872e-04;
-  my_chemistry->SN0_XSi[iSN] =   1.87324e-01;
-  my_chemistry->SN0_XS [iSN] =   1.15582e-01;
-  my_chemistry->SN0_XFe[iSN] =   6.79294e-02;
+  my_rates->SN0_XC [iSN] =   3.65050e-02;
+  my_rates->SN0_XO [iSN] =   4.88552e-01;
+  my_rates->SN0_XMg[iSN] =   2.69665e-02;
+  my_rates->SN0_XAl[iSN] =   1.36872e-04;
+  my_rates->SN0_XSi[iSN] =   1.87324e-01;
+  my_rates->SN0_XS [iSN] =   1.15582e-01;
+  my_rates->SN0_XFe[iSN] =   6.79294e-02;
 
-  my_chemistry->SN0_fC [iSN] =   3.64677e-02;
-  my_chemistry->SN0_fO [iSN] =   4.88307e-01;
-  my_chemistry->SN0_fMg[iSN] =   2.69665e-02;
-  my_chemistry->SN0_fAl[iSN] =   1.36872e-04;
-  my_chemistry->SN0_fSi[iSN] =   1.87051e-01;
-  my_chemistry->SN0_fS [iSN] =   1.15582e-01;
-  my_chemistry->SN0_fFe[iSN] =   6.75026e-02;
+  my_rates->SN0_fC [iSN] =   3.64677e-02;
+  my_rates->SN0_fO [iSN] =   4.88307e-01;
+  my_rates->SN0_fMg[iSN] =   2.69665e-02;
+  my_rates->SN0_fAl[iSN] =   1.36872e-04;
+  my_rates->SN0_fSi[iSN] =   1.87051e-01;
+  my_rates->SN0_fS [iSN] =   1.15582e-01;
+  my_rates->SN0_fFe[iSN] =   6.75026e-02;
 
-  my_chemistry->SN0_fSiM     [iSN] =   5.90622e-05;
-  my_chemistry->SN0_fFeM     [iSN] =   4.26809e-04;
-  my_chemistry->SN0_fMg2SiO4 [iSN] =   4.08246e-15;
-  my_chemistry->SN0_fAC      [iSN] =   3.72287e-05;
-  my_chemistry->SN0_fSiO2D   [iSN] =   4.59330e-04;
-  my_chemistry->SN0_fMgO     [iSN] =   5.38389e-09;
+  my_rates->SN0_fSiM     [iSN] =   5.90622e-05;
+  my_rates->SN0_fFeM     [iSN] =   4.26809e-04;
+  my_rates->SN0_fMg2SiO4 [iSN] =   4.08246e-15;
+  my_rates->SN0_fAC      [iSN] =   3.72287e-05;
+  my_rates->SN0_fSiO2D   [iSN] =   4.59330e-04;
+  my_rates->SN0_fMgO     [iSN] =   5.38389e-09;
 
   itab0 = 3 * iSN;
-  my_chemistry->SN0_r0SiM     [itab0 + 0] =   8.86269e-07;
-  my_chemistry->SN0_r0FeM     [itab0 + 0] =   2.02272e-06;
-  my_chemistry->SN0_r0Mg2SiO4 [itab0 + 0] =   1.42189e-05;
-  my_chemistry->SN0_r0AC      [itab0 + 0] =   7.46096e-07;
-  my_chemistry->SN0_r0SiO2D   [itab0 + 0] =   1.73471e-05;
-  my_chemistry->SN0_r0MgO     [itab0 + 0] =   1.26307e-05;
+  my_rates->SN0_r0SiM     [itab0 + 0] =   8.86269e-07;
+  my_rates->SN0_r0FeM     [itab0 + 0] =   2.02272e-06;
+  my_rates->SN0_r0Mg2SiO4 [itab0 + 0] =   1.42189e-05;
+  my_rates->SN0_r0AC      [itab0 + 0] =   7.46096e-07;
+  my_rates->SN0_r0SiO2D   [itab0 + 0] =   1.73471e-05;
+  my_rates->SN0_r0MgO     [itab0 + 0] =   1.26307e-05;
 
-  my_chemistry->SN0_r0SiM     [itab0 + 1] =   1.71166e-12;
-  my_chemistry->SN0_r0FeM     [itab0 + 1] =   5.41308e-12;
-  my_chemistry->SN0_r0Mg2SiO4 [itab0 + 1] =   2.04834e-10;
-  my_chemistry->SN0_r0AC      [itab0 + 1] =   9.32091e-13;
-  my_chemistry->SN0_r0SiO2D   [itab0 + 1] =   3.08556e-10;
-  my_chemistry->SN0_r0MgO     [itab0 + 1] =   1.59673e-10;
+  my_rates->SN0_r0SiM     [itab0 + 1] =   1.71166e-12;
+  my_rates->SN0_r0FeM     [itab0 + 1] =   5.41308e-12;
+  my_rates->SN0_r0Mg2SiO4 [itab0 + 1] =   2.04834e-10;
+  my_rates->SN0_r0AC      [itab0 + 1] =   9.32091e-13;
+  my_rates->SN0_r0SiO2D   [itab0 + 1] =   3.08556e-10;
+  my_rates->SN0_r0MgO     [itab0 + 1] =   1.59673e-10;
 
-  my_chemistry->SN0_r0SiM     [itab0 + 2] =   5.46663e-18;
-  my_chemistry->SN0_r0FeM     [itab0 + 2] =   2.06248e-17;
-  my_chemistry->SN0_r0Mg2SiO4 [itab0 + 2] =   2.98805e-15;
-  my_chemistry->SN0_r0AC      [itab0 + 2] =   1.99556e-18;
-  my_chemistry->SN0_r0SiO2D   [itab0 + 2] =   5.66409e-15;
-  my_chemistry->SN0_r0MgO     [itab0 + 2] =   2.02075e-15;
+  my_rates->SN0_r0SiM     [itab0 + 2] =   5.46663e-18;
+  my_rates->SN0_r0FeM     [itab0 + 2] =   2.06248e-17;
+  my_rates->SN0_r0Mg2SiO4 [itab0 + 2] =   2.98805e-15;
+  my_rates->SN0_r0AC      [itab0 + 2] =   1.99556e-18;
+  my_rates->SN0_r0SiO2D   [itab0 + 2] =   5.66409e-15;
+  my_rates->SN0_r0MgO     [itab0 + 2] =   2.02075e-15;
 
   NTd =            35;
  Nmom =             4;
