@@ -59,69 +59,7 @@ cdef extern from "grackle_chemistry_data.h":
         double *k57
         double *k58
 
-        double *k125
-        double *k129
-        double *k130
-        double *k131
-        double *k132
-        double *k133
-        double *k134
-        double *k135
-        double *k136
-        double *k137
-        double *k148
-        double *k149
-        double *k150
-        double *k151
-        double *k152
-        double *k153
-
-        double *kz15
-        double *kz16
-        double *kz17
-        double *kz18
-        double *kz19
-        double *kz20
-        double *kz21
-        double *kz22
-        double *kz23
-        double *kz24
-        double *kz25
-        double *kz26
-        double *kz27
-        double *kz28
-        double *kz29
-        double *kz30
-        double *kz31
-        double *kz32
-        double *kz33
-        double *kz34
-        double *kz35
-        double *kz36
-        double *kz37
-        double *kz38
-        double *kz39
-        double *kz40
-        double *kz41
-        double *kz42
-        double *kz43
-        double *kz44
-        double *kz45
-        double *kz46
-        double *kz47
-        double *kz48
-        double *kz49
-        double *kz50
-        double *kz51
-        double *kz52
-        double *kz53
-        double *kz54
-
         double *h2dust
-        double *h2dustS
-        double *h2dustC
-
-        double *grain_growth_rate
 
         double *n_cr_n
         double *n_cr_d1
@@ -177,124 +115,8 @@ cdef extern from "grackle_chemistry_data.h":
         double *regr
 
         double gamma_isrf
-        double gamma_isrf2
 
         double *gas_grain
-        double *gas_grain2
-
-        double *cieY06
-
-        int *LH2_N
-        int LH2_Size
-        double *LH2_D
-        double *LH2_T
-        double *LH2_H
-        double LH2_dD
-        double LH2_dT
-        double LH2_dH
-        double *LH2_L
-        int *LHD_N
-        int LHD_Size
-        double *LHD_D
-        double *LHD_T
-        double *LHD_H
-        double LHD_dD
-        double LHD_dT
-        double LHD_dH
-        double *LHD_L
-
-        int *LCI_N
-        int LCI_Size
-        double *LCI_D
-        double *LCI_T
-        double *LCI_H
-        double LCI_dD
-        double LCI_dT
-        double LCI_dH
-        double *LCI_L
-        int *LCII_N
-        int LCII_Size
-        double *LCII_D
-        double *LCII_T
-        double *LCII_H
-        double LCII_dD
-        double LCII_dT
-        double LCII_dH
-        double *LCII_L
-        int *LOI_N
-        int LOI_Size
-        double *LOI_D
-        double *LOI_T
-        double *LOI_H
-        double LOI_dD
-        double LOI_dT
-        double LOI_dH
-        double *LOI_L
-
-        int *LCO_N
-        int LCO_Size
-        double *LCO_D
-        double *LCO_T
-        double *LCO_H
-        double LCO_dD
-        double LCO_dT
-        double LCO_dH
-        double *LCO_L
-        int *LOH_N
-        int LOH_Size
-        double *LOH_D
-        double *LOH_T
-        double *LOH_H
-        double LOH_dD
-        double LOH_dT
-        double LOH_dH
-        double *LOH_L
-        int *LH2O_N
-        int LH2O_Size
-        double *LH2O_D
-        double *LH2O_T
-        double *LH2O_H
-        double LH2O_dD
-        double LH2O_dT
-        double LH2O_dH
-        double *LH2O_L
-
-        int *alphap_N
-        int alphap_Size
-        double *alphap_D
-        double *alphap_T
-        double alphap_dD
-        double alphap_dT
-        double *alphap_Data
-
-        int *grain_N
-        int grain_Size
-        double *grain_D
-        double *grain_T
-        double grain_dD
-        double grain_dT
-        double *Hgrain
-        double *Tgrain
-        double *Ograin
-        double *Lgrain
-
-        int *gr_N
-        int gr_Size
-        double gr_dT
-        double *gr_Td
-        double *SN0_kpSiM
-        double *SN0_kpFeM
-        double *SN0_kpMg2SiO4
-        double *SN0_kpMgSiO3
-        double *SN0_kpFe3O4
-        double *SN0_kpAC
-        double *SN0_kpSiO2D
-        double *SN0_kpMgO
-        double *SN0_kpFeS
-        double *SN0_kpAl2O3
-        double *SN0_kpreforg 
-        double *SN0_kpvolorg 
-        double *SN0_kpH2Oice
                                 
         double hi_avg_crs
         double hei_avg_crs
@@ -328,9 +150,6 @@ cdef extern from "grackle_types.h":
       gr_float *DI_density;
       gr_float *DII_density;
       gr_float *HDI_density;
-      gr_float *DM_density;
-      gr_float *HDII_density;
-      gr_float *HeHII_density;
       gr_float *e_density;
       gr_float *metal_density;
       gr_float *dust_density;
