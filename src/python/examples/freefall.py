@@ -36,7 +36,7 @@ if __name__=="__main__":
     my_chemistry = chemistry_data()
     my_chemistry.use_grackle = 1
     my_chemistry.with_radiative_cooling = 1
-    my_chemistry.primordial_chemistry = 3
+    my_chemistry.primordial_chemistry = 4
     my_chemistry.UVbackground = 0
     my_chemistry.self_shielding_method = 0
     my_chemistry.H2_self_shielding = 0
@@ -93,6 +93,10 @@ if __name__=="__main__":
         fc["DI"][:] = 2.0 * 3.4e-5 * fc["density"]
         fc["DII"][:] = tiny_number * fc["density"]
         fc["HDI"][:] = tiny_number * fc["density"]
+    if my_chemistry.primordial_chemistry > 3:
+        fc["DM"][:] = tiny_number * fc["density"]
+        fc["HDII"][:] = tiny_number * fc["density"]
+        fc["HeHII"][:] = tiny_number * fc["density"]
     if my_chemistry.metal_cooling == 1:
         fc["metal"][:] = metallicity * fc["density"] * \
             my_chemistry.SolarMetalFractionByMass
