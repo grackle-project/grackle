@@ -34,6 +34,7 @@ _nd_fields   = ["energy",
                 "gamma", "cooling_time", "mu", "nH",
                 "mean_molecular_weight"]
 
+# set by the primordial_chemistry parameter
 _fluid_names = {}
 _fluid_names[0] = _base_fluids
 _fluid_names[1] = _fluid_names[0] + \
@@ -44,6 +45,14 @@ _fluid_names[3] = _fluid_names[2] + \
   ["DI", "DII", "HDI"]
 _fluid_names[4] = _fluid_names[3] + \
   ["DM", "HDII", "HeHII"]
+
+# set by the metal_chemistry_parameter
+_metal_fluid_names = {}
+_metal_fluid_names[0] = []
+_metal_fluid_names[1] = \
+  ["CI", "CII", "CO", "CO2", "OI", "OH", "H2O", "O2",
+    "SiI", "SiOI", "SiO2I", "CH", "CH2", "COII",
+    "OII", "OHII", "H2OII", "H3OII", "O2II"]
 
 _rad_trans_names = ['RT_heating_rate', 'RT_HI_ionization_rate',
                     'RT_HeI_ionization_rate', 'RT_HeII_ionization_rate',
@@ -61,6 +70,7 @@ class FluidContainer(dict):
         self.chemistry_data = chemistry_data
         self.n_vals = n_vals
         for fluid in _fluid_names[self.chemistry_data.primordial_chemistry] + \
+          _metal_fluid_names[self.chemistry_data.metal_chemistry] + \
         _extra_fields.get(self.chemistry_data.primordial_chemistry, []) + \
         _nd_fields:
             self._setup_fluid(fluid)
