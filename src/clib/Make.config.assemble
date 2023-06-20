@@ -227,4 +227,5 @@
 # LIBRARY RELEASE VERSION
 #-----------------------------------------------------------------------
 
-LIB_RELEASE_VERSION = 3.3.dev1
+VERSION_FILE = $(GRACKLE_DIR)/../../VERSION
+LIB_RELEASE_VERSION := $(shell tail -1 $(VERSION_FILE))

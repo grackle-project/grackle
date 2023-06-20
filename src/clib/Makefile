@@ -36,6 +36,7 @@ OUTPUT      = out.compile
 VERBOSE     = 0
 GRACKLE_DIR = .
 DEFAULT_INSTALL_PREFIX = /usr/local
+BUILD_HELPER = $(GRACKLE_DIR)/../../build-helper.sh
 
 #-----------------------------------------------------------------------
 # Make.config.settings is used for setting default values to all compile-time 
@@ -205,56 +206,26 @@ verbose: VERBOSE = 1
 #-----------------------------------------------------------------------
 
 .PHONY: autogen
-autogen: config_type auto_show_config.c auto_show_flags.c auto_get_version.c
+autogen: config_type auto_general.c
 
 .PHONY: config_type
 config_type:
-	-@echo "#ifndef __GRACKLE_FLOAT_H__" > grackle_float.h
-	-@echo "#define __GRACKLE_FLOAT_H__" >> grackle_float.h
-	-@echo "#define $(PRECISION_DEFINE)" >> grackle_float.h
-	-@echo "#endif" >> grackle_float.h
+	@(if [ $(ASSEMBLE_PRECISION_NUMBER) -eq 4 ]; then \
+	   $(BUILD_HELPER) generate-header -precision 32 -out grackle_float.h; \
+	else \
+	   $(BUILD_HELPER) generate-header -precision 64 -out grackle_float.h; \
+	fi)
 
-# Force update of auto_show_config.c
-
-.PHONY: auto_show_config.c
-auto_show_config.c:
+# Force update of auto_general.c
+.PHONY: auto_general.c
+auto_general.c:
 	-@$(MAKE) -s show-config  >& temp.show-config
-	-@awk 'BEGIN {print "#include <stdio.h>\nvoid auto_show_config(FILE *fp) {"}; {print "   fprintf (fp,\""$$0"\\n\");"}; END {print "}"}' < temp.show-config > auto_show_config.c
-
-# Force update of auto_show_flags.c
-
-.PHONY: auto_show_flags.c
-auto_show_flags.c:
 	-@$(MAKE) -s show-flags  >& temp.show-flags
-	-@awk 'BEGIN {print "#include <stdio.h>\nvoid auto_show_flags(FILE *fp) {"}; {print "   fprintf (fp,\""$$0"\\n\");"}; END {print "}"}' < temp.show-flags > auto_show_flags.c
-
-# Force update of auto_get_version.c
-
-.PHONY: auto_get_version.c
-auto_get_version.c:
-	-@$(MAKE) -s show-version  >& temp.show-version
-	-@(if [ -f $@ ]; then rm $@; fi) # delete the file if it already exists
-
-	-@echo '#include <stdio.h>'                                                             >> $@
-	-@echo '#include "grackle_types.h"'                                                     >> $@
-	-@echo ''                                                                               >> $@
-	-@echo '// the following macros are auto-generated:'                                    >> $@
-
-	-@awk '{ if (NF > 0) { print "#define AUTO_" toupper($$(NF-1)) " \"" $$(NF) "\"" } };' < temp.show-version >> auto_get_version.c
-
-	-@echo ''                                                                               >> $@
-	-@echo '// test that ensures that all macros were correctly defined:'                   >> $@
-	-@echo '#if !(defined(AUTO_VERSION) && defined(AUTO_BRANCH) && defined(AUTO_REVISION))' >> $@
-	-@echo '#error "Something went wrong while auto-generating macros"'                     >> $@
-	-@echo '#endif'                                                                         >> $@
-	-@echo ''                                                                               >> $@
-	-@echo 'grackle_version get_grackle_version(void) {'                                    >> $@
-	-@echo '  grackle_version out;'                                                         >> $@
-	-@echo '  out.version = AUTO_VERSION;'                                                  >> $@
-	-@echo '  out.branch = AUTO_BRANCH;'                                                    >> $@
-	-@echo '  out.revision = AUTO_REVISION;'                                                >> $@
-	-@echo '  return out;'                                                                  >> $@
-	-@echo '}'                                                                              >> $@
+	@$(BUILD_HELPER) generate-funcs \
+		-version-file $(VERSION_FILE) \
+		-config-file temp.show-config \
+		-flag-file temp.show-flags \
+		-out auto_general.c
 
 #-----------------------------------------------------------------------
 # Generate dependency file
