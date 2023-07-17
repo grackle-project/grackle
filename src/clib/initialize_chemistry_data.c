@@ -33,7 +33,12 @@ void auto_show_config(FILE *fp);
 void auto_show_flags(FILE *fp);
 grackle_version get_grackle_version();
 void show_parameters(FILE *fp, chemistry_data *my_chemistry);
-
+int calc_rates_metal(chemistry_data *my_chemistry,
+                     chemistry_data_storage *my_rates,
+                     code_units *my_units);
+int calc_rates_dust(chemistry_data *my_chemistry,
+                    chemistry_data_storage *my_rates,
+                    code_units *my_units);
 int _free_cloudy_data(cloudy_data *my_cloudy, chemistry_data *my_chemistry, int primordial);
 int initialize_cloudy_data(chemistry_data *my_chemistry,
                            chemistry_data_storage *my_rates,
@@ -151,6 +156,7 @@ int local_initialize_chemistry_data(chemistry_data *my_chemistry,
   if (my_chemistry->h2_on_dust > 0 || my_chemistry->dust_chemistry > 0 || my_chemistry->dust_recombination_cooling > 0) {
     my_rates->gas_grain = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
     my_rates->regr      = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->gas_grain2 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
   }
 
   double co_length_units, co_density_units;
@@ -167,6 +173,17 @@ int local_initialize_chemistry_data(chemistry_data *my_chemistry,
 
   //* Call initialise_rates to compute rate tables.
   initialize_rates(my_chemistry, my_rates, my_units, co_length_units, co_density_units);
+
+  /* Metal chemistry rates */
+  if (calc_rates_metal(my_chemistry, my_rates, my_units) == FAIL) {
+    fprintf(stderr, "Error in calc_rates_metal.\n");
+    return FAIL;
+  }
+  /* Dust rates */
+  if (calc_rates_dust(my_chemistry, my_rates, my_units) == FAIL) {
+    fprintf(stderr, "Error in calc_rates_dust.\n");
+    return FAIL;
+  }
 
   /* Initialize Cloudy cooling. */
   my_rates->cloudy_data_new = 1;
@@ -329,6 +346,7 @@ int local_free_chemistry_data(chemistry_data *my_chemistry,
     GRACKLE_FREE(my_rates->GAel);
     GRACKLE_FREE(my_rates->H2LTE);
     GRACKLE_FREE(my_rates->gas_grain);
+    GRACKLE_FREE(my_rates->gas_grain2);
 
     GRACKLE_FREE(my_rates->k1);
     GRACKLE_FREE(my_rates->k2);
@@ -367,6 +385,9 @@ int local_free_chemistry_data(chemistry_data *my_chemistry,
     GRACKLE_FREE(my_rates->n_cr_n);
     GRACKLE_FREE(my_rates->n_cr_d1);
     GRACKLE_FREE(my_rates->n_cr_d2);
+    GRACKLE_FREE(my_rates->h2dustS);
+    GRACKLE_FREE(my_rates->h2dustC);
+    GRACKLE_FREE(my_rates->grain_growth_rate);
   }
 
 
