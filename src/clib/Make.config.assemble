@@ -227,4 +227,4 @@
 # LIBRARY RELEASE VERSION
 #-----------------------------------------------------------------------
 
-LIB_RELEASE_VERSION = 3.3.dev0
+LIB_RELEASE_VERSION = 3.2.1
