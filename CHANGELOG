@@ -1,3 +1,11 @@
+== Version 3.2.1 ==
+_Release date - Jul 19, 2023_
+
+  * Bugfix: Add missing return value in local_free_chemistry_data
+	https://github.com/grackle-project/grackle/pull/161
+  * Bugfix: Add missing declaration of local_free_chemistry_data
+	https://github.com/grackle-project/grackle/pull/163
+
 == Version 3.2 ==
 _Release date - May 22, 2023_
 
