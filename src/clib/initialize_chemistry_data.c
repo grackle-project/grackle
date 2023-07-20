@@ -49,6 +49,8 @@ int local_free_chemistry_data(chemistry_data *my_chemistry, chemistry_data_stora
 int initialize_rates(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, code_units *my_units,
                 double co_length_units, double co_density_units);
 
+void initialize_empty_UVBtable_struct(UVBtable *table);
+
 static void show_version(FILE *fp)
 {
   grackle_version gversion = get_grackle_version();
@@ -291,23 +293,7 @@ int local_initialize_chemistry_data(chemistry_data *my_chemistry,
   }
 
   /* Initialize UV Background data. */
-  my_rates->UVbackground_table.Nz     = 0;
-  my_rates->UVbackground_table.z      = NULL;
-  my_rates->UVbackground_table.k24    = NULL;
-  my_rates->UVbackground_table.k25    = NULL;
-  my_rates->UVbackground_table.k26    = NULL;
-  my_rates->UVbackground_table.k27    = NULL;
-  my_rates->UVbackground_table.k28    = NULL;
-  my_rates->UVbackground_table.k29    = NULL;
-  my_rates->UVbackground_table.k30    = NULL;
-  my_rates->UVbackground_table.k31    = NULL;
-  my_rates->UVbackground_table.piHI   = NULL;
-  my_rates->UVbackground_table.piHeII = NULL;
-  my_rates->UVbackground_table.piHeI  = NULL;
-  my_rates->UVbackground_table.crsHI  = NULL;
-  my_rates->UVbackground_table.crsHeII = NULL;
-  my_rates->UVbackground_table.crsHeI = NULL;
-
+  initialize_empty_UVBtable_struct(&(my_rates->UVbackground_table));
   if (initialize_UVbackground_data(my_chemistry, my_rates) == FAIL) {
     fprintf(stderr, "Error in initialize_UVbackground_data.\n");
     return FAIL;
