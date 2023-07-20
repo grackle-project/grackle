@@ -53,6 +53,7 @@ int initialize_cloudy_data(chemistry_data *my_chemistry,
   char parameter_name[MAX_LINE_LENGTH];
 
   // Initialize things needed even if cloudy cooling is not used.
+  initialize_empty_cloudy_data_struct(my_cloudy);
 
   my_cloudy->grid_parameters = malloc(CLOUDY_MAX_DIMENSION * sizeof(double *));
   my_cloudy->grid_dimension = malloc(CLOUDY_MAX_DIMENSION * sizeof(long long));
