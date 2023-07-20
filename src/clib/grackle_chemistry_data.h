@@ -178,6 +178,11 @@ typedef struct
 /*****************************
  *** Cooling table storage ***
  *****************************/
+
+// this is an implementation detail that may change in the future. Always rely
+// upon the grid_rank value stored in cloudy_data
+#define GRACKLE_CLOUDY_TABLE_MAX_DIMENSION 5
+
 typedef struct
 {
 
@@ -185,10 +190,10 @@ typedef struct
   long long grid_rank;
 
   // Dimension of dataset.
-  long long *grid_dimension;
+  long long grid_dimension[GRACKLE_CLOUDY_TABLE_MAX_DIMENSION];
 
   // Dataset parameter values.
-  double **grid_parameters;
+  double *grid_parameters[GRACKLE_CLOUDY_TABLE_MAX_DIMENSION];
 
   // Heating values
   double *heating_data;

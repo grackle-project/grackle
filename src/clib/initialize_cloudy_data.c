@@ -20,7 +20,6 @@
 #include "grackle_chemistry_data.h"
 
 #define SMALL_LOG_VALUE -99.0
-#define CLOUDY_MAX_DIMENSION 5
 
 extern int grackle_verbose;
 
@@ -31,8 +30,10 @@ extern int grackle_verbose;
 void initialize_empty_cloudy_data_struct(cloudy_data *my_cloudy)
 {
   my_cloudy->grid_rank = 0LL;
-  my_cloudy->grid_dimension = NULL;
-  my_cloudy->grid_parameters = NULL;
+  for (long long i = 0; i < GRACKLE_CLOUDY_TABLE_MAX_DIMENSION; i++){
+    my_cloudy->grid_dimension[i] = 0LL;
+    my_cloudy->grid_parameters[i] = NULL;
+  }
   my_cloudy->heating_data = NULL;
   my_cloudy->cooling_data = NULL;
   my_cloudy->mmw_data = NULL;
@@ -52,26 +53,10 @@ int initialize_cloudy_data(chemistry_data *my_chemistry,
   long long *temp_int_arr;
   char parameter_name[MAX_LINE_LENGTH];
 
-  // Initialize things needed even if cloudy cooling is not used.
+  // Initialize things (to the null-state) even if cloudy cooling is not used.
   initialize_empty_cloudy_data_struct(my_cloudy);
 
-  my_cloudy->grid_parameters = malloc(CLOUDY_MAX_DIMENSION * sizeof(double *));
-  my_cloudy->grid_dimension = malloc(CLOUDY_MAX_DIMENSION * sizeof(long long));
-  for (q = 0;q < CLOUDY_MAX_DIMENSION;q++) {
-    my_cloudy->grid_dimension[q] = 0LL;
-    my_cloudy->grid_parameters[q] = NULL;
-  }
-
-  // Zero arrays if cloudy cooling not used.
-
-  if (read_data == 0) {
-    my_cloudy->grid_rank = 0;
-    my_cloudy->heating_data = NULL;
-    my_cloudy->cooling_data = NULL;
-    my_cloudy->mmw_data = NULL;
-    my_cloudy->data_size = 0LL;
-    return SUCCESS;
-  }
+  if (read_data == 0) { return SUCCESS; }
 
   if (grackle_verbose) {
     fprintf(stdout,"Initializing Cloudy cooling: %s.\n", group_name);
@@ -326,9 +311,9 @@ int initialize_cloudy_data(chemistry_data *my_chemistry,
 
   status = H5Fclose (file_id);
 
-  if (my_cloudy->grid_rank > CLOUDY_MAX_DIMENSION) {
+  if (my_cloudy->grid_rank > GRACKLE_CLOUDY_TABLE_MAX_DIMENSION) {
     fprintf(stderr,"Error: rank of Cloudy cooling data must be less than or equal to %d.\n",
-	    CLOUDY_MAX_DIMENSION);
+	    GRACKLE_CLOUDY_TABLE_MAX_DIMENSION);
     return FAIL;
   }
 
@@ -342,8 +327,6 @@ int _free_cloudy_data(cloudy_data *my_cloudy, chemistry_data *my_chemistry, int 
     GRACKLE_FREE(my_cloudy->grid_parameters[i]);
   }
 
-  GRACKLE_FREE(my_cloudy->grid_parameters);
-  GRACKLE_FREE(my_cloudy->grid_dimension);
   GRACKLE_FREE(my_cloudy->cooling_data);
   if (my_chemistry->UVbackground == 1) {
     GRACKLE_FREE(my_cloudy->heating_data);
