@@ -66,7 +66,6 @@ int initialize_cloudy_data(chemistry_data *my_chemistry,
 
   if (read_data == 0) {
     my_cloudy->grid_rank = 0;
-    my_cloudy->cooling_data = NULL;
     my_cloudy->heating_data = NULL;
     my_cloudy->cooling_data = NULL;
     my_cloudy->mmw_data = NULL;
