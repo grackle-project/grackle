@@ -152,7 +152,7 @@ void initialize_empty_chemistry_data_storage_struct(chemistry_data_storage *my_r
   my_rates->regr = NULL;
   my_rates->gamma_isrf = 0.;
   my_rates->gas_grain = NULL;
-  int cloudy_data_new = -1;
+  my_rates->cloudy_data_new = -1;
 }
 
 int local_initialize_chemistry_data(chemistry_data *my_chemistry,
