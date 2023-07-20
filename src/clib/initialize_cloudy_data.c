@@ -58,7 +58,7 @@ int initialize_cloudy_data(chemistry_data *my_chemistry,
   my_cloudy->grid_parameters = malloc(CLOUDY_MAX_DIMENSION * sizeof(double *));
   my_cloudy->grid_dimension = malloc(CLOUDY_MAX_DIMENSION * sizeof(long long));
   for (q = 0;q < CLOUDY_MAX_DIMENSION;q++) {
-    my_cloudy->grid_dimension[q] = NULL;
+    my_cloudy->grid_dimension[q] = 0LL;
     my_cloudy->grid_parameters[q] = NULL;
   }
 
