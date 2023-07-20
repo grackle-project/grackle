@@ -62,7 +62,7 @@ static void show_version(FILE *fp)
 /**
  * Initializes an empty #chemistry_data_storage struct with zeros and NULLs.
  */
-void init_empty_chemistry_data_storage_struct(chemistry_data_storage *my_rates)
+void initialize_empty_chemistry_data_storage_struct(chemistry_data_storage *my_rates)
 {
   my_rates->k1 = NULL;
   my_rates->k2 = NULL;
@@ -159,7 +159,7 @@ int local_initialize_chemistry_data(chemistry_data *my_chemistry,
 {
 
   /* Better safe than sorry: Initialize everything to NULL/0 */
-  init_empty_chemistry_data_storage_struct(my_rates);
+  initialize_empty_chemistry_data_storage_struct(my_rates);
 
   if (grackle_verbose) {
     show_version(stdout);
