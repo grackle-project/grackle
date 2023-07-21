@@ -247,14 +247,6 @@ int local_initialize_chemistry_data(chemistry_data *my_chemistry,
     my_chemistry->HydrogenFractionByMass = 1. / (1. + 0.1 * 3.971);
   }
 
-  if (my_chemistry->h2_on_dust > 0 || my_chemistry->dust_chemistry > 0 || my_chemistry->dust_recombination_cooling > 0) {
-    my_rates->gas_grain = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->regr      = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-  } else {
-    my_rates->gas_grain = NULL;
-    my_rates->regr = NULL;
-  }
-
   double co_length_units, co_density_units;
   if (my_units->comoving_coordinates == TRUE) {
     co_length_units = my_units->length_units;
