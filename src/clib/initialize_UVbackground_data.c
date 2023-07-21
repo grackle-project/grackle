@@ -7,7 +7,7 @@
 /
 / Distributed under the terms of the Enzo Public Licence.
 /
-/ The full license is in the file LICENSE, distributed with this 
+/ The full license is in the file LICENSE, distributed with this
 / software.
 ************************************************************************/
 
@@ -22,6 +22,30 @@ extern int grackle_verbose;
 
 // function prototypes
 int read_dataset(hid_t file_id, char *dset_name, double *buffer);
+
+/**
+ * Initializes an empty #UVBtable struct with zeros and NULLs.
+ */
+void initialize_empty_UVBtable_struct(UVBtable *table)
+{
+  table->Nz     = 0LL;
+  table->z      = NULL;
+  table->k24    = NULL;
+  table->k25    = NULL;
+  table->k26    = NULL;
+  table->k27    = NULL;
+  table->k28    = NULL;
+  table->k29    = NULL;
+  table->k30    = NULL;
+  table->k31    = NULL;
+  table->piHI   = NULL;
+  table->piHeI  = NULL;
+  table->piHeII = NULL;
+  table->crsHI  = NULL;
+  table->crsHeII = NULL;
+  table->crsHeI = NULL;
+}
+
 
 // Initialize UV Background data
 int initialize_UVbackground_data(chemistry_data *my_chemistry,
@@ -48,7 +72,7 @@ int initialize_UVbackground_data(chemistry_data *my_chemistry,
   if (grackle_verbose)
     fprintf(stdout, "Reading UV background data from %s.\n",
             my_chemistry->grackle_data_file);
-  file_id = H5Fopen(my_chemistry->grackle_data_file, 
+  file_id = H5Fopen(my_chemistry->grackle_data_file,
                     H5F_ACC_RDONLY, H5P_DEFAULT);
 
 
@@ -73,7 +97,7 @@ int initialize_UVbackground_data(chemistry_data *my_chemistry,
     return FAIL;
   }
 
-  H5Tclose(memtype); 
+  H5Tclose(memtype);
   H5Dclose(dset_id);
 
 
@@ -120,7 +144,7 @@ int initialize_UVbackground_data(chemistry_data *my_chemistry,
     my_rates->UVbackground_table.k29 = malloc(Nz * sizeof(double));
     my_rates->UVbackground_table.k30 = malloc(Nz * sizeof(double));
     my_rates->UVbackground_table.k31 = malloc(Nz * sizeof(double));
-  }    
+  }
 
   my_rates->UVbackground_table.piHI = malloc(Nz * sizeof(double));
   my_rates->UVbackground_table.piHeII = malloc(Nz * sizeof(double));
@@ -175,7 +199,7 @@ int initialize_UVbackground_data(chemistry_data *my_chemistry,
                       my_rates->UVbackground_table.k27) ) {
       fprintf(stderr, "Error reading dataset '/UVBRates/Chemistry/k27' in %s.\n",
               my_chemistry->grackle_data_file);
-      return FAIL;      
+      return FAIL;
     }
 
     // *** k28 ***
@@ -183,7 +207,7 @@ int initialize_UVbackground_data(chemistry_data *my_chemistry,
                       my_rates->UVbackground_table.k28) ) {
       fprintf(stderr, "Error reading dataset '/UVBRates/Chemistry/k28' in %s.\n",
               my_chemistry->grackle_data_file);
-      return FAIL;      
+      return FAIL;
     }
 
     // *** k29 ***
@@ -191,7 +215,7 @@ int initialize_UVbackground_data(chemistry_data *my_chemistry,
                       my_rates->UVbackground_table.k29) ) {
       fprintf(stderr, "Error reading dataset '/UVBRates/Chemistry/k29' in %s.\n",
               my_chemistry->grackle_data_file);
-      return FAIL;      
+      return FAIL;
     }
 
     // *** k30 ***
@@ -199,7 +223,7 @@ int initialize_UVbackground_data(chemistry_data *my_chemistry,
                       my_rates->UVbackground_table.k30) ) {
       fprintf(stderr, "Error reading dataset '/UVBRates/Chemistry/k30' in %s.\n",
               my_chemistry->grackle_data_file);
-      return FAIL;      
+      return FAIL;
     }
 
     // *** k31 ***
@@ -207,9 +231,9 @@ int initialize_UVbackground_data(chemistry_data *my_chemistry,
                       my_rates->UVbackground_table.k31) ) {
       fprintf(stderr, "Error reading dataset '/UVBRates/Chemistry/k31' in %s.\n",
               my_chemistry->grackle_data_file);
-      return FAIL;      
+      return FAIL;
     }
-    
+
   }
 
   // *** piHI ***
@@ -334,7 +358,7 @@ int read_dataset(hid_t file_id, char *dset_name, double *buffer) {
     fprintf(stderr, "Failed to read dataset 'z'.\n");
     return FAIL;
   }
- 
+
   H5Dclose(dset_id);
 
   return SUCCESS;
