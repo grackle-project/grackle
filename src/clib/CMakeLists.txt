@@ -170,6 +170,17 @@ if ("${CMAKE_SYSTEM_NAME}" MATCHES "^(Linux)|(Darwin)$")
   target_compile_definitions(Grackle_Grackle PRIVATE "$<$<NOT:${is_FC}>:LINUX>")
 endif()
 
+# If we are building a shared library, construct a "configuration Makefile"
+# that is used to build the code examples
+# - we're mostly just doing this to let us run the code examples as part of the
+#   pytest test suite (hence why we only do this for shared libraries)
+if (BUILD_SHARED_LIBS)
+  include(CreateExampleConfigMakefile)
+  create_example_config_Makefile(
+    "Make.examples-config" "Grackle::Grackle" "${GRACKLE_FC_FLAG}"
+  )
+endif()
+
 # In the short term, we have explicitly commented out the following code, which
 # deals with installation and creation of a "Config Package File" for a few
 # reasons:

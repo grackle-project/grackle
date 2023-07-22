@@ -959,4 +959,5 @@ cdef extern from *:
     int traditional_in_source_build() # returns 1 for True or 0 for False
 
 def uses_in_source_build():
+    # this is only intented for testing purposes (it's subject to change)
     return bool(traditional_in_source_build())

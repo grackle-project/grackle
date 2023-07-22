@@ -21,6 +21,8 @@ cmake_minimum_required(VERSION 3.16)
 cmake_policy(SET CMP0077 NEW)
 project(Grackle VERSION ${_GRACKLE_VERSION_NO_DEVTAG} LANGUAGES C Fortran)
 
+# Specify that `./cmake` contains cmake modules defining useful functionality
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 # Project-Wide Configuration
 include(GNUInstallDirs)
