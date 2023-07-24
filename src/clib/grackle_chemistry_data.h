@@ -91,7 +91,11 @@ typedef struct
 
   /* flag to use a field specifying a temperature floor */
 
-  int use_temperature_floor_field;
+  int use_temperature_floor;
+
+  /* use to specify scalar temperature floor */
+
+  double temperature_floor_scalar;
 
   /* additional chemistry solver parameters */
   int three_body_rate;

@@ -45,7 +45,7 @@
      &                metPar1, metPar2, metPar3, metPar4, metPar5,
      &                metDataSize, metCooling, metHeating, clnew,
      &                iVheat, iMheat, Vheat, Mheat,
-     &                iTfloor, Tfloor,
+     &                iTfloor, Tfloor_scalar, Tfloor,
      &                iisrffield, isrf_habing, 
      &                iH2shieldcustom, f_shield_custom,
      &                itmax, exititmax)
@@ -146,6 +146,7 @@
 !    Vheat       - array of volumetric heating rates
 !    Mheat       - array of specific heating rates
 !    iTfloor     - flag for using temperature floor field
+!    Tfloor_scalar - scalar temperature floor value
 !    Tfloor      - array of temperature floor values
 !    itmax       - maximum allowed sub-cycle iterations
 !    exititmax   - flag to exit if max iterations exceeded
@@ -177,7 +178,7 @@
 
       real*8  dx, dt, aye, temstart, temend, gamma,
      &        utim, uxyz, uaye, urho, utem, fh, dtoh, z_solar, 
-     &        fgr, dtemstart, dtemend, clEleFra
+     &        fgr, dtemstart, dtemend, clEleFra, Tfloor_scalar
 
 !  Density, energy and velocity fields fields
 
@@ -501,7 +502,7 @@
      &                metPar1, metPar2, metPar3, metPar4, metPar5,
      &                metDataSize, metCooling, metHeating, clnew,
      &                iVheat, iMheat, Vheat, Mheat,
-     &                iTfloor, Tfloor,
+     &                iTfloor, Tfloor_scalar, Tfloor,
      &                iisrffield, isrf_habing, itmask)
 
             if (ispecies .gt. 0) then

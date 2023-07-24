@@ -89,7 +89,10 @@ ENTRY(use_volumetric_heating_rate, INT, 0)
 ENTRY(use_specific_heating_rate, INT, 0)
 
 /* flag to use a field specifying a temperature floor */
-ENTRY(use_temperature_floor_field, INT, 0)
+ENTRY(use_temperature_floor, INT, 0)
+
+/* use to specify scalar temperature floor */
+ENTRY(temperature_floor_scalar, DOUBLE, 0.0)
 
 /* additional chemistry solver parameters */
 ENTRY(three_body_rate, INT, 0)
