@@ -32,6 +32,7 @@
      &                metPar1, metPar2, metPar3, metPar4, metPar5,
      &                metDataSize, metCooling, metHeating, clnew,
      &                iVheat, iMheat, Vheat, Mheat,
+     &                iTfloor, Tfloor_scalar, Tfloor,
      &                iisrffield, isrf_habing)
 
 !  SOLVE RADIATIVE COOLING/HEATING EQUATIONS
@@ -64,12 +65,12 @@
      &        iexpand, ih2co, ipiht, ispecies, imetal, idim,
      &        imcool, idust, idustall,
      &        idustfield, idustrec, igammah, ih2optical, iciecool,
-     &        clnew, iVheat, iMheat, iradtrans, iradshield,
+     &        clnew, iVheat, iMheat, iTfloor, iradtrans, iradshield,
      &        iisrffield
 
       real*8  aye, temstart, temend,
      &        utem, uxyz, uaye, urho, utim,
-     &        gamma, fh, z_solar, fgr, clEleFra
+     &        gamma, fh, z_solar, fgr, clEleFra, Tfloor_scalar
       R_PREC  d(in,jn,kn),   e(in,jn,kn),
      &        u(in,jn,kn),   v(in,jn,kn),    w(in,jn,kn),
      &        de(in,jn,kn),  HI(in,jn,kn),   HII(in,jn,kn),
@@ -77,7 +78,7 @@
      &        HM(in,jn,kn),  H2I(in,jn,kn),  H2II(in,jn,kn),
      &        DI(in,jn,kn),  DII(in,jn,kn),  HDI(in,jn,kn),
      &        metal(in,jn,kn), dust(in,jn,kn),
-     &        Vheat(in,jn,kn), Mheat(in,jn,kn),
+     &        Vheat(in,jn,kn), Mheat(in,jn,kn), Tfloor(in,jn,kn),
      &        isrf_habing(in,jn,kn),
      &        cooltime(in,jn,kn)
       real*8  photogamma(in,jn,kn)
@@ -287,6 +288,7 @@
      &                metPar1, metPar2, metPar3, metPar4, metPar5,
      &                metDataSize, metCooling, metHeating, clnew,
      &                iVheat, iMheat, Vheat, Mheat,
+     &                iTfloor, Tfloor_scalar, Tfloor,
      &                iisrffield, isrf_habing, itmask)
 
 !        Compute the cooling time on the slice

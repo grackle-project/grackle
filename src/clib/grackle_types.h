@@ -67,6 +67,8 @@ typedef struct
   gr_float *volumetric_heating_rate;
   gr_float *specific_heating_rate;
 
+  gr_float *temperature_floor;
+
   gr_float *RT_heating_rate;
   gr_float *RT_HI_ionization_rate;
   gr_float *RT_HeI_ionization_rate;

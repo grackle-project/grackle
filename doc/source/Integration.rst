@@ -521,6 +521,14 @@ electron mass density in :c:data:`density_units` (see :ref:`density-note`).
    should be in units of erg/s/g.  Used when
    :c:data:`use_specific_heating_rate` is set to 1.
 
+.. c:var:: gr_float* temperature_floor
+
+   Pointer to values containing a temperature floor for each element
+   in units of K. No chemistry or cooling calculations will be
+   performed on an element with a temperature at or below the
+   specified value. Used when :c:data:`use_temperature_floor` is
+   set to 2.
+
 .. c:var:: gr_float *RT_heating_rate
 
    Pointer to the radiation transfer heating rate field.  Rates

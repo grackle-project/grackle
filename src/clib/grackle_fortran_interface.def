@@ -66,6 +66,8 @@ c     This is the fortran definition of grackle_field_data
          TYPE(C_PTR) :: volumetric_heating_rate
          TYPE(C_PTR) :: specific_heating_rate
 
+         TYPE(C_PTR) :: temperature_floor
+
          TYPE(C_PTR) :: RT_heating_rate
          TYPE(C_PTR) :: RT_HI_ionization_rate
          TYPE(C_PTR) :: RT_HeI_ionization_rate
@@ -98,6 +100,8 @@ c     This is the fortran definition of grackle_chemistry_data
          REAL(C_DOUBLE) :: interstellar_radiation_field
          INTEGER(C_INT) :: use_volumetric_heating_rate
          INTEGER(C_INT) :: use_specific_heating_rate
+         INTEGER(C_INT) :: use_temperature_floor
+         REAL(C_DOUBLE) :: temperature_floor_scalar
          INTEGER(C_INT) :: three_body_rate
          INTEGER(C_INT) :: cie_cooling
          INTEGER(C_INT) :: h2_optical_depth_approximation
