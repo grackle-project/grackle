@@ -57,18 +57,19 @@ int main(int argc, char *argv[])
   }
 
   // Set parameter values for chemistry.
-  // Access the parameter storage with the struct you've created
-  // or with the grackle_data pointer declared in grackle.h (see further below).
-  grackle_data->use_grackle = 1;            // chemistry on
-  grackle_data->with_radiative_cooling = 1; // cooling on
-  grackle_data->primordial_chemistry = 3;   // molecular network with H, He, D
-  grackle_data->dust_chemistry = 1;         // dust processes
-  grackle_data->metal_cooling = 1;          // metal cooling on
-  grackle_data->UVbackground = 1;           // UV background on
-  grackle_data->grackle_data_file = "../../input/CloudyData_UVB=HM2012.h5"; // data file
+  my_grackle_data->use_grackle = 1;            // chemistry on
+  my_grackle_data->with_radiative_cooling = 1; // cooling on
+  my_grackle_data->primordial_chemistry = 3;   // molecular network with H, He, D
+  my_grackle_data->dust_chemistry = 1;         // dust processes
+  my_grackle_data->metal_cooling = 1;          // metal cooling on
+  my_grackle_data->UVbackground = 1;           // UV background on
+  my_grackle_data->grackle_data_file = "../../input/CloudyData_UVB=HM2012.h5"; // data file
+
+  // Create chemistry data storage object to store rates.
+  chemistry_data_storage my_grackle_rates;
 
   // Finally, initialize the chemistry object.
-  if (initialize_chemistry_data(&my_units) == 0) {
+  if (local_initialize_chemistry_data(my_grackle_data, &my_grackle_rates, &my_units) == 0) {
     fprintf(stderr, "Error in initialize_chemistry_data.\n");
     return EXIT_FAILURE;
   }
@@ -137,10 +138,10 @@ int main(int argc, char *argv[])
 
   for (i = 0;i < field_size;i++) {
     my_fields.density[i] = 1.0;
-    my_fields.HI_density[i] = grackle_data->HydrogenFractionByMass * my_fields.density[i];
+    my_fields.HI_density[i] = my_grackle_data->HydrogenFractionByMass * my_fields.density[i];
     my_fields.HII_density[i] = tiny_number * my_fields.density[i];
     my_fields.HM_density[i] = tiny_number * my_fields.density[i];
-    my_fields.HeI_density[i] = (1.0 - grackle_data->HydrogenFractionByMass) *
+    my_fields.HeI_density[i] = (1.0 - my_grackle_data->HydrogenFractionByMass) *
       my_fields.density[i];
     my_fields.HeII_density[i] = tiny_number * my_fields.density[i];
     my_fields.HeIII_density[i] = tiny_number * my_fields.density[i];
@@ -151,7 +152,7 @@ int main(int argc, char *argv[])
     my_fields.HDI_density[i] = tiny_number * my_fields.density[i];
     my_fields.e_density[i] = tiny_number * my_fields.density[i];
     // solar metallicity
-    my_fields.metal_density[i] = grackle_data->SolarMetalFractionByMass *
+    my_fields.metal_density[i] = my_grackle_data->SolarMetalFractionByMass *
       my_fields.density[i];
 
     my_fields.x_velocity[i] = 0.0;
@@ -180,7 +181,7 @@ int main(int argc, char *argv[])
   // some timestep
   double dt = 3.15e7 * 1e6 / my_units.time_units;
 
-  if (solve_chemistry(&my_units, &my_fields, dt) == 0) {
+  if (local_solve_chemistry(my_grackle_data, &my_grackle_rates, &my_units, &my_fields, dt) == 0) {
     fprintf(stderr, "Error in solve_chemistry.\n");
     return EXIT_FAILURE;
   }
@@ -188,8 +189,8 @@ int main(int argc, char *argv[])
   // Calculate cooling time.
   gr_float *cooling_time;
   cooling_time = malloc(field_size * sizeof(gr_float));
-  if (calculate_cooling_time(&my_units, &my_fields,
-                             cooling_time) == 0) {
+  if (local_calculate_cooling_time(my_grackle_data, &my_grackle_rates, &my_units, &my_fields,
+                                    cooling_time) == 0) {
     fprintf(stderr, "Error in calculate_cooling_time.\n");
     return EXIT_FAILURE;
   }
@@ -200,7 +201,7 @@ int main(int argc, char *argv[])
   // Calculate temperature.
   gr_float *temperature;
   temperature = malloc(field_size * sizeof(gr_float));
-  if (calculate_temperature(&my_units, &my_fields,
+  if (local_calculate_temperature(my_grackle_data, &my_grackle_rates, &my_units, &my_fields,
                             temperature) == 0) {
     fprintf(stderr, "Error in calculate_temperature.\n");
     return EXIT_FAILURE;
@@ -213,7 +214,7 @@ int main(int argc, char *argv[])
   double pressure_units = my_units.density_units *
     pow(my_units.velocity_units, 2);
   pressure = malloc(field_size * sizeof(gr_float));
-  if (calculate_pressure(&my_units, &my_fields,
+  if (local_calculate_pressure(my_grackle_data, &my_grackle_rates, &my_units, &my_fields,
                          pressure) == 0) {
     fprintf(stderr, "Error in calculate_pressure.\n");
     return EXIT_FAILURE;
@@ -224,7 +225,7 @@ int main(int argc, char *argv[])
   // Calculate gamma.
   gr_float *gamma;
   gamma = malloc(field_size * sizeof(gr_float));
-  if (calculate_gamma(&my_units, &my_fields,
+  if (local_calculate_gamma(my_grackle_data, &my_grackle_rates, &my_units, &my_fields,
                       gamma) == 0) {
     fprintf(stderr, "Error in calculate_gamma.\n");
     return EXIT_FAILURE;
@@ -235,7 +236,7 @@ int main(int argc, char *argv[])
   // Calculate dust temperature.
   gr_float *dust_temperature;
   dust_temperature = malloc(field_size * sizeof(gr_float));
-  if (calculate_dust_temperature(&my_units, &my_fields,
+  if (local_calculate_dust_temperature(my_grackle_data, &my_grackle_rates, &my_units, &my_fields,
                       dust_temperature) == 0) {
     fprintf(stderr, "Error in calculate_dust_temperature.\n");
     return EXIT_FAILURE;
