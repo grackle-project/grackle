@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
   my_units.a_value = 1. / (1. + initial_redshift) / my_units.a_units;
   set_velocity_units(&my_units);
 
-  // Second, create a chemistry object for parameters.  This needs to be a pointer.
+  // Second, create a chemistry object for parameters.
   chemistry_data *my_grackle_data;
   my_grackle_data = malloc(sizeof(chemistry_data));
   if (set_default_chemistry_parameters(my_grackle_data) == 0) {
