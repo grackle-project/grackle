@@ -702,11 +702,6 @@ cdef c_field_data setup_field_data(object fc, int[::1] buf,
     my_fields.grid_end = grid_end
 
     my_fields.density = get_field(fc, "density")
-    my_fields.internal_energy = get_field(fc, "energy")
-    if include_velocity:
-        my_fields.x_velocity = get_field(fc, "x-velocity")
-        my_fields.y_velocity = get_field(fc, "y-velocity")
-        my_fields.z_velocity = get_field(fc, "z-velocity")
     my_fields.HI_density = get_field(fc, "HI")
     my_fields.HII_density = get_field(fc, "HII")
     my_fields.HM_density = get_field(fc, "HM")
@@ -721,10 +716,22 @@ cdef c_field_data setup_field_data(object fc, int[::1] buf,
     my_fields.e_density = get_field(fc, "de")
     my_fields.metal_density = get_field(fc, "metal")
     my_fields.dust_density = get_field(fc, "dust")
-    my_fields.RT_heating_rate = get_field(fc, "RT_heating_rate")
+    my_fields.internal_energy = get_field(fc, "energy")
+    if include_velocity:
+        my_fields.x_velocity = get_field(fc, "x-velocity")
+        my_fields.y_velocity = get_field(fc, "y-velocity")
+        my_fields.z_velocity = get_field(fc, "z-velocity")
     my_fields.volumetric_heating_rate = get_field(fc, "volumetric_heating_rate")
     my_fields.specific_heating_rate = get_field(fc, "specific_heating_rate")
     my_fields.temperature_floor = get_field(fc, "temperature_floor")
+    my_fields.RT_heating_rate = get_field(fc, "RT_heating_rate")
+    my_fields.RT_HI_ionization_rate = get_field(fc, "RT_HI_ionization_rate")
+    my_fields.RT_HeI_ionization_rate = get_field(fc, "RT_HeI_ionization_rate")
+    my_fields.RT_HeII_ionization_rate = get_field(fc, "RT_HeII_ionization_rate")
+    my_fields.RT_H2_dissociation_rate = get_field(fc, "RT_H2_dissociation_rate")
+    my_fields.H2_self_shielding_length = get_field(fc, "H2_self_shielding_length")
+    my_fields.H2_custom_shielding_factor = get_field(fc, "H2_custom_shielding_factor")
+    my_fields.isrf_habing = get_field(fc, "isrf_habing")
     return my_fields
 
 def solve_chemistry(fc, my_dt):
