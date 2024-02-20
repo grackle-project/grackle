@@ -405,7 +405,7 @@ electron mass density in :c:data:`density_units` (see :ref:`density-note`).
    the end value in each dimension for the field data.  This can be used
    to ignore boundary cells in grid data.
 
-.. c:var:: gr_float* grid_dx
+.. c:var:: gr_float grid_dx
 
    This is the grid cell width in :c:data:`length_units`. This is currently
    used only in computing approximate H2 self-shielding when H2 is tracked
