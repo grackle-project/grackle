@@ -9,7 +9,6 @@ syntax: glob
 *.lo
 *~
 *.pyc
-*.egg
 *.exe
 *.so
 *.dylib
