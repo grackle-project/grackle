@@ -21,6 +21,8 @@ of calling all of grackle's functions.
 
     * **c_example.c** - C example
 
+    * **c_local_example.c** - C example using only :ref:`local_functions`
+
     * **cxx_example.C** - C++ example
 
     * **cxx_omp_example.C** - C++ example using OpenMP
