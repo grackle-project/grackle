@@ -47,25 +47,64 @@ commands:
     description: "Install grackle."
     parameters:
       omp:
-        type: string
+        type: enum
         default: 'false'
+        enum: ['true', 'false']
+      classic_build:
+        type: enum
+        default: 'true'
+        enum: ['true', 'false']
     steps:
       - run:
           name: "Install grackle."
           command: |
             source $HOME/venv/bin/activate
-            mkdir -p $HOME/local
-            ./configure
+
+            # First, try resetting things to a pristine condition (in the event
+            # that grackle was previously built
+            # -> this is important if we want to perform a cmake build after
+            #    a traditional build
+            rm -rf $HOME/local # installation location
+            ./configure # this is needed so we can call `make clean` (in the
+                        # event that we haven't called ./configure since the
+                        # last time we tried to do this sort of cleanup)
             cd src/clib
             make clean
-            make machine-linux-gnu
-            if [ << parameters.omp >> == 'true' ]; then
-              make omp-on
+            cd -
+            cd src/python
+            make clean
+            cd -
+            # remove the files produced by ./configure
+            rm -f src/clib/Make.config.override src/clib/Make.config.machine src/clib/DEPEND
+            # remove the files produced in a cmake-build
+            rm -rf build
+
+
+            # Next, we actually perform the installation
+            if [ << parameters.classic_build >> == 'true' ]; then
+              mkdir -p $HOME/local # installation location
+              ./configure
+              cd src/clib
+              make clean
+              make machine-linux-gnu
+              if [ << parameters.omp >> == 'true' ]; then
+                make omp-on
+              fi
+              make
+              make install
+              cd ../python
+              pip install -e .[dev]
+            else # this branch builds grackle with cmake
+
+              cmake -DGRACKLE_USE_DOUBLE=ON                   \
+                    -DBUILD_SHARED_LIBS=ON                    \
+                    -DGRACKLE_USE_OPENMP=<< parameters.omp >> \
+                    -Bbuild
+              cmake --build build
+
+              cd src/python
+              PYGRACKLE_CMAKE_BUILD_DIR=../../build pip install -e .[dev]
             fi
-            make
-            make install
-            cd ../python
-            pip install -e .[dev]
 
   install-docs-dependencies:
     description: "Install dependencies for docs build."
@@ -98,8 +137,13 @@ commands:
     description: "Run all tests."
     parameters:
       omp:
-        type: string
+        type: enum
         default: 'false'
+        enum: ['true', 'false']
+      classic_build:
+        type: enum
+        default: 'true'
+        enum: ['true', 'false']
     steps:
       - run:
           name: "Run all tests."
@@ -107,12 +151,16 @@ commands:
             source $BASH_ENV
             source $HOME/venv/bin/activate
             cd src
+            if [ << parameters.classic_build >> == 'false' ]; then
+              export PYTEST_CMAKE_BUILD_DIR="../build"
+            fi
             if [ << parameters.omp >> == 'true' ]; then
               export OMP_NUM_THREADS=4
               py.test python/tests/test_code_examples.py
               cd example
               make cxx_omp_example
               ./cxx_omp_example
+              make clean
             else
               py.test python/tests
             fi
@@ -157,15 +205,27 @@ jobs:
 
       - install-grackle:
           omp: 'false'
+          classic_build: 'true'
 
       - run-tests:
           omp: 'false'
+          classic_build: 'true'
 
       - install-grackle:
           omp: 'true'
+          classic_build: 'true'
 
       - run-tests:
           omp: 'true'
+          classic_build: 'true'
+
+      - install-grackle:
+          omp: 'false'
+          classic_build: 'false'
+
+      - run-tests:
+          omp: 'false'
+          classic_build: 'false'
 
   docs-build:
     parameters:
