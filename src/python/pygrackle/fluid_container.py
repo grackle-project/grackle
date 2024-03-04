@@ -96,7 +96,7 @@ class FluidContainer(dict):
         if my_chemistry.primordial_chemistry > 1:
             nH += self["HM"] + self["H2I"] + self["H2II"]
         if my_chemistry.primordial_chemistry > 2:
-            nH += self["HDI"] / 2.
+            nH += self["HDI"] / 3.
         self["nH"] = nH * my_chemistry.density_units / mass_hydrogen_cgs
 
     def calculate_mean_molecular_weight(self):
@@ -132,6 +132,8 @@ class FluidContainer(dict):
             
         if self.chemistry_data.primordial_chemistry > 1:
             nden += self["HM"]+(self["H2I"]+self["H2II"])/2.
+        if self.chemistry_data.primordial_chemistry > 2:
+            nden += (self["DI"]+self["DII"])/2.+self["HDI"]/3.
             
         self["mu"] = self["density"]/nden
         self["mean_molecular_weight"] = self["mu"]
