@@ -1,18 +1,108 @@
+import glob
+import os
+import shutil
+import subprocess
 import sys
 from setuptools import setup, find_packages
 from setuptools.command.build_ext import build_ext as _build_ext
 from setuptools.extension import Extension
+
+# helper functions:
+
+def _getenv_bool(key, default = None):
+    val = os.getenv(key, default = default)
+    if val is None:
+        return val
+    elif val not in ['0','1']:
+        raise RuntimeError(f"when set, {key!r} env variable must be 0 or 1")
+    return bool(int(val))
+
+def _find_solib_basename(dirpath, nominal_root = 'libgrackle',
+                         return_single = True):
+    # try to find the exact name of the library in the specified directory
+    _paths = set()
+    for cur_path in glob.iglob(f'{dirpath}/{nominal_root}*.so'):
+        if os.path.islink(cur_path) and return_single:
+            cur_path = os.path.abspath(os.path.realpath(cur_path))
+            if not cur_path.startswith(os.path.abspath(dirpath)):
+                raise ValueError("symlink links outside of {dirpath!r}")
+        _paths.add(os.path.abspath(cur_path))
+    if not return_single:
+        return [os.path.basename(p) for p in _paths]
+    elif len(_paths) == 0:
+        return None
+    elif len(_paths) == 1:
+        return os.path.basename(_paths.pop())
+    raise ValueError("Can't identify shared lib.")
+
+def _config_kw(package_locallib_copy, library_dir):
+    if package_locallib_copy:
+        basename = _find_solib_basename(library_dir)
+        assert basename is not None
+        # copy the shared library into the pygrackle directory
+        shutil.copy2(f'{library_dir}/{basename}', './pygrackle')
+
+        extension_kw = {'library_dirs' : [os.path.abspath('./pygrackle')],
+                        'libraries' : [ basename[3:].split('.so')[0] ] }
+        # library_dirs tells the linker where to search for lib during linking,
+        # next, we specify where to search at runtime (we use ORIGIN to
+        # indicate that the library should be right next to the module)
+        if sys.platform.startswith('darwin'): # untested
+            extension_kw['extra_link_args'] = '-Wl,rpath,$ORIGIN'
+        else:
+            extension_kw['runtime_library_dirs'] = ['$ORIGIN']
+
+        # this ensures that the shared library will be properly copied out of
+        # the source-directory into the installed python module
+        setup_pkgdata_kw = { 'package_data' : {"": [basename]} }
+    else:
+        # library_dirs used to find libgrackle while building the extension.
+        # The system installation is linked at runtime
+        extension_kw = {'library_dirs' : [library_dir],
+                        'libraries' : ["grackle"]}
+        setup_pkgdata_kw = {}
+
+    return extension_kw, setup_pkgdata_kw
+
+
+# load in the configuration option
+# - PYGRACKLE_PACKAGE_LOCALLIB:
+#   -> should be set to a value of 0 or 1
+#   -> in both cases, the copy of the libgrackle shared library from the
+#      build-tree is used when linking the entension module. However, the
+#      libgrakle shared library used at runtime differs.
+#   -> when this is set to `1`, a copy of that shared library is packaged with
+#      the python module. The python module is configured to always loads that
+#      packaged library at runtime
+#   -> when set to a value of 0, we use the historical behavior. The libgrackle
+#      shared library is NOT packaged with the python module. At runtime when
+#      extension module is loaded, we depend on the operating system's dynamic
+#      linker to search for the libgrackle shared library (e.g. first in paths
+#      given by LD_LIBRARY_PATH and then at other standard sytem locations)
+package_locallib_copy = _getenv_bool("PYGRACKLE_PACKAGE_LOCALLIB", False)
+
+library_dir="../clib/.libs/"
+
+if package_locallib_copy and (_find_solib_basename(library_dir) is None):
+    raise RuntimeError(f"no shared library found in {library_dir!r}")
+
+# for added safety, remove copies of the libgrackle shared library that were
+# previously copied into the python directory
+for so_basename in _find_solib_basename('./pygrackle', return_single = False):
+    os.remove(f'./pygrackle/{so_basename}')
+
+# handle different choices of package_locallib_copy
+extension_kw, setup_pkgdata_kw = _config_kw(package_locallib_copy, library_dir)
 
 cython_extensions = [
     Extension(
         "pygrackle.grackle_wrapper",
         ["pygrackle/grackle_wrapper.pyx"],
         include_dirs=["../clib"],
-        library_dirs=["../clib/.libs/"],
-        libraries=["grackle"],
         define_macros=[
             ("CONFIG_BFLOAT_8", True),
         ],
+        **extension_kw
     ),
 ]
 
@@ -97,5 +187,6 @@ setup(
     extras_require={
           'dev': dev_requirements,
     },
-    python_requires='>=3.7'
+    python_requires='>=3.7',
+    **setup_pkgdata_kw
 )
