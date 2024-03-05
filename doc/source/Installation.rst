@@ -275,3 +275,110 @@ wrong during linking.
 
 In order to verify that Grackle is fully functional, try :ref:`running the
 test suite <testing>`.
+
+Experimental CMake Build System
+-------------------------------
+
+Recent versions of Grackle include a secondary, experimental build-system depending on cmake (it's intended to supplement the primary/traditional build system in special cases).
+To use this system, version 3.16 or newer of ``cmake`` is required (**NOTE:** ``cmake`` is **NOT** required if you are using the primary build-system).
+
+.. warning::
+
+   This build-system may not work properly if you have previously tried to build grackle with the traditional build system.
+   While the cmake build system performs an "out-of-source" build, the traditional build system performs an "in-source" build.
+   Specifically, some of the auto-generated files (both headers and source files), produced by the in-source build, can cause issues for cmake builds.
+
+Purpose
++++++++
+
+The purpose of this build-system is to facillitate more seamless integration with downstream applications built with CMake.
+In particular, our primary focus is to allow developers to directly embed Grackle into their application.
+This is commonly achieved with git submodules.
+
+There are a few benefits to this approach:
+
+- This integration makes for a very streamlined installation experience for end-users.
+
+  - To install the downstream application, the end-user just has to:
+
+      1. clone the downstream application and initialize all git submodules
+
+      2. configure and build the downstream application.
+
+    The downstream application is able to automatically include the compilation of Grackle as part of its build process.
+
+  - The above process includes far fewer steps than the more traditional installation process.
+    In the more traditional procedure, the user must (i) clone Grackle and (ii) configure and build Grackle before they execute the steps in the above bullet.
+    They must also worry about configuring the installation of the downstream application to properly find Grackle.
+
+- This approach also simplifies scripts used for automated testing of the downstream.
+  Obviously, the streamlined installation process will simplify the scripts (especially if you want to try compiling with single vs. double precision).
+  There is also a more subtle benefit: the grackle datafiles have a predictable location.
+
+Two considerations that should be weighed before considering this approach:
+
+1. The downstream application's build system needs to include some extra logic to properly configure the Grackle build.
+   In reality, many/all of Grackle's dependencies are probably already dependencies of the downstream application (e.g. hdf5).
+   Additionally, this logic of say choosing Grackle's floating-point precision may be able to replace existing compatability checks.
+
+2. Developers of downstream application need to keep updating the `.gitmodules` file as newer grackle versions are released.
+   If the developers are already following best practices, this probably isn't much extra work.
+   Ideally, they should already be informing their users about grackle version compatability.
+   The `.gitmodules` file can be considered a centralized location where this compatability can be checked.
+
+.. COMMENT-BLOCK
+
+   **As an aside:** this embedding approach will implicitly encourage downstream developers to avoid the common pitfall in CI scripts of simply downloading the most recent release of a dependency.
+
+Finally, it's worth mentioning that a downstream project can be configured to use either this-embedded approach **OR** link against a separately compiled version of Grackle (using the more traditional build-system).
+This is probably advisable, given the experimental nature of this buildsystem (e.g. so if a user runs into problems with the CMake-build of Grackle on some more uncommon system, they can always fall back to the more traditional approach).
+We will discuss how to do it down below.
+
+.. note::
+
+   This remainder of this section assumes that the reader already has familiarity with ``cmake``.
+
+Configuring Grackle's Build
++++++++++++++++++++++++++++
+
+The following table lists Grackle-specific cmake options that can be used to configure the build
+
+.. list-table:: General Configuration
+   :widths: 10 30 5
+   :header-rows: 1
+
+   * - Name
+     - Description
+     - Default
+   * - ``GRACKLE_USE_DOUBLE``
+     - Turn off to build Grackle with single precision.
+     - ON
+   * - ``GRACKLE_USE_OPENMP``
+     - Turn on to build Grackle with OpenMP
+     - OFF
+
+You can use standard options to provide the build system with hints for finding the correct HDF5 library and configuring the correct openmp library.
+
+There are 2 noteworthy differences from the traditional build system:
+
+1. It's idiomatic for a given ``cmake`` to build either a shared library OR a static library (not both). This is controlled by the standard ``BUILD_SHARED_LIBS`` flag.
+
+2. (On at least some platforms) When ``cmake`` constructs a shared libraries with ``OPENMP`` support, the resulting library is "more fully" linked against the OPENMP runtime library.
+   Downstream applications don't need to know anything about whether such a Grackle library uses OpenMP during compilation (this contrasts with the more traditional approach, where you would explicitly need to link against openmp).
+   This has an interesting consequence that you could compile pygrackle with openmp support.
+
+Instructions for Integration
+++++++++++++++++++++++++++++
+
+*[ TO BE ADDED ]*
+
+.. COMMENT-BLOCK
+
+   I need to actually test this all out. The crux of this is add_subdirectory and then link against Grackle::Grackle
+   I'll definitely circle back and update this.
+
+.. note::
+
+   At this time, we do NOT support ordinary installation with the cmake build-system.
+   Setting this up right (especially while promoting compatibility with the embedding approach) is a little challenging.
+   The CMake provided machinery for this task is somewhat complex, because the task of supporting installation various kinds of installations across multiple platforms is itself complex.
