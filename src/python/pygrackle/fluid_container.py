@@ -51,8 +51,8 @@ _metal_fluid_names = {}
 _metal_fluid_names[0] = []
 _metal_fluid_names[1] = \
   ["CI", "CII", "CO", "CO2", "OI", "OH", "H2O", "O2",
-    "SiI", "SiOI", "SiO2I", "CH", "CH2", "COII",
-    "OII", "OHII", "H2OII", "H3OII", "O2II"]
+   "SiI", "SiOI", "SiO2I", "CH", "CH2", "COII",
+   "OII", "OHII", "H2OII", "H3OII", "O2II"]
 
 _rad_trans_names = ['RT_heating_rate', 'RT_HI_ionization_rate',
                     'RT_HeI_ionization_rate', 'RT_HeII_ionization_rate',
@@ -95,7 +95,8 @@ class FluidContainer(dict):
 
     @property
     def density_fields(self):
-        return _fluid_names[self.chemistry_data.primordial_chemistry]
+        return _fluid_names[self.chemistry_data.primordial_chemistry] + \
+          _metal_fluid_names[self.chemistry_data.metal_chemistry]
 
     def calculate_hydrogen_number_density(self):
         my_chemistry = self.chemistry_data
