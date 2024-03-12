@@ -13,7 +13,7 @@
 #
 #=======================================================================
 
-MACH_TEXT  = Use apt-get to install libhdf5-serial-dev gfortran
+MACH_TEXT  = Use apt-get to install libhdf5-dev gfortran
 MACH_VALID = 1
 MACH_FILE  = Make.mach.linux-gnu
 
