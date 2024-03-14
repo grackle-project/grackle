@@ -286,8 +286,7 @@ be set to their desired values by accessing ``grackle_data``.  See
 
    This structure holds all chemistry and cooling rate arrays.  All functions
    described here make use of an internally stored instance of this type.
-   The user will not normally encounter this data type, except when using the
-   :ref:`internal_functions`.
+   The user will not normally encounter this data type.
 
 .. code-block:: c++
 
