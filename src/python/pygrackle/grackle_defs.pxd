@@ -194,12 +194,6 @@ cdef extern from "grackle_types.h":
       const char* branch;
       const char* revision;
 
-# define a macro to omit legacy grackle function defined in grackle.h
-cdef extern from *:
-    """
-    #define OMIT_LEGACY_INTERNAL_GRACKLE_FUNC
-    """
-
 cdef extern from "grackle.h":
     int local_initialize_chemistry_parameters(c_chemistry_data *my_chemistry)
 

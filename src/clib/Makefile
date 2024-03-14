@@ -77,7 +77,7 @@ include $(MAKE_CONFIG_OVERRIDE)
 # functions defined inline in the main header file should be omitted
 # while compiling the library
 #-----------------------------------------------------------------------
-OTHER_DEFINES = -DOMIT_LEGACY_INTERNAL_GRACKLE_FUNC
+OTHER_DEFINES =
 
 #-----------------------------------------------------------------------
 # Make.config.assemble takes the settings in the Make.config.settings
