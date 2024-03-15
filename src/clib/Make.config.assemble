@@ -193,8 +193,7 @@
     LDOUTPUT_FLAGS = $(ASSEMBLE_LDOUTPUT_FLAGS)
 
     DEFINES = $(MACH_DEFINES) \
-              $(ASSEMBLE_IO_DEFINES) \
-              $(OTHER_DEFINES)
+              $(ASSEMBLE_IO_DEFINES)
 
     INCLUDES = $(MACH_INCLUDES) \
                $(MAKEFILE_INCLUDES)   -I.
