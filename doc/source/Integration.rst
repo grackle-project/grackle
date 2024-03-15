@@ -284,10 +284,13 @@ be set to their desired values by accessing ``grackle_data``.  See
 
 .. c:type:: chemistry_data_storage
 
-   This structure holds all chemistry and cooling rate arrays.  All functions
-   described here make use of an internally stored instance of this type.
-   The user will not normally encounter this data type, except when using the
-   :ref:`internal_functions`.
+   This structure holds all chemistry and cooling rate arrays. The user will
+   not normally need to work directly with its internals. The functions
+   described below (i.e., the :ref:`primary_functions`) make use of an
+   internally stored instance of this type and, hence, will not encounter it.
+   Users implementing the :ref:`local_functions` will have to store one of
+   these. See the :ref:`c_local_example.c <examples>` sample code for an
+   example of this implementation.
 
 .. code-block:: c++
 
