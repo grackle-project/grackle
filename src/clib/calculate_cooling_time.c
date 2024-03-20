@@ -74,8 +74,8 @@ extern void FORTRAN_NAME(cool_multi_time_g)(
  	long long *metDataSize, double *metCooling,
         double *metHeating, int *clnew,
         int *iVheat, int *iMheat, gr_float *Vheat, gr_float *Mheat,
-        int *iisrffield, gr_float* isrf_habing
-      , int *imchem, int *igrgr
+        int *iTfloor, gr_float *Tfloor_scalar, gr_float *Tfloor,
+        int *imchem, int *igrgr
       , gr_float *DM, gr_float *HDII, gr_float *HeHII
       , gr_float *CI, gr_float *CII, gr_float *CO, gr_float *CO2
       , gr_float *OI, gr_float *OH, gr_float *H2O, gr_float *O2
@@ -133,7 +133,7 @@ extern void FORTRAN_NAME(cool_multi_time_g)(
       , double *SN0_kpAC, double *SN0_kpSiO2D, double *SN0_kpMgO, double *SN0_kpFeS, double *SN0_kpAl2O3
       , double *SN0_kpreforg , double *SN0_kpvolorg , double *SN0_kpH2Oice
       , double *gasgr2a, double *gamma_isrf2a
-        );
+      , int *iisrffield, gr_float* isrf_habing);
 
 int local_calculate_cooling_time(chemistry_data *my_chemistry,
                                  chemistry_data_storage *my_rates,
@@ -339,8 +339,9 @@ int local_calculate_cooling_time(chemistry_data *my_chemistry,
        &my_chemistry->use_specific_heating_rate,
        my_fields->volumetric_heating_rate,
        my_fields->specific_heating_rate,
-       &my_chemistry->use_isrf_field,
-       my_fields->isrf_habing
+       &my_chemistry->use_temperature_floor,
+       &my_chemistry->temperature_floor_scalar,
+       my_fields->temperature_floor,
      ,&my_chemistry->metal_chemistry
      ,&my_chemistry->grain_growth
      , my_fields->DM_density
@@ -534,6 +535,9 @@ int local_calculate_cooling_time(chemistry_data *my_chemistry,
      , my_rates->SN0_kpH2Oice
      , my_rates->gas_grain2
      ,&my_rates->gamma_isrf2
+     , &my_chemistry->use_isrf_field
+     , my_fields->isrf_habing
+
     );
  
   return SUCCESS;

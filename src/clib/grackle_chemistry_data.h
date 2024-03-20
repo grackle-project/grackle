@@ -112,6 +112,14 @@ typedef struct
   int use_volumetric_heating_rate;
   int use_specific_heating_rate;
 
+  /* flag to use a field specifying a temperature floor */
+
+  int use_temperature_floor;
+
+  /* use to specify scalar temperature floor */
+
+  double temperature_floor_scalar;
+
   /* additional chemistry solver parameters */
   int three_body_rate;
   int cie_cooling;
@@ -214,6 +222,11 @@ typedef struct
 /*****************************
  *** Cooling table storage ***
  *****************************/
+
+// this is an implementation detail that may change in the future. Always rely
+// upon the grid_rank value stored in cloudy_data
+#define GRACKLE_CLOUDY_TABLE_MAX_DIMENSION 5
+
 typedef struct
 {
 
@@ -221,10 +234,10 @@ typedef struct
   long long grid_rank;
 
   // Dimension of dataset.
-  long long *grid_dimension;
+  long long grid_dimension[GRACKLE_CLOUDY_TABLE_MAX_DIMENSION];
 
   // Dataset parameter values.
-  double **grid_parameters;
+  double *grid_parameters[GRACKLE_CLOUDY_TABLE_MAX_DIMENSION];
 
   // Heating values
   double *heating_data;

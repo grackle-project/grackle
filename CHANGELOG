@@ -1,3 +1,130 @@
+== Version 3.2.1 ==
+_Release date - Jul 19, 2023_
+
+  * Bugfix: Add missing return value in local_free_chemistry_data
+	https://github.com/grackle-project/grackle/pull/161
+  * Bugfix: Add missing declaration of local_free_chemistry_data
+	https://github.com/grackle-project/grackle/pull/163
+
+== Version 3.2 ==
+_Release date - May 22, 2023_
+
+  * New Feature: Enhanced dust treatment
+	https://github.com/grackle-project/grackle/pull/43,
+	https://github.com/grackle-project/grackle/pull/94
+  * New Feature: Use Grackle in yt fields
+	https://github.com/grackle-project/grackle/pull/62
+  * New Feature: New high density cooling table
+	https://github.com/grackle-project/grackle/pull/71
+  * New Feature: Callable functions for all reaction rates
+	https://github.com/grackle-project/grackle/pull/87
+  * New Feature: New get_velocity_units and get_temperature_units
+	functions https://github.com/grackle-project/grackle/pull/97,
+	https://github.com/grackle-project/grackle/pull/96
+  * New Feature: Updated H2 self-shielding (reissue of PR #72)
+	https://github.com/grackle-project/grackle/pull/98
+  * New Feature: New dynamic API
+	https://github.com/grackle-project/grackle/pull/130,
+	https://github.com/grackle-project/grackle/pull/141
+  * Enhancement: Use gamma in mean molecular
+	weight. https://github.com/grackle-project/grackle/pull/65
+  * Enhancement: Add ability to query the Grackle Version
+	https://github.com/grackle-project/grackle/pull/109
+  * Enhancement: Embed compiled precision into grackle
+	header. https://github.com/grackle-project/grackle/pull/118
+  * Enhancement: Convert iteration limit to a runtime parameter
+	https://github.com/grackle-project/grackle/pull/124
+  * Enhancement: Pygrackle mu improvements
+	https://github.com/grackle-project/grackle/pull/54
+  * Enhancement: Change redshift interpolation to log(1+z)
+	https://github.com/grackle-project/grackle/pull/126
+  * Enhancement: Significant Pygrackle refactor
+	https://github.com/grackle-project/grackle/pull/88,
+	https://github.com/grackle-project/grackle/pull/140
+  * Enhancement: Add updated H2-H rate based on Lique (2015)
+	https://github.com/grackle-project/grackle/pull/61
+  * Enhancement: Add test of synchronization between ``chemistry_data``
+	and dynamic
+	API. https://github.com/grackle-project/grackle/pull/136
+  * Enhancement: Modified the ``chemistry_data`` struct so that the
+	``omp_nthreads`` is always a field
+	https://github.com/grackle-project/grackle/pull/148
+  * Enhancement: Add machine file for tigercpu at Princeton
+	https://github.com/grackle-project/grackle/pull/74
+  * Enhancement: MacOS Big Sur makefile
+	https://github.com/grackle-project/grackle/pull/84
+  * Enhancement: Updating makefiles for NASA's HECC machines
+	https://github.com/grackle-project/grackle/pull/86
+  * Enhancement: Updates for Stampede Builds
+	https://github.com/grackle-project/grackle/pull/58
+  * Bugfix: Mmw bugfix https://github.com/grackle-project/grackle/pull/79
+  * Bugfix: fix energy and pressure units in pygrackle
+	https://github.com/grackle-project/grackle/pull/49
+  * Bugfix: Update cool1d_multi_g.F
+	https://github.com/grackle-project/grackle/pull/59
+  * Bugfix: Fixing lifetime issue for grackle_data_path in the Cython
+	Grackle wrapper https://github.com/grackle-project/grackle/pull/80
+  * Bugfix: Fix velocity_units in freefall.py
+	https://github.com/grackle-project/grackle/pull/92
+  * Bugfix: fix internal velocity units
+	https://github.com/grackle-project/grackle/pull/97
+  * Bugfix: Fix line length issues
+	https://github.com/grackle-project/grackle/pull/102
+  * Bugfix: Avoid use of uninitialized variables when setting the timestep
+	in dense gas https://github.com/grackle-project/grackle/pull/103
+  * Bugfix: Modify property calculations to respect `grid_start` and
+	`grid_stop` https://github.com/grackle-project/grackle/pull/106
+  * Bugfix: provide sensible version info without git
+	https://github.com/grackle-project/grackle/pull/114
+  * Bugfix: Change get_grackle_version to explicitly accept zero
+	arguments. https://github.com/grackle-project/grackle/pull/115
+  * Bugfix: Changing _inner_range to `static inline` to avoid undefined
+	reference https://github.com/grackle-project/grackle/pull/117
+  * Bugfix: Remove duplicate precision definition during compile
+	https://github.com/grackle-project/grackle/pull/137
+  * Bugfix: Changed the type of ``chemistry_data``'s ``grackle_data_file``
+	field from ``char*`` to ``const char*``
+	https://github.com/grackle-project/grackle/pull/147
+  * Bugfix: Replaced ``size_t`` with ``unsigned int`` in the dynamic api
+	functions. https://github.com/grackle-project/grackle/pull/149
+  * Bugfix: Bugfix: making inline legacy internal grackle functions work
+	in C codes https://github.com/grackle-project/grackle/pull/157
+  * Documentation: Update comment
+	https://github.com/grackle-project/grackle/pull/52
+  * Documentation: Add instructions for how to initialize data
+	submodule. https://github.com/grackle-project/grackle/pull/82
+  * Documentation: Updated Documentation
+	https://github.com/grackle-project/grackle/pull/90
+  * Documentation: Expand units documentation and remove ceiling on metal
+	density https://github.com/grackle-project/grackle/pull/121
+  * Documentation: Document optimization issues in Fortran example with
+	gfortran 9.2.1 & 9.4.0
+	https://github.com/grackle-project/grackle/pull/125
+  * Documentation: Add warnings about compiling in single
+	precision. https://github.com/grackle-project/grackle/pull/120
+  * Documentation: Add documentation for CaseBRecombination
+	parameter. https://github.com/grackle-project/grackle/pull/122
+  * Documentation: Add clarification to docs on electron
+	density. https://github.com/grackle-project/grackle/pull/131
+  * Documentation: documentation fixes for later sphinx versions
+	https://github.com/grackle-project/grackle/pull/132
+  * Documentation: Need cstddef or size_t undefined
+	https://github.com/grackle-project/grackle/pull/144
+  * Documentation: Expand discussion in documentation of cooling
+	units. https://github.com/grackle-project/grackle/pull/154
+  * Documentation: Add warning about self-shielding cooling
+	tables. https://github.com/grackle-project/grackle/pull/155
+  * Infrastructure: Switch from csh to bash in
+	configure. https://github.com/grackle-project/grackle/pull/47
+  * Infrastructure: add data files as submodule
+	https://github.com/grackle-project/grackle/pull/75
+  * Infrastructure: Update pygrackle version to 1.0.0 and add
+	metadata. https://github.com/grackle-project/grackle/pull/151
+  * Deprecation: Functions taking all field arrays as arguments (starting
+	in "_") https://github.com/grackle-project/grackle/pull/44
+  * Depreaction: Remaining functions starting with "_"
+	https://github.com/grackle-project/grackle/pull/139
+
 == Version 3.1.1 ==
 _Release date - Jul 1, 2019_
 

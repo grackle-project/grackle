@@ -181,12 +181,14 @@ cdef extern from "grackle_types.h":
       gr_float *z_velocity;
       gr_float *volumetric_heating_rate;
       gr_float *specific_heating_rate;
+      gr_float *temperature_floor;
       gr_float *RT_heating_rate;
       gr_float *RT_HI_ionization_rate;
       gr_float *RT_HeI_ionization_rate;
       gr_float *RT_HeII_ionization_rate;
       gr_float *RT_H2_dissociation_rate;
       gr_float *H2_self_shielding_length;
+      gr_float *H2_custom_shielding_factor;
       gr_float *isrf_habing;
 
     ctypedef struct c_grackle_version "grackle_version":

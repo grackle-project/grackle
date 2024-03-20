@@ -7,7 +7,7 @@
 /
 / Distributed under the terms of the Enzo Public Licence.
 /
-/ The full license is in the file LICENSE, distributed with this 
+/ The full license is in the file LICENSE, distributed with this
 / software.
 ************************************************************************/
 
@@ -20,9 +20,25 @@
 #include "grackle_chemistry_data.h"
 
 #define SMALL_LOG_VALUE -99.0
-#define CLOUDY_MAX_DIMENSION 5
 
 extern int grackle_verbose;
+
+
+/**
+ * Initializes an empty #cloudy_data struct with zeros and NULLs.
+ */
+void initialize_empty_cloudy_data_struct(cloudy_data *my_cloudy)
+{
+  my_cloudy->grid_rank = 0LL;
+  for (long long i = 0; i < GRACKLE_CLOUDY_TABLE_MAX_DIMENSION; i++){
+    my_cloudy->grid_dimension[i] = 0LL;
+    my_cloudy->grid_parameters[i] = NULL;
+  }
+  my_cloudy->heating_data = NULL;
+  my_cloudy->cooling_data = NULL;
+  my_cloudy->mmw_data = NULL;
+  my_cloudy->data_size = 0LL;
+}
 
 // Initialize Cloudy cooling data
 int initialize_cloudy_data(chemistry_data *my_chemistry,
@@ -37,20 +53,10 @@ int initialize_cloudy_data(chemistry_data *my_chemistry,
   long long *temp_int_arr;
   char parameter_name[MAX_LINE_LENGTH];
 
-  // Initialize things needed even if cloudy cooling is not used.
+  // Initialize things (to the null-state) even if cloudy cooling is not used.
+  initialize_empty_cloudy_data_struct(my_cloudy);
 
-  my_cloudy->grid_parameters = malloc(CLOUDY_MAX_DIMENSION * sizeof(double));
-  my_cloudy->grid_dimension = malloc(CLOUDY_MAX_DIMENSION * sizeof(long long));
-  for (q = 0;q < CLOUDY_MAX_DIMENSION;q++) {
-    my_cloudy->grid_dimension[q] = 0;
-  }
-
-  // Zero arrays if cloudy cooling not used.
-
-  if (read_data == 0) {
-    my_cloudy->grid_rank = 0;
-    return SUCCESS;
-  }
+  if (read_data == 0) { return SUCCESS; }
 
   if (grackle_verbose) {
     fprintf(stdout,"Initializing Cloudy cooling: %s.\n", group_name);
@@ -81,12 +87,11 @@ int initialize_cloudy_data(chemistry_data *my_chemistry,
                     (POW(tbase1,3) * dbase1);
 
   // Read cooling data in from hdf5 file.
-
-  hid_t       file_id, dset_id, attr_id; 
+  hid_t       file_id, dset_id, attr_id;
   herr_t      status;
   herr_t      h5_error = -1;
 
-  file_id = H5Fopen(my_chemistry->grackle_data_file, 
+  file_id = H5Fopen(my_chemistry->grackle_data_file,
                     H5F_ACC_RDONLY, H5P_DEFAULT);
 
   if (H5Aexists(file_id, "old_style")) {
@@ -167,7 +172,7 @@ int initialize_cloudy_data(chemistry_data *my_chemistry,
 
     attr_id = H5Aopen_name(dset_id, parameter_name);
     if (attr_id == h5_error) {
-      fprintf(stderr,"Failed to open %s attribute in Cooling dataset.\n", 
+      fprintf(stderr,"Failed to open %s attribute in Cooling dataset.\n",
               parameter_name);
       return FAIL;
     }
@@ -306,9 +311,9 @@ int initialize_cloudy_data(chemistry_data *my_chemistry,
 
   status = H5Fclose (file_id);
 
-  if (my_cloudy->grid_rank > CLOUDY_MAX_DIMENSION) {
+  if (my_cloudy->grid_rank > GRACKLE_CLOUDY_TABLE_MAX_DIMENSION) {
     fprintf(stderr,"Error: rank of Cloudy cooling data must be less than or equal to %d.\n",
-	    CLOUDY_MAX_DIMENSION);
+	    GRACKLE_CLOUDY_TABLE_MAX_DIMENSION);
     return FAIL;
   }
 
@@ -322,8 +327,6 @@ int _free_cloudy_data(cloudy_data *my_cloudy, chemistry_data *my_chemistry, int 
     GRACKLE_FREE(my_cloudy->grid_parameters[i]);
   }
 
-  GRACKLE_FREE(my_cloudy->grid_parameters);
-  GRACKLE_FREE(my_cloudy->grid_dimension);
   GRACKLE_FREE(my_cloudy->cooling_data);
   if (my_chemistry->UVbackground == 1) {
     GRACKLE_FREE(my_cloudy->heating_data);

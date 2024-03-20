@@ -32,7 +32,8 @@ _nd_fields   = ["energy",
                 "x-velocity", "y-velocity", "z-velocity",
                 "temperature", "dust_temperature", "pressure",
                 "gamma", "cooling_time", "mu", "nH",
-                "mean_molecular_weight"]
+                "mean_molecular_weight", "isrf_habing",
+                "temperature_floor"]
 
 # set by the primordial_chemistry parameter
 _fluid_names = {}
@@ -59,7 +60,7 @@ _rad_trans_names = ['RT_heating_rate', 'RT_HI_ionization_rate',
                     'RT_H2_dissociation_rate']
 
 _extra_fields = {}
-_extra_fields[2] = ["H2_self_shielding_length"]
+_extra_fields[2] = ["H2_self_shielding_length", "H2_custom_shielding_factor"]
 _extra_fields[3] = _extra_fields[2] + []
 
 class FluidContainer(dict):

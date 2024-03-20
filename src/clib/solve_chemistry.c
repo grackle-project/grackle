@@ -84,6 +84,7 @@ extern void FORTRAN_NAME(solve_rate_cool_g)(
  	long long *metDataSize, double *metCooling,
         double *metHeating, int *clnew,
         int *iVheat, int *iMheat, gr_float *Vheat, gr_float *Mheat,
+        int *iTfloor, gr_float *Tfloor_scalar, gr_float *Tfloor,
         int *imchem, int *igrgr
       , gr_float *DM, gr_float *HDII, gr_float *HeHII
       , gr_float *CI, gr_float *CII, gr_float *CO, gr_float *CO2
@@ -438,6 +439,9 @@ int local_solve_chemistry(chemistry_data *my_chemistry,
     &my_chemistry->use_specific_heating_rate,
     my_fields->volumetric_heating_rate,
     my_fields->specific_heating_rate,
+    &my_chemistry->use_temperature_floor,
+    &my_chemistry->temperature_floor_scalar,
+    my_fields->temperature_floor,
    &my_chemistry->metal_chemistry
   ,&my_chemistry->grain_growth
   , my_fields->DM_density

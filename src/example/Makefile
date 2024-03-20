@@ -133,7 +133,7 @@ cxx_grid_example: $(MODULES) cxx_grid_example.o
          fi)
 
 #-----------------------------------------------------------------------
-# PURE C EXAMPLE
+# PURE C EXAMPLE USING GLOBAL STRUCTS
 #-----------------------------------------------------------------------
 
 c_example: $(MODULES) c_example.o
@@ -144,6 +144,24 @@ c_example: $(MODULES) c_example.o
              echo "Success!"; \
          else \
              echo "$(LD) $(LDFLAGS) -o c_example c_example.o $(LIBS) $(GRACKLE_LIB)" >> temp1; \
+             cat temp1 $(OUTPUT) > temp2; \
+             rm -f temp1; \
+             mv -f temp2 $(OUTPUT); \
+             echo "Failed! See $(OUTPUT) for error messages"; \
+         fi)
+
+#-----------------------------------------------------------------------
+# PURE C EXAMPLE USING LOCAL STRUCTS
+#-----------------------------------------------------------------------
+
+c_local_example: $(MODULES) c_local_example.o
+	@rm -f $@
+	@echo "Linking"
+	-@$(LD) $(LDFLAGS) -o c_local_example c_local_example.o $(LIBS) $(GRACKLE_LIB) >& $(OUTPUT)
+	@(if [ -e $@ ]; then \
+             echo "Success!"; \
+         else \
+             echo "$(LD) $(LDFLAGS) -o c_local_example c_local_example.o $(LIBS) $(GRACKLE_LIB)" >> temp1; \
              cat temp1 $(OUTPUT) > temp2; \
              rm -f temp1; \
              mv -f temp2 $(OUTPUT); \

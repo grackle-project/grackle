@@ -7,7 +7,7 @@
 /
 / Distributed under the terms of the Enzo Public Licence.
 /
-/ The full license is in the file LICENSE, distributed with this 
+/ The full license is in the file LICENSE, distributed with this
 / software.
 ************************************************************************/
 
@@ -49,8 +49,12 @@ int initialize_cloudy_data(chemistry_data *my_chemistry,
 int initialize_UVbackground_data(chemistry_data *my_chemistry,
                                  chemistry_data_storage *my_rates);
 
-int initialize_rates(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, code_units *my_units, 
+int local_free_chemistry_data(chemistry_data *my_chemistry, chemistry_data_storage *my_rates);
+
+int initialize_rates(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, code_units *my_units,
                 double co_length_units, double co_density_units);
+
+void initialize_empty_UVBtable_struct(UVBtable *table);
 
 static void show_version(FILE *fp)
 {
@@ -62,10 +66,108 @@ static void show_version(FILE *fp)
   fprintf (fp, "\n");
 }
 
+/**
+ * Initializes an empty #chemistry_data_storage struct with zeros and NULLs.
+ */
+void initialize_empty_chemistry_data_storage_struct(chemistry_data_storage *my_rates)
+{
+  my_rates->k1 = NULL;
+  my_rates->k2 = NULL;
+  my_rates->k3 = NULL;
+  my_rates->k4 = NULL;
+  my_rates->k5 = NULL;
+  my_rates->k6 = NULL;
+  my_rates->k7 = NULL;
+  my_rates->k8 = NULL;
+  my_rates->k9 = NULL;
+  my_rates->k10 = NULL;
+  my_rates->k11 = NULL;
+  my_rates->k12 = NULL;
+  my_rates->k13 = NULL;
+  my_rates->k14 = NULL;
+  my_rates->k15 = NULL;
+  my_rates->k16 = NULL;
+  my_rates->k17 = NULL;
+  my_rates->k18 = NULL;
+  my_rates->k19 = NULL;
+  my_rates->k20 = NULL;
+  my_rates->k21 = NULL;
+  my_rates->k22 = NULL;
+  my_rates->k23 = NULL;
+  my_rates->k13dd = NULL;
+  my_rates->k24 = 0.;
+  my_rates->k25 = 0.;
+  my_rates->k26 = 0.;
+  my_rates->k27 = 0.;
+  my_rates->k28 = 0.;
+  my_rates->k29 = 0.;
+  my_rates->k30 = 0.;
+  my_rates->k31 = 0.;
+  my_rates->k50 = NULL;
+  my_rates->k51 = NULL;
+  my_rates->k52 = NULL;
+  my_rates->k53 = NULL;
+  my_rates->k54 = NULL;
+  my_rates->k55 = NULL;
+  my_rates->k56 = NULL;
+  my_rates->k57 = NULL;
+  my_rates->k58 = NULL;
+  my_rates->h2dust = NULL;
+  my_rates->n_cr_n = NULL;
+  my_rates->n_cr_d1 = NULL;
+  my_rates->n_cr_d2 = NULL;
+  my_rates->ceHI = NULL;
+  my_rates->ceHeI = NULL;
+  my_rates->ceHeII = NULL;
+  my_rates->ciHI = NULL;
+  my_rates->ciHeI = NULL;
+  my_rates->ciHeIS = NULL;
+  my_rates->ciHeII = NULL;
+  my_rates->reHII = NULL;
+  my_rates->reHeII1 = NULL;
+  my_rates->reHeII2 = NULL;
+  my_rates->reHeIII = NULL;
+  my_rates->brem = NULL;
+  my_rates->comp = 0.;
+  my_rates->comp_xray = 0.;
+  my_rates->temp_xray = 0.;
+  my_rates->piHI = 0.;
+  my_rates->piHeI = 0.;
+  my_rates->piHeII = 0.;
+  my_rates->crsHI = 0.;
+  my_rates->crsHeI = 0.;
+  my_rates->crsHeII = 0.;
+  my_rates->hyd01k = NULL;
+  my_rates->h2k01 = NULL;
+  my_rates->vibh = NULL;
+  my_rates->roth = NULL;
+  my_rates->rotl = NULL;
+  my_rates->GP99LowDensityLimit = NULL;
+  my_rates->GP99HighDensityLimit = NULL;
+  my_rates->GAHI = NULL;
+  my_rates->GAH2 = NULL;
+  my_rates->GAHe = NULL;
+  my_rates->GAHp = NULL;
+  my_rates->GAel = NULL;
+  my_rates->H2LTE = NULL;
+  my_rates->HDlte = NULL;
+  my_rates->HDlow = NULL;
+  my_rates->cieco = NULL;
+  my_rates->gammah = 0.;
+  my_rates->regr = NULL;
+  my_rates->gamma_isrf = 0.;
+  my_rates->gas_grain = NULL;
+  my_rates->gas_grain2 = NULL;
+  my_rates->cloudy_data_new = -1;
+}
+
 int local_initialize_chemistry_data(chemistry_data *my_chemistry,
                                     chemistry_data_storage *my_rates,
                                     code_units *my_units)
 {
+
+  /* Better safe than sorry: Initialize everything to NULL/0 */
+  initialize_empty_chemistry_data_storage_struct(my_rates);
 
   if (grackle_verbose) {
     show_version(stdout);
@@ -136,7 +238,7 @@ int local_initialize_chemistry_data(chemistry_data *my_chemistry,
 # endif
 
   /* Only allow a units to be one with proper coordinates. */
-  if (my_units->comoving_coordinates == FALSE && 
+  if (my_units->comoving_coordinates == FALSE &&
       my_units->a_units != 1.0) {
     fprintf(stderr, "ERROR: a_units must be 1.0 if comoving_coordinates is 0.\n");
     return FAIL;
@@ -149,12 +251,6 @@ int local_initialize_chemistry_data(chemistry_data *my_chemistry,
        of 0.76 will result in negative electron densities at low
        temperature. Below, we set X = 1 / (1 + m_He * n_He / n_H). */
     my_chemistry->HydrogenFractionByMass = 1. / (1. + 0.1 * 3.971);
-  }
-
-  if (my_chemistry->h2_on_dust > 0 || my_chemistry->dust_chemistry > 0 || my_chemistry->dust_recombination_cooling > 0) {
-    my_rates->gas_grain = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->regr      = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->gas_grain2 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
   }
 
   double co_length_units, co_density_units;
@@ -206,23 +302,7 @@ int local_initialize_chemistry_data(chemistry_data *my_chemistry,
   }
 
   /* Initialize UV Background data. */
-  my_rates->UVbackground_table.Nz     = 0;
-  my_rates->UVbackground_table.z      = NULL;
-  my_rates->UVbackground_table.k24    = NULL;
-  my_rates->UVbackground_table.k25    = NULL;
-  my_rates->UVbackground_table.k26    = NULL;
-  my_rates->UVbackground_table.k27    = NULL;
-  my_rates->UVbackground_table.k28    = NULL;
-  my_rates->UVbackground_table.k29    = NULL;
-  my_rates->UVbackground_table.k30    = NULL;
-  my_rates->UVbackground_table.k31    = NULL;
-  my_rates->UVbackground_table.piHI   = NULL;
-  my_rates->UVbackground_table.piHeII = NULL;
-  my_rates->UVbackground_table.piHeI  = NULL;
-  my_rates->UVbackground_table.crsHI  = NULL;
-  my_rates->UVbackground_table.crsHeII = NULL;
-  my_rates->UVbackground_table.crsHeI = NULL;
-
+  initialize_empty_UVBtable_struct(&(my_rates->UVbackground_table));
   if (initialize_UVbackground_data(my_chemistry, my_rates) == FAIL) {
     fprintf(stderr, "Error in initialize_UVbackground_data.\n");
     return FAIL;
@@ -392,7 +472,7 @@ int local_free_chemistry_data(chemistry_data *my_chemistry,
 
   _free_cloudy_data(&my_rates->cloudy_primordial, my_chemistry, /* primordial */ 1);
   _free_cloudy_data(&my_rates->cloudy_metal, my_chemistry, /* primordial */ 0);
-  
+
   GRACKLE_FREE(my_rates->UVbackground_table.z);
   GRACKLE_FREE(my_rates->UVbackground_table.k24);
   GRACKLE_FREE(my_rates->UVbackground_table.k25);
@@ -410,10 +490,11 @@ int local_free_chemistry_data(chemistry_data *my_chemistry,
   GRACKLE_FREE(my_rates->UVbackground_table.piHeII);
   GRACKLE_FREE(my_rates->UVbackground_table.piHeI);
 
-  if (my_chemistry->self_shielding_method > 0){    
+  if (my_chemistry->self_shielding_method > 0){
     GRACKLE_FREE(my_rates->UVbackground_table.crsHI);
     GRACKLE_FREE(my_rates->UVbackground_table.crsHeII);
     GRACKLE_FREE(my_rates->UVbackground_table.crsHeI);
   }
 
+  return SUCCESS;
 }

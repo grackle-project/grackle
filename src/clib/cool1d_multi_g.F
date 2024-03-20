@@ -42,6 +42,7 @@
      &                metPar1, metPar2, metPar3, metPar4, metPar5,
      &                metDataSize, metCooling, metHeating, clnew,
      &                iVheat, iMheat, Vheat, Mheat,
+     &                iTfloor, Tfloor_scalar, Tfloor,
      &                iisrffield, isrf_habing,
      &                itmask
      &              , imchem, igrgr
@@ -140,13 +141,13 @@
      &        iexpand, ih2co, ipiht, ispecies, imcool,
      &        idust, idustall, idustfield, idustrec,
      &        imetal, igammah, ih2optical, iciecool, clnew,
-     &        iVheat, iMheat, iradtrans, iradshield,
+     &        iVheat, iMheat, iTfloor, iradtrans, iradshield,
      &        iisrffield
      &       ,imchem, igrgr
 
       real*8  aye, temstart, temend, z_solar, fgr,
      &        utem, uxyz, uaye, urho, utim,
-     &        gamma, fh, clEleFra
+     &        gamma, fh, clEleFra, Tfloor_scalar
       R_PREC  d(in,jn,kn),    e(in,jn,kn),
      &        u(in,jn,kn),    v(in,jn,kn),     w(in,jn,kn),
      &        de(in,jn,kn),   HI(in,jn,kn),   HII(in,jn,kn),
@@ -154,7 +155,7 @@
      &        HM(in,jn,kn),  H2I(in,jn,kn), H2II(in,jn,kn),
      &        DI(in,jn,kn),  DII(in,jn,kn), HDI(in,jn,kn),
      &        metal(in,jn,kn), dust(in,jn,kn),
-     &        Vheat(in,jn,kn), Mheat(in,jn,kn),
+     &        Vheat(in,jn,kn), Mheat(in,jn,kn), Tfloor(in,jn,kn),
      &        photogamma(in,jn,kn), isrf_habing(in,jn,kn)
      &      , DM(in,jn,kn)   , HDII(in,jn,kn)   , HeHII(in,jn,kn)
      &      , CI(in,jn,kn)   , CII(in,jn,kn)    , CO(in,jn,kn)
@@ -546,6 +547,28 @@
             enddo
          endif
 
+      endif
+
+!     Skip if below the temperature floor
+
+      if (iTfloor .eq. 1) then
+         do i = is+1, ie+1
+            if ( itmask(i) ) then
+               if (tgas(i) .le. Tfloor_scalar) then
+                  edot(i) = tiny
+                  itmask(i) = .false.
+               endif
+            endif
+         enddo
+      else if (iTfloor .eq. 2) then
+         do i = is+1, ie+1
+            if ( itmask(i) ) then
+               if (tgas(i) .le. Tfloor(i,j,k)) then
+                  edot(i) = tiny
+                  itmask(i) = .false.
+               endif
+            endif
+         enddo
       endif
 
 !     Calculate metallicity and H number density

@@ -111,7 +111,7 @@ void logT_spacing_dust(double *logT_start_dust, double *d_logT_dust, chemistry_d
                                 / (my_chemistry->NumberOfDustTemperatureBins - 1);
 }
 
-//Define a fucntion which is able to add a scalar rate to the calculation.
+//Define a function which is able to add a scalar rate to the calculation.
 int add_scalar_reaction_rate(double *rate_ptr, scalar_rate_function my_function, double units,
                         chemistry_data *my_chemistry)
 {
@@ -154,7 +154,7 @@ int add_k13dd_reaction_rate(double **rate_ptr, double units, chemistry_data *my_
     *rate_ptr = malloc(14 * my_chemistry->NumberOfTemperatureBins * sizeof(double));
 
     //Create a temporary array to retrieve the 14 coefficients calculated by the k13dd function.
-    double *temp_array = malloc(14 * sizeof(double));
+    double temp_array[14];
 
     //Calculate temperature spacing.
     double T, logT, logT_start, d_logT;
@@ -172,8 +172,6 @@ int add_k13dd_reaction_rate(double **rate_ptr, double units, chemistry_data *my_
             (*rate_ptr)[i + (my_chemistry->NumberOfTemperatureBins * j)] = temp_array[j];
         }
     }
-    //Delete temporary array.
-    free(temp_array);
 
     return SUCCESS;
 }

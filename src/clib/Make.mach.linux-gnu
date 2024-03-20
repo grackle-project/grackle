@@ -8,12 +8,12 @@
 #
 # DATE:        2008-09-16
 #
-# This configuration assumes that build-essentials, gfortran, 
+# This configuration assumes that build-essentials, gfortran, xutils-dev
 # OpenMPI and HDF5 have been installed using apt-get.
 #
 #=======================================================================
 
-MACH_TEXT  = Use apt-get to install libhdf5-serial-dev gfortran
+MACH_TEXT  = Use apt-get to install libhdf5-dev gfortran xutils-dev
 MACH_VALID = 1
 MACH_FILE  = Make.mach.linux-gnu
 

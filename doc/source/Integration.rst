@@ -21,6 +21,8 @@ of calling all of grackle's functions.
 
     * **c_example.c** - C example
 
+    * **c_local_example.c** - C example using only :ref:`local_functions`
+
     * **cxx_example.C** - C++ example
 
     * **cxx_omp_example.C** - C++ example using OpenMP
@@ -282,10 +284,13 @@ be set to their desired values by accessing ``grackle_data``.  See
 
 .. c:type:: chemistry_data_storage
 
-   This structure holds all chemistry and cooling rate arrays.  All functions
-   described here make use of an internally stored instance of this type.
-   The user will not normally encounter this data type, except when using the
-   :ref:`internal_functions`.
+   This structure holds all chemistry and cooling rate arrays. The user will
+   not normally need to work directly with its internals. The functions
+   described below (i.e., the :ref:`primary_functions`) make use of an
+   internally stored instance of this type and, hence, will not encounter it.
+   Users implementing the :ref:`local_functions` will have to store one of
+   these. See the :ref:`c_local_example.c <examples>` sample code for an
+   example of this implementation.
 
 .. code-block:: c++
 
@@ -405,7 +410,7 @@ electron mass density in :c:data:`density_units` (see :ref:`density-note`).
    the end value in each dimension for the field data.  This can be used
    to ignore boundary cells in grid data.
 
-.. c:var:: gr_float* grid_dx
+.. c:var:: gr_float grid_dx
 
    This is the grid cell width in :c:data:`length_units`. This is currently
    used only in computing approximate H2 self-shielding when H2 is tracked
@@ -520,6 +525,14 @@ electron mass density in :c:data:`density_units` (see :ref:`density-note`).
    Pointer to values containing specific heating rates.  Rates
    should be in units of erg/s/g.  Used when
    :c:data:`use_specific_heating_rate` is set to 1.
+
+.. c:var:: gr_float* temperature_floor
+
+   Pointer to values containing a temperature floor for each element
+   in units of K. No chemistry or cooling calculations will be
+   performed on an element with a temperature at or below the
+   specified value. Used when :c:data:`use_temperature_floor` is
+   set to 2.
 
 .. c:var:: gr_float *RT_heating_rate
 
