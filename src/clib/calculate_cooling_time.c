@@ -341,7 +341,7 @@ int local_calculate_cooling_time(chemistry_data *my_chemistry,
        my_fields->specific_heating_rate,
        &my_chemistry->use_temperature_floor,
        &my_chemistry->temperature_floor_scalar,
-       my_fields->temperature_floor,
+       my_fields->temperature_floor
      ,&my_chemistry->metal_chemistry
      ,&my_chemistry->grain_growth
      , my_fields->DM_density
