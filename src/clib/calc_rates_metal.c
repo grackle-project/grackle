@@ -219,6 +219,9 @@ int calc_rates_metal(chemistry_data *my_chemistry,
       my_rates->LH2O_N   = calloc(3, sizeof(int));
       my_rates->alphap_N = calloc(2, sizeof(int)); // yes, this should be 2
 
+      int ifunc;
+      ifunc = calc_opacity_prim(my_chemistry, my_rates);
+
       if (ispecies == 0)
         return SUCCESS;
 
@@ -451,8 +454,6 @@ int calc_rates_metal(chemistry_data *my_chemistry,
         my_rates->kz54[i] = fmax(my_rates->kz54[i], tiny) / kunit;
       }
 
-      int ifunc;
-
       ifunc = calc_coolrate_H2 (my_chemistry, my_rates, coolunit);
       ifunc = calc_coolrate_HD (my_chemistry, my_rates, coolunit);
       ifunc = calc_coolrate_CI (my_chemistry, my_rates, coolunit);
@@ -461,7 +462,6 @@ int calc_rates_metal(chemistry_data *my_chemistry,
       ifunc = calc_coolrate_CO (my_chemistry, my_rates, coolunit);
       ifunc = calc_coolrate_OH (my_chemistry, my_rates, coolunit);
       ifunc = calc_coolrate_H2O(my_chemistry, my_rates, coolunit);
-      ifunc = calc_opacity_prim(my_chemistry, my_rates);
 
   return SUCCESS;
 }
