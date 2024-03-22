@@ -66,9 +66,9 @@ atomic_number = {
     'Ni': 28, 'Cu': 29, 'Zn': 30}
 
 solar_total_mass = sum(solar_abundance[a] * atomic_mass[a]
-                    for a in solar_abundance)
+                       for a in solar_abundance)
 solar_metal_mass = sum(solar_abundance[a] * atomic_mass[a]
-                    for a in solar_abundance if a not in ["H", "He"])
+                       for a in solar_abundance if a not in ["H", "He"])
 solar_mass_fraction = \
   {a: solar_abundance[a] * atomic_mass[a] / solar_total_mass
    for a in solar_abundance}
@@ -86,6 +86,7 @@ def get_mass_fraction(el, metallicity):
     fXY_1 = solar_mass_fraction.get(el, 0) / XY_1
     fXY_Z = (fXY_1 - fXY_0) * metallicity + fXY_0
     return fXY_Z * XY_Z
+
 
 if __name__=="__main__":
     current_redshift = 0.
