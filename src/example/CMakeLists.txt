@@ -1,0 +1,21 @@
+add_executable(c_example c_example.c)
+add_executable(c_local_example c_local_example.c)
+add_executable(cxx_example cxx_example.C)
+add_executable(cxx_grid_example cxx_grid_example.C)
+add_executable(cxx_omp_example cxx_omp_example.C)
+add_executable(fortran_example fortran_example.F)
+
+target_link_libraries(c_example grackle m hdf5)
+target_link_libraries(c_local_example grackle m hdf5)
+target_link_libraries(cxx_example grackle hdf5)
+target_link_libraries(cxx_grid_example grackle hdf5)
+target_link_libraries(cxx_omp_example grackle hdf5)
+target_link_libraries(fortran_example grackle hdf5)
+
+target_include_directories(c_example PRIVATE ${PROJECT_SOURCE_DIR}/src/clib)
+target_include_directories(c_local_example PRIVATE ${PROJECT_SOURCE_DIR}/src/clib)
+target_include_directories(cxx_example PRIVATE ${PROJECT_SOURCE_DIR}/src/clib)
+target_include_directories(cxx_grid_example PRIVATE ${PROJECT_SOURCE_DIR}/src/clib)
+target_include_directories(cxx_omp_example PRIVATE ${PROJECT_SOURCE_DIR}/src/clib)
+target_include_directories(fortran_example PRIVATE ${PROJECT_SOURCE_DIR}/src/clib)
+
