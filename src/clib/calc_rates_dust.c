@@ -168,6 +168,9 @@ int calc_rates_dust(chemistry_data *my_chemistry,
 //    d_logttt  = log(d_ttt);
 //    d_dlogtem = (log(dtemend) - log(dtemstart))/(double)(ndratec-1);
 
+      my_rates->gr_N    = calloc(2, sizeof(int));
+      my_rates->grain_N = calloc(2, sizeof(int));
+
       if (ispecies == 0)
         return SUCCESS;
 
@@ -289,7 +292,6 @@ int calc_rates_dust(chemistry_data *my_chemistry,
       dTd =     0.1000000;
      Nmom =             4;
 
-      my_rates->gr_N  = malloc(2 * sizeof(int));
       my_rates->gr_Td = malloc(NTd * Nmom * sizeof(double));
   
       my_rates->gr_Size = NTd * Nmom;
