@@ -148,7 +148,7 @@ verbose: VERBOSE = 1
 	@rm -f $@
 	@(if [ $(VERBOSE) -eq 0 ]; then \
 	  echo "Compiling $<" ; \
-	  $(LIBTOOL) --mode=compile --tag=FC $(FC) -c $(FFLAGS) $(DEFINES) $*.F >& $(OUTPUT) ; \
+	  $(LIBTOOL) --mode=compile --tag=FC $(FC) -c $(FFLAGS) $(DEFINES) $(BUILD_INCLUDES) $*.F >& $(OUTPUT) ; \
 	  if [ ! -e $@ ]; then \
              echo; \
 	     echo "Compiling $< failed!"; \
@@ -157,7 +157,7 @@ verbose: VERBOSE = 1
              exit 1; \
           fi ; \
 	else \
-	  $(LIBTOOL) --mode=compile --tag=FC $(FC) -c $(FFLAGS) $(DEFINES) $*.F; \
+	  $(LIBTOOL) --mode=compile --tag=FC $(FC) -c $(FFLAGS) $(DEFINES) $(BUILD_INCLUDES) $*.F; \
 	  if [ ! -e $@ ]; then \
 	     exit 1; \
 	  fi ; \
@@ -277,12 +277,16 @@ help:
 # INSTALLATION TARGET
 #-----------------------------------------------------------------------
 
+# we make a point to try to clean up any previously installed headers (this is
+# mostly done to avoid confusions if/when we change the name of or delete a
+# public header file
 install:
 	@echo "Installing grackle header files to $(INSTALL_INCLUDE_DIR)."
 	@(if [ ! -d $(INSTALL_INCLUDE_DIR) ]; then \
 		mkdir $(INSTALL_INCLUDE_DIR); \
 	fi)
-	@cp grackle.h grackle_macros.h grackle_float.h grackle_types.h grackle_chemistry_data.h grackle_rate_functions.h grackle.def grackle_fortran_types.def grackle_fortran_interface.def $(INSTALL_INCLUDE_DIR)
+	@rm -f $(INSTALL_INCLUDE_DIR)/grackle*.h $(INSTALL_INCLUDE_DIR)/grackle*.def
+	@cp ../../include/*.h ../../include/*.def grackle_float.h $(INSTALL_INCLUDE_DIR)
 	@(if [ ! -d $(INSTALL_LIB_DIR) ]; then \
 		mkdir $(INSTALL_LIB_DIR); \
 	fi)
