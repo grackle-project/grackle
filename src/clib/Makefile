@@ -36,7 +36,8 @@ OUTPUT      = out.compile
 VERBOSE     = 0
 GRACKLE_DIR = .
 DEFAULT_INSTALL_PREFIX = /usr/local
-BUILD_HELPER = $(GRACKLE_DIR)/../../build-helper.sh
+CONFIG_DIR = $(GRACKLE_DIR)/../../config
+QUERY_VERSION = $(CONFIG_DIR)/query-version.py
 
 #-----------------------------------------------------------------------
 # Make.config.settings is used for setting default values to all compile-time 
@@ -209,23 +210,32 @@ verbose: VERBOSE = 1
 autogen: config_type auto_general.c
 
 .PHONY: config_type
-config_type:
+config_type: grackle_float.h.in
 	@(if [ $(ASSEMBLE_PRECISION_NUMBER) -eq 4 ]; then \
-	   $(BUILD_HELPER) generate-header -precision 32 -out grackle_float.h; \
+	   $(CONFIG_DIR)/configure_file.py --clobber \
+	       --input grackle_float.h.in \
+	       --output grackle_float.h \
+	       GRACKLE_FLOAT_MACRO=GRACKLE_FLOAT_4; \
 	else \
-	   $(BUILD_HELPER) generate-header -precision 64 -out grackle_float.h; \
+	   $(CONFIG_DIR)/configure_file.py --clobber \
+	       --input grackle_float.h.in \
+	       --output grackle_float.h \
+	       GRACKLE_FLOAT_MACRO=GRACKLE_FLOAT_8; \
 	fi)
 
 # Force update of auto_general.c
 .PHONY: auto_general.c
-auto_general.c:
+auto_general.c: auto_general.c.in
 	-@$(MAKE) -s show-config  >& temp.show-config
 	-@$(MAKE) -s show-flags  >& temp.show-flags
-	@$(BUILD_HELPER) generate-funcs \
-		-version-file $(VERSION_FILE) \
-		-config-file temp.show-config \
-		-flag-file temp.show-flags \
-		-out auto_general.c
+	@$(CONFIG_DIR)/configure_file.py --clobber \
+	    --input auto_general.c.in \
+	    --output auto_general.c \
+	    --variable-use-file-contents SHOW_FLAGS_STR=./temp.show-flags \
+	    --variable-use-file-contents SHOW_CONFIG_STR=./temp.show-config \
+	    VERSION_NUM=$(LIB_RELEASE_VERSION) \
+            GIT_BRANCH=`$(QUERY_VERSION) git-branch` \
+            GIT_REVISION=`$(QUERY_VERSION) git-revision`
 
 #-----------------------------------------------------------------------
 # Generate dependency file
@@ -285,7 +295,7 @@ install:
 #-----------------------------------------------------------------------
 
 clean:
-	-@rm -f *.la .libs/* *.o *.lo DEPEND.bak *~ $(OUTPUT) grackle_float.h *.exe auto_show*.c DEPEND out.make.DEPEND
+	-@rm -f *.la .libs/* *.o *.lo DEPEND.bak *~ $(OUTPUT) grackle_float.h *.exe auto_*.c temp.show-* DEPEND out.make.DEPEND
 	-@touch DEPEND
 
 #-----------------------------------------------------------------------
