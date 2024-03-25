@@ -12,9 +12,7 @@
 #-----------------------------------------------------------------------
 
 OBJS_CONFIG_LIB = \
-        auto_show_config.lo \
-        auto_show_flags.lo \
-        auto_get_version.lo \
+        auto_general.lo \
         calculate_cooling_time.lo \
         calculate_dust_temperature.lo \
         calculate_gamma.lo \
