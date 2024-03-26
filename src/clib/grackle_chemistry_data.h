@@ -203,7 +203,6 @@ typedef struct
   int bremsstrahlung_cooling_rates; //Bremsstrahlung cooling
 
   /* flags for alternative rate calculations */
-  int use_palla_salpeter_stahler_1983; //Alternative k13dd calculation scheme
   int use_stancil_lepp_dalgarno_1998; //Alternative calculation scheme for k50-k56
   int use_omukai_gas_grain; //Alternative calculation scheme for gas_grain
   int use_uniform_grain_dist_gamma_isrf; //Alternative calculation scheme for gamma_isrf
