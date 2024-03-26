@@ -26,7 +26,8 @@ def check_convergence(fc1, fc2, fields=None, tol=0.01):
 
     if fields is None:
         fields = ["HI", "HII", "HM", "HeI", "HeII", "HeIII",
-                  "H2I", "H2II", "DI", "DII", "HDI", "de"]
+                  "H2I", "H2II", "DI", "DII", "HDI",
+                  "DM", "HDII", "HeHII", "de"]
     max_field = None
     max_val = 0.0
     for field in fields:
@@ -85,6 +86,10 @@ def setup_fluid_container(my_chemistry,
         fc["DI"][:] = 2.0 * d_to_h_ratio * fc["density"]
         fc["DII"][:] = tiny_number * fc["density"]
         fc["HDI"][:] = tiny_number * fc["density"]
+    if my_chemistry.primordial_chemistry > 3:
+        fc["DM"][:] = tiny_number * fc["density"]
+        fc["HDII"][:] = tiny_number * fc["density"]
+        fc["HeHII"][:] = tiny_number * fc["density"]
     fc["metal"][:] = metal_mass_fraction * fc["density"]
 
     fc.calculate_mean_molecular_weight()
@@ -106,7 +111,8 @@ def setup_fluid_container(my_chemistry,
                          ((my_time * my_chemistry.time_units / sec_per_Myr),
                           (dt * my_chemistry.time_units / sec_per_Myr)))
         for field in ["HI", "HII", "HM", "HeI", "HeII", "HeIII",
-                      "H2I", "H2II", "DI", "DII", "HDI", "de"]:
+                      "H2I", "H2II", "DI", "DII", "HDI",
+                      "DM", "HDII", "HeHII", "de"]:
             if field in fc:
                 fc_last[field] = np.copy(fc[field])
         fc.solve_chemistry(dt)
