@@ -169,7 +169,6 @@ int calc_rates_dust(chemistry_data *my_chemistry,
 //    d_dlogtem = (log(dtemend) - log(dtemstart))/(double)(ndratec-1);
 
       my_rates->gr_N    = calloc(2, sizeof(int));
-      my_rates->grain_N = calloc(2, sizeof(int));
 
       if (ispecies == 0)
         return SUCCESS;

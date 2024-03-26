@@ -97,9 +97,6 @@
      &              , alphap_N, alphap_Size
      &              , alphap_D, alphap_T, alphap_dD, alphap_dT
      &              , alphap_Data
-     &              , grain_N, grain_Size
-     &              , grain_D, grain_T, grain_dD, grain_dT
-     &              , Hgrain, Tgrain, Ograin, Lgrain
      &              , immulti, imabund, idspecies, itdmulti, idsub
      &              , metal_loc
      &              , metal_C13, metal_C20, metal_C25, metal_C30
@@ -358,11 +355,6 @@
        real*8  alphap_D(alphap_N(1)), alphap_T(alphap_N(2))
      &       , alphap_dD, alphap_dT
      &       , alphap_Data(alphap_Size)
-       integer grain_N(2), grain_Size
-       real*8  grain_D(grain_N(1)), grain_T(grain_N(2))
-     &       , grain_dD, grain_dT
-     &       , Hgrain(grain_Size), Tgrain(grain_Size)
-     &       , Ograin(grain_Size), Lgrain(grain_Size)
       integer immulti, imabund, idspecies, itdmulti, idsub
       integer SN0_N
       real*8  SN0_XC (SN0_N), SN0_XO(SN0_N), SN0_XMg(SN0_N)
@@ -886,9 +878,6 @@ C    &   , coolunit*dom/mh ! = vbase1**2 / tbase1
      &              , alphap_N, alphap_Size
      &              , alphap_D, alphap_T, alphap_dD, alphap_dT
      &              , alphap_Data
-     &              , grain_N, grain_Size
-     &              , grain_D, grain_T, grain_dD, grain_dT
-     &              , Tgrain, Ograin, Lgrain
      &              , immulti, imabund, idspecies, itdmulti, idsub
      &              , metal_loc
      &              , metal_C13, metal_C20, metal_C25, metal_C30
@@ -978,9 +967,6 @@ C    &   , coolunit*dom/mh ! = vbase1**2 / tbase1
      &              , kz40 , kz41 , kz42 , kz43 , kz44 
      &              , kz45 , kz46 , kz47 , kz48 , kz49 
      &              , kz50 , kz51 , kz52 , kz53 , kz54 
-     &              , grain_N, grain_Size
-     &              , grain_D, grain_T, grain_dD, grain_dT
-     &              , Hgrain
      &              , immulti, imabund, idspecies, itdmulti, idsub
      &              , metal_loc
      &              , metal_C13, metal_C20, metal_C25, metal_C30
@@ -1677,9 +1663,6 @@ c              allocate(dumvec(nsp))
      & , alphap_N, alphap_Size
      & , alphap_D, alphap_T, alphap_dD, alphap_dT
      & , alphap_Data
-     & , grain_N, grain_Size
-     & , grain_D, grain_T, grain_dD, grain_dT
-     & , Hgrain, Tgrain, Ograin, Lgrain
      & , immulti, imabund, idspecies, itdmulti, idsub
      & , metal_loc(i,j,k), metal_C13(i,j,k), metal_C20(i,j,k)
      & , metal_C25(i,j,k), metal_C30(i,j,k), metal_F13(i,j,k)
@@ -1814,9 +1797,6 @@ c              allocate(dumvec(nsp))
      & , alphap_N, alphap_Size
      & , alphap_D, alphap_T, alphap_dD, alphap_dT
      & , alphap_Data
-     & , grain_N, grain_Size
-     & , grain_D, grain_T, grain_dD, grain_dT
-     & , Hgrain, Tgrain, Ograin, Lgrain
      & , immulti, imabund, idspecies, itdmulti, idsub
      & , metal_loc(i,j,k), metal_C13(i,j,k), metal_C20(i,j,k)
      & , metal_C25(i,j,k), metal_C30(i,j,k), metal_F13(i,j,k)
@@ -2710,9 +2690,6 @@ C                 endif
      &              , kz40 , kz41 , kz42 , kz43 , kz44 
      &              , kz45 , kz46 , kz47 , kz48 , kz49 
      &              , kz50 , kz51 , kz52 , kz53 , kz54 
-     &              , grain_N, grain_Size
-     &              , grain_D, grain_T, grain_dD, grain_dT
-     &              , Hgrain
      &              , immulti, imabund, idspecies, itdmulti, idsub
      &              , metal_loc
      &              , metal_C13, metal_C20, metal_C25, metal_C30
@@ -2887,9 +2864,6 @@ C                 endif
       real*8 k13_CID, k13_DT
       real*8 k13ind
       real*8 logT(in), logrho(in)
-       integer grain_N(2), grain_Size
-       real*8  grain_D(grain_N(1)), grain_T(grain_N(2))
-     &       , grain_dD, grain_dT, Hgrain(grain_Size)
       integer immulti, imabund, idspecies, itdmulti, idsub
       integer SN0_N
       real*8  SN0_fSiM(SN0_N), SN0_fFeM(SN0_N), SN0_fMg2SiO4(SN0_N)

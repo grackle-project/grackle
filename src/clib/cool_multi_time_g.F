@@ -72,9 +72,6 @@
      &              , alphap_N, alphap_Size
      &              , alphap_D, alphap_T, alphap_dD, alphap_dT
      &              , alphap_Data
-     &              , grain_N, grain_Size
-     &              , grain_D, grain_T, grain_dD, grain_dT
-     &              , Tgrain, Ograin, Lgrain
      &              , immulti, imabund, idspecies, itdmulti, idsub
      &              , metal_loc
      &              , metal_C13, metal_C20, metal_C25, metal_C30
@@ -209,10 +206,6 @@
        real*8  alphap_D(alphap_N(1)), alphap_T(alphap_N(2))
      &       , alphap_dD, alphap_dT
      &       , alphap_Data(alphap_Size)
-       integer grain_N(2), grain_Size
-       real*8  grain_D(grain_N(1)), grain_T(grain_N(2))
-     &       , grain_dD, grain_dT, Tgrain(grain_Size)
-     &       , Ograin(grain_Size), Lgrain(grain_Size)
       integer immulti, imabund, idspecies, itdmulti, idsub
       integer SN0_N
       real*8  SN0_fSiM(SN0_N), SN0_fFeM(SN0_N), SN0_fMg2SiO4(SN0_N)
@@ -555,9 +548,6 @@
      &              , alphap_N, alphap_Size
      &              , alphap_D, alphap_T, alphap_dD, alphap_dT
      &              , alphap_Data
-     &              , grain_N, grain_Size
-     &              , grain_D, grain_T, grain_dD, grain_dT
-     &              , Tgrain, Ograin, Lgrain
      &              , immulti, imabund, idspecies, itdmulti, idsub
      &              , metal_loc
      &              , metal_C13, metal_C20, metal_C25, metal_C30

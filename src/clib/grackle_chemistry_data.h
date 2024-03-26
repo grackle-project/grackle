@@ -534,11 +534,6 @@ typedef struct
   double *alphap_D, *alphap_T, alphap_dD, alphap_dT;
   double *alphap_Data;
 
-  /* dust opacity */
-  int    *grain_N, grain_Size;
-  double *grain_D, *grain_T, grain_dD, grain_dT;
-  double *Hgrain, *Tgrain, *Ograin, *Lgrain;
-
   /* metal/dust abundance */
   int    *gr_N, gr_Size;
   double gr_dT, *gr_Td;

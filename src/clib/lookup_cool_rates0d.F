@@ -96,9 +96,6 @@
      &             , alphap_N, alphap_Size
      &             , alphap_D, alphap_T, alphap_dD, alphap_dT
      &             , alphap_Data
-     &             , grain_N, grain_Size
-     &             , grain_D, grain_T, grain_dD, grain_dT
-     &             , Hgrain, Tgrain, Ograin, Lgrain
      &             , immulti, imabund, idspecies, itdmulti, idsub
      &             , metal_loc
      &             , metal_C13, metal_C20, metal_C25, metal_C30
@@ -365,11 +362,6 @@ c -------------------------------------------------------------------
        real*8  alphap_D(alphap_N(1)), alphap_T(alphap_N(2))
      &       , alphap_dD, alphap_dT
      &       , alphap_Data(alphap_Size)
-       integer grain_N(2), grain_Size
-       real*8  grain_D(grain_N(1)), grain_T(grain_N(2))
-     &       , grain_dD, grain_dT
-     &       , Hgrain(grain_Size), Tgrain(grain_Size)
-     &       , Ograin(grain_Size), Lgrain(grain_Size)
       integer immulti, imabund, idspecies, itdmulti, idsub
       integer SN0_N
       real*8  SN0_fSiM(SN0_N), SN0_fFeM(SN0_N), SN0_fMg2SiO4(SN0_N)
@@ -591,9 +583,6 @@ c -------------------------------------------------------------------
      &              , alphap_N, alphap_Size
      &              , alphap_D, alphap_T, alphap_dD, alphap_dT
      &              , alphap_Data
-     &              , grain_N, grain_Size
-     &              , grain_D, grain_T, grain_dD, grain_dT
-     &              , Tgrain, Ograin, Lgrain
      &              , immulti, imabund, idspecies, itdmulti, idsub
      &              , metal_loc
      &              , metal_C13, metal_C20, metal_C25, metal_C30
@@ -684,9 +673,6 @@ c -------------------------------------------------------------------
      &              , kz40 , kz41 , kz42 , kz43 , kz44 
      &              , kz45 , kz46 , kz47 , kz48 , kz49 
      &              , kz50 , kz51 , kz52 , kz53 , kz54 
-     &              , grain_N, grain_Size
-     &              , grain_D, grain_T, grain_dD, grain_dT
-     &              , Hgrain
      &              , immulti, imabund, idspecies, itdmulti, idsub
      &              , metal_loc
      &              , metal_C13, metal_C20, metal_C25, metal_C30
