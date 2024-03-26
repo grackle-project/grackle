@@ -33,7 +33,7 @@
 #error "Both GRACKLE_FLOAT_4 and GRACKLE_FLOAT_8 are defined. Only one can be defined."
 #endif
 
-typedef struct grackle_field_data
+typedef struct
 {
 
   int grid_rank;
@@ -82,7 +82,7 @@ typedef struct grackle_field_data
 
 } grackle_field_data;
 
-typedef struct code_units
+typedef struct
 {
 
   int comoving_coordinates;
