@@ -50,7 +50,10 @@ set(C_SOURCES
   auto_show_config.c
   auto_show_flags.c
   auto_show_version.c)
-  
+
+set(C_WRAPPER_SOURCES
+  c_wrappers/wrap_interpolators_g.c)
+
 set(F_SOURCES
   calc_tdust_1d_g.F
   calc_tdust_3d_g.F
@@ -70,6 +73,6 @@ set(F_SOURCES
 
 set(C_INCLUDES_DIRECTORY ${PROJECT_SOURCE_DIR}/src/clib)
 
-add_library(grackle SHARED ${C_SOURCES} ${F_SOURCES})
+add_library(grackle STATIC ${C_SOURCES} ${C_WRAPPER_SOURCES} ${F_SOURCES})
 target_compile_definitions(grackle PUBLIC LINUX H5_USE_16_API OMIT_LEGACY_INTERNAL_GRACKLE_FUNC)
-target_include_directories(grackle PRIVATE ${C_INCLUDES})
+target_include_directories(grackle PRIVATE ${C_INCLUDES} ${C_INCLUDES_DIRECTORY})
