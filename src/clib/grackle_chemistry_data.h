@@ -17,7 +17,7 @@
 /**********************************
  *** Grackle runtime parameters ***
  **********************************/
-typedef struct chemistry_data
+typedef struct
 {
 
   /* grackle on/off flag
@@ -254,7 +254,7 @@ typedef struct
 /******************************************
  *** Chemistry and cooling data storage ***
  ******************************************/
-typedef struct chemistry_data_storage
+typedef struct
 {
 
   /**********************************
