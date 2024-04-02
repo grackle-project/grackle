@@ -18,6 +18,7 @@
 #include "grackle_types.h"
 #include "grackle_chemistry_data.h"
 #include "phys_constants.h"
+#include "utils.h"
 
 extern chemistry_data *grackle_data;
 extern chemistry_data_storage grackle_rates;
@@ -141,6 +142,12 @@ int local_calculate_cooling_time(chemistry_data *my_chemistry,
       my_units->a_value * my_units->a_units;
     co_density_units = my_units->density_units /
       POW(my_units->a_value * my_units->a_units, 3);
+  }
+
+  /* Error checking for H2 shielding approximation */
+  if (self_shielding_err_check(my_chemistry, my_fields,
+                               "local_calculate_temperature") == FAIL) {
+    return FAIL;
   }
 
   /* Calculate temperature units. */
