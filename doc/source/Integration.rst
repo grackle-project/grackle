@@ -415,7 +415,9 @@ electron mass density in :c:data:`density_units` (see :ref:`density-note`).
    This is the grid cell width in :c:data:`length_units`. This is currently
    used only in computing approximate H2 self-shielding when H2 is tracked
    (:c:data:`primordial_chemistry` >= 2) and :c:data:`H2_self_shielding` is
-   set to 1.
+   set to 1. If this can't be assigned a meaningful value (e.g. the field data
+   does not organized on a grid or the grid cells aren't perfect cubes), we
+   recommend assigning it a value of -1 (so that error-handling works properly)
 
 .. c:var:: gr_float* density
 
@@ -610,6 +612,9 @@ not intend to use.
   my_fields.grid_start = new int[3];
   my_fields.grid_end = new int[3];
   my_fields.grid_dx  = 1.0; // only matters if H2 self-shielding is used
+                            // we recommend assigning it a value of -1 if your
+                            // simulation doesn't have a meaningful value for
+                            // it (so that error-handling works properly)
   for (int i = 0;i < 3;i++) {
     my_fields.grid_dimension[i] = 1;
     my_fields.grid_start[i] = 0;

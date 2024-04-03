@@ -40,4 +40,5 @@ OBJS_CONFIG_LIB = \
         solve_rate_cool_g.lo \
         update_UVbackground_rates.lo \
         rate_functions.lo \
-        initialize_rates.lo
+        initialize_rates.lo \
+        utils.lo
