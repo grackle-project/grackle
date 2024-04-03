@@ -14,11 +14,7 @@
 import numpy as np
 
 from pygrackle.grackle_wrapper import \
-    calculate_cooling_time, \
-    calculate_gamma, \
-    calculate_pressure, \
-    calculate_temperature, \
-    calculate_dust_temperature, \
+    calculate_property, \
     solve_chemistry
 
 from pygrackle.utilities.misc import \
@@ -139,19 +135,19 @@ class FluidContainer(dict):
         self["mean_molecular_weight"] = self["mu"]
 
     def calculate_cooling_time(self):
-        calculate_cooling_time(self)
+        calculate_property(self, property_name = "cooling_time")
 
     def calculate_gamma(self):
-        calculate_gamma(self)
+        calculate_property(self, property_name = "gamma")
 
     def calculate_pressure(self):
-        calculate_pressure(self)
+        calculate_property(self, property_name = "pressure")
 
     def calculate_temperature(self):
-        calculate_temperature(self)
+        calculate_property(self, property_name = "temperature")
 
     def calculate_dust_temperature(self):
-        calculate_dust_temperature(self)
+        calculate_property(self, property_name = "dust_temperature")
 
     def solve_chemistry(self, dt):
         solve_chemistry(self, dt)
