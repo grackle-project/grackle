@@ -195,7 +195,7 @@
     DEFINES = $(MACH_DEFINES) \
               $(ASSEMBLE_IO_DEFINES)
 
-    BUILD_INCLUDES = -I$(GRACKLE_DIR)/../../include -I$(GRACKLE_DIR)
+    BUILD_INCLUDES = -I$(GRACKLE_DIR)/../include -I$(GRACKLE_DIR)
 
     INCLUDES = $(MACH_INCLUDES) \
                $(MAKEFILE_INCLUDES) \

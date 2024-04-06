@@ -2,7 +2,7 @@
 
 This directory contains all of Grackle's C and Fortran source code files. It also contains all private header files.
 
-The directory located at `../../include` (i.e. the `include` directory at the root of this repository) contains Grackle's public header files.
+The directory located at `../include` (i.e. the `include` directory at `src/include`) contains Grackle's public header files.
 
 We review the differences between these headers further down this page.
 
@@ -18,7 +18,7 @@ When including a public header file inside one of the source files contained by 
 
 Suppose we had a file called ``./my_source.c``. To include the ``grackle.h`` file:
 - you should write ``include "grackle.h"``
-- you should NOT write ``include "../../include/grackle.h"``
+- you should NOT write ``include "../include/grackle.h"``
 
 (we use the `-I` flag to tell the compiler where to search for the public headers)
 

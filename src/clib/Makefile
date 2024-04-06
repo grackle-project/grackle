@@ -286,7 +286,7 @@ install:
 		mkdir $(INSTALL_INCLUDE_DIR); \
 	fi)
 	@rm -f $(INSTALL_INCLUDE_DIR)/grackle*.h $(INSTALL_INCLUDE_DIR)/grackle*.def
-	@cp ../../include/*.h ../../include/*.def grackle_float.h $(INSTALL_INCLUDE_DIR)
+	@cp ../include/*.h ../include/*.def grackle_float.h $(INSTALL_INCLUDE_DIR)
 	@(if [ ! -d $(INSTALL_LIB_DIR) ]; then \
 		mkdir $(INSTALL_LIB_DIR); \
 	fi)
