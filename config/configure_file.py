@@ -9,9 +9,18 @@ import string
 import sys
 
 _MAX_VARNAME_SIZE = 256
+_VALID_VARNAME_STR = '\\w{{1,{}}}'.format(_MAX_VARNAME_SIZE)
+_PATTERN = re.compile(r'(@{}@)|(@[^\s@]*@?)'.format(_VALID_VARNAME_STR))
+_ERR_MSG_TEMPLATE = (
+    "{!r}, the string starting with occurence number {} of the '@' character "
+    "on line number {} doesn't specify a valid variable name. "
+    "A valid variable name is string enclosed by 2 '@' symbolds, where the "
+    "string and is composed of 1 to {} alphanumeric ASCII characters. An "
+    "alphanumeric character is an uppercase or lowercase letter (A-Z or a-z), "
+    "a digit (0-9) or an underscore (_)")
 
 def is_valid_varname(s, start = None, stop = None):
-    return re.fullmatch("\w+", s[slice(start, stop)]) is not None
+    return re.fullmatch(_VALID_VARNAME_STR, s[slice(start, stop)]) is not None
 
 def process_line(line_num, line, out_f, variable_map, used_variable_set):
     """
@@ -40,55 +49,27 @@ def process_line(line_num, line, out_f, variable_map, used_variable_set):
         formatted string describing the error message.
     """
 
-    length = len(line)
-    pos = 0
+    match_count, err_msg = 0, None
 
-    while pos < length:
-        # Step 1: Scan until @ symbol and copy all characters from `pos` up to
-        #         `leading` to out_f
-        leading = line.find('@', pos)
-        if leading == pos:
-            pass # do nothing - no characters to write
-        elif leading == -1:
-            # there aren’t any variable substitutions in line[pos:]
-            out_f.write(line[pos:])
-            break
-        else:
-            out_f.write(line[pos:leading])
+    def replace(matchobj):
+        nonlocal err_msg, match_count, used_variable_set, variable_map
+        if matchobj.lastindex == 1:
+            varname = matchobj[1][1:-1]
+            if varname in variable_map:
+                match_count += 1
+                used_variable_set.add(varname)
+                return variable_map[varname]
+            err_msg = ("the variable {} (specified by a string enclosed by a "
+                       "pair of '@' characters on line {}) doesn't have an "
+                       "associated value").format(varname, line_num)
+        elif err_msg is None:
+            err_msg = _ERR_MSG_TEMPLATE.format(
+                matchobj[0], 2*match_count+1, line_num, _MAX_VARNAME_SIZE)
+        return '-' # denotes bad case
 
-        # The remainder of this loop handles variable substitution
-
-        # Step 2: scan until trailing @ symbol
-        trailing = line.find('@', leading + 1,
-                             _MAX_VARNAME_SIZE + 2 + leading)
-        if trailing == -1:
-            return ("the '@' in column {} of line {} is isolated, the "
-                    "specified variable isn’t properly terminated, OR the "
-                    "variable name is too long").format(leading, line_num)
-        elif trailing == (leading+1):
-            return "\"@@\" appears at column {} of line {}".format(leading,
-                                                                   line_num)
-        elif not is_valid_varname(line, leading + 1, trailing):
-            return ("the string enclosed by the '@' characters, starting at "
-                    "column {} of line {} doesn’t specify an allowed variable "
-                    "name").format(leading, line_num)
-
-        # Step 3: write the variable value to the output file
-        varname = line[leading+1:trailing]
-        if varname not in variable_map:
-            return ("the variable {} (specified by a string enclosed by the "
-                    "'@' characters at column {} of line {}) doesn't have an "
-                    "associated value").format(varname, leading, line_num)
-        used_variable_set.add(varname)
-        out_f.write(variable_map[varname])
-
-        # Step 4: update pos:
-        pos = trailing+1
-
-    # after leaving the loop, write a \n
+    out_f.write(_PATTERN.sub(replace,line))
     out_f.write('\n')
-    return None
-
+    return err_msg
 
 def configure_file(lines, variable_map, out_fname):
     """
