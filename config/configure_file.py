@@ -21,35 +21,17 @@ _ERR_MSG_TEMPLATE = (
 
 def is_valid_varname(s, start = None, stop = None):
     return re.fullmatch(_VALID_VARNAME_STR, s[slice(start, stop)]) is not None
+    
 
-def process_line(line_num, line, out_f, variable_map, used_variable_set):
+def configure_file(lines, variable_map, out_fname):
     """
-    Copies the contents of `line` to `out_f` and perform any variable
-    substitutions
-
-    Parameters
-    ----------
-    line_num : int
-        Specifies the line number of the current line (used for formatting
-        error messages)
-    line : str
-        A string representing a line from the input file. This should NOT be
-        terminated by a '\n'
-    out_f
-        Represents the output file
-    variable_map : dict
-        A dict maping names of variables with the associated values
-    used_variable_set : set
-        A set updated by this function to record the names of all variables for
-        which substitutions have been performed.
-    Returns
-    -------
-    out
-        If the function is successful, this is `None`. Otherwise, this is a 
-        formatted string describing the error message.
+    Writes a new file to out_fname, line-by-line, while performing variable
+    substituions
     """
 
-    match_count, err_msg = 0, None
+    used_variable_set = set()
+    out_f = open(out_fname, 'w')
+    err_msg = None
 
     def replace(matchobj):
         nonlocal err_msg, match_count, used_variable_set, variable_map
@@ -67,27 +49,15 @@ def process_line(line_num, line, out_f, variable_map, used_variable_set):
                 matchobj[0], 2*match_count+1, line_num, _MAX_VARNAME_SIZE)
         return '-' # denotes bad case
 
-    out_f.write(_PATTERN.sub(replace,line))
-    out_f.write('\n')
-    return err_msg
-
-def configure_file(lines, variable_map, out_fname):
-    """
-    Writes a new file to out_fname, line-by-line, while performing variable
-    substituions
-    """
-
-    used_variable_set = set()
-    out_f = open(out_fname, 'w')
-
     for line_num, line in enumerate(lines):
         # make sure to drop any trailing '\n'
         assert line[-1] == '\n', "sanity check!"
         line = line[:-1]
-        rslt = process_line(line_num = line_num, line = line,
-                            out_f = out_f, variable_map = variable_map, 
-                            used_variable_set = used_variable_set)
-        if rslt is not None:
+        match_count = 0
+
+        out_f.write(_PATTERN.sub(replace,line))
+        out_f.write('\n')
+        if err_msg is not None:
             out_f.close()
             os.remove(out_fname)
             raise RuntimeError(rslt)
