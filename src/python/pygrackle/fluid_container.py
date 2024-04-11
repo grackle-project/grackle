@@ -23,7 +23,8 @@ from pygrackle.utilities.misc import \
 from pygrackle.utilities.physical_constants import \
     mass_hydrogen_cgs
 
-_base_fluids = ["density", "metal", "dust"]
+_base_fluids = ["density"]
+_more_base_fluids = ["metal", "dust"]
 _nd_fields   = ["energy",
                 "x-velocity", "y-velocity", "z-velocity",
                 "temperature", "dust_temperature", "pressure",
@@ -48,6 +49,25 @@ _extra_fields = {}
 _extra_fields[2] = ["H2_self_shielding_length", "H2_custom_shielding_factor"]
 _extra_fields[3] = _extra_fields[2] + []
 
+def _expected_density_fields(primordial_chemistry, metal_cooling,
+                             use_dust_density_field):
+    """
+    Returns the names of all density fields required by Grackle for a given
+    calculation
+    """
+    assert metal_cooling in [0,1]
+    assert use_dust_density_field in [0,1]
+    fields = _fluid_names[primordial_chemistry].copy()
+    if metal_cooling == 1:
+        fields.append("metal")
+    if use_dust_density_field == 1:
+        fields.append("dust")
+    return fields
+
+def _legacy_density_fields(primordial_chemistry):
+    # used in the FluidContainer class for backwards compatability
+    return _expected_density_fields(primordial_chemistry, 1, 1)
+
 class FluidContainer(dict):
     def __init__(self, chemistry_data, n_vals, dtype="float64",
                  itype="int64"):
@@ -55,9 +75,13 @@ class FluidContainer(dict):
         self.dtype = dtype
         self.chemistry_data = chemistry_data
         self.n_vals = n_vals
-        for fluid in _fluid_names[self.chemistry_data.primordial_chemistry] + \
-        _extra_fields.get(self.chemistry_data.primordial_chemistry, []) + \
-        _nd_fields:
+        # initialize the fields. We are a little "over-eager" about this (i.e.
+        # we initialize some fields that we don't currently need). But,
+        # changing that will break tests
+        prim_chem = self.chemistry_data.primordial_chemistry
+        fields = (_legacy_density_fields(prim_chem) + _nd_fields +
+                  _extra_fields.get(prim_chem, []))
+        for fluid in fields:
             self._setup_fluid(fluid)
         if self.chemistry_data.use_radiative_transfer:
             for fluid in _rad_trans_names:
@@ -80,7 +104,7 @@ class FluidContainer(dict):
 
     @property
     def density_fields(self):
-        return _fluid_names[self.chemistry_data.primordial_chemistry]
+        return _legacy_density_fields(self.chemistry_data.primordial_chemistry)
 
     def calculate_hydrogen_number_density(self):
         my_chemistry = self.chemistry_data
