@@ -46,7 +46,8 @@ set(C_SOURCES
   rate_functions.c
   set_default_chemistry_parameters.c
   solve_chemistry.c
-  update_UVbackground_rates.c)
+  update_UVbackground_rates.c
+  utils.c)
 
 set(C_WRAPPER_SOURCES
   c_wrappers/wrap_interpolators_g.c)
