@@ -46,13 +46,15 @@ set(C_SOURCES
   rate_functions.c
   set_default_chemistry_parameters.c
   solve_chemistry.c
-  update_UVbackground_rates.c
-  auto_show_config.c
-  auto_show_flags.c
-  auto_show_version.c)
+  update_UVbackground_rates.c)
 
 set(C_WRAPPER_SOURCES
   c_wrappers/wrap_interpolators_g.c)
+
+set(C_GENERATED_SOURCES
+  generated/auto_show_config.c
+  generated/auto_show_flags.c
+  generated/auto_show_version.c)
 
 set(F_SOURCES
   calc_tdust_1d_g.F
@@ -71,8 +73,8 @@ set(F_SOURCES
 #  ${PROJECT_SOURCE_DIR}/src/deps/auto_show_flags.c
 #  ${PROJECT_SOURCE_DIR}/src/deps/auto_show_version.c)
 
-set(C_INCLUDES_DIRECTORY ${PROJECT_SOURCE_DIR}/src/clib)
+set(C_INCLUDES_DIRECTORY ${PROJECT_SOURCE_DIR}/src/clib ${PROJECT_SOURCE_DIR}/src/clib/generated)
 
-add_library(grackle STATIC ${C_SOURCES} ${C_WRAPPER_SOURCES} ${F_SOURCES})
+add_library(grackle STATIC ${C_SOURCES} ${C_WRAPPER_SOURCES} ${C_GENERATED_SOURCES} ${F_SOURCES})
 target_compile_definitions(grackle PUBLIC LINUX H5_USE_16_API OMIT_LEGACY_INTERNAL_GRACKLE_FUNC)
 target_include_directories(grackle PRIVATE ${C_INCLUDES} ${C_INCLUDES_DIRECTORY})
