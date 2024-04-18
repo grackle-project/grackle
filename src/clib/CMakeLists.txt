@@ -5,13 +5,36 @@
 # ${CMAKE_CURRENT_SOURCE_DIR}/auto_general.c
 # -> this probably isn't necessary, but it certainly makes things less confusing
 
-set(build_helper_script "${CMAKE_CURRENT_SOURCE_DIR}/../../build-helper.sh")
+set(config_dir "${CMAKE_CURRENT_SOURCE_DIR}/../../config/")
 
-add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/grackle_float.h
-  COMMAND ${build_helper_script} generate-header
-          -precision "$<IF:$<BOOL:${GRACKLE_USE_DOUBLE}>,64,32>"
-          -out grackle_float.h
-  VERBATIM
+#ToDo: consider replacing the following function with calls to configure_file
+#      provided by cmake
+function(pyconfigure_file INPUT OUTPUT)
+  # the 1st argument specifies the input file
+  # the 2nd argument specifies the output file
+  # all remaining arguments are passed as command line arguments
+
+  add_custom_command(OUTPUT ${OUTPUT}
+    COMMAND "${config_dir}/configure_file.py" --clobber
+            --input ${INPUT} --output ${OUTPUT}
+            ${ARGN}
+    VERBATIM
+  )
+endfunction()
+
+function(query_version option OUTVAR)
+  execute_process(
+      COMMAND ${config_dir}/query-version.py ${option}
+      RESULT_VARIABLE RSLT OUTPUT_VARIABLE OUT
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
+  set(${OUTVAR} ${OUT} PARENT_SCOPE)
+endfunction()
+
+pyconfigure_file(
+  "${CMAKE_CURRENT_SOURCE_DIR}/grackle_float.h.in"
+  "${CMAKE_CURRENT_BINARY_DIR}/grackle_float.h"
+  "GRACKLE_FLOAT_MACRO=GRACKLE_FLOAT_$<IF:$<BOOL:${GRACKLE_USE_DOUBLE}>,8,4>"
 )
 
 # in the original build-system, we also included things like: linker path,
@@ -30,21 +53,25 @@ file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/temp.show-config" "
    BUILD_TYPE                          : ${CMAKE_BUILD_TYPE}
 ")
 
-add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/auto_general.c
-  COMMAND ${build_helper_script} generate-funcs
-          -version-file "${CMAKE_CURRENT_SOURCE_DIR}/../../VERSION"
-          -config-file temp.show-config -flag-file temp.show-flags
-          -out auto_general.c
-  DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/temp.show-config"
-          "${CMAKE_CURRENT_BINARY_DIR}/temp.show-flags"
-          "${CMAKE_CURRENT_SOURCE_DIR}/../../VERSION"
-  VERBATIM
+query_version(show-version CUR_VERSION)
+query_version(git-branch GIT_BRANCH)
+query_version(git-revision GIT_REVISION)
+
+pyconfigure_file(
+  "${CMAKE_CURRENT_SOURCE_DIR}/auto_general.c.in"
+  "${CMAKE_CURRENT_BINARY_DIR}/auto_general.c"
+  --variable-use-file-contents SHOW_FLAGS_STR=${CMAKE_CURRENT_BINARY_DIR}/temp.show-flags
+  --variable-use-file-contents SHOW_CONFIG_STR=${CMAKE_CURRENT_BINARY_DIR}/temp.show-config
+  VERSION_NUM=${CUR_VERSION}
+  GIT_BRANCH=${GIT_BRANCH}
+  GIT_REVISION=${GIT_REVISION}
 )
 
 # Get the list of source files
 # ============================
-# - This GLOB-based approach isn't recommended by the authors of CMake. Their
-#   recommendation is to explicitly list all files that must be installed.
+# - TODO: consider explicitly listing files rather than using this glob-based
+#   appraoch. This glob-based approach isn't recommended by the authors of
+#   CMake.
 # - Some disadvantages of this approach are mitigated by inclusion of the
 #   CONFIGURE_DEPENDS flag.
 file(GLOB concrete_c_src_list CONFIGURE_DEPENDS *.c)

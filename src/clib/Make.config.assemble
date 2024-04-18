@@ -193,8 +193,7 @@
     LDOUTPUT_FLAGS = $(ASSEMBLE_LDOUTPUT_FLAGS)
 
     DEFINES = $(MACH_DEFINES) \
-              $(ASSEMBLE_IO_DEFINES) \
-              $(OTHER_DEFINES)
+              $(ASSEMBLE_IO_DEFINES)
 
     INCLUDES = $(MACH_INCLUDES) \
                $(MAKEFILE_INCLUDES)   -I.
@@ -227,5 +226,4 @@
 # LIBRARY RELEASE VERSION
 #-----------------------------------------------------------------------
 
-VERSION_FILE = $(GRACKLE_DIR)/../../VERSION
-LIB_RELEASE_VERSION := $(shell tail -1 $(VERSION_FILE))
+LIB_RELEASE_VERSION := $(shell $(QUERY_VERSION) show-version)

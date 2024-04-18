@@ -85,7 +85,9 @@ suggest-clean:
 
 show-version:
 	@echo
-	@$(BUILD_HELPER) show-version -version-file $(VERSION_FILE)
+	@echo "The Grackle Version $(LIB_RELEASE_VERSION)"
+	@echo "Git Branch   `$(QUERY_VERSION) git-branch`"
+	@echo "Git Revision `$(QUERY_VERSION) git-revision`"
 
 #-----------------------------------------------------------------------
 

@@ -99,6 +99,8 @@ help:
 	@echo
 
 
+clean:
+	-@rm -f *.o *.mod *.f *.f90 *~ *.exe $(OUTPUT) cxx_example cxx_omp_example cxx_grid_example c_example c_local_example fortran_example
 
 #-----------------------------------------------------------------------
 # Include configuration targets

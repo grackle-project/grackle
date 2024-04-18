@@ -123,49 +123,6 @@ int local_calculate_gamma(chemistry_data *my_chemistry,
   return SUCCESS;
 }
 
-int _calculate_gamma(chemistry_data *my_chemistry,
-                     chemistry_data_storage *my_rates,
-                     code_units *my_units,
-                     int grid_rank, int *grid_dimension,
-                     int *grid_start, int *grid_end,
-                     gr_float *density, gr_float *internal_energy,
-                     gr_float *HI_density, gr_float *HII_density, gr_float *HM_density,
-                     gr_float *HeI_density, gr_float *HeII_density, gr_float *HeIII_density,
-                     gr_float *H2I_density, gr_float *H2II_density,
-                     gr_float *DI_density, gr_float *DII_density, gr_float *HDI_density,
-                     gr_float *e_density, gr_float *metal_density,
-                     gr_float *my_gamma)
-{
-
-  grackle_field_data my_fields;
-  my_fields.grid_rank                = grid_rank;
-  my_fields.grid_dimension           = grid_dimension;
-  my_fields.grid_start               = grid_start;
-  my_fields.grid_end                 = grid_end;
-  my_fields.density                  = density;
-  my_fields.internal_energy          = internal_energy;
-  my_fields.HI_density               = HI_density;
-  my_fields.HII_density              = HII_density;
-  my_fields.HM_density               = HM_density;
-  my_fields.HeI_density              = HeI_density;
-  my_fields.HeII_density             = HeII_density;
-  my_fields.HeIII_density            = HeIII_density;
-  my_fields.H2I_density              = H2I_density;
-  my_fields.H2II_density             = H2II_density;
-  my_fields.DI_density               = DI_density;
-  my_fields.DII_density              = DII_density;
-  my_fields.HDI_density              = HDI_density;
-  my_fields.e_density                = e_density;
-  my_fields.metal_density            = metal_density;
-
-  if (local_calculate_gamma(my_chemistry, my_rates, my_units,
-                       &my_fields, my_gamma) == FAIL) {
-    fprintf(stderr, "Error in local_calculate_gamma.\n");
-    return FAIL;
-  }
-  return SUCCESS;
-}
-
 int calculate_gamma(code_units *my_units,
                     grackle_field_data *my_fields,
                     gr_float *my_gamma)

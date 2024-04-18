@@ -700,6 +700,7 @@ cdef c_field_data setup_field_data(object fc, int[::1] buf,
     my_fields.grid_dimension = grid_dimension
     my_fields.grid_start = grid_start
     my_fields.grid_end = grid_end
+    my_fields.grid_dx = -1
 
     my_fields.density = get_field(fc, "density")
     my_fields.HI_density = get_field(fc, "HI")
