@@ -5,47 +5,47 @@
 # ${CMAKE_CURRENT_SOURCE_DIR}/auto_general.c
 # -> this probably isn't necessary, but it certainly makes things less confusing
 
-set(config_dir "${CMAKE_CURRENT_SOURCE_DIR}/../../config/")
+# first, declare recipe for generating grackle_float.h:
+if (GRACKLE_USE_DOUBLE)
+  set(GRACKLE_FLOAT_MACRO "GRACKLE_FLOAT_8")
+else()
+  set(GRACKLE_FLOAT_MACRO "GRACKLE_FLOAT_4")
+endif()
+configure_file(grackle_float.h.in grackle_float.h @ONLY)
 
-#ToDo: consider replacing the following function with calls to configure_file
-#      provided by cmake
-function(pyconfigure_file INPUT OUTPUT)
-  # the 1st argument specifies the input file
-  # the 2nd argument specifies the output file
-  # all remaining arguments are passed as command line arguments
+# next, declare recipe for generating auto_general.c:
 
-  add_custom_command(OUTPUT ${OUTPUT}
-    COMMAND "${config_dir}/configure_file.py" --clobber
-            --input ${INPUT} --output ${OUTPUT}
-            ${ARGN}
-    VERBATIM
-  )
-endfunction()
+# fetch necessary version information via query-version.py script
+# -> GIT_BRANCH and GIT_REVISION hold sensible vals when git isn't installed
+# -> VERSION_NUM may hold more information than Grackle_VERSION (e.g. like the
+#    "dev" suffix)
 
+set(_query_version "${CMAKE_CURRENT_SOURCE_DIR}/../../config/query-version.py")
 function(query_version option OUTVAR)
   execute_process(
-      COMMAND ${config_dir}/query-version.py ${option}
+      COMMAND ${_query_version} ${option}
       RESULT_VARIABLE RSLT OUTPUT_VARIABLE OUT
       OUTPUT_STRIP_TRAILING_WHITESPACE
   )
+  if(result)
+    message(FATAL_ERROR "Call to `${_query_version} ${option}` failed")
+  endif()
   set(${OUTVAR} ${OUT} PARENT_SCOPE)
 endfunction()
 
-pyconfigure_file(
-  "${CMAKE_CURRENT_SOURCE_DIR}/grackle_float.h.in"
-  "${CMAKE_CURRENT_BINARY_DIR}/grackle_float.h"
-  "GRACKLE_FLOAT_MACRO=GRACKLE_FLOAT_$<IF:$<BOOL:${GRACKLE_USE_DOUBLE}>,8,4>"
-)
+query_version(show-version VERSION_NUM)
+query_version(git-branch GIT_BRANCH)
+query_version(git-revision GIT_REVISION)
 
-# in the original build-system, we also included things like: linker path,
-# include args, linking flags, macro definitions, all other compiler flags...
-FILE(WRITE "${CMAKE_CURRENT_BINARY_DIR}/temp.show-flags" "
+# in the original build-system, the following string also included things like:
+# include-args, linking flags, macro definitions, all other compiler flags...
+string(REPLACE "\n" "\\n" SHOW_FLAGS_STR "
   CC = ${CMAKE_C_COMPILER}
   FC = ${CMAKE_Fortran_COMPILER}
   LD = ${CMAKE_LINKER}
 ")
 
-file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/temp.show-config" "
+string(REPLACE "\n" "\\n" SHOW_CONFIG_STR "
    Built with CMake
 
    GRACKLE_USE_DOUBLE                  : ${GRACKLE_USE_DOUBLE}
@@ -53,19 +53,7 @@ file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/temp.show-config" "
    BUILD_TYPE                          : ${CMAKE_BUILD_TYPE}
 ")
 
-query_version(show-version CUR_VERSION)
-query_version(git-branch GIT_BRANCH)
-query_version(git-revision GIT_REVISION)
-
-pyconfigure_file(
-  "${CMAKE_CURRENT_SOURCE_DIR}/auto_general.c.in"
-  "${CMAKE_CURRENT_BINARY_DIR}/auto_general.c"
-  --variable-use-file-contents SHOW_FLAGS_STR=${CMAKE_CURRENT_BINARY_DIR}/temp.show-flags
-  --variable-use-file-contents SHOW_CONFIG_STR=${CMAKE_CURRENT_BINARY_DIR}/temp.show-config
-  VERSION_NUM=${CUR_VERSION}
-  GIT_BRANCH=${GIT_BRANCH}
-  GIT_REVISION=${GIT_REVISION}
-)
+configure_file(auto_general.c.in auto_general.c @ONLY)
 
 # Get the list of source files
 # ============================
