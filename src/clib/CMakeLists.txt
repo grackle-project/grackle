@@ -162,14 +162,6 @@ target_include_directories(Grackle_Grackle
 # source-code file is written in Fortran
 set(is_FC "$<COMPILE_LANGUAGE:Fortran>")
 
-# the following is used to prevent the legacy internal functions from being
-# defined within the output library. Since these functions are all inline
-# functions defined in the headers, they will automatically be defined in
-# downstream libraries unless they also explicitly define this macro
-target_compile_definitions(Grackle_Grackle
-  PRIVATE "$<$<NOT:${is_FC}>:OMIT_LEGACY_INTERNAL_GRACKLE_FUNC>"
-)
-
 target_link_libraries(Grackle_Grackle
   PRIVATE GRACKLE_HDF5_C
           $<$<BOOL:${GRACKLE_USE_OPENMP}>:OpenMP::OpenMP_Fortran>
