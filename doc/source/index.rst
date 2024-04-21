@@ -44,6 +44,7 @@ Contents:
    Parameters.rst
    RateFunctions.rst
    Reference.rst
+   Versioning.rst
    Python.rst
    Conduct.rst
    Contributing.rst
