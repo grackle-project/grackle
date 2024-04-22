@@ -1,6 +1,6 @@
 #include "grackle_macros.h"
 
-// TODO: FORTRAN_NAME for unit tests
+// TODO: FORTRAN_NAME not needed for unit tests
 extern void FORTRAN_NAME(interpolate_1d_g)(double *input1,
                                            long long *gridDim,
                                            double *gridPar1, double *dgridPar1,
