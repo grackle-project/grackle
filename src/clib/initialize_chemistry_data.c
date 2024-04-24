@@ -154,6 +154,8 @@ int local_initialize_chemistry_data(chemistry_data *my_chemistry,
   initialize_empty_chemistry_data_storage_struct(my_rates);
 
   if (grackle_verbose) {
+    fprintf(stdout, "Grackle Version Info: "); // explicitly omit '\n' for
+                                               // nicer formatting
     grackle_version gversion = get_grackle_version();
     show_version_(stdout, &gversion);
     fprintf(stdout, "Initializing grackle data.\n");
@@ -292,17 +294,21 @@ int local_initialize_chemistry_data(chemistry_data *my_chemistry,
 
     FILE *fptr = fopen("GRACKLE_INFO", "w");
     fprintf(fptr, "%s\n", tstr);
+    fprintf(fptr, "Grackle Version Info: "); // explicitly omit '\n' for nicer
+                                             // formatting
     grackle_version gversion = get_grackle_version();
     show_version_(fptr, &gversion);
     fprintf(fptr, "Grackle build options:\n");
     auto_show_config(fptr);
     fprintf(fptr, "Grackle build flags:\n");
     auto_show_flags(fptr);
-    fprintf(fptr, "Grackle run-time parameters:\n");
+    fprintf(fptr, "Grackle run-time parameters: "); // explicitly omit '\n'
+                                                    // for nicer formatting
     show_parameters_(fptr, my_chemistry);
     fclose(fptr);
 
-    fprintf(stdout, "Grackle run-time parameters:\n");
+    fprintf(stdout, "Grackle run-time parameters: "); // explicitly omit '\n'
+                                                      // for nicer formatting
     show_parameters_(stdout, my_chemistry);
 
 #   ifdef _OPENMP

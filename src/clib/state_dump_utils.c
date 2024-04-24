@@ -15,21 +15,67 @@
 
 #include "grackle.h"
 
+struct json_obj_writer {
+  FILE* fp;
+  const char* member_spacing; // holds the whitespace between members
+  int num_separations;
+};
+
+static struct json_obj_writer json_create_writer_(FILE *fp){
+  fputc('{', fp); // intentionally omit '\n'
+  struct json_obj_writer out = {fp, "\n  ", 0};
+  return out;
+}
+
+void json_write_separation_(struct json_obj_writer* writer){
+  if (writer->num_separations > 0) fputc(',', writer->fp);
+  fprintf(writer->fp, "%s", writer->member_spacing);
+  writer->num_separations++;
+}
+
+void json_finish_(struct json_obj_writer* writer){
+  if (writer->num_separations == 0) {
+    fprintf(writer->fp, "}\n");
+  } else {
+    fprintf(writer->fp, "\n}\n");
+  }
+}
+
 // Define helpers for the show_parameters function
-// NOTE: it's okay that these functions all begin with an underscore since they
-//       each have internal linkage (i.e. they are each declared static)
-static void _show_field_INT(FILE *fp, const char* field, int val)
-{ fprintf(fp, "%-33s = %d\n", field, val); }
-static void _show_field_DOUBLE(FILE *fp, const char* field, double val)
-{ fprintf(fp, "%-33s = %g\n", field, val); }
-static void _show_field_STRING(FILE *fp, const char* field, const char* val)
-{ fprintf(fp, "%-33s = %s\n", field, val); }
+static void json_field_INT(struct json_obj_writer* writer, const char* field,
+                           int val)
+{
+  json_write_separation_(writer);
+  fprintf(writer->fp, "\"%s\" : %d", field, val);
+}
+static void json_field_DOUBLE(struct json_obj_writer* writer,
+                              const char* field, double val)
+{
+  json_write_separation_(writer);
+  fprintf(writer->fp, "\"%s\" : %.17g", field, val);
+}
+static void json_field_STRING(struct json_obj_writer* writer,
+                              const char* field, const char* val)
+{
+  json_write_separation_(writer);
+  if (val == NULL){
+    fprintf(writer->fp, "\"%s\" : null", field);
+  } else {
+    fprintf(writer->fp, "\"%s\" : \"%s\"", field, val);
+  }
+}
 
 void show_parameters_(FILE *fp, const chemistry_data *my_chemistry){
+  struct json_obj_writer writer = json_create_writer_(fp);
+
+  // write all of the fields
   #define ENTRY(FIELD, TYPE, DEFAULT_VAL) \
-    _show_field_ ## TYPE (fp, #FIELD, my_chemistry->FIELD);
+    json_field_ ## TYPE (&writer, #FIELD, my_chemistry->FIELD);
   #include "grackle_chemistry_data_fields.def"
   #undef ENTRY
+
+  // end the json object
+  json_finish_(&writer);
 }
 
 void show_version_(FILE *fp, const grackle_version* gversion)
