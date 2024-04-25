@@ -481,7 +481,7 @@ int grunstable_h5dump_state(const char* fname, long long dest_hid,
      {"grackle_field_data", my_fields, h5dump_field_data_}
     };
 
-  int num_entries = sizeof(entry_l);
+  int num_entries = (int)(sizeof(entry_l) / sizeof(struct state_dump_entry_));
   for (int i = 0; i < num_entries; i++) {
     if (entry_l[i].obj == NULL)  continue;
 
