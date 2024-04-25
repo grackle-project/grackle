@@ -322,10 +322,11 @@ static char* copy_f_contents_to_str_(FILE* fp) {
   if (length == -1L)  return NULL;
   fseek(fp, 0, SEEK_SET); // advance file-position to start of the file
 
-  const long str_len_with_nul = length + 1;
+  const size_t str_len_with_nul = (size_t)length + 1;
   char* buf = malloc(sizeof(char) * str_len_with_nul);
   if ((buf != NULL) && (str_len_with_nul > 1)) {
-    if (fgets(buf, (int)str_len_with_nul, fp) == NULL) {
+    size_t num_chars = fread(buf, sizeof(char), str_len_with_nul, fp);
+    if ((num_chars+1) != str_len_with_nul) {
       free(buf);
       buf = NULL;
     }
