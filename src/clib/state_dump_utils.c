@@ -351,8 +351,15 @@ static int copy_fcontents_to_attr_(hid_t loc_id, const char* attr_name,
 
 static int h5dump_chemistry_data_(hid_t loc_id, const void* ptr){
   const chemistry_data *chemistry_data = ptr;
-  fprintf(stderr, "h5dump_chemistry_data_ not implemented yet!");
-  return FAIL;
+  // dump json representation to tmpfile
+  FILE* fp = tmpfile();
+  if (fp == NULL) return FAIL;
+  show_parameters_(fp, chemistry_data);
+
+  // copy json representation to hdf5 attribute
+  int out = copy_fcontents_to_attr_(loc_id, "json_str", fp);
+  fclose(fp);
+  return SUCCESS;
 }
 
 static int h5dump_code_units_(hid_t loc_id, const void* ptr){
