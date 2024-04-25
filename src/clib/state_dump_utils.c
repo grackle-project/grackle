@@ -98,6 +98,18 @@ void show_version_(FILE *fp, const grackle_version* gversion)
   json_finish_(&writer);
 }
 
+void show_code_units_(FILE *fp, const code_units* units)
+{
+  struct json_obj_writer writer = json_create_writer_(fp);
+  json_field_INT(&writer, "comoving_coordinates", units->comoving_coordinates);
+  json_field_DOUBLE(&writer, "density_units", units->density_units);
+  json_field_DOUBLE(&writer, "length_units", units->length_units);
+  json_field_DOUBLE(&writer, "time_units", units->time_units);
+  json_field_DOUBLE(&writer, "velocity_units", units->velocity_units);
+  json_field_DOUBLE(&writer, "a_units", units->a_units);
+  json_field_DOUBLE(&writer, "a_value", units->a_value);
+  json_finish_(&writer);
+}
 
 // if we make the following function part of the stable API:
 // - we should probably move the function to a different file (currently it's
@@ -364,8 +376,14 @@ static int h5dump_chemistry_data_(hid_t loc_id, const void* ptr){
 
 static int h5dump_code_units_(hid_t loc_id, const void* ptr){
   const code_units *units = ptr;
-  fprintf(stderr, "h5dump_code_units_ not implemented yet!");
-  return FAIL;
+  FILE* fp = tmpfile();
+  if (fp == NULL) return FAIL;
+  show_code_units_(fp, units);
+
+  // copy json representation to hdf5 attribute
+  int out = copy_fcontents_to_attr_(loc_id, "json_str", fp);
+  fclose(fp);
+  return SUCCESS;
 }
 
 static int h5dump_version_(hid_t loc_id, const void* ptr){
