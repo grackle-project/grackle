@@ -80,11 +80,11 @@ void show_parameters_(FILE *fp, const chemistry_data *my_chemistry){
 
 void show_version_(FILE *fp, const grackle_version* gversion)
 {
-  fprintf (fp, "\n");
-  fprintf (fp, "The Grackle Version %s\n", gversion->version);
-  fprintf (fp, "Git Branch   %s\n", gversion->branch);
-  fprintf (fp, "Git Revision %s\n", gversion->revision);
-  fprintf (fp, "\n");
+  struct json_obj_writer writer = json_create_writer_(fp);
+  json_field_STRING(&writer, "version", gversion->version);
+  json_field_STRING(&writer, "branch", gversion->branch);
+  json_field_STRING(&writer, "revision", gversion->revision);
+  json_finish_(&writer);
 }
 
 
