@@ -12,6 +12,8 @@
 ************************************************************************/
 
 #include <stdio.h>
+#include <stdlib.h> // malloc
+#include <string.h> // strlen
 #include <hdf5.h>
 
 #include "grackle.h"
@@ -288,6 +290,65 @@ static int h5dump_field_data_(hid_t loc_id, const void* ptr)
 //   write individual key-value pairs as separate attributes... (but that may
 //   not be worth the effort)
 
+// to get a json-string representation, we will temporarily dump the data to a
+// file and then load the data back into memory. This is a dumb strategy, but
+// it's good enough for debugging purposes. Faster approaches might rely upon
+// platform-specific c extensions (like open_memstream or fopencookie)
+
+/// returns a newly allocated null-terminated string that contains a copy of
+/// all of the characters in fp
+///
+/// @note
+/// requires that fp was openned in "wb+" mode (this is consistent with using
+/// an object produced by tmpfile(). To my knowledge, there is no way to
+/// explicitly check this
+static char* copy_f_contents_to_str_(FILE* fp) {
+  // TODO: it would be nice to have some additional error handling
+
+  fseek(fp, 0, SEEK_END); // advance file-position to end of the file
+  const long length = ftell(fp);
+  if (length == -1L)  return NULL;
+  fseek(fp, 0, SEEK_SET); // advance file-position to start of the file
+
+  const long str_len_with_nul = length + 1;
+  char* buf = malloc(sizeof(char) * str_len_with_nul);
+  if ((buf != NULL) && (str_len_with_nul > 1)) {
+    if (fgets(buf, (int)str_len_with_nul, fp) == NULL) {
+      free(buf);
+      buf = NULL;
+    }
+  }
+
+  if (buf != NULL)  buf[str_len_with_nul - 1] = '\0';
+  return buf;
+}
+
+/// this is just a helper function
+/// - essentially the idea is that you call this after you've dumped a long
+///   string to fp
+/// - this function then reads that data into memory and then immediately
+///   writes it to an hdf5 attribute
+static int copy_fcontents_to_attr_(hid_t loc_id, const char* attr_name,
+                                   FILE* fp) {
+  char* str = copy_f_contents_to_str_(fp);
+  if (str == NULL) {
+    fprintf(stderr,
+            "something went wrong while loading file buffer into memory (for "
+            "the sake of writing the \"%s\" hdf5 attr)", attr_name);
+    return FAIL;
+  }
+
+  // we are "cheating" here. We are writing the string as 1D array of
+  // characters (it would probably be more robust to write it as
+  // a variable-length string)
+
+  int out = h5_write_attr_(loc_id, attr_name, str, H5T_NATIVE_CHAR,
+                           strlen(str)+1);
+  free(str);
+  return out;
+}
+
+
 static int h5dump_chemistry_data_(hid_t loc_id, const void* ptr){
   const chemistry_data *chemistry_data = ptr;
   fprintf(stderr, "h5dump_chemistry_data_ not implemented yet!");
@@ -302,8 +363,16 @@ static int h5dump_code_units_(hid_t loc_id, const void* ptr){
 
 static int h5dump_version_(hid_t loc_id, const void* ptr){
   const grackle_version *version = ptr;
-  fprintf(stderr, "h5dump_version_ not implemented yet!");
-  return FAIL;
+
+  // dump json representation to tmpfile
+  FILE* fp = tmpfile();
+  if (fp == NULL) return FAIL;
+  show_version_(fp, version);
+
+  // copy json representation to hdf5 attribute
+  int out = copy_fcontents_to_attr_(loc_id, "json_str", fp);
+  fclose(fp);
+  return SUCCESS;
 }
 
 // implement the publicly exposed hdf5 dumper function
