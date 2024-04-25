@@ -149,6 +149,45 @@ int grunstable_initialize_field_data(grackle_field_data *my_fields,
 // implement generic hdf5-dumping machinery:
 // =========================================
 
+/// The idea is to track additional useful information inside this struct and
+/// pass it around throughout our function stack...
+///
+/// To start out, we will just use it to track custom commonly used dtypes (so
+/// that we don't need to constantly create new versions of this dtype)
+typedef struct contextH5_ {
+  hid_t var_strtype;
+} contextH5_;
+
+static int cleanup_contextH5_(contextH5_* p) {
+  if (p == NULL)  return FAIL;
+
+  // close each contained dtype (if and only if it's currently in a valid state)
+  if ((p->var_strtype != H5I_INVALID_HID) && (H5Tclose(p->var_strtype) < 0)) {
+    fprintf(stderr, "error closing contextH5_->var_strtype\n");
+    return FAIL;
+  }
+  p->var_strtype = H5I_INVALID_HID;
+
+  return SUCCESS;
+}
+
+static int initialize_contextH5_(contextH5_* h_ctx) {
+  if (h_ctx == NULL) {
+    fprintf(stderr, "initialize_contextH5_ can't initialize a NULL ptr\n");
+    return FAIL;
+  }
+
+  // Step 1: create a datatype to represent a variable length string
+  h_ctx->var_strtype = H5Tcopy(H5T_C_S1);
+  if (H5Tset_size(h_ctx->var_strtype, H5T_VARIABLE) < 0) {
+    fprintf(stderr, "Error while initializing contextH5_ instance");
+    return FAIL;
+  }
+
+  return SUCCESS;
+}
+
+
 /// write out a simple individual attribute
 ///
 /// @param[in] loc_id location where the attribute will be attached to
@@ -266,7 +305,8 @@ fail_mkspace:
 }
 
 /// dump a grackle_field_data instance to loc_id
-static int h5dump_field_data_(hid_t loc_id, const void* ptr)
+static int h5dump_field_data_(hid_t loc_id, contextH5_* context,
+                              const void* ptr)
 {
   const grackle_field_data *my_fields = ptr;
   // arg-checking:
@@ -341,8 +381,8 @@ static char* copy_f_contents_to_str_(FILE* fp) {
 ///   string to fp
 /// - this function then reads that data into memory and then immediately
 ///   writes it to an hdf5 attribute
-static int copy_fcontents_to_attr_(hid_t loc_id, const char* attr_name,
-                                   FILE* fp) {
+static int copy_fcontents_to_attr_(hid_t loc_id, contextH5_* h_ctx,
+                                   const char* attr_name, FILE* fp) {
   char* str = copy_f_contents_to_str_(fp);
   if (str == NULL) {
     fprintf(stderr,
@@ -351,18 +391,14 @@ static int copy_fcontents_to_attr_(hid_t loc_id, const char* attr_name,
     return FAIL;
   }
 
-  // we are "cheating" here. We are writing the string as 1D array of
-  // characters (it would probably be more robust to write it as
-  // a variable-length string)
-
-  int out = h5_write_attr_(loc_id, attr_name, str, H5T_NATIVE_CHAR,
-                           strlen(str)+1);
+  int out = h5_write_attr_(loc_id, attr_name, &str, h_ctx->var_strtype, 0);
   free(str);
   return out;
 }
 
 
-static int h5dump_chemistry_data_(hid_t loc_id, const void* ptr){
+static int h5dump_chemistry_data_(hid_t loc_id, contextH5_* h_ctx,
+                                  const void* ptr){
   const chemistry_data *chemistry_data = ptr;
   // dump json representation to tmpfile
   FILE* fp = tmpfile();
@@ -370,24 +406,24 @@ static int h5dump_chemistry_data_(hid_t loc_id, const void* ptr){
   show_parameters_(fp, chemistry_data);
 
   // copy json representation to hdf5 attribute
-  int out = copy_fcontents_to_attr_(loc_id, "json_str", fp);
+  int out = copy_fcontents_to_attr_(loc_id, h_ctx, "json_str", fp);
   fclose(fp);
   return SUCCESS;
 }
 
-static int h5dump_code_units_(hid_t loc_id, const void* ptr){
+static int h5dump_code_units_(hid_t loc_id, contextH5_* h_ctx, const void* ptr){
   const code_units *units = ptr;
   FILE* fp = tmpfile();
   if (fp == NULL) return FAIL;
   show_code_units_(fp, units);
 
   // copy json representation to hdf5 attribute
-  int out = copy_fcontents_to_attr_(loc_id, "json_str", fp);
+  int out = copy_fcontents_to_attr_(loc_id, h_ctx, "json_str", fp);
   fclose(fp);
   return SUCCESS;
 }
 
-static int h5dump_version_(hid_t loc_id, const void* ptr){
+static int h5dump_version_(hid_t loc_id, contextH5_* h_ctx, const void* ptr){
   const grackle_version *version = ptr;
 
   // dump json representation to tmpfile
@@ -396,7 +432,7 @@ static int h5dump_version_(hid_t loc_id, const void* ptr){
   show_version_(fp, version);
 
   // copy json representation to hdf5 attribute
-  int out = copy_fcontents_to_attr_(loc_id, "json_str", fp);
+  int out = copy_fcontents_to_attr_(loc_id, h_ctx, "json_str", fp);
   fclose(fp);
   return SUCCESS;
 }
@@ -447,9 +483,9 @@ static int handle_fname_hid_args_(const char* fname, long long* dest_hid,
 }
 
 struct state_dump_entry_{
-  const char* group_name;             ///< name of the group to create
-  const void* obj;                    ///< object to actually dump
-  int (*fn_ptr)(hid_t, const void*);  ///< function for dumping state
+  const char* group_name;                      ///< name of the group to create
+  const void* obj;                             ///< object to actually dump
+  int (*fn)(hid_t, contextH5_*, const void*);  ///< fn for dumping state
 };
 
 int grunstable_h5dump_state(const char* fname, long long dest_hid,
@@ -464,8 +500,12 @@ int grunstable_h5dump_state(const char* fname, long long dest_hid,
   if (handle_fname_hid_args_(fname, &dest_hid, &require_file_close_hid)
       != SUCCESS) {
     ret_val = FAIL;
-    goto general_cleanup;
+    goto fail_fname_hid_args;
   }
+
+  // setup the contextH5_ instance
+  contextH5_ h_ctx;
+  if (initialize_contextH5_(&h_ctx) != SUCCESS)  goto fail_init_contextH5_;
 
   // TODO: create an attribute called "grackle_dump_finished" with a value of 0
 
@@ -495,7 +535,7 @@ int grunstable_h5dump_state(const char* fname, long long dest_hid,
       break;
     }
 
-    int cur_dump_result = entry_l[i].fn_ptr(group_id, entry_l[i].obj);
+    int cur_dump_result = entry_l[i].fn(group_id, &h_ctx, entry_l[i].obj);
     H5Gclose (group_id);
     if (cur_dump_result != SUCCESS) {
       fprintf(stderr, "problem dumping contents in the %s group\n",
@@ -510,6 +550,9 @@ int grunstable_h5dump_state(const char* fname, long long dest_hid,
   }
 
 general_cleanup:
+  cleanup_contextH5_(&h_ctx);
+fail_init_contextH5_:
+fail_fname_hid_args:
   if (require_file_close_hid) H5Fclose(dest_hid);
 
   return ret_val;
