@@ -14,6 +14,10 @@
 
 #include <stdio.h>
 
+// include some exposed function prototypes that are fully defined within the
+// state_dump_utils.c source file
+#include "grackle_unstable.h"
+
 /// write each member of my_chemistry to fp
 void show_parameters_(FILE *fp, const chemistry_data *my_chemistry);
 
