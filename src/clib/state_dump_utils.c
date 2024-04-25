@@ -15,6 +15,9 @@
 
 #include "grackle.h"
 
+// define some functionality to help write json objects
+// ====================================================
+
 struct json_obj_writer {
   FILE* fp;
   const char* member_spacing; // holds the whitespace between members
@@ -65,6 +68,9 @@ static void json_field_STRING(struct json_obj_writer* writer,
   }
 }
 
+// functions to write json representations of various structs to disk
+// ==================================================================
+
 void show_parameters_(FILE *fp, const chemistry_data *my_chemistry){
   struct json_obj_writer writer = json_create_writer_(fp);
 
@@ -86,5 +92,3 @@ void show_version_(FILE *fp, const grackle_version* gversion)
   json_field_STRING(&writer, "revision", gversion->revision);
   json_finish_(&writer);
 }
-
-
