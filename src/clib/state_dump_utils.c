@@ -231,6 +231,112 @@ fail_mkspace:
   return ret_val;
 }
 
+static const char * const H5_PROTOCOL_VERS_ATTR_ = "@:?GRACKLEDUMP_VERSION";
+static const char * const H5_COMPLETION_ATTR_ = "@:?GRACKLEDUMP_DONE";
+
+/// Closes the "annotated" HDF5 group
+///
+/// @note
+/// See the docstring for h5dump_create_annotated_grp_ for more details
+static int h5dump_close_annotated_grp_(hid_t grp_id, contextH5_* h_ctx,
+                                       int indicate_errs)
+{
+  int ret_val = SUCCESS;
+
+  if (H5Aexists(grp_id, H5_PROTOCOL_VERS_ATTR_) <= 0) {
+    // includes cases where attribute does not exist or there was a failure
+    fprintf(stderr, "ERROR: the \"%s\" attr does not seem to exist\n",
+            H5_PROTOCOL_VERS_ATTR_);
+    ret_val = FAIL;
+  } else if (H5Aexists(grp_id, H5_COMPLETION_ATTR_) != 0) {
+    // includes cases where attribute already exist or there was a failure
+    fprintf(stderr,
+            "ERROR: \"%s\" attr check failed or indicates it already exists\n",
+            H5_PROTOCOL_VERS_ATTR_);
+    ret_val = FAIL;
+  }
+
+  // when giving an indication that everything succeeded correctly, we are
+  // going to try to flush the buffers before writing this attribute. Nothing
+  // is guaranteed (we are at the mercy of the OS), but this decreases the
+  // chance that an interuption to the program could leave us in a state, where
+  // we indicate success and the group is only partially written to disk
+  if ((ret_val == SUCCESS) && (indicate_errs == 0) && (H5Gflush(grp_id) < 0)) {
+    fprintf(stderr, "ERROR: something went wrong during a group-flush\n");
+    ret_val = FAIL;
+  }
+
+  // now, write out the H5_COMPLETION_ATTR_ attribute
+  const int attr_val = ((ret_val == SUCCESS) && (indicate_errs == 0)) ? 1 : -1;
+
+  if (h5_write_attr_(grp_id, H5_COMPLETION_ATTR_, &attr_val,
+                     H5T_NATIVE_INT, 0) != SUCCESS) {
+    fprintf(stderr, "ERROR while writing the \"%s\" attr\n",
+            H5_COMPLETION_ATTR_);
+    ret_val = FAIL;
+  }
+
+  // finally, let's actually close the group!
+  H5Gclose (grp_id);
+  return ret_val;
+}
+
+/// Creates an "annotated" HDF5 group called `name`
+///
+/// In more detail:
+/// - this is just an ordinary hdf5 group with some 1 or more standardized
+///   attributes that are used to annotate metadata (the names of these
+///   attributes are prefixed with "@:?GRACKLEDUMP_")
+/// - The group should be closed by `h5dump_create_annotated_grp_`
+/// - The presence of the "@:?GRACKLEDUMP_VERSION" attribute denotes that the
+///   group is an annotated group
+/// - The "@:?GRACKLEDUMP_DONE" attribute is not initially written when we open
+///   the group; it's ONLY written when we properly close the group. 
+///   - when the group is properly closed without any perceived issues, the
+///     associated value will be explicitly overwritten with a value of 1.
+///   - when the group is properly closed, but issues have been identified, the
+///     associated value will be overwritten with some arbitrary negative value
+///   - the idea is this provides at lease some assurance about the validity of
+///     the group's contents. If there is no attribute OR the value is not 1,
+///     then there was a logical error or something went wrong during execution
+///     (a segmentation fault, the program was interupted, etc.).
+///
+/// @note
+/// This may seem like overkill, but in my experience this stuff usually comes
+/// in handy
+static hid_t h5dump_create_annotated_grp_(hid_t loc_id, contextH5_* h_ctx,
+                                          const char* name)
+{
+  if (H5Lexists(loc_id, name, H5P_DEFAULT) != 0) {
+    fprintf(stderr,
+            "error: the check for whether the \"%s\" group exists "
+            "failed or it indicates that the group already exists\n", name);
+    return H5I_INVALID_HID;
+  }
+
+  // create the group
+  hid_t grp_id = H5Gcreate2(loc_id, name, H5P_DEFAULT, H5P_DEFAULT,
+                            H5P_DEFAULT);
+  if (grp_id == H5I_INVALID_HID){
+    fprintf(stderr, "problem creating the \"%s\" group\n", name);
+    return H5I_INVALID_HID;
+  }
+
+  // write the version number
+  int version = 1;
+  if (h5_write_attr_(grp_id, H5_PROTOCOL_VERS_ATTR_, &version,
+                     H5T_NATIVE_INT, 0) != SUCCESS){
+    fprintf(stderr, "problem creating the \"%s\" group\n", name);
+    // close the group and denote an error
+    h5dump_close_annotated_grp_(grp_id, h_ctx, 0);
+    return H5I_INVALID_HID;
+  }
+
+  return grp_id;
+}
+
+
+
 // implement functions specific to dumping grackle_field_data to hdf5 file
 // =======================================================================
 
@@ -527,8 +633,8 @@ int grunstable_h5dump_state(const char* fname, long long dest_hid,
     if (entry_l[i].obj == NULL)  continue;
 
     // create a group
-    hid_t group_id = H5Gcreate2(dest_hid, entry_l[i].group_name,
-                                H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    hid_t group_id = h5dump_create_annotated_grp_(dest_hid, &h_ctx,
+                                                  entry_l[i].group_name);
     if (group_id == H5I_INVALID_HID){
       fprintf(stderr, "problem creating the %s group\n", entry_l[i].group_name);
       ret_val = FAIL;
@@ -536,17 +642,18 @@ int grunstable_h5dump_state(const char* fname, long long dest_hid,
     }
 
     int cur_dump_result = entry_l[i].fn(group_id, &h_ctx, entry_l[i].obj);
-    H5Gclose (group_id);
+    int close_status = h5dump_close_annotated_grp_(group_id, &h_ctx,
+                                                   cur_dump_result != SUCCESS);
     if (cur_dump_result != SUCCESS) {
       fprintf(stderr, "problem dumping contents in the %s group\n",
               entry_l[i].group_name);
       ret_val = FAIL;
       break;
+    } else if (close_status != SUCCESS) {
+      fprintf(stderr, "problem closing the %s group\n", entry_l[i].group_name);
+      ret_val = FAIL;
+      break;
     }
-  }
-
-  if (ret_val == SUCCESS) {
-    // overwrite the "grackle_dump_finished" attribute with a value of 1
   }
 
 general_cleanup:
