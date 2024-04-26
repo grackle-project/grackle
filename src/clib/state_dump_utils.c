@@ -19,6 +19,96 @@
 #include "grackle.h"
 #include "grackle_macros.h"
 
+// General Design Philosophy
+// =========================
+
+// For some of Grackle's public structs, we want to dump the state in multiple
+// ways (e.g. to a human readable format and a binary format).
+//
+// For a given format and a given struct, we need to apply formatting rules to
+// each member of that struct. This can be implemented by:
+// - defining a set of formatting-functions (specific to the dump-format)
+// - iterating over each struct-member: for each struct-member, pass the name
+//   and value of the struct-member to one of these formatting-functions (we
+//   choose the struct-member based on the type of that struct-member)
+//
+// This is the strategy we choose to adopt for dumping Grackle's simplest
+// public structs. We choose to generalize this process:
+// - we adopt a struct used to store the various formatting-functions pointers
+// - we define a function that applies the function pointers to the each member
+//   of the struct
+//
+// This control-flow resembles the Visitor design pattern.
+//
+// Our use of function pointers slows things down a little bit, but that's
+// reasonable given that this is purely for debugging/informational purposes
+// (i.e. it is not invoked inside of any calculation loop). If speed is a
+// concern we could make use of macros.
+//
+// NOTE: I am very hesitant to expose this functionality (at least in its
+//       current form) as part of the public API right now
+// - Some context: at this time of writing, we are preparing to transcribe a
+//   lot of Grackle's internals from Fortran to C/C++. I think it might be
+//   useful to internally reorganize some things (e.g. reorganize some members
+//   of large structs so that they are composed of smaller structs)
+//
+// - It's worth mentioning that we can easily adapt this functionality for the
+//   sake of deserializing data (it currently follows a control-flow very
+//   similar to the ones used by various C++ serialization frameworks, like
+//   Charm++'s pup framework (of course we rely on function pointers with
+//   context objects and they use classes with function-overloading). However,
+//   if we support such a case, users could start relying on this functionality
+//   even if it isn't part of the public API
+//
+// - With all of that said, if users express an interest in having this
+//   functionality, we could definitely add this functionality into the public
+//   API (I'm primarily concerned with locking into the current implementation,
+//   which isn't very polished)
+
+
+/// A struct used to temporarily hold the function pointers for the purpose of
+/// dumping state.
+///
+/// @note
+/// If we ultimately decide to expose this as part of the public API, we should
+/// be very careful. In particular, I think we should expose an opaque type and
+/// not provide direct access to this struct (this will help us with adding
+/// new members to this struct - such as to support new types)
+struct member_visitor_ {
+  void* context;
+  int (*fn_INT)(void*, const char*, int);
+  int (*fn_DOUBLE)(void*, const char*, double);
+  int (*fn_STRING)(void*, const char*, const char*);
+};
+
+static void visit_parameters_(const chemistry_data * my_chemistry,
+                              struct member_visitor_ * visitor){
+  #define ENTRY(FIELD, TYPE, DEFAULT_VAL) \
+    visitor->fn_ ## TYPE (visitor->context, #FIELD, my_chemistry->FIELD);
+  #include "grackle_chemistry_data_fields.def"
+  #undef ENTRY
+}
+
+static void visit_version_(const grackle_version * gversion,
+                           struct member_visitor_ * visitor) {
+  visitor->fn_STRING(visitor->context, "version", gversion->version);
+  visitor->fn_STRING(visitor->context, "branch", gversion->branch);
+  visitor->fn_STRING(visitor->context, "revision", gversion->revision);
+}
+
+static void visit_code_units_(const code_units * units,
+                              struct member_visitor_ * visitor)
+{
+  visitor->fn_INT(visitor->context, "comoving_coordinates",
+                  units->comoving_coordinates);
+  visitor->fn_DOUBLE(visitor->context, "density_units", units->density_units);
+  visitor->fn_DOUBLE(visitor->context, "length_units", units->length_units);
+  visitor->fn_DOUBLE(visitor->context, "time_units", units->time_units);
+  visitor->fn_DOUBLE(visitor->context, "velocity_units", units->velocity_units);
+  visitor->fn_DOUBLE(visitor->context, "a_units", units->a_units);
+  visitor->fn_DOUBLE(visitor->context, "a_value", units->a_value);
+}
+
 
 // define some functionality to help write json objects
 // ====================================================
@@ -29,86 +119,83 @@ struct json_obj_writer {
   int num_separations;
 };
 
-static struct json_obj_writer json_create_writer_(FILE *fp){
-  fputc('{', fp); // intentionally omit '\n'
-  struct json_obj_writer out = {fp, "\n  ", 0};
-  return out;
-}
-
-void json_write_separation_(struct json_obj_writer* writer){
+static void json_write_separation_(struct json_obj_writer* writer){
   if (writer->num_separations > 0) fputc(',', writer->fp);
   fprintf(writer->fp, "%s", writer->member_spacing);
   writer->num_separations++;
 }
 
-void json_finish_(struct json_obj_writer* writer){
-  if (writer->num_separations == 0) {
-    fprintf(writer->fp, "}\n");
-  } else {
-    fprintf(writer->fp, "\n}\n");
-  }
-}
-
 // Define helpers for the show_parameters function
-static void json_field_INT(struct json_obj_writer* writer, const char* field,
-                           int val)
+static int json_field_INT(void* json_ptr, const char* field, int val)
 {
+  struct json_obj_writer* writer = (struct json_obj_writer*)json_ptr;
   json_write_separation_(writer);
   fprintf(writer->fp, "\"%s\" : %d", field, val);
+  return SUCCESS;
 }
-static void json_field_DOUBLE(struct json_obj_writer* writer,
-                              const char* field, double val)
+static int json_field_DOUBLE(void* json_ptr, const char* field, double val)
 {
+  struct json_obj_writer* writer = (struct json_obj_writer*)json_ptr;
   json_write_separation_(writer);
   fprintf(writer->fp, "\"%s\" : %.17g", field, val);
+  return SUCCESS;
 }
-static void json_field_STRING(struct json_obj_writer* writer,
-                              const char* field, const char* val)
+static int json_field_STRING(void* json_ptr, const char* field, const char* val)
 {
+  struct json_obj_writer* writer = (struct json_obj_writer*)json_ptr;
   json_write_separation_(writer);
   if (val == NULL){
     fprintf(writer->fp, "\"%s\" : null", field);
   } else {
     fprintf(writer->fp, "\"%s\" : \"%s\"", field, val);
   }
+  return SUCCESS;
+}
+
+struct member_visitor_ create_json_visitor_(FILE *fp) {
+  // setup the json_obj_writer instance and do initial work
+  struct json_obj_writer temporary = {fp, "\n  ", 0};
+  fputc('{', fp); // intentionally omit '\n'
+
+  // allocate a pointer to store in the member_visitor_ struct
+  struct json_obj_writer* ptr = malloc(sizeof(struct json_obj_writer));
+  *ptr = temporary;
+  struct member_visitor_ out = {ptr, json_field_INT, json_field_DOUBLE,
+                                json_field_STRING};
+  return out;
+}
+
+static void free_json_visitor(struct member_visitor_* visitor) {
+  struct json_obj_writer* writer = (struct json_obj_writer*)(visitor->context);
+  if (writer->num_separations == 0) {
+    fprintf(writer->fp, "}\n");
+  } else {
+    fprintf(writer->fp, "\n}\n");
+  }
+  free(writer);
 }
 
 // functions to write json representations of various structs to disk
 // ==================================================================
 
 void show_parameters_(FILE *fp, const chemistry_data *my_chemistry){
-  struct json_obj_writer writer = json_create_writer_(fp);
-
-  // write all of the fields
-  #define ENTRY(FIELD, TYPE, DEFAULT_VAL) \
-    json_field_ ## TYPE (&writer, #FIELD, my_chemistry->FIELD);
-  #include "grackle_chemistry_data_fields.def"
-  #undef ENTRY
-
-  // end the json object
-  json_finish_(&writer);
+  struct member_visitor_ visitor = create_json_visitor_(fp);
+  visit_parameters_(my_chemistry, &visitor);
+  free_json_visitor(&visitor); // end the json object
 }
 
 void show_version_(FILE *fp, const grackle_version* gversion)
 {
-  struct json_obj_writer writer = json_create_writer_(fp);
-  json_field_STRING(&writer, "version", gversion->version);
-  json_field_STRING(&writer, "branch", gversion->branch);
-  json_field_STRING(&writer, "revision", gversion->revision);
-  json_finish_(&writer);
+  struct member_visitor_ visitor = create_json_visitor_(fp);
+  visit_version_(gversion, &visitor);
+  free_json_visitor(&visitor); // end the json object
 }
 
 void show_code_units_(FILE *fp, const code_units* units)
 {
-  struct json_obj_writer writer = json_create_writer_(fp);
-  json_field_INT(&writer, "comoving_coordinates", units->comoving_coordinates);
-  json_field_DOUBLE(&writer, "density_units", units->density_units);
-  json_field_DOUBLE(&writer, "length_units", units->length_units);
-  json_field_DOUBLE(&writer, "time_units", units->time_units);
-  json_field_DOUBLE(&writer, "velocity_units", units->velocity_units);
-  json_field_DOUBLE(&writer, "a_units", units->a_units);
-  json_field_DOUBLE(&writer, "a_value", units->a_value);
-  json_finish_(&writer);
+  struct member_visitor_ visitor = create_json_visitor_(fp);
+  visit_code_units_(units, &visitor);
+  free_json_visitor(&visitor); // end the json object
 }
 
 // if we make the following function part of the stable API:
