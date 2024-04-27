@@ -19,6 +19,9 @@
 #include "grackle.h"
 #include "grackle_macros.h"
 
+// when rank is less than 3, don't fill in unused dimensions
+typedef struct array_props_{ int rank; int dimensions[3]; } array_props_;
+
 // General Design Philosophy
 // =========================
 
@@ -79,6 +82,8 @@ struct member_visitor_ {
   int (*fn_INT)(void*, const char*, int);
   int (*fn_DOUBLE)(void*, const char*, double);
   int (*fn_STRING)(void*, const char*, const char*);
+  int (*fn_INTARR)(void*, const char*, const int*, array_props_);
+  int (*fn_GRFLOATARR)(void*, const char*, const gr_float*, array_props_);
 };
 
 static void visit_parameters_(const chemistry_data * my_chemistry,
@@ -109,6 +114,37 @@ static void visit_code_units_(const code_units * units,
   visitor->fn_DOUBLE(visitor->context, "a_value", units->a_value);
 }
 
+static void visit_field_data_(const grackle_field_data * my_fields,
+                              struct member_visitor_ * v)
+{
+  // part 0: copy some data into fixed size arrays
+  array_props_ field_prop = {my_fields->grid_rank, {0,0,0}};
+  int grid_start[3] = {0, 0, 0};
+  int grid_end[3] = {0, 0, 0};
+  for (int i = 0; i < my_fields->grid_rank; i++){
+    field_prop.dimensions[i] = my_fields->grid_dimension[i];
+    grid_start[i] = my_fields->grid_start[i];
+    grid_end[i] = my_fields->grid_end[i];
+  }
+
+  // part 1: dump the generic description about the field and grid
+  {
+    const array_props_ array_prop_3elem = {1, {3,0,0}};
+
+    v->fn_INTARR(v->context, "grid_dimension", field_prop.dimensions,
+                 array_prop_3elem);
+    v->fn_INTARR(v->context, "grid_start", grid_start, array_prop_3elem);
+    v->fn_INTARR(v->context, "grid_end", grid_end, array_prop_3elem);
+    v->fn_INT(v->context, "grid_rank", my_fields->grid_rank);
+    v->fn_DOUBLE(v->context, "grid_dx", my_fields->grid_dx);
+  }
+
+  // part 2: dump the field-data (we use X-Macros)
+  #define ENTRY(MEMBER, _1)                                                \
+    v->fn_GRFLOATARR(v->context, #MEMBER, my_fields->MEMBER, field_prop);
+  #include "grackle_field_data_fdatamembers.def"
+  #undef ENTRY
+}
 
 // define some functionality to help write json objects
 // ====================================================
@@ -152,6 +188,20 @@ static int json_field_STRING(void* json_ptr, const char* field, const char* val)
   return SUCCESS;
 }
 
+static int json_field_INTARR(void* json_ptr, const char* field,
+                             const int* val, array_props_ array_prop)
+{
+  fprintf(stderr, "Currently no support for json arrays. ABORTING NOW!\n");
+  abort();
+}
+
+static int json_field_GRFLOATARR(void* json_ptr, const char* field,
+                                 const gr_float* val, array_props_ array_prop)
+{
+  fprintf(stderr, "Currently no support for json arrays. ABORTING NOW!\n");
+  abort();
+}
+
 struct member_visitor_ create_json_visitor_(FILE *fp) {
   // setup the json_obj_writer instance and do initial work
   struct json_obj_writer temporary = {fp, "\n  ", 0};
@@ -161,7 +211,8 @@ struct member_visitor_ create_json_visitor_(FILE *fp) {
   struct json_obj_writer* ptr = malloc(sizeof(struct json_obj_writer));
   *ptr = temporary;
   struct member_visitor_ out = {ptr, json_field_INT, json_field_DOUBLE,
-                                json_field_STRING};
+                                json_field_STRING, json_field_INTARR,
+                                json_field_GRFLOATARR};
   return out;
 }
 
@@ -235,13 +286,16 @@ int grunstable_initialize_field_data(grackle_field_data *my_fields,
 /// To start out, we will just use it to track custom commonly used dtypes (so
 /// that we don't need to constantly create new versions of this dtype)
 typedef struct contextH5_ {
+  hid_t gr_floattype;
   hid_t var_strtype;
 } contextH5_;
 
 static int cleanup_contextH5_(contextH5_* p) {
   if (p == NULL)  return FAIL;
 
-  // close each contained dtype (if and only if it's currently in a valid state)
+  // ignore h_ctx->gr_floattype (we didn't make a new type here)
+
+  // close h_ctx->var_strtype (if its in a valid state)
   if ((p->var_strtype != H5I_INVALID_HID) && (H5Tclose(p->var_strtype) < 0)) {
     fprintf(stderr, "error closing contextH5_->var_strtype\n");
     return FAIL;
@@ -257,7 +311,11 @@ static int initialize_contextH5_(contextH5_* h_ctx) {
     return FAIL;
   }
 
-  // Step 1: create a datatype to represent a variable length string
+  // Step 1: determine datatype equivalent to gr_float
+  h_ctx->gr_floattype = (sizeof(gr_float) == 8) ?
+    H5T_NATIVE_DOUBLE : H5T_NATIVE_FLOAT;
+
+  // Step 2: create a datatype to represent a variable length string
   h_ctx->var_strtype = H5Tcopy(H5T_C_S1);
   if (H5Tset_size(h_ctx->var_strtype, H5T_VARIABLE) < 0) {
     fprintf(stderr, "Error while initializing contextH5_ instance");
@@ -272,10 +330,10 @@ static int initialize_contextH5_(contextH5_* h_ctx) {
 ///
 /// @param[in] loc_id location where the attribute will be attached to
 /// @param[in] name the name of the attribute
+/// @param[in] ptr Specifies the data to be written
 /// @param[in] type_id the type of the attribute
 /// @param[in] length The number of elements in the attribute (if it's a 1D
 ///     array). If writing a scalar, this should be 0
-/// @param[in] ptr Specifies the data to be written
 static int h5_write_attr_(hid_t loc_id, const char* name, const void* ptr,
                           hid_t type_id, int length) {
   if ((ptr == NULL) || (length < 0)) return FAIL;
@@ -307,6 +365,48 @@ fail_mkspace:
   if (ret_val != SUCCESS){
     fprintf(stderr, "problem writing attribute: %s\n", name);
   }
+
+  return ret_val;
+}
+
+/// Write a contiguous array as a simple dataset
+///
+/// @param[in] loc_id location where the attribute will be attached to
+/// @param[in] name the name of the dataset
+/// @param[in] ptr Specifies the data to be written
+/// @param[in] type_id the elment-type of the array
+/// @param[in] array_prop Specifies the expected dimensions of the data (you
+///     don't need to do anything special when ptr is NULL)
+static int h5dump_write_dset_(hid_t loc_id, const char* name, const void* ptr,
+                              hid_t type_id, array_props_ array_prop)
+{
+  int ret_val = FAIL;
+
+  // create dataspace
+  hsize_t dims[3] = {0, 0, 0};
+  for (int i = 0; i < array_prop.rank; i++) {
+    dims[i] = array_prop.dimensions[i];
+  }
+  hid_t space_id = (ptr == NULL)
+    ? H5Screate(H5S_NULL) // (in this case, it's an empty member)
+    : H5Screate_simple(array_prop.rank, dims, NULL);
+  if (space_id == H5I_INVALID_HID) goto fail_mkspace;
+
+  // create dataset
+  hid_t dset_id = H5Dcreate1(loc_id, name, type_id, space_id, H5P_DEFAULT);
+  if (space_id == H5I_INVALID_HID) goto fail_mkdset;
+
+  // write to the dataset
+  if (H5Dwrite(dset_id, type_id, H5S_ALL, H5S_ALL, H5P_DEFAULT, ptr) >= 0) {
+    ret_val = SUCCESS;
+  }
+
+  // cleanup:
+  H5Dclose(dset_id);
+fail_mkdset:
+  H5Sclose(space_id);
+fail_mkspace:
+  // nothing to cleanup
 
   return ret_val;
 }
@@ -418,109 +518,6 @@ static hid_t h5dump_create_annotated_grp_(hid_t loc_id, contextH5_* h_ctx,
   return grp_id;
 }
 
-
-
-// implement functions specific to dumping grackle_field_data to hdf5 file
-// =======================================================================
-
-/// Dumps subset of grackle_field_data's members into hdf5 attributes
-static int h5dump_field_data_attributes_(hid_t loc_id,
-                                         const grackle_field_data* my_fields)
-{
-
-  // for simplicity: always make grid_start and grid_end into 3D arrays
-  int grid_start[3] = {0, 0, 0};
-  int grid_end[3] = {0, 0, 0};
-  for (int i = 0; i < my_fields->grid_rank; i++){
-    grid_start[i] = my_fields->grid_start[i];
-    grid_end[i] = my_fields->grid_end[i];
-  }
-
-  // here we actually write out the attributes
-  if (h5_write_attr_(loc_id, "grid_start", grid_start,
-                     H5T_NATIVE_INT, 3) != SUCCESS) {
-    return FAIL;
-  } else if (h5_write_attr_(loc_id, "grid_end", grid_end, H5T_NATIVE_INT, 3)
-             != SUCCESS) {
-    return FAIL;
-  } else if (h5_write_attr_(loc_id, "grid_rank", &(my_fields->grid_rank),
-                            H5T_NATIVE_INT, 0) != SUCCESS) {
-    return FAIL;
-  } else if (h5_write_attr_(loc_id, "grid_dx", &(my_fields->grid_dx),
-                            H5T_NATIVE_DOUBLE, 0) != SUCCESS) {
-    return FAIL;
-  }
-
-  return SUCCESS;
-}
-
-/// Write the field_data member (that holds field_data) to the container
-static int h5dump_field_data_single_dset_(hid_t container,
-                                          const grackle_field_data* my_fields,
-                                          const char* field_name,
-                                          const gr_float* values)
-{
-  int ret_val = FAIL;
-  hid_t dtype = (sizeof(gr_float) == 4) ? H5T_NATIVE_FLOAT : H5T_NATIVE_DOUBLE;
-
-  // create dataspace
-  hsize_t dims[3] = {0, 0, 0};
-  for (int i = 0; i < my_fields->grid_rank; i++) {
-    dims[i] = my_fields->grid_dimension[i];
-  }
-  hid_t space_id = (values == NULL)
-    ? H5Screate(H5S_NULL) // (in this case, it's an empty member)
-    : H5Screate_simple(my_fields->grid_rank, dims, NULL);
-  if (space_id == H5I_INVALID_HID) goto fail_mkspace;
-
-  // create dataset
-  hid_t dset_id = H5Dcreate1(container, field_name, dtype, space_id,
-                             H5P_DEFAULT);
-  if (space_id == H5I_INVALID_HID) goto fail_mkdset;
-
-  // write to the dataset
-  if (H5Dwrite(dset_id, dtype, H5S_ALL, H5S_ALL, H5P_DEFAULT, values) >= 0) {
-    ret_val = SUCCESS;
-  }
-
-  // cleanup:
-  H5Dclose(dset_id);
-fail_mkdset:
-  H5Sclose(space_id);
-fail_mkspace:
-  // nothing to cleanup
-
-  return ret_val;
-}
-
-/// dump a grackle_field_data instance to loc_id
-static int h5dump_field_data_(hid_t loc_id, contextH5_* context,
-                              const char* name,
-                              const grackle_field_data* my_fields)
-{
-  // arg-checking:
-  if (my_fields == NULL) {
-    fprintf(stderr, "gr_initial_field_data was passed a NULL pointer\n");
-    return FAIL;
-  }
-
-  // write out some attributes:
-  if (h5dump_field_data_attributes_(loc_id, my_fields) != SUCCESS) {
-    return FAIL;
-  }
-
-  // now dump members of my_fields holding field-data (we use X-Macros)
-  #define ENTRY(MEMBER_NAME, _1)                                              \
-    if (h5dump_field_data_single_dset_(loc_id, my_fields, #MEMBER_NAME,       \
-                                       my_fields->MEMBER_NAME) != SUCCESS) {  \
-      return FAIL;                                                            \
-    }
-  #include "grackle_field_data_fdatamembers.def"
-  #undef ENTRY
-
-  return SUCCESS;
-}
-
 // implement functions specific to dumping other structs to hdf5 file
 // ==================================================================
 
@@ -553,6 +550,28 @@ static int visitorh5_STRING(void* h5plugin, const char* field, const char* val)
   return p->err;
 }
 
+static int visitorh5_INTARR(void* h5plugin, const char* field,
+                            const int* val, array_props_ array_prop)
+{
+  struct visitor_h5plugin_* p = (struct visitor_h5plugin_*)h5plugin;
+  if (p->err == SUCCESS) {
+    p->err = h5dump_write_dset_(p->loc_id, field, val, H5T_NATIVE_INT,
+                                array_prop);
+  }
+  return p->err;
+}
+
+static int visitorh5_GRFLOATARR(void* h5plugin, const char* field,
+                                const gr_float* val, array_props_ array_prop)
+{
+  struct visitor_h5plugin_* p = (struct visitor_h5plugin_*)h5plugin;
+  if (p->err == SUCCESS) {
+    p->err = h5dump_write_dset_(p->loc_id, field, val, p->h_ctx->gr_floattype,
+                                array_prop);
+  }
+  return p->err;
+}
+
 struct member_visitor_ create_h5_visitor_(hid_t loc_id, contextH5_* h_ctx,
                                           const char* group_name) {
   // allocate and initialize the pluggin-pointer
@@ -568,7 +587,8 @@ struct member_visitor_ create_h5_visitor_(hid_t loc_id, contextH5_* h_ctx,
 
   // now package up member_visitor_ and return it!
   struct member_visitor_ out = {ptr, visitorh5_INT, visitorh5_DOUBLE,
-                                visitorh5_STRING};
+                                visitorh5_STRING, visitorh5_INTARR,
+                                visitorh5_GRFLOATARR};
   return out;
 }
 
@@ -630,6 +650,15 @@ static int h5dump_version_(hid_t loc_id, contextH5_* h_ctx,
                            const char* name, const grackle_version *version) {
   struct member_visitor_ visitor = create_h5_visitor_(loc_id, h_ctx, name);
   if (version != NULL)  visit_version_(version, &visitor);
+  free_h5_visitor(&visitor, name);
+  return SUCCESS;
+}
+
+static int h5dump_field_data_(hid_t loc_id, contextH5_* h_ctx,
+                              const char* name,
+                              const grackle_field_data *my_fields) {
+  struct member_visitor_ visitor = create_h5_visitor_(loc_id, h_ctx, name);
+  if (my_fields != NULL)  visit_field_data_(my_fields, &visitor);
   free_h5_visitor(&visitor, name);
   return SUCCESS;
 }
@@ -710,7 +739,12 @@ int grunstable_h5dump_state(const char* fname, long long dest_hid,
   } else if (h5dump_code_units_(dest_hid, &h_ctx, "current_code_units",
                                 current_code_units) != SUCCESS) {
     goto general_cleanup;
-  } else {
+  } else if (h5dump_field_data_(dest_hid, &h_ctx, "grackle_field_data",
+                                my_fields) != SUCCESS) {
+    goto general_cleanup;
+  }
+
+/*
     // dump grackle_field_data - compared to the other structs, this is
     // currently a bit of a special case!
 
@@ -725,7 +759,7 @@ int grunstable_h5dump_state(const char* fname, long long dest_hid,
 
     int cur_dump_result = SUCCESS;
     if (my_fields != NULL) {
-      cur_dump_result = h5dump_field_data_(dest_hid, &h_ctx, name, my_fields);
+      cur_dump_result = h5dump_field_data_(group_id, &h_ctx, name, my_fields);
     }
     int close_status = h5dump_close_annotated_grp_(group_id, &h_ctx,
                                                    cur_dump_result != SUCCESS);
@@ -737,6 +771,7 @@ int grunstable_h5dump_state(const char* fname, long long dest_hid,
       goto general_cleanup;
     }
   }
+*/
 
   ret_val = SUCCESS;
 
