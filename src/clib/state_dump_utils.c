@@ -17,8 +17,8 @@
 #include "grackle.h"
 #include "grackle_macros.h"
 
-#include "grackle_unstable.h" // forward declares some functions defined here
-
+#include "grackle_unstable.h" // forward declare grunstable_h5dump_state
+#include "state_dump_utils.h" // more forward-declarations
 #include "visitor_utils.h"
 
 static void visit_parameters_(const chemistry_data * my_chemistry,
@@ -81,8 +81,6 @@ static void visit_field_data_(const grackle_field_data * my_fields,
   #undef ENTRY
 }
 
-
-
 // functions to write json representations of various structs to disk
 // ==================================================================
 
@@ -99,41 +97,8 @@ void show_version_(FILE *fp, const grackle_version* gversion)
   free_json_visitor_(&visitor); // end the json object
 }
 
-// if we make the following function part of the stable API:
-// - we should probably move the function to a different file (currently it's
-//   here because it's implicitly required to properly dump the field_data)
-// - we could theoretically start explicitly testing whether users specify the
-//   correct fields
-
-int grunstable_initialize_field_data(grackle_field_data *my_fields,
-                                     int only_init_datafields)
-{
-  if (my_fields == NULL) {
-    fprintf(stderr, "gr_initial_field_data was passed a NULL pointer\n");
-    return FAIL;
-  }
-
-  // branching logic based on information encoded by only_init_datafields
-  if (only_init_datafields == 0) { // initialize all members
-    my_fields->grid_rank = -1;
-    my_fields->grid_dimension = NULL;
-    my_fields->grid_start = NULL;
-    my_fields->grid_end = NULL;
-    my_fields->grid_dx = -1.0;
-  } else if (only_init_datafields != 1) {
-    fprintf(stderr, "gr_initial_field_data received an invalid arg\n");
-    return FAIL;
-  }
-
-  // now, modify all members holding datafields to have values of NULL
-  // (we use X-Macros to do this)
-  #define ENTRY(MEMBER_NAME, _1) my_fields->MEMBER_NAME = NULL;
-  #include "grackle_field_data_fdatamembers.def"
-  #undef ENTRY
-
-  return SUCCESS;
-}
-
+// functions to write hdf5 representations of various structs to disk
+// ==================================================================
 
 static int h5dump_chemistry_data_(hid_t loc_id, contextH5_* h_ctx,
                                   const char* name,
@@ -168,9 +133,6 @@ static int h5dump_field_data_(hid_t loc_id, contextH5_* h_ctx,
   free_h5_visitor_(&visitor, name);
   return SUCCESS;
 }
-
-// implement the publicly exposed hdf5 dumper function
-// ===================================================
 
 /// performs some basic argument handling. Handles 3 cases:
 ///   1. Identify invalid combinations of fname and dest_hid
