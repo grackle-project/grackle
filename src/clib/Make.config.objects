@@ -40,4 +40,5 @@ OBJS_CONFIG_LIB = \
         rate_functions.lo \
         initialize_rates.lo \
         utils.lo \
-        state_dump_utils.lo
+        state_dump_utils.lo \
+        visitor_utils.lo

@@ -12,14 +12,16 @@
 / software.
 ************************************************************************/
 
-#include <stdio.h>
+#ifndef STATE_DUMP_UTILS
+#define STATE_DUMP_UTILS
 
-// include some exposed function prototypes that are fully defined within the
-// state_dump_utils.c source file
-#include "grackle_unstable.h"
+#include <stdio.h>
 
 /// write each member of my_chemistry to fp
 void show_parameters_(FILE *fp, const chemistry_data *my_chemistry);
 
 /// write each member of gversion to fp
 void show_version_(FILE *fp, const grackle_version* gversion);
+
+
+#endif /* STATE_DUMP_UTILS */
