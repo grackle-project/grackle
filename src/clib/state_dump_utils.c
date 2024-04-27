@@ -528,105 +528,61 @@ static int h5dump_field_data_(hid_t loc_id, contextH5_* context,
 // implement functions specific to dumping other structs to hdf5 file
 // ==================================================================
 
-// for now, these are just placeholders.
-// - We are going to start with a simple strategy: writing the json
-//   representation to a single attribute.
-// - In the future, we could generalize the json writing machinery and
-//   write individual key-value pairs as separate attributes... (but that may
-//   not be worth the effort)
+struct visitor_h5plugin_ { hid_t loc_id; contextH5_* h_ctx; };
 
-// to get a json-string representation, we will temporarily dump the data to a
-// file and then load the data back into memory. This is a dumb strategy, but
-// it's good enough for debugging purposes. Faster approaches might rely upon
-// platform-specific c extensions (like open_memstream or fopencookie)
-
-/// returns a newly allocated null-terminated string that contains a copy of
-/// all of the characters in fp
-///
-/// @note
-/// requires that fp was openned in "wb+" mode (this is consistent with using
-/// an object produced by tmpfile(). To my knowledge, there is no way to
-/// explicitly check this
-static char* copy_f_contents_to_str_(FILE* fp) {
-  // TODO: it would be nice to have some additional error handling
-
-  fseek(fp, 0, SEEK_END); // advance file-position to end of the file
-  const long length = ftell(fp);
-  if (length == -1L)  return NULL;
-  fseek(fp, 0, SEEK_SET); // advance file-position to start of the file
-
-  const size_t str_len_with_nul = (size_t)length + 1;
-  char* buf = malloc(sizeof(char) * str_len_with_nul);
-  if ((buf != NULL) && (str_len_with_nul > 1)) {
-    size_t num_chars = fread(buf, sizeof(char), str_len_with_nul, fp);
-    if ((num_chars+1) != str_len_with_nul) {
-      free(buf);
-      buf = NULL;
-    }
-  }
-
-  if (buf != NULL)  buf[str_len_with_nul - 1] = '\0';
-  return buf;
+static int visitorh5_INT(void* ptr, const char* field, int val)
+{
+  struct visitor_h5plugin_* h5data = (struct visitor_h5plugin_*)ptr;
+  return h5_write_attr_(h5data->loc_id, field, &val, H5T_NATIVE_INT, 0);
 }
 
-/// this is just a helper function
-/// - essentially the idea is that you call this after you've dumped a long
-///   string to fp
-/// - this function then reads that data into memory and then immediately
-///   writes it to an hdf5 attribute
-static int copy_fcontents_to_attr_(hid_t loc_id, contextH5_* h_ctx,
-                                   const char* attr_name, FILE* fp) {
-  char* str = copy_f_contents_to_str_(fp);
-  if (str == NULL) {
-    fprintf(stderr,
-            "something went wrong while loading file buffer into memory (for "
-            "the sake of writing the \"%s\" hdf5 attr)", attr_name);
-    return FAIL;
-  }
+static int visitorh5_DOUBLE(void* ptr, const char* field, double val)
+{
+  struct visitor_h5plugin_* h5data = (struct visitor_h5plugin_*)ptr;
+  return h5_write_attr_(h5data->loc_id, field, &val, H5T_NATIVE_DOUBLE, 0);
+}
 
-  int out = h5_write_attr_(loc_id, attr_name, &str, h_ctx->var_strtype, 0);
-  free(str);
+static int visitorh5_STRING(void* ptr, const char* field, const char* val)
+{
+  struct visitor_h5plugin_* tmp = (struct visitor_h5plugin_*)ptr;
+  return h5_write_attr_(tmp->loc_id, field, &val, tmp->h_ctx->var_strtype, 0);
+}
+
+struct member_visitor_ create_h5_visitor_(hid_t loc_id, contextH5_* h_ctx) {
+  struct visitor_h5plugin_* ptr = malloc(sizeof(struct visitor_h5plugin_));
+  struct visitor_h5plugin_ tmp = {loc_id, h_ctx};
+  *ptr = tmp;
+  struct member_visitor_ out = {ptr, visitorh5_INT, visitorh5_DOUBLE,
+                                visitorh5_STRING};
   return out;
 }
 
+static void free_h5_visitor(struct member_visitor_* visitor) {
+  free((struct json_obj_writer*)visitor->context);
+}
 
 static int h5dump_chemistry_data_(hid_t loc_id, contextH5_* h_ctx,
                                   const void* ptr){
   const chemistry_data *chemistry_data = ptr;
-  // dump json representation to tmpfile
-  FILE* fp = tmpfile();
-  if (fp == NULL) return FAIL;
-  show_parameters_(fp, chemistry_data);
-
-  // copy json representation to hdf5 attribute
-  int out = copy_fcontents_to_attr_(loc_id, h_ctx, "json_str", fp);
-  fclose(fp);
+  struct member_visitor_ visitor = create_h5_visitor_(loc_id, h_ctx);
+  visit_parameters_(chemistry_data, &visitor);
+  free_h5_visitor(&visitor);
   return SUCCESS;
 }
 
 static int h5dump_code_units_(hid_t loc_id, contextH5_* h_ctx, const void* ptr){
   const code_units *units = ptr;
-  FILE* fp = tmpfile();
-  if (fp == NULL) return FAIL;
-  show_code_units_(fp, units);
-
-  // copy json representation to hdf5 attribute
-  int out = copy_fcontents_to_attr_(loc_id, h_ctx, "json_str", fp);
-  fclose(fp);
+  struct member_visitor_ visitor = create_h5_visitor_(loc_id, h_ctx);
+  visit_code_units_(units, &visitor);
+  free_h5_visitor(&visitor);
   return SUCCESS;
 }
 
 static int h5dump_version_(hid_t loc_id, contextH5_* h_ctx, const void* ptr){
   const grackle_version *version = ptr;
-
-  // dump json representation to tmpfile
-  FILE* fp = tmpfile();
-  if (fp == NULL) return FAIL;
-  show_version_(fp, version);
-
-  // copy json representation to hdf5 attribute
-  int out = copy_fcontents_to_attr_(loc_id, h_ctx, "json_str", fp);
-  fclose(fp);
+  struct member_visitor_ visitor = create_h5_visitor_(loc_id, h_ctx);
+  visit_version_(version, &visitor);
+  free_h5_visitor(&visitor);
   return SUCCESS;
 }
 
