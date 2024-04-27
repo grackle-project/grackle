@@ -726,56 +726,41 @@ int grunstable_h5dump_state(const char* fname, long long dest_hid,
   contextH5_ h_ctx;
   if (initialize_contextH5_(&h_ctx) != SUCCESS)  goto fail_init_contextH5_;
 
+  // create a group to contain everything
+  const char* group_name = "grackle_statedump";
+  hid_t grp_id = h5dump_create_annotated_grp_(dest_hid, &h_ctx, group_name);
+  if (grp_id == H5I_INVALID_HID){
+    fprintf(stderr, "problem creating the %s group\n", group_name);
+    goto fail_create_grp;
+  }
+
   // let's start dumping stuff!
   grackle_version vers = get_grackle_version();
-  if (h5dump_version_(dest_hid, &h_ctx, "grackle_version", &vers) != SUCCESS) {
+  if (h5dump_version_(grp_id, &h_ctx, "grackle_version", &vers) != SUCCESS) {
     goto general_cleanup;
-  } else if (h5dump_chemistry_data_(dest_hid, &h_ctx, "chemistry_data",
+  } else if (h5dump_chemistry_data_(grp_id, &h_ctx, "chemistry_data",
                                     my_chemistry) != SUCCESS) {
     goto general_cleanup;
-  } else if (h5dump_code_units_(dest_hid, &h_ctx, "initial_code_units",
+  } else if (h5dump_code_units_(grp_id, &h_ctx, "initial_code_units",
                                 initial_code_units) != SUCCESS) {
     goto general_cleanup;
-  } else if (h5dump_code_units_(dest_hid, &h_ctx, "current_code_units",
+  } else if (h5dump_code_units_(grp_id, &h_ctx, "current_code_units",
                                 current_code_units) != SUCCESS) {
     goto general_cleanup;
-  } else if (h5dump_field_data_(dest_hid, &h_ctx, "grackle_field_data",
+  } else if (h5dump_field_data_(grp_id, &h_ctx, "grackle_field_data",
                                 my_fields) != SUCCESS) {
     goto general_cleanup;
   }
 
-/*
-    // dump grackle_field_data - compared to the other structs, this is
-    // currently a bit of a special case!
-
-    const char* name = "grackle_field_data";
-
-    // create a group
-    hid_t group_id = h5dump_create_annotated_grp_(dest_hid, &h_ctx, name);
-    if (group_id == H5I_INVALID_HID){
-      fprintf(stderr, "problem creating the %s group\n", name);
-      goto general_cleanup;
-    }
-
-    int cur_dump_result = SUCCESS;
-    if (my_fields != NULL) {
-      cur_dump_result = h5dump_field_data_(group_id, &h_ctx, name, my_fields);
-    }
-    int close_status = h5dump_close_annotated_grp_(group_id, &h_ctx,
-                                                   cur_dump_result != SUCCESS);
-    if (cur_dump_result != SUCCESS) {
-      fprintf(stderr, "problem dumping contents of the %s object\n", name);
-      goto general_cleanup;
-    } else if (close_status != SUCCESS) {
-      fprintf(stderr, "problem closing group for the %s object\n", name);
-      goto general_cleanup;
-    }
-  }
-*/
-
   ret_val = SUCCESS;
 
 general_cleanup:
+  if (h5dump_close_annotated_grp_(grp_id, &h_ctx,
+                                  ret_val != SUCCESS) != SUCCESS) {
+    fprintf(stderr, "problem closing the \"%s\" group\n", group_name);
+    ret_val = FAIL;
+  }
+fail_create_grp:
   cleanup_contextH5_(&h_ctx);
 fail_init_contextH5_:
 fail_fname_hid_args:
