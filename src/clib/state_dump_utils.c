@@ -191,13 +191,6 @@ void show_version_(FILE *fp, const grackle_version* gversion)
   free_json_visitor(&visitor); // end the json object
 }
 
-void show_code_units_(FILE *fp, const code_units* units)
-{
-  struct member_visitor_ visitor = create_json_visitor_(fp);
-  visit_code_units_(units, &visitor);
-  free_json_visitor(&visitor); // end the json object
-}
-
 // if we make the following function part of the stable API:
 // - we should probably move the function to a different file (currently it's
 //   here because it's implicitly required to properly dump the field_data)
@@ -394,7 +387,10 @@ static int h5dump_close_annotated_grp_(hid_t grp_id, contextH5_* h_ctx,
 static hid_t h5dump_create_annotated_grp_(hid_t loc_id, contextH5_* h_ctx,
                                           const char* name)
 {
-  if (H5Lexists(loc_id, name, H5P_DEFAULT) != 0) {
+  if (name == NULL) {
+    fprintf(stderr, "error: the name of the desired group is a NULL ptr\n");
+    return H5I_INVALID_HID;
+  } else if (H5Lexists(loc_id, name, H5P_DEFAULT) != 0) {
     fprintf(stderr,
             "error: the check for whether the \"%s\" group exists "
             "failed or it indicates that the group already exists\n", name);
@@ -499,9 +495,9 @@ fail_mkspace:
 
 /// dump a grackle_field_data instance to loc_id
 static int h5dump_field_data_(hid_t loc_id, contextH5_* context,
-                              const void* ptr)
+                              const char* name,
+                              const grackle_field_data* my_fields)
 {
-  const grackle_field_data *my_fields = ptr;
   // arg-checking:
   if (my_fields == NULL) {
     fprintf(stderr, "gr_initial_field_data was passed a NULL pointer\n");
@@ -528,61 +524,113 @@ static int h5dump_field_data_(hid_t loc_id, contextH5_* context,
 // implement functions specific to dumping other structs to hdf5 file
 // ==================================================================
 
-struct visitor_h5plugin_ { hid_t loc_id; contextH5_* h_ctx; };
+struct visitor_h5plugin_ {hid_t loc_id; contextH5_* h_ctx; int err; };
 
-static int visitorh5_INT(void* ptr, const char* field, int val)
+static int visitorh5_INT(void* h5plugin, const char* field, int val)
 {
-  struct visitor_h5plugin_* h5data = (struct visitor_h5plugin_*)ptr;
-  return h5_write_attr_(h5data->loc_id, field, &val, H5T_NATIVE_INT, 0);
+  struct visitor_h5plugin_* p = (struct visitor_h5plugin_*)h5plugin;
+  if (p->err == SUCCESS) {
+    p->err = h5_write_attr_(p->loc_id, field, &val, H5T_NATIVE_INT, 0);
+  }
+  return p->err;
 }
 
-static int visitorh5_DOUBLE(void* ptr, const char* field, double val)
+static int visitorh5_DOUBLE(void* h5plugin, const char* field, double val)
 {
-  struct visitor_h5plugin_* h5data = (struct visitor_h5plugin_*)ptr;
-  return h5_write_attr_(h5data->loc_id, field, &val, H5T_NATIVE_DOUBLE, 0);
+  struct visitor_h5plugin_* p = (struct visitor_h5plugin_*)h5plugin;
+  if (p->err == SUCCESS) {
+    p->err = h5_write_attr_(p->loc_id, field, &val, H5T_NATIVE_DOUBLE, 0);
+  }
+  return p->err;
 }
 
-static int visitorh5_STRING(void* ptr, const char* field, const char* val)
+static int visitorh5_STRING(void* h5plugin, const char* field, const char* val)
 {
-  struct visitor_h5plugin_* tmp = (struct visitor_h5plugin_*)ptr;
-  return h5_write_attr_(tmp->loc_id, field, &val, tmp->h_ctx->var_strtype, 0);
+  struct visitor_h5plugin_* p = (struct visitor_h5plugin_*)h5plugin;
+  if (p->err == SUCCESS) {
+    p->err = h5_write_attr_(p->loc_id, field, &val, p->h_ctx->var_strtype, 0);
+  }
+  return p->err;
 }
 
-struct member_visitor_ create_h5_visitor_(hid_t loc_id, contextH5_* h_ctx) {
+struct member_visitor_ create_h5_visitor_(hid_t loc_id, contextH5_* h_ctx,
+                                          const char* group_name) {
+  // allocate and initialize the pluggin-pointer
   struct visitor_h5plugin_* ptr = malloc(sizeof(struct visitor_h5plugin_));
-  struct visitor_h5plugin_ tmp = {loc_id, h_ctx};
-  *ptr = tmp;
+  {
+    struct visitor_h5plugin_ tmp = {H5I_INVALID_HID, h_ctx, SUCCESS};
+    *ptr = tmp;
+  }
+
+  // create the new group (that the visitor will write to)
+  ptr->loc_id = h5dump_create_annotated_grp_(loc_id, h_ctx, group_name);
+  if (ptr->loc_id == H5I_INVALID_HID) ptr->err = FAIL;
+
+  // now package up member_visitor_ and return it!
   struct member_visitor_ out = {ptr, visitorh5_INT, visitorh5_DOUBLE,
                                 visitorh5_STRING};
   return out;
 }
 
-static void free_h5_visitor(struct member_visitor_* visitor) {
-  free((struct json_obj_writer*)visitor->context);
+/// delete/cleanup the visitor object (with hdf5 plugin)
+///
+/// In addition to freeing memory, this closes the group that all attributes
+/// were written into.
+///
+/// @param[in] visitor This visitor to cleanup
+/// @param[in] objname_errfmt Optionally specify the name of the object that
+///     we were trying to dump (only used for error-formatting)
+///
+/// @return denotes whether the visitor ever encountered any issues
+static int free_h5_visitor(struct member_visitor_* visitor,
+                           const char* objname_errfmt) {
+  // argument preprocessing
+  struct visitor_h5plugin_* ptr = (struct visitor_h5plugin_*)visitor->context;
+  const char* objname = (objname_errfmt == NULL) ? "<missing>" : objname_errfmt;
+
+  // close the group (that the visitor previously wrote data to)
+  int ret_val = ptr->err;
+  int close_status = SUCCESS;
+  if (ptr->loc_id != H5I_INVALID_HID) {
+    close_status = h5dump_close_annotated_grp_(ptr->loc_id, ptr->h_ctx,
+                                               ret_val != SUCCESS);
+  }
+
+  // error handling:
+  if (ret_val != SUCCESS) {
+    fprintf(stderr, "problem dumping contents of the %s object\n", objname);
+  } else if (close_status != SUCCESS) {
+    fprintf(stderr, "problem closing group for the %s object\n", objname);
+    ret_val = FAIL;
+  }
+
+  free(ptr); // free memory
+
+  return ret_val;
 }
 
 static int h5dump_chemistry_data_(hid_t loc_id, contextH5_* h_ctx,
-                                  const void* ptr){
-  const chemistry_data *chemistry_data = ptr;
-  struct member_visitor_ visitor = create_h5_visitor_(loc_id, h_ctx);
-  visit_parameters_(chemistry_data, &visitor);
-  free_h5_visitor(&visitor);
+                                  const char* name,
+                                  const chemistry_data *chemistry_data) {
+  struct member_visitor_ visitor = create_h5_visitor_(loc_id, h_ctx, name);
+  if (chemistry_data != NULL)  visit_parameters_(chemistry_data, &visitor);
+  free_h5_visitor(&visitor, name);
   return SUCCESS;
 }
 
-static int h5dump_code_units_(hid_t loc_id, contextH5_* h_ctx, const void* ptr){
-  const code_units *units = ptr;
-  struct member_visitor_ visitor = create_h5_visitor_(loc_id, h_ctx);
-  visit_code_units_(units, &visitor);
-  free_h5_visitor(&visitor);
+static int h5dump_code_units_(hid_t loc_id, contextH5_* h_ctx,
+                              const char* name, const code_units *units) {
+  struct member_visitor_ visitor = create_h5_visitor_(loc_id, h_ctx, name);
+  if (units != NULL)  visit_code_units_(units, &visitor);
+  free_h5_visitor(&visitor, name);
   return SUCCESS;
 }
 
-static int h5dump_version_(hid_t loc_id, contextH5_* h_ctx, const void* ptr){
-  const grackle_version *version = ptr;
-  struct member_visitor_ visitor = create_h5_visitor_(loc_id, h_ctx);
-  visit_version_(version, &visitor);
-  free_h5_visitor(&visitor);
+static int h5dump_version_(hid_t loc_id, contextH5_* h_ctx,
+                           const char* name, const grackle_version *version) {
+  struct member_visitor_ visitor = create_h5_visitor_(loc_id, h_ctx, name);
+  if (version != NULL)  visit_version_(version, &visitor);
+  free_h5_visitor(&visitor, name);
   return SUCCESS;
 }
 
@@ -631,24 +679,17 @@ static int handle_fname_hid_args_(const char* fname, long long* dest_hid,
   }
 }
 
-struct state_dump_entry_{
-  const char* group_name;                      ///< name of the group to create
-  const void* obj;                             ///< object to actually dump
-  int (*fn)(hid_t, contextH5_*, const void*);  ///< fn for dumping state
-};
-
 int grunstable_h5dump_state(const char* fname, long long dest_hid,
                             const chemistry_data* my_chemistry,
                             const code_units* initial_code_units,
                             const code_units* current_code_units,
                             const grackle_field_data* my_fields)
 {
-  int ret_val = SUCCESS;
+  int ret_val = FAIL;
   int require_file_close_hid = 0;
 
   if (handle_fname_hid_args_(fname, &dest_hid, &require_file_close_hid)
       != SUCCESS) {
-    ret_val = FAIL;
     goto fail_fname_hid_args;
   }
 
@@ -656,48 +697,48 @@ int grunstable_h5dump_state(const char* fname, long long dest_hid,
   contextH5_ h_ctx;
   if (initialize_contextH5_(&h_ctx) != SUCCESS)  goto fail_init_contextH5_;
 
-  // TODO: create an attribute called "grackle_dump_finished" with a value of 0
+  // let's start dumping stuff!
+  grackle_version vers = get_grackle_version();
+  if (h5dump_version_(dest_hid, &h_ctx, "grackle_version", &vers) != SUCCESS) {
+    goto general_cleanup;
+  } else if (h5dump_chemistry_data_(dest_hid, &h_ctx, "chemistry_data",
+                                    my_chemistry) != SUCCESS) {
+    goto general_cleanup;
+  } else if (h5dump_code_units_(dest_hid, &h_ctx, "initial_code_units",
+                                initial_code_units) != SUCCESS) {
+    goto general_cleanup;
+  } else if (h5dump_code_units_(dest_hid, &h_ctx, "current_code_units",
+                                current_code_units) != SUCCESS) {
+    goto general_cleanup;
+  } else {
+    // dump grackle_field_data - compared to the other structs, this is
+    // currently a bit of a special case!
 
-  grackle_version version = get_grackle_version();
-
-  // Do not make entry_l as a static variable (otherwise, that requires that
-  // the expressions in the initializer list are constant-expressions)
-  const struct state_dump_entry_ entry_l[] =
-    {
-     {"grackle_version", &version, h5dump_version_},
-     {"chemistry_data", my_chemistry, h5dump_chemistry_data_},
-     {"initial_code_units", initial_code_units, h5dump_code_units_},
-     {"current_code_units", current_code_units, h5dump_code_units_},
-     {"grackle_field_data", my_fields, h5dump_field_data_}
-    };
-
-  int num_entries = (int)(sizeof(entry_l) / sizeof(struct state_dump_entry_));
-  for (int i = 0; i < num_entries; i++) {
-    if (entry_l[i].obj == NULL)  continue;
+    const char* name = "grackle_field_data";
 
     // create a group
-    hid_t group_id = h5dump_create_annotated_grp_(dest_hid, &h_ctx,
-                                                  entry_l[i].group_name);
+    hid_t group_id = h5dump_create_annotated_grp_(dest_hid, &h_ctx, name);
     if (group_id == H5I_INVALID_HID){
-      fprintf(stderr, "problem creating the %s group\n", entry_l[i].group_name);
-      ret_val = FAIL;
-      break;
+      fprintf(stderr, "problem creating the %s group\n", name);
+      goto general_cleanup;
     }
 
-    int cur_dump_result = entry_l[i].fn(group_id, &h_ctx, entry_l[i].obj);
+    int cur_dump_result = SUCCESS;
+    if (my_fields != NULL) {
+      cur_dump_result = h5dump_field_data_(dest_hid, &h_ctx, name, my_fields);
+    }
     int close_status = h5dump_close_annotated_grp_(group_id, &h_ctx,
                                                    cur_dump_result != SUCCESS);
     if (cur_dump_result != SUCCESS) {
-      fprintf(stderr, "problem dumping contents in the %s group\n",
-              entry_l[i].group_name);
-      ret_val = FAIL;
-      break;
+      fprintf(stderr, "problem dumping contents of the %s object\n", name);
+      goto general_cleanup;
     } else if (close_status != SUCCESS) {
-      fprintf(stderr, "problem closing the %s group\n", entry_l[i].group_name);
-      ret_val = FAIL;
-      break;
+      fprintf(stderr, "problem closing group for the %s object\n", name);
+      goto general_cleanup;
     }
   }
+
+  ret_val = SUCCESS;
 
 general_cleanup:
   cleanup_contextH5_(&h_ctx);
