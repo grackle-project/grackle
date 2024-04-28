@@ -181,6 +181,8 @@ int main(int argc, char *argv[])
   }
 
   grackle_field_data my_fields_t1, my_fields_tN;
+  gr_initialize_field_data(&my_fields_t1);
+  gr_initialize_field_data(&my_fields_tN);
 
   // Set grid dimension and size.
   // grid_start and grid_end are used to ignore ghost zones.
