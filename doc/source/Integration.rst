@@ -604,6 +604,9 @@ not intend to use.
   // Create struct for storing grackle field data
   grackle_field_data my_fields;
 
+  // initialize members of my_fields to sensible defaults
+  gr_initialize_field_data(&my_fields);
+
   // Set grid dimension and size.
   // grid_start and grid_end are used to ignore ghost zones.
   int field_size = 1;

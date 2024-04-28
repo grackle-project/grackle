@@ -23,27 +23,6 @@
 
 #include "grackle_types.h"
 
-// experimental functionality
-// ==========================
-
-/// Overwrite the entries of a `grackle_field_data` instance
-///
-/// @param[out] my_fields Pointer to the `grackle_field_data` instance whose
-///     members will be overwritten
-/// @param[in]  only_init_datafields when passed a value of `0`, all members of
-///     `grackle_field_data` are overwritten. When passed a value of `1`, only
-///     the members used hold data-fields are overwritten.
-///
-/// @note
-/// Maybe the only_init_datafields function should be removed?
-///
-/// @note
-/// Whenever this function goes to overwrite a given member of the my_fields
-/// struct, it completely ignores the value currently held by the member (i.e.
-/// the control flow doesn't branch for members holding non-NULL pointers, the
-/// function has to assume that the current value is garbage data)
-int grunstable_initialize_field_data(grackle_field_data *my_fields,
-                                     int only_init_datafields);
 
 // debugging functionality
 // =======================
