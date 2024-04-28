@@ -13,7 +13,7 @@ Grackle has two versions of most functions.
    and :c:data:`chemistry_data_storage` instances to be provided as
    arguments. These are explicity thread-safe as they use no global data.
 
-Additionally, there are also some :ref:`misc_functions` and :ref:`rate-functions`.
+Additionally, there are also some :ref:`misc_functions`, :ref:`unstable_functions`, and :ref:`rate-functions`.
 
 .. _primary_functions:
 
@@ -436,3 +436,51 @@ Miscellaneous Functions
    :param grackle_field_data \*my_fields: uninitialized field data storage
    :rtype: int
    :returns: 1 (success) or 0 (failure)
+
+
+.. _unstable_functions:
+
+Unstable Functions
+------------------
+
+Functons in this section are explicitly considered unstable.
+In other words they are **NOT** part of the stable API.
+As a rule, no guarantees are made about the stability/long-term support of functions described in this section.
+(However, we may provide more details on a function-by-function basis).
+
+In general, unstable functions may provide experimental functionality and debugging functionality.
+
+The ``"grackle_unstable.h"`` header must be included to access these functions.
+
+.. c:function:: int grunstable_h5dump_state(const char* fname, long long dest_hid, const chemistry_data* chemistry_data, const code_units* initial_code_units, const code_units* current_code_units, const grackle_field_data* my_fields)
+
+   function used to dump state of various grackle objects for debugging purposes.
+   The information will be written to a newly created HDF5 file (at the path specified by ``fname``) **OR** to a location specified within an already open hdf5 file (at the location specified by ``dest_hid``)
+
+   This function may not work properly if you forgot to use :c:func:`gr_initialize_field_data` to initialize ``my_fields``.
+
+   :param fname: When not ``NULL``, specifies the path to the file that will be created by this function. When ``NULL``, the data will be written to the location specified by ``dest_hid``
+   :type fname: const char*
+   :param dest_hid: Used to optionally specify an hdf5 handle that corresponds to the location where the data will be written. This should be set to ``-1`` when `fname` is not ``NULL``.
+   :type dest_hid: long long
+   :param chemistry_data: :ref:`fully configured <local_setup_data-storage>` run-time parameters. This should **NOT** have been modified since initializing the :c:type:`chemistry_data_storage` data structure (which occurs within :c:func:`initialize_chemistry_data` or :c:func:`local_initialize_chemistry_data`)
+   :type chemistry_data: const chemistry_data \*
+   :param initial_code_units: pointer to the **unmodified** code units conversions used during initialization of :c:type:`chemistry_data_storage`. If you don't have a copy of the unmodified struct, when you call this function (e.g. the ``a_value``, ``length_units``, or ``density_units`` members have been modified), you should pass this argument a ``NULL`` pointer.
+   :type initial_code_units: const code_units \*
+   :param current_code_units: pointer to the code units conversions currently being used (the main purpose of this argument is track any differences from ``initial_code_units`` that may have occured due to the evolution of ``a_value``)
+   :type current_code_units: const code_units \*
+   :param my_fields: Pointer to field data storage
+   :type my_fields: const grackle_field_data \*
+   :rtype: int
+   :returns: 1 (success) or 0 (failure)
+
+   .. note::
+
+      It's our intention to always support some kind of debugging function.
+      However, the precise signature of this function may need to change over time.
+
+   .. note::
+
+      We explicitly elect to use :c:type:`long long` as the datatype of ``dest_hid`` rather than :c:type:`!hid_t` to ensure that the hdf5-library is not a public dependency of Grackle.
+
+      In more detail, if we used :c:type:`!hid_t`, the ``<hdf5.h>`` header would need to be included in the ``"grackle_unstable.h"`` header, which might necessetate passing extra ``-I`` flags to downstream applications.
