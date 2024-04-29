@@ -37,7 +37,7 @@ VERBOSE     = 0
 GRACKLE_DIR = .
 DEFAULT_INSTALL_PREFIX = /usr/local
 CONFIG_DIR = $(GRACKLE_DIR)/../../config
-QUERY_VERSION = $(CONFIG_DIR)/query-version.py
+QUERY_VERSION = $(CONFIG_DIR)/query_version.py
 
 #-----------------------------------------------------------------------
 # Make.config.settings is used for setting default values to all compile-time 
