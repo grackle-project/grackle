@@ -1,6 +1,10 @@
 #include "grackle_macros.h"
 
 // TODO: FORTRAN_NAME not needed for unit tests
+extern void FORTRAN_NAME(calc_tdust_1d_g)(double* tdust, double* tgas, double* nh, double* gasgr,
+                                          double* gamma_isrfa, double* isrf, int* itmask, double* trad,
+                                          int* in, int* is, int* ie, int* j, int* k);
+
 extern void FORTRAN_NAME(set_iteration_mask_and_initial_guess)(double *gamma_isrf, double *isrf, double *gamma_isrfa,
                                                                int *itmask, int *nm_itmask, int *bi_itmask,
                                                                double *tdustnow, double *tgas, double *trad,
