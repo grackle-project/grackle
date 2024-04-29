@@ -1,4 +1,4 @@
-add_executable(runInterpolationTests test_interpolators_g.cpp)# ${PROJECT_SOURCE_DIR}/src/clib/c_wrappers/wrap_interpolators_g.c)
+add_executable(runInterpolationTests test_interpolators_g.cpp)
 target_link_libraries(runInterpolationTests grackle gtest gtest_main hdf5)
 target_include_directories(runInterpolationTests PRIVATE ${PROJECT_SOURCE_DIR}/src/clib)
 
@@ -9,3 +9,14 @@ add_test(NAME Interpolate3Dz COMMAND runInterpolationTests)
 add_test(NAME Interpolate2Df3D COMMAND runInterpolationTests)
 add_test(NAME Interpolate4D COMMAND runInterpolationTests)
 add_test(NAME Interpolate5D COMMAND runInterpolationTests)
+
+add_executable(runUnitCalcTDust1DTests test_unit_calc_tdust_1d_g.cpp)
+target_link_libraries(runUnitCalcTDust1DTests grackle gtest gtest_main hdf5)
+target_include_directories(runUnitCalcTDust1DTests PRIVATE ${PROJECT_SOURCE_DIR}/src/clib)
+
+add_test(NAME CalcGRBalanceTest COMMAND runUnitCalcTDust1DTests)
+add_test(NAME CalcKappaGRBalanceTest COMMAND runUnitCalcTDust1DTests)
+add_test(NAME SetIterationMaskAndInitialGuessTest COMMAND runUnitCalcTDust1DTests)
+add_test(NAME CalcTDPlusTest COMMAND runUnitCalcTDust1DTests)
+add_test(NAME RunNewtonMethodTest COMMAND runUnitCalcTDust1DTests)
+add_test(NAME RunBisectionMethodTest COMMAND runUnitCalcTDust1DTests)
