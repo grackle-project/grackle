@@ -1,1 +1,9 @@
-add_subdirectory(local_solve_chemistry)
+add_executable(runFuncCalcTDust1DTests test_func_calc_tdust_1d_g.cpp )
+target_link_libraries(runFuncCalcTDust1DTests grackle gtest gtest_main hdf5)
+target_include_directories(runFuncCalcTDust1DTests PRIVATE ${PROJECT_SOURCE_DIR}/src/clib)
+add_test(NAME CalcGRBalanceTest COMMAND runFuncCalcTDust1DTests)
+
+add_executable(runFuncLocalSolveChemistryTests test_func_local_solve_chemistry.cpp)
+target_link_libraries(runFuncLocalSolveChemistryTests grackle gtest gtest_main hdf5)
+target_include_directories(runFuncLocalSolveChemistryTests PRIVATE ${PROJECT_SOURCE_DIR}/src/clib ${PROJECT_SOURCE_DIR}/src/clib/generated)
+add_test(NAME LocalSolveChemistryMain COMMAND runFuncLocalSolveChemistryTests)
