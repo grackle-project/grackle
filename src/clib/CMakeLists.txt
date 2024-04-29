@@ -50,7 +50,8 @@ set(C_SOURCES
   utils.c)
 
 set(C_WRAPPER_SOURCES
-  c_wrappers/wrap_interpolators_g.c)
+  c_wrappers/wrap_interpolators_g.c
+  c_wrappers/wrap_calc_tdust_1d_g.c)
 
 set(C_GENERATED_SOURCES
   generated/auto_show_config.c
