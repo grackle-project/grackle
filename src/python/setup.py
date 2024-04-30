@@ -110,7 +110,10 @@ else: # CMAKE-based out-of-source build
     # the generated headers in a different location
     # -> therefore, we specify location where both sets of headers are found
     # -> to be safe, ensure that there are no autogened files from alt approach
-    include_dirs = ["../clib", os.path.join(abs_grackle_build_dir, "src/clib")]
+    include_dirs = [
+        "../clib",
+        os.path.join(abs_grackle_build_dir, "generated_public_headers")
+    ]
     # don't bother checking result code. This will fail if we've never built
     # grackle (if the depend file is missing
     subprocess.run(["make", "clean_autogen"], cwd = "../clib")
