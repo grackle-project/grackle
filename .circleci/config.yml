@@ -99,8 +99,10 @@ commands:
               cmake -DGRACKLE_USE_DOUBLE=ON                   \
                     -DBUILD_SHARED_LIBS=ON                    \
                     -DGRACKLE_USE_OPENMP=<< parameters.omp >> \
+                    -DCMAKE_INSTALL_PREFIX=$HOME/local        \
                     -Bbuild
               cmake --build build
+              cmake --install build
 
               cd src/python
               PYGRACKLE_CMAKE_BUILD_DIR=../../build pip install -e .[dev]
