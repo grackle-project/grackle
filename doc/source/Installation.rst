@@ -341,10 +341,13 @@ We will discuss how to do it down below.
 Configuring Grackle's Build
 +++++++++++++++++++++++++++
 
+The compilation (and installation) of Grackle can be configured using various options.
+These options, are described in the following 2 tables:
+
 The following table lists Grackle-specific cmake options that can be used to configure the build
 
-.. list-table:: General Configuration
-   :widths: 10 30 5
+.. list-table:: Grackle-Specific Options
+   :widths: 12 30 5
    :header-rows: 1
 
    * - Name
@@ -352,16 +355,37 @@ The following table lists Grackle-specific cmake options that can be used to con
      - Default
    * - ``GRACKLE_USE_DOUBLE``
      - Turn off to build Grackle with single precision.
-     - ON
+     - ``"ON"``
    * - ``GRACKLE_USE_OPENMP``
      - Turn on to build Grackle with OpenMP
-     - OFF
+     - ``"OFF"``
 
-You can use standard options to provide the build system with hints for finding the correct HDF5 library and configuring the correct openmp library.
+.. list-table:: Standard CMake Options
+   :widths: 12 30 5
+   :header-rows: 1
+
+   * - Name
+     - Description
+     - Default
+   * - ``BUILD_SHARED_LIBS``
+     - When turned ``"ON"``, Grackle is built as a shared library. When turned ``"OFF"`` (or if its undefined), Grackle is built as a static library.
+     - ``<undefined>``
+   * - ``CMAKE_INSTALL_PREFIX``
+     - Specifies the path-prefix where Grackle will be installed when you invoke ``make install`` from within the build-directory (or using a non-Makefile generator, you use the generator-specific command to build the ``install``-target).
+       Note, that if you use ``cmake --install path/to/builddir`` to invoke installation, you can use ``--prefix`` to specify a different prefix
+     - ``/usr/local``
+   * - ``HDF5_ROOT``
+     - When cmake has trouble finding your hdf5 installation, you can set this variable equal to the path to the HDF5 installation to serve as a hint for cmake
+     - ``<undefined>``
+   * - ``HDF5_PREFER_PARALLEL``
+     - Set to ``true`` to express a preference for linking against parallel hdf5 (by default, the serial version will be preferentially choosen)
+     - ``<undefined>``
+
+There are also additional standard options for BOTH configuring other aspects of the build and for finding the correct/preferred HDF5 library and configuring the correct openmp library.
 
 There are 2 noteworthy differences from the traditional build system:
 
-1. It's idiomatic for a given ``cmake`` to build either a shared library OR a static library (not both). This is controlled by the standard ``BUILD_SHARED_LIBS`` flag.
+1. It's idiomatic for a given ``cmake``-build to build either a shared library OR a static library (not both). This is controlled by the standard ``BUILD_SHARED_LIBS`` flag.
 
 2. (On at least some platforms) When ``cmake`` constructs a shared libraries with ``OPENMP`` support, the resulting library is "more fully" linked against the OPENMP runtime library.
    Downstream applications don't need to know anything about whether such a Grackle library uses OpenMP during compilation (this contrasts with the more traditional approach, where you would explicitly need to link against openmp).

@@ -19,6 +19,7 @@ endif()
 # Preamble
 cmake_minimum_required(VERSION 3.16)
 cmake_policy(SET CMP0077 NEW)
+cmake_policy(SET CMP0082 NEW)
 project(Grackle VERSION ${_GRACKLE_VERSION_NO_DEVTAG} LANGUAGES C Fortran)
 
 # Specify that `./cmake` contains cmake modules defining useful functionality
@@ -26,6 +27,11 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 # Project-Wide Configuration
 include(GNUInstallDirs)
+
+# create a directory where we will store generated generated binary headers
+# (mostly for convenience during installation)
+set(GRACKLE_GENRATED_PUBLIC_HEADERS
+  ${CMAKE_CURRENT_BINARY_DIR}/generated_public_headers)
 
 # determine whether we are building a stand-alone program, or if grackle has
 # been embedded within another project
@@ -44,7 +50,8 @@ if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 endif()
 
 option(GRACKLE_USE_DOUBLE "compile the code with double precision" ON)
-
+option(GRACKLE_DEFINE_INSTALL_RULES
+  "enable Grackle's installation rules" ${GRACKLE_IS_TOP_LEVEL})
 
 # Externally provided content
 find_package(HDF5 REQUIRED COMPONENTS C)
@@ -55,7 +62,6 @@ target_compile_definitions(GRACKLE_HDF5_C
 target_include_directories(GRACKLE_HDF5_C INTERFACE ${HDF5_C_INCLUDE_DIRS})
 
 option(GRACKLE_USE_OPENMP "Use OpenMP" OFF)
-message("${CMAKE_MODULE_PATH}")
 if (GRACKLE_USE_OPENMP)
   find_package(OpenMP REQUIRED COMPONENTS C Fortran)
 endif()
@@ -64,8 +70,7 @@ endif()
 # Main targets built by this project
 add_subdirectory(src/clib)
 
-
-# Packaging (not needed if there is a parent project)
-if(GRACKLE_IS_TOP_LEVEL)
-  # do packaging...
+# Packaging/installation rules (probably not needed if not root project)
+if(GRACKLE_DEFINE_INSTALL_RULES AND NOT CMAKE_SKIP_INSTALL_RULES)
+  include(cmake/installation_rules.cmake)
 endif()

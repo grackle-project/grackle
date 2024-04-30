@@ -11,7 +11,8 @@ if (GRACKLE_USE_DOUBLE)
 else()
   set(GRACKLE_FLOAT_MACRO "GRACKLE_FLOAT_4")
 endif()
-configure_file(grackle_float.h.in grackle_float.h @ONLY)
+configure_file(grackle_float.h.in
+  ${GRACKLE_GENRATED_PUBLIC_HEADERS}/grackle_float.h @ONLY)
 
 # next, declare recipe for generating auto_general.c:
 
@@ -20,14 +21,14 @@ configure_file(grackle_float.h.in grackle_float.h @ONLY)
 # -> VERSION_NUM may hold more information than Grackle_VERSION (e.g. like the
 #    "dev" suffix)
 
-set(_query_version "${CMAKE_CURRENT_SOURCE_DIR}/../../config/query-version.py")
+set(_query_version "${CMAKE_CURRENT_SOURCE_DIR}/../../config/query_version.py")
 function(query_version option OUTVAR)
   execute_process(
       COMMAND ${_query_version} ${option}
       RESULT_VARIABLE RSLT OUTPUT_VARIABLE OUT
       OUTPUT_STRIP_TRAILING_WHITESPACE
   )
-  if(result)
+  if(RSLT)
     message(FATAL_ERROR "Call to `${_query_version} ${option}` failed")
   endif()
   set(${OUTVAR} ${OUT} PARENT_SCOPE)
@@ -67,16 +68,13 @@ file(GLOB concrete_hdr_list CONFIGURE_DEPENDS
   *grackle_chemistry_data_fields.def *.h)
 file(GLOB concrete_f_src_list CONFIGURE_DEPENDS *.F)
 file(GLOB f_interface_list CONFIGURE_DEPENDS *.def)
+list(FILTER f_interface_list EXCLUDE
+  REGEX "/?grackle_chemistry_data_fields.def")
 
 # remove any auto-generated files detected from the source-directory (these
 # would be produced by other build system).
 list(FILTER concrete_c_src_list EXCLUDE REGEX "/?auto_.*")
 list(FILTER concrete_hdr_list EXCLUDE REGEX "/?grackle_float.h")
-
-# move grackle_chemistry_data_fields.def from f_interface_list to hdr_list
-list(FILTER
-  f_interface_list EXCLUDE REGEX "/?grackle_chemistry_data_fields.def")
-list(APPEND concrete_hdr_list grackle_chemistry_data_fields.def)
 
 # Declare the main target
 # =======================
@@ -97,7 +95,7 @@ list(APPEND concrete_hdr_list grackle_chemistry_data_fields.def)
 add_library(Grackle_Grackle
   ${concrete_c_src_list} ${concrete_f_src_list} ${concrete_header_list}
   ${CMAKE_CURRENT_BINARY_DIR}/auto_general.c
-  ${CMAKE_CURRENT_BINARY_DIR}/grackle_float.h)
+  ${GRACKLE_GENRATED_PUBLIC_HEADERS}/grackle_float.h)
 
 # A downstream application built with CMake generally has 2 inclusion
 # approaches (ways that they can make use of this build):
@@ -122,9 +120,28 @@ add_library(Grackle_Grackle
 #   the build)
 add_library(Grackle::Grackle ALIAS Grackle_Grackle) # for inclusion appraoch #1
 
+# the logic diverges a little when naming the library
+if (BUILD_SHARED_LIBS)
+  # Because Grackle's API is not currently suited for ABI-compatability, we
+  # take special steps when compiling it as a shared library (to reduce the
+  # chance that an application linked against one version will try to load a
+  # newer, incompatible version of the library)
+  # - we take a page out of the existing build-system and libtool
+  # - essentially, we will (i) encode the version in core-name of the library
+  #   and (ii) make a symbolic link called libgrackle.so to the the library
+  # - separate instructions are needed to make this link in build-directory
+  #   and in the installation directory
+  set(GRACKLE_LIB_OUTPUT_NAME "grackle-${VERSION_NUM}")
+  add_custom_target(buildtree_link_target
+    ALL COMMAND ${CMAKE_COMMAND} -E create_symlink
+      $<TARGET_FILE:Grackle_Grackle>
+      $<TARGET_FILE_DIR:Grackle_Grackle>/libgrackle.so)
+else()
+  set(GRACKLE_LIB_OUTPUT_NAME "grackle") # resulting lib is named libgrackle.a
+endif()
+
 set_target_properties(Grackle_Grackle PROPERTIES
-  # ensure that the resulting library is named libgrackle(.so)|(.a):
-  OUTPUT_NAME grackle
+  OUTPUT_NAME ${GRACKLE_LIB_OUTPUT_NAME} # <- ensure library is properly named
   # specify target name made available that is made visible in inclusion
   # approach #2. The namespace-prefix of this target, "Grackle::", is declared
   # down below in install(EXPORT ...)
@@ -136,7 +153,7 @@ target_include_directories(Grackle_Grackle
   # grackle AND when linking against grackle under inclusion approach #1
   # -> while it may seem unnecessary to specify the ordinary headers' directory
   #    while building grackle, it's necessary to compile auto_general.c
-  PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}> # generated hdrs
+  PUBLIC $<BUILD_INTERFACE:${GRACKLE_GENRATED_PUBLIC_HEADERS}> # generated hdrs
          $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}> # hdrs in src directory
 
   # specify where to search for the other headers when linking against grackle
@@ -187,60 +204,3 @@ if (BUILD_SHARED_LIBS)
     "Make.examples-config" "Grackle::Grackle" "${GRACKLE_FC_FLAG}"
   )
 endif()
-
-# In the short term, we have explicitly commented out the following code, which
-# deals with installation and creation of a "Config Package File" for a few
-# reasons:
-#  - most importantly, it's unneeded right now. Currently this cmake build
-#    system is all fairly experimental and it only exists to facillitate
-#    embedding of the library within other projects
-#  - setting up installation of the library file and headers isn't hard. But,
-#    we would need to decide just how closely we want to mirror the libtool
-#    approach (which renames the library). Closely mirroring libtool would
-#    introduce some complexity
-#  - creating a "Config Package File" is a little complicated
-#    - This is a file, that we would name GrackleConfig.cmake, that would help
-#      other cmake projects link against the installed grackle libraries.
-#      Among other things, it determines any compiler flags that grackle needs
-#      to use
-#    - This is totally unnecessary if we are embedding grackle within another
-#      project. But, it would probably be good to provide this even if we
-#      ultimately remove the cmake build system.
-#    - it's a little complicated to get this right. In particular, it needs to
-#      conditionally identify any transitive dependencies based on whether
-#      the downstream user wants to use the shared or static library (and the
-#      dependency list depends on whether grackle is compiled with openmp)
-#    - it's also somewhat important to ensure that the package file provides
-#      the same experience as directly embedding grackle
-
-## Handle Installation Considerations
-## ==================================
-## Here we instruct CMake about what needs to be done during installation
-## NOTE: users can influence the installation prefix directory separately
-##       Within that prefix directory
-#
-## installation of public header files
-## (NOTE: it may make sense to reorganize the source directory so that these
-## are more easily identified
-#set(public_hdr_list ${concrete_hdr_list})
-#list(FILTER public_hdr_list INCLUDE REGEX "grackle[^/]*.h")
-#install(FILES ${f_interface_list} ${public_hdr_list}
-#  ${CMAKE_CURRENT_BINARY_DIR}/grackle_float.h
-#  TYPE INCLUDE)
-#
-#
-## install the main library target
-## -> EXPORT associates this target with the GrackleTargets export set
-#install(TARGETS Grackle_Grackle
-#  EXPORT GrackleTargets
-#  DESTINATION ${CMAKE_INSTALL_LIBDIR}
-#)
-#
-## generate and installs a file containing CMake code code that declares targets
-## for all export-key
-## - currently, only 1 target is associated with that export key
-## - all targets in that file will be in the Grackle:: namespace
-#install(EXPORT GrackleTargets
-#  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/Grackle
-#  NAMESPACE Grackle::
-#)
