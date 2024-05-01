@@ -138,7 +138,7 @@ verbose: VERBOSE = 1
 	@rm -f $@
 	@(if [ $(VERBOSE) -eq 0 ]; then \
 	  echo "Compiling $<" ; \
-	  $(LIBTOOL) --mode=compile --tag=FC $(FC) -c $(FFLAGS) $(DEFINES) $*.F >& $(OUTPUT) ; \
+	  $(LIBTOOL) --mode=compile --tag=FC $(FC) -c $(FFLAGS) $(DEFINES) $*.F  -o $@ >& $(OUTPUT) ; \
 	  if [ ! -e $@ ]; then \
              echo; \
 	     echo "Compiling $< failed!"; \
@@ -147,7 +147,7 @@ verbose: VERBOSE = 1
              exit 1; \
           fi ; \
 	else \
-	  $(LIBTOOL) --mode=compile --tag=FC $(FC) -c $(FFLAGS) $(DEFINES) $*.F; \
+	  $(LIBTOOL) --mode=compile --tag=FC $(FC) -c $(FFLAGS) $(DEFINES) $*.F -o $@; \
 	  if [ ! -e $@ ]; then \
 	     exit 1; \
 	  fi ; \
@@ -157,7 +157,7 @@ verbose: VERBOSE = 1
 	@rm -f $@
 	@(if [ $(VERBOSE) -eq 0 ]; then \
 	  echo "Compiling $<" ; \
-	  $(LIBTOOL) --mode=compile --tag=CXX $(CXX) -c $(DEFINES) $(CXXFLAGS) $(INCLUDES) $*.C \
+	  $(LIBTOOL) --mode=compile --tag=CXX $(CXX) -c $(DEFINES) $(CXXFLAGS) $(INCLUDES) $*.C -o $@\
 	    >& $(OUTPUT) ; \
 	  if [ ! -e $@ ]; then \
              echo; \
@@ -167,7 +167,7 @@ verbose: VERBOSE = 1
              exit 1; \
           fi ; \
 	else \
-	  $(LIBTOOL) --mode=compile --tag=CXX $(CXX) -c $(DEFINES) $(CXXFLAGS) $(INCLUDES) $*.C; \
+	  $(LIBTOOL) --mode=compile --tag=CXX $(CXX) -c $(DEFINES) $(CXXFLAGS) $(INCLUDES) $*.C -o $@; \
 	  if [ ! -e $@ ]; then \
 	     exit 1; \
 	  fi ; \
@@ -177,7 +177,7 @@ verbose: VERBOSE = 1
 	@rm -f $@
 	@(if [ $(VERBOSE) -eq 0 ]; then \
 	  echo "Compiling $<" ; \
-	  $(LIBTOOL) --mode=compile --tag=CC $(CC) -c $(DEFINES) $(CFLAGS) $(INCLUDES) $*.c \
+	  $(LIBTOOL) --mode=compile --tag=CC $(CC) -c $(DEFINES) $(CFLAGS) $(INCLUDES) $*.c -o $@ \
 	    >& $(OUTPUT) ; \
 	  if [ ! -e $@ ]; then \
              echo; \
@@ -187,7 +187,7 @@ verbose: VERBOSE = 1
              exit 1; \
           fi ; \
 	else \
-	  $(LIBTOOL) --mode=compile --tag=CC $(CC) -c $(DEFINES) $(CFLAGS) $(INCLUDES) $*.c; \
+	  $(LIBTOOL) --mode=compile --tag=CC $(CC) -c $(DEFINES) $(CFLAGS) $(INCLUDES) $*.c -o $@; \
 	  if [ ! -e $@ ]; then \
 	     exit 1; \
 	  fi ; \
