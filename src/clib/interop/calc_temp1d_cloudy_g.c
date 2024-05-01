@@ -45,6 +45,40 @@ extern void FORTRAN_NAME(interpolate_3Dz_g)(
         const gr_int64* end_int,
         double* value);
 
+// Get index for redshift dimension via bisection
+// - the index is one-indexed
+// - the names of variables have not been changed for backwards compatibility
+//   (it may seem counter-intuitive that clGridDim[1] gives the length of
+//    clPar2, but that's because in Fortran you would access clGridDim(2) )
+static long long find_zindex(double zr, long long clGridRank,
+                             const long long* clGridDim,
+                             const double* clPar2){
+  if (clGridRank > 2){
+    long long zindex;
+    if (zr <= clPar2[0]) {
+      zindex = 1;
+    } else if (zr >= clPar2[clGridDim[1]-2]) {
+      zindex = clGridDim[1];
+    } else if (zr >= clPar2[clGridDim[1]-3]) {
+      zindex = clGridDim[1] - 2;
+    } else {
+      zindex = 1;
+      long long zhighpt = clGridDim[1] - 2;
+      while ((zhighpt - zindex) > 1) {
+        long long zmidpt = (long long)((zhighpt + zindex) / 2);
+        if (zr >= clPar2[zmidpt-1]){
+          zindex = zmidpt;
+        } else {
+          zhighpt = zmidpt;
+        }
+      }
+    }
+    return zindex;
+  } else {
+    return 1;
+  }
+}
+
 
 void calc_temp1d_cloudy_g(
         const gr_float* d, const gr_float* metal, // 3D arrays
@@ -66,7 +100,6 @@ void calc_temp1d_cloudy_g(
   const double mu_metal = 16.0;
   const int ti_max = 20;
 
-  gr_int64 end_int = 0;
   const double inv_log10 = 1.0 / log(10.0);
 
   // Calculate parameter value slopes
@@ -81,31 +114,8 @@ void calc_temp1d_cloudy_g(
     };
 
   // Calculate index for redshift dimension - intentionally kept 1-indexed
-  long long zindex = 1;
-
-  if (clGridRank > 2){
-    // Get index for redshift dimension via bisection
-
-    if (zr <= clPar2[0]) {
-      zindex = 1;
-    } else if (zr >= clPar2[clGridDim[1]-2]) {
-      zindex = clGridDim[1];
-      end_int = 1;
-    } else if (zr >= clPar2[clGridDim[1]-3]) {
-      zindex = clGridDim[1] - 2;
-    } else {
-      zindex = 1;
-      long long zhighpt = clGridDim[1] - 2;
-      while ((zhighpt - zindex) > 1) {
-        long long zmidpt = (long long)((zhighpt + zindex) / 2);
-        if (zr >= clPar2[zmidpt-1]){
-          zindex = zmidpt;
-        } else {
-          zhighpt = zmidpt;
-        }
-      }
-    }
-  }
+  const long long zindex = find_zindex(zr, clGridRank, clGridDim, clPar2);
+  const gr_int64 end_int = ((clGridRank > 2) && (zindex == clGridDim[1]));
 
   for (int i = is + 1; i <= (ie + 1); i++) {
     if ( !itmask[i-1] ) { continue; }
