@@ -20,8 +20,6 @@ OBJS_CONFIG_LIB = \
         calculate_gamma.lo \
         calculate_pressure.lo \
         calculate_temperature.lo \
-        calc_temp1d_cloudy_shim_g.lo \
-        calc_temp1d_cloudy_g.lo \
         calc_temp_cloudy_g.lo \
         calc_tdust_1d_g.lo \
         calc_tdust_3d_g.lo \
@@ -42,4 +40,6 @@ OBJS_CONFIG_LIB = \
         rate_functions.lo \
         initialize_rates.lo \
         utils.lo \
+        interop/calc_temp1d_cloudy_shim_g.lo \
+        interop/calc_temp1d_cloudy_g.lo \
         interop/interpolators_g.lo

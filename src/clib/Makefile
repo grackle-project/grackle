@@ -307,7 +307,10 @@ install:
 #-----------------------------------------------------------------------
 
 clean:
-	-@rm -f *.la .libs/* *.o *.lo DEPEND.bak *~ $(OUTPUT) grackle_float.h *.exe auto_show*.c DEPEND out.make.DEPEND
+	-@rm -f *.la .libs/* *.o *.lo \
+		interop/.libs/* interop/*.o interop/*.lo \
+		DEPEND.bak *~ $(OUTPUT) grackle_float.h *.exe auto_show*.c \
+		DEPEND out.make.DEPEND
 	-@touch DEPEND
 
 #-----------------------------------------------------------------------

@@ -21,6 +21,49 @@ c   1. you have invoked ``USE ISO_C_BINDING``
 c   2. grackle_fortran_types.def has already been included
 
       interface
+        subroutine calc_temp1d_cloudy_g(d, metal, e, rhoH,
+     &                in, jn, kn, is, ie, j, k,
+     &                tgas, mmw, dom, zr, 
+     &                temstart, temend,
+     &                gamma, utem, imetal,
+     &                clGridRank, clGridDim,
+     &                clPar1, clPar2, clPar3,
+     &                clDataSize, clMMW,
+     &                itmask) bind(C)
+          IMPORT
+          R_PREC, INTENT(IN) :: d(*)
+          R_PREC, INTENT(IN) :: metal(*)
+          R_PREC, INTENT(IN) :: e(*)
+          REAL(C_DOUBLE), INTENT(IN) :: rhoH(*)
+          INTEGER(C_INT), VALUE, INTENT(IN) :: in
+          INTEGER(C_INT), VALUE, INTENT(IN) :: jn
+          INTEGER(C_INT), VALUE, INTENT(IN) :: kn
+          INTEGER(C_INT), VALUE, INTENT(IN) :: is
+          INTEGER(C_INT), VALUE, INTENT(IN) :: ie
+          INTEGER(C_INT), VALUE, INTENT(IN) :: j
+          INTEGER(C_INT), VALUE, INTENT(IN) :: k
+          REAL(C_DOUBLE), INTENT(OUT) :: tgas(*)
+          REAL(C_DOUBLE), INTENT(OUT) :: mmw(*)
+          REAL(C_DOUBLE), VALUE, INTENT(IN) :: dom
+          REAL(C_DOUBLE), VALUE, INTENT(IN) :: zr
+          REAL(C_DOUBLE), VALUE, INTENT(IN) :: temstart
+          REAL(C_DOUBLE), VALUE, INTENT(IN) :: temend
+          REAL(C_DOUBLE), VALUE, INTENT(IN) :: gamma
+          REAL(C_DOUBLE), VALUE, INTENT(IN) :: utem
+          INTEGER(C_INT), VALUE, INTENT(IN) :: imetal
+          INTEGER(C_LONG_LONG), VALUE, INTENT(IN) :: clGridRank
+          INTEGER(C_LONG_LONG), INTENT(IN) :: clGridDim(*)
+          REAL(C_DOUBLE), INTENT(IN) :: clPar1(*)
+          REAL(C_DOUBLE), INTENT(IN) :: clPar2(*)
+          REAL(C_DOUBLE), INTENT(IN) :: clPar3(*)
+          INTEGER(C_LONG_LONG), VALUE, INTENT(IN) :: clDataSize
+          REAL(C_DOUBLE), INTENT(IN) :: clMMW(*)
+          INTEGER(C_INT32_T), INTENT(IN) :: itmask(*)
+        end subroutine calc_temp1d_cloudy_g
+
+      end interface
+
+      interface
         subroutine interpolate_1D_g(
      &                input1, gridDim, gridPar1, dgridPar1,
      &                dataSize, dataField, value) bind(C)

@@ -57,8 +57,10 @@
 !
 !-----------------------------------------------------------------------
 
+      USE ISO_C_BINDING
       implicit NONE
-#include "grackle_fortran_types.def"
+#include "../grackle_fortran_types.def"
+#include "interop_funcs.def"
 
 !  General Arguments
 
