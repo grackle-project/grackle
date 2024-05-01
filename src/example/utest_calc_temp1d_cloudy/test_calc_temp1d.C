@@ -7,7 +7,7 @@ extern "C" {
   #include "../../clib/interop/interop_funcs.h"
 
   // legacy version of the function
-  extern void FORTRAN_NAME(calc_temp1d_cloudy_g)(
+  extern void FORTRAN_NAME(calc_temp1d_cloudy_g_fortran)(
         const gr_float* d, const gr_float* metal, // 3D array
         const gr_float* e, // 3D array
         const double* rhoH, // 1D array
@@ -81,7 +81,7 @@ calc_temp_outputs run_test(DummyGrackleConfig& config,
   const std::vector<int32_t> itmask(std::size_t(in), int32_t(1));
 
   if (use_fortran) {
-    FORTRAN_NAME(calc_temp1d_cloudy_g)
+    FORTRAN_NAME(calc_temp1d_cloudy_g_fortran)
       (density.data(), metal_density.data(), eint.data(),
        rhoH.data(),
        &in, &jn, &kn,  &is, &ie, &j, &k,
