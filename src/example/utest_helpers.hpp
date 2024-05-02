@@ -2,6 +2,8 @@
 #include <stdio.h>  // stderr, vfprintf
 #include <stdarg.h> // va_list, va_start, va_end
 
+#include <time.h>
+
 #include <string>
 #include <vector>
 
@@ -252,5 +254,54 @@ struct DummyGrackleConfig{
   DummyGrackleConfig(DummyGrackleConfig&&) = delete;
   DummyGrackleConfig& operator=(const DummyGrackleConfig&) = delete;
   DummyGrackleConfig& operator=(DummyGrackleConfig&&) = delete;
+
+};
+
+
+/// This provides an interface for a very crude timer
+/// -> the main reason this is a struct is so that we can easily swap out the
+///    internal functionality
+struct Timer {
+  Timer() {
+    active_ = false;
+    running_total_ = {0,0};
+  }
+
+  void start() {
+    if (active_) error("TIMER ALREADY ACTIVE!");
+    active_ = true;
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &last_start_);
+  }
+
+  void stop() {
+    timespec stop;
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &stop);
+    if(!active_) error("TIMER ALREADY STOPPED!");
+    active_ = false;
+
+    timespec elapsed;
+    if (last_start_.tv_nsec > stop.tv_nsec) {
+      stop.tv_sec -= time_t(1);
+      stop.tv_nsec += long(1.0e9);
+    }
+    elapsed.tv_sec = stop.tv_sec - last_start_.tv_sec;
+    elapsed.tv_nsec = stop.tv_nsec - last_start_.tv_nsec;
+
+    running_total_.tv_sec += elapsed.tv_sec;
+    running_total_.tv_nsec += elapsed.tv_nsec;
+    if (running_total_.tv_nsec > long(1.0e9)) {
+      running_total_.tv_sec++;
+      running_total_.tv_nsec -= long(1.0e9);
+    }
+  }
+
+  double get() const {
+    return running_total_.tv_sec + (running_total_.tv_nsec / 1.0e9);
+  }
+
+private:
+  bool active_;
+  timespec running_total_;
+  timespec last_start_;
 
 };

@@ -4,6 +4,7 @@
 
 #include <math.h>
 
+
 #include "../utest_helpers.hpp"
 
 
@@ -72,7 +73,6 @@ void FORTRAN_NAME(interpolate_5d_g)(
 }
 
 
-
 // NOTE: this function has been backported to help with unit-testing.
 // Eventually, it will be implemented to help define the C version of
 // cool1d_cloudy_g
@@ -116,6 +116,8 @@ static inline long long find_zindex(double zr, long long clGridRank,
 
 
 
+/// The idea here is to encapsulate an DataTable that can be used to execute
+/// one of the interpolation functions
 class InterpTable {
 
 public:
@@ -192,16 +194,13 @@ private:
   std::vector<double> dataField_;
 };
 
-double run_interp(const std::vector<double>& val_vec,
-                  const InterpTable& table,
-                  bool use_fortran){
+
+Timer run_interp_helper(const double* val_vec,
+                        const InterpTable& table,
+                        std::size_t length,
+                        bool use_fortran, double * out){
 
   const int rank = table.ndim();
-  if (val_vec.size() != rank){
-    error("run_interp", "val_vec has wrong number of dims.");
-  } else if ((rank <= 0) || (rank > 5)) {
-    error("run_interp", "rank has an invalid value.");
-  }
 
   const double* gridPar1 = table.gridPar_0Indexed(0);
   const double* gridPar2 = (rank > 1) ? table.gridPar_0Indexed(1) : nullptr;
@@ -218,80 +217,125 @@ double run_interp(const std::vector<double>& val_vec,
   const gr_int64* gridDim = table.gridDim();
   const gr_int64 dataSize = table.dataSize();
   const double* dataField = table.gridField();
-  
-  double out;
-  if (rank == 1) {
-    if (use_fortran){
-      FORTRAN_NAME(interpolate_1d_g)(&val_vec[0], gridDim,
+
+  Timer t;
+
+  if ((rank == 1) && (use_fortran)) {
+
+    t.start();
+    for (std::size_t i = 0; i < length; i++) {
+      FORTRAN_NAME(interpolate_1d_g)(&val_vec[i], gridDim,
                                      gridPar1, &dgridPar1,
                                      &dataSize, dataField,
-                                     &out);
-    } else {
-      interpolate_1d_g(val_vec[0], gridDim,
+                                     out+i);
+    }
+    t.stop();
+
+  } else if (rank == 1){
+
+    t.start();
+    for (std::size_t i = 0; i < length; i++) {
+      interpolate_1d_g(val_vec[i], gridDim,
                        gridPar1, dgridPar1,
                        dataSize, dataField,
-                       &out);
+                       out+i);
     }
-  } else if (rank == 2) {
-    if (use_fortran){
-      FORTRAN_NAME(interpolate_2d_g)(&val_vec[0], &val_vec[1],
+    t.stop();
+
+  } else if ((rank == 2) && use_fortran){
+
+    t.start();
+    for (std::size_t i = 0; i < length; i++) {
+      FORTRAN_NAME(interpolate_2d_g)(&val_vec[i*2], &val_vec[i*2+1],
                                      gridDim,
                                      gridPar1, &dgridPar1,
                                      gridPar2, &dgridPar2,
                                      &dataSize, dataField,
-                                     &out);
-    } else {
-      interpolate_2d_g(val_vec[0], val_vec[1],
+                                     out+i);
+    }
+    t.stop();
+
+  } else if ((rank == 2)){
+
+    t.start();
+    for (std::size_t i = 0; i < length; i++) {
+      interpolate_2d_g(val_vec[i*2], val_vec[i*2+1],
                        gridDim,
                        gridPar1, dgridPar1,
                        gridPar2, dgridPar2,
                        dataSize, dataField,
-                       &out);
+                       out+i);
     }
-  } else if (rank == 3) {
-    if (use_fortran){
-      FORTRAN_NAME(interpolate_3d_g)(&val_vec[0], &val_vec[1], &val_vec[2],
+    t.stop();
+
+  } else if ((rank == 3) && use_fortran){
+
+    t.start();
+    for (std::size_t i = 0; i < length; i++) {
+      FORTRAN_NAME(interpolate_3d_g)(&val_vec[i*3], &val_vec[i*3+1],
+                                     &val_vec[i*3+2],
                                      gridDim,
                                      gridPar1, &dgridPar1,
                                      gridPar2, &dgridPar2,
                                      gridPar3, &dgridPar3,
                                      &dataSize, dataField,
-                                     &out);
-    } else {
-      interpolate_3d_g(val_vec[0], val_vec[1], val_vec[2],
+                                     out+i);
+    }
+    t.stop();
+
+  } else if (rank == 3) {
+
+    t.start();
+    for (std::size_t i = 0; i < length; i++) {
+      interpolate_3d_g(val_vec[i*3], val_vec[i*3+1], val_vec[i*3+2],
                        gridDim,
                        gridPar1, dgridPar1,
                        gridPar2, dgridPar2,
                        gridPar3, dgridPar3,
                        dataSize, dataField,
-                       &out);
+                       out+i);
     }
-  } else if (rank == 4) {
-    if (use_fortran){
-      FORTRAN_NAME(interpolate_4d_g)(&val_vec[0], &val_vec[1], &val_vec[2],
-                                     &val_vec[3],
+    t.stop();
+
+  } else if ((rank == 4) && use_fortran){
+
+    t.start();
+    for (std::size_t i = 0; i < length; i++) {
+      FORTRAN_NAME(interpolate_4d_g)(&val_vec[i*4], &val_vec[i*4+1],
+                                     &val_vec[i*4+2], &val_vec[i*4+3],
                                      gridDim,
                                      gridPar1, &dgridPar1,
                                      gridPar2, &dgridPar2,
                                      gridPar3, &dgridPar3,
                                      gridPar4, &dgridPar4,
                                      &dataSize, dataField,
-                                     &out);
-    } else {
-      interpolate_4d_g(val_vec[0], val_vec[1], val_vec[2],
-                       val_vec[3],
+                                     out+i);
+    }
+    t.stop();
+
+  } else if (rank == 4) {
+
+    t.start();
+    for (std::size_t i = 0; i < length; i++) {
+      interpolate_4d_g(val_vec[i*4], val_vec[i*4+1], val_vec[i*4+2],
+                       val_vec[i*4+3],
                        gridDim,
                        gridPar1, dgridPar1,
                        gridPar2, dgridPar2,
                        gridPar3, dgridPar3,
                        gridPar4, dgridPar4,
                        dataSize, dataField,
-                       &out);
+                       out+i);
     }
-  } else {
-    if (use_fortran){
-      FORTRAN_NAME(interpolate_5d_g)(&val_vec[0], &val_vec[1], &val_vec[2],
-                                     &val_vec[3], &val_vec[4],
+    t.stop();
+
+  } else if (use_fortran) {
+
+    t.start();
+    for (std::size_t i = 0; i < length; i++) {
+      FORTRAN_NAME(interpolate_5d_g)(&val_vec[i*5], &val_vec[i*5+1],
+                                     &val_vec[i*5+2], &val_vec[i*5+3],
+                                     &val_vec[i*5+4],
                                      gridDim,
                                      gridPar1, &dgridPar1,
                                      gridPar2, &dgridPar2,
@@ -299,10 +343,16 @@ double run_interp(const std::vector<double>& val_vec,
                                      gridPar4, &dgridPar4,
                                      gridPar5, &dgridPar5,
                                      &dataSize, dataField,
-                                     &out);
-    } else {
-      interpolate_5d_g(val_vec[0], val_vec[1], val_vec[2],
-                       val_vec[3], val_vec[4],
+                                     out+i);
+    }
+    t.stop();
+
+  } else {
+
+    t.start();
+    for (std::size_t i = 0; i < length; i++) {
+      interpolate_5d_g(val_vec[i*5], val_vec[i*5+1], val_vec[i*5+2],
+                       val_vec[i*5+3], val_vec[i*5+4],
                        gridDim,
                        gridPar1, dgridPar1,
                        gridPar2, dgridPar2,
@@ -310,30 +360,31 @@ double run_interp(const std::vector<double>& val_vec,
                        gridPar4, dgridPar4,
                        gridPar5, dgridPar5,
                        dataSize, dataField,
-                       &out);
+                       out+i);
     }
+    t.stop();
+
   }
-  return out;
+  return t;
 }
 
-std::vector<double> run_interp(const std::vector<std::vector<double>>& vals,
-                               const InterpTable& table, bool use_fortran)
-{
-  std::vector<double> out(vals.size());
-  for (std::size_t i = 0; i < vals.size(); i++) {
-    out[i] = run_interp(vals[i], table, use_fortran);
-  }
-  return out;
-}
 
-double run_interp_3dz(const std::vector<double>& val_vec,
+struct interp_3dz_arg_{
+  double par1;
+  double zr;
+  double par3;
+  gr_int64 zindex;
+  gr_int64 end_int;
+};
+
+Timer run_interp_3dz_(const double* vals,
                       const InterpTable& table,
-                      bool use_fortran)
+                      std::size_t length,
+                      bool use_fortran,
+                      double * out)
 {
   const int rank = table.ndim();
-  if ((val_vec.size() != rank) && (rank != 3)){
-    error("run_interp_3dz", "val_vec must have 3 parameters.");
-  }
+  if (rank != 3) error("run_interp_3dz", "requires a rank 3 table");
 
   const double* gridPar1 = table.gridPar_0Indexed(0);
   const double* gridPar2 = table.gridPar_0Indexed(1);
@@ -346,42 +397,112 @@ double run_interp_3dz(const std::vector<double>& val_vec,
   const gr_int64 dataSize = table.dataSize();
   const double* dataField = table.gridField();
 
-  const double zr = val_vec[1]; // z redshift
+  // need to do some conversions on the arguments (we try to do this ahead of
+  // time to minimize impact on the timings). Ideally, we'd do this before
+  // calling this function so that we could reuse the same array for both
+  // versions of the function
+  std::vector<interp_3dz_arg_> inputs_vec(length);
+  for (std::size_t i = 0; i < length; i++) {
+    const double zr = vals[i*3+1]; // z redshift
 
-  // Calculate index for redshift dimension - intentionally kept 1-indexed
-  const long long zindex = find_zindex(zr, rank, gridDim, gridPar2);
-  const gr_int64 end_int = ((rank > 2) && (zindex == gridDim[1]));
+    // Calculate index for redshift dimension - intentionally kept 1-indexed
+    const long long zindex = find_zindex(zr, rank, gridDim, gridPar2);
+    const gr_int64 end_int = ((rank > 2) && (zindex == gridDim[1]));
 
-  double out;
-  if (use_fortran){
-    FORTRAN_NAME(interpolate_3dz_g)(&val_vec[0], &zr, &val_vec[2],
-                                    gridDim,
-                                    gridPar1, &dgridPar1,
-                                    gridPar2, &zindex,
-                                    gridPar3, &dgridPar3,
-                                    &dataSize, dataField,
-                                    &end_int, &out);
+    inputs_vec[i] = {vals[i*3], zr, vals[i*3+2], zindex, end_int};
+  }
+
+  const interp_3dz_arg_ * inputs = inputs_vec.data();
+
+  Timer timer;
+
+  if (use_fortran) {
+
+    timer.start();
+    for (std::size_t i = 0; i < length; i++) {
+      FORTRAN_NAME(interpolate_3dz_g)(&(inputs[i].par1), &(inputs[i].zr),
+                                      &(inputs[i].par3),
+                                      gridDim,
+                                      gridPar1, &dgridPar1,
+                                      gridPar2, &(inputs[i].zindex),
+                                      gridPar3, &dgridPar3,
+                                      &dataSize, dataField,
+                                      &(inputs[i].end_int), out+i);
+    }
+    timer.stop();
+
   } else {
-    interpolate_3dz_g(val_vec[0], zr, val_vec[2],
-                      gridDim,
-                      gridPar1, dgridPar1,
-                      gridPar2, zindex,
-                      gridPar3, dgridPar3,
-                      dataSize, dataField,
-                      end_int, &out);
+
+    timer.start();
+    for (std::size_t i = 0; i < length; i++) {
+      interpolate_3dz_g(inputs[i].par1, inputs[i].zr, inputs[i].par3,
+                        gridDim,
+                        gridPar1, dgridPar1,
+                        gridPar2, inputs[i].zindex,
+                        gridPar3, dgridPar3,
+                        dataSize, dataField,
+                        inputs[i].end_int, out+i);
+    }
+    timer.stop();
+
   }
+
+  return timer;
+}
+
+std::vector<double> run_interp(const std::vector<std::vector<double>>& vals,
+                               const InterpTable& table, bool use_fortran,
+                               bool use_3dz, double * elapsed = nullptr)
+{
+  const std::size_t ndim = table.ndim();
+  std::vector<double> flat_vec(vals.size() * ndim);
+  for (std::size_t i = 0; i < vals.size(); i++) {
+    for (std::size_t j = 0; j < ndim; j++) {
+      flat_vec[i*ndim+j] = vals[i][j];
+    }
+  }
+
+  std::vector<double> out(vals.size());
+  Timer t;
+  if (use_3dz) {
+    t = run_interp_3dz_(flat_vec.data(), table, vals.size(),
+                        use_fortran, out.data());
+  } else {
+    t = run_interp_helper(flat_vec.data(), table, vals.size(),
+                          use_fortran, out.data());
+  }
+
+  if (elapsed != nullptr) *elapsed = t.get();
   return out;
 }
 
-std::vector<double> run_interp_3dz(const std::vector<std::vector<double>>& vals,
-                                   const InterpTable& table, bool use_fortran)
+void compare_interp_impls_(const std::vector<std::vector<double>> &inputs,
+                           const InterpTable& table, bool use_3dz,
+                           bool show_timing = false)
 {
-  std::vector<double> out(vals.size());
-  for (std::size_t i = 0; i < vals.size(); i++) {
-    out[i] = run_interp_3dz(vals[i], table, use_fortran);
+  std::vector<double> ref, actual;
+  double fortran_duration_sec, c_duration_sec;
+
+  ref = run_interp(inputs, table, true, use_3dz); // run an extra-time for
+                                                  // more-fair timing
+  ref = run_interp(inputs, table, true, use_3dz, &fortran_duration_sec);
+  actual = run_interp(inputs, table, false, use_3dz, &c_duration_sec);
+  if (show_timing) {
+    printf("      ...Timing Compare: Fortran = %g sec C = %g sec\n",
+           fortran_duration_sec, c_duration_sec);
   }
-  return out;
-}
+
+  if (false) { // debugging statement:
+    std::string ref_s = vec_to_string(ref);
+    std::string actual_s = vec_to_string(actual);
+    std::printf("   reference: %s\n", ref_s.c_str());
+    std::printf("   actual: %s\n", actual_s.c_str());
+  }
+  compare_values(actual, ref, 0.0, 0.0, "");
+};
+
+// Miscelaneous Functions
+// ======================
 
 // uniform distribution on the interval (0, 1]
 double uniform_dist_transform_(std::minstd_rand &prng){
@@ -394,6 +515,8 @@ double uniform_dist_transform_(std::minstd_rand &prng){
   return ( static_cast<double>(prng()) / static_cast<double>(prng.max()) );
 }
 
+// Functions for constructing InterpTable
+// ======================================
 
 struct ParamProps { double min_val; double max_val; int num_vals; };
 
@@ -458,6 +581,9 @@ InterpTable get_3dz_table()
   return {param_vals, dataField};
 }
 
+// Functions to help generate locations to perform interpolations at
+// =================================================================
+
 // this returns a vector of vectors appropriate interpolate function for cases where 1 or more
 // inputs come from special_vals (the other inputs are taken from
 // ordinary_vals)
@@ -503,30 +629,17 @@ std::vector<std::vector<double>> get_combinations_
   return out;
 }
 
+struct TableSummaryProps{
+  std::vector<double> min_param_val;
+  std::vector<double> max_param_val;
+  std::vector<double> unaligned_inrange;
+  std::vector<double> unaligned_inrange_alt;
+  std::vector<double> half_min_param_val;
+  std::vector<double> double_max_param_val;
+};
 
-void run_test(const InterpTable& table, const bool use_3dz = false)
-{
+TableSummaryProps get_interp_table_summary(const InterpTable& table) {
   const int rank = table.ndim();
-
-  auto compare_funcs = [&](const std::vector<std::vector<double>> &inputs)
-    {
-      std::vector<double> ref, actual;
-      if (use_3dz) {
-        ref = run_interp_3dz(inputs, table, true);
-        actual = run_interp_3dz(inputs, table, false);
-      } else {
-        ref = run_interp(inputs, table, true);
-        actual = run_interp(inputs, table, false);
-      }
-
-      if (false) {
-        std::string ref_s = vec_to_string(ref);
-        std::string actual_s = vec_to_string(actual);
-        std::printf("   reference: %s\n", ref_s.c_str());
-        std::printf("   actual: %s\n", actual_s.c_str());
-      }
-      compare_values(actual, ref, 0.0, 0.0, "");
-    };
 
   // get useful values for test:
   std::vector<double> min_param_val(rank);
@@ -551,44 +664,62 @@ void run_test(const InterpTable& table, const bool use_3dz = false)
     double_max_param_val[i] = max_param_val[i]*2;
   }
 
+  TableSummaryProps out;
+  out.min_param_val = min_param_val;
+  out.max_param_val = max_param_val;
+  out.unaligned_inrange = unaligned_inrange;
+  out.unaligned_inrange_alt = unaligned_inrange_alt;
+  out.half_min_param_val = half_min_param_val;
+  out.double_max_param_val = double_max_param_val;
+  return out;
+}
+
+// Define the actual tests
+// =======================
+
+void run_test(const InterpTable& table, const bool use_3dz = false)
+{
+  TableSummaryProps props = get_interp_table_summary(table);
+
+  // define the actual tests in the test suite
+
   std::printf(" -> comparing some in-range values\n");
   {
-    std::vector<std::vector<double>> inputs
-      = get_combinations_(unaligned_inrange, unaligned_inrange_alt);
-    compare_funcs(inputs);
+    std::vector<std::vector<double>> inputs = get_combinations_
+      (props.unaligned_inrange, props.unaligned_inrange_alt);
+    compare_interp_impls_(inputs, table, use_3dz);
   }
 
   std::printf(" -> comparing cases with 1+ inputs on left grid edge\n");
   {
-    std::vector<std::vector<double>> inputs
-      = get_combinations_(min_param_val, unaligned_inrange);
-    compare_funcs(inputs);
+    std::vector<std::vector<double>> inputs = get_combinations_
+      (props.min_param_val, props.unaligned_inrange);
+    compare_interp_impls_(inputs, table, use_3dz);
   }
 
   std::printf(" -> comparing cases with 1+ inputs on right grid edge\n");
   {
-    std::vector<std::vector<double>> inputs
-      = get_combinations_(max_param_val, unaligned_inrange);
-    compare_funcs(inputs);
+    std::vector<std::vector<double>> inputs = get_combinations_
+      (props.max_param_val, props.unaligned_inrange);
+    compare_interp_impls_(inputs, table, use_3dz);
   }
 
   if (!use_3dz) {
     std::printf(" -> comparing cases with 1+ inputs less than min grid val\n");
-    std::vector<std::vector<double>> inputs
-      = get_combinations_(half_min_param_val, unaligned_inrange);
-    compare_funcs(inputs);
+    std::vector<std::vector<double>> inputs = get_combinations_
+      (props.half_min_param_val, props.unaligned_inrange);
+    compare_interp_impls_(inputs, table, use_3dz);
   }
 
-  std::printf(" -> comparing cases with 1+ inputs greater than min grid val\n");
+  std::printf(" -> comparing cases with 1+ inputs greater than max grid val\n");
   {
-    std::vector<std::vector<double>> inputs
-      = get_combinations_(double_max_param_val, unaligned_inrange);
-    compare_funcs(inputs);
+    std::vector<std::vector<double>> inputs = get_combinations_
+      (props.double_max_param_val, props.unaligned_inrange);
+    compare_interp_impls_(inputs, table, use_3dz);
   }
-
 
   if (use_3dz) {
-    std::printf(" -> some extra redshifts\n");
+    std::printf(" -> comparing cases with some extra redshifts\n");
 
     gr_int64 n_gridded_z_vals = table.gridDim()[1];
 
@@ -600,9 +731,31 @@ void run_test(const InterpTable& table, const bool use_3dz = false)
 
     std::vector<std::vector<double>> inputs;
     for (int i = 0; i < 5; i++) {
-      inputs.push_back({unaligned_inrange[0], temp[i], unaligned_inrange[2]});
+      inputs.push_back({props.unaligned_inrange[0], temp[i],
+                        props.unaligned_inrange[2]});
     }
-    compare_funcs(inputs);
+    compare_interp_impls_(inputs, table, use_3dz);
+  }
+
+  std::size_t n_random = 1000000;
+  std::printf(" -> comparing %d random points within grid (with timing)\n",
+              int(n_random));
+  {
+    const int rank = table.ndim();
+    // the fact that we use vectors of vectors as inputs makes this inefficient
+    std::minstd_rand prng = std::minstd_rand(353545);
+    std::vector<std::vector<double>> inputs(n_random);
+    for (std::size_t i = 0; i < n_random; i++) {
+      std::vector<double> tmp(rank);
+      for (int j = 0; j < rank; j++) {
+        double max_val = props.max_param_val[j];
+        double min_val = props.min_param_val[j];
+        tmp[j] = uniform_dist_transform_(prng) * (max_val - min_val) + min_val;
+      }
+      inputs[i] = tmp;
+    }
+
+    compare_interp_impls_(inputs, table, use_3dz, true);
   }
 
 }
