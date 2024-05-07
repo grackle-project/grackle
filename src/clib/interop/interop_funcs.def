@@ -1,0 +1,250 @@
+!=======================================================================
+!
+!
+! fortran interfaces of internal interoperable functions
+!
+!
+! Copyright (c) 2013, Enzo/Grackle Development Team.
+!
+! Distributed under the terms of the Enzo Public Licence.
+!
+! The full license is in the file LICENSE, distributed with this 
+! software.
+!=======================================================================
+
+c Here we define the Fortran 90 interfaces to the C routines using the 2003
+c   Fortran C interoperability features. Note that some care must be taken
+c   defining matching types.
+
+c before including this file, be sure that:
+c   1. you have invoked ``USE ISO_C_BINDING``
+c   2. grackle_fortran_types.def has already been included
+
+      interface
+        subroutine calc_temp1d_cloudy_g(d, metal, e, rhoH,
+     &                in, jn, kn, is, ie, j, k,
+     &                tgas, mmw, dom, zr, 
+     &                temstart, temend,
+     &                gamma, utem, imetal,
+     &                clGridRank, clGridDim,
+     &                clPar1, clPar2, clPar3,
+     &                clDataSize, clMMW,
+     &                itmask) bind(C)
+          IMPORT
+          R_PREC, INTENT(IN) :: d(*)
+          R_PREC, INTENT(IN) :: metal(*)
+          R_PREC, INTENT(IN) :: e(*)
+          REAL(C_DOUBLE), INTENT(IN) :: rhoH(*)
+          INTEGER(C_INT), VALUE, INTENT(IN) :: in
+          INTEGER(C_INT), VALUE, INTENT(IN) :: jn
+          INTEGER(C_INT), VALUE, INTENT(IN) :: kn
+          INTEGER(C_INT), VALUE, INTENT(IN) :: is
+          INTEGER(C_INT), VALUE, INTENT(IN) :: ie
+          INTEGER(C_INT), VALUE, INTENT(IN) :: j
+          INTEGER(C_INT), VALUE, INTENT(IN) :: k
+          REAL(C_DOUBLE), INTENT(OUT) :: tgas(*)
+          REAL(C_DOUBLE), INTENT(OUT) :: mmw(*)
+          REAL(C_DOUBLE), VALUE, INTENT(IN) :: dom
+          REAL(C_DOUBLE), VALUE, INTENT(IN) :: zr
+          REAL(C_DOUBLE), VALUE, INTENT(IN) :: temstart
+          REAL(C_DOUBLE), VALUE, INTENT(IN) :: temend
+          REAL(C_DOUBLE), VALUE, INTENT(IN) :: gamma
+          REAL(C_DOUBLE), VALUE, INTENT(IN) :: utem
+          INTEGER(C_INT), VALUE, INTENT(IN) :: imetal
+          INTEGER(C_LONG_LONG), VALUE, INTENT(IN) :: clGridRank
+          INTEGER(C_LONG_LONG), INTENT(IN) :: clGridDim(*)
+          REAL(C_DOUBLE), INTENT(IN) :: clPar1(*)
+          REAL(C_DOUBLE), INTENT(IN) :: clPar2(*)
+          REAL(C_DOUBLE), INTENT(IN) :: clPar3(*)
+          INTEGER(C_LONG_LONG), VALUE, INTENT(IN) :: clDataSize
+          REAL(C_DOUBLE), INTENT(IN) :: clMMW(*)
+          INTEGER(C_INT32_T), INTENT(IN) :: itmask(*)
+        end subroutine calc_temp1d_cloudy_g
+      end interface
+
+      interface
+        subroutine cool1d_cloudy_g(d, rhoH, metallicity,
+     &                in, jn, kn, is, ie, j, k,
+     &                logtem, edot, comp2, dom, zr,
+     &                icmbTfloor, iClHeat, iZscale,
+     &                clGridRank, clGridDim,
+     &                clPar1, clPar2, clPar3,
+     &                clDataSize, clCooling, clHeating,
+     &                itmask)  bind(C)
+          IMPORT
+          R_PREC, INTENT(IN) :: d(*)
+          REAL(C_DOUBLE), INTENT(IN) :: rhoH(*)
+          REAL(C_DOUBLE), INTENT(IN) :: metallicity(*)
+          INTEGER(C_INT), VALUE, INTENT(IN) :: in
+          INTEGER(C_INT), VALUE, INTENT(IN) :: jn
+          INTEGER(C_INT), VALUE, INTENT(IN) :: kn
+          INTEGER(C_INT), VALUE, INTENT(IN) :: is
+          INTEGER(C_INT), VALUE, INTENT(IN) :: ie
+          INTEGER(C_INT), VALUE, INTENT(IN) :: j
+          INTEGER(C_INT), VALUE, INTENT(IN) :: k
+          REAL(C_DOUBLE), INTENT(IN) :: logtem(*)
+          REAL(C_DOUBLE), INTENT(OUT) :: edot(*)
+          REAL(C_DOUBLE), VALUE, INTENT(IN) :: comp2
+          REAL(C_DOUBLE), VALUE, INTENT(IN) :: dom
+          REAL(C_DOUBLE), VALUE, INTENT(IN) :: zr
+          INTEGER(C_INT), VALUE, INTENT(IN) :: icmbTfloor
+          INTEGER(C_INT), VALUE, INTENT(IN) :: iClHeat
+          INTEGER(C_INT), VALUE, INTENT(IN) :: iZscale
+          INTEGER(C_LONG_LONG), VALUE, INTENT(IN) :: clGridRank
+          INTEGER(C_LONG_LONG), INTENT(IN) :: clGridDim(*)
+          REAL(C_DOUBLE), INTENT(IN) :: clPar1(*)
+          REAL(C_DOUBLE), INTENT(IN) :: clPar2(*)
+          REAL(C_DOUBLE), INTENT(IN) :: clPar3(*)
+          INTEGER(C_LONG_LONG), VALUE, INTENT(IN) :: clDataSize
+          REAL(C_DOUBLE), INTENT(IN) :: clCooling(*)
+          REAL(C_DOUBLE), INTENT(IN) :: clHeating(*)
+          INTEGER(C_INT32_T), INTENT(IN) :: itmask(*)
+        end subroutine cool1d_cloudy_g
+      end interface
+
+      interface
+        subroutine interpolate_1D_g(
+     &                input1, gridDim, gridPar1, dgridPar1,
+     &                dataSize, dataField, value) bind(C)
+          IMPORT
+          REAL(C_DOUBLE), VALUE, INTENT(IN) :: input1
+          INTEGER(C_LONG_LONG), INTENT(IN) :: gridDim(*)
+          REAL(C_DOUBLE), INTENT(IN) :: gridPar1(*)
+          REAL(C_DOUBLE), VALUE, INTENT(IN) :: dgridPar1
+          INTEGER(C_LONG_LONG), VALUE, INTENT(IN) :: dataSize
+          REAL(C_DOUBLE), INTENT(IN) :: dataField(*)
+          REAL(C_DOUBLE), INTENT(OUT) :: value
+          end subroutine interpolate_1D_g
+      end interface
+
+      interface
+        subroutine interpolate_2D_g(
+     &                input1, input2, gridDim,
+     &                gridPar1, dgridPar1,
+     &                gridPar2, dgridPar2,
+     &                dataSize, dataField, value) bind(C)
+          IMPORT
+          REAL(C_DOUBLE), VALUE, INTENT(IN) :: input1
+          REAL(C_DOUBLE), VALUE, INTENT(IN) :: input2
+          INTEGER(C_LONG_LONG), INTENT(IN) :: gridDim(*)
+          REAL(C_DOUBLE), INTENT(IN) :: gridPar1(*)
+          REAL(C_DOUBLE), VALUE, INTENT(IN) :: dgridPar1
+          REAL(C_DOUBLE), INTENT(IN) :: gridPar2(*)
+          REAL(C_DOUBLE), VALUE, INTENT(IN) :: dgridPar2
+          INTEGER(C_LONG_LONG), VALUE, INTENT(IN) :: dataSize
+          REAL(C_DOUBLE), INTENT(IN) :: dataField(*)
+          REAL(C_DOUBLE), INTENT(OUT) :: value
+          end subroutine interpolate_2D_g
+      end interface
+
+      interface
+        subroutine interpolate_3D_g(
+     &                input1, input2, input3, gridDim,
+     &                gridPar1, dgridPar1,
+     &                gridPar2, dgridPar2,
+     &                gridPar3, dgridPar3,
+     &                dataSize, dataField, value) bind(C)
+          IMPORT
+          REAL(C_DOUBLE), VALUE, INTENT(IN) :: input1
+          REAL(C_DOUBLE), VALUE, INTENT(IN) :: input2
+          REAL(C_DOUBLE), VALUE, INTENT(IN) :: input3
+          INTEGER(C_LONG_LONG), INTENT(IN) :: gridDim(*)
+          REAL(C_DOUBLE), INTENT(IN) :: gridPar1(*)
+          REAL(C_DOUBLE), VALUE, INTENT(IN) :: dgridPar1
+          REAL(C_DOUBLE), INTENT(IN) :: gridPar2(*)
+          REAL(C_DOUBLE), VALUE, INTENT(IN) :: dgridPar2
+          REAL(C_DOUBLE), INTENT(IN) :: gridPar3(*)
+          REAL(C_DOUBLE), VALUE, INTENT(IN) :: dgridPar3
+          INTEGER(C_LONG_LONG), VALUE, INTENT(IN) :: dataSize
+          REAL(C_DOUBLE), INTENT(IN) :: dataField(*)
+          REAL(C_DOUBLE), INTENT(OUT) :: value
+          end subroutine interpolate_3D_g
+      end interface
+
+      interface
+        subroutine interpolate_3Dz_g(
+     &                input1, input2, input3, gridDim,
+     &                gridPar1, dgridPar1,
+     &                gridPar2, index2,
+     &                gridPar3, dgridPar3,
+     &                dataSize, dataField,
+     &                end_int, value) bind(C)
+          IMPORT
+          REAL(C_DOUBLE), VALUE, INTENT(IN) :: input1
+          REAL(C_DOUBLE), VALUE, INTENT(IN) :: input2
+          REAL(C_DOUBLE), VALUE, INTENT(IN) :: input3
+          INTEGER(C_LONG_LONG), INTENT(IN) :: gridDim(*)
+          REAL(C_DOUBLE), INTENT(IN) :: gridPar1(*)
+          REAL(C_DOUBLE), VALUE, INTENT(IN) :: dgridPar1
+          REAL(C_DOUBLE), INTENT(IN) :: gridPar2(*)
+          INTEGER(C_LONG_LONG), VALUE, INTENT(IN) :: index2
+          REAL(C_DOUBLE), INTENT(IN) :: gridPar3(*)
+          REAL(C_DOUBLE), VALUE, INTENT(IN) :: dgridPar3
+          INTEGER(C_LONG_LONG), VALUE, INTENT(IN) :: dataSize
+          REAL(C_DOUBLE), INTENT(IN) :: dataField(*)
+          INTEGER(C_LONG_LONG), VALUE, INTENT(IN) :: end_int
+          REAL(C_DOUBLE), INTENT(OUT) :: value
+          end subroutine interpolate_3Dz_g
+      end interface
+
+      interface
+        subroutine interpolate_4D_g(
+     &                input1, input2, input3, input4,
+     &                gridDim,
+     &                gridPar1, dgridPar1,
+     &                gridPar2, dgridPar2,
+     &                gridPar3, dgridPar3,
+     &                gridPar4, dgridPar4,
+     &                dataSize, dataField, value) bind(C)
+          IMPORT
+          REAL(C_DOUBLE), VALUE, INTENT(IN) :: input1
+          REAL(C_DOUBLE), VALUE, INTENT(IN) :: input2
+          REAL(C_DOUBLE), VALUE, INTENT(IN) :: input3
+          REAL(C_DOUBLE), VALUE, INTENT(IN) :: input4
+          INTEGER(C_LONG_LONG), INTENT(IN) :: gridDim(*)
+          REAL(C_DOUBLE), INTENT(IN) :: gridPar1(*)
+          REAL(C_DOUBLE), VALUE, INTENT(IN) :: dgridPar1
+          REAL(C_DOUBLE), INTENT(IN) :: gridPar2(*)
+          REAL(C_DOUBLE), VALUE, INTENT(IN) :: dgridPar2
+          REAL(C_DOUBLE), INTENT(IN) :: gridPar3(*)
+          REAL(C_DOUBLE), VALUE, INTENT(IN) :: dgridPar3
+          REAL(C_DOUBLE), INTENT(IN) :: gridPar4(*)
+          REAL(C_DOUBLE), VALUE, INTENT(IN) :: dgridPar4
+          INTEGER(C_LONG_LONG), VALUE, INTENT(IN) :: dataSize
+          REAL(C_DOUBLE), INTENT(IN) :: dataField(*)
+          REAL(C_DOUBLE), INTENT(OUT) :: value
+          end subroutine interpolate_4D_g
+      end interface
+
+      interface
+        subroutine interpolate_5D_g(
+     &                input1, input2, input3, input4, input5,
+     &                gridDim,
+     &                gridPar1, dgridPar1,
+     &                gridPar2, dgridPar2,
+     &                gridPar3, dgridPar3,
+     &                gridPar4, dgridPar4,
+     &                gridPar5, dgridPar5,
+     &                dataSize, dataField, value) bind(C)
+          IMPORT
+          REAL(C_DOUBLE), VALUE, INTENT(IN) :: input1
+          REAL(C_DOUBLE), VALUE, INTENT(IN) :: input2
+          REAL(C_DOUBLE), VALUE, INTENT(IN) :: input3
+          REAL(C_DOUBLE), VALUE, INTENT(IN) :: input4
+          REAL(C_DOUBLE), VALUE, INTENT(IN) :: input5
+          INTEGER(C_LONG_LONG), INTENT(IN) :: gridDim(*)
+          REAL(C_DOUBLE), INTENT(IN) :: gridPar1(*)
+          REAL(C_DOUBLE), VALUE, INTENT(IN) :: dgridPar1
+          REAL(C_DOUBLE), INTENT(IN) :: gridPar2(*)
+          REAL(C_DOUBLE), VALUE, INTENT(IN) :: dgridPar2
+          REAL(C_DOUBLE), INTENT(IN) :: gridPar3(*)
+          REAL(C_DOUBLE), VALUE, INTENT(IN) :: dgridPar3
+          REAL(C_DOUBLE), INTENT(IN) :: gridPar4(*)
+          REAL(C_DOUBLE), VALUE, INTENT(IN) :: dgridPar4
+          REAL(C_DOUBLE), INTENT(IN) :: gridPar5(*)
+          REAL(C_DOUBLE), VALUE, INTENT(IN) :: dgridPar5
+          INTEGER(C_LONG_LONG), VALUE, INTENT(IN) :: dataSize
+          REAL(C_DOUBLE), INTENT(IN) :: dataField(*)
+          REAL(C_DOUBLE), INTENT(OUT) :: value
+          end subroutine interpolate_5D_g
+      end interface

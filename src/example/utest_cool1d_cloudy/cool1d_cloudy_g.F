@@ -1,7 +1,10 @@
 !=======================================================================
 !////////////////////  SUBROUTINE COOL1D_CLOUDY_G  \\\\\\\\\\\\\\\\\\\\\
 
-      subroutine cool1d_cloudy_g(d, rhoH, metallicity,
+! NOTE: "_fortran" has been appended to the name of this subroutine to avoid
+!     name collisions when we include interop_funcs.def file
+
+      subroutine cool1d_cloudy_g_fortran(d, rhoH, metallicity,
      &                in, jn, kn, is, ie, j, k,
      &                logtem, edot, comp2, dom, zr,
      &                icmbTfloor, iClHeat, iZscale,
@@ -52,8 +55,10 @@
 !
 !-----------------------------------------------------------------------
 
+      USE ISO_C_BINDING
       implicit NONE
-#include "grackle_fortran_types.def"
+#include "../../clib/grackle_fortran_types.def"
+#include "../../clib/interop/interop_funcs.def"
 
 !  General Arguments
 
@@ -75,7 +80,7 @@
 
 !  Iteration mask
 
-      logical itmask(in)
+      integer*4 itmask(in)
 
 !  Parameters
 
@@ -84,7 +89,7 @@
       integer i, get_heat
       integer*8 zindex, zmidpt, zhighpt
       real*8 dclPar(clGridRank), inv_log10, log10_tCMB
-      logical end_int
+      integer*8 end_int
 
 !  Slice locals
 
@@ -95,7 +100,7 @@
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
 !=======================================================================
 
-      end_int = .false.
+      end_int = 0
       get_heat = iClHeat
 
       inv_log10 = 1._DKIND / log(10._DKIND)
@@ -115,7 +120,7 @@
       endif
 
       do i=is+1, ie+1
-         if ( itmask(i) ) then
+         if ( itmask(i) .ne. 0 ) then
 
             log10tem(i) = logtem(i) * inv_log10
 
@@ -133,7 +138,7 @@
                   zindex = 1
                else if (zr .ge. clPar2(clGridDim(2)-1)) then
                   zindex = clGridDim(2)
-                  end_int = .true.
+                  end_int = 1
                   get_heat = 0
                else if (zr .ge. clPar2(clGridDim(2)-2)) then
                   zindex = clGridDim(2) - 2

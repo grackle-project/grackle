@@ -6,7 +6,7 @@
      &     dataSize, dataField, value)
 
       implicit NONE
-#include "grackle_fortran_types.def"
+#include "../../clib/grackle_fortran_types.def"
 
 !  General Arguments
 
@@ -49,7 +49,7 @@
      &     dataSize, dataField, value)
 
       implicit NONE
-#include "grackle_fortran_types.def"
+#include "../../clib/grackle_fortran_types.def"
 
 !  General Arguments
 
@@ -111,7 +111,7 @@
      &     dataSize, dataField, value)
 
       implicit NONE
-#include "grackle_fortran_types.def"
+#include "../../clib/grackle_fortran_types.def"
 
 !  General Arguments
 
@@ -192,7 +192,7 @@
      &     end_int, value)
 
       implicit NONE
-#include "grackle_fortran_types.def"
+#include "../../clib/grackle_fortran_types.def"
 
 !  General Arguments
       integer*8 dataSize, index2
@@ -202,10 +202,10 @@
      &       gridPar2(gridDim(2)),
      &       gridPar3(gridDim(3)), dgridPar3
       real*8 dataField(dataSize)
+      integer*8 end_int
 
 !  Locals
 
-      logical end_int
       integer*8 index1, index3, int_index
       integer q, w
       real*8 slope, value3(2), value2(2)
@@ -213,7 +213,7 @@
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
 !=======================================================================
 
-      if (end_int) then
+      if (end_int .eq. 1) then
          call interpolate_2Df3D_g(input1,
      &        input3, gridDim,
      &        gridPar1, dgridPar1,
@@ -285,7 +285,7 @@
      &     value)
 
       implicit NONE
-#include "grackle_fortran_types.def"
+#include "../../clib/grackle_fortran_types.def"
 
 !  General Arguments
 
@@ -350,7 +350,7 @@
      &     dataSize, dataField, value)
 
       implicit NONE
-#include "grackle_fortran_types.def"
+#include "../../clib/grackle_fortran_types.def"
 
 !  General Arguments
 
@@ -444,7 +444,7 @@
      &     dataSize, dataField, value)
 
       implicit NONE
-#include "grackle_fortran_types.def"
+#include "../../clib/grackle_fortran_types.def"
 
 !  General Arguments
 

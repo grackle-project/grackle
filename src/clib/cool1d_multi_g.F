@@ -237,7 +237,7 @@
             enddo
          endif
 
-         call calc_temp1d_cloudy_g(d, metal, e, rhoH,
+         call calc_temp1d_cloudy_shim_g(d, metal, e, rhoH,
      &        in, jn, kn, is, ie, j, k,
      &        tgas, mmw, dom, zr, 
      &        temstart, temend,
@@ -941,7 +941,7 @@ c  new (correct) way: (april 4, 2007)
 
          iZscale = 0
          mycmbTfloor = 0
-         call cool1d_cloudy_g(d, rhoH, metallicity,
+         call cool1d_cloudy_shim_g(d, rhoH, metallicity,
      &        in, jn, kn, is, ie, j, k,
      &        logtem, edot, comp2, dom, zr,
      &        mycmbTfloor, iClHeat, iZscale,
@@ -1094,7 +1094,7 @@ c  new (correct) way: (april 4, 2007)
          if (clnew .eq. 1) then
 
             iZscale = 1
-            call cool1d_cloudy_g(d, rhoH, metallicity,
+            call cool1d_cloudy_shim_g(d, rhoH, metallicity,
      &           in, jn, kn, is, ie, j, k,
      &           logtem, edot, comp2, dom, zr,
      &           icmbTfloor, iClHeat, iZscale,

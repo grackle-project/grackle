@@ -25,7 +25,10 @@ code_examples = ["c_example",
                  "cxx_example",
                  "cxx_omp_example",
                  "cxx_grid_example",
-                 "fortran_example"]
+                 "fortran_example",
+                 "test_calc_temp1d_cloudy",
+                 "test_cool1d_cloudy",
+                 "test_interpolators"]
 
 
 def run_command(command, cwd, env):

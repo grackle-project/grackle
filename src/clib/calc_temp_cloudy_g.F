@@ -59,8 +59,10 @@
 !
 !-----------------------------------------------------------------------
 
+      USE ISO_C_BINDING
       implicit NONE
 #include "grackle_fortran_types.def"
+#include "interop/interop_funcs.def"
 #ifdef _OPENMP
 #include "omp_lib.h"
 #endif
@@ -102,7 +104,7 @@
 
 !  Iteration mask
 
-      logical itmask(in)
+      integer*4 itmask(in)
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
 !=======================================================================
@@ -145,7 +147,7 @@
 !     Initialize iteration mask to true for all cells.
 
          do i = is+1, ie+1
-            itmask(i) = .true.
+            itmask(i) = 1
 
             rhoH(i) = fh * d(i,j,k)
          enddo
