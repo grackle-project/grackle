@@ -256,11 +256,11 @@ void interpolate_5d_g(double input1, double input2, double input3,
 // This is used for interpolating from just the last
 // slice in the datacube before the redshift where
 // the UV background turns on.
-static double interpolate_2Df3D_g(double input1, double input3,
-                                  const gr_int64* gridDim, // 2 elements
-                                  const double* gridPar1, double dgridPar1,
+static inline double interpolate_2Df3D_g(double input1, double input3,
+                                  const gr_int64* GR_RESTRICT gridDim, // 3 elements
+                                  const double* GR_RESTRICT gridPar1, double dgridPar1,
                                   gr_int64 index2,
-                                  const double* gridPar3, double dgridPar3,
+                                  const double* GR_RESTRICT gridPar3, double dgridPar3,
                                   gr_int64 dataSize,
                                   const double* dataField)
 {
@@ -309,6 +309,17 @@ void interpolate_3dz_g(double input1, double input2, double input3,
   const gr_int64 index1 = get_index_(input1, gridDim[0], gridPar1, dgridPar1);
   const gr_int64 index3 = get_index_(input3, gridDim[2], gridPar3, dgridPar3);
 
+
+  // it turns out that precomputing the following 2 variables reduces runtime
+  // appreciably (because the C compiler can't automatically hoist these
+  // calculations out of the loop)
+  const double par2_slope_denom = log((1+gridPar2[index2]) /
+                                      (1+gridPar2[index2-1]));
+  const double par2_offset_from_grid = log((1+input2)/(1+gridPar2[index2-1]));
+
+
+  // preliminary testing on gcc 9.4 suggests that unrolling the outer loop
+  // could speed this function up by ~10%
   for (gr_int64 q = 0; q < 2; q++) {
     for (gr_int64 w = 0; w < 2; w++) {
 
@@ -321,10 +332,8 @@ void interpolate_3dz_g(double input1, double input2, double input3,
     }
 
     // interpolate over parameter 2
-    double slope = (value3[1] - value3[0]) /
-      log((1+gridPar2[index2]) / (1+gridPar2[index2-1]));
-
-    value2[q] = log((1+input2)/(1+gridPar2[index2-1])) * slope + value3[0];
+    double slope = (value3[1] - value3[0]) / par2_slope_denom;
+    value2[q] = par2_offset_from_grid * slope + value3[0];
   }
 
   // interpolate over parameter 1
