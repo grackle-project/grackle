@@ -210,19 +210,15 @@ verbose: VERBOSE = 1
 .PHONY: autogen
 autogen: config_type auto_general.c
 
+
+# in following recipe, GRACKLE_FLOAT_MACRO is set to either GRACKLE_FLOAT_4 or
+# GRACKLE_FLOAT_8
 .PHONY: config_type
 config_type: grackle_float.h.in
-	@(if [ $(ASSEMBLE_PRECISION_NUMBER) -eq 4 ]; then \
-	   $(CONFIG_DIR)/configure_file.py --clobber \
-	       --input grackle_float.h.in \
-	       --output grackle_float.h \
-	       GRACKLE_FLOAT_MACRO=GRACKLE_FLOAT_4; \
-	else \
-	   $(CONFIG_DIR)/configure_file.py --clobber \
-	       --input grackle_float.h.in \
-	       --output grackle_float.h \
-	       GRACKLE_FLOAT_MACRO=GRACKLE_FLOAT_8; \
-	fi)
+	@($(CONFIG_DIR)/configure_file.py --clobber \
+	    --input grackle_float.h.in \
+	    --output grackle_float.h \
+	    GRACKLE_FLOAT_MACRO=GRACKLE_FLOAT_$(ASSEMBLE_PRECISION_NUMBER));
 
 # Force update of auto_general.c
 .PHONY: auto_general.c
