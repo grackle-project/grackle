@@ -88,6 +88,14 @@ include Make.config.assemble
 
 LIBTOOL ?= libtool
 
+# define current library release version
+# - previously this was hardcoded to a string within Make.config.assemble
+# - now that we started using the QUERY_VERSION script, we need to do it here
+# - if Make.config.assemble invoked the script, errors would arise whenever any
+#   Makefile (like the code-examples Makefile) includes Make.config.assemble,
+#   without defining the QUERY_VERSION script-path ahead of time
+LIB_RELEASE_VERSION := $(shell $(QUERY_VERSION) show-version)
+
 #=======================================================================
 # OBJECT FILES
 #=======================================================================
