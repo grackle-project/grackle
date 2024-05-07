@@ -1,13 +1,21 @@
 #!/usr/bin/env python3
 import argparse, os, subprocess
 
+def get_last_line(path):
+    last_line = None
+    with open(path, 'r') as f:
+        for line in filter(lambda l: len(l) > 0 and not l.isspace(), f):
+            last_line = line
+    if last_line is None:
+        raise ValueError("the {} file is empty".format(path))
+    return last_line.rstrip()
+
+def query_version():
+    return get_last_line(os.path.join(os.path.dirname(__file__), '../VERSION'))
+
 def _call(command, **kwargs):
     rslt = subprocess.check_output(command, shell = True, **kwargs)
     return rslt.decode().rstrip()  # return as str & remove any trailing '\n'
-
-def query_version():
-    version_file = os.path.join(os.path.dirname(__file__), '../VERSION')
-    return _call("tail -1 " + version_file)
 
 def query_git(command):
     # note: we explicitly redirect stderr since `&>` is not portable 
