@@ -177,10 +177,10 @@
                   edot_met(i) = edot_met(i) + 10._DKIND**log_heat(i)
                endif
 #else
-               call rank1_interpolation(get_heat, icmbTfloor, 
-     &              log10tem(i), edot_met(i), log_cool(i), 
-     &              log_cool_cmb(i), log_heat(i), clGridRank, 
-     &              clDataSize, clGridDim, clPar1, clCooling, clHeating, 
+               call rank1_interpolation(get_heat, icmbTfloor,
+     &              log10tem(i), edot_met(i), log_cool(i),
+     &              log_cool_cmb(i), log_heat(i), clGridRank,
+     &              clDataSize, clGridDim, clPar1, clCooling, clHeating,
      &              dclPar(1), log10_tCMB)
           
 #endif
@@ -208,9 +208,9 @@
                   edot_met(i) = edot_met(i) + 10._DKIND**log_heat(i)
                endif
 #else
-              call rank2_interpolation(get_heat, icmbTfloor, 
-     &            log10tem(i), edot_met(i), log_cool(i), 
-     &            log_cool_cmb(i), log_heat(i), log_n_h(i), clGridRank, 
+               call rank2_interpolation(get_heat, icmbTfloor,
+     &            log10tem(i), edot_met(i), log_cool(i),
+     &            log_cool_cmb(i), log_heat(i), log_n_h(i), clGridRank,
      &            clDataSize, clGridDim, clPar1, clPar2, clCooling,
      &            clHeating, dclPar(1), dclPar(2), log10_tCMB)
 #endif   
@@ -250,10 +250,11 @@
                   edot_met(i) = edot_met(i) + 10._DKIND**log_heat(i)
                endif
 #else
-              call rank3_interpolation(get_heat, icmbTfloor, 
-     &            log10tem(i), edot_met(i), log_cool(i), 
-     &            log_cool_cmb(i), log_heat(i), clGridRank, 
-     &            clDataSize, clGridDim, clPar1, clPar2, clPar3, 
+               call rank3_interpolation(get_heat, icmbTfloor,
+     &            log10tem(i), edot_met(i), log_cool(i),
+     &            log_cool_cmb(i), log_heat(i), log_n_h(i),
+     &            zindex, clGridRank, clDataSize, clGridDim,
+     &            clPar1, clPar2, clPar3,
      &            clCooling, clHeating, dclPar(1), dclPar(3), 
      &            log10_tCMB)   
 #endif   
@@ -287,7 +288,7 @@
 !=======================================================================
 !////////////////////  SUBROUTINE RANK1_INTERPOLATION  \\\\\\\\\\\\\\\\\
 
-      subroutine rank1_interpolation(get_heat, icmbTfloor, 
+      subroutine rank1_interpolation(get_heat, icmbTfloor,
      &      log10tem_i, edot_met_i, log_cool_i, log_cool_cmb_i, 
      &      log_heat_i, clGridRank, clDataSize, clGridDim, clPar1, 
      &      clCooling, clHeating, dclPar_1, log10_tCMB)
@@ -348,7 +349,7 @@
 !=======================================================================
 !////////////////////  SUBROUTINE RANK2_INTERPOLATION  \\\\\\\\\\\\\\\\\
 
-      subroutine rank2_interpolation(get_heat, icmbTfloor, 
+      subroutine rank2_interpolation(get_heat, icmbTfloor,
      &      log10tem_i, edot_met_i, log_cool_i, log_cool_cmb_i, 
      &      log_heat_i, log_n_h_i, clGridRank, clDataSize, 
      &      clGridDim, clPar1, clPar2, clCooling, clHeating, 
@@ -414,9 +415,9 @@
 
       subroutine rank3_interpolation(get_heat, icmbTfloor, 
      &      log10tem_i, edot_met_i, log_cool_i, log_cool_cmb_i,
-     &      log_heat_i, clGridRank, clDataSize, clGridDim, clPar1, 
-     &      clPar2, clPar3, clCooling, clHeating, dclPar_1, dclPar_3, 
-     &      log10_tCMB)
+     &      log_heat_i, log_n_h_i, zindex, clGridRank, clDataSize,
+     &      clGridDim, clPar1, clPar2, clPar3, clCooling, clHeating,
+     &      dclPar_1, dclPar_3, log10_tCMB)
           
 !
 !  INTERPOLATE RANK 3 CASE (Interpolate over density, redshift, and temperature.)
@@ -451,38 +452,37 @@
 !=======================================================================
 
       call interpolate_3Dz_g(log_n_h_i, zr, log10tem_i,
-     &              clGridDim,
-     &              clPar1, dclPar_1, 
-     &              clPar2, zindex,
-     &              clPar3, dclPar_3,
-     &              clDataSize, clCooling, 
-     &              end_int, log_cool_i)
+     &   clGridDim,
+     &   clPar1, dclPar_1,
+     &   clPar2, zindex,
+     &   clPar3, dclPar_3,
+     &   clDataSize, clCooling,
+     &   end_int, log_cool_i)
       edot_met_i = -10._DKIND**log_cool_i
 
 !     Ignore CMB term if T >> T_CMB
       if ((icmbTfloor .eq. 1) .and. 
      &   ((log10tem_i - log10_tCMB) .lt. 2._DKIND)) then
          call interpolate_3Dz_g(log_n_h_i, zr, log10_tCMB,
-     &   clGridDim,
-     &   clPar1, dclPar_1,
-     &   clPar2, zindex,
-     &   clPar3, dclPar_3,
-     &   clDataSize, clCooling, 
-     &   end_int, log_cool_cmb_i)
+     &      clGridDim,
+     &      clPar1, dclPar_1,
+     &      clPar2, zindex,
+     &      clPar3, dclPar_3,
+     &      clDataSize, clCooling,
+     &      end_int, log_cool_cmb_i)
          edot_met_i = edot_met_i + 10._DKIND**log_cool_cmb_i
       endif
 
       if (get_heat .eq. 1) then
          call interpolate_3Dz_g(log_n_h_i, zr, log10tem_i,
-     &   clGridDim,
-     &   clPar1, dclPar_1,
-     &   clPar2, zindex,
-     &   clPar3, dclPar_3,
-     &   clDataSize, clHeating, 
-     &   end_int, log_heat_i)
+     &      clGridDim,
+     &      clPar1, dclPar_1,
+     &      clPar2, zindex,
+     &      clPar3, dclPar_3,
+     &      clDataSize, clHeating,
+     &      end_int, log_heat_i)
          edot_met_i = edot_met_i + 10._DKIND**log_heat_i
       endif
-
 
       return
       end
