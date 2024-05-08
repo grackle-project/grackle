@@ -152,7 +152,7 @@ double clHeating[clDataSize] = {39.224844181639753, 39.224844181639753, 39.20256
                                   &clDataSize, clCooling, clHeating, itmask);
 
 
-    for (int i=0; i<in; ++i) {  
+    for (int i=0; i<in; ++i) {
         EXPECT_DOUBLE_EQ(edot[i], edot_reference[i]);
         //ASSERT_NEAR(edot[i], edot_reference[i], 1e-8);
     }
