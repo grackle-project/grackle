@@ -35,7 +35,7 @@ Version numbers associated with a release follow the rules of `semantic versioni
    as possible, we would NEVER remove deprecated functionality except
    when incrementing the major version number.  For example, in the
    release of Grackle 3.0, we marked some functions as deprecated.
-   Technically, if we were adhearing to the rules of semantic
+   Technically, if we were adhering to the rules of semantic
    versioning as strictly as possible, we would have waited until
    Grackle 4.0 to actually remove those functions.  The main reason to
    do this is if we cared about maintaining ABI compatability between
@@ -86,7 +86,7 @@ It is possible to :ref:`query <query-version>` this version number at runtime.
 pygrackle Version Number
 ------------------------
 
-This is the version number assocaited with the python bindings.
+This is the version number associated with the python bindings.
 We have only recently begun incrementing this number in recent releases.
 
 
@@ -113,7 +113,7 @@ More importantly you should probably be using Grackle as a static library, rathe
          If we do that, we will be sure to announce the deprecation (and provide migration guidelines) in a release **long** before we remove that functionality.
 
 .. [#f3] At the time of writing, the API requires the user to explicitly allocate and deallocate the memory used to hold instances of the :c:type:`chemistry_data`, :c:type:`code_units`, :c:type:`grackle_field_data` and (when using the *local* api) the :c:type:`chemistry_data_storage` types, which are all implemented as structs.
-         Minor modifications to Grackle commonly involves introducing new struct-members to the underlying structs.
+         Minor modifications to Grackle commonly involve introducing new struct-members to the underlying structs.
          As noted above, great care is taken so that you can freely compile an application against a newer versions of Grackle without making any modifications to the application's source code (i.e. the API is backwards compatabile).
          However, it's important to make sure that the header-files shipped with the newer version of Grackle are installed when doing this so that the compiler can properly infer that how much memory to allocate **(If you don't know what this all means, don't worry about it. You need to go out of your way to do this wrong)**.
 
