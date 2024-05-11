@@ -209,16 +209,18 @@ endif()
 set_target_properties(Grackle_Grackle PROPERTIES
   # set standard cmake-specific properties
   OUTPUT_NAME ${GRACKLE_LIB_OUTPUT_NAME} # <- ensure library is properly named
-  # specify target name made available that is made visible in inclusion
-  # approach #2. The namespace-prefix of this target, "Grackle::", is declared
-  # down below in install(EXPORT ...)
+  # specify target name that is made visible in inclusion approach #2. The
+  # namespace-prefix of this target, "Grackle::", is declared in the
+  # install(EXPORT ...) command included with the installation rules
   EXPORT_NAME Grackle
 
-  # custom properties (intended for consumption by downstream projects)
+  # set custom properties (intended for consumption by downstream projects)
+  # -> keep these in-sync with the properties in the Config-Package File
   GRACKLE_VERSION_STR "${VERSION_NUM}"
   GRACKLE_USE_DOUBLE "${GRACKLE_USE_DOUBLE}"
   GRACKLE_USE_OPENMP "${GRACKLE_USE_OPENMP}"
 )
+
 
 target_include_directories(Grackle_Grackle
   # specify where to search for generated and ordinary headers when building
