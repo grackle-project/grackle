@@ -1,0 +1,24 @@
+# This file can be used with pkg-config or pkgconf to help link against grackle
+
+# The ${pcfiledir} variable is a feature of pkg-config & pkgconf that is
+# commonly used to make the build relocatable (there's not a ton of docs on it)
+
+prefix=${pcfiledir}/../..
+libdir=${prefix}/lib
+includedir=${prefix}/include
+
+Name: grackle
+Description: chemistry and radiative cooling library for astrophysical simulations and models
+Version: @Grackle_VERSION@
+URL: https://github.com/grackle-project/grackle
+Cflags: -I${includedir}
+Libs: -L${libdir} -lgrackle
+Libs.private: @_GRACKLE_PC_PRIVATE_LIBS@
+
+# This file may be generated with or without Requires.private (it should be
+# configured so that it works properly in either case)
+#  - unfortunately, when we use Requires.private, it ends up introducing extra
+#    flags when compiling a shared library (and unnecessary Cflags when
+#    compiling a static library)... It's probably ok, just ugly
+
+@_PC_REQUIRES_PRIVATE_LINE@
