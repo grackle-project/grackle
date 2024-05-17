@@ -32,14 +32,16 @@ To create a new release:
      (i) Commit A (the first commit) is the final commit included in the release. It should:
 
          - update the changelog
-	 - update the version number of the c-library. This is currently tracked in with `src/clib/Make.config.assemble` **AND** (for documentation purposes) in `doc/source/conf.py`
+         - update the version number of the c-library. This is currently tracked within the ``VERSION`` file (that can be found at the root level of the repository)
          - update the version number of the python module (stored internally in `src/python/setup.py`)
 
      (ii) Commit B (the second commit) is the first commit for the next version.
           It should just update the version number of the c-library to specify the next development version
 
-	  -  like before, this must be updated in `src/clib/Make.config.assemble` **and** `doc/source/conf.py`
+          -  like before, this must be updated in  the ``VERSION`` file (that can be found at the root level of the repository)
           - do **NOT** touch anything else (even the python version number)
+
+
 
   3. After the PR is merged, perform the release on GitHub.
      Make sure to associate the release (and the new tag) with Commit A (not with Commit B).
