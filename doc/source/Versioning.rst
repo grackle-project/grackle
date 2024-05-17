@@ -53,6 +53,9 @@ It must also be incremented in a new release if a backwards incompatible change 
 A change in the minor version number can indicate changes in functionality.
 It must be incremented in a new release if a backwards-compatable change has been made to the public API since the last release.
 
+A change in the micro version number denotes a bugfix-release.
+In other words, it must only be incremented if the only changes since the last release are bugfixes that have not modified the public API in any way.
+
 The presence of ``.dev<DEV_NUM>`` in a version number denotes a development version.
 Development version numbers are not compatible with semantic versioning.
 
