@@ -25,4 +25,5 @@ add_executable(runUnitCool1DCloudyTests test_unit_cool1d_cloudy_g.cpp)
 target_link_libraries(runUnitCool1DCloudyTests grackle gtest gtest_main hdf5)
 target_include_directories(runUnitCool1DCloudyTests PRIVATE ${PROJECT_SOURCE_DIR}/src/clib)
 
-add_test(NAME UnitCool1DCloudy COMMAND runUnitCalcTDust1DTests)
+add_test(NAME CoolRank1InterpolationTest COMMAND runUnitCalcTDust1DTests)
+add_test(NAME CoolRank2InterpolationTest COMMAND runUnitCalcTDust1DTests)
