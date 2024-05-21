@@ -181,9 +181,9 @@
                endif
 #else
                call cool_rank1_interpolation(get_heat, icmbTfloor,
-     &              log10tem(i), clGridRank, clDataSize,
+     &              log10tem(i), log10_tCMB, clGridRank, clDataSize,
      &              clGridDim, clPar1, clCooling, clHeating,
-     &              dclPar(1), log10_tCMB, edot_met(i))
+     &              dclPar(1), edot_met(i))
 
 
 #endif
@@ -212,10 +212,11 @@
                endif
 #else
                call cool_rank2_interpolation(get_heat, icmbTfloor,
-     &            log10tem(i), edot_met(i), log_cool(i),
-     &            log_cool_cmb(i), log_heat(i), log_n_h(i), clGridRank,
-     &            clDataSize, clGridDim, clPar1, clPar2, clCooling,
-     &            clHeating, dclPar(1), dclPar(2), log10_tCMB)
+     &            log_n_h(i), log10tem(i), log10_tCMB,
+     &            clGridRank, clDataSize, clGridDim,
+     &            clPar1, clPar2, clCooling, clHeating,
+     &            dclPar(1), dclPar(2), edot_met(i))
+
 #endif
 !           Interpolate over density, redshift, and temperature.
             else if (clGridRank .eq. 3) then
@@ -351,9 +352,9 @@
 !///////////////  SUBROUTINE COOL_RANK1_INTERPOLATION  \\\\\\\\\\\\\\\\\
 
       subroutine cool_rank1_interpolation(get_heat, icmbTfloor,
-     &      log10tem_i, clGridRank, clDataSize,
+     &      log10tem_i, log10_tCMB, clGridRank, clDataSize,
      &      clGridDim, clPar1, clCooling, clHeating, dclPar_1,
-     &      log10_tCMB, edot_met_i)
+     &      edot_met_i)
 
 !
 !  INTERPOLATE RANK 1 CASE (Interpolate over temperature.)
@@ -413,10 +414,10 @@
 !///////////////  SUBROUTINE COOL_RANK2_INTERPOLATION  \\\\\\\\\\\\\\\\\
 
       subroutine cool_rank2_interpolation(get_heat, icmbTfloor,
-     &      log10tem_i, edot_met_i, log_cool_i, log_cool_cmb_i,
-     &      log_heat_i, log_n_h_i, clGridRank, clDataSize,
-     &      clGridDim, clPar1, clPar2, clCooling, clHeating,
-     &      dclPar_1, dclPar_2, log10_tCMB)
+     &      log_n_h_i, log10tem_i, log10_tCMB,
+     &      clGridRank, clDataSize, clGridDim,
+     &      clPar1, clPar2, clCooling, clHeating,
+     &      dclPar_1, dclPar_2, edot_met_i)
 
 !
 !  INTERPOLATE RANK 2 CASE (Interpolate over density and temperature.)
@@ -439,12 +440,13 @@
 #include "grackle_fortran_types.def"
 
       integer get_heat, icmbTfloor
-      real*8 log10tem_i, edot_met_i, log_cool_i, log_cool_cmb_i,
-     &   log_heat_i, log_n_h_i
+      real*8 log10tem_i, edot_met_i, log_n_h_i
       integer*8 clGridRank, clDataSize, clGridDim(clGridRank)
       real*8 clPar1(clGridDim(1)), clPar2(clGridDim(2)),
      &   clCooling(clDataSize), clHeating(clDataSize), dclPar_1,
      &   dclPar_2, log10_tCMB
+      ! Local variables
+      real*8 log_cool_i, log_cool_cmb_i, log_heat_i
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
 !=======================================================================
