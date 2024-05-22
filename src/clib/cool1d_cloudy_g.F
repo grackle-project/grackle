@@ -255,12 +255,10 @@
                endif
 #else
                call cool_rank3_interpolation(get_heat, icmbTfloor,
-     &            log10tem(i), edot_met(i), log_cool(i),
-     &            log_cool_cmb(i), log_heat(i), log_n_h(i),
-     &            zindex, clGridRank, clDataSize, clGridDim,
-     &            clPar1, clPar2, clPar3,
-     &            clCooling, clHeating, dclPar(1), dclPar(3),
-     &            log10_tCMB)
+     &            log_n_h(i), zr, log10tem(i), log10_tCMB, zindex,
+     &            clGridRank, clDataSize, clGridDim, clPar1,
+     &            clPar2, clPar3, clCooling, clHeating, dclPar(1),
+     &            dclPar(3), edot_met(i))
 #endif
 
             else
@@ -479,10 +477,11 @@
 !///////////////  SUBROUTINE COOL_RANK3_INTERPOLATION  \\\\\\\\\\\\\\\\\
 
       subroutine cool_rank3_interpolation(get_heat, icmbTfloor,
-     &      log10tem_i, edot_met_i, log_cool_i, log_cool_cmb_i,
-     &      log_heat_i, log_n_h_i, zindex, clGridRank, clDataSize,
-     &      clGridDim, clPar1, clPar2, clPar3, clCooling, clHeating,
-     &      dclPar_1, dclPar_3, log10_tCMB)
+     &      log_n_h_i, zr, log10tem_i, log10_tCMB, zindex,
+     &      clGridRank, clDataSize, clGridDim,
+     &      clPar1, clPar2, clPar3,
+     &      clCooling, clHeating,
+     &      dclPar_1, dclPar_3, edot_met_i)
 
 !
 !  INTERPOLATE RANK 3 CASE (Interpolate over density, redshift, and temperature.)
@@ -505,13 +504,14 @@
 #include "grackle_fortran_types.def"
 
       integer get_heat, icmbTfloor
-      real*8 log10tem_i, edot_met_i, log_cool_i, log_cool_cmb_i,
-     &   log_heat_i, log_n_h_i, zr
+      real*8 log10tem_i, edot_met_i, log_n_h_i, zr
       integer*8 zindex, clGridRank, clDataSize, clGridDim(clGridRank)
       real*8 clPar1(clGridDim(1)), clPar2(clGridDim(2)),
      &   clPar3(clGridDim(3)), clCooling(clDataSize),
      &   clHeating(clDataSize), dclPar_1, dclPar_3, log10_tCMB
       logical end_int
+      ! Local variables
+      real*8 log_cool_i, log_cool_cmb_i, log_heat_i
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
 !=======================================================================
