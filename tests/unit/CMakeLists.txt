@@ -27,3 +27,4 @@ target_include_directories(runUnitCool1DCloudyTests PRIVATE ${PROJECT_SOURCE_DIR
 
 add_test(NAME CoolRank1InterpolationTest COMMAND runUnitCalcTDust1DTests)
 add_test(NAME CoolRank2InterpolationTest COMMAND runUnitCalcTDust1DTests)
+add_test(NAME CoolRank3InterpolationTest COMMAND runUnitCalcTDust1DTests)
