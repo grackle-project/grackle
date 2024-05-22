@@ -20,17 +20,15 @@ extern void FORTRAN_NAME(cool_rank1_interpolation)(int* get_heat, int* icmbTfloo
 extern void FORTRAN_NAME(cool_rank2_interpolation)(int* get_heat, int* icmbTfloor,
                                                    double* log_n_h_i, double* log10tem_i, double* log10_tCMB,
                                                    long long* clGridRank, long long* clDataSize, long long* clGridDim,
-                                                   double* clPar1, double* clPar2, double* clCooling, double* clHeating,
+                                                   double* clPar1, double* clPar2,
+                                                   double* clCooling, double* clHeating,
                                                    double* dclPar_1, double* dclPar_2,
                                                    double* edot_met_i);
 
 extern void FORTRAN_NAME(cool_rank3_interpolation)(int* get_heat, int* icmbTfloor,
-                                                   double* log10tem_i, double* edot_met_i,
-                                                   double* log_cool_i, double* log_cool_cmb_i,
-                                                   double* log_heat_i, double* log_n_h_i,
-                                                   long long* zindex, long long* clGridRank,
-                                                   long long* clDataSize, long long* clGridDim,
+                                                   double* log_n_h_i, double* zr, double* log10tem_i, double* log10_tCMB, long long* zindex, 
+                                                   long long* clGridRank, long long* clDataSize, long long* clGridDim,
                                                    double* clPar1, double* clPar2, double* clPar3,
                                                    double* clCooling, double* clHeating,
                                                    double* dclPar_1, double* dclPar_3,
-                                                   double* log10_tCMB);
+                                                   double* edot_met_i);
