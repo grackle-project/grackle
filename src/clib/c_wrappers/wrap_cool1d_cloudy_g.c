@@ -26,9 +26,9 @@ extern void FORTRAN_NAME(cool_rank2_interpolation)(int* get_heat, int* icmbTfloo
                                                    double* edot_met_i);
 
 extern void FORTRAN_NAME(cool_rank3_interpolation)(int* get_heat, int* icmbTfloor,
-                                                   double* log_n_h_i, double* zr, double* log10tem_i, double* log10_tCMB, long long* zindex, 
+                                                   double* log_n_h_i, double* zr, double* log10tem_i, double* log10_tCMB,
                                                    long long* clGridRank, long long* clDataSize, long long* clGridDim,
                                                    double* clPar1, double* clPar2, double* clPar3,
                                                    double* clCooling, double* clHeating,
-                                                   double* dclPar_1, double* dclPar_3,
+                                                   double* dclPar_1, long long* zindex, double* dclPar_3,
                                                    double* edot_met_i);

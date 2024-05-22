@@ -255,10 +255,10 @@
                endif
 #else
                call cool_rank3_interpolation(get_heat, icmbTfloor,
-     &            log_n_h(i), zr, log10tem(i), log10_tCMB, zindex,
+     &            log_n_h(i), zr, log10tem(i), log10_tCMB,
      &            clGridRank, clDataSize, clGridDim, clPar1,
      &            clPar2, clPar3, clCooling, clHeating, dclPar(1),
-     &            dclPar(3), edot_met(i))
+     &            zindex, dclPar(3), edot_met(i))
 #endif
 
             else
@@ -477,11 +477,11 @@
 !///////////////  SUBROUTINE COOL_RANK3_INTERPOLATION  \\\\\\\\\\\\\\\\\
 
       subroutine cool_rank3_interpolation(get_heat, icmbTfloor,
-     &      log_n_h_i, zr, log10tem_i, log10_tCMB, zindex,
+     &      log_n_h_i, zr, log10tem_i, log10_tCMB,
      &      clGridRank, clDataSize, clGridDim,
      &      clPar1, clPar2, clPar3,
      &      clCooling, clHeating,
-     &      dclPar_1, dclPar_3, edot_met_i)
+     &      dclPar_1, zindex, dclPar_3, edot_met_i)
 
 !
 !  INTERPOLATE RANK 3 CASE (Interpolate over density, redshift, and temperature.)
