@@ -43,28 +43,23 @@ To create a new release:
 
      - It's fairly straightforward to draft changes to the changelog based on the contents of the GitHub release.
 
-  2. Create a new PR that includes 2 commits will serve as the final PR of the release. It should:
+  2. Create a new PR that will serve as the final PR of the release. The PR should:
 
      - update the changelog (the changelog is stored within the ``CHANGELOG`` file at the root of the repository).
 
      - update the version number of the c-library. This is currently tracked within the ``VERSION`` file (that can be found at the root level of the repository)
+
      - (if applicable) update the version number of the python module (stored internally in `src/python/setup.py`)
-
-     (ii) Commit B (the second commit) is the first commit for the next version.
-          It should just update the version number of the c-library to specify the next development version
-
-          -  like before, this must be updated in  the ``VERSION`` file (that can be found at the root level of the repository)
-          - do **NOT** touch anything else (even the python version number)
-
-
 
   3. After the PR is merged, perform the release on GitHub.
      Make sure to associate the release with the proper target (it should include changes from the PR).
 
   4. Make a new PR composed of a single commit (this is the first commit of the next release).
      It should **only** update the version number of the c-library to specify the next development version
+ 
+      - like before, this must be updated in  the ``VERSION`` file (that can be found at the root level of the repository).
+        Instructions for choosing development version numbers are provided :ref:`here <dev-version-numbers>` (note that this changed in the version 3.3 release).
 
-      -  like before, this must be updated in  the ``VERSION`` file (that can be found at the root level of the repository)
       - do **NOT** touch anything else (even the python version number)
 
   5. Go to the *Read the Docs* `project webpage <https://readthedocs.org/projects/grackle/>`__ and the new release's tag to the list of "Active Versions."

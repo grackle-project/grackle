@@ -23,11 +23,15 @@ Currently, the repository tracks 2 separate version numbers: the primary version
 Primary Version Number
 ----------------------
 
-The version number used in a release has the form ``<MAJOR>.<MINOR>(.<MICRO>)``, and the version number tracked in the repository at any given time follows the more general form ``<MAJOR>.<MINOR>(.<MICRO>)(.dev<DEV_NUM>)``.
-In this template ``<MAJOR>``, ``<MINOR>``, and ``<MICRO>`` correspond to major, minor, and micro version numbers (the micro version number may be omitted if it’s zero). The final section can specify a development version.
+It is possible to :ref:`query <query-version>` this version number at runtime.
 
-Version numbers associated with a release follow the rules of `semantic versioning <https://semver.org/>`__. [#f1]_
+In the commit associated with a release, the repository stores the release version number.
+This number follows the rules of `semantic versioning <https://semver.org/>`__ and has the form ``<MAJOR>.<MINOR>(.<MICRO>)``.
+In this template, ``<MAJOR>``, ``<MINOR>``, and ``<MICRO>`` correspond to major, minor, and micro version numbers (the micro version number may be omitted if it’s zero).
 
+At any time other than a release, the repository stores a "development version number."
+Since version the ``3.3`` release, the development version number also follows the rules of semantic-versioning and has the form ``<MAJOR>.<MINOR>(.<MICRO>)-dev``.
+More detail is provided :ref:`below <dev-version-numbers>`.
 
 .. COMMENT BLOCK
 
@@ -56,35 +60,33 @@ It must be incremented in a new release if a backwards-compatable change has bee
 A change in the micro version number denotes a bugfix-release.
 In other words, it must only be incremented if the only changes since the last release are bugfixes that have not modified the public API in any way.
 
-The presence of ``.dev<DEV_NUM>`` in a version number denotes a development version.
-Development version numbers are not compatible with semantic versioning.
+.. _dev-version-numbers:
 
-For context, the first 10 version numbers since version ``3.0``, in the order of release are: ``3.0``, ``3.1.dev1``, ``3.1``, ``3.2.dev1``, ``3.1.1``, ``3.2.dev2``, ``3.2.0``, ``3.3.dev0``, ``3.2.1``, ``3.3.dev1``
+Development Version Number Conventions
+++++++++++++++++++++++++++++++++++++++
 
-.. COMMENT BLOCK
+Starting in version ``3.3``, we shifted strategies for incrementing development version numbers.
+Our strategy has 2 strict rules:
 
-   There are 2 reasons that development versions are not compatible
-   with semantic versioning:
+1. The development version immediately after a release must take the version number from that release, increments the micro number and appends the ``-dev`` suffix.
 
-   1. From a formatting perspective, the delimiter between the core
-      version number and the suffix should be a '-' rather than a
-      '.'. In other words, ``3.1-dev1`` has correct formatting while
-      the formatting is incorrect for ``3.1.dev1``
+   - In other words, ``3.3.1-dev`` **MUST** be the development version number immediately after the ``3.3`` release
 
-   2. Semantic Versioning has stronger rules for determining version
-      order. If we change the order formatting for the first 10 versions
-      since 3.0, the actual order is:
+   - Likewise, after a hypothetical ``3.3.1`` bugfix-release, ``3.3.2-dev`` **MUST** be the next development version number.
 
-        3.0 -> 3.1-dev1 -> 3.1 -> 3.2-dev1 -> 3.1.1 -> 3.2-dev2 ->
-        3.2.0 -> 3.3-dev0 -> 3.2.1 -> 3.3-dev1
+2. We are free to increment (but not required) development versions between releases, but we must be sure that the leading numbers of a development-version provide the lower bound on the next allowed release version.
+   For example:
 
-      However, semantic versioning compliance would imply a conflicting
-      version ordering of:
+   - In version ``3.3.1-dev``, if we added a major new feature, and we were confident the next release had to be a minor release, we could introduce a new development-version with an incremented minor version.
+     The resulting version sequence is: ``3.3``, ``3.3.1-dev``, ``3.4-dev``, ``3.4`` ...
 
-        3.0 -> 3.1-dev1 -> 3.1 -> 3.1.1 -> 3.2-dev1 -> 3.2-dev2 ->
-        3.2.0 -> 3.2.1 -> 3.3-dev0 -> 3.3-dev1
+   - As noted above this strategy does not require us to introduce a new development-version (e.g. ``3.3``, ``3.3.1-dev``, ``3.4``, ... is allowed). 
+     With that said, we will make an effort to increment development-version numbers when deprecated functionality is removed.
 
-It is possible to :ref:`query <query-version>` this version number at runtime.
+Under the premise that releases always correspond to a single commit on the main Grackle branch, this new strategy ensures that development version numbers always satisfy version ordering requirements of semantic versioning.
+
+Prior, to the ``3.3`` release, development versions could violate the ordering requirements. [#f1]_ 
+That versioning strategy was better suited for the alternative development-approach where bugfix releases corresponded to commits that on a branch separated from the main development branch.
 
 pygrackle Version Number
 ------------------------
@@ -110,7 +112,9 @@ More importantly you should probably be using Grackle as a static library, rathe
 
 .. rubric:: Footnotes:
 
-.. [#f1] The version number associated with a development version violates the rules outlined in the semantic versioning specification.
+.. [#f1] Prior to version ``3.3``, the developmemt version number was allowed to violate the version-ordering rules outlined in the semantic versioning specification.
+         These development numnbers had the form ``<MAJOR>.<MINOR>(.<MICRO>).dev<DEV_NUM>`` (the suffix was always ``.dev`` whereas our newer strategy ends with ``-dev``).
+         For reference, the **ORDERED** list of version numbers from version ``3.0`` through ``3.3`` is: ``3.0``, ``3.1.dev1``, ``3.1``, ``3.2.dev1``, ``3.1.1``, ``3.2.dev2``, ``3.2.0``, ``3.3.dev0``, ``3.2.1``, ``3.3.dev1``, ``3.3``.
 
 .. [#f2] The main exception is if we deprecate part of the API.
          If we do that, we will be sure to announce the deprecation (and provide migration guidelines) in a release **long** before we remove that functionality.
