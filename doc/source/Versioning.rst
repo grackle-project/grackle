@@ -113,7 +113,7 @@ More importantly you should probably be using Grackle as a static library, rathe
 .. rubric:: Footnotes:
 
 .. [#f1] Prior to version ``3.3``, the developmemt version number was allowed to violate the version-ordering rules outlined in the semantic versioning specification.
-         These development numnbers had the form ``<MAJOR>.<MINOR>(.<MICRO>).dev<DEV_NUM>`` (the suffix was always ``.dev`` whereas our newer strategy ends with ``-dev``).
+         These development numbers had the form ``<MAJOR>.<MINOR>(.<MICRO>).dev<DEV_NUM>`` (the suffix was always ``.dev`` whereas our newer strategy ends with ``-dev``).
          For reference, the **ORDERED** list of version numbers from version ``3.0`` through ``3.3`` is: ``3.0``, ``3.1.dev1``, ``3.1``, ``3.2.dev1``, ``3.1.1``, ``3.2.dev2``, ``3.2.0``, ``3.3.dev0``, ``3.2.1``, ``3.3.dev1``, ``3.3``.
 
 .. [#f2] The main exception is if we deprecate part of the API.
