@@ -54,7 +54,7 @@ dev_requirements = [
 
 setup(
     name="pygrackle",
-    version="1.0.0",
+    version="1.0.1",
     description="A wrapper for the Grackle chemistry library",
     keywords=["simulation", "chemistry", "cooling", "astronomy", "astrophysics"],
     url="https://github.com/grackle-project/grackle",
