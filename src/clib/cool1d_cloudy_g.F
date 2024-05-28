@@ -95,11 +95,13 @@
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
 !=======================================================================
 
-         end_int = .false.
+      end_int = .false.
       get_heat = iClHeat
 
       inv_log10 = 1._DKIND / log(10._DKIND)
       log10_tCMB = log10(comp2)
+
+#ifdef USE_ORIGINAL_CODE
 
 !     Calculate parameter value slopes
 
@@ -113,6 +115,10 @@
          dclPar(3) = (clPar3(clGridDim(3)) - clPar3(1)) /
      &        real(clGridDim(3) - 1, DKIND)
       endif
+#else
+      call calc_parameter_value_slopes(dclPar, clGridRank,
+     &            clGridDim, clPar1, clPar2, clPar3)
+#endif
 
       do i=is+1, ie+1
          if ( itmask(i) ) then
