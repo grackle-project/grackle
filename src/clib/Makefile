@@ -214,10 +214,10 @@ autogen: config_type auto_general.c
 # in following recipe, GRACKLE_FLOAT_MACRO is set to either GRACKLE_FLOAT_4 or
 # GRACKLE_FLOAT_8
 .PHONY: config_type
-config_type: grackle_float.h.in
+config_type: $(PUBLIC_HEADER_SRCDIR)/grackle_float.h.in
 	@($(CONFIG_DIR)/configure_file.py --clobber \
-	    --input grackle_float.h.in \
-	    --output grackle_float.h \
+	    --input $< \
+	    --output $(PUBLIC_HEADER_SRCDIR)/grackle_float.h \
 	    GRACKLE_FLOAT_MACRO=GRACKLE_FLOAT_$(ASSEMBLE_PRECISION_NUMBER));
 
 # Force update of auto_general.c
@@ -286,7 +286,7 @@ install:
 		mkdir $(INSTALL_INCLUDE_DIR); \
 	fi)
 	@rm -f $(INSTALL_INCLUDE_DIR)/grackle*.h $(INSTALL_INCLUDE_DIR)/grackle*.def
-	@cp ../include/*.h ../include/*.def grackle_float.h $(INSTALL_INCLUDE_DIR)
+	@cp ../include/*.h ../include/*.def $(INSTALL_INCLUDE_DIR)
 	@(if [ ! -d $(INSTALL_LIB_DIR) ]; then \
 		mkdir $(INSTALL_LIB_DIR); \
 	fi)
@@ -296,7 +296,7 @@ install:
 #-----------------------------------------------------------------------
 
 clean:
-	-@rm -f *.la .libs/* *.o *.lo DEPEND.bak *~ $(OUTPUT) grackle_float.h *.exe auto_*.c temp.show-* DEPEND out.make.DEPEND
+	-@rm -f *.la .libs/* *.o *.lo DEPEND.bak *~ $(OUTPUT) $(PUBLIC_HEADER_SRCDIR)/grackle_float.h *.exe auto_*.c temp.show-* DEPEND out.make.DEPEND
 	-@touch DEPEND
 
 #-----------------------------------------------------------------------
