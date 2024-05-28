@@ -51,7 +51,8 @@ set(C_SOURCES
 
 set(C_WRAPPER_SOURCES
   c_wrappers/wrap_interpolators_g.c
-  c_wrappers/wrap_calc_tdust_1d_g.c)
+  c_wrappers/wrap_calc_tdust_1d_g.c
+  c_wrappers/wrap_calc_temp_utilities_g.c)
 
 set(C_GENERATED_SOURCES
   generated/auto_show_config.c
@@ -63,6 +64,7 @@ set(F_SOURCES
   calc_tdust_3d_g.F
   calc_temp1d_cloudy_g.F
   calc_temp_cloudy_g.F
+  calc_temp_utilities_g.F
   cool1d_cloudy_g.F
   cool1d_cloudy_old_tables_g.F
   cool1d_multi_g.F
