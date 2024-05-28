@@ -19,6 +19,22 @@
 /
 ************************************************************************/
 
+// define the GR_RESTRICT macro be the restrict keyword introduced in C99
+// -> restrict isn't technically part of the C++ standard, but it is commonly
+//    provided by c++ compilers (so we try to make use of those alternatives)
+#ifdef CONFIG_NO_RESTRICT
+  #define GR_RESTRICT /* ... */
+#elif !defined(__cplusplus) /* simple case (we are compiling C) */
+  #define GR_RESTRICT restrict
+#elif __GNUC__
+  // C++ compilers other than g++ define this macro. To my knowledge, all of
+  // them (e.g. clang++, the new & old intel c++ compilers) define the same
+  // the restrict-extension in the same way
+  #define GR_RESTRICT __restrict
+#else
+  #define GR_RESTRICT /* ... */
+#endif /* GR_RESTRICT */
+
 #define GRACKLE_FREE(p)				\
   {						\
     if (p != NULL) {				\
