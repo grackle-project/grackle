@@ -177,17 +177,23 @@ if (BUILD_SHARED_LIBS)
   add_custom_target(buildtree_link_target
     ALL COMMAND ${CMAKE_COMMAND} -E create_symlink
       $<TARGET_FILE:Grackle_Grackle>
-      $<TARGET_FILE_DIR:Grackle_Grackle>/libgrackle.so)
+      $<TARGET_FILE_DIR:Grackle_Grackle>/libgrackle$<TARGET_FILE_SUFFIX:Grackle_Grackle>)
 else()
   set(GRACKLE_LIB_OUTPUT_NAME "grackle") # resulting lib is named libgrackle.a
 endif()
 
 set_target_properties(Grackle_Grackle PROPERTIES
+  # set standard cmake-specific properties
   OUTPUT_NAME ${GRACKLE_LIB_OUTPUT_NAME} # <- ensure library is properly named
   # specify target name made available that is made visible in inclusion
   # approach #2. The namespace-prefix of this target, "Grackle::", is declared
   # down below in install(EXPORT ...)
   EXPORT_NAME Grackle
+
+  # custom properties (intended for consumption by downstream projects)
+  GRACKLE_VERSION_STR "${VERSION_NUM}"
+  GRACKLE_USES_DOUBLE "${GRACKLE_USES_DOUBLE}"
+  GRACKLE_USES_OPENMP "${GRACKLE_USES_OPENMP}"
 )
 
 target_include_directories(Grackle_Grackle

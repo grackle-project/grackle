@@ -71,13 +71,14 @@ if (BUILD_SHARED_LIBS)
       get_filename_component(_prefix \${CMAKE_INSTALL_PREFIX} ABSOLUTE)
     endif()
 
-    set(_LIB_PATH \"\${_prefix}/${CMAKE_INSTALL_LIBDIR}/$<TARGET_FILE_NAME:Grackle_Grackle>\")
-    set(_LINK_PATH \"\${_prefix}/${CMAKE_INSTALL_LIBDIR}/libgrackle.so\")
+    set(_COMMON \"\${_prefix}/${CMAKE_INSTALL_LIBDIR}\")
+    set(_LIB \"\${_COMMON}/$<TARGET_FILE_NAME:Grackle_Grackle>\")
+    set(_LINK \"\${_COMMON}/libgrackle$<TARGET_FILE_SUFFIX:Grackle_Grackle>\")
 
-    message(STATUS \"Creating symlink to \${_LIB_PATH} called \${_LINK_PATH}\")
+    message(STATUS \"Creating symlink to \${_LIB} called \${_LINK}\")
 
     execute_process(COMMAND
-      ${CMAKE_COMMAND} -E create_symlink \${_LIB_PATH} \${_LINK_PATH}
+      ${CMAKE_COMMAND} -E create_symlink \${_LIB} \${_LINK}
     )"
   )
 endif()
