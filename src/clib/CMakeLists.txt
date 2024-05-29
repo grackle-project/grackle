@@ -214,25 +214,16 @@ target_link_libraries(Grackle_Grackle
           $<$<BOOL:${GRACKLE_USE_OPENMP}>:OpenMP::OpenMP_C>
 )
 
-set(GRACKLE_FC_FLAG "")
-# do some (non-exhaustive) handling of the fortran-specific flags!
-if (CMAKE_FORTRAN_COMPILER_ID STREQUAL "PGI")
-  list(APPEND GRACKLE_FC_FLAG "-Mnosecond_underscore" "-Mextend")
-else()
-  include(CheckFortranCompilerFlag)
-  check_fortran_compiler_flag(-fno-second-underscore no_second_underscore)
-  check_fortran_compiler_flag(-ffixed-line-length-132 fixed_line_length_132)
-  list(APPEND GRACKLE_FC_FLAG
-    "$<$<BOOL:${no_second_underscore}>:-fno-second-underscore>"
-    "$<$<BOOL:${fixed_line_length_132}>:-ffixed-line-length-132>"
-  )
-endif()
+# add the necessary compiler-specific Fortran flags to ensure proper handling
+# of our specific Fortran-dialect and that name mangling is performed as
+# expected (these flags only get applied to Fortran source-code files)
+include(AddConditionalFortranFlags)
+add_conditional_fortran_flags(Grackle_Grackle)
 
-target_compile_options(Grackle_Grackle PRIVATE "$<${is_FC}:${GRACKLE_FC_FLAG}>")
-
-# handle fortran name-mangling macros (TODO: cmake's FortranCInterface module?)
+# define macros so that the C files know how to properly handle name-mangling
+# (if cmake were our only build-system, we could use FortranCInterface module)
 if ("${CMAKE_SYSTEM_NAME}" MATCHES "^(Linux)|(Darwin)$")
-  target_compile_definitions(Grackle_Grackle PRIVATE "$<$<NOT:${is_FC}>:LINUX>")
+  target_compile_definitions(Grackle_Grackle PRIVATE "LINUX")
 endif()
 
 # If we are building a shared library, construct a "configuration Makefile"
