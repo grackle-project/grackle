@@ -221,9 +221,3 @@
     ifdef MACH_INSTALL_INCLUDE_DIR
     	INSTALL_INCLUDE_DIR = $(MACH_INSTALL_INCLUDE_DIR)
     endif
-
-#-----------------------------------------------------------------------
-# LIBRARY RELEASE VERSION
-#-----------------------------------------------------------------------
-
-LIB_RELEASE_VERSION := $(shell $(QUERY_VERSION) show-version)
