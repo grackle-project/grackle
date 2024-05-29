@@ -129,6 +129,7 @@ add_library(Grackle_Grackle
   cool1d_multi_g.F
   cool_multi_time_g.F
   interpolators_g.F
+  solve_rate_cool_g.F
 
   # auto-generated source files
   ${CMAKE_CURRENT_BINARY_DIR}/auto_general.c
