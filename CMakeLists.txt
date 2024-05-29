@@ -40,13 +40,17 @@ if (NOT CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
   set(GRACKLE_IS_TOP_LEVEL OFF)
 endif()
 
-if("${PROJECT_SOURCE_DIR}" STREQUAL "${PROJECT_BINARY_DIR}")
-  message(FATAL_ERROR "Please don't perform an in-source build.")
-endif()
+# the following 2 checks are only enforced when Grackle is built standalone
+# (we let people do whatever when it's embedded for maximum flexibility)
+if (GRACKLE_IS_TOP_LEVEL)
+  if("${PROJECT_SOURCE_DIR}" STREQUAL "${PROJECT_BINARY_DIR}")
+    message(FATAL_ERROR "Please don't perform an in-source build.")
+  endif()
 
-if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
-  message(STATUS "no build type detected, defaulting to Release build-type")
-  set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build." FORCE)
+  if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+    message(STATUS "no build type detected, defaulting to Release build-type")
+    set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build." FORCE)
+  endif()
 endif()
 
 option(GRACKLE_USE_DOUBLE "compile the code with double precision" ON)
