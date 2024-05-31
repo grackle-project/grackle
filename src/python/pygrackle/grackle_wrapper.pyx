@@ -949,3 +949,59 @@ cdef class _wrapped_c_chemistry_data:
         for k in self:
             out[k] = self[k]
         return out
+
+
+# define functionality to construct a c_code_units struct from a dict.
+# -> it's currently similar to the code-style used to construct
+#    grackle_field_data instances.
+# -> However, it may just be easier to define an extension type that wraps
+#    the c_code_units struct (as is done for c_chemistry_data struct)
+
+cdef c_code_units _c_code_units_builder(object accessor_fn) except *:
+    """
+    This function uses the accessor_fn callback to retrieve values for each of
+    the members of the c_code_units struct. This function returns a
+    c_code_units struct that holds each of the returned values.
+
+    The accessor_fn expects 2 args: the name of the member and the expected
+    type of that member (either int or float).
+
+    Note: The way this function is declared causes cython to generate code to
+          check whether an Python Exception was raised every time this function
+          gets called. The runtime overhead should be of minimal concern
+    """
+
+    cdef c_code_units out
+    out.comoving_coordinates = accessor_fn("comoving_coordinates", int)
+    out.density_units = accessor_fn("density_units", float)
+    out.length_units = accessor_fn("length_units", float)
+    out.velocity_units = accessor_fn("velocity_units", float)
+    out.time_units = accessor_fn("time_units", float)
+    out.a_units = accessor_fn("a_units", float)
+    out.a_value = accessor_fn("a_value", float)
+    return out
+
+def _get_code_units_attr_set():
+    # this function returns a set containing the names of all code_units struct
+    # members. We acheive this by passing _c_code_units_builder a function that
+    # returns garbage values for each value, while recording member names
+    member_l = []
+    def _accessor(member_name, dtype):
+        member_l.append(member_name)
+        return dtype(1)
+    _c_code_units_builder(_accessor)
+    return frozenset(member_l)
+
+_CODE_UNITS_ATTR_SET = _get_code_units_attr_set()
+
+cdef c_code_units _c_code_units_from_dict(dict d) except *:
+    if len(d) != len(_CODE_UNITS_ATTR_SET):
+        raise ValueError("a code_units struct can only be constructed from a "
+                         f"dict with the keys: {list(_CODE_UNITS_ATTR_SET)!r}")
+    def _accessor(key, dtype):
+        val = d[key]
+        if not isinstance(dtype, key):
+            raise TypeError(f"d[{key!r}] must have the {dtype.__name__} dtype")
+        return val
+    return _c_code_units_builder(_accessor)
+
