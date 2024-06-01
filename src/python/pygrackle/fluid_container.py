@@ -27,6 +27,22 @@ from pygrackle.utilities.misc import \
 from pygrackle.utilities.physical_constants import \
     mass_hydrogen_cgs
 
+def _convert_field_data_member_name_to_key(member_name):
+    # the members of the grackle_field_data struct don't exactly match the
+    # names of keys stored by FluidContainer. This function maps between the
+    # 2 naming conventions
+    if member_name == 'e_density':
+        return 'de'
+    elif member_name[-8:] == '_density':
+        return member_name[:-8]
+    elif member_name == 'internal_energy':
+        return 'energy'
+    elif member_name[-9:] == '_velocity':
+        return f'{member_name[0]}-velocity'
+    else:
+        return member_name
+
+
 _base_fluids = ["density", "metal", "dust"]
 _nd_fields   = ["energy",
                 "x-velocity", "y-velocity", "z-velocity",
