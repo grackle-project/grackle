@@ -696,6 +696,7 @@ cdef c_field_data setup_field_data(object fc, int[::1] buf,
 
     # now initialize my_fields
     cdef c_field_data my_fields
+    gr_initialize_field_data(&my_fields)
     my_fields.grid_rank = 1
     my_fields.grid_dimension = grid_dimension
     my_fields.grid_start = grid_start
@@ -1000,8 +1001,50 @@ cdef c_code_units _c_code_units_from_dict(dict d) except *:
                          f"dict with the keys: {list(_CODE_UNITS_ATTR_SET)!r}")
     def _accessor(key, dtype):
         val = d[key]
-        if not isinstance(dtype, key):
+        if not isinstance(val, dtype):
             raise TypeError(f"d[{key!r}] must have the {dtype.__name__} dtype")
         return val
     return _c_code_units_builder(_accessor)
+
+
+def _h5dump_state(object fc, object fname, object initial_code_units):
+    # wraps the h5dump routine. This ONLY exists for testing purposes!
+
+    # first, get output filename
+    cdef bytes fname_bytes = fname.encode('ASCII')
+    cdef char* fname_c_str = fname_bytes
+
+    # now, fetch relevant data from fc
+    cdef chemistry_data chem_data = fc.chemistry_data
+    cdef c_chemistry_data* chemistry_data_ptr = &(chem_data.data.data)
+    cdef c_code_units* cur_units_ptr = &(chem_data.units)
+
+    cdef int buf[7] # used for storage by members of my_fields
+    cdef c_field_data my_fields = setup_field_data(fc, buf, True)
+
+    # next, figure out what to specify for initial_code_units
+    cdef c_code_units scratch_code_units
+    cdef c_code_units* initial_units_ptr
+    # initial_code_units can have 3 vals:
+    if isinstance(initial_code_units, bool):
+        if initial_code_units:
+            initial_units_ptr = cur_units_ptr # current & initial are equal
+        else:
+            initial_units_ptr = NULL # we don't know initial units
+    elif isinstance(initial_code_units, dict):
+        # initial_code_units is a dict the specifies original unit values
+        scratch_code_units = _c_code_units_from_dict(initial_code_units)
+        initial_units_ptr = &scratch_code_units
+    else:
+        raise TypeError("initial_code_units arg must be bool or dict")
+
+
+
+    # finally, perform the dump!
+    cdef int ret = grunstable_h5dump_state(
+        fname_c_str, -1, chemistry_data_ptr, initial_units_ptr, cur_units_ptr,
+        &my_fields)
+
+    if (ret == GRACKLE_FAIL_VALUE):
+        raise RuntimeError(f"Error occured while dumping data")
 
