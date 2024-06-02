@@ -211,7 +211,6 @@ list(APPEND _TOOLCHAIN_LINK_LIBS m) # explicit c requirement (but may
 list(REMOVE_DUPLICATES _TOOLCHAIN_LINK_LIBS)
 
 
-
 # Define the grackle.pc file
 # --------------------------
 
@@ -253,9 +252,14 @@ list(TRANSFORM _GRACKLE_PC_PRIVATE_LIBS_LIST PREPEND "-l")
 string(REPLACE
   ";" " " _GRACKLE_PC_PRIVATE_LIBS "${_GRACKLE_PC_PRIVATE_LIBS_LIST}")
 
+# retrieve list of variables conveying Grackle informational properties
+include(TargetInfoProps)
+get_info_properties_export_str(Grackle_Grackle
+    PKG_CONFIG _GRACKLE_PC_INFO_PROPERTIES)
+
 configure_file(
-      ${PROJECT_SOURCE_DIR}/cmake/grackle.pc.in
-      ${CMAKE_CURRENT_BINARY_DIR}/install-metadata/grackle.pc @ONLY)
+  ${PROJECT_SOURCE_DIR}/cmake/grackle.pc.in
+  ${CMAKE_CURRENT_BINARY_DIR}/install-metadata/grackle.pc @ONLY)
 
 install(FILES
   ${CMAKE_CURRENT_BINARY_DIR}/install-metadata/grackle.pc
@@ -294,16 +298,15 @@ write_basic_package_version_file(
 # Configure our Config-Package-File. Currently, we don't need to use
 # configure_package_config_file (but we could use it in the future)
 
-
-get_target_property(_GRACKLETARGET_VERSION_STR
-  Grackle_Grackle GRACKLE_VERSION_STR)
+# retrieve string that we use within the template-file to define informational
+# properties of the Grackle::Grackle target
+get_info_properties_export_str(Grackle_Grackle
+    CMAKE_CONFIG _GRACKLE_INFO_PROPERTIES)
 configure_file(
   ${PROJECT_SOURCE_DIR}/cmake/GrackleConfig.cmake.in
   ${CMAKE_CURRENT_BINARY_DIR}/install-metadata/GrackleConfig.cmake
   @ONLY
 )
-unset(_GRACKLETARGET_VERSION_STR)
-
 
 install(FILES
   ${CMAKE_CURRENT_BINARY_DIR}/install-metadata/GrackleConfig.cmake

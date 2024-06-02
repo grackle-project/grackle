@@ -206,8 +206,8 @@ else()
   set(GRACKLE_LIB_OUTPUT_NAME "grackle") # resulting lib is named libgrackle.a
 endif()
 
+# set standard cmake-specific properties
 set_target_properties(Grackle_Grackle PROPERTIES
-  # set standard cmake-specific properties
   OUTPUT_NAME ${GRACKLE_LIB_OUTPUT_NAME} # <- ensure library is properly named
   # specify target name that is made visible in inclusion approach #2. The
   # namespace-prefix of this target, "Grackle::", is declared in the
@@ -216,11 +216,20 @@ set_target_properties(Grackle_Grackle PROPERTIES
 
   # set custom properties (intended for consumption by downstream projects)
   # -> keep these in-sync with the properties in the Config-Package File
+)
+
+# write custom propeties used to convey information to downstream consumers
+# of the Grackle library. To help us expose consistent information regardless
+# of how Grackle is consume, we use this custom function that wraps
+# set_target_properties (it's important to identify what is a BOOL vs STRING)
+include(TargetInfoProps)
+set_target_typed_info_properties(Grackle_Grackle STRING_PROPERTIES
   GRACKLE_VERSION_STR "${VERSION_NUM}"
+)
+set_target_typed_info_properties(Grackle_Grackle BOOL_PROPERTIES
   GRACKLE_USE_DOUBLE "${GRACKLE_USE_DOUBLE}"
   GRACKLE_USE_OPENMP "${GRACKLE_USE_OPENMP}"
 )
-
 
 target_include_directories(Grackle_Grackle
   # specify where to search for generated and ordinary headers when building

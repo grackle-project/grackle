@@ -7,6 +7,9 @@ prefix=${pcfiledir}/../..
 libdir=${prefix}/lib
 includedir=${prefix}/include
 
+# define Grackle-specific variables conveying extra information
+@_GRACKLE_PC_INFO_PROPERTIES@
+
 Name: grackle
 Description: chemistry and radiative cooling library for astrophysical simulations and models
 Version: @Grackle_VERSION@
