@@ -481,6 +481,6 @@ The ``"grackle_unstable.h"`` header must be included to access these functions.
 
    .. note::
 
-      We explicitly elect to use :c:type:`long long` as the datatype of ``dest_hid`` rather than :c:type:`!hid_t` to ensure that the hdf5-library is not a public dependency of Grackle.
+      We explicitly elect to use :c:type:`!long long` as the datatype of ``dest_hid`` rather than :c:type:`!hid_t` to ensure that the hdf5-library is not a public dependency of Grackle.
 
       In more detail, if we used :c:type:`!hid_t`, the ``<hdf5.h>`` header would need to be included in the ``"grackle_unstable.h"`` header, which might necessetate passing extra ``-I`` flags to downstream applications.
