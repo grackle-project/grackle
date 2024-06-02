@@ -249,3 +249,13 @@ cdef extern from "grackle.h":
         c_chemistry_data_storage *my_rates)
 
     c_grackle_version c_get_grackle_version "get_grackle_version"()
+
+    int gr_initialize_field_data(c_field_data *my_fields)
+
+
+cdef extern from "grackle_unstable.h":
+    int grunstable_h5dump_state(const char* fname, long long dest_hid,
+                                const c_chemistry_data* chemistry_data,
+                                const c_code_units* initial_code_units,
+                                const c_code_units* current_code_units,
+                                const c_field_data* my_fields)

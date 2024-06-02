@@ -20,6 +20,7 @@
 #include "grackle_types.h"
 #include "grackle_chemistry_data.h"
 #include "phys_constants.h"
+#include "state_dump_utils.h"
 #ifdef _OPENMP
 #include <omp.h>
 #endif
@@ -32,7 +33,6 @@ extern chemistry_data_storage grackle_rates;
 void auto_show_config(FILE *fp);
 void auto_show_flags(FILE *fp);
 grackle_version get_grackle_version();
-void show_parameters(FILE *fp, chemistry_data *my_chemistry);
 
 int _free_cloudy_data(cloudy_data *my_cloudy, chemistry_data *my_chemistry, int primordial);
 int initialize_cloudy_data(chemistry_data *my_chemistry,
@@ -50,16 +50,6 @@ int initialize_rates(chemistry_data *my_chemistry, chemistry_data_storage *my_ra
                 double co_length_units, double co_density_units);
 
 void initialize_empty_UVBtable_struct(UVBtable *table);
-
-static void show_version(FILE *fp)
-{
-  grackle_version gversion = get_grackle_version();
-  fprintf (fp, "\n");
-  fprintf (fp, "The Grackle Version %s\n", gversion.version);
-  fprintf (fp, "Git Branch   %s\n", gversion.branch);
-  fprintf (fp, "Git Revision %s\n", gversion.revision);
-  fprintf (fp, "\n");
-}
 
 /**
  * Initializes an empty #chemistry_data_storage struct with zeros and NULLs.
@@ -164,7 +154,10 @@ int local_initialize_chemistry_data(chemistry_data *my_chemistry,
   initialize_empty_chemistry_data_storage_struct(my_rates);
 
   if (grackle_verbose) {
-    show_version(stdout);
+    fprintf(stdout, "Grackle Version Info: "); // explicitly omit '\n' for
+                                               // nicer formatting
+    grackle_version gversion = get_grackle_version();
+    show_version_(stdout, &gversion);
     fprintf(stdout, "Initializing grackle data.\n");
   }
 
@@ -301,17 +294,22 @@ int local_initialize_chemistry_data(chemistry_data *my_chemistry,
 
     FILE *fptr = fopen("GRACKLE_INFO", "w");
     fprintf(fptr, "%s\n", tstr);
-    show_version(fptr);
+    fprintf(fptr, "Grackle Version Info: "); // explicitly omit '\n' for nicer
+                                             // formatting
+    grackle_version gversion = get_grackle_version();
+    show_version_(fptr, &gversion);
     fprintf(fptr, "Grackle build options:\n");
     auto_show_config(fptr);
     fprintf(fptr, "Grackle build flags:\n");
     auto_show_flags(fptr);
-    fprintf(fptr, "Grackle run-time parameters:\n");
-    show_parameters(fptr, my_chemistry);
+    fprintf(fptr, "Grackle run-time parameters: "); // explicitly omit '\n'
+                                                    // for nicer formatting
+    show_parameters_(fptr, my_chemistry);
     fclose(fptr);
 
-    fprintf(stdout, "Grackle run-time parameters:\n");
-    show_parameters(stdout, my_chemistry);
+    fprintf(stdout, "Grackle run-time parameters: "); // explicitly omit '\n'
+                                                      // for nicer formatting
+    show_parameters_(stdout, my_chemistry);
 
 #   ifdef _OPENMP
     int omp_nthread, omp_chunk_size;
@@ -346,24 +344,6 @@ int initialize_chemistry_data(code_units *my_units)
     return FAIL;
   }
   return SUCCESS;
-}
-
-// Define helpers for the show_parameters function
-// NOTE: it's okay that these functions all begin with an underscore since they
-//       each have internal linkage (i.e. they are each declared static)
-static void _show_field_INT(FILE *fp, const char* field, int val)
-{ fprintf(fp, "%-33s = %d\n", field, val); }
-static void _show_field_DOUBLE(FILE *fp, const char* field, double val)
-{ fprintf(fp, "%-33s = %g\n", field, val); }
-static void _show_field_STRING(FILE *fp, const char* field, const char* val)
-{ fprintf(fp, "%-33s = %s\n", field, val); }
-
-// this function writes each field of my_chemistry to fp
-void show_parameters(FILE *fp, chemistry_data *my_chemistry){
-  #define ENTRY(FIELD, TYPE, DEFAULT_VAL) \
-    _show_field_ ## TYPE (fp, #FIELD, my_chemistry->FIELD);
-  #include "grackle_chemistry_data_fields.def"
-  #undef ENTRY
 }
 
 int free_chemistry_data(void){

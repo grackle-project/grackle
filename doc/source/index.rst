@@ -46,6 +46,7 @@ Contents:
    Reference.rst
    Versioning.rst
    Python.rst
+   DiagnositicsAndDebugging.rst
    Conduct.rst
    Contributing.rst
    Help.rst
