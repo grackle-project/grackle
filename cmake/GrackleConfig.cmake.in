@@ -341,9 +341,7 @@ endif()
 # set custom-property information
 # -> keep these in-sync with the custom-properties in the build
 set_target_properties(Grackle::Grackle PROPERTIES
-  GRACKLE_VERSION_STR "@_GRACKLETARGET_VERSION_STR@"
-  GRACKLE_USE_DOUBLE "${_GRACKLEBUILD_USE_DOUBLE}"
-  GRACKLE_USE_OPENMP "${_GRACKLEBUILD_USE_OPENMP}"
+@_GRACKLE_INFO_PROPERTIES@
 )
 
 # Finally, let's do some cleanup so people don't rely upon these variables
