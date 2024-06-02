@@ -192,8 +192,8 @@ set_target_properties(Grackle_Grackle PROPERTIES
 
   # custom properties (intended for consumption by downstream projects)
   GRACKLE_VERSION_STR "${VERSION_NUM}"
-  GRACKLE_USES_DOUBLE "${GRACKLE_USES_DOUBLE}"
-  GRACKLE_USES_OPENMP "${GRACKLE_USES_OPENMP}"
+  GRACKLE_USE_DOUBLE "${GRACKLE_USE_DOUBLE}"
+  GRACKLE_USE_OPENMP "${GRACKLE_USE_OPENMP}"
 )
 
 target_include_directories(Grackle_Grackle
