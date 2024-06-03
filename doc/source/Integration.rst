@@ -292,35 +292,75 @@ be set to their desired values by accessing ``grackle_data``.  See
    these. See the :ref:`c_local_example.c <examples>` sample code for an
    example of this implementation.
 
-.. code-block:: c++
+.. tabs::
 
-  chemistry_data *my_grackle_data;
-  my_grackle_data = new chemistry_data;
-  if (set_default_chemistry_parameters(my_grackle_data) == 0) {
-    fprintf(stderr, "Error in set_default_chemistry_parameters.\n");
-  }
+   .. code-tab:: c++ Primary Functions
 
-  // Set parameter values for chemistry.
-  // Now access the global copy of the chemistry_data struct (grackle_data).
-  grackle_data->use_grackle = 1;            // chemistry on
-  grackle_data->with_radiative_cooling = 1; // cooling on
-  grackle_data->primordial_chemistry = 3;   // molecular network with H, He, D
-  grackle_data->metal_cooling = 1;          // metal cooling on
-  grackle_data->UVbackground = 1;           // UV background on
-  grackle_data->grackle_data_file = "CloudyData_UVB=HM2012.h5"; // data file
+         chemistry_data *my_grackle_data;
+         my_grackle_data = new chemistry_data;
+         if (set_default_chemistry_parameters(my_grackle_data) == 0) {
+           fprintf(stderr, "Error in set_default_chemistry_parameters.\n");
+         }
+
+
+         // At this point, the developer can forget all about the my_grackle_data pointer
+         // since that has been copied to the global variable grackle_data
+
+
+         // Set parameter values for chemistry.
+         // Now access the global copy of the chemistry_data struct (grackle_data).
+         grackle_data->use_grackle = 1;            // chemistry on
+         grackle_data->with_radiative_cooling = 1; // cooling on
+         grackle_data->primordial_chemistry = 3;   // molecular network with H, He, D
+         grackle_data->metal_cooling = 1;          // metal cooling on
+         grackle_data->UVbackground = 1;           // UV background on
+         grackle_data->grackle_data_file = "CloudyData_UVB=HM2012.h5"; // data file
+
+   .. code-tab:: c++ Local Functions
+
+
+         chemistry_data *my_grackle_data;
+         my_grackle_data = new chemistry_data;
+         if (local_initialize_chemistry_parameters(my_grackle_data) == 0) {
+           fprintf(stderr, "Error in local_initialize_chemistry_parameters.\n");
+         }
+
+         // Set parameter values for chemistry.
+         // Now access the global copy of the chemistry_data struct (grackle_data).
+         my_grackle_data->use_grackle = 1;            // chemistry on
+         my_grackle_data->with_radiative_cooling = 1; // cooling on
+         my_grackle_data->primordial_chemistry = 3;   // molecular network with H, He, D
+         my_grackle_data->metal_cooling = 1;          // metal cooling on
+         my_grackle_data->UVbackground = 1;           // UV background on
+         my_grackle_data->grackle_data_file = "CloudyData_UVB=HM2012.h5"; // data file
+
 
 Once the desired parameters have been set, the chemistry and cooling rates 
 must be initialized by calling :c:func:`initialize_chemistry_data` with a
 pointer to the :c:data:`code_units` struct created earlier.  This function
 will return an integer indicating success (1) or failure (0).
 
-.. code-block:: c++
+.. tabs::
 
-  // Finally, initialize the chemistry object.
-  if (initialize_chemistry_data(&my_units) == 0) {
-    fprintf(stderr, "Error in initialize_chemistry_data.\n");
-    return 0;
-  }
+   .. code-tab:: c++ Primary Functions
+
+         // Finally, initialize the chemistry object.
+         if (initialize_chemistry_data(&my_units) == 0) {
+           fprintf(stderr, "Error in initialize_chemistry_data.\n");
+           return 0;
+         }
+
+   .. code-tab:: c++ Local Functions
+
+         // Allocate the chemistry_data_storage type
+         chemistry_data_storage *my_grackle_rates = new chemistry_data_storage;
+
+         // Finally, initialize the chemistry object.
+         if (local_initialize_chemistry_data(my_chemistry_data, my_grackle_rates,
+                                             &my_units) == 0) {
+           fprintf(stderr, "Error in local_initialize_chemistry_data.\n");
+           return 0;
+         }
 
 The Grackle is now ready to be used.
 
