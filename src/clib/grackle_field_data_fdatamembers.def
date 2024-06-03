@@ -1,0 +1,57 @@
+/***********************************************************************
+/
+/ this file lists each member of the grackle_field_data struct that is
+/ intended to hold field data. This list is intended to be used with
+/ X-Macros in *.c files (to reduce the amount of code required to
+/ interact with these fields)
+/
+/ The following information is specified for each field:
+/    1. the field_name
+/    2. a 1 or 0 to denote whether the field_name corresponds to a
+/       passive-scalar density field
+/
+/
+/ Copyright (c) 2013, Enzo/Grackle Development Team.
+/
+/ Distributed under the terms of the Enzo Public Licence.
+/
+/ The full license is in the file LICENSE, distributed with this
+/ software.
+************************************************************************/
+
+ENTRY(density, 0)
+ENTRY(HI_density, 1)
+ENTRY(HII_density, 1)
+ENTRY(HM_density, 1)
+ENTRY(HeI_density, 1)
+ENTRY(HeII_density, 1)
+ENTRY(HeIII_density, 1)
+ENTRY(H2I_density, 1)
+ENTRY(H2II_density, 1)
+ENTRY(DI_density, 1)
+ENTRY(DII_density, 1)
+ENTRY(HDI_density, 1)
+ENTRY(e_density, 1)
+ENTRY(metal_density, 1)
+ENTRY(dust_density, 1)
+
+ENTRY(internal_energy, 0)
+ENTRY(x_velocity, 0)
+ENTRY(y_velocity, 0)
+ENTRY(z_velocity, 0)
+
+ENTRY(volumetric_heating_rate, 0)
+ENTRY(specific_heating_rate, 0)
+
+ENTRY(temperature_floor, 0)
+
+ENTRY(RT_heating_rate, 0)
+ENTRY(RT_HI_ionization_rate, 0)
+ENTRY(RT_HeI_ionization_rate, 0)
+ENTRY(RT_HeII_ionization_rate, 0)
+ENTRY(RT_H2_dissociation_rate, 0)
+
+ENTRY(H2_self_shielding_length, 0)
+ENTRY(H2_custom_shielding_factor, 0)
+
+ENTRY(isrf_habing, 0)
