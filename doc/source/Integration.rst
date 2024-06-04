@@ -836,11 +836,14 @@ Calculating the Dust Temperature Field
 Clearing the memory
 -------------------
 
+
+When using the Grackle's :ref:`primary_functions`, global structures are used and therefore the global structure ``grackle_rates`` needs to be released with
+
 .. code-block:: c++
 
   free_chemistry_data();
 
-Grackle is using global structures and therefore the global structure ``grackle_rates`` needs also to be released.
+When using the :ref:`local_functions`, you should call the counter-part function, :c:func:`local_free_chemistry_data`, to free memory used for storing chemistry and cooling rates.
 
 .. _query-version:
 
