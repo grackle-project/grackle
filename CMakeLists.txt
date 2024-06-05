@@ -7,9 +7,9 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${grackle_vfile})
 
 file(READ ${grackle_vfile} grackle_vfile_content)
 if (grackle_vfile_content MATCHES
-    "^([0-9]+(\\.[0-9_]+)*(\\.[-+A-Za-z0-9_]+)?)[ \t\r\n]*$")
+    "^([0-9]+(\\.[0-9_]+)*(-[-+A-Za-z0-9_]+)?)[ \t\r\n]*$")
   set(_GRACKLE_FULL_VERSION "${CMAKE_MATCH_1}")
-  string(REGEX REPLACE "(\\.[-+A-Za-z0-9_]*[-+A-Za-z_][-+A-Za-z0-9_]*)" ""
+  string(REGEX REPLACE "(-[-+A-Za-z0-9_]*[-+A-Za-z_][-+A-Za-z0-9_]*)" ""
     _GRACKLE_VERSION_NO_DEVTAG "${_GRACKLE_FULL_VERSION}")
 else()
   message(FATAL_ERROR "Invalid version number in ${grackle_vfile}")
