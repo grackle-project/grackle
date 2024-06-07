@@ -56,7 +56,7 @@ commands:
         enum: ['true', 'false']
     steps:
       - run:
-          name: "Install grackle."
+          name: "Install grackle (classic_build: << parameters.classic_build >>, omp: << parameters.omp >>) "
           command: |
             source $HOME/venv/bin/activate
 
@@ -92,8 +92,8 @@ commands:
               fi
               make
               make install
-              cd ../python
-              pip install -e .[dev]
+              cd ../../
+              PYGRACKLE_LEGACY_LINK=classic pip install -v -e .[dev]
             else # this branch builds grackle with cmake
 
               cmake -DGRACKLE_USE_DOUBLE=ON                   \
@@ -102,10 +102,10 @@ commands:
                     -DCMAKE_INSTALL_PREFIX=$HOME/local        \
                     -Bbuild
               cmake --build build
-              cmake --install build
-
-              cd src/python
-              PYGRACKLE_CMAKE_BUILD_DIR=../../build pip install -e .[dev]
+              # we don't need a full installation
+              #cmake --install build
+ 
+              Grackle_DIR=${PWD}/build pip install -v -e .[dev]
             fi
 
   install-docs-dependencies:
