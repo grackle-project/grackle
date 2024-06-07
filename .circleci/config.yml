@@ -153,8 +153,10 @@ commands:
             source $BASH_ENV
             source $HOME/venv/bin/activate
             cd src
-            if [ << parameters.classic_build >> == 'false' ]; then
-              export PYTEST_CMAKE_BUILD_DIR="../build"
+            if [ << parameters.classic_build >> == 'true' ]; then
+              export PYTEST_CODE_LINK_CHOICE="classic"
+            else
+              export PYTEST_CODE_LINK_CHOICE="cmake:../build"
             fi
             if [ << parameters.omp >> == 'true' ]; then
               export OMP_NUM_THREADS=4

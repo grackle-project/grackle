@@ -50,33 +50,43 @@ def run_command(command, cwd, env):
 
 @pytest.mark.parametrize("example", code_examples)
 def test_code_examples(example):
+    # under the classic build system, we could just execute `make` in the examples
+    # directory and there is a good chance that it would work out...
+    # -> now we require the PYTEST_CODE_LINK_CHOICE environment variable to be
+    #    explicitly set in order to dictate how to execute the test
+    # -> if the variable isn't set, then we skip the test
+    # -> purely for backwards compatability, when the PYTEST_CODE_LINK_CHOICE
+    #    variable isn't specified, but pygrackle was built with the classic system
+    #    then we assume that the user wants to test stuff built with the classic
+    #    build-system... (Hopefully, we can remove this extra logic in future
+    #    revisions -- it would simplify a lot!)
 
-    _build_dir = os.getenv("PYTEST_CMAKE_BUILD_DIR", "")
-    if (_USING_TRADITIONAL_BUILD in [None, True]) and _build_dir == "":
-        # lets assume that the underlying library was constructed with the
-        # traditional build-system
+    dflt_choice = "classic" if _USING_TRADITIONAL_BUILD == True else ""
+    choice = os.getenv("PYTEST_CODE_LINK_CHOICE", dflt_choice)
+
+    if choice == "":
+        pytest.skip("the 'PYTEST_CODE_LINK_CHOICE' environment variable must be "
+                    "set to run this test")
+    elif choice == "classic":
         make_command = "make"
-    elif _USING_TRADITIONAL_BUILD and _build_dir != "":
-        raise RuntimeError("PYTEST_CMAKE_BUILD_DIR env variable is set when "
-                           "libgrackle is built with traditional build system")
-    elif (_USING_TRADITIONAL_BUILD is False) and _build_dir == "":
-        raise RuntimeError("PYTEST_CMAKE_BUILD_DIR env variable is needed when "
-                           "libgrackle is built with cmake")
-    else:
-        # this branch is executed if the underlying libgrackle library was
-        # instead constructed with CMake
-        build_dir = os.path.join(os.getcwd(), _build_dir)
+    elif choice.startswith("cmake:") and (len(choice) > 6):
+        build_dir = os.path.expanduser(choice[6:])
+        if not os.path.isabs(build_dir):
+            build_dir = os.path.join(os.getcwd(), build_dir)
+        if not os.path.isdir(build_dir):
+            raise RuntimeError(f"{build_dir} specified as path to cmake-build dir, "
+                               "but it doesn't exist")
         make_command = (
             f"make -f Makefile.out-of-source CMAKE_BUILD_DIR={build_dir}")
-
+    else:
+        raise RuntimeError("PYTEST_CODE_LINK_CHOICE must be '', 'classic' or "
+                           "'cmake:<path/to/build>'. {choice!r} is invalid")
     env = dict(os.environ)
-    curdir = os.getcwd()
-    os.chdir(examples_path)
     command = f'{make_command} {example}'
     run_command(command, examples_path, env)
 
     # test that example compiles
-    assert os.path.exists(example)
+    assert os.path.exists(os.path.join(examples_path, example))
 
     # try to run the example code
     command = f"./{example}"
@@ -84,5 +94,3 @@ def test_code_examples(example):
 
     command = f"{make_command} clean"
     run_command(command, examples_path, env)
-    
-    os.chdir(curdir)
