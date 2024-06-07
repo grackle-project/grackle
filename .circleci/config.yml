@@ -93,7 +93,7 @@ commands:
               make
               make install
               cd ../python
-              pip install -e .[dev]
+              PYGRACKLE_LEGACY_LINK=classic pip install -e .[dev]
             else # this branch builds grackle with cmake
 
               cmake -DGRACKLE_USE_DOUBLE=ON                   \
@@ -105,7 +105,7 @@ commands:
               cmake --install build
 
               cd src/python
-              PYGRACKLE_CMAKE_BUILD_DIR=../../build pip install -e .[dev]
+              PYGRACKLE_LEGACY_LINK=cmake:../../build pip install -e .[dev]
             fi
 
   install-docs-dependencies:
