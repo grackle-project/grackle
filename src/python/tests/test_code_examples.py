@@ -61,7 +61,7 @@ def test_code_examples(example):
     #    build-system... (Hopefully, we can remove this extra logic in future
     #    revisions -- it would simplify a lot!)
 
-    dflt_choice = "classic" if _USING_TRADITIONAL_BUILD == True else ""
+    dflt_choice = "classic" if _USING_TRADITIONAL_BUILD else ""
     choice = os.getenv("PYTEST_CODE_LINK_CHOICE", dflt_choice)
 
     if choice == "":
