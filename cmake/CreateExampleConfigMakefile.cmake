@@ -82,7 +82,8 @@ INCLUDES = # unnecessary for a cmake-constructed shared lib
 # -> WARNING: these particular flags may not be portable to all compilers
 
 GRACKLE_INCLUDE := -I$<JOIN:$<TARGET_PROPERTY:${target},INTERFACE_INCLUDE_DIRECTORIES>, -I>
-GRACKLE_LIB := -Wl,-rpath,$<TARGET_FILE_DIR:${target}>: $<TARGET_FILE:${target}>
+GRACKLE_LIB := -Wl,-rpath,$<TARGET_FILE_DIR:${target}> -L$<TARGET_FILE_DIR:${target}> -l$<TARGET_FILE_BASE_NAME:${target}>
+
 
 ")
 
