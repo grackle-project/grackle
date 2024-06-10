@@ -27,22 +27,65 @@ The easiest thing to do is follow the instructions for installing yt,
 which will provide you with Cython, matplotlib, and NumPy.  Flake8 and
 py.test can then be installed via pip.
 
+You also need to have a fortran compiler installed (for building the Grackle library itself).
+
 Installing Pygrackle
 --------------------
 
-Once the Grackle library has been built and the above dependencies have been
-installed, Pygrackle can be installed by moving into the **src/python**
-directory and running ``pip install -e .``.
+There are 2 ways to build Pygrackle:
+
+ 1. As a standalone, self-contained module.
+    The build-command creates a fresh build of the Grackle library and packages it with the Pygrackle module.
+    (This is recommended for users, who just want to use Pygrackle)
+
+ 2. As a module that links to an external pre-existing copy of Grackle.
+    (This is consistent with what we have historically done).
+
+1. Build Pygrackle as a standalone module
++++++++++++++++++++++++++++++++++++++++++
+
+To install Pygrackle, you need to move to the **src/python** directory.
+For mose users, we recommend invoking ``pip install --user .``.
 
 .. highlight:: none
 
 ::
 
     ~/grackle $ cd src/python
-    ~/grackle/src/python $ pip install -e .
+    ~/grackle/src/python $ pip install --user .
+
+You can configure the exact C and Fortran compilers that are used for this by manipulating the ``CC`` and ``FC`` environment variables.
+
+If you encounter any compilation problems, you can also link Pygrackle against a version of the Grackle library that you already built.
+
+2. Linking Pygrackle to a separately built Grackle library
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+In this scenario, you need to build the Grackle library first.
+Afterwards, we use the ``PYGRACKLE_LEGACY_LINK`` environment variable to indicate that we want to use that build.
+
+
+If you built the Grackle library with the classic build system, use ``PYGRACKLE_LEGACY_LINK=classic``.
+
+::
+
+    ~/grackle $ cd src/python
+    ~/grackle/src/python $ PYGRACKLE_LEGACY_LINK=classic pip install --user .
+
+If you built the Grackle library with ``cmake``, use ``PYGRACKLE_LEGACY_LINK=cmake:<path/to/build>``.
+``<path/to/build>`` should be replaced with the path to the cmake build-directory.
+
+.. note:: If you use the cmake-build system, to prebuild Grackle, you need to build it as a shared library (e.g. by specifying the ``-DBUILD_SHARED_LIBS=ON`` flag when using ``cmake`` to configure the build).
 
 .. note:: Pygrackle can only be run when Grackle is compiled without OpenMP.
    See :ref:`openmp`.
+
+.. note::
+
+   When using a version of Pygrackle that links to an existing, freestanding Grackle library, Pygrackle will happily build even if the Grackle library isn't installed.
+   But, to run Pygrackle, that Grackle library needs to be properly installed to a location known to the operating system.
+   This could be a standard system location for libraries (on some systems you may need to invoke ``ldconfig`` after installation).
+   This could also be a location specified by the relevant variable; ``LD_LIBRARY_PATH`` if you're on Linux (or most unix-like systems) or ``DYLD_LIBRARY_PATH`` (if you're on macOS)
 
 Running the Example Scripts
 ---------------------------
