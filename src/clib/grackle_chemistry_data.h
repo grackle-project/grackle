@@ -14,6 +14,8 @@
 #ifndef __CHEMISTRY_DATA_H__
 #define __CHEMISTRY_DATA_H__
 
+#include "grackle_types.h"
+
 /**********************************
  *** Grackle runtime parameters ***
  **********************************/
@@ -412,6 +414,8 @@ typedef struct
   /* New/old cloudy data flag */
   int cloudy_data_new;
 
+  /* tracks the initial value of the code-units */
+  code_units initial_units;
 } chemistry_data_storage;
 
 /**************************
