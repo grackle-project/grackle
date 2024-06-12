@@ -56,6 +56,7 @@ def _setup_generic_chemistry_data(initial_redshift, current_redshift = None):
     chem.initialize()
     return chem
 
+
 _UNITS_NAMES = ('density_units', 'time_units', 'length_units', 'a_value',
                 'a_units', 'velocity_units', 'temperature_units')
 
@@ -70,7 +71,7 @@ def _prefetch_units_vals(chem):
         out[name] = val
     return out
 
-@pytest.mark.parametrize("comoving_coordinates,initial_redshift", 
+@pytest.mark.parametrize("comoving_coordinates,initial_redshift",
                          [(False, 1.0), (True, 3.0), (True, 1.0)])
 def test_required_units(comoving_coordinates, initial_redshift):
     # when NOT using comoving coordinates, initial_redshift essentially affects
@@ -125,7 +126,7 @@ def test_required_units(comoving_coordinates, initial_redshift):
         for name in _UNITS_NAMES:
             if name in ('time_units', 'a_units'):
                 # these particular quantities should be unchanged
-                assert _required_units(chem, name, a_later) == expected[name] 
+                assert _required_units(chem, name, a_later) == expected[name]
                 assert _required_units(chem, name, a_later) == getattr(chem,
                                                                        name)
             else:
