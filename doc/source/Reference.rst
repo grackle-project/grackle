@@ -417,3 +417,31 @@ The following functions are used to query the name of the ith field of the :c:da
    :param unsigned int i: The index of the accessed parameter
    :rtype: const char*
    :returns: Pointer to the string-literal specifying the name. This is ``NULL``, if :c:data:`chemistry_data` has ``i`` or fewer ``string`` members.
+
+.. _misc_functions:
+
+Miscellaneous Functions
+-----------------------
+
+.. c:function:: double gr_required_units(const chemistry_data_storage * my_rates, const char* units_name, double current_a_value);
+   
+   Queries the expected value of a unit quantity at an arbitrary cosmological scale factor.
+
+   In more detail, makes strong assumptions about the contents of the :c:type:`code_units` data structure based on its initial configuration when initializing :c:type:`chemistry_data_storage` (in :c:func:`initialize_chemistry_data` or :c:func:`local_initialize_chemistry_data`).
+   The :c:type:`code_units`'s contents cannot change in simulations without comoving coordinates. 
+   In simulations with comoving coordinates, grackle's functions expect the caller to change the :c:type:`code_units`'s configuration in a manner that is parameterized by the data structure's initial configuration and the current cosmologial scale factor.
+
+   This function primarily exists as a convenience tool for downstream developers to query what the data structure's contents should be at a given cosmological scale factor.
+
+   :type my_rates: const chemistry_data_storage \* 
+   :param my_rates: fully initialized chemistry and cooling rate data structure
+   :type units_name: const char \*
+   :param units_name: The name of the unit quantity to be queried. Allowed options include ``"a_value"``, ``"a_units``", ``"density_units"``, ``"length_units"``, ``"temperature_units"``, ``"time_units"``, ``"velocity_units"``.
+   :type current_a_value: double
+   :param current_a_value: The current value of the expansion factor in units of :c:data:`a_units`. When passed a value of ``-1``, the function assumes that you want the value used during initial configuration.
+   :rtype: double
+   :returns: Value associated with the quantity. A negative value denotes an error.
+
+   .. warning::
+
+      If grackle was configured with ``comoving_coordinates == 0``, this function considers any choice of ``current_a_value`` other than ``-1`` or an **EXACT** match to the initial choice of ``a_value`` to be an error.
