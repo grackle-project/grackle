@@ -108,6 +108,15 @@ commands:
               Grackle_DIR=${PWD}/build pip install -v -e .[dev]
             fi
 
+  install-standalone-pygrackle:
+    description: "Install pygrackle without explicitly building the grackle library."
+    steps:
+      - run:
+          name: "Install pygrackle."
+          command: |
+            source $HOME/venv/bin/activate
+            pip install -e .[dev]
+
   install-docs-dependencies:
     description: "Install dependencies for docs build."
     steps:
@@ -142,22 +151,28 @@ commands:
         type: enum
         default: 'false'
         enum: ['true', 'false']
-      classic_build:
+      build_kind:
         type: enum
-        default: 'true'
-        enum: ['true', 'false']
+        default: 'classic'
+        enum: ['classic', 'cmake', 'standalone-pygrackle']
     steps:
       - run:
-          name: "Run all tests."
+          name: "Run all tests (build_kind: << parameters.build_kind >>, omp: << parameters.omp >>)."
           command: |
             source $BASH_ENV
             source $HOME/venv/bin/activate
             cd src
-            if [ << parameters.classic_build >> == 'true' ]; then
+
+            # configure env variable for test_code_examples.py
+            if [ << parameters.build_kind >> == 'classic' ]; then
               export PYTEST_CODE_LINK_CHOICE="classic"
-            else
+            elif [ << parameters.build_kind >> == 'cmake' ]; then
               export PYTEST_CODE_LINK_CHOICE="cmake:../build"
+            else
+              export PYTEST_CODE_LINK_CHOICE="" # we skip test_code_examples.py
             fi
+
+            # execute the tests
             if [ << parameters.omp >> == 'true' ]; then
               export OMP_NUM_THREADS=4
               py.test python/tests/test_code_examples.py
@@ -213,7 +228,7 @@ jobs:
 
       - run-tests:
           omp: 'false'
-          classic_build: 'true'
+          build_kind: 'classic'
 
       - install-grackle:
           omp: 'true'
@@ -221,7 +236,7 @@ jobs:
 
       - run-tests:
           omp: 'true'
-          classic_build: 'true'
+          build_kind: 'classic'
 
       - install-grackle:
           omp: 'false'
@@ -229,7 +244,28 @@ jobs:
 
       - run-tests:
           omp: 'false'
-          classic_build: 'false'
+          build_kind: 'cmake'
+
+  test-standalone-pygrackle:
+    parameters:
+      tag:
+        type: string
+        default: latest
+    executor:
+      name: python
+      tag: << parameters.tag >>
+
+    working_directory: ~/grackle
+
+    steps:
+      - checkout
+      - set-env
+      - install-dependencies
+      - download-test-data
+      - install-standalone-pygrackle
+      - run-tests:
+          omp: 'false'
+          build_kind: 'standalone-pygrackle'
 
   docs-build:
     parameters:
@@ -253,7 +289,11 @@ workflows:
    tests:
      jobs:
        - test-suite:
-           name: "Python 3.8 tests"
+           name: "Full test suite - Python 3.8"
+           tag: "3.8.14"
+
+       - test-standalone-pygrackle:
+           name: "Standalone Python 3.8 tests"
            tag: "3.8.14"
 
        - docs-build:
@@ -270,7 +310,11 @@ workflows:
                 - main
      jobs:
        - test-suite:
-           name: "Python 3.8 tests"
+           name: "Full test suite - Python 3.8"
+           tag: "3.8.14"
+
+       - test-standalone-pygrackle:
+           name: "Standalone Python 3.8 tests"
            tag: "3.8.14"
 
        - docs-build:
