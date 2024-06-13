@@ -11,7 +11,7 @@ if (GRACKLE_USE_DOUBLE)
 else()
   set(GRACKLE_FLOAT_MACRO "GRACKLE_FLOAT_4")
 endif()
-configure_file(grackle_float.h.in
+configure_file(../include/grackle_float.h.in
   ${GRACKLE_GENRATED_PUBLIC_HEADERS}/grackle_float.h @ONLY)
 
 # next, declare recipe for generating auto_general.c:
@@ -202,7 +202,8 @@ target_include_directories(Grackle_Grackle
   # -> while it may seem unnecessary to specify the ordinary headers' directory
   #    while building grackle, it's necessary to compile auto_general.c
   PUBLIC $<BUILD_INTERFACE:${GRACKLE_GENRATED_PUBLIC_HEADERS}> # generated hdrs
-         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}> # hdrs in src directory
+         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include> # public hdrs
+         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}> # private hdrs
 
   # specify where to search for the other headers when linking against grackle
   # (for inclusion approach #2)

@@ -10,11 +10,12 @@ from setuptools.extension import Extension
 grackle_build_dir = os.getenv("PYGRACKLE_CMAKE_BUILD_DIR", "")
 if grackle_build_dir == "": # traditional in-source build
     TRADITIONAL_IN_SOURCE_BUILD_MACRO = '1'
-    include_dirs = ["../clib"]
+    include_dirs = ["../clib", "../include"]
     library_dir = "../clib/.libs/"
 else: # CMAKE-based out-of-source build
     TRADITIONAL_IN_SOURCE_BUILD_MACRO = '0'
-    include_dirs = ["../clib", f"{grackle_build_dir}/generated_public_headers"]
+    include_dirs = ["../clib", "../include",
+                    f"{grackle_build_dir}/generated_public_headers"]
     library_dir = f"{grackle_build_dir}/src/clib"
 
 if not os.path.isfile(f'{library_dir}/libgrackle.so'):

@@ -24,15 +24,12 @@
 # 
 
 # define installation rules for installation of public header files
-# -> this can be simplified after we GH PR #188 is merged
-install(DIRECTORY ${PROJECT_SOURCE_DIR}/src/clib/
+install(DIRECTORY ${PROJECT_SOURCE_DIR}/src/include/
   TYPE INCLUDE COMPONENT Grackle_Development
   FILES_MATCHING
-  REGEX "grackle[^/]*\\.(h|def)$"
-  REGEX "grackle_(macros|float).h$" EXCLUDE
-  PATTERN "grackle_chemistry_data_fields.def" EXCLUDE
-  REGEX "\\.libs" EXCLUDE
-)
+  REGEX ".*\\.(h|def)$" # <- needed so we don't copy any "*.h.in" files
+  REGEX "grackle_float.h$" EXCLUDE # <- can be removed after GH-203 or after we
+)                                  #    remove the traditional build-system
 
 install(DIRECTORY ${GRACKLE_GENRATED_PUBLIC_HEADERS}/
   TYPE INCLUDE COMPONENT Grackle_Development
