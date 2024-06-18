@@ -20,7 +20,8 @@ endif()
 cmake_minimum_required(VERSION 3.16)
 cmake_policy(SET CMP0077 NEW)
 cmake_policy(SET CMP0082 NEW)
-project(Grackle VERSION ${_GRACKLE_VERSION_NO_DEVTAG} LANGUAGES C Fortran)
+project(Grackle VERSION ${_GRACKLE_VERSION_NO_DEVTAG} LANGUAGES C CXX Fortran)
+
 
 # Specify that `./cmake` contains cmake modules defining useful functionality
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
@@ -54,6 +55,7 @@ if (GRACKLE_IS_TOP_LEVEL)
 endif()
 
 option(GRACKLE_USE_DOUBLE "compile the code with double precision" ON)
+option(GRACKLE_EXAMPLES "compile grackle examples" ${GRACKLE_IS_TOP_LEVEL})
 option(GRACKLE_DEFINE_INSTALL_RULES
   "enable Grackle's installation rules" ${GRACKLE_IS_TOP_LEVEL})
 
@@ -70,9 +72,13 @@ if (GRACKLE_USE_OPENMP)
   find_package(OpenMP REQUIRED COMPONENTS C Fortran)
 endif()
 
-
 # Main targets built by this project
 add_subdirectory(src/clib)
+
+# declare build-recipies for examples
+if (GRACKLE_EXAMPLES)
+  add_subdirectory(src/example)
+endif()
 
 # Packaging/installation rules (probably not needed if not root project)
 if(GRACKLE_DEFINE_INSTALL_RULES AND NOT CMAKE_SKIP_INSTALL_RULES)
