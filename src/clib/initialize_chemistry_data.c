@@ -276,18 +276,14 @@ int local_initialize_chemistry_data(chemistry_data *my_chemistry,
       fprintf(stderr,
               "ERROR: Invalid HydrogenFractionByMass value is specified.\n"
               " -> when primordial_chemistry == 0, the allowed values are\n"
-              "    are strictly enforced.\n"
-              " -> the specified value is: %.18f\n"
-              " -> it is allowed to have a negative value. In this case, the\n"
-              "    value is overwritten to match the tabulated default\n"
-              "    value of %.18f that is consistent with assumptions made\n"
-              "    while constructing the table (this is the default \n"
-              "    behavior if you don't touch the value of this member.)\n"
-              " -> alternatively you can EXACTLY specify the default value\n"
+              "    are strictly enforced. You have 2 options: \n"
+              "      1. leave the value unset or set it to a negative number\n"
+              "         to have it calculated internally as %.18f\n"
+              "      2. set the value exactly to the above number\n"
               " -> NOTE: for primordial_chemistry == 0, prior versions of\n"
               "    Grackle would silently overwrite the value of\n"
               "    HydrogenFractionByMass instead of reporting this error\n",
-              my_chemistry->HydrogenFractionByMass, default_Hfrac);
+              default_Hfrac);
       return FAIL;
     }
   } else {
