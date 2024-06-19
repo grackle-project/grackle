@@ -297,8 +297,11 @@ For all on/off integer flags, 0 is off and 1 is on.
    When using the non-equilibrium solver, a sensible default is 0.76.
    However, the tables for tabulated mode were created assuming
    n\ :sub:`He`/n\ :sub:`H` = 0.1, which corresponds to an H mass fraction of
-   about 0.716. When running in tabulated mode, this parameter will automatically
-   be changed to this value. Default: 0.76.
+   about 0.716.
+
+   The default value stored in this variable is a negative value that denotes the value is unset.
+   If the user doesn't modify the value, the value is overwritten with a value of about 0.716 in tabulated mode and a value of 0.76 in non-equilibrium mode.
+   While users are allowed to set arbitrary values for the non-equilibrium solver, tabulated mode reports an error if the user initializes this to a value that does not exactly match the default.
 
 .. c:var:: float DeuteriumToHydrogenRatio
 
