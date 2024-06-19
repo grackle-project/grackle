@@ -187,7 +187,7 @@ def test_grackle_chemistry_field_synched():
     member_list = query_struct_fields(
         struct_name = "chemistry_data",
         path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                            "../../clib/grackle_chemistry_data.h")
+                            "../../include/grackle_chemistry_data.h")
     )
 
     # now, categorize the fields by their datatype

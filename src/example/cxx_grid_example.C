@@ -22,9 +22,7 @@
 #include <vector>
 #include <string>
 
-extern "C" {
 #include <grackle.h>
-}
 
 #define mh     1.67262171e-24   
 #define kboltz 1.3806504e-16
