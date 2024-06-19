@@ -1,3 +1,39 @@
+== Version 3.3 ==
+_Release date - May 27, 2024_
+
+  * New Feature: Add temperature floor field
+    https://github.com/grackle-project/grackle/pull/159
+  * Enhancement: Refactor the `cloudy_data` struct so that the `grid_{dimension,parameters}` members are fixed-size arrays
+    https://github.com/grackle-project/grackle/pull/167
+  * Enhancement: Add error-check on `grackle_field_data.grid_dx`
+    https://github.com/grackle-project/grackle/pull/190, https://github.com/grackle-project/grackle/pull/191
+  * Bugfix: Minor tweaks to `initialize_rates.c`
+    https://github.com/grackle-project/grackle/pull/168
+  * Bugfix: explicitly initialize all struct members to solve plethora of issues
+    https://github.com/grackle-project/grackle/pull/166
+  * Bugfix: Fix memory leak
+    https://github.com/grackle-project/grackle/pull/169
+  * Bugfix: Add missing fields to pygrackle
+    https://github.com/grackle-project/grackle/pull/173
+  * Bugfix: Fix pygrackle H number density and mean molecular weight calculations
+    https://github.com/grackle-project/grackle/pull/180
+  * Documentation: Add mention of c_local_example to docs
+    https://github.com/grackle-project/grackle/pull/174
+  * Documentation: Fix a minor typo in documentation related to `grid_dx`
+    https://github.com/grackle-project/grackle/pull/176
+  * Documentation: Document release procedure and describe versioning policy
+    https://github.com/grackle-project/grackle/pull/194
+  * Infrastructure: Introduce `c_local_example` and fixed inconsistencies in `c_example`
+    https://github.com/grackle-project/grackle/pull/170
+  * Infrastructure: Update linux-gnu makefile
+    https://github.com/grackle-project/grackle/pull/183
+  * Infrastructure: Add `c_local_example` to list of executable removed by `make clean`
+    https://github.com/grackle-project/grackle/pull/186
+  * Infrastructure: Factor out some file-generation machinery
+    https://github.com/grackle-project/grackle/pull/181
+  * Deprecation: Removed functions deprecated in version 3.2
+    https://github.com/grackle-project/grackle/pull/184
+
 == Version 3.2.1 ==
 _Release date - Jul 19, 2023_
 

@@ -772,6 +772,8 @@ Clearing the memory
 
 Grackle is using global structures and therefore the global structure ``grackle_rates`` needs also to be released.
 
+.. _query-version:
+
 Querying library version information
 ------------------------------------
 
@@ -792,9 +794,8 @@ git revision.
    ``<MAJOR>``, ``<MINOR>``, and ``<MICRO>`` correspond to a major,
    minor, and micro version numbers (the micro version number is
    omitted if it's zero). The final section can specify a
-   development version. For concreteness, some example versions are
-   provided in increasing order: ``"3.0"``, ``"3.1"``, ``"3.1.1"``,
-   ``"3.1.2"``, ``"3.2.dev1"``, ``"3.2.dev2"``, ``"3.2"``.
+   development version. More details about this version number can be
+   found :ref:`here <primary-version-number>`.
 
 .. c:var:: const char* branch
 

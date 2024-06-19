@@ -195,8 +195,13 @@
     DEFINES = $(MACH_DEFINES) \
               $(ASSEMBLE_IO_DEFINES)
 
+    PUBLIC_HEADER_SRCDIR = $(GRACKLE_DIR)/../include
+
+    BUILD_INCLUDES = -I$(PUBLIC_HEADER_SRCDIR) -I$(GRACKLE_DIR)
+
     INCLUDES = $(MACH_INCLUDES) \
-               $(MAKEFILE_INCLUDES)   -I.
+               $(MAKEFILE_INCLUDES) \
+               $(BUILD_INCLUDES)
 
     OBJS_LIB = $(OBJS_CONFIG_LIB)
 
@@ -221,9 +226,3 @@
     ifdef MACH_INSTALL_INCLUDE_DIR
     	INSTALL_INCLUDE_DIR = $(MACH_INSTALL_INCLUDE_DIR)
     endif
-
-#-----------------------------------------------------------------------
-# LIBRARY RELEASE VERSION
-#-----------------------------------------------------------------------
-
-LIB_RELEASE_VERSION = 3.3.dev1
