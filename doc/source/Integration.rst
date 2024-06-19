@@ -10,6 +10,11 @@ C, C++, and Fortran are also available in the Grackle source.  See
 :ref:`examples` for more information.  For a list of all available
 functions, see the :ref:`reference`.
 
+Grackle currently supports two APIs.
+The :ref:`Primary API <primary_functions>`, manages some of Grackle's data structures (e.g. :c:data:`chemistry_data` and :c:data:`chemistry_data_storage`) for a downstream simulation code by making use of global variables.
+In contrast, the :ref:`Local API <local_functions>`, requires that the downstream application explicitly manage pointers to these same data-structures and requires that the pointers are provided as arguments to each function.
+The latter API is explicitly thread-safe as it involves no global data.
+
 .. _examples:
 
 Example Executables
