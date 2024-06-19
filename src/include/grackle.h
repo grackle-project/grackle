@@ -17,6 +17,10 @@
 #include "grackle_types.h"
 #include "grackle_chemistry_data.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
 extern int grackle_verbose;
 
 extern chemistry_data *grackle_data;
@@ -117,4 +121,8 @@ int local_free_chemistry_data(chemistry_data *my_chemistry, chemistry_data_stora
 
 grackle_version get_grackle_version(void);
 
-#endif
+#ifdef __cplusplus
+} /* extern "C" */
+#endif /* __cplusplus */
+
+#endif /* __GRACKLE_H__ */
