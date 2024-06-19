@@ -73,15 +73,13 @@ Seven header files are installed with the grackle library.  They are:
     * **grackle_macros.h** - contains some macros used internally.
 
 For C and C++ codes, the only source file that needs to be included in your
-simulation code is **grackle.h**.  For Fortran, use **grackle.def**.  Since
-Grackle is written in C, including **grackle.h** in a C++ code requires the
-*extern "C"* directive.
+simulation code is **grackle.h**.  For Fortran, use **grackle.def**.
 
-.. code-block:: c++
+.. note::
 
-  extern "C" {
-  #include <grackle.h>
-  }
+   Earlier versions of Grackle required C++ codes to enclose the ``#include <grackle.h>`` include-directive within a C "language-linkage block" (the block starts with ``extern "C" {``).
+   C++ codes should now directly include the header **(without the block)**.
+   The headers internally use a standard idiom to properly handle this case.
 
 Data Types
 ----------
