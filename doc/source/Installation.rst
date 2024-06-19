@@ -320,17 +320,92 @@ To use this system, version 3.16 or newer of ``cmake`` is required.
 Procedure
 +++++++++
 
-1. Proceed to grackle directory
+1. Proceed to the grackle directory
 
-.. code-block:: sh
+   .. highlight:: none
 
-   cd grackle
+   ::
 
-Configuring Grackle's Build
-+++++++++++++++++++++++++++
+      ~ $ cd grackle
+
+
+2. Initialize and configure the build-system.
+   During this step we specify configuration options.
+   We provide a more :ref:`detailed list of config options <available_cmake_options>` and provide more details about :ref:`specifying th configuration <how_to_configure>` down below.
+   For now, we make 3 basic decisions:
+
+   #. Decide on the directory, ``<build-dir>``, where you want to build Grackle. [#f1]_
+      This is referred to as the build-directory and is generally placed at the root level of the grackle repository.
+      A common choice is ``build`` (but this is fairly arbitrary).
+
+   #. Decide on the installation directory prefix, ``<install-prefix>``, where Grackle will be installed.
+      This is be specified via the ``CMAKE_INSTALL_PREFIX`` cmake configuration variable.
+
+   #. Decide on whether you want to compile Grackle as a static or shared library 
+
+
+   To configure a build where Grackle is compiled as a static library, use
+
+   .. highlight:: none
+
+   ::
+
+      ~/grackle $ cmake -DCMAKE_INSTALL_PREFIX=<install-prefix> -B <build-dir>
+
+   To configure a build where Grackle is compiled as a shared library, use
+
+   .. highlight:: none
+
+   ::
+
+      ~/grackle $ cmake -DCMAKE_INSTALL_PREFIX=<install-prefix> -DBUILD_SHARED_LIBS=ON -B <build-dir>
+
+3. Compile and install grackle.
+
+   .. highlight:: none
+
+   ::
+
+      ~/grackle $ cmake --build <build-dir> 
+      ~/grackle $ cmake --install <build-dir>
+
+   .. note::
+
+      Just like with the classic build-system, Grackle currently needs to be installed to be used.
+      If you install it in a non-standard location, then you also need to ensure that you properly set the LD_LIBRARY_PATH (or DYLD_LIBRARY_PATH on macOS) to make use of it.
+
+      The current structure (and contents) of the build-directory can and will change (especially until ``GH-#204 <https://github.com/grackle-project/grackle/pull/204>``_ and ``GH-208 <https://github.com/grackle-project/grackle/pull/208>``_ are merged).
+      But, we plan to add support for linking against a grackle installation without fully installing it.
+
+
+
+4. Test your Build.
+
+   Once you have compiled Grackle, you can run one of the provided example to test if it functions correctly.
+   These examples are automatically compiled with Enzo-E.
+   To execute use
+
+   .. highlight:: none
+
+      ~/grackle $ cd <build-dir>/examples
+      ~/grackle/<build-dir> $ ./cxx_example
+
+   .. note::
+
+      Because of certain assumptions that the examples make about the location of the input files, you **need** to make sure that you execute the example from within the directory the same directory that the compiled-example is found in.
+      If your ``<build-dir>`` is not a simple directory at the root level of your grackle repository this will not work (e.g. something like ``../my-build`` or ``my_builds/my-first-build``).
+
+   
+
+.. _available_cmake_options:
+
+Available Configuration Options
++++++++++++++++++++++++++++++++
 
 The compilation (and installation) of Grackle can be configured using various options.
 These options are described in the following 2 tables.
+
+Many of these options are binary choices that accept a boolean value. [#f2]_
 
 This first table describes the Grackle-specific options to configure the build.
 
@@ -363,7 +438,7 @@ This second table highlights a subset of standardized CMake options that may als
      - ``<undefined>``
 
    * - ``CMAKE_BUILD_TYPE``
-     - Specifies the desired build configuration (for single-configuration generators [#f1]_).
+     - Specifies the desired build configuration (for single-configuration generators [#f3]_).
        Grackle currently supports the standard choices ``Debug``, ``Release``, ``RelWithDebInfo`` and ``MinSizeRel``.
      - ``<undefined>``
 
@@ -381,6 +456,13 @@ This second table highlights a subset of standardized CMake options that may als
      - ``<undefined>``
 
 There are also additional standard options for BOTH configuring other aspects of the build and for finding the correct/preferred HDF5 library and configuring the correct openmp library.
+
+.. _how_to_configure:
+
+How to Specify Configuration Options
+++++++++++++++++++++++++++++++++++++
+
+*[ To be added ]*
 
 Differences from Classic System
 +++++++++++++++++++++++++++++++
@@ -458,4 +540,11 @@ Instructions for Integration
 
 .. rubric:: Footnotes
 
-.. [#f1] If you are simply following the above compilation instructions, you definitely don't need to worry about the distinction between a single-configuration generator (e.g. Makefiles and standard Ninja) and multi-configuration generators.
+.. [#f1] For the uninitiated, Grackle performs "out of source builds," in which the build-artifacts, like generated headers, object files, linked libraries, are placed inside a build directory (rather than putting them inside the source-directory next to the source files).
+         There are a couple of advantages to this approach such as (i) you can maintain multiple builds at the same time (e.g. if you are switching between development branches) or (ii) it's really easy to clean up from a build (you just delete the build-directory).
+
+
+
+.. [#f2] CMake boolean variables map a variety of values to ``true`` (e.g. ``1``, ``ON``, ``TRUE``, ``YES``, ``Y``) and a variety of values to ``false`` (e.g. ``0``, ``OFF``, ``FALSE``, ``NO``, ``N``).
+
+.. [#f3] If you are simply following the above compilation instructions, you definitely don't need to worry about the distinction between a single-configuration generator (e.g. Makefiles and standard Ninja) and multi-configuration generators.
