@@ -1,7 +1,8 @@
-# by default, a static library is built. But this can be explicitly controlled
-# by externally assigning the BUILD_SHARED_LIBS variable a value of ON or OFF
+# Do 2 things before we declare the project
+# 1. record the languages enabled by any parent projects
+get_property(PRE_ENABLED_LANGUAGES GLOBAL PROPERTY ENABLED_LANGUAGES)
 
-# load and and set the version information
+# 2. load and and set the version information
 set(grackle_vfile ${CMAKE_CURRENT_SOURCE_DIR}/VERSION)
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${grackle_vfile})
 
@@ -22,7 +23,6 @@ cmake_policy(SET CMP0077 NEW)
 cmake_policy(SET CMP0082 NEW)
 project(Grackle VERSION ${_GRACKLE_VERSION_NO_DEVTAG} LANGUAGES C CXX Fortran)
 
-
 # Specify that `./cmake` contains cmake modules defining useful functionality
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
@@ -41,9 +41,30 @@ if (NOT CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
   set(GRACKLE_IS_TOP_LEVEL OFF)
 endif()
 
-# the following 2 checks are only enforced when Grackle is built standalone
-# (we let people do whatever when it's embedded for maximum flexibility)
-if (GRACKLE_IS_TOP_LEVEL)
+# perform some basic checks
+if (NOT GRACKLE_IS_TOP_LEVEL)
+  if ( NOT ("Fortran" IN_LIST PRE_ENABLED_LANGUAGES) )
+    # technically, this is only an issue when building Grackle as a static
+    # library, but we raise an error anyways for a consistent experience
+    #
+    # based on the answers to the following post, we will reassess the approach
+    # we take in this scenario
+    #   https://discourse.cmake.org/t/conventions-for-linking-implicit-dependencies-of-an-embedded-multi-language-static-library/11073
+    message(FATAL_ERROR
+      "The top-level project in which the Grackle-build is embedded doesn't"
+      "list Fortran as an enabled language. This will cause linking issues"
+      "when Grackle is built as a static library (like the current build)."
+      ""
+      "To fix this, either add Fortran to the language list specified in"
+      "the top-level project command OR call enable_language(Fortran)"
+      "before embedding Grackle (see the latest CMake docs for restrictions"
+      "about where enable_language may be called")
+  endif()
+
+elseif (GRACKLE_IS_TOP_LEVEL)
+  # the following 2 checks are only enforced when Grackle is built standalone
+  # (we let people do whatever when it's embedded for maximum flexibility)
+
   if("${PROJECT_SOURCE_DIR}" STREQUAL "${PROJECT_BINARY_DIR}")
     message(FATAL_ERROR "Please don't perform an in-source build.")
   endif()
