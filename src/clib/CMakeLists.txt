@@ -241,7 +241,8 @@ target_include_directories(Grackle_Grackle
 set(is_FC "$<COMPILE_LANGUAGE:Fortran>")
 
 target_link_libraries(Grackle_Grackle
-  PRIVATE GRACKLE_HDF5_C
+  PRIVATE toolchain::m
+          GRACKLE_HDF5_C
           $<$<BOOL:${GRACKLE_USE_OPENMP}>:OpenMP::OpenMP_Fortran>
           $<$<BOOL:${GRACKLE_USE_OPENMP}>:OpenMP::OpenMP_C>
 )

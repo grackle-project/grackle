@@ -93,6 +93,13 @@ if (GRACKLE_USE_OPENMP)
   find_package(OpenMP REQUIRED COMPONENTS C Fortran)
 endif()
 
+# define the corresponds to link the C standard library that is commonly
+# required on unix-like platforms (i.e. the -lm flag)
+add_library(toolchain::m INTERFACE IMPORTED)
+if (UNIX)
+  set_target_properties(toolchain::m PROPERTIES IMPORTED_LIBNAME "m")
+endif()
+
 # Main targets built by this project
 add_subdirectory(src/clib)
 
