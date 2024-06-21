@@ -322,17 +322,14 @@ Procedure
 
 1. Proceed to the grackle directory
 
-   .. highlight:: none
+   .. code-block:: shell-session
 
-   ::
-
-      ~ $ cd grackle
+      ~$ cd grackle
 
 
 2. Initialize and configure the build-system.
-   During this step we specify configuration options.
-   We provide a more :ref:`detailed list of config options <available_cmake_options>` and provide more details about :ref:`specifying th configuration <how_to_configure>` down below.
-   For now, we make 3 basic decisions:
+   In these example snippets, we show the minimum required configuration options (this should work on most machines) and provide more details later about :ref:`additional configuration options <available_cmake_options>` and :ref:`how to specify configuration options <how_to_configure>` down below.
+   For now, we make 2 basic decisions:
 
    #. Decide on the directory, ``<build-dir>``, where you want to build Grackle. [#f1]_
       This is referred to as the build-directory and is generally placed at the root level of the grackle repository.
@@ -340,62 +337,71 @@ Procedure
 
    #. Decide on the installation directory prefix, ``<install-prefix>``, where Grackle will be installed.
       This is be specified via the ``CMAKE_INSTALL_PREFIX`` cmake configuration variable.
-
-   #. Decide on whether you want to compile Grackle as a static or shared library 
-
+      On UNIX-like systems, it defaults to ``/usr/local/``.
 
    To configure a build where Grackle is compiled as a static library, use
 
-   .. highlight:: none
-
-   ::
+   .. code-block:: shell-session
 
       ~/grackle $ cmake -DCMAKE_INSTALL_PREFIX=<install-prefix> -B <build-dir>
 
    To configure a build where Grackle is compiled as a shared library, use
 
-   .. highlight:: none
-
-   ::
+   .. code-block:: shell-session
 
       ~/grackle $ cmake -DCMAKE_INSTALL_PREFIX=<install-prefix> -DBUILD_SHARED_LIBS=ON -B <build-dir>
 
+    .. note::
+
+       If you are building Grackle to be used with a downstream simulation-code, that doesn't mention any preferences about how Grackle is built, you will probably have more luck compiling Grackle as a shared library.
+
 3. Compile and install grackle.
 
-   .. highlight:: none
+   .. code-block:: shell-session
 
-   ::
-
-      ~/grackle $ cmake --build <build-dir> 
+      ~/grackle $ cmake --build <build-dir>
       ~/grackle $ cmake --install <build-dir>
+
+   .. note::
+
+      The above commands show the most generic commands that can be executed
+      Other tutorials that you see online may show slight variations in these commands (where you manually make the build directory) and then manually execute the build-system from within the build-directory...
 
    .. note::
 
       Just like with the classic build-system, Grackle currently needs to be installed to be used.
       If you install it in a non-standard location, then you also need to ensure that you properly set the LD_LIBRARY_PATH (or DYLD_LIBRARY_PATH on macOS) to make use of it.
 
-      The current structure (and contents) of the build-directory can and will change (especially until ``GH-#204 <https://github.com/grackle-project/grackle/pull/204>``_ and ``GH-208 <https://github.com/grackle-project/grackle/pull/208>``_ are merged).
+      The current structure (and contents) of the build-directory can and will change (especially until `GH-#204 <https://github.com/grackle-project/grackle/pull/204>`__ and `GH-#208 <https://github.com/grackle-project/grackle/pull/208>`__ are merged).
       But, we plan to add support for linking against a grackle installation without fully installing it.
-
 
 
 4. Test your Build.
 
    Once you have compiled Grackle, you can run one of the provided example to test if it functions correctly.
    These examples are automatically compiled with Enzo-E.
-   To execute use
 
-   .. highlight:: none
+   .. code-block:: shell-session
 
       ~/grackle $ cd <build-dir>/examples
       ~/grackle/<build-dir> $ ./cxx_example
 
+   .. warning::
+
+      The examples make certain assumptions about the location of the input files.
+      The examples are only guarunteed to work if both:
+
+         1. you execute the example-binary from the same-directory where the example-binary is found
+
+         2. ``<build-dir>`` is a top-level directory in the grackle repository (e.g. something like ``my-build`` is fine, but choices like ``../my-grackle-build`` and ``my_builds/my-first-build`` are problematic).
+
    .. note::
 
-      Because of certain assumptions that the examples make about the location of the input files, you **need** to make sure that you execute the example from within the directory the same directory that the compiled-example is found in.
-      If your ``<build-dir>`` is not a simple directory at the root level of your grackle repository this will not work (e.g. something like ``../my-build`` or ``my_builds/my-first-build``).
+      For reference, the Classic build-system always links Grackle against the shared-library version of Grackle and requires that Grackle is fully installed in a location known by the system (either a standard system location OR a location specified by ``LD_LIBRARY_PATH``/``DYLD_LIBRARY_PATH``).
+      In contrast, cmake automatically takes special-steps to try to ensure that each example-binary will link to the copy of the Grackle library (whether it is shared or static) that is in the ``<build-dir>``; in fact, Grackle doesn't even need to be installed to run the Grackle library.
 
-   
+      With that said, if you compile Grackle as a shared library in a cmake build, an example-binary **might** try to use a copy of a shared grackle library found in a directory specified by ``LD_LIBRARY_PATH``/``DYLD_LIBRARY_PATH`` if one exists.
+      The exact behavior may be platform dependent and also depends on whether CMake instructs the linker to use RPATH or RUNPATH (this is not spacified by the cmake docs).
 
 .. _available_cmake_options:
 
@@ -464,16 +470,25 @@ How to Specify Configuration Options
 
 *[ To be added ]*
 
-Differences from Classic System
-+++++++++++++++++++++++++++++++
 
-There are 2 noteworthy differences from the traditional build system:
+.. _cmake_shared_and_static:
 
-1. It's idiomatic for a given ``cmake``-build to build either a shared library OR a static library (not both). This is controlled by the standard ``BUILD_SHARED_LIBS`` flag.
+Installing both Shared and Static Libraries
++++++++++++++++++++++++++++++++++++++++++++
 
-2. (On at least some platforms), when ``cmake`` constructs a shared libraries with ``OPENMP`` support, the resulting library is "more fully" linked against the OPENMP runtime library.
-   Downstream applications don't need to know anything about whether such a Grackle library uses OpenMP during compilation (this contrasts with the more traditional approach, where you would explicitly need to link against openmp).
-   This has an interesting consequence that you could compile pygrackle with openmp support.
+It's idiomatic for a given ``cmake``-build to build either a shared library OR a static library (not both). This is controlled by the standard ``BUILD_SHARED_LIBS`` flag (you usually don't need both).
+
+With that said, if you really want to install both of them, you could trigger 2 separate builds that install to the same destination. [#f4]_
+The following code snippet illustrates how you might do this (for concreteness, the snippet uses build-directories called ``build-static`` and ``build-shared`` and installs into a directory called ``$HOME/local`` -- but these are all arbitrary choices).
+   
+.. code-block:: shell-session
+
+   ~ grackle $ cmake -DCMAKE_INSTALL_PREFIX=$HOME/local -B build-static
+   ~ grackle $ cmake --build build-static
+   ~ grackle $ cmake --install build-static
+   ~ grackle $ cmake -DCMAKE_INSTALL_PREFIX=$HOME/local -DBUILD_SHARED_LIBS=ON -B build-shared
+   ~ grackle $ cmake --build build-shared
+   ~ grackle $ cmake --install build-shared
 
 Purpose
 +++++++
@@ -527,17 +542,6 @@ We will discuss how to do it down below.
 
 
 
-Instructions for Integration
-++++++++++++++++++++++++++++
-
-*[ TO BE ADDED ]*
-
-.. COMMENT-BLOCK
-
-   I need to actually test this all out. The crux of this is add_subdirectory and then link against Grackle::Grackle
-   I'll definitely circle back and update this.
-
-
 .. rubric:: Footnotes
 
 .. [#f1] For the uninitiated, Grackle performs "out of source builds," in which the build-artifacts, like generated headers, object files, linked libraries, are placed inside a build directory (rather than putting them inside the source-directory next to the source files).
@@ -548,3 +552,9 @@ Instructions for Integration
 .. [#f2] CMake boolean variables map a variety of values to ``true`` (e.g. ``1``, ``ON``, ``TRUE``, ``YES``, ``Y``) and a variety of values to ``false`` (e.g. ``0``, ``OFF``, ``FALSE``, ``NO``, ``N``).
 
 .. [#f3] If you are simply following the above compilation instructions, you definitely don't need to worry about the distinction between a single-configuration generator (e.g. Makefiles and standard Ninja) and multi-configuration generators.
+
+.. [#f4] Aside: performing these 2 separate CMake builds compiles the source files the same number of times as the Classic build system.
+         Behind the scenes, the classic build system always compile each source file twice (once with position independent code and once without).
+
+
+

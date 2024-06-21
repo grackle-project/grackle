@@ -40,6 +40,7 @@ Contents:
 
    Installation.rst
    Testing.rst
+   Consuming.rst
    Integration.rst
    Parameters.rst
    RateFunctions.rst
