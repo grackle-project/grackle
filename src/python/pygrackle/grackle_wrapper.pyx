@@ -771,8 +771,8 @@ cdef c_code_units fetch_code_units(chemistry_data chem_data,
         coerced_cur_a_val = <double> current_a_value
         out.a_value = coerced_cur_a_val
         out.length_units = chem_data.length_units * (coerced_cur_a_val /
-                                                     chem_data.units)
-        aold_div_acur = (chem_data.units/coerced_cur_a_val)
+                                                     chem_data.units.a_value)
+        aold_div_acur = (chem_data.units.a_value/coerced_cur_a_val)
         out.density_units = chem_data.density_units * (aold_div_acur *
                                                        aold_div_acur *
                                                        aold_div_acur)
