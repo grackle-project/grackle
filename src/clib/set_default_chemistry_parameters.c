@@ -57,7 +57,7 @@ int gr_initialize_field_data(grackle_field_data *my_fields)
 
   // now, modify all members holding datafields to have values of NULL
   // (we use X-Macros to do this)
-  #define ENTRY(MEMBER_NAME, _1) my_fields->MEMBER_NAME = NULL;
+  #define ENTRY(MEMBER_NAME) my_fields->MEMBER_NAME = NULL;
   #include "grackle_field_data_fdatamembers.def"
   #undef ENTRY
 
