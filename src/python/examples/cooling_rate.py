@@ -41,8 +41,8 @@ if __name__ == "__main__":
     my_chemistry.self_shielding_method = 0
     my_chemistry.H2_self_shielding = 0
     my_dir = os.path.dirname(os.path.abspath(__file__))
-    grackle_data_file = bytearray(os.path.join(
-        my_dir, "..", "..", "..", "input", "CloudyData_UVB=HM2012.h5"), 'utf-8')
+    grackle_data_file = os.path.join(
+        my_dir, "..", "..", "..", "input", "CloudyData_UVB=HM2012.h5")
     my_chemistry.grackle_data_file = grackle_data_file
 
     my_chemistry.use_specific_heating_rate = 1
@@ -61,36 +61,19 @@ if __name__ == "__main__":
     # Call convenience function for setting up a fluid container.
     # This container holds the solver parameters, units, and fields.
     temperature = np.logspace(1, 9, 200)
-    fc = setup_fluid_container(my_chemistry,
-                               temperature=temperature,
-                               converge=True)
+    fc = setup_fluid_container(
+        my_chemistry,
+        temperature=temperature,
+        metal_mass_fraction=my_chemistry.SolarMetalFractionByMass,
+        converge=True)
 
     fc["specific_heating_rate"][:] = 0.
     fc["volumetric_heating_rate"][:] = 0.
 
-    fc.calculate_temperature()
-    fc.calculate_cooling_time()
+    # get data arrays with symbolic units
+    data = fc.finalize_data()
 
-    density_proper = fc["density"] / \
-        (my_chemistry.a_units *
-         my_chemistry.a_value)**(3*my_chemistry.comoving_coordinates)
-    cooling_rate = fc.chemistry_data.cooling_units * fc["energy"] / \
-        np.abs(fc["cooling_time"]) / density_proper
-
-    data = {}
-    t_sort = np.argsort(fc["temperature"])
-    for field in fc.density_fields:
-        data[field] = yt.YTArray(fc[field][t_sort] *
-                                 my_chemistry.density_units, "g/cm**3")
-    data["energy"] = yt.YTArray(
-        fc["energy"][t_sort] * my_chemistry.energy_units, "erg/g")
-    data["temperature"] = yt.YTArray(fc["temperature"][t_sort], "K")
-    data["pressure"] = yt.YTArray(
-        fc["pressure"][t_sort] * my_chemistry.pressure_units, "dyne/cm**2")
-    data["cooling_time"] = yt.YTArray(fc["cooling_time"][t_sort], "s")
-    data["cooling_rate"] = yt.YTArray(cooling_rate[t_sort], "erg*cm**3/s")
-
-    pyplot.loglog(data["temperature"], data["cooling_rate"],
+    pyplot.loglog(data["temperature"], np.abs(data["cooling_rate"]),
                   color="black")
     pyplot.xlabel('T [K]')
     pyplot.ylabel('$\\Lambda$ [erg s$^{-1}$ cm$^{3}$]')

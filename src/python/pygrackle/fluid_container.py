@@ -12,6 +12,7 @@
 ########################################################################
 
 import numpy as np
+from unyt import unyt_array
 
 from pygrackle.grackle_wrapper import \
     calculate_cooling_time, \
@@ -31,8 +32,8 @@ _base_fluids = ["density", "metal", "dust"]
 _nd_fields   = ["energy",
                 "x-velocity", "y-velocity", "z-velocity",
                 "temperature", "dust_temperature", "pressure",
-                "gamma", "cooling_time", "mu", "nH",
-                "mean_molecular_weight", "isrf_habing",
+                "gamma", "cooling_time",
+                "isrf_habing",
                 "temperature_floor"]
 
 _fluid_names = {}
@@ -137,6 +138,57 @@ class FluidContainer(dict):
             
         self["mu"] = self["density"]/nden
         self["mean_molecular_weight"] = self["mu"]
+
+    def calculate_cooling_rate(self):
+        """
+        Calculate the cooling rate in units of erg s^-1 cm^+3.
+        """
+        self.calculate_cooling_time()
+
+        my_chemistry = self.chemistry_data
+        density_proper = self["density"] / \
+            (my_chemistry.a_units *
+             my_chemistry.a_value)**(3*my_chemistry.comoving_coordinates)
+
+        cooling_rate = my_chemistry.cooling_units * self["energy"] / \
+          self["cooling_time"] / density_proper
+        self["cooling_rate"] = cooling_rate
+
+    def finalize_data(self):
+        """
+        Return field data as unyt_arrays with appropriate units.
+        """
+
+        my_chemistry = self.chemistry_data
+
+        field_units = {
+            "cooling_rate": (None, "erg*cm**3/s"),
+            "cooling_time": (None, "s"),
+            "dust_temperature": (None, "K"),
+            "energy": ("energy_units", "erg/g"),
+            "mean_molecular_weight": (None, ""),
+            "pressure":  ("pressure_units", "dyne/cm**2"),
+            "temperature": (None, "K"),
+        }
+
+        my_data = {}
+        for field in self.density_fields:
+            my_data[field] = unyt_array(
+                self[field].copy() * my_chemistry.density_units, "g/cm**3")
+
+        for field, (conv, units) in field_units.items():
+            func = getattr(self, f"calculate_{field}", None)
+            if func is not None:
+                func()
+
+            my_datum = self[field].copy()
+            if conv is not None:
+                my_datum *= getattr(my_chemistry, conv)
+            if units:
+                my_datum = unyt_array(my_datum, units)
+            my_data[field] = my_datum
+
+        return my_data
 
     def calculate_cooling_time(self):
         calculate_cooling_time(self)
