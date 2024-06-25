@@ -127,20 +127,21 @@ def setup_fluid_container(my_chemistry,
 
     state_vals = {
         "density": fc_density,
-        "metal": metal_mass_fraction * fc_density,
-        "dust": dust_to_gas_ratio * fc_density
+        "metal_density": metal_mass_fraction * fc_density,
+        "dust_density": dust_to_gas_ratio * fc_density
     }
 
     if state == "neutral":
-        state_vals["HI"] = H_total * fc_density
-        state_vals["HeI"] = He_total * fc_density
-        state_vals["DI"] = D_total * fc_density
+        state_vals["HI_density"] = H_total * fc_density
+        state_vals["HeI_density"] = He_total * fc_density
+        state_vals["DI_density"] = D_total * fc_density
     elif state == "ionized":
-        state_vals["HII"] = H_total * fc_density
-        state_vals["HeIII"] = He_total * fc_density
-        state_vals["DII"] = D_total * fc_density
+        state_vals["HII_density"] = H_total * fc_density
+        state_vals["HeIII_density"] = He_total * fc_density
+        state_vals["DII_density"] = D_total * fc_density
         # ignore HeII since we'll set it to tiny
-        state_vals["de"] = state_vals["HII"] + state_vals["HeIII"] / 2
+        state_vals["e_density"] = state_vals["HII_density"] + \
+          state_vals["HeIII_density"] / 2
     else:
         raise ValueError("State must be either neutral or ionized.")
 
@@ -148,12 +149,12 @@ def setup_fluid_container(my_chemistry,
         fc[field][:] = state_vals.get(field, tiny_density)
 
     fc.calculate_mean_molecular_weight()
-    fc["energy"] = temperature / \
+    fc["internal_energy"] = temperature / \
         fc.chemistry_data.temperature_units / \
-        fc["mu"] / (my_chemistry.Gamma - 1.0)
-    fc["x-velocity"][:] = 0.0
-    fc["y-velocity"][:] = 0.0
-    fc["z-velocity"][:] = 0.0
+        fc["mean_molecular_weight"] / (my_chemistry.Gamma - 1.0)
+    fc["x_velocity"][:] = 0.0
+    fc["y_velocity"][:] = 0.0
+    fc["z_velocity"][:] = 0.0
 
     fc_last = fc.copy()
 
@@ -169,8 +170,8 @@ def setup_fluid_container(my_chemistry,
             fc_last[field] = np.copy(fc[field])
         fc.solve_chemistry(dt)
         fc.calculate_mean_molecular_weight()
-        fc["energy"] = temperature / \
-            fc.chemistry_data.temperature_units / fc["mu"] / \
+        fc["internal_energy"] = temperature / \
+            fc.chemistry_data.temperature_units / fc["mean_molecular_weight"] / \
             (my_chemistry.Gamma - 1.0)
         converged = check_convergence(fc, fc_last, tol=tolerance)
         if converged:

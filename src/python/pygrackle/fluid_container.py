@@ -28,26 +28,59 @@ from pygrackle.utilities.misc import \
 from pygrackle.utilities.physical_constants import \
     mass_hydrogen_cgs
 
-_base_fluids = ["density", "metal", "dust"]
-_nd_fields   = ["energy",
-                "x-velocity", "y-velocity", "z-velocity",
+_deprecations = {
+    "metal": "metal_density",
+    "dust": "dust_density",
+    "HI": "HI_density",
+    "HII": "HII_density",
+    "HeI": "HeI_density",
+    "HeII": "HeII_density",
+    "HeIII": "HeIII_density",
+    "de": "e_density",
+    "H2I": "H2I_density",
+    "H2II": "H2II_density",
+    "HM": "HM_density",
+    "DI": "DI_density",
+    "DII": "DII_density",
+    "HDI": "HDI_density",
+    "energy": "internal_energy",
+    "x-velocity": "x_velocity",
+    "y-velocity": "y_velocity",
+    "z-velocity": "z_velocity",
+    "mu": "mean_molecular_weight",
+    "nH": "H_nuclei_density",
+}
+
+_base_fluids = ["density", "metal_density", "dust_density"]
+_nd_fields   = ["internal_energy",
+                "x_velocity", "y_velocity", "z_velocity",
                 "temperature", "dust_temperature", "pressure",
                 "gamma", "cooling_time",
-                "isrf_habing",
+                "H_nuclei_density",
+                "mean_molecular_weight", "isrf_habing",
                 "temperature_floor"]
 
 _fluid_names = {}
 _fluid_names[0] = _base_fluids
 _fluid_names[1] = _fluid_names[0] + \
-  ["HI", "HII", "HeI", "HeII", "HeIII", "de"]
+  ["HI_density",
+   "HII_density",
+   "HeI_density",
+   "HeII_density",
+   "HeIII_density",
+   "e_density"]
 _fluid_names[2] = _fluid_names[1] + \
-  ["H2I", "H2II", "HM"]
+  ["H2I_density",
+   "H2II_density",
+   "HM_density"]
 _fluid_names[3] = _fluid_names[2] + \
-  ["DI", "DII", "HDI"]
+  ["DI_density",
+   "DII_density",
+   "HDI_density"]
 
-_rad_trans_names = ['RT_heating_rate', 'RT_HI_ionization_rate',
-                    'RT_HeI_ionization_rate', 'RT_HeII_ionization_rate',
-                    'RT_H2_dissociation_rate']
+_rad_trans_names = ["RT_heating_rate", "RT_HI_ionization_rate",
+                    "RT_HeI_ionization_rate", "RT_HeII_ionization_rate",
+                    "RT_H2_dissociation_rate"]
 
 _extra_fields = {}
 _extra_fields[2] = ["H2_self_shielding_length", "H2_custom_shielding_factor"]
@@ -72,14 +105,24 @@ class FluidContainer(dict):
             if getattr(self.chemistry_data, "use_%s_heating_rate" % htype, 0):
                 self._setup_fluid("%s_heating_rate" % htype)
 
+    def __getitem__(self, key):
+        if key in _deprecations:
+            new_field = _deprecations[key]
+            warn = f"The {key} field is deprecated and will be removed in " + \
+              f"Pygrackle 1.1. Use {new_field} instead."
+            issue_deprecation_warning(warn)
+            return self[new_field]
+
+        return super().__getitem__(key)
+
     def _setup_fluid(self, fluid_name):
         self[fluid_name] = np.zeros(self.n_vals, self.dtype)
 
     @property
     def cooling_units(self):
-        warn = 'The cooling_units attribute is deprecated.\n' + \
-          'For example, instead of fc.cooling_units, ' + \
-          'use fc.chemistry_data.cooling_units.'
+        warn = "The cooling_units attribute is deprecated.\n" + \
+          "For example, instead of fc.cooling_units, " + \
+          "use fc.chemistry_data.cooling_units."
         issue_deprecation_warning(warn)
         return self.chemistry_data.cooling_units
 
@@ -90,30 +133,28 @@ class FluidContainer(dict):
     def calculate_hydrogen_number_density(self):
         my_chemistry = self.chemistry_data
         if my_chemistry.primordial_chemistry == 0:
-            self["nH"] = my_chemistry.HydrogenFractionByMass * \
+            self["H_nuclei_density"] = my_chemistry.HydrogenFractionByMass * \
               self["density"] * my_chemistry.density_units / mass_hydrogen_cgs
             return
-        nH = self["HI"] + self["HII"]
+        nH = self["HI_density"] + self["HII_density"]
         if my_chemistry.primordial_chemistry > 1:
-            nH += self["HM"] + self["H2I"] + self["H2II"]
+            nH += self["HM_density"] + self["H2I_density"] + self["H2II_density"]
         if my_chemistry.primordial_chemistry > 2:
-            nH += self["HDI"] / 3.
-        self["nH"] = nH * my_chemistry.density_units / mass_hydrogen_cgs
+            nH += self["HDI_density"] / 3.
+        self["H_nuclei_density"] = nH * my_chemistry.density_units / mass_hydrogen_cgs
 
     def calculate_mean_molecular_weight(self):
         # If energy has been set, calculate mu from the energy
-        if not (self["energy"] == 0).all():
+        if not (self["internal_energy"] == 0).all():
             self.calculate_temperature()
             self.calculate_gamma()
-            self["mu"] = self["temperature"] / \
-                (self["energy"] * (self["gamma"] - 1.) *
+            self["mean_molecular_weight"] = self["temperature"] / \
+                (self["internal_energy"] * (self["gamma"] - 1.) *
                  self.chemistry_data.temperature_units)
-            self["mean_molecular_weight"] = self["mu"]
             return
             
         # Default to mu=1
-        self["mu"] = np.ones(self["energy"].size)
-        self["mean_molecular_weight"] = self["mu"]
+        self["mean_molecular_weight"] = np.ones(self["internal_energy"].size)
 
         if self.chemistry_data.primordial_chemistry == 0:
             return # mu=1
@@ -121,23 +162,22 @@ class FluidContainer(dict):
         # Check that (chemistry) density fields have been set.
         # Allow metals to be 0
         for field in self.density_fields:
-            if field == 'metal':
+            if field == "metal_density":
                 continue
             if (self[field] == 0).all():
                 return
 
         # Calculate mu from the species densities; ignore deuterium
-        nden = self["metal"]/16.
-        nden += self["HI"]+self["HII"]+self["de"] + \
-            (self["HeI"]+self["HeII"]+self["HeIII"])/4.
+        nden = self["metal_density"]/16.
+        nden += self["HI_density"]+self["HII_density"]+self["e_density"] + \
+            (self["HeI_density"]+self["HeII_density"]+self["HeIII_density"])/4.
             
         if self.chemistry_data.primordial_chemistry > 1:
-            nden += self["HM"]+(self["H2I"]+self["H2II"])/2.
+            nden += self["HM_density"]+(self["H2I_density"]+self["H2II_density"])/2.
         if self.chemistry_data.primordial_chemistry > 2:
-            nden += (self["DI"]+self["DII"])/2.+self["HDI"]/3.
+            nden += (self["DI_density"]+self["DII_density"])/2.+self["HDI_density"]/3.
             
-        self["mu"] = self["density"]/nden
-        self["mean_molecular_weight"] = self["mu"]
+        self["mean_molecular_weight"] = self["density"]/nden
 
     def calculate_cooling_rate(self):
         """
@@ -150,7 +190,7 @@ class FluidContainer(dict):
             (my_chemistry.a_units *
              my_chemistry.a_value)**(3*my_chemistry.comoving_coordinates)
 
-        cooling_rate = my_chemistry.cooling_units * self["energy"] / \
+        cooling_rate = my_chemistry.cooling_units * self["internal_energy"] / \
           self["cooling_time"] / density_proper
         self["cooling_rate"] = cooling_rate
 
@@ -165,7 +205,7 @@ class FluidContainer(dict):
             "cooling_rate": (None, "erg*cm**3/s"),
             "cooling_time": (None, "s"),
             "dust_temperature": (None, "K"),
-            "energy": ("energy_units", "erg/g"),
+            "internal_energy": ("energy_units", "erg/g"),
             "mean_molecular_weight": (None, ""),
             "pressure":  ("pressure_units", "dyne/cm**2"),
             "temperature": (None, "K"),
