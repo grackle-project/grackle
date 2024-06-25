@@ -249,3 +249,5 @@ cdef extern from "grackle.h":
         c_chemistry_data_storage *my_rates)
 
     c_grackle_version c_get_grackle_version "get_grackle_version"()
+
+    int gr_initialize_field_data(c_field_data *my_fields)

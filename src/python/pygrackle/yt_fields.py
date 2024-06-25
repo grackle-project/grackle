@@ -118,8 +118,9 @@ def prepare_grackle_data(ds, parameters=None):
     sim_type = type(ds)
     par_map = _parameter_map.get(sim_type)
     if par_map is None:
-        raise RuntimeError(
-            "Simulation type not supported: %s." % sim_type)
+        print (f"Warning: cannot get Grackle parameters from {sim_type}.\n"
+               "All parameters need to be supplied through the \"parameters\" keyword.")
+        par_map = {}
 
     all_parameters = \
       dict([(gpar, ds.parameters[dpar])

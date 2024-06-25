@@ -696,6 +696,7 @@ cdef c_field_data setup_field_data(object fc, int[::1] buf,
 
     # now initialize my_fields
     cdef c_field_data my_fields
+    gr_initialize_field_data(&my_fields)
     my_fields.grid_rank = 1
     my_fields.grid_dimension = grid_dimension
     my_fields.grid_start = grid_start
