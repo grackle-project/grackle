@@ -5,5 +5,6 @@ test:
 clean:
 	rm -f pygrackle/*.so pygrackle/*.c pygrackle/*.pyc pygrackle/utilities/*.pyc
 	rm -rf pygrackle.egg-info
+	rm -rf build
 
 .PHONY: build test
