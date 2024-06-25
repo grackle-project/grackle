@@ -12,3 +12,8 @@ add_executable(runFuncCool1DCloudyTest test_func_cool1d_cloudy_g.cpp)
 target_link_libraries(runFuncCool1DCloudyTest grackle gtest gtest_main hdf5)
 target_include_directories(runFuncCool1DCloudyTest PRIVATE ${PROJECT_SOURCE_DIR}/src/clib ${PROJECT_SOURCE_DIR}/src/clib/generated)
 add_test(NAME Cool1DCloudyTest COMMAND runFuncCool1DCloudyTest)
+
+add_executable(runFuncCool1DCloudyOldTablesTest test_func_cool1d_cloudy_old_tables_g.cpp)
+target_link_libraries(runFuncCool1DCloudyOldTablesTest grackle gtest gtest_main hdf5)
+target_include_directories(runFuncCool1DCloudyOldTablesTest PRIVATE ${PROJECT_SOURCE_DIR}/src/clib ${PROJECT_SOURCE_DIR}/src/clib/generated)
+add_test(NAME Cool1DCloudyOldTablesTest COMMAND runFuncCool1DCloudyOldTablesTest)
