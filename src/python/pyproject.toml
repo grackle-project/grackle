@@ -1,0 +1,60 @@
+[build-system]
+requires = ["scikit-build-core", "cython", "numpy"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "pygrackle"
+version = "1.0.1"
+description = "A wrapper for the Grackle chemistry library"
+classifiers=[
+  "Development Status :: 5 - Production/Stable",
+  "Environment :: Console",
+  "Intended Audience :: Science/Research",
+  "Topic :: Scientific/Engineering :: Astronomy",
+  "License :: OSI Approved :: BSD License",
+  "Operating System :: MacOS :: MacOS X",
+  "Operating System :: POSIX :: Linux",
+  "Operating System :: Unix",
+  "Natural Language :: English",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+]
+keywords=[
+  "simulation", "chemistry", "cooling", "astronomy", "astrophysics"
+]
+requires-python = ">=3.7"
+dependencies = [
+  'cython',
+  'h5py',
+  'numpy',
+  'matplotlib',
+  'yt>=4.0.2'
+]
+
+[project.license]
+text = "BSD 3-Clause"
+
+[project.urls]
+Homepage = 'https://github.com/grackle-project/grackle'
+Documentation = 'https://grackle.readthedocs.io/'
+Source = 'https://github.com/grackle-project/grackle'
+Tracker = 'https://github.com/grackle-project/grackle/issues'
+
+[project.optional-dependencies]
+dev = [
+  'flake8',
+  'pytest',
+  'sphinx',
+  'packaging'
+]
+
+
+[tool.scikit-built]
+
+cmake.version = ">=3.16"
+
+# The build type to use when building the project. Valid options are: "Debug",
+# "Release", "RelWithDebInfo", "MinSizeRel", "", etc.
+cmake.build-type = "Release"
+
