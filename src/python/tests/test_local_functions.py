@@ -29,9 +29,6 @@ from pygrackle.utilities.physical_constants import \
     mass_hydrogen_cgs, \
     sec_per_Myr
 
-from pygrackle.utilities.testing import \
-    random_logscale
-
 generate_results = \
   int(os.environ.get("GENERATE_LOCAL_FUNCTION_TEST_RESULTS", 0)) == 1
 
@@ -221,6 +218,8 @@ class LocalFunctionsTest(TestCase):
 
                 else:
                     rval = my_chemistry.initialize()
+                    if rval == 0:
+                        raise RuntimeError("Failed to initialize chemistry_data.")
                     fc = FluidContainer(my_chemistry, 1)
                     for field in my_in:
                         fc[field][:] = my_in[field]
