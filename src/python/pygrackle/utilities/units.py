@@ -20,6 +20,15 @@ def set_cosmology_units(my_units, hubble_constant=0.704,
     r"""
     Set cosmological units like Enzo.
 
+    Returns
+    -------
+    None or dict
+        When `my_units` is `None`, this function returns a dict containing the
+        cosmological units. Otherwise, the `my_units` argument is directly
+        modified
+
+    Notes
+    -----
     Greg Bryan's note on cosmology units:
 
     time:        utim = 1 / sqrt(4 * \pi * G * \rho_0 * (1+zri)^3)
@@ -42,16 +51,23 @@ def set_cosmology_units(my_units, hubble_constant=0.704,
     * - the utem given below assumes that \mu = 1, so you must
     multiply the resulting temperature field by \mu.
     """
+    tmp = {}
+    a_units = 1. / (1. + initial_redshift)
 
-    my_units.comoving_coordinates = 1
-    my_units.a_units = 1. / (1. + initial_redshift)
-    my_units.a_value = 1.0 / (1.0 + current_redshift) / \
-        my_units.a_units
-    my_units.density_units = 1.8788e-29 * omega_matter * \
+    tmp['comoving_coordinates'] = 1
+    tmp['a_units'] = a_units
+    tmp['a_value'] = 1.0 / (1.0 + current_redshift) / a_units
+    tmp['density_units'] = 1.8788e-29 * omega_matter * \
         np.power(hubble_constant, 2) * np.power(1 + current_redshift, 3)
-    my_units.length_units = 3.085678e24 * comoving_box_size / \
+    tmp['length_units'] = 3.085678e24 * comoving_box_size / \
         hubble_constant / (1. + current_redshift)
-    my_units.time_units = 2.519445e17 / np.sqrt(omega_matter) / \
+    tmp['time_units'] = 2.519445e17 / np.sqrt(omega_matter) / \
         hubble_constant / np.power(1 + initial_redshift, 1.5)
-    my_units.velocity_units = 1.22475e7 * comoving_box_size * \
+    tmp['velocity_units'] = 1.22475e7 * comoving_box_size * \
         np.sqrt(omega_matter) * np.sqrt(1 + initial_redshift)
+
+    if my_units is None:
+        return tmp
+    else:
+        for k,v in tmp.items():
+            setattr(my_units, k, v)
