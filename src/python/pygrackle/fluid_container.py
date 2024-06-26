@@ -51,40 +51,74 @@ _deprecations = {
     "nH": "H_nuclei_density",
 }
 
-_base_fluids = ["density", "metal_density", "dust_density"]
-_nd_fields   = ["internal_energy",
-                "x_velocity", "y_velocity", "z_velocity",
-                "temperature", "dust_temperature", "pressure",
-                "gamma", "cooling_time",
-                "H_nuclei_density",
-                "mean_molecular_weight", "isrf_habing",
-                "temperature_floor"]
+_base_densities = ["density"]
+_base_extra_fields = \
+  ["internal_energy",
+   "x_velocity",
+   "y_velocity",
+   "z_velocity"]
 
-_fluid_names = {}
-_fluid_names[0] = _base_fluids
-_fluid_names[1] = _fluid_names[0] + \
+_calculated_fields = \
+  ["cooling_time",
+   "dust_temperature",
+   "gamma",
+   "pressure",
+   "temperature"]
+
+_primordial_chemistry_densities = {}
+_primordial_chemistry_densities[0] = _base_densities
+_primordial_chemistry_densities[1] = \
+  _primordial_chemistry_densities[0] + \
   ["HI_density",
    "HII_density",
    "HeI_density",
    "HeII_density",
    "HeIII_density",
    "e_density"]
-_fluid_names[2] = _fluid_names[1] + \
+_primordial_chemistry_densities[2] = \
+  _primordial_chemistry_densities[1] + \
   ["H2I_density",
    "H2II_density",
    "HM_density"]
-_fluid_names[3] = _fluid_names[2] + \
+_primordial_chemistry_densities[3] = \
+  _primordial_chemistry_densities[2] + \
   ["DI_density",
    "DII_density",
    "HDI_density"]
 
-_rad_trans_names = ["RT_heating_rate", "RT_HI_ionization_rate",
-                    "RT_HeI_ionization_rate", "RT_HeII_ionization_rate",
-                    "RT_H2_dissociation_rate"]
+_radiation_transfer_fields = \
+  ["RT_heating_rate",
+   "RT_HI_ionization_rate",
+   "RT_HeI_ionization_rate",
+   "RT_HeII_ionization_rate",
+   "RT_H2_dissociation_rate"]
 
-_extra_fields = {}
-_extra_fields[2] = ["H2_self_shielding_length", "H2_custom_shielding_factor"]
-_extra_fields[3] = _extra_fields[2] + []
+def _required_density_fields(my_chemistry):
+    my_fields = _primordial_chemistry_densities[
+        my_chemistry.primordial_chemistry].copy()
+    if my_chemistry.metal_cooling == 1:
+        my_fields.append("metal_density")
+    if my_chemistry.dust_chemistry == 1:
+        my_fields.append("dust_density")
+    return my_fields
+
+def _required_extra_fields(my_chemistry):
+    my_fields = _base_extra_fields.copy()
+    if my_chemistry.use_volumetric_heating_rate == 1:
+        my_fields.append("volumetric_heating_rate")
+    if my_chemistry.use_specific_heating_rate == 1:
+        my_fields.append("specific_heating_rate")
+    if my_chemistry.use_temperature_floor == 2:
+        my_fields.append("temperature_floor")
+    if my_chemistry.use_radiative_transfer == 1:
+        my_fields.extend(_radiation_transfer_fields)
+    if my_chemistry.H2_self_shielding == 2:
+        my_fields.append("H2_self_shielding_length")
+    if my_chemistry.H2_custom_shielding == 1:
+        my_fields.append("H2_custom_shielding_factor")
+    if my_chemistry.use_isrf_field == 1:
+        my_fields.append("isrf_habing")
+    return my_fields
 
 class FluidContainer(dict):
     def __init__(self, chemistry_data, n_vals, dtype="float64",
@@ -93,17 +127,11 @@ class FluidContainer(dict):
         self.dtype = dtype
         self.chemistry_data = chemistry_data
         self.n_vals = n_vals
-        for fluid in _fluid_names[self.chemistry_data.primordial_chemistry] + \
-        _extra_fields.get(self.chemistry_data.primordial_chemistry, []) + \
-        _nd_fields:
-            self._setup_fluid(fluid)
-        if self.chemistry_data.use_radiative_transfer:
-            for fluid in _rad_trans_names:
-                self._setup_fluid(fluid)
 
-        for htype in ["specific", "volumetric"]:
-            if getattr(self.chemistry_data, "use_%s_heating_rate" % htype, 0):
-                self._setup_fluid("%s_heating_rate" % htype)
+        for field in _required_density_fields(self.chemistry_data) + \
+          _required_extra_fields(self.chemistry_data) + \
+          _calculated_fields:
+            self._setup_fluid(field)
 
     def __getitem__(self, key):
         if key in _deprecations:
@@ -120,17 +148,18 @@ class FluidContainer(dict):
 
     @property
     def cooling_units(self):
-        warn = "The cooling_units attribute is deprecated.\n" + \
-          "For example, instead of fc.cooling_units, " + \
-          "use fc.chemistry_data.cooling_units."
+        warn = "The cooling_units attribute is deprecated and will be " +\
+          "removed in Pygrackle 1.1. Use chemistry_data.cooling_units instead."
         issue_deprecation_warning(warn)
         return self.chemistry_data.cooling_units
 
     @property
     def density_fields(self):
-        return _fluid_names[self.chemistry_data.primordial_chemistry]
+        return _required_density_fields(self.chemistry_data)
 
     def calculate_hydrogen_number_density(self):
+        # This function should be deprecated in place of a general
+        # approach that works for all species.
         my_chemistry = self.chemistry_data
         if my_chemistry.primordial_chemistry == 0:
             self["H_nuclei_density"] = my_chemistry.HydrogenFractionByMass * \
@@ -201,20 +230,20 @@ class FluidContainer(dict):
 
         my_chemistry = self.chemistry_data
 
+        my_data = {}
+        for field in self.density_fields:
+            my_data[field] = unyt_array(
+                self[field].copy() * my_chemistry.density_units, "g/cm**3")
+
         field_units = {
             "cooling_rate": (None, "erg*cm**3/s"),
-            "cooling_time": (None, "s"),
+            "cooling_time": ("time_units", "s"),
             "dust_temperature": (None, "K"),
             "internal_energy": ("energy_units", "erg/g"),
             "mean_molecular_weight": (None, ""),
             "pressure":  ("pressure_units", "dyne/cm**2"),
             "temperature": (None, "K"),
         }
-
-        my_data = {}
-        for field in self.density_fields:
-            my_data[field] = unyt_array(
-                self[field].copy() * my_chemistry.density_units, "g/cm**3")
 
         for field, (conv, units) in field_units.items():
             func = getattr(self, f"calculate_{field}", None)
