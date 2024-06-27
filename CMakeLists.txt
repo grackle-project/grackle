@@ -93,10 +93,13 @@ if (GRACKLE_USE_OPENMP)
   find_package(OpenMP REQUIRED COMPONENTS C Fortran)
 endif()
 
-# define the corresponds to link the C standard library that is commonly
-# required on unix-like platforms (i.e. the -lm flag)
+# define target to link the math functions of the C standard library
+# (i.e. the -lm flag). This is commonly needed on unix-like platforms (but
+# should not be used on macOS).
+# -> For platforms that don't need libm, this target acts as a dummy
+#    placeholder (that does nothing)
 add_library(toolchain::m INTERFACE IMPORTED)
-if (UNIX)
+if (UNIX AND NOT CMAKE_SYSTEM_NAME STREQUAL "Darwin")
   set_target_properties(toolchain::m PROPERTIES IMPORTED_LIBNAME "m")
 endif()
 
