@@ -212,8 +212,7 @@ class LocalFunctionsTest(TestCase):
                         temperature=base_input_set["temperature"],
                         metal_mass_fraction=base_input_set["metallicity"],
                         converge=False)
-                    my_in = {field: fc[field][0] for field in fc.density_fields +
-                                   ["energy"] + [f"{ax}-velocity" for ax in "xyz"]}
+                    my_in = {field: fc[field][0] for field in fc.input_fields}
                     my_in["redshift"] = redshift
 
                 else:
