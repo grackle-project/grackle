@@ -61,7 +61,7 @@ def setup_fluid_container(my_chemistry,
     initialized to effectively zero.
 
     Parameters
-    ---------
+    ----------
     my_chemistry : chemistry_data
         Struct of Grackle runtime parameters.
     density : optional, float
