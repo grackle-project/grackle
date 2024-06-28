@@ -29,6 +29,9 @@ from pygrackle.utilities.physical_constants import \
     mass_hydrogen_cgs, \
     sec_per_Myr
 
+_format_version = "1-alpha"
+_meta_data = {"format_version": _format_version}
+
 generate_results = \
   int(os.environ.get("GENERATE_LOCAL_FUNCTION_TEST_RESULTS", 0)) == 1
 
@@ -110,12 +113,18 @@ class LocalFunctionsTest(TestCase):
                 self.skipTest(f"Test file not found: {self.test_file}.")
             with open(self.test_file, mode="r") as f:
                 self.test_sets = json.load(f)
+            load_meta = self.test_sets.pop(0)
+            assert load_meta["format_version"] == _meta_data["format_version"], \
+              f"Test version mismatch: data file is {load_meta['format_version']}, " + \
+              f"source code is {_meta_data['format_version']}."
 
     def tearDown(self):
         """
         Write json test file if we are generating resuls.
         """
         if generate_results:
+            # add the format version to the output
+            self.test_sets.insert(0, _meta_data)
             with open(self.test_file, mode="w") as f:
                 f.write(json.dumps(self.test_sets, indent=4))
 
