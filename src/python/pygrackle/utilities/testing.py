@@ -17,6 +17,7 @@ from numpy.testing import assert_array_equal, assert_almost_equal, \
     assert_approx_equal, assert_array_almost_equal, assert_equal, \
     assert_array_less, assert_string_equal, assert_array_almost_equal_nulp,\
     assert_allclose, assert_raises
+import os
 
 def assert_rel_equal(a1, a2, decimals, err_msg='', verbose=True):
     if isinstance(a1, np.ndarray):
@@ -32,8 +33,8 @@ def assert_rel_equal(a1, a2, decimals, err_msg='', verbose=True):
 
 def random_logscale(log_min, log_max, size=1, random_state=None):
     if random_state is None:
-        random_state = np.random.RandomState()
-    log_val = (log_max - log_min) * random_state.random_sample(size) + log_min
+        random_state = np.random.default_rng()
+    log_val = (log_max - log_min) * random_state.random(size) + log_min
     return np.power(10, log_val)
 
 def requires_module(module):
@@ -54,3 +55,14 @@ def requires_module(module):
         return ffalse
     else:
         return ftrue
+
+def dirname(path, level=1):
+    """
+    Multi-level version of os.path.dirname.
+    """
+    if not isinstance(level, int) or level < 1:
+        raise ValueError(
+            f"level must be a positive integer: {level}.")
+    for i in range(level):
+        path = os.path.dirname(path)
+    return path
