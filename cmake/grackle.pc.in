@@ -1,4 +1,30 @@
+# DESCRIPTION
+# -----------
+#
 # This file can be used with pkg-config or pkgconf to help link against grackle
+#
+# There are essentially 2 versions of this file:
+#   1. The first version is intended for any installation that provides Grackle
+#      as a shared library (including installations that provide it as both a
+#      shared and a static library).
+#   2. The second version is intended for inclusion in an installation that
+#      that ONLY provides Grackle as a static library.
+#
+# Most projects ONLY provide a version of the first kind.
+# 
+# We provide both versions so that the build-system of a downstream
+# application can directly use
+#   - the compiler flags returned by ``pkg-config --cflags grackle``
+#   - the linker flags returned by ``pkg-config --libs grackle``
+# to consume Grackle without worrying about how exactly Grackle was installed
+# (the caller may need to specify PKG_CONFIG_PATH)
+#
+# When the first version of this file is consumed provided in an installation
+# that provides Grackle as both a shared and static library, you can access
+# static-library-specific by invoking pkg-config with the ``--static`` flag. As
+# discussed in the Grackle documentation, there are some challenges with
+# static-linking in that particular scenario.
+
 
 # The ${pcfiledir} variable is a feature of pkg-config & pkgconf that is
 # commonly used to make the build relocatable (there's not a ton of docs on it)
@@ -8,15 +34,16 @@ libdir=${prefix}/lib
 includedir=${prefix}/include
 
 # define Grackle-specific variables conveying extra information
-@_GRACKLE_PC_INFO_PROPERTIES@
+@_PC_INFO_PROPERTIES@
 
 Name: grackle
 Description: chemistry and radiative cooling library for astrophysical simulations and models
 Version: @Grackle_VERSION@
 URL: https://github.com/grackle-project/grackle
 Cflags: -I${includedir}
-Libs: -L${libdir} -lgrackle
-Libs.private: @_GRACKLE_PC_PRIVATE_LIBS@
+Libs: -L${libdir} -lgrackle@_PC_EXTRA_LIBS@
+@_PC_LIBS_PRIVATE_ENTRY@
+@_PC_REQUIRES_ENTRY@
 
 # This file may be generated with or without Requires.private (it should be
 # configured so that it works properly in either case)
@@ -24,4 +51,4 @@ Libs.private: @_GRACKLE_PC_PRIVATE_LIBS@
 #    flags when compiling a shared library (and unnecessary Cflags when
 #    compiling a static library)... It's probably ok, just ugly
 
-@_PC_REQUIRES_PRIVATE_LINE@
+@_PC_REQUIRES_PRIVATE_ENTRY@

@@ -110,7 +110,7 @@
 #   - these `COMPONENTS` are defined within the "Config Package File" that gets
 #     installed by the rule defined by invoking `install(EXPORT ...)`
 
-# 
+include("InstallationHelperFuncs")
 
 # define installation rules for installation of public header files
 # -> this can be simplified after GH PR #188 is merged
@@ -185,86 +185,144 @@ else()
   set(_GRACKLE_OpenMP_LIBS "")
 endif()
 
-# this is used to get (non-C) language-specific implicit requirements
-function(get_implicit_link_reqs lang out_libs out_linkdirs)
-  set(libs ${CMAKE_${lang}_IMPLICIT_LINK_LIBRARIES})
-  list(REMOVE_DUPLICATES libs)
-
-  # remove some common dependencies (that aren't really language-specific)
-  set(nondeps
-    c     # libc.so     -> this is a dependency of (almost) everything
-    gcc_s # libgcc_s.so -> dependency commonly needed by underlying linker
-    gcc   # libgcc.a    -> dependency commonly needed by underlying linker
-  )
-  list(REMOVE_ITEM libs ${nondeps})
-  set(${out_libs} ${libs} PARENT_SCOPE)
-
-  set(linkdirs ${CMAKE_${lang}_IMPLICIT_LINK_DIRECTORIES})
-  list(REMOVE_DUPLICATES linkdirs)
-  set(${out_linkdirs} ${linkdirs} PARENT_SCOPE)
-endfunction()
-
-get_implicit_link_reqs(Fortran Fortran_implicit_libs Fortran_implicit_includes)
+get_implicit_link_reqs(Fortran Fortran_implicit_libs Fortran_implicit_linkdirs)
 set(_TOOLCHAIN_LINK_LIBS ${Fortran_implicit_libs})
-list(APPEND _TOOLCHAIN_LINK_LIBS m) # explicit c requirement (but may
-                                    # be a duplicate)
+
+# on most unix-like platforms (but not macOS), we need to explicitly link to
+# to the standard library's math functions
+# -> here we determine based on whether our custom toolchain::m target
+#    is a dummy placeholder or not whether to add this target
+get_target_property(toolchain_m_prop toolchain::m IMPORTED_LIBNAME)
+if(${toolchain_m_prop})
+  list(APPEND _TOOLCHAIN_LINK_LIBS m) # explicit c requirement (but may
+                                      # be a duplicate)
+endif()
+
 list(REMOVE_DUPLICATES _TOOLCHAIN_LINK_LIBS)
 
 
 # Define the grackle.pc file
 # --------------------------
 
-set(_GRACKLE_PC_PRIVATE_LIBS_LIST ${_TOOLCHAIN_LINK_LIBS})
+set(_STATIC_EXTRA_LINK_LIBS ${_TOOLCHAIN_LINK_LIBS})
 
 if (NOT _GRACKLE_OpenMP_LIBS STREQUAL "")
-  list(APPEND _GRACKLE_PC_PRIVATE_LIBS_LIST ${_GRACKLE_OpenMP_LIBS})
+  list(APPEND _STATIC_EXTRA_LINK_LIBS ${_GRACKLE_OpenMP_LIBS})
 endif()
 
-# we will check whether the an hdf5.pc file exists
-set(_HDF5_PC_EXISTS "FALSE")
-find_package(PkgConfig QUIET)
-if (PKG_CONFIG_FOUND)
-  # we could be a little more careful about version numbers...
-  # we explicitly avoid using the pkg-config functions provided by PkgConfig
-  # -> those define a lot of variables we don't care about
-  # -> we just want to check if an hdf5 pkg-config file exists in standard
-  #    search paths
-  execute_process(COMMAND ${PKG_CONFIG_EXECUTABLE} --modversion hdf5
-    RESULT_VARIABLE _HDF5_PC_FILE_FOUND
-    OUTPUT_VARIABLE _dummy_stdout_variable
-    ERROR_VARIABLE _dummy_stderr_variable
-  )
+# we will check whether the hdf5.pc file exists
+check_h5pc_exists(_HDF5_PC_EXISTS)
 
-  if(_HDF5_PC_FILE_FOUND EQUAL 0)
-    set(_HDF5_PC_EXISTS "TRUE")
-  endif()
-endif()
-
+set(_PC_STATIC_REQUIRES "")
 if (_HDF5_PC_EXISTS)
-  set(_PC_REQUIRES_PRIVATE_LINE "Requires.private: hdf5")
+  set(_PC_STATIC_REQUIRES "hdf5")
 else()
-  set(_PC_REQUIRES_PRIVATE_LINE
-    "# Requires.private omitted (hdf5.pc wasn't found)")
-  list(APPEND _GRACKLE_PC_PRIVATE_LIBS_LIST "hdf5")
+  list(APPEND _STATIC_EXTRA_LINK_LIBS "hdf5")
 endif()
 
-list(TRANSFORM _GRACKLE_PC_PRIVATE_LIBS_LIST PREPEND "-l")
+list(TRANSFORM _STATIC_EXTRA_LINK_LIBS PREPEND "-l")
 string(REPLACE
-  ";" " " _GRACKLE_PC_PRIVATE_LIBS "${_GRACKLE_PC_PRIVATE_LIBS_LIST}")
+  ";" " " _STATIC_EXTRA_LINK_LIBS "${_STATIC_EXTRA_LINK_LIBS}")
+
+# at the moment, the only extra library search paths that we are specifying is
+# for finding implicit Fortran dependencies
+# -> this probably isn't adequate on systems where hdf5.pc can't be found
+# -> it may not be adequate on some systems when using OpenMP
+#
+# Our current solution currently has some warts:
+# -> On most systems these flags only tell the linker where to search for the 
+#    libraries at link-time (they generally don't impact the runtime search).
+#    They also say to use the libraries shipped with a compiler at link time
+#    -> we effectively assume that libraries are found at run-time in normal
+#       system installation paths. Thus, if a downstream is linked against a
+#       static grackle library it will hopefully keep working even if we
+#       replace our system's Fortran compiler
+#    -> it kinda makes sense to use libraries shipped with the Fortran compiler
+#       for linking. If there are multiple versions of the Fortran runtime, this
+#       ensures that the downstream application knows to use the runtime that
+#       is compatible with the original compiler (not sure if this is really
+#       an issue in-practice...). At the same time, our pkg-config file will
+#       break if we ever replace/upgrade the compiler...
+#    -> a compromise: link against an ABI compatible version of the runtime. If
+#       we know the library exists in a standard search-path at compile-time,
+#       use that instead...
+# -> We also aren't very consistent. It turns out on macOS, the linker uses the
+#    link-time locations at runtime as well. This is equivalent to us also
+#    specifying -rpath with absolute-paths on most systems.
+#    -> it turns out that this works to our advantage right now because
+#       libgfortran isn't at a system install-path... it is only attached to
+#       the version of libgfortran shipped with the compiler
+#    -> this does mean that an installation could break if you remove/replace
+#       your fortran compiler. We could potentially reduce the chance of
+#       breakage during gfortran upgrades by replacing the -L path to make use
+#       of the symlink at /opt/homebrew/lib/gcc/...
+
+
+set(_STATIC_EXTRA_LINK_DIRS ${Fortran_implicit_linkdirs})
+list(TRANSFORM _STATIC_EXTRA_LINK_DIRS PREPEND "-L")
+string(REPLACE
+  ";" " " _STATIC_EXTRA_LINK_DIRS "${_STATIC_EXTRA_LINK_DIRS}")
+
+set(_GRACKLE_PC_PRIVATE_LIBS
+  "${_STATIC_EXTRA_LINK_DIRS} ${_STATIC_EXTRA_LINK_LIBS}")
 
 # retrieve list of variables conveying Grackle informational properties
 include(TargetInfoProps)
 get_info_properties_export_str(Grackle_Grackle
-    PKG_CONFIG _GRACKLE_PC_INFO_PROPERTIES)
+  PKG_CONFIG _GRACKLE_PC_INFO_PROPERTIES)
 
-configure_file(
-  ${PROJECT_SOURCE_DIR}/cmake/grackle.pc.in
-  ${CMAKE_CURRENT_BINARY_DIR}/install-metadata/grackle.pc @ONLY)
 
-install(FILES
-  ${CMAKE_CURRENT_BINARY_DIR}/install-metadata/grackle.pc
-  DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
-)
+set(INSTALL_METADATA_DIR "${CMAKE_CURRENT_BINARY_DIR}/install-metadata") 
+
+foreach(suffix IN ITEMS "conventional.pc" "static.pc")
+  set(_extra_arg "")
+  if(${suffix} STREQUAL "static.pc")
+    set(_extra_arg "STATIC_ONLY")
+  endif()
+  configure_pkgconfig_file(
+    ${INSTALL_METADATA_DIR}/grackle-${suffix}
+    STATIC_LIBS "${_STATIC_EXTRA_LINK_DIRS} ${_STATIC_EXTRA_LINK_LIBS}"
+    STATIC_REQUIRES "${_PC_STATIC_REQUIRES}"
+    INFO_PROPERTIES "${_GRACKLE_PC_INFO_PROPERTIES}"
+    ${_extra_arg})
+endforeach()
+
+if (BUILD_SHARED_LIBS)
+  install(FILES
+    ${CMAKE_CURRENT_BINARY_DIR}/install-metadata/grackle-conventional.pc
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
+    RENAME grackle.pc)
+else()
+  # if shared library was previously installed, install grackle-conventional.pc
+  # as grackle.pc. Otherwise, install grackle-static.pc as grackle.pc
+  install(CODE "
+    set(_prefix \"${CMAKE_INSTALL_PREFIX}\")
+    if(DEFINED ENV{DESTDIR})
+      message(WARNING
+        \"linking to libgrackle.so (during install) is untested with DESTDIR\")
+      set(_prefix \"\$ENV{DESTDIR}\")
+    elseif(NOT IS_ABSOLUTE \${CMAKE_INSTALL_PREFIX})
+      # install probably triggered by `cmake --install <p1> --prefix <p2>`
+      # and <p2> is not an absolute path...
+      get_filename_component(_prefix \${CMAKE_INSTALL_PREFIX} ABSOLUTE)
+    endif()
+
+    set(_COMMON \"\${_prefix}/${CMAKE_INSTALL_LIBDIR}\")
+    set(_PCDIR \"\${_COMMON}/pkgconfig\")
+    set(_DEST \"\${_PCDIR}/grackle.pc\")
+    if ((EXISTS \"\${_COMMON}/libgrackle.so\") OR
+        (EXISTS \"\${_COMMON}/libgrackle.dylib\"))
+      set(_SRC \"${INSTALL_METADATA_DIR}/grackle-conventional.pc\")
+      file(REMOVE \${_DEST})
+    else()
+      set(_SRC \"${INSTALL_METADATA_DIR}/grackle-static.pc\")
+    endif()
+
+    message(STATUS \"Copying \${_SRC} to \${_DEST}\")
+
+    execute_process(COMMAND ${CMAKE_COMMAND} -E copy \${_SRC} \${_DEST})"
+  )
+endif()
 
 # Define the cmake Package Config File
 #-------------------------------------
