@@ -310,12 +310,12 @@ To use this system, version 3.16 or newer of ``cmake`` is required.
 
 .. warning::
 
-   This build-system may not work properly if you have previously tried to build grackle with the classic build system.
+   This build-system may not work properly if you have previously tried to build an earlier version of Grackle with the classic build system.
 
-      * While the cmake build system performs an "out-of-source" build, the traditional build system performs an "in-source" build.
+   * While the cmake build system performs an "out-of-source" build, the traditional build system performs an "in-source" build.
 
-      * If the auto-generated files (both headers and source files), produced by the in-source build, are not properly removed, this can cause issues for cmake builds.
-        (To remove those files from a "classic build", you will need to invoke ``make clean`` or ``make clean_autogen`` from the **src/clib** directory).
+   * While the "classic build system" has been modified to better coexist with the cmake build-system, earlier versions could cause issues.
+     If the auto-generated files (both headers and source files), produced by the in-source build (from an earlier Grackle-version), are not properly removed, this can cause issues for cmake builds.
 
 Procedure
 +++++++++
@@ -351,7 +351,7 @@ Procedure
 
       ~/grackle $ cmake -DCMAKE_INSTALL_PREFIX=<install-prefix> -DBUILD_SHARED_LIBS=ON -B <build-dir>
 
-    .. note::
+   .. note::
 
        If you are building Grackle to be used with a downstream simulation-code, that doesn't mention any preferences about how Grackle is built, you will probably have more luck compiling Grackle as a shared library.
 
@@ -364,7 +364,7 @@ Procedure
 
    .. note::
 
-      The above commands show the most generic commands that can be executed
+      The above commands show the most generic commands that can be executed.
       Other tutorials that you see online may show slight variations in these commands (where you manually make the build directory) and then manually execute the build-system from within the build-directory...
 
    .. note::
@@ -372,19 +372,19 @@ Procedure
       Just like with the classic build-system, Grackle currently needs to be installed to be used.
       If you install it in a non-standard location, then you also need to ensure that you properly set the LD_LIBRARY_PATH (or DYLD_LIBRARY_PATH on macOS) to make use of it.
 
-      The current structure (and contents) of the build-directory can and will change (especially until `GH-#204 <https://github.com/grackle-project/grackle/pull/204>`__ and `GH-#208 <https://github.com/grackle-project/grackle/pull/208>`__ are merged).
+      The current structure (and contents) of the build-directory can and will change (especially once `GH-#204 <https://github.com/grackle-project/grackle/pull/204>`__ and `GH-#208 <https://github.com/grackle-project/grackle/pull/208>`__ are merged).
       But, we plan to add support for linking against a grackle installation without fully installing it.
 
 
 4. Test your Build.
 
    Once you have compiled Grackle, you can run one of the provided example to test if it functions correctly.
-   These examples are automatically compiled with Enzo-E.
+   These examples are automatically compiled with Grackle.
 
    .. code-block:: shell-session
 
       ~/grackle $ cd <build-dir>/examples
-      ~/grackle/<build-dir> $ ./cxx_example
+      ~/grackle/<build-dir>/examples $ ./cxx_example
 
    .. warning::
 
@@ -402,6 +402,36 @@ Procedure
 
       With that said, if you compile Grackle as a shared library in a cmake build, an example-binary **might** try to use a copy of a shared grackle library found in a directory specified by ``LD_LIBRARY_PATH``/``DYLD_LIBRARY_PATH`` if one exists.
       The exact behavior may be platform dependent and also depends on whether CMake instructs the linker to use RPATH or RUNPATH (this is not spacified by the cmake docs).
+
+.. _how_to_configure:
+
+How to Specify Configuration Options
+++++++++++++++++++++++++++++++++++++
+
+All configuration options can be specified when invoking cmake during configuration of the build.
+Specifically you can specify can specify the values by inserting an argument of the form ``-D<variable>=<value>`` to the list of arguments passed to ``cmake``.
+This is illustrated in the prior subsection where we pass ``-DCMAKE_INSTALL_PREFIX=/my/install/path...`` and ``-DBUILD_SHARED_LIBS=OFF``.
+
+Alternatively, you can replace the call to ``cmake`` during configuration with a call to ``ccmake`` to provide a TUI (text-based user interface) where you can manually configure options.
+For example, a call to ``ccmake -B<build-dir>`` will bring up a TUI to configure a build in the specified directory.
+CMake also provides a GUI (graphical user interface) for this purpose (it may not be available based on how exactly you installed CMake).
+The CMake documentation provide more details about the GUI and how to more generally use cmake `here <https://cmake.org/cmake/help/latest/guide/user-interaction/index.html#guide:User%20Interaction%20Guide>`__.
+
+A summary of all Grackle-specific configuration options and a subset of useful generic CMake configurations is provided in the :ref:`next subsection <available_cmake_options>`.
+
+The idiomatic way to control optimization/debugger flags is store a build-type in the standard ``CMAKE_BUILD_TYPE`` variable.
+Choices include:
+
+* ``-DCMAKE_BUILD_TYPE=Release`` (typically ``-O3``)
+
+* ``-DCMAKE_BUILD_TYPE=RelWithDebInfo`` (typically ``-O2 -g``)
+
+* ``-DCMAKE_BUILD_TYPE=Debug`` (typically ``-O0 -g``)
+
+The first choice is generally fastest, while the second is a sensible choice during development (the compiler performs most optimizations and includes debugging information in the library).
+
+
+*[ NEED TO ADDRESS: machine files and* ``CMAKE_<LANG>_FLAGS`` *]*
 
 .. _available_cmake_options:
 
@@ -463,12 +493,6 @@ This second table highlights a subset of standardized CMake options that may als
 
 There are also additional standard options for BOTH configuring other aspects of the build and for finding the correct/preferred HDF5 library and configuring the correct openmp library.
 
-.. _how_to_configure:
-
-How to Specify Configuration Options
-++++++++++++++++++++++++++++++++++++
-
-*[ To be added ]*
 
 
 .. _cmake_shared_and_static:
