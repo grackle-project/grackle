@@ -11,6 +11,7 @@
 # software.
 ########################################################################
 
+import contextlib
 import importlib
 import numpy as np
 from numpy.testing import assert_array_equal, assert_almost_equal, \
@@ -18,6 +19,9 @@ from numpy.testing import assert_array_equal, assert_almost_equal, \
     assert_array_less, assert_string_equal, assert_array_almost_equal_nulp,\
     assert_allclose, assert_raises
 import os
+import shutil
+import subprocess
+import tempfile
 
 def assert_rel_equal(a1, a2, decimals, err_msg='', verbose=True):
     if isinstance(a1, np.ndarray):
@@ -66,3 +70,29 @@ def dirname(path, level=1):
     for i in range(level):
         path = os.path.dirname(path)
     return path
+
+def run_command(command, timeout=None):
+    try:
+        proc = subprocess.run(command, shell=True, timeout=timeout)
+        if proc.returncode == 0:
+            success = True
+        else:
+            success = False
+    except subprocess.TimeoutExpired:
+        print ("Process reached timeout of %d s. (%s)" % (timeout, command))
+        success = False
+    except KeyboardInterrupt:
+        print ("Killed by keyboard interrupt!")
+        success = False
+    return success
+
+@contextlib.contextmanager
+def temporary_directory():
+    curdir = os.getcwd()
+    tmpdir = tempfile.mkdtemp(dir=curdir)
+    os.chdir(tmpdir)
+    try:
+        yield tmpdir
+    finally:
+        os.chdir(curdir)
+        shutil.rmtree(tmpdir)

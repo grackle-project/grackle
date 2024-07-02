@@ -14,44 +14,64 @@
 from matplotlib import pyplot
 import numpy as np
 import os
+import sys
 import yt
 
 from pygrackle import \
     chemistry_data, \
     setup_fluid_container
-
 from pygrackle.utilities.physical_constants import \
     mass_hydrogen_cgs, \
     sec_per_Myr, \
     cm_per_mpc
+from pygrackle.utilities.testing import \
+    dirname
+from pygrackle.utilities.model_tests import \
+    get_model_set
+
+grackle_install_dir = dirname(os.path.abspath(__file__), level=4)
+grackle_data_dir = os.path.join(grackle_install_dir, "input")
+output_name = os.path.basename(__file__[:-3]) # strip off ".py"
 
 if __name__ == "__main__":
-    current_redshift = 0.
+    # If we are running the script through the testing framework,
+    # then we will pass in two integers corresponding to the sets
+    # of parameters and inputs.
+    if len(sys.argv) > 1:
+        par_index = int(sys.argv[1])
+        input_index = int(sys.argv[2])
+        my_chemistry, input_set = get_model_set(
+            output_name, par_index, input_index)
+        for var, val in input_set.items():
+            globals()[var] = val
+        output_name = f"{output_name}_{par_index}_{input_index}"
 
-    # Set solver parameters
-    my_chemistry = chemistry_data()
-    my_chemistry.use_grackle = 1
-    my_chemistry.with_radiative_cooling = 0
-    if 'PRIMORDIAL_CHEM' in os.environ:
-        my_chemistry.primordial_chemistry = int(os.environ['PRIMORDIAL_CHEM'])
+    # Just run the script as is.
     else:
-        my_chemistry.primordial_chemistry = 3
-    my_chemistry.metal_cooling = 1
-    my_chemistry.UVbackground = 1
-    my_chemistry.self_shielding_method = 0
-    my_chemistry.H2_self_shielding = 0
-    my_dir = os.path.dirname(os.path.abspath(__file__))
-    grackle_data_file = os.path.join(
-        my_dir, "..", "..", "..", "input", "CloudyData_UVB=HM2012.h5")
-    my_chemistry.grackle_data_file = grackle_data_file
+        redshift = 0.
+        specific_heating_rate = 0.
+        volumetric_heating_rate = 0.
+        metallicity = 1. # Solar
 
-    my_chemistry.use_specific_heating_rate = 1
-    my_chemistry.use_volumetric_heating_rate = 1
+        # Set solver parameters
+        my_chemistry = chemistry_data()
+        my_chemistry.use_grackle = 1
+        my_chemistry.with_radiative_cooling = 0
+        my_chemistry.primordial_chemistry = 3
+        my_chemistry.metal_cooling = 1
+        my_chemistry.UVbackground = 1
+        my_chemistry.self_shielding_method = 0
+        my_chemistry.H2_self_shielding = 0
+        my_chemistry.grackle_data_file = \
+          os.path.join(grackle_data_dir, "CloudyData_UVB=HM2012.h5")
+
+        my_chemistry.use_specific_heating_rate = 1
+        my_chemistry.use_volumetric_heating_rate = 1
 
     # Set units
     my_chemistry.comoving_coordinates = 0 # proper units
     my_chemistry.a_units = 1.0
-    my_chemistry.a_value = 1.0 / (1.0 + current_redshift) / \
+    my_chemistry.a_value = 1.0 / (1.0 + redshift) / \
         my_chemistry.a_units
     my_chemistry.density_units = mass_hydrogen_cgs # rho = 1.0 is 1.67e-24 g
     my_chemistry.length_units = cm_per_mpc         # 1 Mpc in cm
@@ -60,15 +80,18 @@ if __name__ == "__main__":
 
     # Call convenience function for setting up a fluid container.
     # This container holds the solver parameters, units, and fields.
+    metal_mass_fraction = metallicity * my_chemistry.SolarMetalFractionByMass
     temperature = np.logspace(1, 9, 200)
     fc = setup_fluid_container(
         my_chemistry,
         temperature=temperature,
-        metal_mass_fraction=my_chemistry.SolarMetalFractionByMass,
+        metal_mass_fraction=metal_mass_fraction,
         converge=True)
 
-    fc["specific_heating_rate"][:] = 0.
-    fc["volumetric_heating_rate"][:] = 0.
+    if my_chemistry.use_specific_heating_rate:
+        fc["specific_heating_rate"][:] = specific_heating_rate
+    if my_chemistry.use_volumetric_heating_rate:
+        fc["volumetric_heating_rate"][:] = volumetric_heating_rate
 
     # get data arrays with symbolic units
     data = fc.finalize_data()
@@ -77,14 +100,6 @@ if __name__ == "__main__":
                   color="black")
     pyplot.xlabel('T [K]')
     pyplot.ylabel('$\\Lambda$ [erg s$^{-1}$ cm$^{3}$]')
-
-    # save data arrays as a yt dataset
-    if 'PRIMORDIAL_CHEM' in os.environ:
-        ds_name = 'cooling_rate.pc%s.h5' % os.environ['PRIMORDIAL_CHEM']
-        im_name = 'cooling_rate.pc%s.png' % os.environ['PRIMORDIAL_CHEM']
-    else:
-        ds_name = 'cooling_rate.h5'
-        im_name = 'cooling_rate.png'
     pyplot.tight_layout()
-    pyplot.savefig(im_name)
-    yt.save_as_dataset({}, ds_name, data)
+    pyplot.savefig(f"{output_name}.png")
+    yt.save_as_dataset({}, filename=f"{output_name}.h5", data=data)
