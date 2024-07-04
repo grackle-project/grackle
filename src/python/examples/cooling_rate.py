@@ -84,6 +84,7 @@ if __name__ == "__main__":
     temperature = np.logspace(1, 9, 200)
     fc = setup_fluid_container(
         my_chemistry,
+        density=mass_hydrogen_cgs,
         temperature=temperature,
         metal_mass_fraction=metal_mass_fraction,
         converge=True)
