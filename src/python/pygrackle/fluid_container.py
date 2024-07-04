@@ -182,6 +182,7 @@ _field_units = {
     "specific_heating_rate": (None, "erg/s/g"),
     "temperature": (None, "K"),
     "temperature_floor": (None, "K"),
+    "time": ("time_units", "s"),
     "volumetric_heating_rate": (None, "erg/s/cm**3"),
     "x_velocity": ("velocity_units", "cm/s"),
     "y_velocity": ("velocity_units", "cm/s"),
@@ -228,6 +229,10 @@ class FluidContainer(dict):
     def input_fields(self):
         return _required_extra_fields(self.chemistry_data) + \
           self.density_fields
+
+    @property
+    def all_fields(self):
+        return self.input_fields + _calculated_fields + _fc_calculated_fields
 
     def calculate_hydrogen_number_density(self):
         warn = "calculate_hydrogen_number_density is deprecated and will " + \
@@ -353,9 +358,7 @@ class FluidContainer(dict):
 
         if data is None:
             data = self
-            all_fields = self.input_fields + \
-              _calculated_fields + \
-              _fc_calculated_fields
+            all_fields = self.all_fields
 
             # call all calculate functions
             for field in _calculated_fields + _fc_calculated_fields:

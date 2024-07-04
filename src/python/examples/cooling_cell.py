@@ -16,106 +16,92 @@
 ########################################################################
 
 from matplotlib import pyplot
+import numpy as np
 import os
+import sys
 import yt
 
 from pygrackle import \
-    FluidContainer, \
     chemistry_data, \
-    evolve_constant_density
-
+    evolve_constant_density, \
+    setup_fluid_container
 from pygrackle.utilities.physical_constants import \
     mass_hydrogen_cgs, \
     sec_per_Myr, \
     cm_per_mpc
+from pygrackle.utilities.testing import \
+    dirname
+from pygrackle.utilities.model_tests import \
+    get_model_set
 
-tiny_number = 1e-20
+grackle_install_dir = dirname(os.path.abspath(__file__), level=4)
+grackle_data_dir = os.path.join(grackle_install_dir, "input")
+output_name = os.path.basename(__file__[:-3]) # strip off ".py"
 
 if __name__ == "__main__":
-    current_redshift = 0.
+    # If we are running the script through the testing framework,
+    # then we will pass in two integers corresponding to the sets
+    # of parameters and inputs.
+    if len(sys.argv) > 1:
+        pass
 
-    # Set initial values
-    density             = 0.1 # g /cm^3
-    initial_temperature = 1.e6 # K
-    final_time          = 100.0 # Myr
+    # Just run the script as is.
+    else:
+        my_chemistry = chemistry_data()
+        my_chemistry.use_grackle = 1
+        my_chemistry.with_radiative_cooling = 1
+        my_chemistry.primordial_chemistry = 0
+        my_chemistry.metal_cooling = 1
+        my_chemistry.UVbackground = 1
+        my_chemistry.self_shielding_method = 0
+        my_chemistry.H2_self_shielding = 0
+        my_chemistry.grackle_data_file = \
+          os.path.join(grackle_data_dir, "CloudyData_UVB=HM2012.h5")
 
-    # Set solver parameters
-    my_chemistry = chemistry_data()
-    my_chemistry.use_grackle = 1
-    my_chemistry.with_radiative_cooling = 1
-    my_chemistry.primordial_chemistry = 0
-    my_chemistry.metal_cooling = 1
-    my_chemistry.UVbackground = 1
-    my_chemistry.self_shielding_method = 0
-    my_chemistry.H2_self_shielding = 0
-    my_dir = os.path.dirname(os.path.abspath(__file__))
-    grackle_data_file = bytearray(os.path.join(
-        my_dir, "..", "..", "..", "input", "CloudyData_UVB=HM2012.h5"), 'utf-8')
-    my_chemistry.grackle_data_file = grackle_data_file
+    redshift = 0.
+    metallicity = 0.1 # Solar
+    density = 0.1 * mass_hydrogen_cgs # g /cm^3
+    temperature = 1e6 # K
+    final_time = 100. # Myr
 
     # Set units
-    my_chemistry.comoving_coordinates = 0 # proper units
+    my_chemistry.comoving_coordinates = 0
     my_chemistry.a_units = 1.0
-    my_chemistry.a_value = 1. / (1. + current_redshift) / \
+    my_chemistry.a_value = 1. / (1. + redshift) / \
         my_chemistry.a_units
-    my_chemistry.density_units = mass_hydrogen_cgs # rho = 1.0 is 1.67e-24 g
-    my_chemistry.length_units = cm_per_mpc         # 1 Mpc in cm
-    my_chemistry.time_units = sec_per_Myr          # 1 Myr in s
+    my_chemistry.density_units = mass_hydrogen_cgs
+    my_chemistry.length_units = cm_per_mpc
+    my_chemistry.time_units = sec_per_Myr
     my_chemistry.set_velocity_units()
 
-    rval = my_chemistry.initialize()
+    metal_mass_fraction = metallicity * my_chemistry.SolarMetalFractionByMass
+    fc = setup_fluid_container(
+        my_chemistry,
+        density=density,
+        temperature=temperature,
+        metal_mass_fraction=metal_mass_fraction,
+        state="ionized",
+        converge=True)
 
-    fc = FluidContainer(my_chemistry, 1)
-    fc["density"][:] = density
-    if my_chemistry.primordial_chemistry > 0:
-        fc["HI"][:] = 0.76 * fc["density"]
-        fc["HII"][:] = tiny_number * fc["density"]
-        fc["HeI"][:] = (1.0 - 0.76) * fc["density"]
-        fc["HeII"][:] = tiny_number * fc["density"]
-        fc["HeIII"][:] = tiny_number * fc["density"]
-    if my_chemistry.primordial_chemistry > 1:
-        fc["H2I"][:] = tiny_number * fc["density"]
-        fc["H2II"][:] = tiny_number * fc["density"]
-        fc["HM"][:] = tiny_number * fc["density"]
-        fc["de"][:] = tiny_number * fc["density"]
-    if my_chemistry.primordial_chemistry > 2:
-        fc["DI"][:] = 2.0 * 3.4e-5 * fc["density"]
-        fc["DII"][:] = tiny_number * fc["density"]
-        fc["HDI"][:] = tiny_number * fc["density"]
-    if my_chemistry.metal_cooling == 1:
-        fc["metal"][:] = 0.1 * fc["density"] * \
-          my_chemistry.SolarMetalFractionByMass
-
-    fc["x-velocity"][:] = 0.0
-    fc["y-velocity"][:] = 0.0
-    fc["z-velocity"][:] = 0.0
-
-    fc["energy"][:] = initial_temperature / \
-        fc.chemistry_data.temperature_units
-    fc.calculate_temperature()
-    fc["energy"][:] *= initial_temperature / fc["temperature"]
-
-    # timestepping safety factor
-    safety_factor = 0.01
-
-    # let gas cool at constant density
+    # evolve gas at constant density
     data = evolve_constant_density(
         fc, final_time=final_time,
-        safety_factor=safety_factor)
+        safety_factor=0.01)
 
-    p1, = pyplot.loglog(data["time"].to("Myr"), data["temperature"],
+    p1, = pyplot.loglog(data["time"].to("Myr"),
+                        data["temperature"],
                         color="black", label="T")
     pyplot.xlabel("Time [Myr]")
     pyplot.ylabel("T [K]")
-
     pyplot.twinx()
-    p2, = pyplot.semilogx(data["time"].to("Myr"), data["mu"],
+    p2, = pyplot.semilogx(data["time"].to("Myr"),
+                          data["mean_molecular_weight"],
                           color="red", label="$\\mu$")
     pyplot.ylabel("$\\mu$")
     pyplot.legend([p1,p2],["T","$\\mu$"], fancybox=True,
                   loc="center left")
     pyplot.tight_layout()
-    pyplot.savefig("cooling_cell.png")
+    pyplot.savefig(f"{output_name}.png")
 
     # save data arrays as a yt dataset
-    yt.save_as_dataset({}, "cooling_cell.h5", data)
+    yt.save_as_dataset({}, f"{output_name}.h5", data)

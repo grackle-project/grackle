@@ -136,48 +136,26 @@ def evolve_constant_density(fc, final_temperature=None,
                fc["temperature"][0]))
         fc.solve_chemistry(dt)
 
-        add_to_data(fc, data, current_time)
+        add_to_data(fc, data, extra={"time": current_time})
         current_time += dt
 
-    data = create_data_arrays(fc, data)
-    return data
+    for field in data:
+        data[field] = np.squeeze(np.array(data[field]))
+    return fc.finalize_data(data=data)
 
-def add_to_data(fc, data, current_time=None):
+def add_to_data(fc, data, extra=None):
     """
     Add current fluid container values to the data structure.
     """
 
-    for field in fc.density_fields:
-        data[field].append(fc[field][0] * fc.chemistry_data.density_units)
-    data["energy"].append(fc["energy"][0] * fc.chemistry_data.energy_units)
-    fc.calculate_temperature()
-    data["temperature"].append(fc["temperature"][0])
-    fc.calculate_pressure()
-    data["pressure"].append(fc["pressure"][0] * fc.chemistry_data.pressure_units)
-    fc.calculate_mean_molecular_weight()
-    data["mu"].append(fc["mu"][0])
-    if fc.chemistry_data.h2_on_dust:
-        fc.calculate_dust_temperature()
-        data["dust_temperature"].append(fc["dust_temperature"][0])
-    if current_time is not None:
-        data["time"].append(current_time * fc.chemistry_data.time_units)
+    for field in fc.all_fields:
+        if field not in fc.input_fields:
+            func = getattr(fc, f"calculate_{field}")
+            if func is None:
+                raise RuntimeError(f"No function for calculating {field}.")
+            func()
+        data[field].append(fc[field].copy())
 
-def create_data_arrays(fc, data):
-    """
-    Turn lists of values into array with proper cgs units.
-    """
-
-    for field in data:
-        if field in fc.density_fields:
-            data[field] = YTArray(data[field], "g/cm**3")
-        elif field == "energy":
-            data[field] = YTArray(data[field], "erg/g")
-        elif field == "time":
-            data[field] = YTArray(data[field], "s")
-        elif "temperature" in field:
-            data[field] = YTArray(data[field], "K")
-        elif field == "pressure":
-            data[field] = YTArray(data[field], "dyne/cm**2")
-        else:
-            data[field] = np.array(data[field])
-    return data
+    if extra is not None:
+        for field in extra:
+            data[field].append(extra[field])

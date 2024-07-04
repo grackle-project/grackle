@@ -67,8 +67,8 @@ def setup_fluid_container(my_chemistry,
     density : optional, float
         The density in CGS for all elements in the fluid container.
         Default: 1 hydrogen mass per cm^3 (i.e., ~1.67e-24 g/cm^3)
-    temperature : optional, array of floats
-        Array of temperature values in K.
+    temperature : optional, float or array of floats
+        Temperature values in K.
     state : optional, string
         The initial ionization state of the gas. Either "neutral" to set
         all ionized species to effectively zero or "ionized" to set all
@@ -110,6 +110,8 @@ def setup_fluid_container(my_chemistry,
         n_points = 200
         temperature = np.logspace(4, 9, n_points)
     else:
+        if not isinstance(temperature, np.ndarray):
+            temperature = np.array([temperature])
         n_points = temperature.size
 
     fc = FluidContainer(my_chemistry, n_points)
