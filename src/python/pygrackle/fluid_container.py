@@ -91,14 +91,19 @@ _base_extra_fields = \
 
 # These are fields calculated using Grackle functions
 # and thus arrays must be allocated for them
-# Other fields calculated by the FluidContainer itself
-# (for example, mean_molecular_weight) do not require this.
 _calculated_fields = \
   ["cooling_time",
    "dust_temperature",
    "gamma",
    "pressure",
    "temperature"]
+
+# These are calculated by the FluidContainer as
+# combinations of other fields. They do not
+# require pre-allocated memory.
+_fc_calculated_fields = \
+  ["cooling_rate",
+   "mean_molecular_weight"]
 
 _primordial_chemistry_densities = {}
 _primordial_chemistry_densities[0] = _base_densities
@@ -154,6 +159,35 @@ def _required_extra_fields(my_chemistry):
     if my_chemistry.use_isrf_field == 1:
         my_fields.append("isrf_habing")
     return my_fields
+
+def _photo_units(my_chemistry):
+    return 1 / my_chemistry.time_units
+
+_field_units = {
+    "H2_self_shielding_length": ("length_units", "cm"),
+    "H2_custom_shielding_factor": (None, ""),
+    "RT_heating_rate": (None, "erg/s"),
+    "RT_HI_ionization_rate": (_photo_units, "1/s"),
+    "RT_HeI_ionization_rate": (_photo_units, "1/s"),
+    "RT_HeII_ionization_rate": (_photo_units, "1/s"),
+    "RT_H2_dissociation_rate": (_photo_units, "1/s"),
+    "cooling_rate": (None, "erg*cm**3/s"),
+    "cooling_time": ("time_units", "s"),
+    "dust_temperature": (None, "K"),
+    "gamma": (None, ""),
+    "internal_energy": ("energy_units", "erg/g"),
+    "isrf_habing": (None, ""),
+    "mean_molecular_weight": (None, ""),
+    "pressure":  ("pressure_units", "dyne/cm**2"),
+    "specific_heating_rate": (None, "erg/s/g"),
+    "temperature": (None, "K"),
+    "temperature_floor": (None, "K"),
+    "volumetric_heating_rate": (None, "erg/s/cm**3"),
+    "x_velocity": ("velocity_units", "cm/s"),
+    "y_velocity": ("velocity_units", "cm/s"),
+    "z_velocity": ("velocity_units", "cm/s"),
+}
+
 
 class FluidContainer(dict):
     def __init__(self, chemistry_data, n_vals, dtype="float64",
@@ -312,41 +346,45 @@ class FluidContainer(dict):
           self["cooling_time"] / density_proper
         self["cooling_rate"] = cooling_rate
 
-    def finalize_data(self):
+    def finalize_data(self, data=None):
         """
         Return field data as unyt_arrays with appropriate units.
         """
 
-        my_chemistry = self.chemistry_data
+        if data is None:
+            data = self
+            all_fields = self.input_fields + \
+              _calculated_fields + \
+              _fc_calculated_fields
 
-        my_data = {}
-        for field in self.density_fields:
-            my_data[field] = unyt_array(
-                self[field].copy() * my_chemistry.density_units, "g/cm**3")
-
-        field_units = {
-            "cooling_rate": (None, "erg*cm**3/s"),
-            "cooling_time": ("time_units", "s"),
-            "dust_temperature": (None, "K"),
-            "internal_energy": ("energy_units", "erg/g"),
-            "mean_molecular_weight": (None, ""),
-            "pressure":  ("pressure_units", "dyne/cm**2"),
-            "temperature": (None, "K"),
-        }
-
-        for field, (conv, units) in field_units.items():
-            func = getattr(self, f"calculate_{field}", None)
-            if func is not None:
+            # call all calculate functions
+            for field in _calculated_fields + _fc_calculated_fields:
+                func = getattr(self, f"calculate_{field}", None)
+                if func is None:
+                    raise RuntimeError(f"No function for calculating {field}.")
                 func()
 
-            my_datum = self[field].copy()
-            if conv is not None:
-                my_datum *= getattr(my_chemistry, conv)
-            if units:
-                my_datum = unyt_array(my_datum, units)
-            my_data[field] = my_datum
+        else:
+            all_fields = data.keys()
 
-        return my_data
+        my_chemistry = self.chemistry_data
+
+        output_data = {}
+        for field in all_fields:
+            if field in self.density_fields:
+                conv = my_chemistry.density_units
+                units = "g/cm**3"
+            else:
+                conv, units = _field_units[field]
+                if conv is None:
+                    conv = 1
+                elif callable(conv):
+                    conv = conv(my_chemistry)
+                else:
+                    conv = getattr(my_chemistry, conv)
+            output_data[field] = unyt_array(data[field].copy() * conv, units)
+
+        return output_data
 
     def calculate_cooling_time(self):
         calculate_cooling_time(self)
