@@ -159,6 +159,9 @@ def setup_fluid_container(my_chemistry,
     fc["z_velocity"][:] = 0.0
 
     fc_last = fc.copy()
+    # disable cooling to iterate to equilibrium
+    val = fc.chemistry_data.with_radiative_cooling
+    fc.chemistry_data.with_radiative_cooling = 0
 
     my_time = 0.0
     i = 0
@@ -183,9 +186,9 @@ def setup_fluid_container(my_chemistry,
         my_time += dt
         i += 1
 
+    fc.chemistry_data.with_radiative_cooling = val
     if i >= max_iterations:
-        sys.stderr.write("ERROR: solver did not converge in %d iterations.\n" %
-                         max_iterations)
-        return None
+        raise RuntimeError(
+            f"ERROR: solver did not converge in {max_iterations} iterations.")
 
     return fc

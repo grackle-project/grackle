@@ -43,23 +43,28 @@ if __name__ == "__main__":
     # then we will pass in two integers corresponding to the sets
     # of parameters and inputs.
     if len(sys.argv) > 1:
-        pass
+        par_index = int(sys.argv[1])
+        input_index = int(sys.argv[2])
+        my_chemistry, input_set = get_model_set(
+            output_name, par_index, input_index)
+        for var, val in input_set.items():
+            globals()[var] = val
+        output_name = f"{output_name}_{par_index}_{input_index}"
 
     # Just run the script as is.
     else:
+        metallicity = 0.1 # Solar
+        redshift = 0.
+
         my_chemistry = chemistry_data()
         my_chemistry.use_grackle = 1
         my_chemistry.with_radiative_cooling = 1
         my_chemistry.primordial_chemistry = 0
         my_chemistry.metal_cooling = 1
         my_chemistry.UVbackground = 1
-        my_chemistry.self_shielding_method = 0
-        my_chemistry.H2_self_shielding = 0
         my_chemistry.grackle_data_file = \
           os.path.join(grackle_data_dir, "CloudyData_UVB=HM2012.h5")
 
-    redshift = 0.
-    metallicity = 0.1 # Solar
     density = 0.1 * mass_hydrogen_cgs # g /cm^3
     temperature = 1e6 # K
     final_time = 100. # Myr

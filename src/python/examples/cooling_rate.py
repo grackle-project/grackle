@@ -48,10 +48,10 @@ if __name__ == "__main__":
 
     # Just run the script as is.
     else:
+        metallicity = 1. # Solar
         redshift = 0.
         specific_heating_rate = 0.
         volumetric_heating_rate = 0.
-        metallicity = 1. # Solar
 
         # Set solver parameters
         my_chemistry = chemistry_data()

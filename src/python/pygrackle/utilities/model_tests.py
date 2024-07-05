@@ -27,27 +27,46 @@ _parameter_exclude = (
     {"dust_chemistry": 1, "primordial_chemistry": 1},
 )
 
-_cr_parameter_grid = {
-    "use_grackle": (1,),
-    "primordial_chemistry": (0, 1, 2, 3),
-    "dust_chemistry": (1,),
-    "metal_cooling": (1,),
-    "UVbackground": (0, 1),
-    "cmb_temperature_floor": (1,),
-    "grackle_data_file": ("CloudyData_UVB=HM2012.h5",),
+_model_test_grids = \
+{
+    "cooling_rate": \
+    {
+        "parameter_grid": \
+        {
+            "use_grackle": (1,),
+            "primordial_chemistry": (0, 1, 2, 3),
+            "dust_chemistry": (1,),
+            "metal_cooling": (1,),
+            "UVbackground": (0, 1),
+            "cmb_temperature_floor": (1,),
+            "grackle_data_file": ("CloudyData_UVB=HM2012.h5",),
+        },
+        "input_grid": \
+        {
+            "metallicity": (0., 1.),
+            "redshift": (0., 2.),
+            "specific_heating_rate": (0.,),
+            "volumetric_heating_rate": (0.,),
+        }
+    },
+    "cooling_cell": \
+    {
+        "parameter_grid": \
+        {
+            "use_grackle": (1,),
+            "primordial_chemistry": (0, 1, 2, 3),
+            "metal_cooling": (1,),
+            "UVbackground": (1,),
+            "cmb_temperature_floor": (1,),
+            "grackle_data_file": ("CloudyData_UVB=HM2012.h5",),
+        },
+        "input_grid": \
+        {
+            "metallicity": (0.1,),
+            "redshift": (0.,),
+        }
+    }
 }
-
-_cr_input_grid = {
-    "metallicity": (0., 1.),
-    "redshift": (0., 2.),
-    "specific_heating_rate": (0.,),
-    "volumetric_heating_rate": (0.,),
-}
-
-_model_test_grids = {}
-_model_test_grids["cooling_rate"] = \
-  {"parameter_grid": _cr_parameter_grid,
-   "input_grid": _cr_input_grid}
 
 def generate_value_sets(parameter_grid, exclude_sets=None):
     """
@@ -65,7 +84,7 @@ def generate_value_sets(parameter_grid, exclude_sets=None):
         exclude = False
         for my_exclude in exclude_sets:
             matches = sum([my_exclude[par] == my_dict[par]
-                           for par in my_exclude])
+                           for par in my_exclude if par in my_dict])
             if matches == len(my_exclude):
                 exclude = True
                 break
