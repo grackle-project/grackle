@@ -402,7 +402,7 @@ The remainder of this subsection is primarily intended for readers who are relat
       Just like with the classic build-system, Grackle currently needs to be installed to be used.
       If you install it in a non-standard location, then you also need to ensure that you properly set the LD_LIBRARY_PATH (or DYLD_LIBRARY_PATH on macOS) to make use of it.
 
-      The current structure (and contents) of the build-directory can and will change (especially once `GH-#204 <https://github.com/grackle-project/grackle/pull/204>`__ and `GH-#208 <https://github.com/grackle-project/grackle/pull/208>`__ are merged).
+      The current structure (and contents) of the build-directory can and will change (especially once `GH-#208 <https://github.com/grackle-project/grackle/pull/208>`__ is merged).
       But, we plan to add support for linking against a grackle installation without fully installing it.
 
 

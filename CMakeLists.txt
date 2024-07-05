@@ -18,6 +18,7 @@ endif()
 
 
 # Preamble
+# --------
 cmake_minimum_required(VERSION 3.16)
 cmake_policy(SET CMP0077 NEW)
 cmake_policy(SET CMP0082 NEW)
@@ -26,20 +27,15 @@ project(Grackle VERSION ${_GRACKLE_VERSION_NO_DEVTAG} LANGUAGES C CXX Fortran)
 # Specify that `./cmake` contains cmake modules defining useful functionality
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
-# Project-Wide Configuration
-include(GNUInstallDirs)
-
-# create a directory where we will store generated generated binary headers
-# (mostly for convenience during installation)
-set(GRACKLE_GENRATED_PUBLIC_HEADERS
-  ${CMAKE_CURRENT_BINARY_DIR}/generated_public_headers)
-
 # determine whether we are building a stand-alone program, or if grackle has
 # been embedded within another project
 set(GRACKLE_IS_TOP_LEVEL ON)
 if (NOT CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
   set(GRACKLE_IS_TOP_LEVEL OFF)
 endif()
+
+# Project-Wide Configuration
+# --------------------------
 
 # perform some basic checks
 if (NOT GRACKLE_IS_TOP_LEVEL)
@@ -106,7 +102,48 @@ if((NOT GRACKLE_IS_TOP_LEVEL) AND
     "related variables) in this scenario, at any time (without any warning)")
 endif()
 
-# Externally provided content
+
+# handle some organization for generated files (mostly for our own convenience)
+include(GNUInstallDirs)
+if (NOT GRACKLE_IS_TOP_LEVEL)
+  set(stageDir ${CMAKE_CURRENT_BINARY_DIR})
+  # the location where the cmake export files go to export from build-tree
+  set(GRACKLE_BUILD_EXPORT_PREFIX_PATH ${stageDir}) # <-- may not get used
+
+elseif(DEFINED CMAKE_RUNTIME_OUTPUT_DIRECTORY OR
+       DEFINED CMAKE_LIBRARY_OUTPUT_DIRECTORY OR
+       DEFINED CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
+
+  message(FATAL_ERROR "unexpected scenario!")
+
+else()
+
+  set(stageDir ${CMAKE_CURRENT_BINARY_DIR}/grackle)
+
+  # Add an explanatory direcotory
+  file(WRITE ${stageDir}/README.md [==[
+This directory only exists for the convenience of the developers of Grackle.
+Files may be moved around (or cease to exist). Please do not rely upon
+the structure of this directory
+]==])
+
+  # these intentionally are not CACHE variables
+  set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${stageDir}/${CMAKE_INSTALL_LIBDIR})
+  set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${stageDir}/${CMAKE_INSTALL_LIBDIR})
+
+  # don't currently need the following since grackle doesn't ship an executable
+  #set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${stageDir}/${CMAKE_INSTALL_BINDIR})
+
+  # the location where the export files go to export from build-tree
+  set(GRACKLE_BUILD_EXPORT_PREFIX_PATH ${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
+endif()
+
+# create a directory where we will store auto-generated generated public headers
+set(GRACKLE_GENRATED_PUBLIC_HEADERS
+  ${CMAKE_CURRENT_BINARY_DIR}/generated_public_headers)
+
+# Dependencies
+# ------------
 find_package(HDF5 REQUIRED COMPONENTS C)
 add_library(GRACKLE_HDF5_C INTERFACE IMPORTED)
 target_link_libraries(GRACKLE_HDF5_C INTERFACE ${HDF5_C_LIBRARIES})
@@ -134,7 +171,8 @@ if (UNIX AND NOT CMAKE_SYSTEM_NAME STREQUAL "Darwin")
   set_target_properties(toolchain::m PROPERTIES IMPORTED_LIBNAME "m")
 endif()
 
-# Main targets built by this project
+# Main build targets
+# ------------------
 add_subdirectory(src/clib)
 
 # declare build-recipies for examples
@@ -142,7 +180,14 @@ if (GRACKLE_EXAMPLES)
   add_subdirectory(src/example)
 endif()
 
-# Packaging/installation rules (probably not needed if not root project)
+# Tests
+# -----
+# (this is where we will add targets for integration tests)
+
+
+# Packaging
+# ---------
+# (probably not needed if not root project)
 if(GRACKLE_DEFINE_INSTALL_RULES AND NOT CMAKE_SKIP_INSTALL_RULES)
   include(cmake/installation_rules.cmake)
 endif()

@@ -388,3 +388,19 @@ install(EXPORT GrackleTargets
   FILE Grackle_${GRACKLE_CONFIG_FILL_VAL}_targets.cmake
 )
 
+# generate and configure some cmake files in the build-tree so that external
+# cmake projects can use find_package to directly import Grackle::Grackle from
+# the build-tree (without requiring a full installation)
+
+set(BUILDTREE_CMAKE_DIR ${GRACKLE_BUILD_EXPORT_PREFIX_PATH}/cmake/Grackle)
+
+file(COPY
+  ${CMAKE_CURRENT_BINARY_DIR}/install-metadata/GrackleConfig.cmake
+  ${CMAKE_CURRENT_BINARY_DIR}/install-metadata/GrackleConfigVersion.cmake
+  DESTINATION ${BUILDTREE_CMAKE_DIR}
+)
+
+export(EXPORT GrackleTargets
+  FILE ${BUILDTREE_CMAKE_DIR}/Grackle_${GRACKLE_CONFIG_FILL_VAL}_targets.cmake
+  NAMESPACE Grackle::
+)

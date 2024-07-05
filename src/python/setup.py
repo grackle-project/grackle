@@ -16,7 +16,7 @@ else: # CMAKE-based out-of-source build
     TRADITIONAL_IN_SOURCE_BUILD_MACRO = '0'
     include_dirs = ["../clib", "../include",
                     f"{grackle_build_dir}/generated_public_headers"]
-    library_dir = f"{grackle_build_dir}/src/clib"
+    library_dir = f"{grackle_build_dir}/grackle/lib"
 
 if not os.path.isfile(f'{library_dir}/libgrackle.so'):
     _message = f"""\

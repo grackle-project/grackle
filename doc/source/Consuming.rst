@@ -14,16 +14,37 @@ Integrating Grackle into your Application
    If we haven't anticipated the particular way that you want to consume the library, we may want to make few quick, minor tweaks to make it easier for us to smoothly support your preference as Grackle continues to evolve.
 
 This section assumes that the reader wants to integrate Grackle into their simulation code.
-There are broadly 3 mainstream approaches (each with a couple variations) that your simulation code could take to support Grackle:
+The following table summarizes the *officially* supported approaches that your simulation code could take to support Grackle.
+Each of these approaches is compatable with using Grackle's CMake build-system.
 
-1. :ref:`Link_Against_Grackle_Installation` -- this is the most conventional approach.
-   We present 3 flavors of this approach.
 
-2. :ref:`Link_Against_Grackle_Build` -- this is not currently supported
++----------------------------------+-----------------------------+------------------+--------------------------+------------------------+
+| Name                             | Required downstream         | Supports         | | Works                  | Other Notes            |
+|                                  | build-system                | :ref:`classic    | | without                |                        |
+|                                  |                             | <classic_build>` | | full install           |                        |
+|                                  |                             | builds           |                          |                        |
++==================================+=============================+==================+==========================+========================+
+| :ref:`link: manual               | ANY                         | YES              | NO                       | We don't *officially*  |
+| <manual_grackle_linking>`        |                             |                  |                          | support this case with |
+|                                  |                             |                  |                          | static Grackle libs    |
++----------------------------------+-----------------------------+------------------+--------------------------+------------------------+
+| :ref:`link: pkg-config           | ANY\*                       | NO               | NO                       | This is the            |
+| <pkgconfig_grackle_linking>`     |                             |                  |                          | recommended way to     |
+|                                  |                             |                  |                          | consume Grackle if     |
+|                                  |                             |                  |                          | not using CMake        |
++----------------------------------+-----------------------------+------------------+--------------------------+------------------------+
+| :ref:`link: CMake                | CMake                       | NO               | EXPERIMENTAL             | We generally recommend |
+| <cmake_grackle_linking>`         |                             |                  |                          | the next option        |
+|                                  |                             |                  |                          | over this approach     |
++----------------------------------+-----------------------------+------------------+--------------------------+------------------------+
+| :ref:`Embedded build             | CMake                       | This is a special case! The end-user doesn't directly build Grackle. |  
+| <Embed_Grackle_in_Sim_Build>`    |                             | Instead, Grackle is built as part of the downstream project.         |
+|                                  | (`Meson?`_)                 |                                                                      |
+|                                  |                             | **This is the most convenient choice for end-users.**                |
++----------------------------------+-----------------------------+------------------+--------------------------+------------------------+
 
-3. :ref:`Embed_Grackle_in_Sim_Build` -- this is most convenient for end-users (it amounts to a form automatic dependency management), but it requires that your simulation code is built with CMake.
+.. _Meson?: https://mesonbuild.com/CMake-module.html#cmake-subprojects
 
-More information about each approach is provided down below.
 
 Requirements for Integration Approaches
 ---------------------------------------
@@ -44,17 +65,11 @@ All of the other approaches involve compiling Grackle with the CMake build-syste
    While linking-issues should **NEVER** occur for the :ref:`embedding approach <Embed_Grackle_in_Sim_Build>`, there is a small chance they could come up for the remaining approaches (please open an issue if that happens!).
    In the event linking issues do arise, the remaining approaches make it is easy to seamlessly switch from consuming Grackle as a static-library to consuming it a shared library (the end-user can simply delete the existing installation and reinstall it as a shared library).
 
-.. _Link_Against_Grackle_Installation:
-
-Link Against Grackle Installation
----------------------------------
-
-We support 3 flavors of this approach.
 
 .. _manual_grackle_linking:
 
 Manually Specifying Linking Flags (when using Grackle as a shared library)
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+--------------------------------------------------------------------------
 
 This is the historic approach that we have always supported.
 If you employ this approach, you should inform your end-users that they should employ build-and-install Grackle via the classic build system or use the CMake build-system to build (and install) Grackle as a shared library.
@@ -105,13 +120,7 @@ Some of these dependencies are implicit and depend on the precise choice of comp
 .. _pkgconfig_grackle_linking:
 
 Using pkg-config
-++++++++++++++++
-
-.. note::
-
-   `GH-#204 <https://github.com/grackle-project/grackle/pull/204>`__ will add support for this approach for **any** installation of a cmake-build of Grackle (whether you compiled Grackle as a static or a shared library).
-
-   The rest of this subsection has been written as though that PR is already merged.
+----------------
 
 .. note::
 
@@ -189,14 +198,15 @@ You can also query Grackle-specific details, such as:
 
 .. _cmake_grackle_linking:
 
-CMake's ``find_package`` (in Config mode)
-+++++++++++++++++++++++++++++++++++++++++
+CMake's ``find_package``
+------------------------
+
 
 .. note::
 
-   `GH-#204 <https://github.com/grackle-project/grackle/pull/204>`__ will add support for this approach for **any** installation of a cmake-build of Grackle (whether you compiled Grackle as a static or a shared library).
+   This approach **ONLY** works if the end-user built and installed Grackle with the CMake build-system.
 
-   The rest of this subsection has been written as though that PR is already merged.
+   We have also added experimental support for using this approach with a build-directory.
 
 CMake builds of Grackle install a Package Config File alongside the Grackle library that assists with importing information about an installation into your CMake project when you call the ``find_package`` command.
 Here is a sample snippet showing how this works
@@ -230,26 +240,6 @@ These properties include:
 * ``GRACKLE_USE_DOUBLE`` -- stores whether Grackle was compiled with single or double precision
 * ``GRACKLE_USE_OPENMP`` -- stores whether Grackle was compiled with OpenMP
 
-.. note::
-
-   At this time, this approach will **ONLY** work with a complete Grackle-installation (i.e. it won't work with linking Grackle from a build-directory).
-   We plan to add support for the alternative in the near future.
-
-.. _Link_Against_Grackle_Build:
-
-Link Against a Grackle Build-Directory
---------------------------------------
-
-This is **NOT** currently supported.
-
-.. warning::
-
-   We will add support for using cmake's ``find_package`` to link against the contents of a build-directory in the near future.
-   We may also add support for using pkg-config for the same purpose.
-
-   We don't currently plan to support manual linking to libraries in the build directory.
-   If this is something you want to be able to do, please let the developers know.
-   Be advised, the organization and precise contents of the build-directory **will** change in the short-term (e.g. some "hacky," temporary choices were made to get tests running that we intend to more properly address).
 
 .. _Embed_Grackle_in_Sim_Build:
 
