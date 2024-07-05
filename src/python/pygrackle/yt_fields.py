@@ -54,43 +54,26 @@ _parameter_map[EnzoDataset] = {
 
 _field_map = {
     'density': (('gas', 'density'), 'code_mass / code_length**3'),
-    'HI': (('gas', 'H_p0_density'), 'code_mass / code_length**3'),
-    'HII': (('gas', 'H_p1_density'), 'code_mass / code_length**3'),
-    'HM': (('gas', 'H_m1_density'), 'code_mass / code_length**3'),
-    'HeI': (('gas', 'He_p0_density'), 'code_mass / code_length**3'),
-    'HeII': (('gas', 'He_p1_density'), 'code_mass / code_length**3'),
-    'HeIII': (('gas', 'He_p2_density'), 'code_mass / code_length**3'),
-    'H2I': (('gas', 'H2_p0_density'), 'code_mass / code_length**3'),
-    'H2II': (('gas', 'H2_p1_density'), 'code_mass / code_length**3'),
-    'DI': (('gas', 'D_p0_density'), 'code_mass / code_length**3'),
-    'DII': (('gas', 'D_p1_density'), 'code_mass / code_length**3'),
-    'HDI': (('gas', 'HD_p0_density'), 'code_mass / code_length**3'),
-    'de': (('gas', 'El_density'), 'code_mass / code_length**3'),
-    'metal': (('gas', 'total_metal_density'), 'code_mass / code_length**3'),
-    'dust': (('gas', 'dust_density'), 'code_mass / code_length**3'),
-    'x-velocity': (('gas', 'velocity_x'), 'code_velocity'),
-    'y-velocity': (('gas', 'velocity_y'), 'code_velocity'),
-    'z-velocity': (('gas', 'velocity_z'), 'code_velocity'),
-    'energy': (('gas', 'specific_thermal_energy'), 'code_velocity**2'),
+    'HI_density': (('gas', 'H_p0_density'), 'code_mass / code_length**3'),
+    'HII_density': (('gas', 'H_p1_density'), 'code_mass / code_length**3'),
+    'HM_density': (('gas', 'H_m1_density'), 'code_mass / code_length**3'),
+    'HeI_density': (('gas', 'He_p0_density'), 'code_mass / code_length**3'),
+    'HeII_density': (('gas', 'He_p1_density'), 'code_mass / code_length**3'),
+    'HeIII_density': (('gas', 'He_p2_density'), 'code_mass / code_length**3'),
+    'H2I_density': (('gas', 'H2_p0_density'), 'code_mass / code_length**3'),
+    'H2II_density': (('gas', 'H2_p1_density'), 'code_mass / code_length**3'),
+    'DI_density': (('gas', 'D_p0_density'), 'code_mass / code_length**3'),
+    'DII_density': (('gas', 'D_p1_density'), 'code_mass / code_length**3'),
+    'HDI_density': (('gas', 'HD_p0_density'), 'code_mass / code_length**3'),
+    'e_density': (('gas', 'El_density'), 'code_mass / code_length**3'),
+    'metal_density': (('gas', 'total_metal_density'), 'code_mass / code_length**3'),
+    'dust_density': (('gas', 'dust_density'), 'code_mass / code_length**3'),
+    'x_velocity': (('gas', 'velocity_x'), 'code_velocity'),
+    'y_velocity': (('gas', 'velocity_y'), 'code_velocity'),
+    'z_velocity': (('gas', 'velocity_z'), 'code_velocity'),
+    'internal_energy': (('gas', 'specific_thermal_energy'), 'code_velocity**2'),
     'RT_heating_rate': (('gas', 'photo_gamma'), 'erg/s')
 }
-
-def _get_needed_fields(my_chemistry):
-    fields = ['density', 'energy'] + \
-      ['%s-velocity' % ax for ax in 'xyz']
-    if my_chemistry.primordial_chemistry > 0:
-        fields += ['HI', 'HII', 'HeI', 'HeII', 'HeIII', 'de']
-    if my_chemistry.primordial_chemistry > 1:
-        fields += ['HM', 'H2I', 'H2II']
-    if my_chemistry.primordial_chemistry > 2:
-        fields += ['DI', 'DII', 'HDI']
-    if my_chemistry.metal_cooling == 1:
-        fields += ['metal']
-    if my_chemistry.use_dust_density_field == 1:
-        fields += ['dust']
-    if my_chemistry.use_radiative_transfer == 1:
-        fields += ['RT_heating_rate']
-    return fields
 
 def _data_to_fc(data, size=None, fc=None):
     if size is None:
@@ -100,8 +83,7 @@ def _data_to_fc(data, size=None, fc=None):
 
     flatten = len(data['gas', 'density'].shape) > 1
 
-    fields = _get_needed_fields(fc.chemistry_data)
-    for gfield in fields:
+    for gfield in fc.input_fields:
         yfield, units = _field_map[gfield]
         fdata = data[yfield].to(units)
 
@@ -109,8 +91,8 @@ def _data_to_fc(data, size=None, fc=None):
             fdata = fdata.flatten()
         fc[gfield][:] = fdata
 
-    if 'de' in fc:
-        fc['de'] *= (mp/me)
+    if 'e_density' in fc:
+        fc['e_density'] *= (mp/me)
 
     return fc
 
@@ -169,9 +151,11 @@ def _grackle_field(field, data):
         raise RuntimeError("Grackle has not been initialized.")
 
     fc = _data_to_fc(data)
-    if not isinstance(data, FieldDetector):
-        func = "calculate_%s" % gfield
-        getattr(fc, func)()
+    if isinstance(data, FieldDetector):
+        if gfield not in fc:
+            fc._setup_fluid(gfield)
+    else:
+        getattr(fc, f"calculate_{gfield}")()
 
     fdata = fc[gfield]
     if hasattr(data, 'ActiveDimensions'):

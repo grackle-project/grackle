@@ -12,10 +12,18 @@
 ########################################################################
 
 import os
+import sys
 import yt
 
-from pygrackle import \
-    add_grackle_fields
+from pygrackle import add_grackle_fields
+from pygrackle.utilities.testing import \
+    dirname
+from pygrackle.utilities.model_tests import \
+    get_model_set
+
+grackle_install_dir = dirname(os.path.abspath(__file__), level=4)
+grackle_data_dir = os.path.join(grackle_install_dir, "input")
+output_name = os.path.basename(__file__[:-3]) # strip off ".py"
 
 DS_NAME = "IsolatedGalaxy/galaxy0030/galaxy0030"
 
@@ -24,21 +32,38 @@ if 'YT_DATA_DIR' in os.environ:
 else:
     ds_path = DS_NAME
 
-ds = yt.load(ds_path)
+if __name__ == "__main__":
+    # If we are running the script through the testing framework,
+    # then we will pass in two integers corresponding to the sets
+    # of parameters and inputs.
+    if len(sys.argv) > 1:
+        par_index = int(sys.argv[1])
+        input_index = int(sys.argv[2])
+        output_name = f"{output_name}_{par_index}_{input_index}"
 
-my_dir = os.path.dirname(os.path.abspath(__file__))
-grackle_data_file = bytes(os.path.join(
-    my_dir, "..", "..", "..", "input", "CloudyData_UVB=HM2012.h5"), 'utf-8')
+    ds = yt.load(ds_path)
 
-grackle_pars = {'grackle_data_file': grackle_data_file,
-                'UVbackground': 1}
+    grackle_data_file = os.path.join(grackle_data_dir, "CloudyData_UVB=HM2012.h5")
 
-add_grackle_fields(ds, parameters=grackle_pars)
+    grackle_pars = {'grackle_data_file': grackle_data_file,
+                    'UVbackground': 1,
+                    'h2_on_dust': 1}
 
-sp = ds.sphere(ds.domain_center, (10, 'kpc'))
-print (sp['gas', 'grackle_cooling_time'])
-print (sp['gas', 'grackle_gamma'])
-print (sp['gas', 'grackle_mean_molecular_weight'])
-print (sp['gas', 'grackle_pressure'])
-print (sp['gas', 'grackle_temperature'])
-print (sp['gas', 'grackle_dust_temperature'])
+    add_grackle_fields(ds, parameters=grackle_pars)
+
+    sp = ds.sphere(ds.domain_center, (10, 'kpc'))
+
+    fields = [
+        ("gas", "grackle_cooling_time"),
+        ("gas", "grackle_gamma"),
+        ("gas", "grackle_mean_molecular_weight"),
+        ("gas", "grackle_pressure"),
+        ("gas", "grackle_temperature"),
+        ("gas", "grackle_dust_temperature"),
+    ]
+    for field in fields:
+        print (f"{field}: {sp[field]}")
+
+    data = {field: sp[field] for field in fields}
+    yt.save_as_dataset(ds, filename=f"{output_name}.h5",
+                       data=data)

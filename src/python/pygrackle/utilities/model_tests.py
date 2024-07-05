@@ -86,6 +86,11 @@ _model_test_grids = \
             "metallicity": (1e-10, 1e-4, 1e-3),
         }
     }
+    "yt_grackle": \
+    {
+        "parameter_grid": {},
+        "input_grid": {}
+    }
 }
 
 def generate_value_sets(parameter_grid, exclude_sets=None):
