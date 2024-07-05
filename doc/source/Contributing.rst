@@ -18,6 +18,35 @@ Adding a New Parameter
 
   3. Add documentation in ``doc/source/Parameters.rst`` for your new parameter.
 
+.. _cmake_buildsystem_design_rationale:
+
+CMake Build-System Design Rationale
+-----------------------------------
+
+The design rationale for the CMake build-system tries to walk a fine line between 2 competing philosophies:
+
+1. We should provide a curated, convenient out-of-box experience for most people who are building Grackle.
+
+2. The internals of a modern CMake build-system should **only** specify the firm build requirements.
+   All other choices compilation options should be specified through one of the many standardized "hooks" or options that CMake provides for customization and overriding default behavior.
+   This is important for making a project easily consumable (as either a standalone project or an embeded build).
+
+The problem with the second philopsphy is that it assumes that the person building software from source is already well-versed in CMake (e.g. a developer, someone who will package and distribute your software, someone who wants to directly embed your software within their project), or they are a motivated developer/user who can be expected to learn CMake.
+It implicitly assumes that most users of a project won't ever need to directly build your software from source; they will instead install prebuilt and pacakaged copies of the software that are distributed through other channels (e.g. through package managers like apt, dnf, homebrew OR downloadable precompiled binaries through a website OR some kind of installer).
+While this implicit assumption may be accurate for most CMake software, it obviously doesn't apply to scientific software).
+
+It may be tempting to dismiss the second philosophy for scientific software.
+In fact, it doesn't provide substantial benefits in build-systems that simply build an application (like a simulation code).
+However, it provides substantial benefits for build-systems of libraries (like Grackle) that are used as components in downstream software.
+It does a lot to make the libraries easier to consume.
+
+Consequently, our CMake build-system pursues a pragmatic compromise between these philosophies.
+We clearly specify all build requirements (this is compatible with both).
+We provide the ability to include commonly desired compilation options (some of these may be specified hostfiles).
+However, these extra (not strictly necessary) options must all be introduced in a manner that they are easily enabled/disabled, without breaking a CMake build.
+This compromise allows both regular users and CMake experts (including people who want to embed Grackle into their simulation code) to easily interact with the build system.
+
+
 .. _pkgconfig_rationale:
 
 Supporting ``pkg-config``

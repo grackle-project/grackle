@@ -1,9 +1,28 @@
 # generate grackle_float.h AND auto_general.c
 # ===========================================
 
-# TODO: if they exist, delete ${CMAKE_CURRENT_SOURCE_DIR}/grackle_float.h AND
-# ${CMAKE_CURRENT_SOURCE_DIR}/auto_general.c
-# -> this probably isn't necessary, but it certainly makes things less confusing
+# perform a check to try to help out with the scenario where the classic build
+# system in an older Grackle revisions placed auto-generated files in locations
+# where a cmake build might mistakenly use the wrong version of the file
+# -> this is probably only an issue with grackle_float.h, but we handle all
+#    auto-generated files for consistency
+# -> in modern Grackle revisions, classic-build put these files in better spots
+# -> I don't think this is a perfect check. It might not help if you
+#      1. configure a cmake-build-directory
+#      2. checkout on old grackle revision and perform a classic-build
+#      3. return the latest revision and use the cmake-build-directory from 1.
+#    But, this is a fairly pathological scenario
+set(bad_fname_l "grackle_float.h;../include/grackle_float.h;auto_general.c")
+foreach(fname IN LISTS bad_fname_l)
+  if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${fname}")
+    message(FATAL_ERROR
+      "Please delete the ${CMAKE_CURRENT_SOURCE_DIR}/${fname} file and perform "
+      "a fresh cmake-build. That file may confuse the cmake-build. Unless you "
+      "manually added that file yourself, that file is left over from a "
+      "classic-build in an older Grackle revision")
+  endif()
+endforeach()
+
 
 # first, declare recipe for generating grackle_float.h:
 if (GRACKLE_USE_DOUBLE)
@@ -234,12 +253,6 @@ target_include_directories(Grackle_Grackle
   INTERFACE $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
-# the following variable is an abbreviated shorthand used in "generator
-# expressions" used to conditionally apply properties/compiler-flags to all
-# source-code files the compose a build-target based on whether or not a given
-# source-code file is written in Fortran
-set(is_FC "$<COMPILE_LANGUAGE:Fortran>")
-
 target_link_libraries(Grackle_Grackle
   PRIVATE toolchain::m
           GRACKLE_HDF5_C
@@ -252,6 +265,22 @@ target_link_libraries(Grackle_Grackle
 # expected (these flags only get applied to Fortran source-code files)
 include(AddConditionalFortranFlags)
 add_conditional_fortran_flags(Grackle_Grackle)
+
+# add the machine-specific compiler optimization options (generally specified
+# in host-files) for use in the  RELEASE or RELWITHDEBINFO build-configurations
+# -> as noted elsewhere, we may stop using these when Grackle isn't the
+#    top-level project
+# -> we explicitly add these directly to the Grackle target rather than
+#    collecting them in an interface library. This lets us avoid exposing these
+#    private flags when we compile Grackle_Grackle as a static library (they
+#    would be exposed once we add support for the ``export`` command to allow
+#    cmake projects to import Grackle from its build directory).
+# -> we can start collecting them in an interface library once CMake 3.26 is our
+#    minimum version, which provides the $<BUILD_LOCAL_INTERFACE:...> generator
+#    expression.
+target_compile_options(Grackle_Grackle PRIVATE
+  "$<$<CONFIG:RELEASE>:${GRACKLE_OPTIMIZATION_FLIST}>"
+  "$<$<CONFIG:RELWITHDEBINFO>:${GRACKLE_OPTIMIZATION_FLIST}>")
 
 # define macros so that the C files know how to properly handle name-mangling
 # (if cmake were our only build-system, we could use FortranCInterface module)

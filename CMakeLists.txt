@@ -80,13 +80,43 @@ option(GRACKLE_EXAMPLES "compile grackle examples" ${GRACKLE_IS_TOP_LEVEL})
 option(GRACKLE_DEFINE_INSTALL_RULES
   "enable Grackle's installation rules" ${GRACKLE_IS_TOP_LEVEL})
 
+# configure custom machine-specific optimization-flags (specified in host-config
+# files). I'm not really sure we should support this when Grackle isn't the
+# top-level project (hence the warning...)
+
+if (NOT DEFINED GRACKLE_OPTIMIZATION_FLIST)
+  set(GRACKLE_OPTIMIZATION_FLIST "${GRACKLE_OPTIMIZATION_FLIST_INIT}"
+    CACHE STRING "\
+machine-specific semicolon delimited list of optimization flags. These are \
+only in RELEASE or RELWITHDEBINFO build-configurations. See the installation \
+documentation for notes about \"shell-quoting\" groups of options. NOTE: We \
+may not use these when Grackle isn't the top-level project (i.e. if it is \
+embedded inside another cmake project).")
+endif()
+
+if((NOT GRACKLE_IS_TOP_LEVEL) AND
+   (NOT "${GRACKLE_OPTIMIZATION_FLIST}" STREQUAL ""))
+  message(WARNING
+    "It's unclear whether we should support machine-specific optimization "
+    "flags, when Grackle isn't the top-level project (i.e. it is embedded in "
+    "the build of another project). In this scenario, it might be better to "
+    "encourage the top-level project to set the ``CMAKE_<LANG>_FLAGS`` "
+    "variable or use the ``add_compile_options`` command. Be aware, we may "
+    "alter support for flags specified through GRACKLE_OPTIMIZATION_FLIST (& "
+    "related variables) in this scenario, at any time (without any warning)")
+endif()
+
 # Externally provided content
 find_package(HDF5 REQUIRED COMPONENTS C)
 add_library(GRACKLE_HDF5_C INTERFACE IMPORTED)
 target_link_libraries(GRACKLE_HDF5_C INTERFACE ${HDF5_C_LIBRARIES})
-target_compile_definitions(GRACKLE_HDF5_C
-  INTERFACE ${HDF5_C_DEFINITIONS} -DH5_USE_16_API)
 target_include_directories(GRACKLE_HDF5_C INTERFACE ${HDF5_C_INCLUDE_DIRS})
+target_compile_definitions(GRACKLE_HDF5_C INTERFACE ${HDF5_C_DEFINITIONS})
+if (HDF5_VERSION VERSION_LESS "1.6")
+  message(FATAL_ERROR "HDF5 version 1.6 or newer is required")
+elseif(HDF5_VERSION VERSION_GREATER "1.6")
+  target_compile_definitions(GRACKLE_HDF5_C INTERFACE -DH5_USE_16_API)
+endif()
 
 option(GRACKLE_USE_OPENMP "Use OpenMP" OFF)
 if (GRACKLE_USE_OPENMP)
@@ -94,10 +124,11 @@ if (GRACKLE_USE_OPENMP)
 endif()
 
 # define target to link the math functions of the C standard library
-# (i.e. the -lm flag). This is commonly needed on unix-like platforms (but
-# should not be used on macOS).
+# (i.e. the -lm flag). This is commonly needed on unix-like platforms
 # -> For platforms that don't need libm, this target acts as a dummy
 #    placeholder (that does nothing)
+# -> The -lm flag should NOT be used on MacOS (while CMake is smart enough to
+#    not pass it to the linker, it will mess with exporting linker flags)
 add_library(toolchain::m INTERFACE IMPORTED)
 if (UNIX AND NOT CMAKE_SYSTEM_NAME STREQUAL "Darwin")
   set_target_properties(toolchain::m PROPERTIES IMPORTED_LIBNAME "m")
