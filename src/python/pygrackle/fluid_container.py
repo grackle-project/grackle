@@ -163,6 +163,7 @@ def _required_extra_fields(my_chemistry):
 def _photo_units(my_chemistry):
     return 1 / my_chemistry.time_units
 
+
 _field_units = {
     "H2_self_shielding_length": ("length_units", "cm"),
     "H2_custom_shielding_factor": (None, ""),

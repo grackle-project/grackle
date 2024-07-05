@@ -16,7 +16,6 @@
 ########################################################################
 
 from matplotlib import pyplot
-import numpy as np
 import os
 import sys
 import yt

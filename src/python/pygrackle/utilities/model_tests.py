@@ -85,7 +85,7 @@ _model_test_grids = \
         {
             "metallicity": (1e-10, 1e-4, 1e-3),
         }
-    }
+    },
     "yt_grackle": \
     {
         "parameter_grid": {},
@@ -131,6 +131,7 @@ def generate_model_sets(model_store):
             my_model["input_sets"] = \
               generate_value_sets(model["input_grid"])
         model_store[model_name] = my_model
+
 
 model_sets = {}
 generate_model_sets(model_sets)

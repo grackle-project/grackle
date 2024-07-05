@@ -18,8 +18,6 @@ import yt
 from pygrackle import add_grackle_fields
 from pygrackle.utilities.testing import \
     dirname
-from pygrackle.utilities.model_tests import \
-    get_model_set
 
 grackle_install_dir = dirname(os.path.abspath(__file__), level=4)
 grackle_data_dir = os.path.join(grackle_install_dir, "input")
