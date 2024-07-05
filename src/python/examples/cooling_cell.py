@@ -109,4 +109,4 @@ if __name__ == "__main__":
     pyplot.savefig(f"{output_name}.png")
 
     # save data arrays as a yt dataset
-    yt.save_as_dataset({}, f"{output_name}.h5", data)
+    yt.save_as_dataset({}, f"{output_name}.h5", data=data)

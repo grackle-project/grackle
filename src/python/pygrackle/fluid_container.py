@@ -378,7 +378,7 @@ class FluidContainer(dict):
                 conv = my_chemistry.density_units
                 units = "g/cm**3"
             else:
-                conv, units = _field_units[field]
+                conv, units = _field_units.get(field, (None, ""))
                 if conv is None:
                     conv = 1
                 elif callable(conv):

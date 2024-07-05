@@ -65,6 +65,26 @@ _model_test_grids = \
             "metallicity": (0.1,),
             "redshift": (0.,),
         }
+    },
+    "freefall": \
+    {
+        "parameter_grid": \
+        {
+            "use_grackle": (1,),
+            "primordial_chemistry": (2, 3),
+            "metal_cooling": (0, 1),
+            "dust_chemistry": (0, 1),
+            "photoelectric_heating": (0,),
+            "cmb_temperature_floor": (1,),
+            "CaseBRecombination": (1,),
+            "cie_cooling": (1,),
+            "h2_optical_depth_approximation": (1,),
+            "grackle_data_file": ("cloudy_metals_2008_3D.h5",),
+        },
+        "input_grid": \
+        {
+            "metallicity": (1e-10, 1e-4, 1e-3),
+        }
     }
 }
 
