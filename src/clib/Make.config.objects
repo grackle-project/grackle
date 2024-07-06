@@ -12,7 +12,7 @@
 #-----------------------------------------------------------------------
 
 OBJS_CONFIG_LIB = \
-        auto_general.lo \
+        $(AUTOGEN_DIR)/auto_general.lo \
         calculate_cooling_time.lo \
         calculate_dust_temperature.lo \
         calculate_gamma.lo \

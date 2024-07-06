@@ -10,7 +10,7 @@ from setuptools.extension import Extension
 grackle_build_dir = os.getenv("PYGRACKLE_CMAKE_BUILD_DIR", "")
 if grackle_build_dir == "": # traditional in-source build
     TRADITIONAL_IN_SOURCE_BUILD_MACRO = '1'
-    include_dirs = ["../clib", "../include"]
+    include_dirs = ["../clib", "../clib/autogen", "../include"]
     library_dir = "../clib/.libs/"
 else: # CMAKE-based out-of-source build
     TRADITIONAL_IN_SOURCE_BUILD_MACRO = '0'

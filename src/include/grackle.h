@@ -121,6 +121,8 @@ int local_free_chemistry_data(chemistry_data *my_chemistry, chemistry_data_stora
 
 grackle_version get_grackle_version(void);
 
+int gr_initialize_field_data(grackle_field_data *my_fields);
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif /* __cplusplus */

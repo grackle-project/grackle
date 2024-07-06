@@ -121,6 +121,7 @@ c     Initialize the Grackle
       iresult = initialize_chemistry_data(my_units)
 
 c     Set field arrays
+      iresult = gr_initialize_field_data(my_fields)
 
 c     If grid rank is less than 3, set the other dimensions, 
 c     start indices, and end indices to 0.
