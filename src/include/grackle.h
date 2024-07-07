@@ -21,6 +21,10 @@
 extern "C" {
 #endif /* __cplusplus */
 
+// standard error codes returned by the grackle functions
+#define GR_SUCCESS 1
+#define GR_FAIL 0
+
 extern int grackle_verbose;
 
 extern chemistry_data *grackle_data;
