@@ -68,11 +68,11 @@ def test_proper_comoving_units():
         chem_p.a_value = 1.0 / (1.0 + current_redshift) / chem_p.a_units
         # Set the proper units to be of similar magnitude to the
         # comoving system to help the solver be more efficient.
-        chem_p.density_units = random_logscale(-2, 2, random_state=my_random_state) * \
+        chem_p.density_units = random_logscale(-2, 2, random_state=my_random_state)[0] * \
             chem_c.density_units / (1 + current_redshift)**3
-        chem_p.length_units = random_logscale(-2, 2, random_state=my_random_state) * \
+        chem_p.length_units = random_logscale(-2, 2, random_state=my_random_state)[0] * \
             chem_c.length_units * (1 + current_redshift)
-        chem_p.time_units = random_logscale(-2, 2, random_state=my_random_state) * \
+        chem_p.time_units = random_logscale(-2, 2, random_state=my_random_state)[0] * \
             chem_c.time_units
         chem_p.velocity_units = chem_p.length_units / chem_p.time_units
         fc_p = setup_fluid_container(chem_p, converge=True)
@@ -135,11 +135,11 @@ def test_proper_comoving_units_tabular():
         chem_p.a_value = 1.0 / (1.0 + current_redshift) / chem_p.a_units
         # Set the proper units to be of similar magnitude to the
         # comoving system to help the solver be more efficient.
-        chem_p.density_units = random_logscale(-2, 2, random_state=my_random_state) * \
+        chem_p.density_units = random_logscale(-2, 2, random_state=my_random_state)[0] * \
             chem_c.density_units / (1 + current_redshift)**3
-        chem_p.length_units = random_logscale(-2, 2, random_state=my_random_state) * \
+        chem_p.length_units = random_logscale(-2, 2, random_state=my_random_state)[0] * \
             chem_c.length_units * (1 + current_redshift)
-        chem_p.time_units = random_logscale(-2, 2, random_state=my_random_state) * \
+        chem_p.time_units = random_logscale(-2, 2, random_state=my_random_state)[0] * \
             chem_c.time_units
         chem_p.velocity_units = chem_p.length_units / chem_p.time_units
         fc_p = setup_fluid_container(chem_p, converge=False)
@@ -182,9 +182,9 @@ def test_proper_units():
         chem_1.comoving_coordinates = 0
         chem_1.a_units = 1.0
         chem_1.a_value = 1.0 / (1.0 + current_redshift) / chem_1.a_units
-        chem_1.density_units = random_logscale(-1, 1, random_state=my_random_state)
-        chem_1.length_units = random_logscale(0, 2, random_state=my_random_state)
-        chem_1.time_units = random_logscale(0, 2, random_state=my_random_state)
+        chem_1.density_units = random_logscale(-1, 1, random_state=my_random_state)[0]
+        chem_1.length_units = random_logscale(0, 2, random_state=my_random_state)[0]
+        chem_1.time_units = random_logscale(0, 2, random_state=my_random_state)[0]
         chem_1.velocity_units = chem_1.length_units / chem_1.time_units
         fc_1 = setup_fluid_container(chem_1, converge=False)
         fc_1.calculate_temperature()
@@ -203,9 +203,9 @@ def test_proper_units():
         chem_2.comoving_coordinates = 0
         chem_2.a_units = 1.0
         chem_2.a_value = 1.0 / (1.0 + current_redshift) / chem_2.a_units
-        chem_2.density_units = random_logscale(-28, -26, random_state=my_random_state)
-        chem_2.length_units = random_logscale(0, 2, random_state=my_random_state)
-        chem_2.time_units = random_logscale(0, 2, random_state=my_random_state)
+        chem_2.density_units = random_logscale(-28, -26, random_state=my_random_state)[0]
+        chem_2.length_units = random_logscale(0, 2, random_state=my_random_state)[0]
+        chem_2.time_units = random_logscale(0, 2, random_state=my_random_state)[0]
         chem_2.velocity_units = chem_2.length_units / chem_2.time_units
         fc_2 = setup_fluid_container(chem_2, converge=False)
         fc_2.calculate_temperature()
@@ -235,9 +235,9 @@ def test_tabulated_mmw_metal_dependence():
         [grackle_dir, "input", "CloudyData_UVB=HM2012.h5"]), 'utf-8')
 
     my_random_state = np.random.RandomState(723466)
-    density_units = random_logscale(-28, -26, random_state=my_random_state)
-    length_units = random_logscale(0, 2, random_state=my_random_state)
-    time_units = random_logscale(0, 2, random_state=my_random_state)
+    density_units = random_logscale(-28, -26, random_state=my_random_state)[0]
+    length_units = random_logscale(0, 2, random_state=my_random_state)[0]
+    time_units = random_logscale(0, 2, random_state=my_random_state)[0]
     velocity_units = length_units / time_units
 
     current_redshift = 0.
@@ -264,7 +264,7 @@ def test_tabulated_mmw_metal_dependence():
         fc = setup_fluid_container(my_chem, converge=False,
                                    metal_mass_fraction=metal_mass_frac)
         fc.calculate_mean_molecular_weight()
-        mmw_vals.append(fc['mu'])
+        mmw_vals.append(fc["mean_molecular_weight"])
 
     mmw_no_metals, mmw_with_metals = mmw_vals
 
