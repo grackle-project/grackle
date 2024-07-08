@@ -16,12 +16,17 @@
 #include <stdio.h>
 #include <time.h>
 #include <math.h>
+#include "grackle.h"
 #include "grackle_macros.h"
 #include "grackle_types.h"
 #include "grackle_chemistry_data.h"
 #include "phys_constants.h"
 #ifdef _OPENMP
 #include <omp.h>
+#endif
+
+#if (GR_SUCCESS != SUCCESS) || (GR_FAIL != FAIL)
+#error "Sanity check failure: GR_SUCCESS must be consistent with SUCCESS and GR_FAIL must be consistent with FAIL"
 #endif
 
 extern int grackle_verbose;
@@ -173,7 +178,7 @@ int local_initialize_chemistry_data(chemistry_data *my_chemistry,
 
     if (my_chemistry->metal_cooling < 1) {
       fprintf(stderr, "ERROR: dust_chemistry > 0 requires metal_cooling > 0.\n");
-      return FAIL;
+      return GR_FAIL;
     }
 
     if (my_chemistry->photoelectric_heating < 0) {
@@ -211,7 +216,7 @@ int local_initialize_chemistry_data(chemistry_data *my_chemistry,
     fprintf(stdout,
             "omp_nthreads can't be set when Grackle isn't compiled with "
             "OPENMP\n");
-    return FAIL;
+    return GR_FAIL;
   }
 # else /* _OPENMP */
   if (my_chemistry->omp_nthreads < 1) {
@@ -235,7 +240,7 @@ int local_initialize_chemistry_data(chemistry_data *my_chemistry,
   if (my_units->comoving_coordinates == FALSE &&
       my_units->a_units != 1.0) {
     fprintf(stderr, "ERROR: a_units must be 1.0 if comoving_coordinates is 0.\n");
-    return FAIL;
+    return GR_FAIL;
   }
 
   // deal with my_chemistry->HydrogenFractionByMass
@@ -255,7 +260,7 @@ int local_initialize_chemistry_data(chemistry_data *my_chemistry,
 
   if (my_chemistry->HydrogenFractionByMass > 1) {
     fprintf(stderr, "ERROR: HydrogenFractionByMass cannot exceed 1.0\n");
-    return FAIL;
+    return GR_FAIL;
   } else if (my_chemistry->primordial_chemistry == 0) {
     /* In fully tabulated mode, set H mass fraction according to
        the abundances in Cloudy, which assumes n_He / n_H = 0.1.
@@ -284,7 +289,7 @@ int local_initialize_chemistry_data(chemistry_data *my_chemistry,
               "    Grackle would silently overwrite the value of\n"
               "    HydrogenFractionByMass instead of reporting this error\n",
               default_Hfrac);
-      return FAIL;
+      return GR_FAIL;
     }
   } else {
     const double default_Hfrac = 0.76;
@@ -316,25 +321,25 @@ int local_initialize_chemistry_data(chemistry_data *my_chemistry,
   read_data = my_chemistry->primordial_chemistry == 0;
   if (initialize_cloudy_data(my_chemistry, my_rates,
                              &my_rates->cloudy_primordial,
-                             "Primordial", my_units, read_data) == FAIL) {
+                             "Primordial", my_units, read_data) == GR_FAIL) {
     fprintf(stderr, "Error in initialize_cloudy_data.\n");
-    return FAIL;
+    return GR_FAIL;
   }
 
   /* Metal tables. */
   read_data = my_chemistry->metal_cooling == TRUE;
   if (initialize_cloudy_data(my_chemistry, my_rates,
                              &my_rates->cloudy_metal,
-                             "Metals", my_units, read_data) == FAIL) {
+                             "Metals", my_units, read_data) == GR_FAIL) {
     fprintf(stderr, "Error in initialize_cloudy_data.\n");
-    return FAIL;
+    return GR_FAIL;
   }
 
   /* Initialize UV Background data. */
   initialize_empty_UVBtable_struct(&(my_rates->UVbackground_table));
-  if (initialize_UVbackground_data(my_chemistry, my_rates) == FAIL) {
+  if (initialize_UVbackground_data(my_chemistry, my_rates) == GR_FAIL) {
     fprintf(stderr, "Error in initialize_UVbackground_data.\n");
-    return FAIL;
+    return GR_FAIL;
   }
 
   if (grackle_verbose) {
@@ -381,17 +386,17 @@ int local_initialize_chemistry_data(chemistry_data *my_chemistry,
 #   endif
   }
 
-  return SUCCESS;
+  return GR_SUCCESS;
 }
 
 int initialize_chemistry_data(code_units *my_units)
 {
   if (local_initialize_chemistry_data(grackle_data, &grackle_rates,
-                                      my_units) == FAIL) {
+                                      my_units) == GR_FAIL) {
     fprintf(stderr, "Error in local_initialize_chemistry_data.\n");
-    return FAIL;
+    return GR_FAIL;
   }
-  return SUCCESS;
+  return GR_SUCCESS;
 }
 
 // Define helpers for the show_parameters function
@@ -413,11 +418,11 @@ void show_parameters(FILE *fp, chemistry_data *my_chemistry){
 }
 
 int free_chemistry_data(void){
-  if (local_free_chemistry_data(grackle_data, &grackle_rates) == FAIL) {
+  if (local_free_chemistry_data(grackle_data, &grackle_rates) == GR_FAIL) {
     fprintf(stderr, "Error in local_free_chemistry_data.\n");
-    return FAIL;
+    return GR_FAIL;
   }
-  return SUCCESS;
+  return GR_SUCCESS;
 }
 
 int local_free_chemistry_data(chemistry_data *my_chemistry,
@@ -521,5 +526,5 @@ int local_free_chemistry_data(chemistry_data *my_chemistry,
     GRACKLE_FREE(my_rates->UVbackground_table.crsHeI);
   }
 
-  return SUCCESS;
+  return GR_SUCCESS;
 }
