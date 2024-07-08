@@ -10,12 +10,11 @@ from setuptools.extension import Extension
 grackle_build_dir = os.getenv("PYGRACKLE_CMAKE_BUILD_DIR", "")
 if grackle_build_dir == "": # traditional in-source build
     TRADITIONAL_IN_SOURCE_BUILD_MACRO = '1'
-    include_dirs = ["../clib", "../clib/autogen", "../include"]
+    autogen_public_hdr_dir = "../clib/autogen"
     library_dir = "../clib/.libs/"
 else: # CMAKE-based out-of-source build
     TRADITIONAL_IN_SOURCE_BUILD_MACRO = '0'
-    include_dirs = ["../clib", "../include",
-                    f"{grackle_build_dir}/generated_public_headers"]
+    autogen_public_hdr_dir = f"{grackle_build_dir}/generated_public_headers"
     library_dir = f"{grackle_build_dir}/grackle/lib"
 
 if not os.path.isfile(f'{library_dir}/libgrackle.so'):
@@ -35,7 +34,7 @@ cython_extensions = [
     Extension(
         "pygrackle.grackle_wrapper",
         ["pygrackle/grackle_wrapper.pyx"],
-        include_dirs=include_dirs,
+        include_dirs=[autogen_public_hdr_dir, "../include"],
         library_dirs=[library_dir],
         libraries=["grackle"],
         define_macros=[
