@@ -119,7 +119,7 @@ commands:
             pip install --upgrade pip
             pip install --upgrade wheel
             pip install --upgrade setuptools
-            pip install sphinx
+            pip install sphinx sphinx-tabs
 
   download-test-data:
     description: "Download test data."
