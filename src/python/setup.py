@@ -7,7 +7,7 @@ cython_extensions = [
     Extension(
         "pygrackle.grackle_wrapper",
         ["pygrackle/grackle_wrapper.pyx"],
-        include_dirs=["../clib"],
+        include_dirs=["../clib/autogen", "../include"],
         library_dirs=["../clib/.libs/"],
         libraries=["grackle"],
         define_macros=[

@@ -10,6 +10,11 @@ C, C++, and Fortran are also available in the Grackle source.  See
 :ref:`examples` for more information.  For a list of all available
 functions, see the :ref:`reference`.
 
+Grackle currently supports two APIs.
+The :ref:`Primary API <primary_functions>`, manages some of Grackle's data structures (e.g. :c:data:`chemistry_data` and :c:data:`chemistry_data_storage`) for a downstream simulation code by making use of global variables.
+In contrast, the :ref:`Local API <local_functions>`, requires that the downstream application explicitly manage pointers to these same data-structures and requires that the pointers are provided as arguments to each function.
+The latter API is explicitly thread-safe as it involves no global data.
+
 .. _examples:
 
 Example Executables
@@ -73,15 +78,13 @@ Seven header files are installed with the grackle library.  They are:
     * **grackle_macros.h** - contains some macros used internally.
 
 For C and C++ codes, the only source file that needs to be included in your
-simulation code is **grackle.h**.  For Fortran, use **grackle.def**.  Since
-Grackle is written in C, including **grackle.h** in a C++ code requires the
-*extern "C"* directive.
+simulation code is **grackle.h**.  For Fortran, use **grackle.def**.
 
-.. code-block:: c++
+.. note::
 
-  extern "C" {
-  #include <grackle.h>
-  }
+   Earlier versions of Grackle required C++ codes to enclose the ``#include <grackle.h>`` include-directive within a C "language-linkage block" (the block starts with ``extern "C" {``).
+   C++ codes should now directly include the header **(without the block)**.
+   The headers internally use a standard idiom to properly handle this case.
 
 Data Types
 ----------
@@ -266,16 +269,10 @@ setting a to 1.
 Chemistry Data
 --------------
 
-The main Grackle header file contains a structure of type
-:c:type:`chemistry_data` called ``grackle_data``, which contains all of the
-parameters that control the behavior of the solver.  The routine,
-:c:func:`set_default_chemistry_parameters` is responsible for the initial setup
-of this structure and for setting of all the default parameter values.  This
-function must be handed a pointer to an instance of :c:type:`chemistry_data`,
-which will then be attached to ``grackle_data``.  The function will return an
-integer indicating success (1) or failure (0).  After this, parameters can then
-be set to their desired values by accessing ``grackle_data``.  See
-:ref:`parameters` for a full list of the available parameters.
+Grackle's behavior is controlled by the :c:type:`chemistry_data` type.
+It is a structure that stores all of the relevant run-time parameters.
+After an instance of the type is configured, it is used to initialize all of the chemistry and cooling rate arrays (stored by the separate :c:type:`chemistry_data_storage` type).
+
 
 .. c:type:: chemistry_data
 
@@ -285,42 +282,116 @@ be set to their desired values by accessing ``grackle_data``.  See
 .. c:type:: chemistry_data_storage
 
    This structure holds all chemistry and cooling rate arrays. The user will
-   not normally need to work directly with its internals. The functions
-   described below (i.e., the :ref:`primary_functions`) make use of an
-   internally stored instance of this type and, hence, will not encounter it.
-   Users implementing the :ref:`local_functions` will have to store one of
-   these. See the :ref:`c_local_example.c <examples>` sample code for an
-   example of this implementation.
+   not normally need to work directly with its internals. Users calling the 
+   :ref:`primary_functions` will not encounter it (because the Primary 
+   Functions make use of an internally stored instance of this type).
+   Users implementing the :ref:`local_functions` will have to store a pointer
+   to one of these.
 
-.. code-block:: c++
+There is a 2 step procedure for setting up Grackle's chemistry data (the precise details vary based on the choosen API flavor):
 
-  chemistry_data *my_grackle_data;
-  my_grackle_data = new chemistry_data;
-  if (set_default_chemistry_parameters(my_grackle_data) == 0) {
-    fprintf(stderr, "Error in set_default_chemistry_parameters.\n");
-  }
 
-  // Set parameter values for chemistry.
-  // Now access the global copy of the chemistry_data struct (grackle_data).
-  grackle_data->use_grackle = 1;            // chemistry on
-  grackle_data->with_radiative_cooling = 1; // cooling on
-  grackle_data->primordial_chemistry = 3;   // molecular network with H, He, D
-  grackle_data->metal_cooling = 1;          // metal cooling on
-  grackle_data->UVbackground = 1;           // UV background on
-  grackle_data->grackle_data_file = "CloudyData_UVB=HM2012.h5"; // data file
+1. Configure the solver's run-time parameters.
+   There are 3 parts to this step.
+   First, allocate memory for a :c:type:`chemistry_data` instance.
+   Next, initialize the instance by calling a function to perform the initial setup of the instance and store all the default parameter values.
+   Finally, assign the desired values to the parameters tracked by the instance.
+   See :ref:`parameters` for a full list of the available parameters.
 
-Once the desired parameters have been set, the chemistry and cooling rates 
-must be initialized by calling :c:func:`initialize_chemistry_data` with a
+
+.. tabs::
+
+   .. group-tab:: Primary Functions
+
+      In this case, the :c:func:`set_default_chemistry_parameters` routine for initializing the structure holding the parameters. 
+      The function must be handed a pointer to an instance of :c:type:`chemistry_data`.
+      That pointer is attached to the global :c:var:`!grackle_data` variable and the memory is properly initialized.
+      The function returns an integer indicating success (1) or failure (0). 
+
+      The convention is to assign desired parameter values by accessing :c:var:`!grackle_data`.
+
+      .. code-block:: c++
+      
+         chemistry_data *my_grackle_data;
+         my_grackle_data = new chemistry_data;
+         if (set_default_chemistry_parameters(my_grackle_data) == 0) {
+           fprintf(stderr, "Error in set_default_chemistry_parameters.\n");
+         }
+
+         // Set parameter values for chemistry.
+         // Now access the global copy of the chemistry_data struct (grackle_data).
+         grackle_data->use_grackle = 1;            // chemistry on
+         grackle_data->with_radiative_cooling = 1; // cooling on
+         grackle_data->primordial_chemistry = 3;   // molecular network with H, He, D
+         grackle_data->metal_cooling = 1;          // metal cooling on
+         grackle_data->UVbackground = 1;           // UV background on
+         grackle_data->grackle_data_file = "CloudyData_UVB=HM2012.h5"; // data file
+
+   .. group-tab:: Local Functions
+
+      In this scenario, the :c:func:`local_initialize_chemistry_parameters` routine is used to initialize the previously allocated memory of a :c:type:`chemistry_data` instance.
+      The function returns an integer indicating success (1) or failure (0).
+
+      Unlike the other scenario, no global variable is initialized; instead the application is responsible for keeping track of the allocated object. 
+
+      .. code-block:: c++
+
+         chemistry_data *my_grackle_data;
+         my_grackle_data = new chemistry_data;
+         if (local_initialize_chemistry_parameters(my_grackle_data) == 0) {
+           fprintf(stderr, "Error in local_initialize_chemistry_parameters.\n");
+         }
+
+         // Set parameter values for chemistry.
+         my_grackle_data->use_grackle = 1;            // chemistry on
+         my_grackle_data->with_radiative_cooling = 1; // cooling on
+         my_grackle_data->primordial_chemistry = 3;   // molecular network with H, He, D
+         my_grackle_data->metal_cooling = 1;          // metal cooling on
+         my_grackle_data->UVbackground = 1;           // UV background on
+         my_grackle_data->grackle_data_file = "CloudyData_UVB=HM2012.h5"; // data file
+
+
+2. Once the desired parameters have been set, the chemistry and cooling rates must be initialized by calling with a
 pointer to the :c:data:`code_units` struct created earlier.  This function
 will return an integer indicating success (1) or failure (0).
 
-.. code-block:: c++
+.. tabs::
 
-  // Finally, initialize the chemistry object.
-  if (initialize_chemistry_data(&my_units) == 0) {
-    fprintf(stderr, "Error in initialize_chemistry_data.\n");
-    return 0;
-  }
+   .. group-tab:: Primary Functions
+      
+      In this case, the initialization function is called :c:func:`initialize_chemistry_data`.
+      This function internally allocates memory for the type that holds the storage data, :c:type:`chemistry_data_storage`, and stores the address in a variable that is tracked behind the scenes.
+      This storage data is automatically passed to other Primary Functions.
+
+      .. code-block:: c++
+      
+         // Finally, initialize the chemistry object.
+         if (initialize_chemistry_data(&my_units) == 0) {
+           fprintf(stderr, "Error in initialize_chemistry_data.\n");
+           return 0;
+         }
+
+
+   .. group-tab:: Local Functions
+
+      In this case, the initialization function is called :c:func:`local_initialize_chemistry_data`.
+      The application is responsible for passing the pointer to the (previously configured) :c:func:`chemistry_data` instance into the function.
+      The application is also responsible for allocating the memory for the :c:type:`chemistry_data_storage` instance that the function initializes.
+      **Note:** the initialization function allocates additional memory that is tracked within the :c:type:`chemistry_data_storage` for holding chemistry and cooling rates.
+
+      Unlike the other scenario, the downstream application is responsible for tracking the initialized object (so that it can be passed to other functions).
+
+      .. code-block:: c++
+
+         // Allocate the chemistry_data_storage type
+         chemistry_data_storage *my_grackle_rates = new chemistry_data_storage;
+
+         // Finally, initialize the chemistry object.
+         if (local_initialize_chemistry_data(my_chemistry_data, my_grackle_rates,
+                                             &my_units) == 0) {
+           fprintf(stderr, "Error in local_initialize_chemistry_data.\n");
+           return 0;
+         }
 
 The Grackle is now ready to be used.
 
@@ -604,6 +675,9 @@ not intend to use.
   // Create struct for storing grackle field data
   grackle_field_data my_fields;
 
+  // initialize members of my_fields to sensible defaults
+  gr_initialize_field_data(&my_fields);
+
   // Set grid dimension and size.
   // grid_start and grid_end are used to ignore ghost zones.
   int field_size = 1;
@@ -768,11 +842,14 @@ Calculating the Dust Temperature Field
 Clearing the memory
 -------------------
 
+
+When using the Grackle's :ref:`primary_functions`, global structures are used and therefore the global structure ``grackle_rates`` needs to be released with
+
 .. code-block:: c++
 
   free_chemistry_data();
 
-Grackle is using global structures and therefore the global structure ``grackle_rates`` needs also to be released.
+When using the :ref:`local_functions`, you should call the counter-part function, :c:func:`local_free_chemistry_data`, to free memory used for storing chemistry and cooling rates.
 
 .. _query-version:
 

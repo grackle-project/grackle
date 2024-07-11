@@ -1,6 +1,3 @@
-cdef extern from "grackle_macros.h":
-    cdef int GRACKLE_FAIL_VALUE "FAIL"
-
 cdef extern from "grackle_types.h":
     # This does not need to be exactly correct, only of the right basic type
     ctypedef float gr_float
@@ -175,6 +172,8 @@ cdef extern from "grackle_types.h":
       const char* revision;
 
 cdef extern from "grackle.h":
+    cdef int GRACKLE_FAIL_VALUE "GR_FAIL"
+
     int local_initialize_chemistry_parameters(c_chemistry_data *my_chemistry)
 
     void set_velocity_units(c_code_units *my_units)
@@ -252,3 +251,5 @@ cdef extern from "grackle.h":
         c_chemistry_data_storage *my_rates)
 
     c_grackle_version c_get_grackle_version "get_grackle_version"()
+
+    int gr_initialize_field_data(c_field_data *my_fields)

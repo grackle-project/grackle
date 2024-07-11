@@ -22,9 +22,7 @@
 #include <vector>
 #include <string>
 
-extern "C" {
 #include <grackle.h>
-}
 
 #define mh     1.67262171e-24   
 #define kboltz 1.3806504e-16
@@ -76,6 +74,7 @@ grackle_field_data construct_field_data(grid_props& my_grid_props,
 
   // Create struct for storing grackle field data
   grackle_field_data my_fields;
+  gr_initialize_field_data(&my_fields);
 
   // Set grid dimension and size.
   // grid_start and grid_end are used to ignore ghost zones.

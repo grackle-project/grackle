@@ -16,6 +16,10 @@
 
 #include "grackle_types.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
 /**********************************
  *** Grackle runtime parameters ***
  **********************************/
@@ -452,4 +456,8 @@ typedef struct
 
 } photo_rate_storage;
 
-#endif
+#ifdef __cplusplus
+} /* extern "C" */
+#endif /* __cplusplus */
+
+#endif /* __CHEMISTRY_DATA_H__ */

@@ -13,6 +13,8 @@ Grackle has two versions of most functions.
    and :c:data:`chemistry_data_storage` instances to be provided as
    arguments. These are explicity thread-safe as they use no global data.
 
+Additionally, there are also some :ref:`misc_functions` and :ref:`rate-functions`.
+
 .. _primary_functions:
 
 Primary Functions
@@ -422,6 +424,19 @@ The following functions are used to query the name of the ith field of the :c:da
 
 Miscellaneous Functions
 -----------------------
+
+.. c:function:: int gr_initialize_field_data(grackle_field_data *my_fields);
+
+   Initializes the struct-members stored in the :c:type:`grackle_field_data` data structure to their default values.
+
+   This function must assume that any existing data within the data structure is garbage data.
+   In other words, when this function goes to overwrite a given member of :c:type:`grackle_field_data`, it completely ignores the value currently held by the member (i.e. the function does not provide special handling for members holding non- ``NULL`` pointers).
+   Consequently, this function should **ONLY** be called **BEFORE** initializing any members of the data structure (if it's called at any other time, the program may leak memory resources).
+
+   :param grackle_field_data \*my_fields: uninitialized field data storage
+   :rtype: int
+   :returns: 1 (success) or 0 (failure)
+
 
 .. c:function:: double gr_required_units(const chemistry_data_storage * my_rates, const char* units_name, double current_a_value);
    
