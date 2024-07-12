@@ -207,34 +207,38 @@ add_library(Grackle::Grackle ALIAS Grackle_Grackle) # for inclusion appraoch #1
 
 # the logic diverges a little when naming the library
 if (BUILD_SHARED_LIBS)
-  # Because Grackle's API is not currently suited for ABI-compatability, we
-  # take special steps when compiling it as a shared library (to reduce the
-  # chance that an application linked against one version will try to load a
-  # newer, incompatible version of the library)
-  # - we take a page out of the existing build-system and libtool
-  # - essentially, we will (i) encode the version in core-name of the library
-  #   and (ii) make a symbolic link called libgrackle.so to the the library
-  # - separate instructions are needed to make this link in build-directory
-  #   and in the installation directory
-  set(GRACKLE_LIB_OUTPUT_NAME "grackle-${VERSION_NUM}")
+  # this is a crude-hack to make it easier to build the Pygrackle with the
+  # current setuptools build-system
+  # -> due to the custom naming of our shared library, the following makes a
+  #    symlink within the build-directory from the shared library to
+  #    libgrackle.so (or libgrackle.dylib on macOS).
+  # -> this is not idiomatic and the logic will be removed when GitHub PR #208
+  #    is merged (the documentation makes it clear you shouldn't use this!)
   add_custom_target(buildtree_link_target
     ALL COMMAND ${CMAKE_COMMAND} -E create_symlink
       $<TARGET_FILE:Grackle_Grackle>
       $<TARGET_FILE_DIR:Grackle_Grackle>/libgrackle$<TARGET_FILE_SUFFIX:Grackle_Grackle>)
-else()
-  set(GRACKLE_LIB_OUTPUT_NAME "grackle") # resulting lib is named libgrackle.a
 endif()
 
 # set standard cmake-specific properties
 set_target_properties(Grackle_Grackle PROPERTIES
-  OUTPUT_NAME ${GRACKLE_LIB_OUTPUT_NAME} # <- ensure library is properly named
+  # specify the grackle library is properly named (when it's NOT a shared lib)
+  OUTPUT_NAME "grackle"
+
+  # choose a special name when grackle is compiled as a shared library (to
+  # reduce the chance that an application linked against one version will try
+  # to load a newer, incompatible version of the library)
+  # -> we follow the convention of the classic build-system (and libtool) of
+  #    encode encode the version in the core-part of the library name
+  # -> for convenience, when Grackle is built and installed as a shared lib,
+  #    custom installation logic is made to link to libgrackle.so (or
+  #    libgrackle.dylib on macOS)
+  LIBRARY_OUTPUT_NAME "grackle-${VERSION_NUM}"
+
   # specify target name that is made visible in inclusion approach #2. The
   # namespace-prefix of this target, "Grackle::", is declared in the
   # install(EXPORT ...) command included with the installation rules
   EXPORT_NAME Grackle
-
-  # set custom properties (intended for consumption by downstream projects)
-  # -> keep these in-sync with the properties in the Config-Package File
 )
 
 # write custom propeties used to convey information to downstream consumers
