@@ -211,11 +211,12 @@ if (NOT _GRACKLE_OpenMP_LIBS STREQUAL "")
 endif()
 
 # we will check whether the hdf5.pc file exists
-check_h5pc_exists(_HDF5_PC_EXISTS)
+check_h5pc_exists("${HDF5_VERSION}" _HDF5_PC_EXISTS)
 
-set(_PC_STATIC_REQUIRES "")
-if (_HDF5_PC_EXISTS)
+if (_HDF5_PC_EXISTS AND ("${HDF5_VERSION}" STREQUAL ""))
   set(_PC_STATIC_REQUIRES "hdf5")
+elseif(_HDF5_PC_EXISTS)
+  set(_PC_STATIC_REQUIRES "hdf5 = ${HDF5_VERSION}")
 else()
   list(APPEND _STATIC_EXTRA_LINK_LIBS "hdf5")
 endif()

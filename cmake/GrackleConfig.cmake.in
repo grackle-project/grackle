@@ -248,7 +248,8 @@ if (${_GRACKLE_LIBKIND} STREQUAL "static")
   # For compatibility with CMake versions from before 3.11, we can't directly
   # use target_link_libraries on IMPORTED targets
 
-  unset(_EXTRA_ARGS)
+  unset(_FIND_H5_ARGS)
+
   if(${CMAKE_FIND_PACKAGE_NAME}_FIND_QUIETLY)
     list(APPEND _EXTRA_ARGS QUIET)
   endif()
@@ -256,6 +257,16 @@ if (${_GRACKLE_LIBKIND} STREQUAL "static")
   if(${CMAKE_FIND_PACKAGE_NAME}_FIND_REQUIRED)
     list(APPEND _EXTRA_ARGS REQUIRED)
   endif()
+
+  # if we know the HDF5 version used to build to build Grackle as a static
+  # library, we really need to make sure the version number of the hdf5 library
+  # match the version number of the hdf5-headers (the documentation for the
+  # H5check_version function makes it clear a mismatch is bad!)
+  set(_DESIRED_HDF5_VERSION "@HDF5_VERSION@")
+  if(NOT "${_DESIRED_HDF5_VERSION}" STREQUAL "")
+    list(APPEND _EXTRA_ARGS "${_DESIRED_HDF5_VERSION}" EXACT)
+  endif()
+  unset(_DESIRED_HDF5_VERSION)
 
   # now we actually find the dependencies
   find_package(HDF5 COMPONENTS C ${_EXTRA_ARGS})

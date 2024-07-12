@@ -113,16 +113,22 @@ endfunction()
 
 
 # checks whether the hdf5.pc file exists
-function(check_h5pc_exists outVar)
+function(check_h5pc_exists version_req outVar)
   set(exists "FALSE")
   find_package(PkgConfig QUIET)
   if (PKG_CONFIG_FOUND)
+
+    set(args "--modversion;hdf5")
+    if (NOT "${required_version}" STREQUAL "")
+      set(args "--modversion;hdf5 = ${version_req}")
+    endif()
+
     # we could be a little more careful about version numbers...
     # we explicitly avoid using the pkg-config functions provided by PkgConfig
     # -> those define a lot of variables we don't care about
     # -> we just want to check if an hdf5 pkg-config file exists in standard
     #    search paths
-    execute_process(COMMAND ${PKG_CONFIG_EXECUTABLE} --modversion hdf5
+    execute_process(COMMAND ${PKG_CONFIG_EXECUTABLE} ${args}
       RESULT_VARIABLE _HDF5_PC_FILE_FOUND
       OUTPUT_VARIABLE _dummy_stdout_variable
       ERROR_VARIABLE _dummy_stderr_variable
