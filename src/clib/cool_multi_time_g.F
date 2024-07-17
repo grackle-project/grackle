@@ -141,7 +141,7 @@
           
 !  Iteration mask for multi_cool
 
-      logical itmask(in)
+      MASK_TYPE itmask(in)
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
 !=======================================================================
@@ -245,7 +245,7 @@
         j = mod(t,dj) + js+1
 
          do i = is+1, ie+1
-            itmask(i) = .true.
+            itmask(i) = MASK_TRUE
          end do
 
 !        Compute the cooling rate

@@ -318,7 +318,8 @@
 
 !  Iteration mask
 
-      logical itmask(in), anydust
+      MASK_TYPE itmask(in)
+      logical anydust
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
 !=======================================================================
@@ -411,10 +412,10 @@
 
 !       tolerance = 1.0e-06_DKIND * dt
 
-!     Initialize iteration mask to true for all cells.
+!     Initialize iteration mask to MASK_TRUE for all cells.
 
          do i = is+1, ie+1
-            itmask(i) = .true.
+            itmask(i) = MASK_TRUE
          enddo
 
 !      If we are using coupled radiation with intermediate stepping,
@@ -424,9 +425,9 @@
             if (iradcoupled .eq. 1 .and. iradstep .eq. 1) then
                do i = is+1, ie+1
                   if (kphHI(i,j,k) .gt. 0) then
-                      itmask(i) = .true.
+                      itmask(i) = MASK_TRUE
                   else
-                      itmask(i) = .false.
+                      itmask(i) = MASK_FALSE
                   endif
                enddo
             endif
@@ -435,9 +436,9 @@
             if (iradcoupled .eq. 1 .and. iradstep .eq. 0) then
                do i = is+1, ie + 1
                   if (kphHI(i,j,k) .gt. 0) then
-                     itmask(i) = .false.
+                     itmask(i) = MASK_FALSE
                   else
-                     itmask(i) = .true.
+                     itmask(i) = MASK_TRUE
                   endif
                enddo
             endif
@@ -456,7 +457,7 @@
          do iter = 1, itmax
 
             do i = is+1, ie+1
-               if (itmask(i)) then
+               if (itmask(i) .eq. MASK_TRUE) then
                   dtit(i) = huge8
                endif
             enddo
@@ -558,7 +559,7 @@
 !           Find timestep that keeps relative chemical changes below 10%
 
             do i = is+1, ie+1
-               if (itmask(i)) then
+               if (itmask(i) .eq. MASK_TRUE) then
 !              Bound from below to prevent numerical errors
                
 	       if (abs(dedot(i)) .lt. tiny8) 
@@ -702,7 +703,7 @@
 !           Compute maximum timestep for cooling/heating
 
             do i = is+1, ie+1
-               if (itmask(i)) then
+               if (itmask(i) .eq. MASK_TRUE) then
 !              Set energy per unit volume of this cell based in the pressure
 !              (the gamma used here is the right one even for H2 since p2d 
 !               is calculated with this gamma).
@@ -759,7 +760,7 @@
 
             if (icool .eq. 1) then
             do i = is+1, ie+1
-               if (itmask(i)) then
+               if (itmask(i) .eq. MASK_TRUE) then
                e(i,j,k)  = e(i,j,k) +
      &                 real(edot(i)/d(i,j,k)*dtit(i), RKIND)
 #ifdef WRITE_COOLING_DEBUG
@@ -810,7 +811,7 @@
             do i = is+1, ie+1
                ttot(i) = min(ttot(i) + dtit(i), dt)
                if (abs(dt-ttot(i)) .lt.
-     &              tolerance*dt) itmask(i) = .false.
+     &              tolerance*dt) itmask(i) = MASK_FALSE
                if (ttot(i).lt.ttmin) ttmin = ttot(i)
             enddo
 
@@ -837,7 +838,8 @@
             write(0,'((16(1pe8.1)))') (dtit(i),i=is+1,ie+1)
             write(0,'((16(1pe8.1)))') (ttot(i),i=is+1,ie+1)
             write(0,'((16(1pe8.1)))') (edot(i),i=is+1,ie+1)
-            write(0,'((16(l3)))') (itmask(i),i=is+1,ie+1)
+!       CORRECT MASK FORMATTING?
+            write(0,'((16(i3)))') (itmask(i),i=is+1,ie+1)
 
             if (exititmax .eq. 1) then
                ierr = 0
@@ -1120,7 +1122,8 @@ c -------------------------------------------------------------------
       real*8 temstart, temend, tgas1d(in), mmw(in), dom,
      &       dtemstart, dtemend
       real*8 coolunit, tbase1, xbase1, dx_cgs, c_ljeans
-      logical itmask(in), anydust
+      MASK_TYPE itmask(in)
+      logical anydust
 
 !     Chemistry rates as a function of temperature
 
@@ -1210,7 +1213,7 @@ c -------------------------------------------------------------------
       dlogtem = (log(temend) - log(temstart))/real(nratec-1, DKIND)
 
       do i = is+1, ie+1
-         if (itmask(i)) then
+         if (itmask(i) .eq. MASK_TRUE) then
 !        Compute temp-centered temperature (and log)
 
 !        logtem(i) = log(0.5_DKIND*(tgas(i)+tgasold(i)))
@@ -1251,7 +1254,7 @@ c -------------------------------------------------------------------
 
       if (ispecies .gt. 1) then
          do i = is+1, ie+1
-            if (itmask(i)) then
+            if (itmask(i) .eq. MASK_TRUE) then
             k7(i) = k7a(indixe(i)) +
      &            (k7a(indixe(i)+1) -k7a(indixe(i)))*tdef(i)
             k8(i) = k8a(indixe(i)) +
@@ -1295,7 +1298,7 @@ c -------------------------------------------------------------------
 
          do n1 = 1, 14
             do i = is+1, ie+1
-               if (itmask(i)) then
+               if (itmask(i) .eq. MASK_TRUE) then
                k13dd(i,n1) = k13dda(indixe(i),n1) +
      &             (k13dda(indixe(i)+1,n1) - 
      &               k13dda(indixe(i)  ,n1) )*tdef(i)
@@ -1309,7 +1312,7 @@ c -------------------------------------------------------------------
 
       if (ispecies .gt. 2) then
          do i = is+1, ie+1
-            if (itmask(i)) then
+            if (itmask(i) .eq. MASK_TRUE) then
             k50(i) = k50a(indixe(i)) +
      &            (k50a(indixe(i)+1) -k50a(indixe(i)))*tdef(i)
             k51(i) = k51a(indixe(i)) +
@@ -1338,7 +1341,7 @@ c -------------------------------------------------------------------
      &        real(ndratec-1, DKIND)
 
          do i = is+1, ie+1
-            if (itmask(i)) then
+            if (itmask(i) .eq. MASK_TRUE) then
 
 !              Assume dust melting at T > 1500 K
 
@@ -1386,7 +1389,7 @@ c -------------------------------------------------------------------
 !        Include approximate self-shielding factors if requested
 
       do i = is+1, ie+1
-         if (itmask(i)) then
+         if (itmask(i) .eq. MASK_TRUE) then
             k24shield(i) = k24
             k25shield(i) = k25
             k26shield(i) = k26
@@ -1403,13 +1406,13 @@ c -------------------------------------------------------------------
       if (ispecies .gt. 1) then
       if (iradtrans == 0) then
          do i = is+1, ie+1
-            if (itmask(i)) then
+            if (itmask(i) .eq. MASK_TRUE) then
                k31shield(i) = k31
             endif 
          enddo
       else
          do i = is+1, ie+1
-            if (itmask(i)) then
+            if (itmask(i) .eq. MASK_TRUE) then
                k31shield(i) = k31 + kdissH2I(i,j,k)
             endif
          enddo
@@ -1418,7 +1421,7 @@ c -------------------------------------------------------------------
 
       if (iH2shield .gt. 0) then
          do i = is+1, ie+1
-            if (itmask(i)) then
+            if (itmask(i) .eq. MASK_TRUE) then
 
 !              Calculate a Sobolev-like length assuming a 3D grid.
                if (iH2shield == 1) then
@@ -1488,7 +1491,7 @@ c -------------------------------------------------------------------
 !     Custom H2 shielding
       if (iH2shieldcustom .gt. 0) then
         do i = is+1, ie+1
-            if (itmask(i)) then
+            if (itmask(i) .eq. MASK_TRUE) then
               k31shield(i) = f_shield_custom(i,j,k) * k31shield(i)
             endif
         enddo
@@ -1498,7 +1501,7 @@ c -------------------------------------------------------------------
       if (iradshield > 0) then
 !     Compute shielding factors
         do i = is+1, ie+1
-          if (itmask(i)) then
+          if (itmask(i) .eq. MASK_TRUE) then
 
 !         Compute shielding factor for H
             nSSh = 6.73e-3_DKIND *
@@ -1553,7 +1556,7 @@ c -------------------------------------------------------------------
 !       using same scaling. (rate k29)
 !
         do i = is+1, ie+1
-          if (itmask(i)) then
+          if (itmask(i) .eq. MASK_TRUE) then
 
             if (k24 .lt. tiny8) then
               k24shield(i) = 0._DKIND
@@ -1587,7 +1590,7 @@ c -------------------------------------------------------------------
 !
 
         do i = is+1, ie+1
-          if (itmask(i)) then
+          if (itmask(i) .eq. MASK_TRUE) then
 
             if (k24 .lt. tiny8) then
                k24shield(i) = 0._DKIND
@@ -1636,7 +1639,7 @@ c -------------------------------------------------------------------
 !     in HI and HeI, but ignoring HeII heating entirely
 !
         do i = is+1, ie+1
-          if (itmask(i)) then
+          if (itmask(i) .eq. MASK_TRUE) then
 
             if (k24 .lt. tiny8) then
                k24shield(i) = 0._DKIND
@@ -1687,7 +1690,7 @@ c -------------------------------------------------------------------
 !          (see calc_rate.src)
 
       do i = is+1, ie+1
-         if (itmask(i)) then
+         if (itmask(i) .eq. MASK_TRUE) then
             x = max(HII(i,j,k)/(HI(i,j,k)+HII(i,j,k)), 1.0e-4_DKIND)
             factor = 0.3908_DKIND*(1._DKIND -
      &           x**0.4092_DKIND)**1.7592_DKIND
@@ -1714,7 +1717,7 @@ c -------------------------------------------------------------------
 #ifdef USE_DENSITY_DEPENDENT_H2_DISSOCIATION_RATE
             if (ispecies .gt. 1 .and. ithreebody .eq. 0) then
                do i = is+1, ie+1
-                  if (itmask(i)) then
+                  if (itmask(i) .eq. MASK_TRUE) then
                   nh = min(HI(i,j,k)*dom, 1.0e9_DKIND)
                   k13(i) = tiny8
                   if (tgas1d(i) .ge. 500._DKIND .and.
@@ -1773,7 +1776,8 @@ c
      &        iradtrans, irt_honly
       real*8 dedot(in), HIdot(in), dom
       real*8 edot(in)
-      logical itmask(in), anydust
+      MASK_TYPE itmask(in)
+      logical anydust
 
 !     Density fields
 
@@ -1809,7 +1813,7 @@ c
       if (ispecies .eq. 1) then
 
          do i = is+1, ie+1
-            if (itmask(i)) then
+            if (itmask(i) .eq. MASK_TRUE) then
 !     Compute the electron density rate-of-change
 
             dedot(i) = 
@@ -1841,7 +1845,7 @@ c
 !         Include molecular hydrogen rates for HIdot
 
          do i = is+1, ie+1
-            if (itmask(i)) then
+            if (itmask(i) .eq. MASK_TRUE) then
                HIdot(i) = 
      &               -      k1(i) *de(i,j,k)    *HI(i,j,k)  
      &               -      k7(i) *de(i,j,k)    *HI(i,j,k)
@@ -1935,7 +1939,7 @@ c
       if (iradtrans .eq. 1) then
          if (irt_honly .eq. 0) then
             do i = is+1, ie+1
-               if (itmask(i)) then
+               if (itmask(i) .eq. MASK_TRUE) then
                   HIdot(i) = HIdot(i) - kphHI(i,j,k)*HI(i,j,k)
                   dedot(i) = dedot(i) + kphHI(i,j,k)*HI(i,j,k)
      &                 + kphHeI(i,j,k) * HeI(i,j,k) / 4._DKIND
@@ -1944,7 +1948,7 @@ c
             enddo
          else
             do i = is+1, ie+1
-               if (itmask(i)) then
+               if (itmask(i) .eq. MASK_TRUE) then
                   HIdot(i) = HIdot(i) - kphHI(i,j,k)*HI(i,j,k)
                   dedot(i) = dedot(i) + kphHI(i,j,k)*HI(i,j,k)
                endif
@@ -1990,7 +1994,8 @@ c -------------------------------------------------------------------
       integer ispecies, in, jn, kn, is, ie, j, k,
      &        iradtrans, irt_honly
       real*8 dtit(in), dedot_prev(in), HIdot_prev(in)
-      logical itmask(in), anydust
+      MASK_TYPE itmask(in)
+      logical anydust
 
 !     Density fields
 
@@ -2034,7 +2039,7 @@ c -------------------------------------------------------------------
       if (ispecies .eq. 1) then
 
          do i = is+1, ie+1
-            if (itmask(i)) then
+            if (itmask(i) .eq. MASK_TRUE) then
 
 !        1) HI
 
@@ -2119,7 +2124,7 @@ c
 !  --- (B) Do helium chemistry in any case: (for all ispecies values) ---
 
       do i = is+1, ie+1
-         if (itmask(i)) then
+         if (itmask(i) .eq. MASK_TRUE) then
 
 !        4) HeI
 
@@ -2171,7 +2176,7 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
 !        First, do HI/HII with molecular hydrogen terms
 
          do i = is+1, ie+1
-            if (itmask(i)) then
+            if (itmask(i) .eq. MASK_TRUE) then
 
 !        1) HI
 !     
@@ -2315,7 +2320,7 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
 !     
       if (ispecies .gt. 2) then
          do i = is+1, ie+1
-            if (itmask(i)) then
+            if (itmask(i) .eq. MASK_TRUE) then
 !     
 !         1) DI
 !     
@@ -2368,7 +2373,7 @@ c
 !   --- (E) Set densities from 1D temps to 3D fields ---
 
       do i = is+1, ie+1
-         if (itmask(i)) then
+         if (itmask(i) .eq. MASK_TRUE) then
          HIdot_prev(i) = abs(HI(i,j,k)-HIp(i)) /
      &           max(real(dtit(i), DKIND), tiny8)
          HI(i,j,k)    = max(real(HIp(i), RKIND), tiny)
