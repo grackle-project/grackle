@@ -115,15 +115,10 @@
       dbase1   = urho*(aye*uaye)**3 ! urho is [dens]/a^3 = [dens]/([a]*a')^3 '
       zr       = 1._DKIND/(aye*uaye) - 1._DKIND
 
-!  Convert densities from comoving to proper
+!  We explicitly assume that the densities have already been converted
+!  from comoving to proper (if iexpand .eq. 1), before this function is
+!  called. (Historically that logic was handled here.
 
-      if (iexpand .eq. 1) then
-
-         call scale_fields_table_g(d, metal,
-     &                  is, ie, js, je, ks, ke,
-     &                  in, jn, kn, imetal, aye**(-3))
-
-      endif
 
 !  Loop over zones, and do an entire i-column in one go
 
@@ -172,16 +167,6 @@
 #ifdef _OPENMP
 !$omp end parallel do
 #endif
-
-!     Convert densities back to comoving from proper
-
-      if (iexpand .eq. 1) then
-
-         call scale_fields_table_g(d, metal,
-     &                  is, ie, js, je, ks, ke,
-     &                  in, jn, kn, imetal, aye**3)
-
-      endif
 
       return
       end

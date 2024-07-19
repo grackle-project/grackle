@@ -47,6 +47,11 @@ extern void FORTRAN_NAME(calc_temp_cloudy_g)(
         double *priPar1, double *priPar2, double *priPar3, 
  	long long *priDataSize, double *priMMW);
 
+extern void FORTRAN_NAME(scale_fields_table_g)(
+       gr_float* d, gr_float* metal,
+       int *is, int *ie, int *js, int *je, int *ks, int *ke,
+       int *in, int *jn, int *kn, int *imetal, double *factor);
+
 double get_temperature_units(code_units *my_units);
 
 int local_calculate_pressure(chemistry_data *my_chemistry,
@@ -147,6 +152,27 @@ int local_calculate_temperature(chemistry_data *my_chemistry,
   return SUCCESS;
 }
 
+// This routine scales the density (and possibly metal) field(s) from
+// comoving units to proper units (and back again)
+static void scale_fields_table_g_cversion(grackle_field_data* my_fields,
+                                          int imetal, double factor)
+{
+  int in = my_fields->grid_dimension[0];
+  int jn = my_fields->grid_dimension[1];
+  int kn = my_fields->grid_dimension[2];
+
+  int is = my_fields->grid_start[0];
+  int js = my_fields->grid_start[1];
+  int ks = my_fields->grid_start[2];
+
+  int ie = my_fields->grid_end[0];
+  int je = my_fields->grid_end[1];
+  int ke = my_fields->grid_end[2];
+  FORTRAN_NAME(scale_fields_table_g)(my_fields->density, my_fields->metal_density,
+                                     &is, &ie, &js, &je, &ks, &ke,
+                                     &in, &jn, &kn, &imetal, &factor);
+}
+
 int local_calculate_temperature_table(chemistry_data *my_chemistry,
                                       chemistry_data_storage *my_rates,
                                       code_units *my_units,
@@ -184,6 +210,12 @@ int local_calculate_temperature_table(chemistry_data *my_chemistry,
 
   double temperature_units = get_temperature_units(my_units);
 
+  if (my_units->comoving_coordinates == 1) {
+    // convert density (& possibly metal) field(s) from comoving to proper
+    scale_fields_table_g_cversion(my_fields, metal_field_present,
+                                  pow(my_units->a_value, -3.0));
+  }
+
   FORTRAN_NAME(calc_temp_cloudy_g)(
         my_fields->density,
         my_fields->internal_energy,
@@ -217,6 +249,13 @@ int local_calculate_temperature_table(chemistry_data *my_chemistry,
         my_rates->cloudy_primordial.grid_parameters[2],
         &my_rates->cloudy_primordial.data_size,
         my_rates->cloudy_primordial.mmw_data);
+
+
+  if (my_units->comoving_coordinates == 1) {
+    // convert density (& possibly metal) field(s) back to comoving from proper
+    scale_fields_table_g_cversion(my_fields, metal_field_present,
+                                  pow(my_units->a_value, 3.0));
+  }
 
   return SUCCESS;
 }
