@@ -42,7 +42,7 @@
    
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
 !=======================================================================
-      print *, 'calc_parameter_value_slopes'
+
 ! TODO: check presence of clPar2/3/4/5 wrt clGridRank
       dclPar(1) = (clPar1(clGridDim(1)) - clPar1(1)) /
      &     real(clGridDim(1) - 1, DKIND)
@@ -81,3 +81,63 @@
 
       return
       end
+
+!=======================================================================
+!///////////////  SUBROUTINE COMPUTE_REDSHIFT_DIMENSION  \\\\\\\\\\\\\\\
+
+      subroutine compute_redshift_dimension(zr, clGridDim_2, clPar2,
+     &   zindex, end_int, get_heat)
+
+!
+!  COMPUTE INDEX FOR REDSHIFT DIMENSION VIA BISECTION
+!
+!  written by:
+!  date: May, 2024
+!
+!  PURPOSE:
+!
+!  INPUTS:
+!
+!  OUTPUTS:
+!     zindex
+!     end_int
+!     get_heat
+!
+!  PARAMETERS:
+!
+!-----------------------------------------------------------------------
+
+      implicit NONE
+#include "grackle_fortran_types.def"
+
+      real*8 zr
+      integer*8 zindex, zmidpt, zhighpt, clGridDim_2
+      real*8 clPar2(clGridDim_2)
+      logical end_int
+      integer, optional :: get_heat
+
+      if (zr .le. clPar2(1)) then
+          zindex = 1
+      else if (zr .ge. clPar2(clGridDim_2-1)) then
+          zindex = clGridDim_2
+          end_int = .true.
+          if (present(get_heat)) then
+              get_heat = 0
+          endif
+      else if (zr .ge. clPar2(clGridDim_2-2)) then
+            zindex = clGridDim_2 - 2
+      else
+      !TODO: create minimal bisection subroutine?
+          zindex = 1
+          zhighpt = clGridDim_2 - 2
+          do while ((zhighpt - zindex) .gt. 1)
+              zmidpt = int((zhighpt + zindex) / 2)
+              if (zr .ge. clPar2(zmidpt)) then
+                  zindex = zmidpt
+              else
+                  zhighpt = zmidpt
+              endif
+          enddo
+      endif
+      return
+      end  
