@@ -94,7 +94,6 @@
       integer i, j, k
       integer t, dj, dk
       real*8 dom, zr
-      real*8 dbase1, tbase1, xbase1
 
 !  row temporaries
 
@@ -110,9 +109,6 @@
 !     Set units
 
       dom      = urho*(aye**3)/mh
-      tbase1   = utim
-      xbase1   = uxyz/(aye*uaye)    ! uxyz is [x]*a      = [x]*[a]*a'        '
-      dbase1   = urho*(aye*uaye)**3 ! urho is [dens]/a^3 = [dens]/([a]*a')^3 '
       zr       = 1._DKIND/(aye*uaye) - 1._DKIND
 
 !  We explicitly assume that the densities have already been converted
