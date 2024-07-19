@@ -9,9 +9,6 @@ extern void FORTRAN_NAME(cool1d_cloudy_g)(double* d, double* rhoH, double* metal
                                           double* clPar1, double* clPar2, double* clPar3,
                                           long long* clDataSize, double* clCooling, double* clHeating, int* itmask);
 
-extern void FORTRAN_NAME(compute_redshift_dimension)(double* zr, long long* clGridDim_i, double* clPar_i,
-                                                     long long* zindex, int* end_int, int* get_heat);
-
 extern void FORTRAN_NAME(cool_rank1_interpolation)(int* get_heat, int* icmbTfloor,
                                                    double* log10tem_i, double* log10_tCMB,
                                                    long long* clGridRank, long long* clDataSize, long long* clGridDim,

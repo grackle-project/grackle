@@ -9,8 +9,11 @@ extern "C" void FORTRAN_NAME(calc_parameter_value_slopes)(double* dclPar, long l
                                                           double* clPar1, double* clPar2, double* clPar3, 
                                                           double* clPar4, double* clPar5);
 
+extern "C" void FORTRAN_NAME(compute_redshift_dimension)(double* zr, long long* clGridDim_i, double* clPar_i,
+                                                         long long* zindex, int* end_int, int* get_heat);
 
-TEST(CalcTempUtilitiesTest, CalcParameterValueSlopes) {
+
+TEST(UnitCalcTempUtilitiesTest, CalcParameterValueSlopesTest) {
 
     // clGridRank = 1
     long long clGridRank = 1;
@@ -108,5 +111,39 @@ TEST(CalcTempUtilitiesTest, CalcParameterValueSlopes) {
     delete [] clPar3;
     delete [] clPar4;
     delete [] clPar5;
+
+}
+
+TEST(UnitCalcTempUtilitiesTest, ComputeRedshiftDimensionsTest) {
+
+    double zr = 0.5;
+    long long clGridDim_i = 5;
+    double clPar_i[clGridDim_i] = {1., 2., 3., 4., 5.};
+    long long zindex = 0;
+    int end_int = 0;
+    int get_heat = 0;
+
+    FORTRAN_NAME(compute_redshift_dimension)(&zr, &clGridDim_i, clPar_i,
+                                             &zindex, &end_int, &get_heat);
+    ASSERT_EQ(zindex, 1);
+    ASSERT_EQ(end_int, 0);
+    ASSERT_EQ(get_heat, 0);
+
+    zr = clPar_i[clGridDim_i-2] + 0.5;
+    FORTRAN_NAME(compute_redshift_dimension)(&zr, &clGridDim_i, clPar_i,
+                                             &zindex, &end_int, &get_heat);
+    ASSERT_EQ(zindex, clGridDim_i);
+    ASSERT_EQ(end_int, 1);
+    ASSERT_EQ(get_heat, 0);
+
+    zr = clPar_i[clGridDim_i-3] + 0.5;
+    FORTRAN_NAME(compute_redshift_dimension)(&zr, &clGridDim_i, clPar_i,
+                                             &zindex, &end_int, &get_heat);
+    ASSERT_EQ(zindex, clGridDim_i-2);
+
+    zr = clPar_i[1] + 0.25;
+    FORTRAN_NAME(compute_redshift_dimension)(&zr, &clGridDim_i, clPar_i,
+                                             &zindex, &end_int, &get_heat);
+    ASSERT_EQ(zindex, 2);
 
 }

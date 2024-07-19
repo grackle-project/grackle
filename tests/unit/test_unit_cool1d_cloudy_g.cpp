@@ -5,10 +5,6 @@ extern "C" {
     #include "grackle_macros.h"
 }
 
-extern "C" void FORTRAN_NAME(compute_redshift_dimension)(double* zr, long long* clGridDim_i, double* clPar_i,
-                                                         long long* zindex, int* end_int, int* get_heat);
-
-
 extern "C" void FORTRAN_NAME(cool_rank1_interpolation)(int* get_heat, int* icmbTfloor,
                                                        double* log10tem_i, double* log10_tCMB,
                                                        long long* clGridRank, long long* clDataSize, long long* clGridDim,
@@ -31,39 +27,6 @@ extern "C" void FORTRAN_NAME(cool_rank3_interpolation)(int* get_heat, int* icmbT
                                                        double* dclPar_1, long long* zindex, double* dclPar_3,
                                                        double* edot_met_i);
 
-TEST(UnitCool1DCloudy, ComputeRedshiftDimensionsTest) {
-
-    double zr = 0.5;
-    long long clGridDim_i = 5;
-    double clPar_i[clGridDim_i] = {1., 2., 3., 4., 5.};
-    long long zindex = 0;
-    int end_int = 0;
-    int get_heat = 0;
-
-    FORTRAN_NAME(compute_redshift_dimension)(&zr, &clGridDim_i, clPar_i,
-                                             &zindex, &end_int, &get_heat);
-    ASSERT_EQ(zindex, 1);
-    ASSERT_EQ(end_int, 0);
-    ASSERT_EQ(get_heat, 0);
-
-    zr = clPar_i[clGridDim_i-2] + 0.5;
-    FORTRAN_NAME(compute_redshift_dimension)(&zr, &clGridDim_i, clPar_i,
-                                             &zindex, &end_int, &get_heat);
-    ASSERT_EQ(zindex, clGridDim_i);
-    ASSERT_EQ(end_int, 1);
-    ASSERT_EQ(get_heat, 0);
-
-    zr = clPar_i[clGridDim_i-3] + 0.5;
-    FORTRAN_NAME(compute_redshift_dimension)(&zr, &clGridDim_i, clPar_i,
-                                             &zindex, &end_int, &get_heat);
-    ASSERT_EQ(zindex, clGridDim_i-2);
-
-    zr = clPar_i[1] + 0.25;
-    FORTRAN_NAME(compute_redshift_dimension)(&zr, &clGridDim_i, clPar_i,
-                                             &zindex, &end_int, &get_heat);
-    ASSERT_EQ(zindex, 2);
-
-}
 
 TEST(UnitCool1DCloudy, CoolRank1InterpolationTest) {
 
