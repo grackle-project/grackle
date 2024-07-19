@@ -47,11 +47,6 @@ extern void FORTRAN_NAME(calc_temp_cloudy_g)(
         double *priPar1, double *priPar2, double *priPar3, 
  	long long *priDataSize, double *priMMW);
 
-extern void FORTRAN_NAME(scale_fields_table_g)(
-       gr_float* d, gr_float* metal,
-       int *is, int *ie, int *js, int *je, int *ks, int *ke,
-       int *in, int *jn, int *kn, int *imetal, double *factor);
-
 double get_temperature_units(code_units *my_units);
 
 int local_calculate_pressure(chemistry_data *my_chemistry,
@@ -157,20 +152,27 @@ int local_calculate_temperature(chemistry_data *my_chemistry,
 static void scale_fields_table_g_cversion(grackle_field_data* my_fields,
                                           int imetal, double factor)
 {
-  int in = my_fields->grid_dimension[0];
-  int jn = my_fields->grid_dimension[1];
-  int kn = my_fields->grid_dimension[2];
+  /* Compute properties used to index the field. */
+  const grackle_index_helper ind_helper = _build_index_helper(my_fields);
 
-  int is = my_fields->grid_start[0];
-  int js = my_fields->grid_start[1];
-  int ks = my_fields->grid_start[2];
+  for (int outer_i = 0; outer_i < ind_helper.outer_ind_size; outer_i++) {
+    const grackle_index_range range = _inner_range(outer_i, &ind_helper);
+    for (int i = range.start; i <= range.end; i++) {
+      my_fields->density[i] *= factor;
+    } // end: loop over i
+  } // end: loop over outer_ind
 
-  int ie = my_fields->grid_end[0];
-  int je = my_fields->grid_end[1];
-  int ke = my_fields->grid_end[2];
-  FORTRAN_NAME(scale_fields_table_g)(my_fields->density, my_fields->metal_density,
-                                     &is, &ie, &js, &je, &ks, &ke,
-                                     &in, &jn, &kn, &imetal, &factor);
+  if (imetal) {
+
+    for (int outer_i = 0; outer_i < ind_helper.outer_ind_size; outer_i++) {
+      const grackle_index_range range = _inner_range(outer_i, &ind_helper);
+      for (int i = range.start; i <= range.end; i++) {
+        my_fields->metal_density[i] *= factor;
+      } // end: loop over i
+    } // end: loop over outer_ind
+
+  }
+
 }
 
 int local_calculate_temperature_table(chemistry_data *my_chemistry,
