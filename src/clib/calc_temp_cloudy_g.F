@@ -6,6 +6,7 @@
       subroutine calc_temp_cloudy_g(d, e, metal, temperature,
      &                in, jn, kn, iexpand, imetal,
      &                is, js, ks, ie, je, ke,
+     &                dom, zr,
      &                aye, temstart, temend, 
      &                utem, uxyz, uaye, urho, utim,
      &                gamma, fh, 
@@ -34,6 +35,8 @@
 !    iexpand  - comoving coordinates flag (0 = off, 1 = on)
 !    imetal   - flag if metal field is active (0 = no, 1 = yes)
 !
+!    dom      - unit conversion to proper number density in code units
+!    zr       - current redshift
 !    fh       - Hydrogen mass fraction (typically 0.76)
 !    aye      - expansion factor (in code units)
 !
@@ -71,6 +74,7 @@
      &        iexpand, imetal
       real*8  aye, temstart, temend, gamma,
      &        utim, uxyz, uaye, urho, utem, fh
+      real*8 dom, zr
 
 !  Density, energy and velocity fields fields
 
@@ -93,7 +97,6 @@
 
       integer i, j, k
       integer t, dj, dk
-      real*8 dom, zr
 
 !  row temporaries
 
@@ -106,11 +109,6 @@
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
 !=======================================================================
       
-!     Set units
-
-      dom      = urho*(aye**3)/mh
-      zr       = 1._DKIND/(aye*uaye) - 1._DKIND
-
 !  We explicitly assume that the densities have already been converted
 !  from comoving to proper (if iexpand .eq. 1), before this function is
 !  called. (Historically that logic was handled here.

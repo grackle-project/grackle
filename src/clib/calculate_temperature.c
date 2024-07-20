@@ -40,7 +40,7 @@ extern void FORTRAN_NAME(calc_temp_cloudy_g)(
         gr_float *d, gr_float *e, gr_float *metal, gr_float *temperature,
 	int *in, int *jn, int *kn, int *iexpand, int *imetal,
 	int *is, int *js, int *ks, int *ie, int *je, int *ke,
-	double *aye, double *temstart, double *temend,
+  double *dom, double *zr, double *aye, double *temstart, double *temend,
 	double *utem, double *uxyz, double *uaye, double *urho, double *utim,
 	double *gamma, double *fh,
         long long *priGridRank, long long *priGridDim,
@@ -218,6 +218,9 @@ int local_calculate_temperature_table(chemistry_data *my_chemistry,
                                   pow(my_units->a_value, -3.0));
   }
 
+  double dom = co_density_units * pow(my_units->a_value, 3) / mh;
+  double zr = 1.0/(my_units->a_value * my_units->a_units) - 1.0;
+
   FORTRAN_NAME(calc_temp_cloudy_g)(
         my_fields->density,
         my_fields->internal_energy,
@@ -234,6 +237,8 @@ int local_calculate_temperature_table(chemistry_data *my_chemistry,
         my_fields->grid_end,
         my_fields->grid_end+1,
         my_fields->grid_end+2,
+        &dom,
+        &zr,
         &my_units->a_value,
         &my_chemistry->TemperatureStart,
         &my_chemistry->TemperatureEnd,
