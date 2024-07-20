@@ -6,10 +6,8 @@
       subroutine calc_temp_cloudy_g(d, e, metal, temperature,
      &                in, jn, kn, iexpand, imetal,
      &                is, js, ks, ie, je, ke,
-     &                dom, zr,
-     &                aye, temstart, temend, 
-     &                utem, uxyz, uaye, urho, utim,
-     &                gamma, fh, 
+     &                dom, zr, temstart, temend,
+     &                utem, gamma, fh,
      &                priGridRank, priGridDim,
      &                priPar1, priPar2, priPar3,
      &                priDataSize, priMMW)
@@ -38,12 +36,7 @@
 !    dom      - unit conversion to proper number density in code units
 !    zr       - current redshift
 !    fh       - Hydrogen mass fraction (typically 0.76)
-!    aye      - expansion factor (in code units)
 !
-!    utim     - time units (i.e. code units to CGS conversion factor)
-!    uaye     - expansion factor conversion factor (uaye = 1/(1+zinit))
-!    urho     - density units
-!    uxyz     - length units
 !    utem     - temperature(-like) units
 !
 !    temstart, temend - start and end of temperature range for rate table
@@ -72,9 +65,8 @@
 
       integer in, jn, kn, is, js, ks, ie, je, ke, 
      &        iexpand, imetal
-      real*8  aye, temstart, temend, gamma,
-     &        utim, uxyz, uaye, urho, utem, fh
-      real*8 dom, zr
+      real*8  temstart, temend, gamma, utem, fh,
+     &        dom, zr
 
 !  Density, energy and velocity fields fields
 
@@ -87,11 +79,6 @@
      &     priGridDim(priGridRank)
       real*8 priPar1(priGridDim(1)), priPar2(priGridDim(2)), 
      &     priPar3(priGridDim(3)), priMMW(priDataSize)
-
-!  Parameters
-
-      real*8 mh
-      parameter (mh = mass_h)
 
 !  Locals
 
