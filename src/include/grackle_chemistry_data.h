@@ -14,8 +14,6 @@
 #ifndef __CHEMISTRY_DATA_H__
 #define __CHEMISTRY_DATA_H__
 
-#include "grackle_types.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
@@ -188,6 +186,23 @@ typedef struct
   int omp_nthreads;
 
 } chemistry_data;
+
+/*****************************
+ ***** code units struct *****
+ *****************************/
+
+typedef struct
+{
+
+  int comoving_coordinates;
+  double density_units;
+  double length_units;
+  double time_units;
+  double velocity_units;
+  double a_units;
+  double a_value;
+
+} code_units;
 
 /*****************************
  *** Cooling table storage ***

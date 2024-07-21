@@ -91,8 +91,6 @@ def query_struct_fields(struct_name, path):
         '-c',
         # tell castxml's compiler that the language is c++
         '-x', 'c++',
-        # tell castxml about include-paths
-        '-I', os.path.dirname(path),
         # the next required option configure castxml's internal Clang compiler.
         # The second part needs to specify an installed compiler (we may need
         # to support configuration of that path)
