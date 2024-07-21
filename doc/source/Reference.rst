@@ -439,6 +439,8 @@ Miscellaneous Functions
 
 
 .. c:function:: double gr_query_units(const chemistry_data_storage * my_rates, const char* units_name, double current_a_value);
+
+   .. versionadded:: 3.4
    
    Queries the expected value of a unit quantity at an arbitrary cosmological scale factor.
 
@@ -453,10 +455,15 @@ Miscellaneous Functions
    :type units_name: const char \*
    :param units_name: The name of the unit quantity to be queried. Allowed options include ``"a_value"``, ``"a_units``", ``"density_units"``, ``"length_units"``, ``"temperature_units"``, ``"time_units"``, ``"velocity_units"``.
    :type current_a_value: double
-   :param current_a_value: The current value of the expansion factor in units of :c:data:`a_units`. When passed a value of ``-1``, the function assumes that you want the value used during initial configuration.
+   :param current_a_value: The current value of the expansion factor in units of :c:data:`a_units`. When passed a value given by the ``GR_SPECIFY_INITIAL_A_VALUE`` constant, the function assumes that you want the value used during initial configuration.
    :rtype: double
    :returns: Value associated with the quantity. A negative value denotes an error.
 
+   .. note::
+
+      The ``GR_SPECIFY_INITIAL_A_VALUE`` constant will always be defined in the same scope as this function.
+      Be aware, we may allow the associated value to change over time.
+
    .. warning::
 
-      If grackle was configured with ``comoving_coordinates == 0``, this function considers any choice of ``current_a_value`` other than ``-1`` or an **EXACT** match to the initial choice of ``a_value`` to be an error.
+      If grackle was configured with ``comoving_coordinates == 0``, this function considers any choice of ``current_a_value`` other than ``GR_SPECIFY_INITIAL_A_VALUE`` or an **EXACT** match to the initial choice of ``a_value`` to be an error.

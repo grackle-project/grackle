@@ -70,10 +70,14 @@ static double required_velocity_units_(const chemistry_data_storage * my_rates,
   return get_velocity_units(&tmp);
 }
 
+// convert the argument to a string-literal. If passed the name of a macro,
+// the name will be the name of the macro
+#define STRINGIFY_MACRO_NAME(x) #x
+
 #define _ERR_UNIT_RETURN -1.0
 
 double gr_query_units(const chemistry_data_storage * my_rates,
-                         const char* units_name, double current_a_value)
+                      const char* units_name, double current_a_value)
 {
   if (my_rates == NULL) {
     fprintf(stderr, "my_rates argument is NULL\n");
@@ -85,16 +89,24 @@ double gr_query_units(const chemistry_data_storage * my_rates,
   int is_unchanged = (current_a_value == initial_units->a_value);
 
   // sanitize the current_a_value arg
-  if (current_a_value == -1.0) {
+  if (current_a_value == GR_SPECIFY_INITIAL_A_VALUE) {
     current_a_value = initial_units->a_value;
     is_unchanged = 1;
   } else if ((initial_units->comoving_coordinates == 0) && !is_unchanged) {
-    fprintf(stderr, ("for non-comoving coordinates, current_a_value must be "
-                     "-1.0 or it must EXACTLY match the initial a_value\n"));
+    // we need to use this '#' syntax to ensure that the macro name is treated
+    // as a string (if we don't it could be expanded to it's underlying value)
+    fprintf(stderr,
+            "for non-comoving coordinates, current_a_value must be the value "
+            "given by the %s constant or it must EXACTLY match the initial "
+            "a_value\n",
+            STRINGIFY_MACRO_NAME(GR_SPECIFY_INITIAL_A_VALUE));
     return _ERR_UNIT_RETURN;
 
   } else if (current_a_value <= 0.0) {
-    fprintf(stderr, "current_a_value must be -1 or a positive value\n");
+    fprintf(stderr,
+            "current_a_value must be the value given by the %s constant, or a "
+            "positive value.\n",
+            STRINGIFY_MACRO_NAME(GR_SPECIFY_INITIAL_A_VALUE));
     return _ERR_UNIT_RETURN;
 
   }

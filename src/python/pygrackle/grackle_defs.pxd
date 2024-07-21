@@ -173,6 +173,7 @@ cdef extern from "grackle_types.h":
 
 cdef extern from "grackle.h":
     cdef int GRACKLE_FAIL_VALUE "GR_FAIL"
+    cdef int GR_SPECIFY_INITIAL_A_VALUE
 
     int local_initialize_chemistry_parameters(c_chemistry_data *my_chemistry)
 

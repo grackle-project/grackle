@@ -969,7 +969,8 @@ def _query_units(chemistry_data chem_data, object name,
         name_copy = name
     cdef char* units_name = name_copy
 
-    cdef double casted_current_a_value = -1.0
+    cdef double casted_current_a_value = GR_SPECIFY_INITIAL_A_VALUE
+
     if current_a_value is not None:
         casted_current_a_value = current_a_value
 

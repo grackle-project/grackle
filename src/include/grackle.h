@@ -25,6 +25,8 @@ extern "C" {
 #define GR_SUCCESS 1
 #define GR_FAIL 0
 
+#define GR_SPECIFY_INITIAL_A_VALUE -1
+
 extern int grackle_verbose;
 
 extern chemistry_data *grackle_data;
