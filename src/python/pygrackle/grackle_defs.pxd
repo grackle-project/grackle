@@ -182,8 +182,8 @@ cdef extern from "grackle.h":
 
     double get_temperature_units(c_code_units *my_units)
 
-    double gr_required_units(const c_chemistry_data_storage * my_rates,
-                             const char* units_name, double current_a_value)
+    double gr_query_units(const c_chemistry_data_storage * my_rates,
+                          const char* units_name, double current_a_value)
 
     int local_initialize_chemistry_data(c_chemistry_data *my_chemistry,
                                         c_chemistry_data_storage *my_rates,

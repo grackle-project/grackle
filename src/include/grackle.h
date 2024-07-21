@@ -36,8 +36,8 @@ void set_velocity_units(code_units *my_units);
 
 double get_temperature_units(code_units *my_units);
 
-double gr_required_units(const chemistry_data_storage * my_rates,
-                         const char* units_name, double current_a_value);
+double gr_query_units(const chemistry_data_storage * my_rates,
+                      const char* units_name, double current_a_value);
 
 int set_default_chemistry_parameters(chemistry_data *my_grackle);
 

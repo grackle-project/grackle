@@ -438,7 +438,7 @@ Miscellaneous Functions
    :returns: 1 (success) or 0 (failure)
 
 
-.. c:function:: double gr_required_units(const chemistry_data_storage * my_rates, const char* units_name, double current_a_value);
+.. c:function:: double gr_query_units(const chemistry_data_storage * my_rates, const char* units_name, double current_a_value);
    
    Queries the expected value of a unit quantity at an arbitrary cosmological scale factor.
 

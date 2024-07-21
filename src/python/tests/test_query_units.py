@@ -1,6 +1,6 @@
 ########################################################################
 #
-# Testing the gr_required_units function
+# Testing the gr_query_units function
 #
 #
 # Copyright (c) 2013, Enzo/Grackle Development Team.
@@ -24,7 +24,7 @@ from pygrackle.utilities.physical_constants import \
     sec_per_Myr, \
     cm_per_mpc
 
-from pygrackle.grackle_wrapper import _required_units
+from pygrackle.grackle_wrapper import _query_units
 
 _local_dir = os.path.dirname(os.path.abspath(__file__))
 def _setup_generic_chemistry_data(initial_redshift, current_redshift = None):
@@ -73,7 +73,7 @@ def _prefetch_units_vals(chem):
 
 @pytest.mark.parametrize("comoving_coordinates,initial_redshift",
                          [(False, 1.0), (True, 3.0), (True, 1.0)])
-def test_required_units(comoving_coordinates, initial_redshift):
+def test_query_units(comoving_coordinates, initial_redshift):
     # when NOT using comoving coordinates, initial_redshift essentially affects
     # the redshift of the UV background
 
@@ -92,7 +92,7 @@ def test_required_units(comoving_coordinates, initial_redshift):
     # factor of -1. In this case, we should literally just retrieve the units
     # specified during initialization
     for name in _UNITS_NAMES:
-        if _required_units(chem, name, -1) != units_at_init[name]:
+        if _query_units(chem, name, -1) != units_at_init[name]:
             raise AssertionError(f"mismatch when fetching '{name}'")
 
     
@@ -101,9 +101,9 @@ def test_required_units(comoving_coordinates, initial_redshift):
     # literally just retrieve the units specified during initialization
     a_init = chem.a_value
     for name in _UNITS_NAMES:
-        if _required_units(chem, name, a_init) != units_at_init[name]:
+        if _query_units(chem, name, a_init) != units_at_init[name]:
             raise AssertionError(f"mismatch when fetching '{name}' with "
-                                 "gr_required_units")
+                                 "gr_query_units")
 
     # now, we will test retrieval of units when we specify a cosmological scale
     # factor corresponding to a later redshift
@@ -114,7 +114,7 @@ def test_required_units(comoving_coordinates, initial_redshift):
         # not EXACTLY match the initial value
         # -> NOTE: this will send messages to stderr
         for name in _UNITS_NAMES:
-            assert _required_units(chem, name, a_later) < 0
+            assert _query_units(chem, name, a_later) < 0
 
     else:
         # for the comoving-case, the returned value should match the physical
@@ -126,15 +126,15 @@ def test_required_units(comoving_coordinates, initial_redshift):
         for name in _UNITS_NAMES:
             if name in ('time_units', 'a_units'):
                 # these particular quantities should be unchanged
-                assert _required_units(chem, name, a_later) == expected[name]
-                assert _required_units(chem, name, a_later) == getattr(chem,
+                assert _query_units(chem, name, a_later) == expected[name]
+                assert _query_units(chem, name, a_later) == getattr(chem,
                                                                        name)
             else:
                 # we don't expect these to be exactly equal
                 np.testing.assert_allclose(
-                   _required_units(chem, name, a_later), expected[name],
+                   _query_units(chem, name, a_later), expected[name],
                    rtol = 1e-18, atol = 0,
                    equal_nan = False, # should be no NaNs
                    err_msg = (f"mismatch when fetching '{name}' with "
-                              "gr_required_units"))
+                              "gr_query_units"))
 

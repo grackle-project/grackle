@@ -47,7 +47,7 @@ double get_temperature_units(code_units *my_units)
   return get_temperature_units_(get_velocity_units(my_units));
 }
 
-/// helper-function used to build help gr_required_units implement a
+/// helper-function used to build help gr_query_units implement a
 /// quick-and-dirty calculations of velocity_units
 static double required_velocity_units_(const chemistry_data_storage * my_rates,
                                        double current_a_value)
@@ -61,18 +61,18 @@ static double required_velocity_units_(const chemistry_data_storage * my_rates,
   tmp.a_value = current_a_value;
   tmp.a_units = my_rates->initial_units.a_units;
   tmp.comoving_coordinates = my_rates->initial_units.comoving_coordinates;
-  tmp.length_units = gr_required_units(my_rates, "length_units",
+  tmp.length_units = gr_query_units(my_rates, "length_units",
                                        current_a_value);
-  tmp.density_units = gr_required_units(my_rates, "density_units",
+  tmp.density_units = gr_query_units(my_rates, "density_units",
                                         current_a_value);
-  tmp.time_units = gr_required_units(my_rates, "time_units", current_a_value); 
+  tmp.time_units = gr_query_units(my_rates, "time_units", current_a_value); 
 
   return get_velocity_units(&tmp);
 }
 
 #define _ERR_UNIT_RETURN -1.0
 
-double gr_required_units(const chemistry_data_storage * my_rates,
+double gr_query_units(const chemistry_data_storage * my_rates,
                          const char* units_name, double current_a_value)
 {
   if (my_rates == NULL) {

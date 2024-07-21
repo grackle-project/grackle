@@ -951,8 +951,8 @@ cdef class _wrapped_c_chemistry_data:
             out[k] = self[k]
         return out
 
-def _required_units(chemistry_data chem_data, object name,
-                    object current_a_value):
+def _query_units(chemistry_data chem_data, object name,
+                 object current_a_value):
     """
     Computes the units required by grackle for a given scale-factor value.
 
@@ -973,5 +973,5 @@ def _required_units(chemistry_data chem_data, object name,
     if current_a_value is not None:
         casted_current_a_value = current_a_value
 
-    return gr_required_units(rates, units_name, casted_current_a_value)
+    return gr_query_units(rates, units_name, casted_current_a_value)
 
