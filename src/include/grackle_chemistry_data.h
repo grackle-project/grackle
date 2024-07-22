@@ -176,6 +176,9 @@ typedef struct
   int recombination_cooling_rates; //Recombination cooling
   int bremsstrahlung_cooling_rates; //Bremsstrahlung cooling
 
+  /* Flag to specify unit-handling */
+  int unit_handling;
+
   /* maximum number of subcycle iterations for solve_chemistry */
   int max_iterations;
 
