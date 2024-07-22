@@ -16,8 +16,7 @@
 #include <math.h>
 
 #include "grackle_macros.h"
-#include "grackle_types.h"
-#include "grackle_chemistry_data.h"
+#include "grackle.h"
 
 int grackle_verbose = FALSE;
 
@@ -53,6 +52,7 @@ int gr_initialize_field_data(grackle_field_data *my_fields)
   my_fields->grid_dimension = NULL;
   my_fields->grid_start = NULL;
   my_fields->grid_end = NULL;
+  my_fields->current_a_value = GR_SPECIFY_INITIAL_A_VALUE;
   my_fields->grid_dx = -1.0;
 
   // now, modify all members holding datafields to have values of NULL
