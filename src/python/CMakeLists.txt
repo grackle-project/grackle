@@ -88,6 +88,7 @@ add_custom_command(
   COMMENT
     "Making ${CMAKE_CURRENT_BINARY_DIR}/grackle_wrapper.c from ${CMAKE_CURRENT_SOURCE_DIR}/pygrackle/grackle_wrapper.pyx"
   COMMAND Python::Interpreter -m cython
+          -3
           "${CMAKE_CURRENT_SOURCE_DIR}/pygrackle/grackle_wrapper.pyx"
           --output-file grackle_wrapper.c
   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/pygrackle/grackle_wrapper.pyx
