@@ -95,18 +95,18 @@ This is the version number associated with the python bindings.
 We have only recently begun incrementing this number in recent releases.
 
 
-Other Notes
------------
+API and ABI policies
+--------------------
 
 We are strongly commited to maintaining backwards compatability with the public API.
-Once you write a downstream application that makes use of Grackle, they can freely rebuild the application using newer versions of Grackle, without modifying any of the source code and Grackle will **always** [#f2]_ provide consistent results.
+Once you write a downstream application that makes use of Grackle, you can freely rebuild the application using newer versions of Grackle, without modifying any of the source code and Grackle will **always** [#f2]_ provide consistent results.
 
 
 At the time of writing, the current design of Grackle's API is not conducive to supporting a stable ABI. [#f3]_
-A stable ABI is **only** needed to support a special shared library feature:  if you compile & link a downstream application against one version of a shared library, you replace the shared library with a different version (that is ABI compatible), and then run the downstream application without any changes.
-This all just means that you need to simply recompile your downstream application any time you upgrade Grackle.
-This isn't a big loss since simulation codes are already regularly recompiled.
-More importantly you should probably be using Grackle as a static library, rather than as a shared library, to maximize speed (in that case, you would need to recompile your application when you upgrade Grackle, even if Grackle supported a stable ABI).
+A stable ABI is **only** needed to support a special shared library feature. [#f4]_
+The fact that Grackle doesn't support a stable ABI simply means that you must recompile any downstream applications that depend on Grackle any time you update Grackle.
+This isn't a major issue since simulation codes are already regularly recompiled.
+More importantly, applications ideally should use Grackle as a static library, rather than as a shared library, to maximize speed (in that case, upgrading Grackle would always require recompiling, even if Grackle supported a stable ABI).
 
 
 
@@ -122,7 +122,7 @@ More importantly you should probably be using Grackle as a static library, rathe
 .. [#f3] At the time of writing, the API requires the user to explicitly allocate and deallocate the memory used to hold instances of the :c:type:`chemistry_data`, :c:type:`code_units`, :c:type:`grackle_field_data` and (when using the *local* api) the :c:type:`chemistry_data_storage` types, which are all implemented as structs.
          Minor modifications to Grackle commonly involve introducing new struct-members to the underlying structs.
          As noted above, great care is taken so that you can freely compile an application against a newer versions of Grackle without making any modifications to the application's source code (i.e. the API is backwards compatabile).
-         However, it's important to make sure that the header-files shipped with the newer version of Grackle are installed when doing this so that the compiler can properly infer that how much memory to allocate **(If you don't know what this all means, don't worry about it. You need to go out of your way to do this wrong)**.
+         However, it's important to make sure that the header-files shipped with the newer version of Grackle are installed when doing this so that the compiler can properly infer how much memory to allocate for each struct **(If you don't know what this all means, don't worry about it. You need to go out of your way to do this wrong)**.
 
 .. COMMENT BLOCK
 
@@ -138,4 +138,7 @@ More importantly you should probably be using Grackle as a static library, rathe
    like the dynamic API (or getter/setters) for accessing the members
    of all structs. libpng does something like this
 
-   
+.. [#f4] Suppose you link your application against a shared library called libfoo.
+         At some point you might remove the original copy libfoo and replace it with a newer version.
+         If the new version is ABI-compatible, then you can continue using your application without issue.
+         If it isn't ABI-compatible, you need to recompile your application to use the new version.
