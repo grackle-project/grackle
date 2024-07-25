@@ -1,0 +1,132 @@
+#ifndef EXECUTOR_H
+#define EXECUTOR_H
+
+#define GRCLI_BENCH_STATE BenchState
+
+// this is basically a dummy object to let us operate without installing
+// google benchmark
+struct BenchState {
+
+  void PauseTiming() { }
+  void ResumeTiming() { }
+
+  class iterator {
+    int count_;
+
+  public:
+    using iterator_category = std::input_iterator_tag;
+    using value_type = int;
+    using difference_type = int;
+    using pointer = int*;
+    using reference = int&;
+
+    explicit iterator(int count) : count_(count); { }
+    iterator& operator++() { *this = iterator(count_+1); return *this;}
+    iterator operator++(int) { iterator out = *this; ++(*this); return out; }
+    bool operator==(iterator other) const { return count_ == other.count_; }
+    bool operator!=(iterator other) const { return count_ != other.count_; }
+    reference operator*() const { return count_; } // should never be nullptr
+  };
+
+  iterator begin() {return iterator(0);}
+  iterator end() { return iterator(1); }
+};
+
+enum struct OperationKind {
+  prop_cooling_time,
+  prop_dust_temperature
+  prop_pressure,
+  prop_temperature,
+  solve_chemistry
+};
+
+struct OperationSpec {
+  OperationKind kind;
+  double dt;
+};
+
+
+namespace {
+
+class GrackleDriver {
+
+  ChemistryData wrapped_my_chem_;
+  chemistry_data_storage* my_rates_;
+  code_units* my_units_;
+  FieldData wrapped_my_field_;
+  OperationSpec operation_;
+
+  template<OperationKind op>
+  void helper(GRCLI_BENCH_STATE& state) {
+
+    double dt = this->operation_.dt;
+    // do any setup!
+    chemistry_data* my_chem = wrapped_my_chem_.get_ptr();
+    chemistry_data_storage* my_rates = this->my_rates_;
+    code_units* my_units = my_units_;
+
+    // set the following up!
+    //grackle_field_data* copied_fields;
+    //gr_float* out = new[...];
+
+    for (auto _ : state) {
+      // because we modify field values in place in all operations (even when
+      // simply doing unit conversions), the input values will vary between
+      // iterations (the amount of drift obviously depends upon the operation)
+      // -> for consistency, we create a new copy of the fields at the start of
+      //    each loop
+      // -> right now, we are using PauseTiming and ResumeTiming, but it may be
+      //    better to manually time these things
+      state->PauseTiming();
+      // do all the memcpy operations on copied_fields
+      state->ResumeTiming();
+
+      if( constexpr op == OperationKind::prop_cooling_time) {
+        local_calculate_cooling_time(my_chem, my_rates, my_units,
+                                     copied_fields, out);
+      } else if constexpr (op == OperationKind::dust_temperature {
+        local_calculate_dust_temperature(my_chem, my_rates, my_units,
+                                         copied_fields, out);
+      } else if constexpr (op == OperationKind::prop_pressure {
+        local_calculate_pressure(my_chem, my_rates, my_units,
+                                 copied_fields, out);
+      } else if constexpr (op == OperationKind::temperature {
+        local_calculate_temperature(my_chem, my_rates, my_units,
+                                    copied_fields, out);
+      } else if constexpr (op == OperationKind::solve_chemistry {
+        local_solve_chemistry(my_chem, my_rates, my_units, copied_fields, dt);
+      }
+
+    }
+
+    // this is where we should cleanup
+    // deallocate all storage inside of copied_fields & 
+  }
+
+public:
+
+  GrackleDriver(ChemistryData wrapped_chem, code_units my_units,
+                /*...*/);
+  ~GrackleDriver();
+
+
+
+  void operator()(GRCLI_BENCH_STATE& state) {
+    switch(this->operation.kind) {
+      case OperationKind::prop_cooling_time:
+        return helper_<OperationKind::prop_cooling_time>(state);
+      case OperationKind::dust_temperature:
+        return helper_<OperationKind::dust_temperature>(state);
+      case OperationKind::prop_pressure:
+        return helper_<OperationKind::prop_pressure>(state);
+      case OperationKind::temperature:
+        return helper_<OperationKind::temperature>(state);
+      case OperationKind::solve_chemistry:
+        return helper_<OperationKind::solve_chemistry>(state);
+    }
+  }
+
+
+}
+
+#endif /* EXECUTOR_H */
