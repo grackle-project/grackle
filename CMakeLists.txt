@@ -174,6 +174,7 @@ endif()
 # Main build targets
 # ------------------
 add_subdirectory(src/clib)
+add_subdirectory(src/tool)
 
 # declare build-recipies for examples
 if (GRACKLE_EXAMPLES)
