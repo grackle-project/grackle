@@ -1,7 +1,7 @@
 Integrating Grackle into your Application
 =========================================
 
-**If you are simply installing Grackle because it is a dependency of a simulation-code, you can probably disregard this section.**
+**If you are simply installing Grackle because it is a dependency of a simulation-code that you want to install (and you aren't a developer of that code), you can probably disregard this section.**
 
 .. note::
 

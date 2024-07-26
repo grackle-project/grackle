@@ -1,8 +1,8 @@
 
 .. _integration:
 
-Adding Grackle to Your Simulation Code
-======================================
+Interacting with Grackle in Your Simulation Code
+================================================
 
 The majority of this document follows the implementation of Grackle in
 a C++ simulation code.  Full implementation examples for
@@ -34,17 +34,38 @@ of calling all of grackle's functions.
 
     * **fortran_example.F** - Fortran example
 
-Once you have already installed the grackle library, you can build the examples 
-by typing *make* and the name of the file without extension.  For example, to 
-build the C++ example, type:
+The instructions for building and executing the examples vary based on the build-system:
 
-.. code-block:: bash
+.. tabs::
 
-  $ make cxx_example
+   .. tab:: Classic Build System
 
-To run the example, make sure to add the path to the directory containing 
-the installed **libgrackle.so** to your LD_LIBRARY_PATH (or 
-DYLD_LIBRARY_PATH on Mac).
+      Once you have already installed the grackle library, you can build the examples by typing *make* and the name of the file without extension.
+      For example, to build the C++ example, type:
+
+      .. code-block:: shell-session
+
+         $ make cxx_example
+
+      To run the example, make sure to add the path to the directory containing 
+      the installed **libgrackle.so** to your LD_LIBRARY_PATH (or 
+      DYLD_LIBRARY_PATH on Mac).
+
+
+   .. tab:: CMake Build System
+
+      By default, the examples are automatically built with the rest of Grackle.
+      The compiled example binaries can be found within *<build-dir>/example*, where *<build-dir>* is the arbitrary build-directory that you need to specify when compiling Grackle.
+
+      It's important that *<build-dir>* is a top-level directory in the grackle repository (e.g. something like *my-build* is fine, but choices like *../my-grackle-build* and *my_builds/my-first-build* are problematic).
+      If this isn't the case, then the examples won't be able to locate the input data files.
+
+      You don't need to worry about using LD_LIBRARY_PATH (or DYLD_LIBRARY_PATH on Mac) to run these examples with this build-system.
+
+.. important::
+
+   The examples make certain assumptions about the location of the input files.
+   To ensure that the input files can be found, you should execute each example-binary from the same directory where the example binary is produced.
 
 Header Files
 ------------
@@ -89,34 +110,31 @@ simulation code is **grackle.h**.  For Fortran, use **grackle.def**.
 Data Types
 ----------
 
-The grackle library provides a configurable variable type to control the 
-precision of the baryon fields passed to the grackle functions.  For C and 
-C++ codes, this is :c:type:`gr_float`.  For Fortran codes, this is
-:c:type:`R_PREC`.  The precision of these types can be configured with the      
-*precision* compile option.  Compile with *precision-32* to make
-:c:type:`gr_float` and :c:type:`R_PREC` a 4 byte float (*float* for C/C++
-and *real\*4* for Fortran).  Compile with *precision-64* to make
-:c:type:`gr_float` and :c:type:`R_PREC` an 8 byte float (*double* for C/C++
-and *real\*8* for Fortran).
+The grackle library provides special configurable data types that are used to specify the floating-point precision of the baryon fields passed to the grackle functions.
+For C and C++ codes, this is the :c:type:`gr_float` type.
+For Fortran codes, this is the :c:type:`R_PREC` type.
+Based on how you configure Grackle during compilation, both types will either alias the respective langauges' 4-byte (32-bit/single-precision) or 8-byte (64-bit/double precision) floating-point type.
+When using the :ref:`classic build system <classic_build>`, this is controlled by assigning the ``CONFIG_PRECISION`` setting to *precision-32* or *precision-64*.
+When using the :ref:`CMake build system <cmake_build>`, this is controlled by setting the ``GRACKLE_USE_DOUBLE`` cmake-variable to ``OFF`` or ``ON``.
 
 .. c:type:: gr_float
 
-   Floating point type used for the baryon fields.  This is of type *float*
-   if compiled with *precision-32* and type double if compiled with
-   *precision-64*.
+   Floating point type used for the baryon fields in C and C++.
+   When Grackle is compiled with *precision-32* (under the :ref:`classic build system <classic_build>`) or ``GRACKLE_USE_DOUBLE=OFF`` (under the :ref:`CMake build system <cmake_build>`), this aliases the :c:type:`!float` type.
+   When Grackle is compiled with *precision-64* or ``GRACKLE_USE_DOUBLE=ON``, this aliases the :c:type:`!double` type.
 
 .. c:type:: R_PREC
 
-   The Fortran analog of :c:type:`gr_float`.  This is of type *real\*4* if
-   compiled with *precision-32* and type *real\*8* if compiled with
-   *precision-64*.
+   The Fortran analog of :c:type:`gr_float`.
+   When Grackle is compiled with *precision-32* (under the :ref:`classic build system <classic_build>`) or ``GRACKLE_USE_DOUBLE=OFF`` (under the :ref:`CMake build system <cmake_build>`), this aliases the *real\*4* type.
+   When Grackle is compiled with *precision-64* or ``GRACKLE_USE_DOUBLE=ON``, this aliases the *real\*8* type.
 
 Enabling Output
 ---------------
 
 By default, grackle will not print anything but error messages.  However,
-a short summary of the running configuration can be printed by setting
-``grackle_verbose`` to 1.  In a parallel code, it is recommended that
+a short summary of the running configuration can be printed by setting the global
+``grackle_verbose`` variable to 1.  In a parallel code, it is recommended that
 output only be enabled for the root process.
 
 .. code-block:: c++
@@ -402,10 +420,13 @@ As an aside, see :ref:`dynamic-api` for a description of an alternative approach
 Running with OpenMP
 -------------------
 
-As of version 2.2, Grackle can be run with OpenMP parallelism.  To do this,
-the library must first be compiled with OpenMP support enabled by issuing the
-command, "make omp-on", before compiling.  See :ref:`compiler-settings` for
-more information on how to change settings.
+As of version 2.2, Grackle can be run with OpenMP parallelism.
+To do this, the library must be compiled with OpenMP support.
+When compiling Grackle
+
+  * with the :ref:`classic build system <classic_build>`, you should execute ``make omp-on`` before compiling (more information about modifying settings in this system are provided :ref:`here <compiler-settings>`)
+
+  * with the :ref:`CMake build system <cmake_build>`, you should configure the build by assigning the ``GRACKLE_USE_OPENMP`` cmake-variable a value of ``ON`` (more information about modifying settings in this system are provided :ref:`here <how_to_configure>`)
 
 For an example of how to compile your code with OpenMP, see the
 **cxx_omp_example.C** code example (:ref:`examples`).  Once your code has

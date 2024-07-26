@@ -419,7 +419,7 @@ The remainder of this subsection is primarily intended for readers who are relat
    .. warning::
 
       The examples make certain assumptions about the location of the input files.
-      The examples are only guarunteed to work if both:
+      The examples are only guaranteed to work if both:
 
          1. you execute the example-binary from the same-directory where the example-binary is found
 
