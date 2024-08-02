@@ -62,7 +62,7 @@ All of the other approaches involve compiling Grackle with the CMake build-syste
    Additionally, the current structure of Grackle's API creates a situation where you should always recompile your simulation whenever Grackle is modified, even if you are consuming Grackle as a shared library (eliminating a strength of shared libraries).
 
    The only advantage to consuming Grackle as a shared library is that Grackle's implicit runtime dependencies are more easily linked.
-   While linking-issues should **NEVER** occur for the :ref:`embedding approach <Embed_Grackle_in_Sim_Build>`, there is a small chance they could come up for the remaining approaches (please open an issue if that happens!).
+   While linking issues should **NEVER** occur for the :ref:`embedding approach <Embed_Grackle_in_Sim_Build>`, there is a small chance they could come up for the remaining approaches (please open an issue if that happens!).
    In the event linking issues do arise, the remaining approaches make it is easy to seamlessly switch from consuming Grackle as a static-library to consuming it a shared library (the end-user can simply delete the existing installation and reinstall it as a shared library).
 
 
@@ -72,7 +72,7 @@ Manually Specifying Linking Flags (when using Grackle as a shared library)
 --------------------------------------------------------------------------
 
 This is the historic approach that we have always supported.
-If you employ this approach, you should inform your end-users that they should employ build-and-install Grackle via the classic build system or use the CMake build-system to build (and install) Grackle as a shared library.
+If you employ this approach, you should inform your end-users that they should employ, build, and install Grackle via the classic build system or use the CMake build-system to build (and install) Grackle as a shared library.
 
 Here is a minimal sample Makefile for compiling the ``c_example.c`` file.
 
@@ -105,7 +105,7 @@ Some of these dependencies are implicit and depend on the precise choice of comp
 
 .. warning::
 
-   If a Grackle-installation using the Classic Build system made use of an incomplete machine-file, the Grackle shared-library may not be properly linked to all required runtime dependencies.
+   If a Grackle installation using the Classic Build system made use of an incomplete machine file, the Grackle shared library may not be properly linked to all required runtime dependencies.
    Consequently, the simulation code may need to link against extra dependencies
    This commonly happens with the OpenMP runtime libraries.
 
@@ -124,7 +124,7 @@ Using pkg-config
 
 .. note::
 
-   This approach **ONLY** works if the end-user built and installed grackle with the cmake build-system.
+   This approach **ONLY** works if the end-user built and installed grackle with the cmake build system.
 
 To help support the usage of Grackle in a wide variety of scenarios, CMake-driven installations of Grackle come with a file called **grackle.pc**\ .
 For the uninitiated, this file encodes a variety of metadata, including Grackle's version number, the compilation requirements, and the linking requirements in a standardized file format.
@@ -132,16 +132,16 @@ This is the most commonly used format for specifying linking requirements on pos
 The format is understood by `pkg-config <https://www.freedesktop.org/wiki/Software/pkg-config/>`__  (or an alternative implementation called `pkgconf <https://github.com/pkgconf/pkgconf>`__ ), and pkg-config comes preinstalled at many computing facilities.
 This file format is recognized by most popular build systems like autotools, Meson, or even CMake (if using CMake, you should prefer the methods described :ref:`here <cmake_grackle_linking>` or :ref:`here <Embed_Grackle_in_Sim_Build>`).
 
-If your application's build system consists of Bare Makefiles, you can employ this file by invoking the ``pkg-config`` directly.
+If your application's build system consists of bare Makefiles, you can employ this file by invoking the ``pkg-config`` directly.
 The basic usage is extremely simple:
 
   * ``pkg-config --cflags grackle`` provides compiler flags (namely the ``-I`` flag)
 
   * ``pkg-config --libs grackle`` provides linker flags (namely the ``-L`` and ``-l`` flags)
 
-If Grackle isn't installed in a standard system installation directly, you or the end user needs to set the ``PKG_CONFIG_PATH`` variable to tell ``pkg-config`` where to find **grackle.pc** (if Grackle is a shared library, the relevant runtime-challenges LINK still need to be addressed).
+If Grackle isn't installed in a standard system installation directly, you or the end-user needs to set the ``PKG_CONFIG_PATH`` variable to tell ``pkg-config`` where to find **grackle.pc** (if Grackle is a shared library, the relevant runtime-challenges LINK still need to be addressed).
 
-To promote a seamless user-experience, the contents of **grackle.pc** are customized based on whether Grackle is installed as a shared library or as a static library.
+To promote a seamless user experience, the contents of **grackle.pc** are customized based on whether Grackle is installed as a shared library or as a static library.
 This is the ONLY *officially* supported way to consume grackle as a static library in a non-CMake build.
 
 The following snippet shows a sample Makefile for compiling a sample application while using Grackle.
@@ -182,18 +182,18 @@ You can also query Grackle-specific details, such as:
 
 .. warning::
 
-   If the end-user uses CMake to create an installation that features Grackle as both a shared library and as a static library, we have included custom-logic to try to ensure that the installed version of the **grackle.pc** file provides out-of-the-box support for the shared library-version.
-   This decision is was made to follow established conventions.
+   If the end-user uses CMake to create an installation that features Grackle as both a shared library and as a static library, we have included custom logic to try to ensure that the installed version of the **grackle.pc** file provides out-of-the-box support for the shared library version.
+   This decision was made to follow established conventions.
 
-   For properly configured files, the ``pkg-config`` supports the ``--static`` as a way to theoretically allow downstream applications to switch between using shared and static libraries in these type of installations.
-   Unfortunately, for :ref:`variety of reasons <pkgconfig_rationale>` outside of our control, this **IS NOT** a reliable/portable solution; while it may work in some cases, it definitely won't give the desired result (or work at all) on several common platforms.
+   For properly configured files, ``pkg-config`` supports the ``--static`` flag as a way to theoretically allow downstream applications to switch between using shared and static libraries in these type of installations.
+   Unfortunately, for a :ref:`variety of reasons <pkgconfig_rationale>` outside of our control, this **IS NOT** a reliable/portable solution; while it may work in some cases, it definitely won't give the desired result (or work at all) on several common platforms.
    We primarily provide this information for people who know what they are doing and want to programatically construct compiler flags for static linking based on a series of ``pkg-config`` queries.
 
 .. note::
 
-   At this time, pkg-config will **ONLY** work with a complete Grackle-installation (i.e. it won't work with linking Grackle from a build-directory).
+   At this time, pkg-config will **ONLY** work with a complete Grackle installation (i.e., it won't work with linking Grackle from a build directory).
 
-   In the future, we may add support for creating a **grackle-uninstalled.pc** file to support linking against Grackle when it is in the build-directory.
+   In the future, we may add support for creating a **grackle-uninstalled.pc** file to support linking against Grackle when it is in the build directory.
 
 
 .. _cmake_grackle_linking:
@@ -206,7 +206,7 @@ CMake's ``find_package``
 
    This approach **ONLY** works if the end-user built and installed Grackle with the CMake build-system.
 
-   We have also added experimental support for using this approach with a build-directory.
+   We have also added experimental support for using this approach with a build directory.
 
 CMake builds of Grackle install a Package Config File alongside the Grackle library that assists with importing information about an installation into your CMake project when you call the ``find_package`` command.
 Here is a sample snippet showing how this works
@@ -228,25 +228,25 @@ The logic has has been customized for the case when :ref:`shared and copies of G
 
 * The caller can express a preference by requesting  ``shared`` or ``static`` component from `find_package <https://cmake.org/cmake/help/latest/command/find_package.html>`__.
   If the preference is listed after the ``COMPONENTS`` keyword, ``find_package`` considers the request to be a strong requirement (``find_package`` reports a failure if the requested type isn't installed).
-  If the preference is listed after the ``OPTIONAL_COMPONENTS`` keyword, then the request is considered a weak preference (``find_package`` import the non-preferred option if that is the only available choice).
+  If the preference is listed after the ``OPTIONAL_COMPONENTS`` keyword, then the request is considered a weak preference (``find_package`` imports the non-preferred option if that is the only available choice).
 
 * If the caller doesn't express any preference, a weak preference is inferred based on the current value of the ``BUILD_SHARED_LIBS`` variable.
 
-We also encode extra-metadata about the Grackle build and how it was configured as custom properties on the ``Grackle::Grackle`` target.
+We also encode extra metadata about the Grackle build and how it was configured as custom properties on the ``Grackle::Grackle`` target.
 These can be accessed with the `get_target_property <https://cmake.org/cmake/help/latest/command/get_target_property.html>`__ command.
 These properties include:
 
-* ``GRACKLE_VERSION_STR`` -- stores the full version string (including any ``-dev`` suffix
+* ``GRACKLE_VERSION_STR`` -- stores the full version string (including any ``-dev`` suffix)
 * ``GRACKLE_USE_DOUBLE`` -- stores whether Grackle was compiled with single or double precision
 * ``GRACKLE_USE_OPENMP`` -- stores whether Grackle was compiled with OpenMP
 
 
 .. _Embed_Grackle_in_Sim_Build:
 
-Embed Grackle into your Simulation Build
-----------------------------------------
+Embedding Grackle into your Simulation Build
+--------------------------------------------
 
-If your simulation-code is built with CMake, this is arguably the most convenient choice for your end-users.
+If your simulation code is built with CMake, this is arguably the most convenient choice for your end-users.
 Essentially, the idea is that you are compiling Grackle directly as part of your simulation.
 In a sense you are providing automatic dependency management.
 You can do this by making Grackle a git-submodule or using CMake's ``FetchContent`` machinery.
@@ -254,7 +254,7 @@ You can do this by making Grackle a git-submodule or using CMake's ``FetchConten
 Be aware that if your simulation code doesn't use Fortran, you will need to add ``Fortran`` to the top-level ``project`` command OR call ``enable_language(Fortran)`` in your simulation's top level ``CMakeLists.txt`` file.
 If you don't do this, linking errors can arise in certain scenarios. [#f1]_
 
-Here are some basic code-snippets showing the 2 approaches.
+Here are some basic code snippets showing the 2 approaches.
 For simplicity, we assume Grackle is a required dependency:
 
 1. This first snippet shows a case with git-submodule
@@ -313,4 +313,4 @@ See the :ref:`section <cmake_grackle_linking>` about ``find_package`` for more d
 .. [#f1] This is required by CMake.
          While we could implement some workarounds into Grackle's CMakeLists.txt files, this may not be a good idea.
          A post `has been created on the CMake forum <https://discourse.cmake.org/t/conventions-for-linking-implicit-dependencies-of-an-embedded-multi-language-static-library/11073?u=mabruzzo>`__ to solicit feedback on this topic.
-         In the event that top-level project depends embeds both Grackle and some other CMake-project with Fortran source-code, it's best that the top-level project calls ``enable_langugage(Fortran)`` to ensure that the both Grackle and the other CMake-project use the same Fortran compiler.
+         In the event that top-level project embeds both Grackle and some other CMake-project with Fortran source-code, it's best that the top-level project calls ``enable_langugage(Fortran)`` to ensure that both Grackle and the other CMake project use the same Fortran compiler.

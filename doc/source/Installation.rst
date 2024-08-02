@@ -330,7 +330,7 @@ For the uninitiated, the CMake build-system performs an out-of-source build.
 An out-of-source build places all build artifacts (auto-generated source/header files, object files, etc.) into a "build-directory."
 The build-directory is at a user-specified location that is organized into a hierarchy that resembles the source directory hierarchy.
 Cleaning up from a CMake-build is as simple as deleting this build-directory.
-In contrast, the "classic build system" performs an in-source build (because the that type of build distributes build artifacts throughout the source directory hierarchy, clean up requires more complex logic encapsulated by the ``make clean`` command).
+In contrast, the "classic build system" performs an in-source build (because that type of build distributes build artifacts throughout the source directory hierarchy, clean up requires more complex logic encapsulated by the ``make clean`` command).
 
 .. warning::
 
@@ -431,7 +431,7 @@ The remainder of this subsection is primarily intended for readers who are relat
       In contrast, cmake automatically takes special-steps to try to ensure that each example-binary will link to the copy of the Grackle library (whether it is shared or static) that is in the ``<build-dir>``; in fact, Grackle doesn't even need to be installed to run the Grackle library.
 
       With that said, if you compile Grackle as a shared library in a cmake build, an example-binary **might** try to use a copy of a shared grackle library found in a directory specified by ``LD_LIBRARY_PATH``/``DYLD_LIBRARY_PATH`` if one exists.
-      The exact behavior may be platform dependent and also depends on whether CMake instructs the linker to use RPATH or RUNPATH (this is not spacified by the cmake docs).
+      The exact behavior may be platform dependent and also depends on whether CMake instructs the linker to use RPATH or RUNPATH (this is not specified by the cmake docs).
 
 In order to verify that Grackle is fully functional, you can try :ref:`running the test suite <testing>`.
 
@@ -441,7 +441,7 @@ How to Specify Configuration Options
 ++++++++++++++++++++++++++++++++++++
 
 All configuration options can be specified when invoking cmake during configuration of the build.
-Specifically you can specify can specify the values by inserting an argument of the form ``-D<variable>=<value>`` to the list of arguments passed to ``cmake``.
+Specifically you can specify the values by inserting an argument of the form ``-D<variable>=<value>`` to the list of arguments passed to ``cmake``.
 This is illustrated in the prior subsection where we pass ``-DCMAKE_INSTALL_PREFIX=/my/install/path...`` and ``-DBUILD_SHARED_LIBS=OFF``.
 
 Alternatively, you can replace the call to ``cmake`` during configuration with a call to ``ccmake`` to provide a TUI (text-based user interface) where you can manually configure options.
@@ -463,7 +463,7 @@ Choices include:
 The first choice is generally fastest, while the second is a sensible choice during development (the compiler performs most optimizations and includes debugging information in the library).
 
 Machine-specific compilation options can also be specified with host-files.
-These host-files are should generally not be necessary, but they may specify thee architecture-specific optimization flags.
+These host-files should generally not be necessary, but they may specify architecture-specific optimization flags.
 This should be specified during the configuration stage with the ``-C`` flag followed by the path to the host-file.
 For example, one might invoke:
 
@@ -477,7 +477,7 @@ For example, one might invoke:
 The order of ``-D`` and ``-C`` flags matters if they are both used to specify values for a given variable; the last one to appear "wins."
 More information about writing host-files are provided :ref:`below <cmake_host-files>`.
 
-Note: any ``-D`` flags that preceede the ``-C`` flag may be overwritten by the config host-file.
+Note: any ``-D`` flags that precede the ``-C`` flag may be overwritten by the config host-file.
 Likewise, any ``-D`` flags that come after the ``-C`` fla
 
 
@@ -594,7 +594,7 @@ Importantly, the usage of *host-files* is optiona (and usually not required).
 They usually aren't needed on local systems (if you find that Grackle won't compile without a host-file, please let us know -- that may indicative of a bug).
 They should generally **NOT** be used when Grackle is embedded within another CMake project.
 
-While there are a couple of ways to implement this concept, our current strategy draws some inspriation from `here <https://llnl-blt.readthedocs.io/en/develop/tutorial/host_configs.html>`__.
+While there are a couple of ways to implement this concept, our current strategy draws some inspiration from `here <https://llnl-blt.readthedocs.io/en/develop/tutorial/host_configs.html>`__.
 Essentially, our strategy leverages cmake functionality to pre-load a script to populate some cache variables.
 
 Usually, will specify the desired compilers.
@@ -643,14 +643,14 @@ While embedded builds currently respect ``GRACKLE_OPTIMIZATION_FLIST_INIT``, tha
 Compiler Toolchain Compatability
 --------------------------------
 
-As a general rule of thumb, the easiest-most reliable thing to do is  to ensure that Grackle is built with the same compiler toolchain (or a compatible one) as the
+As a general rule of thumb, the easiest, most reliable thing to do is  to ensure that Grackle is built with the same compiler toolchain (or a compatible one) as the
 
    * the downstream application itself (whether it's a simulation code or pygrackle)
    * any other dependencies of the application (whether it's other software libraries or other python extension-modules loaded at the same time).
 
-This is only something you need to consider on platforms with multiple compiler toolchains are present. 
+This is only something you need to consider on platforms with multiple compiler toolchains present. 
 
-In practice, toolchain-compatibility generally **ISN'T** much of a concern for Grackle, when is compiled without OpenMP.
+In practice, toolchain-compatibility generally **ISN'T** much of a concern for Grackle, when compiled without OpenMP.
 In this scenario, you need to use Fortran compilers with consistent runtime libraries (e.g. you might encounter issues if you use ``gfortran`` to compile Grackle and ``ifort`` to compile a downstream simulation code).
 If the downstream application doesn't use any Fortran, then there generally aren't any concerns at all.
 

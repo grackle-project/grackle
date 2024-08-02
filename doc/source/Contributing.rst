@@ -28,11 +28,11 @@ The design rationale for the CMake build-system tries to walk a fine line betwee
 1. We should provide a curated, convenient out-of-box experience for most people who are building Grackle.
 
 2. The internals of a modern CMake build-system should **only** specify the firm build requirements.
-   All other choices compilation options should be specified through one of the many standardized "hooks" or options that CMake provides for customization and overriding default behavior.
-   This is important for making a project easily consumable (as either a standalone project or an embeded build).
+   All other choices of compilation options should be specified through one of the many standardized "hooks" or options that CMake provides for customization and overriding default behavior.
+   This is important for making a project easily consumable (as either a standalone project or an embedded build).
 
 The problem with the second philopsphy is that it assumes that the person building software from source is already well-versed in CMake (e.g. a developer, someone who will package and distribute your software, someone who wants to directly embed your software within their project), or they are a motivated developer/user who can be expected to learn CMake.
-It implicitly assumes that most users of a project won't ever need to directly build your software from source; they will instead install prebuilt and pacakaged copies of the software that are distributed through other channels (e.g. through package managers like apt, dnf, homebrew OR downloadable precompiled binaries through a website OR some kind of installer).
+It implicitly assumes that most users of a project won't ever need to directly build your software from source; they will instead install prebuilt and packaged copies of the software that are distributed through other channels (e.g. through package managers like apt, dnf, homebrew OR downloadable precompiled binaries through a website OR some kind of installer).
 While this implicit assumption may be accurate for most CMake software, it obviously doesn't apply to scientific software).
 
 It may be tempting to dismiss the second philosophy for scientific software.
@@ -89,7 +89,7 @@ In the second pair of invocations, the compiler flags are fine (other than some 
 
      * The approach to inform the linker of a preference to use the static-library that is *most* portable and easiest-to-express is to prepend a flag like ``-Bstatic`` to the start of the flags returned by ``pkg-config --static --libs grackle``. [#pc1]_
        **Consequently, the linker will prefer to try to link every other required library statically** (we return to this shortly).
-       **MORE IMPORTANTLY,** there isn't any completely portable to do this; some linkers (namely the one on macOS [#pc2]_ ) don't provide **ANY** convenient way to express this preference.
+       **MORE IMPORTANTLY,** there isn't any completely portable way to do this; some linkers (namely the one on macOS [#pc2]_ ) don't provide **ANY** convenient way to express this preference.
 
   2. Issues dealing with dependencies like hdf5:
 
@@ -98,7 +98,7 @@ In the second pair of invocations, the compiler flags are fine (other than some 
 
      * Recall from the above bullets that when using ``pkg-config``'s ``--static`` flag, we effectively need to tell the linker to prefer linking **ALL** of Grackle's dependencies statically. 
        With that in mind, we really should prefer the "private requirement" approach for specifying hdf5 as a private dependency of Grackle.
-       In slightly more detail, ``libhdf5.a`` has its own set of nontrivial private depenencies, and by using the "private requirement" approach, ``pkg-config`` should automatically handle those dependencies for us.
+       In slightly more detail, ``libhdf5.a`` has its own set of nontrivial private dependencies, and by using the "private requirement" approach, ``pkg-config`` should automatically handle those dependencies for us.
 
      * Unfortunately, common hdf5 installations don't properly specify these private linker flags on commonly used platforms.
        For example, on a Debian or Ubuntu system, the **hdf5.pc** file installed alongside hdf5 with ``apt`` doesn't actually specify **ANY** private linker flags (this seems to be a common occurence).
@@ -123,7 +123,7 @@ While this wouldn't solve the issue of telling the linker to use libgrackle.a on
 Even if we could overcome that remaining issue, this workaround is undesirable (unless there is strong user-demand) for a number of reasons:
 
   * the primary reason is we would have more to maintain, and this workaround is totally unnecessary outside of a somewhat pathological case (Users need to go somewhat out of their way to use the CMake build-system to create a single installation that features both the static and shared versions of Grackle).
-    The much easier/more sensible/more idiomatic default behavior is to compile  Grackle just as a shared library or just as a static library (in which case there isn't **any** problem).
+    The much easier/more sensible/more idiomatic default behavior is to compile Grackle just as a shared library or just as a static library (in which case there isn't **any** problem).
 
   * this is far less "composable" than the existing alternative of requiring the end-user to compile Grackle just as a shared library or just as a static library.
     Under the existing alternative, the build-system of a downstream application will invoke the same commands commands in either scenario.
