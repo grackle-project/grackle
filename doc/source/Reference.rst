@@ -73,7 +73,7 @@ Primary Functions
 
 .. c:function:: double get_temperature_units(const code_units *my_units);
 
-   Returns the factor that includes unit-conversions and fundamental constants that must be multiplied by :c:data:`internal_energy` (in units of :c:data:`velocity_units`\ :sup:`2`) to get temperature (in units of K).
+   Returns the factor that includes unit conversions and fundamental constants that must be multiplied by :c:data:`internal_energy` (in units of :c:data:`velocity_units`\ :sup:`2`) to get temperature (in units of K).
    In more detail:
 
      - the returned value is defined as m\ :sub:`H`\ \*\ :c:data:`velocity_units`\ :sup:`2`\ /\ k\ :sub:`b`, where m\ :sub:`H` is the Hydrogen mass and k\ :sub:`b` is the Boltzmann constant.

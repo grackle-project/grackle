@@ -122,7 +122,7 @@ More importantly, applications ideally should use Grackle as a static library, r
 .. [#f3] At the time of writing, the API requires the user to explicitly allocate and deallocate the memory used to hold instances of the :c:type:`chemistry_data`, :c:type:`code_units`, :c:type:`grackle_field_data` and (when using the *local* api) the :c:type:`chemistry_data_storage` types, which are all implemented as structs.
          Minor modifications to Grackle commonly involve introducing new struct-members to the underlying structs.
          As noted above, great care is taken so that you can freely compile an application against a newer versions of Grackle without making any modifications to the application's source code (i.e. the API is backwards compatabile).
-         However, it's important to make sure that the header-files shipped with the newer version of Grackle are installed when doing this so that the compiler can properly infer how much memory to allocate for each struct **(If you don't know what this all means, don't worry about it. You need to go out of your way to do this wrong)**.
+         However, it's important to make sure that the header files shipped with the newer version of Grackle are installed when doing this so that the compiler can properly infer how much memory to allocate for each struct **(If you don't know what this all means, don't worry about it. You need to go out of your way to do this wrong)**.
 
 .. COMMENT BLOCK
 
