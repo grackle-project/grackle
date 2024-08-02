@@ -70,7 +70,7 @@ The instructions for building and executing the examples vary based on the build
 Header Files
 ------------
 
-Seven header files are installed with the grackle library.  They are:
+Based on the language that your simulation code is written in, you will interact with one of the 2 header files that is shipped with Grackle:
 
     * **grackle.h** - the primary header file, containing declarations for all
       the available functions and data structures.  This is the only header
@@ -79,27 +79,13 @@ Seven header files are installed with the grackle library.  They are:
     * **grackle.def** - the header file to be used in Fortran codes.  Only
       this file needs to be included.
 
-    * **grackle_types.h** - defines the variable type :c:type:`gr_float`, the
-      field structure :c:type:`grackle_field_data`, and the units structure
-      :c:type:`code_units`.
+.. note::
 
-    * **grackle_chemistry_data.h** - defines the :c:type:`chemistry_data`
-      structure, which stores all Grackle run-time parameters and the
-      :c:type:`chemistry_data_storage` structure, which stores all chemistry
-      and cooling rate data.
-
-    * **grackle_fortran_types.def** - similar to **grackle_types.h**, but used
-      with Fortran codes.  This defines the variable type :c:type:`R_PREC` as
-      either real\*4 or real\*8.
-
-    * **grackle_fortran_interface.def** - defines the Fortran interface,
-      including the Fortran analogs of :c:type:`grackle_field_data`,
-      :c:type:`code_units`, and :c:type:`grackle_chemistry_data`.
-
-    * **grackle_macros.h** - contains some macros used internally.
-
-For C and C++ codes, the only source file that needs to be included in your
-simulation code is **grackle.h**.  For Fortran, use **grackle.def**.
+   While other header files are also shipped with Grackle we consider them to be implementation details.
+   With that said, we currently maintain the **grackle_types.h**, **grackle_chemistry_data.h**, **grackle_fortran_types.def**, **grackle_chemistry_data.h**, **grackle_fortran_types.def**, **grackle_fortran_interface.def**, and **grackle_macros.h** because they were previously mentioned in the documentation.
+   **However, their usage is now deprecated.**
+   We will only maintain these for a couple releases after 3.3.
+   Afterwards, we may alter their contents or delete them entirely.
 
 .. note::
 
