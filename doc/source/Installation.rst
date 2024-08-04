@@ -323,7 +323,7 @@ While CMake has some baggage (primarily due to the maintenace of backwards compa
 An overview of our design philosophy is provided :ref:`here <cmake_buildsystem_design_rationale>`.
 This build-system makes integration of Grackle into simulation codes that are themselves built with CMake extremely easy.
 Steps have also been taken simplify integration of Grackle into simulation codes built with any other build-systems (they just need to call the standardized ``pkg-config`` command-line tool).
-More details about integration are provided :doc:`on this page <Consuming>`.
+More details about integration are provided :doc:`on this page <Integration>`.
 This current section focuses on installation.
 
 For the uninitiated, the CMake build-system performs an out-of-source build.
