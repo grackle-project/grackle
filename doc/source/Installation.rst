@@ -474,11 +474,9 @@ For example, one might invoke:
       > -D BUILD_SHARED_LIBS=ON \
       > -B <build-dir>
 
-The order of ``-D`` and ``-C`` flags matters if they are both used to specify values for a given variable; the last one to appear "wins."
+The order of ``-D`` and ``-C`` flags matters.
+If they are both used to specify values for a given variable, the last one to appear "wins."
 More information about writing host-files are provided :ref:`below <cmake_host-files>`.
-
-Note: any ``-D`` flags that precede the ``-C`` flag may be overwritten by the config host-file.
-Likewise, any ``-D`` flags that come after the ``-C`` fla
 
 
 .. _available_cmake_options:
@@ -590,7 +588,7 @@ These files are provided mostly for convenience (and to provide parity with mach
 They are most useful on HPC systems that provide multiple compiler toolchains.
 These are the *\*.cmake* files in the **config/host-config** directory.
 
-Importantly, the usage of *host-files* is optiona (and usually not required).
+Importantly, the usage of *host-files* is optional (and usually not required).
 They usually aren't needed on local systems (if you find that Grackle won't compile without a host-file, please let us know -- that may indicative of a bug).
 They should generally **NOT** be used when Grackle is embedded within another CMake project.
 
