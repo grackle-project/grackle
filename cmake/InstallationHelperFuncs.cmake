@@ -144,9 +144,10 @@ endfunction()
 
 # the following function actually creates grackle's pkg-config file
 #
-#   configure_pkgconfig_file(<output> [STATIC_ONLY]
+#   configure_pkgconfig_file(DESTINATION <path/to/output.pc>
+#                            [STATIC_ONLY]
 #                            STATIC_LIBS static_libs_str
-#                            STATIC_REQUIRES static_requires_str
+#                            [STATIC_REQUIRES static_requires_str]
 #                            INFO_PROPERTIES info_props)
 #
 # -> by default, we configure the file so that it is well-suited for an
@@ -166,12 +167,23 @@ endfunction()
 # ``INFO_PROPERTIES`` Specifies a properly-formatted snippet of text for the
 # output file that defines a series of (queryable) project-specific variables
 # that encode useful metadata
-function(configure_pkgconfig_file output)
+function(configure_pkgconfig_file)
   set(options STATIC_ONLY)
-  set(oneValueArgs STATIC_LIBS STATIC_REQUIRES INFO_PROPERTIES)
+  set(oneValueArgs DESTINATION STATIC_LIBS STATIC_REQUIRES INFO_PROPERTIES)
   set(multiValueArgs)
-  cmake_parse_arguments(CONFIGURE_PC "${options}" "${oneValueArgs}"
-                        "${multiValueArgs}" ${ARGN})
+
+  # cmake_parse_arguments in 2 forms, but we can't use the other one if we want
+  # to support passing an empty string to STATIC_REQUIRES
+  # -> in detail the other form requires us to explicitly pass in each argument
+  #    by "evaluating" the ARGN variable (an auto-defined list of arguments)
+  # -> when STATIC_REQUIRES is passed an empty "", then the contents of ARGN
+  #    might look like "...;STATIC_REQURES;;...". The problem is that when you
+  #    "evaluate" a variable for argument-forwarding, CMake treats multiple
+  #    contiguous semi-colons as a single semi-colon. In other words, it looks
+  #    like STATIC_REQUIRES doesn't receive any arguments
+  # -> the form that we currently use doesn't involve this list evaluation
+  cmake_parse_arguments(PARSE_ARGV 0 CONFIGURE_PC "${options}"
+                        "${oneValueArgs}" "${multiValueArgs}")
 
   # some basic error-handling
   set(_funcname "configure_pkgconfig_file")
@@ -186,7 +198,12 @@ function(configure_pkgconfig_file output)
   endif()
 
   foreach(kw IN LISTS oneValueArgs multiValueArgs)
-    if (NOT DEFINED CONFIGURE_PC_${kw})
+    if (kw STREQUAL "STATIC_REQUIRES")
+      # STATIC_REQUIRES is an optional kwarg. Additionally, when it's passed an
+      # empty string, cmake_parse_arguments doesn't define the corresponding
+      # variable (it appears like the kwarg wasn't specified at all)
+      continue()
+    elseif (NOT DEFINED CONFIGURE_PC_${kw})
       message(FATAL_ERROR "${_funcname} didn't receive the ${kw} argument")
     endif()
   endforeach()
@@ -229,6 +246,7 @@ function(configure_pkgconfig_file output)
     endif()
   endif()
 
-  configure_file(${PROJECT_SOURCE_DIR}/cmake/grackle.pc.in ${output} @ONLY)
+  configure_file(${PROJECT_SOURCE_DIR}/cmake/grackle.pc.in
+    ${CONFIGURE_PC_DESTINATION} @ONLY)
 endfunction()
 

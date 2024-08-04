@@ -64,7 +64,7 @@ function(add_conditional_fortran_flags target)
   message(STATUS "${_grackle_fc_flag_msg}")
 
   # do some (non-exhaustive) handling of the fortran-specific flags!
-  if (CMAKE_Fortran_COMPILER_ID STREQUAL "INTEL")
+  if (CMAKE_Fortran_COMPILER_ID STREQUAL "Intel")
     fc_warn_ninja() # issues encountered with ninja while using cmake 3.16.3
     set(GRACKLE_FC_FLAG "") # no flags needed!
 

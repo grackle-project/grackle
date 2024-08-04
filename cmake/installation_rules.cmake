@@ -280,8 +280,9 @@ foreach(suffix IN ITEMS "conventional.pc" "static.pc")
   if(${suffix} STREQUAL "static.pc")
     set(_extra_arg "STATIC_ONLY")
   endif()
+
   configure_pkgconfig_file(
-    ${INSTALL_METADATA_DIR}/grackle-${suffix}
+    DESTINATION ${INSTALL_METADATA_DIR}/grackle-${suffix}
     STATIC_LIBS "${_STATIC_EXTRA_LINK_DIRS} ${_STATIC_EXTRA_LINK_LIBS}"
     STATIC_REQUIRES "${_PC_STATIC_REQUIRES}"
     INFO_PROPERTIES "${_GRACKLE_PC_INFO_PROPERTIES}"
