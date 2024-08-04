@@ -61,3 +61,14 @@ set(GRACKLE_OPTIMIZATION_FLIST_INIT "-xCORE-AVX512" CACHE STRING "")
 #    within other CMake projects)
 #-----------------------------------------------------------------------
 
+# the following frontera-specific snippet is only included for the sake of
+# example (it definitely isn't required)
+#   Here we provide a hint about where to find hdf5 (cmake is usually smart
+#   enough that it can find it without the hint). When you execute
+#       module spider hdf5/1.x.y
+#   The output informs us that loading that lmod-module will define the
+#   TACC_HDF5_DIR environment variable, which specifies the location
+#   of the module's hdf5 installation. Here, we're telling CMake that it MUST
+#   use this particular installation
+set(HDF5_ROOT "$ENV{TACC_HDF5_DIR}" CACHE STRING
+  "HDF5 install-location based on the loaded hdf5-module during configuration")
