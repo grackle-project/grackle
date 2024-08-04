@@ -11,7 +11,6 @@
 [build-system]
 requires=[
   "cython",
-  "numpy",
   # since tool.scikit-build.minimum-version is set to "build-system.requires",
   # the minimum build-requirement for scikit-build-core controls some default
   # behaviors when newer versions of scikit-build-core are installed

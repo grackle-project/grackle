@@ -8,8 +8,8 @@ project(${SKBUILD_PROJECT_NAME} LANGUAGES C)
 # Dependencies
 # ------------
 
-# find required python components (we currently need NumPy's include directory)
-find_package(Python COMPONENTS Interpreter Development.Module NumPy REQUIRED)
+# find required python components
+find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
 
 # deal with dependency on Grackle and define pygrackle_build_kind variable
 set(traditional_in_source_build 0) # <- will be overwritten in certain cases
