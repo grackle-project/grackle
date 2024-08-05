@@ -29,5 +29,8 @@ from .utilities.evolve import \
 from .utilities.units import \
     set_cosmology_units
 
+from ._version import \
+    __version__
+
 from .yt_fields import \
     add_grackle_fields
