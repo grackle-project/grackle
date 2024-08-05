@@ -99,8 +99,10 @@ grackle_field_data* impl::allocate_and_init_gr_field_data(
 
 #define MK_PAIR(FIELD) {#FIELD, &grackle_field_data::FIELD},
 
+// the presence of std::less lets you do lookups with std::string_view
 static const std::map<std::string,
-                      gr_float* grackle_field_data::*> field_mapping_ {
+                      gr_float* grackle_field_data::*,
+                      std::less<>> field_mapping_ {
   #define ENTRY(MEMBER_NAME) MK_PAIR(MEMBER_NAME)
   #include "grackle_field_data_fdatamembers.def"
   #undef ENTRY
@@ -157,7 +159,32 @@ void clone_field_data(grackle_field_data* dest, grackle_field_data* src) {
 }
 
 View<gr_float> FieldData::view(std::string_view field_name) const {
-    GRCLI_ERROR("NOT IMPLEMENTED YET!!!!");
+  auto search = field_mapping_.find(field_name);
+  if (search == field_mapping_.end()) {
+    GRCLI_ERROR("%s is not a known field name");
+  }
+
+  gr_float* grackle_field_data::* ptr_to_mem = search->second;
+  const grackle_field_data& f = *(this->grackle_fields_);
+  for (int i = 0; i < f.grid_rank; i++) {
+    if ((f.grid_dimension[i] != (f.grid_end[i]+1)) ||
+        (f.grid_start[i] > 0)) {
+      GRCLI_ERROR("Can't currently handle this configuration.");
+    }
+  }
+
+  gr_float* ptr = f.*ptr_to_mem;
+  if (ptr) {
+    return View<gr_float>(
+        ptr,
+        f.grid_dimension[0], f.grid_dimension[1], f.grid_dimension[2],
+        ContiguousLayout::Fortran);
+  } else {
+    return View<gr_float>();
+  }
+
+
+  
 }
 
 

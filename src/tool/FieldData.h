@@ -51,7 +51,7 @@ public:
   ~FieldData()
   { impl::destroy_selfcontained_field_data(grackle_fields_); }
 
-  View<gr_float> view(std::string_view field_name);
+  View<gr_float> view(std::string_view field_name) const;
 
   std::array<int, 3> grid_dimensions() const {
     return {grackle_fields_->grid_dimension[0],
