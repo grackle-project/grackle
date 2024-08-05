@@ -7,7 +7,6 @@ from numpy.testing import assert_allclose
 
 from pygrackle.utilities.model_tests import model_sets
 from pygrackle.utilities.testing import \
-    dirname, \
     ensure_dir, \
     generate_model_results, \
     python_example_dir, \

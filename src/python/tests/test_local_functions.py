@@ -29,7 +29,6 @@ from pygrackle.utilities.physical_constants import \
     mass_hydrogen_cgs, \
     sec_per_Myr
 from pygrackle.utilities.testing import \
-    dirname, \
     ensure_dir, \
     generate_local_function_results, \
     grackle_data_dir, \
