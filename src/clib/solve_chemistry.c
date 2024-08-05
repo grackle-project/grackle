@@ -17,6 +17,7 @@
 #include "grackle_types.h"
 #include "grackle_chemistry_data.h"
 #include "phys_constants.h"
+#include "utils.h"
 
 extern chemistry_data *grackle_data;
 extern chemistry_data_storage grackle_rates;

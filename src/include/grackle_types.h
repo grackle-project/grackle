@@ -21,6 +21,10 @@
 
 #include "grackle_float.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
 #ifdef GRACKLE_FLOAT_4
 #define gr_float float
 #endif
@@ -104,4 +108,8 @@ typedef struct
 
 } grackle_version;
 
-#endif
+#ifdef __cplusplus
+} /* extern "C" */
+#endif /* __cplusplus */
+
+#endif /* __GRACKLE_TYPES_H__ */

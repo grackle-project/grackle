@@ -16,3 +16,8 @@ If you'd like help in real time, this is the place.
 Click `here
 <https://join.slack.com/t/grackle-project/shared_invite/enQtODc3MDA1NjQ0MTY3LTI5OTQ4ZjU4YTk0OTM0YzBiOTE4OGJmNDQyMTA4MmU1ZjMxOTMyN2FjNGM1OTkxOGE2NzM0Yzc1YWUzMDhiODY>`__
 for an invitation to our Slack channel.
+
+GitHub Issues
+~~~~~~~~~~~~~
+
+Alternatively you can describe issues or get help or post ideas for development by openning a  `GitHub Issue <https://github.com/grackle-project/grackle/issues>`__

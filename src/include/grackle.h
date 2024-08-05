@@ -17,16 +17,24 @@
 #include "grackle_types.h"
 #include "grackle_chemistry_data.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
+// standard error codes returned by the grackle functions
+#define GR_SUCCESS 1
+#define GR_FAIL 0
+
 extern int grackle_verbose;
 
 extern chemistry_data *grackle_data;
 extern chemistry_data_storage grackle_rates;
 
-double get_velocity_units(code_units *my_units);
+double get_velocity_units(const code_units *my_units);
 
 void set_velocity_units(code_units *my_units);
 
-double get_temperature_units(code_units *my_units);
+double get_temperature_units(const code_units *my_units);
 
 int set_default_chemistry_parameters(chemistry_data *my_grackle);
 
@@ -117,4 +125,10 @@ int local_free_chemistry_data(chemistry_data *my_chemistry, chemistry_data_stora
 
 grackle_version get_grackle_version(void);
 
-#endif
+int gr_initialize_field_data(grackle_field_data *my_fields);
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif /* __cplusplus */
+
+#endif /* __GRACKLE_H__ */

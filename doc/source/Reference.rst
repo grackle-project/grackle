@@ -13,6 +13,8 @@ Grackle has two versions of most functions.
    and :c:data:`chemistry_data_storage` instances to be provided as
    arguments. These are explicity thread-safe as they use no global data.
 
+Additionally, there are also some :ref:`misc_functions` and :ref:`rate-functions`.
+
 .. _primary_functions:
 
 Primary Functions
@@ -54,7 +56,7 @@ Primary Functions
 
    :param code_units* my_units: code units conversions
 
-.. c:function:: double get_velocity_units(code_units *my_units);
+.. c:function:: double get_velocity_units(const code_units *my_units);
 
    Returns the appropriate value for velocity units given the values of
    :c:data:`length_units`, :c:data:`a_value`, and :c:data:`time_units`
@@ -69,13 +71,14 @@ Primary Functions
    :rtype: double
    :returns: velocity_units
 
-.. c:function:: double get_temperature_units(code_units *my_units);
+.. c:function:: double get_temperature_units(const code_units *my_units);
 
-   Returns the conversion factor between specific internal energy and temperature
-   assuming gamma (the adiabatic index) = 1, such that temperature in K is equal to
-   :c:data:`internal_energy` * ``temperature_units``. This unit conversion is
-   defined as m\ :sub:`H` * :c:data:`velocity_units`\ :sup:`2` / k\ :sub:`b`,
-   where m\ :sub:`H` is the Hydrogen mass and k\ :sub:`b` is the Boltzmann constant.
+   Returns the factor that includes unit conversions and fundamental constants that must be multiplied by :c:data:`internal_energy` (in units of :c:data:`velocity_units`\ :sup:`2`) to get temperature (in units of K).
+   In more detail:
+
+     - the returned value is defined as m\ :sub:`H`\ \*\ :c:data:`velocity_units`\ :sup:`2`\ /\ k\ :sub:`b`, where m\ :sub:`H` is the Hydrogen mass and k\ :sub:`b` is the Boltzmann constant.
+
+     - under the standard assumption of an ideal gas, temperature is given by :c:data:`internal_energy`\ \*\ ``temperature_units``\ \*\ :math:`(\gamma - 1)`\ \*\ :math:`\mu`, where :math:`\gamma` is the adiabatic index and :math:`\mu` is the mean molecular weight.
 
    :param code_units* my_units: code units conversions
    :rtype: double
@@ -417,3 +420,20 @@ The following functions are used to query the name of the ith field of the :c:da
    :param unsigned int i: The index of the accessed parameter
    :rtype: const char*
    :returns: Pointer to the string-literal specifying the name. This is ``NULL``, if :c:data:`chemistry_data` has ``i`` or fewer ``string`` members.
+
+.. _misc_functions:
+
+Miscellaneous Functions
+-----------------------
+
+.. c:function:: int gr_initialize_field_data(grackle_field_data *my_fields);
+
+   Initializes the struct-members stored in the :c:type:`grackle_field_data` data structure to their default values.
+
+   This function must assume that any existing data within the data structure is garbage data.
+   In other words, when this function goes to overwrite a given member of :c:type:`grackle_field_data`, it completely ignores the value currently held by the member (i.e. the function does not provide special handling for members holding non- ``NULL`` pointers).
+   Consequently, this function should **ONLY** be called **BEFORE** initializing any members of the data structure (if it's called at any other time, the program may leak memory resources).
+
+   :param grackle_field_data \*my_fields: uninitialized field data storage
+   :rtype: int
+   :returns: 1 (success) or 0 (failure)
