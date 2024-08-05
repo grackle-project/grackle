@@ -963,3 +963,16 @@ cdef class _wrapped_c_chemistry_data:
         for k in self:
             out[k] = self[k]
         return out
+
+
+# The following snippet exists for testing purposes. It makes use of a macro
+# defined in setup.py, to specify the type of build used for libgrackle
+cdef extern from *:
+    """
+    int traditional_in_source_build(void) {return TRADITIONAL_IN_SOURCE_BUILD;}
+    """
+    int traditional_in_source_build() # returns 1 for True or 0 for False
+
+def uses_in_source_build():
+    # this is only intented for testing purposes (it's subject to change)
+    return bool(traditional_in_source_build())

@@ -10,12 +10,11 @@
 #
 #=======================================================================
 
-# Use bash since sh on datastar does not recognize ">&" used in dep: target
+# Use bash since sh does not recognize ">&" used in dep: target
 
 SHELL       = /bin/bash
 
 TOP_DIR     = ../../
-OUTPUT      = out.compile
 
 GRACKLE_DIR = $(TOP_DIR)/src/clib
 MODULES     = 
@@ -73,166 +72,11 @@ LDFLAGS += $(ASSEMBLE_OMP_FLAGS)
 # OBJECT FILES
 #=======================================================================
 
-OBJS_CONFIG_LIB = cxx_grackle.o
-
 GRACKLE_INCLUDE = -I$(MACH_INSTALL_PREFIX)/include
 GRACKLE_LIB = -L$(MACH_INSTALL_PREFIX)/lib -lgrackle
 
 #-----------------------------------------------------------------------
-# C++ EXAMPLE
-#-----------------------------------------------------------------------
-
-cxx_example: $(MODULES) cxx_example.o
-	@rm -f $@
-	@echo "Linking"
-	-@$(CXX) $(LDFLAGS) -o cxx_example cxx_example.o $(LIBS) $(GRACKLE_LIB) >& $(OUTPUT)
-	@(if [ -e $@ ]; then \
-             echo "Success!"; \
-         else \
-             echo "$(CXX) $(LDFLAGS) -o cxx_example cxx_example.o $(LIBS) $(GRACKLE_LIB)" >> temp1; \
-             cat temp1 $(OUTPUT) > temp2; \
-             rm -f temp1; \
-             mv -f temp2 $(OUTPUT); \
-             echo "Failed! See $(OUTPUT) for error messages"; \
-         fi)
-
-#-----------------------------------------------------------------------
-# C++ OPENMP EXAMPLE
-#-----------------------------------------------------------------------
-
-cxx_omp_example: $(MODULES) cxx_omp_example.o
-	@rm -f $@
-	@echo "Linking"
-	-@$(CXX) $(LDFLAGS) -o cxx_omp_example cxx_omp_example.o $(LIBS) $(GRACKLE_LIB) >& $(OUTPUT)
-	@(if [ -e $@ ]; then \
-             echo "Success!"; \
-         else \
-             echo "$(CXX) $(LDFLAGS) -o cxx_omp_example cxx_omp_example.o $(LIBS) $(GRACKLE_LIB)" >> temp1; \
-             cat temp1 $(OUTPUT) > temp2; \
-             rm -f temp1; \
-             mv -f temp2 $(OUTPUT); \
-             echo "Failed! See $(OUTPUT) for error messages"; \
-         fi)
-
-#-----------------------------------------------------------------------
-# C++ GRID EXAMPLE
-#-----------------------------------------------------------------------
-
-cxx_grid_example: $(MODULES) cxx_grid_example.o
-	@rm -f $@
-	@echo "Linking"
-	-@$(CXX) $(LDFLAGS) -o cxx_grid_example cxx_grid_example.o $(LIBS) $(GRACKLE_LIB) >& $(OUTPUT)
-	@(if [ -e $@ ]; then \
-             echo "Success!"; \
-         else \
-             echo "$(CXX) $(LDFLAGS) -o cxx_grid_example cxx_grid_example.o $(LIBS) $(GRACKLE_LIB)" >> temp1; \
-             cat temp1 $(OUTPUT) > temp2; \
-             rm -f temp1; \
-             mv -f temp2 $(OUTPUT); \
-             echo "Failed! See $(OUTPUT) for error messages"; \
-         fi)
-
-#-----------------------------------------------------------------------
-# PURE C EXAMPLE USING GLOBAL STRUCTS
-#-----------------------------------------------------------------------
-
-c_example: $(MODULES) c_example.o
-	@rm -f $@
-	@echo "Linking"
-	-@$(LD) $(LDFLAGS) -o c_example c_example.o $(LIBS) $(GRACKLE_LIB) >& $(OUTPUT)
-	@(if [ -e $@ ]; then \
-             echo "Success!"; \
-         else \
-             echo "$(LD) $(LDFLAGS) -o c_example c_example.o $(LIBS) $(GRACKLE_LIB)" >> temp1; \
-             cat temp1 $(OUTPUT) > temp2; \
-             rm -f temp1; \
-             mv -f temp2 $(OUTPUT); \
-             echo "Failed! See $(OUTPUT) for error messages"; \
-         fi)
-
-#-----------------------------------------------------------------------
-# PURE C EXAMPLE USING LOCAL STRUCTS
-#-----------------------------------------------------------------------
-
-c_local_example: $(MODULES) c_local_example.o
-	@rm -f $@
-	@echo "Linking"
-	-@$(LD) $(LDFLAGS) -o c_local_example c_local_example.o $(LIBS) $(GRACKLE_LIB) >& $(OUTPUT)
-	@(if [ -e $@ ]; then \
-             echo "Success!"; \
-         else \
-             echo "$(LD) $(LDFLAGS) -o c_local_example c_local_example.o $(LIBS) $(GRACKLE_LIB)" >> temp1; \
-             cat temp1 $(OUTPUT) > temp2; \
-             rm -f temp1; \
-             mv -f temp2 $(OUTPUT); \
-             echo "Failed! See $(OUTPUT) for error messages"; \
-         fi)
-
-#-----------------------------------------------------------------------
-# FORTRAN EXAMPLE
-#-----------------------------------------------------------------------
-
-fortran_example: $(MODULES) fortran_example.o
-	@rm -f $@
-	@echo "Linking"
-	-@$(FC) $(LDFLAGS) -o fortran_example fortran_example.o $(LIBS) $(GRACKLE_LIB) >& $(OUTPUT)
-	@(if [ -e $@ ]; then \
-             echo "Success!"; \
-         else \
-             echo "$(FC) $(LDFLAGS) -o fortran_example fortran_example.o $(LIBS) $(GRACKLE_LIB)" >> temp1; \
-             cat temp1 $(OUTPUT) > temp2; \
-             rm -f temp1; \
-             mv -f temp2 $(OUTPUT); \
-             echo "Failed! See $(OUTPUT) for error messages"; \
-         fi)
-
-#-----------------------------------------------------------------------
-# Implicit rules
-#-----------------------------------------------------------------------
-
-.SUFFIXES: .c .C .F
-
-.C.o:
-	@rm -f $@
-	@echo "Compiling $<"
-	-@($(CXX) -c -o $@ $(DEFINES) $(CXXFLAGS) $(INCLUDES) $(GRACKLE_INCLUDE) $*.C) >& $(OUTPUT)
-	@(if [ ! -e $@ ]; then \
-             echo; \
-             echo "$(CXX) -c -o $@ $(DEFINES) $(CXXFLAGS) $(INCLUDES) $(GRACKLE_INCLUDE) $*.C"; \
-             echo; \
-             $(CXX) -c -o $@ $(DEFINES) $(CXXFLAGS) $(INCLUDES) $(GRACKLE_INCLUDE) $*.C;\
-             echo; \
-             exit 1; \
-          fi)
-
-.c.o:
-	@rm -f $@
-	@echo "Compiling $<"
-	-@($(CC) -c -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) $(GRACKLE_INCLUDE) $*.c) >& $(OUTPUT)
-	@(if [ ! -e $@ ]; then \
-             echo; \
-             echo "$(CC) -c -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) $(GRACKLE_INCLUDE) $*.c"; \
-             echo; \
-             $(CC) -c -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) $(GRACKLE_INCLUDE) $*.c;\
-             echo; \
-             exit 1; \
-          fi)
-
-# the following target uses -O1 optimization because problems can arise with
-# higher levels of optimization. A comment in fortran_example.F provides more
-# details about the problems
-.F.o:
-	@rm -f $@
-	@echo "Compiling $<"
-	-@($(FC) -c -o $@ $(DEFINES) $(FFLAGS) -O1 $(INCLUDES) $(GRACKLE_INCLUDE) $*.F) >& $(OUTPUT)
-	@(if [ ! -e $@ ]; then \
-             echo; \
-             echo "$(FC) -c -o $@ $(DEFINES) $(FFLAGS) $(INCLUDES) $(GRACKLE_INCLUDE) $*.F"; \
-             echo; \
-             $(FC) -c -o $@ $(DEFINES) $(FFLAGS) $(INCLUDES) $(GRACKLE_INCLUDE) $*.F;\
-             echo; \
-             exit 1; \
-          fi)
+include ./Make.config.targets
 
 #-----------------------------------------------------------------------
 # HELP TARGET
@@ -254,7 +98,6 @@ help:
 	@echo "   gmake default        Reset the configuration to the default values"
 	@echo
 
-#-----------------------------------------------------------------------
 
 clean:
 	-@rm -f *.o *.mod *.f *.f90 *~ *.exe $(OUTPUT) cxx_example cxx_omp_example cxx_grid_example c_example c_local_example fortran_example
