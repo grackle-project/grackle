@@ -11,6 +11,11 @@ commands:
             echo 'export LD_LIBRARY_PATH=$HOME/local/lib:$LD_LIBRARY_PATH' >> $BASH_ENV
             echo 'export YT_DATA_DIR=$HOME/yt_test' >> $BASH_ENV
             echo 'export MATPLOTLIBRC=$HOME' >> $BASH_ENV
+            # get tags from the main and PR repository (for the current gold standard)
+            git fetch --tags https://github.com/grackle-project/grackle
+            if [ -n "$CIRCLE_PR_REPONAME" ]; then
+              git fetch --tags https://github.com/$CIRCLE_PR_USERNAME/$CIRCLE_PR_REPONAME
+            fi
 
   install-dependencies:
     description: "Install dependencies."
@@ -54,11 +59,15 @@ commands:
         type: enum
         default: 'true'
         enum: ['true', 'false']
+      tag:
+        type: string
+        default: $CIRCLE_BRANCH
     steps:
       - run:
           name: "Install grackle."
           command: |
             source $HOME/venv/bin/activate
+            git checkout << parameters.tag >>
 
             # First, try resetting things to a pristine condition (in the event
             # that grackle was previously built
@@ -146,6 +155,10 @@ commands:
         type: enum
         default: 'true'
         enum: ['true', 'false']
+      generate:
+        type: enum
+        default: 'true'
+        enum: ['true', 'false']
     steps:
       - run:
           name: "Run all tests."
@@ -157,6 +170,11 @@ commands:
               export PYTEST_CODE_LINK_CHOICE="classic"
             else
               export PYTEST_CODE_LINK_CHOICE="cmake:../build"
+            fi
+            if [ << parameters.generate >> == 'true' ]; then
+              export GENERATE_PYGRACKLE_TEST_RESULTS=1
+            else
+              export GENERATE_PYGRACKLE_TEST_RESULTS=0
             fi
             if [ << parameters.omp >> == 'true' ]; then
               export OMP_NUM_THREADS=4
@@ -226,10 +244,23 @@ jobs:
       - install-grackle:
           omp: 'false'
           classic_build: 'false'
+          tag: gold-standard-v1
 
       - run-tests:
           omp: 'false'
           classic_build: 'false'
+          generate: 'true'
+
+      - install-grackle:
+          omp: 'false'
+          classic_build: 'false'
+          tag: $CIRCLE_BRANCH
+
+      - run-tests:
+          omp: 'false'
+          classic_build: 'false'
+          generate: 'false'
+
 
   docs-build:
     parameters:
