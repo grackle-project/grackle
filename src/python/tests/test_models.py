@@ -8,16 +8,14 @@ from numpy.testing import assert_allclose
 from pygrackle.utilities.model_tests import model_sets
 from pygrackle.utilities.testing import \
     dirname, \
+    ensure_dir, \
+    generate_model_results, \
+    python_example_dir, \
     run_command, \
-    temporary_directory
+    temporary_directory, \
+    test_answers_dir
 
-grackle_install_dir = dirname(os.path.abspath(__file__), level=4)
-grackle_python_dir = os.path.join(grackle_install_dir, "src", "python")
-python_example_dir = os.path.join(grackle_python_dir, "examples")
-test_answers_dir = os.path.join(grackle_python_dir, "tests", "example_answers")
-
-generate_results = \
-  int(os.environ.get("GENERATE_MODEL_TEST_RESULTS", 0)) == 1
+ensure_dir(test_answers_dir)
 
 all_sets = []
 for model_name, model in model_sets.items():
@@ -36,7 +34,7 @@ def test_model(model_name, par_index, input_index):
         output_file = f"{model_name}_{par_index}_{input_index}.h5"
         answer_path = os.path.join(test_answers_dir, output_file)
 
-        if generate_results:
+        if generate_model_results:
             os.rename(output_file, answer_path)
         else:
             assert os.path.exists(answer_path)
