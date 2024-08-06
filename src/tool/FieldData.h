@@ -22,6 +22,8 @@ void destroy_selfcontained_field_data(grackle_field_data* my_fields);
 
 } // impl namespace
 
+void clone_field_data(grackle_field_data* dest, grackle_field_data* src);
+
 /// @brief wraps grackle_field_data and all underlying allocations
 ///
 /// In many simulation codes, a ``grackle_field_data`` instance doesn't own the
@@ -57,6 +59,12 @@ public:
     return {grackle_fields_->grid_dimension[0],
             grackle_fields_->grid_dimension[1],
             grackle_fields_->grid_dimension[2]};
+  }
+
+  std::size_t grid_size() const {
+    return (std::size_t(grackle_fields_->grid_dimension[0])*
+            std::size_t(grackle_fields_->grid_dimension[1])*
+            std::size_t(grackle_fields_->grid_dimension[2]));
   }
 
   grackle_field_data* get_ptr() noexcept {return grackle_fields_; }
