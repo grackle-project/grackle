@@ -34,6 +34,7 @@ if "GENERATE_MODEL_TEST_RESULTS" in os.environ:
     generate_model_results = \
       os.environ["GENERATE_MODEL_TEST_RESULTS"]
 
+local_function_test_format_version = 1
 model_test_format_version = 1
 
 def assert_rel_equal(a1, a2, decimals, err_msg='', verbose=True):

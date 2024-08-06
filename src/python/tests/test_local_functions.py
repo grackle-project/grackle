@@ -32,10 +32,10 @@ from pygrackle.utilities.testing import \
     ensure_dir, \
     generate_local_function_results, \
     grackle_data_dir, \
+    local_function_test_format_version, \
     test_answers_dir
 
-_format_version = "1"
-_meta_data = {"format_version": _format_version}
+_meta_data = {"format_version": local_function_test_format_version}
 
 ensure_dir(test_answers_dir)
 
