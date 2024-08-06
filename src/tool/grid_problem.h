@@ -1,3 +1,6 @@
+#ifndef GRID_PROBLEM_H
+#define GRID_PROBLEM_H
+
 #include <optional>
 #include <regex>
 #include <string>
@@ -124,3 +127,4 @@ grackle_field_data* initialize_grid(chemistry_data* my_chemistry,
 //  return {};
 //}
 
+#endif /* GRID_PROBLEM_H */

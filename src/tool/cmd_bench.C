@@ -15,6 +15,7 @@
 
 #include "CliParser.h"
 #include "cmd_bench.h"
+#include "executor.h"
 #include "grid_problem.h"
 #include "handle_gr_parameters.h"
 #include "utils.h"
