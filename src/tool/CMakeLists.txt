@@ -6,6 +6,7 @@ add_executable(grtool
   cmd_bench.h cmd_bench.C
   cmd_show.h cmd_show.C
   handle_gr_parameters.h handle_gr_parameters.C
+  grid_problem.h grid_problem.C
   main.C
   utils.h utils.C
   view.h

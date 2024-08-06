@@ -24,11 +24,17 @@
 [[noreturn]] void cmd::bench::run(CliParser& parser)
 {
   std::optional<CliParamSpec> gr_param_spec;
+  scenario::CliGridSpec grid_spec;
 
   const char* ptr;
   while ((ptr = parser.next()) != nullptr) {
+    std::string_view arg(ptr);
     try_parse_help(ptr, parser.bin_name());
-    if (try_parse_cli_paramspec(ptr, parser, gr_param_spec)) continue;
+    if (try_parse_cli_paramspec(ptr, parser, gr_param_spec)) {
+      continue;
+    } else if (try_parse_cli_grid_component(ptr, grid_spec)) {
+      continue;
+    } 
     err_unrecognized_arg(ptr);
   }
 
