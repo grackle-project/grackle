@@ -20,6 +20,7 @@ from pygrackle import \
     set_cosmology_units
 
 from pygrackle.utilities.testing import \
+    grackle_data_dir, \
     random_logscale, \
     assert_rel_equal, \
     assert_array_less
@@ -30,10 +31,7 @@ def test_proper_comoving_units():
     Make sure proper and comoving units systems give the same answer.
     """
 
-    grackle_dir = os.path.dirname(os.path.dirname(os.path.dirname(
-        os.path.dirname(os.path.abspath(__file__)))))
-    data_file_path = bytearray(os.sep.join(
-        [grackle_dir, "input", "CloudyData_UVB=HM2012.h5"]), 'utf-8')
+    data_file_path = os.path.join(grackle_data_dir, "CloudyData_UVB=HM2012.h5")
 
     my_random_state = np.random.RandomState(7921)
     for current_redshift in [0., 1., 3., 6., 9.]:
@@ -46,10 +44,12 @@ def test_proper_comoving_units():
         chem_c.metal_cooling = 1
         chem_c.UVbackground = 1
         chem_c.grackle_data_file = data_file_path
+        metal_fraction = 0.1 * chem_c.SolarMetalFractionByMass
         set_cosmology_units(chem_c,
                             current_redshift=current_redshift,
                             initial_redshift=99.)
-        fc_c = setup_fluid_container(chem_c, converge=True)
+        fc_c = setup_fluid_container(chem_c, converge=True,
+                                     metal_mass_fraction=metal_fraction)
         fc_c.calculate_temperature()
         fc_c.calculate_cooling_time()
         t_sort_c = np.argsort(fc_c["temperature"])
@@ -75,7 +75,8 @@ def test_proper_comoving_units():
         chem_p.time_units = random_logscale(-2, 2, random_state=my_random_state)[0] * \
             chem_c.time_units
         chem_p.velocity_units = chem_p.length_units / chem_p.time_units
-        fc_p = setup_fluid_container(chem_p, converge=True)
+        fc_p = setup_fluid_container(chem_p, converge=True,
+                                     metal_mass_fraction=metal_fraction)
         fc_p.calculate_temperature()
         fc_p.calculate_cooling_time()
         t_sort_p = np.argsort(fc_p["temperature"])
@@ -97,10 +98,7 @@ def test_proper_comoving_units_tabular():
     answer with tabular cooling.
     """
 
-    grackle_dir = os.path.dirname(os.path.dirname(os.path.dirname(
-        os.path.dirname(os.path.abspath(__file__)))))
-    data_file_path = bytearray(os.sep.join(
-        [grackle_dir, "input", "CloudyData_UVB=HM2012.h5"]), 'utf-8')
+    data_file_path = os.path.join(grackle_data_dir, "CloudyData_UVB=HM2012.h5")
 
     my_random_state = np.random.RandomState(19650909)
     for current_redshift in [0., 1., 3., 6., 9.]:
@@ -163,10 +161,7 @@ def test_proper_units():
     Make sure two different proper units systems give the same answer.
     """
 
-    grackle_dir = os.path.dirname(os.path.dirname(os.path.dirname(
-        os.path.dirname(os.path.abspath(__file__)))))
-    data_file_path = bytearray(os.sep.join(
-        [grackle_dir, "input", "CloudyData_UVB=HM2012.h5"]), 'utf-8')
+    data_file_path = os.path.join(grackle_data_dir, "CloudyData_UVB=HM2012.h5")
 
     my_random_state = np.random.RandomState(20150725)
     for current_redshift in [0., 1., 3.]:
@@ -229,10 +224,7 @@ def test_tabulated_mmw_metal_dependence():
     mean molecular weight, when run in tabulated mode.
     """
 
-    grackle_dir = os.path.dirname(os.path.dirname(os.path.dirname(
-        os.path.dirname(os.path.abspath(__file__)))))
-    data_file_path = bytearray(os.sep.join(
-        [grackle_dir, "input", "CloudyData_UVB=HM2012.h5"]), 'utf-8')
+    data_file_path = os.path.join(grackle_data_dir, "CloudyData_UVB=HM2012.h5")
 
     my_random_state = np.random.RandomState(723466)
     density_units = random_logscale(-28, -26, random_state=my_random_state)[0]
