@@ -1,13 +1,17 @@
 #ifndef TOOL_GR_PARAMETERS_H
 #define TOOL_GR_PARAMETERS_H
 
+#include <memory>
+#include <optional>
 #include <string_view>
 #include <string>
+#include <utility>
 #include <variant>
 
 #include "grackle.h"
 
 #include "ChemistryData.h"
+#include "CliParser.h"
 #include "utils.h"
 
 
@@ -50,7 +54,7 @@ public:
   /// arguments (std::string_view key, value_variant value)
   template<class PairFn>
   void for_each(PairFn f) const {
-    for(const char* const* ptr = this->begin + 1; ptr != end; ++ptr) {
+    for(const char* const* ptr = this->begin; ptr != end; ++ptr) {
       KVPair kv_pair = this->parse_param_(*ptr);
       f(kv_pair.key, kv_pair.val);
     }
@@ -58,109 +62,84 @@ public:
 
 };
 
-#define LEADING_PARAM_ARG "--par-start"
 
-inline bool check_start_cli_paramspec(const char* arg) {
-  return std::string_view(LEADING_PARAM_ARG) == arg;
+/// Checks whether the specified arg(s) correspond to a CliParamSpec:
+///
+/// * If so, this will parse the arguments and update the param_spec
+///   argument. This function will return true
+///
+/// * Otherwise, this returns false
+inline bool try_parse_cli_paramspec(const char* leading_arg,
+                                    CliParser& parser,
+                                    std::optional<CliParamSpec>& param_spec) {
+  if (std::string_view(leading_arg) != "--par-start") {
+    return false;
+  } else if (param_spec.has_value()) {
+    std::fprintf(stderr, "%s isn't allowed to be provided more than once\n",
+                 leading_arg);
+    std::exit(1);
+  }
+
+  const std::string_view sentinel("--par-stop");
+  if ((not parser.has_next()) || (parser.peek() == sentinel)) {
+    fprintf(stderr, "the \"%s\" flag doesn't start a group of parameters\n",
+            leading_arg);
+    std::exit(1);
+
+  } else {
+    char * const * begin = parser.next_argv_ptr();
+    char * const * latest = begin;
+    while (sentinel != *latest) {
+      if (!parser.has_next()) {
+        latest++;
+        break;
+      }
+      latest = parser.next_argv_ptr();
+    }
+
+    CliParamSpec tmp{begin, latest};
+    param_spec = std::make_optional<CliParamSpec>(std::move(tmp));
+    return true;
+  }
 }
 
-inline CliParamSpec parse_cli_paramspec(const char* const* begin,
-                                        const char* const* end){
-  GRCLI_REQUIRE(check_start_cli_paramspec(*begin),
-                "The first argument must be \"%s\"", LEADING_PARAM_ARG);
+/// Class that holds the full configuration of the Grackle-Solver
+class FullGrackleSolverPack {
+  ChemistryData parameters_;
+  std::unique_ptr<chemistry_data_storage> rates_;
+  code_units initial_units_;
 
-  const char* const* tmp = begin;
-  while(true){
-    tmp++;
+public:
+  FullGrackleSolverPack() = delete;
 
-    if ((tmp == end) || (std::string_view("--par-stop") == *tmp)) {
-      if (tmp == (begin + 1)){
-        fprintf(stderr, "the \"%s\" flag doesn't start a group of parameters\n",
-                LEADING_PARAM_ARG);
-        std::exit(1);
-      }
-      return {begin, tmp};
+  FullGrackleSolverPack(ChemistryData&& parameters, code_units initial_units)
+    : parameters_(std::move(parameters)),
+      rates_(new chemistry_data_storage),
+      initial_units_(initial_units)
+  {
+    if (local_initialize_chemistry_data(parameters_.get_ptr(), rates_.get(),
+                                        &initial_units_) == GR_FAIL) {
+      GRCLI_ERROR("Error in local_initialize_chemistry_data");
     }
   }
 
-}
-
-
-inline const char* fetch_gr_parameter_type(std::string_view key) {
-  using F = const char*(unsigned int);
-  F* fn_list[3] = {param_name_int, param_name_double, param_name_string};
-  const char* type_list[3] = {"int", "double", "string"};
-
-  for (int i = 0; i < 3; i++) {
-    F* fn = fn_list[i];
-    const char* type_name = type_list[i];
-    unsigned int num_pars = grackle_num_params(type_name);
-
-    for (unsigned int j = 0; j < num_pars; j++) {
-      if (fn(j) == key) return type_name;
-    }
+  ~FullGrackleSolverPack() {
+    local_free_chemistry_data(parameters_.get_ptr(), rates_.get());
   }
-  return nullptr;
-}
 
-// the plan would be to eventually support a hybrid approach (e.g. we could use
-// CliParamSpec and dumped parameters
-inline void init_gr_params(const CliParamSpec& param_spec,
-                           ChemistryData& my_chem)
-{
-  /*
-  auto fn = [](std::string_view key, value_variant value) {
-    std::string key_str(key.data(), key.size());
-    if (std::holds_alternative<int>(value)) {
-      std::printf("-> %s: %d (INTEGER)\n", key_str.c_str(), std::get<int>(value));
-    } else if (std::holds_alternative<double>(value)) {
-      std::printf("-> %s: %g (DOUBLE)\n", key_str.c_str(), std::get<double>(value));
-    } else if (std::holds_alternative<std::string>(value)) {
-      std::printf("-> %s: '%s' (STRING)\n", key_str.c_str(),
-                  std::get<std::string>(value).c_str());
-    } else {
-      GRCLI_ERROR("SOMETHING IS VERY_WRONG!!!!");
-    }
-  };
-  */
+  chemistry_data* chemistry_data() { return parameters_.get_ptr(); }
 
+  chemistry_data_storage* chemistry_storage() { return rates_.get(); }
 
-  auto fn = [&my_chem](std::string_view key, value_variant value) {
-    std::string key_str(key.data(), key.size());
-    bool success;
-    const char* specified_type = nullptr;
-    if (std::holds_alternative<int>(value)) {
-      success = my_chem.try_set(key_str, std::get<int>(value));
-      specified_type = "int";
-    } else if (std::holds_alternative<double>(value)) {
-      success = my_chem.try_set(key_str, std::get<double>(value));
-      specified_type = "double";
-    } else if (std::holds_alternative<std::string>(value)) {
-      success = my_chem.try_set(key_str, std::get<std::string>(value));
-      specified_type = "string";
-    } else {
-      GRCLI_ERROR("Something is very wrong! Encountered unknown type");
-    }
+  code_units initial_units() { return initial_units_; }
+};
 
-
-    if (!success) {
-      const char* expected_type = fetch_gr_parameter_type(key);
-      if (expected_type == nullptr) {
-        std::fprintf(stderr, "\"%s\" is not a known grackle parameter\n",
-                    key_str.c_str());
-      } else {
-        std::fprintf(stderr, 
-            "the \"%s\" grackle parameter was specified with \"%s\" value. "
-            "The value should be of type \"%s\"\n",
-            key_str.c_str(), specified_type, expected_type);
-      }
-      std::exit(1);
-    }
-  };
-
-  param_spec.for_each(fn);
-
-}
+/// Fully initialize all parts of the grackle solver
+///
+/// @note
+/// Realistically, this may need to be refactored if we tack-on more features
+FullGrackleSolverPack create_full_grackle_solver(
+  std::optional<CliParamSpec> maybe_parameter_spec);
 
 
 #endif /* TOOL_GR_PARAMETERS_H */

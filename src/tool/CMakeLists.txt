@@ -1,10 +1,13 @@
 
 add_executable(grtool
   ChemistryData.h
+  CliParser.h
+  FieldData.h FieldData.C
+  cmd_bench.h cmd_bench.C
+  cmd_show.h cmd_show.C
+  handle_gr_parameters.h handle_gr_parameters.C
   main.C
-  FieldData.C FieldData.h
-  handle_gr_parameters.C handle_gr_parameters.h
-  utils.C utils.h
+  utils.h utils.C
   view.h
 )
 

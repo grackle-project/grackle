@@ -136,3 +136,88 @@ CliParamSpec::KVPair CliParamSpec::parse_param_(std::string_view token){
 
   return {key, value};
 }
+
+static const char* fetch_gr_parameter_type(std::string_view key) {
+  using F = const char*(unsigned int);
+  F* fn_list[3] = {param_name_int, param_name_double, param_name_string};
+  const char* type_list[3] = {"int", "double", "string"};
+
+  for (int i = 0; i < 3; i++) {
+    F* fn = fn_list[i];
+    const char* type_name = type_list[i];
+    unsigned int num_pars = grackle_num_params(type_name);
+
+    for (unsigned int j = 0; j < num_pars; j++) {
+      if (fn(j) == key) return type_name;
+    }
+  }
+  return nullptr;
+}
+
+// the plan would be to eventually support a hybrid approach (e.g. we could use
+// CliParamSpec and dumped parameters
+static void init_gr_params_(const CliParamSpec& param_spec,
+                            ChemistryData& my_chem)
+{
+
+  auto fn = [&my_chem](std::string_view key, value_variant value) {
+    std::string key_str(key.data(), key.size());
+    bool success;
+    const char* specified_type = nullptr;
+    if (std::holds_alternative<int>(value)) {
+      success = my_chem.try_set(key_str, std::get<int>(value));
+      specified_type = "int";
+    } else if (std::holds_alternative<double>(value)) {
+      success = my_chem.try_set(key_str, std::get<double>(value));
+      specified_type = "double";
+    } else if (std::holds_alternative<std::string>(value)) {
+      success = my_chem.try_set(key_str, std::get<std::string>(value));
+      specified_type = "string";
+    } else {
+      GRCLI_ERROR("Something is very wrong! Encountered unknown type");
+    }
+
+
+    if (!success) {
+      const char* expected_type = fetch_gr_parameter_type(key);
+      if (expected_type == nullptr) {
+        std::fprintf(stderr, "\"%s\" is not a known grackle parameter\n",
+                    key_str.c_str());
+      } else {
+        std::fprintf(stderr, 
+            "the \"%s\" grackle parameter was specified with \"%s\" value. "
+            "The value should be of type \"%s\"\n",
+            key_str.c_str(), specified_type, expected_type);
+      }
+      std::exit(1);
+    }
+  };
+
+  param_spec.for_each(fn);
+
+}
+
+FullGrackleSolverPack create_full_grackle_solver(
+  std::optional<CliParamSpec> maybe_parameter_spec)
+{
+  // it may be beneficial to introduce the idea of presets to avoid needing to
+  // initialize parameters like use_grackle
+
+  ChemistryData my_chem;
+  if (maybe_parameter_spec.has_value()) {
+    init_gr_params_(maybe_parameter_spec.value(), my_chem);
+  }
+
+  // in the future, we will support customization of units!
+  double initial_redshift = 1.0;
+  code_units my_units;
+  my_units.comoving_coordinates = 0; // 1 if cosmological sim, 0 if not
+  my_units.density_units = 1.67e-24;
+  my_units.length_units = 3.0857e18; // ~ 1 parsec
+  my_units.time_units = 3.15e13; // ~ 1 Myr
+  my_units.a_units = 1.0; // units for the expansion factor
+  // Set expansion factor to 1 for non-cosmological simulation.
+  my_units.a_value = 1. / (1. + initial_redshift) / my_units.a_units;
+
+  return FullGrackleSolverPack(std::move(my_chem), my_units);
+}
