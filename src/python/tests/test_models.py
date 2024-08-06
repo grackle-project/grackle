@@ -40,6 +40,7 @@ def test_model(model_name, par_index, input_index):
 
             ds1 = yt.load(output_file)
             ds2 = yt.load(answer_path)
+            ds1.parameters["format_version"] == ds2.parameters["format_version"]
             assert ds1.field_list == ds2.field_list
 
             for field in ds1.field_list:

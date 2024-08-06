@@ -29,12 +29,11 @@ from pygrackle.utilities.physical_constants import \
     sec_per_Myr, \
     cm_per_mpc
 from pygrackle.utilities.testing import \
-    dirname
+    grackle_data_dir, \
+    model_test_format_version
 from pygrackle.utilities.model_tests import \
     get_model_set
 
-grackle_install_dir = dirname(os.path.abspath(__file__), level=4)
-grackle_data_dir = os.path.join(grackle_install_dir, "input")
 output_name = os.path.basename(__file__[:-3]) # strip off ".py"
 
 if __name__ == "__main__":
@@ -49,11 +48,14 @@ if __name__ == "__main__":
         for var, val in input_set.items():
             globals()[var] = val
         output_name = f"{output_name}_{par_index}_{input_index}"
+        extra_attrs = {"format_version": model_test_format_version}
 
     # Just run the script as is.
     else:
         metallicity = 0.1 # Solar
         redshift = 0.
+        # dictionary to store extra information in output dataset
+        extra_attrs = {}
 
         my_chemistry = chemistry_data()
         my_chemistry.use_grackle = 1
@@ -108,4 +110,5 @@ if __name__ == "__main__":
     pyplot.savefig(f"{output_name}.png")
 
     # save data arrays as a yt dataset
-    yt.save_as_dataset({}, f"{output_name}.h5", data=data)
+    yt.save_as_dataset({}, f"{output_name}.h5",
+                       data=data, extra_attrs=extra_attrs)

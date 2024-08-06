@@ -34,6 +34,8 @@ if "GENERATE_MODEL_TEST_RESULTS" in os.environ:
     generate_model_results = \
       os.environ["GENERATE_MODEL_TEST_RESULTS"]
 
+model_test_format_version = 1
+
 def assert_rel_equal(a1, a2, decimals, err_msg='', verbose=True):
     if isinstance(a1, np.ndarray):
         assert(a1.size == a2.size)

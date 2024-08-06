@@ -15,10 +15,7 @@ import itertools
 import os
 
 from pygrackle import chemistry_data
-from pygrackle.utilities.testing import dirname
-
-grackle_install_dir = dirname(os.path.abspath(__file__), level=5)
-grackle_data_dir = os.path.join(grackle_install_dir, "input")
+from pygrackle.utilities.testing import grackle_data_dir
 
 # These are generally applicable to all scripts.
 _parameter_exclude = (

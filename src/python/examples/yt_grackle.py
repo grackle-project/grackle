@@ -17,10 +17,9 @@ import yt
 
 from pygrackle import add_grackle_fields
 from pygrackle.utilities.testing import \
-    dirname
+    grackle_data_dir, \
+    model_test_format_version
 
-grackle_install_dir = dirname(os.path.abspath(__file__), level=4)
-grackle_data_dir = os.path.join(grackle_install_dir, "input")
 output_name = os.path.basename(__file__[:-3]) # strip off ".py"
 
 DS_NAME = "IsolatedGalaxy/galaxy0030/galaxy0030"
@@ -38,6 +37,12 @@ if __name__ == "__main__":
         par_index = int(sys.argv[1])
         input_index = int(sys.argv[2])
         output_name = f"{output_name}_{par_index}_{input_index}"
+        extra_attrs = {"format_version": model_test_format_version}
+
+    # Just run the script as is.
+    else:
+        # dictionary to store extra information in output dataset
+        extra_attrs = {}
 
     ds = yt.load(ds_path)
 
@@ -64,4 +69,4 @@ if __name__ == "__main__":
 
     data = {field: sp[field] for field in fields}
     yt.save_as_dataset(ds, filename=f"{output_name}.h5",
-                       data=data)
+                       data=data, extra_attrs=extra_attrs)
