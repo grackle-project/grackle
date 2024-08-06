@@ -1,17 +1,166 @@
 #include <array>
+#include <cstdio>  // std::fprintf, stderr
+#include <cstdlib> // std::exit
+#include <regex>
+#include <utility> // std::pair
 
-#include <view.h>
+#include "FieldData.h"
 #include "grid_problem.h"
+#include "view.h"
+
+//-------------------------------------------------------------------
+
+/// helper function that tries to parse a sequence
+///
+/// @returns The const char* component is a nullptr if there aren't any issues.
+///   Otherwise, it specifies an error message.
+static std::pair<seq_variant, const char*> parse_seq_(std::string s) {
+
+  // create a dummy value to return if there are any issues
+  seq_variant dummy_seq{valseq::Single(-1.0)};
+
+  const std::regex flt_regex("^" FLT_PATTERN "$");
+
+  if (std::regex_match(s, flt_regex)) {
+    double val = std::stod(s);
+    seq_variant seq{valseq::Single(val)};
+    return { seq, nullptr };
+
+  } else if (starts_with(s, "geomspace")) { // "geomspace;lo;hi;num"
+    const char* pattern = (
+        "^([a-zA-Z]+);(" FLT_PATTERN ");(" FLT_PATTERN ");([-+]?\\d+)$");
+    std::regex geomspace_regex(pattern);
+    std::smatch match;
+    if (std::regex_match(s, match, geomspace_regex)) {
+      // match 0 is full string
+      // match 1 is "geomspace"
+
+      // match 2 is the lo string
+      double lo = std::stod(match[2].str());
+      // matches 3-5 are ALWAYS various parts of float (even if we the string
+      // doesn't have characters that match every subgroup)
+
+      // match 6 is the hi string
+      double hi = std::stod(match[6].str());
+      // matches 7-9 are ALWAYS various parts of a float
+
+      // match 10 is always the number of entries
+      int num = std::stoi(match[10].str());
+      //printf("geomspace;%g;%g;%d\n", lo,hi,num);
+      seq_variant seq{valseq::Geomspace(lo,hi,num)};
+      return {seq, nullptr};
+    } else {
+      return {dummy_seq,
+              "gemospace must be formatted as geomspace;{lo};{hi};{num}"};
+    }
+  } else {
+    return {dummy_seq,
+            "sequence must be a lone value or a geomspace sequence"};
+  }
+}
+
+static const std::regex grid_ax_regex("^-Sgrid.ax([0-9]+)=([a-zA-Z_]+);(.*)$");
+
+static std::optional<scenario::QuantityKind> try_get_quantity_(std::string s) {
+  if (s == "temperature")  return {scenario::QuantityKind::temperature};
+  if (s == "mass_density") return {scenario::QuantityKind::mass_density};
+  if (s == "metallicity")  return {scenario::QuantityKind::metallicity};
+  return {};
+}
+
+
+bool scenario::try_parse_cli_grid_component(const char* arg,
+                                            scenario::CliGridSpec& grid_spec)
+{
+  using namespace scenario;
+
+  // if we ever add more scenario-kinds, we will use the following line
+  //    if (!starts_with("-Sgrid")) return false;
+  // in place of the next 2 if/elif cases
+  if (!starts_with(arg, "-S")) {
+    return false;
+  } else if (!starts_with(arg, "-Sgrid")) {
+    // if we ever add more scenario-kinds, 
+    std::fprintf(
+        stderr,
+        "the argument %s specifies an argument belonging to an unknown "
+        "kind of scenario. At this time, \"grid\" is the only known "
+        "scenario kind",
+        arg);
+    std::exit(1);
+  }
+
+  // here we move onto actual parsing
+  std::string_view ax_prefix("-Sgrid.ax");
+  if (starts_with(arg, ax_prefix)) {
+    std::string arg_str(arg);
+    std::smatch match;
+    if (std::regex_match(arg_str, match, grid_ax_regex)) {
+      // match 0 is the full match
+
+      // match 1 is the axis digit
+      int axis_index = std::stoi(match[1].str());
+      if ((axis_index < 0) || (axis_index > 2)) {
+        std::fprintf(stderr,
+                     "Error parsing `%s`. It must provide ax0, ax1, or ax2.\n",
+                     arg);
+        std::exit(1);
+      } else if (grid_spec.ax_props[axis_index].has_value()) {
+        std::fprintf(stderr,
+                     "`%s` is the second argument to specify -Sgrid.ax%d\n",
+                     arg, axis_index);
+        std::exit(1);
+      }
+
+      // match 2 is the quantity-name
+      std::optional<QuantityKind> quantity = try_get_quantity_(match[2].str());
+      if (!quantity.has_value()) {
+        std::fprintf(stderr,
+                     "Error parsing `%s`. Invalid quantity name.\n", arg);
+        std::exit(1);
+      }
+
+      // match 3 is the full sequence string
+      std::string seq_str = match[3].str();
+      std::pair<seq_variant, const char*> seq_rslt = parse_seq_(seq_str);
+      if (seq_rslt.second != nullptr) {
+        std::fprintf(stderr,
+                     "Error parsing the sequence part of `%s`, or `%s`. %s\n",
+                     arg, seq_str.c_str(), seq_rslt.second);
+        std::exit(1);
+      }
+
+      AxisSpec ax_spec{quantity.value(), seq_rslt.first};
+      grid_spec.ax_props[axis_index] = std::optional<AxisSpec>{ax_spec};
+
+    } else {
+      fprintf(
+          stderr,
+          "The argument `%s` is invalid. It looks like it should have the "
+          "form `-Sgrid.ax<I>=<quantity>;<seq>`\n",
+          arg);
+      std::exit(1);
+    }
+  }
+
+  // if we make it this far, then we have successfully parsed everything
+  grid_spec.any_specified = true;
+  return true;
+}
+
+
+//-------------------------------------------------------------------
+// from here on out, we implement logic for actually setting up a grid
 
 // the following should come from inside grackle
 #define MU_METAL 16
 
-static std::array<int,3> get_shape_(const GridScenarioSpec& scenario) {
+static std::array<int,3> get_shape_(const scenario::CliGridSpec& scenario) {
   std::array<int, 3> shape;
   for (int i = 0; i < 3; i++) {
     if (scenario.ax_props[i].has_value()) {
       shape[i] = std::visit([](auto&& seq)->int { return seq.num; },
-                            scenario.ax_props[i].has_value());
+                            scenario.ax_props[i].value().seq);
     } else {
       shape[i] = 1;
     }
@@ -19,11 +168,10 @@ static std::array<int,3> get_shape_(const GridScenarioSpec& scenario) {
   return shape;
 }
 
-
-static void initialize_View_from_ax_props_(View<gr_float> view,
-                                           QuantityKind quantity,
-                                           const GridScenarioSpec& scenario,
-                                           double SolarMetalFractionByMass)
+/*
+static void initialize_View_from_ax_props_(
+    View<gr_float> view, scenario::QuantityKind quantity,
+    const scenario::CliGridSpec& scenario, double SolarMetalFractionByMass)
 {
   bool complete = false;
   for (int ax_ind = 0; ax_ind < 3; ax_ind++ ) {
@@ -35,7 +183,7 @@ static void initialize_View_from_ax_props_(View<gr_float> view,
       GRCLI_ERROR("a quantity was specifed for more than 1 axis");
     }
     
-    double factor = (quantity != QuantityKind::metallicity)
+    double factor = (quantity != scenario::QuantityKind::metallicity)
                     ? SolarMetalFractionByMass : 1.0; 
 
 
@@ -171,9 +319,12 @@ void initialize_grid_(View<gr_float> target_temperature,
 
 }
 
-grackle_field_data* initialize_grid(const chemistry_data& my_chem,
-                                    const code_units& initial_units,
-                                    const GridScenarioSpec& scenario) {
+grackle_field_data* scenario::initialize_grid(
+    const chemistry_data& my_chem,
+    const code_units& initial_units,
+    const scenario::GridSpec& scenario
+) {
+
   // we will simply assume that my_chem is already initialized!
 
   // some basic checks!
@@ -197,18 +348,21 @@ grackle_field_data* initialize_grid(const chemistry_data& my_chem,
   std::vector<gr_float> temperature_vec(size);
   View<gr_float> temperature(temperature_vec.data(), shape,
                              ContiguousLayout::Fortran)
-  initialize_View_from_ax_props_(temperature, QuantityKind::temperature,
+  initialize_View_from_ax_props_(temperature,
+                                 scenario::QuantityKind::temperature,
                                  scenario, my_chem.SolarMetalFractionByMass);
 
   std::vector<gr_float> density_vec(size);
   View<gr_float> density(density_vec.data(), shape, ContiguousLayout::Fortran); 
-  initialize_View_from_ax_props_(density, QuantityKind::mass_density,
+  initialize_View_from_ax_props_(density,
+                                 scenario::QuantityKind::mass_density,
                                  scenario, my_chem.SolarMetalFractionByMass);
 
   std::vector<gr_float> metal_density_vec(size);
   View<gr_float> metal_density(metal_density_vec.data(), shape,
                                ContiguousLayout::Fortran); 
-  initialize_View_from_ax_props_(metal_density, QuantityKind::metal_density,
+  initialize_View_from_ax_props_(metal_density,
+                                 scenario::QuantityKind::metal_density,
                                  scenario, my_chem.SolarMetalFractionByMass);
 
 
@@ -219,7 +373,6 @@ grackle_field_data* initialize_grid(const chemistry_data& my_chem,
   gr_float* metal_density = new gr_float[size];
 
 
-
-
+  return nullptr;
 }
-
+*/
