@@ -42,7 +42,26 @@
     err_unrecognized_arg(ptr);
   }
 
+
+  // move onto the actual work:
+
+  if (!op_spec.has_value()) {
+    std::fprintf(stderr, "The operation wasn't specified");
+    std::exit(1);
+  }
+
+  // initialize the full grackle solver
   FullGrackleSolverPack pack = create_full_grackle_solver(gr_param_spec);
+
+  // initialize the field data
+  if (!grid_spec.any_specified) {
+    std::fprintf(stderr, "The scenario wasn't specified");
+    std::exit(1);
+  }
+  FieldData fields = scenario::initialize_grid(*pack.chemistry_data(),
+                                               pack.initial_units(),
+                                               grid_spec);
+
 
   GRCLI_ERROR("NOT FINISHED IMPLEMENTING SUBCOMMAND YET");
   std::exit(1);

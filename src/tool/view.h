@@ -67,12 +67,12 @@ public:
   }
 
   int stride(int i) const {
-    GRCLI_ERROR(i >= 0 && i <= 2, "i must be 0, 1, or 2");
+    GRCLI_REQUIRE(i >= 0 && i <= 2, "i must be 0, 1, or 2");
     return strides_[i];
   }
 
   int extent(int i) const {
-    GRCLI_ERROR(i >= 0 && i <= 2, "i must be 0, 1, or 2");
+    GRCLI_REQUIRE(i >= 0 && i <= 2, "i must be 0, 1, or 2");
     return shape_[i];
   }
 

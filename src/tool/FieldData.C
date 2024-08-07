@@ -108,7 +108,7 @@ static const std::map<std::string,
   #undef ENTRY
 };
 
-void destroy_selfcontained_field_data(grackle_field_data* my_fields) {
+void impl::destroy_selfcontained_field_data(grackle_field_data* my_fields) {
   delete[] my_fields->grid_dimension;
   delete[] my_fields->grid_start;
   delete[] my_fields->grid_end;
