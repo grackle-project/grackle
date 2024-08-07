@@ -27,6 +27,8 @@ The easiest thing to do is follow the instructions for installing yt,
 which will provide you with Cython, matplotlib, and NumPy.  Flake8 and
 py.test can then be installed via pip.
 
+.. _install-pygrackle:
+
 Installing Pygrackle
 --------------------
 
