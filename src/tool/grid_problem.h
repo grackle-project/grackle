@@ -108,9 +108,9 @@ bool try_parse_cli_grid_component(const char* arg,
                                   CliGridSpec& grid_spec);
 
 
-grackle_field_data*  initialize_grid(const chemistry_data& my_chem,
-                                     const code_units& initial_units,
-                                     const CliGridSpec& scenario);
+FieldData initialize_grid(const chemistry_data& my_chem,
+                          const code_units& initial_units,
+                          const CliGridSpec& scenario);
 
 } // namespace scenario
 

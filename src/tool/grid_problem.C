@@ -168,7 +168,7 @@ static std::array<int,3> get_shape_(const scenario::CliGridSpec& scenario) {
   return shape;
 }
 
-/*
+
 static void initialize_View_from_ax_props_(
     View<gr_float> view, scenario::QuantityKind quantity,
     const scenario::CliGridSpec& scenario, double SolarMetalFractionByMass)
@@ -191,9 +191,9 @@ static void initialize_View_from_ax_props_(
     // templated on the kind of sequence
     auto fn = [ax_ind, factor, view](auto&& seq)-> void {
 
-      for (int k = 0; k < view.shape[2]; k++) {
-        for (int j = 0; j < view.shape[1]; j++) {
-          for (int i = 0; i < view.shape[0]; i++) {
+      for (int k = 0; k < view.extent(2); k++) {
+        for (int j = 0; j < view.extent(1); j++) {
+          for (int i = 0; i < view.extent(0); i++) {
             int seq_index = ((ax_ind == 0) * i + (ax_ind == 1) * j +
                              (ax_ind == 2) * k);
             view(i,j,k) = gr_float(seq.get(seq_index) * factor);
@@ -203,55 +203,58 @@ static void initialize_View_from_ax_props_(
 
     };
 
-    std::visit(fn, scenario.ax_props[i]->seq);
+    std::visit(fn, scenario.ax_props[ax_ind].value().seq);
     complete = true;
   }
 
   GRCLI_REQUIRE(complete, "Unable to finish initializing view");
 }
 
+static void initialize_grid_(View<gr_float> target_temperature,
+                             View<gr_float> target_density,
+                             View<gr_float> target_metal_density,
+                             FieldData& fields,
+                             const chemistry_data& my_chem,
+                             const code_units& initial_units) {
 
-void initialize_grid_(View<gr_float> target_temperature,
-                      View<gr_float> target_density,
-                      View<gr_float> target_metal_density,
-                      FieldData& fields,
-                      const chemistry_data& my_chem,
-                      const code_units& initial_units) {
-
-  View<gr_float> density       = field.view("density");
-  View<gr_float> eint          = field.view("internal_energy");
-  View<gr_float> metal_density = field.view("metal_density");
+  View<gr_float> density       = fields.view("density");
+  View<gr_float> eint          = fields.view("internal_energy");
+  View<gr_float> metal_density = fields.view("metal_density");
 
   // now we load in species fields
-  View<gr_float> HI_density    = field.view("HI_density");
-  View<gr_float> HII_density   = field.view("HII_density");
-  View<gr_float> HeI_density   = field.view("HeI_density");
-  View<gr_float> HeII_density  = field.view("HeII_density");
-  View<gr_float> HeIII_density = field.view("HeIII_density");
-  View<gr_float> e_density     = field.view("e_density");
+  View<gr_float> HI_density    = fields.view("HI_density");
+  View<gr_float> HII_density   = fields.view("HII_density");
+  View<gr_float> HeI_density   = fields.view("HeI_density");
+  View<gr_float> HeII_density  = fields.view("HeII_density");
+  View<gr_float> HeIII_density = fields.view("HeIII_density");
+  View<gr_float> e_density     = fields.view("e_density");
 
-  View<gr_float> HM_density   = field.view("HM_density");
-  View<gr_float> H2I_density  = field.view("H2I_density");
-  View<gr_float> H2II_density = field.view("H2II_density");
+  View<gr_float> HM_density   = fields.view("HM_density");
+  View<gr_float> H2I_density  = fields.view("H2I_density");
+  View<gr_float> H2II_density = fields.view("H2II_density");
 
-  View<gr_float> DI_density  = field.view("DI_density");
-  View<gr_float> DII_density = field.view("DII_density");
-  View<gr_float> HDI_density = field.view("HDI_density");
+  View<gr_float> DI_density  = fields.view("DI_density");
+  View<gr_float> DII_density = fields.view("DII_density");
+  View<gr_float> HDI_density = fields.view("HDI_density");
 
+  // we will use the nominal gamma everywhere (in the future, we can revisit
+  // this and and take a more self-consistent gamma when you have molecular
+  // Hydrogen)
+  double gm1 = (my_chem.Gamma - 1.0);
 
-  // get the conversion factor (make a copy my_units so we don't need to cast)
-  code_units tmp = initial_units;
-  double eint_to_Tdivmu_factor 
+  code_units tmp = initial_units; // make a copy to avoid a cast
+  double eint_to_Tdivmu_factor = gm1 * get_temperature_units(&tmp);
+  double Tdivmu_to_eint_factor = 1.0 / eint_to_Tdivmu_factor;
 
   const double tiny_number = 1e-10;
-  const std::array<int, 3> shape = field.grid_dimensions();
+  const std::array<int, 3> shape = fields.grid_dimensions();
   // this borrows a lot from the Enzo-E test-problem
 
   for (int k = 0; k < shape[2]; k++) {
     for (int j = 0; j < shape[1]; j++) {
       for (int i = 0; i < shape[0]; i++) {
 
-        double cur_density = nominal_density(i,j,k);
+        double cur_density = target_density(i,j,k);
         double cur_metal_density = target_metal_density(i,j,k);
 
         density(i,j,k) = cur_density;
@@ -260,6 +263,8 @@ void initialize_grid_(View<gr_float> target_temperature,
         if (my_chem.primordial_chemistry > 0){
           HI_density(i,j,k)    = cur_density * my_chem.HydrogenFractionByMass;
           HII_density(i,j,k)   = cur_density * tiny_number;
+          // not going to worry about it right now, but it may make sense to
+          // ignore contributions from metallicity
           HeI_density(i,j,k)   = cur_density * (1.0 - my_chem.HydrogenFractionByMass);
           HeII_density(i,j,k)  = cur_density * tiny_number;
           HeIII_density(i,j,k) = cur_density * tiny_number;
@@ -276,9 +281,8 @@ void initialize_grid_(View<gr_float> target_temperature,
           HDI_density(i,j,k)   = cur_density * tiny_number;
         }
 
-
-        // we may want to support customization in the future...
-
+        // this is a natural place for improvements in the future:
+        // -> 
         gr_float mu;
         if (my_chem.primordial_chemistry == 0) {
           mu = 0.6;
@@ -287,43 +291,37 @@ void initialize_grid_(View<gr_float> target_temperature,
           // neutral-atomic
 
           gr_float tmp = 
-            ( (e_density(iz,iy,ix) + HI_density(iz,iy,ix) +
-               HII_density(iz,iy,ix)) +
-              0.25 * (HeI_density(iz,iy,ix) + HeII_density(iz,iy,ix) +
-                      HeIII_density(iz,iy,ix) ) );
+            ( (e_density(i,j,k) + HI_density(i,j,k) + HII_density(i,j,k)) +
+              0.25 * (HeI_density(i,j,k) + HeII_density(i,j,k) +
+                      HeIII_density(i,j,k) ) );
 
           if (my_chem.primordial_chemistry > 1) {
-            tmp += HM_density(iz,iy,ix) + 0.5 * (H2I_density(iz,iy,ix) +
-                                                 H2II_density(iz,iy,ix));
+            tmp += HM_density(i,j,k) + 0.5 * (H2I_density(i,j,k) +
+                                              H2II_density(i,j,k));
           }
           if (my_chem.primordial_chemistry > 2) {
-            tmp += (0.5 * (DI_density(iz,iy,ix) + DII_density(iz,iy,ix))
-                    + HDI_density(iz,iy,ix)/3.0);
+            tmp += (0.5 * (DI_density(i,j,k) + DII_density(i,j,k))
+                    + HDI_density(i,j,k)/3.0);
           }
 
-          if (my_chem.metal_cooling == 1) {
-            tmp += cur_metal_density / MU_METAL;
-          }
+          if (my_chem.metal_cooling == 1) tmp += cur_metal_density / MU_METAL;
 
-          mu = density(iz,iy,ix) / tmp;
+          mu = density(i,j,k) / tmp;
         }
 
-        // we will use the nominal gamma
-        gr_float gm1 = (my_chem.Gamma - 1.0);
-
-        get_temperature_units(my_units)
-
+        // solve for eint from
+        eint(i,j,k) = gr_float(
+            Tdivmu_to_eint_factor * target_temperature(i,j,k) / mu);
       }
     }
   }
 
 }
 
-grackle_field_data* scenario::initialize_grid(
-    const chemistry_data& my_chem,
-    const code_units& initial_units,
-    const scenario::GridSpec& scenario
-) {
+FieldData scenario::initialize_grid(const chemistry_data& my_chem,
+                                    const code_units& initial_units,
+                                    const scenario::CliGridSpec& scenario)
+{
 
   // we will simply assume that my_chem is already initialized!
 
@@ -339,15 +337,15 @@ grackle_field_data* scenario::initialize_grid(
   std::array<int,3> shape = get_shape_(scenario);
   std::size_t size = shape[0] * shape[1] * shape[2];
 
-  grackle_field_data* fields = impl::allocate_and_init_gr_field_data
-    (my_chem, rank, shape.data());
+  // create the FieldData
+  FieldData fields(shape, my_chem);
 
   // we will now allocate arrays for each of the "axes" values
   // -> we could get a little more clever about this (we don't need a full 3D
   //    array for temperature)
   std::vector<gr_float> temperature_vec(size);
   View<gr_float> temperature(temperature_vec.data(), shape,
-                             ContiguousLayout::Fortran)
+                             ContiguousLayout::Fortran);
   initialize_View_from_ax_props_(temperature,
                                  scenario::QuantityKind::temperature,
                                  scenario, my_chem.SolarMetalFractionByMass);
@@ -362,17 +360,14 @@ grackle_field_data* scenario::initialize_grid(
   View<gr_float> metal_density(metal_density_vec.data(), shape,
                                ContiguousLayout::Fortran); 
   initialize_View_from_ax_props_(metal_density,
-                                 scenario::QuantityKind::metal_density,
+                                 scenario::QuantityKind::metallicity,
                                  scenario, my_chem.SolarMetalFractionByMass);
 
 
   GRCLI_REQUIRE(my_chem.metal_cooling == 1,
-                "we currently require metal cooling (can relax this in the
-                "future");
+      "we currently require metal cooling (can relax this in the future");
 
-  gr_float* metal_density = new gr_float[size];
-
-
-  return nullptr;
+  initialize_grid_(temperature, density, metal_density, fields,
+                   my_chem, initial_units);
+  return fields;
 }
-*/
