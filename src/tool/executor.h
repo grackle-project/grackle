@@ -6,6 +6,7 @@
 #include "grackle.h"
 
 #include "FieldData.h"
+#include "operation.h"
 
 #define GRCLI_BENCH_STATE BenchState
 
@@ -37,20 +38,6 @@ struct BenchState {
   iterator begin() {return iterator(0);}
   iterator end() { return iterator(1); }
 };
-
-enum struct OperationKind {
-  prop_cooling_time,
-  prop_dust_temperature,
-  prop_pressure,
-  prop_temperature,
-  solve_chemistry
-};
-
-struct OperationSpec {
-  OperationKind kind;
-  double dt;
-};
-
 
 class GrackleDriver {
 
@@ -90,16 +77,16 @@ class GrackleDriver {
       clone_field_data(copied_fields, wrapped_my_field_.get_ptr());
       state.ResumeTiming();
 
-      if constexpr (op == OperationKind::prop_cooling_time) {
+      if constexpr (op == OperationKind::calc_cooling_time) {
         local_calculate_cooling_time(my_chem, my_rates, my_units,
                                      copied_fields, out);
-      } else if constexpr (op == OperationKind::prop_dust_temperature) {
+      } else if constexpr (op == OperationKind::calc_dust_temperature) {
         local_calculate_dust_temperature(my_chem, my_rates, my_units,
                                          copied_fields, out);
-      } else if constexpr (op == OperationKind::prop_pressure) {
+      } else if constexpr (op == OperationKind::calc_pressure) {
         local_calculate_pressure(my_chem, my_rates, my_units,
                                  copied_fields, out);
-      } else if constexpr (op == OperationKind::prop_temperature) {
+      } else if constexpr (op == OperationKind::calc_temperature) {
         local_calculate_temperature(my_chem, my_rates, my_units,
                                     copied_fields, out);
       } else if constexpr (op == OperationKind::solve_chemistry) {
@@ -128,14 +115,14 @@ public:
 
   void operator()(GRCLI_BENCH_STATE& state) {
     switch(this->operation_.kind) {
-      case OperationKind::prop_cooling_time:
-        return helper_<OperationKind::prop_cooling_time>(state);
-      case OperationKind::prop_dust_temperature:
-        return helper_<OperationKind::prop_dust_temperature>(state);
-      case OperationKind::prop_pressure:
-        return helper_<OperationKind::prop_pressure>(state);
-      case OperationKind::prop_temperature:
-        return helper_<OperationKind::prop_temperature>(state);
+      case OperationKind::calc_cooling_time:
+        return helper_<OperationKind::calc_cooling_time>(state);
+      case OperationKind::calc_dust_temperature:
+        return helper_<OperationKind::calc_dust_temperature>(state);
+      case OperationKind::calc_pressure:
+        return helper_<OperationKind::calc_pressure>(state);
+      case OperationKind::calc_temperature:
+        return helper_<OperationKind::calc_temperature>(state);
       case OperationKind::solve_chemistry:
         return helper_<OperationKind::solve_chemistry>(state);
     }

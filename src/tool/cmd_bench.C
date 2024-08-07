@@ -18,6 +18,7 @@
 #include "executor.h"
 #include "grid_problem.h"
 #include "handle_gr_parameters.h"
+#include "operation.h"
 #include "utils.h"
 
 /// execute the bench command
@@ -25,6 +26,7 @@
 {
   std::optional<CliParamSpec> gr_param_spec;
   scenario::CliGridSpec grid_spec;
+  std::optional<OperationSpec> op_spec;
 
   const char* ptr;
   while ((ptr = parser.next()) != nullptr) {
@@ -34,7 +36,9 @@
       continue;
     } else if (try_parse_cli_grid_component(ptr, grid_spec)) {
       continue;
-    } 
+    } else if (try_parse_op_spec(ptr, op_spec)) {
+      continue;
+    }
     err_unrecognized_arg(ptr);
   }
 
