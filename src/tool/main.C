@@ -8,18 +8,31 @@
 #include "cmd_show.h"
 #include "utils.h"
 
+static void print_name_section_(FILE* f, const char* bin_name) {
+  std::fprintf(f,
+      R"HELP(NAME:
 
-static void print_usage_(FILE* f, const char* bin_name) {
+    %s  - A command line interface for benchmarking and debugging Grackle
+)HELP",
+      bin_name);
+}
+
+
+static void print_synopsis_section_(FILE* f, const char* bin_name) {
+  const char* pre_subcommand_opts = "[--version] [--precision] [-h | --help]";
+
   std::fprintf(f,
       R"HELP(
-USAGE:
+SYNOPSIS:
 
-    %s bench -S... PARAMETER_OPTIONS
-    %s show-version
-    %s show-precision
-    %s show-parameters PARAMETER_OPTIONS
+    %s %s bench -S... PARAMETER_OPTIONS -O...
+
+    %s %s show-parameters PARAMETER_OPTIONS
+
+    %s %s show-initial-units
 )HELP",
-      bin_name, bin_name, bin_name, bin_name);
+      bin_name, pre_subcommand_opts, bin_name, pre_subcommand_opts,
+      bin_name, pre_subcommand_opts);
 }
 
 static const char* help_message_ = R"HELP(
@@ -27,16 +40,24 @@ DESCRIPTION:
     A simple command-line tool intended for debugging and basic benchmarking of
     grackle.
 
+    We summarize the subcommands down below. Be note that the current
+    organization is experimental and is subject to change
 
-    The different modes are currently experimental:
-      -> bench sets up an example problem and tries to run a benchmark
-      -> show-parameters shows the parameters... (this may change a little in the future)
+      -> bench sets up an example problem and benchmarks it
+
+      -> show-parameters is intended to display the configured parameters.
+
+      -> show-initial-units is intended to display the initial units used
+         during configuration of the grackle-solver. In the future, we may add
+         support for customizing these units and using a different set of units
+         during Grackle operations
 
 OPTIONS:
     Some Flags are grouped into categories
 
-    -S
-        Prefix for all "scenario arguments".
+    -S...
+        Prefix for all "scenario arguments". The "scenario" is the algorithm
+        for initializing all grackle fields that are used in a "test-problem."
 
         At the moment, this might include
           * -Sgrid.ax<I>=<quantity>;<seq>
@@ -48,9 +69,25 @@ OPTIONS:
             values. In practice, this is either a lone floating-point value OR
             geomspace;<start>;<end>;<num>
 
-        
+    -O...
+        Prefix for all "operation arguments". Essentially, this denotes the
+        operation that is executed in a given "test-problem." Currently, you
+        can exclusively specify
+          * -Ocalc-cooling-time  Computes the cooling time
+          * -Ocalc-dust-temperature  Computes the dust-temperature
+          * -Ocalc-pressure  Computes the pressure
+          * -Ocalc-temperature  Computes the temperature
+          * -Osolve-chemistry-dt=<dt-value>  Solves chemistry for the specified
+            timestep (given in code-units).
+
     -h; --help
         Prints this message
+
+    --version
+        Prints the version of Grackle
+
+    --precision
+        Prints the floating-point precision selected while compiling Grackle
 
   PARAMETER OPTIONS
 
@@ -68,7 +105,16 @@ OPTIONS:
 /// when somebody passes an -h flag, a help message is the expected result, so
 /// we print to stdout (rather than stderr)
 void print_help(const char* bin_name) {
-  print_usage_(stdout, bin_name);
+
+  // adjust bin_name so that it only specifies the base name of the program
+  std::string_view bin_name_view(bin_name);
+  std::size_t pos = bin_name_view.rfind('/');
+  if ((pos != std::string_view::npos) && ((pos + 1) < bin_name_view.size())) {
+    bin_name = bin_name + (pos + 1);
+  }
+
+  print_name_section_(stdout, bin_name);
+  print_synopsis_section_(stdout, bin_name);
   std::printf("%s", help_message_);
 }
 
@@ -90,9 +136,11 @@ int main(int argc, char* argv[]) {
     cmd::bench::run(parser);
   } else if (subcommand == "show-parameters") {
     cmd::show::run(parser, cmd::show::Kind::parameters);
-  } else if (subcommand == "show-precision") {
+  } else if (subcommand == "show-initial-units") {
+    cmd::show::run(parser, cmd::show::Kind::initial_units);
+  } else if (subcommand == "--precision") {
     cmd::show::run(parser, cmd::show::Kind::precision);
-  } else if (subcommand == "show-version") {
+  } else if (subcommand == "--version") {
     cmd::show::run(parser, cmd::show::Kind::version);
   } else {
     std::fprintf(stderr, "unknown subcommand: %s\n", arg);
