@@ -127,7 +127,7 @@ public:
     local_free_chemistry_data(parameters_.get_ptr(), rates_.get());
   }
 
-  chemistry_data* chemistry_data() { return parameters_.get_ptr(); }
+  chemistry_data* get_chemistry_data() { return parameters_.get_ptr(); }
 
   chemistry_data_storage* chemistry_storage() { return rates_.get(); }
 

@@ -58,11 +58,11 @@
     std::fprintf(stderr, "The scenario wasn't specified");
     std::exit(1);
   }
-  FieldData fields = scenario::initialize_grid(*pack.chemistry_data(),
+  FieldData fields = scenario::initialize_grid(*pack.get_chemistry_data(),
                                                pack.initial_units(),
                                                grid_spec);
 
-  GrackleDriver driver(pack.chemistry_data(), pack.chemistry_storage(),
+  GrackleDriver driver(pack.get_chemistry_data(), pack.chemistry_storage(),
                        pack.initial_units(), std::move(fields),
                        op_spec.value());
 
