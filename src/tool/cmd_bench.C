@@ -66,8 +66,12 @@
                        pack.initial_units(), std::move(fields),
                        op_spec.value());
 
-  BenchState tmp(1);
+  int n_iter = 20;
+  BenchState tmp(n_iter);
   driver(tmp);
+
+  double n_seconds = tmp.GetTotalElapsedSeconds();
+  std::printf("%d iterations, %g seconds\n", n_iter, n_seconds);
 
   std::exit(0);
 }

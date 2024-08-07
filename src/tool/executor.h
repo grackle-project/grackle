@@ -1,6 +1,7 @@
 #ifndef EXECUTOR_H
 #define EXECUTOR_H
 
+#include <chrono>
 #include <iterator>
 #include <utility> // std::move
 
@@ -17,15 +18,25 @@
 class BenchState {
 
   int max_iter_;
+  double total_elapsed_seconds_;
+
 public:
   BenchState(int max_iter)
-    : max_iter_(max_iter)
+    : max_iter_(max_iter), total_elapsed_seconds_(0)
   {
     GRCLI_REQUIRE(max_iter > 0, "max_iter must be positive");
   }
 
   void PauseTiming() { }
   void ResumeTiming() { }
+
+  void SetIterationTime(double num_seconds) {
+    total_elapsed_seconds_ += num_seconds;
+  }
+
+  double GetTotalElapsedSeconds() {
+    return total_elapsed_seconds_;
+  }
 
   class iterator {
     int count_;
@@ -46,7 +57,7 @@ public:
   };
 
   iterator begin() {return iterator(0);}
-  iterator end() { return iterator(3); }
+  iterator end() { return iterator(max_iter_); }
 };
 
 class GrackleDriver {
@@ -87,6 +98,8 @@ class GrackleDriver {
       clone_field_data(copied_fields, wrapped_my_field_.get_ptr());
       state.ResumeTiming();
 
+      auto start = std::chrono::high_resolution_clock::now();
+
       if constexpr (op == OperationKind::calc_cooling_time) {
         local_calculate_cooling_time(my_chem, my_rates, my_units,
                                      copied_fields, out);
@@ -103,6 +116,12 @@ class GrackleDriver {
         local_solve_chemistry(my_chem, my_rates, my_units, copied_fields, dt);
       }
 
+      auto end = std::chrono::high_resolution_clock::now();
+
+      std::chrono::nanoseconds elapsed_nanoseconds =
+        std::chrono::duration_cast<std::chrono::nanoseconds>(end - start);
+
+      state.SetIterationTime(elapsed_nanoseconds.count() / 1e9);
     }
 
     // this is where we cleanup
