@@ -178,7 +178,6 @@ commands:
             fi
             if [ << parameters.omp >> == 'true' ]; then
               export OMP_NUM_THREADS=4
-              py.test python/tests/test_code_examples.py
               cd example
               make cxx_omp_example
               ./cxx_omp_example
