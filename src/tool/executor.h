@@ -2,17 +2,27 @@
 #define EXECUTOR_H
 
 #include <iterator>
+#include <utility> // std::move
 
 #include "grackle.h"
 
 #include "FieldData.h"
 #include "operation.h"
+#include "utils.h"
 
 #define GRCLI_BENCH_STATE BenchState
 
 // this is basically a dummy object to let us operate without installing
 // google benchmark
-struct BenchState {
+class BenchState {
+
+  int max_iter_;
+public:
+  BenchState(int max_iter)
+    : max_iter_(max_iter)
+  {
+    GRCLI_REQUIRE(max_iter > 0, "max_iter must be positive");
+  }
 
   void PauseTiming() { }
   void ResumeTiming() { }
@@ -36,7 +46,7 @@ struct BenchState {
   };
 
   iterator begin() {return iterator(0);}
-  iterator end() { return iterator(1); }
+  iterator end() { return iterator(3); }
 };
 
 class GrackleDriver {
@@ -127,7 +137,6 @@ public:
         return helper_<OperationKind::solve_chemistry>(state);
     }
   }
-
 
 };
 

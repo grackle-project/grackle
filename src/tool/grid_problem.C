@@ -171,7 +171,7 @@ static std::array<int,3> get_shape_(const scenario::CliGridSpec& scenario) {
 
 static void initialize_View_from_ax_props_(
     View<gr_float> view, scenario::QuantityKind quantity,
-    const scenario::CliGridSpec& scenario, double SolarMetalFractionByMass)
+    const scenario::CliGridSpec& scenario)
 {
   bool complete = false;
   for (int ax_ind = 0; ax_ind < 3; ax_ind++ ) {
@@ -182,21 +182,17 @@ static void initialize_View_from_ax_props_(
     } else if (complete) {
       GRCLI_ERROR("a quantity was specifed for more than 1 axis");
     }
-    
-    double factor = (quantity != scenario::QuantityKind::metallicity)
-                    ? SolarMetalFractionByMass : 1.0; 
-
 
     // define a lambda function to use for initialization. The argument is
     // templated on the kind of sequence
-    auto fn = [ax_ind, factor, view](auto&& seq)-> void {
+    auto fn = [ax_ind, view](auto&& seq)-> void {
 
       for (int k = 0; k < view.extent(2); k++) {
         for (int j = 0; j < view.extent(1); j++) {
           for (int i = 0; i < view.extent(0); i++) {
             int seq_index = ((ax_ind == 0) * i + (ax_ind == 1) * j +
                              (ax_ind == 2) * k);
-            view(i,j,k) = gr_float(seq.get(seq_index) * factor);
+            view(i,j,k) = gr_float(seq.get(seq_index));
           }
         }
       }
@@ -256,6 +252,9 @@ static void initialize_grid_(View<gr_float> target_temperature,
 
         double cur_density = target_density(i,j,k);
         double cur_metal_density = target_metal_density(i,j,k);
+
+        // printf("denisty, metal_density = %g, %g\n",
+        //        cur_density, cur_metal_density);
 
         density(i,j,k) = cur_density;
         metal_density(i,j,k) = cur_metal_density;
@@ -348,26 +347,40 @@ FieldData scenario::initialize_grid(const chemistry_data& my_chem,
                              ContiguousLayout::Fortran);
   initialize_View_from_ax_props_(temperature,
                                  scenario::QuantityKind::temperature,
-                                 scenario, my_chem.SolarMetalFractionByMass);
+                                 scenario);
 
   std::vector<gr_float> density_vec(size);
   View<gr_float> density(density_vec.data(), shape, ContiguousLayout::Fortran); 
   initialize_View_from_ax_props_(density,
                                  scenario::QuantityKind::mass_density,
-                                 scenario, my_chem.SolarMetalFractionByMass);
+                                 scenario);
 
   std::vector<gr_float> metal_density_vec(size);
   View<gr_float> metal_density(metal_density_vec.data(), shape,
-                               ContiguousLayout::Fortran); 
+                               ContiguousLayout::Fortran);
+  // 2 steps for metal_density
+  // first, store the metallicity inside of the array.
   initialize_View_from_ax_props_(metal_density,
-                                 scenario::QuantityKind::metallicity,
-                                 scenario, my_chem.SolarMetalFractionByMass);
-
+                                 scenario::QuantityKind::metallicity, scenario);
+  // second, update the metal_density_view to so that it holds metal-density
+  // (we will need to revisit this if we "get clever" about striding inside
+  // the metal_density view)
+  for (int k = 0; k < metal_density.extent(2); k++) {
+    for (int j = 0; j < metal_density.extent(1); j++) {
+      for (int i = 0; i < metal_density.extent(0); i++) {
+        metal_density(i,j,k) *= gr_float(my_chem.SolarMetalFractionByMass*
+                                         density(i,j,k));
+      }
+    }
+  }
 
   GRCLI_REQUIRE(my_chem.metal_cooling == 1,
       "we currently require metal cooling (can relax this in the future");
 
   initialize_grid_(temperature, density, metal_density, fields,
                    my_chem, initial_units);
+
+  grackle_field_data* ptr = fields.get_ptr();
+
   return fields;
 }

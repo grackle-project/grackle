@@ -127,8 +127,8 @@ void clone_field_data(grackle_field_data* dest, grackle_field_data* src) {
   GRCLI_REQUIRE((dest != nullptr) && (src != nullptr), "args can't be null");
   GRCLI_REQUIRE(dest->grid_rank == src->grid_rank, "the ranks must match");
 
-  std::size_t size_src = 1;
-  std::size_t size_dest = 1;
+  std::size_t size_src = sizeof(gr_float);
+  std::size_t size_dest = sizeof(gr_float);
   for( int i = 0; i < dest->grid_rank; i++) {
     size_src *= src->grid_dimension[i];
     size_dest *= dest->grid_dimension[i];
@@ -142,7 +142,6 @@ void clone_field_data(grackle_field_data* dest, grackle_field_data* src) {
     dest->grid_end[i] = src->grid_end[i];
   }
 
-
   for (auto kv_pair: field_mapping_){
     gr_float* grackle_field_data::* ptr_to_mem = kv_pair.second;
     const gr_float* src_ptr = src->*ptr_to_mem;
@@ -150,6 +149,7 @@ void clone_field_data(grackle_field_data* dest, grackle_field_data* src) {
     if ((src_ptr == nullptr) && (dest_ptr == nullptr)) {
       continue;
     } else if ((src_ptr != nullptr) && (dest_ptr != nullptr)) {
+
       std::memcpy(dest_ptr, src_ptr, size_src);
     } else {
       GRCLI_ERROR("The src or dest object has NULL pointer for the %s while "
