@@ -62,8 +62,13 @@
                                                pack.initial_units(),
                                                grid_spec);
 
+  GrackleDriver driver(pack.chemistry_data(), pack.chemistry_storage(),
+                       pack.initial_units(), std::move(fields),
+                       op_spec.value());
 
-  GRCLI_ERROR("NOT FINISHED IMPLEMENTING SUBCOMMAND YET");
-  std::exit(1);
+  BenchState tmp(1);
+  driver(tmp);
+
+  std::exit(0);
 }
 
