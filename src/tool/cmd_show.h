@@ -18,6 +18,7 @@
 namespace cmd::show {
 
 enum class Kind {
+  initial_units,
   parameters,
   precision,
   version,

@@ -197,17 +197,7 @@ static void init_gr_params_(const CliParamSpec& param_spec,
 
 }
 
-FullGrackleSolverPack create_full_grackle_solver(
-  std::optional<CliParamSpec> maybe_parameter_spec)
-{
-  // it may be beneficial to introduce the idea of presets to avoid needing to
-  // initialize parameters like use_grackle
-
-  ChemistryData my_chem;
-  if (maybe_parameter_spec.has_value()) {
-    init_gr_params_(maybe_parameter_spec.value(), my_chem);
-  }
-
+code_units get_default_units() {
   // in the future, we will support customization of units!
   double initial_redshift = 1.0;
   code_units my_units;
@@ -219,5 +209,20 @@ FullGrackleSolverPack create_full_grackle_solver(
   // Set expansion factor to 1 for non-cosmological simulation.
   my_units.a_value = 1. / (1. + initial_redshift) / my_units.a_units;
 
+  return my_units;
+}
+
+FullGrackleSolverPack create_full_grackle_solver(
+  std::optional<CliParamSpec> maybe_parameter_spec)
+{
+  // it may be beneficial to introduce the idea of presets to avoid needing to
+  // initialize parameters like use_grackle
+
+  ChemistryData my_chem;
+  if (maybe_parameter_spec.has_value()) {
+    init_gr_params_(maybe_parameter_spec.value(), my_chem);
+  }
+  code_units my_units = get_default_units();
+  
   return FullGrackleSolverPack(std::move(my_chem), my_units);
 }

@@ -24,7 +24,13 @@
 
 [[noreturn]] void cmd::show::run(CliParser& parser, cmd::show::Kind kind) {
 
-  if (kind == cmd::show::Kind::parameters) {
+  if (kind == cmd::show::Kind::initial_units) {
+
+    if (parser.has_next()) err_unrecognized_arg(parser.next());
+    code_units initial_units = get_default_units();
+    show_units(stdout, &initial_units);
+
+  } else if (kind == cmd::show::Kind::parameters) {
 
     std::optional<CliParamSpec> gr_param_spec;
     const char* ptr;

@@ -134,6 +134,13 @@ public:
   code_units initial_units() { return initial_units_; }
 };
 
+/// Get the default units
+///
+/// @note
+/// When we make it possible to configure the choice of units, we may want
+/// to change the defaults...
+code_units get_default_units();
+
 /// Fully initialize all parts of the grackle solver
 ///
 /// @note
