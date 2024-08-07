@@ -99,7 +99,7 @@ are marked with annotated git tags and are named 'gold-standard-v' and
 then a number, for example, 'gold-standard-v1'. To find the latest
 gold standard, type ``git tag``. If nothing is output, you may need to
 first fetch the tags from the main repo with something like ``git
-fetch origin --tag`` (where 'origin' in this example is assumed to
+fetch origin --tags`` (where 'origin' in this example is assumed to
 point to the main Grackle repository on github.)
 
 To generate test results from the latest gold standard, follow these
