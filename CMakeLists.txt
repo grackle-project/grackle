@@ -178,7 +178,7 @@ add_subdirectory(src/clib)
 
 # declare build-recipe for grcli
 if (GRACKLE_BUILD_GRCLI)
-  add_subdirectory(src/tool)
+  add_subdirectory(src/grcli)
 endif()
 
 # declare build-recipies for examples
