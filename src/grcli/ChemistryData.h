@@ -1,6 +1,7 @@
 #ifndef CHEMISTRY_DATA_H
 #define CHEMISTRY_DATA_H
 
+#include <cstring> // std::memcpy
 #include <memory> // std::unique_ptr
 #include <string>
 #include <string_view>

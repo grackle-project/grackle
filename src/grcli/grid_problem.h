@@ -1,6 +1,7 @@
 #ifndef GRID_PROBLEM_H
 #define GRID_PROBLEM_H
 
+#include <cmath>
 #include <optional>
 #include <string>
 #include <variant>

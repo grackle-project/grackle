@@ -40,7 +40,7 @@
       err_unrecognized_arg(ptr);
     }
     FullGrackleSolverPack tmp = create_full_grackle_solver(gr_param_spec);
-    show_parameters(stdout,  tmp.chemistry_data());
+    show_parameters(stdout,  tmp.get_chemistry_data());
 
   } else if (kind == cmd::show::Kind::precision) {
 
