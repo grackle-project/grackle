@@ -60,14 +60,14 @@ OPTIONS:
         for initializing all grackle fields that are used in a "test-problem."
 
         At the moment, this might include
-          * -Sgrid.ax<I>=<quantity>;<seq>
+          * -Sgrid.ax<I>=<quantity>,<seq>
         Where the quantities in brackets get replaced by various things. For
         example:
           * <I> is replaced with 0, 1, or 2
           * <quantity> is replaced with temperature, density, metallicity
           * <seq> is replaced by arguments that specify a sequence of 1 or more
             values. In practice, this is either a lone floating-point value OR
-            geomspace;<start>;<end>;<num>
+            geomspace,<start>,<end>,<num>
 
     -O...
         Prefix for all "operation arguments". Essentially, this denotes the
