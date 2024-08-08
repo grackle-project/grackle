@@ -27,6 +27,8 @@ The easiest thing to do is follow the instructions for installing yt,
 which will provide you with Cython, matplotlib, and NumPy.  Flake8 and
 py.test can then be installed via pip.
 
+.. _install-pygrackle:
+
 Installing Pygrackle
 --------------------
 
@@ -57,6 +59,41 @@ If your build directory was located in the root level of the grackle repository 
 
 .. note:: Pygrackle can only be run when Grackle is compiled without OpenMP.
    See :ref:`openmp`.
+
+.. _pygrackle-dev:
+
+Installing Pygrackle Development Requirements
++++++++++++++++++++++++++++++++++++++++++++++
+
+There are a handful of additional packages required for developing
+Grackle. For example, these will enable :ref:`testing` and building
+the documentation locally. To install the development dependencies,
+repeat the last line of the :ref:`pygrackle installation instructions
+<install-pygrackle>` with ``[dev]`` appended.
+
+.. highlight:: none
+
+::
+
+    ~/grackle/src/python $ pip install -e .[dev]
+
+or
+
+.. highlight:: none
+
+::
+
+    ~/grackle/src/python $ PYGRACKLE_CMAKE_BUILD_DIR=../../my-build pip install -e .[dev]
+
+If you use ``zsh`` as your shell, you will need quotes around
+'.[dev]'.
+
+.. highlight:: none
+
+::
+
+    ~/grackle/src/python $ pip install -e '.[dev]'
+
 
 Running the Example Scripts
 ---------------------------

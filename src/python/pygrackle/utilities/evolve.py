@@ -13,7 +13,6 @@
 
 from collections import defaultdict
 import numpy as np
-from yt import YTArray
 
 from .physical_constants import \
     gravitational_constant_cgs, \
@@ -41,7 +40,7 @@ def evolve_freefall(fc, final_density, safety_factor=0.01,
                     (32. * gravitational_constant *
                      fc["density"][0])), 0.5)
 
-        add_to_data(fc, data, current_time)
+        add_to_data(fc, data, extra={"time": current_time})
 
         # compute the new density using the modified
         # free-fall collapse as per Omukai et al. (2005)
@@ -69,22 +68,24 @@ def evolve_freefall(fc, final_density, safety_factor=0.01,
             fc[field] *= density_ratio
 
         # now update energy for adiabatic heating from collapse
-        fc["energy"][0] += (my_chemistry.Gamma - 1.) * fc["energy"][0] * \
-            freefall_time_constant * np.power(fc["density"][0], 0.5) * dt
+        fc["internal_energy"][0] += (my_chemistry.Gamma - 1.) * \
+          fc["internal_energy"][0] * freefall_time_constant * \
+          np.power(fc["density"][0], 0.5) * dt
 
         fc.solve_chemistry(dt)
 
         # update time
         current_time += dt
 
-    data = create_data_arrays(fc, data)
-    return data
+    for field in data:
+        data[field] = np.squeeze(np.array(data[field]))
+    return fc.finalize_data(data=data)
 
 def calculate_collapse_factor(pressure, density):
     # Calculate the effective adiabatic index, dlog(p)/dlog(rho).
 
     if len(pressure) < 3:
-        return 0.
+        return np.array([0.])
 
     # compute dlog(p) / dlog(rho) using last two timesteps
     gamma_eff = np.log10(pressure[-1] / pressure[-2]) / \
@@ -95,19 +96,18 @@ def calculate_collapse_factor(pressure, density):
         gamma_eff += 0.5 * ((np.log10(pressure[-2] / pressure[-3]) /
                              np.log10(density[-2] / density[-3])) - gamma_eff)
 
-    gamma_eff = min(gamma_eff, 4./3.)
+    gamma_eff = np.clip(gamma_eff, a_min=0, a_max=4/3)
 
     # Equation 9 of Omukai et al. (2005)
     if gamma_eff < 0.83:
-        force_factor = 0.0
+        force_factor = gamma_eff * 0
     elif gamma_eff < 1.0:
         force_factor = 0.6 + 2.5 * (gamma_eff - 1) - \
             6.0 * np.power((gamma_eff - 1.0), 2.)
     else:
         force_factor = 1.0 + 0.2 * (gamma_eff - (4./3.)) - \
             2.9 * np.power((gamma_eff - (4./3.)), 2.)
-    force_factor = max(force_factor, 0.0)
-    force_factor = min(force_factor, 0.95)
+    force_factor = np.clip(force_factor, a_min=0, a_max=0.95)
     return force_factor
 
 def evolve_constant_density(fc, final_temperature=None,
@@ -136,48 +136,26 @@ def evolve_constant_density(fc, final_temperature=None,
                fc["temperature"][0]))
         fc.solve_chemistry(dt)
 
-        add_to_data(fc, data, current_time)
+        add_to_data(fc, data, extra={"time": current_time})
         current_time += dt
 
-    data = create_data_arrays(fc, data)
-    return data
+    for field in data:
+        data[field] = np.squeeze(np.array(data[field]))
+    return fc.finalize_data(data=data)
 
-def add_to_data(fc, data, current_time=None):
+def add_to_data(fc, data, extra=None):
     """
     Add current fluid container values to the data structure.
     """
 
-    for field in fc.density_fields:
-        data[field].append(fc[field][0] * fc.chemistry_data.density_units)
-    data["energy"].append(fc["energy"][0] * fc.chemistry_data.energy_units)
-    fc.calculate_temperature()
-    data["temperature"].append(fc["temperature"][0])
-    fc.calculate_pressure()
-    data["pressure"].append(fc["pressure"][0] * fc.chemistry_data.pressure_units)
-    fc.calculate_mean_molecular_weight()
-    data["mu"].append(fc["mu"][0])
-    if fc.chemistry_data.h2_on_dust:
-        fc.calculate_dust_temperature()
-        data["dust_temperature"].append(fc["dust_temperature"][0])
-    if current_time is not None:
-        data["time"].append(current_time * fc.chemistry_data.time_units)
+    for field in fc.all_fields:
+        if field not in fc.input_fields:
+            func = getattr(fc, f"calculate_{field}")
+            if func is None:
+                raise RuntimeError(f"No function for calculating {field}.")
+            func()
+        data[field].append(fc[field].copy())
 
-def create_data_arrays(fc, data):
-    """
-    Turn lists of values into array with proper cgs units.
-    """
-
-    for field in data:
-        if field in fc.density_fields:
-            data[field] = YTArray(data[field], "g/cm**3")
-        elif field == "energy":
-            data[field] = YTArray(data[field], "erg/g")
-        elif field == "time":
-            data[field] = YTArray(data[field], "s")
-        elif "temperature" in field:
-            data[field] = YTArray(data[field], "K")
-        elif field == "pressure":
-            data[field] = YTArray(data[field], "dyne/cm**2")
-        else:
-            data[field] = np.array(data[field])
-    return data
+    if extra is not None:
+        for field in extra:
+            data[field].append(extra[field])

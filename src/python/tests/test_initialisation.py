@@ -153,7 +153,7 @@ def test_rate_initialisation(printParameters=False, printOOMdiscrepanices=False,
     f.close()
 
     #* Compare rates with the expected (correct) ones which are stored and check they are in agreement
-    expectedRates = h5py.File("example_answers/rate_coefficients.h5", "r")
+    expectedRates = h5py.File("test_data/rate_coefficients.h5", "r")
     initialisedRates = h5py.File("rate_coefficients.h5", "r")
 
     #Used to skip assert, testing only.

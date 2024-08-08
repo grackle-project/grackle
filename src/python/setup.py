@@ -75,14 +75,16 @@ def configuration(parent_package='', top_path=None):
 
 dev_requirements = [
     'flake8',
+    'packaging',
     'pytest',
     'sphinx',
-    'packaging'
+    'sphinx-tabs',
+    'sphinx_rtd_theme',
 ]
 
 setup(
     name="pygrackle",
-    version="1.0.1",
+    version="1.1.dev",
     description="A wrapper for the Grackle chemistry library",
     keywords=["simulation", "chemistry", "cooling", "astronomy", "astrophysics"],
     url="https://github.com/grackle-project/grackle",

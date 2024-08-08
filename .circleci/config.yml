@@ -11,6 +11,11 @@ commands:
             echo 'export LD_LIBRARY_PATH=$HOME/local/lib:$LD_LIBRARY_PATH' >> $BASH_ENV
             echo 'export YT_DATA_DIR=$HOME/yt_test' >> $BASH_ENV
             echo 'export MATPLOTLIBRC=$HOME' >> $BASH_ENV
+            # get tags from the main and PR repository (for the current gold standard)
+            git fetch --tags https://github.com/grackle-project/grackle
+            if [ -n "$CIRCLE_PR_REPONAME" ]; then
+              git fetch --tags https://github.com/$CIRCLE_PR_USERNAME/$CIRCLE_PR_REPONAME
+            fi
 
   install-dependencies:
     description: "Install dependencies."
@@ -21,16 +26,13 @@ commands:
             git submodule update --init --remote
             source $BASH_ENV
             sudo apt update
-            sudo apt install -y libhdf5-serial-dev gfortran libtool-bin
+            sudo apt install -y libhdf5-serial-dev gfortran libtool-bin castxml
             python3 -m venv $HOME/venv
             source $HOME/venv/bin/activate
             pip install --upgrade pip
             pip install --upgrade wheel
             pip install --upgrade setuptools
-            # the following dependencies are just used for testing
             pip install flake8
-            pip install packaging
-            sudo apt install castxml
 
   lint:
     description: "Lint."
@@ -54,11 +56,15 @@ commands:
         type: enum
         default: 'true'
         enum: ['true', 'false']
+      tag:
+        type: string
+        default: $CIRCLE_BRANCH
     steps:
       - run:
           name: "Install grackle."
           command: |
             source $HOME/venv/bin/activate
+            git checkout << parameters.tag >>
 
             # First, try resetting things to a pristine condition (in the event
             # that grackle was previously built
@@ -146,6 +152,10 @@ commands:
         type: enum
         default: 'true'
         enum: ['true', 'false']
+      generate:
+        type: enum
+        default: 'true'
+        enum: ['true', 'false']
     steps:
       - run:
           name: "Run all tests."
@@ -158,9 +168,13 @@ commands:
             else
               export PYTEST_CODE_LINK_CHOICE="cmake:../build"
             fi
+            if [ << parameters.generate >> == 'true' ]; then
+              export GENERATE_PYGRACKLE_TEST_RESULTS=1
+            else
+              export GENERATE_PYGRACKLE_TEST_RESULTS=0
+            fi
             if [ << parameters.omp >> == 'true' ]; then
               export OMP_NUM_THREADS=4
-              py.test python/tests/test_code_examples.py
               cd example
               make cxx_omp_example
               ./cxx_omp_example
@@ -226,10 +240,23 @@ jobs:
       - install-grackle:
           omp: 'false'
           classic_build: 'false'
+          tag: gold-standard-v1
 
       - run-tests:
           omp: 'false'
           classic_build: 'false'
+          generate: 'true'
+
+      - install-grackle:
+          omp: 'false'
+          classic_build: 'false'
+          tag: $CIRCLE_BRANCH
+
+      - run-tests:
+          omp: 'false'
+          classic_build: 'false'
+          generate: 'false'
+
 
   docs-build:
     parameters:

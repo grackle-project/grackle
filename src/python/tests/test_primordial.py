@@ -59,11 +59,11 @@ def test_equilibrium():
     t_sort = np.argsort(fc["temperature"])
     t_cool = fc["cooling_time"][t_sort] * my_chem.time_units
     my_T = fc["temperature"][t_sort]
-    fc.calculate_hydrogen_number_density()
-    my_nH = fc["nH"].mean()
+    fc.calculate_nuclei_density("H")
+    my_nH = fc["H_nuclei_density"].mean()
 
     cooling_rate_eq = -1*total_cooling(my_T, my_nH) / my_nH**2
-    cooling_rate_g = fc["energy"][t_sort] / t_cool * fc["density"] * \
+    cooling_rate_g = fc["internal_energy"][t_sort] / t_cool * fc["density"] * \
         my_chem.density_units / my_nH**2
 
     # Make a cooling rate figure
@@ -87,20 +87,20 @@ def test_equilibrium():
 
     # Make an ionization balance figure
     nH_eq = nHI(my_T, my_nH) + nHII(my_T, my_nH)
-    nH_g  = fc["HI"] + fc["HII"]
+    nH_g  = fc["HI_density"] + fc["HII_density"]
     fHI_eq = nHI(my_T, my_nH) / nH_eq
-    fHI_g  = fc["HI"] / nH_g
+    fHI_g  = fc["HI_density"] / nH_g
     fHII_eq = nHII(my_T, my_nH) / nH_eq
-    fHII_g  = fc["HII"] / nH_g
+    fHII_g  = fc["HII_density"] / nH_g
 
     nHe_eq = nHeI(my_T, my_nH) + nHeII(my_T, my_nH) + nHeIII(my_T, my_nH)
-    nHe_g  = fc["HeI"] + fc["HeII"] + fc["HeIII"]
+    nHe_g  = fc["HeI_density"] + fc["HeII_density"] + fc["HeIII_density"]
     fHeI_eq = nHeI(my_T, my_nH) / nHe_eq
-    fHeI_g  = fc["HeI"] / nHe_g
+    fHeI_g  = fc["HeI_density"] / nHe_g
     fHeII_eq = nHeII(my_T, my_nH) / nHe_eq
-    fHeII_g  = fc["HeII"] / nHe_g
+    fHeII_g  = fc["HeII_density"] / nHe_g
     fHeIII_eq = nHeIII(my_T, my_nH) / nHe_eq
-    fHeIII_g  = fc["HeIII"] / nHe_g
+    fHeIII_g  = fc["HeIII_density"] / nHe_g
 
     # Plot H ions
     axes = pyplot.axes()
