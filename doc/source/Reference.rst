@@ -56,7 +56,7 @@ Primary Functions
 
    :param code_units* my_units: code units conversions
 
-.. c:function:: double get_velocity_units(code_units *my_units);
+.. c:function:: double get_velocity_units(const code_units *my_units);
 
    Returns the appropriate value for velocity units given the values of
    :c:data:`length_units`, :c:data:`a_value`, and :c:data:`time_units`
@@ -71,13 +71,14 @@ Primary Functions
    :rtype: double
    :returns: velocity_units
 
-.. c:function:: double get_temperature_units(code_units *my_units);
+.. c:function:: double get_temperature_units(const code_units *my_units);
 
-   Returns the conversion factor between specific internal energy and temperature
-   assuming gamma (the adiabatic index) = 1, such that temperature in K is equal to
-   :c:data:`internal_energy` * ``temperature_units``. This unit conversion is
-   defined as m\ :sub:`H` * :c:data:`velocity_units`\ :sup:`2` / k\ :sub:`b`,
-   where m\ :sub:`H` is the Hydrogen mass and k\ :sub:`b` is the Boltzmann constant.
+   Returns the factor that includes unit conversions and fundamental constants that must be multiplied by :c:data:`internal_energy` (in units of :c:data:`velocity_units`\ :sup:`2`) to get temperature (in units of K).
+   In more detail:
+
+     - the returned value is defined as m\ :sub:`H`\ \*\ :c:data:`velocity_units`\ :sup:`2`\ /\ k\ :sub:`b`, where m\ :sub:`H` is the Hydrogen mass and k\ :sub:`b` is the Boltzmann constant.
+
+     - under the standard assumption of an ideal gas, temperature is given by :c:data:`internal_energy`\ \*\ ``temperature_units``\ \*\ :math:`(\gamma - 1)`\ \*\ :math:`\mu`, where :math:`\gamma` is the adiabatic index and :math:`\mu` is the mean molecular weight.
 
    :param code_units* my_units: code units conversions
    :rtype: double
