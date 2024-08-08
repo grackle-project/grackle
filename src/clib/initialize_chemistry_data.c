@@ -342,6 +342,9 @@ int local_initialize_chemistry_data(chemistry_data *my_chemistry,
     return GR_FAIL;
   }
 
+  /* store a copy of the initial units */
+  my_rates->initial_units = *my_units;
+
   if (grackle_verbose) {
     time_t timer;
     char tstr[80];

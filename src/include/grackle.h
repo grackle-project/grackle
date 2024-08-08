@@ -25,6 +25,8 @@ extern "C" {
 #define GR_SUCCESS 1
 #define GR_FAIL 0
 
+#define GR_SPECIFY_INITIAL_A_VALUE -1
+
 extern int grackle_verbose;
 
 extern chemistry_data *grackle_data;
@@ -35,6 +37,9 @@ double get_velocity_units(const code_units *my_units);
 void set_velocity_units(code_units *my_units);
 
 double get_temperature_units(const code_units *my_units);
+
+double gr_query_units(const chemistry_data_storage * my_rates,
+                      const char* units_name, double current_a_value);
 
 int set_default_chemistry_parameters(chemistry_data *my_grackle);
 
