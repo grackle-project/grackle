@@ -26,16 +26,12 @@ commands:
             git submodule update --init --remote
             source $BASH_ENV
             sudo apt update
-            sudo apt install -y libhdf5-serial-dev gfortran libtool-bin
+            sudo apt install -y libhdf5-serial-dev gfortran libtool-bin castxml
             python3 -m venv $HOME/venv
             source $HOME/venv/bin/activate
             pip install --upgrade pip
             pip install --upgrade wheel
             pip install --upgrade setuptools
-            # the following dependencies are just used for testing
-            pip install flake8
-            pip install packaging
-            sudo apt install castxml
 
   lint:
     description: "Lint."
