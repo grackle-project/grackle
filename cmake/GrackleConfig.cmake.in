@@ -1,0 +1,361 @@
+# NOTE:
+# ====
+# - a version of this file may be installed alongside Grackle. If you stumble
+#   onto the file in that way, then you should ignore the comments
+# - All comments in this file are intended for developers
+
+# About this file:
+# ================
+# This file is a Config Package File that get's installed alongside Grackle
+# (when grackle is built as a standalone project AND installed)...
+# -> The version of this program that is installed, will have all occurences of
+#    @VAR_NAME@ replaced with the associated value
+# -> This file is responsible for helping to set up targets when external
+#    projects call `find_package(Grackle ...)`.
+#    -> once invoked, `find_package` will search for a file with the name
+#       grackle-config.cmake or GrackleConfig.cmake. The installed version of
+#       this file has the latter name.
+#    -> once it locates the installed version of this file (and deals with any
+#       version-checks -- don't worry about that!), `find_package` will execute
+#       this file's contents.
+#    -> before executing this file, `find_package` will define some variables
+#       to describe how it was called.
+#    -> when the logic in this file is executed, it is intended to define
+#       variables necessary for the external project to make use of grackle.
+#       Historically, this involved defining new variables. But, we adopt the
+#       modern convention of ONLY defining library-targets
+#    -> if we include `return()`, anywhere in the top-level scope of this file
+#       (i.e. not in a function definition), the evaluation of this file
+#       abruptly ends. We can also define some specific variables to inform
+#       find_package that the program failed (and provide a reason).
+#       -> This is all taken care of by our _FIND_GRACKLE_FAIL macro.
+# -> the code within this file is NEVER executed during the build (or during
+#    installation). In fact, it may be executed by a completely different
+#    version of cmake (so we take some steps to maximize compatability)
+
+# MAJOR GOAL: The outputs produced using this file should closely mirror the
+#   outputs of embedding a cmake-build of Grackle inside of another project by
+#   using add_subdirectory
+
+# In general, users should not depend on anything defined by this file other
+# than the Grackle::Grackle target. Pretty much everything else defined in this
+# file is an implementation detail!
+
+# OUR STRATEGY (regarding shared and static libraries):
+#   - Grackle's classic (non-cmake) build system historically built/installed
+#     both shared-library & static-library versions of Grackle
+#   - as is idiomatic, a given cmake build MUST choose whether it wants to
+#     build/install a shared library version OR a static library version
+#   - with that said, it's definitely possible to trigger 2 separate cmake
+#     builds (& installations) of Grackle that install the shared and static
+#     library versions to the same location.
+#   - this Config Package File supports that scenario where both library-kinds
+#     are installed.
+#     - However, it will only introduce library target(s) from one library-kind
+#       into a downstream project.
+#     - Furthermore, the names of the introduced target(s) will be independent
+#       of the underlying library-kind (this is done so that target-names can
+#       match the target-names produced in an embeded Grackle-build)
+
+
+# the following is just like message(FATAL_ERROR msg), but it has special
+# semantics for use in "Config Package File"
+# -> rather than causing the build to abort with an error, it exits from
+#    find_package and denotes an error (this is necessary, so that Grackle can
+#    be denoted as an optional dependency
+# -> this is accomplished by calling return. If this were a function, return
+#    would just exit from the function definition. But since this is a macro
+#    and a macro is evaluated as if its contents the current scope, but in a macro, it exits the scope in which the
+#    macro was called
+# -> this means that calling this 
+macro(_FIND_GRACKLE_FAIL MSG)
+  set(${CMAKE_FIND_PACKAGE_NAME}_NOT_FOUND_MESSAGE "${MSG}")
+  set(${CMAKE_FIND_PACKAGE_NAME}_FOUND FALSE)
+  return()
+endmacro()
+
+# STEP 0: PREAMBLE
+# ----------------
+
+# We use if(...IN_LIST...), make sure it is available
+if(CMAKE_VERSION VERSION_LESS 3.3)
+  _FIND_GRACKLE_FAIL("Grackle requires CMake 3.3 or later")
+endif()
+
+cmake_minimum_required(VERSION 3.3)
+
+# store options directly taken from the build
+set(_GRACKLEBUILD_USE_DOUBLE @GRACKLE_USE_DOUBLE@)
+set(_GRACKLEBUILD_USE_OPENMP @GRACKLE_USE_OPENMP@)
+
+# STEP 1: Infer Grackle Configuration preferences
+# -----------------------------------------------
+
+# in this section, we look at some Grackle-specific configuration variables
+# that are specified when you are building Grackle.
+# -> If they are defined, we will respect them as requirements for importing
+#    Grackle. If the version of Grackle does not satisfy these requirements,
+#    then we will report a failure
+# -> the main reason that we respect these values is to let downstream projects
+#    easily switch between importing Grackle (via find_package) and embedding a
+#    Grackle-build within their project (via add_subdirectory)
+
+
+if(DEFINED GRACKLE_USE_DOUBLE)
+  if(GRACKLE_USE_DOUBLE AND NOT _GRACKLEBUILD_USE_DOUBLE)
+    _FIND_GRACKLE_FAIL("Grackle was compiled with single precision, not double")
+  elseif(_GRACKLEBUILD_USE_DOUBLE AND NOT GRACKLE_USE_DOUBLE)
+    _FIND_GRACKLE_FAIL("Grackle was compiled with double precision, not single")
+  endif()
+endif()
+
+if(DEFINED GRACKLE_USE_OPENMP)
+  if(GRACKLE_USE_OPENMP AND NOT _GRACKLEBUILD_USE_OPENMP)
+    _FIND_GRACKLE_FAIL("Grackle was NOT compiled with OpenMP")
+  elseif(_GRACKLEBUILD_USE_OPENMP AND NOT GRACKLE_USE_OPENMP)
+    _FIND_GRACKLE_FAIL("Grackle was compiled with OpenMP")
+  endif()
+endif()
+
+
+# STEP 2: INFER PREFERENCES ABOUT SHARED/STATIC
+# ---------------------------------------------
+
+# First thing's first, we need to determine the find_package caller's preference
+# for Grackle's "library-kind".
+# -> downstream projects can explicitly indicate their preference by having
+#    find_package request a component called "static" or "shared"
+# -> if a preference is not indicated, a preference is inferred based on the
+#    value of the BUILD_SHARED_LIBS variable
+# -> if the preferred "library-kind" is not available, we generally load the
+#    other kind. The only exception to this behavior is when "static" or
+#    "shared" is specified as a required component. In that case, nothing is
+#    loaded if the prefered library kind is unavailable.
+#   - this is loosely inspired HDF5 and the writup from
+#     https://alexreinking.com/blog/building-a-dual-shared-and-static-library-with-cmake.html
+
+set(_GRACKLE_REQUIRE_LIBKIND_PREF "FALSE")
+set(_GRACKLE_LIBKIND_PREF "")
+
+list(REMOVE_DUPLICATES ${CMAKE_FIND_PACKAGE_NAME}_FIND_COMPONENTS)
+foreach(comp IN LISTS ${CMAKE_FIND_PACKAGE_NAME}_FIND_COMPONENTS)
+  if((comp STREQUAL "shared") OR (comp STREQUAL "static"))
+    if(_GRACKLE_LIBKIND_PREF STREQUAL "")
+      set(_GRACKLE_LIBKIND_PREF ${comp})
+      list(REMOVE_ITEM ${CMAKE_FIND_PACKAGE_NAME}_FIND_COMPONENTS ${comp})
+      if(${CMAKE_FIND_PACKAGE_NAME}_FIND_REQUIRED_${comp})
+        set(_GRACKLE_REQUIRE_LIBKIND_PREF "TRUE")
+      endif()
+    else()
+      _FIND_GRACKLE_FAIL("Grackle: shared & static can't both be specified")
+    endif()
+  endif()
+endforeach()
+
+# fall back to other logic for determining library-preference
+if (_GRACKLE_LIBKIND_PREF STREQUAL "")
+  if(BUILD_SHARED_LIBS)
+    set(_GRACKLE_LIBKIND_PREF "shared")
+  else()
+    set(_GRACKLE_LIBKIND_PREF "static")
+  endif()
+endif()
+
+# Now, at this point ${CMAKE_FIND_PACKAGE_NAME}_FIND_COMPONENTS no longer holds
+# "static" or "shared". It now just holds the other, remaining requested
+# components (if any)
+
+# STEP 3: Determine the components that are needed
+# ------------------------------------------------
+# at the moment, we don't support any components... (other than the
+# "shared"/"static" pseudo-components that we've already removed from
+# ${CMAKE_FIND_PACKAGE_NAME}_FIND_COMPONENTS
+
+# If we supported "more-traditional" components, of which some were optional,
+# this is where we would build up the set of components to actually find (e.g.
+# some components denoted as optional might be necessary to build the required
+# components)
+#
+# Since we don't currently support optional "traditional" components...
+# - We'll report errors for any required components
+# - the convention is to just ignore requested optional components (even if
+#   they are invalid). But we will report a warning about these
+
+foreach(comp IN LISTS ${CMAKE_FIND_PACKAGE_NAME}_comps)
+  if(${CMAKE_FIND_PACKAGE_NAME}_FIND_REQUIRED_${comp})
+    _FIND_GRACKLE_FAIL("Grackle does not support required component: ${comp}")
+  endif()
+endforeach()
+unset(comp)
+
+if(NOT ${CMAKE_FIND_PACKAGE_NAME}_FIND_QUIETLY)
+  list(LENGTH ${CMAKE_FIND_PACKAGE_NAME}_FIND_COMPONENTS _GRACKLE_COMP_LEN)
+  if(${_GRACKLE_COMP_LEN} GREATER 0)
+    message(WARNING "Grackle does not support the components: ${${CMAKE_FIND_PACKAGE_NAME}_FIND_COMPONENTS}")
+  endif()
+  unset(_GRACKLE_COMP_LEN)
+endif()
+
+# STEP 4: Figure out if we're actually providing shared libs or static libs
+# -------------------------------------------------------------------------
+# (this is relevant for working out the required external dependencies)
+
+# First, infer the opposite LIBKIND
+if("${_GRACKLE_LIBKIND_PREF}" STREQUAL "shared")
+  set(_GRACKLE_NONPREF "static")
+else()
+  set(_GRACKLE_NONPREF "shared")
+endif()
+
+# Next, determine if we can use our preference
+if(EXISTS ${CMAKE_CURRENT_LIST_DIR}/Grackle_${_GRACKLE_LIBKIND_PREF}_targets.cmake)
+  set(_GRACKLE_LIBKIND ${_GRACKLE_LIBKIND_PREF})
+elseif(_GRACKLE_REQUIRE_LIBKIND_PREF)
+  _FIND_GRACKLE_FAIL(
+    "Grackle does not have a ${_GRACKLE_LIBKIND_PREF} library installed")
+  set(${CMAKE_FIND_PACKAGE_NAME}_FOUND FALSE)
+  return()
+elseif(EXISTS ${CMAKE_CURRENT_LIST_DIR}/Grackle_${_GRACKLE_NONPREF}_targets.cmake)
+  set(_GRACKLE_LIBKIND ${_GRACKLE_NONPREF})
+else()
+  _FIND_GRACKLE_FAIL(
+    "Grackle doesn't have any library installed (SOMETHING IS WRONG)")
+endif()
+
+# from now on, use _GRACKLE_LIBKIND (cleanup other variables)
+unset(_GRACKLE_REQUIRE_LIBKIND_PREF)
+unset(_GRACKLE_LIBKIND_PREF)
+unset(_GRACKLE_NONPREF)
+
+
+# STEP 5: Find the external dependencies
+# --------------------------------------
+
+if (${_GRACKLE_LIBKIND} STREQUAL "static")
+  # we ONLY need to handle dependencies in the case where a static library was
+  # built, since downstream applications will need to perform linking
+
+  # for compatability with CMake versions from before 3.15, we need to manually
+  # use find_package (rather than using the find_dependency macro from the
+  # CMakeFindDependencyMacro module)
+  # -> using find_dependency with those versions could produce bugs since we
+  #    are only looking for a subset of package components. Specifically, bugs
+  #    would arise if a different set of packages-components were ever
+  #    requested with find_dependency (e.g. in another project's config-file)
+  # -> the way we set up & use _EXTRA_ARGS is consistent with find_dependency's
+  #    behavior
+
+  # For compatibility with CMake versions from before 3.11, we can't directly
+  # use target_link_libraries on IMPORTED targets
+
+  unset(_FIND_H5_ARGS)
+
+  if(${CMAKE_FIND_PACKAGE_NAME}_FIND_QUIETLY)
+    list(APPEND _EXTRA_ARGS QUIET)
+  endif()
+
+  if(${CMAKE_FIND_PACKAGE_NAME}_FIND_REQUIRED)
+    list(APPEND _EXTRA_ARGS REQUIRED)
+  endif()
+
+  # if we know the HDF5 version used to build to build Grackle as a static
+  # library, we really need to make sure the version number of the hdf5 library
+  # match the version number of the hdf5-headers (the documentation for the
+  # H5check_version function makes it clear a mismatch is bad!)
+  set(_DESIRED_HDF5_VERSION "@HDF5_VERSION@")
+  if(NOT "${_DESIRED_HDF5_VERSION}" STREQUAL "")
+    list(APPEND _EXTRA_ARGS "${_DESIRED_HDF5_VERSION}" EXACT)
+  endif()
+  unset(_DESIRED_HDF5_VERSION)
+
+  # now we actually find the dependencies
+  find_package(HDF5 COMPONENTS C ${_EXTRA_ARGS})
+  if(NOT HDF5_FOUND)
+    _FIND_GRACKLE_FAIL(
+      "Grackle couldn't be found because dependency HDF5 couldn't be found")
+  endif()
+  # declare HDF5 target (details are omitted that aren't needed for linking)
+  add_library(GRACKLE_HDF5_C INTERFACE IMPORTED)
+  set_target_properties(GRACKLE_HDF5_C PROPERTIES
+    INTERFACE_LINK_LIBRARIES "${HDF5_C_LIBRARIES}")
+
+  # if necessary, deal with OpenMP
+  if (_GRACKLEBUILD_USE_OPENMP)
+
+    # NOTE: The installation process directly provides the required OpenMP
+    #  libraries, rather than requiring this function to call find_package
+    #  -> pragmatically, this is done for compatability purposes (the
+    #     FindOpenMP module doesn't do what we need for earlier cmake versions)
+    #  -> This might help with linking in the scenario where a serial
+    #     application compiled with gcc is linked against a version of Grackle
+    #     compiled with intel compilers
+    set(_GRACKLE_OpenMP_LIBS "@GrackleExport_OpenMP_LIBS@")
+
+    # TODO: we may want to employ find_library in the future to confirm that
+    #       external dependencies can actually be found...
+
+    add_library(GRACKLE_OPENMP INTERFACE IMPORTED)
+    set_target_properties(GRACKLE_OPENMP PROPERTIES
+      INTERFACE_LINK_LIBRARIES "${_GRACKLE_OpenMP_LIBS}")
+
+    unset(_GRACKLE_OpenMP_LIBS)
+  endif()
+
+  # _GRACKLE_TOOLCHAIN_LINK_LIBS holds (toolchain-specific) runtime libs. The
+  # idea here is to ensure that a static Grackle library can be properly linked
+  # against pure-C projects
+  set(_GRACKLE_TOOLCHAIN_LINK_LIBS "@_TOOLCHAIN_LINK_LIBS@")
+
+  add_library(GRACKLE_TOOLCHAIN_RUNTIME_DEPS INTERFACE IMPORTED)
+  set_target_properties(GRACKLE_TOOLCHAIN_RUNTIME_DEPS PROPERTIES
+    INTERFACE_LINK_LIBRARIES "${_GRACKLE_TOOLCHAIN_LINK_LIBS}")
+
+endif()
+
+# STEP 6: Prune list of (optional) components that will be loaded
+# ---------------------------------------------------------------
+# Prune the optional "traditional" components for which the external
+# dependencies could not be found
+#
+# This is not relevant for us (since we don't currently support optional
+# "traditional" components) and 
+
+
+# STEP 7: Confirm that all of the required components are available
+# -----------------------------------------------------------------
+# when loading multiple "traditional" components, it's important to fail (if
+# one or more required components is unavailable) BEFORE actually importing any
+# of Grackle's targets
+#
+# This isn't currently relevant for us since we already did this (while
+# determining whether to actually use a static or shared library)
+
+# STEP 8: Actually import the targets
+# -----------------------------------
+
+# import Grackle::Grackle
+include(${CMAKE_CURRENT_LIST_DIR}/Grackle_${_GRACKLE_LIBKIND}_targets.cmake)
+
+# set relevant linking information
+if (${_GRACKLE_LIBKIND} STREQUAL "static")
+  target_link_libraries(Grackle::Grackle
+    INTERFACE GRACKLE_HDF5_C
+    INTERFACE GRACKLE_TOOLCHAIN_RUNTIME_DEPS
+  )
+
+  if (_GRACKLEBUILD_USE_OPENMP)
+    target_link_libraries(Grackle::Grackle INTERFACE GRACKLE_OPENMP)
+  endif()
+
+endif()
+
+# set custom-property information
+# -> keep these in-sync with the custom-properties in the build
+set_target_properties(Grackle::Grackle PROPERTIES
+@_GRACKLE_INFO_PROPERTIES@
+)
+
+# Finally, let's do some cleanup so people don't rely upon these variables
+# (specifically, let's cleanup the record of the build-flags)
+unset(_GRACKLEBUILD_USE_DOUBLE)
+unset(_GRACKLEBUILD_USE_OPENMP)

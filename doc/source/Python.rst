@@ -32,7 +32,9 @@ Installing Pygrackle
 
 Once the Grackle library has been built and the above dependencies have been
 installed, Pygrackle can be installed by moving into the **src/python**
-directory and running ``pip install -e .``.
+directory and invoking the ``pip install -e .`` command.
+
+This is particularly simple if you installed the Grackle library with the classic build system:
 
 .. highlight:: none
 
@@ -40,6 +42,18 @@ directory and running ``pip install -e .``.
 
     ~/grackle $ cd src/python
     ~/grackle/src/python $ pip install -e .
+
+
+If you used the cmake build-system, you also need to store the path to the build directory in the ``PYGRACKLE_CMAKE_BUILD_DIR`` environment variable.
+If your build directory was located in the root level of the grackle repository and was called **my-build**, the command would look like:
+
+
+.. highlight:: none
+
+::
+
+    ~/grackle $ cd src/python
+    ~/grackle/src/python $ PYGRACKLE_CMAKE_BUILD_DIR=../../my-build pip install -e .
 
 .. note:: Pygrackle can only be run when Grackle is compiled without OpenMP.
    See :ref:`openmp`.

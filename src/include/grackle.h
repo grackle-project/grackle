@@ -32,11 +32,11 @@ extern int grackle_verbose;
 extern chemistry_data *grackle_data;
 extern chemistry_data_storage grackle_rates;
 
-double get_velocity_units(code_units *my_units);
+double get_velocity_units(const code_units *my_units);
 
 void set_velocity_units(code_units *my_units);
 
-double get_temperature_units(code_units *my_units);
+double get_temperature_units(const code_units *my_units);
 
 double gr_query_units(const chemistry_data_storage * my_rates,
                       const char* units_name, double current_a_value);

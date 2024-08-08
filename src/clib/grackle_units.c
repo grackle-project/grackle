@@ -22,7 +22,7 @@
 #include "grackle_chemistry_data.h"
 #include "phys_constants.h"
 
-double get_velocity_units(code_units *my_units)
+double get_velocity_units(const code_units *my_units)
 {
   double velocity_units = my_units->length_units / my_units->time_units;
   if (my_units->comoving_coordinates == 1) {
@@ -42,7 +42,7 @@ static double get_temperature_units_(double velocity_units)
 }
 
 
-double get_temperature_units(code_units *my_units)
+double get_temperature_units(const code_units *my_units)
 {
   return get_temperature_units_(get_velocity_units(my_units));
 }

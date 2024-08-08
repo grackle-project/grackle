@@ -19,7 +19,6 @@ from pygrackle.utilities.physical_constants import \
 from libc.limits cimport INT_MAX
 from .grackle_defs cimport *
 import numpy as np
-cimport numpy as np
 
 cdef class chemistry_data:
     cdef _wrapped_c_chemistry_data data
@@ -654,12 +653,26 @@ cdef class chemistry_data:
         def __get__(self):
             return self.density_units * self.energy_units
 
-cdef gr_float* get_field(fc, name):
-    cdef np.ndarray rv = fc.get(name, None)
-    if rv is None:
+
+
+cdef gr_float* get_field(object fc, object name) except? NULL:
+    """
+    Helper function to retrieve a field's pointer from a ``FluidContainer``
+
+    Note
+    ----
+    This function signature informs cython that it needs to inject code every
+    time this function is called to check whether a Python Exception was raised
+    when function-call returns a ``NULL`` pointer. Exceptions can arise if a
+    user accidently typed ``fc[k] = vals`` instead of ``fc[k][:] = vals``.
+    """
+    cdef object arr = fc.get(name, None)
+    if arr is None:
         return NULL
-    else:
-        return <gr_float *> rv.data
+
+    assert arr.size == fc.n_vals # sanity check
+    cdef gr_float[::1] view = arr
+    return <gr_float *> &view[0]
 
 cdef c_field_data setup_field_data(object fc, int[::1] buf,
                                    bint include_velocity) except *:
@@ -976,3 +989,14 @@ def _query_units(chemistry_data chem_data, object name,
 
     return gr_query_units(rates, units_name, casted_current_a_value)
 
+# The following snippet exists for testing purposes. It makes use of a macro
+# defined in setup.py, to specify the type of build used for libgrackle
+cdef extern from *:
+    """
+    int traditional_in_source_build(void) {return TRADITIONAL_IN_SOURCE_BUILD;}
+    """
+    int traditional_in_source_build() # returns 1 for True or 0 for False
+
+def uses_in_source_build():
+    # this is only intented for testing purposes (it's subject to change)
+    return bool(traditional_in_source_build())
