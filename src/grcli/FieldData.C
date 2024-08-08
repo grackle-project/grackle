@@ -1,4 +1,8 @@
+#include <cstring>
 #include <map>
+#include <string>
+#include <string_view>
+
 #include "FieldData.h"
 #include "grackle.h"
 
