@@ -50,7 +50,7 @@ inline void try_parse_help(std::string_view arg,
 class CliParser {
   char * const * next_;
   char * const * end_;
-  const char* bin_name_;
+  char* bin_name_;
 
 public:
   CliParser() = delete;
@@ -62,7 +62,7 @@ public:
     bin_name_ = argv[0];
   }
 
-  const char * bin_name() const { return bin_name_; }
+  char * bin_name() const { return bin_name_; }
 
   bool has_next() const { 
     bool out = next_ < end_;
