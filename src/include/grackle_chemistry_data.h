@@ -176,6 +176,9 @@ typedef struct
   int recombination_cooling_rates; //Recombination cooling
   int bremsstrahlung_cooling_rates; //Bremsstrahlung cooling
 
+  /* Flag to specify unit-handling */
+  int unit_handling;
+
   /* maximum number of subcycle iterations for solve_chemistry */
   int max_iterations;
 
@@ -186,6 +189,23 @@ typedef struct
   int omp_nthreads;
 
 } chemistry_data;
+
+/*****************************
+ ***** code units struct *****
+ *****************************/
+
+typedef struct
+{
+
+  int comoving_coordinates;
+  double density_units;
+  double length_units;
+  double time_units;
+  double velocity_units;
+  double a_units;
+  double a_value;
+
+} code_units;
 
 /*****************************
  *** Cooling table storage ***
@@ -416,6 +436,8 @@ typedef struct
   /* New/old cloudy data flag */
   int cloudy_data_new;
 
+  /* tracks the initial value of the code-units */
+  code_units initial_units;
 } chemistry_data_storage;
 
 /**************************
