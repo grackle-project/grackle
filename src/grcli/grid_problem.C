@@ -26,9 +26,9 @@ static std::pair<seq_variant, const char*> parse_seq_(std::string s) {
     seq_variant seq{valseq::Single(val)};
     return { seq, nullptr };
 
-  } else if (starts_with(s, "geomspace")) { // "geomspace;lo;hi;num"
+  } else if (starts_with(s, "geomspace")) { // "geomspace,lo,hi,num"
     const char* pattern = (
-        "^([a-zA-Z]+);(" FLT_PATTERN ");(" FLT_PATTERN ");([-+]?\\d+)$");
+        "^([a-zA-Z]+),(" FLT_PATTERN "),(" FLT_PATTERN "),([-+]?\\d+)$");
     std::regex geomspace_regex(pattern);
     std::smatch match;
     if (std::regex_match(s, match, geomspace_regex)) {
@@ -46,12 +46,12 @@ static std::pair<seq_variant, const char*> parse_seq_(std::string s) {
 
       // match 10 is always the number of entries
       int num = std::stoi(match[10].str());
-      //printf("geomspace;%g;%g;%d\n", lo,hi,num);
+      //printf("geomspace,%g,%g,%d\n", lo,hi,num);
       seq_variant seq{valseq::Geomspace(lo,hi,num)};
       return {seq, nullptr};
     } else {
       return {dummy_seq,
-              "gemospace must be formatted as geomspace;{lo};{hi};{num}"};
+              "gemospace must be formatted as geomspace,{lo},{hi},{num}"};
     }
   } else {
     return {dummy_seq,
@@ -59,7 +59,7 @@ static std::pair<seq_variant, const char*> parse_seq_(std::string s) {
   }
 }
 
-static const std::regex grid_ax_regex("^-Sgrid.ax([0-9]+)=([a-zA-Z_]+);(.*)$");
+static const std::regex grid_ax_regex("^-Sgrid.ax([0-9]+)=([a-zA-Z_]+),(.*)$");
 
 static std::optional<scenario::QuantityKind> try_get_quantity_(std::string s) {
   if (s == "temperature")  return {scenario::QuantityKind::temperature};
@@ -137,7 +137,7 @@ bool scenario::try_parse_cli_grid_component(const char* arg,
       fprintf(
           stderr,
           "The argument `%s` is invalid. It looks like it should have the "
-          "form `-Sgrid.ax<I>=<quantity>;<seq>`\n",
+          "form `-Sgrid.ax<I>=<quantity>,<seq>`\n",
           arg);
       std::exit(1);
     }
