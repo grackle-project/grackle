@@ -52,8 +52,9 @@ environment variable to 1.
 This will tell the test suite to simply generate new answers and not
 compare with previously existing ones.
 
-Once you have installed :ref:`pygrackle <python>`, the tests can be
-run from the **src** directory by typing ``make test``:
+Once you have installed :ref:`pygrackle and the development
+dependencies <pygrackle-dev>`, the tests can be run from the **src**
+directory by typing ``make test``:
 
 .. code-block:: bash
 
