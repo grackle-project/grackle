@@ -1,0 +1,45 @@
+# Once GH-#208 is merged, the contents of this file should be merged with the
+# pyproject.toml file introduced by that PR
+#
+# This file contains all python files that were already part of Grackle before
+# we introduced ruff
+# - per our discussion in GH-#218, we aren't applying formatters to old code
+#   yet (to avoid merge-conflicts)
+# - We plan to "rip the bandaid off" and remove all the files from this list
+#   after the next
+# - No new files should be added to this list
+
+# This adds files to the standard set of exclusions
+extend-exclude = [
+    "config/configure_file.py",
+    "config/query_version.py",
+    "doc/source/conf.py",
+    "src/python/examples/cooling_cell.py",
+    "src/python/examples/cooling_rate.py",
+    "src/python/examples/freefall.py",
+    "src/python/examples/yt_grackle.py",
+    "src/python/pygrackle/__init__.py",
+    "src/python/pygrackle/api.py",
+    "src/python/pygrackle/fluid_container.py",
+    "src/python/pygrackle/utilities/__init__.py",
+    "src/python/pygrackle/utilities/api.py",
+    "src/python/pygrackle/utilities/convenience.py",
+    "src/python/pygrackle/utilities/evolve.py",
+    "src/python/pygrackle/utilities/misc.py",
+    "src/python/pygrackle/utilities/physical_constants.py",
+    "src/python/pygrackle/utilities/primordial_equilibrium.py",
+    "src/python/pygrackle/utilities/testing.py",
+    "src/python/pygrackle/utilities/units.py",
+    "src/python/pygrackle/yt_fields.py",
+    "src/python/setup.py",
+    "src/python/tests/test_chemistry.py",
+    "src/python/tests/test_chemistry_struct_synched.py",
+    "src/python/tests/test_code_examples.py",
+    "src/python/tests/test_dynamic_api.py",
+    "src/python/tests/test_examples.py",
+    "src/python/tests/test_get_grackle_version.py",
+    "src/python/tests/test_initialisation.py",
+    "src/python/tests/test_primordial.py",
+    "src/python/tests/test_specific_heating_rate.py",
+    "src/python/tests/test_volumetric_heating_rate.py"
+]
