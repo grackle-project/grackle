@@ -13,6 +13,10 @@
 #include <string_view>
 #include <optional>
 
+#ifdef USE_BENCHMARK
+#include <benchmark/benchmark.h>
+#endif
+
 #include "CliParser.h"
 #include "cmd_bench.h"
 #include "executor.h"
@@ -66,13 +70,26 @@
                        pack.initial_units(), std::move(fields),
                        op_spec.value());
 
-  int n_iter = 20;
-  BenchState tmp(n_iter);
-  driver(tmp);
+  if (false) {
+    int n_iter = 20;
+    grackle::BenchState tmp(n_iter);
+    driver(tmp);
 
-  double n_seconds = tmp.GetTotalElapsedSeconds();
-  std::printf("%d iterations, %g seconds\n", n_iter, n_seconds);
+    double n_seconds = tmp.GetTotalElapsedSeconds();
+    std::printf("%d iterations, %g seconds\n", n_iter, n_seconds);
+  } else {
 
+    auto my_test = [&driver](benchmark::State& st) { driver(st); };
+    benchmark::RegisterBenchmark("scenario", my_test);
+
+    // we should rethink this so we can pass arguments through to benchmark
+    int argc = 1;
+    char* argv[2] = {parser.bin_name(), nullptr};
+    benchmark::Initialize(&argc, argv);
+    benchmark::RunSpecifiedBenchmarks();
+    benchmark::Shutdown();
+
+  }
   std::exit(0);
 }
 

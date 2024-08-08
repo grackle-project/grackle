@@ -1,4 +1,15 @@
 
+include(FetchContent)
+FetchContent_Declare(
+  benchmark
+  # the following url contains the hash for version 1.8.5
+  URL https://github.com/google/benchmark/archive/a6ad7fbbdc2e14fab82bb8a6d27760d700198cbf.zip
+)
+
+set (BENCHMARK_ENABLE_GTEST_TESTS OFF)
+FetchContent_MakeAvailable(benchmark)
+
+
 add_executable(Grackle_Grcli
   ChemistryData.h
   CliParser.h
@@ -19,6 +30,9 @@ set_target_properties(Grackle_Grcli
   #EXPORT_NAME Grcli # <- if we want to export, uncomment this
 )
 
-target_link_libraries(Grackle_Grcli PRIVATE Grackle::Grackle)
+target_link_libraries(Grackle_Grcli
+  PRIVATE Grackle::Grackle benchmark::benchmark)
+
+target_compile_definitions(Grackle_Grcli PUBLIC USE_BENCHMARK=1)
 
 add_executable(Grackle::Grcli ALIAS Grackle_Grcli)

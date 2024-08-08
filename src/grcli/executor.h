@@ -3,7 +3,12 @@
 
 #include <chrono>
 #include <iterator>
+#include <type_traits>
 #include <utility> // std::move
+
+#if USE_BENCHMARK
+#include <benchmark/benchmark.h>
+#endif /* USE_BENCHMARK */
 
 #include "grackle.h"
 
@@ -11,10 +16,10 @@
 #include "operation.h"
 #include "utils.h"
 
-#define GRCLI_BENCH_STATE BenchState
-
 // this is basically a dummy object to let us operate without installing
 // google benchmark
+namespace grackle {
+
 class BenchState {
 
   int max_iter_;
@@ -60,6 +65,8 @@ public:
   iterator end() { return iterator(max_iter_); }
 };
 
+} // namespace grackle
+
 class GrackleDriver {
 
   chemistry_data* my_chem_;
@@ -68,8 +75,10 @@ class GrackleDriver {
   FieldData wrapped_my_field_;
   OperationSpec operation_;
 
-  template<OperationKind op>
-  void helper_(GRCLI_BENCH_STATE& state) {
+  
+  /// This template function does the actual work
+  template<typename T, OperationKind op>
+  void helper_(T& state) {
 
     double dt = this->operation_.dt;
     // do any setup!
@@ -86,7 +95,14 @@ class GrackleDriver {
 
     gr_float* out = new gr_float[wrapped_my_field_.grid_size()];
 
+    using time_point = 
+      std::chrono::time_point<std::chrono::high_resolution_clock>;
+
     for (auto _ : state) {
+      // declare 2 variables that are sometimes used
+      [[maybe_unused]] time_point t_start;
+      [[maybe_unused]] time_point t_end;
+
       // because we modify field values in place in all operations (even when
       // simply doing unit conversions), the input values will vary between
       // iterations (the amount of drift obviously depends upon the operation)
@@ -98,8 +114,11 @@ class GrackleDriver {
       clone_field_data(copied_fields, wrapped_my_field_.get_ptr());
       state.ResumeTiming();
 
-      auto start = std::chrono::high_resolution_clock::now();
+      if constexpr (std::is_same_v<T, grackle::BenchState>) {
+        t_start = std::chrono::high_resolution_clock::now();
+      }
 
+      // here is where we do the actual work
       if constexpr (op == OperationKind::calc_cooling_time) {
         local_calculate_cooling_time(my_chem, my_rates, my_units,
                                      copied_fields, out);
@@ -116,12 +135,12 @@ class GrackleDriver {
         local_solve_chemistry(my_chem, my_rates, my_units, copied_fields, dt);
       }
 
-      auto end = std::chrono::high_resolution_clock::now();
-
-      std::chrono::nanoseconds elapsed_nanoseconds =
-        std::chrono::duration_cast<std::chrono::nanoseconds>(end - start);
-
-      state.SetIterationTime(elapsed_nanoseconds.count() / 1e9);
+      if constexpr (std::is_same_v<T, grackle::BenchState>) {
+        t_end = std::chrono::high_resolution_clock::now();
+        std::chrono::nanoseconds elapsed_nanoseconds =
+          std::chrono::duration_cast<std::chrono::nanoseconds>(t_end - t_start);
+        state.SetIterationTime(elapsed_nanoseconds.count() / 1e9);
+      }
     }
 
     // this is where we cleanup
@@ -142,18 +161,21 @@ public:
   {
   }
 
-  void operator()(GRCLI_BENCH_STATE& state) {
+  /// function that actually dispatches to the correct specialization of the
+  /// `helper_` function
+  template <typename T>
+  void operator()(T& state) {
     switch(this->operation_.kind) {
       case OperationKind::calc_cooling_time:
-        return helper_<OperationKind::calc_cooling_time>(state);
+        return helper_<T, OperationKind::calc_cooling_time>(state);
       case OperationKind::calc_dust_temperature:
-        return helper_<OperationKind::calc_dust_temperature>(state);
+        return helper_<T, OperationKind::calc_dust_temperature>(state);
       case OperationKind::calc_pressure:
-        return helper_<OperationKind::calc_pressure>(state);
+        return helper_<T, OperationKind::calc_pressure>(state);
       case OperationKind::calc_temperature:
-        return helper_<OperationKind::calc_temperature>(state);
+        return helper_<T, OperationKind::calc_temperature>(state);
       case OperationKind::solve_chemistry:
-        return helper_<OperationKind::solve_chemistry>(state);
+        return helper_<T, OperationKind::solve_chemistry>(state);
     }
   }
 
