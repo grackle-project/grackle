@@ -268,6 +268,11 @@ where DU is :c:data:`density_units` and m\ :sub:`H` is the hydrogen
 mass. The above definitions also hold for proper coordinates by
 setting a to 1.
 
+As a convenience, we provide the :c:func:`gr_query_units` function to let the user query the code units at arbitrary values of the expansion factor.
+This is intended to be used when implementing Grackle support into your simulation (and debugging) in order to let you manually confirm that the code units you are passing in are correct (internally, Grackle simply assumes that the caller is giving the right values).
+The values returned by this function are based on the the initial values stored in the :c:type:`code_units` data structure (that are passed into grackle while :ref:`setting up chemistry data and the associated storage <setup_data-storage>`).
+
+
 .. _setup_data-storage:
 
 Chemistry Data

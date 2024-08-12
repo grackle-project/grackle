@@ -964,6 +964,30 @@ cdef class _wrapped_c_chemistry_data:
             out[k] = self[k]
         return out
 
+def _query_units(chemistry_data chem_data, object name,
+                 object current_a_value):
+    """
+    Computes the units required by grackle for a given scale-factor value.
+
+    Notes
+    -----
+    Currently, this mostly exists for testing purposes
+    """
+    cdef c_chemistry_data_storage* rates = &chem_data.rates
+
+    cdef bytes name_copy
+    if isinstance(name, str):
+        name_copy = name.encode('ASCII')
+    else:
+        name_copy = name
+    cdef char* units_name = name_copy
+
+    cdef double casted_current_a_value = GR_SPECIFY_INITIAL_A_VALUE
+
+    if current_a_value is not None:
+        casted_current_a_value = current_a_value
+
+    return gr_query_units(rates, units_name, casted_current_a_value)
 
 # The following snippet exists for testing purposes. It makes use of a macro
 # defined in setup.py, to specify the type of build used for libgrackle
