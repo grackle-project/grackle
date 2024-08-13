@@ -17,7 +17,7 @@
 #include <benchmark/benchmark.h>
 #endif
 
-#include "CliParser.h"
+#include "args/CliParser.h"
 #include "cmd_bench.h"
 #include "executor.h"
 #include "grid_problem.h"

@@ -11,7 +11,7 @@
 #include "grackle.h"
 
 #include "ChemistryData.h"
-#include "CliParser.h"
+#include "args/CliParser.h"
 #include "utils.h"
 
 

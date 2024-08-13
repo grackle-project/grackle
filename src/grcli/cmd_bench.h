@@ -13,7 +13,7 @@
 #ifndef GRCLI_CMDBENCH_H
 #define GRCLI_CMDBENCH_H
 
-#include "CliParser.h"
+#include "args/CliParser.h"
 
 namespace cmd::bench {
 

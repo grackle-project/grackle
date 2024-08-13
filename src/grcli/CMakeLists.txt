@@ -12,7 +12,7 @@ FetchContent_MakeAvailable(benchmark)
 
 add_executable(Grackle_Grcli
   ChemistryData.h
-  CliParser.h
+  args/CliParser.h
   FieldData.h FieldData.C
   cmd_bench.h cmd_bench.C
   cmd_show.h cmd_show.C
@@ -29,6 +29,9 @@ set_target_properties(Grackle_Grcli
   OUTPUT_NAME grcli # controls what the file is named
   #EXPORT_NAME Grcli # <- if we want to export, uncomment this
 )
+
+target_include_directories(Grackle_Grcli
+  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 target_link_libraries(Grackle_Grcli
   PRIVATE Grackle::Grackle benchmark::benchmark)
