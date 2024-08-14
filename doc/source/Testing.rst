@@ -56,17 +56,17 @@ Once you have installed :ref:`pygrackle and the development
 dependencies <pygrackle-dev>`, the tests can be run from the **src**
 directory by typing ``make test``:
 
-.. code-block:: bash
+.. code-block:: shell-session
 
-  ~ $ cd grackle/src
-  ~/grackle/src $ make test
+   ~ $ cd grackle/src
+   ~/grackle/src $ make test
 
 or from the **src/python** directory by typing ``py.test``:
 
-.. code-block:: bash
+.. code-block:: shell-session
 
-  ~ $ cd grackle/src/python
-  ~/grackle/src $ py.test
+   ~ $ cd grackle/src/python
+   ~/grackle/src $ py.test
 
   ==================================== test session starts ====================================
   platform darwin -- Python 3.11.9, pytest-8.2.1, pluggy-1.5.0
