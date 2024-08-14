@@ -13,6 +13,7 @@ FetchContent_MakeAvailable(benchmark)
 add_executable(Grackle_Grcli
   ChemistryData.h
   args/CliParser.h
+  args/EscapedArgsConfig.h
   FieldData.h FieldData.C
   cmd_bench.h cmd_bench.C
   cmd_show.h cmd_show.C

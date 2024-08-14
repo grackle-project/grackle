@@ -12,6 +12,7 @@
 
 #include "ChemistryData.h"
 #include "args/CliParser.h"
+#include "args/EscapedArgsConfig.h"
 #include "utils.h"
 
 

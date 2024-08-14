@@ -18,6 +18,7 @@
 #endif
 
 #include "args/CliParser.h"
+#include "args/EscapedArgsConfig.h"
 #include "cmd_bench.h"
 #include "executor.h"
 #include "grid_problem.h"
@@ -31,6 +32,7 @@
   std::optional<CliParamSpec> gr_param_spec;
   scenario::CliGridSpec grid_spec;
   std::optional<OperationSpec> op_spec;
+  args::BackendConfig backend_arg_spec;
 
   const char* ptr;
   while ((ptr = parser.next()) != nullptr) {
@@ -41,6 +43,8 @@
     } else if (try_parse_cli_grid_component(ptr, grid_spec)) {
       continue;
     } else if (try_parse_op_spec(ptr, op_spec)) {
+      continue;
+    } else if (backend_arg_spec.try_parse(ptr, parser)) {
       continue;
     }
     err_unrecognized_arg(ptr);
@@ -82,10 +86,16 @@
     auto my_test = [&driver](benchmark::State& st) { driver(st); };
     benchmark::RegisterBenchmark("scenario", my_test);
 
-    // we should rethink this so we can pass arguments through to benchmark
-    int argc = 1;
-    char* argv[2] = {parser.bin_name(), nullptr};
-    benchmark::Initialize(&argc, argv);
+    // construct argv and argc
+    // ToDo: there is probably a smarter way to do this without copying the
+    //       vector (since we aren't copying the pointers this isn't terrible)
+    std::vector<char*> argv_vec = backend_arg_spec.args_copy();
+    int argc = int(argv_vec.size()) + 1;
+    argv_vec.reserve(argc + 2);
+    argv_vec.insert(argv_vec.begin(), parser.bin_name());
+    argv_vec.push_back(nullptr);
+
+    benchmark::Initialize(&argc, (char**)(argv_vec.data()));
     benchmark::RunSpecifiedBenchmarks();
     benchmark::Shutdown();
 
