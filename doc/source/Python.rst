@@ -71,26 +71,20 @@ the documentation locally. To install the development dependencies,
 repeat the last line of the :ref:`pygrackle installation instructions
 <install-pygrackle>` with ``[dev]`` appended.
 
-.. highlight:: none
-
-::
+.. code-block:: shell-session
 
     ~/grackle/src/python $ pip install -e .[dev]
 
 or
 
-.. highlight:: none
-
-::
+.. code-block:: shell-session
 
     ~/grackle/src/python $ PYGRACKLE_CMAKE_BUILD_DIR=../../my-build pip install -e .[dev]
 
 If you use ``zsh`` as your shell, you will need quotes around
 '.[dev]'.
 
-.. highlight:: none
-
-::
+.. code-block:: shell-session
 
     ~/grackle/src/python $ pip install -e '.[dev]'
 

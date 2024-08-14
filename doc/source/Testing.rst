@@ -45,7 +45,7 @@ generating the answer test results using the latest gold standard. To
 run this way, first set the ``GENERATE_PYGRACKLE_TEST_RESULTS``
 environment variable to 1.
 
-.. code-block:: bash
+.. code-block:: shell-session
 
    ~ $ export GENERATE_PYGRACKLE_TEST_RESULTS=1
 
