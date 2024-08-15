@@ -25,8 +25,7 @@ using value_variant = std::variant<int, double, std::string>;
 /// receives. If the order within argv, this becomes invalidated. Likewise
 /// this would also become invalidated, if argv were somehow deallocated...
 struct CliParamSpec{
-  const char* const * begin;
-  const char* const * end;
+  std::vector<const char*> args;
 
 private:
   /// internal type used to hold the parsed key-value pair
@@ -55,8 +54,8 @@ public:
   /// arguments (std::string_view key, value_variant value)
   template<class PairFn>
   void for_each(PairFn f) const {
-    for(const char* const* ptr = this->begin; ptr != end; ++ptr) {
-      KVPair kv_pair = this->parse_param_(*ptr);
+    for(const char* arg : args) {
+      KVPair kv_pair = this->parse_param_(arg);
       f(kv_pair.key, kv_pair.val);
     }
   }
@@ -73,35 +72,13 @@ public:
 inline bool try_parse_cli_paramspec(const char* leading_arg,
                                     CliParser& parser,
                                     std::optional<CliParamSpec>& param_spec) {
-  if (std::string_view(leading_arg) != "--par-start") {
-    return false;
-  } else if (param_spec.has_value()) {
-    std::fprintf(stderr, "%s isn't allowed to be provided more than once\n",
-                 leading_arg);
-    std::exit(1);
-  }
+  args::EscapedArgsSpec arg_spec{'P', "--par-start", "--par-stop"};
 
-  const std::string_view sentinel("--par-stop");
-  if ((not parser.has_next()) || (parser.peek() == sentinel)) {
-    fprintf(stderr, "the \"%s\" flag doesn't start a group of parameters\n",
-            leading_arg);
-    std::exit(1);
-
-  } else {
-    char * const * begin = parser.next_argv_ptr();
-    char * const * latest = begin;
-    while (sentinel != *latest) {
-      if (!parser.has_next()) {
-        latest++;
-        break;
-      }
-      latest = parser.next_argv_ptr();
-    }
-
-    CliParamSpec tmp{begin, latest};
-    param_spec = std::make_optional<CliParamSpec>(std::move(tmp));
-    return true;
-  }
+  auto fn = [&param_spec](const char* arg) -> void {
+    if (!param_spec.has_value()) { param_spec = CliParamSpec{}; }
+    param_spec.value().args.push_back(arg);
+  };
+  return arg_spec.try_parse(leading_arg, parser, fn);
 }
 
 /// Class that holds the full configuration of the Grackle-Solver
