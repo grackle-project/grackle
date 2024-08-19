@@ -84,6 +84,22 @@ random_inputs = {
     "redshift":    {"min":   0, "max":    6, "log": False},
 }
 
+def failure_str(my_pars, my_units, my_in, my_out, comp_out, field):
+    msg = "Failed local function test:\n"
+    msg += "Non-default parameters:\n"
+    for par, val in my_pars.items():
+        msg += f"\t{par} = {val}\n"
+    msg += "Units:\n"
+    for unit, val in my_units.items():
+        msg += f"\t{unit} = {val}\n"
+    msg += "Inputs:\n"
+    for my_input, val in my_in.items():
+        msg += f"\t{my_input} = {val}\n"
+    msg += f"field: {field}\n"
+    msg += f"generated output: {my_out[field]}\n"
+    msg += f"stored output: {comp_out[field]}"
+    return msg
+
 class LocalFunctionsTest(TestCase):
     """
     Tests for the local functions.
@@ -251,10 +267,13 @@ class LocalFunctionsTest(TestCase):
                 else:
                     comp_out = my_tests[itest]["output"]
                     for field in my_out:
+                        err_msg=failure_str(
+                            par_set, my_units, my_in,
+                            my_out, comp_out, field)
                         assert_approx_equal(
                             comp_out[field], my_out[field],
                             significant=self.digits,
-                            err_msg=f"Field: {field}.")
+                            err_msg=err_msg)
 
             if generate_test_results:
                 test_set["tests"] = my_tests
