@@ -58,7 +58,9 @@ def setup_fluid_container(my_chemistry,
 
     The state of the gas can be set to "neutral" or "ionized" initialize the
     gas as fully neutral or fully ionized. Molecular fractions are always
-    initialized to effectively zero.
+    initialized to effectively zero. Note, if the primordial_chemistry
+    parameter is set to 0, this option is ignored as only the total density
+    and metal density are followed in this mode.
 
     Parameters
     ----------
