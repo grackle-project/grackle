@@ -20,10 +20,11 @@ from pygrackle import \
     set_cosmology_units
 
 from pygrackle.utilities.testing import \
-    grackle_data_dir, \
     random_logscale, \
     assert_rel_equal, \
     assert_array_less
+
+from testing_common import grackle_data_dir
 
 _parameters = {
     "use_grackle": 1,
