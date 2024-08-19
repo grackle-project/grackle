@@ -73,6 +73,7 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('pygrackle', 'pygrackle')
     return config
 
+
 dev_requirements = [
     'flake8',
     'packaging',
@@ -126,7 +127,7 @@ setup(
     license="BSD 3-clause",
     ext_modules=cython_extensions,
     extras_require={
-          'dev': dev_requirements,
+        'dev': dev_requirements,
     },
     python_requires='>=3.7'
 )
