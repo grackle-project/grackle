@@ -30,7 +30,7 @@ from pygrackle.utilities.physical_constants import \
     sec_per_Myr
 from pygrackle.utilities.testing import \
     ensure_dir, \
-    generate_local_function_results, \
+    generate_test_results, \
     grackle_data_dir, \
     local_function_test_format_version, \
     test_answers_dir
@@ -104,7 +104,7 @@ class LocalFunctionsTest(TestCase):
         json test file.
         """
 
-        if generate_local_function_results:
+        if generate_test_results:
             my_sets = self.generate_parameter_sets()
             self.test_sets = [{"parameters": my_set, "units": base_units}
                               for my_set in my_sets]
@@ -122,7 +122,7 @@ class LocalFunctionsTest(TestCase):
         """
         Write json test file if we are generating resuls.
         """
-        if generate_local_function_results:
+        if generate_test_results:
             # add the format version to the output
             self.test_sets.insert(0, _meta_data)
             with open(self.test_file, mode="w") as f:
@@ -191,7 +191,7 @@ class LocalFunctionsTest(TestCase):
                 setattr(my_chemistry, "grackle_data_file",
                         os.path.join(grackle_data_dir, par_set["grackle_data_file"]))
 
-            if generate_local_function_results:
+            if generate_test_results:
                 my_tests = []
                 base_inputs = self.generate_base_inputs()
                 n_input_sets = len(base_inputs)
@@ -202,7 +202,7 @@ class LocalFunctionsTest(TestCase):
 
             for itest in range(n_input_sets):
                 my_units = base_units.copy()
-                if generate_local_function_results:
+                if generate_test_results:
                     base_input_set = base_inputs[itest]
                     redshift = base_input_set["redshift"]
                 else:
@@ -214,7 +214,7 @@ class LocalFunctionsTest(TestCase):
                     setattr(my_chemistry, unit, val)
                 my_chemistry.set_velocity_units()
 
-                if generate_local_function_results:
+                if generate_test_results:
                     fc = setup_fluid_container(
                         my_chemistry,
                         density=base_input_set["density"],
@@ -244,7 +244,7 @@ class LocalFunctionsTest(TestCase):
                     my_out[fname] = fc[fname][0]
 
                 # Compare with existing results unless we are generating them.
-                if generate_local_function_results:
+                if generate_test_results:
                     my_tests.append({"input": my_in, "output": my_out})
                 else:
                     comp_out = my_tests[itest]["output"]
@@ -254,5 +254,5 @@ class LocalFunctionsTest(TestCase):
                             significant=self.digits,
                             err_msg=f"Field: {field}.")
 
-            if generate_local_function_results:
+            if generate_test_results:
                 test_set["tests"] = my_tests

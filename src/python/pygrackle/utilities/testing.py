@@ -23,21 +23,8 @@ import shutil
 import subprocess
 import tempfile
 
-generate_code_example_results = \
-  generate_local_function_results = \
-  generate_model_results = \
+generate_test_results = \
   int(os.environ.get("GENERATE_PYGRACKLE_TEST_RESULTS", 0)) == 1
-
-# allow for individual test granularity
-if "GENERATE_CODE_EXAMPLE_RESULTS" in os.environ:
-    generate_code_example_results = \
-      os.environ["GENERATE_CODE_EXAMPLE_RESULTS"]
-if "GENERATE_LOCAL_FUNCTION_TEST_RESULTS" in os.environ:
-    generate_local_function_results = \
-      os.environ["GENERATE_LOCAL_FUNCTION_TEST_RESULTS"]
-if "GENERATE_MODEL_TEST_RESULTS" in os.environ:
-    generate_model_results = \
-      os.environ["GENERATE_MODEL_TEST_RESULTS"]
 
 local_function_test_format_version = 1
 model_test_format_version = 1

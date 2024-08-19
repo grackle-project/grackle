@@ -8,7 +8,7 @@ from numpy.testing import assert_allclose
 from pygrackle.utilities.model_tests import model_sets
 from pygrackle.utilities.testing import \
     ensure_dir, \
-    generate_model_results, \
+    generate_test_results, \
     python_example_dir, \
     run_command, \
     temporary_directory, \
@@ -33,7 +33,7 @@ def test_model(model_name, par_index, input_index):
         output_file = f"{model_name}_{par_index}_{input_index}.h5"
         answer_path = os.path.join(test_answers_dir, output_file)
 
-        if generate_model_results:
+        if generate_test_results:
             os.rename(output_file, answer_path)
         else:
             assert os.path.exists(answer_path)

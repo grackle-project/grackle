@@ -19,7 +19,7 @@ import re
 import subprocess
 
 from pygrackle.utilities.testing import \
-    generate_code_example_results, \
+    generate_test_results, \
     test_answers_dir
 
 try:
@@ -59,9 +59,9 @@ rfields = (
 )
 
 test_file = os.path.join(test_answers_dir, "code_examples.json")
-if generate_code_example_results and os.path.exists(test_file):
+if generate_test_results and os.path.exists(test_file):
     os.remove(test_file)
-if not generate_code_example_results and not os.path.exists(test_file):
+if not generate_test_results and not os.path.exists(test_file):
     raise RuntimeError(
         f"Code example results file not found: {test_file}")
 
@@ -151,7 +151,7 @@ def test_code_examples(example):
     if example not in compare_exclude:
         results = parse_output(proc.stdout)
 
-        if generate_code_example_results:
+        if generate_test_results:
             if os.path.exists(test_file):
                 with open(test_file, mode="r") as f:
                     all_results = json.load(f)
