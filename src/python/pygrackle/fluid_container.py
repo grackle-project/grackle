@@ -13,6 +13,7 @@
 
 import numpy as np
 from unyt import unyt_array
+import warnings
 
 from pygrackle.grackle_wrapper import \
     calculate_cooling_time, \
@@ -326,8 +327,8 @@ class FluidContainer(dict):
             spec = field[:-8]
             n += self[field] / _species_masses[spec]
         if (n == 0).any():
-            print ("Warning: FluidContainer object has zero densities. "
-                   "Cannot calculate a proper mean molecular weight.")
+            warnings.warn("FluidContainer object has zero densities. "
+                          "Cannot calculate a proper mean molecular weight.")
             return
 
         self["mean_molecular_weight"] = self["density"] / n
