@@ -8,11 +8,15 @@ from numpy.testing import assert_allclose
 from pygrackle.utilities.model_tests import model_sets
 from pygrackle.utilities.testing import \
     ensure_dir, \
-    generate_test_results, \
-    python_example_dir, \
     run_command, \
-    temporary_directory, \
+    temporary_directory
+
+from testing_common import \
+    generate_test_results, \
+    grackle_python_dir, \
     test_answers_dir
+
+python_example_dir = os.path.join(grackle_python_dir, "examples")
 
 ensure_dir(test_answers_dir)
 

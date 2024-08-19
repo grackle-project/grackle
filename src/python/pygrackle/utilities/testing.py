@@ -23,12 +23,6 @@ import shutil
 import subprocess
 import tempfile
 
-generate_test_results = \
-  int(os.environ.get("GENERATE_PYGRACKLE_TEST_RESULTS", 0)) == 1
-
-local_function_test_format_version = 1
-model_test_format_version = 1
-
 def assert_rel_equal(a1, a2, decimals, err_msg='', verbose=True):
     if isinstance(a1, np.ndarray):
         assert(a1.size == a2.size)
@@ -105,21 +99,3 @@ def ensure_dir(path):
         else:
             raise
     return path
-
-def dirname(path, level=1):
-    """
-    Multi-level version of os.path.dirname.
-    """
-    if not isinstance(level, int) or level < 1:
-        raise ValueError(
-            f"level must be a positive integer: {level}.")
-    for i in range(level):
-        path = os.path.dirname(path)
-    return path
-
-# set some useful path variables
-grackle_install_dir = dirname(os.path.abspath(__file__), level=5)
-grackle_data_dir = os.path.join(grackle_install_dir, "input")
-grackle_python_dir = os.path.join(grackle_install_dir, "src", "python")
-python_example_dir = os.path.join(grackle_python_dir, "examples")
-test_answers_dir = os.path.join(grackle_python_dir, "tests", "test_answers")

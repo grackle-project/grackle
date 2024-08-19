@@ -28,13 +28,15 @@ from pygrackle.utilities.physical_constants import \
     cm_per_mpc, \
     mass_hydrogen_cgs, \
     sec_per_Myr
-from pygrackle.utilities.testing import \
-    ensure_dir, \
+
+from pygrackle.utilities.testing import ensure_dir
+
+from testing_common import \
     generate_test_results, \
     grackle_data_dir, \
-    local_function_test_format_version, \
     test_answers_dir
 
+local_function_test_format_version = 1
 _meta_data = {"format_version": local_function_test_format_version}
 
 ensure_dir(test_answers_dir)

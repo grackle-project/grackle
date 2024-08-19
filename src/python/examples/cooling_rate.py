@@ -20,15 +20,14 @@ import yt
 from pygrackle import \
     chemistry_data, \
     setup_fluid_container
+from pygrackle.utilities.data_path import grackle_data_dir
 from pygrackle.utilities.physical_constants import \
     mass_hydrogen_cgs, \
     sec_per_Myr, \
     cm_per_mpc
-from pygrackle.utilities.testing import \
-    grackle_data_dir, \
-    model_test_format_version
 from pygrackle.utilities.model_tests import \
-    get_model_set
+    get_model_set, \
+    model_test_format_version
 
 output_name = os.path.basename(__file__[:-3]) # strip off ".py"
 

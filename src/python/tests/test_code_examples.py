@@ -18,8 +18,9 @@ import pytest
 import re
 import subprocess
 
-from pygrackle.utilities.testing import \
+from testing_common import \
     generate_test_results, \
+    grackle_install_dir, \
     test_answers_dir
 
 try:
@@ -31,10 +32,7 @@ except ImportError:
     #    build. But we won't depend on that behavior
     _USING_TRADITIONAL_BUILD = None
 
-current_path = os.path.abspath(__file__)
-current_dir = os.path.dirname(current_path)
-
-examples_path = os.path.join(current_dir, "../..", "example")
+examples_dir = os.path.join(grackle_install_dir, "src", "example")
 
 code_examples = (
     "c_example",
@@ -140,14 +138,14 @@ def test_code_examples(example):
                            "'cmake:<path/to/build>'. {choice!r} is invalid")
     env = dict(os.environ)
     command = f'{make_command} {example}'
-    run_command(command, examples_path, env, timeout=60)
+    run_command(command, examples_dir, env, timeout=60)
 
     # test that example compiles
-    assert os.path.exists(os.path.join(examples_path, example))
+    assert os.path.exists(os.path.join(examples_dir, example))
 
     # try to run the example code
     command = f"./{example}"
-    proc = run_command(command, examples_path, env, timeout=120)
+    proc = run_command(command, examples_dir, env, timeout=120)
     if example not in compare_exclude:
         results = parse_output(proc.stdout)
 
@@ -173,4 +171,4 @@ def test_code_examples(example):
                 assert comp_results[field] == results[field], err_msg
 
     command = f"{make_command} clean"
-    run_command(command, examples_path, env, timeout=60)
+    run_command(command, examples_dir, env, timeout=60)

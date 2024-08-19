@@ -15,7 +15,9 @@ import itertools
 import os
 
 from pygrackle import chemistry_data
-from pygrackle.utilities.testing import grackle_data_dir
+from pygrackle.utilities.data_path import grackle_data_dir
+
+model_test_format_version = 1
 
 # These are generally applicable to all scripts.
 _parameter_exclude = (
