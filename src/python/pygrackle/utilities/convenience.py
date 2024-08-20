@@ -15,8 +15,10 @@ import numpy as np
 import sys
 
 from pygrackle.fluid_container import \
+    _element_masses, \
     FluidContainer
 
+from pygrackle.utilities.atomic import solar_abundance
 from pygrackle.utilities.physical_constants import \
     mass_hydrogen_cgs, \
     sec_per_Myr
@@ -126,6 +128,10 @@ def setup_fluid_container(my_chemistry,
     # someday, maybe we'll include D in the total
     D_total = H_total * d2h
 
+    metal_species = ["C", "O", "Si"]
+    metal_totals = {el: metal_mass_fraction * solar_abundance[el]
+                    for el in metal_species}
+
     fc_density = density / my_chemistry.density_units
     tiny_density = tiny_number * fc_density
 
@@ -139,13 +145,22 @@ def setup_fluid_container(my_chemistry,
         state_vals["HI_density"] = H_total * fc_density
         state_vals["HeI_density"] = He_total * fc_density
         state_vals["DI_density"] = D_total * fc_density
+        for el in metal_totals:
+            state_vals[f"{el}I_density"] = metal_totals[el]
     elif state == "ionized":
         state_vals["HII_density"] = H_total * fc_density
         state_vals["HeIII_density"] = He_total * fc_density
         state_vals["DII_density"] = D_total * fc_density
+        # not exactly fully ionized. Are we conserving atomic metals?
+        for el in metal_totals:
+            state_vals[f"{el}II_density"] = metal_totals[el]
         # ignore HeII since we'll set it to tiny
         state_vals["e_density"] = state_vals["HII_density"] + \
           state_vals["HeIII_density"] / 2
+        if my_chemistry.metal_chemistry > 0:
+            state_vals["e_density"] += \
+              sum([state_vals[f"{el}II_density"] / _element_masses[el]
+                   for el in metal_species])
     else:
         raise ValueError("State must be either neutral or ionized.")
 
