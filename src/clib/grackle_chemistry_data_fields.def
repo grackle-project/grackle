@@ -109,7 +109,17 @@ ENTRY(ih2co, INT, 1)
 /* flag for photoionization cooling */
 ENTRY(ipiht, INT, 1)
 
-ENTRY(HydrogenFractionByMass, DOUBLE, 0.76)
+/* This is initially set to an undefined value. If the user doesn't
+ * specify a value, this is subsequently assigned a value based on
+ * the value of primordial chemistry:
+ * -> primordial_chemistry == 0: based on the values used for generating
+ *                               the table
+ * -> primordial_chemistry >= 1: 0.76
+ *
+ * Historically, this was set to a default value of 0.76 and was ALWAYS
+ * silently overwritten when primordial_chemistry is equal to 0.
+ */
+ENTRY(HydrogenFractionByMass, DOUBLE, FLOAT_UNDEFINED)
 
 /* The DToHRatio is by mass in the code, so multiply by 2.
    - the default value comes from Burles & Tytler 1998 */

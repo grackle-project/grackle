@@ -14,6 +14,10 @@
 #ifndef __CHEMISTRY_DATA_H__
 #define __CHEMISTRY_DATA_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
 /**********************************
  *** Grackle runtime parameters ***
  **********************************/
@@ -217,6 +221,23 @@ typedef struct
   int omp_nthreads;
 
 } chemistry_data;
+
+/*****************************
+ ***** code units struct *****
+ *****************************/
+
+typedef struct
+{
+
+  int comoving_coordinates;
+  double density_units;
+  double length_units;
+  double time_units;
+  double velocity_units;
+  double a_units;
+  double a_value;
+
+} code_units;
 
 /*****************************
  *** Cooling table storage ***
@@ -562,6 +583,8 @@ typedef struct
   /* New/old cloudy data flag */
   int cloudy_data_new;
 
+  /* tracks the initial value of the code-units */
+  code_units initial_units;
 } chemistry_data_storage;
 
 /**************************
@@ -598,4 +621,8 @@ typedef struct
 
 } photo_rate_storage;
 
-#endif
+#ifdef __cplusplus
+} /* extern "C" */
+#endif /* __cplusplus */
+
+#endif /* __CHEMISTRY_DATA_H__ */

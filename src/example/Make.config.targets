@@ -1,0 +1,188 @@
+#=======================================================================
+#
+# FILE:        Make.config.targets
+#
+# DESCRIPTION: Makefile targets for all example targets
+#
+# AUTHOR:      Matthew Abruzzo (matthewabruzzo@gmail.com)
+#
+# DATE:        2023-07-21
+#
+# This file is intended to be included by other files. The other file
+# should be sure to define:
+#
+# CC
+# CXX
+# FC
+# CXXFLAGS
+# FFLAGS
+# LDFLAGS
+# LIBS
+# INCLUDES
+# GRACKLE_INCLUDES
+# GRACKLE_LIB
+#
+#=======================================================================
+
+OUTPUT ?= out.compile
+
+#-----------------------------------------------------------------------
+# C++ EXAMPLE
+#-----------------------------------------------------------------------
+
+cxx_example: $(MODULES) cxx_example.o
+	@rm -f $@
+	@echo "Linking"
+	-@$(CXX) $(LDFLAGS) -o cxx_example cxx_example.o $(LIBS) $(GRACKLE_LIB) >& $(OUTPUT)
+	@(if [ -e $@ ]; then \
+             echo "Success!"; \
+         else \
+             echo "$(CXX) $(LDFLAGS) -o cxx_example cxx_example.o $(LIBS) $(GRACKLE_LIB)" >> temp1; \
+             cat temp1 $(OUTPUT) > temp2; \
+             rm -f temp1; \
+             mv -f temp2 $(OUTPUT); \
+             echo "Failed! See $(OUTPUT) for error messages"; \
+         fi)
+
+#-----------------------------------------------------------------------
+# C++ OPENMP EXAMPLE
+#-----------------------------------------------------------------------
+
+cxx_omp_example: $(MODULES) cxx_omp_example.o
+	@rm -f $@
+	@echo "Linking"
+	-@$(CXX) $(LDFLAGS) -o cxx_omp_example cxx_omp_example.o $(LIBS) $(GRACKLE_LIB) >& $(OUTPUT)
+	@(if [ -e $@ ]; then \
+             echo "Success!"; \
+         else \
+             echo "$(CXX) $(LDFLAGS) -o cxx_omp_example cxx_omp_example.o $(LIBS) $(GRACKLE_LIB)" >> temp1; \
+             cat temp1 $(OUTPUT) > temp2; \
+             rm -f temp1; \
+             mv -f temp2 $(OUTPUT); \
+             echo "Failed! See $(OUTPUT) for error messages"; \
+         fi)
+
+#-----------------------------------------------------------------------
+# C++ GRID EXAMPLE
+#-----------------------------------------------------------------------
+
+cxx_grid_example: $(MODULES) cxx_grid_example.o
+	@rm -f $@
+	@echo "Linking"
+	-@$(CXX) $(LDFLAGS) -o cxx_grid_example cxx_grid_example.o $(LIBS) $(GRACKLE_LIB) >& $(OUTPUT)
+	@(if [ -e $@ ]; then \
+             echo "Success!"; \
+         else \
+             echo "$(CXX) $(LDFLAGS) -o cxx_grid_example cxx_grid_example.o $(LIBS) $(GRACKLE_LIB)" >> temp1; \
+             cat temp1 $(OUTPUT) > temp2; \
+             rm -f temp1; \
+             mv -f temp2 $(OUTPUT); \
+             echo "Failed! See $(OUTPUT) for error messages"; \
+         fi)
+
+#-----------------------------------------------------------------------
+# PURE C EXAMPLE
+#-----------------------------------------------------------------------
+
+c_example: $(MODULES) c_example.o
+	@rm -f $@
+	@echo "Linking"
+	-@$(CC) $(LDFLAGS) -o c_example c_example.o -lm $(LIBS) $(GRACKLE_LIB) >& $(OUTPUT)
+	@(if [ -e $@ ]; then \
+             echo "Success!"; \
+         else \
+             echo "$(CC) $(LDFLAGS) -o c_example c_example.o -lm $(LIBS) $(GRACKLE_LIB)" >> temp1; \
+             cat temp1 $(OUTPUT) > temp2; \
+             rm -f temp1; \
+             mv -f temp2 $(OUTPUT); \
+             echo "Failed! See $(OUTPUT) for error messages"; \
+         fi)
+
+#-----------------------------------------------------------------------
+# PURE C EXAMPLE USING LOCAL STRUCTS
+#-----------------------------------------------------------------------
+
+c_local_example: $(MODULES) c_local_example.o
+	@rm -f $@
+	@echo "Linking"
+	-@$(CC) $(LDFLAGS) -o c_local_example c_local_example.o -lm $(LIBS) $(GRACKLE_LIB) >& $(OUTPUT)
+	@(if [ -e $@ ]; then \
+             echo "Success!"; \
+         else \
+             echo "$(LD) $(LDFLAGS) -o c_local_example c_local_example.o $(LIBS) $(GRACKLE_LIB)" >> temp1; \
+             cat temp1 $(OUTPUT) > temp2; \
+             rm -f temp1; \
+             mv -f temp2 $(OUTPUT); \
+             echo "Failed! See $(OUTPUT) for error messages"; \
+         fi)
+
+#-----------------------------------------------------------------------
+# FORTRAN EXAMPLE
+#-----------------------------------------------------------------------
+
+fortran_example: $(MODULES) fortran_example.o
+	@rm -f $@
+	@echo "Linking"
+	-@$(FC) $(LDFLAGS) -o fortran_example fortran_example.o $(LIBS) $(GRACKLE_LIB) >& $(OUTPUT)
+	@(if [ -e $@ ]; then \
+             echo "Success!"; \
+         else \
+             echo "$(FC) $(LDFLAGS) -o fortran_example fortran_example.o $(LIBS) $(GRACKLE_LIB)" >> temp1; \
+             cat temp1 $(OUTPUT) > temp2; \
+             rm -f temp1; \
+             mv -f temp2 $(OUTPUT); \
+             echo "Failed! See $(OUTPUT) for error messages"; \
+         fi)
+
+#-----------------------------------------------------------------------
+# Implicit rules
+#-----------------------------------------------------------------------
+
+.SUFFIXES: .c .C .F
+
+.C.o:
+	@rm -f $@
+	@echo "Compiling $<"
+	-@($(CXX) -c -o $@ $(DEFINES) $(CXXFLAGS) $(INCLUDES) $(GRACKLE_INCLUDE) $*.C) >& $(OUTPUT)
+	@(if [ ! -e $@ ]; then \
+             echo; \
+             echo "$(CXX) -c -o $@ $(DEFINES) $(CXXFLAGS) $(INCLUDES) $(GRACKLE_INCLUDE) $*.C"; \
+             echo; \
+             $(CXX) -c -o $@ $(DEFINES) $(CXXFLAGS) $(INCLUDES) $(GRACKLE_INCLUDE) $*.C;\
+             echo; \
+             exit 1; \
+          fi)
+
+.c.o:
+	@rm -f $@
+	@echo "Compiling $<"
+	-@($(CC) -c -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) $(GRACKLE_INCLUDE) $*.c) >& $(OUTPUT)
+	@(if [ ! -e $@ ]; then \
+             echo; \
+             echo "$(CC) -c -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) $(GRACKLE_INCLUDE) $*.c"; \
+             echo; \
+             $(CC) -c -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) $(GRACKLE_INCLUDE) $*.c;\
+             echo; \
+             exit 1; \
+          fi)
+
+# the following target uses -O1 optimization because problems can arise with
+# higher levels of optimization. A comment in fortran_example.F provides more
+# details about the problems
+.F.o:
+	@rm -f $@
+	@echo "Compiling $<"
+	-@($(FC) -c -o $@ $(DEFINES) $(FFLAGS) -O1 $(INCLUDES) $(GRACKLE_INCLUDE) $*.F) >& $(OUTPUT)
+	@(if [ ! -e $@ ]; then \
+             echo; \
+             echo "$(FC) -c -o $@ $(DEFINES) $(FFLAGS) $(INCLUDES) $(GRACKLE_INCLUDE) $*.F"; \
+             echo; \
+             $(FC) -c -o $@ $(DEFINES) $(FFLAGS) $(INCLUDES) $(GRACKLE_INCLUDE) $*.F;\
+             echo; \
+             exit 1; \
+          fi)
+
+#-----------------------------------------------------------------------
+
+clean:
+	-@rm -f *.o *.mod *.f *.f90 *~ *.exe $(OUTPUT) cxx_example cxx_omp_example cxx_grid_example c_example fortran_example

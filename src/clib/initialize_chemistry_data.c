@@ -16,12 +16,17 @@
 #include <stdio.h>
 #include <time.h>
 #include <math.h>
+#include "grackle.h"
 #include "grackle_macros.h"
 #include "grackle_types.h"
 #include "grackle_chemistry_data.h"
 #include "phys_constants.h"
 #ifdef _OPENMP
 #include <omp.h>
+#endif
+
+#if (GR_SUCCESS != SUCCESS) || (GR_FAIL != FAIL)
+#error "Sanity check failure: GR_SUCCESS must be consistent with SUCCESS and GR_FAIL must be consistent with FAIL"
 #endif
 
 extern int grackle_verbose;
@@ -179,7 +184,7 @@ int local_initialize_chemistry_data(chemistry_data *my_chemistry,
 
     if (my_chemistry->metal_cooling < 1) {
       fprintf(stderr, "ERROR: dust_chemistry > 0 requires metal_cooling > 0.\n");
-      return FAIL;
+      return GR_FAIL;
     }
 
     if (my_chemistry->photoelectric_heating < 0) {
@@ -217,9 +222,9 @@ int local_initialize_chemistry_data(chemistry_data *my_chemistry,
     fprintf(stdout,
             "omp_nthreads can't be set when Grackle isn't compiled with "
             "OPENMP\n");
-    return FAIL;
+    return GR_FAIL;
   }
-# else _OPENMP
+# else /* _OPENMP */
   if (my_chemistry->omp_nthreads < 1) {
     // this is the default behavior (unless the user intervenes)
     my_chemistry->omp_nthreads = omp_get_max_threads();
@@ -241,16 +246,62 @@ int local_initialize_chemistry_data(chemistry_data *my_chemistry,
   if (my_units->comoving_coordinates == FALSE &&
       my_units->a_units != 1.0) {
     fprintf(stderr, "ERROR: a_units must be 1.0 if comoving_coordinates is 0.\n");
-    return FAIL;
+    return GR_FAIL;
   }
 
-  if (my_chemistry->primordial_chemistry == 0) {
+  // deal with my_chemistry->HydrogenFractionByMass
+  // ==============================================
+  // - set_default_chemistry_parameters & local_initialize_chemistry_parameters
+  //   historically configured my_chemistry such that this member had a value
+  //   of 0.76 (the default when primordial_chemistry >= 1). If
+  //   primordial_chemistry == 0, this would always silently overwrite the
+  //   value in fully tabulated mode. This led to cases where downstream users
+  //   might mistakenly think they modified this parameter
+  //
+  // - New behavior: the member is now initialized to an undefined value
+  //   - if the user hasn't changed it, we now set it to the appropriate
+  //     default value
+  //   - if the user has changed it, the precise handling depends on the choice
+  //     of primordial_chemistry
+
+  if (my_chemistry->HydrogenFractionByMass > 1) {
+    fprintf(stderr, "ERROR: HydrogenFractionByMass cannot exceed 1.0\n");
+    return GR_FAIL;
+  } else if (my_chemistry->primordial_chemistry == 0) {
     /* In fully tabulated mode, set H mass fraction according to
        the abundances in Cloudy, which assumes n_He / n_H = 0.1.
-       This gives a value of about 0.716. Using the default value
+       This gives a value of about 0.716. Using the other default value
        of 0.76 will result in negative electron densities at low
-       temperature. Below, we set X = 1 / (1 + m_He * n_He / n_H). */
-    my_chemistry->HydrogenFractionByMass = 1. / (1. + 0.1 * 3.971);
+       temperature. Below, use X = 1 / (1 + m_He * n_He / n_H). */
+
+    // we precomputed this value (in enhanced precision) rather than compute
+    // it on the fly to allow users to directly specify this value (without
+    // worrying about round-off issues)
+    const double default_Hfrac = 0.715768377353088514;
+    // TODO: at some point in the future, we should store the above value as
+    //       an attribute of the HDF5 table and read it in directly.
+
+    if (my_chemistry->HydrogenFractionByMass < 0) {
+      my_chemistry->HydrogenFractionByMass = default_Hfrac;
+    } else if (my_chemistry->HydrogenFractionByMass != default_Hfrac) {
+      fprintf(stderr,
+              "ERROR: Invalid HydrogenFractionByMass value is specified.\n"
+              " -> when primordial_chemistry == 0, the allowed values are\n"
+              "    are strictly enforced. You have 2 options: \n"
+              "      1. leave the value unset or set it to a negative number\n"
+              "         to have it calculated internally as %.18f\n"
+              "      2. set the value exactly to the above number\n"
+              " -> NOTE: for primordial_chemistry == 0, prior versions of\n"
+              "    Grackle would silently overwrite the value of\n"
+              "    HydrogenFractionByMass instead of reporting this error\n",
+              default_Hfrac);
+      return GR_FAIL;
+    }
+  } else {
+    const double default_Hfrac = 0.76;
+    if (my_chemistry->HydrogenFractionByMass < 0) {
+      my_chemistry->HydrogenFractionByMass = default_Hfrac;
+    }
   }
 
   double co_length_units, co_density_units;
@@ -287,26 +338,29 @@ int local_initialize_chemistry_data(chemistry_data *my_chemistry,
   read_data = my_chemistry->primordial_chemistry == 0;
   if (initialize_cloudy_data(my_chemistry, my_rates,
                              &my_rates->cloudy_primordial,
-                             "Primordial", my_units, read_data) == FAIL) {
+                             "Primordial", my_units, read_data) == GR_FAIL) {
     fprintf(stderr, "Error in initialize_cloudy_data.\n");
-    return FAIL;
+    return GR_FAIL;
   }
 
   /* Metal tables. */
   read_data = my_chemistry->metal_cooling == TRUE;
   if (initialize_cloudy_data(my_chemistry, my_rates,
                              &my_rates->cloudy_metal,
-                             "Metals", my_units, read_data) == FAIL) {
+                             "Metals", my_units, read_data) == GR_FAIL) {
     fprintf(stderr, "Error in initialize_cloudy_data.\n");
-    return FAIL;
+    return GR_FAIL;
   }
 
   /* Initialize UV Background data. */
   initialize_empty_UVBtable_struct(&(my_rates->UVbackground_table));
-  if (initialize_UVbackground_data(my_chemistry, my_rates) == FAIL) {
+  if (initialize_UVbackground_data(my_chemistry, my_rates) == GR_FAIL) {
     fprintf(stderr, "Error in initialize_UVbackground_data.\n");
-    return FAIL;
+    return GR_FAIL;
   }
+
+  /* store a copy of the initial units */
+  my_rates->initial_units = *my_units;
 
   if (grackle_verbose) {
     time_t timer;
@@ -352,17 +406,17 @@ int local_initialize_chemistry_data(chemistry_data *my_chemistry,
 #   endif
   }
 
-  return SUCCESS;
+  return GR_SUCCESS;
 }
 
 int initialize_chemistry_data(code_units *my_units)
 {
   if (local_initialize_chemistry_data(grackle_data, &grackle_rates,
-                                      my_units) == FAIL) {
+                                      my_units) == GR_FAIL) {
     fprintf(stderr, "Error in local_initialize_chemistry_data.\n");
-    return FAIL;
+    return GR_FAIL;
   }
-  return SUCCESS;
+  return GR_SUCCESS;
 }
 
 // Define helpers for the show_parameters function
@@ -384,11 +438,11 @@ void show_parameters(FILE *fp, chemistry_data *my_chemistry){
 }
 
 int free_chemistry_data(void){
-  if (local_free_chemistry_data(grackle_data, &grackle_rates) == FAIL) {
+  if (local_free_chemistry_data(grackle_data, &grackle_rates) == GR_FAIL) {
     fprintf(stderr, "Error in local_free_chemistry_data.\n");
-    return FAIL;
+    return GR_FAIL;
   }
-  return SUCCESS;
+  return GR_SUCCESS;
 }
 
 int local_free_chemistry_data(chemistry_data *my_chemistry,
@@ -496,5 +550,5 @@ int local_free_chemistry_data(chemistry_data *my_chemistry,
     GRACKLE_FREE(my_rates->UVbackground_table.crsHeI);
   }
 
-  return SUCCESS;
+  return GR_SUCCESS;
 }

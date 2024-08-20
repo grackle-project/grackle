@@ -1,17 +1,45 @@
+import os
 import sys
+import warnings
 from setuptools import setup, find_packages
 from setuptools.command.build_ext import build_ext as _build_ext
 from setuptools.extension import Extension
+
+# Process the PYGRACKLE_CMAKE_BUILD_DIR env-variable configuration option
+
+grackle_build_dir = os.getenv("PYGRACKLE_CMAKE_BUILD_DIR", "")
+if grackle_build_dir == "": # traditional in-source build
+    TRADITIONAL_IN_SOURCE_BUILD_MACRO = '1'
+    autogen_public_hdr_dir = "../clib/autogen"
+    library_dir = "../clib/.libs/"
+else: # CMAKE-based out-of-source build
+    TRADITIONAL_IN_SOURCE_BUILD_MACRO = '0'
+    autogen_public_hdr_dir = f"{grackle_build_dir}/generated_public_headers"
+    library_dir = f"{grackle_build_dir}/grackle/lib"
+
+if not os.path.isfile(f'{library_dir}/libgrackle.so'):
+    _message = f"""\
+libgrackle.so not found in {library_dir!r}.
+Unless the library is installed in a system search-path, problems will arise.
+
+If you are using using cmake, did you remember to:
+  1. configure the build with -DBUILD_SHARED_LIBS=ON AND
+  2. actually execute the build (& installation) after configuring it?
+  3. use the PYGRACKLE_CMAKE_BUILD_DIR variable to tell setup.py where
+     libgrackle.so was built?"""
+
+    warnings.warn(_message)
 
 cython_extensions = [
     Extension(
         "pygrackle.grackle_wrapper",
         ["pygrackle/grackle_wrapper.pyx"],
-        include_dirs=["../clib"],
-        library_dirs=["../clib/.libs/"],
+        include_dirs=[autogen_public_hdr_dir, "../include"],
+        library_dirs=[library_dir],
         libraries=["grackle"],
         define_macros=[
             ("CONFIG_BFLOAT_8", True),
+            ("TRADITIONAL_IN_SOURCE_BUILD", TRADITIONAL_IN_SOURCE_BUILD_MACRO),
         ],
     ),
 ]
@@ -54,7 +82,7 @@ dev_requirements = [
 
 setup(
     name="pygrackle",
-    version="1.0.0",
+    version="1.0.1",
     description="A wrapper for the Grackle chemistry library",
     keywords=["simulation", "chemistry", "cooling", "astronomy", "astrophysics"],
     url="https://github.com/grackle-project/grackle",

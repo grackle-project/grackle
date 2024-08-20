@@ -34,6 +34,28 @@ pressure, and ratio of specific heats (gamma).
 For more information on features, installation, and integration with simulation
 codes and models, see our [online documentation](https://grackle.readthedocs.io/).
 
+## Software that uses Grackle
+
+A (non-exhaustive) list of software that provides out-of-the-box support for using Grackle includes:
+
+- [ChaNGa](https://github.com/N-BodyShop/changa)
+
+- [Cholla](https://github.com/cholla-hydro/cholla)
+
+- [Enzo](https://enzo-project.org/)
+
+- [Enzo-E](https://enzo-e.readthedocs.io/en/latest/)
+
+- [Gamer](https://github.com/gamer-project/gamer)
+
+- [Gasoline](https://github.com/N-BodyShop/gasoline)
+
+- [GIZMO](http://www.tapir.caltech.edu/~phopkins/Site/GIZMO.html)
+
+- [Swift](https://github.com/SWIFTSIM/SWIFT)
+
+We welcome PRs to add your simulation code to this list. We also welcome the inclusion of python modules that depend on Pygrackle.
+
 ## Resources
 
 - documentation: https://grackle.readthedocs.io/

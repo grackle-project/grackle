@@ -17,6 +17,7 @@
 #include "grackle_types.h"
 #include "grackle_chemistry_data.h"
 #include "phys_constants.h"
+#include "utils.h"
 
 extern chemistry_data *grackle_data;
 extern chemistry_data_storage grackle_rates;
@@ -229,12 +230,8 @@ int local_solve_chemistry(chemistry_data *my_chemistry,
   }
 
   /* Error checking for H2 shielding approximation */
-  if (my_chemistry->H2_self_shielding == 1 && my_fields->grid_rank != 3){
-    fprintf(stderr, "Error in solve_chemistry: H2 self-shielding option 1 "
-                    "will only work for 3D Cartesian grids. Use option 2 "
-                    "to provide an array of shielding lengths with "
-                    "H2_self_shielding_length or option 3 to use the "
-                    "local Jeans length.");
+  if (self_shielding_err_check(my_chemistry, my_fields,
+                               "local_solve_chemistry") == FAIL) {
     return FAIL;
   }
 

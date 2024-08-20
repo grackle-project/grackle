@@ -20,7 +20,7 @@ import shutil
 import subprocess
 import tempfile
 import warnings
-import xml.etree.ElementTree # may not be the optimal xml parsre
+import xml.etree.ElementTree # may not be the optimal xml parser
 
 import pytest
 
@@ -48,6 +48,20 @@ def _field_type_props(elem, root):
             pass # just ignore this
         else:
             return elem.attrib['name'] + (ptr_level * "*")
+
+def _unwrap_struct_from_typedef(elem, root):
+    # this is called when elem corresponds to a type declared with typedef
+    # -> this function returns the xml-object representing the underlying struct
+    #    that is aliased by the typedef
+    _tmp = _find_element_by_ids(elem.attrib['type'], root,
+                                expect_single = True)[0]
+    if _tmp.tag == 'ElaboratedType':
+        struct_elem = _find_element_by_ids(_tmp.attrib['type'], root,
+                                           expect_single = True)[0]
+    else:
+        struct_elem = _tmp
+    assert struct_elem.tag == 'Struct'  # <-- sanity check!
+    return struct_elem
 
 def query_struct_fields(struct_name, path):
     """
@@ -124,21 +138,34 @@ def query_struct_fields(struct_name, path):
         tree.getroot().findall(".//Struct[@name='" + struct_name + "']") +
         tree.getroot().findall(".//Typedef[@name='" + struct_name + "']")
     )
+
     if len(matches) == 0:
         raise RuntimeError(f"no struct name '{struct_name}' was found")
-    elif len(matches) > 1:
-        raise RuntimeError(f"found more than one match for '{struct_name}'")
-    elif matches[0].tag == 'Struct':
-        struct_elem = matches[0].tag
-    elif matches[0].tag == 'Typedef':
-        _tmp = _find_element_by_ids(matches[0].attrib['type'], root,
-                                    expect_single = True)[0]
-        if _tmp.tag == 'ElaboratedType':
-            struct_elem = _find_element_by_ids(_tmp.attrib['type'], root,
-                                               expect_single = True)[0]
-        else:
-            struct_elem = _tmp
-        assert struct_elem.tag == 'Struct'
+    elif len(matches) > 2:
+        raise RuntimeError(f"found more than 2 matches for '{struct_name}'")
+    elif (len(matches) == 1) and (matches[0].tag == 'Struct'):
+        # in this case, we defined a struct named {struct_name} and didn't
+        # use typedef to declare any type aliases of the struct
+        # -> in other words, we can only refer to the type in our C code as
+        #    `struct {struct_name}`
+        struct_elem = matches[0]
+    elif (len(matches) == 1) and (matches[0].tag == 'Typedef'):
+        # in this case, we used typedef to define a type called {struct_name}
+        # that aliases an "anonymous struct"
+        # -> in other words, we can only refer to the type in our C code as
+        #    `{struct_name}`
+        struct_elem = _unwrap_struct_from_typedef(matches[0], root)
+    elif ((len(matches) == 2) and (matches[0].tag == 'Struct') and
+          (matches[1].tag == 'Typedef')):
+        # in this case we probably defined a struct called {struct_name} and
+        # used typedef to declare an alias type called {struct_name}
+        # -> in other words, the types `struct {struct_name}` and
+        #    `{struct_name}` refer to the same type
+        struct_elem = matches[0]
+        # perform a sanity check to confirm that typedef indeed aliases the
+        # corresponding struct
+        # -> note: I'm not entirely sure this is always guaranteed to work
+        assert struct_elem == _unwrap_struct_from_typedef(matches[1], root)
     else:
         raise RuntimeError("SOMETHING WENT WRONG")
 
@@ -160,7 +187,7 @@ def test_grackle_chemistry_field_synched():
     member_list = query_struct_fields(
         struct_name = "chemistry_data",
         path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                            "../../clib/grackle_chemistry_data.h")
+                            "../../include/grackle_chemistry_data.h")
     )
 
     # now, categorize the fields by their datatype

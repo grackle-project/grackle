@@ -17,9 +17,7 @@
 #include <string.h>
 #include <unistd.h>
 
-extern "C" {
 #include <grackle.h>
-}
 
 #define mh     1.67262171e-24   
 #define kboltz 1.3806504e-16
@@ -79,6 +77,7 @@ int main(int argc, char *argv[])
 
   // Create struct for storing grackle field data
   grackle_field_data my_fields;
+  gr_initialize_field_data(&my_fields);
 
   // Set grid dimension and size.
   // grid_start and grid_end are used to ignore ghost zones.

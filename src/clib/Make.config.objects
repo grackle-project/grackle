@@ -12,9 +12,7 @@
 #-----------------------------------------------------------------------
 
 OBJS_CONFIG_LIB = \
-        auto_show_config.lo \
-        auto_show_flags.lo \
-        auto_get_version.lo \
+        $(AUTOGEN_DIR)/auto_general.lo \
         calculate_cooling_time.lo \
         calculate_dust_temperature.lo \
         calculate_gamma.lo \
@@ -57,4 +55,5 @@ OBJS_CONFIG_LIB = \
         calc_grain_size_increment_1d.lo \
         rate_functions.lo \
         initialize_rates.lo \
-        gaussj_g.lo
+        gaussj_g.lo \
+        utils.lo

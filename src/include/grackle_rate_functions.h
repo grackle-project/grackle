@@ -4,6 +4,10 @@
 #ifndef RATE_FUNCTIONS_H
 #define RATE_FUNCTIONS_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
 double k1_rate(double T, double units,  chemistry_data *my_chemistry);
 double k2_rate(double T, double units,  chemistry_data *my_chemistry);
 double k3_rate(double T, double units,  chemistry_data *my_chemistry);
@@ -94,4 +98,8 @@ double gammah_rate(double units, chemistry_data *my_chemistry);
 double gamma_isrf_rate(double units, chemistry_data *my_chemistry);
 double gamma_isrf2_rate(double units, chemistry_data *my_chemistry);
 
-#endif
+#ifdef __cplusplus
+} /* extern "C" */
+#endif /* __cplusplus */
+
+#endif /* RATE_FUNCTIONS_H */
