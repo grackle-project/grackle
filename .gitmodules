@@ -1,4 +1,4 @@
 [submodule "grackle_data_files"]
 	path = grackle_data_files
-	url = https://github.com/brittonsmith/grackle_data_files
-	branch = gtest
+	url = https://github.com/grackle-project/grackle_data_files
+	branch = main
