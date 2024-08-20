@@ -25,12 +25,14 @@ def query_grackle_version_props():
     _rslt = subprocess.run(["git", "describe", "--abbrev=0", "--tags"],
                            check = True, capture_output = True)
     most_recent_tag = _rslt.stdout.decode().rstrip()
-    if 'grackle-' == most_recent_tag[:8]:
+    if most_recent_tag.startswith("grackle-"):
         latest_tagged_version = most_recent_tag[8:]
+    elif most_recent_tag.startswith("gold-standard-v"):
+        latest_tagged_version = most_recent_tag[15:]
     else:
         raise RuntimeError(
-            "expected the first 8 characters of the most recent git-tag to be "
-            "equal to 'grackle-'"
+            "expected the most recent git-tag to start with "
+            "'grackle-' or 'gold-standard-v'"
         )
 
     # get the actual revision when most_recent tag was introduced

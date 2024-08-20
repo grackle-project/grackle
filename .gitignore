@@ -45,4 +45,5 @@ src/python/flake8.out
 src/python/.cache/*
 src/python/pygrackle.egg-info/*
 src/python/pygrackle/*.c
+src/python/tests/test_answers
 doc/build
