@@ -213,6 +213,9 @@ ENTRY(use_radiative_transfer, INT, 0)
 ENTRY(radiative_transfer_coupled_rate_solver, INT, 0)
 ENTRY(radiative_transfer_intermediate_step, INT, 0)
 ENTRY(radiative_transfer_hydrogen_only, INT, 0)
+ENTRY(radiative_transfer_HDI_dissociation, INT, 0)
+ENTRY(radiative_transfer_metal_ionization, INT, 0)
+ENTRY(radiative_transfer_metal_dissociation, INT, 0)
 
 /* flag for approximiate self-shielding as well
    as spectrum averaged photo heating and
@@ -226,7 +229,7 @@ ENTRY(H2_self_shielding, INT, 0)
 
 /* flag for custom H2-shielding factor. The factor is provided as an additional
    field by the user and is multiplied to the rate for radiative H2
-   dissocitation */
+   dissociation */
 ENTRY(H2_custom_shielding, INT, 0)
 
 /* flag to select which formula for calculating k11 you want to use. 

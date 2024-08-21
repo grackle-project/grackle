@@ -213,6 +213,12 @@ cdef extern from "grackle_types.h":
       gr_float *RT_HeI_ionization_rate;
       gr_float *RT_HeII_ionization_rate;
       gr_float *RT_H2_dissociation_rate;
+      gr_float *RT_HDI_dissociation_rate;
+      gr_float *RT_CI_ionization_rate;
+      gr_float *RT_OI_ionization_rate;
+      gr_float *RT_CO_dissociation_rate;
+      gr_float *RT_OH_dissociation_rate;
+      gr_float *RT_H2O_dissociation_rate;
       gr_float *H2_self_shielding_length;
       gr_float *H2_custom_shielding_factor;
       gr_float *isrf_habing;

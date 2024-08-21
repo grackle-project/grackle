@@ -233,7 +233,7 @@ _metal_yield_densities = \
    "pisn200_metal_density",
    "y19_metal_density"]
 
-_radiation_transfer_fields = \
+_base_radiation_transfer_fields = \
   ["RT_heating_rate",
    "RT_HI_ionization_rate",
    "RT_HeI_ionization_rate",
@@ -257,6 +257,19 @@ def _required_density_fields(my_chemistry):
             my_fields.extend(_metal_yield_densities)
     return my_fields
 
+def _required_radiation_transfer_fields(my_chemistry):
+    my_fields = _base_radiation_transfer_fields.copy()
+    if my_chemistry.radiative_transfer_HDI_dissociation:
+        my_fields.append("RT_HDI_dissociation_rate")
+    if my_chemistry.radiative_transfer_metal_ionization:
+        my_fields.extend(["RT_CI_ionization_rate",
+                          "RT_OI_ionization_rate"])
+    if my_chemistry.radiative_transfer_metal_dissociation:
+        my_fields.extend(["RT_CO_dissociation_rate",
+                          "RT_OH_dissociation_rate",
+                          "RT_H2O_dissociation_rate"])
+    return my_fields
+
 def _required_extra_fields(my_chemistry):
     my_fields = _base_extra_fields.copy()
     if my_chemistry.use_volumetric_heating_rate == 1:
@@ -266,7 +279,7 @@ def _required_extra_fields(my_chemistry):
     if my_chemistry.use_temperature_floor == 2:
         my_fields.append("temperature_floor")
     if my_chemistry.use_radiative_transfer == 1:
-        my_fields.extend(_radiation_transfer_fields)
+        my_fields.extend(_required_radiation_transfer_fields(my_chemistry))
     if my_chemistry.H2_self_shielding == 2:
         my_fields.append("H2_self_shielding_length")
     if my_chemistry.H2_custom_shielding == 1:
