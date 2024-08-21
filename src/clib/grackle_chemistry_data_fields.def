@@ -77,6 +77,9 @@ ENTRY(metal_abundances, INT, 0)
 */
 ENTRY(dust_species, INT, 0)
 
+/* Flag to solve temperatures of multiple grain species */
+ENTRY(use_multiple_dust_temperatures, INT, FALSE)
+
 /* add heating from UV background model
    0) off, 1) on */
 ENTRY(UVbackground, INT, 0)

@@ -110,7 +110,7 @@ typedef struct
   int dust_species;
 
   /* Flag to solve temperatures of multiple grain species */
-  int dust_temperature_multi;
+  int use_multiple_dust_temperatures;
 
   /* Flag to supply dust sublimation */
   int dust_sublimation;

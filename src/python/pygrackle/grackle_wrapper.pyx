@@ -798,6 +798,21 @@ cdef c_field_data setup_field_data(object fc, int[::1] buf,
     my_fields.H2_self_shielding_length = get_field(fc, "H2_self_shielding_length")
     my_fields.H2_custom_shielding_factor = get_field(fc, "H2_custom_shielding_factor")
     my_fields.isrf_habing = get_field(fc, "isrf_habing")
+
+    my_fields.SiM_temperature = get_field(fc, "SiM_temperature")
+    my_fields.FeM_temperature = get_field(fc, "FeM_temperature")
+    my_fields.Mg2SiO4_temperature = get_field(fc, "Mg2SiO4_temperature")
+    my_fields.MgSiO3_temperature = get_field(fc, "MgSiO3_temperature")
+    my_fields.Fe3O4_temperature = get_field(fc, "Fe3O4_temperature")
+    my_fields.AC_temperature = get_field(fc, "AC_temperature")
+    my_fields.SiO2_temperature = get_field(fc, "SiO2_temperature")
+    my_fields.MgO_temperature = get_field(fc, "MgO_temperature")
+    my_fields.FeS_temperature = get_field(fc, "FeS_temperature")
+    my_fields.Al2O3_temperature = get_field(fc, "Al2O3_temperature")
+    my_fields.ref_org_temperature = get_field(fc, "ref_org_temperature")
+    my_fields.vol_org_temperature = get_field(fc, "vol_org_temperature")
+    my_fields.H2O_ice_temperature = get_field(fc, "H2O_ice_temperature")
+
     return my_fields
 
 def solve_chemistry(fc, my_dt):

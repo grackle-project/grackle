@@ -216,6 +216,19 @@ cdef extern from "grackle_types.h":
       gr_float *H2_self_shielding_length;
       gr_float *H2_custom_shielding_factor;
       gr_float *isrf_habing;
+      gr_float *SiM_temperature;
+      gr_float *FeM_temperature;
+      gr_float *Mg2SiO4_temperature;
+      gr_float *MgSiO3_temperature;
+      gr_float *Fe3O4_temperature;
+      gr_float *AC_temperature;
+      gr_float *SiO2_temperature;
+      gr_float *MgO_temperature;
+      gr_float *FeS_temperature;
+      gr_float *Al2O3_temperature;
+      gr_float *ref_org_temperature;
+      gr_float *vol_org_temperature;
+      gr_float *H2O_ice_temperature;
 
     ctypedef struct c_grackle_version "grackle_version":
       const char* version;

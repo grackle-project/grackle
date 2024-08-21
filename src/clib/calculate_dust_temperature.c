@@ -187,7 +187,7 @@ int local_calculate_dust_temperature(chemistry_data *my_chemistry,
      ,&my_chemistry->multi_metals
      ,&my_chemistry->metal_abundances
      ,&my_chemistry->dust_species
-     ,&my_chemistry->dust_temperature_multi
+     ,&my_chemistry->use_multiple_dust_temperatures
      ,&my_chemistry->dust_sublimation
      , my_fields->local_ISM_metal_density
      , my_fields->ccsn13_metal_density
@@ -253,13 +253,13 @@ int local_calculate_dust_temperature(chemistry_data *my_chemistry,
      , my_fields->MgSiO3_temperature
      , my_fields->Fe3O4_temperature
      , my_fields->AC_temperature
-     , my_fields->SiO2D_temperature
+     , my_fields->SiO2_temperature
      , my_fields->MgO_temperature
      , my_fields->FeS_temperature
      , my_fields->Al2O3_temperature
-     , my_fields->reforg_temperature
-     , my_fields->volorg_temperature
-     , my_fields->H2Oice_temperature
+     , my_fields->ref_org_temperature
+     , my_fields->vol_org_temperature
+     , my_fields->H2O_ice_temperature
    );
 
   free(temperature);

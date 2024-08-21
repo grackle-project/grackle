@@ -193,25 +193,31 @@ _dust_metal_densities[3] = \
   _dust_metal_densities[2]
 
 # controlled by dust_species parameter
-_dust_densities = {0: []}
-_dust_densities[1] = \
-  ["MgSiO3_dust_density",
-   "AC_dust_density"]
-_dust_densities[2] = \
-  _dust_densities[1] + \
-  ["SiM_dust_density",
-   "FeM_dust_density",
-   "Mg2SiO4_dust_density",
-   "Fe3O4_dust_density",
-   "SiO2_dust_density",
-   "MgO_dust_density",
-   "FeS_dust_density",
-   "Al2O3_dust_density"]
-_dust_densities[3] = \
-  _dust_densities[2] + \
-  ["ref_org_dust_density",
-   "vol_org_dust_density",
-   "H2O_ice_dust_density"]
+_dust_species = {0: []}
+_dust_species[1] = \
+  ["MgSiO3",
+   "AC"]
+_dust_species[2] = \
+  _dust_species[1] + \
+  ["SiM",
+   "FeM",
+   "Mg2SiO4",
+   "Fe3O4",
+   "SiO2",
+   "MgO",
+   "FeS",
+   "Al2O3"]
+_dust_species[3] = \
+  _dust_species[2] + \
+  ["ref_org",
+   "vol_org",
+   "H2O_ice"]
+_dust_densities = {idust: [f"{spec}_dust_density"
+                           for spec in _dust_species[idust]]
+                   for idust in _dust_species}
+_dust_temperatures = {idust: [f"{spec}_temperature"
+                              for spec in _dust_species[idust]]
+                      for idust in _dust_species}
 
 _metal_yield_densities = \
   ["local_ISM_metal_density",
@@ -269,6 +275,12 @@ def _required_extra_fields(my_chemistry):
         my_fields.append("isrf_habing")
     return my_fields
 
+def _required_calculated_fields(my_chemistry):
+    my_fields = _calculated_fields.copy()
+    if my_chemistry.use_multiple_dust_temperatures:
+        my_fields.extend(_dust_temperatures[my_chemistry.dust_species])
+    return my_fields
+
 def _photo_units(my_chemistry):
     return 1 / my_chemistry.time_units
 
@@ -308,7 +320,8 @@ class FluidContainer(dict):
         self.chemistry_data = chemistry_data
         self.n_vals = n_vals
 
-        for field in self.input_fields + _calculated_fields:
+        for field in self.input_fields + \
+          _required_calculated_fields(self.chemistry_data):
             self._setup_fluid(field)
 
     def __getitem__(self, key):
@@ -342,7 +355,9 @@ class FluidContainer(dict):
 
     @property
     def all_fields(self):
-        return self.input_fields + _calculated_fields + _fc_calculated_fields
+        return self.input_fields + \
+          _required_calculated_fields(self.chemistry_data) + \
+          _fc_calculated_fields
 
     def calculate_hydrogen_number_density(self):
         warn = "calculate_hydrogen_number_density is deprecated and will " + \
@@ -471,7 +486,8 @@ class FluidContainer(dict):
             all_fields = self.all_fields
 
             # call all calculate functions
-            for field in _calculated_fields + _fc_calculated_fields:
+            for field in _required_calculated_fields(self.chemistry_data) + \
+              _fc_calculated_fields:
                 func = getattr(self, f"calculate_{field}", None)
                 if func is None:
                     raise RuntimeError(f"No function for calculating {field}.")
