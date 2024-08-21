@@ -131,8 +131,7 @@ _fc_calculated_fields = \
   ["cooling_rate",
    "mean_molecular_weight"]
 
-_primordial_chemistry_densities = {}
-_primordial_chemistry_densities[0] = _base_densities
+_primordial_chemistry_densities = {0: _base_densities}
 _primordial_chemistry_densities[1] = \
   _primordial_chemistry_densities[0] + \
   ["HI_density",
@@ -157,8 +156,7 @@ _primordial_chemistry_densities[4] = \
    "HDII_density",
    "HeHII_density"]
 
-_metal_chemistry_densities = {}
-_metal_chemistry_densities[0] = []
+_metal_chemistry_densities = {0: []}
 _metal_chemistry_densities[1] = \
   ["CI_density",
    "CII_density",
@@ -180,6 +178,20 @@ _metal_chemistry_densities[1] = \
    "H3OII_density",
    "O2II_density"]
 
+_metal_yield_densities = \
+  ["local_ISM_metal_density",
+   "ccsn13_metal_density",
+   "ccsn20_metal_density",
+   "ccsn25_metal_density",
+   "ccsn30_metal_density",
+   "fsn13_metal_density",
+   "fsn15_metal_density",
+   "fsn50_metal_density",
+   "fsn80_metal_density",
+   "pisn170_metal_density",
+   "pisn200_metal_density",
+   "y19_metal_density"]
+
 _radiation_transfer_fields = \
   ["RT_heating_rate",
    "RT_HI_ionization_rate",
@@ -195,6 +207,11 @@ def _required_density_fields(my_chemistry):
         my_fields.append("metal_density")
     if my_chemistry.dust_chemistry == 1:
         my_fields.append("dust_density")
+    if my_chemistry.metal_chemistry > 0:
+        if my_chemistry.multi_metals == 0:
+            my_fields.append(_metal_yield_densities[my_chemistry.metal_abundances])
+        else:
+            my_fields.extend(_metal_yield_densities)
     return my_fields
 
 def _required_extra_fields(my_chemistry):

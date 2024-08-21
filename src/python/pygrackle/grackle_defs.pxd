@@ -172,6 +172,18 @@ cdef extern from "grackle_types.h":
       gr_float *e_density;
       gr_float *metal_density;
       gr_float *dust_density;
+      gr_float *local_ISM_metal_density;
+      gr_float *ccsn13_metal_density;
+      gr_float *ccsn20_metal_density;
+      gr_float *ccsn25_metal_density;
+      gr_float *ccsn30_metal_density;
+      gr_float *fsn13_metal_density;
+      gr_float *fsn15_metal_density;
+      gr_float *fsn50_metal_density;
+      gr_float *fsn80_metal_density;
+      gr_float *pisn170_metal_density;
+      gr_float *pisn200_metal_density;
+      gr_float *y19_metal_density;
       gr_float *internal_energy;
       gr_float *x_velocity;
       gr_float *y_velocity;

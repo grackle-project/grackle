@@ -50,6 +50,24 @@ ENTRY(metal_cooling, INT, FALSE)
    0) off, 1) on */
 ENTRY(metal_chemistry, INT, FALSE)
 
+/* enable tracking of multiple metal sources for dust evolution
+   0) off, 1) on */
+ENTRY(multi_metals, INT, FALSE)
+
+/* if metal_chemistry>0 and multi_metals=0,
+   this flag selects a single metal source for dust evolution from the
+   following options:
+  0. metal/dust abundances of local ISM (Pollack et al. 1994)
+  1-4. Pop III normal core-collapse supernovae (Nozawa et al. 2007)
+       with progenitor masses 13, 20, 25 and 30 Msun
+  5-8. Pop III faint supernovae (Marassi et al. 2014)
+       with progenitor masses 13, 50 and 80 Msun
+  9-10. Pop III pair-instability supernovae (Nozawa et al. 2007)
+        with progenitor masses 170 and 200 Msun
+  11. simple dust model (only include silicate and graphite; Yajima et al. 2019)
+*/
+ENTRY(metal_abundances, INT, 0)
+
 /* add heating from UV background model
    0) off, 1) on */
 ENTRY(UVbackground, INT, 0)
