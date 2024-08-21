@@ -180,7 +180,6 @@ typedef struct
   int radiative_transfer_coupled_rate_solver;
   int radiative_transfer_intermediate_step;
   int radiative_transfer_hydrogen_only;
-  int radiative_transfer_H2II_diss;
   int radiative_transfer_HDI_diss;
   int radiative_transfer_metal_ion;
   int radiative_transfer_metal_diss;
