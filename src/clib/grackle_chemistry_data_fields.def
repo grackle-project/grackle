@@ -68,6 +68,15 @@ ENTRY(multi_metals, INT, FALSE)
 */
 ENTRY(metal_abundances, INT, 0)
 
+/* Flag to solve multiple grain species
+   1. enstatite + amorphous carbon (also follow Mg metal density)
+   2. + metallic silicon + metallic iron + forsterite + magnetite
+      + silica + magnesia + troilite + alumina
+      (also follow Al, S, Fe metal densities)
+   3. + water ice + volatile organics + refractory organics
+*/
+ENTRY(dust_species, INT, 0)
+
 /* add heating from UV background model
    0) off, 1) on */
 ENTRY(UVbackground, INT, 0)

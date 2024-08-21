@@ -131,6 +131,7 @@ _fc_calculated_fields = \
   ["cooling_rate",
    "mean_molecular_weight"]
 
+# controlled by primordial_chemistry parameter
 _primordial_chemistry_densities = {0: _base_densities}
 _primordial_chemistry_densities[1] = \
   _primordial_chemistry_densities[0] + \
@@ -156,6 +157,7 @@ _primordial_chemistry_densities[4] = \
    "HDII_density",
    "HeHII_density"]
 
+# controlled by metal_chemistry parameter
 _metal_chemistry_densities = {0: []}
 _metal_chemistry_densities[1] = \
   ["CI_density",
@@ -177,6 +179,39 @@ _metal_chemistry_densities[1] = \
    "H2OII_density",
    "H3OII_density",
    "O2II_density"]
+
+# controlled by dust_species parameter
+_dust_metal_densities = {0: []}
+_dust_metal_densities[1] = \
+  ["Mg_density"]
+_dust_metal_densities[2] = \
+  _dust_metal_densities[1] + \
+  ["Al_density",
+   "S_density",
+   "Fe_density"]
+_dust_metal_densities[3] = \
+  _dust_metal_densities[2]
+
+# controlled by dust_species parameter
+_dust_densities = {0: []}
+_dust_densities[1] = \
+  ["MgSiO3_dust_density",
+   "AC_dust_density"]
+_dust_densities[2] = \
+  _dust_densities[1] + \
+  ["SiM_dust_density",
+   "FeM_dust_density",
+   "Mg2SiO4_dust_density",
+   "Fe3O4_dust_density",
+   "SiO2_dust_density",
+   "MgO_dust_density",
+   "FeS_dust_density",
+   "Al2O3_dust_density"]
+_dust_densities[3] = \
+  _dust_densities[2] + \
+  ["ref_org_dust_density",
+   "vol_org_dust_density",
+   "H2O_ice_dust_density"]
 
 _metal_yield_densities = \
   ["local_ISM_metal_density",
@@ -208,6 +243,8 @@ def _required_density_fields(my_chemistry):
     if my_chemistry.dust_chemistry == 1:
         my_fields.append("dust_density")
     if my_chemistry.metal_chemistry > 0:
+        my_fields.extend(_dust_metal_densities[my_chemistry.dust_species] +
+                         _dust_densities[my_chemistry.dust_species])
         if my_chemistry.multi_metals == 0:
             my_fields.append(_metal_yield_densities[my_chemistry.metal_abundances])
         else:

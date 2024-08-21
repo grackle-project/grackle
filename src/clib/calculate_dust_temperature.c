@@ -171,19 +171,19 @@ int local_calculate_dust_temperature(chemistry_data *my_chemistry,
      ,&my_chemistry->SolarMetalFractionByMass
      , my_fields->metal_density
      , my_fields->dust_density
-     , my_fields->SiM_density
-     , my_fields->FeM_density
-     , my_fields->Mg2SiO4_density
-     , my_fields->MgSiO3_density
-     , my_fields->Fe3O4_density
-     , my_fields->AC_density
-     , my_fields->SiO2D_density
-     , my_fields->MgO_density
-     , my_fields->FeS_density
-     , my_fields->Al2O3_density
-     , my_fields->reforg_density
-     , my_fields->volorg_density
-     , my_fields->H2Oice_density
+     , my_fields->SiM_dust_density
+     , my_fields->FeM_dust_density
+     , my_fields->Mg2SiO4_dust_density
+     , my_fields->MgSiO3_dust_density
+     , my_fields->Fe3O4_dust_density
+     , my_fields->AC_dust_density
+     , my_fields->SiO2_dust_density
+     , my_fields->MgO_dust_density
+     , my_fields->FeS_dust_density
+     , my_fields->Al2O3_dust_density
+     , my_fields->ref_org_dust_density
+     , my_fields->vol_org_dust_density
+     , my_fields->H2O_ice_dust_density
      ,&my_chemistry->multi_metals
      ,&my_chemistry->metal_abundances
      ,&my_chemistry->dust_species

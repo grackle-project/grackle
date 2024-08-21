@@ -90,19 +90,19 @@ typedef struct
   gr_float *Al_density;
   gr_float *S_density;
   gr_float *Fe_density;
-  gr_float *SiM_density;
-  gr_float *FeM_density;
-  gr_float *Mg2SiO4_density;
-  gr_float *MgSiO3_density;
-  gr_float *Fe3O4_density;
-  gr_float *AC_density;
-  gr_float *SiO2D_density;
-  gr_float *MgO_density;
-  gr_float *FeS_density;
-  gr_float *Al2O3_density;
-  gr_float *reforg_density;
-  gr_float *volorg_density;
-  gr_float *H2Oice_density;
+  gr_float *MgSiO3_dust_density; // enstatite
+  gr_float *AC_dust_density; // amorphous carbon
+  gr_float *SiM_dust_density; // metallic silicon
+  gr_float *FeM_dust_density; // metallic iron
+  gr_float *Mg2SiO4_dust_density; // forsterite
+  gr_float *Fe3O4_dust_density; // magnetite
+  gr_float *SiO2_dust_density; // silica
+  gr_float *MgO_dust_density; // magnesia
+  gr_float *FeS_dust_density; // troilite
+  gr_float *Al2O3_dust_density; // alumina
+  gr_float *ref_org_dust_density; // refractory organics
+  gr_float *vol_org_dust_density; // volatile organics
+  gr_float *H2O_ice_dust_density; // water ice
   gr_float *e_density;
   gr_float *metal_density;
   gr_float *dust_density;

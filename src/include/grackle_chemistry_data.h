@@ -83,15 +83,30 @@ typedef struct
   /* Flag to solve grain growth reactions */
   int grain_growth;
 
-  /* Flag to solve multiple metal sources */
+  /* Flag to enable tracking of multiple metal sources for dust evolution */
   int multi_metals;
 
-  /* Select pop III metal/dust model
-         For multi_metals = 0, select a dust model
-         For multi_metals > 0, select a set of dust models */
+  /* if metal_chemistry>0 and multi_metals=0,
+     this flag selects a single metal source for dust evolution from the
+     following options:
+     0. metal/dust abundances of local ISM (Pollack et al. 1994)
+     1-4. Pop III normal core-collapse supernovae (Nozawa et al. 2007)
+     with progenitor masses 13, 20, 25 and 30 Msun
+     5-8. Pop III faint supernovae (Marassi et al. 2014)
+     with progenitor masses 13, 50 and 80 Msun
+     9-10. Pop III pair-instability supernovae (Nozawa et al. 2007)
+     with progenitor masses 170 and 200 Msun
+     11. simple dust model (only include silicate and graphite; Yajima et al. 2019)
+  */
   int metal_abundances;
 
-  /* Flag to solve multiple grain species */
+  /* Flag to solve multiple grain species
+     1. enstatite + amorphous carbon (also follow Mg metal density)
+     2. + metallic silicon + metallic iron + forsterite + magnetite
+        + silica + magnesia + troilite + alumina
+        (also follow Al, S, Fe metal densities)
+     3. + water ice + volatile organics + refractory organics
+  */
   int dust_species;
 
   /* Flag to solve temperatures of multiple grain species */
