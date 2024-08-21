@@ -50,6 +50,9 @@ ENTRY(metal_cooling, INT, FALSE)
    0) off, 1) on */
 ENTRY(metal_chemistry, INT, FALSE)
 
+/* Flag to solve grain growth reactions */
+ENTRY(grain_growth, INT, FALSE)
+
 /* enable tracking of multiple metal sources for dust evolution
    0) off, 1) on */
 ENTRY(multi_metals, INT, FALSE)
