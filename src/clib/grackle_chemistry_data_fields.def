@@ -217,6 +217,9 @@ ENTRY(radiative_transfer_HDI_dissociation, INT, 0)
 ENTRY(radiative_transfer_metal_ionization, INT, 0)
 ENTRY(radiative_transfer_metal_dissociation, INT, 0)
 
+/* flag to signal H2 self-shielding is being done in hydro code */
+ENTRY(radiative_transfer_use_H2_shielding, INT, FALSE)
+
 /* flag for approximiate self-shielding as well
    as spectrum averaged photo heating and
    photo ionization shielding factors */
@@ -250,6 +253,12 @@ ENTRY(collisional_excitation_rates, INT, 1) //Collisional excitation
 ENTRY(collisional_ionisation_rates, INT, 1) //Collisional ionisation
 ENTRY(recombination_cooling_rates, INT, 1) //Recombination cooling
 ENTRY(bremsstrahlung_cooling_rates, INT, 1) //Bremsstrahlung cooling
+
+/* flags for alternative rate calculations */
+ENTRY(use_stancil_lepp_dalgarno_1998, INT, FALSE) //Alternative calculation scheme for k50-k56
+ENTRY(use_omukai_gas_grain, INT, FALSE) //Alternative calculation scheme for gas_grain
+ENTRY(use_uniform_grain_dist_gamma_isrf, INT, FALSE) //Alternative calculation scheme for gamma_isrf
+
 
 /* maximum number of subcycle iterations for solve_chemistry */
 ENTRY(max_iterations, INT, 10000)

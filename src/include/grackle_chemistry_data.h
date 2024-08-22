@@ -184,7 +184,7 @@ typedef struct
   int radiative_transfer_metal_ionization;
   int radiative_transfer_metal_dissociation;
 
-  /* flag to H2 self-shielding in hydro code */
+  /* flag to signal H2 self-shielding is being done in hydro code */
   int radiative_transfer_use_H2_shielding;
 
   /* flag for approximiate self-shielding as well
