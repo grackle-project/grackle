@@ -32,7 +32,7 @@ cdef class chemistry_data:
     #   backwards compatibility)
     cdef object data_copy_from_init
 
-    def __cinit__(self):
+    def __cinit__(self, object preinit_wrapped_c_chemistry_data = None):
         self.data = _wrapped_c_chemistry_data()
         self.data_copy_from_init = None
 
@@ -66,6 +66,17 @@ cdef class chemistry_data:
         self.data_copy_from_init = copy.deepcopy(self.data)
 
         return ret
+
+    @staticmethod
+    def _from_wrapped_c_chemistry_data(_wrapped_c_chemistry_data data):
+        """ 
+        Private static method function
+
+        End Users should NOT use this function, it is subject to change
+        """
+        cdef chemistry_data out = chemistry_data()
+        out.data = data
+        return out
 
     def set_velocity_units(self):
         set_velocity_units(&self.units)
@@ -749,13 +760,45 @@ cdef c_field_data setup_field_data(object fc, int[::1] buf,
     my_fields.isrf_habing = get_field(fc, "isrf_habing")
     return my_fields
 
-def solve_chemistry(fc, my_dt):
+cdef c_code_units fetch_code_units(chemistry_data chem_data,
+                                   object current_a_value) except *:
+    """
+    Helper function to return an instance of the code_units object.
+    -> this will overwrite the a_value field based on the current_a_value arg
+    -> it will also appropriately overwrite the values of length_units and
+       density_units
+
+    Note: The way this function is declared causes cython to generate code to
+          check whether an Python Exception was raised every time this function
+          gets called.
+    """
+    cdef double coerced_cur_a_val = 0.0
+    cdef double aold_div_acur = 0.0
+    # make a copy of the code units struct
+    cdef c_code_units out = chem_data.units
+    if current_a_value is None:
+        return out
+    elif out.comoving_coordinates != 1:
+        raise ValueError("The a_value member of the code_units struct should "
+                         "not be updated in non-cosmological simulations")
+    else:
+        coerced_cur_a_val = <double> current_a_value
+        out.a_value = coerced_cur_a_val
+        out.length_units = chem_data.length_units * (coerced_cur_a_val /
+                                                     chem_data.units.a_value)
+        aold_div_acur = (chem_data.units.a_value/coerced_cur_a_val)
+        out.density_units = chem_data.density_units * (aold_div_acur *
+                                                       aold_div_acur *
+                                                       aold_div_acur)
+        return out
+
+def solve_chemistry(fc, my_dt, *, current_a_value = None):
     cdef double dt_value = <double> my_dt
 
     cdef chemistry_data chem_data = fc.chemistry_data
     cdef c_chemistry_data my_chemistry = chem_data.data.data
     cdef c_chemistry_data_storage my_rates = chem_data.rates
-    cdef c_code_units my_units = chem_data.units
+    cdef c_code_units my_units = fetch_code_units(chem_data, current_a_value)
 
     cdef int buf[7] # used for storage by members of my_fields
     cdef c_field_data my_fields = setup_field_data(fc, buf, False)
@@ -774,12 +817,12 @@ ctypedef int (*calc_prop_fn)(c_chemistry_data*, c_chemistry_data_storage*,
 			     c_code_units*, c_field_data*, gr_float*)
 
 cdef void _calculate_helper(object fc, object field_name, object func_name,
-                            calc_prop_fn func) except *:
+                            calc_prop_fn func, object current_a_value) except *:
     # handle all of the setup before calling the function:
     cdef chemistry_data chem_data = fc.chemistry_data
     cdef c_chemistry_data my_chemistry = chem_data.data.data
     cdef c_chemistry_data_storage my_rates = chem_data.rates
-    cdef c_code_units my_units = chem_data.units
+    cdef c_code_units my_units = fetch_code_units(chem_data, current_a_value)
 
     cdef int buf[7] # used for storage by members of my_fields
     cdef c_field_data my_fields = setup_field_data(fc, buf, True)
@@ -790,27 +833,29 @@ cdef void _calculate_helper(object fc, object field_name, object func_name,
                         output_field)
     if (ret == GRACKLE_FAIL_VALUE):
         raise RuntimeError(f"Error occured within {func_name}")
-    
-def calculate_cooling_time(fc):
-    _calculate_helper(fc, "cooling_time", "local_calculate_cooling_time",
-                      &c_local_calculate_cooling_time)
 
-def calculate_gamma(fc):
-    _calculate_helper(fc, "gamma", "local_calculate_gamma",
-                      &c_local_calculate_gamma)
+def calculate_property(fc, *, property_name, current_a_value = None):
+    cdef calc_prop_fn func
+    if property_name == "cooling_time":
+        func = &c_local_calculate_cooling_time
+        func_name = "local_calculate_cooling_time"
+    elif property_name == "dust_temperature":
+        func = &c_local_calculate_dust_temperature
+        func_name = "local_calculate_dust_temperature"
+    elif property_name == "gamma":
+        func = &c_local_calculate_gamma
+        func_name = "local_calculate_gamma"
+    elif property_name == "pressure":
+        func = &c_local_calculate_pressure
+        func_name = "local_calculate_pressure"
+    elif property_name == "temperature":
+        func = &c_local_calculate_temperature
+        func_name = "local_calculate_temperature"
+    else:
+        raise ValueError(f"unrecognized property_name: {property_name}")
 
-def calculate_pressure(fc):
-    _calculate_helper(fc, "pressure", "local_calculate_pressure",
-                      &c_local_calculate_pressure)
-
-def calculate_temperature(fc):
-    _calculate_helper(fc, "temperature", "local_calculate_temperature",
-                      &c_local_calculate_temperature)
-
-def calculate_dust_temperature(fc):
-    _calculate_helper(fc, "dust_temperature",
-                      "local_calculate_dust_temperature",
-                      &c_local_calculate_dust_temperature)
+    _calculate_helper(fc, property_name, func_name, func, current_a_value)
+    return fc[property_name]
 
 def get_grackle_version():
     cdef c_grackle_version version_struct = c_get_grackle_version()
@@ -850,9 +895,24 @@ cdef class _wrapped_c_chemistry_data:
     #   _string_buffers["<field>"]. In CPython, the string is always terminated
     #   by a null character (the Python interface just hides if from users)
 
-    def __cinit__(self):
+    def __cinit__(self, mapping = None):
+        # we completely ignore mapping (we only accept it because
+        # __cinit__ gets passed the same args as __init__)
         local_initialize_chemistry_parameters(&self.data)
         self._string_buffers = {}
+
+    def __init__(self, mapping = None):
+        # this is called after __cinit__
+        if mapping is not None:
+            # it's probably be more efficient to iterate over mapping.items()
+            # but, we do it this way since _wrapped_c_chemistry_data doesn't
+            # currently have an items method
+            for k in mapping:
+                try:
+                    self[k] = mapping[k]
+                except KeyError:
+                    raise ValueError("_wrapped_c_chemistry_data does not "
+                                     f"recognize the key: {k!r}") from None
 
     def _access_struct_field(self, key, val = None):
         """
