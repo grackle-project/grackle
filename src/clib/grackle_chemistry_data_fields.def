@@ -259,7 +259,6 @@ ENTRY(use_stancil_lepp_dalgarno_1998, INT, FALSE) //Alternative calculation sche
 ENTRY(use_omukai_gas_grain, INT, FALSE) //Alternative calculation scheme for gas_grain
 ENTRY(use_uniform_grain_dist_gamma_isrf, INT, FALSE) //Alternative calculation scheme for gamma_isrf
 
-
 /* maximum number of subcycle iterations for solve_chemistry */
 ENTRY(max_iterations, INT, 10000)
 
