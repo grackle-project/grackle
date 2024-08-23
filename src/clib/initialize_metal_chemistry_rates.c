@@ -29,9 +29,9 @@ int calc_opacity_prim(chemistry_data *my_chemistry, chemistry_data_storage *my_r
 int allocate_rates_metal(chemistry_data *my_chemistry, chemistry_data_storage *my_rates);
 
 
-int calc_rates_metal(chemistry_data *my_chemistry,
-                     chemistry_data_storage *my_rates,
-                     code_units *my_units)
+int initialize_metal_chemistry_rates(chemistry_data *my_chemistry,
+                                     chemistry_data_storage *my_rates,
+                                     code_units *my_units)
 {
 
 //-------125:   HDII +  HI   ->  HII  +  HDI

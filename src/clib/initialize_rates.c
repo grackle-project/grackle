@@ -89,12 +89,12 @@
 #include "grackle_chemistry_data.h"
 #include "phys_constants.h"
 
-int calc_rates_metal(chemistry_data *my_chemistry,
-                     chemistry_data_storage *my_rates,
-                     code_units *my_units);
-int calc_rates_dust(chemistry_data *my_chemistry,
-                    chemistry_data_storage *my_rates,
-                    code_units *my_units);
+int initialize_metal_chemistry_rates(chemistry_data *my_chemistry,
+                                     chemistry_data_storage *my_rates,
+                                     code_units *my_units);
+int initialize_dust_yields(chemistry_data *my_chemistry,
+                           chemistry_data_storage *my_rates,
+                           code_units *my_units);
 
 //Define the type of a scalar rate function.
 typedef double (*scalar_rate_function)(double, chemistry_data*);
@@ -550,12 +550,12 @@ int initialize_rates(chemistry_data *my_chemistry, chemistry_data_storage *my_ra
     }
 
     /* Metal chemistry rates */
-    if (calc_rates_metal(my_chemistry, my_rates, my_units) == FAIL) {
+    if (initialize_metal_chemistry_rates(my_chemistry, my_rates, my_units) == FAIL) {
       fprintf(stderr, "Error in calc_rates_metal.\n");
       return FAIL;
     }
     /* Dust rates */
-    if (calc_rates_dust(my_chemistry, my_rates, my_units) == FAIL) {
+    if (initialize_dust_yields(my_chemistry, my_rates, my_units) == FAIL) {
       fprintf(stderr, "Error in calc_rates_dust.\n");
       return FAIL;
     }

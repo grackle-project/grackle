@@ -123,6 +123,8 @@ add_library(Grackle_Grackle
   index_helper.c
   initialize_chemistry_data.c
   initialize_cloudy_data.c
+  initialize_dust_yields.c
+  initialize_metal_chemistry_rates.c
   initialize_rates.c
   initialize_UVbackground_data.c
   rate_functions.c
@@ -130,20 +132,6 @@ add_library(Grackle_Grackle
   solve_chemistry.c
   update_UVbackground_rates.c
   utils.c
-  calc_rates_dust.c
-  calc_rates_dust_C13.c
-  calc_rates_dust_C20.c
-  calc_rates_dust_C25.c
-  calc_rates_dust_C30.c
-  calc_rates_dust_F13.c
-  calc_rates_dust_F15.c
-  calc_rates_dust_F50.c
-  calc_rates_dust_F80.c
-  calc_rates_dust_P170.c
-  calc_rates_dust_P200.c
-  calc_rates_dust_Y19.c
-  calc_rates_dust_loc.c
-  calc_rates_metal.c
 
   # auto-generated C source files
   ${CMAKE_CURRENT_BINARY_DIR}/auto_general.c
