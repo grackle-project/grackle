@@ -211,6 +211,75 @@ int initialize_dust_yields(chemistry_data *my_chemistry,
   return SUCCESS;
 }
 
+int local_free_dust_yields(chemistry_data *my_chemistry,
+                           chemistry_data_storage *my_rates) {
+
+  if (my_chemistry->metal_chemistry == 0)
+    return SUCCESS;
+
+  GRACKLE_FREE(my_rates->SN0_XC);
+  GRACKLE_FREE(my_rates->SN0_XO);
+  GRACKLE_FREE(my_rates->SN0_XMg);
+  GRACKLE_FREE(my_rates->SN0_XAl);
+  GRACKLE_FREE(my_rates->SN0_XSi);
+  GRACKLE_FREE(my_rates->SN0_XS);
+  GRACKLE_FREE(my_rates->SN0_XFe);
+
+  GRACKLE_FREE(my_rates->SN0_fC);
+  GRACKLE_FREE(my_rates->SN0_fO);
+  GRACKLE_FREE(my_rates->SN0_fMg);
+  GRACKLE_FREE(my_rates->SN0_fAl);
+  GRACKLE_FREE(my_rates->SN0_fSi);
+  GRACKLE_FREE(my_rates->SN0_fS);
+  GRACKLE_FREE(my_rates->SN0_fFe);
+
+  GRACKLE_FREE(my_rates->SN0_fSiM);
+  GRACKLE_FREE(my_rates->SN0_fFeM);
+  GRACKLE_FREE(my_rates->SN0_fMg2SiO4);
+  GRACKLE_FREE(my_rates->SN0_fMgSiO3);
+  GRACKLE_FREE(my_rates->SN0_fFe3O4);
+  GRACKLE_FREE(my_rates->SN0_fAC);
+  GRACKLE_FREE(my_rates->SN0_fSiO2D);
+  GRACKLE_FREE(my_rates->SN0_fMgO);
+  GRACKLE_FREE(my_rates->SN0_fFeS);
+  GRACKLE_FREE(my_rates->SN0_fAl2O3);
+  GRACKLE_FREE(my_rates->SN0_freforg);
+  GRACKLE_FREE(my_rates->SN0_fvolorg);
+  GRACKLE_FREE(my_rates->SN0_fH2Oice);
+
+  GRACKLE_FREE(my_rates->SN0_r0SiM);
+  GRACKLE_FREE(my_rates->SN0_r0FeM);
+  GRACKLE_FREE(my_rates->SN0_r0Mg2SiO4);
+  GRACKLE_FREE(my_rates->SN0_r0MgSiO3);
+  GRACKLE_FREE(my_rates->SN0_r0Fe3O4);
+  GRACKLE_FREE(my_rates->SN0_r0AC);
+  GRACKLE_FREE(my_rates->SN0_r0SiO2D);
+  GRACKLE_FREE(my_rates->SN0_r0MgO);
+  GRACKLE_FREE(my_rates->SN0_r0FeS);
+  GRACKLE_FREE(my_rates->SN0_r0Al2O3);
+  GRACKLE_FREE(my_rates->SN0_r0reforg);
+  GRACKLE_FREE(my_rates->SN0_r0volorg);
+  GRACKLE_FREE(my_rates->SN0_r0H2Oice);
+
+  GRACKLE_FREE(my_rates->gr_Td);
+
+  GRACKLE_FREE(my_rates->SN0_kpSiM);
+  GRACKLE_FREE(my_rates->SN0_kpFeM);
+  GRACKLE_FREE(my_rates->SN0_kpMg2SiO4);
+  GRACKLE_FREE(my_rates->SN0_kpMgSiO3);
+  GRACKLE_FREE(my_rates->SN0_kpFe3O4);
+  GRACKLE_FREE(my_rates->SN0_kpAC);
+  GRACKLE_FREE(my_rates->SN0_kpSiO2D);
+  GRACKLE_FREE(my_rates->SN0_kpMgO);
+  GRACKLE_FREE(my_rates->SN0_kpFeS);
+  GRACKLE_FREE(my_rates->SN0_kpAl2O3);
+  GRACKLE_FREE(my_rates->SN0_kpreforg);
+  GRACKLE_FREE(my_rates->SN0_kpvolorg);
+  GRACKLE_FREE(my_rates->SN0_kpH2Oice);
+
+  return SUCCESS;
+}
+
 int calc_rates_dust_loc(int iSN, chemistry_data *my_chemistry, chemistry_data_storage *my_rates)
 {
 

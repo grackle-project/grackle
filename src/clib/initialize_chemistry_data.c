@@ -50,6 +50,8 @@ int initialize_UVbackground_data(chemistry_data *my_chemistry,
 
 int local_free_chemistry_data(chemistry_data *my_chemistry, chemistry_data_storage *my_rates);
 
+int local_free_dust_yields(chemistry_data *my_chemistry, chemistry_data_storage *my_rates);
+
 int initialize_rates(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, code_units *my_units,
                 double co_length_units, double co_density_units);
 
@@ -531,6 +533,11 @@ int local_free_chemistry_data(chemistry_data *my_chemistry,
     GRACKLE_FREE(my_rates->UVbackground_table.crsHI);
     GRACKLE_FREE(my_rates->UVbackground_table.crsHeII);
     GRACKLE_FREE(my_rates->UVbackground_table.crsHeI);
+  }
+
+  if (local_free_dust_yields(my_chemistry, my_rates) == FAIL) {
+    fprintf(stderr, "Error in local_free_dust_yields.\n");
+    return FAIL;
   }
 
   return GR_SUCCESS;
