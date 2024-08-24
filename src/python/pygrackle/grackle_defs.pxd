@@ -173,6 +173,7 @@ cdef extern from "grackle_types.h":
 
 cdef extern from "grackle.h":
     cdef int GRACKLE_FAIL_VALUE "GR_FAIL"
+    cdef int GR_SPECIFY_INITIAL_A_VALUE
 
     int local_initialize_chemistry_parameters(c_chemistry_data *my_chemistry)
 
@@ -181,6 +182,9 @@ cdef extern from "grackle.h":
     double get_velocity_units(c_code_units *my_units)
 
     double get_temperature_units(c_code_units *my_units)
+
+    double gr_query_units(const c_chemistry_data_storage * my_rates,
+                          const char* units_name, double current_a_value)
 
     int local_initialize_chemistry_data(c_chemistry_data *my_chemistry,
                                         c_chemistry_data_storage *my_rates,
