@@ -15,7 +15,7 @@ requires=[
   # the minimum build-requirement for scikit-build-core controls some default
   # behaviors when newer versions of scikit-build-core are installed
   # (we should keep an eye on this and keep increasing it over time)
-  "scikit-build-core>=0.9"
+  "scikit-build-core>=0.10"
 ]
 build-backend = "scikit_build_core.build"
 
@@ -83,7 +83,7 @@ cmake.version = ">=3.16"
 cmake.build-type = "Release"
 
 # since this is set, this provides a method for backward compatibility.
-minimum-version = "0.9" # change to "build-system.requires" in next version
+minimum-version = "build-system.requires"
 
 # The following are all packaging-related and may require tweaking
 
