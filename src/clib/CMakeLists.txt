@@ -86,6 +86,7 @@ add_library(Grackle_Grackle
   calculate_gamma.c
   calculate_pressure.c
   calculate_temperature.c
+  data_file_utils.c
   dynamic_api.c
   grackle_units.c
   index_helper.c
@@ -135,6 +136,7 @@ add_library(Grackle_Grackle
 
   # C private headers
   cie_thin_cooling_rate_tables.h
+  data_file_utils.h
   grackle_chemistry_data_fields.def # <-- acts as a C header
   grackle_macros.h
   index_helper.h
