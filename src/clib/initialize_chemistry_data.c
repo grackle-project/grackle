@@ -40,13 +40,13 @@ grackle_version get_grackle_version();
 void show_parameters(FILE *fp, chemistry_data *my_chemistry);
 
 int _free_cloudy_data(cloudy_data *my_cloudy, chemistry_data *my_chemistry, int primordial);
-int initialize_cloudy_data(chemistry_data *my_chemistry,
+int initialize_cloudy_data(const char* path, chemistry_data *my_chemistry,
                            chemistry_data_storage *my_rates,
                            cloudy_data *my_cloudy, char *group_name,
                            code_units *my_units,
                            int read_data);
 
-int initialize_UVbackground_data(chemistry_data *my_chemistry,
+int initialize_UVbackground_data(const char* path, chemistry_data *my_chemistry,
                                  chemistry_data_storage *my_rates);
 
 int local_free_chemistry_data(chemistry_data *my_chemistry, chemistry_data_storage *my_rates);
@@ -313,13 +313,16 @@ int local_initialize_chemistry_data(chemistry_data *my_chemistry,
   //* Call initialise_rates to compute rate tables.
   initialize_rates(my_chemistry, my_rates, my_units, co_length_units, co_density_units);
 
+  // prepare to read data from data files
+  const char* path = my_chemistry->grackle_data_file;
+
   /* Initialize Cloudy cooling. */
   my_rates->cloudy_data_new = 1;
   int read_data;
 
   /* Primordial tables. */
   read_data = my_chemistry->primordial_chemistry == 0;
-  if (initialize_cloudy_data(my_chemistry, my_rates,
+  if (initialize_cloudy_data(path, my_chemistry, my_rates,
                              &my_rates->cloudy_primordial,
                              "Primordial", my_units, read_data) == GR_FAIL) {
     fprintf(stderr, "Error in initialize_cloudy_data.\n");
@@ -328,7 +331,7 @@ int local_initialize_chemistry_data(chemistry_data *my_chemistry,
 
   /* Metal tables. */
   read_data = my_chemistry->metal_cooling == TRUE;
-  if (initialize_cloudy_data(my_chemistry, my_rates,
+  if (initialize_cloudy_data(path, my_chemistry, my_rates,
                              &my_rates->cloudy_metal,
                              "Metals", my_units, read_data) == GR_FAIL) {
     fprintf(stderr, "Error in initialize_cloudy_data.\n");
@@ -337,7 +340,7 @@ int local_initialize_chemistry_data(chemistry_data *my_chemistry,
 
   /* Initialize UV Background data. */
   initialize_empty_UVBtable_struct(&(my_rates->UVbackground_table));
-  if (initialize_UVbackground_data(my_chemistry, my_rates) == GR_FAIL) {
+  if (initialize_UVbackground_data(path, my_chemistry, my_rates) == GR_FAIL) {
     fprintf(stderr, "Error in initialize_UVbackground_data.\n");
     return GR_FAIL;
   }
