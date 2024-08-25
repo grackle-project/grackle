@@ -1,25 +1,16 @@
 #include <stdlib.h> 
 #include <string.h>
 #include <stdio.h>
-#include <time.h>
 #include <math.h>
 #include "grackle_macros.h"
 #include "grackle_types.h"
 #include "grackle_chemistry_data.h"
 #include "phys_constants.h"
+#include "grackle_rate_functions.h"
 
 #define tiny 1.0e-20
 #define tevk 1.1605e+4
 
-int calc_coolrate_H2 (chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit);
-int calc_coolrate_HD (chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit);
-int calc_coolrate_CI (chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit);
-int calc_coolrate_CII(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit);
-int calc_coolrate_OI (chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit);
-int calc_coolrate_CO (chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit);
-int calc_coolrate_OH (chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit);
-int calc_coolrate_H2O(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit);
-int calc_opacity_prim(chemistry_data *my_chemistry, chemistry_data_storage *my_rates);
 int allocate_rates_metal(chemistry_data *my_chemistry, chemistry_data_storage *my_rates);
 
 
@@ -28,7 +19,7 @@ int initialize_metal_chemistry_rates(chemistry_data *my_chemistry,
                                      code_units *my_units)
 {
 
-  if (my_chemistry->primordial_chemistry == 0)
+  if (my_chemistry->metal_chemistry == 0)
     return SUCCESS;
 
 //-------125:   HDII +  HI   ->  HII  +  HDI
@@ -204,7 +195,6 @@ int initialize_metal_chemistry_rates(chemistry_data *my_chemistry,
       my_rates->alphap_N = calloc(2, sizeof(int)); // yes, this should be 2
 
       int ifunc;
-      ifunc = calc_opacity_prim(my_chemistry, my_rates);
 
 // Allocate rates
       allocate_rates_metal(my_chemistry, my_rates);
@@ -435,8 +425,6 @@ int initialize_metal_chemistry_rates(chemistry_data *my_chemistry,
         my_rates->kz54[i] = fmax(my_rates->kz54[i], tiny) / kunit;
       }
 
-      ifunc = calc_coolrate_H2 (my_chemistry, my_rates, coolunit);
-      ifunc = calc_coolrate_HD (my_chemistry, my_rates, coolunit);
       ifunc = calc_coolrate_CI (my_chemistry, my_rates, coolunit);
       ifunc = calc_coolrate_CII(my_chemistry, my_rates, coolunit);
       ifunc = calc_coolrate_OI (my_chemistry, my_rates, coolunit);
@@ -448,7 +436,7 @@ int initialize_metal_chemistry_rates(chemistry_data *my_chemistry,
 }
 
 
-int calc_coolrate_H2 (chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit)
+void calc_coolrate_H2(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit)
 {
   int    ND = 16,  NT = 11,  NH = 21;
   double D0 =20.0, T0 = 1.6, H0 = -10.0;
@@ -655,12 +643,10 @@ int calc_coolrate_H2 (chemistry_data *my_chemistry, chemistry_data_storage *my_r
   for(itab = 0; itab < ND * NT * NH; itab++) {
     my_rates->LH2_L[itab] = L[itab] + log_coolunit;
   }
-
-  return SUCCESS;
 }
 
 
-int calc_coolrate_HD (chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit)
+void calc_coolrate_HD(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit)
 {
   int    ND = 16,  NT = 11 , NH = 21;
   double D0 =16.0, T0 = 1.6, H0 =-12.0;
@@ -2007,7 +1993,7 @@ int calc_coolrate_H2O(chemistry_data *my_chemistry, chemistry_data_storage *my_r
 }
 
 
-int calc_opacity_prim  (chemistry_data *my_chemistry, chemistry_data_storage *my_rates)
+void calc_opacity_prim(chemistry_data *my_chemistry, chemistry_data_storage *my_rates)
 {
   int    ND = 15, NT = 29;
   double D0 =-16.0, T0 = 1.8;

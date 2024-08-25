@@ -98,6 +98,17 @@ double gammah_rate(double units, chemistry_data *my_chemistry);
 double gamma_isrf_rate(double units, chemistry_data *my_chemistry);
 double gamma_isrf2_rate(double units, chemistry_data *my_chemistry);
 
+void calc_coolrate_H2(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit);
+void calc_coolrate_HD(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit);
+void calc_opacity_prim(chemistry_data *my_chemistry, chemistry_data_storage *my_rates);
+
+int calc_coolrate_CI (chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit);
+int calc_coolrate_CII(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit);
+int calc_coolrate_OI (chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit);
+int calc_coolrate_CO (chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit);
+int calc_coolrate_OH (chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit);
+int calc_coolrate_H2O(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit);
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif /* __cplusplus */

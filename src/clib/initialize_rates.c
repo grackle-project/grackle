@@ -490,6 +490,13 @@ int initialize_rates(chemistry_data *my_chemistry, chemistry_data_storage *my_ra
         //from Glover (2015, MNRAS, 451, 2082)
         add_reaction_rate(&my_rates->H2LTE, H2LTE_rate, coolingUnits, my_chemistry);
 
+        // Chiaki & Wise 2019 rates
+        // Note: these are still defined in initialize_metal_chemistry_rates.c.
+        // They should be moved someday.
+        calc_coolrate_H2(my_chemistry, my_rates, coolingUnits);
+        calc_coolrate_HD(my_chemistry, my_rates, coolingUnits);
+        calc_opacity_prim(my_chemistry, my_rates);
+
         //* f) HD cooling.
 
         //HD cooling function has units of ergs cm^3 / s
