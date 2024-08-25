@@ -7,15 +7,9 @@
 #include "grackle_types.h"
 #include "grackle_chemistry_data.h"
 #include "phys_constants.h"
-#ifdef _OPENMP
-#include <omp.h>
-#endif
 
 #define tiny 1.0e-20
-#define huge 1.0e+20
 #define tevk 1.1605e+4
-
-extern int grackle_verbose;
 
 int calc_coolrate_H2 (chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit);
 int calc_coolrate_HD (chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit);
@@ -33,6 +27,9 @@ int initialize_metal_chemistry_rates(chemistry_data *my_chemistry,
                                      chemistry_data_storage *my_rates,
                                      code_units *my_units)
 {
+
+  if (my_chemistry->primordial_chemistry == 0)
+    return SUCCESS;
 
 //-------125:   HDII +  HI   ->  HII  +  HDI
 //-------129:   DI   +  HII  ->  HDII +  p
@@ -106,34 +103,21 @@ int initialize_metal_chemistry_rates(chemistry_data *my_chemistry,
           POW(my_units->a_value * my_units->a_units, 3);
       }
 
-      int  ispecies    = my_chemistry->primordial_chemistry;
-      int  igammah     = my_chemistry->photoelectric_heating;
-      int  idust       = my_chemistry->h2_on_dust;
-      int  idustall    = my_chemistry->dust_chemistry;
       int  nratec      = my_chemistry->NumberOfTemperatureBins;
       double  aye      = my_units->a_value;
       double  temstart = my_chemistry->TemperatureStart;
       double  temend   = my_chemistry->TemperatureEnd;
-      int  casebrates  = my_chemistry->CaseBRecombination;
-      int  threebody   = my_chemistry->three_body_rate;
       double  uxyz     = co_length_units;
       double  uaye     = my_units->a_units;
       double  urho     = co_density_units;
       double  utim     = my_units->time_units;
 
-      int i,j,idt;
+      int i;
       double logttt, ttt, tev, logtev,
-           xx, dum, tbase1, xbase1, kunit, coolunit,
-           dbase1, dlogtem, kunit_3bdy, cierate,
-           grain_coef, fgr, d_ttt, d_logttt, d_dlogtem,
-           ttt2, ttt300, d_ttt2, tk9, lambdaHI, lambdaHeII,
-           lambdaHeIII, grbeta;
-      double tm, HDLR, HDLV, lt, t3, lt3;
-      int anydust;
-//
-//    Set flag for dust-related options
-//
-      anydust = (idust > 0) || (idustall > 0);
+        tbase1, xbase1, kunit, coolunit,
+        dbase1, dlogtem, kunit_3bdy, cierate,
+        grain_coef, fgr, d_ttt, d_dlogtem,
+        ttt2, ttt300, tk9;
 //
 //
 // Get conversion units
@@ -221,9 +205,6 @@ int initialize_metal_chemistry_rates(chemistry_data *my_chemistry,
 
       int ifunc;
       ifunc = calc_opacity_prim(my_chemistry, my_rates);
-
-      if (ispecies == 0)
-        return SUCCESS;
 
 // Allocate rates
       allocate_rates_metal(my_chemistry, my_rates);
