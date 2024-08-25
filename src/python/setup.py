@@ -73,16 +73,19 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('pygrackle', 'pygrackle')
     return config
 
+
 dev_requirements = [
     'flake8',
+    'packaging',
     'pytest',
     'sphinx',
-    'packaging'
+    'sphinx-tabs',
+    'sphinx_rtd_theme',
 ]
 
 setup(
     name="pygrackle",
-    version="1.0.1",
+    version="1.1.dev",
     description="A wrapper for the Grackle chemistry library",
     keywords=["simulation", "chemistry", "cooling", "astronomy", "astrophysics"],
     url="https://github.com/grackle-project/grackle",
@@ -106,6 +109,7 @@ setup(
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
     ],
     packages=find_packages(),
     setup_requires=[
@@ -123,7 +127,7 @@ setup(
     license="BSD 3-clause",
     ext_modules=cython_extensions,
     extras_require={
-          'dev': dev_requirements,
+        'dev': dev_requirements,
     },
     python_requires='>=3.7'
 )

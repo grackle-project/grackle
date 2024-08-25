@@ -12,9 +12,16 @@
 # software.
 ########################################################################
 
+import json
 import os
 import pytest
+import re
 import subprocess
+
+from testing_common import \
+    generate_test_results, \
+    grackle_install_dir, \
+    test_answers_dir
 
 try:
     from pygrackle.grackle_wrapper import uses_in_source_build
@@ -25,28 +32,76 @@ except ImportError:
     #    build. But we won't depend on that behavior
     _USING_TRADITIONAL_BUILD = None
 
-current_path = os.path.abspath(__file__)
-current_dir = os.path.dirname(current_path)
+examples_dir = os.path.join(grackle_install_dir, "src", "example")
 
-examples_path = os.path.join(current_dir, "../..", "example")
+code_examples = (
+    "c_example",
+    "c_local_example",
+    "cxx_example",
+    "cxx_omp_example",
+    "cxx_grid_example",
+    "fortran_example",
+)
 
-code_examples = ["c_example",
-                 "c_local_example",
-                 "cxx_example",
-                 "cxx_omp_example",
-                 "cxx_grid_example",
-                 "fortran_example"]
+compare_exclude = (
+    "cxx_omp_example",
+    "cxx_grid_example"
+)
 
+rfields = (
+    "cooling_time",
+    "dust_temperature",
+    "gamma",
+    "pressure",
+    "temperature"
+)
 
-def run_command(command, cwd, env):
-    try:
-        subprocess.check_output(
-            command.split(' '), stderr=subprocess.STDOUT,
-            cwd=cwd, env=env)
-    except subprocess.CalledProcessError as er:
+test_file = os.path.join(test_answers_dir, "code_examples.json")
+if generate_test_results and os.path.exists(test_file):
+    os.remove(test_file)
+if not generate_test_results and not os.path.exists(test_file):
+    raise RuntimeError(
+        f"Code example results file not found: {test_file}")
+
+def run_command(command, cwd, env, timeout=None):
+    proc = subprocess.run(
+        command, shell=True,
+        cwd=cwd, env=env, capture_output=True)
+    if proc.returncode == 0:
+        return proc
+    else:
         raise RuntimeError(
-            f"Command {command} failed with return code {er.returncode} "
-            f"and the following output: {er.output}")
+            f"Command {command} failed with return value "
+            f"{proc.returncode} and the following stderr output "
+            f"{proc.stderr}")
+
+def parse_output(ostr):
+    results = {field: None for field in rfields}
+
+    if isinstance(ostr, bytes):
+        ostr = ostr.decode("utf8")
+    lines = ostr.split("\n")
+    for line in lines:
+        for field in results:
+            match = re.match(f"^ ?{field} = ", line)
+            if match is None:
+                continue
+            _, rside = line.split(" = ")
+            rparts = rside.split()
+            if len(rparts) == 1:
+                val = rparts[0][:-1]
+            elif len(rparts) == 2:
+                val = rparts[0]
+            else:
+                raise RuntimeError(
+                    f"Cannot grab field values from line: {line}.")
+
+            if results[field] is not None:
+                raise RuntimeError(
+                    f"Already have value for {field}.")
+            results[field] = val
+
+    return results
 
 @pytest.mark.parametrize("example", code_examples)
 def test_code_examples(example):
@@ -83,14 +138,37 @@ def test_code_examples(example):
                            "'cmake:<path/to/build>'. {choice!r} is invalid")
     env = dict(os.environ)
     command = f'{make_command} {example}'
-    run_command(command, examples_path, env)
+    run_command(command, examples_dir, env, timeout=60)
 
     # test that example compiles
-    assert os.path.exists(os.path.join(examples_path, example))
+    assert os.path.exists(os.path.join(examples_dir, example))
 
     # try to run the example code
     command = f"./{example}"
-    run_command(command, examples_path, env)
+    proc = run_command(command, examples_dir, env, timeout=120)
+    if example not in compare_exclude:
+        results = parse_output(proc.stdout)
+
+        if generate_test_results:
+            if os.path.exists(test_file):
+                with open(test_file, mode="r") as f:
+                    all_results = json.load(f)
+            else:
+                all_results = {}
+
+            all_results.update({example: results})
+            with open(test_file, mode="w") as f:
+                f.write(json.dumps(all_results, indent=4))
+
+        else:
+            with open(test_file, mode="r") as f:
+                all_results = json.load(f)
+
+            comp_results = all_results[example]
+            for field in comp_results:
+                err_msg = f"In {example}: mismatch for {field} - " + \
+                  f"old: {comp_results[field]}, new: {results[field]}"
+                assert comp_results[field] == results[field], err_msg
 
     command = f"{make_command} clean"
-    run_command(command, examples_path, env)
+    run_command(command, examples_dir, env, timeout=60)

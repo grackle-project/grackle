@@ -221,30 +221,30 @@ c     Evolving the chemistry.
 c     Calculate cooling time.
 
       iresult = calculate_cooling_time(my_units, my_fields,cooling_time)
-      write(*,*) "Cooling time = ", (cooling_time(1) * 
+      write(6,*) "cooling_time = ", (cooling_time(1) *
      &     my_units%time_units), "s."
 
 c     Calculate temperature.
 
       iresult = calculate_temperature(my_units, my_fields, temperature)
-      write(*,*) "Temperature = ", temperature(1), "K."
+      write(6,*) "temperature = ", temperature(1), "K."
 
 c     Calcualte pressure.
 
       pressure_units = my_units%density_units *
      &     my_units%velocity_units**2
       iresult = calculate_pressure(my_units, my_fields, pressure)
-      write(*,*) "Pressure = ", pressure(1)*pressure_units, "dyne/cm^2."
+      write(6,*) "pressure = ", pressure(1)*pressure_units, "dyne/cm^2."
 
 c     Calculate gamma.
 
       iresult = calculate_gamma(my_units, my_fields, gamma)
-      write(*,*) "Gamma = ", gamma(1)
+      write(6,*) "gamma = ", gamma(1)
 
 c     Calculate dust temperature.
 
       iresult = calculate_dust_temperature(my_units, my_fields,
      &     dust_temperature)
-      write(*,*) "Dust temperature = ", dust_temperature(1), "K."
+      write(6,*) "dust_temperature = ", dust_temperature(1), "K."
 
       end program fortran_example

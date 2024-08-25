@@ -27,6 +27,8 @@ The easiest thing to do is follow the instructions for installing yt,
 which will provide you with Cython, matplotlib, and NumPy.  Flake8 and
 py.test can then be installed via pip.
 
+.. _install-pygrackle:
+
 Installing Pygrackle
 --------------------
 
@@ -36,27 +38,51 @@ directory and invoking the ``pip install -e .`` command.
 
 This is particularly simple if you installed the Grackle library with the classic build system:
 
-.. highlight:: none
+.. code-block:: shell-session
 
-::
-
-    ~/grackle $ cd src/python
-    ~/grackle/src/python $ pip install -e .
+   ~/grackle $ cd src/python
+   ~/grackle/src/python $ pip install -e .
 
 
 If you used the cmake build-system, you also need to store the path to the build directory in the ``PYGRACKLE_CMAKE_BUILD_DIR`` environment variable.
 If your build directory was located in the root level of the grackle repository and was called **my-build**, the command would look like:
 
+.. code-block:: shell-session
 
-.. highlight:: none
-
-::
-
-    ~/grackle $ cd src/python
-    ~/grackle/src/python $ PYGRACKLE_CMAKE_BUILD_DIR=../../my-build pip install -e .
+   ~/grackle $ cd src/python
+   ~/grackle/src/python $ PYGRACKLE_CMAKE_BUILD_DIR=../../my-build pip install -e .
 
 .. note:: Pygrackle can only be run when Grackle is compiled without OpenMP.
    See :ref:`openmp`.
+
+.. _pygrackle-dev:
+
+Installing Pygrackle Development Requirements
++++++++++++++++++++++++++++++++++++++++++++++
+
+There are a handful of additional packages required for developing
+Grackle. For example, these will enable :ref:`testing` and building
+the documentation locally. To install the development dependencies,
+repeat the last line of the :ref:`pygrackle installation instructions
+<install-pygrackle>` with ``[dev]`` appended.
+
+.. code-block:: shell-session
+
+   ~/grackle/src/python $ pip install -e .[dev]
+
+or
+
+.. code-block:: shell-session
+
+   ~/grackle/src/python $ PYGRACKLE_CMAKE_BUILD_DIR=../../my-build pip install -e .[dev]
+
+If you use ``zsh`` as your shell, you will need quotes around
+'.[dev]'.
+
+.. code-block:: shell-session
+
+   ~/grackle/src/python $ pip install -e '.[dev]'
+
 
 Running the Example Scripts
 ---------------------------
@@ -68,6 +94,30 @@ a parcel of gas at constant density or in a free-fall model.  Each example
 will produce a figure as well as a dataset that can be loaded and analyzed
 with `yt <http://yt-project.org/>`__.
 
+Configuring the path to Grackle input data
+++++++++++++++++++++++++++++++++++++++++++
+
+All of the example scripts discussed below use the following line to
+make a guess at where the Grackle input files are located.
+
+.. code-block:: python
+
+   from pygrackle.utilities.data_path import grackle_data_dir
+
+This will typically work for any 'editable' Pygrackle installation
+(i.e., one installed with ``pip install -e .`` as directed
+above). In this case, it will be assumed that the data files can be
+found in a directory called ``input`` in the top level of the source
+repository. However, this will not work with non-editable
+installations. In this case you can use the ``GRACKLE_DATA_DIR``
+environment variable to set the path to the data. This will be picked
+up by the Python code above and the ``grackle_data_dir`` variable will
+contain the proper path.
+
+.. code-block:: shell-session
+
+   export GRACKLE_DATA_DIR=/path/to/data
+
 Cooling Rate Figure Example
 +++++++++++++++++++++++++++
 
@@ -77,11 +127,9 @@ is disabled and the chemistry solver is iterated until the species fractions
 have converged.  The cooling time is then calculated and used to compute the cooling 
 rate.
 
-.. highlight:: none
+.. code-block:: shell-session
 
-::
-
-    python cooling_rate.py
+   ~/grackle/src/python/examples $ python cooling_rate.py
 
 .. image:: _images/cooling_rate.png
    :width: 500
@@ -108,11 +156,9 @@ This sets up a single grid cell with an initial density and temperature and solv
 the chemistry and cooling for a given amount of time.  The resulting dataset gives
 the values of the densities, temperatures, and mean molecular weights for all times.
 
-.. highlight:: none
+.. code-block:: shell-session
 
-::
-
-    python cooling_cell.py
+   ~/grackle/src/python/examples $ python cooling_cell.py
 
 .. image:: _images/cooling_cell.png
    :width: 500
@@ -137,11 +183,9 @@ The density increases with time following a free-fall collapse model.  As the de
 increases, thermal energy is added to model heating via adiabatic compression.
 This can be useful for testing chemistry networks over a large range in density.
 
-.. highlight:: none
+.. code-block:: shell-session
 
-::
-
-    python freefall.py
+   ~/grackle/src/python/examples $ python freefall.py
 
 .. image:: _images/freefall.png
    :width: 500
@@ -166,17 +210,23 @@ Using Grackle with yt
 +++++++++++++++++++++
 
 This example illustrates how Grackle functionality can be called using
-simulation datasets loaded with `yt <https://yt-project.org/>`__ as input.
+simulation datasets loaded with `yt <https://yt-project.org/>`__ as
+input. Note, below we invoke Python with the ``-i`` flag to keep the
+interpreter running. The second block is assumed to happen within the
+same session.
+
+.. code-block:: shell-session
+
+   ~/grackle/src/python/examples $ python -i yt_grackle.py
 
 .. code-block:: python
 
-    python -i yt_grackle.py
-    >>> print (sp['gas', 'grackle_cooling_time'].to('Myr'))
-    [-5.33399975 -5.68132287 -6.04043746 ... -0.44279721 -0.37466095
-     -0.19981158] Myr
-    >>> print (sp['gas', 'grackle_temperature'])
-    [12937.90890302 12953.99126155 13234.96820101 ... 11824.51319307
-     11588.16161462 10173.0168747 ] K
+   >>> print (sp['gas', 'grackle_cooling_time'].to('Myr'))
+   [-5.33399975 -5.68132287 -6.04043746 ... -0.44279721 -0.37466095
+    -0.19981158] Myr
+   >>> print (sp['gas', 'grackle_temperature'])
+   [12937.90890302 12953.99126155 13234.96820101 ... 11824.51319307
+    11588.16161462 10173.0168747 ] K
 
 Through ``pygrackle``, the following ``yt`` fields are defined:
 
