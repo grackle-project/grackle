@@ -29,6 +29,8 @@ py.test can then be installed via pip.
 
 You also need to have a fortran compiler installed (for building the Grackle library itself).
 
+.. _install-pygrackle:
+
 Installing Pygrackle
 --------------------
 
@@ -52,8 +54,8 @@ Currently, Pygrackle should be used with Grackle-builds where OpenMP is disabled
    We strongly encourage you to use the first approach so that your Pygrackle installation is independent of other Grackle installations on your machine.
 
    The latter 2 approaches are primarily intended for testing-purposes.
-   If you use the latter 2 approaches, it's your responsibility to ensure that Pygrackle whenever the external Grackle library is updated.
-   If you forget, Pygrackle may still work, but it's more likely to produce a segmentation fault or (even worse!) give incorrect results.
+   If you use the latter 2 approaches, it's your responsibility to ensure that you delete the old version of Pygrackle and reinstall it whenever the external Grackle library is updated.
+   If you forget, Pygrackle may still work, but it's more likely to produce a segmentation fault or (even worse!) silently give incorrect results.
 
 1. Build Pygrackle as a standalone module (recommended)
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -62,13 +64,12 @@ To install Pygrackle, you just need to invoke the following from the root-direct
 
 .. code-block:: shell-session
 
-    ~/grackle $ pip install .
+    ~/grackle $ pip install -v .
 
 You can configure the exact C and Fortran compilers that are used for this by manipulating the ``CC`` and ``FC`` environment variables.
 If you must pass extra compiler flags to all invocations of the C or Fortran compiler, you can use the ``CFLAGS`` or ``FFLAGS`` environment variable.
 
 If you encounter any compilation problems, you can also link Pygrackle against a version of the Grackle library that you already built.
-
 
 (In the event that you are writing an external python-package that depends on directly linking to the underlying Grackle library, be aware that the underlying organization of files in the resulting pacakge may change)
 
@@ -120,7 +121,7 @@ For the sake of example, we assume that we previously used ``cmake`` to build (a
 
    .. tab:: Legacy Linking
 
-      It's also possible to achieve linking behavior more similar to the case where we build Pygrackle against an external Grackle-library that was built with the classic build-system (this is consistent with the behavior implemented by Pygrackle's former ``setuptools`` build-system.
+      It's also possible to achieve linking behavior more similar to the case where we build Pygrackle against an external Grackle-library that was built with the classic build-system (this is consistent with the behavior implemented by Pygrackle's former ``setuptools`` build-system).
       Under this scenario, no relationship is assumed between the path to the Grackle shared library that is used while building Pygrackle and the path that is used while running Pygrackle.
       Instead, we assume that the Grackle shared library will be at an arbitrary location known to the system at runtime (e.g. either it's in a standard location that the OS knows to check or you use ``LD_LIBRARY_PATH``/``DYLD_LIBRARY_PATH``.
 
@@ -139,7 +140,6 @@ For the sake of example, we assume that we previously used ``cmake`` to build (a
              ~/grackle $ export SKBUILD_CMAKE_DEFINE="CMAKE_SKIP_INSTALL_RPATH=TRUE"
              ~/grackle $ pip install --user .
 
-
 Testing Your Installation
 -------------------------
 
@@ -151,6 +151,30 @@ To make sure everything is installed properly, you can try invoking pygrackle fr
 
 If this command executes without raising any errors, then you have successfully installed Pygrackle.
 
+.. _pygrackle-dev:
+
+Installing Pygrackle Development Requirements
++++++++++++++++++++++++++++++++++++++++++++++
+
+There are a handful of additional packages required for developing
+Grackle. For example, these will enable :ref:`testing` and building
+the documentation locally. To install the development dependencies,
+repeat the last line of the :ref:`pygrackle installation instructions
+<install-pygrackle>` with ``[dev]`` appended.
+
+.. code-block:: shell-session
+
+   ~/grackle $ pip install -e .[dev]
+
+
+If you use ``zsh`` as your shell, you will need quotes around
+'.[dev]'.
+
+.. code-block:: shell-session
+
+   ~/grackle $ pip install -e '.[dev]'
+
+
 Running the Example Scripts
 ---------------------------
 
@@ -161,6 +185,30 @@ a parcel of gas at constant density or in a free-fall model.  Each example
 will produce a figure as well as a dataset that can be loaded and analyzed
 with `yt <http://yt-project.org/>`__.
 
+Configuring the path to Grackle input data
+++++++++++++++++++++++++++++++++++++++++++
+
+All of the example scripts discussed below use the following line to
+make a guess at where the Grackle input files are located.
+
+.. code-block:: python
+
+   from pygrackle.utilities.data_path import grackle_data_dir
+
+This will typically work for any 'editable' Pygrackle installation
+(i.e., one installed with ``pip install -e .`` as directed
+above). In this case, it will be assumed that the data files can be
+found in a directory called ``input`` in the top level of the source
+repository. However, this will not work with non-editable
+installations. In this case you can use the ``GRACKLE_DATA_DIR``
+environment variable to set the path to the data. This will be picked
+up by the Python code above and the ``grackle_data_dir`` variable will
+contain the proper path.
+
+.. code-block:: shell-session
+
+   export GRACKLE_DATA_DIR=/path/to/data
+
 Cooling Rate Figure Example
 +++++++++++++++++++++++++++
 
@@ -170,11 +218,9 @@ is disabled and the chemistry solver is iterated until the species fractions
 have converged.  The cooling time is then calculated and used to compute the cooling 
 rate.
 
-.. highlight:: none
+.. code-block:: shell-session
 
-::
-
-    python cooling_rate.py
+   ~/grackle/src/python/examples $ python cooling_rate.py
 
 .. image:: _images/cooling_rate.png
    :width: 500
@@ -201,11 +247,9 @@ This sets up a single grid cell with an initial density and temperature and solv
 the chemistry and cooling for a given amount of time.  The resulting dataset gives
 the values of the densities, temperatures, and mean molecular weights for all times.
 
-.. highlight:: none
+.. code-block:: shell-session
 
-::
-
-    python cooling_cell.py
+   ~/grackle/src/python/examples $ python cooling_cell.py
 
 .. image:: _images/cooling_cell.png
    :width: 500
@@ -230,11 +274,9 @@ The density increases with time following a free-fall collapse model.  As the de
 increases, thermal energy is added to model heating via adiabatic compression.
 This can be useful for testing chemistry networks over a large range in density.
 
-.. highlight:: none
+.. code-block:: shell-session
 
-::
-
-    python freefall.py
+   ~/grackle/src/python/examples $ python freefall.py
 
 .. image:: _images/freefall.png
    :width: 500
@@ -259,17 +301,23 @@ Using Grackle with yt
 +++++++++++++++++++++
 
 This example illustrates how Grackle functionality can be called using
-simulation datasets loaded with `yt <https://yt-project.org/>`__ as input.
+simulation datasets loaded with `yt <https://yt-project.org/>`__ as
+input. Note, below we invoke Python with the ``-i`` flag to keep the
+interpreter running. The second block is assumed to happen within the
+same session.
+
+.. code-block:: shell-session
+
+   ~/grackle/src/python/examples $ python -i yt_grackle.py
 
 .. code-block:: python
 
-    python -i yt_grackle.py
-    >>> print (sp['gas', 'grackle_cooling_time'].to('Myr'))
-    [-5.33399975 -5.68132287 -6.04043746 ... -0.44279721 -0.37466095
-     -0.19981158] Myr
-    >>> print (sp['gas', 'grackle_temperature'])
-    [12937.90890302 12953.99126155 13234.96820101 ... 11824.51319307
-     11588.16161462 10173.0168747 ] K
+   >>> print (sp['gas', 'grackle_cooling_time'].to('Myr'))
+   [-5.33399975 -5.68132287 -6.04043746 ... -0.44279721 -0.37466095
+    -0.19981158] Myr
+   >>> print (sp['gas', 'grackle_temperature'])
+   [12937.90890302 12953.99126155 13234.96820101 ... 11824.51319307
+    11588.16161462 10173.0168747 ] K
 
 Through ``pygrackle``, the following ``yt`` fields are defined:
 

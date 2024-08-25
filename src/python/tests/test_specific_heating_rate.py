@@ -66,7 +66,7 @@ def get_heating_rate(fc):
     density_proper = fc["density"] / \
         (fc.chemistry_data.a_units *
          fc.chemistry_data.a_value)**(3*fc.chemistry_data.comoving_coordinates)
-    cooling_rate = fc.chemistry_data.cooling_units * fc["energy"] / \
+    cooling_rate = fc.chemistry_data.cooling_units * fc["internal_energy"] / \
         np.abs(fc["cooling_time"]) / density_proper / \
         fc.chemistry_data.a_units**3
 
@@ -176,7 +176,7 @@ def test_specific_heating_rate_a_units():
           (fc.chemistry_data.length_units / fc.chemistry_data.a_value) / \
           fc.chemistry_data.time_units
         fc.chemistry_data.velocity_units = new_velocity_units
-        fc["energy"] *= (velocity_units / new_velocity_units)**2
+        fc["internal_energy"] *= (velocity_units / new_velocity_units)**2
 
         new_heating_rate = get_heating_rate(fc)
 
