@@ -151,7 +151,6 @@ int initialize_dust_yields(chemistry_data *my_chemistry,
      Nmom =             4;
 
       my_rates->gr_Td = malloc(NTd * Nmom * sizeof(double));
-  
       my_rates->gr_Size = NTd * Nmom;
       my_rates->gr_N[0] = Nmom;
       my_rates->gr_N[1] = NTd;

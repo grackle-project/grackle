@@ -351,6 +351,18 @@ int initialize_rates(chemistry_data *my_chemistry, chemistry_data_storage *my_ra
     double coolingUnits = (pow(my_units->a_units, 5) * pow(lengthBase1, 2) * pow(mh, 2))
                           / (densityBase1 * pow(timeBase1, 3));
 
+    // These always need to be allocated since we define other variables by them.
+    my_rates->LH2_N = calloc(3, sizeof(int));
+    my_rates->LHD_N = calloc(3, sizeof(int));
+    my_rates->LCI_N = calloc(3, sizeof(int));
+    my_rates->LCII_N = calloc(3, sizeof(int));
+    my_rates->LOI_N = calloc(3, sizeof(int));
+    my_rates->LCO_N = calloc(3, sizeof(int));
+    my_rates->LOH_N = calloc(3, sizeof(int));
+    my_rates->LH2O_N = calloc(3, sizeof(int));
+    my_rates->alphap_N = calloc(2, sizeof(int));
+    my_rates->gr_N = calloc(2, sizeof(int));
+
     //* 3) Units for radiative transfer coefficients are 1/[time].
 
     //* Compute rates for primordial chemistry.

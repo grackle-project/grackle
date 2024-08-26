@@ -36,7 +36,11 @@ _element_masses = {
     "He": 4,
     "C": 12,
     "O": 16,
+    "Mg": 24,
+    "Al": 27,
     "Si": 28,
+    "S": 32,
+    "Fe": 56,
     "e": 1,
     "metal": 16,
 }
@@ -461,6 +465,8 @@ class FluidContainer(dict):
             if field in ["density", "dust_density"]:
                 continue
             spec = field[:-8]
+            if spec not in _species_masses:
+                continue
             n += self[field] / _species_masses[spec]
         if (n == 0).any():
             warnings.warn("FluidContainer object has zero densities. "

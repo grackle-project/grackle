@@ -709,6 +709,14 @@ int local_free_chemistry_data(chemistry_data *my_chemistry,
     GRACKLE_FREE(my_rates->alphap_T);
     GRACKLE_FREE(my_rates->alphap_Data);
 
+    GRACKLE_FREE(my_rates->LCI_N);
+    GRACKLE_FREE(my_rates->LCII_N);
+    GRACKLE_FREE(my_rates->LOI_N);
+    GRACKLE_FREE(my_rates->LCO_N);
+    GRACKLE_FREE(my_rates->LOH_N);
+    GRACKLE_FREE(my_rates->LH2O_N);
+    GRACKLE_FREE(my_rates->gr_N);
+
     GRACKLE_FREE(my_rates->k1);
     GRACKLE_FREE(my_rates->k2);
     GRACKLE_FREE(my_rates->k3);

@@ -16,6 +16,7 @@ import sys
 
 from pygrackle.fluid_container import \
     _element_masses, \
+    _metal_yield_densities, \
     FluidContainer
 
 from pygrackle.utilities.atomic import solar_abundance
@@ -128,7 +129,7 @@ def setup_fluid_container(my_chemistry,
     # someday, maybe we'll include D in the total
     D_total = H_total * d2h
 
-    metal_species = ["C", "O", "Si"]
+    metal_species = ["C", "O", "Mg", "Al", "Si", "S", "Fe"]
     metal_totals = {el: metal_mass_fraction * solar_abundance[el]
                     for el in metal_species}
 
@@ -141,28 +142,54 @@ def setup_fluid_container(my_chemistry,
         "dust_density": dust_to_gas_ratio * fc_density
     }
 
+    if my_chemistry.metal_chemistry > 0:
+        if my_chemistry.multi_metals == 0:
+            # put all the metal into the single yield we are following
+            my_metal = _metal_yield_densities[my_chemistry.metal_abundances]
+        elif my_chemistry.multi_metals == 1:
+            # we are following all possible metal yields, but for now
+            # just put everything in the local ISM field.
+            my_metal = _metal_yield_densities[0]
+        else:
+            raise ValueError(f"multi_metals must be either 0 or 1.")
+        state_vals[my_metal] = state_vals["metal_density"]
+
     if state == "neutral":
         state_vals["HI_density"] = H_total * fc_density
         state_vals["HeI_density"] = He_total * fc_density
         state_vals["DI_density"] = D_total * fc_density
         for el in metal_totals:
-            state_vals[f"{el}I_density"] = metal_totals[el]
+            my_ion = f"{el}I_density"
+            if my_ion in fc.density_fields:
+                state_vals[my_ion] = metal_totals[el]
     elif state == "ionized":
         state_vals["HII_density"] = H_total * fc_density
         state_vals["HeIII_density"] = He_total * fc_density
         state_vals["DII_density"] = D_total * fc_density
         # not exactly fully ionized. Are we conserving atomic metals?
         for el in metal_totals:
-            state_vals[f"{el}II_density"] = metal_totals[el]
+            my_ion = f"{el}II_density"
+            # if we are following an ionized version, put the density there
+            if my_ion in fc.density_fields:
+                state_vals[my_ion] = metal_totals[el]
         # ignore HeII since we'll set it to tiny
         state_vals["e_density"] = state_vals["HII_density"] + \
           state_vals["HeIII_density"] / 2
         if my_chemistry.metal_chemistry > 0:
+            # This assumes that the singly ionized state is the highest
+            # ion we are tracking for any metal.
             state_vals["e_density"] += \
               sum([state_vals[f"{el}II_density"] / _element_masses[el]
-                   for el in metal_species])
+                   for el in metal_species
+                   if f"{el}II_density" in fc.density_fields])
     else:
         raise ValueError("State must be either neutral or ionized.")
+
+    # Assign any metals that we are just following as tracers.
+    # For these, we will not follow any ions.
+    for el in metal_totals:
+        if f"{el}I_density" not in fc.density_fields:
+            state_vals[f"{el}_density"] = metal_totals[el]
 
     for field in fc.density_fields:
         fc[field][:] = state_vals.get(field, tiny_density)

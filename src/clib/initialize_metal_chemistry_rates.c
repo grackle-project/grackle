@@ -424,13 +424,6 @@ int local_free_metal_chemistry_rates(chemistry_data *my_chemistry,
   if (my_chemistry->metal_chemistry == 0)
     return SUCCESS;
 
-  GRACKLE_FREE(my_rates->LCI_N);
-  GRACKLE_FREE(my_rates->LCII_N);
-  GRACKLE_FREE(my_rates->LOI_N);
-  GRACKLE_FREE(my_rates->LCO_N);
-  GRACKLE_FREE(my_rates->LOH_N);
-  GRACKLE_FREE(my_rates->LH2O_N);
-
   GRACKLE_FREE(my_rates->LCI_D);
   GRACKLE_FREE(my_rates->LCI_T);
   GRACKLE_FREE(my_rates->LCI_H);
@@ -705,7 +698,6 @@ void initialize_cooling_rate_H2(chemistry_data *my_chemistry, chemistry_data_sto
   int iD, iT, iH, itab;
   double log_coolunit = log10(coolunit);
 
-  my_rates->LH2_N = calloc(3, sizeof(int));
   my_rates->LH2_D = malloc(ND * sizeof(double));
   my_rates->LH2_T = malloc(NT * sizeof(double));
   my_rates->LH2_H = malloc(NH * sizeof(double));
@@ -916,7 +908,6 @@ void initialize_cooling_rate_HD(chemistry_data *my_chemistry, chemistry_data_sto
   int iD, iT, iH, itab;
   double log_coolunit = log10(coolunit);
 
-  my_rates->LHD_N = calloc(3, sizeof(int));
   my_rates->LHD_D = malloc(ND * sizeof(double));
   my_rates->LHD_T = malloc(NT * sizeof(double));
   my_rates->LHD_H = malloc(NH * sizeof(double));
@@ -1160,7 +1151,6 @@ void initialize_cooling_rate_CI(chemistry_data *my_chemistry, chemistry_data_sto
   int iD, iT, iH, itab;
   double log_coolunit = log10(coolunit);
 
-  my_rates->LCI_N = calloc(3, sizeof(int));
   my_rates->LCI_D = malloc(ND * sizeof(double));
   my_rates->LCI_T = malloc(NT * sizeof(double));
   my_rates->LCI_H = malloc(NH * sizeof(double));
@@ -1404,7 +1394,6 @@ void initialize_cooling_rate_CII(chemistry_data *my_chemistry, chemistry_data_st
   int iD, iT, iH, itab;
   double log_coolunit = log10(coolunit);
 
-  my_rates->LCII_N = calloc(3, sizeof(int));
   my_rates->LCII_D = malloc(ND * sizeof(double));
   my_rates->LCII_T = malloc(NT * sizeof(double));
   my_rates->LCII_H = malloc(NH * sizeof(double));
@@ -1648,7 +1637,6 @@ void initialize_cooling_rate_OI(chemistry_data *my_chemistry, chemistry_data_sto
   int iD, iT, iH, itab;
   double log_coolunit = log10(coolunit);
 
-  my_rates->LOI_N = calloc(3, sizeof(int));
   my_rates->LOI_D = malloc(ND * sizeof(double));
   my_rates->LOI_T = malloc(NT * sizeof(double));
   my_rates->LOI_H = malloc(NH * sizeof(double));
@@ -1805,7 +1793,6 @@ void initialize_cooling_rate_CO(chemistry_data *my_chemistry, chemistry_data_sto
   int iD, iT, iH, itab;
   double log_coolunit = log10(coolunit);
 
-  my_rates->LCO_N = calloc(3, sizeof(int));
   my_rates->LCO_D = malloc(ND * sizeof(double));
   my_rates->LCO_T = malloc(NT * sizeof(double));
   my_rates->LCO_H = malloc(NH * sizeof(double));
@@ -1895,7 +1882,6 @@ void initialize_cooling_rate_OH(chemistry_data *my_chemistry, chemistry_data_sto
   int iD, iT, iH, itab;
   double log_coolunit = log10(coolunit);
 
-  my_rates->LOH_N = calloc(3, sizeof(int));
   my_rates->LOH_D = malloc(ND * sizeof(double));
   my_rates->LOH_T = malloc(NT * sizeof(double));
   my_rates->LOH_H = malloc(NH * sizeof(double));
@@ -2051,7 +2037,6 @@ void initialize_cooling_rate_H2O(chemistry_data *my_chemistry, chemistry_data_st
   int iD, iT, iH, itab;
   double log_coolunit = log10(coolunit);
 
-  my_rates->LH2O_N = calloc(3, sizeof(int));
   my_rates->LH2O_D = malloc(ND * sizeof(double));
   my_rates->LH2O_T = malloc(NT * sizeof(double));
   my_rates->LH2O_H = malloc(NH * sizeof(double));
@@ -2116,7 +2101,6 @@ void initialize_primordial_opacity(chemistry_data *my_chemistry, chemistry_data_
   int iD, iT, itab;
   double log_rho;
 
-  my_rates->alphap_N = calloc(2, sizeof(int)); // yes, this should be 2
   my_rates->alphap_D = malloc(ND * sizeof(double));
   my_rates->alphap_T = malloc(NT * sizeof(double));
   my_rates->alphap_Data = malloc(ND * NT * sizeof(double));
