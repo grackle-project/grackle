@@ -493,9 +493,9 @@ int initialize_rates(chemistry_data *my_chemistry, chemistry_data_storage *my_ra
         // Chiaki & Wise 2019 rates
         // Note: these are still defined in initialize_metal_chemistry_rates.c.
         // They should be moved someday.
-        calc_coolrate_H2(my_chemistry, my_rates, coolingUnits);
-        calc_coolrate_HD(my_chemistry, my_rates, coolingUnits);
-        calc_opacity_prim(my_chemistry, my_rates);
+        initialize_cooling_rate_H2(my_chemistry, my_rates, coolingUnits);
+        initialize_cooling_rate_HD(my_chemistry, my_rates, coolingUnits);
+        initialize_primordial_opacity(my_chemistry, my_rates);
 
         //* f) HD cooling.
 

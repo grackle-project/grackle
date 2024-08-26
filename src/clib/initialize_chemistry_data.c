@@ -50,6 +50,7 @@ int initialize_UVbackground_data(chemistry_data *my_chemistry,
 
 int local_free_chemistry_data(chemistry_data *my_chemistry, chemistry_data_storage *my_rates);
 
+int local_free_metal_chemistry_rates(chemistry_data *my_chemistry, chemistry_data_storage *my_rates);
 int local_free_dust_yields(chemistry_data *my_chemistry, chemistry_data_storage *my_rates);
 
 int initialize_rates(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, code_units *my_units,
@@ -465,6 +466,21 @@ int local_free_chemistry_data(chemistry_data *my_chemistry,
     GRACKLE_FREE(my_rates->gas_grain);
     GRACKLE_FREE(my_rates->gas_grain2);
 
+    GRACKLE_FREE(my_rates->LH2_N);
+    GRACKLE_FREE(my_rates->LH2_D);
+    GRACKLE_FREE(my_rates->LH2_T);
+    GRACKLE_FREE(my_rates->LH2_H);
+    GRACKLE_FREE(my_rates->LH2_L);
+    GRACKLE_FREE(my_rates->LHD_N);
+    GRACKLE_FREE(my_rates->LHD_D);
+    GRACKLE_FREE(my_rates->LHD_T);
+    GRACKLE_FREE(my_rates->LHD_H);
+    GRACKLE_FREE(my_rates->LHD_L);
+    GRACKLE_FREE(my_rates->alphap_N);
+    GRACKLE_FREE(my_rates->alphap_D);
+    GRACKLE_FREE(my_rates->alphap_T);
+    GRACKLE_FREE(my_rates->alphap_Data);
+
     GRACKLE_FREE(my_rates->k1);
     GRACKLE_FREE(my_rates->k2);
     GRACKLE_FREE(my_rates->k3);
@@ -507,8 +523,6 @@ int local_free_chemistry_data(chemistry_data *my_chemistry,
     GRACKLE_FREE(my_rates->grain_growth_rate);
   }
 
-
-
   _free_cloudy_data(&my_rates->cloudy_primordial, my_chemistry, /* primordial */ 1);
   _free_cloudy_data(&my_rates->cloudy_metal, my_chemistry, /* primordial */ 0);
 
@@ -533,6 +547,11 @@ int local_free_chemistry_data(chemistry_data *my_chemistry,
     GRACKLE_FREE(my_rates->UVbackground_table.crsHI);
     GRACKLE_FREE(my_rates->UVbackground_table.crsHeII);
     GRACKLE_FREE(my_rates->UVbackground_table.crsHeI);
+  }
+
+  if (local_free_metal_chemistry_rates(my_chemistry, my_rates) == FAIL) {
+    fprintf(stderr, "Error in local_free_metal_chemistry_rates.\n");
+    return FAIL;
   }
 
   if (local_free_dust_yields(my_chemistry, my_rates) == FAIL) {

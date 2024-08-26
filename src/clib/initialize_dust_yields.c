@@ -212,7 +212,8 @@ int initialize_dust_yields(chemistry_data *my_chemistry,
 }
 
 int local_free_dust_yields(chemistry_data *my_chemistry,
-                           chemistry_data_storage *my_rates) {
+                           chemistry_data_storage *my_rates)
+{
 
   if (my_chemistry->metal_chemistry == 0)
     return SUCCESS;
