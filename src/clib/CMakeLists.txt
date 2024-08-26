@@ -228,6 +228,7 @@ target_include_directories(Grackle_Grackle
 target_link_libraries(Grackle_Grackle
   PRIVATE toolchain::m
           GRACKLE_HDF5_C
+          picohash
           $<$<BOOL:${GRACKLE_USE_OPENMP}>:OpenMP::OpenMP_Fortran>
           $<$<BOOL:${GRACKLE_USE_OPENMP}>:OpenMP::OpenMP_C>
 )
