@@ -100,15 +100,15 @@ void initialize_empty_chemistry_data_storage_struct(chemistry_data_storage *my_r
   my_rates->k23 = NULL;
   my_rates->k13dd = NULL;
 
-  my_rates->k24 = 0;
-  my_rates->k25 = 0;
-  my_rates->k26 = 0;
+  my_rates->k24 = 0.;
+  my_rates->k25 = 0.;
+  my_rates->k26 = 0.;
 
-  my_rates->k27 = 0;
-  my_rates->k28 = 0;
-  my_rates->k29 = 0;
-  my_rates->k30 = 0;
-  my_rates->k31 = 0;
+  my_rates->k27 = 0.;
+  my_rates->k28 = 0.;
+  my_rates->k29 = 0.;
+  my_rates->k30 = 0.;
+  my_rates->k31 = 0.;
 
   my_rates->k50 = NULL;
   my_rates->k51 = NULL;
@@ -201,17 +201,17 @@ void initialize_empty_chemistry_data_storage_struct(chemistry_data_storage *my_r
   my_rates->reHeII2 = NULL;
   my_rates->reHeIII = NULL;
   my_rates->brem = NULL;
-  my_rates->comp = 0;
-  my_rates->comp_xray = 0;
-  my_rates->temp_xray = 0;
+  my_rates->comp = 0.;
+  my_rates->comp_xray = 0.;
+  my_rates->temp_xray = 0.;
 
-  my_rates->piHI = 0;
-  my_rates->piHeI = 0;
-  my_rates->piHeII = 0;
+  my_rates->piHI = 0.;
+  my_rates->piHeI = 0.;
+  my_rates->piHeII = 0.;
 
-  my_rates->crsHI = 0;
-  my_rates->crsHeI = 0;
-  my_rates->crsHeII = 0;
+  my_rates->crsHI = 0.;
+  my_rates->crsHeI = 0.;
+  my_rates->crsHeII = 0.;
 
   my_rates->hyd01k = NULL;
   my_rates->h2k01 = NULL;
@@ -234,12 +234,12 @@ void initialize_empty_chemistry_data_storage_struct(chemistry_data_storage *my_r
 
   my_rates->cieco = NULL;
 
-  my_rates->gammah = 0;
+  my_rates->gammah = 0.;
 
   my_rates->regr = NULL;
 
-  my_rates->gamma_isrf = 0;
-  my_rates->gamma_isrf2 = 0;
+  my_rates->gamma_isrf = 0.;
+  my_rates->gamma_isrf2 = 0.;
 
   my_rates->gas_grain = NULL;
   my_rates->gas_grain2 = NULL;
@@ -326,8 +326,8 @@ void initialize_empty_chemistry_data_storage_struct(chemistry_data_storage *my_r
   my_rates->alphap_D = NULL;
   my_rates->alphap_T = NULL;
   my_rates->alphap_dD = 0.;
-  my_rates->alphap_dT;
-  my_rates->alphap_Data;
+  my_rates->alphap_dT = 0.;
+  my_rates->alphap_Data = NULL;
 
   my_rates->gr_N = NULL;
   my_rates->gr_Size = 0;
