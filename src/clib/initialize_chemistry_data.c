@@ -73,12 +73,14 @@ static void show_version(FILE *fp)
  */
 void initialize_empty_chemistry_data_storage_struct(chemistry_data_storage *my_rates)
 {
+
   my_rates->k1 = NULL;
   my_rates->k2 = NULL;
   my_rates->k3 = NULL;
   my_rates->k4 = NULL;
   my_rates->k5 = NULL;
   my_rates->k6 = NULL;
+
   my_rates->k7 = NULL;
   my_rates->k8 = NULL;
   my_rates->k9 = NULL;
@@ -97,14 +99,17 @@ void initialize_empty_chemistry_data_storage_struct(chemistry_data_storage *my_r
   my_rates->k22 = NULL;
   my_rates->k23 = NULL;
   my_rates->k13dd = NULL;
-  my_rates->k24 = 0.;
-  my_rates->k25 = 0.;
-  my_rates->k26 = 0.;
-  my_rates->k27 = 0.;
-  my_rates->k28 = 0.;
-  my_rates->k29 = 0.;
-  my_rates->k30 = 0.;
-  my_rates->k31 = 0.;
+
+  my_rates->k24 = 0;
+  my_rates->k25 = 0;
+  my_rates->k26 = 0;
+
+  my_rates->k27 = 0;
+  my_rates->k28 = 0;
+  my_rates->k29 = 0;
+  my_rates->k30 = 0;
+  my_rates->k31 = 0;
+
   my_rates->k50 = NULL;
   my_rates->k51 = NULL;
   my_rates->k52 = NULL;
@@ -112,12 +117,78 @@ void initialize_empty_chemistry_data_storage_struct(chemistry_data_storage *my_r
   my_rates->k54 = NULL;
   my_rates->k55 = NULL;
   my_rates->k56 = NULL;
+
   my_rates->k57 = NULL;
   my_rates->k58 = NULL;
+
+  my_rates->k125 = NULL;
+  my_rates->k129 = NULL;
+  my_rates->k130 = NULL;
+  my_rates->k131 = NULL;
+  my_rates->k132 = NULL;
+  my_rates->k133 = NULL;
+  my_rates->k134 = NULL;
+  my_rates->k135 = NULL;
+  my_rates->k136 = NULL;
+  my_rates->k137 = NULL;
+  my_rates->k148 = NULL;
+  my_rates->k149 = NULL;
+  my_rates->k150 = NULL;
+  my_rates->k151 = NULL;
+  my_rates->k152 = NULL;
+  my_rates->k153 = NULL;
+
+  my_rates->kz15 = NULL;
+  my_rates->kz16 = NULL;
+  my_rates->kz17 = NULL;
+  my_rates->kz18 = NULL;
+  my_rates->kz19 = NULL;
+  my_rates->kz20 = NULL;
+  my_rates->kz21 = NULL;
+  my_rates->kz22 = NULL;
+  my_rates->kz23 = NULL;
+  my_rates->kz24 = NULL;
+  my_rates->kz25 = NULL;
+  my_rates->kz26 = NULL;
+  my_rates->kz27 = NULL;
+  my_rates->kz28 = NULL;
+  my_rates->kz29 = NULL;
+  my_rates->kz30 = NULL;
+  my_rates->kz31 = NULL;
+  my_rates->kz32 = NULL;
+  my_rates->kz33 = NULL;
+  my_rates->kz34 = NULL;
+  my_rates->kz35 = NULL;
+  my_rates->kz36 = NULL;
+  my_rates->kz37 = NULL;
+  my_rates->kz38 = NULL;
+  my_rates->kz39 = NULL;
+  my_rates->kz40 = NULL;
+  my_rates->kz41 = NULL;
+  my_rates->kz42 = NULL;
+  my_rates->kz43 = NULL;
+  my_rates->kz44 = NULL;
+  my_rates->kz45 = NULL;
+  my_rates->kz46 = NULL;
+  my_rates->kz47 = NULL;
+  my_rates->kz48 = NULL;
+  my_rates->kz49 = NULL;
+  my_rates->kz50 = NULL;
+  my_rates->kz51 = NULL;
+  my_rates->kz52 = NULL;
+  my_rates->kz53 = NULL;
+  my_rates->kz54 = NULL;
+
   my_rates->h2dust = NULL;
+  my_rates->h2dustS = NULL;
+  my_rates->h2dustC = NULL;
+
+  my_rates->grain_growth_rate = NULL;
+
   my_rates->n_cr_n = NULL;
   my_rates->n_cr_d1 = NULL;
   my_rates->n_cr_d2 = NULL;
+
   my_rates->ceHI = NULL;
   my_rates->ceHeI = NULL;
   my_rates->ceHeII = NULL;
@@ -130,15 +201,18 @@ void initialize_empty_chemistry_data_storage_struct(chemistry_data_storage *my_r
   my_rates->reHeII2 = NULL;
   my_rates->reHeIII = NULL;
   my_rates->brem = NULL;
-  my_rates->comp = 0.;
-  my_rates->comp_xray = 0.;
-  my_rates->temp_xray = 0.;
-  my_rates->piHI = 0.;
-  my_rates->piHeI = 0.;
-  my_rates->piHeII = 0.;
-  my_rates->crsHI = 0.;
-  my_rates->crsHeI = 0.;
-  my_rates->crsHeII = 0.;
+  my_rates->comp = 0;
+  my_rates->comp_xray = 0;
+  my_rates->temp_xray = 0;
+
+  my_rates->piHI = 0;
+  my_rates->piHeI = 0;
+  my_rates->piHeII = 0;
+
+  my_rates->crsHI = 0;
+  my_rates->crsHeI = 0;
+  my_rates->crsHeII = 0;
+
   my_rates->hyd01k = NULL;
   my_rates->h2k01 = NULL;
   my_rates->vibh = NULL;
@@ -146,20 +220,174 @@ void initialize_empty_chemistry_data_storage_struct(chemistry_data_storage *my_r
   my_rates->rotl = NULL;
   my_rates->GP99LowDensityLimit = NULL;
   my_rates->GP99HighDensityLimit = NULL;
+
   my_rates->GAHI = NULL;
   my_rates->GAH2 = NULL;
   my_rates->GAHe = NULL;
   my_rates->GAHp = NULL;
   my_rates->GAel = NULL;
+
   my_rates->H2LTE = NULL;
+
   my_rates->HDlte = NULL;
   my_rates->HDlow = NULL;
+
   my_rates->cieco = NULL;
-  my_rates->gammah = 0.;
+
+  my_rates->gammah = 0;
+
   my_rates->regr = NULL;
-  my_rates->gamma_isrf = 0.;
+
+  my_rates->gamma_isrf = 0;
+  my_rates->gamma_isrf2 = 0;
+
   my_rates->gas_grain = NULL;
   my_rates->gas_grain2 = NULL;
+
+  my_rates->cieY06 = NULL;
+
+  my_rates->LH2_N = NULL;
+  my_rates->LH2_Size = 0;
+  my_rates->LH2_D = NULL;
+  my_rates->LH2_T = NULL;
+  my_rates->LH2_H = NULL;
+  my_rates->LH2_dD = 0.;
+  my_rates->LH2_dT = 0.;
+  my_rates->LH2_dH = 0.;
+  my_rates->LH2_L = NULL;
+  my_rates->LHD_N = NULL;
+  my_rates->LHD_Size = 0;
+  my_rates->LHD_D = NULL;
+  my_rates->LHD_T = NULL;
+  my_rates->LHD_H = NULL;
+  my_rates->LHD_dD = 0.;
+  my_rates->LHD_dT = 0.;
+  my_rates->LHD_dH = 0.;
+  my_rates->LHD_L = NULL;
+
+  my_rates->LCI_N = NULL;
+  my_rates->LCI_Size = 0;
+  my_rates->LCI_D = NULL;
+  my_rates->LCI_T = NULL;
+  my_rates->LCI_H = NULL;
+  my_rates->LCI_dD = 0.;
+  my_rates->LCI_dT = 0.;
+  my_rates->LCI_dH = 0.;
+  my_rates->LCI_L = NULL;
+  my_rates->LCII_N = NULL;
+  my_rates->LCII_Size = 0;
+  my_rates->LCII_D = NULL;
+  my_rates->LCII_T = NULL;
+  my_rates->LCII_H = NULL;
+  my_rates->LCII_dD = 0.;
+  my_rates->LCII_dT = 0.;
+  my_rates->LCII_dH = 0.;
+  my_rates->LCII_L = NULL;
+  my_rates->LOI_N = NULL;
+  my_rates->LOI_Size = 0;
+  my_rates->LOI_D = NULL;
+  my_rates->LOI_T = NULL;
+  my_rates->LOI_H = NULL;
+  my_rates->LOI_dD = 0.;
+  my_rates->LOI_dT = 0.;
+  my_rates->LOI_dH = 0.;
+  my_rates->LOI_L = NULL;
+
+  my_rates->LCO_N = NULL;
+  my_rates->LCO_Size = 0;
+  my_rates->LCO_D = NULL;
+  my_rates->LCO_T = NULL;
+  my_rates->LCO_H = NULL;
+  my_rates->LCO_dD = 0.;
+  my_rates->LCO_dT = 0.;
+  my_rates->LCO_dH = 0.;
+  my_rates->LCO_L = NULL;
+  my_rates->LOH_N = NULL;
+  my_rates->LOH_Size = 0;
+  my_rates->LOH_D = NULL;
+  my_rates->LOH_T = NULL;
+  my_rates->LOH_H = NULL;
+  my_rates->LOH_dD = 0.;
+  my_rates->LOH_dT = 0.;
+  my_rates->LOH_dH = 0.;
+  my_rates->LOH_L = NULL;
+  my_rates->LH2O_N = NULL;
+  my_rates->LH2O_Size = 0;
+  my_rates->LH2O_D = NULL;
+  my_rates->LH2O_T = NULL;
+  my_rates->LH2O_H = NULL;
+  my_rates->LH2O_dD = 0.;
+  my_rates->LH2O_dT = 0.;
+  my_rates->LH2O_dH = 0.;
+  my_rates->LH2O_L = NULL;
+
+  my_rates->alphap_N = NULL;
+  my_rates->alphap_Size = 0;
+  my_rates->alphap_D = NULL;
+  my_rates->alphap_T = NULL;
+  my_rates->alphap_dD = 0.;
+  my_rates->alphap_dT;
+  my_rates->alphap_Data;
+
+  my_rates->gr_N = NULL;
+  my_rates->gr_Size = 0;
+  my_rates->gr_dT = 0.;
+  my_rates->gr_Td = NULL;
+  my_rates->SN0_N = 0;
+  my_rates->SN0_XC = NULL;
+  my_rates->SN0_XO = NULL;
+  my_rates->SN0_XMg = NULL;
+  my_rates->SN0_XAl = NULL;
+  my_rates->SN0_XSi = NULL;
+  my_rates->SN0_XS = NULL;
+  my_rates->SN0_XFe = NULL;
+  my_rates->SN0_fC = NULL;
+  my_rates->SN0_fO = NULL;
+  my_rates->SN0_fMg = NULL;
+  my_rates->SN0_fAl = NULL;
+  my_rates->SN0_fSi = NULL;
+  my_rates->SN0_fS = NULL;
+  my_rates->SN0_fFe = NULL;
+  my_rates->SN0_fSiM = NULL;
+  my_rates->SN0_fFeM = NULL;
+  my_rates->SN0_fMg2SiO4 = NULL;
+  my_rates->SN0_fMgSiO3 = NULL;
+  my_rates->SN0_fFe3O4 = NULL;
+  my_rates->SN0_fAC = NULL;
+  my_rates->SN0_fSiO2D = NULL;
+  my_rates->SN0_fMgO = NULL;
+  my_rates->SN0_fFeS = NULL;
+  my_rates->SN0_fAl2O3 = NULL;
+  my_rates->SN0_freforg = NULL;
+  my_rates->SN0_fvolorg = NULL;
+  my_rates->SN0_fH2Oice = NULL;
+  my_rates->SN0_r0SiM = NULL;
+  my_rates->SN0_r0FeM = NULL;
+  my_rates->SN0_r0Mg2SiO4 = NULL;
+  my_rates->SN0_r0MgSiO3 = NULL;
+  my_rates->SN0_r0Fe3O4 = NULL;
+  my_rates->SN0_r0AC = NULL;
+  my_rates->SN0_r0SiO2D = NULL;
+  my_rates->SN0_r0MgO = NULL;
+  my_rates->SN0_r0FeS = NULL;
+  my_rates->SN0_r0Al2O3 = NULL;
+  my_rates->SN0_r0reforg = NULL;
+  my_rates->SN0_r0volorg = NULL;
+  my_rates->SN0_r0H2Oice = NULL;
+  my_rates->SN0_kpSiM = NULL;
+  my_rates->SN0_kpFeM = NULL;
+  my_rates->SN0_kpMg2SiO4 = NULL;
+  my_rates->SN0_kpMgSiO3 = NULL;
+  my_rates->SN0_kpFe3O4 = NULL;
+  my_rates->SN0_kpAC = NULL;
+  my_rates->SN0_kpSiO2D = NULL;
+  my_rates->SN0_kpMgO = NULL;
+  my_rates->SN0_kpFeS = NULL;
+  my_rates->SN0_kpAl2O3 = NULL;
+  my_rates->SN0_kpreforg = NULL;
+  my_rates->SN0_kpvolorg = NULL;
+  my_rates->SN0_kpH2Oice = NULL;
+
   my_rates->cloudy_data_new = -1;
 }
 
