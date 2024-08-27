@@ -151,7 +151,7 @@ def setup_fluid_container(my_chemistry,
             # just put everything in the local ISM field.
             my_metal = _metal_yield_densities[0]
         else:
-            raise ValueError(f"multi_metals must be either 0 or 1.")
+            raise ValueError("multi_metals must be either 0 or 1.")
         state_vals[my_metal] = state_vals["metal_density"]
 
     if state == "neutral":
