@@ -6,10 +6,10 @@
 //    -> ``<outpath>`` with a path to the output file
 //    -> ``<dir>`` with a path to the directory containing all files that are
 //       to be included in the registry
-{"CloudyData_UVB=FG2011.h5", "5b3423fb5cb96d6f8fae65655e204f1f82a276fa"},
-{"CloudyData_UVB=FG2011_shielded.h5", "60d13b4632f074fcb295f7adea85843046c0d4ef"},
-{"CloudyData_UVB=HM2012.h5", "3ae95f71926aa9543964fbd41c5e53a42345c19c"},
-{"CloudyData_UVB=HM2012_high_density.h5", "6db93abf8cb818975e8d751776328c5dab44d4ee"},
-{"CloudyData_UVB=HM2012_shielded.h5", "16cab5b5bd0bf5ef87db717dd5e8901be11812c2"},
-{"CloudyData_noUVB.h5", "55fed7c4bfd10e35d60660ca1adc5ceb411befb2"},
-{"cloudy_metals_2008_3D.h5", "ade563216d1102e8befab822cbb60c418b130aa1"}
+{"CloudyData_UVB=FG2011.h5", "sha1:5b3423fb5cb96d6f8fae65655e204f1f82a276fa"},
+{"CloudyData_UVB=FG2011_shielded.h5", "sha1:60d13b4632f074fcb295f7adea85843046c0d4ef"},
+{"CloudyData_UVB=HM2012.h5", "sha1:3ae95f71926aa9543964fbd41c5e53a42345c19c"},
+{"CloudyData_UVB=HM2012_high_density.h5", "sha1:6db93abf8cb818975e8d751776328c5dab44d4ee"},
+{"CloudyData_UVB=HM2012_shielded.h5", "sha1:16cab5b5bd0bf5ef87db717dd5e8901be11812c2"},
+{"CloudyData_noUVB.h5", "sha1:55fed7c4bfd10e35d60660ca1adc5ceb411befb2"},
+{"cloudy_metals_2008_3D.h5", "sha1:ade563216d1102e8befab822cbb60c418b130aa1"}

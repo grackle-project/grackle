@@ -11,13 +11,20 @@
 # software.
 ########################################################################
 
-from functools import partial
+import io
 import os
 import sys
 
 from pygrackle.grackle_wrapper import get_grackle_version
-from pygrackle.utilities.grdata import make_config_objects, get_version_dir
+from pygrackle.utilities.grdata import (
+    make_config_objects,
+    VersionDataManager,
+    _parse_file_registry,
+)
 from pygrackle.utilities.misc import dirname
+
+# maybe it would be better to export nothing?
+__all__ = ["grackle_data_dir"]
 
 
 # when we shift to scikit-build-core we can do something more robust here
@@ -55,4 +62,13 @@ _CONFIG_PAIR = make_config_objects(
     file_registry_file=_get_file_registry_contents(is_editable_install),
 )
 
-grackle_data_dir = get_version_dir(*_CONFIG_PAIR)
+_MANAGER = VersionDataManager.create(*_CONFIG_PAIR)
+
+
+def _download_all_datafiles():
+    """Download all datafiles if it hasn't been downloaded already."""
+    registry = _parse_file_registry(_CONFIG_PAIR[1].file_registry_file)
+    return _MANAGER.fetch_all(registry)
+
+
+grackle_data_dir = _MANAGER.version_dir
