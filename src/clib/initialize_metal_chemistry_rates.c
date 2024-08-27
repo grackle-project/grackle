@@ -19,7 +19,9 @@ int initialize_metal_chemistry_rates(chemistry_data *my_chemistry,
                                      code_units *my_units)
 {
 
-  if (my_chemistry->metal_chemistry == 0)
+  /* TO-DO: k125 - k153 are primordial_chemistry=4.
+     These should be moved to initialize_rates.c so this is only metal species. */
+  if (my_chemistry->primordial_chemistry == 0)
     return SUCCESS;
 
 //-------125:   HDII +  HI   ->  HII  +  HDI
@@ -421,7 +423,9 @@ int local_free_metal_chemistry_rates(chemistry_data *my_chemistry,
                                      chemistry_data_storage *my_rates)
 {
 
-  if (my_chemistry->metal_chemistry == 0)
+  /* TO-DO: k125 - k153 are primordial_chemistry=4.
+     These should be moved to initialize_rates.c so this is only metal species. */
+  if (my_chemistry->primordial_chemistry == 0)
     return SUCCESS;
 
   GRACKLE_FREE(my_rates->LCI_D);
