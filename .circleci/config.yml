@@ -61,7 +61,7 @@ commands:
         default: $CIRCLE_BRANCH
     steps:
       - run:
-          name: "Install grackle (classic_build: << parameters.classic_build >>, omp: << parameters.omp >>, tag: <<parameters.tag >> )"
+          name: "Install grackle (classic_build: << parameters.classic_build >>, omp: << parameters.omp >>, tag: << parameters.tag >> )"
           command: |
             source $HOME/venv/bin/activate
             git checkout << parameters.tag >>
@@ -98,8 +98,15 @@ commands:
               fi
               make
               make install
-              cd ../../
-              PYGRACKLE_LEGACY_LINK=classic pip install -v -e .[dev]
+              cd ../../ # go back to the root level
+
+              if [ << parameters.tag >> == 'gold-standard-v1' ]; then
+                # this is the old way to perform the python install
+                cd src/python
+                pip install -e .[dev]
+              else
+                PYGRACKLE_LEGACY_LINK=classic pip install -v -e .[dev]
+              fi
             else # this branch builds grackle with cmake
 
               cmake -DGRACKLE_USE_DOUBLE=ON                   \
@@ -108,10 +115,20 @@ commands:
                     -DCMAKE_INSTALL_PREFIX=$HOME/local        \
                     -Bbuild
               cmake --build build
-              # we don't need a full installation
-              #cmake --install build
- 
-              Grackle_DIR=${PWD}/build pip install -v -e .[dev]
+              
+              if [ << parameters.tag >> == 'gold-standard-v1' ]; then
+                # this is the old way to perform the python install
+
+                # we DO need a full installation of the c-library
+                cmake --install build 
+
+                cd src/python
+                PYGRACKLE_CMAKE_BUILD_DIR=../../build pip install -e .[dev]
+              else
+                # we DO NOT need a full installation of the c-library
+                #cmake --install build 
+                Grackle_DIR=${PWD}/build pip install -v -e .[dev]
+              fi
             fi
 
   install-standalone-pygrackle:
