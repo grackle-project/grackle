@@ -53,20 +53,41 @@ typedef struct
   gr_float grid_dx;
 
   gr_float *density;
+  gr_float *internal_energy;
+  gr_float *x_velocity;
+  gr_float *y_velocity;
+  gr_float *z_velocity;
+
+  // metal_cooling = 1
+  gr_float *metal_density;
+
+  // use_dust_density_field = 1
+  gr_float *dust_density;
+
+  // primordial_chemistry = 1
+  gr_float *e_density;
   gr_float *HI_density;
   gr_float *HII_density;
-  gr_float *HM_density;
   gr_float *HeI_density;
   gr_float *HeII_density;
   gr_float *HeIII_density;
+
+  // primordial_chemistry = 2
+  gr_float *HM_density;
   gr_float *H2I_density;
   gr_float *H2II_density;
+
+  // primordial_chemistry = 3
   gr_float *DI_density;
   gr_float *DII_density;
   gr_float *HDI_density;
+
+  // primordial_chemistry = 4
   gr_float *DM_density;
   gr_float *HDII_density;
   gr_float *HeHII_density;
+
+  // metal_chemistry = 1
   gr_float *CI_density;
   gr_float *CII_density;
   gr_float *CO_density;
@@ -86,12 +107,20 @@ typedef struct
   gr_float *H2OII_density;
   gr_float *H3OII_density;
   gr_float *O2II_density;
+
+  // dust_species = 1
   gr_float *Mg_density;
+
+  // dust_species = 2
   gr_float *Al_density;
   gr_float *S_density;
   gr_float *Fe_density;
+
+  // dust_species = 1
   gr_float *MgSiO3_dust_density; // enstatite
   gr_float *AC_dust_density; // amorphous carbon
+
+  // dust_species = 2
   gr_float *SiM_dust_density; // metallic silicon
   gr_float *FeM_dust_density; // metallic iron
   gr_float *Mg2SiO4_dust_density; // forsterite
@@ -100,12 +129,15 @@ typedef struct
   gr_float *MgO_dust_density; // magnesia
   gr_float *FeS_dust_density; // troilite
   gr_float *Al2O3_dust_density; // alumina
+
+  // dust_species = 3
   gr_float *ref_org_dust_density; // refractory organics
   gr_float *vol_org_dust_density; // volatile organics
   gr_float *H2O_ice_dust_density; // water ice
-  gr_float *e_density;
-  gr_float *metal_density;
-  gr_float *dust_density;
+
+  // metal_chemistry = 1
+  // multi_metals = 0, metal_abundances = 0-11 selects one of below
+  // multi_metals = 1, all of below
   gr_float *local_ISM_metal_density;
   gr_float *ccsn13_metal_density;
   gr_float *ccsn20_metal_density;
@@ -119,35 +151,41 @@ typedef struct
   gr_float *pisn200_metal_density;
   gr_float *y19_metal_density;
 
-  gr_float *internal_energy;
-  gr_float *x_velocity;
-  gr_float *y_velocity;
-  gr_float *z_velocity;
-
+  // use_volumetric_heating_rate = 1
   gr_float *volumetric_heating_rate;
+  // use_specific_heating_rate = 1
   gr_float *specific_heating_rate;
-
+  // use_temperature_floor = 1
   gr_float *temperature_floor;
 
+  // use_radiative_transfer = 1
+  // primordial_chemistry = 1
   gr_float *RT_heating_rate;
   gr_float *RT_HI_ionization_rate;
   gr_float *RT_HeI_ionization_rate;
   gr_float *RT_HeII_ionization_rate;
+  // primordial_chemistry = 2
   gr_float *RT_H2_dissociation_rate;
 
+  // radiative_transfer_HDI_dissociation = 1
   gr_float *RT_HDI_dissociation_rate;
+  // radiative_transfer_metal_ionization = 1
   gr_float *RT_CI_ionization_rate;
   gr_float *RT_OI_ionization_rate;
+  // radiative_transfer_metal_dissociation = 1
   gr_float *RT_CO_dissociation_rate;
   gr_float *RT_OH_dissociation_rate;
   gr_float *RT_H2O_dissociation_rate;
 
+  // H2_self_shielding = 2
   gr_float *H2_self_shielding_length;
+  // H2_custom_shielding = 1
   gr_float *H2_custom_shielding_factor;
 
+  // use_isrf_field = 1
   gr_float *isrf_habing;
 
-  // pointers for dust temperature fields
+  // use_multiple_dust_temperatures = 1
   gr_float *SiM_temperature;
   gr_float *FeM_temperature;
   gr_float *Mg2SiO4_temperature;

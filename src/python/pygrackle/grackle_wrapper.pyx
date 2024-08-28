@@ -717,20 +717,34 @@ cdef c_field_data setup_field_data(object fc, int[::1] buf,
     my_fields.grid_dx = -1
 
     my_fields.density = get_field(fc, "density")
+    my_fields.internal_energy = get_field(fc, "internal_energy")
+    if include_velocity:
+        my_fields.x_velocity = get_field(fc, "x_velocity")
+        my_fields.y_velocity = get_field(fc, "y_velocity")
+        my_fields.z_velocity = get_field(fc, "z_velocity")
+
+    my_fields.metal_density = get_field(fc, "metal_density")
+    my_fields.dust_density = get_field(fc, "dust_density")
+
+    my_fields.e_density = get_field(fc, "e_density")
     my_fields.HI_density = get_field(fc, "HI_density")
     my_fields.HII_density = get_field(fc, "HII_density")
-    my_fields.HM_density = get_field(fc, "HM_density")
     my_fields.HeI_density = get_field(fc, "HeI_density")
     my_fields.HeII_density = get_field(fc, "HeII_density")
     my_fields.HeIII_density = get_field(fc, "HeIII_density")
+
+    my_fields.HM_density = get_field(fc, "HM_density")
     my_fields.H2I_density = get_field(fc, "H2I_density")
     my_fields.H2II_density = get_field(fc, "H2II_density")
+
     my_fields.DI_density = get_field(fc, "DI_density")
     my_fields.DII_density = get_field(fc, "DII_density")
     my_fields.HDI_density = get_field(fc, "HDI_density")
+
     my_fields.DM_density = get_field(fc, "DM_density")
     my_fields.HDII_density = get_field(fc, "HDII_density")
     my_fields.HeHII_density = get_field(fc, "HeHII_density")
+
     my_fields.CI_density = get_field(fc, "CI_density")
     my_fields.CII_density = get_field(fc, "CII_density")
     my_fields.CO_density = get_field(fc, "CO_density")
@@ -750,12 +764,16 @@ cdef c_field_data setup_field_data(object fc, int[::1] buf,
     my_fields.H2OII_density = get_field(fc, "H2OII_density")
     my_fields.H3OII_density = get_field(fc, "H3OII_density")
     my_fields.O2II_density = get_field(fc, "O2II_density")
+
     my_fields.Mg_density = get_field(fc, "Mg_density")
+
     my_fields.Al_density = get_field(fc, "Al_density")
     my_fields.S_density = get_field(fc, "S_density")
     my_fields.Fe_density = get_field(fc, "Fe_density")
+
     my_fields.MgSiO3_dust_density = get_field(fc, "MgSiO3_dust_density")
     my_fields.AC_dust_density = get_field(fc, "AC_dust_density")
+
     my_fields.SiM_dust_density = get_field(fc, "SiM_dust_density")
     my_fields.FeM_dust_density = get_field(fc, "FeM_dust_density")
     my_fields.Mg2SiO4_dust_density = get_field(fc, "Mg2SiO4_dust_density")
@@ -764,12 +782,11 @@ cdef c_field_data setup_field_data(object fc, int[::1] buf,
     my_fields.MgO_dust_density = get_field(fc, "MgO_dust_density")
     my_fields.FeS_dust_density = get_field(fc, "FeS_dust_density")
     my_fields.Al2O3_dust_density = get_field(fc, "Al2O3_dust_density")
+
     my_fields.ref_org_dust_density = get_field(fc, "ref_org_dust_density")
     my_fields.vol_org_dust_density = get_field(fc, "vol_org_dust_density")
     my_fields.H2O_ice_dust_density = get_field(fc, "H2O_ice_dust_density")
-    my_fields.e_density = get_field(fc, "e_density")
-    my_fields.metal_density = get_field(fc, "metal_density")
-    my_fields.dust_density = get_field(fc, "dust_density")
+
     my_fields.local_ISM_metal_density = get_field(fc, "local_ISM_metal_density")
     my_fields.ccsn13_metal_density = get_field(fc, "ccsn13_metal_density")
     my_fields.ccsn20_metal_density = get_field(fc, "ccsn20_metal_density")
@@ -782,25 +799,26 @@ cdef c_field_data setup_field_data(object fc, int[::1] buf,
     my_fields.pisn170_metal_density = get_field(fc, "pisn170_metal_density")
     my_fields.pisn200_metal_density = get_field(fc, "pisn200_metal_density")
     my_fields.y19_metal_density = get_field(fc, "y19_metal_density")
-    my_fields.internal_energy = get_field(fc, "internal_energy")
-    if include_velocity:
-        my_fields.x_velocity = get_field(fc, "x_velocity")
-        my_fields.y_velocity = get_field(fc, "y_velocity")
-        my_fields.z_velocity = get_field(fc, "z_velocity")
+
     my_fields.volumetric_heating_rate = get_field(fc, "volumetric_heating_rate")
     my_fields.specific_heating_rate = get_field(fc, "specific_heating_rate")
     my_fields.temperature_floor = get_field(fc, "temperature_floor")
+
     my_fields.RT_heating_rate = get_field(fc, "RT_heating_rate")
     my_fields.RT_HI_ionization_rate = get_field(fc, "RT_HI_ionization_rate")
     my_fields.RT_HeI_ionization_rate = get_field(fc, "RT_HeI_ionization_rate")
     my_fields.RT_HeII_ionization_rate = get_field(fc, "RT_HeII_ionization_rate")
     my_fields.RT_H2_dissociation_rate = get_field(fc, "RT_H2_dissociation_rate")
+
     my_fields.RT_HDI_dissociation_rate = get_field(fc, "RT_HDI_dissociation_rate")
+
     my_fields.RT_CI_ionization_rate = get_field(fc, "RT_CI_ionization_rate")
     my_fields.RT_OI_ionization_rate = get_field(fc, "RT_OI_ionization_rate")
+
     my_fields.RT_CO_dissociation_rate = get_field(fc, "RT_CO_dissociation_rate")
     my_fields.RT_OH_dissociation_rate = get_field(fc, "RT_OH_dissociation_rate")
     my_fields.RT_H2O_dissociation_rate = get_field(fc, "RT_H2O_dissociation_rate")
+
     my_fields.H2_self_shielding_length = get_field(fc, "H2_self_shielding_length")
     my_fields.H2_custom_shielding_factor = get_field(fc, "H2_custom_shielding_factor")
     my_fields.isrf_habing = get_field(fc, "isrf_habing")
