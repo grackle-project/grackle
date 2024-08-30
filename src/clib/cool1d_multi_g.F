@@ -45,7 +45,7 @@
      &                iTfloor, Tfloor_scalar, Tfloor,
      &                iisrffield, isrf_habing,
      &                itmask
-     &              , imchem, igrgr
+     &              , imchem, igrgr, ipcont
      &              , DM, HDII, HeHII
      &              , CI, CII, CO, CO2
      &              , OI, OH, H2O, O2
@@ -140,7 +140,7 @@
      &        imetal, igammah, ih2optical, iciecool, clnew,
      &        iVheat, iMheat, iTfloor, iradtrans, iradshield,
      &        iisrffield
-     &       ,imchem, igrgr
+     &       ,imchem, igrgr, ipcont
 
       real*8  aye, temstart, temend, z_solar, fgr,
      &        utem, uxyz, uaye, urho, utim,
@@ -1435,10 +1435,12 @@ c  new (correct) way: (april 4, 2007)
 
 !     Compute continuum opacity
 
+      if ( ipcont .eq. 1 ) then
+
       do i = is+1, ie+1
          if ( itmask(i) ) then
 
-            !! primordial continuum opscity !!
+            !! primordial continuum opacity !!
             call interpolate_2D_g(
      &        logrho(i), logT(i), int8(alphap_N), alphap_D, alphap_dD, 
      &        alphap_T, alphap_dT, int8(alphap_Size), 
@@ -1446,6 +1448,15 @@ c  new (correct) way: (april 4, 2007)
               alpha(i) = 1.d1**log_a
          endif
       enddo
+
+      else
+         do i = is+1, ie+1
+            if ( itmask(i) ) then
+               alpha(i) = 0.
+         endif
+      enddo
+
+      endif
 
       ! Add dust opacity.
       ! if (idspecies .eq. 0), dust opacity is overestimated at Td > 50 K

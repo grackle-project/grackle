@@ -46,7 +46,7 @@
      &                metDataSize, metCooling, metHeating, clnew,
      &                iVheat, iMheat, Vheat, Mheat,
      &                iTfloor, Tfloor_scalar, Tfloor,
-     &                imchem, igrgr
+     &                imchem, igrgr, ipcont
      &              , DM, HDII, HeHII
      &              , CI, CII, CO, CO2
      &              , OI, OH, H2O, O2
@@ -251,7 +251,7 @@
      &        ndratec, clnew, iVheat, iMheat, iTfloor,
      &        iH2shield, iradshield,
      &        iradtrans, iradcoupled, iradstep, irt_honly,
-     &        imchem, igrgr,
+     &        imchem, igrgr, ipcont,
      &        iisrffield, iH2shieldcustom, ierr, itmax, exititmax
 
       real*8  dx, dt, aye, temstart, temend, gamma,
@@ -839,7 +839,7 @@ C    &   , coolunit*dom/mh ! = vbase1**2 / tbase1
      &                iVheat, iMheat, Vheat, Mheat,
      &                iTfloor, Tfloor_scalar, Tfloor,
      &                iisrffield, isrf_habing, itmask
-     &              , imchem, igrgr
+     &              , imchem, igrgr, ipcont
      &              , DM, HDII, HeHII
      &              , CI, CII, CO, CO2
      &              , OI, OH, H2O, O2

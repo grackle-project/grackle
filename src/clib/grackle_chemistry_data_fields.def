@@ -254,6 +254,9 @@ ENTRY(collisional_ionisation_rates, INT, 1) //Collisional ionisation
 ENTRY(recombination_cooling_rates, INT, 1) //Recombination cooling
 ENTRY(bremsstrahlung_cooling_rates, INT, 1) //Bremsstrahlung cooling
 
+/* flag to add primordial continuum opacity */
+ENTRY(use_primordial_continuum_opacity, INT, FALSE)
+
 /* flags for alternative rate calculations */
 ENTRY(use_stancil_lepp_dalgarno_1998, INT, FALSE) //Alternative calculation scheme for k50-k56
 ENTRY(use_omukai_gas_grain, INT, FALSE) //Alternative calculation scheme for gas_grain

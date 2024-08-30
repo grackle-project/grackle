@@ -220,6 +220,9 @@ typedef struct
   int recombination_cooling_rates; //Recombination cooling
   int bremsstrahlung_cooling_rates; //Bremsstrahlung cooling
 
+  /* flag to add primordial continuum opacity */
+  int use_primordial_continuum_opacity;
+
   /* flags for alternative rate calculations */
   int use_stancil_lepp_dalgarno_1998; //Alternative calculation scheme for k50-k56
   int use_omukai_gas_grain; //Alternative calculation scheme for gas_grain

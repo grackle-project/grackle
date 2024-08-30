@@ -363,6 +363,10 @@ int initialize_rates(chemistry_data *my_chemistry, chemistry_data_storage *my_ra
     my_rates->alphap_N = calloc(2, sizeof(int));
     my_rates->gr_N = calloc(2, sizeof(int));
 
+    if (my_chemistry->use_primordial_continuum_opacity == 1) {
+      initialize_primordial_opacity(my_chemistry, my_rates);
+    }
+
     //* 3) Units for radiative transfer coefficients are 1/[time].
 
     //* Compute rates for primordial chemistry.
@@ -507,7 +511,6 @@ int initialize_rates(chemistry_data *my_chemistry, chemistry_data_storage *my_ra
         // They should be moved someday.
         initialize_cooling_rate_H2(my_chemistry, my_rates, coolingUnits);
         initialize_cooling_rate_HD(my_chemistry, my_rates, coolingUnits);
-        initialize_primordial_opacity(my_chemistry, my_rates);
 
         //* f) HD cooling.
 

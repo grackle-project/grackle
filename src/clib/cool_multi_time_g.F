@@ -33,7 +33,7 @@
      &                metDataSize, metCooling, metHeating, clnew,
      &                iVheat, iMheat, Vheat, Mheat,
      &                iTfloor, Tfloor_scalar, Tfloor
-     &              , imchem, igrgr
+     &              , imchem, igrgr, ipcont
      &              , DM, HDII, HeHII
      &              , CI, CII, CO, CO2
      &              , OI, OH, H2O, O2
@@ -126,7 +126,7 @@
      &        idustfield, idustrec, igammah, ih2optical, iciecool,
      &        clnew, iVheat, iMheat, iTfloor, iradtrans, iradshield,
      &        iisrffield
-     &       ,imchem, igrgr
+     &       ,imchem, igrgr, ipcont
 
       real*8  aye, temstart, temend,
      &        utem, uxyz, uaye, urho, utim,
@@ -509,7 +509,7 @@
      &                iVheat, iMheat, Vheat, Mheat,
      &                iTfloor, Tfloor_scalar, Tfloor,
      &                iisrffield, isrf_habing, itmask
-     &              , imchem, igrgr
+     &              , imchem, igrgr, ipcont
      &              , DM, HDII, HeHII
      &              , CI, CII, CO, CO2
      &              , OI, OH, H2O, O2
