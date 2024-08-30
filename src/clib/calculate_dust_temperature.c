@@ -247,19 +247,19 @@ int local_calculate_dust_temperature(chemistry_data *my_chemistry,
      , my_rates->SN0_kpH2Oice
      , my_rates->gas_grain2
      ,&my_rates->gamma_isrf2
-     , my_fields->SiM_temperature
-     , my_fields->FeM_temperature
-     , my_fields->Mg2SiO4_temperature
-     , my_fields->MgSiO3_temperature
-     , my_fields->Fe3O4_temperature
-     , my_fields->AC_temperature
-     , my_fields->SiO2_temperature
-     , my_fields->MgO_temperature
-     , my_fields->FeS_temperature
-     , my_fields->Al2O3_temperature
-     , my_fields->ref_org_temperature
-     , my_fields->vol_org_temperature
-     , my_fields->H2O_ice_temperature
+     , my_fields->SiM_dust_temperature
+     , my_fields->FeM_dust_temperature
+     , my_fields->Mg2SiO4_dust_temperature
+     , my_fields->MgSiO3_dust_temperature
+     , my_fields->Fe3O4_dust_temperature
+     , my_fields->AC_dust_temperature
+     , my_fields->SiO2_dust_temperature
+     , my_fields->MgO_dust_temperature
+     , my_fields->FeS_dust_temperature
+     , my_fields->Al2O3_dust_temperature
+     , my_fields->ref_org_dust_temperature
+     , my_fields->vol_org_dust_temperature
+     , my_fields->H2O_ice_dust_temperature
    );
 
   free(temperature);

@@ -128,6 +128,8 @@ _calculated_fields = \
    "pressure",
    "temperature"]
 
+_indirectly_calculated_fields = {}
+
 # These are calculated by the FluidContainer as
 # combinations of other fields. They do not
 # require pre-allocated memory.
@@ -219,9 +221,13 @@ _dust_species[3] = \
 _dust_densities = {idust: [f"{spec}_dust_density"
                            for spec in _dust_species[idust]]
                    for idust in _dust_species}
-_dust_temperatures = {idust: [f"{spec}_temperature"
+_dust_temperatures = {idust: [f"{spec}_dust_temperature"
                               for spec in _dust_species[idust]]
                       for idust in _dust_species}
+_indirectly_calculated_fields.update(
+    {field: "calculate_dust_temperature"
+     for field in _dust_temperatures[max(_dust_temperatures.keys())]}
+)
 
 _metal_yield_densities = \
   ["local_ISM_metal_density",
@@ -504,13 +510,26 @@ class FluidContainer(dict):
             data = self
             all_fields = self.all_fields
 
+            # for indirectly calculated fields, we get more than one field from a call.
+            # keep a list of what we've called so we don't have to call them again.
+            called = []
+
             # call all calculate functions
             for field in _required_calculated_fields(self.chemistry_data) + \
               _fc_calculated_fields:
-                func = getattr(self, f"calculate_{field}", None)
+
+                if field in _indirectly_calculated_fields:
+                    fname = _indirectly_calculated_fields[field]
+                else:
+                    fname = f"calculate_{field}"
+
+                func = getattr(self, fname, None)
                 if func is None:
                     raise RuntimeError(f"No function for calculating {field}.")
-                func()
+
+                if fname not in called:
+                    func()
+                    called.append(fname)
 
         else:
             all_fields = data.keys()

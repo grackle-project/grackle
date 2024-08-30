@@ -186,19 +186,19 @@ typedef struct
   gr_float *isrf_habing;
 
   // use_multiple_dust_temperatures = 1
-  gr_float *SiM_temperature;
-  gr_float *FeM_temperature;
-  gr_float *Mg2SiO4_temperature;
-  gr_float *MgSiO3_temperature;
-  gr_float *Fe3O4_temperature;
-  gr_float *AC_temperature;
-  gr_float *SiO2_temperature;
-  gr_float *MgO_temperature;
-  gr_float *FeS_temperature;
-  gr_float *Al2O3_temperature;
-  gr_float *ref_org_temperature;
-  gr_float *vol_org_temperature;
-  gr_float *H2O_ice_temperature;
+  gr_float *SiM_dust_temperature;
+  gr_float *FeM_dust_temperature;
+  gr_float *Mg2SiO4_dust_temperature;
+  gr_float *MgSiO3_dust_temperature;
+  gr_float *Fe3O4_dust_temperature;
+  gr_float *AC_dust_temperature;
+  gr_float *SiO2_dust_temperature;
+  gr_float *MgO_dust_temperature;
+  gr_float *FeS_dust_temperature;
+  gr_float *Al2O3_dust_temperature;
+  gr_float *ref_org_dust_temperature;
+  gr_float *vol_org_dust_temperature;
+  gr_float *H2O_ice_dust_temperature;
 
 } grackle_field_data;
 
