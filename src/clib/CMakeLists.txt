@@ -94,6 +94,7 @@ add_library(Grackle_Grackle
   initialize_cloudy_data.c
   initialize_rates.c
   initialize_UVbackground_data.c
+  os_utils.c
   rate_functions.c
   set_default_chemistry_parameters.c
   solve_chemistry.c
@@ -140,6 +141,7 @@ add_library(Grackle_Grackle
   grackle_chemistry_data_fields.def # <-- acts as a C header
   grackle_macros.h
   index_helper.h
+  os_utils.h
   phys_constants.h
   utils.h
 
@@ -257,6 +259,25 @@ target_compile_options(Grackle_Grackle PRIVATE
 if ("${CMAKE_SYSTEM_NAME}" MATCHES "^(Linux)|(Darwin)$")
   target_compile_definitions(Grackle_Grackle PRIVATE "LINUX")
 endif()
+
+# define a macro to specify the correct macro for use within os_utils.c
+# -> this is used to define functionality that specifies the default
+#    location where data is stored (this location is prefered by OS)
+#    when the GRACKLE_DATA_DIR isn't specified
+if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Darwin")
+  target_compile_definitions(Grackle_Grackle PRIVATE PLATFORM_MACOS)
+else()
+  # check if we can treat the platform as a generic unix-like OS that provides
+  # a few standard headers
+
+  include(CheckIncludeFiles)
+  unset(HAS_POSIX_HDRS CACHE)
+  CHECK_INCLUDE_FILES("unistd.h;sys/types.h;pwd.h" HAS_POSIX_HDRS)
+  if(UNIX AND "${HAS_POSIX_HDRS}" STREQUAL "1")
+    target_compile_definitions(Grackle_Grackle PRIVATE PLATFORM_GENERIC_UNIX)
+  endif()
+endif()
+
 
 # If we are building a shared library, construct a "configuration Makefile"
 # that is used to build the code examples
