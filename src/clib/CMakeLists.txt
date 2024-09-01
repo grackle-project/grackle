@@ -129,6 +129,7 @@ add_library(Grackle_Grackle
   set_default_chemistry_parameters.c
   solve_chemistry.c
   update_UVbackground_rates.c
+  unit_handling.h
   utils.c
 
   # auto-generated C source files

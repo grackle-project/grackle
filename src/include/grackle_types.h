@@ -50,6 +50,7 @@ typedef struct
   int *grid_start;
   int *grid_end;
 
+  double current_a_value;
   gr_float grid_dx;
 
   gr_float *density;
