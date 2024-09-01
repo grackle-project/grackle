@@ -57,12 +57,22 @@ def _get_file_registry_contents(editable_install):
     return io.StringIO(contents)
 
 
-_CONFIG_PAIR = make_config_objects(
-    grackle_version=get_grackle_version()["version"],
-    file_registry_file=_get_file_registry_contents(is_editable_install),
-)
+def _make_config_pair(grackle_version=None):
+    if grackle_version is None:
+        grackle_version = get_grackle_version()["version"]
+    return make_config_objects(
+        grackle_version=grackle_version,
+        file_registry_file=_get_file_registry_contents(is_editable_install),
+    )
 
+
+_CONFIG_PAIR = _make_config_pair()
 _MANAGER = VersionDataManager.create(*_CONFIG_PAIR)
+
+
+def _fnames_in_registry():
+    # used for testing/debugging
+    return tuple(_parse_file_registry(_CONFIG_PAIR[1].file_registry_file).keys())
 
 
 def _download_all_datafiles():

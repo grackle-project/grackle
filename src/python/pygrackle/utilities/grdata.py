@@ -423,7 +423,7 @@ def _get_platform_data_dir(appname="grackle", system_str=None):
         * we have NOT read any source code
     """
     if system_str is None:
-        system_str=sys.platform
+        system_str = sys.platform
     if system_str.startswith("win32"):
         raise RuntimeError()
     elif system_str.startswith("darwin"):
@@ -449,6 +449,7 @@ def _get_platform_data_dir(appname="grackle", system_str=None):
             return os.path.expanduser(f"{env_str}/{appname}")
         else:
             return f"{env_str}/{appname}"
+
 
 def _get_data_dir():
     manual_choice = os.getenv("GRACKLE_DATA_DIR", default=None)
@@ -1152,7 +1153,53 @@ def lsversions_command(args, tool_config, data_store_config):
 
 
 def getpath_command(args, tool_config, data_store_config):
-    print(data_store_config.data_dir)
+    if args.data_dir:
+        print(data_store_config.data_dir)
+    elif args.data_store:
+        print(data_store_config.store_location)
+    else:
+        assert args.vdata is not _UNSPECIFIED  # sanity check!
+        if args.vdata is None:
+            version = tool_config.grackle_version
+        else:
+            version = args.vdata
+        print(os.path.join(data_store_config.store_location, version))
+
+
+def _register_getpath_subcommand(subparsers):
+    parser_getpath = subparsers.add_parser(
+        "getpath",
+        description=(
+            "Provides the expected filesystem location for data. This command "
+            "doesn't care about whether the filesystem location actually exists."
+        ),
+        help="show expected filesystem location for data.",
+    )
+    getpath_spec_grp = parser_getpath.add_argument_group(
+        title="Target",
+        description="specifies the target that we retrieve the path for.",
+    ).add_mutually_exclusive_group(required=True)
+    getpath_spec_grp.add_argument(
+        "--data-dir", action="store_true", help="get path to the data directory"
+    )
+    getpath_spec_grp.add_argument(
+        "--data-store",
+        action="store_true",
+        help="get path to the data-store (for the protocol version used by this tool)",
+    )
+    getpath_spec_grp.add_argument(
+        "--vdata",
+        default=_UNSPECIFIED,
+        nargs="?",
+        help=(
+            "get path to the directory of files-references associated with the "
+            "specified version. This command assumes that the version-data was "
+            "managed by a version of this tool that uses the same protocol version "
+            "as the version returned by --version-protocol. If no version is "
+            "specified, it uses the version associated with the --version-dir flag."
+        ),
+    )
+    parser_getpath.set_defaults(func=getpath_command)
 
 
 def calcreg_command(args, tool_config, data_store_config):
@@ -1301,10 +1348,7 @@ def build_parser(tool_config, prog_name):
     parser_rm.set_defaults(func=rm_command)
 
     # getpath subcommand
-    parser_getpath = subparsers.add_parser(
-        "getpath", help="get filesystem location where all the data is stored"
-    )
-    parser_getpath.set_defaults(func=getpath_command)
+    _register_getpath_subcommand(subparsers)
 
     # calcreg subcommand
     parser_calcregistry = subparsers.add_parser(
@@ -1347,9 +1391,17 @@ def build_parser(tool_config, prog_name):
     return parser
 
 
-def main(tool_config, data_store_config, prog_name):
+def main(tool_config, data_store_config, prog_name, *, args=None):
+    """
+    Launch the command
+
+    Returns
+    -------
+    int
+        Specified the exit code
+    """
     parser = build_parser(tool_config, prog_name)
-    args = parser.parse_args()
+    args = parser.parse_args(args=args)
 
     try:
         args.func(args, tool_config=tool_config, data_store_config=data_store_config)
@@ -1365,16 +1417,16 @@ ERROR: The `{lock_file_path}` lock-file already exists.
    of this tool previously crashed""",
             file=sys.stderr,
         )
-        sys.exit(78)  # https://www.man7.org/linux/man-pages/man3/sysexits.h.3head.html
+        return 78  # https://www.man7.org/linux/man-pages/man3/sysexits.h.3head.html
     except GenericToolError as err:
         print(f"ERROR: {err.args[0]}")
-        sys.exit(70)  # https://www.man7.org/linux/man-pages/man3/sysexits.h.3head.html
+        return 70  # https://www.man7.org/linux/man-pages/man3/sysexits.h.3head.html
     except BaseException:
         print("Unexpected error:", file=sys.stderr)
         traceback.print_exc(file=sys.stderr)
-        sys.exit(70)  # https://www.man7.org/linux/man-pages/man3/sysexits.h.3head.html
+        return 70  # https://www.man7.org/linux/man-pages/man3/sysexits.h.3head.html
     else:
-        sys.exit(0)
+        return 0
 
 
 def _default_data_store_config(tool_config, file_registry_file):
@@ -1451,4 +1503,4 @@ if __name__ == "__main__":
         grackle_version=_GRACKLE_VERSION,
         file_registry_file=io.StringIO(_FILE_REGISTRY_CONTENTS),
     )
-    main(*_CONFIG_PAIR, prog_name="grdata")
+    sys.exit(main(*_CONFIG_PAIR, prog_name="grdata"))
