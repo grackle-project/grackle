@@ -147,6 +147,12 @@ typedef struct
    */
   int h2_cooling_rate;
 
+  /* HD cooling rate
+   * 0: Coppola et al (2011) and Wrathmall, Gusdorf, & Flower (2007)
+   * 1: Chiaki & Wise (2019)
+   */
+  int hd_cooling_rate;
+
   /* additional chemistry solver parameters */
   int three_body_rate;
   int cie_cooling;

@@ -33,7 +33,7 @@
      &                iradshield, avgsighi, avgsighei,
      &                avgsigheii,
      &                k24, k26, iradtrans, photogamma,
-     &                ih2optical, iciecool, ih2cr, ciecoa, cieco,
+     &                ih2optical, iciecool, ih2cr, ihdcr, ciecoa, cieco,
      &                icmbTfloor, iClHeat, clEleFra,
      &                priGridRank, priGridDim,
      &                priPar1, priPar2, priPar3, priPar4, priPar5,
@@ -137,7 +137,8 @@
       integer in, jn, kn, is, ie, j, k, nratec, idim,
      &        iexpand, ih2co, ipiht, ispecies, imcool,
      &        idust, idustall, idustfield, idustrec,
-     &        imetal, igammah, ih2optical, iciecool, ih2cr, clnew,
+     &        imetal, igammah, ih2optical, iciecool, ih2cr, ihdcr,
+     &        clnew,
      &        iVheat, iMheat, iTfloor, iradtrans, iradshield,
      &        iisrffield
      &       ,imchem, igrgr, ipcont
@@ -769,8 +770,6 @@
       enddo
 
       endif
-
-#define USE_CHIAKI_WISE2019
 
 !     --- H2 cooling ---
 

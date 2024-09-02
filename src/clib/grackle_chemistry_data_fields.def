@@ -142,6 +142,12 @@ ENTRY(temperature_floor_scalar, DOUBLE, 0.0)
  */
 ENTRY(h2_cooling_rate, INT, 2)
 
+/* HD cooling rate
+ * 0: Coppola et al (2011) and Wrathmall, Gusdorf, & Flower (2007)
+ * 1: Chiaki & Wise (2019)
+ */
+ENTRY(hd_cooling_rate, INT, 0)
+
 /* additional chemistry solver parameters */
 ENTRY(three_body_rate, INT, 0)
 ENTRY(cie_cooling, INT, 0)

@@ -23,7 +23,7 @@
      &                h2ltea, gasgra,
      &                iradshield, avgsighi, avgsighei, avgsigheii,
      &                k24, k26, iradtrans, photogamma,
-     &                ih2optical, iciecool, ih2cr, ciecoa,
+     &                ih2optical, iciecool, ih2cr, ihdcr, ciecoa,
      &                icmbTfloor, iClHeat, clEleFra,
      &                priGridRank, priGridDim,
      &                priPar1, priPar2, priPar3, priPar4, priPar5,
@@ -124,7 +124,7 @@
      &        iexpand, ih2co, ipiht, ispecies, imetal, idim,
      &        imcool, idust, idustall,
      &        idustfield, idustrec, igammah, ih2optical, iciecool,
-     &        ih2cr,
+     &        ih2cr, ihdcr,
      &        clnew, iVheat, iMheat, iTfloor, iradtrans, iradshield,
      &        iisrffield
      &       ,imchem, igrgr, ipcont
@@ -499,7 +499,7 @@
      &                gammaha_eff, gasgr_tdust, regr,
      &                iradshield, avgsighi, avgsighei, avgsigheii,
      &                k24, k26, iradtrans, photogamma,
-     &                ih2optical, iciecool, ih2cr, ciecoa, cieco,
+     &                ih2optical, iciecool, ih2cr, ihdcr, ciecoa, cieco,
      &                icmbTfloor, iClHeat, clEleFra,
      &                priGridRank, priGridDim,
      &                priPar1, priPar2, priPar3, priPar4, priPar5,
