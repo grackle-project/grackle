@@ -42,6 +42,7 @@
      &               metPar1, metPar2, metPar3, metPar4, metPar5,
      &               metDataSize, metCooling, metHeating, clnew,
      &               iVheat, iMheat, Vheat, Mheat,
+     &               iTfloor, Tfloor_scalar, Tfloor,
      &               iisrffield, isrf_habing,
      &               ithreebody, anydust, iH2shield, 
      &               k1a, k2a, k3a, k4a, k5a, k6a, k7a, k8a, k9a, k10a,
@@ -55,7 +56,7 @@
      &               dom, coolunit, tbase1, xbase1, dx_cgs, c_ljeans,
      &               kphHI, kphHeI, kphHeII, kdissH2I, 
      &               photogamma, xH2shield, chunit, itmask
-     &             , imchem, igrgr
+     &             , imchem, igrgr, ipcont
      &             , k125a, k129a, k130a, k131a, k132a
      &             , k133a, k134a, k135a, k136a, k137a
      &             , k148a, k149a, k150a, k151a, k152a
@@ -136,21 +137,22 @@ c -------------------------------------------------------------------
      &        iexpand, ih2co, ipiht, ispecies, imetal, idim,
      &        imcool, idust, idustall, idustfield, idustrec,
      &        igammah, ih2optical, iciecool, ithreebody,
-     &        ndratec, clnew, iVheat, iMheat, iH2shield, iradshield,
+     &        ndratec, clnew, iVheat, iMheat, iTfloor,
+     &        iH2shield, iradshield,
      &        iradtrans, irt_honly, iisrffield
-     &       ,imchem, igrgr
+     &       ,imchem, igrgr, ipcont
       logical itmask, anydust
 
       real*8  dx_cgs, aye, temstart, temend, gamma,
      &        utim, uxyz, uaye, urho, utem, fh, z_solar, 
-     &        fgr, dtemstart, dtemend, clEleFra
+     &        fgr, dtemstart, dtemend, clEleFra, Tfloor_scalar
 
 !  Density, energy and velocity fields fields
       integer, parameter :: i_eng = 52
       real*8  dsp(i_eng), dspdot(i_eng)
       R_PREC  d, e, u, v, w,
      &        metal, dust,
-     &        Vheat, Mheat
+     &        Vheat, Mheat, Tfloor
        R_PREC metal_loc
      &      , metal_C13          , metal_C20          
      &      , metal_C25          , metal_C30          
@@ -543,8 +545,9 @@ c -------------------------------------------------------------------
      &                metPar1, metPar2, metPar3, metPar4, metPar5,
      &                metDataSize, metCooling, metHeating, clnew,
      &                iVheat, iMheat, Vheat, Mheat,
+     &                iTfloor, Tfloor_scalar, Tfloor,
      &                iisrffield, isrf_habing, itmask
-     &              , imchem, igrgr
+     &              , imchem, igrgr, ipcont
      &              , DM, HDII, HeHII
      &              , CI, CII, CO, CO2
      &              , OI, OH, H2O, O2

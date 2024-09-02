@@ -1861,7 +1861,7 @@ c  new (correct) way: (april 4, 2007)
       
 !           CI
             lognhat = logCI(i) - logdvdr(i)
-      
+
             call interpolate_3D_g(
      &        lognhat, logT(i), logH(i), int8(LCI_N), 
      &        LCI_D, LCI_dD, LCI_T, LCI_dT, LCI_H, LCI_dH,

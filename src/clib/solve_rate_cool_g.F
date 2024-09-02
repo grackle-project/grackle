@@ -1609,6 +1609,7 @@ c              allocate(dumvec(nsp))
      &   metPar1, metPar2, metPar3, metPar4, metPar5,
      &   metDataSize, metCooling, metHeating, clnew,
      &   iVheat, iMheat, Vheat(i,j,k), Mheat(i,j,k),
+     &   iTfloor, Tfloor_scalar, Tfloor(i,j,k),
      &   iisrffield, isrf_habing,
      &   ithreebody, anydust, iH2shield, 
      &   k1a, k2a, k3a, k4a, k5a, k6a, k7a, k8a, k9a, k10a,
@@ -1622,7 +1623,7 @@ c              allocate(dumvec(nsp))
      &   dom, coolunit, tbase1, xbase1, dx_cgs, c_ljeans,
      &   kphHI(i,j,k), kphHeI(i,j,k), kphHeII(i,j,k), kdissH2I(i,j,k), 
      &   photogamma(i,j,k), xH2shield(i,j,k), chunit, itmask_nr(i)
-     & , imchem, igrgr
+     & , imchem, igrgr, ipcont
      & , k125a, k129a, k130a, k131a, k132a
      & , k133a, k134a, k135a, k136a, k137a
      & , k148a, k149a, k150a, k151a, k152a
@@ -1743,6 +1744,7 @@ c              allocate(dumvec(nsp))
      &   metPar1, metPar2, metPar3, metPar4, metPar5,
      &   metDataSize, metCooling, metHeating, clnew,
      &   iVheat, iMheat, Vheat(i,j,k), Mheat(i,j,k),
+     &   iTfloor, Tfloor_scalar, Tfloor(i,j,k),
      &   iisrffield, isrf_habing,
      &   ithreebody, anydust, iH2shield, 
      &   k1a, k2a, k3a, k4a, k5a, k6a, k7a, k8a, k9a, k10a,
@@ -1756,7 +1758,7 @@ c              allocate(dumvec(nsp))
      &   dom, coolunit, tbase1, xbase1, dx_cgs, c_ljeans,
      &   kphHI(i,j,k), kphHeI(i,j,k), kphHeII(i,j,k), kdissH2I(i,j,k), 
      &   photogamma(i,j,k), xH2shield(i,j,k), chunit, itmask_nr(i)
-     & , imchem, igrgr
+     & , imchem, igrgr, ipcont
      & , k125a, k129a, k130a, k131a, k132a
      & , k133a, k134a, k135a, k136a, k137a
      & , k148a, k149a, k150a, k151a, k152a
