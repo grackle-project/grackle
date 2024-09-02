@@ -134,8 +134,15 @@ ENTRY(use_temperature_floor, INT, 0)
 /* use to specify scalar temperature floor */
 ENTRY(temperature_floor_scalar, DOUBLE, 0.0)
 
+/* H2 cooling rate
+ * 0: Lepp & Shull (1983)
+ * 1: Galli & Palla (1998)
+ * 2: Glover & Abel (2008)
+ * 3: Chiaki & Wise (2019)
+ */
+ENTRY(h2_cooling_rate, INT, 2)
+
 /* additional chemistry solver parameters */
-ENTRY(h2_cooling_rate, INT, 0)
 ENTRY(three_body_rate, INT, 0)
 ENTRY(cie_cooling, INT, 0)
 ENTRY(h2_optical_depth_approximation, INT, 0)

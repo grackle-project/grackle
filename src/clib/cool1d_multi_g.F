@@ -769,12 +769,14 @@
       enddo
 
       endif
-     
+
+#define USE_CHIAKI_WISE2019
+
 !     --- H2 cooling ---
 
       if (ispecies .gt. 1) then
-#define USE_CHIAKI_WISE2019
-#ifdef USE_CHIAKI_WISE2019
+!        Chiaki & Wise (2019) H2 cooling rate
+         if (ih2cr .eq. 3) then
 
       do i = is+1, ie+1
       if ( itmask(i) ) then
@@ -803,10 +805,10 @@
 
       endif
       enddo
-#else  /* USE_CHIAKI_WISE2019 */
 
-#define USE_GLOVER_ABEL2008
-#ifdef USE_GLOVER_ABEL2008
+!     Glover & Abel (2008) H2 cooling rate
+      else if (ih2cr .eq. 2) then
+
          do i = is+1, ie+1
             if ( itmask(i) ) then
             gaHI(i) = gaHIa(indixe(i)) + tdef(i)
@@ -862,14 +864,9 @@ c            gphdl1 = gphdl(i)/dom
 
             end if
          enddo
-#else
 
-#define USE_GALLI_PALLA1999
-#define NO_OPTICAL_DEPTH_FUDGE
-
-!        Use the Galli and Palla (1999) cooling rates for molecular H.
-
-#ifdef USE_GALLI_PALLA1999
+!     Galli & Palla (1998) H2 cooling rate
+      else if (ih2cr .eq. 1) then
 
          do i = is+1, ie+1
             if ( itmask(i) ) then
@@ -885,6 +882,7 @@ c            gphdl1 = gphdl(i)/dom
          do i = is+1, ie+1
             if ( itmask(i) ) then
 
+#define NO_OPTICAL_DEPTH_FUDGE
 #ifdef OPTICAL_DEPTH_FUDGE
             nH2 = 0.5_DKIND*H2I(i,j,k)
             nother = (HeI(i,j,k) + HeII(i,j,k) +
@@ -912,7 +910,8 @@ c            gphdl1 = gphdl(i)/dom
             end if
          enddo
 
-#else /* USE_GALLI_PALLA1999 */
+!      Lepp & Shull (1983) H2 cooling rate
+       else if (ih2cr .eq. 0) then
 
          do i = is+1, ie+1
             if ( itmask(i) ) then
@@ -958,10 +957,7 @@ c            gphdl1 = gphdl(i)/dom
             end if
          enddo
 
-#endif /* USE_GALLI_PALLA1999 */
-#endif /* USE_GLOVER_ABEL2008 */
-
-#endif /* USE_CHIAKI_WISE2019 */
+      endif ! ih2cr
 
 c     CIE
 c     cooling from H2-H2 and He-H2 collisional induced emission comes

@@ -139,8 +139,15 @@ typedef struct
 
   double temperature_floor_scalar;
 
-  /* additional chemistry solver parameters */
+  /* H2 cooling rate
+   * 0: Lepp & Shull (1983)
+   * 1: Galli & Palla (1998)
+   * 2: Glover & Abel (2008)
+   * 3: Chiaki & Wise (2019)
+   */
   int h2_cooling_rate;
+
+  /* additional chemistry solver parameters */
   int three_body_rate;
   int cie_cooling;
   int h2_optical_depth_approximation;
