@@ -1036,9 +1036,9 @@ c              if (d(i,j,k)*dom .lt. 1.e-2_DKIND) then
                if ( ( (imetal .eq. 0)
      &          .and. (d(i,j,k)*dom .lt. 1.e8_DKIND) )
      &         .or. ( (imetal .eq. 1)
-     &          .and. ( ( (metal(i,j,k) .le. 1.e-9_DKIND * d(i,j,k))
+     &          .and. ( ( (metallicity(i) .le. 1.e-9_DKIND * z_solar)
      &              .and. (d(i,j,k)*dom .lt. 1.e8_DKIND) )
-     &             .or. ( (metal(i,j,k) .gt. 1.e-9_DKIND * d(i,j,k))
+     &             .or. ( (metallicity(i) .gt. 1.e-9_DKIND * z_solar)
      &              .and. (d(i,j,k)*dom .lt. 1.e6_DKIND) ) ) ) ) then
                   itmask_nr(i) = .false.
                else

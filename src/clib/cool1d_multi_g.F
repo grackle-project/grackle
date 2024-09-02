@@ -572,6 +572,12 @@
                metallicity(i) = metal(i,j,k) / d(i,j,k) / z_solar
             endif
          enddo
+      else
+         do i = is+1, ie+1
+            if ( itmask(i) ) then
+               metallicity(i) = tiny
+            endif
+         enddo
       endif
 
       do i = is+1, ie+1
