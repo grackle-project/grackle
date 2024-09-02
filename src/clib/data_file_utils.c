@@ -232,7 +232,8 @@ static char* calc_checksum_str_(const char* fname) {
 
 
 static struct generic_file_props file_from_data_dir_(
-  const char* grackle_data_file, int grackle_data_file_options
+  const char* grackle_data_file, int grackle_data_file_options,
+  int calculate_checksum
 )
 {
   // initialize output struct in a format that will denote an error (if is
@@ -270,6 +271,12 @@ static struct generic_file_props file_from_data_dir_(
   };
   char* full_path = join_parts_('/', path_parts, 4);
   free(data_dir_path);
+
+  if (calculate_checksum == 0) { // skip the checksum calculation
+    out.path = full_path;
+    out.path_requires_dealloc = 1;
+    return out;
+  }
 
   char* measured_cksum_str = calc_checksum_str_(full_path);
 
@@ -312,20 +319,31 @@ struct generic_file_props determine_data_file_(const char* grackle_data_file,
   if (grackle_data_file == NULL) {
     fprintf(stderr, "grackle_data_file must not be NULL\n");
     return out;
-
-  } else if (grackle_data_file_options == -1) { // the legacy case!
-    out.path = grackle_data_file;
-    return out;
-  } else if (grackle_data_file_options == 1) {
-    return file_from_data_dir_(grackle_data_file, grackle_data_file_options);
-  } else {
-    fprintf(stderr, "grackle_data_file_options has an unexpected value: %d\n",
-            grackle_data_file_options);
-    return out;
-
   }
 
+  if (grackle_data_file_options == -1) {
+    grackle_data_file_options = GR_DFOPT_FULLPATH_NO_CKSUM;  // the legacy case
+  }
 
+  switch (grackle_data_file_options) {
+    case GR_DFOPT_FULLPATH_NO_CKSUM: {
+      out.path = grackle_data_file;
+      return out;
+    }
+    case GR_DFOPT_MANAGED: {
+      return file_from_data_dir_(grackle_data_file, grackle_data_file_options,
+                                 1);
+    }
+    case GR_DFOPT_MANAGED_NO_CKSUM: {
+      return file_from_data_dir_(grackle_data_file, grackle_data_file_options,
+                                 0);
+    }
+    default: {
+      fprintf(stderr, "grackle_data_file_options has an unexpected value: %d\n",
+              grackle_data_file_options);
+      return out;
+    }
+  }
 }
 
 void free_generic_file_props_(struct generic_file_props* ptr) {
