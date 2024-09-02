@@ -33,6 +33,15 @@ endif()
 configure_file(../include/grackle_float.h.in
   ${GRACKLE_GENRATED_PUBLIC_HEADERS}/grackle_float.h @ONLY)
 
+# now, declare recipe for generating file_registry.h:
+set(GRACKLE_GENERATED_PRIVATE_HEADERS "${CMAKE_CURRENT_BINARY_DIR}")
+file(READ
+  "${CMAKE_CURRENT_SOURCE_DIR}/../python/pygrackle/file_registry/file_registry.txt"
+  FILE_REGISTRY_CONTENTS)
+configure_file(file_registry.h.in
+  ${GRACKLE_GENERATED_PRIVATE_HEADERS}/file_registry.h @ONLY)
+
+
 # next, declare recipe for generating auto_general.c:
 
 # fetch necessary version information via query-version.py script
@@ -212,15 +221,18 @@ set_target_typed_info_properties(Grackle_Grackle BOOL_PROPERTIES
 )
 
 target_include_directories(Grackle_Grackle
-  # specify where to search for generated and ordinary headers when building
-  # grackle AND when linking against grackle under inclusion approach #1
-  # -> while it may seem unnecessary to specify the ordinary headers' directory
-  #    while building grackle, it's necessary to compile auto_general.c
-  PUBLIC $<BUILD_INTERFACE:${GRACKLE_GENRATED_PUBLIC_HEADERS}> # generated hdrs
-         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include> # public hdrs
-         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}> # private hdrs
+  # specify where to search for generated/ordinary private headers (only used
+  # when building grackle)
+  # -> while it may seem unnecessary to specify the ordinary private headers'
+  #    directory, it's necessary to compile auto_general.c
+  PRIVATE ${GRACKLE_GENERATED_PRIVATE_HEADERS} ${CMAKE_CURRENT_SOURCE_DIR}
 
-  # specify where to search for the other headers when linking against grackle
+  # specify where to search for generated/ordinary public headers when building
+  # grackle AND when linking against grackle under inclusion approach #1
+  PUBLIC $<BUILD_INTERFACE:${GRACKLE_GENRATED_PUBLIC_HEADERS}>
+         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
+
+  # specify where to search for public headers when linking against grackle
   # (for inclusion approach #2)
   INTERFACE $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
