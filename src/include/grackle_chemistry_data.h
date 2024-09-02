@@ -140,6 +140,7 @@ typedef struct
   double temperature_floor_scalar;
 
   /* additional chemistry solver parameters */
+  int h2_cooling_rate;
   int three_body_rate;
   int cie_cooling;
   int h2_optical_depth_approximation;

@@ -33,7 +33,7 @@
      &                iradshield, avgsighi, avgsighei,
      &                avgsigheii,
      &                k24, k26, iradtrans, photogamma,
-     &                ih2optical, iciecool, ciecoa, cieco,
+     &                ih2optical, iciecool, ih2cr, ciecoa, cieco,
      &                icmbTfloor, iClHeat, clEleFra,
      &                priGridRank, priGridDim,
      &                priPar1, priPar2, priPar3, priPar4, priPar5,
@@ -137,7 +137,7 @@
       integer in, jn, kn, is, ie, j, k, nratec, idim,
      &        iexpand, ih2co, ipiht, ispecies, imcool,
      &        idust, idustall, idustfield, idustrec,
-     &        imetal, igammah, ih2optical, iciecool, clnew,
+     &        imetal, igammah, ih2optical, iciecool, ih2cr, clnew,
      &        iVheat, iMheat, iTfloor, iradtrans, iradshield,
      &        iisrffield
      &       ,imchem, igrgr, ipcont

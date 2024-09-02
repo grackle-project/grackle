@@ -135,6 +135,7 @@ ENTRY(use_temperature_floor, INT, 0)
 ENTRY(temperature_floor_scalar, DOUBLE, 0.0)
 
 /* additional chemistry solver parameters */
+ENTRY(h2_cooling_rate, INT, 0)
 ENTRY(three_body_rate, INT, 0)
 ENTRY(cie_cooling, INT, 0)
 ENTRY(h2_optical_depth_approximation, INT, 0)
