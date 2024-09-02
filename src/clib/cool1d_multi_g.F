@@ -996,8 +996,10 @@ c               ciefudge, which is applied to the continuum, is applied to edot
 !     --- Cooling from HD ---
 
       if (ispecies .gt. 2) then
-#define USE_CHIAKI_WISE2019
-#ifdef USE_CHIAKI_WISE2019
+
+!     Chiaki & Wise (2019) HD cooling rate
+      if (ihdcr .eq. 1 ) then
+
       do i = is+1, ie+1
       if ( itmask(i) ) then
 
@@ -1025,7 +1027,10 @@ c               ciefudge, which is applied to the continuum, is applied to edot
 
       endif
       enddo
-#else
+
+!     Coppola et al (2011) and Wrathmall, Gusdorf, & Flower (2007) HD cooling rate
+      else if (ihdcr .eq. 0) then
+
          do i = is+1, ie+1
             if ( itmask(i) ) then
 c CMB cooling floor
@@ -1056,7 +1061,8 @@ c  new (correct) way: (april 4, 2007)
      &              (3._DKIND*dom)
             end if
          enddo
-#endif /* USE_CHIAKI_WISE2019 */ 
+
+      endif ! ihdcr
       endif
 
 !     Iteration mask for metal-rich cells
