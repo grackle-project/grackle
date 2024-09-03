@@ -148,9 +148,24 @@ ENTRY(h2_cooling_rate, INT, 2)
  */
 ENTRY(hd_cooling_rate, INT, 0)
 
-/* additional chemistry solver parameters */
+/* H2 formation from 3-body reactions
+ * 0: Abel, Bryan & Norman (2002)
+ * 1: Palla, Salpeter & Stahler (1983)
+ * 2: Cohen & Westberg (1983)
+ * 3: Flower & Harris (2007)
+ * 4: Glover (2008)
+ * 5: Forrey (2013)
+ */
 ENTRY(three_body_rate, INT, 0)
+
+/* H2 collisionally-induced emission cooling
+ * 0: off
+ * 1: Ripamonti & Abel (2003)
+ * 2: Yoshida et al. (2006)
+ */
 ENTRY(cie_cooling, INT, 0)
+
+/* H2 cooling attenuation from Ripamonti & Abel (2004) */
 ENTRY(h2_optical_depth_approximation, INT, 0)
 
 /* flag for H2 cooling (0-off/1-on) */

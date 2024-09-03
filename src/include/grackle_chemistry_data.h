@@ -153,10 +153,26 @@ typedef struct
    */
   int hd_cooling_rate;
 
-  /* additional chemistry solver parameters */
+  /* H2 formation from 3-body reactions
+   * 0: Abel, Bryan & Norman (2002)
+   * 1: Palla, Salpeter & Stahler (1983)
+   * 2: Cohen & Westberg (1983)
+   * 3: Flower & Harris (2007)
+   * 4: Glover (2008)
+   * 5: Forrey (2013)
+   */
   int three_body_rate;
+
+  /* H2 collisionally-induced emission cooling
+   * 0: off
+   * 1: Ripamonti & Abel (2003)
+   * 2: Yoshida et al. (2006)
+   */
   int cie_cooling;
+
+  /* H2 cooling attenuation from Ripamonti & Abel (2004) */
   int h2_optical_depth_approximation;
+
   int ih2co; // flag for H2 cooling (0-off/1-on)
   int ipiht; // flag for photoionization cooling
   double HydrogenFractionByMass;
