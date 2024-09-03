@@ -976,18 +976,20 @@ c               Matt's attempt at a second exponentialier cutoff
                 tau = max(tau, 1.e-5_DKIND)
                 ciefudge = ciefudge*min((1.-exp(-tau))/tau,1._DKIND)
 c               ciefudge, which is applied to the continuum, is applied to edot
-#define USE_YOSHIDA06
-#ifdef USE_YOSHIDA06
+                edot(i) = ciefudge*(edot(i) - 
+     &                  H2I(i,j,k)*(d(i,j,k)*cieco(i)))
+              endif
+            endif
+            enddo
+c     CIE H2 cooling using Yoshida et al. (2006)
+         else if (iciecool .eq. 2) then
+            do i = is+1, ie+1
+               if (itmask(i)) then
                 cieY06(i) = cieY06a(indixe(i)) + tdef(i)
      &             *(cieY06a(indixe(i)+1) - cieY06a(indixe(i)))
                 LCIE(i) = - cieY06(i) * (H2I(i,j,k)/2.d0)**2
                 edot(i) = edot(i) + LCIE(i)
-#else
-                edot(i) = ciefudge*(edot(i) - 
-     &                  H2I(i,j,k)*(d(i,j,k)*cieco(i)))
-#endif /* USE_YOSHIDA06 */
-              endif
-            endif
+               endif
             enddo
          endif
 
