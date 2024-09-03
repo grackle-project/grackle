@@ -223,7 +223,7 @@
      &       gphdl1, dom_inv, tau, ciefudge,
      &       coolunit, dbase1, tbase1, xbase1,
      &       nH2, nother, nSSh, nratio, nssh_he, nratio_he,
-     &       fSShHI, fSShHeI, pe_eps, pe_X, grbeta
+     &       fSShHI, fSShHeI, pe_eps, pe_X, grbeta, ih2cox
       integer itd
 
 !  Slice locals
@@ -405,6 +405,9 @@
 
       comp1 = compa  * (1._DKIND + zr)**4
       comp2 = 2.73_DKIND * (1._DKIND + zr)
+
+!     multiplicative factor for including/excluding H2 cooling
+      ih2cox = real(ih2co, DKIND)
 
 !     Initialize edot
 
@@ -800,7 +803,7 @@
 
          LH2(i) = - (L - G) / dom * H2I(i,j,k)/2.d0
          if (LH2(i) .ne. LH2(i)) LH2(i) = 0.d0
-         edot(i) = edot(i) + LH2(i)
+         edot(i) = edot(i) + ih2cox*LH2(i)
 
       endif
       enddo
@@ -858,7 +861,7 @@
      &               + gael(i) * de(i,j,k)
 c            gphdl1 = gphdl(i)/dom
             gphdl1 = h2lte(i)/dom
-            edot(i) = edot(i) - real(ih2co, DKIND)*fudge*H2I(i,j,k)*
+            edot(i) = edot(i) - ih2cox*fudge*H2I(i,j,k)*
      &           h2lte(i)/(1._DKIND + gphdl1/galdl(i)) / (2._DKIND*dom)
 
             end if
@@ -903,7 +906,7 @@ c            gphdl1 = gphdl(i)/dom
                 fudge = 1._DKIND
             endif
             gphdl1 = gphdl(i)/(HI(i,j,k)*dom)
-            edot(i) = edot(i) - real(ih2co, DKIND)*fudge*H2I(i,j,k)*
+            edot(i) = edot(i) - ih2cox*fudge*H2I(i,j,k)*
      &           gphdl(i)/(1._DKIND + gphdl1/gpldl(i)) / (2._DKIND*dom)
 
             end if
@@ -949,7 +952,7 @@ c            gphdl1 = gphdl(i)/dom
             fudge = min(fudge, 1._DKIND)
 #endif /* OPTICAL_DEPTH_FUDGE */
 
-            edot(i) = edot(i) - real(ih2co, DKIND)*fudge*H2I(i,j,k)*(
+            edot(i) = edot(i) - ih2cox*fudge*H2I(i,j,k)*(
      &           vibh(i)/(1._DKIND+vibh(i)/max(   vibl     ,tiny)) +
      &           roth(i)/(1._DKIND+roth(i)/max(qq*rotl(i),tiny))     
      &           )/2._DKIND/dom
