@@ -265,8 +265,14 @@ typedef struct
    */
   int gas_grain_cooling_rate;
 
-  /* flags for alternative rate calculations */
-  int use_uniform_grain_dist_gamma_isrf; //Alternative calculation scheme for gamma_isrf
+  /* Alternative formulations of interstellar radiation heating
+     rate of grains. Both are based on Goldsmith (2001) and
+     Krumholz (2014) and are in fact very similar. See
+     rate_functions.c for more details.
+   * 0: 3.9e-24 / mh / fgr, where fgr is local dust-to-gas ratio
+   * 1: 8.60892e-24 / (2.0 * mh) / fgr
+   */
+  int uniform_grain_isrf_heating_rate;
 
   /* maximum number of subcycle iterations for solve_chemistry */
   int max_iterations;

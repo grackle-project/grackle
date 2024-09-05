@@ -1440,22 +1440,25 @@ double gammah_rate(double units, chemistry_data *my_chemistry)
 
 //Calculation of gamma_isrf.
 double gamma_isrf_rate(double units, chemistry_data *my_chemistry)
-{   
-    //Parameter definition.
-    double fgr = 0.009387;
-
-    if (my_chemistry->use_uniform_grain_dist_gamma_isrf){
-        //For uniform grain size (Goldsmith 2001; Krumholz 2014)
-        return 8.60892e-24 / (2.0 * mh) / fgr;
-        //F_isrf sigma_gr / mass_gr
-        //For MRN-like broken power low size distribution (Omukai 2000) 
-        //The factor 2 to cancel out the molecular mass of H2.
-    } else {
-        //(Equation B15, Krumholz, 2014)
-        //Don't normalize by coolunit since tdust calculation is done in CGS.
-        return 3.9e-24 / mh / fgr;
-    }
-
+{
+  // Parameter definition.
+  double fgr = 0.009387;
+  if (my_chemistry->uniform_grain_isrf_heating_rate == 0) {
+    // (Equation B15, Krumholz, 2014)
+    // Don't normalize by coolunit since tdust calculation is done in CGS.
+    return 3.9e-24 / mh / fgr;
+  }
+  else if (my_chemistry->uniform_grain_isrf_heating_rate == 1) {
+    // For uniform grain size (Goldsmith 2001; Krumholz 2014)
+    return 8.60892e-24 / (2.0 * mh) / fgr;
+    // F_isrf sigma_gr / mass_gr
+    // For MRN-like broken power low size distribution (Omukai 2000)
+    // The factor 2 to cancel out the molecular mass of H2.
+  }
+  else {
+    fprintf(stderr, "uniform_grain_isrf_heating_rate can only be 0 or 1.\n");
+    exit(1);
+  }
 }
 
 //Calculation of gamma_isrf2.
