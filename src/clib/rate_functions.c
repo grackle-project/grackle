@@ -243,7 +243,7 @@ double k11_rate(double T, double units, chemistry_data *my_chemistry)
         } else {
             fprintf(stderr, "k11_rate flag set to unknown value. This must be either 1 \
                              or 2 but was set to %d \n", my_chemistry->h2_charge_exchange_rate);
-            exit(0);
+            exit(1);
         }
     } else {
         k11 = tiny;
@@ -319,7 +319,7 @@ double k13_rate(double T, double units, chemistry_data *my_chemistry)
         default:
             fprintf(stderr, "three_body_rate has been set to an unknown value: %d \n",
                 my_chemistry->three_body_rate);
-            exit(0);
+            exit(1);
     }
     return k13 / units;
 }
@@ -399,7 +399,7 @@ void _k13dd_rate(double T, int idt, double units, double *k13dd_results, chemist
     } else {
         //Print error message if value of idt is invalid and return failure.
         fprintf(stderr, "idt has been set to an unknown value. Expected 0 or 1, received %d \n", idt);
-        exit(0);
+        exit(1);
     }
 
     //Define log10 of the temperature for convenience in the following calculations.
@@ -593,7 +593,7 @@ double k22_rate(double T, double units, chemistry_data *my_chemistry)
         default:
             fprintf(stderr, "three_body_rate has been set to an unknown value: %d \n",
                 my_chemistry->three_body_rate);
-            exit(0);
+            exit(1);
     }
     return k22 / units;
 }
@@ -610,108 +610,151 @@ double k23_rate(double T, double units, chemistry_data *my_chemistry)
 //Calculation of k50 (HII + DI --> HI + DII)
 double k50_rate(double T, double units, chemistry_data *my_chemistry)
 {
-    if (my_chemistry->use_stancil_lepp_dalgarno_1998){
-        return 1.0e-9 * exp(-41.0 / T) / units;
-    } else {
-        //Fit taken from Savin (2002) which is valid for T < 2e5 K.
-        //We extrapolate for higher temperatures.
-        if (T <= 2.0e5) {
-            return (2.0e-10 * pow(T, 0.402) * exp(-3.71e1/T)
-                        - 3.31e-17 * pow(T, 1.48)) / units;
-        } else {
-            return 2.5e-8 * pow(T/2.0e5, 0.402) / units;
-        }
+  if (my_chemistry->hd_reaction_rates == 0) {
+    // Fit taken from Savin (2002) which is valid for T < 2e5 K.
+    // We extrapolate for higher temperatures.
+    if (T <= 2.0e5) {
+      return (2.0e-10 * pow(T, 0.402) * exp(-3.71e1/T)
+              - 3.31e-17 * pow(T, 1.48)) / units;
     }
+    else {
+      return 2.5e-8 * pow(T/2.0e5, 0.402) / units;
+    }
+  }
+  // Stancil, Lepp & Dalgarno (1998)
+  else if (my_chemistry->hd_reaction_rates == 1) {
+    return 1.0e-9 * exp(-41.0 / T) / units;
+  }
+  else {
+    fprintf(stderr, "hd_reaction_rates can only be 0 or 1.\n");
+    exit(1);
+  }
 }
         
 //Calculation of k51 (HI + DII --> HII + DI)
 double k51_rate(double T, double units, chemistry_data *my_chemistry)
 {   
-    if (my_chemistry->use_stancil_lepp_dalgarno_1998){
-        return 1.0e-9 / units;
-    } else {
-        // Fit taken from Savin (2002) which is valid for T < 2e5 K.
-        return (2.06e-10 * pow(T, 0.396) * exp(-3.30e1/T)
-                            + 2.03e-9 * pow(T, -0.332)) / units;
-    }
+  if (my_chemistry->hd_reaction_rates == 0) {
+      // Fit taken from Savin (2002) which is valid for T < 2e5 K.
+      return (2.06e-10 * pow(T, 0.396) * exp(-3.30e1/T)
+              + 2.03e-9 * pow(T, -0.332)) / units;
+  }
+  // Stancil, Lepp & Dalgarno (1998)
+  else if (my_chemistry->hd_reaction_rates == 1) {
+    return 1.0e-9 / units;
+  }
+  else {
+    fprintf(stderr, "hd_reaction_rates can only be 0 or 1.\n");
+    exit(1);
+  }
 }
 
 //Calculation of k52 (H2I + DII --> HDI + HII)
 double k52_rate(double T, double units, chemistry_data *my_chemistry)
 {
-    if (my_chemistry->use_stancil_lepp_dalgarno_1998){
-        return 2.1e-9 / units;
+  if (my_chemistry->hd_reaction_rates == 0) {
+    // Fits from Galli & Palla (2002) to calculations by Gerlich (1982).
+    // If T > 1e4 K use fixed value for k52 to avoid numerical issues with fitting function.
+    // In this limit this reaction is not expected to be important anyway.
+    if (T <= 1e4) {
+      return 1.0e-9 * (0.417 + 0.846 * log10(T) - 0.137 * pow(log10(T), 2)) / units;
     } else {
-        // Fits from Galli & Palla (2002) to calculations by Gerlich (1982).
-        // If T > 1e4 K use fixed value for k52 to avoid numerical issues with fitting function.
-        // In this limit this reaction is not expected to be important anyway.
-        if (T <= 1e4) {
-        return 1.0e-9 * (0.417 + 0.846 * log10(T) - 0.137 * pow(log10(T), 2)) / units;
-        } else {
-            return 1.609e-9 / units;
-        }
+      return 1.609e-9 / units;
     }
+  }
+  // Stancil, Lepp & Dalgarno (1998)
+  else if (my_chemistry->hd_reaction_rates == 1) {
+    return 2.1e-9 / units;
+  }
+  else {
+    fprintf(stderr, "hd_reaction_rates can only be 0 or 1.\n");
+    exit(1);
+  }
 }
 
 //Calculation of k53 (HDI + HII --> H2I + DII)
 double k53_rate(double T, double units, chemistry_data *my_chemistry)
 {
-    if (my_chemistry->use_stancil_lepp_dalgarno_1998){
-        return 1.0e-9 * exp(-464.0 / T) / units;
-    } else {
-        // Fits from Galli & Palla (2002) to calculations by Gerlich (1982).
-        return 1.1e-9 * exp(-4.88e2/T) / units;
-    }
+  if (my_chemistry->hd_reaction_rates == 0) {
+    // Fits from Galli & Palla (2002) to calculations by Gerlich (1982).
+    return 1.1e-9 * exp(-4.88e2/T) / units;
+  }
+  // Stancil, Lepp & Dalgarno (1998)
+  else if (my_chemistry->hd_reaction_rates == 1) {
+    return 1.0e-9 * exp(-464.0 / T) / units;
+  }
+  else {
+    fprintf(stderr, "hd_reaction_rates can only be 0 or 1.\n");
+    exit(1);
+  }
 }
 
 //Calculation of k54 (H2I + DI --> HDI + HI)
 double k54_rate(double T, double units, chemistry_data *my_chemistry)
 {
-    if (my_chemistry->use_stancil_lepp_dalgarno_1998){
-        return 7.5e-11 * exp(-3820.0 / T) / units;
+  if (my_chemistry->hd_reaction_rates == 0) {
+    // Fit from Clark et al (2011), which is based on data in Mielke et al (2003).
+    if (T <= 2.0e3) {
+      return pow(1.0e1, (-5.64737e1 + 5.88886 * log10(T)
+                         + 7.19692  * pow(log10(T), 2)
+                         + 2.25069  * pow(log10(T), 3)
+                         - 2.16903  * pow(log10(T), 4)
+                         + 3.17887e-1 * pow(log10(T), 5)));
     } else {
-        // Fit from Clark et al (2011), which is based on data in Mielke et al (2003).
-        if (T <= 2.0e3) {
-            return pow(1.0e1, (-5.64737e1 + 5.88886 * log10(T)
-                                + 7.19692  * pow(log10(T), 2)
-                                + 2.25069  * pow(log10(T), 3)
-                                - 2.16903  * pow(log10(T), 4)
-                                + 3.17887e-1 * pow(log10(T), 5)));
-        } else {
-            return 3.17e-10 * exp(-5.207e3 / T);
-        }
+      return 3.17e-10 * exp(-5.207e3 / T);
     }
+  }
+  // Stancil, Lepp & Dalgarno (1998)
+  else if (my_chemistry->hd_reaction_rates == 1) {
+    return 7.5e-11 * exp(-3820.0 / T) / units;
+    }
+  else {
+    fprintf(stderr, "hd_reaction_rates can only be 0 or 1.\n");
+    exit(1);
+  }
 }
 
 //Calculation of k55 (HDI + HI --> H2I + DI)
 double k55_rate(double T, double units, chemistry_data *my_chemistry)
 {
-    if (my_chemistry->use_stancil_lepp_dalgarno_1998){
-        return 7.5e-11 * exp(-4240.0 / T) / units;
+  if (my_chemistry->hd_reaction_rates == 0) {
+    // Fit from Galli & Palla (2002), which is based on Shavitt (1959).
+    // Fit has been modified at low temperature to avoid creating an
+    // anomalously large rate coefficient -- as suggested by Ripamonti (2007)
+    // and McGreer & Bryan (2008).
+    if (T <= 2.0e2) {
+      return 1.08e-22 / units;
     } else {
-        // Fit from Galli & Palla (2002), which is based on Shavitt (1959).
-        // Fit has been modified at low temperature to avoid creating an 
-        // anomalously large rate coefficient -- as suggested by Ripamonti (2007)
-        // and McGreer & Bryan (2008).
-        if (T <= 2.0e2) {
-            return 1.08e-22 / units;
-        } else {
-            return 5.25e-11 * exp(-4.43e3/T + 1.739e5/pow(T, 2)) / units;
-        }
+      return 5.25e-11 * exp(-4.43e3/T + 1.739e5/pow(T, 2)) / units;
     }
+  }
+  // Stancil, Lepp & Dalgarno (1998)
+  else if (my_chemistry->hd_reaction_rates == 1) {
+    return 7.5e-11 * exp(-4240.0 / T) / units;
+  }
+  else {
+    fprintf(stderr, "hd_reaction_rates can only be 0 or 1.\n");
+    exit(1);
+  }
 }
 
 //Calculation of k56 (DI + HM --> HDI + e)
 double k56_rate(double T, double units, chemistry_data *my_chemistry)
 {
-    if (my_chemistry->use_stancil_lepp_dalgarno_1998){
-        return 1.5e-9 * pow(T / 3.0e2, -0.1) / units;
-    } else {
-        // This is the same as DM + HI --> HDI + e 
-        // Measurements from Miller et al (2012) suggest there is no significant isotope effect
-        // for this reaction.
-        return k8_rate(T, units, my_chemistry);
-    }
+  if (my_chemistry->hd_reaction_rates == 0) {
+    // This is the same as DM + HI --> HDI + e
+    // Measurements from Miller et al (2012) suggest there is no significant isotope effect
+    // for this reaction.
+    return k8_rate(T, units, my_chemistry);
+  }
+  // Stancil, Lepp & Dalgarno (1998)
+  else if (my_chemistry->hd_reaction_rates == 1) {
+    return 1.5e-9 * pow(T / 3.0e2, -0.1) / units;
+  }
+  else {
+    fprintf(stderr, "hd_reaction_rates can only be 0 or 1.\n");
+    exit(1);
+  }
 }
         
 //Calculation of k57 (HI + HI --> HII + HI + e)
@@ -1112,7 +1155,7 @@ double GAHI_rate(double T, double units, chemistry_data *my_chemistry)
     } else {
         fprintf(stderr, "h2_h_cooling_rate must be 1 or 2, it has been set \
                 to %d \n", my_chemistry->h2_h_cooling_rate);
-        exit(0);
+        exit(1);
 
     }
 }

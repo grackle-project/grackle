@@ -253,8 +253,13 @@ typedef struct
   /* flag to add primordial continuum opacity */
   int use_primordial_continuum_opacity;
 
+  /* Alternative rates for HD-related reactions (k50-k56)
+   * 0: multiple sources (see rate_functions.c for details)
+   * 1: Stancil, Lepp & Dalgarno (1998)
+   */
+  int hd_reaction_rates;
+
   /* flags for alternative rate calculations */
-  int use_stancil_lepp_dalgarno_1998; //Alternative calculation scheme for k50-k56
   int use_omukai_gas_grain; //Alternative calculation scheme for gas_grain
   int use_uniform_grain_dist_gamma_isrf; //Alternative calculation scheme for gamma_isrf
 

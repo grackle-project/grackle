@@ -286,8 +286,13 @@ ENTRY(bremsstrahlung_cooling_rates, INT, 1) //Bremsstrahlung cooling
 /* flag to add primordial continuum opacity */
 ENTRY(use_primordial_continuum_opacity, INT, FALSE)
 
+/* Alternative rates for HD-related reactions (k50-k56)
+ * 0: multiple sources (see rate_functions.c for details)
+ * 1: Stancil, Lepp & Dalgarno (1998)
+ */
+ENTRY(hd_reaction_rates, INT, 0)
+
 /* flags for alternative rate calculations */
-ENTRY(use_stancil_lepp_dalgarno_1998, INT, FALSE) //Alternative calculation scheme for k50-k56
 ENTRY(use_omukai_gas_grain, INT, FALSE) //Alternative calculation scheme for gas_grain
 ENTRY(use_uniform_grain_dist_gamma_isrf, INT, FALSE) //Alternative calculation scheme for gamma_isrf
 
