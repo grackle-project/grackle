@@ -259,8 +259,13 @@ typedef struct
    */
   int hd_reaction_rates;
 
+  /* Alternative gas-grain heat transfer rate.
+   * 0: Hollenbach & McKee (1989)
+   * 1: Omukai (2000) - see rate_functions.c for more details
+   */
+  int gas_grain_cooling_rate;
+
   /* flags for alternative rate calculations */
-  int use_omukai_gas_grain; //Alternative calculation scheme for gas_grain
   int use_uniform_grain_dist_gamma_isrf; //Alternative calculation scheme for gamma_isrf
 
   /* maximum number of subcycle iterations for solve_chemistry */

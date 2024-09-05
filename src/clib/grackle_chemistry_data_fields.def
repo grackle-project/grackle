@@ -292,8 +292,13 @@ ENTRY(use_primordial_continuum_opacity, INT, FALSE)
  */
 ENTRY(hd_reaction_rates, INT, 0)
 
+/* Alternative gas-grain heat transfer rate.
+ * 0: Hollenbach & McKee (1989)
+ * 1: Omukai (2000) - see rate_functions.c for more details
+ */
+ENTRY(gas_grain_cooling_rate, INT, 0)
+
 /* flags for alternative rate calculations */
-ENTRY(use_omukai_gas_grain, INT, FALSE) //Alternative calculation scheme for gas_grain
 ENTRY(use_uniform_grain_dist_gamma_isrf, INT, FALSE) //Alternative calculation scheme for gamma_isrf
 
 /* maximum number of subcycle iterations for solve_chemistry */
