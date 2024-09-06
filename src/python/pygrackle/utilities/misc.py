@@ -11,7 +11,11 @@
 # software.
 ########################################################################
 
-from numpy import VisibleDeprecationWarning
+try:
+    from numpy import VisibleDeprecationWarning
+except ImportError:
+    from numpy.exceptions import VisibleDeprecationWarning
+
 import os
 import warnings
 
