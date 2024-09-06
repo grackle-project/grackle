@@ -100,8 +100,14 @@ commands:
               make install
               cd ../../ # go back to the root level
 
-              if [ << parameters.tag >> == 'gold-standard-v1' ]; then
-                # this is the old way to perform the python install
+              if [ ! -f ./pyproject.toml ]; then
+                # this is the old way to install pygrackle. 
+                # - We need to support this as long as the most recent gold
+                #   standard tags a version of the repository from before we
+                #   transitioned away from setuptools
+                # - previously, we checked the value held by parameters.tag,
+                #   but that was less robust than the current solution
+
                 cd src/python
                 pip install -e .[dev]
               else
