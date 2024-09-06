@@ -15,7 +15,13 @@ if grackle_build_dir == "": # traditional in-source build
 else: # CMAKE-based out-of-source build
     TRADITIONAL_IN_SOURCE_BUILD_MACRO = '0'
     autogen_public_hdr_dir = f"{grackle_build_dir}/generated_public_headers"
-    library_dir = f"{grackle_build_dir}/grackle/lib"
+    if os.path.isdir(f"{grackle_build_dir}/grackle/lib"):
+        library_dir = f"{grackle_build_dir}/grackle/lib"
+    elif os.path.isdir(f"{grackle_build_dir}/grackle/lib64"):
+        # preferred on Red Hat related Linux distributions (like Fedora)
+        library_dir = f"{grackle_build_dir}/grackle/lib64"
+    else:
+        raise RuntimeError("could not find the cmake-based grackle build dir")
 
 if not os.path.isfile(f'{library_dir}/libgrackle.so'):
     _message = f"""\
