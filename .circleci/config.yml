@@ -282,7 +282,7 @@ jobs:
       - install-grackle:
           omp: 'false'
           classic_build: 'false'
-          tag: gold-standard-v1
+          tag: gold-standard-v2
 
       - run-tests:
           omp: 'false'
