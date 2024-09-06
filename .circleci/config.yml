@@ -122,8 +122,13 @@ commands:
                     -Bbuild
               cmake --build build
               
-              if [ << parameters.tag >> == 'gold-standard-v1' ]; then
-                # this is the old way to perform the python install
+              if [ ! -f ./pyproject.toml ]; then
+                # this is the old way to install pygrackle. 
+                # - We need to support this as long as the most recent gold
+                #   standard tags a version of the repository from before we
+                #   transitioned away from setuptools
+                # - previously, we checked the value held by parameters.tag,
+                #   but that was less robust than the current solution
 
                 # we DO need a full installation of the c-library
                 cmake --install build 
@@ -324,7 +329,7 @@ jobs:
       - install-dependencies
       - download-test-data
       #- install-standalone-pygrackle:
-      #    tag: gold-standard-v1
+      #    tag: gold-standard-v2
       #- run-tests:
       #    omp: 'false'
       #    build_kind: 'standalone-pygrackle'
