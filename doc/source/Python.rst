@@ -39,7 +39,7 @@ Currently, the only way to get Pygrackle is to build it from source.
 There are 3 ways to build Pygrackle:
 
  1. As a standalone, self-contained module.
-    The build-command creates a fresh build of the Grackle library and packages it with the Pygrackle module.
+    The build command creates a fresh build of the Grackle library and packages it with the Pygrackle module.
     **(This is the recommended approach)**
 
  2. As a module that links to an external copy of Grackle that was compiled with the :ref:`Classic build system <classic_build>`.
@@ -47,7 +47,7 @@ There are 3 ways to build Pygrackle:
 
  3. As a module that links to an external copy of Grackle that was created with the :ref:`CMake build system <cmake_build>`.
 
-Currently, Pygrackle should be used with Grackle-builds where OpenMP is disabled.
+Currently, Pygrackle should be used with Grackle builds where OpenMP is disabled.
 
 .. warning::
 
@@ -60,7 +60,7 @@ Currently, Pygrackle should be used with Grackle-builds where OpenMP is disabled
 1. Build Pygrackle as a standalone module (recommended)
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-To install Pygrackle, you just need to invoke the following from the root-directory.
+To install Pygrackle, you just need to invoke the following from the root directory.
 
 .. code-block:: shell-session
 
@@ -71,9 +71,9 @@ If you must pass extra compiler flags to all invocations of the C or Fortran com
 
 If you encounter any compilation problems, you can also link Pygrackle against a version of the Grackle library that you already built.
 
-(In the event that you are writing an external python-package that depends on directly linking to the underlying Grackle library, be aware that the underlying organization of files in the resulting pacakge may change)
+(In the event that you are writing an external python package that depends on directly linking to the underlying Grackle library, be aware that the underlying organization of files in the resulting package may change)
 
-2. Link to external Grackle library (built with Classic build-system)
+2. Link to external Grackle library (built with Classic build system)
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 *Prerequisite:* This scenario assumes that you have already built Grackle with the :ref:`Class build system <classic_build>`.
@@ -88,23 +88,23 @@ Specifically, that variable must be configured as ``PYGRACKLE_LEGACY_LINK=classi
 .. note::
 
    We explicitly try to maintain the legacy behavior of the older setuptools-based python build-system.
-   This means that we use the copy of the Grackle shared library from the build-directory during linking (i.e. Pygrackle will happily build even if Grackle isn't fully installed).
+   This means that we use the copy of the Grackle shared library from the build directory during linking (i.e. Pygrackle will happily build even if Grackle isn't fully installed).
    
    We then **ASSUME** that a copy of the Grackle shared library will be in a location known to the system, when you try to run Pygrackle.
    This could be a standard system location for libraries (on some systems you may need to invoke ``ldconfig`` after installation).
    This could also be a location specified by the relevant variable; ``LD_LIBRARY_PATH`` if you're on Linux (or most unix-like systems) or ``DYLD_LIBRARY_PATH`` (if you're on macOS)
 
-3. Link to external Grackle library (built with the CMake build-system)
+3. Link to external Grackle library (built with the CMake build system)
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 *Prerequisite:*  This scenario assumes that you have already built (and possibly installed) Grackle with the :ref:`CMake build system <cmake_build>`.
-Specifically, that cmake-build must have compiled Grackle as a shared library (the primary way to ensure this happens is by passing the ``-DBUILD_SHARED_LIBS=ON`` flag when using ``cmake`` to configure the build).
+Specifically, that cmake build must have compiled Grackle as a shared library (the primary way to ensure this happens is by passing the ``-DBUILD_SHARED_LIBS=ON`` flag when using ``cmake`` to configure the build).
 
-To build Pygrackle in this way, you must either initialize either the ``Grackle_DIR`` environment variable or the ``Grackle_ROOT`` environment variable with the relvant path for your prebuilt Grackle library.
-This path can either point to cmake-build directory (where Grackle is built) OR an installation directory.
+To build Pygrackle in this way, you must initialize either the ``Grackle_DIR`` environment variable or the ``Grackle_ROOT`` environment variable with the relevant path for your prebuilt Grackle library.
+This path can either point to cmake build directory (where Grackle is built) OR an installation directory.
 
 We illustrates how to install Pygrackle under this approach down below.
-For the sake of example, we assume that we previously used ``cmake`` to build (and compile) Grackle as a shared library in a build-directory called **~/grackle/build**.
+For the sake of example, we assume that we previously used ``cmake`` to build (and compile) Grackle as a shared library in a build directory called **~/grackle/build**.
 
 .. tabs::
 
@@ -113,7 +113,7 @@ For the sake of example, we assume that we previously used ``cmake`` to build (a
       The default command to build Pygrackle against a CMake-built is shown below.
       **By default, this approach assumes that the Grackle shared library will never move.**
       This means that issues will occur if you delete or move the Grackle library.
-      (This is a necessary assumption in order to support build-directories).
+      (This is a necessary assumption in order to support build directories).
 
       .. code-block:: shell-session
 
@@ -121,11 +121,11 @@ For the sake of example, we assume that we previously used ``cmake`` to build (a
 
    .. tab:: Legacy Linking
 
-      It's also possible to achieve linking behavior more similar to the case where we build Pygrackle against an external Grackle-library that was built with the classic build-system (this is consistent with the behavior implemented by Pygrackle's former ``setuptools`` build-system).
+      It's also possible to achieve linking behavior more similar to the case where we build Pygrackle against an external Grackle library that was built with the classic build system (this is consistent with the behavior implemented by Pygrackle's former ``setuptools`` build system).
       Under this scenario, no relationship is assumed between the path to the Grackle shared library that is used while building Pygrackle and the path that is used while running Pygrackle.
       Instead, we assume that the Grackle shared library will be at an arbitrary location known to the system at runtime (e.g. either it's in a standard location that the OS knows to check or you use ``LD_LIBRARY_PATH``/``DYLD_LIBRARY_PATH``.
 
-      To easily invoke this linking-behavior, you can either pass an additional argument to ``pip`` or define an environment variable.
+      To easily invoke this linking behavior, you can either pass an additional argument to ``pip`` or define an environment variable.
 
        .. tabs::
 
