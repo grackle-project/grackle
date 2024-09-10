@@ -165,10 +165,14 @@ def test_code_examples(example):
                 all_results = json.load(f)
 
             comp_results = all_results[example]
+            failures = 0
+            err_msg = f"{example}:\n"
             for field in comp_results:
-                err_msg = f"In {example}: mismatch for {field} - " + \
-                  f"old: {comp_results[field]}, new: {results[field]}"
-                assert comp_results[field] == results[field], err_msg
+                if comp_results[field] == results[field]:
+                    continue
+                failures += 1
+                err_msg += f"\t{field} - old: {comp_results[field]}, new: {results[field]}\n"
+            assert failures == 0, err_msg
 
     command = f"{make_command} clean"
     run_command(command, examples_dir, env, timeout=60)
