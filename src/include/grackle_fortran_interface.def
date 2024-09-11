@@ -75,6 +75,7 @@ c     This is the fortran definition of grackle_field_data
          TYPE(C_PTR) :: RT_H2_dissociation_rate
 
          TYPE(C_PTR) :: H2_self_shielding_length
+         TYPE(C_PTR) :: H2_custom_shielding_factor
 
          TYPE(C_PTR) :: isrf_habing
       END TYPE
