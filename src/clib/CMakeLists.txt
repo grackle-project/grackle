@@ -97,40 +97,8 @@ add_library(Grackle_Grackle
   set_default_chemistry_parameters.c
   solve_chemistry.c
   update_UVbackground_rates.c
-  calculate_cooling_time.c
-  calculate_dust_temperature.c
-  calculate_gamma.c
-  calculate_pressure.c
-  calculate_temperature.c
-  dynamic_api.c
-  grackle_units.c
-  index_helper.c
-  initialize_chemistry_data.c
-  initialize_cloudy_data.c
-  initialize_rates.c
-  initialize_UVbackground_data.c
-  rate_functions.c
-  set_default_chemistry_parameters.c
-  solve_chemistry.c
-  update_UVbackground_rates.c
-  calculate_cooling_time.c
-  calculate_dust_temperature.c
-  calculate_gamma.c
-  calculate_pressure.c
-  calculate_temperature.c
-  dynamic_api.c
-  grackle_units.c
-  index_helper.c
-  initialize_chemistry_data.c
-  initialize_cloudy_data.c
   initialize_dust_yields.c
   initialize_metal_chemistry_rates.c
-  initialize_rates.c
-  initialize_UVbackground_data.c
-  rate_functions.c
-  set_default_chemistry_parameters.c
-  solve_chemistry.c
-  update_UVbackground_rates.c
   utils.c
 
   # auto-generated C source files
