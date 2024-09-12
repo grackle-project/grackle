@@ -13,16 +13,19 @@ def get_last_line(path):
 def query_version():
     return get_last_line(os.path.join(os.path.dirname(__file__), '../VERSION'))
 
-def _call(command, **kwargs):
-    rslt = subprocess.check_output(command, shell = True, **kwargs)
+def _call(command, fallback_result=None, **kwargs):
+    try:
+        rslt = subprocess.check_output(command, shell=True, **kwargs)
+    except (subprocess.CalledProcessError, OSError):
+        return fallback_result
     return rslt.decode().rstrip()  # return as str & remove any trailing '\n'
 
 def query_git(command):
-    # note: we explicitly redirect stderr since `&>` is not portable 
-    git_is_installed = _call('command -v git > /dev/null 2>&1 && '
-                             'git status > /dev/null 2>&1 && '
-                             'echo "1"') == "1"
-    return _call(command) if git_is_installed else "N/A"
+    # historically, we queried whether git exists before executing a command.
+    # However, on certain systems this doesn't seem to be adequate. Instead, we
+    # just try to execute the command. If it fails, we fall back to "N/A"
+    return _call(command, fallback_result="N/A")
+
 
 choices = {"show-version" : query_version,
            "git-branch" : lambda: query_git("git rev-parse --abbrev-ref HEAD"),
