@@ -1,7 +1,7 @@
 !=======================================================================
 !////////////////////  SUBROUTINE SCALE_FIELDS_G  \\\\\\\\\\\\\\\\\\\\\\
 
-      subroutine my_scale_fields_g(
+      subroutine scale_fields_g(
      &     ispecies, imetal, idustfield, imchem,
      &     imabund, idspecies, immulti, igrgr, idsub, factor,
      &     is, ie, js, je, ks, ke, in, jn, kn,
