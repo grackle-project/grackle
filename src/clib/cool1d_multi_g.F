@@ -1072,17 +1072,17 @@ c  new (correct) way: (april 4, 2007)
 
 !     Iteration mask for metal-rich cells
 
-         do i = is+1, ie+1
-            itmask_metal(i) = .false.
+      do i = is+1, ie+1
+         itmask_metal(i) = .false.
+      enddo
+      if (imetal .eq. 1) then
+         do i = is+1, ie + 1
+            itmask_metal(i) = itmask(i)
+            if (metal(i,j,k) .lt. 1.e-9_DKIND * d(i,j,k)) then
+               itmask_metal(i) = .false.
+            endif
          enddo
-         if (imetal .eq. 1) then
-             do i = is+1, ie + 1
-                itmask_metal(i) = itmask(i)
-                if (metal(i,j,k) .lt. 1.e-9_DKIND * d(i,j,k)) then
-                   itmask_metal(i) = .false.
-                endif
-             enddo
-         endif
+      endif
 
 !     Compute grain size increment
 
