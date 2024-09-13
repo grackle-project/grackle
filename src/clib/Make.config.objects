@@ -34,6 +34,7 @@ OBJS_CONFIG_LIB = \
         initialize_rates.lo \
         initialize_UVbackground_data.lo \
         interpolators_g.lo \
+        scale_fields_g.lo \
         set_default_chemistry_parameters.lo \
         solve_chemistry.lo \
         solve_rate_cool_g.lo \
