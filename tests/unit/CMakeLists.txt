@@ -1,0 +1,11 @@
+add_executable(runInterpolationTests test_unit_interpolators_g.cpp)
+target_link_libraries(runInterpolationTests Grackle_Grackle gtest gtest_main hdf5)
+target_include_directories(runInterpolationTests PRIVATE ${PROJECT_SOURCE_DIR}/src/clib)
+
+add_test(NAME Interpolate1D COMMAND runInterpolationTests)
+add_test(NAME Interpolate2D COMMAND runInterpolationTests)
+add_test(NAME Interpolate3D COMMAND runInterpolationTests)
+add_test(NAME Interpolate3Dz COMMAND runInterpolationTests)
+add_test(NAME Interpolate2Df3D COMMAND runInterpolationTests)
+add_test(NAME Interpolate4D COMMAND runInterpolationTests)
+add_test(NAME Interpolate5D COMMAND runInterpolationTests)
