@@ -11,15 +11,14 @@ project(${SKBUILD_PROJECT_NAME} LANGUAGES C)
 # find required python components
 find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
 
-# deal with dependency on Grackle and define pygrackle_build_kind variable
-set(traditional_in_source_build 0) # <- will be overwritten in certain cases
+# deal with dependency on Grackle and define _PYGRACKLE_CONSUME_MODE
 if ("$ENV{PYGRACKLE_LEGACY_LINK}" STREQUAL "classic")
-
   # match old setuptools-approach for the builds with the classic build-system
   # -> explicitly match legacy behavior: link against library in local build &
   #    HOPE that the library will be installed when we need it
   # -> more idiomatic alternative: provide cmake with full library path
-  set(traditional_in_source_build 1)
+  set(_PYGRACKLE_CONSUME_MODE "ExternalClassic")
+
   add_library(Grackle::Grackle INTERFACE IMPORTED)
   target_include_directories(Grackle::Grackle
     INTERFACE ${GRACKLE_REPO_ROOT}/src/include ${GRACKLE_REPO_ROOT}/src/clib/autogen)
@@ -45,9 +44,9 @@ elseif(DEFINED ENV{Grackle_ROOT} OR DEFINED ENV{Grackle_DIR})
   # -> ideally, would only modify the RPATH if it isn't in a standard system
   #    search path, but that is tricky to check. For now, the caller should set
   #    CMAKE_SKIP_INSTALL_RPATH=OFF in that scenario
-  set(traditional_in_source_build 0 PARENT_SCOPE)
-  find_package(Grackle COMPONENTS shared REQUIRED)
+  set(_PYGRACKLE_CONSUME_MODE "ExternalCMake")
 
+  find_package(Grackle COMPONENTS shared REQUIRED)
   if ((NOT CMAKE_SKIP_RPATH) AND
       (NOT DEFINED CMAKE_BUILD_RPATH) AND
       (NOT DEFINED CMAKE_BUILD_RPATH_USE_ORIGIN) AND
@@ -64,7 +63,9 @@ elseif(DEFINED ENV{Grackle_ROOT} OR DEFINED ENV{Grackle_DIR})
 else()
   # standalone pygrackle-build (Grackle is freshly compiled as a shared lib
   # and packaged as part of pygrackle)
-  # -> this is the most reliable way to do it get pygrackle
+  # -> this is the most reliable/robust way to install pygrackle
+  set(_PYGRACKLE_CONSUME_MODE "Embedded")
+
   enable_language(Fortran) # <- needed for embedded CMake builds
   set(BUILD_SHARED_LIBS ON)
   add_subdirectory(${GRACKLE_REPO_ROOT} grackle_sub-build-dir)
