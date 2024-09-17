@@ -21,8 +21,12 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "pygrackle"
-dynamic = ["version"]
 description = "A wrapper for the Grackle chemistry library"
+# A simpler project could infer used to infer the version number from git:
+#    https://scikit-build-core.readthedocs.io/en/latest/configuration.html#dynamic-metadata
+# but pygrackle can't (currently) do this since it lives in a "monorepo"
+#    https://github.com/pypa/setuptools_scm/issues/1056
+version = "1.1.dev0"
 classifiers=[
   "Development Status :: 5 - Production/Stable",
   "Environment :: Console",
@@ -89,20 +93,17 @@ minimum-version = "build-system.requires"
 
 # Files to exclude from the SDist (even if they're included by default).
 # Supports gitignore syntax.
-sdist.exclude = [".circleci"]
+sdist.exclude = [".circleci",".readthedocs.yml"]
 
 # A list of packages to auto-copy into the wheel.
 wheel.packages = ["./src/python/pygrackle"]
 
 # A set of patterns to exclude from the wheel. This is additive to the SDist
 # exclude patterns.
-# -> Per the discussion in gh-220, we have decided not to package pyd files
-#    (at least for right now)
-wheel.exclude = ["**.pyd"]
-
-[tool.scikit-build.metadata.version]
-# using the scikit-build-core's integrated regex plugin to extract version
-provider = "scikit_build_core.metadata.regex"
-input = "src/python/pygrackle/_version.py"
-#the following regex-expression is based on the built-in default
-regex = '''(__version__|VERSION)(?: ?\: ?str)? *= *(['"])v?(?P<value>.+?)\2'''
+wheel.exclude = [
+    # Per the discussion in gh-220, we have decided not to package pyd files
+    # (at least for right now)
+    "**.pyd",
+    # No need to package template files
+    "**.py.in"
+]

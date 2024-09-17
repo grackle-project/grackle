@@ -83,6 +83,13 @@ endif()
 # ------------------
 # -> we build a shared-library represented by the grackle_wrapper library
 
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/pygrackle/__config__.py.in
+  ${CMAKE_CURRENT_BINARY_DIR}/__config__.py @ONLY
+)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/__config__.py
+  DESTINATION ${SKBUILD_PROJECT_NAME})
+  
+
 add_custom_command(
   OUTPUT grackle_wrapper.c
   COMMENT
