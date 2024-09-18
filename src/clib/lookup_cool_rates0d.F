@@ -56,7 +56,7 @@
      &               dom, coolunit, tbase1, xbase1, dx_cgs, c_ljeans,
      &               kphHI, kphHeI, kphHeII, kdissH2I, 
      &               photogamma, xH2shield, chunit, itmask
-     &             , imchem, igrgr, ipcont
+     &             , imchem, igrgr, ipcont, tmcool
      &             , k125a, k129a, k130a, k131a, k132a
      &             , k133a, k134a, k135a, k136a, k137a
      &             , k148a, k149a, k150a, k151a, k152a
@@ -145,7 +145,8 @@ c -------------------------------------------------------------------
 
       real*8  dx_cgs, aye, temstart, temend, gamma,
      &        utim, uxyz, uaye, urho, utem, fh, z_solar, 
-     &        fgr, dtemstart, dtemend, clEleFra, Tfloor_scalar
+     &        fgr, dtemstart, dtemend, clEleFra, Tfloor_scalar,
+     &        tmcool
 
 !  Density, energy and velocity fields fields
       integer, parameter :: i_eng = 52
@@ -547,7 +548,7 @@ c -------------------------------------------------------------------
      &                iVheat, iMheat, Vheat, Mheat,
      &                iTfloor, Tfloor_scalar, Tfloor,
      &                iisrffield, isrf_habing, itmask
-     &              , imchem, igrgr, ipcont
+     &              , imchem, igrgr, ipcont, tmcool
      &              , DM, HDII, HeHII
      &              , CI, CII, CO, CO2
      &              , OI, OH, H2O, O2

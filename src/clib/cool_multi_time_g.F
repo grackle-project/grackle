@@ -33,7 +33,7 @@
      &                metDataSize, metCooling, metHeating, clnew,
      &                iVheat, iMheat, Vheat, Mheat,
      &                iTfloor, Tfloor_scalar, Tfloor
-     &              , imchem, igrgr, ipcont
+     &              , imchem, igrgr, ipcont, tmcool
      &              , DM, HDII, HeHII
      &              , CI, CII, CO, CO2
      &              , OI, OH, H2O, O2
@@ -131,7 +131,8 @@
 
       real*8  aye, temstart, temend,
      &        utem, uxyz, uaye, urho, utim,
-     &        gamma, fh, z_solar, fgr, clEleFra, Tfloor_scalar
+     &        gamma, fh, z_solar, fgr, clEleFra, Tfloor_scalar,
+     &        tmcool
       R_PREC  d(in,jn,kn),   e(in,jn,kn),
      &        u(in,jn,kn),   v(in,jn,kn),    w(in,jn,kn),
      &        de(in,jn,kn),  HI(in,jn,kn),   HII(in,jn,kn),
@@ -391,7 +392,7 @@
      &                iVheat, iMheat, Vheat, Mheat,
      &                iTfloor, Tfloor_scalar, Tfloor,
      &                iisrffield, isrf_habing, itmask
-     &              , imchem, igrgr, ipcont
+     &              , imchem, igrgr, ipcont, tmcool
      &              , DM, HDII, HeHII
      &              , CI, CII, CO, CO2
      &              , OI, OH, H2O, O2

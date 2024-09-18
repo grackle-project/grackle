@@ -45,7 +45,7 @@
      &                iTfloor, Tfloor_scalar, Tfloor,
      &                iisrffield, isrf_habing,
      &                itmask
-     &              , imchem, igrgr, ipcont
+     &              , imchem, igrgr, ipcont, tmcool
      &              , DM, HDII, HeHII
      &              , CI, CII, CO, CO2
      &              , OI, OH, H2O, O2
@@ -145,7 +145,7 @@
 
       real*8  aye, temstart, temend, z_solar, fgr,
      &        utem, uxyz, uaye, urho, utim,
-     &        gamma, fh, clEleFra, Tfloor_scalar
+     &        gamma, fh, clEleFra, Tfloor_scalar, tmcool
       R_PREC  d(in,jn,kn),    e(in,jn,kn),
      &        u(in,jn,kn),    v(in,jn,kn),     w(in,jn,kn),
      &        de(in,jn,kn),   HI(in,jn,kn),   HII(in,jn,kn),
@@ -359,8 +359,7 @@
 !  Iteration mask
 
       logical itmask(in), anydust, interp
-      logical itmask_line(in), itmask_tmp(in)
-      logical itmask_metal(in)
+      logical itmask_metal(in), itmask_tab(in)
 !!#define CALCULATE_TGAS_SELF_CONSISTENTLY
 #ifdef CALCULATE_TGAS_SELF_CONSISTENTLY
       integer iter_tgas
@@ -1835,7 +1834,16 @@ c  new (correct) way: (april 4, 2007)
 
       if (imcool .eq. 1) then
 
-      if (imchem .eq. 0) then
+!     Determine if the temperature is above the threshold to do tabulated cooling.
+         do i = is+1, ie+1
+            itmask_tab(i) = itmask_metal(i)
+            if ( itmask_tab(i) ) then
+               if (( tmcool .gt. 0.0d0 ) .and.
+     &             ( tgas(i) .lt. tmcool )) then
+                  itmask_tab(i) = .false.
+               endif
+            endif
+         enddo
 
          if (clnew .eq. 1) then
 
@@ -1847,7 +1855,7 @@ c  new (correct) way: (april 4, 2007)
      &           metGridRank, metGridDim,
      &           metPar1, metPar2, metPar3,
      &           metDataSize, metCooling, metHeating,
-     &           itmask)
+     &           itmask_tab)
 
          else
 
@@ -1859,11 +1867,11 @@ c  new (correct) way: (april 4, 2007)
      &           clEleFra, metGridRank, metGridDim,
      &           metPar1, metPar2, metPar3, metPar4, metPar5,
      &           metDataSize, metCooling, metHeating, 
-     &           itmask)
+     &           itmask_tab)
 
          endif
 
-      else ! imchem
+      if (imchem .eq. 1) then
 
 !        --- C/O fine-structure, metal molecular rotational cooling for low temperatures ---
       

@@ -47,7 +47,7 @@
      &                metDataSize, metCooling, metHeating, clnew,
      &                iVheat, iMheat, Vheat, Mheat,
      &                iTfloor, Tfloor_scalar, Tfloor,
-     &                imchem, igrgr, ipcont
+     &                imchem, igrgr, ipcont, tmcool
      &              , DM, HDII, HeHII
      &              , CI, CII, CO, CO2
      &              , OI, OH, H2O, O2
@@ -257,7 +257,8 @@
 
       real*8  dx, dt, aye, temstart, temend, gamma,
      &        utim, uxyz, uaye, urho, utem, fh, dtoh, z_solar, 
-     &        fgr, dtemstart, dtemend, clEleFra, Tfloor_scalar
+     &        fgr, dtemstart, dtemend, clEleFra, Tfloor_scalar,
+     &        tmcool
 
 !  Density, energy and velocity fields fields
 
@@ -841,7 +842,7 @@ C    &   , coolunit*dom/mh ! = vbase1**2 / tbase1
      &                iVheat, iMheat, Vheat, Mheat,
      &                iTfloor, Tfloor_scalar, Tfloor,
      &                iisrffield, isrf_habing, itmask
-     &              , imchem, igrgr, ipcont
+     &              , imchem, igrgr, ipcont, tmcool
      &              , DM, HDII, HeHII
      &              , CI, CII, CO, CO2
      &              , OI, OH, H2O, O2
@@ -1625,7 +1626,7 @@ c              allocate(dumvec(nsp))
      &   dom, coolunit, tbase1, xbase1, dx_cgs, c_ljeans,
      &   kphHI(i,j,k), kphHeI(i,j,k), kphHeII(i,j,k), kdissH2I(i,j,k), 
      &   photogamma(i,j,k), xH2shield(i,j,k), chunit, itmask_nr(i)
-     & , imchem, igrgr, ipcont
+     & , imchem, igrgr, ipcont, tmcool
      & , k125a, k129a, k130a, k131a, k132a
      & , k133a, k134a, k135a, k136a, k137a
      & , k148a, k149a, k150a, k151a, k152a
@@ -1760,7 +1761,7 @@ c              allocate(dumvec(nsp))
      &   dom, coolunit, tbase1, xbase1, dx_cgs, c_ljeans,
      &   kphHI(i,j,k), kphHeI(i,j,k), kphHeII(i,j,k), kdissH2I(i,j,k), 
      &   photogamma(i,j,k), xH2shield(i,j,k), chunit, itmask_nr(i)
-     & , imchem, igrgr, ipcont
+     & , imchem, igrgr, ipcont, tmcool
      & , k125a, k129a, k130a, k131a, k132a
      & , k133a, k134a, k135a, k136a, k137a
      & , k148a, k149a, k150a, k151a, k152a
