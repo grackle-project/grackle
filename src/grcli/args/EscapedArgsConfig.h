@@ -30,7 +30,7 @@ struct EscapedArgsSpec {
       }
 
       if (escaped == nullptr) {
-        std::fprintf(stderr, "the %s arg is missing an option\n");
+        std::fprintf(stderr, "the %s arg is missing an option\n", leading_arg);
         std::exit(1);
       }
       fn(escaped);

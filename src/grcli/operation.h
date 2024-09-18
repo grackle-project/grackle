@@ -24,4 +24,10 @@ struct OperationSpec {
 /// * Otherwise, this returns false
 bool try_parse_op_spec(const char* arg, std::optional<OperationSpec>& op_spec);
 
+/// produce a string representation of the operation
+///
+/// In the event that there is a timestep associated with the operation, it may
+/// not be perfectly represented
+std::string string_repr(const OperationSpec& spec);
+
 #endif /* GRCLI_OPERATION_H */

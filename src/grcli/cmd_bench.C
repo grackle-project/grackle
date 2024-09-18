@@ -84,7 +84,7 @@
   } else {
 
     auto my_test = [&driver](benchmark::State& st) { driver(st); };
-    benchmark::RegisterBenchmark("scenario", my_test);
+    benchmark::RegisterBenchmark(string_repr(op_spec.value()), my_test);
 
     // construct argv and argc
     // ToDo: there is probably a smarter way to do this without copying the
