@@ -1414,7 +1414,7 @@ c  new (correct) way: (april 4, 2007)
                endif
 
                if (idspecies .gt. 1) then
-                  Ldst(i) = - (
+                  Ldst(i) = Ldst(i) - (
      &                gasSiM     (i) * (tgas(i) - tSiM     (i))
      &              + gasFeM     (i) * (tgas(i) - tFeM     (i))
      &              + gasMg2SiO4 (i) * (tgas(i) - tMg2SiO4 (i))
@@ -1427,7 +1427,7 @@ c  new (correct) way: (april 4, 2007)
                endif
 
                if (idspecies .gt. 2) then
-                  Ldst(i) = - (
+                  Ldst(i) = Ldst(i) - (
      &                gasreforg  (i) * (tgas(i) - treforg  (i))
      &              + gasvolorg  (i) * (tgas(i) - tvolorg  (i))
      &              + gasH2Oice  (i) * (tgas(i) - tH2Oice  (i))
