@@ -1,5 +1,77 @@
 .. include:: ../../CONTRIBUTING.rst
 
+Style Formatting
+----------------
+All C/C++/python code contributed in new files will be formatted by automated tools (for the time being, code in older files will not be formatted to avoid merge-conflicts).
+
+The formatters are run by the `pre-commit.ci <https://pre-commit.ci/>`__ continuous integration tool.
+This form of continuous integration is built on top of the `pre-commit <https://pre-commit.com/>`__ software, which is framework responsible for calling individual linting tools.
+
+Below, we briefly discuss how to run the linters locally.
+Then we breifly describe some of the linters managed by precomit
+
+Running the Checks Locally
+++++++++++++++++++++++++++
+
+To run the checks locally, we strongly encourage you to install the pre-commit software.
+This software is written in python and can be installed with ``pip``.
+The `installation instructions <https://pre-commit.com/#installation>`__ also mention an alternative approach where you can run download and run pre-commit without fully installing it (as a "zipapp").
+
+Once you have installed ``pre-commit``, you can enforce the checks by invoking the following command from the root of your Grackle repository:
+
+.. code-block:: shell-session
+
+   ~/grackle $ pre-commit run --all-files
+
+The above command does 2 things:
+
+ 1. First, it ensure that local copies of the correct versions of the required enforcement tools are installed.
+    These local copies are only accessed by pre-commit and won't affect other parts of your system.
+    These copies are also cached (so that the tools don't need to be reinstalled on every invocation).
+
+ 2. Then the command applies the enforcement tools on the files in your repository (tool-specific exclusions, like files listed ``.clang-format-ignore`` are obviously respected).
+
+.. caution::
+
+   The above command will modify the files in your repository (after all, that's the whole point of the command).
+   The pre-commit software does not provide a way to reverse this change.
+
+``clang-format`` (C/C++ Formatting)
++++++++++++++++++++++++++++++++++++
+
+C/C++ code is formatted by `clang-format <https://releases.llvm.org/18.1.8/tools/clang/docs/ClangFormat.html>`__.
+
+ * At this time of writing, ``clang-format`` enforces formatting rules that are largely derived from the google-style (with a handful of tweaks that derive from the llvm style guide).
+   Details about the enforced style are configured in the ``.clang-format`` file at the root of the Grackle repository.
+
+ * files that are formatted this way will generally have far fewer merge conflicts.
+
+ * Sometimes, you may need to disable clang-format to disable formatting for individual pieces of code.
+   You can do that with a pair of special comments, `described here <https://releases.llvm.org/18.1.8/tools/clang/docs/ClangFormatStyleOptions.html#disabling-formatting-on-a-piece-of-code>`__.
+
+ * **All** newly introduced C/C++ files will be formatted by ``clang-format``.
+   With that said, we have temporarily disabled clang-format from applying to most older files (listed in ``.clang-format-ignore``, that existed before we adopted clang-format in order to minimize merge conflicts (we plan to enable ``clang-format`` for these files in the future).
+   We plan to enable formatting on these files in the future.
+
+ * **NOTE:** Trying to manually learn all of the style-rules is an exercise in frustration.
+   Instead, we recommend that you rely upon clang-format.
+
+.. important::
+
+   The ``clang-format`` version number is tied to the version number of the entire LLVM project, which has a fairly rapid release cadence and  clang-format is **NOT** forward or backwards compatible.
+   If you want to manually install and invoke clang-format on your machine (outside of the pre-commit framework), you **NEED** to make sure that you use the exact same version of clang-format that is used by the pre-commit framework.
+   If you use a different version, differences **will** arise. [#f1]_
+   This version number is stored in the ``.pre-commit-config.yaml`` file by the ``rev`` parameter in the section for the "clang-format plugin".
+
+   For this reason, we **strongly** encourage you to invoke the ``pre-commit`` tool for local formatting.
+
+
+
+``ruff`` (Python formatting)
+++++++++++++++++++++++++++++
+
+Python code is formatted by the `ruff <https://github.com/astral-sh/ruff>`__ tool.
+
 .. _adding-new-params:
 
 Adding a New Parameter
@@ -189,6 +261,8 @@ To create a new release:
 
 
 .. rubric:: Footnotes
+
+.. [#f1] While this hasn't been tested, it's *probably* okay to use a different version of clang-format as long as the Major and Minor version numbers match (e.g. if the pre-commit plugin was configured to use version 18.1.2 of clang-format, you could probably use version 18.1.6).
 
 .. [#pc1] It would be ideal if ``pkg-config`` could produce something like ``-Wl,--push-state,-Bstatic -lgrackle -Wl,--pop-state``, in place of ``-lgrackle``, when the ``--static`` flag is specified.
           By doing this you would specify that you would prefer Grackle to be linked statically.

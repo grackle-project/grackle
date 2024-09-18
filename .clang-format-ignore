@@ -1,0 +1,40 @@
+# the .clang-format-ignore file is only respected by version 18 or newer of
+# clang-format (earlier versions will simply ignore the file)
+#
+# This file contains all c/c++ files that were already part of Grackle before
+# we introduced clang-format
+# - per our discussion in GH-#218, we aren't applying formatters to old code
+#   yet (to avoid merge-conflicts)
+# - We plan to "rip the bandaid off" and remove all the files from this list
+#   after the next
+# - No new files should be added to this list
+
+src/clib/calculate_cooling_time.c
+src/clib/calculate_dust_temperature.c
+src/clib/calculate_gamma.c
+src/clib/calculate_pressure.c
+src/clib/calculate_temperature.c
+src/clib/cie_thin_cooling_rate_tables.h
+src/clib/dynamic_api.c
+src/clib/grackle_macros.h
+src/clib/grackle_units.c
+src/clib/index_helper.c
+src/clib/index_helper.h
+src/clib/initialize_UVbackground_data.c
+src/clib/initialize_chemistry_data.c
+src/clib/initialize_cloudy_data.c
+src/clib/initialize_rates.c
+src/clib/phys_constants.h
+src/clib/rate_functions.c
+src/clib/set_default_chemistry_parameters.c
+src/clib/solve_chemistry.c
+src/clib/update_UVbackground_rates.c
+src/example/c_example.c
+src/example/c_local_example.c
+src/example/cxx_example.C
+src/example/cxx_grid_example.C
+src/example/cxx_omp_example.C
+src/include/grackle.h
+src/include/grackle_chemistry_data.h
+src/include/grackle_rate_functions.h
+src/include/grackle_types.h
