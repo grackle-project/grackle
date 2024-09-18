@@ -80,6 +80,17 @@ typedef struct
   /* Flag to solve metal chemistry */
   int metal_chemistry;
 
+  /* minimum temperature to include tabulated metal cooling.
+     This is used to supplement the non-equilibrium metal cooling
+     from setting metal_chemistry=1, which is only valid up to T~1e4 K.
+     - A value of -1.0 is used to specify no minimum temperature, i.e.,
+       tabulated cooling is always used.
+     - A value of -2.0 indicates the parameter is unset. If unset, the
+       following behavior is applied:
+       - if metal_chemistry = 0, this is set to -1.0 (i.e., disabled)
+       - if metal_chemistry = 1, this is set to 1e4 K. */
+  double tabulated_cooling_minimum_temperature;
+
   /* Flag to solve grain growth reactions */
   int grain_growth;
 

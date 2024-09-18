@@ -404,6 +404,20 @@ int local_initialize_chemistry_data(chemistry_data *my_chemistry,
     fprintf(stdout, "Initializing grackle data.\n");
   }
 
+  /* Set the minimum temperature for using tabulated metal cooling. */
+  if (my_chemistry->tabulated_cooling_minimum_temperature < -1.0) {
+    if (my_chemistry->metal_chemistry > 0) {
+      my_chemistry->tabulated_cooling_minimum_temperature = 1e4;
+    }
+    else {
+      my_chemistry->tabulated_cooling_minimum_temperature = -1.0;
+    }
+    if (grackle_verbose) {
+      fprintf(stdout, "Setting tabulated_cooling_minimum_temperature to %g.\n",
+              my_chemistry->tabulated_cooling_minimum_temperature);
+    }
+  }
+
   // Activate dust chemistry machinery.
   if (my_chemistry->dust_chemistry > 0) {
 
