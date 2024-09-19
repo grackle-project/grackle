@@ -649,23 +649,6 @@
          endif
       enddo
 
-!     initialize arrays
-      do i = is+1, ie+1
-         if ( itmask(i) ) then
-           Lpri(i) = 0.d0
-           LH2 (i) = 0.d0
-           LHD (i) = 0.d0
-           LCI (i) = 0.d0
-           LCII(i) = 0.d0
-           LOI (i) = 0.d0
-           LCO (i) = 0.d0
-           LOH (i) = 0.d0
-           LH2O(i) = 0.d0
-           Ldst(i) = 0.d0
-           LCIE(i) = 0.d0
-         endif
-      enddo
-
 !     Compute interpolation indices
 
       if (interp) then
@@ -800,9 +783,9 @@
          G = tiny8
          endif
 
-         LH2(i) = - (L - G) / dom * H2I(i,j,k)/2.d0
+         LH2(i) = ih2cox * (G - L) / dom * H2I(i,j,k)/2.d0
          if (LH2(i) .ne. LH2(i)) LH2(i) = 0.d0
-         edot(i) = edot(i) + ih2cox*LH2(i)
+         edot(i) = edot(i) + LH2(i)
 
       endif
       enddo
@@ -1025,7 +1008,7 @@ c     CIE H2 cooling using Yoshida et al. (2006)
          G = tiny8
          endif
 
-         LHD(i) = - (L - G) / dom * HDI(i,j,k)/3.d0
+         LHD(i) = (G - L) / dom * HDI(i,j,k)/3.d0
          if (LHD(i) .ne. LHD(i)) LHD(i) = 0.d0
          edot(i) = edot(i) + LHD(i)
 
@@ -1898,7 +1881,7 @@ c  new (correct) way: (april 4, 2007)
             G = tiny8
             endif
       
-            LCI(i) = - (L - G) / dom * CI(i,j,k)/12.d0
+            LCI(i) = (G - L) / dom * CI(i,j,k)/12.d0
             if (LCI(i) .ne. LCI(i)) LCI(i) = 0.d0
             edot(i) = edot(i) + LCI(i)
       
@@ -1922,7 +1905,7 @@ c  new (correct) way: (april 4, 2007)
             G = tiny8
             endif
       
-            LCII(i) = - (L - G) / dom * CII(i,j,k)/12.d0
+            LCII(i) = (G - L) / dom * CII(i,j,k)/12.d0
             if (LCII(i) .ne. LCII(i)) LCII(i) = 0.d0
             edot(i) = edot(i) + LCII(i)
       
@@ -1946,7 +1929,7 @@ c  new (correct) way: (april 4, 2007)
             G = tiny8
             endif
       
-            LOI(i) = - (L - G) / dom * OI(i,j,k)/16.d0
+            LOI(i) = (G - L) / dom * OI(i,j,k)/16.d0
             if (LOI(i) .ne. LOI(i)) LOI(i) = 0.d0
             edot(i) = edot(i) + LOI(i)
       
@@ -1972,7 +1955,7 @@ c  new (correct) way: (april 4, 2007)
             G = tiny8
             endif
       
-            LCO(i) = - (L - G) / dom * CO(i,j,k)/28.d0
+            LCO(i) = (G - L) / dom * CO(i,j,k)/28.d0
             if (LCO(i) .ne. LCO(i)) LCO(i) = 0.d0
             edot(i) = edot(i) + LCO(i)
       
@@ -1996,7 +1979,7 @@ c  new (correct) way: (april 4, 2007)
             G = tiny8
             endif
       
-            LOH(i) = - (L - G) / dom * OH(i,j,k)/17.d0
+            LOH(i) = (G - L) / dom * OH(i,j,k)/17.d0
             if (LOH(i) .ne. LOH(i)) LOH(i) = 0.d0
             edot(i) = edot(i) + LOH(i)
 
@@ -2020,7 +2003,7 @@ c  new (correct) way: (april 4, 2007)
             G = tiny8
             endif
       
-            LH2O(i) = - (L - G) / dom * H2O(i,j,k)/18.d0
+            LH2O(i) = (G - L) / dom * H2O(i,j,k)/18.d0
             if (LH2O(i) .ne. LH2O(i)) LH2O(i) = 0.d0
             edot(i) = edot(i) + LH2O(i)
       
