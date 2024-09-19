@@ -48,7 +48,6 @@ dependencies = [
   'numpy',
   'matplotlib',
   'yt>=4.0.2',
-  'pooch',
   "importlib_resources;python_version<'3.9'"
 ]
 

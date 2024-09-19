@@ -1,28 +1,18 @@
 #!/usr/bin/env python3
 
-# A tool for managing grackle data files. This should be usable as
-# -> a standalone command line tool (when pygrackle isn't installed)
-# -> as a part of pygrackle.
+# A tool for managing grackle data files. (More details provided after imports)
 #
-# There is 1 snag to converting this to file to a standalone command-line-tool
-# (that can be used without installing any packages):
+# This file should be usable as both (i) a part of pygrackle and (ii) a standalone
+# command line tool (when pygrackle IS NOT installed)
 #
-# -> Currently, we are using the external pooch package.
-# -> I originaly thought it would be a great tool for helping us manage
-#    datafiles. But our custom deduplication strategy required me to
-#    implement a bunch of functionality that makes a lot of pooch's features
-#    unnecessary.
-# -> We have 2 choices:
-#    1. We could totally remove pooch and use urllib instead
-#    2. We could package this program as a
-#       `zipapp <https://docs.python.org/3/library/zipapp.html#module-zipapp>`_.
-
+# To support scenario 1, this CAN ONLY use python's built in modules.
 
 import argparse
-from contextlib import ExitStack
+from contextlib import contextmanager, ExitStack
 import filecmp
 import hashlib
 import io
+from math import log10
 import os
 import re
 import shutil
@@ -30,11 +20,12 @@ import stat
 import sys
 import traceback
 from typing import IO, NamedTuple, Union
+import urllib.request
+from urllib.error import URLError, HTTPError
 import warnings
 
-import pooch  # external import
-
 if (sys.version_info.major, sys.version_info.minor) < (3, 6, 1):
+    # 3.6.0 doesn't support all NamedTuple features
     raise RuntimeError("python 3.6.1 or newer is required")
 
 # Down below, we provide a detailed description that serves 3 purposes
@@ -270,20 +261,20 @@ GRACKLE_DATA_DIR/
 #    -> See the end of this file for what that entails
 
 
-def _use_progress_bar():
-    try:
-        import tqdm  # noqa: F401
+# define some constants
+# =====================
 
-        return True
-    except ImportError:
-        return False
+# default chunksize used for file operations
+_CHUNKSIZE = 4096
 
-
-_PROGRESSBAR = _use_progress_bar()
-
-
-_UNSPECIFIED = object()
+# the name of the subdirectory in a data-store where we handle deduplication
 _OBJECT_STORE_SUBDIR = "object-store"
+
+# Alternative to `None` for specifying that a value wasn't specified. This is primarily
+# used as a default value for an optional command line flag that requires an argument.
+# In that case, a value of _UNSPECIFIED means that the flag wasn't specified while a
+# value of `None` means that the flag doesn't have an associated value.
+_UNSPECIFIED = object()
 
 
 class GenericToolError(RuntimeError):
@@ -304,6 +295,100 @@ def _ensure_all_removed(fnames):
             os.remove(fname)
         except FileNotFoundError:
             continue
+
+
+_MAX_BAR = 160 * "="
+
+
+@contextmanager
+def _progress_bar(ncols, total_bytes, *, use_dummy=False):
+    """
+    ContextManager that provides a function used for drawing/updating progress bars
+
+    If the program wasn't excuted from a shell, or the caller want to draw
+    too few columns, the returned function does nothing.
+    """
+    # the main template is '[<progress-bar>] <size>/<size> <unit>'
+    # -> <progress-bar> is some fraction of _FULL_BAR and empty space
+    # -> <size> describes the current/total download size (takes up to 6 characters)
+    # -> <unit> is 1 or 2 characters
+    # -> thus, we need 19 characters for everything other than <progress-bar>
+    bar_len = min(len(_MAX_BAR), ncols - 19)
+
+    if use_dummy or (total_bytes <= 0) or (bar_len <= 0) or not sys.stdout.isatty():
+        use_dummy = True
+
+        def _update(size):
+            return None
+    else:
+        power_div_3 = int(log10(total_bytes)) // 3
+        factor, unit = 1000.0**power_div_3, ("B", "KB", "MB", "GB")[power_div_3]
+        fmt = "\r[{bar:{len}.{nfill}}] {size:.2f}" + f"/{total_bytes/factor:.2f} {unit}"
+
+        def _update(size):
+            nfill = bar_len * int(size / total_bytes)
+            val = fmt.format(bar=_MAX_BAR, len=bar_len, nfill=nfill, size=size / factor)
+            print(val, end="", flush=True)
+
+    try:
+        yield _update
+    finally:
+        # always execute this clause when exiting the context manager. If an exception
+        # caused the exit, it will be re-raised after this clause
+        if not use_dummy:
+            print(flush=True)
+
+
+def _retrieve_url(url, dest, fname, *, use_progress_bar=True, chunksize=_CHUNKSIZE):
+    """
+    download the file from url to dest
+
+    Note
+    ----
+    Online discussion about calling `response.read(chunksize)`, where
+    `response` is the context manager object produced by
+    `url.request.urlopen`, seems to strongly imply that this limits the
+    amount of data read from the http request into memory at a given
+    point in time. However, the documentation seems vague on this point.
+
+    This is unlikely to ever be a problem (the biggest file we need is
+    currently under 10 Megabytes). However, if it does become a problem,
+    we have 2 options:
+      1. we could conditionally fall back to ``curl`` (cli tool) or
+         ``Requests`` (python package) if they are present on the system
+      2. we could craft custom http requests
+    """
+    ncols = shutil.get_terminal_size()[0] - 1
+    req = urllib.request.Request(url)
+    try:
+        with ExitStack() as stack:
+            # enter context managers for http-response, progress-bar, & output-file
+            response = stack.enter_context(urllib.request.urlopen(req))
+            total_bytes = int(response.headers.get("Content-Length", -1))
+            update_progress = stack.enter_context(
+                _progress_bar(ncols, total_bytes, use_dummy=not use_progress_bar)
+            )
+            out_file = stack.enter_context(open(dest, "wb"))
+
+            # write downloaded data to a file
+            downloaded_bytes = 0
+            while True:
+                update_progress(downloaded_bytes)
+                block = response.read(chunksize)
+                if not block:
+                    break
+                downloaded_bytes += len(block)
+                out_file.write(block)
+    except HTTPError as e:
+        raise GenericToolError(
+            f"The server couldn't fulfill the request for retrieving {fname} from "
+            f"{url}.\nError code: {e.code}"
+        )
+    except URLError as e:
+        raise GenericToolError(
+            f"The server couldn't be reached while trying to retrieve {fname} from "
+            f"{url}.\nError code: {e.code}"
+        )
 
 
 class Fetcher(NamedTuple):
@@ -342,51 +427,41 @@ class Fetcher(NamedTuple):
 
         Notes
         -----
-        It doesn't look too difficult to swap out the ``pooch.retrieve``
-        functionality for custom logic that calls methods from python's
-        builtin urllib module. This would simplify the process of shipping
-        this functionality as a portable standalone script.
+        We follow the following procedure (inspired by pooch):
+          1. downloads the file to a temporary location
+          2. verifies that the checksum is correct
+          3. move the file to the appropriate destination
 
-        If we ever move away from pooch (e.g. to make this functionality
-        easier to use in a portable standalone script), we need to ensure
-        that the our new approach implements a similar procedure that
-        they adopt where:
-        1. any downloaded file is first put in a temporary location
-        2. and then, only after we verify that the checksum is correct,
-           we move the file to the downloads directory.
+        This provides robust behavior if the program is interupted. In
+        principle, we could combine steps 1 and 2. But, there may be some
+        minor benefits to keeping our procedure like this (theoretically,
+        we may be more likely to catch corruption from harddrive hardware
+        errors).
         """
+        src = os.path.join(self.base_path, fname)
+        dst = os.path.join(dest_dir, fname)
+        _pretty_log(f"-> fetching `{fname}`", indent_all=True)
+        tmp_name = os.path.join(dest_dir, "_tempfile")
+        # tmp_name can safely be removed if it exists (it only exists if this logic
+        # previously crashed or was interupted by SIGKILL)
+        _ensure_all_removed([tmp_name])
 
-        if self.holds_url:
-            return pooch.retrieve(
-                url=f"{self.base_path}/{fname}",
-                fname=fname,
-                known_hash=f"{checksum_kind}:{checksum}",
-                path=dest_dir,
-                progressbar=_PROGRESSBAR,
-            )
-        else:
-            tmp_name = os.path.join(dest_dir, "_tempfile")
-            # tmp_name can safely be removed if it exists (it only exists if this logic
-            # previously crashed or was interupted by SIGKILL)
-            _ensure_all_removed([tmp_name])
-            try:
-                src = os.path.join(self.base_path, fname)
-                dst = os.path.join(dest_dir, fname)
-                _pretty_log(
-                    f"retrieving {fname}:\n" f"-> from: {src}\n" f"-> to: {dst}"
-                )
+        try:
+            if self.holds_url:
+                _retrieve_url(src, tmp_name, fname)
+            else:
                 # copy the file
                 shutil.copyfile(src, tmp_name)
-                if not matches_checksum(tmp_name, checksum_kind, checksum):
-                    if matches_checksum(src, checksum_kind, checksum):
-                        raise GenericToolError(
-                            f"while copying from {src}, data may have been corrupted"
-                        )
-                    raise GenericToolError(f"{src} does't have the expected checksum")
-                os.rename(tmp_name, dst)
+            if not matches_checksum(tmp_name, checksum_kind, checksum):
+                if matches_checksum(src, checksum_kind, checksum):
+                    raise GenericToolError(
+                        f"while copying from {src}, data may have been corrupted"
+                    )
+                raise GenericToolError(f"{src} does't have the expected checksum")
+            os.rename(tmp_name, dst)
 
-            finally:
-                _ensure_all_removed([tmp_name])
+        finally:
+            _ensure_all_removed([tmp_name])
 
 
 class DataStoreConfig(NamedTuple):
@@ -597,7 +672,7 @@ def standard_lockfile(data_store_config):
     return LockFileContext(os.path.join(data_store_config.data_dir, "lockfile"))
 
 
-def calc_checksum(fname, alg_name, *, chunksize=4096):
+def calc_checksum(fname, alg_name, *, chunksize=_CHUNKSIZE):
     """Calculate the checksum for a given fname"""
     # construct the object to track intermediate state of the checksum
     # calculation as we stream through the data
@@ -619,13 +694,14 @@ def matches_checksum(fname, alg_name, checksum):
     return checksum == calc_checksum(fname, alg_name)
 
 
-def _pretty_log(arg):
+def _pretty_log(arg, *, indent_all=False):
     """indent messages so it's clear when multiline messages are a single thought"""
     lines = arg.splitlines()
-    if len(lines):
-        print("\n".join([f"-- {lines[0]}"] + [f"   {e}" for e in lines[1:]]))
+    if len(lines) and not indent_all:
+        formatted = [f"-- {lines[0]}"] + [f"   {e}" for e in lines[1:]]
     else:
-        print("")
+        formatted = [f"   {e}" for e in lines]
+    print(*formatted, sep="\n")
 
 
 def _ensure_exists(path, content_description):
@@ -975,6 +1051,7 @@ Something bizare (& extremely unlikely) happened:
 
         with lockfile_ctx:
             num_fetched = 0
+            _pretty_log(f"preparing to fetch files from: {self.fetcher.base_path}")
             for fname, full_checksum_str in registry.items():
                 any_work, _ = self._fetch_file(
                     fname, full_checksum_str, lockfile_ctx=lockfile_ctx
@@ -982,7 +1059,7 @@ Something bizare (& extremely unlikely) happened:
                 num_fetched += any_work
 
         if num_fetched == 0:
-            _pretty_log("no files needed to be downloaded")
+            _pretty_log("-> no files needed to be retrieved", indent_all=True)
 
 
 def fetch_command(args, tool_config, data_store_config):
@@ -1467,14 +1544,14 @@ def make_config_objects(grackle_version, file_registry_file):
     return tool_config, data_store_config
 
 
+# Here, we define machinery employed when used as a standalone program
+# ====================================================================
+
 # to support installing this file as a standalone program, we will need to introduce the
 # following procedure to the build-system:
 #    - treat this file as a template-file and configure it with CMake's
 #      ``configure_file`` command (or invoke ``configure_file.py`` under the classic
 #      build system) in order to substitute the names enclosed by the @ symbols
-#    - if we are still using pooch (or some other external package) we'll need to
-#      introduce logic to convert this into a zipapp (this is a special zip file that
-#      contains all dependencies that the python interpretter knows how to execute)
 #    - make resulting file executable (and maybe drop the .py suffix)
 #    - install it into the bin directory alongside the grackle libraries
 
