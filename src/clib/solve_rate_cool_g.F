@@ -580,21 +580,12 @@ c     real*8 vecDtot
 
       dom      = urho*(aye**3)/mh
       tbase1   = utim
-      xbase1   = uxyz/(aye*uaye)    ! uxyz is [x]*a      = [x]*[a]*a
-      dbase1   = urho*(aye*uaye)**3 ! urho is [dens]/a^3 = [dens]/([a]*a')^3
-
+      xbase1   = uxyz/(aye*uaye)    ! uxyz is [x]*a      = [x]*[a]*a'        '
+      dbase1   = urho*(aye*uaye)**3 ! urho is [dens]/a^3 = [dens]/([a]*a')^3 '
       coolunit = (uaye**5 * xbase1**2 * mh**2) / (tbase1**3 * dbase1)
-!     uvel     = uxyz / utim
-      uvel     = xbase1 / tbase1 * uaye
-        ! correct the dependency on uaye (Aug 2020, Gen Chiaki)
-c     chunit = (7.17775e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 4.5 eV per H2 formed
+      uvel = (uxyz/aye) / utim
 c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 formed
-      chunit = (1.60218e-12_DKIND)/(uvel*uvel*mh)
-        ! 1 eV per REACTION (Feb 2020, Gen Chiaki)
-C     write(*,'(A2,8E13.5)')
-C    &     '#', uaye, xbase1, tbase1, dbase1, coolunit, dom
-C    &   , chunit
-C    &   , coolunit*dom/mh ! = vbase1**2 / tbase1
+      chunit = (1.60218e-12_DKIND)/(uvel*uvel*mh)            ! 1 eV per REACTION (Feb 2020, Gen Chiaki)
 
       dx_cgs = dx * xbase1
       c_ljeans = sqrt((gamma * pi * kboltz) /
