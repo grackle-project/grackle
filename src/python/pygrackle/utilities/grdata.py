@@ -1082,6 +1082,26 @@ def fetch_command(args, tool_config, data_store_config):
     man.fetch_all(registry)
 
 
+def _register_fetch_command(subparsers):
+    parser_fetch = subparsers.add_parser(
+        "fetch",
+        help=(
+            "fetch data files if we don't already have the data for the "
+            "associated version of grackle"
+        ),
+    )
+    parser_fetch.add_argument(
+        "--from-dir",
+        default=None,
+        help=(
+            "optionally specify a path to a directory where we copy the files from "
+            "(instead of downloading them)"
+        ),
+    )
+    parser_fetch.set_defaults(func=fetch_command)
+
+
+
 def direntry_iter(path, *, ftype="file", mismatch="skip", ignore=None):
     """
     Iterate over the contents of a single directory with focus on a
@@ -1225,6 +1245,32 @@ def rm_command(args, tool_config, data_store_config):
             fn(target_path)
 
 
+def _register_rm_command(subparsers):
+    parser_rm = subparsers.add_parser(
+        "rm", help="remove data associated with a given version"
+    )
+    parser_rm.add_argument(
+        "-f",
+        "--force",
+        action="store_true",
+        help="This option must be present to actually remove things",
+    )
+    rm_spec_grp = parser_rm.add_argument_group(
+        title="Target", description="specifies the target that will be removed"
+    ).add_mutually_exclusive_group(required=True)
+    rm_spec_grp.add_argument(
+        "--data-store", action="store_true", help="remove the full data-store"
+    )
+    rm_spec_grp.add_argument(
+        "--vdata",
+        default=_UNSPECIFIED,
+        nargs="?",
+        help="remove all data associated with the contemporaneous grackle version",
+    )
+    parser_rm.set_defaults(func=rm_command)
+
+
+
 def lsversions_command(args, tool_config, data_store_config):
     if not os.path.exists(data_store_config.store_location):
         print("there is no data")
@@ -1236,6 +1282,11 @@ def lsversions_command(args, tool_config, data_store_config):
             ignore=[_OBJECT_STORE_SUBDIR],
         )
         print(*sorted(pair[0] for pair in it), sep="\n")
+
+
+def _register_lsversions_command(subparsers):
+    parser_ls = subparsers.add_parser("ls-versions", help="list the versions")
+    parser_ls.set_defaults(func=lsversions_command)
 
 
 def getpath_command(args, tool_config, data_store_config):
@@ -1252,7 +1303,7 @@ def getpath_command(args, tool_config, data_store_config):
         print(os.path.join(data_store_config.store_location, version))
 
 
-def _register_getpath_subcommand(subparsers):
+def _register_getpath_command(subparsers):
     parser_getpath = subparsers.add_parser(
         "getpath",
         description=(
@@ -1301,6 +1352,17 @@ def showknownreg_command(args, tool_config, data_store_config):
     print(*contents, sep="", end="")
 
 
+def _register_showknownreg_command(subparsers):
+    parser_showknownreg = subparsers.add_parser(
+        "showknownreg",
+        help=(
+            "prints the pre-registered file registry expected by the current version "
+            "of Grackle"
+        ),
+    )
+    parser_showknownreg.set_defaults(func=showknownreg_command)
+
+
 def _fmt_registry_lines(fname_cksum_pairs, hash_alg):
     length, suffix = len(fname_cksum_pairs), (",\n", "\n")
     return [
@@ -1346,6 +1408,39 @@ def calcreg_command(args, tool_config, data_store_config):
         print(*_fmt_registry_lines(pairs, args.hash_name), sep="", end="", file=file)
 
 
+def _register_calcreg_command(subparsers):
+    parser_calcregistry = subparsers.add_parser(
+        "calcreg",
+        help=(
+            "prints the file registry (file hash pairs) for a given directory. This "
+            "computed registry can be used to configure future versions of Grackle."
+        ),
+    )
+    parser_calcregistry.add_argument(
+        "-o",
+        "--output",
+        metavar="FILE",
+        help=(
+            "Write the output to a file instead of stdout. The file will include extra "
+            "metadata (as comments)."
+        ),
+    )
+    parser_calcregistry.add_argument(
+        "--hash-name",
+        required=True,
+        metavar="HASH",
+        choices=hashlib.algorithms_guaranteed,
+        help=(
+            "the kind of checksum to compute. Must be one of: "
+            f"{ ', '.join(sorted(hashlib.algorithms_guaranteed))}"
+        ),
+    )
+    parser_calcregistry.add_argument(
+        "path", help="path to the directory containing the files in the registry"
+    )
+    parser_calcregistry.set_defaults(func=calcreg_command)
+
+
 def help_command(*args, **kwargs):
     # it might be nice to pipe to a pager (specified by PAGER env variable or
 
@@ -1366,6 +1461,13 @@ def help_command(*args, **kwargs):
             continue
         else:
             print(line)
+
+
+def _register_help_command(subparsers):
+    parser_help = subparsers.add_parser(
+        "help", help="Display detailed help information about this tool"
+    )
+    parser_help.set_defaults(func=help_command)
 
 
 def _add_program_prop_query(parser, flag, value, short_descr):
@@ -1427,102 +1529,13 @@ def build_parser(tool_config, prog_name):
 
     subparsers = parser.add_subparsers(required=True)
 
-    # fetch subcommand
-    parser_fetch = subparsers.add_parser(
-        "fetch",
-        help=(
-            "fetch data files if we don't already have the data for the "
-            "associated version of grackle"
-        ),
-    )
-    parser_fetch.add_argument(
-        "--from-dir",
-        default=None,
-        help=(
-            "optionally specify a path to a directory where we copy the files from "
-            "(instead of downloading them)"
-        ),
-    )
-    parser_fetch.set_defaults(func=fetch_command)
-
-    # ls-versions subcommand
-    parser_ls = subparsers.add_parser("ls-versions", help="list the versions")
-    parser_ls.set_defaults(func=lsversions_command)
-
-    # rm subcommand
-    parser_rm = subparsers.add_parser(
-        "rm", help="remove data associated with a given version"
-    )
-    parser_rm.add_argument(
-        "-f",
-        "--force",
-        action="store_true",
-        help="This option must be present to actually remove things",
-    )
-    rm_spec_grp = parser_rm.add_argument_group(
-        title="Target", description="specifies the target that will be removed"
-    ).add_mutually_exclusive_group(required=True)
-    rm_spec_grp.add_argument(
-        "--data-store", action="store_true", help="remove the full data-store"
-    )
-    rm_spec_grp.add_argument(
-        "--vdata",
-        default=_UNSPECIFIED,
-        nargs="?",
-        help="remove all data associated with the contemporaneous grackle version",
-    )
-    parser_rm.set_defaults(func=rm_command)
-
-    # getpath subcommand
-    _register_getpath_subcommand(subparsers)
-
-    # showknownreg subcommand
-    parser_showknownreg = subparsers.add_parser(
-        "showknownreg",
-        help=(
-            "prints the pre-registered file registry expected by the current version "
-            "of Grackle"
-        ),
-    )
-    parser_showknownreg.set_defaults(func=showknownreg_command)
-
-    # calcreg subcommand
-    parser_calcregistry = subparsers.add_parser(
-        "calcreg",
-        help=(
-            "prints the file registry (file hash pairs) for a given directory. This "
-            "computed registry can be used to configure future versions of Grackle."
-        ),
-    )
-    parser_calcregistry.add_argument(
-        "-o",
-        "--output",
-        metavar="FILE",
-        help=(
-            "Write the output to a file instead of stdout. The file will include extra "
-            "metadata (as comments)."
-        ),
-    )
-    parser_calcregistry.add_argument(
-        "--hash-name",
-        required=True,
-        metavar="HASH",
-        choices=hashlib.algorithms_guaranteed,
-        help=(
-            "the kind of checksum to compute. Must be one of: "
-            f"{ ', '.join(sorted(hashlib.algorithms_guaranteed))}"
-        ),
-    )
-    parser_calcregistry.add_argument(
-        "path", help="path to the directory containing the files in the registry"
-    )
-    parser_calcregistry.set_defaults(func=calcreg_command)
-
-    # help subcommand
-    parser_help = subparsers.add_parser(
-        "help", help="Display detailed help information about this tool"
-    )
-    parser_help.set_defaults(func=help_command)
+    _register_fetch_command(subparsers)
+    _register_rm_command(subparsers)
+    _register_lsversions_command(subparsers)
+    _register_getpath_command(subparsers)
+    _register_showknownreg_command(subparsers)
+    _register_calcreg_command(subparsers)
+    _register_help_command(subparsers)
 
     return parser
 
