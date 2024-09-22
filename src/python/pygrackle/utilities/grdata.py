@@ -543,6 +543,26 @@ def _get_data_dir():
         return manual_choice
 
 
+@contextmanager
+def _file_openner(f, mode, **kwargs):
+    """Open a file or pass through an already open file"""
+    if (sys.version_info.major, sys.version_info.minor) < (3, 6):
+        if not isinstance(f, io.IOBase):
+            path = f
+        else:
+            path = None
+    else:
+        try:
+            path = os.fspath(f)
+        except TypeError:
+            path = None
+    if path is None:
+        yield f
+    else:
+        with open(path, mode, **kwargs) as fobj:
+            yield fobj
+
+
 def _parse_file_registry(f):
     """Read the file registry, as a dict from a text file
 
@@ -562,23 +582,7 @@ def _parse_file_registry(f):
         and there is allowed to be a trailing comma
     """
 
-    if (sys.version_info.major, sys.version_info.minor) < (3, 6):
-        if not isinstance(f, io.IOBase):
-            path = f
-        else:
-            path = None
-    else:
-        try:
-            path = os.fspath(f)
-        except TypeError:
-            path = None
-
-    with ExitStack() as stack:
-        if path is None:
-            file = f
-        else:
-            file = stack.enter_context(open(path, "r"))
-
+    with _file_openner(f, "r") as file:
         file_registry = {}
         for i, line in enumerate(file):  # iterater over lines
             if (len(line) == 0) or line.isspace() or line.startswith("//"):
@@ -677,7 +681,10 @@ def calc_checksum(fname, alg_name, *, chunksize=_CHUNKSIZE):
     # construct the object to track intermediate state of the checksum
     # calculation as we stream through the data
     hash_obj = hashlib.new(alg_name)
-    with open(fname, "rb") as f:
+    with _file_openner(fname, "rb") as f:
+        if f is fname:
+            f.seek(0, os.SEEK_SET)
+
         buffer = bytearray(chunksize)
         while True:
             nbytes = f.readinto(buffer)
@@ -1153,8 +1160,8 @@ def rm_command(args, tool_config, data_store_config):
         )
         if not os.path.isdir(target_path):
             raise GenericToolError(
-                "intended to recursively delete all contents of the associated data-store. "
-                "But no such directory can be found."
+                "intended to recursively delete all contents of the associated "
+                "data-store. But no such directory can be found."
             )
 
         fn = shutil.rmtree
@@ -1169,7 +1176,8 @@ def rm_command(args, tool_config, data_store_config):
         target_path = os.path.join(data_store_config.store_location, target)
         operation_description = (
             f"deleting all data file references for the grackle-version {_descr}. "
-            "Any files for which the reference-count drops to zero will also be removed."
+            "Any files for which the reference-count drops to zero will also be "
+            "removed."
         )
 
         if not os.path.isdir(target_path):
@@ -1205,15 +1213,16 @@ def rm_command(args, tool_config, data_store_config):
                     _HardlinkStrat.remove_if_norefs(cksum_fname)
             os.rmdir(path)
 
-    if not args.force:
-        _pretty_log(
-            f"{operation_description}\n"
-            "-> essentially, we are recursively removing\n"
-            f"     `{target_path}`\n"
-            "-> to actually perform this command, pass the --force flag"
-        )
-    else:
-        fn(target_path)
+    with standard_lockfile(data_store_config):
+        if not args.force:
+            _pretty_log(
+                f"{operation_description}\n"
+                "-> essentially, we are recursively removing\n"
+                f"     `{target_path}`\n"
+                "-> to actually perform this command, pass the --force flag"
+            )
+        else:
+            fn(target_path)
 
 
 def lsversions_command(args, tool_config, data_store_config):
@@ -1279,6 +1288,27 @@ def _register_getpath_subcommand(subparsers):
     parser_getpath.set_defaults(func=getpath_command)
 
 
+def showknownreg_command(args, tool_config, data_store_config):
+    f = data_store_config.file_registry_file
+    if isinstance(f, io.IOBase):
+        lines = f.readlines()
+    else:
+        with open(data_store_config.file_registry_file, "r") as f:
+            lines = f.readlines()
+    contents = [
+        line for line in lines if len(line.strip()) > 0 and not line.startswith("//")
+    ]
+    print(*contents, sep="", end="")
+
+
+def _fmt_registry_lines(fname_cksum_pairs, hash_alg):
+    length, suffix = len(fname_cksum_pairs), (",\n", "\n")
+    return [
+        f'{{"{fname}", "{hash_alg}:{cksum}"}}{suffix[(i+1) == length]}'
+        for i, (fname, cksum) in enumerate(sorted(fname_cksum_pairs))
+    ]
+
+
 def calcreg_command(args, tool_config, data_store_config):
     # print the properly file registry information (in the proper format that can be
     # used to configure newer versions of Grackle
@@ -1300,6 +1330,7 @@ def calcreg_command(args, tool_config, data_store_config):
         else:
             file = stack.enter_context(open(args.output, "w"))
 
+        '''
         if file is not None:
             file.write(f"""\
 // This is a file registry generated by the grackle data management tool
@@ -1311,11 +1342,8 @@ def calcreg_command(args, tool_config, data_store_config):
 //    -> ``<dir>`` with a path to the directory containing all files that are
 //       to be included in the registry
 """)
-        print(
-            *[f'{{"{p[0]}", "{args.hash_name}:{p[1]}"}}' for p in sorted(pairs)],
-            sep=",\n",
-            file=file,
-        )
+        '''
+        print(*_fmt_registry_lines(pairs, args.hash_name), sep="", end="", file=file)
 
 
 def help_command(*args, **kwargs):
@@ -1340,8 +1368,13 @@ def help_command(*args, **kwargs):
             print(line)
 
 
-def _add_version(parser, version_flag, version_name, value):
-    """add argument to parser to show a version and exit (similar to --help)"""
+def _add_program_prop_query(parser, flag, value, short_descr):
+    """
+    add a flag to parser to trigger a control flow that:
+    1. shows a fundamental piece of information about the command line program (like a
+        version number or the ``--help`` option)
+    2. then immediately exits the program
+    """
 
     class _Action(argparse.Action):
         def __call__(self, *args, **kwargs):
@@ -1349,11 +1382,11 @@ def _add_version(parser, version_flag, version_name, value):
             sys.exit(0)
 
     parser.add_argument(
-        version_flag,
+        flag,
         metavar="",
         action=_Action,
         nargs=0,
-        help=f"show associated {version_name} and exit",
+        help=f"show associated {short_descr} and exit",
     )
 
 
@@ -1367,15 +1400,31 @@ def build_parser(tool_config, prog_name):
         epilog=f"Invoke `{prog_name} help` to get a detailed overview of the tool",
     )
 
-    _add_version(
-        parser, "--version-grackle", "Grackle version", tool_config.grackle_version
+    # This is a hidden argument. It is only used for sake of testing (we may remove it
+    # any time in the future)
+    parser.add_argument(
+        "--testing-override-registry-file",
+        help=argparse.SUPPRESS,  # hides the help message
+        default=argparse.SUPPRESS,  # adds no attribute if option wasn't specified
     )
-    _add_version(
-        parser,
-        "--version-protocol",
-        "data-store protocol version",
-        tool_config.protocol_version,
+    parser.add_argument(
+        "--testing-override-version-grackle",
+        help=argparse.SUPPRESS,  # hides the help message
+        default=argparse.SUPPRESS,  # adds no attribute if option wasn't specified
     )
+
+    query_l = [
+        ("--version-grackle", "Grackle version", tool_config.grackle_version),
+        (
+            "--version-protocol",
+            "data-store protocol version",
+            tool_config.protocol_version,
+        ),
+        ("--cksum-alg", "name of the checksum algorithm", tool_config.checksum_kind),
+    ]
+    for flag, short_descr, val in query_l:
+        _add_program_prop_query(parser, flag, val, short_descr)
+
     subparsers = parser.add_subparsers(required=True)
 
     # fetch subcommand
@@ -1426,6 +1475,16 @@ def build_parser(tool_config, prog_name):
 
     # getpath subcommand
     _register_getpath_subcommand(subparsers)
+
+    # showknownreg subcommand
+    parser_showknownreg = subparsers.add_parser(
+        "showknownreg",
+        help=(
+            "prints the pre-registered file registry expected by the current version "
+            "of Grackle"
+        ),
+    )
+    parser_showknownreg.set_defaults(func=showknownreg_command)
 
     # calcreg subcommand
     parser_calcregistry = subparsers.add_parser(
@@ -1479,6 +1538,18 @@ def main(tool_config, data_store_config, prog_name, *, args=None):
     """
     parser = build_parser(tool_config, prog_name)
     args = parser.parse_args(args=args)
+
+    # handle testing overrides
+    if hasattr(args, "testing_override_registry_file"):
+        # _replace makes a copy & in the copy any specified attributes are overridden
+        data_store_config = data_store_config._replace(
+            file_registry_file=args.testing_override_registry_file
+        )
+    if hasattr(args, "testing_override_version_grackle"):
+        # _replace makes a copy & in the copy any specified attributes are overridden
+        tool_config = tool_config._replace(
+            grackle_version=args.testing_override_version_grackle
+        )
 
     try:
         args.func(args, tool_config=tool_config, data_store_config=data_store_config)
