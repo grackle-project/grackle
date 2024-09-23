@@ -7,18 +7,12 @@ from numpy.testing import assert_allclose
 
 from pygrackle.utilities.model_tests import model_sets
 from pygrackle.utilities.testing import \
-    ensure_dir, \
     run_command, \
     temporary_directory
 
-from testing_common import \
-    generate_test_results, \
-    grackle_python_dir, \
-    test_answers_dir
+from testing_common import grackle_python_dir
 
 python_example_dir = os.path.join(grackle_python_dir, "examples")
-
-ensure_dir(test_answers_dir)
 
 all_sets = []
 for model_name, model in model_sets.items():
@@ -27,7 +21,7 @@ for model_name, model in model_sets.items():
             all_sets.append((model_name, par_index, input_index))
 
 @pytest.mark.parametrize("model_name, par_index, input_index", all_sets)
-def test_model(model_name, par_index, input_index):
+def test_model(answertestspec, model_name, par_index, input_index):
     script_path = os.path.join(python_example_dir, f"{model_name}.py")
     command = f"{sys.executable} {script_path} {par_index} {input_index}"
     with temporary_directory():
@@ -35,9 +29,9 @@ def test_model(model_name, par_index, input_index):
         assert rval
 
         output_file = f"{model_name}_{par_index}_{input_index}.h5"
-        answer_path = os.path.join(test_answers_dir, output_file)
+        answer_path = os.path.join(answertestspec.answer_dir, output_file)
 
-        if generate_test_results:
+        if answertestspec.generate_answers:
             os.rename(output_file, answer_path)
         else:
             assert os.path.exists(answer_path)
