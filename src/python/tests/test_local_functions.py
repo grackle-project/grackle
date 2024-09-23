@@ -17,7 +17,6 @@ import numpy as np
 import os
 
 from numpy.testing import assert_approx_equal
-from unittest import TestCase
 
 from pygrackle import \
     FluidContainer, \
@@ -100,7 +99,7 @@ def failure_str(my_pars, my_units, my_in, my_out, comp_out, field):
     msg += f"stored output: {comp_out[field]}"
     return msg
 
-class LocalFunctionsTest(TestCase):
+class TestLocalFunctions:
     """
     Tests for the local functions.
     """
@@ -110,9 +109,9 @@ class LocalFunctionsTest(TestCase):
     digits = 12
     test_file = os.path.join(test_answers_dir, "local_function_tests.json")
 
-    def setUp(self):
+    def setup_parameter_sets(self):
         """
-        Setup local function tests.
+        Setup parameter-sets for local function tests.
 
         If we are generating results, then create a list of parameter values
         from the parameter_grid and exclude_sets structures defined above.
@@ -121,6 +120,8 @@ class LocalFunctionsTest(TestCase):
         If we are not generating results, then read everything in from the
         json test file.
         """
+        # if we need to reuse this functionality, we need should remove this
+        # from the class and convert it into a pytest fixture
 
         if generate_test_results:
             my_sets = self.generate_parameter_sets()
@@ -136,7 +137,7 @@ class LocalFunctionsTest(TestCase):
               f"Test version mismatch: data file is {load_meta['format_version']}, " + \
               f"source code is {_meta_data['format_version']}."
 
-    def tearDown(self):
+    def finish_tests(self):
         """
         Write json test file if we are generating resuls.
         """
@@ -195,6 +196,7 @@ class LocalFunctionsTest(TestCase):
         return base_inputs
 
     def test_local_functions(self):
+        self.setup_parameter_sets()
         for test_set in self.test_sets:
 
             par_set = test_set["parameters"]
@@ -277,3 +279,4 @@ class LocalFunctionsTest(TestCase):
 
             if generate_test_results:
                 test_set["tests"] = my_tests
+        self.finish_tests()
