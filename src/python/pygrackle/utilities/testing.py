@@ -85,17 +85,3 @@ def temporary_directory():
     finally:
         os.chdir(curdir)
         shutil.rmtree(tmpdir)
-
-def ensure_dir(path):
-    r"""Parallel safe directory maker."""
-    if os.path.exists(path):
-        return path
-
-    try:
-        os.makedirs(path)
-    except OSError as e:
-        if e.errno == errno.EEXIST:
-            pass
-        else:
-            raise
-    return path
