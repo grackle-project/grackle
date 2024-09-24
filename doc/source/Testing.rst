@@ -37,36 +37,62 @@ include:
  - all grackle 'calculate' functions return correct results for sets
    of random field values
 
+.. _test_without_answer_verification:
+
 Tests Without Answer Verification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 If you only want to quickly verify that everything runs, you can skip
-generating the answer test results using the latest gold standard. To
-run this way, first set the ``GENERATE_PYGRACKLE_TEST_RESULTS``
-environment variable to 1.
+generating the answer test results using the latest gold standard.
+
+Once you have installed :ref:`pygrackle and the development dependencies <pygrackle-dev>`,
+there are currently 2 ways to do this:
+
+.. tabs::
+
+   .. group-tab:: Command Line Flag
+
+      Simply invoke ``py.test`` from the **src/python** directory with the ``--answer-store`` flag:
+
+      .. code-block:: shell-session
+
+         ~ $ cd grackle/src/python
+         ~/grackle/src $ py.test --answer-store
+
+      This will both invoke the test suite and tell it to simply generate new answers and not compare with previously existing ones.
+
+   .. group-tab:: Environment Variable
+
+      First set the ``GENERATE_PYGRACKLE_TEST_RESULTS`` environment variable to 1.
+
+      .. code-block:: shell-session
+
+          ~ $ export GENERATE_PYGRACKLE_TEST_RESULTS=1
+
+      This will tell the test suite to simply generate new answers and not
+      compare with previously existing ones.
+
+      The tests can then be run from the **src** directory by typing ``make test``:
+
+      .. code-block:: shell-session
+
+         ~ $ cd grackle/src
+         ~/grackle/src $ make test
+
+      or from the **src/python** directory by typing ``py.test``:
+
+      .. code-block:: shell-session
+
+         ~ $ cd grackle/src/python
+         ~/grackle/src $ py.test
+
+      .. warning::
+
+         The ability to use an environment variable may be removed.
+
+Once you launch the test, the output will look like the following:
 
 .. code-block:: shell-session
-
-   ~ $ export GENERATE_PYGRACKLE_TEST_RESULTS=1
-
-This will tell the test suite to simply generate new answers and not
-compare with previously existing ones.
-
-Once you have installed :ref:`pygrackle and the development
-dependencies <pygrackle-dev>`, the tests can be run from the **src**
-directory by typing ``make test``:
-
-.. code-block:: shell-session
-
-   ~ $ cd grackle/src
-   ~/grackle/src $ make test
-
-or from the **src/python** directory by typing ``py.test``:
-
-.. code-block:: shell-session
-
-   ~ $ cd grackle/src/python
-   ~/grackle/src $ py.test
 
   ==================================== test session starts ====================================
   platform darwin -- Python 3.11.9, pytest-8.2.1, pluggy-1.5.0
@@ -112,11 +138,9 @@ steps:
 #. Re-compile the Grackle library and :ref:`re-install pygrackle
    <install-pygrackle>`.
 
-#. Set the ``GENERATE_PYGRACKLE_TEST_RESULTS`` environment variable to
-   1.
-
-#. Run the test suite as described above. This will create test result
-   files in the directory **src/python/tests/test_answers**.
+#. Execute the test suite with instructions to generate test results.
+   The 2 ways to do this are described :ref:`above <test_without_answer_verification>`: (i) execute ``py.test`` with the ``--answer-store`` flag or (ii) set the ``GENERATE_PYGRACKLE_TEST_RESULTS`` environment variable to 1 before executing the test suite.
+   By default, this will create test result files in the directory **src/python/tests/test_answers**.
 
 #. Return to the branch of the repository you started with. If you just
    cloned the main repository, this will be called 'main', in which
@@ -125,8 +149,15 @@ steps:
 #. Re-compile the Grackle library and :ref:`re-install pygrackle
    <install-pygrackle>`.
 
-#. Set the ``GENERATE_PYGRACKLE_TEST_RESULTS`` environment variable to
-   0.
+#. If you previously assigned a value to the ``GENERATE_PYGRACKLE_TEST_RESULTS`` variable, you must now unset the variable **OR** assign it a value of 0.
 
-#. Run the test suite again. This time, the answer tests will be
-   compared with the previously generated results.
+#. Run the test suite again (do **NOT** pass the ``--answer-store`` flags.
+   This time, the answer tests will be compared with the previously generated results.
+
+Other Test Configuration
+^^^^^^^^^^^^^^^^^^^^^^^^
+To run the test-suite without any answer tests, invoke ``py.test`` with the ``--answer-skip`` flag.
+
+To control the location of the directory where the test answers are save, you can invoke ``py.test`` with the ``--local-dir`` flag
+
+

@@ -14,15 +14,7 @@ import os
 from pygrackle import chemistry_data
 #Necessary constants from grackle
 from pygrackle.utilities.physical_constants import mass_hydrogen_cgs
-from pygrackle.utilities.testing import \
-    assert_allclose, \
-    ensure_dir
-
-from testing_common import \
-    generate_test_results, \
-    test_answers_dir
-
-ensure_dir(test_answers_dir)
+from pygrackle.utilities.testing import assert_allclose
 
 #* Function which returns chemistry_data instance with default initialisation settings.
 def get_defChem():
@@ -108,8 +100,12 @@ def set_parameters(parSet, my_chemistry):
 
 
 #* Function which tests that the rates have been initialised correctly for each parameter set.
-def test_rate_initialisation(printParameters=False, printOOMdiscrepanices=False, testCustomFile=False, parSets=[1,2,3,4,5,6,7],
-                                fileName="rate_coefficients.h5"):
+def test_rate_initialisation(answertestspec,
+                             printParameters=False,
+                             printOOMdiscrepanices=False,
+                             testCustomFile=False,
+                             parSets=[1,2,3,4,5,6,7],
+                             fileName="rate_coefficients.h5"):
     """
     Test that the rate tables are initialized correctly.
 
@@ -134,8 +130,8 @@ def test_rate_initialisation(printParameters=False, printOOMdiscrepanices=False,
 
     #* Calculate rates for each parameter set and write to hdf5 file
     #Create and open file. If the file already exists this will overwrite it.
-    if generate_test_results:
-        fileName = os.path.join(test_answers_dir, fileName)
+    if answertestspec.generate_answers:
+        fileName = os.path.join(answertestspec.answer_dir, fileName)
     f = h5py.File(fileName, "w")
 
     #Iterate over parameter sets.
@@ -163,11 +159,11 @@ def test_rate_initialisation(printParameters=False, printOOMdiscrepanices=False,
     f.close()
 
     # Just generate results and leave.
-    if generate_test_results:
+    if answertestspec.generate_answers:
         return
 
     #* Compare rates with the expected (correct) ones which are stored and check they are in agreement
-    expectedRates = h5py.File(os.path.join(test_answers_dir, fileName), "r")
+    expectedRates = h5py.File(os.path.join(answertestspec.answer_dir, fileName), "r")
     initialisedRates = h5py.File(fileName, "r")
 
 
