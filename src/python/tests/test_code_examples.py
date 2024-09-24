@@ -62,6 +62,7 @@ def test_file(answertestspec):
     if not answertestspec.generate_answers and not os.path.exists(test_file):
         raise RuntimeError(
             f"Code example results file not found: {test_file}")
+    return test_file
 
 def run_command(command, cwd, env, timeout=None):
     proc = subprocess.run(

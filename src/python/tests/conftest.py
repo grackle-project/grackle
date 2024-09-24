@@ -15,14 +15,13 @@ def pytest_addoption(parser):
     parser.addoption(
         "--answer-skip",
         action="store_true",
-        help="Indicates that we should skip all answer tests."
+        help="Indicates that we should skip all answer tests.",
     )
     parser.addoption(
         "--answer-store",
         action="store_true",
         help="Indicates that we should generate test results.",
     )
-
 
     # in the future, I think we should revisit the default behavior when this
     # is omitted. Instead of providing a default location, I think we should
@@ -31,7 +30,9 @@ def pytest_addoption(parser):
     parser.addoption(
         "--local-dir",
         action="store",
-        default=os.path.join(os.path.abspath(__file__), "test_answers"),
+        default=os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), "test_answers"
+        ),
         help="Path to directory where answers are/will be stored.",
     )
 
@@ -59,7 +60,6 @@ def answertestspec(request):
         or int(os.environ.get("GENERATE_PYGRACKLE_TEST_RESULTS", 0)) == 1
     )
     answer_dir = request.config.getoption("--local-dir")
-
 
     if (not os.path.isdir(answer_dir)) and (not generate_answers):
         pytest.skip(f"the directory of test answers can't be found, {answer_dir}")
