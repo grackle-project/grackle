@@ -189,7 +189,6 @@ option(BUILD_TESTS "build tests" OFF)
 
 # Setup GTEST if needed
 if(BUILD_TESTS)
-    list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
     include(setup_GTest)
     add_subdirectory(tests)
 endif()
