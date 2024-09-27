@@ -22,6 +22,7 @@ endif()
 cmake_minimum_required(VERSION 3.16)
 cmake_policy(SET CMP0077 NEW)
 cmake_policy(SET CMP0082 NEW)
+
 project(Grackle VERSION ${_GRACKLE_VERSION_NO_DEVTAG} LANGUAGES C CXX Fortran)
 
 # Specify that `./cmake` contains cmake modules defining useful functionality
@@ -185,14 +186,16 @@ endif()
 # (this is where we will add targets for integration tests)
 
 # Add BUILD_TESTS option available
-option(BUILD_TESTS "build tests" OFF)
+option(GRACKLE_BUILD_TESTS "build Grackle tests using GoogleTest" OFF)
 
-# Setup GTEST if needed
-if(BUILD_TESTS)
-    include(setup_GTest)
-    add_subdirectory(tests)
+# if desired, setup Grackle's tests that use GoogleTest (this has no impact on
+# the tests run via pytest, those are handled outside of cmake)
+if(GRACKLE_BUILD_TESTS)
+    # load CMake's built-in module that defines functions to registering unit
+    # tests implemented with GoogleTest into CMake's test-runner, CTest
+    include(GoogleTest)
+    enable_testing() # enable the test-runner, CTest
 endif()
-
 
 # Packaging
 # ---------
