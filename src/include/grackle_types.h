@@ -21,6 +21,15 @@
 
 #include "grackle_float.h"
 
+// the following include-directive only exists because the definition of
+// the code_units type got moved and we don't want to break anybody's
+// code who expect that type to be defined in this file
+#include "grackle_chemistry_data.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
 #ifdef GRACKLE_FLOAT_4
 #define gr_float float
 #endif
@@ -82,18 +91,6 @@ typedef struct
 
 } grackle_field_data;
 
-typedef struct
-{
-
-  int comoving_coordinates;
-  double density_units;
-  double length_units;
-  double time_units;
-  double velocity_units;
-  double a_units;
-  double a_value;
-
-} code_units;
 
 typedef struct
 {
@@ -104,4 +101,8 @@ typedef struct
 
 } grackle_version;
 
-#endif
+#ifdef __cplusplus
+} /* extern "C" */
+#endif /* __cplusplus */
+
+#endif /* __GRACKLE_TYPES_H__ */

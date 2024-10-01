@@ -1,11 +1,15 @@
-add_executable(runInterpolationTests test_interpolators_g.cpp)# ${PROJECT_SOURCE_DIR}/src/clib/c_wrappers/wrap_interpolators_g.c)
-target_link_libraries(runInterpolationTests grackle gtest gtest_main hdf5)
-target_include_directories(runInterpolationTests PRIVATE ${PROJECT_SOURCE_DIR}/src/clib)
+# declare testdeps to bundle together dependencies used by all tests
+# ------------------------------------------------------------------
+add_library(unittestdeps INTERFACE)
+target_link_libraries(unittestdeps INTERFACE Grackle::Grackle GTest::gtest_main)
 
-add_test(NAME Interpolate1D COMMAND runInterpolationTests)
-add_test(NAME Interpolate2D COMMAND runInterpolationTests)
-add_test(NAME Interpolate3D COMMAND runInterpolationTests)
-add_test(NAME Interpolate3Dz COMMAND runInterpolationTests)
-add_test(NAME Interpolate2Df3D COMMAND runInterpolationTests)
-add_test(NAME Interpolate4D COMMAND runInterpolationTests)
-add_test(NAME Interpolate5D COMMAND runInterpolationTests)
+# short-term hack to let tests invoke Fortran functions from C
+target_compile_definitions(unittestdeps INTERFACE "$<$<PLATFORM_ID:Linux,Darwin>:LINUX>")
+target_include_directories(unittestdeps INTERFACE ${PROJECT_SOURCE_DIR}/src/clib)
+
+# start declaring targets for tests
+# ---------------------------------
+add_executable(runInterpolationTests test_unit_interpolators_g.cpp)
+target_link_libraries(runInterpolationTests unittestdeps)
+
+gtest_discover_tests(runInterpolationTests)

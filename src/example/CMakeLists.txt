@@ -1,21 +1,39 @@
+
+# overwrite the global variable that controls where the binaries compiled in
+# this directory are placed
+# -> because this file is only read by CMake via add_subdirectory and we are
+#    are not making a CACHE variable, this won't affect anything outside of
+#    this directory
+# -> for a build directory, <build>, this places the binaries at 
+#    <build>/examples
+# -> assuming that the build-directory is at the root level of the grackle
+#    repository, then executing the examples from within the examples directory
+#    should ensure that the paths to the datafiles are correct
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../../examples)
+
+
 add_executable(c_example c_example.c)
+target_link_libraries(c_example Grackle::Grackle)
+
 add_executable(c_local_example c_local_example.c)
+target_link_libraries(c_local_example Grackle::Grackle)
+
+set(CMAKE_CXX_STANDARD 11) # needed by apple-clang compiler for some examples
+
 add_executable(cxx_example cxx_example.C)
+target_link_libraries(cxx_example Grackle::Grackle)
+
 add_executable(cxx_grid_example cxx_grid_example.C)
-add_executable(cxx_omp_example cxx_omp_example.C)
+target_link_libraries(cxx_grid_example Grackle::Grackle)
+
+if (GRACKLE_USE_OPENMP)
+  add_executable(cxx_omp_example cxx_omp_example.C)
+  target_link_libraries(cxx_omp_example Grackle::Grackle)
+endif()
+
+# the following target uses -O1 optimization because problems can arise with
+# higher levels of optimization. A comment in fortran_example.F provides more
+# details about the problems
 add_executable(fortran_example fortran_example.F)
-
-target_link_libraries(c_example grackle m hdf5)
-target_link_libraries(c_local_example grackle m hdf5)
-target_link_libraries(cxx_example grackle hdf5)
-target_link_libraries(cxx_grid_example grackle hdf5)
-target_link_libraries(cxx_omp_example grackle hdf5)
-target_link_libraries(fortran_example grackle hdf5)
-
-target_include_directories(c_example PRIVATE ${PROJECT_SOURCE_DIR}/src/clib ${PROJECT_SOURCE_DIR}/src/clib/generated)
-target_include_directories(c_local_example PRIVATE ${PROJECT_SOURCE_DIR}/src/clib ${PROJECT_SOURCE_DIR}/src/clib/generated)
-target_include_directories(cxx_example PRIVATE ${PROJECT_SOURCE_DIR}/src/clib ${PROJECT_SOURCE_DIR}/src/clib/generated)
-target_include_directories(cxx_grid_example PRIVATE ${PROJECT_SOURCE_DIR}/src/clib ${PROJECT_SOURCE_DIR}/src/clib/generated)
-target_include_directories(cxx_omp_example PRIVATE ${PROJECT_SOURCE_DIR}/src/clib ${PROJECT_SOURCE_DIR}/src/clib/generated)
-target_include_directories(fortran_example PRIVATE ${PROJECT_SOURCE_DIR}/src/clib ${PROJECT_SOURCE_DIR}/src/clib/generated)
-
+target_compile_options(fortran_example PRIVATE "-O1")
+target_link_libraries(fortran_example Grackle::Grackle)

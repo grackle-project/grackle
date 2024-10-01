@@ -1,0 +1,213 @@
+#=======================================================================
+#
+# FILE:        Make.config.targets
+#
+# SUMMARY:     Make targets for managing configuration settings
+#              (originally written by James Border for Enzo)
+#
+# DESCRIPTION  See 'make help-config' for definitive description of targets
+#
+#-----------------------------------------------------------------------
+
+#-----------------------------------------------------------------------
+help-config:
+	@echo "========================================================================"
+	@echo "   GRACKLE CONFIGURATION HELP"
+	@echo "========================================================================"
+	@echo
+	@echo "CONFIGURATION SETTINGS"
+	@echo
+	@echo "   Set baryon field precision"
+	@echo
+	@echo "      make precision-32"
+	@echo "      make precision-64"
+	@echo
+	@echo "   Set optimization/debug/warning levels"
+	@echo
+	@echo "      make opt-warn"
+	@echo "      make opt-debug"
+	@echo "      make opt-high"
+	@echo "      make opt-aggressive"
+	@echo
+	@echo "   Set OpenMP support"
+	@echo
+	@echo "      make omp-on"
+	@echo "      make omp-off"
+	@echo
+
+#-----------------------------------------------------------------------
+
+show-flags:
+	@echo
+	@echo "CPP = `which $(CPP)`"
+	@echo "CC  = `which $(CC)`"
+	@echo "CXX = `which $(CXX)`"
+	@echo "FC  = `which $(FC)`"
+	@echo "F90 = `which $(F90)`"
+	@echo "LD  = `which $(LD)`"
+	@echo "LIBTOOL = `which $(LIBTOOL)`"
+	@echo ""
+	@echo "DEFINES = $(DEFINES)"
+	@echo ""
+	@echo "INCLUDES = $(INCLUDES)"
+	@echo ""
+	@echo "CPPFLAGS = $(CPPFLAGS)"
+	@echo "CFLAGS   = $(CFLAGS)"
+	@echo "CXXFLAGS = $(CXXFLAGS)"
+	@echo "FFLAGS   = $(FFLAGS)"
+	@echo "F90FLAGS = $(F90FLAGS)"
+	@echo "LDFLAGS  = $(LDFLAGS)"
+	@echo ""
+	@echo "LIBS     = $(LIBS)"
+	@echo
+
+#-----------------------------------------------------------------------
+
+show-config:
+	@echo
+	@echo "   MACHINE: $(MACH_TEXT)"
+	@echo "   MACHINE-NAME: $(CONFIG_MACHINE)"
+	@echo
+	@echo "   CONFIG_PRECISION  [precision-{32,64}]                     : $(CONFIG_PRECISION)"
+	@echo "   CONFIG_OPT  [opt-{warn,debug,high,aggressive}]            : $(CONFIG_OPT)"
+	@echo "   CONFIG_OMP  [omp-{on,off}]                                : $(CONFIG_OMP)"
+	@echo
+
+#-----------------------------------------------------------------------
+
+.PHONY: suggest-clean
+suggest-clean:
+	@echo
+	@echo " *** Execute 'make clean' before rebuilding executables ***"
+	@echo
+
+#-----------------------------------------------------------------------
+
+show-version:
+	@echo
+	@echo "The Grackle Version $(LIB_RELEASE_VERSION)"
+	@echo "Git Branch   `$(QUERY_VERSION) git-branch`"
+	@echo "Git Revision `$(QUERY_VERSION) git-revision`"
+
+#-----------------------------------------------------------------------
+
+show-diff:
+	@git diff
+
+#-----------------------------------------------------------------------
+.PHONY: default
+
+default:
+	@rm -f $(MAKE_CONFIG_OVERRIDE)
+	@touch $(MAKE_CONFIG_OVERRIDE)
+	@$(MAKE) show-config
+	@$(MAKE) suggest-clean
+
+#-----------------------------------------------------------------------
+
+machine-%: suggest-clean
+	@if [ -e $(GRACKLE_DIR)/Make.mach.$* ]  || [ -e $(HOME)/.grackle/Make.mach.$* ]; then \
+           tmp=.config.temp; \
+           grep -v CONFIG_MACHINE $(MAKE_CONFIG_MACHINE) > $${tmp}; \
+           mv $${tmp} $(MAKE_CONFIG_MACHINE); \
+           echo "CONFIG_MACHINE = $*" >> $(MAKE_CONFIG_MACHINE); \
+	   $(MAKE)  show-config | grep MACHINE; \
+	else \
+           echo; \
+	   echo "   No such machine file "'"'"Make.mach.$*"'"'; \
+           echo; \
+	   exit 1; \
+        fi; \
+	echo
+
+#-----------------------------------------------------------------------
+
+load-config-%:
+	@if [ -e $(HOME)/.grackle/Make.settings.$* ]; then \
+           @tmp=.config.temp; \
+	   cat $(HOME)/.grackle/Make.settings.$* > $(MAKE_CONFIG_OVERRIDE); \
+           echo; \
+           echo "   CONFIG SETTINGS: $*"; \
+	   $(MAKE) show-config; \
+	   $(MAKE) suggest-clean; \
+	elif [ -e Make.settings.$* ]; then \
+           @tmp=.config.temp; \
+	   cat Make.settings.$* > $(MAKE_CONFIG_OVERRIDE); \
+           echo; \
+           echo "   CONFIG SETTINGS: $*"; \
+	   $(MAKE) show-config; \
+	   $(MAKE) suggest-clean; \
+        else \
+           echo; \
+           echo "   No such settings file "'"'"$(HOME)/.grackle/Make.settings.$*"'"'; \
+           echo; \
+	   exit 1; \
+        fi;
+
+#-----------------------------------------------------------------------
+
+save-config-%:
+	@(if [ ! -d $(HOME)/.grackle ]; then \
+		mkdir $(HOME)/.grackle; \
+	fi)
+	@tmp=.config.temp; \
+	cat $(MAKE_CONFIG_OVERRIDE) > $(HOME)/.grackle/Make.settings.$*; \
+	echo; \
+	echo "   Settings saved to $(HOME)/.grackle/Make.settings.$*."; \
+	echo "   Type "'"'"$(MAKE) load-config-$*"'"'" to reload settings."; \
+	echo;
+
+#-----------------------------------------------------------------------
+
+VALID_PRECISION = precision-32 precision-64
+.PHONY: $(VALID_PRECISION)
+
+precision-32: CONFIG_PRECISION-32
+precision-64: CONFIG_PRECISION-64
+precision-%:
+	@printf "\n\tInvalid target: $@\n\n\tValid targets: [$(VALID_PRECISION)]\n\n"
+CONFIG_PRECISION-%: suggest-clean
+	@tmp=.config.temp; \
+        grep -v CONFIG_PRECISION $(MAKE_CONFIG_OVERRIDE) > $${tmp}; \
+        mv $${tmp} $(MAKE_CONFIG_OVERRIDE); \
+        echo "CONFIG_PRECISION = $*" >> $(MAKE_CONFIG_OVERRIDE); \
+	$(MAKE)  show-config | grep CONFIG_PRECISION; \
+	echo
+
+#-----------------------------------------------------------------------
+
+VALID_OPT = opt-warn opt-debug opt-high opt-aggressive
+.PHONY: $(VALID_OPT)
+
+opt-warn:       CONFIG_OPT-warn
+opt-debug:      CONFIG_OPT-debug
+opt-high:       CONFIG_OPT-high
+opt-aggressive: CONFIG_OPT-aggressive
+opt-%:
+	@printf "\n\tInvalid target: $@\n\n\tValid targets: [$(VALID_OPT)]\n\n"
+CONFIG_OPT-%: suggest-clean
+	@tmp=.config.temp; \
+        grep -v CONFIG_OPT $(MAKE_CONFIG_OVERRIDE) > $${tmp}; \
+        mv $${tmp} $(MAKE_CONFIG_OVERRIDE); \
+        echo "CONFIG_OPT = $*" >> $(MAKE_CONFIG_OVERRIDE); \
+	$(MAKE)  show-config | grep CONFIG_OPT; \
+	echo
+
+#-----------------------------------------------------------------------
+ 
+VALID_OMP = omp-on omp-off
+.PHONY: $(VALID_OMP)
+
+omp-on:  CONFIG_OMP-on
+omp-off: CONFIG_OMP-off
+omp-%:
+	@printf "\n\tInvalid target: $@\n\n\tValid targets: [$(VALID_OMP)]\n\n"
+CONFIG_OMP-%: suggest-clean
+	@tmp=.config.temp; \
+        grep -v CONFIG_OMP $(MAKE_CONFIG_OVERRIDE) > $${tmp}; \
+        mv $${tmp} $(MAKE_CONFIG_OVERRIDE); \
+        echo "CONFIG_OMP = $*" >> $(MAKE_CONFIG_OVERRIDE); \
+	$(MAKE)  show-config | grep CONFIG_OMP; \
+	echo
+
+#-----------------------------------------------------------------------
