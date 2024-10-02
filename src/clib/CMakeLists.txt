@@ -141,6 +141,9 @@ add_library(Grackle_Grackle
   phys_constants.h
   utils.h
 
+  # C wrappers
+  c_wrappers/wrap_interpolators_g.c
+
   # Fortran public headers
   ../include/grackle.def
   ../include/grackle_fortran_interface.def
