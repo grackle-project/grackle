@@ -8,7 +8,7 @@
 # To support scenario 1, this CAN ONLY use python's built in modules.
 
 import argparse
-from contextlib import contextmanager, ExitStack
+import contextlib
 import filecmp
 import hashlib
 import io
@@ -19,14 +19,10 @@ import shutil
 import stat
 import sys
 import traceback
-from typing import IO, NamedTuple, Union
+from typing import IO, NamedTuple, Optional, Union
 import urllib.request
 from urllib.error import URLError, HTTPError
 import warnings
-
-if (sys.version_info.major, sys.version_info.minor) < (3, 6, 1):
-    # 3.6.0 doesn't support all NamedTuple features
-    raise RuntimeError("python 3.6.1 or newer is required")
 
 # Down below, we provide a detailed description that serves 3 purposes
 #   1. to act as a description of this files contents for developers
@@ -277,6 +273,29 @@ _OBJECT_STORE_SUBDIR = "object-store"
 _UNSPECIFIED = object()
 
 
+# Version check and define some backports
+# =======================================
+
+if sys.version_info < (3, 6, 1):
+    # 3.6.0 doesn't support all NamedTuple features
+    raise RuntimeError("python 3.6.1 or newer is required")
+
+elif sys.version_info < (3, 7, 0):
+
+    class nullcontext:
+        def __init__(self, enter_result=None):
+            self.enter_result = enter_result
+
+        def __enter__(self):
+            return self.enter_result
+
+        def __exit__(self, *args):
+            pass
+
+else:
+    nullcontext = contextlib.nullcontext
+
+
 class GenericToolError(RuntimeError):
     pass
 
@@ -300,7 +319,7 @@ def _ensure_all_removed(fnames):
 _MAX_BAR = 160 * "="
 
 
-@contextmanager
+@contextlib.contextmanager
 def _progress_bar(ncols, total_bytes, *, use_dummy=False):
     """
     ContextManager that provides a function used for drawing/updating progress bars
@@ -361,7 +380,7 @@ def _retrieve_url(url, dest, fname, *, use_progress_bar=True, chunksize=_CHUNKSI
     ncols = shutil.get_terminal_size()[0] - 1
     req = urllib.request.Request(url)
     try:
-        with ExitStack() as stack:
+        with contextlib.ExitStack() as stack:
             # enter context managers for http-response, progress-bar, & output-file
             response = stack.enter_context(urllib.request.urlopen(req))
             total_bytes = int(response.headers.get("Content-Length", -1))
@@ -543,7 +562,7 @@ def _get_data_dir():
         return manual_choice
 
 
-@contextmanager
+@contextlib.contextmanager
 def _file_openner(f, mode, **kwargs):
     """Open a file or pass through an already open file"""
     if (sys.version_info.major, sys.version_info.minor) < (3, 6):
@@ -860,7 +879,21 @@ def get_object_dir(data_store_config):
 
 
 class VersionDataManager(NamedTuple):
-    """Actually manages downloads of files
+    """
+    Actually manages downloads of files to a directory where the
+    directory and files are associated with single Grackle version.
+
+    Instances of this class support 2 modes of operation:
+      1. The instance manages a data file directory that is part of the
+         larger data-management system. This data-management system may
+         include multiple version directories and data-files are
+         deduplicated.
+      2. The instance manages a data file directory that is completely
+         isolated from any data-management system (i.e. there is no
+         deduplication)
+
+    The first mode is the primary usecase of this class. (The second mode
+    is mostly provided as a convenience)
 
     Warnings
     --------
@@ -883,36 +916,73 @@ class VersionDataManager(NamedTuple):
         a file in the object directory)
     """
 
-    # define attributes holding directory paths where data files are actually stored
-
-    # Path to output directory, where the file-name matches the name given
-    # in the registry and is known by the associated grackle-version
+    # Path to output directory, where the file-name matches the name given in the
+    # registry and is known by the associated grackle-version.
     version_dir: str
-    # Path to the object directory. This is the name where checksum names are used as
-    # filenames. (This is the mechanism used to aid deduplication)
-    object_dir: str
 
     # data_store_config holds a little more information than we actually need
     # -> we may chooise to redefine this in the future
-    data_store_config: DataStoreConfig
+    data_store_config: Optional[DataStoreConfig]
 
     # encodes the configuration (and logic) for fetching the files
     fetcher: Fetcher
 
     @classmethod
-    def create(cls, tool_config, data_store_config, *, override_fetcher=None):
-        """create a new instance"""
+    def create(
+        cls,
+        tool_config,
+        data_store_config,
+        *,
+        untracked_dest_dir=None,
+        override_fetcher=None,
+    ):
+        """
+        Create a new instance
+
+        Parameters
+        ----------
+        tool_config : ToolConfig
+        data_store_config : DataStoreConfig
+        untracked_dest_dir : str, optional
+            When specified the constructed object will be used to manage
+            fetched files are placed in the specified
+            directory and no attempt is made to track the file as part of
+            the data-directory.
+        override_fetcher : Fetcher, optional
+            When specified, this fetcher is used in place of the standard
+            default fetcher provided by data_store_config.
+        """
 
         fetcher = override_fetcher
         if fetcher is None:
             fetcher = data_store_config.default_fetcher
 
+        if untracked_dest_dir is None:
+            version_dir = get_version_dir(tool_config, data_store_config)
+        else:
+            version_dir = untracked_dest_dir
+            data_store_config = None
+
         return cls(
-            version_dir=get_version_dir(tool_config, data_store_config),
-            object_dir=get_object_dir(data_store_config),
+            version_dir=version_dir,
             data_store_config=data_store_config,
             fetcher=fetcher,
         )
+
+    def manages_untracked_data(self):
+        return self.data_store_config is None
+
+    def _object_dir(self):
+        """
+        If the instance manages data as part of a larger data management
+        system, then this method returns the path to the object directory.
+        This is the directory where checksum names are used as filenames.
+        (Linking with files in this directory is the mechanism used to aid
+        deduplication)
+        """
+        if self.data_store_config is None:
+            return None
+        return get_object_dir(self.data_store_config)
 
     def _setup_file_system(self):
         """
@@ -920,50 +990,66 @@ class VersionDataManager(NamedTuple):
         fetching new files and returns the configured lockfile context
         manager (it isn't locked yet)
         """
-        _ensure_data_dir_exists(self.data_store_config)
+        if self.manages_untracked_data():
+            lockfile_ctx = nullcontext()
+        else:
+            _ensure_data_dir_exists(self.data_store_config)
 
-        lockfile_ctx = standard_lockfile(self.data_store_config)
+            lockfile_ctx = standard_lockfile(self.data_store_config)
+            with lockfile_ctx:
+                # let's validate we can actually use hardlinks
+                if not hasattr(os, "link"):
+                    raise GenericToolError("operating system doesn't support hardlinks")
+                elif not _HardlinkStrat.is_supported(self.data_store_config.tmp_dir):
+                    raise GenericToolError("The file system does not support hardlinks")
+
+                # a little more set up
+                _ensure_exists(
+                    self.data_store_config.store_location, "that holds the data-store"
+                )
+                _ensure_exists(self._object_dir(), "")
+
+            assert not lockfile_ctx.locked()  # sanity check!
+
         with lockfile_ctx:
-            # let's validate we can actually use hardlinks
-            if not hasattr(os, "link"):
-                raise GenericToolError("The operating system doesn't support hardlinks")
-            elif not _HardlinkStrat.is_supported(self.data_store_config.tmp_dir):
-                raise GenericToolError("The file system does not support hardlinks")
-
-            # a little more set up
-            _ensure_exists(
-                self.data_store_config.store_location, "that will hold the data-store"
-            )
-            _ensure_exists(self.object_dir, "")
             _ensure_exists(
                 self.version_dir, "that holds data for current Grackle version"
             )
 
-        assert not lockfile_ctx.locked()  # sanity check!
         return lockfile_ctx
 
     def _fetch_file(self, fname, full_checksum_str, *, lockfile_ctx=None):
         """
-        Helper method to fetch a single file and provide the full path
+        Helper method to fetch a single file. Provides the full path
+
+        Parameters
+        ----------
+        fname : str
+            The name of the file to be fetched
+        full_checksum_str : str
+            The checksum of the file.
+        lockfile_ctx : LockFileContext, optional
+            When this is None, the calling process doesn't already own the
+            lock for the data-directory (and this function will try to
+            acquire the lock)
 
         Returns
         -------
         any_work : bool
-            ``True`` indicates that we actually needed to go get the file,
-            while ``False`` indicates that the file already existed
-        full_path : str
-            Full path to the file
+            Indicates whether any work was actually required to fetch the
+            file. the file was freshly fetched. ``True`` indicates that we
+            actually needed to go get the file, while ``False`` denotes
+            that the file already existed
+        full_fname : str
+            Specifies the absolute path to the file. When a tracked file
+            is fetched, then this is path to the file entry where
+            `os.path.basename(full_fname)` is equal `fname`
         """
 
         if lockfile_ctx is None:
             lockfile_ctx = self._setup_file_system()
 
-        # get the global checksum kind
-        cksum_kind = self.data_store_config.checksum_kind
-
         # extract the checksum_kind and string that are stored in the registry
-        # (we are being a little more careful here than necessary, but if this ever
-        # becomes library-code, it will pay off)
         if ":" in full_checksum_str:
             cur_cksum_kind, checksum = full_checksum_str.split(":")
         else:
@@ -971,69 +1057,97 @@ class VersionDataManager(NamedTuple):
                 f"the checksum for {fname} does not specify the checksum kind"
             )
 
-        if cur_cksum_kind != cksum_kind:
-            raise ValueError(
-                "Currently, we only support downloading from file registries where the "
-                "checksum algorithm matches the globally used algorithm, "
-                f"{cksum_kind}. The checksum algorithm associated with {fname} is "
-                f"{cur_cksum_kind}."
-            )
+        # when tracking files as part of the data file management system, there are
+        # strict requirements on the kind of checksum that is used.
+        # -> This is because the entries in the object directory (used for
+        #    deduplication) use the checksum string (without the algorithm tag) as
+        #    file names.
+        # -> here, we check this requirement
+        if self.manages_untracked_data():
+            req_cksum_kind = None
+        else:
+            req_cksum_kind = self.data_store_config.checksum_kind
+            if cur_cksum_kind != req_cksum_kind:
+                raise ValueError(
+                    "To download a file as part of Grackle's data file management "
+                    "system, we must know the file's checksum computed with the "
+                    f"{req_cksum_kind} checksum algorithm. The provided checksum "
+                    f"for {fname} was computed with the {cur_cksum_kind} algorithm."
+                )
 
+        # now we actually fetch the file (if necessary)
         with lockfile_ctx:
-            # name associated with current file in the current grackle version
+            # get the full path to the downloaded file
             full_fname = os.path.join(self.version_dir, fname)
 
             # if the file already exists we are done
             if os.path.exists(full_fname):
-                if not matches_checksum(full_fname, cksum_kind, checksum):
+                if not matches_checksum(full_fname, cur_cksum_kind, checksum):
                     raise RuntimeError(
                         f"{full_fname} already exists but has the wrong hash"
                     )
+                # when we're handling tracked data, we could theoretically check whether
+                # this data is properly linked. But I don't think I would want to take
+                # any kind of action if it isn't properly tracked (the most action I
+                # would recommend is providing the user with a warning)
                 return (False, full_fname)
 
-            # download the file (pooch will log a detailed message
+            # download the file
             fetcher = self.fetcher
             fetcher(
                 fname,
                 checksum=checksum,
-                checksum_kind=cksum_kind,
+                checksum_kind=cur_cksum_kind,
                 dest_dir=self.version_dir,
             )
-            os.chmod(full_fname, _IMMUTABLE_MODE)
+            if not self.manages_untracked_data():
+                # by changing permissions, certain platforms (like MacOS) will ask
+                # users "are you sure you want to delete this file" when the ``rm``
+                # command is used:
+                # -> this is desirable for files managed by the grackle data management
+                #    systems (when we don't want users removing individual files)
+                # -> but, we avoid doing this for untracked data files (because it's
+                #    just an annoyance for the end-user)
+                os.chmod(full_fname, _IMMUTABLE_MODE)
 
-            # now deduplicate
-            cksum_fname = os.path.join(self.object_dir, checksum)
+            if not self.manages_untracked_data():
+                # handle deduplication (since the data files are part of the larger
+                # grackle data file management system)
+                cksum_fname = os.path.join(self._object_dir(), checksum)
 
-            try:
-                _HardlinkStrat.deduplicate(full_fname, cksum_fname)
+                try:
+                    _HardlinkStrat.deduplicate(full_fname, cksum_fname)
 
-                # not strictly necessary, but doing this for safety reasons
-                os.chmod(cksum_fname, _IMMUTABLE_MODE)
+                    # not strictly necessary, but doing this for safety reasons
+                    os.chmod(cksum_fname, _IMMUTABLE_MODE)
 
-            except Exception as err:
-                # remove full_fname since we don't want users to use it before dealing
-                # with the larger issue. We also want to make the errors reproducible
-                os.remove(full_fname)
-                if (not isinstance(err, ValueError)) and os.path.is_file(cksum_fname):
-                    raise err
+                except Exception as err:
+                    # remove full_fname
+                    # -> we don't want users to use it before resolving the issues
+                    # -> We also want to make the errors as reproducible as possible
+                    #    (ideally, rerunning the command should produce the same error
+                    #    if you haven't changed anything)
+                    os.remove(full_fname)
+                    if os.path.is_file(cksum_fname) and not isinstance(err, ValueError):
+                        raise err
 
-                # this should only happens when full_fname and cksum_fname both exist,
-                # but aren't perfect matches of each other. We try to provide a more
-                # informative error message
-                if not matches_checksum(cksum_fname, cksum_kind, checksum):
-                    raise GenericToolError(f"""\
+                    # this should only happens when full_fname and cksum_fname both
+                    # exist, but aren't perfect matches of each other. Here, we try to
+                    # provide a more informative error message
+                    if not matches_checksum(cksum_fname, req_cksum_kind, checksum):
+                        raise GenericToolError(f"""\
 A file (used for deduplication) that already existed on disk
    `{cksum_fname}`
 which is probably a version of `{fname}`,
-doesn't have the appropriate {self.data_store_config.checksum_kind} checksum.
--> expected: {calc_checksum(cksum_fname, cksum_kind)}
+doesn't have the appropriate {req_cksum_kind} checksum.
+-> expected: {calc_checksum(cksum_fname, req_cksum_kind)}
 -> actual: {checksum}
 -> This implies that the data was corrupted and it needs to be dealt with.
    To avoid confusion we have deleted the newly downloaded version of
    `{fname}`
 -> The safest bet is probably to delete the data directory""")
-                else:
-                    raise GenericToolError(f"""\
+                    else:
+                        raise GenericToolError(f"""\
 Something bizare (& extremely unlikely) happened:
 -> a previous invocation of this tool appears to have installed a data file
    with the same checksum as {fname}, but has different contents.
@@ -1043,15 +1157,30 @@ Something bizare (& extremely unlikely) happened:
    downloaded version of the file""")
         return (True, full_fname)
 
-    def fetch_all(self, registry):
+    def fetch_all(self, registry, *, fnames=None):
         """
-        Ensures that all files in the specified registry are downloaded
+        Ensures that files in the specified registry are downloaded
 
         Parameters
         ----------
         registry : dict
             maps file names to associated checksums
+        fnames : sequence, optional
+            Optionally specifies a list of files, with corresponding
+            registry entries to fetch. When this is ``None``, all files in
+            the registry are fetched.
         """
+
+        if fnames is None:
+            fname_cksum_pairs = registry.items()
+        else:
+            for fname in filter(lambda fname: fname not in registry, fnames):
+                raise ValueError(
+                    f"{fname} is not the name of a file with a registry "
+                    "entry. Thus it can't be downloaded.\n\nFiles with "
+                    f"registry entries include: {list(registry.keys())!r}"
+                )
+            fname_cksum_pairs = ((fname, registry[fname]) for fname in fnames)
 
         # ensure all needed directories exist and fetch the lockfile context manager
         lockfile_ctx = self._setup_file_system()
@@ -1059,7 +1188,7 @@ Something bizare (& extremely unlikely) happened:
         with lockfile_ctx:
             num_fetched = 0
             _pretty_log(f"preparing to fetch files from: {self.fetcher.base_path}")
-            for fname, full_checksum_str in registry.items():
+            for fname, full_checksum_str in fname_cksum_pairs:
                 any_work, _ = self._fetch_file(
                     fname, full_checksum_str, lockfile_ctx=lockfile_ctx
                 )
@@ -1073,13 +1202,17 @@ def fetch_command(args, tool_config, data_store_config):
     override_fetcher = None
     if args.from_dir is not None:
         override_fetcher = Fetcher.configure_src_dir(args.from_dir)
+
+    fnames = None if len(args.fnames) == 0 else args.fnames
+
     man = VersionDataManager.create(
         tool_config=tool_config,
         data_store_config=data_store_config,
+        untracked_dest_dir=args.untracked_dest_dir,
         override_fetcher=override_fetcher,
     )
     registry = _parse_file_registry(data_store_config.file_registry_file)
-    man.fetch_all(registry)
+    man.fetch_all(registry, fnames=fnames)
 
 
 def _register_fetch_command(subparsers):
@@ -1091,6 +1224,32 @@ def _register_fetch_command(subparsers):
         ),
     )
     parser_fetch.add_argument(
+        "fnames",
+        nargs="*",
+        help=(
+            "Optionally specify the names of files that should be fetched. "
+            "Each listed file must have a corresponding entry in the file "
+            "registry used by this tool. If no files are specified, then the "
+            "tool will fetch every known file."
+        ),
+    )
+    parser_fetch.add_argument(
+        "--untracked-dest-dir",
+        default=None,
+        help=(
+            "This flag can be used to instruct to download files to an "
+            "arbitrary directory where the data files will NOT be stored as "
+            "part of the data file management system. This provided as a "
+            "convenience. The specified directory should NOT be located "
+            "inside the grackle data directory. The tool also won't use any "
+            "kind of lock files (thus, it's the user's responsibility to "
+            "ensure that only a single process is modifying the specified "
+            "directory at any given time. This is provided mostly as a "
+            "convenience. Management of the files in this directory is "
+            "outside this tool's scope."
+        ),
+    )
+    parser_fetch.add_argument(
         "--from-dir",
         default=None,
         help=(
@@ -1099,7 +1258,6 @@ def _register_fetch_command(subparsers):
         ),
     )
     parser_fetch.set_defaults(func=fetch_command)
-
 
 
 def direntry_iter(path, *, ftype="file", mismatch="skip", ignore=None):
@@ -1270,7 +1428,6 @@ def _register_rm_command(subparsers):
     parser_rm.set_defaults(func=rm_command)
 
 
-
 def lsversions_command(args, tool_config, data_store_config):
     if not os.path.exists(data_store_config.store_location):
         print("there is no data")
@@ -1386,7 +1543,7 @@ def calcreg_command(args, tool_config, data_store_config):
 
     pairs = [(name, calc_checksum(path, args.hash_name)) for name, path in it]
 
-    with ExitStack() as stack:
+    with contextlib.ExitStack() as stack:
         if args.output is None:
             file = sys.stdout
         else:

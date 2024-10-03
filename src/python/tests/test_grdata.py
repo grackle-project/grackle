@@ -162,7 +162,14 @@ class CLIApp:
             raise GRDataExecErr("".join(msg_lines))
         return returncode, stdout.rstrip()
 
-    def fetch(self, src_dir=None, *, expect_success=None):
+    def fetch(
+        self,
+        src_dir=None,
+        *,
+        file_list=None,
+        untracked_dest_dir=None,
+        expect_success=None,
+    ):
         # a number of tests care about whether the command fails. (In some case we
         # actually expect it to fail). We return whether or not it was succesful.
 
@@ -173,6 +180,12 @@ class CLIApp:
             subcommand_args = ["fetch"]
         else:
             subcommand_args = ["fetch", "--from-dir", src_dir]
+
+        if file_list is not None:
+            subcommand_args += file_list
+
+        if untracked_dest_dir is not None:
+            subcommand_args += ["--untracked-dest-dir", untracked_dest_dir]
         return self(subcommand_args, expect_success=expect_success)[0] == 0
 
     def rm_vdata(self, version, *, omit_force=False, expect_success=None):
@@ -434,6 +447,39 @@ def _get_managed_file(datadir_path, version, fname):
     return os.path.join(datadir_path, "data-store-v1", version, fname)
 
 
+def _dummy_errmsg_writer(msg):
+    return AssertionError(msg)
+
+
+def check_version_data_dir_contents(
+    version_dir_path,
+    file_set,
+    *,
+    exhaustive_file_set=True,
+    errmsg_writer=_dummy_errmsg_writer,
+):
+    __tracebackhide__ = True  # suppress noisy pytest tracebacks
+    for fname, file_spec in file_set:
+        full_path = os.path.join(version_dir_path, fname)
+
+        if not os.path.isfile(full_path):
+            raise errmsg_writer(
+                f"file, {full_path}, doesn't exist after the last invocation of grdata"
+            )
+        with open(full_path, "r") as f:
+            contents = f.read()
+        if contents != file_spec.contents_str:
+            raise errmsg_writer(
+                f"the file, {full_path}, doesn't have the correct contents"
+            )
+
+    if exhaustive_file_set and (len(os.listdir(version_dir_path)) != len(file_set)):
+        raise errmsg_writer(
+            f"the directory, {version_dir_path}, doesn't contain the right number of "
+            "entries."
+        )
+
+
 def check_version_data_dir(
     datadir_path, version, lockfile_should_exist=False, file_set=None, *, err_msg=None
 ):
@@ -466,28 +512,41 @@ def check_version_data_dir(
             "a lockfile shouldn't exist after the last invocation of grdata."
         )
 
+    exhaustive_file_set = True
     if file_set is None:
         file_set = []
+        exhaustive_file_set = False
+    check_version_data_dir_contents(
+        version_dir_path=_get_version_dir(datadir_path, version),
+        file_set=file_set,
+        exhaustive_file_set=exhaustive_file_set,
+        errmsg_writer=prep_assertion_err,
+    )
 
-    for fname, file_spec in file_set:
-        full_path = _get_managed_file(datadir_path, version, fname)
 
-        if not os.path.isfile(full_path):
-            raise prep_assertion_err(
-                f"file, {full_path}, doesn't exist after the last invocation of grdata"
-            )
-        with open(full_path, "r") as f:
-            contents = f.read()
-        if contents != file_spec.contents_str:
-            raise prep_assertion_err(
-                f"the file, {full_path}, doesn't have the correct contents"
-            )
+def _check_removal(data_dir, version, retains_datastore):
+    version_dir = _get_version_dir(data_dir, version)
+    datastore_dir = _get_datastore_dir(data_dir)
+    if os.path.isdir(version_dir):
+        raise AssertionError(
+            f"after a successful remove operation, the version-dir, {version_dir}, "
+            "shouldn't exist"
+        )
+    elif os.path.isdir(datastore_dir) != retains_datastore:
+        raise AssertionError(
+            f"the data-store directory, {datastore_dir}, should "
+            + ["not", "still"][retains_datastore]
+            + "after the removal operation"
+        )
 
 
 @pytest.mark.parametrize(
     "rm_approach", ["rm-implicit-vdata", "rm-explicit-vdata", "rm-data-store"]
 )
 def test_fetch_and_remove(dummy_file_repo, rm_approach, cli_app):
+    # in this test, the fetch operation is used to fetch all files in the registry
+    # and we vary the rm approach
+
     version = "1.0"
     app = dummy_file_repo.cli_app_with_overrides(cli_app, "primary", version)
     data_dir = os.path.join(dummy_file_repo.test_dir, "my-data-dir")
@@ -533,19 +592,77 @@ def test_fetch_and_remove(dummy_file_repo, rm_approach, cli_app):
         # now we expect it to succeed
         rm_method(*rm_args, expect_success=True)
 
-        version_dir = _get_version_dir(data_dir, version)
-        datastore_dir = _get_datastore_dir(data_dir)
-        if os.path.isdir(version_dir):
-            raise AssertionError(
-                f"after a successful remove operation, the version-dir, {version_dir}, "
-                "shouldn't exist"
+        _check_removal(data_dir, version, retains_datastore)
+
+
+@pytest.mark.parametrize(
+    "fetch_subset",
+    [
+        "fetch-single",
+        "fetch-single-then-all",
+        "fetch-all-then-single",
+        "fetch-all-explicit-list",
+    ],
+)
+def test_fetch_subset_and_remove(dummy_file_repo, fetch_subset, cli_app):
+    # in this test, the fetch operation is used to fetch a named subset of files
+    # in the registry and we use a single rm approach
+    version = "1.0"
+    app = dummy_file_repo.cli_app_with_overrides(cli_app, "primary", version)
+    data_dir = os.path.join(dummy_file_repo.test_dir, "my-data-dir")
+    with custom_datadir(data_dir):
+        # fetch the data
+        if fetch_subset == "fetch-single":
+            # call it twice to ensure we consider the operation a success each time
+            for i in range(2):
+                app.fetch(
+                    dummy_file_repo.src_file_dir.primary,
+                    file_list=[_DUMMY_SET_PRIMARY[1][0]],
+                    expect_success=True,
+                )
+                check_version_data_dir(
+                    data_dir, version, file_set=[_DUMMY_SET_PRIMARY[1]]
+                )
+
+        elif fetch_subset == "fetch-single-then-all":
+            app.fetch(
+                dummy_file_repo.src_file_dir.primary,
+                file_list=[_DUMMY_SET_PRIMARY[1][0]],
+                expect_success=True,
             )
-        elif os.path.isdir(datastore_dir) != retains_datastore:
-            raise AssertionError(
-                f"the data-store directory, {datastore_dir}, should "
-                + ["not", "still"][retains_datastore]
-                + "after the removal operation"
+            check_version_data_dir(data_dir, version, file_set=[_DUMMY_SET_PRIMARY[1]])
+
+            # fetch all data
+            app.fetch(dummy_file_repo.src_file_dir.primary, expect_success=True)
+            check_version_data_dir(data_dir, version, file_set=_DUMMY_SET_PRIMARY)
+
+        elif fetch_subset == "fetch-all-then-single":
+            # fetch all data
+            app.fetch(dummy_file_repo.src_file_dir.primary, expect_success=True)
+            check_version_data_dir(data_dir, version, file_set=_DUMMY_SET_PRIMARY)
+
+            # fetch a single data file
+            app.fetch(
+                dummy_file_repo.src_file_dir.primary,
+                file_list=[_DUMMY_SET_PRIMARY[1][0]],
+                expect_success=True,
             )
+            check_version_data_dir(data_dir, version, file_set=_DUMMY_SET_PRIMARY)
+
+        elif fetch_subset == "fetch-all-explicit-list":
+            # fetch all data files
+            app.fetch(
+                dummy_file_repo.src_file_dir.primary,
+                file_list=[pair[0] for pair in _DUMMY_SET_PRIMARY],
+                expect_success=True,
+            )
+            check_version_data_dir(data_dir, version, file_set=_DUMMY_SET_PRIMARY)
+
+        else:
+            raise RuntimeError("unexpected fetch_subset")
+
+        app.rm_vdata(None, expect_success=True)
+        _check_removal(data_dir, version, retains_datastore=True)
 
 
 @pytest.mark.parametrize(
@@ -597,6 +714,38 @@ def test_fetch_fail_locked(dummy_file_repo, cli_app):
         raise AssertionError(
             "the tool should not create a version directory when a lock file exists"
         )
+
+
+def test_fetch_untracked(dummy_file_repo, cli_app):
+    # test the fetch operation is used to fetch files to an untracked directory
+    version = "1.0"
+    app = dummy_file_repo.cli_app_with_overrides(cli_app, "primary", version)
+    data_dir = os.path.join(dummy_file_repo.test_dir, "my-data-dir")
+    with custom_datadir(data_dir):
+        # first we download everything
+        dest_dir_1 = os.path.join(dummy_file_repo.test_dir, "my-untracked-dir-all")
+        for i in range(2):
+            app.fetch(
+                dummy_file_repo.src_file_dir.primary,
+                untracked_dest_dir=dest_dir_1,
+                expect_success=True,
+            )
+            assert not os.path.isfile(data_dir)
+            check_version_data_dir_contents(dest_dir_1, file_set=_DUMMY_SET_PRIMARY)
+
+        # now confirm that we can download a subset
+        dest_dir_2 = os.path.join(dummy_file_repo.test_dir, "my-untracked-dir-single")
+        for i in range(2):
+            app.fetch(
+                dummy_file_repo.src_file_dir.primary,
+                untracked_dest_dir=dest_dir_2,
+                file_list=[_DUMMY_SET_PRIMARY[1][0]],
+                expect_success=True,
+            )
+            assert not os.path.isfile(data_dir)
+            check_version_data_dir_contents(
+                dest_dir_2, file_set=[_DUMMY_SET_PRIMARY[1]]
+            )
 
 
 def is_linked(*paths):
