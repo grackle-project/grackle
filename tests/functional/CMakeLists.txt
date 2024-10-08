@@ -1,19 +1,15 @@
-add_executable(runFuncCalcTDust1DTests test_func_calc_tdust_1d_g.cpp )
-target_link_libraries(runFuncCalcTDust1DTests grackle gtest gtest_main hdf5)
-target_include_directories(runFuncCalcTDust1DTests PRIVATE ${PROJECT_SOURCE_DIR}/src/clib)
-add_test(NAME CalcTDust1DTest COMMAND runFuncCalcTDust1DTests)
+# declare testdeps to bundle together dependencies used by all tests
+# ------------------------------------------------------------------
+add_library(functestdeps INTERFACE)
+target_link_libraries(functestdeps INTERFACE Grackle::Grackle GTest::gtest_main)
 
-add_executable(runFuncLocalSolveChemistryTests test_func_local_solve_chemistry.cpp)
-target_link_libraries(runFuncLocalSolveChemistryTests grackle gtest gtest_main hdf5)
-target_include_directories(runFuncLocalSolveChemistryTests PRIVATE ${PROJECT_SOURCE_DIR}/src/clib ${PROJECT_SOURCE_DIR}/src/clib/generated)
-add_test(NAME LocalSolveChemistryMain COMMAND runFuncLocalSolveChemistryTests)
+# short-term hack to let tests invoke Fortran functions from C
+target_compile_definitions(functestdeps INTERFACE "$<$<PLATFORM_ID:Linux,Darwin>:LINUX>")
+target_include_directories(functestdeps INTERFACE ${PROJECT_SOURCE_DIR}/src/clib)
 
-add_executable(runFuncCool1DCloudyTest test_func_cool1d_cloudy_g.cpp)
-target_link_libraries(runFuncCool1DCloudyTest grackle gtest gtest_main hdf5)
-target_include_directories(runFuncCool1DCloudyTest PRIVATE ${PROJECT_SOURCE_DIR}/src/clib ${PROJECT_SOURCE_DIR}/src/clib/generated)
-add_test(NAME Cool1DCloudyTest COMMAND runFuncCool1DCloudyTest)
+# start declaring targets for tests
+# ---------------------------------
+add_executable(runLocalSolveChemistryTest test_local_solve_chemistry.cpp)
+target_link_libraries(runLocalSolveChemistryTest functestdeps)
 
-add_executable(runFuncCool1DCloudyOldTablesTest test_func_cool1d_cloudy_old_tables_g.cpp)
-target_link_libraries(runFuncCool1DCloudyOldTablesTest grackle gtest gtest_main hdf5)
-target_include_directories(runFuncCool1DCloudyOldTablesTest PRIVATE ${PROJECT_SOURCE_DIR}/src/clib ${PROJECT_SOURCE_DIR}/src/clib/generated)
-add_test(NAME Cool1DCloudyOldTablesTest COMMAND runFuncCool1DCloudyOldTablesTest)
+gtest_discover_tests(runLocalSolveChemistryTest)

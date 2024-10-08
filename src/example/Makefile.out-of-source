@@ -1,0 +1,25 @@
+#=======================================================================
+#
+# FILE:        Makefile
+#
+# SUMMARY:     Configurable Makefile for grackle example executable using
+#              a library constructed in an out-of-source build
+#
+# DESCRIPTION
+#   When you want to use this file, execute
+#      make -f Makefile.out-of-source CMAKE_BUILD_DIR=<PATH> ...
+#   instead of executing
+#      make ...
+#   In the above snippet <PATH> should be replaced with the path to the cmake
+#   build-directory where grackle was constructed
+#
+#=======================================================================
+
+# default to bash since sh does not recognize ">&"
+SHELL = /bin/bash
+
+CMAKE_BUILD_DIR ?= ../../build
+
+include $(CMAKE_BUILD_DIR)/src/clib/Make.examples-config
+
+include ./Make.config.targets

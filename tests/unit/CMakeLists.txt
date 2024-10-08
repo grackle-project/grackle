@@ -1,37 +1,31 @@
-add_executable(runInterpolationTests test_interpolators_g.cpp)
-target_link_libraries(runInterpolationTests grackle gtest gtest_main hdf5)
-target_include_directories(runInterpolationTests PRIVATE ${PROJECT_SOURCE_DIR}/src/clib)
+# declare testdeps to bundle together dependencies used by all tests
+# ------------------------------------------------------------------
+add_library(unittestdeps INTERFACE)
+target_link_libraries(unittestdeps INTERFACE Grackle::Grackle GTest::gtest_main)
 
-add_test(NAME Interpolate1D COMMAND runInterpolationTests)
-add_test(NAME Interpolate2D COMMAND runInterpolationTests)
-add_test(NAME Interpolate3D COMMAND runInterpolationTests)
-add_test(NAME Interpolate3Dz COMMAND runInterpolationTests)
-add_test(NAME Interpolate2Df3D COMMAND runInterpolationTests)
-add_test(NAME Interpolate4D COMMAND runInterpolationTests)
-add_test(NAME Interpolate5D COMMAND runInterpolationTests)
+# short-term hack to let tests invoke Fortran functions from C
+target_compile_definitions(unittestdeps INTERFACE "$<$<PLATFORM_ID:Linux,Darwin>:LINUX>")
+target_include_directories(unittestdeps INTERFACE ${PROJECT_SOURCE_DIR}/src/clib)
+
+# start declaring targets for tests
+# ---------------------------------
+add_executable(runInterpolationTests test_unit_interpolators_g.cpp)
+target_link_libraries(runInterpolationTests unittestdeps)
+
+gtest_discover_tests(runInterpolationTests)
 
 add_executable(runUnitCalcTDust1DTests test_unit_calc_tdust_1d_g.cpp)
 target_link_libraries(runUnitCalcTDust1DTests grackle gtest gtest_main hdf5)
-target_include_directories(runUnitCalcTDust1DTests PRIVATE ${PROJECT_SOURCE_DIR}/src/clib)
 
-add_test(NAME CalcGRBalanceTest COMMAND runUnitCalcTDust1DTests)
-add_test(NAME CalcKappaGRBalanceTest COMMAND runUnitCalcTDust1DTests)
-add_test(NAME SetIterationMaskAndInitialGuessTest COMMAND runUnitCalcTDust1DTests)
-add_test(NAME CalcTDPlusTest COMMAND runUnitCalcTDust1DTests)
-add_test(NAME RunNewtonMethodTest COMMAND runUnitCalcTDust1DTests)
-add_test(NAME RunBisectionMethodTest COMMAND runUnitCalcTDust1DTests)
+gtest_discover_tests(runUnitCalcTDust1DTests)
 
 add_executable(runUnitCool1DCloudyTests test_unit_cool1d_cloudy_g.cpp)
 target_link_libraries(runUnitCool1DCloudyTests grackle gtest gtest_main hdf5)
-target_include_directories(runUnitCool1DCloudyTests PRIVATE ${PROJECT_SOURCE_DIR}/src/clib)
 
-add_test(NAME CoolRank1InterpolationTest COMMAND runUnitCalcTDust1DTests)
-add_test(NAME CoolRank2InterpolationTest COMMAND runUnitCalcTDust1DTests)
-add_test(NAME CoolRank3InterpolationTest COMMAND runUnitCalcTDust1DTests)
+gtest_discover_tests(runUnitCool1DCloudyTests)
 
 add_executable(runUnitCalcTempUtilitiesTest test_unit_calc_temp_utilities_g.cpp)
 target_link_libraries(runUnitCalcTempUtilitiesTest grackle gtest gtest_main hdf5)
-target_include_directories(runUnitCalcTempUtilitiesTest PRIVATE ${PROJECT_SOURCE_DIR}/src/clib)
 
-add_test(NAME CalcParameterValueSlopesTest COMMAND runUnitCalcTempUtilitiesTest)
-add_test(NAME ComputeRedshiftDimensionTest COMMAND runUnitCalcTempUtilitiesTest)
+gtest_discover_tests(runUnitCalcTempUtilitiesTest)
+
