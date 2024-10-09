@@ -21,6 +21,7 @@
 
 #define mh     1.67262171e-24   
 #define kboltz 1.3806504e-16
+#define sec_per_Myr 31.5576e12
 
 int main(int argc, char *argv[])
 {
@@ -62,9 +63,11 @@ int main(int argc, char *argv[])
   grackle_data->use_grackle = 1;            // chemistry on
   grackle_data->with_radiative_cooling = 1; // cooling on
   grackle_data->primordial_chemistry = 3;   // molecular network with H, He, D
-  grackle_data->dust_chemistry = 1;         // dust processes
   grackle_data->metal_cooling = 1;          // metal cooling on
   grackle_data->UVbackground = 1;           // UV background on
+  grackle_data->dust_chemistry = 1;         // dust processes
+  grackle_data->use_dust_density_field = 1; // follow dust density field
+  grackle_data->use_isrf_field = 1;         // follow interstellar radiation field
   grackle_data->grackle_data_file = "../../input/CloudyData_UVB=HM2012.h5"; // data file
 
   // Finally, initialize the chemistry object.
@@ -119,6 +122,8 @@ int main(int argc, char *argv[])
   my_fields.HDI_density     = malloc(field_size * sizeof(gr_float));
   // for metal_cooling = 1
   my_fields.metal_density   = malloc(field_size * sizeof(gr_float));
+  // for use_dust_density_field = 1
+  my_fields.dust_density    = malloc(field_size * sizeof(gr_float));
 
   // volumetric heating rate (provide in units [erg s^-1 cm^-3])
   my_fields.volumetric_heating_rate = malloc(field_size * sizeof(gr_float));
@@ -133,12 +138,16 @@ int main(int argc, char *argv[])
   // radiative transfer heating rate field (provide in units [erg s^-1 cm^-3])
   my_fields.RT_heating_rate = malloc(field_size * sizeof(gr_float));
 
+  // interstellar radiation field strength
+  my_fields.isrf_habing = malloc(field_size * sizeof(gr_float));
+
   // set temperature units
   double temperature_units = get_temperature_units(&my_units);
 
   for (i = 0;i < field_size;i++) {
     my_fields.density[i] = 1.0;
-    my_fields.HI_density[i] = grackle_data->HydrogenFractionByMass * my_fields.density[i];
+    my_fields.HI_density[i] = grackle_data->HydrogenFractionByMass *
+      my_fields.density[i];
     my_fields.HII_density[i] = tiny_number * my_fields.density[i];
     my_fields.HM_density[i] = tiny_number * my_fields.density[i];
     my_fields.HeI_density[i] = (1.0 - grackle_data->HydrogenFractionByMass) *
@@ -153,6 +162,9 @@ int main(int argc, char *argv[])
     my_fields.e_density[i] = tiny_number * my_fields.density[i];
     // solar metallicity
     my_fields.metal_density[i] = grackle_data->SolarMetalFractionByMass *
+      my_fields.density[i];
+    // local dust to gas ratio
+    my_fields.dust_density[i] = grackle_data->local_dust_to_gas_ratio *
       my_fields.density[i];
 
     my_fields.x_velocity[i] = 0.0;
@@ -170,21 +182,14 @@ int main(int argc, char *argv[])
     my_fields.RT_HeII_ionization_rate[i] = 0.0;
     my_fields.RT_H2_dissociation_rate[i] = 0.0;
     my_fields.RT_heating_rate[i] = 0.0;
+
+    my_fields.isrf_habing[i] = grackle_data->interstellar_radiation_field;
   }
 
   /*********************************************************************
   / Calling the chemistry solver
   / These routines can now be called during the simulation.
   *********************************************************************/
-
-  // Evolving the chemistry.
-  // some timestep
-  double dt = 3.15e7 * 1e6 / my_units.time_units;
-
-  if (solve_chemistry(&my_units, &my_fields, dt) == 0) {
-    fprintf(stderr, "Error in solve_chemistry.\n");
-    return EXIT_FAILURE;
-  }
 
   // Calculate cooling time.
   gr_float *cooling_time;
@@ -194,8 +199,7 @@ int main(int argc, char *argv[])
     fprintf(stderr, "Error in calculate_cooling_time.\n");
     return EXIT_FAILURE;
   }
-
-  fprintf(stdout, "cooling_time = %g s.\n", cooling_time[0] *
+  fprintf(stdout, "Before - cooling_time = %g s.\n", cooling_time[0] *
           my_units.time_units);
 
   // Calculate temperature.
@@ -206,8 +210,7 @@ int main(int argc, char *argv[])
     fprintf(stderr, "Error in calculate_temperature.\n");
     return EXIT_FAILURE;
   }
-
-  fprintf(stdout, "temperature = %g K.\n", temperature[0]);
+  fprintf(stdout, "Before - temperature = %g K.\n", temperature[0]);
 
   // Calculate pressure.
   gr_float *pressure;
@@ -219,8 +222,7 @@ int main(int argc, char *argv[])
     fprintf(stderr, "Error in calculate_pressure.\n");
     return EXIT_FAILURE;
   }
-
-  fprintf(stdout, "pressure = %le dyne/cm^2.\n", pressure[0]*pressure_units);
+  fprintf(stdout, "Before - pressure = %g dyne/cm^2.\n", pressure[0]*pressure_units);
 
   // Calculate gamma.
   gr_float *gamma;
@@ -230,8 +232,7 @@ int main(int argc, char *argv[])
     fprintf(stderr, "Error in calculate_gamma.\n");
     return EXIT_FAILURE;
   }
-
-  fprintf(stdout, "gamma = %g.\n", gamma[0]);
+  fprintf(stdout, "Before - gamma = %g.\n", gamma[0]);
 
   // Calculate dust temperature.
   gr_float *dust_temperature;
@@ -241,8 +242,60 @@ int main(int argc, char *argv[])
     fprintf(stderr, "Error in calculate_dust_temperature.\n");
     return EXIT_FAILURE;
   }
+  fprintf(stdout, "Before - dust_temperature = %g K.\n", dust_temperature[0]);
 
-  fprintf(stdout, "dust_temperature = %g K.\n", dust_temperature[0]);
+  // Evolving the chemistry.
+  // some timestep
+  double dt = sec_per_Myr / my_units.time_units;
+  fprintf(stderr, "Calling solve_chemistry with dt = %g Myr.\n",
+          (dt * my_units.time_units / sec_per_Myr));
+  if (solve_chemistry(&my_units, &my_fields, dt) == 0) {
+    fprintf(stderr, "Error in solve_chemistry.\n");
+    return EXIT_FAILURE;
+  }
+
+  // Calculate cooling time.
+  if (calculate_cooling_time(&my_units, &my_fields,
+                             cooling_time) == 0) {
+    fprintf(stderr, "Error in calculate_cooling_time.\n");
+    return EXIT_FAILURE;
+  }
+  fprintf(stdout, "After - cooling_time = %g s.\n", cooling_time[0] *
+          my_units.time_units);
+
+  // Calculate temperature.
+  if (calculate_temperature(&my_units, &my_fields,
+                            temperature) == 0) {
+    fprintf(stderr, "Error in calculate_temperature.\n");
+    return EXIT_FAILURE;
+  }
+  fprintf(stdout, "After - temperature = %g K.\n", temperature[0]);
+
+  // Calculate pressure.
+  if (calculate_pressure(&my_units, &my_fields,
+                         pressure) == 0) {
+    fprintf(stderr, "Error in calculate_pressure.\n");
+    return EXIT_FAILURE;
+  }
+  fprintf(stdout, "After - pressure = %g dyne/cm^2.\n", pressure[0]*pressure_units);
+
+  // Calculate gamma.
+  if (calculate_gamma(&my_units, &my_fields,
+                      gamma) == 0) {
+    fprintf(stderr, "Error in calculate_gamma.\n");
+    return EXIT_FAILURE;
+  }
+  fprintf(stdout, "After - gamma = %g.\n", gamma[0]);
+
+  // Calculate dust temperature.
+  if (calculate_dust_temperature(&my_units, &my_fields,
+                      dust_temperature) == 0) {
+    fprintf(stderr, "Error in calculate_dust_temperature.\n");
+    return EXIT_FAILURE;
+  }
+  fprintf(stdout, "After - dust_temperature = %g K.\n", dust_temperature[0]);
+
+  free_chemistry_data();
 
   return EXIT_SUCCESS;
 }
