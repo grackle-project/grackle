@@ -390,7 +390,6 @@ configure_file(
 install(FILES
   ${CMAKE_CURRENT_BINARY_DIR}/install-metadata/GrackleConfig.cmake
   ${CMAKE_CURRENT_BINARY_DIR}/install-metadata/GrackleConfigVersion.cmake
-  ${LOCAL_CMAKE_MODULE_DIR}/GrackleReusedBuildConfigCommands.cmake
   DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/Grackle
 )
 
@@ -427,7 +426,6 @@ grdata_install_export_helper_(INSTALL_EXPORT
 file(COPY
   ${CMAKE_CURRENT_BINARY_DIR}/install-metadata/GrackleConfig.cmake
   ${CMAKE_CURRENT_BINARY_DIR}/install-metadata/GrackleConfigVersion.cmake
-  ${LOCAL_CMAKE_MODULE_DIR}/GrackleReusedBuildConfigCommands.cmake
   DESTINATION ${BUILDTREE_CMAKE_DIR}
 )
 

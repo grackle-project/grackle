@@ -206,11 +206,8 @@ add_subdirectory(src/clib)
 include(CreateProgram-grdata)
 create_grdata_program(
   GRACKLE_VERSION "${_GRACKLE_FULL_VERSION}"
-  PATH_OUTVAR "_GRACKLE_GRDATA_TOOL_PATH"
+  TARGET_NAME Grackle::grdata
 )
-# make the location of grdata accessible via the grackle_get_info command
-include(GrackleReusedBuildConfigCommands)
-_grackleprivate_get_info_setup("${_GRACKLE_GRDATA_TOOL_PATH}")
 
 # declare build-recipies for examples
 if (GRACKLE_EXAMPLES)

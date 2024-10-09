@@ -29,9 +29,10 @@ function(load_file_registry_string UPDATE_CONFIGURE_DEPENDS outvar)
   set("${outvar}" "${contents}" PARENT_SCOPE)
 endfunction()
 
-set(_GRDATA_CACHE_PREFIX "_GRACKLEGRDATAPRIVATE_")
-
-# create the grdata program
+# create the grdata program (and represent it as an executable target)
+#
+# To install the program, and properly expose export information, see the
+# grdata_install_export_helper_ command
 #
 # the program's resulting location is controlled by the global
 # CMAKE_RUNTIME_OUTPUT_DIRECTORY variable, if it is set. Otherwise, we put it
@@ -39,16 +40,68 @@ set(_GRDATA_CACHE_PREFIX "_GRACKLEGRDATAPRIVATE_")
 #
 # Arguments
 # ---------
-#
 # GRACKLE_VERSION: the full grackle version number of the grackle version that
-#     the program is associated with (not just the truncated number understood
-#     by cmake)
-# PATH_OUTVAR: specifies the name of the variable where the path to the
-#     resulting program is stored
+#                  the program is associated with (not just the truncated
+#                  number understood by cmake)
+# TARGET_NAME: specifies the name of the target that is created to represent
+#              the program.
+#
+# Notes
+# -----
+# The grdata program can be very useful for downstream codes for testing
+# purposes (and for the hypothetical scenario where we support downloading
+# precompiled copies of Grackle). Due to the nature of the grdata program,
+# providing the program details (i.e. namely providing the path to it) to
+# downstream projects is not straight-forward.
+# - In more detail, the program is a little weird in a CMake context since we
+#   want people to essentially think of it as a generic command line program 
+#   even though it isn't technically a compiled program (people shouldn't care
+#   that it is actually a portable, executable python script).
+# - I was originally hesitant to declare it as an IMPORTED executable. I was
+#   primarily concerned about the scenario where other CMake-built projects
+#   might consume Grackle by embedding it as a part of the build. Since the
+#   documentation explains that IMPORTED executable machinery is intended to
+#   represent machinery from outside the CMake, I was concerned that we could
+#   encounter some unforseen side-effects.
+# - Prior to CMake 3.0, we might have instead provided the tool's path in a
+#   package variable (like GRACKLE_GRDATA_TOOL_PATH). While the details of how
+#   we achieve this in modern CMake differ, we can still provide the path in a
+#   manner similar to variable-access
+#   - it is still possible to provide package variables, but the *Professional
+#     CMake* book, by Craig Scott (a primary CMake developer), makes is clear
+#     we should to avoid package-variables to make Grackle easily consumable.
+#     In the book's 18th edition this advice is in section 40.4.
+#   - essentially, we would need to take extra steps for every package variable
+#     that we introduce to support downstream projects employ newer dependency
+#     management machinery introduced in 2022 (cmake 3.24).
+#   - the advice is to make this information accessible through a function
+#     (that returns values for known keys) or as properties of a target. We
+#     experimented with the function approach -- see commits just before this
+#     documentation was written. It requires a somewhat involved solution
+#     to completely avoid global/package variables.
+#
+# After giving this some more thought, it became clear that the IMPORTED
+# executable approach is superior for 2 reasons:
+# 1. Even if there is some unforseen side-effect of the IMPORTED executable, we
+#    wiil be no worse-off than the variable-like approach.
+#    - The worst imaginable side-effect is that somebody consuming Grackle
+#      in an embedded manner, might find that some of CMake's source-file
+#      dependency magic doesn't work right after updating the files that
+#      compose the grdata tool.
+#    - This scenario seems extremely pathological (and should probably never
+#      arise), since it could only occur if people alter their source files
+#      based on the output of the grdata tool.
+#    - Regardless of the practicality, the variable-like approach definitely
+#      wouldn't offer any benefits here (the same issues would still occur)
+# 2. The use of targets is generally more idiomatic than variables. While we
+#    still require some custom logic to get everything to work right, we need
+#    less of it than the alternative. Moreover, the custom-code will be much
+#    more directly analogous to standard cmake logic (making it easier to
+#    understand)
 function(create_grdata_program)
 
   set(options)
-  set(oneValueArgs DESTINATION GRACKLE_VERSION PATH_OUTVAR)
+  set(oneValueArgs DESTINATION GRACKLE_VERSION TARGET_NAME)
   set(multiValueArgs)
 
   cmake_parse_arguments(PARSE_ARGV 0
@@ -89,12 +142,18 @@ function(create_grdata_program)
     execute_process(COMMAND chmod a+rx ${output_path})
   endif()
 
-  set("${CREATE_GRDATA_PATH_OUTVAR}" "${output_path}" PARENT_SCOPE)
+  set(_GRACKLEGRDATAPRIVATE_TARGETNAME "${CREATE_GRDATA_TARGET_NAME}"
+    CACHE INTERNAL "name of the target representing the grdata tool")
 
-  set(_GRACKLEGRDATAPRIVATE_TOOL_PATH "${output_path}" CACHE INTERNAL
-      "cached location of the grdata tool")
+  add_executable(${_GRACKLEGRDATAPRIVATE_TARGETNAME} IMPORTED GLOBAL)
+  set_target_properties(${_GRACKLEGRDATAPRIVATE_TARGETNAME} PROPERTIES
+    IMPORTED_LOCATION "${output_path}"
+  )
+
 endfunction()
 
+# Helper Functions used to define export files
+# --------------------------------------------
 
 # note that cmake normalizes paths on all platforms to use forward-slashes
 function(_num_path_segments path outCount)
@@ -131,13 +190,19 @@ function(_num_path_segments path outCount)
   set(${outCount} "${count}" PARENT_SCOPE)
 endfunction()
 
-# helper function to create an export-file (that will be installed) and is used
-# to provide some basic properties about the grdata tool
-#  EXPORT_FILE_DESTINATION_DIR specifies directory where the export-file will
-#    be installed relative to the root-install path
-#  TOOL_RELATIVE_INSTALL_PATH where the export-file will be
-#    installed relative to the root-install path
-function(_grdata_get_export_file_contents EXPORT_FILE_DESTINATION_DIR TOOL_RELATIVE_INSTALL_PATH outVar)
+# create a relocatable export-file (to be placed in the installation directory)
+# that declares a target representing the grdata tool
+#
+# Arguments
+# ---------
+# EXPORT_FILE_DESTINATION_DIR specifies directory where the export-file will
+#                             be installed, relative to the root-install path
+# TOOL_RELATIVE_INSTALL_PATH  specifies path where the grdata tool will be
+#                             installed, relative to the root-install path
+# TMP_FILE_LOCATION           Where to put the file (right after we create it)
+function(_grdata_write_installdir_export_file
+    EXPORT_FILE_DESTINATION_DIR TOOL_RELATIVE_INSTALL_PATH TMP_FILE_LOCATION
+)
   # a sanity check!
   if ((EXPORT_FILE_DESTINATION_DIR MATCHES "^/.*") OR
       (TOOL_RELATIVE_INSTALL_PATH MATCHES "^/.*"))
@@ -155,10 +220,7 @@ function(_grdata_get_export_file_contents EXPORT_FILE_DESTINATION_DIR TOOL_RELAT
     string(REPEAT "../" "${num_segments}" REL_PATH_TO_PREFIX)
   endif()
 
-  # now, we will sanitize EXPORT_FILE_DESTINATION_DIR (and remove any trailing
-  # slashes)
-
-  string(CONFIGURE [=[
+  set(template [======================[
 # Autogenerated file that stores the location of the grdata tool
 # -> this is directly analogous to a file that would be defined with cmake's
 #    install(EXPORT ...) command.
@@ -166,15 +228,46 @@ function(_grdata_get_export_file_contents EXPORT_FILE_DESTINATION_DIR TOOL_RELAT
 #    compiled), we store the path to the file
 # -> like `install(EXPORT ...)` (and in contrast to `export(EXPORT ...)`),
 #    we use a relative path to the grdata tool
+
 set(_IMPORT_PREFIX "${CMAKE_CURRENT_LIST_FILE}/@REL_PATH_TO_PREFIX@")
-set(_GRACKLE_GRDATA_TOOL_PATH "${_IMPORT_PREFIX}/@TOOL_RELATIVE_INSTALL_PATH@")
-unset(_IMPORT_PREFIX)
-]=] contents @ONLY
+
+add_executable(@_GRACKLEGRDATAPRIVATE_TARGETNAME@ IMPORTED)
+set_target_properties(@_GRACKLEGRDATAPRIVATE_TARGETNAME@ PROPERTIES
+  IMPORTED_LOCATION "${_IMPORT_PREFIX}/@TOOL_RELATIVE_INSTALL_PATH@"
 )
-  set("${outVar}" "${contents}" PARENT_SCOPE)
+
+unset(_IMPORT_PREFIX)
+]======================]
+)
+
+  string(CONFIGURE "${template}" contents @ONLY)
+  file(WRITE ${TMP_FILE_LOCATION} "${contents}")
 
 endfunction()
 
+# helper function to create a export-file to support find_package using the
+# build-directory (analogous to the of `export(EXPORT)` command)
+function(_grdata_write_builddir_export_file IMMEDIATE_EXPORT_FILE_PATH)
+
+  set(template [======================[
+# Autogenerated file that stores the location of the grdata tool
+# -> this is directly analogous to a file that would be defined with cmake's
+#    export(EXPORT ...) command.
+# -> since the grdata tool is a weird sort of pseudo target (i.e. it isn't
+#    compiled), we store the path to the file
+# -> like `export(EXPORT ...)` (and in contrast to `install(EXPORT ...)`), 
+#    we use an absolute path
+
+set(_GRACKLE_GRDATA_TOOL_PATH "@absolute_tool_path@")
+]======================]
+)
+  get_target_property(absolute_tool_path
+    ${_GRACKLEGRDATAPRIVATE_TARGETNAME} IMPORTED_LOCATION)
+
+  string(CONFIGURE "${template}" contents @ONLY)
+  file(WRITE ${IMMEDIATE_EXPORT_FILE_PATH} "${contents}")
+
+endfunction()
 
 # due to the "weird" nature of the grdata tool, (we treat it like its an
 # executable even though it isn't compiled), this is a command to help with
@@ -206,6 +299,7 @@ endfunction()
 #        stores them within <build>/CMakeFiles/Export)
 #      - we explicitly generate the export files at configuration time & store
 #        them within directory specified by TMPDIR
+#    NOTE: the namespace used when we originally defined the target is reused
 #
 # 3. In ``EXPORT_EXPORT`` mode, the following command
 #      ```
@@ -218,13 +312,13 @@ macro(grdata_install_export_helper_ mode)
 
   set(_GRDATA_IEH_name "grdata_install_export_helper_")
 
-  # get the kwargs for the current mode
+  # get the kwargs for the current mode (all kwargs expect a single arg)
   if("INSTALL_TOOL" STREQUAL "${mode}")
-    set(_GRDATA_IEH_oneValueArgs DESTINATION COMPONENT)
+    set(_GRDATA_IEH_Args DESTINATION COMPONENT)
   elseif("INSTALL_EXPORT" STREQUAL "${mode}")
-    set(_GRDATA_IEH_oneValueArgs DESTINATION FILE TMPDIR)
+    set(_GRDATA_IEH_Args DESTINATION FILE TMPDIR)
   elseif("EXPORT_EXPORT" STREQUAL "${mode}")
-    set(_GRDATA_IEH_oneValueArgs FILE)
+    set(_GRDATA_IEH_Args FILE)
   else()
     message(FATAL_ERROR
       "${_GRDATA_IEH_name} command invoked with unexpected mode: \"${mode}\""
@@ -232,9 +326,9 @@ macro(grdata_install_export_helper_ mode)
   endif()
 
   # parse the arguments
-  cmake_parse_arguments(_GRDATA_IEH "" "${_GRDATA_IEH_oneValueArgs}" ""
-                        ${ARGN})
+  cmake_parse_arguments(_GRDATA_IEH "" "${_GRDATA_IEH_Args}" "" ${ARGN})
 
+  # check argument validity
   if (DEFINED _GRDATA_IEH_UNPARSED_ARGUMENTS)
     message(FATAL_ERROR
       "${_GRDATA_IEH_name}(${mode}) recieved invalid arguments: "
@@ -245,8 +339,15 @@ macro(grdata_install_export_helper_ mode)
       "${_GRDATA_IEH_KEYWORDS_MISSING_VALUES} keyword(s) without any "
       "associated arguments.")
   endif()
+  foreach(_GRDATA_IEH_ARG IN ITEMS ${_GRDATA_IEH_Args})
+    if (NOT DEFINED "_GRDATA_IEH_${_GRDATA_IEH_ARG}")
+      message(FATAL_ERROR
+        "${_GRDATA_IEH_name}(${mode}) requires the `${_GRDATA_IEH_ARG}` kwarg")
+    endif()
+  endforeach()
 
-  if (NOT DEFINED _GRACKLEGRDATAPRIVATE_TOOL_PATH)
+  # check a precondition
+  if (NOT DEFINED _GRACKLEGRDATAPRIVATE_TARGETNAME)
     message(FATAL_ERROR
       "${_GRDATA_IEH_name}(${mode}) can only be called AFTER a call to the "
       "create_grdata_program command.")
@@ -254,7 +355,7 @@ macro(grdata_install_export_helper_ mode)
 
   # now, actually complete the command
   if ("INSTALL_TOOL" STREQUAL "${mode}")
-    install(PROGRAMS ${_GRACKLEGRDATAPRIVATE_TOOL_PATH}
+    install(PROGRAMS $<TARGET_FILE:${_GRACKLEGRDATAPRIVATE_TARGETNAME}>
       COMPONENT ${_GRDATA_IEH_COMPONENT}
       DESTINATION ${_GRDATA_IEH_DESTINATION}
     )
@@ -270,37 +371,34 @@ macro(grdata_install_export_helper_ mode)
         "${_GRDATA_IEH_name}(INSTALL_TOOL) command.")
     endif()
 
-    _grdata_get_export_file_contents(
+    # create the export file
+    _grdata_write_installdir_export_file(
+      # where we'll put export file during install (relative to install-prefix)
       ${_GRDATA_IEH_DESTINATION}
+      # where we'll put grdata tool during install (relative to install-prefix)
       ${_GRACKLEGRDATAPRIVATE_RELATIVE_INSTALL_PATH}
-      "_GRDATA_IEH_EXPORT_CONTENTS"
+      # where in the build-directly we'll put the export file immediately after
+      # we create it (we will copy it from here when we install)
+      "${_GRDATA_IEH_TMPDIR}/${_GRDATA_IEH_FILE}"
     )
 
-    file(WRITE "${_GRDATA_IEH_TMPDIR}/${_GRDATA_IEH_FILE}"
-      "${_GRDATA_IEH_EXPORT_CONTENTS}")
+    # define the rule to copy the export-file during installation
     install(FILES
       "${_GRDATA_IEH_TMPDIR}/${_GRDATA_IEH_FILE}"
       DESTINATION "${_GRDATA_IEH_DESTINATION}"
     )
 
   elseif ("EXPORT_EXPORT" STREQUAL "${mode}")
-    string(CONFIGURE [=[
-# Autogenerated file that stores the location of the grdata tool
-# -> this is directly analogous to a file that would be defined with cmake's
-#    export(EXPORT ...) command.
-# -> since the grdata tool is a weird sort of pseudo target (i.e. it isn't
-#    compiled), we store the path to the file
-# -> like `export(EXPORT ...)` (and in contrast to `install(EXPORT ...)`), 
-#    we use an absolute path
-
-set(_GRACKLE_GRDATA_TOOL_PATH "@_GRACKLEGRDATAPRIVATE_TOOL_PATH@")
-"]=] _GRDATA_IEH_EXPORT_CONTENTS @ONLY)
-
-  file(WRITE "${_GRDATA_IEH_FILE}" "${_GRDATA_IEH_EXPORT_CONTENTS}")
+    _grdata_write_builddir_export_file("${_GRDATA_IEH_FILE}")
 
   else()
     message(FATAL_ERROR
       "something went horribly wrong within ${_GRDATA_IEH_name}(${mode})")
   endif()
+
+  # need to do some cleanup (since we are in a macro):
+  foreach(_GRDATA_IEH_ARG IN LISTS _GRDATA_IEH_Args)
+    unset("_GRDATA_IEH_${_GRDATA_IEH_ARG}")
+  endforeach()
 
 endmacro()

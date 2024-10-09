@@ -172,13 +172,16 @@ The following snippet shows a sample Makefile for compiling a sample application
 
 pkg-config also provides additional functionality, like querying version numbers, enforcing version requirements, etc.
 Most of that functionality is described in `this guide <https://people.freedesktop.org/~dbn/pkg-config-guide.html>`__.
-You can also query Grackle-specific details, such as:
+You can also query Grackle-related details, such as:
 
 * the full version string (to determine if it's a dev-version or not) via ``pkg-config --variable=GRACKLE_VERSION_STR grackle``
 
 * whether Grackle was compiled with double precision, via ``pkg-config --variable=GRACKLE_USE_DOUBLE grackle``
 
-* whether grackle was compiled with openmp, via ``pkg-config --variable=GRACKLE_USE_OPENMP grackle``
+* whether Grackle was compiled with openmp, via ``pkg-config --variable=GRACKLE_USE_OPENMP grackle``
+
+* the path to the :ref:`grdata cli tool <manage-data-files>` associated with this version of Grackle, via ``pkg-config --variable=GRACKLE_GRDATA_TOOL_PATH grackle`` (this might be useful for testing purposes)
+
 
 .. warning::
 
@@ -240,6 +243,8 @@ These properties include:
 * ``GRACKLE_USE_DOUBLE`` -- stores whether Grackle was compiled with single or double precision
 * ``GRACKLE_USE_OPENMP`` -- stores whether Grackle was compiled with OpenMP
 
+Information about the :ref:`grdata cli tool <manage-data-files>` tool that is created and built alongside this version of Grackle is exposed via the ``Grackle::grcli`` executable target.
+This can be useful for testing purposes.
 
 .. _Embed_Grackle_in_Sim_Build:
 
@@ -307,6 +312,8 @@ For simplicity, we assume Grackle is a required dependency:
 Care has been taken while designing the CMake build-system to ensure that the ``Grackle::Grackle`` CMake target looks and acts the same regardless of whether it was produced with this strategy (embedding Grackle into your simulation code's build system) or imported via ``find_package`` (as discussed :ref:`here <cmake_grackle_linking>`).
 In both cases, the target provides the same custom properties to describe information about the build.
 See the :ref:`section <cmake_grackle_linking>` about ``find_package`` for more details.
+
+Additionally, information about the :ref:`grdata cli tool <manage-data-files>` tool that is created and built alongside this version of Grackle is exposed via the ``Grackle::grcli`` executable target.
 
 .. rubric:: Footnotes
 

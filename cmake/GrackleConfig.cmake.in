@@ -23,7 +23,7 @@
 #    -> when the logic in this file is executed, it is intended to define
 #       variables necessary for the external project to make use of grackle.
 #       Historically, this involved defining new variables. But, we adopt the
-#       modern convention of ONLY defining library-targets
+#       modern convention of ONLY defining targets
 #    -> if we include `return()`, anywhere in the top-level scope of this file
 #       (i.e. not in a function definition), the evaluation of this file
 #       abruptly ends. We can also define some specific variables to inform
@@ -355,12 +355,8 @@ set_target_properties(Grackle::Grackle PROPERTIES
 @_GRACKLE_INFO_PROPERTIES@
 )
 
-# define the grackle_get_info command
+# define the Grackle::grdata executable
 include(${CMAKE_CURRENT_LIST_DIR}/Grackle_grdata_pseudotarget.cmake)
-include(${CMAKE_CURRENT_LIST_DIR}/GrackleReusedBuildConfigCommands.cmake)
-_grackleprivate_get_info_setup("${_GRACKLE_GRDATA_TOOL_PATH}")
-unset(_GRACKLE_GRDATA_TOOL_PATH)
-
 
 # Finally, let's do some cleanup so people don't rely upon these variables
 # (specifically, let's cleanup the record of the build-flags)
