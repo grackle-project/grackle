@@ -1797,9 +1797,9 @@ def make_config_objects(grackle_version, file_registry_file):
 #    - install it into the bin directory alongside the grackle libraries
 
 if __name__ == "__main__":
-    _GRACKLE_VERSION = "@GRACKLE_VERSION@"
+    _GRACKLE_VERSION = "@_GRDATA_GRACKLE_VERSION@"
     _FILE_REGISTRY_CONTENTS = """\
-@FILE_REGISTRY_CONTENTS@
+@_GRDATA_FILE_REGISTRY_CONTENTS@
 """
 
     def _check_substitution_problems(var_name, var_value):
