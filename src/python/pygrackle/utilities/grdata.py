@@ -42,7 +42,7 @@ interface provides commands to fetch these data files, list all of the
 available data, and delete the data.
 
 The system stores the data files at a single global location. (Grackle,
-itself, will soon be able to access files from this location).
+itself, can access files from this location).
 
 The key feature of this system is its support for versioning:
 
