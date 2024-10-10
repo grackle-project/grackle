@@ -19,6 +19,9 @@ _ERR_MSG_TEMPLATE = (
     "alphanumeric character is an uppercase or lowercase letter (A-Z or a-z), "
     "a digit (0-9) or an underscore (_)")
 
+# simple pattern to detect simple occurences python decorator syntax
+_PY_DECORATOR_PATTERN = re.compile(r"^[ \t]*@[^\s@]+[^@]*$")
+
 def is_valid_varname(s, start = None, stop = None):
     return re.fullmatch(_VALID_VARNAME_STR, s[slice(start, stop)]) is not None
     
@@ -55,7 +58,13 @@ def configure_file(lines, variable_map, out_fname):
         line = line[:-1]
         match_count = 0
 
-        out_f.write(_PATTERN.sub(replace,line))
+        if _PY_DECORATOR_PATTERN.match(line) is not None:
+            # this is a crude workaround to support python decorators.
+            # - if we didn't have this, then our eager error-handling would
+            #   classify this line as an error
+            out_f.write(line)
+        else:
+            out_f.write(_PATTERN.sub(replace,line))
         out_f.write('\n')
         if err_msg is not None:
             out_f.close()
