@@ -41,7 +41,7 @@ void initialize_empty_cloudy_data_struct(cloudy_data *my_cloudy)
 }
 
 // Initialize Cloudy cooling data
-int initialize_cloudy_data(chemistry_data *my_chemistry,
+int initialize_cloudy_data(const char* path, chemistry_data *my_chemistry,
                            chemistry_data_storage *my_rates,
                            cloudy_data *my_cloudy, char *group_name,
                            code_units *my_units, int read_data)
@@ -60,7 +60,7 @@ int initialize_cloudy_data(chemistry_data *my_chemistry,
 
   if (grackle_verbose) {
     fprintf(stdout,"Initializing Cloudy cooling: %s.\n", group_name);
-    fprintf(stdout,"cloudy_table_file: %s.\n",my_chemistry->grackle_data_file);
+    fprintf(stdout,"cloudy_table_file: %s.\n",path);
   }
 
   /* Get conversion units. */
@@ -91,8 +91,7 @@ int initialize_cloudy_data(chemistry_data *my_chemistry,
   herr_t      status;
   herr_t      h5_error = -1;
 
-  file_id = H5Fopen(my_chemistry->grackle_data_file,
-                    H5F_ACC_RDONLY, H5P_DEFAULT);
+  file_id = H5Fopen(path, H5F_ACC_RDONLY, H5P_DEFAULT);
 
   if (H5Aexists(file_id, "old_style")) {
     my_rates->cloudy_data_new = 0;
@@ -105,8 +104,7 @@ int initialize_cloudy_data(chemistry_data *my_chemistry,
   sprintf(parameter_name, "/CoolingRates/%s/Cooling", group_name);
   dset_id =  H5Dopen(file_id, parameter_name);
   if (dset_id == h5_error) {
-    fprintf(stderr,"Can't open Cooling in %s.\n",
-            my_chemistry->grackle_data_file);
+    fprintf(stderr,"Can't open Cooling in %s.\n", path);
     return FAIL;
   }
 
@@ -249,8 +247,7 @@ int initialize_cloudy_data(chemistry_data *my_chemistry,
     sprintf(parameter_name, "/CoolingRates/%s/Heating", group_name);
     dset_id =  H5Dopen(file_id, parameter_name);
     if (dset_id == h5_error) {
-      fprintf(stderr,"Can't open Heating in %s.\n",
-              my_chemistry->grackle_data_file);
+      fprintf(stderr,"Can't open Heating in %s.\n", path);
       return FAIL;
     }
 
@@ -288,8 +285,7 @@ int initialize_cloudy_data(chemistry_data *my_chemistry,
     sprintf(parameter_name, "/CoolingRates/%s/MMW", group_name);
     dset_id =  H5Dopen(file_id, parameter_name);
     if (dset_id == h5_error) {
-      fprintf(stderr,"Can't open MMW in %s.\n",
-              my_chemistry->grackle_data_file);
+      fprintf(stderr,"Can't open MMW in %s.\n", path);
       return FAIL;
     }
 

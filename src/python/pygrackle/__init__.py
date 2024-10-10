@@ -18,7 +18,9 @@ from .fluid_container import \
     FluidContainer
 
 from .grackle_wrapper import \
-    chemistry_data
+    chemistry_data, \
+    constants
+
 
 from .utilities.convenience import \
     setup_fluid_container

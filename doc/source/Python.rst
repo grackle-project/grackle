@@ -151,6 +151,17 @@ To make sure everything is installed properly, you can try invoking pygrackle fr
 
 If this command executes without raising any errors, then you have successfully installed Pygrackle.
 
+Installing DataFiles
+++++++++++++++++++++
+
+To install the datafiles in a location usable for automatic usage in the Pygrackle examples (and tests) we recommend invoking the following command (from any directory):
+
+.. code-block:: shell-session
+
+   $ python -m pygrackle fetch
+
+:ref:`This section <manage-data-files>` for more details about customizing the the location where data is stored and about managing datafiles in general.
+
 .. _pygrackle-dev:
 
 Installing Pygrackle Development Requirements
