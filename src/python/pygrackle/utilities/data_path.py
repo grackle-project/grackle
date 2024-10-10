@@ -15,6 +15,7 @@ import io
 import os
 import sys
 
+from pygrackle.__config__ import _is_editable_installation
 from pygrackle.grackle_wrapper import get_grackle_version
 from pygrackle.utilities.grdata import (
     make_config_objects,
@@ -27,17 +28,8 @@ from pygrackle.utilities.misc import dirname
 __all__ = ["grackle_data_dir"]
 
 
-# when we shift to scikit-build-core we can do something more robust here
-def _is_editable_install():
-    _install_dir = dirname(os.path.abspath(__file__), level=5)
-    return os.path.exists(os.path.join(_install_dir, "grackle_data_files"))
-
-
-is_editable_install = _is_editable_install()
-
-
-def _get_file_registry_contents(editable_install):
-    if editable_install:
+def _get_file_registry_contents():
+    if _is_editable_installation():
         fname = os.path.join(
             dirname(os.path.abspath(__file__), 2), "file_registry", "file_registry.txt"
         )
@@ -62,7 +54,7 @@ def _make_config_pair(grackle_version=None):
         grackle_version = get_grackle_version()["version"]
     return make_config_objects(
         grackle_version=grackle_version,
-        file_registry_file=_get_file_registry_contents(is_editable_install),
+        file_registry_file=_get_file_registry_contents(),
     )
 
 
