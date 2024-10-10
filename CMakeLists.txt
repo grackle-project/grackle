@@ -130,9 +130,7 @@ the structure of this directory
   # these intentionally are not CACHE variables
   set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${stageDir}/${CMAKE_INSTALL_LIBDIR})
   set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${stageDir}/${CMAKE_INSTALL_LIBDIR})
-
-  # don't currently need the following since grackle doesn't ship an executable
-  #set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${stageDir}/${CMAKE_INSTALL_BINDIR})
+  set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${stageDir}/${CMAKE_INSTALL_BINDIR})
 
   # the location where the export files go to export from build-tree
   set(GRACKLE_BUILD_EXPORT_PREFIX_PATH ${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
@@ -201,6 +199,18 @@ target_include_directories(picohash SYSTEM INTERFACE
 # Main build targets
 # ------------------
 add_subdirectory(src/clib)
+
+# configure the grdata cli program
+# -> we are essentially performing some template substitutions on a python
+#    file so that the file can be executed as a standalone cli program
+include(CreateProgram-grdata)
+create_grdata_program(
+  GRACKLE_VERSION "${_GRACKLE_FULL_VERSION}"
+  PATH_OUTVAR "_GRACKLE_GRDATA_TOOL_PATH"
+)
+# make the location of grdata accessible via the grackle_get_info command
+include(GrackleReusedBuildConfigCommands)
+_grackleprivate_get_info_setup("${_GRACKLE_GRDATA_TOOL_PATH}")
 
 # declare build-recipies for examples
 if (GRACKLE_EXAMPLES)

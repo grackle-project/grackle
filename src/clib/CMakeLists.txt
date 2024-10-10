@@ -34,18 +34,11 @@ configure_file(../include/grackle_float.h.in
   ${GRACKLE_GENRATED_PUBLIC_HEADERS}/grackle_float.h @ONLY)
 
 # now, declare recipe for generating file_registry.h:
+include(CreateProgram-grdata)
 set(GRACKLE_GENERATED_PRIVATE_HEADERS "${CMAKE_CURRENT_BINARY_DIR}")
-set(_FILE_REGISTRY_PATH
-  "${CMAKE_CURRENT_SOURCE_DIR}/../python/pygrackle/file_registry/file_registry.txt"
-)
-file(READ ${_FILE_REGISTRY_PATH} FILE_REGISTRY_CONTENTS)
+load_file_registry_string(TRUE FILE_REGISTRY_CONTENTS)
 configure_file(file_registry.h.in
   ${GRACKLE_GENERATED_PRIVATE_HEADERS}/file_registry.h @ONLY)
-# instruct CMake to rerun config-stage (and re-generate files) if any changes
-# occur to the file containing the file registry
-set_property(
-  DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${_FILE_REGISTRY_PATH}
-)
 
 # next, declare recipe for generating auto_general.c:
 

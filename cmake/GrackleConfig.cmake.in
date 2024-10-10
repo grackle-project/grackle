@@ -355,6 +355,13 @@ set_target_properties(Grackle::Grackle PROPERTIES
 @_GRACKLE_INFO_PROPERTIES@
 )
 
+# define the grackle_get_info command
+include(${CMAKE_CURRENT_LIST_DIR}/Grackle_grdata_pseudotarget.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/GrackleReusedBuildConfigCommands.cmake)
+_grackleprivate_get_info_setup("${_GRACKLE_GRDATA_TOOL_PATH}")
+unset(_GRACKLE_GRDATA_TOOL_PATH)
+
+
 # Finally, let's do some cleanup so people don't rely upon these variables
 # (specifically, let's cleanup the record of the build-flags)
 unset(_GRACKLEBUILD_USE_DOUBLE)
