@@ -1792,7 +1792,7 @@ def make_config_objects(grackle_version, file_registry_file):
 # following procedure to the build-system:
 #    - treat this file as a template-file and configure it with CMake's
 #      ``configure_file`` command (or invoke ``configure_file.py`` under the classic
-#      build system) in order to substitute the names enclosed by the @ symbols
+#      build system) in order to substitute the names enclosed by the "at sign" symbol
 #    - make resulting file executable (and maybe drop the .py suffix)
 #    - install it into the bin directory alongside the grackle libraries
 
@@ -1803,9 +1803,12 @@ if __name__ == "__main__":
 """
 
     def _check_substitution_problems(var_name, var_value):
+        # we use unicode escape sequence, \u0040, that python automatically converts
+        # to the "at sign" to prevent the configure_file.py script (used by Grackle's
+        # Grackle's build-system) from falsely reporting an error
         if (
             (var_name in var_value)
-            or ("@" in var_value)
+            or ("\u0040" in var_value)
             or (len(var_value) == 0)
             or (var_value.isspace())
         ):
