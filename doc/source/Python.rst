@@ -196,30 +196,6 @@ a parcel of gas at constant density or in a free-fall model.  Each example
 will produce a figure as well as a dataset that can be loaded and analyzed
 with `yt <http://yt-project.org/>`__.
 
-Configuring the path to Grackle input data
-++++++++++++++++++++++++++++++++++++++++++
-
-All of the example scripts discussed below use the following line to
-make a guess at where the Grackle input files are located.
-
-.. code-block:: python
-
-   from pygrackle.utilities.data_path import grackle_data_dir
-
-This will typically work for any 'editable' Pygrackle installation
-(i.e., one installed with ``pip install -e .`` as directed
-above). In this case, it will be assumed that the data files can be
-found in a directory called ``input`` in the top level of the source
-repository. However, this will not work with non-editable
-installations. In this case you can use the ``GRACKLE_DATA_DIR``
-environment variable to set the path to the data. This will be picked
-up by the Python code above and the ``grackle_data_dir`` variable will
-contain the proper path.
-
-.. code-block:: shell-session
-
-   export GRACKLE_DATA_DIR=/path/to/data
-
 Cooling Rate Figure Example
 +++++++++++++++++++++++++++
 
