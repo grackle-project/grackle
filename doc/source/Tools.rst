@@ -42,11 +42,11 @@ To execute the tool:
 
          In detail, the tool is implemented as an executable python script (it only uses the python standard library) and it relies upon a `shebang <https://en.wikipedia.org/wiki/Shebang_%28Unix%29>`__ to launch the program.
 
-         In the event that, that your machine finds an invalid python version (at this time of writing, the minimum required version is 3.6.1 is r) or can't find any python interpretter, you have 2 options:
+         In the event that, that your machine finds an invalid python version (at this time of writing, the minimum required version is 3.6.1) or can't find any python interpretter, you have 2 options:
 
          1. you can modify the shebang path OR
 
-         2. you can directly invoke the tool with python `path/to/python path/to/grdata <args>...`.
+         2. you can directly invoke the tool with python: ``<path/to/python> <path/to/grdata> <args>...``.
 
 
    .. group-tab:: As a part of Pygrackle
