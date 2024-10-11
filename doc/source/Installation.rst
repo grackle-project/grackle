@@ -261,53 +261,12 @@ Then, to install:
 5. Test your Installation
 
 Once installed, you can test your installation with the provided example to
-assure it is functioning correctly.  If something goes wrong in this process,
+assure it is functioning correctly.
+More details are provided :ref:`here <how-to-run-example>`.
+If something goes wrong in this process,
 check the ``out.compile`` file to see what went wrong during compilation,
 or use ``ldd`` (``otool -L`` on Mac) on your executable to determine what went 
 wrong during linking.
-
-::
-
-    ~/grackle/src/clib $ cd ../example
-    ~/grackle/src/example $ make clean 
-    ~/grackle/src/example $ make 
-
-    Compiling cxx_example.C
-    Linking
-    Success!
-  
-    ~/grackle/src/example $ ./cxx_example
-
-    The Grackle Version 2.2
-    Mercurial Branch   default
-    Mercurial Revision b4650914153d
-
-    Initializing grackle data.
-    with_radiative_cooling: 1.
-    primordial_chemistry: 3.
-    metal_cooling: 1.
-    UVbackground: 1.
-    Initializing Cloudy cooling: Metals.
-    cloudy_table_file: ../../input/CloudyData_UVB=HM2012.h5.
-    Cloudy cooling grid rank: 3.
-    Cloudy cooling grid dimensions: 29 26 161.
-    Parameter1: -10 to 4 (29 steps).
-    Parameter2: 0 to 14.849 (26 steps).
-    Temperature: 1 to 9 (161 steps).
-    Reading Cloudy Cooling dataset.
-    Reading Cloudy Heating dataset.
-    Initializing UV background.
-    Reading UV background data from ../../input/CloudyData_UVB=HM2012.h5.
-    UV background information:
-    Haardt & Madau (2012, ApJ, 746, 125) [Galaxies & Quasars]
-    z_min =  0.000
-    z_max = 15.130
-    Setting UVbackground_redshift_on to 15.130000.
-    Setting UVbackground_redshift_off to 0.000000.
-    Cooling time = -1.434987e+13 s.
-    Temperature = 4.637034e+02 K.
-    Pressure = 3.345738e+34.
-    gamma = 1.666645e+00.
 
 In order to verify that Grackle is fully functional, try :ref:`running the
 test suite <testing>`.
@@ -326,11 +285,37 @@ Steps have also been taken simplify integration of Grackle into simulation codes
 More details about integration are provided :doc:`on this page <Integration>`.
 This current section focuses on installation.
 
-For the uninitiated, the CMake build-system performs an out-of-source build.
-An out-of-source build places all build artifacts (auto-generated source/header files, object files, etc.) into a "build-directory."
-The build-directory is at a user-specified location that is organized into a hierarchy that resembles the source directory hierarchy.
-Cleaning up from a CMake-build is as simple as deleting this build-directory.
-In contrast, the "classic build system" performs an in-source build (because that type of build distributes build artifacts throughout the source directory hierarchy, clean up requires more complex logic encapsulated by the ``make clean`` command).
+Basic Definitions
++++++++++++++++++
+
+For the uninitiated, the CMake build-system performs an *out-of-source* build.
+To introduce what this means we define the terms **source directory** and **build directory** and touch on the idea of an **install destination**.
+For concreteness, we continue to assume that the root of the cloned Grackle repository is located at **~/grackle**.
+
+.. COMMENT: The following is a RST "Definition List" structure (with a label so we can reference it later)
+
+.. _dir-defs:
+
+source directory
+   The root directory holding all of Grackle's source files.
+   We generally consider this to be **~/grackle/src** (a case could be made that it's actually **~/grackle**).
+
+build directory
+   The root directory where we put all build artifacts (auto-generated source/header files, object files, libraries, executables, etc.)
+
+   * for an *in-source-build* (e.g. a build performed by the classic build system) the build and source directories are comingled (i.e. build artifacts are distributed throughout the source directory hierarchy).
+   * for an *out-of-source* build, this is a location chosen so that no build artifacts are placed within the source directory
+   * for the CMake build system, this is an arbitrary, user-specified location.
+     It is conventionally placed within the root of the grackle repository and called something like **~/grackle/build**.
+     We commonly denote this location as **<build-dir>**
+
+install destination
+   Specifies where the primary products of the build process are copied during a build system's installation phase.
+   Properties of the copied products (e.g. file owners, file permissions, executable/shared library properties) may be altered.
+   More information will be provided later.
+
+While cleaning up from an *in-source-build* requires special logic (commonly encoded in a ``make clean`` command), cleaning up from an *out-of-source-build* is much more straight-forward.
+To clean up from an *out-of-source-build*, you can simply delete the build directory.
 
 .. warning::
 
@@ -357,9 +342,8 @@ The remainder of this subsection is primarily intended for readers who are relat
 
    For now, we make 2 basic decisions:
 
-   #. Decide on the directory, ``<build-dir>``, where you want to build Grackle. [#f1]_
-      This is referred to as the build-directory and is generally placed at the root level of the grackle repository.
-      A common choice is ``build`` (but this is fairly arbitrary).
+   #. Decide on the :ref:`build-directory <dir-defs>`, ``<build-dir>``, where you want to build Grackle.\ [#f1]_
+      This is generally placed at the root level of the grackle repository and commonly named ``build`` (but this is fairly arbitrary).
 
    #. Decide on the installation directory prefix, ``<install-prefix>``, where Grackle will be installed.
       This is be specified via the ``CMAKE_INSTALL_PREFIX`` cmake configuration variable.
@@ -404,33 +388,9 @@ The remainder of this subsection is primarily intended for readers who are relat
 
 
 4. Test your Build.
-
-   Once you have compiled Grackle, you can run one of the provided example to test if it functions correctly.
-   These examples are automatically compiled with Grackle.
-
-   .. code-block:: shell-session
-
-      ~/grackle $ cd <build-dir>/examples
-      ~/grackle/<build-dir>/examples $ ./cxx_example
-
-   .. warning::
-
-      The examples make certain assumptions about the location of the input files.
-      The examples are only guaranteed to work if both:
-
-         1. you execute the example-binary from the same-directory where the example-binary is found
-
-         2. ``<build-dir>`` is a top-level directory in the grackle repository (e.g. something like ``my-build`` is fine, but choices like ``../my-grackle-build`` and ``my_builds/my-first-build`` are problematic).
-
-   .. note::
-
-      For reference, the Classic build-system always links Grackle against the shared-library version of Grackle and requires that Grackle is fully installed in a location known by the system (either a standard system location OR a location specified by ``LD_LIBRARY_PATH``/``DYLD_LIBRARY_PATH``).
-      In contrast, cmake automatically takes special-steps to try to ensure that each example-binary will link to the copy of the Grackle library (whether it is shared or static) that is in the ``<build-dir>``; in fact, Grackle doesn't even need to be installed to run the Grackle library.
-
-      With that said, if you compile Grackle as a shared library in a cmake build, an example-binary **might** try to use a copy of a shared grackle library found in a directory specified by ``LD_LIBRARY_PATH``/``DYLD_LIBRARY_PATH`` if one exists.
-      The exact behavior may be platform dependent and also depends on whether CMake instructs the linker to use RPATH or RUNPATH (this is not specified by the cmake docs).
-
-In order to verify that Grackle is fully functional, you can try :ref:`running the test suite <testing>`.
+   Once you have compiled Grackle, you can run one of the provided examples to test if it functions correctly.
+   More details are provided :ref:`here <how-to-run-example>`.
+   In order to verify that Grackle is fully functional, you can try :ref:`running the test suite <testing>`.
 
 .. _how_to_configure:
 

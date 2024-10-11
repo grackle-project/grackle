@@ -39,6 +39,7 @@ Contents:
    :maxdepth: 2
 
    Installation.rst
+   Examples.rst
    Testing.rst
    Integration.rst
    Interaction.rst
