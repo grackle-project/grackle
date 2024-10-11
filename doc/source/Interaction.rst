@@ -22,6 +22,8 @@ The grackle source code contains examples for C, C++, and Fortran codes.
 These files illustrate how to call all of grackle's functions.
 More details are provided :ref:`here <examples>`.
 
+.. _public-header-files:
+
 Header Files
 ------------
 

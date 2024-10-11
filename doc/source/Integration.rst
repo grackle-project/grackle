@@ -1,3 +1,6 @@
+
+.. _integration-consuming-grackle:
+
 Integrating Grackle into your Application
 =========================================
 
