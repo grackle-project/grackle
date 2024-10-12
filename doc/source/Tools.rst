@@ -65,6 +65,8 @@ The pygrackle examples and the pygrackle tests all rely upon this functionality.
 The Grackle C library has support for access the datafiles managed by this tool.
 Some of the examples may soon rely upon the functionality.
 
+.. _grdata-versioning-and-deduplication:
+
 .. important::
 
    Instances of the grdata tool are associated with a single version of Grackle (if you are using Pygrackle, the version of the core Grackle c-library is the relevant version number).

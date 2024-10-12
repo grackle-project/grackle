@@ -34,8 +34,28 @@ test suite <testing>`).
 
 The instructions for building and executing the examples vary based on the build-system.
 In both cases, the examples require that you haven't cleanup up from your build.
+If you used the classic build-system, the examples require that Grackle has been fully installed.
 
-1. Compile the example:
+1. Fetch datafiles with the ``grdata`` tool.
+
+   * some of the examples require that the :ref:`datafiles have been fetched and managed <manage-data-files>` by the ``grdata`` tool.
+
+   * In a full, standalone Grackle installation (regardless of build-system), the ``grdata`` tool will be :ref:`one of the installed components <install-products>`.
+     If you build a standalone copy of Grackle with the CMake build-system, the build-system provides details about where to find a copy of the ``grdata`` tool :ref:`within the build-directory <build-dir-product-locations>`.
+
+   Once you locate ``grdata`` you should invoke:
+
+   .. code-block:: shell-session
+
+      $ ./<path/to/grdata> fetch
+
+   .. tip::
+
+      Even if you don't think it will be necessary, it is always worth fetching the data files with the copy of ``grdata`` that was created alongside Grackle.
+      Grackle will only access managed files if you have invoked this command with a copy of ``grdata`` that exactly matches the Grackle version :ref:`(steps are taken to deduplicate files on disk) <grdata-versioning-and-deduplication>`.
+      At worst, the command will confirm that nothing needs to be done.
+
+2. Compile the example (if necessary):
 
    .. tabs::
 
@@ -57,20 +77,20 @@ In both cases, the examples require that you haven't cleanup up from your build.
       .. group-tab:: CMake Build System
  
          By default, the examples are automatically built with the rest of Grackle.
-         The compiled example binaries can be found within **<build-dir>/example**, where **<build-dir>** is the arbitrary build-directory that you need to specify when compiling Grackle.
+         The compiled example binaries can be found within **<build-dir>/example**, where **<build-dir>** is the arbitrary :ref:`build-directory <dir-defs>` that you previously specified while compiling Grackle.
 
          .. warning::
 
             It's important that **<build-dir>** is a top-level directory in the grackle repository (e.g. something like **~/grackle/my-build** is fine, but choices like **~/grackle/../my-grackle-build** and **~/grackle/my_builds/my-first-build** are problematic).
-            If this isn't the case, then the examples won't be able to locate the input data files.
+            If this isn't the case, then the examples (that don't use automatically managed input data files) won't be able to locate the data files.
 
    .. important::
 
       If you're using the Classic build system, make sure to add the path to the directory containing the installed **libgrackle.so** to your LD_LIBRARY_PATH (or DYLD_LIBRARY_PATH on Mac).
       This is **NOT** necessary for the CMake build system.
-      More information is provided below.\ [#f1]_
+      :ref:`More information is provided below.<how-examples-are-built>`
 
-2. Now we execute the example
+3. Now we execute the example
 
    .. note::
 
@@ -130,12 +150,17 @@ In both cases, the examples require that you haven't cleanup up from your build.
     gamma = 1.666645e+00.
 
 
-.. rubric:: Footnotes
+.. _how-examples-are-built:
 
-.. [#f1] In more detail, both build-systems use copies of the grackle-library within the build directory while compiling the example.
+More details about how examples are built
+-----------------------------------------
 
-   * the Classic build-system **always** links Grackle against the shared-library version of Grackle and requires that Grackle is fully installed in a location known by the system (either a standard system location OR a location specified by ``LD_LIBRARY_PATH``/``DYLD_LIBRARY_PATH``).
-   * In contrast, cmake automatically takes special-steps to try to ensure that each example-binary will link to the copy of the Grackle library (whether it is shared or static) that is in the ``<build-dir>``; in fact, Grackle doesn't even need to be installed to run the Grackle library.
-   * With that said, if you compile Grackle as a shared library in a cmake build, an example-binary **might** try to use a copy of a shared grackle library found in a directory specified by ``LD_LIBRARY_PATH``/``DYLD_LIBRARY_PATH`` if one exists.
-     The exact behavior may be platform dependent and also depends on whether CMake instructs the linker to use RPATH or RUNPATH (this is not specified by the cmake docs).
+In more detail, both build-systems use copies of the grackle-library within the build directory while compiling the example.
+
+* the Classic build-system **always** links Grackle against the shared-library version of Grackle and requires that Grackle is fully installed in a location known by the system (either a standard system location OR a location specified by ``LD_LIBRARY_PATH``/``DYLD_LIBRARY_PATH``).
+
+* In contrast, CMake automatically takes special-steps to try to ensure that each example-binary will link to the copy of the Grackle library (whether it is shared or static) that is in the ``<build-dir>``; in fact, Grackle doesn't even need to be installed to run the Grackle library.
+
+* With that said, if you compile Grackle as a shared library in a cmake build, an example-binary **might** try to use a copy of a shared grackle library found in a directory specified by ``LD_LIBRARY_PATH``/``DYLD_LIBRARY_PATH`` if one exists.
+  The exact behavior may be platform dependent and also depends on whether CMake instructs the linker to use RPATH or RUNPATH (this is not specified by the cmake docs).
 
