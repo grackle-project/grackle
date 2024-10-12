@@ -209,6 +209,15 @@ create_grdata_program(
   TARGET_NAME Grackle::grdata
 )
 
+file(GENERATE
+  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/grackle-buildpaths-$<CONFIG>.txt
+  CONTENT [[
+# This file lists paths where useful build products can be found in the build
+# directory (if/when the products are actually built)
+$<TARGET_FILE:Grackle::grdata>
+]])
+
+
 # declare build-recipies for examples
 if (GRACKLE_EXAMPLES)
   add_subdirectory(src/example)

@@ -21,22 +21,14 @@ To execute the tool:
 
    .. group-tab:: As a Standalone CLI
 
-      When you build grackle as a standalone application with the CMake build-system, the program can generally be found inside the build directory at *<path-to-build-dir>/grackle/bin/grdata*. [#df1]_
-      Thus, you can invoke the tool with:
+      In a full, standalone Grackle installation (regardless of build-system), the ``grdata`` tool will be :ref:`one of the installed components <install-products>`.
+      If you build a standalone copy of Grackle with the CMake build-system, the build-system provides details about where to find a copy of the ``grdata`` tool :ref:`within the build-directory <build-dir-product-locations>`.
+
+      Once you locate the tool, you can invoke in with:
 
       .. code-block:: shell-session
 
-         $ ./<path-to-build-dir>/grackle/bin/grdata <args>...
-
-      When you install grackle (with either the traditional build-system OR the CMake build-system), the program will be installed alongside the core Grackle library.
-      If the core Grackle library is at *<install-prefix>/lib/libgrackle...*, then the tool is probably installed to *<install-prefix>/bin/grdata*. [#df2]_
-      In this case, you can invoke the tool with:
-
-
-      .. code-block:: shell-session
-
-         $ <install-prefix>/bin/grdata <args>...
-
+         $ ./<path/to/grdata> <args>...
 
       .. note::
 
@@ -132,16 +124,3 @@ Down below, we sketch out what the directory-structure might look like:
    :language: none
    :start-after: [[[BEGIN:DIRECTORY-CARTOON]]]
    :end-before: [[[END:DIRECTORY-CARTOON]]]
-
-
-.. rubric:: Footnotes
-
-.. [#df1] The precise location is sensitive to CMake's standard `CMAKE_INSTALL_BINDIR` variable.
-   On just about all platforms this defaults to *bin*, but it is plausible that it could default to a different value.
-   You are also free to override the value of the `CMAKE_INSTALL_BINDIR` variable.
-
-.. [#df2] Again, the precise location of ``grdata`` installed by the CMake build-system is sensitive to CMake's standard `CMAKE_INSTALL_BINDIR` variable.
-   Additionally the precise location of the core Grackle library is sensitive to the CMake's standard `CMAKE_INSTALL_LIBDIR` variable, which defaults to platform's preferred default values (again, you can overwrite it).
-   CMake's `CMAKE_INSTALL_LIBDIR` variable is known to vary considerably more between platforms.
-   Common defaults include *lib* (most common), *lib64*, *lib32*, or *libx32*.
-

@@ -566,6 +566,28 @@ The following code snippet illustrates how you might do this (for concreteness, 
    ~ grackle $ cmake --build build-shared
    ~ grackle $ cmake --install build-shared
 
+.. _build-dir-product-locations:
+
+Build Directory Product Locations
++++++++++++++++++++++++++++++++++
+
+Up until now, we have been pretty vague about how the build-products are organized within the build directory.
+**This is intentional!**
+The paths to files within the build directory are an implementation detail that can and will change at any time in the future (some files could be removed entirely from the build-directory).
+We generally expect consumers to interact with most of Grackle's build products :ref:`once they are installed <install-products>`.
+
+With that said, we recognize that it can be useful to make use of certain build-products from a standalone Grackle build without requiring a full installation.
+We provide 2 mechanisms for doing this:
+
+1. The root of the build directory contains a file called **grackle-buildpaths-<CONFIG>.txt** contains paths specifying where some useful grackle utilities can be found in the build-directory (if/when they are built)
+
+   - if you have been following the above compilation instructions, you can only have 1 file in you build-directory called **grackle-buildpaths-*.txt** at a time.\ [#buildproducts1]_
+
+   - at the moment, this just contains the ``grdata`` command line tool for :ref:`managing grackle data files<manage-data-files>`.
+
+2. We provide an experimental :ref:`approach for integrating grackle <integration-consuming-grackle>` in a downstream project using a the build directory of a Grackle directory and we may add another approach in the future.\ [#buildproducts2]_
+   (Technically, the :ref:`embedded install apprach <Embed_Grackle_in_Sim_Build>` also lets you avoid fully installing Grackle, but this is a special case)
+
 .. _cmake_host-files:
 
 More About Host-Files
@@ -652,7 +674,7 @@ The **include** subdirectory typically holds headers, the **bin** subdirectory t
       The standard ``CMAKE_INSTALL_PREFIX`` option :ref:`controls the prefix <standard-cmake-options>` while 
       ``CMAKE_INSTALL_LIBDIR``, ``CMAKE_INSTALL_INCLUDEDIR``, and ``CMAKE_INSTALL_BINDIR`` options :ref:`provide finer control <cmake-granular-install-vars>`.
 
-A vanilla, standalone Grackle installation provides:
+A vanilla, standalone (i.e. :ref:`not an embedded build <Embed_Grackle_in_Sim_Build>`) Grackle installation provides:
 
 - The Grackle library (in the **lib** subdirectory).
   Depending on how build system (and your choices), installation provides it as a shared library, a static library, or both.
@@ -662,6 +684,15 @@ A vanilla, standalone Grackle installation provides:
 
 - Utility Executables (in the **bin** subdirectory).
   At the moment, this just includes the ``grdata`` command line tool for :ref:`managing grackle data files<manage-data-files>`.
+
+     .. note::
+
+        .. COMMENT: (Maybe we should just put a redirect at the root of the build-directory?)
+
+        When you use the CMake build-system, you can reliably find the ``grdata`` command line program within the build directory at **<build-dir>/grackle/bin/grdata** (this assumes that you performed a stand-alone build, with default configuration settings)
+
+        **REMINDER: Unless explicitly noted, the locations of all other installation products (and any other contents) within the build directory are considered implementation details -- they can/will change at ANY time.**
+
 
 - If you used the CMake build system, some metadata files are also included to make it :ref:`easy for other projects to consume Grackle <integration-consuming-grackle>`
 
@@ -713,6 +744,13 @@ For example, adding GPU-support with the likes of CUDA or HIP would involve link
 
 .. [#f4] Aside: performing these 2 separate CMake builds compiles the source files the same number of times as the Classic build system.
          Behind the scenes, the classic build system always compile each source file twice (once with position independent code and once without).
+
+.. [#buildproducts1] In principle, you can get multiple files if you are using a multi-configuration generation.
+                     If you don't know what this means, you really don't need to worry about it.
+
+.. [#buildproducts2] The common property to a supported integration approach that lets you use grackle from the build-directory is they don't require hardcoding assumptions about Grackle's build-directory into a downstream project's build-system.
+                     Instead, they introduce a standardized way for us, the Grackle developers, to communicate Grackle's usage requirements (and any assumptions abouts paths) to the downstream build system.
+                     
 
 .. [#installproducts1] The primary exception is for MacOS software distributed through official Apple channels.
                        For our purposes, we (like most open-source science software) get away with treating MacOS as a generic Unix-like system.
