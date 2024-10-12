@@ -78,7 +78,7 @@
           
 !  Iteration mask for multi_cool
 
-      logical itmask(in)
+      MASK_TYPE itmask(in)
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
 !=======================================================================
@@ -121,9 +121,9 @@
 
         do i = is+1, ie+1
 
-!     Set itmask to all true
+!     Set itmask to all MASK_TRUE
 
-           itmask(i) = .true.
+           itmask(i) = MASK_TRUE
 
 !     Compute interstellar radiation field
 
