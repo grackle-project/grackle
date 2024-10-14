@@ -33,6 +33,13 @@ endif()
 configure_file(../include/grackle_float.h.in
   ${GRACKLE_GENRATED_PUBLIC_HEADERS}/grackle_float.h @ONLY)
 
+# now, declare recipe for generating file_registry.h:
+include(CreateProgram-grdata)
+set(GRACKLE_GENERATED_PRIVATE_HEADERS "${CMAKE_CURRENT_BINARY_DIR}")
+load_file_registry_string(TRUE FILE_REGISTRY_CONTENTS)
+configure_file(file_registry.h.in
+  ${GRACKLE_GENERATED_PRIVATE_HEADERS}/file_registry.h @ONLY)
+
 # next, declare recipe for generating auto_general.c:
 
 # fetch necessary version information via query-version.py script
@@ -86,6 +93,7 @@ add_library(Grackle_Grackle
   calculate_gamma.c
   calculate_pressure.c
   calculate_temperature.c
+  data_file_utils.c
   dynamic_api.c
   grackle_units.c
   index_helper.c
@@ -93,6 +101,7 @@ add_library(Grackle_Grackle
   initialize_cloudy_data.c
   initialize_rates.c
   initialize_UVbackground_data.c
+  os_utils.c
   rate_functions.c
   set_default_chemistry_parameters.c
   solve_chemistry.c
@@ -135,9 +144,11 @@ add_library(Grackle_Grackle
 
   # C private headers
   cie_thin_cooling_rate_tables.h
+  data_file_utils.h
   grackle_chemistry_data_fields.def # <-- acts as a C header
   grackle_macros.h
   index_helper.h
+  os_utils.h
   phys_constants.h
   utils.h
 
@@ -208,15 +219,18 @@ set_target_typed_info_properties(Grackle_Grackle BOOL_PROPERTIES
 )
 
 target_include_directories(Grackle_Grackle
-  # specify where to search for generated and ordinary headers when building
-  # grackle AND when linking against grackle under inclusion approach #1
-  # -> while it may seem unnecessary to specify the ordinary headers' directory
-  #    while building grackle, it's necessary to compile auto_general.c
-  PUBLIC $<BUILD_INTERFACE:${GRACKLE_GENRATED_PUBLIC_HEADERS}> # generated hdrs
-         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include> # public hdrs
-         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}> # private hdrs
+  # specify where to search for generated/ordinary private headers (only used
+  # when building grackle)
+  # -> while it may seem unnecessary to specify the ordinary private headers'
+  #    directory, it's necessary to compile auto_general.c
+  PRIVATE ${GRACKLE_GENERATED_PRIVATE_HEADERS} ${CMAKE_CURRENT_SOURCE_DIR}
 
-  # specify where to search for the other headers when linking against grackle
+  # specify where to search for generated/ordinary public headers when building
+  # grackle AND when linking against grackle under inclusion approach #1
+  PUBLIC $<BUILD_INTERFACE:${GRACKLE_GENRATED_PUBLIC_HEADERS}>
+         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
+
+  # specify where to search for public headers when linking against grackle
   # (for inclusion approach #2)
   INTERFACE $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
@@ -224,6 +238,7 @@ target_include_directories(Grackle_Grackle
 target_link_libraries(Grackle_Grackle
   PRIVATE toolchain::m
           GRACKLE_HDF5_C
+          picohash
           $<$<BOOL:${GRACKLE_USE_OPENMP}>:OpenMP::OpenMP_Fortran>
           $<$<BOOL:${GRACKLE_USE_OPENMP}>:OpenMP::OpenMP_C>
 )
@@ -255,6 +270,25 @@ target_compile_options(Grackle_Grackle PRIVATE
 if ("${CMAKE_SYSTEM_NAME}" MATCHES "^(Linux)|(Darwin)$")
   target_compile_definitions(Grackle_Grackle PRIVATE "LINUX")
 endif()
+
+# define a macro to specify the correct macro for use within os_utils.c
+# -> this is used to define functionality that specifies the default
+#    location where data is stored (this location is prefered by OS)
+#    when the GRACKLE_DATA_DIR isn't specified
+if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Darwin")
+  target_compile_definitions(Grackle_Grackle PRIVATE PLATFORM_MACOS)
+else()
+  # check if we can treat the platform as a generic unix-like OS that provides
+  # a few standard headers
+
+  include(CheckIncludeFiles)
+  unset(HAS_POSIX_HDRS CACHE)
+  CHECK_INCLUDE_FILES("unistd.h;sys/types.h;pwd.h" HAS_POSIX_HDRS)
+  if(UNIX AND "${HAS_POSIX_HDRS}" STREQUAL "1")
+    target_compile_definitions(Grackle_Grackle PRIVATE PLATFORM_GENERIC_UNIX)
+  endif()
+endif()
+
 
 # If we are building a shared library, construct a "configuration Makefile"
 # that is used to build the code examples

@@ -19,6 +19,9 @@ _ERR_MSG_TEMPLATE = (
     "alphanumeric character is an uppercase or lowercase letter (A-Z or a-z), "
     "a digit (0-9) or an underscore (_)")
 
+# simple pattern to detect simple occurences python decorator syntax
+_PY_DECORATOR_PATTERN = re.compile(r"^[ \t]*@[^\s@]+[^@]*$")
+
 def is_valid_varname(s, start = None, stop = None):
     return re.fullmatch(_VALID_VARNAME_STR, s[slice(start, stop)]) is not None
     
@@ -55,12 +58,18 @@ def configure_file(lines, variable_map, out_fname):
         line = line[:-1]
         match_count = 0
 
-        out_f.write(_PATTERN.sub(replace,line))
+        if _PY_DECORATOR_PATTERN.match(line) is not None:
+            # this is a crude workaround to support python decorators.
+            # - if we didn't have this, then our eager error-handling would
+            #   classify this line as an error
+            out_f.write(line)
+        else:
+            out_f.write(_PATTERN.sub(replace,line))
         out_f.write('\n')
         if err_msg is not None:
             out_f.close()
             os.remove(out_fname)
-            raise RuntimeError(rslt)
+            raise RuntimeError(err_msg)
 
     unused_variables = used_variable_set.symmetric_difference(variable_map)
 
@@ -70,7 +79,9 @@ def configure_file(lines, variable_map, out_fname):
                            "were unused: {!r}".format(unused_variables))
 
 def _parse_variables(dict_to_update, var_val_assignment_str_l,
-                     val_is_file_path = False):
+                     val_kind = 'literal'):
+    assert val_kind in ['literal', 'file-path-escaped-contents',
+                        'file-path-literal-contents']
     for var_val_assignment_str in var_val_assignment_str_l:
         stripped_str = var_val_assignment_str.strip() # for safety
 
@@ -104,7 +115,7 @@ def _parse_variables(dict_to_update, var_val_assignment_str_l,
             raise RuntimeError(
                 "the {!r} variable is defined more than once".format(var_name))
 
-        if val_is_file_path:
+        if val_kind != 'literal': # val_kind is some kind of file path
             path = value
             if not os.path.isfile(path):
                 raise RuntimeError(
@@ -112,11 +123,15 @@ def _parse_variables(dict_to_update, var_val_assignment_str_l,
                      "at {!r} with the {!r} variable: no such file exists"
                      ).format(path, var_name))
             with open(value, "r") as f:
-                # we generally treat the characters in the file as literals
-                # -> we do need to make a point of properly escaping the
-                #    newline characters
-                assert os.linesep == '\n' # implicit assumption
-                value = f.read().replace(os.linesep, r'\n')
+                if val_kind == 'file-path-escaped-contents':
+                    # we generally treat the characters in the file as literals
+                    # -> we do need to make a point of properly escaping the
+                    #    newline characters
+                    assert os.linesep == '\n' # implicit assumption
+                    value = f.read().replace(os.linesep, r'\n')
+                else: # val_kind == 'file-path-literal-contents'
+                    value = f.read()
+
         dict_to_update[var_name] = value
 
 def main(args):
@@ -130,9 +145,11 @@ def main(args):
     # fill variable_map with the specified variables and values
     variable_map = {}
     _parse_variables(variable_map, args.variables,
-                     val_is_file_path = False)
+                     val_kind = 'literal')
     _parse_variables(variable_map, args.variable_use_file_contents,
-                     val_is_file_path = True)
+                     val_kind = 'file-path-escaped-contents')
+    _parse_variables(variable_map, args.variable_use_literal_file_contents,
+                     val_kind = 'file-path-literal-contents')
 
     # use variable_map to actually create the output file
     with open(args.input, 'r') as f_input:
@@ -148,7 +165,16 @@ parser.add_argument(
     '--variable-use-file-contents',  action = 'append', default = [],
     metavar = 'VAR=path/to/file',
     help = ("associates the (possibly multi-line) contents contained by the "
-            "specified file with VAR")
+            "specified file with VAR. This replaces each newline character "
+            "with the pair of characters \"\\n\". This is useful if the "
+            "contents represent a string to be printed")
+)
+
+parser.add_argument(
+    '--variable-use-literal-file-contents',  action = 'append', default = [],
+    metavar = 'VAR=path/to/file',
+    help = ("associates the (possibly multi-line) contents contained by the "
+            "specified file with VAR. This does NOT escape newline characters.")
 )
 parser.add_argument(
     "variables", nargs = '*', action = 'store', default = [],

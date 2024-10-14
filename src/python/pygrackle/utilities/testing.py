@@ -99,3 +99,53 @@ def ensure_dir(path):
         else:
             raise
     return path
+
+def _fetch_keys(actual, reference, err_msg = ""):
+    # check consistency in dictionary keys
+    refkeys = reference.keys()
+    refkey_set = set(refkeys)
+    mismatch_keys = refkey_set.symmetric_difference(actual.keys())
+
+    if len(mismatch_keys):
+        shared_keys = list(refkey_set.intersection(actual.keys()))
+        extra_ref, extra_actual = [], []
+        for k in mismatch_keys:
+            if k in refkeys:
+                extra_ref.append(k)
+            else:
+                extra_actual.append(k)
+
+        raise AssertionError(
+            "The results are not equal to specified tolerance.\n"
+            f"{err_msg}\n"
+            "There is a keys mismatch. Both results have the keys:\n"
+            f" {shared_keys!r}\n"
+            "Extra Keys:\n"
+            f" actual:    {extra_actual}\n"
+            f" reference: {extra_ref}"
+        )
+    return list(refkeys)
+
+def assert_allequal_arraydict(actual, reference, err_msg=''):
+    """
+    Raises an AssertionError if any contents of the 2 compared mappings of
+    arrays are not EXACTLY equal
+    Parameters
+    ----------
+    actual : mapping
+         A mapping of arrays obtained in a calculation
+    reference : mapping
+         A mapping of reference arrays
+    err_msg : str
+         Custom error message to be printed in case of failure.
+    Note
+    ----
+    A separate function is proposed as part of PR #195 to do approximate
+    equality checks (like np.testing.assert_allclose).
+    """
+    __tracebackhide__ = True  # control pytest traceback depth
+
+    keys = _fetch_keys(actual, reference, err_msg = err_msg)
+    for key in keys:
+        assert_array_equal(actual[key], reference[key], err_msg = err_msg,
+                           strict = True)

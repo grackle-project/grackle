@@ -141,6 +141,18 @@ install(TARGETS Grackle_Grackle
     COMPONENT Grackle_Development
 )
 
+include(CreateProgram-grdata)
+# define installation rules for installation of grdata cli tool. This is
+# analogous to install(TARGETS ...), but is needed since grdata isn't a
+# compiled executable
+# -> in the future, maybe we should make this part of the Grackle_Development
+#    "installation component?" (from my perspective it's probably better err
+#    on the side of being a little too atomic here)
+grdata_install_export_helper_(INSTALL_TOOL
+  DESTINATION ${CMAKE_INSTALL_BINDIR}
+  COMPONENT Grackle_Tools
+)
+
 if (BUILD_SHARED_LIBS)
   # (As noted above) Because we renamed the shared library so its called
   # `libgrackle-{VERSION_NUM}.so` (rather than `libgrackle.so`), we need an
@@ -329,6 +341,13 @@ endif()
 # Define the cmake Package Config File
 #-------------------------------------
 
+# create variable that holds the path to the current directory
+set(LOCAL_CMAKE_MODULE_DIR "${CMAKE_CURRENT_LIST_DIR}")
+
+# create variable storing where copies of the cmake files are stored so that
+# they can be used without a full installation
+set(BUILDTREE_CMAKE_DIR ${GRACKLE_BUILD_EXPORT_PREFIX_PATH}/cmake/Grackle)
+
 include(CMakePackageConfigHelpers)
 
 # The following function implements standardized logic for determining
@@ -363,7 +382,7 @@ write_basic_package_version_file(
 get_info_properties_export_str(Grackle_Grackle
     CMAKE_CONFIG _GRACKLE_INFO_PROPERTIES)
 configure_file(
-  ${PROJECT_SOURCE_DIR}/cmake/GrackleConfig.cmake.in
+  ${LOCAL_CMAKE_MODULE_DIR}/GrackleConfig.cmake.in
   ${CMAKE_CURRENT_BINARY_DIR}/install-metadata/GrackleConfig.cmake
   @ONLY
 )
@@ -390,11 +409,19 @@ install(EXPORT GrackleTargets
   FILE Grackle_${GRACKLE_CONFIG_FILL_VAL}_targets.cmake
 )
 
-# generate and configure some cmake files in the build-tree so that external
-# cmake projects can use find_package to directly import Grackle::Grackle from
-# the build-tree (without requiring a full installation)
+# call the analog of install(EXPORT ...) for the grdata tool
+grdata_install_export_helper_(INSTALL_EXPORT
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/Grackle
+  FILE Grackle_grdata_pseudotarget.cmake
+  TMPDIR ${CMAKE_CURRENT_BINARY_DIR}/install-metadata
+)
 
-set(BUILDTREE_CMAKE_DIR ${GRACKLE_BUILD_EXPORT_PREFIX_PATH}/cmake/Grackle)
+
+# copy some files to the build tree to locations specified by the
+# BUILDTREE_CMAKE_DIR variable so so that external cmake projects can use
+# find_package to directly import Grackle::Grackle from the build-tree (without
+# requiring a full installation)
+
 
 file(COPY
   ${CMAKE_CURRENT_BINARY_DIR}/install-metadata/GrackleConfig.cmake
@@ -405,4 +432,9 @@ file(COPY
 export(EXPORT GrackleTargets
   FILE ${BUILDTREE_CMAKE_DIR}/Grackle_${GRACKLE_CONFIG_FILL_VAL}_targets.cmake
   NAMESPACE Grackle::
+)
+
+# analog to export(EXPORT ...) for the grdata tool
+grdata_install_export_helper_(EXPORT_EXPORT
+  FILE ${BUILDTREE_CMAKE_DIR}/Grackle_grdata_pseudotarget.cmake
 )

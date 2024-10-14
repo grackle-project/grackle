@@ -39,6 +39,7 @@ Contents:
    :maxdepth: 2
 
    Installation.rst
+   Examples.rst
    Testing.rst
    Integration.rst
    Interaction.rst
@@ -47,6 +48,7 @@ Contents:
    Reference.rst
    Versioning.rst
    Python.rst
+   Tools.rst
    Conduct.rst
    Contributing.rst
    Help.rst

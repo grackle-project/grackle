@@ -17,7 +17,7 @@ There are 3 steps to setting up Grackle on your system
    Given a smooth roll-out of the :ref:`CMake build system <cmake_build>`, it is our intention to deprecate and remove the :ref:`classic build system <classic_build>`.
    If you encounter any problems with the CMake system or anticipate any issues with this plan, :doc:`please let us know <Help>`.
 
-We include a :ref:`note on compiler toolchain compatability <compiler_toolchain_compatability>` at the end of this page.
+We include a :ref:`description of the installed products <install-products>` and a :ref:`note on compiler toolchain compatability <compiler_toolchain_compatability>` at the end of this page.
 
 
 .. _install_grackle_dependencies:
@@ -116,7 +116,17 @@ Linux systems, and an unformatted ``Make.mach.unknown``.  If you have a make
 file prepared for an Enzo install, it cannot be used straight away, but is a 
 very good place to start.
 
-Once you have chosen the make file to be used, a few variables should be set:
+.. COMMENT BLOCK
+
+   To support cross-referencing of the following block of text with sphinx's
+   `:ref:` construct (while suppressing warnings about referencing plain text),
+   we enclose the text in RST's container directive (it won't impact rendering)
+      https://docutils.sourceforge.io/docs/ref/rst/directives.html#toc-entry-19
+
+.. container::
+   :name: classic-makefile-variable-list
+
+   Once you have chosen the make file to be used, a few variables should be set:
 
     * ``MACH_LIBTOOL`` - path to ``libtool`` executable.  Note, on a Mac, 
       this should point to ``glibtool``, which can be installed with macports 
@@ -135,6 +145,10 @@ Once you have chosen the make file to be used, a few variables should be set:
 
     * ``MACH_INSTALL_INCLUDE_DIR`` - path where grackle header files will be 
       installed (only set if different from MACH_INSTALL_PREFIX/include).
+
+    * ``MACH_INSTALL_BIN_DIR`` - path where grackle-related utility executables
+      will be installed (only set if different from MACH_INSTALL_PREFIX/include).
+
 
 Once the proper variables are set, they are loaded into the build system by 
 doing the following:
@@ -261,53 +275,12 @@ Then, to install:
 5. Test your Installation
 
 Once installed, you can test your installation with the provided example to
-assure it is functioning correctly.  If something goes wrong in this process,
+assure it is functioning correctly.
+More details are provided :ref:`here <how-to-run-example>`.
+If something goes wrong in this process,
 check the ``out.compile`` file to see what went wrong during compilation,
 or use ``ldd`` (``otool -L`` on Mac) on your executable to determine what went 
 wrong during linking.
-
-::
-
-    ~/grackle/src/clib $ cd ../example
-    ~/grackle/src/example $ make clean 
-    ~/grackle/src/example $ make 
-
-    Compiling cxx_example.C
-    Linking
-    Success!
-  
-    ~/grackle/src/example $ ./cxx_example
-
-    The Grackle Version 2.2
-    Mercurial Branch   default
-    Mercurial Revision b4650914153d
-
-    Initializing grackle data.
-    with_radiative_cooling: 1.
-    primordial_chemistry: 3.
-    metal_cooling: 1.
-    UVbackground: 1.
-    Initializing Cloudy cooling: Metals.
-    cloudy_table_file: ../../input/CloudyData_UVB=HM2012.h5.
-    Cloudy cooling grid rank: 3.
-    Cloudy cooling grid dimensions: 29 26 161.
-    Parameter1: -10 to 4 (29 steps).
-    Parameter2: 0 to 14.849 (26 steps).
-    Temperature: 1 to 9 (161 steps).
-    Reading Cloudy Cooling dataset.
-    Reading Cloudy Heating dataset.
-    Initializing UV background.
-    Reading UV background data from ../../input/CloudyData_UVB=HM2012.h5.
-    UV background information:
-    Haardt & Madau (2012, ApJ, 746, 125) [Galaxies & Quasars]
-    z_min =  0.000
-    z_max = 15.130
-    Setting UVbackground_redshift_on to 15.130000.
-    Setting UVbackground_redshift_off to 0.000000.
-    Cooling time = -1.434987e+13 s.
-    Temperature = 4.637034e+02 K.
-    Pressure = 3.345738e+34.
-    gamma = 1.666645e+00.
 
 In order to verify that Grackle is fully functional, try :ref:`running the
 test suite <testing>`.
@@ -324,13 +297,39 @@ An overview of our design philosophy is provided :ref:`here <cmake_buildsystem_d
 This build-system makes integration of Grackle into simulation codes that are themselves built with CMake extremely easy.
 Steps have also been taken simplify integration of Grackle into simulation codes built with any other build-systems (they just need to call the standardized ``pkg-config`` command-line tool).
 More details about integration are provided :doc:`on this page <Integration>`.
-This current section focuses on installation.
+The current section focuses on building and installation.
 
-For the uninitiated, the CMake build-system performs an out-of-source build.
-An out-of-source build places all build artifacts (auto-generated source/header files, object files, etc.) into a "build-directory."
-The build-directory is at a user-specified location that is organized into a hierarchy that resembles the source directory hierarchy.
-Cleaning up from a CMake-build is as simple as deleting this build-directory.
-In contrast, the "classic build system" performs an in-source build (because that type of build distributes build artifacts throughout the source directory hierarchy, clean up requires more complex logic encapsulated by the ``make clean`` command).
+Basic Definitions
++++++++++++++++++
+
+For the uninitiated, the CMake build-system performs an *out-of-source* build.
+To introduce what this means we define the terms **source directory** and **build directory** and touch on the idea of an **install destination**.
+For concreteness, we continue to assume that the root of the cloned Grackle repository is located at **~/grackle**.
+
+.. COMMENT: The following is a RST "Definition List" structure (with a label so we can reference it later)
+
+.. _dir-defs:
+
+source directory
+   The root directory holding all of Grackle's source files.
+   We generally consider this to be **~/grackle/src** (a case could be made that it's actually **~/grackle**).
+
+build directory
+   The root directory where we put all build artifacts (auto-generated source/header files, object files, libraries, executables, etc.)
+
+   * for an *in-source-build* (e.g. a build performed by the classic build system) the build and source directories are comingled (i.e. build artifacts are distributed throughout the source directory hierarchy).
+   * for an *out-of-source* build, this is a location chosen so that no build artifacts are placed within the source directory
+   * for the CMake build system, this is an arbitrary, user-specified location.
+     It is conventionally placed within the root of the grackle repository and called something like **~/grackle/build**.
+     We commonly denote this location as **<build-dir>**
+
+install destination
+   Specifies where the primary products of the build process are copied during a build system's installation phase.
+   Properties of the copied products (e.g. file owners, file permissions, executable/shared library properties) may be altered.
+   More information will be provided :ref:`below <install-products>`.
+
+While cleaning up from an *in-source-build* requires special logic (commonly encoded in a ``make clean`` command), cleaning up from an *out-of-source-build* is much more straight-forward.
+To clean up from an *out-of-source-build*, you can simply delete the build directory.
 
 .. warning::
 
@@ -357,9 +356,8 @@ The remainder of this subsection is primarily intended for readers who are relat
 
    For now, we make 2 basic decisions:
 
-   #. Decide on the directory, ``<build-dir>``, where you want to build Grackle. [#f1]_
-      This is referred to as the build-directory and is generally placed at the root level of the grackle repository.
-      A common choice is ``build`` (but this is fairly arbitrary).
+   #. Decide on the :ref:`build-directory <dir-defs>`, ``<build-dir>``, where you want to build Grackle.\ [#f1]_
+      This is generally placed at the root level of the grackle repository and commonly named ``build`` (but this is fairly arbitrary).
 
    #. Decide on the installation directory prefix, ``<install-prefix>``, where Grackle will be installed.
       This is be specified via the ``CMAKE_INSTALL_PREFIX`` cmake configuration variable.
@@ -404,33 +402,9 @@ The remainder of this subsection is primarily intended for readers who are relat
 
 
 4. Test your Build.
-
-   Once you have compiled Grackle, you can run one of the provided example to test if it functions correctly.
-   These examples are automatically compiled with Grackle.
-
-   .. code-block:: shell-session
-
-      ~/grackle $ cd <build-dir>/examples
-      ~/grackle/<build-dir>/examples $ ./cxx_example
-
-   .. warning::
-
-      The examples make certain assumptions about the location of the input files.
-      The examples are only guaranteed to work if both:
-
-         1. you execute the example-binary from the same-directory where the example-binary is found
-
-         2. ``<build-dir>`` is a top-level directory in the grackle repository (e.g. something like ``my-build`` is fine, but choices like ``../my-grackle-build`` and ``my_builds/my-first-build`` are problematic).
-
-   .. note::
-
-      For reference, the Classic build-system always links Grackle against the shared-library version of Grackle and requires that Grackle is fully installed in a location known by the system (either a standard system location OR a location specified by ``LD_LIBRARY_PATH``/``DYLD_LIBRARY_PATH``).
-      In contrast, cmake automatically takes special-steps to try to ensure that each example-binary will link to the copy of the Grackle library (whether it is shared or static) that is in the ``<build-dir>``; in fact, Grackle doesn't even need to be installed to run the Grackle library.
-
-      With that said, if you compile Grackle as a shared library in a cmake build, an example-binary **might** try to use a copy of a shared grackle library found in a directory specified by ``LD_LIBRARY_PATH``/``DYLD_LIBRARY_PATH`` if one exists.
-      The exact behavior may be platform dependent and also depends on whether CMake instructs the linker to use RPATH or RUNPATH (this is not specified by the cmake docs).
-
-In order to verify that Grackle is fully functional, you can try :ref:`running the test suite <testing>`.
+   Once you have compiled Grackle, you can run one of the provided examples to test if it functions correctly.
+   More details are provided :ref:`here <how-to-run-example>`.
+   In order to verify that Grackle is fully functional, you can try :ref:`running the test suite <testing>`.
 
 .. _how_to_configure:
 
@@ -507,6 +481,7 @@ This second table highlights a subset of standardized CMake options that may als
 .. list-table:: Standard CMake Options
    :widths: 12 30 5
    :header-rows: 1
+   :name: standard-cmake-options
 
    * - Name
      - Description
@@ -517,7 +492,7 @@ This second table highlights a subset of standardized CMake options that may als
      - ``<undefined>``
 
    * - ``CMAKE_BUILD_TYPE``
-     - Specifies the desired build configuration (for single-configuration generators [#f3]_).
+     - Specifies the desired build configuration (for single-configuration generators\ [#f3]_).
        Grackle currently supports the standard choices ``Debug``, ``Release``, ``RelWithDebInfo`` and ``MinSizeRel``.
      - ``<undefined>``
 
@@ -538,6 +513,22 @@ This second table highlights a subset of standardized CMake options that may als
      - Set of variables (where ``<LANG>`` is replaced by ``C``, ``Fortran`` or ``CXX``) to overide the compiler choice.
        This is commonly set by host-files.
      - ``<undefined>``
+
+
+.. COMMENT BLOCK
+
+   To support cross-referencing the following block of text with sphinx's `ref`
+   construct (while suppressing warnings about referencing plain text), we
+   enclose the text in RST's container directive (it won't impact rendering)
+
+.. container::
+   :name: cmake-granular-install-vars
+
+   In the (unlikely) event you need more control over :ref:`installation locations <install-products>`, the build-sytem honors values specified for standard variables like ``CMAKE_INSTALL_BINDIR``, ``CMAKE_INSTALL_LIBDIR``, ``CMAKE_INSTALL_INCLUDEDIR``.
+   More information is provided `here <https://cmake.org/cmake/help/latest/module/GNUInstallDirs.html>`__ about these cmake variables.
+
+
+
 
 There are also additional standard options for BOTH configuring other aspects of the build and for finding the correct/preferred HDF5 library and configuring the correct openmp library.
 
@@ -574,6 +565,28 @@ The following code snippet illustrates how you might do this (for concreteness, 
    ~ grackle $ cmake -DCMAKE_INSTALL_PREFIX=$HOME/local -DBUILD_SHARED_LIBS=ON -B build-shared
    ~ grackle $ cmake --build build-shared
    ~ grackle $ cmake --install build-shared
+
+.. _build-dir-product-locations:
+
+Build Directory Product Locations
++++++++++++++++++++++++++++++++++
+
+Up until now, we have been pretty vague about how the build-products are organized within the build directory.
+**This is intentional!**
+The paths to files within the build directory are an implementation detail that can and will change at any time in the future (some files could be removed entirely from the build-directory).
+We generally expect consumers to interact with most of Grackle's build products :ref:`once they are installed <install-products>`.
+
+With that said, we recognize that it can be useful to make use of certain build-products from a standalone Grackle build without requiring a full installation.
+We provide 2 mechanisms for doing this:
+
+1. The root of the build directory contains a file called **grackle-buildpaths-<CONFIG>.txt** contains paths specifying where some useful grackle utilities can be found in the build-directory (if/when they are built)
+
+   - if you have been following the above compilation instructions, you can only have 1 file in you build-directory called **grackle-buildpaths-*.txt** at a time.\ [#buildproducts1]_
+
+   - at the moment, this just contains the ``grdata`` command line tool for :ref:`managing grackle data files<manage-data-files>`.
+
+2. We provide an experimental :ref:`approach for integrating grackle <integration-consuming-grackle>` in a downstream project using a the build directory of a Grackle directory and we may add another approach in the future.\ [#buildproducts2]_
+   (Technically, the :ref:`embedded install apprach <Embed_Grackle_in_Sim_Build>` also lets you avoid fully installing Grackle, but this is a special case)
 
 .. _cmake_host-files:
 
@@ -632,6 +645,57 @@ While embedded builds currently respect ``GRACKLE_OPTIMIZATION_FLIST_INIT``, tha
 
    * after we update the minimum required CMake version for compiling Grackle to at least 3.19, we may transition to using these features.
 
+.. _install-products:
+
+Installation Products
+---------------------
+
+We now give an overview of the products of an installation (e.g. the result of commands like ``make install`` or ``cmake --install <build-dir>``).
+
+We describe these products in terms of the :ref:`installation destination <dir-defs>`.
+Organization of the installed products has a similar description on all major platforms.\ [#installproducts1]_
+Essentially, products are distributed among a standard set of directories contained within a single root directory.
+This root directory is often called the "installation prefix" (or simply the "prefix").
+The **include** subdirectory typically holds headers, the **bin** subdirectory typically holds executables, and the **lib** subdirectory (some platform use similar names like **lib64**) holds libraries.
+
+.. tabs::
+
+   .. group-tab:: Classic Build System
+
+      Unless overriden, the **lib** subdirectory is *always* called **lib**.
+
+      Overrides are specified with :ref:`Makefile variables <classic-makefile-variable-list>` 
+      ``MACH_INSTALL_PREFIX`` controls the prefix while ``MACH_INSTALL_LIB_DIR``, ``MACH_INSTALL_INCLUDE_DIR``, and ``MACH_INSTALL_BIN_DIR`` gives finer grain control over the other variables.
+
+   .. group-tab:: CMake Build System
+
+      The default value for the **lib** subdirectory is `platform dependent <https://stackoverflow.com/a/76528304>`__ (currently either **lib** or **lib64**).
+
+      The standard ``CMAKE_INSTALL_PREFIX`` option :ref:`controls the prefix <standard-cmake-options>` while 
+      ``CMAKE_INSTALL_LIBDIR``, ``CMAKE_INSTALL_INCLUDEDIR``, and ``CMAKE_INSTALL_BINDIR`` options :ref:`provide finer control <cmake-granular-install-vars>`.
+
+A vanilla, standalone (i.e. :ref:`not an embedded build <Embed_Grackle_in_Sim_Build>`) Grackle installation provides:
+
+- The Grackle library (in the **lib** subdirectory).
+  Depending on how build system (and your choices), installation provides it as a shared library, a static library, or both.
+
+- Header files (in the **include** subdirectory).
+  More details about the header files (e.g. public headers vs. implementation details) are provided :ref:`here <public-header-files>`.
+
+- Utility Executables (in the **bin** subdirectory).
+  At the moment, this just includes the ``grdata`` command line tool for :ref:`managing grackle data files<manage-data-files>`.
+
+     .. note::
+
+        .. COMMENT: (Maybe we should just put a redirect at the root of the build-directory?)
+
+        When you use the CMake build-system, you can reliably find the ``grdata`` command line program within the build directory at **<build-dir>/grackle/bin/grdata** (this assumes that you performed a stand-alone build, with default configuration settings)
+
+        **REMINDER: Unless explicitly noted, the locations of all other installation products (and any other contents) within the build directory are considered implementation details -- they can/will change at ANY time.**
+
+
+- If you used the CMake build system, some metadata files are also included to make it :ref:`easy for other projects to consume Grackle <integration-consuming-grackle>`
+
 
 .. _compiler_toolchain_compatability:
 
@@ -681,5 +745,14 @@ For example, adding GPU-support with the likes of CUDA or HIP would involve link
 .. [#f4] Aside: performing these 2 separate CMake builds compiles the source files the same number of times as the Classic build system.
          Behind the scenes, the classic build system always compile each source file twice (once with position independent code and once without).
 
+.. [#buildproducts1] In principle, you can get multiple files if you are using a multi-configuration generation.
+                     If you don't know what this means, you really don't need to worry about it.
 
+.. [#buildproducts2] The common property to a supported integration approach that lets you use grackle from the build-directory is they don't require hardcoding assumptions about Grackle's build-directory into a downstream project's build-system.
+                     Instead, they introduce a standardized way for us, the Grackle developers, to communicate Grackle's usage requirements (and any assumptions abouts paths) to the downstream build system.
+                     
+
+.. [#installproducts1] The primary exception is for MacOS software distributed through official Apple channels.
+                       For our purposes, we (like most open-source science software) get away with treating MacOS as a generic Unix-like system.
+                       Ironically, while Windows (which we definitely don't support) may prefer some alternative organization, it is much less of an exception than MacOS.
 
