@@ -1125,64 +1125,11 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
                 heq = (-1._DKIND / (4._DKIND*k22(i))) * (k13(i)-
      &               sqrt(8._DKIND*k13(i)*k22(i)*
      &               fh*d(i,j,k)+k13(i)**2._DKIND))
-                !write(0,*) heq2, heq1, eqt2, eqt1, tgas(i), p2d(i), 
-!     &                     edot(i)
-                if (ddom(i).gt.1.d18.and.i.eq.4) then
-#ifdef _OPENMP
-!$omp critical
-#endif
-                  write(0,*) HI(i,j,k)/heq, edot(i), tgas(i)
-#ifdef _OPENMP
-!$omp end critical
-#endif
-                endif
                 dtit(i) = min(dtit(i), 0.1_DKIND*heq/dheq)
               endif
               if (iter.gt.10_DKIND) then
                  dtit(i) = min(olddtit*1.5_DKIND, dtit(i))
               endif
-
-#define DONT_WRITE_COOLING_DEBUG
-#ifdef WRITE_COOLING_DEBUG
-!              Output some debugging information if required
-
-               if (dtit(i)/dt .lt. 1.0e-2_DKIND .and.
-     &             iter .gt. 800 .and.
-     &             abs((dt-ttot(i))/dt) .gt. 1.0e-3_DKIND) then
-#ifdef _OPENMP
-!$omp critical
-#endif
-                  write(4,1000) iter,i,j,k,dtit(i),
-     &              ttot(i),dt,de(i,j,k),dedot(i),HI(i,j,k),HIdot(i),
-     &              tgas(i), dedot_prev(i), HIdot_prev(i)
-                  write(4,1100) HI(i,j,k),HII(i,j,k),
-     &              HeI(i,j,k),HeII(i,j,k),HeIII(i,j,k),
-     &              HM(i,j,k),H2I(i,j,k),H2II(i,j,k),de(i,j,k)
-                  write(4,1100)
-     &               -      k1(i) *de(i,j,k)    *HI(i,j,k)  ,
-     &               -      k7(i) *de(i,j,k)    *HI(i,j,k),
-     &               -      k8(i) *HM(i,j,k)    *HI(i,j,k),
-     &               -      k9(i) *HII(i,j,k)   *HI(i,j,k),
-     &               -      k10(i)*H2II(i,j,k)  *HI(i,j,k)/2._DKIND,
-     &               - 2._DKIND*k22(i)*HI(i,j,k)**2 *HI(i,j,k),
-     &               +      k2(i) *HII(i,j,k)   *de(i,j,k) ,
-     &               + 2._DKIND*k13(i)*HI(i,j,k)*H2I(i,j,k)/2._DKIND,
-     &               +      k11(i)*HII(i,j,k)   *H2I(i,j,k)/2._DKIND,
-     &               + 2._DKIND*k12(i)*de(i,j,k)*H2I(i,j,k)/2._DKIND,
-     &               +      k14(i)*HM(i,j,k)    *de(i,j,k),
-     &               +      k15(i)*HM(i,j,k)    *HI(i,j,k),
-     &               + 2._DKIND*k16(i)*HM(i,j,k)    *HII(i,j,k),
-     &               + 2._DKIND*k18(i)*H2II(i,j,k)  *de(i,j,k)/2._DKIND,
-     &               +      k19(i)*H2II(i,j,k)  *HM(i,j,k)/2._DKIND,
-     &               -      k57(i)*HI(i,j,k)    *HI(i,j,k),
-     &               -      k58(i)*HI(i,j,k)    *HeI(i,j,k)/4._DKIND
-#ifdef _OPENMP
-!$omp end critical
-#endif
-               endif
- 1000          format(i5,3(i3,1x),1p,11(e11.3))
- 1100          format(1p,22(e11.3))
-#endif /* WRITE_COOLING_DEBUG */
 
             else if ((itmask_nr(i)).and.(imp_eng(i).eq.0)) then
                dtit(i) = min(abs(0.1_DKIND*e(i,j,k)/edot(i)*d(i,j,k)),
@@ -1234,23 +1181,6 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
 #endif
                endif
 
-#ifdef WRITE_COOLING_DEBUG
-!              If the timestep is too small, then output some debugging info
-
-               if (((dtit(i)/dt .lt. 1.0e-2_DKIND .and. iter .gt. 800) 
-     &               .or. iter .gt. itmax-100) .and.
-     &              abs((dt-ttot(i))/dt) .gt. 1.0e-3_DKIND) then
-#ifdef _OPENMP
-!$omp critical
-#endif
-                 write(3,2000) i,j,k,iter,e(i,j,k),edot(i),tgas(i),
-     &             energy,de(i,j,k),ttot(i),d(i,j,k),e(i,j,k),dtit(i)
-#ifdef _OPENMP
-!$omp end critical
-#endif
-               endif
- 2000          format(4(i4,1x),1p,10(e14.3))
-#endif /* WRITE_COOLING_DEBUG */
             endif   ! itmask
             enddo   ! end loop over i
 
@@ -1261,17 +1191,6 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
                if (itmask(i)) then
                e(i,j,k)  = e(i,j,k) +
      &                 real(edot(i)/d(i,j,k)*dtit(i), RKIND)
-#ifdef WRITE_COOLING_DEBUG
-               if (e(i,j,k) .ne. e(i,j,k)) then
-#ifdef _OPENMP
-!$omp critical
-#endif
-                    write(3,*) edot(i),d(i,j,k),dtit(i)
-#ifdef _OPENMP
-!$omp end critical
-#endif
-               endif
-#endif /* WRITE_COOLING_DEBUG */
 
             endif               ! itmask
             enddo
