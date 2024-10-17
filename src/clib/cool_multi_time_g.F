@@ -297,7 +297,7 @@
 
       if (iexpand .eq. 1) then
 
-         factor = real(aye**-3, RKIND)
+         factor = real(aye**(-3), RKIND)
 
          call scale_fields_g(
      &     ispecies, imetal, idustfield, imchem,
