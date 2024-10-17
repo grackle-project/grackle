@@ -464,7 +464,7 @@
       real*8 coolunit, dbase1, tbase1, xbase1, chunit, uvel
       real*8 heq1, heq2, eqk221, eqk222, eqk131, eqk132,
      &       eqt1, eqt2, eqtdef, dheq, heq, dlogtem, dx_cgs,
-     &       c_ljeans
+     &       c_ljeans, min_metallicity
       R_PREC factor
 
 !  row temporaries
@@ -474,7 +474,7 @@
      &       dtit(in), ttot(in), p2d(in), tgas(in), tgasold(in),
      &       tdust(in), metallicity(in), dust2gas(in),
      &       rhoH(in), mmw(in), mynh(in), myde(in), gammaha_eff(in),
-     &       gasgr_tdust(in), regr(in), olddtit
+     &       gasgr_tdust(in), regr(in), ddom(in), olddtit
 
 !  Rate equation row temporaries
 
@@ -575,6 +575,9 @@ c     real*8 vecDtot
 !     Set flag for dust-related options
 
       anydust = (idust .gt. 0) .or. (idustall .gt. 0)
+
+!     ignore metal chemistry/cooling below this metallicity
+      min_metallicity = 1.d-9 / z_solar
       
 !     Set units
 
@@ -698,7 +701,8 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
 !$omp&   t1, t2, logtem, tdef,
 !$omp&   dtit, ttot, p2d, tgas, tgasold,
 !$omp&   tdust, metallicity, dust2gas, rhoH, mmw,
-!$omp&   mynh, myde, gammaha_eff, gasgr_tdust, regr, olddtit,
+!$omp&   mynh, myde, gammaha_eff, gasgr_tdust, regr, ddom,
+!$omp&   olddtit,
 !$omp&   HIp, HIIp, HeIp, HeIIp, HeIIIp,
 !$omp&   HMp, H2Ip, H2IIp,
 !$omp&   dep, dedot,HIdot, dedot_prev,
@@ -719,7 +723,7 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
 !$omp&   brem, edot,
 !$omp&   hyd01k, h2k01, vibh, roth, rotl,
 !$omp&   gpldl, gphdl, hdlte, hdlow, cieco,
-!$omp&   itmask )
+!$omp&   itmask, itmask_metal )
 #endif
       do t = 0, dk*dj-1
         k = t/dj      + ks+1
@@ -763,6 +767,12 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
 
          do i = is+1, ie+1
             ttot(i) = 0._DKIND
+         enddo
+
+!        A useful slice variable since we do this a lot
+
+         do i = is+1, ie+1
+            ddom(i) = d(i,j,k) * dom
          enddo
 
 !        ------------------ Loop over subcycles ----------------
@@ -1009,17 +1019,13 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
             do i = is+1, ie+1
             if ( itmask_tmp(i) ) then
 
-c              if (d(i,j,k)*dom .lt. 1.e-2_DKIND) then
-!!             if (d(i,j,k)*dom .lt.
-!!   &          min(1.e6_DKIND/(metal(i,j,k)/d(i,j,k)/0.02d-4)**2
-!!   &             ,1.e6_DKIND)) then
                if ( ( (imetal .eq. 0)
-     &          .and. (d(i,j,k)*dom .lt. 1.e8_DKIND) )
+     &          .and. (ddom(i) .lt. 1.d8) )
      &         .or. ( (imetal .eq. 1)
-     &          .and. ( ( (metallicity(i) .le. 1.e-9_DKIND * z_solar)
-     &              .and. (d(i,j,k)*dom .lt. 1.e8_DKIND) )
-     &             .or. ( (metallicity(i) .gt. 1.e-9_DKIND * z_solar)
-     &              .and. (d(i,j,k)*dom .lt. 1.e6_DKIND) ) ) ) ) then
+     &          .and. ( ( (metallicity(i) .le. min_metallicity)
+     &              .and. (ddom(i) .lt. 1.d8) )
+     &             .or. ( (metallicity(i) .gt. min_metallicity)
+     &              .and. (ddom(i) .lt. 1.d6) ) ) ) ) then
                   itmask_nr(i) = .false.
                else
                   itmask(i) = .false.
@@ -1031,7 +1037,7 @@ c              if (d(i,j,k)*dom .lt. 1.e-2_DKIND) then
             do i = is+1, ie+1
             if (itmask_nr(i)) then
                if ( (icool .eq. 1) .and. (ispecies .gt. 1) .and.
-     &              ((d(i,j,k)*dom .gt. 1.d7)
+     &              ((ddom(i) .gt. 1.d7)
      &         .and.(tgas(i) .gt. 1650.d0)) ) then
                   imp_eng(i) = 1
                else
@@ -1080,7 +1086,7 @@ c              if (d(i,j,k)*dom .lt. 1.e-2_DKIND) then
      &              abs(0.1_DKIND*HI(i,j,k)/HIdot(i)),
      &              dt-ttot(i), 0.5_DKIND*dt)
 
-               if (d(i,j,k)*dom .gt. 1e8_DKIND .and. 
+               if (ddom(i) .gt. 1.d8 .and.
      &              edot(i) .gt. 0._DKIND      .and.
      &             ispecies .gt. 1) then
 !              Equilibrium value for H is:
@@ -1121,7 +1127,7 @@ c              if (d(i,j,k)*dom .lt. 1.e-2_DKIND) then
      &               fh*d(i,j,k)+k13(i)**2._DKIND))
                 !write(0,*) heq2, heq1, eqt2, eqt1, tgas(i), p2d(i), 
 !     &                     edot(i)
-                if (d(i,j,k)*dom.gt.1e18_DKIND.and.i.eq.4) then
+                if (ddom(i).gt.1.d18.and.i.eq.4) then
 #ifdef _OPENMP
 !$omp critical
 #endif
