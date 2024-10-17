@@ -501,6 +501,11 @@ This first table describes the Grackle-specific options to configure the build.
    * - ``GRACKLE_USE_OPENMP``
      - Turn on to build Grackle with OpenMP
      - ``"OFF"``
+   * - ``GRACKLE_BUILD_GRCLI``
+     - enables/disables building of the ``grcli`` development tool
+     - ``"ON"``\*
+
+In the above table, any entry where the default value is marked with an asterisk, indicates that the default value is ``OFF`` in the special case when a Grackle build is embedded within the build of another project (don't worry about this if you don't know what this means).
 
 This second table highlights a subset of standardized CMake options that may also be useful.
 
