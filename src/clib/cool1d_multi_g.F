@@ -44,7 +44,7 @@
      &                iVheat, iMheat, Vheat, Mheat,
      &                iTfloor, Tfloor_scalar, Tfloor,
      &                iisrffield, isrf_habing,
-     &                itmask
+     &                itmask, itmask_metal
      &              , imchem, igrgr, ipcont, tmcool
      &              , DM, HDII, HeHII
      &              , CI, CII, CO, CO2
@@ -223,7 +223,8 @@
      &       gphdl1, dom_inv, tau, ciefudge,
      &       coolunit, dbase1, tbase1, xbase1,
      &       nH2, nother, nSSh, nratio, nssh_he, nratio_he,
-     &       fSShHI, fSShHeI, pe_eps, pe_X, grbeta, ih2cox
+     &       fSShHI, fSShHeI, pe_eps, pe_X, grbeta, ih2cox,
+     &       min_metallicity
       integer itd
 
 !  Slice locals
@@ -407,6 +408,9 @@
 
 !     multiplicative factor for including/excluding H2 cooling
       ih2cox = real(ih2co, DKIND)
+
+!     ignore metal chemistry/cooling below this metallicity
+      min_metallicity = 1.d-9 / z_solar
 
 !     Initialize edot
 
@@ -1053,17 +1057,14 @@ c  new (correct) way: (april 4, 2007)
       endif
 
 !     Iteration mask for metal-rich cells
-
-      do i = is+1, ie+1
-         itmask_metal(i) = .false.
-      enddo
       if (imetal .eq. 1) then
-         do i = is+1, ie + 1
-            itmask_metal(i) = itmask(i)
-            if (metal(i,j,k) .lt. 1.e-9_DKIND * d(i,j,k)) then
-               itmask_metal(i) = .false.
-            endif
-         enddo
+         where (metallicity .ge. min_metallicity)
+            itmask_metal = itmask
+         elsewhere
+            itmask_metal = .false.
+         end where
+      else
+         itmask_metal = .false.
       endif
 
 !     Compute grain size increment

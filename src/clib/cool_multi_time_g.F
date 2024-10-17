@@ -286,7 +286,7 @@
           
 !  Iteration mask for multi_cool
 
-      logical itmask(in)
+      logical itmask(in), itmask_metal(in)
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
 !=======================================================================
@@ -391,7 +391,7 @@
      &                metDataSize, metCooling, metHeating, clnew,
      &                iVheat, iMheat, Vheat, Mheat,
      &                iTfloor, Tfloor_scalar, Tfloor,
-     &                iisrffield, isrf_habing, itmask
+     &                iisrffield, isrf_habing, itmask, itmask_metal
      &              , imchem, igrgr, ipcont, tmcool
      &              , DM, HDII, HeHII
      &              , CI, CII, CO, CO2

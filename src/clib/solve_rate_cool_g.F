@@ -633,7 +633,7 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
 
       if (iexpand .eq. 1) then
 
-         factor = real(aye**-3, RKIND)
+         factor = real(aye**(-3), RKIND)
 
          call scale_fields_g(
      &     ispecies, imetal, idustfield, imchem,
@@ -759,21 +759,6 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
             endif
          endif ! end rad trans check (divergent from original code)
 
-!     Iteration mask for metal-rich cells
-         do i = is+1, ie+1
-            itmask_metal(i) = .false.
-         enddo
-         if (imetal .eq. 1) then
-             do i = is+1, ie + 1
-                itmask_metal(i) = itmask(i)
-                if (metal(i,j,k) .lt. 1.e-9_DKIND * d(i,j,k)) then
-                   itmask_metal(i) = .false.
-                endif
-             enddo
-         endif
-          
-
-
 !        Set time elapsed to zero for each cell in 1D section
 
          do i = is+1, ie+1
@@ -832,7 +817,7 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
      &                metDataSize, metCooling, metHeating, clnew,
      &                iVheat, iMheat, Vheat, Mheat,
      &                iTfloor, Tfloor_scalar, Tfloor,
-     &                iisrffield, isrf_habing, itmask
+     &                iisrffield, isrf_habing, itmask, itmask_metal
      &              , imchem, igrgr, ipcont, tmcool
      &              , DM, HDII, HeHII
      &              , CI, CII, CO, CO2
@@ -925,7 +910,8 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
      &               k31shield, h2dust, ncrn, ncrd1, ncrd2, 
      &               t1, t2, tdef, logtem, indixe, 
      &               dom, coolunit, tbase1, xbase1, dx_cgs, c_ljeans,
-     &               iradtrans, kdissH2I, xH2shield, itmask
+     &               iradtrans, kdissH2I, xH2shield, itmask,
+     &               itmask_metal
      &              , fh, metal
      &              , DM, HDII, HeHII, imetal, imchem, igrgr
      &              , CI, CII, CO, CO2
@@ -1306,7 +1292,7 @@ c              if (d(i,j,k)*dom .lt. 1.e-2_DKIND) then
      &                     dedot_prev, HIdot_prev,
      &                     iradtrans, irt_honly, 
      &                     kphHI, kphHeI, kphHeII,
-     &                     itmask
+     &                     itmask, itmask_metal
      &                   , DM, HDII, HeHII, imetal, metal
      &                   , imchem, idspecies, igrgr, idsub
      &                   , CI, CII, CO, CO2
@@ -1616,7 +1602,8 @@ c              allocate(dumvec(nsp))
      &   h2dust(i), ncrn(i), ncrd1(i), ncrd2(i), 
      &   dom, coolunit, tbase1, xbase1, dx_cgs, c_ljeans,
      &   kphHI(i,j,k), kphHeI(i,j,k), kphHeII(i,j,k), kdissH2I(i,j,k), 
-     &   photogamma(i,j,k), xH2shield(i,j,k), chunit, itmask_nr(i)
+     &   photogamma(i,j,k), xH2shield(i,j,k), chunit, itmask_nr(i),
+     &   itmask_metal(i)
      & , imchem, igrgr, ipcont, tmcool
      & , k125a, k129a, k130a, k131a, k132a
      & , k133a, k134a, k135a, k136a, k137a
@@ -1751,7 +1738,8 @@ c              allocate(dumvec(nsp))
      &   h2dust(i), ncrn(i), ncrd1(i), ncrd2(i), 
      &   dom, coolunit, tbase1, xbase1, dx_cgs, c_ljeans,
      &   kphHI(i,j,k), kphHeI(i,j,k), kphHeII(i,j,k), kdissH2I(i,j,k), 
-     &   photogamma(i,j,k), xH2shield(i,j,k), chunit, itmask_nr(i)
+     &   photogamma(i,j,k), xH2shield(i,j,k), chunit, itmask_nr(i),
+     &   itmask_metal(i)
      & , imchem, igrgr, ipcont, tmcool
      & , k125a, k129a, k130a, k131a, k132a
      & , k133a, k134a, k135a, k136a, k137a
@@ -2434,7 +2422,8 @@ C                 endif
      &                h2dust, ncrn, ncrd1, ncrd2,
      &                t1, t2, tdef, logtem, indixe, 
      &                dom, coolunit, tbase1, xbase1, dx_cgs, c_ljeans,
-     &                iradtrans, kdissH2I, xH2shield, itmask
+     &                iradtrans, kdissH2I, xH2shield, itmask,
+     &                itmask_metal
      &              , fh, metal
      &              , DM, HDII, HeHII, imetal, imchem, igrgr
      &              , CI, CII, CO, CO2
@@ -2977,20 +2966,6 @@ C                 endif
          endif
          enddo
       endif
-
-!     Iteration mask for metal-rich cells
-
-         do i = is+1, ie+1
-            itmask_metal(i) = .false.
-         enddo
-         if (imetal .eq. 1) then
-             do i = is+1, ie + 1
-                itmask_metal(i) = itmask(i)
-                if (metal(i,j,k) .lt. 1.e-9_DKIND * d(i,j,k)) then
-                   itmask_metal(i) = .false.
-                endif
-             enddo
-         endif
 
 !     Compute grain size increment
 
@@ -4168,7 +4143,7 @@ C           close(11)
      &                     dedot_prev, HIdot_prev,
      &                     iradtrans, irt_honly,
      &                     kphHI, kphHeI, kphHeII,
-     &                     itmask
+     &                     itmask, itmask_metal
      &                   , DM, HDII, HeHII, imetal, metal
      &                   , imchem, idspecies, igrgr, idsub
      &                   , CI, CII, CO, CO2
@@ -4218,7 +4193,7 @@ c -------------------------------------------------------------------
       integer ispecies, in, jn, kn, is, ie, j, k,
      &        iradtrans, irt_honly
       real*8 dtit(in), dedot_prev(in), HIdot_prev(in)
-      logical itmask(in), anydust
+      logical itmask(in), itmask_metal(in), anydust
 
 !     Density fields
 
@@ -4307,21 +4282,6 @@ c -------------------------------------------------------------------
 
       integer i
       real*8 scoef, acoef
-      logical itmask_metal(in)
-
-!     Iteration mask for metal-rich cells
-
-      do i = is+1, ie+1
-         itmask_metal(i) = .false.
-      enddo
-      if (imetal .eq. 1) then
-          do i = is+1, ie + 1
-             itmask_metal(i) = itmask(i)
-             if (metal(i,j,k) .lt. 1.e-9_DKIND * d(i,j,k)) then
-                itmask_metal(i) = .false.
-             endif
-          enddo
-      endif
 
 !   A) the 6-species integrator
 !      

@@ -55,7 +55,7 @@
      &               h2dust, ncrn, ncrd1, ncrd2, 
      &               dom, coolunit, tbase1, xbase1, dx_cgs, c_ljeans,
      &               kphHI, kphHeI, kphHeII, kdissH2I, 
-     &               photogamma, xH2shield, chunit, itmask
+     &               photogamma, xH2shield, chunit, itmask, itmask_metal
      &             , imchem, igrgr, ipcont, tmcool
      &             , k125a, k129a, k130a, k131a, k132a
      &             , k133a, k134a, k135a, k136a, k137a
@@ -141,7 +141,7 @@ c -------------------------------------------------------------------
      &        iH2shield, iradshield,
      &        iradtrans, irt_honly, iisrffield
      &       ,imchem, igrgr, ipcont
-      logical itmask, anydust
+      logical itmask, itmask_metal, anydust
 
       real*8  dx_cgs, aye, temstart, temend, gamma,
      &        utim, uxyz, uaye, urho, utem, fh, z_solar, 
@@ -408,22 +408,11 @@ c -------------------------------------------------------------------
 
       integer imp_eng, isp
       real*8 scoef, acoef
-      real*8 atten, H2delta, h2heatfac
-      logical itmask_metal
+      real*8 atten, H2delta, h2heatfac, min_metallicity
 
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
 !=======================================================================
-
-!     Iteration mask for metal-rich cells
-
-      itmask_metal = .false.
-      if (imetal .eq. 1) then
-         itmask_metal = itmask
-         if (metal .lt. 1.e-9_DKIND * d) then
-            itmask_metal = .false.
-         endif
-      endif
 
       if ( ispecies .gt. 0 ) then
          de      = dsp( 1)
@@ -547,7 +536,7 @@ c -------------------------------------------------------------------
      &                metDataSize, metCooling, metHeating, clnew,
      &                iVheat, iMheat, Vheat, Mheat,
      &                iTfloor, Tfloor_scalar, Tfloor,
-     &                iisrffield, isrf_habing, itmask
+     &                iisrffield, isrf_habing, itmask, itmask_metal
      &              , imchem, igrgr, ipcont, tmcool
      &              , DM, HDII, HeHII
      &              , CI, CII, CO, CO2
@@ -641,7 +630,8 @@ c -------------------------------------------------------------------
      &                k31shield, h2dust, ncrn, ncrd1, ncrd2, 
      &                t1, t2, tdef, logtem, indixe, 
      &                dom, coolunit, tbase1, xbase1, dx_cgs, c_ljeans,
-     &                iradtrans, kdissH2I, xH2shield, itmask
+     &                iradtrans, kdissH2I, xH2shield, itmask,
+     &                itmask_metal
      &              , fh, metal
      &              , DM, HDII, HeHII, imetal, imchem, igrgr
      &              , CI, CII, CO, CO2
