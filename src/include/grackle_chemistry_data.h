@@ -74,8 +74,57 @@ typedef struct
   /* Flag to supply a dust density field */
   int use_dust_density_field;
 
-  /* Flag for enabling recombination cooling on grains */
+  /* Flag for dust recombination cooling */
   int dust_recombination_cooling;
+
+  /* Flag to solve metal chemistry */
+  int metal_chemistry;
+
+  /* minimum temperature to include tabulated metal cooling.
+     This is used to supplement the non-equilibrium metal cooling
+     from setting metal_chemistry=1, which is only valid up to T~1e4 K.
+     - A value of -1.0 is used to specify no minimum temperature, i.e.,
+       tabulated cooling is always used.
+     - A value of -2.0 indicates the parameter is unset. If unset, the
+       following behavior is applied:
+       - if metal_chemistry = 0, this is set to -1.0 (i.e., disabled)
+       - if metal_chemistry = 1, this is set to 1e4 K. */
+  double tabulated_cooling_minimum_temperature;
+
+  /* Flag to solve grain growth reactions */
+  int grain_growth;
+
+  /* Flag to enable tracking of multiple metal sources for dust evolution */
+  int multi_metals;
+
+  /* if metal_chemistry>0 and multi_metals=0,
+     this flag selects a single metal source for dust evolution from the
+     following options:
+     0. metal/dust abundances of local ISM (Pollack et al. 1994)
+     1-4. Pop III normal core-collapse supernovae (Nozawa et al. 2007)
+     with progenitor masses 13, 20, 25 and 30 Msun
+     5-8. Pop III faint supernovae (Marassi et al. 2014)
+     with progenitor masses 13, 50 and 80 Msun
+     9-10. Pop III pair-instability supernovae (Nozawa et al. 2007)
+     with progenitor masses 170 and 200 Msun
+     11. simple dust model (only include silicate and graphite; Yajima et al. 2019)
+  */
+  int metal_abundances;
+
+  /* Flag to solve multiple grain species
+     1. enstatite + amorphous carbon (also follow Mg metal density)
+     2. + metallic silicon + metallic iron + forsterite + magnetite
+        + silica + magnesia + troilite + alumina
+        (also follow Al, S, Fe metal densities)
+     3. + water ice + volatile organics + refractory organics
+  */
+  int dust_species;
+
+  /* Flag to solve temperatures of multiple grain species */
+  int use_multiple_dust_temperatures;
+
+  /* Flag to supply dust sublimation */
+  int dust_sublimation;
 
   /* photo-electric heating from irradiated dust */
   int photoelectric_heating;
@@ -101,10 +150,40 @@ typedef struct
 
   double temperature_floor_scalar;
 
-  /* additional chemistry solver parameters */
+  /* H2 cooling rate
+   * 0: Lepp & Shull (1983)
+   * 1: Galli & Palla (1998)
+   * 2: Glover & Abel (2008)
+   * 3: Chiaki & Wise (2019)
+   */
+  int h2_cooling_rate;
+
+  /* HD cooling rate
+   * 0: Coppola et al (2011) and Wrathmall, Gusdorf, & Flower (2007)
+   * 1: Chiaki & Wise (2019)
+   */
+  int hd_cooling_rate;
+
+  /* H2 formation from 3-body reactions
+   * 0: Abel, Bryan & Norman (2002)
+   * 1: Palla, Salpeter & Stahler (1983)
+   * 2: Cohen & Westberg (1983)
+   * 3: Flower & Harris (2007)
+   * 4: Glover (2008)
+   * 5: Forrey (2013)
+   */
   int three_body_rate;
+
+  /* H2 collisionally-induced emission cooling
+   * 0: off
+   * 1: Ripamonti & Abel (2003)
+   * 2: Yoshida et al. (2006)
+   */
   int cie_cooling;
+
+  /* H2 cooling attenuation from Ripamonti & Abel (2004) */
   int h2_optical_depth_approximation;
+
   int ih2co; // flag for H2 cooling (0-off/1-on)
   int ipiht; // flag for photoionization cooling
   double HydrogenFractionByMass;
@@ -142,6 +221,12 @@ typedef struct
   int radiative_transfer_coupled_rate_solver;
   int radiative_transfer_intermediate_step;
   int radiative_transfer_hydrogen_only;
+  int radiative_transfer_HDI_dissociation;
+  int radiative_transfer_metal_ionization;
+  int radiative_transfer_metal_dissociation;
+
+  /* flag to signal H2 self-shielding is being done in hydro code */
+  int radiative_transfer_use_H2_shielding;
 
   /* flag for approximiate self-shielding as well
      as spectrum averaged photo heating and
@@ -175,6 +260,30 @@ typedef struct
   int collisional_ionisation_rates; //Collisional ionisation
   int recombination_cooling_rates; //Recombination cooling
   int bremsstrahlung_cooling_rates; //Bremsstrahlung cooling
+
+  /* flag to add primordial continuum opacity */
+  int use_primordial_continuum_opacity;
+
+  /* Alternative rates for HD-related reactions (k50-k56)
+   * 0: multiple sources (see rate_functions.c for details)
+   * 1: Stancil, Lepp & Dalgarno (1998)
+   */
+  int hd_reaction_rates;
+
+  /* Alternative gas-grain heat transfer rate.
+   * 0: Hollenbach & McKee (1989)
+   * 1: Omukai (2000) - see rate_functions.c for more details
+   */
+  int gas_grain_cooling_rate;
+
+  /* Alternative formulations of interstellar radiation heating
+     rate of grains. Both are based on Goldsmith (2001) and
+     Krumholz (2014) and are in fact very similar. See
+     rate_functions.c for more details.
+   * 0: 3.9e-24 / mh / fgr, where fgr is local dust-to-gas ratio
+   * 1: 8.60892e-24 / (2.0 * mh) / fgr
+   */
+  int uniform_grain_isrf_heating_rate;
 
   /* maximum number of subcycle iterations for solve_chemistry */
   int max_iterations;
@@ -336,8 +445,73 @@ typedef struct
   double *k57;
   double *k58;
 
+  /* 15 species rates (with DM, HDII, HeHII) */
+  double *k125;
+  double *k129;
+  double *k130;
+  double *k131;
+  double *k132;
+  double *k133;
+  double *k134;
+  double *k135;
+  double *k136;
+  double *k137;
+  double *k148;
+  double *k149;
+  double *k150;
+  double *k151;
+  double *k152;
+  double *k153;
+
+  /* Metal species */
+  double *kz15;
+  double *kz16;
+  double *kz17;
+  double *kz18;
+  double *kz19;
+  double *kz20;
+  double *kz21;
+  double *kz22;
+  double *kz23;
+  double *kz24;
+  double *kz25;
+  double *kz26;
+  double *kz27;
+  double *kz28;
+  double *kz29;
+  double *kz30;
+  double *kz31;
+  double *kz32;
+  double *kz33;
+  double *kz34;
+  double *kz35;
+  double *kz36;
+  double *kz37;
+  double *kz38;
+  double *kz39;
+  double *kz40;
+  double *kz41;
+  double *kz42;
+  double *kz43;
+  double *kz44;
+  double *kz45;
+  double *kz46;
+  double *kz47;
+  double *kz48;
+  double *kz49;
+  double *kz50;
+  double *kz51;
+  double *kz52;
+  double *kz53;
+  double *kz54;
+
   /* H2 formation on dust grains */
   double *h2dust;
+  double *h2dustS;
+  double *h2dustC;
+
+  /* Grain growth rate */
+  double *grain_growth_rate;
 
   /* Chemical heating from H2 formation. */
   /* numerator and denominator of Eq 23 of Omukai ea. 2000. */
@@ -417,9 +591,59 @@ typedef struct
 
   // Heating of dust by interstellar radiation field
   double gamma_isrf;
+  // for arbitrary grain size distribution
+  double gamma_isrf2;
 
   /* Gas/grain energy transfer. */
   double *gas_grain;
+  // for arbitrary grain size distribution
+  double *gas_grain2;
+
+  /* CIE cooling rate (Yoshida et al. 2006) */
+  double *cieY06;
+
+  /* H2 and HD cooling rates (collision with HI; Hollenbach & McKee 1979) */
+  int    *LH2_N, LH2_Size;
+  double *LH2_D, *LH2_T, *LH2_H, LH2_dD, LH2_dT, LH2_dH, *LH2_L;
+  int    *LHD_N, LHD_Size;
+  double *LHD_D, *LHD_T, *LHD_H, LHD_dD, LHD_dT, LHD_dH, *LHD_L;
+
+  /* Fine-structure cooling rates (collision with HI; Maio et al. 2007) */
+  int    *LCI_N, LCI_Size;
+  double *LCI_D, *LCI_T, *LCI_H, LCI_dD, LCI_dT, LCI_dH, *LCI_L;
+  int    *LCII_N, LCII_Size;
+  double *LCII_D, *LCII_T, *LCII_H, LCII_dD, LCII_dT, LCII_dH, *LCII_L;
+  int    *LOI_N, LOI_Size;
+  double *LOI_D, *LOI_T, *LOI_H, LOI_dD, LOI_dT, LOI_dH, *LOI_L;
+
+  /* metal molecular cooling rates (collision with H2I; UMIST table) */
+  int    *LCO_N, LCO_Size;
+  double *LCO_D, *LCO_T, *LCO_H, LCO_dD, LCO_dT, LCO_dH, *LCO_L;
+  int    *LOH_N, LOH_Size;
+  double *LOH_D, *LOH_T, *LOH_H, LOH_dD, LOH_dT, LOH_dH, *LOH_L;
+  int    *LH2O_N, LH2O_Size;
+  double *LH2O_D, *LH2O_T, *LH2O_H, LH2O_dD, LH2O_dT, LH2O_dH, *LH2O_L;
+
+  /* primordial opacity */
+  int    *alphap_N, alphap_Size;
+  double *alphap_D, *alphap_T, alphap_dD, alphap_dT;
+  double *alphap_Data;
+
+  /* metal/dust abundance */
+  int    *gr_N, gr_Size;
+  double gr_dT, *gr_Td;
+  int     SN0_N;
+  double *SN0_XC , *SN0_XO , *SN0_XMg, *SN0_XAl, *SN0_XSi, *SN0_XS , *SN0_XFe;
+  double *SN0_fC , *SN0_fO , *SN0_fMg, *SN0_fAl, *SN0_fSi, *SN0_fS , *SN0_fFe;
+  double *SN0_fSiM, *SN0_fFeM, *SN0_fMg2SiO4, *SN0_fMgSiO3, *SN0_fFe3O4
+       , *SN0_fAC, *SN0_fSiO2D, *SN0_fMgO, *SN0_fFeS, *SN0_fAl2O3
+       , *SN0_freforg , *SN0_fvolorg , *SN0_fH2Oice;
+  double *SN0_r0SiM, *SN0_r0FeM, *SN0_r0Mg2SiO4, *SN0_r0MgSiO3, *SN0_r0Fe3O4
+       , *SN0_r0AC, *SN0_r0SiO2D, *SN0_r0MgO, *SN0_r0FeS, *SN0_r0Al2O3
+       , *SN0_r0reforg , *SN0_r0volorg , *SN0_r0H2Oice;
+  double *SN0_kpSiM, *SN0_kpFeM, *SN0_kpMg2SiO4, *SN0_kpMgSiO3, *SN0_kpFe3O4
+       , *SN0_kpAC, *SN0_kpSiO2D, *SN0_kpMgO, *SN0_kpFeS, *SN0_kpAl2O3
+       , *SN0_kpreforg , *SN0_kpvolorg , *SN0_kpH2Oice;
 
   /* UV background data */
   UVBtable UVbackground_table;
