@@ -559,11 +559,6 @@
       real*8, allocatable :: mtrx(:,:), vec(:)
       real*8, parameter   :: eps = 1.d-4
 
-!  Debug
-c     integer ierr_max
-c     real*8, allocatable :: dummtrx(:,:), dumvec(:)
-c     real*8 vecDtot
-
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
 !=======================================================================
@@ -1294,8 +1289,6 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
                allocate(idsp(nsp))
                allocate(mtrx(nsp,nsp))
                allocate(vec(nsp))
-c              allocate(dummtrx(nsp,nsp))
-c              allocate(dumvec(nsp))
 
                if ( ispecies .gt. 0 ) then
                   dsp( 1) = de(i,j,k)
@@ -1772,28 +1765,10 @@ c              allocate(dumvec(nsp))
                       vec(isp) = vec(isp)/d(i,j,k)
                     enddo
 
-c                   if((i.eq.1).and.(j.eq.1).and.(k.eq.1)) then
-c                      write(*,'(a1,1p60e10.2)') 'a', d(i,j,k)*dom
-c    &                      , vec(idsp(:))
-c                      dummtrx = mtrx
-c                      dumvec  = vec
-c                   endif
-
                     call gaussj_g(nsp, mtrx, vec, ierror)
                     if(ierror .eq. 1) then
                       go to 9998
                     endif
-
-c                   if((i.eq.1).and.(j.eq.1).and.(k.eq.1)) then
-c                      do isp = 1, nsp
-c                        do jsp = 1, nsp
-c                          dumvec(isp) = dumvec(isp)
-c    &                       - dummtrx(isp,jsp)*vec(jsp)
-c                        enddo
-c                      enddo
-c                      write(*,'(a1,1p60e10.2)') 'b', d(i,j,k)*dom
-c    &                     , dumvec(idsp(:))
-c                   endif
 
 !                   multiply with density again
                     do isp = 1, nsp
@@ -1818,7 +1793,6 @@ c                   endif
                     endif
 
                     err_max = 0.d0
-c                   ierr_max = 0
                     do isp = 1, nsp
                       if(dsp(idsp(isp)) .gt. tiny8) then
                         err = dabs(vec(isp) / dsp(idsp(isp)))
@@ -1827,7 +1801,6 @@ c                   ierr_max = 0
                       endif
                       if(err .gt. err_max) then
                         err_max = err
-c                       ierr_max = idsp(isp)
                       endif
                     enddo
 
@@ -1939,9 +1912,6 @@ c                       ierr_max = idsp(isp)
                deallocate(idsp)
                deallocate(vec)
                deallocate(mtrx)
-
-c              deallocate(dumvec)
-c              deallocate(dummtrx)
 
             endif
             enddo
