@@ -2619,7 +2619,7 @@ C                 endif
      &      , tAl2O3(in) 
      &      , treforg(in) , tvolorg(in) , tH2Oice(in)
 !     tabulate h2 formation rate
-      integer d_N(2), d_Size
+      integer*8 d_N(2), d_Size
       real*8  d_dTd, d_dTg
       real*8  d_Td(ndratec),  d_Tg(nratec)
       integer idratec, iratec
@@ -2989,8 +2989,8 @@ C                 endif
          else ! idspecies
 
 !        create table for interpolation
-         d_N(1) = ndratec
-         d_N(2) = nratec
+         d_N(1) = int(ndratec, 8)
+         d_N(2) = int(nratec, 8)
          d_Size = d_N(1) * d_N(2)
          d_dTd = d_dlogtem
          d_dTg = dlogtem
@@ -3009,12 +3009,12 @@ C                 endif
                   if (idspecies .gt. 0) then
                   d_logtem(i) = log(tdust(i))
                   call interpolate_2D_g(
-     &              d_logtem(i), logtem(i), int8(d_N), d_Td, d_dTd, 
-     &              d_Tg, d_dTg, int8(d_Size), h2dustSa, h2MgSiO3 )
+     &              d_logtem(i), logtem(i), d_N, d_Td, d_dTd, 
+     &              d_Tg, d_dTg, d_Size, h2dustSa, h2MgSiO3 )
                  
                   call interpolate_2D_g(
-     &              d_logtem(i), logtem(i), int8(d_N), d_Td, d_dTd, 
-     &              d_Tg, d_dTg, int8(d_Size), h2dustCa, h2AC     )
+     &              d_logtem(i), logtem(i), d_N, d_Td, d_dTd, 
+     &              d_Tg, d_dTg, d_Size, h2dustCa, h2AC     )
 
                      h2dust(i) = h2MgSiO3   * sgMgSiO3  (i)
      &                         + h2AC       * sgAC      (i)
@@ -3042,72 +3042,72 @@ C                 endif
                   if (idspecies .gt. 0) then
                      d_logtem(i) = log(tMgSiO3  (i))
                      call interpolate_2D_g(
-     &                 d_logtem(i), logtem(i), int8(d_N), d_Td, d_dTd,
-     &                 d_Tg, d_dTg, int8(d_Size), h2dustSa, h2MgSiO3  )
+     &                 d_logtem(i), logtem(i), d_N, d_Td, d_dTd,
+     &                 d_Tg, d_dTg, d_Size, h2dustSa, h2MgSiO3  )
                  
                      d_logtem(i) = log(tAC      (i))
                      call interpolate_2D_g(
-     &                 d_logtem(i), logtem(i), int8(d_N), d_Td, d_dTd,
-     &                 d_Tg, d_dTg, int8(d_Size), h2dustCa, h2AC      )
+     &                 d_logtem(i), logtem(i), d_N, d_Td, d_dTd,
+     &                 d_Tg, d_dTg, d_Size, h2dustCa, h2AC      )
                   endif
 
                   if (idspecies .gt. 1) then
                      d_logtem(i) = log(tSiM     (i))
                      call interpolate_2D_g(
-     &                 d_logtem(i), logtem(i), int8(d_N), d_Td, d_dTd, 
-     &                 d_Tg, d_dTg, int8(d_Size), h2dustSa, h2SiM     )
+     &                 d_logtem(i), logtem(i), d_N, d_Td, d_dTd, 
+     &                 d_Tg, d_dTg, d_Size, h2dustSa, h2SiM     )
              
                      d_logtem(i) = log(tFeM     (i))
                      call interpolate_2D_g(
-     &                 d_logtem(i), logtem(i), int8(d_N), d_Td, d_dTd,
-     &                 d_Tg, d_dTg, int8(d_Size), h2dustSa, h2FeM     )
+     &                 d_logtem(i), logtem(i), d_N, d_Td, d_dTd,
+     &                 d_Tg, d_dTg, d_Size, h2dustSa, h2FeM     )
                  
                      d_logtem(i) = log(tMg2SiO4 (i))
                      call interpolate_2D_g(
-     &                 d_logtem(i), logtem(i), int8(d_N), d_Td, d_dTd,
-     &                 d_Tg, d_dTg, int8(d_Size), h2dustSa, h2Mg2SiO4 )
+     &                 d_logtem(i), logtem(i), d_N, d_Td, d_dTd,
+     &                 d_Tg, d_dTg, d_Size, h2dustSa, h2Mg2SiO4 )
                  
                      d_logtem(i) = log(tFe3O4   (i))
                      call interpolate_2D_g(
-     &                 d_logtem(i), logtem(i), int8(d_N), d_Td, d_dTd,
-     &                 d_Tg, d_dTg, int8(d_Size), h2dustSa, h2Fe3O4   )
+     &                 d_logtem(i), logtem(i), d_N, d_Td, d_dTd,
+     &                 d_Tg, d_dTg, d_Size, h2dustSa, h2Fe3O4   )
                  
                      d_logtem(i) = log(tSiO2D   (i))
                      call interpolate_2D_g(
-     &                 d_logtem(i), logtem(i), int8(d_N), d_Td, d_dTd,
-     &                 d_Tg, d_dTg, int8(d_Size), h2dustSa, h2SiO2D   )
+     &                 d_logtem(i), logtem(i), d_N, d_Td, d_dTd,
+     &                 d_Tg, d_dTg, d_Size, h2dustSa, h2SiO2D   )
                  
                      d_logtem(i) = log(tMgO     (i))
                      call interpolate_2D_g(
-     &                 d_logtem(i), logtem(i), int8(d_N), d_Td, d_dTd,
-     &                 d_Tg, d_dTg, int8(d_Size), h2dustSa, h2MgO     )
+     &                 d_logtem(i), logtem(i), d_N, d_Td, d_dTd,
+     &                 d_Tg, d_dTg, d_Size, h2dustSa, h2MgO     )
                  
                      d_logtem(i) = log(tFeS     (i))
                      call interpolate_2D_g(
-     &                 d_logtem(i), logtem(i), int8(d_N), d_Td, d_dTd,
-     &                 d_Tg, d_dTg, int8(d_Size), h2dustSa, h2FeS     )
+     &                 d_logtem(i), logtem(i), d_N, d_Td, d_dTd,
+     &                 d_Tg, d_dTg, d_Size, h2dustSa, h2FeS     )
                  
                      d_logtem(i) = log(tAl2O3   (i))
                      call interpolate_2D_g(
-     &                 d_logtem(i), logtem(i), int8(d_N), d_Td, d_dTd,
-     &                 d_Tg, d_dTg, int8(d_Size), h2dustSa, h2Al2O3   )
+     &                 d_logtem(i), logtem(i), d_N, d_Td, d_dTd,
+     &                 d_Tg, d_dTg, d_Size, h2dustSa, h2Al2O3   )
                   endif
 
                   if (idspecies .gt. 2) then
                      d_logtem(i) = log(treforg  (i))
                      call interpolate_2D_g(
-     &                 d_logtem(i), logtem(i), int8(d_N), d_Td, d_dTd,
-     &                 d_Tg, d_dTg, int8(d_Size), h2dustSa, h2reforg  )
+     &                 d_logtem(i), logtem(i), d_N, d_Td, d_dTd,
+     &                 d_Tg, d_dTg, d_Size, h2dustSa, h2reforg  )
                  
                      d_logtem(i) = log(tvolorg  (i))
                      call interpolate_2D_g(
-     &                 d_logtem(i), logtem(i), int8(d_N), d_Td, d_dTd,
-     &                 d_Tg, d_dTg, int8(d_Size), h2dustSa, h2volorg  )
+     &                 d_logtem(i), logtem(i), d_N, d_Td, d_dTd,
+     &                 d_Tg, d_dTg, d_Size, h2dustSa, h2volorg  )
                  
                      d_logtem(i) = log(tH2Oice  (i))
                      call interpolate_2D_g(
-     &                 d_logtem(i), logtem(i), int8(d_N), d_Td, d_dTd, 
-     &                 d_Tg, d_dTg, int8(d_Size), h2dustSa, h2H2Oice  )
+     &                 d_logtem(i), logtem(i), d_N, d_Td, d_dTd, 
+     &                 d_Tg, d_dTg, d_Size, h2dustSa, h2H2Oice  )
                   endif
               
                   if (idspecies .gt. 0) then
