@@ -3146,8 +3146,8 @@ C                 endif
 
                if (idspecies .gt. 0) then
                call interpolate_1D_g(
-     &              logtem(i), int8(nratec), d_Tg, d_dTg,
-     &              int8(nratec), grogra, kd)
+     &              logtem(i), int(nratec, 8), d_Tg, d_dTg,
+     &              int(nratec, 8), grogra, kd)
             
                kdMgSiO3  (i) = kd * sgMgSiO3  (i) * d(i,j,k)
      &          * min( Mg  (i,j,k) / 24._DKIND**1.5_DKIND
