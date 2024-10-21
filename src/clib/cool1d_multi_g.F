@@ -1058,13 +1058,17 @@ c  new (correct) way: (april 4, 2007)
 
 !     Iteration mask for metal-rich cells
       if (imetal .eq. 1) then
-         where (metallicity .ge. min_metallicity)
-            itmask_metal = itmask
-         elsewhere
-            itmask_metal = .false.
-         end where
+         do i = is+1, ie+1
+            if (metallicity(i) .ge. min_metallicity) then
+               itmask_metal(i) = itmask(i)
+            else
+               itmask_metal(i) = .false.
+            endif
+         enddo
       else
-         itmask_metal = .false.
+         do i = is+1, ie+1
+            itmask_metal(i) = .false.
+         enddo
       endif
 
 !     Compute grain size increment
