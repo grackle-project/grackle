@@ -1253,6 +1253,8 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
      &                   , idissZ, kdissCO, kdissOH, kdissH2O
      &           )
 
+!     Note 10/18/2024: the code from here to the comment "end Newton-Raphson scheme"
+!     should be put into its own function.
 !           Start Newton-Raphson scheme
             do i = is+1, ie+1
             if (itmask_nr(i)) then
@@ -1272,18 +1274,18 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
                if (ispecies .gt. 2) nsp = nsp + 3
                if (ispecies .gt. 3) nsp = nsp + 3
                if (itmask_metal(i)) then
-               if (imchem .eq. 1) then
-                  nsp = nsp + 19
-                  if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1) ) then
-                    if (idspecies .gt. 0) nsp = nsp + 1
-                    if (idspecies .gt. 1) nsp = nsp + 3
+                  if (imchem .eq. 1) then
+                     nsp = nsp + 19
+                     if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1) ) then
+                        if (idspecies .gt. 0) nsp = nsp + 1
+                        if (idspecies .gt. 1) nsp = nsp + 3
+                     endif
                   endif
-               endif
-               if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1) ) then
-                  if (idspecies .gt. 0) nsp = nsp + 2
-                  if (idspecies .gt. 1) nsp = nsp + 8
-                  if (idspecies .gt. 2) nsp = nsp + 3
-               endif
+                  if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1) ) then
+                     if (idspecies .gt. 0) nsp = nsp + 2
+                     if (idspecies .gt. 1) nsp = nsp + 8
+                     if (idspecies .gt. 2) nsp = nsp + 3
+                  endif
                endif
                nsp = nsp + imp_eng(i)
                allocate(idsp(nsp))
@@ -1314,59 +1316,59 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
                   dsp(15) = HeHII(i,j,k)
                endif
                if ( itmask_metal(i) ) then
-               if ( imchem .eq. 1 ) then
-                  dsp(16) = CI(i,j,k)
-                  dsp(17) = CII(i,j,k)
-                  dsp(18) = CO(i,j,k)
-                  dsp(19) = CO2(i,j,k)
-                  dsp(20) = OI(i,j,k)
-                  dsp(21) = OH(i,j,k)
-                  dsp(22) = H2O(i,j,k)
-                  dsp(23) = O2(i,j,k)
-                  dsp(24) = SiI(i,j,k)
-                  dsp(25) = SiOI(i,j,k)
-                  dsp(26) = SiO2I(i,j,k)
-                  dsp(27) = CH(i,j,k)
-                  dsp(28) = CH2(i,j,k)
-                  dsp(29) = COII(i,j,k)
-                  dsp(30) = OII(i,j,k)
-                  dsp(31) = OHII(i,j,k)
-                  dsp(32) = H2OII(i,j,k)
-                  dsp(33) = H3OII(i,j,k)
-                  dsp(34) = O2II(i,j,k)
+                  if ( imchem .eq. 1 ) then
+                     dsp(16) = CI(i,j,k)
+                     dsp(17) = CII(i,j,k)
+                     dsp(18) = CO(i,j,k)
+                     dsp(19) = CO2(i,j,k)
+                     dsp(20) = OI(i,j,k)
+                     dsp(21) = OH(i,j,k)
+                     dsp(22) = H2O(i,j,k)
+                     dsp(23) = O2(i,j,k)
+                     dsp(24) = SiI(i,j,k)
+                     dsp(25) = SiOI(i,j,k)
+                     dsp(26) = SiO2I(i,j,k)
+                     dsp(27) = CH(i,j,k)
+                     dsp(28) = CH2(i,j,k)
+                     dsp(29) = COII(i,j,k)
+                     dsp(30) = OII(i,j,k)
+                     dsp(31) = OHII(i,j,k)
+                     dsp(32) = H2OII(i,j,k)
+                     dsp(33) = H3OII(i,j,k)
+                     dsp(34) = O2II(i,j,k)
+                     if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1) ) then
+                        if (idspecies .gt. 0) then
+                           dsp(35) = Mg(i,j,k)
+                        endif
+                        if (idspecies .gt. 1) then
+                           dsp(36) = Al(i,j,k)
+                           dsp(37) = S(i,j,k)
+                           dsp(38) = Fe(i,j,k)
+                        endif
+                     endif
+                  endif
                   if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1) ) then
-                  if (idspecies .gt. 0) then
-                  dsp(35) = Mg(i,j,k)
+                     if (idspecies .gt. 0) then
+                        dsp(39) = MgSiO3(i,j,k)
+                        dsp(40) = AC(i,j,k)
+                     endif
+                     if (idspecies .gt. 1) then
+                        dsp(41) = SiM(i,j,k)
+                        dsp(42) = FeM(i,j,k)
+                        dsp(43) = Mg2SiO4(i,j,k)
+                        dsp(44) = Fe3O4(i,j,k)
+                        dsp(45) = SiO2D(i,j,k)
+                        dsp(46) = MgO(i,j,k)
+                        dsp(47) = FeS(i,j,k)
+                        dsp(48) = Al2O3(i,j,k)
+                     endif
+                     if (idspecies .gt. 2) then
+                        dsp(49) = reforg(i,j,k)
+                        dsp(50) = volorg(i,j,k)
+                        dsp(51) = H2Oice(i,j,k)
+                     endif
                   endif
-                  if (idspecies .gt. 1) then
-                  dsp(36) = Al(i,j,k)
-                  dsp(37) = S(i,j,k)
-                  dsp(38) = Fe(i,j,k)
-                  endif
-                  endif
-               endif
-               if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1) ) then
-               if (idspecies .gt. 0) then
-                  dsp(39) = MgSiO3(i,j,k)
-                  dsp(40) = AC(i,j,k)
-               endif
-               if (idspecies .gt. 1) then
-                  dsp(41) = SiM(i,j,k)
-                  dsp(42) = FeM(i,j,k)
-                  dsp(43) = Mg2SiO4(i,j,k)
-                  dsp(44) = Fe3O4(i,j,k)
-                  dsp(45) = SiO2D(i,j,k)
-                  dsp(46) = MgO(i,j,k)
-                  dsp(47) = FeS(i,j,k)
-                  dsp(48) = Al2O3(i,j,k)
-               endif
-               if (idspecies .gt. 2) then
-                  dsp(49) = reforg(i,j,k) 
-                  dsp(50) = volorg(i,j,k) 
-                  dsp(51) = H2Oice(i,j,k) 
-               endif
-               endif
-               endif
+               endif ! if ( itmask_metal(i) )
                dsp(i_eng) = e(i,j,k)
 
                id = 0
@@ -1853,58 +1855,58 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
                   HeHII(i,j,k)   = dsp(15)
                endif
                if ( itmask_metal(i) ) then
-               if ( imchem .eq. 1 ) then
-                  CI(i,j,k)      = dsp(16)
-                  CII(i,j,k)     = dsp(17)
-                  CO(i,j,k)      = dsp(18)
-                  CO2(i,j,k)     = dsp(19)
-                  OI(i,j,k)      = dsp(20)
-                  OH(i,j,k)      = dsp(21)
-                  H2O(i,j,k)     = dsp(22)
-                  O2(i,j,k)      = dsp(23)
-                  SiI(i,j,k)     = dsp(24)
-                  SiOI(i,j,k)    = dsp(25)
-                  SiO2I(i,j,k)   = dsp(26)
-                  CH(i,j,k)      = dsp(27)
-                  CH2(i,j,k)     = dsp(28)
-                  COII(i,j,k)    = dsp(29)
-                  OII(i,j,k)     = dsp(30)
-                  OHII(i,j,k)    = dsp(31)
-                  H2OII(i,j,k)   = dsp(32)
-                  H3OII(i,j,k)   = dsp(33)
-                  O2II(i,j,k)    = dsp(34)
+                  if ( imchem .eq. 1 ) then
+                     CI(i,j,k)      = dsp(16)
+                     CII(i,j,k)     = dsp(17)
+                     CO(i,j,k)      = dsp(18)
+                     CO2(i,j,k)     = dsp(19)
+                     OI(i,j,k)      = dsp(20)
+                     OH(i,j,k)      = dsp(21)
+                     H2O(i,j,k)     = dsp(22)
+                     O2(i,j,k)      = dsp(23)
+                     SiI(i,j,k)     = dsp(24)
+                     SiOI(i,j,k)    = dsp(25)
+                     SiO2I(i,j,k)   = dsp(26)
+                     CH(i,j,k)      = dsp(27)
+                     CH2(i,j,k)     = dsp(28)
+                     COII(i,j,k)    = dsp(29)
+                     OII(i,j,k)     = dsp(30)
+                     OHII(i,j,k)    = dsp(31)
+                     H2OII(i,j,k)   = dsp(32)
+                     H3OII(i,j,k)   = dsp(33)
+                     O2II(i,j,k)    = dsp(34)
+                     if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1 ) ) then
+                        if (idspecies .gt. 0) then
+                           Mg(i,j,k)      = dsp(35)
+                        endif
+                        if (idspecies .gt. 1) then
+                           Al(i,j,k)      = dsp(36)
+                           S(i,j,k)       = dsp(37)
+                           Fe(i,j,k)      = dsp(38)
+                        endif
+                     endif
+                  endif
                   if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1 ) ) then
-                  if (idspecies .gt. 0) then
-                  Mg(i,j,k)      = dsp(35)
+                     if (idspecies .gt. 0) then
+                        MgSiO3(i,j,k)  = dsp(39)
+                        AC(i,j,k)      = dsp(40)
+                     endif
+                     if (idspecies .gt. 1) then
+                        SiM(i,j,k)     = dsp(41)
+                        FeM(i,j,k)     = dsp(42)
+                        Mg2SiO4(i,j,k) = dsp(43)
+                        Fe3O4(i,j,k)   = dsp(44)
+                        SiO2D(i,j,k)   = dsp(45)
+                        MgO(i,j,k)     = dsp(46)
+                        FeS(i,j,k)     = dsp(47)
+                        Al2O3(i,j,k)   = dsp(48)
+                     endif
+                     if (idspecies .gt. 2) then
+                        reforg(i,j,k)  = dsp(49)
+                        volorg(i,j,k)  = dsp(50)
+                        H2Oice(i,j,k)  = dsp(51)
+                     endif
                   endif
-                  if (idspecies .gt. 1) then
-                  Al(i,j,k)      = dsp(36)
-                  S(i,j,k)       = dsp(37)
-                  Fe(i,j,k)      = dsp(38)
-                  endif
-                  endif
-               endif
-               if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1 ) ) then
-               if (idspecies .gt. 0) then
-                  MgSiO3(i,j,k)  = dsp(39)
-                  AC(i,j,k)      = dsp(40)
-               endif
-               if (idspecies .gt. 1) then
-                  SiM(i,j,k)     = dsp(41)
-                  FeM(i,j,k)     = dsp(42)
-                  Mg2SiO4(i,j,k) = dsp(43)
-                  Fe3O4(i,j,k)   = dsp(44)
-                  SiO2D(i,j,k)   = dsp(45)
-                  MgO(i,j,k)     = dsp(46)
-                  FeS(i,j,k)     = dsp(47)
-                  Al2O3(i,j,k)   = dsp(48)
-               endif
-               if (idspecies .gt. 2) then
-                  reforg(i,j,k)  = dsp(49)
-                  volorg(i,j,k)  = dsp(50)
-                  H2Oice(i,j,k)  = dsp(51)
-               endif
-               endif
                endif
 
                e(i,j,k)     = dsp(i_eng)
@@ -1914,7 +1916,7 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
                deallocate(mtrx)
 
             endif
-            enddo
+            enddo ! end Newton-Raphson scheme
 
             endif ! if (ispecies .gt. 0) then
 
