@@ -633,6 +633,8 @@
               logH2O(i) = log10(H2O(i,j,k) * dom / 18.d0)
             endif
             endif
+
+!     From Chiaki & Wise (2019), approximate dv/dr as 1/(3 * t_ff)
             logdvdr(i) = -8.79947961814d0 + 0.5d0 * logrho(i) ! km/s / cm
             lshield_con(i) = 
      &         sqrt((gamma * pi_val * kboltz * tgas(i)) /
