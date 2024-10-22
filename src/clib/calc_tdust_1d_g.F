@@ -431,8 +431,8 @@ c             Tgr < 50 K (Omukai 2000).
             logalsp1(:) = logalsp(:,i)
        
             call interpolate_1D_g(
-     &           log10(tdust(i)), int8(gr_N), gr_Td, gr_dT,
-     &           int8(gr_Size), logalsp1, logkgr)
+     &           log10(tdust(i)), int(gr_N, 8), gr_Td, gr_dT,
+     &           int(gr_Size, 8), logalsp1, logkgr)
             kgr(i) = 10._DKIND**logkgr
 !!          write(*,*) 'fff', i, kgr(i)
 

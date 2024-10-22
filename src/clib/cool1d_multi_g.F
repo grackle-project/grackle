@@ -772,16 +772,16 @@
          lognhat = logH2I(i) - logdvdr(i)
 
          call interpolate_3D_g(
-     &     lognhat, logT(i), logH(i), int8(LH2_N), 
+     &     lognhat, logT(i), logH(i), int(LH2_N,8),
      &     LH2_D, LH2_dD, LH2_T, LH2_dT, LH2_H, LH2_dH,
-     &     int8(LH2_Size), LH2_L, log_Linv)
+     &     int(LH2_Size,8), LH2_L, log_Linv)
          L = 1.d1**(-log_Linv)
 
          if (icmbTfloor .eq. 1) then
          call interpolate_3D_g(
-     &     lognhat, logTcmb(i), logH(i), int8(LH2_N), 
+     &     lognhat, logTcmb(i), logH(i), int(LH2_N,8),
      &     LH2_D, LH2_dD, LH2_T, LH2_dT, LH2_H, LH2_dH,
-     &     int8(LH2_Size), LH2_L, log_Ginv)
+     &     int(LH2_Size,8), LH2_L, log_Ginv)
          G = 1.d1**(-log_Ginv)
          else
          G = tiny8
@@ -997,16 +997,16 @@ c     CIE H2 cooling using Yoshida et al. (2006)
          lognhat = logHDI(i) - logdvdr(i)
 
          call interpolate_3D_g(
-     &     lognhat, logT(i), logH(i), int8(LHD_N), 
+     &     lognhat, logT(i), logH(i), int(LHD_N,8),
      &     LHD_D, LHD_dD, LHD_T, LHD_dT, LHD_H, LHD_dH,
-     &     int8(LHD_Size), LHD_L, log_Linv)
+     &     int(LHD_Size,8), LHD_L, log_Linv)
          L = 1.d1**(-log_Linv)
 
          if (icmbTfloor .eq. 1) then
          call interpolate_3D_g(
-     &     lognhat, logTcmb(i), logH(i), int8(LHD_N), 
+     &     lognhat, logTcmb(i), logH(i), int(LHD_N,8),
      &     LHD_D, LHD_dD, LHD_T, LHD_dT, LHD_H, LHD_dH,
-     &     int8(LHD_Size), LHD_L, log_Ginv)
+     &     int(LHD_Size,8), LHD_L, log_Ginv)
          G = 1.d1**(-log_Ginv)
          else
          G = tiny8
@@ -1058,13 +1058,17 @@ c  new (correct) way: (april 4, 2007)
 
 !     Iteration mask for metal-rich cells
       if (imetal .eq. 1) then
-         where (metallicity .ge. min_metallicity)
-            itmask_metal = itmask
-         elsewhere
-            itmask_metal = .false.
-         end where
+         do i = is+1, ie+1
+            if (metallicity(i) .ge. min_metallicity) then
+               itmask_metal(i) = itmask(i)
+            else
+               itmask_metal(i) = .false.
+            endif
+         enddo
       else
-         itmask_metal = .false.
+         do i = is+1, ie+1
+            itmask_metal(i) = .false.
+         enddo
       endif
 
 !     Compute grain size increment
@@ -1437,8 +1441,8 @@ c  new (correct) way: (april 4, 2007)
 
             !! primordial continuum opacity !!
             call interpolate_2D_g(
-     &        logrho(i), logT(i), int8(alphap_N), alphap_D, alphap_dD, 
-     &        alphap_T, alphap_dT, int8(alphap_Size), 
+     &        logrho(i), logT(i), int(alphap_N,8), alphap_D, alphap_dD,
+     &        alphap_T, alphap_dT, int(alphap_Size,8),
      &        alphap_Data, log_a)
               alpha(i) = 1.d1**log_a
          endif
@@ -1867,16 +1871,16 @@ c  new (correct) way: (april 4, 2007)
             lognhat = logCI(i) - logdvdr(i)
 
             call interpolate_3D_g(
-     &        lognhat, logT(i), logH(i), int8(LCI_N), 
+     &        lognhat, logT(i), logH(i), int(LCI_N,8),
      &        LCI_D, LCI_dD, LCI_T, LCI_dT, LCI_H, LCI_dH,
-     &        int8(LCI_Size), LCI_L, log_Linv)
+     &        int(LCI_Size,8), LCI_L, log_Linv)
             L = 1.d1**(-log_Linv)
       
             if (icmbTfloor .eq. 1) then
             call interpolate_3D_g(
-     &        lognhat, logTcmb(i), logH(i), int8(LCI_N), 
+     &        lognhat, logTcmb(i), logH(i), int(LCI_N,8),
      &        LCI_D, LCI_dD, LCI_T, LCI_dT, LCI_H, LCI_dH,
-     &        int8(LCI_Size), LCI_L, log_Ginv)
+     &        int(LCI_Size,8), LCI_L, log_Ginv)
             G = 1.d1**(-log_Ginv)
             else
             G = tiny8
@@ -1891,16 +1895,16 @@ c  new (correct) way: (april 4, 2007)
             lognhat = logCII(i) - logdvdr(i)
       
             call interpolate_3D_g(
-     &        lognhat, logT(i), logH(i), int8(LCII_N), 
+     &        lognhat, logT(i), logH(i), int(LCII_N,8),
      &        LCII_D, LCII_dD, LCII_T, LCII_dT, LCII_H, LCII_dH,
-     &        int8(LCII_Size), LCII_L, log_Linv)
+     &        int(LCII_Size,8), LCII_L, log_Linv)
             L = 1.d1**(-log_Linv)
       
             if (icmbTfloor .eq. 1) then
             call interpolate_3D_g(
-     &        lognhat, logTcmb(i), logH(i), int8(LCII_N), 
+     &        lognhat, logTcmb(i), logH(i), int(LCII_N,8),
      &        LCII_D, LCII_dD, LCII_T, LCII_dT, LCII_H, LCII_dH,
-     &        int8(LCII_Size), LCII_L, log_Ginv)
+     &        int(LCII_Size,8), LCII_L, log_Ginv)
             G = 1.d1**(-log_Ginv)
             else
             G = tiny8
@@ -1915,16 +1919,16 @@ c  new (correct) way: (april 4, 2007)
             lognhat = logOI(i) - logdvdr(i)
       
             call interpolate_3D_g(
-     &        lognhat, logT(i), logH(i), int8(LOI_N), 
+     &        lognhat, logT(i), logH(i), int(LOI_N,8),
      &        LOI_D, LOI_dD, LOI_T, LOI_dT, LOI_H, LOI_dH,
-     &        int8(LOI_Size), LOI_L, log_Linv)
+     &        int(LOI_Size,8), LOI_L, log_Linv)
             L = 1.d1**(-log_Linv)
       
             if (icmbTfloor .eq. 1) then
             call interpolate_3D_g(
-     &        lognhat, logTcmb(i), logH(i), int8(LOI_N), 
+     &        lognhat, logTcmb(i), logH(i), int(LOI_N,8),
      &        LOI_D, LOI_dD, LOI_T, LOI_dT, LOI_H, LOI_dH,
-     &        int8(LOI_Size), LOI_L, log_Ginv)
+     &        int(LOI_Size,8), LOI_L, log_Ginv)
             G = 1.d1**(-log_Ginv)
             else
             G = tiny8
@@ -1941,16 +1945,16 @@ c  new (correct) way: (april 4, 2007)
             lognhat = logCO(i) - logdvdr(i)
       
             call interpolate_3D_g(
-     &        lognhat, logT(i), logH2(i), int8(LCO_N), 
+     &        lognhat, logT(i), logH2(i), int(LCO_N,8),
      &        LCO_D, LCO_dD, LCO_T, LCO_dT, LCO_H, LCO_dH,
-     &        int8(LCO_Size), LCO_L, log_Linv)
+     &        int(LCO_Size,8), LCO_L, log_Linv)
             L = 1.d1**(-log_Linv)
       
             if (icmbTfloor .eq. 1) then
             call interpolate_3D_g(
-     &        lognhat, logTcmb(i), logH2(i), int8(LCO_N), 
+     &        lognhat, logTcmb(i), logH2(i), int(LCO_N,8),
      &        LCO_D, LCO_dD, LCO_T, LCO_dT, LCO_H, LCO_dH,
-     &        int8(LCO_Size), LCO_L, log_Ginv)
+     &        int(LCO_Size,8), LCO_L, log_Ginv)
             G = 1.d1**(-log_Ginv)
             else
             G = tiny8
@@ -1965,16 +1969,16 @@ c  new (correct) way: (april 4, 2007)
             lognhat = logOH(i) - logdvdr(i)
       
             call interpolate_3D_g(
-     &        lognhat, logT(i), logH2(i), int8(LOH_N), 
+     &        lognhat, logT(i), logH2(i), int(LOH_N,8),
      &        LOH_D, LOH_dD, LOH_T, LOH_dT, LOH_H, LOH_dH,
-     &        int8(LOH_Size), LOH_L, log_Linv)
+     &        int(LOH_Size,8), LOH_L, log_Linv)
             L = 1.d1**(-log_Linv)
       
             if (icmbTfloor .eq. 1) then
             call interpolate_3D_g(
-     &        lognhat, logTcmb(i), logH2(i), int8(LOH_N), 
+     &        lognhat, logTcmb(i), logH2(i), int(LOH_N,8),
      &        LOH_D, LOH_dD, LOH_T, LOH_dT, LOH_H, LOH_dH,
-     &        int8(LOH_Size), LOH_L, log_Ginv)
+     &        int(LOH_Size,8), LOH_L, log_Ginv)
             G = 1.d1**(-log_Ginv)
             else
             G = tiny8
@@ -1989,16 +1993,16 @@ c  new (correct) way: (april 4, 2007)
             lognhat = logH2O(i) - logdvdr(i)
       
             call interpolate_3D_g(
-     &        lognhat, logT(i), logH2(i), int8(LH2O_N), 
+     &        lognhat, logT(i), logH2(i), int(LH2O_N,8),
      &        LH2O_D, LH2O_dD, LH2O_T, LH2O_dT, LH2O_H, LH2O_dH,
-     &        int8(LH2O_Size), LH2O_L, log_Linv)
+     &        int(LH2O_Size,8), LH2O_L, log_Linv)
             L = 1.d1**(-log_Linv)
       
             if (icmbTfloor .eq. 1) then
             call interpolate_3D_g(
-     &        lognhat, logTcmb(i), logH2(i), int8(LH2O_N), 
+     &        lognhat, logTcmb(i), logH2(i), int(LH2O_N,8),
      &        LH2O_D, LH2O_dD, LH2O_T, LH2O_dT, LH2O_H, LH2O_dH,
-     &        int8(LH2O_Size), LH2O_L, log_Ginv)
+     &        int(LH2O_Size,8), LH2O_L, log_Ginv)
             G = 1.d1**(-log_Ginv)
             else
             G = tiny8
