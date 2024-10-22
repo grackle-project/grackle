@@ -83,7 +83,7 @@ def parse_output(ostr):
         ostr = ostr.decode("utf8")
     lines = ostr.split("\n")
     for line in lines:
-        match = re.match(rf"^ ?(\w+) - (\w+) = ", line)
+        match = re.match(r"^ ?(\w+) - (\w+) = ", line)
         if match is None:
             continue
         when, field = match.groups()
