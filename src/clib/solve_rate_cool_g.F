@@ -445,9 +445,7 @@
 
 #ifdef GRACKLE_FLOAT_4
       R_PREC, parameter :: tolerance = 1.0e-05_RKIND
-#endif
-
-#ifdef GRACKLE_FLOAT_8
+#else
       R_PREC, parameter :: tolerance = 1.0e-10_RKIND
 #endif
 
