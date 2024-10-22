@@ -65,18 +65,17 @@
 !  Parameters
 
       integer idspecies
-      real*8 t_subl
-      parameter(t_subl = 1.5e3_DKIND) ! grain sublimation temperature
-      real*8 radf
-      parameter(radf = 4._DKIND * sigma_sb)
-      real*8 kgr1
-      parameter(kgr1 = 4.0e-4_DKIND / 0.009387d0)
+      ! grain sublimation temperature
+      real*8, parameter :: t_subl = 1.5e3_DKIND
+      real*8, parameter :: radf = 4._DKIND * sigma_sb
+      real*8, parameter :: kgr1 = 4.0e-4_DKIND / 0.009387d0
          !! should be normalized with local fgr. [GC20200701]
-      real*8 tol, bi_tol, minpert, gamma_isrf(in)
-      parameter(tol = 1.e-5_DKIND, bi_tol = 1.e-3_DKIND, 
-     &     minpert = 1.e-10_DKIND)
-      integer itmax, bi_itmax
-      parameter(itmax = 50, bi_itmax = 30)
+      real*8 gamma_isrf(in)
+      real*8, parameter :: tol = 1.e-5_DKIND
+      real*8, parameter :: bi_tol = 1.e-3_DKIND
+      real*8, parameter :: minpert = 1.e-10_DKIND
+      integer, parameter :: itmax = 50
+      integer, parameter :: bi_itmax = 30
 
 !  Locals
 
@@ -384,9 +383,8 @@ c               ERROR_MESSAGE
 
 !  Parameters
 
-      real*8 kgr1, kgr200
-      parameter(kgr1 = 4.0e-4_DKIND / 0.009387d0
-     &        , kgr200 = 16.0_DKIND / 0.009387d0)
+      real*8, parameter :: kgr1 = 4.0e-4_DKIND / 0.009387d0
+      real*8, parameter :: kgr200 = 16.0_DKIND / 0.009387d0
          !! should be normalized with local fgr. [GC20200701]
          !! This value is valid only for Td < 50 K (Omukai 2000).
 
@@ -498,8 +496,7 @@ c             Tgr < 50 K (Omukai 2000).
 
 !  Parameters
 
-      real*8 radf
-      parameter(radf = 4._DKIND * sigma_sb)
+      real*8, parameter :: radf = 4._DKIND * sigma_sb
 
 !  Locals
 

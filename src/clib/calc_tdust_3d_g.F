@@ -187,8 +187,7 @@
 
 !  Parameters
 
-      real*8 mh
-      parameter (mh = mass_h)
+      real*8, parameter :: mh = mass_h
 
 !  Locals
 
