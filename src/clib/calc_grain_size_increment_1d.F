@@ -434,6 +434,9 @@
 
 
       implicit NONE
+
+#include "grackle_fortran_types.def"
+
 ! input
       integer in, jn, kn, is, ie, j, k
       logical itmask(in)
