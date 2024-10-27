@@ -4166,7 +4166,7 @@ c -------------------------------------------------------------------
      &     , OHIIp(in) , H2OIIp(in)  , H3OIIp(in)
      &     , O2IIp(in) , Mgp(in)     , Alp(in)
      &     , Sp(in)    , Fep(in)     
-      real*8  SiMp(in), FeMp(in), Mg2SiO4p(in)
+      R_PREC  SiMp(in), FeMp(in), Mg2SiO4p(in)
      &      , MgSiO3p(in), Fe3O4p(in), ACp(in)
      &      , SiO2Dp(in), MgOp(in), FeSp(in)
      &      , Al2O3p(in)
