@@ -361,10 +361,10 @@
       MASK_TYPE itmask(in), anydust, interp
       MASK_TYPE itmask_metal(in), itmask_tab(in)
 !!#define CALCULATE_TGAS_SELF_CONSISTENTLY
-#ifdef CALCULATE_TGAS_SELF_CONSISTENTLY
+!#ifdef CALCULATE_TGAS_SELF_CONSISTENTLY
       integer iter_tgas
       real*8  tgas_err, tgas0
-#endif /* NOT important */
+!#endif /* NOT important */
 !     debug
       real*8  edotunit
       integer i_max
@@ -519,36 +519,36 @@
                   nother = (HeI(i,j,k) + HeII(i,j,k) +
      &                 HeIII(i,j,k))/4._DKIND +
      &                 HI(i,j,k) + HII(i,j,k) + de(i,j,k)
-#ifdef CALCULATE_TGAS_SELF_CONSISTENTLY
+
                   iter_tgas = 0
                   tgas_err = huge8
                   do while ((iter_tgas .lt. 100)
      &                 .and.(tgas_err .gt. 1.d-3))
-                  tgas0 = tgas(i)
-#endif
-                  if (nH2/nother .gt. 1.0e-3_DKIND) then
-                     x = 6100._DKIND/tgas(i) ! not quite self-consistent
-                     if (x .gt. 10._DKIND) then
-                        gamma2 = 0.5_DKIND*5._DKIND
+                     tgas0 = tgas(i)
+                     if (nH2/nother .gt. 1.0e-3_DKIND) then
+                        x = 6100._DKIND/tgas(i) ! not quite self-consistent
+                        if (x .gt. 10._DKIND) then
+                           gamma2 = 0.5_DKIND*5._DKIND
+                        else
+                           gamma2 = 0.5_DKIND*(5._DKIND + 2._DKIND*x**2
+     &                       * exp(x)/(exp(x)-1)**2)
+                        endif
                      else
-                        gamma2 = 0.5_DKIND*(5._DKIND + 2._DKIND*x**2 * 
-     &                       exp(x)/(exp(x)-1)**2)
+                        gamma2 = 2.5_DKIND
                      endif
-                  else
-                     gamma2 = 2.5_DKIND
-                  endif
-                  gamma2 = 1._DKIND + (nH2 + nother)/
-     &                 (nH2*gamma2 + nother/(gamma-1._DKIND))
+                     gamma2 = 1._DKIND + (nH2 + nother)/
+     &                    (nH2*gamma2 + nother/(gamma-1._DKIND))
 #ifdef CALCULATE_TGAS_SELF_CONSISTENTLY
-                  tgas(i) = max((gamma2 - 1._DKIND)*mmw(i)*e(i,j,k)*utem
-     &                        , temstart)
-                  tgas_err = dabs(tgas0 - tgas(i)) / tgas0
-                  iter_tgas = iter_tgas + 1
-                  end do
+                     tgas(i) = max((gamma2 - 1._DKIND)*mmw(i)*e(i,j,k)*
+     &                    utem, temstart)
+                     tgas_err = dabs(tgas0 - tgas(i)) / tgas0
+                     iter_tgas = iter_tgas + 1
 #else
-                  tgas(i) = tgas(i) * (gamma2 - 1._DKIND)/
-     &                 (gamma - 1._DKIND)
+                     tgas(i) = tgas(i) * (gamma2 - 1._DKIND)/
+     &                    (gamma - 1._DKIND)
+                     iter_tgas = 101
 #endif
+                  end do
                end if
             enddo
          endif
