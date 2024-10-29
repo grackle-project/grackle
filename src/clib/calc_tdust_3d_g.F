@@ -217,7 +217,7 @@
      & vibh(in)
 !  Iteration mask for multi_cool
 
-      logical itmask(in)
+      MASK_TYPE itmask(in)
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
 !=======================================================================
@@ -377,7 +377,7 @@
 
 !     Set itmask to all true
 
-           itmask(i) = .true.
+           itmask(i) = MASK_TRUE
 
         enddo
 
@@ -386,7 +386,7 @@
          if (imetal .eq. 1) then
              do i = is+1, ie + 1
                 if (metal(i,j,k) .lt. 1.e-9_DKIND * d(i,j,k)) then
-                   itmask(i) = .false.
+                   itmask(i) = MASK_FALSE
                 endif
              enddo
          endif
@@ -430,7 +430,7 @@
         endif
 
         do i = is+1, ie+1
-        if(itmask(i)) then
+        if(itmask(i) .ne. MASK_FALSE) then
 !     Calculate metallicity
 
            if (imetal .eq. 1) then
@@ -720,7 +720,7 @@ C          endif
 !     Copy slice values back to grid
 
         do i = is+1, ie+1
-        if (itmask(i)) then
+        if (itmask(i) .ne. MASK_FALSE) then
            if (itdmulti .eq. 0) then
               dust_temp(i,j,k) = tdust(i)
            else

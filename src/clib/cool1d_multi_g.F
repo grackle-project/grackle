@@ -358,8 +358,8 @@
      &      , gisrfreforg(in), gisrfvolorg(in), gisrfH2Oice(in)
 !  Iteration mask
 
-      logical itmask(in), anydust, interp
-      logical itmask_metal(in), itmask_tab(in)
+      MASK_TYPE itmask(in), anydust, interp
+      MASK_TYPE itmask_metal(in), itmask_tab(in)
 !!#define CALCULATE_TGAS_SELF_CONSISTENTLY
 #ifdef CALCULATE_TGAS_SELF_CONSISTENTLY
       integer iter_tgas
@@ -375,13 +375,20 @@
 
 !     Set flag for dust-related options
 
-      anydust = (idust .gt. 0) .or. (idustall .gt. 0) .or.
-     &          (idustrec .gt. 0)
+      if ((idust .gt. 0) .or. (idustall .gt. 0) .or.
+     &    (idustrec .gt. 0)) then
+         anydust = MASK_TRUE
+      else
+         anydust = MASK_FALSE
+      endif
 
 !     Set flag for needing interpolation variables
 
-      interp = (ispecies .gt. 0) .or. (idustall .gt. 0)
-
+      if ((ispecies .gt. 0) .or. (idustall .gt. 0)) then
+         interp = MASK_TRUE
+      else
+         interp = MASK_FALSE
+      endif
 !     Set log values of start and end of lookup tables
 
       logtem0 = log(temstart)
@@ -414,7 +421,7 @@
 !     Initialize edot
 
       do i = is+1, ie+1
-         if ( itmask(i) ) then
+         if ( itmask(i) .ne. MASK_FALSE ) then
             edot(i) = 0._DKIND
          end if
       enddo
@@ -422,7 +429,7 @@
 !     Compute Pressure
 
       do i = is+1, ie+1
-         if ( itmask(i) ) then
+         if ( itmask(i) .ne. MASK_FALSE ) then
             p2d(i) = (gamma - 1._DKIND)*d(i,j,k)*e(i,j,k)
          end if
       enddo
@@ -438,13 +445,13 @@
 
          if (imetal .eq. 1) then
             do i = is+1, ie+1
-               if ( itmask(i) ) then
+               if ( itmask(i) .ne. MASK_FALSE ) then
                   rhoH(i) = fh * (d(i,j,k) - metal(i,j,k))
                endif
             enddo
          else
             do i = is+1, ie+1
-               if ( itmask(i) ) then
+               if ( itmask(i) .ne. MASK_FALSE ) then
                   rhoH(i) = fh * d(i,j,k)
                endif
             enddo
@@ -465,7 +472,7 @@
 !     Compute mean molecular weight (and temperature) directly
 
          do i = is+1, ie+1
-            if ( itmask(i) ) then
+            if ( itmask(i) .ne. MASK_FALSE ) then
                mmw(i) =
      &              (HeI(i,j,k) + HeII(i,j,k) + HeIII(i,j,k))/4._DKIND +
      &              HI(i,j,k) + HII(i,j,k) + de(i,j,k)
@@ -478,7 +485,7 @@
 
          if (ispecies .gt. 1) then
             do i = is+1, ie+1
-               if ( itmask(i) ) then
+               if ( itmask(i) .ne. MASK_FALSE ) then
                   mmw(i) = mmw(i) +
      &                 HM(i,j,k) + (H2I(i,j,k) + H2II(i,j,k))/2._DKIND
                   rhoH(i) = rhoH(i) + H2I(i,j,k) + H2II(i,j,k)
@@ -490,14 +497,14 @@
 
          if (imetal .eq. 1) then
             do i = is+1, ie+1
-               if ( itmask(i) ) then
+               if ( itmask(i) .ne. MASK_FALSE ) then
                   mmw(i) = mmw(i) + metal(i,j,k)/mu_metal
                end if
             enddo
          endif
 
          do i = is+1, ie+1
-            if ( itmask(i) ) then
+            if ( itmask(i) .ne. MASK_FALSE ) then
                tgas(i) = max(p2d(i)*utem/mmw(i), temstart)
                mmw(i) = d(i,j,k) / mmw(i)
             end if
@@ -507,7 +514,7 @@
 
          if (ispecies .gt. 1) then
             do i = is+1, ie+1
-               if ( itmask(i) ) then
+               if ( itmask(i) .ne. MASK_FALSE ) then
                   nH2 = 0.5_DKIND*(H2I(i,j,k) + H2II(i,j,k))
                   nother = (HeI(i,j,k) + HeII(i,j,k) +
      &                 HeIII(i,j,k))/4._DKIND +
@@ -552,19 +559,19 @@
 
       if (iTfloor .eq. 1) then
          do i = is+1, ie+1
-            if ( itmask(i) ) then
+            if ( itmask(i) .ne. MASK_FALSE ) then
                if (tgas(i) .le. Tfloor_scalar) then
                   edot(i) = tiny
-                  itmask(i) = .false.
+                  itmask(i) = MASK_FALSE
                endif
             endif
          enddo
       else if (iTfloor .eq. 2) then
          do i = is+1, ie+1
-            if ( itmask(i) ) then
+            if ( itmask(i) .ne. MASK_FALSE ) then
                if (tgas(i) .le. Tfloor(i,j,k)) then
                   edot(i) = tiny
-                  itmask(i) = .false.
+                  itmask(i) = MASK_FALSE
                endif
             endif
          enddo
@@ -574,20 +581,20 @@
 
       if (imetal .eq. 1) then
          do i = is+1, ie+1
-            if ( itmask(i) ) then
+            if ( itmask(i) .ne. MASK_FALSE ) then
                metallicity(i) = metal(i,j,k) / d(i,j,k) / z_solar
             endif
          enddo
       else
          do i = is+1, ie+1
-            if ( itmask(i) ) then
+            if ( itmask(i) .ne. MASK_FALSE ) then
                metallicity(i) = tiny
             endif
          enddo
       endif
 
       do i = is+1, ie+1
-         if ( itmask(i) ) then
+         if ( itmask(i) .ne. MASK_FALSE ) then
             mynh(i) = rhoH(i) * dom
          end if
       enddo
@@ -596,7 +603,7 @@
 
       if (iter .eq. 1) then
          do i = is+1, ie+1
-            if ( itmask(i) ) then
+            if ( itmask(i) .ne. MASK_FALSE ) then
             tgasold(i) = tgas(i)
             end if
          enddo
@@ -606,7 +613,7 @@
 
       logdom = log10(dom)
       do i = is+1, ie+1
-         if ( itmask(i) ) then
+         if ( itmask(i) .ne. MASK_FALSE ) then
             logT(i)   = log10(tgas(i))
             if(icmbTfloor .eq. 1)
      &         logTcmb(i) = log10(comp2)
@@ -643,7 +650,7 @@
       enddo
      
       do i = is+1, ie+1
-         if ( itmask(i) ) then
+         if ( itmask(i) .ne. MASK_FALSE ) then
 
 !        Compute log temperature and truncate if above/below table max/min
 
@@ -656,9 +663,9 @@
 
 !     Compute interpolation indices
 
-      if (interp) then
+      if (interp .ne. MASK_FALSE) then
          do i = is+1, ie+1
-            if ( itmask(i) ) then
+            if ( itmask(i) .ne. MASK_FALSE ) then
 
 !     Compute index into the table and precompute parts of linear interp
 
@@ -677,7 +684,7 @@
       if (ispecies .gt. 0) then
 
       do i = is+1, ie+1
-         if ( itmask(i) ) then
+         if ( itmask(i) .ne. MASK_FALSE ) then
 
 !        Lookup cooling values and do a linear temperature in log(T)
 
@@ -712,7 +719,7 @@
 !     Compute the cooling function
 
       do i = is+1, ie+1
-         if ( itmask(i) ) then
+         if ( itmask(i) .ne. MASK_FALSE ) then
          edot(i) = (
 
 !                    Collisional excitations
@@ -768,7 +775,7 @@
          if (ih2cr .eq. 3) then
 
       do i = is+1, ie+1
-      if ( itmask(i) ) then
+      if ( itmask(i) .ne. MASK_FALSE ) then
 
          lognhat = logH2I(i) - logdvdr(i)
 
@@ -799,7 +806,7 @@
       else if (ih2cr .eq. 2) then
 
          do i = is+1, ie+1
-            if ( itmask(i) ) then
+            if ( itmask(i) .ne. MASK_FALSE ) then
             gaHI(i) = gaHIa(indixe(i)) + tdef(i)
      &         *(gaHIa(indixe(i)+1) - gaHIa(indixe(i)))
             gaH2(i) = gaH2a(indixe(i)) + tdef(i)
@@ -820,7 +827,7 @@
          enddo
 
          do i = is+1, ie+1
-            if ( itmask(i) ) then
+            if ( itmask(i) .ne. MASK_FALSE ) then
 #ifdef OPTICAL_DEPTH_FUDGE
             nH2 = 0.5_DKIND*H2I(i,j,k)
             nother = (HeI(i,j,k) + HeII(i,j,k) + 
@@ -858,7 +865,7 @@ c            gphdl1 = gphdl(i)/dom
       else if (ih2cr .eq. 1) then
 
          do i = is+1, ie+1
-            if ( itmask(i) ) then
+            if ( itmask(i) .ne. MASK_FALSE ) then
             gpldl(i) = gpldla(indixe(i)) + tdef(i)
      &         *(gpldla(indixe(i)+1) - gpldla(indixe(i)))
             gphdl(i) = gphdla(indixe(i)) + tdef(i)
@@ -869,7 +876,7 @@ c            gphdl1 = gphdl(i)/dom
          enddo
 
          do i = is+1, ie+1
-            if ( itmask(i) ) then
+            if ( itmask(i) .ne. MASK_FALSE ) then
 
 #define NO_OPTICAL_DEPTH_FUDGE
 #ifdef OPTICAL_DEPTH_FUDGE
@@ -903,7 +910,7 @@ c            gphdl1 = gphdl(i)/dom
        else if (ih2cr .eq. 0) then
 
          do i = is+1, ie+1
-            if ( itmask(i) ) then
+            if ( itmask(i) .ne. MASK_FALSE ) then
             hyd01k(i) = hyd01ka(indixe(i)) + tdef(i)
      &         *(hyd01ka(indixe(i)+1)-hyd01ka(indixe(i)))
             h2k01(i) = h2k01a(indixe(i)) + tdef(i)
@@ -920,7 +927,7 @@ c            gphdl1 = gphdl(i)/dom
          enddo
 
          do i = is+1, ie+1
-            if ( itmask(i) ) then
+            if ( itmask(i) .ne. MASK_FALSE ) then
             qq   = 1.2_DKIND*(HI(i,j,k)*dom)**0.77_DKIND + 
      &                (H2I(i,j,k)*dom/2._DKIND)**0.77_DKIND
             vibl = (HI(i,j,k)*hyd01k(i) + 
@@ -954,7 +961,7 @@ C     with its own radiative transfer correction as discussed in
 C     Ripamonti & Abel 2003
          if (iciecool.eq.1) then
             do i = is+1, ie+1
-            if (itmask(i)) then
+            if (itmask(i) .ne. MASK_FALSE) then
 c     Only calculate if H2I(i) is a substantial fraction
               if (d(i,j,k)*dom.gt.1e10_DKIND) then
                 ciefudge = 1._DKIND
@@ -974,7 +981,7 @@ c               ciefudge, which is applied to the continuum, is applied to edot
 c     CIE H2 cooling using Yoshida et al. (2006)
          else if (iciecool .eq. 2) then
             do i = is+1, ie+1
-               if (itmask(i)) then
+               if (itmask(i) .ne. MASK_FALSE) then
                 cieY06(i) = cieY06a(indixe(i)) + tdef(i)
      &             *(cieY06a(indixe(i)+1) - cieY06a(indixe(i)))
                 LCIE(i) = - cieY06(i) * (H2I(i,j,k)/2.d0)**2
@@ -993,7 +1000,7 @@ c     CIE H2 cooling using Yoshida et al. (2006)
       if (ihdcr .eq. 1 ) then
 
       do i = is+1, ie+1
-      if ( itmask(i) ) then
+      if ( itmask(i) .ne. MASK_FALSE ) then
 
          lognhat = logHDI(i) - logdvdr(i)
 
@@ -1024,7 +1031,7 @@ c     CIE H2 cooling using Yoshida et al. (2006)
       else if (ihdcr .eq. 0) then
 
          do i = is+1, ie+1
-            if ( itmask(i) ) then
+            if ( itmask(i) .ne. MASK_FALSE ) then
 c CMB cooling floor
                if (tgas(i) .gt. comp2) then
                   hdlte(i) = hdltea(indixe(i)) + tdef(i)
@@ -1039,7 +1046,7 @@ c CMB cooling floor
          enddo
 
          do i = is+1, ie+1
-            if ( itmask(i) ) then
+            if ( itmask(i) .ne. MASK_FALSE ) then
 c  old (incorrect) way:
 c               hdlte1 = hdlte(i)/(HDI(i,j,k)*dom/2._DKIND)
 c               hdlow1 = max(hdlow(i), tiny)
@@ -1063,12 +1070,12 @@ c  new (correct) way: (april 4, 2007)
             if (metallicity(i) .ge. min_metallicity) then
                itmask_metal(i) = itmask(i)
             else
-               itmask_metal(i) = .false.
+               itmask_metal(i) = MASK_FALSE
             endif
          enddo
       else
          do i = is+1, ie+1
-            itmask_metal(i) = .false.
+            itmask_metal(i) = MASK_FALSE
          enddo
       endif
 
@@ -1112,16 +1119,16 @@ c  new (correct) way: (april 4, 2007)
 
 !     Calculate dust to gas ratio
 
-      if (anydust .or. (igammah .gt. 0)) then
+      if ((anydust .ne. MASK_FALSE) .or. (igammah .gt. 0)) then
          if (idustfield .gt. 0) then
             do i = is+1, ie+1
-               if ( itmask_metal(i) ) then
+               if ( itmask_metal(i) .ne. MASK_FALSE ) then
                   dust2gas(i) = dust(i,j,k) / d(i,j,k)
                endif
             enddo
          else
             do i = is+1, ie+1
-               if ( itmask_metal(i) ) then
+               if ( itmask_metal(i) .ne. MASK_FALSE ) then
                   dust2gas(i) = fgr * metallicity(i)
                endif
             enddo
@@ -1130,25 +1137,25 @@ c  new (correct) way: (april 4, 2007)
 
 !     Calculate interstellar radiation field
 
-      if (anydust .or. (igammah .gt. 1)) then
+      if ((anydust .ne. MASK_FALSE) .or. (igammah .gt. 1)) then
          if (iisrffield .gt. 0) then
             do i = is+1, ie+1
-               if ( itmask_metal(i) ) then
+               if ( itmask_metal(i) .ne. MASK_FALSE ) then
                   myisrf(i) = isrf_habing(i,j,k)
                endif
             enddo
          else
             do i = is+1, ie+1
-               if ( itmask_metal(i) ) then
+               if ( itmask_metal(i) .ne. MASK_FALSE ) then
                   myisrf(i) = isrf
                endif
             enddo
          endif
       endif
 
-      if (anydust .or. (igammah .gt. 1)) then
+      if ((anydust .ne. MASK_FALSE) .or. (igammah .gt. 1)) then
       do i = is+1, ie+1
-         if ( itmask_metal(i) ) then
+         if ( itmask_metal(i) .ne. MASK_FALSE ) then
 
          if (idspecies .eq. 0 ) then
             if (idustfield .gt. 0) then
@@ -1201,12 +1208,12 @@ c  new (correct) way: (april 4, 2007)
 
 !     --- Gas to grain heat transfer ---
 
-      if (anydust) then
+      if (anydust .ne. MASK_FALSE) then
 
 !     Look up gas/grain heat transfer rates
 
          do i = is+1, ie+1
-            if ( itmask_metal(i) ) then
+            if ( itmask_metal(i) .ne. MASK_FALSE ) then
 
             if(idspecies .eq. 0) then
 
@@ -1379,7 +1386,7 @@ c  new (correct) way: (april 4, 2007)
 !     Calculate dust cooling rate
 
          do i = is+1, ie+1
-            if ( itmask_metal(i) ) then
+            if ( itmask_metal(i) .ne. MASK_FALSE ) then
 
             if (idspecies .eq. 0) then
 
@@ -1438,7 +1445,7 @@ c  new (correct) way: (april 4, 2007)
       if ( ipcont .eq. 1 ) then
 
       do i = is+1, ie+1
-         if ( itmask(i) ) then
+         if ( itmask(i) .ne. MASK_FALSE ) then
 
             !! primordial continuum opacity !!
             call interpolate_2D_g(
@@ -1451,7 +1458,7 @@ c  new (correct) way: (april 4, 2007)
 
       else
          do i = is+1, ie+1
-            if ( itmask(i) ) then
+            if ( itmask(i) .ne. MASK_FALSE ) then
                alpha(i) = 0.
          endif
       enddo
@@ -1461,9 +1468,9 @@ c  new (correct) way: (april 4, 2007)
       ! Add dust opacity.
       ! if (idspecies .eq. 0), dust opacity is overestimated at Td > 50 K
       ! We better not include dust opacity.
-      if ((anydust).and.(idspecies .gt. 0)) then
+      if ((anydust .ne. MASK_FALSE).and.(idspecies .gt. 0)) then
          do i = is+1, ie+1
-            if ( itmask_metal(i) ) then
+            if ( itmask_metal(i) .ne. MASK_FALSE ) then
 
             if (itdmulti .eq. 0) then
 
@@ -1502,7 +1509,7 @@ c  new (correct) way: (april 4, 2007)
       endif !! anydust
 
       do i = is+1, ie+1
-         if ( itmask(i) ) then
+         if ( itmask(i) .ne. MASK_FALSE ) then
          tau_con(i) = alpha(i) * lshield_con(i)
          endif
       enddo
@@ -1514,7 +1521,7 @@ c  new (correct) way: (april 4, 2007)
 
       if (iradshield == 0) then ! no shielding
         do i = is+1, ie+1
-           if ( itmask(i) ) then
+           if ( itmask(i) .ne. MASK_FALSE ) then
               edot(i) = edot(i) + real(ipiht, DKIND)*(
      &               piHI  *HI  (i,j,k) ! pi of HI
      &             + piHeI *HeI (i,j,k)*0.25_DKIND ! pi of HeI
@@ -1531,7 +1538,7 @@ c  new (correct) way: (april 4, 2007)
 !
 
         do i = is+1, ie+1
-           if (itmask(i)) then
+           if (itmask(i) .ne. MASK_FALSE) then
               if (k24 .lt. tiny8) then
                  fSShHI = 1._DKIND
               else
@@ -1563,7 +1570,7 @@ c  new (correct) way: (april 4, 2007)
 !
 
         do i = is+1, ie+1
-           if ( itmask(i) ) then
+           if ( itmask(i) .ne. MASK_FALSE ) then
 !
 !            HI self shielding ratio
 !
@@ -1616,7 +1623,7 @@ c  new (correct) way: (april 4, 2007)
 !
 
         do i = is+1, ie+1
-           if ( itmask(i) ) then
+           if ( itmask(i) .ne. MASK_FALSE ) then
 !
 !            HI self shielding ratio
 !
@@ -1685,7 +1692,7 @@ c  new (correct) way: (april 4, 2007)
 !     Calculate electron density from mean molecular weight
 
          do i = is+1, ie+1
-            if ( itmask(i) ) then
+            if ( itmask(i) .ne. MASK_FALSE ) then
 
                myde(i) = 1 - mmw(i) * (3.0_DKIND * fh + 1.0_DKIND) /
      &              4.0_DKIND
@@ -1706,7 +1713,7 @@ c  new (correct) way: (april 4, 2007)
       if (igammah .eq. 1) then
 
           do i = is + 1, ie + 1
-             if (itmask(i)) then
+             if (itmask(i) .ne. MASK_FALSE) then
                 if ( tgas(i) > 2.d4 ) then
                    gammaha_eff(i) = 0._DKIND
                 else
@@ -1719,7 +1726,7 @@ c  new (correct) way: (april 4, 2007)
       else if (igammah .eq. 2) then
 
           do i = is + 1, ie + 1
-             if (itmask(i)) then
+             if (itmask(i) .ne. MASK_FALSE) then
                 if ( tgas(i) > 2.d4 ) then
                    gammaha_eff(i) = 0._DKIND
                 else
@@ -1733,7 +1740,7 @@ c  new (correct) way: (april 4, 2007)
       else if (igammah .eq. 3) then
 
           do i = is + 1, ie + 1
-             if (itmask(i)) then
+             if (itmask(i) .ne. MASK_FALSE) then
                 pe_X = myisrf(i) * dom_inv * sqrt(tgas(i)) / myde(i)
                 pe_eps =
      &               (4.9d-2 /
@@ -1748,7 +1755,7 @@ c  new (correct) way: (april 4, 2007)
 
       if (igammah .gt. 0) then
           do i = is + 1, ie + 1
-             if (itmask(i)) then
+             if (itmask(i) .ne. MASK_FALSE) then
                 edot(i) = edot(i) + gammaha_eff(i) * rhoH(i) *
      &               dom_inv * dust2gas(i) / fgr
             endif
@@ -1760,14 +1767,14 @@ c  new (correct) way: (april 4, 2007)
       if ((idustall .gt. 0) .or. (idustrec .gt. 0)) then
 
           do i = is + 1, ie + 1
-             if (itmask(i)) then
+             if (itmask(i) .ne. MASK_FALSE) then
                 regr(i) = regra(indixe(i)) + tdef(i)
      &               *(regra(indixe(i)+1) -regra(indixe(i)))
              endif
           enddo
 
           do i = is + 1, ie + 1
-             if (itmask(i)) then
+             if (itmask(i) .ne. MASK_FALSE) then
                 grbeta = 0.74_DKIND / tgas(i)**0.068_DKIND
                 edot(i) = edot(i) -
      &               regr(i) * (myisrf(i)*dom_inv / myde(i))**grbeta *
@@ -1780,7 +1787,7 @@ c  new (correct) way: (april 4, 2007)
 !     Compton cooling or heating and X-ray compton heating
 
       do i = is + 1, ie + 1
-         if (itmask(i)) then
+         if (itmask(i) .ne. MASK_FALSE) then
 
             edot(i) = edot(i)
 
@@ -1799,7 +1806,7 @@ c  new (correct) way: (april 4, 2007)
 
       if (iradtrans .eq. 1) then
           do i = is + 1, ie + 1
-            if (itmask(i)) then
+            if (itmask(i) .ne. MASK_FALSE) then
               edot(i) = edot(i) + real(ipiht, DKIND) * photogamma(i,j,k)
      &                          / coolunit * HI(i,j,k) / dom
 
@@ -1826,10 +1833,10 @@ c  new (correct) way: (april 4, 2007)
 !     Determine if the temperature is above the threshold to do tabulated cooling.
          do i = is+1, ie+1
             itmask_tab(i) = itmask_metal(i)
-            if ( itmask_tab(i) ) then
+            if ( itmask_tab(i) .ne. MASK_FALSE ) then
                if (( tmcool .gt. 0.0d0 ) .and.
      &             ( tgas(i) .lt. tmcool )) then
-                  itmask_tab(i) = .false.
+                  itmask_tab(i) = MASK_FALSE
                endif
             endif
          enddo
@@ -1866,7 +1873,7 @@ c  new (correct) way: (april 4, 2007)
       
 !        C/O fine-structure cooling
          do i = is+1, ie+1
-         if ( itmask_metal(i) ) then
+         if ( itmask_metal(i) .ne. MASK_FALSE ) then
       
 !           CI
             lognhat = logCI(i) - logdvdr(i)
@@ -2025,7 +2032,7 @@ c  new (correct) way: (april 4, 2007)
       if (iVheat .eq. 1) then
 
       do i = is+1, ie+1
-         if ( itmask(i) ) then
+         if ( itmask(i) .ne. MASK_FALSE ) then
             edot(i) = edot(i) + Vheat(i,j,k) / coolunit / dom**2
          end if
       enddo
@@ -2035,7 +2042,7 @@ c  new (correct) way: (april 4, 2007)
       if (iMheat .eq. 1) then
 
       do i = is+1, ie+1
-         if ( itmask(i) ) then
+         if ( itmask(i) .ne. MASK_FALSE ) then
             edot(i) = edot(i) + Mheat(i,j,k) * d(i,j,k) * mh
      &          / coolunit / dom
          end if
@@ -2046,7 +2053,7 @@ c  new (correct) way: (april 4, 2007)
 !     Continuum opacity
 
       do i = is+1, ie+1
-         if ( itmask(i) ) then
+         if ( itmask(i) .ne. MASK_FALSE ) then
             if ( tau_con(i) .gt. 1.d0 ) then
                if ( tau_con(i) .lt. 1.d2 ) then
                   edot(i) = edot(i) * tau_con(i)**(-2.d0)
@@ -2060,7 +2067,7 @@ c  new (correct) way: (april 4, 2007)
 !     Set tgasold
 
       do i=is+1, ie+1
-         if ( itmask(i) ) then
+         if ( itmask(i) .ne. MASK_FALSE ) then
          tgasold(i) = tgas(i)
          end if
       enddo

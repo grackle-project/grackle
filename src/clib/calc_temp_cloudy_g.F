@@ -101,7 +101,7 @@
 
 !  Iteration mask
 
-      logical itmask(in)
+      MASK_TYPE itmask(in)
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
 !=======================================================================
@@ -144,7 +144,7 @@
 !     Initialize iteration mask to true for all cells.
 
          do i = is+1, ie+1
-            itmask(i) = .true.
+            itmask(i) = MASK_TRUE
 
             rhoH(i) = fh * d(i,j,k)
          enddo

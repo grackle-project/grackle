@@ -60,7 +60,7 @@
 
 !  Iteration mask
 
-      logical itmask(in)
+      MASK_TYPE itmask(in)
 
 !  Parameters
 
@@ -89,7 +89,7 @@
      &       slope(in), tdplus(in), tdustnow(in), tdustold(in),
      &       pert(in),
      &       bi_t_mid(in), bi_t_high(in)
-      logical nm_itmask(in), bi_itmask(in)
+      MASK_TYPE nm_itmask(in), bi_itmask(in)
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
 !=======================================================================
@@ -105,7 +105,7 @@
       Td_N(1) = gr_N(2)
       Td_Size = gr_N(2)
       do i = is+1, ie+1
-         if ( itmask(i) ) then
+         if ( itmask(i) .ne. MASK_FALSE ) then
             logalsp(:,i) = log10(alsp(:,i))
          endif
       enddo
@@ -119,7 +119,7 @@
 !     Set local iteration mask and initial guess
 
       do i = is+1, ie+1
-         if ( itmask(i) ) then
+         if ( itmask(i) .ne. MASK_FALSE ) then
             gamma_isrf(i) = isrf(i) * gamma_isrfa(i)
          endif
       enddo
@@ -127,17 +127,17 @@
       do i = is+1, ie+1
          nm_itmask(i) = itmask(i)
          bi_itmask(i) = itmask(i)
-         if ( nm_itmask(i) ) then
+         if ( nm_itmask(i) .ne. MASK_FALSE ) then
 
             if (trad .ge. tgas(i)) then
                tdustnow(i) = trad
-               nm_itmask(i) = .false.
-               bi_itmask(i) = .false.
+               nm_itmask(i) = MASK_FALSE
+               bi_itmask(i) = MASK_FALSE
                c_done = c_done + 1
                nm_done = nm_done + 1
             else if (tgas(i) .gt. t_subl) then
 !     Use bisection if T_gas > grain sublimation temperature.
-               nm_itmask(i) = .false.
+               nm_itmask(i) = MASK_FALSE
                nm_done = nm_done + 1
             else
                tdustnow(i) = max(trad,
@@ -158,7 +158,7 @@
 !     Loop over slice
 
          do i = is+1, ie+1
-            if ( nm_itmask(i) ) then
+            if ( nm_itmask(i) .ne. MASK_FALSE ) then
 
                tdplus(i) = max(1.e-3_DKIND, ((1._DKIND + pert(i))
      &              * tdustnow(i)))
@@ -185,7 +185,7 @@
      &        gamma_isrf, nh, nm_itmask, solplus, in, is, ie)
 
          do i = is+1, ie+1
-            if ( nm_itmask(i) ) then
+            if ( nm_itmask(i) .ne. MASK_FALSE ) then
 
 !     Use Newton's method to solve for Tdust
 
@@ -203,13 +203,13 @@
 
 !     If negative solution calculated, give up and wait for bisection step.
                if (tdustnow(i) .lt. trad) then
-                  nm_itmask(i) = .false.
+                  nm_itmask(i) = MASK_FALSE
                   nm_done = nm_done + 1
 !     Check for convergence of solution
                else if (abs(sol(i) / solplus(i)) .lt. tol) then
-                  nm_itmask(i) = .false.
+                  nm_itmask(i) = MASK_FALSE
                   c_done = c_done + 1
-                  bi_itmask(i) = .false.
+                  bi_itmask(i) = MASK_FALSE
                   nm_done = nm_done + 1
                endif
 
@@ -234,7 +234,7 @@
 !     If iteration count exceeded, try once more with bisection
       if (c_done .lt. c_total) then
          do i = is+1, ie+1
-            if ( bi_itmask(i) ) then
+            if ( bi_itmask(i) .ne. MASK_FALSE ) then
                tdustnow(i)  = trad
 !              bi_t_high(i) = tgas(i)
                bi_t_high(i) = 3e3_DKIND
@@ -244,7 +244,7 @@
          do iter = 1, bi_itmax
 
             do i = is+1, ie+1
-               if ( bi_itmask(i) ) then
+               if ( bi_itmask(i) .ne. MASK_FALSE ) then
 
                   bi_t_mid(i) = 0.5_DKIND * (tdustnow(i) + bi_t_high(i))
                   if (iter .eq. 1) then
@@ -262,7 +262,7 @@
      &           gamma_isrf, nh, bi_itmask, sol, in, is, ie)
 
             do i = is+1, ie+1
-               if ( bi_itmask(i) ) then
+               if ( bi_itmask(i) .ne. MASK_FALSE ) then
 
                   if (sol(i) .gt. 0._DKIND) then
                      tdustnow(i) = bi_t_mid(i)
@@ -272,7 +272,7 @@
 
                   if ((abs(bi_t_high(i) - tdustnow(i)) / tdustnow(i)) 
      &                 .le. bi_tol) then
-                     bi_itmask(i) = .false.
+                     bi_itmask(i) = MASK_FALSE
                      c_done = c_done + 1
                   endif
 
@@ -308,7 +308,7 @@ c            ERROR_MESSAGE
 
 !     Copy values back to thrown slice
       do i = is+1, ie+1
-         if ( itmask(i) ) then
+         if ( itmask(i) .ne. MASK_FALSE ) then
 
 !     Check for bad solutions
             if (tdustnow(i) .lt. 0._DKIND) then
@@ -379,7 +379,7 @@ c               ERROR_MESSAGE
 
 !  Iteration mask
 
-      logical itmask(in)
+      MASK_TYPE itmask(in)
 
 !  Parameters
 
@@ -407,7 +407,7 @@ c               ERROR_MESSAGE
 !=======================================================================
 
       do i = is+1, ie+1
-      if ( itmask(i) ) then
+      if ( itmask(i) .ne. MASK_FALSE ) then
 
          if(idspecies.eq.0) then
 
@@ -492,7 +492,7 @@ c             Tgr < 50 K (Omukai 2000).
 
 !  Iteration mask
 
-      logical itmask(in)
+      MASK_TYPE itmask(in)
 
 !  Parameters
 
@@ -510,7 +510,7 @@ c             Tgr < 50 K (Omukai 2000).
 !=======================================================================
 
       do i = is+1, ie+1
-         if ( itmask(i) ) then
+         if ( itmask(i) .ne. MASK_FALSE ) then
 
             sol(i) = gamma_isrf(i) + radf * kgr(i) *
      &           (trad4 - tdust(i)**4) +
