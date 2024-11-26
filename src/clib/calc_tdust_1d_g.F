@@ -11,7 +11,7 @@
 !
 !  written by: Britton Smith
 !  date:       February, 2011
-!  modified1: 
+!  modified1:
 !
 !  PURPOSE:
 !    Calculate dust temperature.
@@ -61,7 +61,7 @@
       real*8 kgr1
       parameter(kgr1 = 4.0e-4_DKIND)
       real*8 tol, bi_tol, minpert, gamma_isrf(in)
-      parameter(tol = 1.e-5_DKIND, bi_tol = 1.e-3_DKIND, 
+      parameter(tol = 1.e-5_DKIND, bi_tol = 1.e-3_DKIND,
      &     minpert = 1.e-10_DKIND)
       integer itmax, bi_itmax
       parameter(itmax = 50, bi_itmax = 30)
@@ -74,7 +74,7 @@
 
 !  Slice Locals
 
-      real*8 kgr(in), kgrplus(in), sol(in), solplus(in), 
+      real*8 kgr(in), kgrplus(in), sol(in), solplus(in),
      &       slope(in), tdplus(in), tdustnow(in), tdustold(in),
      &       pert(in),
      &       bi_t_mid(in), bi_t_high(in)
@@ -94,8 +94,9 @@
       nm_done = 0
       c_total = ie - is + 1
 
-!     Set local iteration mask and initial guess
+#ifdef USE_ORIGINAL_CODE
 
+!     Set local iteration mask and initial guess
       do i = is+1, ie+1
          if ( itmask(i) ) then
             gamma_isrf(i) = isrf(i) * gamma_isrfa
@@ -129,9 +130,19 @@
          endif
       enddo
 
+#else
+      call set_iteration_mask_and_initial_guess(gamma_isrf, isrf,
+     &     gamma_isrfa, itmask, nm_itmask, bi_itmask, tdustnow, tgas,
+     &     trad, t_subl, radf, kgr1, pert_i, pert, c_done, nm_done,
+     &     is, ie)
+
+#endif
+
 !     Iterate to convergence with Newton's method
 
       do iter = 1, itmax
+
+#ifdef USE_ORIGINAL_CODE
 
 !     Loop over slice
 
@@ -143,6 +154,12 @@
 
             endif
          enddo
+
+#else
+
+         call calc_tdplus(in, is, ie, nm_itmask, pert, tdustnow, tdplus)
+
+#endif
 
 !     Calculate grain opacities
 
@@ -160,19 +177,21 @@
          call calc_gr_balance_g(tdplus, tgas, kgrplus, trad4, gasgr,
      &        gamma_isrf, nh, nm_itmask, solplus, in, is, ie)
 
+#ifdef USE_ORIGINAL_CODE
+
          do i = is+1, ie+1
             if ( nm_itmask(i) ) then
 
 !     Use Newton's method to solve for Tdust
 
-               slope(i) = (solplus(i) - sol(i)) / 
+               slope(i) = (solplus(i) - sol(i)) /
      &              (pert(i) * tdustnow(i))
 
                tdustold(i) = tdustnow(i)
                tdustnow(i) = tdustnow(i) - (sol(i) / slope(i))
 
-               pert(i) = max(min(pert(i), 
-     &              (0.5_DKIND * abs(tdustnow(i) - tdustold(i)) / 
+               pert(i) = max(min(pert(i),
+     &              (0.5_DKIND * abs(tdustnow(i) - tdustold(i)) /
      &              tdustnow(i))), minpert)
 
 !     If negative solution calculated, give up and wait for bisection step.
@@ -193,6 +212,14 @@
 !     End loop over slice
          enddo
 
+#else
+
+         call run_newton_method_iteration(in, is, ie, nm_itmask,
+     &        bi_itmask, solplus, sol, slope, tdustnow, tdustold,
+     &        pert, minpert, trad, tol, nm_done, c_done)
+
+#endif
+
 !     Check for all cells converged
          if (c_done .ge. c_total) go to 666
 
@@ -207,6 +234,7 @@
 
 !     If iteration count exceeded, try once more with bisection
       if (c_done .lt. c_total) then
+
          do i = is+1, ie+1
             if ( bi_itmask(i) ) then
                tdustnow(i)  = trad
@@ -215,6 +243,8 @@
          enddo
 
          do iter = 1, bi_itmax
+
+#ifdef USE_ORIGINAL_CODE
 
             do i = is+1, ie+1
                if ( bi_itmask(i) ) then
@@ -242,7 +272,7 @@
                      bi_t_high(i) = bi_t_mid(i)
                   endif
 
-                  if ((abs(bi_t_high(i) - tdustnow(i)) / tdustnow(i)) 
+                  if ((abs(bi_t_high(i) - tdustnow(i)) / tdustnow(i))
      &                 .le. bi_tol) then
                      bi_itmask(i) = .false.
                      c_done = c_done + 1
@@ -256,6 +286,16 @@
 
 !     End loop over slice
             enddo
+#else
+
+            call run_bisection_method_iteration(in, is, ie, bi_itmask,
+     &           tdustnow, bi_t_high, iter, t_subl, kgr, tgas,
+     &           trad4, gasgr, gamma_isrf, nh, sol, bi_tol, c_done,
+     &           c_total)
+!     Check for all cells converged
+            if (c_done .ge. c_total) go to 666
+
+#endif
 
 !     End iteration loop for bisection
          enddo
@@ -281,7 +321,6 @@ c            ERROR_MESSAGE
 !     Copy values back to thrown slice
       do i = is+1, ie+1
          if ( itmask(i) ) then
-
 !     Check for bad solutions
             if (tdustnow(i) .lt. 0._DKIND) then
 #ifdef _OPENMP
@@ -289,7 +328,7 @@ c            ERROR_MESSAGE
 #endif
                write(6, *) 'CALC_TDUST_1D_G Newton method - ',
      &              'T_dust < 0: i = ', i, 'j = ', j,
-     &              'k = ', k, 'nh = ', nh(i), 
+     &              'k = ', k, 'nh = ', nh(i),
      &              't_gas = ', tgas(i), 't_rad = ', trad,
      &              't_dust = ', tdustnow(i)
 #ifdef _OPENMP
@@ -315,7 +354,7 @@ c               ERROR_MESSAGE
 !
 !  written by: Britton Smith
 !  date:       September, 2011
-!  modified1: 
+!  modified1:
 !
 !  PURPOSE:
 !    Calculate grain plank mean opacity
@@ -378,7 +417,7 @@ c               ERROR_MESSAGE
             else if (tdust(i) .lt. t_subl) then
                kgr(i) = kgr200
             else
-               kgr(i) = max(tiny, 
+               kgr(i) = max(tiny,
      &              (kgr200 * (tdust(i) / 1.5e3_DKIND)**(-12)))
             endif
 
@@ -465,6 +504,280 @@ c               ERROR_MESSAGE
      &           (tgas(i) - tdust(i)))
 
          endif
+      enddo
+
+      return
+      end
+
+!=======================================================================
+!////////  SUBROUTINE SET_ITERATION_MASK_AND_INITIAL_GUESS  \\\\\\\\\\\\
+
+      subroutine set_iteration_mask_and_initial_guess(
+     &     gamma_isrf, isrf, gamma_isrfa, itmask, nm_itmask, bi_itmask,
+     &     tdustnow, tgas, trad, t_subl, radf, kgr1, pert_i, pert,
+     &     c_done, nm_done, is, ie)
+
+!  SET LOCAL ITERATION MASK AND COMPUTE INITIAL GUEST !TODO: better description
+!
+!  written by: Christopher Bignamini
+!  date:       March, 2024
+!  modified1:
+!
+!  PURPOSE:
+!
+!
+!  INPUTS:
+!
+!
+!  OUTPUTS:
+!
+!
+!  PARAMETERS:
+!
+!-----------------------------------------------------------------------
+
+      implicit NONE
+#include "grackle_fortran_types.def"
+
+!     Arguments
+      integer :: is, ie
+      logical :: itmask(*), nm_itmask(*), bi_itmask(*)
+      real*8 :: gamma_isrf(*), isrf(*), gamma_isrfa, tdustnow(*),
+     &     tgas(*)
+      real*8 :: trad, t_subl, radf, kgr1, pert_i
+      real*8 :: pert(*)
+      integer :: c_done, nm_done
+
+!     Local variables
+      integer :: i
+
+!     Set local iteration mask and initial guess
+      c_done = 0
+      nm_done = 0
+
+      do i = is+1, ie+1
+         if (itmask(i)) then
+            gamma_isrf(i) = isrf(i) * gamma_isrfa
+         end if
+      end do
+
+      do i = is+1, ie+1
+         nm_itmask(i) = itmask(i)
+         bi_itmask(i) = itmask(i)
+         if (nm_itmask(i)) then
+
+            if (trad .ge. tgas(i)) then
+               tdustnow(i) = trad
+               nm_itmask(i) = .false.
+               bi_itmask(i) = .false.
+               c_done = c_done + 1
+               nm_done = nm_done + 1
+            else if (tgas(i) .gt. t_subl) then
+!     Use bisection if T_gas > grain sublimation temperature.
+               nm_itmask(i) = .false.
+               nm_done = nm_done + 1
+            else
+               tdustnow(i) = max(trad,
+     &              (gamma_isrf(i) / radf / kgr1)**0.17_DKIND)
+               pert(i) = pert_i
+            end if
+
+         else
+            c_done = c_done + 1
+            nm_done = nm_done + 1
+         end if
+      end do
+      return
+      end
+
+
+!=======================================================================
+!//////////////////////  SUBROUTINE CALC_TDPLUS  \\\\\\\\\\\\\\\\\\\\\\\
+
+      subroutine calc_tdplus(in, is, ie, nm_itmask, pert, tdustnow,
+     &     tdplus)
+
+!  CALCULATE TODO: add description
+!
+!  written by: Christopher Bignamini
+!  date:       March, 2024
+!  modified1:
+!
+!  PURPOSE:
+!
+!
+!  INPUTS:
+!
+!
+!  OUTPUTS:
+!
+!
+!  PARAMETERS:
+!
+!-----------------------------------------------------------------------
+
+      implicit NONE
+#include "grackle_fortran_types.def"
+
+      integer in, is, ie, i
+      logical nm_itmask(in)
+      real*8 pert(in), tdustnow(in), tdplus(in)
+
+      do i = is+1, ie+1
+         if (nm_itmask(i)) then
+            tdplus(i) = max(1.e-3_DKIND, ((1._DKIND + pert(i)) *
+     &         tdustnow(i)))
+         endif
+      enddo
+
+      return
+      end
+
+
+!=======================================================================
+!//////////////SUBROUTINE RUN_NEWTON_METHOD_ITERATION  \\\\\\\\\\\\\\\\\
+
+      subroutine run_newton_method_iteration(in, is, ie, nm_itmask,
+     &     bi_itmask, solplus, sol, slope, tdustnow, tdustold, pert,
+     &     minpert, trad, tol, nm_done, c_done)
+
+!
+!
+!  written by: Christopher Bignamini
+!  date:       March, 2024
+!  modified1:
+!
+!  PURPOSE:
+!
+!
+!  INPUTS:
+!
+!
+!  OUTPUTS:
+!
+!
+!  PARAMETERS:
+!
+!-----------------------------------------------------------------------
+
+      implicit NONE
+#include "grackle_fortran_types.def"
+
+      integer in, is, ie, i
+      logical nm_itmask(in), bi_itmask(in)
+      real*8 solplus(in), sol(in), slope(in), tdustnow(in),
+     &     tdustold(in), pert(in)
+!TODO: in principle tdustold is not needed in input
+      real*8 minpert, trad, tol
+      integer nm_done, c_done
+
+      do i = is+1, ie+1
+         if ( nm_itmask(i) ) then
+
+!     Use Newton's method to solve for Tdust
+
+            slope(i) = (solplus(i) - sol(i)) /
+     &           (pert(i) * tdustnow(i))
+
+            tdustold(i) = tdustnow(i)
+            tdustnow(i) = tdustnow(i) - (sol(i) / slope(i))
+
+            pert(i) = max(min(pert(i),
+     &           (0.5_DKIND * abs(tdustnow(i) - tdustold(i)) /
+     &           tdustnow(i))), minpert)
+
+!     If negative solution calculated, give up and wait for bisection step.
+            if (tdustnow(i) .lt. trad) then
+               nm_itmask(i) = .false.
+               nm_done = nm_done + 1
+!     Check for convergence of solution
+            else if (abs(sol(i) / solplus(i)) .lt. tol) then
+               nm_itmask(i) = .false.
+               c_done = c_done + 1
+               bi_itmask(i) = .false.
+               nm_done = nm_done + 1
+            endif
+
+!     if ( nm_itmask(i) )
+         endif
+
+!     End loop over slice
+      enddo
+
+      return
+      end
+
+!=======================================================================
+!/////////////  SUBROUTINE RUN_BISECTION_METHOD_ITERATION  \\\\\\\\\\\\\
+
+      subroutine run_bisection_method_iteration(in, is, ie, bi_itmask,
+     &     tdustnow, bi_t_high, iter, t_subl, kgr, tgas,
+     &     trad4, gasgr, gamma_isrf, nh, sol, bi_tol, c_done, c_total)
+
+!
+!
+!  written by: Christopher Bignamini
+!  date:       March, 2024
+!  modified1:
+!
+!  PURPOSE:
+!
+!
+!  INPUTS:
+!
+!
+!  OUTPUTS:
+!
+!
+!  PARAMETERS:
+!
+!-----------------------------------------------------------------------
+
+      implicit NONE
+#include "grackle_fortran_types.def"
+
+      integer in, is, ie, iter
+      logical bi_itmask(in)
+      real*8 tdustnow(in), bi_t_high(in), bi_t_mid(in), kgr(in),
+     &     tgas(in), gasgr(in), sol(in), gamma_isrf(in), nh(in)
+      real*8 trad4, t_subl, bi_tol
+      integer c_done, c_total, i
+
+!     Loop over slices
+      do i = is+1, ie+1
+         if ( bi_itmask(i) ) then
+            bi_t_mid(i) = 0.5_DKIND * (tdustnow(i) + bi_t_high(i))
+            if (iter .eq. 1) then
+               bi_t_mid(i) = min(bi_t_mid(i), t_subl)
+            endif
+         endif
+      enddo
+
+!     Calculate properties
+      call calc_kappa_gr_g(bi_t_mid, kgr, bi_itmask, in, is, ie,
+     &     t_subl)
+      call calc_gr_balance_g(bi_t_mid, tgas, kgr, trad4, gasgr,
+     &     gamma_isrf, nh, bi_itmask, sol, in, is, ie)
+
+!     Loop over slices
+      do i = is+1, ie+1
+         if ( bi_itmask(i) ) then
+            if (sol(i) .gt. 0._DKIND) then
+               tdustnow(i) = bi_t_mid(i)
+            else
+               bi_t_high(i) = bi_t_mid(i)
+            endif
+            if ((abs(bi_t_high(i) - tdustnow(i)) / tdustnow(i)) .le.
+     &           bi_tol) then
+               bi_itmask(i) = .false.
+               c_done = c_done + 1
+            endif
+!     Check for all cells converged
+            if (c_done .ge. c_total) then !go to 666
+               return
+            endif
+         endif
+!     End loop over slice
       enddo
 
       return

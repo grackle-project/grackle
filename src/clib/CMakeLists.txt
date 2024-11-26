@@ -107,6 +107,7 @@ add_library(Grackle_Grackle
   calc_tdust_3d_g.F
   calc_temp1d_cloudy_g.F
   calc_temp_cloudy_g.F
+  calc_temp_utilities_g.F
   cool1d_cloudy_g.F
   cool1d_cloudy_old_tables_g.F
   cool1d_multi_g.F
@@ -140,6 +141,13 @@ add_library(Grackle_Grackle
   index_helper.h
   phys_constants.h
   utils.h
+
+  # C wrappers
+  c_wrappers/wrap_calc_tdust_1d_g.c
+  c_wrappers/wrap_calc_temp_utilities_g.c
+  c_wrappers/wrap_cool1d_cloudy_g.c
+  c_wrappers/wrap_cool1d_cloudy_old_tables_g.c
+  c_wrappers/wrap_interpolators_g.c
 
   # Fortran public headers
   ../include/grackle.def

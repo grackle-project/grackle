@@ -106,6 +106,8 @@
 
       inv_log10 = 1._DKIND / log(10._DKIND)
 
+#ifdef USE_ORIGINAL_CODE
+
 !     Calculate parameter value slopes
 
       dclPar(1) = (clPar1(clGridDim(1)) - clPar1(1)) / 
@@ -118,6 +120,10 @@
          dclPar(3) = (clPar3(clGridDim(3)) - clPar3(1)) / 
      &        real(clGridDim(3) - 1, DKIND)
       endif
+#else
+      call calc_parameter_value_slopes(dclPar, clGridRank,
+     &            clGridDim, clPar1, clPar2, clPar3)
+#endif
 
 !     Calculate index for redshift dimension
 
