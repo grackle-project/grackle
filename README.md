@@ -1,3 +1,9 @@
+> [!IMPORTANT]  
+> This is a special version of the [brittonsmith:gen2024](https://github.com/brittonsmith/grackle/tree/gen2024) branch (i.e. the branch of changes proposed for merging in the grackle-project/grackle#177 Pull Request).
+>
+> This branch includes additional changes that are needed to simplify the transcription process to C++. There are pending PRs to merge all of these changes into the gen2024 branch ([see this list of PRs](https://github.com/brittonsmith/grackle/pulls/mabruzzo))
+
+
 # Grackle
 
 [![Users' Mailing List](https://img.shields.io/badge/Users-List-lightgrey.svg)](https://groups.google.com/forum/#!forum/grackle-cooling-users)
