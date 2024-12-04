@@ -5773,27 +5773,46 @@ C              metal_Y19(i,j,k) = metal_Y19(i,j,k) * correctZ
 C           enddo
 
             nSN = 12
-            SN_i( 1) = 1; SN_metal(:, 1) = metal_loc(:,j,k)
-            SN_i( 2) = 2; SN_metal(:, 2) = metal_C13(:,j,k)
-            SN_i( 3) = 3; SN_metal(:, 3) = metal_C20(:,j,k)
-            SN_i( 4) = 4; SN_metal(:, 4) = metal_C25(:,j,k)
-            SN_i( 5) = 5; SN_metal(:, 5) = metal_C30(:,j,k)
-            SN_i( 6) = 6; SN_metal(:, 6) = metal_F13(:,j,k)
-            SN_i( 7) = 7; SN_metal(:, 7) = metal_F15(:,j,k)
-            SN_i( 8) = 8; SN_metal(:, 8) = metal_F50(:,j,k)
-            SN_i( 9) = 9; SN_metal(:, 9) = metal_F80(:,j,k)
-            SN_i(10) =10; SN_metal(:,10) = metal_P170(:,j,k)
-            SN_i(11) =11; SN_metal(:,11) = metal_P200(:,j,k)
-            SN_i(12) =12; SN_metal(:,12) = metal_Y19(:,j,k)
+            SN_i( 1) = 1
+            SN_metal(:, 1) = metal_loc(:,j,k)
+            SN_i( 2) = 2
+            SN_metal(:, 2) = metal_C13(:,j,k)
+            SN_i( 3) = 3
+            SN_metal(:, 3) = metal_C20(:,j,k)
+            SN_i( 4) = 4
+            SN_metal(:, 4) = metal_C25(:,j,k)
+            SN_i( 5) = 5
+            SN_metal(:, 5) = metal_C30(:,j,k)
+            SN_i( 6) = 6
+            SN_metal(:, 6) = metal_F13(:,j,k)
+            SN_i( 7) = 7
+            SN_metal(:, 7) = metal_F15(:,j,k)
+            SN_i( 8) = 8
+            SN_metal(:, 8) = metal_F50(:,j,k)
+            SN_i( 9) = 9
+            SN_metal(:, 9) = metal_F80(:,j,k)
+            SN_i(10) =10
+            SN_metal(:,10) = metal_P170(:,j,k)
+            SN_i(11) =11
+            SN_metal(:,11) = metal_P200(:,j,k)
+            SN_i(12) =12
+            SN_metal(:,12) = metal_Y19(:,j,k)
          
             do i = is+1, ie+1
-                Ct(i) = 0._DKIND;  Cg(i) = 0._DKIND
-                Ot(i) = 0._DKIND;  Og(i) = 0._DKIND
-               Mgt(i) = 0._DKIND; Mgg(i) = 0._DKIND
-               Alt(i) = 0._DKIND; Alg(i) = 0._DKIND
-               Sit(i) = 0._DKIND; Sig(i) = 0._DKIND
-                St(i) = 0._DKIND;  Sg(i) = 0._DKIND
-               Fet(i) = 0._DKIND; Feg(i) = 0._DKIND
+                Ct(i) = 0._DKIND
+                Cg(i) = 0._DKIND
+                Ot(i) = 0._DKIND
+                Og(i) = 0._DKIND
+               Mgt(i) = 0._DKIND
+               Mgg(i) = 0._DKIND
+               Alt(i) = 0._DKIND
+               Alg(i) = 0._DKIND
+               Sit(i) = 0._DKIND
+               Sig(i) = 0._DKIND
+                St(i) = 0._DKIND
+                Sg(i) = 0._DKIND
+               Fet(i) = 0._DKIND
+               Feg(i) = 0._DKIND
                do iSN = 1, nSN
                   iSN0 = SN_i(iSN)
 
