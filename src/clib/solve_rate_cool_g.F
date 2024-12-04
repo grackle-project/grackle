@@ -1471,7 +1471,7 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
                        go to 9996
                     endif
 
-            call lookup_cool_rates0d(itr, dtit(i),
+            call lookup_cool_rates0d(dtit(i),
      &   d(i,j,k), u(i,j,k), v(i,j,k), w(i,j,k), 
      &   nsp, dsp, dspdot, nratec, 
      &   iexpand, ispecies, imetal, imcool,
@@ -1607,7 +1607,7 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
                         endif
                       enddo
 
-            call lookup_cool_rates0d(1, dtit(i),
+            call lookup_cool_rates0d(dtit(i),
      &   d(i,j,k), u(i,j,k), v(i,j,k), w(i,j,k), 
      &   nsp, dsp1, dspdot1, nratec, 
      &   iexpand, ispecies, imetal, imcool,
