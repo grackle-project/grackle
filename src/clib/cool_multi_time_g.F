@@ -283,6 +283,7 @@
      &       brem(in), cieco(in),
      &       hyd01k(in), h2k01(in), vibh(in), roth(in), rotl(in),
      &       gpldl(in), gphdl(in), hdlte(in), hdlow(in)
+      integer dummy_iter_arg
           
 !  Iteration mask for multi_cool
 
@@ -351,13 +352,15 @@
          end do
 
 !        Compute the cooling rate
+         dummy_iter_arg=1
 
          call cool1d_multi_g(     
      &                d, e, u, v, w, de, HI, HII, HeI, HeII, HeIII,
      &                in, jn, kn, nratec, 
      &                iexpand, ispecies, imetal, imcool,
      &                idust, idustall, idustfield, idustrec,
-     &                idim, is, ie, j, k, ih2co, ipiht, 1, igammah,
+     &                idim, is, ie, j, k, ih2co, ipiht,
+     &                dummy_iter_arg, igammah,
      &                aye, temstart, temend, z_solar, fgr,
      &                utem, uxyz, uaye, urho, utim,
      &                gamma, fh,
