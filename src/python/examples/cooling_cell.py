@@ -35,6 +35,22 @@ from pygrackle.utilities.model_tests import \
 
 output_name = os.path.basename(__file__[:-3]) # strip off ".py"
 
+def gen_plot(fc,  data, fname):
+    p1, = pyplot.loglog(data["time"].to("Myr"),
+                        data["temperature"],
+                        color="black", label="T")
+    pyplot.xlabel("Time [Myr]")
+    pyplot.ylabel("T [K]")
+    pyplot.twinx()
+    p2, = pyplot.semilogx(data["time"].to("Myr"),
+                          data["mean_molecular_weight"],
+                          color="red", label="$\\mu$")
+    pyplot.ylabel("$\\mu$")
+    pyplot.legend([p1,p2],["T","$\\mu$"], fancybox=True,
+                  loc="center left")
+    pyplot.tight_layout()
+    pyplot.savefig(fname)
+
 if __name__ == "__main__":
     # If we are running the script through the testing framework,
     # then we will pass in two integers corresponding to the sets
@@ -48,6 +64,8 @@ if __name__ == "__main__":
             globals()[var] = val
         output_name = f"{output_name}_{par_index}_{input_index}"
         extra_attrs = {"format_version": model_test_format_version}
+
+        in_testing_framework = True
 
     # Just run the script as is.
     else:
@@ -64,6 +82,8 @@ if __name__ == "__main__":
         my_chemistry.UVbackground = 1
         my_chemistry.grackle_data_file = \
           os.path.join(grackle_data_dir, "CloudyData_UVB=HM2012.h5")
+
+        in_testing_framework = False
 
     density = 0.1 * mass_hydrogen_cgs # g /cm^3
     temperature = 1e6 # K
@@ -93,20 +113,8 @@ if __name__ == "__main__":
         fc, final_time=final_time,
         safety_factor=0.01)
 
-    p1, = pyplot.loglog(data["time"].to("Myr"),
-                        data["temperature"],
-                        color="black", label="T")
-    pyplot.xlabel("Time [Myr]")
-    pyplot.ylabel("T [K]")
-    pyplot.twinx()
-    p2, = pyplot.semilogx(data["time"].to("Myr"),
-                          data["mean_molecular_weight"],
-                          color="red", label="$\\mu$")
-    pyplot.ylabel("$\\mu$")
-    pyplot.legend([p1,p2],["T","$\\mu$"], fancybox=True,
-                  loc="center left")
-    pyplot.tight_layout()
-    pyplot.savefig(f"{output_name}.png")
+    if not in_testing_framework:
+        gen_plot(fc, data, fname=f"{output_name}.png")
 
     # save data arrays as a yt dataset
     yt.save_as_dataset({}, f"{output_name}.h5",

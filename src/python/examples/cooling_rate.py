@@ -31,6 +31,14 @@ from pygrackle.utilities.model_tests import \
 
 output_name = os.path.basename(__file__[:-3]) # strip off ".py"
 
+def gen_plot(fc, data, fname):
+    pyplot.loglog(data["temperature"], np.abs(data["cooling_rate"]),
+                  color="black")
+    pyplot.xlabel('T [K]')
+    pyplot.ylabel('$\\Lambda$ [erg s$^{-1}$ cm$^{3}$]')
+    pyplot.tight_layout()
+    pyplot.savefig(fname)
+
 if __name__ == "__main__":
     # If we are running the script through the testing framework,
     # then we will pass in two integers corresponding to the sets
@@ -44,6 +52,8 @@ if __name__ == "__main__":
             globals()[var] = val
         output_name = f"{output_name}_{par_index}_{input_index}"
         extra_attrs = {"format_version": model_test_format_version}
+
+        in_testing_framework = True
 
     # Just run the script as is.
     else:
@@ -68,6 +78,8 @@ if __name__ == "__main__":
 
         my_chemistry.use_specific_heating_rate = 1
         my_chemistry.use_volumetric_heating_rate = 1
+
+        in_testing_framework = False
 
     # Set units
     my_chemistry.comoving_coordinates = 0 # proper units
@@ -98,11 +110,8 @@ if __name__ == "__main__":
     # get data arrays with symbolic units
     data = fc.finalize_data()
 
-    pyplot.loglog(data["temperature"], np.abs(data["cooling_rate"]),
-                  color="black")
-    pyplot.xlabel('T [K]')
-    pyplot.ylabel('$\\Lambda$ [erg s$^{-1}$ cm$^{3}$]')
-    pyplot.tight_layout()
-    pyplot.savefig(f"{output_name}.png")
+    if not in_testing_framework:
+        gen_plot(fc, data, fname=f"{output_name}.png")
+
     yt.save_as_dataset({}, filename=f"{output_name}.h5",
                        data=data, extra_attrs=extra_attrs)

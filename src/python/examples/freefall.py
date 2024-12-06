@@ -32,6 +32,26 @@ from pygrackle.utilities.model_tests import \
 
 output_name = os.path.basename(__file__[:-3]) # strip off ".py"
 
+def gen_plot(fc, data, fname):
+    plots = pyplot.loglog(data["density"], data["temperature"],
+                          color="black", label="T$_{gas}$")
+    if fc.chemistry_data.dust_chemistry == 1:
+        plots.extend(
+            pyplot.loglog(data["density"], data["dust_temperature"],
+                          color="black", linestyle="--", label="T$_{dust}$"))
+    pyplot.xlabel("$\\rho$ [g/cm$^{3}$]")
+    pyplot.ylabel("T [K]")
+
+    pyplot.twinx()
+    plots.extend(
+        pyplot.loglog(data["density"], data["H2I_density"] / data["density"],
+                      color="red", label="f$_{H2}$"))
+    pyplot.ylabel("H$_{2}$ fraction")
+    pyplot.legend(plots, [plot.get_label() for plot in plots],
+                  loc="lower right")
+    pyplot.tight_layout()
+    pyplot.savefig(fname)
+
 if __name__=="__main__":
     # If we are running the script through the testing framework,
     # then we will pass in two integers corresponding to the sets
@@ -45,6 +65,8 @@ if __name__=="__main__":
             globals()[var] = val
         output_name = f"{output_name}_{par_index}_{input_index}"
         extra_attrs = {"format_version": model_test_format_version}
+
+        in_testing_framework = True
 
     # Just run the script as is.
     else:
@@ -67,6 +89,8 @@ if __name__=="__main__":
         my_chemistry.h2_optical_depth_approximation = 1
         my_chemistry.grackle_data_file = os.path.join(
             grackle_data_dir, "cloudy_metals_2008_3D.h5")
+
+        in_testing_framework = False
 
     redshift = 0.
 
@@ -108,25 +132,8 @@ if __name__=="__main__":
     data = evolve_freefall(fc, final_density,
                            safety_factor=0.01,
                            include_pressure=True)
-
-    plots = pyplot.loglog(data["density"], data["temperature"],
-                          color="black", label="T$_{gas}$")
-    if fc.chemistry_data.dust_chemistry == 1:
-        plots.extend(
-            pyplot.loglog(data["density"], data["dust_temperature"],
-                          color="black", linestyle="--", label="T$_{dust}$"))
-    pyplot.xlabel("$\\rho$ [g/cm$^{3}$]")
-    pyplot.ylabel("T [K]")
-
-    pyplot.twinx()
-    plots.extend(
-        pyplot.loglog(data["density"], data["H2I_density"] / data["density"],
-                      color="red", label="f$_{H2}$"))
-    pyplot.ylabel("H$_{2}$ fraction")
-    pyplot.legend(plots, [plot.get_label() for plot in plots],
-                  loc="lower right")
-    pyplot.tight_layout()
-    pyplot.savefig(f"{output_name}.png")
+    if not in_testing_framework:
+        gen_plot(fc, data, fname=f"{output_name}.png")
 
     # save data arrays as a yt dataset
     yt.save_as_dataset({}, f"{output_name}.h5",
