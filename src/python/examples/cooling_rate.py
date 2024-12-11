@@ -25,9 +25,7 @@ from pygrackle.utilities.physical_constants import \
     mass_hydrogen_cgs, \
     sec_per_Myr, \
     cm_per_mpc
-from pygrackle.utilities.model_tests import \
-    get_model_set, \
-    model_test_format_version
+from pygrackle.utilities.model_tests import parse_model_cliargs
 
 output_name = os.path.basename(__file__[:-3]) # strip off ".py"
 
@@ -39,21 +37,21 @@ def gen_plot(fc, data, fname):
     pyplot.tight_layout()
     pyplot.savefig(fname)
 
-if __name__ == "__main__":
-    # If we are running the script through the testing framework,
-    # then we will pass in two integers corresponding to the sets
-    # of parameters and inputs.
-    if len(sys.argv) > 1:
-        par_index = int(sys.argv[1])
-        input_index = int(sys.argv[2])
-        my_chemistry, input_set = get_model_set(
-            output_name, par_index, input_index)
-        for var, val in input_set.items():
-            globals()[var] = val
-        output_name = f"{output_name}_{par_index}_{input_index}"
-        extra_attrs = {"format_version": model_test_format_version}
 
-        in_testing_framework = True
+if __name__ == "__main__":
+    # If we are running the script through the testing framework, then we will
+    # pass in arguments (recall sys.argv is just the file name)
+    if len(sys.argv) > 1:
+        tmp = parse_model_cliargs(sys.argv[1:], output_name)
+        if tmp is None:
+            sys.exit(0) # exit early
+        my_chemistry = tmp.my_chemistry
+        for var, val in tmp.input_set.items():
+            globals()[var] = val
+
+        output_name = tmp.output_name
+        extra_attrs = tmp.extra_attrs
+        skip_plot = tmp.skip_plot
 
     # Just run the script as is.
     else:
@@ -79,7 +77,7 @@ if __name__ == "__main__":
         my_chemistry.use_specific_heating_rate = 1
         my_chemistry.use_volumetric_heating_rate = 1
 
-        in_testing_framework = False
+        skip_plot = False
 
     # Set units
     my_chemistry.comoving_coordinates = 0 # proper units
@@ -110,7 +108,7 @@ if __name__ == "__main__":
     # get data arrays with symbolic units
     data = fc.finalize_data()
 
-    if not in_testing_framework:
+    if not skip_plot:
         gen_plot(fc, data, fname=f"{output_name}.png")
 
     yt.save_as_dataset({}, filename=f"{output_name}.h5",

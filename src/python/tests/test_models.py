@@ -29,7 +29,11 @@ for model_name, model in model_sets.items():
 @pytest.mark.parametrize("model_name, par_index, input_index", all_sets)
 def test_model(model_name, par_index, input_index):
     script_path = os.path.join(python_example_dir, f"{model_name}.py")
-    command = f"{sys.executable} {script_path} {par_index} {input_index}"
+    command = (
+        f"{sys.executable} {script_path} run-test "
+        f"--param-preset {par_index} "
+        f"--input-preset {input_index} "
+    )
     with temporary_directory():
         rval = run_command(command, timeout=60)
         assert rval

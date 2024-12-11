@@ -29,9 +29,7 @@ from pygrackle.utilities.physical_constants import \
     sec_per_Myr, \
     cm_per_mpc
 from pygrackle.utilities.data_path import grackle_data_dir
-from pygrackle.utilities.model_tests import \
-    get_model_set, \
-    model_test_format_version
+from pygrackle.utilities.model_tests import parse_model_cliargs
 
 output_name = os.path.basename(__file__[:-3]) # strip off ".py"
 
@@ -51,21 +49,20 @@ def gen_plot(fc,  data, fname):
     pyplot.tight_layout()
     pyplot.savefig(fname)
 
-if __name__ == "__main__":
-    # If we are running the script through the testing framework,
-    # then we will pass in two integers corresponding to the sets
-    # of parameters and inputs.
-    if len(sys.argv) > 1:
-        par_index = int(sys.argv[1])
-        input_index = int(sys.argv[2])
-        my_chemistry, input_set = get_model_set(
-            output_name, par_index, input_index)
-        for var, val in input_set.items():
-            globals()[var] = val
-        output_name = f"{output_name}_{par_index}_{input_index}"
-        extra_attrs = {"format_version": model_test_format_version}
 
-        in_testing_framework = True
+if __name__ == "__main__":
+    # If we are running the script through the testing framework, then we will
+    # pass in arguments (recall sys.argv is just the file name)
+    if len(sys.argv) > 1:
+        tmp = parse_model_cliargs(sys.argv[1:], output_name)
+        if tmp is None:
+            sys.exit(0) # exit early
+        my_chemistry = tmp.my_chemistry
+        for var, val in tmp.input_set.items():
+            globals()[var] = val
+        output_name = tmp.output_name
+        extra_attrs = tmp.extra_attrs
+        skip_plot = tmp.skip_plot
 
     # Just run the script as is.
     else:
@@ -83,7 +80,7 @@ if __name__ == "__main__":
         my_chemistry.grackle_data_file = \
           os.path.join(grackle_data_dir, "CloudyData_UVB=HM2012.h5")
 
-        in_testing_framework = False
+        skip_plot = False
 
     density = 0.1 * mass_hydrogen_cgs # g /cm^3
     temperature = 1e6 # K
@@ -113,7 +110,7 @@ if __name__ == "__main__":
         fc, final_time=final_time,
         safety_factor=0.01)
 
-    if not in_testing_framework:
+    if not skip_plot:
         gen_plot(fc, data, fname=f"{output_name}.png")
 
     # save data arrays as a yt dataset
