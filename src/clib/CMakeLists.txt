@@ -115,6 +115,7 @@ add_library(Grackle_Grackle
   cool_multi_time_g.F
   interpolators_g.F
   solve_rate_cool_g.F
+  step_rate_newton_raphson.F
   calc_grain_size_increment_1d.F
   gaussj_g.F
   lookup_cool_rates0d.F
