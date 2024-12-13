@@ -87,8 +87,8 @@
      &                reHII, reHeII1, reHeII2, reHeIII, brem, edot,
      &                hyd01k, h2k01, vibh, roth, rotl, gpldl, gphdl,
      &                hdlte, hdlow, cieco, anydust, itmask_nr,
-     &                itmask_metal, itr, imp_eng, nsp, isp,
-     &                jsp, id, dspj, err, err_max, dsp, dsp0, dsp1,
+     &                itmask_metal, itr, imp_eng,
+     &                dspj, err, err_max, dsp, dsp0, dsp1,
      &                dspdot, dspdot1, ddsp, der
      &              )
 
@@ -330,8 +330,9 @@
       integer itr, imp_eng(in)
 !  Local variable
       integer itr_time
-!  Arguments (that could probably be converted to local variables)
       integer nsp, isp, jsp, id
+
+!  Arguments (that could probably be converted to local variables)
       real*8  dspj, err, err_max
       integer,parameter   :: i_eng = 52
       real*8  dsp(i_eng), dsp0(i_eng), dsp1(i_eng)

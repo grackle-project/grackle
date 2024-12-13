@@ -545,7 +545,6 @@
       MASK_TYPE itmask_tmp(in), itmask_nr(in)
       MASK_TYPE itmask_metal(in)
       integer itr, imp_eng(in)
-      integer nsp, isp, jsp, id
       real*8  dspj, err, err_max
       integer,parameter   :: i_eng = 52
       real*8  dsp(i_eng), dsp0(i_eng), dsp1(i_eng)
@@ -1347,8 +1346,8 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
      &                reHII, reHeII1, reHeII2, reHeIII, brem, edot,
      &                hyd01k, h2k01, vibh, roth, rotl, gpldl, gphdl,
      &                hdlte, hdlow, cieco, anydust, itmask_nr,
-     &                itmask_metal, itr, imp_eng, nsp, isp,
-     &                jsp, id, dspj, err, err_max, dsp, dsp0, dsp1,
+     &                itmask_metal, itr, imp_eng,
+     &                dspj, err, err_max, dsp, dsp0, dsp1,
      &                dspdot, dspdot1, ddsp, der
      &              )
 
