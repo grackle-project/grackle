@@ -87,9 +87,7 @@
      &                reHII, reHeII1, reHeII2, reHeIII, brem, edot,
      &                hyd01k, h2k01, vibh, roth, rotl, gpldl, gphdl,
      &                hdlte, hdlow, cieco, anydust, itmask_nr,
-     &                itmask_metal, itr, imp_eng,
-     &                dspj, err, err_max, dsp, dsp0, dsp1,
-     &                dspdot, dspdot1, ddsp, der
+     &                itmask_metal, itr, imp_eng
      &              )
 
 !  PURPOSE:
@@ -331,15 +329,14 @@
 !  Local variable
       integer itr_time
       integer nsp, isp, jsp, id
-
-!  Arguments (that could probably be converted to local variables)
       real*8  dspj, err, err_max
       integer,parameter   :: i_eng = 52
+! There may be an argument for allocating the following at a higher
+! level function, but we will leave that for after transcription
       real*8  dsp(i_eng), dsp0(i_eng), dsp1(i_eng)
      &      , dspdot(i_eng), dspdot1(i_eng)
      &      , ddsp(i_eng), der(i_eng,i_eng)
 
-! The following are all local variables
 ! (In the future, we may want to reconsider when/how we allocate
 ! the following 3 variables)
       integer,allocatable :: idsp(:)
