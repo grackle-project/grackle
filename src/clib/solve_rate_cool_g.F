@@ -551,9 +551,6 @@
       real*8  dsp(i_eng), dsp0(i_eng), dsp1(i_eng)
      &      , dspdot(i_eng), dspdot1(i_eng)
      &      , ddsp(i_eng), der(i_eng,i_eng)
-      integer,allocatable :: idsp(:)
-      real*8, allocatable :: mtrx(:,:), vec(:)
-      real*8, parameter   :: eps = 1.d-4
 
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
