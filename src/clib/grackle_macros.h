@@ -13,6 +13,9 @@
 
 #ifndef __GRACKLE_MACROS_H_
 #define __GRACKLE_MACROS_H_
+
+#include "grackle_float.h"
+
 /***********************************************************************
 /  
 / MACRO DEFINITIONS AND PARAMETERS
@@ -53,6 +56,30 @@
 #define PFORTRAN_NAME(NAME) NAME##_c
 #else
 #define PFORTRAN_NAME(NAME) FORTRAN_NAME(NAME)
+#endif
+
+/* Function macro for gr_float literal */
+
+/// @def GRFLOAT_C(DBL_LITERAL)
+/// @brief expands to a a floating point literal having the value specified by
+///     it argument and the type `gr_float`. The argument must be a literal
+///     with the type `double`
+///
+/// @par More details
+/// This is directly analogous to the `INT32_C(ARG)` or `INTMAX_C(ARG)` macros
+/// defined by the standard <stdint.h> header, but it is designed for
+/// `gr_float` than rather fixed-size integer types. In more detail:
+/// - if `sizeof(gr_float) == sizeof(float)` the macro expands to the input
+///   argument with the `f` suffix.
+/// - otherwise, the macro expands to the input argument
+///
+/// @par Concrete Example
+/// The snippet, `GRFLOAT_C(1.0)` expands to either `1.0f` or `1.0`.
+#ifdef GRACKLE_FLOAT_4
+  #define INNER_CONCAT_(A, B) A ## B
+  #define GRFLOAT_C(DBL_LITERAL) ( INNER_CONCAT_(DBL_LITERAL, f) )
+#elif defined(GRACKLE_FLOAT_8)
+  #define GRFLOAT_C(DBL_LITERAL) ( DBL_LITERAL )
 #endif
 
 /* HDF5 definitions */
@@ -111,6 +138,13 @@
 #ifndef huge
 #define huge 1.0e20
 #endif
+
+// the following 4 are explicitly defined to always match the values used by
+// the fortran layer (in the future, maybe we can consolidate?)
+#define tiny_fortran_val GRFLOAT_C(1.0e-20)
+#define huge_fortran_val GRFLOAT_C(1.0e20)
+#define tiny8 1.0e-40
+#define huge8 1.0e40
 
 /* Macro definitions (things C should have) */
 
