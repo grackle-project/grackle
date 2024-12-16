@@ -516,7 +516,7 @@
      &     , kz40(in), kz41(in), kz42(in), kz43(in), kz44(in)
      &     , kz45(in), kz46(in), kz47(in), kz48(in), kz49(in)
      &     , kz50(in), kz51(in), kz52(in), kz53(in), kz54(in)
-      real*8  h2dustSa(nratec, ndratec), h2dustCa(nratec, ndratec)
+      real*8  h2dustSa(nratec * ndratec), h2dustCa(nratec * ndratec)
       real*8  grogra(nratec)
       real*8  kdSiM(in), kdFeM(in), kdMg2SiO4(in)
      &      , kdMgSiO3(in), kdFe3O4(in), kdAC(in)
