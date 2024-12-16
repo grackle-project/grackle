@@ -162,7 +162,7 @@
      &        ciHeIIa(nratec), reHIIa(nratec), reHeII1a(nratec), 
      &        reHeII2a(nratec), reHeIIIa(nratec), brema(nratec),
      &        compa, piHI, piHeI, piHeII, comp_xraya, comp_temp,
-     &        gammaha, isrf, regra, gamma_isrfa,
+     &        gammaha, isrf, regra(nratec), gamma_isrfa,
      &        avgsighi, avgsighei, avgsigheii,
      &        k24, k26
        R_PREC DM(in,jn,kn)   , HDII(in,jn,kn)   , HeHII(in,jn,kn)
