@@ -457,9 +457,8 @@
       real*8 dsp0, SN_sgsp, SN_kpsp
       real*8 SN_dsp0(SN0_N), SN_nsp0(SN0_N)
       real*8 drsp(in)
-      real*8 pi, mh
-      parameter (pi = pi_val)
-      parameter (mh = mass_h)
+      real*8, parameter :: pi = pi_val
+      real*8, parameter :: mh = mass_h
 !     debug
       real*8 SN_dsp(SN0_N), SN_msp(SN0_N), dsp1
       integer iTd, iTd0
@@ -649,8 +648,7 @@
       real*8 q, r, m
       real*8 th
       real*8 s,t
-      real*8 pi
-      parameter (pi = pi_val)
+      real*8, parameter :: pi = pi_val
 
       q = (a*a - 3.d0*b)/9.d0
       r = (2.d0*a*a*a - 9.d0*a*b + 27.d0*c)/54.d0

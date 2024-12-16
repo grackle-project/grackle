@@ -444,17 +444,13 @@
 !  Parameters
 
 #ifdef GRACKLE_FLOAT_4
-      R_PREC tolerance
-      parameter (tolerance = 1.0e-05_RKIND)
+      R_PREC, parameter :: tolerance = 1.0e-05_RKIND
+#else
+      R_PREC, parameter :: tolerance = 1.0e-10_RKIND
 #endif
 
-#ifdef GRACKLE_FLOAT_8
-      R_PREC tolerance
-      parameter (tolerance = 1.0e-10_RKIND)
-#endif
-
-      real*8 mh, pi
-      parameter (mh = mass_h, pi = pi_val)
+      real*8, parameter :: mh = mass_h
+      real*8, parameter :: pi = pi_val
 
 !  Locals
 
@@ -2517,9 +2513,9 @@ C                 endif
 
 !     Parameters
 
-      real*8 everg, e24, e26
-      parameter(everg = ev2erg, e24 = 13.6_DKIND,
-     &     e26 = 24.6_DKIND)
+      real*8, parameter :: everg = ev2erg
+      real*8, parameter :: e24 = 13.6_DKIND
+      real*8, parameter :: e26 = 24.6_DKIND
 
 !     locals
 
@@ -2596,8 +2592,8 @@ C                 endif
       real*8  d_Td(ndratec),  d_Tg(nratec)
       integer idratec, iratec
       real*8  kd
-      real*8 fh, mh
-      parameter (mh = mass_h)      !DPC
+      real*8 fh
+      real*8, parameter :: mh = mass_h      !DPC
 
 !     locals for H2 self-shielding as WG+19
 

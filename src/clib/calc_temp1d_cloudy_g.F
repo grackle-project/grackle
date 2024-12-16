@@ -82,10 +82,9 @@
 
 !  Parameters
 
-      integer ti_max
-      real*8 mu_metal
-      parameter (mu_metal = 16._DKIND)    ! approx. mean molecular weight of metals
-      parameter (ti_max = 20)
+      ! approx. mean molecular weight of metals
+      real*8, parameter :: mu_metal = 16._DKIND
+      integer, parameter :: ti_max = 20
 
 !  Locals
 

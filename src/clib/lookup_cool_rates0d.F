@@ -249,21 +249,16 @@ c -------------------------------------------------------------------
 
 !  Parameters
 
-      integer itmax
-      parameter (itmax = 10000)
+      integer, parameter :: itmax = 10000
 
-#ifdef CONFIG_BFLOAT_4
-      R_PREC tolerance
-      parameter (tolerance = 1.0e-05_RKIND)
+#ifdef GRACKLE_FLOAT_4
+      R_PREC, parameter :: tolerance = 1.0e-05_RKIND
+#else
+      R_PREC, parameter :: tolerance = 1.0e-10_RKIND
 #endif
 
-#ifdef CONFIG_BFLOAT_8
-      R_PREC tolerance
-      parameter (tolerance = 1.0e-10_RKIND)
-#endif
-
-      real*8 mh, pi
-      parameter (mh = mass_h, pi = pi_val)
+      real*8, parameter :: mh = mass_h
+      real*8, parameter :: pi = pi_val
 
 !  Locals
 
