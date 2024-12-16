@@ -3,7 +3,7 @@
 
 ! calculate rates
 
-      subroutine lookup_cool_rates0d(output, dtit,
+      subroutine lookup_cool_rates0d(dtit,
      &               d, u, v, w, 
      &               nsp, dsp, dspdot, nratec, 
      &               iexpand, ispecies, imetal, imcool,
@@ -133,7 +133,7 @@ c -------------------------------------------------------------------
 
 !  General Arguments
 
-      integer output, nratec, nsp,
+      integer nratec, nsp,
      &        iexpand, ih2co, ipiht, ispecies, imetal, idim,
      &        imcool, idust, idustall, idustfield, idustrec,
      &        igammah, ih2optical, iciecool, ih2cr, ihdcr, ithreebody,
