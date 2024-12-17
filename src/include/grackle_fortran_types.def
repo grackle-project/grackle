@@ -14,6 +14,12 @@
 
 #include "grackle_float.h"
 
+#define MASK_TYPE integer*4
+      integer, parameter :: MASK_KIND=4
+#define MASK_TRUE  1_MASK_KIND
+#define MASK_FALSE 0_MASK_KIND
+
+
 #ifdef GRACKLE_FLOAT_4
 #define tiny 1.e-20
 #define huge 1.e+20

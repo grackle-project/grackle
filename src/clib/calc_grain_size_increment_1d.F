@@ -40,7 +40,7 @@
 
 !     in
       integer in, jn, kn, is, ie, j, k
-      logical itmask(in)
+      MASK_TYPE itmask(in)
       integer immulti, imabund, idspecies, igrgr
       real*8  dom
       R_PREC  d(in,jn,kn)
@@ -369,7 +369,7 @@
       endif
 
       do i = is+1, ie+1
-      if ( itmask(i) ) then
+      if ( itmask(i) .ne. MASK_FALSE ) then
             
          if (idspecies .gt. 0) then
             sgtot  (i) = sgMgSiO3    (i)
@@ -434,9 +434,12 @@
 
 
       implicit NONE
+
+#include "grackle_fortran_types.def"
+
 ! input
       integer in, jn, kn, is, ie, j, k
-      logical itmask(in)
+      MASK_TYPE itmask(in)
       integer igrgr
       integer iSN, nSN, SN0_N
       real*8  dom
@@ -477,7 +480,7 @@
 !     enddo
  
       do i = is+1, ie+1
-         if ( itmask(i) ) then
+         if ( itmask(i) .ne. MASK_FALSE ) then
 !!!!!!!!!!!!!
 !!!!     if( dsp(i,j,k) .gt. 1.d-15*d(i,j,k) ) then
 !!!!!!!!!!!!!
