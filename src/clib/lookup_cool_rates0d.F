@@ -124,6 +124,7 @@
      &             , imp_eng
      &             , idissHDI, kdissHDI, iionZ, kphCI, kphOI
      &             , idissZ, kdissCO, kdissOH, kdissH2O, iuseH2shield
+     &             , iH2shieldcustom, f_shield_custom
      &         )
 
 c -------------------------------------------------------------------
@@ -139,7 +140,7 @@ c -------------------------------------------------------------------
      &        igammah, ih2optical, iciecool, ih2cr, ihdcr, ithreebody,
      &        ndratec, clnew, iVheat, iMheat, iTfloor,
      &        iH2shield, iradshield,
-     &        iradtrans, irt_honly, iisrffield
+     &        iradtrans, iH2shieldcustom, irt_honly, iisrffield
      &       ,imchem, igrgr, ipcont
       MASK_TYPE itmask, itmask_metal, anydust
 
@@ -179,6 +180,10 @@ c -------------------------------------------------------------------
 !  Interstellar radiation field for dust heating
 
       R_PREC  isrf_habing
+
+!  Custom H2 shielding factor
+
+      R_PREC f_shield_custom
 
 !  Cooling tables (coolings rates as a function of temperature)
 
@@ -688,6 +693,7 @@ c -------------------------------------------------------------------
      &              , tSiM, tFeM, tMg2SiO4, tMgSiO3, tFe3O4
      &              , tAC, tSiO2D, tMgO, tFeS, tAl2O3
      &              , treforg, tvolorg, tH2Oice, iuseH2shield
+     &              , iH2shieldcustom, f_shield_custom
      &      )
 
 !           Compute dedot and HIdot, the rates of change of de and HI
