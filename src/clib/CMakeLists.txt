@@ -180,21 +180,6 @@ add_library(Grackle_Grackle
 #   the build)
 add_library(Grackle::Grackle ALIAS Grackle_Grackle) # for inclusion appraoch #1
 
-# the logic diverges a little when naming the library
-if (BUILD_SHARED_LIBS)
-  # this is a crude-hack to make it easier to build the Pygrackle with the
-  # current setuptools build-system
-  # -> due to the custom naming of our shared library, the following makes a
-  #    symlink within the build-directory from the shared library to
-  #    libgrackle.so (or libgrackle.dylib on macOS).
-  # -> this is not idiomatic and the logic will be removed when GitHub PR #208
-  #    is merged (the documentation makes it clear you shouldn't use this!)
-  add_custom_target(buildtree_link_target
-    ALL COMMAND ${CMAKE_COMMAND} -E create_symlink
-      $<TARGET_FILE:Grackle_Grackle>
-      $<TARGET_FILE_DIR:Grackle_Grackle>/libgrackle$<TARGET_FILE_SUFFIX:Grackle_Grackle>)
-endif()
-
 # set standard cmake-specific properties
 set_target_properties(Grackle_Grackle PROPERTIES
   # specify the grackle library is properly named (when it's NOT a shared lib)

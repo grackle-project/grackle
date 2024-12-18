@@ -27,33 +27,129 @@ The easiest thing to do is follow the instructions for installing yt,
 which will provide you with Cython, matplotlib, and NumPy.  Flake8 and
 py.test can then be installed via pip.
 
+You also need to have a fortran compiler installed (for building the Grackle library itself).
+
 .. _install-pygrackle:
 
 Installing Pygrackle
 --------------------
 
-Once the Grackle library has been built and the above dependencies have been
-installed, Pygrackle can be installed by moving into the **src/python**
-directory and invoking the ``pip install -e .`` command.
+Currently, the only way to get Pygrackle is to build it from source.
 
-This is particularly simple if you installed the Grackle library with the classic build system:
+There are 3 ways to build Pygrackle:
+
+ 1. As a standalone, self-contained module.
+    The build command creates a fresh build of the Grackle library and packages it with the Pygrackle module.
+    **(This is the recommended approach)**
+
+ 2. As a module that links to an external copy of Grackle that was compiled with the :ref:`Classic build system <classic_build>`.
+    (This is consistent with the legacy approach for building Pygrackle).
+
+ 3. As a module that links to an external copy of Grackle that was created with the :ref:`CMake build system <cmake_build>`.
+
+Currently, Pygrackle should be used with Grackle builds where OpenMP is disabled.
+
+.. warning::
+
+   We strongly encourage you to use the first approach so that your Pygrackle installation is independent of other Grackle installations on your machine.
+
+   The latter 2 approaches are primarily intended for testing-purposes.
+   If you use the latter 2 approaches, it's your responsibility to ensure that you delete the old version of Pygrackle and reinstall it whenever the external Grackle library is updated.
+   If you forget, Pygrackle may still work, but it's more likely to produce a segmentation fault or (even worse!) silently give incorrect results.
+
+1. Build Pygrackle as a standalone module (recommended)
++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+To install Pygrackle, you just need to invoke the following from the root directory.
 
 .. code-block:: shell-session
 
-   ~/grackle $ cd src/python
-   ~/grackle/src/python $ pip install -e .
+    ~/grackle $ pip install -v .
 
+You can configure the exact C and Fortran compilers that are used for this by manipulating the ``CC`` and ``FC`` environment variables.
+If you must pass extra compiler flags to all invocations of the C or Fortran compiler, you can use the ``CFLAGS`` or ``FFLAGS`` environment variable.
 
-If you used the cmake build-system, you also need to store the path to the build directory in the ``PYGRACKLE_CMAKE_BUILD_DIR`` environment variable.
-If your build directory was located in the root level of the grackle repository and was called **my-build**, the command would look like:
+If you encounter any compilation problems, you can also link Pygrackle against a version of the Grackle library that you already built.
+
+(In the event that you are writing an external python package that depends on directly linking to the underlying Grackle library, be aware that the underlying organization of files in the resulting package may change)
+
+2. Link to external Grackle library (built with Classic build system)
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+*Prerequisite:* This scenario assumes that you have already built Grackle with the :ref:`Class build system <classic_build>`.
+
+To build Pygrackle, we use the ``PYGRACKLE_LEGACY_LINK`` environment variable to indicate that we want to that external build.
+Specifically, that variable must be configured as ``PYGRACKLE_LEGACY_LINK=classic``.
 
 .. code-block:: shell-session
 
-   ~/grackle $ cd src/python
-   ~/grackle/src/python $ PYGRACKLE_CMAKE_BUILD_DIR=../../my-build pip install -e .
+    ~/grackle $ PYGRACKLE_LEGACY_LINK=classic pip install .
 
-.. note:: Pygrackle can only be run when Grackle is compiled without OpenMP.
-   See :ref:`openmp`.
+.. note::
+
+   We explicitly try to maintain the legacy behavior of the older setuptools-based python build-system.
+   This means that we use the copy of the Grackle shared library from the build directory during linking (i.e. Pygrackle will happily build even if Grackle isn't fully installed).
+   
+   We then **ASSUME** that a copy of the Grackle shared library will be in a location known to the system, when you try to run Pygrackle.
+   This could be a standard system location for libraries (on some systems you may need to invoke ``ldconfig`` after installation).
+   This could also be a location specified by the relevant variable; ``LD_LIBRARY_PATH`` if you're on Linux (or most unix-like systems) or ``DYLD_LIBRARY_PATH`` (if you're on macOS)
+
+3. Link to external Grackle library (built with the CMake build system)
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+*Prerequisite:*  This scenario assumes that you have already built (and possibly installed) Grackle with the :ref:`CMake build system <cmake_build>`.
+Specifically, that cmake build must have compiled Grackle as a shared library (the primary way to ensure this happens is by passing the ``-DBUILD_SHARED_LIBS=ON`` flag when using ``cmake`` to configure the build).
+
+To build Pygrackle in this way, you must initialize either the ``Grackle_DIR`` environment variable or the ``Grackle_ROOT`` environment variable with the relevant path for your prebuilt Grackle library.
+This path can either point to cmake build directory (where Grackle is built) OR an installation directory.
+
+We illustrates how to install Pygrackle under this approach down below.
+For the sake of example, we assume that we previously used ``cmake`` to build (and compile) Grackle as a shared library in a build directory called **~/grackle/build**.
+
+.. tabs::
+
+   .. tab:: Default Case (libgrackle won't move after building)
+
+      The default command to build Pygrackle against a CMake-built is shown below.
+      **By default, this approach assumes that the Grackle shared library will never move.**
+      This means that issues will occur if you delete or move the Grackle library.
+      (This is a necessary assumption in order to support build directories).
+
+      .. code-block:: shell-session
+
+         ~/grackle $ Grackle_DIR=${PWD}/build pip install .
+
+   .. tab:: Legacy Linking
+
+      It's also possible to achieve linking behavior more similar to the case where we build Pygrackle against an external Grackle library that was built with the classic build system (this is consistent with the behavior implemented by Pygrackle's former ``setuptools`` build system).
+      Under this scenario, no relationship is assumed between the path to the Grackle shared library that is used while building Pygrackle and the path that is used while running Pygrackle.
+      Instead, we assume that the Grackle shared library will be at an arbitrary location known to the system at runtime (e.g. either it's in a standard location that the OS knows to check or you use ``LD_LIBRARY_PATH``/``DYLD_LIBRARY_PATH``.
+
+      To easily invoke this linking behavior, you can either pass an additional argument to ``pip`` or define an environment variable.
+
+       .. tabs::
+
+          .. code-tab:: shell-session pip
+
+             ~/grackle $ Grackle_DIR=${PWD}/build \
+             > pip install . --config-settings=cmake.define.CMAKE_SKIP_INSTALL_RPATH=TRUE"
+
+          .. code-tab:: shell-session Environment
+
+             ~/grackle $ export Grackle_DIR=${PWD}/build
+             ~/grackle $ export SKBUILD_CMAKE_DEFINE="CMAKE_SKIP_INSTALL_RPATH=TRUE"
+             ~/grackle $ pip install --user .
+
+Testing Your Installation
+-------------------------
+
+To make sure everything is installed properly, you can try invoking pygrackle from the command line:
+
+.. code-block:: shell-session
+
+   $ python -c "import pygrackle"
+
+If this command executes without raising any errors, then you have successfully installed Pygrackle.
 
 .. _pygrackle-dev:
 
@@ -68,20 +164,15 @@ repeat the last line of the :ref:`pygrackle installation instructions
 
 .. code-block:: shell-session
 
-   ~/grackle/src/python $ pip install -e .[dev]
+   ~/grackle $ pip install -e .[dev]
 
-or
-
-.. code-block:: shell-session
-
-   ~/grackle/src/python $ PYGRACKLE_CMAKE_BUILD_DIR=../../my-build pip install -e .[dev]
 
 If you use ``zsh`` as your shell, you will need quotes around
 '.[dev]'.
 
 .. code-block:: shell-session
 
-   ~/grackle/src/python $ pip install -e '.[dev]'
+   ~/grackle $ pip install -e '.[dev]'
 
 
 Running the Example Scripts

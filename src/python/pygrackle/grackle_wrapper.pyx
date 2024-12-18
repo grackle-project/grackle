@@ -1078,15 +1078,3 @@ def _query_units(chemistry_data chem_data, object name,
         casted_current_a_value = current_a_value
 
     return gr_query_units(rates, units_name, casted_current_a_value)
-
-# The following snippet exists for testing purposes. It makes use of a macro
-# defined in setup.py, to specify the type of build used for libgrackle
-cdef extern from *:
-    """
-    int traditional_in_source_build(void) {return TRADITIONAL_IN_SOURCE_BUILD;}
-    """
-    int traditional_in_source_build() # returns 1 for True or 0 for False
-
-def uses_in_source_build():
-    # this is only intented for testing purposes (it's subject to change)
-    return bool(traditional_in_source_build())

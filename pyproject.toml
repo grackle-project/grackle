@@ -1,0 +1,109 @@
+# NOTE: scikit-build-core doesn't use the root-level CMakeLists.txt file,
+#       instead we have it use src/python/CMakeLists.txt.
+#
+# There are 2 reasons for placing this at the root-level directory
+# (rather than in src/python):
+#   1. it ensures that the source-distribution of our source-directory and the
+#      SDist we'll eventually distribute via PyPI will have the same structure
+#   2. it ensures that pygrackle can be installable by invoking
+#      pip install pygrackle @ git+https://github.com/grackle-project/grackle
+
+[build-system]
+requires=[
+  "cython",
+  # since tool.scikit-build.minimum-version is set to "build-system.requires",
+  # the minimum build-requirement for scikit-build-core controls some default
+  # behaviors when newer versions of scikit-build-core are installed
+  # (we should keep an eye on this and keep increasing it over time)
+  "scikit-build-core>=0.10"
+]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "pygrackle"
+description = "A wrapper for the Grackle chemistry library"
+# A simpler project could infer used to infer the version number from git:
+#    https://scikit-build-core.readthedocs.io/en/latest/configuration.html#dynamic-metadata
+# but pygrackle can't (currently) do this since it lives in a "monorepo"
+#    https://github.com/pypa/setuptools_scm/issues/1056
+version = "1.1.dev0"
+classifiers=[
+  "Development Status :: 5 - Production/Stable",
+  "Environment :: Console",
+  "Intended Audience :: Science/Research",
+  "Topic :: Scientific/Engineering :: Astronomy",
+  "License :: OSI Approved :: BSD License",
+  "Operating System :: MacOS :: MacOS X",
+  "Operating System :: POSIX :: Linux",
+  "Operating System :: Unix",
+  "Natural Language :: English",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+]
+keywords=[
+  "simulation", "chemistry", "cooling", "astronomy", "astrophysics"
+]
+requires-python = ">=3.7"
+dependencies = [
+  'cython',
+  'h5py',
+  'numpy',
+  'matplotlib',
+  'yt>=4.0.2'
+]
+
+[project.license]
+text = "BSD 3-Clause"
+
+[project.urls]
+Homepage = 'https://github.com/grackle-project/grackle'
+Documentation = 'https://grackle.readthedocs.io/'
+Source = 'https://github.com/grackle-project/grackle'
+Tracker = 'https://github.com/grackle-project/grackle/issues'
+
+[project.optional-dependencies]
+dev = [
+  'flake8',
+  'packaging',
+  'pytest',
+  'sphinx',
+  'sphinx-tabs',
+  'sphinx_rtd_theme',
+]
+
+
+[tool.scikit-build]
+# redirect to the appropriate CMakeLists.txt file
+cmake.source-dir = "./src/python"
+
+# if the following version of CMake isn't found, scikit-build-core will
+# download and use a compatible CMake-verison
+cmake.version = ">=3.16"
+
+# The build type to use when building the project. Valid options are: "Debug",
+# "Release", "RelWithDebInfo", "MinSizeRel", "", etc.
+cmake.build-type = "Release"
+
+# since this is set, this provides a method for backward compatibility.
+minimum-version = "build-system.requires"
+
+# The following are all packaging-related and may require tweaking
+
+# Files to exclude from the SDist (even if they're included by default).
+# Supports gitignore syntax.
+sdist.exclude = [".circleci",".readthedocs.yml"]
+
+# A list of packages to auto-copy into the wheel.
+wheel.packages = ["./src/python/pygrackle"]
+
+# A set of patterns to exclude from the wheel. This is additive to the SDist
+# exclude patterns.
+wheel.exclude = [
+    # Per the discussion in gh-220, we have decided not to package pyd files
+    # (at least for right now)
+    "**.pyd",
+    # No need to package template files
+    "**.py.in"
+]
