@@ -141,7 +141,7 @@ c -------------------------------------------------------------------
      &        iH2shield, iradshield,
      &        iradtrans, irt_honly, iisrffield
      &       ,imchem, igrgr, ipcont
-      logical itmask, itmask_metal, anydust
+      MASK_TYPE itmask, itmask_metal, anydust
 
       real*8  dx_cgs, aye, temstart, temend, gamma,
      &        utim, uxyz, uaye, urho, utem, fh, z_solar, 
@@ -432,7 +432,7 @@ c -------------------------------------------------------------------
          HDII    = dsp(14)
          HeHII   = dsp(15)
       endif
-      if ( itmask_metal ) then
+      if ( itmask_metal .ne. MASK_FALSE ) then
       if (imchem .eq. 1) then
          CI      = dsp(16)
          CII     = dsp(17)
@@ -909,7 +909,8 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
                   scoef = scoef
      &              + kdissHDI        * HDI       /3.0_DKIND
                endif
-               if ((imchem .eq. 1) .and. (itmask_metal   )) then
+               if ((imchem .eq. 1) .and. 
+     &             (itmask_metal .ne. MASK_FALSE)) then
                if (idissZ .gt. 0) then
                   scoef = scoef
      &              + kdissOH         * OH        /17.0_DKIND
@@ -918,8 +919,8 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
                endif
             endif
 
-            if (anydust) then
-            if(itmask_metal   ) then
+            if (anydust .ne. MASK_FALSE) then
+            if(itmask_metal .ne. MASK_FALSE   ) then
                acoef = acoef + 2._DKIND * h2dust    * rhoH   
             endif
             endif
@@ -949,7 +950,8 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
      &             + k152    * HeHII        /  5._DKIND
             endif
 
-            if ( (imchem .eq. 1) .and. (itmask_metal   ) ) then
+            if ((imchem .eq. 1) .and. 
+     &          (itmask_metal .ne. MASK_FALSE)) then
                scoef = scoef
      &             + kz20    *    CI        *   H2I        / 24._DKIND
      &             + kz21    *    OI        *   H2I        / 32._DKIND
@@ -1033,7 +1035,8 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
      &             + k149    *   HeI        /  4._DKIND
             endif
 
-            if ( (imchem .eq. 1) .and. (itmask_metal   ) ) then
+            if ((imchem .eq. 1) .and. 
+     &          (itmask_metal .ne. MASK_FALSE)) then
                scoef = scoef
      &             + kz39    *   OII        *    HI        / 16._DKIND
      &             + kz43    *  COII        *    HI        / 28._DKIND
@@ -1065,7 +1068,8 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
             if ( (iradtrans .eq. 1) .and. (irt_honly .eq. 1) )
      &          scoef = scoef + kphHI        * HI    
             if (iradtrans .eq. 1) then
-               if ((imchem .eq. 1) .and. (itmask_metal   )) then
+               if ((imchem .eq. 1) .and. 
+     &             (itmask_metal .ne. MASK_FALSE)) then
                if (iionZ .gt. 0) then
                   scoef = scoef
      &              + kphCI        * CI       /12.0_DKIND
@@ -1100,7 +1104,8 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
      &             + k153    * HeHII        /  5._DKIND
             endif
 
-            if ( (imchem .eq. 1) .and. (itmask_metal   ) ) then
+            if ((imchem .eq. 1) .and. 
+     &          (itmask_metal .ne. MASK_FALSE)) then
                scoef = scoef
                acoef = acoef
      &             + kz44    *   CII        / 12._DKIND
@@ -1124,8 +1129,8 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
      &              + k12   *de        )
      &              + k29shield    + k31shield   
 
-            if (anydust) then
-            if(itmask_metal   ) then
+            if (anydust .ne. MASK_FALSE) then
+            if(itmask_metal .ne. MASK_FALSE   ) then
                scoef = scoef + 2._DKIND * h2dust    *
      &              HI        * rhoH   
             endif
@@ -1141,7 +1146,8 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
      &               + k54    * DI         / 2._DKIND
             endif
 
-            if ( (imchem .eq. 1) .and. (itmask_metal   ) ) then
+            if ((imchem .eq. 1) .and. 
+     &          (itmask_metal .ne. MASK_FALSE)) then
                scoef = scoef +  2._DKIND * ( 0._DKIND
      &             + kz15    *    HI        *    CH        / 13._DKIND
      &             + kz16    *    HI        *   CH2        / 14._DKIND
@@ -1380,7 +1386,7 @@ c
 !     
       if (imchem .eq. 1) then
 
-            if (itmask_metal   ) then
+            if (itmask_metal .ne. MASK_FALSE   ) then
 
 C***** CI **********
                scoef = 0._DKIND + 12._DKIND * ( 0._DKIND
@@ -1820,7 +1826,7 @@ C***** Fe **********
 !     
       if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1) ) then
 
-            if (itmask_metal   ) then
+            if (itmask_metal .ne. MASK_FALSE   ) then
 
             if (idspecies .gt. 0) then
 C***** MgSiO3 **********

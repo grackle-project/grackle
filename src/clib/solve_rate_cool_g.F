@@ -541,9 +541,9 @@
 
 !  Iteration mask
 
-      logical itmask(in), anydust
-      logical itmask_tmp(in), itmask_nr(in)
-      logical itmask_metal(in)
+      MASK_TYPE itmask(in), anydust
+      MASK_TYPE itmask_tmp(in), itmask_nr(in)
+      MASK_TYPE itmask_metal(in)
       integer itr, imp_eng(in), itr_time
       integer nsp, isp, jsp, id
       real*8  dspj, err, err_max
@@ -565,7 +565,11 @@
 
 !     Set flag for dust-related options
 
-      anydust = (idust .gt. 0) .or. (idustall .gt. 0)
+      if ((idust .gt. 0) .or. (idustall .gt. 0)) then
+         anydust = MASK_TRUE
+      else
+         anydust = MASK_FALSE
+      endif
 
 !     ignore metal chemistry/cooling below this metallicity
       min_metallicity = 1.d-9 / z_solar
@@ -725,7 +729,7 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
 !     Initialize iteration mask to true for all cells.
 
          do i = is+1, ie+1
-            itmask(i) = .true.
+            itmask(i) = MASK_TRUE
          enddo
 
 !      If we are using coupled radiation with intermediate stepping,
@@ -735,9 +739,9 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
             if (iradcoupled .eq. 1 .and. iradstep .eq. 1) then
                do i = is+1, ie+1
                   if (kphHI(i,j,k) .gt. 0) then
-                      itmask(i) = .true.
+                      itmask(i) = MASK_TRUE
                   else
-                      itmask(i) = .false.
+                      itmask(i) = MASK_FALSE
                   endif
                enddo
             endif
@@ -746,9 +750,9 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
             if (iradcoupled .eq. 1 .and. iradstep .eq. 0) then
                do i = is+1, ie + 1
                   if (kphHI(i,j,k) .gt. 0) then
-                     itmask(i) = .false.
+                     itmask(i) = MASK_FALSE
                   else
-                     itmask(i) = .true.
+                     itmask(i) = MASK_TRUE
                   endif
                enddo
             endif
@@ -771,7 +775,7 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
          do iter = 1, itmax
 
             do i = is+1, ie+1
-               if (itmask(i)) then
+               if (itmask(i) .ne. MASK_FALSE) then
                   dtit(i) = huge8
                endif
             enddo
@@ -1008,7 +1012,7 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
             itmask_tmp = itmask
             itmask_nr  = itmask
             do i = is+1, ie+1
-            if ( itmask_tmp(i) ) then
+            if ( itmask_tmp(i) .ne. MASK_FALSE ) then
 
                if ( ( (imetal .eq. 0)
      &          .and. (ddom(i) .lt. 1.d8) )
@@ -1017,16 +1021,16 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
      &              .and. (ddom(i) .lt. 1.d8) )
      &             .or. ( (metallicity(i) .gt. min_metallicity)
      &              .and. (ddom(i) .lt. 1.d6) ) ) ) ) then
-                  itmask_nr(i) = .false.
+                  itmask_nr(i) = MASK_FALSE
                else
-                  itmask(i) = .false.
+                  itmask(i) = MASK_FALSE
                endif
 
             endif
             enddo
 
             do i = is+1, ie+1
-            if (itmask_nr(i)) then
+            if (itmask_nr(i) .ne. MASK_FALSE) then
                if ( (icool .eq. 1) .and. (ispecies .gt. 1) .and.
      &              ((ddom(i) .gt. 1.d7)
      &         .and.(tgas(i) .gt. 1650.d0)) ) then
@@ -1040,7 +1044,7 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
 !           Find timestep that keeps relative chemical changes below 10%
 
             do i = is+1, ie+1
-               if (itmask(i)) then
+               if (itmask(i) .ne. MASK_FALSE) then
 !              Bound from below to prevent numerical errors
                
 	       if (abs(dedot(i)) .lt. tiny8) 
@@ -1122,11 +1126,13 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
                  dtit(i) = min(olddtit*1.5_DKIND, dtit(i))
               endif
 
-            else if ((itmask_nr(i)).and.(imp_eng(i).eq.0)) then
+            else if ((itmask_nr(i).ne.MASK_FALSE).and.
+     &               (imp_eng(i).eq.0)) then
                dtit(i) = min(abs(0.1_DKIND*e(i,j,k)/edot(i)*d(i,j,k)),
      &              dt-ttot(i), 0.5_DKIND*dt)
 
-            else if ((itmask_nr(i)).and.(imp_eng(i).eq.1)) then
+            else if ((itmask_nr(i).ne.MASK_FALSE).and.
+     &               (imp_eng(i).eq.1)) then
                dtit(i) = dt - ttot(i)
 
             else               ! itmask
@@ -1139,7 +1145,7 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
 !           Compute maximum timestep for cooling/heating
 
             do i = is+1, ie+1
-               if (itmask(i)) then
+               if (itmask(i) .ne. MASK_FALSE) then
 !              Set energy per unit volume of this cell based in the pressure
 !              (the gamma used here is the right one even for H2 since p2d 
 !               is calculated with this gamma).
@@ -1179,7 +1185,7 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
 
             if (icool .eq. 1) then
             do i = is+1, ie+1
-               if (itmask(i)) then
+               if (itmask(i) .ne. MASK_FALSE) then
                e(i,j,k)  = e(i,j,k) +
      &                 real(edot(i)/d(i,j,k)*dtit(i), RKIND)
 
@@ -1253,7 +1259,7 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
 !     should be put into its own function.
 !           Start Newton-Raphson scheme
             do i = is+1, ie+1
-            if (itmask_nr(i)) then
+            if (itmask_nr(i) .ne. MASK_FALSE) then
 
 !           If density and temperature are low, update gas energy explicitly
 
@@ -1269,7 +1275,7 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
                if (ispecies .gt. 1) nsp = nsp + 3
                if (ispecies .gt. 2) nsp = nsp + 3
                if (ispecies .gt. 3) nsp = nsp + 3
-               if (itmask_metal(i)) then
+               if (itmask_metal(i) .ne. MASK_FALSE) then
                   if (imchem .eq. 1) then
                      nsp = nsp + 19
                      if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1) ) then
@@ -1311,7 +1317,7 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
                   dsp(14) = HDII(i,j,k)
                   dsp(15) = HeHII(i,j,k)
                endif
-               if ( itmask_metal(i) ) then
+               if ( itmask_metal(i) .ne. MASK_FALSE ) then
                   if ( imchem .eq. 1 ) then
                      dsp(16) = CI(i,j,k)
                      dsp(17) = CII(i,j,k)
@@ -1392,7 +1398,7 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
                      idsp(id) = isp
                   enddo
                endif
-               if (itmask_metal(i)) then
+               if (itmask_metal(i) .ne. MASK_FALSE) then
                   if (imchem .eq. 1) then
                      do isp = 16, 34
                         id = id + 1
@@ -1850,7 +1856,7 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
                   HDII(i,j,k)    = dsp(14)
                   HeHII(i,j,k)   = dsp(15)
                endif
-               if ( itmask_metal(i) ) then
+               if ( itmask_metal(i) .ne. MASK_FALSE ) then
                   if ( imchem .eq. 1 ) then
                      CI(i,j,k)      = dsp(16)
                      CII(i,j,k)     = dsp(17)
@@ -1928,7 +1934,7 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
             do i = is+1, ie+1
                ttot(i) = min(ttot(i) + dtit(i), dt)
                if (abs(dt-ttot(i)) .lt.
-     &              tolerance*dt) itmask(i) = .false.
+     &              tolerance*dt) itmask(i) = MASK_FALSE
                if (ttot(i).lt.ttmin) ttmin = ttot(i)
             enddo
 
@@ -1955,7 +1961,7 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
             write(0,'((16(1pe8.1)))') (dtit(i),i=is+1,ie+1)
             write(0,'((16(1pe8.1)))') (ttot(i),i=is+1,ie+1)
             write(0,'((16(1pe8.1)))') (edot(i),i=is+1,ie+1)
-            write(0,'((16(l3)))') (itmask(i),i=is+1,ie+1)
+            write(0,'((16(I3)))') (itmask(i),i=is+1,ie+1)
 
             if (exititmax .eq. 1) then
                ierr = 0
@@ -2393,7 +2399,7 @@ C                 endif
       real*8 temstart, temend, tgas1d(in), mmw(in), dom,
      &       dtemstart, dtemend
       real*8 coolunit, tbase1, xbase1, dx_cgs, c_ljeans
-      logical itmask(in), anydust
+      MASK_TYPE itmask(in), anydust
 
 !     Chemistry rates as a function of temperature
 
@@ -2600,7 +2606,7 @@ C                 endif
       real*8 tgas_touse, ngas_touse, aWG2019
 
       real*8 nSSh, nratio
-      logical itmask_metal(in)
+      MASK_TYPE itmask_metal(in)
 
 !     debug
       integer item
@@ -2612,7 +2618,7 @@ C                 endif
       dlogtem = (log(temend) - log(temstart))/real(nratec-1, DKIND)
 
       do i = is+1, ie+1
-         if (itmask(i)) then
+         if (itmask(i) .ne. MASK_FALSE) then
 !        Compute temp-centered temperature (and log)
 
 !        logtem(i) = log(0.5_DKIND*(tgas(i)+tgasold(i)))
@@ -2653,7 +2659,7 @@ C                 endif
 
       if (ispecies .gt. 1) then
          do i = is+1, ie+1
-            if (itmask(i)) then
+            if (itmask(i) .ne. MASK_FALSE) then
             k7(i) = k7a(indixe(i)) +
      &            (k7a(indixe(i)+1) -k7a(indixe(i)))*tdef(i)
             k8(i) = k8a(indixe(i)) +
@@ -2697,7 +2703,7 @@ C                 endif
 
          do n1 = 1, 14
             do i = is+1, ie+1
-               if (itmask(i)) then
+               if (itmask(i) .ne. MASK_FALSE) then
                k13dd(i,n1) = k13dda(indixe(i),n1) +
      &             (k13dda(indixe(i)+1,n1) - 
      &               k13dda(indixe(i)  ,n1) )*tdef(i)
@@ -2711,7 +2717,7 @@ C                 endif
 
       if (ispecies .gt. 2) then
          do i = is+1, ie+1
-            if (itmask(i)) then
+            if (itmask(i) .ne. MASK_FALSE) then
             k50(i) = k50a(indixe(i)) +
      &            (k50a(indixe(i)+1) -k50a(indixe(i)))*tdef(i)
             k51(i) = k51a(indixe(i)) +
@@ -2734,7 +2740,7 @@ C                 endif
 
       if (ispecies .gt. 3) then
          do i = is+1, ie+1
-            if (itmask(i)) then
+            if (itmask(i) .ne. MASK_FALSE) then
             k125(i) = k125a(indixe(i)) +
      &            (k125a(indixe(i)+1) -k125a(indixe(i)))*tdef(i)
             k129(i) = k129a(indixe(i)) +
@@ -2775,7 +2781,7 @@ C                 endif
 
       if (imchem .eq. 1) then
          do i = is+1, ie+1
-            if (itmask(i)) then
+            if (itmask(i) .ne. MASK_FALSE) then
             kz15(i) = kz15a(indixe(i)) +
      &            (kz15a(indixe(i)+1) -kz15a(indixe(i)))*tdef(i)
             kz16(i) = kz16a(indixe(i)) +
@@ -2862,7 +2868,7 @@ C                 endif
 
 !     Compute grain size increment
 
-      if ( (anydust) .and. (idspecies .gt. 0) ) then
+      if ( (anydust .ne. MASK_FALSE) .and. (idspecies .gt. 0) ) then
 
          call calc_grain_size_increment_1d(
      &             immulti, imabund, idspecies, igrgr, itmask_metal
@@ -2900,7 +2906,7 @@ C                 endif
 
 !     Look-up for H2 formation on dust
 
-      if (anydust) then
+      if (anydust .ne. MASK_FALSE) then
 
          d_logtem0 = log(dtemstart)
          d_logtem9 = log(dtemend)
@@ -2910,7 +2916,7 @@ C                 endif
          if(idspecies .eq. 0) then
 
          do i = is+1, ie+1
-            if (itmask_metal(i)) then
+            if (itmask_metal(i) .ne. MASK_FALSE) then
 
 !              Assume dust melting at T > 1500 K
 
@@ -2970,7 +2976,7 @@ C                 endif
          enddo
 
          do i = is+1, ie+1
-            if (itmask_metal(i)) then
+            if (itmask_metal(i) .ne. MASK_FALSE) then
 
                if (itdmulti .eq. 0) then
 
@@ -3108,7 +3114,7 @@ C                 endif
 !     Compute grain growth rate
 
          do i = is+1, ie+1
-            if (itmask_metal(i)) then
+            if (itmask_metal(i) .ne. MASK_FALSE) then
 
             if (igrgr .eq. 1) then
 
@@ -3315,7 +3321,7 @@ C                 endif
 !        Include approximate self-shielding factors if requested
 
       do i = is+1, ie+1
-         if (itmask(i)) then
+         if (itmask(i) .ne. MASK_FALSE) then
             k24shield(i) = k24
             k25shield(i) = k25
             k26shield(i) = k26
@@ -3334,13 +3340,13 @@ C                 endif
 !     your hydro code, add kdissH2I later
       if (iradtrans == 0 .or. iuseH2shield == 1) then
          do i = is+1, ie+1
-            if (itmask(i)) then
+            if (itmask(i) .ne. MASK_FALSE) then
                k31shield(i) = k31
             endif 
          enddo
       else
          do i = is+1, ie+1
-            if (itmask(i)) then
+            if (itmask(i) .ne. MASK_FALSE) then
                k31shield(i) = k31 + kdissH2I(i,j,k)
             endif
          enddo
@@ -3349,7 +3355,7 @@ C                 endif
 
       if (iH2shield .gt. 0) then
          do i = is+1, ie+1
-            if (itmask(i)) then
+            if (itmask(i) .ne. MASK_FALSE) then
 
 !              Calculate a Sobolev-like length assuming a 3D grid.
                if (iH2shield == 1) then
@@ -3420,7 +3426,7 @@ C                 endif
       if (iradtrans == 1 .and. iuseH2shield == 1) then
 C        write(*,*) 'kdissH2I included'
          do i = is+1, ie+1
-            if (itmask(i)) then
+            if (itmask(i) .ne. MASK_FALSE) then
                k31shield(i) = k31shield(i) + kdissH2I(i,j,k)
             endif 
          enddo
@@ -3429,7 +3435,7 @@ C        write(*,*) 'kdissH2I included'
 !     Custom H2 shielding
       if (iH2shieldcustom .gt. 0) then
         do i = is+1, ie+1
-            if (itmask(i)) then
+            if (itmask(i) .ne. MASK_FALSE) then
               k31shield(i) = f_shield_custom(i,j,k) * k31shield(i)
             endif
         enddo
@@ -3439,7 +3445,7 @@ C        write(*,*) 'kdissH2I included'
       if (iradshield > 0) then
 !     Compute shielding factors
         do i = is+1, ie+1
-          if (itmask(i)) then
+          if (itmask(i) .ne. MASK_FALSE) then
 
 !         Compute shielding factor for H
             nSSh = 6.73e-3_DKIND *
@@ -3494,7 +3500,7 @@ C        write(*,*) 'kdissH2I included'
 !       using same scaling. (rate k29)
 !
         do i = is+1, ie+1
-          if (itmask(i)) then
+          if (itmask(i) .ne. MASK_FALSE) then
 
             if (k24 .lt. tiny8) then
               k24shield(i) = 0._DKIND
@@ -3528,7 +3534,7 @@ C        write(*,*) 'kdissH2I included'
 !
 
         do i = is+1, ie+1
-          if (itmask(i)) then
+          if (itmask(i) .ne. MASK_FALSE) then
 
             if (k24 .lt. tiny8) then
                k24shield(i) = 0._DKIND
@@ -3577,7 +3583,7 @@ C        write(*,*) 'kdissH2I included'
 !     in HI and HeI, but ignoring HeII heating entirely
 !
         do i = is+1, ie+1
-          if (itmask(i)) then
+          if (itmask(i) .ne. MASK_FALSE) then
 
             if (k24 .lt. tiny8) then
                k24shield(i) = 0._DKIND
@@ -3628,7 +3634,7 @@ C        write(*,*) 'kdissH2I included'
 !          (see calc_rate.src)
 
       do i = is+1, ie+1
-         if (itmask(i)) then
+         if (itmask(i) .ne. MASK_FALSE) then
             x = max(HII(i,j,k)/(HI(i,j,k)+HII(i,j,k)), 1.0e-4_DKIND)
             factor = 0.3908_DKIND*(1._DKIND -
      &           x**0.4092_DKIND)**1.7592_DKIND
@@ -3655,7 +3661,7 @@ C        write(*,*) 'kdissH2I included'
 #ifdef USE_DENSITY_DEPENDENT_H2_DISSOCIATION_RATE
             if (ispecies .gt. 1 .and. ithreebody .eq. 0) then
                do i = is+1, ie+1
-                  if (itmask(i)) then
+                  if (itmask(i) .ne. MASK_FALSE) then
                   nh = min(HI(i,j,k)*dom, 1.0e9_DKIND)
                   k13(i) = tiny8
                   if (tgas1d(i) .ge. 500._DKIND .and.
@@ -3732,7 +3738,7 @@ c
      &        iradtrans, irt_honly
       real*8 dedot(in), HIdot(in), dom
       real*8 edot(in)
-      logical itmask(in), anydust
+      MASK_TYPE itmask(in), anydust
 
 !     Density fields
 
@@ -3781,7 +3787,7 @@ c
       if (ispecies .eq. 1) then
 
          do i = is+1, ie+1
-            if (itmask(i)) then
+            if (itmask(i) .ne. MASK_FALSE) then
 !     Compute the electron density rate-of-change
 
             dedot(i) = 
@@ -3813,7 +3819,7 @@ c
 !         Include molecular hydrogen rates for HIdot
 
          do i = is+1, ie+1
-            if (itmask(i)) then
+            if (itmask(i) .ne. MASK_FALSE) then
                HIdot(i) = 
      &               -      k1(i) *de(i,j,k)    *HI(i,j,k)  
      &               -      k7(i) *de(i,j,k)    *HI(i,j,k)
@@ -3837,7 +3843,7 @@ c
 
 !     Add H2 formation on dust grains
 
-            if (anydust) then
+            if (anydust .ne. MASK_FALSE) then
             if (metal(i,j,k) .gt. 1.e-9_DKIND * d(i,j,k)) then
                HIdot(i) = HIdot(i) 
      &              - 2._DKIND * h2dust(i) * rhoH(i) * HI(i,j,k)
@@ -3899,7 +3905,7 @@ c
 !!          endif
 
 
-            if (anydust) then
+            if (anydust .ne. MASK_FALSE) then
             if (metal(i,j,k) .gt. 1.e-9_DKIND * d(i,j,k)) then
                H2delta(i) = H2delta(i) + 
      &              h2dust(i) * HI(i,j,k) * rhoH(i) * 
@@ -3966,7 +3972,7 @@ C           close(11)
       if (iradtrans .eq. 1) then
          if (irt_honly .eq. 0) then
             do i = is+1, ie+1
-               if (itmask(i)) then
+               if (itmask(i) .ne. MASK_FALSE) then
                   HIdot(i) = HIdot(i) - kphHI(i,j,k)*HI(i,j,k)
                   dedot(i) = dedot(i) + kphHI(i,j,k)*HI(i,j,k)
      &                 + kphHeI(i,j,k) * HeI(i,j,k) / 4._DKIND
@@ -3975,7 +3981,7 @@ C           close(11)
             enddo
          else
             do i = is+1, ie+1
-               if (itmask(i)) then
+               if (itmask(i) .ne. MASK_FALSE) then
                   HIdot(i) = HIdot(i) - kphHI(i,j,k)*HI(i,j,k)
                   dedot(i) = dedot(i) + kphHI(i,j,k)*HI(i,j,k)
                endif
@@ -3983,7 +3989,7 @@ C           close(11)
          endif
          if ((ispecies .gt. 2).and.(idissHDI .gt. 0)) then
             do i = is+1, ie+1
-               if (itmask(i)) then
+               if (itmask(i) .ne. MASK_FALSE) then
                   HIdot(i) = HIdot(i)
      &              + kdissHDI(i,j,k) * HDI(i,j,k)/3.0_DKIND
                endif
@@ -3991,7 +3997,7 @@ C           close(11)
          endif
          if ((imchem .gt. 0).and.(iionZ .gt. 0)) then
             do i = is+1, ie+1
-               if (itmask(i)) then
+               if (itmask(i) .ne. MASK_FALSE) then
                   dedot(i) = dedot(i)
      &              + kphCI(i,j,k) * CI(i,j,k)/12.0_DKIND
      &              + kphOI(i,j,k) * OI(i,j,k)/16.0_DKIND
@@ -4000,7 +4006,7 @@ C           close(11)
          endif
          if ((imchem .gt. 0).and.(idissZ .gt. 0)) then
             do i = is+1, ie+1
-               if (itmask(i)) then
+               if (itmask(i) .ne. MASK_FALSE) then
                   HIdot(i) = HIdot(i)
      &              + kdissOH (i,j,k) * OH(i,j,k) /17.0_DKIND
      &              + kdissH2O(i,j,k) * H2O(i,j,k)/18.0_DKIND
@@ -4086,7 +4092,7 @@ c -------------------------------------------------------------------
       integer ispecies, in, jn, kn, is, ie, j, k,
      &        iradtrans, irt_honly
       real*8 dtit(in), dedot_prev(in), HIdot_prev(in)
-      logical itmask(in), itmask_metal(in), anydust
+      MASK_TYPE itmask(in), itmask_metal(in), anydust
 
 !     Density fields
 
@@ -4160,7 +4166,7 @@ c -------------------------------------------------------------------
      &     , OHIIp(in) , H2OIIp(in)  , H3OIIp(in)
      &     , O2IIp(in) , Mgp(in)     , Alp(in)
      &     , Sp(in)    , Fep(in)     
-      real*8  SiMp(in), FeMp(in), Mg2SiO4p(in)
+      R_PREC  SiMp(in), FeMp(in), Mg2SiO4p(in)
      &      , MgSiO3p(in), Fe3O4p(in), ACp(in)
      &      , SiO2Dp(in), MgOp(in), FeSp(in)
      &      , Al2O3p(in)
@@ -4181,7 +4187,7 @@ c -------------------------------------------------------------------
       if (ispecies .eq. 1) then
 
          do i = is+1, ie+1
-            if (itmask(i)) then
+            if (itmask(i) .ne. MASK_FALSE) then
 
 !        1) HI
 
@@ -4266,7 +4272,7 @@ c
 !  --- (B) Do helium chemistry in any case: (for all ispecies values) ---
 
       do i = is+1, ie+1
-         if (itmask(i)) then
+         if (itmask(i) .ne. MASK_FALSE) then
 
 !        4) HeI
 
@@ -4330,7 +4336,7 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
 !        First, do HI/HII with molecular hydrogen terms
 
          do i = is+1, ie+1
-            if (itmask(i)) then
+            if (itmask(i) .ne. MASK_FALSE) then
 
 !        1) HI
 !     
@@ -4361,7 +4367,8 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
                   scoef = scoef
      &              + kdissHDI(i,j,k) * HDI(i,j,k)/3.0_DKIND
                endif
-               if ((imchem .eq. 1) .and. (itmask_metal(i))) then
+               if ( (imchem .eq. 1) .and.
+     &              (itmask_metal(i) .ne. MASK_FALSE) ) then
                if (idissZ .gt. 0) then
                   scoef = scoef
      &              + kdissOH (i,j,k) * OH(i,j,k) /17.0_DKIND
@@ -4370,8 +4377,8 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
                endif
             endif
 
-            if (anydust) then
-            if(itmask_metal(i)) then
+            if (anydust .ne. MASK_FALSE) then
+            if(itmask_metal(i) .ne. MASK_FALSE) then
                acoef = acoef + 2._DKIND * h2dust(i) * rhoH(i)
             endif
             endif
@@ -4401,7 +4408,8 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
      &             + k152(i) * HeHII(i,j,k) /  5._DKIND
             endif
 
-            if ( (imchem .eq. 1) .and. (itmask_metal(i)) ) then
+            if ( (imchem .eq. 1) .and.
+     &           (itmask_metal(i) .ne. MASK_FALSE) ) then
                scoef = scoef
      &             + kz20(i) *    CI(i,j,k) *   H2I(i,j,k) / 24._DKIND
      &             + kz21(i) *    OI(i,j,k) *   H2I(i,j,k) / 32._DKIND
@@ -4485,7 +4493,8 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
      &             + k149(i) *   HeI(i,j,k) /  4._DKIND
             endif
 
-            if ( (imchem .eq. 1) .and. (itmask_metal(i)) ) then
+            if ( (imchem .eq. 1) .and.
+     &           (itmask_metal(i) .ne. MASK_FALSE) ) then
                scoef = scoef
      &             + kz39(i) *   OII(i,j,k) *    HI(i,j,k) / 16._DKIND
      &             + kz43(i) *  COII(i,j,k) *    HI(i,j,k) / 28._DKIND
@@ -4517,7 +4526,8 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
             if ( (iradtrans .eq. 1) .and. (irt_honly .eq. 1) )
      &          scoef = scoef + kphHI(i,j,k) * HIp(i)
             if (iradtrans .eq. 1) then
-               if ((imchem .eq. 1) .and. (itmask_metal(i))) then
+               if ( (imchem .eq. 1) .and.
+     &              (itmask_metal(i) .ne. MASK_FALSE) ) then
                if (iionZ .gt. 0) then
                   scoef = scoef
      &              + kphCI(i,j,k) * CI(i,j,k)/12.0_DKIND
@@ -4552,7 +4562,8 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
      &             + k153(i) * HeHII(i,j,k) /  5._DKIND
             endif
 
-            if ( (imchem .eq. 1) .and. (itmask_metal(i)) ) then
+            if ( (imchem .eq. 1) .and.
+     &           (itmask_metal(i) .ne. MASK_FALSE) ) then
                scoef = scoef
                acoef = acoef
      &             + kz44(i) *   CII(i,j,k) / 12._DKIND
@@ -4576,8 +4587,8 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
      &              + k12(i)*de(i,j,k) )
      &              + k29shield(i) + k31shield(i)
 
-            if (anydust) then
-            if(itmask_metal(i)) then
+            if (anydust .ne. MASK_FALSE) then
+            if(itmask_metal(i) .ne. MASK_FALSE) then
                scoef = scoef + 2._DKIND * h2dust(i) *
      &              HI(i,j,k) * rhoH(i)
             endif
@@ -4593,7 +4604,8 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
      &               + k54(i) * DI (i,j,k) / 2._DKIND
             endif
 #endif
-            if ( (imchem .eq. 1) .and. (itmask_metal(i)) ) then
+            if ( (imchem .eq. 1) .and.
+     &           (itmask_metal(i) .ne. MASK_FALSE) ) then
                scoef = scoef +  2._DKIND * ( 0._DKIND
      &             + kz15(i) *    HI(i,j,k) *    CH(i,j,k) / 13._DKIND
      &             + kz16(i) *    HI(i,j,k) *   CH2(i,j,k) / 14._DKIND
@@ -4689,7 +4701,7 @@ c --- (C) Now do extra 3-species for molecular hydrogen ---
 !     
       if (ispecies .gt. 2) then
          do i = is+1, ie+1
-            if (itmask(i)) then
+            if (itmask(i) .ne. MASK_FALSE) then
 !     
 !         1) DI
 !     
@@ -4780,7 +4792,7 @@ c
 !     
       if (ispecies .gt. 3) then
          do i = is+1, ie+1
-            if (itmask(i)) then
+            if (itmask(i) .ne. MASK_FALSE) then
 !     
 !         1) DM
 !     
@@ -4832,7 +4844,7 @@ c
 !     
       if (imchem .eq. 1) then
          do i = is+1, ie+1
-            if (itmask_metal(i)) then
+            if (itmask_metal(i) .ne. MASK_FALSE) then
 
 C***** CI **********
                scoef = 0._DKIND + 12._DKIND * ( 0._DKIND
@@ -5272,7 +5284,7 @@ C***** Fe **********
 !     
       if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1) ) then
          do i = is+1, ie+1
-            if (itmask_metal(i)) then
+            if (itmask_metal(i) .ne. MASK_FALSE) then
 
             if (idspecies .gt. 0) then
 C***** MgSiO3 **********
@@ -5417,7 +5429,7 @@ C***** H2Oice **********
 !   --- (E) Set densities from 1D temps to 3D fields ---
 
       do i = is+1, ie+1
-         if (itmask(i)) then
+         if (itmask(i) .ne. MASK_FALSE) then
          HIdot_prev(i) = abs(HI(i,j,k)-HIp(i)) /
      &           max(real(dtit(i), DKIND), tiny8)
          HI(i,j,k)    = max(real(HIp(i), RKIND), tiny)
@@ -5441,7 +5453,8 @@ C***** H2Oice **********
          if (ispecies .gt. 3)
      &        de(i,j,k) = de(i,j,k) - DM(i,j,k)/2._RKIND
      &             + HDII(i,j,k)/3._RKIND + HeHII(i,j,k)/5._RKIND
-         if ( (imchem .eq. 1) .and. (itmask_metal(i)) )
+         if ( (imchem .eq. 1) .and.
+     &        (itmask_metal(i) .ne. MASK_FALSE) )
      &        de(i,j,k) = de(i,j,k)
      &             + CII(i,j,k)/12._RKIND + COII(i,j,k)/28._RKIND
      &             + OII(i,j,k)/16._RKIND + OHII(i,j,k)/17._RKIND
@@ -5469,7 +5482,8 @@ C***** H2Oice **********
             HeHII(i,j,k) = max(real(HeHIIp(i), RKIND), tiny)
          endif
 
-         if ( (imchem .eq. 1) .and. (itmask_metal(i)) ) then
+         if ( (imchem .eq. 1) .and.
+     &        (itmask_metal(i) .ne. MASK_FALSE) ) then
             CI(i,j,k)      = max(real(CIp(i)     , RKIND), tiny)
             CII(i,j,k)     = max(real(CIIp(i)    , RKIND), tiny)
             CO(i,j,k)      = max(real(COp(i)     , RKIND), tiny)
@@ -5647,7 +5661,6 @@ C***** H2Oice **********
      &     , Sig(in), Sg(in), Feg(in)
       real*8 Cd(in), Od(in), Mgd(in), Ald(in)
      &     , Sid(in), Sd(in), Fed(in)
-!     logical itmask_metal(in)
 
 !     Loop over all zones
 
