@@ -302,7 +302,7 @@
 
       real*8 h2dust(in), ncrn(in), ncrd1(in), ncrd2(in)
 
-      real*8  h2dustSa(nratec, ndratec), h2dustCa(nratec, ndratec)
+      real*8  h2dustSa(nratec*ndratec), h2dustCa(nratec*ndratec)
       real*8  grogra(nratec)
 !     grain temperature
       real*8  tSiM(in), tFeM(in), tMg2SiO4(in)
@@ -599,7 +599,7 @@
      &   metDataSize, metCooling, metHeating, clnew,
      &   iVheat, iMheat, Vheat(i,j,k), Mheat(i,j,k),
      &   iTfloor, Tfloor_scalar, Tfloor(i,j,k),
-     &   iisrffield, isrf_habing,
+     &   iisrffield, isrf_habing(i,j,k),
      &   ithreebody, anydust, iH2shield, 
      &   k1a, k2a, k3a, k4a, k5a, k6a, k7a, k8a, k9a, k10a,
      &   k11a, k12a, k13a, k13dda, k14a, k15a, k16a,
@@ -735,7 +735,7 @@
      &   metDataSize, metCooling, metHeating, clnew,
      &   iVheat, iMheat, Vheat(i,j,k), Mheat(i,j,k),
      &   iTfloor, Tfloor_scalar, Tfloor(i,j,k),
-     &   iisrffield, isrf_habing,
+     &   iisrffield, isrf_habing(i,j,k),
      &   ithreebody, anydust, iH2shield, 
      &   k1a, k2a, k3a, k4a, k5a, k6a, k7a, k8a, k9a, k10a,
      &   k11a, k12a, k13a, k13dda, k14a, k15a, k16a,

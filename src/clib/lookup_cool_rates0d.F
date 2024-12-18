@@ -384,7 +384,7 @@ c -------------------------------------------------------------------
      &      , SN0_kpFeS(gr_Size,SN0_N), SN0_kpAl2O3(gr_Size,SN0_N)
      &      , SN0_kpreforg(gr_Size,SN0_N)
      &      , SN0_kpvolorg(gr_Size,SN0_N), SN0_kpH2Oice(gr_Size,SN0_N)
-      real*8  h2dustSa(nratec, ndratec), h2dustCa(nratec, ndratec)
+      real*8  h2dustSa(nratec * ndratec), h2dustCa(nratec * ndratec)
       real*8  grogra(nratec)
       real*8  kdSiM    , kdFeM    , kdMg2SiO4    
      &      , kdMgSiO3    , kdFe3O4    , kdAC    
