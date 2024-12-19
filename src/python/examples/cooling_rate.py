@@ -69,6 +69,9 @@ if __name__ == "__main__":
         my_chemistry.use_specific_heating_rate = 1
         my_chemistry.use_volumetric_heating_rate = 1
 
+    # max_iterations needs to be increased for the colder temperatures
+    my_chemistry.max_iterations = 4*10000
+
     # Set units
     my_chemistry.comoving_coordinates = 0 # proper units
     my_chemistry.a_units = 1.0
