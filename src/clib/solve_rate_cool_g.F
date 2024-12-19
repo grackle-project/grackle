@@ -878,7 +878,15 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
      &              , gasgr2a, gamma_isrf2a
      &          )
 
-            if (ispecies .gt. 0) then
+            if (ispecies .eq. 0) then
+!        This is some basic book-keeping to ensure that itmask_tmp has
+!        sensible values when ispecies is 0
+!        -> There's room for optimization: when ispecies is 0, there is
+!           need to ever touch this variable. But, for now we focus on
+!           correct behavior before implementing this optimization
+              itmask_tmp = itmask
+
+            else
 
 !        Look-up rates as a function of temperature for 1D set of zones
 !         (maybe should add itmask to this call)
