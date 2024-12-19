@@ -1117,41 +1117,46 @@ c  new (correct) way: (april 4, 2007)
 
       endif
 
-!     Calculate dust to gas ratio
+!     Calculate dust to gas ratio AND interstellar radiation field
+!     -> an earlier version of this logic would store values @ indices
+!        where `itmask_metal(i) .ne. MASK_FALSE`
+!     -> this was undesirable, b/c these quantities are required for
+!        photo-electric heating, which can occur when
+!        `itmask_metal(i) .eq. MASK_FALSE` (we can revisit this choice
+!        later). Moreover, in most cases, these calculations will be
+!        faster when there is no branching
 
       if ((anydust .ne. MASK_FALSE) .or. (igammah .gt. 0)) then
          if (idustfield .gt. 0) then
             do i = is+1, ie+1
-               if ( itmask_metal(i) .ne. MASK_FALSE ) then
+               ! REMINDER: use of `itmask` over `itmask_metal` is
+               !   currently required by Photo-electric heating
+               if (itmask(i) .ne. MASK_FALSE) then
+                  ! it may be faster to remove this branching
                   dust2gas(i) = dust(i,j,k) / d(i,j,k)
                endif
             enddo
          else
             do i = is+1, ie+1
-               if ( itmask_metal(i) .ne. MASK_FALSE ) then
-                  dust2gas(i) = fgr * metallicity(i)
-               endif
+               dust2gas(i) = fgr * metallicity(i)
             enddo
          endif
       endif
-
-!     Calculate interstellar radiation field
 
       if ((anydust .ne. MASK_FALSE) .or. (igammah .gt. 1)) then
          if (iisrffield .gt. 0) then
             do i = is+1, ie+1
-               if ( itmask_metal(i) .ne. MASK_FALSE ) then
-                  myisrf(i) = isrf_habing(i,j,k)
-               endif
+               myisrf(i) = isrf_habing(i,j,k)
             enddo
          else
             do i = is+1, ie+1
-               if ( itmask_metal(i) .ne. MASK_FALSE ) then
-                  myisrf(i) = isrf
-               endif
+               myisrf(i) = isrf
             enddo
          endif
       endif
+
+!     Calculate heating from interstellar radiation field
+!     -> this is ONLY used when `itmask_metal .eq. MASK_TRUE`
 
       if ((anydust .ne. MASK_FALSE) .or. (igammah .gt. 1)) then
       do i = is+1, ie+1
