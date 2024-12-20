@@ -2043,8 +2043,17 @@ C                 endif
       real*8 nSSh, nratio
       MASK_TYPE itmask_metal(in)
 
-!     debug
-      integer item
+!     this is a temporary variable to help with transcription
+!     -> we do this to circumvent the transcription issue of casting a
+!        variable and passing the result by reference.
+!     -> we make this a 1 element array to let us avoid some warnings
+!        from some simple analysis-routines that check that the array
+!        rank of a variable (or the lack thereof) is consistent with the
+!        declaration within the called subroutine
+      integer*8 nratec_single_elem_arr(1)
+
+!     Cast nratec
+      nratec_single_elem_arr(1) = int(nratec, 8)
 
 !     Set log values of start and end of lookup tables
 
@@ -2555,8 +2564,8 @@ C                 endif
 
                if (idspecies .gt. 0) then
                call interpolate_1D_g(
-     &              logtem(i), int(nratec, 8), d_Tg, d_dTg,
-     &              int(nratec, 8), grogra, kd)
+     &              logtem(i), nratec_single_elem_arr, d_Tg, d_dTg,
+     &              nratec_single_elem_arr(1), grogra, kd)
             
                kdMgSiO3  (i) = kd * sgMgSiO3  (i) * d(i,j,k)
      &          * min( Mg  (i,j,k) / 24._DKIND**1.5_DKIND
