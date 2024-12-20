@@ -112,7 +112,7 @@ extern void FORTRAN_NAME(cool_multi_time_g)(
         long long *LH2O_N, long long *LH2O_Size,
         double *LH2O_D, double *LH2O_T, double *LH2O_H,
         double *LH2O_dD, double *LH2O_dT, double *LH2O_dH, double *LH2O_L,
-        int *alphap_N, int *alphap_Size,
+        long long *alphap_N, long long *alphap_Size,
         double *alphap_D, double *alphap_T, double *alphap_dD, double *alphap_dT,
         double *alphap_Data,
         int *immulti, int *imabund, int *idspecies, int *itdmulti, int *idsub,

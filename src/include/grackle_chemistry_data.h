@@ -625,7 +625,7 @@ typedef struct
   double *LH2O_D, *LH2O_T, *LH2O_H, LH2O_dD, LH2O_dT, LH2O_dH, *LH2O_L;
 
   /* primordial opacity */
-  int    *alphap_N, alphap_Size;
+  long long *alphap_N, alphap_Size;
   double *alphap_D, *alphap_T, alphap_dD, alphap_dT;
   double *alphap_Data;
 

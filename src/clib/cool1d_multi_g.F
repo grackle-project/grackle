@@ -271,7 +271,7 @@
        integer*8 LH2O_N(3), LH2O_Size
        real*8  LH2O_D(LH2O_N(1)), LH2O_T(LH2O_N(2)), LH2O_H(LH2O_N(3))
      &       , LH2O_dD, LH2O_dT, LH2O_dH, LH2O_L(LH2O_Size)
-       integer alphap_N(2), alphap_Size
+       integer*8 alphap_N(2), alphap_Size
        real*8  alphap_D(alphap_N(1)), alphap_T(alphap_N(2))
      &       , alphap_dD, alphap_dT
      &       , alphap_Data(alphap_Size)
@@ -1454,8 +1454,8 @@ c  new (correct) way: (april 4, 2007)
 
             !! primordial continuum opacity !!
             call interpolate_2D_g(
-     &        logrho(i), logT(i), int(alphap_N,8), alphap_D, alphap_dD,
-     &        alphap_T, alphap_dT, int(alphap_Size,8),
+     &        logrho(i), logT(i), alphap_N, alphap_D, alphap_dD,
+     &        alphap_T, alphap_dT, alphap_Size,
      &        alphap_Data, log_a)
               alpha(i) = 1.d1**log_a
          endif

@@ -204,7 +204,7 @@
        integer*8 LH2O_N(3), LH2O_Size
        real*8  LH2O_D(LH2O_N(1)), LH2O_T(LH2O_N(2)), LH2O_H(LH2O_N(3))
      &       , LH2O_dD, LH2O_dT, LH2O_dH, LH2O_L(LH2O_Size)
-       integer alphap_N(2), alphap_Size
+       integer*8 alphap_N(2), alphap_Size
        real*8  alphap_D(alphap_N(1)), alphap_T(alphap_N(2))
      &       , alphap_dD, alphap_dT
      &       , alphap_Data(alphap_Size)

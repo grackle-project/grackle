@@ -360,7 +360,7 @@ int initialize_rates(chemistry_data *my_chemistry, chemistry_data_storage *my_ra
     my_rates->LCO_N = calloc(3, sizeof(long long));
     my_rates->LOH_N = calloc(3, sizeof(long long));
     my_rates->LH2O_N = calloc(3, sizeof(long long));
-    my_rates->alphap_N = calloc(2, sizeof(int));
+    my_rates->alphap_N = calloc(2, sizeof(long long));
     my_rates->gr_N = calloc(2, sizeof(int));
 
     if (my_chemistry->use_primordial_continuum_opacity == 1) {
