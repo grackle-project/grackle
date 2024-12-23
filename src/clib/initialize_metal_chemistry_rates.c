@@ -2098,24 +2098,24 @@ void initialize_primordial_opacity(chemistry_data *my_chemistry, chemistry_data_
   int iD, iT, itab;
   double log_rho;
 
-  my_rates->alphap_D = malloc(ND * sizeof(double));
-  my_rates->alphap_T = malloc(NT * sizeof(double));
-  my_rates->alphap_Data = malloc(ND * NT * sizeof(double));
+  my_rates->alphap.props.parameters[0] = malloc(ND * sizeof(double));
+  my_rates->alphap.props.parameters[1] = malloc(NT * sizeof(double));
+  my_rates->alphap.data = malloc(ND * NT * sizeof(double));
 
-  my_rates->alphap_N[0] = ND;
-  my_rates->alphap_N[1] = NT;
-  my_rates->alphap_Size = ND * NT;
+  my_rates->alphap.props.dimension[0] = ND;
+  my_rates->alphap.props.dimension[1] = NT;
+  my_rates->alphap.props.data_size = ND * NT;
   for(iD = 0; iD < ND; iD++)
-    my_rates->alphap_D[iD] = D0 + (double)iD * dD;
+    my_rates->alphap.props.parameters[0][iD] = D0 + (double)iD * dD;
   for(iT = 0; iT < NT; iT++)
-    my_rates->alphap_T[iT] = T0 + (double)iT * dT;
-  my_rates->alphap_dD = dD;
-  my_rates->alphap_dT = dT; 
+    my_rates->alphap.props.parameters[1][iT] = T0 + (double)iT * dT;
+  my_rates->alphap.props.parameter_spacing[0] = dD;
+  my_rates->alphap.props.parameter_spacing[1] = dT;
   for(iD=0; iD<ND; iD++) {
     log_rho = D0 + iD*dD;
     for(iT=0; iT<NT; iT++) {
       itab = iD * NT + iT;
-      my_rates->alphap_Data[itab] = kp[iT][iD] + log_rho;
+      my_rates->alphap.data[itab] = kp[iT][iD] + log_rho;
     }
   }
 

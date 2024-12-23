@@ -668,10 +668,10 @@ typedef struct
   gr_interp_grid LOH;
   gr_interp_grid LH2O;
 
-  /* primordial opacity */
-  long long *alphap_N, alphap_Size;
-  double *alphap_D, *alphap_T, alphap_dD, alphap_dT;
-  double *alphap_Data;
+  /* primordial opacity table
+   * -> alphap.parameters[0] is log10(mass density)
+   * -> alphap.parameters[1] is log10(temperature) */
+  gr_interp_grid alphap;
 
   /* metal/dust abundance */
   int    *gr_N, gr_Size;

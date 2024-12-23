@@ -273,13 +273,7 @@ void initialize_empty_chemistry_data_storage_struct(chemistry_data_storage *my_r
   initialize_empty_interp_grid_(&my_rates->LOH);
   initialize_empty_interp_grid_(&my_rates->LH2O);
 
-  my_rates->alphap_N = NULL;
-  my_rates->alphap_Size = 0;
-  my_rates->alphap_D = NULL;
-  my_rates->alphap_T = NULL;
-  my_rates->alphap_dD = 0.;
-  my_rates->alphap_dT = 0.;
-  my_rates->alphap_Data = NULL;
+  initialize_empty_interp_grid_(&my_rates->alphap);
 
   my_rates->gr_N = NULL;
   my_rates->gr_Size = 0;
@@ -666,10 +660,7 @@ int local_free_chemistry_data(chemistry_data *my_chemistry,
     // we deal with freeing other interp grids inside of
     // local_free_metal_chemistry_rates
 
-    GRACKLE_FREE(my_rates->alphap_N);
-    GRACKLE_FREE(my_rates->alphap_D);
-    GRACKLE_FREE(my_rates->alphap_T);
-    GRACKLE_FREE(my_rates->alphap_Data);
+    free_interp_grid_(&my_rates->alphap);
 
     GRACKLE_FREE(my_rates->gr_N);
 
