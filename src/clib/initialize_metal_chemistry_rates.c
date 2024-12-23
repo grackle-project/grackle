@@ -5,6 +5,7 @@
 #include "grackle_macros.h"
 #include "grackle_types.h"
 #include "grackle_chemistry_data.h"
+#include "interp_table_utils.h" // free_interp_grid_
 #include "phys_constants.h"
 #include "grackle_rate_functions.h"
 
@@ -428,30 +429,14 @@ int local_free_metal_chemistry_rates(chemistry_data *my_chemistry,
   if (my_chemistry->primordial_chemistry == 0)
     return SUCCESS;
 
-  GRACKLE_FREE(my_rates->LCI_D);
-  GRACKLE_FREE(my_rates->LCI_T);
-  GRACKLE_FREE(my_rates->LCI_H);
-  GRACKLE_FREE(my_rates->LCI_L);
-  GRACKLE_FREE(my_rates->LCII_D);
-  GRACKLE_FREE(my_rates->LCII_T);
-  GRACKLE_FREE(my_rates->LCII_H);
-  GRACKLE_FREE(my_rates->LCII_L);
-  GRACKLE_FREE(my_rates->LOI_D);
-  GRACKLE_FREE(my_rates->LOI_T);
-  GRACKLE_FREE(my_rates->LOI_H);
-  GRACKLE_FREE(my_rates->LOI_L);
-  GRACKLE_FREE(my_rates->LCO_D);
-  GRACKLE_FREE(my_rates->LCO_T);
-  GRACKLE_FREE(my_rates->LCO_H);
-  GRACKLE_FREE(my_rates->LCO_L);
-  GRACKLE_FREE(my_rates->LOH_D);
-  GRACKLE_FREE(my_rates->LOH_T);
-  GRACKLE_FREE(my_rates->LOH_H);
-  GRACKLE_FREE(my_rates->LOH_L);
-  GRACKLE_FREE(my_rates->LH2O_D);
-  GRACKLE_FREE(my_rates->LH2O_T);
-  GRACKLE_FREE(my_rates->LH2O_H);
-  GRACKLE_FREE(my_rates->LH2O_L);
+
+  free_interp_grid_(&my_rates->LCI);
+  free_interp_grid_(&my_rates->LCII);
+  free_interp_grid_(&my_rates->LOI);
+
+  free_interp_grid_(&my_rates->LCO);
+  free_interp_grid_(&my_rates->LOH);
+  free_interp_grid_(&my_rates->LH2O);
 
   GRACKLE_FREE(my_rates->k125);
   GRACKLE_FREE(my_rates->k129);
@@ -702,26 +687,27 @@ void initialize_cooling_rate_H2(chemistry_data *my_chemistry, chemistry_data_sto
   int iD, iT, iH, itab;
   double log_coolunit = log10(coolunit);
 
-  my_rates->LH2_D = malloc(ND * sizeof(double));
-  my_rates->LH2_T = malloc(NT * sizeof(double));
-  my_rates->LH2_H = malloc(NH * sizeof(double));
-  my_rates->LH2_L = malloc(ND * NT * NH * sizeof(double));
+  my_rates->LH2.props.rank=3;
+  my_rates->LH2.props.parameters[0] = malloc(ND * sizeof(double));
+  my_rates->LH2.props.parameters[1] = malloc(NT * sizeof(double));
+  my_rates->LH2.props.parameters[2] = malloc(NH * sizeof(double));
+  my_rates->LH2.data = malloc(ND * NT * NH * sizeof(double));
 
-  my_rates->LH2_N[0] = ND;
-  my_rates->LH2_N[1] = NT;
-  my_rates->LH2_N[2] = NH;
-  my_rates->LH2_Size = ND * NT * NH;
+  my_rates->LH2.props.dimension[0] = ND;
+  my_rates->LH2.props.dimension[1] = NT;
+  my_rates->LH2.props.dimension[2] = NH;
+  my_rates->LH2.props.data_size = ND * NT * NH;
   for(iD = 0; iD < ND; iD++)
-    my_rates->LH2_D[iD] = D0 + (double)iD * dD;
+    my_rates->LH2.props.parameters[0][iD] = D0 + (double)iD * dD;
   for(iT = 0; iT < NT; iT++)
-    my_rates->LH2_T[iT] = T0 + (double)iT * dT;
+    my_rates->LH2.props.parameters[1][iT] = T0 + (double)iT * dT;
   for(iH = 0; iH < NH; iH++)
-    my_rates->LH2_H[iH] = H0 + (double)iH * dH;
-  my_rates->LH2_dD = dD;
-  my_rates->LH2_dT = dT; 
-  my_rates->LH2_dH = dH; 
+    my_rates->LH2.props.parameters[2][iH] = H0 + (double)iH * dH;
+  my_rates->LH2.props.parameter_spacing[0] = dD;
+  my_rates->LH2.props.parameter_spacing[1] = dT;
+  my_rates->LH2.props.parameter_spacing[2] = dH;
   for(itab = 0; itab < ND * NT * NH; itab++) {
-    my_rates->LH2_L[itab] = L[itab] + log_coolunit;
+    my_rates->LH2.data[itab] = L[itab] + log_coolunit;
   }
 }
 
@@ -912,26 +898,27 @@ void initialize_cooling_rate_HD(chemistry_data *my_chemistry, chemistry_data_sto
   int iD, iT, iH, itab;
   double log_coolunit = log10(coolunit);
 
-  my_rates->LHD_D = malloc(ND * sizeof(double));
-  my_rates->LHD_T = malloc(NT * sizeof(double));
-  my_rates->LHD_H = malloc(NH * sizeof(double));
-  my_rates->LHD_L = malloc(ND * NT * NH * sizeof(double));
+  my_rates->LHD.props.rank=3;
+  my_rates->LHD.props.parameters[0] = malloc(ND * sizeof(double));
+  my_rates->LHD.props.parameters[1] = malloc(NT * sizeof(double));
+  my_rates->LHD.props.parameters[2] = malloc(NH * sizeof(double));
+  my_rates->LHD.data = malloc(ND * NT * NH * sizeof(double));
 
-  my_rates->LHD_N[0] = ND;
-  my_rates->LHD_N[1] = NT;
-  my_rates->LHD_N[2] = NH;
-  my_rates->LHD_Size = ND * NT * NH;
+  my_rates->LHD.props.dimension[0] = ND;
+  my_rates->LHD.props.dimension[1] = NT;
+  my_rates->LHD.props.dimension[2] = NH;
+  my_rates->LHD.props.data_size = ND * NT * NH;
   for(iD = 0; iD < ND; iD++)
-    my_rates->LHD_D[iD] = D0 + (double)iD * dD;
+    my_rates->LHD.props.parameters[0][iD] = D0 + (double)iD * dD;
   for(iT = 0; iT < NT; iT++)
-    my_rates->LHD_T[iT] = T0 + (double)iT * dT;
+    my_rates->LHD.props.parameters[1][iT] = T0 + (double)iT * dT;
   for(iH = 0; iH < NH; iH++)
-    my_rates->LHD_H[iH] = H0 + (double)iH * dH;
-  my_rates->LHD_dD = dD;
-  my_rates->LHD_dT = dT; 
-  my_rates->LHD_dH = dH; 
+    my_rates->LHD.props.parameters[2][iH] = H0 + (double)iH * dH;
+  my_rates->LHD.props.parameter_spacing[0] = dD;
+  my_rates->LHD.props.parameter_spacing[1] = dT;
+  my_rates->LHD.props.parameter_spacing[2] = dH;
   for(itab = 0; itab < ND * NT * NH; itab++) {
-    my_rates->LHD_L[itab] = L[itab] + log_coolunit;
+    my_rates->LHD.data[itab] = L[itab] + log_coolunit;
   }
 
 }
@@ -1155,26 +1142,27 @@ void initialize_cooling_rate_CI(chemistry_data *my_chemistry, chemistry_data_sto
   int iD, iT, iH, itab;
   double log_coolunit = log10(coolunit);
 
-  my_rates->LCI_D = malloc(ND * sizeof(double));
-  my_rates->LCI_T = malloc(NT * sizeof(double));
-  my_rates->LCI_H = malloc(NH * sizeof(double));
-  my_rates->LCI_L = malloc(ND * NT * NH * sizeof(double));
+  my_rates->LCI.props.rank=3;
+  my_rates->LCI.props.parameters[0] = malloc(ND * sizeof(double));
+  my_rates->LCI.props.parameters[1] = malloc(NT * sizeof(double));
+  my_rates->LCI.props.parameters[2] = malloc(NH * sizeof(double));
+  my_rates->LCI.data = malloc(ND * NT * NH * sizeof(double));
 
-  my_rates->LCI_N[0] = ND;
-  my_rates->LCI_N[1] = NT;
-  my_rates->LCI_N[2] = NH;
-  my_rates->LCI_Size = ND * NT * NH;
+  my_rates->LCI.props.dimension[0] = ND;
+  my_rates->LCI.props.dimension[1] = NT;
+  my_rates->LCI.props.dimension[2] = NH;
+  my_rates->LCI.props.data_size = ND * NT * NH;
   for(iD = 0; iD < ND; iD++)
-    my_rates->LCI_D[iD] = D0 + (double)iD * dD;
+    my_rates->LCI.props.parameters[0][iD] = D0 + (double)iD * dD;
   for(iT = 0; iT < NT; iT++)
-    my_rates->LCI_T[iT] = T0 + (double)iT * dT;
+    my_rates->LCI.props.parameters[1][iT] = T0 + (double)iT * dT;
   for(iH = 0; iH < NH; iH++)
-    my_rates->LCI_H[iH] = H0 + (double)iH * dH;
-  my_rates->LCI_dD = dD;
-  my_rates->LCI_dT = dT; 
-  my_rates->LCI_dH = dH; 
+    my_rates->LCI.props.parameters[2][iH] = H0 + (double)iH * dH;
+  my_rates->LCI.props.parameter_spacing[0] = dD;
+  my_rates->LCI.props.parameter_spacing[1] = dT;
+  my_rates->LCI.props.parameter_spacing[2] = dH;
   for(itab = 0; itab < ND * NT * NH; itab++) {
-    my_rates->LCI_L[itab] = L[itab] + log_coolunit;
+    my_rates->LCI.data[itab] = L[itab] + log_coolunit;
   }
 
 }
@@ -1398,26 +1386,27 @@ void initialize_cooling_rate_CII(chemistry_data *my_chemistry, chemistry_data_st
   int iD, iT, iH, itab;
   double log_coolunit = log10(coolunit);
 
-  my_rates->LCII_D = malloc(ND * sizeof(double));
-  my_rates->LCII_T = malloc(NT * sizeof(double));
-  my_rates->LCII_H = malloc(NH * sizeof(double));
-  my_rates->LCII_L = malloc(ND * NT * NH * sizeof(double));
+  my_rates->LCII.props.rank=3;
+  my_rates->LCII.props.parameters[0] = malloc(ND * sizeof(double));
+  my_rates->LCII.props.parameters[1] = malloc(NT * sizeof(double));
+  my_rates->LCII.props.parameters[2] = malloc(NH * sizeof(double));
+  my_rates->LCII.data = malloc(ND * NT * NH * sizeof(double));
 
-  my_rates->LCII_N[0] = ND;
-  my_rates->LCII_N[1] = NT;
-  my_rates->LCII_N[2] = NH;
-  my_rates->LCII_Size = ND * NT * NH;
+  my_rates->LCII.props.dimension[0] = ND;
+  my_rates->LCII.props.dimension[1] = NT;
+  my_rates->LCII.props.dimension[2] = NH;
+  my_rates->LCII.props.data_size = ND * NT * NH;
   for(iD = 0; iD < ND; iD++)
-    my_rates->LCII_D[iD] = D0 + (double)iD * dD;
+    my_rates->LCII.props.parameters[0][iD] = D0 + (double)iD * dD;
   for(iT = 0; iT < NT; iT++)
-    my_rates->LCII_T[iT] = T0 + (double)iT * dT;
+    my_rates->LCII.props.parameters[1][iT] = T0 + (double)iT * dT;
   for(iH = 0; iH < NH; iH++)
-    my_rates->LCII_H[iH] = H0 + (double)iH * dH;
-  my_rates->LCII_dD = dD;
-  my_rates->LCII_dT = dT; 
-  my_rates->LCII_dH = dH; 
+    my_rates->LCII.props.parameters[2][iH] = H0 + (double)iH * dH;
+  my_rates->LCII.props.parameter_spacing[0] = dD;
+  my_rates->LCII.props.parameter_spacing[1] = dT;
+  my_rates->LCII.props.parameter_spacing[2] = dH;
   for(itab = 0; itab < ND * NT * NH; itab++) {
-    my_rates->LCII_L[itab] = L[itab] + log_coolunit;
+    my_rates->LCII.data[itab] = L[itab] + log_coolunit;
   }
 
 }
@@ -1641,26 +1630,27 @@ void initialize_cooling_rate_OI(chemistry_data *my_chemistry, chemistry_data_sto
   int iD, iT, iH, itab;
   double log_coolunit = log10(coolunit);
 
-  my_rates->LOI_D = malloc(ND * sizeof(double));
-  my_rates->LOI_T = malloc(NT * sizeof(double));
-  my_rates->LOI_H = malloc(NH * sizeof(double));
-  my_rates->LOI_L = malloc(ND * NT * NH * sizeof(double));
+  my_rates->LOI.props.rank=3;
+  my_rates->LOI.props.parameters[0] = malloc(ND * sizeof(double));
+  my_rates->LOI.props.parameters[1] = malloc(NT * sizeof(double));
+  my_rates->LOI.props.parameters[2] = malloc(NH * sizeof(double));
+  my_rates->LOI.data = malloc(ND * NT * NH * sizeof(double));
 
-  my_rates->LOI_N[0] = ND;
-  my_rates->LOI_N[1] = NT;
-  my_rates->LOI_N[2] = NH;
-  my_rates->LOI_Size = ND * NT * NH;
+  my_rates->LOI.props.dimension[0] = ND;
+  my_rates->LOI.props.dimension[1] = NT;
+  my_rates->LOI.props.dimension[2] = NH;
+  my_rates->LOI.props.data_size = ND * NT * NH;
   for(iD = 0; iD < ND; iD++)
-    my_rates->LOI_D[iD] = D0 + (double)iD * dD;
+    my_rates->LOI.props.parameters[0][iD] = D0 + (double)iD * dD;
   for(iT = 0; iT < NT; iT++)
-    my_rates->LOI_T[iT] = T0 + (double)iT * dT;
+    my_rates->LOI.props.parameters[1][iT] = T0 + (double)iT * dT;
   for(iH = 0; iH < NH; iH++)
-    my_rates->LOI_H[iH] = H0 + (double)iH * dH;
-  my_rates->LOI_dD = dD;
-  my_rates->LOI_dT = dT; 
-  my_rates->LOI_dH = dH; 
+    my_rates->LOI.props.parameters[2][iH] = H0 + (double)iH * dH;
+  my_rates->LOI.props.parameter_spacing[0] = dD;
+  my_rates->LOI.props.parameter_spacing[1] = dT;
+  my_rates->LOI.props.parameter_spacing[2] = dH;
   for(itab = 0; itab < ND * NT * NH; itab++) {
-    my_rates->LOI_L[itab] = L[itab] + log_coolunit;
+    my_rates->LOI.data[itab] = L[itab] + log_coolunit;
   }
 
 }
@@ -1797,26 +1787,27 @@ void initialize_cooling_rate_CO(chemistry_data *my_chemistry, chemistry_data_sto
   int iD, iT, iH, itab;
   double log_coolunit = log10(coolunit);
 
-  my_rates->LCO_D = malloc(ND * sizeof(double));
-  my_rates->LCO_T = malloc(NT * sizeof(double));
-  my_rates->LCO_H = malloc(NH * sizeof(double));
-  my_rates->LCO_L = malloc(ND * NT * NH * sizeof(double));
+  my_rates->LCO.props.rank=3;
+  my_rates->LCO.props.parameters[0] = malloc(ND * sizeof(double));
+  my_rates->LCO.props.parameters[1] = malloc(NT * sizeof(double));
+  my_rates->LCO.props.parameters[2] = malloc(NH * sizeof(double));
+  my_rates->LCO.data = malloc(ND * NT * NH * sizeof(double));
 
-  my_rates->LCO_N[0] = ND;
-  my_rates->LCO_N[1] = NT;
-  my_rates->LCO_N[2] = NH;
-  my_rates->LCO_Size = ND * NT * NH;
+  my_rates->LCO.props.dimension[0] = ND;
+  my_rates->LCO.props.dimension[1] = NT;
+  my_rates->LCO.props.dimension[2] = NH;
+  my_rates->LCO.props.data_size = ND * NT * NH;
   for(iD = 0; iD < ND; iD++)
-    my_rates->LCO_D[iD] = D0 + (double)iD * dD;
+    my_rates->LCO.props.parameters[0][iD] = D0 + (double)iD * dD;
   for(iT = 0; iT < NT; iT++)
-    my_rates->LCO_T[iT] = T0 + (double)iT * dT;
+    my_rates->LCO.props.parameters[1][iT] = T0 + (double)iT * dT;
   for(iH = 0; iH < NH; iH++)
-    my_rates->LCO_H[iH] = H0 + (double)iH * dH;
-  my_rates->LCO_dD = dD;
-  my_rates->LCO_dT = dT; 
-  my_rates->LCO_dH = dH; 
+    my_rates->LCO.props.parameters[2][iH] = H0 + (double)iH * dH;
+  my_rates->LCO.props.parameter_spacing[0] = dD;
+  my_rates->LCO.props.parameter_spacing[1] = dT;
+  my_rates->LCO.props.parameter_spacing[2] = dH;
   for(itab = 0; itab < ND * NT * NH; itab++) {
-    my_rates->LCO_L[itab] = L[itab] + log_coolunit;
+    my_rates->LCO.data[itab] = L[itab] + log_coolunit;
   }
 
 }
@@ -1886,26 +1877,27 @@ void initialize_cooling_rate_OH(chemistry_data *my_chemistry, chemistry_data_sto
   int iD, iT, iH, itab;
   double log_coolunit = log10(coolunit);
 
-  my_rates->LOH_D = malloc(ND * sizeof(double));
-  my_rates->LOH_T = malloc(NT * sizeof(double));
-  my_rates->LOH_H = malloc(NH * sizeof(double));
-  my_rates->LOH_L = malloc(ND * NT * NH * sizeof(double));
+  my_rates->LOH.props.rank=3;
+  my_rates->LOH.props.parameters[0] = malloc(ND * sizeof(double));
+  my_rates->LOH.props.parameters[1] = malloc(NT * sizeof(double));
+  my_rates->LOH.props.parameters[2] = malloc(NH * sizeof(double));
+  my_rates->LOH.data = malloc(ND * NT * NH * sizeof(double));
 
-  my_rates->LOH_N[0] = ND;
-  my_rates->LOH_N[1] = NT;
-  my_rates->LOH_N[2] = NH;
-  my_rates->LOH_Size = ND * NT * NH;
+  my_rates->LOH.props.dimension[0] = ND;
+  my_rates->LOH.props.dimension[1] = NT;
+  my_rates->LOH.props.dimension[2] = NH;
+  my_rates->LOH.props.data_size = ND * NT * NH;
   for(iD = 0; iD < ND; iD++)
-    my_rates->LOH_D[iD] = D0 + (double)iD * dD;
+    my_rates->LOH.props.parameters[0][iD] = D0 + (double)iD * dD;
   for(iT = 0; iT < NT; iT++)
-    my_rates->LOH_T[iT] = T0 + (double)iT * dT;
+    my_rates->LOH.props.parameters[1][iT] = T0 + (double)iT * dT;
   for(iH = 0; iH < NH; iH++)
-    my_rates->LOH_H[iH] = H0 + (double)iH * dH;
-  my_rates->LOH_dD = dD;
-  my_rates->LOH_dT = dT; 
-  my_rates->LOH_dH = dH; 
+    my_rates->LOH.props.parameters[2][iH] = H0 + (double)iH * dH;
+  my_rates->LOH.props.parameter_spacing[0] = dD;
+  my_rates->LOH.props.parameter_spacing[1] = dT;
+  my_rates->LOH.props.parameter_spacing[2] = dH;
   for(itab = 0; itab < ND * NT * NH; itab++) {
-    my_rates->LOH_L[itab] = L[itab] + log_coolunit;
+    my_rates->LOH.data[itab] = L[itab] + log_coolunit;
   }
 
 }
@@ -2041,26 +2033,27 @@ void initialize_cooling_rate_H2O(chemistry_data *my_chemistry, chemistry_data_st
   int iD, iT, iH, itab;
   double log_coolunit = log10(coolunit);
 
-  my_rates->LH2O_D = malloc(ND * sizeof(double));
-  my_rates->LH2O_T = malloc(NT * sizeof(double));
-  my_rates->LH2O_H = malloc(NH * sizeof(double));
-  my_rates->LH2O_L = malloc(ND * NT * NH * sizeof(double));
+  my_rates->LH2O.props.rank=3;
+  my_rates->LH2O.props.parameters[0] = malloc(ND * sizeof(double));
+  my_rates->LH2O.props.parameters[1] = malloc(NT * sizeof(double));
+  my_rates->LH2O.props.parameters[2] = malloc(NH * sizeof(double));
+  my_rates->LH2O.data = malloc(ND * NT * NH * sizeof(double));
 
-  my_rates->LH2O_N[0] = ND;
-  my_rates->LH2O_N[1] = NT;
-  my_rates->LH2O_N[2] = NH;
-  my_rates->LH2O_Size = ND * NT * NH;
+  my_rates->LH2O.props.dimension[0] = ND;
+  my_rates->LH2O.props.dimension[1] = NT;
+  my_rates->LH2O.props.dimension[2] = NH;
+  my_rates->LH2O.props.data_size = ND * NT * NH;
   for(iD = 0; iD < ND; iD++)
-    my_rates->LH2O_D[iD] = D0 + (double)iD * dD;
+    my_rates->LH2O.props.parameters[0][iD] = D0 + (double)iD * dD;
   for(iT = 0; iT < NT; iT++)
-    my_rates->LH2O_T[iT] = T0 + (double)iT * dT;
+    my_rates->LH2O.props.parameters[1][iT] = T0 + (double)iT * dT;
   for(iH = 0; iH < NH; iH++)
-    my_rates->LH2O_H[iH] = H0 + (double)iH * dH;
-  my_rates->LH2O_dD = dD;
-  my_rates->LH2O_dT = dT; 
-  my_rates->LH2O_dH = dH; 
+    my_rates->LH2O.props.parameters[2][iH] = H0 + (double)iH * dH;
+  my_rates->LH2O.props.parameter_spacing[0] = dD;
+  my_rates->LH2O.props.parameter_spacing[1] = dT;
+  my_rates->LH2O.props.parameter_spacing[2] = dH;
   for(itab = 0; itab < ND * NT * NH; itab++) {
-    my_rates->LH2O_L[itab] = L[itab] + log_coolunit;
+    my_rates->LH2O.data[itab] = L[itab] + log_coolunit;
   }
 
 }
