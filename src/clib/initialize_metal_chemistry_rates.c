@@ -1943,9 +1943,12 @@ void initialize_cooling_rate_H2O(chemistry_data *my_chemistry, chemistry_data_st
 
 void initialize_primordial_opacity(chemistry_data *my_chemistry, chemistry_data_storage *my_rates)
 {
-  int    ND = 15, NT = 29;
-  double D0 =-16.0, T0 = 1.8;
-  double dD = 1.0, dT = 0.1;
+  const int rank = 2;
+  const struct regular_range_ params[2] = {
+    {15, -16.0, 1.0}, // log10(mass-density)
+    {29,   1.8, 0.1}  // log10(temperature)
+  };
+
   double kp[29][15] =
    {{-14.39, -13.39, -12.39, -11.39, -10.39, -9.39, -8.39, -7.39,  -6.39,  -5.39,  -4.39,  -3.39,  -2.39,  -1.39,  -0.39}
    ,{-14.18, -13.18, -12.18, -11.18, -10.18, -9.18, -8.18, -7.18,  -6.18,  -5.18,  -4.18,  -3.18,  -2.18,  -1.18,  -0.18}
@@ -1977,26 +1980,13 @@ void initialize_primordial_opacity(chemistry_data *my_chemistry, chemistry_data_
    ,{ -6.13,  -5.13,  -4.13,  -3.13,  -2.13, -1.15, -0.25,  0.68,   1.67,   2.67,   3.66,  10.00,  10.00,  10.00,  10.00}
    ,{ -6.45,  -5.45,  -4.45,  -3.45,  -2.45, -1.45, -0.45,  0.53,   1.46,   2.42,   3.41,  10.00,  10.00,  10.00,  10.00}};
 
-  int iD, iT, itab;
-  double log_rho;
+  setup_generic_grid_props_(&my_rates->alphap.props, rank, params);
 
-  my_rates->alphap.props.parameters[0] = malloc(ND * sizeof(double));
-  my_rates->alphap.props.parameters[1] = malloc(NT * sizeof(double));
-  my_rates->alphap.data = malloc(ND * NT * sizeof(double));
-
-  my_rates->alphap.props.dimension[0] = ND;
-  my_rates->alphap.props.dimension[1] = NT;
-  my_rates->alphap.props.data_size = ND * NT;
-  for(iD = 0; iD < ND; iD++)
-    my_rates->alphap.props.parameters[0][iD] = D0 + (double)iD * dD;
-  for(iT = 0; iT < NT; iT++)
-    my_rates->alphap.props.parameters[1][iT] = T0 + (double)iT * dT;
-  my_rates->alphap.props.parameter_spacing[0] = dD;
-  my_rates->alphap.props.parameter_spacing[1] = dT;
-  for(iD=0; iD<ND; iD++) {
-    log_rho = D0 + iD*dD;
-    for(iT=0; iT<NT; iT++) {
-      itab = iD * NT + iT;
+  my_rates->alphap.data = malloc(my_rates->alphap.props.data_size * sizeof(double));
+  for(int iD=0; iD<params[0].count; iD++) {
+    double log_rho = params[0].start + iD*params[0].step;
+    for(int iT=0; iT<params[1].count; iT++) {
+      int itab = iD * params[1].count + iT;
       my_rates->alphap.data[itab] = kp[iT][iD] + log_rho;
     }
   }
