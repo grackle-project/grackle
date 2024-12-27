@@ -245,5 +245,7 @@ int main(int argc, char *argv[])
 
   fprintf(stdout, "dust_temperature = %24.16g K\n", dust_temperature[0]);
 
+  local_free_chemistry_data(my_grackle_data, &my_grackle_rates);
+
   return EXIT_SUCCESS;
 }
