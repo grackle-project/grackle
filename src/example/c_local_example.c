@@ -309,7 +309,7 @@ int main(int argc, char *argv[])
   }
   fprintf(stdout, "After - dust_temperature = %g K.\n", dust_temperature[0]);
 
-  local_free_chemistry_data(&my_grackle_data, &my_grackle_rates);
+  local_free_chemistry_data(my_grackle_data, &my_grackle_rates);
 
   return EXIT_SUCCESS;
 }
