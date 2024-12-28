@@ -105,11 +105,13 @@
 #define NULL      0
 #endif
 
+#ifndef SKIP_DEF_FAIL
 #ifdef FAIL
 #undef FAIL
 #endif
 #define FAIL      0
 #define SUCCESS   1
+#endif /* SKIP_DEF_FAIL */
 
 #ifndef FALSE
 #define FALSE     0

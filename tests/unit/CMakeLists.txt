@@ -7,6 +7,13 @@ target_link_libraries(testdeps INTERFACE Grackle::Grackle GTest::gtest_main)
 target_compile_definitions(testdeps INTERFACE "$<$<PLATFORM_ID:Linux,Darwin>:LINUX>")
 target_include_directories(testdeps INTERFACE ${PROJECT_SOURCE_DIR}/src/clib)
 
+# short-term hack to get path input-file directory
+# (we can remove this hack once we introduce automatic file management in PR 235,
+#  PR 237, and PR 246)
+target_compile_definitions(testdeps
+  INTERFACE GR_DATADIR=${CMAKE_CURRENT_SOURCE_DIR}/../../grackle_data_files/input/
+)
+
 # start declaring targets for tests
 # ---------------------------------
 add_executable(runInterpolationTests
@@ -20,3 +27,4 @@ add_executable(runInterpolationTests2
 target_link_libraries(runInterpolationTests2 testdeps)
 
 gtest_discover_tests(runInterpolationTests)
+gtest_discover_tests(runInterpolationTests2)

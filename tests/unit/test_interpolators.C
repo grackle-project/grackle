@@ -762,58 +762,48 @@ void run_test(const InterpTable& table, const bool use_3dz = false)
 }
 
 
-int main(){
+const std::uint32_t seed = 342;
 
-  const std::uint32_t seed = 342;
-
-
+TEST(InterpolationTest, CompareInterpolate1D) {
   std::printf("comparing interpolate_1d_g:\n");
-  {
-    InterpTable table = build_table(seed, {{-6.0, 6.0, 25}});
-    run_test(table);
-  }
+  InterpTable table = build_table(seed, {{-6.0, 6.0, 25}});
+  run_test(table);
+}
 
-
+TEST(InterpolationTest, CompareInterpolate2D) {
   std::printf("\ncomparing interpolate_2d_g:\n");
-  {
-    InterpTable table = build_table(seed, {{-6.0, 6.0, 25}, {0.0, 10.0, 11}});
-    run_test(table);
-  }
+  InterpTable table = build_table(seed, {{-6.0, 6.0, 25}, {0.0, 10.0, 11}});
+  run_test(table);
+}
 
 
+TEST(InterpolationTest, CompareInterpolate3D) {
   std::printf("\ncomparing interpolate_3d_g:\n");
-  {
-    InterpTable table = build_table(seed,
-                                    {{-6.0, 6.0, 25}, {0.0, 10.0, 11},
-                                     {-1.0, 0.0, 5}});
-    run_test(table);
-  }
+  InterpTable table = build_table(seed,
+                                  {{-6.0, 6.0, 25}, {0.0, 10.0, 11},
+                                   {-1.0, 0.0, 5}});
+  run_test(table);
+}
 
-
+TEST(InterpolationTest, CompareInterpolate4D) {
   std::printf("\ncomparing interpolate_4d_g:\n");
-  {
-    InterpTable table = build_table(seed,
-                                    {{-6.0, 6.0, 25}, {0.0, 10.0, 11},
-                                     {-1.0, 0.0, 5}, {0.5, 5.5, 6}});
-    run_test(table);
-  }
+  InterpTable table = build_table(seed,
+                                  {{-6.0, 6.0, 25}, {0.0, 10.0, 11},
+                                   {-1.0, 0.0, 5}, {0.5, 5.5, 6}});
+  run_test(table);
+}
 
-
+TEST(InterpolationTest, CompareInterpolate5D) {
   std::printf("\ncomparing interpolate_5d_g:\n");
-  {
-    InterpTable table = build_table(seed,
-                                    {{-6.0, 6.0, 25}, {0.0, 10.0, 11},
-                                     {-1.0, 0.0, 5}, {0.5, 5.5, 6},
-                                     {-10.0, 0.0, 11}});
-    run_test(table);
-  }
+  InterpTable table = build_table(seed,
+                                  {{-6.0, 6.0, 25}, {0.0, 10.0, 11},
+                                   {-1.0, 0.0, 5}, {0.5, 5.5, 6},
+                                   {-10.0, 0.0, 11}});
+  run_test(table);
+}
 
-
+TEST(InterpolationTest, CompareInterpolate3Dz) {
   std::printf("\ncomparing interpolate_3dz_g:\n");
-  {
-    InterpTable table = get_3dz_table();
-    run_test(table, true);
-  }
-  
-  return 0;
+  InterpTable table = get_3dz_table();
+  run_test(table, true);
 }

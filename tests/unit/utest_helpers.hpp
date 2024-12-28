@@ -7,11 +7,18 @@
 #include <string>
 #include <vector>
 
+#include <gtest/gtest.h>
+
 #define mh     1.67262171e-24
 
 #ifndef OMIT_LEGACY_INTERNAL_GRACKLE_FUNC
 #define OMIT_LEGACY_INTERNAL_GRACKLE_FUNC
 #endif
+
+#ifndef SKIP_DEF_FAIL
+#define SKIP_DEF_FAIL
+#endif /* SKIP_DEF_FAIL */
+
 
 extern "C" {
   #include <grackle.h>
@@ -21,13 +28,30 @@ extern "C" {
 #undef max
 #undef min
 
-[[noreturn]] void error(const char *fmt, ...){
+inline std::vector<char> fmt_errmsg_helper_(const char* fmt, std::va_list argp) {
+  std::va_list args2;
+  va_copy(args2, argp);
+  std::vector<char> buf(1 + std::vsnprintf(nullptr, 0, fmt, argp));
+  va_end(argp);
+  std::vsnprintf(buf.data(), buf.size(), fmt, args2);
+  va_end(args2);
+  return buf;
+}
 
-  // parse argument list
-  va_list arg_list;
+inline std::vector<char> fmt_errmsg_(const char* fmt, ...){
+  std::va_list args;
+  va_start(args, fmt);
+  std::vector<char> buf = fmt_errmsg_helper_(fmt, args);
+  va_end(args);
+  return buf;
+}
+
+[[noreturn]] void error(const char *fmt, ...){
+  std::va_list arg_list;
   va_start(arg_list, fmt);         // access variable arguments after fmt
-  vfprintf(stderr, fmt, arg_list); // print to stderr
+  std::vector<char> buf = fmt_errmsg_helper_(fmt, arg_list);
   va_end(arg_list);                // cleanup variable arguments
+  fprintf(stderr, "%s", buf.data()); // print to stderr
   abort();                         // exit program with nonzero exit code
 }
 
@@ -69,7 +93,7 @@ inline void compare_values(const std::vector<double>& actual,
                            std::string err_msg = "")
 {
   if (actual.size() != desired.size()){
-    error("the compared arrays have different lengths\n");
+    FAIL() << "the compared arrays have different lengths\n";
   }
 
   std::size_t num_mismatches = 0;
@@ -114,7 +138,7 @@ inline void compare_values(const std::vector<double>& actual,
   std::string actual_vec_str = vec_to_string(actual);
   std::string ref_vec_str = vec_to_string(desired);
 
-  error
+  std::vector<char> buf = fmt_errmsg_
     (("arrays are unequal for the tolerance: rtol = %g, atol = %g\n"
       "%s\n" // custom error message
       "Mismatched elements: %d / %d\n"
@@ -130,6 +154,7 @@ inline void compare_values(const std::vector<double>& actual,
      max_relDiff, (int)max_relDiff_ind, actual[max_relDiff_ind],
      desired[max_relDiff_ind],
      actual_vec_str.c_str(), ref_vec_str.c_str());
+  FAIL() << buf.data();
 }
 
 /// This function takes an input cloudy-cooling data table and cuts it down so
@@ -180,6 +205,9 @@ inline void cut_down_to_1D_table(cloudy_data* ptr){
   (*ptr) = newObj;
 }
 
+#define stringify(s) stringify_helper(s)
+#define stringify_helper(s) #s
+
 struct DummyGrackleConfig{
   // the central purpose here is to hold grackle configuration options for
   // tabulated solver
@@ -223,11 +251,9 @@ struct DummyGrackleConfig{
     if ((n_tab_dims <= 0) || (n_tab_dims > 3)) {
       error("n_tab_dims must be 1, 2, or 3\n");
     } else if (n_tab_dims <= 2) {
-      my_chem.grackle_data_file
-        = "../../grackle_data_files/input/CloudyData_noUVB.h5";
+      my_chem.grackle_data_file = stringify(GR_DATADIR) "/CloudyData_noUVB.h5";
     } else {
-      my_chem.grackle_data_file =
-        "../../grackle_data_files/input/CloudyData_UVB=HM2012.h5";
+      my_chem.grackle_data_file = stringify(GR_DATADIR) "/CloudyData_UVB=HM2012.h5";
     }
 
     chemistry_data_storage my_rates;
