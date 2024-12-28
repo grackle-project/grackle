@@ -15,7 +15,7 @@
 
 extern "C" {
   #include <grackle.h>
-  #include "../clib/grackle_macros.h"
+  #include "grackle_macros.h"
 }
 
 #undef max

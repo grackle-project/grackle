@@ -9,7 +9,14 @@ target_include_directories(testdeps INTERFACE ${PROJECT_SOURCE_DIR}/src/clib)
 
 # start declaring targets for tests
 # ---------------------------------
-add_executable(runInterpolationTests test_unit_interpolators_g.cpp)
+add_executable(runInterpolationTests
+  test_unit_interpolators_g.cpp interpolators_g.F
+)
 target_link_libraries(runInterpolationTests testdeps)
+
+add_executable(runInterpolationTests2
+  test_interpolators.C utest_helpers.hpp interpolators_g.F
+)
+target_link_libraries(runInterpolationTests2 testdeps)
 
 gtest_discover_tests(runInterpolationTests)

@@ -5,14 +5,14 @@
 #include <math.h>
 
 
-#include "../utest_helpers.hpp"
+#include "utest_helpers.hpp"
 
 
 typedef long long gr_int64;
 
 extern "C" {
 
-#include "../../clib/interop/interop_funcs.h"
+#include "interop_funcs.h"
 
 void FORTRAN_NAME(interpolate_1d_g)(
         const double* input1, const gr_int64* gridDim,
@@ -509,7 +509,8 @@ double uniform_dist_transform_(std::minstd_rand &prng){
 
   // sanity check to confirm that the largest value returned by generator is
   // representable (without any loss of precision) by a double (its <= 2^53)
-  static_assert( (prng.max() <= 9007199254740992) & (prng.min() == 1),
+  static_assert( (std::minstd_rand::max() <= 9007199254740992) &
+                 (std::minstd_rand::min() == 1),
                  "sanity check failed");
 
   return ( static_cast<double>(prng()) / static_cast<double>(prng.max()) );
