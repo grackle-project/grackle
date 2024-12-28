@@ -17,14 +17,9 @@ target_compile_definitions(testdeps
 # start declaring targets for tests
 # ---------------------------------
 add_executable(runInterpolationTests
-  test_unit_interpolators_g.cpp interpolators_g.F
+  test_unit_interpolators_g.cpp interpolators_g.F test_interpolators_comparisons.cpp
 )
 target_link_libraries(runInterpolationTests testdeps)
 
-add_executable(runInterpolationTests2
-  test_interpolators.C utest_helpers.hpp interpolators_g.F
-)
-target_link_libraries(runInterpolationTests2 testdeps)
 
 gtest_discover_tests(runInterpolationTests)
-gtest_discover_tests(runInterpolationTests2)

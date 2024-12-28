@@ -7,6 +7,12 @@
 
 #include "utest_helpers.hpp"
 
+// this file introduces tests that directly compare the newer versions of
+// interpolation routines against the original Fortran versions
+// - this was originally written without using gtest. The tests have all been
+//   retrofitted so that they work with gtest
+// - consequentially, they may not provide the best example for what a unit test
+//   should look like.
 
 typedef long long gr_int64;
 
