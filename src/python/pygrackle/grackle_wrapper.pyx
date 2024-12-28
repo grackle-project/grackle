@@ -19,7 +19,6 @@ from pygrackle.utilities.physical_constants import \
 from libc.limits cimport INT_MAX
 from .grackle_defs cimport *
 import numpy as np
-cimport numpy as np
 
 cdef class chemistry_data:
     cdef _wrapped_c_chemistry_data data
@@ -654,12 +653,26 @@ cdef class chemistry_data:
         def __get__(self):
             return self.density_units * self.energy_units
 
-cdef gr_float* get_field(fc, name):
-    cdef np.ndarray rv = fc.get(name, None)
-    if rv is None:
+
+
+cdef gr_float* get_field(object fc, object name) except? NULL:
+    """
+    Helper function to retrieve a field's pointer from a ``FluidContainer``
+
+    Note
+    ----
+    This function signature informs cython that it needs to inject code every
+    time this function is called to check whether a Python Exception was raised
+    when function-call returns a ``NULL`` pointer. Exceptions can arise if a
+    user accidently typed ``fc[k] = vals`` instead of ``fc[k][:] = vals``.
+    """
+    cdef object arr = fc.get(name, None)
+    if arr is None:
         return NULL
-    else:
-        return <gr_float *> rv.data
+
+    assert arr.size == fc.n_vals # sanity check
+    cdef gr_float[::1] view = arr
+    return <gr_float *> &view[0]
 
 cdef c_field_data setup_field_data(object fc, int[::1] buf,
                                    bint include_velocity) except *:
@@ -696,6 +709,7 @@ cdef c_field_data setup_field_data(object fc, int[::1] buf,
 
     # now initialize my_fields
     cdef c_field_data my_fields
+    gr_initialize_field_data(&my_fields)
     my_fields.grid_rank = 1
     my_fields.grid_dimension = grid_dimension
     my_fields.grid_start = grid_start
@@ -703,25 +717,25 @@ cdef c_field_data setup_field_data(object fc, int[::1] buf,
     my_fields.grid_dx = -1
 
     my_fields.density = get_field(fc, "density")
-    my_fields.HI_density = get_field(fc, "HI")
-    my_fields.HII_density = get_field(fc, "HII")
-    my_fields.HM_density = get_field(fc, "HM")
-    my_fields.HeI_density = get_field(fc, "HeI")
-    my_fields.HeII_density = get_field(fc, "HeII")
-    my_fields.HeIII_density = get_field(fc, "HeIII")
-    my_fields.H2I_density = get_field(fc, "H2I")
-    my_fields.H2II_density = get_field(fc, "H2II")
-    my_fields.DI_density = get_field(fc, "DI")
-    my_fields.DII_density = get_field(fc, "DII")
-    my_fields.HDI_density = get_field(fc, "HDI")
-    my_fields.e_density = get_field(fc, "de")
-    my_fields.metal_density = get_field(fc, "metal")
-    my_fields.dust_density = get_field(fc, "dust")
-    my_fields.internal_energy = get_field(fc, "energy")
+    my_fields.HI_density = get_field(fc, "HI_density")
+    my_fields.HII_density = get_field(fc, "HII_density")
+    my_fields.HM_density = get_field(fc, "HM_density")
+    my_fields.HeI_density = get_field(fc, "HeI_density")
+    my_fields.HeII_density = get_field(fc, "HeII_density")
+    my_fields.HeIII_density = get_field(fc, "HeIII_density")
+    my_fields.H2I_density = get_field(fc, "H2I_density")
+    my_fields.H2II_density = get_field(fc, "H2II_density")
+    my_fields.DI_density = get_field(fc, "DI_density")
+    my_fields.DII_density = get_field(fc, "DII_density")
+    my_fields.HDI_density = get_field(fc, "HDI_density")
+    my_fields.e_density = get_field(fc, "e_density")
+    my_fields.metal_density = get_field(fc, "metal_density")
+    my_fields.dust_density = get_field(fc, "dust_density")
+    my_fields.internal_energy = get_field(fc, "internal_energy")
     if include_velocity:
-        my_fields.x_velocity = get_field(fc, "x-velocity")
-        my_fields.y_velocity = get_field(fc, "y-velocity")
-        my_fields.z_velocity = get_field(fc, "z-velocity")
+        my_fields.x_velocity = get_field(fc, "x_velocity")
+        my_fields.y_velocity = get_field(fc, "y_velocity")
+        my_fields.z_velocity = get_field(fc, "z_velocity")
     my_fields.volumetric_heating_rate = get_field(fc, "volumetric_heating_rate")
     my_fields.specific_heating_rate = get_field(fc, "specific_heating_rate")
     my_fields.temperature_floor = get_field(fc, "temperature_floor")
@@ -949,3 +963,28 @@ cdef class _wrapped_c_chemistry_data:
         for k in self:
             out[k] = self[k]
         return out
+
+def _query_units(chemistry_data chem_data, object name,
+                 object current_a_value):
+    """
+    Computes the units required by grackle for a given scale-factor value.
+
+    Notes
+    -----
+    Currently, this mostly exists for testing purposes
+    """
+    cdef c_chemistry_data_storage* rates = &chem_data.rates
+
+    cdef bytes name_copy
+    if isinstance(name, str):
+        name_copy = name.encode('ASCII')
+    else:
+        name_copy = name
+    cdef char* units_name = name_copy
+
+    cdef double casted_current_a_value = GR_SPECIFY_INITIAL_A_VALUE
+
+    if current_a_value is not None:
+        casted_current_a_value = current_a_value
+
+    return gr_query_units(rates, units_name, casted_current_a_value)

@@ -17,9 +17,7 @@
 #include <string.h>
 #include <unistd.h>
 
-extern "C" {
 #include <grackle.h>
-}
 
 #define mh     1.67262171e-24   
 #define kboltz 1.3806504e-16
@@ -79,6 +77,7 @@ int main(int argc, char *argv[])
 
   // Create struct for storing grackle field data
   grackle_field_data my_fields;
+  gr_initialize_field_data(&my_fields);
 
   // Set grid dimension and size.
   // grid_start and grid_end are used to ignore ghost zones.
@@ -201,7 +200,7 @@ int main(int argc, char *argv[])
     return EXIT_FAILURE;
   }
 
-  fprintf(stderr, "Cooling time = %le s.\n", cooling_time[0] *
+  fprintf(stdout, "cooling_time = %le s.\n", cooling_time[0] *
           my_units.time_units);
 
   // Calculate temperature.
@@ -213,7 +212,7 @@ int main(int argc, char *argv[])
     return EXIT_FAILURE;
   }
 
-  fprintf(stderr, "Temperature = %le K.\n", temperature[0]);
+  fprintf(stdout, "temperature = %le K.\n", temperature[0]);
 
   // Calculate pressure.
   gr_float *pressure;
@@ -226,7 +225,7 @@ int main(int argc, char *argv[])
     return EXIT_FAILURE;
   }
 
-  fprintf(stderr, "Pressure = %le dyne/cm^2.\n", pressure[0]*pressure_units);
+  fprintf(stdout, "pressure = %le dyne/cm^2.\n", pressure[0]*pressure_units);
 
   // Calculate gamma.
   gr_float *gamma;
@@ -237,7 +236,7 @@ int main(int argc, char *argv[])
     return EXIT_FAILURE;
   }
 
-  fprintf(stderr, "gamma = %le.\n", gamma[0]);
+  fprintf(stdout, "gamma = %le.\n", gamma[0]);
 
     // Calculate dust temperature.
   gr_float *dust_temperature;
@@ -248,7 +247,7 @@ int main(int argc, char *argv[])
     return EXIT_FAILURE;
   }
 
-  fprintf(stderr, "dust_temperature = %g K.\n", dust_temperature[0]);
+  fprintf(stdout, "dust_temperature = %g K.\n", dust_temperature[0]);
 
   free_chemistry_data();
 

@@ -21,9 +21,7 @@
 #include <omp.h>
 #endif
 
-extern "C" {
 #include <grackle.h>
-}
 
 #define mh     1.67262171e-24
 #define kboltz 1.3806504e-16
@@ -181,6 +179,8 @@ int main(int argc, char *argv[])
   }
 
   grackle_field_data my_fields_t1, my_fields_tN;
+  gr_initialize_field_data(&my_fields_t1);
+  gr_initialize_field_data(&my_fields_tN);
 
   // Set grid dimension and size.
   // grid_start and grid_end are used to ignore ghost zones.

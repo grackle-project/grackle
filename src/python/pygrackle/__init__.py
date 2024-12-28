@@ -11,7 +11,8 @@
 # software.
 ########################################################################
 
-__version__ = "1.0.0"
+from .__config__ import \
+    __version__
 
 from .fluid_container import \
     FluidContainer
