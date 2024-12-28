@@ -39,4 +39,4 @@ OBJS_CONFIG_LIB = \
         rate_functions.lo \
         initialize_rates.lo \
         utils.lo \
-        interop/interpolators_g.lo
+        interpolators_g.lo
