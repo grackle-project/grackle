@@ -45,10 +45,6 @@ void cool_multi_time_g(
 
   // Locals
 
-  int i, j, k;
-  int t, dj, dk;
-  double comp1, comp2, energy;
-  gr_float factor;
 
   // Slice locals
  
@@ -96,8 +92,7 @@ void cool_multi_time_g(
   std::vector<double> gphdl(my_fields->grid_dimension[0]);
   std::vector<double> hdlte(my_fields->grid_dimension[0]);
   std::vector<double> hdlow(my_fields->grid_dimension[0]);
-  int dummy_iter_arg;
-          
+
   // Iteration mask for multi_cool
 
   std::vector<gr_mask_type> itmask(my_fields->grid_dimension[0]);
@@ -105,14 +100,14 @@ void cool_multi_time_g(
 
   // \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
   // =======================================================================
-  dk = my_fields->grid_end[2] - my_fields->grid_start[2] + 1;
-  dj = my_fields->grid_end[1] - my_fields->grid_start[1] + 1;
+  const int dk = my_fields->grid_end[2] - my_fields->grid_start[2] + 1;
+  const int dj = my_fields->grid_end[1] - my_fields->grid_start[1] + 1;
 
   // Convert densities from comoving to 'proper'
 
   if (my_units->comoving_coordinates == 1)  {
 
-    factor = (gr_float)(std::pow(my_units->a_value,(-3)) );
+    gr_float factor = (gr_float)(std::pow(my_units->a_value,(-3)) );
 
      FORTRAN_NAME(scale_fields_g)(
       &my_chemistry->primordial_chemistry, imetal, &my_chemistry->use_dust_density_field, &my_chemistry->metal_chemistry,
@@ -142,8 +137,6 @@ void cool_multi_time_g(
   // flat j and k loops for better parallelism
   //_// PORT: #ifdef _OPENMP
   //_// PORT: !$omp parallel do schedule(runtime) private(
-  //_// PORT: !$omp&   i, j, k,
-  //_// PORT: !$omp&   comp1, comp2, energy,
   //_// PORT: !$omp&   indixe,
   //_// PORT: !$omp&   t1, t2, logtem, tdef, p2d,
   //_// PORT: !$omp&   tgas, tgasold,
@@ -161,16 +154,17 @@ void cool_multi_time_g(
   {
     //_// TODO: move relevant variable declarations to here to replace OMP private
     //_// TODO_USE: OMP_PRAGMA("omp for")
-    for (t = 0; t<=(dk * dj - 1); t++) {
-      k = t/dj      + my_fields->grid_start[2]+1;
-      j = grackle::impl::mod(t,dj) + my_fields->grid_start[1]+1;
+    for (int t = 0; t<=(dk * dj - 1); t++) {
+      int k = t/dj      + my_fields->grid_start[2]+1;
+      int j = grackle::impl::mod(t,dj) + my_fields->grid_start[1]+1;
 
-      for (i = my_fields->grid_start[0] + 1; i<=(my_fields->grid_end[0] + 1); i++) {
+      for (int i = my_fields->grid_start[0] + 1; i<=(my_fields->grid_end[0] + 1); i++) {
         itmask[i-1] = MASK_TRUE;
       }
 
       // Compute the cooling rate
-      dummy_iter_arg=1;
+      int dummy_iter_arg=1;
+      double comp1, comp2;
 
        FORTRAN_NAME(cool1d_multi_g)(
                    my_fields->density, my_fields->internal_energy, my_fields->x_velocity, my_fields->y_velocity, my_fields->z_velocity, my_fields->e_density, my_fields->HI_density, my_fields->HII_density, my_fields->HeI_density, my_fields->HeII_density, my_fields->HeIII_density,
@@ -281,8 +275,8 @@ void cool_multi_time_g(
       //   (the gamma used here is the same as used to calculate the pressure
       //    in cool1d_multi_g)
 
-      for (i = my_fields->grid_start[0] + 1; i<=(my_fields->grid_end[0] + 1); i++) {
-        energy = std::fmax(p2d[i-1]/(my_chemistry->Gamma-1.), tiny_fortran_val);
+      for (int i = my_fields->grid_start[0] + 1; i<=(my_fields->grid_end[0] + 1); i++) {
+        double energy = std::fmax(p2d[i-1]/(my_chemistry->Gamma-1.), tiny_fortran_val);
         cooltime(i-1,j-1,k-1) = (gr_float)(energy/edot[i-1] );
       }
 
@@ -293,7 +287,7 @@ void cool_multi_time_g(
 
   if (my_units->comoving_coordinates == 1)  {
 
-    factor = (gr_float)(std::pow(my_units->a_value,3) );
+    gr_float factor = (gr_float)(std::pow(my_units->a_value,3) );
 
      FORTRAN_NAME(scale_fields_g)(
       &my_chemistry->primordial_chemistry, imetal, &my_chemistry->use_dust_density_field, &my_chemistry->metal_chemistry,
