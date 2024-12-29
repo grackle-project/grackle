@@ -17,6 +17,14 @@ extern "C" {
 #endif /* __cplusplus */
 // the following function can be called from C or C++
 
+/// Solve the energy cooling equations
+///
+/// @par history
+/// * written by: Yu Zhang, Peter Anninos and Tom Abel
+/// * modified1: January, 1996 by Greg Bryan; adapted to KRONOS
+/// * modified2: October, 1996 by GB; moved to AMR
+/// * modified3: February, 2003 by Robert Harkness; iteration mask
+/// * modified4: December, 2024 by Matthew Abruzzo; ported to C++
 void cool_multi_time_g(
   gr_float* cooltime_data_, int* imetal, double* utem, double* uxyz,
   double* urho, chemistry_data* my_chemistry, chemistry_data_storage* my_rates,

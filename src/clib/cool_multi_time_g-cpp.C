@@ -26,58 +26,8 @@ void cool_multi_time_g(
   photo_rate_storage* my_uvb_rates
 )
 {
-
-  //   SOLVE RADIATIVE COOLING/HEATING EQUATIONS
-  
-  //   written by: Yu Zhang, Peter Anninos and Tom Abel
-  //   date:
-  //   modified1: January, 1996 by Greg Bryan; adapted to KRONOS
-  //   modified2: October, 1996 by GB; moved to AMR
-  //   modified3: February, 2003 by Robert Harkness; iteration mask
-  
-  //   PURPOSE:
-  //     Solve the energy cooling equations.
-  
-  //   INPUTS:
-  //     is,ie   - start and end indicies of active region (zero-based!)
-  
-  //   PARAMETERS:
-  
-  // -----------------------------------------------------------------------
-
-
-  // Arguments
-
-  // -- removed line (previously just declared arg types) -- 
-
-  // -- removed line (previously just declared arg types) -- 
   grackle::impl::View<gr_float***> cooltime(cooltime_data_, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-  // opacity table
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
+
   // grain temperature
   std::vector<double> tSiM(my_fields->grid_dimension[0]);
   std::vector<double> tFeM(my_fields->grid_dimension[0]);
@@ -92,15 +42,6 @@ void cool_multi_time_g(
   std::vector<double> treforg(my_fields->grid_dimension[0]);
   std::vector<double> tvolorg(my_fields->grid_dimension[0]);
   std::vector<double> tH2Oice(my_fields->grid_dimension[0]);
-  // -- removed line (previously just declared arg types) -- 
-
-  // Cloudy cooling data
-
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-
-  // Parameters
 
   // Locals
 
