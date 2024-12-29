@@ -1,6 +1,9 @@
-#include <stdlib.h> // abort
-#include <stdio.h>  // stderr, vfprintf
-#include <stdarg.h> // va_list, va_start, va_end
+#ifndef UTEST_HELPERS_HPP
+#define UTEST_HELPERS_HPP
+
+#include <cstdlib> // abort
+#include <cstdio>  // stderr, vfprintf
+#include <cstdarg> // va_list, va_start, va_end
 
 #include <time.h>
 
@@ -331,3 +334,4 @@ private:
   timespec last_start_;
 
 };
+#endif /* UTEST_HELPERS_HPP */
