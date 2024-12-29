@@ -105,6 +105,7 @@ add_library(Grackle_Grackle
   ${CMAKE_CURRENT_BINARY_DIR}/auto_general.c
 
   # C++ Source (and Private Header Files)
+  cool_multi_time_g-cpp.C cool_multi_time_g-cpp.h
   utils-cpp.C utils-cpp.hpp
 
   # Fortran Source Files
@@ -115,7 +116,6 @@ add_library(Grackle_Grackle
   cool1d_cloudy_g.F
   cool1d_cloudy_old_tables_g.F
   cool1d_multi_g.F
-  cool_multi_time_g.F
   interpolators_g.F
   solve_rate_cool_g.F
   step_rate_newton_raphson.F
