@@ -104,6 +104,9 @@ add_library(Grackle_Grackle
   # auto-generated C source files
   ${CMAKE_CURRENT_BINARY_DIR}/auto_general.c
 
+  # C++ Source (and Private Header Files)
+  utils-cpp.C utils-cpp.hpp
+
   # Fortran Source Files
   calc_tdust_1d_g.F
   calc_tdust_3d_g.F
@@ -140,8 +143,9 @@ add_library(Grackle_Grackle
   ../include/grackle_rate_functions.h
   ../include/grackle_types.h
 
-  # C private headers
+  # private headers
   cie_thin_cooling_rate_tables.h
+  fortran_func_decls.h
   grackle_chemistry_data_fields.def # <-- acts as a C header
   grackle_macros.h
   index_helper.h
@@ -158,6 +162,8 @@ add_library(Grackle_Grackle
   # Fortran private headers
   phys_const.def
 )
+
+target_compile_features(Grackle_Grackle PRIVATE cxx_std_17)
 
 # A downstream application built with CMake generally has 2 inclusion
 # approaches (ways that they can make use of this build):

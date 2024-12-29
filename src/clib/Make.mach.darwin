@@ -98,7 +98,7 @@ MACH_INCLUDES         = $(LOCAL_INCLUDES_HDF5)
 # Libraries
 #-----------------------------------------------------------------------
 
-LOCAL_LIBS_MACH   = -L$(LOCAL_FC_INSTALL) -lgfortran 
+LOCAL_LIBS_MACH   = -L$(LOCAL_FC_INSTALL) -lgfortran -lc++
 LOCAL_LIBS_HDF5   = -L$(LOCAL_HDF5_INSTALL)/lib -lhdf5
 
 MACH_LIBS        = $(LOCAL_LIBS_HDF5) $(LOCAL_LIBS_MACH) 

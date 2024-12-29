@@ -179,7 +179,8 @@
     CFLAGS   = $(MACH_CFLAGS) \
                $(ASSEMBLE_OPT_FLAGS) \
                $(ASSEMBLE_OMP_FLAGS)
-    CXXFLAGS = $(MACH_CXXFLAGS) \
+    CXXFLAGS = --std=c++17 \
+               $(MACH_CXXFLAGS) \
                $(ASSEMBLE_OPT_FLAGS) \
                $(ASSEMBLE_OMP_FLAGS)
     FFLAGS   = $(MACH_FFLAGS) \

@@ -72,7 +72,7 @@ MACH_INCLUDES         = $(LOCAL_INCLUDES_HDF5)
 #-----------------------------------------------------------------------
 
 LOCAL_LIBS_HDF5   = -L/usr/lib/x86_64-linux-gnu/ -lhdf5_serial -lz # HDF5 libraries
-LOCAL_LIBS_MACH   = -lgfortran # Machine-dependent libraries
+LOCAL_LIBS_MACH   = -lgfortran -lstdc++ # Machine-dependent libraries
 
 MACH_LIBS         = $(LOCAL_LIBS_HDF5) $(LOCAL_LIBS_MACH)
 
