@@ -106,6 +106,7 @@ add_library(Grackle_Grackle
 
   # C++ Source (and Private Header Files)
   cool_multi_time_g-cpp.C cool_multi_time_g-cpp.h
+  internal_types.C internal_types.hpp
   utils-cpp.C utils-cpp.hpp
 
   # Fortran Source Files

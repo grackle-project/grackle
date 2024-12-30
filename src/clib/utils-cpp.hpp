@@ -12,6 +12,7 @@
 #include "fortran_func_decls.h" // gr_mask_type
 
 #include <cmath>
+#include <cstdio> // printf
 #include <type_traits> // std::is_floating_point_v, std::is_same_v
 
 // ---------------------------------------------

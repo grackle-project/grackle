@@ -11,6 +11,7 @@
 
 #include "grackle.h"
 #include "fortran_func_decls.h"
+#include "internal_types.hpp"
 #include "utils-cpp.hpp"
 
 #include "cool_multi_time_g-cpp.h"
@@ -68,30 +69,6 @@ void cool_multi_time_g(
   std::vector<double> regr(my_fields->grid_dimension[0]);
   std::vector<double> edot(my_fields->grid_dimension[0]);
 
-  // Cooling/heating slice locals
-
-  std::vector<double> ceHI(my_fields->grid_dimension[0]);
-  std::vector<double> ceHeI(my_fields->grid_dimension[0]);
-  std::vector<double> ceHeII(my_fields->grid_dimension[0]);
-  std::vector<double> ciHI(my_fields->grid_dimension[0]);
-  std::vector<double> ciHeI(my_fields->grid_dimension[0]);
-  std::vector<double> ciHeIS(my_fields->grid_dimension[0]);
-  std::vector<double> ciHeII(my_fields->grid_dimension[0]);
-  std::vector<double> reHII(my_fields->grid_dimension[0]);
-  std::vector<double> reHeII1(my_fields->grid_dimension[0]);
-  std::vector<double> reHeII2(my_fields->grid_dimension[0]);
-  std::vector<double> reHeIII(my_fields->grid_dimension[0]);
-  std::vector<double> brem(my_fields->grid_dimension[0]);
-  std::vector<double> cieco(my_fields->grid_dimension[0]);
-  std::vector<double> hyd01k(my_fields->grid_dimension[0]);
-  std::vector<double> h2k01(my_fields->grid_dimension[0]);
-  std::vector<double> vibh(my_fields->grid_dimension[0]);
-  std::vector<double> roth(my_fields->grid_dimension[0]);
-  std::vector<double> rotl(my_fields->grid_dimension[0]);
-  std::vector<double> gpldl(my_fields->grid_dimension[0]);
-  std::vector<double> gphdl(my_fields->grid_dimension[0]);
-  std::vector<double> hdlte(my_fields->grid_dimension[0]);
-  std::vector<double> hdlow(my_fields->grid_dimension[0]);
 
   // Iteration mask for multi_cool
 
@@ -142,17 +119,19 @@ void cool_multi_time_g(
   //_// PORT: !$omp&   tgas, tgasold,
   //_// PORT: !$omp&   tdust, metallicity, dust2gas, rhoH, mmw,
   //_// PORT: !$omp&   mynh, myde, gammaha_eff, gasgr_tdust, regr, edot,
-  //_// PORT: !$omp&   ceHI, ceHeI, ceHeII,
-  //_// PORT: !$omp&   ciHI, ciHeI, ciHeIS, ciHeII,
-  //_// PORT: !$omp&   reHII, reHeII1, reHeII2, reHeIII,
-  //_// PORT: !$omp&   brem, cieco,
-  //_// PORT: !$omp&   hyd01k, h2k01, vibh, roth, rotl,
-  //_// PORT: !$omp&   gpldl, gphdl, hdlte, hdlow,
   //_// PORT: !$omp&   itmask )
   //_// PORT: #endif
   //_// TODO_USE: OMP_PRAGMA("omp parallel")
   {
-    //_// TODO: move relevant variable declarations to here to replace OMP private
+    //_// TODO: move remaining relevant declarations here to replace OMP private
+
+    // each OMP thread separately initializes/allocates variables defined in
+    // the current scope
+
+    // Cooling/heating slice locals
+    grackle::impl::CoolHeatScratchBuf coolingheating_buf =
+      grackle::impl::new_CoolHeatScratchBuf(my_fields->grid_dimension[0]);
+
     //_// TODO_USE: OMP_PRAGMA("omp for")
     for (int t = 0; t<=(dk * dj - 1); t++) {
       int k = t/dj      + my_fields->grid_start[2]+1;
@@ -183,20 +162,20 @@ void cool_multi_time_g(
                    &my_uvb_rates->piHI, &my_uvb_rates->piHeI, &my_uvb_rates->piHeII, &comp1, &comp2,
                    my_fields->HM_density, my_fields->H2I_density, my_fields->H2II_density, my_fields->DI_density, my_fields->DII_density, my_fields->HDI_density, my_fields->metal_density, my_fields->dust_density,
                    my_rates->hyd01k, my_rates->h2k01, my_rates->vibh, my_rates->roth, my_rates->rotl,
-                   hyd01k.data(), h2k01.data(), vibh.data(), roth.data(), rotl.data(),
-                   my_rates->GP99LowDensityLimit, my_rates->GP99HighDensityLimit, gpldl.data(), gphdl.data(),
-                   my_rates->HDlte, my_rates->HDlow, hdlte.data(), hdlow.data(),
+                   coolingheating_buf.hyd01k, coolingheating_buf.h2k01, coolingheating_buf.vibh, coolingheating_buf.roth, coolingheating_buf.rotl,
+                   my_rates->GP99LowDensityLimit, my_rates->GP99HighDensityLimit, coolingheating_buf.gpldl, coolingheating_buf.gphdl,
+                   my_rates->HDlte, my_rates->HDlow, coolingheating_buf.hdlte, coolingheating_buf.hdlow,
                    my_rates->GAHI, my_rates->GAH2, my_rates->GAHe, my_rates->GAHp, my_rates->GAel,
                    my_rates->H2LTE, my_rates->gas_grain,
-                   ceHI.data(), ceHeI.data(), ceHeII.data(), ciHI.data(), ciHeI.data(), ciHeIS.data(), ciHeII.data(),
-                   reHII.data(), reHeII1.data(), reHeII2.data(), reHeIII.data(), brem.data(),
+                   coolingheating_buf.ceHI, coolingheating_buf.ceHeI, coolingheating_buf.ceHeII, coolingheating_buf.ciHI, coolingheating_buf.ciHeI, coolingheating_buf.ciHeIS, coolingheating_buf.ciHeII,
+                   coolingheating_buf.reHII, coolingheating_buf.reHeII1, coolingheating_buf.reHeII2, coolingheating_buf.reHeIII, coolingheating_buf.brem,
                    indixe.data(), t1.data(), t2.data(), logtem.data(), tdef.data(), edot.data(),
                    tgas.data(), tgasold.data(), mmw.data(), p2d.data(), tdust.data(), metallicity.data(),
                    dust2gas.data(), rhoH.data(), mynh.data(), myde.data(),
                    gammaha_eff.data(), gasgr_tdust.data(), regr.data(),
                    &my_chemistry->self_shielding_method, &my_uvb_rates->crsHI, &my_uvb_rates->crsHeI, &my_uvb_rates->crsHeII,
                    &my_uvb_rates->k24, &my_uvb_rates->k26, &my_chemistry->use_radiative_transfer, my_fields->RT_heating_rate,
-                   &my_chemistry->h2_optical_depth_approximation, &my_chemistry->cie_cooling, &my_chemistry->h2_cooling_rate, &my_chemistry->hd_cooling_rate, my_rates->cieco, cieco.data(),
+                   &my_chemistry->h2_optical_depth_approximation, &my_chemistry->cie_cooling, &my_chemistry->h2_cooling_rate, &my_chemistry->hd_cooling_rate, my_rates->cieco, coolingheating_buf.cieco,
                    &my_chemistry->cmb_temperature_floor, &my_chemistry->UVbackground, &my_chemistry->cloudy_electron_fraction_factor,
                    &my_rates->cloudy_primordial.grid_rank, my_rates->cloudy_primordial.grid_dimension,
                    my_rates->cloudy_primordial.grid_parameters[0], my_rates->cloudy_primordial.grid_parameters[1], my_rates->cloudy_primordial.grid_parameters[2], my_rates->cloudy_primordial.grid_parameters[3], my_rates->cloudy_primordial.grid_parameters[4],
@@ -281,6 +260,10 @@ void cool_multi_time_g(
       }
 
     }
+
+    // cleanup temporaries
+    grackle::impl::drop_CoolHeatScratchBuf(&coolingheating_buf);
+
   }  // OMP_PRAGMA("omp parallel")
 
   // Convert densities back to comoving from 'proper'
