@@ -142,6 +142,43 @@ CoolHeatScratchBuf new_CoolHeatScratchBuf(int nelem);
 /// This effectively invokes the destructor
 void drop_CoolHeatScratchBuf(CoolHeatScratchBuf*);
 
+/// Holds 1D arrays used for linear interpolation
+///
+/// A common idiom within Grackle is to construct 1D tables of different
+/// quantities (I think its mostly different types of rates) sampled at various
+/// log temperature values during setup.
+/// - when performing calculations on simulation data, Grackle will compute
+///   values from these tables.
+/// - Since these tables are all sampled at the same log-temperature values, we
+///   can reuse information about the current location in the table between
+///   different interpolations to speed up the calculation
+/// - the values of the buffers in this data structure at a given location are
+///   used encode this information about logT table location.
+///
+/// @note
+/// Logic related to this struct is a prime candidate for logic that we probably
+/// want to refactor after we complete transcription from Fortran
+///
+/// @todo
+/// Once we finish transcribing, we may want to make the naming a little more
+/// generic since it can be used for more than just temperature
+struct LogTLinInterpScratchBuf{
+  long long* indixe = nullptr;
+  double* t1 = nullptr;
+  double* t2 = nullptr;
+  double* logtem = nullptr;
+  double* tdef = nullptr;
+};
+
+/// allocates the contents of a new LogTLinInterpScratchBuf
+///
+/// @param nelem The number of elements in each buffer
+LogTLinInterpScratchBuf new_LogTLinInterpScratchBuf(int nelem);
+
+/// performs cleanup of the contents of LogTLinInterpScratchBuf
+///
+/// This effectively invokes the destructor
+void drop_LogTLinInterpScratchBuf(LogTLinInterpScratchBuf*);
 
 
 } // namespace grackle::impl

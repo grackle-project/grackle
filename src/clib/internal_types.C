@@ -30,6 +30,8 @@ static void cleanup_member_(double** member, void* ctx) {
   GRACKLE_FREE(*member);
 }
 
+// -----------------------------------------------------------------
+
 /// Apply a function to each data member of CoolHeatScratchBuf
 ///
 /// @note
@@ -78,5 +80,31 @@ grackle::impl::CoolHeatScratchBuf grackle::impl::new_CoolHeatScratchBuf(
 void grackle::impl::drop_CoolHeatScratchBuf(CoolHeatScratchBuf* ptr)
 {
   for_each_coolingheating_member(ptr, &cleanup_member_, NULL);
+}
+
+// -----------------------------------------------------------------
+
+grackle::impl::LogTLinInterpScratchBuf
+grackle::impl::new_LogTLinInterpScratchBuf(int nelem)
+{
+  GRIMPL_REQUIRE(nelem > 0, "nelem must be positive");
+  grackle::impl::LogTLinInterpScratchBuf out;
+  out.indixe = (long long*)malloc(sizeof(long long)*nelem);
+  out.t1 = (double*)malloc(sizeof(double)*nelem);
+  out.t2 = (double*)malloc(sizeof(double)*nelem);
+  out.logtem = (double*)malloc(sizeof(double)*nelem);
+  out.tdef = (double*)malloc(sizeof(double)*nelem);
+  return out;
+}
+
+void grackle::impl::drop_LogTLinInterpScratchBuf(
+  grackle::impl::LogTLinInterpScratchBuf* ptr
+)
+{
+  GRACKLE_FREE(ptr->indixe);
+  GRACKLE_FREE(ptr->t1);
+  GRACKLE_FREE(ptr->t2);
+  GRACKLE_FREE(ptr->logtem);
+  GRACKLE_FREE(ptr->tdef);
 }
 

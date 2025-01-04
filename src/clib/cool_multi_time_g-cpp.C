@@ -49,11 +49,6 @@ void cool_multi_time_g(
 
   // Slice locals
  
-  std::vector<long long> indixe(my_fields->grid_dimension[0]);
-  std::vector<double> t1(my_fields->grid_dimension[0]);
-  std::vector<double> t2(my_fields->grid_dimension[0]);
-  std::vector<double> logtem(my_fields->grid_dimension[0]);
-  std::vector<double> tdef(my_fields->grid_dimension[0]);
   std::vector<double> p2d(my_fields->grid_dimension[0]);
   std::vector<double> tgas(my_fields->grid_dimension[0]);
   std::vector<double> tgasold(my_fields->grid_dimension[0]);
@@ -114,8 +109,7 @@ void cool_multi_time_g(
   // flat j and k loops for better parallelism
   //_// PORT: #ifdef _OPENMP
   //_// PORT: !$omp parallel do schedule(runtime) private(
-  //_// PORT: !$omp&   indixe,
-  //_// PORT: !$omp&   t1, t2, logtem, tdef, p2d,
+  //_// PORT: !$omp&   p2d,
   //_// PORT: !$omp&   tgas, tgasold,
   //_// PORT: !$omp&   tdust, metallicity, dust2gas, rhoH, mmw,
   //_// PORT: !$omp&   mynh, myde, gammaha_eff, gasgr_tdust, regr, edot,
@@ -127,6 +121,9 @@ void cool_multi_time_g(
 
     // each OMP thread separately initializes/allocates variables defined in
     // the current scope
+
+    grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf =
+      grackle::impl::new_LogTLinInterpScratchBuf(my_fields->grid_dimension[0]);
 
     // Cooling/heating slice locals
     grackle::impl::CoolHeatScratchBuf coolingheating_buf =
@@ -169,7 +166,7 @@ void cool_multi_time_g(
                    my_rates->H2LTE, my_rates->gas_grain,
                    coolingheating_buf.ceHI, coolingheating_buf.ceHeI, coolingheating_buf.ceHeII, coolingheating_buf.ciHI, coolingheating_buf.ciHeI, coolingheating_buf.ciHeIS, coolingheating_buf.ciHeII,
                    coolingheating_buf.reHII, coolingheating_buf.reHeII1, coolingheating_buf.reHeII2, coolingheating_buf.reHeIII, coolingheating_buf.brem,
-                   indixe.data(), t1.data(), t2.data(), logtem.data(), tdef.data(), edot.data(),
+                   logTlininterp_buf.indixe, logTlininterp_buf.t1, logTlininterp_buf.t2, logTlininterp_buf.logtem, logTlininterp_buf.tdef, edot.data(),
                    tgas.data(), tgasold.data(), mmw.data(), p2d.data(), tdust.data(), metallicity.data(),
                    dust2gas.data(), rhoH.data(), mynh.data(), myde.data(),
                    gammaha_eff.data(), gasgr_tdust.data(), regr.data(),
@@ -262,6 +259,7 @@ void cool_multi_time_g(
     }
 
     // cleanup temporaries
+    grackle::impl::drop_LogTLinInterpScratchBuf(&logTlininterp_buf);
     grackle::impl::drop_CoolHeatScratchBuf(&coolingheating_buf);
 
   }  // OMP_PRAGMA("omp parallel")
