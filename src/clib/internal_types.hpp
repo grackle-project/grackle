@@ -142,6 +142,32 @@ CoolHeatScratchBuf new_CoolHeatScratchBuf(int nelem);
 /// This effectively invokes the destructor
 void drop_CoolHeatScratchBuf(CoolHeatScratchBuf*);
 
+/// holds other assorted scratch buffers used within cool1d_multi_g
+///
+/// @note
+/// Prior to transcription, there was a distinction between the buffers that
+/// are now inside of this struct and the buffers in CoolHeatScratchBuf. The
+/// distinction has been preserved during transcription, but it is not clear
+/// how real the distinction truly is.
+struct Cool1DMultiScratchBuf {
+  double* tgasold = nullptr;
+  double* mynh = nullptr;
+  double* myde = nullptr;
+  double* gammaha_eff = nullptr;
+  double* gasgr_tdust = nullptr;
+  double* regr = nullptr;
+};
+
+/// allocates the contents of a new Cool1DMultiScratchBuf
+///
+/// @param nelem The number of elements in each buffer
+Cool1DMultiScratchBuf new_Cool1DMultiScratchBuf(int nelem);
+
+/// performs cleanup of the contents of Cool1DMultiScratchBuf
+///
+/// This effectively invokes the destructor
+void drop_Cool1DMultiScratchBuf(Cool1DMultiScratchBuf*);
+
 /// Holds 1D arrays used for linear interpolation
 ///
 /// A common idiom within Grackle is to construct 1D tables of different

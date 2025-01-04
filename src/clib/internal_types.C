@@ -84,6 +84,44 @@ void grackle::impl::drop_CoolHeatScratchBuf(CoolHeatScratchBuf* ptr)
 
 // -----------------------------------------------------------------
 
+/// Apply a function to each data member of Cool1DMultiScratchBuf
+///
+/// @note
+/// If we are willing to embrace C++, then this should accept a template
+/// argument (instead of a function pointer and the callback_ctx pointer)
+static void for_each_cool1dmultibuf_member(
+  grackle::impl::Cool1DMultiScratchBuf* ptr,
+  modify_member_callback* fn,
+  void* callback_ctx
+) {
+  fn(&ptr->tgasold, callback_ctx);
+  fn(&ptr->mynh, callback_ctx);
+  fn(&ptr->myde, callback_ctx);
+  fn(&ptr->gammaha_eff, callback_ctx);
+  fn(&ptr->gasgr_tdust, callback_ctx);
+  fn(&ptr->regr, callback_ctx);
+}
+
+grackle::impl::Cool1DMultiScratchBuf grackle::impl::new_Cool1DMultiScratchBuf(
+  int nelem
+)
+{
+  GRIMPL_REQUIRE(nelem > 0, "nelem must be positive");
+  Cool1DMultiScratchBuf out;
+  MemberAllocCtx_ ctx{nelem};
+  for_each_cool1dmultibuf_member(&out, &allocate_member_, (void*)(&ctx));
+  return out;
+}
+
+void grackle::impl::drop_Cool1DMultiScratchBuf(
+  grackle::impl::Cool1DMultiScratchBuf* ptr
+)
+{
+  for_each_cool1dmultibuf_member(ptr, &cleanup_member_, NULL);
+}
+
+// -----------------------------------------------------------------
+
 grackle::impl::LogTLinInterpScratchBuf
 grackle::impl::new_LogTLinInterpScratchBuf(int nelem)
 {

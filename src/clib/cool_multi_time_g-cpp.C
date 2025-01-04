@@ -51,17 +51,11 @@ void cool_multi_time_g(
  
   std::vector<double> p2d(my_fields->grid_dimension[0]);
   std::vector<double> tgas(my_fields->grid_dimension[0]);
-  std::vector<double> tgasold(my_fields->grid_dimension[0]);
   std::vector<double> mmw(my_fields->grid_dimension[0]);
   std::vector<double> tdust(my_fields->grid_dimension[0]);
   std::vector<double> metallicity(my_fields->grid_dimension[0]);
   std::vector<double> dust2gas(my_fields->grid_dimension[0]);
   std::vector<double> rhoH(my_fields->grid_dimension[0]);
-  std::vector<double> mynh(my_fields->grid_dimension[0]);
-  std::vector<double> myde(my_fields->grid_dimension[0]);
-  std::vector<double> gammaha_eff(my_fields->grid_dimension[0]);
-  std::vector<double> gasgr_tdust(my_fields->grid_dimension[0]);
-  std::vector<double> regr(my_fields->grid_dimension[0]);
   std::vector<double> edot(my_fields->grid_dimension[0]);
 
 
@@ -110,9 +104,9 @@ void cool_multi_time_g(
   //_// PORT: #ifdef _OPENMP
   //_// PORT: !$omp parallel do schedule(runtime) private(
   //_// PORT: !$omp&   p2d,
-  //_// PORT: !$omp&   tgas, tgasold,
+  //_// PORT: !$omp&   tgas,
   //_// PORT: !$omp&   tdust, metallicity, dust2gas, rhoH, mmw,
-  //_// PORT: !$omp&   mynh, myde, gammaha_eff, gasgr_tdust, regr, edot,
+  //_// PORT: !$omp&   edot,
   //_// PORT: !$omp&   itmask )
   //_// PORT: #endif
   //_// TODO_USE: OMP_PRAGMA("omp parallel")
@@ -124,6 +118,9 @@ void cool_multi_time_g(
 
     grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf =
       grackle::impl::new_LogTLinInterpScratchBuf(my_fields->grid_dimension[0]);
+
+    grackle::impl::Cool1DMultiScratchBuf cool1dmulti_buf =
+      grackle::impl::new_Cool1DMultiScratchBuf(my_fields->grid_dimension[0]);
 
     // Cooling/heating slice locals
     grackle::impl::CoolHeatScratchBuf coolingheating_buf =
@@ -167,9 +164,9 @@ void cool_multi_time_g(
                    coolingheating_buf.ceHI, coolingheating_buf.ceHeI, coolingheating_buf.ceHeII, coolingheating_buf.ciHI, coolingheating_buf.ciHeI, coolingheating_buf.ciHeIS, coolingheating_buf.ciHeII,
                    coolingheating_buf.reHII, coolingheating_buf.reHeII1, coolingheating_buf.reHeII2, coolingheating_buf.reHeIII, coolingheating_buf.brem,
                    logTlininterp_buf.indixe, logTlininterp_buf.t1, logTlininterp_buf.t2, logTlininterp_buf.logtem, logTlininterp_buf.tdef, edot.data(),
-                   tgas.data(), tgasold.data(), mmw.data(), p2d.data(), tdust.data(), metallicity.data(),
-                   dust2gas.data(), rhoH.data(), mynh.data(), myde.data(),
-                   gammaha_eff.data(), gasgr_tdust.data(), regr.data(),
+                   tgas.data(), cool1dmulti_buf.tgasold, mmw.data(), p2d.data(), tdust.data(), metallicity.data(),
+                   dust2gas.data(), rhoH.data(), cool1dmulti_buf.mynh, cool1dmulti_buf.myde,
+                   cool1dmulti_buf.gammaha_eff, cool1dmulti_buf.gasgr_tdust, cool1dmulti_buf.regr,
                    &my_chemistry->self_shielding_method, &my_uvb_rates->crsHI, &my_uvb_rates->crsHeI, &my_uvb_rates->crsHeII,
                    &my_uvb_rates->k24, &my_uvb_rates->k26, &my_chemistry->use_radiative_transfer, my_fields->RT_heating_rate,
                    &my_chemistry->h2_optical_depth_approximation, &my_chemistry->cie_cooling, &my_chemistry->h2_cooling_rate, &my_chemistry->hd_cooling_rate, my_rates->cieco, coolingheating_buf.cieco,
@@ -260,6 +257,7 @@ void cool_multi_time_g(
 
     // cleanup temporaries
     grackle::impl::drop_LogTLinInterpScratchBuf(&logTlininterp_buf);
+    grackle::impl::drop_Cool1DMultiScratchBuf(&cool1dmulti_buf);
     grackle::impl::drop_CoolHeatScratchBuf(&coolingheating_buf);
 
   }  // OMP_PRAGMA("omp parallel")
