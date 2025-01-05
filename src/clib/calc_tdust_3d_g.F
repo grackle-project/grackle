@@ -98,8 +98,7 @@
      &   , SiOI(in,jn,kn) , SiO2I(in,jn,kn)  , CH(in,jn,kn)
      &   , CH2(in,jn,kn)  , COII(in,jn,kn)   , OII(in,jn,kn)
      &   , OHII(in,jn,kn) , H2OII(in,jn,kn)  , H3OII(in,jn,kn)
-     &   , O2II(in,jn,kn) , Mg(in,jn,kn)     , Al(in,jn,kn)
-     &   , S(in,jn,kn)    , Fe(in,jn,kn)     
+     &   , O2II(in,jn,kn)
       R_PREC  SiM(in,jn,kn), FeM(in,jn,kn), Mg2SiO4(in,jn,kn)
      &      , MgSiO3(in,jn,kn), Fe3O4(in,jn,kn), AC(in,jn,kn)
      &      , SiO2D(in,jn,kn), MgO(in,jn,kn), FeS(in,jn,kn)
@@ -283,16 +282,6 @@
                  H2OII(i,j,k)   = H2OII(i,j,k)/real(aye**3, RKIND)
                  H3OII(i,j,k)   = H3OII(i,j,k)/real(aye**3, RKIND)
                  O2II(i,j,k)    = O2II(i,j,k)/real(aye**3, RKIND)
-                 if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1 ) ) then
-                 if (idspecies .gt. 0) then
-                 Mg(i,j,k)      = Mg(i,j,k)/real(aye**3, RKIND)
-                 endif
-                 if (idspecies .gt. 1) then
-                 Al(i,j,k)      = Al(i,j,k)/real(aye**3, RKIND)
-                 S(i,j,k)       = S(i,j,k)/real(aye**3, RKIND)
-                 Fe(i,j,k)      = Fe(i,j,k)/real(aye**3, RKIND)
-                 endif
-                 endif
               endif
 !!            endif
            enddo
@@ -778,16 +767,6 @@ C          endif
                  H2OII(i,j,k)   = H2OII(i,j,k)*real(aye**3, RKIND)
                  H3OII(i,j,k)   = H3OII(i,j,k)*real(aye**3, RKIND)
                  O2II(i,j,k)    = O2II(i,j,k)*real(aye**3, RKIND)
-                 if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1 ) ) then
-                 if (idspecies .gt. 0) then
-                 Mg(i,j,k)      = Mg(i,j,k)*real(aye**3, RKIND)
-                 endif
-                 if (idspecies .gt. 1) then
-                 Al(i,j,k)      = Al(i,j,k)*real(aye**3, RKIND)
-                 S(i,j,k)       = S(i,j,k)*real(aye**3, RKIND)
-                 Fe(i,j,k)      = Fe(i,j,k)*real(aye**3, RKIND)
-                 endif
-                 endif
               endif
 !!            endif
            enddo
