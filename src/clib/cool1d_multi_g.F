@@ -345,11 +345,6 @@
      &      , gasSiO2D(in), gasMgO(in), gasFeS(in)
      &      , gasAl2O3(in)
      &      , gasreforg(in), gasvolorg(in), gasH2Oice(in)
-      real*8  gasgr_tSiM(in), gasgr_tFeM(in), gasgr_tMg2SiO4(in)
-     &      , gasgr_tMgSiO3(in), gasgr_tFe3O4(in), gasgr_tAC(in)
-     &      , gasgr_tSiO2D(in), gasgr_tMgO(in), gasgr_tFeS(in)
-     &      , gasgr_tAl2O3(in)
-     &      , gasgr_treforg(in), gasgr_tvolorg(in), gasgr_tH2Oice(in)
 !  Iteration mask
 
       MASK_TYPE itmask(in), anydust, interp
@@ -1177,11 +1172,7 @@ c  new (correct) way: (april 4, 2007)
      &                kpH2Oice, kptot, gasSiM, gasFeM, gasMg2SiO4,
      &                gasMgSiO3, gasFe3O4, gasAC, gasSiO2D, gasMgO,
      &                gasFeS, gasAl2O3, gasreforg, gasvolorg,
-     &                gasH2Oice, gasgr_tSiM, gasgr_tFeM,
-     &                gasgr_tMg2SiO4, gasgr_tMgSiO3, gasgr_tFe3O4,
-     &                gasgr_tAC, gasgr_tSiO2D, gasgr_tMgO, gasgr_tFeS,
-     &                gasgr_tAl2O3, gasgr_treforg, gasgr_tvolorg,
-     &                gasgr_tH2Oice
+     &                gasH2Oice
      &              )
 
          endif
