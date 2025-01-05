@@ -2,11 +2,8 @@
      &                idustfield, is, ie, j, k, fgr, gamma_isrfa,
      &                trad, gasgra, indixe, tdef, tgas, tdust,
      &                metallicity, dust2gas, mynh, gasgr_tdust,
-     &                itmask_metal, LH2_N, LH2_Size, LHD_N, LHD_Size,
-     &                LCI_N, LCI_Size, LCII_N, LCII_Size, LOI_N,
-     &                LOI_Size, LCO_N, LCO_Size, LOH_N, LOH_Size,
-     &                LH2O_N, LH2O_Size, alphap_N, alphap_Size,
-     &                idspecies, itdmulti, SN0_N, gr_N, gr_Size, gr_dT,
+     &                itmask_metal,
+     &                idspecies, itdmulti, gr_N, gr_Size, gr_dT,
      &                gr_Td, tSiM, tFeM, tMg2SiO4, tMgSiO3, tFe3O4,
      &                tAC, tSiO2D, tMgO, tFeS, tAl2O3, treforg,
      &                tvolorg, tH2Oice, gasgr2a, gamma_isrf2a,
@@ -73,17 +70,7 @@
 !  Cooling/heating slice locals
 
       real*8 gasgr(in), gasgr_tdust(in), myisrf(in)
-       integer*8 LH2_N(3), LH2_Size
-       integer*8 LHD_N(3), LHD_Size
-       integer*8 LCI_N(3), LCI_Size
-       integer*8 LCII_N(3), LCII_Size
-       integer*8 LOI_N(3), LOI_Size
-       integer*8 LCO_N(3), LCO_Size
-       integer*8 LOH_N(3), LOH_Size
-       integer*8 LH2O_N(3), LH2O_Size
-       integer*8 alphap_N(2), alphap_Size
       integer idspecies, itdmulti
-      integer SN0_N
 !     opacity table
       integer gr_N(2), gr_Size
       real*8  gr_dT, gr_Td(gr_N(2))
