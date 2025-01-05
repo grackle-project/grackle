@@ -191,8 +191,8 @@
 
 !  Slice locals
  
-      integer indixe(in)
-      R_PREC  t1(in), t2(in), logtem(in), tdef(in), 
+      integer*8 indixe(in)
+      real*8  t1(in), t2(in), logtem(in), tdef(in), 
      &     tgas(in), tdust(in), nh(in), gasgr(in),
      &     myisrf(in)
 
