@@ -350,12 +350,6 @@
      &      , gasgr_tSiO2D(in), gasgr_tMgO(in), gasgr_tFeS(in)
      &      , gasgr_tAl2O3(in)
      &      , gasgr_treforg(in), gasgr_tvolorg(in), gasgr_tH2Oice(in)
-      real*8  mygisrf(in), fv2k, fac
-      real*8  gisrfSiM(in), gisrfFeM(in), gisrfMg2SiO4(in)
-     &      , gisrfMgSiO3(in), gisrfFe3O4(in), gisrfAC(in)
-     &      , gisrfSiO2D(in), gisrfMgO(in), gisrfFeS(in)
-     &      , gisrfAl2O3(in)
-     &      , gisrfreforg(in), gisrfvolorg(in), gisrfH2Oice(in)
 !  Iteration mask
 
       MASK_TYPE itmask(in), anydust, interp
@@ -1187,11 +1181,7 @@ c  new (correct) way: (april 4, 2007)
      &                gasgr_tMg2SiO4, gasgr_tMgSiO3, gasgr_tFe3O4,
      &                gasgr_tAC, gasgr_tSiO2D, gasgr_tMgO, gasgr_tFeS,
      &                gasgr_tAl2O3, gasgr_treforg, gasgr_tvolorg,
-     &                gasgr_tH2Oice, mygisrf, fv2k, fac, gisrfSiM,
-     &                gisrfFeM, gisrfMg2SiO4, gisrfMgSiO3, gisrfFe3O4,
-     &                gisrfAC, gisrfSiO2D, gisrfMgO, gisrfFeS,
-     &                gisrfAl2O3, gisrfreforg, gisrfvolorg,
-     &                gisrfH2Oice, anydust
+     &                gasgr_tH2Oice
      &              )
 
          endif
