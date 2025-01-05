@@ -27,27 +27,7 @@ void cool_multi_time_g(
   photo_rate_storage* my_uvb_rates
 )
 {
-  grackle::impl::View<gr_float***> cooltime(cooltime_data_, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
-  // Slice locals
- 
-  std::vector<double> p2d(my_fields->grid_dimension[0]);
-  std::vector<double> tgas(my_fields->grid_dimension[0]);
-  std::vector<double> mmw(my_fields->grid_dimension[0]);
-  std::vector<double> tdust(my_fields->grid_dimension[0]);
-  std::vector<double> metallicity(my_fields->grid_dimension[0]);
-  std::vector<double> dust2gas(my_fields->grid_dimension[0]);
-  std::vector<double> rhoH(my_fields->grid_dimension[0]);
-  std::vector<double> edot(my_fields->grid_dimension[0]);
-
-
-  // Iteration mask for multi_cool
-
-  std::vector<gr_mask_type> itmask(my_fields->grid_dimension[0]);
-  std::vector<gr_mask_type> itmask_metal(my_fields->grid_dimension[0]);
-
-  // \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
-  // =======================================================================
   const int dk = my_fields->grid_end[2] - my_fields->grid_start[2] + 1;
   const int dj = my_fields->grid_end[1] - my_fields->grid_start[1] + 1;
 
@@ -79,24 +59,14 @@ void cool_multi_time_g(
  
   }
 
-  // Loop over slices (in the k-direction)
 
-  // parallelize the k and j loops with OpenMP
-  // flat j and k loops for better parallelism
-  //_// PORT: #ifdef _OPENMP
-  //_// PORT: !$omp parallel do schedule(runtime) private(
-  //_// PORT: !$omp&   p2d,
-  //_// PORT: !$omp&   tgas,
-  //_// PORT: !$omp&   tdust, metallicity, dust2gas, rhoH, mmw,
-  //_// PORT: !$omp&   edot,
-  //_// PORT: !$omp&   itmask )
-  //_// PORT: #endif
-  //_// TODO_USE: OMP_PRAGMA("omp parallel")
+  OMP_PRAGMA("omp parallel")
   {
-    //_// TODO: move remaining relevant declarations here to replace OMP private
-
     // each OMP thread separately initializes/allocates variables defined in
-    // the current scope
+    // the current scope and then enters the for-loop
+
+    grackle::impl::View<gr_float***> cooltime(cooltime_data_, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+
     grackle::impl::GrainSpeciesCollection grain_temperatures =
       grackle::impl::new_GrainSpeciesCollection(my_fields->grid_dimension[0]);
 
@@ -105,12 +75,32 @@ void cool_multi_time_g(
 
     grackle::impl::Cool1DMultiScratchBuf cool1dmulti_buf =
       grackle::impl::new_Cool1DMultiScratchBuf(my_fields->grid_dimension[0]);
-
-    // Cooling/heating slice locals
+ 
     grackle::impl::CoolHeatScratchBuf coolingheating_buf =
       grackle::impl::new_CoolHeatScratchBuf(my_fields->grid_dimension[0]);
 
-    //_// TODO_USE: OMP_PRAGMA("omp for")
+    // the following variables aren't embedded because they are structs or are
+    // used in a number of different internal routines. Sorting these into
+    // additional structs (or leaving them free-standing) will become more
+    // obvious as we transcribe more routines.
+
+    std::vector<double> p2d(my_fields->grid_dimension[0]);
+    std::vector<double> tgas(my_fields->grid_dimension[0]);
+    std::vector<double> mmw(my_fields->grid_dimension[0]);
+    std::vector<double> tdust(my_fields->grid_dimension[0]);
+    std::vector<double> metallicity(my_fields->grid_dimension[0]);
+    std::vector<double> dust2gas(my_fields->grid_dimension[0]);
+    std::vector<double> rhoH(my_fields->grid_dimension[0]);
+    std::vector<double> edot(my_fields->grid_dimension[0]);
+
+    // Iteration mask for multi_cool
+    std::vector<gr_mask_type> itmask(my_fields->grid_dimension[0]);
+    std::vector<gr_mask_type> itmask_metal(my_fields->grid_dimension[0]);
+
+    // The following for-loop is a flattened loop over every k,j combination.
+    // OpenMP divides this loop between all threads. Within the loop,
+    // calculations are completed for all i indices.
+    OMP_PRAGMA("omp for")
     for (int t = 0; t<=(dk * dj - 1); t++) {
       int k = t/dj      + my_fields->grid_start[2]+1;
       int j = grackle::impl::mod(t,dj) + my_fields->grid_start[1]+1;
