@@ -1151,8 +1151,6 @@ c  new (correct) way: (april 4, 2007)
      &                idustfield, is, ie, j, k, fgr, gamma_isrfa,
      &                comp2, gasgra, indixe, tdef, tgas, tdust,
      &                metallicity, dust2gas, mynh, gasgr_tdust,
-     &                priGridRank, priGridDim, priDataSize,
-     &                metGridRank, metGridDim, metDataSize,
      &                itmask_metal, LH2_N, LH2_Size, LHD_N, LHD_Size,
      &                LCI_N, LCI_Size, LCII_N, LCII_Size, LOI_N,
      &                LOI_Size, LCO_N, LCO_Size, LOH_N, LOH_Size,
