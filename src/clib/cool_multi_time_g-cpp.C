@@ -29,24 +29,6 @@ void cool_multi_time_g(
 {
   grackle::impl::View<gr_float***> cooltime(cooltime_data_, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
-  // grain temperature
-  std::vector<double> tSiM(my_fields->grid_dimension[0]);
-  std::vector<double> tFeM(my_fields->grid_dimension[0]);
-  std::vector<double> tMg2SiO4(my_fields->grid_dimension[0]);
-  std::vector<double> tMgSiO3(my_fields->grid_dimension[0]);
-  std::vector<double> tFe3O4(my_fields->grid_dimension[0]);
-  std::vector<double> tAC(my_fields->grid_dimension[0]);
-  std::vector<double> tSiO2D(my_fields->grid_dimension[0]);
-  std::vector<double> tMgO(my_fields->grid_dimension[0]);
-  std::vector<double> tFeS(my_fields->grid_dimension[0]);
-  std::vector<double> tAl2O3(my_fields->grid_dimension[0]);
-  std::vector<double> treforg(my_fields->grid_dimension[0]);
-  std::vector<double> tvolorg(my_fields->grid_dimension[0]);
-  std::vector<double> tH2Oice(my_fields->grid_dimension[0]);
-
-  // Locals
-
-
   // Slice locals
  
   std::vector<double> p2d(my_fields->grid_dimension[0]);
@@ -115,6 +97,8 @@ void cool_multi_time_g(
 
     // each OMP thread separately initializes/allocates variables defined in
     // the current scope
+    grackle::impl::GrainSpeciesCollection grain_temperatures =
+      grackle::impl::new_GrainSpeciesCollection(my_fields->grid_dimension[0]);
 
     grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf =
       grackle::impl::new_LogTLinInterpScratchBuf(my_fields->grid_dimension[0]);
@@ -238,9 +222,9 @@ void cool_multi_time_g(
                   my_rates->SN0_kpFe3O4, my_rates->SN0_kpAC, my_rates->SN0_kpSiO2D, my_rates->SN0_kpMgO,
                   my_rates->SN0_kpFeS, my_rates->SN0_kpAl2O3,
                   my_rates->SN0_kpreforg, my_rates->SN0_kpvolorg, my_rates->SN0_kpH2Oice,
-                  tSiM.data(), tFeM.data(), tMg2SiO4.data(), tMgSiO3.data(), tFe3O4.data(),
-                  tAC.data(), tSiO2D.data(), tMgO.data(), tFeS.data(), tAl2O3.data(),
-                  treforg.data(), tvolorg.data(), tH2Oice.data(),
+                  grain_temperatures.SiM, grain_temperatures.FeM, grain_temperatures.Mg2SiO4, grain_temperatures.MgSiO3, grain_temperatures.Fe3O4,
+                  grain_temperatures.AC, grain_temperatures.SiO2D, grain_temperatures.MgO, grain_temperatures.FeS, grain_temperatures.Al2O3,
+                  grain_temperatures.reforg, grain_temperatures.volorg, grain_temperatures.H2Oice,
                   my_rates->gas_grain2, &my_rates->gamma_isrf2
                );
 
@@ -256,6 +240,7 @@ void cool_multi_time_g(
     }
 
     // cleanup temporaries
+    grackle::impl::drop_GrainSpeciesCollection(&grain_temperatures);
     grackle::impl::drop_LogTLinInterpScratchBuf(&logTlininterp_buf);
     grackle::impl::drop_Cool1DMultiScratchBuf(&cool1dmulti_buf);
     grackle::impl::drop_CoolHeatScratchBuf(&coolingheating_buf);

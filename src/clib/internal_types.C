@@ -146,3 +146,49 @@ void grackle::impl::drop_LogTLinInterpScratchBuf(
   GRACKLE_FREE(ptr->tdef);
 }
 
+// -----------------------------------------------------------------
+
+/// Apply a function to each data member of GrainSpeciesCollection
+///
+/// @note
+/// If we are willing to embrace C++, then this should accept a template
+/// argument (instead of a function pointer and the callback_ctx pointer)
+static void for_each_grainspeciescol_member(
+  grackle::impl::GrainSpeciesCollection* ptr,
+  modify_member_callback* fn,
+  void* callback_ctx
+) {
+  fn(&ptr->SiM, callback_ctx);
+  fn(&ptr->FeM, callback_ctx);
+  fn(&ptr->Mg2SiO4, callback_ctx);
+  fn(&ptr->MgSiO3, callback_ctx);
+  fn(&ptr->Fe3O4, callback_ctx);
+  fn(&ptr->AC, callback_ctx);
+  fn(&ptr->SiO2D, callback_ctx);
+  fn(&ptr->MgO, callback_ctx);
+  fn(&ptr->FeS, callback_ctx);
+  fn(&ptr->Al2O3, callback_ctx);
+  fn(&ptr->reforg, callback_ctx);
+  fn(&ptr->volorg, callback_ctx);
+  fn(&ptr->H2Oice, callback_ctx);
+}
+
+grackle::impl::GrainSpeciesCollection grackle::impl::new_GrainSpeciesCollection(
+  int nelem
+)
+{
+  GRIMPL_REQUIRE(nelem > 0, "nelem must be positive");
+  GrainSpeciesCollection out;
+  MemberAllocCtx_ ctx{nelem};
+  for_each_grainspeciescol_member(&out, &allocate_member_, (void*)(&ctx));
+  return out;
+}
+
+void grackle::impl::drop_GrainSpeciesCollection(
+  grackle::impl::GrainSpeciesCollection* ptr
+)
+{
+  for_each_grainspeciescol_member(ptr, &cleanup_member_, NULL);
+}
+
+
