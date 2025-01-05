@@ -92,13 +92,6 @@
      &      , metal_F50(in,jn,kn), metal_F80(in,jn,kn)
      &      , metal_P170(in,jn,kn), metal_P200(in,jn,kn)
      &      , metal_Y19(in,jn,kn)
-     &   , CI(in,jn,kn)   , CII(in,jn,kn)    , CO(in,jn,kn)
-     &   , CO2(in,jn,kn)  , OI(in,jn,kn)     , OH(in,jn,kn)
-     &   , H2O(in,jn,kn)  , O2(in,jn,kn)     , SiI(in,jn,kn)
-     &   , SiOI(in,jn,kn) , SiO2I(in,jn,kn)  , CH(in,jn,kn)
-     &   , CH2(in,jn,kn)  , COII(in,jn,kn)   , OII(in,jn,kn)
-     &   , OHII(in,jn,kn) , H2OII(in,jn,kn)  , H3OII(in,jn,kn)
-     &   , O2II(in,jn,kn)
       R_PREC  SiM(in,jn,kn), FeM(in,jn,kn), Mg2SiO4(in,jn,kn)
      &      , MgSiO3(in,jn,kn), Fe3O4(in,jn,kn), AC(in,jn,kn)
      &      , SiO2D(in,jn,kn), MgO(in,jn,kn), FeS(in,jn,kn)
@@ -261,29 +254,6 @@
                  metal_P200(i,j,k)=metal_P200(i,j,k)/real(aye**3, RKIND)
                  metal_Y19(i,j,k) = metal_Y19(i,j,k)/real(aye**3, RKIND)
               endif
-!!            if (metal(i,j,k) .gt. 1.d-9 * d(i,j,k)) then
-              if (imchem .eq. 1) then
-                 CI(i,j,k)      = CI(i,j,k)/real(aye**3, RKIND)
-                 CII(i,j,k)     = CII(i,j,k)/real(aye**3, RKIND)
-                 CO(i,j,k)      = CO(i,j,k)/real(aye**3, RKIND)
-                 CO2(i,j,k)     = CO2(i,j,k)/real(aye**3, RKIND)
-                 OI(i,j,k)      = OI(i,j,k)/real(aye**3, RKIND)
-                 OH(i,j,k)      = OH(i,j,k)/real(aye**3, RKIND)
-                 H2O(i,j,k)     = H2O(i,j,k)/real(aye**3, RKIND)
-                 O2(i,j,k)      = O2(i,j,k)/real(aye**3, RKIND)
-                 SiI(i,j,k)     = SiI(i,j,k)/real(aye**3, RKIND)
-                 SiOI(i,j,k)    = SiOI(i,j,k)/real(aye**3, RKIND)
-                 SiO2I(i,j,k)   = SiO2I(i,j,k)/real(aye**3, RKIND)
-                 CH(i,j,k)      = CH(i,j,k)/real(aye**3, RKIND)
-                 CH2(i,j,k)     = CH2(i,j,k)/real(aye**3, RKIND)
-                 COII(i,j,k)    = COII(i,j,k)/real(aye**3, RKIND)
-                 OII(i,j,k)     = OII(i,j,k)/real(aye**3, RKIND)
-                 OHII(i,j,k)    = OHII(i,j,k)/real(aye**3, RKIND)
-                 H2OII(i,j,k)   = H2OII(i,j,k)/real(aye**3, RKIND)
-                 H3OII(i,j,k)   = H3OII(i,j,k)/real(aye**3, RKIND)
-                 O2II(i,j,k)    = O2II(i,j,k)/real(aye**3, RKIND)
-              endif
-!!            endif
            enddo
         endif
         if (idustfield .eq. 1) then
@@ -746,29 +716,6 @@ C          endif
                  metal_P200(i,j,k)=metal_P200(i,j,k)*real(aye**3, RKIND)
                  metal_Y19(i,j,k) = metal_Y19(i,j,k)*real(aye**3, RKIND)
               endif
-!!            if (metal(i,j,k) .gt. 1.d-9 * d(i,j,k)) then
-              if (imchem .eq. 1) then
-                 CI(i,j,k)      = CI(i,j,k)*real(aye**3, RKIND)
-                 CII(i,j,k)     = CII(i,j,k)*real(aye**3, RKIND)
-                 CO(i,j,k)      = CO(i,j,k)*real(aye**3, RKIND)
-                 CO2(i,j,k)     = CO2(i,j,k)*real(aye**3, RKIND)
-                 OI(i,j,k)      = OI(i,j,k)*real(aye**3, RKIND)
-                 OH(i,j,k)      = OH(i,j,k)*real(aye**3, RKIND)
-                 H2O(i,j,k)     = H2O(i,j,k)*real(aye**3, RKIND)
-                 O2(i,j,k)      = O2(i,j,k)*real(aye**3, RKIND)
-                 SiI(i,j,k)     = SiI(i,j,k)*real(aye**3, RKIND)
-                 SiOI(i,j,k)    = SiOI(i,j,k)*real(aye**3, RKIND)
-                 SiO2I(i,j,k)   = SiO2I(i,j,k)*real(aye**3, RKIND)
-                 CH(i,j,k)      = CH(i,j,k)*real(aye**3, RKIND)
-                 CH2(i,j,k)     = CH2(i,j,k)*real(aye**3, RKIND)
-                 COII(i,j,k)    = COII(i,j,k)*real(aye**3, RKIND)
-                 OII(i,j,k)     = OII(i,j,k)*real(aye**3, RKIND)
-                 OHII(i,j,k)    = OHII(i,j,k)*real(aye**3, RKIND)
-                 H2OII(i,j,k)   = H2OII(i,j,k)*real(aye**3, RKIND)
-                 H3OII(i,j,k)   = H3OII(i,j,k)*real(aye**3, RKIND)
-                 O2II(i,j,k)    = O2II(i,j,k)*real(aye**3, RKIND)
-              endif
-!!            endif
            enddo
         endif
         if (idustfield .eq. 1) then
