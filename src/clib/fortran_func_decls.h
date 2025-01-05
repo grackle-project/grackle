@@ -18,6 +18,34 @@ typedef int32_t gr_mask_type;
 #define MASK_TRUE 1
 #define MASK_FALSE 0
 
+void FORTRAN_NAME(calc_all_tdust_gasgr_1d_g)(
+  int* in, int* jn, int* kn, int* nratec, int* idustfield, int* is, int* ie,
+  int* j, int* k, double* fgr, double* gamma_isrfa, double* trad,
+  double* gasgra, long long* indixe, double* tdef, double* tgas, double* tdust,
+  double* metallicity, double* dust2gas, double* nh, double* gasgr_tdust,
+  gr_mask_type* itmask_metal, int* idspecies, int* itdmulti, int* gr_N,
+  int* gr_Size, double* gr_dT, double* gr_Td, double* tSiM, double* tFeM,
+  double* tMg2SiO4, double* tMgSiO3, double* tFe3O4, double* tAC,
+  double* tSiO2D, double* tMgO, double* tFeS, double* tAl2O3, double* treforg,
+  double* tvolorg, double* tH2Oice, double* gasgr2a, double* gamma_isrf2a,
+  double* coolunit, double* gasgr, double* myisrf, double* sgSiM, double* sgFeM,
+  double* sgMg2SiO4, double* sgMgSiO3, double* sgFe3O4, double* sgAC,
+  double* sgSiO2D, double* sgMgO, double* sgFeS, double* sgAl2O3,
+  double* sgreforg, double* sgvolorg, double* sgH2Oice, double* sgtot,
+  double* alSiM_data_ptr, double* alFeM_data_ptr, double* alMg2SiO4_data_ptr,
+  double* alMgSiO3_data_ptr, double* alFe3O4_data_ptr, double* alAC_data_ptr,
+  double* alSiO2D_data_ptr, double* alMgO_data_ptr, double* alFeS_data_ptr,
+  double* alAl2O3_data_ptr, double* alreforg_data_ptr,
+  double* alvolorg_data_ptr, double* alH2Oice_data_ptr, double* altot_data_ptr,
+  double* kpSiM, double* kpFeM, double* kpMg2SiO4, double* kpMgSiO3,
+  double* kpFe3O4, double* kpAC, double* kpSiO2D, double* kpMgO, double* kpFeS,
+  double* kpAl2O3, double* kpreforg, double* kpvolorg, double* kpH2Oice,
+  double* kptot, double* gasSiM, double* gasFeM, double* gasMg2SiO4,
+  double* gasMgSiO3, double* gasFe3O4, double* gasAC, double* gasSiO2D,
+  double* gasMgO, double* gasFeS, double* gasAl2O3, double* gasreforg,
+  double* gasvolorg, double* gasH2Oice
+);
+
 void FORTRAN_NAME(calc_grain_size_increment_1d)(
   int* immulti, int* imabund, int* idspecies, int* igrgr, gr_mask_type* itmask,
   int* in, int* jn, int* kn, int* is, int* ie, int* j, int* k, double* dom,
