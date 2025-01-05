@@ -27,11 +27,7 @@
      &                gasgr_tMg2SiO4, gasgr_tMgSiO3, gasgr_tFe3O4,
      &                gasgr_tAC, gasgr_tSiO2D, gasgr_tMgO, gasgr_tFeS,
      &                gasgr_tAl2O3, gasgr_treforg, gasgr_tvolorg,
-     &                gasgr_tH2Oice, mygisrf, fv2k, fac, gisrfSiM,
-     &                gisrfFeM, gisrfMg2SiO4, gisrfMgSiO3, gisrfFe3O4,
-     &                gisrfAC, gisrfSiO2D, gisrfMgO, gisrfFeS,
-     &                gisrfAl2O3, gisrfreforg, gisrfvolorg,
-     &                gisrfH2Oice, anydust
+     &                gasgr_tH2Oice
      &              )
 
 !  PURPOSE:
@@ -150,7 +146,6 @@
      &      , gisrfreforg(in), gisrfvolorg(in), gisrfH2Oice(in)
 !  Iteration mask
 
-      MASK_TYPE anydust
       MASK_TYPE itmask_metal(in)
 
           ! Calculate heating from interstellar radiation field
