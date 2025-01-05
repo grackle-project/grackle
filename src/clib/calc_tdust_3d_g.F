@@ -206,10 +206,9 @@
 
 !  Additional slice locals
       R_PREC  comp1(in), comp2(in), edot(in),
-     & energy(in), gammaha_eff(in), gasgr_tdust(in),
-     & mmw(in), myde(in),
-     & mynh(in), p2d(in), regr(in), rhoH(in),
-     & tgasold(in)
+     & energy(in),
+     & mmw(in),
+     & p2d(in), rhoH(in)
 !  Iteration mask for multi_cool
 
       MASK_TYPE itmask(in)
@@ -250,9 +249,9 @@
 !$omp&   comp1, comp2, energy,
 !$omp&   indixe,
 !$omp&   t1, t2, logtem, tdef, p2d,
-!$omp&   tgas, tgasold,
+!$omp&   tgas,
 !$omp&   tdust, metallicity, dust2gas, rhoH, mmw,
-!$omp&   mynh, myde, gammaha_eff, gasgr_tdust, regr, edot,
+!$omp&   edot,
 !$omp&   itmask )
 #endif
       do t = 0, dk*dj-1
@@ -753,9 +752,9 @@ C          endif
 !$omp&   comp1, comp2, energy,
 !$omp&   indixe,
 !$omp&   t1, t2, logtem, tdef, p2d,
-!$omp&   tgas, tgasold,
+!$omp&   tgas,
 !$omp&   tdust, metallicity, dust2gas, rhoH, mmw,
-!$omp&   mynh, myde, gammaha_eff, gasgr_tdust, regr, edot,
+!$omp&   edot,
 !$omp&   itmask )
 #endif
       do t = 0, dk*dj-1
