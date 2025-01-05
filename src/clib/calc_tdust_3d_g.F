@@ -205,7 +205,7 @@
      &     myisrf(in)
 
 !  Additional slice locals
-      R_PREC  comp1(in), comp2(in), edot(in),
+      R_PREC  edot(in),
      & energy(in),
      & mmw(in),
      & p2d(in), rhoH(in)
@@ -246,7 +246,7 @@
 #ifdef _OPENMP
 !$omp parallel do schedule(runtime) private(
 !$omp&   i, j, k,
-!$omp&   comp1, comp2, energy,
+!$omp&   energy,
 !$omp&   indixe,
 !$omp&   t1, t2, logtem, tdef, p2d,
 !$omp&   tgas,
@@ -749,7 +749,7 @@ C          endif
 #ifdef _OPENMP
 !$omp parallel do schedule(runtime) private(
 !$omp&   i, j, k,
-!$omp&   comp1, comp2, energy,
+!$omp&   energy,
 !$omp&   indixe,
 !$omp&   t1, t2, logtem, tdef, p2d,
 !$omp&   tgas,
