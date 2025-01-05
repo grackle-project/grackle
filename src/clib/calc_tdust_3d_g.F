@@ -734,13 +734,7 @@ C          endif
 ! parallelize the k and j loops with OpenMP
 ! flat j and k loops for better parallelism
 #ifdef _OPENMP
-!$omp parallel do schedule(runtime) private(
-!$omp&   i, j, k,
-!$omp&   indixe,
-!$omp&   t1, t2, logtem, tdef,
-!$omp&   tgas,
-!$omp&   tdust, metallicity, dust2gas,
-!$omp&   itmask )
+!$omp parallel do schedule(runtime) private(i, j, k)
 #endif
       do t = 0, dk*dj-1
         k = t/dj      + ks+1
