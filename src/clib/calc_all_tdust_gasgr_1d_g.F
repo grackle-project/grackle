@@ -2,8 +2,6 @@
      &                idustfield, is, ie, j, k, fgr, gamma_isrfa,
      &                trad, gasgra, indixe, tdef, tgas, tdust,
      &                metallicity, dust2gas, mynh, gasgr_tdust,
-     &                priGridRank, priGridDim, priDataSize,
-     &                metGridRank, metGridDim, metDataSize,
      &                itmask_metal, LH2_N, LH2_Size, LHD_N, LHD_Size,
      &                LCI_N, LCI_Size, LCII_N, LCII_Size, LOI_N,
      &                LOI_Size, LCO_N, LCO_Size, LOH_N, LOH_Size,
@@ -57,16 +55,9 @@
       real*8 fgr
       real*8 gasgra(nratec), gamma_isrfa
 
-!  Cloudy cooling data
-
-      integer*8 priGridRank, priDataSize,
-     &     metGridRank, metDataSize,
-     &     priGridDim(priGridRank), metGridDim(metGridRank)
-
 !  Parameters
 
       real*8, parameter :: mh = mass_h      !DPC
-      ! approx. mean molecular weight of metals
 
 !  Locals
 
