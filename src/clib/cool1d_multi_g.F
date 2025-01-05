@@ -1155,10 +1155,16 @@ c  new (correct) way: (april 4, 2007)
          endif
       endif
 
-!     Calculate heating from interstellar radiation field
-!     -> this is ONLY used when `itmask_metal .eq. MASK_TRUE`
+      ! compute dust temperature and cooling due to dust
+      if (anydust .ne. MASK_FALSE) then
+          ! Calculate heating from interstellar radiation field
+          !  -> this is ONLY used when `itmask_metal .eq. MASK_TRUE`
 
-      if ((anydust .ne. MASK_FALSE) .or. (igammah .gt. 1)) then
+          ! NOTE: An earlier version of this logic would also compute
+          !       mygisrf (or the set of girsf[...]) when anydust
+          !       was MASK_FALSE and igammah > 1. However, there was
+          !       no need to do this.
+
       do i = is+1, ie+1
          if ( itmask_metal(i) .ne. MASK_FALSE ) then
 
@@ -1209,11 +1215,8 @@ c  new (correct) way: (april 4, 2007)
 
          endif
       enddo
-      endif
 
 !     --- Gas to grain heat transfer ---
-
-      if (anydust .ne. MASK_FALSE) then
 
 !     Look up gas/grain heat transfer rates
 
