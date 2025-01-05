@@ -204,11 +204,6 @@
      &     tgas(in), tdust(in), nh(in), gasgr(in),
      &     myisrf(in)
 
-!  Additional slice locals
-      R_PREC  edot(in),
-     & energy(in),
-     & mmw(in),
-     & p2d(in), rhoH(in)
 !  Iteration mask for multi_cool
 
       MASK_TYPE itmask(in)
@@ -246,12 +241,10 @@
 #ifdef _OPENMP
 !$omp parallel do schedule(runtime) private(
 !$omp&   i, j, k,
-!$omp&   energy,
 !$omp&   indixe,
-!$omp&   t1, t2, logtem, tdef, p2d,
+!$omp&   t1, t2, logtem, tdef,
 !$omp&   tgas,
-!$omp&   tdust, metallicity, dust2gas, rhoH, mmw,
-!$omp&   edot,
+!$omp&   tdust, metallicity, dust2gas,
 !$omp&   itmask )
 #endif
       do t = 0, dk*dj-1
@@ -749,12 +742,10 @@ C          endif
 #ifdef _OPENMP
 !$omp parallel do schedule(runtime) private(
 !$omp&   i, j, k,
-!$omp&   energy,
 !$omp&   indixe,
-!$omp&   t1, t2, logtem, tdef, p2d,
+!$omp&   t1, t2, logtem, tdef,
 !$omp&   tgas,
-!$omp&   tdust, metallicity, dust2gas, rhoH, mmw,
-!$omp&   edot,
+!$omp&   tdust, metallicity, dust2gas,
 !$omp&   itmask )
 #endif
       do t = 0, dk*dj-1
