@@ -205,16 +205,11 @@
      &     myisrf(in)
 
 !  Additional slice locals
-      R_PREC brem(in), ceHeI(in), ceHeII(in), ceHI(in),
-     & cieco(in), ciHeI(in), ciHeII(in), ciHeIS(in),
-     & ciHI(in), comp1(in), comp2(in), edot(in),
+      R_PREC  comp1(in), comp2(in), edot(in),
      & energy(in), gammaha_eff(in), gasgr_tdust(in),
-     & gphdl(in), gpldl(in), h2k01(in), hdlow(in),
-     & hdlte(in), hyd01k(in), mmw(in), myde(in),
-     & mynh(in), p2d(in), regr(in), reHeII1(in),
-     & reHeIII(in), reHII(in), rhoH(in), reHeII(in),
-     & reHeII2(in), roth(in), rotl(in), tgasold(in),
-     & vibh(in)
+     & mmw(in), myde(in),
+     & mynh(in), p2d(in), regr(in), rhoH(in),
+     & tgasold(in)
 !  Iteration mask for multi_cool
 
       MASK_TYPE itmask(in)
@@ -258,12 +253,6 @@
 !$omp&   tgas, tgasold,
 !$omp&   tdust, metallicity, dust2gas, rhoH, mmw,
 !$omp&   mynh, myde, gammaha_eff, gasgr_tdust, regr, edot,
-!$omp&   ceHI, ceHeI, ceHeII,
-!$omp&   ciHI, ciHeI, ciHeIS, ciHeII,
-!$omp&   reHII, reHeII1, reHeII2, reHeIII,
-!$omp&   brem, cieco,
-!$omp&   hyd01k, h2k01, vibh, roth, rotl,
-!$omp&   gpldl, gphdl, hdlte, hdlow,
 !$omp&   itmask )
 #endif
       do t = 0, dk*dj-1
@@ -767,12 +756,6 @@ C          endif
 !$omp&   tgas, tgasold,
 !$omp&   tdust, metallicity, dust2gas, rhoH, mmw,
 !$omp&   mynh, myde, gammaha_eff, gasgr_tdust, regr, edot,
-!$omp&   ceHI, ceHeI, ceHeII,
-!$omp&   ciHI, ciHeI, ciHeIS, ciHeII,
-!$omp&   reHII, reHeII1, reHeII2, reHeIII,
-!$omp&   brem, cieco,
-!$omp&   hyd01k, h2k01, vibh, roth, rotl,
-!$omp&   gpldl, gphdl, hdlte, hdlow,
 !$omp&   itmask )
 #endif
       do t = 0, dk*dj-1
