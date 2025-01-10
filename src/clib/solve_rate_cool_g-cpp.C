@@ -67,17 +67,11 @@ int solve_rate_cool_g(
   std::vector<double> ttot(my_fields->grid_dimension[0]);
   std::vector<double> p2d(my_fields->grid_dimension[0]);
   std::vector<double> tgas(my_fields->grid_dimension[0]);
-  std::vector<double> tgasold(my_fields->grid_dimension[0]);
   std::vector<double> tdust(my_fields->grid_dimension[0]);
   std::vector<double> metallicity(my_fields->grid_dimension[0]);
   std::vector<double> dust2gas(my_fields->grid_dimension[0]);
   std::vector<double> rhoH(my_fields->grid_dimension[0]);
   std::vector<double> mmw(my_fields->grid_dimension[0]);
-  std::vector<double> mynh(my_fields->grid_dimension[0]);
-  std::vector<double> myde(my_fields->grid_dimension[0]);
-  std::vector<double> gammaha_eff(my_fields->grid_dimension[0]);
-  std::vector<double> gasgr_tdust(my_fields->grid_dimension[0]);
-  std::vector<double> regr(my_fields->grid_dimension[0]);
   std::vector<double> ddom(my_fields->grid_dimension[0]);
 
   // Rate equation row temporaries
@@ -420,9 +414,9 @@ int solve_rate_cool_g(
   //_// PORT: !$omp&   ttmin, energy, comp1, comp2,
   //_// PORT: !$omp&   heq1, heq2, eqk221, eqk222, eqk131, eqk132,
   //_// PORT: !$omp&   eqt1, eqt2, eqtdef, dheq, heq,
-  //_// PORT: !$omp&   dtit, ttot, p2d, tgas, tgasold,
+  //_// PORT: !$omp&   dtit, ttot, p2d, tgas,
   //_// PORT: !$omp&   tdust, metallicity, dust2gas, rhoH, mmw,
-  //_// PORT: !$omp&   mynh, myde, gammaha_eff, gasgr_tdust, regr, ddom,
+  //_// PORT: !$omp&   ddom,
   //_// PORT: !$omp&   olddtit,
   //_// PORT: !$omp&   HIp, HIIp, HeIp, HeIIp, HeIIIp,
   //_// PORT: !$omp&   HMp, H2Ip, H2IIp,
@@ -456,6 +450,9 @@ int solve_rate_cool_g(
 
     grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf =
       grackle::impl::new_LogTLinInterpScratchBuf(my_fields->grid_dimension[0]);
+
+    grackle::impl::Cool1DMultiScratchBuf cool1dmulti_buf =
+      grackle::impl::new_Cool1DMultiScratchBuf(my_fields->grid_dimension[0]);
 
     //_// TODO_USE: OMP_PRAGMA("omp for")
     for (t = 0; t<=(dk * dj - 1); t++) {
@@ -544,9 +541,9 @@ int solve_rate_cool_g(
                   ceHI.data(), ceHeI.data(), ceHeII.data(), ciHI.data(), ciHeI.data(), ciHeIS.data(), ciHeII.data(),
                   reHII.data(), reHeII1.data(), reHeII2.data(), reHeIII.data(), brem.data(),
                   logTlininterp_buf.indixe, logTlininterp_buf.t1, logTlininterp_buf.t2, logTlininterp_buf.logtem, logTlininterp_buf.tdef, edot.data(),
-                  tgas.data(), tgasold.data(), mmw.data(), p2d.data(), tdust.data(), metallicity.data(),
-                  dust2gas.data(), rhoH.data(), mynh.data(), myde.data(),
-                  gammaha_eff.data(), gasgr_tdust.data(), regr.data(),
+                  tgas.data(), cool1dmulti_buf.tgasold, mmw.data(), p2d.data(), tdust.data(), metallicity.data(),
+                  dust2gas.data(), rhoH.data(), cool1dmulti_buf.mynh, cool1dmulti_buf.myde,
+                  cool1dmulti_buf.gammaha_eff, cool1dmulti_buf.gasgr_tdust, cool1dmulti_buf.regr,
                   &my_chemistry->self_shielding_method, &my_uvb_rates->crsHI, &my_uvb_rates->crsHeI, &my_uvb_rates->crsHeII,
                   &my_uvb_rates->k24, &my_uvb_rates->k26,
                   &my_chemistry->use_radiative_transfer, my_fields->RT_heating_rate,
@@ -1091,9 +1088,9 @@ int solve_rate_cool_g(
                     &j, &k, &iter, &dom, &comp1,
                     &comp2, &coolunit, &tbase1, &xbase1, &chunit, &dx_cgs,
                     &c_ljeans, logTlininterp_buf.indixe, logTlininterp_buf.t1, logTlininterp_buf.t2, logTlininterp_buf.logtem, logTlininterp_buf.tdef, dtit.data(),
-                    p2d.data(), tgas.data(), tgasold.data(), tdust.data(), metallicity.data(), dust2gas.data(),
-                    rhoH.data(), mmw.data(), mynh.data(), myde.data(), gammaha_eff.data(), gasgr_tdust.data(),
-                    regr.data(), h2dust.data(), ncrn.data(), ncrd1.data(), ncrd2.data(), grain_temperatures.SiM, grain_temperatures.FeM,
+                    p2d.data(), tgas.data(), cool1dmulti_buf.tgasold, tdust.data(), metallicity.data(), dust2gas.data(),
+                    rhoH.data(), mmw.data(), cool1dmulti_buf.mynh, cool1dmulti_buf.myde, cool1dmulti_buf.gammaha_eff, cool1dmulti_buf.gasgr_tdust,
+                    cool1dmulti_buf.regr, h2dust.data(), ncrn.data(), ncrd1.data(), ncrd2.data(), grain_temperatures.SiM, grain_temperatures.FeM,
                     grain_temperatures.Mg2SiO4, grain_temperatures.MgSiO3, grain_temperatures.Fe3O4, grain_temperatures.AC, grain_temperatures.SiO2D, grain_temperatures.MgO,
                     grain_temperatures.FeS, grain_temperatures.Al2O3, grain_temperatures.reforg, grain_temperatures.volorg, grain_temperatures.H2Oice, ceHI.data(),
                     ceHeI.data(), ceHeII.data(), ciHI.data(), ciHeI.data(), ciHeIS.data(), ciHeII.data(),
@@ -1171,6 +1168,7 @@ int solve_rate_cool_g(
     // cleanup manually allocated temporaries
     grackle::impl::drop_GrainSpeciesCollection(&grain_temperatures);
     grackle::impl::drop_LogTLinInterpScratchBuf(&logTlininterp_buf);
+    grackle::impl::drop_Cool1DMultiScratchBuf(&cool1dmulti_buf);
 
   }  // OMP_PRAGMA("omp parallel")
 
