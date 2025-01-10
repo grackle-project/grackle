@@ -909,7 +909,7 @@ void FORTRAN_NAME(step_rate_newton_raphson)(
   double* reHeIII, double* brem, double* edot, double* hyd01k, double* h2k01,
   double* vibh, double* roth, double* rotl, double* gpldl, double* gphdl,
   double* hdlte, double* hdlow, double* cieco, gr_mask_type* anydust,
-  gr_mask_type* itmask_nr, gr_mask_type* itmask_metal, int* itr, int* imp_eng
+  gr_mask_type* itmask_nr, gr_mask_type* itmask_metal, int* imp_eng
 );
 
 

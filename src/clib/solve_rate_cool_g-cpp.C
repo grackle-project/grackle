@@ -300,7 +300,6 @@ int solve_rate_cool_g(
   std::vector<gr_mask_type> itmask_tmp(my_fields->grid_dimension[0]);
   std::vector<gr_mask_type> itmask_nr(my_fields->grid_dimension[0]);
   std::vector<gr_mask_type> itmask_metal(my_fields->grid_dimension[0]);
-  int itr;
   std::vector<int> imp_eng(my_fields->grid_dimension[0]);
 
   
@@ -1113,7 +1112,7 @@ int solve_rate_cool_g(
                     reHII.data(), reHeII1.data(), reHeII2.data(), reHeIII.data(), brem.data(), edot.data(),
                     hyd01k.data(), h2k01.data(), vibh.data(), roth.data(), rotl.data(), gpldl.data(), gphdl.data(),
                     hdlte.data(), hdlow.data(), cieco.data(), &anydust, itmask_nr.data(),
-                    itmask_metal.data(), &itr, imp_eng.data()
+                    itmask_metal.data(), imp_eng.data()
                   );
 
         }
