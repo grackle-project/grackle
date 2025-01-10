@@ -13,18 +13,12 @@
 
 #include <stdio.h>
 #include <math.h>
+#include "grackle.h"
 #include "grackle_macros.h"
-#include "grackle_types.h"
-#include "grackle_chemistry_data.h"
 #include "phys_constants.h"
 #include "utils.h"
 
-extern chemistry_data *grackle_data;
-extern chemistry_data_storage grackle_rates;
-
 /* function prototypes */
-
-double get_temperature_units(code_units *my_units);
 
 int update_UVbackground_rates(chemistry_data *my_chemistry,
                               chemistry_data_storage *my_rates,
