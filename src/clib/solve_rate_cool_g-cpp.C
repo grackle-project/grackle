@@ -313,7 +313,7 @@ void solve_rate_cool_g(
 
   // Set error indicator
 
-  (*ierr) = 1;
+  (*ierr) = GR_SUCCESS;
 
   // Set flag for dust-related options
 
@@ -1139,15 +1139,12 @@ void solve_rate_cool_g(
           if (ttot[i-1]<ttmin) { ttmin = ttot[i-1]; }
         }
 
-        // If all cells are done (on this slice), then exit
-
-        if (std::fabs((*dt)-ttmin) < tolerance*(*dt)) { goto label_9999; }
+        // If all cells are done (on this slice), break out of subcycle loop
+        if (std::fabs((*dt)-ttmin) < tolerance*(*dt)) { break; }
 
       }  // subcycle iteration loop (for current row)
 
-label_9999:
-
-      // Abort if iteration count exceeds maximum
+      // review number of iterations that were spent in the subcycle loop
 
       if (iter > my_chemistry->max_iterations)  {
         OMP_PRAGMA_CRITICAL
@@ -1167,9 +1164,9 @@ label_9999:
   //_// PORT:             write(0,'((16(I3)))') (itmask(i),i=is+1,ie+1)
 
           if (my_chemistry->exit_after_iterations_exceeded == 1)  {
-            (*ierr) = 0;
+            (*ierr) = GR_FAIL;
           }
-        }
+        }  // OMP_PRAGMA_CRITICAL
       }
 
       if (iter > my_chemistry->max_iterations/2) { // WARNING_MESSAGE
@@ -1184,7 +1181,7 @@ label_9999:
 
   // If an error has been produced, return now.
 
-  if ((*ierr) == 0)  {
+  if ((*ierr) != GR_SUCCESS)  {
     return;
   }
 
