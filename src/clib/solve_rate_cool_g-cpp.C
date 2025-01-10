@@ -245,29 +245,7 @@ int solve_rate_cool_g(
 
   // Cooling/heating row locals
 
-  std::vector<double> ceHI(my_fields->grid_dimension[0]);
-  std::vector<double> ceHeI(my_fields->grid_dimension[0]);
-  std::vector<double> ceHeII(my_fields->grid_dimension[0]);
-  std::vector<double> ciHI(my_fields->grid_dimension[0]);
-  std::vector<double> ciHeI(my_fields->grid_dimension[0]);
-  std::vector<double> ciHeIS(my_fields->grid_dimension[0]);
-  std::vector<double> ciHeII(my_fields->grid_dimension[0]);
-  std::vector<double> reHII(my_fields->grid_dimension[0]);
-  std::vector<double> reHeII1(my_fields->grid_dimension[0]);
-  std::vector<double> reHeII2(my_fields->grid_dimension[0]);
-  std::vector<double> reHeIII(my_fields->grid_dimension[0]);
-  std::vector<double> brem(my_fields->grid_dimension[0]);
   std::vector<double> edot(my_fields->grid_dimension[0]);
-  std::vector<double> hyd01k(my_fields->grid_dimension[0]);
-  std::vector<double> h2k01(my_fields->grid_dimension[0]);
-  std::vector<double> vibh(my_fields->grid_dimension[0]);
-  std::vector<double> roth(my_fields->grid_dimension[0]);
-  std::vector<double> rotl(my_fields->grid_dimension[0]);
-  std::vector<double> gpldl(my_fields->grid_dimension[0]);
-  std::vector<double> gphdl(my_fields->grid_dimension[0]);
-  std::vector<double> hdlte(my_fields->grid_dimension[0]);
-  std::vector<double> hdlow(my_fields->grid_dimension[0]);
-  std::vector<double> cieco(my_fields->grid_dimension[0]);
 
   // Iteration mask
 
@@ -432,12 +410,7 @@ int solve_rate_cool_g(
   //_// PORT: !$omp&   k50, k51, k52, k53, k54,
   //_// PORT: !$omp&   k55, k56, k57, k58, k13dd, h2dust,
   //_// PORT: !$omp&   ncrn, ncrd1, ncrd2,
-  //_// PORT: !$omp&   ceHI, ceHeI, ceHeII,
-  //_// PORT: !$omp&   ciHI, ciHeI, ciHeIS, ciHeII,
-  //_// PORT: !$omp&   reHII, reHeII1, reHeII2, reHeIII,
-  //_// PORT: !$omp&   brem, edot,
-  //_// PORT: !$omp&   hyd01k, h2k01, vibh, roth, rotl,
-  //_// PORT: !$omp&   gpldl, gphdl, hdlte, hdlow, cieco,
+  //_// PORT: !$omp&   edot,
   //_// PORT: !$omp&   itmask, itmask_metal )
   //_// PORT: #endif
   //_// TODO_USE: OMP_PRAGMA("omp parallel")
@@ -453,6 +426,9 @@ int solve_rate_cool_g(
 
     grackle::impl::Cool1DMultiScratchBuf cool1dmulti_buf =
       grackle::impl::new_Cool1DMultiScratchBuf(my_fields->grid_dimension[0]);
+
+    grackle::impl::CoolHeatScratchBuf coolingheating_buf =
+      grackle::impl::new_CoolHeatScratchBuf(my_fields->grid_dimension[0]);
 
     //_// TODO_USE: OMP_PRAGMA("omp for")
     for (t = 0; t<=(dk * dj - 1); t++) {
@@ -533,13 +509,13 @@ int solve_rate_cool_g(
                   &my_uvb_rates->piHI, &my_uvb_rates->piHeI, &my_uvb_rates->piHeII, &comp1, &comp2,
                   my_fields->HM_density, my_fields->H2I_density, my_fields->H2II_density, my_fields->DI_density, my_fields->DII_density, my_fields->HDI_density, my_fields->metal_density, my_fields->dust_density,
                   my_rates->hyd01k, my_rates->h2k01, my_rates->vibh, my_rates->roth, my_rates->rotl,
-                  hyd01k.data(), h2k01.data(), vibh.data(), roth.data(), rotl.data(),
-                  my_rates->GP99LowDensityLimit, my_rates->GP99HighDensityLimit, gpldl.data(), gphdl.data(),
-                  my_rates->HDlte, my_rates->HDlow, hdlte.data(), hdlow.data(),
+                  coolingheating_buf.hyd01k, coolingheating_buf.h2k01, coolingheating_buf.vibh, coolingheating_buf.roth, coolingheating_buf.rotl,
+                  my_rates->GP99LowDensityLimit, my_rates->GP99HighDensityLimit, coolingheating_buf.gpldl, coolingheating_buf.gphdl,
+                  my_rates->HDlte, my_rates->HDlow, coolingheating_buf.hdlte, coolingheating_buf.hdlow,
                   my_rates->GAHI, my_rates->GAH2, my_rates->GAHe, my_rates->GAHp, my_rates->GAel,
                   my_rates->H2LTE, my_rates->gas_grain,
-                  ceHI.data(), ceHeI.data(), ceHeII.data(), ciHI.data(), ciHeI.data(), ciHeIS.data(), ciHeII.data(),
-                  reHII.data(), reHeII1.data(), reHeII2.data(), reHeIII.data(), brem.data(),
+                  coolingheating_buf.ceHI, coolingheating_buf.ceHeI, coolingheating_buf.ceHeII, coolingheating_buf.ciHI, coolingheating_buf.ciHeI, coolingheating_buf.ciHeIS, coolingheating_buf.ciHeII,
+                  coolingheating_buf.reHII, coolingheating_buf.reHeII1, coolingheating_buf.reHeII2, coolingheating_buf.reHeIII, coolingheating_buf.brem,
                   logTlininterp_buf.indixe, logTlininterp_buf.t1, logTlininterp_buf.t2, logTlininterp_buf.logtem, logTlininterp_buf.tdef, edot.data(),
                   tgas.data(), cool1dmulti_buf.tgasold, mmw.data(), p2d.data(), tdust.data(), metallicity.data(),
                   dust2gas.data(), rhoH.data(), cool1dmulti_buf.mynh, cool1dmulti_buf.myde,
@@ -547,7 +523,7 @@ int solve_rate_cool_g(
                   &my_chemistry->self_shielding_method, &my_uvb_rates->crsHI, &my_uvb_rates->crsHeI, &my_uvb_rates->crsHeII,
                   &my_uvb_rates->k24, &my_uvb_rates->k26,
                   &my_chemistry->use_radiative_transfer, my_fields->RT_heating_rate,
-                  &my_chemistry->h2_optical_depth_approximation, &my_chemistry->cie_cooling, &my_chemistry->h2_cooling_rate, &my_chemistry->hd_cooling_rate, my_rates->cieco, cieco.data(),
+                  &my_chemistry->h2_optical_depth_approximation, &my_chemistry->cie_cooling, &my_chemistry->h2_cooling_rate, &my_chemistry->hd_cooling_rate, my_rates->cieco, coolingheating_buf.cieco,
                   &my_chemistry->cmb_temperature_floor, &my_chemistry->UVbackground, &my_chemistry->cloudy_electron_fraction_factor,
                   &my_rates->cloudy_primordial.grid_rank, my_rates->cloudy_primordial.grid_dimension,
                   my_rates->cloudy_primordial.grid_parameters[0], my_rates->cloudy_primordial.grid_parameters[1], my_rates->cloudy_primordial.grid_parameters[2], my_rates->cloudy_primordial.grid_parameters[3], my_rates->cloudy_primordial.grid_parameters[4],
@@ -1092,11 +1068,11 @@ int solve_rate_cool_g(
                     rhoH.data(), mmw.data(), cool1dmulti_buf.mynh, cool1dmulti_buf.myde, cool1dmulti_buf.gammaha_eff, cool1dmulti_buf.gasgr_tdust,
                     cool1dmulti_buf.regr, h2dust.data(), ncrn.data(), ncrd1.data(), ncrd2.data(), grain_temperatures.SiM, grain_temperatures.FeM,
                     grain_temperatures.Mg2SiO4, grain_temperatures.MgSiO3, grain_temperatures.Fe3O4, grain_temperatures.AC, grain_temperatures.SiO2D, grain_temperatures.MgO,
-                    grain_temperatures.FeS, grain_temperatures.Al2O3, grain_temperatures.reforg, grain_temperatures.volorg, grain_temperatures.H2Oice, ceHI.data(),
-                    ceHeI.data(), ceHeII.data(), ciHI.data(), ciHeI.data(), ciHeIS.data(), ciHeII.data(),
-                    reHII.data(), reHeII1.data(), reHeII2.data(), reHeIII.data(), brem.data(), edot.data(),
-                    hyd01k.data(), h2k01.data(), vibh.data(), roth.data(), rotl.data(), gpldl.data(), gphdl.data(),
-                    hdlte.data(), hdlow.data(), cieco.data(), &anydust, itmask_nr.data(),
+                    grain_temperatures.FeS, grain_temperatures.Al2O3, grain_temperatures.reforg, grain_temperatures.volorg, grain_temperatures.H2Oice, coolingheating_buf.ceHI,
+                    coolingheating_buf.ceHeI, coolingheating_buf.ceHeII, coolingheating_buf.ciHI, coolingheating_buf.ciHeI, coolingheating_buf.ciHeIS, coolingheating_buf.ciHeII,
+                    coolingheating_buf.reHII, coolingheating_buf.reHeII1, coolingheating_buf.reHeII2, coolingheating_buf.reHeIII, coolingheating_buf.brem, edot.data(),
+                    coolingheating_buf.hyd01k, coolingheating_buf.h2k01, coolingheating_buf.vibh, coolingheating_buf.roth, coolingheating_buf.rotl, coolingheating_buf.gpldl, coolingheating_buf.gphdl,
+                    coolingheating_buf.hdlte, coolingheating_buf.hdlow, coolingheating_buf.cieco, &anydust, itmask_nr.data(),
                     itmask_metal.data(), imp_eng.data()
                   );
 
@@ -1169,6 +1145,8 @@ int solve_rate_cool_g(
     grackle::impl::drop_GrainSpeciesCollection(&grain_temperatures);
     grackle::impl::drop_LogTLinInterpScratchBuf(&logTlininterp_buf);
     grackle::impl::drop_Cool1DMultiScratchBuf(&cool1dmulti_buf);
+    grackle::impl::drop_CoolHeatScratchBuf(&coolingheating_buf);
+
 
   }  // OMP_PRAGMA("omp parallel")
 
