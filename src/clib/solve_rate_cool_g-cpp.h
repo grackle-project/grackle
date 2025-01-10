@@ -17,6 +17,17 @@ extern "C" {
 #endif /* __cplusplus */
 // the following function can be called from C or C++
 
+/// Solve the multi-species rate and cooling equations
+///
+/// @par History
+/// written by: Yu Zhang, Peter Anninos and Tom Abel
+/// modified1:  January, 1996 by Greg Bryan; converted to KRONOS
+/// modified2:  October, 1996 by GB; adapted to AMR
+/// modified3:  May,     1999 by GB and Tom Abel, 3bodyH2, solver, HD
+/// modified4:  June,    2005 by GB to solve rate & cool at same time
+/// modified5:  April,   2009 by JHW to include radiative transfer
+/// modified6:  September, 2009 by BDS to include cloudy cooling
+/// modified7:  January, 2025 by Matthew Abruzzo; ported to C++
 void solve_rate_cool_g(
   int* imetal, double* dt, double* utem, double* uxyz, double* urho, int* ierr,
   chemistry_data* my_chemistry, chemistry_data_storage* my_rates,

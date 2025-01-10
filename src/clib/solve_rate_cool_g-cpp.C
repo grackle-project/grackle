@@ -27,121 +27,9 @@ void solve_rate_cool_g(
 )
 {
 
-  
-  // SOLVE MULTI-SPECIES RATE EQUATIONS AND RADIATIVE COOLING
-  
-  // written by: Yu Zhang, Peter Anninos and Tom Abel
-  // date:
-  // modified1:  January, 1996 by Greg Bryan; converted to KRONOS
-  // modified2:  October, 1996 by GB; adapted to AMR
-  // modified3:  May,     1999 by GB and Tom Abel, 3bodyH2, solver, HD
-  // modified4:  June,    2005 by GB to solve rate & cool at same time
-  // modified5:  April,   2009 by JHW to include radiative transfer
-  // modified6:  September, 2009 by BDS to include cloudy cooling
-  
-  // PURPOSE:
-  //   Solve the multi-species rate and cool equations.
-  
-  // INPUTS:
-  //   icool    - flag to update energy from radiative cooling
-  //   in,jn,kn - dimensions of 3D fields
-  
-  //   d        - total density field
-  //   de       - electron density field
-  //   HI,HII   - H density fields (neutral & ionized)
-  //   HeI/II/III - He density fields
-  //   DI/II    - D density fields (neutral & ionized)
-  //   HDI      - neutral HD molecule density field
-  //   HM       - H- density field
-  //   H2I      - H_2 (molecular H) density field
-  //   H2II     - H_2+ density field
-  //   metal    - metal density field
-  //   dust     - dust density field
-  //   kph*     - photoionization fields
-  //   gamma*   - photoheating fields
-  //   f_shield_custom - custom H2 shielding factor
-  
-  //   is,ie    - start and end indices of active region (zero based)
-  //   iexpand  - comoving coordinates flag (0 = off, 1 = on)
-  //   idim     - dimensionality (rank) of problem
-  //   ispecies - chemistry module (1 - H/He only, 2 - molecular H, 3 - D)
-  //   imetal   - flag if metal field is active (0 = no, 1 = yes)
-  //   imcool   - flag if there is metal cooling
-  //   idust    - flag for H2 formation on dust grains
-  //   idustall - flag for dust (0 - none, 1 - heating/cooling + H2 form.)
-  //   idustfield - flag if a dust density field is present
-  //   iisrffield - flag if a field for the interstellar radiation field is present
-  //   ih2co    - flag to include H2 cooling (1 = on, 0 = off)
-  //   ipiht    - flag to include photoionization heating (1 = on, 0 = off)
-  //   idustrec - flag to include dust recombination cooling (1 = on, -1 = off)
-  //   iH2shield - flag for approximate self-shielding of H2 (Wolcott-Green+ 2011)
-  //   iradshield - flag for approximate self-shielding of UV background
-  //   avgsighi   - spectrum averaged ionization crs for HI for use with shielding
-  //   avgsighei  - spectrum averaged ionization crs for HeI for use with shielding
-  //   avgsigheii - spectrum averaged ionization crs for HeII for use with shielding
-  //   iradtrans - flag to include radiative transfer (1 = on, 0 = off)
-  //   iradcoupled - flag to indicate coupled radiative transfer
-  //   iradstep  - flag to indicate intermediate coupled radiative transfer timestep
-  //   irt_honly - flag to indicate applying RT ionization and heating to HI only
-  //   iH2shieldcustom - flag to indicate a custom H2 shielding factor is provided
-
-  //     fh       - Hydrogen mass fraction (typically 0.76)
-  //     dtoh     - Deuterium to H mass ratio
-  //     z_solar  - Solar metal mass fraction
-  //     fgr      - the local dust to gas ratio (by mass)
-  //     dt       - timestep to integrate over
-  //     aye      - expansion factor (in code units)
-  
-  //     utim     - time units (i.e. code units to CGS conversion factor)
-  //     uaye     - expansion factor conversion factor (uaye = 1/(1+zinit))
-  //     urho     - density units
-  //     uxyz     - length units
-  //     utem     - temperature(-like) units
-  
-  //     temstart, temend - start and end of temperature range for rate table
-  //     nratec   - dimensions of chemical rate arrays (functions of temperature)
-  //     dtemstart, dtemend - start and end of dust temperature range
-  //     ndratec  - extra dimension for H2 formation on dust rate (dust temperature)
-  
-  //     icmbTfloor - flag to include temperature floor from cmb
-  //     iClHeat    - flag to include cloudy heating
-  //     priGridRank - rank of cloudy primordial cooling data grid
-  //     priGridDim  - array containing dimensions of cloudy primordial data
-  //     priPar1, priPar2, priPar3 - arrays containing primordial grid parameter values
-  //     priDataSize - total size of flattened 1D primordial cooling data array
-  //     priCooling  - primordial cooling data
-  //     priHeating  - primordial heating data
-  //     priMMW      - primordial mmw data
-  //     metGridRank - rank of cloudy metal cooling data grid
-  //     metGridDim  - array containing dimensions of cloudy metal data
-  //     metPar1, metPar2, metPar3 - arrays containing metal grid parameter values
-  //     metDataSize - total size of flattened 1D metal cooling data array
-  //     metCooling  - metal cooling data
-  //     metHeating  - metal heating data
-  //     iVheat      - flag for using volumetric heating rate
-  //     iMheat      - flag for using specific heating rate
-  //     Vheat       - array of volumetric heating rates
-  //     Mheat       - array of specific heating rates
-  //     iTfloor     - flag for using temperature floor field
-  //     Tfloor_scalar - scalar temperature floor value
-  //     Tfloor      - array of temperature floor values
-  //     itmax       - maximum allowed sub-cycle iterations
-  //     exititmax   - flag to exit if max iterations exceeded
-  
-  //   OUTPUTS:
-  //     update chemical rate densities (HI, HII, etc)
-  
-  //   PARAMETERS:
-  //     mh      - H mass in cgs units
-  
-  // -----------------------------------------------------------------------
-
-
   // General Arguments
 
   int ierror;
-
-  // -- removed line (previously just declared arg types) -- 
 
   // Density, energy and velocity fields fields
 
@@ -155,63 +43,7 @@ void solve_rate_cool_g(
 
   grackle::impl::View<gr_float***> kphHI(my_fields->RT_HI_ionization_rate, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-
-  // H2 self-shielding length-scale field
-
-
-  // Interstellar radiation field for dust heating
-
-
-  // Custom H2 shielding factor
-
-
-  // Cooling tables (coolings rates as a function of temperature)
-
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-  // opacity table
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-
-  // -- removed line (previously just declared arg types) -- 
-
-  // Chemistry tables (rates as a function of temperature)
-
-  // -- removed line (previously just declared arg types) -- 
-
-  // Cloudy cooling data
-
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-
-  // Parameters
+  // Constants
 
 #ifdef GRACKLE_FLOAT_4
   const gr_float tolerance = (gr_float)(1.0e-05);
@@ -411,8 +243,6 @@ void solve_rate_cool_g(
   std::vector<double> kz52(my_fields->grid_dimension[0]);
   std::vector<double> kz53(my_fields->grid_dimension[0]);
   std::vector<double> kz54(my_fields->grid_dimension[0]);
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
   std::vector<double> kdSiM(my_fields->grid_dimension[0]);
   std::vector<double> kdFeM(my_fields->grid_dimension[0]);
   std::vector<double> kdMg2SiO4(my_fields->grid_dimension[0]);
