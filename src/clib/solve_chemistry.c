@@ -238,7 +238,7 @@ int local_solve_chemistry(chemistry_data *my_chemistry,
   /* Call the fortran routine to solve cooling equations. */
 
   int ierr = solve_rate_cool_g(
-    &metal_field_present, &dt_value, &temperature_units, &co_length_units,
+    metal_field_present, dt_value, &temperature_units, &co_length_units,
     &co_density_units, my_chemistry, my_rates, my_units, my_fields,
     &my_uvb_rates
   );

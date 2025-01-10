@@ -20,7 +20,7 @@ extern "C" {
 #endif /* __cplusplus */
 
 int solve_rate_cool_g(
-  int* imetal, double* dt, double* utem, double* uxyz, double* urho,
+  int imetal, double dt, double* utem, double* uxyz, double* urho,
   chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
   code_units* my_units, grackle_field_data* my_fields,
   photo_rate_storage* my_uvb_rates
@@ -351,7 +351,7 @@ int solve_rate_cool_g(
      FORTRAN_NAME(make_consistent_g)(de.data(), HI.data(), HII.data(), my_fields->HeI_density, my_fields->HeII_density, my_fields->HeIII_density,
                          my_fields->HM_density, my_fields->H2I_density, my_fields->H2II_density, my_fields->DI_density, my_fields->DII_density, my_fields->HDI_density, my_fields->metal_density, my_fields->dust_density,
                          d.data(), &my_fields->grid_start[0], &my_fields->grid_end[0], &my_fields->grid_start[1], &my_fields->grid_end[1], &my_fields->grid_start[2], &my_fields->grid_end[2],
-                         &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &my_chemistry->primordial_chemistry, imetal, &my_chemistry->HydrogenFractionByMass, &my_chemistry->DeuteriumToHydrogenRatio,
+                         &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &my_chemistry->primordial_chemistry, &imetal, &my_chemistry->HydrogenFractionByMass, &my_chemistry->DeuteriumToHydrogenRatio,
                         &my_chemistry->use_dust_density_field, &my_chemistry->metal_chemistry, &my_chemistry->grain_growth, &dom,
                         my_fields->DM_density, my_fields->HDII_density, my_fields->HeHII_density,
                         my_fields->CI_density, my_fields->CII_density, my_fields->CO_density, my_fields->CO2_density,
@@ -385,7 +385,7 @@ int solve_rate_cool_g(
     factor = (gr_float)(std::pow(my_units->a_value,(-3)) );
 
      FORTRAN_NAME(scale_fields_g)(
-      &my_chemistry->primordial_chemistry, imetal, &my_chemistry->use_dust_density_field, &my_chemistry->metal_chemistry,
+      &my_chemistry->primordial_chemistry, &imetal, &my_chemistry->use_dust_density_field, &my_chemistry->metal_chemistry,
       &my_chemistry->metal_abundances, &my_chemistry->dust_species, &my_chemistry->multi_metals, &my_chemistry->grain_growth, &my_chemistry->dust_sublimation, &factor,
       &my_fields->grid_start[0], &my_fields->grid_end[0], &my_fields->grid_start[1], &my_fields->grid_end[1], &my_fields->grid_start[2], &my_fields->grid_end[2], &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2],
       d.data(), de.data(), HI.data(), HII.data(), my_fields->HeI_density, my_fields->HeII_density, my_fields->HeIII_density,
@@ -410,7 +410,7 @@ int solve_rate_cool_g(
    FORTRAN_NAME(ceiling_species_g)(d.data(), de.data(), HI.data(), HII.data(), my_fields->HeI_density, my_fields->HeII_density, my_fields->HeIII_density,
                        my_fields->HM_density, my_fields->H2I_density, my_fields->H2II_density, my_fields->DI_density, my_fields->DII_density, my_fields->HDI_density, my_fields->metal_density, my_fields->dust_density,
                        &my_fields->grid_start[0], &my_fields->grid_end[0], &my_fields->grid_start[1], &my_fields->grid_end[1], &my_fields->grid_start[2], &my_fields->grid_end[2],
-                       &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &my_chemistry->primordial_chemistry, imetal, &my_chemistry->use_dust_density_field,
+                       &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &my_chemistry->primordial_chemistry, &imetal, &my_chemistry->use_dust_density_field,
                       my_fields->DM_density, my_fields->HDII_density, my_fields->HeHII_density,
                       &my_chemistry->metal_abundances, &my_chemistry->metal_chemistry, &my_chemistry->dust_species, &my_chemistry->multi_metals,
                       &my_chemistry->grain_growth, &my_chemistry->dust_sublimation,
@@ -540,7 +540,7 @@ int solve_rate_cool_g(
          FORTRAN_NAME(cool1d_multi_g)(
                   d.data(), e.data(), my_fields->x_velocity, my_fields->y_velocity, my_fields->z_velocity, de.data(), HI.data(), HII.data(), my_fields->HeI_density, my_fields->HeII_density, my_fields->HeIII_density,
                   &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &my_chemistry->NumberOfTemperatureBins,
-                  &my_units->comoving_coordinates, &my_chemistry->primordial_chemistry, imetal, &my_chemistry->metal_cooling,
+                  &my_units->comoving_coordinates, &my_chemistry->primordial_chemistry, &imetal, &my_chemistry->metal_cooling,
                   &my_chemistry->h2_on_dust, &my_chemistry->dust_chemistry, &my_chemistry->use_dust_density_field, &my_chemistry->dust_recombination_cooling,
                   &my_fields->grid_rank, &my_fields->grid_start[0], &my_fields->grid_end[0], &j, &k, &my_chemistry->ih2co, &my_chemistry->ipiht, &iter, &my_chemistry->photoelectric_heating,
                   &my_units->a_value, &my_chemistry->TemperatureStart, &my_chemistry->TemperatureEnd, &my_chemistry->SolarMetalFractionByMass, &my_chemistry->local_dust_to_gas_ratio,
@@ -681,7 +681,7 @@ int solve_rate_cool_g(
                    &my_chemistry->use_radiative_transfer, my_fields->RT_H2_dissociation_rate, my_fields->H2_self_shielding_length, itmask.data(),
                    itmask_metal.data(),
                    &my_chemistry->HydrogenFractionByMass, my_fields->metal_density,
-                   my_fields->DM_density, my_fields->HDII_density, my_fields->HeHII_density, imetal, &my_chemistry->metal_chemistry, &my_chemistry->grain_growth,
+                   my_fields->DM_density, my_fields->HDII_density, my_fields->HeHII_density, &imetal, &my_chemistry->metal_chemistry, &my_chemistry->grain_growth,
                    my_fields->CI_density, my_fields->CII_density, my_fields->CO_density, my_fields->CO2_density,
                    my_fields->OI_density, my_fields->OH_density, my_fields->H2O_density, my_fields->O2_density,
                    my_fields->SiI_density, my_fields->SiOI_density, my_fields->SiO2I_density,
@@ -734,7 +734,7 @@ int solve_rate_cool_g(
                    my_rates->SN0_kpFe3O4, my_rates->SN0_kpAC, my_rates->SN0_kpSiO2D, my_rates->SN0_kpMgO,
                    my_rates->SN0_kpFeS, my_rates->SN0_kpAl2O3,
                    my_rates->SN0_kpreforg, my_rates->SN0_kpvolorg, my_rates->SN0_kpH2Oice,
-                   my_rates->h2dustS, my_rates->h2dustC, rhoH.data(), my_rates->grain_growth_rate, dt,
+                   my_rates->h2dustS, my_rates->h2dustC, rhoH.data(), my_rates->grain_growth_rate, &dt,
                    kdSiM.data(), kdFeM.data(), kdMg2SiO4.data(),
                    kdMgSiO3.data(), kdFe3O4.data(), kdAC.data(), kdSiO2D.data(), kdMgO.data(), kdFeS.data(),
                    kdAl2O3.data(), kdreforg.data(), kdvolorg.data(), kdH2Oice.data(),
@@ -778,9 +778,9 @@ int solve_rate_cool_g(
           for (i = my_fields->grid_start[0] + 1; i<=(my_fields->grid_end[0] + 1); i++) {
             if ( itmask_tmp[i-1] != MASK_FALSE )  {
 
-              if ( ( ((*imetal) == 0)
+              if ( ( (imetal == 0)
                 &&  (ddom[i-1] < 1.e8) )
-               ||  ( ((*imetal) == 1)
+               ||  ( (imetal == 1)
                 &&  ( ( (metallicity[i-1] <= min_metallicity)
                     &&  (ddom[i-1] < 1.e8) )
                    ||  ( (metallicity[i-1] > min_metallicity)
@@ -843,7 +843,7 @@ int solve_rate_cool_g(
               olddtit = dtit[i-1];
               dtit[i-1] = grackle::impl::fmin(std::fabs(0.1*de(i-1,j-1,k-1)/dedot[i-1]),
                    std::fabs(0.1*HI(i-1,j-1,k-1)/HIdot[i-1]),
-                   (*dt)-ttot[i-1], 0.5*(*dt));
+                   dt-ttot[i-1], 0.5*dt);
 
               if (ddom[i-1] > 1.e8  && 
                    edot[i-1] > 0.       && 
@@ -893,14 +893,14 @@ int solve_rate_cool_g(
             } else if ((itmask_nr[i-1]!=MASK_FALSE) && 
                      (imp_eng[i-1]==0))  {
               dtit[i-1] = grackle::impl::fmin(std::fabs(0.1*e(i-1,j-1,k-1)/edot[i-1]*d(i-1,j-1,k-1)),
-                   (*dt)-ttot[i-1], 0.5*(*dt));
+                   dt-ttot[i-1], 0.5*dt);
 
             } else if ((itmask_nr[i-1]!=MASK_FALSE) && 
                      (imp_eng[i-1]==1))  {
-              dtit[i-1] = (*dt) - ttot[i-1];
+              dtit[i-1] = dt - ttot[i-1];
 
             } else {
-              dtit[i-1] = (*dt);
+              dtit[i-1] = dt;
             }
           }
 
@@ -928,7 +928,7 @@ int solve_rate_cool_g(
 
             dtit[i-1] = grackle::impl::fmin((double)(std::fabs(0.1*
               energy/edot[i-1]) ),
-              (*dt)-ttot[i-1], dtit[i-1]);
+              dt-ttot[i-1], dtit[i-1]);
 
             if (dtit[i-1] != dtit[i-1])  {
               OMP_PRAGMA_CRITICAL
@@ -937,7 +937,7 @@ int solve_rate_cool_g(
                         energy,
                         edot [ i-1 ],
                         dtit [ i-1 ],
-                        (*dt),
+                        dt,
                         ttot [ i-1 ],
                         std::fabs ( 0.1 * energy / edot [ i-1 ] ),
                         (double) ( std::fabs ( 0.1 * energy / edot [ i-1 ] ) ));
@@ -982,7 +982,7 @@ int solve_rate_cool_g(
                          &my_chemistry->use_radiative_transfer, &my_chemistry->radiative_transfer_hydrogen_only,
                          kphHI.data(), my_fields->RT_HeI_ionization_rate, my_fields->RT_HeII_ionization_rate,
                          itmask.data(), itmask_metal.data(),
-                        my_fields->DM_density, my_fields->HDII_density, my_fields->HeHII_density, imetal, my_fields->metal_density,
+                        my_fields->DM_density, my_fields->HDII_density, my_fields->HeHII_density, &imetal, my_fields->metal_density,
                         &my_chemistry->metal_chemistry, &my_chemistry->dust_species, &my_chemistry->grain_growth, &my_chemistry->dust_sublimation,
                         my_fields->CI_density, my_fields->CII_density, my_fields->CO_density, my_fields->CO2_density,
                         my_fields->OI_density, my_fields->OH_density, my_fields->H2O_density, my_fields->O2_density,
@@ -1029,7 +1029,7 @@ int solve_rate_cool_g(
 
            FORTRAN_NAME(step_rate_newton_raphson)(&my_chemistry->with_radiative_cooling, d.data(), e.data(), my_fields->x_velocity, my_fields->y_velocity, my_fields->z_velocity, de.data(), HI.data(),
                     HII.data(), my_fields->HeI_density, my_fields->HeII_density, my_fields->HeIII_density, &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &my_chemistry->NumberOfTemperatureBins,
-                    &my_units->comoving_coordinates, &my_chemistry->primordial_chemistry, imetal, &my_chemistry->metal_cooling, &my_chemistry->h2_on_dust,
+                    &my_units->comoving_coordinates, &my_chemistry->primordial_chemistry, &imetal, &my_chemistry->metal_cooling, &my_chemistry->h2_on_dust,
                     &my_chemistry->dust_chemistry, &my_chemistry->use_dust_density_field, &my_fields->grid_start[0], &my_fields->grid_end[0], &my_chemistry->ih2co, &my_chemistry->ipiht,
                     &my_chemistry->dust_recombination_cooling, &my_chemistry->photoelectric_heating, &my_units->a_value, &my_chemistry->TemperatureStart, &my_chemistry->TemperatureEnd, utem,
                     uxyz, &my_units->a_units, urho, &my_units->time_units, &my_chemistry->Gamma, &my_chemistry->HydrogenFractionByMass, &my_chemistry->SolarMetalFractionByMass, &my_chemistry->local_dust_to_gas_ratio,
@@ -1132,14 +1132,14 @@ int solve_rate_cool_g(
 
         ttmin = huge8;
         for (i = my_fields->grid_start[0] + 1; i<=(my_fields->grid_end[0] + 1); i++) {
-          ttot[i-1] = std::fmin(ttot[i-1] + dtit[i-1], (*dt));
-          if (std::fabs((*dt)-ttot[i-1]) <
-               tolerance*(*dt)) { itmask[i-1] = MASK_FALSE; }
+          ttot[i-1] = std::fmin(ttot[i-1] + dtit[i-1], dt);
+          if (std::fabs(dt-ttot[i-1]) <
+               tolerance*dt) { itmask[i-1] = MASK_FALSE; }
           if (ttot[i-1]<ttmin) { ttmin = ttot[i-1]; }
         }
 
         // If all cells are done (on this slice), break out of subcycle loop
-        if (std::fabs((*dt)-ttmin) < tolerance*(*dt)) { break; }
+        if (std::fabs(dt-ttmin) < tolerance*dt) { break; }
 
       }  // subcycle iteration loop (for current row)
 
@@ -1156,7 +1156,7 @@ int solve_rate_cool_g(
                   j,
                   k);
           printf("FATAL error (2) in MULTI_COOL\n");
-          printf("( dt = %.17e ttmin = %.17e )", *dt, ttmin);
+          printf("( dt = %.17e ttmin = %.17e )", dt, ttmin);
           grackle::impl::print_contiguous_row_(
             dtit.data(), my_fields->grid_start[0], my_fields->grid_end[0]+1
           );
@@ -1199,7 +1199,7 @@ int solve_rate_cool_g(
     factor = (gr_float)(std::pow(my_units->a_value,3) );
 
      FORTRAN_NAME(scale_fields_g)(
-      &my_chemistry->primordial_chemistry, imetal, &my_chemistry->use_dust_density_field, &my_chemistry->metal_chemistry,
+      &my_chemistry->primordial_chemistry, &imetal, &my_chemistry->use_dust_density_field, &my_chemistry->metal_chemistry,
       &my_chemistry->metal_abundances, &my_chemistry->dust_species, &my_chemistry->multi_metals, &my_chemistry->grain_growth, &my_chemistry->dust_sublimation, &factor,
       &my_fields->grid_start[0], &my_fields->grid_end[0], &my_fields->grid_start[1], &my_fields->grid_end[1], &my_fields->grid_start[2], &my_fields->grid_end[2], &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2],
       d.data(), de.data(), HI.data(), HII.data(), my_fields->HeI_density, my_fields->HeII_density, my_fields->HeIII_density,
@@ -1228,7 +1228,7 @@ int solve_rate_cool_g(
      FORTRAN_NAME(make_consistent_g)(de.data(), HI.data(), HII.data(), my_fields->HeI_density, my_fields->HeII_density, my_fields->HeIII_density,
                          my_fields->HM_density, my_fields->H2I_density, my_fields->H2II_density, my_fields->DI_density, my_fields->DII_density, my_fields->HDI_density, my_fields->metal_density, my_fields->dust_density,
                          d.data(), &my_fields->grid_start[0], &my_fields->grid_end[0], &my_fields->grid_start[1], &my_fields->grid_end[1], &my_fields->grid_start[2], &my_fields->grid_end[2],
-                         &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &my_chemistry->primordial_chemistry, imetal, &my_chemistry->HydrogenFractionByMass, &my_chemistry->DeuteriumToHydrogenRatio,
+                         &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &my_chemistry->primordial_chemistry, &imetal, &my_chemistry->HydrogenFractionByMass, &my_chemistry->DeuteriumToHydrogenRatio,
                         &my_chemistry->use_dust_density_field, &my_chemistry->metal_chemistry, &my_chemistry->grain_growth, &dom,
                         my_fields->DM_density, my_fields->HDII_density, my_fields->HeHII_density,
                         my_fields->CI_density, my_fields->CII_density, my_fields->CO_density, my_fields->CO2_density,
@@ -1255,7 +1255,7 @@ int solve_rate_cool_g(
      FORTRAN_NAME(ceiling_species_g)(d.data(), de.data(), HI.data(), HII.data(), my_fields->HeI_density, my_fields->HeII_density, my_fields->HeIII_density,
                          my_fields->HM_density, my_fields->H2I_density, my_fields->H2II_density, my_fields->DI_density, my_fields->DII_density, my_fields->HDI_density, my_fields->metal_density, my_fields->dust_density,
                          &my_fields->grid_start[0], &my_fields->grid_end[0], &my_fields->grid_start[1], &my_fields->grid_end[1], &my_fields->grid_start[2], &my_fields->grid_end[2],
-                         &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &my_chemistry->primordial_chemistry, imetal, &my_chemistry->use_dust_density_field,
+                         &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &my_chemistry->primordial_chemistry, &imetal, &my_chemistry->use_dust_density_field,
                         my_fields->DM_density, my_fields->HDII_density, my_fields->HeHII_density,
                         &my_chemistry->metal_abundances, &my_chemistry->metal_chemistry, &my_chemistry->dust_species, &my_chemistry->multi_metals,
                         &my_chemistry->grain_growth, &my_chemistry->dust_sublimation,
