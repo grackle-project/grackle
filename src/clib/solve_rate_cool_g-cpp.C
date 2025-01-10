@@ -1156,11 +1156,19 @@ int solve_rate_cool_g(
                   j,
                   k);
           printf("FATAL error (2) in MULTI_COOL\n");
-  //_// PORT:             write(0,'(" dt = ",1pe10.3," ttmin = ",1pe10.3)') dt, ttmin
-  //_// PORT:             write(0,'((16(1pe8.1)))') (dtit(i),i=is+1,ie+1)
-  //_// PORT:             write(0,'((16(1pe8.1)))') (ttot(i),i=is+1,ie+1)
-  //_// PORT:             write(0,'((16(1pe8.1)))') (edot(i),i=is+1,ie+1)
-  //_// PORT:             write(0,'((16(I3)))') (itmask(i),i=is+1,ie+1)
+          printf("( dt = %.17e ttmin = %.17e )", *dt, ttmin);
+          grackle::impl::print_contiguous_row_(
+            dtit.data(), my_fields->grid_start[0], my_fields->grid_end[0]+1
+          );
+          grackle::impl::print_contiguous_row_(
+            ttot.data(), my_fields->grid_start[0], my_fields->grid_end[0]+1
+          );
+          grackle::impl::print_contiguous_row_(
+            edot.data(), my_fields->grid_start[0], my_fields->grid_end[0]+1
+          );
+          grackle::impl::print_contiguous_row_(
+            itmask.data(), my_fields->grid_start[0], my_fields->grid_end[0]+1
+          );
 
           if (my_chemistry->exit_after_iterations_exceeded == 1)  {
             ierr = GR_FAIL;
