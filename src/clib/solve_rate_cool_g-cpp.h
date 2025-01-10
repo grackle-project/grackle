@@ -28,8 +28,10 @@ extern "C" {
 /// modified5:  April,   2009 by JHW to include radiative transfer
 /// modified6:  September, 2009 by BDS to include cloudy cooling
 /// modified7:  January, 2025 by Matthew Abruzzo; ported to C++
-void solve_rate_cool_g(
-  int* imetal, double* dt, double* utem, double* uxyz, double* urho, int* ierr,
+///
+/// @return Returns GR_SUCCESS or GR_FAIL to indicate whether there was an error
+int solve_rate_cool_g(
+  int* imetal, double* dt, double* utem, double* uxyz, double* urho,
   chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
   code_units* my_units, grackle_field_data* my_fields,
   photo_rate_storage* my_uvb_rates

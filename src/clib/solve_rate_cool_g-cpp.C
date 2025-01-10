@@ -19,8 +19,8 @@
 extern "C" {
 #endif /* __cplusplus */
 
-void solve_rate_cool_g(
-  int* imetal, double* dt, double* utem, double* uxyz, double* urho, int* ierr,
+int solve_rate_cool_g(
+  int* imetal, double* dt, double* utem, double* uxyz, double* urho,
   chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
   code_units* my_units, grackle_field_data* my_fields,
   photo_rate_storage* my_uvb_rates
@@ -311,9 +311,8 @@ void solve_rate_cool_g(
   // \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
   // =======================================================================
 
-  // Set error indicator
-
-  (*ierr) = GR_SUCCESS;
+  // Set error indicator (we will return this value)
+  int ierr = GR_SUCCESS;
 
   // Set flag for dust-related options
 
@@ -1164,7 +1163,7 @@ void solve_rate_cool_g(
   //_// PORT:             write(0,'((16(I3)))') (itmask(i),i=is+1,ie+1)
 
           if (my_chemistry->exit_after_iterations_exceeded == 1)  {
-            (*ierr) = GR_FAIL;
+            ierr = GR_FAIL;
           }
         }  // OMP_PRAGMA_CRITICAL
       }
@@ -1181,8 +1180,8 @@ void solve_rate_cool_g(
 
   // If an error has been produced, return now.
 
-  if ((*ierr) != GR_SUCCESS)  {
-    return;
+  if (ierr != GR_SUCCESS)  {
+    return ierr;
   }
 
   // Convert densities back to comoving from proper
@@ -1269,7 +1268,7 @@ void solve_rate_cool_g(
 
   }
 
-  return;
+  return ierr;
 }
 
 #ifdef __cplusplus

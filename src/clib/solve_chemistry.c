@@ -237,15 +237,13 @@ int local_solve_chemistry(chemistry_data *my_chemistry,
 
   /* Call the fortran routine to solve cooling equations. */
 
-  int ierr = 0;
-
-  solve_rate_cool_g(
+  int ierr = solve_rate_cool_g(
     &metal_field_present, &dt_value, &temperature_units, &co_length_units,
-    &co_density_units, &ierr, my_chemistry, my_rates, my_units, my_fields,
+    &co_density_units, my_chemistry, my_rates, my_units, my_fields,
     &my_uvb_rates
   );
 
-  if (ierr == FAIL) {
+  if (ierr == GR_FAIL) {
     fprintf(stderr, "Error in solve_rate_cool_g.\n");
   }
 
