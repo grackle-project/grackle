@@ -11,6 +11,7 @@
 
 #include "grackle.h"
 #include "fortran_func_decls.h"
+#include "internal_types.hpp"
 #include "utils-cpp.hpp"
 
 #include "solve_rate_cool_g-cpp.h"
@@ -61,12 +62,7 @@ int solve_rate_cool_g(
 
   // row temporaries
 
-  std::vector<long long> indixe(my_fields->grid_dimension[0]);
   double olddtit;
-  std::vector<double> t1(my_fields->grid_dimension[0]);
-  std::vector<double> t2(my_fields->grid_dimension[0]);
-  std::vector<double> logtem(my_fields->grid_dimension[0]);
-  std::vector<double> tdef(my_fields->grid_dimension[0]);
   std::vector<double> dtit(my_fields->grid_dimension[0]);
   std::vector<double> ttot(my_fields->grid_dimension[0]);
   std::vector<double> p2d(my_fields->grid_dimension[0]);
@@ -252,20 +248,6 @@ int solve_rate_cool_g(
   std::vector<double> kdreforg(my_fields->grid_dimension[0]);
   std::vector<double> kdvolorg(my_fields->grid_dimension[0]);
   std::vector<double> kdH2Oice(my_fields->grid_dimension[0]);
-  // grain temperature
-  std::vector<double> tSiM(my_fields->grid_dimension[0]);
-  std::vector<double> tFeM(my_fields->grid_dimension[0]);
-  std::vector<double> tMg2SiO4(my_fields->grid_dimension[0]);
-  std::vector<double> tMgSiO3(my_fields->grid_dimension[0]);
-  std::vector<double> tFe3O4(my_fields->grid_dimension[0]);
-  std::vector<double> tAC(my_fields->grid_dimension[0]);
-  std::vector<double> tSiO2D(my_fields->grid_dimension[0]);
-  std::vector<double> tMgO(my_fields->grid_dimension[0]);
-  std::vector<double> tFeS(my_fields->grid_dimension[0]);
-  std::vector<double> tAl2O3(my_fields->grid_dimension[0]);
-  std::vector<double> treforg(my_fields->grid_dimension[0]);
-  std::vector<double> tvolorg(my_fields->grid_dimension[0]);
-  std::vector<double> tH2Oice(my_fields->grid_dimension[0]);
 
   // Cooling/heating row locals
 
@@ -438,8 +420,6 @@ int solve_rate_cool_g(
   //_// PORT: !$omp&   ttmin, energy, comp1, comp2,
   //_// PORT: !$omp&   heq1, heq2, eqk221, eqk222, eqk131, eqk132,
   //_// PORT: !$omp&   eqt1, eqt2, eqtdef, dheq, heq,
-  //_// PORT: !$omp&   indixe,
-  //_// PORT: !$omp&   t1, t2, logtem, tdef,
   //_// PORT: !$omp&   dtit, ttot, p2d, tgas, tgasold,
   //_// PORT: !$omp&   tdust, metallicity, dust2gas, rhoH, mmw,
   //_// PORT: !$omp&   mynh, myde, gammaha_eff, gasgr_tdust, regr, ddom,
@@ -468,7 +448,15 @@ int solve_rate_cool_g(
   //_// PORT: #endif
   //_// TODO_USE: OMP_PRAGMA("omp parallel")
   {
-    //_// TODO: move relevant variable declarations to here to replace OMP private
+    // TODO: move more relevant variable declarations to here to replace the
+    //       OMP private-clause
+
+    grackle::impl::GrainSpeciesCollection grain_temperatures =
+      grackle::impl::new_GrainSpeciesCollection(my_fields->grid_dimension[0]);
+
+    grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf =
+      grackle::impl::new_LogTLinInterpScratchBuf(my_fields->grid_dimension[0]);
+
     //_// TODO_USE: OMP_PRAGMA("omp for")
     for (t = 0; t<=(dk * dj - 1); t++) {
       k = t/dj      + my_fields->grid_start[2]+1;
@@ -555,7 +543,7 @@ int solve_rate_cool_g(
                   my_rates->H2LTE, my_rates->gas_grain,
                   ceHI.data(), ceHeI.data(), ceHeII.data(), ciHI.data(), ciHeI.data(), ciHeIS.data(), ciHeII.data(),
                   reHII.data(), reHeII1.data(), reHeII2.data(), reHeIII.data(), brem.data(),
-                  indixe.data(), t1.data(), t2.data(), logtem.data(), tdef.data(), edot.data(),
+                  logTlininterp_buf.indixe, logTlininterp_buf.t1, logTlininterp_buf.t2, logTlininterp_buf.logtem, logTlininterp_buf.tdef, edot.data(),
                   tgas.data(), tgasold.data(), mmw.data(), p2d.data(), tdust.data(), metallicity.data(),
                   dust2gas.data(), rhoH.data(), mynh.data(), myde.data(),
                   gammaha_eff.data(), gasgr_tdust.data(), regr.data(),
@@ -631,9 +619,9 @@ int solve_rate_cool_g(
                  my_rates->SN0_kpFe3O4, my_rates->SN0_kpAC, my_rates->SN0_kpSiO2D, my_rates->SN0_kpMgO,
                  my_rates->SN0_kpFeS, my_rates->SN0_kpAl2O3,
                  my_rates->SN0_kpreforg, my_rates->SN0_kpvolorg, my_rates->SN0_kpH2Oice,
-                 tSiM.data(), tFeM.data(), tMg2SiO4.data(), tMgSiO3.data(), tFe3O4.data(),
-                 tAC.data(), tSiO2D.data(), tMgO.data(), tFeS.data(), tAl2O3.data(),
-                 treforg.data(), tvolorg.data(), tH2Oice.data(),
+                 grain_temperatures.SiM, grain_temperatures.FeM, grain_temperatures.Mg2SiO4, grain_temperatures.MgSiO3, grain_temperatures.Fe3O4,
+                 grain_temperatures.AC, grain_temperatures.SiO2D, grain_temperatures.MgO, grain_temperatures.FeS, grain_temperatures.Al2O3,
+                 grain_temperatures.reforg, grain_temperatures.volorg, grain_temperatures.H2Oice,
                  my_rates->gas_grain2, &my_rates->gamma_isrf2
             );
 
@@ -671,7 +659,7 @@ int solve_rate_cool_g(
                    k58.data(), k13dd.data(), k24shield.data(), k25shield.data(), k26shield.data(),
                    k28shield.data(), k29shield.data(), k30shield.data(),
                    k31shield.data(), h2dust.data(), ncrn.data(), ncrd1.data(), ncrd2.data(),
-                   t1.data(), t2.data(), tdef.data(), logtem.data(), indixe.data(),
+                   logTlininterp_buf.t1, logTlininterp_buf.t2, logTlininterp_buf.tdef, logTlininterp_buf.logtem, logTlininterp_buf.indixe,
                    &dom, &coolunit, &tbase1, &xbase1, &dx_cgs, &c_ljeans,
                    &my_chemistry->use_radiative_transfer, my_fields->RT_H2_dissociation_rate, my_fields->H2_self_shielding_length, itmask.data(),
                    itmask_metal.data(),
@@ -733,9 +721,9 @@ int solve_rate_cool_g(
                    kdSiM.data(), kdFeM.data(), kdMg2SiO4.data(),
                    kdMgSiO3.data(), kdFe3O4.data(), kdAC.data(), kdSiO2D.data(), kdMgO.data(), kdFeS.data(),
                    kdAl2O3.data(), kdreforg.data(), kdvolorg.data(), kdH2Oice.data(),
-                   tSiM.data(), tFeM.data(), tMg2SiO4.data(), tMgSiO3.data(), tFe3O4.data(),
-                   tAC.data(), tSiO2D.data(), tMgO.data(), tFeS.data(), tAl2O3.data(),
-                   treforg.data(), tvolorg.data(), tH2Oice.data(), &my_chemistry->radiative_transfer_use_H2_shielding,
+                   grain_temperatures.SiM, grain_temperatures.FeM, grain_temperatures.Mg2SiO4, grain_temperatures.MgSiO3, grain_temperatures.Fe3O4,
+                   grain_temperatures.AC, grain_temperatures.SiO2D, grain_temperatures.MgO, grain_temperatures.FeS, grain_temperatures.Al2O3,
+                   grain_temperatures.reforg, grain_temperatures.volorg, grain_temperatures.H2Oice, &my_chemistry->radiative_transfer_use_H2_shielding,
                    &my_chemistry->H2_custom_shielding, my_fields->H2_custom_shielding_factor
           );
 
@@ -854,22 +842,22 @@ int solve_rate_cool_g(
                 // de / dt = edot
                 // Now we use our estimate of dT/de to get the estimated
                 // difference in the equilibrium
-                eqt2 = std::fmin(std::log(tgas[i-1]) + 0.1*dlogtem, t2[i-1]);
-                eqtdef = (eqt2 - t1[i-1])/(t2[i-1] - t1[i-1]);
-                eqk222 = my_rates->k22[indixe[i-1]-1] +
-                  (my_rates->k22[indixe[i-1]+1-1] -my_rates->k22[indixe[i-1]-1])*eqtdef;
-                eqk132 = my_rates->k13[indixe[i-1]-1] +
-                  (my_rates->k13[indixe[i-1]+1-1] -my_rates->k13[indixe[i-1]-1])*eqtdef;
+                eqt2 = std::fmin(std::log(tgas[i-1]) + 0.1*dlogtem, logTlininterp_buf.t2[i-1]);
+                eqtdef = (eqt2 - logTlininterp_buf.t1[i-1])/(logTlininterp_buf.t2[i-1] - logTlininterp_buf.t1[i-1]);
+                eqk222 = my_rates->k22[logTlininterp_buf.indixe[i-1]-1] +
+                  (my_rates->k22[logTlininterp_buf.indixe[i-1]+1-1] -my_rates->k22[logTlininterp_buf.indixe[i-1]-1])*eqtdef;
+                eqk132 = my_rates->k13[logTlininterp_buf.indixe[i-1]-1] +
+                  (my_rates->k13[logTlininterp_buf.indixe[i-1]+1-1] -my_rates->k13[logTlininterp_buf.indixe[i-1]-1])*eqtdef;
                 heq2 = (-1. / (4.*eqk222)) * (eqk132-
                      std::sqrt(8.*eqk132*eqk222*
                      my_chemistry->HydrogenFractionByMass*d(i-1,j-1,k-1)+std::pow(eqk132,2.)));
 
-                eqt1 = std::fmax(std::log(tgas[i-1]) - 0.1*dlogtem, t1[i-1]);
-                eqtdef = (eqt1 - t1[i-1])/(t2[i-1] - t1[i-1]);
-                eqk221 = my_rates->k22[indixe[i-1]-1] +
-                  (my_rates->k22[indixe[i-1]+1-1] -my_rates->k22[indixe[i-1]-1])*eqtdef;
-                eqk131 = my_rates->k13[indixe[i-1]-1] +
-                  (my_rates->k13[indixe[i-1]+1-1] -my_rates->k13[indixe[i-1]-1])*eqtdef;
+                eqt1 = std::fmax(std::log(tgas[i-1]) - 0.1*dlogtem, logTlininterp_buf.t1[i-1]);
+                eqtdef = (eqt1 - logTlininterp_buf.t1[i-1])/(logTlininterp_buf.t2[i-1] - logTlininterp_buf.t1[i-1]);
+                eqk221 = my_rates->k22[logTlininterp_buf.indixe[i-1]-1] +
+                  (my_rates->k22[logTlininterp_buf.indixe[i-1]+1-1] -my_rates->k22[logTlininterp_buf.indixe[i-1]-1])*eqtdef;
+                eqk131 = my_rates->k13[logTlininterp_buf.indixe[i-1]-1] +
+                  (my_rates->k13[logTlininterp_buf.indixe[i-1]+1-1] -my_rates->k13[logTlininterp_buf.indixe[i-1]-1])*eqtdef;
                 heq1 = (-1. / (4.*eqk221)) * (eqk131-
                      std::sqrt(8.*eqk131*eqk221*
                      my_chemistry->HydrogenFractionByMass*d(i-1,j-1,k-1)+std::pow(eqk131,2.)));
@@ -1102,12 +1090,12 @@ int solve_rate_cool_g(
                     my_fields->isrf_habing, &my_chemistry->H2_custom_shielding, my_fields->H2_custom_shielding_factor,
                     &j, &k, &iter, &dom, &comp1,
                     &comp2, &coolunit, &tbase1, &xbase1, &chunit, &dx_cgs,
-                    &c_ljeans, indixe.data(), t1.data(), t2.data(), logtem.data(), tdef.data(), dtit.data(),
+                    &c_ljeans, logTlininterp_buf.indixe, logTlininterp_buf.t1, logTlininterp_buf.t2, logTlininterp_buf.logtem, logTlininterp_buf.tdef, dtit.data(),
                     p2d.data(), tgas.data(), tgasold.data(), tdust.data(), metallicity.data(), dust2gas.data(),
                     rhoH.data(), mmw.data(), mynh.data(), myde.data(), gammaha_eff.data(), gasgr_tdust.data(),
-                    regr.data(), h2dust.data(), ncrn.data(), ncrd1.data(), ncrd2.data(), tSiM.data(), tFeM.data(),
-                    tMg2SiO4.data(), tMgSiO3.data(), tFe3O4.data(), tAC.data(), tSiO2D.data(), tMgO.data(),
-                    tFeS.data(), tAl2O3.data(), treforg.data(), tvolorg.data(), tH2Oice.data(), ceHI.data(),
+                    regr.data(), h2dust.data(), ncrn.data(), ncrd1.data(), ncrd2.data(), grain_temperatures.SiM, grain_temperatures.FeM,
+                    grain_temperatures.Mg2SiO4, grain_temperatures.MgSiO3, grain_temperatures.Fe3O4, grain_temperatures.AC, grain_temperatures.SiO2D, grain_temperatures.MgO,
+                    grain_temperatures.FeS, grain_temperatures.Al2O3, grain_temperatures.reforg, grain_temperatures.volorg, grain_temperatures.H2Oice, ceHI.data(),
                     ceHeI.data(), ceHeII.data(), ciHI.data(), ciHeI.data(), ciHeIS.data(), ciHeII.data(),
                     reHII.data(), reHeII1.data(), reHeII2.data(), reHeIII.data(), brem.data(), edot.data(),
                     hyd01k.data(), h2k01.data(), vibh.data(), roth.data(), rotl.data(), gpldl.data(), gphdl.data(),
@@ -1179,6 +1167,11 @@ int solve_rate_cool_g(
       }
 
     }  // loop over j,k pairs
+
+    // cleanup manually allocated temporaries
+    grackle::impl::drop_GrainSpeciesCollection(&grain_temperatures);
+    grackle::impl::drop_LogTLinInterpScratchBuf(&logTlininterp_buf);
+
   }  // OMP_PRAGMA("omp parallel")
 
   // If an error has been produced, return now.
