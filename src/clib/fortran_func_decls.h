@@ -893,7 +893,7 @@ void FORTRAN_NAME(step_rate_newton_raphson)(
   gr_float* kphOI_data_ptr, int* idissZ, gr_float* kdissCO_data_ptr,
   gr_float* kdissOH_data_ptr, gr_float* kdissH2O_data_ptr, int* iuseH2shield,
   int* iisrffield, gr_float* isrf_habing_data_ptr, int* iH2shieldcustom,
-  gr_float* f_shield_custom_data_ptr, int* ierror, int* j, int* k, int* iter,
+  gr_float* f_shield_custom_data_ptr, int* j, int* k, int* iter,
   double* dom, double* comp1, double* comp2, double* coolunit, double* tbase1,
   double* xbase1, double* chunit, double* dx_cgs, double* c_ljeans,
   long long* indixe, double* t1, double* t2, double* logtem, double* tdef,

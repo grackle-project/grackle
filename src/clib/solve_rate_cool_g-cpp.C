@@ -27,10 +27,6 @@ int solve_rate_cool_g(
 )
 {
 
-  // General Arguments
-
-  int ierror;
-
   // Density, energy and velocity fields fields
 
   grackle::impl::View<gr_float***> de(my_fields->e_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
@@ -1105,7 +1101,7 @@ int solve_rate_cool_g(
                     my_fields->RT_HDI_dissociation_rate, &my_chemistry->radiative_transfer_metal_ionization, my_fields->RT_CI_ionization_rate, my_fields->RT_OI_ionization_rate, &my_chemistry->radiative_transfer_metal_dissociation, my_fields->RT_CO_dissociation_rate,
                     my_fields->RT_OH_dissociation_rate, my_fields->RT_H2O_dissociation_rate, &my_chemistry->radiative_transfer_use_H2_shielding, &my_chemistry->use_isrf_field,
                     my_fields->isrf_habing, &my_chemistry->H2_custom_shielding, my_fields->H2_custom_shielding_factor,
-                    &ierror, &j, &k, &iter, &dom, &comp1,
+                    &j, &k, &iter, &dom, &comp1,
                     &comp2, &coolunit, &tbase1, &xbase1, &chunit, &dx_cgs,
                     &c_ljeans, indixe.data(), t1.data(), t2.data(), logtem.data(), tdef.data(), dtit.data(),
                     p2d.data(), tgas.data(), tgasold.data(), tdust.data(), metallicity.data(), dust2gas.data(),
