@@ -1143,9 +1143,7 @@ void solve_rate_cool_g(
 
         if (std::fabs((*dt)-ttmin) < tolerance*(*dt)) { goto label_9999; }
 
-        // Next subcycle iteration
-
-      }
+      }  // subcycle iteration loop (for current row)
 
 label_9999:
 
@@ -1172,18 +1170,16 @@ label_9999:
             (*ierr) = 0;
           }
         }
-        // WARNING_MESSAGE
       }
 
-      if (iter > my_chemistry->max_iterations/2)  {
+      if (iter > my_chemistry->max_iterations/2) { // WARNING_MESSAGE
         OMP_PRAGMA_CRITICAL
         {
           eprintf("MULTI_COOL iter,j,k = %d %d %d\n", iter, j, k);
         }
       }
-      
-      // Next j,k
-    }
+
+    }  // loop over j,k pairs
   }  // OMP_PRAGMA("omp parallel")
 
   // If an error has been produced, return now.
