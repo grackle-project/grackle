@@ -20,7 +20,7 @@ extern "C" {
 #endif /* __cplusplus */
 
 int solve_rate_cool_g(
-  int imetal, double dt, double* utem, double* uxyz, double* urho,
+  int imetal, double dt, double utem, double uxyz, double urho,
   chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
   code_units* my_units, grackle_field_data* my_fields,
   photo_rate_storage* my_uvb_rates
@@ -327,12 +327,12 @@ int solve_rate_cool_g(
       
   // Set units
 
-  dom      = (*urho)*(std::pow(my_units->a_value,3))/mh_local_var;
+  dom      = urho*(std::pow(my_units->a_value,3))/mh_local_var;
   tbase1   = my_units->time_units;
-  xbase1   = (*uxyz)/(my_units->a_value*my_units->a_units);    // uxyz is [x]*a      = [x]*[a]*a'        '
-  dbase1   = (*urho)*std::pow((my_units->a_value*my_units->a_units),3); // urho is [dens]/a^3 = [dens]/([a]*a')^3 '
+  xbase1   = uxyz/(my_units->a_value*my_units->a_units);    // uxyz is [x]*a      = [x]*[a]*a'        '
+  dbase1   = urho*std::pow((my_units->a_value*my_units->a_units),3); // urho is [dens]/a^3 = [dens]/([a]*a')^3 '
   coolunit = (std::pow(my_units->a_units,5) * std::pow(xbase1,2) * std::pow(mh_local_var,2)) / (std::pow(tbase1,3) * dbase1);
-  uvel = ((*uxyz)/my_units->a_value) / my_units->time_units;
+  uvel = (uxyz/my_units->a_value) / my_units->time_units;
   // chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 formed
   chunit = (1.60218e-12)/(uvel*uvel*mh_local_var);            // 1 eV per REACTION (Feb 2020, Gen Chiaki)
 
@@ -544,7 +544,7 @@ int solve_rate_cool_g(
                   &my_chemistry->h2_on_dust, &my_chemistry->dust_chemistry, &my_chemistry->use_dust_density_field, &my_chemistry->dust_recombination_cooling,
                   &my_fields->grid_rank, &my_fields->grid_start[0], &my_fields->grid_end[0], &j, &k, &my_chemistry->ih2co, &my_chemistry->ipiht, &iter, &my_chemistry->photoelectric_heating,
                   &my_units->a_value, &my_chemistry->TemperatureStart, &my_chemistry->TemperatureEnd, &my_chemistry->SolarMetalFractionByMass, &my_chemistry->local_dust_to_gas_ratio,
-                  utem, uxyz, &my_units->a_units, urho, &my_units->time_units,
+                  &utem, &uxyz, &my_units->a_units, &urho, &my_units->time_units,
                   &my_chemistry->Gamma, &my_chemistry->HydrogenFractionByMass,
                   my_rates->ceHI, my_rates->ceHeI, my_rates->ceHeII, my_rates->ciHI, my_rates->ciHeI,
                   my_rates->ciHeIS, my_rates->ciHeII, my_rates->reHII, my_rates->reHeII1,
@@ -1031,8 +1031,8 @@ int solve_rate_cool_g(
                     HII.data(), my_fields->HeI_density, my_fields->HeII_density, my_fields->HeIII_density, &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &my_chemistry->NumberOfTemperatureBins,
                     &my_units->comoving_coordinates, &my_chemistry->primordial_chemistry, &imetal, &my_chemistry->metal_cooling, &my_chemistry->h2_on_dust,
                     &my_chemistry->dust_chemistry, &my_chemistry->use_dust_density_field, &my_fields->grid_start[0], &my_fields->grid_end[0], &my_chemistry->ih2co, &my_chemistry->ipiht,
-                    &my_chemistry->dust_recombination_cooling, &my_chemistry->photoelectric_heating, &my_units->a_value, &my_chemistry->TemperatureStart, &my_chemistry->TemperatureEnd, utem,
-                    uxyz, &my_units->a_units, urho, &my_units->time_units, &my_chemistry->Gamma, &my_chemistry->HydrogenFractionByMass, &my_chemistry->SolarMetalFractionByMass, &my_chemistry->local_dust_to_gas_ratio,
+                    &my_chemistry->dust_recombination_cooling, &my_chemistry->photoelectric_heating, &my_units->a_value, &my_chemistry->TemperatureStart, &my_chemistry->TemperatureEnd, &utem,
+                    &uxyz, &my_units->a_units, &urho, &my_units->time_units, &my_chemistry->Gamma, &my_chemistry->HydrogenFractionByMass, &my_chemistry->SolarMetalFractionByMass, &my_chemistry->local_dust_to_gas_ratio,
                     my_rates->k1, my_rates->k2, my_rates->k3, my_rates->k4, my_rates->k5, my_rates->k6, my_rates->k7, my_rates->k8, my_rates->k9,
                     my_rates->k10, my_rates->k11, my_rates->k12, my_rates->k13, my_rates->k13dd, my_rates->k14, my_rates->k15, my_rates->k16,
                     my_rates->k17, my_rates->k18, my_rates->k19, my_rates->k22, &my_uvb_rates->k24, &my_uvb_rates->k25, &my_uvb_rates->k26, &my_uvb_rates->k27, &my_uvb_rates->k28,
