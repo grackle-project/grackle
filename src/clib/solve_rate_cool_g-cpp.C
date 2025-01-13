@@ -16,6 +16,88 @@
 
 #include "solve_rate_cool_g-cpp.h"
 
+/// Computes the timescale given by `ndens_Heq / (d ndens_Heq / d t)`
+///
+/// This is used to help compute the subcycle timestep when using a primordial
+/// chemistry solver
+///
+/// @param my_chemistry holds a number of configuration parameters
+/// @param my_rates holds assorted rate data. In this function, this is being
+///    used to specify some the interpolation tables of some relevant reaction
+///    rates (they are tabulated with respect to logT)
+/// @param dlogtem Specifies the constant spacing shared by the relevant rate
+///    interpolation tables
+/// @param logTlininterp_buf Specifies the information related to the position
+///    in the logT interpolations (for a number of chemistry zones)
+/// @param k13, k22 1D arrays specifying the previously looked up, local values
+///    of the k13 and k22 rates.
+/// @param local_rho specifies the local (total) mass density
+/// @param tgas, p2d, edot 1D arrays containing local values of temperature,
+///    pressure divided by density, and the time derivative of internal energy.
+/// @param i Specifies the index of the relevant zone in the 1D array. (**BE
+///    AWARE:** this is a 1-based index for historical reasons)
+///
+/// @note
+/// The `static` annotation indicates that this function is only visible to the
+/// current translation unit
+static double calc_Heq_div_dHeqdt_(
+  const chemistry_data* my_chemistry,
+  const chemistry_data_storage* my_rates,
+  double dlogtem,
+  const grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf,
+  const double* k13,
+  const double* k22,
+  double local_rho,
+  const double* tgas,
+  const double* p2d,
+  const double* edot,
+  int i
+) {
+
+  // Equilibrium value for H is:
+  // Heq = (-1._DKIND / (4*k22)) * (k13 - sqrt(8 k13 k22 rho + k13^2))
+  // We want to know dH_eq/dt.
+  // - We can trivially get dH_eq/dT.
+  // - We have de/dt.
+  // - We need dT/de.
+  //
+  // T = (g-1)*p2d*utem/N; tgas == (g-1)(p2d*utem/N)
+  // dH_eq / dt = (dH_eq/dT) * (dT/de) * (de/dt)
+  // dH_eq / dT (see above; we can calculate the derivative here)
+  // dT / de = utem * (gamma - 1._DKIND) / N == tgas / p2d
+  // de / dt = edot
+  // Now we use our estimate of dT/de to get the estimated
+  // difference in the equilibrium
+  double eqt2 = std::fmin(std::log(tgas[i-1]) + 0.1*dlogtem, logTlininterp_buf.t2[i-1]);
+  double eqtdef = (eqt2 - logTlininterp_buf.t1[i-1])/(logTlininterp_buf.t2[i-1] - logTlininterp_buf.t1[i-1]);
+  double eqk222 = my_rates->k22[logTlininterp_buf.indixe[i-1]-1] +
+    (my_rates->k22[logTlininterp_buf.indixe[i-1]+1-1] -my_rates->k22[logTlininterp_buf.indixe[i-1]-1])*eqtdef;
+  double eqk132 = my_rates->k13[logTlininterp_buf.indixe[i-1]-1] +
+    (my_rates->k13[logTlininterp_buf.indixe[i-1]+1-1] -my_rates->k13[logTlininterp_buf.indixe[i-1]-1])*eqtdef;
+  double heq2 = (-1. / (4.*eqk222)) * (eqk132-
+    std::sqrt(8.*eqk132*eqk222*
+              my_chemistry->HydrogenFractionByMass*local_rho+
+              std::pow(eqk132,2.)));
+
+  double eqt1 = std::fmax(std::log(tgas[i-1]) - 0.1*dlogtem, logTlininterp_buf.t1[i-1]);
+  eqtdef = (eqt1 - logTlininterp_buf.t1[i-1])/(logTlininterp_buf.t2[i-1] - logTlininterp_buf.t1[i-1]);
+  double eqk221 = my_rates->k22[logTlininterp_buf.indixe[i-1]-1] +
+    (my_rates->k22[logTlininterp_buf.indixe[i-1]+1-1] -my_rates->k22[logTlininterp_buf.indixe[i-1]-1])*eqtdef;
+  double eqk131 = my_rates->k13[logTlininterp_buf.indixe[i-1]-1] +
+    (my_rates->k13[logTlininterp_buf.indixe[i-1]+1-1] -my_rates->k13[logTlininterp_buf.indixe[i-1]-1])*eqtdef;
+  double heq1 = (-1. / (4.*eqk221)) * (eqk131-
+    std::sqrt(8.*eqk131*eqk221*
+              my_chemistry->HydrogenFractionByMass*local_rho+std::pow(eqk131,2.)));
+
+  double dheq = (std::fabs(heq2-heq1)/(std::exp(eqt2) - std::exp(eqt1)))
+    * (tgas[i-1]/p2d[i-1]) * edot[i-1];
+  double heq = (-1. / (4.*k22[i-1])) * (k13[i-1]-
+    std::sqrt(8.*k13[i-1]*k22[i-1]*
+              my_chemistry->HydrogenFractionByMass*local_rho+std::pow(k13[i-1],2.)));
+
+  return heq / dheq;
+}
+
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
@@ -802,43 +884,15 @@ int solve_rate_cool_g(
               if (ddom[i-1] > 1.e8  && 
                    edot[i-1] > 0.       && 
                   my_chemistry->primordial_chemistry > 1)  {
-                // Equilibrium value for H is:
-                // H = (-1._DKIND / (4*k22)) * (k13 - sqrt(8 k13 k22 rho + k13^2))
-                // We now want this to change by 10% or less, but we're only
-                // differentiating by dT.  We have de/dt.  We need dT/de.
-                // T = (g-1)*p2d*utem/N; tgas == (g-1)(p2d*utem/N)
-                // dH_eq / dt = (dH_eq/dT) * (dT/de) * (de/dt)
-                // dH_eq / dT (see above; we can calculate the derivative here)
-                // dT / de = utem * (gamma - 1._DKIND) / N == tgas / p2d
-                // de / dt = edot
-                // Now we use our estimate of dT/de to get the estimated
-                // difference in the equilibrium
-                double eqt2 = std::fmin(std::log(tgas[i-1]) + 0.1*dlogtem, logTlininterp_buf.t2[i-1]);
-                double eqtdef = (eqt2 - logTlininterp_buf.t1[i-1])/(logTlininterp_buf.t2[i-1] - logTlininterp_buf.t1[i-1]);
-                double eqk222 = my_rates->k22[logTlininterp_buf.indixe[i-1]-1] +
-                  (my_rates->k22[logTlininterp_buf.indixe[i-1]+1-1] -my_rates->k22[logTlininterp_buf.indixe[i-1]-1])*eqtdef;
-                double eqk132 = my_rates->k13[logTlininterp_buf.indixe[i-1]-1] +
-                  (my_rates->k13[logTlininterp_buf.indixe[i-1]+1-1] -my_rates->k13[logTlininterp_buf.indixe[i-1]-1])*eqtdef;
-                double heq2 = (-1. / (4.*eqk222)) * (eqk132-
-                     std::sqrt(8.*eqk132*eqk222*
-                     my_chemistry->HydrogenFractionByMass*d(i-1,j-1,k-1)+std::pow(eqk132,2.)));
+                // here, we ensure that that the equilibrium mass density of
+                // Hydrogen changes by 10% or less
+                double Heq_div_dHeqdt = calc_Heq_div_dHeqdt_(
+                  my_chemistry, my_rates, dlogtem, logTlininterp_buf,
+                  k13.data(), k22.data(), d(i-1,j-1,k-1), tgas.data(),
+                  p2d.data(), edot.data(), i
+                );
 
-                double eqt1 = std::fmax(std::log(tgas[i-1]) - 0.1*dlogtem, logTlininterp_buf.t1[i-1]);
-                eqtdef = (eqt1 - logTlininterp_buf.t1[i-1])/(logTlininterp_buf.t2[i-1] - logTlininterp_buf.t1[i-1]);
-                double eqk221 = my_rates->k22[logTlininterp_buf.indixe[i-1]-1] +
-                  (my_rates->k22[logTlininterp_buf.indixe[i-1]+1-1] -my_rates->k22[logTlininterp_buf.indixe[i-1]-1])*eqtdef;
-                double eqk131 = my_rates->k13[logTlininterp_buf.indixe[i-1]-1] +
-                  (my_rates->k13[logTlininterp_buf.indixe[i-1]+1-1] -my_rates->k13[logTlininterp_buf.indixe[i-1]-1])*eqtdef;
-                double heq1 = (-1. / (4.*eqk221)) * (eqk131-
-                     std::sqrt(8.*eqk131*eqk221*
-                     my_chemistry->HydrogenFractionByMass*d(i-1,j-1,k-1)+std::pow(eqk131,2.)));
-
-                double dheq = (std::fabs(heq2-heq1)/(std::exp(eqt2) - std::exp(eqt1)))
-                     * (tgas[i-1]/p2d[i-1]) * edot[i-1];
-                double heq = (-1. / (4.*k22[i-1])) * (k13[i-1]-
-                     std::sqrt(8.*k13[i-1]*k22[i-1]*
-                     my_chemistry->HydrogenFractionByMass*d(i-1,j-1,k-1)+std::pow(k13[i-1],2.)));
-                dtit[i-1] = std::fmin(dtit[i-1], 0.1*heq/dheq);
+                dtit[i-1] = std::fmin(dtit[i-1], 0.1*Heq_div_dHeqdt);
               }
               if (iter>10LL)  {
                 dtit[i-1] = std::fmin(olddtit*1.5, dtit[i-1]);
