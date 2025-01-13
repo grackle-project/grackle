@@ -57,7 +57,7 @@ int solve_rate_cool_g(
   int t, dj, dk;
   double ttmin, dom, energy, comp1, comp2;
   double coolunit, dbase1, tbase1, xbase1, chunit, uvel;
-  double eqt1, eqt2, eqtdef, heq, dlogtem, dx_cgs, c_ljeans, min_metallicity;
+  double dlogtem, dx_cgs, c_ljeans, min_metallicity;
   gr_float factor;
 
   // row temporaries
@@ -390,7 +390,6 @@ int solve_rate_cool_g(
   //_// PORT: !$omp parallel do schedule(runtime) private(
   //_// PORT: !$omp&   i, j, k, iter,
   //_// PORT: !$omp&   ttmin, energy, comp1, comp2,
-  //_// PORT: !$omp&   eqt1, eqt2, eqtdef, heq,
   //_// PORT: !$omp&   dtit, ttot, p2d, tgas,
   //_// PORT: !$omp&   tdust, metallicity, dust2gas, rhoH, mmw,
   //_// PORT: !$omp&   ddom,
@@ -814,8 +813,8 @@ int solve_rate_cool_g(
                 // de / dt = edot
                 // Now we use our estimate of dT/de to get the estimated
                 // difference in the equilibrium
-                eqt2 = std::fmin(std::log(tgas[i-1]) + 0.1*dlogtem, logTlininterp_buf.t2[i-1]);
-                eqtdef = (eqt2 - logTlininterp_buf.t1[i-1])/(logTlininterp_buf.t2[i-1] - logTlininterp_buf.t1[i-1]);
+                double eqt2 = std::fmin(std::log(tgas[i-1]) + 0.1*dlogtem, logTlininterp_buf.t2[i-1]);
+                double eqtdef = (eqt2 - logTlininterp_buf.t1[i-1])/(logTlininterp_buf.t2[i-1] - logTlininterp_buf.t1[i-1]);
                 double eqk222 = my_rates->k22[logTlininterp_buf.indixe[i-1]-1] +
                   (my_rates->k22[logTlininterp_buf.indixe[i-1]+1-1] -my_rates->k22[logTlininterp_buf.indixe[i-1]-1])*eqtdef;
                 double eqk132 = my_rates->k13[logTlininterp_buf.indixe[i-1]-1] +
@@ -824,7 +823,7 @@ int solve_rate_cool_g(
                      std::sqrt(8.*eqk132*eqk222*
                      my_chemistry->HydrogenFractionByMass*d(i-1,j-1,k-1)+std::pow(eqk132,2.)));
 
-                eqt1 = std::fmax(std::log(tgas[i-1]) - 0.1*dlogtem, logTlininterp_buf.t1[i-1]);
+                double eqt1 = std::fmax(std::log(tgas[i-1]) - 0.1*dlogtem, logTlininterp_buf.t1[i-1]);
                 eqtdef = (eqt1 - logTlininterp_buf.t1[i-1])/(logTlininterp_buf.t2[i-1] - logTlininterp_buf.t1[i-1]);
                 double eqk221 = my_rates->k22[logTlininterp_buf.indixe[i-1]-1] +
                   (my_rates->k22[logTlininterp_buf.indixe[i-1]+1-1] -my_rates->k22[logTlininterp_buf.indixe[i-1]-1])*eqtdef;
@@ -836,7 +835,7 @@ int solve_rate_cool_g(
 
                 double dheq = (std::fabs(heq2-heq1)/(std::exp(eqt2) - std::exp(eqt1)))
                      * (tgas[i-1]/p2d[i-1]) * edot[i-1];
-                heq = (-1. / (4.*k22[i-1])) * (k13[i-1]-
+                double heq = (-1. / (4.*k22[i-1])) * (k13[i-1]-
                      std::sqrt(8.*k13[i-1]*k22[i-1]*
                      my_chemistry->HydrogenFractionByMass*d(i-1,j-1,k-1)+std::pow(k13[i-1],2.)));
                 dtit[i-1] = std::fmin(dtit[i-1], 0.1*heq/dheq);
