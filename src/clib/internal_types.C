@@ -237,6 +237,46 @@ void grackle::impl::drop_ColRecRxnRateCollection(
 
 // -----------------------------------------------------------------
 
+/// Apply a function to each data member of PhotoRxnRateCollection
+///
+/// @note
+/// If we are willing to embrace C++, then this should accept a template
+/// argument (instead of a function pointer and the callback_ctx pointer)
+static void for_each_kphotoCollection_member(
+  grackle::impl::PhotoRxnRateCollection* ptr,
+  modify_member_callback* fn,
+  void* callback_ctx
+) {
+  fn(&ptr->k24, callback_ctx);
+  fn(&ptr->k25, callback_ctx);
+  fn(&ptr->k26, callback_ctx);
+  fn(&ptr->k27, callback_ctx);
+  fn(&ptr->k28, callback_ctx);
+  fn(&ptr->k29, callback_ctx);
+  fn(&ptr->k30, callback_ctx);
+  fn(&ptr->k31, callback_ctx);
+}
+
+grackle::impl::PhotoRxnRateCollection grackle::impl::new_PhotoRxnRateCollection(
+  int nelem
+) {
+  GRIMPL_REQUIRE(nelem > 0, "nelem must be positive");
+  grackle::impl::PhotoRxnRateCollection out;
+  MemberAllocCtx_ ctx{nelem};
+  for_each_kphotoCollection_member(&out, &allocate_member_, (void*)(&ctx));
+  return out;
+}
+
+void grackle::impl::drop_PhotoRxnRateCollection(
+  grackle::impl::PhotoRxnRateCollection* ptr
+)
+{
+  for_each_kphotoCollection_member(ptr, &cleanup_member_, NULL);
+}
+
+
+// -----------------------------------------------------------------
+
 grackle::impl::ChemHeatingRates grackle::impl::new_ChemHeatingRates(
   int nelem
 )

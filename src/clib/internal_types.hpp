@@ -305,6 +305,36 @@ ColRecRxnRateCollection new_ColRecRxnRateCollection(int nelem);
 /// This effectively invokes a destructor
 void drop_ColRecRxnRateCollection(ColRecRxnRateCollection*);
 
+/// holds radiative reaction rate buffers
+///
+/// @note
+/// In the future, it would be nice to use this within the general rate
+/// storage struct (and maybe also within the photo_rate_storage struct).
+/// Since the storage struct only needs to store these rates as scalars we
+/// would need to adopt the LUT strategy (or templates)
+struct PhotoRxnRateCollection {
+  /* Radiative rates for 6-species. */
+  double* k24;
+  double* k25;
+  double* k26;
+
+  /* Radiative rates for 6-species. */
+  double* k27;
+  double* k28;
+  double* k29;
+  double* k30;
+  double* k31;
+};
+
+/// allocates the contents of a new PhotoRxnRateCollection
+///
+/// @param nelem The number of elements in each buffer
+PhotoRxnRateCollection new_PhotoRxnRateCollection(int nelem);
+
+/// performs cleanup of the contents of PhotoRxnRateCollection
+///
+/// This effectively invokes a destructor
+void drop_PhotoRxnRateCollection(PhotoRxnRateCollection*);
 
 /// holds reaction rates chemical heating reaction rates
 ///

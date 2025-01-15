@@ -162,29 +162,8 @@ int solve_rate_cool_g(
   std::vector<double> HIdot(my_fields->grid_dimension[0]);
   std::vector<double> dedot_prev(my_fields->grid_dimension[0]);
   std::vector<double> HIdot_prev(my_fields->grid_dimension[0]);
-  std::vector<double> k24shield(my_fields->grid_dimension[0]);
-  std::vector<double> k25shield(my_fields->grid_dimension[0]);
-  std::vector<double> k26shield(my_fields->grid_dimension[0]);
-  std::vector<double> k28shield(my_fields->grid_dimension[0]);
-  std::vector<double> k29shield(my_fields->grid_dimension[0]);
-  std::vector<double> k30shield(my_fields->grid_dimension[0]);
-  std::vector<double> k31shield(my_fields->grid_dimension[0]);
   std::vector<double> k13dd(my_fields->grid_dimension[0] * 14);
   std::vector<double> h2dust(my_fields->grid_dimension[0]);
-
-  std::vector<double> kdSiM(my_fields->grid_dimension[0]);
-  std::vector<double> kdFeM(my_fields->grid_dimension[0]);
-  std::vector<double> kdMg2SiO4(my_fields->grid_dimension[0]);
-  std::vector<double> kdMgSiO3(my_fields->grid_dimension[0]);
-  std::vector<double> kdFe3O4(my_fields->grid_dimension[0]);
-  std::vector<double> kdAC(my_fields->grid_dimension[0]);
-  std::vector<double> kdSiO2D(my_fields->grid_dimension[0]);
-  std::vector<double> kdMgO(my_fields->grid_dimension[0]);
-  std::vector<double> kdFeS(my_fields->grid_dimension[0]);
-  std::vector<double> kdAl2O3(my_fields->grid_dimension[0]);
-  std::vector<double> kdreforg(my_fields->grid_dimension[0]);
-  std::vector<double> kdvolorg(my_fields->grid_dimension[0]);
-  std::vector<double> kdH2Oice(my_fields->grid_dimension[0]);
 
   // Cooling/heating row locals
 
@@ -339,9 +318,6 @@ int solve_rate_cool_g(
   //_// PORT: !$omp&   olddtit,
   //_// PORT: !$omp&   dep, dedot,HIdot, dedot_prev,
   //_// PORT: !$omp&   HIdot_prev,
-  //_// PORT: !$omp&   k24shield, k25shield, k26shield,
-  //_// PORT: !$omp&   k28shield, k29shield, k30shield,
-  //_// PORT: !$omp&   k31shield,
   //_// PORT: !$omp&   k13dd, h2dust,
   //_// PORT: !$omp&   edot,
   //_// PORT: !$omp&   itmask, itmask_metal )
@@ -351,7 +327,12 @@ int solve_rate_cool_g(
     // TODO: move more relevant variable declarations to here to replace the
     //       OMP private-clause
 
+    // holds computed grain temperatures:
     grackle::impl::GrainSpeciesCollection grain_temperatures =
+      grackle::impl::new_GrainSpeciesCollection(my_fields->grid_dimension[0]);
+
+    // holds computed grain growth/destruction rates:
+    grackle::impl::GrainSpeciesCollection grain_growth_rates =
       grackle::impl::new_GrainSpeciesCollection(my_fields->grid_dimension[0]);
 
     grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf =
@@ -375,10 +356,14 @@ int solve_rate_cool_g(
       grackle::impl::new_ColRecRxnRateCollection(my_fields->grid_dimension[0]);
 
     // buffers in the following data structure are used to temporarily hold
+    // the computed radiative reaction rates
+    grackle::impl::PhotoRxnRateCollection kshield_buf =
+      grackle::impl::new_PhotoRxnRateCollection(my_fields->grid_dimension[0]);
+
+    // buffers in the following data structure are used to temporarily hold
     // the interpolated chemistry-heating rates at each islice zone
     grackle::impl::ChemHeatingRates chemheatrates_buf =
       grackle::impl::new_ChemHeatingRates(my_fields->grid_dimension[0]);
-
 
     //_// TODO_USE: OMP_PRAGMA("omp for")
     for (t = 0; t<=(dk * dj - 1); t++) {
@@ -579,9 +564,9 @@ int solve_rate_cool_g(
                    kcr_buf.data[ColRecRxnLUT::k11], kcr_buf.data[ColRecRxnLUT::k12], kcr_buf.data[ColRecRxnLUT::k13], kcr_buf.data[ColRecRxnLUT::k14], kcr_buf.data[ColRecRxnLUT::k15], kcr_buf.data[ColRecRxnLUT::k16], kcr_buf.data[ColRecRxnLUT::k17], kcr_buf.data[ColRecRxnLUT::k18],
                    kcr_buf.data[ColRecRxnLUT::k19], kcr_buf.data[ColRecRxnLUT::k22], &my_uvb_rates->k24, &my_uvb_rates->k25, &my_uvb_rates->k26, &my_uvb_rates->k28, &my_uvb_rates->k29, &my_uvb_rates->k30, &my_uvb_rates->k31,
                    kcr_buf.data[ColRecRxnLUT::k50], kcr_buf.data[ColRecRxnLUT::k51], kcr_buf.data[ColRecRxnLUT::k52], kcr_buf.data[ColRecRxnLUT::k53], kcr_buf.data[ColRecRxnLUT::k54], kcr_buf.data[ColRecRxnLUT::k55], kcr_buf.data[ColRecRxnLUT::k56], kcr_buf.data[ColRecRxnLUT::k57],
-                   kcr_buf.data[ColRecRxnLUT::k58], k13dd.data(), k24shield.data(), k25shield.data(), k26shield.data(),
-                   k28shield.data(), k29shield.data(), k30shield.data(),
-                   k31shield.data(), h2dust.data(), chemheatrates_buf.n_cr_n, chemheatrates_buf.n_cr_d1, chemheatrates_buf.n_cr_d2,
+                   kcr_buf.data[ColRecRxnLUT::k58], k13dd.data(), kshield_buf.k24, kshield_buf.k25, kshield_buf.k26,
+                   kshield_buf.k28, kshield_buf.k29, kshield_buf.k30,
+                   kshield_buf.k31, h2dust.data(), chemheatrates_buf.n_cr_n, chemheatrates_buf.n_cr_d1, chemheatrates_buf.n_cr_d2,
                    logTlininterp_buf.t1, logTlininterp_buf.t2, logTlininterp_buf.tdef, logTlininterp_buf.logtem, logTlininterp_buf.indixe,
                    &dom, &coolunit, &tbase1, &xbase1, &dx_cgs, &c_ljeans,
                    &my_chemistry->use_radiative_transfer, my_fields->RT_H2_dissociation_rate, my_fields->H2_self_shielding_length, itmask.data(),
@@ -641,9 +626,9 @@ int solve_rate_cool_g(
                    my_rates->SN0_kpFeS, my_rates->SN0_kpAl2O3,
                    my_rates->SN0_kpreforg, my_rates->SN0_kpvolorg, my_rates->SN0_kpH2Oice,
                    my_rates->h2dustS, my_rates->h2dustC, rhoH.data(), my_rates->grain_growth_rate, &dt,
-                   kdSiM.data(), kdFeM.data(), kdMg2SiO4.data(),
-                   kdMgSiO3.data(), kdFe3O4.data(), kdAC.data(), kdSiO2D.data(), kdMgO.data(), kdFeS.data(),
-                   kdAl2O3.data(), kdreforg.data(), kdvolorg.data(), kdH2Oice.data(),
+                   grain_growth_rates.SiM, grain_growth_rates.FeM, grain_growth_rates.Mg2SiO4,
+                   grain_growth_rates.MgSiO3, grain_growth_rates.Fe3O4, grain_growth_rates.AC, grain_growth_rates.SiO2D, grain_growth_rates.MgO, grain_growth_rates.FeS,
+                   grain_growth_rates.Al2O3, grain_growth_rates.reforg, grain_growth_rates.volorg, grain_growth_rates.H2Oice,
                    grain_temperatures.SiM, grain_temperatures.FeM, grain_temperatures.Mg2SiO4, grain_temperatures.MgSiO3, grain_temperatures.Fe3O4,
                    grain_temperatures.AC, grain_temperatures.SiO2D, grain_temperatures.MgO, grain_temperatures.FeS, grain_temperatures.Al2O3,
                    grain_temperatures.reforg, grain_temperatures.volorg, grain_temperatures.H2Oice, &my_chemistry->radiative_transfer_use_H2_shielding,
@@ -663,8 +648,8 @@ int solve_rate_cool_g(
                          &my_uvb_rates->k24, &my_uvb_rates->k25, &my_uvb_rates->k26, &my_uvb_rates->k27, &my_uvb_rates->k28, &my_uvb_rates->k29, &my_uvb_rates->k30,
                          kcr_buf.data[ColRecRxnLUT::k50], kcr_buf.data[ColRecRxnLUT::k51], kcr_buf.data[ColRecRxnLUT::k52], kcr_buf.data[ColRecRxnLUT::k53], kcr_buf.data[ColRecRxnLUT::k54], kcr_buf.data[ColRecRxnLUT::k55], kcr_buf.data[ColRecRxnLUT::k56], kcr_buf.data[ColRecRxnLUT::k57], kcr_buf.data[ColRecRxnLUT::k58],
                          h2dust.data(), chemheatrates_buf.n_cr_n, chemheatrates_buf.n_cr_d1, chemheatrates_buf.n_cr_d2, rhoH.data(),
-                         k24shield.data(), k25shield.data(), k26shield.data(),
-                         k28shield.data(), k29shield.data(), k30shield.data(), k31shield.data(),
+                         kshield_buf.k24, kshield_buf.k25, kshield_buf.k26,
+                         kshield_buf.k28, kshield_buf.k29, kshield_buf.k30, kshield_buf.k31,
                          &my_chemistry->use_radiative_transfer, &my_chemistry->radiative_transfer_hydrogen_only,
                          kphHI.data(), my_fields->RT_HeI_ionization_rate, my_fields->RT_HeII_ionization_rate,
                          itmask.data(), edot.data(), &chunit, &dom, my_fields->metal_density,
@@ -852,8 +837,8 @@ int solve_rate_cool_g(
                          &my_uvb_rates->k24, &my_uvb_rates->k25, &my_uvb_rates->k26, &my_uvb_rates->k27, &my_uvb_rates->k28, &my_uvb_rates->k29, &my_uvb_rates->k30,
                          kcr_buf.data[ColRecRxnLUT::k50], kcr_buf.data[ColRecRxnLUT::k51], kcr_buf.data[ColRecRxnLUT::k52], kcr_buf.data[ColRecRxnLUT::k53], kcr_buf.data[ColRecRxnLUT::k54], kcr_buf.data[ColRecRxnLUT::k55], kcr_buf.data[ColRecRxnLUT::k56], kcr_buf.data[ColRecRxnLUT::k57], kcr_buf.data[ColRecRxnLUT::k58],
                          h2dust.data(), rhoH.data(),
-                         k24shield.data(), k25shield.data(), k26shield.data(),
-                         k28shield.data(), k29shield.data(), k30shield.data(), k31shield.data(),
+                         kshield_buf.k24, kshield_buf.k25, kshield_buf.k26,
+                         kshield_buf.k28, kshield_buf.k29, kshield_buf.k30, kshield_buf.k31,
                          species_tmpdens.data[SpLUT::HI], species_tmpdens.data[SpLUT::HII], species_tmpdens.data[SpLUT::HeI], species_tmpdens.data[SpLUT::HeII], species_tmpdens.data[SpLUT::HeIII], species_tmpdens.data[SpLUT::e],
                          species_tmpdens.data[SpLUT::HM], species_tmpdens.data[SpLUT::H2I], species_tmpdens.data[SpLUT::H2II], species_tmpdens.data[SpLUT::DI], species_tmpdens.data[SpLUT::DII], species_tmpdens.data[SpLUT::HDI],
                          dedot_prev.data(), HIdot_prev.data(),
@@ -893,9 +878,9 @@ int solve_rate_cool_g(
                         species_tmpdens.data[SpLUT::SiM], species_tmpdens.data[SpLUT::FeM], species_tmpdens.data[SpLUT::Mg2SiO4], species_tmpdens.data[SpLUT::MgSiO3], species_tmpdens.data[SpLUT::Fe3O4],
                         species_tmpdens.data[SpLUT::AC], species_tmpdens.data[SpLUT::SiO2D], species_tmpdens.data[SpLUT::MgO], species_tmpdens.data[SpLUT::FeS], species_tmpdens.data[SpLUT::Al2O3],
                         species_tmpdens.data[SpLUT::reforg], species_tmpdens.data[SpLUT::volorg], species_tmpdens.data[SpLUT::H2Oice],
-                        kdSiM.data(), kdFeM.data(), kdMg2SiO4.data(), kdMgSiO3.data(), kdFe3O4.data(),
-                        kdAC.data(), kdSiO2D.data(), kdMgO.data(), kdFeS.data(), kdAl2O3.data(),
-                        kdreforg.data(), kdvolorg.data(), kdH2Oice.data(),
+                        grain_growth_rates.SiM, grain_growth_rates.FeM, grain_growth_rates.Mg2SiO4, grain_growth_rates.MgSiO3, grain_growth_rates.Fe3O4,
+                        grain_growth_rates.AC, grain_growth_rates.SiO2D, grain_growth_rates.MgO, grain_growth_rates.FeS, grain_growth_rates.Al2O3,
+                        grain_growth_rates.reforg, grain_growth_rates.volorg, grain_growth_rates.H2Oice,
                         &my_chemistry->radiative_transfer_HDI_dissociation, my_fields->RT_HDI_dissociation_rate, &my_chemistry->radiative_transfer_metal_ionization, my_fields->RT_CI_ionization_rate, my_fields->RT_OI_ionization_rate,
                         &my_chemistry->radiative_transfer_metal_dissociation, my_fields->RT_CO_dissociation_rate, my_fields->RT_OH_dissociation_rate, my_fields->RT_H2O_dissociation_rate
                );
@@ -1065,11 +1050,13 @@ int solve_rate_cool_g(
 
     // cleanup manually allocated temporaries
     grackle::impl::drop_GrainSpeciesCollection(&grain_temperatures);
+    grackle::impl::drop_GrainSpeciesCollection(&grain_growth_rates);
     grackle::impl::drop_LogTLinInterpScratchBuf(&logTlininterp_buf);
     grackle::impl::drop_Cool1DMultiScratchBuf(&cool1dmulti_buf);
     grackle::impl::drop_CoolHeatScratchBuf(&coolingheating_buf);
     grackle::impl::drop_SpeciesCollection(&species_tmpdens);
     grackle::impl::drop_ColRecRxnRateCollection(&kcr_buf);
+    grackle::impl::drop_PhotoRxnRateCollection(&kshield_buf);
     grackle::impl::drop_ChemHeatingRates(&chemheatrates_buf);
 
 
