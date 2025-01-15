@@ -306,6 +306,35 @@ ColRecRxnRateCollection new_ColRecRxnRateCollection(int nelem);
 void drop_ColRecRxnRateCollection(ColRecRxnRateCollection*);
 
 
+/// holds reaction rates chemical heating reaction rates
+///
+/// @note
+/// In the future, it would be nice to use this within the general rate
+/// storage struct
+///
+/// @note
+/// For now, the modelled rates are fairly limited, but the idea is this could
+/// be extended in the future
+struct ChemHeatingRates{
+  // Chemical heating from H2 formation.
+  // numerator and denominator of Eq 23 of Omukai ea. 2000.
+  double *n_cr_n;
+  double *n_cr_d1;
+  double *n_cr_d2;
+};
+
+/// allocates the contents of a new ChemHeatingRates
+///
+/// @param nelem The number of elements in each buffer
+ChemHeatingRates new_ChemHeatingRates(int nelem);
+
+/// performs cleanup of the contents of ColRecRxnRateCollection
+///
+/// This effectively invokes a destructor
+void drop_ChemHeatingRates(ChemHeatingRates*);
+
+
+
 } // namespace grackle::impl
 
 #endif /* INTERNAL_TYPES_HPP */

@@ -234,3 +234,26 @@ void grackle::impl::drop_ColRecRxnRateCollection(
   // since we only allocate a single pointer, we only need to call free once
   free(ptr->data[0]);
 }
+
+// -----------------------------------------------------------------
+
+grackle::impl::ChemHeatingRates grackle::impl::new_ChemHeatingRates(
+  int nelem
+)
+{
+  GRIMPL_REQUIRE(nelem > 0, "nelem must be positive");
+  ChemHeatingRates out;
+  out.n_cr_n = (double*)malloc(sizeof(double)*nelem);
+  out.n_cr_d1 = (double*)malloc(sizeof(double)*nelem);
+  out.n_cr_d2 = (double*)malloc(sizeof(double)*nelem);
+  return out;
+}
+
+void grackle::impl::drop_ChemHeatingRates(
+  grackle::impl::ChemHeatingRates* ptr
+)
+{
+  GRACKLE_FREE(ptr->n_cr_n);
+  GRACKLE_FREE(ptr->n_cr_d1);
+  GRACKLE_FREE(ptr->n_cr_d2);
+}
