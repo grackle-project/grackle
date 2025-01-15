@@ -191,4 +191,23 @@ void grackle::impl::drop_GrainSpeciesCollection(
   for_each_grainspeciescol_member(ptr, &cleanup_member_, NULL);
 }
 
+// -----------------------------------------------------------------
 
+grackle::impl::SpeciesCollection grackle::impl::new_SpeciesCollection(
+  int nelem
+) {
+  GRIMPL_REQUIRE(nelem > 0, "nelem must be positive");
+  grackle::impl::SpeciesCollection out;
+  double* ptr = (double*)malloc(sizeof(double) * nelem * SpLUT::NUM_ENTRIES);
+  for (int i = 0; i < SpLUT::NUM_ENTRIES; i++) {
+    out.data[i] = ptr + (i * nelem);
+  }
+  return out;
+}
+
+void grackle::impl::drop_SpeciesCollection(
+  grackle::impl::SpeciesCollection *ptr
+) {
+  // since we only allocate a single pointer, we only need to call free once
+  free(ptr->data[0]);
+}

@@ -98,6 +98,8 @@
 #error "This file must be used by a c++ compiler"
 #endif
 
+#include "LUT.hpp"
+
 namespace grackle::impl {
 
 /// Holds 1D arrays used for cooling and heating
@@ -243,6 +245,44 @@ GrainSpeciesCollection new_GrainSpeciesCollection(int nelem);
 ///
 /// This effectively invokes a destructor
 void drop_GrainSpeciesCollection(GrainSpeciesCollection*);
+
+
+/// holds properties about each kind of species
+///
+/// The basic premise is that we can use `SpLUT::<entry>` to lookup values
+/// for the desired species
+///
+/// @note
+/// The way this is currently a lot like a struct of arrays (i.e. there is an
+/// extra level of indirection).
+/// - For concreteness, to access index `idx` of the data for HeI, you
+///   would write `obj.data[SpLUT::HeI][idx]`.
+/// - in terms of performance, this is very similar to what came before (and
+///   is good enough for now)
+/// - in the long term, it would be even better to replace this with a
+///   `View<double**>`, but I want to wait until after we have transcribed the
+///   bulk of grackle before we do that.
+///
+/// @note
+/// At the time of writing, both this data structure and the
+/// GrainSpeciesCollection data structure both reserve space for each of the
+/// dust species. Maybe this data structure shouldn't do this? (If we remove
+/// the grain species, maybe we rename this so that it is called
+/// ChemSpeciesCollection?)
+struct SpeciesCollection {
+  double* data[SpLUT::NUM_ENTRIES];
+};
+
+
+/// allocates the contents of a new SpeciesCollection
+///
+/// @param nelem The number of elements in each buffer
+SpeciesCollection new_SpeciesCollection(int nelem);
+
+/// performs cleanup of the contents of SpeciesCollection
+///
+/// This effectively invokes a destructor
+void drop_SpeciesCollection(SpeciesCollection*);
 
 } // namespace grackle::impl
 
