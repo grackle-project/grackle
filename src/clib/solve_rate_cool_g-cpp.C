@@ -158,21 +158,9 @@ int solve_rate_cool_g(
 
   // Rate equation row temporaries
 
-  std::vector<double> HIp(my_fields->grid_dimension[0]);
-  std::vector<double> HIIp(my_fields->grid_dimension[0]);
-  std::vector<double> HeIp(my_fields->grid_dimension[0]);
-  std::vector<double> HeIIp(my_fields->grid_dimension[0]);
-  std::vector<double> HeIIIp(my_fields->grid_dimension[0]);
-  std::vector<double> HMp(my_fields->grid_dimension[0]);
-  std::vector<double> H2Ip(my_fields->grid_dimension[0]);
-  std::vector<double> H2IIp(my_fields->grid_dimension[0]);
-  std::vector<double> dep(my_fields->grid_dimension[0]);
   std::vector<double> dedot(my_fields->grid_dimension[0]);
   std::vector<double> HIdot(my_fields->grid_dimension[0]);
   std::vector<double> dedot_prev(my_fields->grid_dimension[0]);
-  std::vector<double> DIp(my_fields->grid_dimension[0]);
-  std::vector<double> DIIp(my_fields->grid_dimension[0]);
-  std::vector<double> HDIp(my_fields->grid_dimension[0]);
   std::vector<double> HIdot_prev(my_fields->grid_dimension[0]);
   std::vector<double> k24shield(my_fields->grid_dimension[0]);
   std::vector<double> k25shield(my_fields->grid_dimension[0]);
@@ -215,45 +203,6 @@ int solve_rate_cool_g(
   std::vector<double> ncrn(my_fields->grid_dimension[0]);
   std::vector<double> ncrd1(my_fields->grid_dimension[0]);
   std::vector<double> ncrd2(my_fields->grid_dimension[0]);
-  std::vector<double> DMp(my_fields->grid_dimension[0]);
-  std::vector<double> HDIIp(my_fields->grid_dimension[0]);
-  std::vector<double> HeHIIp(my_fields->grid_dimension[0]);
-  std::vector<double> CIp(my_fields->grid_dimension[0]);
-  std::vector<double> CIIp(my_fields->grid_dimension[0]);
-  std::vector<double> COp(my_fields->grid_dimension[0]);
-  std::vector<double> CO2p(my_fields->grid_dimension[0]);
-  std::vector<double> OIp(my_fields->grid_dimension[0]);
-  std::vector<double> OHp(my_fields->grid_dimension[0]);
-  std::vector<double> H2Op(my_fields->grid_dimension[0]);
-  std::vector<double> O2p(my_fields->grid_dimension[0]);
-  std::vector<double> SiIp(my_fields->grid_dimension[0]);
-  std::vector<double> SiOIp(my_fields->grid_dimension[0]);
-  std::vector<double> SiO2Ip(my_fields->grid_dimension[0]);
-  std::vector<double> CHp(my_fields->grid_dimension[0]);
-  std::vector<double> CH2p(my_fields->grid_dimension[0]);
-  std::vector<double> COIIp(my_fields->grid_dimension[0]);
-  std::vector<double> OIIp(my_fields->grid_dimension[0]);
-  std::vector<double> OHIIp(my_fields->grid_dimension[0]);
-  std::vector<double> H2OIIp(my_fields->grid_dimension[0]);
-  std::vector<double> H3OIIp(my_fields->grid_dimension[0]);
-  std::vector<double> O2IIp(my_fields->grid_dimension[0]);
-  std::vector<double> Mgp(my_fields->grid_dimension[0]);
-  std::vector<double> Alp(my_fields->grid_dimension[0]);
-  std::vector<double> Sp(my_fields->grid_dimension[0]);
-  std::vector<double> Fep(my_fields->grid_dimension[0]);
-  std::vector<gr_float> SiMp(my_fields->grid_dimension[0]);
-  std::vector<gr_float> FeMp(my_fields->grid_dimension[0]);
-  std::vector<gr_float> Mg2SiO4p(my_fields->grid_dimension[0]);
-  std::vector<gr_float> MgSiO3p(my_fields->grid_dimension[0]);
-  std::vector<gr_float> Fe3O4p(my_fields->grid_dimension[0]);
-  std::vector<gr_float> ACp(my_fields->grid_dimension[0]);
-  std::vector<gr_float> SiO2Dp(my_fields->grid_dimension[0]);
-  std::vector<gr_float> MgOp(my_fields->grid_dimension[0]);
-  std::vector<gr_float> FeSp(my_fields->grid_dimension[0]);
-  std::vector<gr_float> Al2O3p(my_fields->grid_dimension[0]);
-  std::vector<gr_float> reforgp(my_fields->grid_dimension[0]);
-  std::vector<gr_float> volorgp(my_fields->grid_dimension[0]);
-  std::vector<gr_float> H2Oicep(my_fields->grid_dimension[0]);
 
   std::vector<double> k125(my_fields->grid_dimension[0]);
   std::vector<double> k129(my_fields->grid_dimension[0]);
@@ -476,10 +425,8 @@ int solve_rate_cool_g(
   //_// PORT: !$omp&   tdust, metallicity, dust2gas, rhoH, mmw,
   //_// PORT: !$omp&   ddom,
   //_// PORT: !$omp&   olddtit,
-  //_// PORT: !$omp&   HIp, HIIp, HeIp, HeIIp, HeIIIp,
-  //_// PORT: !$omp&   HMp, H2Ip, H2IIp,
   //_// PORT: !$omp&   dep, dedot,HIdot, dedot_prev,
-  //_// PORT: !$omp&   DIp, DIIp, HDIp, HIdot_prev,
+  //_// PORT: !$omp&   HIdot_prev,
   //_// PORT: !$omp&   k24shield, k25shield, k26shield,
   //_// PORT: !$omp&   k28shield, k29shield, k30shield,
   //_// PORT: !$omp&   k31shield,
@@ -509,6 +456,12 @@ int solve_rate_cool_g(
 
     grackle::impl::CoolHeatScratchBuf coolingheating_buf =
       grackle::impl::new_CoolHeatScratchBuf(my_fields->grid_dimension[0]);
+
+    // buffers in the following data structure are used to temporarily hold
+    // the evolved density of various species as we evolve over a subcycle
+    grackle::impl::SpeciesCollection species_tmpdens =
+      grackle::impl::new_SpeciesCollection(my_fields->grid_dimension[0]);
+
 
     //_// TODO_USE: OMP_PRAGMA("omp for")
     for (t = 0; t<=(dk * dj - 1); t++) {
@@ -984,8 +937,8 @@ int solve_rate_cool_g(
                          h2dust.data(), rhoH.data(),
                          k24shield.data(), k25shield.data(), k26shield.data(),
                          k28shield.data(), k29shield.data(), k30shield.data(), k31shield.data(),
-                         HIp.data(), HIIp.data(), HeIp.data(), HeIIp.data(), HeIIIp.data(), dep.data(),
-                         HMp.data(), H2Ip.data(), H2IIp.data(), DIp.data(), DIIp.data(), HDIp.data(),
+                         species_tmpdens.data[SpLUT::HI], species_tmpdens.data[SpLUT::HII], species_tmpdens.data[SpLUT::HeI], species_tmpdens.data[SpLUT::HeII], species_tmpdens.data[SpLUT::HeIII], species_tmpdens.data[SpLUT::e],
+                         species_tmpdens.data[SpLUT::HM], species_tmpdens.data[SpLUT::H2I], species_tmpdens.data[SpLUT::H2II], species_tmpdens.data[SpLUT::DI], species_tmpdens.data[SpLUT::DII], species_tmpdens.data[SpLUT::HDI],
                          dedot_prev.data(), HIdot_prev.data(),
                          &my_chemistry->use_radiative_transfer, &my_chemistry->radiative_transfer_hydrogen_only,
                          kphHI.data(), my_fields->RT_HeI_ionization_rate, my_fields->RT_HeII_ionization_rate,
@@ -1013,16 +966,16 @@ int solve_rate_cool_g(
                         kz40.data(),  kz41.data(),  kz42.data(),  kz43.data(),  kz44.data(),
                         kz45.data(),  kz46.data(),  kz47.data(),  kz48.data(),  kz49.data(),
                         kz50.data(),  kz51.data(),  kz52.data(),  kz53.data(),  kz54.data(),
-                        DMp.data(), HDIIp.data(), HeHIIp.data(),
-                        CIp.data(), CIIp.data(), COp.data(), CO2p.data(),
-                        OIp.data(), OHp.data(), H2Op.data(), O2p.data(),
-                        SiIp.data(), SiOIp.data(), SiO2Ip.data(),
-                        CHp.data(), CH2p.data(), COIIp.data(), OIIp.data(),
-                        OHIIp.data(), H2OIIp.data(), H3OIIp.data(), O2IIp.data(),
-                        Mgp.data(), Alp.data(), Sp.data(), Fep.data(),
-                        SiMp.data(), FeMp.data(), Mg2SiO4p.data(), MgSiO3p.data(), Fe3O4p.data(),
-                        ACp.data(), SiO2Dp.data(), MgOp.data(), FeSp.data(), Al2O3p.data(),
-                        reforgp.data(), volorgp.data(), H2Oicep.data(),
+                        species_tmpdens.data[SpLUT::DM], species_tmpdens.data[SpLUT::HDII], species_tmpdens.data[SpLUT::HeHII],
+                        species_tmpdens.data[SpLUT::CI], species_tmpdens.data[SpLUT::CII], species_tmpdens.data[SpLUT::CO], species_tmpdens.data[SpLUT::CO2],
+                        species_tmpdens.data[SpLUT::OI], species_tmpdens.data[SpLUT::OH], species_tmpdens.data[SpLUT::H2O], species_tmpdens.data[SpLUT::O2],
+                        species_tmpdens.data[SpLUT::SiI], species_tmpdens.data[SpLUT::SiOI], species_tmpdens.data[SpLUT::SiO2I],
+                        species_tmpdens.data[SpLUT::CH], species_tmpdens.data[SpLUT::CH2], species_tmpdens.data[SpLUT::COII], species_tmpdens.data[SpLUT::OII],
+                        species_tmpdens.data[SpLUT::OHII], species_tmpdens.data[SpLUT::H2OII], species_tmpdens.data[SpLUT::H3OII], species_tmpdens.data[SpLUT::O2II],
+                        species_tmpdens.data[SpLUT::Mg], species_tmpdens.data[SpLUT::Al], species_tmpdens.data[SpLUT::S], species_tmpdens.data[SpLUT::Fe],
+                        species_tmpdens.data[SpLUT::SiM], species_tmpdens.data[SpLUT::FeM], species_tmpdens.data[SpLUT::Mg2SiO4], species_tmpdens.data[SpLUT::MgSiO3], species_tmpdens.data[SpLUT::Fe3O4],
+                        species_tmpdens.data[SpLUT::AC], species_tmpdens.data[SpLUT::SiO2D], species_tmpdens.data[SpLUT::MgO], species_tmpdens.data[SpLUT::FeS], species_tmpdens.data[SpLUT::Al2O3],
+                        species_tmpdens.data[SpLUT::reforg], species_tmpdens.data[SpLUT::volorg], species_tmpdens.data[SpLUT::H2Oice],
                         kdSiM.data(), kdFeM.data(), kdMg2SiO4.data(), kdMgSiO3.data(), kdFe3O4.data(),
                         kdAC.data(), kdSiO2D.data(), kdMgO.data(), kdFeS.data(), kdAl2O3.data(),
                         kdreforg.data(), kdvolorg.data(), kdH2Oice.data(),
@@ -1198,6 +1151,7 @@ int solve_rate_cool_g(
     grackle::impl::drop_LogTLinInterpScratchBuf(&logTlininterp_buf);
     grackle::impl::drop_Cool1DMultiScratchBuf(&cool1dmulti_buf);
     grackle::impl::drop_CoolHeatScratchBuf(&coolingheating_buf);
+    grackle::impl::drop_SpeciesCollection(&species_tmpdens);
 
 
   }  // OMP_PRAGMA("omp parallel")
