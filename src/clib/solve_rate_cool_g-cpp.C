@@ -169,97 +169,12 @@ int solve_rate_cool_g(
   std::vector<double> k29shield(my_fields->grid_dimension[0]);
   std::vector<double> k30shield(my_fields->grid_dimension[0]);
   std::vector<double> k31shield(my_fields->grid_dimension[0]);
-  std::vector<double> k1(my_fields->grid_dimension[0]);
-  std::vector<double> k2(my_fields->grid_dimension[0]);
-  std::vector<double> k3(my_fields->grid_dimension[0]);
-  std::vector<double> k4(my_fields->grid_dimension[0]);
-  std::vector<double> k5(my_fields->grid_dimension[0]);
-  std::vector<double> k6(my_fields->grid_dimension[0]);
-  std::vector<double> k7(my_fields->grid_dimension[0]);
-  std::vector<double> k8(my_fields->grid_dimension[0]);
-  std::vector<double> k9(my_fields->grid_dimension[0]);
-  std::vector<double> k10(my_fields->grid_dimension[0]);
-  std::vector<double> k11(my_fields->grid_dimension[0]);
-  std::vector<double> k12(my_fields->grid_dimension[0]);
-  std::vector<double> k13(my_fields->grid_dimension[0]);
-  std::vector<double> k14(my_fields->grid_dimension[0]);
-  std::vector<double> k15(my_fields->grid_dimension[0]);
-  std::vector<double> k16(my_fields->grid_dimension[0]);
-  std::vector<double> k17(my_fields->grid_dimension[0]);
-  std::vector<double> k18(my_fields->grid_dimension[0]);
-  std::vector<double> k19(my_fields->grid_dimension[0]);
-  std::vector<double> k22(my_fields->grid_dimension[0]);
-  std::vector<double> k50(my_fields->grid_dimension[0]);
-  std::vector<double> k51(my_fields->grid_dimension[0]);
-  std::vector<double> k52(my_fields->grid_dimension[0]);
-  std::vector<double> k53(my_fields->grid_dimension[0]);
-  std::vector<double> k54(my_fields->grid_dimension[0]);
-  std::vector<double> k55(my_fields->grid_dimension[0]);
-  std::vector<double> k56(my_fields->grid_dimension[0]);
-  std::vector<double> k57(my_fields->grid_dimension[0]);
-  std::vector<double> k58(my_fields->grid_dimension[0]);
   std::vector<double> k13dd(my_fields->grid_dimension[0] * 14);
   std::vector<double> h2dust(my_fields->grid_dimension[0]);
   std::vector<double> ncrn(my_fields->grid_dimension[0]);
   std::vector<double> ncrd1(my_fields->grid_dimension[0]);
   std::vector<double> ncrd2(my_fields->grid_dimension[0]);
 
-  std::vector<double> k125(my_fields->grid_dimension[0]);
-  std::vector<double> k129(my_fields->grid_dimension[0]);
-  std::vector<double> k130(my_fields->grid_dimension[0]);
-  std::vector<double> k131(my_fields->grid_dimension[0]);
-  std::vector<double> k132(my_fields->grid_dimension[0]);
-  std::vector<double> k133(my_fields->grid_dimension[0]);
-  std::vector<double> k134(my_fields->grid_dimension[0]);
-  std::vector<double> k135(my_fields->grid_dimension[0]);
-  std::vector<double> k136(my_fields->grid_dimension[0]);
-  std::vector<double> k137(my_fields->grid_dimension[0]);
-  std::vector<double> k148(my_fields->grid_dimension[0]);
-  std::vector<double> k149(my_fields->grid_dimension[0]);
-  std::vector<double> k150(my_fields->grid_dimension[0]);
-  std::vector<double> k151(my_fields->grid_dimension[0]);
-  std::vector<double> k152(my_fields->grid_dimension[0]);
-  std::vector<double> k153(my_fields->grid_dimension[0]);
-  std::vector<double> kz15(my_fields->grid_dimension[0]);
-  std::vector<double> kz16(my_fields->grid_dimension[0]);
-  std::vector<double> kz17(my_fields->grid_dimension[0]);
-  std::vector<double> kz18(my_fields->grid_dimension[0]);
-  std::vector<double> kz19(my_fields->grid_dimension[0]);
-  std::vector<double> kz20(my_fields->grid_dimension[0]);
-  std::vector<double> kz21(my_fields->grid_dimension[0]);
-  std::vector<double> kz22(my_fields->grid_dimension[0]);
-  std::vector<double> kz23(my_fields->grid_dimension[0]);
-  std::vector<double> kz24(my_fields->grid_dimension[0]);
-  std::vector<double> kz25(my_fields->grid_dimension[0]);
-  std::vector<double> kz26(my_fields->grid_dimension[0]);
-  std::vector<double> kz27(my_fields->grid_dimension[0]);
-  std::vector<double> kz28(my_fields->grid_dimension[0]);
-  std::vector<double> kz29(my_fields->grid_dimension[0]);
-  std::vector<double> kz30(my_fields->grid_dimension[0]);
-  std::vector<double> kz31(my_fields->grid_dimension[0]);
-  std::vector<double> kz32(my_fields->grid_dimension[0]);
-  std::vector<double> kz33(my_fields->grid_dimension[0]);
-  std::vector<double> kz34(my_fields->grid_dimension[0]);
-  std::vector<double> kz35(my_fields->grid_dimension[0]);
-  std::vector<double> kz36(my_fields->grid_dimension[0]);
-  std::vector<double> kz37(my_fields->grid_dimension[0]);
-  std::vector<double> kz38(my_fields->grid_dimension[0]);
-  std::vector<double> kz39(my_fields->grid_dimension[0]);
-  std::vector<double> kz40(my_fields->grid_dimension[0]);
-  std::vector<double> kz41(my_fields->grid_dimension[0]);
-  std::vector<double> kz42(my_fields->grid_dimension[0]);
-  std::vector<double> kz43(my_fields->grid_dimension[0]);
-  std::vector<double> kz44(my_fields->grid_dimension[0]);
-  std::vector<double> kz45(my_fields->grid_dimension[0]);
-  std::vector<double> kz46(my_fields->grid_dimension[0]);
-  std::vector<double> kz47(my_fields->grid_dimension[0]);
-  std::vector<double> kz48(my_fields->grid_dimension[0]);
-  std::vector<double> kz49(my_fields->grid_dimension[0]);
-  std::vector<double> kz50(my_fields->grid_dimension[0]);
-  std::vector<double> kz51(my_fields->grid_dimension[0]);
-  std::vector<double> kz52(my_fields->grid_dimension[0]);
-  std::vector<double> kz53(my_fields->grid_dimension[0]);
-  std::vector<double> kz54(my_fields->grid_dimension[0]);
   std::vector<double> kdSiM(my_fields->grid_dimension[0]);
   std::vector<double> kdFeM(my_fields->grid_dimension[0]);
   std::vector<double> kdMg2SiO4(my_fields->grid_dimension[0]);
@@ -430,12 +345,7 @@ int solve_rate_cool_g(
   //_// PORT: !$omp&   k24shield, k25shield, k26shield,
   //_// PORT: !$omp&   k28shield, k29shield, k30shield,
   //_// PORT: !$omp&   k31shield,
-  //_// PORT: !$omp&   k1 , k2 , k3 , k4 , k5,
-  //_// PORT: !$omp&   k6 , k7 , k8 , k9 , k10,
-  //_// PORT: !$omp&   k11, k12, k13, k14, k15,
-  //_// PORT: !$omp&   k16, k17, k18, k19, k22,
-  //_// PORT: !$omp&   k50, k51, k52, k53, k54,
-  //_// PORT: !$omp&   k55, k56, k57, k58, k13dd, h2dust,
+  //_// PORT: !$omp&   k13dd, h2dust,
   //_// PORT: !$omp&   ncrn, ncrd1, ncrd2,
   //_// PORT: !$omp&   edot,
   //_// PORT: !$omp&   itmask, itmask_metal )
@@ -461,6 +371,13 @@ int solve_rate_cool_g(
     // the evolved density of various species as we evolve over a subcycle
     grackle::impl::SpeciesCollection species_tmpdens =
       grackle::impl::new_SpeciesCollection(my_fields->grid_dimension[0]);
+
+    // buffers in the following data structure are used to temporarily hold
+    // the interpolated Collisional/Recombination Rates that have interpolated
+    // using the standard 1D log temperature table.
+    grackle::impl::ColRecRxnRateCollection kcr_buf =
+      grackle::impl::new_ColRecRxnRateCollection(my_fields->grid_dimension[0]);
+
 
 
     //_// TODO_USE: OMP_PRAGMA("omp for")
@@ -658,11 +575,11 @@ int solve_rate_cool_g(
                    my_rates->k57, my_rates->k58, &my_chemistry->NumberOfDustTemperatureBins, &my_chemistry->DustTemperatureStart, &my_chemistry->DustTemperatureEnd, my_rates->h2dust,
                    my_rates->n_cr_n, my_rates->n_cr_d1, my_rates->n_cr_d2,
                    &my_uvb_rates->crsHI, &my_uvb_rates->crsHeI, &my_uvb_rates->crsHeII, &my_uvb_rates->piHI, &my_uvb_rates->piHeI,
-                   k1.data(), k2.data(), k3.data(), k4.data(), k5.data(), k6.data(), k7.data(), k8.data(), k9.data(), k10.data(),
-                   k11.data(), k12.data(), k13.data(), k14.data(), k15.data(), k16.data(), k17.data(), k18.data(),
-                   k19.data(), k22.data(), &my_uvb_rates->k24, &my_uvb_rates->k25, &my_uvb_rates->k26, &my_uvb_rates->k28, &my_uvb_rates->k29, &my_uvb_rates->k30, &my_uvb_rates->k31,
-                   k50.data(), k51.data(), k52.data(), k53.data(), k54.data(), k55.data(), k56.data(), k57.data(),
-                   k58.data(), k13dd.data(), k24shield.data(), k25shield.data(), k26shield.data(),
+                   kcr_buf.data[ColRecRxnLUT::k1], kcr_buf.data[ColRecRxnLUT::k2], kcr_buf.data[ColRecRxnLUT::k3], kcr_buf.data[ColRecRxnLUT::k4], kcr_buf.data[ColRecRxnLUT::k5], kcr_buf.data[ColRecRxnLUT::k6], kcr_buf.data[ColRecRxnLUT::k7], kcr_buf.data[ColRecRxnLUT::k8], kcr_buf.data[ColRecRxnLUT::k9], kcr_buf.data[ColRecRxnLUT::k10],
+                   kcr_buf.data[ColRecRxnLUT::k11], kcr_buf.data[ColRecRxnLUT::k12], kcr_buf.data[ColRecRxnLUT::k13], kcr_buf.data[ColRecRxnLUT::k14], kcr_buf.data[ColRecRxnLUT::k15], kcr_buf.data[ColRecRxnLUT::k16], kcr_buf.data[ColRecRxnLUT::k17], kcr_buf.data[ColRecRxnLUT::k18],
+                   kcr_buf.data[ColRecRxnLUT::k19], kcr_buf.data[ColRecRxnLUT::k22], &my_uvb_rates->k24, &my_uvb_rates->k25, &my_uvb_rates->k26, &my_uvb_rates->k28, &my_uvb_rates->k29, &my_uvb_rates->k30, &my_uvb_rates->k31,
+                   kcr_buf.data[ColRecRxnLUT::k50], kcr_buf.data[ColRecRxnLUT::k51], kcr_buf.data[ColRecRxnLUT::k52], kcr_buf.data[ColRecRxnLUT::k53], kcr_buf.data[ColRecRxnLUT::k54], kcr_buf.data[ColRecRxnLUT::k55], kcr_buf.data[ColRecRxnLUT::k56], kcr_buf.data[ColRecRxnLUT::k57],
+                   kcr_buf.data[ColRecRxnLUT::k58], k13dd.data(), k24shield.data(), k25shield.data(), k26shield.data(),
                    k28shield.data(), k29shield.data(), k30shield.data(),
                    k31shield.data(), h2dust.data(), ncrn.data(), ncrd1.data(), ncrd2.data(),
                    logTlininterp_buf.t1, logTlininterp_buf.t2, logTlininterp_buf.tdef, logTlininterp_buf.logtem, logTlininterp_buf.indixe,
@@ -692,18 +609,18 @@ int solve_rate_cool_g(
                    my_rates->kz40, my_rates->kz41, my_rates->kz42, my_rates->kz43, my_rates->kz44,
                    my_rates->kz45, my_rates->kz46, my_rates->kz47, my_rates->kz48, my_rates->kz49,
                    my_rates->kz50, my_rates->kz51, my_rates->kz52, my_rates->kz53, my_rates->kz54,
-                   k125.data(),  k129.data(),  k130.data(),  k131.data(),  k132.data(),
-                   k133.data(),  k134.data(),  k135.data(),  k136.data(),  k137.data(),
-                   k148.data(),  k149.data(),  k150.data(),  k151.data(),  k152.data(),
-                   k153.data(),
-                   kz15.data(),  kz16.data(),  kz17.data(),  kz18.data(),  kz19.data(),
-                   kz20.data(),  kz21.data(),  kz22.data(),  kz23.data(),  kz24.data(),
-                   kz25.data(),  kz26.data(),  kz27.data(),  kz28.data(),  kz29.data(),
-                   kz30.data(),  kz31.data(),  kz32.data(),  kz33.data(),  kz34.data(),
-                   kz35.data(),  kz36.data(),  kz37.data(),  kz38.data(),  kz39.data(),
-                   kz40.data(),  kz41.data(),  kz42.data(),  kz43.data(),  kz44.data(),
-                   kz45.data(),  kz46.data(),  kz47.data(),  kz48.data(),  kz49.data(),
-                   kz50.data(),  kz51.data(),  kz52.data(),  kz53.data(),  kz54.data(),
+                   kcr_buf.data[ColRecRxnLUT::k125],  kcr_buf.data[ColRecRxnLUT::k129],  kcr_buf.data[ColRecRxnLUT::k130],  kcr_buf.data[ColRecRxnLUT::k131],  kcr_buf.data[ColRecRxnLUT::k132],
+                   kcr_buf.data[ColRecRxnLUT::k133],  kcr_buf.data[ColRecRxnLUT::k134],  kcr_buf.data[ColRecRxnLUT::k135],  kcr_buf.data[ColRecRxnLUT::k136],  kcr_buf.data[ColRecRxnLUT::k137],
+                   kcr_buf.data[ColRecRxnLUT::k148],  kcr_buf.data[ColRecRxnLUT::k149],  kcr_buf.data[ColRecRxnLUT::k150],  kcr_buf.data[ColRecRxnLUT::k151],  kcr_buf.data[ColRecRxnLUT::k152],
+                   kcr_buf.data[ColRecRxnLUT::k153],
+                   kcr_buf.data[ColRecRxnLUT::kz15],  kcr_buf.data[ColRecRxnLUT::kz16],  kcr_buf.data[ColRecRxnLUT::kz17],  kcr_buf.data[ColRecRxnLUT::kz18],  kcr_buf.data[ColRecRxnLUT::kz19],
+                   kcr_buf.data[ColRecRxnLUT::kz20],  kcr_buf.data[ColRecRxnLUT::kz21],  kcr_buf.data[ColRecRxnLUT::kz22],  kcr_buf.data[ColRecRxnLUT::kz23],  kcr_buf.data[ColRecRxnLUT::kz24],
+                   kcr_buf.data[ColRecRxnLUT::kz25],  kcr_buf.data[ColRecRxnLUT::kz26],  kcr_buf.data[ColRecRxnLUT::kz27],  kcr_buf.data[ColRecRxnLUT::kz28],  kcr_buf.data[ColRecRxnLUT::kz29],
+                   kcr_buf.data[ColRecRxnLUT::kz30],  kcr_buf.data[ColRecRxnLUT::kz31],  kcr_buf.data[ColRecRxnLUT::kz32],  kcr_buf.data[ColRecRxnLUT::kz33],  kcr_buf.data[ColRecRxnLUT::kz34],
+                   kcr_buf.data[ColRecRxnLUT::kz35],  kcr_buf.data[ColRecRxnLUT::kz36],  kcr_buf.data[ColRecRxnLUT::kz37],  kcr_buf.data[ColRecRxnLUT::kz38],  kcr_buf.data[ColRecRxnLUT::kz39],
+                   kcr_buf.data[ColRecRxnLUT::kz40],  kcr_buf.data[ColRecRxnLUT::kz41],  kcr_buf.data[ColRecRxnLUT::kz42],  kcr_buf.data[ColRecRxnLUT::kz43],  kcr_buf.data[ColRecRxnLUT::kz44],
+                   kcr_buf.data[ColRecRxnLUT::kz45],  kcr_buf.data[ColRecRxnLUT::kz46],  kcr_buf.data[ColRecRxnLUT::kz47],  kcr_buf.data[ColRecRxnLUT::kz48],  kcr_buf.data[ColRecRxnLUT::kz49],
+                   kcr_buf.data[ColRecRxnLUT::kz50],  kcr_buf.data[ColRecRxnLUT::kz51],  kcr_buf.data[ColRecRxnLUT::kz52],  kcr_buf.data[ColRecRxnLUT::kz53],  kcr_buf.data[ColRecRxnLUT::kz54],
                    &my_chemistry->multi_metals, &my_chemistry->metal_abundances, &my_chemistry->dust_species, &my_chemistry->use_multiple_dust_temperatures, &my_chemistry->dust_sublimation,
                    my_fields->local_ISM_metal_density,
                    my_fields->ccsn13_metal_density, my_fields->ccsn20_metal_density, my_fields->ccsn25_metal_density, my_fields->ccsn30_metal_density,
@@ -741,10 +658,10 @@ int solve_rate_cool_g(
                          de.data(), HI.data(), HII.data(), my_fields->HeI_density, my_fields->HeII_density, my_fields->HeIII_density, d.data(),
                          my_fields->HM_density, my_fields->H2I_density, my_fields->H2II_density,
                          &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &my_fields->grid_start[0], &my_fields->grid_end[0], &j, &k,
-                         k1.data(), k2.data(), k3.data(), k4.data(), k5.data(), k6.data(), k7.data(), k8.data(), k9.data(), k10.data(), k11.data(),
-                         k12.data(), k13.data(), k14.data(), k15.data(), k16.data(), k17.data(), k18.data(), k19.data(), k22.data(),
+                         kcr_buf.data[ColRecRxnLUT::k1], kcr_buf.data[ColRecRxnLUT::k2], kcr_buf.data[ColRecRxnLUT::k3], kcr_buf.data[ColRecRxnLUT::k4], kcr_buf.data[ColRecRxnLUT::k5], kcr_buf.data[ColRecRxnLUT::k6], kcr_buf.data[ColRecRxnLUT::k7], kcr_buf.data[ColRecRxnLUT::k8], kcr_buf.data[ColRecRxnLUT::k9], kcr_buf.data[ColRecRxnLUT::k10], kcr_buf.data[ColRecRxnLUT::k11],
+                         kcr_buf.data[ColRecRxnLUT::k12], kcr_buf.data[ColRecRxnLUT::k13], kcr_buf.data[ColRecRxnLUT::k14], kcr_buf.data[ColRecRxnLUT::k15], kcr_buf.data[ColRecRxnLUT::k16], kcr_buf.data[ColRecRxnLUT::k17], kcr_buf.data[ColRecRxnLUT::k18], kcr_buf.data[ColRecRxnLUT::k19], kcr_buf.data[ColRecRxnLUT::k22],
                          &my_uvb_rates->k24, &my_uvb_rates->k25, &my_uvb_rates->k26, &my_uvb_rates->k27, &my_uvb_rates->k28, &my_uvb_rates->k29, &my_uvb_rates->k30,
-                         k50.data(), k51.data(), k52.data(), k53.data(), k54.data(), k55.data(), k56.data(), k57.data(), k58.data(),
+                         kcr_buf.data[ColRecRxnLUT::k50], kcr_buf.data[ColRecRxnLUT::k51], kcr_buf.data[ColRecRxnLUT::k52], kcr_buf.data[ColRecRxnLUT::k53], kcr_buf.data[ColRecRxnLUT::k54], kcr_buf.data[ColRecRxnLUT::k55], kcr_buf.data[ColRecRxnLUT::k56], kcr_buf.data[ColRecRxnLUT::k57], kcr_buf.data[ColRecRxnLUT::k58],
                          h2dust.data(), ncrn.data(), ncrd1.data(), ncrd2.data(), rhoH.data(),
                          k24shield.data(), k25shield.data(), k26shield.data(),
                          k28shield.data(), k29shield.data(), k30shield.data(), k31shield.data(),
@@ -808,8 +725,8 @@ int solve_rate_cool_g(
               // If the net rate is almost perfectly balanced then set
               //     it to zero (since it is zero to available precision)
 
-              if (std::fmin(std::fabs(k1[i-1]* de(i-1,j-1,k-1)*HI(i-1,j-1,k-1)),
-                      std::fabs(k2[i-1]*HII(i-1,j-1,k-1)*de(i-1,j-1,k-1)))/
+              if (std::fmin(std::fabs(kcr_buf.data[ColRecRxnLUT::k1][i-1]* de(i-1,j-1,k-1)*HI(i-1,j-1,k-1)),
+                      std::fabs(kcr_buf.data[ColRecRxnLUT::k2][i-1]*HII(i-1,j-1,k-1)*de(i-1,j-1,k-1)))/
                   std::fmax(std::fabs(dedot[i-1]),std::fabs(HIdot[i-1])) >
                    1.0e6)  {
                 dedot[i-1] = tiny8;
@@ -841,7 +758,7 @@ int solve_rate_cool_g(
                 // Hydrogen changes by 10% or less
                 double Heq_div_dHeqdt = calc_Heq_div_dHeqdt_(
                   my_chemistry, my_rates, dlogtem, logTlininterp_buf,
-                  k13.data(), k22.data(), d(i-1,j-1,k-1), tgas.data(),
+                  kcr_buf.data[ColRecRxnLUT::k13], kcr_buf.data[ColRecRxnLUT::k22], d(i-1,j-1,k-1), tgas.data(),
                   p2d.data(), edot.data(), i
                 );
 
@@ -930,10 +847,10 @@ int solve_rate_cool_g(
                          my_fields->HM_density, my_fields->H2I_density, my_fields->H2II_density, my_fields->DI_density, my_fields->DII_density, my_fields->HDI_density, dtit.data(),
                          &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &my_fields->grid_start[0], &my_fields->grid_end[0], &j, &k,
                          &my_chemistry->primordial_chemistry, &anydust,
-                         k1.data(), k2.data(), k3.data(), k4.data(), k5.data(), k6.data(), k7.data(), k8.data(), k9.data(), k10.data(), k11.data(),
-                         k12.data(), k13.data(), k14.data(), k15.data(), k16.data(), k17.data(), k18.data(), k19.data(), k22.data(),
+                         kcr_buf.data[ColRecRxnLUT::k1], kcr_buf.data[ColRecRxnLUT::k2], kcr_buf.data[ColRecRxnLUT::k3], kcr_buf.data[ColRecRxnLUT::k4], kcr_buf.data[ColRecRxnLUT::k5], kcr_buf.data[ColRecRxnLUT::k6], kcr_buf.data[ColRecRxnLUT::k7], kcr_buf.data[ColRecRxnLUT::k8], kcr_buf.data[ColRecRxnLUT::k9], kcr_buf.data[ColRecRxnLUT::k10], kcr_buf.data[ColRecRxnLUT::k11],
+                         kcr_buf.data[ColRecRxnLUT::k12], kcr_buf.data[ColRecRxnLUT::k13], kcr_buf.data[ColRecRxnLUT::k14], kcr_buf.data[ColRecRxnLUT::k15], kcr_buf.data[ColRecRxnLUT::k16], kcr_buf.data[ColRecRxnLUT::k17], kcr_buf.data[ColRecRxnLUT::k18], kcr_buf.data[ColRecRxnLUT::k19], kcr_buf.data[ColRecRxnLUT::k22],
                          &my_uvb_rates->k24, &my_uvb_rates->k25, &my_uvb_rates->k26, &my_uvb_rates->k27, &my_uvb_rates->k28, &my_uvb_rates->k29, &my_uvb_rates->k30,
-                         k50.data(), k51.data(), k52.data(), k53.data(), k54.data(), k55.data(), k56.data(), k57.data(), k58.data(),
+                         kcr_buf.data[ColRecRxnLUT::k50], kcr_buf.data[ColRecRxnLUT::k51], kcr_buf.data[ColRecRxnLUT::k52], kcr_buf.data[ColRecRxnLUT::k53], kcr_buf.data[ColRecRxnLUT::k54], kcr_buf.data[ColRecRxnLUT::k55], kcr_buf.data[ColRecRxnLUT::k56], kcr_buf.data[ColRecRxnLUT::k57], kcr_buf.data[ColRecRxnLUT::k58],
                          h2dust.data(), rhoH.data(),
                          k24shield.data(), k25shield.data(), k26shield.data(),
                          k28shield.data(), k29shield.data(), k30shield.data(), k31shield.data(),
@@ -954,18 +871,18 @@ int solve_rate_cool_g(
                         my_fields->SiM_dust_density, my_fields->FeM_dust_density, my_fields->Mg2SiO4_dust_density, my_fields->MgSiO3_dust_density, my_fields->Fe3O4_dust_density,
                         my_fields->AC_dust_density, my_fields->SiO2_dust_density, my_fields->MgO_dust_density, my_fields->FeS_dust_density, my_fields->Al2O3_dust_density,
                         my_fields->ref_org_dust_density, my_fields->vol_org_dust_density, my_fields->H2O_ice_dust_density,
-                        k125.data(), k129.data(), k130.data(), k131.data(), k132.data(),
-                        k133.data(), k134.data(), k135.data(), k136.data(), k137.data(),
-                        k148.data(), k149.data(), k150.data(), k151.data(), k152.data(),
-                        k153.data(),
-                        kz15.data(),  kz16.data(),  kz17.data(),  kz18.data(),  kz19.data(),
-                        kz20.data(),  kz21.data(),  kz22.data(),  kz23.data(),  kz24.data(),
-                        kz25.data(),  kz26.data(),  kz27.data(),  kz28.data(),  kz29.data(),
-                        kz30.data(),  kz31.data(),  kz32.data(),  kz33.data(),  kz34.data(),
-                        kz35.data(),  kz36.data(),  kz37.data(),  kz38.data(),  kz39.data(),
-                        kz40.data(),  kz41.data(),  kz42.data(),  kz43.data(),  kz44.data(),
-                        kz45.data(),  kz46.data(),  kz47.data(),  kz48.data(),  kz49.data(),
-                        kz50.data(),  kz51.data(),  kz52.data(),  kz53.data(),  kz54.data(),
+                        kcr_buf.data[ColRecRxnLUT::k125], kcr_buf.data[ColRecRxnLUT::k129], kcr_buf.data[ColRecRxnLUT::k130], kcr_buf.data[ColRecRxnLUT::k131], kcr_buf.data[ColRecRxnLUT::k132],
+                        kcr_buf.data[ColRecRxnLUT::k133], kcr_buf.data[ColRecRxnLUT::k134], kcr_buf.data[ColRecRxnLUT::k135], kcr_buf.data[ColRecRxnLUT::k136], kcr_buf.data[ColRecRxnLUT::k137],
+                        kcr_buf.data[ColRecRxnLUT::k148], kcr_buf.data[ColRecRxnLUT::k149], kcr_buf.data[ColRecRxnLUT::k150], kcr_buf.data[ColRecRxnLUT::k151], kcr_buf.data[ColRecRxnLUT::k152],
+                        kcr_buf.data[ColRecRxnLUT::k153],
+                        kcr_buf.data[ColRecRxnLUT::kz15],  kcr_buf.data[ColRecRxnLUT::kz16],  kcr_buf.data[ColRecRxnLUT::kz17],  kcr_buf.data[ColRecRxnLUT::kz18],  kcr_buf.data[ColRecRxnLUT::kz19],
+                        kcr_buf.data[ColRecRxnLUT::kz20],  kcr_buf.data[ColRecRxnLUT::kz21],  kcr_buf.data[ColRecRxnLUT::kz22],  kcr_buf.data[ColRecRxnLUT::kz23],  kcr_buf.data[ColRecRxnLUT::kz24],
+                        kcr_buf.data[ColRecRxnLUT::kz25],  kcr_buf.data[ColRecRxnLUT::kz26],  kcr_buf.data[ColRecRxnLUT::kz27],  kcr_buf.data[ColRecRxnLUT::kz28],  kcr_buf.data[ColRecRxnLUT::kz29],
+                        kcr_buf.data[ColRecRxnLUT::kz30],  kcr_buf.data[ColRecRxnLUT::kz31],  kcr_buf.data[ColRecRxnLUT::kz32],  kcr_buf.data[ColRecRxnLUT::kz33],  kcr_buf.data[ColRecRxnLUT::kz34],
+                        kcr_buf.data[ColRecRxnLUT::kz35],  kcr_buf.data[ColRecRxnLUT::kz36],  kcr_buf.data[ColRecRxnLUT::kz37],  kcr_buf.data[ColRecRxnLUT::kz38],  kcr_buf.data[ColRecRxnLUT::kz39],
+                        kcr_buf.data[ColRecRxnLUT::kz40],  kcr_buf.data[ColRecRxnLUT::kz41],  kcr_buf.data[ColRecRxnLUT::kz42],  kcr_buf.data[ColRecRxnLUT::kz43],  kcr_buf.data[ColRecRxnLUT::kz44],
+                        kcr_buf.data[ColRecRxnLUT::kz45],  kcr_buf.data[ColRecRxnLUT::kz46],  kcr_buf.data[ColRecRxnLUT::kz47],  kcr_buf.data[ColRecRxnLUT::kz48],  kcr_buf.data[ColRecRxnLUT::kz49],
+                        kcr_buf.data[ColRecRxnLUT::kz50],  kcr_buf.data[ColRecRxnLUT::kz51],  kcr_buf.data[ColRecRxnLUT::kz52],  kcr_buf.data[ColRecRxnLUT::kz53],  kcr_buf.data[ColRecRxnLUT::kz54],
                         species_tmpdens.data[SpLUT::DM], species_tmpdens.data[SpLUT::HDII], species_tmpdens.data[SpLUT::HeHII],
                         species_tmpdens.data[SpLUT::CI], species_tmpdens.data[SpLUT::CII], species_tmpdens.data[SpLUT::CO], species_tmpdens.data[SpLUT::CO2],
                         species_tmpdens.data[SpLUT::OI], species_tmpdens.data[SpLUT::OH], species_tmpdens.data[SpLUT::H2O], species_tmpdens.data[SpLUT::O2],
@@ -1152,6 +1069,7 @@ int solve_rate_cool_g(
     grackle::impl::drop_Cool1DMultiScratchBuf(&cool1dmulti_buf);
     grackle::impl::drop_CoolHeatScratchBuf(&coolingheating_buf);
     grackle::impl::drop_SpeciesCollection(&species_tmpdens);
+    grackle::impl::drop_ColRecRxnRateCollection(&kcr_buf);
 
 
   }  // OMP_PRAGMA("omp parallel")

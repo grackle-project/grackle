@@ -284,6 +284,28 @@ SpeciesCollection new_SpeciesCollection(int nelem);
 /// This effectively invokes a destructor
 void drop_SpeciesCollection(SpeciesCollection*);
 
+
+/// holds properties about Collisional and Recombination Reaction Rates that
+/// behave in the "standard" way (i.e. we interpolate in 1D with respect to
+/// log T)
+///
+/// This operates in a similar manner to SpeciesCollection (i.e. we use
+/// `ColRecRxnLUT::<entry>` to lookup values for the desired rate).
+struct ColRecRxnRateCollection {
+  double* data[ColRecRxnLUT::NUM_ENTRIES];
+};
+
+/// allocates the contents of a new ColRecRxnRateCollection
+///
+/// @param nelem The number of elements in each buffer
+ColRecRxnRateCollection new_ColRecRxnRateCollection(int nelem);
+
+/// performs cleanup of the contents of ColRecRxnRateCollection
+///
+/// This effectively invokes a destructor
+void drop_ColRecRxnRateCollection(ColRecRxnRateCollection*);
+
+
 } // namespace grackle::impl
 
 #endif /* INTERNAL_TYPES_HPP */
