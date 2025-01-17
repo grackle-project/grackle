@@ -55,8 +55,10 @@
 !
 !-----------------------------------------------------------------------
 
+      USE ISO_C_BINDING
       implicit NONE
 #include "grackle_fortran_types.def"
+#include "interop_funcs.def"
 
 !  General Arguments
 
@@ -93,7 +95,7 @@
       integer*8 zindex, zmidpt, zhighpt
       real*8 dclPar(clGridRank), inv_log10,
      &     muold, munew
-      logical end_int
+      integer*8 end_int
 
 !  Slice locals
 
@@ -102,7 +104,7 @@
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
 !=======================================================================
 
-      end_int = .false.
+      end_int = 0
 
       inv_log10 = 1._DKIND / log(10._DKIND)
 
@@ -129,7 +131,7 @@
             zindex = 1
          else if (zr .ge. clPar2(clGridDim(2)-1)) then
             zindex = clGridDim(2)
-            end_int = .true.
+            end_int = 1
          else if (zr .ge. clPar2(clGridDim(2)-2)) then
             zindex = clGridDim(2) - 2
          else
