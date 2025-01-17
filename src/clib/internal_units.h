@@ -61,8 +61,8 @@ typedef struct InternalGrUnits{
   double a_units;
 
   /// specifies whether user specifies fields in Grackle's comoving coordinates
-  /// (while this info has historically been passed throughout internal funcs,
-  /// I've confirmed that it's only used for converting the field units)
+  /// - while this info has historically been passed deeply into the callstack
+  ///   I've confirmed that it's only used for converting the field units
   int extfields_in_comoving;
 
   /// proper-frame: cm per 1 comoving length unit (depends on scale factor, a)
