@@ -162,6 +162,18 @@
     endif
 
 #=======================================================================
+# DETERMIN PLATFORM-SPECIFIC DEFINES
+#=======================================================================
+
+    # this is only used within os_utils.c
+    PLATFORM := $(shell uname)
+    ifeq  ($(PLATFORM),Darwin)
+       PLATFORM_DEFINES = -DPLATFORM_MACOS
+    else
+       PLATFORM_DEFINES = -DPLATFORM_GENERIC_UNIX
+    endif
+
+#=======================================================================
 # ASSIGN ALL OUTPUT VARIABLES
 #=======================================================================
 
@@ -193,12 +205,15 @@
     LDOUTPUT_FLAGS = $(ASSEMBLE_LDOUTPUT_FLAGS)
 
     DEFINES = $(MACH_DEFINES) \
-              $(ASSEMBLE_IO_DEFINES)
+              $(ASSEMBLE_IO_DEFINES) \
+              $(PLATFORM_DEFINES)
 
     PUBLIC_HEADER_SRCDIR = $(GRACKLE_DIR)/../include
     AUTOGEN_DIR = $(GRACKLE_DIR)/autogen
 
-    BUILD_INCLUDES = -I$(PUBLIC_HEADER_SRCDIR) -I$(AUTOGEN_DIR)
+    BUILD_INCLUDES = -I$(PUBLIC_HEADER_SRCDIR) \
+                     -I$(AUTOGEN_DIR) \
+                     -I$(GRACKLE_DIR)/../../external
 
     INCLUDES = $(MACH_INCLUDES) \
                $(MAKEFILE_INCLUDES) \
@@ -214,10 +229,12 @@
 
     INSTALL_LIB_DIR = $(DEFAULT_INSTALL_PREFIX)/lib
     INSTALL_INCLUDE_DIR = $(DEFAULT_INSTALL_PREFIX)/include
+    INSTALL_BIN_DIR = $(DEFAULT_INSTALL_PREFIX)/bin
 
     ifdef MACH_INSTALL_PREFIX
 	INSTALL_LIB_DIR = $(MACH_INSTALL_PREFIX)/lib
 	INSTALL_INCLUDE_DIR = $(MACH_INSTALL_PREFIX)/include
+	INSTALL_BIN_DIR = $(MACH_INSTALL_PREFIX)/bin
     endif
 
     ifdef MACH_INSTALL_LIB_DIR
@@ -226,4 +243,8 @@
 
     ifdef MACH_INSTALL_INCLUDE_DIR
     	INSTALL_INCLUDE_DIR = $(MACH_INSTALL_INCLUDE_DIR)
+    endif
+
+    ifdef MACH_INSTALL_BIN_DIR
+        INSTALL_BIN_DIR = $(MACH_INSTALL_BIN_DIR)
     endif

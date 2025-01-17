@@ -15,57 +15,14 @@ The :ref:`Primary API <primary_functions>`, manages some of Grackle's data struc
 In contrast, the :ref:`Local API <local_functions>`, requires that the downstream application explicitly manage pointers to these same data-structures and requires that the pointers are provided as arguments to each function.
 The latter API is explicitly thread-safe as it involves no global data.
 
-.. _examples:
-
 Example Executables
 -------------------
 
 The grackle source code contains examples for C, C++, and Fortran codes.  
-They are located in the **src/example** directory and provide examples
-of calling all of grackle's functions.
+These files illustrate how to call all of grackle's functions.
+More details are provided :ref:`here <examples>`.
 
-    * **c_example.c** - C example
-
-    * **c_local_example.c** - C example using only :ref:`local_functions`
-
-    * **cxx_example.C** - C++ example
-
-    * **cxx_omp_example.C** - C++ example using OpenMP
-
-    * **fortran_example.F** - Fortran example
-
-The instructions for building and executing the examples vary based on the build-system:
-
-.. tabs::
-
-   .. tab:: Classic Build System
-
-      Once you have already installed the grackle library, you can build the examples by typing *make* and the name of the file without extension.
-      For example, to build the C++ example, type:
-
-      .. code-block:: shell-session
-
-         $ make cxx_example
-
-      To run the example, make sure to add the path to the directory containing 
-      the installed **libgrackle.so** to your LD_LIBRARY_PATH (or 
-      DYLD_LIBRARY_PATH on Mac).
-
-
-   .. tab:: CMake Build System
-
-      By default, the examples are automatically built with the rest of Grackle.
-      The compiled example binaries can be found within *<build-dir>/example*, where *<build-dir>* is the arbitrary build-directory that you need to specify when compiling Grackle.
-
-      It's important that *<build-dir>* is a top-level directory in the grackle repository (e.g. something like *my-build* is fine, but choices like *../my-grackle-build* and *my_builds/my-first-build* are problematic).
-      If this isn't the case, then the examples won't be able to locate the input data files.
-
-      You don't need to worry about using LD_LIBRARY_PATH (or DYLD_LIBRARY_PATH on Mac) to run these examples with this build-system.
-
-.. important::
-
-   The examples make certain assumptions about the location of the input files.
-   To ensure that the input files can be found, you should execute each example-binary from the same directory where the example binary is produced.
+.. _public-header-files:
 
 Header Files
 ------------

@@ -11,6 +11,7 @@
 # software.
 ########################################################################
 
+from collections import ChainMap
 import os
 import numpy as np
 import pytest
@@ -26,20 +27,43 @@ from pygrackle.utilities.physical_constants import \
 
 from pygrackle.grackle_wrapper import _query_units
 
-_local_dir = os.path.dirname(os.path.abspath(__file__))
-def _setup_generic_chemistry_data(initial_redshift, current_redshift = None):
-    # construct a generic chemistry_data instance
-    # -> it is ONLY set up for comoving coordinates when current_redshift is
-    #    not None
-    data_file_path = os.sep.join([_local_dir, "..", "..", "..", "input",
-                                  "CloudyData_UVB=HM2012.h5"])
+from testing_common import grackle_data_dir
+
+_UNITS_NAMES = ('density_units', 'time_units', 'length_units', 'a_value',
+                'a_units', 'velocity_units', 'temperature_units')
+
+def _setup_generic_chemistry_data(initial_redshift, current_redshift = None, *,
+                                  skip_initialize = False, parameter_overrides = None):
+    """
+    construct a generic chemistry_data instance
+
+    It is ONLY set up for comoving coordinates when current_redshift is
+    not None
+    """
+
+    defaults = {
+        "use_grackle" : 1,
+        "with_radiative_cooling" : 0,
+        "primordial_chemistry" : 0,
+        "metal_cooling" : 1,
+        "UVbackground" : 1,
+        "grackle_data_file" : os.path.join(grackle_data_dir, "CloudyData_UVB=HM2012.h5")
+    }
+
+    params = ChainMap(
+        {} if parameter_overrides is None else parameter_overrides,
+        defaults
+    )
+
     chem = chemistry_data()
-    chem.use_grackle = 1
-    chem.with_radiative_cooling = 0
-    chem.primordial_chemistry = 0
-    chem.metal_cooling = 1
-    chem.UVbackground = 1
-    chem.grackle_data_file = data_file_path
+    for param_name, value in params.items():
+        if (param_name in _UNITS_NAMES) or (param_name == "comoving_coordinates"):
+            raise ValueError(
+                f"{param_name!r} isn't allowed to be passed an override parameter "
+                "because this function has special handling for initializing "
+                "unit-related parameters")
+        setattr(chem, param_name, value)
+
     if current_redshift is not None:
         set_cosmology_units(chem,
                             current_redshift=current_redshift,
@@ -53,8 +77,11 @@ def _setup_generic_chemistry_data(initial_redshift, current_redshift = None):
         chem.density_units = mass_hydrogen_cgs # rho = 1.0 is 1.67e-24 g
         chem.length_units = cm_per_mpc         # 1 Mpc in cm
         chem.time_units = sec_per_Myr          # 1 Myr in s
-    chem.initialize()
-    return chem
+    if skip_initialize:
+        return chem
+    else:
+        chem.initialize()
+        return chem
 
 
 _UNITS_NAMES = ('density_units', 'time_units', 'length_units', 'a_value',
@@ -82,8 +109,11 @@ def test_query_units(comoving_coordinates, initial_redshift):
         current_redshift = initial_redshift
     else:
         current_redshift = None
-    chem = _setup_generic_chemistry_data(initial_redshift = initial_redshift,
-                                         current_redshift = current_redshift)
+    chem = _setup_generic_chemistry_data(
+        initial_redshift = initial_redshift,
+        current_redshift = current_redshift,
+        parameter_overrides = {"with_radiative_cooling" : 0}
+    )
 
     # retrieve the initial units-related quantities
     units_at_init = _prefetch_units_vals(chem)
@@ -120,8 +150,11 @@ def test_query_units(comoving_coordinates, initial_redshift):
         # for the comoving-case, the returned value should match the physical
         # units at the desired cosmological scale_factor
         expected = _prefetch_units_vals(
-            _setup_generic_chemistry_data(initial_redshift = initial_redshift,
-                                          current_redshift = later_redshift)
+            _setup_generic_chemistry_data(
+                initial_redshift = initial_redshift,
+                current_redshift = later_redshift,
+                parameter_overrides = {"with_radiative_cooling" : 0}
+            )
         )
         for name in _UNITS_NAMES:
             if name in ('time_units', 'a_units'):

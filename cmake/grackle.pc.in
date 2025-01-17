@@ -30,11 +30,14 @@
 # commonly used to make the build relocatable (there's not a ton of docs on it)
 
 prefix=${pcfiledir}/../..
-libdir=${prefix}/lib
+libdir=${prefix}/@CMAKE_INSTALL_LIBDIR@
 includedir=${prefix}/include
 
 # define Grackle-specific variables conveying extra information
 @_PC_INFO_PROPERTIES@
+
+# define other variables conveying extra Grackle-related information
+GRACKLE_GRDATA_TOOL_PATH=${prefix}/@CMAKE_INSTALL_BINDIR@/grdata
 
 Name: grackle
 Description: chemistry and radiative cooling library for astrophysical simulations and models
