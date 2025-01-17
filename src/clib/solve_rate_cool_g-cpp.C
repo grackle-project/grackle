@@ -12,6 +12,7 @@
 #include "grackle.h"
 #include "fortran_func_decls.h"
 #include "internal_types.hpp"
+#include "internal_units.h"
 #include "utils-cpp.hpp"
 
 #include "solve_rate_cool_g-cpp.h"
@@ -138,7 +139,7 @@ int solve_rate_cool_g(
   int i, j, k, iter;
   int t, dj, dk;
   double ttmin, dom, energy, comp1, comp2;
-  double coolunit, dbase1, tbase1, xbase1, chunit, uvel;
+  double coolunit, dbase1, tbase1, xbase1, chunit;
   double dlogtem, dx_cgs, c_ljeans, min_metallicity;
   gr_float factor;
 
@@ -197,19 +198,17 @@ int solve_rate_cool_g(
   min_metallicity = 1.e-9 / my_chemistry->SolarMetalFractionByMass;
       
   // Set units
+  InternalGrUnits internalu = new_internalu_(my_units);
 
   dom      = urho*(std::pow(my_units->a_value,3))/mh_local_var;
   tbase1   = my_units->time_units;
-  xbase1   = uxyz/(my_units->a_value*my_units->a_units);    // uxyz is [x]*a      = [x]*[a]*a'        '
-  dbase1   = urho*std::pow((my_units->a_value*my_units->a_units),3); // urho is [dens]/a^3 = [dens]/([a]*a')^3 '
-  coolunit = (std::pow(my_units->a_units,5) * std::pow(xbase1,2) * std::pow(mh_local_var,2)) / (std::pow(tbase1,3) * dbase1);
-  uvel = (uxyz/my_units->a_value) / my_units->time_units;
-  // chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 formed
-  chunit = (1.60218e-12)/(uvel*uvel*mh_local_var);            // 1 eV per REACTION (Feb 2020, Gen Chiaki)
+  xbase1   = internalu.xbase1;
+  dbase1   = internalu.dbase1;
+  coolunit = internalu.coolunit;
+  chunit   = internalu_get_chunit_(internalu);
 
   dx_cgs = my_fields->grid_dx * xbase1;
-  c_ljeans = std::sqrt((my_chemistry->Gamma * pi_local_var * kboltz_grflt) /
-       (GravConst_grflt * mh_local_var * dbase1));
+  c_ljeans = internalu_calc_coef_ljeans_(internalu, my_chemistry->Gamma);
 
   dlogtem = (std::log(my_chemistry->TemperatureEnd) - std::log(my_chemistry->TemperatureStart))/(double)(my_chemistry->NumberOfTemperatureBins-1 );
 
