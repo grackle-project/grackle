@@ -75,7 +75,7 @@
 
 !  Iteration mask
 
-      logical itmask(in)
+      MASK_TYPE itmask(in)
 
 !  Parameters
 
@@ -115,7 +115,7 @@
       endif
 
       do i=is+1, ie+1
-         if ( itmask(i) ) then
+         if (itmask(i) .eq. MASK_TRUE) then
 
             log10tem(i) = logtem(i) * inv_log10
 
