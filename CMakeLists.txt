@@ -79,6 +79,7 @@ endif()
 
 option(GRACKLE_USE_DOUBLE "compile the code with double precision" ON)
 option(GRACKLE_EXAMPLES "compile grackle examples" ${GRACKLE_IS_TOP_LEVEL})
+option(GRACKLE_BUILD_GRCLI "compile grcli" ${GRACKLE_IS_TOP_LEVEL})
 option(GRACKLE_DEFINE_INSTALL_RULES
   "enable Grackle's installation rules" ${GRACKLE_IS_TOP_LEVEL})
 
@@ -180,6 +181,11 @@ endif()
 # Main build targets
 # ------------------
 add_subdirectory(src/clib)
+
+# declare build-recipe for grcli
+if (GRACKLE_BUILD_GRCLI)
+  add_subdirectory(src/grcli)
+endif()
 
 # declare build-recipies for examples
 if (GRACKLE_EXAMPLES)
