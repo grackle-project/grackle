@@ -25,7 +25,7 @@
 #ifndef INTERNAL_UNITS_HPP
 #define INTERNAL_UNITS_HPP
 
-#ifndef __cplusplus
+#ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
 
@@ -126,7 +126,7 @@ static inline double internalu_get_chunit_(InternalGrUnits internalu){
 /// calculates a standard quantity used throughout the codebase
 static inline double internalu_calc_dom_(InternalGrUnits internalu) {
   const double mh_local_var = internalu_get_mh_(internalu);
-  return internalu.urho*(std::pow(internalu.a_value,3))/mh_local_var;
+  return internalu.urho*(pow(internalu.a_value,3))/mh_local_var;
 }
 
 /// calculates coefficients used for computing the Jeans' length
@@ -136,8 +136,8 @@ static inline double internalu_calc_dom_(InternalGrUnits internalu) {
 static inline double internalu_calc_coef_ljeans_(InternalGrUnits internalu,
                                                  double gamma) {
   const double mh_local_var = internalu_get_mh_(internalu);
-  return std::sqrt((gamma * pi_fortran_val * kboltz_grflt) /
-                   (GravConst_grflt * mh_local_var * internalu.dbase1));
+  return sqrt((gamma * pi_fortran_val * kboltz_grflt) /
+              (GravConst_grflt * mh_local_var * internalu.dbase1));
 }
 
 /// Construct an instance of InternalGrUnits from the frontend_units
@@ -198,7 +198,7 @@ static inline InternalGrUnits new_internalu_(
   return internalu;
 }
 
-#ifndef __cplusplus
+#ifdef __cplusplus
 } // extern "C"
 #endif /* __cplusplus */
 
