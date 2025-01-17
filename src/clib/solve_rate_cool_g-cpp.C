@@ -104,10 +104,9 @@ extern "C" {
 #endif /* __cplusplus */
 
 int solve_rate_cool_g(
-  int imetal, double dt, double utem, double uxyz, double urho,
+  int imetal, double dt, double utem, InternalGrUnits internalu,
   chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
-  code_units* my_units, grackle_field_data* my_fields,
-  photo_rate_storage* my_uvb_rates
+  grackle_field_data* my_fields, photo_rate_storage* my_uvb_rates
 )
 {
 
@@ -198,8 +197,6 @@ int solve_rate_cool_g(
   min_metallicity = 1.e-9 / my_chemistry->SolarMetalFractionByMass;
       
   // Set units
-  InternalGrUnits internalu = new_internalu_(my_units);
-
   dom      = internalu_calc_dom_(internalu);
   chunit   = internalu_get_chunit_(internalu);
 

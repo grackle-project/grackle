@@ -15,6 +15,7 @@
 #include <math.h>
 #include "grackle.h"
 #include "grackle_macros.h"
+#include "internal_units.h"
 #include "phys_constants.h"
 #include "solve_rate_cool_g-cpp.h"
 #include "utils.h"
@@ -80,17 +81,7 @@ int local_solve_chemistry(chemistry_data *my_chemistry,
   if (my_fields->metal_density == NULL)
     metal_field_present = FALSE;
 
-  double co_length_units, co_density_units;
-  if (my_units->comoving_coordinates == TRUE) {
-    co_length_units = my_units->length_units;
-    co_density_units = my_units->density_units;
-  }
-  else {
-    co_length_units = my_units->length_units *
-      my_units->a_value * my_units->a_units;
-    co_density_units = my_units->density_units /
-      POW(my_units->a_value * my_units->a_units, 3);
-  }
+  InternalGrUnits internalu = new_internalu_(my_units);
 
   /* Error checking for H2 shielding approximation */
   if (self_shielding_err_check(my_chemistry, my_fields,
@@ -105,9 +96,8 @@ int local_solve_chemistry(chemistry_data *my_chemistry,
   /* Call the fortran routine to solve cooling equations. */
 
   int ierr = solve_rate_cool_g(
-    metal_field_present, dt_value, temperature_units, co_length_units,
-    co_density_units, my_chemistry, my_rates, my_units, my_fields,
-    &my_uvb_rates
+    metal_field_present, dt_value, temperature_units, internalu,
+    my_chemistry, my_rates, my_fields, &my_uvb_rates
   );
 
   if (ierr == GR_FAIL) {
