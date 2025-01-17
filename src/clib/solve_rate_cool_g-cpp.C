@@ -246,9 +246,9 @@ int solve_rate_cool_g(
 
   // Convert densities from comoving to proper
 
-  if (my_units->comoving_coordinates == 1)  {
+  if (internalu.extfields_in_comoving == 1)  {
 
-    factor = (gr_float)(std::pow(my_units->a_value,(-3)) );
+    factor = (gr_float)(std::pow(internalu.a_value,(-3)) );
 
      FORTRAN_NAME(scale_fields_g)(
       &my_chemistry->primordial_chemistry, &imetal, &my_chemistry->use_dust_density_field, &my_chemistry->metal_chemistry,
@@ -426,11 +426,11 @@ int solve_rate_cool_g(
          FORTRAN_NAME(cool1d_multi_g)(
                   d.data(), e.data(), my_fields->x_velocity, my_fields->y_velocity, my_fields->z_velocity, de.data(), HI.data(), HII.data(), my_fields->HeI_density, my_fields->HeII_density, my_fields->HeIII_density,
                   &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &my_chemistry->NumberOfTemperatureBins,
-                  &my_units->comoving_coordinates, &my_chemistry->primordial_chemistry, &imetal, &my_chemistry->metal_cooling,
+                  &internalu.extfields_in_comoving, &my_chemistry->primordial_chemistry, &imetal, &my_chemistry->metal_cooling,
                   &my_chemistry->h2_on_dust, &my_chemistry->dust_chemistry, &my_chemistry->use_dust_density_field, &my_chemistry->dust_recombination_cooling,
                   &my_fields->grid_rank, &my_fields->grid_start[0], &my_fields->grid_end[0], &j, &k, &my_chemistry->ih2co, &my_chemistry->ipiht, &iter, &my_chemistry->photoelectric_heating,
-                  &my_units->a_value, &my_chemistry->TemperatureStart, &my_chemistry->TemperatureEnd, &my_chemistry->SolarMetalFractionByMass, &my_chemistry->local_dust_to_gas_ratio,
-                  &utem, &internalu.uxyz, &my_units->a_units, &internalu.urho, &my_units->time_units,
+                  &internalu.a_value, &my_chemistry->TemperatureStart, &my_chemistry->TemperatureEnd, &my_chemistry->SolarMetalFractionByMass, &my_chemistry->local_dust_to_gas_ratio,
+                  &utem, &internalu.uxyz, &internalu.a_units, &internalu.urho, &internalu.tbase1,
                   &my_chemistry->Gamma, &my_chemistry->HydrogenFractionByMass,
                   my_rates->ceHI, my_rates->ceHeI, my_rates->ceHeII, my_rates->ciHI, my_rates->ciHeI,
                   my_rates->ciHeIS, my_rates->ciHeII, my_rates->reHII, my_rates->reHeII1,
@@ -887,10 +887,10 @@ int solve_rate_cool_g(
 
            FORTRAN_NAME(step_rate_newton_raphson)(&my_chemistry->with_radiative_cooling, d.data(), e.data(), my_fields->x_velocity, my_fields->y_velocity, my_fields->z_velocity, de.data(), HI.data(),
                     HII.data(), my_fields->HeI_density, my_fields->HeII_density, my_fields->HeIII_density, &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &my_chemistry->NumberOfTemperatureBins,
-                    &my_units->comoving_coordinates, &my_chemistry->primordial_chemistry, &imetal, &my_chemistry->metal_cooling, &my_chemistry->h2_on_dust,
+                    &internalu.extfields_in_comoving, &my_chemistry->primordial_chemistry, &imetal, &my_chemistry->metal_cooling, &my_chemistry->h2_on_dust,
                     &my_chemistry->dust_chemistry, &my_chemistry->use_dust_density_field, &my_fields->grid_start[0], &my_fields->grid_end[0], &my_chemistry->ih2co, &my_chemistry->ipiht,
-                    &my_chemistry->dust_recombination_cooling, &my_chemistry->photoelectric_heating, &my_units->a_value, &my_chemistry->TemperatureStart, &my_chemistry->TemperatureEnd, &utem,
-                    &internalu.uxyz, &my_units->a_units, &internalu.urho, &my_units->time_units, &my_chemistry->Gamma, &my_chemistry->HydrogenFractionByMass, &my_chemistry->SolarMetalFractionByMass, &my_chemistry->local_dust_to_gas_ratio,
+                    &my_chemistry->dust_recombination_cooling, &my_chemistry->photoelectric_heating, &internalu.a_value, &my_chemistry->TemperatureStart, &my_chemistry->TemperatureEnd, &utem,
+                    &internalu.uxyz, &internalu.a_units, &internalu.urho, &internalu.tbase1, &my_chemistry->Gamma, &my_chemistry->HydrogenFractionByMass, &my_chemistry->SolarMetalFractionByMass, &my_chemistry->local_dust_to_gas_ratio,
                     my_rates->k1, my_rates->k2, my_rates->k3, my_rates->k4, my_rates->k5, my_rates->k6, my_rates->k7, my_rates->k8, my_rates->k9,
                     my_rates->k10, my_rates->k11, my_rates->k12, my_rates->k13, my_rates->k13dd, my_rates->k14, my_rates->k15, my_rates->k16,
                     my_rates->k17, my_rates->k18, my_rates->k19, my_rates->k22, &my_uvb_rates->k24, &my_uvb_rates->k25, &my_uvb_rates->k26, &my_uvb_rates->k27, &my_uvb_rates->k28,
@@ -1065,9 +1065,9 @@ int solve_rate_cool_g(
 
   // Convert densities back to comoving from proper
 
-  if (my_units->comoving_coordinates == 1)  {
+  if (internalu.extfields_in_comoving == 1)  {
 
-    factor = (gr_float)(std::pow(my_units->a_value,3) );
+    factor = (gr_float)(std::pow(internalu.a_value,3) );
 
      FORTRAN_NAME(scale_fields_g)(
       &my_chemistry->primordial_chemistry, &imetal, &my_chemistry->use_dust_density_field, &my_chemistry->metal_chemistry,
