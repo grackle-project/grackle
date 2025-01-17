@@ -139,7 +139,7 @@ int solve_rate_cool_g(
   int i, j, k, iter;
   int t, dj, dk;
   double ttmin, dom, energy, comp1, comp2;
-  double coolunit, dbase1, tbase1, xbase1, chunit;
+  double chunit;
   double dlogtem, dx_cgs, c_ljeans, min_metallicity;
   gr_float factor;
 
@@ -200,14 +200,10 @@ int solve_rate_cool_g(
   // Set units
   InternalGrUnits internalu = new_internalu_(my_units);
 
-  dom      = urho*(std::pow(my_units->a_value,3))/mh_local_var;
-  tbase1   = my_units->time_units;
-  xbase1   = internalu.xbase1;
-  dbase1   = internalu.dbase1;
-  coolunit = internalu.coolunit;
+  dom      = internalu_calc_dom_(internalu);
   chunit   = internalu_get_chunit_(internalu);
 
-  dx_cgs = my_fields->grid_dx * xbase1;
+  dx_cgs = my_fields->grid_dx * internalu.xbase1;
   c_ljeans = internalu_calc_coef_ljeans_(internalu, my_chemistry->Gamma);
 
   dlogtem = (std::log(my_chemistry->TemperatureEnd) - std::log(my_chemistry->TemperatureStart))/(double)(my_chemistry->NumberOfTemperatureBins-1 );
@@ -434,7 +430,7 @@ int solve_rate_cool_g(
                   &my_chemistry->h2_on_dust, &my_chemistry->dust_chemistry, &my_chemistry->use_dust_density_field, &my_chemistry->dust_recombination_cooling,
                   &my_fields->grid_rank, &my_fields->grid_start[0], &my_fields->grid_end[0], &j, &k, &my_chemistry->ih2co, &my_chemistry->ipiht, &iter, &my_chemistry->photoelectric_heating,
                   &my_units->a_value, &my_chemistry->TemperatureStart, &my_chemistry->TemperatureEnd, &my_chemistry->SolarMetalFractionByMass, &my_chemistry->local_dust_to_gas_ratio,
-                  &utem, &uxyz, &my_units->a_units, &urho, &my_units->time_units,
+                  &utem, &internalu.uxyz, &my_units->a_units, &internalu.urho, &my_units->time_units,
                   &my_chemistry->Gamma, &my_chemistry->HydrogenFractionByMass,
                   my_rates->ceHI, my_rates->ceHeI, my_rates->ceHeII, my_rates->ciHI, my_rates->ciHeI,
                   my_rates->ciHeIS, my_rates->ciHeII, my_rates->reHII, my_rates->reHeII1,
@@ -567,7 +563,7 @@ int solve_rate_cool_g(
                    kshield_buf.k28, kshield_buf.k29, kshield_buf.k30,
                    kshield_buf.k31, h2dust.data(), chemheatrates_buf.n_cr_n, chemheatrates_buf.n_cr_d1, chemheatrates_buf.n_cr_d2,
                    logTlininterp_buf.t1, logTlininterp_buf.t2, logTlininterp_buf.tdef, logTlininterp_buf.logtem, logTlininterp_buf.indixe,
-                   &dom, &coolunit, &tbase1, &xbase1, &dx_cgs, &c_ljeans,
+                   &dom, &internalu.coolunit, &internalu.tbase1, &internalu.xbase1, &dx_cgs, &c_ljeans,
                    &my_chemistry->use_radiative_transfer, my_fields->RT_H2_dissociation_rate, my_fields->H2_self_shielding_length, itmask.data(),
                    itmask_metal.data(),
                    &my_chemistry->HydrogenFractionByMass, my_fields->metal_density,
@@ -894,7 +890,7 @@ int solve_rate_cool_g(
                     &my_units->comoving_coordinates, &my_chemistry->primordial_chemistry, &imetal, &my_chemistry->metal_cooling, &my_chemistry->h2_on_dust,
                     &my_chemistry->dust_chemistry, &my_chemistry->use_dust_density_field, &my_fields->grid_start[0], &my_fields->grid_end[0], &my_chemistry->ih2co, &my_chemistry->ipiht,
                     &my_chemistry->dust_recombination_cooling, &my_chemistry->photoelectric_heating, &my_units->a_value, &my_chemistry->TemperatureStart, &my_chemistry->TemperatureEnd, &utem,
-                    &uxyz, &my_units->a_units, &urho, &my_units->time_units, &my_chemistry->Gamma, &my_chemistry->HydrogenFractionByMass, &my_chemistry->SolarMetalFractionByMass, &my_chemistry->local_dust_to_gas_ratio,
+                    &internalu.uxyz, &my_units->a_units, &internalu.urho, &my_units->time_units, &my_chemistry->Gamma, &my_chemistry->HydrogenFractionByMass, &my_chemistry->SolarMetalFractionByMass, &my_chemistry->local_dust_to_gas_ratio,
                     my_rates->k1, my_rates->k2, my_rates->k3, my_rates->k4, my_rates->k5, my_rates->k6, my_rates->k7, my_rates->k8, my_rates->k9,
                     my_rates->k10, my_rates->k11, my_rates->k12, my_rates->k13, my_rates->k13dd, my_rates->k14, my_rates->k15, my_rates->k16,
                     my_rates->k17, my_rates->k18, my_rates->k19, my_rates->k22, &my_uvb_rates->k24, &my_uvb_rates->k25, &my_uvb_rates->k26, &my_uvb_rates->k27, &my_uvb_rates->k28,
@@ -968,7 +964,7 @@ int solve_rate_cool_g(
                     my_fields->RT_OH_dissociation_rate, my_fields->RT_H2O_dissociation_rate, &my_chemistry->radiative_transfer_use_H2_shielding, &my_chemistry->use_isrf_field,
                     my_fields->isrf_habing, &my_chemistry->H2_custom_shielding, my_fields->H2_custom_shielding_factor,
                     &j, &k, &iter, &dom, &comp1,
-                    &comp2, &coolunit, &tbase1, &xbase1, &chunit, &dx_cgs,
+                    &comp2, &internalu.coolunit, &internalu.tbase1, &internalu.xbase1, &chunit, &dx_cgs,
                     &c_ljeans, logTlininterp_buf.indixe, logTlininterp_buf.t1, logTlininterp_buf.t2, logTlininterp_buf.logtem, logTlininterp_buf.tdef, dtit.data(),
                     p2d.data(), tgas.data(), cool1dmulti_buf.tgasold, tdust.data(), metallicity.data(), dust2gas.data(),
                     rhoH.data(), mmw.data(), cool1dmulti_buf.mynh, cool1dmulti_buf.myde, cool1dmulti_buf.gammaha_eff, cool1dmulti_buf.gasgr_tdust,
