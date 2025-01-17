@@ -12,6 +12,7 @@
 ########################################################################
 
 import copy
+from types import SimpleNamespace
 from pygrackle.utilities.physical_constants import \
     boltzmann_constant_cgs, \
     mass_hydrogen_cgs
@@ -19,6 +20,18 @@ from pygrackle.utilities.physical_constants import \
 from libc.limits cimport INT_MAX
 from .grackle_defs cimport *
 import numpy as np
+
+# declare a variable that acts as a namespace for all of Grackle's named
+# constants. The name of this variable is all lowercase in case we ever want to
+# make a module called `constants.pyx`
+_constants_contents = {
+    'GR_FAIL': GRACKLE_FAIL_VALUE,
+    'GR_DFOPT_FULLPATH_NO_CKSUM' : GR_DFOPT_FULLPATH_NO_CKSUM,
+    'GR_DFOPT_MANAGED' : GR_DFOPT_MANAGED,
+    'GR_DFOPT_MANAGED_NO_CKSUM' : GR_DFOPT_MANAGED_NO_CKSUM
+}
+constants = SimpleNamespace(**_constants_contents)
+del _constants_contents
 
 cdef class chemistry_data:
     cdef _wrapped_c_chemistry_data data

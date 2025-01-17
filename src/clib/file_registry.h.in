@@ -1,0 +1,43 @@
+/***********************************************************************
+/
+/ Template header-file that is used to internally specify the file
+/ registry. This is only intended to be included once
+/
+/
+/ Copyright (c) 2013, Enzo/Grackle Development Team.
+/
+/ Distributed under the terms of the Enzo Public Licence.
+/
+/ The full license is in the file LICENSE, distributed with this 
+/ software.
+************************************************************************/
+
+#ifndef FILE_REGISTRY_H
+#define FILE_REGISTRY_H
+
+#include <string.h> // strcmp
+
+typedef struct { const char* fname; const char* cksum; } registry_entry;
+
+static registry_entry file_registry[] = {
+@FILE_REGISTRY_CONTENTS@
+};
+
+/// return the full checksum string of the file if it is in the registry
+///
+/// returns NULL if there is no match!
+static inline const char* expected_file_cksum_(const char* fname) {
+  if (fname == NULL) return NULL;
+
+  const size_t n_entries = sizeof(file_registry) / sizeof(registry_entry);
+  const char* cksum_str = NULL;
+  for (size_t i = 0; i < n_entries; i++) {
+    if (strcmp(fname, file_registry[i].fname) == 0) {
+      return file_registry[i].cksum;
+    }
+  }
+  return NULL;
+}
+
+
+#endif /* FILE_REGISTRY_H */
