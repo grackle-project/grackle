@@ -486,25 +486,12 @@ int solve_rate_cool_g(
           // Compute dedot and HIdot, the rates of change of de and HI
           //   (should add itmask to this call)
 
-           FORTRAN_NAME(rate_timestep_g)(
-                         dedot.data(), HIdot.data(), &my_chemistry->primordial_chemistry, &anydust,
-                         de.data(), HI.data(), HII.data(), my_fields->HeI_density, my_fields->HeII_density, my_fields->HeIII_density, d.data(),
-                         my_fields->HM_density, my_fields->H2I_density, my_fields->H2II_density,
-                         &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &my_fields->grid_start[0], &my_fields->grid_end[0], &j, &k,
-                         kcr_buf.data[ColRecRxnLUT::k1], kcr_buf.data[ColRecRxnLUT::k2], kcr_buf.data[ColRecRxnLUT::k3], kcr_buf.data[ColRecRxnLUT::k4], kcr_buf.data[ColRecRxnLUT::k5], kcr_buf.data[ColRecRxnLUT::k6], kcr_buf.data[ColRecRxnLUT::k7], kcr_buf.data[ColRecRxnLUT::k8], kcr_buf.data[ColRecRxnLUT::k9], kcr_buf.data[ColRecRxnLUT::k10], kcr_buf.data[ColRecRxnLUT::k11],
-                         kcr_buf.data[ColRecRxnLUT::k12], kcr_buf.data[ColRecRxnLUT::k13], kcr_buf.data[ColRecRxnLUT::k14], kcr_buf.data[ColRecRxnLUT::k15], kcr_buf.data[ColRecRxnLUT::k16], kcr_buf.data[ColRecRxnLUT::k17], kcr_buf.data[ColRecRxnLUT::k18], kcr_buf.data[ColRecRxnLUT::k19], kcr_buf.data[ColRecRxnLUT::k22],
-                         &my_uvb_rates->k24, &my_uvb_rates->k25, &my_uvb_rates->k26, &my_uvb_rates->k27, &my_uvb_rates->k28, &my_uvb_rates->k29, &my_uvb_rates->k30,
-                         kcr_buf.data[ColRecRxnLUT::k50], kcr_buf.data[ColRecRxnLUT::k51], kcr_buf.data[ColRecRxnLUT::k52], kcr_buf.data[ColRecRxnLUT::k53], kcr_buf.data[ColRecRxnLUT::k54], kcr_buf.data[ColRecRxnLUT::k55], kcr_buf.data[ColRecRxnLUT::k56], kcr_buf.data[ColRecRxnLUT::k57], kcr_buf.data[ColRecRxnLUT::k58],
-                         h2dust.data(), chemheatrates_buf.n_cr_n, chemheatrates_buf.n_cr_d1, chemheatrates_buf.n_cr_d2, rhoH.data(),
-                         kshield_buf.k24, kshield_buf.k25, kshield_buf.k26,
-                         kshield_buf.k28, kshield_buf.k29, kshield_buf.k30, kshield_buf.k31,
-                         &my_chemistry->use_radiative_transfer, &my_chemistry->radiative_transfer_hydrogen_only,
-                         kphHI.data(), my_fields->RT_HeI_ionization_rate, my_fields->RT_HeII_ionization_rate,
-                         itmask.data(), edot.data(), &chunit, &dom, my_fields->metal_density,
-                        my_fields->HDI_density, &my_chemistry->metal_chemistry, my_fields->CI_density, my_fields->OI_density, my_fields->OH_density, my_fields->CO_density, my_fields->H2O_density,
-                        &my_chemistry->radiative_transfer_HDI_dissociation, my_fields->RT_HDI_dissociation_rate, &my_chemistry->radiative_transfer_metal_ionization, my_fields->RT_CI_ionization_rate, my_fields->RT_OI_ionization_rate,
-                        &my_chemistry->radiative_transfer_metal_dissociation, my_fields->RT_CO_dissociation_rate, my_fields->RT_OH_dissociation_rate, my_fields->RT_H2O_dissociation_rate
-                              );
+          wrapped_rate_timestep_g_(
+            dedot.data(), HIdot.data(), anydust, j, k, h2dust.data(),
+            rhoH.data(), itmask.data(), edot.data(), chunit, dom,
+            my_chemistry, my_fields, *my_uvb_rates, kcr_buf, kshield_buf,
+            chemheatrates_buf
+          );
 
           // move itmask temporary array
           // then split cells with low densities
