@@ -88,6 +88,21 @@ typedef struct InternalGrUnits{
   /// accessed so we precompute it
   double coolunit;
 
+  /// constant coefficients (including unit conversions) that must be
+  /// multiplied by `internal_energy` (in squared velocity code units) when
+  /// calculating temperature (this term neglects contributions from mmw and
+  /// adiabatic index). For more information, see the documentation of
+  /// `get_temperature_units` in the website docs.
+  ///
+  /// This isn't really a "unit", but we are including it in this struct
+  /// because we historically have called it a unit and it used in the vast
+  /// majority of cases where this struct gets used.
+  ///
+  /// Because of the way that relevant units (namely code velocity) in our
+  /// comoving unit system are defined, this is the same in the proper &
+  /// comoving frame
+  double utem;
+
 } InternalGrUnits;
 
 /// Return the version of hydrogen mass constant used by the internal units
@@ -147,6 +162,17 @@ static inline InternalGrUnits new_internalu_(
   // rename the frontend_units object for convenience
   const code_units* my_units = frontend_units;
 
+  // Part 1: Common logic extracted from solve_chemistry and
+  //         calculate_(cooling_time|temperature|dust_temperature) that was
+  //         historically used to determine unit-related quantities passed into
+  //         the fortran subroutines
+
+  // calculate temperature units (obviously, don't change this until we finish
+  // transcription -- under the hood, this calculation implicitly chooses a
+  // definition of mh that may differ from the value used elesewhere within the
+  // functions in the current file)
+  double temperature_units = get_temperature_units(my_units);
+
   // determine the size of comoving length & comoving density units
   // (that are equivalent to the frontend units), as measured in the proper
   // reference frame
@@ -169,19 +195,24 @@ static inline InternalGrUnits new_internalu_(
       POW(my_units->a_value * my_units->a_units, 3);
   }
 
-  // initialize output units and copy some stuff from frontend units
+  // Part 2: initialize output units and copy some stuff from frontend units
   InternalGrUnits internalu;
   internalu.a_value = my_units->a_value;
   internalu.a_units = my_units->a_units;
   internalu.extfields_in_comoving = my_units->comoving_coordinates;
+
+  // store the temperature_units (this name remapping would historically occur)
+  internalu.utem = temperature_units;
 
   // this represents the name remapping that would occur when passing
   // co_length_units and co_density_units into a Fortran routine
   internalu.uxyz = co_length_units;
   internalu.urho = co_density_units;
 
-  // store the fundamental units of the unit system
-  //
+  // Part 3: Employ logic from fortran subroutines to compute fundamental unit
+  //         basis of the unit-system and store them in internalu. Then compute
+  //         the cooling units.
+
   // TODO: (AFTER FINISIHING TRANSCRIPTION) Consider refactoring this logic for
   // the case with `my_units->comoving_coordinates==0` (in that case, we do an
   // unnecessary round-trip)

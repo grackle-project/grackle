@@ -104,7 +104,7 @@ extern "C" {
 #endif /* __cplusplus */
 
 int solve_rate_cool_g(
-  int imetal, double dt, double utem, InternalGrUnits internalu,
+  int imetal, double dt, InternalGrUnits internalu,
   chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
   grackle_field_data* my_fields, photo_rate_storage* my_uvb_rates
 )
@@ -356,7 +356,7 @@ int solve_rate_cool_g(
         // Compute the cooling rate, tgas, tdust, and metallicity for this row
 
         wrapped_cool1d_multi_g_(
-          imetal, j, k, iter, utem, &comp1, &comp2, edot.data(), tgas.data(),
+          imetal, j, k, iter, &comp1, &comp2, edot.data(), tgas.data(),
           mmw.data(), p2d.data(), tdust.data(), metallicity.data(),
           dust2gas.data(), rhoH.data(), itmask.data(), itmask_metal.data(),
           my_chemistry, my_rates, my_fields, *my_uvb_rates, internalu,
@@ -579,7 +579,7 @@ int solve_rate_cool_g(
           // itmask_nr)
 
           wrapped_step_rate_newton_raphson_(
-            imetal, utem, j, k, iter, dom, &comp1, &comp2, chunit, dx_cgs,
+            imetal, j, k, iter, dom, &comp1, &comp2, chunit, dx_cgs,
             c_ljeans, dtit.data(), p2d.data(), tgas.data(), tdust.data(),
             metallicity.data(), dust2gas.data(), rhoH.data(), mmw.data(),
             h2dust.data(), edot.data(), anydust, itmask_nr.data(),

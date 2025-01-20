@@ -89,14 +89,10 @@ int local_solve_chemistry(chemistry_data *my_chemistry,
     return FAIL;
   }
 
-  /* Calculate temperature units. */
-
-  double temperature_units = get_temperature_units(my_units);
-
-  /* Call the fortran routine to solve cooling equations. */
+  /* Call the routine to solve cooling equations. */
 
   int ierr = solve_rate_cool_g(
-    metal_field_present, dt_value, temperature_units, internalu,
+    metal_field_present, dt_value, internalu,
     my_chemistry, my_rates, my_fields, &my_uvb_rates
   );
 

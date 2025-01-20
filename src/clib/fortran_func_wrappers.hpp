@@ -56,7 +56,7 @@ inline void wrapped_ceiling_species_g_(
 }
 
 inline void wrapped_cool1d_multi_g_(
-  int imetal, int j, int k, int iter, double utem, double* comp1, double* comp2,
+  int imetal, int j, int k, int iter, double* comp1, double* comp2,
   double* edot, double* tgas, double* mmw, double* p2d, double* tdust,
   double* metallicity, double* dust2gas, double* rhoH, gr_mask_type* itmask,
   gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
@@ -74,7 +74,7 @@ inline void wrapped_cool1d_multi_g_(
                   &my_chemistry->h2_on_dust, &my_chemistry->dust_chemistry, &my_chemistry->use_dust_density_field, &my_chemistry->dust_recombination_cooling,
                   &my_fields->grid_rank, &my_fields->grid_start[0], &my_fields->grid_end[0], &j, &k, &my_chemistry->ih2co, &my_chemistry->ipiht, &iter, &my_chemistry->photoelectric_heating,
                   &internalu.a_value, &my_chemistry->TemperatureStart, &my_chemistry->TemperatureEnd, &my_chemistry->SolarMetalFractionByMass, &my_chemistry->local_dust_to_gas_ratio,
-                  &utem, &internalu.uxyz, &internalu.a_units, &internalu.urho, &internalu.tbase1,
+                  &internalu.utem, &internalu.uxyz, &internalu.a_units, &internalu.urho, &internalu.tbase1,
                   &my_chemistry->Gamma, &my_chemistry->HydrogenFractionByMass,
                   my_rates->ceHI, my_rates->ceHeI, my_rates->ceHeII, my_rates->ciHI, my_rates->ciHeI,
                   my_rates->ciHeIS, my_rates->ciHeII, my_rates->reHII, my_rates->reHeII1,
@@ -450,7 +450,7 @@ inline void wrapped_step_rate_g_(
 }
 
 inline void wrapped_step_rate_newton_raphson_(
-  int imetal, double utem, int j, int k, int iter, double dom, double* comp1,
+  int imetal, int j, int k, int iter, double dom, double* comp1,
   double* comp2, double chunit, double dx_cgs, double c_ljeans, double* dtit,
   double* p2d, double* tgas, double* tdust, double* metallicity,
   double* dust2gas, double* rhoH, double* mmw, double* h2dust, double* edot,
@@ -468,7 +468,7 @@ inline void wrapped_step_rate_newton_raphson_(
                     my_fields->HII_density, my_fields->HeI_density, my_fields->HeII_density, my_fields->HeIII_density, &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &my_chemistry->NumberOfTemperatureBins,
                     &internalu.extfields_in_comoving, &my_chemistry->primordial_chemistry, &imetal, &my_chemistry->metal_cooling, &my_chemistry->h2_on_dust,
                     &my_chemistry->dust_chemistry, &my_chemistry->use_dust_density_field, &my_fields->grid_start[0], &my_fields->grid_end[0], &my_chemistry->ih2co, &my_chemistry->ipiht,
-                    &my_chemistry->dust_recombination_cooling, &my_chemistry->photoelectric_heating, &internalu.a_value, &my_chemistry->TemperatureStart, &my_chemistry->TemperatureEnd, &utem,
+                    &my_chemistry->dust_recombination_cooling, &my_chemistry->photoelectric_heating, &internalu.a_value, &my_chemistry->TemperatureStart, &my_chemistry->TemperatureEnd, &internalu.utem,
                     &internalu.uxyz, &internalu.a_units, &internalu.urho, &internalu.tbase1, &my_chemistry->Gamma, &my_chemistry->HydrogenFractionByMass, &my_chemistry->SolarMetalFractionByMass, &my_chemistry->local_dust_to_gas_ratio,
                     my_rates->k1, my_rates->k2, my_rates->k3, my_rates->k4, my_rates->k5, my_rates->k6, my_rates->k7, my_rates->k8, my_rates->k9,
                     my_rates->k10, my_rates->k11, my_rates->k12, my_rates->k13, my_rates->k13dd, my_rates->k14, my_rates->k15, my_rates->k16,

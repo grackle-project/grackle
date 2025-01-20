@@ -32,7 +32,7 @@ extern "C" {
 ///
 /// @return Returns GR_SUCCESS or GR_FAIL to indicate whether there was an error
 int solve_rate_cool_g(
-  int imetal, double dt, double utem, InternalGrUnits internalu,
+  int imetal, double dt, InternalGrUnits internalu,
   chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
   grackle_field_data* my_fields, photo_rate_storage* my_uvb_rates
 );
