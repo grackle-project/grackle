@@ -37,7 +37,7 @@
 /// @param tgas, p2d, edot 1D arrays containing local values of temperature,
 ///    pressure divided by density, and the time derivative of internal energy.
 /// @param i Specifies the index of the relevant zone in the 1D array. (**BE
-///    AWARE:** this is a 1-based index for historical reasons)
+///    AWARE:** this is a 0-based index)
 ///
 /// @note
 /// The `static` annotation indicates that this function is only visible to the
@@ -70,32 +70,32 @@ static double calc_Heq_div_dHeqdt_(
   // de / dt = edot
   // Now we use our estimate of dT/de to get the estimated
   // difference in the equilibrium
-  double eqt2 = std::fmin(std::log(tgas[i-1]) + 0.1*dlogtem, logTlininterp_buf.t2[i-1]);
-  double eqtdef = (eqt2 - logTlininterp_buf.t1[i-1])/(logTlininterp_buf.t2[i-1] - logTlininterp_buf.t1[i-1]);
-  double eqk222 = my_rates->k22[logTlininterp_buf.indixe[i-1]-1] +
-    (my_rates->k22[logTlininterp_buf.indixe[i-1]+1-1] -my_rates->k22[logTlininterp_buf.indixe[i-1]-1])*eqtdef;
-  double eqk132 = my_rates->k13[logTlininterp_buf.indixe[i-1]-1] +
-    (my_rates->k13[logTlininterp_buf.indixe[i-1]+1-1] -my_rates->k13[logTlininterp_buf.indixe[i-1]-1])*eqtdef;
+  double eqt2 = std::fmin(std::log(tgas[i]) + 0.1*dlogtem, logTlininterp_buf.t2[i]);
+  double eqtdef = (eqt2 - logTlininterp_buf.t1[i])/(logTlininterp_buf.t2[i] - logTlininterp_buf.t1[i]);
+  double eqk222 = my_rates->k22[logTlininterp_buf.indixe[i]-1] +
+    (my_rates->k22[logTlininterp_buf.indixe[i]+1-1] -my_rates->k22[logTlininterp_buf.indixe[i]-1])*eqtdef;
+  double eqk132 = my_rates->k13[logTlininterp_buf.indixe[i]-1] +
+    (my_rates->k13[logTlininterp_buf.indixe[i]+1-1] -my_rates->k13[logTlininterp_buf.indixe[i]-1])*eqtdef;
   double heq2 = (-1. / (4.*eqk222)) * (eqk132-
     std::sqrt(8.*eqk132*eqk222*
               my_chemistry->HydrogenFractionByMass*local_rho+
               std::pow(eqk132,2.)));
 
-  double eqt1 = std::fmax(std::log(tgas[i-1]) - 0.1*dlogtem, logTlininterp_buf.t1[i-1]);
-  eqtdef = (eqt1 - logTlininterp_buf.t1[i-1])/(logTlininterp_buf.t2[i-1] - logTlininterp_buf.t1[i-1]);
-  double eqk221 = my_rates->k22[logTlininterp_buf.indixe[i-1]-1] +
-    (my_rates->k22[logTlininterp_buf.indixe[i-1]+1-1] -my_rates->k22[logTlininterp_buf.indixe[i-1]-1])*eqtdef;
-  double eqk131 = my_rates->k13[logTlininterp_buf.indixe[i-1]-1] +
-    (my_rates->k13[logTlininterp_buf.indixe[i-1]+1-1] -my_rates->k13[logTlininterp_buf.indixe[i-1]-1])*eqtdef;
+  double eqt1 = std::fmax(std::log(tgas[i]) - 0.1*dlogtem, logTlininterp_buf.t1[i]);
+  eqtdef = (eqt1 - logTlininterp_buf.t1[i])/(logTlininterp_buf.t2[i] - logTlininterp_buf.t1[i]);
+  double eqk221 = my_rates->k22[logTlininterp_buf.indixe[i]-1] +
+    (my_rates->k22[logTlininterp_buf.indixe[i]+1-1] -my_rates->k22[logTlininterp_buf.indixe[i]-1])*eqtdef;
+  double eqk131 = my_rates->k13[logTlininterp_buf.indixe[i]-1] +
+    (my_rates->k13[logTlininterp_buf.indixe[i]+1-1] -my_rates->k13[logTlininterp_buf.indixe[i]-1])*eqtdef;
   double heq1 = (-1. / (4.*eqk221)) * (eqk131-
     std::sqrt(8.*eqk131*eqk221*
               my_chemistry->HydrogenFractionByMass*local_rho+std::pow(eqk131,2.)));
 
   double dheq = (std::fabs(heq2-heq1)/(std::exp(eqt2) - std::exp(eqt1)))
-    * (tgas[i-1]/p2d[i-1]) * edot[i-1];
-  double heq = (-1. / (4.*k22[i-1])) * (k13[i-1]-
-    std::sqrt(8.*k13[i-1]*k22[i-1]*
-              my_chemistry->HydrogenFractionByMass*local_rho+std::pow(k13[i-1],2.)));
+    * (tgas[i]/p2d[i]) * edot[i];
+  double heq = (-1. / (4.*k22[i])) * (k13[i]-
+    std::sqrt(8.*k13[i]*k22[i]*
+              my_chemistry->HydrogenFractionByMass*local_rho+std::pow(k13[i],2.)));
 
   return heq / dheq;
 }
@@ -481,8 +481,7 @@ int solve_rate_cool_g(
                 double Heq_div_dHeqdt = calc_Heq_div_dHeqdt_(
                   my_chemistry, my_rates, dlogtem, logTlininterp_buf,
                   kcr_buf.data[ColRecRxnLUT::k13], kcr_buf.data[ColRecRxnLUT::k22], d(i,j,k), tgas.data(),
-                  p2d.data(), edot.data(),
-                  i+1 // the function currently expects i to be a 1-based index
+                  p2d.data(), edot.data(), i
                 );
 
                 dtit[i] = std::fmin(dtit[i], 0.1*Heq_div_dHeqdt);
