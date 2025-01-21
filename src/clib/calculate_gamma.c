@@ -32,8 +32,6 @@ int local_calculate_temperature(chemistry_data *my_chemistry,
                                 grackle_field_data *my_fields,
                                 gr_float *temperature);
 
-grackle_index_helper _build_index_helper(const grackle_field_data *my_fields);
-
 int local_calculate_gamma(chemistry_data *my_chemistry,
                           chemistry_data_storage *my_rates,
                           code_units *my_units,
@@ -44,7 +42,7 @@ int local_calculate_gamma(chemistry_data *my_chemistry,
   if (!my_chemistry->use_grackle)
     return SUCCESS;
  
-  const grackle_index_helper ind_helper = _build_index_helper(my_fields);
+  const grackle_index_helper ind_helper = build_index_helper_(my_fields);
   int outer_ind, index;
   
   /* If molecular hydrogen is not being used, just use monotonic.
@@ -52,7 +50,8 @@ int local_calculate_gamma(chemistry_data *my_chemistry,
 
   for (outer_ind = 0; outer_ind < ind_helper.outer_ind_size; outer_ind++){
 
-    const grackle_index_range range = _inner_range(outer_ind, &ind_helper);
+    const field_flat_index_range range = inner_flat_range_(outer_ind,
+                                                           &ind_helper);
 
     for (index = range.start; index <= range.end; index++) {
       my_gamma[index] = my_chemistry->Gamma;
@@ -83,7 +82,8 @@ int local_calculate_gamma(chemistry_data *my_chemistry,
 #   endif
     for (outer_ind = 0; outer_ind < ind_helper.outer_ind_size; outer_ind++){
 
-      const grackle_index_range range = _inner_range(outer_ind, &ind_helper);
+      const field_flat_index_range range = inner_flat_range_(outer_ind,
+                                                             &ind_helper);
 
       for (index = range.start; index <= range.end; index++) {
  
