@@ -137,12 +137,10 @@ int solve_rate_cool_g(
   // Locals
 
   int iter;
-  double ttmin, energy, comp1, comp2;
-  gr_float factor;
+  double ttmin, comp1, comp2;
 
   // row temporaries
 
-  double olddtit;
   std::vector<double> dtit(my_fields->grid_dimension[0]);
   std::vector<double> ttot(my_fields->grid_dimension[0]);
   std::vector<double> p2d(my_fields->grid_dimension[0]);
@@ -222,7 +220,7 @@ int solve_rate_cool_g(
   // Convert densities from comoving to proper
 
   if (internalu.extfields_in_comoving == 1)  {
-    factor = (gr_float)(std::pow(internalu.a_value,(-3)) );
+    gr_float factor = (gr_float)(std::pow(internalu.a_value,(-3)) );
     wrapped_scale_fields_g_(imetal, factor, my_chemistry, my_fields);
   }
 
@@ -238,11 +236,10 @@ int solve_rate_cool_g(
   //_// PORT: ! ierr is declared as shared and should be modified with atomic operation
   //_// PORT: !$omp parallel do schedule(runtime) private(
   //_// PORT: !$omp&   iter,
-  //_// PORT: !$omp&   ttmin, energy, comp1, comp2,
+  //_// PORT: !$omp&   ttmin, comp1, comp2,
   //_// PORT: !$omp&   dtit, ttot, p2d, tgas,
   //_// PORT: !$omp&   tdust, metallicity, dust2gas, rhoH, mmw,
   //_// PORT: !$omp&   ddom,
-  //_// PORT: !$omp&   olddtit,
   //_// PORT: !$omp&   dep, dedot,HIdot, dedot_prev,
   //_// PORT: !$omp&   HIdot_prev,
   //_// PORT: !$omp&   k13dd, h2dust,
@@ -471,7 +468,7 @@ int solve_rate_cool_g(
 
               // compute minimum rate timestep
 
-              olddtit = dtit[i];
+              double olddtit = dtit[i];
               dtit[i] = grackle::impl::fmin(std::fabs(0.1*de(i,j,k)/dedot[i]),
                    std::fabs(0.1*HI(i,j,k)/HIdot[i]),
                    dt-ttot[i], 0.5*dt);
@@ -517,7 +514,7 @@ int solve_rate_cool_g(
             // (the gamma used here is the right one even for H2 since p2d
             //  is calculated with this gamma).
 
-            energy = std::fmax(p2d[i]/(my_chemistry->Gamma-1.), tiny8);
+            double energy = std::fmax(p2d[i]/(my_chemistry->Gamma-1.), tiny8);
 
             // If the temperature is at the bottom of the temperature look-up
             // table and edot < 0, then shut off the cooling.
@@ -678,7 +675,7 @@ int solve_rate_cool_g(
   // Convert densities back to comoving from proper
 
   if (internalu.extfields_in_comoving == 1)  {
-    factor = (gr_float)(std::pow(internalu.a_value,3) );
+    gr_float factor = (gr_float)(std::pow(internalu.a_value,3) );
     wrapped_scale_fields_g_(imetal, factor, my_chemistry, my_fields);
   }
 
