@@ -300,8 +300,8 @@ int solve_rate_cool_g(
 
       // Initialize iteration mask to true for all cells.
 
-      for (int i = my_fields->grid_start[0] + 1; i<=(my_fields->grid_end[0] + 1); i++) {
-        itmask[i-1] = MASK_TRUE;
+      for (int i = my_fields->grid_start[0]; i<=my_fields->grid_end[0]; i++) {
+        itmask[i] = MASK_TRUE;
       }
 
       // If we are using coupled radiation with intermediate stepping,
@@ -309,22 +309,22 @@ int solve_rate_cool_g(
       // intermediate coupled chemistry / energy step
       if (my_chemistry->use_radiative_transfer == 1)  {
         if (my_chemistry->radiative_transfer_coupled_rate_solver == 1  &&  my_chemistry->radiative_transfer_intermediate_step == 1)  {
-          for (int i = my_fields->grid_start[0] + 1; i<=(my_fields->grid_end[0] + 1); i++) {
-            if (kphHI(i-1,j,k) > 0)  {
-              itmask[i-1] = MASK_TRUE;
+          for (int i = my_fields->grid_start[0]; i<=my_fields->grid_end[0]; i++) {
+            if (kphHI(i,j,k) > 0)  {
+              itmask[i] = MASK_TRUE;
             } else {
-              itmask[i-1] = MASK_FALSE;
+              itmask[i] = MASK_FALSE;
             }
           }
         }
 
         // Normal rate solver, but don't double count cells with radiation
         if (my_chemistry->radiative_transfer_coupled_rate_solver == 1  &&  my_chemistry->radiative_transfer_intermediate_step == 0)  {
-          for (int i = my_fields->grid_start[0] + 1; i<=(my_fields->grid_end[0] + 1); i++) {
-            if (kphHI(i-1,j,k) > 0)  {
-              itmask[i-1] = MASK_FALSE;
+          for (int i = my_fields->grid_start[0]; i<=my_fields->grid_end[0]; i++) {
+            if (kphHI(i,j,k) > 0)  {
+              itmask[i] = MASK_FALSE;
             } else {
-              itmask[i-1] = MASK_TRUE;
+              itmask[i] = MASK_TRUE;
             }
           }
         }
@@ -332,23 +332,23 @@ int solve_rate_cool_g(
 
       // Set time elapsed to zero for each cell in 1D section
 
-      for (int i = my_fields->grid_start[0] + 1; i<=(my_fields->grid_end[0] + 1); i++) {
-        ttot[i-1] = 0.;
+      for (int i = my_fields->grid_start[0]; i<=my_fields->grid_end[0]; i++) {
+        ttot[i] = 0.;
       }
 
       // A useful slice variable since we do this a lot
 
-      for (int i = my_fields->grid_start[0] + 1; i<=(my_fields->grid_end[0] + 1); i++) {
-        ddom[i-1] = d(i-1,j,k) * dom;
+      for (int i = my_fields->grid_start[0]; i<=my_fields->grid_end[0]; i++) {
+        ddom[i] = d(i,j,k) * dom;
       }
 
       // ------------------ Loop over subcycles ----------------
 
       for (iter = 1; iter<=(my_chemistry->max_iterations); iter++) {
 
-        for (int i = my_fields->grid_start[0] + 1; i<=(my_fields->grid_end[0] + 1); i++) {
-          if (itmask[i-1] != MASK_FALSE)  {
-            dtit[i-1] = huge8;
+        for (int i = my_fields->grid_start[0]; i<=my_fields->grid_end[0]; i++) {
+          if (itmask[i] != MASK_FALSE)  {
+            dtit[i] = huge8;
           }
         }
 
