@@ -551,10 +551,10 @@ int solve_rate_cool_g(
         // Update total and gas energy
 
         if (my_chemistry->with_radiative_cooling == 1)  {
-          for (int i = my_fields->grid_start[0] + 1; i<=(my_fields->grid_end[0] + 1); i++) {
-            if (itmask[i-1] != MASK_FALSE)  {
-              e(i-1,j,k)  = e(i-1,j,k) +
-                      (gr_float)(edot[i-1]/d(i-1,j,k)*dtit[i-1] );
+          for (int i = my_fields->grid_start[0]; i<=my_fields->grid_end[0]; i++) {
+            if (itmask[i] != MASK_FALSE)  {
+              e(i,j,k)  = e(i,j,k) +
+                      (gr_float)(edot[i]/d(i,j,k)*dtit[i] );
 
             }
           }
@@ -592,19 +592,19 @@ int solve_rate_cool_g(
         }
 
         // return itmask
-        for (int i = my_fields->grid_start[0] + 1; i<=(my_fields->grid_end[0] + 1); i++) {
-          itmask[i-1] = itmask_tmp[i-1];
+        for (int i = my_fields->grid_start[0]; i<=my_fields->grid_end[0]; i++) {
+          itmask[i] = itmask_tmp[i];
         }
 
         // Add the timestep to the elapsed time for each cell and find
         //  minimum elapsed time step in this row
 
         ttmin = huge8;
-        for (int i = my_fields->grid_start[0] + 1; i<=(my_fields->grid_end[0] + 1); i++) {
-          ttot[i-1] = std::fmin(ttot[i-1] + dtit[i-1], dt);
-          if (std::fabs(dt-ttot[i-1]) <
-               tolerance*dt) { itmask[i-1] = MASK_FALSE; }
-          if (ttot[i-1]<ttmin) { ttmin = ttot[i-1]; }
+        for (int i = my_fields->grid_start[0]; i<=my_fields->grid_end[0]; i++) {
+          ttot[i] = std::fmin(ttot[i] + dtit[i], dt);
+          if (std::fabs(dt-ttot[i]) <
+               tolerance*dt) { itmask[i] = MASK_FALSE; }
+          if (ttot[i]<ttmin) { ttmin = ttot[i]; }
         }
 
         // If all cells are done (on this slice), break out of subcycle loop
