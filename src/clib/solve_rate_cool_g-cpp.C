@@ -136,7 +136,7 @@ int solve_rate_cool_g(
 
   // Locals
 
-  int i, iter;
+  int iter;
   double ttmin, dom, energy, comp1, comp2;
   double chunit;
   double dlogtem, dx_cgs, c_ljeans, min_metallicity;
@@ -234,7 +234,7 @@ int solve_rate_cool_g(
   //_// PORT: #ifdef _OPENMP
   //_// PORT: ! ierr is declared as shared and should be modified with atomic operation
   //_// PORT: !$omp parallel do schedule(runtime) private(
-  //_// PORT: !$omp&   i, iter,
+  //_// PORT: !$omp&   iter,
   //_// PORT: !$omp&   ttmin, energy, comp1, comp2,
   //_// PORT: !$omp&   dtit, ttot, p2d, tgas,
   //_// PORT: !$omp&   tdust, metallicity, dust2gas, rhoH, mmw,
@@ -300,7 +300,7 @@ int solve_rate_cool_g(
 
       // Initialize iteration mask to true for all cells.
 
-      for (i = my_fields->grid_start[0] + 1; i<=(my_fields->grid_end[0] + 1); i++) {
+      for (int i = my_fields->grid_start[0] + 1; i<=(my_fields->grid_end[0] + 1); i++) {
         itmask[i-1] = MASK_TRUE;
       }
 
@@ -309,7 +309,7 @@ int solve_rate_cool_g(
       // intermediate coupled chemistry / energy step
       if (my_chemistry->use_radiative_transfer == 1)  {
         if (my_chemistry->radiative_transfer_coupled_rate_solver == 1  &&  my_chemistry->radiative_transfer_intermediate_step == 1)  {
-          for (i = my_fields->grid_start[0] + 1; i<=(my_fields->grid_end[0] + 1); i++) {
+          for (int i = my_fields->grid_start[0] + 1; i<=(my_fields->grid_end[0] + 1); i++) {
             if (kphHI(i-1,j,k) > 0)  {
               itmask[i-1] = MASK_TRUE;
             } else {
@@ -320,7 +320,7 @@ int solve_rate_cool_g(
 
         // Normal rate solver, but don't double count cells with radiation
         if (my_chemistry->radiative_transfer_coupled_rate_solver == 1  &&  my_chemistry->radiative_transfer_intermediate_step == 0)  {
-          for (i = my_fields->grid_start[0] + 1; i<=(my_fields->grid_end[0] + 1); i++) {
+          for (int i = my_fields->grid_start[0] + 1; i<=(my_fields->grid_end[0] + 1); i++) {
             if (kphHI(i-1,j,k) > 0)  {
               itmask[i-1] = MASK_FALSE;
             } else {
@@ -332,13 +332,13 @@ int solve_rate_cool_g(
 
       // Set time elapsed to zero for each cell in 1D section
 
-      for (i = my_fields->grid_start[0] + 1; i<=(my_fields->grid_end[0] + 1); i++) {
+      for (int i = my_fields->grid_start[0] + 1; i<=(my_fields->grid_end[0] + 1); i++) {
         ttot[i-1] = 0.;
       }
 
       // A useful slice variable since we do this a lot
 
-      for (i = my_fields->grid_start[0] + 1; i<=(my_fields->grid_end[0] + 1); i++) {
+      for (int i = my_fields->grid_start[0] + 1; i<=(my_fields->grid_end[0] + 1); i++) {
         ddom[i-1] = d(i-1,j,k) * dom;
       }
 
@@ -346,7 +346,7 @@ int solve_rate_cool_g(
 
       for (iter = 1; iter<=(my_chemistry->max_iterations); iter++) {
 
-        for (i = my_fields->grid_start[0] + 1; i<=(my_fields->grid_end[0] + 1); i++) {
+        for (int i = my_fields->grid_start[0] + 1; i<=(my_fields->grid_end[0] + 1); i++) {
           if (itmask[i-1] != MASK_FALSE)  {
             dtit[i-1] = huge8;
           }
@@ -403,7 +403,7 @@ int solve_rate_cool_g(
 
           std::memcpy(itmask_tmp.data(), itmask.data(), sizeof(gr_mask_type)*my_fields->grid_dimension[0]);
           std::memcpy(itmask_nr.data(), itmask.data(), sizeof(gr_mask_type)*my_fields->grid_dimension[0]);
-          for (i = my_fields->grid_start[0] + 1; i<=(my_fields->grid_end[0] + 1); i++) {
+          for (int i = my_fields->grid_start[0] + 1; i<=(my_fields->grid_end[0] + 1); i++) {
             if ( itmask_tmp[i-1] != MASK_FALSE )  {
 
               if ( ( (imetal == 0)
@@ -421,7 +421,7 @@ int solve_rate_cool_g(
             }
           }
 
-          for (i = my_fields->grid_start[0] + 1; i<=(my_fields->grid_end[0] + 1); i++) {
+          for (int i = my_fields->grid_start[0] + 1; i<=(my_fields->grid_end[0] + 1); i++) {
             if (itmask_nr[i-1] != MASK_FALSE)  {
               if ( (my_chemistry->with_radiative_cooling == 1)  &&  (my_chemistry->primordial_chemistry > 1)  && 
                    ((ddom[i-1] > 1.e7)
@@ -435,7 +435,7 @@ int solve_rate_cool_g(
 
           // Find timestep that keeps relative chemical changes below 10%
 
-          for (i = my_fields->grid_start[0] + 1; i<=(my_fields->grid_end[0] + 1); i++) {
+          for (int i = my_fields->grid_start[0] + 1; i<=(my_fields->grid_end[0] + 1); i++) {
             if (itmask[i-1] != MASK_FALSE)  {
               // Bound from below to prevent numerical errors
                
@@ -508,7 +508,7 @@ int solve_rate_cool_g(
 
         // Compute maximum timestep for cooling/heating
 
-        for (i = my_fields->grid_start[0] + 1; i<=(my_fields->grid_end[0] + 1); i++) {
+        for (int i = my_fields->grid_start[0] + 1; i<=(my_fields->grid_end[0] + 1); i++) {
           if (itmask[i-1] != MASK_FALSE)  {
             // Set energy per unit volume of this cell based in the pressure
             // (the gamma used here is the right one even for H2 since p2d
@@ -550,7 +550,7 @@ int solve_rate_cool_g(
         // Update total and gas energy
 
         if (my_chemistry->with_radiative_cooling == 1)  {
-          for (i = my_fields->grid_start[0] + 1; i<=(my_fields->grid_end[0] + 1); i++) {
+          for (int i = my_fields->grid_start[0] + 1; i<=(my_fields->grid_end[0] + 1); i++) {
             if (itmask[i-1] != MASK_FALSE)  {
               e(i-1,j,k)  = e(i-1,j,k) +
                       (gr_float)(edot[i-1]/d(i-1,j,k)*dtit[i-1] );
@@ -591,7 +591,7 @@ int solve_rate_cool_g(
         }
 
         // return itmask
-        for (i = my_fields->grid_start[0] + 1; i<=(my_fields->grid_end[0] + 1); i++) {
+        for (int i = my_fields->grid_start[0] + 1; i<=(my_fields->grid_end[0] + 1); i++) {
           itmask[i-1] = itmask_tmp[i-1];
         }
 
@@ -599,7 +599,7 @@ int solve_rate_cool_g(
         //  minimum elapsed time step in this row
 
         ttmin = huge8;
-        for (i = my_fields->grid_start[0] + 1; i<=(my_fields->grid_end[0] + 1); i++) {
+        for (int i = my_fields->grid_start[0] + 1; i<=(my_fields->grid_end[0] + 1); i++) {
           ttot[i-1] = std::fmin(ttot[i-1] + dtit[i-1], dt);
           if (std::fabs(dt-ttot[i-1]) <
                tolerance*dt) { itmask[i-1] = MASK_FALSE; }
