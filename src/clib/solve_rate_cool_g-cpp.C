@@ -435,24 +435,24 @@ int solve_rate_cool_g(
 
           // Find timestep that keeps relative chemical changes below 10%
 
-          for (int i = my_fields->grid_start[0] + 1; i<=(my_fields->grid_end[0] + 1); i++) {
-            if (itmask[i-1] != MASK_FALSE)  {
+          for (int i = my_fields->grid_start[0]; i<=my_fields->grid_end[0]; i++) {
+            if (itmask[i] != MASK_FALSE)  {
               // Bound from below to prevent numerical errors
                
-              if (std::fabs(dedot[i-1]) < tiny8)
-                         { dedot[i-1] = std::fmin(tiny_fortran_val,de(i-1,j,k)); }
-              if (std::fabs(HIdot[i-1]) < tiny8)
-                         { HIdot[i-1] = std::fmin(tiny_fortran_val,HI(i-1,j,k)); }
+              if (std::fabs(dedot[i]) < tiny8)
+                         { dedot[i] = std::fmin(tiny_fortran_val,de(i,j,k)); }
+              if (std::fabs(HIdot[i]) < tiny8)
+                         { HIdot[i] = std::fmin(tiny_fortran_val,HI(i,j,k)); }
 
               // If the net rate is almost perfectly balanced then set
               //     it to zero (since it is zero to available precision)
 
-              if (std::fmin(std::fabs(kcr_buf.data[ColRecRxnLUT::k1][i-1]* de(i-1,j,k)*HI(i-1,j,k)),
-                      std::fabs(kcr_buf.data[ColRecRxnLUT::k2][i-1]*HII(i-1,j,k)*de(i-1,j,k)))/
-                  std::fmax(std::fabs(dedot[i-1]),std::fabs(HIdot[i-1])) >
+              if (std::fmin(std::fabs(kcr_buf.data[ColRecRxnLUT::k1][i]* de(i,j,k)*HI(i,j,k)),
+                      std::fabs(kcr_buf.data[ColRecRxnLUT::k2][i]*HII(i,j,k)*de(i,j,k)))/
+                  std::fmax(std::fabs(dedot[i]),std::fabs(HIdot[i])) >
                    1.0e6)  {
-                dedot[i-1] = tiny8;
-                HIdot[i-1] = tiny8;
+                dedot[i] = tiny8;
+                HIdot[i] = tiny8;
               }
 
               // If the iteration count is high then take the smaller of
@@ -462,45 +462,46 @@ int solve_rate_cool_g(
               //   individual terms (which all nearly cancel).
 
               if (iter > 50)  {
-                dedot[i-1] = std::fmin(std::fabs(dedot[i-1]), std::fabs(dedot_prev[i-1]));
-                HIdot[i-1] = std::fmin(std::fabs(HIdot[i-1]), std::fabs(HIdot_prev[i-1]));
+                dedot[i] = std::fmin(std::fabs(dedot[i]), std::fabs(dedot_prev[i]));
+                HIdot[i] = std::fmin(std::fabs(HIdot[i]), std::fabs(HIdot_prev[i]));
               }
 
               // compute minimum rate timestep
 
-              olddtit = dtit[i-1];
-              dtit[i-1] = grackle::impl::fmin(std::fabs(0.1*de(i-1,j,k)/dedot[i-1]),
-                   std::fabs(0.1*HI(i-1,j,k)/HIdot[i-1]),
-                   dt-ttot[i-1], 0.5*dt);
+              olddtit = dtit[i];
+              dtit[i] = grackle::impl::fmin(std::fabs(0.1*de(i,j,k)/dedot[i]),
+                   std::fabs(0.1*HI(i,j,k)/HIdot[i]),
+                   dt-ttot[i], 0.5*dt);
 
-              if (ddom[i-1] > 1.e8  && 
-                   edot[i-1] > 0.       && 
+              if (ddom[i] > 1.e8  && 
+                   edot[i] > 0.       && 
                   my_chemistry->primordial_chemistry > 1)  {
                 // here, we ensure that that the equilibrium mass density of
                 // Hydrogen changes by 10% or less
                 double Heq_div_dHeqdt = calc_Heq_div_dHeqdt_(
                   my_chemistry, my_rates, dlogtem, logTlininterp_buf,
-                  kcr_buf.data[ColRecRxnLUT::k13], kcr_buf.data[ColRecRxnLUT::k22], d(i-1,j,k), tgas.data(),
-                  p2d.data(), edot.data(), i
+                  kcr_buf.data[ColRecRxnLUT::k13], kcr_buf.data[ColRecRxnLUT::k22], d(i,j,k), tgas.data(),
+                  p2d.data(), edot.data(),
+                  i+1 // the function currently expects i to be a 1-based index
                 );
 
-                dtit[i-1] = std::fmin(dtit[i-1], 0.1*Heq_div_dHeqdt);
+                dtit[i] = std::fmin(dtit[i], 0.1*Heq_div_dHeqdt);
               }
               if (iter>10LL)  {
-                dtit[i-1] = std::fmin(olddtit*1.5, dtit[i-1]);
+                dtit[i] = std::fmin(olddtit*1.5, dtit[i]);
               }
 
-            } else if ((itmask_nr[i-1]!=MASK_FALSE) && 
-                     (imp_eng[i-1]==0))  {
-              dtit[i-1] = grackle::impl::fmin(std::fabs(0.1*e(i-1,j,k)/edot[i-1]*d(i-1,j,k)),
-                   dt-ttot[i-1], 0.5*dt);
+            } else if ((itmask_nr[i]!=MASK_FALSE) && 
+                     (imp_eng[i]==0))  {
+              dtit[i] = grackle::impl::fmin(std::fabs(0.1*e(i,j,k)/edot[i]*d(i,j,k)),
+                   dt-ttot[i], 0.5*dt);
 
-            } else if ((itmask_nr[i-1]!=MASK_FALSE) && 
-                     (imp_eng[i-1]==1))  {
-              dtit[i-1] = dt - ttot[i-1];
+            } else if ((itmask_nr[i]!=MASK_FALSE) && 
+                     (imp_eng[i]==1))  {
+              dtit[i] = dt - ttot[i];
 
             } else {
-              dtit[i-1] = dt;
+              dtit[i] = dt;
             }
           }
 
