@@ -355,7 +355,7 @@ int solve_rate_cool_g(
         // Compute the cooling rate, tgas, tdust, and metallicity for this row
 
         wrapped_cool1d_multi_g_(
-          imetal, j, k, iter, &comp1, &comp2, edot.data(), tgas.data(),
+          imetal, idx_range, iter, &comp1, &comp2, edot.data(), tgas.data(),
           mmw.data(), p2d.data(), tdust.data(), metallicity.data(),
           dust2gas.data(), rhoH.data(), itmask.data(), itmask_metal.data(),
           my_chemistry, my_rates, my_fields, *my_uvb_rates, internalu,
@@ -377,7 +377,7 @@ int solve_rate_cool_g(
           //  (maybe should add itmask to this call)
 
           wrapped_lookup_cool_rates1d_g_(
-            j, k, anydust, tgas.data(), mmw.data(),
+            idx_range, anydust, tgas.data(), mmw.data(),
             tdust.data(), dust2gas.data(), k13dd.data(), h2dust.data(),
             dom, dx_cgs, c_ljeans, itmask.data(), itmask_metal.data(),
             imetal, rhoH.data(), dt, my_chemistry, my_rates, my_fields,
@@ -389,7 +389,7 @@ int solve_rate_cool_g(
           //   (should add itmask to this call)
 
           wrapped_rate_timestep_g_(
-            dedot.data(), HIdot.data(), anydust, j, k, h2dust.data(),
+            dedot.data(), HIdot.data(), anydust, idx_range, h2dust.data(),
             rhoH.data(), itmask.data(), edot.data(), chunit, dom,
             my_chemistry, my_fields, *my_uvb_rates, kcr_buf, kshield_buf,
             chemheatrates_buf
@@ -566,7 +566,7 @@ int solve_rate_cool_g(
           // itmask)
 
           wrapped_step_rate_g_(
-            dtit.data(), j, k, anydust, h2dust.data(), rhoH.data(),
+            dtit.data(), idx_range, anydust, h2dust.data(), rhoH.data(),
             dedot_prev.data(), HIdot_prev.data(), itmask.data(),
             itmask_metal.data(), imetal, my_chemistry, my_fields,
             *my_uvb_rates, grain_growth_rates, species_tmpdens, kcr_buf,
@@ -578,7 +578,7 @@ int solve_rate_cool_g(
           // itmask_nr)
 
           wrapped_step_rate_newton_raphson_(
-            imetal, j, k, iter, dom, &comp1, &comp2, chunit, dx_cgs,
+            imetal, idx_range, iter, dom, &comp1, &comp2, chunit, dx_cgs,
             c_ljeans, dtit.data(), p2d.data(), tgas.data(), tdust.data(),
             metallicity.data(), dust2gas.data(), rhoH.data(), mmw.data(),
             h2dust.data(), edot.data(), anydust, itmask_nr.data(),
@@ -609,7 +609,7 @@ int solve_rate_cool_g(
         // If all cells are done (on this slice), break out of subcycle loop
         if (std::fabs(dt-ttmin) < tolerance*dt) { break; }
 
-      }  // subcycle iteration loop (for current row)
+      }  // subcycle iteration loop (for current idx_range)
 
       // review number of iterations that were spent in the subcycle loop
 

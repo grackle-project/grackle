@@ -24,6 +24,7 @@
 
 #include "grackle.h"
 #include "fortran_func_decls.h"
+#include "index_helper.h"
 #include "internal_types.hpp"
 #include "internal_units.h"
 #include "LUT.hpp"
@@ -56,7 +57,7 @@ inline void wrapped_ceiling_species_g_(
 }
 
 inline void wrapped_cool1d_multi_g_(
-  int imetal, int j, int k, int iter, double* comp1, double* comp2,
+  int imetal, IndexRange idx_range, int iter, double* comp1, double* comp2,
   double* edot, double* tgas, double* mmw, double* p2d, double* tdust,
   double* metallicity, double* dust2gas, double* rhoH, gr_mask_type* itmask,
   gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
@@ -72,7 +73,7 @@ inline void wrapped_cool1d_multi_g_(
                   &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &my_chemistry->NumberOfTemperatureBins,
                   &internalu.extfields_in_comoving, &my_chemistry->primordial_chemistry, &imetal, &my_chemistry->metal_cooling,
                   &my_chemistry->h2_on_dust, &my_chemistry->dust_chemistry, &my_chemistry->use_dust_density_field, &my_chemistry->dust_recombination_cooling,
-                  &my_fields->grid_rank, &my_fields->grid_start[0], &my_fields->grid_end[0], &j, &k, &my_chemistry->ih2co, &my_chemistry->ipiht, &iter, &my_chemistry->photoelectric_heating,
+                  &my_fields->grid_rank, &my_fields->grid_start[0], &my_fields->grid_end[0], &idx_range.jp1, &idx_range.kp1, &my_chemistry->ih2co, &my_chemistry->ipiht, &iter, &my_chemistry->photoelectric_heating,
                   &internalu.a_value, &my_chemistry->TemperatureStart, &my_chemistry->TemperatureEnd, &my_chemistry->SolarMetalFractionByMass, &my_chemistry->local_dust_to_gas_ratio,
                   &internalu.utem, &internalu.uxyz, &internalu.a_units, &internalu.urho, &internalu.tbase1,
                   &my_chemistry->Gamma, &my_chemistry->HydrogenFractionByMass,
@@ -177,7 +178,7 @@ inline void wrapped_cool1d_multi_g_(
 /// This routine uses the temperature to look up the chemical rates that are
 /// tabulated in a log table as a function of temperature
 inline void wrapped_lookup_cool_rates1d_g_(
-  int j, int k, gr_mask_type anydust, double* tgas1d, double* mmw,
+  IndexRange idx_range, gr_mask_type anydust, double* tgas1d, double* mmw,
   double* tdust, double* dust2gas, double* k13dd, double* h2dust,
   double dom, double dx_cgs, double c_ljeans, gr_mask_type* itmask,
   gr_mask_type* itmask_metal, int imetal, gr_float* rhoH, double dt,
@@ -192,7 +193,7 @@ inline void wrapped_lookup_cool_rates1d_g_(
   grackle::impl::ChemHeatingRates chemheatrates_buf
 ) {
 
-  FORTRAN_NAME(lookup_cool_rates1d_g)(&my_chemistry->TemperatureStart, &my_chemistry->TemperatureEnd, &my_chemistry->NumberOfTemperatureBins, &j, &k,
+  FORTRAN_NAME(lookup_cool_rates1d_g)(&my_chemistry->TemperatureStart, &my_chemistry->TemperatureEnd, &my_chemistry->NumberOfTemperatureBins, &idx_range.jp1, &idx_range.kp1,
                    &my_fields->grid_start[0], &my_fields->grid_end[0], &my_chemistry->three_body_rate,
                    &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &my_chemistry->primordial_chemistry, &anydust,
                    &my_chemistry->H2_self_shielding, &my_chemistry->self_shielding_method,
@@ -320,7 +321,7 @@ inline void wrapped_make_consistent_g_(
 /// This routine calculates the electron and HI rates of change in order to
 /// determine the maximum permitted timestep
 inline void wrapped_rate_timestep_g_(
-  double* dedot, double* HIdot, gr_mask_type anydust, int j, int k,
+  double* dedot, double* HIdot, gr_mask_type anydust, IndexRange idx_range,
   double* h2dust, double* rhoH, gr_mask_type* itmask, double* edot,
   double chunit, double dom, chemistry_data* my_chemistry,
   grackle_field_data* my_fields, photo_rate_storage my_uvb_rates,
@@ -332,7 +333,7 @@ inline void wrapped_rate_timestep_g_(
                          dedot, HIdot, &my_chemistry->primordial_chemistry, &anydust,
                          my_fields->e_density, my_fields->HI_density, my_fields->HII_density, my_fields->HeI_density, my_fields->HeII_density, my_fields->HeIII_density, my_fields->density,
                          my_fields->HM_density, my_fields->H2I_density, my_fields->H2II_density,
-                         &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &my_fields->grid_start[0], &my_fields->grid_end[0], &j, &k,
+                         &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &my_fields->grid_start[0], &my_fields->grid_end[0], &idx_range.jp1, &idx_range.kp1,
                          kcr_buf.data[ColRecRxnLUT::k1], kcr_buf.data[ColRecRxnLUT::k2], kcr_buf.data[ColRecRxnLUT::k3], kcr_buf.data[ColRecRxnLUT::k4], kcr_buf.data[ColRecRxnLUT::k5], kcr_buf.data[ColRecRxnLUT::k6], kcr_buf.data[ColRecRxnLUT::k7], kcr_buf.data[ColRecRxnLUT::k8], kcr_buf.data[ColRecRxnLUT::k9], kcr_buf.data[ColRecRxnLUT::k10], kcr_buf.data[ColRecRxnLUT::k11],
                          kcr_buf.data[ColRecRxnLUT::k12], kcr_buf.data[ColRecRxnLUT::k13], kcr_buf.data[ColRecRxnLUT::k14], kcr_buf.data[ColRecRxnLUT::k15], kcr_buf.data[ColRecRxnLUT::k16], kcr_buf.data[ColRecRxnLUT::k17], kcr_buf.data[ColRecRxnLUT::k18], kcr_buf.data[ColRecRxnLUT::k19], kcr_buf.data[ColRecRxnLUT::k22],
                          &my_uvb_rates.k24, &my_uvb_rates.k25, &my_uvb_rates.k26, &my_uvb_rates.k27, &my_uvb_rates.k28, &my_uvb_rates.k29, &my_uvb_rates.k30,
@@ -380,7 +381,7 @@ inline void wrapped_scale_fields_g_(
 /// Uses one linearly implicit Gauss-Seidel sweep of a backward-Euler time
 /// integrator to advance the rate equations by one (sub-)cycle (dtit).
 inline void wrapped_step_rate_g_(
-  double* dtit, int j, int k, gr_mask_type anydust, double* h2dust,
+  double* dtit, IndexRange idx_range, gr_mask_type anydust, double* h2dust,
   double* rhoH, double* dedot_prev, double* HIdot_prev,
   gr_mask_type* itmask, gr_mask_type* itmask_metal, int imetal,
   chemistry_data* my_chemistry, grackle_field_data* my_fields,
@@ -392,7 +393,7 @@ inline void wrapped_step_rate_g_(
 ) {
            FORTRAN_NAME(step_rate_g)(my_fields->e_density, my_fields->HI_density, my_fields->HII_density, my_fields->HeI_density, my_fields->HeII_density, my_fields->HeIII_density, my_fields->density,
                          my_fields->HM_density, my_fields->H2I_density, my_fields->H2II_density, my_fields->DI_density, my_fields->DII_density, my_fields->HDI_density, dtit,
-                         &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &my_fields->grid_start[0], &my_fields->grid_end[0], &j, &k,
+                         &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &my_fields->grid_start[0], &my_fields->grid_end[0], &idx_range.jp1, &idx_range.kp1,
                          &my_chemistry->primordial_chemistry, &anydust,
                          kcr_buf.data[ColRecRxnLUT::k1], kcr_buf.data[ColRecRxnLUT::k2], kcr_buf.data[ColRecRxnLUT::k3], kcr_buf.data[ColRecRxnLUT::k4], kcr_buf.data[ColRecRxnLUT::k5], kcr_buf.data[ColRecRxnLUT::k6], kcr_buf.data[ColRecRxnLUT::k7], kcr_buf.data[ColRecRxnLUT::k8], kcr_buf.data[ColRecRxnLUT::k9], kcr_buf.data[ColRecRxnLUT::k10], kcr_buf.data[ColRecRxnLUT::k11],
                          kcr_buf.data[ColRecRxnLUT::k12], kcr_buf.data[ColRecRxnLUT::k13], kcr_buf.data[ColRecRxnLUT::k14], kcr_buf.data[ColRecRxnLUT::k15], kcr_buf.data[ColRecRxnLUT::k16], kcr_buf.data[ColRecRxnLUT::k17], kcr_buf.data[ColRecRxnLUT::k18], kcr_buf.data[ColRecRxnLUT::k19], kcr_buf.data[ColRecRxnLUT::k22],
@@ -450,7 +451,7 @@ inline void wrapped_step_rate_g_(
 }
 
 inline void wrapped_step_rate_newton_raphson_(
-  int imetal, int j, int k, int iter, double dom, double* comp1,
+  int imetal, IndexRange idx_range, int iter, double dom, double* comp1,
   double* comp2, double chunit, double dx_cgs, double c_ljeans, double* dtit,
   double* p2d, double* tgas, double* tdust, double* metallicity,
   double* dust2gas, double* rhoH, double* mmw, double* h2dust, double* edot,
@@ -542,7 +543,7 @@ inline void wrapped_step_rate_newton_raphson_(
                     my_fields->RT_HDI_dissociation_rate, &my_chemistry->radiative_transfer_metal_ionization, my_fields->RT_CI_ionization_rate, my_fields->RT_OI_ionization_rate, &my_chemistry->radiative_transfer_metal_dissociation, my_fields->RT_CO_dissociation_rate,
                     my_fields->RT_OH_dissociation_rate, my_fields->RT_H2O_dissociation_rate, &my_chemistry->radiative_transfer_use_H2_shielding, &my_chemistry->use_isrf_field,
                     my_fields->isrf_habing, &my_chemistry->H2_custom_shielding, my_fields->H2_custom_shielding_factor,
-                    &j, &k, &iter, &dom, comp1,
+                    &idx_range.jp1, &idx_range.kp1, &iter, &dom, comp1,
                     comp2, &internalu.coolunit, &internalu.tbase1, &internalu.xbase1, &chunit, &dx_cgs,
                     &c_ljeans, logTlininterp_buf.indixe, logTlininterp_buf.t1, logTlininterp_buf.t2, logTlininterp_buf.logtem, logTlininterp_buf.tdef, dtit,
                     p2d, tgas, cool1dmulti_buf.tgasold, tdust, metallicity, dust2gas,
