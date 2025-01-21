@@ -403,32 +403,32 @@ int solve_rate_cool_g(
 
           std::memcpy(itmask_tmp.data(), itmask.data(), sizeof(gr_mask_type)*my_fields->grid_dimension[0]);
           std::memcpy(itmask_nr.data(), itmask.data(), sizeof(gr_mask_type)*my_fields->grid_dimension[0]);
-          for (int i = my_fields->grid_start[0] + 1; i<=(my_fields->grid_end[0] + 1); i++) {
-            if ( itmask_tmp[i-1] != MASK_FALSE )  {
+          for (int i = my_fields->grid_start[0]; i<=my_fields->grid_end[0]; i++) {
+            if ( itmask_tmp[i] != MASK_FALSE )  {
 
               if ( ( (imetal == 0)
-                &&  (ddom[i-1] < 1.e8) )
+                &&  (ddom[i] < 1.e8) )
                ||  ( (imetal == 1)
-                &&  ( ( (metallicity[i-1] <= min_metallicity)
-                    &&  (ddom[i-1] < 1.e8) )
-                   ||  ( (metallicity[i-1] > min_metallicity)
-                    &&  (ddom[i-1] < 1.e6) ) ) ) )  {
-                itmask_nr[i-1] = MASK_FALSE;
+                &&  ( ( (metallicity[i] <= min_metallicity)
+                    &&  (ddom[i] < 1.e8) )
+                   ||  ( (metallicity[i] > min_metallicity)
+                    &&  (ddom[i] < 1.e6) ) ) ) )  {
+                itmask_nr[i] = MASK_FALSE;
               } else {
-                itmask[i-1] = MASK_FALSE;
+                itmask[i] = MASK_FALSE;
               }
 
             }
           }
 
-          for (int i = my_fields->grid_start[0] + 1; i<=(my_fields->grid_end[0] + 1); i++) {
-            if (itmask_nr[i-1] != MASK_FALSE)  {
+          for (int i = my_fields->grid_start[0]; i<=my_fields->grid_end[0]; i++) {
+            if (itmask_nr[i] != MASK_FALSE)  {
               if ( (my_chemistry->with_radiative_cooling == 1)  &&  (my_chemistry->primordial_chemistry > 1)  && 
-                   ((ddom[i-1] > 1.e7)
-               && (tgas[i-1] > 1650.e0)) )  {
-                imp_eng[i-1] = 1;
+                   ((ddom[i] > 1.e7)
+               && (tgas[i] > 1650.e0)) )  {
+                imp_eng[i] = 1;
               } else {
-                imp_eng[i-1] = 0;
+                imp_eng[i] = 0;
               }
             }
           }
