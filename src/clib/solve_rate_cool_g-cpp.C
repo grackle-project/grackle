@@ -11,6 +11,7 @@
 
 #include "grackle.h"
 #include "fortran_func_wrappers.hpp"
+#include "index_helper.h"
 #include "internal_types.hpp"
 #include "internal_units.h"
 #include "utils-cpp.hpp"
@@ -135,8 +136,7 @@ int solve_rate_cool_g(
 
   // Locals
 
-  int i, j, k, iter;
-  int t, dj, dk;
+  int i, iter;
   double ttmin, dom, energy, comp1, comp2;
   double chunit;
   double dlogtem, dx_cgs, c_ljeans, min_metallicity;
@@ -227,17 +227,14 @@ int solve_rate_cool_g(
   wrapped_ceiling_species_g_(imetal, my_chemistry, my_fields);
 #endif
 
-
-  // Loop over zones, and do an entire i-column in one go
-  dk = my_fields->grid_end[2] - my_fields->grid_start[2] + 1;
-  dj = my_fields->grid_end[1] - my_fields->grid_start[1] + 1;
+  const grackle_index_helper idx_helper = build_index_helper_(my_fields);
 
   // parallelize the k and j loops with OpenMP
   // flat j and k loops for better parallelism
   //_// PORT: #ifdef _OPENMP
   //_// PORT: ! ierr is declared as shared and should be modified with atomic operation
   //_// PORT: !$omp parallel do schedule(runtime) private(
-  //_// PORT: !$omp&   i, j, k, iter,
+  //_// PORT: !$omp&   i, iter,
   //_// PORT: !$omp&   ttmin, energy, comp1, comp2,
   //_// PORT: !$omp&   dtit, ttot, p2d, tgas,
   //_// PORT: !$omp&   tdust, metallicity, dust2gas, rhoH, mmw,
@@ -293,9 +290,11 @@ int solve_rate_cool_g(
       grackle::impl::new_ChemHeatingRates(my_fields->grid_dimension[0]);
 
     //_// TODO_USE: OMP_PRAGMA("omp for")
-    for (t = 0; t<=(dk * dj - 1); t++) {
-      k = t/dj      + my_fields->grid_start[2]+1;
-      j = grackle::impl::mod(t,dj) + my_fields->grid_start[1]+1;
+    for (int t = 0; t < idx_helper.outer_ind_size; t++) {
+      // construct an index-range corresponding to "i-slice"
+      const IndexRange idx_range = make_idx_range_(t, &idx_helper);
+      const int k = idx_range.kp1; // use 1-based index for now
+      const int j = idx_range.jp1; // use 1-based index for now
 
       // tolerance = 1.0e-06_DKIND * dt
 
@@ -652,7 +651,7 @@ int solve_rate_cool_g(
         }
       }
 
-    }  // loop over j,k pairs
+    }  // outer-loop (index t) - each of these correspond to j,k pairs
 
     // cleanup manually allocated temporaries
     grackle::impl::drop_GrainSpeciesCollection(&grain_temperatures);
