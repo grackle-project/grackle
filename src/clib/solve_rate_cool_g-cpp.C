@@ -619,10 +619,8 @@ int solve_rate_cool_g(
           printf("inside if statement solve rate cool: %d %d\n",
                  my_fields->grid_start[0],
                  my_fields->grid_end[0]);
-          eprintf("MULTI_COOL iter >  %d  at j,k = %d %d\n",
-                  my_chemistry->max_iterations,
-                  j,
-                  k);
+          eprintf("MULTI_COOL iter >  %d  at j_0based,k_0based = %d %d\n",
+                  my_chemistry->max_iterations, idx_range.j, idx_range.k);
           printf("FATAL error (2) in MULTI_COOL\n");
           printf("( dt = %.17e ttmin = %.17e )", dt, ttmin);
           grackle::impl::print_contiguous_row_(
@@ -647,7 +645,8 @@ int solve_rate_cool_g(
       if (iter > my_chemistry->max_iterations/2) { // WARNING_MESSAGE
         OMP_PRAGMA_CRITICAL
         {
-          eprintf("MULTI_COOL iter,j,k = %d %d %d\n", iter, j, k);
+          eprintf("MULTI_COOL iter,j_0based,k_0based = %d %d %d\n",
+                  iter, idx_range.j, idx_range.k);
         }
       }
 
