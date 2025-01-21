@@ -293,8 +293,8 @@ int solve_rate_cool_g(
     for (int t = 0; t < idx_helper.outer_ind_size; t++) {
       // construct an index-range corresponding to "i-slice"
       const IndexRange idx_range = make_idx_range_(t, &idx_helper);
-      const int k = idx_range.kp1; // use 1-based index for now
-      const int j = idx_range.jp1; // use 1-based index for now
+      const int k = idx_range.k; // use 0-based index
+      const int j = idx_range.j; // use 0-based index
 
       // tolerance = 1.0e-06_DKIND * dt
 
@@ -310,7 +310,7 @@ int solve_rate_cool_g(
       if (my_chemistry->use_radiative_transfer == 1)  {
         if (my_chemistry->radiative_transfer_coupled_rate_solver == 1  &&  my_chemistry->radiative_transfer_intermediate_step == 1)  {
           for (i = my_fields->grid_start[0] + 1; i<=(my_fields->grid_end[0] + 1); i++) {
-            if (kphHI(i-1,j-1,k-1) > 0)  {
+            if (kphHI(i-1,j,k) > 0)  {
               itmask[i-1] = MASK_TRUE;
             } else {
               itmask[i-1] = MASK_FALSE;
@@ -321,7 +321,7 @@ int solve_rate_cool_g(
         // Normal rate solver, but don't double count cells with radiation
         if (my_chemistry->radiative_transfer_coupled_rate_solver == 1  &&  my_chemistry->radiative_transfer_intermediate_step == 0)  {
           for (i = my_fields->grid_start[0] + 1; i<=(my_fields->grid_end[0] + 1); i++) {
-            if (kphHI(i-1,j-1,k-1) > 0)  {
+            if (kphHI(i-1,j,k) > 0)  {
               itmask[i-1] = MASK_FALSE;
             } else {
               itmask[i-1] = MASK_TRUE;
@@ -339,7 +339,7 @@ int solve_rate_cool_g(
       // A useful slice variable since we do this a lot
 
       for (i = my_fields->grid_start[0] + 1; i<=(my_fields->grid_end[0] + 1); i++) {
-        ddom[i-1] = d(i-1,j-1,k-1) * dom;
+        ddom[i-1] = d(i-1,j,k) * dom;
       }
 
       // ------------------ Loop over subcycles ----------------
@@ -440,15 +440,15 @@ int solve_rate_cool_g(
               // Bound from below to prevent numerical errors
                
               if (std::fabs(dedot[i-1]) < tiny8)
-                         { dedot[i-1] = std::fmin(tiny_fortran_val,de(i-1,j-1,k-1)); }
+                         { dedot[i-1] = std::fmin(tiny_fortran_val,de(i-1,j,k)); }
               if (std::fabs(HIdot[i-1]) < tiny8)
-                         { HIdot[i-1] = std::fmin(tiny_fortran_val,HI(i-1,j-1,k-1)); }
+                         { HIdot[i-1] = std::fmin(tiny_fortran_val,HI(i-1,j,k)); }
 
               // If the net rate is almost perfectly balanced then set
               //     it to zero (since it is zero to available precision)
 
-              if (std::fmin(std::fabs(kcr_buf.data[ColRecRxnLUT::k1][i-1]* de(i-1,j-1,k-1)*HI(i-1,j-1,k-1)),
-                      std::fabs(kcr_buf.data[ColRecRxnLUT::k2][i-1]*HII(i-1,j-1,k-1)*de(i-1,j-1,k-1)))/
+              if (std::fmin(std::fabs(kcr_buf.data[ColRecRxnLUT::k1][i-1]* de(i-1,j,k)*HI(i-1,j,k)),
+                      std::fabs(kcr_buf.data[ColRecRxnLUT::k2][i-1]*HII(i-1,j,k)*de(i-1,j,k)))/
                   std::fmax(std::fabs(dedot[i-1]),std::fabs(HIdot[i-1])) >
                    1.0e6)  {
                 dedot[i-1] = tiny8;
@@ -469,8 +469,8 @@ int solve_rate_cool_g(
               // compute minimum rate timestep
 
               olddtit = dtit[i-1];
-              dtit[i-1] = grackle::impl::fmin(std::fabs(0.1*de(i-1,j-1,k-1)/dedot[i-1]),
-                   std::fabs(0.1*HI(i-1,j-1,k-1)/HIdot[i-1]),
+              dtit[i-1] = grackle::impl::fmin(std::fabs(0.1*de(i-1,j,k)/dedot[i-1]),
+                   std::fabs(0.1*HI(i-1,j,k)/HIdot[i-1]),
                    dt-ttot[i-1], 0.5*dt);
 
               if (ddom[i-1] > 1.e8  && 
@@ -480,7 +480,7 @@ int solve_rate_cool_g(
                 // Hydrogen changes by 10% or less
                 double Heq_div_dHeqdt = calc_Heq_div_dHeqdt_(
                   my_chemistry, my_rates, dlogtem, logTlininterp_buf,
-                  kcr_buf.data[ColRecRxnLUT::k13], kcr_buf.data[ColRecRxnLUT::k22], d(i-1,j-1,k-1), tgas.data(),
+                  kcr_buf.data[ColRecRxnLUT::k13], kcr_buf.data[ColRecRxnLUT::k22], d(i-1,j,k), tgas.data(),
                   p2d.data(), edot.data(), i
                 );
 
@@ -492,7 +492,7 @@ int solve_rate_cool_g(
 
             } else if ((itmask_nr[i-1]!=MASK_FALSE) && 
                      (imp_eng[i-1]==0))  {
-              dtit[i-1] = grackle::impl::fmin(std::fabs(0.1*e(i-1,j-1,k-1)/edot[i-1]*d(i-1,j-1,k-1)),
+              dtit[i-1] = grackle::impl::fmin(std::fabs(0.1*e(i-1,j,k)/edot[i-1]*d(i-1,j,k)),
                    dt-ttot[i-1], 0.5*dt);
 
             } else if ((itmask_nr[i-1]!=MASK_FALSE) && 
@@ -552,8 +552,8 @@ int solve_rate_cool_g(
         if (my_chemistry->with_radiative_cooling == 1)  {
           for (i = my_fields->grid_start[0] + 1; i<=(my_fields->grid_end[0] + 1); i++) {
             if (itmask[i-1] != MASK_FALSE)  {
-              e(i-1,j-1,k-1)  = e(i-1,j-1,k-1) +
-                      (gr_float)(edot[i-1]/d(i-1,j-1,k-1)*dtit[i-1] );
+              e(i-1,j,k)  = e(i-1,j,k) +
+                      (gr_float)(edot[i-1]/d(i-1,j,k)*dtit[i-1] );
 
             }
           }
