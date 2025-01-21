@@ -137,9 +137,7 @@ int solve_rate_cool_g(
   // Locals
 
   int iter;
-  double ttmin, dom, energy, comp1, comp2;
-  double chunit;
-  double dlogtem, dx_cgs, c_ljeans, min_metallicity;
+  double ttmin, energy, comp1, comp2;
   gr_float factor;
 
   // row temporaries
@@ -194,16 +192,21 @@ int solve_rate_cool_g(
   }
 
   // ignore metal chemistry/cooling below this metallicity
-  min_metallicity = 1.e-9 / my_chemistry->SolarMetalFractionByMass;
+  const double min_metallicity = 1.e-9 / my_chemistry->SolarMetalFractionByMass;
       
   // Set units
-  dom      = internalu_calc_dom_(internalu);
-  chunit   = internalu_get_chunit_(internalu);
+  const double dom      = internalu_calc_dom_(internalu);
+  const double chunit   = internalu_get_chunit_(internalu);
 
-  dx_cgs = my_fields->grid_dx * internalu.xbase1;
-  c_ljeans = internalu_calc_coef_ljeans_(internalu, my_chemistry->Gamma);
+  const double dx_cgs = my_fields->grid_dx * internalu.xbase1;
+  const double c_ljeans = internalu_calc_coef_ljeans_(internalu,
+                                                      my_chemistry->Gamma);
 
-  dlogtem = (std::log(my_chemistry->TemperatureEnd) - std::log(my_chemistry->TemperatureStart))/(double)(my_chemistry->NumberOfTemperatureBins-1 );
+  const double dlogtem = (
+    (std::log(my_chemistry->TemperatureEnd) -
+     std::log(my_chemistry->TemperatureStart)) /
+    (double)(my_chemistry->NumberOfTemperatureBins-1 )
+  );
 
   // We better make consistent at first GC202002
 
