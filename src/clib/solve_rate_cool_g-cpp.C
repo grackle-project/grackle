@@ -304,28 +304,29 @@ int solve_rate_cool_g(
         itmask[i] = MASK_TRUE;
       }
 
-      // If we are using coupled radiation with intermediate stepping,
-      // set iteration mask to include only cells with radiation in the
-      // intermediate coupled chemistry / energy step
-      if (my_chemistry->use_radiative_transfer == 1)  {
-        if (my_chemistry->radiative_transfer_coupled_rate_solver == 1  &&  my_chemistry->radiative_transfer_intermediate_step == 1)  {
-          for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-            if (kphHI(i,j,k) > 0)  {
-              itmask[i] = MASK_TRUE;
-            } else {
-              itmask[i] = MASK_FALSE;
-            }
-          }
-        }
+      // adjust iteration mask if the caller indicates that they're using
+      // Grackle in a coupled radiative-transfer/chemistry-energy calculation
+      // (that has intermediate steps)
+      if (my_chemistry->use_radiative_transfer == 1 &&
+          my_chemistry->radiative_transfer_coupled_rate_solver == 1)  {
+        // we only define behavior for radiative_transfer_intermediate_step
+        // values of 0 or 1
 
-        // Normal rate solver, but don't double count cells with radiation
-        if (my_chemistry->radiative_transfer_coupled_rate_solver == 1  &&  my_chemistry->radiative_transfer_intermediate_step == 0)  {
+        if (my_chemistry->radiative_transfer_intermediate_step == 1) {
+          // the caller has invoked this chemistry-energy solver as an
+          // intermediate step of a coupled radiative-transfer/chemistry-energy
+          // calculation and they only want the solver consider cells where
+          // the radiation is non-zero
           for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-            if (kphHI(i,j,k) > 0)  {
-              itmask[i] = MASK_FALSE;
-            } else {
-              itmask[i] = MASK_TRUE;
-            }
+            itmask[i] = (kphHI(i,j,k) > 0) ? MASK_TRUE : MASK_FALSE;
+          }
+        } else if (my_chemistry->radiative_transfer_intermediate_step == 0) {
+          // the caller has invoked this chemistry-energy solver outside
+          // of their coupled radiative-transfer/chemistry-energy calculation.
+          // They want to apply the solver to cells where radiation is 0 (i.e.
+          // locations where skipped by the coupled calculation)
+          for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+            itmask[i] = (kphHI(i,j,k) > 0) ? MASK_FALSE : MASK_TRUE;
           }
         }
       }
