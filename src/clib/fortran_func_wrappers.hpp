@@ -57,9 +57,9 @@ inline void wrapped_ceiling_species_g_(
 }
 
 inline void wrapped_cool1d_multi_g_(
-  int imetal, IndexRange idx_range, int iter, double* comp1, double* comp2,
-  double* edot, double* tgas, double* mmw, double* p2d, double* tdust,
-  double* metallicity, double* dust2gas, double* rhoH, gr_mask_type* itmask,
+  int imetal, IndexRange idx_range, int iter, double* edot, double* tgas,
+  double* mmw, double* p2d, double* tdust, double* metallicity,
+  double* dust2gas, double* rhoH, gr_mask_type* itmask,
   gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
   chemistry_data_storage* my_rates, grackle_field_data* my_fields,
   photo_rate_storage my_uvb_rates, InternalGrUnits internalu,
@@ -68,6 +68,16 @@ inline void wrapped_cool1d_multi_g_(
   grackle::impl::Cool1DMultiScratchBuf cool1dmulti_buf,
   grackle::impl::CoolHeatScratchBuf coolingheating_buf
 ) {
+
+  // the following 2 variables should not be arguments (they are only inside
+  // of cool1d_multi_g to temporarily store a local value)
+  //
+  // We will fix this in the future
+  double comp1, comp2;
+
+  // TODO: we should really pass in a value for min_metallicity (this is
+  // computed in a few independent places)
+
          FORTRAN_NAME(cool1d_multi_g)(
                   my_fields->density, my_fields->internal_energy, my_fields->x_velocity, my_fields->y_velocity, my_fields->z_velocity, my_fields->e_density, my_fields->HI_density, my_fields->HII_density, my_fields->HeI_density, my_fields->HeII_density, my_fields->HeIII_density,
                   &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &my_chemistry->NumberOfTemperatureBins,
@@ -81,7 +91,7 @@ inline void wrapped_cool1d_multi_g_(
                   my_rates->ciHeIS, my_rates->ciHeII, my_rates->reHII, my_rates->reHeII1,
                   my_rates->reHeII2, my_rates->reHeIII, my_rates->brem, &my_rates->comp, &my_rates->gammah,
                   &my_chemistry->interstellar_radiation_field, my_rates->regr, &my_rates->gamma_isrf, &my_uvb_rates.comp_xray, &my_uvb_rates.temp_xray,
-                  &my_uvb_rates.piHI, &my_uvb_rates.piHeI, &my_uvb_rates.piHeII, comp1, comp2,
+                  &my_uvb_rates.piHI, &my_uvb_rates.piHeI, &my_uvb_rates.piHeII, &comp1, &comp2,
                   my_fields->HM_density, my_fields->H2I_density, my_fields->H2II_density, my_fields->DI_density, my_fields->DII_density, my_fields->HDI_density, my_fields->metal_density, my_fields->dust_density,
                   my_rates->hyd01k, my_rates->h2k01, my_rates->vibh, my_rates->roth, my_rates->rotl,
                   coolingheating_buf.hyd01k, coolingheating_buf.h2k01, coolingheating_buf.vibh, coolingheating_buf.roth, coolingheating_buf.rotl,
@@ -451,12 +461,12 @@ inline void wrapped_step_rate_g_(
 }
 
 inline void wrapped_step_rate_newton_raphson_(
-  int imetal, IndexRange idx_range, int iter, double dom, double* comp1,
-  double* comp2, double chunit, double dx_cgs, double c_ljeans, double* dtit,
-  double* p2d, double* tgas, double* tdust, double* metallicity,
-  double* dust2gas, double* rhoH, double* mmw, double* h2dust, double* edot,
-  gr_mask_type anydust, gr_mask_type* itmask_nr, gr_mask_type* itmask_metal,
-  int* imp_eng, chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
+  int imetal, IndexRange idx_range, int iter, double dom, double chunit,
+  double dx_cgs, double c_ljeans, double* dtit, double* p2d, double* tgas,
+  double* tdust, double* metallicity, double* dust2gas, double* rhoH,
+  double* mmw, double* h2dust, double* edot, gr_mask_type anydust,
+  gr_mask_type* itmask_nr, gr_mask_type* itmask_metal, int* imp_eng,
+  chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
   grackle_field_data* my_fields, photo_rate_storage my_uvb_rates,
   InternalGrUnits internalu,
   grackle::impl::GrainSpeciesCollection grain_temperatures,
@@ -465,6 +475,13 @@ inline void wrapped_step_rate_newton_raphson_(
   grackle::impl::CoolHeatScratchBuf coolingheating_buf,
   grackle::impl::ChemHeatingRates chemheatrates_buf
 ) {
+
+  // the following 2 variables should not be arguments (they are only inside
+  // of cool1d_multi_g to temporarily store a local value)
+  //
+  // We will fix this in the future
+  double comp1, comp2;
+
            FORTRAN_NAME(step_rate_newton_raphson)(&my_chemistry->with_radiative_cooling, my_fields->density, my_fields->internal_energy, my_fields->x_velocity, my_fields->y_velocity, my_fields->z_velocity, my_fields->e_density, my_fields->HI_density,
                     my_fields->HII_density, my_fields->HeI_density, my_fields->HeII_density, my_fields->HeIII_density, &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &my_chemistry->NumberOfTemperatureBins,
                     &internalu.extfields_in_comoving, &my_chemistry->primordial_chemistry, &imetal, &my_chemistry->metal_cooling, &my_chemistry->h2_on_dust,
@@ -543,8 +560,8 @@ inline void wrapped_step_rate_newton_raphson_(
                     my_fields->RT_HDI_dissociation_rate, &my_chemistry->radiative_transfer_metal_ionization, my_fields->RT_CI_ionization_rate, my_fields->RT_OI_ionization_rate, &my_chemistry->radiative_transfer_metal_dissociation, my_fields->RT_CO_dissociation_rate,
                     my_fields->RT_OH_dissociation_rate, my_fields->RT_H2O_dissociation_rate, &my_chemistry->radiative_transfer_use_H2_shielding, &my_chemistry->use_isrf_field,
                     my_fields->isrf_habing, &my_chemistry->H2_custom_shielding, my_fields->H2_custom_shielding_factor,
-                    &idx_range.jp1, &idx_range.kp1, &iter, &dom, comp1,
-                    comp2, &internalu.coolunit, &internalu.tbase1, &internalu.xbase1, &chunit, &dx_cgs,
+                    &idx_range.jp1, &idx_range.kp1, &iter, &dom, &comp1,
+                    &comp2, &internalu.coolunit, &internalu.tbase1, &internalu.xbase1, &chunit, &dx_cgs,
                     &c_ljeans, logTlininterp_buf.indixe, logTlininterp_buf.t1, logTlininterp_buf.t2, logTlininterp_buf.logtem, logTlininterp_buf.tdef, dtit,
                     p2d, tgas, cool1dmulti_buf.tgasold, tdust, metallicity, dust2gas,
                     rhoH, mmw, cool1dmulti_buf.mynh, cool1dmulti_buf.myde, cool1dmulti_buf.gammaha_eff, cool1dmulti_buf.gasgr_tdust,

@@ -185,10 +185,6 @@ int solve_rate_cool_g(
   const double mh_local_var = mh_grflt;
   const double pi_local_var = pi_fortran_val;
 
-  // Locals
-
-  double comp1, comp2;
-
   // row temporaries
 
   std::vector<double> dtit(my_fields->grid_dimension[0]);
@@ -285,7 +281,6 @@ int solve_rate_cool_g(
   //_// PORT: #ifdef _OPENMP
   //_// PORT: ! ierr is declared as shared and should be modified with atomic operation
   //_// PORT: !$omp parallel do schedule(runtime) private(
-  //_// PORT: !$omp&   comp1, comp2,
   //_// PORT: !$omp&   dtit, ttot, p2d, tgas,
   //_// PORT: !$omp&   tdust, metallicity, dust2gas, rhoH, mmw,
   //_// PORT: !$omp&   ddom,
@@ -387,7 +382,7 @@ int solve_rate_cool_g(
         // Compute the cooling rate, tgas, tdust, and metallicity for this row
 
         wrapped_cool1d_multi_g_(
-          imetal, idx_range, iter, &comp1, &comp2, edot.data(), tgas.data(),
+          imetal, idx_range, iter, edot.data(), tgas.data(),
           mmw.data(), p2d.data(), tdust.data(), metallicity.data(),
           dust2gas.data(), rhoH.data(), itmask.data(), itmask_metal.data(),
           my_chemistry, my_rates, my_fields, *my_uvb_rates, internalu,
@@ -610,8 +605,8 @@ int solve_rate_cool_g(
           // itmask_nr)
 
           wrapped_step_rate_newton_raphson_(
-            imetal, idx_range, iter, dom, &comp1, &comp2, chunit, dx_cgs,
-            c_ljeans, dtit.data(), p2d.data(), tgas.data(), tdust.data(),
+            imetal, idx_range, iter, dom, chunit, dx_cgs, c_ljeans,
+            dtit.data(), p2d.data(), tgas.data(), tdust.data(),
             metallicity.data(), dust2gas.data(), rhoH.data(), mmw.data(),
             h2dust.data(), edot.data(), anydust, itmask_nr.data(),
             itmask_metal.data(), imp_eng.data(), my_chemistry, my_rates,
