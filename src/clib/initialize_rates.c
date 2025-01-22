@@ -352,15 +352,15 @@ int initialize_rates(chemistry_data *my_chemistry, chemistry_data_storage *my_ra
                           / (densityBase1 * pow(timeBase1, 3));
 
     // These always need to be allocated since we define other variables by them.
-    my_rates->LH2_N = calloc(3, sizeof(int));
-    my_rates->LHD_N = calloc(3, sizeof(int));
-    my_rates->LCI_N = calloc(3, sizeof(int));
-    my_rates->LCII_N = calloc(3, sizeof(int));
-    my_rates->LOI_N = calloc(3, sizeof(int));
-    my_rates->LCO_N = calloc(3, sizeof(int));
-    my_rates->LOH_N = calloc(3, sizeof(int));
-    my_rates->LH2O_N = calloc(3, sizeof(int));
-    my_rates->alphap_N = calloc(2, sizeof(int));
+    my_rates->LH2_N = calloc(3, sizeof(long long));
+    my_rates->LHD_N = calloc(3, sizeof(long long));
+    my_rates->LCI_N = calloc(3, sizeof(long long));
+    my_rates->LCII_N = calloc(3, sizeof(long long));
+    my_rates->LOI_N = calloc(3, sizeof(long long));
+    my_rates->LCO_N = calloc(3, sizeof(long long));
+    my_rates->LOH_N = calloc(3, sizeof(long long));
+    my_rates->LH2O_N = calloc(3, sizeof(long long));
+    my_rates->alphap_N = calloc(2, sizeof(long long));
     my_rates->gr_N = calloc(2, sizeof(int));
 
     if (my_chemistry->use_primordial_continuum_opacity == 1) {

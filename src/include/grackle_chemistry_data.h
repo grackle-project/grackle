@@ -603,29 +603,29 @@ typedef struct
   double *cieY06;
 
   /* H2 and HD cooling rates (collision with HI; Hollenbach & McKee 1979) */
-  int    *LH2_N, LH2_Size;
+  long long *LH2_N, LH2_Size;
   double *LH2_D, *LH2_T, *LH2_H, LH2_dD, LH2_dT, LH2_dH, *LH2_L;
-  int    *LHD_N, LHD_Size;
+  long long *LHD_N, LHD_Size;
   double *LHD_D, *LHD_T, *LHD_H, LHD_dD, LHD_dT, LHD_dH, *LHD_L;
 
   /* Fine-structure cooling rates (collision with HI; Maio et al. 2007) */
-  int    *LCI_N, LCI_Size;
+  long long *LCI_N, LCI_Size;
   double *LCI_D, *LCI_T, *LCI_H, LCI_dD, LCI_dT, LCI_dH, *LCI_L;
-  int    *LCII_N, LCII_Size;
+  long long *LCII_N, LCII_Size;
   double *LCII_D, *LCII_T, *LCII_H, LCII_dD, LCII_dT, LCII_dH, *LCII_L;
-  int    *LOI_N, LOI_Size;
+  long long *LOI_N, LOI_Size;
   double *LOI_D, *LOI_T, *LOI_H, LOI_dD, LOI_dT, LOI_dH, *LOI_L;
 
   /* metal molecular cooling rates (collision with H2I; UMIST table) */
-  int    *LCO_N, LCO_Size;
+  long long *LCO_N, LCO_Size;
   double *LCO_D, *LCO_T, *LCO_H, LCO_dD, LCO_dT, LCO_dH, *LCO_L;
-  int    *LOH_N, LOH_Size;
+  long long *LOH_N, LOH_Size;
   double *LOH_D, *LOH_T, *LOH_H, LOH_dD, LOH_dT, LOH_dH, *LOH_L;
-  int    *LH2O_N, LH2O_Size;
+  long long *LH2O_N, LH2O_Size;
   double *LH2O_D, *LH2O_T, *LH2O_H, LH2O_dD, LH2O_dT, LH2O_dH, *LH2O_L;
 
   /* primordial opacity */
-  int    *alphap_N, alphap_Size;
+  long long *alphap_N, alphap_Size;
   double *alphap_D, *alphap_T, alphap_dD, alphap_dT;
   double *alphap_Data;
 
