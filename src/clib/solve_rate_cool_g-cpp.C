@@ -570,10 +570,10 @@ int solve_rate_cool_g(
       const int k = idx_range.k; // use 0-based index
       const int j = idx_range.j; // use 0-based index
 
-      // tolerance = 1.0e-06_DKIND * dt
+      // `tolerance = 1.0e-06_DKIND * dt` was some commented logic in the
+      // original fortran subroutine in this location
 
       // Initialize iteration mask to true for all cells.
-
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         itmask[i] = MASK_TRUE;
       }
