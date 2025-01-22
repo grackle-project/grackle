@@ -187,8 +187,7 @@ int solve_rate_cool_g(
 
   // Locals
 
-  int iter;
-  double ttmin, comp1, comp2;
+  double comp1, comp2;
 
   // row temporaries
 
@@ -286,8 +285,7 @@ int solve_rate_cool_g(
   //_// PORT: #ifdef _OPENMP
   //_// PORT: ! ierr is declared as shared and should be modified with atomic operation
   //_// PORT: !$omp parallel do schedule(runtime) private(
-  //_// PORT: !$omp&   iter,
-  //_// PORT: !$omp&   ttmin, comp1, comp2,
+  //_// PORT: !$omp&   comp1, comp2,
   //_// PORT: !$omp&   dtit, ttot, p2d, tgas,
   //_// PORT: !$omp&   tdust, metallicity, dust2gas, rhoH, mmw,
   //_// PORT: !$omp&   ddom,
@@ -370,6 +368,11 @@ int solve_rate_cool_g(
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         ddom[i] = d(i,j,k) * dom;
       }
+
+      // declare 2 variables (primarily used for subcycling, but also used in
+      // error reporting)
+      int iter;
+      double ttmin;
 
       // ------------------ Loop over subcycles ----------------
 
