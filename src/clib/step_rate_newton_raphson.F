@@ -75,7 +75,8 @@
      &                gasgr2a, gamma_isrf2a, grogra, idissHDI,
      &                kdissHDI, iionZ, kphCI, kphOI, idissZ, kdissCO,
      &                kdissOH, kdissH2O, iuseH2shield, iisrffield,
-     &                isrf_habing, ierror, j, k, iter, dom, comp1,
+     &                isrf_habing, iH2shieldcustom, f_shield_custom,
+     &                ierror, j, k, iter, dom, comp1,
      &                comp2, coolunit, tbase1, xbase1, chunit, dx_cgs,
      &                c_ljeans, indixe, t1, t2, logtem, tdef, dtit,
      &                p2d, tgas, tgasold, tdust, metallicity, dust2gas,
@@ -104,7 +105,7 @@
      &        idustfield, idustrec, igammah, ih2optical, iciecool,
      &        ithreebody, ih2cr, ihdcr, ndratec, clnew, iVheat, iMheat,
      &        iTfloor, iH2shield, iradshield, iradtrans, irt_honly,
-     &        imchem, igrgr, ipcont, iisrffield
+     &        imchem, igrgr, ipcont, iisrffield, iH2shieldcustom
 
       real*8 aye, temstart, temend, gamma, utim, uxyz, uaye, urho,
      &       utem, fh, z_solar, fgr, dtemstart, dtemend, clEleFra,
@@ -159,6 +160,10 @@
 !  Interstellar radiation field for dust heating
 
       R_PREC  isrf_habing(in,jn,kn)
+
+!  Custom H2 shielding factor
+
+      R_PREC f_shield_custom(in, jn, kn)
 
 !  Cooling tables (coolings rates as a function of temperature)
 
@@ -681,7 +686,7 @@
      & , imp_eng(i)
      & , idissHDI, kdissHDI(i,j,k), iionZ, kphCI(i,j,k), kphOI(i,j,k)
      & , idissZ, kdissCO(i,j,k), kdissOH(i,j,k), kdissH2O(i,j,k)
-     & , iuseH2shield
+     & , iuseH2shield, iH2shieldcustom, f_shield_custom(i,j,k)
      &   )
 
                     do jsp = 1, nsp
@@ -817,7 +822,7 @@
      & , imp_eng(i)
      & , idissHDI, kdissHDI(i,j,k), iionZ, kphCI(i,j,k), kphOI(i,j,k)
      & , idissZ, kdissCO(i,j,k), kdissOH(i,j,k), kdissH2O(i,j,k)
-     & , iuseH2shield
+     & , iuseH2shield, iH2shieldcustom, f_shield_custom(i,j,k)
      &   )
 
                       do isp = 1, nsp

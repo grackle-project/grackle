@@ -969,6 +969,7 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
      &              , tSiM, tFeM, tMg2SiO4, tMgSiO3, tFe3O4
      &              , tAC, tSiO2D, tMgO, tFeS, tAl2O3
      &              , treforg, tvolorg, tH2Oice, iuseH2shield
+     &              , iH2shieldcustom, f_shield_custom
      &      )
 
 !           Compute dedot and HIdot, the rates of change of de and HI
@@ -1329,7 +1330,8 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
      &                gasgr2a, gamma_isrf2a, grogra, idissHDI,
      &                kdissHDI, iionZ, kphCI, kphOI, idissZ, kdissCO,
      &                kdissOH, kdissH2O, iuseH2shield, iisrffield,
-     &                isrf_habing, ierror, j, k, iter, dom, comp1,
+     &                isrf_habing, iH2shieldcustom, f_shield_custom,
+     &                ierror, j, k, iter, dom, comp1,
      &                comp2, coolunit, tbase1, xbase1, chunit, dx_cgs,
      &                c_ljeans, indixe, t1, t2, logtem, tdef, dtit,
      &                p2d, tgas, tgasold, tdust, metallicity, dust2gas,
@@ -1808,6 +1810,7 @@ C                 endif
      &              , tSiM, tFeM, tMg2SiO4, tMgSiO3, tFe3O4
      &              , tAC, tSiO2D, tMgO, tFeS, tAl2O3
      &              , treforg, tvolorg, tH2Oice, iuseH2shield
+     &              , iH2shieldcustom, f_shield_custom
      &      )
 ! -------------------------------------------------------------------
 
