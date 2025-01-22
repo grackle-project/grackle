@@ -18,8 +18,8 @@
 
 #include "solve_rate_cool_g-cpp.h"
 
-/// overrides the subcycle timestep for each index in the index-range that is
-/// selected by the given itmask with the maximum allowed heating/cooling
+/// overrides the subcycle timestep (for each index in the index-range that is
+/// selected by the given itmask) with the maximum allowed heating/cooling
 /// timestep when the current value is larger.
 ///
 /// @param[out]    dtit buffer tracking the current subcycle timestep for each
@@ -44,39 +44,36 @@ static void enforce_max_heatcool_subcycle_dt_(
   const gr_mask_type* itmask, const double* tgas, const double* p2d,
   double* edot, const chemistry_data* my_chemistry
 ) {
+
   for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-    if (itmask[i] != MASK_FALSE)  {
+
+    if (itmask[i] != MASK_FALSE) {
       // Set energy per unit volume of this cell based in the pressure
       // (the gamma used here is the right one even for H2 since p2d
       //  is calculated with this gamma).
-
       double energy = std::fmax(p2d[i]/(my_chemistry->Gamma-1.), tiny8);
 
       // If the temperature is at the bottom of the temperature look-up
       // table and edot < 0, then shut off the cooling.
+      if (tgas[i] <= 1.01*my_chemistry->TemperatureStart && edot[i] < 0.) {
+        edot[i] = tiny8;
+      }
 
-      if (tgas[i] <= 1.01*my_chemistry->TemperatureStart  && 
-           edot[i] < 0.)
-           { edot[i] = tiny8; }
+      // enforce the floor
       if (std::fabs(edot[i]) < tiny8) { edot[i] = tiny8; }
 
       // Compute timestep for 10% change
+      dtit[i] = grackle::impl::fmin(
+        (double)(std::fabs(0.1 * energy / edot[i])), dt - ttot[i], dtit[i]
+      );
 
-      dtit[i] = grackle::impl::fmin((double)(std::fabs(0.1*
-        energy/edot[i]) ),
-        dt-ttot[i], dtit[i]);
-
-      if (dtit[i] != dtit[i])  {
+      if (dtit[i] != dtit[i]) {
         OMP_PRAGMA_CRITICAL
         {
           eprintf("HUGE dtit ::  %g %g %g %g %g %g %g\n",
-                  energy,
-                  edot [ i ],
-                  dtit [ i ],
-                  dt,
-                  ttot [ i ],
-                  std::fabs ( 0.1 * energy / edot [ i ] ),
-                  (double) ( std::fabs ( 0.1 * energy / edot [ i ] ) ));
+                  energy, edot[i], dtit[i], dt, ttot[i],
+                  std::fabs(0.1 * energy / edot[i]),
+                  (double)(std::fabs(0.1 * energy / edot [i])) );
         }
       }
 
