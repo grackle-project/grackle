@@ -213,7 +213,6 @@ int solve_rate_cool_g(
 
   // Iteration mask
 
-  gr_mask_type anydust;
   std::vector<gr_mask_type> itmask(my_fields->grid_dimension[0]);
   std::vector<gr_mask_type> itmask_tmp(my_fields->grid_dimension[0]);
   std::vector<gr_mask_type> itmask_nr(my_fields->grid_dimension[0]);
@@ -228,12 +227,10 @@ int solve_rate_cool_g(
   int ierr = GR_SUCCESS;
 
   // Set flag for dust-related options
-
-  if ((my_chemistry->h2_on_dust > 0)  ||  (my_chemistry->dust_chemistry > 0))  {
-    anydust = MASK_TRUE;
-  } else {
-    anydust = MASK_FALSE;
-  }
+  const gr_mask_type anydust =
+    ((my_chemistry->h2_on_dust > 0)  ||  (my_chemistry->dust_chemistry > 0))
+    ? MASK_TRUE
+    : MASK_FALSE;
 
   // ignore metal chemistry/cooling below this metallicity
   const double min_metallicity = 1.e-9 / my_chemistry->SolarMetalFractionByMass;
