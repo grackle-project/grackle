@@ -435,13 +435,13 @@ int solve_rate_cool_g(
           for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
             if ( itmask_tmp[i] != MASK_FALSE )  {
 
-              if ( ( (imetal == 0)
-                &&  (ddom[i] < 1.e8) )
-               ||  ( (imetal == 1)
-                &&  ( ( (metallicity[i] <= min_metallicity)
-                    &&  (ddom[i] < 1.e8) )
-                   ||  ( (metallicity[i] > min_metallicity)
-                    &&  (ddom[i] < 1.e6) ) ) ) )  {
+              if ( (imetal == 0) && (ddom[i] < 1.e8) ) {
+                itmask_nr[i] = MASK_FALSE;
+              } else if (
+                (imetal == 1) &&
+                (((metallicity[i] <= min_metallicity) && (ddom[i] < 1.e8)) ||
+                 ((metallicity[i] > min_metallicity) && (ddom[i] < 1.e6)))
+              ) {
                 itmask_nr[i] = MASK_FALSE;
               } else {
                 itmask[i] = MASK_FALSE;
@@ -452,9 +452,9 @@ int solve_rate_cool_g(
 
           for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
             if (itmask_nr[i] != MASK_FALSE)  {
-              if ( (my_chemistry->with_radiative_cooling == 1)  &&  (my_chemistry->primordial_chemistry > 1)  && 
-                   ((ddom[i] > 1.e7)
-               && (tgas[i] > 1650.e0)) )  {
+              if ((my_chemistry->with_radiative_cooling == 1) &&
+                  (my_chemistry->primordial_chemistry > 1) &&
+                  (ddom[i] > 1.e7) && (tgas[i] > 1650.0)) {
                 imp_eng[i] = 1;
               } else {
                 imp_eng[i] = 0;
