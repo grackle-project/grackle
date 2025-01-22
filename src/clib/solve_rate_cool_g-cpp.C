@@ -84,6 +84,84 @@ static void enforce_max_heatcool_subcycle_dt_(
 
 // -------------------------------------------------------------
 
+/// Selects the scheme that will be used to evolve the chemistry network and
+/// then accordingly updates the iteration masks (and `imp_eng`)
+///
+/// There are 2 schemes:
+///   1. Gauss-Seidel (for low-density zones)
+///   2. Newton-Raphson (for high-density zones) in 2 modes:
+///      - internal energy evolution is operator-split (handled separately from
+///        chemistry network)
+///      - internal energy is coupled with the rest of the chemistry network
+///
+/// @param[in]     idx_range Specifies the current index-range
+/// @param[in,out] itmask Initially specifies all locations to be evolved
+///     during the current subcycle (in `idx_range`). Will be updated to only
+///     specify the locations to apply Gauss-Seidel scheme
+/// @param[out]    itmask_nr Buffer for `idx_range` that is used to specify
+///     locations where we will apply Newton-Raphson scheme
+/// @param[out]    imp_eng Buffer for `idx_range` where the choice of
+///     energy-evolution handling is recorded for the Newton-Raphson scheme
+/// @param[out]    itmask_tmp Buffer where the initial values of itmask are
+///     copied into
+/// @param[in]     mask_len the length of the iteration masks
+/// @param[in]     imetal specifies whether or not the caller provided a metal
+///     density field
+/// @param[in]     min_metallicity specifies the minimum metallicity where we
+///     consider metal chemistry/cooling
+/// @param[in]     ddom specifies precomputed product of mass density and the
+///    `dom` quantity for each location in `idx_range`
+/// @param[in]     tgas specifies the gas temperatures for the `idx_range`
+/// @param[in]     metallicity specifies the metallicity for the `idx_range`
+///
+/// @todo
+/// It might make more sense to create `itmask_tmp` before calling this
+/// function and then completely ignore the initial values in `itmask` (this
+/// would be far less confusing)
+static void select_chem_scheme_update_masks_(
+  IndexRange idx_range, gr_mask_type* itmask, gr_mask_type* itmask_nr,
+  int* imp_eng, gr_mask_type* itmask_tmp, int mask_len, int imetal,
+  double min_metallicity, const double* ddom, const double* tgas,
+  const double* metallicity, const chemistry_data* my_chemistry
+) {
+
+  std::memcpy(itmask_tmp, itmask, sizeof(gr_mask_type)*mask_len);
+  std::memcpy(itmask_nr, itmask, sizeof(gr_mask_type)*mask_len);
+
+  // would it be more robust to use my_chemistry->metal_cooling than imetal?
+
+  for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+    if ( itmask_tmp[i] != MASK_FALSE )  {
+
+      if ( (imetal == 0) && (ddom[i] < 1.e8) ) {
+        itmask_nr[i] = MASK_FALSE;
+      } else if (
+        (imetal == 1) &&
+        (((metallicity[i] <= min_metallicity) && (ddom[i] < 1.e8)) ||
+         ((metallicity[i] > min_metallicity) && (ddom[i] < 1.e6)))
+      ) {
+        itmask_nr[i] = MASK_FALSE;
+      } else {
+        itmask[i] = MASK_FALSE;
+      }
+
+    }
+  }
+
+  for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+    if (itmask_nr[i] != MASK_FALSE)  {
+      if ((my_chemistry->with_radiative_cooling == 1) &&
+          (my_chemistry->primordial_chemistry > 1) &&
+          (ddom[i] > 1.e7) && (tgas[i] > 1650.0)) {
+        imp_eng[i] = 1;
+      } else {
+        imp_eng[i] = 0;
+      }
+    }
+  }
+}
+
+// -------------------------------------------------------------
 
 /// Computes the timescale given by `ndens_Heq / (d ndens_Heq / d t)`
 ///
@@ -652,43 +730,19 @@ int solve_rate_cool_g(
             chemheatrates_buf
           );
 
-          // move itmask temporary array
-          // then split cells with low densities
-          //    => Gauss-Seidel scheme
-          //              and with high densities
-          //    => Newton-Raphson scheme
-
-          std::memcpy(itmask_tmp.data(), itmask.data(), sizeof(gr_mask_type)*my_fields->grid_dimension[0]);
-          std::memcpy(itmask_nr.data(), itmask.data(), sizeof(gr_mask_type)*my_fields->grid_dimension[0]);
-          for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-            if ( itmask_tmp[i] != MASK_FALSE )  {
-
-              if ( (imetal == 0) && (ddom[i] < 1.e8) ) {
-                itmask_nr[i] = MASK_FALSE;
-              } else if (
-                (imetal == 1) &&
-                (((metallicity[i] <= min_metallicity) && (ddom[i] < 1.e8)) ||
-                 ((metallicity[i] > min_metallicity) && (ddom[i] < 1.e6)))
-              ) {
-                itmask_nr[i] = MASK_FALSE;
-              } else {
-                itmask[i] = MASK_FALSE;
-              }
-
-            }
-          }
-
-          for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-            if (itmask_nr[i] != MASK_FALSE)  {
-              if ((my_chemistry->with_radiative_cooling == 1) &&
-                  (my_chemistry->primordial_chemistry > 1) &&
-                  (ddom[i] > 1.e7) && (tgas[i] > 1650.0)) {
-                imp_eng[i] = 1;
-              } else {
-                imp_eng[i] = 0;
-              }
-            }
-          }
+          // First, copy itmask's current values into a temporary array
+          // (itmask_tmp). Then setup masks to identify which chemistry schemes
+          // to use. We split cells by density:
+          //    => low-density: Gauss-Seidel scheme, tracked by itmask
+          //    => high-density: Newton-Raphson scheme, tracked by itmask_nr
+          //
+          // (the values stored within itmask will change within the function)
+          select_chem_scheme_update_masks_(
+            idx_range, itmask.data(), itmask_nr.data(), imp_eng.data(),
+            itmask_tmp.data(), my_fields->grid_dimension[0], imetal,
+            min_metallicity, ddom.data(), tgas.data(), metallicity.data(),
+            my_chemistry
+          );
 
           // Set the max timestep for the current subcycle based on our scheme
           // for updating the chemical network:
