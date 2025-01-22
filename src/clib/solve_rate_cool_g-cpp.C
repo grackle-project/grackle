@@ -100,6 +100,57 @@ static double calc_Heq_div_dHeqdt_(
   return heq / dheq;
 }
 
+// -------------------------------------------------------------
+
+/// Updates the iteration mask in the case where the user has specified that we
+/// are using grackle as a part of a coupled radiative transfer calculation
+///
+/// @param[out] itmask the mask that will be overriden
+/// @param[in] idx_range specifies the index-range
+/// @param[in] kphHI view of the HI photo-ionization rate field
+/// @param[in] my_chemistry specifies grackle settings (we probably don't need
+///     to pass in everything)
+static inline void coupled_rt_modify_itmask_(
+  gr_mask_type* itmask,
+  IndexRange idx_range,
+  grackle::impl::View<gr_float***> kphHI,
+  const chemistry_data* my_chemistry
+)
+{
+  // adjust iteration mask if the caller indicates that they're using
+  // Grackle in a coupled radiative-transfer/chemistry-energy calculation
+  // (that has intermediate steps)
+  if (my_chemistry->use_radiative_transfer == 1 &&
+      my_chemistry->radiative_transfer_coupled_rate_solver == 1)  {
+    // we only define behavior for radiative_transfer_intermediate_step
+    // values of 0 or 1
+
+    const int j = idx_range.j;
+    const int k = idx_range.k;
+
+    if (my_chemistry->radiative_transfer_intermediate_step == 1) {
+      // the caller has invoked this chemistry-energy solver as an
+      // intermediate step of a coupled radiative-transfer/chemistry-energy
+      // calculation and they only want the solver consider cells where
+      // the radiation is non-zero
+      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+        itmask[i] = (kphHI(i,j,k) > 0) ? MASK_TRUE : MASK_FALSE;
+      }
+    } else if (my_chemistry->radiative_transfer_intermediate_step == 0) {
+      // the caller has invoked this chemistry-energy solver outside
+      // of their coupled radiative-transfer/chemistry-energy calculation.
+      // They want to apply the solver to cells where radiation is 0 (i.e.
+      // locations where skipped by the coupled calculation)
+      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+        itmask[i] = (kphHI(i,j,k) > 0) ? MASK_FALSE : MASK_TRUE;
+      }
+    }
+  }
+}
+
+
+// -------------------------------------------------------------
+
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
@@ -304,32 +355,9 @@ int solve_rate_cool_g(
         itmask[i] = MASK_TRUE;
       }
 
-      // adjust iteration mask if the caller indicates that they're using
-      // Grackle in a coupled radiative-transfer/chemistry-energy calculation
-      // (that has intermediate steps)
-      if (my_chemistry->use_radiative_transfer == 1 &&
-          my_chemistry->radiative_transfer_coupled_rate_solver == 1)  {
-        // we only define behavior for radiative_transfer_intermediate_step
-        // values of 0 or 1
-
-        if (my_chemistry->radiative_transfer_intermediate_step == 1) {
-          // the caller has invoked this chemistry-energy solver as an
-          // intermediate step of a coupled radiative-transfer/chemistry-energy
-          // calculation and they only want the solver consider cells where
-          // the radiation is non-zero
-          for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-            itmask[i] = (kphHI(i,j,k) > 0) ? MASK_TRUE : MASK_FALSE;
-          }
-        } else if (my_chemistry->radiative_transfer_intermediate_step == 0) {
-          // the caller has invoked this chemistry-energy solver outside
-          // of their coupled radiative-transfer/chemistry-energy calculation.
-          // They want to apply the solver to cells where radiation is 0 (i.e.
-          // locations where skipped by the coupled calculation)
-          for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-            itmask[i] = (kphHI(i,j,k) > 0) ? MASK_FALSE : MASK_TRUE;
-          }
-        }
-      }
+      // adjust iteration mask (but only if using Grackle in a coupled
+      // radiative-transfer calculation)
+      coupled_rt_modify_itmask_(itmask.data(), idx_range, kphHI, my_chemistry);
 
       // Set time elapsed to zero for each cell in 1D section
 
