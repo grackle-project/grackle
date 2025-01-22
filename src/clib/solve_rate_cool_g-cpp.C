@@ -18,6 +18,76 @@
 
 #include "solve_rate_cool_g-cpp.h"
 
+/// overrides the subcycle timestep for each index in the index-range that is
+/// selected by the given itmask with the maximum allowed heating/cooling
+/// timestep when the current value is larger.
+///
+/// @param[out]    dtit buffer tracking the current subcycle timestep for each
+///    index in the index-range. If the current value exceeds the maximum
+///    allowed heating/cooling timestep, the values will overwritten
+/// @param[in]     idx_range Specifies the current index-range
+/// @param[in]     dt tracks the full timestep that all the subcycles will
+///    eventually add up to
+/// @param[in]     ttot tracks the total time that has already elapsed from
+///    previous subcycles for each location in `idx_range`
+/// @param[in]     itmask Specifies the `idx_range`'s iteration-mask for this
+///    calculation
+/// @param[in]     tgas specifies the gas temperatures for the `idx_range`
+/// @param[in]     p2d specifies the pressures for the `idx_range`. This is
+///    computed user-specified nominal adiabatic index value (i.e. no attempts
+///    are made to correct for presence of H2)
+/// @param[in,out] edot specifies the time derivative of internal energy
+///    density for each location in `idx_range`. This may be overwritten to
+///    enforce the floor.
+static void enforce_max_heatcool_subcycle_dt_(
+  double* dtit, IndexRange idx_range, double dt, const double* ttot,
+  const gr_mask_type* itmask, const double* tgas, const double* p2d,
+  double* edot, const chemistry_data* my_chemistry
+) {
+  for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+    if (itmask[i] != MASK_FALSE)  {
+      // Set energy per unit volume of this cell based in the pressure
+      // (the gamma used here is the right one even for H2 since p2d
+      //  is calculated with this gamma).
+
+      double energy = std::fmax(p2d[i]/(my_chemistry->Gamma-1.), tiny8);
+
+      // If the temperature is at the bottom of the temperature look-up
+      // table and edot < 0, then shut off the cooling.
+
+      if (tgas[i] <= 1.01*my_chemistry->TemperatureStart  && 
+           edot[i] < 0.)
+           { edot[i] = tiny8; }
+      if (std::fabs(edot[i]) < tiny8) { edot[i] = tiny8; }
+
+      // Compute timestep for 10% change
+
+      dtit[i] = grackle::impl::fmin((double)(std::fabs(0.1*
+        energy/edot[i]) ),
+        dt-ttot[i], dtit[i]);
+
+      if (dtit[i] != dtit[i])  {
+        OMP_PRAGMA_CRITICAL
+        {
+          eprintf("HUGE dtit ::  %g %g %g %g %g %g %g\n",
+                  energy,
+                  edot [ i ],
+                  dtit [ i ],
+                  dt,
+                  ttot [ i ],
+                  std::fabs ( 0.1 * energy / edot [ i ] ),
+                  (double) ( std::fabs ( 0.1 * energy / edot [ i ] ) ));
+        }
+      }
+
+    }
+  }
+
+}
+
+// -------------------------------------------------------------
+
+
 /// Computes the timescale given by `ndens_Heq / (d ndens_Heq / d t)`
 ///
 /// This is used to help compute the subcycle timestep when using a primordial
@@ -631,46 +701,13 @@ int solve_rate_cool_g(
           );
         }
 
-        // Compute maximum timestep for cooling/heating
-
-        for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-          if (itmask[i] != MASK_FALSE)  {
-            // Set energy per unit volume of this cell based in the pressure
-            // (the gamma used here is the right one even for H2 since p2d
-            //  is calculated with this gamma).
-
-            double energy = std::fmax(p2d[i]/(my_chemistry->Gamma-1.), tiny8);
-
-            // If the temperature is at the bottom of the temperature look-up
-            // table and edot < 0, then shut off the cooling.
-
-            if (tgas[i] <= 1.01*my_chemistry->TemperatureStart  && 
-                 edot[i] < 0.)
-                 { edot[i] = tiny8; }
-            if (std::fabs(edot[i]) < tiny8) { edot[i] = tiny8; }
-
-            // Compute timestep for 10% change
-
-            dtit[i] = grackle::impl::fmin((double)(std::fabs(0.1*
-              energy/edot[i]) ),
-              dt-ttot[i], dtit[i]);
-
-            if (dtit[i] != dtit[i])  {
-              OMP_PRAGMA_CRITICAL
-              {
-                eprintf("HUGE dtit ::  %g %g %g %g %g %g %g\n",
-                        energy,
-                        edot [ i ],
-                        dtit [ i ],
-                        dt,
-                        ttot [ i ],
-                        std::fabs ( 0.1 * energy / edot [ i ] ),
-                        (double) ( std::fabs ( 0.1 * energy / edot [ i ] ) ));
-              }
-            }
-
-          }
-        }
+        // Update dtit (the current subcycle timestep) to ensure it doesn't
+        // exceed the max timestep for cooling/heating
+        // -> zones that will use Newton-Raphson scheme are ignored
+        enforce_max_heatcool_subcycle_dt_(
+          dtit.data(), idx_range, dt, ttot.data(), itmask.data(), tgas.data(),
+          p2d.data(), edot.data(), my_chemistry
+        );
 
         // Update total and gas energy
 
