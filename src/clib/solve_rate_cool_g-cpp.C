@@ -180,29 +180,32 @@ static double calc_Heq_div_dHeqdt_(
 /// if it exceeds maximum the allowed chemistry-rate timestep.
 ///
 /// @param[out] dtit buffer tracking the current subcycle timestep for each
-///   index in the index-range. Values will be modified in place.
+///    index in the index-range. Values will be modified in place.
 /// @param[in] idx_range Specifies the current index-range
 /// @param[in] iter current subcycle iteration
 /// @param[in] dt tracks the full timestep that all the subcycles will
-///   eventually add up to
+///    eventually add up to
 /// @param[in] ttot tracks the total time that has already elapsed from
-///   previous subcycles for each location in `idx_range`
+///    previous subcycles for each location in `idx_range`
 /// @param[in] itmask Specifies the `idx_range`'s iteration-mask for the
-///   Gauss-Seidel scheme
+///    Gauss-Seidel scheme
 /// @param[in] itmask_nr Specifies the `idx_range`'s iteration-mask for the
-///   Newton-Raphson scheme
+///    Newton-Raphson scheme
 /// @param[in] imp_eng Specifies how Newton-Raphson scheme handles energy
-///   evolution at each `idx_range` location
+///    evolution at each `idx_range` location
 /// @param[in] dedot, HIdot respectively specify the time derivative of the
-///   free electrons and HI for the `idx_range`
+///    free electrons and HI for the `idx_range`
 /// @param[in] dedot_prev, HIdot_prev respectively specify the time derivative
-///   of the free electron density and HI density for the `idx_range` from the
-///   previous subcycle (they're allowed to hold garbage data in 1st subcycle)
+///    of the free electron density and HI density for the `idx_range` from the
+///    previous subcycle (they're allowed to hold garbage data in 1st subcycle)
 /// @param[in] ddom specifies precomputed product of mass density and the
 ///    `dom` quantity for each location in `idx_range`
-/// @param[in] tgas, p2d, edot arrays that respectively specify the precomputed
-///    gas temperature, pressure divided by density, and the time derivative of
-///    internal energy density (for each location in `idx_range`)
+/// @param[in] tgas specifies the gas temperatures for the `idx_range`
+/// @param[in] p2d specifies the pressures for the `idx_range`. This is
+///    computed user-specified nominal adiabatic index value (i.e. no attempts
+///    are made to correct for presence of H2)
+/// @param[in] edot specifies the time derivative of the internal energy
+///    density for the `idx_range`.
 /// @param[in] my_chemistry holds a number of configuration parameters
 /// @param[in] my_rates holds assorted rate data. In this function, this is
 ///    being used to specify the interpolation tables of some relevant reaction
