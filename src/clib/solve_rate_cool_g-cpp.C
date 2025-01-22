@@ -182,9 +182,6 @@ int solve_rate_cool_g(
   const gr_float tolerance = (gr_float)(1.0e-10);
 #endif
 
-  const double mh_local_var = mh_grflt;
-  const double pi_local_var = pi_fortran_val;
-
   // row temporaries
 
   std::vector<double> dtit(my_fields->grid_dimension[0]);
