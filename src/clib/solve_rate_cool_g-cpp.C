@@ -181,24 +181,35 @@ static void set_subcycle_dt_from_chemistry_scheme_(
                                      my_fields->grid_dimension[1],
                                      my_fields->grid_dimension[2]);
 
+
   for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-    if (itmask[i] != MASK_FALSE)  {
+    if (itmask[i] != MASK_FALSE) {
+      // in this case, the chemical network will be evolved with Gauss-Seidel
+
+      // Part 1 of 2: adjust values of dedot and HIdot
+      // ---------------------------------------------
+
       // Bound from below to prevent numerical errors
-       
-      if (std::fabs(dedot[i]) < tiny8)
-                 { dedot[i] = std::fmin(tiny_fortran_val,de(i,j,k)); }
-      if (std::fabs(HIdot[i]) < tiny8)
-                 { HIdot[i] = std::fmin(tiny_fortran_val,HI(i,j,k)); }
+      if (std::fabs(dedot[i]) < tiny8) {
+        dedot[i] = std::fmin(tiny_fortran_val, de(i,j,k));
+      }
+      if (std::fabs(HIdot[i]) < tiny8){
+        HIdot[i] = std::fmin(tiny_fortran_val, HI(i,j,k));
+      }
 
       // If the net rate is almost perfectly balanced then set
       //     it to zero (since it is zero to available precision)
-
-      if (std::fmin(std::fabs(kcr_buf.data[ColRecRxnLUT::k1][i]* de(i,j,k)*HI(i,j,k)),
-              std::fabs(kcr_buf.data[ColRecRxnLUT::k2][i]*HII(i,j,k)*de(i,j,k)))/
-          std::fmax(std::fabs(dedot[i]),std::fabs(HIdot[i])) >
-           1.0e6)  {
-        dedot[i] = tiny8;
-        HIdot[i] = tiny8;
+      {
+        double ion_rate = std::fabs(kcr_buf.data[ColRecRxnLUT::k1][i] *
+                                    de(i,j,k) * HI(i,j,k));
+        double recomb_rate = std::fabs(kcr_buf.data[ColRecRxnLUT::k2][i] *
+                                       HII(i,j,k) * de(i,j,k));
+        double ratio = (std::fmin(ion_rate, recomb_rate) /
+                        std::fmax(std::fabs(dedot[i]), std::fabs(HIdot[i])));
+        if (ratio > 1.0e6) {
+          dedot[i] = tiny8;
+          HIdot[i] = tiny8;
+        }
       }
 
       // If the iteration count is high then take the smaller of
@@ -206,21 +217,21 @@ static void set_subcycle_dt_from_chemistry_scheme_(
       //   This is intended to get around the problem of a low
       //   electron or HI fraction which is in equilibrium with high
       //   individual terms (which all nearly cancel).
-
       if (iter > 50)  {
         dedot[i] = std::fmin(std::fabs(dedot[i]), std::fabs(dedot_prev[i]));
         HIdot[i] = std::fmin(std::fabs(HIdot[i]), std::fabs(HIdot_prev[i]));
       }
 
-      // compute minimum rate timestep
+      // Part 2 of 2: compute minimum rate timestep
+      // ------------------------------------------
 
       double olddtit = dtit[i];
       dtit[i] = grackle::impl::fmin(std::fabs(0.1*de(i,j,k)/dedot[i]),
-           std::fabs(0.1*HI(i,j,k)/HIdot[i]),
-           dt-ttot[i], 0.5*dt);
+                                    std::fabs(0.1*HI(i,j,k)/HIdot[i]),
+                                    dt-ttot[i],
+                                    0.5*dt);
 
-      if (ddom[i] > 1.e8  && 
-           edot[i] > 0.       && 
+      if (ddom[i] > 1.e8  && edot[i] > 0. &&
           my_chemistry->primordial_chemistry > 1)  {
         // here, we ensure that that the equilibrium mass density of
         // Hydrogen changes by 10% or less
@@ -232,24 +243,26 @@ static void set_subcycle_dt_from_chemistry_scheme_(
 
         dtit[i] = std::fmin(dtit[i], 0.1*Heq_div_dHeqdt);
       }
-      if (iter>10LL)  {
+
+      if (iter > 10) {
         dtit[i] = std::fmin(olddtit*1.5, dtit[i]);
       }
 
-    } else if ((itmask_nr[i]!=MASK_FALSE) && 
-             (imp_eng[i]==0))  {
+    } else if ((itmask_nr[i]!=MASK_FALSE) && (imp_eng[i]==0))  {
+      // we may want to handle this case and the next case in a separate
+      // function (they determine the timestep using very different logic than
+      // in the above case)
       dtit[i] = grackle::impl::fmin(std::fabs(0.1*e(i,j,k)/edot[i]*d(i,j,k)),
-           dt-ttot[i], 0.5*dt);
+                                    dt-ttot[i],
+                                    0.5*dt);
 
-    } else if ((itmask_nr[i]!=MASK_FALSE) && 
-             (imp_eng[i]==1))  {
+    } else if ((itmask_nr[i]!=MASK_FALSE) && (imp_eng[i]==1))  {
       dtit[i] = dt - ttot[i];
 
     } else {
       dtit[i] = dt;
     }
   }
-
 }
 
 // -------------------------------------------------------------
@@ -603,7 +616,11 @@ int solve_rate_cool_g(
             }
           }
 
-          // Find timestep that keeps relative chemical changes below 10%
+          // Set the max timestep for the current subcycle based on our scheme
+          // for updating the chemical network:
+          // - for Gauss-Seidel, pick a timestep that keeps relative chemical
+          //   changes below 10%
+          // - do something else for Newton-Raphson
 
           set_subcycle_dt_from_chemistry_scheme_(
             dtit.data(), idx_range, iter, dt, ttot.data(), itmask.data(),
