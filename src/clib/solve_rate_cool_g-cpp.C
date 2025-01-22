@@ -102,6 +102,158 @@ static double calc_Heq_div_dHeqdt_(
 
 // -------------------------------------------------------------
 
+/// Sets the current subcycle timestep for each index in the index-range
+/// if it exceeds maximum the allowed chemistry-rate timestep.
+///
+/// @param[out] dtit buffer tracking the current subcycle timestep for each
+///   index in the index-range. Values will be modified in place.
+/// @param[in] idx_range Specifies the current index-range
+/// @param[in] iter current subcycle iteration
+/// @param[in] dt tracks the full timestep that all the subcycles will
+///   eventually add up to
+/// @param[in] ttot tracks the total time that has already elapsed from
+///   previous subcycles for each location in `idx_range`
+/// @param[in] itmask Specifies the `idx_range`'s iteration-mask for the
+///   Gauss-Seidel scheme
+/// @param[in] itmask_nr Specifies the `idx_range`'s iteration-mask for the
+///   Newton-Raphson scheme
+/// @param[in] imp_eng Specifies how Newton-Raphson scheme handles energy
+///   evolution at each `idx_range` location
+/// @param[in] dedot, HIdot respectively specify the time derivative of the
+///   free electrons and HI for the `idx_range`
+/// @param[in] dedot_prev, HIdot_prev respectively specify the time derivative
+///   of the free electron density and HI density for the `idx_range` from the
+///   previous subcycle (they're allowed to hold garbage data in 1st subcycle)
+/// @param[in] ddom specifies precomputed product of mass density and the
+///    `dom` quantity for each location in `idx_range`
+/// @param[in] tgas, p2d, edot arrays that respectively specify the precomputed
+///    gas temperature, pressure divided by density, and the time derivative of
+///    internal energy density (for each location in `idx_range`)
+/// @param[in] my_chemistry holds a number of configuration parameters
+/// @param[in] my_rates holds assorted rate data. In this function, this is
+///    being used to specify the interpolation tables of some relevant reaction
+///    rates (they are tabulated with respect to logT)
+/// @param[in] dlogtem Specifies the constant spacing shared by the relevant
+///    rate interpolation tables
+/// @param[in] logTlininterp_buf Specifies the information related to the
+///    position in the logT interpolations (for a number of chemistry zones)
+/// @param[in] my_fields specifies the field data
+/// @param[in] kcr_buf holds various pre-computed chemical reaction rates for
+///    each location in `idx_range`.
+///
+/// @todo
+/// Consider breaking this into 2 functions that separately determines dtit for
+/// Gauss-Seidel and Newton-Raphson. (At the time of writing, the included
+/// logic for Newton-Raphson doesn't care about the chemistry-rates, instead
+/// it sets the timestep based on the energy evolution)
+static void set_subcycle_dt_from_chemistry_scheme_(
+  double* dtit, IndexRange idx_range, int iter, double dt, const double* ttot,
+  const gr_mask_type* itmask, const gr_mask_type* itmask_nr, const int* imp_eng,
+  double* dedot, double* HIdot,
+  const double* dedot_prev, const double* HIdot_prev,
+  const double* ddom, const double* tgas, const double* p2d, const double* edot,
+  const chemistry_data* my_chemistry, const chemistry_data_storage* my_rates,
+  double dlogtem,
+  const grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf,
+  grackle_field_data* my_fields, grackle::impl::ColRecRxnRateCollection kcr_buf
+) {
+  const int j = idx_range.j;
+  const int k = idx_range.k;
+
+  grackle::impl::View<gr_float***> de(my_fields->e_density,
+                                      my_fields->grid_dimension[0],
+                                      my_fields->grid_dimension[1],
+                                      my_fields->grid_dimension[2]);
+  grackle::impl::View<gr_float***> HI(my_fields->HI_density,
+                                      my_fields->grid_dimension[0],
+                                      my_fields->grid_dimension[1],
+                                      my_fields->grid_dimension[2]);
+  grackle::impl::View<gr_float***> HII(my_fields->HII_density,
+                                       my_fields->grid_dimension[0],
+                                       my_fields->grid_dimension[1],
+                                       my_fields->grid_dimension[2]);
+  grackle::impl::View<gr_float***> d(my_fields->density,
+                                     my_fields->grid_dimension[0],
+                                     my_fields->grid_dimension[1],
+                                     my_fields->grid_dimension[2]);
+  grackle::impl::View<gr_float***> e(my_fields->internal_energy,
+                                     my_fields->grid_dimension[0],
+                                     my_fields->grid_dimension[1],
+                                     my_fields->grid_dimension[2]);
+
+  for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+    if (itmask[i] != MASK_FALSE)  {
+      // Bound from below to prevent numerical errors
+       
+      if (std::fabs(dedot[i]) < tiny8)
+                 { dedot[i] = std::fmin(tiny_fortran_val,de(i,j,k)); }
+      if (std::fabs(HIdot[i]) < tiny8)
+                 { HIdot[i] = std::fmin(tiny_fortran_val,HI(i,j,k)); }
+
+      // If the net rate is almost perfectly balanced then set
+      //     it to zero (since it is zero to available precision)
+
+      if (std::fmin(std::fabs(kcr_buf.data[ColRecRxnLUT::k1][i]* de(i,j,k)*HI(i,j,k)),
+              std::fabs(kcr_buf.data[ColRecRxnLUT::k2][i]*HII(i,j,k)*de(i,j,k)))/
+          std::fmax(std::fabs(dedot[i]),std::fabs(HIdot[i])) >
+           1.0e6)  {
+        dedot[i] = tiny8;
+        HIdot[i] = tiny8;
+      }
+
+      // If the iteration count is high then take the smaller of
+      //   the calculated dedot and last time step's actual dedot.
+      //   This is intended to get around the problem of a low
+      //   electron or HI fraction which is in equilibrium with high
+      //   individual terms (which all nearly cancel).
+
+      if (iter > 50)  {
+        dedot[i] = std::fmin(std::fabs(dedot[i]), std::fabs(dedot_prev[i]));
+        HIdot[i] = std::fmin(std::fabs(HIdot[i]), std::fabs(HIdot_prev[i]));
+      }
+
+      // compute minimum rate timestep
+
+      double olddtit = dtit[i];
+      dtit[i] = grackle::impl::fmin(std::fabs(0.1*de(i,j,k)/dedot[i]),
+           std::fabs(0.1*HI(i,j,k)/HIdot[i]),
+           dt-ttot[i], 0.5*dt);
+
+      if (ddom[i] > 1.e8  && 
+           edot[i] > 0.       && 
+          my_chemistry->primordial_chemistry > 1)  {
+        // here, we ensure that that the equilibrium mass density of
+        // Hydrogen changes by 10% or less
+        double Heq_div_dHeqdt = calc_Heq_div_dHeqdt_(
+          my_chemistry, my_rates, dlogtem, logTlininterp_buf,
+          kcr_buf.data[ColRecRxnLUT::k13], kcr_buf.data[ColRecRxnLUT::k22],
+          d(i,j,k), tgas, p2d, edot, i
+        );
+
+        dtit[i] = std::fmin(dtit[i], 0.1*Heq_div_dHeqdt);
+      }
+      if (iter>10LL)  {
+        dtit[i] = std::fmin(olddtit*1.5, dtit[i]);
+      }
+
+    } else if ((itmask_nr[i]!=MASK_FALSE) && 
+             (imp_eng[i]==0))  {
+      dtit[i] = grackle::impl::fmin(std::fabs(0.1*e(i,j,k)/edot[i]*d(i,j,k)),
+           dt-ttot[i], 0.5*dt);
+
+    } else if ((itmask_nr[i]!=MASK_FALSE) && 
+             (imp_eng[i]==1))  {
+      dtit[i] = dt - ttot[i];
+
+    } else {
+      dtit[i] = dt;
+    }
+  }
+
+}
+
+// -------------------------------------------------------------
+
 /// Updates the iteration mask in the case where the user has specified that we
 /// are using grackle as a part of a coupled radiative transfer calculation
 ///
@@ -164,9 +316,6 @@ int solve_rate_cool_g(
 
   // Density, energy and velocity fields fields
 
-  grackle::impl::View<gr_float***> de(my_fields->e_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> HI(my_fields->HI_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> HII(my_fields->HII_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> d(my_fields->density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> e(my_fields->internal_energy, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
@@ -456,75 +605,13 @@ int solve_rate_cool_g(
 
           // Find timestep that keeps relative chemical changes below 10%
 
-          for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-            if (itmask[i] != MASK_FALSE)  {
-              // Bound from below to prevent numerical errors
-               
-              if (std::fabs(dedot[i]) < tiny8)
-                         { dedot[i] = std::fmin(tiny_fortran_val,de(i,j,k)); }
-              if (std::fabs(HIdot[i]) < tiny8)
-                         { HIdot[i] = std::fmin(tiny_fortran_val,HI(i,j,k)); }
-
-              // If the net rate is almost perfectly balanced then set
-              //     it to zero (since it is zero to available precision)
-
-              if (std::fmin(std::fabs(kcr_buf.data[ColRecRxnLUT::k1][i]* de(i,j,k)*HI(i,j,k)),
-                      std::fabs(kcr_buf.data[ColRecRxnLUT::k2][i]*HII(i,j,k)*de(i,j,k)))/
-                  std::fmax(std::fabs(dedot[i]),std::fabs(HIdot[i])) >
-                   1.0e6)  {
-                dedot[i] = tiny8;
-                HIdot[i] = tiny8;
-              }
-
-              // If the iteration count is high then take the smaller of
-              //   the calculated dedot and last time step's actual dedot.
-              //   This is intended to get around the problem of a low
-              //   electron or HI fraction which is in equilibrium with high
-              //   individual terms (which all nearly cancel).
-
-              if (iter > 50)  {
-                dedot[i] = std::fmin(std::fabs(dedot[i]), std::fabs(dedot_prev[i]));
-                HIdot[i] = std::fmin(std::fabs(HIdot[i]), std::fabs(HIdot_prev[i]));
-              }
-
-              // compute minimum rate timestep
-
-              double olddtit = dtit[i];
-              dtit[i] = grackle::impl::fmin(std::fabs(0.1*de(i,j,k)/dedot[i]),
-                   std::fabs(0.1*HI(i,j,k)/HIdot[i]),
-                   dt-ttot[i], 0.5*dt);
-
-              if (ddom[i] > 1.e8  && 
-                   edot[i] > 0.       && 
-                  my_chemistry->primordial_chemistry > 1)  {
-                // here, we ensure that that the equilibrium mass density of
-                // Hydrogen changes by 10% or less
-                double Heq_div_dHeqdt = calc_Heq_div_dHeqdt_(
-                  my_chemistry, my_rates, dlogtem, logTlininterp_buf,
-                  kcr_buf.data[ColRecRxnLUT::k13], kcr_buf.data[ColRecRxnLUT::k22], d(i,j,k), tgas.data(),
-                  p2d.data(), edot.data(), i
-                );
-
-                dtit[i] = std::fmin(dtit[i], 0.1*Heq_div_dHeqdt);
-              }
-              if (iter>10LL)  {
-                dtit[i] = std::fmin(olddtit*1.5, dtit[i]);
-              }
-
-            } else if ((itmask_nr[i]!=MASK_FALSE) && 
-                     (imp_eng[i]==0))  {
-              dtit[i] = grackle::impl::fmin(std::fabs(0.1*e(i,j,k)/edot[i]*d(i,j,k)),
-                   dt-ttot[i], 0.5*dt);
-
-            } else if ((itmask_nr[i]!=MASK_FALSE) && 
-                     (imp_eng[i]==1))  {
-              dtit[i] = dt - ttot[i];
-
-            } else {
-              dtit[i] = dt;
-            }
-          }
-
+          set_subcycle_dt_from_chemistry_scheme_(
+            dtit.data(), idx_range, iter, dt, ttot.data(), itmask.data(),
+            itmask_nr.data(), imp_eng.data(), dedot.data(), HIdot.data(),
+            dedot_prev.data(), HIdot_prev.data(), ddom.data(), tgas.data(),
+            p2d.data(), edot.data(), my_chemistry, my_rates, dlogtem,
+            logTlininterp_buf, my_fields, kcr_buf
+          );
         }
 
         // Compute maximum timestep for cooling/heating
