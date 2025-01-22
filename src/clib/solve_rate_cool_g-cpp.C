@@ -104,8 +104,12 @@ static void enforce_max_heatcool_subcycle_dt_(
 /// @param k13, k22 1D arrays specifying the previously looked up, local values
 ///    of the k13 and k22 rates.
 /// @param local_rho specifies the local (total) mass density
-/// @param tgas, p2d, edot 1D arrays containing local values of temperature,
-///    pressure divided by density, and the time derivative of internal energy.
+/// @param tgas 1D array specifying the temperature
+/// @param p2d 1D array specifying the pressures values. This is computed from
+///    the user-specified nominal adiabatic index value (i.e. no attempts
+///    are made to correct for presence of H2)
+/// @param edot 1D array specifying the time derivative of the internal energy
+///    density
 /// @param i Specifies the index of the relevant zone in the 1D array. (**BE
 ///    AWARE:** this is a 0-based index)
 ///
