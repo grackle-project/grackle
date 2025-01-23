@@ -7,6 +7,7 @@
 // solve_rate_cool_g function from FORTRAN to C++
 
 #include <cstdio>
+#include <cstdlib> // std::malloc, std::free
 #include <vector>
 
 #include "grackle.h"
@@ -465,6 +466,103 @@ static inline void coupled_rt_modify_itmask_(
   }
 }
 
+// -------------------------------------------------------------
+
+namespace grackle::impl {
+
+/// Aggregates buffers used as scratch space in rate-related calculations
+///
+/// This exists to encapsulate the logic for all of the local buffers used in
+/// rate calculations within solve_rate_cool_g (this is useful given the size
+/// of the function). It is not expected to be used outside of the function.
+///
+/// @note
+/// The purpose of this type is similar in spirit to the purpose of the
+/// ScratchBuf data structrues described in the inernal_types.hpp header and
+/// we consequently observe those conventions relating to (con|de)structors.
+///
+/// @note
+/// The majority of the time, functions only need a subset of data stored by
+/// this struct. In these cases, you should strongly prefer to only pass the
+/// members that are required as function arguments (if we unnecessarily pass
+/// this whole struct, that can make it difficult to visualize the data flow)
+struct SpeciesRateSolverScratchBuf {
+
+  /// specifies precomputed product of mass density and the `dom` quantity for
+  /// each location in the index-range. Used to pick the scheme for solving the
+  /// rate equations and in setting the max allowed chemistry-timstep
+  double* ddom;
+
+  /// buffers to hold time derivatives of free electron and HI mass densities
+  /// for index_range
+  double *dedot, *HIdot;
+  /// buffers to hold time derivatives of free electron and HI mass densities
+  /// for index_range computed during the previous cycle
+  double *dedot_prev, *HIdot_prev;
+
+  /// buffer used to track the rate of H2 formation on dust grains
+  double* h2dust;
+
+  /// scratch space used only within lookup_cool_rates1d_g. This is 14 times
+  /// larger than most of the other buffers.
+  ///
+  /// (with minimal refactoring, this buffer could probably be removed)
+  double *k13dd;
+
+  /// iteration mask denoting where the Newton-Raphson scheme will be used
+  gr_mask_type* itmask_nr;
+
+  /// buffer specifying how the Newton-Raphson scheme handles energy evolution
+  int* imp_eng;
+
+};
+
+/// allocates the contents of a new SpeciesRateSolverScratchBuf
+///
+/// @param nelem The number of elements a buffer is expected to have in order
+///    to store values for the standard sized index-range
+SpeciesRateSolverScratchBuf new_SpeciesRateSolverScratchBuf(int nelem) {
+  SpeciesRateSolverScratchBuf out;
+
+  out.ddom = (double*)malloc(sizeof(double)*nelem);
+
+  out.dedot = (double*)malloc(sizeof(double)*nelem);
+  out.HIdot = (double*)malloc(sizeof(double)*nelem);
+  out.dedot_prev = (double*)malloc(sizeof(double)*nelem);
+  out.HIdot_prev = (double*)malloc(sizeof(double)*nelem);
+
+  out.k13dd = (double*)malloc(sizeof(double)*nelem*14);
+
+  out.h2dust = (double*)malloc(sizeof(double)*nelem);
+
+  out.itmask_nr = (gr_mask_type*)malloc(sizeof(gr_mask_type)*nelem);
+
+  out.imp_eng = (int*)malloc(sizeof(int)*nelem);
+
+  return out;
+}
+
+/// performs cleanup of the contents of SpeciesRateSolverScratchBuf
+///
+/// This effectively invokes a destructor
+void drop_SpeciesRateSolverScratchBuf(SpeciesRateSolverScratchBuf* ptr) {
+  free(ptr->ddom);
+
+  free(ptr->dedot);
+  free(ptr->HIdot);
+  free(ptr->dedot_prev);
+  free(ptr->HIdot_prev);
+
+  free(ptr->k13dd);
+
+  free(ptr->h2dust);
+
+  free(ptr->itmask_nr);
+  free(ptr->imp_eng);
+}
+
+
+} // namespace grackle::impl
 
 // -------------------------------------------------------------
 
@@ -507,16 +605,6 @@ int solve_rate_cool_g(
   std::vector<double> dust2gas(my_fields->grid_dimension[0]);
   std::vector<double> rhoH(my_fields->grid_dimension[0]);
   std::vector<double> mmw(my_fields->grid_dimension[0]);
-  std::vector<double> ddom(my_fields->grid_dimension[0]);
-
-  // Rate equation row temporaries
-
-  std::vector<double> dedot(my_fields->grid_dimension[0]);
-  std::vector<double> HIdot(my_fields->grid_dimension[0]);
-  std::vector<double> dedot_prev(my_fields->grid_dimension[0]);
-  std::vector<double> HIdot_prev(my_fields->grid_dimension[0]);
-  std::vector<double> k13dd(my_fields->grid_dimension[0] * 14);
-  std::vector<double> h2dust(my_fields->grid_dimension[0]);
 
   // Cooling/heating row locals
 
@@ -526,11 +614,8 @@ int solve_rate_cool_g(
 
   std::vector<gr_mask_type> itmask(my_fields->grid_dimension[0]);
   std::vector<gr_mask_type> itmask_tmp(my_fields->grid_dimension[0]);
-  std::vector<gr_mask_type> itmask_nr(my_fields->grid_dimension[0]);
   std::vector<gr_mask_type> itmask_metal(my_fields->grid_dimension[0]);
-  std::vector<int> imp_eng(my_fields->grid_dimension[0]);
 
-  
   // \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
   // =======================================================================
 
@@ -591,10 +676,6 @@ int solve_rate_cool_g(
   //_// PORT: !$omp parallel do schedule(runtime) private(
   //_// PORT: !$omp&   dtit, ttot, p2d, tgas,
   //_// PORT: !$omp&   tdust, metallicity, dust2gas, rhoH, mmw,
-  //_// PORT: !$omp&   ddom,
-  //_// PORT: !$omp&   dep, dedot,HIdot, dedot_prev,
-  //_// PORT: !$omp&   HIdot_prev,
-  //_// PORT: !$omp&   k13dd, h2dust,
   //_// PORT: !$omp&   edot,
   //_// PORT: !$omp&   itmask, itmask_metal )
   //_// PORT: #endif
@@ -641,6 +722,15 @@ int solve_rate_cool_g(
     grackle::impl::ChemHeatingRates chemheatrates_buf =
       grackle::impl::new_ChemHeatingRates(my_fields->grid_dimension[0]);
 
+    // holds buffers exclusively used for solving species rate equations
+    // (i.e. in the future, we could have the constructor skip allocations of
+    // all contained data structures when using primordial_chemistry == 0)
+    grackle::impl::SpeciesRateSolverScratchBuf spsolvbuf =
+      grackle::impl::new_SpeciesRateSolverScratchBuf(
+        my_fields->grid_dimension[0]
+      );
+
+
     //_// TODO_USE: OMP_PRAGMA("omp for")
     for (int t = 0; t < idx_helper.outer_ind_size; t++) {
       // construct an index-range corresponding to "i-slice"
@@ -669,7 +759,7 @@ int solve_rate_cool_g(
       // A useful slice variable since we do this a lot
 
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-        ddom[i] = d(i,j,k) * dom;
+        spsolvbuf.ddom[i] = d(i,j,k) * dom;
       }
 
       // declare 2 variables (primarily used for subcycling, but also used in
@@ -688,7 +778,6 @@ int solve_rate_cool_g(
         }
 
         // Compute the cooling rate, tgas, tdust, and metallicity for this row
-
         wrapped_cool1d_multi_g_(
           imetal, idx_range, iter, edot.data(), tgas.data(),
           mmw.data(), p2d.data(), tdust.data(), metallicity.data(),
@@ -704,7 +793,8 @@ int solve_rate_cool_g(
           // -> There's room for optimization: when ispecies is 0, there is
           //    need to ever touch this variable. But, for now we focus on
           //    correct behavior before implementing this optimization
-          std::memcpy(itmask_tmp.data(), itmask.data(), sizeof(gr_mask_type)*my_fields->grid_dimension[0]);
+          std::memcpy(itmask_tmp.data(), itmask.data(),
+                      sizeof(gr_mask_type)*my_fields->grid_dimension[0]);
 
         } else {
 
@@ -712,8 +802,8 @@ int solve_rate_cool_g(
           //  (maybe should add itmask to this call)
 
           wrapped_lookup_cool_rates1d_g_(
-            idx_range, anydust, tgas.data(), mmw.data(),
-            tdust.data(), dust2gas.data(), k13dd.data(), h2dust.data(),
+            idx_range, anydust, tgas.data(), mmw.data(), tdust.data(),
+            dust2gas.data(), spsolvbuf.k13dd, spsolvbuf.h2dust,
             dom, dx_cgs, c_ljeans, itmask.data(), itmask_metal.data(),
             imetal, rhoH.data(), dt, my_chemistry, my_rates, my_fields,
             *my_uvb_rates, internalu, grain_growth_rates, grain_temperatures,
@@ -724,10 +814,10 @@ int solve_rate_cool_g(
           //   (should add itmask to this call)
 
           wrapped_rate_timestep_g_(
-            dedot.data(), HIdot.data(), anydust, idx_range, h2dust.data(),
-            rhoH.data(), itmask.data(), edot.data(), chunit, dom,
-            my_chemistry, my_fields, *my_uvb_rates, kcr_buf, kshield_buf,
-            chemheatrates_buf
+            spsolvbuf.dedot, spsolvbuf.HIdot, anydust, idx_range,
+            spsolvbuf.h2dust, rhoH.data(), itmask.data(), edot.data(),
+            chunit, dom, my_chemistry, my_fields, *my_uvb_rates, kcr_buf,
+            kshield_buf, chemheatrates_buf
           );
 
           // First, copy itmask's current values into a temporary array
@@ -738,10 +828,10 @@ int solve_rate_cool_g(
           //
           // (the values stored within itmask will change within the function)
           select_chem_scheme_update_masks_(
-            idx_range, itmask.data(), itmask_nr.data(), imp_eng.data(),
+            idx_range, itmask.data(), spsolvbuf.itmask_nr, spsolvbuf.imp_eng,
             itmask_tmp.data(), my_fields->grid_dimension[0], imetal,
-            min_metallicity, ddom.data(), tgas.data(), metallicity.data(),
-            my_chemistry
+            min_metallicity, spsolvbuf.ddom, tgas.data(),
+            metallicity.data(), my_chemistry
           );
 
           // Set the max timestep for the current subcycle based on our scheme
@@ -752,10 +842,12 @@ int solve_rate_cool_g(
 
           set_subcycle_dt_from_chemistry_scheme_(
             dtit.data(), idx_range, iter, dt, ttot.data(), itmask.data(),
-            itmask_nr.data(), imp_eng.data(), dedot.data(), HIdot.data(),
-            dedot_prev.data(), HIdot_prev.data(), ddom.data(), tgas.data(),
-            p2d.data(), edot.data(), my_chemistry, my_rates, dlogtem,
-            logTlininterp_buf, my_fields, kcr_buf
+            spsolvbuf.itmask_nr, spsolvbuf.imp_eng,
+            spsolvbuf.dedot, spsolvbuf.HIdot,
+            spsolvbuf.dedot_prev, spsolvbuf.HIdot_prev,
+            spsolvbuf.ddom, tgas.data(), p2d.data(), edot.data(),
+            my_chemistry, my_rates, dlogtem, logTlininterp_buf, my_fields,
+            kcr_buf
           );
         }
 
@@ -768,13 +860,11 @@ int solve_rate_cool_g(
         );
 
         // Update total and gas energy
-
+        // -> zones that will use Newton-Raphson scheme are ignored
         if (my_chemistry->with_radiative_cooling == 1)  {
           for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-            if (itmask[i] != MASK_FALSE)  {
-              e(i,j,k)  = e(i,j,k) +
-                      (gr_float)(edot[i]/d(i,j,k)*dtit[i] );
-
+            if (itmask[i] != MASK_FALSE) {
+              e(i,j,k) = e(i,j,k) + (gr_float)(edot[i]/d(i,j,k)*dtit[i]);
             }
           }
         }
@@ -786,8 +876,8 @@ int solve_rate_cool_g(
           // itmask)
 
           wrapped_step_rate_g_(
-            dtit.data(), idx_range, anydust, h2dust.data(), rhoH.data(),
-            dedot_prev.data(), HIdot_prev.data(), itmask.data(),
+            dtit.data(), idx_range, anydust, spsolvbuf.h2dust, rhoH.data(),
+            spsolvbuf.dedot_prev, spsolvbuf.HIdot_prev, itmask.data(),
             itmask_metal.data(), imetal, my_chemistry, my_fields,
             *my_uvb_rates, grain_growth_rates, species_tmpdens, kcr_buf,
             kshield_buf
@@ -801,8 +891,8 @@ int solve_rate_cool_g(
             imetal, idx_range, iter, dom, chunit, dx_cgs, c_ljeans,
             dtit.data(), p2d.data(), tgas.data(), tdust.data(),
             metallicity.data(), dust2gas.data(), rhoH.data(), mmw.data(),
-            h2dust.data(), edot.data(), anydust, itmask_nr.data(),
-            itmask_metal.data(), imp_eng.data(), my_chemistry, my_rates,
+            spsolvbuf.h2dust, edot.data(), anydust, spsolvbuf.itmask_nr,
+            itmask_metal.data(), spsolvbuf.imp_eng, my_chemistry, my_rates,
             my_fields, *my_uvb_rates, internalu, grain_temperatures,
             logTlininterp_buf, cool1dmulti_buf, coolingheating_buf,
             chemheatrates_buf
@@ -810,23 +900,23 @@ int solve_rate_cool_g(
 
         }
 
-        // return itmask
+        // restore the values of itmask from the backup that we made earlier
         for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
           itmask[i] = itmask_tmp[i];
         }
 
         // Add the timestep to the elapsed time for each cell and find
         //  minimum elapsed time step in this row
-
         ttmin = huge8;
         for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
           ttot[i] = std::fmin(ttot[i] + dtit[i], dt);
-          if (std::fabs(dt-ttot[i]) <
-               tolerance*dt) { itmask[i] = MASK_FALSE; }
+
+          if (std::fabs(dt-ttot[i]) < tolerance*dt) { itmask[i] = MASK_FALSE; }
+
           if (ttot[i]<ttmin) { ttmin = ttot[i]; }
         }
 
-        // If all cells are done (on this slice), break out of subcycle loop
+        // If all cells are done (in idx_range), break out of subcycle loop
         if (std::fabs(dt-ttmin) < tolerance*dt) { break; }
 
       }  // subcycle iteration loop (for current idx_range)
@@ -882,6 +972,7 @@ int solve_rate_cool_g(
     grackle::impl::drop_ColRecRxnRateCollection(&kcr_buf);
     grackle::impl::drop_PhotoRxnRateCollection(&kshield_buf);
     grackle::impl::drop_ChemHeatingRates(&chemheatrates_buf);
+    grackle::impl::drop_SpeciesRateSolverScratchBuf(&spsolvbuf);
 
 
   }  // OMP_PRAGMA("omp parallel")
