@@ -616,43 +616,11 @@ int solve_rate_cool_g(
 )
 {
 
-  // Density, energy and velocity fields fields
-
-  grackle::impl::View<gr_float***> d(my_fields->density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> e(my_fields->internal_energy, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  
-  // Constants
-
 #ifdef GRACKLE_FLOAT_4
   const gr_float tolerance = (gr_float)(1.0e-05);
 #else
   const gr_float tolerance = (gr_float)(1.0e-10);
 #endif
-
-  // row temporaries
-
-  std::vector<double> dtit(my_fields->grid_dimension[0]);
-  std::vector<double> ttot(my_fields->grid_dimension[0]);
-  std::vector<double> p2d(my_fields->grid_dimension[0]);
-  std::vector<double> tgas(my_fields->grid_dimension[0]);
-  std::vector<double> tdust(my_fields->grid_dimension[0]);
-  std::vector<double> metallicity(my_fields->grid_dimension[0]);
-  std::vector<double> dust2gas(my_fields->grid_dimension[0]);
-  std::vector<double> rhoH(my_fields->grid_dimension[0]);
-  std::vector<double> mmw(my_fields->grid_dimension[0]);
-
-  // Cooling/heating row locals
-
-  std::vector<double> edot(my_fields->grid_dimension[0]);
-
-  // Iteration mask
-
-  std::vector<gr_mask_type> itmask(my_fields->grid_dimension[0]);
-  std::vector<gr_mask_type> itmask_tmp(my_fields->grid_dimension[0]);
-  std::vector<gr_mask_type> itmask_metal(my_fields->grid_dimension[0]);
-
-  // \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
-  // =======================================================================
 
   // Set error indicator (we will return this value)
   int ierr = GR_SUCCESS;
@@ -704,20 +672,10 @@ int solve_rate_cool_g(
 
   const grackle_index_helper idx_helper = build_index_helper_(my_fields);
 
-  // parallelize the k and j loops with OpenMP
-  // flat j and k loops for better parallelism
-  //_// PORT: #ifdef _OPENMP
-  //_// PORT: ! ierr is declared as shared and should be modified with atomic operation
-  //_// PORT: !$omp parallel do schedule(runtime) private(
-  //_// PORT: !$omp&   dtit, ttot, p2d, tgas,
-  //_// PORT: !$omp&   tdust, metallicity, dust2gas, rhoH, mmw,
-  //_// PORT: !$omp&   edot,
-  //_// PORT: !$omp&   itmask, itmask_metal )
-  //_// PORT: #endif
-  //_// TODO_USE: OMP_PRAGMA("omp parallel")
+  OMP_PRAGMA("omp parallel")
   {
-    // TODO: move more relevant variable declarations to here to replace the
-    //       OMP private-clause
+    // each OMP thread separately initializes/allocates variables defined in
+    // the current scope and then enters the for-loop
 
     // holds computed grain temperatures:
     grackle::impl::GrainSpeciesCollection grain_temperatures =
@@ -740,8 +698,41 @@ int solve_rate_cool_g(
         my_fields->grid_dimension[0]
       );
 
+    // the following variables aren't embedded in structs because they are used
+    // in a number of different internal routines. Sorting these into
+    // additional structs (or leaving them free-standing) will become more
+    // obvious as we transcribe more routines.
+    std::vector<double> dtit(my_fields->grid_dimension[0]);
+    std::vector<double> ttot(my_fields->grid_dimension[0]);
+    std::vector<double> p2d(my_fields->grid_dimension[0]);
+    std::vector<double> tgas(my_fields->grid_dimension[0]);
+    std::vector<double> tdust(my_fields->grid_dimension[0]);
+    std::vector<double> metallicity(my_fields->grid_dimension[0]);
+    std::vector<double> dust2gas(my_fields->grid_dimension[0]);
+    std::vector<double> rhoH(my_fields->grid_dimension[0]);
+    std::vector<double> mmw(my_fields->grid_dimension[0]);
+    std::vector<double> edot(my_fields->grid_dimension[0]);
 
-    //_// TODO_USE: OMP_PRAGMA("omp for")
+    // iteration masks
+    std::vector<gr_mask_type> itmask(my_fields->grid_dimension[0]);
+    std::vector<gr_mask_type> itmask_tmp(my_fields->grid_dimension[0]);
+    std::vector<gr_mask_type> itmask_metal(my_fields->grid_dimension[0]);
+
+    // create views of density and internal energy fields to support 3D access
+    grackle::impl::View<gr_float***> d(my_fields->density,
+                                       my_fields->grid_dimension[0],
+                                       my_fields->grid_dimension[1],
+                                       my_fields->grid_dimension[2]);
+    grackle::impl::View<gr_float***> e(my_fields->internal_energy,
+                                       my_fields->grid_dimension[0],
+                                       my_fields->grid_dimension[1],
+                                       my_fields->grid_dimension[2]);
+
+    // The following for-loop is a flattened loop over every k,j combination.
+    // OpenMP divides this loop between all threads. Within the loop, we
+    // complete calculations for the constructed index-range construct
+    // (an index range corresponds to an "i-slice")
+    OMP_PRAGMA("omp for schedule(runtime)")
     for (int t = 0; t < idx_helper.outer_ind_size; t++) {
       // construct an index-range corresponding to "i-slice"
       const IndexRange idx_range = make_idx_range_(t, &idx_helper);
@@ -997,7 +988,6 @@ int solve_rate_cool_g(
     grackle::impl::drop_CoolHeatScratchBuf(&coolingheating_buf);
 
     grackle::impl::drop_SpeciesRateSolverScratchBuf(&spsolvbuf);
-
 
   }  // OMP_PRAGMA("omp parallel")
 
