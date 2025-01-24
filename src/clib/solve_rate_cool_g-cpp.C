@@ -765,7 +765,7 @@ int solve_rate_cool_g(
       }
 
       // A useful slice variable since we do this a lot
-
+      // -> we don't need it for primordial_chemistry==0
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         spsolvbuf.ddom[i] = d(i,j,k) * dom;
       }
@@ -798,9 +798,8 @@ int solve_rate_cool_g(
         if (my_chemistry->primordial_chemistry == 0)  {
           // This is some basic book-keeping to ensure that itmask_tmp has
           // sensible values when ispecies is 0
-          // -> There's room for optimization: when ispecies is 0, there is
-          //    need to ever touch this variable. But, for now we focus on
-          //    correct behavior before implementing this optimization
+          // -> see the comment following this if-else statement suggesting how
+          //    we could refactor itmask-handling (eliminating this branch)
           std::memcpy(itmask_tmp.data(), itmask.data(),
                       sizeof(gr_mask_type)*my_fields->grid_dimension[0]);
 
@@ -860,6 +859,22 @@ int solve_rate_cool_g(
             spsolvbuf.kcr_buf
           );
         }
+
+        // TODO: Consider refactoring the iteration mask handling:
+        //  1. introduce `itmask_gs` as a member of `spsolvbuf` and have the
+        //     `select_chem_scheme_update_masks_` function store locations in
+        //     `spsolvbuf.itmask_gs` where we will apply Gauss-Seidel scheme
+        //  2. replace `itmask` with `spsolvbuf.itmask_gs` in arg-lists of
+        //     `set_subcycle_dt_from_chemistry_scheme_` & `wrapped_step_rate_g_`
+        //  3. insert following chunk of logic RIGHT HERE
+        //      > const gr_mask_type* energy_itmask =
+        //      >   (my_chemistry->primordial_chemistry == 0)
+        //      >   ? itmask.data() : spsolvbuf.itmask_gs;
+        //  4. replace `itmask` with `energy_itmask` in arg-list of
+        //     `enforce_max_heatcool_subcycle_dt_` & within energy update loop
+        //  5. stop modifying `itmask` in `select_chem_scheme_update_masks_`
+        //  6. remove declaration of `itmask_tmp`, logic that initializes, and
+        //     the loop that uses it to override `itmask`
 
         // Update dtit (the current subcycle timestep) to ensure it doesn't
         // exceed the max timestep for cooling/heating
