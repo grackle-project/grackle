@@ -425,16 +425,22 @@ static void set_subcycle_dt_from_chemistry_scheme_(
 ///
 /// @param[out] itmask the mask that will be overriden
 /// @param[in] idx_range specifies the index-range
-/// @param[in] kphHI view of the HI photo-ionization rate field
 /// @param[in] my_chemistry specifies grackle settings (we probably don't need
 ///     to pass in everything)
+/// @param[in] my_fields used to access HI photo-ionization rate field
+
 static inline void coupled_rt_modify_itmask_(
   gr_mask_type* itmask,
   IndexRange idx_range,
-  grackle::impl::View<gr_float***> kphHI,
-  const chemistry_data* my_chemistry
+  const chemistry_data* my_chemistry,
+  grackle_field_data* my_fields
 )
 {
+  grackle::impl::View<const gr_float***> kphHI(my_fields->RT_HI_ionization_rate,
+                                               my_fields->grid_dimension[0],
+                                               my_fields->grid_dimension[1],
+                                               my_fields->grid_dimension[2]);
+
   // adjust iteration mask if the caller indicates that they're using
   // Grackle in a coupled radiative-transfer/chemistry-energy calculation
   // (that has intermediate steps)
@@ -614,11 +620,7 @@ int solve_rate_cool_g(
 
   grackle::impl::View<gr_float***> d(my_fields->density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> e(my_fields->internal_energy, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-
-  // Radiative transfer fields
-
-  grackle::impl::View<gr_float***> kphHI(my_fields->RT_HI_ionization_rate, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-
+  
   // Constants
 
 #ifdef GRACKLE_FLOAT_4
@@ -756,7 +758,8 @@ int solve_rate_cool_g(
 
       // adjust iteration mask (but only if using Grackle in a coupled
       // radiative-transfer calculation)
-      coupled_rt_modify_itmask_(itmask.data(), idx_range, kphHI, my_chemistry);
+      coupled_rt_modify_itmask_(itmask.data(), idx_range, my_chemistry,
+                                my_fields);
 
       // Set time elapsed to zero for each cell in 1D section
 
