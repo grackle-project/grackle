@@ -515,6 +515,27 @@ struct SpeciesRateSolverScratchBuf {
   /// buffer specifying how the Newton-Raphson scheme handles energy evolution
   int* imp_eng;
 
+  // buffers in the following data structure are used to temporarily hold
+  // the evolved density of various species as we evolve over a subcycle
+  // (currently only used by step_rate_g)
+  grackle::impl::SpeciesCollection species_tmpdens;
+
+  // buffers in the following data structure are used to temporarily hold
+  // the interpolated Collisional/Recombination Rates that have been
+  // interpolated using the standard 1D log temperature table.
+  grackle::impl::ColRecRxnRateCollection kcr_buf;
+
+  // buffers in the following data structure are used to temporarily hold
+  // the computed radiative reaction rates
+  grackle::impl::PhotoRxnRateCollection kshield_buf;
+
+  // buffers in the following data structure are used to temporarily hold
+  // the interpolated chemistry-heating rates at each index-range location
+  grackle::impl::ChemHeatingRates chemheatrates_buf;
+
+  // holds computed grain growth/destruction rates:
+  grackle::impl::GrainSpeciesCollection grain_growth_rates;
+
 };
 
 /// allocates the contents of a new SpeciesRateSolverScratchBuf
@@ -539,6 +560,12 @@ SpeciesRateSolverScratchBuf new_SpeciesRateSolverScratchBuf(int nelem) {
 
   out.imp_eng = (int*)malloc(sizeof(int)*nelem);
 
+  out.species_tmpdens = grackle::impl::new_SpeciesCollection(nelem);
+  out.kcr_buf = grackle::impl::new_ColRecRxnRateCollection(nelem);
+  out.kshield_buf = grackle::impl::new_PhotoRxnRateCollection(nelem);
+  out.chemheatrates_buf = grackle::impl::new_ChemHeatingRates(nelem);
+  out.grain_growth_rates = grackle::impl::new_GrainSpeciesCollection(nelem);
+
   return out;
 }
 
@@ -559,6 +586,12 @@ void drop_SpeciesRateSolverScratchBuf(SpeciesRateSolverScratchBuf* ptr) {
 
   free(ptr->itmask_nr);
   free(ptr->imp_eng);
+
+  grackle::impl::drop_SpeciesCollection(&ptr->species_tmpdens);
+  grackle::impl::drop_ColRecRxnRateCollection(&ptr->kcr_buf);
+  grackle::impl::drop_PhotoRxnRateCollection(&ptr->kshield_buf);
+  grackle::impl::drop_ChemHeatingRates(&ptr->chemheatrates_buf);
+  grackle::impl::drop_GrainSpeciesCollection(&ptr->grain_growth_rates);
 }
 
 
@@ -688,10 +721,6 @@ int solve_rate_cool_g(
     grackle::impl::GrainSpeciesCollection grain_temperatures =
       grackle::impl::new_GrainSpeciesCollection(my_fields->grid_dimension[0]);
 
-    // holds computed grain growth/destruction rates:
-    grackle::impl::GrainSpeciesCollection grain_growth_rates =
-      grackle::impl::new_GrainSpeciesCollection(my_fields->grid_dimension[0]);
-
     grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf =
       grackle::impl::new_LogTLinInterpScratchBuf(my_fields->grid_dimension[0]);
 
@@ -700,27 +729,6 @@ int solve_rate_cool_g(
 
     grackle::impl::CoolHeatScratchBuf coolingheating_buf =
       grackle::impl::new_CoolHeatScratchBuf(my_fields->grid_dimension[0]);
-
-    // buffers in the following data structure are used to temporarily hold
-    // the evolved density of various species as we evolve over a subcycle
-    grackle::impl::SpeciesCollection species_tmpdens =
-      grackle::impl::new_SpeciesCollection(my_fields->grid_dimension[0]);
-
-    // buffers in the following data structure are used to temporarily hold
-    // the interpolated Collisional/Recombination Rates that have interpolated
-    // using the standard 1D log temperature table.
-    grackle::impl::ColRecRxnRateCollection kcr_buf =
-      grackle::impl::new_ColRecRxnRateCollection(my_fields->grid_dimension[0]);
-
-    // buffers in the following data structure are used to temporarily hold
-    // the computed radiative reaction rates
-    grackle::impl::PhotoRxnRateCollection kshield_buf =
-      grackle::impl::new_PhotoRxnRateCollection(my_fields->grid_dimension[0]);
-
-    // buffers in the following data structure are used to temporarily hold
-    // the interpolated chemistry-heating rates at each islice zone
-    grackle::impl::ChemHeatingRates chemheatrates_buf =
-      grackle::impl::new_ChemHeatingRates(my_fields->grid_dimension[0]);
 
     // holds buffers exclusively used for solving species rate equations
     // (i.e. in the future, we could have the constructor skip allocations of
@@ -806,8 +814,9 @@ int solve_rate_cool_g(
             dust2gas.data(), spsolvbuf.k13dd, spsolvbuf.h2dust,
             dom, dx_cgs, c_ljeans, itmask.data(), itmask_metal.data(),
             imetal, rhoH.data(), dt, my_chemistry, my_rates, my_fields,
-            *my_uvb_rates, internalu, grain_growth_rates, grain_temperatures,
-            logTlininterp_buf, kcr_buf, kshield_buf, chemheatrates_buf
+            *my_uvb_rates, internalu, spsolvbuf.grain_growth_rates,
+            grain_temperatures, logTlininterp_buf, spsolvbuf.kcr_buf,
+            spsolvbuf.kshield_buf, spsolvbuf.chemheatrates_buf
           );
 
           // Compute dedot and HIdot, the rates of change of de and HI
@@ -816,8 +825,9 @@ int solve_rate_cool_g(
           wrapped_rate_timestep_g_(
             spsolvbuf.dedot, spsolvbuf.HIdot, anydust, idx_range,
             spsolvbuf.h2dust, rhoH.data(), itmask.data(), edot.data(),
-            chunit, dom, my_chemistry, my_fields, *my_uvb_rates, kcr_buf,
-            kshield_buf, chemheatrates_buf
+            chunit, dom, my_chemistry, my_fields, *my_uvb_rates,
+            spsolvbuf.kcr_buf, spsolvbuf.kshield_buf,
+            spsolvbuf.chemheatrates_buf
           );
 
           // First, copy itmask's current values into a temporary array
@@ -847,7 +857,7 @@ int solve_rate_cool_g(
             spsolvbuf.dedot_prev, spsolvbuf.HIdot_prev,
             spsolvbuf.ddom, tgas.data(), p2d.data(), edot.data(),
             my_chemistry, my_rates, dlogtem, logTlininterp_buf, my_fields,
-            kcr_buf
+            spsolvbuf.kcr_buf
           );
         }
 
@@ -879,8 +889,8 @@ int solve_rate_cool_g(
             dtit.data(), idx_range, anydust, spsolvbuf.h2dust, rhoH.data(),
             spsolvbuf.dedot_prev, spsolvbuf.HIdot_prev, itmask.data(),
             itmask_metal.data(), imetal, my_chemistry, my_fields,
-            *my_uvb_rates, grain_growth_rates, species_tmpdens, kcr_buf,
-            kshield_buf
+            *my_uvb_rates, spsolvbuf.grain_growth_rates,
+            spsolvbuf.species_tmpdens, spsolvbuf.kcr_buf, spsolvbuf.kshield_buf
           );
 
           // Solve rate equations with one linearly implicit Gauss-Seidel
@@ -895,7 +905,7 @@ int solve_rate_cool_g(
             itmask_metal.data(), spsolvbuf.imp_eng, my_chemistry, my_rates,
             my_fields, *my_uvb_rates, internalu, grain_temperatures,
             logTlininterp_buf, cool1dmulti_buf, coolingheating_buf,
-            chemheatrates_buf
+            spsolvbuf.chemheatrates_buf
           );
 
         }
@@ -964,14 +974,10 @@ int solve_rate_cool_g(
 
     // cleanup manually allocated temporaries
     grackle::impl::drop_GrainSpeciesCollection(&grain_temperatures);
-    grackle::impl::drop_GrainSpeciesCollection(&grain_growth_rates);
     grackle::impl::drop_LogTLinInterpScratchBuf(&logTlininterp_buf);
     grackle::impl::drop_Cool1DMultiScratchBuf(&cool1dmulti_buf);
     grackle::impl::drop_CoolHeatScratchBuf(&coolingheating_buf);
-    grackle::impl::drop_SpeciesCollection(&species_tmpdens);
-    grackle::impl::drop_ColRecRxnRateCollection(&kcr_buf);
-    grackle::impl::drop_PhotoRxnRateCollection(&kshield_buf);
-    grackle::impl::drop_ChemHeatingRates(&chemheatrates_buf);
+
     grackle::impl::drop_SpeciesRateSolverScratchBuf(&spsolvbuf);
 
 
