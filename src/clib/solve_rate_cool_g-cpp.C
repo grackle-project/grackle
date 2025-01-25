@@ -615,6 +615,8 @@ int solve_rate_cool_g(
   grackle_field_data* my_fields, photo_rate_storage* my_uvb_rates
 )
 {
+  // shorten `grackle::impl::fortran_wrapper` to `f_wrap` within this function
+  namespace f_wrap = ::grackle::impl::fortran_wrapper;
 
 #ifdef GRACKLE_FLOAT_4
   const gr_float tolerance = (gr_float)(1.0e-05);
@@ -654,7 +656,7 @@ int solve_rate_cool_g(
 
 #define ABUNDANCE_CORRECTION
 #ifdef ABUNDANCE_CORRECTION
-    wrapped_make_consistent_g_(imetal, dom, my_chemistry, my_rates, my_fields);
+    f_wrap::make_consistent_g(imetal, dom, my_chemistry, my_rates, my_fields);
 #endif
 
   }
@@ -663,11 +665,11 @@ int solve_rate_cool_g(
 
   if (internalu.extfields_in_comoving == 1)  {
     gr_float factor = (gr_float)(std::pow(internalu.a_value,(-3)) );
-    wrapped_scale_fields_g_(imetal, factor, my_chemistry, my_fields);
+    f_wrap::scale_fields_g(imetal, factor, my_chemistry, my_fields);
   }
 
 #ifdef ABUNDANCE_CORRECTION
-  wrapped_ceiling_species_g_(imetal, my_chemistry, my_fields);
+  f_wrap::ceiling_species_g(imetal, my_chemistry, my_fields);
 #endif
 
   const grackle_index_helper idx_helper = build_index_helper_(my_fields);
@@ -780,7 +782,7 @@ int solve_rate_cool_g(
         }
 
         // Compute the cooling rate, tgas, tdust, and metallicity for this row
-        wrapped_cool1d_multi_g_(
+        f_wrap::cool1d_multi_g(
           imetal, idx_range, iter, edot.data(), tgas.data(),
           mmw.data(), p2d.data(), tdust.data(), metallicity.data(),
           dust2gas.data(), rhoH.data(), itmask.data(), itmask_metal.data(),
@@ -802,7 +804,7 @@ int solve_rate_cool_g(
           // Look-up rates as a function of temperature for 1D set of zones
           //  (maybe should add itmask to this call)
 
-          wrapped_lookup_cool_rates1d_g_(
+          f_wrap::lookup_cool_rates1d_g(
             idx_range, anydust, tgas.data(), mmw.data(), tdust.data(),
             dust2gas.data(), spsolvbuf.k13dd, spsolvbuf.h2dust,
             dom, dx_cgs, c_ljeans, itmask.data(), itmask_metal.data(),
@@ -815,7 +817,7 @@ int solve_rate_cool_g(
           // Compute dedot and HIdot, the rates of change of de and HI
           //   (should add itmask to this call)
 
-          wrapped_rate_timestep_g_(
+          f_wrap::rate_timestep_g(
             spsolvbuf.dedot, spsolvbuf.HIdot, anydust, idx_range,
             spsolvbuf.h2dust, rhoH.data(), itmask.data(), edot.data(),
             chunit, dom, my_chemistry, my_fields, *my_uvb_rates,
@@ -859,7 +861,7 @@ int solve_rate_cool_g(
         //     `select_chem_scheme_update_masks_` function store locations in
         //     `spsolvbuf.itmask_gs` where we will apply Gauss-Seidel scheme
         //  2. replace `itmask` with `spsolvbuf.itmask_gs` in arg-lists of
-        //     `set_subcycle_dt_from_chemistry_scheme_` & `wrapped_step_rate_g_`
+        //     `set_subcycle_dt_from_chemistry_scheme_` & `f_wrap::step_rate_g`
         //  3. insert following chunk of logic RIGHT HERE
         //      > const gr_mask_type* energy_itmask =
         //      >   (my_chemistry->primordial_chemistry == 0)
@@ -894,7 +896,7 @@ int solve_rate_cool_g(
           // sweep of a backward Euler method (for all cells specified by
           // itmask)
 
-          wrapped_step_rate_g_(
+          f_wrap::step_rate_g(
             dtit.data(), idx_range, anydust, spsolvbuf.h2dust, rhoH.data(),
             spsolvbuf.dedot_prev, spsolvbuf.HIdot_prev, itmask.data(),
             itmask_metal.data(), imetal, my_chemistry, my_fields,
@@ -906,7 +908,7 @@ int solve_rate_cool_g(
           // sweep of a backward Euler method (for all cells specified by
           // itmask_nr)
 
-          wrapped_step_rate_newton_raphson_(
+          f_wrap::step_rate_newton_raphson(
             imetal, idx_range, iter, dom, chunit, dx_cgs, c_ljeans,
             dtit.data(), p2d.data(), tgas.data(), tdust.data(),
             metallicity.data(), dust2gas.data(), rhoH.data(), mmw.data(),
@@ -1001,7 +1003,7 @@ int solve_rate_cool_g(
 
   if (internalu.extfields_in_comoving == 1)  {
     gr_float factor = (gr_float)(std::pow(internalu.a_value,3) );
-    wrapped_scale_fields_g_(imetal, factor, my_chemistry, my_fields);
+    f_wrap::scale_fields_g(imetal, factor, my_chemistry, my_fields);
   }
 
   if (my_chemistry->primordial_chemistry > 0)  {
@@ -1009,8 +1011,8 @@ int solve_rate_cool_g(
     // Correct the species to ensure consistency (i.e. type conservation)
 
 #ifdef ABUNDANCE_CORRECTION
-    wrapped_make_consistent_g_(imetal, dom, my_chemistry, my_rates, my_fields);
-    wrapped_ceiling_species_g_(imetal, my_chemistry, my_fields);
+    f_wrap::make_consistent_g(imetal, dom, my_chemistry, my_rates, my_fields);
+    f_wrap::ceiling_species_g(imetal, my_chemistry, my_fields);
 #endif
 
   }

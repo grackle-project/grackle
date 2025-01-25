@@ -31,6 +31,12 @@ extern "C" {
 /// modified7:  January, 2025 by Matthew Abruzzo; ported to C++
 ///
 /// @return Returns GR_SUCCESS or GR_FAIL to indicate whether there was an error
+///
+/// @todo
+/// Once the file where this routine called is adjusted to be compiled with a
+/// C++ compiler, modify this function (prototype & implementation) such that:
+/// - it's not enclosed by a `extern "C"` block
+/// - it's defined within a `grackle::impl` namespace
 int solve_rate_cool_g(
   int imetal, double dt, InternalGrUnits internalu,
   chemistry_data* my_chemistry, chemistry_data_storage* my_rates,

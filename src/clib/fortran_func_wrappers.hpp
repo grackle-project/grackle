@@ -29,7 +29,12 @@
 #include "internal_units.h"
 #include "LUT.hpp"
 
-inline void wrapped_ceiling_species_g_(
+
+// callers of these functions are generally expected to locally shorten the
+// namespace name when they call these routines
+namespace grackle::impl::fortran_wrapper {
+
+inline void ceiling_species_g(
   int imetal, chemistry_data* my_chemistry, grackle_field_data* my_fields
 ) {
 
@@ -56,7 +61,7 @@ inline void wrapped_ceiling_species_g_(
 
 }
 
-inline void wrapped_cool1d_multi_g_(
+inline void cool1d_multi_g(
   int imetal, IndexRange idx_range, int iter, double* edot, double* tgas,
   double* mmw, double* p2d, double* tdust, double* metallicity,
   double* dust2gas, double* rhoH, gr_mask_type* itmask,
@@ -187,7 +192,7 @@ inline void wrapped_cool1d_multi_g_(
 
 /// This routine uses the temperature to look up the chemical rates that are
 /// tabulated in a log table as a function of temperature
-inline void wrapped_lookup_cool_rates1d_g_(
+inline void lookup_cool_rates1d_g(
   IndexRange idx_range, gr_mask_type anydust, double* tgas1d, double* mmw,
   double* tdust, double* dust2gas, double* k13dd, double* h2dust,
   double dom, double dx_cgs, double c_ljeans, gr_mask_type* itmask,
@@ -296,7 +301,7 @@ inline void wrapped_lookup_cool_rates1d_g_(
 
 // the following case was handcoded (so the argument order may shift when we
 // actually transcribe the routine)
-inline void wrapped_make_consistent_g_(
+inline void make_consistent_g(
   int imetal, double dom, chemistry_data* my_chemistry,
   chemistry_data_storage* my_rates, grackle_field_data* my_fields
 ){
@@ -330,7 +335,7 @@ inline void wrapped_make_consistent_g_(
 
 /// This routine calculates the electron and HI rates of change in order to
 /// determine the maximum permitted timestep
-inline void wrapped_rate_timestep_g_(
+inline void rate_timestep_g(
   double* dedot, double* HIdot, gr_mask_type anydust, IndexRange idx_range,
   double* h2dust, double* rhoH, gr_mask_type* itmask, double* edot,
   double chunit, double dom, chemistry_data* my_chemistry,
@@ -361,7 +366,7 @@ inline void wrapped_rate_timestep_g_(
 }
 
 
-inline void wrapped_scale_fields_g_(
+inline void scale_fields_g(
   int imetal, gr_float factor, chemistry_data* my_chemistry,
   grackle_field_data* my_fields
 ) {
@@ -390,7 +395,7 @@ inline void wrapped_scale_fields_g_(
 
 /// Uses one linearly implicit Gauss-Seidel sweep of a backward-Euler time
 /// integrator to advance the rate equations by one (sub-)cycle (dtit).
-inline void wrapped_step_rate_g_(
+inline void step_rate_g(
   double* dtit, IndexRange idx_range, gr_mask_type anydust, double* h2dust,
   double* rhoH, double* dedot_prev, double* HIdot_prev,
   gr_mask_type* itmask, gr_mask_type* itmask_metal, int imetal,
@@ -460,7 +465,7 @@ inline void wrapped_step_rate_g_(
 
 }
 
-inline void wrapped_step_rate_newton_raphson_(
+inline void step_rate_newton_raphson(
   int imetal, IndexRange idx_range, int iter, double dom, double chunit,
   double dx_cgs, double c_ljeans, double* dtit, double* p2d, double* tgas,
   double* tdust, double* metallicity, double* dust2gas, double* rhoH,
@@ -580,7 +585,7 @@ inline void wrapped_step_rate_newton_raphson_(
 
 }
 
-
+} // namespace grackle::impl::fortran_wrapper
 
 #endif /* FORTRAN_FUNC_WRAPPERS_HPP */
 
