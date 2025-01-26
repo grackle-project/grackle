@@ -1,7 +1,7 @@
 // See LICENSE file for license and copyright information
 
 /// @file LUT.hpp
-/// @brief Declares some lookup-tables used internally by Grackle
+/// @brief Declares some lookup-tables (LUTs) used internally by Grackle
 
 #ifndef LUT_HPP
 #define LUT_HPP
@@ -9,6 +9,19 @@
 #ifndef __cplusplus
 #error "This file can only be read by a c++ compiler"
 #endif
+
+// once we have transcribed more code, we should really put this header's
+// contents inside of the grackle::impl namespace
+// - if a lookup-table is called {name}, then its fully qualified name will be
+//   `grackle::impl::{name}`.
+// - when using the LUT in a function, we can shorten its name, within the
+//   function to just {name} by inserting `using grackle::impl::{name};` near
+//   the start of the function
+// - we should hold off on doing this until more code is transcribed (since it
+//   will be hard for the transcription tools to automatically handle the
+//   shortenning of the fully qualified name)
+
+
 
 /// This is collection of enumerators (localized to the `SpLUT::` scope), with
 /// an enumerator named for EVERY species (primordial-species, metal-species,
