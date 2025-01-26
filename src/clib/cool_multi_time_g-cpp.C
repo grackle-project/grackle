@@ -11,6 +11,7 @@
 
 #include "grackle.h"
 #include "fortran_func_decls.h"
+#include "internal_units.h"
 #include "internal_types.hpp"
 #include "utils-cpp.hpp"
 
@@ -21,10 +22,9 @@ extern "C" {
 #endif /* __cplusplus */
 
 void cool_multi_time_g(
-  gr_float* cooltime_data_, int* imetal, double* utem, double* uxyz,
-  double* urho, chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
-  code_units* my_units, grackle_field_data* my_fields,
-  photo_rate_storage* my_uvb_rates
+  gr_float* cooltime_data_, int* imetal, InternalGrUnits internalu,
+  chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
+  grackle_field_data* my_fields, photo_rate_storage* my_uvb_rates
 )
 {
 
@@ -33,9 +33,9 @@ void cool_multi_time_g(
 
   // Convert densities from comoving to 'proper'
 
-  if (my_units->comoving_coordinates == 1)  {
+  if (internalu.extfields_in_comoving == 1)  {
 
-    gr_float factor = (gr_float)(std::pow(my_units->a_value,(-3)) );
+    gr_float factor = (gr_float)(std::pow(internalu.a_value,(-3)) );
 
      FORTRAN_NAME(scale_fields_g)(
       &my_chemistry->primordial_chemistry, imetal, &my_chemistry->use_dust_density_field, &my_chemistry->metal_chemistry,
@@ -116,12 +116,12 @@ void cool_multi_time_g(
        FORTRAN_NAME(cool1d_multi_g)(
                    my_fields->density, my_fields->internal_energy, my_fields->x_velocity, my_fields->y_velocity, my_fields->z_velocity, my_fields->e_density, my_fields->HI_density, my_fields->HII_density, my_fields->HeI_density, my_fields->HeII_density, my_fields->HeIII_density,
                    &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &my_chemistry->NumberOfTemperatureBins,
-                   &my_units->comoving_coordinates, &my_chemistry->primordial_chemistry, imetal, &my_chemistry->metal_cooling,
+                   &internalu.extfields_in_comoving, &my_chemistry->primordial_chemistry, imetal, &my_chemistry->metal_cooling,
                    &my_chemistry->h2_on_dust, &my_chemistry->dust_chemistry, &my_chemistry->use_dust_density_field, &my_chemistry->dust_recombination_cooling,
                    &my_fields->grid_rank, &my_fields->grid_start[0], &my_fields->grid_end[0], &j, &k, &my_chemistry->ih2co, &my_chemistry->ipiht,
                    &dummy_iter_arg, &my_chemistry->photoelectric_heating,
-                   &my_units->a_value, &my_chemistry->TemperatureStart, &my_chemistry->TemperatureEnd, &my_chemistry->SolarMetalFractionByMass, &my_chemistry->local_dust_to_gas_ratio,
-                   utem, uxyz, &my_units->a_units, urho, &my_units->time_units,
+                   &internalu.a_value, &my_chemistry->TemperatureStart, &my_chemistry->TemperatureEnd, &my_chemistry->SolarMetalFractionByMass, &my_chemistry->local_dust_to_gas_ratio,
+                   &internalu.utem, &internalu.uxyz, &internalu.a_units, &internalu.urho, &internalu.tbase1,
                    &my_chemistry->Gamma, &my_chemistry->HydrogenFractionByMass,
                    my_rates->ceHI, my_rates->ceHeI, my_rates->ceHeII, my_rates->ciHI, my_rates->ciHeI,
                    my_rates->ciHeIS, my_rates->ciHeII, my_rates->reHII, my_rates->reHeII1,
@@ -239,9 +239,9 @@ void cool_multi_time_g(
 
   // Convert densities back to comoving from 'proper'
 
-  if (my_units->comoving_coordinates == 1)  {
+  if (internalu.extfields_in_comoving == 1)  {
 
-    gr_float factor = (gr_float)(std::pow(my_units->a_value,3) );
+    gr_float factor = (gr_float)(std::pow(internalu.a_value,3) );
 
      FORTRAN_NAME(scale_fields_g)(
       &my_chemistry->primordial_chemistry, imetal, &my_chemistry->use_dust_density_field, &my_chemistry->metal_chemistry,
