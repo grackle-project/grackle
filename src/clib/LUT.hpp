@@ -151,6 +151,32 @@ struct SpLUT {
 }; // SpLUT struct
 
 
+/// Define a LUT that ONLY contains grain species
+struct OnlyGrainSpLUT {
+
+  // in the future, we may want to reimplement the following in terms of the
+  // XMacros provided in grackle_field_data_fdatamembers.def (or we may need to
+  // slightly revise the system?)
+  enum {
+    SiM,
+    FeM,
+    Mg2SiO4,
+    MgSiO3,
+    Fe3O4,
+    AC,
+    SiO2D,
+    MgO,
+    FeS,
+    Al2O3,
+    reforg,
+    volorg,
+    H2Oice,
+
+    NUM_ENTRIES // <- always last (so it specifies the number of species)
+  };
+}; // struct OnlyGrainSpLUT
+
+
 /// Defines the LUT for Standard Collisional and Recombination reaction rates
 struct ColRecRxnLUT {
 

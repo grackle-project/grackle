@@ -212,9 +212,9 @@ void cool_multi_time_g(
                   my_rates->SN0_kpFe3O4, my_rates->SN0_kpAC, my_rates->SN0_kpSiO2D, my_rates->SN0_kpMgO,
                   my_rates->SN0_kpFeS, my_rates->SN0_kpAl2O3,
                   my_rates->SN0_kpreforg, my_rates->SN0_kpvolorg, my_rates->SN0_kpH2Oice,
-                  grain_temperatures.SiM, grain_temperatures.FeM, grain_temperatures.Mg2SiO4, grain_temperatures.MgSiO3, grain_temperatures.Fe3O4,
-                  grain_temperatures.AC, grain_temperatures.SiO2D, grain_temperatures.MgO, grain_temperatures.FeS, grain_temperatures.Al2O3,
-                  grain_temperatures.reforg, grain_temperatures.volorg, grain_temperatures.H2Oice,
+                  grain_temperatures.data[OnlyGrainSpLUT::SiM], grain_temperatures.data[OnlyGrainSpLUT::FeM], grain_temperatures.data[OnlyGrainSpLUT::Mg2SiO4], grain_temperatures.data[OnlyGrainSpLUT::MgSiO3], grain_temperatures.data[OnlyGrainSpLUT::Fe3O4],
+                  grain_temperatures.data[OnlyGrainSpLUT::AC], grain_temperatures.data[OnlyGrainSpLUT::SiO2D], grain_temperatures.data[OnlyGrainSpLUT::MgO], grain_temperatures.data[OnlyGrainSpLUT::FeS], grain_temperatures.data[OnlyGrainSpLUT::Al2O3],
+                  grain_temperatures.data[OnlyGrainSpLUT::reforg], grain_temperatures.data[OnlyGrainSpLUT::volorg], grain_temperatures.data[OnlyGrainSpLUT::H2Oice],
                   my_rates->gas_grain2, &my_rates->gamma_isrf2
                );
 
