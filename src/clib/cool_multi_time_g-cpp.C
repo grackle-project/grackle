@@ -11,6 +11,7 @@
 
 #include "grackle.h"
 #include "fortran_func_decls.h"
+#include "index_helper.h"
 #include "internal_units.h"
 #include "internal_types.hpp"
 #include "utils-cpp.hpp"
@@ -28,8 +29,7 @@ void cool_multi_time_g(
 )
 {
 
-  const int dk = my_fields->grid_end[2] - my_fields->grid_start[2] + 1;
-  const int dj = my_fields->grid_end[1] - my_fields->grid_start[1] + 1;
+  const grackle_index_helper idx_helper = build_index_helper_(my_fields);
 
   // Convert densities from comoving to 'proper'
 
@@ -98,12 +98,14 @@ void cool_multi_time_g(
     std::vector<gr_mask_type> itmask_metal(my_fields->grid_dimension[0]);
 
     // The following for-loop is a flattened loop over every k,j combination.
-    // OpenMP divides this loop between all threads. Within the loop,
-    // calculations are completed for all i indices.
+    // OpenMP divides this loop between all threads. Within the loop, we
+    // complete calculations for the constructed index-range construct
+    // (an index range corresponds to an "i-slice")
     OMP_PRAGMA("omp for")
-    for (int t = 0; t<=(dk * dj - 1); t++) {
-      int k = t/dj      + my_fields->grid_start[2]+1;
-      int j = grackle::impl::mod(t,dj) + my_fields->grid_start[1]+1;
+    for (int t = 0; t < idx_helper.outer_ind_size; t++) {
+      const IndexRange idx_range = make_idx_range_(t, &idx_helper);
+      int k = idx_range.kp1; // use 1-based index, for now
+      int j = idx_range.jp1; // use 1-based index, for now
 
       for (int i = my_fields->grid_start[0] + 1; i<=(my_fields->grid_end[0] + 1); i++) {
         itmask[i-1] = MASK_TRUE;
