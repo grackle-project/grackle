@@ -84,11 +84,11 @@ void cool_multi_time_g(
     OMP_PRAGMA("omp for")
     for (int t = 0; t < idx_helper.outer_ind_size; t++) {
       const IndexRange idx_range = make_idx_range_(t, &idx_helper);
-      int k = idx_range.kp1; // use 1-based index, for now
-      int j = idx_range.jp1; // use 1-based index, for now
+      const int k = idx_range.k; // use 0-based index
+      const int j = idx_range.j; // use 0-based index
 
-      for (int i = my_fields->grid_start[0] + 1; i<=(my_fields->grid_end[0] + 1); i++) {
-        itmask[i-1] = MASK_TRUE;
+      for (int i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
+        itmask[i] = MASK_TRUE;
       }
 
       // Compute the cooling rate
@@ -107,9 +107,10 @@ void cool_multi_time_g(
       //   (the gamma used here is the same as used to calculate the pressure
       //    in cool1d_multi_g)
 
-      for (int i = my_fields->grid_start[0] + 1; i<=(my_fields->grid_end[0] + 1); i++) {
-        double energy = std::fmax(p2d[i-1]/(my_chemistry->Gamma-1.), tiny_fortran_val);
-        cooltime(i-1,j-1,k-1) = (gr_float)(energy/edot[i-1] );
+      for (int i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
+        double energy = std::fmax(p2d[i]/(my_chemistry->Gamma-1.),
+                                  tiny_fortran_val);
+        cooltime(i,j,k) = (gr_float)(energy/edot[i]);
       }
 
     }
