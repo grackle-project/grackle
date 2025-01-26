@@ -87,7 +87,7 @@ void cool_multi_time_g(
       const int k = idx_range.k; // use 0-based index
       const int j = idx_range.j; // use 0-based index
 
-      for (int i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
+      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         itmask[i] = MASK_TRUE;
       }
 
@@ -107,7 +107,7 @@ void cool_multi_time_g(
       //   (the gamma used here is the same as used to calculate the pressure
       //    in cool1d_multi_g)
 
-      for (int i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
+      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         double energy = std::fmax(p2d[i]/(my_chemistry->Gamma-1.),
                                   tiny_fortran_val);
         cooltime(i,j,k) = (gr_float)(energy/edot[i]);
