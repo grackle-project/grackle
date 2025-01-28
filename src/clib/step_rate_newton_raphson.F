@@ -76,8 +76,8 @@
      &                kdissHDI, iionZ, kphCI, kphOI, idissZ, kdissCO,
      &                kdissOH, kdissH2O, iuseH2shield, iisrffield,
      &                isrf_habing, iH2shieldcustom, f_shield_custom,
-     &                j, k, iter, dom, comp1,
-     &                comp2, coolunit, tbase1, xbase1, chunit, dx_cgs,
+     &                j, k, iter, dom,
+     &                coolunit, tbase1, xbase1, chunit, dx_cgs,
      &                c_ljeans, indixe, t1, t2, logtem, tdef, dtit,
      &                p2d, tgas, tgasold, tdust, metallicity, dust2gas,
      &                rhoH, mmw, mynh, myde, gammaha_eff, gasgr_tdust,
@@ -291,7 +291,7 @@
 
 !  Assorted arguments
       integer j, k, iter
-      real*8 dom, comp1, comp2
+      real*8 dom
       real*8 coolunit, tbase1, xbase1, chunit
       real*8 dx_cgs, c_ljeans
 
@@ -583,7 +583,7 @@
      &   ciHeISa, ciHeIIa, reHIIa, reHeII1a, 
      &   reHeII2a, reHeIIIa, brema, compa, gammaha,
      &   isrf, regra, gamma_isrfa, comp_xraya, comp_temp,
-     &   piHI, piHeI, piHeII, comp1, comp2,
+     &   piHI, piHeI, piHeII,
      &   metal(i,j,k), dust(i,j,k),
      &   hyd01ka, h2k01a, vibha, rotha, rotla,
      &   hyd01k(i), h2k01(i), vibh(i), roth(i), rotl(i),
@@ -719,7 +719,7 @@
      &   ciHeISa, ciHeIIa, reHIIa, reHeII1a, 
      &   reHeII2a, reHeIIIa, brema, compa, gammaha,
      &   isrf, regra, gamma_isrfa, comp_xraya, comp_temp,
-     &   piHI, piHeI, piHeII, comp1, comp2,
+     &   piHI, piHeI, piHeII,
      &   metal(i,j,k), dust(i,j,k),
      &   hyd01ka, h2k01a, vibha, rotha, rotla,
      &   hyd01k(i), h2k01(i), vibh(i), roth(i), rotl(i),

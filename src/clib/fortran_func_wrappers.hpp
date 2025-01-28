@@ -481,11 +481,6 @@ inline void step_rate_newton_raphson(
   grackle::impl::ChemHeatingRates chemheatrates_buf
 ) {
 
-  // the following 2 variables should not be arguments (they are only inside
-  // of cool1d_multi_g to temporarily store a local value)
-  //
-  // We will fix this in the future
-  double comp1, comp2;
 
            FORTRAN_NAME(step_rate_newton_raphson)(&my_chemistry->with_radiative_cooling, my_fields->density, my_fields->internal_energy, my_fields->x_velocity, my_fields->y_velocity, my_fields->z_velocity, my_fields->e_density, my_fields->HI_density,
                     my_fields->HII_density, my_fields->HeI_density, my_fields->HeII_density, my_fields->HeIII_density, &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &my_chemistry->NumberOfTemperatureBins,
@@ -565,8 +560,8 @@ inline void step_rate_newton_raphson(
                     my_fields->RT_HDI_dissociation_rate, &my_chemistry->radiative_transfer_metal_ionization, my_fields->RT_CI_ionization_rate, my_fields->RT_OI_ionization_rate, &my_chemistry->radiative_transfer_metal_dissociation, my_fields->RT_CO_dissociation_rate,
                     my_fields->RT_OH_dissociation_rate, my_fields->RT_H2O_dissociation_rate, &my_chemistry->radiative_transfer_use_H2_shielding, &my_chemistry->use_isrf_field,
                     my_fields->isrf_habing, &my_chemistry->H2_custom_shielding, my_fields->H2_custom_shielding_factor,
-                    &idx_range.jp1, &idx_range.kp1, &iter, &dom, &comp1,
-                    &comp2, &internalu.coolunit, &internalu.tbase1, &internalu.xbase1, &chunit, &dx_cgs,
+                    &idx_range.jp1, &idx_range.kp1, &iter, &dom,
+                    &internalu.coolunit, &internalu.tbase1, &internalu.xbase1, &chunit, &dx_cgs,
                     &c_ljeans, logTlininterp_buf.indixe, logTlininterp_buf.t1, logTlininterp_buf.t2, logTlininterp_buf.logtem, logTlininterp_buf.tdef, dtit,
                     p2d, tgas, cool1dmulti_buf.tgasold, tdust, metallicity, dust2gas,
                     rhoH, mmw, cool1dmulti_buf.mynh, cool1dmulti_buf.myde, cool1dmulti_buf.gammaha_eff, cool1dmulti_buf.gasgr_tdust,
