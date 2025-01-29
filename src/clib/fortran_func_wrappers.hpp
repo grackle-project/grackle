@@ -482,10 +482,10 @@ inline void step_rate_newton_raphson(
 ) {
 
   grackle::impl::step_rate_newton_raphson(
-    &imetal, &iter, &dom, &chunit,
-    &dx_cgs, &c_ljeans, dtit, p2d, tgas,
+    imetal, iter, dom, chunit,
+    dx_cgs, c_ljeans, dtit, p2d, tgas,
     tdust, metallicity, dust2gas, rhoH,
-    mmw, h2dust, edot, &anydust,
+    mmw, h2dust, edot, anydust,
     itmask_nr, itmask_metal, imp_eng,
     my_chemistry, my_rates, my_fields, my_uvb_rates,
     internalu, idx_range,
