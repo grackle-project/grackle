@@ -187,15 +187,16 @@ inline void step_rate_newton_raphson(
 
   // The following was extracted from another subroutine
   for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-    const int ip1 = i+1;
-    if (itmask_nr[ip1-1] != MASK_FALSE)  {
+    const int j = idx_range.j;
+    const int k = idx_range.k;
+    if (itmask_nr[i] != MASK_FALSE)  {
 
       // If density and temperature are low, update gas energy explicitly
 
       if (my_chemistry->with_radiative_cooling == 1)  {
-        if (imp_eng[ip1-1] == 0)  {
-          e(ip1-1,idx_range.jp1-1,idx_range.kp1-1)  = e(ip1-1,idx_range.jp1-1,idx_range.kp1-1) +
-               (gr_float)(edot[ip1-1]/d(ip1-1,idx_range.jp1-1,idx_range.kp1-1)*dtit[ip1-1] );
+        if (imp_eng[i] == 0)  {
+          e(i,j,k)  = e(i,j,k) +
+               (gr_float)(edot[i]/d(i,j,k)*dtit[i] );
         }
       }
 
@@ -204,7 +205,7 @@ inline void step_rate_newton_raphson(
       if (my_chemistry->primordial_chemistry > 1) { nsp = nsp + 3; }
       if (my_chemistry->primordial_chemistry > 2) { nsp = nsp + 3; }
       if (my_chemistry->primordial_chemistry > 3) { nsp = nsp + 3; }
-      if (itmask_metal[ip1-1] != MASK_FALSE)  {
+      if (itmask_metal[i] != MASK_FALSE)  {
         if (my_chemistry->metal_chemistry == 1)  {
           nsp = nsp + 19;
           if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
@@ -218,90 +219,90 @@ inline void step_rate_newton_raphson(
           if (my_chemistry->dust_species > 2) { nsp = nsp + 3; }
         }
       }
-      nsp = nsp + imp_eng[ip1-1];
+      nsp = nsp + imp_eng[i];
       idsp.reserve(nsp);
       mtrx_data_.reserve(nsp * nsp);
       mtrx = grackle::impl::View<double**>(mtrx_data_.data(), nsp, nsp);
       vec.reserve(nsp);
 
       if ( my_chemistry->primordial_chemistry > 0 )  {
-        dsp[ 1-1] = de(ip1-1,idx_range.jp1-1,idx_range.kp1-1);
-        dsp[ 2-1] = HI(ip1-1,idx_range.jp1-1,idx_range.kp1-1);
-        dsp[ 3-1] = HII(ip1-1,idx_range.jp1-1,idx_range.kp1-1);
-        dsp[ 4-1] = HeI(ip1-1,idx_range.jp1-1,idx_range.kp1-1);
-        dsp[ 5-1] = HeII(ip1-1,idx_range.jp1-1,idx_range.kp1-1);
-        dsp[ 6-1] = HeIII(ip1-1,idx_range.jp1-1,idx_range.kp1-1);
+        dsp[ 1-1] = de(i,j,k);
+        dsp[ 2-1] = HI(i,j,k);
+        dsp[ 3-1] = HII(i,j,k);
+        dsp[ 4-1] = HeI(i,j,k);
+        dsp[ 5-1] = HeII(i,j,k);
+        dsp[ 6-1] = HeIII(i,j,k);
       }
       if ( my_chemistry->primordial_chemistry > 1 )  {
-        dsp[ 7-1] = HM(ip1-1,idx_range.jp1-1,idx_range.kp1-1);
-        dsp[ 8-1] = H2I(ip1-1,idx_range.jp1-1,idx_range.kp1-1);
-        dsp[ 9-1] = H2II(ip1-1,idx_range.jp1-1,idx_range.kp1-1);
+        dsp[ 7-1] = HM(i,j,k);
+        dsp[ 8-1] = H2I(i,j,k);
+        dsp[ 9-1] = H2II(i,j,k);
       }
       if ( my_chemistry->primordial_chemistry > 2 )  {
-        dsp[10-1] = DI(ip1-1,idx_range.jp1-1,idx_range.kp1-1);
-        dsp[11-1] = DII(ip1-1,idx_range.jp1-1,idx_range.kp1-1);
-        dsp[12-1] = HDI(ip1-1,idx_range.jp1-1,idx_range.kp1-1);
+        dsp[10-1] = DI(i,j,k);
+        dsp[11-1] = DII(i,j,k);
+        dsp[12-1] = HDI(i,j,k);
       }
       if ( my_chemistry->primordial_chemistry > 3 )  {
-        dsp[13-1] = DM(ip1-1,idx_range.jp1-1,idx_range.kp1-1);
-        dsp[14-1] = HDII(ip1-1,idx_range.jp1-1,idx_range.kp1-1);
-        dsp[15-1] = HeHII(ip1-1,idx_range.jp1-1,idx_range.kp1-1);
+        dsp[13-1] = DM(i,j,k);
+        dsp[14-1] = HDII(i,j,k);
+        dsp[15-1] = HeHII(i,j,k);
       }
-      if ( itmask_metal[ip1-1] != MASK_FALSE )  {
+      if ( itmask_metal[i] != MASK_FALSE )  {
         if ( my_chemistry->metal_chemistry == 1 )  {
-          dsp[16-1] = CI(ip1-1,idx_range.jp1-1,idx_range.kp1-1);
-          dsp[17-1] = CII(ip1-1,idx_range.jp1-1,idx_range.kp1-1);
-          dsp[18-1] = CO(ip1-1,idx_range.jp1-1,idx_range.kp1-1);
-          dsp[19-1] = CO2(ip1-1,idx_range.jp1-1,idx_range.kp1-1);
-          dsp[20-1] = OI(ip1-1,idx_range.jp1-1,idx_range.kp1-1);
-          dsp[21-1] = OH(ip1-1,idx_range.jp1-1,idx_range.kp1-1);
-          dsp[22-1] = H2O(ip1-1,idx_range.jp1-1,idx_range.kp1-1);
-          dsp[23-1] = O2(ip1-1,idx_range.jp1-1,idx_range.kp1-1);
-          dsp[24-1] = SiI(ip1-1,idx_range.jp1-1,idx_range.kp1-1);
-          dsp[25-1] = SiOI(ip1-1,idx_range.jp1-1,idx_range.kp1-1);
-          dsp[26-1] = SiO2I(ip1-1,idx_range.jp1-1,idx_range.kp1-1);
-          dsp[27-1] = CH(ip1-1,idx_range.jp1-1,idx_range.kp1-1);
-          dsp[28-1] = CH2(ip1-1,idx_range.jp1-1,idx_range.kp1-1);
-          dsp[29-1] = COII(ip1-1,idx_range.jp1-1,idx_range.kp1-1);
-          dsp[30-1] = OII(ip1-1,idx_range.jp1-1,idx_range.kp1-1);
-          dsp[31-1] = OHII(ip1-1,idx_range.jp1-1,idx_range.kp1-1);
-          dsp[32-1] = H2OII(ip1-1,idx_range.jp1-1,idx_range.kp1-1);
-          dsp[33-1] = H3OII(ip1-1,idx_range.jp1-1,idx_range.kp1-1);
-          dsp[34-1] = O2II(ip1-1,idx_range.jp1-1,idx_range.kp1-1);
+          dsp[16-1] = CI(i,j,k);
+          dsp[17-1] = CII(i,j,k);
+          dsp[18-1] = CO(i,j,k);
+          dsp[19-1] = CO2(i,j,k);
+          dsp[20-1] = OI(i,j,k);
+          dsp[21-1] = OH(i,j,k);
+          dsp[22-1] = H2O(i,j,k);
+          dsp[23-1] = O2(i,j,k);
+          dsp[24-1] = SiI(i,j,k);
+          dsp[25-1] = SiOI(i,j,k);
+          dsp[26-1] = SiO2I(i,j,k);
+          dsp[27-1] = CH(i,j,k);
+          dsp[28-1] = CH2(i,j,k);
+          dsp[29-1] = COII(i,j,k);
+          dsp[30-1] = OII(i,j,k);
+          dsp[31-1] = OHII(i,j,k);
+          dsp[32-1] = H2OII(i,j,k);
+          dsp[33-1] = H3OII(i,j,k);
+          dsp[34-1] = O2II(i,j,k);
           if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
             if (my_chemistry->dust_species > 0)  {
-              dsp[35-1] = Mg(ip1-1,idx_range.jp1-1,idx_range.kp1-1);
+              dsp[35-1] = Mg(i,j,k);
             }
             if (my_chemistry->dust_species > 1)  {
-              dsp[36-1] = Al(ip1-1,idx_range.jp1-1,idx_range.kp1-1);
-              dsp[37-1] = S(ip1-1,idx_range.jp1-1,idx_range.kp1-1);
-              dsp[38-1] = Fe(ip1-1,idx_range.jp1-1,idx_range.kp1-1);
+              dsp[36-1] = Al(i,j,k);
+              dsp[37-1] = S(i,j,k);
+              dsp[38-1] = Fe(i,j,k);
             }
           }
         }
         if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
           if (my_chemistry->dust_species > 0)  {
-            dsp[39-1] = MgSiO3(ip1-1,idx_range.jp1-1,idx_range.kp1-1);
-            dsp[40-1] = AC(ip1-1,idx_range.jp1-1,idx_range.kp1-1);
+            dsp[39-1] = MgSiO3(i,j,k);
+            dsp[40-1] = AC(i,j,k);
           }
           if (my_chemistry->dust_species > 1)  {
-            dsp[41-1] = SiM(ip1-1,idx_range.jp1-1,idx_range.kp1-1);
-            dsp[42-1] = FeM(ip1-1,idx_range.jp1-1,idx_range.kp1-1);
-            dsp[43-1] = Mg2SiO4(ip1-1,idx_range.jp1-1,idx_range.kp1-1);
-            dsp[44-1] = Fe3O4(ip1-1,idx_range.jp1-1,idx_range.kp1-1);
-            dsp[45-1] = SiO2D(ip1-1,idx_range.jp1-1,idx_range.kp1-1);
-            dsp[46-1] = MgO(ip1-1,idx_range.jp1-1,idx_range.kp1-1);
-            dsp[47-1] = FeS(ip1-1,idx_range.jp1-1,idx_range.kp1-1);
-            dsp[48-1] = Al2O3(ip1-1,idx_range.jp1-1,idx_range.kp1-1);
+            dsp[41-1] = SiM(i,j,k);
+            dsp[42-1] = FeM(i,j,k);
+            dsp[43-1] = Mg2SiO4(i,j,k);
+            dsp[44-1] = Fe3O4(i,j,k);
+            dsp[45-1] = SiO2D(i,j,k);
+            dsp[46-1] = MgO(i,j,k);
+            dsp[47-1] = FeS(i,j,k);
+            dsp[48-1] = Al2O3(i,j,k);
           }
           if (my_chemistry->dust_species > 2)  {
-            dsp[49-1] = reforg(ip1-1,idx_range.jp1-1,idx_range.kp1-1);
-            dsp[50-1] = volorg(ip1-1,idx_range.jp1-1,idx_range.kp1-1);
-            dsp[51-1] = H2Oice(ip1-1,idx_range.jp1-1,idx_range.kp1-1);
+            dsp[49-1] = reforg(i,j,k);
+            dsp[50-1] = volorg(i,j,k);
+            dsp[51-1] = H2Oice(i,j,k);
           }
         }
       }
-      dsp[i_eng-1] = e(ip1-1,idx_range.jp1-1,idx_range.kp1-1);
+      dsp[i_eng-1] = e(i,j,k);
 
       id = 0;
       if (my_chemistry->primordial_chemistry > 0)  {
@@ -328,7 +329,7 @@ inline void step_rate_newton_raphson(
           idsp[id-1] = isp;
         }
       }
-      if (itmask_metal[ip1-1] != MASK_FALSE)  {
+      if (itmask_metal[i] != MASK_FALSE)  {
         if (my_chemistry->metal_chemistry == 1)  {
           for (isp = 16; isp<=(34); isp++) {
             id = id + 1;
@@ -370,7 +371,7 @@ inline void step_rate_newton_raphson(
           }
         }
       }
-      if ( imp_eng[ip1-1] ==1 )  {
+      if ( imp_eng[i] ==1 )  {
         id = id + 1;
         idsp[id-1] = i_eng;
       }
@@ -401,8 +402,8 @@ inline void step_rate_newton_raphson(
             goto label_9996;
           }
 
-           FORTRAN_NAME(lookup_cool_rates0d)(&dtit[ip1-1],
-          &d(ip1-1,idx_range.jp1-1,idx_range.kp1-1), &u(ip1-1,idx_range.jp1-1,idx_range.kp1-1), &v(ip1-1,idx_range.jp1-1,idx_range.kp1-1), &w(ip1-1,idx_range.jp1-1,idx_range.kp1-1),
+           FORTRAN_NAME(lookup_cool_rates0d)(&dtit[i],
+          &d(i,j,k), &u(i,j,k), &v(i,j,k), &w(i,j,k),
           &nsp, dsp.data(), dspdot.data(), &my_chemistry->NumberOfTemperatureBins,
           &internalu.extfields_in_comoving, &my_chemistry->primordial_chemistry, &imetal, &my_chemistry->metal_cooling,
           &my_chemistry->h2_on_dust, &my_chemistry->dust_chemistry, &my_chemistry->use_dust_density_field, &my_chemistry->dust_recombination_cooling,
@@ -415,24 +416,24 @@ inline void step_rate_newton_raphson(
           my_rates->reHeII2, my_rates->reHeIII, my_rates->brem, &my_rates->comp, &my_rates->gammah,
           &my_chemistry->interstellar_radiation_field, my_rates->regr, &my_rates->gamma_isrf, &my_uvb_rates.comp_xray, &my_uvb_rates.temp_xray,
           &my_uvb_rates.piHI, &my_uvb_rates.piHeI, &my_uvb_rates.piHeII,
-          &metal(ip1-1,idx_range.jp1-1,idx_range.kp1-1), &dust(ip1-1,idx_range.jp1-1,idx_range.kp1-1),
+          &metal(i,j,k), &dust(i,j,k),
           my_rates->hyd01k, my_rates->h2k01, my_rates->vibh, my_rates->roth, my_rates->rotl,
-          &coolingheating_buf.hyd01k[ip1-1], &coolingheating_buf.h2k01[ip1-1], &coolingheating_buf.vibh[ip1-1], &coolingheating_buf.roth[ip1-1], &coolingheating_buf.rotl[ip1-1],
-          my_rates->GP99LowDensityLimit, my_rates->GP99HighDensityLimit, &coolingheating_buf.gpldl[ip1-1], &coolingheating_buf.gphdl[ip1-1],
-          my_rates->HDlte, my_rates->HDlow, &coolingheating_buf.hdlte[ip1-1], &coolingheating_buf.hdlow[ip1-1],
+          &coolingheating_buf.hyd01k[i], &coolingheating_buf.h2k01[i], &coolingheating_buf.vibh[i], &coolingheating_buf.roth[i], &coolingheating_buf.rotl[i],
+          my_rates->GP99LowDensityLimit, my_rates->GP99HighDensityLimit, &coolingheating_buf.gpldl[i], &coolingheating_buf.gphdl[i],
+          my_rates->HDlte, my_rates->HDlow, &coolingheating_buf.hdlte[i], &coolingheating_buf.hdlow[i],
           my_rates->GAHI, my_rates->GAH2, my_rates->GAHe,
           my_rates->GAHp, my_rates->GAel,
           my_rates->H2LTE, my_rates->gas_grain,
-          &coolingheating_buf.ceHI[ip1-1], &coolingheating_buf.ceHeI[ip1-1], &coolingheating_buf.ceHeII[ip1-1], &coolingheating_buf.ciHI[ip1-1], &coolingheating_buf.ciHeI[ip1-1],
-          &coolingheating_buf.ciHeIS[ip1-1], &coolingheating_buf.ciHeII[ip1-1],
-          &coolingheating_buf.reHII[ip1-1], &coolingheating_buf.reHeII1[ip1-1], &coolingheating_buf.reHeII2[ip1-1], &coolingheating_buf.reHeIII[ip1-1], &coolingheating_buf.brem[ip1-1],
-          &logTlininterp_buf.indixe[ip1-1], &logTlininterp_buf.t1[ip1-1], &logTlininterp_buf.t2[ip1-1], &logTlininterp_buf.logtem[ip1-1], &logTlininterp_buf.tdef[ip1-1], &edot[ip1-1],
-          &tgas[ip1-1], &cool1dmulti_buf.tgasold[ip1-1], &mmw[ip1-1], &p2d[ip1-1], &tdust[ip1-1], &metallicity[ip1-1],
-          &dust2gas[ip1-1], &rhoH[ip1-1], &cool1dmulti_buf.mynh[ip1-1], &cool1dmulti_buf.myde[ip1-1],
-          &cool1dmulti_buf.gammaha_eff[ip1-1], &cool1dmulti_buf.gasgr_tdust[ip1-1], &cool1dmulti_buf.regr[ip1-1],
+          &coolingheating_buf.ceHI[i], &coolingheating_buf.ceHeI[i], &coolingheating_buf.ceHeII[i], &coolingheating_buf.ciHI[i], &coolingheating_buf.ciHeI[i],
+          &coolingheating_buf.ciHeIS[i], &coolingheating_buf.ciHeII[i],
+          &coolingheating_buf.reHII[i], &coolingheating_buf.reHeII1[i], &coolingheating_buf.reHeII2[i], &coolingheating_buf.reHeIII[i], &coolingheating_buf.brem[i],
+          &logTlininterp_buf.indixe[i], &logTlininterp_buf.t1[i], &logTlininterp_buf.t2[i], &logTlininterp_buf.logtem[i], &logTlininterp_buf.tdef[i], &edot[i],
+          &tgas[i], &cool1dmulti_buf.tgasold[i], &mmw[i], &p2d[i], &tdust[i], &metallicity[i],
+          &dust2gas[i], &rhoH[i], &cool1dmulti_buf.mynh[i], &cool1dmulti_buf.myde[i],
+          &cool1dmulti_buf.gammaha_eff[i], &cool1dmulti_buf.gasgr_tdust[i], &cool1dmulti_buf.regr[i],
           &my_chemistry->self_shielding_method, &my_uvb_rates.crsHI, &my_uvb_rates.crsHeI, &my_uvb_rates.crsHeII,
           &my_chemistry->use_radiative_transfer, &my_chemistry->radiative_transfer_hydrogen_only,
-          &my_chemistry->h2_optical_depth_approximation, &my_chemistry->cie_cooling, &my_chemistry->h2_cooling_rate, &my_chemistry->hd_cooling_rate, my_rates->cieco, &coolingheating_buf.cieco[ip1-1],
+          &my_chemistry->h2_optical_depth_approximation, &my_chemistry->cie_cooling, &my_chemistry->h2_cooling_rate, &my_chemistry->hd_cooling_rate, my_rates->cieco, &coolingheating_buf.cieco[i],
           &my_chemistry->cmb_temperature_floor, &my_chemistry->UVbackground, &my_chemistry->cloudy_electron_fraction_factor,
           &my_rates->cloudy_primordial.grid_rank, my_rates->cloudy_primordial.grid_dimension,
           my_rates->cloudy_primordial.grid_parameters[0], my_rates->cloudy_primordial.grid_parameters[1], my_rates->cloudy_primordial.grid_parameters[2], my_rates->cloudy_primordial.grid_parameters[3], my_rates->cloudy_primordial.grid_parameters[4],
@@ -440,9 +441,9 @@ inline void step_rate_newton_raphson(
           &my_rates->cloudy_metal.grid_rank, my_rates->cloudy_metal.grid_dimension,
           my_rates->cloudy_metal.grid_parameters[0], my_rates->cloudy_metal.grid_parameters[1], my_rates->cloudy_metal.grid_parameters[2], my_rates->cloudy_metal.grid_parameters[3], my_rates->cloudy_metal.grid_parameters[4],
           &my_rates->cloudy_metal.data_size, my_rates->cloudy_metal.cooling_data, my_rates->cloudy_metal.heating_data, &my_rates->cloudy_data_new,
-          &my_chemistry->use_volumetric_heating_rate, &my_chemistry->use_specific_heating_rate, &Vheat(ip1-1,idx_range.jp1-1,idx_range.kp1-1), &Mheat(ip1-1,idx_range.jp1-1,idx_range.kp1-1),
-          &my_chemistry->use_temperature_floor, &my_chemistry->temperature_floor_scalar, &Tfloor(ip1-1,idx_range.jp1-1,idx_range.kp1-1),
-          &my_chemistry->use_isrf_field, &isrf_habing(ip1-1,idx_range.jp1-1,idx_range.kp1-1),
+          &my_chemistry->use_volumetric_heating_rate, &my_chemistry->use_specific_heating_rate, &Vheat(i,j,k), &Mheat(i,j,k),
+          &my_chemistry->use_temperature_floor, &my_chemistry->temperature_floor_scalar, &Tfloor(i,j,k),
+          &my_chemistry->use_isrf_field, &isrf_habing(i,j,k),
           &my_chemistry->three_body_rate, &anydust, &my_chemistry->H2_self_shielding,
           my_rates->k1, my_rates->k2, my_rates->k3, my_rates->k4, my_rates->k5, my_rates->k6, my_rates->k7, my_rates->k8, my_rates->k9, my_rates->k10,
           my_rates->k11, my_rates->k12, my_rates->k13, my_rates->k13dd, my_rates->k14, my_rates->k15, my_rates->k16,
@@ -451,11 +452,11 @@ inline void step_rate_newton_raphson(
           my_rates->k50, my_rates->k51, my_rates->k52, my_rates->k53, my_rates->k54, my_rates->k55, my_rates->k56,
           my_rates->k57, my_rates->k58, &my_chemistry->NumberOfDustTemperatureBins, &my_chemistry->DustTemperatureStart, &my_chemistry->DustTemperatureEnd, my_rates->h2dust,
           my_rates->n_cr_n, my_rates->n_cr_d1, my_rates->n_cr_d2,
-          &h2dust[ip1-1], &chemheatrates_buf.n_cr_n[ip1-1], &chemheatrates_buf.n_cr_d1[ip1-1], &chemheatrates_buf.n_cr_d2[ip1-1],
+          &h2dust[i], &chemheatrates_buf.n_cr_n[i], &chemheatrates_buf.n_cr_d1[i], &chemheatrates_buf.n_cr_d2[i],
           &dom, &internalu.coolunit, &internalu.tbase1, &internalu.xbase1, &dx_cgs, &c_ljeans,
-          &kphHI(ip1-1,idx_range.jp1-1,idx_range.kp1-1), &kphHeI(ip1-1,idx_range.jp1-1,idx_range.kp1-1), &kphHeII(ip1-1,idx_range.jp1-1,idx_range.kp1-1), &kdissH2I(ip1-1,idx_range.jp1-1,idx_range.kp1-1),
-          &photogamma(ip1-1,idx_range.jp1-1,idx_range.kp1-1), &xH2shield(ip1-1,idx_range.jp1-1,idx_range.kp1-1), &chunit, &itmask_nr[ip1-1],
-          &itmask_metal[ip1-1],
+          &kphHI(i,j,k), &kphHeI(i,j,k), &kphHeII(i,j,k), &kdissH2I(i,j,k),
+          &photogamma(i,j,k), &xH2shield(i,j,k), &chunit, &itmask_nr[i],
+          &itmask_metal[i],
            &my_chemistry->metal_chemistry, &my_chemistry->grain_growth, &my_chemistry->use_primordial_continuum_opacity, &my_chemistry->tabulated_cooling_minimum_temperature,
            my_rates->k125, my_rates->k129, my_rates->k130, my_rates->k131, my_rates->k132,
            my_rates->k133, my_rates->k134, my_rates->k135, my_rates->k136, my_rates->k137,
@@ -498,10 +499,10 @@ inline void step_rate_newton_raphson(
            my_rates->alphap.props.parameters[0], my_rates->alphap.props.parameters[1], &my_rates->alphap.props.parameter_spacing[0], &my_rates->alphap.props.parameter_spacing[1],
            my_rates->alphap.data,
            &my_chemistry->multi_metals, &my_chemistry->metal_abundances, &my_chemistry->dust_species, &my_chemistry->use_multiple_dust_temperatures, &my_chemistry->dust_sublimation,
-           &metal_loc(ip1-1,idx_range.jp1-1,idx_range.kp1-1), &metal_C13(ip1-1,idx_range.jp1-1,idx_range.kp1-1), &metal_C20(ip1-1,idx_range.jp1-1,idx_range.kp1-1),
-           &metal_C25(ip1-1,idx_range.jp1-1,idx_range.kp1-1), &metal_C30(ip1-1,idx_range.jp1-1,idx_range.kp1-1), &metal_F13(ip1-1,idx_range.jp1-1,idx_range.kp1-1),
-           &metal_F15(ip1-1,idx_range.jp1-1,idx_range.kp1-1), &metal_F50(ip1-1,idx_range.jp1-1,idx_range.kp1-1), &metal_F80(ip1-1,idx_range.jp1-1,idx_range.kp1-1),
-           &metal_P170(ip1-1,idx_range.jp1-1,idx_range.kp1-1), &metal_P200(ip1-1,idx_range.jp1-1,idx_range.kp1-1), &metal_Y19(ip1-1,idx_range.jp1-1,idx_range.kp1-1),
+           &metal_loc(i,j,k), &metal_C13(i,j,k), &metal_C20(i,j,k),
+           &metal_C25(i,j,k), &metal_C30(i,j,k), &metal_F13(i,j,k),
+           &metal_F15(i,j,k), &metal_F50(i,j,k), &metal_F80(i,j,k),
+           &metal_P170(i,j,k), &metal_P200(i,j,k), &metal_Y19(i,j,k),
            &my_rates->SN0_N,
            my_rates->SN0_fSiM, my_rates->SN0_fFeM, my_rates->SN0_fMg2SiO4, my_rates->SN0_fMgSiO3,
            my_rates->SN0_fFe3O4, my_rates->SN0_fAC, my_rates->SN0_fSiO2D, my_rates->SN0_fMgO,
@@ -517,14 +518,14 @@ inline void step_rate_newton_raphson(
            my_rates->SN0_kpFeS, my_rates->SN0_kpAl2O3,
            my_rates->SN0_kpreforg, my_rates->SN0_kpvolorg, my_rates->SN0_kpH2Oice,
            my_rates->h2dustS, my_rates->h2dustC, my_rates->grain_growth_rate,
-           &grain_temperatures.data[OnlyGrainSpLUT::SiM_dust][ip1-1], &grain_temperatures.data[OnlyGrainSpLUT::FeM_dust][ip1-1], &grain_temperatures.data[OnlyGrainSpLUT::Mg2SiO4_dust][ip1-1], &grain_temperatures.data[OnlyGrainSpLUT::MgSiO3_dust][ip1-1], &grain_temperatures.data[OnlyGrainSpLUT::Fe3O4_dust][ip1-1],
-           &grain_temperatures.data[OnlyGrainSpLUT::AC_dust][ip1-1], &grain_temperatures.data[OnlyGrainSpLUT::SiO2_dust][ip1-1], &grain_temperatures.data[OnlyGrainSpLUT::MgO_dust][ip1-1], &grain_temperatures.data[OnlyGrainSpLUT::FeS_dust][ip1-1], &grain_temperatures.data[OnlyGrainSpLUT::Al2O3_dust][ip1-1],
-           &grain_temperatures.data[OnlyGrainSpLUT::ref_org_dust][ip1-1], &grain_temperatures.data[OnlyGrainSpLUT::vol_org_dust][ip1-1], &grain_temperatures.data[OnlyGrainSpLUT::H2O_ice_dust][ip1-1],
+           &grain_temperatures.data[OnlyGrainSpLUT::SiM_dust][i], &grain_temperatures.data[OnlyGrainSpLUT::FeM_dust][i], &grain_temperatures.data[OnlyGrainSpLUT::Mg2SiO4_dust][i], &grain_temperatures.data[OnlyGrainSpLUT::MgSiO3_dust][i], &grain_temperatures.data[OnlyGrainSpLUT::Fe3O4_dust][i],
+           &grain_temperatures.data[OnlyGrainSpLUT::AC_dust][i], &grain_temperatures.data[OnlyGrainSpLUT::SiO2_dust][i], &grain_temperatures.data[OnlyGrainSpLUT::MgO_dust][i], &grain_temperatures.data[OnlyGrainSpLUT::FeS_dust][i], &grain_temperatures.data[OnlyGrainSpLUT::Al2O3_dust][i],
+           &grain_temperatures.data[OnlyGrainSpLUT::ref_org_dust][i], &grain_temperatures.data[OnlyGrainSpLUT::vol_org_dust][i], &grain_temperatures.data[OnlyGrainSpLUT::H2O_ice_dust][i],
            my_rates->gas_grain2, &my_rates->gamma_isrf2,
-           &imp_eng[ip1-1],
-           &my_chemistry->radiative_transfer_HDI_dissociation, &kdissHDI(ip1-1,idx_range.jp1-1,idx_range.kp1-1), &my_chemistry->radiative_transfer_metal_ionization, &kphCI(ip1-1,idx_range.jp1-1,idx_range.kp1-1), &kphOI(ip1-1,idx_range.jp1-1,idx_range.kp1-1),
-           &my_chemistry->radiative_transfer_metal_dissociation, &kdissCO(ip1-1,idx_range.jp1-1,idx_range.kp1-1), &kdissOH(ip1-1,idx_range.jp1-1,idx_range.kp1-1), &kdissH2O(ip1-1,idx_range.jp1-1,idx_range.kp1-1),
-           &my_chemistry->radiative_transfer_use_H2_shielding, &my_chemistry->H2_custom_shielding, &f_shield_custom(ip1-1,idx_range.jp1-1,idx_range.kp1-1)
+           &imp_eng[i],
+           &my_chemistry->radiative_transfer_HDI_dissociation, &kdissHDI(i,j,k), &my_chemistry->radiative_transfer_metal_ionization, &kphCI(i,j,k), &kphOI(i,j,k),
+           &my_chemistry->radiative_transfer_metal_dissociation, &kdissCO(i,j,k), &kdissOH(i,j,k), &kdissH2O(i,j,k),
+           &my_chemistry->radiative_transfer_use_H2_shielding, &my_chemistry->H2_custom_shielding, &f_shield_custom(i,j,k)
           );
 
           for (jsp = 1; jsp<=(nsp); jsp++) {
@@ -537,8 +538,8 @@ inline void step_rate_newton_raphson(
               }
             }
 
-             FORTRAN_NAME(lookup_cool_rates0d)(&dtit[ip1-1],
-            &d(ip1-1,idx_range.jp1-1,idx_range.kp1-1), &u(ip1-1,idx_range.jp1-1,idx_range.kp1-1), &v(ip1-1,idx_range.jp1-1,idx_range.kp1-1), &w(ip1-1,idx_range.jp1-1,idx_range.kp1-1),
+             FORTRAN_NAME(lookup_cool_rates0d)(&dtit[i],
+            &d(i,j,k), &u(i,j,k), &v(i,j,k), &w(i,j,k),
             &nsp, dsp1.data(), dspdot1.data(), &my_chemistry->NumberOfTemperatureBins,
             &internalu.extfields_in_comoving, &my_chemistry->primordial_chemistry, &imetal, &my_chemistry->metal_cooling,
             &my_chemistry->h2_on_dust, &my_chemistry->dust_chemistry, &my_chemistry->use_dust_density_field, &my_chemistry->dust_recombination_cooling,
@@ -551,24 +552,24 @@ inline void step_rate_newton_raphson(
             my_rates->reHeII2, my_rates->reHeIII, my_rates->brem, &my_rates->comp, &my_rates->gammah,
             &my_chemistry->interstellar_radiation_field, my_rates->regr, &my_rates->gamma_isrf, &my_uvb_rates.comp_xray, &my_uvb_rates.temp_xray,
             &my_uvb_rates.piHI, &my_uvb_rates.piHeI, &my_uvb_rates.piHeII,
-            &metal(ip1-1,idx_range.jp1-1,idx_range.kp1-1), &dust(ip1-1,idx_range.jp1-1,idx_range.kp1-1),
+            &metal(i,j,k), &dust(i,j,k),
             my_rates->hyd01k, my_rates->h2k01, my_rates->vibh, my_rates->roth, my_rates->rotl,
-            &coolingheating_buf.hyd01k[ip1-1], &coolingheating_buf.h2k01[ip1-1], &coolingheating_buf.vibh[ip1-1], &coolingheating_buf.roth[ip1-1], &coolingheating_buf.rotl[ip1-1],
-            my_rates->GP99LowDensityLimit, my_rates->GP99HighDensityLimit, &coolingheating_buf.gpldl[ip1-1], &coolingheating_buf.gphdl[ip1-1],
-            my_rates->HDlte, my_rates->HDlow, &coolingheating_buf.hdlte[ip1-1], &coolingheating_buf.hdlow[ip1-1],
+            &coolingheating_buf.hyd01k[i], &coolingheating_buf.h2k01[i], &coolingheating_buf.vibh[i], &coolingheating_buf.roth[i], &coolingheating_buf.rotl[i],
+            my_rates->GP99LowDensityLimit, my_rates->GP99HighDensityLimit, &coolingheating_buf.gpldl[i], &coolingheating_buf.gphdl[i],
+            my_rates->HDlte, my_rates->HDlow, &coolingheating_buf.hdlte[i], &coolingheating_buf.hdlow[i],
             my_rates->GAHI, my_rates->GAH2, my_rates->GAHe,
             my_rates->GAHp, my_rates->GAel,
             my_rates->H2LTE, my_rates->gas_grain,
-            &coolingheating_buf.ceHI[ip1-1], &coolingheating_buf.ceHeI[ip1-1], &coolingheating_buf.ceHeII[ip1-1], &coolingheating_buf.ciHI[ip1-1], &coolingheating_buf.ciHeI[ip1-1],
-            &coolingheating_buf.ciHeIS[ip1-1], &coolingheating_buf.ciHeII[ip1-1],
-            &coolingheating_buf.reHII[ip1-1], &coolingheating_buf.reHeII1[ip1-1], &coolingheating_buf.reHeII2[ip1-1], &coolingheating_buf.reHeIII[ip1-1], &coolingheating_buf.brem[ip1-1],
-            &logTlininterp_buf.indixe[ip1-1], &logTlininterp_buf.t1[ip1-1], &logTlininterp_buf.t2[ip1-1], &logTlininterp_buf.logtem[ip1-1], &logTlininterp_buf.tdef[ip1-1], &edot[ip1-1],
-            &tgas[ip1-1], &cool1dmulti_buf.tgasold[ip1-1], &mmw[ip1-1], &p2d[ip1-1], &tdust[ip1-1], &metallicity[ip1-1],
-            &dust2gas[ip1-1], &rhoH[ip1-1], &cool1dmulti_buf.mynh[ip1-1], &cool1dmulti_buf.myde[ip1-1],
-            &cool1dmulti_buf.gammaha_eff[ip1-1], &cool1dmulti_buf.gasgr_tdust[ip1-1], &cool1dmulti_buf.regr[ip1-1],
+            &coolingheating_buf.ceHI[i], &coolingheating_buf.ceHeI[i], &coolingheating_buf.ceHeII[i], &coolingheating_buf.ciHI[i], &coolingheating_buf.ciHeI[i],
+            &coolingheating_buf.ciHeIS[i], &coolingheating_buf.ciHeII[i],
+            &coolingheating_buf.reHII[i], &coolingheating_buf.reHeII1[i], &coolingheating_buf.reHeII2[i], &coolingheating_buf.reHeIII[i], &coolingheating_buf.brem[i],
+            &logTlininterp_buf.indixe[i], &logTlininterp_buf.t1[i], &logTlininterp_buf.t2[i], &logTlininterp_buf.logtem[i], &logTlininterp_buf.tdef[i], &edot[i],
+            &tgas[i], &cool1dmulti_buf.tgasold[i], &mmw[i], &p2d[i], &tdust[i], &metallicity[i],
+            &dust2gas[i], &rhoH[i], &cool1dmulti_buf.mynh[i], &cool1dmulti_buf.myde[i],
+            &cool1dmulti_buf.gammaha_eff[i], &cool1dmulti_buf.gasgr_tdust[i], &cool1dmulti_buf.regr[i],
             &my_chemistry->self_shielding_method, &my_uvb_rates.crsHI, &my_uvb_rates.crsHeI, &my_uvb_rates.crsHeII,
             &my_chemistry->use_radiative_transfer, &my_chemistry->radiative_transfer_hydrogen_only,
-            &my_chemistry->h2_optical_depth_approximation, &my_chemistry->cie_cooling, &my_chemistry->h2_cooling_rate, &my_chemistry->hd_cooling_rate, my_rates->cieco, &coolingheating_buf.cieco[ip1-1],
+            &my_chemistry->h2_optical_depth_approximation, &my_chemistry->cie_cooling, &my_chemistry->h2_cooling_rate, &my_chemistry->hd_cooling_rate, my_rates->cieco, &coolingheating_buf.cieco[i],
             &my_chemistry->cmb_temperature_floor, &my_chemistry->UVbackground, &my_chemistry->cloudy_electron_fraction_factor,
             &my_rates->cloudy_primordial.grid_rank, my_rates->cloudy_primordial.grid_dimension,
             my_rates->cloudy_primordial.grid_parameters[0], my_rates->cloudy_primordial.grid_parameters[1], my_rates->cloudy_primordial.grid_parameters[2], my_rates->cloudy_primordial.grid_parameters[3], my_rates->cloudy_primordial.grid_parameters[4],
@@ -576,9 +577,9 @@ inline void step_rate_newton_raphson(
             &my_rates->cloudy_metal.grid_rank, my_rates->cloudy_metal.grid_dimension,
             my_rates->cloudy_metal.grid_parameters[0], my_rates->cloudy_metal.grid_parameters[1], my_rates->cloudy_metal.grid_parameters[2], my_rates->cloudy_metal.grid_parameters[3], my_rates->cloudy_metal.grid_parameters[4],
             &my_rates->cloudy_metal.data_size, my_rates->cloudy_metal.cooling_data, my_rates->cloudy_metal.heating_data, &my_rates->cloudy_data_new,
-            &my_chemistry->use_volumetric_heating_rate, &my_chemistry->use_specific_heating_rate, &Vheat(ip1-1,idx_range.jp1-1,idx_range.kp1-1), &Mheat(ip1-1,idx_range.jp1-1,idx_range.kp1-1),
-            &my_chemistry->use_temperature_floor, &my_chemistry->temperature_floor_scalar, &Tfloor(ip1-1,idx_range.jp1-1,idx_range.kp1-1),
-            &my_chemistry->use_isrf_field, &isrf_habing(ip1-1,idx_range.jp1-1,idx_range.kp1-1),
+            &my_chemistry->use_volumetric_heating_rate, &my_chemistry->use_specific_heating_rate, &Vheat(i,j,k), &Mheat(i,j,k),
+            &my_chemistry->use_temperature_floor, &my_chemistry->temperature_floor_scalar, &Tfloor(i,j,k),
+            &my_chemistry->use_isrf_field, &isrf_habing(i,j,k),
             &my_chemistry->three_body_rate, &anydust, &my_chemistry->H2_self_shielding,
             my_rates->k1, my_rates->k2, my_rates->k3, my_rates->k4, my_rates->k5, my_rates->k6, my_rates->k7, my_rates->k8, my_rates->k9, my_rates->k10,
             my_rates->k11, my_rates->k12, my_rates->k13, my_rates->k13dd, my_rates->k14, my_rates->k15, my_rates->k16,
@@ -587,11 +588,11 @@ inline void step_rate_newton_raphson(
             my_rates->k50, my_rates->k51, my_rates->k52, my_rates->k53, my_rates->k54, my_rates->k55, my_rates->k56,
             my_rates->k57, my_rates->k58, &my_chemistry->NumberOfDustTemperatureBins, &my_chemistry->DustTemperatureStart, &my_chemistry->DustTemperatureEnd, my_rates->h2dust,
             my_rates->n_cr_n, my_rates->n_cr_d1, my_rates->n_cr_d2,
-            &h2dust[ip1-1], &chemheatrates_buf.n_cr_n[ip1-1], &chemheatrates_buf.n_cr_d1[ip1-1], &chemheatrates_buf.n_cr_d2[ip1-1],
+            &h2dust[i], &chemheatrates_buf.n_cr_n[i], &chemheatrates_buf.n_cr_d1[i], &chemheatrates_buf.n_cr_d2[i],
             &dom, &internalu.coolunit, &internalu.tbase1, &internalu.xbase1, &dx_cgs, &c_ljeans,
-            &kphHI(ip1-1,idx_range.jp1-1,idx_range.kp1-1), &kphHeI(ip1-1,idx_range.jp1-1,idx_range.kp1-1), &kphHeII(ip1-1,idx_range.jp1-1,idx_range.kp1-1), &kdissH2I(ip1-1,idx_range.jp1-1,idx_range.kp1-1),
-            &photogamma(ip1-1,idx_range.jp1-1,idx_range.kp1-1), &xH2shield(ip1-1,idx_range.jp1-1,idx_range.kp1-1), &chunit, &itmask_nr[ip1-1],
-            &itmask_metal[ip1-1],
+            &kphHI(i,j,k), &kphHeI(i,j,k), &kphHeII(i,j,k), &kdissH2I(i,j,k),
+            &photogamma(i,j,k), &xH2shield(i,j,k), &chunit, &itmask_nr[i],
+            &itmask_metal[i],
              &my_chemistry->metal_chemistry, &my_chemistry->grain_growth, &my_chemistry->use_primordial_continuum_opacity, &my_chemistry->tabulated_cooling_minimum_temperature,
              my_rates->k125, my_rates->k129, my_rates->k130, my_rates->k131, my_rates->k132,
              my_rates->k133, my_rates->k134, my_rates->k135, my_rates->k136, my_rates->k137,
@@ -634,10 +635,10 @@ inline void step_rate_newton_raphson(
              my_rates->alphap.props.parameters[0], my_rates->alphap.props.parameters[1], &my_rates->alphap.props.parameter_spacing[0], &my_rates->alphap.props.parameter_spacing[1],
              my_rates->alphap.data,
              &my_chemistry->multi_metals, &my_chemistry->metal_abundances, &my_chemistry->dust_species, &my_chemistry->use_multiple_dust_temperatures, &my_chemistry->dust_sublimation,
-             &metal_loc(ip1-1,idx_range.jp1-1,idx_range.kp1-1), &metal_C13(ip1-1,idx_range.jp1-1,idx_range.kp1-1), &metal_C20(ip1-1,idx_range.jp1-1,idx_range.kp1-1),
-             &metal_C25(ip1-1,idx_range.jp1-1,idx_range.kp1-1), &metal_C30(ip1-1,idx_range.jp1-1,idx_range.kp1-1), &metal_F13(ip1-1,idx_range.jp1-1,idx_range.kp1-1),
-             &metal_F15(ip1-1,idx_range.jp1-1,idx_range.kp1-1), &metal_F50(ip1-1,idx_range.jp1-1,idx_range.kp1-1), &metal_F80(ip1-1,idx_range.jp1-1,idx_range.kp1-1),
-             &metal_P170(ip1-1,idx_range.jp1-1,idx_range.kp1-1), &metal_P200(ip1-1,idx_range.jp1-1,idx_range.kp1-1), &metal_Y19(ip1-1,idx_range.jp1-1,idx_range.kp1-1),
+             &metal_loc(i,j,k), &metal_C13(i,j,k), &metal_C20(i,j,k),
+             &metal_C25(i,j,k), &metal_C30(i,j,k), &metal_F13(i,j,k),
+             &metal_F15(i,j,k), &metal_F50(i,j,k), &metal_F80(i,j,k),
+             &metal_P170(i,j,k), &metal_P200(i,j,k), &metal_Y19(i,j,k),
              &my_rates->SN0_N,
              my_rates->SN0_fSiM, my_rates->SN0_fFeM, my_rates->SN0_fMg2SiO4, my_rates->SN0_fMgSiO3,
              my_rates->SN0_fFe3O4, my_rates->SN0_fAC, my_rates->SN0_fSiO2D, my_rates->SN0_fMgO,
@@ -653,14 +654,14 @@ inline void step_rate_newton_raphson(
              my_rates->SN0_kpFeS, my_rates->SN0_kpAl2O3,
              my_rates->SN0_kpreforg, my_rates->SN0_kpvolorg, my_rates->SN0_kpH2Oice,
              my_rates->h2dustS, my_rates->h2dustC, my_rates->grain_growth_rate,
-             &grain_temperatures.data[OnlyGrainSpLUT::SiM_dust][ip1-1], &grain_temperatures.data[OnlyGrainSpLUT::FeM_dust][ip1-1], &grain_temperatures.data[OnlyGrainSpLUT::Mg2SiO4_dust][ip1-1], &grain_temperatures.data[OnlyGrainSpLUT::MgSiO3_dust][ip1-1], &grain_temperatures.data[OnlyGrainSpLUT::Fe3O4_dust][ip1-1],
-             &grain_temperatures.data[OnlyGrainSpLUT::AC_dust][ip1-1], &grain_temperatures.data[OnlyGrainSpLUT::SiO2_dust][ip1-1], &grain_temperatures.data[OnlyGrainSpLUT::MgO_dust][ip1-1], &grain_temperatures.data[OnlyGrainSpLUT::FeS_dust][ip1-1], &grain_temperatures.data[OnlyGrainSpLUT::Al2O3_dust][ip1-1],
-             &grain_temperatures.data[OnlyGrainSpLUT::ref_org_dust][ip1-1], &grain_temperatures.data[OnlyGrainSpLUT::vol_org_dust][ip1-1], &grain_temperatures.data[OnlyGrainSpLUT::H2O_ice_dust][ip1-1],
+             &grain_temperatures.data[OnlyGrainSpLUT::SiM_dust][i], &grain_temperatures.data[OnlyGrainSpLUT::FeM_dust][i], &grain_temperatures.data[OnlyGrainSpLUT::Mg2SiO4_dust][i], &grain_temperatures.data[OnlyGrainSpLUT::MgSiO3_dust][i], &grain_temperatures.data[OnlyGrainSpLUT::Fe3O4_dust][i],
+             &grain_temperatures.data[OnlyGrainSpLUT::AC_dust][i], &grain_temperatures.data[OnlyGrainSpLUT::SiO2_dust][i], &grain_temperatures.data[OnlyGrainSpLUT::MgO_dust][i], &grain_temperatures.data[OnlyGrainSpLUT::FeS_dust][i], &grain_temperatures.data[OnlyGrainSpLUT::Al2O3_dust][i],
+             &grain_temperatures.data[OnlyGrainSpLUT::ref_org_dust][i], &grain_temperatures.data[OnlyGrainSpLUT::vol_org_dust][i], &grain_temperatures.data[OnlyGrainSpLUT::H2O_ice_dust][i],
              my_rates->gas_grain2, &my_rates->gamma_isrf2,
-             &imp_eng[ip1-1],
-             &my_chemistry->radiative_transfer_HDI_dissociation, &kdissHDI(ip1-1,idx_range.jp1-1,idx_range.kp1-1), &my_chemistry->radiative_transfer_metal_ionization, &kphCI(ip1-1,idx_range.jp1-1,idx_range.kp1-1), &kphOI(ip1-1,idx_range.jp1-1,idx_range.kp1-1),
-             &my_chemistry->radiative_transfer_metal_dissociation, &kdissCO(ip1-1,idx_range.jp1-1,idx_range.kp1-1), &kdissOH(ip1-1,idx_range.jp1-1,idx_range.kp1-1), &kdissH2O(ip1-1,idx_range.jp1-1,idx_range.kp1-1),
-             &my_chemistry->radiative_transfer_use_H2_shielding, &my_chemistry->H2_custom_shielding, &f_shield_custom(ip1-1,idx_range.jp1-1,idx_range.kp1-1)
+             &imp_eng[i],
+             &my_chemistry->radiative_transfer_HDI_dissociation, &kdissHDI(i,j,k), &my_chemistry->radiative_transfer_metal_ionization, &kphCI(i,j,k), &kphOI(i,j,k),
+             &my_chemistry->radiative_transfer_metal_dissociation, &kdissCO(i,j,k), &kdissOH(i,j,k), &kdissH2O(i,j,k),
+             &my_chemistry->radiative_transfer_use_H2_shielding, &my_chemistry->H2_custom_shielding, &f_shield_custom(i,j,k)
             );
 
             for (isp = 1; isp<=(nsp); isp++) {
@@ -680,23 +681,23 @@ inline void step_rate_newton_raphson(
           for (isp = 1; isp<=(nsp); isp++) {
             for (jsp = 1; jsp<=(nsp); jsp++) {
               if(isp == jsp)  {
-                mtrx(isp-1,jsp-1) = 1.e0 - dtit[ip1-1]
+                mtrx(isp-1,jsp-1) = 1.e0 - dtit[i]
                    * der(idsp[isp-1]-1,idsp[jsp-1]-1);
               } else {
-                mtrx(isp-1,jsp-1) =      - dtit[ip1-1]
+                mtrx(isp-1,jsp-1) =      - dtit[i]
                    * der(idsp[isp-1]-1,idsp[jsp-1]-1);
               }
             }
           }
 
           for (isp = 1; isp<=(nsp); isp++) {
-            vec[isp-1] = dspdot[idsp[isp-1]-1] * dtit[ip1-1]
+            vec[isp-1] = dspdot[idsp[isp-1]-1] * dtit[i]
                    - ddsp[idsp[isp-1]-1];
           }
 
           // to get more accuracy
           for (isp = 1; isp<=(nsp); isp++) {
-            vec[isp-1] = vec[isp-1]/d(ip1-1,idx_range.jp1-1,idx_range.kp1-1);
+            vec[isp-1] = vec[isp-1]/d(i,j,k);
           }
 
            FORTRAN_NAME(gaussj_g)(&nsp, mtrx.data(), vec.data(), &ierror);
@@ -706,7 +707,7 @@ inline void step_rate_newton_raphson(
 
           // multiply with density again
           for (isp = 1; isp<=(nsp); isp++) {
-            vec[isp-1] = vec[isp-1]*d(ip1-1,idx_range.jp1-1,idx_range.kp1-1);
+            vec[isp-1] = vec[isp-1]*d(i,j,k);
           }
 
           for (isp = 1; isp<=(nsp); isp++) {
@@ -714,7 +715,7 @@ inline void step_rate_newton_raphson(
             dsp[idsp[isp-1]-1]  = dsp[idsp[isp-1]-1]  + vec[isp-1];
           }
 
-          if (imp_eng[ip1-1] == 1)  {
+          if (imp_eng[i] == 1)  {
             if( (my_chemistry->primordial_chemistry > 0)  &&  (my_chemistry->with_radiative_cooling == 1) )  {
               for (isp = 1; isp<=(nsp); isp++) {
                 if ( (dsp[idsp[isp-1]-1] != dsp[idsp[isp-1]-1])
@@ -757,91 +758,91 @@ label_9996:
           }
         }
         if(ierror == 1)  {
-          dtit[ip1-1] = 0.5e0*dtit[ip1-1];
+          dtit[i] = 0.5e0*dtit[i];
         }
 
         itr_time=itr_time+1;
       }
 
       if ( my_chemistry->primordial_chemistry > 0 )  {
-        de(ip1-1,idx_range.jp1-1,idx_range.kp1-1)      = dsp[ 1-1];
-        HI(ip1-1,idx_range.jp1-1,idx_range.kp1-1)      = dsp[ 2-1];
-        HII(ip1-1,idx_range.jp1-1,idx_range.kp1-1)     = dsp[ 3-1];
-        HeI(ip1-1,idx_range.jp1-1,idx_range.kp1-1)     = dsp[ 4-1];
-        HeII(ip1-1,idx_range.jp1-1,idx_range.kp1-1)    = dsp[ 5-1];
-        HeIII(ip1-1,idx_range.jp1-1,idx_range.kp1-1)   = dsp[ 6-1];
+        de(i,j,k)      = dsp[ 1-1];
+        HI(i,j,k)      = dsp[ 2-1];
+        HII(i,j,k)     = dsp[ 3-1];
+        HeI(i,j,k)     = dsp[ 4-1];
+        HeII(i,j,k)    = dsp[ 5-1];
+        HeIII(i,j,k)   = dsp[ 6-1];
       }
       if ( my_chemistry->primordial_chemistry > 1 )  {
-        HM(ip1-1,idx_range.jp1-1,idx_range.kp1-1)      = dsp[ 7-1];
-        H2I(ip1-1,idx_range.jp1-1,idx_range.kp1-1)     = dsp[ 8-1];
-        H2II(ip1-1,idx_range.jp1-1,idx_range.kp1-1)    = dsp[ 9-1];
+        HM(i,j,k)      = dsp[ 7-1];
+        H2I(i,j,k)     = dsp[ 8-1];
+        H2II(i,j,k)    = dsp[ 9-1];
       }
       if ( my_chemistry->primordial_chemistry > 2 )  {
-        DI(ip1-1,idx_range.jp1-1,idx_range.kp1-1)      = dsp[10-1];
-        DII(ip1-1,idx_range.jp1-1,idx_range.kp1-1)     = dsp[11-1];
-        HDI(ip1-1,idx_range.jp1-1,idx_range.kp1-1)     = dsp[12-1];
+        DI(i,j,k)      = dsp[10-1];
+        DII(i,j,k)     = dsp[11-1];
+        HDI(i,j,k)     = dsp[12-1];
       }
       if ( my_chemistry->primordial_chemistry > 3 )  {
-        DM(ip1-1,idx_range.jp1-1,idx_range.kp1-1)      = dsp[13-1];
-        HDII(ip1-1,idx_range.jp1-1,idx_range.kp1-1)    = dsp[14-1];
-        HeHII(ip1-1,idx_range.jp1-1,idx_range.kp1-1)   = dsp[15-1];
+        DM(i,j,k)      = dsp[13-1];
+        HDII(i,j,k)    = dsp[14-1];
+        HeHII(i,j,k)   = dsp[15-1];
       }
-      if ( itmask_metal[ip1-1] != MASK_FALSE )  {
+      if ( itmask_metal[i] != MASK_FALSE )  {
         if ( my_chemistry->metal_chemistry == 1 )  {
-          CI(ip1-1,idx_range.jp1-1,idx_range.kp1-1)      = dsp[16-1];
-          CII(ip1-1,idx_range.jp1-1,idx_range.kp1-1)     = dsp[17-1];
-          CO(ip1-1,idx_range.jp1-1,idx_range.kp1-1)      = dsp[18-1];
-          CO2(ip1-1,idx_range.jp1-1,idx_range.kp1-1)     = dsp[19-1];
-          OI(ip1-1,idx_range.jp1-1,idx_range.kp1-1)      = dsp[20-1];
-          OH(ip1-1,idx_range.jp1-1,idx_range.kp1-1)      = dsp[21-1];
-          H2O(ip1-1,idx_range.jp1-1,idx_range.kp1-1)     = dsp[22-1];
-          O2(ip1-1,idx_range.jp1-1,idx_range.kp1-1)      = dsp[23-1];
-          SiI(ip1-1,idx_range.jp1-1,idx_range.kp1-1)     = dsp[24-1];
-          SiOI(ip1-1,idx_range.jp1-1,idx_range.kp1-1)    = dsp[25-1];
-          SiO2I(ip1-1,idx_range.jp1-1,idx_range.kp1-1)   = dsp[26-1];
-          CH(ip1-1,idx_range.jp1-1,idx_range.kp1-1)      = dsp[27-1];
-          CH2(ip1-1,idx_range.jp1-1,idx_range.kp1-1)     = dsp[28-1];
-          COII(ip1-1,idx_range.jp1-1,idx_range.kp1-1)    = dsp[29-1];
-          OII(ip1-1,idx_range.jp1-1,idx_range.kp1-1)     = dsp[30-1];
-          OHII(ip1-1,idx_range.jp1-1,idx_range.kp1-1)    = dsp[31-1];
-          H2OII(ip1-1,idx_range.jp1-1,idx_range.kp1-1)   = dsp[32-1];
-          H3OII(ip1-1,idx_range.jp1-1,idx_range.kp1-1)   = dsp[33-1];
-          O2II(ip1-1,idx_range.jp1-1,idx_range.kp1-1)    = dsp[34-1];
+          CI(i,j,k)      = dsp[16-1];
+          CII(i,j,k)     = dsp[17-1];
+          CO(i,j,k)      = dsp[18-1];
+          CO2(i,j,k)     = dsp[19-1];
+          OI(i,j,k)      = dsp[20-1];
+          OH(i,j,k)      = dsp[21-1];
+          H2O(i,j,k)     = dsp[22-1];
+          O2(i,j,k)      = dsp[23-1];
+          SiI(i,j,k)     = dsp[24-1];
+          SiOI(i,j,k)    = dsp[25-1];
+          SiO2I(i,j,k)   = dsp[26-1];
+          CH(i,j,k)      = dsp[27-1];
+          CH2(i,j,k)     = dsp[28-1];
+          COII(i,j,k)    = dsp[29-1];
+          OII(i,j,k)     = dsp[30-1];
+          OHII(i,j,k)    = dsp[31-1];
+          H2OII(i,j,k)   = dsp[32-1];
+          H3OII(i,j,k)   = dsp[33-1];
+          O2II(i,j,k)    = dsp[34-1];
           if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1 ) )  {
             if (my_chemistry->dust_species > 0)  {
-              Mg(ip1-1,idx_range.jp1-1,idx_range.kp1-1)      = dsp[35-1];
+              Mg(i,j,k)      = dsp[35-1];
             }
             if (my_chemistry->dust_species > 1)  {
-              Al(ip1-1,idx_range.jp1-1,idx_range.kp1-1)      = dsp[36-1];
-              S(ip1-1,idx_range.jp1-1,idx_range.kp1-1)       = dsp[37-1];
-              Fe(ip1-1,idx_range.jp1-1,idx_range.kp1-1)      = dsp[38-1];
+              Al(i,j,k)      = dsp[36-1];
+              S(i,j,k)       = dsp[37-1];
+              Fe(i,j,k)      = dsp[38-1];
             }
           }
         }
         if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1 ) )  {
           if (my_chemistry->dust_species > 0)  {
-            MgSiO3(ip1-1,idx_range.jp1-1,idx_range.kp1-1)  = dsp[39-1];
-            AC(ip1-1,idx_range.jp1-1,idx_range.kp1-1)      = dsp[40-1];
+            MgSiO3(i,j,k)  = dsp[39-1];
+            AC(i,j,k)      = dsp[40-1];
           }
           if (my_chemistry->dust_species > 1)  {
-            SiM(ip1-1,idx_range.jp1-1,idx_range.kp1-1)     = dsp[41-1];
-            FeM(ip1-1,idx_range.jp1-1,idx_range.kp1-1)     = dsp[42-1];
-            Mg2SiO4(ip1-1,idx_range.jp1-1,idx_range.kp1-1) = dsp[43-1];
-            Fe3O4(ip1-1,idx_range.jp1-1,idx_range.kp1-1)   = dsp[44-1];
-            SiO2D(ip1-1,idx_range.jp1-1,idx_range.kp1-1)   = dsp[45-1];
-            MgO(ip1-1,idx_range.jp1-1,idx_range.kp1-1)     = dsp[46-1];
-            FeS(ip1-1,idx_range.jp1-1,idx_range.kp1-1)     = dsp[47-1];
-            Al2O3(ip1-1,idx_range.jp1-1,idx_range.kp1-1)   = dsp[48-1];
+            SiM(i,j,k)     = dsp[41-1];
+            FeM(i,j,k)     = dsp[42-1];
+            Mg2SiO4(i,j,k) = dsp[43-1];
+            Fe3O4(i,j,k)   = dsp[44-1];
+            SiO2D(i,j,k)   = dsp[45-1];
+            MgO(i,j,k)     = dsp[46-1];
+            FeS(i,j,k)     = dsp[47-1];
+            Al2O3(i,j,k)   = dsp[48-1];
           }
           if (my_chemistry->dust_species > 2)  {
-            reforg(ip1-1,idx_range.jp1-1,idx_range.kp1-1)  = dsp[49-1];
-            volorg(ip1-1,idx_range.jp1-1,idx_range.kp1-1)  = dsp[50-1];
-            H2Oice(ip1-1,idx_range.jp1-1,idx_range.kp1-1)  = dsp[51-1];
+            reforg(i,j,k)  = dsp[49-1];
+            volorg(i,j,k)  = dsp[50-1];
+            H2Oice(i,j,k)  = dsp[51-1];
           }
         }
       }
 
-      e(ip1-1,idx_range.jp1-1,idx_range.kp1-1)     = dsp[i_eng-1];
+      e(i,j,k)     = dsp[i_eng-1];
 
       idsp.clear();
       vec.clear();
