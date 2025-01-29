@@ -108,6 +108,7 @@ add_library(Grackle_Grackle
   cool_multi_time_g-cpp.C cool_multi_time_g-cpp.h
   internal_types.C internal_types.hpp
   solve_rate_cool_g-cpp.C solve_rate_cool_g-cpp.h
+  step_rate_newton_raphson.hpp
   utils-cpp.C utils-cpp.hpp
   utils-field.hpp
   fortran_func_wrappers.hpp
@@ -123,7 +124,6 @@ add_library(Grackle_Grackle
   cool1d_multi_g.F
   interpolators_g.F
   solve_rate_cool_g.F
-  step_rate_newton_raphson.F
   calc_grain_size_increment_1d.F
   gaussj_g.F
   lookup_cool_rates0d.F
