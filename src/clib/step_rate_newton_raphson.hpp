@@ -35,14 +35,14 @@ namespace grackle::impl {
 /// - this has **ALWAYS** been the case. Historically these buffers have been
 ///   reused when computing finite differences
 inline void step_rate_newton_raphson(
-  int imetal, int iter, double dom, double chunit, double dx_cgs,
-  double c_ljeans, double* dtit, double* p2d, double* tgas, double* tdust,
-  double* metallicity, double* dust2gas, double* rhoH, double* mmw,
-  double* h2dust, double* edot, gr_mask_type anydust, gr_mask_type* itmask_nr,
-  gr_mask_type* itmask_metal, int* imp_eng, chemistry_data* my_chemistry,
-  chemistry_data_storage* my_rates, grackle_field_data* my_fields,
-  photo_rate_storage my_uvb_rates, InternalGrUnits internalu,
-  IndexRange idx_range,
+  int imetal, IndexRange idx_range, int iter, double dom, double chunit,
+  double dx_cgs, double c_ljeans, double* dtit, double* p2d, double* tgas,
+  double* tdust, double* metallicity, double* dust2gas, double* rhoH,
+  double* mmw, double* h2dust, double* edot, gr_mask_type anydust,
+  gr_mask_type* itmask_nr, gr_mask_type* itmask_metal, int* imp_eng,
+  chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
+  grackle_field_data* my_fields, photo_rate_storage my_uvb_rates,
+  InternalGrUnits internalu,
   grackle::impl::GrainSpeciesCollection grain_temperatures,
   grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf,
   grackle::impl::Cool1DMultiScratchBuf cool1dmulti_buf,

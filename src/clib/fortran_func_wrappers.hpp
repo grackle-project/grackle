@@ -28,7 +28,6 @@
 #include "internal_types.hpp"
 #include "internal_units.h"
 #include "LUT.hpp"
-#include "step_rate_newton_raphson.hpp"
 
 // callers of these functions are generally expected to locally shorten the
 // namespace name when they call these routines
@@ -465,35 +464,6 @@ inline void step_rate_g(
 
 }
 
-inline void step_rate_newton_raphson(
-  int imetal, IndexRange idx_range, int iter, double dom, double chunit,
-  double dx_cgs, double c_ljeans, double* dtit, double* p2d, double* tgas,
-  double* tdust, double* metallicity, double* dust2gas, double* rhoH,
-  double* mmw, double* h2dust, double* edot, gr_mask_type anydust,
-  gr_mask_type* itmask_nr, gr_mask_type* itmask_metal, int* imp_eng,
-  chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
-  grackle_field_data* my_fields, photo_rate_storage my_uvb_rates,
-  InternalGrUnits internalu,
-  grackle::impl::GrainSpeciesCollection grain_temperatures,
-  grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf,
-  grackle::impl::Cool1DMultiScratchBuf cool1dmulti_buf,
-  grackle::impl::CoolHeatScratchBuf coolingheating_buf,
-  grackle::impl::ChemHeatingRates chemheatrates_buf
-) {
-
-  grackle::impl::step_rate_newton_raphson(
-    imetal, iter, dom, chunit,
-    dx_cgs, c_ljeans, dtit, p2d, tgas,
-    tdust, metallicity, dust2gas, rhoH,
-    mmw, h2dust, edot, anydust,
-    itmask_nr, itmask_metal, imp_eng,
-    my_chemistry, my_rates, my_fields, my_uvb_rates,
-    internalu, idx_range,
-    grain_temperatures, logTlininterp_buf, cool1dmulti_buf, coolingheating_buf,
-    chemheatrates_buf
-  );
-
-}
 
 } // namespace grackle::impl::fortran_wrapper
 

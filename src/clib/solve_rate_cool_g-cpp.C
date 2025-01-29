@@ -15,6 +15,7 @@
 #include "index_helper.h"
 #include "internal_types.hpp"
 #include "internal_units.h"
+#include "step_rate_newton_raphson.hpp"
 #include "utils-cpp.hpp"
 
 #include "solve_rate_cool_g-cpp.h"
@@ -907,8 +908,7 @@ int solve_rate_cool_g(
           // Solve rate equations with one linearly implicit Gauss-Seidel
           // sweep of a backward Euler method (for all cells specified by
           // itmask_nr)
-
-          f_wrap::step_rate_newton_raphson(
+          grackle::impl::step_rate_newton_raphson(
             imetal, idx_range, iter, dom, chunit, dx_cgs, c_ljeans,
             dtit.data(), p2d.data(), tgas.data(), tdust.data(),
             metallicity.data(), dust2gas.data(), rhoH.data(), mmw.data(),
