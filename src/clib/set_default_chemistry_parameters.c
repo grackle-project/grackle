@@ -55,10 +55,17 @@ int gr_initialize_field_data(grackle_field_data *my_fields)
   my_fields->grid_end = NULL;
   my_fields->grid_dx = -1.0;
 
-  // now, modify all members holding datafields to have values of NULL
-  // (we use X-Macros to do this)
+  // below, we use X-Macros to modify all members of my_fields, which are used
+  // to hold datafields, to have values of NULL
+
+  // part 1: modify species-field members that grackle can evolve
+  #define ENTRY(SPECIES_NAME) my_fields->SPECIES_NAME ## _density = NULL;
+  #include "field_data_evolved_species.def"
+  #undef ENTRY
+
+  // part 2: modify all other field members
   #define ENTRY(MEMBER_NAME) my_fields->MEMBER_NAME = NULL;
-  #include "grackle_field_data_fdatamembers.def"
+  #include "field_data_misc_fdatamembers.def"
   #undef ENTRY
 
   return SUCCESS;
