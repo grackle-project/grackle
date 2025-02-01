@@ -87,63 +87,9 @@ struct SpLUT {
   // XMacros provided in grackle_field_data_fdatamembers.def (or we may need to
   // slightly revise the system?)
   enum {
-    e,
-    HI,
-    HII,
-    HeI,
-    HeII,
-    HeIII,
- 
-    HM,
-    H2I,
-    H2II,
- 
-    DI,
-    DII,
-    HDI,
- 
-    DM,
-    HDII,
-    HeHII,
- 
-    CI,
-    CII,
-    CO,
-    CO2,
-    OI,
-    OH,
-    H2O,
-    O2,
-    SiI,
-    SiOI,
-    SiO2I,
-    CH,
-    CH2,
-    COII,
-    OII,
-    OHII,
-    H2OII,
-    H3OII,
-    O2II,
- 
-    Mg,
-    Al,
-    S,
-    Fe,
- 
-    SiM_dust,
-    FeM_dust,
-    Mg2SiO4_dust,
-    MgSiO3_dust,
-    Fe3O4_dust,
-    AC_dust,
-    SiO2_dust,
-    MgO_dust,
-    FeS_dust,
-    Al2O3_dust,
-    ref_org_dust,
-    vol_org_dust,
-    H2O_ice_dust,
+    #define ENTRY(NAME) NAME,
+    #include "field_data_evolved_species.def"
+    #undef ENTRY
  
     NUM_ENTRIES // <- always last (so it specifies the number of species)
   }; // enum
