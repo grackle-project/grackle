@@ -145,8 +145,15 @@ inline void step_rate_newton_raphson(
   // Another parameter
   const double eps = 1.e-4;
 
+  // collect args that are forwarded to the time-derivative calculation and are
+  // effectively frozen between various calls
+  t_deriv::FrozenSimpleArgs frozen_tderiv_args = {
+    iter, dom, chunit, dx_cgs, c_ljeans, anydust, my_chemistry, my_rates,
+    my_uvb_rates, internalu
+  };
+
   // partially initialize the struct we will use for the time derivative calc
-  t_deriv::ContextPack pack = t_deriv::new_ContextPack();
+  t_deriv::ContextPack pack = t_deriv::new_ContextPack(frozen_tderiv_args);
 
   // The following was extracted from another subroutine
   for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
@@ -379,7 +386,7 @@ inline void step_rate_newton_raphson(
           &nsp, dsp.data(), dspdot.data(), &my_chemistry->NumberOfTemperatureBins,
           &internalu.extfields_in_comoving, &my_chemistry->primordial_chemistry, &imetal, &my_chemistry->metal_cooling,
           &my_chemistry->h2_on_dust, &my_chemistry->dust_chemistry, &my_chemistry->use_dust_density_field, &my_chemistry->dust_recombination_cooling,
-          &my_chemistry->ih2co, &my_chemistry->ipiht, &iter, &my_chemistry->photoelectric_heating,
+          &my_chemistry->ih2co, &my_chemistry->ipiht, &pack.fwd_args.iter, &my_chemistry->photoelectric_heating,
           &internalu.a_value, &my_chemistry->TemperatureStart, &my_chemistry->TemperatureEnd, &my_chemistry->SolarMetalFractionByMass, &my_chemistry->local_dust_to_gas_ratio,
           &internalu.utem, &internalu.uxyz, &internalu.a_units, &internalu.urho, &internalu.tbase1,
           &my_chemistry->Gamma, &my_chemistry->HydrogenFractionByMass,
@@ -416,7 +423,7 @@ inline void step_rate_newton_raphson(
           &my_chemistry->use_volumetric_heating_rate, &my_chemistry->use_specific_heating_rate, pack.fields.volumetric_heating_rate, pack.fields.specific_heating_rate,
           &my_chemistry->use_temperature_floor, &my_chemistry->temperature_floor_scalar, pack.fields.temperature_floor,
           &my_chemistry->use_isrf_field, pack.fields.isrf_habing,
-          &my_chemistry->three_body_rate, &anydust, &my_chemistry->H2_self_shielding,
+          &my_chemistry->three_body_rate, &pack.fwd_args.anydust, &my_chemistry->H2_self_shielding,
           my_rates->k1, my_rates->k2, my_rates->k3, my_rates->k4, my_rates->k5, my_rates->k6, my_rates->k7, my_rates->k8, my_rates->k9, my_rates->k10,
           my_rates->k11, my_rates->k12, my_rates->k13, my_rates->k13dd, my_rates->k14, my_rates->k15, my_rates->k16,
           my_rates->k17, my_rates->k18, my_rates->k19, my_rates->k22,
@@ -425,9 +432,9 @@ inline void step_rate_newton_raphson(
           my_rates->k57, my_rates->k58, &my_chemistry->NumberOfDustTemperatureBins, &my_chemistry->DustTemperatureStart, &my_chemistry->DustTemperatureEnd, my_rates->h2dust,
           my_rates->n_cr_n, my_rates->n_cr_d1, my_rates->n_cr_d2,
           &h2dust[i], &chemheatrates_buf.n_cr_n[i], &chemheatrates_buf.n_cr_d1[i], &chemheatrates_buf.n_cr_d2[i],
-          &dom, &internalu.coolunit, &internalu.tbase1, &internalu.xbase1, &dx_cgs, &c_ljeans,
+          &pack.fwd_args.dom, &internalu.coolunit, &internalu.tbase1, &internalu.xbase1, &pack.fwd_args.dx_cgs, &pack.fwd_args.c_ljeans,
           pack.fields.RT_HI_ionization_rate, pack.fields.RT_HeI_ionization_rate, pack.fields.RT_HeII_ionization_rate, pack.fields.RT_H2_dissociation_rate,
-          pack.fields.RT_heating_rate, pack.fields.H2_self_shielding_length, &chunit, &itmask_nr[i],
+          pack.fields.RT_heating_rate, pack.fields.H2_self_shielding_length, &pack.fwd_args.chunit, &itmask_nr[i],
           &itmask_metal[i],
            &my_chemistry->metal_chemistry, &my_chemistry->grain_growth, &my_chemistry->use_primordial_continuum_opacity, &my_chemistry->tabulated_cooling_minimum_temperature,
            my_rates->k125, my_rates->k129, my_rates->k130, my_rates->k131, my_rates->k132,
@@ -515,7 +522,7 @@ inline void step_rate_newton_raphson(
             &nsp, dsp1.data(), dspdot1.data(), &my_chemistry->NumberOfTemperatureBins,
             &internalu.extfields_in_comoving, &my_chemistry->primordial_chemistry, &imetal, &my_chemistry->metal_cooling,
             &my_chemistry->h2_on_dust, &my_chemistry->dust_chemistry, &my_chemistry->use_dust_density_field, &my_chemistry->dust_recombination_cooling,
-            &my_chemistry->ih2co, &my_chemistry->ipiht, &iter, &my_chemistry->photoelectric_heating,
+            &my_chemistry->ih2co, &my_chemistry->ipiht, &pack.fwd_args.iter, &my_chemistry->photoelectric_heating,
             &internalu.a_value, &my_chemistry->TemperatureStart, &my_chemistry->TemperatureEnd, &my_chemistry->SolarMetalFractionByMass, &my_chemistry->local_dust_to_gas_ratio,
             &internalu.utem, &internalu.uxyz, &internalu.a_units, &internalu.urho, &internalu.tbase1,
             &my_chemistry->Gamma, &my_chemistry->HydrogenFractionByMass,
@@ -552,7 +559,7 @@ inline void step_rate_newton_raphson(
             &my_chemistry->use_volumetric_heating_rate, &my_chemistry->use_specific_heating_rate, pack.fields.volumetric_heating_rate, pack.fields.specific_heating_rate,
             &my_chemistry->use_temperature_floor, &my_chemistry->temperature_floor_scalar, pack.fields.temperature_floor,
             &my_chemistry->use_isrf_field, pack.fields.isrf_habing,
-            &my_chemistry->three_body_rate, &anydust, &my_chemistry->H2_self_shielding,
+            &my_chemistry->three_body_rate, &pack.fwd_args.anydust, &my_chemistry->H2_self_shielding,
             my_rates->k1, my_rates->k2, my_rates->k3, my_rates->k4, my_rates->k5, my_rates->k6, my_rates->k7, my_rates->k8, my_rates->k9, my_rates->k10,
             my_rates->k11, my_rates->k12, my_rates->k13, my_rates->k13dd, my_rates->k14, my_rates->k15, my_rates->k16,
             my_rates->k17, my_rates->k18, my_rates->k19, my_rates->k22,
@@ -561,9 +568,9 @@ inline void step_rate_newton_raphson(
             my_rates->k57, my_rates->k58, &my_chemistry->NumberOfDustTemperatureBins, &my_chemistry->DustTemperatureStart, &my_chemistry->DustTemperatureEnd, my_rates->h2dust,
             my_rates->n_cr_n, my_rates->n_cr_d1, my_rates->n_cr_d2,
             &h2dust[i], &chemheatrates_buf.n_cr_n[i], &chemheatrates_buf.n_cr_d1[i], &chemheatrates_buf.n_cr_d2[i],
-            &dom, &internalu.coolunit, &internalu.tbase1, &internalu.xbase1, &dx_cgs, &c_ljeans,
+            &pack.fwd_args.dom, &internalu.coolunit, &internalu.tbase1, &internalu.xbase1, &pack.fwd_args.dx_cgs, &pack.fwd_args.c_ljeans,
             pack.fields.RT_HI_ionization_rate, pack.fields.RT_HeI_ionization_rate, pack.fields.RT_HeII_ionization_rate, pack.fields.RT_H2_dissociation_rate,
-            pack.fields.RT_heating_rate, pack.fields.H2_self_shielding_length, &chunit, &itmask_nr[i],
+            pack.fields.RT_heating_rate, pack.fields.H2_self_shielding_length, &pack.fwd_args.chunit, &itmask_nr[i],
             &itmask_metal[i],
              &my_chemistry->metal_chemistry, &my_chemistry->grain_growth, &my_chemistry->use_primordial_continuum_opacity, &my_chemistry->tabulated_cooling_minimum_temperature,
              my_rates->k125, my_rates->k129, my_rates->k130, my_rates->k131, my_rates->k132,
