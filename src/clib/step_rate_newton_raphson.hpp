@@ -70,16 +70,10 @@ inline void step_rate_newton_raphson(
   grackle::impl::View<gr_float***> DI(my_fields->DI_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> DII(my_fields->DII_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> HDI(my_fields->HDI_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+
   grackle::impl::View<gr_float***> d(my_fields->density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> e(my_fields->internal_energy, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> u(my_fields->x_velocity, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> v(my_fields->y_velocity, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> w(my_fields->z_velocity, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal(my_fields->metal_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> dust(my_fields->dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> Vheat(my_fields->volumetric_heating_rate, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> Mheat(my_fields->specific_heating_rate, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> Tfloor(my_fields->temperature_floor, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+
   grackle::impl::View<gr_float***> DM(my_fields->DM_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> HDII(my_fields->HDII_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> HeHII(my_fields->HeHII_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
@@ -408,7 +402,7 @@ inline void step_rate_newton_raphson(
           }
 
            FORTRAN_NAME(lookup_cool_rates0d)(&dtit[i],
-          &d(i,j,k), &u(i,j,k), &v(i,j,k), &w(i,j,k),
+          pack.fields.density, pack.fields.x_velocity, pack.fields.y_velocity, pack.fields.z_velocity,
           &nsp, dsp.data(), dspdot.data(), &my_chemistry->NumberOfTemperatureBins,
           &internalu.extfields_in_comoving, &my_chemistry->primordial_chemistry, &imetal, &my_chemistry->metal_cooling,
           &my_chemistry->h2_on_dust, &my_chemistry->dust_chemistry, &my_chemistry->use_dust_density_field, &my_chemistry->dust_recombination_cooling,
@@ -421,7 +415,7 @@ inline void step_rate_newton_raphson(
           my_rates->reHeII2, my_rates->reHeIII, my_rates->brem, &my_rates->comp, &my_rates->gammah,
           &my_chemistry->interstellar_radiation_field, my_rates->regr, &my_rates->gamma_isrf, &my_uvb_rates.comp_xray, &my_uvb_rates.temp_xray,
           &my_uvb_rates.piHI, &my_uvb_rates.piHeI, &my_uvb_rates.piHeII,
-          &metal(i,j,k), &dust(i,j,k),
+          pack.fields.metal_density, pack.fields.dust_density,
           my_rates->hyd01k, my_rates->h2k01, my_rates->vibh, my_rates->roth, my_rates->rotl,
           &coolingheating_buf.hyd01k[i], &coolingheating_buf.h2k01[i], &coolingheating_buf.vibh[i], &coolingheating_buf.roth[i], &coolingheating_buf.rotl[i],
           my_rates->GP99LowDensityLimit, my_rates->GP99HighDensityLimit, &coolingheating_buf.gpldl[i], &coolingheating_buf.gphdl[i],
@@ -446,8 +440,8 @@ inline void step_rate_newton_raphson(
           &my_rates->cloudy_metal.grid_rank, my_rates->cloudy_metal.grid_dimension,
           my_rates->cloudy_metal.grid_parameters[0], my_rates->cloudy_metal.grid_parameters[1], my_rates->cloudy_metal.grid_parameters[2], my_rates->cloudy_metal.grid_parameters[3], my_rates->cloudy_metal.grid_parameters[4],
           &my_rates->cloudy_metal.data_size, my_rates->cloudy_metal.cooling_data, my_rates->cloudy_metal.heating_data, &my_rates->cloudy_data_new,
-          &my_chemistry->use_volumetric_heating_rate, &my_chemistry->use_specific_heating_rate, &Vheat(i,j,k), &Mheat(i,j,k),
-          &my_chemistry->use_temperature_floor, &my_chemistry->temperature_floor_scalar, &Tfloor(i,j,k),
+          &my_chemistry->use_volumetric_heating_rate, &my_chemistry->use_specific_heating_rate, pack.fields.volumetric_heating_rate, pack.fields.specific_heating_rate,
+          &my_chemistry->use_temperature_floor, &my_chemistry->temperature_floor_scalar, pack.fields.temperature_floor,
           &my_chemistry->use_isrf_field, &isrf_habing(i,j,k),
           &my_chemistry->three_body_rate, &anydust, &my_chemistry->H2_self_shielding,
           my_rates->k1, my_rates->k2, my_rates->k3, my_rates->k4, my_rates->k5, my_rates->k6, my_rates->k7, my_rates->k8, my_rates->k9, my_rates->k10,
@@ -544,7 +538,7 @@ inline void step_rate_newton_raphson(
             }
 
              FORTRAN_NAME(lookup_cool_rates0d)(&dtit[i],
-            &d(i,j,k), &u(i,j,k), &v(i,j,k), &w(i,j,k),
+            pack.fields.density, pack.fields.x_velocity, pack.fields.y_velocity, pack.fields.z_velocity,
             &nsp, dsp1.data(), dspdot1.data(), &my_chemistry->NumberOfTemperatureBins,
             &internalu.extfields_in_comoving, &my_chemistry->primordial_chemistry, &imetal, &my_chemistry->metal_cooling,
             &my_chemistry->h2_on_dust, &my_chemistry->dust_chemistry, &my_chemistry->use_dust_density_field, &my_chemistry->dust_recombination_cooling,
@@ -557,7 +551,7 @@ inline void step_rate_newton_raphson(
             my_rates->reHeII2, my_rates->reHeIII, my_rates->brem, &my_rates->comp, &my_rates->gammah,
             &my_chemistry->interstellar_radiation_field, my_rates->regr, &my_rates->gamma_isrf, &my_uvb_rates.comp_xray, &my_uvb_rates.temp_xray,
             &my_uvb_rates.piHI, &my_uvb_rates.piHeI, &my_uvb_rates.piHeII,
-            &metal(i,j,k), &dust(i,j,k),
+            pack.fields.metal_density, pack.fields.dust_density,
             my_rates->hyd01k, my_rates->h2k01, my_rates->vibh, my_rates->roth, my_rates->rotl,
             &coolingheating_buf.hyd01k[i], &coolingheating_buf.h2k01[i], &coolingheating_buf.vibh[i], &coolingheating_buf.roth[i], &coolingheating_buf.rotl[i],
             my_rates->GP99LowDensityLimit, my_rates->GP99HighDensityLimit, &coolingheating_buf.gpldl[i], &coolingheating_buf.gphdl[i],
@@ -582,8 +576,8 @@ inline void step_rate_newton_raphson(
             &my_rates->cloudy_metal.grid_rank, my_rates->cloudy_metal.grid_dimension,
             my_rates->cloudy_metal.grid_parameters[0], my_rates->cloudy_metal.grid_parameters[1], my_rates->cloudy_metal.grid_parameters[2], my_rates->cloudy_metal.grid_parameters[3], my_rates->cloudy_metal.grid_parameters[4],
             &my_rates->cloudy_metal.data_size, my_rates->cloudy_metal.cooling_data, my_rates->cloudy_metal.heating_data, &my_rates->cloudy_data_new,
-            &my_chemistry->use_volumetric_heating_rate, &my_chemistry->use_specific_heating_rate, &Vheat(i,j,k), &Mheat(i,j,k),
-            &my_chemistry->use_temperature_floor, &my_chemistry->temperature_floor_scalar, &Tfloor(i,j,k),
+            &my_chemistry->use_volumetric_heating_rate, &my_chemistry->use_specific_heating_rate, pack.fields.volumetric_heating_rate, pack.fields.specific_heating_rate,
+            &my_chemistry->use_temperature_floor, &my_chemistry->temperature_floor_scalar, pack.fields.temperature_floor,
             &my_chemistry->use_isrf_field, &isrf_habing(i,j,k),
             &my_chemistry->three_body_rate, &anydust, &my_chemistry->H2_self_shielding,
             my_rates->k1, my_rates->k2, my_rates->k3, my_rates->k4, my_rates->k5, my_rates->k6, my_rates->k7, my_rates->k8, my_rates->k9, my_rates->k10,
