@@ -145,6 +145,12 @@ inline void step_rate_newton_raphson(
   // Another parameter
   const double eps = 1.e-4;
 
+  // allocate some scratch buffers. In the future, when we refactor to support
+  // calculations of the time derivatives of multiple values at once, we should
+  // forward the buffers passed into this routine as arguments rather than
+  // allocating separate buffers
+  t_deriv::MainScratchBuf main_scratch_buf = t_deriv::new_MainScratchBuf();
+
   // collect args that are forwarded to the time-derivative calculation and are
   // effectively frozen between various calls
   t_deriv::FrozenSimpleArgs frozen_tderiv_args = {
@@ -153,7 +159,9 @@ inline void step_rate_newton_raphson(
   };
 
   // partially initialize the struct we will use for the time derivative calc
-  t_deriv::ContextPack pack = t_deriv::new_ContextPack(frozen_tderiv_args);
+  t_deriv::ContextPack pack = t_deriv::new_ContextPack(
+    frozen_tderiv_args, main_scratch_buf
+  );
 
   // The following was extracted from another subroutine
   for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
@@ -397,22 +405,22 @@ inline void step_rate_newton_raphson(
           &my_uvb_rates.piHI, &my_uvb_rates.piHeI, &my_uvb_rates.piHeII,
           pack.fields.metal_density, pack.fields.dust_density,
           my_rates->hyd01k, my_rates->h2k01, my_rates->vibh, my_rates->roth, my_rates->rotl,
-          &coolingheating_buf.hyd01k[i], &coolingheating_buf.h2k01[i], &coolingheating_buf.vibh[i], &coolingheating_buf.roth[i], &coolingheating_buf.rotl[i],
-          my_rates->GP99LowDensityLimit, my_rates->GP99HighDensityLimit, &coolingheating_buf.gpldl[i], &coolingheating_buf.gphdl[i],
-          my_rates->HDlte, my_rates->HDlow, &coolingheating_buf.hdlte[i], &coolingheating_buf.hdlow[i],
+          pack.main_scratch_buf.coolingheating_buf.hyd01k, pack.main_scratch_buf.coolingheating_buf.h2k01, pack.main_scratch_buf.coolingheating_buf.vibh, pack.main_scratch_buf.coolingheating_buf.roth, pack.main_scratch_buf.coolingheating_buf.rotl,
+          my_rates->GP99LowDensityLimit, my_rates->GP99HighDensityLimit, pack.main_scratch_buf.coolingheating_buf.gpldl, pack.main_scratch_buf.coolingheating_buf.gphdl,
+          my_rates->HDlte, my_rates->HDlow, pack.main_scratch_buf.coolingheating_buf.hdlte, pack.main_scratch_buf.coolingheating_buf.hdlow,
           my_rates->GAHI, my_rates->GAH2, my_rates->GAHe,
           my_rates->GAHp, my_rates->GAel,
           my_rates->H2LTE, my_rates->gas_grain,
-          &coolingheating_buf.ceHI[i], &coolingheating_buf.ceHeI[i], &coolingheating_buf.ceHeII[i], &coolingheating_buf.ciHI[i], &coolingheating_buf.ciHeI[i],
-          &coolingheating_buf.ciHeIS[i], &coolingheating_buf.ciHeII[i],
-          &coolingheating_buf.reHII[i], &coolingheating_buf.reHeII1[i], &coolingheating_buf.reHeII2[i], &coolingheating_buf.reHeIII[i], &coolingheating_buf.brem[i],
-          &logTlininterp_buf.indixe[i], &logTlininterp_buf.t1[i], &logTlininterp_buf.t2[i], &logTlininterp_buf.logtem[i], &logTlininterp_buf.tdef[i], &edot[i],
-          &tgas[i], &cool1dmulti_buf.tgasold[i], &mmw[i], &p2d[i], &tdust[i], &metallicity[i],
-          &dust2gas[i], &rhoH[i], &cool1dmulti_buf.mynh[i], &cool1dmulti_buf.myde[i],
-          &cool1dmulti_buf.gammaha_eff[i], &cool1dmulti_buf.gasgr_tdust[i], &cool1dmulti_buf.regr[i],
+          pack.main_scratch_buf.coolingheating_buf.ceHI, pack.main_scratch_buf.coolingheating_buf.ceHeI, pack.main_scratch_buf.coolingheating_buf.ceHeII, pack.main_scratch_buf.coolingheating_buf.ciHI, pack.main_scratch_buf.coolingheating_buf.ciHeI,
+          pack.main_scratch_buf.coolingheating_buf.ciHeIS, pack.main_scratch_buf.coolingheating_buf.ciHeII,
+          pack.main_scratch_buf.coolingheating_buf.reHII, pack.main_scratch_buf.coolingheating_buf.reHeII1, pack.main_scratch_buf.coolingheating_buf.reHeII2, pack.main_scratch_buf.coolingheating_buf.reHeIII, pack.main_scratch_buf.coolingheating_buf.brem,
+          pack.main_scratch_buf.logTlininterp_buf.indixe, pack.main_scratch_buf.logTlininterp_buf.t1, pack.main_scratch_buf.logTlininterp_buf.t2, pack.main_scratch_buf.logTlininterp_buf.logtem, pack.main_scratch_buf.logTlininterp_buf.tdef, &edot[i],
+          &tgas[i], pack.main_scratch_buf.cool1dmulti_buf.tgasold, &mmw[i], &p2d[i], &tdust[i], &metallicity[i],
+          &dust2gas[i], &rhoH[i], pack.main_scratch_buf.cool1dmulti_buf.mynh, pack.main_scratch_buf.cool1dmulti_buf.myde,
+          pack.main_scratch_buf.cool1dmulti_buf.gammaha_eff, pack.main_scratch_buf.cool1dmulti_buf.gasgr_tdust, pack.main_scratch_buf.cool1dmulti_buf.regr,
           &my_chemistry->self_shielding_method, &my_uvb_rates.crsHI, &my_uvb_rates.crsHeI, &my_uvb_rates.crsHeII,
           &my_chemistry->use_radiative_transfer, &my_chemistry->radiative_transfer_hydrogen_only,
-          &my_chemistry->h2_optical_depth_approximation, &my_chemistry->cie_cooling, &my_chemistry->h2_cooling_rate, &my_chemistry->hd_cooling_rate, my_rates->cieco, &coolingheating_buf.cieco[i],
+          &my_chemistry->h2_optical_depth_approximation, &my_chemistry->cie_cooling, &my_chemistry->h2_cooling_rate, &my_chemistry->hd_cooling_rate, my_rates->cieco, pack.main_scratch_buf.coolingheating_buf.cieco,
           &my_chemistry->cmb_temperature_floor, &my_chemistry->UVbackground, &my_chemistry->cloudy_electron_fraction_factor,
           &my_rates->cloudy_primordial.grid_rank, my_rates->cloudy_primordial.grid_dimension,
           my_rates->cloudy_primordial.grid_parameters[0], my_rates->cloudy_primordial.grid_parameters[1], my_rates->cloudy_primordial.grid_parameters[2], my_rates->cloudy_primordial.grid_parameters[3], my_rates->cloudy_primordial.grid_parameters[4],
@@ -431,7 +439,7 @@ inline void step_rate_newton_raphson(
           my_rates->k50, my_rates->k51, my_rates->k52, my_rates->k53, my_rates->k54, my_rates->k55, my_rates->k56,
           my_rates->k57, my_rates->k58, &my_chemistry->NumberOfDustTemperatureBins, &my_chemistry->DustTemperatureStart, &my_chemistry->DustTemperatureEnd, my_rates->h2dust,
           my_rates->n_cr_n, my_rates->n_cr_d1, my_rates->n_cr_d2,
-          &h2dust[i], &chemheatrates_buf.n_cr_n[i], &chemheatrates_buf.n_cr_d1[i], &chemheatrates_buf.n_cr_d2[i],
+          &h2dust[i], pack.main_scratch_buf.chemheatrates_buf.n_cr_n, pack.main_scratch_buf.chemheatrates_buf.n_cr_d1, pack.main_scratch_buf.chemheatrates_buf.n_cr_d2,
           &pack.fwd_args.dom, &internalu.coolunit, &internalu.tbase1, &internalu.xbase1, &pack.fwd_args.dx_cgs, &pack.fwd_args.c_ljeans,
           pack.fields.RT_HI_ionization_rate, pack.fields.RT_HeI_ionization_rate, pack.fields.RT_HeII_ionization_rate, pack.fields.RT_H2_dissociation_rate,
           pack.fields.RT_heating_rate, pack.fields.H2_self_shielding_length, &pack.fwd_args.chunit, &itmask_nr[i],
@@ -497,9 +505,9 @@ inline void step_rate_newton_raphson(
            my_rates->SN0_kpFeS, my_rates->SN0_kpAl2O3,
            my_rates->SN0_kpreforg, my_rates->SN0_kpvolorg, my_rates->SN0_kpH2Oice,
            my_rates->h2dustS, my_rates->h2dustC, my_rates->grain_growth_rate,
-           &grain_temperatures.data[OnlyGrainSpLUT::SiM_dust][i], &grain_temperatures.data[OnlyGrainSpLUT::FeM_dust][i], &grain_temperatures.data[OnlyGrainSpLUT::Mg2SiO4_dust][i], &grain_temperatures.data[OnlyGrainSpLUT::MgSiO3_dust][i], &grain_temperatures.data[OnlyGrainSpLUT::Fe3O4_dust][i],
-           &grain_temperatures.data[OnlyGrainSpLUT::AC_dust][i], &grain_temperatures.data[OnlyGrainSpLUT::SiO2_dust][i], &grain_temperatures.data[OnlyGrainSpLUT::MgO_dust][i], &grain_temperatures.data[OnlyGrainSpLUT::FeS_dust][i], &grain_temperatures.data[OnlyGrainSpLUT::Al2O3_dust][i],
-           &grain_temperatures.data[OnlyGrainSpLUT::ref_org_dust][i], &grain_temperatures.data[OnlyGrainSpLUT::vol_org_dust][i], &grain_temperatures.data[OnlyGrainSpLUT::H2O_ice_dust][i],
+           pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::SiM_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::FeM_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::Mg2SiO4_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::MgSiO3_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::Fe3O4_dust],
+           pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::AC_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::SiO2_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::MgO_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::FeS_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::Al2O3_dust],
+           pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::ref_org_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::vol_org_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::H2O_ice_dust],
            my_rates->gas_grain2, &my_rates->gamma_isrf2,
            &imp_eng[i],
            &my_chemistry->radiative_transfer_HDI_dissociation, pack.fields.RT_HDI_dissociation_rate, &my_chemistry->radiative_transfer_metal_ionization, pack.fields.RT_CI_ionization_rate, pack.fields.RT_OI_ionization_rate,
@@ -533,22 +541,22 @@ inline void step_rate_newton_raphson(
             &my_uvb_rates.piHI, &my_uvb_rates.piHeI, &my_uvb_rates.piHeII,
             pack.fields.metal_density, pack.fields.dust_density,
             my_rates->hyd01k, my_rates->h2k01, my_rates->vibh, my_rates->roth, my_rates->rotl,
-            &coolingheating_buf.hyd01k[i], &coolingheating_buf.h2k01[i], &coolingheating_buf.vibh[i], &coolingheating_buf.roth[i], &coolingheating_buf.rotl[i],
-            my_rates->GP99LowDensityLimit, my_rates->GP99HighDensityLimit, &coolingheating_buf.gpldl[i], &coolingheating_buf.gphdl[i],
-            my_rates->HDlte, my_rates->HDlow, &coolingheating_buf.hdlte[i], &coolingheating_buf.hdlow[i],
+            pack.main_scratch_buf.coolingheating_buf.hyd01k, pack.main_scratch_buf.coolingheating_buf.h2k01, pack.main_scratch_buf.coolingheating_buf.vibh, pack.main_scratch_buf.coolingheating_buf.roth, pack.main_scratch_buf.coolingheating_buf.rotl,
+            my_rates->GP99LowDensityLimit, my_rates->GP99HighDensityLimit, pack.main_scratch_buf.coolingheating_buf.gpldl, pack.main_scratch_buf.coolingheating_buf.gphdl,
+            my_rates->HDlte, my_rates->HDlow, pack.main_scratch_buf.coolingheating_buf.hdlte, pack.main_scratch_buf.coolingheating_buf.hdlow,
             my_rates->GAHI, my_rates->GAH2, my_rates->GAHe,
             my_rates->GAHp, my_rates->GAel,
             my_rates->H2LTE, my_rates->gas_grain,
-            &coolingheating_buf.ceHI[i], &coolingheating_buf.ceHeI[i], &coolingheating_buf.ceHeII[i], &coolingheating_buf.ciHI[i], &coolingheating_buf.ciHeI[i],
-            &coolingheating_buf.ciHeIS[i], &coolingheating_buf.ciHeII[i],
-            &coolingheating_buf.reHII[i], &coolingheating_buf.reHeII1[i], &coolingheating_buf.reHeII2[i], &coolingheating_buf.reHeIII[i], &coolingheating_buf.brem[i],
-            &logTlininterp_buf.indixe[i], &logTlininterp_buf.t1[i], &logTlininterp_buf.t2[i], &logTlininterp_buf.logtem[i], &logTlininterp_buf.tdef[i], &edot[i],
-            &tgas[i], &cool1dmulti_buf.tgasold[i], &mmw[i], &p2d[i], &tdust[i], &metallicity[i],
-            &dust2gas[i], &rhoH[i], &cool1dmulti_buf.mynh[i], &cool1dmulti_buf.myde[i],
-            &cool1dmulti_buf.gammaha_eff[i], &cool1dmulti_buf.gasgr_tdust[i], &cool1dmulti_buf.regr[i],
+            pack.main_scratch_buf.coolingheating_buf.ceHI, pack.main_scratch_buf.coolingheating_buf.ceHeI, pack.main_scratch_buf.coolingheating_buf.ceHeII, pack.main_scratch_buf.coolingheating_buf.ciHI, pack.main_scratch_buf.coolingheating_buf.ciHeI,
+            pack.main_scratch_buf.coolingheating_buf.ciHeIS, pack.main_scratch_buf.coolingheating_buf.ciHeII,
+            pack.main_scratch_buf.coolingheating_buf.reHII, pack.main_scratch_buf.coolingheating_buf.reHeII1, pack.main_scratch_buf.coolingheating_buf.reHeII2, pack.main_scratch_buf.coolingheating_buf.reHeIII, pack.main_scratch_buf.coolingheating_buf.brem,
+            pack.main_scratch_buf.logTlininterp_buf.indixe, pack.main_scratch_buf.logTlininterp_buf.t1, pack.main_scratch_buf.logTlininterp_buf.t2, pack.main_scratch_buf.logTlininterp_buf.logtem, pack.main_scratch_buf.logTlininterp_buf.tdef, &edot[i],
+            &tgas[i], pack.main_scratch_buf.cool1dmulti_buf.tgasold, &mmw[i], &p2d[i], &tdust[i], &metallicity[i],
+            &dust2gas[i], &rhoH[i], pack.main_scratch_buf.cool1dmulti_buf.mynh, pack.main_scratch_buf.cool1dmulti_buf.myde,
+            pack.main_scratch_buf.cool1dmulti_buf.gammaha_eff, pack.main_scratch_buf.cool1dmulti_buf.gasgr_tdust, pack.main_scratch_buf.cool1dmulti_buf.regr,
             &my_chemistry->self_shielding_method, &my_uvb_rates.crsHI, &my_uvb_rates.crsHeI, &my_uvb_rates.crsHeII,
             &my_chemistry->use_radiative_transfer, &my_chemistry->radiative_transfer_hydrogen_only,
-            &my_chemistry->h2_optical_depth_approximation, &my_chemistry->cie_cooling, &my_chemistry->h2_cooling_rate, &my_chemistry->hd_cooling_rate, my_rates->cieco, &coolingheating_buf.cieco[i],
+            &my_chemistry->h2_optical_depth_approximation, &my_chemistry->cie_cooling, &my_chemistry->h2_cooling_rate, &my_chemistry->hd_cooling_rate, my_rates->cieco, pack.main_scratch_buf.coolingheating_buf.cieco,
             &my_chemistry->cmb_temperature_floor, &my_chemistry->UVbackground, &my_chemistry->cloudy_electron_fraction_factor,
             &my_rates->cloudy_primordial.grid_rank, my_rates->cloudy_primordial.grid_dimension,
             my_rates->cloudy_primordial.grid_parameters[0], my_rates->cloudy_primordial.grid_parameters[1], my_rates->cloudy_primordial.grid_parameters[2], my_rates->cloudy_primordial.grid_parameters[3], my_rates->cloudy_primordial.grid_parameters[4],
@@ -567,7 +575,7 @@ inline void step_rate_newton_raphson(
             my_rates->k50, my_rates->k51, my_rates->k52, my_rates->k53, my_rates->k54, my_rates->k55, my_rates->k56,
             my_rates->k57, my_rates->k58, &my_chemistry->NumberOfDustTemperatureBins, &my_chemistry->DustTemperatureStart, &my_chemistry->DustTemperatureEnd, my_rates->h2dust,
             my_rates->n_cr_n, my_rates->n_cr_d1, my_rates->n_cr_d2,
-            &h2dust[i], &chemheatrates_buf.n_cr_n[i], &chemheatrates_buf.n_cr_d1[i], &chemheatrates_buf.n_cr_d2[i],
+            &h2dust[i], pack.main_scratch_buf.chemheatrates_buf.n_cr_n, pack.main_scratch_buf.chemheatrates_buf.n_cr_d1, pack.main_scratch_buf.chemheatrates_buf.n_cr_d2,
             &pack.fwd_args.dom, &internalu.coolunit, &internalu.tbase1, &internalu.xbase1, &pack.fwd_args.dx_cgs, &pack.fwd_args.c_ljeans,
             pack.fields.RT_HI_ionization_rate, pack.fields.RT_HeI_ionization_rate, pack.fields.RT_HeII_ionization_rate, pack.fields.RT_H2_dissociation_rate,
             pack.fields.RT_heating_rate, pack.fields.H2_self_shielding_length, &pack.fwd_args.chunit, &itmask_nr[i],
@@ -633,9 +641,9 @@ inline void step_rate_newton_raphson(
              my_rates->SN0_kpFeS, my_rates->SN0_kpAl2O3,
              my_rates->SN0_kpreforg, my_rates->SN0_kpvolorg, my_rates->SN0_kpH2Oice,
              my_rates->h2dustS, my_rates->h2dustC, my_rates->grain_growth_rate,
-             &grain_temperatures.data[OnlyGrainSpLUT::SiM_dust][i], &grain_temperatures.data[OnlyGrainSpLUT::FeM_dust][i], &grain_temperatures.data[OnlyGrainSpLUT::Mg2SiO4_dust][i], &grain_temperatures.data[OnlyGrainSpLUT::MgSiO3_dust][i], &grain_temperatures.data[OnlyGrainSpLUT::Fe3O4_dust][i],
-             &grain_temperatures.data[OnlyGrainSpLUT::AC_dust][i], &grain_temperatures.data[OnlyGrainSpLUT::SiO2_dust][i], &grain_temperatures.data[OnlyGrainSpLUT::MgO_dust][i], &grain_temperatures.data[OnlyGrainSpLUT::FeS_dust][i], &grain_temperatures.data[OnlyGrainSpLUT::Al2O3_dust][i],
-             &grain_temperatures.data[OnlyGrainSpLUT::ref_org_dust][i], &grain_temperatures.data[OnlyGrainSpLUT::vol_org_dust][i], &grain_temperatures.data[OnlyGrainSpLUT::H2O_ice_dust][i],
+             pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::SiM_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::FeM_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::Mg2SiO4_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::MgSiO3_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::Fe3O4_dust],
+             pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::AC_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::SiO2_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::MgO_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::FeS_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::Al2O3_dust],
+             pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::ref_org_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::vol_org_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::H2O_ice_dust],
              my_rates->gas_grain2, &my_rates->gamma_isrf2,
              &imp_eng[i],
              &my_chemistry->radiative_transfer_HDI_dissociation, pack.fields.RT_HDI_dissociation_rate, &my_chemistry->radiative_transfer_metal_ionization, pack.fields.RT_CI_ionization_rate, pack.fields.RT_OI_ionization_rate,
@@ -830,6 +838,9 @@ label_9996:
 
     }
   }
+
+  t_deriv::drop_MainScratchBuf(&main_scratch_buf);
+
 }
 
 

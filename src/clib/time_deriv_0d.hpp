@@ -11,6 +11,7 @@
 
 #include "grackle.h"
 #include "utils-field.hpp"
+#include "internal_types.hpp"
 
 // we choose to adopt a longer, more descriptive namespace here so that the
 // handful of functions defined in this file can have shorter names (in the
@@ -33,6 +34,40 @@ struct FrozenSimpleArgs {
   photo_rate_storage my_uvb_rates;
   InternalGrUnits internalu;
 };
+
+/// these are collections of scratch buffers for solving the 0d time derivative
+///
+/// @note
+/// Since the time derivative calculation only operates on a single zone, we
+/// choose to freshly allocate data for each of these buffers (this is a small
+/// fraction of the required memory). In the future, if we refactor the
+/// calculation to operate on multiple elements at once, then this should reuse
+/// preallocated buffers.
+struct MainScratchBuf {
+  GrainSpeciesCollection grain_temperatures;
+  LogTLinInterpScratchBuf logTlininterp_buf;
+  Cool1DMultiScratchBuf cool1dmulti_buf;
+  CoolHeatScratchBuf coolingheating_buf;
+  ChemHeatingRates chemheatrates_buf;
+};
+
+MainScratchBuf new_MainScratchBuf(void) {
+  MainScratchBuf out;
+  out.grain_temperatures = new_GrainSpeciesCollection(1);
+  out.logTlininterp_buf = new_LogTLinInterpScratchBuf(1);
+  out.cool1dmulti_buf = new_Cool1DMultiScratchBuf(1);
+  out.coolingheating_buf = new_CoolHeatScratchBuf(1);
+  out.chemheatrates_buf = new_ChemHeatingRates(1);
+  return out;
+}
+
+void drop_MainScratchBuf(MainScratchBuf* ptr) {
+  drop_GrainSpeciesCollection(&ptr->grain_temperatures);
+  drop_LogTLinInterpScratchBuf(&ptr->logTlininterp_buf);
+  drop_Cool1DMultiScratchBuf(&ptr->cool1dmulti_buf);
+  drop_CoolHeatScratchBuf(&ptr->coolingheating_buf);
+  drop_ChemHeatingRates(&ptr->chemheatrates_buf);
+}
 
 /// this struct is used to organize some temporary data that is used for
 /// computing time derivatives of species data (and possibly, internal energy)
@@ -72,6 +107,11 @@ struct ContextPack {
   /// to the calculation for different spatial locations.
   FrozenSimpleArgs fwd_args;
 
+  /// the struct containing the primary scratch buffers (the lifetimes of the
+  /// buffers in this member are intended to all outlive the lifetime of this
+  /// struct)
+  MainScratchBuf main_scratch_buf;
+
   /** @} */
 
 };
@@ -83,7 +123,8 @@ typedef struct ContextPack ContextPack;
 /// Ideally, we would initialize everything all at once in full generality, but
 /// we reuse this object multiple times (maybe revisit this in the future?)
 inline ContextPack new_ContextPack(
-  FrozenSimpleArgs fwd_args
+  FrozenSimpleArgs fwd_args,
+  MainScratchBuf scratch_buf
 ) {
   ContextPack pack;
   for (int i = 0; i < 3; i++) {
@@ -97,8 +138,9 @@ inline ContextPack new_ContextPack(
   pack.fields.grid_start = pack.grid_start;
   pack.fields.grid_end = pack.grid_end;
 
-  // initialize other args
+  // initialize other members
   pack.fwd_args = fwd_args;
+  pack.main_scratch_buf = scratch_buf;
   return pack;
 }
 
