@@ -114,33 +114,6 @@ inline void step_rate_newton_raphson(
   grackle::impl::View<gr_float***> volorg(my_fields->vol_org_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> H2Oice(my_fields->H2O_ice_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
-  // Radiative transfer fields
-
-  grackle::impl::View<gr_float***> kphHI(my_fields->RT_HI_ionization_rate, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> kphHeI(my_fields->RT_HeI_ionization_rate, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> kphHeII(my_fields->RT_HeII_ionization_rate, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> kdissH2I(my_fields->RT_H2_dissociation_rate, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> photogamma(my_fields->RT_heating_rate, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-
-  grackle::impl::View<gr_float***> kdissHDI(my_fields->RT_HDI_dissociation_rate, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> kphCI(my_fields->RT_CI_ionization_rate, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> kphOI(my_fields->RT_OI_ionization_rate, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> kdissCO(my_fields->RT_CO_dissociation_rate, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> kdissOH(my_fields->RT_OH_dissociation_rate, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> kdissH2O(my_fields->RT_H2O_dissociation_rate, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-
-  // H2 self-shielding length-scale field
-
-  grackle::impl::View<gr_float***> xH2shield(my_fields->H2_self_shielding_length, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-
-  // Interstellar radiation field for dust heating
-
-  grackle::impl::View<gr_float***> isrf_habing(my_fields->isrf_habing, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-
-  // Custom H2 shielding factor
-
-  grackle::impl::View<gr_float***> f_shield_custom(my_fields->H2_custom_shielding_factor, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-
   // ierror local variable
   //   - this variable is only used internally by this subroutine for
   //     determining control-flow
@@ -442,7 +415,7 @@ inline void step_rate_newton_raphson(
           &my_rates->cloudy_metal.data_size, my_rates->cloudy_metal.cooling_data, my_rates->cloudy_metal.heating_data, &my_rates->cloudy_data_new,
           &my_chemistry->use_volumetric_heating_rate, &my_chemistry->use_specific_heating_rate, pack.fields.volumetric_heating_rate, pack.fields.specific_heating_rate,
           &my_chemistry->use_temperature_floor, &my_chemistry->temperature_floor_scalar, pack.fields.temperature_floor,
-          &my_chemistry->use_isrf_field, &isrf_habing(i,j,k),
+          &my_chemistry->use_isrf_field, pack.fields.isrf_habing,
           &my_chemistry->three_body_rate, &anydust, &my_chemistry->H2_self_shielding,
           my_rates->k1, my_rates->k2, my_rates->k3, my_rates->k4, my_rates->k5, my_rates->k6, my_rates->k7, my_rates->k8, my_rates->k9, my_rates->k10,
           my_rates->k11, my_rates->k12, my_rates->k13, my_rates->k13dd, my_rates->k14, my_rates->k15, my_rates->k16,
@@ -453,8 +426,8 @@ inline void step_rate_newton_raphson(
           my_rates->n_cr_n, my_rates->n_cr_d1, my_rates->n_cr_d2,
           &h2dust[i], &chemheatrates_buf.n_cr_n[i], &chemheatrates_buf.n_cr_d1[i], &chemheatrates_buf.n_cr_d2[i],
           &dom, &internalu.coolunit, &internalu.tbase1, &internalu.xbase1, &dx_cgs, &c_ljeans,
-          &kphHI(i,j,k), &kphHeI(i,j,k), &kphHeII(i,j,k), &kdissH2I(i,j,k),
-          &photogamma(i,j,k), &xH2shield(i,j,k), &chunit, &itmask_nr[i],
+          pack.fields.RT_HI_ionization_rate, pack.fields.RT_HeI_ionization_rate, pack.fields.RT_HeII_ionization_rate, pack.fields.RT_H2_dissociation_rate,
+          pack.fields.RT_heating_rate, pack.fields.H2_self_shielding_length, &chunit, &itmask_nr[i],
           &itmask_metal[i],
            &my_chemistry->metal_chemistry, &my_chemistry->grain_growth, &my_chemistry->use_primordial_continuum_opacity, &my_chemistry->tabulated_cooling_minimum_temperature,
            my_rates->k125, my_rates->k129, my_rates->k130, my_rates->k131, my_rates->k132,
@@ -522,9 +495,9 @@ inline void step_rate_newton_raphson(
            &grain_temperatures.data[OnlyGrainSpLUT::ref_org_dust][i], &grain_temperatures.data[OnlyGrainSpLUT::vol_org_dust][i], &grain_temperatures.data[OnlyGrainSpLUT::H2O_ice_dust][i],
            my_rates->gas_grain2, &my_rates->gamma_isrf2,
            &imp_eng[i],
-           &my_chemistry->radiative_transfer_HDI_dissociation, &kdissHDI(i,j,k), &my_chemistry->radiative_transfer_metal_ionization, &kphCI(i,j,k), &kphOI(i,j,k),
-           &my_chemistry->radiative_transfer_metal_dissociation, &kdissCO(i,j,k), &kdissOH(i,j,k), &kdissH2O(i,j,k),
-           &my_chemistry->radiative_transfer_use_H2_shielding, &my_chemistry->H2_custom_shielding, &f_shield_custom(i,j,k)
+           &my_chemistry->radiative_transfer_HDI_dissociation, pack.fields.RT_HDI_dissociation_rate, &my_chemistry->radiative_transfer_metal_ionization, pack.fields.RT_CI_ionization_rate, pack.fields.RT_OI_ionization_rate,
+           &my_chemistry->radiative_transfer_metal_dissociation, pack.fields.RT_CO_dissociation_rate, pack.fields.RT_OH_dissociation_rate, pack.fields.RT_H2O_dissociation_rate,
+           &my_chemistry->radiative_transfer_use_H2_shielding, &my_chemistry->H2_custom_shielding, pack.fields.H2_custom_shielding_factor
           );
 
           for (jsp = 1; jsp<=(nsp); jsp++) {
@@ -578,7 +551,7 @@ inline void step_rate_newton_raphson(
             &my_rates->cloudy_metal.data_size, my_rates->cloudy_metal.cooling_data, my_rates->cloudy_metal.heating_data, &my_rates->cloudy_data_new,
             &my_chemistry->use_volumetric_heating_rate, &my_chemistry->use_specific_heating_rate, pack.fields.volumetric_heating_rate, pack.fields.specific_heating_rate,
             &my_chemistry->use_temperature_floor, &my_chemistry->temperature_floor_scalar, pack.fields.temperature_floor,
-            &my_chemistry->use_isrf_field, &isrf_habing(i,j,k),
+            &my_chemistry->use_isrf_field, pack.fields.isrf_habing,
             &my_chemistry->three_body_rate, &anydust, &my_chemistry->H2_self_shielding,
             my_rates->k1, my_rates->k2, my_rates->k3, my_rates->k4, my_rates->k5, my_rates->k6, my_rates->k7, my_rates->k8, my_rates->k9, my_rates->k10,
             my_rates->k11, my_rates->k12, my_rates->k13, my_rates->k13dd, my_rates->k14, my_rates->k15, my_rates->k16,
@@ -589,8 +562,8 @@ inline void step_rate_newton_raphson(
             my_rates->n_cr_n, my_rates->n_cr_d1, my_rates->n_cr_d2,
             &h2dust[i], &chemheatrates_buf.n_cr_n[i], &chemheatrates_buf.n_cr_d1[i], &chemheatrates_buf.n_cr_d2[i],
             &dom, &internalu.coolunit, &internalu.tbase1, &internalu.xbase1, &dx_cgs, &c_ljeans,
-            &kphHI(i,j,k), &kphHeI(i,j,k), &kphHeII(i,j,k), &kdissH2I(i,j,k),
-            &photogamma(i,j,k), &xH2shield(i,j,k), &chunit, &itmask_nr[i],
+            pack.fields.RT_HI_ionization_rate, pack.fields.RT_HeI_ionization_rate, pack.fields.RT_HeII_ionization_rate, pack.fields.RT_H2_dissociation_rate,
+            pack.fields.RT_heating_rate, pack.fields.H2_self_shielding_length, &chunit, &itmask_nr[i],
             &itmask_metal[i],
              &my_chemistry->metal_chemistry, &my_chemistry->grain_growth, &my_chemistry->use_primordial_continuum_opacity, &my_chemistry->tabulated_cooling_minimum_temperature,
              my_rates->k125, my_rates->k129, my_rates->k130, my_rates->k131, my_rates->k132,
@@ -658,9 +631,9 @@ inline void step_rate_newton_raphson(
              &grain_temperatures.data[OnlyGrainSpLUT::ref_org_dust][i], &grain_temperatures.data[OnlyGrainSpLUT::vol_org_dust][i], &grain_temperatures.data[OnlyGrainSpLUT::H2O_ice_dust][i],
              my_rates->gas_grain2, &my_rates->gamma_isrf2,
              &imp_eng[i],
-             &my_chemistry->radiative_transfer_HDI_dissociation, &kdissHDI(i,j,k), &my_chemistry->radiative_transfer_metal_ionization, &kphCI(i,j,k), &kphOI(i,j,k),
-             &my_chemistry->radiative_transfer_metal_dissociation, &kdissCO(i,j,k), &kdissOH(i,j,k), &kdissH2O(i,j,k),
-             &my_chemistry->radiative_transfer_use_H2_shielding, &my_chemistry->H2_custom_shielding, &f_shield_custom(i,j,k)
+             &my_chemistry->radiative_transfer_HDI_dissociation, pack.fields.RT_HDI_dissociation_rate, &my_chemistry->radiative_transfer_metal_ionization, pack.fields.RT_CI_ionization_rate, pack.fields.RT_OI_ionization_rate,
+             &my_chemistry->radiative_transfer_metal_dissociation, pack.fields.RT_CO_dissociation_rate, pack.fields.RT_OH_dissociation_rate, pack.fields.RT_H2O_dissociation_rate,
+             &my_chemistry->radiative_transfer_use_H2_shielding, &my_chemistry->H2_custom_shielding, pack.fields.H2_custom_shielding_factor
             );
 
             for (isp = 1; isp<=(nsp); isp++) {
