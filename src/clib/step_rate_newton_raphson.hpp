@@ -18,6 +18,9 @@
 #include "internal_units.h"
 #include "utils-cpp.hpp"
 
+#include "utils-field.hpp"
+#include "time_deriv_0d.hpp"
+
 namespace grackle::impl {
 
 /// An alternative to step_rate_g for evolving the species rate equations that
@@ -50,6 +53,8 @@ inline void step_rate_newton_raphson(
   grackle::impl::ChemHeatingRates chemheatrates_buf
 )
 {
+  // shorten `grackle::impl::time_deriv_0d` to `t_deriv` within this function
+  namespace t_deriv = ::grackle::impl::time_deriv_0d;
 
   // Density, energy and velocity fields fields
 
@@ -185,10 +190,19 @@ inline void step_rate_newton_raphson(
   // Another parameter
   const double eps = 1.e-4;
 
+  // partially initialize the struct we will use for the time derivative calc
+  t_deriv::ContextPack pack = t_deriv::new_ContextPack();
+
   // The following was extracted from another subroutine
   for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
     const int j = idx_range.j;
     const int k = idx_range.k;
+
+    // remap the 3D index to a 1D index
+    const int field_idx1d = layoutleft_3D_index_to_1D_(
+        my_fields->grid_dimension, i, j, k
+    );
+
     if (itmask_nr[i] != MASK_FALSE)  {
 
       // If density and temperature are low, update gas energy explicitly
@@ -375,6 +389,9 @@ inline void step_rate_newton_raphson(
         id = id + 1;
         idsp[id-1] = i_eng;
       }
+
+      // configure pack for use during the current index
+      t_deriv::configure_ContextPack(&pack, my_fields, field_idx1d);
 
       // Save arrays at ttot(ip1)
 
