@@ -69,6 +69,26 @@ void drop_MainScratchBuf(MainScratchBuf* ptr) {
   drop_ChemHeatingRates(&ptr->chemheatrates_buf);
 }
 
+/// this is a collections of values intended to act as 1-element arrays and
+/// that don't need to be dynamically allocated
+///
+/// @note
+/// When we ultimately refactor the time derivative calculation to operate on
+/// multiple elements at once, we will need to merge this object with
+/// MainScratchBuf and track pointers to previously allocated memory buffer
+/// for all cases
+struct Assorted1ElemBuf {
+  double p2d[1];
+  double tgas[1];
+  double tdust[1];
+  double metallicity[1];
+  double dust2gas[1];
+  double rhoH[1];
+  double mmw[1];
+  double h2dust[1];
+  double edot[1];
+};
+
 /// this struct is used to organize some temporary data that is used for
 /// computing time derivatives of species data (and possibly, internal energy)
 /// in a single zone
@@ -112,6 +132,16 @@ struct ContextPack {
   /// struct)
   MainScratchBuf main_scratch_buf;
 
+  /// collection of other assorted scratch buffers.
+  ///
+  /// @note
+  /// While main_scratch_buf holds collections of buffers, this holds loose
+  /// buffers. Because this is entirely composed of loose buffers and the
+  /// calculation currently only operates on a single zone, these buffers are
+  /// all specified as statically sized arrays (i.e. there's no need to
+  /// manually allocate and deallocate the buffers)
+  Assorted1ElemBuf other_scratch_buf;
+
   /** @} */
 
 };
@@ -141,6 +171,8 @@ inline ContextPack new_ContextPack(
   // initialize other members
   pack.fwd_args = fwd_args;
   pack.main_scratch_buf = scratch_buf;
+
+  // nothing needs to be done for pack.other_scratch_buf
   return pack;
 }
 
