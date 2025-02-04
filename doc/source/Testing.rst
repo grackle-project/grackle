@@ -26,8 +26,9 @@ the following:
 Answer tests are those whose correct answers must be generated from a
 prior, trusted version of Grackle (i.e., the "gold standard"). The
 tests are first run using this trusted version to generate the
-results, then run again on the latest version to compate. These tests
-include:
+results (in *store-mode*), then run again on the latest version to
+compare (in *compare-mode*).
+These tests include:
 
  - all code examples build, run, and return correct results
 
@@ -37,6 +38,22 @@ include:
  - all grackle 'calculate' functions return correct results for sets
    of random field values
 
+We refer to the location where the results of answer-tests are stored as the "answer-directory." This is an arbitrary user-specified location.
+
+Quick Primer on the Test Runner's CLI
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+By default, the pytest test-runner always runs all available test cases.
+
+ - The unit tests are **ALWAYS** available.
+
+ - By default, **all** answer-tests are fully disabled.
+   Command-line options make them available in *store-mode* or *compare-mode*.
+   The ``--answer-dir=<PATH/TO/ANSWER-DIR>`` flag is required for both modes; it specifies the path to the user's chosen "answer-directory" (where answer-tests results are stored/read-from).
+   The ``--answer-store`` flag enables *store-mode*, while its absence enables *compare-mode*.
+
+*For contributors:* you may find pytest's `build-in command-line interface <https://docs.pytest.org/en/stable/how-to/usage.html>`__ useful during debugging (e.g. you can instruct pytest to only run a subset of all available tests).
+
 .. _test_without_answer_verification:
 
 Tests Without Answer Verification
@@ -45,58 +62,27 @@ Tests Without Answer Verification
 If you only want to quickly verify that everything runs, you can skip
 generating the answer test results using the latest gold standard.
 
-Once you have installed :ref:`pygrackle and the development dependencies <pygrackle-dev>`,
-there are currently 2 ways to do this:
+Once you have installed :ref:`pygrackle and the development dependencies <pygrackle-dev>`, this is relatively straight-forward.
 
-.. tabs::
+Simply invoke ``py.test`` from the **src/python** directory with the ``--answer-dir=<PATH/TO/ANSWER-DIR>`` option **and** the ``--answer-store`` option.
+For the former You can specify an arbitrary path where the test-answers will be recorded.
+A concrete example of what this looks like is shown down below.
 
-   .. group-tab:: Command Line Flag
+.. code-block:: shell-session
 
-      Simply invoke ``py.test`` from the **src/python** directory with the ``--answer-store`` flag:
+   ~ $ cd grackle/src/python
+   ~/grackle/src/python $ py.test --answer-dir=./my_test_answers --answer-store
 
-      .. code-block:: shell-session
+The above snippet instructs each answer-test to store the test result in the directory called **./my_test_answers**; an answer-test reports that it has "passed" as long as it is able to successfully store the result.
+After you run the test-suite, you can delete the **./my_test_answers** directory (since we don't actually care about the test results).
 
-         ~ $ cd grackle/src/python
-         ~/grackle/src $ py.test --answer-store
-
-      This will both invoke the test suite and tell it to simply generate new answers and not compare with previously existing ones.
-
-   .. group-tab:: Environment Variable
-
-      First set the ``GENERATE_PYGRACKLE_TEST_RESULTS`` environment variable to 1.
-
-      .. code-block:: shell-session
-
-          ~ $ export GENERATE_PYGRACKLE_TEST_RESULTS=1
-
-      This will tell the test suite to simply generate new answers and not
-      compare with previously existing ones.
-
-      The tests can then be run from the **src** directory by typing ``make test``:
-
-      .. code-block:: shell-session
-
-         ~ $ cd grackle/src
-         ~/grackle/src $ make test
-
-      or from the **src/python** directory by typing ``py.test``:
-
-      .. code-block:: shell-session
-
-         ~ $ cd grackle/src/python
-         ~/grackle/src $ py.test
-
-      .. warning::
-
-         The ability to use an environment variable may be removed.
-
-Once you launch the test, the output will look like the following:
+When you launch the tests, the output will look like the following:
 
 .. code-block:: shell-session
 
   ==================================== test session starts ====================================
   platform darwin -- Python 3.11.9, pytest-8.2.1, pluggy-1.5.0
-  rootdir: /Users/britton/Documents/work/research/simulation/grackle/grackle-git/src
+  rootdir: /Users/britton/Documents/work/research/simulation/grackle/grackle-git/src/python
   plugins: cov-5.0.0
   collected 65 items
 
@@ -138,9 +124,18 @@ steps:
 #. Re-compile the Grackle library and :ref:`re-install pygrackle
    <install-pygrackle>`.
 
-#. Execute the test suite with instructions to generate test results.
-   The 2 ways to do this are described :ref:`above <test_without_answer_verification>`: (i) execute ``py.test`` with the ``--answer-store`` flag or (ii) set the ``GENERATE_PYGRACKLE_TEST_RESULTS`` environment variable to 1 before executing the test suite.
-   By default, this will create test result files in the directory **src/python/tests/test_answers**.
+#. Execute the test suite using command-line flags to instruct the test-runner to run answer tests in *store-mode*.
+   This was already illustrated :ref:`above <test_without_answer_verification>`, we repeat the instructions here:
+
+   - Execute ``py.test`` from the **src/python** directory while specifing the path  to the *answer-directory* with ``--answer-dir=<PATH/TO/ANSWER-DIR>`` **and** specifying the ``--answer-store`` option.
+
+   - Be aware, this will directly overwrite any files that were previously stored in the answer-dir.
+
+   - If we wanted to store the test-answers in **./my-test-answers**, we would invoke:
+
+     .. code-block:: shell-session
+
+        ~/grackle/src/python $ py.test --answer-dir=./my_test_answers --answer-store
 
 #. Return to the branch of the repository you started with. If you just
    cloned the main repository, this will be called 'main', in which
@@ -149,15 +144,16 @@ steps:
 #. Re-compile the Grackle library and :ref:`re-install pygrackle
    <install-pygrackle>`.
 
-#. If you previously assigned a value to the ``GENERATE_PYGRACKLE_TEST_RESULTS`` variable, you must now unset the variable **OR** assign it a value of 0.
+#. Run the test suite again using a command-line flag to instruct the test runner to evaluate the answer-tests in *compare-mode*:
 
-#. Run the test suite again (do **NOT** pass the ``--answer-store`` flags.
-   This time, the answer tests will be compared with the previously generated results.
+   - you just need to specify the *answer-directory* path with ``--answer-dir=<PATH/TO/ANSWER-DIR>``.
 
-Other Test Configuration
-^^^^^^^^^^^^^^^^^^^^^^^^
-To run the test-suite without any answer tests, invoke ``py.test`` with the ``--answer-skip`` flag.
+   - Do **NOT** pass the ``--answer-store`` flag.
+     The absence of this flag is how the test-runner knows to use *compare-mode*.
+     (If the flag were present, then the answer-tests would overwrite the answers)
 
-To control the location of the directory where the test answers are save, you can invoke ``py.test`` with the ``--local-dir`` flag
+   - To compare against the results previously written to **./my-test-answers**, you would invoke:
 
+     .. code-block:: shell-session
 
+        ~/grackle/src/python $ py.test --answer-dir=./my_test_answers --answer-store
