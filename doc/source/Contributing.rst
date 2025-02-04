@@ -168,7 +168,7 @@ To create a new release:
 
      - update the version number of the c-library. This is currently tracked within the ``VERSION`` file (that can be found at the root level of the repository)
 
-     - (if applicable) update the version number of the python module (stored internally in `src/python/pygrackle/_version.py`)
+     - (if applicable) update the version number of the python module (stored internally in `pyproject.toml`)
 
   3. After the PR is merged, perform the release on GitHub.
      Make sure to associate the release with the proper target (it should include changes from the PR).

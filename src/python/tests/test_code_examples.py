@@ -24,8 +24,10 @@ from testing_common import \
     test_answers_dir
 
 try:
-    from pygrackle.grackle_wrapper import uses_in_source_build
-    _USING_TRADITIONAL_BUILD = uses_in_source_build()
+    from pygrackle.__config__ import \
+        _GrackleBuild, \
+        _grackle_build
+    _USING_TRADITIONAL_BUILD = _grackle_build == _GrackleBuild.ExternalClassic
 except ImportError:
     # this branch is executed when grackle was compiled with OpenMP
     # -> last time I checked, this won't happen if OpenMP is used in a cmake,
