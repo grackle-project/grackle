@@ -321,6 +321,17 @@ jobs:
           build_kind: 'cmake'
           generate: 'false'
 
+      - run:
+          name: "Execute the C++ tests"
+          command: |
+            # compile the tests (it would probably would be better to do this when
+            # compiling the rest of Grackle)
+            cmake -DGRACKLE_BUILD_TESTS=ON -Bbuild
+            cmake --build build
+            # execute the tests
+            cd build
+            ctest
+
 # TODO: once we merge in GH-#208, we need to issue a new gold standard, and then we should
 #       issue a followup PR where we uncomment the remainder of this test
   test-standalone-pygrackle:

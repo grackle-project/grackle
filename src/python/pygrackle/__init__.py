@@ -11,7 +11,8 @@
 # software.
 ########################################################################
 
-__version__ = "1.1.dev"
+from .__config__ import \
+    __version__
 
 from .fluid_container import \
     FluidContainer
@@ -28,9 +29,6 @@ from .utilities.evolve import \
 
 from .utilities.units import \
     set_cosmology_units
-
-from ._version import \
-    __version__
 
 from .yt_fields import \
     add_grackle_fields
