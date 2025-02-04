@@ -59,9 +59,10 @@ def test_file(answertestspec):
     test_file = os.path.join(answertestspec.answer_dir, "code_examples.json")
     if answertestspec.generate_answers and os.path.exists(test_file):
         os.remove(test_file)
-    if not answertestspec.generate_answers and not os.path.exists(test_file):
-        raise RuntimeError(
-            f"Code example results file not found: {test_file}")
+
+    # if test_file doesn't exist and answertestspec.generate_answers is False,
+    # defer any error reporting until within the test-case (after the test-case
+    # determines whether or not it should be skipped)
     return test_file
 
 def run_command(command, cwd, env, timeout=None):
@@ -137,7 +138,16 @@ def test_code_examples(answertestspec, test_file, example):
     else:
         raise RuntimeError("PYTEST_CODE_LINK_CHOICE must be '', 'classic' or "
                            "'cmake:<path/to/build>'. {choice!r} is invalid")
+
+    # if we aren't generating test-answers, and the test-file can't be found
+    # report an error (we explicitly wait to do this until after we have
+    # decided whether to skip the test or not).
+    if not answertestspec.generate_answers and not os.path.exists(test_file):
+        raise RuntimeError(f"Code example results file not found: {test_file}")
+
     env = dict(os.environ)
+
+    # compile the example
     command = f'{make_command} {example}'
     run_command(command, examples_dir, env, timeout=60)
 
