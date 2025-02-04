@@ -6,14 +6,14 @@ import yt
 from numpy.testing import assert_allclose
 
 from pygrackle.utilities.model_tests import model_sets
-from pygrackle.utilities.testing import \
-    run_command, \
-    temporary_directory
+from pygrackle.utilities.testing import run_command
 
 from testing_common import grackle_python_dir
 
 python_example_dir = os.path.join(grackle_python_dir, "examples")
 
+# collect all of the python-examples and various model configurations into
+# a list of tuples
 all_sets = []
 for model_name, model in model_sets.items():
     for par_index in range(len(model["parameter_sets"])):
@@ -21,15 +21,31 @@ for model_name, model in model_sets.items():
             all_sets.append((model_name, par_index, input_index))
 
 @pytest.mark.parametrize("model_name, par_index, input_index", all_sets)
-def test_model(answertestspec, model_name, par_index, input_index):
+def test_model(answertestspec, tmp_path, model_name, par_index, input_index):
+    """
+    Each execution tests a python example with a set of inputs
+
+    Each of the parameters down below is a fixture
+
+    Parameters
+    ----------
+    answertestspec: AnswerTestSpec
+        A fixture that provides info about the answer-testing configuration
+    tmp_path: pathlib.Path
+        A custom built-in fixture provided by pytest that specifies a pre-made
+        temporary directory that is named for the current test
+    """
+
     script_path = os.path.join(python_example_dir, f"{model_name}.py")
     command = f"{sys.executable} {script_path} {par_index} {input_index}"
-    with temporary_directory():
-        rval = run_command(command, timeout=60)
+
+    if True:
+        rval = run_command(command, timeout=60, cwd=tmp_path)
         assert rval
 
-        output_file = f"{model_name}_{par_index}_{input_index}.h5"
-        answer_path = os.path.join(answertestspec.answer_dir, output_file)
+        output_basename = f"{model_name}_{par_index}_{input_index}.h5"
+        output_file = os.path.join(str(tmp_path), output_basename)
+        answer_path = os.path.join(answertestspec.answer_dir, output_basename)
 
         if answertestspec.generate_answers:
             os.rename(output_file, answer_path)

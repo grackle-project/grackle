@@ -101,6 +101,7 @@ def set_parameters(parSet, my_chemistry):
 
 #* Function which tests that the rates have been initialised correctly for each parameter set.
 def test_rate_initialisation(answertestspec,
+                             tmp_path,
                              printParameters=False,
                              printOOMdiscrepanices=False,
                              testCustomFile=False,
@@ -113,12 +114,15 @@ def test_rate_initialisation(answertestspec,
     be saved into a hdf5 file. This should be used for testing and is not meant for frequent use.
 
     printParameters (bool) --> If set to True will print the parameter settings for each parameter set.
-    """
 
-    #* Navigate to the directory where the file is located.
-    filePath = os.path.abspath(__file__)
-    dirPath = os.path.dirname(filePath)
-    os.chdir(dirPath)
+    Fixtures
+    --------
+    answertestspec : AnswerTestSpec
+        A fixture used for all answer tests
+    tmp_path : pathlib.Path
+        A custom built-in fixture provided by pytest that specifies a pre-made temporary directory
+        that is named to be used with tmp_path
+    """
 
     #* List of all rate variable names which will be checked.
     testRates = "k1,k3,k4,k2,k5,k6,k7,k8,k9,k10,k11,k12,k14,k15,k16,k17,k18,k19,k20,k23,"\
@@ -132,6 +136,8 @@ def test_rate_initialisation(answertestspec,
     #Create and open file. If the file already exists this will overwrite it.
     if answertestspec.generate_answers:
         fileName = os.path.join(answertestspec.answer_dir, fileName)
+    else:
+        fileName = str(tmp_path / fileName)
     f = h5py.File(fileName, "w")
 
     #Iterate over parameter sets.
