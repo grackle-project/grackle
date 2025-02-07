@@ -238,8 +238,9 @@ typedef void visitor_callback(
     visit_mempair_fn(*objptr, dummy, wrapper);                                \
   }
 
-
-// -----------------------------------------------------------------
+// =================================================================
+// Start implementing typical ScratchBuf data structures
+// =================================================================
 
 /// Holds 1D arrays used for cooling and heating
 ///
@@ -453,168 +454,6 @@ void drop_LogTLinInterpScratchBuf(LogTLinInterpScratchBuf*);
 
 // -----------------------------------------------------------------
 
-/// holds properties about each kind of dust grain
-///
-/// @note
-/// This operates in a similar manner to SpeciesCollection (i.e. we use
-/// `OnlyGrainSpLUT::<entry>` to lookup values for the desired rate).
-///
-/// @note
-/// This is something we may want to reuse. If we are willing to embrace C++,
-/// then we may want to use templates
-struct GrainSpeciesCollection {
-  double* data[OnlyGrainSpLUT::NUM_ENTRIES];
-};
-
-/// used to help implement the visitor design pattern
-///
-/// (avoid using this unless you really have to)
-template<class BinaryFn>
-void visit_member_pair(
-  GrainSpeciesCollection& obj0, GrainSpeciesCollection& obj1, BinaryFn f
-) {
-  for (int i = 0; i < OnlyGrainSpLUT::NUM_ENTRIES; i++) {
-    f(MemberInfo{nullptr, MemberKind::f64_buffer}, obj0.data[i], obj1.data[i]);
-  }
-}
-
-/// implements the visitor design pattern
-///
-/// @param ptr[in,out] Members of the specified object will be visited
-/// @param fn[in] Calls function that will be applied to each function
-/// @param visitor_ctx[in,out] User-defined callback function context
-inline void visit_member_GrainSpeciesCollection(
-  GrainSpeciesCollection* ptr, visitor_callback* fn, void* visitor_ctx
-) {
-  GRIMPL_IMPL_VISIT_MEMBER(visit_member_pair, GrainSpeciesCollection, ptr, fn,
-                           visitor_ctx)
-}
-
-/// allocates the contents of a new GrainSpeciesCollection
-///
-/// @param nelem The number of elements in each buffer
-GrainSpeciesCollection new_GrainSpeciesCollection(int nelem);
-
-/// performs cleanup of the contents of GrainSpeciesCollection
-///
-/// This effectively invokes a destructor
-void drop_GrainSpeciesCollection(GrainSpeciesCollection*);
-
-// -----------------------------------------------------------------
-
-/// holds properties about each kind of species
-///
-/// The basic premise is that we can use `SpLUT::<entry>` to lookup values
-/// for the desired species
-///
-/// @note
-/// The way this is currently a lot like a struct of arrays (i.e. there is an
-/// extra level of indirection).
-/// - For concreteness, to access index `idx` of the data for HeI, you
-///   would write `obj.data[SpLUT::HeI][idx]`.
-/// - in terms of performance, this is very similar to what came before (and
-///   is good enough for now)
-/// - in the long term, it would be even better to replace this with a
-///   `View<double**>`, but I want to wait until after we have transcribed the
-///   bulk of grackle before we do that.
-///
-/// @note
-/// At the time of writing, both this data structure and the
-/// GrainSpeciesCollection data structure both reserve space for each of the
-/// dust species. Maybe this data structure shouldn't do this? (If we remove
-/// the grain species, maybe we rename this so that it is called
-/// ChemSpeciesCollection?)
-struct SpeciesCollection {
-  double* data[SpLUT::NUM_ENTRIES];
-};
-
-/// used to help implement the visitor design pattern
-///
-/// (avoid using this unless you really have to)
-template<class BinaryFn>
-void visit_member_pair(
-  SpeciesCollection& obj0, SpeciesCollection& obj1, BinaryFn f
-) {
-  // it's okay that we aren't specifing the name of the visited member.
-  // -> if we need this info, we could easily write a function mapping the
-  //    LUT index to the species name
-  // -> frankly, this function is totally unnecessary. We're only implementing
-  //    it for the sake of consistency/convenience
-  for (int i = 0; i < SpLUT::NUM_ENTRIES; i++) {
-    f(MemberInfo{nullptr, MemberKind::f64_buffer}, obj0.data[i], obj1.data[i]);
-  }
-}
-
-/// implements the visitor design pattern
-///
-/// @param ptr[in,out] Members of the specified object will be visited
-/// @param fn[in] Calls function that will be applied to each function
-/// @param visitor_ctx[in,out] User-defined callback function context
-inline void visit_member_SpeciesCollection(
-  SpeciesCollection* ptr, visitor_callback* fn, void* visitor_ctx
-) {
-  GRIMPL_IMPL_VISIT_MEMBER(visit_member_pair, SpeciesCollection, ptr, fn,
-                           visitor_ctx)
-}
-
-/// allocates the contents of a new SpeciesCollection
-///
-/// @param nelem The number of elements in each buffer
-SpeciesCollection new_SpeciesCollection(int nelem);
-
-/// performs cleanup of the contents of SpeciesCollection
-///
-/// This effectively invokes a destructor
-void drop_SpeciesCollection(SpeciesCollection*);
-
-// -----------------------------------------------------------------
-
-/// holds properties about Collisional and Recombination Reaction Rates that
-/// behave in the "standard" way (i.e. we interpolate in 1D with respect to
-/// log T)
-///
-/// This operates in a similar manner to SpeciesCollection (i.e. we use
-/// `ColRecRxnLUT::<entry>` to lookup values for the desired rate).
-struct ColRecRxnRateCollection {
-  double* data[ColRecRxnLUT::NUM_ENTRIES];
-};
-
-/// used to help implement the visitor design pattern
-///
-/// (avoid using this unless you really have to)
-template<class BinaryFn>
-void visit_member_pair(
-  ColRecRxnRateCollection& obj0, ColRecRxnRateCollection& obj1, BinaryFn f
-) {
-  for (int i = 0; i < ColRecRxnLUT::NUM_ENTRIES; i++) {
-    f(MemberInfo{nullptr, MemberKind::f64_buffer}, obj0.data[i], obj1.data[i]);
-  }
-}
-
-/// implements the visitor design pattern
-///
-/// @param ptr[in,out] Members of the specified object will be visited
-/// @param fn[in] Calls function that will be applied to each function
-/// @param visitor_ctx[in,out] User-defined callback function context
-inline void visit_member_ColRecRxnRateCollection(
-  ColRecRxnRateCollection* ptr, visitor_callback* fn, void* visitor_ctx
-) {
-  GRIMPL_IMPL_VISIT_MEMBER(visit_member_pair, ColRecRxnRateCollection, ptr, fn,
-                           visitor_ctx)
-}
-
-/// allocates the contents of a new ColRecRxnRateCollection
-///
-/// @param nelem The number of elements in each buffer
-ColRecRxnRateCollection new_ColRecRxnRateCollection(int nelem);
-
-/// performs cleanup of the contents of ColRecRxnRateCollection
-///
-/// This effectively invokes a destructor
-void drop_ColRecRxnRateCollection(ColRecRxnRateCollection*);
-
-// -----------------------------------------------------------------
-
 /// holds radiative reaction rate buffers
 ///
 /// @note
@@ -727,6 +566,177 @@ ChemHeatingRates new_ChemHeatingRates(int nelem);
 ///
 /// This effectively invokes a destructor
 void drop_ChemHeatingRates(ChemHeatingRates*);
+
+// =================================================================
+// The next set of data structures don't really follow all of the
+// standard conventions of the other ScratchBuf Data Structures.
+// - Instead, they are each implemented as a struct that contains a
+//   member called `data`, which is a statically sized array of
+//   double* pointers
+// - The idea is to use a compile-time lookup table to access members
+//   of the struct (the compile-time lookup table is implemented in
+//   terms of enumerators)
+// =================================================================
+
+/// holds properties about each kind of species
+///
+/// The basic premise is that we can use `SpLUT::<entry>` to lookup values
+/// for the desired species
+///
+/// @note
+/// The way this is currently a lot like a struct of arrays (i.e. there is an
+/// extra level of indirection).
+/// - For concreteness, to access index `idx` of the data for HeI, you
+///   would write `obj.data[SpLUT::HeI][idx]`.
+/// - in terms of performance, this is very similar to what came before (and
+///   is good enough for now)
+/// - in the long term, it would be even better to replace this with a
+///   `View<double**>`, but I want to wait until after we have transcribed the
+///   bulk of grackle before we do that.
+///
+/// @note
+/// At the time of writing, both this data structure and the
+/// GrainSpeciesCollection data structure both reserve space for each of the
+/// dust species. Maybe this data structure shouldn't do this? (If we remove
+/// the grain species, maybe we rename this so that it is called
+/// ChemSpeciesCollection?)
+struct SpeciesCollection {
+  double* data[SpLUT::NUM_ENTRIES];
+};
+
+/// used to help implement the visitor design pattern
+///
+/// (avoid using this unless you really have to)
+template<class BinaryFn>
+void visit_member_pair(
+  SpeciesCollection& obj0, SpeciesCollection& obj1, BinaryFn f
+) {
+  // it's okay that we aren't specifing the name of the visited member.
+  // -> if we need this info, we could easily write a function mapping the
+  //    LUT index to the species name
+  // -> frankly, this function is totally unnecessary. We're only implementing
+  //    it for the sake of consistency/convenience
+  for (int i = 0; i < SpLUT::NUM_ENTRIES; i++) {
+    f(MemberInfo{nullptr, MemberKind::f64_buffer}, obj0.data[i], obj1.data[i]);
+  }
+}
+
+/// implements the visitor design pattern
+///
+/// @param ptr[in,out] Members of the specified object will be visited
+/// @param fn[in] Calls function that will be applied to each function
+/// @param visitor_ctx[in,out] User-defined callback function context
+inline void visit_member_SpeciesCollection(
+  SpeciesCollection* ptr, visitor_callback* fn, void* visitor_ctx
+) {
+  GRIMPL_IMPL_VISIT_MEMBER(visit_member_pair, SpeciesCollection, ptr, fn,
+                           visitor_ctx)
+}
+
+/// allocates the contents of a new SpeciesCollection
+///
+/// @param nelem The number of elements in each buffer
+SpeciesCollection new_SpeciesCollection(int nelem);
+
+/// performs cleanup of the contents of SpeciesCollection
+///
+/// This effectively invokes a destructor
+void drop_SpeciesCollection(SpeciesCollection*);
+
+// -----------------------------------------------------------------
+
+/// holds properties about each kind of dust grain
+///
+/// @note
+/// This operates in a similar manner to SpeciesCollection (i.e. we use
+/// `OnlyGrainSpLUT::<entry>` to lookup values for the desired rate).
+///
+/// @note
+/// This is something we may want to reuse. If we are willing to embrace C++,
+/// then we may want to use templates
+struct GrainSpeciesCollection {
+  double* data[OnlyGrainSpLUT::NUM_ENTRIES];
+};
+
+/// used to help implement the visitor design pattern
+///
+/// (avoid using this unless you really have to)
+template<class BinaryFn>
+void visit_member_pair(
+  GrainSpeciesCollection& obj0, GrainSpeciesCollection& obj1, BinaryFn f
+) {
+  for (int i = 0; i < OnlyGrainSpLUT::NUM_ENTRIES; i++) {
+    f(MemberInfo{nullptr, MemberKind::f64_buffer}, obj0.data[i], obj1.data[i]);
+  }
+}
+
+/// implements the visitor design pattern
+///
+/// @param ptr[in,out] Members of the specified object will be visited
+/// @param fn[in] Calls function that will be applied to each function
+/// @param visitor_ctx[in,out] User-defined callback function context
+inline void visit_member_GrainSpeciesCollection(
+  GrainSpeciesCollection* ptr, visitor_callback* fn, void* visitor_ctx
+) {
+  GRIMPL_IMPL_VISIT_MEMBER(visit_member_pair, GrainSpeciesCollection, ptr, fn,
+                           visitor_ctx)
+}
+
+/// allocates the contents of a new GrainSpeciesCollection
+///
+/// @param nelem The number of elements in each buffer
+GrainSpeciesCollection new_GrainSpeciesCollection(int nelem);
+
+/// performs cleanup of the contents of GrainSpeciesCollection
+///
+/// This effectively invokes a destructor
+void drop_GrainSpeciesCollection(GrainSpeciesCollection*);
+
+// -----------------------------------------------------------------
+
+/// holds properties about Collisional and Recombination Reaction Rates that
+/// behave in the "standard" way (i.e. we interpolate in 1D with respect to
+/// log T)
+///
+/// This operates in a similar manner to SpeciesCollection (i.e. we use
+/// `ColRecRxnLUT::<entry>` to lookup values for the desired rate).
+struct ColRecRxnRateCollection {
+  double* data[ColRecRxnLUT::NUM_ENTRIES];
+};
+
+/// used to help implement the visitor design pattern
+///
+/// (avoid using this unless you really have to)
+template<class BinaryFn>
+void visit_member_pair(
+  ColRecRxnRateCollection& obj0, ColRecRxnRateCollection& obj1, BinaryFn f
+) {
+  for (int i = 0; i < ColRecRxnLUT::NUM_ENTRIES; i++) {
+    f(MemberInfo{nullptr, MemberKind::f64_buffer}, obj0.data[i], obj1.data[i]);
+  }
+}
+
+/// implements the visitor design pattern
+///
+/// @param ptr[in,out] Members of the specified object will be visited
+/// @param fn[in] Calls function that will be applied to each function
+/// @param visitor_ctx[in,out] User-defined callback function context
+inline void visit_member_ColRecRxnRateCollection(
+  ColRecRxnRateCollection* ptr, visitor_callback* fn, void* visitor_ctx
+) {
+  GRIMPL_IMPL_VISIT_MEMBER(visit_member_pair, ColRecRxnRateCollection, ptr, fn,
+                           visitor_ctx)
+}
+
+/// allocates the contents of a new ColRecRxnRateCollection
+///
+/// @param nelem The number of elements in each buffer
+ColRecRxnRateCollection new_ColRecRxnRateCollection(int nelem);
+
+/// performs cleanup of the contents of ColRecRxnRateCollection
+///
+/// This effectively invokes a destructor
+void drop_ColRecRxnRateCollection(ColRecRxnRateCollection*);
 
 } // namespace grackle::impl
 
