@@ -363,6 +363,45 @@ inline void step_rate_newton_raphson(
       // configure pack for use during the current index
       t_deriv::configure_ContextPack(&pack, my_fields, field_idx1d);
 
+      // copy values at the current index from the external scratch buffers
+      // passed into the current function as args into the corresponding
+      // buffers managed by pack
+      // -> see the called function's docstring for an explanation as to why
+      //    this is not currently combined with the prior function call
+      // -> in a lot of cases, the need to copy values is dictated by the value
+      //    of imp_eng
+      // -> in the future, we should really refactor so that this isn't
+      //    necessary (arguably, the only thing we should really consider
+      //    copying is the value of cool1dmulti_buf.tgasold -- and that doesn't
+      //    currently get used)
+      t_deriv::scratchbufs_copy_into_pack(
+        i, &pack, p2d, tgas, tdust, metallicity, dust2gas, rhoH, mmw, h2dust,
+        edot, grain_temperatures, logTlininterp_buf, cool1dmulti_buf,
+        coolingheating_buf, chemheatrates_buf
+      );
+
+      // before we merge the gen2024 branch into the main grackle branch we
+      // need to resolve the following issue (or at least exit gracefully)
+      // -> the easiest short-term solution is to temporarily overwrite the
+      //    value of iter
+      // -> Alternatively, we could try to reuse the existing value of tgasold.
+      //    Doing that requires some care; we need to use meaningful values
+      //    of tgasold when we iteratively call lookup_cool_rates0d for the
+      //    sake of estimating elements in the jacobian matrix.
+      GRIMPL_REQUIRE(
+        ((iter == 1) || (imp_eng[i] != 1)),
+        "there is a logical issue in the original lookup_cool_rates0d "
+        "Fortran routine when (iter != 1) AND (imp_eng == 1).\n"
+        " -> as it was originally written the routine, allocates storage\n"
+        "    for the tgasold buffer (on the stack) and leaves the value\n"
+        "    unitialized.\n"
+        " -> this is a problem when (iter != 1) and (imp_eng == 1) because\n"
+        "    cool1d_multi_g will try to make use of the unitialized variable\n"
+        " -> this isn't a problem when (iter == 1) and (imp_eng == 1) since\n"
+        "    cool1d_multi_g knows it needs to initialize tgasold. It isn't\n"
+        "    a problem when (imp_eng != 1) since cool1d_multi_g isn't called"
+      );
+
       // Save arrays at ttot(ip1)
 
       std::memcpy(dsp0.data(), dsp.data(), sizeof(double)*i_eng);
@@ -414,9 +453,9 @@ inline void step_rate_newton_raphson(
           pack.main_scratch_buf.coolingheating_buf.ceHI, pack.main_scratch_buf.coolingheating_buf.ceHeI, pack.main_scratch_buf.coolingheating_buf.ceHeII, pack.main_scratch_buf.coolingheating_buf.ciHI, pack.main_scratch_buf.coolingheating_buf.ciHeI,
           pack.main_scratch_buf.coolingheating_buf.ciHeIS, pack.main_scratch_buf.coolingheating_buf.ciHeII,
           pack.main_scratch_buf.coolingheating_buf.reHII, pack.main_scratch_buf.coolingheating_buf.reHeII1, pack.main_scratch_buf.coolingheating_buf.reHeII2, pack.main_scratch_buf.coolingheating_buf.reHeIII, pack.main_scratch_buf.coolingheating_buf.brem,
-          pack.main_scratch_buf.logTlininterp_buf.indixe, pack.main_scratch_buf.logTlininterp_buf.t1, pack.main_scratch_buf.logTlininterp_buf.t2, pack.main_scratch_buf.logTlininterp_buf.logtem, pack.main_scratch_buf.logTlininterp_buf.tdef, &edot[i],
-          &tgas[i], pack.main_scratch_buf.cool1dmulti_buf.tgasold, &mmw[i], &p2d[i], &tdust[i], &metallicity[i],
-          &dust2gas[i], &rhoH[i], pack.main_scratch_buf.cool1dmulti_buf.mynh, pack.main_scratch_buf.cool1dmulti_buf.myde,
+          pack.main_scratch_buf.logTlininterp_buf.indixe, pack.main_scratch_buf.logTlininterp_buf.t1, pack.main_scratch_buf.logTlininterp_buf.t2, pack.main_scratch_buf.logTlininterp_buf.logtem, pack.main_scratch_buf.logTlininterp_buf.tdef, pack.other_scratch_buf.edot,
+          pack.other_scratch_buf.tgas, pack.main_scratch_buf.cool1dmulti_buf.tgasold, pack.other_scratch_buf.mmw, pack.other_scratch_buf.p2d, pack.other_scratch_buf.tdust, pack.other_scratch_buf.metallicity,
+          pack.other_scratch_buf.dust2gas, pack.other_scratch_buf.rhoH, pack.main_scratch_buf.cool1dmulti_buf.mynh, pack.main_scratch_buf.cool1dmulti_buf.myde,
           pack.main_scratch_buf.cool1dmulti_buf.gammaha_eff, pack.main_scratch_buf.cool1dmulti_buf.gasgr_tdust, pack.main_scratch_buf.cool1dmulti_buf.regr,
           &my_chemistry->self_shielding_method, &my_uvb_rates.crsHI, &my_uvb_rates.crsHeI, &my_uvb_rates.crsHeII,
           &my_chemistry->use_radiative_transfer, &my_chemistry->radiative_transfer_hydrogen_only,
@@ -439,7 +478,7 @@ inline void step_rate_newton_raphson(
           my_rates->k50, my_rates->k51, my_rates->k52, my_rates->k53, my_rates->k54, my_rates->k55, my_rates->k56,
           my_rates->k57, my_rates->k58, &my_chemistry->NumberOfDustTemperatureBins, &my_chemistry->DustTemperatureStart, &my_chemistry->DustTemperatureEnd, my_rates->h2dust,
           my_rates->n_cr_n, my_rates->n_cr_d1, my_rates->n_cr_d2,
-          &h2dust[i], pack.main_scratch_buf.chemheatrates_buf.n_cr_n, pack.main_scratch_buf.chemheatrates_buf.n_cr_d1, pack.main_scratch_buf.chemheatrates_buf.n_cr_d2,
+          pack.other_scratch_buf.h2dust, pack.main_scratch_buf.chemheatrates_buf.n_cr_n, pack.main_scratch_buf.chemheatrates_buf.n_cr_d1, pack.main_scratch_buf.chemheatrates_buf.n_cr_d2,
           &pack.fwd_args.dom, &internalu.coolunit, &internalu.tbase1, &internalu.xbase1, &pack.fwd_args.dx_cgs, &pack.fwd_args.c_ljeans,
           pack.fields.RT_HI_ionization_rate, pack.fields.RT_HeI_ionization_rate, pack.fields.RT_HeII_ionization_rate, pack.fields.RT_H2_dissociation_rate,
           pack.fields.RT_heating_rate, pack.fields.H2_self_shielding_length, &pack.fwd_args.chunit, &itmask_nr[i],
@@ -550,9 +589,9 @@ inline void step_rate_newton_raphson(
             pack.main_scratch_buf.coolingheating_buf.ceHI, pack.main_scratch_buf.coolingheating_buf.ceHeI, pack.main_scratch_buf.coolingheating_buf.ceHeII, pack.main_scratch_buf.coolingheating_buf.ciHI, pack.main_scratch_buf.coolingheating_buf.ciHeI,
             pack.main_scratch_buf.coolingheating_buf.ciHeIS, pack.main_scratch_buf.coolingheating_buf.ciHeII,
             pack.main_scratch_buf.coolingheating_buf.reHII, pack.main_scratch_buf.coolingheating_buf.reHeII1, pack.main_scratch_buf.coolingheating_buf.reHeII2, pack.main_scratch_buf.coolingheating_buf.reHeIII, pack.main_scratch_buf.coolingheating_buf.brem,
-            pack.main_scratch_buf.logTlininterp_buf.indixe, pack.main_scratch_buf.logTlininterp_buf.t1, pack.main_scratch_buf.logTlininterp_buf.t2, pack.main_scratch_buf.logTlininterp_buf.logtem, pack.main_scratch_buf.logTlininterp_buf.tdef, &edot[i],
-            &tgas[i], pack.main_scratch_buf.cool1dmulti_buf.tgasold, &mmw[i], &p2d[i], &tdust[i], &metallicity[i],
-            &dust2gas[i], &rhoH[i], pack.main_scratch_buf.cool1dmulti_buf.mynh, pack.main_scratch_buf.cool1dmulti_buf.myde,
+            pack.main_scratch_buf.logTlininterp_buf.indixe, pack.main_scratch_buf.logTlininterp_buf.t1, pack.main_scratch_buf.logTlininterp_buf.t2, pack.main_scratch_buf.logTlininterp_buf.logtem, pack.main_scratch_buf.logTlininterp_buf.tdef, pack.other_scratch_buf.edot,
+            pack.other_scratch_buf.tgas, pack.main_scratch_buf.cool1dmulti_buf.tgasold, pack.other_scratch_buf.mmw, pack.other_scratch_buf.p2d, pack.other_scratch_buf.tdust, pack.other_scratch_buf.metallicity,
+            pack.other_scratch_buf.dust2gas, pack.other_scratch_buf.rhoH, pack.main_scratch_buf.cool1dmulti_buf.mynh, pack.main_scratch_buf.cool1dmulti_buf.myde,
             pack.main_scratch_buf.cool1dmulti_buf.gammaha_eff, pack.main_scratch_buf.cool1dmulti_buf.gasgr_tdust, pack.main_scratch_buf.cool1dmulti_buf.regr,
             &my_chemistry->self_shielding_method, &my_uvb_rates.crsHI, &my_uvb_rates.crsHeI, &my_uvb_rates.crsHeII,
             &my_chemistry->use_radiative_transfer, &my_chemistry->radiative_transfer_hydrogen_only,
@@ -575,7 +614,7 @@ inline void step_rate_newton_raphson(
             my_rates->k50, my_rates->k51, my_rates->k52, my_rates->k53, my_rates->k54, my_rates->k55, my_rates->k56,
             my_rates->k57, my_rates->k58, &my_chemistry->NumberOfDustTemperatureBins, &my_chemistry->DustTemperatureStart, &my_chemistry->DustTemperatureEnd, my_rates->h2dust,
             my_rates->n_cr_n, my_rates->n_cr_d1, my_rates->n_cr_d2,
-            &h2dust[i], pack.main_scratch_buf.chemheatrates_buf.n_cr_n, pack.main_scratch_buf.chemheatrates_buf.n_cr_d1, pack.main_scratch_buf.chemheatrates_buf.n_cr_d2,
+            pack.other_scratch_buf.h2dust, pack.main_scratch_buf.chemheatrates_buf.n_cr_n, pack.main_scratch_buf.chemheatrates_buf.n_cr_d1, pack.main_scratch_buf.chemheatrates_buf.n_cr_d2,
             &pack.fwd_args.dom, &internalu.coolunit, &internalu.tbase1, &internalu.xbase1, &pack.fwd_args.dx_cgs, &pack.fwd_args.c_ljeans,
             pack.fields.RT_HI_ionization_rate, pack.fields.RT_HeI_ionization_rate, pack.fields.RT_HeII_ionization_rate, pack.fields.RT_H2_dissociation_rate,
             pack.fields.RT_heating_rate, pack.fields.H2_self_shielding_length, &pack.fwd_args.chunit, &itmask_nr[i],
@@ -750,6 +789,20 @@ label_9996:
 
         itr_time=itr_time+1;
       }
+
+
+      // overwrite the scratch-buffer values
+      // -> It makes no logical sense for us to do this, but we do it for the
+      //    sake of backwards compatability
+      // -> we should totally delete this function (we may already be able to
+      //    do so)
+      t_deriv::scratchbufs_copy_from_pack(
+        i, &pack, p2d, tgas, tdust, metallicity, dust2gas, rhoH, mmw, h2dust,
+        edot, grain_temperatures, logTlininterp_buf, cool1dmulti_buf,
+        coolingheating_buf, chemheatrates_buf
+      );
+
+      // overwrite the fields tracked by my_fields with the evolved values
 
       if ( my_chemistry->primordial_chemistry > 0 )  {
         de(i,j,k)      = dsp[ 1-1];

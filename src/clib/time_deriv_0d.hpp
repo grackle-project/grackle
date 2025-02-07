@@ -196,6 +196,144 @@ inline void configure_ContextPack(ContextPack* pack,
   // pointer corresponding to the appropriate entry in `dsp`
 }
 
+/// here we copy the values from the scratch buffers (used by grackle's main
+/// loop) at a single index into the corresponding buffers tracked by the
+/// ContextPack.
+///
+/// @todo
+/// We are copying more values than are strictly necessary (we are doing this
+/// for historical consistency). We should be copying as few values as
+/// possible. Honestly, creating this routine has made it clear that some of
+/// the logic of the 0d time-derivative time calculation should probably be
+/// reconsidered.
+///
+/// @todo
+/// Once we remove scratchbuf_copy_from_pack (which does the inverse of this
+/// function), and we have removed the unnecessary logic from this function,
+/// this should be combined with configure_ContextPack
+inline void scratchbufs_copy_into_pack(
+  int index, ContextPack* pack, const double* p2d, const double* tgas,
+  const double* tdust, const double* metallicity, const double* dust2gas,
+  const double* rhoH, const double* mmw, const double* h2dust,
+  const double* edot, grackle::impl::GrainSpeciesCollection grain_temperatures,
+  grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf,
+  grackle::impl::Cool1DMultiScratchBuf cool1dmulti_buf,
+  grackle::impl::CoolHeatScratchBuf coolingheating_buf,
+  grackle::impl::ChemHeatingRates chemheatrates_buf
+) {
+
+  // it's a little unclear how many of the following copy-operations are
+  // required by the current implementation
+  // -> the need for copying depending may depend on whether internal_energy
+  //    evolved with the species densities
+  // -> we comment in special cases where there is an obvious choice
+
+  // first, we copy the values into the buffers of pack->main_scratch_buf
+  {
+    // to help out, we define a lambda function (it captures index by value)
+    auto copy_fn = [index](
+      MemberInfo member_info, auto*& pack_buf, auto*& external_buf
+    ) { pack_buf[0] = external_buf[index]; };
+
+    // unclear if the current implementation depends on the following copy, but
+    // it SHOULD never be necessary
+    visit_member_pair(
+      pack->main_scratch_buf.logTlininterp_buf, logTlininterp_buf, copy_fn
+    );
+
+    // I think the following case is necessary (if we aren't co-evolving
+    // internal energy). But, it seems like we should be recomputing this in
+    // all cases (these depend on the number density of dust, right?)
+    visit_member_pair(
+      pack->main_scratch_buf.grain_temperatures, grain_temperatures, copy_fn
+    );
+
+    // the tgasold buffer is definitely needed when the current implementation
+    // co-evolves the internal energy
+    visit_member_pair(
+      pack->main_scratch_buf.cool1dmulti_buf, cool1dmulti_buf, copy_fn
+    );
+
+    // unclear whether the following cases need to be copied
+    visit_member_pair(
+      pack->main_scratch_buf.coolingheating_buf, coolingheating_buf, copy_fn
+    );
+    visit_member_pair(
+      pack->main_scratch_buf.chemheatrates_buf, chemheatrates_buf, copy_fn
+    );
+  }
+
+  // second, we copy the remaining values
+  pack->other_scratch_buf.p2d[0] = p2d[index];
+  // we may want to recalculate this regardless of whether we are co-evolving
+  // internal-energy (since temperature is dependent on the species number
+  // densities
+  pack->other_scratch_buf.tgas[0] = tgas[index];
+  pack->other_scratch_buf.tdust[0] = tdust[index];
+  pack->other_scratch_buf.metallicity[0] = metallicity[index];
+  pack->other_scratch_buf.dust2gas[0] = dust2gas[index];
+  pack->other_scratch_buf.rhoH[0] = rhoH[index];
+  pack->other_scratch_buf.mmw[0] = mmw[index];
+  pack->other_scratch_buf.h2dust[0] = h2dust[index];
+  pack->other_scratch_buf.edot[0] = edot[index];
+}
+
+/// here we copy the values into the scratch buffers (used by grackle's main
+/// loop) at a single index from the corresponding buffers tracked by the
+/// ContextPack.
+///
+/// @note
+/// This function should **NOT** exist and should be removed (it only exists
+/// right now as we pursue transcription). In particular, it makes no logical
+/// sense to overwrite the value of cool1dmulti_buf.tgasold
+inline void scratchbufs_copy_from_pack(
+  int index, ContextPack* pack, double* p2d, double* tgas,
+  double* tdust, double* metallicity, double* dust2gas, double* rhoH,
+  double* mmw, double* h2dust, double* edot,
+  grackle::impl::GrainSpeciesCollection grain_temperatures,
+  grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf,
+  grackle::impl::Cool1DMultiScratchBuf cool1dmulti_buf,
+  grackle::impl::CoolHeatScratchBuf coolingheating_buf,
+  grackle::impl::ChemHeatingRates chemheatrates_buf
+) {
+
+  // first, we copy the values from the buffers of pack->main_scratch_buf
+  {
+    // to help out, we define a lambda function (it captures index by value)
+    auto copy_fn = [index](
+      MemberInfo member_info, auto*& pack_buf, auto*& external_buf
+    ) { external_buf[index] = pack_buf[0]; };
+
+    visit_member_pair(
+      pack->main_scratch_buf.logTlininterp_buf, logTlininterp_buf, copy_fn
+    );
+    visit_member_pair(
+      pack->main_scratch_buf.grain_temperatures, grain_temperatures, copy_fn
+    );
+    visit_member_pair(
+      pack->main_scratch_buf.cool1dmulti_buf, cool1dmulti_buf, copy_fn
+    );
+    visit_member_pair(
+      pack->main_scratch_buf.coolingheating_buf, coolingheating_buf, copy_fn
+    );
+    visit_member_pair(
+      pack->main_scratch_buf.chemheatrates_buf, chemheatrates_buf, copy_fn
+    );
+  }
+
+  // second, we copy the remaining values
+  p2d[index] = pack->other_scratch_buf.p2d[0];
+  tgas[index] = pack->other_scratch_buf.tgas[0];
+  tdust[index] = pack->other_scratch_buf.tdust[0];
+  metallicity[index] = pack->other_scratch_buf.metallicity[0];
+  dust2gas[index] = pack->other_scratch_buf.dust2gas[0];
+  rhoH[index] = pack->other_scratch_buf.rhoH[0];
+  mmw[index] = pack->other_scratch_buf.mmw[0];
+  h2dust[index] = pack->other_scratch_buf.h2dust[0];
+  edot[index] = pack->other_scratch_buf.edot[0];
+
+}
+
 } // namespace grackle::impl::time_deriv_0d
 
 #endif /* TIME_DERIV_0D_HPP */
