@@ -251,61 +251,92 @@ bool equal_ghost_values(val_vec_map_t& ref, val_vec_map_t& actual,
   return true;
 }
 
-int check_if_grackle_mutates_ghost_zone(int primordial_chemistry,
-                                        grid_props my_grid_props)
-{
+namespace { // stuff within anonymous namespace is local to the current file
+
+/// the following is just a dummy struct that primarily exists to assist with
+/// cleanup (and avoid memory leaks)
+struct GrackleCtxPack {
+  bool successful_default = false;
+  bool successful_data_file = false;
+  bool successful_init = false;
+  code_units my_units;
+  chemistry_data* my_chemistry = nullptr;
+};
+
+void cleanup_grackle_conditions(GrackleCtxPack& pack) {
+  if (pack.successful_init) { free_chemistry_data(); }
+  if (pack.my_chemistry != nullptr) { delete pack.my_chemistry; }
+}
+
+GrackleCtxPack setup_simple_grackle_conditions(int primordial_chemistry) {
   /*********************************************************************
   / Initial setup of units and chemistry objects.
-  / This should be done at simulation start.
   *********************************************************************/
+
+  GrackleCtxPack pack;
 
   // Set initial redshift (for internal units).
   double initial_redshift = 0.;
 
   // First, set up the units system.
   // These are conversions from code units to cgs.
-  code_units my_units;
-  my_units.comoving_coordinates = 0; // 1 if cosmological sim, 0 if not
-  my_units.density_units = 1.67e-24;
-  my_units.length_units = 1.0;
-  my_units.time_units = 1.0e12;
-  my_units.a_units = 1.0; // units for the expansion factor
+  pack.my_units.comoving_coordinates = 0; // 1 if cosmological sim, 0 if not
+  pack.my_units.density_units = 1.67e-24;
+  pack.my_units.length_units = 1.0;
+  pack.my_units.time_units = 1.0e12;
+  pack.my_units.a_units = 1.0; // units for the expansion factor
   // Set expansion factor to 1 for non-cosmological simulation.
-  my_units.a_value = 1. / (1. + initial_redshift) / my_units.a_units;
-  set_velocity_units(&my_units);
+  pack.my_units.a_value = 1. / (1. + initial_redshift) / pack.my_units.a_units;
+  set_velocity_units(&pack.my_units);
 
-  // Second, create a chemistry object for parameters.  This needs to be a pointer.
-  chemistry_data *my_grackle_data;
-  my_grackle_data = new chemistry_data;
-  if (set_default_chemistry_parameters(my_grackle_data) == 0) {
-    fprintf(stderr, "Error in set_default_chemistry_parameters.\n");
-    return EXIT_FAILURE;
+  // Second, create a chemistry object for parameters.
+  pack.my_chemistry = new chemistry_data;
+  if (set_default_chemistry_parameters(pack.my_chemistry) != GR_SUCCESS) {
+    return pack;
   }
+  pack.successful_default=true;
+
   // Set parameter values for chemistry.
   // Access the parameter storage with the struct you've created
   // or with the grackle_data pointer declared in grackle.h (see further below).
-  grackle_data->use_grackle = 1;            // chemistry on
-  grackle_data->use_isrf_field = 1;
-  grackle_data->with_radiative_cooling = 1; // cooling on
-  grackle_data->primordial_chemistry = primordial_chemistry;
-  grackle_data->dust_chemistry = (primordial_chemistry == 0) ? 0 : 1;
-  grackle_data->metal_cooling = 1;          // metal cooling on
-  grackle_data->UVbackground = 1;           // UV background on
+  pack.my_chemistry->use_grackle = 1;            // chemistry on
+  pack.my_chemistry->use_isrf_field = 1;
+  pack.my_chemistry->with_radiative_cooling = 1; // cooling on
+  pack.my_chemistry->primordial_chemistry = primordial_chemistry;
+  pack.my_chemistry->dust_chemistry = (primordial_chemistry == 0) ? 0 : 1;
+  pack.my_chemistry->metal_cooling = 1;          // metal cooling on
+  pack.my_chemistry->UVbackground = 1;           // UV background on
 
-  bool successful_datafile = grtest::set_standard_datafile(
-      *grackle_data, "CloudyData_UVB=HM2012.h5"
+  pack.successful_data_file = grtest::set_standard_datafile(
+      *pack.my_chemistry, "CloudyData_UVB=HM2012.h5"
   );
-  if (!successful_datafile) {
-    fprintf(stderr, "Something went wrong while setting the datafile\n");
-    return EXIT_FAILURE;
-  }
+  if (!pack.successful_data_file) { return pack; }
 
   // Finally, initialize the chemistry object.
-  if (initialize_chemistry_data(&my_units) == 0) {
-    fprintf(stderr, "Error in initialize_chemistry_data.\n");
-    return EXIT_FAILURE;
-  }
+  if (initialize_chemistry_data(&pack.my_units) != GR_SUCCESS) { return pack; }
+  pack.successful_init = true;
+  return pack;
+}
 
+} // anonymous namespace
+
+// this defines a parameterized test-fixture
+// -> it has a GetParam() method to access the parameters
+class APIConventionTest : public testing::TestWithParam<int> {
+};
+
+void check_if_grackle_mutates_ghost_zone(int primordial_chemistry,
+                                         grid_props my_grid_props)
+{
+  GrackleCtxPack pack = setup_simple_grackle_conditions(primordial_chemistry);
+
+  if (!pack.successful_default) {
+    FAIL() << "Error in set_default_chemistry_parameters.";
+  } else if (!pack.successful_data_file) {
+    GTEST_SKIP() << "something went wrong with finding the data file";
+  } else if (!pack.successful_init) {
+    FAIL() << "Error in initialize_chemistry_data.";
+  }
 
   // initialize pseudo random number generator
   std::uint32_t seed = 1379069008;
@@ -319,7 +350,7 @@ int check_if_grackle_mutates_ghost_zone(int primordial_chemistry,
   // For example: my_fields.density = my_field_map["density"].data()
   val_vec_map_t my_field_map;
   grackle_field_data my_fields = construct_field_data(
-    my_grid_props, my_units, my_field_map, generator
+    my_grid_props, pack.my_units, my_field_map, generator
   );
 
   // orig_field_map_copy is a deepcopy of my_field_map. We will use this as a
@@ -335,21 +366,16 @@ int check_if_grackle_mutates_ghost_zone(int primordial_chemistry,
 
   // Evolving the chemistry.
   // some timestep
-  double dt = 3.15e7 * 1e6 / my_units.time_units;
+  double dt = 3.15e7 * 1e6 / pack.my_units.time_units;
 
-  if (solve_chemistry(&my_units, &my_fields, dt) == 0) {
-    fprintf(stderr, "Error in solve_chemistry.\n");
-    return EXIT_FAILURE;
+  if (solve_chemistry(&pack.my_units, &my_fields, dt) != GR_SUCCESS) {
+    FAIL() << "Error running solve_chemistry";
   }
 
   // check if any ghost values were mutated
-  if (equal_ghost_values(orig_field_map_copy, my_field_map, my_grid_props)) {
-    fprintf(stderr, "No ghost values were modified in solve_chemistry.\n");
-  } else {
-    fprintf(stderr, "Some ghost values were modified in solve_chemistry.\n");
-    return EXIT_FAILURE;
+  if (!equal_ghost_values(orig_field_map_copy, my_field_map, my_grid_props)) {
+    FAIL() << "Some ghost values were modified in solve_chemistry.";
   }
-
 
   // Now check what hapens when computing various properties
   const char* func_names[5] = {"calculate_cooling_time",
@@ -373,32 +399,24 @@ int check_if_grackle_mutates_ghost_zone(int primordial_chemistry,
 
     // perform the calculation
     property_func func_ptr = func_ptrs[i];
-    if ( (*func_ptr)(&my_units, &my_fields, out_vals.data()) == 0 ) {
-      fprintf(stderr, "Error in %s.\n", func_names[i]);
-      return EXIT_FAILURE;
+    if ( (*func_ptr)(&pack.my_units, &my_fields, out_vals.data())
+         != GR_SUCCESS ) {
+      FAIL() << "Error reported by " << func_names;
     }
 
     // compare the ghost values from before and after the calculation
-    if (equal_ghost_values(out_vals, pre_calc_copy, my_grid_props)) {
-      fprintf(stderr, "No ghost values were modified in %s.\n", func_names[i]);
-    } else {
-      fprintf(stderr, "Some ghost values were modified in %s.\n",
-              func_names[i]);
-      return EXIT_FAILURE; 
+    if (!equal_ghost_values(out_vals, pre_calc_copy, my_grid_props)) {
+      FAIL() << "Some ghost values were modified by " << func_names;
     }
   }
 
-  free_chemistry_data();
-  delete my_grackle_data;
-
+  cleanup_grackle_conditions(pack);
   delete[] my_fields.grid_dimension;
   delete[] my_fields.grid_start;
   delete[] my_fields.grid_end;
-
-  return EXIT_SUCCESS;
 }
 
-TEST(APIConventionTest, GridZoneStartEnd) {
+TEST_P(APIConventionTest, GridZoneStartEnd) {
 
   // Disable output
   grackle_verbose = 0;
@@ -407,21 +425,15 @@ TEST(APIConventionTest, GridZoneStartEnd) {
 
   // consider different values for primordial_chemistry since it executes
   // different code paths
-  for (int primordial_chem = 0; primordial_chem <=3; primordial_chem++) {
-    if (primordial_chem > 0) {
-      fprintf(stderr, "\n");
-    }
+  {
+    int primordial_chem = GetParam();
     fprintf(stderr, "checking primordial_chemistry = %d\n", primordial_chem);
 
-    int rslt = check_if_grackle_mutates_ghost_zone(primordial_chem,
-                                                   my_grid_props);
-
-    EXPECT_EQ(rslt, EXIT_SUCCESS)
-      << "one of the calculate_<quan> function calls "
-      << "(for primordial_chemistry = " <<  primordial_chem << ") "
-      << "appears to have mutated a value value at a location in the output "
-      << "array that should be excluded by grid_start & grid_end (it is "
-      << "plausible that something else went wrong)";
+    check_if_grackle_mutates_ghost_zone(primordial_chem, my_grid_props);
 
   }
 }
+
+INSTANTIATE_TEST_SUITE_P(
+  VaryingPrimordialChem, APIConventionTest, ::testing::Range(0, 4)
+);
