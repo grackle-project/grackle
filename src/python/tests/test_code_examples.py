@@ -41,13 +41,11 @@ code_examples = (
     "c_local_example",
     "cxx_example",
     "cxx_omp_example",
-    "cxx_grid_example",
     "fortran_example",
 )
 
 compare_exclude = (
     "cxx_omp_example",
-    "cxx_grid_example"
 )
 
 rfields = (

@@ -1,8 +1,8 @@
 /***********************************************************************
 /
-/ Example executable using libgrackle. 
 / This checks that ghost zones are not mutated
-/
+/ - this was written a few years before we adopted gtest and was adapted
+/   retroactively to work as part of the test suite
 /
 / Copyright (c) 2013, Enzo/Grackle Development Team.
 /
@@ -24,7 +24,9 @@
 
 #include <grackle.h>
 
-#define mh     1.67262171e-24   
+#include <gtest/gtest.h>
+
+#define mh     1.67262171e-24
 #define kboltz 1.3806504e-16
 
 typedef int (*property_func)(code_units*, grackle_field_data*, gr_float*);
@@ -370,8 +372,7 @@ int check_if_grackle_mutates_ghost_zone(int primordial_chemistry,
   return EXIT_SUCCESS;
 }
 
-int main(int argc, char *argv[])
-{
+TEST(APIConventionTest, GridZoneStartEnd) {
 
   // Disable output
   grackle_verbose = 0;
@@ -389,10 +390,12 @@ int main(int argc, char *argv[])
     int rslt = check_if_grackle_mutates_ghost_zone(primordial_chem,
                                                    my_grid_props);
 
-    if (rslt == EXIT_FAILURE) {
-      return EXIT_FAILURE;
-    }
-  }
+    EXPECT_EQ(rslt, EXIT_SUCCESS)
+      << "one of the calculate_<quan> function calls "
+      << "(for primordial_chemistry = " <<  primordial_chem << ") "
+      << "appears to have mutated a value value at a location in the output "
+      << "array that should be excluded by grid_start & grid_end (it is "
+      << "plausible that something else went wrong)";
 
-  return EXIT_SUCCESS;
+  }
 }
