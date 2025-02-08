@@ -18,9 +18,13 @@
 #include <string.h>
 #include <unistd.h>
 
+#include <cstdint>
 #include <map>
-#include <vector>
+#include <random>
 #include <string>
+#include <vector>
+
+#include "grtest_utils.hpp"
 
 #include <grackle.h>
 
@@ -42,10 +46,12 @@ struct grid_props{
   }
 };
 
-std::vector<gr_float> init_rand_vals(int field_size){
+std::vector<gr_float> init_rand_vals(int field_size,
+                                     std::minstd_rand& generator)
+{
   std::vector<gr_float> out(field_size);
   for (int i = 0; i < field_size; i++){
-    out[i] = (gr_float)drand48();
+    out[i] = (gr_float)grtest::random::uniform_dist_transform(generator);
   }
   return out;
 }
@@ -53,24 +59,28 @@ std::vector<gr_float> init_rand_vals(int field_size){
 class FieldInitHelper{
   // allocates new fields using std::vector and stores the vectors in val_map
 public:
-  FieldInitHelper(val_vec_map_t& val_map, int field_size)
-    : val_map_(val_map), field_size_(field_size)
+  FieldInitHelper(val_vec_map_t& val_map,
+                  int field_size,
+                  std::minstd_rand& generator)
+    : val_map_(val_map), field_size_(field_size), generator_ref_(generator)
   { }
 
   gr_float* operator()(const std::string& name){
-    val_map_[name] = init_rand_vals(field_size_);
+    val_map_[name] = init_rand_vals(field_size_, generator_ref_);
     return val_map_[name].data();
   }
 
 private:
   val_vec_map_t& val_map_;
   int field_size_;
+  std::minstd_rand& generator_ref_;
 };
 
 // allocates the grackle_field_data struct
 grackle_field_data construct_field_data(grid_props& my_grid_props,
                                         code_units& my_units,
-                                        val_vec_map_t& val_map){
+                                        val_vec_map_t& val_map,
+                                        std::minstd_rand& generator){
 
   gr_float tiny_number = 1.e-20;
 
@@ -100,7 +110,7 @@ grackle_field_data construct_field_data(grid_props& my_grid_props,
 
   my_fields.grid_dx = 0.0; // used only for H2 self-shielding approximation
 
-  FieldInitHelper init_helper(val_map, field_size);
+  FieldInitHelper init_helper(val_map, field_size, generator);
   my_fields.density         = init_helper("density");
   my_fields.internal_energy = init_helper("internal_energy");
   my_fields.x_velocity      = init_helper("x_velocity");
@@ -281,13 +291,25 @@ int check_if_grackle_mutates_ghost_zone(int primordial_chemistry,
   grackle_data->dust_chemistry = (primordial_chemistry == 0) ? 0 : 1;
   grackle_data->metal_cooling = 1;          // metal cooling on
   grackle_data->UVbackground = 1;           // UV background on
-  grackle_data->grackle_data_file = "../../input/CloudyData_UVB=HM2012.h5"; // data file
+
+  bool successful_datafile = grtest::set_standard_datafile(
+      *grackle_data, "CloudyData_UVB=HM2012.h5"
+  );
+  if (!successful_datafile) {
+    fprintf(stderr, "Something went wrong while setting the datafile\n");
+    return EXIT_FAILURE;
+  }
 
   // Finally, initialize the chemistry object.
   if (initialize_chemistry_data(&my_units) == 0) {
     fprintf(stderr, "Error in initialize_chemistry_data.\n");
     return EXIT_FAILURE;
   }
+
+
+  // initialize pseudo random number generator
+  std::uint32_t seed = 1379069008;
+  std::minstd_rand generator(seed);
 
   // Create the struct for storing grackle field data. Data in the ghost zone
   // is initialized to random values.
@@ -296,8 +318,9 @@ int check_if_grackle_mutates_ghost_zone(int primordial_chemistry,
   // managed stored in my_field_map.
   // For example: my_fields.density = my_field_map["density"].data()
   val_vec_map_t my_field_map;
-  grackle_field_data my_fields = construct_field_data(my_grid_props, my_units,
-                                                      my_field_map);
+  grackle_field_data my_fields = construct_field_data(
+    my_grid_props, my_units, my_field_map, generator
+  );
 
   // orig_field_map_copy is a deepcopy of my_field_map. We will use this as a
   // reference to make sure that no values in the ghost cells are mutated.
@@ -340,8 +363,11 @@ int check_if_grackle_mutates_ghost_zone(int primordial_chemistry,
                                 &calculate_gamma,
                                 &calculate_dust_temperature};
   for (int i = 0; i < 5; i++){
+    std::uint32_t seed2 = 1860889605;
+    std::minstd_rand generator2(seed2);
+
     // allocate vector used to hold outputs (initialize with random vals)
-    std::vector<gr_float> out_vals = init_rand_vals(field_size);
+    std::vector<gr_float> out_vals = init_rand_vals(field_size, generator2);
     // make a deep copy of out_vals before the calculation
     std::vector<gr_float> pre_calc_copy = out_vals;
 
