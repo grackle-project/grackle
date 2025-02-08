@@ -77,23 +77,19 @@ private:
 };
 
 // allocates the grackle_field_data struct
-grackle_field_data construct_field_data(grid_props& my_grid_props,
-                                        code_units& my_units,
-                                        val_vec_map_t& val_map,
-                                        std::minstd_rand& generator){
+void construct_field_data(grackle_field_data& my_fields,
+                          grid_props& my_grid_props,
+                          code_units& my_units,
+                          val_vec_map_t& val_map,
+                          std::minstd_rand& generator){
 
   gr_float tiny_number = 1.e-20;
 
   // Create struct for storing grackle field data
-  grackle_field_data my_fields;
-  gr_initialize_field_data(&my_fields);
 
   // Set grid dimension and size.
   // grid_start and grid_end are used to ignore ghost zones.
   my_fields.grid_rank = 3;
-  my_fields.grid_dimension = new int[3];
-  my_fields.grid_start = new int[3];
-  my_fields.grid_end = new int[3];
 
   for (int i = 0; i < 3; i++){
     int dim = my_grid_props.dimensions[i];
@@ -205,7 +201,6 @@ grackle_field_data construct_field_data(grid_props& my_grid_props,
     }
   }
 
-  return my_fields;
 }
 
 // check that all elements in ref and actual that correspond to ghost cells
@@ -320,37 +315,69 @@ GrackleCtxPack setup_simple_grackle_conditions(int primordial_chemistry) {
 
 } // anonymous namespace
 
-// this defines a parameterized test-fixture
+// this defines a parameterized test-fixture (it is parameterized on
+// primordial_chemistry)
 // -> it has a GetParam() method to access the parameters
+// -> to assist with avoiding memory leaks, I decided to also make this setup
+//    and teardown GrackleCtxPack.
+//    -> Frankly, I don't love this, but I think it is okay since the test
+//       really doesn't care how grackle is configured (other than that
+//       primordial_chemistry varies and that it will actually perform
+//       calculations)
 class APIConventionTest : public testing::TestWithParam<int> {
+ protected:
+  void SetUp() override {
+    // Disable output
+    grackle_verbose = 0;
+
+    // called immediately after the constructor (but before the test-case)
+    int primordial_chemistry = GetParam();
+
+    pack_ = setup_simple_grackle_conditions(primordial_chemistry);
+    if (!pack_.successful_default) {
+      FAIL() << "Error in set_default_chemistry_parameters.";
+    } else if (!pack_.successful_data_file) {
+      GTEST_SKIP() << "something went wrong with finding the data file";
+    } else if (!pack_.successful_init) {
+      FAIL() << "Error in initialize_chemistry_data.";
+    }
+  }
+
+  ~APIConventionTest() {
+    cleanup_grackle_conditions(this->pack_);
+  }
+
+  GrackleCtxPack pack_;
 };
 
-void check_if_grackle_mutates_ghost_zone(int primordial_chemistry,
-                                         grid_props my_grid_props)
-{
-  GrackleCtxPack pack = setup_simple_grackle_conditions(primordial_chemistry);
+TEST_P(APIConventionTest, GridZoneStartEnd) {
 
-  if (!pack.successful_default) {
-    FAIL() << "Error in set_default_chemistry_parameters.";
-  } else if (!pack.successful_data_file) {
-    GTEST_SKIP() << "something went wrong with finding the data file";
-  } else if (!pack.successful_init) {
-    FAIL() << "Error in initialize_chemistry_data.";
-  }
+  grid_props my_grid_props = {{5,6,7}, {1,0,2}};
+
+  // alias the pack_ attribute tracked by the fixture
+  GrackleCtxPack& pack = pack_;
 
   // initialize pseudo random number generator
   std::uint32_t seed = 1379069008;
   std::minstd_rand generator(seed);
 
-  // Create the struct for storing grackle field data. Data in the ghost zone
+  // Create the struct for storing grackle field data.
+  grackle_field_data my_fields;
+  gr_initialize_field_data(&my_fields);
+  int grid_prop_storage[9];
+  my_fields.grid_dimension = grid_prop_storage + 0;
+  my_fields.grid_start = grid_prop_storage + 3;
+  my_fields.grid_end = grid_prop_storage + 6;
+
+  // Initialize the fields in Data in the ghost zone
   // is initialized to random values.
-  //
+
   // Each field data pointer in my_fields actually aliases vector data
   // managed stored in my_field_map.
   // For example: my_fields.density = my_field_map["density"].data()
   val_vec_map_t my_field_map;
-  grackle_field_data my_fields = construct_field_data(
-    my_grid_props, pack.my_units, my_field_map, generator
+  construct_field_data(
+    my_fields, my_grid_props, pack.my_units, my_field_map, generator
   );
 
   // orig_field_map_copy is a deepcopy of my_field_map. We will use this as a
@@ -410,28 +437,6 @@ void check_if_grackle_mutates_ghost_zone(int primordial_chemistry,
     }
   }
 
-  cleanup_grackle_conditions(pack);
-  delete[] my_fields.grid_dimension;
-  delete[] my_fields.grid_start;
-  delete[] my_fields.grid_end;
-}
-
-TEST_P(APIConventionTest, GridZoneStartEnd) {
-
-  // Disable output
-  grackle_verbose = 0;
-
-  grid_props my_grid_props = {{5,6,7}, {1,0,2}};
-
-  // consider different values for primordial_chemistry since it executes
-  // different code paths
-  {
-    int primordial_chem = GetParam();
-    fprintf(stderr, "checking primordial_chemistry = %d\n", primordial_chem);
-
-    check_if_grackle_mutates_ghost_zone(primordial_chem, my_grid_props);
-
-  }
 }
 
 INSTANTIATE_TEST_SUITE_P(
