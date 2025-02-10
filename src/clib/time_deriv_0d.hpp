@@ -23,6 +23,7 @@ namespace grackle::impl::time_deriv_0d {
 /// time derivative calculations
 struct FrozenSimpleArgs {
   // the following batch of args are all forwarded
+  int imetal;
   int iter;
   double dom;
   double chunit;
