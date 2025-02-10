@@ -804,7 +804,9 @@ int solve_rate_cool_g(
 
           // Look-up rates as a function of temperature for 1D set of zones
           //  (maybe should add itmask to this call)
-
+          //
+          // -> TODO: passing dt to this function is probably incorrect. See
+          //    the C++ docstring for a longer discussion
           f_wrap::lookup_cool_rates1d_g(
             idx_range, anydust, tgas.data(), mmw.data(), tdust.data(),
             dust2gas.data(), spsolvbuf.k13dd, spsolvbuf.h2dust,
