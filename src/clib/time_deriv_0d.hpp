@@ -105,6 +105,12 @@ struct Assorted1ElemBuf {
 ///   original fortran code from before transcription. (We should refactor this
 ///   in the future after we finish transcription)
 struct ContextPack {
+  /// holds the local value of itmask_metal
+  gr_mask_type local_itmask_metal;
+  /// specifies how we handling edot in the calculation. This comes from
+  /// an array historically known as imp_eng
+  int local_edot_handling;
+
   /// the idea is that this will hold data for a single zone
   grackle_field_data fields;
 
@@ -183,9 +189,15 @@ inline ContextPack new_ContextPack(
 /// @param[in] my_fields the multidimensional field instance
 /// @param[in] field_idx1d the index where we will be performing the calculation
 ///    (it has already been remapped from multiple dimensions to 1D).
-inline void configure_ContextPack(ContextPack* pack,
-                                  const grackle_field_data* my_fields,
-                                  int field_idx1d) {
+/// @param[in] local_itmask_metal specifies the local values of itmask_metal
+/// @param[in] local_edot_handling Specifies how we handle energy evolution.
+///    This is read from an array historically known as `imp_eng`
+inline void configure_ContextPack(
+  ContextPack* pack, const grackle_field_data* my_fields,
+  int field_idx1d, gr_mask_type local_itmask_metal, int local_edot_handling
+) {
+  pack->local_itmask_metal = local_itmask_metal;
+  pack->local_edot_handling = local_edot_handling;
   pack->fields.grid_dx = my_fields->grid_dx;
 
   // here, we overwrite each field in pack.fields_1zone with pointers from
