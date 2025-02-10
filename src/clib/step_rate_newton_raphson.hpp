@@ -360,6 +360,28 @@ inline void step_rate_newton_raphson(
         idsp[id-1] = i_eng;
       }
 
+      // setup the dt_FIXME variable (this obviously needs some attention)
+      // -> as in solve_rate_cool_g, dt represents the total timestep that we
+      //    are evolving the system of equations over
+      // -> here, we are saying defining dt as a reference to the current
+      //    subcycle timestep at the current zone (we define it as a
+      //    reference because it needs to match the value of dtit[i] if we
+      //    choose to modify it)
+      // -> This sure seems inconsistent!
+      // -> OK, in more detail:
+      //    -> the only purpose of this variable is to be passed into the
+      //       time-derivative calculation.
+      //    -> within the time derivative calculation, the variable is ONLY
+      //       used as an argument forwarded to the `dt` argument of
+      //       lookup_cool_rates1d_g
+      //    -> at present, the other callsite of `lookup_cool_rates1d_g`
+      //       passes in the total timestep to dt
+      //    -> for now, we're just going to maintain compatability but this
+      //       NEEDS to be addressed (see the C++ docstring of
+      //       `lookup_cool_rates1d_g` for more discussion). We actually have
+      //       been doing things correctly here and incorrectly elsewhere
+      double& dt_FIXME = dtit[i];
+
       // configure pack for use during the current index
       t_deriv::configure_ContextPack(&pack, my_fields, field_idx1d);
 
@@ -428,7 +450,7 @@ inline void step_rate_newton_raphson(
             goto label_9996;
           }
 
-           FORTRAN_NAME(lookup_cool_rates0d)(&dtit[i],
+           FORTRAN_NAME(lookup_cool_rates0d)(&dt_FIXME,
           pack.fields.density, pack.fields.x_velocity, pack.fields.y_velocity, pack.fields.z_velocity,
           &nsp, dsp.data(), dspdot.data(), &my_chemistry->NumberOfTemperatureBins,
           &internalu.extfields_in_comoving, &my_chemistry->primordial_chemistry, &imetal, &my_chemistry->metal_cooling,
@@ -564,7 +586,7 @@ inline void step_rate_newton_raphson(
               }
             }
 
-             FORTRAN_NAME(lookup_cool_rates0d)(&dtit[i],
+             FORTRAN_NAME(lookup_cool_rates0d)(&dt_FIXME,
             pack.fields.density, pack.fields.x_velocity, pack.fields.y_velocity, pack.fields.z_velocity,
             &nsp, dsp1.data(), dspdot1.data(), &my_chemistry->NumberOfTemperatureBins,
             &internalu.extfields_in_comoving, &my_chemistry->primordial_chemistry, &imetal, &my_chemistry->metal_cooling,
