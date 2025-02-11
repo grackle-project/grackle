@@ -13,6 +13,7 @@
 
 #include "grackle.h"             // gr_float
 #include "fortran_func_decls.h"  // gr_mask_int
+#include "fortran_func_wrappers.hpp" // grackle::impl::fortran_wrapper::gaussj_g
 #include "index_helper.h"
 #include "internal_types.hpp"
 #include "internal_units.h"
@@ -55,6 +56,8 @@ inline void step_rate_newton_raphson(
 {
   // shorten `grackle::impl::time_deriv_0d` to `t_deriv` within this function
   namespace t_deriv = ::grackle::impl::time_deriv_0d;
+  // shorten `grackle::impl::fortran_wrapper` to `f_wrap` within this function
+  namespace f_wrap = ::grackle::impl::fortran_wrapper;
 
   // Density, energy and velocity fields fields
 
@@ -503,7 +506,7 @@ inline void step_rate_newton_raphson(
             vec[isp-1] = vec[isp-1]/d(i,j,k);
           }
 
-           FORTRAN_NAME(gaussj_g)(&nsp, mtrx.data(), vec.data(), &ierror);
+          ierror = f_wrap::gaussj_g(nsp, mtrx.data(), vec.data());
           if(ierror == 1)  {
             goto label_9998;
           }
