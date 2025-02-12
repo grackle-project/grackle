@@ -189,7 +189,9 @@ inline void step_rate_newton_raphson(
   int itr, itr_time;
   int nsp, isp, jsp, id;
   double dspj, err, err_max;
-  const int i_eng = 52;
+  // the following specifies the historical 1-based index that we would use to
+  // hold energy
+  const int i_eng = SpLUT::NUM_ENTRIES + 1;
   // There may be an argument for allocating the following at a higher
   // level function, but we will leave that for after transcription
   std::vector<double> dsp(i_eng);
@@ -358,76 +360,105 @@ inline void step_rate_newton_raphson(
       }
       dsp[i_eng-1] = e(i,j,k);
 
+      // here, we fill in the idsp array
+      // -> the idsp array is used for mapping between the compressed vector
+      //    form (that only has nsp elements) and dsp (that always has
+      //    `SpLUT::NUM_ENTRIES + 1` entries)
+      // -> in the future, we should construct this array first (before doing
+      //    anything else):
+      //    -> it gives us the value of nsp for free!
+      //    -> using this array with SpeciesLUTFieldAdaptor lets us cut out
+      //       (duplicated) logic when we copy values from my_fields to dsp and
+      //       the reverse (we can cut ~70 lines in each place)
       id = 0;
-      if (my_chemistry->primordial_chemistry > 0)  {
-        for (isp = 1; isp<=(6); isp++) {
-          id = id + 1;
-          idsp[id-1] = isp;
-        }
+      if ( my_chemistry->primordial_chemistry > 0 )  {
+        idsp[id++] = SpLUT::e;
+        idsp[id++] = SpLUT::HI;
+        idsp[id++] = SpLUT::HII;
+        idsp[id++] = SpLUT::HeI;
+        idsp[id++] = SpLUT::HeII;
+        idsp[id++] = SpLUT::HeIII;
       }
-      if (my_chemistry->primordial_chemistry > 1)  {
-        for (isp = 7; isp<=(9); isp++) {
-          id = id + 1;
-          idsp[id-1] = isp;
-        }
+      if ( my_chemistry->primordial_chemistry > 1 )  {
+        idsp[id++] = SpLUT::HM;
+        idsp[id++] = SpLUT::H2I;
+        idsp[id++] = SpLUT::H2II;
       }
-      if (my_chemistry->primordial_chemistry > 2)  {
-        for (isp = 10; isp<=(12); isp++) {
-          id = id + 1;
-          idsp[id-1] = isp;
-        }
+      if ( my_chemistry->primordial_chemistry > 2 )  {
+        idsp[id++] = SpLUT::DI;
+        idsp[id++] = SpLUT::DII;
+        idsp[id++] = SpLUT::HDI;
       }
-      if (my_chemistry->primordial_chemistry > 3)  {
-        for (isp = 13; isp<=(15); isp++) {
-          id = id + 1;
-          idsp[id-1] = isp;
-        }
+      if ( my_chemistry->primordial_chemistry > 3 )  {
+        idsp[id++] = SpLUT::DM;
+        idsp[id++] = SpLUT::HDII;
+        idsp[id++] = SpLUT::HeHII;
       }
-      if (itmask_metal[i] != MASK_FALSE)  {
-        if (my_chemistry->metal_chemistry == 1)  {
-          for (isp = 16; isp<=(34); isp++) {
-            id = id + 1;
-            idsp[id-1] = isp;
-          }
-          if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
+      if ( itmask_metal[i] != MASK_FALSE )  {
+        if ( my_chemistry->metal_chemistry == 1 )  {
+          idsp[id++] = SpLUT::CI;
+          idsp[id++] = SpLUT::CII;
+          idsp[id++] = SpLUT::CO;
+          idsp[id++] = SpLUT::CO2;
+          idsp[id++] = SpLUT::OI;
+          idsp[id++] = SpLUT::OH;
+          idsp[id++] = SpLUT::H2O;
+          idsp[id++] = SpLUT::O2;
+          idsp[id++] = SpLUT::SiI;
+          idsp[id++] = SpLUT::SiOI;
+          idsp[id++] = SpLUT::SiO2I;
+          idsp[id++] = SpLUT::CH;
+          idsp[id++] = SpLUT::CH2;
+          idsp[id++] = SpLUT::COII;
+          idsp[id++] = SpLUT::OII;
+          idsp[id++] = SpLUT::OHII;
+          idsp[id++] = SpLUT::H2OII;
+          idsp[id++] = SpLUT::H3OII;
+          idsp[id++] = SpLUT::O2II;
+          if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1 ) )  {
             if (my_chemistry->dust_species > 0)  {
-              for (isp = 35; isp<=(35); isp++) {
-                id = id + 1;
-                idsp[id-1] = isp;
-              }
+              idsp[id++] = SpLUT::Mg;
             }
             if (my_chemistry->dust_species > 1)  {
-              for (isp = 36; isp<=(38); isp++) {
-                id = id + 1;
-                idsp[id-1] = isp;
-              }
+              idsp[id++] = SpLUT::Al;
+              idsp[id++] = SpLUT::S;
+              idsp[id++] = SpLUT::Fe;
             }
           }
         }
-        if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
+        if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1 ) )  {
           if (my_chemistry->dust_species > 0)  {
-            for (isp = 39; isp<=(40); isp++) {
-              id = id + 1;
-              idsp[id-1] = isp;
-            }
+            idsp[id++] = SpLUT::MgSiO3_dust;
+            idsp[id++] = SpLUT::AC_dust;
           }
           if (my_chemistry->dust_species > 1)  {
-            for (isp = 41; isp<=(48); isp++) {
-              id = id + 1;
-              idsp[id-1] = isp;
-            }
+            idsp[id++] = SpLUT::SiM_dust;
+            idsp[id++] = SpLUT::FeM_dust;
+            idsp[id++] = SpLUT::Mg2SiO4_dust;
+            idsp[id++] = SpLUT::Fe3O4_dust;
+            idsp[id++] = SpLUT::SiO2_dust;
+            idsp[id++] = SpLUT::MgO_dust;
+            idsp[id++] = SpLUT::FeS_dust;
+            idsp[id++] = SpLUT::Al2O3_dust;
           }
           if (my_chemistry->dust_species > 2)  {
-            for (isp = 49; isp<=(51); isp++) {
-              id = id + 1;
-              idsp[id-1] = isp;
-            }
+            idsp[id++] = SpLUT::ref_org_dust;
+            idsp[id++] = SpLUT::vol_org_dust;
+            idsp[id++] = SpLUT::H2O_ice_dust;
           }
         }
       }
+
       if ( imp_eng[i] ==1 )  {
-        id = id + 1;
-        idsp[id-1] = i_eng;
+        idsp[id++] = i_eng-1;
+      }
+
+      GRIMPL_REQUIRE((id == nsp), "SANITY CHECK FAILED");
+
+      // currently idsp is filled with 0-based indices. Later on, we expect it
+      // to have 1-based indices so we adjust it
+      for (int index = 0; index < id; index++){
+        idsp[index] += 1;
       }
 
       // setup the dt_FIXME variable (this obviously needs some attention)
