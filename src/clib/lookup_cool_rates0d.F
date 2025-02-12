@@ -621,9 +621,9 @@ c -------------------------------------------------------------------
 !   rates which are tabulated in a log table as a function
 !   of temperature.
 
-            call lookup_cool_rates1d_g(temstart, temend, nratec, 1, 1,
-     &                 0,  0, ithreebody,
-     &                 1,  1,  1, ispecies, anydust,
+            call lookup_cool_rates1d_g(temstart, temend, nratec,
+     &                local_j, local_k, local_is, local_ie, ithreebody,
+     &                local_in, local_jn, local_kn, ispecies, anydust,
      &                iH2shield, iradshield,
      &                tgas, mmw, d, HI, HII, HeI, HeII, HeIII, 
      &                HM, H2I, H2II, DI, DII, HDI,
