@@ -428,7 +428,6 @@ void lookup_cool_rates0d(
   // General Arguments
 
   const int i_eng = 52;
-  gr_float e;
 
   // Constants (I honestly don't think most of these should be defined)
   const int itmax = 10000;
@@ -457,10 +456,8 @@ void lookup_cool_rates0d(
 
   // Rate equation row temporaries
 
-  double HI, HII, HeI, HeII, HeIII, HM, H2I, H2II, de, dedot, HIdot, dedot_prev, DI, DII, HDI, HIdot_prev, k24shield, k25shield, k26shield, k28shield, k29shield, k30shield, k31shield, k1, k2, k3, k4, k5, k6, k7, k8, k9, k10, k11, k12, k13, k14, k15, k16, k17, k18, k19, k22, k50, k51, k52, k53, k54, k55, k56, k57, k58;
+  double dedot, HIdot, dedot_prev, HIdot_prev, k24shield, k25shield, k26shield, k28shield, k29shield, k30shield, k31shield, k1, k2, k3, k4, k5, k6, k7, k8, k9, k10, k11, k12, k13, k14, k15, k16, k17, k18, k19, k22, k50, k51, k52, k53, k54, k55, k56, k57, k58;
   std::vector<double> k13dd(14);
-  gr_float DM, HDII, HeHII, CI, CII, CO, CO2, OI, OH, H2O, O2, SiI, SiOI, SiO2I, CH, CH2, COII, OII, OHII, H2OII, H3OII, O2II, Mg, Al, S, Fe;
-  gr_float SiM, FeM, Mg2SiO4, MgSiO3, Fe3O4, AC, SiO2D, MgO, FeS, Al2O3, reforg, volorg, H2Oice;
   double k125, k129, k130, k131, k132, k133, k134, k135, k136, k137, k148, k149, k150, k151, k152, k153, kz15, kz16, kz17, kz18, kz19, kz20, kz21, kz22, kz23, kz24, kz25, kz26, kz27, kz28, kz29, kz30, kz31, kz32, kz33, kz34, kz35, kz36, kz37, kz38, kz39, kz40, kz41, kz42, kz43, kz44, kz45, kz46, kz47, kz48, kz49, kz50, kz51, kz52, kz53, kz54;
 
   double kdSiM, kdFeM, kdMg2SiO4, kdMgSiO3, kdFe3O4, kdAC, kdSiO2D, kdMgO, kdFeS, kdAl2O3, kdreforg, kdvolorg, kdH2Oice;
@@ -511,84 +508,69 @@ void lookup_cool_rates0d(
     dsp[SpLUT::NUM_ENTRIES]
   );
 
-  if ( my_chemistry->primordial_chemistry > 0 )  {
-    de      = dsp[ 1-1];
-    HI      = dsp[ 2-1];
-    HII     = dsp[ 3-1];
-    HeI     = dsp[ 4-1];
-    HeII    = dsp[ 5-1];
-    HeIII   = dsp[ 6-1];
-  }
-  if ( my_chemistry->primordial_chemistry > 1 )  {
-    HM      = dsp[ 7-1];
-    H2I     = dsp[ 8-1];
-    H2II    = dsp[ 9-1];
-  }
-  if ( my_chemistry->primordial_chemistry > 2 )  {
-    DI      = dsp[10-1];
-    DII     = dsp[11-1];
-    HDI     = dsp[12-1];
-  }
-  if ( my_chemistry->primordial_chemistry > 3 )  {
-    DM      = dsp[13-1];
-    HDII    = dsp[14-1];
-    HeHII   = dsp[15-1];
-  }
-  if ( pack.local_itmask_metal != MASK_FALSE )  {
-    if (my_chemistry->metal_chemistry == 1)  {
-      CI      = dsp[16-1];
-      CII     = dsp[17-1];
-      CO      = dsp[18-1];
-      CO2     = dsp[19-1];
-      OI      = dsp[20-1];
-      OH      = dsp[21-1];
-      H2O     = dsp[22-1];
-      O2      = dsp[23-1];
-      SiI     = dsp[24-1];
-      SiOI    = dsp[25-1];
-      SiO2I   = dsp[26-1];
-      CH      = dsp[27-1];
-      CH2     = dsp[28-1];
-      COII    = dsp[29-1];
-      OII     = dsp[30-1];
-      OHII    = dsp[31-1];
-      H2OII   = dsp[32-1];
-      H3OII   = dsp[33-1];
-      O2II    = dsp[34-1];
-      if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1 ) )  {
-        if (my_chemistry->dust_species > 0)  {
-          Mg      = dsp[35-1];
-        }
-        if (my_chemistry->dust_species > 1)  {
-          Al      = dsp[36-1];
-          S       = dsp[37-1];
-          Fe      = dsp[38-1];
-        }
-      }
-    }
-    if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1 ) )  {
-      if (my_chemistry->dust_species > 0)  {
-        MgSiO3  = dsp[39-1];
-        AC      = dsp[40-1];
-      }
-      if (my_chemistry->dust_species > 1)  {
-        SiM     = dsp[41-1];
-        FeM     = dsp[42-1];
-        Mg2SiO4 = dsp[43-1];
-        Fe3O4   = dsp[44-1];
-        SiO2D   = dsp[45-1];
-        MgO     = dsp[46-1];
-        FeS     = dsp[47-1];
-        Al2O3   = dsp[48-1];
-      }
-      if (my_chemistry->dust_species > 2)  {
-        reforg  = dsp[49-1];
-        volorg  = dsp[50-1];
-        H2Oice  = dsp[51-1];
-      }
-    }
-  }
-  e     = dsp[i_eng-1];
+  // define some local variables carried over from the fortran version:
+  // - the goal is to remove all of these by time we are done with cleanup
+  // - originally we only conditionally defined some of these variables, but
+  //   there honestly isn't any benefit to doing that (the memory is allocated
+  //   already)
+  // - originally, each of these variables was a stack allocated variable that
+  //   held a copy of the corresponding entry in dsp. Now, these variables are
+  //   references to casted copies taken from dsp
+  // - we aren't being that consistent with the historic implementation when
+  //   gr_float isn't the same as double (but I don't thi
+
+  gr_float& de      = pack.fields.e_density[0];
+  gr_float& HI      = pack.fields.HI_density[0];
+  gr_float& HII     = pack.fields.HII_density[0];
+  gr_float& HeI     = pack.fields.HeI_density[0];
+  gr_float& HeII    = pack.fields.HeII_density[0];
+  gr_float& HeIII   = pack.fields.HeIII_density[0];
+  gr_float& HM      = pack.fields.HM_density[0];
+  gr_float& H2I     = pack.fields.H2I_density[0];
+  gr_float& H2II    = pack.fields.H2II_density[0];
+  gr_float& DI      = pack.fields.DI_density[0];
+  gr_float& DII     = pack.fields.DII_density[0];
+  gr_float& HDI     = pack.fields.HDI_density[0];
+  gr_float& DM      = pack.fields.DM_density[0];
+  gr_float& HDII    = pack.fields.HDII_density[0];
+  gr_float& HeHII   = pack.fields.HeHII_density[0];
+  gr_float& CI      = pack.fields.CI_density[0];
+  gr_float& CII     = pack.fields.CII_density[0];
+  gr_float& CO      = pack.fields.CO_density[0];
+  gr_float& CO2     = pack.fields.CO2_density[0];
+  gr_float& OI      = pack.fields.OI_density[0];
+  gr_float& OH      = pack.fields.OH_density[0];
+  gr_float& H2O     = pack.fields.H2O_density[0];
+  gr_float& O2      = pack.fields.O2_density[0];
+  gr_float& SiI     = pack.fields.SiI_density[0];
+  gr_float& SiOI    = pack.fields.SiOI_density[0];
+  gr_float& SiO2I   = pack.fields.SiO2I_density[0];
+  gr_float& CH      = pack.fields.CH_density[0];
+  gr_float& CH2     = pack.fields.CH2_density[0];
+  gr_float& COII    = pack.fields.COII_density[0];
+  gr_float& OII     = pack.fields.OII_density[0];
+  gr_float& OHII    = pack.fields.OHII_density[0];
+  gr_float& H2OII   = pack.fields.H2OII_density[0];
+  gr_float& H3OII   = pack.fields.H3OII_density[0];
+  gr_float& O2II    = pack.fields.O2II_density[0];
+  gr_float& Mg      = pack.fields.Mg_density[0];
+  gr_float& Al      = pack.fields.Al_density[0];
+  gr_float& S       = pack.fields.S_density[0];
+  gr_float& Fe      = pack.fields.Fe_density[0];
+  gr_float& MgSiO3  = pack.fields.MgSiO3_dust_density[0];
+  gr_float& AC      = pack.fields.AC_dust_density[0];
+  gr_float& SiM     = pack.fields.SiM_dust_density[0];
+  gr_float& FeM     = pack.fields.FeM_dust_density[0];
+  gr_float& Mg2SiO4 = pack.fields.Mg2SiO4_dust_density[0];
+  gr_float& Fe3O4   = pack.fields.Fe3O4_dust_density[0];
+  gr_float& SiO2D   = pack.fields.SiO2_dust_density[0];
+  gr_float& MgO     = pack.fields.MgO_dust_density[0];
+  gr_float& FeS     = pack.fields.FeS_dust_density[0];
+  gr_float& Al2O3   = pack.fields.Al2O3_dust_density[0];
+  gr_float& reforg  = pack.fields.ref_org_dust_density[0];
+  gr_float& volorg  = pack.fields.vol_org_dust_density[0];
+  gr_float& H2Oice  = pack.fields.H2O_ice_dust_density[0];
+  gr_float& e       = pack.fields.internal_energy[0];
 
   local_in = 1;
   local_jn = 1;
