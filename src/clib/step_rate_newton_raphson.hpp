@@ -455,12 +455,6 @@ inline void step_rate_newton_raphson(
 
       GRIMPL_REQUIRE((id == nsp), "SANITY CHECK FAILED");
 
-      // currently idsp is filled with 0-based indices. Later on, we expect it
-      // to have 1-based indices so we adjust it
-      for (int index = 0; index < id; index++){
-        idsp[index] += 1;
-      }
-
       // setup the dt_FIXME variable (this obviously needs some attention)
       // -> as in solve_rate_cool_g, dt represents the total timestep that we
       //    are evolving the system of equations over
@@ -557,26 +551,26 @@ inline void step_rate_newton_raphson(
           t_deriv::derivatives(dt_FIXME, dsp.data(), dspdot.data(), pack);
 
           for (jsp = 1; jsp<=(nsp); jsp++) {
-            dspj = eps * dsp[idsp[jsp-1]-1];
+            dspj = eps * dsp[idsp[jsp-1]];
             for (isp = 1; isp<=(nsp); isp++) {
               if(isp == jsp)  {
-                dsp1[idsp[isp-1]-1] = dsp[idsp[isp-1]-1] + dspj;
+                dsp1[idsp[isp-1]] = dsp[idsp[isp-1]] + dspj;
               } else {
-                dsp1[idsp[isp-1]-1] = dsp[idsp[isp-1]-1];
+                dsp1[idsp[isp-1]] = dsp[idsp[isp-1]];
               }
             }
 
             t_deriv::derivatives(dt_FIXME, dsp1.data(), dspdot1.data(), pack);
 
             for (isp = 1; isp<=(nsp); isp++) {
-              if ( (dsp[idsp[isp-1]-1]==0.e0)
-               &&  (dspdot1[idsp[isp-1]-1]
-               ==  dspdot[idsp[isp-1]-1]) )  {
-                der(idsp[isp-1]-1,idsp[jsp-1]-1) = 0.e0;
+              if ( (dsp[idsp[isp-1]]==0.e0)
+               &&  (dspdot1[idsp[isp-1]]
+               ==  dspdot[idsp[isp-1]]) )  {
+                der(idsp[isp-1],idsp[jsp-1]) = 0.e0;
               } else {
-                der(idsp[isp-1]-1,idsp[jsp-1]-1) =
-                   (dspdot1[idsp[isp-1]-1]
-                   - dspdot[idsp[isp-1]-1]) / dspj;
+                der(idsp[isp-1],idsp[jsp-1]) =
+                   (dspdot1[idsp[isp-1]]
+                   - dspdot[idsp[isp-1]]) / dspj;
               }
             }
 
@@ -586,17 +580,17 @@ inline void step_rate_newton_raphson(
             for (jsp = 1; jsp<=(nsp); jsp++) {
               if(isp == jsp)  {
                 mtrx(isp-1,jsp-1) = 1.e0 - dtit[i]
-                   * der(idsp[isp-1]-1,idsp[jsp-1]-1);
+                   * der(idsp[isp-1],idsp[jsp-1]);
               } else {
                 mtrx(isp-1,jsp-1) =      - dtit[i]
-                   * der(idsp[isp-1]-1,idsp[jsp-1]-1);
+                   * der(idsp[isp-1],idsp[jsp-1]);
               }
             }
           }
 
           for (isp = 1; isp<=(nsp); isp++) {
-            vec[isp-1] = dspdot[idsp[isp-1]-1] * dtit[i]
-                   - ddsp[idsp[isp-1]-1];
+            vec[isp-1] = dspdot[idsp[isp-1]] * dtit[i]
+                   - ddsp[idsp[isp-1]];
           }
 
           // to get more accuracy
@@ -615,15 +609,15 @@ inline void step_rate_newton_raphson(
           }
 
           for (isp = 1; isp<=(nsp); isp++) {
-            ddsp[idsp[isp-1]-1] = ddsp[idsp[isp-1]-1] + vec[isp-1];
-            dsp[idsp[isp-1]-1]  = dsp[idsp[isp-1]-1]  + vec[isp-1];
+            ddsp[idsp[isp-1]] = ddsp[idsp[isp-1]] + vec[isp-1];
+            dsp[idsp[isp-1]]  = dsp[idsp[isp-1]]  + vec[isp-1];
           }
 
           if (imp_eng[i] == 1)  {
             if( (my_chemistry->primordial_chemistry > 0)  &&  (my_chemistry->with_radiative_cooling == 1) )  {
               for (isp = 1; isp<=(nsp); isp++) {
-                if ( (dsp[idsp[isp-1]-1] != dsp[idsp[isp-1]-1])
-                 ||  (dsp[idsp[isp-1]-1] <= 0.) )  {
+                if ( (dsp[idsp[isp-1]] != dsp[idsp[isp-1]])
+                 ||  (dsp[idsp[isp-1]] <= 0.) )  {
                   ierror = 1;
                   goto label_9997;
                 }
@@ -633,8 +627,8 @@ inline void step_rate_newton_raphson(
 
           err_max = 0.e0;
           for (isp = 1; isp<=(nsp); isp++) {
-            if(dsp[idsp[isp-1]-1] > tiny8)  {
-              err = grackle::impl::dabs(vec[isp-1] / dsp[idsp[isp-1]-1]);
+            if(dsp[idsp[isp-1]] > tiny8)  {
+              err = grackle::impl::dabs(vec[isp-1] / dsp[idsp[isp-1]]);
             } else {
               err = 0.e0;
             }
@@ -655,8 +649,8 @@ label_9996:
 
         if( (my_chemistry->primordial_chemistry > 0)  &&  (my_chemistry->with_radiative_cooling == 1) )  {
           for (isp = 1; isp<=(nsp); isp++) {
-            if ( (dsp[idsp[isp-1]-1] != dsp[idsp[isp-1]-1])
-             ||  (dsp[idsp[isp-1]-1] <= 0.) )  {
+            if ( (dsp[idsp[isp-1]] != dsp[idsp[isp-1]])
+             ||  (dsp[idsp[isp-1]] <= 0.) )  {
               ierror = 1;
             }
           }
