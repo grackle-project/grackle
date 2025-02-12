@@ -11,9 +11,8 @@
 
 #include "grackle.h"
 #include "utils-field.hpp"
+#include "index_helper.h"
 #include "internal_types.hpp"
-
-#include <vector>
 
 // we choose to adopt a longer, more descriptive namespace here so that the
 // handful of functions defined in this file can have shorter names (in the
@@ -169,7 +168,7 @@ inline ContextPack new_ContextPack(
   for (int i = 0; i < 3; i++) {
     pack.grid_dimension[i] = 1;
     pack.grid_start[i] = 0;
-    pack.grid_end[i] = 1;
+    pack.grid_end[i] = 0;
   }
   gr_initialize_field_data(&pack.fields);
   pack.fields.grid_rank=3;
@@ -468,9 +467,11 @@ void lookup_cool_rates0d(
   double scoef, acoef;
   double atten, H2delta, h2heatfac, min_metallicity;
 
-  // The following are defined to aid with transcription
-  int local_j, local_k, local_is, local_ie;
-
+  // we want to avoid directly constructing an IndexRange (if the internals
+  // change we don't want to fix it here). But we should probably preconstruct
+  // it ahead of time
+  const grackle_index_helper idx_helper = build_index_helper_(&pack.fields);
+  IndexRange idx_range = make_idx_range_(0, &idx_helper);
   
   // \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
   // =======================================================================
@@ -571,11 +572,6 @@ void lookup_cool_rates0d(
   gr_float& H2Oice  = pack.fields.H2O_ice_dust_density[0];
   gr_float& e       = pack.fields.internal_energy[0];
 
-  local_is = 0;
-  local_ie = 0;
-  local_j = 1;
-  local_k = 1;
-
   grackle_field_data* my_fields = &pack.fields;
   GRIMPL_REQUIRE(
     (
@@ -594,8 +590,8 @@ void lookup_cool_rates0d(
               &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &my_chemistry->NumberOfTemperatureBins,
               &internalu.extfields_in_comoving, &my_chemistry->primordial_chemistry, &pack.fwd_args.imetal, &my_chemistry->metal_cooling,
               &my_chemistry->h2_on_dust, &my_chemistry->dust_chemistry, &my_chemistry->use_dust_density_field, &my_chemistry->dust_recombination_cooling,
-              &my_fields->grid_rank,  &local_is,  &local_ie, &local_j,
-              &local_k, &my_chemistry->ih2co, &my_chemistry->ipiht, &pack.fwd_args.iter, &my_chemistry->photoelectric_heating,
+              &my_fields->grid_rank,  &idx_range.i_start,  &idx_range.i_end, &idx_range.jp1,
+              &idx_range.kp1, &my_chemistry->ih2co, &my_chemistry->ipiht, &pack.fwd_args.iter, &my_chemistry->photoelectric_heating,
               &internalu.a_value, &my_chemistry->TemperatureStart, &my_chemistry->TemperatureEnd, &my_chemistry->SolarMetalFractionByMass, &my_chemistry->local_dust_to_gas_ratio,
               &internalu.utem, &internalu.uxyz, &internalu.a_units, &internalu.urho, &internalu.tbase1,
               &my_chemistry->Gamma, &my_chemistry->HydrogenFractionByMass,
@@ -702,7 +698,7 @@ void lookup_cool_rates0d(
   //   of temperature.
 
    FORTRAN_NAME(lookup_cool_rates1d_g)(&my_chemistry->TemperatureStart, &my_chemistry->TemperatureEnd, &my_chemistry->NumberOfTemperatureBins,
-            &local_j, &local_k, &local_is, &local_ie, &my_chemistry->three_body_rate,
+            &idx_range.jp1, &idx_range.kp1, &idx_range.i_start, &idx_range.i_end, &my_chemistry->three_body_rate,
             &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &my_chemistry->primordial_chemistry, &pack.fwd_args.anydust,
             &my_chemistry->H2_self_shielding, &my_chemistry->self_shielding_method,
             pack.other_scratch_buf.tgas, pack.other_scratch_buf.mmw, pack.fields.density, &HI, &HII, &HeI, &HeII, &HeIII,
@@ -798,8 +794,8 @@ void lookup_cool_rates0d(
                    &dedot, &HIdot, &my_chemistry->primordial_chemistry, &pack.fwd_args.anydust,
                    &de, &HI, &HII, &HeI, &HeII, &HeIII, pack.fields.density,
                    &HM, &H2I, &H2II,
-                   &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &local_is,
-                   &local_ie, &local_j, &local_k,
+                   &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &idx_range.i_start,
+                   &idx_range.i_end, &idx_range.jp1, &idx_range.kp1,
                    &k1, &k2, &k3, &k4, &k5, &k6, &k7, &k8, &k9, &k10, &k11,
                    &k12, &k13, &k14, &k15, &k16, &k17, &k18, &k19, &k22,
                    &my_uvb_rates.k24, &my_uvb_rates.k25, &my_uvb_rates.k26, &my_uvb_rates.k27, &my_uvb_rates.k28, &my_uvb_rates.k29, &my_uvb_rates.k30,
