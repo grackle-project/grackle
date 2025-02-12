@@ -13,6 +13,8 @@
 #include "utils-field.hpp"
 #include "internal_types.hpp"
 
+#include <vector>
+
 // we choose to adopt a longer, more descriptive namespace here so that the
 // handful of functions defined in this file can have shorter names (in the
 // future, if we are willing to define methods on a struct, we can definitely
@@ -476,6 +478,38 @@ void lookup_cool_rates0d(
   
   // \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
   // =======================================================================
+
+  // here, we are injecting some logic to help with refactoring
+
+  // first, we declare some storage for our local copies of the species density
+  // and internal energy AND we overwrite the pointers tracked by pack.fields
+  // corresponding to these quantities
+  // -> it would probably be better to do all of this ahead of time
+  // -> it would also probably be better to not stack-allocate the storage,
+  //    but it isn't much worse than what was here before
+  gr_float rho_species[SpLUT::NUM_ENTRIES];
+  gr_float e_internal[1];
+
+  copy_contigSpTable_fieldmember_ptrs_(&pack.fields, rho_species, 1);
+  pack.fields.internal_energy = &e_internal[0];
+
+  // Now we store a local copy of all of the species (after casting).
+  // -> we are remaining consistent with historical behavior in terms of
+  //    copying. When gr_float == double, maybe we could reuse storage?
+  // -> we aren't particular consistent with the historical behavior when
+  //    gr_float == float. That's because the historical behavior was blatently
+  //    wrong in that scenario (I doubt it was ever tested)
+  SpeciesLUTFieldAdaptor field_lut_adaptor{pack.fields};
+  for (int sp_idx = 0; sp_idx < SpLUT::NUM_ENTRIES; sp_idx++) {
+    // TODO: somewhere, we need to have some logic to deal with edge cases when
+    //       sizeof(gr_float) != sizeof(double)
+    field_lut_adaptor.get_ptr_dynamic(sp_idx)[0] = static_cast<gr_float>(
+      dsp[sp_idx]
+    );
+  }
+  pack.fields.internal_energy[0] = static_cast<gr_float>(
+    dsp[SpLUT::NUM_ENTRIES]
+  );
 
   if ( my_chemistry->primordial_chemistry > 0 )  {
     de      = dsp[ 1-1];
