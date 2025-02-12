@@ -5,7 +5,7 @@
 
       subroutine lookup_cool_rates0d(dtit,
      &               d, u, v, w, 
-     &               nsp, dsp, dspdot, nratec, 
+     &               nsp, dsp, dspdot, nratec,
      &               iexpand, ispecies, imetal, imcool,
      &               idust, idustall, idustfield, idustrec,
      &               ih2co, ipiht, iter, igammah,
@@ -135,7 +135,7 @@ c -------------------------------------------------------------------
 !  General Arguments
 
       integer nratec, nsp,
-     &        iexpand, ih2co, ipiht, ispecies, imetal, idim,
+     &        iexpand, ih2co, ipiht, ispecies, imetal,
      &        imcool, idust, idustall, idustfield, idustrec,
      &        igammah, ih2optical, iciecool, ih2cr, ihdcr, ithreebody,
      &        ndratec, clnew, iVheat, iMheat, iTfloor,
@@ -410,6 +410,10 @@ c -------------------------------------------------------------------
       real*8 scoef, acoef
       real*8 atten, H2delta, h2heatfac, min_metallicity
 
+!     The following are defined to aid with transcription
+      integer local_in, local_jn, local_kn, local_idim
+      integer local_j, local_k, local_is, local_ie
+
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
 !=======================================================================
@@ -493,15 +497,25 @@ c -------------------------------------------------------------------
       endif
       e     = dsp(i_eng)
 
+      local_in = 1
+      local_jn = 1
+      local_kn = 1
+      local_idim = 1
+      local_is = 0
+      local_ie = 0
+      local_j = 1
+      local_k = 1
+
 !     Compute the cooling rate, tgas, tdust, and metallicity for this row
 
       if (imp_eng .eq. 1) then
             call cool1d_multi_g(
      &                d, e, u, v, w, de, HI, HII, HeI, HeII, HeIII,
-     &                 1,  1,  1, nratec, 
+     &                local_in, local_jn, local_kn, nratec, 
      &                iexpand, ispecies, imetal, imcool,
      &                idust, idustall, idustfield, idustrec,
-     &                   1,  0,  0, 1, 1, ih2co, ipiht, iter, igammah,
+     &                local_idim,  local_is,  local_ie, local_j,
+     &                local_k, ih2co, ipiht, iter, igammah,
      &                aye, temstart, temend, z_solar, fgr,
      &                utem, uxyz, uaye, urho, utim,
      &                gamma, fh,
