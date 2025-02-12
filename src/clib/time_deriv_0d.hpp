@@ -469,7 +469,6 @@ void lookup_cool_rates0d(
   double atten, H2delta, h2heatfac, min_metallicity;
 
   // The following are defined to aid with transcription
-  int local_in, local_jn, local_kn, local_idim;
   int local_j, local_k, local_is, local_ie;
 
   
@@ -572,24 +571,30 @@ void lookup_cool_rates0d(
   gr_float& H2Oice  = pack.fields.H2O_ice_dust_density[0];
   gr_float& e       = pack.fields.internal_energy[0];
 
-  local_in = 1;
-  local_jn = 1;
-  local_kn = 1;
-  local_idim = 1;
   local_is = 0;
   local_ie = 0;
   local_j = 1;
   local_k = 1;
+
+  grackle_field_data* my_fields = &pack.fields;
+  GRIMPL_REQUIRE(
+    (
+      (my_fields->grid_dimension[0] == 1) &&
+      (my_fields->grid_dimension[1] == 1) &&
+      (my_fields->grid_dimension[2] == 1)
+    ),
+    "sanity check!"
+  );
 
   // Compute the cooling rate, tgas, tdust, and metallicity for this row
 
   if (pack.local_edot_handling == 1)  {
      FORTRAN_NAME(cool1d_multi_g)(
               pack.fields.density, &e, pack.fields.x_velocity, pack.fields.y_velocity, pack.fields.z_velocity, &de, &HI, &HII, &HeI, &HeII, &HeIII,
-              &local_in, &local_jn, &local_kn, &my_chemistry->NumberOfTemperatureBins,
+              &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &my_chemistry->NumberOfTemperatureBins,
               &internalu.extfields_in_comoving, &my_chemistry->primordial_chemistry, &pack.fwd_args.imetal, &my_chemistry->metal_cooling,
               &my_chemistry->h2_on_dust, &my_chemistry->dust_chemistry, &my_chemistry->use_dust_density_field, &my_chemistry->dust_recombination_cooling,
-              &local_idim,  &local_is,  &local_ie, &local_j,
+              &my_fields->grid_rank,  &local_is,  &local_ie, &local_j,
               &local_k, &my_chemistry->ih2co, &my_chemistry->ipiht, &pack.fwd_args.iter, &my_chemistry->photoelectric_heating,
               &internalu.a_value, &my_chemistry->TemperatureStart, &my_chemistry->TemperatureEnd, &my_chemistry->SolarMetalFractionByMass, &my_chemistry->local_dust_to_gas_ratio,
               &internalu.utem, &internalu.uxyz, &internalu.a_units, &internalu.urho, &internalu.tbase1,
@@ -698,7 +703,7 @@ void lookup_cool_rates0d(
 
    FORTRAN_NAME(lookup_cool_rates1d_g)(&my_chemistry->TemperatureStart, &my_chemistry->TemperatureEnd, &my_chemistry->NumberOfTemperatureBins,
             &local_j, &local_k, &local_is, &local_ie, &my_chemistry->three_body_rate,
-            &local_in, &local_jn, &local_kn, &my_chemistry->primordial_chemistry, &pack.fwd_args.anydust,
+            &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &my_chemistry->primordial_chemistry, &pack.fwd_args.anydust,
             &my_chemistry->H2_self_shielding, &my_chemistry->self_shielding_method,
             pack.other_scratch_buf.tgas, pack.other_scratch_buf.mmw, pack.fields.density, &HI, &HII, &HeI, &HeII, &HeIII,
             &HM, &H2I, &H2II, &DI, &DII, &HDI,
@@ -793,7 +798,7 @@ void lookup_cool_rates0d(
                    &dedot, &HIdot, &my_chemistry->primordial_chemistry, &pack.fwd_args.anydust,
                    &de, &HI, &HII, &HeI, &HeII, &HeIII, pack.fields.density,
                    &HM, &H2I, &H2II,
-                   &local_in, &local_jn, &local_kn, &local_is,
+                   &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &local_is,
                    &local_ie, &local_j, &local_k,
                    &k1, &k2, &k3, &k4, &k5, &k6, &k7, &k8, &k9, &k10, &k11,
                    &k12, &k13, &k14, &k15, &k16, &k17, &k18, &k19, &k22,
