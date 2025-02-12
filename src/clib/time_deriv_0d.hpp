@@ -347,6 +347,16 @@ inline void scratchbufs_copy_from_pack(
 
 }
 
+// we temporarily forward declare the following signature
+// (in the future, the following function will be consolidated with the
+// derivatives function)
+void lookup_cool_rates0d(
+  double* dtit, int* nsp, double* dsp, double* dspdot, gr_mask_type* itmask,
+  chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
+  photo_rate_storage my_uvb_rates, InternalGrUnits internalu,
+  grackle::impl::time_deriv_0d::ContextPack pack
+);
+
 /// calculate the time derivatives
 ///
 /// @param[in] dt_FIXME Specifies the timestep passed to the
@@ -396,133 +406,1641 @@ void derivatives(
   // todo: remove this variable
   int nsp = -1; // <- dummy value! (it isn't actually used)
 
-  FORTRAN_NAME(lookup_cool_rates0d)(&dt_FIXME,
-    pack.fields.density, pack.fields.x_velocity, pack.fields.y_velocity, pack.fields.z_velocity,
-    &nsp, ycur, ydot, &my_chemistry->NumberOfTemperatureBins,
-    &internalu.extfields_in_comoving, &my_chemistry->primordial_chemistry, &pack.fwd_args.imetal, &my_chemistry->metal_cooling,
-    &my_chemistry->h2_on_dust, &my_chemistry->dust_chemistry, &my_chemistry->use_dust_density_field, &my_chemistry->dust_recombination_cooling,
-    &my_chemistry->ih2co, &my_chemistry->ipiht, &pack.fwd_args.iter, &my_chemistry->photoelectric_heating,
-    &internalu.a_value, &my_chemistry->TemperatureStart, &my_chemistry->TemperatureEnd, &my_chemistry->SolarMetalFractionByMass, &my_chemistry->local_dust_to_gas_ratio,
-    &internalu.utem, &internalu.uxyz, &internalu.a_units, &internalu.urho, &internalu.tbase1,
-    &my_chemistry->Gamma, &my_chemistry->HydrogenFractionByMass,
-    my_rates->ceHI, my_rates->ceHeI, my_rates->ceHeII, my_rates->ciHI, my_rates->ciHeI,
-    my_rates->ciHeIS, my_rates->ciHeII, my_rates->reHII, my_rates->reHeII1,
-    my_rates->reHeII2, my_rates->reHeIII, my_rates->brem, &my_rates->comp, &my_rates->gammah,
-    &my_chemistry->interstellar_radiation_field, my_rates->regr, &my_rates->gamma_isrf, &my_uvb_rates.comp_xray, &my_uvb_rates.temp_xray,
-    &my_uvb_rates.piHI, &my_uvb_rates.piHeI, &my_uvb_rates.piHeII,
-    pack.fields.metal_density, pack.fields.dust_density,
-    my_rates->hyd01k, my_rates->h2k01, my_rates->vibh, my_rates->roth, my_rates->rotl,
-    pack.main_scratch_buf.coolingheating_buf.hyd01k, pack.main_scratch_buf.coolingheating_buf.h2k01, pack.main_scratch_buf.coolingheating_buf.vibh, pack.main_scratch_buf.coolingheating_buf.roth, pack.main_scratch_buf.coolingheating_buf.rotl,
-    my_rates->GP99LowDensityLimit, my_rates->GP99HighDensityLimit, pack.main_scratch_buf.coolingheating_buf.gpldl, pack.main_scratch_buf.coolingheating_buf.gphdl,
-    my_rates->HDlte, my_rates->HDlow, pack.main_scratch_buf.coolingheating_buf.hdlte, pack.main_scratch_buf.coolingheating_buf.hdlow,
-    my_rates->GAHI, my_rates->GAH2, my_rates->GAHe,
-    my_rates->GAHp, my_rates->GAel,
-    my_rates->H2LTE, my_rates->gas_grain,
-    pack.main_scratch_buf.coolingheating_buf.ceHI, pack.main_scratch_buf.coolingheating_buf.ceHeI, pack.main_scratch_buf.coolingheating_buf.ceHeII, pack.main_scratch_buf.coolingheating_buf.ciHI, pack.main_scratch_buf.coolingheating_buf.ciHeI,
-    pack.main_scratch_buf.coolingheating_buf.ciHeIS, pack.main_scratch_buf.coolingheating_buf.ciHeII,
-    pack.main_scratch_buf.coolingheating_buf.reHII, pack.main_scratch_buf.coolingheating_buf.reHeII1, pack.main_scratch_buf.coolingheating_buf.reHeII2, pack.main_scratch_buf.coolingheating_buf.reHeIII, pack.main_scratch_buf.coolingheating_buf.brem,
-    pack.main_scratch_buf.logTlininterp_buf.indixe, pack.main_scratch_buf.logTlininterp_buf.t1, pack.main_scratch_buf.logTlininterp_buf.t2, pack.main_scratch_buf.logTlininterp_buf.logtem, pack.main_scratch_buf.logTlininterp_buf.tdef, pack.other_scratch_buf.edot,
-    pack.other_scratch_buf.tgas, pack.main_scratch_buf.cool1dmulti_buf.tgasold, pack.other_scratch_buf.mmw, pack.other_scratch_buf.p2d, pack.other_scratch_buf.tdust, pack.other_scratch_buf.metallicity,
-    pack.other_scratch_buf.dust2gas, pack.other_scratch_buf.rhoH, pack.main_scratch_buf.cool1dmulti_buf.mynh, pack.main_scratch_buf.cool1dmulti_buf.myde,
-    pack.main_scratch_buf.cool1dmulti_buf.gammaha_eff, pack.main_scratch_buf.cool1dmulti_buf.gasgr_tdust, pack.main_scratch_buf.cool1dmulti_buf.regr,
-    &my_chemistry->self_shielding_method, &my_uvb_rates.crsHI, &my_uvb_rates.crsHeI, &my_uvb_rates.crsHeII,
-    &my_chemistry->use_radiative_transfer, &my_chemistry->radiative_transfer_hydrogen_only,
-    &my_chemistry->h2_optical_depth_approximation, &my_chemistry->cie_cooling, &my_chemistry->h2_cooling_rate, &my_chemistry->hd_cooling_rate, my_rates->cieco, pack.main_scratch_buf.coolingheating_buf.cieco,
-    &my_chemistry->cmb_temperature_floor, &my_chemistry->UVbackground, &my_chemistry->cloudy_electron_fraction_factor,
-    &my_rates->cloudy_primordial.grid_rank, my_rates->cloudy_primordial.grid_dimension,
-    my_rates->cloudy_primordial.grid_parameters[0], my_rates->cloudy_primordial.grid_parameters[1], my_rates->cloudy_primordial.grid_parameters[2], my_rates->cloudy_primordial.grid_parameters[3], my_rates->cloudy_primordial.grid_parameters[4],
-    &my_rates->cloudy_primordial.data_size, my_rates->cloudy_primordial.cooling_data, my_rates->cloudy_primordial.heating_data, my_rates->cloudy_primordial.mmw_data,
-    &my_rates->cloudy_metal.grid_rank, my_rates->cloudy_metal.grid_dimension,
-    my_rates->cloudy_metal.grid_parameters[0], my_rates->cloudy_metal.grid_parameters[1], my_rates->cloudy_metal.grid_parameters[2], my_rates->cloudy_metal.grid_parameters[3], my_rates->cloudy_metal.grid_parameters[4],
-    &my_rates->cloudy_metal.data_size, my_rates->cloudy_metal.cooling_data, my_rates->cloudy_metal.heating_data, &my_rates->cloudy_data_new,
-    &my_chemistry->use_volumetric_heating_rate, &my_chemistry->use_specific_heating_rate, pack.fields.volumetric_heating_rate, pack.fields.specific_heating_rate,
-    &my_chemistry->use_temperature_floor, &my_chemistry->temperature_floor_scalar, pack.fields.temperature_floor,
-    &my_chemistry->use_isrf_field, pack.fields.isrf_habing,
-    &my_chemistry->three_body_rate, &pack.fwd_args.anydust, &my_chemistry->H2_self_shielding,
-    my_rates->k1, my_rates->k2, my_rates->k3, my_rates->k4, my_rates->k5, my_rates->k6, my_rates->k7, my_rates->k8, my_rates->k9, my_rates->k10,
-    my_rates->k11, my_rates->k12, my_rates->k13, my_rates->k13dd, my_rates->k14, my_rates->k15, my_rates->k16,
-    my_rates->k17, my_rates->k18, my_rates->k19, my_rates->k22,
-    &my_uvb_rates.k24, &my_uvb_rates.k25, &my_uvb_rates.k26, &my_uvb_rates.k27, &my_uvb_rates.k28, &my_uvb_rates.k29, &my_uvb_rates.k30, &my_uvb_rates.k31,
-    my_rates->k50, my_rates->k51, my_rates->k52, my_rates->k53, my_rates->k54, my_rates->k55, my_rates->k56,
-    my_rates->k57, my_rates->k58, &my_chemistry->NumberOfDustTemperatureBins, &my_chemistry->DustTemperatureStart, &my_chemistry->DustTemperatureEnd, my_rates->h2dust,
-    my_rates->n_cr_n, my_rates->n_cr_d1, my_rates->n_cr_d2,
-    pack.other_scratch_buf.h2dust, pack.main_scratch_buf.chemheatrates_buf.n_cr_n, pack.main_scratch_buf.chemheatrates_buf.n_cr_d1, pack.main_scratch_buf.chemheatrates_buf.n_cr_d2,
-    &pack.fwd_args.dom, &internalu.coolunit, &internalu.tbase1, &internalu.xbase1, &pack.fwd_args.dx_cgs, &pack.fwd_args.c_ljeans,
-    pack.fields.RT_HI_ionization_rate, pack.fields.RT_HeI_ionization_rate, pack.fields.RT_HeII_ionization_rate, pack.fields.RT_H2_dissociation_rate,
-    pack.fields.RT_heating_rate, pack.fields.H2_self_shielding_length, &pack.fwd_args.chunit, &local_itmask_nr,
-    &pack.local_itmask_metal,
-     &my_chemistry->metal_chemistry, &my_chemistry->grain_growth, &my_chemistry->use_primordial_continuum_opacity, &my_chemistry->tabulated_cooling_minimum_temperature,
-     my_rates->k125, my_rates->k129, my_rates->k130, my_rates->k131, my_rates->k132,
-     my_rates->k133, my_rates->k134, my_rates->k135, my_rates->k136, my_rates->k137,
-     my_rates->k148, my_rates->k149, my_rates->k150, my_rates->k151, my_rates->k152,
-     my_rates->k153,
-     my_rates->kz15, my_rates->kz16, my_rates->kz17, my_rates->kz18, my_rates->kz19,
-     my_rates->kz20, my_rates->kz21, my_rates->kz22, my_rates->kz23, my_rates->kz24,
-     my_rates->kz25, my_rates->kz26, my_rates->kz27, my_rates->kz28, my_rates->kz29,
-     my_rates->kz30, my_rates->kz31, my_rates->kz32, my_rates->kz33, my_rates->kz34,
-     my_rates->kz35, my_rates->kz36, my_rates->kz37, my_rates->kz38, my_rates->kz39,
-     my_rates->kz40, my_rates->kz41, my_rates->kz42, my_rates->kz43, my_rates->kz44,
-     my_rates->kz45, my_rates->kz46, my_rates->kz47, my_rates->kz48, my_rates->kz49,
-     my_rates->kz50, my_rates->kz51, my_rates->kz52, my_rates->kz53, my_rates->kz54,
-     my_rates->cieY06,
-     my_rates->LH2.props.dimension, &my_rates->LH2.props.data_size,
-     my_rates->LH2.props.parameters[0], my_rates->LH2.props.parameters[1], my_rates->LH2.props.parameters[2],
-     &my_rates->LH2.props.parameter_spacing[0], &my_rates->LH2.props.parameter_spacing[1], &my_rates->LH2.props.parameter_spacing[2], my_rates->LH2.data,
-     my_rates->LHD.props.dimension, &my_rates->LHD.props.data_size,
-     my_rates->LHD.props.parameters[0], my_rates->LHD.props.parameters[1], my_rates->LHD.props.parameters[2],
-     &my_rates->LHD.props.parameter_spacing[0], &my_rates->LHD.props.parameter_spacing[1], &my_rates->LHD.props.parameter_spacing[2], my_rates->LHD.data,
-     my_rates->LCI.props.dimension, &my_rates->LCI.props.data_size,
-     my_rates->LCI.props.parameters[0], my_rates->LCI.props.parameters[1], my_rates->LCI.props.parameters[2],
-     &my_rates->LCI.props.parameter_spacing[0], &my_rates->LCI.props.parameter_spacing[1], &my_rates->LCI.props.parameter_spacing[2], my_rates->LCI.data,
-     my_rates->LCII.props.dimension, &my_rates->LCII.props.data_size,
-     my_rates->LCII.props.parameters[0], my_rates->LCII.props.parameters[1], my_rates->LCII.props.parameters[2],
-     &my_rates->LCII.props.parameter_spacing[0], &my_rates->LCII.props.parameter_spacing[1], &my_rates->LCII.props.parameter_spacing[2], my_rates->LCII.data,
-     my_rates->LOI.props.dimension, &my_rates->LOI.props.data_size,
-     my_rates->LOI.props.parameters[0], my_rates->LOI.props.parameters[1], my_rates->LOI.props.parameters[2],
-     &my_rates->LOI.props.parameter_spacing[0], &my_rates->LOI.props.parameter_spacing[1], &my_rates->LOI.props.parameter_spacing[2], my_rates->LOI.data,
-     my_rates->LCO.props.dimension, &my_rates->LCO.props.data_size,
-     my_rates->LCO.props.parameters[0], my_rates->LCO.props.parameters[1], my_rates->LCO.props.parameters[2],
-     &my_rates->LCO.props.parameter_spacing[0], &my_rates->LCO.props.parameter_spacing[1], &my_rates->LCO.props.parameter_spacing[2], my_rates->LCO.data,
-     my_rates->LOH.props.dimension, &my_rates->LOH.props.data_size,
-     my_rates->LOH.props.parameters[0], my_rates->LOH.props.parameters[1], my_rates->LOH.props.parameters[2],
-     &my_rates->LOH.props.parameter_spacing[0], &my_rates->LOH.props.parameter_spacing[1], &my_rates->LOH.props.parameter_spacing[2], my_rates->LOH.data,
-     my_rates->LH2O.props.dimension, &my_rates->LH2O.props.data_size,
-     my_rates->LH2O.props.parameters[0], my_rates->LH2O.props.parameters[1], my_rates->LH2O.props.parameters[2],
-     &my_rates->LH2O.props.parameter_spacing[0], &my_rates->LH2O.props.parameter_spacing[1], &my_rates->LH2O.props.parameter_spacing[2], my_rates->LH2O.data,
-     my_rates->alphap.props.dimension, &my_rates->alphap.props.data_size,
-     my_rates->alphap.props.parameters[0], my_rates->alphap.props.parameters[1], &my_rates->alphap.props.parameter_spacing[0], &my_rates->alphap.props.parameter_spacing[1],
-     my_rates->alphap.data,
-     &my_chemistry->multi_metals, &my_chemistry->metal_abundances, &my_chemistry->dust_species, &my_chemistry->use_multiple_dust_temperatures, &my_chemistry->dust_sublimation,
-     pack.fields.local_ISM_metal_density, pack.fields.ccsn13_metal_density, pack.fields.ccsn20_metal_density,
-     pack.fields.ccsn25_metal_density, pack.fields.ccsn30_metal_density, pack.fields.fsn13_metal_density,
-     pack.fields.fsn15_metal_density, pack.fields.fsn50_metal_density, pack.fields.fsn80_metal_density,
-     pack.fields.pisn170_metal_density, pack.fields.pisn200_metal_density, pack.fields.y19_metal_density,
-     &my_rates->SN0_N,
-     my_rates->SN0_fSiM, my_rates->SN0_fFeM, my_rates->SN0_fMg2SiO4, my_rates->SN0_fMgSiO3,
-     my_rates->SN0_fFe3O4, my_rates->SN0_fAC, my_rates->SN0_fSiO2D, my_rates->SN0_fMgO,
-     my_rates->SN0_fFeS, my_rates->SN0_fAl2O3,
-     my_rates->SN0_freforg, my_rates->SN0_fvolorg, my_rates->SN0_fH2Oice,
-     my_rates->SN0_r0SiM, my_rates->SN0_r0FeM, my_rates->SN0_r0Mg2SiO4, my_rates->SN0_r0MgSiO3,
-     my_rates->SN0_r0Fe3O4, my_rates->SN0_r0AC, my_rates->SN0_r0SiO2D, my_rates->SN0_r0MgO,
-     my_rates->SN0_r0FeS, my_rates->SN0_r0Al2O3,
-     my_rates->SN0_r0reforg, my_rates->SN0_r0volorg, my_rates->SN0_r0H2Oice,
-     my_rates->gr_N, &my_rates->gr_Size, &my_rates->gr_dT, my_rates->gr_Td,
-     my_rates->SN0_kpSiM, my_rates->SN0_kpFeM, my_rates->SN0_kpMg2SiO4, my_rates->SN0_kpMgSiO3,
-     my_rates->SN0_kpFe3O4, my_rates->SN0_kpAC, my_rates->SN0_kpSiO2D, my_rates->SN0_kpMgO,
-     my_rates->SN0_kpFeS, my_rates->SN0_kpAl2O3,
-     my_rates->SN0_kpreforg, my_rates->SN0_kpvolorg, my_rates->SN0_kpH2Oice,
-     my_rates->h2dustS, my_rates->h2dustC, my_rates->grain_growth_rate,
-     pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::SiM_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::FeM_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::Mg2SiO4_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::MgSiO3_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::Fe3O4_dust],
-     pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::AC_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::SiO2_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::MgO_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::FeS_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::Al2O3_dust],
-     pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::ref_org_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::vol_org_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::H2O_ice_dust],
-     my_rates->gas_grain2, &my_rates->gamma_isrf2,
-     &pack.local_edot_handling,
-     &my_chemistry->radiative_transfer_HDI_dissociation, pack.fields.RT_HDI_dissociation_rate, &my_chemistry->radiative_transfer_metal_ionization, pack.fields.RT_CI_ionization_rate, pack.fields.RT_OI_ionization_rate,
-     &my_chemistry->radiative_transfer_metal_dissociation, pack.fields.RT_CO_dissociation_rate, pack.fields.RT_OH_dissociation_rate, pack.fields.RT_H2O_dissociation_rate,
-     &my_chemistry->radiative_transfer_use_H2_shielding, &my_chemistry->H2_custom_shielding, pack.fields.H2_custom_shielding_factor
-    );
-
+  lookup_cool_rates0d(
+    &dt_FIXME, &nsp, ycur, ydot, &local_itmask_nr, my_chemistry, my_rates,
+    my_uvb_rates, internalu, pack
+  );
 }
+
+void lookup_cool_rates0d(
+  double* dtit, int* nsp, double* dsp, double* dspdot, gr_mask_type* itmask,
+  chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
+  photo_rate_storage my_uvb_rates, InternalGrUnits internalu,
+  grackle::impl::time_deriv_0d::ContextPack pack
+)
+{
+
+  // -------------------------------------------------------------------
+
+
+  // General Arguments
+
+  const int i_eng = 52;
+  gr_float e;
+
+  // Constants (I honestly don't think most of these should be defined)
+  const int itmax = 10000;
+
+#ifdef GRACKLE_FLOAT_4
+  const gr_float tolerance = (gr_float)(1.0e-05);
+#else
+  const gr_float tolerance = (gr_float)(1.0e-10);
+#endif
+
+  const double mh_local_var = mh_grflt;
+  const double pi_local_var = pi_fortran_val;
+
+  // Locals
+
+  int i, j, k;
+  int t, dj, dk;
+  double ttmin, energy, comp1, comp2;
+  double dbase1, uvel;
+  double heq1, heq2, eqk221, eqk222, eqk131, eqk132, eqt1, eqt2, eqtdef, dheq, heq, dlogtem;
+
+  // row temporaries
+
+  // -- removed line (previously just declared arg types) -- 
+  double ttot, olddtit;
+
+  // Rate equation row temporaries
+
+  double HI, HII, HeI, HeII, HeIII, HM, H2I, H2II, de, dedot, HIdot, dedot_prev, DI, DII, HDI, HIdot_prev, k24shield, k25shield, k26shield, k28shield, k29shield, k30shield, k31shield, k1, k2, k3, k4, k5, k6, k7, k8, k9, k10, k11, k12, k13, k14, k15, k16, k17, k18, k19, k22, k50, k51, k52, k53, k54, k55, k56, k57, k58;
+  std::vector<double> k13dd(14);
+  gr_float DM, HDII, HeHII, CI, CII, CO, CO2, OI, OH, H2O, O2, SiI, SiOI, SiO2I, CH, CH2, COII, OII, OHII, H2OII, H3OII, O2II, Mg, Al, S, Fe;
+  gr_float SiM, FeM, Mg2SiO4, MgSiO3, Fe3O4, AC, SiO2D, MgO, FeS, Al2O3, reforg, volorg, H2Oice;
+  double k125, k129, k130, k131, k132, k133, k134, k135, k136, k137, k148, k149, k150, k151, k152, k153, kz15, kz16, kz17, kz18, kz19, kz20, kz21, kz22, kz23, kz24, kz25, kz26, kz27, kz28, kz29, kz30, kz31, kz32, kz33, kz34, kz35, kz36, kz37, kz38, kz39, kz40, kz41, kz42, kz43, kz44, kz45, kz46, kz47, kz48, kz49, kz50, kz51, kz52, kz53, kz54;
+
+  double kdSiM, kdFeM, kdMg2SiO4, kdMgSiO3, kdFe3O4, kdAC, kdSiO2D, kdMgO, kdFeS, kdAl2O3, kdreforg, kdvolorg, kdH2Oice;
+
+  // locals
+
+  int isp;
+  double scoef, acoef;
+  double atten, H2delta, h2heatfac, min_metallicity;
+
+  // The following are defined to aid with transcription
+  int local_in, local_jn, local_kn, local_idim;
+  int local_j, local_k, local_is, local_ie;
+
+  
+  // \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
+  // =======================================================================
+
+  if ( my_chemistry->primordial_chemistry > 0 )  {
+    de      = dsp[ 1-1];
+    HI      = dsp[ 2-1];
+    HII     = dsp[ 3-1];
+    HeI     = dsp[ 4-1];
+    HeII    = dsp[ 5-1];
+    HeIII   = dsp[ 6-1];
+  }
+  if ( my_chemistry->primordial_chemistry > 1 )  {
+    HM      = dsp[ 7-1];
+    H2I     = dsp[ 8-1];
+    H2II    = dsp[ 9-1];
+  }
+  if ( my_chemistry->primordial_chemistry > 2 )  {
+    DI      = dsp[10-1];
+    DII     = dsp[11-1];
+    HDI     = dsp[12-1];
+  }
+  if ( my_chemistry->primordial_chemistry > 3 )  {
+    DM      = dsp[13-1];
+    HDII    = dsp[14-1];
+    HeHII   = dsp[15-1];
+  }
+  if ( pack.local_itmask_metal != MASK_FALSE )  {
+    if (my_chemistry->metal_chemistry == 1)  {
+      CI      = dsp[16-1];
+      CII     = dsp[17-1];
+      CO      = dsp[18-1];
+      CO2     = dsp[19-1];
+      OI      = dsp[20-1];
+      OH      = dsp[21-1];
+      H2O     = dsp[22-1];
+      O2      = dsp[23-1];
+      SiI     = dsp[24-1];
+      SiOI    = dsp[25-1];
+      SiO2I   = dsp[26-1];
+      CH      = dsp[27-1];
+      CH2     = dsp[28-1];
+      COII    = dsp[29-1];
+      OII     = dsp[30-1];
+      OHII    = dsp[31-1];
+      H2OII   = dsp[32-1];
+      H3OII   = dsp[33-1];
+      O2II    = dsp[34-1];
+      if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1 ) )  {
+        if (my_chemistry->dust_species > 0)  {
+          Mg      = dsp[35-1];
+        }
+        if (my_chemistry->dust_species > 1)  {
+          Al      = dsp[36-1];
+          S       = dsp[37-1];
+          Fe      = dsp[38-1];
+        }
+      }
+    }
+    if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1 ) )  {
+      if (my_chemistry->dust_species > 0)  {
+        MgSiO3  = dsp[39-1];
+        AC      = dsp[40-1];
+      }
+      if (my_chemistry->dust_species > 1)  {
+        SiM     = dsp[41-1];
+        FeM     = dsp[42-1];
+        Mg2SiO4 = dsp[43-1];
+        Fe3O4   = dsp[44-1];
+        SiO2D   = dsp[45-1];
+        MgO     = dsp[46-1];
+        FeS     = dsp[47-1];
+        Al2O3   = dsp[48-1];
+      }
+      if (my_chemistry->dust_species > 2)  {
+        reforg  = dsp[49-1];
+        volorg  = dsp[50-1];
+        H2Oice  = dsp[51-1];
+      }
+    }
+  }
+  e     = dsp[i_eng-1];
+
+  local_in = 1;
+  local_jn = 1;
+  local_kn = 1;
+  local_idim = 1;
+  local_is = 0;
+  local_ie = 0;
+  local_j = 1;
+  local_k = 1;
+
+  // Compute the cooling rate, tgas, tdust, and metallicity for this row
+
+  if (pack.local_edot_handling == 1)  {
+     FORTRAN_NAME(cool1d_multi_g)(
+              pack.fields.density, &e, pack.fields.x_velocity, pack.fields.y_velocity, pack.fields.z_velocity, &de, &HI, &HII, &HeI, &HeII, &HeIII,
+              &local_in, &local_jn, &local_kn, &my_chemistry->NumberOfTemperatureBins,
+              &internalu.extfields_in_comoving, &my_chemistry->primordial_chemistry, &pack.fwd_args.imetal, &my_chemistry->metal_cooling,
+              &my_chemistry->h2_on_dust, &my_chemistry->dust_chemistry, &my_chemistry->use_dust_density_field, &my_chemistry->dust_recombination_cooling,
+              &local_idim,  &local_is,  &local_ie, &local_j,
+              &local_k, &my_chemistry->ih2co, &my_chemistry->ipiht, &pack.fwd_args.iter, &my_chemistry->photoelectric_heating,
+              &internalu.a_value, &my_chemistry->TemperatureStart, &my_chemistry->TemperatureEnd, &my_chemistry->SolarMetalFractionByMass, &my_chemistry->local_dust_to_gas_ratio,
+              &internalu.utem, &internalu.uxyz, &internalu.a_units, &internalu.urho, &internalu.tbase1,
+              &my_chemistry->Gamma, &my_chemistry->HydrogenFractionByMass,
+              my_rates->ceHI, my_rates->ceHeI, my_rates->ceHeII, my_rates->ciHI, my_rates->ciHeI,
+              my_rates->ciHeIS, my_rates->ciHeII, my_rates->reHII, my_rates->reHeII1,
+              my_rates->reHeII2, my_rates->reHeIII, my_rates->brem, &my_rates->comp, &my_rates->gammah,
+              &my_chemistry->interstellar_radiation_field, my_rates->regr, &my_rates->gamma_isrf, &my_uvb_rates.comp_xray, &my_uvb_rates.temp_xray,
+              &my_uvb_rates.piHI, &my_uvb_rates.piHeI, &my_uvb_rates.piHeII, &comp1, &comp2,
+              &HM, &H2I, &H2II, &DI, &DII, &HDI, pack.fields.metal_density, pack.fields.dust_density,
+              my_rates->hyd01k, my_rates->h2k01, my_rates->vibh, my_rates->roth, my_rates->rotl,
+              pack.main_scratch_buf.coolingheating_buf.hyd01k, pack.main_scratch_buf.coolingheating_buf.h2k01, pack.main_scratch_buf.coolingheating_buf.vibh, pack.main_scratch_buf.coolingheating_buf.roth, pack.main_scratch_buf.coolingheating_buf.rotl,
+              my_rates->GP99LowDensityLimit, my_rates->GP99HighDensityLimit, pack.main_scratch_buf.coolingheating_buf.gpldl, pack.main_scratch_buf.coolingheating_buf.gphdl,
+              my_rates->HDlte, my_rates->HDlow, pack.main_scratch_buf.coolingheating_buf.hdlte, pack.main_scratch_buf.coolingheating_buf.hdlow,
+              my_rates->GAHI, my_rates->GAH2, my_rates->GAHe, my_rates->GAHp, my_rates->GAel,
+              my_rates->H2LTE, my_rates->gas_grain,
+              pack.main_scratch_buf.coolingheating_buf.ceHI, pack.main_scratch_buf.coolingheating_buf.ceHeI, pack.main_scratch_buf.coolingheating_buf.ceHeII, pack.main_scratch_buf.coolingheating_buf.ciHI, pack.main_scratch_buf.coolingheating_buf.ciHeI, pack.main_scratch_buf.coolingheating_buf.ciHeIS, pack.main_scratch_buf.coolingheating_buf.ciHeII,
+              pack.main_scratch_buf.coolingheating_buf.reHII, pack.main_scratch_buf.coolingheating_buf.reHeII1, pack.main_scratch_buf.coolingheating_buf.reHeII2, pack.main_scratch_buf.coolingheating_buf.reHeIII, pack.main_scratch_buf.coolingheating_buf.brem,
+              pack.main_scratch_buf.logTlininterp_buf.indixe, pack.main_scratch_buf.logTlininterp_buf.t1, pack.main_scratch_buf.logTlininterp_buf.t2, pack.main_scratch_buf.logTlininterp_buf.logtem, pack.main_scratch_buf.logTlininterp_buf.tdef, pack.other_scratch_buf.edot,
+              pack.other_scratch_buf.tgas, pack.main_scratch_buf.cool1dmulti_buf.tgasold, pack.other_scratch_buf.mmw, pack.other_scratch_buf.p2d, pack.other_scratch_buf.tdust, pack.other_scratch_buf.metallicity,
+              pack.other_scratch_buf.dust2gas, pack.other_scratch_buf.rhoH, pack.main_scratch_buf.cool1dmulti_buf.mynh, pack.main_scratch_buf.cool1dmulti_buf.myde,
+              pack.main_scratch_buf.cool1dmulti_buf.gammaha_eff, pack.main_scratch_buf.cool1dmulti_buf.gasgr_tdust, pack.main_scratch_buf.cool1dmulti_buf.regr,
+              &my_chemistry->self_shielding_method, &my_uvb_rates.crsHI, &my_uvb_rates.crsHeI, &my_uvb_rates.crsHeII,
+              &my_uvb_rates.k24, &my_uvb_rates.k26,
+              &my_chemistry->use_radiative_transfer, pack.fields.RT_heating_rate,
+              &my_chemistry->h2_optical_depth_approximation, &my_chemistry->cie_cooling, &my_chemistry->h2_cooling_rate, &my_chemistry->hd_cooling_rate, my_rates->cieco, pack.main_scratch_buf.coolingheating_buf.cieco,
+              &my_chemistry->cmb_temperature_floor, &my_chemistry->UVbackground, &my_chemistry->cloudy_electron_fraction_factor,
+              &my_rates->cloudy_primordial.grid_rank, my_rates->cloudy_primordial.grid_dimension,
+              my_rates->cloudy_primordial.grid_parameters[0], my_rates->cloudy_primordial.grid_parameters[1], my_rates->cloudy_primordial.grid_parameters[2], my_rates->cloudy_primordial.grid_parameters[3], my_rates->cloudy_primordial.grid_parameters[4],
+              &my_rates->cloudy_primordial.data_size, my_rates->cloudy_primordial.cooling_data, my_rates->cloudy_primordial.heating_data, my_rates->cloudy_primordial.mmw_data,
+              &my_rates->cloudy_metal.grid_rank, my_rates->cloudy_metal.grid_dimension,
+              my_rates->cloudy_metal.grid_parameters[0], my_rates->cloudy_metal.grid_parameters[1], my_rates->cloudy_metal.grid_parameters[2], my_rates->cloudy_metal.grid_parameters[3], my_rates->cloudy_metal.grid_parameters[4],
+              &my_rates->cloudy_metal.data_size, my_rates->cloudy_metal.cooling_data, my_rates->cloudy_metal.heating_data, &my_rates->cloudy_data_new,
+              &my_chemistry->use_volumetric_heating_rate, &my_chemistry->use_specific_heating_rate, pack.fields.volumetric_heating_rate, pack.fields.specific_heating_rate,
+              &my_chemistry->use_temperature_floor, &my_chemistry->temperature_floor_scalar, pack.fields.temperature_floor,
+              &my_chemistry->use_isrf_field, pack.fields.isrf_habing, itmask, &pack.local_itmask_metal,
+             &my_chemistry->metal_chemistry, &my_chemistry->grain_growth, &my_chemistry->use_primordial_continuum_opacity, &my_chemistry->tabulated_cooling_minimum_temperature,
+             &DM, &HDII, &HeHII,
+             &CI, &CII, &CO, &CO2,
+             &OI, &OH, &H2O, &O2,
+             &SiI, &SiOI, &SiO2I,
+             &CH, &CH2, &COII, &OII,
+             &OHII, &H2OII, &H3OII, &O2II,
+             &Mg, &Al, &S, &Fe,
+             &SiM, &FeM, &Mg2SiO4, &MgSiO3, &Fe3O4,
+             &AC, &SiO2D, &MgO, &FeS, &Al2O3,
+             &reforg, &volorg, &H2Oice,
+             my_rates->cieY06,
+             my_rates->LH2.props.dimension, &my_rates->LH2.props.data_size,
+             my_rates->LH2.props.parameters[0], my_rates->LH2.props.parameters[1], my_rates->LH2.props.parameters[2],
+             &my_rates->LH2.props.parameter_spacing[0], &my_rates->LH2.props.parameter_spacing[1], &my_rates->LH2.props.parameter_spacing[2], my_rates->LH2.data,
+             my_rates->LHD.props.dimension, &my_rates->LHD.props.data_size,
+             my_rates->LHD.props.parameters[0], my_rates->LHD.props.parameters[1], my_rates->LHD.props.parameters[2],
+             &my_rates->LHD.props.parameter_spacing[0], &my_rates->LHD.props.parameter_spacing[1], &my_rates->LHD.props.parameter_spacing[2], my_rates->LHD.data,
+             my_rates->LCI.props.dimension, &my_rates->LCI.props.data_size,
+             my_rates->LCI.props.parameters[0], my_rates->LCI.props.parameters[1], my_rates->LCI.props.parameters[2],
+             &my_rates->LCI.props.parameter_spacing[0], &my_rates->LCI.props.parameter_spacing[1], &my_rates->LCI.props.parameter_spacing[2], my_rates->LCI.data,
+             my_rates->LCII.props.dimension, &my_rates->LCII.props.data_size,
+             my_rates->LCII.props.parameters[0], my_rates->LCII.props.parameters[1], my_rates->LCII.props.parameters[2],
+             &my_rates->LCII.props.parameter_spacing[0], &my_rates->LCII.props.parameter_spacing[1], &my_rates->LCII.props.parameter_spacing[2], my_rates->LCII.data,
+             my_rates->LOI.props.dimension, &my_rates->LOI.props.data_size,
+             my_rates->LOI.props.parameters[0], my_rates->LOI.props.parameters[1], my_rates->LOI.props.parameters[2],
+             &my_rates->LOI.props.parameter_spacing[0], &my_rates->LOI.props.parameter_spacing[1], &my_rates->LOI.props.parameter_spacing[2], my_rates->LOI.data,
+             my_rates->LCO.props.dimension, &my_rates->LCO.props.data_size,
+             my_rates->LCO.props.parameters[0], my_rates->LCO.props.parameters[1], my_rates->LCO.props.parameters[2],
+             &my_rates->LCO.props.parameter_spacing[0], &my_rates->LCO.props.parameter_spacing[1], &my_rates->LCO.props.parameter_spacing[2], my_rates->LCO.data,
+             my_rates->LOH.props.dimension, &my_rates->LOH.props.data_size,
+             my_rates->LOH.props.parameters[0], my_rates->LOH.props.parameters[1], my_rates->LOH.props.parameters[2],
+             &my_rates->LOH.props.parameter_spacing[0], &my_rates->LOH.props.parameter_spacing[1], &my_rates->LOH.props.parameter_spacing[2], my_rates->LOH.data,
+             my_rates->LH2O.props.dimension, &my_rates->LH2O.props.data_size,
+             my_rates->LH2O.props.parameters[0], my_rates->LH2O.props.parameters[1], my_rates->LH2O.props.parameters[2],
+             &my_rates->LH2O.props.parameter_spacing[0], &my_rates->LH2O.props.parameter_spacing[1], &my_rates->LH2O.props.parameter_spacing[2], my_rates->LH2O.data,
+             my_rates->alphap.props.dimension, &my_rates->alphap.props.data_size,
+             my_rates->alphap.props.parameters[0], my_rates->alphap.props.parameters[1], &my_rates->alphap.props.parameter_spacing[0], &my_rates->alphap.props.parameter_spacing[1],
+             my_rates->alphap.data,
+             &my_chemistry->multi_metals, &my_chemistry->metal_abundances, &my_chemistry->dust_species, &my_chemistry->use_multiple_dust_temperatures, &my_chemistry->dust_sublimation,
+             pack.fields.local_ISM_metal_density,
+             pack.fields.ccsn13_metal_density, pack.fields.ccsn20_metal_density, pack.fields.ccsn25_metal_density, pack.fields.ccsn30_metal_density,
+             pack.fields.fsn13_metal_density, pack.fields.fsn15_metal_density, pack.fields.fsn50_metal_density, pack.fields.fsn80_metal_density,
+             pack.fields.pisn170_metal_density, pack.fields.pisn200_metal_density, pack.fields.y19_metal_density,
+             &my_rates->SN0_N,
+             my_rates->SN0_fSiM, my_rates->SN0_fFeM, my_rates->SN0_fMg2SiO4, my_rates->SN0_fMgSiO3,
+             my_rates->SN0_fFe3O4, my_rates->SN0_fAC, my_rates->SN0_fSiO2D, my_rates->SN0_fMgO,
+             my_rates->SN0_fFeS, my_rates->SN0_fAl2O3,
+             my_rates->SN0_freforg, my_rates->SN0_fvolorg, my_rates->SN0_fH2Oice,
+             my_rates->SN0_r0SiM, my_rates->SN0_r0FeM, my_rates->SN0_r0Mg2SiO4, my_rates->SN0_r0MgSiO3,
+             my_rates->SN0_r0Fe3O4, my_rates->SN0_r0AC, my_rates->SN0_r0SiO2D, my_rates->SN0_r0MgO,
+             my_rates->SN0_r0FeS, my_rates->SN0_r0Al2O3,
+             my_rates->SN0_r0reforg, my_rates->SN0_r0volorg, my_rates->SN0_r0H2Oice,
+             my_rates->gr_N, &my_rates->gr_Size, &my_rates->gr_dT, my_rates->gr_Td,
+             my_rates->SN0_kpSiM, my_rates->SN0_kpFeM, my_rates->SN0_kpMg2SiO4, my_rates->SN0_kpMgSiO3,
+             my_rates->SN0_kpFe3O4, my_rates->SN0_kpAC, my_rates->SN0_kpSiO2D, my_rates->SN0_kpMgO,
+             my_rates->SN0_kpFeS, my_rates->SN0_kpAl2O3,
+             my_rates->SN0_kpreforg, my_rates->SN0_kpvolorg, my_rates->SN0_kpH2Oice,
+             pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::SiM_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::FeM_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::Mg2SiO4_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::MgSiO3_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::Fe3O4_dust],
+             pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::AC_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::SiO2_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::MgO_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::FeS_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::Al2O3_dust],
+             pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::ref_org_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::vol_org_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::H2O_ice_dust],
+             my_rates->gas_grain2, &my_rates->gamma_isrf2
+    );
+  }
+
+  // -----------------------------------------------------------
+  // This routine uses the temperature to look up the chemical
+  //   rates which are tabulated in a log table as a function
+  //   of temperature.
+
+   FORTRAN_NAME(lookup_cool_rates1d_g)(&my_chemistry->TemperatureStart, &my_chemistry->TemperatureEnd, &my_chemistry->NumberOfTemperatureBins,
+            &local_j, &local_k, &local_is, &local_ie, &my_chemistry->three_body_rate,
+            &local_in, &local_jn, &local_kn, &my_chemistry->primordial_chemistry, &pack.fwd_args.anydust,
+            &my_chemistry->H2_self_shielding, &my_chemistry->self_shielding_method,
+            pack.other_scratch_buf.tgas, pack.other_scratch_buf.mmw, pack.fields.density, &HI, &HII, &HeI, &HeII, &HeIII,
+            &HM, &H2I, &H2II, &DI, &DII, &HDI,
+            pack.other_scratch_buf.tdust, pack.other_scratch_buf.dust2gas,
+            my_rates->k1, my_rates->k2, my_rates->k3, my_rates->k4, my_rates->k5, my_rates->k6, my_rates->k7, my_rates->k8, my_rates->k9, my_rates->k10,
+            my_rates->k11, my_rates->k12, my_rates->k13, my_rates->k13dd, my_rates->k14, my_rates->k15, my_rates->k16,
+            my_rates->k17, my_rates->k18, my_rates->k19, my_rates->k22,
+            my_rates->k50, my_rates->k51, my_rates->k52, my_rates->k53, my_rates->k54, my_rates->k55, my_rates->k56,
+            my_rates->k57, my_rates->k58, &my_chemistry->NumberOfDustTemperatureBins, &my_chemistry->DustTemperatureStart, &my_chemistry->DustTemperatureEnd, my_rates->h2dust,
+            my_rates->n_cr_n, my_rates->n_cr_d1, my_rates->n_cr_d2,
+            &my_uvb_rates.crsHI, &my_uvb_rates.crsHeI, &my_uvb_rates.crsHeII, &my_uvb_rates.piHI, &my_uvb_rates.piHeI,
+            &k1, &k2, &k3, &k4, &k5, &k6, &k7, &k8, &k9, &k10,
+            &k11, &k12, &k13, &k14, &k15, &k16, &k17, &k18,
+            &k19, &k22, &my_uvb_rates.k24, &my_uvb_rates.k25, &my_uvb_rates.k26, &my_uvb_rates.k28, &my_uvb_rates.k29, &my_uvb_rates.k30, &my_uvb_rates.k31,
+            &k50, &k51, &k52, &k53, &k54, &k55, &k56, &k57,
+            &k58, k13dd.data(), &k24shield, &k25shield, &k26shield,
+            &k28shield, &k29shield, &k30shield,
+            &k31shield, pack.other_scratch_buf.h2dust, pack.main_scratch_buf.chemheatrates_buf.n_cr_n, pack.main_scratch_buf.chemheatrates_buf.n_cr_d1, pack.main_scratch_buf.chemheatrates_buf.n_cr_d2,
+            pack.main_scratch_buf.logTlininterp_buf.t1, pack.main_scratch_buf.logTlininterp_buf.t2, pack.main_scratch_buf.logTlininterp_buf.tdef, pack.main_scratch_buf.logTlininterp_buf.logtem, pack.main_scratch_buf.logTlininterp_buf.indixe,
+            &pack.fwd_args.dom, &internalu.coolunit, &internalu.tbase1, &internalu.xbase1, &pack.fwd_args.dx_cgs, &pack.fwd_args.c_ljeans,
+            &my_chemistry->use_radiative_transfer, pack.fields.RT_H2_dissociation_rate, pack.fields.H2_self_shielding_length, itmask,
+            &pack.local_itmask_metal,
+           &my_chemistry->HydrogenFractionByMass, pack.fields.metal_density,
+           &DM, &HDII, &HeHII, &pack.fwd_args.imetal, &my_chemistry->metal_chemistry, &my_chemistry->grain_growth,
+           &CI, &CII, &CO, &CO2,
+           &OI, &OH, &H2O, &O2,
+           &SiI, &SiOI, &SiO2I,
+           &CH, &CH2, &COII, &OII,
+           &OHII, &H2OII, &H3OII, &O2II,
+           &Mg, &Al, &S, &Fe,
+           &SiM, &FeM, &Mg2SiO4, &MgSiO3, &Fe3O4,
+           &AC, &SiO2D, &MgO, &FeS, &Al2O3,
+           &reforg, &volorg, &H2Oice,
+           my_rates->k125, my_rates->k129, my_rates->k130, my_rates->k131, my_rates->k132,
+           my_rates->k133, my_rates->k134, my_rates->k135, my_rates->k136, my_rates->k137,
+           my_rates->k148, my_rates->k149, my_rates->k150, my_rates->k151, my_rates->k152,
+           my_rates->k153,
+           my_rates->kz15, my_rates->kz16, my_rates->kz17, my_rates->kz18, my_rates->kz19,
+           my_rates->kz20, my_rates->kz21, my_rates->kz22, my_rates->kz23, my_rates->kz24,
+           my_rates->kz25, my_rates->kz26, my_rates->kz27, my_rates->kz28, my_rates->kz29,
+           my_rates->kz30, my_rates->kz31, my_rates->kz32, my_rates->kz33, my_rates->kz34,
+           my_rates->kz35, my_rates->kz36, my_rates->kz37, my_rates->kz38, my_rates->kz39,
+           my_rates->kz40, my_rates->kz41, my_rates->kz42, my_rates->kz43, my_rates->kz44,
+           my_rates->kz45, my_rates->kz46, my_rates->kz47, my_rates->kz48, my_rates->kz49,
+           my_rates->kz50, my_rates->kz51, my_rates->kz52, my_rates->kz53, my_rates->kz54,
+           &k125,  &k129,  &k130,  &k131,  &k132,
+           &k133,  &k134,  &k135,  &k136,  &k137,
+           &k148,  &k149,  &k150,  &k151,  &k152,
+           &k153,
+           &kz15,  &kz16,  &kz17,  &kz18,  &kz19,
+           &kz20,  &kz21,  &kz22,  &kz23,  &kz24,
+           &kz25,  &kz26,  &kz27,  &kz28,  &kz29,
+           &kz30,  &kz31,  &kz32,  &kz33,  &kz34,
+           &kz35,  &kz36,  &kz37,  &kz38,  &kz39,
+           &kz40,  &kz41,  &kz42,  &kz43,  &kz44,
+           &kz45,  &kz46,  &kz47,  &kz48,  &kz49,
+           &kz50,  &kz51,  &kz52,  &kz53,  &kz54,
+           &my_chemistry->multi_metals, &my_chemistry->metal_abundances, &my_chemistry->dust_species, &my_chemistry->use_multiple_dust_temperatures, &my_chemistry->dust_sublimation,
+           pack.fields.local_ISM_metal_density,
+           pack.fields.ccsn13_metal_density, pack.fields.ccsn20_metal_density, pack.fields.ccsn25_metal_density, pack.fields.ccsn30_metal_density,
+           pack.fields.fsn13_metal_density, pack.fields.fsn15_metal_density, pack.fields.fsn50_metal_density, pack.fields.fsn80_metal_density,
+           pack.fields.pisn170_metal_density, pack.fields.pisn200_metal_density, pack.fields.y19_metal_density,
+           &my_rates->SN0_N,
+           my_rates->SN0_fSiM, my_rates->SN0_fFeM, my_rates->SN0_fMg2SiO4, my_rates->SN0_fMgSiO3,
+           my_rates->SN0_fFe3O4, my_rates->SN0_fAC, my_rates->SN0_fSiO2D, my_rates->SN0_fMgO,
+           my_rates->SN0_fFeS, my_rates->SN0_fAl2O3,
+           my_rates->SN0_freforg, my_rates->SN0_fvolorg, my_rates->SN0_fH2Oice,
+           my_rates->SN0_r0SiM, my_rates->SN0_r0FeM, my_rates->SN0_r0Mg2SiO4, my_rates->SN0_r0MgSiO3,
+           my_rates->SN0_r0Fe3O4, my_rates->SN0_r0AC, my_rates->SN0_r0SiO2D, my_rates->SN0_r0MgO,
+           my_rates->SN0_r0FeS, my_rates->SN0_r0Al2O3,
+           my_rates->SN0_r0reforg, my_rates->SN0_r0volorg, my_rates->SN0_r0H2Oice,
+           my_rates->gr_N, &my_rates->gr_Size, &my_rates->gr_dT, my_rates->gr_Td,
+           my_rates->SN0_kpSiM, my_rates->SN0_kpFeM, my_rates->SN0_kpMg2SiO4, my_rates->SN0_kpMgSiO3,
+           my_rates->SN0_kpFe3O4, my_rates->SN0_kpAC, my_rates->SN0_kpSiO2D, my_rates->SN0_kpMgO,
+           my_rates->SN0_kpFeS, my_rates->SN0_kpAl2O3,
+           my_rates->SN0_kpreforg, my_rates->SN0_kpvolorg, my_rates->SN0_kpH2Oice,
+           my_rates->h2dustS, my_rates->h2dustC, pack.other_scratch_buf.rhoH, my_rates->grain_growth_rate, dtit,
+           &kdSiM, &kdFeM, &kdMg2SiO4,
+           &kdMgSiO3, &kdFe3O4, &kdAC, &kdSiO2D, &kdMgO, &kdFeS,
+           &kdAl2O3, &kdreforg, &kdvolorg, &kdH2Oice,
+           pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::SiM_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::FeM_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::Mg2SiO4_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::MgSiO3_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::Fe3O4_dust],
+           pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::AC_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::SiO2_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::MgO_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::FeS_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::Al2O3_dust],
+           pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::ref_org_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::vol_org_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::H2O_ice_dust], &my_chemistry->radiative_transfer_use_H2_shielding,
+           &my_chemistry->H2_custom_shielding, pack.fields.H2_custom_shielding_factor
+  );
+
+  // Compute dedot and HIdot, the rates of change of de and HI
+  //   (should add itmask to this call)
+
+  if (pack.local_edot_handling == 1)  {
+     FORTRAN_NAME(rate_timestep_g)(
+                   &dedot, &HIdot, &my_chemistry->primordial_chemistry, &pack.fwd_args.anydust,
+                   &de, &HI, &HII, &HeI, &HeII, &HeIII, pack.fields.density,
+                   &HM, &H2I, &H2II,
+                   &local_in, &local_jn, &local_kn, &local_is,
+                   &local_ie, &local_j, &local_k,
+                   &k1, &k2, &k3, &k4, &k5, &k6, &k7, &k8, &k9, &k10, &k11,
+                   &k12, &k13, &k14, &k15, &k16, &k17, &k18, &k19, &k22,
+                   &my_uvb_rates.k24, &my_uvb_rates.k25, &my_uvb_rates.k26, &my_uvb_rates.k27, &my_uvb_rates.k28, &my_uvb_rates.k29, &my_uvb_rates.k30,
+                   &k50, &k51, &k52, &k53, &k54, &k55, &k56, &k57, &k58,
+                   pack.other_scratch_buf.h2dust, pack.main_scratch_buf.chemheatrates_buf.n_cr_n, pack.main_scratch_buf.chemheatrates_buf.n_cr_d1, pack.main_scratch_buf.chemheatrates_buf.n_cr_d2, pack.other_scratch_buf.rhoH,
+                   &k24shield, &k25shield, &k26shield,
+                   &k28shield, &k29shield, &k30shield, &k31shield,
+                   &my_chemistry->use_radiative_transfer, &my_chemistry->radiative_transfer_hydrogen_only,
+                   pack.fields.RT_HI_ionization_rate, pack.fields.RT_HeI_ionization_rate, pack.fields.RT_HeII_ionization_rate,
+                   itmask, pack.other_scratch_buf.edot, &pack.fwd_args.chunit, &pack.fwd_args.dom, pack.fields.metal_density,
+                  &HDI, &my_chemistry->metal_chemistry, &CI, &OI, &OH, &CO, &H2O,
+                  &my_chemistry->radiative_transfer_HDI_dissociation, pack.fields.RT_HDI_dissociation_rate, &my_chemistry->radiative_transfer_metal_ionization, pack.fields.RT_CI_ionization_rate, pack.fields.RT_OI_ionization_rate,
+                  &my_chemistry->radiative_transfer_metal_dissociation, pack.fields.RT_CO_dissociation_rate, pack.fields.RT_OH_dissociation_rate, pack.fields.RT_H2O_dissociation_rate
+                       );
+  }
+
+  // Initialize
+
+  std::memset(dspdot, 0, sizeof(double)*i_eng);
+
+
+  // Heating/cooling rate (per unit volume -> gas mass)
+
+  dspdot[i_eng-1] = *(pack.other_scratch_buf.edot) / *(pack.fields.density);
+
+  // A) the 6-species integrator
+  if (my_chemistry->primordial_chemistry == 1)  {
+
+
+
+
+    // 1) HI
+
+    scoef  = k2   *HII       *de;
+    acoef  = k1   *de
+           + k57   *HI
+           + k58   *HeI       /4.
+           + k24shield;
+    if (my_chemistry->use_radiative_transfer == 1) { acoef = acoef + *(pack.fields.RT_HI_ionization_rate); }
+    dspdot[2-1] = dspdot[2-1] + (scoef - acoef * HI);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    // 2) HII
+    scoef  = k1   *HI    *de
+           + k57   *HI    *HI
+           + k58   *HI    *HeI       /4.
+           + k24shield   *HI;
+    if (my_chemistry->use_radiative_transfer == 1)
+        { scoef = scoef + *(pack.fields.RT_HI_ionization_rate)       *HI; }
+    acoef  = k2   *de;
+    dspdot[3-1] = dspdot[3-1] + (scoef - acoef * HII);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    // 3) Electron density
+
+    scoef = 0.
+               + k57   *HI    *HI
+               + k58   *HI    *HeI       /4.
+               + k24shield   *HI
+               + k25shield   *HeII       /4.
+               + k26shield   *HeI       /4.;
+
+    if ( (my_chemistry->use_radiative_transfer == 1)  &&  ( my_chemistry->radiative_transfer_hydrogen_only == 0) )
+        { scoef = scoef + *(pack.fields.RT_HI_ionization_rate)        * HI
+              + *(pack.fields.RT_HeI_ionization_rate)         * HeI         / 4.
+              + *(pack.fields.RT_HeII_ionization_rate)        * HeII        / 4.; }
+    if ( (my_chemistry->use_radiative_transfer == 1)  &&  ( my_chemistry->radiative_transfer_hydrogen_only == 1) )
+        { scoef = scoef + *(pack.fields.RT_HI_ionization_rate)        * HI; }
+
+
+
+    acoef = -(k1   *HI             - k2   *HII
+            + k3   *HeI       /4. -
+         k6   *HeIII       /4.
+            + k5   *HeII       /4. -
+         k4   *HeII       /4.);
+    dspdot[1-1] = dspdot[1-1] + (scoef - acoef * de);
+
+
+
+
+
+  }
+
+  // --- (B) Do helium chemistry in any case: (for all ispecies values) ---
+
+
+
+
+  // 4) HeI
+
+  scoef  = k4   *HeII       *de;
+  acoef  = k3   *de
+               + k26shield;
+
+  if ( (my_chemistry->use_radiative_transfer == 1)  &&  (my_chemistry->radiative_transfer_hydrogen_only == 0))
+      { acoef = acoef + *(pack.fields.RT_HeI_ionization_rate); }
+  if (my_chemistry->primordial_chemistry > 3)  {
+    scoef = scoef +  4. * ( 0.
+        + k152    * HeHII        *    HI        /  5.
+        + k153    * HeHII        *    de        /  5.
+       );
+    acoef = acoef
+        + k148    *   HII
+        + k149    *   HII
+        + k150    *  H2II        /  2.;
+  }
+  dspdot[4-1] = dspdot[4-1] + (scoef - acoef * HeI);
+
+
+  // 5) HeII
+
+  scoef  = k3   *HeI    *de
+         + k6   *HeIII       *de
+         + k26shield   *HeI;
+
+  if ( (my_chemistry->use_radiative_transfer == 1)  &&  (my_chemistry->radiative_transfer_hydrogen_only == 0))
+      { scoef = scoef + *(pack.fields.RT_HeI_ionization_rate)       *HeI; }
+
+  acoef  = k4   *de        + k5   *de
+         + k25shield;
+
+  if ( (my_chemistry->use_radiative_transfer == 1)  &&  (my_chemistry->radiative_transfer_hydrogen_only == 0))
+      { acoef = acoef + *(pack.fields.RT_HeII_ionization_rate); }
+  if (my_chemistry->primordial_chemistry > 3)  {
+    acoef = acoef
+        + k151    *    HI;
+  }
+  dspdot[5-1] = dspdot[5-1] + (scoef - acoef * HeII);
+
+
+  // 6) HeIII
+
+  scoef   = k5   *HeII    *de
+          + k25shield   *HeII;
+  if ((my_chemistry->use_radiative_transfer == 1)  &&  (my_chemistry->radiative_transfer_hydrogen_only == 0))
+      { scoef = scoef + *(pack.fields.RT_HeII_ionization_rate)        * HeII; }
+  acoef   = k6   *de;
+  dspdot[6-1] = dspdot[6-1] + (scoef - acoef * HeIII);
+
+
+
+
+
+  // --- (C) Now do extra 3-species for molecular hydrogen ---
+
+  if (my_chemistry->primordial_chemistry > 1)  {
+
+    // First, do HI/HII with molecular hydrogen terms
+
+
+
+
+    // 1) HI
+    scoef  =      k2    * HII        * de
+           + 2.*k13   * HI         * H2I       /2.
+           +      k11   * HII        * H2I       /2.
+           + 2.*k12   * de         * H2I       /2.
+           +      k14   * HM         * de
+           +      k15   * HM         * HI
+           + 2.*k16   * HM         * HII
+           + 2.*k18   * H2II       * de       /2.
+           +      k19   * H2II       * HM       /2.
+           + 2.*k31shield      * H2I       /2.;
+
+    acoef  =      k1    * de
+           +      k7    * de
+           +      k8    * HM
+           +      k9    * HII
+           +      k10   * H2II       /2.
+           + 2.*k22   * std::pow(HI       ,2)
+           +      k57   * HI
+           +      k58   * HeI       /4.
+           + k24shield;
+
+    if (my_chemistry->use_radiative_transfer == 1) { acoef = acoef + *(pack.fields.RT_HI_ionization_rate); }
+    if (my_chemistry->use_radiative_transfer == 1)  {
+      if ((my_chemistry->primordial_chemistry > 2) && (my_chemistry->radiative_transfer_HDI_dissociation > 0))  {
+        scoef = scoef
+          + *(pack.fields.RT_HDI_dissociation_rate)        * HDI       /3.0;
+      }
+      if ((my_chemistry->metal_chemistry == 1)  && 
+          (pack.local_itmask_metal != MASK_FALSE))  {
+        if (my_chemistry->radiative_transfer_metal_dissociation > 0)  {
+          scoef = scoef
+            + *(pack.fields.RT_OH_dissociation_rate)         * OH        /17.0
+            + *(pack.fields.RT_H2O_dissociation_rate)        * H2O       /18.0;
+        }
+      }
+    }
+
+    if (pack.fwd_args.anydust != MASK_FALSE)  {
+      if(pack.local_itmask_metal != MASK_FALSE   )  {
+        acoef = acoef + 2. * *(pack.other_scratch_buf.h2dust)    * *(pack.other_scratch_buf.rhoH);
+      }
+    }
+    // contribution of minor species
+    if (my_chemistry->primordial_chemistry > 2)  {
+      scoef = scoef
+            + k50    * HII        * DI         / 2.
+            + k54    * H2I        * DI         / 4.;
+      acoef = acoef
+            + k51    * DII        / 2.
+            + k55    * HDI        / 3.;
+    }
+
+    if (my_chemistry->primordial_chemistry > 3)  {
+      scoef = scoef
+          + k131    *  HDII        *    de        /  3.
+          + k134    *   HII        *    DM        /  2.
+          + k135    *    HM        *    DI        /  2.
+          + k150    *   HeI        *  H2II        /  8.
+          + k153    * HeHII        *    de        /  5.;
+      acoef = acoef
+          + k125    *  HDII        /  3.
+          + k130    *   DII        /  2.
+          + k136    *    DM        /  2.
+          + k137    *    DM        /  2.
+          + k151    *  HeII        /  4.
+          + k152    * HeHII        /  5.;
+    }
+
+    if ((my_chemistry->metal_chemistry == 1)  && 
+        (pack.local_itmask_metal != MASK_FALSE))  {
+      scoef = scoef
+          + kz20    *    CI        *   H2I        / 24.
+          + kz21    *    OI        *   H2I        / 32.
+          + kz22    *   HII        *    OI        / 16.
+          + kz23    *   H2I        *    CH        / 26.
+          + kz24    *   H2I        *    OH        / 34.
+          + kz26    *    OH        *    CO        / 476.
+          + kz28    *    CI        *    OH        / 204.
+          + kz32    *    OI        *    CH        / 208.
+          + kz33    *    OI        *    OH        / 272.
+          + kz34    *   HII        *    OH        / 17.
+          + kz35    *   HII        *   H2O        / 18.
+          + kz36    *   HII        *    O2        / 32.
+          + kz37    *   CII        *    OH        / 204.
+          + kz40    *   OII        *   H2I        / 32.
+          + kz41    *  OHII        *   H2I        / 34.
+          + kz42    * H2OII        *   H2I        / 36.
+          + kz46    * H2OII        *    de        / 18.
+          + kz48    * H3OII        *    de        / 19.
+          + kz49    * H3OII        *    de        / 9.5
+          + kz52    *   SiI        *    OH        / 476.
+          + kz54    *  SiOI        *    OH        / 748.;
+      acoef = acoef
+          + kz15    *    CH        / 13.
+          + kz16    *   CH2        / 14.
+          + kz17    *    OH        / 17.
+          + kz18    *   H2O        / 18.
+          + kz19    *    O2        / 32.
+          + kz27    *    CI        / 12.
+          + kz30    *    OI        / 16.
+          + kz39    *   OII        / 16.
+          + kz43    *  COII        / 28.;
+    }
+    dspdot[2-1] = dspdot[2-1] + (scoef - acoef * HI);
+
+
+
+
+
+
+
+
+
+
+
+
+
+    // 2) HII
+
+    scoef  =    k1     * HI        * de
+           +    k10    * H2II       *HI       /2.
+           +    k57    * HI        * HI
+           +    k58    * HI        * HeI       /4.
+           + k24shield   *HI;
+
+    if (my_chemistry->use_radiative_transfer == 1)
+        { scoef = scoef + *(pack.fields.RT_HI_ionization_rate)        * HI; }
+
+    acoef  =    k2     * de
+           +    k9     * HI
+           +    k11    * H2I       /2.
+           +    k16    * HM
+           +    k17    * HM;
+    // contribution of minor species
+    if (my_chemistry->primordial_chemistry > 2)  {
+      scoef = scoef
+            + k51    * HI         * DII        / 2.
+            + k52    * H2I        * DII        / 4.;
+      acoef = acoef
+            + k50    * DI         / 2.
+            + k53    * HDI        / 3.;
+    }
+
+    if (my_chemistry->primordial_chemistry > 3)  {
+      scoef = scoef
+          + k125    *  HDII        *    HI        /  3.;
+      acoef = acoef
+          + k129    *    DI        /  2.
+          + k134    *    DM        /  2.
+          + k148    *   HeI        /  4.
+          + k149    *   HeI        /  4.;
+    }
+
+    if ((my_chemistry->metal_chemistry == 1)  && 
+        (pack.local_itmask_metal != MASK_FALSE))  {
+      scoef = scoef
+          + kz39    *   OII        *    HI        / 16.
+          + kz43    *  COII        *    HI        / 28.;
+      acoef = acoef
+          + kz22    *    OI        / 16.
+          + kz34    *    OH        / 17.
+          + kz35    *   H2O        / 18.
+          + kz36    *    O2        / 32.;
+    }
+    dspdot[3-1] = dspdot[3-1] + (scoef - acoef * HII);
+
+    
+    // 3) electrons:
+
+    scoef =   k8    * HM        * HI
+           +  k15   * HM        * HI
+           +  k17   * HM        * HII
+           +  k57   * HI        * HI
+           +  k58   * HI        * HeI       /4.
+    // 
+           + k24shield   *HI
+           + k25shield   *HeII    /4.
+           + k26shield   *HeI    /4.;
+
+    if ( (my_chemistry->use_radiative_transfer == 1)  &&  (my_chemistry->radiative_transfer_hydrogen_only == 0) )
+        { scoef = scoef + *(pack.fields.RT_HI_ionization_rate)        * HI
+              + *(pack.fields.RT_HeI_ionization_rate)         * HeI      / 4.
+              + *(pack.fields.RT_HeII_ionization_rate)        * HeII     / 4.; }
+    if ( (my_chemistry->use_radiative_transfer == 1)  &&  (my_chemistry->radiative_transfer_hydrogen_only == 1) )
+        { scoef = scoef + *(pack.fields.RT_HI_ionization_rate)        * HI; }
+    if (my_chemistry->use_radiative_transfer == 1)  {
+      if ((my_chemistry->metal_chemistry == 1)  && 
+          (pack.local_itmask_metal != MASK_FALSE))  {
+        if (my_chemistry->radiative_transfer_metal_ionization > 0)  {
+          scoef = scoef
+            + *(pack.fields.RT_CI_ionization_rate)        * CI       /12.0
+            + *(pack.fields.RT_OI_ionization_rate)        * OI       /16.0;
+        }
+      }
+    }
+
+    acoef = - (k1    *HI           - k2   *HII
+            +  k3    *HeI       /4. -
+         k6   *HeIII       /4.
+            +  k5    *HeII       /4. -
+         k4   *HeII       /4.
+            +  k14   *HM
+            -  k7    *HI
+            -  k18   *H2II       /2.);
+    // contribution of minor species
+    if (my_chemistry->primordial_chemistry > 2)  {
+      scoef = scoef
+            + k56    * DI         * HM        / 2.;
+      acoef = acoef
+            - k1     * DI         / 2.
+            + k2     * DII        / 2.;
+    }
+
+    if (my_chemistry->primordial_chemistry > 3)  {
+      scoef = scoef
+          + k137    *    DM        *    HI        /  2.;
+      acoef = acoef
+          + k131    *  HDII        /  3.
+          + k132    *    DI        /  2.
+          + k153    * HeHII        /  5.;
+    }
+
+    if ((my_chemistry->metal_chemistry == 1)  && 
+        (pack.local_itmask_metal != MASK_FALSE))  {
+      scoef = scoef;
+      acoef = acoef
+          + kz44    *   CII        / 12.
+          + kz45    *   OII        / 16.
+          + kz46    * H2OII        / 18.
+          + kz47    * H2OII        / 18.
+          + kz48    * H3OII        / 19.
+          + kz49    * H3OII        / 19.
+          + kz50    *  O2II        / 32.;
+    }
+    dspdot[1-1] = dspdot[1-1] + (scoef - acoef * de);
+
+
+    // 7) H2
+
+    scoef = 2.*(k8     * HM          * HI
+          +       k10    * H2II        * HI       /2.
+          +       k19    * H2II        * HM       /2.
+          +       k22    * HI        * std::pow((HI       ),2.));
+    acoef = ( k13   *HI        + k11   *HII
+            + k12   *de        )
+            + k29shield    + k31shield;
+
+    if (pack.fwd_args.anydust != MASK_FALSE)  {
+      if(pack.local_itmask_metal != MASK_FALSE   )  {
+        scoef = scoef + 2. * *(pack.other_scratch_buf.h2dust)    *
+             HI        * *(pack.other_scratch_buf.rhoH);
+      }
+    }
+    // contribution of minor species
+    if (my_chemistry->primordial_chemistry > 2)  {
+      scoef = scoef + 2. * (
+              k53    * HDI        * HII        / 3.
+            + k55    * HDI        * HI         / 3.
+               );
+      acoef = acoef
+            + k52    * DII        / 2.
+            + k54    * DI         / 2.;
+    }
+
+    if ((my_chemistry->metal_chemistry == 1)  && 
+        (pack.local_itmask_metal != MASK_FALSE))  {
+      scoef = scoef +  2. * ( 0.
+          + kz15    *    HI        *    CH        / 13.
+          + kz16    *    HI        *   CH2        / 14.
+          + kz17    *    HI        *    OH        / 17.
+          + kz18    *    HI        *   H2O        / 18.
+          + kz47    * H2OII        *    de        / 18.
+         );
+      acoef = acoef
+          + kz20    *    CI        / 12.
+          + kz21    *    OI        / 16.
+          + kz23    *    CH        / 13.
+          + kz24    *    OH        / 17.
+          + kz40    *   OII        / 16.
+          + kz41    *  OHII        / 17.
+          + kz42    * H2OII        / 18.
+          + kz51    *    CI        / 12.;
+      if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
+        if (my_chemistry->dust_species > 0)  {
+          scoef = scoef + 2. *
+                kdMgSiO3      * 2.;
+
+        }
+        if (my_chemistry->dust_species > 1)  {
+          scoef = scoef + 2. * (
+                kdMg2SiO4     * 3.
+              + kdFe3O4       * 4.
+              + kdMgO
+              + kdAl2O3       * 3.
+            );
+        }
+        if (my_chemistry->dust_species > 2)  {
+          acoef = acoef
+          + kdvolorg      / H2I        * 2. * 2.;
+        }
+      }
+    }
+    dspdot[8-1] = dspdot[8-1] + (scoef - acoef * H2I);
+
+
+    // 8) H-
+
+    scoef = k7    * HI        * de;
+    acoef = (k8     + k15   )  * HI        +
+            (k16    + k17   )  * HII        +
+            k14    * de        + k19    * H2II       /2.0f +
+            my_uvb_rates.k27;
+    // contribution of minor species
+    if (my_chemistry->primordial_chemistry > 2)  {
+      acoef = acoef
+            + k56    * DI         / 2.;
+    }
+
+    if (my_chemistry->primordial_chemistry > 3)  {
+      scoef = scoef
+          + k136    *    DM        *    HI        /  2.;
+      acoef = acoef
+          + k135    *    DI        /  2.;
+    }
+    dspdot[7-1] = dspdot[7-1] + (scoef - acoef * HM);
+
+
+
+    // 9) H2+
+
+    scoef =    2.*( k9    *HI    *HII
+                  +   k11   *H2I    /2.*HII
+                  +   k17   *HM    *HII
+                  + k29shield   *H2I    /2.
+                  );
+    acoef =         k10   *HI     + k18   *de
+                  + k19   *HM
+                  + (k28shield   +k30shield   );
+    if (my_chemistry->primordial_chemistry > 3)  {
+      scoef = scoef +  2. * ( 0.
+          + k152    * HeHII        *    HI        /  5.
+         );
+      acoef = acoef
+          + k150    *   HeI        /  4.;
+    }
+    dspdot[9-1] = dspdot[9-1] + (scoef - acoef * H2II);
+
+
+
+
+
+
+
+
+
+  }
+
+  // --- (D) Now do extra 3-species for molecular HD ---
+  if (my_chemistry->primordial_chemistry > 2)  {
+
+
+    
+    // 1) DI
+    scoef =   (       k2    * DII        * de
+               +      k51   * DII        * HI
+               + 2.*k55   * HDI        *
+            HI       /3.
+               );
+    acoef  =    k1    * de
+           +    k50    * HII
+           +    k54    * H2I       /2.
+           +    k56    * HM
+           + k24shield;
+    if (my_chemistry->use_radiative_transfer == 1) { acoef = acoef + *(pack.fields.RT_HI_ionization_rate); }
+    if (my_chemistry->primordial_chemistry > 3)  {
+      scoef = scoef +  2. * ( 0.
+          + k131    *  HDII        *    de        /  3.
+          + k133    *   DII        *    DM        /  2.
+          + k134    *   HII        *    DM        /  2.
+          + k136    *    DM        *    HI        /  2.
+          );
+      acoef = acoef
+          + k129    *   HII
+          + k132    *    de
+          + k135    *    HM;
+    }
+    if (my_chemistry->use_radiative_transfer == 1)  {
+      if (my_chemistry->radiative_transfer_HDI_dissociation > 0)  {
+        scoef = scoef
+          + 2. * *(pack.fields.RT_HDI_dissociation_rate)        * HDI       /3.0;
+      }
+    }
+    dspdot[10-1] = dspdot[10-1] + (scoef - acoef * DI);
+                                                    
+
+    // 2) DII
+    scoef =   (   k1     * DI        * de
+          +       k50    * HII       * DI
+          +  2.*k53    * HII       * HDI       /3.
+          )
+          + k24shield   *DI;
+    acoef = 0.;
+    // ! initialize GC202002
+    if (my_chemistry->use_radiative_transfer == 1) { scoef = scoef + *(pack.fields.RT_HI_ionization_rate)       *DI; }
+    acoef =    k2     * de
+          +    k51    * HI
+          +    k52    * H2I       /2.;
+    if (my_chemistry->primordial_chemistry > 3)  {
+      acoef = acoef
+          + k130    *    HI
+          + k133    *    DM        /  2.;
+    }
+    dspdot[11-1] = dspdot[11-1] + (scoef - acoef * DII);
+
+
+    // 3) HDI
+    scoef = 3.*(k52    * DII       *
+         H2I       /2./2.
+         + k54    * DI        * H2I       /2./2.
+    // !   &           + 2._DKIND*k56    * DI        * HM       /2._DKIND
+    //- ! corrected by GC202005
+         +          k56    * DI        * HM       /2.
+               );
+    acoef  =    k53    * HII
+           +    k55    * HI;
+    if (my_chemistry->use_radiative_transfer == 1)  {
+      if (my_chemistry->radiative_transfer_HDI_dissociation > 0)  {
+        acoef = acoef
+          + *(pack.fields.RT_HDI_dissociation_rate);
+      }
+    }
+    if (my_chemistry->primordial_chemistry > 3)  {
+      scoef = scoef +  3. * ( 0.
+          + k125    *  HDII        *    HI        /  3.
+          + k137    *    DM        *    HI        /  2.
+          );
+    }
+    dspdot[12-1] = dspdot[12-1] + (scoef - acoef * HDI);
+
+
+
+
+  }
+
+  // --- (D2) Now do extra 3-species for minor primordial species ---
+  if (my_chemistry->primordial_chemistry > 3)  {
+
+
+
+    // 1) DM
+
+    scoef =
+          k132    *    DI        *    de
+        + k135    *    HM        *    DI;
+    acoef =
+          k133    *   DII        /  2.
+        + k134    *   HII
+        + k136    *    HI
+        + k137    *    HI;
+
+    dspdot[13-1] = dspdot[13-1] + (scoef - acoef * DM);
+
+
+    // 2) HDII
+
+    scoef = 3. * (
+          k129    *    DI        *   HII        /  2.
+        + k130    *   DII        *    HI        /  2.
+       );
+    acoef =
+          k125    *    HI
+        + k131    *    de;
+
+    dspdot[14-1] = dspdot[14-1] + (scoef - acoef * HDII);
+
+
+    // 3) HeHII
+
+    scoef = 5. * (
+          k148    *   HeI        *   HII        /  4.
+        + k149    *   HeI        *   HII        /  4.
+        + k150    *   HeI        *  H2II        /  8.
+        + k151    *  HeII        *    HI        /  4.
+       );
+    acoef =
+          k152    *    HI
+        + k153    *    de;
+
+    dspdot[15-1] = dspdot[15-1] + (scoef - acoef * HeHII);
+
+
+
+
+  }
+
+  // --- (D3) Now do metal species ---
+  if (my_chemistry->metal_chemistry == 1)  {
+
+    if (pack.local_itmask_metal != MASK_FALSE   )  {
+
+      // ***** CI **********
+      scoef = 0. + 12. * ( 0.
+          + kz15    *    HI        *    CH        / 13.
+          + kz44    *   CII        *    de        / 12.
+         );
+      acoef = 0.
+          + kz20    *   H2I        /  2.
+          + kz27    *    HI
+          + kz28    *    OH        / 17.
+          + kz29    *    O2        / 32.
+          + kz51    *   H2I        /  2.;
+      if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
+        if (my_chemistry->dust_species > 0)  {
+          acoef = acoef
+          + kdAC          / CI        * 12.;
+        }
+      }
+      if (my_chemistry->use_radiative_transfer == 1)  {
+        if (my_chemistry->radiative_transfer_metal_ionization > 0)  {
+          acoef = acoef
+            + *(pack.fields.RT_CI_ionization_rate);
+        }
+        if (my_chemistry->radiative_transfer_metal_dissociation > 0)  {
+          scoef = scoef + 12. *
+              *(pack.fields.RT_CO_dissociation_rate)         * CO        /28.0;
+        }
+      }
+
+      dspdot[16-1] = dspdot[16-1] + (scoef - acoef * CI);
+
+
+
+      // ***** CII **********
+      scoef = 0. + 12. * ( 0.
+         );
+      acoef = 0.
+          + kz37    *    OH        / 17.
+          + kz38    *    O2        / 32.
+          + kz44    *    de;
+      if (my_chemistry->use_radiative_transfer == 1)  {
+        if (my_chemistry->radiative_transfer_metal_ionization > 0)  {
+          scoef = scoef
+            + *(pack.fields.RT_CI_ionization_rate)        * CI;
+        }
+      }
+
+      dspdot[17-1] = dspdot[17-1] + (scoef - acoef * CII);
+
+
+
+      // ***** CO **********
+      scoef = 0. + 28. * ( 0.
+          + kz28    *    CI        *    OH        / 204.
+          + kz29    *    CI        *    O2        / 384.
+          + kz32    *    OI        *    CH        / 208.
+          + kz38    *   CII        *    O2        / 384.
+          + kz43    *  COII        *    HI        / 28.
+         );
+      acoef = 0.
+          + kz26    *    OH        / 17.;
+      if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
+        if (my_chemistry->dust_species > 2)  {
+          acoef = acoef
+          + kdreforg      / CO        * 17. * 0.5
+          + kdvolorg      / CO        * 17.;
+        }
+      }
+      if (my_chemistry->use_radiative_transfer == 1)  {
+        if (my_chemistry->radiative_transfer_metal_dissociation > 0)  {
+          acoef = acoef
+            + *(pack.fields.RT_CO_dissociation_rate);
+        }
+      }
+
+      dspdot[18-1] = dspdot[18-1] + (scoef - acoef * CO);
+
+
+
+      // ***** CO2 **********
+      scoef = 0. + 44. * ( 0.
+          + kz26    *    OH        *    CO        / 476.
+         );
+      acoef = 0.;
+
+      dspdot[19-1] = dspdot[19-1] + (scoef - acoef * CO2);
+
+
+
+      // ***** OI **********
+      scoef = 0. + 16. * ( 0.
+          + kz17    *    HI        *    OH        / 17.
+          + kz19    *    HI        *    O2        / 32.
+          + kz25    *    OH        *    OH        / 289.
+          + kz29    *    CI        *    O2        / 384.
+          + kz39    *   OII        *    HI        / 16.
+          + kz45    *   OII        *    de        / 16.
+          + kz47    * H2OII        *    de        / 18.
+          + kz50    *  O2II        *    de        / 16.
+          + kz53    *   SiI        *    O2        / 896.
+         );
+      acoef = 0.
+          + kz21    *   H2I        /  2.
+          + kz22    *   HII
+          + kz30    *    HI
+          + kz31    *    OI        / 8.
+          + kz32    *    CH        / 13.
+          + kz33    *    OH        / 17.;
+      if (my_chemistry->use_radiative_transfer == 1)  {
+        if (my_chemistry->radiative_transfer_metal_ionization > 0)  {
+          acoef = acoef
+            + *(pack.fields.RT_OI_ionization_rate);
+        }
+        if (my_chemistry->radiative_transfer_metal_dissociation > 0)  {
+          scoef = scoef + 16. *
+            ( *(pack.fields.RT_OH_dissociation_rate)         * OH        /17.0
+            + *(pack.fields.RT_CO_dissociation_rate)         * CO        /28.0);
+        }
+      }
+
+      dspdot[20-1] = dspdot[20-1] + (scoef - acoef * OI);
+
+
+
+      // ***** OH **********
+      scoef = 0. + 17. * ( 0.
+          + kz18    *    HI        *   H2O        / 18.
+          + kz19    *    HI        *    O2        / 32.
+          + kz21    *    OI        *   H2I        / 32.
+          + kz30    *    OI        *    HI        / 16.
+          + kz46    * H2OII        *    de        / 18.
+          + kz49    * H3OII        *    de        / 19.
+         );
+      acoef = 0.
+          + kz17    *    HI
+          + kz24    *   H2I        /  2.
+          + kz25    *    OH        / 8.5
+          + kz26    *    CO        / 28.
+          + kz28    *    CI        / 12.
+          + kz33    *    OI        / 16.
+          + kz34    *   HII
+          + kz37    *   CII        / 12.
+          + kz52    *   SiI        / 28.
+          + kz54    *  SiOI        / 44.;
+      if (my_chemistry->use_radiative_transfer == 1)  {
+        if (my_chemistry->radiative_transfer_metal_dissociation > 0)  {
+          acoef = acoef
+            + *(pack.fields.RT_OH_dissociation_rate);
+          scoef = scoef + 17. *
+              *(pack.fields.RT_H2O_dissociation_rate)        * H2O       /18.0;
+        }
+      }
+
+      dspdot[21-1] = dspdot[21-1] + (scoef - acoef * OH);
+
+
+
+      // ***** H2O **********
+      scoef = 0. + 18. * ( 0.
+          + kz24    *   H2I        *    OH        / 34.
+          + kz25    *    OH        *    OH        / 289.
+          + kz48    * H3OII        *    de        / 19.
+         );
+      acoef = 0.
+          + kz18    *    HI
+          + kz35    *   HII;
+      if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
+        if (my_chemistry->dust_species > 0)  {
+          acoef = acoef
+          + kdMgSiO3      / H2O        * 18. * 2.;
+        }
+        if (my_chemistry->dust_species > 1)  {
+          acoef = acoef
+          + kdMg2SiO4     / H2O        * 18. * 3.
+          + kdFe3O4       / H2O        * 18. * 4.
+          + kdMgO         / H2O        * 18.
+          + kdAl2O3       / H2O        * 18. * 3.;
+        }
+        if (my_chemistry->dust_species > 2)  {
+          acoef = acoef
+          + kdH2Oice      / H2O        * 18.;
+        }
+      }
+      if (my_chemistry->use_radiative_transfer == 1)  {
+        if (my_chemistry->radiative_transfer_metal_dissociation > 0)  {
+          acoef = acoef
+            + *(pack.fields.RT_H2O_dissociation_rate);
+        }
+      }
+
+      dspdot[22-1] = dspdot[22-1] + (scoef - acoef * H2O);
+
+
+
+      // ***** O2 **********
+      scoef = 0. + 32. * ( 0.
+          + kz31    *    OI        *    OI        / 256.
+          + kz33    *    OI        *    OH        / 272.
+         );
+      acoef = 0.
+          + kz19    *    HI
+          + kz29    *    CI        / 12.
+          + kz36    *   HII
+          + kz38    *   CII        / 12.
+          + kz53    *   SiI        / 28.;
+
+      dspdot[23-1] = dspdot[23-1] + (scoef - acoef * O2);
+
+
+
+      // ***** SiI **********
+      scoef = 0. + 28. * ( 0.
+         );
+      acoef = 0.
+          + kz52    *    OH        / 17.
+          + kz53    *    O2        / 32.;
+      if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
+        if (my_chemistry->dust_species > 1)  {
+          acoef = acoef
+          + kdSiM         / SiI        * 28.;
+        }
+      }
+
+      dspdot[24-1] = dspdot[24-1] + (scoef - acoef * SiI);
+
+
+
+      // ***** SiOI **********
+      scoef = 0. + 44. * ( 0.
+          + kz52    *   SiI        *    OH        / 476.
+          + kz53    *   SiI        *    O2        / 896.
+         );
+      acoef = 0.
+          + kz54    *    OH        / 17.;
+      if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
+        if (my_chemistry->dust_species > 0)  {
+          acoef = acoef
+          + kdMgSiO3      / SiOI        * 44.;
+        }
+        if (my_chemistry->dust_species > 1)  {
+          acoef = acoef
+          + kdMg2SiO4     / SiOI        * 44.;
+        }
+      }
+
+      dspdot[25-1] = dspdot[25-1] + (scoef - acoef * SiOI);
+
+
+
+      // ***** SiO2I **********
+      scoef = 0. + 60. * ( 0.
+          + kz54    *  SiOI        *    OH        / 748.
+         );
+      acoef = 0.;
+      if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
+        if (my_chemistry->dust_species > 1)  {
+          acoef = acoef
+          + kdSiO2D       / SiO2I        * 60.;
+        }
+      }
+
+      dspdot[26-1] = dspdot[26-1] + (scoef - acoef * SiO2I);
+
+
+
+      // ***** CH **********
+      scoef = 0. + 13. * ( 0.
+          + kz16    *    HI        *   CH2        / 14.
+          + kz20    *    CI        *   H2I        / 24.
+          + kz27    *    CI        *    HI        / 12.
+         );
+      acoef = 0.
+          + kz15    *    HI
+          + kz23    *   H2I        /  2.
+          + kz32    *    OI        / 16.;
+
+      dspdot[27-1] = dspdot[27-1] + (scoef - acoef * CH);
+
+
+
+      // ***** CH2 **********
+      scoef = 0. + 14. * ( 0.
+          + kz23    *   H2I        *    CH        / 26.
+          + kz51    *   H2I        *    CI        / 24.
+         );
+      acoef = 0.
+          + kz16    *    HI;
+      if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
+        if (my_chemistry->dust_species > 2)  {
+          acoef = acoef
+          + kdreforg      / CH2        * 14. * 0.5;
+        }
+      }
+
+      dspdot[28-1] = dspdot[28-1] + (scoef - acoef * CH2);
+
+
+
+      // ***** COII **********
+      scoef = 0. + 28. * ( 0.
+          + kz37    *   CII        *    OH        / 204.
+         );
+      acoef = 0.
+          + kz43    *    HI;
+
+      dspdot[29-1] = dspdot[29-1] + (scoef - acoef * COII);
+
+
+
+      // ***** OII **********
+      scoef = 0. + 16. * ( 0.
+          + kz22    *   HII        *    OI        / 16.
+          + kz38    *   CII        *    O2        / 384.
+         );
+      acoef = 0.
+          + kz39    *    HI
+          + kz40    *   H2I        /  2.
+          + kz45    *    de;
+      if (my_chemistry->use_radiative_transfer == 1)  {
+        if (my_chemistry->radiative_transfer_metal_ionization > 0)  {
+          scoef = scoef
+            + *(pack.fields.RT_OI_ionization_rate)        * OI;
+        }
+      }
+
+      dspdot[30-1] = dspdot[30-1] + (scoef - acoef * OII);
+
+
+
+      // ***** OHII **********
+      scoef = 0. + 17. * ( 0.
+          + kz34    *   HII        *    OH        / 17.
+          + kz40    *   OII        *   H2I        / 32.
+         );
+      acoef = 0.
+          + kz41    *   H2I        /  2.;
+
+      dspdot[31-1] = dspdot[31-1] + (scoef - acoef * OHII);
+
+
+
+      // ***** H2OII **********
+      scoef = 0. + 18. * ( 0.
+          + kz35    *   HII        *   H2O        / 18.
+          + kz41    *  OHII        *   H2I        / 34.
+         );
+      acoef = 0.
+          + kz42    *   H2I        /  2.
+          + kz46    *    de
+          + kz47    *    de;
+
+      dspdot[32-1] = dspdot[32-1] + (scoef - acoef * H2OII);
+
+
+
+      // ***** H3OII **********
+      scoef = 0. + 19. * ( 0.
+          + kz42    * H2OII        *   H2I        / 36.
+         );
+      acoef = 0.
+          + kz48    *    de
+          + kz49    *    de;
+
+      dspdot[33-1] = dspdot[33-1] + (scoef - acoef * H3OII);
+
+
+
+      // ***** O2II **********
+      scoef = 0. + 32. * ( 0.
+          + kz36    *   HII        *    O2        / 32.
+         );
+      acoef = 0.
+          + kz50    *    de;
+
+      dspdot[34-1] = dspdot[34-1] + (scoef - acoef * O2II);
+
+
+
+      if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
+        if (my_chemistry->dust_species > 0)  {
+          // ***** Mg **********
+          scoef = 0.;
+          acoef = 0.;
+          acoef = acoef
+          + kdMgSiO3      / Mg        * 24.;
+          if (my_chemistry->dust_species > 1)  {
+            acoef = acoef
+            + kdMg2SiO4     / Mg        * 24. * 2.
+            + kdMgO         / Mg        * 24.;
+          }
+
+          dspdot[35-1] = dspdot[35-1] + (scoef - acoef * Mg);
+
+
+        }
+
+        if (my_chemistry->dust_species > 1)  {
+          // ***** Al **********
+          scoef = 0.;
+          acoef = 0.;
+          acoef = acoef
+          + kdAl2O3       / Al        * 27. * 2.;
+
+          dspdot[36-1] = dspdot[36-1] + (scoef - acoef * Al);
+
+
+
+          // ***** S  **********
+          scoef = 0.;
+          acoef = 0.;
+          acoef = acoef
+          + kdFeS         / S        * 32.;
+
+          dspdot[37-1] = dspdot[37-1] + (scoef - acoef * S);
+
+
+
+          // ***** Fe **********
+          scoef = 0.;
+          acoef = 0.;
+          acoef = acoef
+          + kdFeM         / Fe        * 56.
+          + kdFe3O4       / Fe        * 56. * 3.
+          + kdFeS         / Fe        * 56.;
+
+          dspdot[38-1] = dspdot[38-1] + (scoef - acoef * Fe);
+
+
+        }
+      }
+
+    }
+
+  }
+
+  // --- (D4) Now do dust species ---
+  if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
+
+    if (pack.local_itmask_metal != MASK_FALSE   )  {
+
+      if (my_chemistry->dust_species > 0)  {
+        // ***** MgSiO3 **********
+        scoef = 0.;
+        scoef = scoef
+        + kdMgSiO3      * 100.;
+        acoef = 0.;
+
+        dspdot[39-1] = dspdot[39-1] + (scoef - acoef * MgSiO3);
+
+
+
+        // ***** AC **********
+        scoef = 0.;
+        scoef = scoef
+        + kdAC          * 12.;
+        acoef = 0.;
+
+        dspdot[40-1] = dspdot[40-1] + (scoef - acoef * AC);
+
+
+      }
+
+      if (my_chemistry->dust_species > 1)  {
+        // ***** SiM **********
+        scoef = 0.;
+        scoef = scoef
+        + kdSiM         * 28.;
+        acoef = 0.;
+
+        dspdot[41-1] = dspdot[41-1] + (scoef - acoef * SiM);
+
+
+
+        // ***** FeM **********
+        scoef = 0.;
+        scoef = scoef
+        + kdFeM         * 56.;
+        acoef = 0.;
+
+        dspdot[42-1] = dspdot[42-1] + (scoef - acoef * FeM);
+
+
+
+        // ***** Mg2SiO4 **********
+        scoef = 0.;
+        scoef = scoef
+        + kdMg2SiO4     * 140.;
+        acoef = 0.;
+
+        dspdot[43-1] = dspdot[43-1] + (scoef - acoef * Mg2SiO4);
+
+
+
+        // ***** Fe3O4 **********
+        scoef = 0.;
+        scoef = scoef
+        + kdFe3O4       * 232.;
+        acoef = 0.;
+
+        dspdot[44-1] = dspdot[44-1] + (scoef - acoef * Fe3O4);
+
+
+
+        // ***** SiO2D **********
+        scoef = 0.;
+        scoef = scoef
+        + kdSiO2D       * 60.;
+        acoef = 0.;
+
+        dspdot[45-1] = dspdot[45-1] + (scoef - acoef * SiO2D);
+
+
+
+        // ***** MgO **********
+        scoef = 0.;
+        scoef = scoef
+        + kdMgO         * 40.;
+        acoef = 0.;
+
+        dspdot[46-1] = dspdot[46-1] + (scoef - acoef * MgO);
+
+
+
+        // ***** FeS **********
+        scoef = 0.;
+        scoef = scoef
+        + kdFeS         * 88.;
+        acoef = 0.;
+
+        dspdot[47-1] = dspdot[47-1] + (scoef - acoef * FeS);
+
+
+
+        // ***** Al2O3 **********
+        scoef = 0.;
+        scoef = scoef
+        + kdAl2O3       * 102.;
+        acoef = 0.;
+
+        dspdot[48-1] = dspdot[48-1] + (scoef - acoef * Al2O3);
+
+
+      }
+
+      if (my_chemistry->dust_species > 2)  {
+        // ***** reforg **********
+        scoef = 0.;
+        scoef = scoef
+        + kdreforg      * 22.68;
+        acoef = 0.;
+
+        dspdot[49-1] = dspdot[49-1] + (scoef - acoef * reforg);
+
+
+
+        // ***** volorg **********
+        scoef = 0.;
+        scoef = scoef
+        + kdvolorg      * 32.;
+        acoef = 0.;
+
+        dspdot[50-1] = dspdot[50-1] + (scoef - acoef * volorg);
+
+
+
+        // ***** H2Oice **********
+        scoef = 0.;
+        scoef = scoef
+        + kdH2Oice      * 18.;
+        acoef = 0.;
+
+        dspdot[51-1] = dspdot[51-1] + (scoef - acoef * H2Oice);
+
+
+      }
+
+    }
+
+  }
+
+  return;
+}
+
 
 } // namespace grackle::impl::time_deriv_0d
 
