@@ -424,34 +424,11 @@ void lookup_cool_rates0d(
   // -------------------------------------------------------------------
 
 
-  // General Arguments
 
   const int i_eng = 52;
 
-  // Constants (I honestly don't think most of these should be defined)
-  const int itmax = 10000;
-
-#ifdef GRACKLE_FLOAT_4
-  const gr_float tolerance = (gr_float)(1.0e-05);
-#else
-  const gr_float tolerance = (gr_float)(1.0e-10);
-#endif
-
-  const double mh_local_var = mh_grflt;
-  const double pi_local_var = pi_fortran_val;
-
-  // Locals
-
-  int i, j, k;
-  int t, dj, dk;
-  double ttmin, energy, comp1, comp2;
-  double dbase1, uvel;
-  double heq1, heq2, eqk221, eqk222, eqk131, eqk132, eqt1, eqt2, eqtdef, dheq, heq, dlogtem;
-
-  // row temporaries
-
-  // -- removed line (previously just declared arg types) -- 
-  double ttot, olddtit;
+  double comp1, comp2;  // in the future, these won't need to be passed to
+                        // cool1d_multi_g
 
   // Rate equation row temporaries
 
@@ -463,7 +440,6 @@ void lookup_cool_rates0d(
 
   // locals
 
-  int isp;
   double scoef, acoef;
   double atten, H2delta, h2heatfac, min_metallicity;
 
