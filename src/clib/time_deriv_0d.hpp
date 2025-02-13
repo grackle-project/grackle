@@ -581,124 +581,36 @@ void lookup_cool_rates0d(
     );
   }
 
-  // -----------------------------------------------------------
-  // This routine uses the temperature to look up the chemical
-  //   rates which are tabulated in a log table as a function
-  //   of temperature.
-
-   FORTRAN_NAME(lookup_cool_rates1d_g)(&my_chemistry->TemperatureStart, &my_chemistry->TemperatureEnd, &my_chemistry->NumberOfTemperatureBins,
-            &idx_range.jp1, &idx_range.kp1, &idx_range.i_start, &idx_range.i_end, &my_chemistry->three_body_rate,
-            &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &my_chemistry->primordial_chemistry, &pack.fwd_args.anydust,
-            &my_chemistry->H2_self_shielding, &my_chemistry->self_shielding_method,
-            pack.other_scratch_buf.tgas, pack.other_scratch_buf.mmw, pack.fields.density, &HI, &HII, &HeI, &HeII, &HeIII,
-            &HM, &H2I, &H2II, &DI, &DII, &HDI,
-            pack.other_scratch_buf.tdust, pack.other_scratch_buf.dust2gas,
-            my_rates->k1, my_rates->k2, my_rates->k3, my_rates->k4, my_rates->k5, my_rates->k6, my_rates->k7, my_rates->k8, my_rates->k9, my_rates->k10,
-            my_rates->k11, my_rates->k12, my_rates->k13, my_rates->k13dd, my_rates->k14, my_rates->k15, my_rates->k16,
-            my_rates->k17, my_rates->k18, my_rates->k19, my_rates->k22,
-            my_rates->k50, my_rates->k51, my_rates->k52, my_rates->k53, my_rates->k54, my_rates->k55, my_rates->k56,
-            my_rates->k57, my_rates->k58, &my_chemistry->NumberOfDustTemperatureBins, &my_chemistry->DustTemperatureStart, &my_chemistry->DustTemperatureEnd, my_rates->h2dust,
-            my_rates->n_cr_n, my_rates->n_cr_d1, my_rates->n_cr_d2,
-            &my_uvb_rates.crsHI, &my_uvb_rates.crsHeI, &my_uvb_rates.crsHeII, &my_uvb_rates.piHI, &my_uvb_rates.piHeI,
-            kcr_buf.data[ColRecRxnLUT::k1], kcr_buf.data[ColRecRxnLUT::k2], kcr_buf.data[ColRecRxnLUT::k3], kcr_buf.data[ColRecRxnLUT::k4], kcr_buf.data[ColRecRxnLUT::k5], kcr_buf.data[ColRecRxnLUT::k6], kcr_buf.data[ColRecRxnLUT::k7], kcr_buf.data[ColRecRxnLUT::k8], kcr_buf.data[ColRecRxnLUT::k9], kcr_buf.data[ColRecRxnLUT::k10],
-            kcr_buf.data[ColRecRxnLUT::k11], kcr_buf.data[ColRecRxnLUT::k12], kcr_buf.data[ColRecRxnLUT::k13], kcr_buf.data[ColRecRxnLUT::k14], kcr_buf.data[ColRecRxnLUT::k15], kcr_buf.data[ColRecRxnLUT::k16], kcr_buf.data[ColRecRxnLUT::k17], kcr_buf.data[ColRecRxnLUT::k18],
-            kcr_buf.data[ColRecRxnLUT::k19], kcr_buf.data[ColRecRxnLUT::k22], &my_uvb_rates.k24, &my_uvb_rates.k25, &my_uvb_rates.k26, &my_uvb_rates.k28, &my_uvb_rates.k29, &my_uvb_rates.k30, &my_uvb_rates.k31,
-            kcr_buf.data[ColRecRxnLUT::k50], kcr_buf.data[ColRecRxnLUT::k51], kcr_buf.data[ColRecRxnLUT::k52], kcr_buf.data[ColRecRxnLUT::k53], kcr_buf.data[ColRecRxnLUT::k54], kcr_buf.data[ColRecRxnLUT::k55], kcr_buf.data[ColRecRxnLUT::k56], kcr_buf.data[ColRecRxnLUT::k57],
-            kcr_buf.data[ColRecRxnLUT::k58], k13dd, kshield_buf.k24, kshield_buf.k25, kshield_buf.k26,
-            kshield_buf.k28, kshield_buf.k29, kshield_buf.k30,
-            kshield_buf.k31, pack.other_scratch_buf.h2dust, pack.main_scratch_buf.chemheatrates_buf.n_cr_n, pack.main_scratch_buf.chemheatrates_buf.n_cr_d1, pack.main_scratch_buf.chemheatrates_buf.n_cr_d2,
-            pack.main_scratch_buf.logTlininterp_buf.t1, pack.main_scratch_buf.logTlininterp_buf.t2, pack.main_scratch_buf.logTlininterp_buf.tdef, pack.main_scratch_buf.logTlininterp_buf.logtem, pack.main_scratch_buf.logTlininterp_buf.indixe,
-            &pack.fwd_args.dom, &internalu.coolunit, &internalu.tbase1, &internalu.xbase1, &pack.fwd_args.dx_cgs, &pack.fwd_args.c_ljeans,
-            &my_chemistry->use_radiative_transfer, pack.fields.RT_H2_dissociation_rate, pack.fields.H2_self_shielding_length, itmask,
-            &pack.local_itmask_metal,
-           &my_chemistry->HydrogenFractionByMass, pack.fields.metal_density,
-           &DM, &HDII, &HeHII, &pack.fwd_args.imetal, &my_chemistry->metal_chemistry, &my_chemistry->grain_growth,
-           &CI, &CII, &CO, &CO2,
-           &OI, &OH, &H2O, &O2,
-           &SiI, &SiOI, &SiO2I,
-           &CH, &CH2, &COII, &OII,
-           &OHII, &H2OII, &H3OII, &O2II,
-           &Mg, &Al, &S, &Fe,
-           &SiM, &FeM, &Mg2SiO4, &MgSiO3, &Fe3O4,
-           &AC, &SiO2D, &MgO, &FeS, &Al2O3,
-           &reforg, &volorg, &H2Oice,
-           my_rates->k125, my_rates->k129, my_rates->k130, my_rates->k131, my_rates->k132,
-           my_rates->k133, my_rates->k134, my_rates->k135, my_rates->k136, my_rates->k137,
-           my_rates->k148, my_rates->k149, my_rates->k150, my_rates->k151, my_rates->k152,
-           my_rates->k153,
-           my_rates->kz15, my_rates->kz16, my_rates->kz17, my_rates->kz18, my_rates->kz19,
-           my_rates->kz20, my_rates->kz21, my_rates->kz22, my_rates->kz23, my_rates->kz24,
-           my_rates->kz25, my_rates->kz26, my_rates->kz27, my_rates->kz28, my_rates->kz29,
-           my_rates->kz30, my_rates->kz31, my_rates->kz32, my_rates->kz33, my_rates->kz34,
-           my_rates->kz35, my_rates->kz36, my_rates->kz37, my_rates->kz38, my_rates->kz39,
-           my_rates->kz40, my_rates->kz41, my_rates->kz42, my_rates->kz43, my_rates->kz44,
-           my_rates->kz45, my_rates->kz46, my_rates->kz47, my_rates->kz48, my_rates->kz49,
-           my_rates->kz50, my_rates->kz51, my_rates->kz52, my_rates->kz53, my_rates->kz54,
-           kcr_buf.data[ColRecRxnLUT::k125],  kcr_buf.data[ColRecRxnLUT::k129],  kcr_buf.data[ColRecRxnLUT::k130],  kcr_buf.data[ColRecRxnLUT::k131],  kcr_buf.data[ColRecRxnLUT::k132],
-           kcr_buf.data[ColRecRxnLUT::k133],  kcr_buf.data[ColRecRxnLUT::k134],  kcr_buf.data[ColRecRxnLUT::k135],  kcr_buf.data[ColRecRxnLUT::k136],  kcr_buf.data[ColRecRxnLUT::k137],
-           kcr_buf.data[ColRecRxnLUT::k148],  kcr_buf.data[ColRecRxnLUT::k149],  kcr_buf.data[ColRecRxnLUT::k150],  kcr_buf.data[ColRecRxnLUT::k151],  kcr_buf.data[ColRecRxnLUT::k152],
-           kcr_buf.data[ColRecRxnLUT::k153],
-           kcr_buf.data[ColRecRxnLUT::kz15],  kcr_buf.data[ColRecRxnLUT::kz16],  kcr_buf.data[ColRecRxnLUT::kz17],  kcr_buf.data[ColRecRxnLUT::kz18],  kcr_buf.data[ColRecRxnLUT::kz19],
-           kcr_buf.data[ColRecRxnLUT::kz20],  kcr_buf.data[ColRecRxnLUT::kz21],  kcr_buf.data[ColRecRxnLUT::kz22],  kcr_buf.data[ColRecRxnLUT::kz23],  kcr_buf.data[ColRecRxnLUT::kz24],
-           kcr_buf.data[ColRecRxnLUT::kz25],  kcr_buf.data[ColRecRxnLUT::kz26],  kcr_buf.data[ColRecRxnLUT::kz27],  kcr_buf.data[ColRecRxnLUT::kz28],  kcr_buf.data[ColRecRxnLUT::kz29],
-           kcr_buf.data[ColRecRxnLUT::kz30],  kcr_buf.data[ColRecRxnLUT::kz31],  kcr_buf.data[ColRecRxnLUT::kz32],  kcr_buf.data[ColRecRxnLUT::kz33],  kcr_buf.data[ColRecRxnLUT::kz34],
-           kcr_buf.data[ColRecRxnLUT::kz35],  kcr_buf.data[ColRecRxnLUT::kz36],  kcr_buf.data[ColRecRxnLUT::kz37],  kcr_buf.data[ColRecRxnLUT::kz38],  kcr_buf.data[ColRecRxnLUT::kz39],
-           kcr_buf.data[ColRecRxnLUT::kz40],  kcr_buf.data[ColRecRxnLUT::kz41],  kcr_buf.data[ColRecRxnLUT::kz42],  kcr_buf.data[ColRecRxnLUT::kz43],  kcr_buf.data[ColRecRxnLUT::kz44],
-           kcr_buf.data[ColRecRxnLUT::kz45],  kcr_buf.data[ColRecRxnLUT::kz46],  kcr_buf.data[ColRecRxnLUT::kz47],  kcr_buf.data[ColRecRxnLUT::kz48],  kcr_buf.data[ColRecRxnLUT::kz49],
-           kcr_buf.data[ColRecRxnLUT::kz50],  kcr_buf.data[ColRecRxnLUT::kz51],  kcr_buf.data[ColRecRxnLUT::kz52],  kcr_buf.data[ColRecRxnLUT::kz53],  kcr_buf.data[ColRecRxnLUT::kz54],
-           &my_chemistry->multi_metals, &my_chemistry->metal_abundances, &my_chemistry->dust_species, &my_chemistry->use_multiple_dust_temperatures, &my_chemistry->dust_sublimation,
-           pack.fields.local_ISM_metal_density,
-           pack.fields.ccsn13_metal_density, pack.fields.ccsn20_metal_density, pack.fields.ccsn25_metal_density, pack.fields.ccsn30_metal_density,
-           pack.fields.fsn13_metal_density, pack.fields.fsn15_metal_density, pack.fields.fsn50_metal_density, pack.fields.fsn80_metal_density,
-           pack.fields.pisn170_metal_density, pack.fields.pisn200_metal_density, pack.fields.y19_metal_density,
-           &my_rates->SN0_N,
-           my_rates->SN0_fSiM, my_rates->SN0_fFeM, my_rates->SN0_fMg2SiO4, my_rates->SN0_fMgSiO3,
-           my_rates->SN0_fFe3O4, my_rates->SN0_fAC, my_rates->SN0_fSiO2D, my_rates->SN0_fMgO,
-           my_rates->SN0_fFeS, my_rates->SN0_fAl2O3,
-           my_rates->SN0_freforg, my_rates->SN0_fvolorg, my_rates->SN0_fH2Oice,
-           my_rates->SN0_r0SiM, my_rates->SN0_r0FeM, my_rates->SN0_r0Mg2SiO4, my_rates->SN0_r0MgSiO3,
-           my_rates->SN0_r0Fe3O4, my_rates->SN0_r0AC, my_rates->SN0_r0SiO2D, my_rates->SN0_r0MgO,
-           my_rates->SN0_r0FeS, my_rates->SN0_r0Al2O3,
-           my_rates->SN0_r0reforg, my_rates->SN0_r0volorg, my_rates->SN0_r0H2Oice,
-           my_rates->gr_N, &my_rates->gr_Size, &my_rates->gr_dT, my_rates->gr_Td,
-           my_rates->SN0_kpSiM, my_rates->SN0_kpFeM, my_rates->SN0_kpMg2SiO4, my_rates->SN0_kpMgSiO3,
-           my_rates->SN0_kpFe3O4, my_rates->SN0_kpAC, my_rates->SN0_kpSiO2D, my_rates->SN0_kpMgO,
-           my_rates->SN0_kpFeS, my_rates->SN0_kpAl2O3,
-           my_rates->SN0_kpreforg, my_rates->SN0_kpvolorg, my_rates->SN0_kpH2Oice,
-           my_rates->h2dustS, my_rates->h2dustC, pack.other_scratch_buf.rhoH, my_rates->grain_growth_rate, dtit,
-           grain_growth_rates.data[OnlyGrainSpLUT::SiM_dust], grain_growth_rates.data[OnlyGrainSpLUT::FeM_dust], grain_growth_rates.data[OnlyGrainSpLUT::Mg2SiO4_dust],
-           grain_growth_rates.data[OnlyGrainSpLUT::MgSiO3_dust], grain_growth_rates.data[OnlyGrainSpLUT::Fe3O4_dust], grain_growth_rates.data[OnlyGrainSpLUT::AC_dust], grain_growth_rates.data[OnlyGrainSpLUT::SiO2_dust], grain_growth_rates.data[OnlyGrainSpLUT::MgO_dust], grain_growth_rates.data[OnlyGrainSpLUT::FeS_dust],
-           grain_growth_rates.data[OnlyGrainSpLUT::Al2O3_dust], grain_growth_rates.data[OnlyGrainSpLUT::ref_org_dust], grain_growth_rates.data[OnlyGrainSpLUT::vol_org_dust], grain_growth_rates.data[OnlyGrainSpLUT::H2O_ice_dust],
-           pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::SiM_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::FeM_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::Mg2SiO4_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::MgSiO3_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::Fe3O4_dust],
-           pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::AC_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::SiO2_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::MgO_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::FeS_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::Al2O3_dust],
-           pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::ref_org_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::vol_org_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::H2O_ice_dust], &my_chemistry->radiative_transfer_use_H2_shielding,
-           &my_chemistry->H2_custom_shielding, pack.fields.H2_custom_shielding_factor
+  // uses the temperature to look up the chemical rates (they are interpolated
+  // with respect to log temperature from input tables)
+  f_wrap::lookup_cool_rates1d_g(
+    idx_range, pack.fwd_args.anydust, pack.other_scratch_buf.tgas,
+    pack.other_scratch_buf.mmw, pack.other_scratch_buf.tdust,
+    pack.other_scratch_buf.dust2gas, k13dd, pack.other_scratch_buf.h2dust,
+    pack.fwd_args.dom, pack.fwd_args.dx_cgs, pack.fwd_args.c_ljeans,
+    itmask, &pack.local_itmask_metal,
+    pack.fwd_args.imetal, pack.other_scratch_buf.rhoH, dtit[0],
+    my_chemistry, my_rates, &pack.fields, my_uvb_rates, internalu,
+    grain_growth_rates, pack.main_scratch_buf.grain_temperatures,
+    pack.main_scratch_buf.logTlininterp_buf, kcr_buf, kshield_buf,
+    pack.main_scratch_buf.chemheatrates_buf
   );
 
-  // Compute dedot and HIdot, the rates of change of de and HI
-  //   (should add itmask to this call)
 
+  // The following function nominally computes dedot and HIdot (the time
+  // derivatives in the mass densities of electrons and HI)
+  // -> we don't care about these quantities (we recompute them later)
+  // -> I'm pretty sure we care about how the following function also modifies
+  //    edot
   if (pack.local_edot_handling == 1)  {
-     FORTRAN_NAME(rate_timestep_g)(
-                   dedot, HIdot, &my_chemistry->primordial_chemistry, &pack.fwd_args.anydust,
-                   &de, &HI, &HII, &HeI, &HeII, &HeIII, pack.fields.density,
-                   &HM, &H2I, &H2II,
-                   &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &idx_range.i_start,
-                   &idx_range.i_end, &idx_range.jp1, &idx_range.kp1,
-                   kcr_buf.data[ColRecRxnLUT::k1], kcr_buf.data[ColRecRxnLUT::k2], kcr_buf.data[ColRecRxnLUT::k3], kcr_buf.data[ColRecRxnLUT::k4], kcr_buf.data[ColRecRxnLUT::k5], kcr_buf.data[ColRecRxnLUT::k6], kcr_buf.data[ColRecRxnLUT::k7], kcr_buf.data[ColRecRxnLUT::k8], kcr_buf.data[ColRecRxnLUT::k9], kcr_buf.data[ColRecRxnLUT::k10], kcr_buf.data[ColRecRxnLUT::k11],
-                   kcr_buf.data[ColRecRxnLUT::k12], kcr_buf.data[ColRecRxnLUT::k13], kcr_buf.data[ColRecRxnLUT::k14], kcr_buf.data[ColRecRxnLUT::k15], kcr_buf.data[ColRecRxnLUT::k16], kcr_buf.data[ColRecRxnLUT::k17], kcr_buf.data[ColRecRxnLUT::k18], kcr_buf.data[ColRecRxnLUT::k19], kcr_buf.data[ColRecRxnLUT::k22],
-                   &my_uvb_rates.k24, &my_uvb_rates.k25, &my_uvb_rates.k26, &my_uvb_rates.k27, &my_uvb_rates.k28, &my_uvb_rates.k29, &my_uvb_rates.k30,
-                   kcr_buf.data[ColRecRxnLUT::k50], kcr_buf.data[ColRecRxnLUT::k51], kcr_buf.data[ColRecRxnLUT::k52], kcr_buf.data[ColRecRxnLUT::k53], kcr_buf.data[ColRecRxnLUT::k54], kcr_buf.data[ColRecRxnLUT::k55], kcr_buf.data[ColRecRxnLUT::k56], kcr_buf.data[ColRecRxnLUT::k57], kcr_buf.data[ColRecRxnLUT::k58],
-                   pack.other_scratch_buf.h2dust, pack.main_scratch_buf.chemheatrates_buf.n_cr_n, pack.main_scratch_buf.chemheatrates_buf.n_cr_d1, pack.main_scratch_buf.chemheatrates_buf.n_cr_d2, pack.other_scratch_buf.rhoH,
-                   kshield_buf.k24, kshield_buf.k25, kshield_buf.k26,
-                   kshield_buf.k28, kshield_buf.k29, kshield_buf.k30, kshield_buf.k31,
-                   &my_chemistry->use_radiative_transfer, &my_chemistry->radiative_transfer_hydrogen_only,
-                   pack.fields.RT_HI_ionization_rate, pack.fields.RT_HeI_ionization_rate, pack.fields.RT_HeII_ionization_rate,
-                   itmask, pack.other_scratch_buf.edot, &pack.fwd_args.chunit, &pack.fwd_args.dom, pack.fields.metal_density,
-                  &HDI, &my_chemistry->metal_chemistry, &CI, &OI, &OH, &CO, &H2O,
-                  &my_chemistry->radiative_transfer_HDI_dissociation, pack.fields.RT_HDI_dissociation_rate, &my_chemistry->radiative_transfer_metal_ionization, pack.fields.RT_CI_ionization_rate, pack.fields.RT_OI_ionization_rate,
-                  &my_chemistry->radiative_transfer_metal_dissociation, pack.fields.RT_CO_dissociation_rate, pack.fields.RT_OH_dissociation_rate, pack.fields.RT_H2O_dissociation_rate
-                       );
+
+    f_wrap::rate_timestep_g(
+      dedot, HIdot, pack.fwd_args.anydust, idx_range,
+      pack.other_scratch_buf.h2dust, pack.other_scratch_buf.rhoH,
+      itmask, pack.other_scratch_buf.edot, pack.fwd_args.chunit,
+      pack.fwd_args.dom, my_chemistry, &pack.fields, my_uvb_rates,
+      kcr_buf, kshield_buf, pack.main_scratch_buf.chemheatrates_buf
+    );
   }
 
   // Initialize
