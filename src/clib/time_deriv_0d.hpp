@@ -432,11 +432,13 @@ void lookup_cool_rates0d(
 
   // Rate equation row temporaries
 
-  double dedot, HIdot, dedot_prev, HIdot_prev, k24shield, k25shield, k26shield, k28shield, k29shield, k30shield, k31shield, k1, k2, k3, k4, k5, k6, k7, k8, k9, k10, k11, k12, k13, k14, k15, k16, k17, k18, k19, k22, k50, k51, k52, k53, k54, k55, k56, k57, k58;
+  double dedot, HIdot, dedot_prev, HIdot_prev, k1, k2, k3, k4, k5, k6, k7, k8, k9, k10, k11, k12, k13, k14, k15, k16, k17, k18, k19, k22, k50, k51, k52, k53, k54, k55, k56, k57, k58;
   std::vector<double> k13dd(14);
   double k125, k129, k130, k131, k132, k133, k134, k135, k136, k137, k148, k149, k150, k151, k152, k153, kz15, kz16, kz17, kz18, kz19, kz20, kz21, kz22, kz23, kz24, kz25, kz26, kz27, kz28, kz29, kz30, kz31, kz32, kz33, kz34, kz35, kz36, kz37, kz38, kz39, kz40, kz41, kz42, kz43, kz44, kz45, kz46, kz47, kz48, kz49, kz50, kz51, kz52, kz53, kz54;
 
   // this should not be allocated every time we enter this function...
+  grackle::impl::PhotoRxnRateCollection kshield_buf =
+    grackle::impl::new_PhotoRxnRateCollection(1);
   grackle::impl::GrainSpeciesCollection grain_growth_rates =
     grackle::impl::new_GrainSpeciesCollection(1);
 
@@ -693,9 +695,9 @@ void lookup_cool_rates0d(
             &k11, &k12, &k13, &k14, &k15, &k16, &k17, &k18,
             &k19, &k22, &my_uvb_rates.k24, &my_uvb_rates.k25, &my_uvb_rates.k26, &my_uvb_rates.k28, &my_uvb_rates.k29, &my_uvb_rates.k30, &my_uvb_rates.k31,
             &k50, &k51, &k52, &k53, &k54, &k55, &k56, &k57,
-            &k58, k13dd.data(), &k24shield, &k25shield, &k26shield,
-            &k28shield, &k29shield, &k30shield,
-            &k31shield, pack.other_scratch_buf.h2dust, pack.main_scratch_buf.chemheatrates_buf.n_cr_n, pack.main_scratch_buf.chemheatrates_buf.n_cr_d1, pack.main_scratch_buf.chemheatrates_buf.n_cr_d2,
+            &k58, k13dd.data(), kshield_buf.k24, kshield_buf.k25, kshield_buf.k26,
+            kshield_buf.k28, kshield_buf.k29, kshield_buf.k30,
+            kshield_buf.k31, pack.other_scratch_buf.h2dust, pack.main_scratch_buf.chemheatrates_buf.n_cr_n, pack.main_scratch_buf.chemheatrates_buf.n_cr_d1, pack.main_scratch_buf.chemheatrates_buf.n_cr_d2,
             pack.main_scratch_buf.logTlininterp_buf.t1, pack.main_scratch_buf.logTlininterp_buf.t2, pack.main_scratch_buf.logTlininterp_buf.tdef, pack.main_scratch_buf.logTlininterp_buf.logtem, pack.main_scratch_buf.logTlininterp_buf.indixe,
             &pack.fwd_args.dom, &internalu.coolunit, &internalu.tbase1, &internalu.xbase1, &pack.fwd_args.dx_cgs, &pack.fwd_args.c_ljeans,
             &my_chemistry->use_radiative_transfer, pack.fields.RT_H2_dissociation_rate, pack.fields.H2_self_shielding_length, itmask,
@@ -779,8 +781,8 @@ void lookup_cool_rates0d(
                    &my_uvb_rates.k24, &my_uvb_rates.k25, &my_uvb_rates.k26, &my_uvb_rates.k27, &my_uvb_rates.k28, &my_uvb_rates.k29, &my_uvb_rates.k30,
                    &k50, &k51, &k52, &k53, &k54, &k55, &k56, &k57, &k58,
                    pack.other_scratch_buf.h2dust, pack.main_scratch_buf.chemheatrates_buf.n_cr_n, pack.main_scratch_buf.chemheatrates_buf.n_cr_d1, pack.main_scratch_buf.chemheatrates_buf.n_cr_d2, pack.other_scratch_buf.rhoH,
-                   &k24shield, &k25shield, &k26shield,
-                   &k28shield, &k29shield, &k30shield, &k31shield,
+                   kshield_buf.k24, kshield_buf.k25, kshield_buf.k26,
+                   kshield_buf.k28, kshield_buf.k29, kshield_buf.k30, kshield_buf.k31,
                    &my_chemistry->use_radiative_transfer, &my_chemistry->radiative_transfer_hydrogen_only,
                    pack.fields.RT_HI_ionization_rate, pack.fields.RT_HeI_ionization_rate, pack.fields.RT_HeII_ionization_rate,
                    itmask, pack.other_scratch_buf.edot, &pack.fwd_args.chunit, &pack.fwd_args.dom, pack.fields.metal_density,
@@ -811,7 +813,7 @@ void lookup_cool_rates0d(
     acoef  = k1   *de
            + k57   *HI
            + k58   *HeI       /4.
-           + k24shield;
+           + kshield_buf.k24[0];
     if (my_chemistry->use_radiative_transfer == 1) { acoef = acoef + *(pack.fields.RT_HI_ionization_rate); }
     dspdot[2-1] = dspdot[2-1] + (scoef - acoef * HI);
 
@@ -832,7 +834,7 @@ void lookup_cool_rates0d(
     scoef  = k1   *HI    *de
            + k57   *HI    *HI
            + k58   *HI    *HeI       /4.
-           + k24shield   *HI;
+           + kshield_buf.k24[0]   *HI;
     if (my_chemistry->use_radiative_transfer == 1)
         { scoef = scoef + *(pack.fields.RT_HI_ionization_rate)       *HI; }
     acoef  = k2   *de;
@@ -858,9 +860,9 @@ void lookup_cool_rates0d(
     scoef = 0.
                + k57   *HI    *HI
                + k58   *HI    *HeI       /4.
-               + k24shield   *HI
-               + k25shield   *HeII       /4.
-               + k26shield   *HeI       /4.;
+               + kshield_buf.k24[0]   *HI
+               + kshield_buf.k25[0]   *HeII       /4.
+               + kshield_buf.k26[0]   *HeI       /4.;
 
     if ( (my_chemistry->use_radiative_transfer == 1)  &&  ( my_chemistry->radiative_transfer_hydrogen_only == 0) )
         { scoef = scoef + *(pack.fields.RT_HI_ionization_rate)        * HI
@@ -893,7 +895,7 @@ void lookup_cool_rates0d(
 
   scoef  = k4   *HeII       *de;
   acoef  = k3   *de
-               + k26shield;
+               + kshield_buf.k26[0];
 
   if ( (my_chemistry->use_radiative_transfer == 1)  &&  (my_chemistry->radiative_transfer_hydrogen_only == 0))
       { acoef = acoef + *(pack.fields.RT_HeI_ionization_rate); }
@@ -914,13 +916,13 @@ void lookup_cool_rates0d(
 
   scoef  = k3   *HeI    *de
          + k6   *HeIII       *de
-         + k26shield   *HeI;
+         + kshield_buf.k26[0]   *HeI;
 
   if ( (my_chemistry->use_radiative_transfer == 1)  &&  (my_chemistry->radiative_transfer_hydrogen_only == 0))
       { scoef = scoef + *(pack.fields.RT_HeI_ionization_rate)       *HeI; }
 
   acoef  = k4   *de        + k5   *de
-         + k25shield;
+         + kshield_buf.k25[0];
 
   if ( (my_chemistry->use_radiative_transfer == 1)  &&  (my_chemistry->radiative_transfer_hydrogen_only == 0))
       { acoef = acoef + *(pack.fields.RT_HeII_ionization_rate); }
@@ -934,7 +936,7 @@ void lookup_cool_rates0d(
   // 6) HeIII
 
   scoef   = k5   *HeII    *de
-          + k25shield   *HeII;
+          + kshield_buf.k25[0]   *HeII;
   if ((my_chemistry->use_radiative_transfer == 1)  &&  (my_chemistry->radiative_transfer_hydrogen_only == 0))
       { scoef = scoef + *(pack.fields.RT_HeII_ionization_rate)        * HeII; }
   acoef   = k6   *de;
@@ -963,7 +965,7 @@ void lookup_cool_rates0d(
            + 2.*k16   * HM         * HII
            + 2.*k18   * H2II       * de       /2.
            +      k19   * H2II       * HM       /2.
-           + 2.*k31shield      * H2I       /2.;
+           + 2.*kshield_buf.k31[0]      * H2I       /2.;
 
     acoef  =      k1    * de
            +      k7    * de
@@ -973,7 +975,7 @@ void lookup_cool_rates0d(
            + 2.*k22   * std::pow(HI       ,2)
            +      k57   * HI
            +      k58   * HeI       /4.
-           + k24shield;
+           + kshield_buf.k24[0];
 
     if (my_chemistry->use_radiative_transfer == 1) { acoef = acoef + *(pack.fields.RT_HI_ionization_rate); }
     if (my_chemistry->use_radiative_transfer == 1)  {
@@ -1077,7 +1079,7 @@ void lookup_cool_rates0d(
            +    k10    * H2II       *HI       /2.
            +    k57    * HI        * HI
            +    k58    * HI        * HeI       /4.
-           + k24shield   *HI;
+           + kshield_buf.k24[0]   *HI;
 
     if (my_chemistry->use_radiative_transfer == 1)
         { scoef = scoef + *(pack.fields.RT_HI_ionization_rate)        * HI; }
@@ -1129,9 +1131,9 @@ void lookup_cool_rates0d(
            +  k57   * HI        * HI
            +  k58   * HI        * HeI       /4.
     // 
-           + k24shield   *HI
-           + k25shield   *HeII    /4.
-           + k26shield   *HeI    /4.;
+           + kshield_buf.k24[0]   *HI
+           + kshield_buf.k25[0]   *HeII    /4.
+           + kshield_buf.k26[0]   *HeI    /4.;
 
     if ( (my_chemistry->use_radiative_transfer == 1)  &&  (my_chemistry->radiative_transfer_hydrogen_only == 0) )
         { scoef = scoef + *(pack.fields.RT_HI_ionization_rate)        * HI
@@ -1199,7 +1201,7 @@ void lookup_cool_rates0d(
           +       k22    * HI        * std::pow((HI       ),2.));
     acoef = ( k13   *HI        + k11   *HII
             + k12   *de        )
-            + k29shield    + k31shield;
+            + kshield_buf.k29[0]    + kshield_buf.k31[0];
 
     if (pack.fwd_args.anydust != MASK_FALSE)  {
       if(pack.local_itmask_metal != MASK_FALSE   )  {
@@ -1287,11 +1289,11 @@ void lookup_cool_rates0d(
     scoef =    2.*( k9    *HI    *HII
                   +   k11   *H2I    /2.*HII
                   +   k17   *HM    *HII
-                  + k29shield   *H2I    /2.
+                  + kshield_buf.k29[0]   *H2I    /2.
                   );
     acoef =         k10   *HI     + k18   *de
                   + k19   *HM
-                  + (k28shield   +k30shield   );
+                  + (kshield_buf.k28[0]   +kshield_buf.k30[0]   );
     if (my_chemistry->primordial_chemistry > 3)  {
       scoef = scoef +  2. * ( 0.
           + k152    * HeHII        *    HI        /  5.
@@ -1326,7 +1328,7 @@ void lookup_cool_rates0d(
            +    k50    * HII
            +    k54    * H2I       /2.
            +    k56    * HM
-           + k24shield;
+           + kshield_buf.k24[0];
     if (my_chemistry->use_radiative_transfer == 1) { acoef = acoef + *(pack.fields.RT_HI_ionization_rate); }
     if (my_chemistry->primordial_chemistry > 3)  {
       scoef = scoef +  2. * ( 0.
@@ -1354,7 +1356,7 @@ void lookup_cool_rates0d(
           +       k50    * HII       * DI
           +  2.*k53    * HII       * HDI       /3.
           )
-          + k24shield   *DI;
+          + kshield_buf.k24[0]   *DI;
     acoef = 0.;
     // ! initialize GC202002
     if (my_chemistry->use_radiative_transfer == 1) { scoef = scoef + *(pack.fields.RT_HI_ionization_rate)       *DI; }
@@ -2033,6 +2035,7 @@ void lookup_cool_rates0d(
 
   }
 
+  grackle::impl::drop_PhotoRxnRateCollection(&kshield_buf);
   grackle::impl::drop_GrainSpeciesCollection(&grain_growth_rates);
 
   return;
