@@ -436,7 +436,9 @@ void lookup_cool_rates0d(
   std::vector<double> k13dd(14);
   double k125, k129, k130, k131, k132, k133, k134, k135, k136, k137, k148, k149, k150, k151, k152, k153, kz15, kz16, kz17, kz18, kz19, kz20, kz21, kz22, kz23, kz24, kz25, kz26, kz27, kz28, kz29, kz30, kz31, kz32, kz33, kz34, kz35, kz36, kz37, kz38, kz39, kz40, kz41, kz42, kz43, kz44, kz45, kz46, kz47, kz48, kz49, kz50, kz51, kz52, kz53, kz54;
 
-  double kdSiM, kdFeM, kdMg2SiO4, kdMgSiO3, kdFe3O4, kdAC, kdSiO2D, kdMgO, kdFeS, kdAl2O3, kdreforg, kdvolorg, kdH2Oice;
+  // this should not be allocated every time we enter this function...
+  grackle::impl::GrainSpeciesCollection grain_growth_rates =
+    grackle::impl::new_GrainSpeciesCollection(1);
 
   // locals
 
@@ -753,9 +755,9 @@ void lookup_cool_rates0d(
            my_rates->SN0_kpFeS, my_rates->SN0_kpAl2O3,
            my_rates->SN0_kpreforg, my_rates->SN0_kpvolorg, my_rates->SN0_kpH2Oice,
            my_rates->h2dustS, my_rates->h2dustC, pack.other_scratch_buf.rhoH, my_rates->grain_growth_rate, dtit,
-           &kdSiM, &kdFeM, &kdMg2SiO4,
-           &kdMgSiO3, &kdFe3O4, &kdAC, &kdSiO2D, &kdMgO, &kdFeS,
-           &kdAl2O3, &kdreforg, &kdvolorg, &kdH2Oice,
+           grain_growth_rates.data[OnlyGrainSpLUT::SiM_dust], grain_growth_rates.data[OnlyGrainSpLUT::FeM_dust], grain_growth_rates.data[OnlyGrainSpLUT::Mg2SiO4_dust],
+           grain_growth_rates.data[OnlyGrainSpLUT::MgSiO3_dust], grain_growth_rates.data[OnlyGrainSpLUT::Fe3O4_dust], grain_growth_rates.data[OnlyGrainSpLUT::AC_dust], grain_growth_rates.data[OnlyGrainSpLUT::SiO2_dust], grain_growth_rates.data[OnlyGrainSpLUT::MgO_dust], grain_growth_rates.data[OnlyGrainSpLUT::FeS_dust],
+           grain_growth_rates.data[OnlyGrainSpLUT::Al2O3_dust], grain_growth_rates.data[OnlyGrainSpLUT::ref_org_dust], grain_growth_rates.data[OnlyGrainSpLUT::vol_org_dust], grain_growth_rates.data[OnlyGrainSpLUT::H2O_ice_dust],
            pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::SiM_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::FeM_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::Mg2SiO4_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::MgSiO3_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::Fe3O4_dust],
            pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::AC_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::SiO2_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::MgO_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::FeS_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::Al2O3_dust],
            pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::ref_org_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::vol_org_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::H2O_ice_dust], &my_chemistry->radiative_transfer_use_H2_shielding,
@@ -1237,20 +1239,20 @@ void lookup_cool_rates0d(
       if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
         if (my_chemistry->dust_species > 0)  {
           scoef = scoef + 2. *
-                kdMgSiO3      * 2.;
+                grain_growth_rates.data[OnlyGrainSpLUT::MgSiO3_dust][0]      * 2.;
 
         }
         if (my_chemistry->dust_species > 1)  {
           scoef = scoef + 2. * (
-                kdMg2SiO4     * 3.
-              + kdFe3O4       * 4.
-              + kdMgO
-              + kdAl2O3       * 3.
+                grain_growth_rates.data[OnlyGrainSpLUT::Mg2SiO4_dust][0]     * 3.
+              + grain_growth_rates.data[OnlyGrainSpLUT::Fe3O4_dust][0]       * 4.
+              + grain_growth_rates.data[OnlyGrainSpLUT::MgO_dust][0]
+              + grain_growth_rates.data[OnlyGrainSpLUT::Al2O3_dust][0]       * 3.
             );
         }
         if (my_chemistry->dust_species > 2)  {
           acoef = acoef
-          + kdvolorg      / H2I        * 2. * 2.;
+          + grain_growth_rates.data[OnlyGrainSpLUT::vol_org_dust][0]      / H2I        * 2. * 2.;
         }
       }
     }
@@ -1466,7 +1468,7 @@ void lookup_cool_rates0d(
       if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
         if (my_chemistry->dust_species > 0)  {
           acoef = acoef
-          + kdAC          / CI        * 12.;
+          + grain_growth_rates.data[OnlyGrainSpLUT::AC_dust][0]          / CI        * 12.;
         }
       }
       if (my_chemistry->use_radiative_transfer == 1)  {
@@ -1515,8 +1517,8 @@ void lookup_cool_rates0d(
       if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
         if (my_chemistry->dust_species > 2)  {
           acoef = acoef
-          + kdreforg      / CO        * 17. * 0.5
-          + kdvolorg      / CO        * 17.;
+          + grain_growth_rates.data[OnlyGrainSpLUT::ref_org_dust][0]      / CO        * 17. * 0.5
+          + grain_growth_rates.data[OnlyGrainSpLUT::vol_org_dust][0]      / CO        * 17.;
         }
       }
       if (my_chemistry->use_radiative_transfer == 1)  {
@@ -1620,18 +1622,18 @@ void lookup_cool_rates0d(
       if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
         if (my_chemistry->dust_species > 0)  {
           acoef = acoef
-          + kdMgSiO3      / H2O        * 18. * 2.;
+          + grain_growth_rates.data[OnlyGrainSpLUT::MgSiO3_dust][0]      / H2O        * 18. * 2.;
         }
         if (my_chemistry->dust_species > 1)  {
           acoef = acoef
-          + kdMg2SiO4     / H2O        * 18. * 3.
-          + kdFe3O4       / H2O        * 18. * 4.
-          + kdMgO         / H2O        * 18.
-          + kdAl2O3       / H2O        * 18. * 3.;
+          + grain_growth_rates.data[OnlyGrainSpLUT::Mg2SiO4_dust][0]     / H2O        * 18. * 3.
+          + grain_growth_rates.data[OnlyGrainSpLUT::Fe3O4_dust][0]       / H2O        * 18. * 4.
+          + grain_growth_rates.data[OnlyGrainSpLUT::MgO_dust][0]         / H2O        * 18.
+          + grain_growth_rates.data[OnlyGrainSpLUT::Al2O3_dust][0]       / H2O        * 18. * 3.;
         }
         if (my_chemistry->dust_species > 2)  {
           acoef = acoef
-          + kdH2Oice      / H2O        * 18.;
+          + grain_growth_rates.data[OnlyGrainSpLUT::H2O_ice_dust][0]      / H2O        * 18.;
         }
       }
       if (my_chemistry->use_radiative_transfer == 1)  {
@@ -1670,7 +1672,7 @@ void lookup_cool_rates0d(
       if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
         if (my_chemistry->dust_species > 1)  {
           acoef = acoef
-          + kdSiM         / SiI        * 28.;
+          + grain_growth_rates.data[OnlyGrainSpLUT::SiM_dust][0]         / SiI        * 28.;
         }
       }
 
@@ -1688,11 +1690,11 @@ void lookup_cool_rates0d(
       if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
         if (my_chemistry->dust_species > 0)  {
           acoef = acoef
-          + kdMgSiO3      / SiOI        * 44.;
+          + grain_growth_rates.data[OnlyGrainSpLUT::MgSiO3_dust][0]      / SiOI        * 44.;
         }
         if (my_chemistry->dust_species > 1)  {
           acoef = acoef
-          + kdMg2SiO4     / SiOI        * 44.;
+          + grain_growth_rates.data[OnlyGrainSpLUT::Mg2SiO4_dust][0]     / SiOI        * 44.;
         }
       }
 
@@ -1708,7 +1710,7 @@ void lookup_cool_rates0d(
       if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
         if (my_chemistry->dust_species > 1)  {
           acoef = acoef
-          + kdSiO2D       / SiO2I        * 60.;
+          + grain_growth_rates.data[OnlyGrainSpLUT::SiO2_dust][0]       / SiO2I        * 60.;
         }
       }
 
@@ -1741,7 +1743,7 @@ void lookup_cool_rates0d(
       if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
         if (my_chemistry->dust_species > 2)  {
           acoef = acoef
-          + kdreforg      / CH2        * 14. * 0.5;
+          + grain_growth_rates.data[OnlyGrainSpLUT::ref_org_dust][0]      / CH2        * 14. * 0.5;
         }
       }
 
@@ -1835,11 +1837,11 @@ void lookup_cool_rates0d(
           scoef = 0.;
           acoef = 0.;
           acoef = acoef
-          + kdMgSiO3      / Mg        * 24.;
+          + grain_growth_rates.data[OnlyGrainSpLUT::MgSiO3_dust][0]      / Mg        * 24.;
           if (my_chemistry->dust_species > 1)  {
             acoef = acoef
-            + kdMg2SiO4     / Mg        * 24. * 2.
-            + kdMgO         / Mg        * 24.;
+            + grain_growth_rates.data[OnlyGrainSpLUT::Mg2SiO4_dust][0]     / Mg        * 24. * 2.
+            + grain_growth_rates.data[OnlyGrainSpLUT::MgO_dust][0]         / Mg        * 24.;
           }
 
           dspdot[35-1] = dspdot[35-1] + (scoef - acoef * Mg);
@@ -1852,7 +1854,7 @@ void lookup_cool_rates0d(
           scoef = 0.;
           acoef = 0.;
           acoef = acoef
-          + kdAl2O3       / Al        * 27. * 2.;
+          + grain_growth_rates.data[OnlyGrainSpLUT::Al2O3_dust][0]       / Al        * 27. * 2.;
 
           dspdot[36-1] = dspdot[36-1] + (scoef - acoef * Al);
 
@@ -1862,7 +1864,7 @@ void lookup_cool_rates0d(
           scoef = 0.;
           acoef = 0.;
           acoef = acoef
-          + kdFeS         / S        * 32.;
+          + grain_growth_rates.data[OnlyGrainSpLUT::FeS_dust][0]         / S        * 32.;
 
           dspdot[37-1] = dspdot[37-1] + (scoef - acoef * S);
 
@@ -1872,9 +1874,9 @@ void lookup_cool_rates0d(
           scoef = 0.;
           acoef = 0.;
           acoef = acoef
-          + kdFeM         / Fe        * 56.
-          + kdFe3O4       / Fe        * 56. * 3.
-          + kdFeS         / Fe        * 56.;
+          + grain_growth_rates.data[OnlyGrainSpLUT::FeM_dust][0]         / Fe        * 56.
+          + grain_growth_rates.data[OnlyGrainSpLUT::Fe3O4_dust][0]       / Fe        * 56. * 3.
+          + grain_growth_rates.data[OnlyGrainSpLUT::FeS_dust][0]         / Fe        * 56.;
 
           dspdot[38-1] = dspdot[38-1] + (scoef - acoef * Fe);
 
@@ -1895,7 +1897,7 @@ void lookup_cool_rates0d(
         // ***** MgSiO3 **********
         scoef = 0.;
         scoef = scoef
-        + kdMgSiO3      * 100.;
+        + grain_growth_rates.data[OnlyGrainSpLUT::MgSiO3_dust][0]      * 100.;
         acoef = 0.;
 
         dspdot[39-1] = dspdot[39-1] + (scoef - acoef * MgSiO3);
@@ -1905,7 +1907,7 @@ void lookup_cool_rates0d(
         // ***** AC **********
         scoef = 0.;
         scoef = scoef
-        + kdAC          * 12.;
+        + grain_growth_rates.data[OnlyGrainSpLUT::AC_dust][0]          * 12.;
         acoef = 0.;
 
         dspdot[40-1] = dspdot[40-1] + (scoef - acoef * AC);
@@ -1917,7 +1919,7 @@ void lookup_cool_rates0d(
         // ***** SiM **********
         scoef = 0.;
         scoef = scoef
-        + kdSiM         * 28.;
+        + grain_growth_rates.data[OnlyGrainSpLUT::SiM_dust][0]         * 28.;
         acoef = 0.;
 
         dspdot[41-1] = dspdot[41-1] + (scoef - acoef * SiM);
@@ -1927,7 +1929,7 @@ void lookup_cool_rates0d(
         // ***** FeM **********
         scoef = 0.;
         scoef = scoef
-        + kdFeM         * 56.;
+        + grain_growth_rates.data[OnlyGrainSpLUT::FeM_dust][0]         * 56.;
         acoef = 0.;
 
         dspdot[42-1] = dspdot[42-1] + (scoef - acoef * FeM);
@@ -1937,7 +1939,7 @@ void lookup_cool_rates0d(
         // ***** Mg2SiO4 **********
         scoef = 0.;
         scoef = scoef
-        + kdMg2SiO4     * 140.;
+        + grain_growth_rates.data[OnlyGrainSpLUT::Mg2SiO4_dust][0]     * 140.;
         acoef = 0.;
 
         dspdot[43-1] = dspdot[43-1] + (scoef - acoef * Mg2SiO4);
@@ -1947,7 +1949,7 @@ void lookup_cool_rates0d(
         // ***** Fe3O4 **********
         scoef = 0.;
         scoef = scoef
-        + kdFe3O4       * 232.;
+        + grain_growth_rates.data[OnlyGrainSpLUT::Fe3O4_dust][0]       * 232.;
         acoef = 0.;
 
         dspdot[44-1] = dspdot[44-1] + (scoef - acoef * Fe3O4);
@@ -1957,7 +1959,7 @@ void lookup_cool_rates0d(
         // ***** SiO2D **********
         scoef = 0.;
         scoef = scoef
-        + kdSiO2D       * 60.;
+        + grain_growth_rates.data[OnlyGrainSpLUT::SiO2_dust][0]       * 60.;
         acoef = 0.;
 
         dspdot[45-1] = dspdot[45-1] + (scoef - acoef * SiO2D);
@@ -1967,7 +1969,7 @@ void lookup_cool_rates0d(
         // ***** MgO **********
         scoef = 0.;
         scoef = scoef
-        + kdMgO         * 40.;
+        + grain_growth_rates.data[OnlyGrainSpLUT::MgO_dust][0]         * 40.;
         acoef = 0.;
 
         dspdot[46-1] = dspdot[46-1] + (scoef - acoef * MgO);
@@ -1977,7 +1979,7 @@ void lookup_cool_rates0d(
         // ***** FeS **********
         scoef = 0.;
         scoef = scoef
-        + kdFeS         * 88.;
+        + grain_growth_rates.data[OnlyGrainSpLUT::FeS_dust][0]         * 88.;
         acoef = 0.;
 
         dspdot[47-1] = dspdot[47-1] + (scoef - acoef * FeS);
@@ -1987,7 +1989,7 @@ void lookup_cool_rates0d(
         // ***** Al2O3 **********
         scoef = 0.;
         scoef = scoef
-        + kdAl2O3       * 102.;
+        + grain_growth_rates.data[OnlyGrainSpLUT::Al2O3_dust][0]       * 102.;
         acoef = 0.;
 
         dspdot[48-1] = dspdot[48-1] + (scoef - acoef * Al2O3);
@@ -1999,7 +2001,7 @@ void lookup_cool_rates0d(
         // ***** reforg **********
         scoef = 0.;
         scoef = scoef
-        + kdreforg      * 22.68;
+        + grain_growth_rates.data[OnlyGrainSpLUT::ref_org_dust][0]      * 22.68;
         acoef = 0.;
 
         dspdot[49-1] = dspdot[49-1] + (scoef - acoef * reforg);
@@ -2009,7 +2011,7 @@ void lookup_cool_rates0d(
         // ***** volorg **********
         scoef = 0.;
         scoef = scoef
-        + kdvolorg      * 32.;
+        + grain_growth_rates.data[OnlyGrainSpLUT::vol_org_dust][0]      * 32.;
         acoef = 0.;
 
         dspdot[50-1] = dspdot[50-1] + (scoef - acoef * volorg);
@@ -2019,7 +2021,7 @@ void lookup_cool_rates0d(
         // ***** H2Oice **********
         scoef = 0.;
         scoef = scoef
-        + kdH2Oice      * 18.;
+        + grain_growth_rates.data[OnlyGrainSpLUT::H2O_ice_dust][0]      * 18.;
         acoef = 0.;
 
         dspdot[51-1] = dspdot[51-1] + (scoef - acoef * H2Oice);
@@ -2030,6 +2032,8 @@ void lookup_cool_rates0d(
     }
 
   }
+
+  grackle::impl::drop_GrainSpeciesCollection(&grain_growth_rates);
 
   return;
 }
