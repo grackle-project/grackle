@@ -9,10 +9,11 @@
 #ifndef TIME_DERIV_0D_HPP
 #define TIME_DERIV_0D_HPP
 
+#include "fortran_func_wrappers.hpp"
 #include "grackle.h"
-#include "utils-field.hpp"
 #include "index_helper.h"
 #include "internal_types.hpp"
+#include "utils-field.hpp"
 
 // we choose to adopt a longer, more descriptive namespace here so that the
 // handful of functions defined in this file can have shorter names (in the
@@ -423,7 +424,8 @@ void lookup_cool_rates0d(
 
   // -------------------------------------------------------------------
 
-
+  // shorten `grackle::impl::fortran_wrapper` to `f_wrap` within this function
+  namespace f_wrap = ::grackle::impl::fortran_wrapper;
 
   const int i_eng = 52;
 
@@ -564,111 +566,18 @@ void lookup_cool_rates0d(
 
   // Compute the cooling rate, tgas, tdust, and metallicity for this row
 
-  if (pack.local_edot_handling == 1)  {
-     FORTRAN_NAME(cool1d_multi_g)(
-              pack.fields.density, &e, pack.fields.x_velocity, pack.fields.y_velocity, pack.fields.z_velocity, &de, &HI, &HII, &HeI, &HeII, &HeIII,
-              &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &my_chemistry->NumberOfTemperatureBins,
-              &internalu.extfields_in_comoving, &my_chemistry->primordial_chemistry, &pack.fwd_args.imetal, &my_chemistry->metal_cooling,
-              &my_chemistry->h2_on_dust, &my_chemistry->dust_chemistry, &my_chemistry->use_dust_density_field, &my_chemistry->dust_recombination_cooling,
-              &my_fields->grid_rank,  &idx_range.i_start,  &idx_range.i_end, &idx_range.jp1,
-              &idx_range.kp1, &my_chemistry->ih2co, &my_chemistry->ipiht, &pack.fwd_args.iter, &my_chemistry->photoelectric_heating,
-              &internalu.a_value, &my_chemistry->TemperatureStart, &my_chemistry->TemperatureEnd, &my_chemistry->SolarMetalFractionByMass, &my_chemistry->local_dust_to_gas_ratio,
-              &internalu.utem, &internalu.uxyz, &internalu.a_units, &internalu.urho, &internalu.tbase1,
-              &my_chemistry->Gamma, &my_chemistry->HydrogenFractionByMass,
-              my_rates->ceHI, my_rates->ceHeI, my_rates->ceHeII, my_rates->ciHI, my_rates->ciHeI,
-              my_rates->ciHeIS, my_rates->ciHeII, my_rates->reHII, my_rates->reHeII1,
-              my_rates->reHeII2, my_rates->reHeIII, my_rates->brem, &my_rates->comp, &my_rates->gammah,
-              &my_chemistry->interstellar_radiation_field, my_rates->regr, &my_rates->gamma_isrf, &my_uvb_rates.comp_xray, &my_uvb_rates.temp_xray,
-              &my_uvb_rates.piHI, &my_uvb_rates.piHeI, &my_uvb_rates.piHeII, &comp1, &comp2,
-              &HM, &H2I, &H2II, &DI, &DII, &HDI, pack.fields.metal_density, pack.fields.dust_density,
-              my_rates->hyd01k, my_rates->h2k01, my_rates->vibh, my_rates->roth, my_rates->rotl,
-              pack.main_scratch_buf.coolingheating_buf.hyd01k, pack.main_scratch_buf.coolingheating_buf.h2k01, pack.main_scratch_buf.coolingheating_buf.vibh, pack.main_scratch_buf.coolingheating_buf.roth, pack.main_scratch_buf.coolingheating_buf.rotl,
-              my_rates->GP99LowDensityLimit, my_rates->GP99HighDensityLimit, pack.main_scratch_buf.coolingheating_buf.gpldl, pack.main_scratch_buf.coolingheating_buf.gphdl,
-              my_rates->HDlte, my_rates->HDlow, pack.main_scratch_buf.coolingheating_buf.hdlte, pack.main_scratch_buf.coolingheating_buf.hdlow,
-              my_rates->GAHI, my_rates->GAH2, my_rates->GAHe, my_rates->GAHp, my_rates->GAel,
-              my_rates->H2LTE, my_rates->gas_grain,
-              pack.main_scratch_buf.coolingheating_buf.ceHI, pack.main_scratch_buf.coolingheating_buf.ceHeI, pack.main_scratch_buf.coolingheating_buf.ceHeII, pack.main_scratch_buf.coolingheating_buf.ciHI, pack.main_scratch_buf.coolingheating_buf.ciHeI, pack.main_scratch_buf.coolingheating_buf.ciHeIS, pack.main_scratch_buf.coolingheating_buf.ciHeII,
-              pack.main_scratch_buf.coolingheating_buf.reHII, pack.main_scratch_buf.coolingheating_buf.reHeII1, pack.main_scratch_buf.coolingheating_buf.reHeII2, pack.main_scratch_buf.coolingheating_buf.reHeIII, pack.main_scratch_buf.coolingheating_buf.brem,
-              pack.main_scratch_buf.logTlininterp_buf.indixe, pack.main_scratch_buf.logTlininterp_buf.t1, pack.main_scratch_buf.logTlininterp_buf.t2, pack.main_scratch_buf.logTlininterp_buf.logtem, pack.main_scratch_buf.logTlininterp_buf.tdef, pack.other_scratch_buf.edot,
-              pack.other_scratch_buf.tgas, pack.main_scratch_buf.cool1dmulti_buf.tgasold, pack.other_scratch_buf.mmw, pack.other_scratch_buf.p2d, pack.other_scratch_buf.tdust, pack.other_scratch_buf.metallicity,
-              pack.other_scratch_buf.dust2gas, pack.other_scratch_buf.rhoH, pack.main_scratch_buf.cool1dmulti_buf.mynh, pack.main_scratch_buf.cool1dmulti_buf.myde,
-              pack.main_scratch_buf.cool1dmulti_buf.gammaha_eff, pack.main_scratch_buf.cool1dmulti_buf.gasgr_tdust, pack.main_scratch_buf.cool1dmulti_buf.regr,
-              &my_chemistry->self_shielding_method, &my_uvb_rates.crsHI, &my_uvb_rates.crsHeI, &my_uvb_rates.crsHeII,
-              &my_uvb_rates.k24, &my_uvb_rates.k26,
-              &my_chemistry->use_radiative_transfer, pack.fields.RT_heating_rate,
-              &my_chemistry->h2_optical_depth_approximation, &my_chemistry->cie_cooling, &my_chemistry->h2_cooling_rate, &my_chemistry->hd_cooling_rate, my_rates->cieco, pack.main_scratch_buf.coolingheating_buf.cieco,
-              &my_chemistry->cmb_temperature_floor, &my_chemistry->UVbackground, &my_chemistry->cloudy_electron_fraction_factor,
-              &my_rates->cloudy_primordial.grid_rank, my_rates->cloudy_primordial.grid_dimension,
-              my_rates->cloudy_primordial.grid_parameters[0], my_rates->cloudy_primordial.grid_parameters[1], my_rates->cloudy_primordial.grid_parameters[2], my_rates->cloudy_primordial.grid_parameters[3], my_rates->cloudy_primordial.grid_parameters[4],
-              &my_rates->cloudy_primordial.data_size, my_rates->cloudy_primordial.cooling_data, my_rates->cloudy_primordial.heating_data, my_rates->cloudy_primordial.mmw_data,
-              &my_rates->cloudy_metal.grid_rank, my_rates->cloudy_metal.grid_dimension,
-              my_rates->cloudy_metal.grid_parameters[0], my_rates->cloudy_metal.grid_parameters[1], my_rates->cloudy_metal.grid_parameters[2], my_rates->cloudy_metal.grid_parameters[3], my_rates->cloudy_metal.grid_parameters[4],
-              &my_rates->cloudy_metal.data_size, my_rates->cloudy_metal.cooling_data, my_rates->cloudy_metal.heating_data, &my_rates->cloudy_data_new,
-              &my_chemistry->use_volumetric_heating_rate, &my_chemistry->use_specific_heating_rate, pack.fields.volumetric_heating_rate, pack.fields.specific_heating_rate,
-              &my_chemistry->use_temperature_floor, &my_chemistry->temperature_floor_scalar, pack.fields.temperature_floor,
-              &my_chemistry->use_isrf_field, pack.fields.isrf_habing, itmask, &pack.local_itmask_metal,
-             &my_chemistry->metal_chemistry, &my_chemistry->grain_growth, &my_chemistry->use_primordial_continuum_opacity, &my_chemistry->tabulated_cooling_minimum_temperature,
-             &DM, &HDII, &HeHII,
-             &CI, &CII, &CO, &CO2,
-             &OI, &OH, &H2O, &O2,
-             &SiI, &SiOI, &SiO2I,
-             &CH, &CH2, &COII, &OII,
-             &OHII, &H2OII, &H3OII, &O2II,
-             &Mg, &Al, &S, &Fe,
-             &SiM, &FeM, &Mg2SiO4, &MgSiO3, &Fe3O4,
-             &AC, &SiO2D, &MgO, &FeS, &Al2O3,
-             &reforg, &volorg, &H2Oice,
-             my_rates->cieY06,
-             my_rates->LH2.props.dimension, &my_rates->LH2.props.data_size,
-             my_rates->LH2.props.parameters[0], my_rates->LH2.props.parameters[1], my_rates->LH2.props.parameters[2],
-             &my_rates->LH2.props.parameter_spacing[0], &my_rates->LH2.props.parameter_spacing[1], &my_rates->LH2.props.parameter_spacing[2], my_rates->LH2.data,
-             my_rates->LHD.props.dimension, &my_rates->LHD.props.data_size,
-             my_rates->LHD.props.parameters[0], my_rates->LHD.props.parameters[1], my_rates->LHD.props.parameters[2],
-             &my_rates->LHD.props.parameter_spacing[0], &my_rates->LHD.props.parameter_spacing[1], &my_rates->LHD.props.parameter_spacing[2], my_rates->LHD.data,
-             my_rates->LCI.props.dimension, &my_rates->LCI.props.data_size,
-             my_rates->LCI.props.parameters[0], my_rates->LCI.props.parameters[1], my_rates->LCI.props.parameters[2],
-             &my_rates->LCI.props.parameter_spacing[0], &my_rates->LCI.props.parameter_spacing[1], &my_rates->LCI.props.parameter_spacing[2], my_rates->LCI.data,
-             my_rates->LCII.props.dimension, &my_rates->LCII.props.data_size,
-             my_rates->LCII.props.parameters[0], my_rates->LCII.props.parameters[1], my_rates->LCII.props.parameters[2],
-             &my_rates->LCII.props.parameter_spacing[0], &my_rates->LCII.props.parameter_spacing[1], &my_rates->LCII.props.parameter_spacing[2], my_rates->LCII.data,
-             my_rates->LOI.props.dimension, &my_rates->LOI.props.data_size,
-             my_rates->LOI.props.parameters[0], my_rates->LOI.props.parameters[1], my_rates->LOI.props.parameters[2],
-             &my_rates->LOI.props.parameter_spacing[0], &my_rates->LOI.props.parameter_spacing[1], &my_rates->LOI.props.parameter_spacing[2], my_rates->LOI.data,
-             my_rates->LCO.props.dimension, &my_rates->LCO.props.data_size,
-             my_rates->LCO.props.parameters[0], my_rates->LCO.props.parameters[1], my_rates->LCO.props.parameters[2],
-             &my_rates->LCO.props.parameter_spacing[0], &my_rates->LCO.props.parameter_spacing[1], &my_rates->LCO.props.parameter_spacing[2], my_rates->LCO.data,
-             my_rates->LOH.props.dimension, &my_rates->LOH.props.data_size,
-             my_rates->LOH.props.parameters[0], my_rates->LOH.props.parameters[1], my_rates->LOH.props.parameters[2],
-             &my_rates->LOH.props.parameter_spacing[0], &my_rates->LOH.props.parameter_spacing[1], &my_rates->LOH.props.parameter_spacing[2], my_rates->LOH.data,
-             my_rates->LH2O.props.dimension, &my_rates->LH2O.props.data_size,
-             my_rates->LH2O.props.parameters[0], my_rates->LH2O.props.parameters[1], my_rates->LH2O.props.parameters[2],
-             &my_rates->LH2O.props.parameter_spacing[0], &my_rates->LH2O.props.parameter_spacing[1], &my_rates->LH2O.props.parameter_spacing[2], my_rates->LH2O.data,
-             my_rates->alphap.props.dimension, &my_rates->alphap.props.data_size,
-             my_rates->alphap.props.parameters[0], my_rates->alphap.props.parameters[1], &my_rates->alphap.props.parameter_spacing[0], &my_rates->alphap.props.parameter_spacing[1],
-             my_rates->alphap.data,
-             &my_chemistry->multi_metals, &my_chemistry->metal_abundances, &my_chemistry->dust_species, &my_chemistry->use_multiple_dust_temperatures, &my_chemistry->dust_sublimation,
-             pack.fields.local_ISM_metal_density,
-             pack.fields.ccsn13_metal_density, pack.fields.ccsn20_metal_density, pack.fields.ccsn25_metal_density, pack.fields.ccsn30_metal_density,
-             pack.fields.fsn13_metal_density, pack.fields.fsn15_metal_density, pack.fields.fsn50_metal_density, pack.fields.fsn80_metal_density,
-             pack.fields.pisn170_metal_density, pack.fields.pisn200_metal_density, pack.fields.y19_metal_density,
-             &my_rates->SN0_N,
-             my_rates->SN0_fSiM, my_rates->SN0_fFeM, my_rates->SN0_fMg2SiO4, my_rates->SN0_fMgSiO3,
-             my_rates->SN0_fFe3O4, my_rates->SN0_fAC, my_rates->SN0_fSiO2D, my_rates->SN0_fMgO,
-             my_rates->SN0_fFeS, my_rates->SN0_fAl2O3,
-             my_rates->SN0_freforg, my_rates->SN0_fvolorg, my_rates->SN0_fH2Oice,
-             my_rates->SN0_r0SiM, my_rates->SN0_r0FeM, my_rates->SN0_r0Mg2SiO4, my_rates->SN0_r0MgSiO3,
-             my_rates->SN0_r0Fe3O4, my_rates->SN0_r0AC, my_rates->SN0_r0SiO2D, my_rates->SN0_r0MgO,
-             my_rates->SN0_r0FeS, my_rates->SN0_r0Al2O3,
-             my_rates->SN0_r0reforg, my_rates->SN0_r0volorg, my_rates->SN0_r0H2Oice,
-             my_rates->gr_N, &my_rates->gr_Size, &my_rates->gr_dT, my_rates->gr_Td,
-             my_rates->SN0_kpSiM, my_rates->SN0_kpFeM, my_rates->SN0_kpMg2SiO4, my_rates->SN0_kpMgSiO3,
-             my_rates->SN0_kpFe3O4, my_rates->SN0_kpAC, my_rates->SN0_kpSiO2D, my_rates->SN0_kpMgO,
-             my_rates->SN0_kpFeS, my_rates->SN0_kpAl2O3,
-             my_rates->SN0_kpreforg, my_rates->SN0_kpvolorg, my_rates->SN0_kpH2Oice,
-             pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::SiM_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::FeM_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::Mg2SiO4_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::MgSiO3_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::Fe3O4_dust],
-             pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::AC_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::SiO2_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::MgO_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::FeS_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::Al2O3_dust],
-             pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::ref_org_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::vol_org_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::H2O_ice_dust],
-             my_rates->gas_grain2, &my_rates->gamma_isrf2
+  if (pack.local_edot_handling == 1) {
+    f_wrap::cool1d_multi_g(
+      pack.fwd_args.imetal, idx_range, pack.fwd_args.iter,
+      pack.other_scratch_buf.edot, pack.other_scratch_buf.tgas,
+      pack.other_scratch_buf.mmw, pack.other_scratch_buf.p2d,
+      pack.other_scratch_buf.tdust, pack.other_scratch_buf.metallicity,
+      pack.other_scratch_buf.dust2gas, pack.other_scratch_buf.rhoH,
+      itmask, &pack.local_itmask_metal, my_chemistry, my_rates, &pack.fields,
+      my_uvb_rates, internalu, pack.main_scratch_buf.grain_temperatures,
+      pack.main_scratch_buf.logTlininterp_buf,
+      pack.main_scratch_buf.cool1dmulti_buf,
+      pack.main_scratch_buf.coolingheating_buf
     );
   }
 
