@@ -430,12 +430,11 @@ void lookup_cool_rates0d(
   double comp1, comp2;  // in the future, these won't need to be passed to
                         // cool1d_multi_g
 
-  // Rate equation row temporaries
-
-  double dedot, HIdot, dedot_prev, HIdot_prev;
-  std::vector<double> k13dd(14);
-
-  // this should not be allocated every time we enter this function...
+  // these should not be re-allocated every time we enter this function...
+  // (they should all be preallocated ahead of time!)
+  double dedot[1];
+  double HIdot[1];
+  double k13dd[14];
   grackle::impl::ColRecRxnRateCollection kcr_buf =
     grackle::impl::new_ColRecRxnRateCollection(1);
   grackle::impl::PhotoRxnRateCollection kshield_buf =
@@ -696,7 +695,7 @@ void lookup_cool_rates0d(
             kcr_buf.data[ColRecRxnLUT::k11], kcr_buf.data[ColRecRxnLUT::k12], kcr_buf.data[ColRecRxnLUT::k13], kcr_buf.data[ColRecRxnLUT::k14], kcr_buf.data[ColRecRxnLUT::k15], kcr_buf.data[ColRecRxnLUT::k16], kcr_buf.data[ColRecRxnLUT::k17], kcr_buf.data[ColRecRxnLUT::k18],
             kcr_buf.data[ColRecRxnLUT::k19], kcr_buf.data[ColRecRxnLUT::k22], &my_uvb_rates.k24, &my_uvb_rates.k25, &my_uvb_rates.k26, &my_uvb_rates.k28, &my_uvb_rates.k29, &my_uvb_rates.k30, &my_uvb_rates.k31,
             kcr_buf.data[ColRecRxnLUT::k50], kcr_buf.data[ColRecRxnLUT::k51], kcr_buf.data[ColRecRxnLUT::k52], kcr_buf.data[ColRecRxnLUT::k53], kcr_buf.data[ColRecRxnLUT::k54], kcr_buf.data[ColRecRxnLUT::k55], kcr_buf.data[ColRecRxnLUT::k56], kcr_buf.data[ColRecRxnLUT::k57],
-            kcr_buf.data[ColRecRxnLUT::k58], k13dd.data(), kshield_buf.k24, kshield_buf.k25, kshield_buf.k26,
+            kcr_buf.data[ColRecRxnLUT::k58], k13dd, kshield_buf.k24, kshield_buf.k25, kshield_buf.k26,
             kshield_buf.k28, kshield_buf.k29, kshield_buf.k30,
             kshield_buf.k31, pack.other_scratch_buf.h2dust, pack.main_scratch_buf.chemheatrates_buf.n_cr_n, pack.main_scratch_buf.chemheatrates_buf.n_cr_d1, pack.main_scratch_buf.chemheatrates_buf.n_cr_d2,
             pack.main_scratch_buf.logTlininterp_buf.t1, pack.main_scratch_buf.logTlininterp_buf.t2, pack.main_scratch_buf.logTlininterp_buf.tdef, pack.main_scratch_buf.logTlininterp_buf.logtem, pack.main_scratch_buf.logTlininterp_buf.indixe,
@@ -772,7 +771,7 @@ void lookup_cool_rates0d(
 
   if (pack.local_edot_handling == 1)  {
      FORTRAN_NAME(rate_timestep_g)(
-                   &dedot, &HIdot, &my_chemistry->primordial_chemistry, &pack.fwd_args.anydust,
+                   dedot, HIdot, &my_chemistry->primordial_chemistry, &pack.fwd_args.anydust,
                    &de, &HI, &HII, &HeI, &HeII, &HeIII, pack.fields.density,
                    &HM, &H2I, &H2II,
                    &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &idx_range.i_start,
