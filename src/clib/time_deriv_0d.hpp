@@ -622,6 +622,30 @@ void lookup_cool_rates0d(
 
   dspdot[i_eng-1] = *(pack.other_scratch_buf.edot) / *(pack.fields.density);
 
+
+  // TODO: Deal with the remaining logic in this function (~1200 lines of code)
+  //   1. First, it should be moved into a different function!
+  //   2. Second, we should replace all usage of dspdot (and hardcoded
+  //      integers) to use grackle::impl::SpeciesCollection and SpLUT
+  //      -> this will finish the migration of solve_rate_newton_raphson
+  //         away from hardcoded integers to SpLUT
+  //      -> this will aide with the next step
+  //   3. Third, we should consider how to deduplicate this logic and most of
+  //      the logic in step_rate_g
+  //      -> I am pretty sure Gen performed a copy-and-paste when he wrote this
+  //      -> it is totally unsustainable for us to maintain both implementations
+  //      -> A common obstacle for unifying this logic is:
+  //         - step_rate_g uses these calculations with a backward difference
+  //           formula (see 3.2 of the grackle paper)
+  //         - Here, we're computing the net time derivative.
+  //         We can DEFINITELY overcome this obstacle!
+  //      -> there's another obstacle that applies for unifying another part of
+  //         the logic:
+  //         - Parts (A), (B), and (C) in the original `step_rate_g` all apply
+  //           partial updates (again, see 3.2 of the grackle paper)
+  //         - notably, part (D) does not do this (but I'm not sure that there
+  //           is a reasonable motivation for that choice)
+
   // A) the 6-species integrator
   if (my_chemistry->primordial_chemistry == 1)  {
 
