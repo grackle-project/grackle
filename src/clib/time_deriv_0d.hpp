@@ -2,9 +2,6 @@
 
 /// @file time_deriv_0d.hpp
 /// @brief Defines machinery to calculate the time derivative for a single zone
-///
-/// When we transcribe `lookup_cool_rates0d`, the plan is directly embed its
-/// logic into the `grackle::impl::time_deriv_0d::derivatives` function.
 
 #ifndef TIME_DERIV_0D_HPP
 #define TIME_DERIV_0D_HPP
@@ -350,20 +347,11 @@ inline void scratchbufs_copy_from_pack(
 
 }
 
-// we temporarily forward declare the following signature
-// (in the future, the following function will be consolidated with the
-// derivatives function)
-void lookup_cool_rates0d(
-  double* dtit, int* nsp, double* dsp, double* dspdot, gr_mask_type* itmask,
-  chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
-  photo_rate_storage my_uvb_rates, InternalGrUnits internalu,
-  grackle::impl::time_deriv_0d::ContextPack pack
-);
 
 /// calculate the time derivatives
 ///
 /// @param[in] dt_FIXME Specifies the timestep passed to the
-///   lookup_cool_rates0d_g function. See the C++ docstring for that function
+///   lookup_cool_rates1d_g function. See the C++ docstring for that function
 ///   for more details (this needs to be revisited)
 /// @param[in] ycur A buffer representing a mathematical vector that holds the
 ///   initial values. This always has enough space for each species and the
@@ -382,9 +370,8 @@ void lookup_cool_rates0d(
 ///      finite derivatives that are used to estimate the jacobian matrix)
 ///
 /// @todo
-/// when we transcribe `lookup_cool_rates0d`, we should replace `ycur` and
-/// `ydot` with instances of `SpeciesCollection` and then pass
-/// `internal_energy` and `edot` as separate arguments.
+/// we should replace `ycur` and `ydot` with instances of `SpeciesCollection`
+/// and then pass `internal_energy` and `edot` as separate arguments.
 ///   - This will allow make the code easier to understand at a glance (and
 ///     will be important for reducing code duplication between this function
 ///     and `step_rate_g`)
@@ -395,35 +382,23 @@ void derivatives(
   double dt_FIXME, double* ycur, double* ydot, ContextPack& pack
 ) {
 
-  // once we transcribe lookup_cool_rates0d, we will need to update the
-  // appropriate members of pack.fields to point to entries of ycur
-
   chemistry_data* my_chemistry = pack.fwd_args.my_chemistry;
   chemistry_data_storage* my_rates = pack.fwd_args.my_rates;
   photo_rate_storage my_uvb_rates = pack.fwd_args.my_uvb_rates;
   InternalGrUnits internalu = pack.fwd_args.internalu;
 
   // todo: remove this variable
-  gr_mask_type local_itmask_nr = MASK_TRUE;
+  gr_mask_type local_itmask = MASK_TRUE;
 
   // todo: remove this variable
   int nsp = -1; // <- dummy value! (it isn't actually used)
 
-  lookup_cool_rates0d(
-    &dt_FIXME, &nsp, ycur, ydot, &local_itmask_nr, my_chemistry, my_rates,
-    my_uvb_rates, internalu, pack
-  );
-}
+  // some aliases to temporarily use
+  double* dtit = &dt_FIXME;
+  double* dsp = ycur;
+  double* dspdot = ydot;
+  gr_mask_type* itmask = &local_itmask;
 
-void lookup_cool_rates0d(
-  double* dtit, int* nsp, double* dsp, double* dspdot, gr_mask_type* itmask,
-  chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
-  photo_rate_storage my_uvb_rates, InternalGrUnits internalu,
-  grackle::impl::time_deriv_0d::ContextPack pack
-)
-{
-
-  // -------------------------------------------------------------------
 
   // shorten `grackle::impl::fortran_wrapper` to `f_wrap` within this function
   namespace f_wrap = ::grackle::impl::fortran_wrapper;
