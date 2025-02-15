@@ -107,6 +107,13 @@ struct Assorted1ElemBuf {
   double mmw[1];
   double h2dust[1];
   double edot[1];
+
+  // the remaining buffers were originally reallocated (on the stack)
+  // every time calculated the time derivatives were computed.
+  gr_mask_type itmask[1];
+  // These are used to compute values that we totally ignore in this context
+  double dedot[1];
+  double HIdot[1];
 };
 
 /// this struct is used to organize some temporary data that is used for
@@ -406,8 +413,7 @@ void derivatives(
   photo_rate_storage my_uvb_rates = pack.fwd_args.my_uvb_rates;
   InternalGrUnits internalu = pack.fwd_args.internalu;
 
-  // todo: remove this variable
-  gr_mask_type local_itmask = MASK_TRUE;
+  pack.other_scratch_buf.itmask[0] = MASK_TRUE;
 
   // todo: remove this variable
   int nsp = -1; // <- dummy value! (it isn't actually used)
@@ -416,8 +422,6 @@ void derivatives(
   double* dtit = &dt_FIXME;
   double* dsp = ycur;
   double* dspdot = ydot;
-  gr_mask_type* itmask = &local_itmask;
-
 
   // shorten `grackle::impl::fortran_wrapper` to `f_wrap` within this function
   namespace f_wrap = ::grackle::impl::fortran_wrapper;
@@ -429,12 +433,6 @@ void derivatives(
 
   double comp1, comp2;  // in the future, these won't need to be passed to
                         // cool1d_multi_g
-
-  // these should not be re-allocated every time we enter this function...
-  // (they should all be preallocated ahead of time!)
-  double dedot[1];
-  double HIdot[1];
-  
 
   // locals
 
@@ -501,7 +499,8 @@ void derivatives(
       pack.other_scratch_buf.mmw, pack.other_scratch_buf.p2d,
       pack.other_scratch_buf.tdust, pack.other_scratch_buf.metallicity,
       pack.other_scratch_buf.dust2gas, pack.other_scratch_buf.rhoH,
-      itmask, &pack.local_itmask_metal, my_chemistry, my_rates, &pack.fields,
+      pack.other_scratch_buf.itmask, &pack.local_itmask_metal, my_chemistry,
+      my_rates, &pack.fields,
       my_uvb_rates, internalu, pack.main_scratch_buf.grain_temperatures,
       pack.main_scratch_buf.logTlininterp_buf,
       pack.main_scratch_buf.cool1dmulti_buf,
@@ -516,8 +515,9 @@ void derivatives(
     pack.other_scratch_buf.mmw, pack.other_scratch_buf.tdust,
     pack.other_scratch_buf.dust2gas, pack.main_scratch_buf.k13dd,
     pack.other_scratch_buf.h2dust, pack.fwd_args.dom, pack.fwd_args.dx_cgs,
-    pack.fwd_args.c_ljeans, itmask, &pack.local_itmask_metal,
-    pack.fwd_args.imetal, pack.other_scratch_buf.rhoH, dtit[0],
+    pack.fwd_args.c_ljeans, pack.other_scratch_buf.itmask,
+    &pack.local_itmask_metal, pack.fwd_args.imetal,
+    pack.other_scratch_buf.rhoH, dtit[0],
     my_chemistry, my_rates, &pack.fields, my_uvb_rates, internalu,
     pack.main_scratch_buf.grain_growth_rates,
     pack.main_scratch_buf.grain_temperatures,
@@ -535,11 +535,12 @@ void derivatives(
   if (pack.local_edot_handling == 1)  {
 
     f_wrap::rate_timestep_g(
-      dedot, HIdot, pack.fwd_args.anydust, idx_range,
-      pack.other_scratch_buf.h2dust, pack.other_scratch_buf.rhoH,
-      itmask, pack.other_scratch_buf.edot, pack.fwd_args.chunit,
-      pack.fwd_args.dom, my_chemistry, &pack.fields, my_uvb_rates,
-      pack.main_scratch_buf.kcr_buf, pack.main_scratch_buf.kshield_buf,
+      pack.other_scratch_buf.dedot, pack.other_scratch_buf.HIdot,
+      pack.fwd_args.anydust, idx_range, pack.other_scratch_buf.h2dust,
+      pack.other_scratch_buf.rhoH, pack.other_scratch_buf.itmask,
+      pack.other_scratch_buf.edot, pack.fwd_args.chunit, pack.fwd_args.dom,
+      my_chemistry, &pack.fields, my_uvb_rates, pack.main_scratch_buf.kcr_buf,
+      pack.main_scratch_buf.kshield_buf,
       pack.main_scratch_buf.chemheatrates_buf
     );
   }
