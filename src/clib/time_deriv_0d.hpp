@@ -361,12 +361,13 @@ void lookup_cool_rates0d(
 
 /// the following is extremely temporary
 void species_density_derivatives_0d(
-  double* dspdot, const chemistry_data* my_chemistry,
-  photo_rate_storage my_uvb_rates,
-  grackle::impl::GrainSpeciesCollection grain_growth_rates,
-  grackle::impl::ColRecRxnRateCollection kcr_buf,
-  grackle::impl::PhotoRxnRateCollection kshield_buf,
-  grackle::impl::time_deriv_0d::ContextPack pack
+  double* dspdot, gr_mask_type anydust, const double* h2dust,
+  const double* rhoH, const gr_mask_type* itmask_metal,
+  const chemistry_data* my_chemistry, const grackle_field_data* my_fields,
+  const photo_rate_storage my_uvb_rates,
+  const grackle::impl::GrainSpeciesCollection grain_growth_rates,
+  const grackle::impl::ColRecRxnRateCollection kcr_buf,
+  const grackle::impl::PhotoRxnRateCollection kshield_buf
 );
 
 /// calculate the time derivatives
@@ -569,10 +570,12 @@ void lookup_cool_rates0d(
   dspdot[i_eng-1] = *(pack.other_scratch_buf.edot) / *(pack.fields.density);
 
   // we are missing some logic!
-
+  
   species_density_derivatives_0d(
-    dspdot, my_chemistry, my_uvb_rates, grain_growth_rates, kcr_buf,
-    kshield_buf, pack
+    dspdot, pack.fwd_args.anydust, pack.other_scratch_buf.h2dust,
+    pack.other_scratch_buf.rhoH, &pack.local_itmask_metal,
+    my_chemistry, &pack.fields, my_uvb_rates, grain_growth_rates,
+    kcr_buf, kshield_buf
   );
 
   grackle::impl::drop_ColRecRxnRateCollection(&kcr_buf);
@@ -580,7 +583,32 @@ void lookup_cool_rates0d(
   grackle::impl::drop_GrainSpeciesCollection(&grain_growth_rates);
 }
 
-/// Computes the time derivatives
+/// Computes the time derivatives of the mass densities of various species
+///
+/// This function is specialized to operate on a single cell at a time. This is
+/// mostly for historical reasons. In reality, it would be faster to operate on
+/// many species at once.
+///
+/// @param[out] dspdot This is where we store the time derivative of the
+///     species mass densities. The caller must make sure this is filled with
+///     zeros before calling this function
+/// @param[in]  anydust
+/// @param[in]  h2dust
+/// @param[in]  rhoH Indicates the mass density of all Hydrogen
+/// @param[in]  itmask_metal Indicates where we should account for metal
+///     chemistry
+/// @param[in]  my_chemistry Provides various runtime parameters (we probably
+///     don't need to pass the whole thing)
+/// @param[in]  my_fields Specifies field data
+/// @param[in]  my_uvb_rates specifies precomputed rxn rates dependent on the
+///     UV background
+/// @param[in]  grain_growth_rates, kcr_buf, kshield_buf specifies the
+///     precomputed rxn rates (depends on local physical conditions)
+///
+/// @note
+/// Some of occurences of the const keyword is somewhat symbolic (to indicate
+/// that we won't modify an arg or the contents of a struct). In reality,
+/// C/C++ allows you to modify pointers in a `const struct`
 ///
 /// @todo
 /// We should replace all usage of dspdot (and hardcoded integers) to use
@@ -605,13 +633,13 @@ void lookup_cool_rates0d(
 ///    - notably, part (D) does not do this (but I'm not sure that there
 ///      is a reasonable motivation for that choice)
 void species_density_derivatives_0d(
-  double* dspdot,
-  const chemistry_data* my_chemistry,
-  photo_rate_storage my_uvb_rates,
-  grackle::impl::GrainSpeciesCollection grain_growth_rates,
-  grackle::impl::ColRecRxnRateCollection kcr_buf,
-  grackle::impl::PhotoRxnRateCollection kshield_buf,
-  grackle::impl::time_deriv_0d::ContextPack pack
+  double* dspdot, gr_mask_type anydust, const double* h2dust,
+  const double* rhoH, const gr_mask_type* itmask_metal,
+  const chemistry_data* my_chemistry, const grackle_field_data* my_fields,
+  const photo_rate_storage my_uvb_rates,
+  const grackle::impl::GrainSpeciesCollection grain_growth_rates,
+  const grackle::impl::ColRecRxnRateCollection kcr_buf,
+  const grackle::impl::PhotoRxnRateCollection kshield_buf
 ) {
 
   // define some local variables carried over from the fortran version:
@@ -626,57 +654,57 @@ void species_density_derivatives_0d(
   //   gr_float isn't the same as double (but, the historical implementation
   //   definitely didn't handle this case properly)
 
-  gr_float& de      = pack.fields.e_density[0];
-  gr_float& HI      = pack.fields.HI_density[0];
-  gr_float& HII     = pack.fields.HII_density[0];
-  gr_float& HeI     = pack.fields.HeI_density[0];
-  gr_float& HeII    = pack.fields.HeII_density[0];
-  gr_float& HeIII   = pack.fields.HeIII_density[0];
-  gr_float& HM      = pack.fields.HM_density[0];
-  gr_float& H2I     = pack.fields.H2I_density[0];
-  gr_float& H2II    = pack.fields.H2II_density[0];
-  gr_float& DI      = pack.fields.DI_density[0];
-  gr_float& DII     = pack.fields.DII_density[0];
-  gr_float& HDI     = pack.fields.HDI_density[0];
-  gr_float& DM      = pack.fields.DM_density[0];
-  gr_float& HDII    = pack.fields.HDII_density[0];
-  gr_float& HeHII   = pack.fields.HeHII_density[0];
-  gr_float& CI      = pack.fields.CI_density[0];
-  gr_float& CII     = pack.fields.CII_density[0];
-  gr_float& CO      = pack.fields.CO_density[0];
-  gr_float& CO2     = pack.fields.CO2_density[0];
-  gr_float& OI      = pack.fields.OI_density[0];
-  gr_float& OH      = pack.fields.OH_density[0];
-  gr_float& H2O     = pack.fields.H2O_density[0];
-  gr_float& O2      = pack.fields.O2_density[0];
-  gr_float& SiI     = pack.fields.SiI_density[0];
-  gr_float& SiOI    = pack.fields.SiOI_density[0];
-  gr_float& SiO2I   = pack.fields.SiO2I_density[0];
-  gr_float& CH      = pack.fields.CH_density[0];
-  gr_float& CH2     = pack.fields.CH2_density[0];
-  gr_float& COII    = pack.fields.COII_density[0];
-  gr_float& OII     = pack.fields.OII_density[0];
-  gr_float& OHII    = pack.fields.OHII_density[0];
-  gr_float& H2OII   = pack.fields.H2OII_density[0];
-  gr_float& H3OII   = pack.fields.H3OII_density[0];
-  gr_float& O2II    = pack.fields.O2II_density[0];
-  gr_float& Mg      = pack.fields.Mg_density[0];
-  gr_float& Al      = pack.fields.Al_density[0];
-  gr_float& S       = pack.fields.S_density[0];
-  gr_float& Fe      = pack.fields.Fe_density[0];
-  gr_float& MgSiO3  = pack.fields.MgSiO3_dust_density[0];
-  gr_float& AC      = pack.fields.AC_dust_density[0];
-  gr_float& SiM     = pack.fields.SiM_dust_density[0];
-  gr_float& FeM     = pack.fields.FeM_dust_density[0];
-  gr_float& Mg2SiO4 = pack.fields.Mg2SiO4_dust_density[0];
-  gr_float& Fe3O4   = pack.fields.Fe3O4_dust_density[0];
-  gr_float& SiO2D   = pack.fields.SiO2_dust_density[0];
-  gr_float& MgO     = pack.fields.MgO_dust_density[0];
-  gr_float& FeS     = pack.fields.FeS_dust_density[0];
-  gr_float& Al2O3   = pack.fields.Al2O3_dust_density[0];
-  gr_float& reforg  = pack.fields.ref_org_dust_density[0];
-  gr_float& volorg  = pack.fields.vol_org_dust_density[0];
-  gr_float& H2Oice  = pack.fields.H2O_ice_dust_density[0];
+  gr_float& de      = my_fields->e_density[0];
+  gr_float& HI      = my_fields->HI_density[0];
+  gr_float& HII     = my_fields->HII_density[0];
+  gr_float& HeI     = my_fields->HeI_density[0];
+  gr_float& HeII    = my_fields->HeII_density[0];
+  gr_float& HeIII   = my_fields->HeIII_density[0];
+  gr_float& HM      = my_fields->HM_density[0];
+  gr_float& H2I     = my_fields->H2I_density[0];
+  gr_float& H2II    = my_fields->H2II_density[0];
+  gr_float& DI      = my_fields->DI_density[0];
+  gr_float& DII     = my_fields->DII_density[0];
+  gr_float& HDI     = my_fields->HDI_density[0];
+  gr_float& DM      = my_fields->DM_density[0];
+  gr_float& HDII    = my_fields->HDII_density[0];
+  gr_float& HeHII   = my_fields->HeHII_density[0];
+  gr_float& CI      = my_fields->CI_density[0];
+  gr_float& CII     = my_fields->CII_density[0];
+  gr_float& CO      = my_fields->CO_density[0];
+  gr_float& CO2     = my_fields->CO2_density[0];
+  gr_float& OI      = my_fields->OI_density[0];
+  gr_float& OH      = my_fields->OH_density[0];
+  gr_float& H2O     = my_fields->H2O_density[0];
+  gr_float& O2      = my_fields->O2_density[0];
+  gr_float& SiI     = my_fields->SiI_density[0];
+  gr_float& SiOI    = my_fields->SiOI_density[0];
+  gr_float& SiO2I   = my_fields->SiO2I_density[0];
+  gr_float& CH      = my_fields->CH_density[0];
+  gr_float& CH2     = my_fields->CH2_density[0];
+  gr_float& COII    = my_fields->COII_density[0];
+  gr_float& OII     = my_fields->OII_density[0];
+  gr_float& OHII    = my_fields->OHII_density[0];
+  gr_float& H2OII   = my_fields->H2OII_density[0];
+  gr_float& H3OII   = my_fields->H3OII_density[0];
+  gr_float& O2II    = my_fields->O2II_density[0];
+  gr_float& Mg      = my_fields->Mg_density[0];
+  gr_float& Al      = my_fields->Al_density[0];
+  gr_float& S       = my_fields->S_density[0];
+  gr_float& Fe      = my_fields->Fe_density[0];
+  gr_float& MgSiO3  = my_fields->MgSiO3_dust_density[0];
+  gr_float& AC      = my_fields->AC_dust_density[0];
+  gr_float& SiM     = my_fields->SiM_dust_density[0];
+  gr_float& FeM     = my_fields->FeM_dust_density[0];
+  gr_float& Mg2SiO4 = my_fields->Mg2SiO4_dust_density[0];
+  gr_float& Fe3O4   = my_fields->Fe3O4_dust_density[0];
+  gr_float& SiO2D   = my_fields->SiO2_dust_density[0];
+  gr_float& MgO     = my_fields->MgO_dust_density[0];
+  gr_float& FeS     = my_fields->FeS_dust_density[0];
+  gr_float& Al2O3   = my_fields->Al2O3_dust_density[0];
+  gr_float& reforg  = my_fields->ref_org_dust_density[0];
+  gr_float& volorg  = my_fields->vol_org_dust_density[0];
+  gr_float& H2Oice  = my_fields->H2O_ice_dust_density[0];
 
   double scoef, acoef;
 
@@ -693,7 +721,7 @@ void species_density_derivatives_0d(
            + kcr_buf.data[ColRecRxnLUT::k57][0]   *HI
            + kcr_buf.data[ColRecRxnLUT::k58][0]   *HeI       /4.
            + kshield_buf.k24[0];
-    if (my_chemistry->use_radiative_transfer == 1) { acoef = acoef + *(pack.fields.RT_HI_ionization_rate); }
+    if (my_chemistry->use_radiative_transfer == 1) { acoef = acoef + *(my_fields->RT_HI_ionization_rate); }
     dspdot[2-1] = dspdot[2-1] + (scoef - acoef * HI);
 
 
@@ -715,7 +743,7 @@ void species_density_derivatives_0d(
            + kcr_buf.data[ColRecRxnLUT::k58][0]   *HI    *HeI       /4.
            + kshield_buf.k24[0]   *HI;
     if (my_chemistry->use_radiative_transfer == 1)
-        { scoef = scoef + *(pack.fields.RT_HI_ionization_rate)       *HI; }
+        { scoef = scoef + *(my_fields->RT_HI_ionization_rate)       *HI; }
     acoef  = kcr_buf.data[ColRecRxnLUT::k2][0]   *de;
     dspdot[3-1] = dspdot[3-1] + (scoef - acoef * HII);
 
@@ -744,11 +772,11 @@ void species_density_derivatives_0d(
                + kshield_buf.k26[0]   *HeI       /4.;
 
     if ( (my_chemistry->use_radiative_transfer == 1)  &&  ( my_chemistry->radiative_transfer_hydrogen_only == 0) )
-        { scoef = scoef + *(pack.fields.RT_HI_ionization_rate)        * HI
-              + *(pack.fields.RT_HeI_ionization_rate)         * HeI         / 4.
-              + *(pack.fields.RT_HeII_ionization_rate)        * HeII        / 4.; }
+        { scoef = scoef + *(my_fields->RT_HI_ionization_rate)        * HI
+              + *(my_fields->RT_HeI_ionization_rate)         * HeI         / 4.
+              + *(my_fields->RT_HeII_ionization_rate)        * HeII        / 4.; }
     if ( (my_chemistry->use_radiative_transfer == 1)  &&  ( my_chemistry->radiative_transfer_hydrogen_only == 1) )
-        { scoef = scoef + *(pack.fields.RT_HI_ionization_rate)        * HI; }
+        { scoef = scoef + *(my_fields->RT_HI_ionization_rate)        * HI; }
 
 
 
@@ -777,7 +805,7 @@ void species_density_derivatives_0d(
                + kshield_buf.k26[0];
 
   if ( (my_chemistry->use_radiative_transfer == 1)  &&  (my_chemistry->radiative_transfer_hydrogen_only == 0))
-      { acoef = acoef + *(pack.fields.RT_HeI_ionization_rate); }
+      { acoef = acoef + *(my_fields->RT_HeI_ionization_rate); }
   if (my_chemistry->primordial_chemistry > 3)  {
     scoef = scoef +  4. * ( 0.
         + kcr_buf.data[ColRecRxnLUT::k152][0]    * HeHII        *    HI        /  5.
@@ -798,13 +826,13 @@ void species_density_derivatives_0d(
          + kshield_buf.k26[0]   *HeI;
 
   if ( (my_chemistry->use_radiative_transfer == 1)  &&  (my_chemistry->radiative_transfer_hydrogen_only == 0))
-      { scoef = scoef + *(pack.fields.RT_HeI_ionization_rate)       *HeI; }
+      { scoef = scoef + *(my_fields->RT_HeI_ionization_rate)       *HeI; }
 
   acoef  = kcr_buf.data[ColRecRxnLUT::k4][0]   *de        + kcr_buf.data[ColRecRxnLUT::k5][0]   *de
          + kshield_buf.k25[0];
 
   if ( (my_chemistry->use_radiative_transfer == 1)  &&  (my_chemistry->radiative_transfer_hydrogen_only == 0))
-      { acoef = acoef + *(pack.fields.RT_HeII_ionization_rate); }
+      { acoef = acoef + *(my_fields->RT_HeII_ionization_rate); }
   if (my_chemistry->primordial_chemistry > 3)  {
     acoef = acoef
         + kcr_buf.data[ColRecRxnLUT::k151][0]    *    HI;
@@ -817,7 +845,7 @@ void species_density_derivatives_0d(
   scoef   = kcr_buf.data[ColRecRxnLUT::k5][0]   *HeII    *de
           + kshield_buf.k25[0]   *HeII;
   if ((my_chemistry->use_radiative_transfer == 1)  &&  (my_chemistry->radiative_transfer_hydrogen_only == 0))
-      { scoef = scoef + *(pack.fields.RT_HeII_ionization_rate)        * HeII; }
+      { scoef = scoef + *(my_fields->RT_HeII_ionization_rate)        * HeII; }
   acoef   = kcr_buf.data[ColRecRxnLUT::k6][0]   *de;
   dspdot[6-1] = dspdot[6-1] + (scoef - acoef * HeIII);
 
@@ -856,25 +884,25 @@ void species_density_derivatives_0d(
            +      kcr_buf.data[ColRecRxnLUT::k58][0]   * HeI       /4.
            + kshield_buf.k24[0];
 
-    if (my_chemistry->use_radiative_transfer == 1) { acoef = acoef + *(pack.fields.RT_HI_ionization_rate); }
+    if (my_chemistry->use_radiative_transfer == 1) { acoef = acoef + *(my_fields->RT_HI_ionization_rate); }
     if (my_chemistry->use_radiative_transfer == 1)  {
       if ((my_chemistry->primordial_chemistry > 2) && (my_chemistry->radiative_transfer_HDI_dissociation > 0))  {
         scoef = scoef
-          + *(pack.fields.RT_HDI_dissociation_rate)        * HDI       /3.0;
+          + *(my_fields->RT_HDI_dissociation_rate)        * HDI       /3.0;
       }
       if ((my_chemistry->metal_chemistry == 1)  && 
-          (pack.local_itmask_metal != MASK_FALSE))  {
+          (itmask_metal[0] != MASK_FALSE))  {
         if (my_chemistry->radiative_transfer_metal_dissociation > 0)  {
           scoef = scoef
-            + *(pack.fields.RT_OH_dissociation_rate)         * OH        /17.0
-            + *(pack.fields.RT_H2O_dissociation_rate)        * H2O       /18.0;
+            + *(my_fields->RT_OH_dissociation_rate)         * OH        /17.0
+            + *(my_fields->RT_H2O_dissociation_rate)        * H2O       /18.0;
         }
       }
     }
 
-    if (pack.fwd_args.anydust != MASK_FALSE)  {
-      if(pack.local_itmask_metal != MASK_FALSE   )  {
-        acoef = acoef + 2. * *(pack.other_scratch_buf.h2dust)    * *(pack.other_scratch_buf.rhoH);
+    if (anydust != MASK_FALSE)  {
+      if(itmask_metal[0] != MASK_FALSE   )  {
+        acoef = acoef + 2. * h2dust[0]    * rhoH[0];
       }
     }
     // contribution of minor species
@@ -904,7 +932,7 @@ void species_density_derivatives_0d(
     }
 
     if ((my_chemistry->metal_chemistry == 1)  && 
-        (pack.local_itmask_metal != MASK_FALSE))  {
+        (itmask_metal[0] != MASK_FALSE))  {
       scoef = scoef
           + kcr_buf.data[ColRecRxnLUT::kz20][0]    *    CI        *   H2I        / 24.
           + kcr_buf.data[ColRecRxnLUT::kz21][0]    *    OI        *   H2I        / 32.
@@ -961,7 +989,7 @@ void species_density_derivatives_0d(
            + kshield_buf.k24[0]   *HI;
 
     if (my_chemistry->use_radiative_transfer == 1)
-        { scoef = scoef + *(pack.fields.RT_HI_ionization_rate)        * HI; }
+        { scoef = scoef + *(my_fields->RT_HI_ionization_rate)        * HI; }
 
     acoef  =    kcr_buf.data[ColRecRxnLUT::k2][0]     * de
            +    kcr_buf.data[ColRecRxnLUT::k9][0]     * HI
@@ -989,7 +1017,7 @@ void species_density_derivatives_0d(
     }
 
     if ((my_chemistry->metal_chemistry == 1)  && 
-        (pack.local_itmask_metal != MASK_FALSE))  {
+        (itmask_metal[0] != MASK_FALSE))  {
       scoef = scoef
           + kcr_buf.data[ColRecRxnLUT::kz39][0]    *   OII        *    HI        / 16.
           + kcr_buf.data[ColRecRxnLUT::kz43][0]    *  COII        *    HI        / 28.;
@@ -1015,18 +1043,18 @@ void species_density_derivatives_0d(
            + kshield_buf.k26[0]   *HeI    /4.;
 
     if ( (my_chemistry->use_radiative_transfer == 1)  &&  (my_chemistry->radiative_transfer_hydrogen_only == 0) )
-        { scoef = scoef + *(pack.fields.RT_HI_ionization_rate)        * HI
-              + *(pack.fields.RT_HeI_ionization_rate)         * HeI      / 4.
-              + *(pack.fields.RT_HeII_ionization_rate)        * HeII     / 4.; }
+        { scoef = scoef + *(my_fields->RT_HI_ionization_rate)        * HI
+              + *(my_fields->RT_HeI_ionization_rate)         * HeI      / 4.
+              + *(my_fields->RT_HeII_ionization_rate)        * HeII     / 4.; }
     if ( (my_chemistry->use_radiative_transfer == 1)  &&  (my_chemistry->radiative_transfer_hydrogen_only == 1) )
-        { scoef = scoef + *(pack.fields.RT_HI_ionization_rate)        * HI; }
+        { scoef = scoef + *(my_fields->RT_HI_ionization_rate)        * HI; }
     if (my_chemistry->use_radiative_transfer == 1)  {
       if ((my_chemistry->metal_chemistry == 1)  && 
-          (pack.local_itmask_metal != MASK_FALSE))  {
+          (itmask_metal[0] != MASK_FALSE))  {
         if (my_chemistry->radiative_transfer_metal_ionization > 0)  {
           scoef = scoef
-            + *(pack.fields.RT_CI_ionization_rate)        * CI       /12.0
-            + *(pack.fields.RT_OI_ionization_rate)        * OI       /16.0;
+            + *(my_fields->RT_CI_ionization_rate)        * CI       /12.0
+            + *(my_fields->RT_OI_ionization_rate)        * OI       /16.0;
         }
       }
     }
@@ -1058,7 +1086,7 @@ void species_density_derivatives_0d(
     }
 
     if ((my_chemistry->metal_chemistry == 1)  && 
-        (pack.local_itmask_metal != MASK_FALSE))  {
+        (itmask_metal[0] != MASK_FALSE))  {
       scoef = scoef;
       acoef = acoef
           + kcr_buf.data[ColRecRxnLUT::kz44][0]    *   CII        / 12.
@@ -1082,10 +1110,10 @@ void species_density_derivatives_0d(
             + kcr_buf.data[ColRecRxnLUT::k12][0]   *de        )
             + kshield_buf.k29[0]    + kshield_buf.k31[0];
 
-    if (pack.fwd_args.anydust != MASK_FALSE)  {
-      if(pack.local_itmask_metal != MASK_FALSE   )  {
-        scoef = scoef + 2. * *(pack.other_scratch_buf.h2dust)    *
-             HI        * *(pack.other_scratch_buf.rhoH);
+    if (anydust != MASK_FALSE)  {
+      if(itmask_metal[0] != MASK_FALSE   )  {
+        scoef = scoef + 2. * h2dust[0]    *
+             HI        * rhoH[0];
       }
     }
     // contribution of minor species
@@ -1100,7 +1128,7 @@ void species_density_derivatives_0d(
     }
 
     if ((my_chemistry->metal_chemistry == 1)  && 
-        (pack.local_itmask_metal != MASK_FALSE))  {
+        (itmask_metal[0] != MASK_FALSE))  {
       scoef = scoef +  2. * ( 0.
           + kcr_buf.data[ColRecRxnLUT::kz15][0]    *    HI        *    CH        / 13.
           + kcr_buf.data[ColRecRxnLUT::kz16][0]    *    HI        *   CH2        / 14.
@@ -1208,7 +1236,7 @@ void species_density_derivatives_0d(
            +    kcr_buf.data[ColRecRxnLUT::k54][0]    * H2I       /2.
            +    kcr_buf.data[ColRecRxnLUT::k56][0]    * HM
            + kshield_buf.k24[0];
-    if (my_chemistry->use_radiative_transfer == 1) { acoef = acoef + *(pack.fields.RT_HI_ionization_rate); }
+    if (my_chemistry->use_radiative_transfer == 1) { acoef = acoef + *(my_fields->RT_HI_ionization_rate); }
     if (my_chemistry->primordial_chemistry > 3)  {
       scoef = scoef +  2. * ( 0.
           + kcr_buf.data[ColRecRxnLUT::k131][0]    *  HDII        *    de        /  3.
@@ -1224,7 +1252,7 @@ void species_density_derivatives_0d(
     if (my_chemistry->use_radiative_transfer == 1)  {
       if (my_chemistry->radiative_transfer_HDI_dissociation > 0)  {
         scoef = scoef
-          + 2. * *(pack.fields.RT_HDI_dissociation_rate)        * HDI       /3.0;
+          + 2. * *(my_fields->RT_HDI_dissociation_rate)        * HDI       /3.0;
       }
     }
     dspdot[10-1] = dspdot[10-1] + (scoef - acoef * DI);
@@ -1238,7 +1266,7 @@ void species_density_derivatives_0d(
           + kshield_buf.k24[0]   *DI;
     acoef = 0.;
     // ! initialize GC202002
-    if (my_chemistry->use_radiative_transfer == 1) { scoef = scoef + *(pack.fields.RT_HI_ionization_rate)       *DI; }
+    if (my_chemistry->use_radiative_transfer == 1) { scoef = scoef + *(my_fields->RT_HI_ionization_rate)       *DI; }
     acoef =    kcr_buf.data[ColRecRxnLUT::k2][0]     * de
           +    kcr_buf.data[ColRecRxnLUT::k51][0]    * HI
           +    kcr_buf.data[ColRecRxnLUT::k52][0]    * H2I       /2.;
@@ -1263,7 +1291,7 @@ void species_density_derivatives_0d(
     if (my_chemistry->use_radiative_transfer == 1)  {
       if (my_chemistry->radiative_transfer_HDI_dissociation > 0)  {
         acoef = acoef
-          + *(pack.fields.RT_HDI_dissociation_rate);
+          + *(my_fields->RT_HDI_dissociation_rate);
       }
     }
     if (my_chemistry->primordial_chemistry > 3)  {
@@ -1333,7 +1361,7 @@ void species_density_derivatives_0d(
   // --- (D3) Now do metal species ---
   if (my_chemistry->metal_chemistry == 1)  {
 
-    if (pack.local_itmask_metal != MASK_FALSE   )  {
+    if (itmask_metal[0] != MASK_FALSE   )  {
 
       // ***** CI **********
       scoef = 0. + 12. * ( 0.
@@ -1355,11 +1383,11 @@ void species_density_derivatives_0d(
       if (my_chemistry->use_radiative_transfer == 1)  {
         if (my_chemistry->radiative_transfer_metal_ionization > 0)  {
           acoef = acoef
-            + *(pack.fields.RT_CI_ionization_rate);
+            + *(my_fields->RT_CI_ionization_rate);
         }
         if (my_chemistry->radiative_transfer_metal_dissociation > 0)  {
           scoef = scoef + 12. *
-              *(pack.fields.RT_CO_dissociation_rate)         * CO        /28.0;
+              *(my_fields->RT_CO_dissociation_rate)         * CO        /28.0;
         }
       }
 
@@ -1377,7 +1405,7 @@ void species_density_derivatives_0d(
       if (my_chemistry->use_radiative_transfer == 1)  {
         if (my_chemistry->radiative_transfer_metal_ionization > 0)  {
           scoef = scoef
-            + *(pack.fields.RT_CI_ionization_rate)        * CI;
+            + *(my_fields->RT_CI_ionization_rate)        * CI;
         }
       }
 
@@ -1405,7 +1433,7 @@ void species_density_derivatives_0d(
       if (my_chemistry->use_radiative_transfer == 1)  {
         if (my_chemistry->radiative_transfer_metal_dissociation > 0)  {
           acoef = acoef
-            + *(pack.fields.RT_CO_dissociation_rate);
+            + *(my_fields->RT_CO_dissociation_rate);
         }
       }
 
@@ -1445,12 +1473,12 @@ void species_density_derivatives_0d(
       if (my_chemistry->use_radiative_transfer == 1)  {
         if (my_chemistry->radiative_transfer_metal_ionization > 0)  {
           acoef = acoef
-            + *(pack.fields.RT_OI_ionization_rate);
+            + *(my_fields->RT_OI_ionization_rate);
         }
         if (my_chemistry->radiative_transfer_metal_dissociation > 0)  {
           scoef = scoef + 16. *
-            ( *(pack.fields.RT_OH_dissociation_rate)         * OH        /17.0
-            + *(pack.fields.RT_CO_dissociation_rate)         * CO        /28.0);
+            ( *(my_fields->RT_OH_dissociation_rate)         * OH        /17.0
+            + *(my_fields->RT_CO_dissociation_rate)         * CO        /28.0);
         }
       }
 
@@ -1481,9 +1509,9 @@ void species_density_derivatives_0d(
       if (my_chemistry->use_radiative_transfer == 1)  {
         if (my_chemistry->radiative_transfer_metal_dissociation > 0)  {
           acoef = acoef
-            + *(pack.fields.RT_OH_dissociation_rate);
+            + *(my_fields->RT_OH_dissociation_rate);
           scoef = scoef + 17. *
-              *(pack.fields.RT_H2O_dissociation_rate)        * H2O       /18.0;
+              *(my_fields->RT_H2O_dissociation_rate)        * H2O       /18.0;
         }
       }
 
@@ -1520,7 +1548,7 @@ void species_density_derivatives_0d(
       if (my_chemistry->use_radiative_transfer == 1)  {
         if (my_chemistry->radiative_transfer_metal_dissociation > 0)  {
           acoef = acoef
-            + *(pack.fields.RT_H2O_dissociation_rate);
+            + *(my_fields->RT_H2O_dissociation_rate);
         }
       }
 
@@ -1655,7 +1683,7 @@ void species_density_derivatives_0d(
       if (my_chemistry->use_radiative_transfer == 1)  {
         if (my_chemistry->radiative_transfer_metal_ionization > 0)  {
           scoef = scoef
-            + *(pack.fields.RT_OI_ionization_rate)        * OI;
+            + *(my_fields->RT_OI_ionization_rate)        * OI;
         }
       }
 
@@ -1772,7 +1800,7 @@ void species_density_derivatives_0d(
   // --- (D4) Now do dust species ---
   if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
 
-    if (pack.local_itmask_metal != MASK_FALSE   )  {
+    if (itmask_metal[0] != MASK_FALSE   )  {
 
       if (my_chemistry->dust_species > 0)  {
         // ***** MgSiO3 **********
