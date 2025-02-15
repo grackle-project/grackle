@@ -9,6 +9,7 @@
 #include "chemistry_solver_funcs.hpp"
 #include "fortran_func_wrappers.hpp"
 #include "grackle.h"
+#include "grackle_macros.h" // GRACKLE_FREE
 #include "index_helper.h"
 #include "internal_types.hpp"
 #include "utils-field.hpp"
@@ -50,15 +51,28 @@ struct MainScratchBuf {
   Cool1DMultiScratchBuf cool1dmulti_buf;
   CoolHeatScratchBuf coolingheating_buf;
   ChemHeatingRates chemheatrates_buf;
+
+  // the remaining buffers were originally reallocated (mostly on the stack)
+  // every time calculated the time derivatives were computed
+  ColRecRxnRateCollection kcr_buf;
+  PhotoRxnRateCollection kshield_buf;
+  GrainSpeciesCollection grain_growth_rates;
+  double* k13dd; // <- only used within lookup_cool_rates1d_g
 };
 
 MainScratchBuf new_MainScratchBuf(void) {
+  int nelem = 1;
   MainScratchBuf out;
-  out.grain_temperatures = new_GrainSpeciesCollection(1);
-  out.logTlininterp_buf = new_LogTLinInterpScratchBuf(1);
-  out.cool1dmulti_buf = new_Cool1DMultiScratchBuf(1);
-  out.coolingheating_buf = new_CoolHeatScratchBuf(1);
-  out.chemheatrates_buf = new_ChemHeatingRates(1);
+  out.grain_temperatures = new_GrainSpeciesCollection(nelem);
+  out.logTlininterp_buf = new_LogTLinInterpScratchBuf(nelem);
+  out.cool1dmulti_buf = new_Cool1DMultiScratchBuf(nelem);
+  out.coolingheating_buf = new_CoolHeatScratchBuf(nelem);
+  out.chemheatrates_buf = new_ChemHeatingRates(nelem);
+
+  out.kcr_buf = new_ColRecRxnRateCollection(nelem);
+  out.kshield_buf = new_PhotoRxnRateCollection(nelem);
+  out.grain_growth_rates = new_GrainSpeciesCollection(nelem);
+  out.k13dd = (double*)malloc(sizeof(double)*14*nelem);
   return out;
 }
 
@@ -68,6 +82,11 @@ void drop_MainScratchBuf(MainScratchBuf* ptr) {
   drop_Cool1DMultiScratchBuf(&ptr->cool1dmulti_buf);
   drop_CoolHeatScratchBuf(&ptr->coolingheating_buf);
   drop_ChemHeatingRates(&ptr->chemheatrates_buf);
+
+  drop_ColRecRxnRateCollection(&ptr->kcr_buf);
+  drop_PhotoRxnRateCollection(&ptr->kshield_buf);
+  drop_GrainSpeciesCollection(&ptr->grain_growth_rates);
+  GRACKLE_FREE(ptr->k13dd);
 }
 
 /// this is a collections of values intended to act as 1-element arrays and
@@ -415,13 +434,7 @@ void derivatives(
   // (they should all be preallocated ahead of time!)
   double dedot[1];
   double HIdot[1];
-  double k13dd[14];
-  grackle::impl::ColRecRxnRateCollection kcr_buf =
-    grackle::impl::new_ColRecRxnRateCollection(1);
-  grackle::impl::PhotoRxnRateCollection kshield_buf =
-    grackle::impl::new_PhotoRxnRateCollection(1);
-  grackle::impl::GrainSpeciesCollection grain_growth_rates =
-    grackle::impl::new_GrainSpeciesCollection(1);
+  
 
   // locals
 
@@ -501,13 +514,15 @@ void derivatives(
   f_wrap::lookup_cool_rates1d_g(
     idx_range, pack.fwd_args.anydust, pack.other_scratch_buf.tgas,
     pack.other_scratch_buf.mmw, pack.other_scratch_buf.tdust,
-    pack.other_scratch_buf.dust2gas, k13dd, pack.other_scratch_buf.h2dust,
-    pack.fwd_args.dom, pack.fwd_args.dx_cgs, pack.fwd_args.c_ljeans,
-    itmask, &pack.local_itmask_metal,
+    pack.other_scratch_buf.dust2gas, pack.main_scratch_buf.k13dd,
+    pack.other_scratch_buf.h2dust, pack.fwd_args.dom, pack.fwd_args.dx_cgs,
+    pack.fwd_args.c_ljeans, itmask, &pack.local_itmask_metal,
     pack.fwd_args.imetal, pack.other_scratch_buf.rhoH, dtit[0],
     my_chemistry, my_rates, &pack.fields, my_uvb_rates, internalu,
-    grain_growth_rates, pack.main_scratch_buf.grain_temperatures,
-    pack.main_scratch_buf.logTlininterp_buf, kcr_buf, kshield_buf,
+    pack.main_scratch_buf.grain_growth_rates,
+    pack.main_scratch_buf.grain_temperatures,
+    pack.main_scratch_buf.logTlininterp_buf,
+    pack.main_scratch_buf.kcr_buf, pack.main_scratch_buf.kshield_buf,
     pack.main_scratch_buf.chemheatrates_buf
   );
 
@@ -524,7 +539,8 @@ void derivatives(
       pack.other_scratch_buf.h2dust, pack.other_scratch_buf.rhoH,
       itmask, pack.other_scratch_buf.edot, pack.fwd_args.chunit,
       pack.fwd_args.dom, my_chemistry, &pack.fields, my_uvb_rates,
-      kcr_buf, kshield_buf, pack.main_scratch_buf.chemheatrates_buf
+      pack.main_scratch_buf.kcr_buf, pack.main_scratch_buf.kshield_buf,
+      pack.main_scratch_buf.chemheatrates_buf
     );
   }
 
@@ -541,14 +557,10 @@ void derivatives(
   
   gr_chem::species_density_derivatives_0d(
     dspdot, pack.fwd_args.anydust, pack.other_scratch_buf.h2dust,
-    pack.other_scratch_buf.rhoH, &pack.local_itmask_metal,
-    my_chemistry, &pack.fields, my_uvb_rates, grain_growth_rates,
-    kcr_buf, kshield_buf
+    pack.other_scratch_buf.rhoH, &pack.local_itmask_metal, my_chemistry,
+    &pack.fields, my_uvb_rates, pack.main_scratch_buf.grain_growth_rates,
+    pack.main_scratch_buf.kcr_buf, pack.main_scratch_buf.kshield_buf
   );
-
-  grackle::impl::drop_ColRecRxnRateCollection(&kcr_buf);
-  grackle::impl::drop_PhotoRxnRateCollection(&kshield_buf);
-  grackle::impl::drop_GrainSpeciesCollection(&grain_growth_rates);
 }
 
 
