@@ -359,6 +359,16 @@ void lookup_cool_rates0d(
   grackle::impl::time_deriv_0d::ContextPack pack
 );
 
+/// the following is extremely temporary
+void species_density_derivatives_0d(
+  double* dspdot, const chemistry_data* my_chemistry,
+  photo_rate_storage my_uvb_rates,
+  grackle::impl::GrainSpeciesCollection grain_growth_rates,
+  grackle::impl::ColRecRxnRateCollection kcr_buf,
+  grackle::impl::PhotoRxnRateCollection kshield_buf,
+  grackle::impl::time_deriv_0d::ContextPack pack
+);
+
 /// calculate the time derivatives
 ///
 /// @param[in] dt_FIXME Specifies the timestep passed to the
@@ -446,7 +456,6 @@ void lookup_cool_rates0d(
 
   // locals
 
-  double scoef, acoef;
   double atten, H2delta, h2heatfac, min_metallicity;
 
   // we want to avoid directly constructing an IndexRange (if the internals
@@ -490,69 +499,6 @@ void lookup_cool_rates0d(
     dsp[SpLUT::NUM_ENTRIES]
   );
 
-  // define some local variables carried over from the fortran version:
-  // - the goal is to remove all of these by time we are done with cleanup
-  // - originally we only conditionally defined some of these variables, but
-  //   there honestly isn't any benefit to doing that (the memory is allocated
-  //   already)
-  // - originally, each of these variables was a stack allocated variable that
-  //   held a copy of the corresponding entry in dsp. Now, these variables are
-  //   references to casted copies taken from dsp
-  // - we aren't being that consistent with the historic implementation when
-  //   gr_float isn't the same as double (but I don't thi
-
-  gr_float& de      = pack.fields.e_density[0];
-  gr_float& HI      = pack.fields.HI_density[0];
-  gr_float& HII     = pack.fields.HII_density[0];
-  gr_float& HeI     = pack.fields.HeI_density[0];
-  gr_float& HeII    = pack.fields.HeII_density[0];
-  gr_float& HeIII   = pack.fields.HeIII_density[0];
-  gr_float& HM      = pack.fields.HM_density[0];
-  gr_float& H2I     = pack.fields.H2I_density[0];
-  gr_float& H2II    = pack.fields.H2II_density[0];
-  gr_float& DI      = pack.fields.DI_density[0];
-  gr_float& DII     = pack.fields.DII_density[0];
-  gr_float& HDI     = pack.fields.HDI_density[0];
-  gr_float& DM      = pack.fields.DM_density[0];
-  gr_float& HDII    = pack.fields.HDII_density[0];
-  gr_float& HeHII   = pack.fields.HeHII_density[0];
-  gr_float& CI      = pack.fields.CI_density[0];
-  gr_float& CII     = pack.fields.CII_density[0];
-  gr_float& CO      = pack.fields.CO_density[0];
-  gr_float& CO2     = pack.fields.CO2_density[0];
-  gr_float& OI      = pack.fields.OI_density[0];
-  gr_float& OH      = pack.fields.OH_density[0];
-  gr_float& H2O     = pack.fields.H2O_density[0];
-  gr_float& O2      = pack.fields.O2_density[0];
-  gr_float& SiI     = pack.fields.SiI_density[0];
-  gr_float& SiOI    = pack.fields.SiOI_density[0];
-  gr_float& SiO2I   = pack.fields.SiO2I_density[0];
-  gr_float& CH      = pack.fields.CH_density[0];
-  gr_float& CH2     = pack.fields.CH2_density[0];
-  gr_float& COII    = pack.fields.COII_density[0];
-  gr_float& OII     = pack.fields.OII_density[0];
-  gr_float& OHII    = pack.fields.OHII_density[0];
-  gr_float& H2OII   = pack.fields.H2OII_density[0];
-  gr_float& H3OII   = pack.fields.H3OII_density[0];
-  gr_float& O2II    = pack.fields.O2II_density[0];
-  gr_float& Mg      = pack.fields.Mg_density[0];
-  gr_float& Al      = pack.fields.Al_density[0];
-  gr_float& S       = pack.fields.S_density[0];
-  gr_float& Fe      = pack.fields.Fe_density[0];
-  gr_float& MgSiO3  = pack.fields.MgSiO3_dust_density[0];
-  gr_float& AC      = pack.fields.AC_dust_density[0];
-  gr_float& SiM     = pack.fields.SiM_dust_density[0];
-  gr_float& FeM     = pack.fields.FeM_dust_density[0];
-  gr_float& Mg2SiO4 = pack.fields.Mg2SiO4_dust_density[0];
-  gr_float& Fe3O4   = pack.fields.Fe3O4_dust_density[0];
-  gr_float& SiO2D   = pack.fields.SiO2_dust_density[0];
-  gr_float& MgO     = pack.fields.MgO_dust_density[0];
-  gr_float& FeS     = pack.fields.FeS_dust_density[0];
-  gr_float& Al2O3   = pack.fields.Al2O3_dust_density[0];
-  gr_float& reforg  = pack.fields.ref_org_dust_density[0];
-  gr_float& volorg  = pack.fields.vol_org_dust_density[0];
-  gr_float& H2Oice  = pack.fields.H2O_ice_dust_density[0];
-  gr_float& e       = pack.fields.internal_energy[0];
 
   grackle_field_data* my_fields = &pack.fields;
   GRIMPL_REQUIRE(
@@ -622,29 +568,117 @@ void lookup_cool_rates0d(
 
   dspdot[i_eng-1] = *(pack.other_scratch_buf.edot) / *(pack.fields.density);
 
+  // we are missing some logic!
 
-  // TODO: Deal with the remaining logic in this function (~1200 lines of code)
-  //   1. First, it should be moved into a different function!
-  //   2. Second, we should replace all usage of dspdot (and hardcoded
-  //      integers) to use grackle::impl::SpeciesCollection and SpLUT
-  //      -> this will finish the migration of solve_rate_newton_raphson
-  //         away from hardcoded integers to SpLUT
-  //      -> this will aide with the next step
-  //   3. Third, we should consider how to deduplicate this logic and most of
-  //      the logic in step_rate_g
-  //      -> I am pretty sure Gen performed a copy-and-paste when he wrote this
-  //      -> it is totally unsustainable for us to maintain both implementations
-  //      -> A common obstacle for unifying this logic is:
-  //         - step_rate_g uses these calculations with a backward difference
-  //           formula (see 3.2 of the grackle paper)
-  //         - Here, we're computing the net time derivative.
-  //         We can DEFINITELY overcome this obstacle!
-  //      -> there's another obstacle that applies for unifying another part of
-  //         the logic:
-  //         - Parts (A), (B), and (C) in the original `step_rate_g` all apply
-  //           partial updates (again, see 3.2 of the grackle paper)
-  //         - notably, part (D) does not do this (but I'm not sure that there
-  //           is a reasonable motivation for that choice)
+  species_density_derivatives_0d(
+    dspdot, my_chemistry, my_uvb_rates, grain_growth_rates, kcr_buf,
+    kshield_buf, pack
+  );
+
+  grackle::impl::drop_ColRecRxnRateCollection(&kcr_buf);
+  grackle::impl::drop_PhotoRxnRateCollection(&kshield_buf);
+  grackle::impl::drop_GrainSpeciesCollection(&grain_growth_rates);
+}
+
+/// Computes the time derivatives
+///
+/// @todo
+/// We should replace all usage of dspdot (and hardcoded integers) to use
+/// `grackle::impl::SpeciesCollection` and `SpLUT`
+/// - this is important to help finish `solve_rate_newton_raphson`'s migration
+///   away from hardcoded integers to SpLUT
+///
+/// @todo
+/// We should consider how to deduplicate this logic and most of the logic in
+/// `step_rate_g`
+/// -> I am pretty sure Gen performed a copy-and-paste when he wrote this
+/// -> it is totally unsustainable for us to maintain both implementations
+/// -> A common obstacle for unifying this logic is:
+///    - step_rate_g uses these calculations with a backward difference
+///      formula (see 3.2 of the grackle paper)
+///    - Here, we're computing the net time derivative.
+///    We can DEFINITELY overcome this obstacle!
+/// -> there's another obstacle that applies for unifying another part of
+///    the logic:
+///    - Parts (A), (B), and (C) in the original `step_rate_g` all apply
+///      partial updates (again, see 3.2 of the grackle paper)
+///    - notably, part (D) does not do this (but I'm not sure that there
+///      is a reasonable motivation for that choice)
+void species_density_derivatives_0d(
+  double* dspdot,
+  const chemistry_data* my_chemistry,
+  photo_rate_storage my_uvb_rates,
+  grackle::impl::GrainSpeciesCollection grain_growth_rates,
+  grackle::impl::ColRecRxnRateCollection kcr_buf,
+  grackle::impl::PhotoRxnRateCollection kshield_buf,
+  grackle::impl::time_deriv_0d::ContextPack pack
+) {
+
+  // define some local variables carried over from the fortran version:
+  // - the goal is to eventually remove all of these
+  // - originally we only conditionally defined some of these variables, but
+  //   there honestly isn't any benefit to doing that (the memory is allocated
+  //   already)
+  // - originally, each of these variables was a stack allocated variable that
+  //   held a copy of the corresponding entry in dsp. Now, these variables are
+  //   references to casted copies taken from dsp
+  // - we aren't being that consistent with the historic implementation when
+  //   gr_float isn't the same as double (but, the historical implementation
+  //   definitely didn't handle this case properly)
+
+  gr_float& de      = pack.fields.e_density[0];
+  gr_float& HI      = pack.fields.HI_density[0];
+  gr_float& HII     = pack.fields.HII_density[0];
+  gr_float& HeI     = pack.fields.HeI_density[0];
+  gr_float& HeII    = pack.fields.HeII_density[0];
+  gr_float& HeIII   = pack.fields.HeIII_density[0];
+  gr_float& HM      = pack.fields.HM_density[0];
+  gr_float& H2I     = pack.fields.H2I_density[0];
+  gr_float& H2II    = pack.fields.H2II_density[0];
+  gr_float& DI      = pack.fields.DI_density[0];
+  gr_float& DII     = pack.fields.DII_density[0];
+  gr_float& HDI     = pack.fields.HDI_density[0];
+  gr_float& DM      = pack.fields.DM_density[0];
+  gr_float& HDII    = pack.fields.HDII_density[0];
+  gr_float& HeHII   = pack.fields.HeHII_density[0];
+  gr_float& CI      = pack.fields.CI_density[0];
+  gr_float& CII     = pack.fields.CII_density[0];
+  gr_float& CO      = pack.fields.CO_density[0];
+  gr_float& CO2     = pack.fields.CO2_density[0];
+  gr_float& OI      = pack.fields.OI_density[0];
+  gr_float& OH      = pack.fields.OH_density[0];
+  gr_float& H2O     = pack.fields.H2O_density[0];
+  gr_float& O2      = pack.fields.O2_density[0];
+  gr_float& SiI     = pack.fields.SiI_density[0];
+  gr_float& SiOI    = pack.fields.SiOI_density[0];
+  gr_float& SiO2I   = pack.fields.SiO2I_density[0];
+  gr_float& CH      = pack.fields.CH_density[0];
+  gr_float& CH2     = pack.fields.CH2_density[0];
+  gr_float& COII    = pack.fields.COII_density[0];
+  gr_float& OII     = pack.fields.OII_density[0];
+  gr_float& OHII    = pack.fields.OHII_density[0];
+  gr_float& H2OII   = pack.fields.H2OII_density[0];
+  gr_float& H3OII   = pack.fields.H3OII_density[0];
+  gr_float& O2II    = pack.fields.O2II_density[0];
+  gr_float& Mg      = pack.fields.Mg_density[0];
+  gr_float& Al      = pack.fields.Al_density[0];
+  gr_float& S       = pack.fields.S_density[0];
+  gr_float& Fe      = pack.fields.Fe_density[0];
+  gr_float& MgSiO3  = pack.fields.MgSiO3_dust_density[0];
+  gr_float& AC      = pack.fields.AC_dust_density[0];
+  gr_float& SiM     = pack.fields.SiM_dust_density[0];
+  gr_float& FeM     = pack.fields.FeM_dust_density[0];
+  gr_float& Mg2SiO4 = pack.fields.Mg2SiO4_dust_density[0];
+  gr_float& Fe3O4   = pack.fields.Fe3O4_dust_density[0];
+  gr_float& SiO2D   = pack.fields.SiO2_dust_density[0];
+  gr_float& MgO     = pack.fields.MgO_dust_density[0];
+  gr_float& FeS     = pack.fields.FeS_dust_density[0];
+  gr_float& Al2O3   = pack.fields.Al2O3_dust_density[0];
+  gr_float& reforg  = pack.fields.ref_org_dust_density[0];
+  gr_float& volorg  = pack.fields.vol_org_dust_density[0];
+  gr_float& H2Oice  = pack.fields.H2O_ice_dust_density[0];
+
+  double scoef, acoef;
 
   // A) the 6-species integrator
   if (my_chemistry->primordial_chemistry == 1)  {
@@ -1880,11 +1914,6 @@ void lookup_cool_rates0d(
 
   }
 
-  grackle::impl::drop_ColRecRxnRateCollection(&kcr_buf);
-  grackle::impl::drop_PhotoRxnRateCollection(&kshield_buf);
-  grackle::impl::drop_GrainSpeciesCollection(&grain_growth_rates);
-
-  return;
 }
 
 
