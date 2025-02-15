@@ -243,9 +243,6 @@ inline void configure_ContextPack(
   // each field in my_fields corresponding to the current location (i,j,k)
   copy_offset_fieldmember_ptrs_(&pack->fields, my_fields, field_idx1d);
 
-  // in the near future, we will overwrite the pointers of each
-  // species-field (& the internal_energy) in pack.fields_1zone with a
-  // pointer corresponding to the appropriate entry in `dsp`
 }
 
 /// here we copy the values from the scratch buffers (used by grackle's main
@@ -418,10 +415,33 @@ inline void scratchbufs_copy_from_pack(
 /// @note
 /// If we ever redefine `SpeciesCollection` to be a class template, it would be
 /// natural to represent `rhosp` with `SpeciesCollection<gr_float>`
+///
+/// @par Future Performance Considerations:
+/// From a performance perspective, a compelling case could be made that we
+/// should be wiring up the members of the `grackle_field_data` struct to point
+/// to the entries of `rhosp` and `eint` ahead of time (before we call this
+/// function). In that scenario, it would probably make the most sense:
+/// - to replace `rhosp` and `eint` arguments with an argument passing the
+///   struct AND to manage the struct entirely outside of the logic in the
+///   time_deriv_0d namespace (this could make a lot of sense if we transition
+///   this function to operating on arrays of inputs)
+/// - Alternatively, we could organize all of the routines in this namespace so
+///   that they represent a single well-defined data-structure with explicitly
+///   documented semantics for the order of invoking commands. Essentially, it
+///   would need to be a state-machine.
+/// - (no matter what, we should try to avoid a bunch of implicit "magic")
+/// In reality, `grackle_field_data` is very poorly suited for its current role
+/// as a universal data-structure for passing around any/all kinds of field
+/// data. And, we should work on coming up with a superior alternative for
+/// use within Grackle
 void derivatives(
   double dt_FIXME, gr_float* rhosp, grackle::impl::SpeciesCollection rhosp_dot,
   gr_float* eint, double* eint_dot_specific, ContextPack& pack
 ) {
+
+  // introduce some namespace abbreviations for use within this function
+  namespace f_wrap = ::grackle::impl::fortran_wrapper;
+  namespace gr_chem = ::grackle::impl::chemistry;
 
   chemistry_data* my_chemistry = pack.fwd_args.my_chemistry;
   chemistry_data_storage* my_rates = pack.fwd_args.my_rates;
@@ -430,65 +450,14 @@ void derivatives(
 
   pack.other_scratch_buf.itmask[0] = MASK_TRUE;
 
-  // todo: remove this variable
-  int nsp = -1; // <- dummy value! (it isn't actually used)
 
-  // some aliases to temporarily use
-  double* dtit = &dt_FIXME;
+  // configure the relevant members of `pack.fields` to point to the buffers
+  // specified by the rhosp and eint argument.
+  // -> the "Future Performance Considerations" section of the docstring has
+  //    a relevant discussion about this operation
+  copy_contigSpTable_fieldmember_ptrs_(&pack.fields, rhosp, 1);
+  pack.fields.internal_energy = &eint[0];
 
-  // shorten `grackle::impl::fortran_wrapper` to `f_wrap` within this function
-  namespace f_wrap = ::grackle::impl::fortran_wrapper;
-
-  // shorten `grackle::impl::chemistry` to `gr_chem` within this function
-  namespace gr_chem = ::grackle::impl::chemistry;
-
-  const int i_eng = 52;
-
-  double comp1, comp2;  // in the future, these won't need to be passed to
-                        // cool1d_multi_g
-
-  // locals
-
-  double atten, H2delta, h2heatfac, min_metallicity;
-
-  // \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
-  // =======================================================================
-
-  // here, we are injecting some logic to help with refactoring
-
-  // first, we declare some storage for our local copies of the species density
-  // and internal energy AND we overwrite the pointers tracked by pack.fields
-  // corresponding to these quantities
-  // -> it would probably be better to do all of this ahead of time
-  // -> it would also probably be better to not stack-allocate the storage,
-  //    but it isn't much worse than what was here before
-  gr_float rho_species[SpLUT::NUM_ENTRIES];
-  gr_float e_internal[1];
-
-  copy_contigSpTable_fieldmember_ptrs_(&pack.fields, rho_species, 1);
-  pack.fields.internal_energy = &e_internal[0];
-
-  // Now we store a local copy of all of the species (after casting).
-  // -> we are remaining consistent with historical behavior in terms of
-  //    copying. When gr_float == double, maybe we could reuse storage?
-  // -> we aren't particular consistent with the historical behavior when
-  //    gr_float == float. That's because the historical behavior was blatently
-  //    wrong in that scenario (I doubt it was ever tested)
-  SpeciesLUTFieldAdaptor field_lut_adaptor{pack.fields};
-  for (int sp_idx = 0; sp_idx < SpLUT::NUM_ENTRIES; sp_idx++) {
-    field_lut_adaptor.get_ptr_dynamic(sp_idx)[0] = rhosp[sp_idx];
-  }
-  pack.fields.internal_energy[0] = eint[0];
-
-  grackle_field_data* my_fields = &pack.fields;
-  GRIMPL_REQUIRE(
-    (
-      (my_fields->grid_dimension[0] == 1) &&
-      (my_fields->grid_dimension[1] == 1) &&
-      (my_fields->grid_dimension[2] == 1)
-    ),
-    "sanity check!"
-  );
 
   // Compute the cooling rate, tgas, tdust, and metallicity for this row
 
@@ -518,7 +487,7 @@ void derivatives(
     pack.fwd_args.dom, pack.fwd_args.dx_cgs,
     pack.fwd_args.c_ljeans, pack.other_scratch_buf.itmask,
     &pack.local_itmask_metal, pack.fwd_args.imetal,
-    pack.other_scratch_buf.rhoH, dtit[0],
+    pack.other_scratch_buf.rhoH, dt_FIXME,
     my_chemistry, my_rates, &pack.fields, my_uvb_rates, internalu,
     pack.main_scratch_buf.grain_growth_rates,
     pack.main_scratch_buf.grain_temperatures,
