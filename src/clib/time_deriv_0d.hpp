@@ -361,7 +361,7 @@ void lookup_cool_rates0d(
 
 /// the following is extremely temporary
 void species_density_derivatives_0d(
-  double* dspdot, gr_mask_type anydust, const double* h2dust,
+  double* rhosp_dot, gr_mask_type anydust, const double* h2dust,
   const double* rhoH, const gr_mask_type* itmask_metal,
   const chemistry_data* my_chemistry, const grackle_field_data* my_fields,
   const photo_rate_storage my_uvb_rates,
@@ -611,10 +611,8 @@ void lookup_cool_rates0d(
 /// C/C++ allows you to modify pointers in a `const struct`
 ///
 /// @todo
-/// We should replace all usage of dspdot (and hardcoded integers) to use
-/// `grackle::impl::SpeciesCollection` and `SpLUT`
-/// - this is important to help finish `solve_rate_newton_raphson`'s migration
-///   away from hardcoded integers to SpLUT
+/// We should replace all usage of dspdot to use
+/// `grackle::impl::SpeciesCollection`
 ///
 /// @todo
 /// We should consider how to deduplicate this logic and most of the logic in
@@ -633,7 +631,7 @@ void lookup_cool_rates0d(
 ///    - notably, part (D) does not do this (but I'm not sure that there
 ///      is a reasonable motivation for that choice)
 void species_density_derivatives_0d(
-  double* dspdot, gr_mask_type anydust, const double* h2dust,
+  double* rhosp_dot, gr_mask_type anydust, const double* h2dust,
   const double* rhoH, const gr_mask_type* itmask_metal,
   const chemistry_data* my_chemistry, const grackle_field_data* my_fields,
   const photo_rate_storage my_uvb_rates,
@@ -722,7 +720,7 @@ void species_density_derivatives_0d(
            + kcr_buf.data[ColRecRxnLUT::k58][0]   *HeI       /4.
            + kshield_buf.k24[0];
     if (my_chemistry->use_radiative_transfer == 1) { acoef = acoef + *(my_fields->RT_HI_ionization_rate); }
-    dspdot[2-1] = dspdot[2-1] + (scoef - acoef * HI);
+    rhosp_dot[SpLUT::HI] = rhosp_dot[SpLUT::HI] + (scoef - acoef * HI);
 
 
 
@@ -745,7 +743,7 @@ void species_density_derivatives_0d(
     if (my_chemistry->use_radiative_transfer == 1)
         { scoef = scoef + *(my_fields->RT_HI_ionization_rate)       *HI; }
     acoef  = kcr_buf.data[ColRecRxnLUT::k2][0]   *de;
-    dspdot[3-1] = dspdot[3-1] + (scoef - acoef * HII);
+    rhosp_dot[SpLUT::HII] = rhosp_dot[SpLUT::HII] + (scoef - acoef * HII);
 
 
 
@@ -785,7 +783,7 @@ void species_density_derivatives_0d(
          kcr_buf.data[ColRecRxnLUT::k6][0]   *HeIII       /4.
             + kcr_buf.data[ColRecRxnLUT::k5][0]   *HeII       /4. -
          kcr_buf.data[ColRecRxnLUT::k4][0]   *HeII       /4.);
-    dspdot[1-1] = dspdot[1-1] + (scoef - acoef * de);
+    rhosp_dot[SpLUT::e] = rhosp_dot[SpLUT::e] + (scoef - acoef * de);
 
 
 
@@ -816,7 +814,7 @@ void species_density_derivatives_0d(
         + kcr_buf.data[ColRecRxnLUT::k149][0]    *   HII
         + kcr_buf.data[ColRecRxnLUT::k150][0]    *  H2II        /  2.;
   }
-  dspdot[4-1] = dspdot[4-1] + (scoef - acoef * HeI);
+  rhosp_dot[SpLUT::HeI] = rhosp_dot[SpLUT::HeI] + (scoef - acoef * HeI);
 
 
   // 5) HeII
@@ -837,7 +835,7 @@ void species_density_derivatives_0d(
     acoef = acoef
         + kcr_buf.data[ColRecRxnLUT::k151][0]    *    HI;
   }
-  dspdot[5-1] = dspdot[5-1] + (scoef - acoef * HeII);
+  rhosp_dot[SpLUT::HeII] = rhosp_dot[SpLUT::HeII] + (scoef - acoef * HeII);
 
 
   // 6) HeIII
@@ -847,7 +845,7 @@ void species_density_derivatives_0d(
   if ((my_chemistry->use_radiative_transfer == 1)  &&  (my_chemistry->radiative_transfer_hydrogen_only == 0))
       { scoef = scoef + *(my_fields->RT_HeII_ionization_rate)        * HeII; }
   acoef   = kcr_buf.data[ColRecRxnLUT::k6][0]   *de;
-  dspdot[6-1] = dspdot[6-1] + (scoef - acoef * HeIII);
+  rhosp_dot[SpLUT::HeIII] = rhosp_dot[SpLUT::HeIII] + (scoef - acoef * HeIII);
 
 
 
@@ -966,7 +964,7 @@ void species_density_derivatives_0d(
           + kcr_buf.data[ColRecRxnLUT::kz39][0]    *   OII        / 16.
           + kcr_buf.data[ColRecRxnLUT::kz43][0]    *  COII        / 28.;
     }
-    dspdot[2-1] = dspdot[2-1] + (scoef - acoef * HI);
+    rhosp_dot[SpLUT::HI] = rhosp_dot[SpLUT::HI] + (scoef - acoef * HI);
 
 
 
@@ -1027,7 +1025,7 @@ void species_density_derivatives_0d(
           + kcr_buf.data[ColRecRxnLUT::kz35][0]    *   H2O        / 18.
           + kcr_buf.data[ColRecRxnLUT::kz36][0]    *    O2        / 32.;
     }
-    dspdot[3-1] = dspdot[3-1] + (scoef - acoef * HII);
+    rhosp_dot[SpLUT::HII] = rhosp_dot[SpLUT::HII] + (scoef - acoef * HII);
 
     
     // 3) electrons:
@@ -1097,7 +1095,7 @@ void species_density_derivatives_0d(
           + kcr_buf.data[ColRecRxnLUT::kz49][0]    * H3OII        / 19.
           + kcr_buf.data[ColRecRxnLUT::kz50][0]    *  O2II        / 32.;
     }
-    dspdot[1-1] = dspdot[1-1] + (scoef - acoef * de);
+    rhosp_dot[SpLUT::e] = rhosp_dot[SpLUT::e] + (scoef - acoef * de);
 
 
     // 7) H2
@@ -1165,7 +1163,7 @@ void species_density_derivatives_0d(
         }
       }
     }
-    dspdot[8-1] = dspdot[8-1] + (scoef - acoef * H2I);
+    rhosp_dot[SpLUT::H2I] = rhosp_dot[SpLUT::H2I] + (scoef - acoef * H2I);
 
 
     // 8) H-
@@ -1187,7 +1185,7 @@ void species_density_derivatives_0d(
       acoef = acoef
           + kcr_buf.data[ColRecRxnLUT::k135][0]    *    DI        /  2.;
     }
-    dspdot[7-1] = dspdot[7-1] + (scoef - acoef * HM);
+    rhosp_dot[SpLUT::HM] = rhosp_dot[SpLUT::HM] + (scoef - acoef * HM);
 
 
 
@@ -1208,7 +1206,7 @@ void species_density_derivatives_0d(
       acoef = acoef
           + kcr_buf.data[ColRecRxnLUT::k150][0]    *   HeI        /  4.;
     }
-    dspdot[9-1] = dspdot[9-1] + (scoef - acoef * H2II);
+    rhosp_dot[SpLUT::H2II] = rhosp_dot[SpLUT::H2II] + (scoef - acoef * H2II);
 
 
 
@@ -1255,7 +1253,7 @@ void species_density_derivatives_0d(
           + 2. * *(my_fields->RT_HDI_dissociation_rate)        * HDI       /3.0;
       }
     }
-    dspdot[10-1] = dspdot[10-1] + (scoef - acoef * DI);
+    rhosp_dot[SpLUT::DI] = rhosp_dot[SpLUT::DI] + (scoef - acoef * DI);
                                                     
 
     // 2) DII
@@ -1275,7 +1273,7 @@ void species_density_derivatives_0d(
           + kcr_buf.data[ColRecRxnLUT::k130][0]    *    HI
           + kcr_buf.data[ColRecRxnLUT::k133][0]    *    DM        /  2.;
     }
-    dspdot[11-1] = dspdot[11-1] + (scoef - acoef * DII);
+    rhosp_dot[SpLUT::DII] = rhosp_dot[SpLUT::DII] + (scoef - acoef * DII);
 
 
     // 3) HDI
@@ -1300,7 +1298,7 @@ void species_density_derivatives_0d(
           + kcr_buf.data[ColRecRxnLUT::k137][0]    *    DM        *    HI        /  2.
           );
     }
-    dspdot[12-1] = dspdot[12-1] + (scoef - acoef * HDI);
+    rhosp_dot[SpLUT::HDI] = rhosp_dot[SpLUT::HDI] + (scoef - acoef * HDI);
 
 
 
@@ -1323,7 +1321,7 @@ void species_density_derivatives_0d(
         + kcr_buf.data[ColRecRxnLUT::k136][0]    *    HI
         + kcr_buf.data[ColRecRxnLUT::k137][0]    *    HI;
 
-    dspdot[13-1] = dspdot[13-1] + (scoef - acoef * DM);
+    rhosp_dot[SpLUT::DM] = rhosp_dot[SpLUT::DM] + (scoef - acoef * DM);
 
 
     // 2) HDII
@@ -1336,7 +1334,7 @@ void species_density_derivatives_0d(
           kcr_buf.data[ColRecRxnLUT::k125][0]    *    HI
         + kcr_buf.data[ColRecRxnLUT::k131][0]    *    de;
 
-    dspdot[14-1] = dspdot[14-1] + (scoef - acoef * HDII);
+    rhosp_dot[SpLUT::HDII] = rhosp_dot[SpLUT::HDII] + (scoef - acoef * HDII);
 
 
     // 3) HeHII
@@ -1351,7 +1349,7 @@ void species_density_derivatives_0d(
           kcr_buf.data[ColRecRxnLUT::k152][0]    *    HI
         + kcr_buf.data[ColRecRxnLUT::k153][0]    *    de;
 
-    dspdot[15-1] = dspdot[15-1] + (scoef - acoef * HeHII);
+    rhosp_dot[SpLUT::HeHII] = rhosp_dot[SpLUT::HeHII] + (scoef - acoef * HeHII);
 
 
 
@@ -1391,7 +1389,7 @@ void species_density_derivatives_0d(
         }
       }
 
-      dspdot[16-1] = dspdot[16-1] + (scoef - acoef * CI);
+      rhosp_dot[SpLUT::CI] = rhosp_dot[SpLUT::CI] + (scoef - acoef * CI);
 
 
 
@@ -1409,7 +1407,7 @@ void species_density_derivatives_0d(
         }
       }
 
-      dspdot[17-1] = dspdot[17-1] + (scoef - acoef * CII);
+      rhosp_dot[SpLUT::CII] = rhosp_dot[SpLUT::CII] + (scoef - acoef * CII);
 
 
 
@@ -1437,7 +1435,7 @@ void species_density_derivatives_0d(
         }
       }
 
-      dspdot[18-1] = dspdot[18-1] + (scoef - acoef * CO);
+      rhosp_dot[SpLUT::CO] = rhosp_dot[SpLUT::CO] + (scoef - acoef * CO);
 
 
 
@@ -1447,7 +1445,7 @@ void species_density_derivatives_0d(
          );
       acoef = 0.;
 
-      dspdot[19-1] = dspdot[19-1] + (scoef - acoef * CO2);
+      rhosp_dot[SpLUT::CO2] = rhosp_dot[SpLUT::CO2] + (scoef - acoef * CO2);
 
 
 
@@ -1482,7 +1480,7 @@ void species_density_derivatives_0d(
         }
       }
 
-      dspdot[20-1] = dspdot[20-1] + (scoef - acoef * OI);
+      rhosp_dot[SpLUT::OI] = rhosp_dot[SpLUT::OI] + (scoef - acoef * OI);
 
 
 
@@ -1515,7 +1513,7 @@ void species_density_derivatives_0d(
         }
       }
 
-      dspdot[21-1] = dspdot[21-1] + (scoef - acoef * OH);
+      rhosp_dot[SpLUT::OH] = rhosp_dot[SpLUT::OH] + (scoef - acoef * OH);
 
 
 
@@ -1552,7 +1550,7 @@ void species_density_derivatives_0d(
         }
       }
 
-      dspdot[22-1] = dspdot[22-1] + (scoef - acoef * H2O);
+      rhosp_dot[SpLUT::H2O] = rhosp_dot[SpLUT::H2O] + (scoef - acoef * H2O);
 
 
 
@@ -1568,7 +1566,7 @@ void species_density_derivatives_0d(
           + kcr_buf.data[ColRecRxnLUT::kz38][0]    *   CII        / 12.
           + kcr_buf.data[ColRecRxnLUT::kz53][0]    *   SiI        / 28.;
 
-      dspdot[23-1] = dspdot[23-1] + (scoef - acoef * O2);
+      rhosp_dot[SpLUT::O2] = rhosp_dot[SpLUT::O2] + (scoef - acoef * O2);
 
 
 
@@ -1585,7 +1583,7 @@ void species_density_derivatives_0d(
         }
       }
 
-      dspdot[24-1] = dspdot[24-1] + (scoef - acoef * SiI);
+      rhosp_dot[SpLUT::SiI] = rhosp_dot[SpLUT::SiI] + (scoef - acoef * SiI);
 
 
 
@@ -1607,7 +1605,7 @@ void species_density_derivatives_0d(
         }
       }
 
-      dspdot[25-1] = dspdot[25-1] + (scoef - acoef * SiOI);
+      rhosp_dot[SpLUT::SiOI] = rhosp_dot[SpLUT::SiOI] + (scoef - acoef * SiOI);
 
 
 
@@ -1623,7 +1621,7 @@ void species_density_derivatives_0d(
         }
       }
 
-      dspdot[26-1] = dspdot[26-1] + (scoef - acoef * SiO2I);
+      rhosp_dot[SpLUT::SiO2I] = rhosp_dot[SpLUT::SiO2I] + (scoef - acoef * SiO2I);
 
 
 
@@ -1638,7 +1636,7 @@ void species_density_derivatives_0d(
           + kcr_buf.data[ColRecRxnLUT::kz23][0]    *   H2I        /  2.
           + kcr_buf.data[ColRecRxnLUT::kz32][0]    *    OI        / 16.;
 
-      dspdot[27-1] = dspdot[27-1] + (scoef - acoef * CH);
+      rhosp_dot[SpLUT::CH] = rhosp_dot[SpLUT::CH] + (scoef - acoef * CH);
 
 
 
@@ -1656,7 +1654,7 @@ void species_density_derivatives_0d(
         }
       }
 
-      dspdot[28-1] = dspdot[28-1] + (scoef - acoef * CH2);
+      rhosp_dot[SpLUT::CH2] = rhosp_dot[SpLUT::CH2] + (scoef - acoef * CH2);
 
 
 
@@ -1667,7 +1665,7 @@ void species_density_derivatives_0d(
       acoef = 0.
           + kcr_buf.data[ColRecRxnLUT::kz43][0]    *    HI;
 
-      dspdot[29-1] = dspdot[29-1] + (scoef - acoef * COII);
+      rhosp_dot[SpLUT::COII] = rhosp_dot[SpLUT::COII] + (scoef - acoef * COII);
 
 
 
@@ -1687,7 +1685,7 @@ void species_density_derivatives_0d(
         }
       }
 
-      dspdot[30-1] = dspdot[30-1] + (scoef - acoef * OII);
+      rhosp_dot[SpLUT::OII] = rhosp_dot[SpLUT::OII] + (scoef - acoef * OII);
 
 
 
@@ -1699,7 +1697,7 @@ void species_density_derivatives_0d(
       acoef = 0.
           + kcr_buf.data[ColRecRxnLUT::kz41][0]    *   H2I        /  2.;
 
-      dspdot[31-1] = dspdot[31-1] + (scoef - acoef * OHII);
+      rhosp_dot[SpLUT::OHII] = rhosp_dot[SpLUT::OHII] + (scoef - acoef * OHII);
 
 
 
@@ -1713,7 +1711,7 @@ void species_density_derivatives_0d(
           + kcr_buf.data[ColRecRxnLUT::kz46][0]    *    de
           + kcr_buf.data[ColRecRxnLUT::kz47][0]    *    de;
 
-      dspdot[32-1] = dspdot[32-1] + (scoef - acoef * H2OII);
+      rhosp_dot[SpLUT::H2OII] = rhosp_dot[SpLUT::H2OII] + (scoef - acoef * H2OII);
 
 
 
@@ -1725,7 +1723,7 @@ void species_density_derivatives_0d(
           + kcr_buf.data[ColRecRxnLUT::kz48][0]    *    de
           + kcr_buf.data[ColRecRxnLUT::kz49][0]    *    de;
 
-      dspdot[33-1] = dspdot[33-1] + (scoef - acoef * H3OII);
+      rhosp_dot[SpLUT::H3OII] = rhosp_dot[SpLUT::H3OII] + (scoef - acoef * H3OII);
 
 
 
@@ -1736,7 +1734,7 @@ void species_density_derivatives_0d(
       acoef = 0.
           + kcr_buf.data[ColRecRxnLUT::kz50][0]    *    de;
 
-      dspdot[34-1] = dspdot[34-1] + (scoef - acoef * O2II);
+      rhosp_dot[SpLUT::O2II] = rhosp_dot[SpLUT::O2II] + (scoef - acoef * O2II);
 
 
 
@@ -1753,7 +1751,7 @@ void species_density_derivatives_0d(
             + grain_growth_rates.data[OnlyGrainSpLUT::MgO_dust][0]         / Mg        * 24.;
           }
 
-          dspdot[35-1] = dspdot[35-1] + (scoef - acoef * Mg);
+          rhosp_dot[SpLUT::Mg] = rhosp_dot[SpLUT::Mg] + (scoef - acoef * Mg);
 
 
         }
@@ -1765,7 +1763,7 @@ void species_density_derivatives_0d(
           acoef = acoef
           + grain_growth_rates.data[OnlyGrainSpLUT::Al2O3_dust][0]       / Al        * 27. * 2.;
 
-          dspdot[36-1] = dspdot[36-1] + (scoef - acoef * Al);
+          rhosp_dot[SpLUT::Al] = rhosp_dot[SpLUT::Al] + (scoef - acoef * Al);
 
 
 
@@ -1775,7 +1773,7 @@ void species_density_derivatives_0d(
           acoef = acoef
           + grain_growth_rates.data[OnlyGrainSpLUT::FeS_dust][0]         / S        * 32.;
 
-          dspdot[37-1] = dspdot[37-1] + (scoef - acoef * S);
+          rhosp_dot[SpLUT::S] = rhosp_dot[SpLUT::S] + (scoef - acoef * S);
 
 
 
@@ -1787,7 +1785,7 @@ void species_density_derivatives_0d(
           + grain_growth_rates.data[OnlyGrainSpLUT::Fe3O4_dust][0]       / Fe        * 56. * 3.
           + grain_growth_rates.data[OnlyGrainSpLUT::FeS_dust][0]         / Fe        * 56.;
 
-          dspdot[38-1] = dspdot[38-1] + (scoef - acoef * Fe);
+          rhosp_dot[SpLUT::Fe] = rhosp_dot[SpLUT::Fe] + (scoef - acoef * Fe);
 
 
         }
@@ -1809,7 +1807,7 @@ void species_density_derivatives_0d(
         + grain_growth_rates.data[OnlyGrainSpLUT::MgSiO3_dust][0]      * 100.;
         acoef = 0.;
 
-        dspdot[39-1] = dspdot[39-1] + (scoef - acoef * MgSiO3);
+        rhosp_dot[SpLUT::MgSiO3_dust] = rhosp_dot[SpLUT::MgSiO3_dust] + (scoef - acoef * MgSiO3);
 
 
 
@@ -1819,7 +1817,7 @@ void species_density_derivatives_0d(
         + grain_growth_rates.data[OnlyGrainSpLUT::AC_dust][0]          * 12.;
         acoef = 0.;
 
-        dspdot[40-1] = dspdot[40-1] + (scoef - acoef * AC);
+        rhosp_dot[SpLUT::AC_dust] = rhosp_dot[SpLUT::AC_dust] + (scoef - acoef * AC);
 
 
       }
@@ -1831,7 +1829,7 @@ void species_density_derivatives_0d(
         + grain_growth_rates.data[OnlyGrainSpLUT::SiM_dust][0]         * 28.;
         acoef = 0.;
 
-        dspdot[41-1] = dspdot[41-1] + (scoef - acoef * SiM);
+        rhosp_dot[SpLUT::SiM_dust] = rhosp_dot[SpLUT::SiM_dust] + (scoef - acoef * SiM);
 
 
 
@@ -1841,7 +1839,7 @@ void species_density_derivatives_0d(
         + grain_growth_rates.data[OnlyGrainSpLUT::FeM_dust][0]         * 56.;
         acoef = 0.;
 
-        dspdot[42-1] = dspdot[42-1] + (scoef - acoef * FeM);
+        rhosp_dot[SpLUT::FeM_dust] = rhosp_dot[SpLUT::FeM_dust] + (scoef - acoef * FeM);
 
 
 
@@ -1851,7 +1849,7 @@ void species_density_derivatives_0d(
         + grain_growth_rates.data[OnlyGrainSpLUT::Mg2SiO4_dust][0]     * 140.;
         acoef = 0.;
 
-        dspdot[43-1] = dspdot[43-1] + (scoef - acoef * Mg2SiO4);
+        rhosp_dot[SpLUT::Mg2SiO4_dust] = rhosp_dot[SpLUT::Mg2SiO4_dust] + (scoef - acoef * Mg2SiO4);
 
 
 
@@ -1861,7 +1859,7 @@ void species_density_derivatives_0d(
         + grain_growth_rates.data[OnlyGrainSpLUT::Fe3O4_dust][0]       * 232.;
         acoef = 0.;
 
-        dspdot[44-1] = dspdot[44-1] + (scoef - acoef * Fe3O4);
+        rhosp_dot[SpLUT::Fe3O4_dust] = rhosp_dot[SpLUT::Fe3O4_dust] + (scoef - acoef * Fe3O4);
 
 
 
@@ -1871,7 +1869,7 @@ void species_density_derivatives_0d(
         + grain_growth_rates.data[OnlyGrainSpLUT::SiO2_dust][0]       * 60.;
         acoef = 0.;
 
-        dspdot[45-1] = dspdot[45-1] + (scoef - acoef * SiO2D);
+        rhosp_dot[SpLUT::SiO2_dust] = rhosp_dot[SpLUT::SiO2_dust] + (scoef - acoef * SiO2D);
 
 
 
@@ -1881,7 +1879,7 @@ void species_density_derivatives_0d(
         + grain_growth_rates.data[OnlyGrainSpLUT::MgO_dust][0]         * 40.;
         acoef = 0.;
 
-        dspdot[46-1] = dspdot[46-1] + (scoef - acoef * MgO);
+        rhosp_dot[SpLUT::MgO_dust] = rhosp_dot[SpLUT::MgO_dust] + (scoef - acoef * MgO);
 
 
 
@@ -1891,7 +1889,7 @@ void species_density_derivatives_0d(
         + grain_growth_rates.data[OnlyGrainSpLUT::FeS_dust][0]         * 88.;
         acoef = 0.;
 
-        dspdot[47-1] = dspdot[47-1] + (scoef - acoef * FeS);
+        rhosp_dot[SpLUT::FeS_dust] = rhosp_dot[SpLUT::FeS_dust] + (scoef - acoef * FeS);
 
 
 
@@ -1901,7 +1899,7 @@ void species_density_derivatives_0d(
         + grain_growth_rates.data[OnlyGrainSpLUT::Al2O3_dust][0]       * 102.;
         acoef = 0.;
 
-        dspdot[48-1] = dspdot[48-1] + (scoef - acoef * Al2O3);
+        rhosp_dot[SpLUT::Al2O3_dust] = rhosp_dot[SpLUT::Al2O3_dust] + (scoef - acoef * Al2O3);
 
 
       }
@@ -1913,7 +1911,7 @@ void species_density_derivatives_0d(
         + grain_growth_rates.data[OnlyGrainSpLUT::ref_org_dust][0]      * 22.68;
         acoef = 0.;
 
-        dspdot[49-1] = dspdot[49-1] + (scoef - acoef * reforg);
+        rhosp_dot[SpLUT::ref_org_dust] = rhosp_dot[SpLUT::ref_org_dust] + (scoef - acoef * reforg);
 
 
 
@@ -1923,7 +1921,7 @@ void species_density_derivatives_0d(
         + grain_growth_rates.data[OnlyGrainSpLUT::vol_org_dust][0]      * 32.;
         acoef = 0.;
 
-        dspdot[50-1] = dspdot[50-1] + (scoef - acoef * volorg);
+        rhosp_dot[SpLUT::vol_org_dust] = rhosp_dot[SpLUT::vol_org_dust] + (scoef - acoef * volorg);
 
 
 
@@ -1933,7 +1931,7 @@ void species_density_derivatives_0d(
         + grain_growth_rates.data[OnlyGrainSpLUT::H2O_ice_dust][0]      * 18.;
         acoef = 0.;
 
-        dspdot[51-1] = dspdot[51-1] + (scoef - acoef * H2Oice);
+        rhosp_dot[SpLUT::H2O_ice_dust] = rhosp_dot[SpLUT::H2O_ice_dust] + (scoef - acoef * H2Oice);
 
 
       }
