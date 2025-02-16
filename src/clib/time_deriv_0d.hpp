@@ -137,6 +137,12 @@ struct ContextPack {
   /// an array historically known as imp_eng
   int local_edot_handling;
 
+  /// this represents the precomputed index-range
+  /// - if we transition to an implementation where we compute the time
+  ///   derivatives for multiple sets of physical conditions at a time, this
+  ///   will need to be computed on the fly
+  IndexRange idx_range_1_element;
+
   /// the idea is that this will hold data for a single zone
   grackle_field_data fields;
 
@@ -200,6 +206,13 @@ inline ContextPack new_ContextPack(
   pack.fields.grid_dimension = pack.grid_dimension;
   pack.fields.grid_start = pack.grid_start;
   pack.fields.grid_end = pack.grid_end;
+
+  // precompute the 1-element index-range
+  // - we explicitly follow the standard idiom for constructing an IndexRange
+  //   and avoid directly constructing it (if the internals change we don't
+  //   want to fix it here).
+  const grackle_index_helper idx_helper = build_index_helper_(&pack.fields);
+  pack.idx_range_1_element = make_idx_range_(0, &idx_helper);
 
   // initialize other members
   pack.fwd_args = fwd_args;
@@ -438,12 +451,6 @@ void derivatives(
 
   double atten, H2delta, h2heatfac, min_metallicity;
 
-  // we want to avoid directly constructing an IndexRange (if the internals
-  // change we don't want to fix it here). But we should probably preconstruct
-  // it ahead of time
-  const grackle_index_helper idx_helper = build_index_helper_(&pack.fields);
-  IndexRange idx_range = make_idx_range_(0, &idx_helper);
-  
   // \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
   // =======================================================================
 
@@ -494,7 +501,7 @@ void derivatives(
 
   if (pack.local_edot_handling == 1) {
     f_wrap::cool1d_multi_g(
-      pack.fwd_args.imetal, idx_range, pack.fwd_args.iter,
+      pack.fwd_args.imetal, pack.idx_range_1_element, pack.fwd_args.iter,
       pack.other_scratch_buf.edot, pack.other_scratch_buf.tgas,
       pack.other_scratch_buf.mmw, pack.other_scratch_buf.p2d,
       pack.other_scratch_buf.tdust, pack.other_scratch_buf.metallicity,
@@ -511,10 +518,11 @@ void derivatives(
   // uses the temperature to look up the chemical rates (they are interpolated
   // with respect to log temperature from input tables)
   f_wrap::lookup_cool_rates1d_g(
-    idx_range, pack.fwd_args.anydust, pack.other_scratch_buf.tgas,
-    pack.other_scratch_buf.mmw, pack.other_scratch_buf.tdust,
-    pack.other_scratch_buf.dust2gas, pack.main_scratch_buf.k13dd,
-    pack.other_scratch_buf.h2dust, pack.fwd_args.dom, pack.fwd_args.dx_cgs,
+    pack.idx_range_1_element, pack.fwd_args.anydust,
+    pack.other_scratch_buf.tgas, pack.other_scratch_buf.mmw,
+    pack.other_scratch_buf.tdust, pack.other_scratch_buf.dust2gas,
+    pack.main_scratch_buf.k13dd, pack.other_scratch_buf.h2dust,
+    pack.fwd_args.dom, pack.fwd_args.dx_cgs,
     pack.fwd_args.c_ljeans, pack.other_scratch_buf.itmask,
     &pack.local_itmask_metal, pack.fwd_args.imetal,
     pack.other_scratch_buf.rhoH, dtit[0],
@@ -536,10 +544,11 @@ void derivatives(
 
     f_wrap::rate_timestep_g(
       pack.other_scratch_buf.dedot, pack.other_scratch_buf.HIdot,
-      pack.fwd_args.anydust, idx_range, pack.other_scratch_buf.h2dust,
-      pack.other_scratch_buf.rhoH, pack.other_scratch_buf.itmask,
-      pack.other_scratch_buf.edot, pack.fwd_args.chunit, pack.fwd_args.dom,
-      my_chemistry, &pack.fields, my_uvb_rates, pack.main_scratch_buf.kcr_buf,
+      pack.fwd_args.anydust, pack.idx_range_1_element,
+      pack.other_scratch_buf.h2dust, pack.other_scratch_buf.rhoH,
+      pack.other_scratch_buf.itmask, pack.other_scratch_buf.edot,
+      pack.fwd_args.chunit, pack.fwd_args.dom, my_chemistry, &pack.fields,
+      my_uvb_rates, pack.main_scratch_buf.kcr_buf,
       pack.main_scratch_buf.kshield_buf,
       pack.main_scratch_buf.chemheatrates_buf
     );
