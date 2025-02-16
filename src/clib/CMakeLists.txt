@@ -105,6 +105,7 @@ add_library(Grackle_Grackle
   ${CMAKE_CURRENT_BINARY_DIR}/auto_general.c
 
   # C++ Source (and Private Header Files)
+  cool1d_multi_g-cpp.C cool1d_multi_g-cpp.h
   cool_multi_time_g-cpp.C cool_multi_time_g-cpp.h
   internal_types.C internal_types.hpp
   solve_rate_cool_g-cpp.C solve_rate_cool_g-cpp.h
@@ -122,7 +123,6 @@ add_library(Grackle_Grackle
   calc_temp_cloudy_g.F
   cool1d_cloudy_g.F
   cool1d_cloudy_old_tables_g.F
-  cool1d_multi_g.F
   interpolators_g.F
   solve_rate_cool_g.F
   calc_grain_size_increment_1d.F
