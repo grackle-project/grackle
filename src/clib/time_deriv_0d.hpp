@@ -392,12 +392,19 @@ inline void scratchbufs_copy_from_pack(
 /// @param[in] dt_FIXME Specifies the timestep passed to the
 ///   lookup_cool_rates1d_g function. See the C++ docstring for that function
 ///   for more details (this needs to be revisited)
-/// @param[in] ycur A buffer representing a mathematical vector that holds the
-///   initial values. This always has enough space for each species and the
-///   internal energy (even if some entries are not evolved)
-/// @param[out] ydot A buffer representing a mathematical vector that holds the
-///   computed derivatives. This always has enough space for each species and
-///   the internal energy (even if some entries are not evolved)
+/// @param[in] rhosp Specifies the species mass densities to use for computing
+///   the time derivatives. This always has enough space for each species (it
+///   is indexed by SpLUT), even if some entries are not evolved.
+/// @param[out] rhosp_dot Buffers to hold computed time derivatives of the mass
+///   density for each relevant species. (We do not specify how/whether this
+///   function modifies values stored in buffers corresponding to unevolved
+///   species)
+/// @param[in] eint Specifies the nominal specific internal energy to use in
+///   the calculations. Based on the context, this may or may not be used
+/// @param[out] eint_dot_specific Buffer to hold the time derivative of the
+///   **specific** internal energy. The fact that the specific quantity is
+///   written is noteworth. In certain contexts, a meaningful value may not be
+///   written here.
 /// @param[in] pack Specifies extra buffers and information to be used in the
 ///   calculation
 ///
@@ -408,17 +415,12 @@ inline void scratchbufs_copy_from_pack(
 ///      once (one might pick multiple simultaneous inputs for use in the
 ///      finite derivatives that are used to estimate the jacobian matrix)
 ///
-/// @todo
-/// we should replace `ycur` and `ydot` with instances of `SpeciesCollection`
-/// and then pass `internal_energy` and `edot` as separate arguments.
-///   - This will allow make the code easier to understand at a glance (and
-///     will be important for reducing code duplication between this function
-///     and `step_rate_g`)
-///   - Furthermore, `step_rate_newton_raphson` already is responsible for
-///     remapping for remapping to the `ycur` format. Effectively, we're only
-///     tweaking the format and not producing any extra work.
+/// @note
+/// If we ever redefine `SpeciesCollection` to be a class template, it would be
+/// natural to represent `rhosp` with `SpeciesCollection<gr_float>`
 void derivatives(
-  double dt_FIXME, double* ycur, double* ydot, ContextPack& pack
+  double dt_FIXME, gr_float* rhosp, grackle::impl::SpeciesCollection rhosp_dot,
+  gr_float* eint, double* eint_dot_specific, ContextPack& pack
 ) {
 
   chemistry_data* my_chemistry = pack.fwd_args.my_chemistry;
@@ -433,8 +435,6 @@ void derivatives(
 
   // some aliases to temporarily use
   double* dtit = &dt_FIXME;
-  double* dsp = ycur;
-  double* dspdot = ydot;
 
   // shorten `grackle::impl::fortran_wrapper` to `f_wrap` within this function
   namespace f_wrap = ::grackle::impl::fortran_wrapper;
@@ -476,16 +476,9 @@ void derivatives(
   //    wrong in that scenario (I doubt it was ever tested)
   SpeciesLUTFieldAdaptor field_lut_adaptor{pack.fields};
   for (int sp_idx = 0; sp_idx < SpLUT::NUM_ENTRIES; sp_idx++) {
-    // TODO: somewhere, we need to have some logic to deal with edge cases when
-    //       sizeof(gr_float) != sizeof(double)
-    field_lut_adaptor.get_ptr_dynamic(sp_idx)[0] = static_cast<gr_float>(
-      dsp[sp_idx]
-    );
+    field_lut_adaptor.get_ptr_dynamic(sp_idx)[0] = rhosp[sp_idx];
   }
-  pack.fields.internal_energy[0] = static_cast<gr_float>(
-    dsp[SpLUT::NUM_ENTRIES]
-  );
-
+  pack.fields.internal_energy[0] = eint[0];
 
   grackle_field_data* my_fields = &pack.fields;
   GRIMPL_REQUIRE(
@@ -554,19 +547,21 @@ void derivatives(
     );
   }
 
-  // Initialize
-
-  std::memset(dspdot, 0, sizeof(double)*i_eng);
-
-
   // Heating/cooling rate (per unit volume -> gas mass)
+  eint_dot_specific[0] = (
+    pack.other_scratch_buf.edot[0] / pack.fields.density[0]
+  );
 
-  dspdot[i_eng-1] = *(pack.other_scratch_buf.edot) / *(pack.fields.density);
+  // Initialize entries of the derivatives buffer to 0
+  // -> we could define a function associated with SpeciesCollection to perform
+  //    a much more optimized version of this operation by taking advantage of
+  //    the underlying implementation
+  for (int sp_idx = 0; sp_idx < SpLUT::NUM_ENTRIES; sp_idx++) {
+    rhosp_dot.data[sp_idx][0] = 0.0;
+  }
 
-  // we are missing some logic!
-  
   gr_chem::species_density_derivatives_0d(
-    dspdot, pack.fwd_args.anydust, pack.other_scratch_buf.h2dust,
+    rhosp_dot, pack.fwd_args.anydust, pack.other_scratch_buf.h2dust,
     pack.other_scratch_buf.rhoH, &pack.local_itmask_metal, my_chemistry,
     &pack.fields, my_uvb_rates, pack.main_scratch_buf.grain_growth_rates,
     pack.main_scratch_buf.kcr_buf, pack.main_scratch_buf.kshield_buf
