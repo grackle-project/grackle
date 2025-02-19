@@ -494,32 +494,31 @@ void cool1d_multi_g(
 
   // Compute log densities
 
-  //_// PORT:       logdom = log10(dom)
+  logdom = std::log10(dom);
   for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
     if ( itmask[i-1] != MASK_FALSE )  {
-  //_// PORT:             logT(i)   = log10(tgas(i))
-  //_// PORT:             if(icmbTfloor .eq. 1)
-  //_// PORT:      &         logTcmb(i) = log10(comp2)
-  //_// PORT:             logrho(i) = log10(d(i,j,k) * dom*mh)
+      logT[i-1] = std::log10(tgas[i-1]);
+      if(my_chemistry->cmb_temperature_floor == 1) logTcmb[i-1] = std::log10(comp2);
+      logrho[i-1] = std::log10(d(i-1,idx_range.jp1-1,idx_range.kp1-1) * dom*mh);
       if( my_chemistry->primordial_chemistry > 0)  {
-  //_// PORT:                logH(i)   = log10(HI(i,j,k) * dom)
-  //_// PORT:                logH2(i)  = log10(HI(i,j,k) * dom)
+        logH[i-1] = std::log10(HI(i-1,idx_range.jp1-1,idx_range.kp1-1) * dom);
+        logH2[i-1] = std::log10(HI(i-1,idx_range.jp1-1,idx_range.kp1-1) * dom);
       }
       if( my_chemistry->primordial_chemistry > 1 )  {
-  //_// PORT:               logH2(i)  = log10((HI(i,j,k) + H2I(i,j,k) / 2.d0) * dom)
-  //_// PORT:               logH2I(i) = log10(H2I(i,j,k) * dom /  2.d0)
+        logH2[i-1]  = std::log10((HI(i-1,idx_range.jp1-1,idx_range.kp1-1) + H2I(i-1,idx_range.jp1-1,idx_range.kp1-1) / 2.0) * dom);
+        logH2I[i-1] = std::log10(H2I(i-1,idx_range.jp1-1,idx_range.kp1-1) * dom / 2.0);
       }
       if( my_chemistry->primordial_chemistry > 2)  {
-  //_// PORT:               logHDI(i) = log10(HDI(i,j,k) * dom /  3.d0)
+        logHDI[i-1] = std::log10(HDI(i-1,idx_range.jp1-1,idx_range.kp1-1) * dom / 3.0);
       }
       if( my_chemistry->metal_cooling == 1 )  {
         if( my_chemistry->metal_chemistry == 1 )  {
-  //_// PORT:               logCI(i)  = log10(CI (i,j,k) * dom / 12.d0)
-  //_// PORT:               logCII(i) = log10(CII(i,j,k) * dom / 12.d0)
-  //_// PORT:               logOI(i)  = log10(OI (i,j,k) * dom / 16.d0)
-  //_// PORT:               logCO(i)  = log10(CO (i,j,k) * dom / 28.d0)
-  //_// PORT:               logOH(i)  = log10(OH (i,j,k) * dom / 17.d0)
-  //_// PORT:               logH2O(i) = log10(H2O(i,j,k) * dom / 18.d0)
+          logCI[i-1]  = std::log10(CI(i-1,idx_range.jp1-1,idx_range.kp1-1) * dom / 12.0);
+          logCII[i-1] = std::log10(CII(i-1,idx_range.jp1-1,idx_range.kp1-1) * dom / 12.0);
+          logOI[i-1]  = std::log10(OI(i-1,idx_range.jp1-1,idx_range.kp1-1) * dom / 16.0);
+          logCO[i-1]  = std::log10(CO(i-1,idx_range.jp1-1,idx_range.kp1-1) * dom / 28.0);
+          logOH[i-1]  = std::log10(OH(i-1,idx_range.jp1-1,idx_range.kp1-1) * dom / 17.0);
+          logH2O[i-1] = std::log10(H2O(i-1,idx_range.jp1-1,idx_range.kp1-1) * dom / 18.0);
         }
       }
 
@@ -724,9 +723,8 @@ void cool1d_multi_g(
                HeIII(i-1,idx_range.jp1-1,idx_range.kp1-1))/4. +
                HI(i-1,idx_range.jp1-1,idx_range.kp1-1) + HII(i-1,idx_range.jp1-1,idx_range.kp1-1) + de(i-1,idx_range.jp1-1,idx_range.kp1-1);
           fH2 = nH2/(nH2 + nother);
-  //_// PORT:             fudge = sqrt((40._DKIND * 10._DKIND**(4.8_DKIND * 
-  //_// PORT:      &           sqrt(max(log10(tgas(i)),2._DKIND)-2._DKIND)) / fH2**2)/
-  //_// PORT:      &           ((nH2 + nother)*dom) )
+          fudge = std::sqrt((40. * std::pow(10.,(4.8 * std::sqrt(std::max(std::log10(tgas[i-1]),2.)-2.))) / std::pow(fH2,2))/
+                            ((nH2 + nother)*dom) );
           fudge = std::fmin(fudge, 1.);
 #endif /* OPTICAL_DEPTH_FUDGE */
           // Note that this optical depth approximation comes from
@@ -775,9 +773,9 @@ void cool1d_multi_g(
                HeIII(i-1,idx_range.jp1-1,idx_range.kp1-1))/4. +
                HI(i-1,idx_range.jp1-1,idx_range.kp1-1) + HII(i-1,idx_range.jp1-1,idx_range.kp1-1) + de(i-1,idx_range.jp1-1,idx_range.kp1-1);
           fH2 = nH2/(nH2 + nother);
-  //_// PORT:             fudge = sqrt((40._DKIND * 10._DKIND**(4.8_DKIND * 
-  //_// PORT:      &           sqrt(max(log10(tgas(i)),2._DKIND)-2._DKIND)) / fH2**2)/
-  //_// PORT:      &           ((nH2 + nother)*dom) )
+          // TODO: code duplication with line 726
+          fudge = std::sqrt((40. * std::pow(10.,(4.8 * std::sqrt(std::max(std::log10(tgas[i-1]),2.)-2.))) / std::pow(fH2,2))/
+          ((nH2 + nother)*dom) )
           fudge = std::fmin(fudge, 1.);
 #endif /* OPTICAL_DEPTH_FUDGE */
           // Note that this optical depth approximation comes from
@@ -830,9 +828,8 @@ void cool1d_multi_g(
                HeIII(i-1,idx_range.jp1-1,idx_range.kp1-1))/4. +
                HI(i-1,idx_range.jp1-1,idx_range.kp1-1) + HII(i-1,idx_range.jp1-1,idx_range.kp1-1) + de(i-1,idx_range.jp1-1,idx_range.kp1-1);
           fH2 = nH2/(nH2 + nother);
-  //_// PORT:             fudge = sqrt((40._DKIND * 10._DKIND**(4.8_DKIND * 
-  //_// PORT:      &           sqrt(max(log10(tgas(i)),2._DKIND)-2._DKIND)) / fH2**2)/
-  //_// PORT:      &           ((nH2 + nother)*dom) )
+          fudge = std::sqrt((40. * std::pow(10.,(4.8 * std::sqrt(std::max(std::log10(tgas[i-1]),2.)-2.))) / std::pow(fH2,2))/
+          ((nH2 + nother)*dom) )
           fudge = std::fmin(fudge, 1.);
 #endif /* OPTICAL_DEPTH_FUDGE */
 
