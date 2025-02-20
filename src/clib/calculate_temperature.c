@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include "calc_temp_cloudy_g-cpp.h"
 #include "grackle.h"
 #include "grackle_macros.h"
 #include "index_helper.h"
@@ -162,40 +163,10 @@ int local_calculate_temperature_table(chemistry_data *my_chemistry,
   if (my_fields->metal_density == NULL)
     metal_field_present = FALSE;
 
-  FORTRAN_NAME(calc_temp_cloudy_g)(
-        my_fields->density,
-        my_fields->internal_energy,
-        my_fields->metal_density,
-        temperature,
-        my_fields->grid_dimension+0,
-        my_fields->grid_dimension+1,
-        my_fields->grid_dimension+2,
-        &internalu.extfields_in_comoving,
-        &metal_field_present,
-        my_fields->grid_start+0,
-        my_fields->grid_start+1,
-        my_fields->grid_start+2,
-        my_fields->grid_end+0,
-        my_fields->grid_end+1,
-        my_fields->grid_end+2,
-        &internalu.a_value,
-        &my_chemistry->TemperatureStart,
-        &my_chemistry->TemperatureEnd,
-        &internalu.utem,
-        &internalu.uxyz,
-        &internalu.a_units,
-        &internalu.urho,
-        &internalu.tbase1,
-        &my_chemistry->Gamma,
-        &my_chemistry->HydrogenFractionByMass,
-        &my_rates->cloudy_primordial.grid_rank,
-        my_rates->cloudy_primordial.grid_dimension,
-        my_rates->cloudy_primordial.grid_parameters[0],
-        my_rates->cloudy_primordial.grid_parameters[1],
-        my_rates->cloudy_primordial.grid_parameters[2],
-        &my_rates->cloudy_primordial.data_size,
-        my_rates->cloudy_primordial.mmw_data);
-
+  calc_temp_cloudy_g(
+    temperature, &metal_field_present, my_chemistry, my_rates, my_fields,
+    internalu
+  );
   return SUCCESS;
 }
 

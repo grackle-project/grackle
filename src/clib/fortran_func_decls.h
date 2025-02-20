@@ -179,16 +179,6 @@ void FORTRAN_NAME(calc_temp1d_cloudy_g)(
   double* clPar3, long long* clDataSize, double* clMMW, gr_mask_type* itmask
 );
 
-void FORTRAN_NAME(calc_temp_cloudy_g)(
-  gr_float* d_data_ptr, gr_float* e_data_ptr, gr_float* metal_data_ptr,
-  gr_float* temperature_data_ptr, int* in, int* jn, int* kn, int* iexpand,
-  int* imetal, int* is, int* js, int* ks, int* ie, int* je, int* ke,
-  double* aye, double* temstart, double* temend, double* utem, double* uxyz,
-  double* uaye, double* urho, double* utim, double* gamma, double* fh,
-  long long* priGridRank, long long* priGridDim, double* priPar1,
-  double* priPar2, double* priPar3, long long* priDataSize, double* priMMW
-);
-
 void FORTRAN_NAME(scale_fields_table_g)(
   gr_float* d_data_ptr, gr_float* metal_data_ptr, int* is, int* ie, int* js,
   int* je, int* ks, int* ke, int* in, int* jn, int* kn, int* imetal,
