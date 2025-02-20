@@ -34,12 +34,6 @@
  
 #define MINIMUM_TEMPERATURE 1.0
  
-int local_calculate_temperature_table(chemistry_data *my_chemistry,
-                                      chemistry_data_storage *my_rates,
-                                      code_units *my_units,
-                                      grackle_field_data *my_fields,
-                                      gr_float *temperature);
- 
 int local_calculate_temperature(chemistry_data *my_chemistry,
                                 chemistry_data_storage *my_rates,
                                 code_units *my_units,
@@ -50,15 +44,14 @@ int local_calculate_temperature(chemistry_data *my_chemistry,
 
   const int imetal = (my_fields->metal_density != NULL) ? 1 : 0;
 
+  // we have special handling for tabulated-chemistry-mode
   if (my_chemistry->primordial_chemistry == 0) {
-    const int rslt = local_calculate_temperature_table(
-      my_chemistry, my_rates, my_units, my_fields, temperature
-    );
-    if (rslt != GR_SUCCESS) {
-      fprintf(stderr, "Error in local_calculcate_temperature_table.\n");
-    }
-    return rslt;
-  }
+    calc_temp_cloudy_g(temperature, imetal, my_chemistry,
+                       my_rates->cloudy_primordial, my_fields,
+                       new_internalu_(my_units));
+    return GR_SUCCESS;
+  };
+
 
   /* Compute the pressure first. */
   if (local_calculate_pressure(my_chemistry, my_rates, my_units,
@@ -125,35 +118,6 @@ int local_calculate_temperature(chemistry_data *my_chemistry,
   return GR_SUCCESS;
 }
 
-int local_calculate_temperature_table(chemistry_data *my_chemistry,
-                                      chemistry_data_storage *my_rates,
-                                      code_units *my_units,
-                                      grackle_field_data *my_fields,
-                                      gr_float *temperature)
-{
-
-  if (!my_chemistry->use_grackle)
-    return SUCCESS;
-
-  if (my_chemistry->primordial_chemistry != 0) {
-    fprintf(stderr, "ERROR: this function requires primordial_chemistry set to 0.\n");
-    return FAIL;
-  }
-
-  InternalGrUnits internalu = new_internalu_(my_units);
-
-  /* Check for a metal field. */
-
-  int metal_field_present = TRUE;
-  if (my_fields->metal_density == NULL)
-    metal_field_present = FALSE;
-
-  calc_temp_cloudy_g(
-    temperature, metal_field_present, my_chemistry, my_rates->cloudy_primordial,
-    my_fields, internalu
-  );
-  return SUCCESS;
-}
 
 int calculate_temperature(code_units *my_units,
                           grackle_field_data *my_fields,
