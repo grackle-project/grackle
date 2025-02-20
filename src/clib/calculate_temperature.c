@@ -46,18 +46,25 @@ int local_calculate_temperature(chemistry_data *my_chemistry,
                                 grackle_field_data *my_fields,
                                 gr_float *temperature)
 {
+  if (!my_chemistry->use_grackle) { return GR_SUCCESS; }
 
-  if (!my_chemistry->use_grackle)
-    return SUCCESS;
+  const int imetal = (my_fields->metal_density != NULL) ? 1 : 0;
+
+  if (my_chemistry->primordial_chemistry == 0) {
+    const int rslt = local_calculate_temperature_table(
+      my_chemistry, my_rates, my_units, my_fields, temperature
+    );
+    if (rslt != GR_SUCCESS) {
+      fprintf(stderr, "Error in local_calculcate_temperature_table.\n");
+    }
+    return rslt;
+  }
 
   /* Compute the pressure first. */
- 
-  if (my_chemistry->primordial_chemistry > 0) {
-    if (local_calculate_pressure(my_chemistry, my_rates, my_units,
-                                 my_fields, temperature) == FAIL) {
-      fprintf(stderr, "Error in calculate_pressure.\n");
-      return FAIL;
-    }
+  if (local_calculate_pressure(my_chemistry, my_rates, my_units,
+                               my_fields, temperature) != GR_SUCCESS) {
+    fprintf(stderr, "Error in calculate_pressure.\n");
+    return GR_FAIL;
   }
 
   /* Calculate temperature units. */
@@ -66,15 +73,6 @@ int local_calculate_temperature(chemistry_data *my_chemistry,
 
   double number_density, tiny_number = 1.-20;
   double inv_metal_mol = 1.0 / MU_METAL;
-  
-  if (my_chemistry->primordial_chemistry == 0) {
-    if (local_calculate_temperature_table(my_chemistry, my_rates, my_units,
-                                          my_fields, temperature) == FAIL) {
-      fprintf(stderr, "Error in local_calculcate_temperature_table.\n");
-      return FAIL;
-    }
-    return SUCCESS;
-  }
 
   /* Compute properties used to index the field. */
   const grackle_index_helper ind_helper = build_index_helper_(my_fields);
@@ -112,7 +110,7 @@ int local_calculate_temperature(chemistry_data *my_chemistry,
 		 my_fields->H2II_density[index]);
       }
 
-      if (my_fields->metal_density != NULL) {
+      if (imetal) {
 	number_density += my_fields->metal_density[index] * inv_metal_mol;
       }
  
@@ -124,7 +122,7 @@ int local_calculate_temperature(chemistry_data *my_chemistry,
     } // end: loop over i
   } // end: loop over outer_ind
 
-  return SUCCESS;
+  return GR_SUCCESS;
 }
 
 int local_calculate_temperature_table(chemistry_data *my_chemistry,
@@ -162,9 +160,9 @@ int calculate_temperature(code_units *my_units,
                           gr_float *temperature)
 {
   if (local_calculate_temperature(grackle_data, &grackle_rates, my_units,
-                                  my_fields, temperature) == FAIL) {
+                                  my_fields, temperature) != GR_SUCCESS) {
     fprintf(stderr, "Error in local_calculate_temperature.\n");
-    return FAIL;
+    return GR_FAIL;
   }
-  return SUCCESS;
+  return GR_SUCCESS;
 }
