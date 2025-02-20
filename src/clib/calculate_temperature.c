@@ -34,19 +34,6 @@
  
 #define MINIMUM_TEMPERATURE 1.0
  
-/* function prototypes */ 
-
-extern void FORTRAN_NAME(calc_temp_cloudy_g)(
-        gr_float *d, gr_float *e, gr_float *metal, gr_float *temperature,
-	int *in, int *jn, int *kn, int *iexpand, int *imetal,
-	int *is, int *js, int *ks, int *ie, int *je, int *ke,
-	double *aye, double *temstart, double *temend,
-	double *utem, double *uxyz, double *uaye, double *urho, double *utim,
-	double *gamma, double *fh,
-        long long *priGridRank, long long *priGridDim,
-        double *priPar1, double *priPar2, double *priPar3, 
- 	long long *priDataSize, double *priMMW);
-
 int local_calculate_temperature_table(chemistry_data *my_chemistry,
                                       chemistry_data_storage *my_rates,
                                       code_units *my_units,
@@ -164,8 +151,8 @@ int local_calculate_temperature_table(chemistry_data *my_chemistry,
     metal_field_present = FALSE;
 
   calc_temp_cloudy_g(
-    temperature, &metal_field_present, my_chemistry, my_rates, my_fields,
-    internalu
+    temperature, metal_field_present, my_chemistry, my_rates->cloudy_primordial,
+    my_fields, internalu
   );
   return SUCCESS;
 }

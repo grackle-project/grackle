@@ -21,19 +21,20 @@ extern "C" {
 ///
 /// @par History
 /// written by: Britton Smith May 2015
+/// modified1:  February, 2025 by Matthew Abruzzo; ported to C++
 ///
 /// @param[out] temperature_data Array where computed values are written
-/// @param[in]  flag if metal field is active (0 = no, 1 = yes)
+/// @param[in]  imetal flag if metal field is active (0 = no, 1 = yes)
 /// @param[in]  my_chemistry specifies various properties
-/// @param[in]  my_rates specifies the tables
+/// @param[in]  cloudy_primordia specifies the cloudy table
 /// @param[in]  my_fields specifies all of the field data
 /// @param[in]  internalu Specifies unit information
 ///
 /// @note
 /// We are specifying way more information than necessary!
 void calc_temp_cloudy_g(
-  gr_float* temperature_data_, int* imetal, chemistry_data* my_chemistry,
-  chemistry_data_storage* my_rates, grackle_field_data* my_fields,
+  gr_float* temperature_data_, int imetal, chemistry_data* my_chemistry,
+  cloudy_data cloudy_primordial, grackle_field_data* my_fields,
   InternalGrUnits internalu
 );
 
