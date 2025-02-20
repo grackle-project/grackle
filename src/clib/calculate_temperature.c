@@ -10,24 +10,23 @@
 / The full license is in the file LICENSE, distributed with this 
 / software.
 ************************************************************************/
- 
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include "grackle.h"
 #include "grackle_macros.h"
-#include "grackle_types.h"
-#include "grackle_chemistry_data.h"
-#include "phys_constants.h"
 #include "index_helper.h"
+#include "internal_units.h"
+#include "phys_constants.h"
+
 #ifdef _OPENMP
 #include <omp.h>
 #endif
 
-extern chemistry_data *grackle_data;
-extern chemistry_data_storage grackle_rates;
-
-/* Set the mean molecular mass. */
- 
+// Set the mean molecular mass for metals
+// -> TODO: this should really be defined by a (internal) header
+// -> currently, it's also defined by cool1d_multi_g and calc_temp1d_cloudy_g
 #define MU_METAL 16.0
  
 /* This is minimum returned temperature. (K) */
@@ -46,14 +45,6 @@ extern void FORTRAN_NAME(calc_temp_cloudy_g)(
         long long *priGridRank, long long *priGridDim,
         double *priPar1, double *priPar2, double *priPar3, 
  	long long *priDataSize, double *priMMW);
-
-double get_temperature_units(code_units *my_units);
-
-int local_calculate_pressure(chemistry_data *my_chemistry,
-                             chemistry_data_storage *my_rates,
-                             code_units *my_units,
-                             grackle_field_data *my_fields,
-                             gr_float *pressure);
 
 int local_calculate_temperature_table(chemistry_data *my_chemistry,
                                       chemistry_data_storage *my_rates,
@@ -163,27 +154,13 @@ int local_calculate_temperature_table(chemistry_data *my_chemistry,
     return FAIL;
   }
 
+  InternalGrUnits internalu = new_internalu_(my_units);
+
   /* Check for a metal field. */
 
   int metal_field_present = TRUE;
   if (my_fields->metal_density == NULL)
     metal_field_present = FALSE;
-
-  double co_length_units, co_density_units;
-  if (my_units->comoving_coordinates == TRUE) {
-    co_length_units = my_units->length_units;
-    co_density_units = my_units->density_units;
-  }
-  else {
-    co_length_units = my_units->length_units *
-      my_units->a_value * my_units->a_units;
-    co_density_units = my_units->density_units /
-      POW(my_units->a_value * my_units->a_units, 3);
-  }
-
-  /* Calculate temperature units. */
-
-  double temperature_units = get_temperature_units(my_units);
 
   FORTRAN_NAME(calc_temp_cloudy_g)(
         my_fields->density,
@@ -193,7 +170,7 @@ int local_calculate_temperature_table(chemistry_data *my_chemistry,
         my_fields->grid_dimension+0,
         my_fields->grid_dimension+1,
         my_fields->grid_dimension+2,
-        &my_units->comoving_coordinates,
+        &internalu.extfields_in_comoving,
         &metal_field_present,
         my_fields->grid_start+0,
         my_fields->grid_start+1,
@@ -201,14 +178,14 @@ int local_calculate_temperature_table(chemistry_data *my_chemistry,
         my_fields->grid_end+0,
         my_fields->grid_end+1,
         my_fields->grid_end+2,
-        &my_units->a_value,
+        &internalu.a_value,
         &my_chemistry->TemperatureStart,
         &my_chemistry->TemperatureEnd,
-        &temperature_units,
-        &co_length_units,
-        &my_units->a_units,
-        &co_density_units,
-        &my_units->time_units,
+        &internalu.utem,
+        &internalu.uxyz,
+        &internalu.a_units,
+        &internalu.urho,
+        &internalu.tbase1,
         &my_chemistry->Gamma,
         &my_chemistry->HydrogenFractionByMass,
         &my_rates->cloudy_primordial.grid_rank,
