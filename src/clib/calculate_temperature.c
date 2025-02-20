@@ -16,7 +16,6 @@
 #include <math.h>
 #include "calc_temp_cloudy_g-cpp.h"
 #include "grackle.h"
-#include "grackle_macros.h"
 #include "index_helper.h"
 #include "internal_units.h"
 #include "phys_constants.h"
@@ -109,9 +108,9 @@ int local_calculate_temperature(chemistry_data *my_chemistry,
  
       /* Ignore deuterium. */
  
-      temperature[index] *= temperature_units / max(number_density,
+      temperature[index] *= temperature_units / fmax(number_density,
 						    tiny_number);
-      temperature[index] = max(temperature[index], MINIMUM_TEMPERATURE);
+      temperature[index] = fmax(temperature[index], MINIMUM_TEMPERATURE);
     } // end: loop over i
   } // end: loop over outer_ind
 
