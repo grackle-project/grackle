@@ -11,6 +11,7 @@
 
 #include "grackle.h"
 #include "fortran_func_decls.h"
+#include "index_helper.h"
 #include "utils-cpp.hpp"
 
 #include "calc_temp_cloudy_g-cpp.h"
@@ -43,8 +44,6 @@ void calc_temp_cloudy_g(
 
   // Locals
 
-  int i, j, k;
-  int t, dj, dk;
   double dom, zr;
   double dbase1, tbase1, xbase1;
   double factor;
@@ -77,30 +76,32 @@ void calc_temp_cloudy_g(
 
   }
 
-  // Loop over zones, and do an entire i-column in one go
 
-  dk = my_fields->grid_end[2] - my_fields->grid_start[2] + 1;
-  dj = my_fields->grid_end[1] - my_fields->grid_start[1] + 1;
+  const grackle_index_helper idx_helper = build_index_helper_(my_fields);
 
-  // parallelize the k and j loops with OpenMP
-  // flat j and k loops for better parallelism
   //_// PORT: #ifdef _OPENMP
   //_// PORT: !$omp parallel do schedule(runtime) private(
-  //_// PORT: !$omp&  i, j, k, 
   //_// PORT: !$omp&  tgas, rhoH, mmw,
   //_// PORT: !$omp&  itmask )
   //_// PORT: #endif
   //_// TODO_USE: OMP_PRAGMA("omp parallel")
   {
     //_// TODO: move relevant variable declarations to here to replace OMP private
+
+    // The following for-loop is a flattened loop over every k,j combination.
+    // OpenMP divides this loop between all threads. Within the loop, we
+    // complete calculations for the constructed index-range construct
+    // (an index range corresponds to an "i-slice")
     //_// TODO_USE: OMP_PRAGMA("omp for")
-    for (t = 0; t<=(dk * dj - 1); t++) {
-      k = t/dj      + my_fields->grid_start[2]+1;
-      j = grackle::impl::mod(t,dj) + my_fields->grid_start[1]+1;
+    for (int t = 0; t < idx_helper.outer_ind_size; t++) {
+      // construct an index-range corresponding to "i-slice"
+      const IndexRange idx_range = make_idx_range_(t, &idx_helper);
+      int k = idx_range.kp1; // use 1-based indexing (for now)
+      int j = idx_range.jp1; // use 1-based indexing (for now)
 
       // Initialize iteration mask to true for all cells.
 
-      for (i = my_fields->grid_start[0] + 1; i<=(my_fields->grid_end[0] + 1); i++) {
+      for (int i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
         itmask[i-1] = MASK_TRUE;
 
         rhoH[i-1] = my_chemistry->HydrogenFractionByMass * d(i-1,j-1,k-1);
@@ -120,7 +121,7 @@ void calc_temp_cloudy_g(
 
       // Copy slice values into field array
 
-      for (i = my_fields->grid_start[0] + 1; i<=(my_fields->grid_end[0] + 1); i++) {
+      for (int i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
         temperature(i-1,j-1,k-1) = tgas[i-1];
       }
 
