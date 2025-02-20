@@ -11,6 +11,7 @@
 
 #include "grackle.h"
 #include "fortran_func_decls.h"
+#include "fortran_func_wrappers.hpp"
 #include "index_helper.h"
 #include "utils-cpp.hpp"
 
@@ -26,6 +27,8 @@ void calc_temp_cloudy_g(
   InternalGrUnits internalu
 )
 {
+  // shorten `grackle::impl::fortran_wrapper` to `f_wrap` within this function
+  namespace f_wrap = ::grackle::impl::fortran_wrapper;
 
   grackle::impl::View<gr_float***> d(
     my_fields->density,
@@ -70,10 +73,7 @@ void calc_temp_cloudy_g(
 
   if (internalu.extfields_in_comoving == 1)  {
     factor = std::pow(internalu.a_value,(-3));
-     FORTRAN_NAME(scale_fields_table_g)(d.data(), my_fields->metal_density,
-                   &my_fields->grid_start[0], &my_fields->grid_end[0], &my_fields->grid_start[1], &my_fields->grid_end[1], &my_fields->grid_start[2], &my_fields->grid_end[2],
-                   &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &imetal, &factor);
-
+    f_wrap::scale_fields_table_g(my_fields, factor);
   }
 
 
@@ -108,16 +108,11 @@ void calc_temp_cloudy_g(
       }
 
       // Calculate temperature and mean molecular weight
+      f_wrap::calc_temp1d_cloudy_g(
+        rhoH.data(), idx_range, tgas.data(), mmw.data(), dom, zr, imetal,
+        cloudy_primordial, itmask.data(), my_chemistry, my_fields, internalu
+      );
 
-       FORTRAN_NAME(calc_temp1d_cloudy_g)(d.data(), my_fields->metal_density, my_fields->internal_energy, rhoH.data(),
-           &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &my_fields->grid_start[0], &my_fields->grid_end[0], &j, &k,
-           tgas.data(), mmw.data(), &dom, &zr,
-           &my_chemistry->TemperatureStart, &my_chemistry->TemperatureEnd,
-           &my_chemistry->Gamma, &internalu.utem, &imetal,
-           &cloudy_primordial.grid_rank, cloudy_primordial.grid_dimension,
-           cloudy_primordial.grid_parameters[0], cloudy_primordial.grid_parameters[1], cloudy_primordial.grid_parameters[2],
-           &cloudy_primordial.data_size, cloudy_primordial.mmw_data,
-           itmask.data());
 
       // Copy slice values into field array
 
@@ -132,10 +127,7 @@ void calc_temp_cloudy_g(
 
   if (internalu.extfields_in_comoving == 1)  {
     factor = std::pow(internalu.a_value,3);
-     FORTRAN_NAME(scale_fields_table_g)(d.data(), my_fields->metal_density,
-                   &my_fields->grid_start[0], &my_fields->grid_end[0], &my_fields->grid_start[1], &my_fields->grid_end[1], &my_fields->grid_start[2], &my_fields->grid_end[2],
-                   &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &imetal, &factor);
-
+    f_wrap::scale_fields_table_g(my_fields, factor);
   }
 
   return;
