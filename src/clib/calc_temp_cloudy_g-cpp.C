@@ -77,15 +77,13 @@ void calc_temp_cloudy_g(
     for (int t = 0; t < idx_helper.outer_ind_size; t++) {
       // construct an index-range corresponding to "i-slice"
       const IndexRange idx_range = make_idx_range_(t, &idx_helper);
-      int k = idx_range.kp1; // use 1-based indexing (for now)
-      int j = idx_range.jp1; // use 1-based indexing (for now)
 
-      // Initialize iteration mask to true for all cells.
-
-      for (int i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-        itmask[i-1] = MASK_TRUE;
-
-        rhoH[i-1] = my_chemistry->HydrogenFractionByMass * d(i-1,j-1,k-1);
+      // Initialize iteration mask to true for all cells and compute the mass
+      // density of Hydrogen
+      const double f_H = my_chemistry->HydrogenFractionByMass;
+      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+        itmask[i] = MASK_TRUE;
+        rhoH[i] = f_H * d(i, idx_range.j, idx_range.k);
       }
 
       // Calculate temperature and mean molecular weight
@@ -94,11 +92,9 @@ void calc_temp_cloudy_g(
         cloudy_primordial, itmask.data(), my_chemistry, my_fields, internalu
       );
 
-
-      // Copy slice values into field array
-
-      for (int i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-        temperature(i-1,j-1,k-1) = tgas[i-1];
+      // Record the computed temperature values in the output array
+      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+        temperature(i, idx_range.j, idx_range.k) = tgas[i];
       }
 
     }
