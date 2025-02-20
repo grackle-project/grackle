@@ -30,29 +30,6 @@ void calc_temp_cloudy_g(
   // shorten `grackle::impl::fortran_wrapper` to `f_wrap` within this function
   namespace f_wrap = ::grackle::impl::fortran_wrapper;
 
-  grackle::impl::View<gr_float***> d(
-    my_fields->density,
-    my_fields->grid_dimension[0],
-    my_fields->grid_dimension[1],
-    my_fields->grid_dimension[2]
-  );
-  grackle::impl::View<gr_float***> temperature(
-    temperature_data_,
-    my_fields->grid_dimension[0],
-    my_fields->grid_dimension[1],
-    my_fields->grid_dimension[2]
-  );
-
-  // row temporaries
-
-  std::vector<double> tgas(my_fields->grid_dimension[0]);
-  std::vector<double> rhoH(my_fields->grid_dimension[0]);
-  std::vector<double> mmw(my_fields->grid_dimension[0]);
-
-  // Iteration mask
-
-  std::vector<gr_mask_type> itmask(my_fields->grid_dimension[0]);
-  
   // Calc quantities using values specified by internalu
   const double dom = internalu_calc_dom_(internalu);
   const double zr = 1./(internalu.a_value*internalu.a_units) - 1.;
@@ -64,23 +41,39 @@ void calc_temp_cloudy_g(
     f_wrap::scale_fields_table_g(my_fields, factor);
   }
 
-
   const grackle_index_helper idx_helper = build_index_helper_(my_fields);
 
-  //_// PORT: #ifdef _OPENMP
-  //_// PORT: !$omp parallel do schedule(runtime) private(
-  //_// PORT: !$omp&  tgas, rhoH, mmw,
-  //_// PORT: !$omp&  itmask )
-  //_// PORT: #endif
-  //_// TODO_USE: OMP_PRAGMA("omp parallel")
+  OMP_PRAGMA("omp parallel")
   {
-    //_// TODO: move relevant variable declarations to here to replace OMP private
+    // each OMP thread separately initializes/allocates variables defined in
+    // the current scope and then enters the for-loop
+
+    grackle::impl::View<gr_float***> d(
+      my_fields->density,
+      my_fields->grid_dimension[0],
+      my_fields->grid_dimension[1],
+      my_fields->grid_dimension[2]
+    );
+
+    grackle::impl::View<gr_float***> temperature(
+      temperature_data_,
+      my_fields->grid_dimension[0],
+      my_fields->grid_dimension[1],
+      my_fields->grid_dimension[2]
+    );
+
+    // these are used to temporarily hold values from each idx_range
+    std::vector<double> tgas(my_fields->grid_dimension[0]);
+    std::vector<double> rhoH(my_fields->grid_dimension[0]);
+    std::vector<double> mmw(my_fields->grid_dimension[0]);
+    std::vector<gr_mask_type> itmask(my_fields->grid_dimension[0]);
+
 
     // The following for-loop is a flattened loop over every k,j combination.
     // OpenMP divides this loop between all threads. Within the loop, we
     // complete calculations for the constructed index-range construct
     // (an index range corresponds to an "i-slice")
-    //_// TODO_USE: OMP_PRAGMA("omp for")
+    OMP_PRAGMA("omp for")
     for (int t = 0; t < idx_helper.outer_ind_size; t++) {
       // construct an index-range corresponding to "i-slice"
       const IndexRange idx_range = make_idx_range_(t, &idx_helper);
