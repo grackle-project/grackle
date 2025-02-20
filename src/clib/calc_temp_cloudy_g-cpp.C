@@ -43,14 +43,6 @@ void calc_temp_cloudy_g(
     my_fields->grid_dimension[2]
   );
 
-  const double mh_local_var = mh_grflt;
-
-  // Locals
-
-  double dom, zr;
-  double dbase1, tbase1, xbase1;
-  double factor;
-
   // row temporaries
 
   std::vector<double> tgas(my_fields->grid_dimension[0]);
@@ -61,18 +53,14 @@ void calc_temp_cloudy_g(
 
   std::vector<gr_mask_type> itmask(my_fields->grid_dimension[0]);
   
-  // Set units
-
-  dom      = internalu.urho*(std::pow(internalu.a_value,3))/mh_local_var;
-  tbase1   = internalu.tbase1;
-  xbase1   = internalu.uxyz/(internalu.a_value*internalu.a_units);    // uxyz is [x]*a      = [x]*[a]*a'        '
-  dbase1   = internalu.urho*std::pow((internalu.a_value*internalu.a_units),3); // urho is [dens]/a^3 = [dens]/([a]*a')^3 '
-  zr       = 1./(internalu.a_value*internalu.a_units) - 1.;
+  // Calc quantities using values specified by internalu
+  const double dom = internalu_calc_dom_(internalu);
+  const double zr = 1./(internalu.a_value*internalu.a_units) - 1.;
 
   // Convert densities from comoving to proper
 
   if (internalu.extfields_in_comoving == 1)  {
-    factor = std::pow(internalu.a_value,(-3));
+    double factor = std::pow(internalu.a_value,(-3));
     f_wrap::scale_fields_table_g(my_fields, factor);
   }
 
@@ -126,7 +114,7 @@ void calc_temp_cloudy_g(
   // Convert densities back to comoving from proper
 
   if (internalu.extfields_in_comoving == 1)  {
-    factor = std::pow(internalu.a_value,3);
+    double factor = std::pow(internalu.a_value,3);
     f_wrap::scale_fields_table_g(my_fields, factor);
   }
 
