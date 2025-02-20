@@ -13,6 +13,7 @@
 #include "fortran_func_decls.h"
 #include "fortran_func_wrappers.hpp"
 #include "index_helper.h"
+#include "scale_fields_table.hpp"
 #include "utils-cpp.hpp"
 
 #include "calc_temp_cloudy_g-cpp.h"
@@ -38,7 +39,7 @@ void calc_temp_cloudy_g(
 
   if (internalu.extfields_in_comoving == 1)  {
     double factor = std::pow(internalu.a_value,(-3));
-    f_wrap::scale_fields_table_g(my_fields, factor);
+    grackle::impl::scale_fields_table(my_fields, factor);
   }
 
   const grackle_index_helper idx_helper = build_index_helper_(my_fields);
@@ -104,7 +105,7 @@ void calc_temp_cloudy_g(
 
   if (internalu.extfields_in_comoving == 1)  {
     double factor = std::pow(internalu.a_value,3);
-    f_wrap::scale_fields_table_g(my_fields, factor);
+    grackle::impl::scale_fields_table(my_fields, factor);
   }
 
   return;
