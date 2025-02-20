@@ -33,10 +33,10 @@ inline void scale_fields_table(grackle_field_data* my_fields, double factor) {
     my_fields->grid_dimension[2]
   );
 
-  for (int k = grid_start[2] + 1; k<=(grid_end[2] + 1); k++) {
-    for (int j = grid_start[1] + 1; j<=(grid_end[1] + 1); j++) {
-      for (int i = grid_start[0] + 1; i<=(grid_end[0] + 1); i++) {
-        d(i-1,j-1,k-1) = d(i-1,j-1,k-1) * factor;
+  for (int k = grid_start[2]; k <= grid_end[2]; k++) {
+    for (int j = grid_start[1]; j <= grid_end[1]; j++) {
+      for (int i = grid_start[0]; i <= grid_end[0]; i++) {
+        d(i,j,k) = d(i,j,k) * factor;
       }
     }
   }
@@ -48,10 +48,10 @@ inline void scale_fields_table(grackle_field_data* my_fields, double factor) {
       my_fields->grid_dimension[1],
       my_fields->grid_dimension[2]
     );
-    for (int k = grid_start[2] + 1; k<=(grid_end[2] + 1); k++) {
-      for (int j = grid_start[1] + 1; j<=(grid_end[1] + 1); j++) {
-        for (int i = grid_start[0] + 1; i<=(grid_end[0] + 1); i++) {
-          metal(i-1,j-1,k-1) = metal(i-1,j-1,k-1) * factor;
+    for (int k = grid_start[2]; k <= grid_end[2]; k++) {
+      for (int j = grid_start[1]; j <= grid_end[1]; j++) {
+        for (int i = grid_start[0]; i <= grid_end[0]; i++) {
+          metal(i,j,k) = metal(i,j,k) * factor;
         }
       }
     }
