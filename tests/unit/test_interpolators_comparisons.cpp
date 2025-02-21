@@ -180,11 +180,10 @@ Timer run_interp_helper(const double* val_vec,
 
     t.start();
     for (std::size_t i = 0; i < length; i++) {
-      grackle::impl::interpolate_1d_g(
+      out[i] = grackle::impl::interpolate_1d_g(
         val_vec[i], gridDim,
         gridPar1, dgridPar1,
-        dataSize, dataField,
-        out+i
+        dataSize, dataField
       );
     }
     t.stop();
@@ -207,13 +206,12 @@ Timer run_interp_helper(const double* val_vec,
 
     t.start();
     for (std::size_t i = 0; i < length; i++) {
-      grackle::impl::interpolate_2d_g(
+      out[i] = grackle::impl::interpolate_2d_g(
         val_vec[i*2], val_vec[i*2+1],
         gridDim,
         gridPar1, dgridPar1,
         gridPar2, dgridPar2,
-        dataSize, dataField,
-        out+i
+        dataSize, dataField
       );
     }
     t.stop();
@@ -237,14 +235,13 @@ Timer run_interp_helper(const double* val_vec,
 
     t.start();
     for (std::size_t i = 0; i < length; i++) {
-      grackle::impl::interpolate_3d_g(
+      out[i] = grackle::impl::interpolate_3d_g(
         val_vec[i*3], val_vec[i*3+1], val_vec[i*3+2],
         gridDim,
         gridPar1, dgridPar1,
         gridPar2, dgridPar2,
         gridPar3, dgridPar3,
-        dataSize, dataField,
-        out + i
+        dataSize, dataField
       );
     }
     t.stop();
@@ -269,15 +266,14 @@ Timer run_interp_helper(const double* val_vec,
 
     t.start();
     for (std::size_t i = 0; i < length; i++) {
-      grackle::impl::interpolate_4d_g(
+      out[i] = grackle::impl::interpolate_4d_g(
         val_vec[i*4], val_vec[i*4+1], val_vec[i*4+2], val_vec[i*4+3],
         gridDim,
         gridPar1, dgridPar1,
         gridPar2, dgridPar2,
         gridPar3, dgridPar3,
         gridPar4, dgridPar4,
-        dataSize, dataField,
-        out+i
+        dataSize, dataField
       );
     }
     t.stop();
@@ -304,7 +300,7 @@ Timer run_interp_helper(const double* val_vec,
 
     t.start();
     for (std::size_t i = 0; i < length; i++) {
-      grackle::impl::interpolate_5d_g(
+      out[i] = grackle::impl::interpolate_5d_g(
         val_vec[i*5], val_vec[i*5+1], val_vec[i*5+2], val_vec[i*5+3],
         val_vec[i*5+4],
         gridDim,
@@ -313,8 +309,7 @@ Timer run_interp_helper(const double* val_vec,
         gridPar3, dgridPar3,
         gridPar4, dgridPar4,
         gridPar5, dgridPar5,
-        dataSize, dataField,
-        out+i
+        dataSize, dataField
       );
     }
     t.stop();
@@ -391,14 +386,14 @@ Timer run_interp_3dz_(const double* vals,
 
     timer.start();
     for (std::size_t i = 0; i < length; i++) {
-      grackle::impl::interpolate_3dz_g(
+      out[i] = grackle::impl::interpolate_3dz_g(
         inputs[i].par1, inputs[i].zr, inputs[i].par3,
         gridDim,
         gridPar1, dgridPar1,
         gridPar2, inputs[i].zindex,
         gridPar3, dgridPar3,
         dataSize, dataField,
-        inputs[i].end_int, out+i
+        inputs[i].end_int
       );
     }
     timer.stop();

@@ -49,26 +49,26 @@ static inline double interp_(double x,
   return (x - xref0) * slope + yref0;
 }
 
-void interpolate_1d_g(double input1,
-                      const gr_i64 * GRIMPL_RESTRICT gridDim, // 1 elements
-                      const double * GRIMPL_RESTRICT gridPar1, double dgridPar1,
-                      gr_i64 dataSize, const double * GRIMPL_RESTRICT dataField,
-                      double * GRIMPL_RESTRICT value)
-{
+inline double interpolate_1d_g(
+  double input1,
+  const gr_i64 * GRIMPL_RESTRICT gridDim, // 1 elements
+  const double * GRIMPL_RESTRICT gridPar1, double dgridPar1,
+  gr_i64 dataSize, const double * GRIMPL_RESTRICT dataField
+) {
   const gr_i64 index1 = get_index_(input1, gridDim[0], gridPar1, dgridPar1);
 
   // interpolate over parameter 1
-  *value = interp_(input1, gridPar1[index1-1], gridPar1[index1],
-                   dataField[index1-1], dataField[index1]);
+  return interp_(input1, gridPar1[index1-1], gridPar1[index1],
+                 dataField[index1-1], dataField[index1]);
 }
 
-void interpolate_2d_g(double input1, double input2,
-                      const gr_i64 * GRIMPL_RESTRICT gridDim, // 2 elements
-                      const double * GRIMPL_RESTRICT gridPar1, double dgridPar1,
-                      const double * GRIMPL_RESTRICT gridPar2, double dgridPar2,
-                      gr_i64 dataSize, const double * GRIMPL_RESTRICT dataField,
-                      double * GRIMPL_RESTRICT value)
-{
+inline double interpolate_2d_g(
+  double input1, double input2,
+  const gr_i64 * GRIMPL_RESTRICT gridDim, // 2 elements
+  const double * GRIMPL_RESTRICT gridPar1, double dgridPar1,
+  const double * GRIMPL_RESTRICT gridPar2, double dgridPar2,
+  gr_i64 dataSize, const double * GRIMPL_RESTRICT dataField
+) {
   double value2[2];
 
   const gr_i64 index1 = get_index_(input1, gridDim[0], gridPar1, dgridPar1);
@@ -83,18 +83,18 @@ void interpolate_2d_g(double input1, double input2,
                         dataField[int_index-1], dataField[int_index]);
   }
 
-  *value = interp_(input1, gridPar1[index1-1], gridPar1[index1],
-                   value2[0], value2[1]);
+  return interp_(input1, gridPar1[index1-1], gridPar1[index1],
+                 value2[0], value2[1]);
 }
 
-void interpolate_3d_g(double input1, double input2, double input3,
-                      const gr_i64 * GRIMPL_RESTRICT gridDim, // 3 elements
-                      const double * GRIMPL_RESTRICT gridPar1, double dgridPar1,
-                      const double * GRIMPL_RESTRICT gridPar2, double dgridPar2,
-                      const double * GRIMPL_RESTRICT gridPar3, double dgridPar3,
-                      gr_i64 dataSize, const double * GRIMPL_RESTRICT dataField,
-                      double * GRIMPL_RESTRICT value)
-{
+inline double interpolate_3d_g(
+  double input1, double input2, double input3,
+  const gr_i64 * GRIMPL_RESTRICT gridDim, // 3 elements
+  const double * GRIMPL_RESTRICT gridPar1, double dgridPar1,
+  const double * GRIMPL_RESTRICT gridPar2, double dgridPar2,
+  const double * GRIMPL_RESTRICT gridPar3, double dgridPar3,
+  gr_i64 dataSize, const double * GRIMPL_RESTRICT dataField
+) {
   double value3[2], value2[2];
 
   const gr_i64 index1 = get_index_(input1, gridDim[0], gridPar1, dgridPar1);
@@ -118,20 +118,19 @@ void interpolate_3d_g(double input1, double input2, double input3,
   }
 
   // interpolate over parameter 1
-  *value = interp_(input1, gridPar1[index1-1], gridPar1[index1],
-                   value2[0], value2[1]);
+  return interp_(input1, gridPar1[index1-1], gridPar1[index1],
+                 value2[0], value2[1]);
 }
 
-void interpolate_4d_g(double input1, double input2, double input3,
-                      double input4,
-                      const gr_i64 * GRIMPL_RESTRICT gridDim, // 4 elements
-                      const double * GRIMPL_RESTRICT gridPar1, double dgridPar1,
-                      const double * GRIMPL_RESTRICT gridPar2, double dgridPar2,
-                      const double * GRIMPL_RESTRICT gridPar3, double dgridPar3,
-                      const double * GRIMPL_RESTRICT gridPar4, double dgridPar4,
-                      gr_i64 dataSize, const double * GRIMPL_RESTRICT dataField,
-                      double * GRIMPL_RESTRICT value)
-{
+inline double interpolate_4d_g(
+  double input1, double input2, double input3, double input4,
+  const gr_i64 * GRIMPL_RESTRICT gridDim, // 4 elements
+  const double * GRIMPL_RESTRICT gridPar1, double dgridPar1,
+  const double * GRIMPL_RESTRICT gridPar2, double dgridPar2,
+  const double * GRIMPL_RESTRICT gridPar3, double dgridPar3,
+  const double * GRIMPL_RESTRICT gridPar4, double dgridPar4,
+  gr_i64 dataSize, const double * GRIMPL_RESTRICT dataField
+) {
 
   double value4[2], value3[2], value2[2];
 
@@ -164,21 +163,20 @@ void interpolate_4d_g(double input1, double input2, double input3,
   }
 
   // interpolate over parameter 1
-  *value = interp_(input1, gridPar1[index1-1], gridPar1[index1],
-                   value2[0], value2[1]);
+  return interp_(input1, gridPar1[index1-1], gridPar1[index1],
+                 value2[0], value2[1]);
 }
 
-void interpolate_5d_g(double input1, double input2, double input3,
-                      double input4, double input5,
-                      const gr_i64 * GRIMPL_RESTRICT gridDim, // 5 elements
-                      const double * GRIMPL_RESTRICT gridPar1, double dgridPar1,
-                      const double * GRIMPL_RESTRICT gridPar2, double dgridPar2,
-                      const double * GRIMPL_RESTRICT gridPar3, double dgridPar3,
-                      const double * GRIMPL_RESTRICT gridPar4, double dgridPar4,
-                      const double * GRIMPL_RESTRICT gridPar5, double dgridPar5,
-                      gr_i64 dataSize, const double * GRIMPL_RESTRICT dataField,
-                      double * GRIMPL_RESTRICT value)
-{
+double interpolate_5d_g(
+  double input1, double input2, double input3, double input4, double input5,
+  const gr_i64 * GRIMPL_RESTRICT gridDim, // 5 elements
+  const double * GRIMPL_RESTRICT gridPar1, double dgridPar1,
+  const double * GRIMPL_RESTRICT gridPar2, double dgridPar2,
+  const double * GRIMPL_RESTRICT gridPar3, double dgridPar3,
+  const double * GRIMPL_RESTRICT gridPar4, double dgridPar4,
+  const double * GRIMPL_RESTRICT gridPar5, double dgridPar5,
+  gr_i64 dataSize, const double * GRIMPL_RESTRICT dataField
+) {
   double value5[2], value4[2], value3[2], value2[2];
 
   const gr_i64 index1 = get_index_(input1, gridDim[0], gridPar1, dgridPar1);
@@ -239,8 +237,8 @@ void interpolate_5d_g(double input1, double input2, double input3,
                         value3[0], value3[1]);
   }
 
-  *value = interp_(input1, gridPar1[index1-1], gridPar1[index1],
-                   value2[0], value2[1]);
+  return interp_(input1, gridPar1[index1-1], gridPar1[index1],
+                 value2[0], value2[1]);
 }
 
 
@@ -278,22 +276,22 @@ static inline double interpolate_2Df3D_g(double input1, double input3,
 }
 
 
-void interpolate_3dz_g(double input1, double input2, double input3,
-                       const gr_i64 * GRIMPL_RESTRICT gridDim, // 3 elements
-                       const double * GRIMPL_RESTRICT gridPar1, double dgridPar1,
-                       const double * GRIMPL_RESTRICT gridPar2, gr_i64 index2,
-                       const double * GRIMPL_RESTRICT gridPar3, double dgridPar3,
-                       gr_i64 dataSize, const double * GRIMPL_RESTRICT dataField,
-                       gr_i64 end_int, double * GRIMPL_RESTRICT value)
-{
+inline double interpolate_3dz_g(
+  double input1, double input2, double input3,
+  const gr_i64 * GRIMPL_RESTRICT gridDim, // 3 elements
+  const double * GRIMPL_RESTRICT gridPar1, double dgridPar1,
+  const double * GRIMPL_RESTRICT gridPar2, gr_i64 index2,
+  const double * GRIMPL_RESTRICT gridPar3, double dgridPar3,
+  gr_i64 dataSize, const double * GRIMPL_RESTRICT dataField,
+  gr_i64 end_int
+) {
   if (end_int == 1) {
-    *value = interpolate_2Df3D_g(input1, input3,
-                                 gridDim,
-                                 gridPar1, dgridPar1,
-                                 index2,
-                                 gridPar3, dgridPar3,
-                                 dataSize, dataField);
-    return;
+    return interpolate_2Df3D_g(input1, input3,
+                               gridDim,
+                               gridPar1, dgridPar1,
+                               index2,
+                               gridPar3, dgridPar3,
+                               dataSize, dataField);
   }
 
   double value3[2], value2[2];
@@ -330,8 +328,8 @@ void interpolate_3dz_g(double input1, double input2, double input3,
   }
 
   // interpolate over parameter 1
-  *value = interp_(input1, gridPar1[index1-1], gridPar1[index1],
-                   value2[0], value2[1]);
+  return interp_(input1, gridPar1[index1-1], gridPar1[index1],
+                 value2[0], value2[1]);
 }
 
 } // namespace grackle::impl
