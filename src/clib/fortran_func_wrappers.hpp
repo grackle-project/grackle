@@ -254,35 +254,35 @@ inline int gaussj_g(int n, double* coef_matrix, double* vector) {
 }
 
 /// wrapper for 1d interpolation
-inline void interpolate_1d_g(
+inline double interpolate_1d_g(
   double input1,
   const gr_i64 * GRIMPL_RESTRICT gridDim, // 1 elements
   const double * GRIMPL_RESTRICT gridPar1, double dgridPar1,
-  gr_i64 dataSize, const double * GRIMPL_RESTRICT dataField,
-  double * GRIMPL_RESTRICT value
+  gr_i64 dataSize, const double * GRIMPL_RESTRICT dataField
 ) {
-  
+  double value;
   FORTRAN_NAME(interpolate_1d_g)(
-    &input1, gridDim, gridPar1, &dgridPar1, &dataSize, dataField, value
+    &input1, gridDim, gridPar1, &dgridPar1, &dataSize, dataField, &value
   );
-
+  return value;
 }
 
 /// wrapper for 2d interpolation
-inline void interpolate_2d_g(
+inline double interpolate_2d_g(
   double input1, double input2,
   const gr_i64 * GRIMPL_RESTRICT gridDim, // 2 elements
   const double * GRIMPL_RESTRICT gridPar1, double dgridPar1,
   const double * GRIMPL_RESTRICT gridPar2, double dgridPar2,
-  gr_i64 dataSize, const double* dataField,
-  double * GRIMPL_RESTRICT value
+  gr_i64 dataSize, const double* dataField
 ) {
+  double value;
   FORTRAN_NAME(interpolate_2d_g)(
     &input1, &input2,
     gridDim,
     gridPar1, &dgridPar1, gridPar2, &dgridPar2,
-    &dataSize, dataField, value
+    &dataSize, dataField, &value
   );
+  return value;
 }
 
 /// Helper function used to implement interpolate_3dz_g
@@ -310,69 +310,73 @@ inline double interpolate_2df3d_g(
 /// Similar to interpolate_3d_g except index2 is calculated ahead of time
 /// because it corresponds to redshift, which will not change for the entire
 /// grid during the current calculation.
-inline void interpolate_3dz_g(
+inline double interpolate_3dz_g(
   double input1, double input2, double input3,
   const gr_i64 * GRIMPL_RESTRICT gridDim, // 3 elements
   const double * GRIMPL_RESTRICT gridPar1, double dgridPar1,
   const double * GRIMPL_RESTRICT gridPar2, gr_i64 index2,
   const double * GRIMPL_RESTRICT gridPar3, double dgridPar3,
   gr_i64 dataSize, const double * GRIMPL_RESTRICT dataField,
-  gr_i64 end_int, double * GRIMPL_RESTRICT value
+  gr_i64 end_int
 ) {
 
+  double value;
   FORTRAN_NAME(interpolate_3dz_g)(
     &input1, &input2, &input3,
     gridDim,
     gridPar1, &dgridPar1, gridPar2, &index2, gridPar3, &dgridPar3,
-    &dataSize, dataField, &end_int, value
+    &dataSize, dataField, &end_int, &value
   );
+  return value;
 
 }
 
 /// wraps 3d interpolator functions
-inline void interpolate_3d_g(
+inline double interpolate_3d_g(
   double input1, double input2, double input3,
   const gr_i64 * GRIMPL_RESTRICT gridDim, // 3 elements
   const double * GRIMPL_RESTRICT gridPar1, double dgridPar1,
   const double * GRIMPL_RESTRICT gridPar2, double dgridPar2,
   const double * GRIMPL_RESTRICT gridPar3, double dgridPar3,
-  gr_i64 dataSize, const double * GRIMPL_RESTRICT dataField,
-  double* value
+  gr_i64 dataSize, const double * GRIMPL_RESTRICT dataField
 ) {
 
+  double value;
   FORTRAN_NAME(interpolate_3d_g)(
     &input1, &input2, &input3,
     gridDim,
     gridPar1, &dgridPar1, gridPar2, &dgridPar2, gridPar3, &dgridPar3,
-    &dataSize, dataField, value
+    &dataSize, dataField, &value
   );
+  return value;
 
 }
 
 /// wraps 4d interpolator functions
-inline void interpolate_4d_g(
+inline double interpolate_4d_g(
   double input1, double input2, double input3, double input4,
   const gr_i64 * GRIMPL_RESTRICT gridDim, // 4 elements
   const double * GRIMPL_RESTRICT gridPar1, double dgridPar1,
   const double * GRIMPL_RESTRICT gridPar2, double dgridPar2,
   const double * GRIMPL_RESTRICT gridPar3, double dgridPar3,
   const double * GRIMPL_RESTRICT gridPar4, double dgridPar4,
-  gr_i64 dataSize, const double * GRIMPL_RESTRICT dataField,
-  double * GRIMPL_RESTRICT value
+  gr_i64 dataSize, const double * GRIMPL_RESTRICT dataField
 ) {
 
+  double value;
   FORTRAN_NAME(interpolate_4d_g)(
     &input1, &input2, &input3, &input4,
     gridDim,
     gridPar1, &dgridPar1, gridPar2, &dgridPar2, gridPar3, &dgridPar3,
     gridPar4, &dgridPar4,
-    &dataSize, dataField, value
+    &dataSize, dataField, &value
   );
+  return value;
 
 }
 
 /// wraps 5d interpolation routine
-inline void interpolate_5d_g(
+inline double interpolate_5d_g(
   double input1, double input2, double input3, double input4, double input5,
   const gr_i64 * GRIMPL_RESTRICT gridDim, // 5 elements
   const double * GRIMPL_RESTRICT gridPar1, double dgridPar1,
@@ -380,17 +384,18 @@ inline void interpolate_5d_g(
   const double * GRIMPL_RESTRICT gridPar3, double dgridPar3,
   const double * GRIMPL_RESTRICT gridPar4, double dgridPar4,
   const double * GRIMPL_RESTRICT gridPar5, double dgridPar5,
-  gr_i64 dataSize, const double * GRIMPL_RESTRICT dataField,
-  double * GRIMPL_RESTRICT value
+  gr_i64 dataSize, const double * GRIMPL_RESTRICT dataField
 ) {
 
+  double value;
   FORTRAN_NAME(interpolate_5d_g)(
     &input1, &input2, &input3, &input4, &input5,
     gridDim,
     gridPar1, &dgridPar1, gridPar2, &dgridPar2, gridPar3, &dgridPar3,
     gridPar4, &dgridPar4, gridPar5, &dgridPar5,
-    &dataSize, dataField, value
+    &dataSize, dataField, &value
   );
+  return value;
 
 }
 

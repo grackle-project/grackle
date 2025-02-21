@@ -16,7 +16,6 @@ TEST(InterpolationTest, Interpolate1D) {
     std::vector<long long> gridDim(1,dataSize);
     std::vector<double> gridPar1(dataSize);
     std::vector<double> dataField(dataSize);
-    double value;
 
     for(auto i=0;i<dataSize;i++){
         gridPar1[i]=1.0 + i*dgridPar1;
@@ -24,12 +23,12 @@ TEST(InterpolationTest, Interpolate1D) {
     }
 
     
-    grackle::impl::fortran_wrapper::interpolate_1d_g(
+    double value = grackle::impl::fortran_wrapper::interpolate_1d_g(
         input1,
         gridDim.data(),
         gridPar1.data(), dgridPar1,
-        dataSize, dataField.data(),
-        &value);
+        dataSize, dataField.data()
+    );
 
     EXPECT_DOUBLE_EQ(value, 3.0769230769230766);
 }
@@ -47,7 +46,6 @@ TEST(InterpolationTest, Interpolate2D) {
     std::vector<double> gridPar1(dataSize1);
     std::vector<double> gridPar2(dataSize2);
     std::vector<double> dataField(dataSize);
-    double value;
 
     for(auto i=0;i<dataSize1;i++){
         gridPar1[i]=2.0+i*dgridPar1;
@@ -62,13 +60,13 @@ TEST(InterpolationTest, Interpolate2D) {
     }
 
 
-    grackle::impl::fortran_wrapper::interpolate_2d_g(
+    double value = grackle::impl::fortran_wrapper::interpolate_2d_g(
         input1, input2,
         gridDim.data(),
         gridPar1.data(), dgridPar1,
         gridPar2.data(), dgridPar2,
-        dataSize, dataField.data(),
-        &value);
+        dataSize, dataField.data()
+    );
 
     EXPECT_DOUBLE_EQ(value, 1.2333333333333329);
 }
@@ -90,7 +88,6 @@ TEST(InterpolationTest, Interpolate3D) {
     std::vector<double> gridPar2(dataSize2);
     std::vector<double> gridPar3(dataSize3);
     std::vector<double> dataField(dataSize);
-    double value;
 
     for(auto i=0;i<dataSize1;i++){
         gridPar1[i]=2.0+i*dgridPar1;
@@ -109,14 +106,14 @@ TEST(InterpolationTest, Interpolate3D) {
         }
     }
 
-    grackle::impl::fortran_wrapper::interpolate_3d_g(
+    double value = grackle::impl::fortran_wrapper::interpolate_3d_g(
         input1, input2, input3,
         gridDim.data(),
         gridPar1.data(), dgridPar1,
         gridPar2.data(), dgridPar2,
         gridPar3.data(), dgridPar3,
-        dataSize, dataField.data(),
-        &value);
+        dataSize, dataField.data()
+    );
 
     EXPECT_DOUBLE_EQ(value, 7.3999999999999986);
 
@@ -141,8 +138,6 @@ TEST(InterpolationTest, Interpolate3Dz) {
     std::vector<double> gridPar2(dataSize2);
     std::vector<double> gridPar3(dataSize3);
     std::vector<double> dataField(dataSize);
-    double value_end_int_0;
-    double value_end_int_1;
 
     for(auto i=0;i<dataSize1;i++){
         gridPar1[i]=2.0+i*dgridPar1;
@@ -161,26 +156,26 @@ TEST(InterpolationTest, Interpolate3Dz) {
         }
     }
 
-    grackle::impl::fortran_wrapper::interpolate_3dz_g(
+    double value_end_int_0 = grackle::impl::fortran_wrapper::interpolate_3dz_g(
       input1, input2, input3,
       gridDim.data(),
       gridPar1.data(), dgridPar1,
       gridPar2.data(), index2,
       gridPar3.data(), dgridPar3,
       dataSize, dataField.data(),
-      end_int,
-      &value_end_int_0);
+      end_int
+    );
 
     end_int = 1;
-    grackle::impl::fortran_wrapper::interpolate_3dz_g(
+    double value_end_int_1 = grackle::impl::fortran_wrapper::interpolate_3dz_g(
       input1, input2, input3,
       gridDim.data(),
       gridPar1.data(), dgridPar1,
       gridPar2.data(), index2,
       gridPar3.data(), dgridPar3,
       dataSize, dataField.data(),
-      end_int,
-      &value_end_int_1);
+      end_int
+    );
 
     EXPECT_DOUBLE_EQ(value_end_int_0, 7.3391950270214341);
     EXPECT_DOUBLE_EQ(value_end_int_1, 5.0);
@@ -255,7 +250,6 @@ TEST(InterpolationTest, Interpolate4D) {
     std::vector<double> gridPar3(dataSize3);
     std::vector<double> gridPar4(dataSize4);
     std::vector<double> dataField(dataSize);
-    double value;
 
     for(auto i=0;i<dataSize1;i++){
         gridPar1[i]=2.0+i*dgridPar1;
@@ -280,15 +274,15 @@ TEST(InterpolationTest, Interpolate4D) {
         }
     }
 
-    grackle::impl::fortran_wrapper::interpolate_4d_g(
+    double value = grackle::impl::fortran_wrapper::interpolate_4d_g(
         input1, input2, input3, input4,
         gridDim.data(),
         gridPar1.data(), dgridPar1,
         gridPar2.data(), dgridPar2,
         gridPar3.data(), dgridPar3,
         gridPar4.data(), dgridPar4,
-        dataSize, dataField.data(),
-        &value);
+        dataSize, dataField.data()
+    );
 
     EXPECT_DOUBLE_EQ(value, 9.9142857142857146);
 }
@@ -318,7 +312,6 @@ TEST(InterpolationTest, Interpolate5D) {
     std::vector<double> gridPar4(dataSize4);
     std::vector<double> gridPar5(dataSize5);
     std::vector<double> dataField(dataSize);
-    double value;
 
     for(auto i=0;i<dataSize1;i++){
         gridPar1[i]=2.0+i*dgridPar1;
@@ -349,7 +342,7 @@ TEST(InterpolationTest, Interpolate5D) {
         }
     }
 
-    grackle::impl::fortran_wrapper::interpolate_5d_g(
+    double value = grackle::impl::fortran_wrapper::interpolate_5d_g(
         input1, input2, input3, input4, input5,
         gridDim.data(),
         gridPar1.data(), dgridPar1,
@@ -357,8 +350,8 @@ TEST(InterpolationTest, Interpolate5D) {
         gridPar3.data(), dgridPar3,
         gridPar4.data(), dgridPar4,
         gridPar5.data(), dgridPar5,
-        dataSize, dataField.data(),
-        &value);
+        dataSize, dataField.data()
+    );
 
     EXPECT_DOUBLE_EQ(value, 10.247619047619049);
 }
