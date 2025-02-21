@@ -136,11 +136,17 @@
 /// > - To be clear, I have a lot more faith in enabling this feature than
 /// >   passing the ``-ffast-math`` flag to gcc (__restrict__ semantics are
 /// >   well defined and its opt-in)
-#if defined (__GNUC__)
-//#define GRIMPL_RESTRICT __restrict__
-#define GRIMPL_RESTRICT /* ... */
+#ifdef GRIMPL_NOUSE_RESTRICT
+  #define GRIMPL_RESTRICT /* ... */
+#elif !defined(__cplusplus) /* simple case (we are compiling C) */
+  #define GRIMPL_RESTRICT restrict
+#elif defined (__GNUC__)
+  // C++ compilers other than g++ define this macro. To my knowledge, all of
+  // them (e.g. clang++, the new & old intel c++ compilers) define the same
+  // the restrict-extension in the same way
+  #define GRIMPL_RESTRICT __restrict
 #else
-#define GRIMPL_RESTRICT /* ... */
+  #define GRIMPL_RESTRICT /* ... */
 #endif
 
 // -----------------------------------------------------------------------
