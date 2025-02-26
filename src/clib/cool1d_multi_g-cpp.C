@@ -9,14 +9,14 @@
 #include <cstdio>
 #include <vector>
 #include <iostream>
+
+#include "cool1d_multi_g-cpp.h"
 #include "grackle.h"
 #include "fortran_func_decls.h"
 #include "utils-cpp.hpp"
 
-#include "cool1d_multi_g-cpp.h"
-//TODO: manually removed from signature (double* comp1, double* comp2)
 void cool1d_multi_g(
-  int imetal, int iter, //double* comp1, double* comp2, 
+  int imetal, int iter,
   double* edot,
   double* tgas, double* mmw, double* p2d, double* tdust, double* metallicity,
   double* dust2gas, double* rhoH, gr_mask_type* itmask,
@@ -53,9 +53,6 @@ void cool1d_multi_g(
 
   // Arguments
 
-  // -- removed line (previously just declared arg types) -- 
-
-  // -- removed line (previously just declared arg types) -- 
   grackle::impl::View<gr_float***> d(my_fields->density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> e(my_fields->internal_energy, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> de(my_fields->e_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
@@ -81,13 +78,10 @@ void cool1d_multi_g(
   grackle::impl::View<gr_float***> OI(my_fields->OI_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> OH(my_fields->OH_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> H2O(my_fields->H2O_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  // -- removed line (previously just declared arg types) --
 
   // Cloudy cooling data
 
   int iZscale, mycmbTfloor;
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
 
   // Parameters
 
@@ -101,12 +95,10 @@ void cool1d_multi_g(
   int i, ti, iradfield;
   double dom, qq, vibl, logtem0, logtem9, dlogtem, zr, hdlte1, hdlow1, gamma2, x, fudge, fH2, gphdl1, dom_inv, tau, ciefudge, coolunit, dbase1, tbase1, xbase1, nH2, nother, nSSh, nratio, nssh_he, nratio_he, fSShHI, fSShHeI, pe_eps, pe_X, grbeta, ih2cox, min_metallicity;
   int itd;
-  double comp1, comp2; //TODO: manually added and removed from signature
+  double comp1, comp2;
 
   // Slice locals
  
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
 
   // Cooling/heating slice locals
 
@@ -121,30 +113,9 @@ void cool1d_multi_g(
   std::vector<double> myisrf(my_fields->grid_dimension[0]);
   int iden, item, itab;
   std::vector<double> cieY06(my_fields->grid_dimension[0]);
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
+
   // opacity table
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
+
   double logdom;
   std::vector<double> logT(my_fields->grid_dimension[0]);
   std::vector<double> logTcmb(my_fields->grid_dimension[0]);
@@ -178,7 +149,9 @@ void cool1d_multi_g(
   std::vector<double> lshield_con(my_fields->grid_dimension[0]);
   std::vector<double> tau_con(my_fields->grid_dimension[0]);
   double log_a, log_L, log_G;
+
   // grain growth
+
   std::vector<double> sgSiM(my_fields->grid_dimension[0]);
   std::vector<double> sgFeM(my_fields->grid_dimension[0]);
   std::vector<double> sgMg2SiO4(my_fields->grid_dimension[0]);
@@ -221,9 +194,9 @@ void cool1d_multi_g(
   std::vector<double> kpvolorg(my_fields->grid_dimension[0]);
   std::vector<double> kpH2Oice(my_fields->grid_dimension[0]);
   std::vector<double> kptot(my_fields->grid_dimension[0]);
+
   // grain temperature
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
+
   std::vector<double> gasSiM(my_fields->grid_dimension[0]);
   std::vector<double> gasFeM(my_fields->grid_dimension[0]);
   std::vector<double> gasMg2SiO4(my_fields->grid_dimension[0]);
@@ -237,6 +210,7 @@ void cool1d_multi_g(
   std::vector<double> gasreforg(my_fields->grid_dimension[0]);
   std::vector<double> gasvolorg(my_fields->grid_dimension[0]);
   std::vector<double> gasH2Oice(my_fields->grid_dimension[0]);
+
   // Iteration mask
 
   gr_mask_type anydust, interp;
@@ -290,8 +264,6 @@ void cool1d_multi_g(
 
   // Set compton cooling coefficients (and temperature)
 
-  // (*comp1) = my_rates->comp  * std::pow((1. + zr),4);
-  // (*comp2) = 2.73 * (1. + zr);
   comp1 = my_rates->comp  * std::pow((1. + zr),4);
   comp2 = 2.73 * (1. + zr);
 
