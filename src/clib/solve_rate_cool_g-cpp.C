@@ -785,29 +785,8 @@ int solve_rate_cool_g(
 
         // Compute the cooling rate, tgas, tdust, and metallicity for this row
 
-        // f_wrap::cool1d_multi_g(
-        //   imetal, idx_range, iter, edot.data(), tgas.data(),
-        //   mmw.data(), p2d.data(), tdust.data(), metallicity.data(),
-        //   dust2gas.data(), rhoH.data(), itmask.data(), itmask_metal.data(),
-        //   my_chemistry, my_rates, my_fields, *my_uvb_rates, internalu,
-        //   grain_temperatures, logTlininterp_buf, cool1dmulti_buf,
-        //   coolingheating_buf
-        // );
-
-        // TODO:should we directly pass the vector?
-        //gr_mask_type* itmask_metal -> std::vector<gr_mask_type>
-        //gr_mask_type* itmask -> std::vector<gr_mask_type>
-        //double* metallicity -> std::vector<double>
-        //double* tdust -> std::vector<double>
-        //double* p2d -> std::vector<double>
-        //double* rhoH -> std::vector<double>
-        //double* dust2gas -> std::vector<double>
-        //double* tgas -> std::vector<double>
-        //double* mmw -> std::vector<double>
-        //double* edot -> std::vector<double>
-        // TODO: what about comp1/comp2?
         cool1d_multi_g(
-          imetal, iter, //double* comp1, double* comp2, 
+          imetal, iter,
           edot.data(),
           tgas.data(), mmw.data(), p2d.data(), tdust.data(), metallicity.data(),
           dust2gas.data(), rhoH.data(), itmask.data(),
