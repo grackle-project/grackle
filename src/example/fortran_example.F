@@ -94,9 +94,12 @@ c     Set parameters
 c     cooling data for Haardt & Madau 2012 background
       filename = "../../input/CloudyData_UVB=HM2012.h5"//C_NULL_CHAR
       grackle_data%grackle_data_file = C_LOC(filename(1:1))
-      grackle_data%h2_on_dust = 0             ! no dust
-      grackle_data%cmb_temperature_floor = 1  ! include CMB cooling floor
-      grackle_data%Gamma = 5./3.;          ! monoatomic gas
+
+c     The following are commented out because they aren't in the c
+c     version of the example
+c      grackle_data%h2_on_dust = 0             ! no dust
+c      grackle_data%cmb_temperature_floor = 1  ! include CMB cooling floor
+c      grackle_data%Gamma = 5./3.;          ! monoatomic gas
 
 c     Set units
 
@@ -140,10 +143,12 @@ c     0-based
 
       do i = 1,field_size
          density(i) = 1.0
-         HI_density(i) = fH * density(i)
+         HI_density(i) = grackle_data%HydrogenFractionByMass *
+     &        density(i)
          HII_density(i) = tiny_number * density(i)
          HM_density(i) = tiny_number * density(i)
-         HeI_density(i) = (1.0 - fH) * density(i)
+         HeI_density(i) = (1.0 - grackle_data%HydrogenFractionByMass) *
+     &        density(i)
          HeII_density(i) = tiny_number * density(i)
          HeIII_density(i) = tiny_number * density(i)
          H2I_density(i) = tiny_number * density(i)
@@ -218,33 +223,42 @@ c     Evolving the chemistry.
       dt = 3.15e7 * 1e6 / my_units%time_units    ! some timestep
       iresult = solve_chemistry(my_units, my_fields, dt)
 
+
+c     Now we compute derived quantities and print the values
+c     -> the Fortran formatting syntax is a little strange. It's unclear
+c        why the G formatter insists on putting a zero to the left of
+c        the decimal point for really small and really large numbers
+
 c     Calculate cooling time.
 
       iresult = calculate_cooling_time(my_units, my_fields,cooling_time)
-      write(6,*) "cooling_time = ", (cooling_time(1) *
-     &     my_units%time_units), "s."
+      write(6,'("cooling_time = ",G25.17E3," s")')
+     &     cooling_time(1) * my_units%time_units
 
 c     Calculate temperature.
 
       iresult = calculate_temperature(my_units, my_fields, temperature)
-      write(6,*) "temperature = ", temperature(1), "K."
+      write(6,'("temperature = ",G25.17E3," K")') temperature(1)
 
 c     Calcualte pressure.
 
       pressure_units = my_units%density_units *
      &     my_units%velocity_units**2
       iresult = calculate_pressure(my_units, my_fields, pressure)
-      write(6,*) "pressure = ", pressure(1)*pressure_units, "dyne/cm^2."
+      write(6,'("pressure = ",G25.17E3," dyne/cm^2")')
+     &     pressure(1)*pressure_units
 
 c     Calculate gamma.
 
       iresult = calculate_gamma(my_units, my_fields, gamma)
-      write(6,*) "gamma = ", gamma(1)
+      write(6,'("gamma = ",G25.17E3)') gamma(1)
 
 c     Calculate dust temperature.
 
       iresult = calculate_dust_temperature(my_units, my_fields,
      &     dust_temperature)
-      write(6,*) "dust_temperature = ", dust_temperature(1), "K."
+      write(6,'("dust_temperature = ",G25.17E3," K")')
+     &     dust_temperature(1)
+
 
       end program fortran_example
