@@ -9,6 +9,7 @@
 #ifndef TIME_DERIV_0D_HPP
 #define TIME_DERIV_0D_HPP
 
+#include "cool1d_multi_g-cpp.h"
 #include "fortran_func_wrappers.hpp"
 #include "grackle.h"
 #include "index_helper.h"
@@ -429,9 +430,6 @@ void lookup_cool_rates0d(
 
   const int i_eng = 52;
 
-  double comp1, comp2;  // in the future, these won't need to be passed to
-                        // cool1d_multi_g
-
   // these should not be re-allocated every time we enter this function...
   // (they should all be preallocated ahead of time!)
   double dedot[1];
@@ -567,14 +565,15 @@ void lookup_cool_rates0d(
   // Compute the cooling rate, tgas, tdust, and metallicity for this row
 
   if (pack.local_edot_handling == 1) {
-    f_wrap::cool1d_multi_g(
-      pack.fwd_args.imetal, idx_range, pack.fwd_args.iter,
+
+    cool1d_multi_g(
+      pack.fwd_args.imetal, pack.fwd_args.iter,
       pack.other_scratch_buf.edot, pack.other_scratch_buf.tgas,
       pack.other_scratch_buf.mmw, pack.other_scratch_buf.p2d,
       pack.other_scratch_buf.tdust, pack.other_scratch_buf.metallicity,
       pack.other_scratch_buf.dust2gas, pack.other_scratch_buf.rhoH,
       itmask, &pack.local_itmask_metal, my_chemistry, my_rates, &pack.fields,
-      my_uvb_rates, internalu, pack.main_scratch_buf.grain_temperatures,
+      my_uvb_rates, internalu, idx_range, pack.main_scratch_buf.grain_temperatures,
       pack.main_scratch_buf.logTlininterp_buf,
       pack.main_scratch_buf.cool1dmulti_buf,
       pack.main_scratch_buf.coolingheating_buf
