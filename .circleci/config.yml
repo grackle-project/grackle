@@ -206,15 +206,6 @@ commands:
             source $HOME/venv/bin/activate
             cd src
 
-            # configure env variable for test_code_examples.py
-            if [ << parameters.build_kind >> == 'classic' ]; then
-              export PYTEST_CODE_LINK_CHOICE="classic"
-            elif [ << parameters.build_kind >> == 'cmake' ]; then
-              export PYTEST_CODE_LINK_CHOICE="cmake:../build"
-            else
-              export PYTEST_CODE_LINK_CHOICE="" # we skip test_code_examples.py
-            fi
-
             # configure variables for generating test answers
             if [ << parameters.generate >> == 'true' ]; then
               export GENERATE_PYGRACKLE_TEST_RESULTS=1
