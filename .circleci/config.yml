@@ -224,6 +224,46 @@ commands:
               py.test python/tests
             fi
 
+  run-core-tests:
+    description: "Run the suite of tests that operate directly on the core-library."
+    parameters:
+      omp:
+        type: enum
+        default: 'false'
+        enum: ['true', 'false']
+      build_kind:
+        type: enum
+        default: 'classic'
+        enum: ['classic', 'cmake', 'standalone-pygrackle']
+    steps:
+      - run:
+          name: "Run core-library tests (build_kind: << parameters.build_kind >>, omp: << parameters.omp >>)."
+          command: |
+            source $BASH_ENV
+            cd src
+
+            # actually execute the tests
+            if [[ << parameters.build_kind >> == 'classic' &&
+                  << parameters.omp >> == 'true' ]]; then
+              export OMP_NUM_THREADS=4
+              cd example
+              make cxx_omp_example
+              ./cxx_omp_example
+              make clean
+            elif [ << parameters.build_kind >> == 'cmake' >> ]; then
+              # compile the tests (it would probably would be better to do this
+              # when compiling the rest of Grackle)
+              cmake -DGRACKLE_BUILD_TESTS=ON -Bbuild
+              cmake --build build
+              # execute the tests
+              # -> if the cmake build-system was configured with OpenMP, the
+              #    test-suite automatically knows to run the OpenMP example
+              cd build
+              ctest --output-on-failure
+            else
+              echo "the core-library tests can't be run in this configuration"
+            fi
+
   build-docs:
     description: "Test the docs build."
     steps:
@@ -277,7 +317,7 @@ jobs:
           classic_build: 'true'
           tag: $CIRCLE_BRANCH
 
-      - run-tests:
+      - run-core-tests:
           omp: 'true'
           build_kind: 'classic'
 
@@ -301,16 +341,9 @@ jobs:
           build_kind: 'cmake'
           generate: 'false'
 
-      - run:
-          name: "Execute the C++ tests"
-          command: |
-            # compile the tests (it would probably would be better to do this when
-            # compiling the rest of Grackle)
-            cmake -DGRACKLE_BUILD_TESTS=ON -Bbuild
-            cmake --build build
-            # execute the tests
-            cd build
-            ctest
+      - run-core-tests:
+          omp: 'false'
+          build_kind: 'cmake'
 
 # TODO: once we merge in GH-#208, we need to issue a new gold standard, and then we should
 #       issue a followup PR where we uncomment the remainder of this test
