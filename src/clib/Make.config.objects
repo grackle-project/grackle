@@ -42,7 +42,7 @@ OBJS_CONFIG_LIB = \
         update_UVbackground_rates.lo \
         calc_all_tdust_gasgr_1d_g.lo \
         calc_tdust_1d_g.lo \
-        calc_tdust_3d_g.lo \
+        calc_tdust_3d.lo \
         calc_grain_size_increment_1d.lo \
         rate_functions.lo \
         gaussj_g.lo \
