@@ -14,26 +14,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include "grackle.h"
 #include "grackle_macros.h"
-#include "grackle_types.h"
-#include "grackle_chemistry_data.h"
+#include "internal_units.h"
 #include "phys_constants.h"
-#ifdef _OPENMP
-#include <omp.h>
-#endif
-
-extern chemistry_data *grackle_data;
-extern chemistry_data_storage grackle_rates;
 
 /* function prototypes */
-
-double get_temperature_units(code_units *my_units);
-
-int local_calculate_temperature(chemistry_data *my_chemistry,
-                                chemistry_data_storage *my_rates,
-                                code_units *my_units,
-                                grackle_field_data *my_fields,
-                                gr_float *temperature);
 
 extern void FORTRAN_NAME(calc_tdust_3d_g)(
 	gr_float *d, gr_float *de, gr_float *HI, gr_float *HII,
@@ -89,24 +75,13 @@ int local_calculate_dust_temperature(chemistry_data *my_chemistry,
   if (my_chemistry->dust_chemistry < 1 && my_chemistry->h2_on_dust < 1)
     return SUCCESS;
 
+  InternalGrUnits internalu = new_internalu_(my_units);
+
   /* Check for a metal field. */
 
   int metal_field_present = TRUE;
   if (my_fields->metal_density == NULL)
     metal_field_present = FALSE;
-
-  double co_length_units, co_density_units;
-  if (my_units->comoving_coordinates == TRUE) {
-    co_length_units = my_units->length_units;
-    co_density_units = my_units->density_units;
-  }
-  else {
-    co_length_units = my_units->length_units *
-      my_units->a_value * my_units->a_units;
-    co_density_units = my_units->density_units /
-      POW(my_units->a_value * my_units->a_units, 3);
-  }
-  double temperature_units = get_temperature_units(my_units);
 
   /* Compute the size of the fields. */
  
@@ -114,8 +89,7 @@ int local_calculate_dust_temperature(chemistry_data *my_chemistry,
   for (dim = 0; dim < my_fields->grid_rank; dim++)
     size *= my_fields->grid_dimension[dim];
 
-  gr_float *temperature;
-  temperature = malloc(size * sizeof(gr_float));
+  gr_float *temperature = malloc(size * sizeof(gr_float));
   if (local_calculate_temperature(my_chemistry, my_rates, my_units,
                                   my_fields, temperature) == FAIL) {
     fprintf(stderr, "Error in local_calculate_temperature.\n");
@@ -139,7 +113,7 @@ int local_calculate_dust_temperature(chemistry_data *my_chemistry,
        my_fields->grid_dimension+1,
        my_fields->grid_dimension+2,
        &my_chemistry->NumberOfTemperatureBins,
-       &my_units->comoving_coordinates,
+       &internalu.extfields_in_comoving,
        &my_chemistry->primordial_chemistry,
        &(my_fields->grid_rank),
        my_fields->grid_start+0,
@@ -148,18 +122,18 @@ int local_calculate_dust_temperature(chemistry_data *my_chemistry,
        my_fields->grid_end+0,
        my_fields->grid_end+1,
        my_fields->grid_end+2,
-       &my_units->a_value,
+       &internalu.a_value,
        &my_chemistry->TemperatureStart,
        &my_chemistry->TemperatureEnd,
        &my_chemistry->local_dust_to_gas_ratio,
        my_rates->gas_grain,
        &my_rates->gamma_isrf,
        &my_chemistry->interstellar_radiation_field,
-       &temperature_units,
-       &co_length_units,
-       &my_units->a_units,
-       &co_density_units,
-       &my_units->time_units,
+       &internalu.utem,
+       &internalu.uxyz,
+       &internalu.a_units,
+       &internalu.urho,
+       &internalu.tbase1,
        temperature,
        dust_temperature,
        &my_chemistry->use_isrf_field,
