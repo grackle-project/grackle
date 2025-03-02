@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "calc_tdust_3d.h"
+#include "dust_props.hpp"
 #include "fortran_func_decls.h"
 #include "grackle.h"
 #include "index_helper.h"
@@ -275,6 +276,9 @@ void calc_tdust_3d_g(
     grackle::impl::GrainSpeciesCollection grain_temperatures =
       grackle::impl::new_GrainSpeciesCollection(my_fields->grid_dimension[0]);
 
+    grackle::impl::InternalDustPropBuf internal_dust_prop_buf =
+      grackle::impl::new_InternalDustPropBuf(my_fields->grid_dimension[0]);
+
     //_// TODO_USE: OMP_PRAGMA("omp for")
     for (int t = 0; t < idx_helper.outer_ind_size; t++) {
       // construct an index-range corresponding to "i-slice"
@@ -474,6 +478,7 @@ void calc_tdust_3d_g(
     }
 
     grackle::impl::drop_GrainSpeciesCollection(&grain_temperatures);
+    grackle::impl::drop_InternalDustPropBuf(&internal_dust_prop_buf);
   }  // OMP_PRAGMA("omp parallel")
 
   // Convert densities back to comoving from 'proper'
