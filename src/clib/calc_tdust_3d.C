@@ -13,6 +13,7 @@
 #include "fortran_func_decls.h"
 #include "grackle.h"
 #include "index_helper.h"
+#include "internal_types.hpp"
 #include "utils-cpp.hpp"
 
 #ifdef __cplusplus
@@ -108,20 +109,7 @@ void calc_tdust_3d_g(
   std::vector<double> kpvolorg(my_fields->grid_dimension[0]);
   std::vector<double> kpH2Oice(my_fields->grid_dimension[0]);
   std::vector<double> kptot(my_fields->grid_dimension[0]);
-  // grain temperature
-  std::vector<double> tSiM(my_fields->grid_dimension[0]);
-  std::vector<double> tFeM(my_fields->grid_dimension[0]);
-  std::vector<double> tMg2SiO4(my_fields->grid_dimension[0]);
-  std::vector<double> tMgSiO3(my_fields->grid_dimension[0]);
-  std::vector<double> tFe3O4(my_fields->grid_dimension[0]);
-  std::vector<double> tAC(my_fields->grid_dimension[0]);
-  std::vector<double> tSiO2D(my_fields->grid_dimension[0]);
-  std::vector<double> tMgO(my_fields->grid_dimension[0]);
-  std::vector<double> tFeS(my_fields->grid_dimension[0]);
-  std::vector<double> tAl2O3(my_fields->grid_dimension[0]);
-  std::vector<double> treforg(my_fields->grid_dimension[0]);
-  std::vector<double> tvolorg(my_fields->grid_dimension[0]);
-  std::vector<double> tH2Oice(my_fields->grid_dimension[0]);
+
   grackle::impl::View<gr_float***> SiM_temp(my_fields->SiM_dust_temperature, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> FeM_temp(my_fields->FeM_dust_temperature, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> Mg2SiO4_temp(my_fields->Mg2SiO4_dust_temperature, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
@@ -284,6 +272,9 @@ void calc_tdust_3d_g(
   //_// TODO_USE: OMP_PRAGMA("omp parallel")
   {
     //_// TODO: move relevant variable declarations to here to replace OMP private
+    grackle::impl::GrainSpeciesCollection grain_temperatures =
+      grackle::impl::new_GrainSpeciesCollection(my_fields->grid_dimension[0]);
+
     //_// TODO_USE: OMP_PRAGMA("omp for")
     for (int t = 0; t < idx_helper.outer_ind_size; t++) {
       // construct an index-range corresponding to "i-slice"
@@ -432,9 +423,9 @@ void calc_tdust_3d_g(
                     metallicity.data(), dust2gas.data(), nh.data(), gasgr_tdust.data(),
                     itmask.data(),
                     &my_chemistry->dust_species, &my_chemistry->use_multiple_dust_temperatures, my_rates->gr_N, &my_rates->gr_Size, &my_rates->gr_dT,
-                    my_rates->gr_Td, tSiM.data(), tFeM.data(), tMg2SiO4.data(), tMgSiO3.data(), tFe3O4.data(),
-                    tAC.data(), tSiO2D.data(), tMgO.data(), tFeS.data(), tAl2O3.data(), treforg.data(),
-                    tvolorg.data(), tH2Oice.data(), my_rates->gas_grain2, &my_rates->gamma_isrf2,
+                    my_rates->gr_Td, grain_temperatures.data[OnlyGrainSpLUT::SiM_dust], grain_temperatures.data[OnlyGrainSpLUT::FeM_dust], grain_temperatures.data[OnlyGrainSpLUT::Mg2SiO4_dust], grain_temperatures.data[OnlyGrainSpLUT::MgSiO3_dust], grain_temperatures.data[OnlyGrainSpLUT::Fe3O4_dust],
+                    grain_temperatures.data[OnlyGrainSpLUT::AC_dust], grain_temperatures.data[OnlyGrainSpLUT::SiO2_dust], grain_temperatures.data[OnlyGrainSpLUT::MgO_dust], grain_temperatures.data[OnlyGrainSpLUT::FeS_dust], grain_temperatures.data[OnlyGrainSpLUT::Al2O3_dust], grain_temperatures.data[OnlyGrainSpLUT::ref_org_dust],
+                    grain_temperatures.data[OnlyGrainSpLUT::vol_org_dust], grain_temperatures.data[OnlyGrainSpLUT::H2O_ice_dust], my_rates->gas_grain2, &my_rates->gamma_isrf2,
                     &coolunit, gasgr.data(), myisrf.data(), sgSiM.data(), sgFeM.data(), sgMg2SiO4.data(),
                     sgMgSiO3.data(), sgFe3O4.data(), sgAC.data(), sgSiO2D.data(), sgMgO.data(), sgFeS.data(),
                     sgAl2O3.data(), sgreforg.data(), sgvolorg.data(), sgH2Oice.data(), sgtot.data(),
@@ -458,29 +449,31 @@ void calc_tdust_3d_g(
             dust_temp(i-1,j-1,k-1) = tdust[i-1];
           } else {
             if (my_chemistry->dust_species > 0)  {
-              MgSiO3_temp(i-1,j-1,k-1) = tMgSiO3  [i-1];
-              AC_temp(i-1,j-1,k-1) = tAC      [i-1];
+              MgSiO3_temp(i-1,j-1,k-1) = grain_temperatures.data[OnlyGrainSpLUT::MgSiO3_dust][i-1];
+              AC_temp(i-1,j-1,k-1) = grain_temperatures.data[OnlyGrainSpLUT::AC_dust][i-1];
             }
             if (my_chemistry->dust_species > 1)  {
-              SiM_temp(i-1,j-1,k-1) = tSiM     [i-1];
-              FeM_temp(i-1,j-1,k-1) = tFeM     [i-1];
-              Mg2SiO4_temp(i-1,j-1,k-1) = tMg2SiO4 [i-1];
-              Fe3O4_temp(i-1,j-1,k-1) = tFe3O4   [i-1];
-              SiO2D_temp(i-1,j-1,k-1) = tSiO2D   [i-1];
-              MgO_temp(i-1,j-1,k-1) = tMgO     [i-1];
-              FeS_temp(i-1,j-1,k-1) = tFeS     [i-1];
-              Al2O3_temp(i-1,j-1,k-1) = tAl2O3   [i-1];
+              SiM_temp(i-1,j-1,k-1) = grain_temperatures.data[OnlyGrainSpLUT::SiM_dust][i-1];
+              FeM_temp(i-1,j-1,k-1) = grain_temperatures.data[OnlyGrainSpLUT::FeM_dust][i-1];
+              Mg2SiO4_temp(i-1,j-1,k-1) = grain_temperatures.data[OnlyGrainSpLUT::Mg2SiO4_dust][i-1];
+              Fe3O4_temp(i-1,j-1,k-1) = grain_temperatures.data[OnlyGrainSpLUT::Fe3O4_dust][i-1];
+              SiO2D_temp(i-1,j-1,k-1) = grain_temperatures.data[OnlyGrainSpLUT::SiO2_dust][i-1];
+              MgO_temp(i-1,j-1,k-1) = grain_temperatures.data[OnlyGrainSpLUT::MgO_dust][i-1];
+              FeS_temp(i-1,j-1,k-1) = grain_temperatures.data[OnlyGrainSpLUT::FeS_dust][i-1];
+              Al2O3_temp(i-1,j-1,k-1) = grain_temperatures.data[OnlyGrainSpLUT::Al2O3_dust][i-1];
             }
             if (my_chemistry->dust_species > 2)  {
-              reforg_temp(i-1,j-1,k-1) = treforg  [i-1];
-              volorg_temp(i-1,j-1,k-1) = tvolorg  [i-1];
-              H2Oice_temp(i-1,j-1,k-1) = tH2Oice  [i-1];
+              reforg_temp(i-1,j-1,k-1) = grain_temperatures.data[OnlyGrainSpLUT::ref_org_dust][i-1];
+              volorg_temp(i-1,j-1,k-1) = grain_temperatures.data[OnlyGrainSpLUT::vol_org_dust][i-1];
+              H2Oice_temp(i-1,j-1,k-1) = grain_temperatures.data[OnlyGrainSpLUT::H2O_ice_dust][i-1];
             }
           }
         }
       }
 
     }
+
+    grackle::impl::drop_GrainSpeciesCollection(&grain_temperatures);
   }  // OMP_PRAGMA("omp parallel")
 
   // Convert densities back to comoving from 'proper'
