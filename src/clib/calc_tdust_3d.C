@@ -67,21 +67,6 @@ void calc_tdust_3d_g(
   grackle::impl::View<gr_float***> volorg(my_fields->vol_org_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> H2Oice(my_fields->H2O_ice_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
-  std::vector<double> kpSiM(my_fields->grid_dimension[0]);
-  std::vector<double> kpFeM(my_fields->grid_dimension[0]);
-  std::vector<double> kpMg2SiO4(my_fields->grid_dimension[0]);
-  std::vector<double> kpMgSiO3(my_fields->grid_dimension[0]);
-  std::vector<double> kpFe3O4(my_fields->grid_dimension[0]);
-  std::vector<double> kpAC(my_fields->grid_dimension[0]);
-  std::vector<double> kpSiO2D(my_fields->grid_dimension[0]);
-  std::vector<double> kpMgO(my_fields->grid_dimension[0]);
-  std::vector<double> kpFeS(my_fields->grid_dimension[0]);
-  std::vector<double> kpAl2O3(my_fields->grid_dimension[0]);
-  std::vector<double> kpreforg(my_fields->grid_dimension[0]);
-  std::vector<double> kpvolorg(my_fields->grid_dimension[0]);
-  std::vector<double> kpH2Oice(my_fields->grid_dimension[0]);
-  std::vector<double> kptot(my_fields->grid_dimension[0]);
-
   grackle::impl::View<gr_float***> SiM_temp(my_fields->SiM_dust_temperature, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> FeM_temp(my_fields->FeM_dust_temperature, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> Mg2SiO4_temp(my_fields->Mg2SiO4_dust_temperature, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
@@ -252,6 +237,18 @@ void calc_tdust_3d_g(
         my_fields->grid_dimension[0], my_rates->gr_N[1]
       );
 
+    // these next buffer variables hold values that are computed as side-effect
+    // (we don't really care about them in the current context)
+
+    // opacity coefficients for each dust grain (the product of opacity
+    // coefficient & gas mass density is the linear absortpion coefficient)
+    grackle::impl::GrainSpeciesCollection grain_kappa =
+      grackle::impl::new_GrainSpeciesCollection(my_fields->grid_dimension[0]);
+
+    // closely related to grain_kappa
+    std::vector<double> kappa_tot(my_fields->grid_dimension[0]);
+
+
     //_// TODO_USE: OMP_PRAGMA("omp for")
     for (int t = 0; t < idx_helper.outer_ind_size; t++) {
       // construct an index-range corresponding to "i-slice"
@@ -408,10 +405,10 @@ void calc_tdust_3d_g(
                     internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::Al2O3_dust], internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::ref_org_dust], internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::vol_org_dust], internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::H2O_ice_dust], internal_dust_prop_buf.sigma_per_gas_mass_tot,
                     internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::SiM_dust], internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::FeM_dust], internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::Mg2SiO4_dust], internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::MgSiO3_dust], internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::Fe3O4_dust], internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::AC_dust],
                     internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::SiO2_dust], internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::MgO_dust], internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::FeS_dust], internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::Al2O3_dust], internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::ref_org_dust],
-                    internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::vol_org_dust], internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::H2O_ice_dust], internal_dust_prop_buf.dyntab_kappa_tot, kpSiM.data(), kpFeM.data(),
-                    kpMg2SiO4.data(), kpMgSiO3.data(), kpFe3O4.data(), kpAC.data(), kpSiO2D.data(),
-                    kpMgO.data(), kpFeS.data(), kpAl2O3.data(), kpreforg.data(), kpvolorg.data(),
-                    kpH2Oice.data(), kptot.data(), gasSiM.data(), gasFeM.data(), gasMg2SiO4.data(),
+                    internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::vol_org_dust], internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::H2O_ice_dust], internal_dust_prop_buf.dyntab_kappa_tot, grain_kappa.data[OnlyGrainSpLUT::SiM_dust], grain_kappa.data[OnlyGrainSpLUT::FeM_dust],
+                    grain_kappa.data[OnlyGrainSpLUT::Mg2SiO4_dust], grain_kappa.data[OnlyGrainSpLUT::MgSiO3_dust], grain_kappa.data[OnlyGrainSpLUT::Fe3O4_dust], grain_kappa.data[OnlyGrainSpLUT::AC_dust], grain_kappa.data[OnlyGrainSpLUT::SiO2_dust],
+                    grain_kappa.data[OnlyGrainSpLUT::MgO_dust], grain_kappa.data[OnlyGrainSpLUT::FeS_dust], grain_kappa.data[OnlyGrainSpLUT::Al2O3_dust], grain_kappa.data[OnlyGrainSpLUT::ref_org_dust], grain_kappa.data[OnlyGrainSpLUT::vol_org_dust],
+                    grain_kappa.data[OnlyGrainSpLUT::H2O_ice_dust], kappa_tot.data(), gasSiM.data(), gasFeM.data(), gasMg2SiO4.data(),
                     gasMgSiO3.data(), gasFe3O4.data(), gasAC.data(), gasSiO2D.data(), gasMgO.data(),
                     gasFeS.data(), gasAl2O3.data(), gasreforg.data(), gasvolorg.data(),
                     gasH2Oice.data()
@@ -452,6 +449,7 @@ void calc_tdust_3d_g(
 
     grackle::impl::drop_GrainSpeciesCollection(&grain_temperatures);
     grackle::impl::drop_InternalDustPropBuf(&internal_dust_prop_buf);
+    grackle::impl::drop_GrainSpeciesCollection(&grain_kappa);
   }  // OMP_PRAGMA("omp parallel")
 
   // Convert densities back to comoving from 'proper'
