@@ -67,21 +67,6 @@ void calc_tdust_3d_g(
   grackle::impl::View<gr_float***> volorg(my_fields->vol_org_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> H2Oice(my_fields->H2O_ice_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
-  // grain growth
-  std::vector<double> sgSiM(my_fields->grid_dimension[0]);
-  std::vector<double> sgFeM(my_fields->grid_dimension[0]);
-  std::vector<double> sgMg2SiO4(my_fields->grid_dimension[0]);
-  std::vector<double> sgMgSiO3(my_fields->grid_dimension[0]);
-  std::vector<double> sgFe3O4(my_fields->grid_dimension[0]);
-  std::vector<double> sgAC(my_fields->grid_dimension[0]);
-  std::vector<double> sgSiO2D(my_fields->grid_dimension[0]);
-  std::vector<double> sgMgO(my_fields->grid_dimension[0]);
-  std::vector<double> sgFeS(my_fields->grid_dimension[0]);
-  std::vector<double> sgAl2O3(my_fields->grid_dimension[0]);
-  std::vector<double> sgreforg(my_fields->grid_dimension[0]);
-  std::vector<double> sgvolorg(my_fields->grid_dimension[0]);
-  std::vector<double> sgH2Oice(my_fields->grid_dimension[0]);
-  std::vector<double> sgtot(my_fields->grid_dimension[0]);
   std::vector<double> alSiM(my_rates->gr_N[2-1] * my_fields->grid_dimension[0]);
   std::vector<double> alFeM(my_rates->gr_N[2-1] * my_fields->grid_dimension[0]);
   std::vector<double> alMg2SiO4(my_rates->gr_N[2-1] * my_fields->grid_dimension[0]);
@@ -332,9 +317,9 @@ void calc_tdust_3d_g(
                  my_rates->SN0_kpFe3O4, my_rates->SN0_kpAC, my_rates->SN0_kpSiO2D, my_rates->SN0_kpMgO,
                  my_rates->SN0_kpFeS, my_rates->SN0_kpAl2O3,
                  my_rates->SN0_kpreforg, my_rates->SN0_kpvolorg, my_rates->SN0_kpH2Oice,
-                 sgSiM.data(), sgFeM.data(), sgMg2SiO4.data(), sgMgSiO3.data(), sgFe3O4.data(), sgAC.data(),
-                 sgSiO2D.data(), sgMgO.data(), sgFeS.data(), sgAl2O3.data(),
-                 sgreforg.data(), sgvolorg.data(), sgH2Oice.data(), sgtot.data(),
+                 internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::SiM_dust], internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::FeM_dust], internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::Mg2SiO4_dust], internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::MgSiO3_dust], internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::Fe3O4_dust], internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::AC_dust],
+                 internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::SiO2_dust], internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::MgO_dust], internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::FeS_dust], internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::Al2O3_dust],
+                 internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::ref_org_dust], internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::vol_org_dust], internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::H2O_ice_dust], internal_dust_prop_buf.sigma_per_gas_mass_tot,
                  alSiM.data(), alFeM.data(), alMg2SiO4.data(), alMgSiO3.data(), alFe3O4.data(), alAC.data(),
                  alSiO2D.data(), alMgO.data(), alFeS.data(), alAl2O3.data(),
                  alreforg.data(), alvolorg.data(), alH2Oice.data(), altot.data()
@@ -430,9 +415,9 @@ void calc_tdust_3d_g(
                     my_rates->gr_Td, grain_temperatures.data[OnlyGrainSpLUT::SiM_dust], grain_temperatures.data[OnlyGrainSpLUT::FeM_dust], grain_temperatures.data[OnlyGrainSpLUT::Mg2SiO4_dust], grain_temperatures.data[OnlyGrainSpLUT::MgSiO3_dust], grain_temperatures.data[OnlyGrainSpLUT::Fe3O4_dust],
                     grain_temperatures.data[OnlyGrainSpLUT::AC_dust], grain_temperatures.data[OnlyGrainSpLUT::SiO2_dust], grain_temperatures.data[OnlyGrainSpLUT::MgO_dust], grain_temperatures.data[OnlyGrainSpLUT::FeS_dust], grain_temperatures.data[OnlyGrainSpLUT::Al2O3_dust], grain_temperatures.data[OnlyGrainSpLUT::ref_org_dust],
                     grain_temperatures.data[OnlyGrainSpLUT::vol_org_dust], grain_temperatures.data[OnlyGrainSpLUT::H2O_ice_dust], my_rates->gas_grain2, &my_rates->gamma_isrf2,
-                    &coolunit, gasgr.data(), myisrf.data(), sgSiM.data(), sgFeM.data(), sgMg2SiO4.data(),
-                    sgMgSiO3.data(), sgFe3O4.data(), sgAC.data(), sgSiO2D.data(), sgMgO.data(), sgFeS.data(),
-                    sgAl2O3.data(), sgreforg.data(), sgvolorg.data(), sgH2Oice.data(), sgtot.data(),
+                    &coolunit, gasgr.data(), myisrf.data(), internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::SiM_dust], internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::FeM_dust], internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::Mg2SiO4_dust],
+                    internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::MgSiO3_dust], internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::Fe3O4_dust], internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::AC_dust], internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::SiO2_dust], internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::MgO_dust], internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::FeS_dust],
+                    internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::Al2O3_dust], internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::ref_org_dust], internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::vol_org_dust], internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::H2O_ice_dust], internal_dust_prop_buf.sigma_per_gas_mass_tot,
                     alSiM.data(), alFeM.data(), alMg2SiO4.data(), alMgSiO3.data(), alFe3O4.data(), alAC.data(),
                     alSiO2D.data(), alMgO.data(), alFeS.data(), alAl2O3.data(), alreforg.data(),
                     alvolorg.data(), alH2Oice.data(), altot.data(), kpSiM.data(), kpFeM.data(),
