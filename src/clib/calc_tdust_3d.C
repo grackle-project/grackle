@@ -80,20 +80,6 @@ void calc_tdust_3d_g(
   grackle::impl::View<gr_float***> reforg_temp(my_fields->ref_org_dust_temperature, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> volorg_temp(my_fields->vol_org_dust_temperature, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> H2Oice_temp(my_fields->H2O_ice_dust_temperature, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  // -- removed line (previously just declared arg types) -- 
-  std::vector<double> gasSiM(my_fields->grid_dimension[0]);
-  std::vector<double> gasFeM(my_fields->grid_dimension[0]);
-  std::vector<double> gasMg2SiO4(my_fields->grid_dimension[0]);
-  std::vector<double> gasMgSiO3(my_fields->grid_dimension[0]);
-  std::vector<double> gasFe3O4(my_fields->grid_dimension[0]);
-  std::vector<double> gasAC(my_fields->grid_dimension[0]);
-  std::vector<double> gasSiO2D(my_fields->grid_dimension[0]);
-  std::vector<double> gasMgO(my_fields->grid_dimension[0]);
-  std::vector<double> gasFeS(my_fields->grid_dimension[0]);
-  std::vector<double> gasAl2O3(my_fields->grid_dimension[0]);
-  std::vector<double> gasreforg(my_fields->grid_dimension[0]);
-  std::vector<double> gasvolorg(my_fields->grid_dimension[0]);
-  std::vector<double> gasH2Oice(my_fields->grid_dimension[0]);
 
   // Parameters
 
@@ -247,6 +233,10 @@ void calc_tdust_3d_g(
 
     // closely related to grain_kappa
     std::vector<double> kappa_tot(my_fields->grid_dimension[0]);
+
+    // holds the gas/grain-species heat transfer rates
+    grackle::impl::GrainSpeciesCollection gas_grainsp_heatrate =
+      grackle::impl::new_GrainSpeciesCollection(my_fields->grid_dimension[0]);
 
 
     //_// TODO_USE: OMP_PRAGMA("omp for")
@@ -408,10 +398,10 @@ void calc_tdust_3d_g(
                     internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::vol_org_dust], internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::H2O_ice_dust], internal_dust_prop_buf.dyntab_kappa_tot, grain_kappa.data[OnlyGrainSpLUT::SiM_dust], grain_kappa.data[OnlyGrainSpLUT::FeM_dust],
                     grain_kappa.data[OnlyGrainSpLUT::Mg2SiO4_dust], grain_kappa.data[OnlyGrainSpLUT::MgSiO3_dust], grain_kappa.data[OnlyGrainSpLUT::Fe3O4_dust], grain_kappa.data[OnlyGrainSpLUT::AC_dust], grain_kappa.data[OnlyGrainSpLUT::SiO2_dust],
                     grain_kappa.data[OnlyGrainSpLUT::MgO_dust], grain_kappa.data[OnlyGrainSpLUT::FeS_dust], grain_kappa.data[OnlyGrainSpLUT::Al2O3_dust], grain_kappa.data[OnlyGrainSpLUT::ref_org_dust], grain_kappa.data[OnlyGrainSpLUT::vol_org_dust],
-                    grain_kappa.data[OnlyGrainSpLUT::H2O_ice_dust], kappa_tot.data(), gasSiM.data(), gasFeM.data(), gasMg2SiO4.data(),
-                    gasMgSiO3.data(), gasFe3O4.data(), gasAC.data(), gasSiO2D.data(), gasMgO.data(),
-                    gasFeS.data(), gasAl2O3.data(), gasreforg.data(), gasvolorg.data(),
-                    gasH2Oice.data()
+                    grain_kappa.data[OnlyGrainSpLUT::H2O_ice_dust], kappa_tot.data(), gas_grainsp_heatrate.data[OnlyGrainSpLUT::SiM_dust], gas_grainsp_heatrate.data[OnlyGrainSpLUT::FeM_dust], gas_grainsp_heatrate.data[OnlyGrainSpLUT::Mg2SiO4_dust],
+                    gas_grainsp_heatrate.data[OnlyGrainSpLUT::MgSiO3_dust], gas_grainsp_heatrate.data[OnlyGrainSpLUT::Fe3O4_dust], gas_grainsp_heatrate.data[OnlyGrainSpLUT::AC_dust], gas_grainsp_heatrate.data[OnlyGrainSpLUT::SiO2_dust], gas_grainsp_heatrate.data[OnlyGrainSpLUT::MgO_dust],
+                    gas_grainsp_heatrate.data[OnlyGrainSpLUT::FeS_dust], gas_grainsp_heatrate.data[OnlyGrainSpLUT::Al2O3_dust], gas_grainsp_heatrate.data[OnlyGrainSpLUT::ref_org_dust], gas_grainsp_heatrate.data[OnlyGrainSpLUT::vol_org_dust],
+                    gas_grainsp_heatrate.data[OnlyGrainSpLUT::H2O_ice_dust]
                   );
 
 
@@ -450,6 +440,7 @@ void calc_tdust_3d_g(
     grackle::impl::drop_GrainSpeciesCollection(&grain_temperatures);
     grackle::impl::drop_InternalDustPropBuf(&internal_dust_prop_buf);
     grackle::impl::drop_GrainSpeciesCollection(&grain_kappa);
+    grackle::impl::drop_GrainSpeciesCollection(&gas_grainsp_heatrate);
   }  // OMP_PRAGMA("omp parallel")
 
   // Convert densities back to comoving from 'proper'
