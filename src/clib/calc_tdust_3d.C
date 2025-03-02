@@ -91,11 +91,6 @@ void calc_tdust_3d_g(
 
   // Slice locals
  
-  std::vector<long long> indixe(my_fields->grid_dimension[0]);
-  std::vector<double> t1(my_fields->grid_dimension[0]);
-  std::vector<double> t2(my_fields->grid_dimension[0]);
-  std::vector<double> logtem(my_fields->grid_dimension[0]);
-  std::vector<double> tdef(my_fields->grid_dimension[0]);
   std::vector<double> tgas(my_fields->grid_dimension[0]);
   std::vector<double> tdust(my_fields->grid_dimension[0]);
   std::vector<double> nh(my_fields->grid_dimension[0]);
@@ -207,14 +202,15 @@ void calc_tdust_3d_g(
   //_// PORT: #ifdef _OPENMP
   //_// PORT: !$omp parallel do schedule(runtime) private(
   //_// PORT: !$omp&   i, j, k,
-  //_// PORT: !$omp&   indixe,
-  //_// PORT: !$omp&   t1, t2, logtem, tdef,
   //_// PORT: !$omp&   tgas, tdust, nh, gasgr, myisrf,
   //_// PORT: !$omp&   itmask )
   //_// PORT: #endif
   //_// TODO_USE: OMP_PRAGMA("omp parallel")
   {
     //_// TODO: move relevant variable declarations to here to replace OMP private
+    grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf =
+      grackle::impl::new_LogTLinInterpScratchBuf(my_fields->grid_dimension[0]);
+
     grackle::impl::GrainSpeciesCollection grain_temperatures =
       grackle::impl::new_GrainSpeciesCollection(my_fields->grid_dimension[0]);
 
@@ -365,17 +361,19 @@ void calc_tdust_3d_g(
           // Compute log temperature and truncate if above/below table max/min
 
           tgas[i-1]   = gas_temp(i-1,j-1,k-1);
-          logtem[i-1] = std::log(tgas[i-1]);
-          logtem[i-1] = std::fmax(logtem[i-1], logtem0);
-          logtem[i-1] = std::fmin(logtem[i-1], logtem9);
+          logTlininterp_buf.logtem[i-1] = std::log(tgas[i-1]);
+          logTlininterp_buf.logtem[i-1] = std::fmax(logTlininterp_buf.logtem[i-1], logtem0);
+          logTlininterp_buf.logtem[i-1] = std::fmin(logTlininterp_buf.logtem[i-1], logtem9);
 
           // Compute index into the table and precompute parts of linear interp
 
-          indixe[i-1] = std::fmin(my_chemistry->NumberOfTemperatureBins-1,
-               std::fmax(1,(long long)((logtem[i-1]-logtem0)/dlogtem)+1));
-          t1[i-1] = (logtem0 + (indixe[i-1] - 1)*dlogtem);
-          t2[i-1] = (logtem0 + (indixe[i-1]    )*dlogtem);
-          tdef[i-1] = (logtem[i-1] - t1[i-1]) / (t2[i-1] - t1[i-1]);
+          logTlininterp_buf.indixe[i-1] = std::fmin(
+            my_chemistry->NumberOfTemperatureBins-1,
+            std::fmax(1,(long long)((logTlininterp_buf.logtem[i-1]-logtem0)/dlogtem)+1)
+          );
+          logTlininterp_buf.t1[i-1] = (logtem0 + (logTlininterp_buf.indixe[i-1] - 1)*dlogtem);
+          logTlininterp_buf.t2[i-1] = (logtem0 + (logTlininterp_buf.indixe[i-1]    )*dlogtem);
+          logTlininterp_buf.tdef[i-1] = (logTlininterp_buf.logtem[i-1] - logTlininterp_buf.t1[i-1]) / (logTlininterp_buf.t2[i-1] - logTlininterp_buf.t1[i-1]);
 
         }
       }
@@ -383,7 +381,7 @@ void calc_tdust_3d_g(
 
        FORTRAN_NAME(calc_all_tdust_gasgr_1d_g)(&my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &my_chemistry->NumberOfTemperatureBins,
                     &my_chemistry->use_dust_density_field, &my_fields->grid_start[0], &my_fields->grid_end[0], &idx_range.jp1, &idx_range.kp1, &my_chemistry->local_dust_to_gas_ratio, &my_rates->gamma_isrf,
-                    &trad, my_rates->gas_grain, indixe.data(), tdef.data(), tgas.data(), tdust.data(),
+                    &trad, my_rates->gas_grain, logTlininterp_buf.indixe, logTlininterp_buf.tdef, tgas.data(), tdust.data(),
                     metallicity.data(), dust2gas.data(), nh.data(), gasgr_tdust.data(),
                     itmask.data(),
                     &my_chemistry->dust_species, &my_chemistry->use_multiple_dust_temperatures, my_rates->gr_N, &my_rates->gr_Size, &my_rates->gr_dT,
@@ -437,6 +435,7 @@ void calc_tdust_3d_g(
 
     }
 
+    grackle::impl::drop_LogTLinInterpScratchBuf(&logTlininterp_buf);
     grackle::impl::drop_GrainSpeciesCollection(&grain_temperatures);
     grackle::impl::drop_InternalDustPropBuf(&internal_dust_prop_buf);
     grackle::impl::drop_GrainSpeciesCollection(&grain_kappa);
