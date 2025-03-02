@@ -9,11 +9,11 @@
 #include <cstdio>
 #include <vector>
 
-#include "grackle.h"
-#include "fortran_func_decls.h"
-#include "utils-cpp.hpp"
-
 #include "calc_tdust_3d.h"
+#include "fortran_func_decls.h"
+#include "grackle.h"
+#include "index_helper.h"
+#include "utils-cpp.hpp"
 
 #ifdef __cplusplus
 extern "C" {
@@ -169,8 +169,6 @@ void calc_tdust_3d_g(
 
   // Locals
 
-  int i, j, k;
-  int t, dj, dk;
   double trad, zr, logtem0, logtem9, dlogtem, coolunit, dbase1, tbase1, xbase1;
 
   // Slice locals
@@ -214,26 +212,26 @@ void calc_tdust_3d_g(
   trad = (gr_float)(2.73) * ((gr_float)(1.) + zr);
 
   // Loop over zones, and do an entire i-column in one go
-  dk = my_fields->grid_end[2] - my_fields->grid_start[2] + 1;
-  dj = my_fields->grid_end[1] - my_fields->grid_start[1] + 1;
+  const grackle_index_helper idx_helper = build_index_helper_(my_fields);
 
   if (internalu.extfields_in_comoving == 1)  {
 
-    // parallelize the k and j loops with OpenMP
-    // flat j and k loops for better parallelism
-  //_// PORT: #ifdef _OPENMP
-  //_// PORT: !$omp parallel do schedule(runtime) private(i, j, k)
-  //_// PORT: #endif
+    //_// PORT: #ifdef _OPENMP
+    //_// PORT: !$omp parallel do schedule(runtime) private(i, j, k)
+    //_// PORT: #endif
     //_// TODO_USE: OMP_PRAGMA("omp parallel")
     {
       //_// TODO: move relevant variable declarations to here to replace OMP private
+
       //_// TODO_USE: OMP_PRAGMA("omp for")
-      for (t = 0; t<=(dk * dj - 1); t++) {
-        k = t/dj      + my_fields->grid_start[2]+1;
-        j = grackle::impl::mod(t,dj) + my_fields->grid_start[1]+1;
+      for (int t = 0; t < idx_helper.outer_ind_size; t++) {
+        // construct an index-range corresponding to "i-slice"
+        const IndexRange idx_range = make_idx_range_(t, &idx_helper);
+        int k = idx_range.kp1; // use 1-based indexing (for now)
+        int j = idx_range.jp1; // use 1-based indexing (for now)
 
         if (imetal == 1)  {
-          for (i = my_fields->grid_start[0] + 1; i<=(my_fields->grid_end[0] + 1); i++) {
+          for (int i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
             metal(i-1,j-1,k-1) = metal(i-1,j-1,k-1)/(gr_float)(std::pow(internalu.a_value,3) );
             if (my_chemistry->multi_metals > 0)  {
               metal_loc(i-1,j-1,k-1) = metal_loc(i-1,j-1,k-1)/(gr_float)(std::pow(internalu.a_value,3) );
@@ -252,7 +250,7 @@ void calc_tdust_3d_g(
           }
         }
         if (my_chemistry->use_dust_density_field == 1)  {
-          for (i = my_fields->grid_start[0] + 1; i<=(my_fields->grid_end[0] + 1); i++) {
+          for (int i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
             dust(i-1,j-1,k-1) = dust(i-1,j-1,k-1)/(gr_float)(std::pow(internalu.a_value,3) );
             if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1 ) )  {
               // !            if (metal(i,j,k) .gt. 1.d-9 * d(i,j,k)) then
@@ -300,11 +298,13 @@ void calc_tdust_3d_g(
   {
     //_// TODO: move relevant variable declarations to here to replace OMP private
     //_// TODO_USE: OMP_PRAGMA("omp for")
-    for (t = 0; t<=(dk * dj - 1); t++) {
-      k = t/dj      + my_fields->grid_start[2]+1;
-      j = grackle::impl::mod(t,dj) + my_fields->grid_start[1]+1;
+    for (int t = 0; t < idx_helper.outer_ind_size; t++) {
+      // construct an index-range corresponding to "i-slice"
+      IndexRange idx_range = make_idx_range_(t, &idx_helper);
+      int k = idx_range.kp1; // use 1-based indexing (for now)
+      int j = idx_range.jp1; // use 1-based indexing (for now)
 
-      for (i = my_fields->grid_start[0] + 1; i<=(my_fields->grid_end[0] + 1); i++) {
+      for (int i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
 
         // Set itmask to all true
 
@@ -315,7 +315,7 @@ void calc_tdust_3d_g(
       // Iteration mask for metal-rich cells
 
       if (imetal == 1)  {
-        for (i = my_fields->grid_start[0] + 1; i<=(my_fields->grid_end[0] + 1); i++) {
+        for (int i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
           if (metal(i-1,j-1,k-1) < 1.e-9 * d(i-1,j-1,k-1))  {
             itmask[i-1] = MASK_FALSE;
           }
@@ -328,7 +328,7 @@ void calc_tdust_3d_g(
 
          FORTRAN_NAME(calc_grain_size_increment_1d)(
                   &my_chemistry->multi_metals, &my_chemistry->metal_abundances, &my_chemistry->dust_species, &my_chemistry->grain_growth, itmask.data(),
-                 &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &my_fields->grid_start[0], &my_fields->grid_end[0], &j, &k, &dom, d.data(),
+                 &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &my_fields->grid_start[0], &my_fields->grid_end[0], &idx_range.jp1, &idx_range.kp1, &dom, d.data(),
                  SiM.data(), FeM.data(), Mg2SiO4.data(), MgSiO3.data(), Fe3O4.data(),
                  AC.data(), SiO2D.data(), MgO.data(), FeS.data(), Al2O3.data(),
                  reforg.data(), volorg.data(), H2Oice.data(),
@@ -360,7 +360,7 @@ void calc_tdust_3d_g(
 
       }
 
-      for (i = my_fields->grid_start[0] + 1; i<=(my_fields->grid_end[0] + 1); i++) {
+      for (int i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
         if(itmask[i-1] != MASK_FALSE)  {
           // Calculate metallicity
 
@@ -440,7 +440,7 @@ void calc_tdust_3d_g(
       // --- Compute dust temperature in a slice ---
 
        FORTRAN_NAME(calc_all_tdust_gasgr_1d_g)(&my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &my_chemistry->NumberOfTemperatureBins,
-                    &my_chemistry->use_dust_density_field, &my_fields->grid_start[0], &my_fields->grid_end[0], &j, &k, &my_chemistry->local_dust_to_gas_ratio, &my_rates->gamma_isrf,
+                    &my_chemistry->use_dust_density_field, &my_fields->grid_start[0], &my_fields->grid_end[0], &idx_range.jp1, &idx_range.kp1, &my_chemistry->local_dust_to_gas_ratio, &my_rates->gamma_isrf,
                     &trad, my_rates->gas_grain, indixe.data(), tdef.data(), tgas.data(), tdust.data(),
                     metallicity.data(), dust2gas.data(), nh.data(), gasgr_tdust.data(),
                     itmask.data(),
@@ -465,7 +465,7 @@ void calc_tdust_3d_g(
 
       // Copy slice values back to grid
 
-      for (i = my_fields->grid_start[0] + 1; i<=(my_fields->grid_end[0] + 1); i++) {
+      for (int i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
         if (itmask[i-1] != MASK_FALSE)  {
           if (my_chemistry->use_multiple_dust_temperatures == 0)  {
             dust_temp(i-1,j-1,k-1) = tdust[i-1];
@@ -509,12 +509,14 @@ void calc_tdust_3d_g(
     {
       //_// TODO: move relevant variable declarations to here to replace OMP private
       //_// TODO_USE: OMP_PRAGMA("omp for")
-      for (t = 0; t<=(dk * dj - 1); t++) {
-        k = t/dj      + my_fields->grid_start[2]+1;
-        j = grackle::impl::mod(t,dj) + my_fields->grid_start[1]+1;
+      for (int t = 0; t < idx_helper.outer_ind_size; t++) {
+        // construct an index-range corresponding to "i-slice"
+        const IndexRange idx_range = make_idx_range_(t, &idx_helper);
+        int k = idx_range.kp1; // use 1-based indexing (for now)
+        int j = idx_range.jp1; // use 1-based indexing (for now)
 
         if (imetal == 1)  {
-          for (i = my_fields->grid_start[0] + 1; i<=(my_fields->grid_end[0] + 1); i++) {
+          for (int i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
             metal(i-1,j-1,k-1) = metal(i-1,j-1,k-1)*(gr_float)(std::pow(internalu.a_value,3) );
             if (my_chemistry->multi_metals > 0)  {
               metal_loc(i-1,j-1,k-1) = metal_loc(i-1,j-1,k-1)*(gr_float)(std::pow(internalu.a_value,3) );
@@ -533,7 +535,7 @@ void calc_tdust_3d_g(
           }
         }
         if (my_chemistry->use_dust_density_field == 1)  {
-          for (i = my_fields->grid_start[0] + 1; i<=(my_fields->grid_end[0] + 1); i++) {
+          for (int i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
             dust(i-1,j-1,k-1) = dust(i-1,j-1,k-1)*(gr_float)(std::pow(internalu.a_value,3) );
             if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1 ) )  {
               // !            if (metal(i,j,k) .gt. 1.d-9 * d(i,j,k)) then
