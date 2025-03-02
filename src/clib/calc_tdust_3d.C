@@ -146,47 +146,47 @@ void calc_tdust_3d_g(
         const int j = idx_range.j;
 
         if (imetal == 1)  {
-          for (int ip1 = idx_range.i_start + 1; ip1<=(idx_range.i_end + 1); ip1++) {
-            metal(ip1-1,j,k) = metal(ip1-1,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
+          for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+            metal(i,j,k) = metal(i,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
             if (my_chemistry->multi_metals > 0)  {
-              metal_loc(ip1-1,j,k) = metal_loc(ip1-1,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
-              metal_C13(ip1-1,j,k) = metal_C13(ip1-1,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
-              metal_C20(ip1-1,j,k) = metal_C20(ip1-1,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
-              metal_C25(ip1-1,j,k) = metal_C25(ip1-1,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
-              metal_C30(ip1-1,j,k) = metal_C30(ip1-1,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
-              metal_F13(ip1-1,j,k) = metal_F13(ip1-1,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
-              metal_F15(ip1-1,j,k) = metal_F15(ip1-1,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
-              metal_F50(ip1-1,j,k) = metal_F50(ip1-1,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
-              metal_F80(ip1-1,j,k) = metal_F80(ip1-1,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
-              metal_P170(ip1-1,j,k)=metal_P170(ip1-1,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
-              metal_P200(ip1-1,j,k)=metal_P200(ip1-1,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
-              metal_Y19(ip1-1,j,k) = metal_Y19(ip1-1,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
+              metal_loc(i,j,k) = metal_loc(i,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
+              metal_C13(i,j,k) = metal_C13(i,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
+              metal_C20(i,j,k) = metal_C20(i,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
+              metal_C25(i,j,k) = metal_C25(i,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
+              metal_C30(i,j,k) = metal_C30(i,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
+              metal_F13(i,j,k) = metal_F13(i,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
+              metal_F15(i,j,k) = metal_F15(i,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
+              metal_F50(i,j,k) = metal_F50(i,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
+              metal_F80(i,j,k) = metal_F80(i,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
+              metal_P170(i,j,k)=metal_P170(i,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
+              metal_P200(i,j,k)=metal_P200(i,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
+              metal_Y19(i,j,k) = metal_Y19(i,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
             }
           }
         }
         if (my_chemistry->use_dust_density_field == 1)  {
-          for (int ip1 = idx_range.i_start + 1; ip1<=(idx_range.i_end + 1); ip1++) {
-            dust(ip1-1,j,k) = dust(ip1-1,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
+          for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+            dust(i,j,k) = dust(i,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
             if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1 ) )  {
-              // !            if (metal(ip1,j,k) .gt. 1.d-9 * d(ip1,j,k)) then
+              // !            if (metal(i,j,k) .gt. 1.d-9 * d(i,j,k)) then
               if (my_chemistry->dust_species > 0)  {
-                MgSiO3(ip1-1,j,k)  = MgSiO3(ip1-1,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
-                AC(ip1-1,j,k)      = AC(ip1-1,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
+                MgSiO3(i,j,k)  = MgSiO3(i,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
+                AC(i,j,k)      = AC(i,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
               }
               if (my_chemistry->dust_species > 1)  {
-                SiM(ip1-1,j,k)     = SiM(ip1-1,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
-                FeM(ip1-1,j,k)     = FeM(ip1-1,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
-                Mg2SiO4(ip1-1,j,k) = Mg2SiO4(ip1-1,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
-                Fe3O4(ip1-1,j,k)   = Fe3O4(ip1-1,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
-                SiO2D(ip1-1,j,k)   = SiO2D(ip1-1,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
-                MgO(ip1-1,j,k)     = MgO(ip1-1,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
-                FeS(ip1-1,j,k)     = FeS(ip1-1,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
-                Al2O3(ip1-1,j,k)   = Al2O3(ip1-1,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
+                SiM(i,j,k)     = SiM(i,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
+                FeM(i,j,k)     = FeM(i,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
+                Mg2SiO4(i,j,k) = Mg2SiO4(i,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
+                Fe3O4(i,j,k)   = Fe3O4(i,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
+                SiO2D(i,j,k)   = SiO2D(i,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
+                MgO(i,j,k)     = MgO(i,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
+                FeS(i,j,k)     = FeS(i,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
+                Al2O3(i,j,k)   = Al2O3(i,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
               }
               if (my_chemistry->dust_species > 2)  {
-                reforg(ip1-1,j,k)  = reforg(ip1-1,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
-                volorg(ip1-1,j,k)  = volorg(ip1-1,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
-                H2Oice(ip1-1,j,k)  = H2Oice(ip1-1,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
+                reforg(i,j,k)  = reforg(i,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
+                volorg(i,j,k)  = volorg(i,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
+                H2Oice(i,j,k)  = H2Oice(i,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
               }
               // !            endif
             }
@@ -243,20 +243,20 @@ void calc_tdust_3d_g(
       const int k = idx_range.k;
       const int j = idx_range.j;
 
-      for (int ip1 = idx_range.i_start + 1; ip1<=(idx_range.i_end + 1); ip1++) {
+      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
 
         // Set itmask to all true
 
-        itmask[ip1-1] = MASK_TRUE;
+        itmask[i] = MASK_TRUE;
 
       }
 
       // Iteration mask for metal-rich cells
 
       if (imetal == 1)  {
-        for (int ip1 = idx_range.i_start + 1; ip1<=(idx_range.i_end + 1); ip1++) {
-          if (metal(ip1-1,j,k) < 1.e-9 * d(ip1-1,j,k))  {
-            itmask[ip1-1] = MASK_FALSE;
+        for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+          if (metal(i,j,k) < 1.e-9 * d(i,j,k))  {
+            itmask[i] = MASK_FALSE;
           }
         }
       }
@@ -272,12 +272,12 @@ void calc_tdust_3d_g(
 
       }
 
-      for (int ip1 = idx_range.i_start + 1; ip1<=(idx_range.i_end + 1); ip1++) {
-        if(itmask[ip1-1] != MASK_FALSE)  {
+      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+        if(itmask[i] != MASK_FALSE)  {
           // Calculate metallicity
 
           if (imetal == 1)  {
-            metallicity[ip1-1] = metal(ip1-1,j,k) / d(ip1-1,j,k) / my_chemistry->SolarMetalFractionByMass;
+            metallicity[i] = metal(i,j,k) / d(i,j,k) / my_chemistry->SolarMetalFractionByMass;
           }
 
           // Calculate dust to gas ratio
@@ -307,47 +307,47 @@ void calc_tdust_3d_g(
           //       endif
 
           if (my_chemistry->use_dust_density_field > 0)  {
-            dust2gas[ip1-1] = dust(ip1-1,j,k) / d(ip1-1,j,k);
+            dust2gas[i] = dust(i,j,k) / d(i,j,k);
           } else {
-            dust2gas[ip1-1] = my_chemistry->local_dust_to_gas_ratio * metallicity[ip1-1];
+            dust2gas[i] = my_chemistry->local_dust_to_gas_ratio * metallicity[i];
           }
 
           // Compute interstellar radiation field
 
           if (my_chemistry->use_isrf_field > 0)  {
-            myisrf[ip1-1] = isrf_habing(ip1-1,j,k);
+            myisrf[i] = isrf_habing(i,j,k);
           } else {
-            myisrf[ip1-1] = my_chemistry->interstellar_radiation_field;
+            myisrf[i] = my_chemistry->interstellar_radiation_field;
           }
 
 
           // Compute hydrogen number density
 
-          nh[ip1-1] = HI(ip1-1,j,k) + HII(ip1-1,j,k);
+          nh[i] = HI(i,j,k) + HII(i,j,k);
           if (my_chemistry->primordial_chemistry > 1)  {
-            nh[ip1-1] = nh[ip1-1] + H2I(ip1-1,j,k) + H2II(ip1-1,j,k);
+            nh[i] = nh[i] + H2I(i,j,k) + H2II(i,j,k);
           }
 
           // We have not converted to proper, so use urho and not dom
 
-          nh[ip1-1] = nh[ip1-1] * internalu.urho / mh_local_var;
+          nh[i] = nh[i] * internalu.urho / mh_local_var;
 
           // Compute log temperature and truncate if above/below table max/min
 
-          tgas[ip1-1]   = gas_temp(ip1-1,j,k);
-          logTlininterp_buf.logtem[ip1-1] = std::log(tgas[ip1-1]);
-          logTlininterp_buf.logtem[ip1-1] = std::fmax(logTlininterp_buf.logtem[ip1-1], logtem0);
-          logTlininterp_buf.logtem[ip1-1] = std::fmin(logTlininterp_buf.logtem[ip1-1], logtem9);
+          tgas[i]   = gas_temp(i,j,k);
+          logTlininterp_buf.logtem[i] = std::log(tgas[i]);
+          logTlininterp_buf.logtem[i] = std::fmax(logTlininterp_buf.logtem[i], logtem0);
+          logTlininterp_buf.logtem[i] = std::fmin(logTlininterp_buf.logtem[i], logtem9);
 
           // Compute index into the table and precompute parts of linear interp
 
-          logTlininterp_buf.indixe[ip1-1] = std::fmin(
+          logTlininterp_buf.indixe[i] = std::fmin(
             my_chemistry->NumberOfTemperatureBins-1,
-            std::fmax(1,(long long)((logTlininterp_buf.logtem[ip1-1]-logtem0)/dlogtem)+1)
+            std::fmax(1,(long long)((logTlininterp_buf.logtem[i]-logtem0)/dlogtem)+1)
           );
-          logTlininterp_buf.t1[ip1-1] = (logtem0 + (logTlininterp_buf.indixe[ip1-1] - 1)*dlogtem);
-          logTlininterp_buf.t2[ip1-1] = (logtem0 + (logTlininterp_buf.indixe[ip1-1]    )*dlogtem);
-          logTlininterp_buf.tdef[ip1-1] = (logTlininterp_buf.logtem[ip1-1] - logTlininterp_buf.t1[ip1-1]) / (logTlininterp_buf.t2[ip1-1] - logTlininterp_buf.t1[ip1-1]);
+          logTlininterp_buf.t1[i] = (logtem0 + (logTlininterp_buf.indixe[i] - 1)*dlogtem);
+          logTlininterp_buf.t2[i] = (logtem0 + (logTlininterp_buf.indixe[i]    )*dlogtem);
+          logTlininterp_buf.tdef[i] = (logTlininterp_buf.logtem[i] - logTlininterp_buf.t1[i]) / (logTlininterp_buf.t2[i] - logTlininterp_buf.t1[i]);
 
         }
       }
@@ -363,29 +363,29 @@ void calc_tdust_3d_g(
 
       // Copy slice values back to grid
 
-      for (int ip1 = idx_range.i_start + 1; ip1<=(idx_range.i_end + 1); ip1++) {
-        if (itmask[ip1-1] != MASK_FALSE)  {
+      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+        if (itmask[i] != MASK_FALSE)  {
           if (my_chemistry->use_multiple_dust_temperatures == 0)  {
-            dust_temp(ip1-1,j,k) = tdust[ip1-1];
+            dust_temp(i,j,k) = tdust[i];
           } else {
             if (my_chemistry->dust_species > 0)  {
-              MgSiO3_temp(ip1-1,j,k) = grain_temperatures.data[OnlyGrainSpLUT::MgSiO3_dust][ip1-1];
-              AC_temp(ip1-1,j,k) = grain_temperatures.data[OnlyGrainSpLUT::AC_dust][ip1-1];
+              MgSiO3_temp(i,j,k) = grain_temperatures.data[OnlyGrainSpLUT::MgSiO3_dust][i];
+              AC_temp(i,j,k) = grain_temperatures.data[OnlyGrainSpLUT::AC_dust][i];
             }
             if (my_chemistry->dust_species > 1)  {
-              SiM_temp(ip1-1,j,k) = grain_temperatures.data[OnlyGrainSpLUT::SiM_dust][ip1-1];
-              FeM_temp(ip1-1,j,k) = grain_temperatures.data[OnlyGrainSpLUT::FeM_dust][ip1-1];
-              Mg2SiO4_temp(ip1-1,j,k) = grain_temperatures.data[OnlyGrainSpLUT::Mg2SiO4_dust][ip1-1];
-              Fe3O4_temp(ip1-1,j,k) = grain_temperatures.data[OnlyGrainSpLUT::Fe3O4_dust][ip1-1];
-              SiO2D_temp(ip1-1,j,k) = grain_temperatures.data[OnlyGrainSpLUT::SiO2_dust][ip1-1];
-              MgO_temp(ip1-1,j,k) = grain_temperatures.data[OnlyGrainSpLUT::MgO_dust][ip1-1];
-              FeS_temp(ip1-1,j,k) = grain_temperatures.data[OnlyGrainSpLUT::FeS_dust][ip1-1];
-              Al2O3_temp(ip1-1,j,k) = grain_temperatures.data[OnlyGrainSpLUT::Al2O3_dust][ip1-1];
+              SiM_temp(i,j,k) = grain_temperatures.data[OnlyGrainSpLUT::SiM_dust][i];
+              FeM_temp(i,j,k) = grain_temperatures.data[OnlyGrainSpLUT::FeM_dust][i];
+              Mg2SiO4_temp(i,j,k) = grain_temperatures.data[OnlyGrainSpLUT::Mg2SiO4_dust][i];
+              Fe3O4_temp(i,j,k) = grain_temperatures.data[OnlyGrainSpLUT::Fe3O4_dust][i];
+              SiO2D_temp(i,j,k) = grain_temperatures.data[OnlyGrainSpLUT::SiO2_dust][i];
+              MgO_temp(i,j,k) = grain_temperatures.data[OnlyGrainSpLUT::MgO_dust][i];
+              FeS_temp(i,j,k) = grain_temperatures.data[OnlyGrainSpLUT::FeS_dust][i];
+              Al2O3_temp(i,j,k) = grain_temperatures.data[OnlyGrainSpLUT::Al2O3_dust][i];
             }
             if (my_chemistry->dust_species > 2)  {
-              reforg_temp(ip1-1,j,k) = grain_temperatures.data[OnlyGrainSpLUT::ref_org_dust][ip1-1];
-              volorg_temp(ip1-1,j,k) = grain_temperatures.data[OnlyGrainSpLUT::vol_org_dust][ip1-1];
-              H2Oice_temp(ip1-1,j,k) = grain_temperatures.data[OnlyGrainSpLUT::H2O_ice_dust][ip1-1];
+              reforg_temp(i,j,k) = grain_temperatures.data[OnlyGrainSpLUT::ref_org_dust][i];
+              volorg_temp(i,j,k) = grain_temperatures.data[OnlyGrainSpLUT::vol_org_dust][i];
+              H2Oice_temp(i,j,k) = grain_temperatures.data[OnlyGrainSpLUT::H2O_ice_dust][i];
             }
           }
         }
@@ -420,47 +420,47 @@ void calc_tdust_3d_g(
         const int j = idx_range.j;
 
         if (imetal == 1)  {
-          for (int ip1 = idx_range.i_start + 1; ip1<=(idx_range.i_end + 1); ip1++) {
-            metal(ip1-1,j,k) = metal(ip1-1,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
+          for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+            metal(i,j,k) = metal(i,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
             if (my_chemistry->multi_metals > 0)  {
-              metal_loc(ip1-1,j,k) = metal_loc(ip1-1,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
-              metal_C13(ip1-1,j,k) = metal_C13(ip1-1,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
-              metal_C20(ip1-1,j,k) = metal_C20(ip1-1,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
-              metal_C25(ip1-1,j,k) = metal_C25(ip1-1,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
-              metal_C30(ip1-1,j,k) = metal_C30(ip1-1,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
-              metal_F13(ip1-1,j,k) = metal_F13(ip1-1,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
-              metal_F15(ip1-1,j,k) = metal_F15(ip1-1,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
-              metal_F50(ip1-1,j,k) = metal_F50(ip1-1,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
-              metal_F80(ip1-1,j,k) = metal_F80(ip1-1,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
-              metal_P170(ip1-1,j,k)=metal_P170(ip1-1,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
-              metal_P200(ip1-1,j,k)=metal_P200(ip1-1,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
-              metal_Y19(ip1-1,j,k) = metal_Y19(ip1-1,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
+              metal_loc(i,j,k) = metal_loc(i,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
+              metal_C13(i,j,k) = metal_C13(i,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
+              metal_C20(i,j,k) = metal_C20(i,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
+              metal_C25(i,j,k) = metal_C25(i,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
+              metal_C30(i,j,k) = metal_C30(i,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
+              metal_F13(i,j,k) = metal_F13(i,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
+              metal_F15(i,j,k) = metal_F15(i,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
+              metal_F50(i,j,k) = metal_F50(i,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
+              metal_F80(i,j,k) = metal_F80(i,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
+              metal_P170(i,j,k)=metal_P170(i,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
+              metal_P200(i,j,k)=metal_P200(i,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
+              metal_Y19(i,j,k) = metal_Y19(i,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
             }
           }
         }
         if (my_chemistry->use_dust_density_field == 1)  {
-          for (int ip1 = idx_range.i_start + 1; ip1<=(idx_range.i_end + 1); ip1++) {
-            dust(ip1-1,j,k) = dust(ip1-1,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
+          for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+            dust(i,j,k) = dust(i,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
             if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1 ) )  {
-              // !            if (metal(ip1,j,k) .gt. 1.d-9 * d(ip1,j,k)) then
+              // !            if (metal(i,j,k) .gt. 1.d-9 * d(i,j,k)) then
               if (my_chemistry->dust_species > 0)  {
-                MgSiO3(ip1-1,j,k)  = MgSiO3(ip1-1,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
-                AC(ip1-1,j,k)      = AC(ip1-1,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
+                MgSiO3(i,j,k)  = MgSiO3(i,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
+                AC(i,j,k)      = AC(i,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
               }
               if (my_chemistry->dust_species > 1)  {
-                SiM(ip1-1,j,k)     = SiM(ip1-1,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
-                FeM(ip1-1,j,k)     = FeM(ip1-1,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
-                Mg2SiO4(ip1-1,j,k) = Mg2SiO4(ip1-1,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
-                Fe3O4(ip1-1,j,k)   = Fe3O4(ip1-1,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
-                SiO2D(ip1-1,j,k)   = SiO2D(ip1-1,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
-                MgO(ip1-1,j,k)     = MgO(ip1-1,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
-                FeS(ip1-1,j,k)     = FeS(ip1-1,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
-                Al2O3(ip1-1,j,k)   = Al2O3(ip1-1,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
+                SiM(i,j,k)     = SiM(i,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
+                FeM(i,j,k)     = FeM(i,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
+                Mg2SiO4(i,j,k) = Mg2SiO4(i,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
+                Fe3O4(i,j,k)   = Fe3O4(i,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
+                SiO2D(i,j,k)   = SiO2D(i,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
+                MgO(i,j,k)     = MgO(i,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
+                FeS(i,j,k)     = FeS(i,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
+                Al2O3(i,j,k)   = Al2O3(i,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
               }
               if (my_chemistry->dust_species > 2)  {
-                reforg(ip1-1,j,k)  = reforg(ip1-1,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
-                volorg(ip1-1,j,k)  = volorg(ip1-1,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
-                H2Oice(ip1-1,j,k)  = H2Oice(ip1-1,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
+                reforg(i,j,k)  = reforg(i,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
+                volorg(i,j,k)  = volorg(i,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
+                H2Oice(i,j,k)  = H2Oice(i,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
               }
               // !            endif
             }
