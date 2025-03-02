@@ -38,7 +38,6 @@ void calc_tdust_3d_g(
   grackle::impl::View<gr_float***> gas_temp(gas_temp_data_, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> dust_temp(dust_temp_data_, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> isrf_habing(my_fields->isrf_habing, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  double dom;
   std::vector<double> metallicity(my_fields->grid_dimension[0]);
   std::vector<double> dust2gas(my_fields->grid_dimension[0]);
   grackle::impl::View<gr_float***> metal(my_fields->metal_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
@@ -89,7 +88,7 @@ void calc_tdust_3d_g(
 
   // Locals
 
-  double trad, zr, logtem0, logtem9, dlogtem, coolunit, dbase1, tbase1, xbase1;
+  double logtem0, logtem9, dlogtem;
 
   // Slice locals
  
@@ -113,18 +112,12 @@ void calc_tdust_3d_g(
   logtem9  = std::log(my_chemistry->TemperatureEnd);
   dlogtem  = (logtem9 - logtem0)/(double)(my_chemistry->NumberOfTemperatureBins-1);
 
-  // Set units
-
-  dom      = internalu.urho*(std::pow(internalu.a_value,3))/mh_local_var;
-  tbase1   = internalu.tbase1;
-  xbase1   = internalu.uxyz/(internalu.a_value*internalu.a_units);    // uxyz is [x]*a      = [x]*[a]*a'        '
-  dbase1   = internalu.urho*std::pow((internalu.a_value*internalu.a_units),3); // urho is [dens]/a^3 = [dens]/([a]*a')^3 '
-  coolunit = (std::pow(internalu.a_units,5) * std::pow(xbase1,2) * std::pow(mh_local_var,2)) / (std::pow(tbase1,3) * dbase1);
-  zr       = (gr_float)(1.)/(internalu.a_value*internalu.a_units) - (gr_float)(1.);
+  // Set unit-related quantities
+  const double dom = internalu_calc_dom_(internalu);
 
   // Set CMB temperature
-
-  trad = (gr_float)(2.73) * ((gr_float)(1.) + zr);
+  const double zr = (gr_float)(1.)/(internalu.a_value*internalu.a_units) - (gr_float)(1.);
+  const double trad = (gr_float)(2.73) * ((gr_float)(1.) + zr);
 
   // Loop over zones, and do an entire i-column in one go
   const grackle_index_helper idx_helper = build_index_helper_(my_fields);
@@ -355,10 +348,10 @@ void calc_tdust_3d_g(
       // Compute dust temperature(s) in the index-range
       f_wrap::calc_all_tdust_gasgr_1d_g(
         trad, tgas.data(), tdust.data(), metallicity.data(), dust2gas.data(),
-        nh.data(), gasgr_tdust.data(), itmask.data(), coolunit, gasgr.data(),
-        myisrf.data(), kappa_tot.data(), my_chemistry, my_rates, my_fields,
-        idx_range, grain_temperatures, gas_grainsp_heatrate, grain_kappa,
-        logTlininterp_buf, internal_dust_prop_buf
+        nh.data(), gasgr_tdust.data(), itmask.data(), internalu.coolunit,
+        gasgr.data(), myisrf.data(), kappa_tot.data(), my_chemistry, my_rates,
+        my_fields, idx_range, grain_temperatures, gas_grainsp_heatrate,
+        grain_kappa, logTlininterp_buf, internal_dust_prop_buf
       );
 
       // Copy slice values back to grid
