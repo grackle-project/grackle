@@ -149,19 +149,6 @@ void calc_tdust_3d_g(
   std::vector<double> gasreforg(my_fields->grid_dimension[0]);
   std::vector<double> gasvolorg(my_fields->grid_dimension[0]);
   std::vector<double> gasH2Oice(my_fields->grid_dimension[0]);
-  std::vector<double> gasgr_tSiM(my_fields->grid_dimension[0]);
-  std::vector<double> gasgr_tFeM(my_fields->grid_dimension[0]);
-  std::vector<double> gasgr_tMg2SiO4(my_fields->grid_dimension[0]);
-  std::vector<double> gasgr_tMgSiO3(my_fields->grid_dimension[0]);
-  std::vector<double> gasgr_tFe3O4(my_fields->grid_dimension[0]);
-  std::vector<double> gasgr_tAC(my_fields->grid_dimension[0]);
-  std::vector<double> gasgr_tSiO2D(my_fields->grid_dimension[0]);
-  std::vector<double> gasgr_tMgO(my_fields->grid_dimension[0]);
-  std::vector<double> gasgr_tFeS(my_fields->grid_dimension[0]);
-  std::vector<double> gasgr_tAl2O3(my_fields->grid_dimension[0]);
-  std::vector<double> gasgr_treforg(my_fields->grid_dimension[0]);
-  std::vector<double> gasgr_tvolorg(my_fields->grid_dimension[0]);
-  std::vector<double> gasgr_tH2Oice(my_fields->grid_dimension[0]);
 
   // Parameters
 
