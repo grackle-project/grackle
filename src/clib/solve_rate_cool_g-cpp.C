@@ -560,6 +560,8 @@ SpeciesRateSolverScratchBuf new_SpeciesRateSolverScratchBuf(int nelem) {
 
   out.h2dust = (double*)malloc(sizeof(double)*nelem);
 
+  out.itmask_gs = (gr_mask_type*)malloc(sizeof(gr_mask_type)*nelem);
+
   out.itmask_nr = (gr_mask_type*)malloc(sizeof(gr_mask_type)*nelem);
 
   out.imp_eng = (int*)malloc(sizeof(int)*nelem);
@@ -588,6 +590,7 @@ void drop_SpeciesRateSolverScratchBuf(SpeciesRateSolverScratchBuf* ptr) {
 
   free(ptr->h2dust);
 
+  free(ptr->itmask_gs);
   free(ptr->itmask_nr);
   free(ptr->imp_eng);
 
