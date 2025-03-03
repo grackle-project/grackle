@@ -269,7 +269,7 @@ static double calc_Heq_div_dHeqdt_(
 ///    eventually add up to
 /// @param[in] ttot tracks the total time that has already elapsed from
 ///    previous subcycles for each location in `idx_range`
-/// @param[in] itmask Specifies the `idx_range`'s iteration-mask for the
+/// @param[in] itmask_gs Specifies the `idx_range`'s iteration-mask for the
 ///    Gauss-Seidel scheme
 /// @param[in] itmask_nr Specifies the `idx_range`'s iteration-mask for the
 ///    Newton-Raphson scheme
@@ -307,8 +307,8 @@ static double calc_Heq_div_dHeqdt_(
 /// it sets the timestep based on the energy evolution)
 static void set_subcycle_dt_from_chemistry_scheme_(
   double* dtit, IndexRange idx_range, int iter, double dt, const double* ttot,
-  const gr_mask_type* itmask, const gr_mask_type* itmask_nr, const int* imp_eng,
-  double* dedot, double* HIdot,
+  const gr_mask_type* itmask_gs, const gr_mask_type* itmask_nr,
+  const int* imp_eng, double* dedot, double* HIdot,
   const double* dedot_prev, const double* HIdot_prev,
   const double* ddom, const double* tgas, const double* p2d, const double* edot,
   const chemistry_data* my_chemistry, const chemistry_data_storage* my_rates,
@@ -342,7 +342,7 @@ static void set_subcycle_dt_from_chemistry_scheme_(
 
 
   for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-    if (itmask[i] != MASK_FALSE) {
+    if (itmask_gs[i] != MASK_FALSE) {
       // in this case, the chemical network will be evolved with Gauss-Seidel
 
       // Part 1 of 2: adjust values of dedot and HIdot
@@ -857,7 +857,7 @@ int solve_rate_cool_g(
           // - do something else for Newton-Raphson
 
           set_subcycle_dt_from_chemistry_scheme_(
-            dtit.data(), idx_range, iter, dt, ttot.data(), itmask.data(),
+            dtit.data(), idx_range, iter, dt, ttot.data(), spsolvbuf.itmask_gs,
             spsolvbuf.itmask_nr, spsolvbuf.imp_eng,
             spsolvbuf.dedot, spsolvbuf.HIdot,
             spsolvbuf.dedot_prev, spsolvbuf.HIdot_prev,
@@ -869,8 +869,7 @@ int solve_rate_cool_g(
 
         // TODO: Consider refactoring the iteration mask handling:
         //  1. DONE
-        //  2. replace `itmask` with `spsolvbuf.itmask_gs` in arg-lists of
-        //     `set_subcycle_dt_from_chemistry_scheme_` & `f_wrap::step_rate_g`
+        //  2. DONE
         //  3. insert following chunk of logic RIGHT HERE
         //      > const gr_mask_type* energy_itmask =
         //      >   (my_chemistry->primordial_chemistry == 0)
@@ -903,11 +902,10 @@ int solve_rate_cool_g(
 
           // Solve rate equations with one linearly implicit Gauss-Seidel
           // sweep of a backward Euler method (for all cells specified by
-          // itmask)
-
+          // itmask_gs)
           f_wrap::step_rate_g(
             dtit.data(), idx_range, anydust, spsolvbuf.h2dust, rhoH.data(),
-            spsolvbuf.dedot_prev, spsolvbuf.HIdot_prev, itmask.data(),
+            spsolvbuf.dedot_prev, spsolvbuf.HIdot_prev, spsolvbuf.itmask_gs,
             itmask_metal.data(), imetal, my_chemistry, my_fields,
             *my_uvb_rates, spsolvbuf.grain_growth_rates,
             spsolvbuf.species_tmpdens, spsolvbuf.kcr_buf, spsolvbuf.kshield_buf
