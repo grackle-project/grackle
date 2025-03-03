@@ -105,8 +105,6 @@ static void enforce_max_heatcool_subcycle_dt_(
 ///     locations where we will apply Newton-Raphson scheme
 /// @param[out] imp_eng Buffer for `idx_range` where the choice of
 ///     energy-evolution handling is recorded for the Newton-Raphson scheme
-/// @param[out] itmask_tmp Buffer where the initial values of itmask are
-///     copied into
 /// @param[in]  mask_len the length of the iteration masks
 /// @param[in]  imetal specifies whether or not the caller provided a metal
 ///     density field
@@ -116,27 +114,20 @@ static void enforce_max_heatcool_subcycle_dt_(
 ///    `dom` quantity for each location in `idx_range`
 /// @param[in]  tgas specifies the gas temperatures for the `idx_range`
 /// @param[in]  metallicity specifies the metallicity for the `idx_range`
-///
-/// @todo
-/// It might make more sense to create `itmask_tmp` before calling this
-/// function and then completely ignore the initial values in `itmask` (this
-/// would be far less confusing)
 static void setup_chem_scheme_masks_(
   IndexRange idx_range, const gr_mask_type* itmask, gr_mask_type* itmask_gs,
-  gr_mask_type* itmask_nr, int* imp_eng, gr_mask_type* itmask_tmp,
-  int mask_len, int imetal, double min_metallicity, const double* ddom,
-  const double* tgas, const double* metallicity,
-  const chemistry_data* my_chemistry
+  gr_mask_type* itmask_nr, int* imp_eng, int mask_len, int imetal,
+  double min_metallicity, const double* ddom, const double* tgas,
+  const double* metallicity, const chemistry_data* my_chemistry
 ) {
 
-  std::memcpy(itmask_tmp, itmask, sizeof(gr_mask_type)*mask_len);
   std::memcpy(itmask_gs, itmask, sizeof(gr_mask_type)*mask_len);
   std::memcpy(itmask_nr, itmask, sizeof(gr_mask_type)*mask_len);
 
   // would it be more robust to use my_chemistry->metal_cooling than imetal?
 
   for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-    if ( itmask_tmp[i] != MASK_FALSE )  {
+    if ( itmask[i] != MASK_FALSE )  {
 
       if ( (imetal == 0) && (ddom[i] < 1.e8) ) {
         itmask_nr[i] = MASK_FALSE;
@@ -724,7 +715,6 @@ int solve_rate_cool_g(
 
     // iteration masks
     std::vector<gr_mask_type> itmask(my_fields->grid_dimension[0]);
-    std::vector<gr_mask_type> itmask_tmp(my_fields->grid_dimension[0]);
     std::vector<gr_mask_type> itmask_metal(my_fields->grid_dimension[0]);
 
     // create views of density and internal energy fields to support 3D access
@@ -798,15 +788,7 @@ int solve_rate_cool_g(
           coolingheating_buf
         );
 
-        if (my_chemistry->primordial_chemistry == 0)  {
-          // This is some basic book-keeping to ensure that itmask_tmp has
-          // sensible values when ispecies is 0
-          // -> see the comment following this if-else statement suggesting how
-          //    we could refactor itmask-handling (eliminating this branch)
-          std::memcpy(itmask_tmp.data(), itmask.data(),
-                      sizeof(gr_mask_type)*my_fields->grid_dimension[0]);
-
-        } else {
+        if (my_chemistry->primordial_chemistry > 0)  {
 
           // Look-up rates as a function of temperature for 1D set of zones
           //  (maybe should add itmask to this call)
@@ -840,9 +822,9 @@ int solve_rate_cool_g(
           //    => high-density: Newton-Raphson scheme, tracked by itmask_nr
           setup_chem_scheme_masks_(
             idx_range, itmask.data(), spsolvbuf.itmask_gs, spsolvbuf.itmask_nr,
-            spsolvbuf.imp_eng, itmask_tmp.data(), my_fields->grid_dimension[0],
-            imetal, min_metallicity, spsolvbuf.ddom, tgas.data(),
-            metallicity.data(), my_chemistry
+            spsolvbuf.imp_eng, my_fields->grid_dimension[0], imetal,
+            min_metallicity, spsolvbuf.ddom, tgas.data(), metallicity.data(),
+            my_chemistry
           );
 
           // Set the max timestep for the current subcycle based on our scheme
@@ -865,15 +847,6 @@ int solve_rate_cool_g(
         const gr_mask_type* energy_itmask =
           (my_chemistry->primordial_chemistry == 0)
           ? itmask.data() : spsolvbuf.itmask_gs;
-
-        // TODO: Consider refactoring the iteration mask handling:
-        //  1. DONE
-        //  2. DONE
-        //  3. DONE
-        //  4. DONE
-        //  5. DONE
-        //  6. remove declaration of `itmask_tmp`, logic that initializes, and
-        //     the loop that uses it to override `itmask`
 
         // Update dtit (the current subcycle timestep) to ensure it doesn't
         // exceed the max timestep for cooling/heating
@@ -920,11 +893,6 @@ int solve_rate_cool_g(
             spsolvbuf.chemheatrates_buf
           );
 
-        }
-
-        // restore the values of itmask from the backup that we made earlier
-        for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-          itmask[i] = itmask_tmp[i];
         }
 
         // Add the timestep to the elapsed time for each cell and find
