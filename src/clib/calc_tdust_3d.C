@@ -38,8 +38,7 @@ void calc_tdust_3d_g(
   grackle::impl::View<gr_float***> gas_temp(gas_temp_data_, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> dust_temp(dust_temp_data_, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> isrf_habing(my_fields->isrf_habing, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  std::vector<double> metallicity(my_fields->grid_dimension[0]);
-  std::vector<double> dust2gas(my_fields->grid_dimension[0]);
+
   grackle::impl::View<gr_float***> metal(my_fields->metal_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> dust(my_fields->dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> metal_loc(my_fields->local_ISM_metal_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
@@ -86,30 +85,14 @@ void calc_tdust_3d_g(
 
   const double mh_local_var = mh_grflt;
 
-  // Locals
-
-  double logtem0, logtem9, dlogtem;
-
-  // Slice locals
- 
-  std::vector<double> tgas(my_fields->grid_dimension[0]);
-  std::vector<double> tdust(my_fields->grid_dimension[0]);
-  std::vector<double> nh(my_fields->grid_dimension[0]);
-  std::vector<double> gasgr(my_fields->grid_dimension[0]);
-  std::vector<double> gasgr_tdust(my_fields->grid_dimension[0]);
-  std::vector<double> myisrf(my_fields->grid_dimension[0]);
-
-  // Iteration mask for multi_cool
-
-
   // \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
   // =======================================================================
 
   // Set log values of start and end of lookup tables
 
-  logtem0  = std::log(my_chemistry->TemperatureStart);
-  logtem9  = std::log(my_chemistry->TemperatureEnd);
-  dlogtem  = (logtem9 - logtem0)/(double)(my_chemistry->NumberOfTemperatureBins-1);
+  const double logtem0  = std::log(my_chemistry->TemperatureStart);
+  const double logtem9  = std::log(my_chemistry->TemperatureEnd);
+  const double dlogtem  = (logtem9 - logtem0)/(double)(my_chemistry->NumberOfTemperatureBins-1);
 
   // Set unit-related quantities
   const double dom = internalu_calc_dom_(internalu);
@@ -201,6 +184,15 @@ void calc_tdust_3d_g(
   {
     //_// TODO: move relevant variable declarations to here to replace OMP private
 
+    // buffers that store values computed within an index-range
+    std::vector<double> metallicity(my_fields->grid_dimension[0]);
+    std::vector<double> dust2gas(my_fields->grid_dimension[0]);
+    std::vector<double> tgas(my_fields->grid_dimension[0]);
+    std::vector<double> tdust(my_fields->grid_dimension[0]);
+    std::vector<double> nh(my_fields->grid_dimension[0]);
+    std::vector<double> gasgr(my_fields->grid_dimension[0]);
+    std::vector<double> gasgr_tdust(my_fields->grid_dimension[0]);
+    std::vector<double> myisrf(my_fields->grid_dimension[0]);
     std::vector<gr_mask_type> itmask_metal(my_fields->grid_dimension[0]);
 
     grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf =
