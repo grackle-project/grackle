@@ -101,7 +101,6 @@ void calc_tdust_3d_g(
 
   // Iteration mask for multi_cool
 
-  std::vector<gr_mask_type> itmask(my_fields->grid_dimension[0]);
 
   // \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
   // =======================================================================
@@ -196,12 +195,14 @@ void calc_tdust_3d_g(
   // flat j and k loops for better parallelism
   //_// PORT: #ifdef _OPENMP
   //_// PORT: !$omp parallel do schedule(runtime) private(
-  //_// PORT: !$omp&   tgas, tdust, nh, gasgr, myisrf,
-  //_// PORT: !$omp&   itmask )
+  //_// PORT: !$omp&   tgas, tdust, nh, gasgr, myisrf)
   //_// PORT: #endif
   //_// TODO_USE: OMP_PRAGMA("omp parallel")
   {
     //_// TODO: move relevant variable declarations to here to replace OMP private
+
+    std::vector<gr_mask_type> itmask_metal(my_fields->grid_dimension[0]);
+
     grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf =
       grackle::impl::new_LogTLinInterpScratchBuf(my_fields->grid_dimension[0]);
 
@@ -236,20 +237,17 @@ void calc_tdust_3d_g(
       const int k = idx_range.k;
       const int j = idx_range.j;
 
+
+      // Set itmask to true for entire idx_range
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-
-        // Set itmask to all true
-
-        itmask[i] = MASK_TRUE;
-
+        itmask_metal[i] = MASK_TRUE;
       }
 
-      // Iteration mask for metal-rich cells
-
-      if (imetal == 1)  {
+      // Set itmask to false for metal-poor cells
+      if (imetal == 1) {
         for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
           if (metal(i,j,k) < 1.e-9 * d(i,j,k))  {
-            itmask[i] = MASK_FALSE;
+            itmask_metal[i] = MASK_FALSE;
           }
         }
       }
@@ -259,14 +257,14 @@ void calc_tdust_3d_g(
       if ( (my_chemistry->use_dust_density_field > 0)  &&  (my_chemistry->dust_species > 0) )  {
 
         f_wrap::calc_grain_size_increment_1d (
-          dom, idx_range, itmask.data(), my_chemistry, my_rates, my_fields,
-          internal_dust_prop_buf
+          dom, idx_range, itmask_metal.data(), my_chemistry, my_rates,
+          my_fields, internal_dust_prop_buf
         );
 
       }
 
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-        if(itmask[i] != MASK_FALSE)  {
+        if(itmask_metal[i] != MASK_FALSE)  {
           // Calculate metallicity
 
           if (imetal == 1)  {
@@ -348,7 +346,7 @@ void calc_tdust_3d_g(
       // Compute dust temperature(s) in the index-range
       f_wrap::calc_all_tdust_gasgr_1d_g(
         trad, tgas.data(), tdust.data(), metallicity.data(), dust2gas.data(),
-        nh.data(), gasgr_tdust.data(), itmask.data(), internalu.coolunit,
+        nh.data(), gasgr_tdust.data(), itmask_metal.data(), internalu.coolunit,
         gasgr.data(), myisrf.data(), kappa_tot.data(), my_chemistry, my_rates,
         my_fields, idx_range, grain_temperatures, gas_grainsp_heatrate,
         grain_kappa, logTlininterp_buf, internal_dust_prop_buf
@@ -357,7 +355,7 @@ void calc_tdust_3d_g(
       // Copy slice values back to grid
 
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-        if (itmask[i] != MASK_FALSE)  {
+        if (itmask_metal[i] != MASK_FALSE) {
           if (my_chemistry->use_multiple_dust_temperatures == 0)  {
             dust_temp(i,j,k) = tdust[i];
           } else {
