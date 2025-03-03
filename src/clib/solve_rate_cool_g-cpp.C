@@ -100,6 +100,8 @@ static void enforce_max_heatcool_subcycle_dt_(
 /// @param[in,out] itmask Initially specifies all locations to be evolved
 ///     during the current subcycle (in `idx_range`). Will be updated to only
 ///     specify the locations to apply Gauss-Seidel scheme
+/// @param[out]    itmask_gs Buffer for `idx_range` that is used to specify
+///     locations where we will apply Gauss-Seidel scheme
 /// @param[out]    itmask_nr Buffer for `idx_range` that is used to specify
 ///     locations where we will apply Newton-Raphson scheme
 /// @param[out]    imp_eng Buffer for `idx_range` where the choice of
@@ -121,13 +123,15 @@ static void enforce_max_heatcool_subcycle_dt_(
 /// function and then completely ignore the initial values in `itmask` (this
 /// would be far less confusing)
 static void select_chem_scheme_update_masks_(
-  IndexRange idx_range, gr_mask_type* itmask, gr_mask_type* itmask_nr,
-  int* imp_eng, gr_mask_type* itmask_tmp, int mask_len, int imetal,
-  double min_metallicity, const double* ddom, const double* tgas,
-  const double* metallicity, const chemistry_data* my_chemistry
+  IndexRange idx_range, gr_mask_type* itmask, gr_mask_type* itmask_gs,
+  gr_mask_type* itmask_nr, int* imp_eng, gr_mask_type* itmask_tmp,
+  int mask_len, int imetal, double min_metallicity, const double* ddom,
+  const double* tgas, const double* metallicity,
+  const chemistry_data* my_chemistry
 ) {
 
   std::memcpy(itmask_tmp, itmask, sizeof(gr_mask_type)*mask_len);
+  std::memcpy(itmask_gs, itmask, sizeof(gr_mask_type)*mask_len);
   std::memcpy(itmask_nr, itmask, sizeof(gr_mask_type)*mask_len);
 
   // would it be more robust to use my_chemistry->metal_cooling than imetal?
@@ -145,6 +149,7 @@ static void select_chem_scheme_update_masks_(
         itmask_nr[i] = MASK_FALSE;
       } else {
         itmask[i] = MASK_FALSE;
+        itmask_gs[i] = MASK_FALSE;
       }
 
     }
@@ -516,6 +521,9 @@ struct SpeciesRateSolverScratchBuf {
   /// (with minimal refactoring, this buffer could probably be removed)
   double *k13dd;
 
+  /// iteration mask denoting where the Gauss-Seidel scheme will be used
+  gr_mask_type* itmask_gs;
+
   /// iteration mask denoting where the Newton-Raphson scheme will be used
   gr_mask_type* itmask_nr;
 
@@ -836,9 +844,9 @@ int solve_rate_cool_g(
           //
           // (the values stored within itmask will change within the function)
           select_chem_scheme_update_masks_(
-            idx_range, itmask.data(), spsolvbuf.itmask_nr, spsolvbuf.imp_eng,
-            itmask_tmp.data(), my_fields->grid_dimension[0], imetal,
-            min_metallicity, spsolvbuf.ddom, tgas.data(),
+            idx_range, itmask.data(), spsolvbuf.itmask_gs, spsolvbuf.itmask_nr,
+            spsolvbuf.imp_eng, itmask_tmp.data(), my_fields->grid_dimension[0],
+            imetal, min_metallicity, spsolvbuf.ddom, tgas.data(),
             metallicity.data(), my_chemistry
           );
 
@@ -860,9 +868,7 @@ int solve_rate_cool_g(
         }
 
         // TODO: Consider refactoring the iteration mask handling:
-        //  1. introduce `itmask_gs` as a member of `spsolvbuf` and have the
-        //     `select_chem_scheme_update_masks_` function store locations in
-        //     `spsolvbuf.itmask_gs` where we will apply Gauss-Seidel scheme
+        //  1. DONE
         //  2. replace `itmask` with `spsolvbuf.itmask_gs` in arg-lists of
         //     `set_subcycle_dt_from_chemistry_scheme_` & `f_wrap::step_rate_g`
         //  3. insert following chunk of logic RIGHT HERE
