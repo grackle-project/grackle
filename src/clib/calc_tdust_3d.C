@@ -78,14 +78,9 @@ void calc_tdust_3d_g(
 
   if (internalu.extfields_in_comoving == 1)  {
 
-    //_// PORT: #ifdef _OPENMP
-    //_// PORT: !$omp parallel do schedule(runtime)
-    //_// PORT: #endif
-    //_// TODO_USE: OMP_PRAGMA("omp parallel")
+    // we will get rid of this unnecessary level of scope in the near future
     {
-      //_// TODO: move relevant variable declarations to here to replace OMP private
-
-      //_// TODO_USE: OMP_PRAGMA("omp for")
+      OMP_PRAGMA("omp parallel for schedule(runtime)")
       for (int t = 0; t < idx_helper.outer_ind_size; t++) {
         // construct an index-range corresponding to "i-slice"
         const IndexRange idx_range = make_idx_range_(t, &idx_helper);
@@ -140,21 +135,14 @@ void calc_tdust_3d_g(
           }
         }
       }
-    }  // OMP_PRAGMA("omp parallel")
+    }
  
   }
 
-  // Loop over slices (in the k-direction)
-
-  // parallelize the k and j loops with OpenMP
-  // flat j and k loops for better parallelism
-  //_// PORT: #ifdef _OPENMP
-  //_// PORT: !$omp parallel do schedule(runtime) private(
-  //_// PORT: !$omp&   tgas, tdust, nh, gasgr, myisrf)
-  //_// PORT: #endif
-  //_// TODO_USE: OMP_PRAGMA("omp parallel")
+  OMP_PRAGMA("omp parallel")
   {
-    //_// TODO: move relevant variable declarations to here to replace OMP private
+    // each OMP thread separately initializes/allocates variables defined in
+    // the current scope and then enters the for-loop
 
     grackle::impl::View<gr_float***> d(my_fields->density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
     grackle::impl::View<gr_float***> HI(my_fields->HI_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
@@ -217,7 +205,11 @@ void calc_tdust_3d_g(
       grackle::impl::new_GrainSpeciesCollection(my_fields->grid_dimension[0]);
 
 
-    //_// TODO_USE: OMP_PRAGMA("omp for")
+    // The following for-loop is a flattened loop over every k,j combination.
+    // OpenMP divides this loop between all threads. Within the loop, we
+    // complete calculations for the constructed index-range construct
+    // (an index range corresponds to an "i-slice")
+    OMP_PRAGMA("omp for schedule(runtime)")
     for (int t = 0; t < idx_helper.outer_ind_size; t++) {
       // construct an index-range corresponding to "i-slice"
       const IndexRange idx_range = make_idx_range_(t, &idx_helper);
@@ -382,15 +374,14 @@ void calc_tdust_3d_g(
 
   if (internalu.extfields_in_comoving == 1)  {
 
-    // parallelize the k and j loops with OpenMP
-    // flat j and k loops for better parallelism
-  //_// PORT: #ifdef _OPENMP
-  //_// PORT: !$omp parallel do schedule(runtime)
-  //_// PORT: #endif
-    //_// TODO_USE: OMP_PRAGMA("omp parallel")
+    // we will get rid of this unnecessary level of scope in the near future
     {
-      //_// TODO: move relevant variable declarations to here to replace OMP private
-      //_// TODO_USE: OMP_PRAGMA("omp for")
+
+      // The following for-loop is a flattened loop over every k,j combination.
+      // OpenMP divides this loop between all threads. Within the loop, we
+      // complete calculations for the constructed index-range construct
+      // (an index range corresponds to an "i-slice")
+      OMP_PRAGMA("omp parallel for schedule(runtime)")
       for (int t = 0; t < idx_helper.outer_ind_size; t++) {
         // construct an index-range corresponding to "i-slice"
         const IndexRange idx_range = make_idx_range_(t, &idx_helper);
@@ -445,7 +436,7 @@ void calc_tdust_3d_g(
           }
         }
       }
-    }  // OMP_PRAGMA("omp parallel")
+    }
 
   }
 
