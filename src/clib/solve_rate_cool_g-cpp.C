@@ -128,18 +128,14 @@ static void setup_chem_scheme_masks_(
 
   for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
     if ( itmask[i] != MASK_FALSE )  {
+      bool usemetal = (imetal == 1) && (metallicity[i] > min_metallicity);
+      bool use_gs = (
+        ((!usemetal) && (ddom[i] < 1.e8)) || (usemetal && (ddom[i] < 1.0e6))
+      );
+      bool use_nr = !use_gs;
 
-      if ( (imetal == 0) && (ddom[i] < 1.e8) ) {
-        itmask_nr[i] = MASK_FALSE;
-      } else if (
-        (imetal == 1) &&
-        (((metallicity[i] <= min_metallicity) && (ddom[i] < 1.e8)) ||
-         ((metallicity[i] > min_metallicity) && (ddom[i] < 1.e6)))
-      ) {
-        itmask_nr[i] = MASK_FALSE;
-      } else {
-        itmask_gs[i] = MASK_FALSE;
-      }
+      itmask_gs[i] = (use_gs) ? MASK_TRUE : MASK_FALSE;
+      itmask_nr[i] = (use_nr) ? MASK_TRUE : MASK_FALSE;
 
     }
   }
