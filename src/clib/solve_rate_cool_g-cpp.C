@@ -867,15 +867,15 @@ int solve_rate_cool_g(
           );
         }
 
+        const gr_mask_type* energy_itmask =
+          (my_chemistry->primordial_chemistry == 0)
+          ? itmask.data() : spsolvbuf.itmask_gs;
+
         // TODO: Consider refactoring the iteration mask handling:
         //  1. DONE
         //  2. DONE
-        //  3. insert following chunk of logic RIGHT HERE
-        //      > const gr_mask_type* energy_itmask =
-        //      >   (my_chemistry->primordial_chemistry == 0)
-        //      >   ? itmask.data() : spsolvbuf.itmask_gs;
-        //  4. replace `itmask` with `energy_itmask` in arg-list of
-        //     `enforce_max_heatcool_subcycle_dt_` & within energy update loop
+        //  3. DONE
+        //  4. DONE
         //  5. stop modifying `itmask` in `select_chem_scheme_update_masks_`
         //  6. remove declaration of `itmask_tmp`, logic that initializes, and
         //     the loop that uses it to override `itmask`
@@ -884,7 +884,7 @@ int solve_rate_cool_g(
         // exceed the max timestep for cooling/heating
         // -> zones that will use Newton-Raphson scheme are ignored
         enforce_max_heatcool_subcycle_dt_(
-          dtit.data(), idx_range, dt, ttot.data(), itmask.data(), tgas.data(),
+          dtit.data(), idx_range, dt, ttot.data(), energy_itmask, tgas.data(),
           p2d.data(), edot.data(), my_chemistry
         );
 
@@ -892,7 +892,7 @@ int solve_rate_cool_g(
         // -> zones that will use Newton-Raphson scheme are ignored
         if (my_chemistry->with_radiative_cooling == 1)  {
           for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-            if (itmask[i] != MASK_FALSE) {
+            if (energy_itmask[i] != MASK_FALSE) {
               e(i,j,k) = e(i,j,k) + (gr_float)(edot[i]/d(i,j,k)*dtit[i]);
             }
           }
