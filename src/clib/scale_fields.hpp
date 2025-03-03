@@ -1,13 +1,13 @@
 // See LICENSE file for license and copyright information
 
-/// @file scale_fields_table.hpp
-/// @brief Defines the scale_fields_table function
+/// @file scale_fields.hpp
+/// @brief Defines field-scaling functions (to account for cosmology)
 
 // This file was initially generated automatically during conversion of the
 // scale_fields_table_g function from FORTRAN to C++
 
-#ifndef SCALE_FIELDS_TABLE_HPP
-#define SCALE_FIELDS_TABLE_HPP
+#ifndef SCALE_FIELDS_HPP
+#define SCALE_FIELDS_HPP
 
 #include "grackle.h"
 #include "utils-cpp.hpp"
@@ -61,4 +61,4 @@ inline void scale_fields_table(grackle_field_data* my_fields, double factor) {
 
 } // namespace grackle::impl
 
-#endif /* SCALE_FIELDS_TABLE_HPP */
+#endif /* SCALE_FIELDS_HPP */
