@@ -6,6 +6,7 @@ target_link_libraries(testdeps INTERFACE Grackle::Grackle GTest::gtest_main)
 # short-term hack to let tests invoke Fortran functions from C
 target_compile_definitions(testdeps INTERFACE "$<$<PLATFORM_ID:Linux,Darwin>:LINUX>")
 target_include_directories(testdeps INTERFACE ${PROJECT_SOURCE_DIR}/src/clib)
+target_compile_features(testdeps INTERFACE cxx_std_17)
 
 # start declaring targets for tests
 # ---------------------------------
