@@ -275,17 +275,17 @@ void cool1d_multi_g(
 
   // Initialize edot
 
-  for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-    if ( itmask[i-1] != MASK_FALSE )  {
-      edot[i-1] = 0.;
+  for (i = idx_range.i_start; i<=idx_range.i_end; i++) {
+    if ( itmask[i] != MASK_FALSE )  {
+      edot[i] = 0.;
     }
   }
 
   // Compute Pressure
 
-  for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-    if ( itmask[i-1] != MASK_FALSE )  {
-      p2d[i-1] = (my_chemistry->Gamma - 1.)*d(i-1,idx_range.jp1-1,idx_range.kp1-1)*e(i-1,idx_range.jp1-1,idx_range.kp1-1);
+  for (i = idx_range.i_start; i<=idx_range.i_end; i++) {
+    if ( itmask[i] != MASK_FALSE )  {
+      p2d[i] = (my_chemistry->Gamma - 1.)*d(i,idx_range.jp1-1,idx_range.kp1-1)*e(i,idx_range.jp1-1,idx_range.kp1-1);
     }
   }
 
@@ -299,15 +299,15 @@ void cool1d_multi_g(
     // fh is H mass fraction in metal-free gas.
 
     if (imetal == 1)  {
-      for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-        if ( itmask[i-1] != MASK_FALSE )  {
-          rhoH[i-1] = my_chemistry->HydrogenFractionByMass * (d(i-1,idx_range.jp1-1,idx_range.kp1-1) - metal(i-1,idx_range.jp1-1,idx_range.kp1-1));
+      for (i = idx_range.i_start; i<=idx_range.i_end; i++) {
+        if ( itmask[i] != MASK_FALSE )  {
+          rhoH[i] = my_chemistry->HydrogenFractionByMass * (d(i,idx_range.jp1-1,idx_range.kp1-1) - metal(i,idx_range.jp1-1,idx_range.kp1-1));
         }
       }
     } else {
-      for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-        if ( itmask[i-1] != MASK_FALSE )  {
-          rhoH[i-1] = my_chemistry->HydrogenFractionByMass * d(i-1,idx_range.jp1-1,idx_range.kp1-1);
+      for (i = idx_range.i_start; i<=idx_range.i_end; i++) {
+        if ( itmask[i] != MASK_FALSE )  {
+          rhoH[i] = my_chemistry->HydrogenFractionByMass * d(i,idx_range.jp1-1,idx_range.kp1-1);
         }
       }
     }
@@ -326,24 +326,24 @@ void cool1d_multi_g(
 
     // Compute mean molecular weight (and temperature) directly
 
-    for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-      if ( itmask[i-1] != MASK_FALSE )  {
-        mmw[i-1] =
-             (HeI(i-1,idx_range.jp1-1,idx_range.kp1-1) + HeII(i-1,idx_range.jp1-1,idx_range.kp1-1) + HeIII(i-1,idx_range.jp1-1,idx_range.kp1-1))/4. +
-             HI(i-1,idx_range.jp1-1,idx_range.kp1-1) + HII(i-1,idx_range.jp1-1,idx_range.kp1-1) + de(i-1,idx_range.jp1-1,idx_range.kp1-1);
-        rhoH[i-1] = HI(i-1,idx_range.jp1-1,idx_range.kp1-1) + HII(i-1,idx_range.jp1-1,idx_range.kp1-1);
-        cool1dmulti_buf.myde[i-1] = de(i-1,idx_range.jp1-1,idx_range.kp1-1);
+    for (i = idx_range.i_start; i<=idx_range.i_end; i++) {
+      if ( itmask[i] != MASK_FALSE )  {
+        mmw[i] =
+             (HeI(i,idx_range.jp1-1,idx_range.kp1-1) + HeII(i,idx_range.jp1-1,idx_range.kp1-1) + HeIII(i,idx_range.jp1-1,idx_range.kp1-1))/4. +
+             HI(i,idx_range.jp1-1,idx_range.kp1-1) + HII(i,idx_range.jp1-1,idx_range.kp1-1) + de(i,idx_range.jp1-1,idx_range.kp1-1);
+        rhoH[i] = HI(i,idx_range.jp1-1,idx_range.kp1-1) + HII(i,idx_range.jp1-1,idx_range.kp1-1);
+        cool1dmulti_buf.myde[i] = de(i,idx_range.jp1-1,idx_range.kp1-1);
       }
     }
 
     // (include molecular hydrogen, but ignore deuterium)
 
     if (my_chemistry->primordial_chemistry > 1)  {
-      for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-        if ( itmask[i-1] != MASK_FALSE )  {
-          mmw[i-1] = mmw[i-1] +
-               HM(i-1,idx_range.jp1-1,idx_range.kp1-1) + (H2I(i-1,idx_range.jp1-1,idx_range.kp1-1) + H2II(i-1,idx_range.jp1-1,idx_range.kp1-1))/2.;
-          rhoH[i-1] = rhoH[i-1] + H2I(i-1,idx_range.jp1-1,idx_range.kp1-1) + H2II(i-1,idx_range.jp1-1,idx_range.kp1-1);
+      for (i = idx_range.i_start; i<=idx_range.i_end; i++) {
+        if ( itmask[i] != MASK_FALSE )  {
+          mmw[i] = mmw[i] +
+               HM(i,idx_range.jp1-1,idx_range.kp1-1) + (H2I(i,idx_range.jp1-1,idx_range.kp1-1) + H2II(i,idx_range.jp1-1,idx_range.kp1-1))/2.;
+          rhoH[i] = rhoH[i] + H2I(i,idx_range.jp1-1,idx_range.kp1-1) + H2II(i,idx_range.jp1-1,idx_range.kp1-1);
         }
       }
     }
@@ -351,37 +351,37 @@ void cool1d_multi_g(
     // Include metal species
 
     if (imetal == 1)  {
-      for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-        if ( itmask[i-1] != MASK_FALSE )  {
-          mmw[i-1] = mmw[i-1] + metal(i-1,idx_range.jp1-1,idx_range.kp1-1)/mu_metal;
+      for (i = idx_range.i_start; i<=idx_range.i_end; i++) {
+        if ( itmask[i] != MASK_FALSE )  {
+          mmw[i] = mmw[i] + metal(i,idx_range.jp1-1,idx_range.kp1-1)/mu_metal;
         }
       }
     }
 
-    for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-      if ( itmask[i-1] != MASK_FALSE )  {
-        tgas[i-1] = std::fmax(p2d[i-1]*internalu.utem/mmw[i-1], my_chemistry->TemperatureStart);
-        mmw[i-1] = d(i-1,idx_range.jp1-1,idx_range.kp1-1) / mmw[i-1];
+    for (i = idx_range.i_start; i<=idx_range.i_end; i++) {
+      if ( itmask[i] != MASK_FALSE )  {
+        tgas[i] = std::fmax(p2d[i]*internalu.utem/mmw[i], my_chemistry->TemperatureStart);
+        mmw[i] = d(i,idx_range.jp1-1,idx_range.kp1-1) / mmw[i];
       }
     }
 
     // Correct temperature for gamma from H2
 
     if (my_chemistry->primordial_chemistry > 1)  {
-      for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-        if ( itmask[i-1] != MASK_FALSE )  {
-          nH2 = 0.5*(H2I(i-1,idx_range.jp1-1,idx_range.kp1-1) + H2II(i-1,idx_range.jp1-1,idx_range.kp1-1));
-          nother = (HeI(i-1,idx_range.jp1-1,idx_range.kp1-1) + HeII(i-1,idx_range.jp1-1,idx_range.kp1-1) +
-               HeIII(i-1,idx_range.jp1-1,idx_range.kp1-1))/4. +
-               HI(i-1,idx_range.jp1-1,idx_range.kp1-1) + HII(i-1,idx_range.jp1-1,idx_range.kp1-1) + de(i-1,idx_range.jp1-1,idx_range.kp1-1);
+      for (i = idx_range.i_start; i<=idx_range.i_end; i++) {
+        if ( itmask[i] != MASK_FALSE )  {
+          nH2 = 0.5*(H2I(i,idx_range.jp1-1,idx_range.kp1-1) + H2II(i,idx_range.jp1-1,idx_range.kp1-1));
+          nother = (HeI(i,idx_range.jp1-1,idx_range.kp1-1) + HeII(i,idx_range.jp1-1,idx_range.kp1-1) +
+               HeIII(i,idx_range.jp1-1,idx_range.kp1-1))/4. +
+               HI(i,idx_range.jp1-1,idx_range.kp1-1) + HII(i,idx_range.jp1-1,idx_range.kp1-1) + de(i,idx_range.jp1-1,idx_range.kp1-1);
 
           iter_tgas = 0;
           tgas_err = huge8;
           while ((iter_tgas < 100)
                 && (tgas_err > 1.e-3)) {
-            tgas0 = tgas[i-1];
+            tgas0 = tgas[i];
             if (nH2/nother > 1.0e-3)  {
-              x = 6100./tgas[i-1]; // not quite self-consistent
+              x = 6100./tgas[i]; // not quite self-consistent
               if (x > 10.)  {
                 gamma2 = 0.5*5.;
               } else {
@@ -394,12 +394,12 @@ void cool1d_multi_g(
             gamma2 = 1. + (nH2 + nother)/
                  (nH2*gamma2 + nother/(my_chemistry->Gamma-1.));
 #ifdef CALCULATE_TGAS_SELF_CONSISTENTLY
-            tgas[i-1] = std::fmax((gamma2 - 1.)*mmw[i-1]*e(i-1,idx_range.jp1-1,idx_range.kp1-1)*
+            tgas[i] = std::fmax((gamma2 - 1.)*mmw[i]*e(i,idx_range.jp1-1,idx_range.kp1-1)*
                  internalu.utem, my_chemistry->TemperatureStart);
-            tgas_err = grackle::impl::dabs(tgas0 - tgas[i-1]) / tgas0;
+            tgas_err = grackle::impl::dabs(tgas0 - tgas[i]) / tgas0;
             iter_tgas = iter_tgas + 1;
 #else
-            tgas[i-1] = tgas[i-1] * (gamma2 - 1.)/
+            tgas[i] = tgas[i] * (gamma2 - 1.)/
                  (my_chemistry->Gamma - 1.);
             iter_tgas = 101;
 #endif
@@ -413,20 +413,20 @@ void cool1d_multi_g(
   // Skip if below the temperature floor
 
   if (my_chemistry->use_temperature_floor == 1)  {
-    for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-      if ( itmask[i-1] != MASK_FALSE )  {
-        if (tgas[i-1] <= my_chemistry->temperature_floor_scalar)  {
-          edot[i-1] = tiny_fortran_val;
-          itmask[i-1] = MASK_FALSE;
+    for (i = idx_range.i_start; i<=idx_range.i_end; i++) {
+      if ( itmask[i] != MASK_FALSE )  {
+        if (tgas[i] <= my_chemistry->temperature_floor_scalar)  {
+          edot[i] = tiny_fortran_val;
+          itmask[i] = MASK_FALSE;
         }
       }
     }
   } else if (my_chemistry->use_temperature_floor == 2)  {
-    for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-      if ( itmask[i-1] != MASK_FALSE )  {
-        if (tgas[i-1] <= Tfloor(i-1,idx_range.jp1-1,idx_range.kp1-1))  {
-          edot[i-1] = tiny_fortran_val;
-          itmask[i-1] = MASK_FALSE;
+    for (i = idx_range.i_start; i<=idx_range.i_end; i++) {
+      if ( itmask[i] != MASK_FALSE )  {
+        if (tgas[i] <= Tfloor(i,idx_range.jp1-1,idx_range.kp1-1))  {
+          edot[i] = tiny_fortran_val;
+          itmask[i] = MASK_FALSE;
         }
       }
     }
@@ -435,31 +435,31 @@ void cool1d_multi_g(
   // Calculate metallicity and H number density
 
   if (imetal == 1)  {
-    for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-      if ( itmask[i-1] != MASK_FALSE )  {
-        metallicity[i-1] = metal(i-1,idx_range.jp1-1,idx_range.kp1-1) / d(i-1,idx_range.jp1-1,idx_range.kp1-1) / my_chemistry->SolarMetalFractionByMass;
+    for (i = idx_range.i_start; i<=idx_range.i_end; i++) {
+      if ( itmask[i] != MASK_FALSE )  {
+        metallicity[i] = metal(i,idx_range.jp1-1,idx_range.kp1-1) / d(i,idx_range.jp1-1,idx_range.kp1-1) / my_chemistry->SolarMetalFractionByMass;
       }
     }
   } else {
-    for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-      if ( itmask[i-1] != MASK_FALSE )  {
-        metallicity[i-1] = tiny_fortran_val;
+    for (i = idx_range.i_start; i<=idx_range.i_end; i++) {
+      if ( itmask[i] != MASK_FALSE )  {
+        metallicity[i] = tiny_fortran_val;
       }
     }
   }
 
-  for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-    if ( itmask[i-1] != MASK_FALSE )  {
-      cool1dmulti_buf.mynh[i-1] = rhoH[i-1] * dom;
+  for (i = idx_range.i_start; i<=idx_range.i_end; i++) {
+    if ( itmask[i] != MASK_FALSE )  {
+      cool1dmulti_buf.mynh[i] = rhoH[i] * dom;
     }
   }
 
   // If this is the first time through, just set tgasold to tgas
 
   if (iter == 1)  {
-    for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-      if ( itmask[i-1] != MASK_FALSE )  {
-        cool1dmulti_buf.tgasold[i-1] = tgas[i-1];
+    for (i = idx_range.i_start; i<=idx_range.i_end; i++) {
+      if ( itmask[i] != MASK_FALSE )  {
+        cool1dmulti_buf.tgasold[i] = tgas[i];
       }
     }
   }
@@ -467,50 +467,50 @@ void cool1d_multi_g(
   // Compute log densities
 
   logdom = std::log10(dom);
-  for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-    if ( itmask[i-1] != MASK_FALSE )  {
-      logT[i-1] = std::log10(tgas[i-1]);
-      if(my_chemistry->cmb_temperature_floor == 1) logTcmb[i-1] = std::log10(comp2);
-      logrho[i-1] = std::log10(d(i-1,idx_range.jp1-1,idx_range.kp1-1) * dom*mh);
+  for (i = idx_range.i_start; i<=idx_range.i_end; i++) {
+    if ( itmask[i] != MASK_FALSE )  {
+      logT[i] = std::log10(tgas[i]);
+      if(my_chemistry->cmb_temperature_floor == 1) logTcmb[i] = std::log10(comp2);
+      logrho[i] = std::log10(d(i,idx_range.jp1-1,idx_range.kp1-1) * dom*mh);
       if( my_chemistry->primordial_chemistry > 0)  {
-        logH[i-1] = std::log10(HI(i-1,idx_range.jp1-1,idx_range.kp1-1) * dom);
-        logH2[i-1] = std::log10(HI(i-1,idx_range.jp1-1,idx_range.kp1-1) * dom);
+        logH[i] = std::log10(HI(i,idx_range.jp1-1,idx_range.kp1-1) * dom);
+        logH2[i] = std::log10(HI(i,idx_range.jp1-1,idx_range.kp1-1) * dom);
       }
       if( my_chemistry->primordial_chemistry > 1 )  {
-        logH2[i-1]  = std::log10((HI(i-1,idx_range.jp1-1,idx_range.kp1-1) + H2I(i-1,idx_range.jp1-1,idx_range.kp1-1) / 2.0) * dom);
-        logH2I[i-1] = std::log10(H2I(i-1,idx_range.jp1-1,idx_range.kp1-1) * dom / 2.0);
+        logH2[i]  = std::log10((HI(i,idx_range.jp1-1,idx_range.kp1-1) + H2I(i,idx_range.jp1-1,idx_range.kp1-1) / 2.0) * dom);
+        logH2I[i] = std::log10(H2I(i,idx_range.jp1-1,idx_range.kp1-1) * dom / 2.0);
       }
       if( my_chemistry->primordial_chemistry > 2)  {
-        logHDI[i-1] = std::log10(HDI(i-1,idx_range.jp1-1,idx_range.kp1-1) * dom / 3.0);
+        logHDI[i] = std::log10(HDI(i,idx_range.jp1-1,idx_range.kp1-1) * dom / 3.0);
       }
       if( my_chemistry->metal_cooling == 1 )  {
         if( my_chemistry->metal_chemistry == 1 )  {
-          logCI[i-1]  = std::log10(CI(i-1,idx_range.jp1-1,idx_range.kp1-1) * dom / 12.0);
-          logCII[i-1] = std::log10(CII(i-1,idx_range.jp1-1,idx_range.kp1-1) * dom / 12.0);
-          logOI[i-1]  = std::log10(OI(i-1,idx_range.jp1-1,idx_range.kp1-1) * dom / 16.0);
-          logCO[i-1]  = std::log10(CO(i-1,idx_range.jp1-1,idx_range.kp1-1) * dom / 28.0);
-          logOH[i-1]  = std::log10(OH(i-1,idx_range.jp1-1,idx_range.kp1-1) * dom / 17.0);
-          logH2O[i-1] = std::log10(H2O(i-1,idx_range.jp1-1,idx_range.kp1-1) * dom / 18.0);
+          logCI[i]  = std::log10(CI(i,idx_range.jp1-1,idx_range.kp1-1) * dom / 12.0);
+          logCII[i] = std::log10(CII(i,idx_range.jp1-1,idx_range.kp1-1) * dom / 12.0);
+          logOI[i]  = std::log10(OI(i,idx_range.jp1-1,idx_range.kp1-1) * dom / 16.0);
+          logCO[i]  = std::log10(CO(i,idx_range.jp1-1,idx_range.kp1-1) * dom / 28.0);
+          logOH[i]  = std::log10(OH(i,idx_range.jp1-1,idx_range.kp1-1) * dom / 17.0);
+          logH2O[i] = std::log10(H2O(i,idx_range.jp1-1,idx_range.kp1-1) * dom / 18.0);
         }
       }
 
       // From Chiaki & Wise (2019), approximate dv/dr as 1/(3 * t_ff)
-      logdvdr[i-1] = -8.79947961814e0 + 0.5e0 * logrho[i-1]; // km/s / cm
-      lshield_con[i-1] =
-         std::sqrt((my_chemistry->Gamma * pi_fortran_val * kboltz_grflt * tgas[i-1]) /
-         (GravConst_grflt *  mmw[i-1]*mh_local_var * d(i-1,idx_range.jp1-1,idx_range.kp1-1)*dom*mh_local_var));
+      logdvdr[i] = -8.79947961814e0 + 0.5e0 * logrho[i]; // km/s / cm
+      lshield_con[i] =
+         std::sqrt((my_chemistry->Gamma * pi_fortran_val * kboltz_grflt * tgas[i]) /
+         (GravConst_grflt *  mmw[i]*mh_local_var * d(i,idx_range.jp1-1,idx_range.kp1-1)*dom*mh_local_var));
 
     }
   }
      
-  for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-    if ( itmask[i-1] != MASK_FALSE )  {
+  for (i = idx_range.i_start; i<=idx_range.i_end; i++) {
+    if ( itmask[i] != MASK_FALSE )  {
 
       // Compute log temperature and truncate if above/below table max/min
 
-      logTlininterp_buf.logtem[i-1] = std::log(0.5*(tgas[i-1]+cool1dmulti_buf.tgasold[i-1]));
-      logTlininterp_buf.logtem[i-1] = std::fmax(logTlininterp_buf.logtem[i-1], logtem0);
-      logTlininterp_buf.logtem[i-1] = std::fmin(logTlininterp_buf.logtem[i-1], logtem9);
+      logTlininterp_buf.logtem[i] = std::log(0.5*(tgas[i]+cool1dmulti_buf.tgasold[i]));
+      logTlininterp_buf.logtem[i] = std::fmax(logTlininterp_buf.logtem[i], logtem0);
+      logTlininterp_buf.logtem[i] = std::fmin(logTlininterp_buf.logtem[i], logtem9);
 
     }
   }
@@ -518,16 +518,16 @@ void cool1d_multi_g(
   // Compute interpolation indices
 
   if (interp != MASK_FALSE)  {
-    for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-      if ( itmask[i-1] != MASK_FALSE )  {
+    for (i = idx_range.i_start; i<=idx_range.i_end; i++) {
+      if ( itmask[i] != MASK_FALSE )  {
 
         // Compute index into the table and precompute parts of linear interp
 
-        logTlininterp_buf.indixe[i-1] = std::fmin(my_chemistry->NumberOfTemperatureBins-1,
-                std::fmax(1,(long long)((logTlininterp_buf.logtem[i-1]-logtem0)/dlogtem )+1));
-        logTlininterp_buf.t1[i-1] = (logtem0 + (logTlininterp_buf.indixe[i-1] - 1)*dlogtem);
-        logTlininterp_buf.t2[i-1] = (logtem0 + (logTlininterp_buf.indixe[i-1]    )*dlogtem);
-        logTlininterp_buf.tdef[i-1] = (logTlininterp_buf.logtem[i-1] - logTlininterp_buf.t1[i-1]) / (logTlininterp_buf.t2[i-1] - logTlininterp_buf.t1[i-1]);
+        logTlininterp_buf.indixe[i] = std::fmin(my_chemistry->NumberOfTemperatureBins-1,
+                std::fmax(1,(long long)((logTlininterp_buf.logtem[i]-logtem0)/dlogtem )+1));
+        logTlininterp_buf.t1[i] = (logtem0 + (logTlininterp_buf.indixe[i] - 1)*dlogtem);
+        logTlininterp_buf.t2[i] = (logtem0 + (logTlininterp_buf.indixe[i]    )*dlogtem);
+        logTlininterp_buf.tdef[i] = (logTlininterp_buf.logtem[i] - logTlininterp_buf.t1[i]) / (logTlininterp_buf.t2[i] - logTlininterp_buf.t1[i]);
 
       }
     }
@@ -537,90 +537,90 @@ void cool1d_multi_g(
 
   if (my_chemistry->primordial_chemistry > 0)  {
 
-    for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-      if ( itmask[i-1] != MASK_FALSE )  {
+    for (i = idx_range.i_start; i<=idx_range.i_end; i++) {
+      if ( itmask[i] != MASK_FALSE )  {
 
         // Lookup cooling values and do a linear temperature in log(T)
 
-        coolingheating_buf.ceHI[i-1] = my_rates->ceHI[logTlininterp_buf.indixe[i-1]-1] + logTlininterp_buf.tdef[i-1]
-              *(my_rates->ceHI[logTlininterp_buf.indixe[i-1]+1-1] -my_rates->ceHI[logTlininterp_buf.indixe[i-1]-1]);
-        coolingheating_buf.ceHeI[i-1] = my_rates->ceHeI[logTlininterp_buf.indixe[i-1]-1] + logTlininterp_buf.tdef[i-1]
-              *(my_rates->ceHeI[logTlininterp_buf.indixe[i-1]+1-1] -my_rates->ceHeI[logTlininterp_buf.indixe[i-1]-1]);
-        coolingheating_buf.ceHeII[i-1] = my_rates->ceHeII[logTlininterp_buf.indixe[i-1]-1] + logTlininterp_buf.tdef[i-1]
-              *(my_rates->ceHeII[logTlininterp_buf.indixe[i-1]+1-1] -my_rates->ceHeII[logTlininterp_buf.indixe[i-1]-1]);
-        coolingheating_buf.ciHI[i-1] = my_rates->ciHI[logTlininterp_buf.indixe[i-1]-1] + logTlininterp_buf.tdef[i-1]
-              *(my_rates->ciHI[logTlininterp_buf.indixe[i-1]+1-1] -my_rates->ciHI[logTlininterp_buf.indixe[i-1]-1]);
-        coolingheating_buf.ciHeI[i-1] = my_rates->ciHeI[logTlininterp_buf.indixe[i-1]-1] + logTlininterp_buf.tdef[i-1]
-              *(my_rates->ciHeI[logTlininterp_buf.indixe[i-1]+1-1] -my_rates->ciHeI[logTlininterp_buf.indixe[i-1]-1]);
-        coolingheating_buf.ciHeIS[i-1] = my_rates->ciHeIS[logTlininterp_buf.indixe[i-1]-1] + logTlininterp_buf.tdef[i-1]
-              *(my_rates->ciHeIS[logTlininterp_buf.indixe[i-1]+1-1] -my_rates->ciHeIS[logTlininterp_buf.indixe[i-1]-1]);
-        coolingheating_buf.ciHeII[i-1] = my_rates->ciHeII[logTlininterp_buf.indixe[i-1]-1] + logTlininterp_buf.tdef[i-1]
-              *(my_rates->ciHeII[logTlininterp_buf.indixe[i-1]+1-1] -my_rates->ciHeII[logTlininterp_buf.indixe[i-1]-1]);
-        coolingheating_buf.reHII[i-1] = my_rates->reHII[logTlininterp_buf.indixe[i-1]-1] + logTlininterp_buf.tdef[i-1]
-              *(my_rates->reHII[logTlininterp_buf.indixe[i-1]+1-1] -my_rates->reHII[logTlininterp_buf.indixe[i-1]-1]);
-        coolingheating_buf.reHeII1[i-1]=my_rates->reHeII1[logTlininterp_buf.indixe[i-1]-1] + logTlininterp_buf.tdef[i-1]
-             *(my_rates->reHeII1[logTlininterp_buf.indixe[i-1]+1-1]-my_rates->reHeII1[logTlininterp_buf.indixe[i-1]-1]);
-        coolingheating_buf.reHeII2[i-1]=my_rates->reHeII2[logTlininterp_buf.indixe[i-1]-1] + logTlininterp_buf.tdef[i-1]
-             *(my_rates->reHeII2[logTlininterp_buf.indixe[i-1]+1-1]-my_rates->reHeII2[logTlininterp_buf.indixe[i-1]-1]);
-        coolingheating_buf.reHeIII[i-1]=my_rates->reHeIII[logTlininterp_buf.indixe[i-1]-1] + logTlininterp_buf.tdef[i-1]
-             *(my_rates->reHeIII[logTlininterp_buf.indixe[i-1]+1-1]-my_rates->reHeIII[logTlininterp_buf.indixe[i-1]-1]);
-        coolingheating_buf.brem[i-1] = my_rates->brem[logTlininterp_buf.indixe[i-1]-1] + logTlininterp_buf.tdef[i-1]
-              *(my_rates->brem[logTlininterp_buf.indixe[i-1]+1-1] -my_rates->brem[logTlininterp_buf.indixe[i-1]-1]);
+        coolingheating_buf.ceHI[i] = my_rates->ceHI[logTlininterp_buf.indixe[i]-1] + logTlininterp_buf.tdef[i]
+              *(my_rates->ceHI[logTlininterp_buf.indixe[i]+1-1] -my_rates->ceHI[logTlininterp_buf.indixe[i]-1]);
+        coolingheating_buf.ceHeI[i] = my_rates->ceHeI[logTlininterp_buf.indixe[i]-1] + logTlininterp_buf.tdef[i]
+              *(my_rates->ceHeI[logTlininterp_buf.indixe[i]+1-1] -my_rates->ceHeI[logTlininterp_buf.indixe[i]-1]);
+        coolingheating_buf.ceHeII[i] = my_rates->ceHeII[logTlininterp_buf.indixe[i]-1] + logTlininterp_buf.tdef[i]
+              *(my_rates->ceHeII[logTlininterp_buf.indixe[i]+1-1] -my_rates->ceHeII[logTlininterp_buf.indixe[i]-1]);
+        coolingheating_buf.ciHI[i] = my_rates->ciHI[logTlininterp_buf.indixe[i]-1] + logTlininterp_buf.tdef[i]
+              *(my_rates->ciHI[logTlininterp_buf.indixe[i]+1-1] -my_rates->ciHI[logTlininterp_buf.indixe[i]-1]);
+        coolingheating_buf.ciHeI[i] = my_rates->ciHeI[logTlininterp_buf.indixe[i]-1] + logTlininterp_buf.tdef[i]
+              *(my_rates->ciHeI[logTlininterp_buf.indixe[i]+1-1] -my_rates->ciHeI[logTlininterp_buf.indixe[i]-1]);
+        coolingheating_buf.ciHeIS[i] = my_rates->ciHeIS[logTlininterp_buf.indixe[i]-1] + logTlininterp_buf.tdef[i]
+              *(my_rates->ciHeIS[logTlininterp_buf.indixe[i]+1-1] -my_rates->ciHeIS[logTlininterp_buf.indixe[i]-1]);
+        coolingheating_buf.ciHeII[i] = my_rates->ciHeII[logTlininterp_buf.indixe[i]-1] + logTlininterp_buf.tdef[i]
+              *(my_rates->ciHeII[logTlininterp_buf.indixe[i]+1-1] -my_rates->ciHeII[logTlininterp_buf.indixe[i]-1]);
+        coolingheating_buf.reHII[i] = my_rates->reHII[logTlininterp_buf.indixe[i]-1] + logTlininterp_buf.tdef[i]
+              *(my_rates->reHII[logTlininterp_buf.indixe[i]+1-1] -my_rates->reHII[logTlininterp_buf.indixe[i]-1]);
+        coolingheating_buf.reHeII1[i]=my_rates->reHeII1[logTlininterp_buf.indixe[i]-1] + logTlininterp_buf.tdef[i]
+             *(my_rates->reHeII1[logTlininterp_buf.indixe[i]+1-1]-my_rates->reHeII1[logTlininterp_buf.indixe[i]-1]);
+        coolingheating_buf.reHeII2[i]=my_rates->reHeII2[logTlininterp_buf.indixe[i]-1] + logTlininterp_buf.tdef[i]
+             *(my_rates->reHeII2[logTlininterp_buf.indixe[i]+1-1]-my_rates->reHeII2[logTlininterp_buf.indixe[i]-1]);
+        coolingheating_buf.reHeIII[i]=my_rates->reHeIII[logTlininterp_buf.indixe[i]-1] + logTlininterp_buf.tdef[i]
+             *(my_rates->reHeIII[logTlininterp_buf.indixe[i]+1-1]-my_rates->reHeIII[logTlininterp_buf.indixe[i]-1]);
+        coolingheating_buf.brem[i] = my_rates->brem[logTlininterp_buf.indixe[i]-1] + logTlininterp_buf.tdef[i]
+              *(my_rates->brem[logTlininterp_buf.indixe[i]+1-1] -my_rates->brem[logTlininterp_buf.indixe[i]-1]);
 
       }
     }
 
     // Compute the cooling function
 
-    for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-      if ( itmask[i-1] != MASK_FALSE )  {
-        edot[i-1] = (
+    for (i = idx_range.i_start; i<=idx_range.i_end; i++) {
+      if ( itmask[i] != MASK_FALSE )  {
+        edot[i] = (
 
         // Collisional excitations
 
-                  - coolingheating_buf.ceHI  [i-1]*HI  (i-1,idx_range.jp1-1,idx_range.kp1-1)*de(i-1,idx_range.jp1-1,idx_range.kp1-1)              // ce of HI
-                  - coolingheating_buf.ceHeI [i-1]*HeII(i-1,idx_range.jp1-1,idx_range.kp1-1)*std::pow(de(i-1,idx_range.jp1-1,idx_range.kp1-1),2)*dom/4.  // ce of HeI
-                  - coolingheating_buf.ceHeII[i-1]*HeII(i-1,idx_range.jp1-1,idx_range.kp1-1)*de(i-1,idx_range.jp1-1,idx_range.kp1-1)/4.         // ce of HeII
+                  - coolingheating_buf.ceHI  [i]*HI  (i,idx_range.jp1-1,idx_range.kp1-1)*de(i,idx_range.jp1-1,idx_range.kp1-1)              // ce of HI
+                  - coolingheating_buf.ceHeI [i]*HeII(i,idx_range.jp1-1,idx_range.kp1-1)*std::pow(de(i,idx_range.jp1-1,idx_range.kp1-1),2)*dom/4.  // ce of HeI
+                  - coolingheating_buf.ceHeII[i]*HeII(i,idx_range.jp1-1,idx_range.kp1-1)*de(i,idx_range.jp1-1,idx_range.kp1-1)/4.         // ce of HeII
 
         // Collisional ionizations
 
-                  - coolingheating_buf.ciHI  [i-1]*HI  (i-1,idx_range.jp1-1,idx_range.kp1-1)*de(i-1,idx_range.jp1-1,idx_range.kp1-1)              // ci of HI
-                  - coolingheating_buf.ciHeI [i-1]*HeI (i-1,idx_range.jp1-1,idx_range.kp1-1)*de(i-1,idx_range.jp1-1,idx_range.kp1-1)/4.         // ci of HeI
-                  - coolingheating_buf.ciHeII[i-1]*HeII(i-1,idx_range.jp1-1,idx_range.kp1-1)*de(i-1,idx_range.jp1-1,idx_range.kp1-1)/4.         // ci of HeII
-                  - coolingheating_buf.ciHeIS[i-1]*HeII(i-1,idx_range.jp1-1,idx_range.kp1-1)*std::pow(de(i-1,idx_range.jp1-1,idx_range.kp1-1),2)*dom/4.  // ci of HeIS
+                  - coolingheating_buf.ciHI  [i]*HI  (i,idx_range.jp1-1,idx_range.kp1-1)*de(i,idx_range.jp1-1,idx_range.kp1-1)              // ci of HI
+                  - coolingheating_buf.ciHeI [i]*HeI (i,idx_range.jp1-1,idx_range.kp1-1)*de(i,idx_range.jp1-1,idx_range.kp1-1)/4.         // ci of HeI
+                  - coolingheating_buf.ciHeII[i]*HeII(i,idx_range.jp1-1,idx_range.kp1-1)*de(i,idx_range.jp1-1,idx_range.kp1-1)/4.         // ci of HeII
+                  - coolingheating_buf.ciHeIS[i]*HeII(i,idx_range.jp1-1,idx_range.kp1-1)*std::pow(de(i,idx_range.jp1-1,idx_range.kp1-1),2)*dom/4.  // ci of HeIS
 
         // Recombinations
 
-                  - coolingheating_buf.reHII  [i-1]*HII  (i-1,idx_range.jp1-1,idx_range.kp1-1)*de(i-1,idx_range.jp1-1,idx_range.kp1-1)           // re of HII
-                  - coolingheating_buf.reHeII1[i-1]*HeII (i-1,idx_range.jp1-1,idx_range.kp1-1)*de(i-1,idx_range.jp1-1,idx_range.kp1-1)/4.      // re of HeII
-                  - coolingheating_buf.reHeII2[i-1]*HeII (i-1,idx_range.jp1-1,idx_range.kp1-1)*de(i-1,idx_range.jp1-1,idx_range.kp1-1)/4.      // re of HeII
-                  - coolingheating_buf.reHeIII[i-1]*HeIII(i-1,idx_range.jp1-1,idx_range.kp1-1)*de(i-1,idx_range.jp1-1,idx_range.kp1-1)/4.      // re of HeIII
+                  - coolingheating_buf.reHII  [i]*HII  (i,idx_range.jp1-1,idx_range.kp1-1)*de(i,idx_range.jp1-1,idx_range.kp1-1)           // re of HII
+                  - coolingheating_buf.reHeII1[i]*HeII (i,idx_range.jp1-1,idx_range.kp1-1)*de(i,idx_range.jp1-1,idx_range.kp1-1)/4.      // re of HeII
+                  - coolingheating_buf.reHeII2[i]*HeII (i,idx_range.jp1-1,idx_range.kp1-1)*de(i,idx_range.jp1-1,idx_range.kp1-1)/4.      // re of HeII
+                  - coolingheating_buf.reHeIII[i]*HeIII(i,idx_range.jp1-1,idx_range.kp1-1)*de(i,idx_range.jp1-1,idx_range.kp1-1)/4.      // re of HeIII
 
         // Bremsstrahlung
 
-                  - coolingheating_buf.brem[i-1]*(HII(i-1,idx_range.jp1-1,idx_range.kp1-1)+HeII(i-1,idx_range.jp1-1,idx_range.kp1-1)/4. +
-                HeIII(i-1,idx_range.jp1-1,idx_range.kp1-1)) * de(i-1,idx_range.jp1-1,idx_range.kp1-1)
+                  - coolingheating_buf.brem[i]*(HII(i,idx_range.jp1-1,idx_range.kp1-1)+HeII(i,idx_range.jp1-1,idx_range.kp1-1)/4. +
+                HeIII(i,idx_range.jp1-1,idx_range.kp1-1)) * de(i,idx_range.jp1-1,idx_range.kp1-1)
 
                   );
-        Lpri[i-1] = edot[i-1];
+        Lpri[i] = edot[i];
 
-        if (edot[i-1] != edot[i-1])  {
+        if (edot[i] != edot[i])  {
           OMP_PRAGMA_CRITICAL
           {
             eprintf("NaN in edot[1]:  %d %d %d %g %g %g %g %g %g %g %g %g %g\n",
                     i,
                     idx_range.jp1,
                     idx_range.kp1,
-                    edot [ i-1 ],
-                    HI ( i-1, idx_range.jp1-1, idx_range.kp1-1 ),
-                    HII ( i-1, idx_range.jp1-1, idx_range.kp1-1 ),
-                    HeI ( i-1, idx_range.jp1-1, idx_range.kp1-1 ),
-                    HeII ( i-1, idx_range.jp1-1, idx_range.kp1-1 ),
-                    HeIII ( i-1, idx_range.jp1-1, idx_range.kp1-1 ),
-                    de ( i-1, idx_range.jp1-1, idx_range.kp1-1 ),
-                    d ( i-1, idx_range.jp1-1, idx_range.kp1-1 ),
-                    tgas [ i-1 ],
-                    p2d [ i-1 ]);
+                    edot [ i ],
+                    HI ( i, idx_range.jp1-1, idx_range.kp1-1 ),
+                    HII ( i, idx_range.jp1-1, idx_range.kp1-1 ),
+                    HeI ( i, idx_range.jp1-1, idx_range.kp1-1 ),
+                    HeII ( i, idx_range.jp1-1, idx_range.kp1-1 ),
+                    HeIII ( i, idx_range.jp1-1, idx_range.kp1-1 ),
+                    de ( i, idx_range.jp1-1, idx_range.kp1-1 ),
+                    d ( i, idx_range.jp1-1, idx_range.kp1-1 ),
+                    tgas [ i ],
+                    p2d [ i ]);
           }
         }
          
@@ -635,20 +635,20 @@ void cool1d_multi_g(
     // Chiaki & Wise (2019) H2 cooling rate
     if (my_chemistry->h2_cooling_rate == 3)  {
 
-      for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-        if ( itmask[i-1] != MASK_FALSE )  {
+      for (i = idx_range.i_start; i<=idx_range.i_end; i++) {
+        if ( itmask[i] != MASK_FALSE )  {
 
-          lognhat = logH2I[i-1] - logdvdr[i-1];
+          lognhat = logH2I[i] - logdvdr[i];
 
            FORTRAN_NAME(interpolate_3d_g)(
-            &lognhat, &logT[i-1], &logH[i-1], my_rates->LH2.props.dimension,
+            &lognhat, &logT[i], &logH[i], my_rates->LH2.props.dimension,
             my_rates->LH2.props.parameters[0], &my_rates->LH2.props.parameter_spacing[0], my_rates->LH2.props.parameters[1], &my_rates->LH2.props.parameter_spacing[1], my_rates->LH2.props.parameters[2], &my_rates->LH2.props.parameter_spacing[2],
             &my_rates->LH2.props.data_size, my_rates->LH2.data, &log_Linv);
           L = std::pow(1.e1,(-log_Linv));
 
           if (my_chemistry->cmb_temperature_floor == 1)  {
              FORTRAN_NAME(interpolate_3d_g)(
-              &lognhat, &logTcmb[i-1], &logH[i-1], my_rates->LH2.props.dimension,
+              &lognhat, &logTcmb[i], &logH[i], my_rates->LH2.props.dimension,
               my_rates->LH2.props.parameters[0], &my_rates->LH2.props.parameter_spacing[0], my_rates->LH2.props.parameters[1], &my_rates->LH2.props.parameter_spacing[1], my_rates->LH2.props.parameters[2], &my_rates->LH2.props.parameter_spacing[2],
               &my_rates->LH2.props.data_size, my_rates->LH2.data, &log_Ginv);
             G = std::pow(1.e1,(-log_Ginv));
@@ -656,9 +656,9 @@ void cool1d_multi_g(
             G = tiny8;
           }
 
-          LH2[i-1] = ih2cox * (G - L) / dom * H2I(i-1,idx_range.jp1-1,idx_range.kp1-1)/2.e0;
-          if (LH2[i-1] != LH2[i-1]) { LH2[i-1] = 0.e0; }
-          edot[i-1] = edot[i-1] + LH2[i-1];
+          LH2[i] = ih2cox * (G - L) / dom * H2I(i,idx_range.jp1-1,idx_range.kp1-1)/2.e0;
+          if (LH2[i] != LH2[i]) { LH2[i] = 0.e0; }
+          edot[i] = edot[i] + LH2[i];
 
         }
       }
@@ -666,57 +666,57 @@ void cool1d_multi_g(
       // Glover & Abel (2008) H2 cooling rate
     } else if (my_chemistry->h2_cooling_rate == 2)  {
 
-      for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-        if ( itmask[i-1] != MASK_FALSE )  {
-          gaHI[i-1] = my_rates->GAHI[logTlininterp_buf.indixe[i-1]-1] + logTlininterp_buf.tdef[i-1]
-             *(my_rates->GAHI[logTlininterp_buf.indixe[i-1]+1-1] - my_rates->GAHI[logTlininterp_buf.indixe[i-1]-1]);
-          gaH2[i-1] = my_rates->GAH2[logTlininterp_buf.indixe[i-1]-1] + logTlininterp_buf.tdef[i-1]
-             *(my_rates->GAH2[logTlininterp_buf.indixe[i-1]+1-1] - my_rates->GAH2[logTlininterp_buf.indixe[i-1]-1]);
-          gaHe[i-1] = my_rates->GAHe[logTlininterp_buf.indixe[i-1]-1] + logTlininterp_buf.tdef[i-1]
-             *(my_rates->GAHe[logTlininterp_buf.indixe[i-1]+1-1] - my_rates->GAHe[logTlininterp_buf.indixe[i-1]-1]);
-          gaHp[i-1] = my_rates->GAHp[logTlininterp_buf.indixe[i-1]-1] + logTlininterp_buf.tdef[i-1]
-             *(my_rates->GAHp[logTlininterp_buf.indixe[i-1]+1-1] - my_rates->GAHp[logTlininterp_buf.indixe[i-1]-1]);
-          gael[i-1] = my_rates->GAel[logTlininterp_buf.indixe[i-1]-1] + logTlininterp_buf.tdef[i-1]
-             *(my_rates->GAel[logTlininterp_buf.indixe[i-1]+1-1] - my_rates->GAel[logTlininterp_buf.indixe[i-1]-1]);
-          coolingheating_buf.gphdl[i-1] = my_rates->GP99HighDensityLimit[logTlininterp_buf.indixe[i-1]-1] + logTlininterp_buf.tdef[i-1]
-             *(my_rates->GP99HighDensityLimit[logTlininterp_buf.indixe[i-1]+1-1] - my_rates->GP99HighDensityLimit[logTlininterp_buf.indixe[i-1]-1]);
-          h2lte[i-1] = my_rates->H2LTE[logTlininterp_buf.indixe[i-1]-1] + logTlininterp_buf.tdef[i-1]
-             *(my_rates->H2LTE[logTlininterp_buf.indixe[i-1]+1-1] - my_rates->H2LTE[logTlininterp_buf.indixe[i-1]-1]);
-          coolingheating_buf.cieco[i-1] = my_rates->cieco[logTlininterp_buf.indixe[i-1]-1] + logTlininterp_buf.tdef[i-1]
-             *(my_rates->cieco[logTlininterp_buf.indixe[i-1]+1-1] - my_rates->cieco[logTlininterp_buf.indixe[i-1]-1]);
+      for (i = idx_range.i_start; i<=idx_range.i_end; i++) {
+        if ( itmask[i] != MASK_FALSE )  {
+          gaHI[i] = my_rates->GAHI[logTlininterp_buf.indixe[i]-1] + logTlininterp_buf.tdef[i]
+             *(my_rates->GAHI[logTlininterp_buf.indixe[i]+1-1] - my_rates->GAHI[logTlininterp_buf.indixe[i]-1]);
+          gaH2[i] = my_rates->GAH2[logTlininterp_buf.indixe[i]-1] + logTlininterp_buf.tdef[i]
+             *(my_rates->GAH2[logTlininterp_buf.indixe[i]+1-1] - my_rates->GAH2[logTlininterp_buf.indixe[i]-1]);
+          gaHe[i] = my_rates->GAHe[logTlininterp_buf.indixe[i]-1] + logTlininterp_buf.tdef[i]
+             *(my_rates->GAHe[logTlininterp_buf.indixe[i]+1-1] - my_rates->GAHe[logTlininterp_buf.indixe[i]-1]);
+          gaHp[i] = my_rates->GAHp[logTlininterp_buf.indixe[i]-1] + logTlininterp_buf.tdef[i]
+             *(my_rates->GAHp[logTlininterp_buf.indixe[i]+1-1] - my_rates->GAHp[logTlininterp_buf.indixe[i]-1]);
+          gael[i] = my_rates->GAel[logTlininterp_buf.indixe[i]-1] + logTlininterp_buf.tdef[i]
+             *(my_rates->GAel[logTlininterp_buf.indixe[i]+1-1] - my_rates->GAel[logTlininterp_buf.indixe[i]-1]);
+          coolingheating_buf.gphdl[i] = my_rates->GP99HighDensityLimit[logTlininterp_buf.indixe[i]-1] + logTlininterp_buf.tdef[i]
+             *(my_rates->GP99HighDensityLimit[logTlininterp_buf.indixe[i]+1-1] - my_rates->GP99HighDensityLimit[logTlininterp_buf.indixe[i]-1]);
+          h2lte[i] = my_rates->H2LTE[logTlininterp_buf.indixe[i]-1] + logTlininterp_buf.tdef[i]
+             *(my_rates->H2LTE[logTlininterp_buf.indixe[i]+1-1] - my_rates->H2LTE[logTlininterp_buf.indixe[i]-1]);
+          coolingheating_buf.cieco[i] = my_rates->cieco[logTlininterp_buf.indixe[i]-1] + logTlininterp_buf.tdef[i]
+             *(my_rates->cieco[logTlininterp_buf.indixe[i]+1-1] - my_rates->cieco[logTlininterp_buf.indixe[i]-1]);
         }
       }
 
-      for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-        if ( itmask[i-1] != MASK_FALSE )  {
+      for (i = idx_range.i_start; i<=idx_range.i_end; i++) {
+        if ( itmask[i] != MASK_FALSE )  {
 #ifdef OPTICAL_DEPTH_FUDGE
-          nH2 = 0.5*H2I(i-1,idx_range.jp1-1,idx_range.kp1-1);
-          nother = (HeI(i-1,idx_range.jp1-1,idx_range.kp1-1) + HeII(i-1,idx_range.jp1-1,idx_range.kp1-1) +
-               HeIII(i-1,idx_range.jp1-1,idx_range.kp1-1))/4. +
-               HI(i-1,idx_range.jp1-1,idx_range.kp1-1) + HII(i-1,idx_range.jp1-1,idx_range.kp1-1) + de(i-1,idx_range.jp1-1,idx_range.kp1-1);
+          nH2 = 0.5*H2I(i,idx_range.jp1-1,idx_range.kp1-1);
+          nother = (HeI(i,idx_range.jp1-1,idx_range.kp1-1) + HeII(i,idx_range.jp1-1,idx_range.kp1-1) +
+               HeIII(i,idx_range.jp1-1,idx_range.kp1-1))/4. +
+               HI(i,idx_range.jp1-1,idx_range.kp1-1) + HII(i,idx_range.jp1-1,idx_range.kp1-1) + de(i,idx_range.jp1-1,idx_range.kp1-1);
           fH2 = nH2/(nH2 + nother);
-          fudge = std::sqrt((40. * std::pow(10.,(4.8 * std::sqrt(std::max(std::log10(tgas[i-1]),2.)-2.))) / std::pow(fH2,2))/
+          fudge = std::sqrt((40. * std::pow(10.,(4.8 * std::sqrt(std::max(std::log10(tgas[i]),2.)-2.))) / std::pow(fH2,2))/
                             ((nH2 + nother)*dom) );
           fudge = std::fmin(fudge, 1.);
 #endif /* OPTICAL_DEPTH_FUDGE */
           // Note that this optical depth approximation comes from
           // RA04.
           if (my_chemistry->h2_optical_depth_approximation==1)  {
-            fudge = std::pow((0.76*d(i-1,idx_range.jp1-1,idx_range.kp1-1)*dom/
+            fudge = std::pow((0.76*d(i,idx_range.jp1-1,idx_range.kp1-1)*dom/
                 8.e9),(-0.45));
             fudge = std::fmin(fudge, 1.);
           } else {
             fudge = 1.;
           }
-          galdl[i-1] = gaHI[i-1] * HI(i-1,idx_range.jp1-1,idx_range.kp1-1)
-                   + gaH2[i-1] * H2I(i-1,idx_range.jp1-1,idx_range.kp1-1) / 2.
-                   + gaHe[i-1] * HeI(i-1,idx_range.jp1-1,idx_range.kp1-1) / 4.
-                   + gaHp[i-1] * HII(i-1,idx_range.jp1-1,idx_range.kp1-1)
-                   + gael[i-1] * de(i-1,idx_range.jp1-1,idx_range.kp1-1);
+          galdl[i] = gaHI[i] * HI(i,idx_range.jp1-1,idx_range.kp1-1)
+                   + gaH2[i] * H2I(i,idx_range.jp1-1,idx_range.kp1-1) / 2.
+                   + gaHe[i] * HeI(i,idx_range.jp1-1,idx_range.kp1-1) / 4.
+                   + gaHp[i] * HII(i,idx_range.jp1-1,idx_range.kp1-1)
+                   + gael[i] * de(i,idx_range.jp1-1,idx_range.kp1-1);
           // gphdl1 = gphdl(i)/dom
-          gphdl1 = h2lte[i-1]/dom;
-          edot[i-1] = edot[i-1] - ih2cox*fudge*H2I(i-1,idx_range.jp1-1,idx_range.kp1-1)*
-               h2lte[i-1]/(1. + gphdl1/galdl[i-1]) / (2.*dom);
+          gphdl1 = h2lte[i]/dom;
+          edot[i] = edot[i] - ih2cox*fudge*H2I(i,idx_range.jp1-1,idx_range.kp1-1)*
+               h2lte[i]/(1. + gphdl1/galdl[i]) / (2.*dom);
 
         }
       }
@@ -724,44 +724,44 @@ void cool1d_multi_g(
       // Galli & Palla (1998) H2 cooling rate
     } else if (my_chemistry->h2_cooling_rate == 1)  {
 
-      for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-        if ( itmask[i-1] != MASK_FALSE )  {
-          coolingheating_buf.gpldl[i-1] = my_rates->GP99LowDensityLimit[logTlininterp_buf.indixe[i-1]-1] + logTlininterp_buf.tdef[i-1]
-             *(my_rates->GP99LowDensityLimit[logTlininterp_buf.indixe[i-1]+1-1] - my_rates->GP99LowDensityLimit[logTlininterp_buf.indixe[i-1]-1]);
-          coolingheating_buf.gphdl[i-1] = my_rates->GP99HighDensityLimit[logTlininterp_buf.indixe[i-1]-1] + logTlininterp_buf.tdef[i-1]
-             *(my_rates->GP99HighDensityLimit[logTlininterp_buf.indixe[i-1]+1-1] - my_rates->GP99HighDensityLimit[logTlininterp_buf.indixe[i-1]-1]);
-          coolingheating_buf.cieco[i-1] = my_rates->cieco[logTlininterp_buf.indixe[i-1]-1] + logTlininterp_buf.tdef[i-1]
-             *(my_rates->cieco[logTlininterp_buf.indixe[i-1]+1-1] - my_rates->cieco[logTlininterp_buf.indixe[i-1]-1]);
+      for (i = idx_range.i_start; i<=idx_range.i_end; i++) {
+        if ( itmask[i] != MASK_FALSE )  {
+          coolingheating_buf.gpldl[i] = my_rates->GP99LowDensityLimit[logTlininterp_buf.indixe[i]-1] + logTlininterp_buf.tdef[i]
+             *(my_rates->GP99LowDensityLimit[logTlininterp_buf.indixe[i]+1-1] - my_rates->GP99LowDensityLimit[logTlininterp_buf.indixe[i]-1]);
+          coolingheating_buf.gphdl[i] = my_rates->GP99HighDensityLimit[logTlininterp_buf.indixe[i]-1] + logTlininterp_buf.tdef[i]
+             *(my_rates->GP99HighDensityLimit[logTlininterp_buf.indixe[i]+1-1] - my_rates->GP99HighDensityLimit[logTlininterp_buf.indixe[i]-1]);
+          coolingheating_buf.cieco[i] = my_rates->cieco[logTlininterp_buf.indixe[i]-1] + logTlininterp_buf.tdef[i]
+             *(my_rates->cieco[logTlininterp_buf.indixe[i]+1-1] - my_rates->cieco[logTlininterp_buf.indixe[i]-1]);
         }
       }
 
-      for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-        if ( itmask[i-1] != MASK_FALSE )  {
+      for (i = idx_range.i_start; i<=idx_range.i_end; i++) {
+        if ( itmask[i] != MASK_FALSE )  {
 
 #define NO_OPTICAL_DEPTH_FUDGE
 #ifdef OPTICAL_DEPTH_FUDGE
-          nH2 = 0.5*H2I(i-1,idx_range.jp1-1,idx_range.kp1-1);
-          nother = (HeI(i-1,idx_range.jp1-1,idx_range.kp1-1) + HeII(i-1,idx_range.jp1-1,idx_range.kp1-1) +
-               HeIII(i-1,idx_range.jp1-1,idx_range.kp1-1))/4. +
-               HI(i-1,idx_range.jp1-1,idx_range.kp1-1) + HII(i-1,idx_range.jp1-1,idx_range.kp1-1) + de(i-1,idx_range.jp1-1,idx_range.kp1-1);
+          nH2 = 0.5*H2I(i,idx_range.jp1-1,idx_range.kp1-1);
+          nother = (HeI(i,idx_range.jp1-1,idx_range.kp1-1) + HeII(i,idx_range.jp1-1,idx_range.kp1-1) +
+               HeIII(i,idx_range.jp1-1,idx_range.kp1-1))/4. +
+               HI(i,idx_range.jp1-1,idx_range.kp1-1) + HII(i,idx_range.jp1-1,idx_range.kp1-1) + de(i,idx_range.jp1-1,idx_range.kp1-1);
           fH2 = nH2/(nH2 + nother);
           // TODO: code duplication with line 726
-          fudge = std::sqrt((40. * std::pow(10.,(4.8 * std::sqrt(std::max(std::log10(tgas[i-1]),2.)-2.))) / std::pow(fH2,2))/
+          fudge = std::sqrt((40. * std::pow(10.,(4.8 * std::sqrt(std::max(std::log10(tgas[i]),2.)-2.))) / std::pow(fH2,2))/
           ((nH2 + nother)*dom) )
           fudge = std::fmin(fudge, 1.);
 #endif /* OPTICAL_DEPTH_FUDGE */
           // Note that this optical depth approximation comes from
           // RA04.
           if (my_chemistry->h2_optical_depth_approximation==1)  {
-            fudge = std::pow((0.76*d(i-1,idx_range.jp1-1,idx_range.kp1-1)*dom/
+            fudge = std::pow((0.76*d(i,idx_range.jp1-1,idx_range.kp1-1)*dom/
                 8.e9),(-0.45));
             fudge = std::fmin(fudge, 1.);
           } else {
             fudge = 1.;
           }
-          gphdl1 = coolingheating_buf.gphdl[i-1]/(HI(i-1,idx_range.jp1-1,idx_range.kp1-1)*dom);
-          edot[i-1] = edot[i-1] - ih2cox*fudge*H2I(i-1,idx_range.jp1-1,idx_range.kp1-1)*
-               coolingheating_buf.gphdl[i-1]/(1. + gphdl1/coolingheating_buf.gpldl[i-1]) / (2.*dom);
+          gphdl1 = coolingheating_buf.gphdl[i]/(HI(i,idx_range.jp1-1,idx_range.kp1-1)*dom);
+          edot[i] = edot[i] - ih2cox*fudge*H2I(i,idx_range.jp1-1,idx_range.kp1-1)*
+               coolingheating_buf.gphdl[i]/(1. + gphdl1/coolingheating_buf.gpldl[i]) / (2.*dom);
 
         }
       }
@@ -769,45 +769,45 @@ void cool1d_multi_g(
       // Lepp & Shull (1983) H2 cooling rate
     } else if (my_chemistry->h2_cooling_rate == 0)  {
 
-      for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-        if ( itmask[i-1] != MASK_FALSE )  {
-          coolingheating_buf.hyd01k[i-1] = my_rates->hyd01k[logTlininterp_buf.indixe[i-1]-1] + logTlininterp_buf.tdef[i-1]
-             *(my_rates->hyd01k[logTlininterp_buf.indixe[i-1]+1-1]-my_rates->hyd01k[logTlininterp_buf.indixe[i-1]-1]);
-          coolingheating_buf.h2k01[i-1] = my_rates->h2k01[logTlininterp_buf.indixe[i-1]-1] + logTlininterp_buf.tdef[i-1]
-             *(my_rates->h2k01[logTlininterp_buf.indixe[i-1]+1-1] - my_rates->h2k01[logTlininterp_buf.indixe[i-1]-1]);
-          coolingheating_buf.vibh[i-1] = my_rates->vibh[logTlininterp_buf.indixe[i-1]-1] + logTlininterp_buf.tdef[i-1]
-             *(my_rates->vibh[logTlininterp_buf.indixe[i-1]+1-1] - my_rates->vibh[logTlininterp_buf.indixe[i-1]-1]);
-          coolingheating_buf.roth[i-1] = my_rates->roth[logTlininterp_buf.indixe[i-1]-1] + logTlininterp_buf.tdef[i-1]
-             *(my_rates->roth[logTlininterp_buf.indixe[i-1]+1-1] - my_rates->roth[logTlininterp_buf.indixe[i-1]-1]);
-          coolingheating_buf.rotl[i-1] = my_rates->rotl[logTlininterp_buf.indixe[i-1]-1] + logTlininterp_buf.tdef[i-1]
-             *(my_rates->rotl[logTlininterp_buf.indixe[i-1]+1-1] - my_rates->rotl[logTlininterp_buf.indixe[i-1]-1]);
-          coolingheating_buf.cieco[i-1] = my_rates->cieco[logTlininterp_buf.indixe[i-1]-1] + logTlininterp_buf.tdef[i-1]
-             *(my_rates->cieco[logTlininterp_buf.indixe[i-1]+1-1] - my_rates->cieco[logTlininterp_buf.indixe[i-1]-1]);
+      for (i = idx_range.i_start; i<=idx_range.i_end; i++) {
+        if ( itmask[i] != MASK_FALSE )  {
+          coolingheating_buf.hyd01k[i] = my_rates->hyd01k[logTlininterp_buf.indixe[i]-1] + logTlininterp_buf.tdef[i]
+             *(my_rates->hyd01k[logTlininterp_buf.indixe[i]+1-1]-my_rates->hyd01k[logTlininterp_buf.indixe[i]-1]);
+          coolingheating_buf.h2k01[i] = my_rates->h2k01[logTlininterp_buf.indixe[i]-1] + logTlininterp_buf.tdef[i]
+             *(my_rates->h2k01[logTlininterp_buf.indixe[i]+1-1] - my_rates->h2k01[logTlininterp_buf.indixe[i]-1]);
+          coolingheating_buf.vibh[i] = my_rates->vibh[logTlininterp_buf.indixe[i]-1] + logTlininterp_buf.tdef[i]
+             *(my_rates->vibh[logTlininterp_buf.indixe[i]+1-1] - my_rates->vibh[logTlininterp_buf.indixe[i]-1]);
+          coolingheating_buf.roth[i] = my_rates->roth[logTlininterp_buf.indixe[i]-1] + logTlininterp_buf.tdef[i]
+             *(my_rates->roth[logTlininterp_buf.indixe[i]+1-1] - my_rates->roth[logTlininterp_buf.indixe[i]-1]);
+          coolingheating_buf.rotl[i] = my_rates->rotl[logTlininterp_buf.indixe[i]-1] + logTlininterp_buf.tdef[i]
+             *(my_rates->rotl[logTlininterp_buf.indixe[i]+1-1] - my_rates->rotl[logTlininterp_buf.indixe[i]-1]);
+          coolingheating_buf.cieco[i] = my_rates->cieco[logTlininterp_buf.indixe[i]-1] + logTlininterp_buf.tdef[i]
+             *(my_rates->cieco[logTlininterp_buf.indixe[i]+1-1] - my_rates->cieco[logTlininterp_buf.indixe[i]-1]);
         }
       }
 
-      for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-        if ( itmask[i-1] != MASK_FALSE )  {
-          qq   = 1.2*std::pow((HI(i-1,idx_range.jp1-1,idx_range.kp1-1)*dom),0.77) +
-                    std::pow((H2I(i-1,idx_range.jp1-1,idx_range.kp1-1)*dom/2.),0.77);
-          vibl = (HI(i-1,idx_range.jp1-1,idx_range.kp1-1)*coolingheating_buf.hyd01k[i-1] +
-                 H2I(i-1,idx_range.jp1-1,idx_range.kp1-1)/2.*coolingheating_buf.h2k01[i-1])
+      for (i = idx_range.i_start; i<=idx_range.i_end; i++) {
+        if ( itmask[i] != MASK_FALSE )  {
+          qq   = 1.2*std::pow((HI(i,idx_range.jp1-1,idx_range.kp1-1)*dom),0.77) +
+                    std::pow((H2I(i,idx_range.jp1-1,idx_range.kp1-1)*dom/2.),0.77);
+          vibl = (HI(i,idx_range.jp1-1,idx_range.kp1-1)*coolingheating_buf.hyd01k[i] +
+                 H2I(i,idx_range.jp1-1,idx_range.kp1-1)/2.*coolingheating_buf.h2k01[i])
                  *dom*8.18e-13;
 
 #ifdef OPTICAL_DEPTH_FUDGE
-          nH2 = 0.5*H2I(i-1,idx_range.jp1-1,idx_range.kp1-1);
-          nother = (HeI(i-1,idx_range.jp1-1,idx_range.kp1-1) + HeII(i-1,idx_range.jp1-1,idx_range.kp1-1) +
-               HeIII(i-1,idx_range.jp1-1,idx_range.kp1-1))/4. +
-               HI(i-1,idx_range.jp1-1,idx_range.kp1-1) + HII(i-1,idx_range.jp1-1,idx_range.kp1-1) + de(i-1,idx_range.jp1-1,idx_range.kp1-1);
+          nH2 = 0.5*H2I(i,idx_range.jp1-1,idx_range.kp1-1);
+          nother = (HeI(i,idx_range.jp1-1,idx_range.kp1-1) + HeII(i,idx_range.jp1-1,idx_range.kp1-1) +
+               HeIII(i,idx_range.jp1-1,idx_range.kp1-1))/4. +
+               HI(i,idx_range.jp1-1,idx_range.kp1-1) + HII(i,idx_range.jp1-1,idx_range.kp1-1) + de(i,idx_range.jp1-1,idx_range.kp1-1);
           fH2 = nH2/(nH2 + nother);
-          fudge = std::sqrt((40. * std::pow(10.,(4.8 * std::sqrt(std::max(std::log10(tgas[i-1]),2.)-2.))) / std::pow(fH2,2))/
+          fudge = std::sqrt((40. * std::pow(10.,(4.8 * std::sqrt(std::max(std::log10(tgas[i]),2.)-2.))) / std::pow(fH2,2))/
           ((nH2 + nother)*dom) )
           fudge = std::fmin(fudge, 1.);
 #endif /* OPTICAL_DEPTH_FUDGE */
 
-          edot[i-1] = edot[i-1] - ih2cox*fudge*H2I(i-1,idx_range.jp1-1,idx_range.kp1-1)*(
-               coolingheating_buf.vibh[i-1]/(1.+coolingheating_buf.vibh[i-1]/std::fmax(   vibl,     tiny_fortran_val)) +
-               coolingheating_buf.roth[i-1]/(1.+coolingheating_buf.roth[i-1]/std::fmax(qq*coolingheating_buf.rotl[i-1],tiny_fortran_val))
+          edot[i] = edot[i] - ih2cox*fudge*H2I(i,idx_range.jp1-1,idx_range.kp1-1)*(
+               coolingheating_buf.vibh[i]/(1.+coolingheating_buf.vibh[i]/std::fmax(   vibl,     tiny_fortran_val)) +
+               coolingheating_buf.roth[i]/(1.+coolingheating_buf.roth[i]/std::fmax(qq*coolingheating_buf.rotl[i],tiny_fortran_val))
                )/2./dom;
         }
       }
@@ -819,32 +819,32 @@ void cool1d_multi_g(
     //- with its own radiative transfer correction as discussed in
     //- Ripamonti & Abel 2003
     if (my_chemistry->cie_cooling==1)  {
-      for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-        if (itmask[i-1] != MASK_FALSE)  {
+      for (i = idx_range.i_start; i<=idx_range.i_end; i++) {
+        if (itmask[i] != MASK_FALSE)  {
           // Only calculate if H2I(i) is a substantial fraction
-          if (d(i-1,idx_range.jp1-1,idx_range.kp1-1)*dom>1e10)  {
+          if (d(i,idx_range.jp1-1,idx_range.kp1-1)*dom>1e10)  {
             ciefudge = 1.;
-            tau = std::pow(((d(i-1,idx_range.jp1-1,idx_range.kp1-1)/2e16)*dom),2.8);  // 2e16 is in units of cm^-3
+            tau = std::pow(((d(i,idx_range.jp1-1,idx_range.kp1-1)/2e16)*dom),2.8);  // 2e16 is in units of cm^-3
             tau = std::fmax(tau, 1.e-5);
             ciefudge = std::fmin((1.-std::exp(-tau))/tau,1.);
             // Matt's attempt at a second exponentialier cutoff
-            tau = std::pow(((d(i-1,idx_range.jp1-1,idx_range.kp1-1)/2.e18)*dom),8.);  // 2e18 is in units of cm^-3
+            tau = std::pow(((d(i,idx_range.jp1-1,idx_range.kp1-1)/2.e18)*dom),8.);  // 2e18 is in units of cm^-3
             tau = std::fmax(tau, 1.e-5);
             ciefudge = ciefudge*std::fmin((1.f-std::exp(-tau))/tau,1.);
             // ciefudge, which is applied to the continuum, is applied to edot
-            edot[i-1] = ciefudge*(edot[i-1] -
-                    H2I(i-1,idx_range.jp1-1,idx_range.kp1-1)*(d(i-1,idx_range.jp1-1,idx_range.kp1-1)*coolingheating_buf.cieco[i-1]));
+            edot[i] = ciefudge*(edot[i] -
+                    H2I(i,idx_range.jp1-1,idx_range.kp1-1)*(d(i,idx_range.jp1-1,idx_range.kp1-1)*coolingheating_buf.cieco[i]));
           }
         }
       }
       // CIE H2 cooling using Yoshida et al. (2006)
     } else if (my_chemistry->cie_cooling == 2)  {
-      for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-        if (itmask[i-1] != MASK_FALSE)  {
-          cieY06[i-1] = my_rates->cieY06[logTlininterp_buf.indixe[i-1]-1] + logTlininterp_buf.tdef[i-1]
-             *(my_rates->cieY06[logTlininterp_buf.indixe[i-1]+1-1] - my_rates->cieY06[logTlininterp_buf.indixe[i-1]-1]);
-          LCIE[i-1] = - cieY06[i-1] * std::pow((H2I(i-1,idx_range.jp1-1,idx_range.kp1-1)/2.e0),2);
-          edot[i-1] = edot[i-1] + LCIE[i-1];
+      for (i = idx_range.i_start; i<=idx_range.i_end; i++) {
+        if (itmask[i] != MASK_FALSE)  {
+          cieY06[i] = my_rates->cieY06[logTlininterp_buf.indixe[i]-1] + logTlininterp_buf.tdef[i]
+             *(my_rates->cieY06[logTlininterp_buf.indixe[i]+1-1] - my_rates->cieY06[logTlininterp_buf.indixe[i]-1]);
+          LCIE[i] = - cieY06[i] * std::pow((H2I(i,idx_range.jp1-1,idx_range.kp1-1)/2.e0),2);
+          edot[i] = edot[i] + LCIE[i];
         }
       }
     }
@@ -858,20 +858,20 @@ void cool1d_multi_g(
     // Chiaki & Wise (2019) HD cooling rate
     if (my_chemistry->hd_cooling_rate == 1 )  {
 
-      for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-        if ( itmask[i-1] != MASK_FALSE )  {
+      for (i = idx_range.i_start; i<=idx_range.i_end; i++) {
+        if ( itmask[i] != MASK_FALSE )  {
 
-          lognhat = logHDI[i-1] - logdvdr[i-1];
+          lognhat = logHDI[i] - logdvdr[i];
 
            FORTRAN_NAME(interpolate_3d_g)(
-            &lognhat, &logT[i-1], &logH[i-1], my_rates->LHD.props.dimension,
+            &lognhat, &logT[i], &logH[i], my_rates->LHD.props.dimension,
             my_rates->LHD.props.parameters[0], &my_rates->LHD.props.parameter_spacing[0], my_rates->LHD.props.parameters[1], &my_rates->LHD.props.parameter_spacing[1], my_rates->LHD.props.parameters[2], &my_rates->LHD.props.parameter_spacing[2],
             &my_rates->LHD.props.data_size, my_rates->LHD.data, &log_Linv);
           L = std::pow(1.e1,(-log_Linv));
 
           if (my_chemistry->cmb_temperature_floor == 1)  {
              FORTRAN_NAME(interpolate_3d_g)(
-              &lognhat, &logTcmb[i-1], &logH[i-1], my_rates->LHD.props.dimension,
+              &lognhat, &logTcmb[i], &logH[i], my_rates->LHD.props.dimension,
               my_rates->LHD.props.parameters[0], &my_rates->LHD.props.parameter_spacing[0], my_rates->LHD.props.parameters[1], &my_rates->LHD.props.parameter_spacing[1], my_rates->LHD.props.parameters[2], &my_rates->LHD.props.parameter_spacing[2],
               &my_rates->LHD.props.data_size, my_rates->LHD.data, &log_Ginv);
             G = std::pow(1.e1,(-log_Ginv));
@@ -879,9 +879,9 @@ void cool1d_multi_g(
             G = tiny8;
           }
 
-          LHD[i-1] = (G - L) / dom * HDI(i-1,idx_range.jp1-1,idx_range.kp1-1)/3.e0;
-          if (LHD[i-1] != LHD[i-1]) { LHD[i-1] = 0.e0; }
-          edot[i-1] = edot[i-1] + LHD[i-1];
+          LHD[i] = (G - L) / dom * HDI(i,idx_range.jp1-1,idx_range.kp1-1)/3.e0;
+          if (LHD[i] != LHD[i]) { LHD[i] = 0.e0; }
+          edot[i] = edot[i] + LHD[i];
 
         }
       }
@@ -889,33 +889,33 @@ void cool1d_multi_g(
       // Coppola et al (2011) and Wrathmall, Gusdorf, & Flower (2007) HD cooling rate
     } else if (my_chemistry->hd_cooling_rate == 0)  {
 
-      for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-        if ( itmask[i-1] != MASK_FALSE )  {
+      for (i = idx_range.i_start; i<=idx_range.i_end; i++) {
+        if ( itmask[i] != MASK_FALSE )  {
           // CMB cooling floor
-          if (tgas[i-1] > comp2)  {
-            coolingheating_buf.hdlte[i-1] = my_rates->HDlte[logTlininterp_buf.indixe[i-1]-1] + logTlininterp_buf.tdef[i-1]
-            *(my_rates->HDlte[logTlininterp_buf.indixe[i-1]+1-1] - my_rates->HDlte[logTlininterp_buf.indixe[i-1]-1]);
-            coolingheating_buf.hdlow[i-1] = my_rates->HDlow[logTlininterp_buf.indixe[i-1]-1] + logTlininterp_buf.tdef[i-1]
-            *(my_rates->HDlow[logTlininterp_buf.indixe[i-1]+1-1] - my_rates->HDlow[logTlininterp_buf.indixe[i-1]-1]);
+          if (tgas[i] > comp2)  {
+            coolingheating_buf.hdlte[i] = my_rates->HDlte[logTlininterp_buf.indixe[i]-1] + logTlininterp_buf.tdef[i]
+            *(my_rates->HDlte[logTlininterp_buf.indixe[i]+1-1] - my_rates->HDlte[logTlininterp_buf.indixe[i]-1]);
+            coolingheating_buf.hdlow[i] = my_rates->HDlow[logTlininterp_buf.indixe[i]-1] + logTlininterp_buf.tdef[i]
+            *(my_rates->HDlow[logTlininterp_buf.indixe[i]+1-1] - my_rates->HDlow[logTlininterp_buf.indixe[i]-1]);
           } else {
-            coolingheating_buf.hdlte[i-1] = tiny_fortran_val;
-            coolingheating_buf.hdlow[i-1] = tiny_fortran_val;
+            coolingheating_buf.hdlte[i] = tiny_fortran_val;
+            coolingheating_buf.hdlow[i] = tiny_fortran_val;
           }
         }
       }
 
-      for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-        if ( itmask[i-1] != MASK_FALSE )  {
+      for (i = idx_range.i_start; i<=idx_range.i_end; i++) {
+        if ( itmask[i] != MASK_FALSE )  {
           // old (incorrect) way:
           //              hdlte1 = hdlte(i)/(HDI(i,j,k)*dom/2._DKIND)
           //              hdlow1 = max(hdlow(i), tiny)
           //              edot(i) = edot(i) - HDI(i,j,k)*
           //    .                     (hdlte1/(1._DKIND + hdlte1/hdlow1)/(2._DKIND*dom))
           // new (correct) way: (april 4, 2007)
-          hdlte1 = coolingheating_buf.hdlte[i-1]/(HI(i-1,idx_range.jp1-1,idx_range.kp1-1)*dom);
-          hdlow1 = std::fmax(coolingheating_buf.hdlow[i-1], tiny_fortran_val);
-          edot[i-1] = edot[i-1] - HDI(i-1,idx_range.jp1-1,idx_range.kp1-1)*
-               (coolingheating_buf.hdlte[i-1]/(1. + hdlte1/hdlow1)) /
+          hdlte1 = coolingheating_buf.hdlte[i]/(HI(i,idx_range.jp1-1,idx_range.kp1-1)*dom);
+          hdlow1 = std::fmax(coolingheating_buf.hdlow[i], tiny_fortran_val);
+          edot[i] = edot[i] - HDI(i,idx_range.jp1-1,idx_range.kp1-1)*
+               (coolingheating_buf.hdlte[i]/(1. + hdlte1/hdlow1)) /
                (3.*dom);
         }
       }
@@ -925,16 +925,16 @@ void cool1d_multi_g(
 
   // Iteration mask for metal-rich cells
   if (imetal == 1)  {
-    for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-      if (metallicity[i-1] >= min_metallicity)  {
-        itmask_metal[i-1] = itmask[i-1];
+    for (i = idx_range.i_start; i<=idx_range.i_end; i++) {
+      if (metallicity[i] >= min_metallicity)  {
+        itmask_metal[i] = itmask[i];
       } else {
-        itmask_metal[i-1] = MASK_FALSE;
+        itmask_metal[i] = MASK_FALSE;
       }
     }
   } else {
-    for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-      itmask_metal[i-1] = MASK_FALSE;
+    for (i = idx_range.i_start; i<=idx_range.i_end; i++) {
+      itmask_metal[i] = MASK_FALSE;
     }
   }
 
@@ -987,29 +987,29 @@ void cool1d_multi_g(
 
   if ((anydust != MASK_FALSE)  ||  (my_chemistry->photoelectric_heating > 0))  {
     if (my_chemistry->use_dust_density_field > 0)  {
-      for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
+      for (i = idx_range.i_start; i<=idx_range.i_end; i++) {
         // REMINDER: use of `itmask` over `itmask_metal` is
         //   currently required by Photo-electric heating
-        if (itmask[i-1] != MASK_FALSE)  {
+        if (itmask[i] != MASK_FALSE)  {
           // it may be faster to remove this branching
-          dust2gas[i-1] = dust(i-1,idx_range.jp1-1,idx_range.kp1-1) / d(i-1,idx_range.jp1-1,idx_range.kp1-1);
+          dust2gas[i] = dust(i,idx_range.jp1-1,idx_range.kp1-1) / d(i,idx_range.jp1-1,idx_range.kp1-1);
         }
       }
     } else {
-      for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-        dust2gas[i-1] = my_chemistry->local_dust_to_gas_ratio * metallicity[i-1];
+      for (i = idx_range.i_start; i<=idx_range.i_end; i++) {
+        dust2gas[i] = my_chemistry->local_dust_to_gas_ratio * metallicity[i];
       }
     }
   }
 
   if ((anydust != MASK_FALSE)  ||  (my_chemistry->photoelectric_heating > 1))  {
     if (my_chemistry->use_isrf_field > 0)  {
-      for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-        myisrf[i-1] = isrf_habing(i-1,idx_range.jp1-1,idx_range.kp1-1);
+      for (i = idx_range.i_start; i<=idx_range.i_end; i++) {
+        myisrf[i] = isrf_habing(i,idx_range.jp1-1,idx_range.kp1-1);
       }
     } else {
-      for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-        myisrf[i-1] = my_chemistry->interstellar_radiation_field;
+      for (i = idx_range.i_start; i<=idx_range.i_end; i++) {
+        myisrf[i] = my_chemistry->interstellar_radiation_field;
       }
     }
   }
@@ -1046,55 +1046,55 @@ void cool1d_multi_g(
   if (anydust != MASK_FALSE)  {
 
 
-    for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-      if ( itmask_metal[i-1] != MASK_FALSE )  {
+    for (i = idx_range.i_start; i<=idx_range.i_end; i++) {
+      if ( itmask_metal[i] != MASK_FALSE )  {
 
         if (my_chemistry->dust_species == 0)  {
 
-          Ldst[i-1] =         -
-               gasgr[i-1] * (tgas[i-1] - tdust[i-1]) *
-               dust2gas[i-1] * rhoH[i-1] * rhoH[i-1];
+          Ldst[i] =         -
+               gasgr[i] * (tgas[i] - tdust[i]) *
+               dust2gas[i] * rhoH[i] * rhoH[i];
 
         } else {
 
           if (my_chemistry->use_multiple_dust_temperatures == 0)  {
-            Ldst[i-1] = - gasgr[i-1] * (tgas[i-1] - tdust[i-1])
-               * d(i-1,idx_range.jp1-1,idx_range.kp1-1) * rhoH[i-1];
+            Ldst[i] = - gasgr[i] * (tgas[i] - tdust[i])
+               * d(i,idx_range.jp1-1,idx_range.kp1-1) * rhoH[i];
           } else {
 
             if (my_chemistry->dust_species > 0)  {
-              Ldst[i-1] = - (
-                  gasMgSiO3  [i-1] * (tgas[i-1] - grain_temperatures.data[OnlyGrainSpLUT::MgSiO3_dust]  [i-1])
-                + gasAC      [i-1] * (tgas[i-1] - grain_temperatures.data[OnlyGrainSpLUT::AC_dust]      [i-1])
-                ) * d(i-1,idx_range.jp1-1,idx_range.kp1-1) * rhoH[i-1];
+              Ldst[i] = - (
+                  gasMgSiO3  [i] * (tgas[i] - grain_temperatures.data[OnlyGrainSpLUT::MgSiO3_dust]  [i])
+                + gasAC      [i] * (tgas[i] - grain_temperatures.data[OnlyGrainSpLUT::AC_dust]      [i])
+                ) * d(i,idx_range.jp1-1,idx_range.kp1-1) * rhoH[i];
             }
 
             if (my_chemistry->dust_species > 1)  {
-              Ldst[i-1] = Ldst[i-1] - (
-                  gasSiM     [i-1] * (tgas[i-1] - grain_temperatures.data[OnlyGrainSpLUT::SiM_dust]     [i-1])
-                + gasFeM     [i-1] * (tgas[i-1] - grain_temperatures.data[OnlyGrainSpLUT::FeM_dust]     [i-1])
-                + gasMg2SiO4 [i-1] * (tgas[i-1] - grain_temperatures.data[OnlyGrainSpLUT::Mg2SiO4_dust] [i-1])
-                + gasFe3O4   [i-1] * (tgas[i-1] - grain_temperatures.data[OnlyGrainSpLUT::Fe3O4_dust]   [i-1])
-                + gasSiO2D   [i-1] * (tgas[i-1] - grain_temperatures.data[OnlyGrainSpLUT::SiO2_dust]   [i-1])
-                + gasMgO     [i-1] * (tgas[i-1] - grain_temperatures.data[OnlyGrainSpLUT::MgO_dust]     [i-1])
-                + gasFeS     [i-1] * (tgas[i-1] - grain_temperatures.data[OnlyGrainSpLUT::FeS_dust]     [i-1])
-                + gasAl2O3   [i-1] * (tgas[i-1] - grain_temperatures.data[OnlyGrainSpLUT::Al2O3_dust]   [i-1])
-                ) * d(i-1,idx_range.jp1-1,idx_range.kp1-1) * rhoH[i-1];
+              Ldst[i] = Ldst[i] - (
+                  gasSiM     [i] * (tgas[i] - grain_temperatures.data[OnlyGrainSpLUT::SiM_dust]     [i])
+                + gasFeM     [i] * (tgas[i] - grain_temperatures.data[OnlyGrainSpLUT::FeM_dust]     [i])
+                + gasMg2SiO4 [i] * (tgas[i] - grain_temperatures.data[OnlyGrainSpLUT::Mg2SiO4_dust] [i])
+                + gasFe3O4   [i] * (tgas[i] - grain_temperatures.data[OnlyGrainSpLUT::Fe3O4_dust]   [i])
+                + gasSiO2D   [i] * (tgas[i] - grain_temperatures.data[OnlyGrainSpLUT::SiO2_dust]   [i])
+                + gasMgO     [i] * (tgas[i] - grain_temperatures.data[OnlyGrainSpLUT::MgO_dust]     [i])
+                + gasFeS     [i] * (tgas[i] - grain_temperatures.data[OnlyGrainSpLUT::FeS_dust]     [i])
+                + gasAl2O3   [i] * (tgas[i] - grain_temperatures.data[OnlyGrainSpLUT::Al2O3_dust]   [i])
+                ) * d(i,idx_range.jp1-1,idx_range.kp1-1) * rhoH[i];
             }
 
             if (my_chemistry->dust_species > 2)  {
-              Ldst[i-1] = Ldst[i-1] - (
-                  gasreforg  [i-1] * (tgas[i-1] - grain_temperatures.data[OnlyGrainSpLUT::ref_org_dust]  [i-1])
-                + gasvolorg  [i-1] * (tgas[i-1] - grain_temperatures.data[OnlyGrainSpLUT::vol_org_dust]  [i-1])
-                + gasH2Oice  [i-1] * (tgas[i-1] - grain_temperatures.data[OnlyGrainSpLUT::H2O_ice_dust]  [i-1])
-                ) * d(i-1,idx_range.jp1-1,idx_range.kp1-1) * rhoH[i-1];
+              Ldst[i] = Ldst[i] - (
+                  gasreforg  [i] * (tgas[i] - grain_temperatures.data[OnlyGrainSpLUT::ref_org_dust]  [i])
+                + gasvolorg  [i] * (tgas[i] - grain_temperatures.data[OnlyGrainSpLUT::vol_org_dust]  [i])
+                + gasH2Oice  [i] * (tgas[i] - grain_temperatures.data[OnlyGrainSpLUT::H2O_ice_dust]  [i])
+                ) * d(i,idx_range.jp1-1,idx_range.kp1-1) * rhoH[i];
             }
           }
 
 
         }
 
-        edot[i-1] = edot[i-1] + Ldst[i-1];
+        edot[i] = edot[i] + Ldst[i];
 
       }
     }
@@ -1105,22 +1105,22 @@ void cool1d_multi_g(
 
   if ( my_chemistry->use_primordial_continuum_opacity == 1 )  {
 
-    for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-      if ( itmask[i-1] != MASK_FALSE )  {
+    for (i = idx_range.i_start; i<=idx_range.i_end; i++) {
+      if ( itmask[i] != MASK_FALSE )  {
 
         // ! primordial continuum opacity !!
          FORTRAN_NAME(interpolate_2d_g)(
-          &logrho[i-1], &logT[i-1], my_rates->alphap.props.dimension, my_rates->alphap.props.parameters[0], &my_rates->alphap.props.parameter_spacing[0],
+          &logrho[i], &logT[i], my_rates->alphap.props.dimension, my_rates->alphap.props.parameters[0], &my_rates->alphap.props.parameter_spacing[0],
           my_rates->alphap.props.parameters[1], &my_rates->alphap.props.parameter_spacing[1], &my_rates->alphap.props.data_size,
           my_rates->alphap.data, &log_a);
-        alpha[i-1] = std::pow(1.e1,log_a);
+        alpha[i] = std::pow(1.e1,log_a);
       }
     }
 
   } else {
-    for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-      if ( itmask[i-1] != MASK_FALSE )  {
-        alpha[i-1] = 0.f;
+    for (i = idx_range.i_start; i<=idx_range.i_end; i++) {
+      if ( itmask[i] != MASK_FALSE )  {
+        alpha[i] = 0.f;
       }
     }
 
@@ -1130,48 +1130,48 @@ void cool1d_multi_g(
   // if (idspecies .eq. 0), dust opacity is overestimated at Td > 50 K
   // We better not include dust opacity.
   if ((anydust != MASK_FALSE) && (my_chemistry->dust_species > 0))  {
-    for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-      if ( itmask_metal[i-1] != MASK_FALSE )  {
+    for (i = idx_range.i_start; i<=idx_range.i_end; i++) {
+      if ( itmask_metal[i] != MASK_FALSE )  {
 
         if (my_chemistry->use_multiple_dust_temperatures == 0)  {
 
-          alphad[i-1] = kptot[i-1];
+          alphad[i] = kptot[i];
 
         } else {
 
           if (my_chemistry->dust_species > 0)  {
-            alphad[i-1] = kpMgSiO3  [i-1]
-                      + kpAC      [i-1];
+            alphad[i] = kpMgSiO3  [i]
+                      + kpAC      [i];
           }
           if (my_chemistry->dust_species > 1)  {
-            alphad[i-1] = alphad[i-1]
-                      + kpSiM     [i-1]
-                      + kpFeM     [i-1]
-                      + kpMg2SiO4 [i-1]
-                      + kpFe3O4   [i-1]
-                      + kpSiO2D   [i-1]
-                      + kpMgO     [i-1]
-                      + kpFeS     [i-1]
-                      + kpAl2O3   [i-1];
+            alphad[i] = alphad[i]
+                      + kpSiM     [i]
+                      + kpFeM     [i]
+                      + kpMg2SiO4 [i]
+                      + kpFe3O4   [i]
+                      + kpSiO2D   [i]
+                      + kpMgO     [i]
+                      + kpFeS     [i]
+                      + kpAl2O3   [i];
           }
           if (my_chemistry->dust_species > 2)  {
-            alphad[i-1] = alphad[i-1]
-                      + kpreforg  [i-1]
-                      + kpvolorg  [i-1]
-                      + kpH2Oice  [i-1];
+            alphad[i] = alphad[i]
+                      + kpreforg  [i]
+                      + kpvolorg  [i]
+                      + kpH2Oice  [i];
           }
         }
 
-        alpha[i-1] = alpha[i-1] + alphad[i-1] * d(i-1,idx_range.jp1-1,idx_range.kp1-1)*dom*mh_local_var;
+        alpha[i] = alpha[i] + alphad[i] * d(i,idx_range.jp1-1,idx_range.kp1-1)*dom*mh_local_var;
 
       }
     }
 
   }
 
-  for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-    if ( itmask[i-1] != MASK_FALSE )  {
-      tau_con[i-1] = alpha[i-1] * lshield_con[i-1];
+  for (i = idx_range.i_start; i<=idx_range.i_end; i++) {
+    if ( itmask[i] != MASK_FALSE )  {
+      tau_con[i] = alpha[i] * lshield_con[i];
     }
   }
 
@@ -1182,12 +1182,12 @@ void cool1d_multi_g(
 
     if (my_chemistry->self_shielding_method == 0)  // no shielding
     {
-      for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-        if ( itmask[i-1] != MASK_FALSE )  {
-          edot[i-1] = edot[i-1] + (double)(my_chemistry->ipiht )*(
-                 my_uvb_rates.piHI  *HI  (i-1,idx_range.jp1-1,idx_range.kp1-1) // pi of HI
-               + my_uvb_rates.piHeI *HeI (i-1,idx_range.jp1-1,idx_range.kp1-1)*0.25 // pi of HeI
-               + my_uvb_rates.piHeII*HeII(i-1,idx_range.jp1-1,idx_range.kp1-1)*0.25 // pi of HeII
+      for (i = idx_range.i_start; i<=idx_range.i_end; i++) {
+        if ( itmask[i] != MASK_FALSE )  {
+          edot[i] = edot[i] + (double)(my_chemistry->ipiht )*(
+                 my_uvb_rates.piHI  *HI  (i,idx_range.jp1-1,idx_range.kp1-1) // pi of HI
+               + my_uvb_rates.piHeI *HeI (i,idx_range.jp1-1,idx_range.kp1-1)*0.25 // pi of HeI
+               + my_uvb_rates.piHeII*HeII(i,idx_range.jp1-1,idx_range.kp1-1)*0.25 // pi of HeII
                )/dom;
         }
       }
@@ -1198,16 +1198,16 @@ void cool1d_multi_g(
       // Rahmati et. al. 2013 (MNRAS, 430, 2427-2445)
       // to shield HI, while leaving HeI and HeII optically thin
 
-      for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-        if (itmask[i-1] != MASK_FALSE)  {
+      for (i = idx_range.i_start; i<=idx_range.i_end; i++) {
+        if (itmask[i] != MASK_FALSE)  {
           if (my_uvb_rates.k24 < tiny8)  {
             fSShHI = 1.;
           } else {
             nSSh = 6.73e-3 *
              std::pow((my_uvb_rates.crsHI /2.49e-18),(-2./3.))*
-             std::pow((tgas[i-1]/1.0e4),(0.17))*
+             std::pow((tgas[i]/1.0e4),(0.17))*
              std::pow((my_uvb_rates.k24/tbase1/1.0e-12),(2./3.));
-            nratio = (HI(i-1,idx_range.jp1-1,idx_range.kp1-1) + HII(i-1,idx_range.jp1-1,idx_range.kp1-1))*dom/nSSh;
+            nratio = (HI(i,idx_range.jp1-1,idx_range.kp1-1) + HII(i,idx_range.jp1-1,idx_range.kp1-1))*dom/nSSh;
             fSShHI =
              0.98*std::pow((1.+
              std::pow(nratio,(1.64))),(-2.28)) +
@@ -1215,10 +1215,10 @@ void cool1d_multi_g(
              nratio),(-0.84));
           }
 
-          edot[i-1] = edot[i-1] + (double)(my_chemistry->ipiht)*(
-                 my_uvb_rates.piHI  *HI  (i-1,idx_range.jp1-1,idx_range.kp1-1)* fSShHI
-               + my_uvb_rates.piHeI * HeI(i-1,idx_range.jp1-1,idx_range.kp1-1)*0.25
-               + my_uvb_rates.piHeII*HeII(i-1,idx_range.jp1-1,idx_range.kp1-1)*0.25
+          edot[i] = edot[i] + (double)(my_chemistry->ipiht)*(
+                 my_uvb_rates.piHI  *HI  (i,idx_range.jp1-1,idx_range.kp1-1)* fSShHI
+               + my_uvb_rates.piHeI * HeI(i,idx_range.jp1-1,idx_range.kp1-1)*0.25
+               + my_uvb_rates.piHeII*HeII(i,idx_range.jp1-1,idx_range.kp1-1)*0.25
                 )/dom;
         }
       }
@@ -1229,8 +1229,8 @@ void cool1d_multi_g(
       // Rahmati et. al. 2013 (MNRAS, 430, 2427-2445)
       // approximate self shielding in HeI and HeII
 
-      for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-        if ( itmask[i-1] != MASK_FALSE )  {
+      for (i = idx_range.i_start; i<=idx_range.i_end; i++) {
+        if ( itmask[i] != MASK_FALSE )  {
           
           // HI self shielding ratio
           if (my_uvb_rates.k24 < tiny8)  {
@@ -1238,9 +1238,9 @@ void cool1d_multi_g(
           } else {
             nSSh = 6.73e-3 *
              std::pow((my_uvb_rates.crsHI/2.49e-18),(-2./3.))*
-             std::pow((tgas[i-1]/1.0e4),(0.17))*
+             std::pow((tgas[i]/1.0e4),(0.17))*
              std::pow((my_uvb_rates.k24/tbase1/1.0e-12),(2./3.));
-            nratio = (HI(i-1,idx_range.jp1-1,idx_range.kp1-1) + HII(i-1,idx_range.jp1-1,idx_range.kp1-1))*dom/nSSh;
+            nratio = (HI(i,idx_range.jp1-1,idx_range.kp1-1) + HII(i,idx_range.jp1-1,idx_range.kp1-1))*dom/nSSh;
             fSShHI =
              0.98*std::pow((1.+
               std::pow(nratio,(1.64))),(-2.28))+
@@ -1254,10 +1254,10 @@ void cool1d_multi_g(
           } else {
             nssh_he = 6.73e-3 *
              std::pow((my_uvb_rates.crsHeI/ 2.49e-18),(-2./3.))*
-             std::pow((tgas[i-1]/1.0e4),(0.17))*
+             std::pow((tgas[i]/1.0e4),(0.17))*
              std::pow((my_uvb_rates.k26/tbase1/1.0e-12),(2./3.));
             nratio_he = 0.25*
-             (HeI(i-1,idx_range.jp1-1,idx_range.kp1-1) + HeII(i-1,idx_range.jp1-1,idx_range.kp1-1) + HeIII(i-1,idx_range.jp1-1,idx_range.kp1-1))*dom/nssh_he;
+             (HeI(i,idx_range.jp1-1,idx_range.kp1-1) + HeII(i,idx_range.jp1-1,idx_range.kp1-1) + HeIII(i,idx_range.jp1-1,idx_range.kp1-1))*dom/nssh_he;
             fSShHeI =
              0.98*std::pow((1.+
               std::pow(nratio_he,(1.64))),(-2.28))+
@@ -1265,10 +1265,10 @@ void cool1d_multi_g(
               nratio_he),(-0.84));
           }
 
-          edot[i-1] = edot[i-1] + (double)(my_chemistry->ipiht )*(
-                 my_uvb_rates.piHI * HI(i-1,idx_range.jp1-1,idx_range.kp1-1)* fSShHI
-               + my_uvb_rates.piHeI * HeI(i-1,idx_range.jp1-1,idx_range.kp1-1)*0.25* fSShHeI
-               + my_uvb_rates.piHeII*HeII(i-1,idx_range.jp1-1,idx_range.kp1-1)*0.25
+          edot[i] = edot[i] + (double)(my_chemistry->ipiht )*(
+                 my_uvb_rates.piHI * HI(i,idx_range.jp1-1,idx_range.kp1-1)* fSShHI
+               + my_uvb_rates.piHeI * HeI(i,idx_range.jp1-1,idx_range.kp1-1)*0.25* fSShHeI
+               + my_uvb_rates.piHeII*HeII(i,idx_range.jp1-1,idx_range.kp1-1)*0.25
                  )/dom;
         }
       }
@@ -1279,8 +1279,8 @@ void cool1d_multi_g(
       // Rahmati et. al. 2013 (MNRAS, 430, 2427-2445)
       // in HI and HeI, but ignoring HeII heating entirely
 
-      for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-        if ( itmask[i-1] != MASK_FALSE )  {
+      for (i = idx_range.i_start; i<=idx_range.i_end; i++) {
+        if ( itmask[i] != MASK_FALSE )  {
           
           // HI self shielding ratio
           if (my_uvb_rates.k24 < tiny8)  {
@@ -1288,9 +1288,9 @@ void cool1d_multi_g(
           } else {
             nSSh = 6.73e-3 *
              std::pow((my_uvb_rates.crsHI /2.49e-18),(-2./3.))*
-             std::pow((tgas[i-1]/1.0e4),(0.17))*
+             std::pow((tgas[i]/1.0e4),(0.17))*
              std::pow((my_uvb_rates.k24/tbase1/1.0e-12),(2./3.));
-            nratio = (HI(i-1,idx_range.jp1-1,idx_range.kp1-1) + HII(i-1,idx_range.jp1-1,idx_range.kp1-1))*dom/nSSh;
+            nratio = (HI(i,idx_range.jp1-1,idx_range.kp1-1) + HII(i,idx_range.jp1-1,idx_range.kp1-1))*dom/nSSh;
             fSShHI =
              0.98*std::pow((1.+
               std::pow(nratio,(1.64))),(-2.28))+
@@ -1304,10 +1304,10 @@ void cool1d_multi_g(
           } else {
             nssh_he = 6.73e-3 *
              std::pow((my_uvb_rates.crsHeI /2.49e-18),(-2./3.))*
-             std::pow((tgas[i-1]/1.0e4),(0.17))*
+             std::pow((tgas[i]/1.0e4),(0.17))*
              std::pow((my_uvb_rates.k26/tbase1/1.0e-12),(2./3.));
             nratio_he = 0.25*
-             (HeI(i-1,idx_range.jp1-1,idx_range.kp1-1) + HeII(i-1,idx_range.jp1-1,idx_range.kp1-1) + HeIII(i-1,idx_range.jp1-1,idx_range.kp1-1))*dom/nssh_he;
+             (HeI(i,idx_range.jp1-1,idx_range.kp1-1) + HeII(i,idx_range.jp1-1,idx_range.kp1-1) + HeIII(i,idx_range.jp1-1,idx_range.kp1-1))*dom/nssh_he;
             fSShHeI =
              0.98*std::pow((1.+
               std::pow(nratio_he,(1.64))),(-2.28))+
@@ -1315,9 +1315,9 @@ void cool1d_multi_g(
               nratio_he),(-0.84));
           }
 
-          edot[i-1] = edot[i-1] + (double)(my_chemistry->ipiht )*(
-                 my_uvb_rates.piHI * HI (i-1,idx_range.jp1-1,idx_range.kp1-1)* fSShHI
-              + my_uvb_rates.piHeI * HeI(i-1,idx_range.jp1-1,idx_range.kp1-1)* fSShHeI
+          edot[i] = edot[i] + (double)(my_chemistry->ipiht )*(
+                 my_uvb_rates.piHI * HI (i,idx_range.jp1-1,idx_range.kp1-1)* fSShHI
+              + my_uvb_rates.piHeI * HeI(i,idx_range.jp1-1,idx_range.kp1-1)* fSShHeI
               )/dom;
           
           // Ignoring HeII heating (HeII heating rate -> 0)
@@ -1345,17 +1345,17 @@ void cool1d_multi_g(
 
     // Calculate electron density from mean molecular weight
 
-    for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-      if ( itmask[i-1] != MASK_FALSE )  {
+    for (i = idx_range.i_start; i<=idx_range.i_end; i++) {
+      if ( itmask[i] != MASK_FALSE )  {
 
-        cool1dmulti_buf.myde[i-1] = 1 - mmw[i-1] * (3.0 * my_chemistry->HydrogenFractionByMass + 1.0) /
+        cool1dmulti_buf.myde[i] = 1 - mmw[i] * (3.0 * my_chemistry->HydrogenFractionByMass + 1.0) /
              4.0;
         if (imetal == 1)  {
-          cool1dmulti_buf.myde[i-1] = cool1dmulti_buf.myde[i-1] - mmw[i-1] * metal(i-1,idx_range.jp1-1,idx_range.kp1-1) /
-               (d(i-1,idx_range.jp1-1,idx_range.kp1-1) * mu_metal);
+          cool1dmulti_buf.myde[i] = cool1dmulti_buf.myde[i] - mmw[i] * metal(i,idx_range.jp1-1,idx_range.kp1-1) /
+               (d(i,idx_range.jp1-1,idx_range.kp1-1) * mu_metal);
         }
-        cool1dmulti_buf.myde[i-1] = d(i-1,idx_range.jp1-1,idx_range.kp1-1) * cool1dmulti_buf.myde[i-1] / mmw[i-1];
-        cool1dmulti_buf.myde[i-1] = std::fmax(cool1dmulti_buf.myde[i-1], 0.);
+        cool1dmulti_buf.myde[i] = d(i,idx_range.jp1-1,idx_range.kp1-1) * cool1dmulti_buf.myde[i] / mmw[i];
+        cool1dmulti_buf.myde[i] = std::fmax(cool1dmulti_buf.myde[i], 0.);
 
       }
     }
@@ -1366,12 +1366,12 @@ void cool1d_multi_g(
 
   if (my_chemistry->photoelectric_heating == 1)  {
 
-    for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-      if (itmask[i-1] != MASK_FALSE)  {
-        if ( tgas[i-1] > 2.e4 )  {
-          cool1dmulti_buf.gammaha_eff[i-1] = 0.;
+    for (i = idx_range.i_start; i<=idx_range.i_end; i++) {
+      if (itmask[i] != MASK_FALSE)  {
+        if ( tgas[i] > 2.e4 )  {
+          cool1dmulti_buf.gammaha_eff[i] = 0.;
         } else {
-          cool1dmulti_buf.gammaha_eff[i-1] = my_rates->gammah;
+          cool1dmulti_buf.gammaha_eff[i] = my_rates->gammah;
         }
       }
     }
@@ -1379,13 +1379,13 @@ void cool1d_multi_g(
     // Use eqn. 1 of Wolfire et al. (1995)
   } else if (my_chemistry->photoelectric_heating == 2)  {
 
-    for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-      if (itmask[i-1] != MASK_FALSE)  {
-        if ( tgas[i-1] > 2.e4 )  {
-          cool1dmulti_buf.gammaha_eff[i-1] = 0.;
+    for (i = idx_range.i_start; i<=idx_range.i_end; i++) {
+      if (itmask[i] != MASK_FALSE)  {
+        if ( tgas[i] > 2.e4 )  {
+          cool1dmulti_buf.gammaha_eff[i] = 0.;
         } else {
           // Assume constant epsilon = 0.05.
-          cool1dmulti_buf.gammaha_eff[i-1] = my_rates->gammah * 0.05 * myisrf[i-1];
+          cool1dmulti_buf.gammaha_eff[i] = my_rates->gammah * 0.05 * myisrf[i];
         }
       }
     }
@@ -1393,25 +1393,25 @@ void cool1d_multi_g(
     // Full calculation of epsilon (eqn. 2 of Wolfire 1995)
   } else if (my_chemistry->photoelectric_heating == 3)  {
 
-    for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-      if (itmask[i-1] != MASK_FALSE)  {
-        pe_X = myisrf[i-1] * dom_inv * std::sqrt(tgas[i-1]) / cool1dmulti_buf.myde[i-1];
+    for (i = idx_range.i_start; i<=idx_range.i_end; i++) {
+      if (itmask[i] != MASK_FALSE)  {
+        pe_X = myisrf[i] * dom_inv * std::sqrt(tgas[i]) / cool1dmulti_buf.myde[i];
         pe_eps =
              (4.9e-2 /
               (1. + std::pow((pe_X / 1925.),0.73))) +
-             ((3.7e-2 * std::pow((tgas[i-1] / 1.e4),0.7)) /
+             ((3.7e-2 * std::pow((tgas[i] / 1.e4),0.7)) /
               (1. + (pe_X / 5000.)));
-        cool1dmulti_buf.gammaha_eff[i-1] = my_rates->gammah * pe_eps * myisrf[i-1];
+        cool1dmulti_buf.gammaha_eff[i] = my_rates->gammah * pe_eps * myisrf[i];
       }
     }
 
   }
 
   if (my_chemistry->photoelectric_heating > 0)  {
-    for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-      if (itmask[i-1] != MASK_FALSE)  {
-        edot[i-1] = edot[i-1] + cool1dmulti_buf.gammaha_eff[i-1] * rhoH[i-1] *
-             dom_inv * dust2gas[i-1] / my_chemistry->local_dust_to_gas_ratio;
+    for (i = idx_range.i_start; i<=idx_range.i_end; i++) {
+      if (itmask[i] != MASK_FALSE)  {
+        edot[i] = edot[i] + cool1dmulti_buf.gammaha_eff[i] * rhoH[i] *
+             dom_inv * dust2gas[i] / my_chemistry->local_dust_to_gas_ratio;
       }
     }
   }
@@ -1420,19 +1420,19 @@ void cool1d_multi_g(
 
   if ((my_chemistry->dust_chemistry > 0)  ||  (my_chemistry->dust_recombination_cooling > 0))  {
 
-    for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-      if (itmask[i-1] != MASK_FALSE)  {
-        cool1dmulti_buf.regr[i-1] = my_rates->regr[logTlininterp_buf.indixe[i-1]-1] + logTlininterp_buf.tdef[i-1]
-             *(my_rates->regr[logTlininterp_buf.indixe[i-1]+1-1] -my_rates->regr[logTlininterp_buf.indixe[i-1]-1]);
+    for (i = idx_range.i_start; i<=idx_range.i_end; i++) {
+      if (itmask[i] != MASK_FALSE)  {
+        cool1dmulti_buf.regr[i] = my_rates->regr[logTlininterp_buf.indixe[i]-1] + logTlininterp_buf.tdef[i]
+             *(my_rates->regr[logTlininterp_buf.indixe[i]+1-1] -my_rates->regr[logTlininterp_buf.indixe[i]-1]);
       }
     }
 
-    for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-      if (itmask[i-1] != MASK_FALSE)  {
-        grbeta = 0.74 / std::pow(tgas[i-1],0.068);
-        edot[i-1] = edot[i-1] -
-             cool1dmulti_buf.regr[i-1] * std::pow((myisrf[i-1]*dom_inv / cool1dmulti_buf.myde[i-1]),grbeta) *
-             cool1dmulti_buf.myde[i-1] * rhoH[i-1] * dust2gas[i-1] / my_chemistry->local_dust_to_gas_ratio;
+    for (i = idx_range.i_start; i<=idx_range.i_end; i++) {
+      if (itmask[i] != MASK_FALSE)  {
+        grbeta = 0.74 / std::pow(tgas[i],0.068);
+        edot[i] = edot[i] -
+             cool1dmulti_buf.regr[i] * std::pow((myisrf[i]*dom_inv / cool1dmulti_buf.myde[i]),grbeta) *
+             cool1dmulti_buf.myde[i] * rhoH[i] * dust2gas[i] / my_chemistry->local_dust_to_gas_ratio;
       }
     }
 
@@ -1440,18 +1440,18 @@ void cool1d_multi_g(
 
   // Compton cooling or heating and X-ray compton heating
 
-  for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-    if (itmask[i-1] != MASK_FALSE)  {
+  for (i = idx_range.i_start; i<=idx_range.i_end; i++) {
+    if (itmask[i] != MASK_FALSE)  {
 
-      edot[i-1] = edot[i-1]
+      edot[i] = edot[i]
 
       // Compton cooling or heating
 
-           - comp1      * (tgas[i-1] - comp2)     * cool1dmulti_buf.myde[i-1]*dom_inv
+           - comp1      * (tgas[i] - comp2)     * cool1dmulti_buf.myde[i]*dom_inv
 
       // X-ray compton heating
 
-           - my_uvb_rates.comp_xray * (tgas[i-1] - my_uvb_rates.temp_xray) * cool1dmulti_buf.myde[i-1]*dom_inv;
+           - my_uvb_rates.comp_xray * (tgas[i] - my_uvb_rates.temp_xray) * cool1dmulti_buf.myde[i]*dom_inv;
 
     }
   }
@@ -1459,26 +1459,26 @@ void cool1d_multi_g(
   // Photoheating from radiative transfer
 
   if (my_chemistry->use_radiative_transfer == 1)  {
-    for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-      if (itmask[i-1] != MASK_FALSE)  {
-        edot[i-1] = edot[i-1] + (double)(my_chemistry->ipiht ) * photogamma(i-1,idx_range.jp1-1,idx_range.kp1-1)
-                          / coolunit * HI(i-1,idx_range.jp1-1,idx_range.kp1-1) / dom;
+    for (i = idx_range.i_start; i<=idx_range.i_end; i++) {
+      if (itmask[i] != MASK_FALSE)  {
+        edot[i] = edot[i] + (double)(my_chemistry->ipiht ) * photogamma(i,idx_range.jp1-1,idx_range.kp1-1)
+                          / coolunit * HI(i,idx_range.jp1-1,idx_range.kp1-1) / dom;
 
-        if (edot[i-1] != edot[i-1])  {
+        if (edot[i] != edot[i])  {
           OMP_PRAGMA_CRITICAL
           {
             eprintf("NaN in edot[2]:  %d %d %d %g %g %g %g %g %g %g %g %g %g %g %g\n",
                     i,
                     idx_range.jp1,
                     idx_range.kp1,
-                    edot [ i-1 ],
-                    photogamma ( i-1, idx_range.jp1-1, idx_range.kp1-1 ),
-                    HI ( i-1, idx_range.jp1-1, idx_range.kp1-1 ),
-                    de ( i-1, idx_range.jp1-1, idx_range.kp1-1 ),
-                    d ( i-1, idx_range.jp1-1, idx_range.kp1-1 ),
-                    e ( i-1, idx_range.jp1-1, idx_range.kp1-1 ),
-                    p2d [ i-1 ],
-                    tgas [ i-1 ],
+                    edot [ i ],
+                    photogamma ( i, idx_range.jp1-1, idx_range.kp1-1 ),
+                    HI ( i, idx_range.jp1-1, idx_range.kp1-1 ),
+                    de ( i, idx_range.jp1-1, idx_range.kp1-1 ),
+                    d ( i, idx_range.jp1-1, idx_range.kp1-1 ),
+                    e ( i, idx_range.jp1-1, idx_range.kp1-1 ),
+                    p2d [ i ],
+                    tgas [ i ],
                     dom,
                     internalu.urho,
                     internalu.a_value,
@@ -1495,12 +1495,12 @@ void cool1d_multi_g(
   if (my_chemistry->metal_cooling == 1)  {
 
     // Determine if the temperature is above the threshold to do tabulated cooling.
-    for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-      itmask_tab[i-1] = itmask_metal[i-1];
-      if ( itmask_tab[i-1] != MASK_FALSE )  {
+    for (i = idx_range.i_start; i<=idx_range.i_end; i++) {
+      itmask_tab[i] = itmask_metal[i];
+      if ( itmask_tab[i] != MASK_FALSE )  {
         if (( my_chemistry->tabulated_cooling_minimum_temperature > 0.0e0 )  && 
-            ( tgas[i-1] < my_chemistry->tabulated_cooling_minimum_temperature ))  {
-          itmask_tab[i-1] = MASK_FALSE;
+            ( tgas[i] < my_chemistry->tabulated_cooling_minimum_temperature ))  {
+          itmask_tab[i] = MASK_FALSE;
         }
       }
     }
@@ -1536,21 +1536,21 @@ void cool1d_multi_g(
       // --- C/O fine-structure, metal molecular rotational cooling for low temperatures ---
       
       // C/O fine-structure cooling
-      for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-        if ( itmask_metal[i-1] != MASK_FALSE )  {
+      for (i = idx_range.i_start; i<=idx_range.i_end; i++) {
+        if ( itmask_metal[i] != MASK_FALSE )  {
       
           // CI
-          lognhat = logCI[i-1] - logdvdr[i-1];
+          lognhat = logCI[i] - logdvdr[i];
 
            FORTRAN_NAME(interpolate_3d_g)(
-            &lognhat, &logT[i-1], &logH[i-1], my_rates->LCI.props.dimension,
+            &lognhat, &logT[i], &logH[i], my_rates->LCI.props.dimension,
             my_rates->LCI.props.parameters[0], &my_rates->LCI.props.parameter_spacing[0], my_rates->LCI.props.parameters[1], &my_rates->LCI.props.parameter_spacing[1], my_rates->LCI.props.parameters[2], &my_rates->LCI.props.parameter_spacing[2],
             &my_rates->LCI.props.data_size, my_rates->LCI.data, &log_Linv);
           L = std::pow(1.e1,(-log_Linv));
       
           if (my_chemistry->cmb_temperature_floor == 1)  {
              FORTRAN_NAME(interpolate_3d_g)(
-              &lognhat, &logTcmb[i-1], &logH[i-1], my_rates->LCI.props.dimension,
+              &lognhat, &logTcmb[i], &logH[i], my_rates->LCI.props.dimension,
               my_rates->LCI.props.parameters[0], &my_rates->LCI.props.parameter_spacing[0], my_rates->LCI.props.parameters[1], &my_rates->LCI.props.parameter_spacing[1], my_rates->LCI.props.parameters[2], &my_rates->LCI.props.parameter_spacing[2],
               &my_rates->LCI.props.data_size, my_rates->LCI.data, &log_Ginv);
             G = std::pow(1.e1,(-log_Ginv));
@@ -1558,23 +1558,23 @@ void cool1d_multi_g(
             G = tiny8;
           }
       
-          LCI[i-1] = (G - L) / dom * CI(i-1,idx_range.jp1-1,idx_range.kp1-1)/12.e0;
-          if (LCI[i-1] != LCI[i-1]) { LCI[i-1] = 0.e0; }
-          edot[i-1] = edot[i-1] + LCI[i-1];
+          LCI[i] = (G - L) / dom * CI(i,idx_range.jp1-1,idx_range.kp1-1)/12.e0;
+          if (LCI[i] != LCI[i]) { LCI[i] = 0.e0; }
+          edot[i] = edot[i] + LCI[i];
       
       
           // CII
-          lognhat = logCII[i-1] - logdvdr[i-1];
+          lognhat = logCII[i] - logdvdr[i];
       
            FORTRAN_NAME(interpolate_3d_g)(
-            &lognhat, &logT[i-1], &logH[i-1], my_rates->LCII.props.dimension,
+            &lognhat, &logT[i], &logH[i], my_rates->LCII.props.dimension,
             my_rates->LCII.props.parameters[0], &my_rates->LCII.props.parameter_spacing[0], my_rates->LCII.props.parameters[1], &my_rates->LCII.props.parameter_spacing[1], my_rates->LCII.props.parameters[2], &my_rates->LCII.props.parameter_spacing[2],
             &my_rates->LCII.props.data_size, my_rates->LCII.data, &log_Linv);
           L = std::pow(1.e1,(-log_Linv));
       
           if (my_chemistry->cmb_temperature_floor == 1)  {
              FORTRAN_NAME(interpolate_3d_g)(
-              &lognhat, &logTcmb[i-1], &logH[i-1], my_rates->LCII.props.dimension,
+              &lognhat, &logTcmb[i], &logH[i], my_rates->LCII.props.dimension,
               my_rates->LCII.props.parameters[0], &my_rates->LCII.props.parameter_spacing[0], my_rates->LCII.props.parameters[1], &my_rates->LCII.props.parameter_spacing[1], my_rates->LCII.props.parameters[2], &my_rates->LCII.props.parameter_spacing[2],
               &my_rates->LCII.props.data_size, my_rates->LCII.data, &log_Ginv);
             G = std::pow(1.e1,(-log_Ginv));
@@ -1582,23 +1582,23 @@ void cool1d_multi_g(
             G = tiny8;
           }
       
-          LCII[i-1] = (G - L) / dom * CII(i-1,idx_range.jp1-1,idx_range.kp1-1)/12.e0;
-          if (LCII[i-1] != LCII[i-1]) { LCII[i-1] = 0.e0; }
-          edot[i-1] = edot[i-1] + LCII[i-1];
+          LCII[i] = (G - L) / dom * CII(i,idx_range.jp1-1,idx_range.kp1-1)/12.e0;
+          if (LCII[i] != LCII[i]) { LCII[i] = 0.e0; }
+          edot[i] = edot[i] + LCII[i];
       
       
           // OI
-          lognhat = logOI[i-1] - logdvdr[i-1];
+          lognhat = logOI[i] - logdvdr[i];
       
            FORTRAN_NAME(interpolate_3d_g)(
-            &lognhat, &logT[i-1], &logH[i-1], my_rates->LOI.props.dimension,
+            &lognhat, &logT[i], &logH[i], my_rates->LOI.props.dimension,
             my_rates->LOI.props.parameters[0], &my_rates->LOI.props.parameter_spacing[0], my_rates->LOI.props.parameters[1], &my_rates->LOI.props.parameter_spacing[1], my_rates->LOI.props.parameters[2], &my_rates->LOI.props.parameter_spacing[2],
             &my_rates->LOI.props.data_size, my_rates->LOI.data, &log_Linv);
           L = std::pow(1.e1,(-log_Linv));
       
           if (my_chemistry->cmb_temperature_floor == 1)  {
              FORTRAN_NAME(interpolate_3d_g)(
-              &lognhat, &logTcmb[i-1], &logH[i-1], my_rates->LOI.props.dimension,
+              &lognhat, &logTcmb[i], &logH[i], my_rates->LOI.props.dimension,
               my_rates->LOI.props.parameters[0], &my_rates->LOI.props.parameter_spacing[0], my_rates->LOI.props.parameters[1], &my_rates->LOI.props.parameter_spacing[1], my_rates->LOI.props.parameters[2], &my_rates->LOI.props.parameter_spacing[2],
               &my_rates->LOI.props.data_size, my_rates->LOI.data, &log_Ginv);
             G = std::pow(1.e1,(-log_Ginv));
@@ -1606,25 +1606,25 @@ void cool1d_multi_g(
             G = tiny8;
           }
       
-          LOI[i-1] = (G - L) / dom * OI(i-1,idx_range.jp1-1,idx_range.kp1-1)/16.e0;
-          if (LOI[i-1] != LOI[i-1]) { LOI[i-1] = 0.e0; }
-          edot[i-1] = edot[i-1] + LOI[i-1];
+          LOI[i] = (G - L) / dom * OI(i,idx_range.jp1-1,idx_range.kp1-1)/16.e0;
+          if (LOI[i] != LOI[i]) { LOI[i] = 0.e0; }
+          edot[i] = edot[i] + LOI[i];
       
       
           // Metal molecules rotational cooling
 
           // CO
-          lognhat = logCO[i-1] - logdvdr[i-1];
+          lognhat = logCO[i] - logdvdr[i];
       
            FORTRAN_NAME(interpolate_3d_g)(
-            &lognhat, &logT[i-1], &logH2[i-1], my_rates->LCO.props.dimension,
+            &lognhat, &logT[i], &logH2[i], my_rates->LCO.props.dimension,
             my_rates->LCO.props.parameters[0], &my_rates->LCO.props.parameter_spacing[0], my_rates->LCO.props.parameters[1], &my_rates->LCO.props.parameter_spacing[1], my_rates->LCO.props.parameters[2], &my_rates->LCO.props.parameter_spacing[2],
             &my_rates->LCO.props.data_size, my_rates->LCO.data, &log_Linv);
           L = std::pow(1.e1,(-log_Linv));
       
           if (my_chemistry->cmb_temperature_floor == 1)  {
              FORTRAN_NAME(interpolate_3d_g)(
-              &lognhat, &logTcmb[i-1], &logH2[i-1], my_rates->LCO.props.dimension,
+              &lognhat, &logTcmb[i], &logH2[i], my_rates->LCO.props.dimension,
               my_rates->LCO.props.parameters[0], &my_rates->LCO.props.parameter_spacing[0], my_rates->LCO.props.parameters[1], &my_rates->LCO.props.parameter_spacing[1], my_rates->LCO.props.parameters[2], &my_rates->LCO.props.parameter_spacing[2],
               &my_rates->LCO.props.data_size, my_rates->LCO.data, &log_Ginv);
             G = std::pow(1.e1,(-log_Ginv));
@@ -1632,23 +1632,23 @@ void cool1d_multi_g(
             G = tiny8;
           }
       
-          LCO[i-1] = (G - L) / dom * CO(i-1,idx_range.jp1-1,idx_range.kp1-1)/28.e0;
-          if (LCO[i-1] != LCO[i-1]) { LCO[i-1] = 0.e0; }
-          edot[i-1] = edot[i-1] + LCO[i-1];
+          LCO[i] = (G - L) / dom * CO(i,idx_range.jp1-1,idx_range.kp1-1)/28.e0;
+          if (LCO[i] != LCO[i]) { LCO[i] = 0.e0; }
+          edot[i] = edot[i] + LCO[i];
       
 
           // OH
-          lognhat = logOH[i-1] - logdvdr[i-1];
+          lognhat = logOH[i] - logdvdr[i];
       
            FORTRAN_NAME(interpolate_3d_g)(
-            &lognhat, &logT[i-1], &logH2[i-1], my_rates->LOH.props.dimension,
+            &lognhat, &logT[i], &logH2[i], my_rates->LOH.props.dimension,
             my_rates->LOH.props.parameters[0], &my_rates->LOH.props.parameter_spacing[0], my_rates->LOH.props.parameters[1], &my_rates->LOH.props.parameter_spacing[1], my_rates->LOH.props.parameters[2], &my_rates->LOH.props.parameter_spacing[2],
             &my_rates->LOH.props.data_size, my_rates->LOH.data, &log_Linv);
           L = std::pow(1.e1,(-log_Linv));
       
           if (my_chemistry->cmb_temperature_floor == 1)  {
              FORTRAN_NAME(interpolate_3d_g)(
-              &lognhat, &logTcmb[i-1], &logH2[i-1], my_rates->LOH.props.dimension,
+              &lognhat, &logTcmb[i], &logH2[i], my_rates->LOH.props.dimension,
               my_rates->LOH.props.parameters[0], &my_rates->LOH.props.parameter_spacing[0], my_rates->LOH.props.parameters[1], &my_rates->LOH.props.parameter_spacing[1], my_rates->LOH.props.parameters[2], &my_rates->LOH.props.parameter_spacing[2],
               &my_rates->LOH.props.data_size, my_rates->LOH.data, &log_Ginv);
             G = std::pow(1.e1,(-log_Ginv));
@@ -1656,23 +1656,23 @@ void cool1d_multi_g(
             G = tiny8;
           }
       
-          LOH[i-1] = (G - L) / dom * OH(i-1,idx_range.jp1-1,idx_range.kp1-1)/17.e0;
-          if (LOH[i-1] != LOH[i-1]) { LOH[i-1] = 0.e0; }
-          edot[i-1] = edot[i-1] + LOH[i-1];
+          LOH[i] = (G - L) / dom * OH(i,idx_range.jp1-1,idx_range.kp1-1)/17.e0;
+          if (LOH[i] != LOH[i]) { LOH[i] = 0.e0; }
+          edot[i] = edot[i] + LOH[i];
 
 
           // H2O
-          lognhat = logH2O[i-1] - logdvdr[i-1];
+          lognhat = logH2O[i] - logdvdr[i];
       
            FORTRAN_NAME(interpolate_3d_g)(
-            &lognhat, &logT[i-1], &logH2[i-1], my_rates->LH2O.props.dimension,
+            &lognhat, &logT[i], &logH2[i], my_rates->LH2O.props.dimension,
             my_rates->LH2O.props.parameters[0], &my_rates->LH2O.props.parameter_spacing[0], my_rates->LH2O.props.parameters[1], &my_rates->LH2O.props.parameter_spacing[1], my_rates->LH2O.props.parameters[2], &my_rates->LH2O.props.parameter_spacing[2],
             &my_rates->LH2O.props.data_size, my_rates->LH2O.data, &log_Linv);
           L = std::pow(1.e1,(-log_Linv));
       
           if (my_chemistry->cmb_temperature_floor == 1)  {
              FORTRAN_NAME(interpolate_3d_g)(
-              &lognhat, &logTcmb[i-1], &logH2[i-1], my_rates->LH2O.props.dimension,
+              &lognhat, &logTcmb[i], &logH2[i], my_rates->LH2O.props.dimension,
               my_rates->LH2O.props.parameters[0], &my_rates->LH2O.props.parameter_spacing[0], my_rates->LH2O.props.parameters[1], &my_rates->LH2O.props.parameter_spacing[1], my_rates->LH2O.props.parameters[2], &my_rates->LH2O.props.parameter_spacing[2],
               &my_rates->LH2O.props.data_size, my_rates->LH2O.data, &log_Ginv);
             G = std::pow(1.e1,(-log_Ginv));
@@ -1680,9 +1680,9 @@ void cool1d_multi_g(
             G = tiny8;
           }
       
-          LH2O[i-1] = (G - L) / dom * H2O(i-1,idx_range.jp1-1,idx_range.kp1-1)/18.e0;
-          if (LH2O[i-1] != LH2O[i-1]) { LH2O[i-1] = 0.e0; }
-          edot[i-1] = edot[i-1] + LH2O[i-1];
+          LH2O[i] = (G - L) / dom * H2O(i,idx_range.jp1-1,idx_range.kp1-1)/18.e0;
+          if (LH2O[i] != LH2O[i]) { LH2O[i] = 0.e0; }
+          edot[i] = edot[i] + LH2O[i];
       
         }
       }
@@ -1695,9 +1695,9 @@ void cool1d_multi_g(
 
   if (my_chemistry->use_volumetric_heating_rate == 1)  {
 
-    for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-      if ( itmask[i-1] != MASK_FALSE )  {
-        edot[i-1] = edot[i-1] + Vheat(i-1,idx_range.jp1-1,idx_range.kp1-1) / coolunit / std::pow(dom,2);
+    for (i = idx_range.i_start; i<=idx_range.i_end; i++) {
+      if ( itmask[i] != MASK_FALSE )  {
+        edot[i] = edot[i] + Vheat(i,idx_range.jp1-1,idx_range.kp1-1) / coolunit / std::pow(dom,2);
       }
     }
 
@@ -1705,9 +1705,9 @@ void cool1d_multi_g(
 
   if (my_chemistry->use_specific_heating_rate == 1)  {
 
-    for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-      if ( itmask[i-1] != MASK_FALSE )  {
-        edot[i-1] = edot[i-1] + Mheat(i-1,idx_range.jp1-1,idx_range.kp1-1) * d(i-1,idx_range.jp1-1,idx_range.kp1-1) * mh_local_var
+    for (i = idx_range.i_start; i<=idx_range.i_end; i++) {
+      if ( itmask[i] != MASK_FALSE )  {
+        edot[i] = edot[i] + Mheat(i,idx_range.jp1-1,idx_range.kp1-1) * d(i,idx_range.jp1-1,idx_range.kp1-1) * mh_local_var
             / coolunit / dom;
       }
     }
@@ -1716,13 +1716,13 @@ void cool1d_multi_g(
 
   // Continuum opacity
 
-  for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-    if ( itmask[i-1] != MASK_FALSE )  {
-      if ( tau_con[i-1] > 1.e0 )  {
-        if ( tau_con[i-1] < 1.e2 )  {
-          edot[i-1] = edot[i-1] * std::pow(tau_con[i-1],(-2.e0));
+  for (i = idx_range.i_start; i<=idx_range.i_end; i++) {
+    if ( itmask[i] != MASK_FALSE )  {
+      if ( tau_con[i] > 1.e0 )  {
+        if ( tau_con[i] < 1.e2 )  {
+          edot[i] = edot[i] * std::pow(tau_con[i],(-2.e0));
         } else {
-          edot[i-1] = 0.e0;
+          edot[i] = 0.e0;
         }
       }
     }
@@ -1730,9 +1730,9 @@ void cool1d_multi_g(
 
   // Set tgasold
 
-  for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-    if ( itmask[i-1] != MASK_FALSE )  {
-      cool1dmulti_buf.tgasold[i-1] = tgas[i-1];
+  for (i = idx_range.i_start; i<=idx_range.i_end; i++) {
+    if ( itmask[i] != MASK_FALSE )  {
+      cool1dmulti_buf.tgasold[i] = tgas[i];
     }
   }
 
