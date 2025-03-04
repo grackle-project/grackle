@@ -13,6 +13,7 @@
 #include "cool1d_multi_g-cpp.h"
 #include "grackle.h"
 #include "fortran_func_decls.h"
+#include "fortran_func_wrappers.hpp"
 #include "utils-cpp.hpp"
 
 void cool1d_multi_g(
@@ -312,15 +313,8 @@ void cool1d_multi_g(
       }
     }
 
-     FORTRAN_NAME(calc_temp1d_cloudy_g)(d.data(), metal.data(), e.data(), rhoH,
-         &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &idx_range.i_start, &idx_range.i_end, &idx_range.jp1, &idx_range.kp1,
-         tgas, mmw, &dom, &zr,
-         &my_chemistry->TemperatureStart, &my_chemistry->TemperatureEnd,
-         &my_chemistry->Gamma, &internalu.utem, &imetal,
-         &my_rates->cloudy_primordial.grid_rank, my_rates->cloudy_primordial.grid_dimension,
-         my_rates->cloudy_primordial.grid_parameters[0], my_rates->cloudy_primordial.grid_parameters[1], my_rates->cloudy_primordial.grid_parameters[2],
-         &my_rates->cloudy_primordial.data_size, my_rates->cloudy_primordial.mmw_data,
-         itmask);
+    grackle::impl::fortran_wrapper::calc_temp1d_cloudy_g(rhoH, idx_range, tgas, mmw, dom,
+      zr, imetal, my_rates->cloudy_primordial, itmask, my_chemistry, my_fields, internalu);
 
   } else {
 
