@@ -126,31 +126,30 @@ static void setup_chem_scheme_masks_(
 
   // would it be more robust to use my_chemistry->metal_cooling than imetal?
 
+  // netwon-raphson solver can only coevolves energy when this is true
+  const bool has_nr_coevolve_eint_prereqs = (
+    (my_chemistry->with_radiative_cooling == 1) &&
+    (my_chemistry->primordial_chemistry > 1)
+  );
+
   for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
     if ( itmask[i] != MASK_FALSE )  {
       bool usemetal = (imetal == 1) && (metallicity[i] > min_metallicity);
-      bool use_gs = (
-        ((!usemetal) && (ddom[i] < 1.e8)) || (usemetal && (ddom[i] < 1.0e6))
+      bool is_hi_dens = (ddom[i] >= 1.e8) || (usemetal && (ddom[i] >= 1.0e6));
+
+      itmask_gs[i] = (!is_hi_dens) ? MASK_TRUE : MASK_FALSE;
+      itmask_nr[i] = (is_hi_dens) ? MASK_TRUE : MASK_FALSE;
+
+      // when true, the newton-raphson scheme coevolves internal-energy
+      // alongside chemistry
+      bool nr_coevolve_energy = (
+        has_nr_coevolve_eint_prereqs && (ddom[i] > 1.e7) && (tgas[i] > 1650.0)
       );
-      bool use_nr = !use_gs;
-
-      itmask_gs[i] = (use_gs) ? MASK_TRUE : MASK_FALSE;
-      itmask_nr[i] = (use_nr) ? MASK_TRUE : MASK_FALSE;
-
+      // we don't care about imp_eng[i] where itmask_nr[i] == MASK_FALSE
+      imp_eng[i] = (nr_coevolve_energy) ? 1 : 0;
     }
   }
 
-  for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-    if (itmask_nr[i] != MASK_FALSE)  {
-      if ((my_chemistry->with_radiative_cooling == 1) &&
-          (my_chemistry->primordial_chemistry > 1) &&
-          (ddom[i] > 1.e7) && (tgas[i] > 1650.0)) {
-        imp_eng[i] = 1;
-      } else {
-        imp_eng[i] = 0;
-      }
-    }
-  }
 }
 
 // -------------------------------------------------------------
