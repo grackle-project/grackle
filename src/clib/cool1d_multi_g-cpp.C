@@ -41,18 +41,6 @@ void grackle::impl::cool1d_multi_g(
   // modified3: February, 2003 by Robert Harkness; iteration mask
   // modified6: September, 2009 by BDS to include cloudy cooling
   
-  // PURPOSE:
-  //   Solve the energy cooling equations.
-  
-  // INPUTS:
-  //   is,ie   - start and end indicies of active region (zero-based!)
-  
-  // PARAMETERS:
-
-  // -----------------------------------------------------------------------
-
-
-  // Arguments
 
   grackle::impl::View<gr_float***> d(my_fields->density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> e(my_fields->internal_energy, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
@@ -98,10 +86,16 @@ void grackle::impl::cool1d_multi_g(
   int itd;
   double comp1, comp2;
 
-  // Slice locals
- 
-
-  // Cooling/heating slice locals
+  // Performing heap allocations for all of the subsequent buffers within this
+  // function is a major impediment to (i) CPU performance and (ii) adding GPU
+  // support to Grackle. Future work should work on addressing this
+  // - in the immediate short-term, we need to focus on aggregating these
+  //   variables into logically organized structs. In a lot of cases, it
+  //   may make sense to move the buffers into the existing
+  //   Cool1DMultiScratchBuf or CoolHeatScratchBuf structs.
+  // - in the longer term the goal is to refactor this logic to remove as many
+  //   of these buffers as possible (without crippling cache performance on
+  //   CPUs)
 
   std::vector<double> gaHI(my_fields->grid_dimension[0]);
   std::vector<double> gaH2(my_fields->grid_dimension[0]);
@@ -110,12 +104,12 @@ void grackle::impl::cool1d_multi_g(
   std::vector<double> gael(my_fields->grid_dimension[0]);
   std::vector<double> h2lte(my_fields->grid_dimension[0]);
   std::vector<double> galdl(my_fields->grid_dimension[0]);
+  // gas/grain heat transfer rate
   std::vector<double> gasgr(my_fields->grid_dimension[0]);
+  // holds values of the interstellar radiation field
   std::vector<double> myisrf(my_fields->grid_dimension[0]);
   int iden, item, itab;
   std::vector<double> cieY06(my_fields->grid_dimension[0]);
-
-  // opacity table
 
   double logdom;
   std::vector<double> logT(my_fields->grid_dimension[0]);
@@ -1131,9 +1125,12 @@ void grackle::impl::cool1d_multi_g(
 
   }
 
-  // Add dust opacity.
-  // if (idspecies .eq. 0), dust opacity is overestimated at Td > 50 K
-  // We better not include dust opacity.
+  // Add contributions from dust opacity to alpha, the linear absorption coefficient
+  //
+  //  The original Fortran version of this function had the following 2 comments:
+  //    ! if (idspecies .eq. 0), dust opacity is overestimated at Td > 50 K
+  //    ! We better not include dust opacity.
+  // It's a little unclear how relevant these comments actually are.
   if ((anydust != MASK_FALSE) && (my_chemistry->dust_species > 0))  {
     for (i = idx_range.i_start; i<=idx_range.i_end; i++) {
       if ( itmask_metal[i] != MASK_FALSE )  {
