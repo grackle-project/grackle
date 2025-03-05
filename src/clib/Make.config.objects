@@ -22,7 +22,6 @@ OBJS_CONFIG_LIB = \
         calc_temp_cloudy_g-cpp.lo \
         cool1d_cloudy_g.lo \
         cool1d_cloudy_old_tables_g.lo \
-        cool1d_multi_g.lo \
         cool_multi_time_g-cpp.lo \
         dynamic_api.lo \
         grackle_units.lo \
