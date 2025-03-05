@@ -603,8 +603,8 @@ void grackle::impl::cool1d_multi_g(
           {
             eprintf("NaN in edot[1]:  %d %d %d %g %g %g %g %g %g %g %g %g %g\n",
                     i,
-                    idx_range.jp1,
-                    idx_range.kp1,
+                    idx_range.j,
+                    idx_range.k,
                     edot [ i ],
                     HI ( i, idx_range.j, idx_range.k ),
                     HII ( i, idx_range.j, idx_range.k ),
@@ -1474,8 +1474,8 @@ void grackle::impl::cool1d_multi_g(
           {
             eprintf("NaN in edot[2]:  %d %d %d %g %g %g %g %g %g %g %g %g %g %g %g\n",
                     i,
-                    idx_range.jp1,
-                    idx_range.kp1,
+                    idx_range.j,
+                    idx_range.k,
                     edot [ i ],
                     photogamma ( i, idx_range.j, idx_range.k ),
                     HI ( i, idx_range.j, idx_range.k ),
