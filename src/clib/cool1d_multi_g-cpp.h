@@ -6,8 +6,8 @@
 // This file was initially generated automatically during conversion of the
 // cool1d_multi_g function from FORTRAN to C++
 
-#ifndef MY_FILE_CPP_H
-#define MY_FILE_CPP_H
+#ifndef COOL1D_MULTI_G_HPP
+#define COOL1D_MULTI_G_HPP
 
 #include "grackle.h"             // gr_float
 #include "fortran_func_decls.h"  // gr_mask_int
@@ -15,6 +15,9 @@
 #include "internal_types.hpp"    // GrainSpeciesCollection
 #include "index_helper.h"        // IndexRange
 //TODO: manually removed from signature (double* comp1, double* comp2)
+
+namespace grackle::impl {
+
 void cool1d_multi_g(
   int imetal, int iter, //double* comp1, double* comp2, 
   double* edot,
@@ -30,4 +33,6 @@ void cool1d_multi_g(
   grackle::impl::CoolHeatScratchBuf coolingheating_buf
 );
 
-#endif /* MY_FILE_CPP_H */
+};
+
+#endif /* COOL1D_MULTI_G_HPP */
