@@ -1344,12 +1344,12 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
      &                itmask_metal, itr, imp_eng
      &              )
 
-            endif ! if (ispecies .gt. 0) then
-
 !           return itmask
             do i = is+1, ie+1
                itmask(i) = itmask_tmp(i)
             enddo
+
+            endif ! if (ispecies .gt. 0) then
 
 !           Add the timestep to the elapsed time for each cell and find
 !            minimum elapsed time step in this row
