@@ -75,7 +75,8 @@
      &                gasgr2a, gamma_isrf2a, grogra, idissHDI,
      &                kdissHDI, iionZ, kphCI, kphOI, idissZ, kdissCO,
      &                kdissOH, kdissH2O, iuseH2shield, iisrffield,
-     &                isrf_habing, ierror, j, k, iter, dom, comp1,
+     &                isrf_habing, iH2shieldcustom, f_shield_custom,
+     &                ierror, j, k, iter, dom, comp1,
      &                comp2, coolunit, tbase1, xbase1, chunit, dx_cgs,
      &                c_ljeans, indixe, t1, t2, logtem, tdef, dtit,
      &                p2d, tgas, tgasold, tdust, metallicity, dust2gas,
@@ -104,7 +105,7 @@
      &        idustfield, idustrec, igammah, ih2optical, iciecool,
      &        ithreebody, ih2cr, ihdcr, ndratec, clnew, iVheat, iMheat,
      &        iTfloor, iH2shield, iradshield, iradtrans, irt_honly,
-     &        imchem, igrgr, ipcont, iisrffield
+     &        imchem, igrgr, ipcont, iisrffield, iH2shieldcustom
 
       real*8 aye, temstart, temend, gamma, utim, uxyz, uaye, urho,
      &       utem, fh, z_solar, fgr, dtemstart, dtemend, clEleFra,
@@ -160,6 +161,10 @@
 
       R_PREC  isrf_habing(in,jn,kn)
 
+!  Custom H2 shielding factor
+
+      R_PREC f_shield_custom(in, jn, kn)
+
 !  Cooling tables (coolings rates as a function of temperature)
 
       real*8  hyd01ka(nratec), h2k01a(nratec), vibha(nratec), 
@@ -175,31 +180,31 @@
      &        compa, piHI, piHeI, piHeII, comp_xraya, comp_temp,
      &        gammaha, isrf, regra(nratec), gamma_isrfa
        real*8  cieY06a(nratec)
-       integer LH2_N(3), LH2_Size
+       integer*8 LH2_N(3), LH2_Size
        real*8  LH2_D(LH2_N(1)), LH2_T(LH2_N(2)), LH2_H(LH2_N(3))
      &       , LH2_dD, LH2_dT, LH2_dH, LH2_L(LH2_Size)
-       integer LHD_N(3), LHD_Size
+       integer*8 LHD_N(3), LHD_Size
        real*8  LHD_D(LHD_N(1)), LHD_T(LHD_N(2)), LHD_H(LHD_N(3))
      &       , LHD_dD, LHD_dT, LHD_dH, LHD_L(LHD_Size)
-       integer LCI_N(3), LCI_Size
+       integer*8 LCI_N(3), LCI_Size
        real*8  LCI_D(LCI_N(1)), LCI_T(LCI_N(2)), LCI_H(LCI_N(3))
      &       , LCI_dD, LCI_dT, LCI_dH, LCI_L(LCI_Size)
-       integer LCII_N(3), LCII_Size
+       integer*8 LCII_N(3), LCII_Size
        real*8  LCII_D(LCII_N(1)), LCII_T(LCII_N(2)), LCII_H(LCII_N(3))
      &       , LCII_dD, LCII_dT, LCII_dH, LCII_L(LCII_Size)
-       integer LOI_N(3), LOI_Size
+       integer*8 LOI_N(3), LOI_Size
        real*8  LOI_D(LOI_N(1)), LOI_T(LOI_N(2)), LOI_H(LOI_N(3))
      &       , LOI_dD, LOI_dT, LOI_dH, LOI_L(LOI_Size)
-       integer LCO_N(3), LCO_Size
+       integer*8 LCO_N(3), LCO_Size
        real*8  LCO_D(LCO_N(1)), LCO_T(LCO_N(2)), LCO_H(LCO_N(3))
      &       , LCO_dD, LCO_dT, LCO_dH, LCO_L(LCO_Size)
-       integer LOH_N(3), LOH_Size
+       integer*8 LOH_N(3), LOH_Size
        real*8  LOH_D(LOH_N(1)), LOH_T(LOH_N(2)), LOH_H(LOH_N(3))
      &       , LOH_dD, LOH_dT, LOH_dH, LOH_L(LOH_Size)
-       integer LH2O_N(3), LH2O_Size
+       integer*8 LH2O_N(3), LH2O_Size
        real*8  LH2O_D(LH2O_N(1)), LH2O_T(LH2O_N(2)), LH2O_H(LH2O_N(3))
      &       , LH2O_dD, LH2O_dT, LH2O_dH, LH2O_L(LH2O_Size)
-       integer alphap_N(2), alphap_Size
+       integer*8 alphap_N(2), alphap_Size
        real*8  alphap_D(alphap_N(1)), alphap_T(alphap_N(2))
      &       , alphap_dD, alphap_dT
      &       , alphap_Data(alphap_Size)
@@ -681,7 +686,7 @@
      & , imp_eng(i)
      & , idissHDI, kdissHDI(i,j,k), iionZ, kphCI(i,j,k), kphOI(i,j,k)
      & , idissZ, kdissCO(i,j,k), kdissOH(i,j,k), kdissH2O(i,j,k)
-     & , iuseH2shield
+     & , iuseH2shield, iH2shieldcustom, f_shield_custom(i,j,k)
      &   )
 
                     do jsp = 1, nsp
@@ -817,7 +822,7 @@
      & , imp_eng(i)
      & , idissHDI, kdissHDI(i,j,k), iionZ, kphCI(i,j,k), kphOI(i,j,k)
      & , idissZ, kdissCO(i,j,k), kdissOH(i,j,k), kdissH2O(i,j,k)
-     & , iuseH2shield
+     & , iuseH2shield, iH2shieldcustom, f_shield_custom(i,j,k)
      &   )
 
                       do isp = 1, nsp

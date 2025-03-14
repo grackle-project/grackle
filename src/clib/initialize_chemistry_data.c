@@ -20,6 +20,7 @@
 #include "grackle_macros.h"
 #include "grackle_types.h"
 #include "grackle_chemistry_data.h"
+#include "interp_table_utils.h" // free_interp_grid_
 #include "phys_constants.h"
 #ifdef _OPENMP
 #include <omp.h>
@@ -66,6 +67,21 @@ static void show_version(FILE *fp)
   fprintf (fp, "Git Branch   %s\n", gversion.branch);
   fprintf (fp, "Git Revision %s\n", gversion.revision);
   fprintf (fp, "\n");
+}
+
+/**
+ * Initialize an empty #gr_interp_grid
+ */
+static void initialize_empty_interp_grid_(gr_interp_grid* grid)
+{
+  grid->props.rank = 0;
+  for (int i = 0; i < GRACKLE_CLOUDY_TABLE_MAX_DIMENSION; i++){
+    grid->props.dimension[i] = 0;
+    grid->props.parameters[i] = NULL;
+    grid->props.parameter_spacing[i] = 0.0;
+  }
+  grid->props.data_size = 0;
+  grid->data=NULL;
 }
 
 /**
@@ -246,88 +262,18 @@ void initialize_empty_chemistry_data_storage_struct(chemistry_data_storage *my_r
 
   my_rates->cieY06 = NULL;
 
-  my_rates->LH2_N = NULL;
-  my_rates->LH2_Size = 0;
-  my_rates->LH2_D = NULL;
-  my_rates->LH2_T = NULL;
-  my_rates->LH2_H = NULL;
-  my_rates->LH2_dD = 0.;
-  my_rates->LH2_dT = 0.;
-  my_rates->LH2_dH = 0.;
-  my_rates->LH2_L = NULL;
-  my_rates->LHD_N = NULL;
-  my_rates->LHD_Size = 0;
-  my_rates->LHD_D = NULL;
-  my_rates->LHD_T = NULL;
-  my_rates->LHD_H = NULL;
-  my_rates->LHD_dD = 0.;
-  my_rates->LHD_dT = 0.;
-  my_rates->LHD_dH = 0.;
-  my_rates->LHD_L = NULL;
+  initialize_empty_interp_grid_(&my_rates->LH2);
+  initialize_empty_interp_grid_(&my_rates->LHD);
 
-  my_rates->LCI_N = NULL;
-  my_rates->LCI_Size = 0;
-  my_rates->LCI_D = NULL;
-  my_rates->LCI_T = NULL;
-  my_rates->LCI_H = NULL;
-  my_rates->LCI_dD = 0.;
-  my_rates->LCI_dT = 0.;
-  my_rates->LCI_dH = 0.;
-  my_rates->LCI_L = NULL;
-  my_rates->LCII_N = NULL;
-  my_rates->LCII_Size = 0;
-  my_rates->LCII_D = NULL;
-  my_rates->LCII_T = NULL;
-  my_rates->LCII_H = NULL;
-  my_rates->LCII_dD = 0.;
-  my_rates->LCII_dT = 0.;
-  my_rates->LCII_dH = 0.;
-  my_rates->LCII_L = NULL;
-  my_rates->LOI_N = NULL;
-  my_rates->LOI_Size = 0;
-  my_rates->LOI_D = NULL;
-  my_rates->LOI_T = NULL;
-  my_rates->LOI_H = NULL;
-  my_rates->LOI_dD = 0.;
-  my_rates->LOI_dT = 0.;
-  my_rates->LOI_dH = 0.;
-  my_rates->LOI_L = NULL;
+  initialize_empty_interp_grid_(&my_rates->LCI);
+  initialize_empty_interp_grid_(&my_rates->LCII);
+  initialize_empty_interp_grid_(&my_rates->LOI);
 
-  my_rates->LCO_N = NULL;
-  my_rates->LCO_Size = 0;
-  my_rates->LCO_D = NULL;
-  my_rates->LCO_T = NULL;
-  my_rates->LCO_H = NULL;
-  my_rates->LCO_dD = 0.;
-  my_rates->LCO_dT = 0.;
-  my_rates->LCO_dH = 0.;
-  my_rates->LCO_L = NULL;
-  my_rates->LOH_N = NULL;
-  my_rates->LOH_Size = 0;
-  my_rates->LOH_D = NULL;
-  my_rates->LOH_T = NULL;
-  my_rates->LOH_H = NULL;
-  my_rates->LOH_dD = 0.;
-  my_rates->LOH_dT = 0.;
-  my_rates->LOH_dH = 0.;
-  my_rates->LOH_L = NULL;
-  my_rates->LH2O_N = NULL;
-  my_rates->LH2O_Size = 0;
-  my_rates->LH2O_D = NULL;
-  my_rates->LH2O_T = NULL;
-  my_rates->LH2O_H = NULL;
-  my_rates->LH2O_dD = 0.;
-  my_rates->LH2O_dT = 0.;
-  my_rates->LH2O_dH = 0.;
-  my_rates->LH2O_L = NULL;
+  initialize_empty_interp_grid_(&my_rates->LCO);
+  initialize_empty_interp_grid_(&my_rates->LOH);
+  initialize_empty_interp_grid_(&my_rates->LH2O);
 
-  my_rates->alphap_N = NULL;
-  my_rates->alphap_Size = 0;
-  my_rates->alphap_D = NULL;
-  my_rates->alphap_T = NULL;
-  my_rates->alphap_dD = 0.;
-  my_rates->alphap_dT = 0.;
-  my_rates->alphap_Data = NULL;
+  initialize_empty_interp_grid_(&my_rates->alphap);
 
   my_rates->gr_N = NULL;
   my_rates->gr_Size = 0;
@@ -708,27 +654,14 @@ int local_free_chemistry_data(chemistry_data *my_chemistry,
     GRACKLE_FREE(my_rates->gas_grain);
     GRACKLE_FREE(my_rates->gas_grain2);
 
-    GRACKLE_FREE(my_rates->LH2_N);
-    GRACKLE_FREE(my_rates->LH2_D);
-    GRACKLE_FREE(my_rates->LH2_T);
-    GRACKLE_FREE(my_rates->LH2_H);
-    GRACKLE_FREE(my_rates->LH2_L);
-    GRACKLE_FREE(my_rates->LHD_N);
-    GRACKLE_FREE(my_rates->LHD_D);
-    GRACKLE_FREE(my_rates->LHD_T);
-    GRACKLE_FREE(my_rates->LHD_H);
-    GRACKLE_FREE(my_rates->LHD_L);
-    GRACKLE_FREE(my_rates->alphap_N);
-    GRACKLE_FREE(my_rates->alphap_D);
-    GRACKLE_FREE(my_rates->alphap_T);
-    GRACKLE_FREE(my_rates->alphap_Data);
+    free_interp_grid_(&my_rates->LH2);
+    free_interp_grid_(&my_rates->LHD);
 
-    GRACKLE_FREE(my_rates->LCI_N);
-    GRACKLE_FREE(my_rates->LCII_N);
-    GRACKLE_FREE(my_rates->LOI_N);
-    GRACKLE_FREE(my_rates->LCO_N);
-    GRACKLE_FREE(my_rates->LOH_N);
-    GRACKLE_FREE(my_rates->LH2O_N);
+    // we deal with freeing other interp grids inside of
+    // local_free_metal_chemistry_rates
+
+    free_interp_grid_(&my_rates->alphap);
+
     GRACKLE_FREE(my_rates->gr_N);
 
     GRACKLE_FREE(my_rates->k1);

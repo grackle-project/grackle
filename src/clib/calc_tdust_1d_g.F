@@ -398,6 +398,8 @@ c               ERROR_MESSAGE
 
       integer i
       R_PREC  logalsp1(gr_Size), logkgr
+      integer*8 gr_N_i64(1)
+      real*8 log10tdust
 
 !  Slice Locals
 
@@ -405,6 +407,10 @@ c               ERROR_MESSAGE
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
 !=======================================================================
+      if(idspecies.ne.0) then
+         gr_N_i64(1) = int(gr_N(1), 8)
+      endif
+
 
       do i = is+1, ie+1
       if ( itmask(i) .ne. MASK_FALSE ) then
@@ -427,10 +433,11 @@ c             Tgr < 50 K (Omukai 2000).
          else
 
             logalsp1(:) = logalsp(:,i)
+            log10tdust = log10(tdust(i))
        
             call interpolate_1D_g(
-     &           log10(tdust(i)), int(gr_N, 8), gr_Td, gr_dT,
-     &           int(gr_Size, 8), logalsp1, logkgr)
+     &           log10tdust, gr_N_i64, gr_Td, gr_dT,
+     &           gr_N_i64(1), logalsp1, logkgr)
             kgr(i) = 10._DKIND**logkgr
 !!          write(*,*) 'fff', i, kgr(i)
 
