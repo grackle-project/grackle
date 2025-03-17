@@ -5060,7 +5060,7 @@ C***** H2Oice **********
 
       integer i, j, k
       real*8 totalH(in), totalHe(in),
-     &       totalD, metalfree(in)
+     &       totalD, metalfree(in), my_dtoh
       R_PREC correctH, correctHe, correctD
       real*8 totalZ
       real*8 totalC, totalO, totalMg, totalAl
@@ -5085,6 +5085,12 @@ C***** H2Oice **********
      &     , Sig(in), Sg(in), Feg(in)
       real*8 Cd(in), Od(in), Mgd(in), Ald(in)
      &     , Sid(in), Sd(in), Fed(in)
+
+      if (ispecies .gt. 2) then
+         my_dtoh = dtoh
+      else
+         my_dtoh = 0._DKIND
+      endif
 
 !     Loop over all zones
 
@@ -5303,10 +5309,9 @@ C           enddo
 !     Correct densities by keeping fractions the same
 
       do i = is+1, ie+1
-         correctH = real(fh*(1._DKIND - dtoh)*metalfree(i)/totalH(i)
-     &              , RKIND)
-         !! GC202005
-!!       correctH = real(fh*metalfree(i)/totalH(i), RKIND)
+!        Only include D/H ratio if using D species
+         correctH = real(fh*(1._DKIND - my_dtoh)*metalfree(i)/totalH(i),
+     &        RKIND)
          HI(i,j,k)  = HI(i,j,k)*correctH
          HII(i,j,k) = HII(i,j,k)*correctH
 
