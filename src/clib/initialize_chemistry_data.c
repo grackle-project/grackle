@@ -21,6 +21,7 @@
 #include "grackle_types.h"
 #include "grackle_chemistry_data.h"
 #include "phys_constants.h"
+#include "show.h"
 #ifdef _OPENMP
 #include <omp.h>
 #endif
@@ -37,7 +38,6 @@ extern chemistry_data_storage grackle_rates;
 void auto_show_config(FILE *fp);
 void auto_show_flags(FILE *fp);
 grackle_version get_grackle_version();
-void show_parameters(FILE *fp, chemistry_data *my_chemistry);
 
 int _free_cloudy_data(cloudy_data *my_cloudy, chemistry_data *my_chemistry, int primordial);
 int initialize_cloudy_data(chemistry_data *my_chemistry,
@@ -56,7 +56,7 @@ int initialize_rates(chemistry_data *my_chemistry, chemistry_data_storage *my_ra
 
 void initialize_empty_UVBtable_struct(UVBtable *table);
 
-static void show_version(FILE *fp)
+void show_version(FILE *fp)
 {
   grackle_version gversion = get_grackle_version();
   fprintf (fp, "\n");
