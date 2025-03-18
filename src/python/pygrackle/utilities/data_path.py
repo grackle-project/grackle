@@ -20,7 +20,8 @@ if _is_editable_installation():
     # Note, this only works with an editable install of pygrackle.
     _install_dir = dirname(os.path.abspath(__file__), level=5)
     grackle_data_dir = os.path.join(_install_dir, "input")
-else (grackle_data_dir is None):
+else:
     raise RuntimeError(
         "in non-editable pygrackle installations, like this one, "
         f"grackle_data_dir cannot be imported from {__file__}."
+    )
