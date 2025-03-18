@@ -57,4 +57,3 @@ extern void FORTRAN_NAME(interpolate_5d_g)(double *input1, double *input2, doubl
                                            double *gridPar5, double *dgridPar5,
                                            long long *dataSize, double *dataField,
                                            double *value);
-
