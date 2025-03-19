@@ -18,38 +18,149 @@
 ************************************************************************/
 
 ENTRY(density)
-ENTRY(HI_density)
-ENTRY(HII_density)
-ENTRY(HM_density)
-ENTRY(HeI_density)
-ENTRY(HeII_density)
-ENTRY(HeIII_density)
-ENTRY(H2I_density)
-ENTRY(H2II_density)
-ENTRY(DI_density)
-ENTRY(DII_density)
-ENTRY(HDI_density)
-ENTRY(e_density)
-ENTRY(metal_density)
-ENTRY(dust_density)
-
 ENTRY(internal_energy)
 ENTRY(x_velocity)
 ENTRY(y_velocity)
 ENTRY(z_velocity)
 
-ENTRY(volumetric_heating_rate)
-ENTRY(specific_heating_rate)
+  // metal_cooling = 1
+ENTRY(metal_density)
 
+  // use_dust_density_field = 1
+ENTRY(dust_density)
+
+  // primordial_chemistry = 1
+ENTRY(e_density)
+ENTRY(HI_density)
+ENTRY(HII_density)
+ENTRY(HeI_density)
+ENTRY(HeII_density)
+ENTRY(HeIII_density)
+
+  // primordial_chemistry = 2
+ENTRY(HM_density)
+ENTRY(H2I_density)
+ENTRY(H2II_density)
+
+  // primordial_chemistry = 3
+ENTRY(DI_density)
+ENTRY(DII_density)
+ENTRY(HDI_density)
+
+  // primordial_chemistry = 4
+ENTRY(DM_density)
+ENTRY(HDII_density)
+ENTRY(HeHII_density)
+
+  // metal_chemistry = 1
+ENTRY(CI_density)
+ENTRY(CII_density)
+ENTRY(CO_density)
+ENTRY(CO2_density)
+ENTRY(OI_density)
+ENTRY(OH_density)
+ENTRY(H2O_density)
+ENTRY(O2_density)
+ENTRY(SiI_density)
+ENTRY(SiOI_density)
+ENTRY(SiO2I_density)
+ENTRY(CH_density)
+ENTRY(CH2_density)
+ENTRY(COII_density)
+ENTRY(OII_density)
+ENTRY(OHII_density)
+ENTRY(H2OII_density)
+ENTRY(H3OII_density)
+ENTRY(O2II_density)
+
+  // dust_species = 1
+ENTRY(Mg_density)
+
+  // dust_species = 2
+ENTRY(Al_density)
+ENTRY(S_density)
+ENTRY(Fe_density)
+
+  // dust_species = 1
+ENTRY(MgSiO3_dust_density) // enstatite
+ENTRY(AC_dust_density) // amorphous carbon
+
+  // dust_species = 2
+ENTRY(SiM_dust_density) // metallic silicon
+ENTRY(FeM_dust_density) // metallic iron
+ENTRY(Mg2SiO4_dust_density) // forsterite
+ENTRY(Fe3O4_dust_density) // magnetite
+ENTRY(SiO2_dust_density) // silica
+ENTRY(MgO_dust_density) // magnesia
+ENTRY(FeS_dust_density) // troilite
+ENTRY(Al2O3_dust_density) // alumina
+
+  // dust_species = 3
+ENTRY(ref_org_dust_density) // refractory organics
+ENTRY(vol_org_dust_density) // volatile organics
+ENTRY(H2O_ice_dust_density) // water ice
+
+  // metal_chemistry = 1
+  // multi_metals = 0, metal_abundances = 0-11 selects one of below
+  // multi_metals = 1, all of below
+ENTRY(local_ISM_metal_density)
+ENTRY(ccsn13_metal_density)
+ENTRY(ccsn20_metal_density)
+ENTRY(ccsn25_metal_density)
+ENTRY(ccsn30_metal_density)
+ENTRY(fsn13_metal_density)
+ENTRY(fsn15_metal_density)
+ENTRY(fsn50_metal_density)
+ENTRY(fsn80_metal_density)
+ENTRY(pisn170_metal_density)
+ENTRY(pisn200_metal_density)
+ENTRY(y19_metal_density)
+
+  // use_volumetric_heating_rate = 1
+ENTRY(volumetric_heating_rate)
+  // use_specific_heating_rate = 1
+ENTRY(specific_heating_rate)
+  // use_temperature_floor = 1
 ENTRY(temperature_floor)
 
+  // use_radiative_transfer = 1
+  // primordial_chemistry = 1
 ENTRY(RT_heating_rate)
 ENTRY(RT_HI_ionization_rate)
 ENTRY(RT_HeI_ionization_rate)
 ENTRY(RT_HeII_ionization_rate)
+  // primordial_chemistry = 2
 ENTRY(RT_H2_dissociation_rate)
 
+  // radiative_transfer_HDI_dissociation = 1
+ENTRY(RT_HDI_dissociation_rate)
+  // radiative_transfer_metal_ionization = 1
+ENTRY(RT_CI_ionization_rate)
+ENTRY(RT_OI_ionization_rate)
+  // radiative_transfer_metal_dissociation = 1
+ENTRY(RT_CO_dissociation_rate)
+ENTRY(RT_OH_dissociation_rate)
+ENTRY(RT_H2O_dissociation_rate)
+
+  // H2_self_shielding = 2
 ENTRY(H2_self_shielding_length)
+  // H2_custom_shielding = 1
 ENTRY(H2_custom_shielding_factor)
 
+  // use_isrf_field = 1
 ENTRY(isrf_habing)
+
+  // use_multiple_dust_temperatures = 1
+ENTRY(SiM_dust_temperature)
+ENTRY(FeM_dust_temperature)
+ENTRY(Mg2SiO4_dust_temperature)
+ENTRY(MgSiO3_dust_temperature)
+ENTRY(Fe3O4_dust_temperature)
+ENTRY(AC_dust_temperature)
+ENTRY(SiO2_dust_temperature)
+ENTRY(MgO_dust_temperature)
+ENTRY(FeS_dust_temperature)
+ENTRY(Al2O3_dust_temperature)
+ENTRY(ref_org_dust_temperature)
+ENTRY(vol_org_dust_temperature)
+ENTRY(H2O_ice_dust_temperature)

@@ -33,7 +33,7 @@
      &                iradshield, avgsighi, avgsighei,
      &                avgsigheii,
      &                k24, k26, iradtrans, photogamma,
-     &                ih2optical, iciecool, ciecoa, cieco,
+     &                ih2optical, iciecool, ih2cr, ihdcr, ciecoa, cieco,
      &                icmbTfloor, iClHeat, clEleFra,
      &                priGridRank, priGridDim,
      &                priPar1, priPar2, priPar3, priPar4, priPar5,
@@ -44,7 +44,70 @@
      &                iVheat, iMheat, Vheat, Mheat,
      &                iTfloor, Tfloor_scalar, Tfloor,
      &                iisrffield, isrf_habing,
-     &                itmask)
+     &                itmask, itmask_metal
+     &              , imchem, igrgr, ipcont, tmcool
+     &              , DM, HDII, HeHII
+     &              , CI, CII, CO, CO2
+     &              , OI, OH, H2O, O2
+     &              , SiI, SiOI, SiO2I
+     &              , CH, CH2, COII, OII
+     &              , OHII, H2OII, H3OII, O2II
+     &              , Mg, Al, S, Fe
+     &              , SiM, FeM, Mg2SiO4, MgSiO3, Fe3O4
+     &              , AC, SiO2D, MgO, FeS, Al2O3
+     &              , reforg, volorg, H2Oice
+     &              , cieY06a
+     &              , LH2_N, LH2_Size
+     &              , LH2_D, LH2_T, LH2_H
+     &              , LH2_dD, LH2_dT, LH2_dH, LH2_L
+     &              , LHD_N, LHD_Size
+     &              , LHD_D, LHD_T, LHD_H
+     &              , LHD_dD, LHD_dT, LHD_dH, LHD_L
+     &              , LCI_N, LCI_Size
+     &              , LCI_D, LCI_T, LCI_H
+     &              , LCI_dD, LCI_dT, LCI_dH, LCI_L
+     &              , LCII_N, LCII_Size
+     &              , LCII_D, LCII_T, LCII_H
+     &              , LCII_dD, LCII_dT, LCII_dH, LCII_L
+     &              , LOI_N, LOI_Size
+     &              , LOI_D, LOI_T, LOI_H
+     &              , LOI_dD, LOI_dT, LOI_dH, LOI_L
+     &              , LCO_N, LCO_Size
+     &              , LCO_D, LCO_T, LCO_H
+     &              , LCO_dD, LCO_dT, LCO_dH, LCO_L
+     &              , LOH_N, LOH_Size
+     &              , LOH_D, LOH_T, LOH_H
+     &              , LOH_dD, LOH_dT, LOH_dH, LOH_L
+     &              , LH2O_N, LH2O_Size
+     &              , LH2O_D, LH2O_T, LH2O_H
+     &              , LH2O_dD, LH2O_dT, LH2O_dH, LH2O_L
+     &              , alphap_N, alphap_Size
+     &              , alphap_D, alphap_T, alphap_dD, alphap_dT
+     &              , alphap_Data
+     &              , immulti, imabund, idspecies, itdmulti, idsub
+     &              , metal_loc
+     &              , metal_C13, metal_C20, metal_C25, metal_C30
+     &              , metal_F13, metal_F15, metal_F50, metal_F80
+     &              , metal_P170, metal_P200, metal_Y19
+     &              , SN0_N
+     &              , SN0_fSiM, SN0_fFeM, SN0_fMg2SiO4, SN0_fMgSiO3
+     &              , SN0_fFe3O4, SN0_fAC, SN0_fSiO2D, SN0_fMgO
+     &              , SN0_fFeS, SN0_fAl2O3
+     &              , SN0_freforg, SN0_fvolorg, SN0_fH2Oice
+     &              , SN0_r0SiM, SN0_r0FeM, SN0_r0Mg2SiO4, SN0_r0MgSiO3
+     &              , SN0_r0Fe3O4, SN0_r0AC, SN0_r0SiO2D, SN0_r0MgO
+     &              , SN0_r0FeS, SN0_r0Al2O3
+     &              , SN0_r0reforg, SN0_r0volorg, SN0_r0H2Oice
+     &              , gr_N, gr_Size, gr_dT, gr_Td
+     &              , SN0_kpSiM, SN0_kpFeM, SN0_kpMg2SiO4, SN0_kpMgSiO3
+     &              , SN0_kpFe3O4, SN0_kpAC, SN0_kpSiO2D, SN0_kpMgO
+     &              , SN0_kpFeS, SN0_kpAl2O3
+     &              , SN0_kpreforg, SN0_kpvolorg, SN0_kpH2Oice
+     &              , tSiM, tFeM, tMg2SiO4, tMgSiO3, tFe3O4
+     &              , tAC, tSiO2D, tMgO, tFeS, tAl2O3
+     &              , treforg, tvolorg, tH2Oice
+     &              , gasgr2a, gamma_isrf2a
+     &            )
 
 !  SOLVE RADIATIVE COOLING/HEATING EQUATIONS
 !
@@ -74,13 +137,15 @@
       integer in, jn, kn, is, ie, j, k, nratec, idim,
      &        iexpand, ih2co, ipiht, ispecies, imcool,
      &        idust, idustall, idustfield, idustrec,
-     &        imetal, igammah, ih2optical, iciecool, clnew,
+     &        imetal, igammah, ih2optical, iciecool, ih2cr, ihdcr,
+     &        clnew,
      &        iVheat, iMheat, iTfloor, iradtrans, iradshield,
      &        iisrffield
+     &       ,imchem, igrgr, ipcont
 
       real*8  aye, temstart, temend, z_solar, fgr,
      &        utem, uxyz, uaye, urho, utim,
-     &        gamma, fh, clEleFra, Tfloor_scalar
+     &        gamma, fh, clEleFra, Tfloor_scalar, tmcool
       R_PREC  d(in,jn,kn),    e(in,jn,kn),
      &        u(in,jn,kn),    v(in,jn,kn),     w(in,jn,kn),
      &        de(in,jn,kn),   HI(in,jn,kn),   HII(in,jn,kn),
@@ -90,6 +155,27 @@
      &        metal(in,jn,kn), dust(in,jn,kn),
      &        Vheat(in,jn,kn), Mheat(in,jn,kn), Tfloor(in,jn,kn),
      &        photogamma(in,jn,kn), isrf_habing(in,jn,kn)
+     &      , DM(in,jn,kn)   , HDII(in,jn,kn)   , HeHII(in,jn,kn)
+     &      , CI(in,jn,kn)   , CII(in,jn,kn)    , CO(in,jn,kn)
+     &      , CO2(in,jn,kn)  , OI(in,jn,kn)     , OH(in,jn,kn)
+     &      , H2O(in,jn,kn)  , O2(in,jn,kn)     , SiI(in,jn,kn)
+     &      , SiOI(in,jn,kn) , SiO2I(in,jn,kn)  , CH(in,jn,kn)
+     &      , CH2(in,jn,kn)  , COII(in,jn,kn)   , OII(in,jn,kn)
+     &      , OHII(in,jn,kn) , H2OII(in,jn,kn)  , H3OII(in,jn,kn)
+     &      , O2II(in,jn,kn) , Mg(in,jn,kn)     , Al(in,jn,kn)
+     &      , S(in,jn,kn)    , Fe(in,jn,kn)
+      R_PREC  SiM(in,jn,kn), FeM(in,jn,kn), Mg2SiO4(in,jn,kn)
+     &      , MgSiO3(in,jn,kn), Fe3O4(in,jn,kn), AC(in,jn,kn)
+     &      , SiO2D(in,jn,kn), MgO(in,jn,kn), FeS(in,jn,kn)
+     &      , Al2O3(in,jn,kn)
+     &      , reforg(in,jn,kn), volorg(in,jn,kn), H2Oice(in,jn,kn)
+       R_PREC metal_loc(in,jn,kn)
+     &      , metal_C13(in,jn,kn), metal_C20(in,jn,kn)
+     &      , metal_C25(in,jn,kn), metal_C30(in,jn,kn)
+     &      , metal_F13(in,jn,kn), metal_F15(in,jn,kn)
+     &      , metal_F50(in,jn,kn), metal_F80(in,jn,kn)
+     &      , metal_P170(in,jn,kn), metal_P200(in,jn,kn)
+     &      , metal_Y19(in,jn,kn)
       real*8  hyd01ka(nratec), h2k01a(nratec), vibha(nratec), 
      &        rotha(nratec), rotla(nratec), gpldla(nratec),
      &        gphdla(nratec), hdltea(nratec), hdlowa(nratec),
@@ -122,11 +208,10 @@
 
 !  Parameters
 
-      integer ti_max
-      real*8 mh, mu_metal
-      parameter (mh = mass_h)      !DPC
-      parameter (mu_metal = 16._DKIND)    ! approx. mean molecular weight of metals
-      parameter (ti_max = 20)
+      real*8, parameter :: mh = mass_h      !DPC
+      ! approx. mean molecular weight of metals
+      real*8, parameter :: mu_metal = 16._DKIND
+      integer, parameter :: ti_max = 20
 
 !  Locals
 
@@ -137,7 +222,9 @@
      &       gphdl1, dom_inv, tau, ciefudge,
      &       coolunit, dbase1, tbase1, xbase1,
      &       nH2, nother, nSSh, nratio, nssh_he, nratio_he,
-     &       fSShHI, fSShHeI, pe_eps, pe_X, grbeta
+     &       fSShHI, fSShHeI, pe_eps, pe_X, grbeta, ih2cox,
+     &       min_metallicity
+      integer itd
 
 !  Slice locals
  
@@ -158,23 +245,150 @@
      &       gaHI(in), gaH2(in), gaHe(in), gaHp(in), gael(in),
      &       h2lte(in), galdl(in), gasgr(in), gasgr_tdust(in),
      &       regr(in), myisrf(in)
-
+       integer iden, item, itab
+       real*8  cieY06a(nratec), cieY06(in)
+       integer*8 LH2_N(3), LH2_Size
+       real*8  LH2_D(LH2_N(1)), LH2_T(LH2_N(2)), LH2_H(LH2_N(3))
+     &       , LH2_dD, LH2_dT, LH2_dH, LH2_L(LH2_Size)
+       integer*8 LHD_N(3), LHD_Size
+       real*8  LHD_D(LHD_N(1)), LHD_T(LHD_N(2)), LHD_H(LHD_N(3))
+     &       , LHD_dD, LHD_dT, LHD_dH, LHD_L(LHD_Size)
+       integer*8 LCI_N(3), LCI_Size
+       real*8  LCI_D(LCI_N(1)), LCI_T(LCI_N(2)), LCI_H(LCI_N(3))
+     &       , LCI_dD, LCI_dT, LCI_dH, LCI_L(LCI_Size)
+       integer*8 LCII_N(3), LCII_Size
+       real*8  LCII_D(LCII_N(1)), LCII_T(LCII_N(2)), LCII_H(LCII_N(3))
+     &       , LCII_dD, LCII_dT, LCII_dH, LCII_L(LCII_Size)
+       integer*8 LOI_N(3), LOI_Size
+       real*8  LOI_D(LOI_N(1)), LOI_T(LOI_N(2)), LOI_H(LOI_N(3))
+     &       , LOI_dD, LOI_dT, LOI_dH, LOI_L(LOI_Size)
+       integer*8 LCO_N(3), LCO_Size
+       real*8  LCO_D(LCO_N(1)), LCO_T(LCO_N(2)), LCO_H(LCO_N(3))
+     &       , LCO_dD, LCO_dT, LCO_dH, LCO_L(LCO_Size)
+       integer*8 LOH_N(3), LOH_Size
+       real*8  LOH_D(LOH_N(1)), LOH_T(LOH_N(2)), LOH_H(LOH_N(3))
+     &       , LOH_dD, LOH_dT, LOH_dH, LOH_L(LOH_Size)
+       integer*8 LH2O_N(3), LH2O_Size
+       real*8  LH2O_D(LH2O_N(1)), LH2O_T(LH2O_N(2)), LH2O_H(LH2O_N(3))
+     &       , LH2O_dD, LH2O_dT, LH2O_dH, LH2O_L(LH2O_Size)
+       integer*8 alphap_N(2), alphap_Size
+       real*8  alphap_D(alphap_N(1)), alphap_T(alphap_N(2))
+     &       , alphap_dD, alphap_dT
+     &       , alphap_Data(alphap_Size)
+      integer immulti, imabund, idspecies, itdmulti, idsub
+      integer SN0_N
+      real*8  SN0_fSiM(SN0_N), SN0_fFeM(SN0_N), SN0_fMg2SiO4(SN0_N)
+     &      , SN0_fMgSiO3(SN0_N), SN0_fFe3O4(SN0_N), SN0_fAC(SN0_N)
+     &      , SN0_fSiO2D(SN0_N), SN0_fMgO(SN0_N), SN0_fFeS(SN0_N)
+     &      , SN0_fAl2O3(SN0_N)
+     &      , SN0_freforg(SN0_N), SN0_fvolorg(SN0_N), SN0_fH2Oice(SN0_N)
+      real*8  SN0_r0SiM(3,SN0_N), SN0_r0FeM(3,SN0_N)
+     &      , SN0_r0Mg2SiO4(3,SN0_N), SN0_r0MgSiO3(3,SN0_N)
+     &      , SN0_r0Fe3O4(3,SN0_N), SN0_r0AC(3,SN0_N)
+     &      , SN0_r0SiO2D(3,SN0_N), SN0_r0MgO(3,SN0_N)
+     &      , SN0_r0FeS(3,SN0_N), SN0_r0Al2O3(3,SN0_N)
+     &      , SN0_r0reforg(3,SN0_N)
+     &      , SN0_r0volorg(3,SN0_N), SN0_r0H2Oice(3,SN0_N)
+!     opacity table
+      integer gr_N(2), gr_Size
+      real*8  gr_dT, gr_Td(gr_N(2))
+      real*8  SN0_kpSiM(gr_Size,SN0_N), SN0_kpFeM(gr_Size,SN0_N)
+     &      , SN0_kpMg2SiO4(gr_Size,SN0_N), SN0_kpMgSiO3(gr_Size,SN0_N)
+     &      , SN0_kpFe3O4(gr_Size,SN0_N), SN0_kpAC(gr_Size,SN0_N)
+     &      , SN0_kpSiO2D(gr_Size,SN0_N), SN0_kpMgO(gr_Size,SN0_N)
+     &      , SN0_kpFeS(gr_Size,SN0_N), SN0_kpAl2O3(gr_Size,SN0_N)
+     &      , SN0_kpreforg(gr_Size,SN0_N)
+     &      , SN0_kpvolorg(gr_Size,SN0_N), SN0_kpH2Oice(gr_Size,SN0_N)
+       real*8 logdom, logT(in), logTcmb(in), logrho(in)
+     &      , logH(in), logH2I(in), logHDI(in)
+     &      , logH2(in), logCI(in), logCII(in), logOI(in)
+     &      , logCO(in), logOH(in), logH2O(in)
+       real*8 logdvdr(in), lognhat
+       real*8 log_Linv, log_Ginv, L, G
+       real*8 Lpri(in)
+     &      , LH2(in), LCIE(in), LHD(in)
+     &      , LCI(in), LCII(in), LOI(in)
+     &      , LCO(in), LOH(in), LH2O(in)
+       real*8 Ldst(in), alpha(in), alphad(in)
+       real*8 lshield_con(in), tau_con(in)
+       real*8 log_a, log_L, log_G
+!     grain growth
+      real*8  sgSiM(in), sgFeM(in), sgMg2SiO4(in)
+     &      , sgMgSiO3(in), sgFe3O4(in), sgAC(in)
+     &      , sgSiO2D(in), sgMgO(in), sgFeS(in)
+     &      , sgAl2O3(in)
+     &      , sgreforg(in), sgvolorg(in), sgH2Oice(in)
+     &      , sgtot(in)
+      real*8  alSiM(gr_N(2),in), alFeM(gr_N(2),in)
+     &      , alMg2SiO4(gr_N(2),in), alMgSiO3(gr_N(2),in)
+     &      , alFe3O4(gr_N(2),in), alAC(gr_N(2),in)
+     &      , alSiO2D(gr_N(2),in), alMgO(gr_N(2),in)
+     &      , alFeS(gr_N(2),in), alAl2O3(gr_N(2),in)
+     &      , alreforg(gr_N(2),in)
+     &      , alvolorg(gr_N(2),in), alH2Oice(gr_N(2),in)
+     &      , altot(gr_N(2),in)
+      real*8  kpSiM(in), kpFeM(in), kpMg2SiO4(in)
+     &      , kpMgSiO3(in), kpFe3O4(in), kpAC(in)
+     &      , kpSiO2D(in), kpMgO(in), kpFeS(in)
+     &      , kpAl2O3(in)
+     &      , kpreforg(in), kpvolorg(in), kpH2Oice(in)
+     &      , kptot(in)
+!     grain temperature
+      real*8  tSiM(in), tFeM(in), tMg2SiO4(in)
+     &      , tMgSiO3(in), tFe3O4(in), tAC(in)
+     &      , tSiO2D(in), tMgO(in), tFeS(in)
+     &      , tAl2O3(in)
+     &      , treforg(in), tvolorg(in), tH2Oice(in)
+      real*8  gasgr2a(nratec), gamma_isrf2a
+      real*8  gasSiM(in), gasFeM(in), gasMg2SiO4(in)
+     &      , gasMgSiO3(in), gasFe3O4(in), gasAC(in)
+     &      , gasSiO2D(in), gasMgO(in), gasFeS(in)
+     &      , gasAl2O3(in)
+     &      , gasreforg(in), gasvolorg(in), gasH2Oice(in)
+      real*8  gasgr_tSiM(in), gasgr_tFeM(in), gasgr_tMg2SiO4(in)
+     &      , gasgr_tMgSiO3(in), gasgr_tFe3O4(in), gasgr_tAC(in)
+     &      , gasgr_tSiO2D(in), gasgr_tMgO(in), gasgr_tFeS(in)
+     &      , gasgr_tAl2O3(in)
+     &      , gasgr_treforg(in), gasgr_tvolorg(in), gasgr_tH2Oice(in)
+      real*8  mygisrf(in), fv2k, fac
+      real*8  gisrfSiM(in), gisrfFeM(in), gisrfMg2SiO4(in)
+     &      , gisrfMgSiO3(in), gisrfFe3O4(in), gisrfAC(in)
+     &      , gisrfSiO2D(in), gisrfMgO(in), gisrfFeS(in)
+     &      , gisrfAl2O3(in)
+     &      , gisrfreforg(in), gisrfvolorg(in), gisrfH2Oice(in)
 !  Iteration mask
 
-      logical itmask(in), anydust, interp
+      MASK_TYPE itmask(in), anydust, interp
+      MASK_TYPE itmask_metal(in), itmask_tab(in)
+!!#define CALCULATE_TGAS_SELF_CONSISTENTLY
+!#ifdef CALCULATE_TGAS_SELF_CONSISTENTLY
+      integer iter_tgas
+      real*8  tgas_err, tgas0
+!#endif /* NOT important */
+!     debug
+      real*8  edotunit
+      integer i_max
+      R_PREC  d_max
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
 !=======================================================================
 
 !     Set flag for dust-related options
 
-      anydust = (idust .gt. 0) .or. (idustall .gt. 0) .or.
-     &          (idustrec .gt. 0)
+      if ((idust .gt. 0) .or. (idustall .gt. 0) .or.
+     &    (idustrec .gt. 0)) then
+         anydust = MASK_TRUE
+      else
+         anydust = MASK_FALSE
+      endif
 
 !     Set flag for needing interpolation variables
 
-      interp = (ispecies .gt. 0) .or. (idustall .gt. 0)
-
+      if ((ispecies .gt. 0) .or. (idustall .gt. 0)) then
+         interp = MASK_TRUE
+      else
+         interp = MASK_FALSE
+      endif
 !     Set log values of start and end of lookup tables
 
       logtem0 = log(temstart)
@@ -198,10 +412,16 @@
       comp1 = compa  * (1._DKIND + zr)**4
       comp2 = 2.73_DKIND * (1._DKIND + zr)
 
+!     multiplicative factor for including/excluding H2 cooling
+      ih2cox = real(ih2co, DKIND)
+
+!     ignore metal chemistry/cooling below this metallicity
+      min_metallicity = 1.d-9 / z_solar
+
 !     Initialize edot
 
       do i = is+1, ie+1
-         if ( itmask(i) ) then
+         if ( itmask(i) .ne. MASK_FALSE ) then
             edot(i) = 0._DKIND
          end if
       enddo
@@ -209,7 +429,7 @@
 !     Compute Pressure
 
       do i = is+1, ie+1
-         if ( itmask(i) ) then
+         if ( itmask(i) .ne. MASK_FALSE ) then
             p2d(i) = (gamma - 1._DKIND)*d(i,j,k)*e(i,j,k)
          end if
       enddo
@@ -225,13 +445,13 @@
 
          if (imetal .eq. 1) then
             do i = is+1, ie+1
-               if ( itmask(i) ) then
+               if ( itmask(i) .ne. MASK_FALSE ) then
                   rhoH(i) = fh * (d(i,j,k) - metal(i,j,k))
                endif
             enddo
          else
             do i = is+1, ie+1
-               if ( itmask(i) ) then
+               if ( itmask(i) .ne. MASK_FALSE ) then
                   rhoH(i) = fh * d(i,j,k)
                endif
             enddo
@@ -252,7 +472,7 @@
 !     Compute mean molecular weight (and temperature) directly
 
          do i = is+1, ie+1
-            if ( itmask(i) ) then
+            if ( itmask(i) .ne. MASK_FALSE ) then
                mmw(i) =
      &              (HeI(i,j,k) + HeII(i,j,k) + HeIII(i,j,k))/4._DKIND +
      &              HI(i,j,k) + HII(i,j,k) + de(i,j,k)
@@ -265,7 +485,7 @@
 
          if (ispecies .gt. 1) then
             do i = is+1, ie+1
-               if ( itmask(i) ) then
+               if ( itmask(i) .ne. MASK_FALSE ) then
                   mmw(i) = mmw(i) +
      &                 HM(i,j,k) + (H2I(i,j,k) + H2II(i,j,k))/2._DKIND
                   rhoH(i) = rhoH(i) + H2I(i,j,k) + H2II(i,j,k)
@@ -277,14 +497,14 @@
 
          if (imetal .eq. 1) then
             do i = is+1, ie+1
-               if ( itmask(i) ) then
+               if ( itmask(i) .ne. MASK_FALSE ) then
                   mmw(i) = mmw(i) + metal(i,j,k)/mu_metal
                end if
             enddo
          endif
 
          do i = is+1, ie+1
-            if ( itmask(i) ) then
+            if ( itmask(i) .ne. MASK_FALSE ) then
                tgas(i) = max(p2d(i)*utem/mmw(i), temstart)
                mmw(i) = d(i,j,k) / mmw(i)
             end if
@@ -294,26 +514,41 @@
 
          if (ispecies .gt. 1) then
             do i = is+1, ie+1
-               if ( itmask(i) ) then
+               if ( itmask(i) .ne. MASK_FALSE ) then
                   nH2 = 0.5_DKIND*(H2I(i,j,k) + H2II(i,j,k))
                   nother = (HeI(i,j,k) + HeII(i,j,k) +
      &                 HeIII(i,j,k))/4._DKIND +
      &                 HI(i,j,k) + HII(i,j,k) + de(i,j,k)
-                  if (nH2/nother .gt. 1.0e-3_DKIND) then
-                     x = 6100._DKIND/tgas(i) ! not quite self-consistent
-                     if (x .gt. 10._DKIND) then
-                        gamma2 = 0.5_DKIND*5._DKIND
+
+                  iter_tgas = 0
+                  tgas_err = huge8
+                  do while ((iter_tgas .lt. 100)
+     &                 .and.(tgas_err .gt. 1.d-3))
+                     tgas0 = tgas(i)
+                     if (nH2/nother .gt. 1.0e-3_DKIND) then
+                        x = 6100._DKIND/tgas(i) ! not quite self-consistent
+                        if (x .gt. 10._DKIND) then
+                           gamma2 = 0.5_DKIND*5._DKIND
+                        else
+                           gamma2 = 0.5_DKIND*(5._DKIND + 2._DKIND*x**2
+     &                       * exp(x)/(exp(x)-1)**2)
+                        endif
                      else
-                        gamma2 = 0.5_DKIND*(5._DKIND + 2._DKIND*x**2 * 
-     &                       exp(x)/(exp(x)-1)**2)
+                        gamma2 = 2.5_DKIND
                      endif
-                  else
-                     gamma2 = 2.5_DKIND
-                  endif
-                  gamma2 = 1._DKIND + (nH2 + nother)/
-     &                 (nH2*gamma2 + nother/(gamma-1._DKIND))
-                  tgas(i) = tgas(i) * (gamma2 - 1._DKIND)/
-     &                 (gamma - 1._DKIND)
+                     gamma2 = 1._DKIND + (nH2 + nother)/
+     &                    (nH2*gamma2 + nother/(gamma-1._DKIND))
+#ifdef CALCULATE_TGAS_SELF_CONSISTENTLY
+                     tgas(i) = max((gamma2 - 1._DKIND)*mmw(i)*e(i,j,k)*
+     &                    utem, temstart)
+                     tgas_err = dabs(tgas0 - tgas(i)) / tgas0
+                     iter_tgas = iter_tgas + 1
+#else
+                     tgas(i) = tgas(i) * (gamma2 - 1._DKIND)/
+     &                    (gamma - 1._DKIND)
+                     iter_tgas = 101
+#endif
+                  end do
                end if
             enddo
          endif
@@ -324,19 +559,19 @@
 
       if (iTfloor .eq. 1) then
          do i = is+1, ie+1
-            if ( itmask(i) ) then
+            if ( itmask(i) .ne. MASK_FALSE ) then
                if (tgas(i) .le. Tfloor_scalar) then
                   edot(i) = tiny
-                  itmask(i) = .false.
+                  itmask(i) = MASK_FALSE
                endif
             endif
          enddo
       else if (iTfloor .eq. 2) then
          do i = is+1, ie+1
-            if ( itmask(i) ) then
+            if ( itmask(i) .ne. MASK_FALSE ) then
                if (tgas(i) .le. Tfloor(i,j,k)) then
                   edot(i) = tiny
-                  itmask(i) = .false.
+                  itmask(i) = MASK_FALSE
                endif
             endif
          enddo
@@ -346,14 +581,20 @@
 
       if (imetal .eq. 1) then
          do i = is+1, ie+1
-            if ( itmask(i) ) then
+            if ( itmask(i) .ne. MASK_FALSE ) then
                metallicity(i) = metal(i,j,k) / d(i,j,k) / z_solar
+            endif
+         enddo
+      else
+         do i = is+1, ie+1
+            if ( itmask(i) .ne. MASK_FALSE ) then
+               metallicity(i) = tiny
             endif
          enddo
       endif
 
       do i = is+1, ie+1
-         if ( itmask(i) ) then
+         if ( itmask(i) .ne. MASK_FALSE ) then
             mynh(i) = rhoH(i) * dom
          end if
       enddo
@@ -362,14 +603,54 @@
 
       if (iter .eq. 1) then
          do i = is+1, ie+1
-            if ( itmask(i) ) then
+            if ( itmask(i) .ne. MASK_FALSE ) then
             tgasold(i) = tgas(i)
             end if
          enddo
       endif
 
+!     Compute log densities
+
+      logdom = log10(dom)
       do i = is+1, ie+1
-         if ( itmask(i) ) then
+         if ( itmask(i) .ne. MASK_FALSE ) then
+            logT(i)   = log10(tgas(i))
+            if(icmbTfloor .eq. 1)
+     &         logTcmb(i) = log10(comp2)
+            logrho(i) = log10(d(i,j,k) * dom*mh)
+            if( ispecies .gt. 0) then
+               logH(i)   = log10(HI(i,j,k) * dom)
+               logH2(i)  = log10(HI(i,j,k) * dom)
+            endif
+            if( ispecies .gt. 1 ) then
+              logH2(i)  = log10((HI(i,j,k) + H2I(i,j,k) / 2.d0) * dom)
+              logH2I(i) = log10(H2I(i,j,k) * dom /  2.d0)
+            endif
+            if( ispecies .gt. 2) then
+              logHDI(i) = log10(HDI(i,j,k) * dom /  3.d0)
+            endif
+            if( imcool .eq. 1 ) then
+            if( imchem .eq. 1 ) then
+              logCI(i)  = log10(CI (i,j,k) * dom / 12.d0)
+              logCII(i) = log10(CII(i,j,k) * dom / 12.d0)
+              logOI(i)  = log10(OI (i,j,k) * dom / 16.d0)
+              logCO(i)  = log10(CO (i,j,k) * dom / 28.d0)
+              logOH(i)  = log10(OH (i,j,k) * dom / 17.d0)
+              logH2O(i) = log10(H2O(i,j,k) * dom / 18.d0)
+            endif
+            endif
+
+!     From Chiaki & Wise (2019), approximate dv/dr as 1/(3 * t_ff)
+            logdvdr(i) = -8.79947961814d0 + 0.5d0 * logrho(i) ! km/s / cm
+            lshield_con(i) = 
+     &         sqrt((gamma * pi_val * kboltz * tgas(i)) /
+     &         (GravConst *  mmw(i)*mh * d(i,j,k)*dom*mh))
+
+          endif
+      enddo
+     
+      do i = is+1, ie+1
+         if ( itmask(i) .ne. MASK_FALSE ) then
 
 !        Compute log temperature and truncate if above/below table max/min
 
@@ -382,9 +663,9 @@
 
 !     Compute interpolation indices
 
-      if (interp) then
+      if (interp .ne. MASK_FALSE) then
          do i = is+1, ie+1
-            if ( itmask(i) ) then
+            if ( itmask(i) .ne. MASK_FALSE ) then
 
 !     Compute index into the table and precompute parts of linear interp
 
@@ -403,7 +684,7 @@
       if (ispecies .gt. 0) then
 
       do i = is+1, ie+1
-         if ( itmask(i) ) then
+         if ( itmask(i) .ne. MASK_FALSE ) then
 
 !        Lookup cooling values and do a linear temperature in log(T)
 
@@ -438,7 +719,7 @@
 !     Compute the cooling function
 
       do i = is+1, ie+1
-         if ( itmask(i) ) then
+         if ( itmask(i) .ne. MASK_FALSE ) then
          edot(i) = (
 
 !                    Collisional excitations
@@ -467,6 +748,7 @@
      &           HeIII(i,j,k)) * de(i,j,k)
 
      &             )
+         Lpri(i) = edot(i)
 
          if (edot(i) .ne. edot(i)) then
 #ifdef _OPENMP
@@ -485,15 +767,46 @@
       enddo
 
       endif
-     
+
 !     --- H2 cooling ---
 
       if (ispecies .gt. 1) then
+!        Chiaki & Wise (2019) H2 cooling rate
+         if (ih2cr .eq. 3) then
 
-#define USE_GLOVER_ABEL2008
-#ifdef USE_GLOVER_ABEL2008
+      do i = is+1, ie+1
+      if ( itmask(i) .ne. MASK_FALSE ) then
+
+         lognhat = logH2I(i) - logdvdr(i)
+
+         call interpolate_3D_g(
+     &     lognhat, logT(i), logH(i), LH2_N,
+     &     LH2_D, LH2_dD, LH2_T, LH2_dT, LH2_H, LH2_dH,
+     &     LH2_Size, LH2_L, log_Linv)
+         L = 1.d1**(-log_Linv)
+
+         if (icmbTfloor .eq. 1) then
+         call interpolate_3D_g(
+     &     lognhat, logTcmb(i), logH(i), LH2_N,
+     &     LH2_D, LH2_dD, LH2_T, LH2_dT, LH2_H, LH2_dH,
+     &     LH2_Size, LH2_L, log_Ginv)
+         G = 1.d1**(-log_Ginv)
+         else
+         G = tiny8
+         endif
+
+         LH2(i) = ih2cox * (G - L) / dom * H2I(i,j,k)/2.d0
+         if (LH2(i) .ne. LH2(i)) LH2(i) = 0.d0
+         edot(i) = edot(i) + LH2(i)
+
+      endif
+      enddo
+
+!     Glover & Abel (2008) H2 cooling rate
+      else if (ih2cr .eq. 2) then
+
          do i = is+1, ie+1
-            if ( itmask(i) ) then
+            if ( itmask(i) .ne. MASK_FALSE ) then
             gaHI(i) = gaHIa(indixe(i)) + tdef(i)
      &         *(gaHIa(indixe(i)+1) - gaHIa(indixe(i)))
             gaH2(i) = gaH2a(indixe(i)) + tdef(i)
@@ -514,7 +827,7 @@
          enddo
 
          do i = is+1, ie+1
-            if ( itmask(i) ) then
+            if ( itmask(i) .ne. MASK_FALSE ) then
 #ifdef OPTICAL_DEPTH_FUDGE
             nH2 = 0.5_DKIND*H2I(i,j,k)
             nother = (HeI(i,j,k) + HeII(i,j,k) + 
@@ -542,22 +855,17 @@
      &               + gael(i) * de(i,j,k)
 c            gphdl1 = gphdl(i)/dom
             gphdl1 = h2lte(i)/dom
-            edot(i) = edot(i) - real(ih2co, DKIND)*fudge*H2I(i,j,k)*
+            edot(i) = edot(i) - ih2cox*fudge*H2I(i,j,k)*
      &           h2lte(i)/(1._DKIND + gphdl1/galdl(i)) / (2._DKIND*dom)
 
             end if
          enddo
-#else
 
-#define USE_GALLI_PALLA1999
-#define NO_OPTICAL_DEPTH_FUDGE
-
-!        Use the Galli and Palla (1999) cooling rates for molecular H.
-
-#ifdef USE_GALLI_PALLA1999
+!     Galli & Palla (1998) H2 cooling rate
+      else if (ih2cr .eq. 1) then
 
          do i = is+1, ie+1
-            if ( itmask(i) ) then
+            if ( itmask(i) .ne. MASK_FALSE ) then
             gpldl(i) = gpldla(indixe(i)) + tdef(i)
      &         *(gpldla(indixe(i)+1) - gpldla(indixe(i)))
             gphdl(i) = gphdla(indixe(i)) + tdef(i)
@@ -568,8 +876,9 @@ c            gphdl1 = gphdl(i)/dom
          enddo
 
          do i = is+1, ie+1
-            if ( itmask(i) ) then
+            if ( itmask(i) .ne. MASK_FALSE ) then
 
+#define NO_OPTICAL_DEPTH_FUDGE
 #ifdef OPTICAL_DEPTH_FUDGE
             nH2 = 0.5_DKIND*H2I(i,j,k)
             nother = (HeI(i,j,k) + HeII(i,j,k) +
@@ -591,16 +900,17 @@ c            gphdl1 = gphdl(i)/dom
                 fudge = 1._DKIND
             endif
             gphdl1 = gphdl(i)/(HI(i,j,k)*dom)
-            edot(i) = edot(i) - real(ih2co, DKIND)*fudge*H2I(i,j,k)*
+            edot(i) = edot(i) - ih2cox*fudge*H2I(i,j,k)*
      &           gphdl(i)/(1._DKIND + gphdl1/gpldl(i)) / (2._DKIND*dom)
 
             end if
          enddo
 
-#else /* USE_GALLI_PALLA1999 */
+!      Lepp & Shull (1983) H2 cooling rate
+       else if (ih2cr .eq. 0) then
 
          do i = is+1, ie+1
-            if ( itmask(i) ) then
+            if ( itmask(i) .ne. MASK_FALSE ) then
             hyd01k(i) = hyd01ka(indixe(i)) + tdef(i)
      &         *(hyd01ka(indixe(i)+1)-hyd01ka(indixe(i)))
             h2k01(i) = h2k01a(indixe(i)) + tdef(i)
@@ -617,7 +927,7 @@ c            gphdl1 = gphdl(i)/dom
          enddo
 
          do i = is+1, ie+1
-            if ( itmask(i) ) then
+            if ( itmask(i) .ne. MASK_FALSE ) then
             qq   = 1.2_DKIND*(HI(i,j,k)*dom)**0.77_DKIND + 
      &                (H2I(i,j,k)*dom/2._DKIND)**0.77_DKIND
             vibl = (HI(i,j,k)*hyd01k(i) + 
@@ -636,15 +946,14 @@ c            gphdl1 = gphdl(i)/dom
             fudge = min(fudge, 1._DKIND)
 #endif /* OPTICAL_DEPTH_FUDGE */
 
-            edot(i) = edot(i) - real(ih2co, DKIND)*fudge*H2I(i,j,k)*(
+            edot(i) = edot(i) - ih2cox*fudge*H2I(i,j,k)*(
      &           vibh(i)/(1._DKIND+vibh(i)/max(   vibl     ,tiny)) +
      &           roth(i)/(1._DKIND+roth(i)/max(qq*rotl(i),tiny))     
      &           )/2._DKIND/dom
             end if
          enddo
 
-#endif /* USE_GALLI_PALLA1999 */
-#endif /* USE_GLOVER_ABEL2008 */
+      endif ! ih2cr
 
 c     CIE
 c     cooling from H2-H2 and He-H2 collisional induced emission comes
@@ -652,7 +961,7 @@ C     with its own radiative transfer correction as discussed in
 C     Ripamonti & Abel 2003
          if (iciecool.eq.1) then
             do i = is+1, ie+1
-            if (itmask(i)) then
+            if (itmask(i) .ne. MASK_FALSE) then
 c     Only calculate if H2I(i) is a substantial fraction
               if (d(i,j,k)*dom.gt.1e10_DKIND) then
                 ciefudge = 1._DKIND
@@ -669,6 +978,16 @@ c               ciefudge, which is applied to the continuum, is applied to edot
               endif
             endif
             enddo
+c     CIE H2 cooling using Yoshida et al. (2006)
+         else if (iciecool .eq. 2) then
+            do i = is+1, ie+1
+               if (itmask(i) .ne. MASK_FALSE) then
+                cieY06(i) = cieY06a(indixe(i)) + tdef(i)
+     &             *(cieY06a(indixe(i)+1) - cieY06a(indixe(i)))
+                LCIE(i) = - cieY06(i) * (H2I(i,j,k)/2.d0)**2
+                edot(i) = edot(i) + LCIE(i)
+               endif
+            enddo
          endif
 
       endif
@@ -676,8 +995,43 @@ c               ciefudge, which is applied to the continuum, is applied to edot
 !     --- Cooling from HD ---
 
       if (ispecies .gt. 2) then
+
+!     Chiaki & Wise (2019) HD cooling rate
+      if (ihdcr .eq. 1 ) then
+
+      do i = is+1, ie+1
+      if ( itmask(i) .ne. MASK_FALSE ) then
+
+         lognhat = logHDI(i) - logdvdr(i)
+
+         call interpolate_3D_g(
+     &     lognhat, logT(i), logH(i), LHD_N,
+     &     LHD_D, LHD_dD, LHD_T, LHD_dT, LHD_H, LHD_dH,
+     &     LHD_Size, LHD_L, log_Linv)
+         L = 1.d1**(-log_Linv)
+
+         if (icmbTfloor .eq. 1) then
+         call interpolate_3D_g(
+     &     lognhat, logTcmb(i), logH(i), LHD_N,
+     &     LHD_D, LHD_dD, LHD_T, LHD_dT, LHD_H, LHD_dH,
+     &     LHD_Size, LHD_L, log_Ginv)
+         G = 1.d1**(-log_Ginv)
+         else
+         G = tiny8
+         endif
+
+         LHD(i) = (G - L) / dom * HDI(i,j,k)/3.d0
+         if (LHD(i) .ne. LHD(i)) LHD(i) = 0.d0
+         edot(i) = edot(i) + LHD(i)
+
+      endif
+      enddo
+
+!     Coppola et al (2011) and Wrathmall, Gusdorf, & Flower (2007) HD cooling rate
+      else if (ihdcr .eq. 0) then
+
          do i = is+1, ie+1
-            if ( itmask(i) ) then
+            if ( itmask(i) .ne. MASK_FALSE ) then
 c CMB cooling floor
                if (tgas(i) .gt. comp2) then
                   hdlte(i) = hdltea(indixe(i)) + tdef(i)
@@ -692,7 +1046,7 @@ c CMB cooling floor
          enddo
 
          do i = is+1, ie+1
-            if ( itmask(i) ) then
+            if ( itmask(i) .ne. MASK_FALSE ) then
 c  old (incorrect) way:
 c               hdlte1 = hdlte(i)/(HDI(i,j,k)*dom/2._DKIND)
 c               hdlow1 = max(hdlow(i), tiny)
@@ -702,78 +1056,468 @@ c  new (correct) way: (april 4, 2007)
                hdlte1 = hdlte(i)/(HI(i,j,k)*dom)
                hdlow1 = max(hdlow(i), tiny)
                edot(i) = edot(i) - HDI(i,j,k)*
-     .              (hdlte(i)/(1._DKIND + hdlte1/hdlow1)) /
+     &              (hdlte(i)/(1._DKIND + hdlte1/hdlow1)) /
      &              (3._DKIND*dom)
             end if
          enddo
+
+      endif ! ihdcr
       endif
 
-!     Calculate dust to gas ratio
+!     Iteration mask for metal-rich cells
+      if (imetal .eq. 1) then
+         do i = is+1, ie+1
+            if (metallicity(i) .ge. min_metallicity) then
+               itmask_metal(i) = itmask(i)
+            else
+               itmask_metal(i) = MASK_FALSE
+            endif
+         enddo
+      else
+         do i = is+1, ie+1
+            itmask_metal(i) = MASK_FALSE
+         enddo
+      endif
 
-      if (anydust .or. (igammah .gt. 0)) then
+!     Compute grain size increment
+
+      if ( (idustfield .gt. 0) .and. (idspecies .gt. 0) ) then
+
+         call calc_grain_size_increment_1d(
+     &             immulti, imabund, idspecies, igrgr, itmask_metal
+     &           , in, jn, kn, is, ie, j, k, dom, d
+     &           , SiM, FeM, Mg2SiO4, MgSiO3, Fe3O4
+     &           , AC, SiO2D, MgO, FeS, Al2O3
+     &           , reforg, volorg, H2Oice
+     &           , metal, metal_loc
+     &           , metal_C13, metal_C20, metal_C25, metal_C30
+     &           , metal_F13, metal_F15, metal_F50, metal_F80
+     &           , metal_P170, metal_P200, metal_Y19
+     &           , SN0_N
+     &           , SN0_fSiM, SN0_fFeM, SN0_fMg2SiO4, SN0_fMgSiO3
+     &           , SN0_fFe3O4, SN0_fAC, SN0_fSiO2D, SN0_fMgO
+     &           , SN0_fFeS, SN0_fAl2O3
+     &           , SN0_freforg, SN0_fvolorg, SN0_fH2Oice
+     &           , SN0_r0SiM, SN0_r0FeM, SN0_r0Mg2SiO4, SN0_r0MgSiO3
+     &           , SN0_r0Fe3O4, SN0_r0AC, SN0_r0SiO2D, SN0_r0MgO
+     &           , SN0_r0FeS, SN0_r0Al2O3
+     &           , SN0_r0reforg, SN0_r0volorg, SN0_r0H2Oice
+     &           , gr_N, gr_Size, gr_dT, gr_Td
+     &           , SN0_kpSiM, SN0_kpFeM, SN0_kpMg2SiO4, SN0_kpMgSiO3
+     &           , SN0_kpFe3O4, SN0_kpAC, SN0_kpSiO2D, SN0_kpMgO
+     &           , SN0_kpFeS, SN0_kpAl2O3
+     &           , SN0_kpreforg, SN0_kpvolorg, SN0_kpH2Oice
+     &           , sgSiM, sgFeM, sgMg2SiO4, sgMgSiO3, sgFe3O4, sgAC
+     &           , sgSiO2D, sgMgO, sgFeS, sgAl2O3
+     &           , sgreforg, sgvolorg, sgH2Oice, sgtot
+     &           , alSiM, alFeM, alMg2SiO4, alMgSiO3, alFe3O4, alAC
+     &           , alSiO2D, alMgO, alFeS, alAl2O3
+     &           , alreforg, alvolorg, alH2Oice, altot
+     &         )
+
+      endif
+
+!     Calculate dust to gas ratio AND interstellar radiation field
+!     -> an earlier version of this logic would store values @ indices
+!        where `itmask_metal(i) .ne. MASK_FALSE`
+!     -> this was undesirable, b/c these quantities are required for
+!        photo-electric heating, which can occur when
+!        `itmask_metal(i) .eq. MASK_FALSE` (we can revisit this choice
+!        later). Moreover, in most cases, these calculations will be
+!        faster when there is no branching
+
+      if ((anydust .ne. MASK_FALSE) .or. (igammah .gt. 0)) then
          if (idustfield .gt. 0) then
             do i = is+1, ie+1
-               if ( itmask(i) ) then
+               ! REMINDER: use of `itmask` over `itmask_metal` is
+               !   currently required by Photo-electric heating
+               if (itmask(i) .ne. MASK_FALSE) then
+                  ! it may be faster to remove this branching
                   dust2gas(i) = dust(i,j,k) / d(i,j,k)
                endif
             enddo
          else
             do i = is+1, ie+1
-               if ( itmask(i) ) then
-                  dust2gas(i) = fgr * metallicity(i)
-               endif
+               dust2gas(i) = fgr * metallicity(i)
             enddo
          endif
       endif
 
-!     Calculate interstellar radiation field
-
-      if (anydust .or. (igammah .gt. 1)) then
+      if ((anydust .ne. MASK_FALSE) .or. (igammah .gt. 1)) then
          if (iisrffield .gt. 0) then
             do i = is+1, ie+1
-               if ( itmask(i) ) then
-                  myisrf(i) = isrf_habing(i,j,k)
-               endif
+               myisrf(i) = isrf_habing(i,j,k)
             enddo
          else
             do i = is+1, ie+1
-               if ( itmask(i) ) then
-                  myisrf(i) = isrf
-               endif
+               myisrf(i) = isrf
             enddo
          endif
+      endif
+
+!     Calculate heating from interstellar radiation field
+!     -> this is ONLY used when `itmask_metal .eq. MASK_TRUE`
+
+      if ((anydust .ne. MASK_FALSE) .or. (igammah .gt. 1)) then
+      do i = is+1, ie+1
+         if ( itmask_metal(i) .ne. MASK_FALSE ) then
+
+         if (idspecies .eq. 0 ) then
+            if (idustfield .gt. 0) then
+               mygisrf(i) = gamma_isrfa
+     &                    * fgr / dust2gas(i) * metallicity(i)
+               !! correct with the depletion or enhancement of condensation rate.
+            else
+               mygisrf(i) = gamma_isrfa
+            endif
+
+         else ! idspecies
+
+            if (itdmulti .eq. 0) then
+            
+               mygisrf(i) = gamma_isrf2a * sgtot(i)
+               !! in UV, absorption coefficient Q ~ 1 (Goldsmith 2001)
+               !! so we use the geometrical cross-section of grains [cgs]
+
+            else
+
+            if (idspecies .gt. 0) then
+               gisrfMgSiO3  (i) = gamma_isrf2a * sgMgSiO3  (i)
+!!             write(*,*) 'sil', d(i,j,k), gamma_isrf2a, sgMgSiO3(i)
+               gisrfAC      (i) = gamma_isrf2a * sgAC      (i)
+!!             write(*,*) 'car', d(i,j,k), gamma_isrf2a, sgMgSiO3(i)
+            endif
+            if (idspecies .gt. 1) then
+               gisrfSiM     (i) = gamma_isrf2a * sgSiM     (i)
+               gisrfFeM     (i) = gamma_isrf2a * sgFeM     (i)
+               gisrfMg2SiO4 (i) = gamma_isrf2a * sgMg2SiO4 (i)
+               gisrfFe3O4   (i) = gamma_isrf2a * sgFe3O4   (i)
+               gisrfSiO2D   (i) = gamma_isrf2a * sgSiO2D   (i)
+               gisrfMgO     (i) = gamma_isrf2a * sgMgO     (i)
+               gisrfFeS     (i) = gamma_isrf2a * sgFeS     (i)
+               gisrfAl2O3   (i) = gamma_isrf2a * sgAl2O3   (i)
+            endif
+            if (idspecies .gt. 2) then
+               gisrfreforg  (i) = gamma_isrf2a * sgreforg  (i)
+               gisrfvolorg  (i) = gamma_isrf2a * sgvolorg  (i)
+               gisrfH2Oice  (i) = gamma_isrf2a * sgH2Oice  (i)
+            endif
+
+            endif
+
+         endif ! idspecies
+
+         endif
+      enddo
       endif
 
 !     --- Gas to grain heat transfer ---
 
-      if (anydust) then
+      if (anydust .ne. MASK_FALSE) then
 
 !     Look up gas/grain heat transfer rates
 
          do i = is+1, ie+1
-            if ( itmask(i) ) then
+            if ( itmask_metal(i) .ne. MASK_FALSE ) then
+
+            if(idspecies .eq. 0) then
+
                gasgr(i) = gasgra(indixe(i)) + tdef(i)
      &              *(gasgra(indixe(i)+1) -gasgra(indixe(i)))
-               gasgr_tdust(i) = fgr * gasgr(i) * coolunit / mh
+
+!!             gasgr_tdust(i) = fgr * gasgr(i) * coolunit / mh
+               gasgr_tdust(i) = (dust2gas(i) / metallicity(i))
+     &                              * gasgr(i) * coolunit / mh
+                    !! apply to (idustfield .eq. 1) GC20200701
+
+            else ! idspecies
+
+               fv2k    = gasgr2a(indixe(i)) + tdef(i)
+     &              *(gasgr2a(indixe(i)+1) -gasgr2a(indixe(i)))
+
+               fac = coolunit / mh 
+
+               if ( itdmulti .eq. 0 ) then
+
+               gasgr(i) = fv2k * sgtot(i)
+
+               gasgr_tdust(i) = gasgr(i) * fac
+                 
+               else
+
+               if (idspecies .gt. 0) then
+               gasMgSiO3  (i) = fv2k * sgMgSiO3  (i)
+               gasAC      (i) = fv2k * sgAC      (i)
+               endif
+               if (idspecies .gt. 1) then
+               gasSiM     (i) = fv2k * sgSiM     (i)
+               gasFeM     (i) = fv2k * sgFeM     (i)
+               gasMg2SiO4 (i) = fv2k * sgMg2SiO4 (i)
+               gasFe3O4   (i) = fv2k * sgFe3O4   (i)
+               gasSiO2D   (i) = fv2k * sgSiO2D   (i)
+               gasMgO     (i) = fv2k * sgMgO     (i)
+               gasFeS     (i) = fv2k * sgFeS     (i)
+               gasAl2O3   (i) = fv2k * sgAl2O3   (i)
+               endif
+               if (idspecies .gt. 2) then
+               gasreforg  (i) = fv2k * sgreforg  (i)
+               gasvolorg  (i) = fv2k * sgvolorg  (i)
+               gasH2Oice  (i) = fv2k * sgH2Oice  (i)
+               endif
+
+               if (idspecies .gt. 0) then
+               gasgr_tMgSiO3  (i) = gasMgSiO3  (i) * fac
+               gasgr_tAC      (i) = gasAC      (i) * fac
+               endif
+               if (idspecies .gt. 1) then
+               gasgr_tSiM     (i) = gasSiM     (i) * fac
+               gasgr_tFeM     (i) = gasFeM     (i) * fac
+               gasgr_tMg2SiO4 (i) = gasMg2SiO4 (i) * fac
+               gasgr_tFe3O4   (i) = gasFe3O4   (i) * fac
+               gasgr_tSiO2D   (i) = gasSiO2D   (i) * fac
+               gasgr_tMgO     (i) = gasMgO     (i) * fac
+               gasgr_tFeS     (i) = gasFeS     (i) * fac
+               gasgr_tAl2O3   (i) = gasAl2O3   (i) * fac
+               endif
+               if (idspecies .gt. 2) then
+               gasgr_treforg  (i) = gasreforg  (i) * fac
+               gasgr_tvolorg  (i) = gasvolorg  (i) * fac
+               gasgr_tH2Oice  (i) = gasH2Oice  (i) * fac
+               endif
+
+               endif
+
+            endif ! idspecies
+
             endif
          enddo
 
 !     Compute dust temperature
 
-         call calc_tdust_1d_g(tdust, tgas, mynh, gasgr_tdust,
-     &        gamma_isrfa, myisrf, itmask, comp2, in, is, ie, j, k)
+         if (itdmulti .eq. 0) then
 
-!     Calculate cooling rate
+            call calc_tdust_1d_g(tdust, tgas, mynh, gasgr_tdust,
+     &           mygisrf, myisrf, itmask_metal, comp2, in, is, ie, j, k
+     &         , gr_N, gr_Size, gr_dT, gr_Td, altot, kptot, idspecies)
+
+         else
+
+            if (idspecies .gt. 0) then
+            call calc_tdust_1d_g(tMgSiO3  , tgas, mynh, gasgr_tMgSiO3  ,
+     &           gisrfMgSiO3  , myisrf, itmask_metal, comp2, 
+     &           in, is, ie, j, k
+     &         , gr_N, gr_Size, gr_dT, gr_Td, alMgSiO3  , kpMgSiO3   
+     &         , idspecies)
+          
+            call calc_tdust_1d_g(tAC      , tgas, mynh, gasgr_tAC      ,
+     &           gisrfAC      , myisrf, itmask_metal, comp2, 
+     &           in, is, ie, j, k
+     &         , gr_N, gr_Size, gr_dT, gr_Td, alAC      , kpAC       
+     &         , idspecies)
+            endif
+
+            if (idspecies .gt. 1) then
+            call calc_tdust_1d_g(tSiM     , tgas, mynh, gasgr_tSiM     ,
+     &           gisrfSiM     , myisrf, itmask_metal, comp2, 
+     &           in, is, ie, j, k
+     &         , gr_N, gr_Size, gr_dT, gr_Td, alSiM     , kpSiM      
+     &         , idspecies)
+          
+            call calc_tdust_1d_g(tFeM     , tgas, mynh, gasgr_tFeM     ,
+     &           gisrfFeM     , myisrf, itmask_metal, comp2, 
+     &           in, is, ie, j, k
+     &         , gr_N, gr_Size, gr_dT, gr_Td, alFeM     , kpFeM      
+     &         , idspecies)
+          
+            call calc_tdust_1d_g(tMg2SiO4 , tgas, mynh, gasgr_tMg2SiO4 ,
+     &           gisrfMg2SiO4 , myisrf, itmask_metal, comp2, 
+     &           in, is, ie, j, k
+     &         , gr_N, gr_Size, gr_dT, gr_Td, alMg2SiO4 , kpMg2SiO4  
+     &         , idspecies)
+          
+            call calc_tdust_1d_g(tFe3O4   , tgas, mynh, gasgr_tFe3O4   ,
+     &           gisrfFe3O4   , myisrf, itmask_metal, comp2, 
+     &           in, is, ie, j, k
+     &         , gr_N, gr_Size, gr_dT, gr_Td, alFe3O4   , kpFe3O4    
+     &         , idspecies)
+          
+            call calc_tdust_1d_g(tSiO2D   , tgas, mynh, gasgr_tSiO2D   ,
+     &           gisrfSiO2D   , myisrf, itmask_metal, comp2, 
+     &           in, is, ie, j, k
+     &         , gr_N, gr_Size, gr_dT, gr_Td, alSiO2D   , kpSiO2D    
+     &         , idspecies)
+          
+            call calc_tdust_1d_g(tMgO     , tgas, mynh, gasgr_tMgO     ,
+     &           gisrfMgO     , myisrf, itmask_metal, comp2, 
+     &           in, is, ie, j, k
+     &         , gr_N, gr_Size, gr_dT, gr_Td, alMgO     , kpMgO      
+     &         , idspecies)
+          
+            call calc_tdust_1d_g(tFeS     , tgas, mynh, gasgr_tFeS     ,
+     &           gisrfFeS     , myisrf, itmask_metal, comp2, 
+     &           in, is, ie, j, k
+     &         , gr_N, gr_Size, gr_dT, gr_Td, alFeS     , kpFeS      
+     &         , idspecies)
+          
+            call calc_tdust_1d_g(tAl2O3   , tgas, mynh, gasgr_tAl2O3   ,
+     &           gisrfAl2O3   , myisrf, itmask_metal, comp2, 
+     &           in, is, ie, j, k
+     &         , gr_N, gr_Size, gr_dT, gr_Td, alAl2O3   , kpAl2O3    
+     &         , idspecies)
+            endif
+
+            if (idspecies .gt. 2) then
+            call calc_tdust_1d_g(treforg  , tgas, mynh, gasgr_treforg  ,
+     &           gisrfreforg  , myisrf, itmask_metal, comp2, 
+     &           in, is, ie, j, k
+     &         , gr_N, gr_Size, gr_dT, gr_Td, alreforg  , kpreforg   
+     &         , idspecies)
+          
+            call calc_tdust_1d_g(tvolorg  , tgas, mynh, gasgr_tvolorg  ,
+     &           gisrfvolorg  , myisrf, itmask_metal, comp2, 
+     &           in, is, ie, j, k
+     &         , gr_N, gr_Size, gr_dT, gr_Td, alvolorg  , kpvolorg   
+     &         , idspecies)
+          
+            call calc_tdust_1d_g(tH2Oice  , tgas, mynh, gasgr_tH2Oice  ,
+     &           gisrfH2Oice  , myisrf, itmask_metal, comp2, 
+     &           in, is, ie, j, k
+     &         , gr_N, gr_Size, gr_dT, gr_Td, alH2Oice  , kpH2Oice   
+     &         , idspecies)
+            endif
+
+         endif
+
+!     Calculate dust cooling rate
 
          do i = is+1, ie+1
-            if ( itmask(i) ) then
-               edot(i) = edot(i) - 
+            if ( itmask_metal(i) .ne. MASK_FALSE ) then
+
+            if (idspecies .eq. 0) then
+
+               Ldst(i) =         - 
      &              gasgr(i) * (tgas(i) - tdust(i)) * 
      &              dust2gas(i) * rhoH(i) * rhoH(i)
+
+            else ! idspecies
+
+               if (itdmulti .eq. 0) then
+                   Ldst(i) = - gasgr(i) * (tgas(i) - tdust(i))
+     &                * d(i,j,k) * rhoH(i)
+               else
+
+               if (idspecies .gt. 0) then
+                  Ldst(i) = - (
+     &                gasMgSiO3  (i) * (tgas(i) - tMgSiO3  (i))
+     &              + gasAC      (i) * (tgas(i) - tAC      (i))
+     &              ) * d(i,j,k) * rhoH(i)
+               endif
+
+               if (idspecies .gt. 1) then
+                  Ldst(i) = Ldst(i) - (
+     &                gasSiM     (i) * (tgas(i) - tSiM     (i))
+     &              + gasFeM     (i) * (tgas(i) - tFeM     (i))
+     &              + gasMg2SiO4 (i) * (tgas(i) - tMg2SiO4 (i))
+     &              + gasFe3O4   (i) * (tgas(i) - tFe3O4   (i))
+     &              + gasSiO2D   (i) * (tgas(i) - tSiO2D   (i))
+     &              + gasMgO     (i) * (tgas(i) - tMgO     (i))
+     &              + gasFeS     (i) * (tgas(i) - tFeS     (i))
+     &              + gasAl2O3   (i) * (tgas(i) - tAl2O3   (i))
+     &              ) * d(i,j,k) * rhoH(i)
+               endif
+
+               if (idspecies .gt. 2) then
+                  Ldst(i) = Ldst(i) - (
+     &                gasreforg  (i) * (tgas(i) - treforg  (i))
+     &              + gasvolorg  (i) * (tgas(i) - tvolorg  (i))
+     &              + gasH2Oice  (i) * (tgas(i) - tH2Oice  (i))
+     &              ) * d(i,j,k) * rhoH(i)
+               endif
+               endif
+
+
+            endif ! idspecies
+
+            edot(i) = edot(i) + Ldst(i)
+
             endif
          enddo
 
       endif
+
+!     Compute continuum opacity
+
+      if ( ipcont .eq. 1 ) then
+
+      do i = is+1, ie+1
+         if ( itmask(i) .ne. MASK_FALSE ) then
+
+            !! primordial continuum opacity !!
+            call interpolate_2D_g(
+     &        logrho(i), logT(i), alphap_N, alphap_D, alphap_dD,
+     &        alphap_T, alphap_dT, alphap_Size,
+     &        alphap_Data, log_a)
+              alpha(i) = 1.d1**log_a
+         endif
+      enddo
+
+      else
+         do i = is+1, ie+1
+            if ( itmask(i) .ne. MASK_FALSE ) then
+               alpha(i) = 0.
+         endif
+      enddo
+
+      endif
+
+      ! Add dust opacity.
+      ! if (idspecies .eq. 0), dust opacity is overestimated at Td > 50 K
+      ! We better not include dust opacity.
+      if ((anydust .ne. MASK_FALSE).and.(idspecies .gt. 0)) then
+         do i = is+1, ie+1
+            if ( itmask_metal(i) .ne. MASK_FALSE ) then
+
+            if (itdmulti .eq. 0) then
+
+               alphad(i) = kptot(i)
+
+            else
+
+               if (idspecies .gt. 0) then
+               alphad(i) = kpMgSiO3  (i)
+     &                   + kpAC      (i)
+               endif
+               if (idspecies .gt. 1) then
+               alphad(i) = alphad(i)
+     &                   + kpSiM     (i)
+     &                   + kpFeM     (i)
+     &                   + kpMg2SiO4 (i)
+     &                   + kpFe3O4   (i)
+     &                   + kpSiO2D   (i)
+     &                   + kpMgO     (i)
+     &                   + kpFeS     (i)
+     &                   + kpAl2O3   (i)
+               endif
+               if (idspecies .gt. 2) then
+               alphad(i) = alphad(i)
+     &                   + kpreforg  (i)
+     &                   + kpvolorg  (i)
+     &                   + kpH2Oice  (i)
+               endif
+            endif
+
+            alpha(i) = alpha(i) + alphad(i) * d(i,j,k)*dom*mh
+
+            endif
+         enddo
+
+      endif !! anydust
+
+      do i = is+1, ie+1
+         if ( itmask(i) .ne. MASK_FALSE ) then
+         tau_con(i) = alpha(i) * lshield_con(i)
+         endif
+      enddo
 
 !     --- Compute (external) radiative heating terms ---
 !     Photoionization heating
@@ -782,7 +1526,7 @@ c  new (correct) way: (april 4, 2007)
 
       if (iradshield == 0) then ! no shielding
         do i = is+1, ie+1
-           if ( itmask(i) ) then
+           if ( itmask(i) .ne. MASK_FALSE ) then
               edot(i) = edot(i) + real(ipiht, DKIND)*(
      &               piHI  *HI  (i,j,k) ! pi of HI
      &             + piHeI *HeI (i,j,k)*0.25_DKIND ! pi of HeI
@@ -799,7 +1543,7 @@ c  new (correct) way: (april 4, 2007)
 !
 
         do i = is+1, ie+1
-           if (itmask(i)) then
+           if (itmask(i) .ne. MASK_FALSE) then
               if (k24 .lt. tiny8) then
                  fSShHI = 1._DKIND
               else
@@ -831,7 +1575,7 @@ c  new (correct) way: (april 4, 2007)
 !
 
         do i = is+1, ie+1
-           if ( itmask(i) ) then
+           if ( itmask(i) .ne. MASK_FALSE ) then
 !
 !            HI self shielding ratio
 !
@@ -884,7 +1628,7 @@ c  new (correct) way: (april 4, 2007)
 !
 
         do i = is+1, ie+1
-           if ( itmask(i) ) then
+           if ( itmask(i) .ne. MASK_FALSE ) then
 !
 !            HI self shielding ratio
 !
@@ -953,7 +1697,7 @@ c  new (correct) way: (april 4, 2007)
 !     Calculate electron density from mean molecular weight
 
          do i = is+1, ie+1
-            if ( itmask(i) ) then
+            if ( itmask(i) .ne. MASK_FALSE ) then
 
                myde(i) = 1 - mmw(i) * (3.0_DKIND * fh + 1.0_DKIND) /
      &              4.0_DKIND
@@ -974,7 +1718,7 @@ c  new (correct) way: (april 4, 2007)
       if (igammah .eq. 1) then
 
           do i = is + 1, ie + 1
-             if (itmask(i)) then
+             if (itmask(i) .ne. MASK_FALSE) then
                 if ( tgas(i) > 2.d4 ) then
                    gammaha_eff(i) = 0._DKIND
                 else
@@ -987,7 +1731,7 @@ c  new (correct) way: (april 4, 2007)
       else if (igammah .eq. 2) then
 
           do i = is + 1, ie + 1
-             if (itmask(i)) then
+             if (itmask(i) .ne. MASK_FALSE) then
                 if ( tgas(i) > 2.d4 ) then
                    gammaha_eff(i) = 0._DKIND
                 else
@@ -1001,7 +1745,7 @@ c  new (correct) way: (april 4, 2007)
       else if (igammah .eq. 3) then
 
           do i = is + 1, ie + 1
-             if (itmask(i)) then
+             if (itmask(i) .ne. MASK_FALSE) then
                 pe_X = myisrf(i) * dom_inv * sqrt(tgas(i)) / myde(i)
                 pe_eps =
      &               (4.9d-2 /
@@ -1016,7 +1760,7 @@ c  new (correct) way: (april 4, 2007)
 
       if (igammah .gt. 0) then
           do i = is + 1, ie + 1
-             if (itmask(i)) then
+             if (itmask(i) .ne. MASK_FALSE) then
                 edot(i) = edot(i) + gammaha_eff(i) * rhoH(i) *
      &               dom_inv * dust2gas(i) / fgr
             endif
@@ -1028,14 +1772,14 @@ c  new (correct) way: (april 4, 2007)
       if ((idustall .gt. 0) .or. (idustrec .gt. 0)) then
 
           do i = is + 1, ie + 1
-             if (itmask(i)) then
+             if (itmask(i) .ne. MASK_FALSE) then
                 regr(i) = regra(indixe(i)) + tdef(i)
      &               *(regra(indixe(i)+1) -regra(indixe(i)))
              endif
           enddo
 
           do i = is + 1, ie + 1
-             if (itmask(i)) then
+             if (itmask(i) .ne. MASK_FALSE) then
                 grbeta = 0.74_DKIND / tgas(i)**0.068_DKIND
                 edot(i) = edot(i) -
      &               regr(i) * (myisrf(i)*dom_inv / myde(i))**grbeta *
@@ -1048,7 +1792,7 @@ c  new (correct) way: (april 4, 2007)
 !     Compton cooling or heating and X-ray compton heating
 
       do i = is + 1, ie + 1
-         if (itmask(i)) then
+         if (itmask(i) .ne. MASK_FALSE) then
 
             edot(i) = edot(i)
 
@@ -1067,7 +1811,7 @@ c  new (correct) way: (april 4, 2007)
 
       if (iradtrans .eq. 1) then
           do i = is + 1, ie + 1
-            if (itmask(i)) then
+            if (itmask(i) .ne. MASK_FALSE) then
               edot(i) = edot(i) + real(ipiht, DKIND) * photogamma(i,j,k)
      &                          / coolunit * HI(i,j,k) / dom
 
@@ -1091,6 +1835,17 @@ c  new (correct) way: (april 4, 2007)
 
       if (imcool .eq. 1) then
 
+!     Determine if the temperature is above the threshold to do tabulated cooling.
+         do i = is+1, ie+1
+            itmask_tab(i) = itmask_metal(i)
+            if ( itmask_tab(i) .ne. MASK_FALSE ) then
+               if (( tmcool .gt. 0.0d0 ) .and.
+     &             ( tgas(i) .lt. tmcool )) then
+                  itmask_tab(i) = MASK_FALSE
+               endif
+            endif
+         enddo
+
          if (clnew .eq. 1) then
 
             iZscale = 1
@@ -1101,7 +1856,7 @@ c  new (correct) way: (april 4, 2007)
      &           metGridRank, metGridDim,
      &           metPar1, metPar2, metPar3,
      &           metDataSize, metCooling, metHeating,
-     &           itmask)
+     &           itmask_tab)
 
          else
 
@@ -1113,18 +1868,176 @@ c  new (correct) way: (april 4, 2007)
      &           clEleFra, metGridRank, metGridDim,
      &           metPar1, metPar2, metPar3, metPar4, metPar5,
      &           metDataSize, metCooling, metHeating, 
-     &           itmask)
+     &           itmask_tab)
 
          endif
 
-      endif
+      if (imchem .eq. 1) then
+
+!        --- C/O fine-structure, metal molecular rotational cooling for low temperatures ---
+      
+!        C/O fine-structure cooling
+         do i = is+1, ie+1
+         if ( itmask_metal(i) .ne. MASK_FALSE ) then
+      
+!           CI
+            lognhat = logCI(i) - logdvdr(i)
+
+            call interpolate_3D_g(
+     &        lognhat, logT(i), logH(i), LCI_N,
+     &        LCI_D, LCI_dD, LCI_T, LCI_dT, LCI_H, LCI_dH,
+     &        LCI_Size, LCI_L, log_Linv)
+            L = 1.d1**(-log_Linv)
+      
+            if (icmbTfloor .eq. 1) then
+            call interpolate_3D_g(
+     &        lognhat, logTcmb(i), logH(i), LCI_N,
+     &        LCI_D, LCI_dD, LCI_T, LCI_dT, LCI_H, LCI_dH,
+     &        LCI_Size, LCI_L, log_Ginv)
+            G = 1.d1**(-log_Ginv)
+            else
+            G = tiny8
+            endif
+      
+            LCI(i) = (G - L) / dom * CI(i,j,k)/12.d0
+            if (LCI(i) .ne. LCI(i)) LCI(i) = 0.d0
+            edot(i) = edot(i) + LCI(i)
+      
+      
+!           CII
+            lognhat = logCII(i) - logdvdr(i)
+      
+            call interpolate_3D_g(
+     &        lognhat, logT(i), logH(i), LCII_N,
+     &        LCII_D, LCII_dD, LCII_T, LCII_dT, LCII_H, LCII_dH,
+     &        LCII_Size, LCII_L, log_Linv)
+            L = 1.d1**(-log_Linv)
+      
+            if (icmbTfloor .eq. 1) then
+            call interpolate_3D_g(
+     &        lognhat, logTcmb(i), logH(i), LCII_N,
+     &        LCII_D, LCII_dD, LCII_T, LCII_dT, LCII_H, LCII_dH,
+     &        LCII_Size, LCII_L, log_Ginv)
+            G = 1.d1**(-log_Ginv)
+            else
+            G = tiny8
+            endif
+      
+            LCII(i) = (G - L) / dom * CII(i,j,k)/12.d0
+            if (LCII(i) .ne. LCII(i)) LCII(i) = 0.d0
+            edot(i) = edot(i) + LCII(i)
+      
+      
+!           OI
+            lognhat = logOI(i) - logdvdr(i)
+      
+            call interpolate_3D_g(
+     &        lognhat, logT(i), logH(i), LOI_N,
+     &        LOI_D, LOI_dD, LOI_T, LOI_dT, LOI_H, LOI_dH,
+     &        LOI_Size, LOI_L, log_Linv)
+            L = 1.d1**(-log_Linv)
+      
+            if (icmbTfloor .eq. 1) then
+            call interpolate_3D_g(
+     &        lognhat, logTcmb(i), logH(i), LOI_N,
+     &        LOI_D, LOI_dD, LOI_T, LOI_dT, LOI_H, LOI_dH,
+     &        LOI_Size, LOI_L, log_Ginv)
+            G = 1.d1**(-log_Ginv)
+            else
+            G = tiny8
+            endif
+      
+            LOI(i) = (G - L) / dom * OI(i,j,k)/16.d0
+            if (LOI(i) .ne. LOI(i)) LOI(i) = 0.d0
+            edot(i) = edot(i) + LOI(i)
+      
+      
+!           Metal molecules rotational cooling
+
+!           CO
+            lognhat = logCO(i) - logdvdr(i)
+      
+            call interpolate_3D_g(
+     &        lognhat, logT(i), logH2(i), LCO_N,
+     &        LCO_D, LCO_dD, LCO_T, LCO_dT, LCO_H, LCO_dH,
+     &        LCO_Size, LCO_L, log_Linv)
+            L = 1.d1**(-log_Linv)
+      
+            if (icmbTfloor .eq. 1) then
+            call interpolate_3D_g(
+     &        lognhat, logTcmb(i), logH2(i), LCO_N,
+     &        LCO_D, LCO_dD, LCO_T, LCO_dT, LCO_H, LCO_dH,
+     &        LCO_Size, LCO_L, log_Ginv)
+            G = 1.d1**(-log_Ginv)
+            else
+            G = tiny8
+            endif
+      
+            LCO(i) = (G - L) / dom * CO(i,j,k)/28.d0
+            if (LCO(i) .ne. LCO(i)) LCO(i) = 0.d0
+            edot(i) = edot(i) + LCO(i)
+      
+
+!           OH
+            lognhat = logOH(i) - logdvdr(i)
+      
+            call interpolate_3D_g(
+     &        lognhat, logT(i), logH2(i), LOH_N,
+     &        LOH_D, LOH_dD, LOH_T, LOH_dT, LOH_H, LOH_dH,
+     &        LOH_Size, LOH_L, log_Linv)
+            L = 1.d1**(-log_Linv)
+      
+            if (icmbTfloor .eq. 1) then
+            call interpolate_3D_g(
+     &        lognhat, logTcmb(i), logH2(i), LOH_N,
+     &        LOH_D, LOH_dD, LOH_T, LOH_dT, LOH_H, LOH_dH,
+     &        LOH_Size, LOH_L, log_Ginv)
+            G = 1.d1**(-log_Ginv)
+            else
+            G = tiny8
+            endif
+      
+            LOH(i) = (G - L) / dom * OH(i,j,k)/17.d0
+            if (LOH(i) .ne. LOH(i)) LOH(i) = 0.d0
+            edot(i) = edot(i) + LOH(i)
+
+
+!           H2O
+            lognhat = logH2O(i) - logdvdr(i)
+      
+            call interpolate_3D_g(
+     &        lognhat, logT(i), logH2(i), LH2O_N,
+     &        LH2O_D, LH2O_dD, LH2O_T, LH2O_dT, LH2O_H, LH2O_dH,
+     &        LH2O_Size, LH2O_L, log_Linv)
+            L = 1.d1**(-log_Linv)
+      
+            if (icmbTfloor .eq. 1) then
+            call interpolate_3D_g(
+     &        lognhat, logTcmb(i), logH2(i), LH2O_N,
+     &        LH2O_D, LH2O_dD, LH2O_T, LH2O_dT, LH2O_H, LH2O_dH,
+     &        LH2O_Size, LH2O_L, log_Ginv)
+            G = 1.d1**(-log_Ginv)
+            else
+            G = tiny8
+            endif
+      
+            LH2O(i) = (G - L) / dom * H2O(i,j,k)/18.d0
+            if (LH2O(i) .ne. LH2O(i)) LH2O(i) = 0.d0
+            edot(i) = edot(i) + LH2O(i)
+      
+         endif
+         enddo
+
+      endif ! imchem
+
+      endif ! imcool
 
 !     Add user-provided volumetric and/or specific heating terms
 
       if (iVheat .eq. 1) then
 
       do i = is+1, ie+1
-         if ( itmask(i) ) then
+         if ( itmask(i) .ne. MASK_FALSE ) then
             edot(i) = edot(i) + Vheat(i,j,k) / coolunit / dom**2
          end if
       enddo
@@ -1134,7 +2047,7 @@ c  new (correct) way: (april 4, 2007)
       if (iMheat .eq. 1) then
 
       do i = is+1, ie+1
-         if ( itmask(i) ) then
+         if ( itmask(i) .ne. MASK_FALSE ) then
             edot(i) = edot(i) + Mheat(i,j,k) * d(i,j,k) * mh
      &          / coolunit / dom
          end if
@@ -1142,10 +2055,24 @@ c  new (correct) way: (april 4, 2007)
 
       endif
 
+!     Continuum opacity
+
+      do i = is+1, ie+1
+         if ( itmask(i) .ne. MASK_FALSE ) then
+            if ( tau_con(i) .gt. 1.d0 ) then
+               if ( tau_con(i) .lt. 1.d2 ) then
+                  edot(i) = edot(i) * tau_con(i)**(-2.d0)
+               else
+                  edot(i) = 0.d0
+               endif
+            endif
+         end if
+      enddo
+
 !     Set tgasold
 
       do i=is+1, ie+1
-         if ( itmask(i) ) then
+         if ( itmask(i) .ne. MASK_FALSE ) then
          tgasold(i) = tgas(i)
          end if
       enddo
