@@ -87,6 +87,7 @@ add_library(Grackle_Grackle
   calculate_pressure.c
   calculate_temperature.c
   dynamic_api.c
+  FrozenKeyIdxBiMap.c FrozenKeyIdxBiMap.h FrozenKeyIdxBiMap_details.h
   grackle_units.c
   index_helper.c
   initialize_chemistry_data.c
@@ -96,6 +97,7 @@ add_library(Grackle_Grackle
   rate_functions.c
   set_default_chemistry_parameters.c
   solve_chemistry.c
+  status_reporting.c status_reporting.h
   update_UVbackground_rates.c
   utils.c
 
