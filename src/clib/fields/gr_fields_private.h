@@ -7,7 +7,7 @@
 #define GR_FIELDS_PRIVATE_H
 
 #include "grackle.h"
-#include "fields/experimental_api.h"
+#include "grackle_experimental_api.h"
 #include "fields/internal_field_data.h"
 #include "FrozenKeyIdxBiMap.h"
 

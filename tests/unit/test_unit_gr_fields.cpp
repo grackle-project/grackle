@@ -4,7 +4,7 @@
 
 #include "gtest/gtest.h"
 #include "grackle.h"
-#include "fields/experimental_api.h"
+#include "grackle_experimental_api.h"
 
 // these headers are included just so we can use grFields_from_field_names_
 // (since the public API's initializer hasn't been created yet)

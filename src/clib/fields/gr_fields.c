@@ -8,7 +8,7 @@
 #include <stdlib.h> // malloc, free
 
 #include "grackle.h"
-#include "fields/experimental_api.h"
+#include "grackle_experimental_api.h"
 #include "grackle_macros.h" // GRACKLE_FREE
 #include "fields/internal_field_data.h"
 #include "fields/gr_fields_private.h"
