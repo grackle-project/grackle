@@ -206,21 +206,39 @@ commands:
             source $HOME/venv/bin/activate
             cd src
 
-            # configure variables for generating test answers
-            if [ << parameters.generate >> == 'true' ]; then
-              export GENERATE_PYGRACKLE_TEST_RESULTS=1
-            else
-              export GENERATE_PYGRACKLE_TEST_RESULTS=0
-            fi
-
             # actually execute the tests
             if [[ << parameters.build_kind >> == 'classic' &&
                   << parameters.omp >> == 'true' ]]; then
               echo "the pygrackle tests can't be run in this configuration"
+
+            elif [ ! -f ./python/tests/conftest.py ]; then
+              # NOTE: these tests should run if using OpenMP without the
+              #       classic build-system
+
+              # here we use the old way to control the answer-test mode (i.e.
+              # defining environment variables)
+              # - We can stop supporting this case once the most recent gold
+              #   standard tags a repository version containing conftest.py
+              if [ << parameters.generate >> == 'true' ]; then
+                export GENERATE_PYGRACKLE_TEST_RESULTS=1
+              else
+                export GENERATE_PYGRACKLE_TEST_RESULTS=0
+              fi
+              py.test python/tests
+
             else
               # NOTE: these tests should run if using OpenMP without the
               #       classic build-system
-              py.test python/tests
+
+              # ANSWER_DIR was picked to ensure that it matches up with the old
+              # hardcoded location (we can change it once the most recent gold
+              # standard tags a repository version containing conftest.py)
+              ANSWER_DIR=./python/tests/test_answers
+              if [ << parameters.generate >> == 'true' ]; then
+                py.test --answer-dir=${ANSWER_DIR} --answer-store python/tests
+              else
+                py.test --answer-dir=${ANSWER_DIR} python/tests
+              fi
             fi
 
   run-core-tests:
