@@ -329,31 +329,31 @@
      &        compa, piHI, piHeI, piHeII, comp_xraya, comp_temp,
      &        gammaha, isrf, regra(nratec), gamma_isrfa
        real*8  cieY06a(nratec)
-       integer LH2_N(3), LH2_Size
+       integer*8 LH2_N(3), LH2_Size
        real*8  LH2_D(LH2_N(1)), LH2_T(LH2_N(2)), LH2_H(LH2_N(3))
      &       , LH2_dD, LH2_dT, LH2_dH, LH2_L(LH2_Size)
-       integer LHD_N(3), LHD_Size
+       integer*8 LHD_N(3), LHD_Size
        real*8  LHD_D(LHD_N(1)), LHD_T(LHD_N(2)), LHD_H(LHD_N(3))
      &       , LHD_dD, LHD_dT, LHD_dH, LHD_L(LHD_Size)
-       integer LCI_N(3), LCI_Size
+       integer*8 LCI_N(3), LCI_Size
        real*8  LCI_D(LCI_N(1)), LCI_T(LCI_N(2)), LCI_H(LCI_N(3))
      &       , LCI_dD, LCI_dT, LCI_dH, LCI_L(LCI_Size)
-       integer LCII_N(3), LCII_Size
+       integer*8 LCII_N(3), LCII_Size
        real*8  LCII_D(LCII_N(1)), LCII_T(LCII_N(2)), LCII_H(LCII_N(3))
      &       , LCII_dD, LCII_dT, LCII_dH, LCII_L(LCII_Size)
-       integer LOI_N(3), LOI_Size
+       integer*8 LOI_N(3), LOI_Size
        real*8  LOI_D(LOI_N(1)), LOI_T(LOI_N(2)), LOI_H(LOI_N(3))
      &       , LOI_dD, LOI_dT, LOI_dH, LOI_L(LOI_Size)
-       integer LCO_N(3), LCO_Size
+       integer*8 LCO_N(3), LCO_Size
        real*8  LCO_D(LCO_N(1)), LCO_T(LCO_N(2)), LCO_H(LCO_N(3))
      &       , LCO_dD, LCO_dT, LCO_dH, LCO_L(LCO_Size)
-       integer LOH_N(3), LOH_Size
+       integer*8 LOH_N(3), LOH_Size
        real*8  LOH_D(LOH_N(1)), LOH_T(LOH_N(2)), LOH_H(LOH_N(3))
      &       , LOH_dD, LOH_dT, LOH_dH, LOH_L(LOH_Size)
-       integer LH2O_N(3), LH2O_Size
+       integer*8 LH2O_N(3), LH2O_Size
        real*8  LH2O_D(LH2O_N(1)), LH2O_T(LH2O_N(2)), LH2O_H(LH2O_N(3))
      &       , LH2O_dD, LH2O_dT, LH2O_dH, LH2O_L(LH2O_Size)
-       integer alphap_N(2), alphap_Size
+       integer*8 alphap_N(2), alphap_Size
        real*8  alphap_D(alphap_N(1)), alphap_T(alphap_N(2))
      &       , alphap_dD, alphap_dT
      &       , alphap_Data(alphap_Size)
@@ -2043,8 +2043,17 @@ C                 endif
       real*8 nSSh, nratio
       MASK_TYPE itmask_metal(in)
 
-!     debug
-      integer item
+!     this is a temporary variable to help with transcription
+!     -> we do this to circumvent the transcription issue of casting a
+!        variable and passing the result by reference.
+!     -> we make this a 1 element array to let us avoid some warnings
+!        from some simple analysis-routines that check that the array
+!        rank of a variable (or the lack thereof) is consistent with the
+!        declaration within the called subroutine
+      integer*8 nratec_single_elem_arr(1)
+
+!     Cast nratec
+      nratec_single_elem_arr(1) = int(nratec, 8)
 
 !     Set log values of start and end of lookup tables
 
@@ -2555,8 +2564,8 @@ C                 endif
 
                if (idspecies .gt. 0) then
                call interpolate_1D_g(
-     &              logtem(i), int(nratec, 8), d_Tg, d_dTg,
-     &              int(nratec, 8), grogra, kd)
+     &              logtem(i), nratec_single_elem_arr, d_Tg, d_dTg,
+     &              nratec_single_elem_arr(1), grogra, kd)
             
                kdMgSiO3  (i) = kd * sgMgSiO3  (i) * d(i,j,k)
      &          * min( Mg  (i,j,k) / 24._DKIND**1.5_DKIND
@@ -5071,7 +5080,7 @@ C***** H2Oice **********
 
       integer i, j, k
       real*8 totalH(in), totalHe(in),
-     &       totalD, metalfree(in)
+     &       totalD, metalfree(in), my_dtoh
       R_PREC correctH, correctHe, correctD
       real*8 totalZ
       real*8 totalC, totalO, totalMg, totalAl
@@ -5096,6 +5105,12 @@ C***** H2Oice **********
      &     , Sig(in), Sg(in), Feg(in)
       real*8 Cd(in), Od(in), Mgd(in), Ald(in)
      &     , Sid(in), Sd(in), Fed(in)
+
+      if (ispecies .gt. 2) then
+         my_dtoh = dtoh
+      else
+         my_dtoh = 0._DKIND
+      endif
 
 !     Loop over all zones
 
@@ -5314,10 +5329,9 @@ C           enddo
 !     Correct densities by keeping fractions the same
 
       do i = is+1, ie+1
-         correctH = real(fh*(1._DKIND - dtoh)*metalfree(i)/totalH(i)
-     &              , RKIND)
-         !! GC202005
-!!       correctH = real(fh*metalfree(i)/totalH(i), RKIND)
+!        Only include D/H ratio if using D species
+         correctH = real(fh*(1._DKIND - my_dtoh)*metalfree(i)/totalH(i),
+     &        RKIND)
          HI(i,j,k)  = HI(i,j,k)*correctH
          HII(i,j,k) = HII(i,j,k)*correctH
 
