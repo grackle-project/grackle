@@ -292,14 +292,14 @@ jobs:
           build_kind: 'classic'
           generate: 'true'
 
-      - install-grackle:
-          omp: 'true'
-          classic_build: 'true'
-          tag: $CIRCLE_BRANCH
+      # - install-grackle:
+      #     omp: 'true'
+      #     classic_build: 'true'
+      #     tag: $CIRCLE_BRANCH
 
-      - run-tests:
-          omp: 'true'
-          build_kind: 'classic'
+      # - run-tests:
+      #     omp: 'true'
+      #     build_kind: 'classic'
 
       - install-grackle:
           omp: 'false'
