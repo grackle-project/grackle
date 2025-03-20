@@ -71,7 +71,7 @@
 !  Cloudy parameters and data
 
       integer icmbTfloor, iClHeat
-      integer*8 clGridRank, clDataSize, clGridDim(3)
+      integer*8 clGridRank, clDataSize, clGridDim(5)
       real*8 clEleFra
       real*8 clPar1(clGridDim(1)), clPar2(clGridDim(2)),
      &     clPar3(clGridDim(3)), clPar4(clGridDim(4)),

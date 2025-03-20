@@ -1354,6 +1354,19 @@ double cie_thin_cooling_rate(double T){
                    / ( t_cie_c[maxInd] - t_cie_c[minInd] );
         }
     }
+
+    // the following logic was added as a quick way to address the compiler
+    // warnings about a control flow that doesn't return get addressed.
+    // - In the future, we may want to consider a way to handle failure more
+    //   gracefully (if failure is even possible)
+    // - for now, loudly exitting with a failure is better than quietly
+    //   continuing with a garbage value
+    fprintf(
+      stderr,
+      "INTERNAL ERROR: something went horribly wrong while computing the "
+      "optically thin cooling rate due to CIE cooling. Aborting\n"
+    );
+    abort();
 }
 
 //Calculation of cieco.
