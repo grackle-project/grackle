@@ -18,10 +18,7 @@ import pytest
 import re
 import subprocess
 
-from testing_common import \
-    generate_test_results, \
-    grackle_install_dir, \
-    test_answers_dir
+from testing_common import grackle_install_dir
 
 try:
     from pygrackle.__config__ import \
@@ -58,12 +55,17 @@ rfields = (
     "temperature"
 )
 
-test_file = os.path.join(test_answers_dir, "code_examples.json")
-if generate_test_results and os.path.exists(test_file):
-    os.remove(test_file)
-if not generate_test_results and not os.path.exists(test_file):
-    raise RuntimeError(
-        f"Code example results file not found: {test_file}")
+@pytest.fixture(scope="module")
+def test_file(answertestspec):
+    # this fixture has module-scope so that we will delete the test file once
+    test_file = os.path.join(answertestspec.answer_dir, "code_examples.json")
+    if answertestspec.generate_answers and os.path.exists(test_file):
+        os.remove(test_file)
+
+    # if test_file doesn't exist and answertestspec.generate_answers is False,
+    # defer any error reporting until within the test-case (after the test-case
+    # determines whether or not it should be skipped)
+    return test_file
 
 def run_command(command, cwd, env, timeout=None):
     proc = subprocess.run(
@@ -107,7 +109,7 @@ def parse_output(ostr):
     return results
 
 @pytest.mark.parametrize("example", code_examples)
-def test_code_examples(example):
+def test_code_examples(answertestspec, test_file, example):
     # under the classic build system, we could just execute `make` in the examples
     # directory and there is a good chance that it would work out...
     # -> now we require the PYTEST_CODE_LINK_CHOICE environment variable to be
@@ -139,7 +141,16 @@ def test_code_examples(example):
     else:
         raise RuntimeError("PYTEST_CODE_LINK_CHOICE must be '', 'classic' or "
                            "'cmake:<path/to/build>'. {choice!r} is invalid")
+
+    # if we aren't generating test-answers, and the test-file can't be found
+    # report an error (we explicitly wait to do this until after we have
+    # decided whether to skip the test or not).
+    if not answertestspec.generate_answers and not os.path.exists(test_file):
+        raise RuntimeError(f"Code example results file not found: {test_file}")
+
     env = dict(os.environ)
+
+    # compile the example
     command = f'{make_command} {example}'
     run_command(command, examples_dir, env, timeout=60)
 
@@ -152,7 +163,7 @@ def test_code_examples(example):
     if example not in compare_exclude:
         results = parse_output(proc.stdout)
 
-        if generate_test_results:
+        if answertestspec.generate_answers:
             if os.path.exists(test_file):
                 with open(test_file, mode="r") as f:
                     all_results = json.load(f)

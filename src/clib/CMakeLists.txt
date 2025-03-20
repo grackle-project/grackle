@@ -146,6 +146,7 @@ add_library(Grackle_Grackle
   grackle_chemistry_data_fields.def # <-- acts as a C header
   grackle_macros.h
   index_helper.h
+  interp_table_utils.h
   phys_constants.h
   utils.h
   dust_const.def
