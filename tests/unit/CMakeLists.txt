@@ -10,10 +10,13 @@ target_compile_features(testdeps INTERFACE cxx_std_17)
 
 # start declaring targets for tests
 # ---------------------------------
-add_executable(runFrozenKeyIdxBiMapTests test_unit_FrozenKeyIdxBiMap.cpp)
-target_link_libraries(runFrozenKeyIdxBiMapTests testdeps)
+add_executable(runMiscUnitTests
+  test_unit_FrozenKeyIdxBiMap.cpp
+  test_unit_gr_fields.cpp
+)
+target_link_libraries(runMiscUnitTests testdeps)
 
-gtest_discover_tests(runFrozenKeyIdxBiMapTests)
+gtest_discover_tests(runMiscUnitTests)
 
 
 add_executable(runInterpolationTests test_unit_interpolators_g.cpp)
