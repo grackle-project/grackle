@@ -5,6 +5,7 @@
 #include "grackle_macros.h"
 #include "grackle_types.h"
 #include "grackle_chemistry_data.h"
+#include "interp_table_utils.h" // free_interp_grid_
 #include "phys_constants.h"
 #include "grackle_rate_functions.h"
 
@@ -428,30 +429,14 @@ int local_free_metal_chemistry_rates(chemistry_data *my_chemistry,
   if (my_chemistry->primordial_chemistry == 0)
     return SUCCESS;
 
-  GRACKLE_FREE(my_rates->LCI_D);
-  GRACKLE_FREE(my_rates->LCI_T);
-  GRACKLE_FREE(my_rates->LCI_H);
-  GRACKLE_FREE(my_rates->LCI_L);
-  GRACKLE_FREE(my_rates->LCII_D);
-  GRACKLE_FREE(my_rates->LCII_T);
-  GRACKLE_FREE(my_rates->LCII_H);
-  GRACKLE_FREE(my_rates->LCII_L);
-  GRACKLE_FREE(my_rates->LOI_D);
-  GRACKLE_FREE(my_rates->LOI_T);
-  GRACKLE_FREE(my_rates->LOI_H);
-  GRACKLE_FREE(my_rates->LOI_L);
-  GRACKLE_FREE(my_rates->LCO_D);
-  GRACKLE_FREE(my_rates->LCO_T);
-  GRACKLE_FREE(my_rates->LCO_H);
-  GRACKLE_FREE(my_rates->LCO_L);
-  GRACKLE_FREE(my_rates->LOH_D);
-  GRACKLE_FREE(my_rates->LOH_T);
-  GRACKLE_FREE(my_rates->LOH_H);
-  GRACKLE_FREE(my_rates->LOH_L);
-  GRACKLE_FREE(my_rates->LH2O_D);
-  GRACKLE_FREE(my_rates->LH2O_T);
-  GRACKLE_FREE(my_rates->LH2O_H);
-  GRACKLE_FREE(my_rates->LH2O_L);
+
+  free_interp_grid_(&my_rates->LCI);
+  free_interp_grid_(&my_rates->LCII);
+  free_interp_grid_(&my_rates->LOI);
+
+  free_interp_grid_(&my_rates->LCO);
+  free_interp_grid_(&my_rates->LOH);
+  free_interp_grid_(&my_rates->LH2O);
 
   GRACKLE_FREE(my_rates->k125);
   GRACKLE_FREE(my_rates->k129);
@@ -516,11 +501,63 @@ int local_free_metal_chemistry_rates(chemistry_data *my_chemistry,
   return SUCCESS;
 }
 
+struct regular_range_{
+  int count;
+  double start;
+  double step;
+};
+
+/// helper function to assist with setting up a generic interp_grid_props
+static void setup_generic_grid_props_(gr_interp_grid_props* grid_props,
+                                      int rank,
+                                      const struct regular_range_* parameters)
+{
+  grid_props->rank = rank;
+
+  long long data_size = 1ll ? (rank > 0) : 0ll;
+  for (int i = 0; i < rank; i++) {
+    const struct regular_range_ par_range = parameters[i];
+
+    double* arr = malloc(par_range.count * sizeof(double));
+    for(int j = 0; j < par_range.count; j++) {
+      arr[j] = par_range.start + (double)j * par_range.step;
+    }
+
+    grid_props->dimension[i] = par_range.count;
+    grid_props->parameters[i] = arr;
+    grid_props->parameter_spacing[i] = par_range.step;
+
+    data_size *= (long long)par_range.count;
+  }
+  grid_props->data_size = data_size;
+}
+
+
+/// helper function to assist with setting up a interp_grid for cooling
+static void setup_cool_interp_grid_(gr_interp_grid* grid,
+                                    int rank,
+                                    const struct regular_range_* parameters,
+                                    const double* data,
+                                    double log_coolrate)
+{
+  setup_generic_grid_props_(&grid->props, rank, parameters);
+  const long long data_size = grid->props.data_size;
+  grid->data = malloc(data_size * sizeof(double));
+  for(long long i = 0; i < data_size; i++) {
+    grid->data[i] = data[i] + log_coolrate;
+  }
+}
+
+
 void initialize_cooling_rate_H2(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit)
 {
-  int    ND = 16,  NT = 11,  NH = 21;
-  double D0 =20.0, T0 = 1.6, H0 = -10.0;
-  double dD = 1.0, dT = 0.2, dH =   1.0;
+  const int rank = 3;
+  const struct regular_range_ params[3] = {
+    {16,  20.0, 1.0}, // log10(number-density like)
+    {11,   1.6, 0.2}, // log10(temperature)
+    {21, -10.0, 1.0}  // log10(H2 number density)
+  };
+
   double L[] = 
     {41.47,  40.47,  39.47,  38.47,  37.47,  36.47,  35.47,  34.47,  33.47,  32.47,  31.47,  30.48,  29.58,  29.03,  28.91,  28.89,  28.89,  28.89,  28.89,  28.89,  28.89, 
      39.38,  38.38,  37.38,  36.38,  35.38,  34.38,  33.38,  32.38,  31.38,  30.38,  29.38,  28.39,  27.51,  27.03,  26.89,  26.86,  26.86,  26.86,  26.86,  26.86,  26.86, 
@@ -699,38 +736,19 @@ void initialize_cooling_rate_H2(chemistry_data *my_chemistry, chemistry_data_sto
      33.98,  33.23,  32.34,  31.37,  30.44,  29.57,  28.59,  27.59,  26.60,  25.63,  24.79,  24.33,  29.02,  29.01,  28.85,  28.64,  28.59,  28.59,  28.59,  28.59,  28.59, 
      33.32,  32.46,  31.50,  30.54,  29.66,  28.72,  27.73,  26.73,  25.75,  24.93,  23.98,  23.66,  28.70,  28.60,  28.26,  28.03,  27.99,  27.99,  27.99,  27.99,  27.99}; 
 
-  int iD, iT, iH, itab;
-  double log_coolunit = log10(coolunit);
-
-  my_rates->LH2_D = malloc(ND * sizeof(double));
-  my_rates->LH2_T = malloc(NT * sizeof(double));
-  my_rates->LH2_H = malloc(NH * sizeof(double));
-  my_rates->LH2_L = malloc(ND * NT * NH * sizeof(double));
-
-  my_rates->LH2_N[0] = ND;
-  my_rates->LH2_N[1] = NT;
-  my_rates->LH2_N[2] = NH;
-  my_rates->LH2_Size = ND * NT * NH;
-  for(iD = 0; iD < ND; iD++)
-    my_rates->LH2_D[iD] = D0 + (double)iD * dD;
-  for(iT = 0; iT < NT; iT++)
-    my_rates->LH2_T[iT] = T0 + (double)iT * dT;
-  for(iH = 0; iH < NH; iH++)
-    my_rates->LH2_H[iH] = H0 + (double)iH * dH;
-  my_rates->LH2_dD = dD;
-  my_rates->LH2_dT = dT; 
-  my_rates->LH2_dH = dH; 
-  for(itab = 0; itab < ND * NT * NH; itab++) {
-    my_rates->LH2_L[itab] = L[itab] + log_coolunit;
-  }
+  setup_cool_interp_grid_(&my_rates->LH2, rank, params, L, log10(coolunit));
 }
 
 
 void initialize_cooling_rate_HD(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit)
 {
-  int    ND = 16,  NT = 11 , NH = 21;
-  double D0 =16.0, T0 = 1.6, H0 =-12.0;
-  double dD = 1.0, dT = 0.2, dH =  1.0;
+  const int rank = 3;
+  const struct regular_range_ params[3] = {
+    {16,  16.0, 1.0}, // log10(number-density like)
+    {11,   1.6, 0.2}, // log10(temperature)
+    {21, -12.0, 1.0} // log10(H2 number density)
+  };
+
   double L[] =
      {37.75,  36.75,  35.75,  34.75,  33.75,  32.75,  31.75,  30.75,  29.75,  28.75,  27.75,  26.75,  25.75,  24.76,  23.76,  22.83,  22.20,  22.02,  22.00,  21.99,  21.99, 
       37.14,  36.14,  35.14,  34.14,  33.14,  32.14,  31.14,  30.14,  29.14,  28.14,  27.14,  26.14,  25.14,  24.14,  23.15,  22.24,  21.68,  21.47,  21.41,  21.40,  21.40, 
@@ -909,39 +927,19 @@ void initialize_cooling_rate_HD(chemistry_data *my_chemistry, chemistry_data_sto
       35.07,  34.09,  33.20,  32.88,  32.88,  32.88,  32.88,  32.88,  32.88,  32.88,  32.88,  32.86,  32.71,  32.17,  31.40,  30.33,  29.41,  29.07,  29.00,  28.99,  28.99, 
       34.83,  33.85,  33.03,  32.83,  32.83,  32.83,  32.83,  32.83,  32.83,  32.83,  32.82,  32.79,  32.57,  31.94,  31.13,  29.99,  29.10,  28.84,  28.78,  28.78,  28.78};
 
-  int iD, iT, iH, itab;
-  double log_coolunit = log10(coolunit);
-
-  my_rates->LHD_D = malloc(ND * sizeof(double));
-  my_rates->LHD_T = malloc(NT * sizeof(double));
-  my_rates->LHD_H = malloc(NH * sizeof(double));
-  my_rates->LHD_L = malloc(ND * NT * NH * sizeof(double));
-
-  my_rates->LHD_N[0] = ND;
-  my_rates->LHD_N[1] = NT;
-  my_rates->LHD_N[2] = NH;
-  my_rates->LHD_Size = ND * NT * NH;
-  for(iD = 0; iD < ND; iD++)
-    my_rates->LHD_D[iD] = D0 + (double)iD * dD;
-  for(iT = 0; iT < NT; iT++)
-    my_rates->LHD_T[iT] = T0 + (double)iT * dT;
-  for(iH = 0; iH < NH; iH++)
-    my_rates->LHD_H[iH] = H0 + (double)iH * dH;
-  my_rates->LHD_dD = dD;
-  my_rates->LHD_dT = dT; 
-  my_rates->LHD_dH = dH; 
-  for(itab = 0; itab < ND * NT * NH; itab++) {
-    my_rates->LHD_L[itab] = L[itab] + log_coolunit;
-  }
-
+  setup_cool_interp_grid_(&my_rates->LHD, rank, params, L, log10(coolunit));
 }
 
 
 void initialize_cooling_rate_CI(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit)
 {
-  int    ND = 13,  NT = 16 , NH = 17;
-  double D0 =15.0, T0 = 0.6, H0 =-10.0;
-  double dD = 1.0, dT = 0.2, dH =  1.0;
+  const int rank = 3;
+  const struct regular_range_ params[3] = {
+    {13,  15.0, 1.0}, // log10(number-density like)
+    {16,   0.6, 0.2}, // log10(temperature)
+    {17, -10.0, 1.0}  // log10(H2 number density)
+  };
+
   double L[] =
      {36.61,  35.61,  34.61,  33.61,  32.61,  31.61,  30.61,  29.61,  28.61,  27.61,  26.61,  25.62,  24.67,  23.98,  23.76,  23.73,  23.73, 
       35.62,  34.62,  33.62,  32.62,  31.62,  30.62,  29.62,  28.62,  27.62,  26.62,  25.62,  24.62,  23.68,  23.01,  22.81,  22.78,  22.78, 
@@ -1152,39 +1150,19 @@ void initialize_cooling_rate_CI(chemistry_data *my_chemistry, chemistry_data_sto
       32.95,  32.00,  31.10,  30.33,  29.71,  29.19,  28.71,  28.34,  28.17,  28.13,  28.13,  28.13,  28.13,  28.13,  28.13,  28.13,  28.13, 
       32.90,  31.95,  31.06,  30.29,  29.68,  29.15,  28.67,  28.26,  28.06,  28.01,  28.01,  28.01,  28.01,  28.01,  28.01,  28.01,  28.01}; 
 
-  int iD, iT, iH, itab;
-  double log_coolunit = log10(coolunit);
-
-  my_rates->LCI_D = malloc(ND * sizeof(double));
-  my_rates->LCI_T = malloc(NT * sizeof(double));
-  my_rates->LCI_H = malloc(NH * sizeof(double));
-  my_rates->LCI_L = malloc(ND * NT * NH * sizeof(double));
-
-  my_rates->LCI_N[0] = ND;
-  my_rates->LCI_N[1] = NT;
-  my_rates->LCI_N[2] = NH;
-  my_rates->LCI_Size = ND * NT * NH;
-  for(iD = 0; iD < ND; iD++)
-    my_rates->LCI_D[iD] = D0 + (double)iD * dD;
-  for(iT = 0; iT < NT; iT++)
-    my_rates->LCI_T[iT] = T0 + (double)iT * dT;
-  for(iH = 0; iH < NH; iH++)
-    my_rates->LCI_H[iH] = H0 + (double)iH * dH;
-  my_rates->LCI_dD = dD;
-  my_rates->LCI_dT = dT; 
-  my_rates->LCI_dH = dH; 
-  for(itab = 0; itab < ND * NT * NH; itab++) {
-    my_rates->LCI_L[itab] = L[itab] + log_coolunit;
-  }
-
+  setup_cool_interp_grid_(&my_rates->LCI, rank, params, L, log10(coolunit));
 }
 
 
 void initialize_cooling_rate_CII(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit)
 {
-  int    ND = 13,  NT = 16 , NH = 17;
-  double D0 =15.0, T0 = 0.6, H0 =-10.0;
-  double dD = 1.0, dT = 0.2, dH =  1.0;
+  const int rank = 3;
+  const struct regular_range_ params[3] = {
+    {13,  15.0, 1.0}, // log10(number-density like)
+    {16,   0.6, 0.2}, // log10(temperature)
+    {17, -10.0, 1.0}  // log10(H2 number density)
+  };
+
   double L[] =
      {42.75,  41.75,  40.75,  39.75,  38.75,  37.75,  36.75,  35.75,  34.75,  33.75,  32.75,  31.75,  30.76,  29.85,  29.31,  29.19,  29.17, 
       39.06,  38.06,  37.06,  36.06,  35.06,  34.06,  33.06,  32.06,  31.06,  30.06,  29.06,  28.06,  27.07,  26.17,  25.63,  25.52,  25.50, 
@@ -1395,39 +1373,20 @@ void initialize_cooling_rate_CII(chemistry_data *my_chemistry, chemistry_data_st
       32.61,  31.62,  30.65,  29.81,  29.17,  28.64,  28.18,  27.84,  27.69,  27.67,  27.66,  27.66,  27.66,  27.66,  27.66,  27.66,  27.66, 
       32.59,  31.60,  30.63,  29.80,  29.16,  28.62,  28.14,  27.74,  27.52,  27.47,  27.46,  27.46,  27.46,  27.46,  27.46,  27.46,  27.46};
 
-  int iD, iT, iH, itab;
-  double log_coolunit = log10(coolunit);
-
-  my_rates->LCII_D = malloc(ND * sizeof(double));
-  my_rates->LCII_T = malloc(NT * sizeof(double));
-  my_rates->LCII_H = malloc(NH * sizeof(double));
-  my_rates->LCII_L = malloc(ND * NT * NH * sizeof(double));
-
-  my_rates->LCII_N[0] = ND;
-  my_rates->LCII_N[1] = NT;
-  my_rates->LCII_N[2] = NH;
-  my_rates->LCII_Size = ND * NT * NH;
-  for(iD = 0; iD < ND; iD++)
-    my_rates->LCII_D[iD] = D0 + (double)iD * dD;
-  for(iT = 0; iT < NT; iT++)
-    my_rates->LCII_T[iT] = T0 + (double)iT * dT;
-  for(iH = 0; iH < NH; iH++)
-    my_rates->LCII_H[iH] = H0 + (double)iH * dH;
-  my_rates->LCII_dD = dD;
-  my_rates->LCII_dT = dT; 
-  my_rates->LCII_dH = dH; 
-  for(itab = 0; itab < ND * NT * NH; itab++) {
-    my_rates->LCII_L[itab] = L[itab] + log_coolunit;
-  }
+  setup_cool_interp_grid_(&my_rates->LCII, rank, params, L, log10(coolunit));
 
 }
 
 
 void initialize_cooling_rate_OI(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit)
 {
-  int    ND = 13,  NT = 16 , NH = 16;
-  double D0 =15.0, T0 = 0.8, H0 = - 5.0;
-  double dD = 1.0, dT = 0.2, dH =   1.0;
+  const int rank = 3;
+  const struct regular_range_ params[3] = {
+    {13, 15.0, 1.0}, // log10(number-density like)
+    {16,  0.8, 0.2}, // log10(temperature)
+    {16, -5.0, 1.0}  // log10(H2 number density)
+  };
+
   double L[] =
      {45.39,  44.39,  43.39,  42.39,  41.39,  40.39,  39.39,  38.39,  37.39,  36.39,  35.40,  34.46,  33.81,  33.62,  33.60,  33.60, 
       39.42,  38.42,  37.42,  36.42,  35.42,  34.42,  33.42,  32.42,  31.42,  30.42,  29.42,  28.50,  27.92,  27.78,  27.76,  27.76, 
@@ -1638,39 +1597,19 @@ void initialize_cooling_rate_OI(chemistry_data *my_chemistry, chemistry_data_sto
       27.75,  27.04,  26.47,  26.03,  25.76,  25.68,  25.67,  25.67,  25.67,  25.67,  25.67,  25.67,  25.67,  25.67,  25.67,  25.67, 
       27.63,  26.93,  26.37,  25.91,  25.60,  25.48,  25.46,  25.46,  25.46,  25.46,  25.46,  25.46,  25.46,  25.46,  25.46,  25.46}; 
 
-  int iD, iT, iH, itab;
-  double log_coolunit = log10(coolunit);
-
-  my_rates->LOI_D = malloc(ND * sizeof(double));
-  my_rates->LOI_T = malloc(NT * sizeof(double));
-  my_rates->LOI_H = malloc(NH * sizeof(double));
-  my_rates->LOI_L = malloc(ND * NT * NH * sizeof(double));
-
-  my_rates->LOI_N[0] = ND;
-  my_rates->LOI_N[1] = NT;
-  my_rates->LOI_N[2] = NH;
-  my_rates->LOI_Size = ND * NT * NH;
-  for(iD = 0; iD < ND; iD++)
-    my_rates->LOI_D[iD] = D0 + (double)iD * dD;
-  for(iT = 0; iT < NT; iT++)
-    my_rates->LOI_T[iT] = T0 + (double)iT * dT;
-  for(iH = 0; iH < NH; iH++)
-    my_rates->LOI_H[iH] = H0 + (double)iH * dH;
-  my_rates->LOI_dD = dD;
-  my_rates->LOI_dT = dT; 
-  my_rates->LOI_dH = dH; 
-  for(itab = 0; itab < ND * NT * NH; itab++) {
-    my_rates->LOI_L[itab] = L[itab] + log_coolunit;
-  }
-
+  setup_cool_interp_grid_(&my_rates->LOI, rank, params, L, log10(coolunit));
 }
 
 
 void initialize_cooling_rate_CO(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit)
 {
-  int    ND = 11 , NT = 11 , NH = 14;
-  double D0 =14.0, T0 = 1.0, H0 = - 3.0;
-  double dD = 0.5, dT = 0.2, dH =   1.0;
+  const int rank = 3;
+  const struct regular_range_ params[3] = {
+    {11, 14.0, 0.5}, // log10(number-density like)
+    {11,  1.0, 0.2}, // log10(temperature)
+    {14, -3.0, 1.0}  // log10(H2I number density)
+  };
+
   double L[] =
      {27.77,  26.77,  25.77,  24.78,  23.80,  22.84,  21.99,  21.40,  21.16,  21.10,  21.09,  21.08,  21.08,  21.08, 
       27.51,  26.51,  25.52,  24.52,  23.54,  22.58,  21.71,  21.04,  20.72,  20.63,  20.60,  20.60,  20.60,  20.60, 
@@ -1794,39 +1733,19 @@ void initialize_cooling_rate_CO(chemistry_data *my_chemistry, chemistry_data_sto
       26.11,  25.11,  24.11,  23.11,  22.13,  21.17,  20.28,  19.54,  18.97,  18.59,  18.37,  18.28,  18.25,  18.23, 
       25.91,  24.91,  23.91,  22.92,  21.93,  20.97,  20.07,  19.28,  18.65,  18.24,  18.03,  17.96,  17.94,  17.93};
 
-  int iD, iT, iH, itab;
-  double log_coolunit = log10(coolunit);
-
-  my_rates->LCO_D = malloc(ND * sizeof(double));
-  my_rates->LCO_T = malloc(NT * sizeof(double));
-  my_rates->LCO_H = malloc(NH * sizeof(double));
-  my_rates->LCO_L = malloc(ND * NT * NH * sizeof(double));
-
-  my_rates->LCO_N[0] = ND;
-  my_rates->LCO_N[1] = NT;
-  my_rates->LCO_N[2] = NH;
-  my_rates->LCO_Size = ND * NT * NH;
-  for(iD = 0; iD < ND; iD++)
-    my_rates->LCO_D[iD] = D0 + (double)iD * dD;
-  for(iT = 0; iT < NT; iT++)
-    my_rates->LCO_T[iT] = T0 + (double)iT * dT;
-  for(iH = 0; iH < NH; iH++)
-    my_rates->LCO_H[iH] = H0 + (double)iH * dH;
-  my_rates->LCO_dD = dD;
-  my_rates->LCO_dT = dT; 
-  my_rates->LCO_dH = dH; 
-  for(itab = 0; itab < ND * NT * NH; itab++) {
-    my_rates->LCO_L[itab] = L[itab] + log_coolunit;
-  }
-
+  setup_cool_interp_grid_(&my_rates->LCO, rank, params, L, log10(coolunit));
 }
 
 
 void initialize_cooling_rate_OH(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit)
 {
-  int    ND = 9  , NT = 6  , NH = 14;
-  double D0 =10.0, T0 = 1.6, H0 =  1.0;
-  double dD = 1.0, dT = 0.2, dH =  1.0;;
+  const int rank = 3;
+  const struct regular_range_ params[3] = {
+    {9, 10.0, 1.0}, // log10(number-density like)
+    {6, 1.6, 0.2}, // log10(temperature)
+    {14, 1.0, 1.0} // log10(H2I number density)
+  };
+
   double L[] =
      {23.88,  22.88,  21.88,  20.88,  19.88,  18.88,  17.89,  16.94,  16.17,  15.85,  15.79,  15.78,  15.78,  15.78, 
       23.28,  22.28,  21.28,  20.28,  19.28,  18.28,  17.29,  16.35,  15.60,  15.28,  15.20,  15.18,  15.18,  15.17, 
@@ -1883,39 +1802,19 @@ void initialize_cooling_rate_OH(chemistry_data *my_chemistry, chemistry_data_sto
       22.27,  21.29,  20.32,  19.38,  18.53,  17.82,  17.34,  17.12,  17.05,  17.03,  17.02,  17.02,  17.02,  17.02, 
       22.06,  21.08,  20.11,  19.17,  18.30,  17.55,  17.01,  16.74,  16.66,  16.64,  16.64,  16.63,  16.63,  16.63}; 
 
-  int iD, iT, iH, itab;
-  double log_coolunit = log10(coolunit);
-
-  my_rates->LOH_D = malloc(ND * sizeof(double));
-  my_rates->LOH_T = malloc(NT * sizeof(double));
-  my_rates->LOH_H = malloc(NH * sizeof(double));
-  my_rates->LOH_L = malloc(ND * NT * NH * sizeof(double));
-
-  my_rates->LOH_N[0] = ND;
-  my_rates->LOH_N[1] = NT;
-  my_rates->LOH_N[2] = NH;
-  my_rates->LOH_Size = ND * NT * NH;
-  for(iD = 0; iD < ND; iD++)
-    my_rates->LOH_D[iD] = D0 + (double)iD * dD;
-  for(iT = 0; iT < NT; iT++)
-    my_rates->LOH_T[iT] = T0 + (double)iT * dT;
-  for(iH = 0; iH < NH; iH++)
-    my_rates->LOH_H[iH] = H0 + (double)iH * dH;
-  my_rates->LOH_dD = dD;
-  my_rates->LOH_dT = dT; 
-  my_rates->LOH_dH = dH; 
-  for(itab = 0; itab < ND * NT * NH; itab++) {
-    my_rates->LOH_L[itab] = L[itab] + log_coolunit;
-  }
-
+  setup_cool_interp_grid_(&my_rates->LOH, rank, params, L, log10(coolunit));
 }
 
 
 void initialize_cooling_rate_H2O(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit)
 {
-  int    ND = 10 , NT = 12 , NH = 16;
-  double D0 =10.0, T0 = 1.0, H0 = - 1.0;
-  double dD = 1.0, dT = 0.2, dH =   1.0;
+  const int rank = 3;
+  const struct regular_range_ params[3] = {
+    {10, 10.0, 1.0}, // log10(number-density like)
+    {12, 1.0, 0.2}, // log10(temperature)
+    {16, -1.0, 1.0} // log10(H2I number density)
+  };
+
   double L[] =
      {27.85,  26.85,  25.85,  24.85,  23.85,  22.85,  21.85,  20.85,  19.86,  18.91,  18.21,  17.94,  17.89,  17.88,  17.88,  17.87, 
       27.18,  26.18,  25.18,  24.18,  23.18,  22.18,  21.18,  20.19,  19.20,  18.25,  17.50,  17.18,  17.11,  17.09,  17.08,  17.08, 
@@ -2038,39 +1937,18 @@ void initialize_cooling_rate_H2O(chemistry_data *my_chemistry, chemistry_data_st
       23.89,  22.89,  21.90,  20.93,  19.97,  19.04,  18.17,  17.35,  16.58,  15.89,  15.34,  15.05,  14.97,  14.95,  14.94,  14.94, 
       23.63,  22.64,  21.65,  20.67,  19.71,  18.77,  17.86,  17.01,  16.20,  15.48,  14.94,  14.70,  14.64,  14.62,  14.62,  14.62}; 
 
-  int iD, iT, iH, itab;
-  double log_coolunit = log10(coolunit);
-
-  my_rates->LH2O_D = malloc(ND * sizeof(double));
-  my_rates->LH2O_T = malloc(NT * sizeof(double));
-  my_rates->LH2O_H = malloc(NH * sizeof(double));
-  my_rates->LH2O_L = malloc(ND * NT * NH * sizeof(double));
-
-  my_rates->LH2O_N[0] = ND;
-  my_rates->LH2O_N[1] = NT;
-  my_rates->LH2O_N[2] = NH;
-  my_rates->LH2O_Size = ND * NT * NH;
-  for(iD = 0; iD < ND; iD++)
-    my_rates->LH2O_D[iD] = D0 + (double)iD * dD;
-  for(iT = 0; iT < NT; iT++)
-    my_rates->LH2O_T[iT] = T0 + (double)iT * dT;
-  for(iH = 0; iH < NH; iH++)
-    my_rates->LH2O_H[iH] = H0 + (double)iH * dH;
-  my_rates->LH2O_dD = dD;
-  my_rates->LH2O_dT = dT; 
-  my_rates->LH2O_dH = dH; 
-  for(itab = 0; itab < ND * NT * NH; itab++) {
-    my_rates->LH2O_L[itab] = L[itab] + log_coolunit;
-  }
-
+  setup_cool_interp_grid_(&my_rates->LH2O, rank, params, L, log10(coolunit));
 }
 
 
 void initialize_primordial_opacity(chemistry_data *my_chemistry, chemistry_data_storage *my_rates)
 {
-  int    ND = 15, NT = 29;
-  double D0 =-16.0, T0 = 1.8;
-  double dD = 1.0, dT = 0.1;
+  const int rank = 2;
+  const struct regular_range_ params[2] = {
+    {15, -16.0, 1.0}, // log10(mass-density)
+    {29,   1.8, 0.1}  // log10(temperature)
+  };
+
   double kp[29][15] =
    {{-14.39, -13.39, -12.39, -11.39, -10.39, -9.39, -8.39, -7.39,  -6.39,  -5.39,  -4.39,  -3.39,  -2.39,  -1.39,  -0.39}
    ,{-14.18, -13.18, -12.18, -11.18, -10.18, -9.18, -8.18, -7.18,  -6.18,  -5.18,  -4.18,  -3.18,  -2.18,  -1.18,  -0.18}
@@ -2102,27 +1980,14 @@ void initialize_primordial_opacity(chemistry_data *my_chemistry, chemistry_data_
    ,{ -6.13,  -5.13,  -4.13,  -3.13,  -2.13, -1.15, -0.25,  0.68,   1.67,   2.67,   3.66,  10.00,  10.00,  10.00,  10.00}
    ,{ -6.45,  -5.45,  -4.45,  -3.45,  -2.45, -1.45, -0.45,  0.53,   1.46,   2.42,   3.41,  10.00,  10.00,  10.00,  10.00}};
 
-  int iD, iT, itab;
-  double log_rho;
+  setup_generic_grid_props_(&my_rates->alphap.props, rank, params);
 
-  my_rates->alphap_D = malloc(ND * sizeof(double));
-  my_rates->alphap_T = malloc(NT * sizeof(double));
-  my_rates->alphap_Data = malloc(ND * NT * sizeof(double));
-
-  my_rates->alphap_N[0] = ND;
-  my_rates->alphap_N[1] = NT;
-  my_rates->alphap_Size = ND * NT;
-  for(iD = 0; iD < ND; iD++)
-    my_rates->alphap_D[iD] = D0 + (double)iD * dD;
-  for(iT = 0; iT < NT; iT++)
-    my_rates->alphap_T[iT] = T0 + (double)iT * dT;
-  my_rates->alphap_dD = dD;
-  my_rates->alphap_dT = dT; 
-  for(iD=0; iD<ND; iD++) {
-    log_rho = D0 + iD*dD;
-    for(iT=0; iT<NT; iT++) {
-      itab = iD * NT + iT;
-      my_rates->alphap_Data[itab] = kp[iT][iD] + log_rho;
+  my_rates->alphap.data = malloc(my_rates->alphap.props.data_size * sizeof(double));
+  for(int iD=0; iD<params[0].count; iD++) {
+    double log_rho = params[0].start + iD*params[0].step;
+    for(int iT=0; iT<params[1].count; iT++) {
+      int itab = iD * params[1].count + iT;
+      my_rates->alphap.data[itab] = kp[iT][iD] + log_rho;
     }
   }
 
