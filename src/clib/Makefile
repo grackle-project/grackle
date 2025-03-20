@@ -306,7 +306,7 @@ install:
 #-----------------------------------------------------------------------
 
 clean:
-	-@rm -f *.la .libs/* *.o *.lo DEPEND.bak *~ $(OUTPUT) *.exe DEPEND out.make.DEPEND
+	-@rm -f *.la .libs/* *.o *.lo fields/*.o fields/*.lo fields/.libs/* DEPEND.bak *~ $(OUTPUT) *.exe DEPEND out.make.DEPEND
 	-@rm -rf $(AUTOGEN_DIR)
 	-@touch DEPEND
 
