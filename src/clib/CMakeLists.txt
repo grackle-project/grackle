@@ -88,7 +88,6 @@ add_library(Grackle_Grackle
   calculate_temperature.c
   dynamic_api.c
   FrozenKeyIdxBiMap.c FrozenKeyIdxBiMap.h FrozenKeyIdxBiMap_details.h
-  fields/experimental_api.h
   fields/gr_fields.c fields/gr_fields_private.h fields/internal_field_data.h
   grackle_units.c
   index_helper.c
@@ -134,6 +133,7 @@ add_library(Grackle_Grackle
   # C/C++ public headers
   ../include/grackle.h
   ../include/grackle_chemistry_data.h
+  ../include/grackle_experimental_api.h
   ../include/grackle_rate_functions.h
   ../include/grackle_types.h
 
