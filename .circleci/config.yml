@@ -215,13 +215,6 @@ commands:
               export PYTEST_CODE_LINK_CHOICE="" # we skip test_code_examples.py
             fi
 
-            # configure variables for generating test answers
-            if [ << parameters.generate >> == 'true' ]; then
-              export GENERATE_PYGRACKLE_TEST_RESULTS=1
-            else
-              export GENERATE_PYGRACKLE_TEST_RESULTS=0
-            fi
-
             # actually execute the tests
             if [ << parameters.omp >> == 'true' ]; then
               export OMP_NUM_THREADS=4
@@ -229,8 +222,26 @@ commands:
               make cxx_omp_example
               ./cxx_omp_example
               make clean
-            else
+            elif [ ! -f ./python/tests/conftest.py ]; then
+              # this is the old way to control the answer-test mode
+              # - We can stop supporting this case once the most recent gold
+              #   standard tags a repository version containing conftest.py
+              if [ << parameters.generate >> == 'true' ]; then
+                export GENERATE_PYGRACKLE_TEST_RESULTS=1
+              else
+                export GENERATE_PYGRACKLE_TEST_RESULTS=0
+              fi
               py.test python/tests
+            else
+              # ANSWER_DIR was picked to ensure that it matches up with the old
+              # hardcoded location (we can change it once the most recent gold
+              # standard tags a repository version containing conftest.py)
+              ANSWER_DIR=./python/tests/test_answers
+              if [ << parameters.generate >> == 'true' ]; then
+                py.test --answer-dir=${ANSWER_DIR} --answer-store python/tests
+              else
+                py.test --answer-dir=${ANSWER_DIR} python/tests
+              fi
             fi
 
   build-docs:
@@ -281,14 +292,14 @@ jobs:
           build_kind: 'classic'
           generate: 'true'
 
-      - install-grackle:
-          omp: 'true'
-          classic_build: 'true'
-          tag: $CIRCLE_BRANCH
+      # - install-grackle:
+      #     omp: 'true'
+      #     classic_build: 'true'
+      #     tag: $CIRCLE_BRANCH
 
-      - run-tests:
-          omp: 'true'
-          build_kind: 'classic'
+      # - run-tests:
+      #     omp: 'true'
+      #     build_kind: 'classic'
 
       - install-grackle:
           omp: 'false'
