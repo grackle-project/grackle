@@ -80,31 +80,30 @@ def run_command(command, cwd, env, timeout=None):
             f"{proc.stderr}")
 
 def parse_output(ostr):
-    results = {when: {field: None for field in rfields}
-               for when in ("Before", "After")}
+    results = {field: None for field in rfields}
 
     if isinstance(ostr, bytes):
         ostr = ostr.decode("utf8")
     lines = ostr.split("\n")
     for line in lines:
-        match = re.match(r"^ ?(\w+) - (\w+) = ", line)
-        if match is None:
-            continue
-        when, field = match.groups()
-        _, rside = line.split(" = ")
-        rparts = rside.split()
-        if len(rparts) == 1:
-            val = rparts[0][:-1]
-        elif len(rparts) == 2:
-            val = rparts[0]
-        else:
-            raise RuntimeError(
-                f"Cannot grab field values from line: {line}.")
+        for field in results:
+            match = re.match(f"^ ?{field} = ", line)
+            if match is None:
+                continue
+            _, rside = line.split(" = ")
+            rparts = rside.split()
+            if len(rparts) == 1:
+                val = rparts[0][:-1]
+            elif len(rparts) == 2:
+                val = rparts[0]
+            else:
+                raise RuntimeError(
+                    f"Cannot grab field values from line: {line}.")
 
-        if results[when][field] is not None:
-            raise RuntimeError(
-                f"Already have value for {field}.")
-        results[when][field] = val
+            if results[field] is not None:
+                raise RuntimeError(
+                    f"Already have value for {field}.")
+            results[field] = val
 
     return results
 
@@ -179,17 +178,10 @@ def test_code_examples(answertestspec, test_file, example):
                 all_results = json.load(f)
 
             comp_results = all_results[example]
-            failures = 0
-            err_msg = f"{example}:\n"
-            for when in comp_results:
-                for field in comp_results[when]:
-                    if comp_results[when][field] == results[when][field]:
-                        continue
-                    failures += 1
-                    err_msg += f"\t{when} - {field} - " + \
-                      f"old: {comp_results[when][field]}, " + \
-                      f"new: {results[when][field]}\n"
-            assert failures == 0, err_msg
+            for field in comp_results:
+                err_msg = f"In {example}: mismatch for {field} - " + \
+                  f"old: {comp_results[field]}, new: {results[field]}"
+                assert comp_results[field] == results[field], err_msg
 
     command = f"{make_command} clean"
     run_command(command, examples_dir, env, timeout=60)
