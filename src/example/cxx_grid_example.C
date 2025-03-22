@@ -281,6 +281,12 @@ int check_if_grackle_mutates_ghost_zone(int primordial_chemistry,
   grackle_data->UVbackground = 1;           // UV background on
   grackle_data->grackle_data_file = "../../input/CloudyData_UVB=HM2012.h5"; // data file
 
+  // Third, check the consistency
+  if (gr_check_consistency() == 0) {
+    fprintf(stderr, "Error in gr_check_consistency.\n");
+    return EXIT_FAILURE;
+  }
+
   // Finally, initialize the chemistry object.
   if (initialize_chemistry_data(&my_units) == 0) {
     fprintf(stderr, "Error in initialize_chemistry_data.\n");

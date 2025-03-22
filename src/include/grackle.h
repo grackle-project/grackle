@@ -130,6 +130,13 @@ int local_free_chemistry_data(chemistry_data *my_chemistry, chemistry_data_stora
 
 grackle_version get_grackle_version(void);
 
+// the following function's signature may change
+int grimpl_check_consistency_(int gr_float_hdrsize);
+
+static inline int gr_check_consistency(void) {
+  return grimpl_check_consistency_((int)sizeof(gr_float));
+}
+
 int gr_initialize_field_data(grackle_field_data *my_fields);
 
 #ifdef __cplusplus

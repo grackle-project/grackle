@@ -68,6 +68,12 @@ int main(int argc, char *argv[])
   // Create chemistry data storage object to store rates.
   chemistry_data_storage my_grackle_rates;
 
+  // Third, check the consistency
+  if (gr_check_consistency() == 0) {
+    fprintf(stderr, "Error in gr_check_consistency.\n");
+    return EXIT_FAILURE;
+  }
+
   // Finally, initialize the chemistry object.
   if (local_initialize_chemistry_data(my_grackle_data, &my_grackle_rates, &my_units) == 0) {
     fprintf(stderr, "Error in initialize_chemistry_data.\n");

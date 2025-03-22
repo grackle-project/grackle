@@ -531,3 +531,15 @@ int local_free_chemistry_data(chemistry_data *my_chemistry,
 
   return GR_SUCCESS;
 }
+
+int grimpl_check_consistency_(int gr_float_hdrsize) {
+  if (gr_float_hdrsize != ((int)sizeof(gr_float))) {
+    fprintf(stderr, "ERROR: Inconsistent floating-point precisions.\n"
+                    "       size of gr_float in the library linked against during compilation = %d\n"
+                    "       size of gr_float in the library linked against during runtime     = %d\n",
+                    gr_float_hdrsize, (int)sizeof(gr_float));
+    return GR_FAIL;
+  } else {
+    return GR_SUCCESS;
+  }
+}
