@@ -11,64 +11,6 @@
 #include "fields/gr_fields_private.h" // grFields_from_field_names_
 #include "FrozenKeyIdxBiMap.h"
 
-
-// first we define machinery to deal make a unique_ptr wrapper of
-// FrozenKeyIdxBiMap to reduce the chance of memory leaks
-
-// this is used by std::unique_ptr
-/*
-struct FrozenKeyIdxBiMap_deleter_ {
-  void operator() (FrozenKeyIdxBiMap* p) {
-    if (p != nullptr) { drop_FrozenKeyIdxBiMap(p); }
-  }
-}
-*/
-
-/*
-// the purpose of this fixture is to reduce all of the messy cleanup for
-// FrozenKeyIdxBiMap and gr_fields
-// -> this is messy because most of the tests are checking an internal function
-//    grFields_from_field_names_
-// -> essentially, we need to register the functions
-class GrFieldInitTest : public testing::Test {
-protected:
-  FrozenKeyIdxBiMap* registered_field_names_ = nullptr;
-  bool any_registered_field_names_ = false;
-  gr_fields* registered_gr_fields_ = nullptr;
-  bool any_registered_fields_ = false;
-
-  FrozenKeyIdxBiMap* field_names_from_vec(const std::vector<std::string>& v) {
-    ASSERT_FALSE(any_registered_field_names_)
-      << "the fixture's " << __func__
-      << "method can only be called once per test";
-    registered_field_names_ = FrozenKeyIdxBiMap_from_vec(v);
-    any_registered_field_names_ = true;
-    return registered_field_names_;
-  }
-
-  FrozenKeyIdxBiMap* register_gr_fields_(gr_fields* fields) {
-    ASSERT_FALSE(any_registered_fields_)
-      << "the fixture's " << __func__
-      << "method can only be called once per test";
-    registered_gr_fields_ = fields;
-    any_registered_fields_ = true;
-  }
-
-  void TearDown() override {
-    ASSERT_TRUE(any_registered_field_names_ && any_registered_fields_)
-      << "
-
-  }
-
-
-
-
-    field_names_from_vec method can only be c
-  }
-
-*/
-
-
 /// helper function to initialize a map from a vector
 FrozenKeyIdxBiMap* FrozenKeyIdxBiMap_from_vec(
   const std::vector<std::string>& vec_
