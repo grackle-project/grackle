@@ -28,6 +28,7 @@ OBJS_CONFIG_LIB = \
         cool_multi_time_g.lo \
         dynamic_api.lo \
         FrozenKeyIdxBiMap.lo \
+        fields/get_field_names.lo \
         fields/gr_fields.lo \
         grackle_units.lo \
 	index_helper.lo \

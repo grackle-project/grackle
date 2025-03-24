@@ -11,6 +11,7 @@
 #include "grackle_experimental_api.h"
 #include "grackle_macros.h" // GRACKLE_FREE
 #include "fields/internal_field_data.h"
+#include "fields/get_field_names.h"
 #include "fields/gr_fields_private.h"
 #include "FrozenKeyIdxBiMap.h"
 #include "status_reporting.h"
@@ -185,27 +186,30 @@ int grFields_from_field_names_(gr_fields** out, FrozenKeyIdxBiMap* field_names,
   return GR_SUCCESS;
 }
 
+// --------------------------------------------------------------------
+
 int grunstableFields_init_from_local(
   gr_fields** ptr,
   const chemistry_data* my_chemistry, const chemistry_data_storage* my_rates,
   uint64_t flags, uint64_t nelements_per_field
 )
 {
-  int num_fields = 0;
-  const char** field_list = NULL;
-  // we need to insert logic to make field_list into a list of pointers to
-  // string literals specifying field names
-  // -> maybe we can borrow logic from pygrackle?
-  GR_INTERNAL_ERROR("Not Implemented Yet");
+  if (my_chemistry == NULL) {
+    return GrPrintAndReturnErr("my_chemistry can't be NULL");
+  } else if (my_rates == NULL) {
+    // right now, we technically don't need my_rates to be non-null.
+    // - we require it to be non-null to try to make it clear that my_chemistry
+    //   should already have been used to set up a my_rates instance
+    // - In the future, if we choose to fully embrace using gr_fields with the
+    //   local API, then we should pre-build field_names_bimap and just clone
+    //   it within this function (this should speed this function)
+    return GrPrintAndReturnErr("my_rates can't be NULL");
+  }
 
   // construct field_names from field_list
   FrozenKeyIdxBiMap* field_names_bimap = NULL;
-  int ret = new_FrozenKeyIdxBiMap(&field_names_bimap, field_list, num_fields,
-                                  BIMAP_REFS_KEYDATA);
-  if (ret != GR_SUCCESS) {
-    // do we need to cleanup field_list?
-    return ret;
-  }
+  int ret = get_field_names_from_local_(&field_names_bimap, my_chemistry);
+  if (ret != GR_SUCCESS) { return ret; }
 
   ret = grFields_from_field_names_(ptr, field_names_bimap, flags,
                                    nelements_per_field);
@@ -214,6 +218,8 @@ int grunstableFields_init_from_local(
     return ret;
   }
 
+  // reminder: the constructed gr_fields instance has taken ownership of
+  //           field_names_bimap (it gets destroyed with grunstableFields_free)
   return GR_SUCCESS;
 }
 

@@ -88,6 +88,7 @@ add_library(Grackle_Grackle
   calculate_temperature.c
   dynamic_api.c
   FrozenKeyIdxBiMap.c FrozenKeyIdxBiMap.h FrozenKeyIdxBiMap_details.h
+  fields/get_field_names.c  fields/get_field_names.h
   fields/gr_fields.c fields/gr_fields_private.h fields/internal_field_data.h
   grackle_units.c
   index_helper.c

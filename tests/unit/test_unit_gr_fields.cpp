@@ -457,4 +457,114 @@ TEST(GrFieldAssorted, GetSlotByNameManaged)
   }
 }
 
+// this is a really long drawn out test...
+TEST(GrFieldAssorted, FieldListLocalPrimordialChem2)
+{
+  // Setup 1: set up the units system.
+  code_units my_units;
+  my_units.comoving_coordinates = 0; // 1 if cosmological sim, 0 if not
+  my_units.density_units = 1.67e-24;
+  my_units.length_units = 1.0;
+  my_units.time_units = 1.0e12;
+  my_units.a_units = 1.0;
+  my_units.a_value = 1.0;
 
+  // Setup 2: create a chemistry object to hold configuration parameters.
+  chemistry_data *my_chemistry = new chemistry_data;
+  {
+    int tmp = set_default_chemistry_parameters(my_chemistry);
+    if (tmp != GR_SUCCESS) { delete my_chemistry; }
+    ASSERT_EQ(tmp, GR_SUCCESS);
+  }
+
+  // Setup 3: set the parameters
+  my_chemistry->use_grackle = 1; // chemistry on
+  my_chemistry->with_radiative_cooling = 1; // cooling on
+  my_chemistry->primordial_chemistry = 2; // molecular network with H & He
+  // for simplicity, we disable all features using the datafile. After we merge
+  // in changes from #254, we can start using datafiles in unit tests.
+  my_chemistry->metal_cooling = 0;          // metal cooling off
+  my_chemistry->UVbackground = 0;           // UV background off
+  my_chemistry->grackle_data_file = nullptr;
+
+  // Setup 4: Create chemistry data storage object to store rates.
+  chemistry_data_storage* my_rates = new chemistry_data_storage;
+
+  // Setup 5: initialize the chemistry object.
+  {
+    int tmp = local_initialize_chemistry_data(my_chemistry, my_rates,
+                                              &my_units);
+    if (tmp != GR_SUCCESS) {
+      delete my_rates;
+      delete my_chemistry;
+    }
+    ASSERT_EQ(tmp, GR_SUCCESS);
+  }
+
+  // Invoke the function we are actually testing
+  // ===========================================
+  gr_fields* fields = nullptr;
+  int ret = grunstableFields_init_from_local(&fields, my_chemistry, my_rates,
+                                             0, 0);
+  if (ret != GR_SUCCESS) {
+    delete my_rates;
+    delete my_chemistry;
+  }
+  ASSERT_EQ(ret, GR_SUCCESS);
+  ASSERT_NE(fields, nullptr);
+
+  // get the number of fields
+  // =======================================================
+  int64_t num_fields = -1;
+  EXPECT_EQ(grunstableFields_num_fields(fields, &num_fields), GR_SUCCESS);
+  if (num_fields < 1) {
+    grunstableFields_free(fields);
+    local_free_chemistry_data(my_chemistry, my_rates);
+    delete my_rates;
+    delete my_chemistry;
+  }
+  ASSERT_GE(num_fields, 1)
+    << "it shouldn't be possible to have a non-positive field count";
+
+  // Now, confirm that some fields are in the field list
+  // ===================================================
+  std::vector<std::string> expected_field_names = {
+    "density", "internal_energy", "HI_density", "HII_density", "HeI_density",
+    "HeII_density", "HeIII_density", "e_density", "H2I_density",
+    "H2II_density", "HM_density"
+  };
+  for (const std::string& name : expected_field_names) { // range-based loop
+    int64_t idx = 0;
+    EXPECT_EQ(
+      grunstableFields_idx_by_name(fields, name.c_str(), &idx), GR_SUCCESS
+    ) << "encountered a problem while querying the idx associated with the `"
+      << name << "` field";
+    EXPECT_GT(idx, -1) << '`' << name << "` field seems to be missing";
+    EXPECT_LT(idx, num_fields)
+      << "index associated with `" << name << "` field doesn't make sense";
+  }
+
+  // Now, check that some fields are missing from the field list
+  // ===========================================================
+  // (this is not exhaustive)
+  std::vector<std::string> unexpected_field_names = {
+    "DII_density", "not-a-field", "metal_density", "dust_density",
+    "volumetric_heating_rate", "temperature_floor", "RT_HeI_ionization_rate",
+    "H2_self_shielding_length", "isrf_habing"
+  };
+  for (const std::string& name : unexpected_field_names) { // range-based loop
+    int64_t idx = 0;
+    EXPECT_EQ(
+      grunstableFields_idx_by_name(fields, name.c_str(), &idx), GR_SUCCESS
+    ) << "encountered a problem while querying the idx associated with the `"
+      << name << "` field";
+    EXPECT_EQ(idx, -1) << '`' << name << "` field should be missing";
+  }
+
+  // CLEANUP
+  // =======
+  grunstableFields_free(fields);
+  local_free_chemistry_data(my_chemistry, my_rates);
+  delete my_rates;
+  delete my_chemistry;
+}
