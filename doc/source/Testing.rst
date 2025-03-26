@@ -64,14 +64,14 @@ generating the answer test results using the latest gold standard.
 
 Once you have installed :ref:`pygrackle and the development dependencies <pygrackle-dev>`, this is relatively straight-forward.
 
-Simply invoke ``py.test`` from the **src/python** directory with the ``--answer-dir=<PATH/TO/ANSWER-DIR>`` option **and** the ``--answer-store`` option.
-For the former You can specify an arbitrary path where the test-answers will be recorded.
+Simply invoke ``py.test`` from the root of the Grackle directory with the ``--answer-dir=<PATH/TO/ANSWER-DIR>`` option **and** the ``--answer-store`` option.
+The former option lets you can specify an arbitrary path where the test-answers will be recorded.
 A concrete example of what this looks like is shown down below.
 
 .. code-block:: shell-session
 
-   ~ $ cd grackle/src/python
-   ~/grackle/src/python $ py.test --answer-dir=./my_test_answers --answer-store
+   ~ $ cd grackle
+   ~/grackle $ py.test --answer-dir=./my_test_answers --answer-store
 
 The above snippet instructs each answer-test to store the test result in the directory called **./my_test_answers**; an answer-test reports that it has "passed" as long as it is able to successfully store the result.
 After you run the test-suite, you can delete the **./my_test_answers** directory (since we don't actually care about the test results).
@@ -80,25 +80,27 @@ When you launch the tests, the output will look like the following:
 
 .. code-block:: shell-session
 
-  ==================================== test session starts ====================================
+  ============================= test session starts ==============================
   platform darwin -- Python 3.11.9, pytest-8.2.1, pluggy-1.5.0
   rootdir: /Users/britton/Documents/work/research/simulation/grackle/grackle-git/src/python
+  configfile: pyproject.toml
+  testpaths: src/python/tests
   plugins: cov-5.0.0
-  collected 65 items
+  collected 62 items
 
-  python/tests/test_chemistry.py ....                                                   [  6%]
-  python/tests/test_chemistry_struct_synched.py .                                       [  7%]
-  python/tests/test_code_examples.py ......                                             [ 16%]
-  python/tests/test_dynamic_api.py ...                                                  [ 21%]
-  python/tests/test_get_grackle_version.py .                                            [ 23%]
-  python/tests/test_initialisation.py .                                                 [ 24%]
-  python/tests/test_local_functions.py .                                                [ 26%]
-  python/tests/test_models.py .......................................                   [ 86%]
-  python/tests/test_primordial.py .                                                     [ 87%]
-  python/tests/test_specific_heating_rate.py ....                                       [ 93%]
-  python/tests/test_volumetric_heating_rate.py ....                                     [100%]
+  src/python/tests/test_chemistry.py ....                                  [  6%]
+  src/python/tests/test_chemistry_struct_synched.py .                      [  8%]
+  src/python/tests/test_dynamic_api.py ...                                 [ 12%]
+  src/python/tests/test_get_grackle_version.py .                           [ 14%]
+  src/python/tests/test_initialisation.py .                                [ 16%]
+  src/python/tests/test_local_functions.py .                               [ 17%]
+  src/python/tests/test_models.py .......................................  [ 80%]
+  src/python/tests/test_primordial.py .                                    [ 82%]
+  src/python/tests/test_query_units.py ...                                 [ 87%]
+  src/python/tests/test_specific_heating_rate.py ....                      [ 93%]
+  src/python/tests/test_volumetric_heating_rate.py ....                    [100%]
 
-  ============================== 65 passed in 148.47s (0:02:28) ===============================
+  ======================== 62 passed in 95.46s (0:01:35) =========================
 
 Now it's time to :ref:`integrate grackle into your simulation code
 <integration>`.
@@ -135,7 +137,7 @@ steps:
 
      .. code-block:: shell-session
 
-        ~/grackle/src/python $ py.test --answer-dir=./my_test_answers --answer-store
+        ~/grackle $ py.test --answer-dir=./my_test_answers --answer-store
 
 #. Return to the branch of the repository you started with. If you just
    cloned the main repository, this will be called 'main', in which
@@ -156,4 +158,4 @@ steps:
 
      .. code-block:: shell-session
 
-        ~/grackle/src/python $ py.test --answer-dir=./my_test_answers
+        ~/grackle $ py.test --answer-dir=./my_test_answers

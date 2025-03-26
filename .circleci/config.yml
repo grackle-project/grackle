@@ -204,7 +204,6 @@ commands:
           command: |
             source $BASH_ENV
             source $HOME/venv/bin/activate
-            cd src
 
             # actually execute the tests
             if [[ << parameters.build_kind >> == 'classic' &&
@@ -224,6 +223,7 @@ commands:
               else
                 export GENERATE_PYGRACKLE_TEST_RESULTS=0
               fi
+              cd src
               py.test python/tests
 
             else
@@ -235,9 +235,9 @@ commands:
               # standard tags a repository version containing conftest.py)
               ANSWER_DIR=./python/tests/test_answers
               if [ << parameters.generate >> == 'true' ]; then
-                py.test --answer-dir=${ANSWER_DIR} --answer-store python/tests
+                py.test --answer-dir=${ANSWER_DIR} --answer-store
               else
-                py.test --answer-dir=${ANSWER_DIR} python/tests
+                py.test --answer-dir=${ANSWER_DIR}
               fi
             fi
 
