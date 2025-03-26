@@ -156,4 +156,4 @@ steps:
 
      .. code-block:: shell-session
 
-        ~/grackle/src/python $ py.test --answer-dir=./my_test_answers --answer-store
+        ~/grackle/src/python $ py.test --answer-dir=./my_test_answers
