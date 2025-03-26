@@ -17,16 +17,27 @@ commands:
               git fetch --tags https://github.com/$CIRCLE_PR_USERNAME/$CIRCLE_PR_REPONAME
             fi
 
+  install-cmake-dependencies:
+    description: "Install just the dependencies needed for a CMake build"
+    steps:
+      - run:
+          name: "Install only the basic dependencies for a CMake build"
+          command: |
+            git submodule update --init --remote
+            sudo apt update
+            sudo apt install -y libhdf5-serial-dev gfortran ninja-build cmake
+
   install-dependencies:
     description: "Install dependencies."
     steps:
+      - install-cmake-dependencies
       - run:
-          name: "Install dependencies."
+          name: "Install all other dependencies."
           command: |
-            git submodule update --init --remote
             source $BASH_ENV
-            sudo apt update
-            sudo apt install -y libhdf5-serial-dev gfortran libtool-bin castxml
+            # libtool-bin is a requirement of the classic build-system
+            # castxml is a requirement of the pygrackle test-suite
+            sudo apt install -y libtool-bin castxml
             python3 -m venv $HOME/venv
             source $HOME/venv/bin/activate
             pip install --upgrade pip
@@ -241,45 +252,19 @@ commands:
               fi
             fi
 
-  run-core-tests:
-    description: "Run the suite of tests that operate directly on the core-library."
-    parameters:
-      omp:
-        type: enum
-        default: 'false'
-        enum: ['true', 'false']
-      build_kind:
-        type: enum
-        default: 'classic'
-        enum: ['classic', 'cmake', 'standalone-pygrackle']
+  run-classic-omp-test:
+    description: "Run the OpenMP test with the classic build-system"
     steps:
       - run:
-          name: "Run core-library tests (build_kind: << parameters.build_kind >>, omp: << parameters.omp >>)."
+          name: "Run the OpenMP test with the classic build system"
           command: |
             source $BASH_ENV
             cd src
-
-            # actually execute the tests
-            if [[ << parameters.build_kind >> == 'classic' &&
-                  << parameters.omp >> == 'true' ]]; then
-              export OMP_NUM_THREADS=4
-              cd example
-              make cxx_omp_example
-              ./cxx_omp_example
-              make clean
-            elif [ << parameters.build_kind >> == 'cmake' >> ]; then
-              # compile the tests (it would probably would be better to do this
-              # when compiling the rest of Grackle)
-              cmake -DGRACKLE_BUILD_TESTS=ON -Bbuild
-              cmake --build build
-              # execute the tests
-              # -> if the cmake build-system was configured with OpenMP, the
-              #    test-suite automatically knows to run the OpenMP example
-              cd build
-              ctest --output-on-failure
-            else
-              echo "the core-library tests can't be run in this configuration"
-            fi
+            export OMP_NUM_THREADS=4
+            cd example
+            make cxx_omp_example
+            ./cxx_omp_example
+            make clean
 
   build-docs:
     description: "Test the docs build."
@@ -334,9 +319,7 @@ jobs:
           classic_build: 'true'
           tag: $CIRCLE_BRANCH
 
-      - run-core-tests:
-          omp: 'true'
-          build_kind: 'classic'
+      - run-classic-omp-test
 
       - install-grackle:
           omp: 'false'
@@ -357,10 +340,6 @@ jobs:
           omp: 'false'
           build_kind: 'cmake'
           generate: 'false'
-
-      - run-core-tests:
-          omp: 'false'
-          build_kind: 'cmake'
 
 # TODO: once we merge in GH-#208, we need to issue a new gold standard, and then we should
 #       issue a followup PR where we uncomment the remainder of this test
@@ -393,6 +372,34 @@ jobs:
       #    build_kind: 'standalone-pygrackle'
       #    generate: 'false'
 
+  corelib-tests:
+    # we're only using a python docker-image out of convenience (We only care
+    # that a version of python exists with a version of 3.7 or newer to run
+    # our scripts).
+    executor:
+      name: python
+      tag: 3.8.14
+
+    working_directory: ~/grackle
+
+    steps:
+      - checkout
+      - install-cmake-dependencies
+      - run:
+          name: "Build libgrackle and all of the core library's tests"
+          command: |
+            cmake -DGRACKLE_USE_DOUBLE=ON                   \
+                  -DGRACKLE_USE_OPENMP=OFF                  \
+                  -DGRACKLE_BUILD_TESTS=ON                  \
+                  -DCMAKE_BUILD_TYPE=Release                \
+                  -GNinja -Bbuild
+            cmake --build build
+      - run:
+          name: "description: Run the suite of tests that operate directly on the core-library."
+          command: |
+            cd build
+            ctest --output-on-failure
+
   docs-build:
     parameters:
       tag:
@@ -415,12 +422,15 @@ workflows:
    tests:
      jobs:
        - test-suite:
-           name: "Full test suite - Python 3.8"
+           name: "Pygrackle test suite - Python 3.8"
            tag: "3.8.14"
 
        - test-standalone-pygrackle:
-           name: "Standalone Python 3.8 tests"
+           name: "Standalone Pygrackle tests - Python 3.8"
            tag: "3.8.14"
+
+       - corelib-tests:
+           name: "Core library test suite"
 
        - docs-build:
            name: "Docs build"
@@ -436,12 +446,15 @@ workflows:
                 - main
      jobs:
        - test-suite:
-           name: "Full test suite - Python 3.8"
+           name: "Pygrackle test suite - Python 3.8"
            tag: "3.8.14"
 
        - test-standalone-pygrackle:
-           name: "Standalone Python 3.8 tests"
+           name: "Standalone Pygrackle tests - Python 3.8"
            tag: "3.8.14"
+
+       - corelib-tests:
+           name: "Core library test suite"
 
        - docs-build:
            name: "Docs build"
