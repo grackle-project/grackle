@@ -3,8 +3,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to grackle's documentation!
-===================================
+Grackle Documentation
+=====================
 
 Grackle is a chemistry and radiative cooling library for astrophysical 
 simulations and models.  Grackle has interfaces for C, C++, Fortran, and
@@ -33,23 +33,48 @@ The Grackle provides functions to update chemistry species; solve radiative
 cooling and update internal energy; and calculate cooling time, temperature, 
 pressure, and ratio of specific heats (gamma).
 
-Contents:
+.. toctree::
+   :maxdepth: 1
+   :hidden:
+
+   Introduction <self>
 
 .. toctree::
+   :caption: Getting Started
    :maxdepth: 2
+   :hidden:
 
    Installation.rst
+   Python.rst
    Testing.rst
+   Getting Help <Help.rst>
+
+.. toctree::
+   :caption: Using Grackle in Your Code
+   :hidden:
+   :maxdepth: 2
+
    Integration.rst
    Interaction.rst
    Parameters.rst
    RateFunctions.rst
    Reference.rst
+
+.. toctree::
+   :caption: About the Project
+   :hidden:
+
    Versioning.rst
-   Python.rst
    Conduct.rst
    Contributing.rst
-   Help.rst
+   Changelog.rst
+
+.. toctree::
+   :caption: Useful links
+   :hidden:
+
+   GitHub <https://github.com/grackle-project/grackle>
+   Tracker <https://github.com/grackle-project/grackle/issues>
 
 .. include:: Help.rst
 
