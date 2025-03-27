@@ -46,4 +46,8 @@ src/python/.cache/*
 src/python/pygrackle.egg-info/*
 src/python/pygrackle/*.c
 src/python/tests/test_answers
+
+# build-directories for documentation
 doc/build
+# the following is created if you follow commands in .circleci/config.yml
+doc/source/_build/*
