@@ -105,6 +105,7 @@ To help you start using Grackle, we provide:
    :hidden:
 
    Versioning.rst
+   Changelog.rst
 
 .. toctree::
    :caption: Contributing
