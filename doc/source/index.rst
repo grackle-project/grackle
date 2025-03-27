@@ -75,21 +75,51 @@ To help you start using Grackle, we provide:
 - a curated `guide <https://grackle.readthedocs.io/en/latest/Python.html#running-the-example-scripts>`__ for the Pygrackle examples
 
 .. toctree::
+   :maxdepth: 1
+   :hidden:
+
+   Introduction <self>
+
+.. toctree::
+   :caption: Getting Started
+   :maxdepth: 2
+   :hidden:
+
+   Installation.rst
+   Python.rst
+   Getting Help <Help.rst>
+
+.. toctree::
+   :caption: Using Grackle in Your Code
    :hidden:
    :maxdepth: 2
 
-   Installation.rst
-   Testing.rst
    Integration.rst
    Interaction.rst
    Parameters.rst
    RateFunctions.rst
    Reference.rst
+
+.. toctree::
+   :caption: Project Details
+   :hidden:
+
    Versioning.rst
-   Python.rst
+
+.. toctree::
+   :caption: Contributing
+   :hidden:
+
+   Testing.rst
    Conduct.rst
    Contributing.rst
-   Help.rst
+
+.. toctree::
+   :caption: Useful links
+   :hidden:
+
+   GitHub <https://github.com/grackle-project/grackle>
+   Tracker <https://github.com/grackle-project/grackle/issues>
 
 .. include:: Help.rst
 
