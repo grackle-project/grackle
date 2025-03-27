@@ -138,12 +138,21 @@ Quick Primer on the Test Runner's CLI
 
 By default, the pytest test-runner always runs all available test cases.
 
- - The unit tests are **ALWAYS** available.
+ - The suite's unit tests are **ALWAYS** available.
 
  - By default, **all** answer-tests are fully disabled.
-   Command-line options make them available in *store-mode* or *compare-mode*.
-   The ``--answer-dir=<PATH/TO/ANSWER-DIR>`` flag is required for both modes; it specifies the path to the user's chosen "answer-directory" (where answer-tests results are stored/read-from).
-   The ``--answer-store`` flag enables *store-mode*, while its absence enables *compare-mode*.
+   These tests are made available, in *store-mode* or *compare-mode*, when the :option:`--answer-dir` command-line option is provided.
+   The :option:`--answer-store` command line flag enables *store-mode*, while its absence enables *compare-mode*.
+
+   .. option:: --answer-dir=<PATH>
+
+      Specifies the path to the "answer-directory".
+      This is the custom user-specified directory where answer-tests are stored (in *store-mode*) or read from (in *compare-mode*).
+
+   .. option:: --answer-store
+
+      The presence of this flag enables *store-mode*, where answer-tests results are stored to the answer-directory (any previously recorded answers will be overwritten).
+      When :option:`--answer-dir` is specified and this flag is omitted, *compare-mode* is enabled.
 
 *For contributors:* you may find pytest's `build-in command-line interface <https://docs.pytest.org/en/stable/how-to/usage.html>`__ useful during debugging (e.g. you can instruct pytest to only run a subset of all available tests).
 
