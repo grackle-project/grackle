@@ -33,23 +33,47 @@ The Grackle provides functions to update chemistry species; solve radiative
 cooling and update internal energy; and calculate cooling time, temperature, 
 pressure, and ratio of specific heats (gamma).
 
-Contents:
+.. toctree::
+   :maxdepth: 1
+   :hidden:
+
+   Introduction <self>
 
 .. toctree::
+   :caption: Getting Started
    :maxdepth: 2
+   :hidden:
 
    Installation.rst
+   Python.rst
    Testing.rst
+   Getting Help <Help.rst>
+
+.. toctree::
+   :caption: Using Grackle in Your Code
+   :hidden:
+   :maxdepth: 2
+
    Integration.rst
    Interaction.rst
    Parameters.rst
    RateFunctions.rst
    Reference.rst
+
+.. toctree::
+   :caption: About the Project
+   :hidden:
+
    Versioning.rst
-   Python.rst
    Conduct.rst
    Contributing.rst
-   Help.rst
+
+.. toctree::
+   :caption: Useful links
+   :hidden:
+
+   GitHub <https://github.com/grackle-project/grackle>
+   Tracker <https://github.com/grackle-project/grackle/issues>
 
 .. include:: Help.rst
 
