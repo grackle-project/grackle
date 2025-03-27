@@ -146,51 +146,63 @@
          nSN = 0
          if(maxval(metal_loc(:,j,k) /metal(:,j,k)) .gt. 0.01_DKIND) then
             nSN = nSN + 1
-            SN_i(nSN) =  1; SN_metal(:,nSN) = metal_loc(:,j,k)
+            SN_i(nSN) =  1
+            SN_metal(:,nSN) = metal_loc(:,j,k)
          endif
          if(maxval(metal_C13(:,j,k) /metal(:,j,k)) .gt. 0.01_DKIND) then
             nSN = nSN + 1
-            SN_i(nSN) =  2; SN_metal(:,nSN) = metal_C13(:,j,k)
+            SN_i(nSN) =  2
+            SN_metal(:,nSN) = metal_C13(:,j,k)
          endif
          if(maxval(metal_C20(:,j,k) /metal(:,j,k)) .gt. 0.01_DKIND) then
             nSN = nSN + 1
-            SN_i(nSN) =  3; SN_metal(:,nSN) = metal_C20(:,j,k)
+            SN_i(nSN) =  3
+            SN_metal(:,nSN) = metal_C20(:,j,k)
          endif
          if(maxval(metal_C25(:,j,k) /metal(:,j,k)) .gt. 0.01_DKIND) then
             nSN = nSN + 1
-            SN_i(nSN) =  4; SN_metal(:,nSN) = metal_C25(:,j,k)
+            SN_i(nSN) =  4
+            SN_metal(:,nSN) = metal_C25(:,j,k)
          endif
          if(maxval(metal_C30(:,j,k) /metal(:,j,k)) .gt. 0.01_DKIND) then
             nSN = nSN + 1
-            SN_i(nSN) =  5; SN_metal(:,nSN) = metal_C30(:,j,k)
+            SN_i(nSN) =  5
+            SN_metal(:,nSN) = metal_C30(:,j,k)
          endif
          if(maxval(metal_F13(:,j,k) /metal(:,j,k)) .gt. 0.01_DKIND) then
             nSN = nSN + 1
-            SN_i(nSN) =  6; SN_metal(:,nSN) = metal_F13(:,j,k)
+            SN_i(nSN) =  6
+            SN_metal(:,nSN) = metal_F13(:,j,k)
          endif
          if(maxval(metal_F15(:,j,k) /metal(:,j,k)) .gt. 0.01_DKIND) then
             nSN = nSN + 1
-            SN_i(nSN) =  7; SN_metal(:,nSN) = metal_F15(:,j,k)
+            SN_i(nSN) =  7
+            SN_metal(:,nSN) = metal_F15(:,j,k)
          endif
          if(maxval(metal_F50(:,j,k) /metal(:,j,k)) .gt. 0.01_DKIND) then
             nSN = nSN + 1
-            SN_i(nSN) =  8; SN_metal(:,nSN) = metal_F50(:,j,k)
+            SN_i(nSN) =  8
+            SN_metal(:,nSN) = metal_F50(:,j,k)
          endif
          if(maxval(metal_F80(:,j,k) /metal(:,j,k)) .gt. 0.01_DKIND) then
             nSN = nSN + 1
-            SN_i(nSN) =  9; SN_metal(:,nSN) = metal_F80(:,j,k)
+            SN_i(nSN) =  9
+            SN_metal(:,nSN) = metal_F80(:,j,k)
          endif
          if(maxval(metal_P170(:,j,k)/metal(:,j,k)) .gt. 0.01_DKIND) then
             nSN = nSN + 1
-            SN_i(nSN) = 10; SN_metal(:,nSN) = metal_P170(:,j,k)
+            SN_i(nSN) = 10
+            SN_metal(:,nSN) = metal_P170(:,j,k)
          endif
          if(maxval(metal_P200(:,j,k)/metal(:,j,k)) .gt. 0.01_DKIND) then
             nSN = nSN + 1
-            SN_i(nSN) = 11; SN_metal(:,nSN) = metal_P200(:,j,k)
+            SN_i(nSN) = 11
+            SN_metal(:,nSN) = metal_P200(:,j,k)
          endif
          if(maxval(metal_Y19(:,j,k) /metal(:,j,k)) .gt. 0.01_DKIND) then
             nSN = nSN + 1
-            SN_i(nSN) = 12; SN_metal(:,nSN) = metal_Y19(:,j,k)
+            SN_i(nSN) = 12
+            SN_metal(:,nSN) = metal_Y19(:,j,k)
          endif
       endif
          
@@ -639,6 +651,7 @@
       subroutine solve_cubic_equation(a, b, c, root)
 
       implicit NONE
+#include "grackle_fortran_types.def"
 
 !  General Arguments
 
