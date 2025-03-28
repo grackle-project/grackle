@@ -586,8 +586,6 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
 
       if (ispecies .gt. 0) then
 
-#define ABUNDANCE_CORRECTION
-#ifdef ABUNDANCE_CORRECTION
       call make_consistent_g(de, HI, HII, HeI, HeII, HeIII,
      &                     HM, H2I, H2II, DI, DII, HDI, metal, dust,
      &                     d, is, ie, js, je, ks, ke,
@@ -614,7 +612,6 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
      &                   , SN0_fC, SN0_fO, SN0_fMg, SN0_fAl, SN0_fSi
      &                   , SN0_fS, SN0_fFe
      &                      )
-#endif
 
       endif
 
@@ -646,7 +643,6 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
 
       endif
 
-#ifdef ABUNDANCE_CORRECTION
       call ceiling_species_g(d, de, HI, HII, HeI, HeII, HeIII,
      &                     HM, H2I, H2II, DI, DII, HDI, metal, dust,
      &                     is, ie, js, je, ks, ke,
@@ -667,7 +663,6 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
      &                   , metal_C13, metal_C20, metal_C25, metal_C30
      &                   , metal_F13, metal_F15, metal_F50, metal_F80
      &                   , metal_P170, metal_P200, metal_Y19)
-#endif
 
 
 !  Loop over zones, and do an entire i-column in one go
@@ -1461,7 +1456,6 @@ c            WARNING_MESSAGE
 
 !     Correct the species to ensure consistency (i.e. type conservation)
 
-#ifdef ABUNDANCE_CORRECTION
       call make_consistent_g(de, HI, HII, HeI, HeII, HeIII,
      &                     HM, H2I, H2II, DI, DII, HDI, metal, dust,
      &                     d, is, ie, js, je, ks, ke,
@@ -1509,7 +1503,6 @@ c            WARNING_MESSAGE
      &                   , metal_C13, metal_C20, metal_C25, metal_C30
      &                   , metal_F13, metal_F15, metal_F50, metal_F80
      &                   , metal_P170, metal_P200, metal_Y19)
-#endif
 
       endif
 
