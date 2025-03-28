@@ -1450,27 +1450,6 @@ c            WARNING_MESSAGE
      &                   , SN0_fS, SN0_fFe
      &                      )
 
-      call ceiling_species_g(d, de, HI, HII, HeI, HeII, HeIII,
-     &                     HM, H2I, H2II, DI, DII, HDI, metal, dust,
-     &                     is, ie, js, je, ks, ke,
-     &                     in, jn, kn, ispecies, imetal, idustfield
-     &                   , DM, HDII, HeHII
-     &                   , imabund, imchem, idspecies, immulti
-     &                   , igrgr, idsub
-     &                   , CI, CII, CO, CO2
-     &                   , OI, OH, H2O, O2
-     &                   , SiI, SiOI, SiO2I
-     &                   , CH, CH2, COII, OII
-     &                   , OHII, H2OII, H3OII, O2II
-     &                   , Mg, Al, S, Fe
-     &                   , SiM, FeM, Mg2SiO4, MgSiO3, Fe3O4
-     &                   , AC, SiO2D, MgO, FeS, Al2O3
-     &                   , reforg, volorg, H2Oice
-     &                   , metal_loc
-     &                   , metal_C13, metal_C20, metal_C25, metal_C30
-     &                   , metal_F13, metal_F15, metal_F50, metal_F80
-     &                   , metal_P170, metal_P200, metal_Y19)
-
       endif
 
       return
