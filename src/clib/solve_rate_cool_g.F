@@ -582,39 +582,6 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
 
       dlogtem = (log(temend) - log(temstart))/real(nratec-1, DKIND)
 
-!     We better make consistent at first GC202002
-
-      if (ispecies .gt. 0) then
-
-      call make_consistent_g(de, HI, HII, HeI, HeII, HeIII,
-     &                     HM, H2I, H2II, DI, DII, HDI, metal, dust,
-     &                     d, is, ie, js, je, ks, ke,
-     &                     in, jn, kn, ispecies, imetal, fh, dtoh
-     &                   , idustfield, imchem, igrgr, dom
-     &                   , DM, HDII, HeHII
-     &                   , CI, CII, CO, CO2
-     &                   , OI, OH, H2O, O2
-     &                   , SiI, SiOI, SiO2I
-     &                   , CH, CH2, COII, OII
-     &                   , OHII, H2OII, H3OII, O2II
-     &                   , Mg, Al, S, Fe
-     &                   , SiM, FeM, Mg2SiO4, MgSiO3, Fe3O4
-     &                   , AC, SiO2D, MgO, FeS, Al2O3
-     &                   , reforg, volorg, H2Oice
-     &                   , immulti, imabund, idspecies, itdmulti, idsub
-     &                   , metal_loc
-     &                   , metal_C13, metal_C20, metal_C25, metal_C30
-     &                   , metal_F13, metal_F15, metal_F50, metal_F80
-     &                   , metal_P170, metal_P200, metal_Y19
-     &                   , SN0_N
-     &                   , SN0_XC, SN0_XO, SN0_XMg, SN0_XAl, SN0_XSi
-     &                   , SN0_XS, SN0_XFe
-     &                   , SN0_fC, SN0_fO, SN0_fMg, SN0_fAl, SN0_fSi
-     &                   , SN0_fS, SN0_fFe
-     &                      )
-
-      endif
-
 !  Convert densities from comoving to proper
 
       if (iexpand .eq. 1) then
