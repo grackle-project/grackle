@@ -33,6 +33,12 @@ int main(int argc, char *argv[])
   // Set initial redshift (for internal units).
   double initial_redshift = 0.;
 
+  // Check the consistency
+  if (gr_check_consistency() != GR_SUCCESS) {
+    fprintf(stderr, "Error in gr_check_consistency.\n");
+    return EXIT_FAILURE;
+  }
+
   // Enable output
   grackle_verbose = 1;
 
@@ -67,12 +73,6 @@ int main(int argc, char *argv[])
 
   // Create chemistry data storage object to store rates.
   chemistry_data_storage my_grackle_rates;
-
-  // Third, check the consistency
-  if (gr_check_consistency() != GR_SUCCESS) {
-    fprintf(stderr, "Error in gr_check_consistency.\n");
-    return EXIT_FAILURE;
-  }
 
   // Finally, initialize the chemistry object.
   if (local_initialize_chemistry_data(my_grackle_data, &my_grackle_rates, &my_units) == 0) {

@@ -33,6 +33,12 @@ int main(int argc, char *argv[])
   // Set initial redshift (for internal units).
   double initial_redshift = 0.;
 
+  // Check the consistency
+  if (gr_check_consistency() != GR_SUCCESS) {
+    fprintf(stderr, "Error in gr_check_consistency.\n");
+    return EXIT_FAILURE;
+  }
+
   // Enable output
   grackle_verbose = 1;
 
@@ -66,12 +72,6 @@ int main(int argc, char *argv[])
   grackle_data->metal_cooling = 1;          // metal cooling on
   grackle_data->UVbackground = 1;           // UV background on
   grackle_data->grackle_data_file = "../../input/CloudyData_UVB=HM2012.h5"; // data file
-
-  // Third, check the consistency
-  if (gr_check_consistency() != GR_SUCCESS) {
-    fprintf(stderr, "Error in gr_check_consistency.\n");
-    return EXIT_FAILURE;
-  }
 
   // Finally, initialize the chemistry object.
   if (initialize_chemistry_data(&my_units) == 0) {
