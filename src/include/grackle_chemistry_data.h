@@ -11,6 +11,17 @@
 / software.
 ************************************************************************/
 
+// this should go before the header-guard
+#ifndef GRIMPL_PUBLIC_INCLUDE
+  #include "grackle_misc.h"
+  GRIMPL_COMPTIME_WARNING(
+    "You are using a deprecated header file; include the public \"grackle.h\" "
+    "header file instead! In a future Grackle version, "
+    "\"grackle_chemistry_data.h\" may cease to exist (or contents may change "
+    "in an incompatible manner)."
+  );
+#endif
+
 #ifndef __CHEMISTRY_DATA_H__
 #define __CHEMISTRY_DATA_H__
 

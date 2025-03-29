@@ -130,6 +130,7 @@ add_library(Grackle_Grackle
   # C/C++ public headers
   ../include/grackle.h
   ../include/grackle_chemistry_data.h
+  ../include/grackle_misc.h
   ../include/grackle_rate_functions.h
   ../include/grackle_types.h
 
@@ -255,3 +256,8 @@ target_compile_options(Grackle_Grackle PRIVATE
 if ("${CMAKE_SYSTEM_NAME}" MATCHES "^(Linux)|(Darwin)$")
   target_compile_definitions(Grackle_Grackle PRIVATE "LINUX")
 endif()
+
+# define macro to suppress warnings about C files using our deprecated public
+# headers (the files should include grackle.h instead). We're currently holding
+# off on this to minimize conflicts with the newchem-cpp branch
+target_compile_definitions(Grackle_Grackle PRIVATE GRIMPL_PUBLIC_INCLUDE=1)
