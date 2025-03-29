@@ -171,5 +171,6 @@ extend-exclude = [
     "src/python/tests/test_specific_heating_rate.py",
     "src/python/tests/test_volumetric_heating_rate.py",
     "src/python/tests/testing_common.py",
-    "tests/scripts/code_example_checker.py"
+    "tests/scripts/code_example_checker.py",
+    "src/python/pygrackle/utilities/atomic.py"
 ]
