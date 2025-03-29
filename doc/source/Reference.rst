@@ -468,3 +468,17 @@ Miscellaneous Functions
    .. warning::
 
       If grackle was configured with ``comoving_coordinates == 0``, this function considers any choice of ``current_a_value`` other than ``GR_SPECIFY_INITIAL_A_VALUE`` or an **EXACT** match to the initial choice of ``a_value`` to be an error.
+
+.. c:function:: int gr_check_consistency();
+
+   .. versionadded:: 3.4
+
+   Verifies the consistency between the Grackle libraries used at compile time and runtime.
+
+   At the time of writing, the function simply verifies that the definitions of :c:type:`gr_float` are consistent.
+   In the future, this function may perform other checks (e.g. version consistency).
+   
+   The most common cause for this function to fail is that an application was compiled with headers from one Grackle installation, and is dynamically linked against a shared library from a separate incompatible Grackle installation.
+
+   :rtype: int
+   :returns: ``GR_SUCCESS`` if successful

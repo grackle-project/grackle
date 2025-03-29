@@ -130,6 +130,15 @@ int local_free_chemistry_data(chemistry_data *my_chemistry, chemistry_data_stora
 
 grackle_version get_grackle_version(void);
 
+// the following function is NOT part of the public API (and it NEVER will be)
+// - it does a lot of heavy lifting for `gr_check_consistency`
+// - the signature may change in the future
+int grimpl_check_consistency_(int gr_float_hdrsize);
+
+static inline int gr_check_consistency(void) {
+  return grimpl_check_consistency_((int)sizeof(gr_float));
+}
+
 int gr_initialize_field_data(grackle_field_data *my_fields);
 
 #ifdef __cplusplus
