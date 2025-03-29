@@ -130,6 +130,7 @@ add_library(Grackle_Grackle
   # C/C++ public headers
   ../include/grackle.h
   ../include/grackle_chemistry_data.h
+  ../include/grackle_misc.h
   ../include/grackle_rate_functions.h
   ../include/grackle_types.h
 
