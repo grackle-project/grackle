@@ -82,9 +82,7 @@ function(add_conditional_fortran_flags target)
     fc_warn_untested() # things compile, but tests haven't been run
     fc_warn_ninja() # issues encountered with ninja with cmake version 3.27.7
 
-    # it's worrisome to pass -qhalt=s (it suppress certain classes of errors),
-    # but it's currently necessary for cool1d_cloudy_old_tables_g.F
-    set(GRACKLE_FC_FLAG "-qfixed=132;-qhalt=s")
+    set(GRACKLE_FC_FLAG "-qfixed=132")
 
   elseif (CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
     set(GRACKLE_FC_FLAG "-fno-second-underscore;-ffixed-line-length-132")

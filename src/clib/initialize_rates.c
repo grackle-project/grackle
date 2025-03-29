@@ -83,10 +83,9 @@
 #include <stdio.h>
 #include <math.h>
 
+#include "grackle.h"
 #include "grackle_macros.h"
-#include "grackle_types.h"
 #include "grackle_rate_functions.h"
-#include "grackle_chemistry_data.h"
 #include "phys_constants.h"
 
 //Define the type of a scalar rate function.
@@ -205,6 +204,7 @@ int add_h2dust_reaction_rate(double **rate_ptr, double units, chemistry_data *my
             (*rate_ptr)[i + my_chemistry->NumberOfTemperatureBins*j] = h2dust_rate(T, T_dust, units, my_chemistry);
         }
     }
+    return GR_SUCCESS;
 }
 
 //Definition of the initialise_rates function.
