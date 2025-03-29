@@ -69,7 +69,7 @@ int main(int argc, char *argv[])
   chemistry_data_storage my_grackle_rates;
 
   // Third, check the consistency
-  if (gr_check_consistency() == 0) {
+  if (gr_check_consistency() != GR_SUCCESS) {
     fprintf(stderr, "Error in gr_check_consistency.\n");
     return EXIT_FAILURE;
   }

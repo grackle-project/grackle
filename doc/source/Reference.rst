@@ -471,9 +471,14 @@ Miscellaneous Functions
 
 .. c:function:: int gr_check_consistency();
 
-   Verifies the consistency between the header files used during application compilation and the Grackle library dynamically linked against at runtime.
+   .. versionadded:: 3.4
 
-   This function checks the types of :c:type:`gr_float` are consistent to prevent potential runtime errors caused by mismatched libraries.
+   Verifies the consistency between the Grackle libraries used at compile time and runtime.
+
+   At the time of writing, the function simply verifies that the definitions of :c:type:`gr_float` are consistent.
+   In the future, this function may perform other checks (e.g. version consistency).
+   
+   The most common cause for this function to fail is that an application was compiled with headers from one Grackle installation, and is dynamically linked against a shared library from a separate incompatible Grackle installation.
 
    :rtype: int
-   :returns: 1 (success) or 0 (failure)
+   :returns: ``GR_SUCCESS`` if successful

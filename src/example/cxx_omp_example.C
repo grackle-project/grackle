@@ -173,7 +173,7 @@ int main(int argc, char *argv[])
 # endif
 
   // Third, check the consistency
-  if (gr_check_consistency() == 0) {
+  if (gr_check_consistency() != GR_SUCCESS) {
     fprintf(stderr, "Error in gr_check_consistency.\n");
     return EXIT_FAILURE;
   }
