@@ -138,9 +138,3 @@ Citing Grackle
 
 If you use Grackle please cite it.
 More instructions are provided :ref:`here <citing>`.
-
-Search
-------
-
-* :ref:`search`
-
