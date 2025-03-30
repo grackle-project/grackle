@@ -61,7 +61,7 @@ pressure, and ratio of specific heats (gamma).
    Reference.rst
 
 .. toctree::
-   :caption: About the Project
+   :caption: Project Details
    :hidden:
 
    Citing.rst
