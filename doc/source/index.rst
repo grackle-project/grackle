@@ -104,6 +104,7 @@ To help you start using Grackle, we provide:
    :caption: Project Details
    :hidden:
 
+   Citing.rst
    Versioning.rst
    Changelog.rst
 
@@ -132,22 +133,11 @@ Development of Grackle happens in the open on GitHub `here
 contributors. Please, see the :ref:`conduct`.  For a guide to developing
 Grackle, see :ref:`contributing-code`.
 
-Citing grackle
+Citing Grackle
 --------------
 
-The Grackle method paper can be found
-`here <http://adsabs.harvard.edu/abs/2017MNRAS.466.2217S>`__.
-
-The Grackle library was born out of the chemistry and cooling routines of the 
-`Enzo <http://enzo-project.org/>`__ simulation code.  As such, all of those who 
-have contributed to Enzo development, and especially to the chemistry and 
-cooling, have contributed to the Grackle.
-
-If you used the Grackle library in your work, please cite it as "the Grackle 
-chemistry and cooling library (`Smith et al. 2017
-<http://adsabs.harvard.edu/abs/2017MNRAS.466.2217S>`_)."  Also, please add a
-footnote to `https://grackle.readthedocs.io/ <https://grackle.readthedocs.io/>`_.
-
+If you use Grackle please cite it.
+More instructions are provided :ref:`here <citing>`.
 
 Search
 ------
