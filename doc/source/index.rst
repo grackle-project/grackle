@@ -46,7 +46,6 @@ pressure, and ratio of specific heats (gamma).
 
    Installation.rst
    Python.rst
-   Testing.rst
    Getting Help <Help.rst>
 
 .. toctree::
@@ -72,6 +71,7 @@ pressure, and ratio of specific heats (gamma).
    :caption: Contributing
    :hidden:
 
+   Testing.rst
    Conduct.rst
    Contributing.rst
 
