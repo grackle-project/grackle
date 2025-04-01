@@ -146,7 +146,7 @@ commands:
             pip install --upgrade pip
             pip install --upgrade wheel
             pip install --upgrade setuptools
-            pip install sphinx sphinx-tabs sphinx_rtd_theme
+            pip install sphinx --requirement doc/source/requirements.txt
 
   download-test-data:
     description: "Download test data."
