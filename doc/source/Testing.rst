@@ -35,7 +35,7 @@ The core-library tests are driven by the ``ctest`` program that is shipped as pa
 To configure Grackle builds to run the core-library tests, you must enable the ``GRACKLE_BUILD_TESTS`` option when you configure a CMake build of Grackle.
 This option just enables ``CTest`` and some extra build-recipes needed to run the tests (it has no impact on how libgrackle is compiled/linked).
 
-The following snippet illustrates how you might invoke the unit-tests when performing a fresh build oof grackle, with the :ref:`CMake build system <cmake_build>`, from the root of the Grackle repository:
+The following snippet illustrates how you might invoke the unit tests when performing a fresh build of grackle, with the :ref:`CMake build system <cmake_build>`, from the root of the Grackle repository:
 
 .. code-block:: shell-session
 
