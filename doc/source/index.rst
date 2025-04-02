@@ -44,6 +44,7 @@ pressure, and ratio of specific heats (gamma).
    :maxdepth: 2
    :hidden:
 
+   CapabilityGuide.rst
    Installation.rst
    Python.rst
    Getting Help <Help.rst>
