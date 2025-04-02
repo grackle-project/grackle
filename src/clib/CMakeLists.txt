@@ -105,7 +105,7 @@ add_library(Grackle_Grackle
   ${CMAKE_CURRENT_BINARY_DIR}/auto_general.c
 
   # C++ Source (and Private Header Files)
-  cool1d_multi_g-cpp.C cool1d_multi_g-cpp.h
+  cool1d_multi_g-cpp.C cool1d_multi_g.hpp
   calc_temp_cloudy_g-cpp.C calc_temp_cloudy_g-cpp.h
   calc_tdust_3d.C calc_tdust_3d.h
   cool_multi_time_g-cpp.C cool_multi_time_g-cpp.h
