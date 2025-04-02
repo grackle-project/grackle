@@ -1111,6 +1111,15 @@ void grackle::impl::cool1d_multi_g(
 
         if (my_chemistry->use_multiple_dust_temperatures == 0)  {
 
+        // In the future, we should consider renaming `alphad`. The
+        // current name is a little confusing since:
+        // - the related `alpha` variable holds linear absorption
+        //   coefficients (which is commonly denoted by the Greek
+        //   letter alpha)
+        // - in contrast, `alphad` only ever holds the sum of
+        //   opacity coefficients (commonly denoted by the Greek
+        //   letter kappa)
+
           alphad[i] = kptot[i];
 
         } else {
