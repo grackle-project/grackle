@@ -83,7 +83,7 @@ void grackle::impl::cool1d_multi_g(
   // Locals
 
   int i, ti, iradfield;
-  double dom, qq, vibl, logtem0, logtem9, dlogtem, zr, hdlte1, hdlow1, gamma2, x, fudge, fH2, gphdl1, dom_inv, tau, ciefudge, coolunit, dbase1, tbase1, xbase1, nH2, nother, nSSh, nratio, nssh_he, nratio_he, fSShHI, fSShHeI, pe_eps, pe_X, grbeta, ih2cox, min_metallicity;
+  double dom, qq, vibl, logtem0, logtem9, dlogtem, zr, hdlte1, hdlow1, gamma2, x, fudge, fH2, gphdl1, dom_inv, tau, ciefudge, coolunit, tbase1, nH2, nother, nSSh, nratio, nssh_he, nratio_he, fSShHI, fSShHeI, pe_eps, pe_X, grbeta, ih2cox, min_metallicity;
   int itd;
   double comp1, comp2;
 
@@ -203,12 +203,11 @@ void grackle::impl::cool1d_multi_g(
 
   // Set units
 
-  dom      = internalu.urho*(std::pow(internalu.a_value,3))/mh_local_var;
+  dom      = internalu_calc_dom_(internalu);
   dom_inv  = 1./dom;
   tbase1   = internalu.tbase1;
-  xbase1   = internalu.uxyz/(internalu.a_value*internalu.a_units);    // uxyz is [x]*a      = [x]*[a]*a'        '
-  dbase1   = internalu.urho*std::pow((internalu.a_value*internalu.a_units),3); // urho is [dens]/a^3 = [dens]/([a]*a')^3 '
-  coolunit = (std::pow(internalu.a_units,5) * std::pow(xbase1,2) * std::pow(mh_local_var,2)) / (std::pow(tbase1,3) * dbase1);
+  coolunit = internalu.coolunit;
+
   zr       = 1./(internalu.a_value*internalu.a_units) - 1.;
   fudge    = 1.;
   iradfield = -1;
