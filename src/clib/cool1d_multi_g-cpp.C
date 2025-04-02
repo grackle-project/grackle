@@ -14,6 +14,8 @@
 #include "grackle.h"
 #include "fortran_func_decls.h"
 #include "fortran_func_wrappers.hpp"
+#include "dust_props.hpp"
+#include "internal_types.hpp"
 #include "utils-cpp.hpp"
 
 void grackle::impl::cool1d_multi_g(
@@ -144,66 +146,21 @@ void grackle::impl::cool1d_multi_g(
   std::vector<double> tau_con(my_fields->grid_dimension[0]);
   double log_a, log_L, log_G;
 
-  // grain growth
-
-  std::vector<double> sgSiM(my_fields->grid_dimension[0]);
-  std::vector<double> sgFeM(my_fields->grid_dimension[0]);
-  std::vector<double> sgMg2SiO4(my_fields->grid_dimension[0]);
-  std::vector<double> sgMgSiO3(my_fields->grid_dimension[0]);
-  std::vector<double> sgFe3O4(my_fields->grid_dimension[0]);
-  std::vector<double> sgAC(my_fields->grid_dimension[0]);
-  std::vector<double> sgSiO2D(my_fields->grid_dimension[0]);
-  std::vector<double> sgMgO(my_fields->grid_dimension[0]);
-  std::vector<double> sgFeS(my_fields->grid_dimension[0]);
-  std::vector<double> sgAl2O3(my_fields->grid_dimension[0]);
-  std::vector<double> sgreforg(my_fields->grid_dimension[0]);
-  std::vector<double> sgvolorg(my_fields->grid_dimension[0]);
-  std::vector<double> sgH2Oice(my_fields->grid_dimension[0]);
-  std::vector<double> sgtot(my_fields->grid_dimension[0]);
-  std::vector<double> alSiM(my_rates->gr_N[2-1] * my_fields->grid_dimension[0]);
-  std::vector<double> alFeM(my_rates->gr_N[2-1] * my_fields->grid_dimension[0]);
-  std::vector<double> alMg2SiO4(my_rates->gr_N[2-1] * my_fields->grid_dimension[0]);
-  std::vector<double> alMgSiO3(my_rates->gr_N[2-1] * my_fields->grid_dimension[0]);
-  std::vector<double> alFe3O4(my_rates->gr_N[2-1] * my_fields->grid_dimension[0]);
-  std::vector<double> alAC(my_rates->gr_N[2-1] * my_fields->grid_dimension[0]);
-  std::vector<double> alSiO2D(my_rates->gr_N[2-1] * my_fields->grid_dimension[0]);
-  std::vector<double> alMgO(my_rates->gr_N[2-1] * my_fields->grid_dimension[0]);
-  std::vector<double> alFeS(my_rates->gr_N[2-1] * my_fields->grid_dimension[0]);
-  std::vector<double> alAl2O3(my_rates->gr_N[2-1] * my_fields->grid_dimension[0]);
-  std::vector<double> alreforg(my_rates->gr_N[2-1] * my_fields->grid_dimension[0]);
-  std::vector<double> alvolorg(my_rates->gr_N[2-1] * my_fields->grid_dimension[0]);
-  std::vector<double> alH2Oice(my_rates->gr_N[2-1] * my_fields->grid_dimension[0]);
-  std::vector<double> altot(my_rates->gr_N[2-1] * my_fields->grid_dimension[0]);
-  std::vector<double> kpSiM(my_fields->grid_dimension[0]);
-  std::vector<double> kpFeM(my_fields->grid_dimension[0]);
-  std::vector<double> kpMg2SiO4(my_fields->grid_dimension[0]);
-  std::vector<double> kpMgSiO3(my_fields->grid_dimension[0]);
-  std::vector<double> kpFe3O4(my_fields->grid_dimension[0]);
-  std::vector<double> kpAC(my_fields->grid_dimension[0]);
-  std::vector<double> kpSiO2D(my_fields->grid_dimension[0]);
-  std::vector<double> kpMgO(my_fields->grid_dimension[0]);
-  std::vector<double> kpFeS(my_fields->grid_dimension[0]);
-  std::vector<double> kpAl2O3(my_fields->grid_dimension[0]);
-  std::vector<double> kpreforg(my_fields->grid_dimension[0]);
-  std::vector<double> kpvolorg(my_fields->grid_dimension[0]);
-  std::vector<double> kpH2Oice(my_fields->grid_dimension[0]);
-  std::vector<double> kptot(my_fields->grid_dimension[0]);
-
-  // grain temperature
-
-  std::vector<double> gasSiM(my_fields->grid_dimension[0]);
-  std::vector<double> gasFeM(my_fields->grid_dimension[0]);
-  std::vector<double> gasMg2SiO4(my_fields->grid_dimension[0]);
-  std::vector<double> gasMgSiO3(my_fields->grid_dimension[0]);
-  std::vector<double> gasFe3O4(my_fields->grid_dimension[0]);
-  std::vector<double> gasAC(my_fields->grid_dimension[0]);
-  std::vector<double> gasSiO2D(my_fields->grid_dimension[0]);
-  std::vector<double> gasMgO(my_fields->grid_dimension[0]);
-  std::vector<double> gasFeS(my_fields->grid_dimension[0]);
-  std::vector<double> gasAl2O3(my_fields->grid_dimension[0]);
-  std::vector<double> gasreforg(my_fields->grid_dimension[0]);
-  std::vector<double> gasvolorg(my_fields->grid_dimension[0]);
-  std::vector<double> gasH2Oice(my_fields->grid_dimension[0]);
+  // buffers of intermediate quantities used within dust-routines (for
+  // calculating quantites related to heating/cooling)
+  grackle::impl::InternalDustPropBuf internal_dust_prop_buf =
+      grackle::impl::new_InternalDustPropBuf(
+        my_fields->grid_dimension[0], my_rates->gr_N[1]
+      );
+  // opacity coefficients for each dust grain (the product of opacity
+  // coefficient & gas mass density is the linear absortpion coefficient)
+  grackle::impl::GrainSpeciesCollection grain_kappa =
+    grackle::impl::new_GrainSpeciesCollection(my_fields->grid_dimension[0]);
+  // closely related to grain_kappa
+  std::vector<double> kappa_tot(my_fields->grid_dimension[0]);
+  // holds the gas/grain-species heat transfer rates
+  grackle::impl::GrainSpeciesCollection gas_grainsp_heatrate =
+    grackle::impl::new_GrainSpeciesCollection(my_fields->grid_dimension[0]);
 
   // Iteration mask
 
@@ -935,11 +892,7 @@ void grackle::impl::cool1d_multi_g(
   }
 
   // Compute grain size increment
-  grackle::impl::InternalDustPropBuf internal_dust_prop_buf;
   if ( (my_chemistry->use_dust_density_field > 0)  &&  (my_chemistry->dust_species > 0) )  {
-
-    // TODO: check position, is this if alwas true when anydust != MASK_FALSE?
-    grackle::impl::InternalDustPropBuf internal_dust_prop_buf = grackle::impl::new_InternalDustPropBuf(sgtot.size(), altot.size());
 
     grackle::impl::fortran_wrapper::calc_grain_size_increment_1d(dom, idx_range, itmask_metal, my_chemistry,
                                                                  my_rates, my_fields, internal_dust_prop_buf);
@@ -985,15 +938,12 @@ void grackle::impl::cool1d_multi_g(
 
   // compute dust temperature and cooling due to dust
   if (anydust != MASK_FALSE)  {
-    // TODO: what about smart pointers, can we use them?
-    GrainSpeciesCollection gas_grainsp_heatrate = new_GrainSpeciesCollection(my_fields->grid_dimension[0]);
-    GrainSpeciesCollection grain_kappa = new_GrainSpeciesCollection(my_fields->grid_dimension[0]);
 
     // TODO: trad -> comp2
     grackle::impl::fortran_wrapper::calc_all_tdust_gasgr_1d_g(
       comp2, tgas, tdust, metallicity,
       dust2gas, cool1dmulti_buf.mynh, cool1dmulti_buf.gasgr_tdust, itmask_metal,
-      coolunit, gasgr.data(), myisrf.data(), kptot.data(),
+      coolunit, gasgr.data(), myisrf.data(), kappa_tot.data(),
       my_chemistry, my_rates,
       my_fields, idx_range,
       grain_temperatures,
@@ -1001,16 +951,7 @@ void grackle::impl::cool1d_multi_g(
       grain_kappa,
       logTlininterp_buf,
       internal_dust_prop_buf);
-
-      // TODO: check position
-      drop_GrainSpeciesCollection(&gas_grainsp_heatrate);
-      // TODO: check position
-      drop_GrainSpeciesCollection(&grain_kappa);
-
   }
-  // TODO: check position
-  grackle::impl::drop_InternalDustPropBuf(&internal_dust_prop_buf);
-
 
   // Calculate dust cooling rate
   if (anydust != MASK_FALSE)  {
@@ -1034,29 +975,29 @@ void grackle::impl::cool1d_multi_g(
 
             if (my_chemistry->dust_species > 0)  {
               Ldst[i] = - (
-                  gasMgSiO3  [i] * (tgas[i] - grain_temperatures.data[OnlyGrainSpLUT::MgSiO3_dust]  [i])
-                + gasAC      [i] * (tgas[i] - grain_temperatures.data[OnlyGrainSpLUT::AC_dust]      [i])
+                gas_grainsp_heatrate.data[OnlyGrainSpLUT::MgSiO3_dust][i] * (tgas[i] - grain_temperatures.data[OnlyGrainSpLUT::MgSiO3_dust][i])
+                + gas_grainsp_heatrate.data[OnlyGrainSpLUT::AC_dust][i] * (tgas[i] - grain_temperatures.data[OnlyGrainSpLUT::AC_dust][i])
                 ) * d(i,idx_range.j,idx_range.k) * rhoH[i];
             }
 
             if (my_chemistry->dust_species > 1)  {
               Ldst[i] = Ldst[i] - (
-                  gasSiM     [i] * (tgas[i] - grain_temperatures.data[OnlyGrainSpLUT::SiM_dust]     [i])
-                + gasFeM     [i] * (tgas[i] - grain_temperatures.data[OnlyGrainSpLUT::FeM_dust]     [i])
-                + gasMg2SiO4 [i] * (tgas[i] - grain_temperatures.data[OnlyGrainSpLUT::Mg2SiO4_dust] [i])
-                + gasFe3O4   [i] * (tgas[i] - grain_temperatures.data[OnlyGrainSpLUT::Fe3O4_dust]   [i])
-                + gasSiO2D   [i] * (tgas[i] - grain_temperatures.data[OnlyGrainSpLUT::SiO2_dust]   [i])
-                + gasMgO     [i] * (tgas[i] - grain_temperatures.data[OnlyGrainSpLUT::MgO_dust]     [i])
-                + gasFeS     [i] * (tgas[i] - grain_temperatures.data[OnlyGrainSpLUT::FeS_dust]     [i])
-                + gasAl2O3   [i] * (tgas[i] - grain_temperatures.data[OnlyGrainSpLUT::Al2O3_dust]   [i])
+                  gas_grainsp_heatrate.data[OnlyGrainSpLUT::SiM_dust][i] * (tgas[i] - grain_temperatures.data[OnlyGrainSpLUT::SiM_dust][i])
+                + gas_grainsp_heatrate.data[OnlyGrainSpLUT::FeM_dust][i] * (tgas[i] - grain_temperatures.data[OnlyGrainSpLUT::FeM_dust][i])
+                + gas_grainsp_heatrate.data[OnlyGrainSpLUT::Mg2SiO4_dust][i] * (tgas[i] - grain_temperatures.data[OnlyGrainSpLUT::Mg2SiO4_dust][i])
+                + gas_grainsp_heatrate.data[OnlyGrainSpLUT::Fe3O4_dust][i] * (tgas[i] - grain_temperatures.data[OnlyGrainSpLUT::Fe3O4_dust][i])
+                + gas_grainsp_heatrate.data[OnlyGrainSpLUT::SiO2_dust][i] * (tgas[i] - grain_temperatures.data[OnlyGrainSpLUT::SiO2_dust][i])
+                + gas_grainsp_heatrate.data[OnlyGrainSpLUT::MgO_dust][i] * (tgas[i] - grain_temperatures.data[OnlyGrainSpLUT::MgO_dust][i])
+                + gas_grainsp_heatrate.data[OnlyGrainSpLUT::FeS_dust][i] * (tgas[i] - grain_temperatures.data[OnlyGrainSpLUT::FeS_dust][i])
+                + gas_grainsp_heatrate.data[OnlyGrainSpLUT::Al2O3_dust][i] * (tgas[i] - grain_temperatures.data[OnlyGrainSpLUT::Al2O3_dust][i])
                 ) * d(i,idx_range.j,idx_range.k) * rhoH[i];
             }
 
             if (my_chemistry->dust_species > 2)  {
               Ldst[i] = Ldst[i] - (
-                  gasreforg  [i] * (tgas[i] - grain_temperatures.data[OnlyGrainSpLUT::ref_org_dust]  [i])
-                + gasvolorg  [i] * (tgas[i] - grain_temperatures.data[OnlyGrainSpLUT::vol_org_dust]  [i])
-                + gasH2Oice  [i] * (tgas[i] - grain_temperatures.data[OnlyGrainSpLUT::H2O_ice_dust]  [i])
+                  gas_grainsp_heatrate.data[OnlyGrainSpLUT::ref_org_dust][i] * (tgas[i] - grain_temperatures.data[OnlyGrainSpLUT::ref_org_dust][i])
+                + gas_grainsp_heatrate.data[OnlyGrainSpLUT::vol_org_dust][i] * (tgas[i] - grain_temperatures.data[OnlyGrainSpLUT::vol_org_dust][i])
+                + gas_grainsp_heatrate.data[OnlyGrainSpLUT::H2O_ice_dust][i] * (tgas[i] - grain_temperatures.data[OnlyGrainSpLUT::H2O_ice_dust][i])
                 ) * d(i,idx_range.j,idx_range.k) * rhoH[i];
             }
           }
@@ -1119,30 +1060,30 @@ void grackle::impl::cool1d_multi_g(
         //   opacity coefficients (commonly denoted by the Greek
         //   letter kappa)
 
-          alphad[i] = kptot[i];
+          alphad[i] = kappa_tot[i];
 
         } else {
 
           if (my_chemistry->dust_species > 0)  {
-            alphad[i] = kpMgSiO3  [i]
-                      + kpAC      [i];
+            alphad[i] = grain_kappa.data[OnlyGrainSpLUT::MgSiO3_dust][i]
+                      + grain_kappa.data[OnlyGrainSpLUT::AC_dust][i];
           }
           if (my_chemistry->dust_species > 1)  {
             alphad[i] = alphad[i]
-                      + kpSiM     [i]
-                      + kpFeM     [i]
-                      + kpMg2SiO4 [i]
-                      + kpFe3O4   [i]
-                      + kpSiO2D   [i]
-                      + kpMgO     [i]
-                      + kpFeS     [i]
-                      + kpAl2O3   [i];
+                      + grain_kappa.data[OnlyGrainSpLUT::SiM_dust][i]
+                      + grain_kappa.data[OnlyGrainSpLUT::FeM_dust][i]
+                      + grain_kappa.data[OnlyGrainSpLUT::Mg2SiO4_dust][i]
+                      + grain_kappa.data[OnlyGrainSpLUT::Fe3O4_dust][i]
+                      + grain_kappa.data[OnlyGrainSpLUT::SiO2_dust][i]
+                      + grain_kappa.data[OnlyGrainSpLUT::MgO_dust][i]
+                      + grain_kappa.data[OnlyGrainSpLUT::FeS_dust][i]
+                      + grain_kappa.data[OnlyGrainSpLUT::Al2O3_dust][i];
           }
           if (my_chemistry->dust_species > 2)  {
             alphad[i] = alphad[i]
-                      + kpreforg  [i]
-                      + kpvolorg  [i]
-                      + kpH2Oice  [i];
+                      + gas_grainsp_heatrate.data[OnlyGrainSpLUT::ref_org_dust][i]
+                      + gas_grainsp_heatrate.data[OnlyGrainSpLUT::vol_org_dust][i]
+                      + gas_grainsp_heatrate.data[OnlyGrainSpLUT::H2O_ice_dust][i];
           }
         }
 
@@ -1745,6 +1686,11 @@ void grackle::impl::cool1d_multi_g(
       cool1dmulti_buf.tgasold[i] = tgas[i];
     }
   }
+
+  // Free memory
+  grackle::impl::drop_InternalDustPropBuf(&internal_dust_prop_buf);
+  grackle::impl::drop_GrainSpeciesCollection(&grain_kappa);
+  grackle::impl::drop_GrainSpeciesCollection(&gas_grainsp_heatrate);
 
   return;
 }
