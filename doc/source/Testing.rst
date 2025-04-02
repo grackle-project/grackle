@@ -1,10 +1,108 @@
 .. _testing:
 
-Running the Test Suite
-----------------------
+Testing
+=======
 
 Grackle contains a number of unit and answer tests to verify that
 everything is working properly.
+
+The tests are primarily organized into 2 test suites:
+
+  1. the :ref:`core-library test suite <corelib-suite>`, which performs tests on the Core library
+  2. the :ref:`pygrackle test suite <pygrackle-suite>`, which performs tests on the pygrackle bindings
+
+Our continuous integration system is also set up to ensure that all Python code conforms to `PEP 8 <https://www.python.org/dev/peps/pep-0008/>`__
+
+Historically, the pygrackle test suite included **all tests**.
+More recently, the core-library test suite was introduced to make it easier to run unit tests on functionality that isn't directly exposed through pygrackle and to run tests involving compilation.
+At this point, the pygrackle test suite includes a mix of unit tests and "answer tests" (we describe "answer tests" more down below). 
+
+.. _corelib-suite:
+
+Running the Core-Lib Test Suite
+-------------------------------
+
+The core-library test suite includes a mix of unit tests and "compilation tests."
+The "compilation tests" verify that all code examples build, run, and return consistent results (these mostly check that the Grackle examples produce reasonable results and that the results are the same regardless of the choice of language/API bindings).
+
+The core-library tests are driven by the ``ctest`` program that is shipped as part of ``CMake``.
+
+  - the ``CTest`` test-driver is integrated with ``CMake`` and it is designed to flexibly run various kinds of tests by invoking the command-line
+
+  - the unit tests that the ``CTest`` driver invokes are all implemented using the `GoogleTest testing Framework <https://google.github.io/googletest/>`__.
+    Note: the dependency on GoogleTest is handled automatically (if you don't configure the build-system to use an existing installation, the build system will know to automatically fetch/compile the framework when instructed to compile the tests).
+
+To configure Grackle builds to run the core-library tests, you must enable the ``GRACKLE_BUILD_TESTS`` option when you configure a CMake build of Grackle.
+This option just enables ``CTest`` and some extra build-recipes needed to run the tests (it has no impact on how libgrackle is compiled/linked).
+
+The following snippet illustrates how you might invoke the unit tests when performing a fresh build of grackle, with the :ref:`CMake build system <cmake_build>`, from the root of the Grackle repository:
+
+.. code-block:: shell-session
+
+   ~/grackle $ cmake -DGRACKLE_USE_DOUBLE=ON   \
+                     -DGRACKLE_BUILD_TESTS=ON  \
+                     -B<build-dir>
+   ~/grackle $ cmake --build <build-dir>
+   ~/grackle $ cd <build-dir>
+   ~/grackle/<build-dir> $ ctest --output-on-failure
+
+In the above snippet, ``<build-dir>`` should be replaced with your chosen build-directory's name (see the section on :ref:`CMake builds <cmake_build>` for more info); a common choice might be ``build``.
+Let's quickly talk through the commands:
+
+  - First, we configure the build.
+    You can add :ref:`other configuration options <available_cmake_options>` (e.g. ``GNinja``, ``GRACKLE_USE_OPENMP``, ``BUILD_SHARED_LIBS``, ``CMAKE_BUILD_TYPE``, etc.)
+  - Next, we invoke the build
+  - The final 2 commands move into the build-directory and invoke the tests from there (the ``--output-on-failure`` flag is completely optional).
+    Starting in CMake 3.20 these 2 commands can be replaced with ``cmake --output-on-failure --test-dir <build-dir>``
+
+When you launch the tests, the output will look like the following:
+
+.. code-block:: shell-session
+
+   Test project /Users/mabruzzo/packages/c++/grackle/build
+         Start  1: GrExample.SatisfyPrereqs
+    1/16 Test  #1: GrExample.SatisfyPrereqs .....................................   Passed    0.05 sec
+         Start  2: GrExampleHistoricalCMP.c
+    2/16 Test  #2: GrExampleHistoricalCMP.c .....................................   Passed    0.18 sec
+         Start  3: GrExampleCMP.c_local
+    3/16 Test  #3: GrExampleCMP.c_local .........................................   Passed    0.16 sec
+         Start  4: GrExampleCMP.cxx
+    4/16 Test  #4: GrExampleCMP.cxx .............................................   Passed    0.16 sec
+         Start  5: GrExampleCMP.fortran
+    5/16 Test  #5: GrExampleCMP.fortran .........................................   Passed    0.16 sec
+         Start  6: InterpolationTest.Interpolate1D
+    6/16 Test  #6: InterpolationTest.Interpolate1D ..............................   Passed    0.00 sec
+         Start  7: InterpolationTest.Interpolate2D
+    7/16 Test  #7: InterpolationTest.Interpolate2D ..............................   Passed    0.00 sec
+         Start  8: InterpolationTest.Interpolate3D
+    8/16 Test  #8: InterpolationTest.Interpolate3D ..............................   Passed    0.00 sec
+         Start  9: InterpolationTest.Interpolate3Dz
+    9/16 Test  #9: InterpolationTest.Interpolate3Dz .............................   Passed    0.00 sec
+         Start 10: InterpolationTest.Interpolate2Df3D
+   10/16 Test #10: InterpolationTest.Interpolate2Df3D ...........................   Passed    0.00 sec
+         Start 11: InterpolationTest.Interpolate4D
+   11/16 Test #11: InterpolationTest.Interpolate4D ..............................   Passed    0.00 sec
+         Start 12: InterpolationTest.Interpolate5D
+   12/16 Test #12: InterpolationTest.Interpolate5D ..............................   Passed    0.00 sec
+         Start 13: VaryingPrimordialChem/APIConventionTest.GridZoneStartEnd/0
+   13/16 Test #13: VaryingPrimordialChem/APIConventionTest.GridZoneStartEnd/0 ...   Passed    0.01 sec
+         Start 14: VaryingPrimordialChem/APIConventionTest.GridZoneStartEnd/1
+   14/16 Test #14: VaryingPrimordialChem/APIConventionTest.GridZoneStartEnd/1 ...   Passed    0.02 sec
+         Start 15: VaryingPrimordialChem/APIConventionTest.GridZoneStartEnd/2
+   15/16 Test #15: VaryingPrimordialChem/APIConventionTest.GridZoneStartEnd/2 ...   Passed    0.02 sec
+         Start 16: VaryingPrimordialChem/APIConventionTest.GridZoneStartEnd/3
+   16/16 Test #16: VaryingPrimordialChem/APIConventionTest.GridZoneStartEnd/3 ...   Passed    0.02 sec
+
+   100% tests passed, 0 tests failed out of 16
+
+   Total Test time (real) =   0.80 sec
+
+.. _pygrackle-suite:
+
+Running the pygrackle Test Suite
+--------------------------------
+
+As already noted, the pygrackle suite includes unit tests and answer tests.
 
 Unit tests (i.e., those with explicitly known correct answers) include
 the following:
@@ -20,17 +118,12 @@ the following:
  - atomic, primordial collisional ionization equilibrium agrees with
    the analytical solution
 
- - all Python code conforms to `PEP 8
-   <https://www.python.org/dev/peps/pep-0008/>`__
-
 Answer tests are those whose correct answers must be generated from a
 prior, trusted version of Grackle (i.e., the "gold standard"). The
 tests are first run using this trusted version to generate the
 results (in *store-mode*), then run again on the latest version to
 compare (in *compare-mode*).
 These tests include:
-
- - all code examples build, run, and return correct results
 
  - all python examples run and give correct results for a range of
    parameter values
