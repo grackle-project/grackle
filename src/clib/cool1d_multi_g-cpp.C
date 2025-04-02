@@ -1156,8 +1156,7 @@ void grackle::impl::cool1d_multi_g(
 
   if (my_chemistry->primordial_chemistry > 0)  {
 
-    if (my_chemistry->self_shielding_method == 0)  // no shielding
-    {
+    if (my_chemistry->self_shielding_method == 0) {  // no shielding
       for (i = idx_range.i_start; i<=idx_range.i_end; i++) {
         if ( itmask[i] != MASK_FALSE )  {
           edot[i] = edot[i] + (double)(my_chemistry->ipiht )*(
