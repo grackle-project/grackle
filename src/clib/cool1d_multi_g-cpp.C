@@ -936,41 +936,14 @@ void grackle::impl::cool1d_multi_g(
   }
 
   // Compute grain size increment
-
+  grackle::impl::InternalDustPropBuf internal_dust_prop_buf;
   if ( (my_chemistry->use_dust_density_field > 0)  &&  (my_chemistry->dust_species > 0) )  {
 
-     FORTRAN_NAME(calc_grain_size_increment_1d)(
-              &my_chemistry->multi_metals, &my_chemistry->metal_abundances, &my_chemistry->dust_species, &my_chemistry->grain_growth, itmask_metal,
-             &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &idx_range.i_start, &idx_range.i_end, &idx_range.jp1, &idx_range.kp1, &dom, d.data(),
-             my_fields->SiM_dust_density, my_fields->FeM_dust_density, my_fields->Mg2SiO4_dust_density, my_fields->MgSiO3_dust_density, my_fields->Fe3O4_dust_density,
-             my_fields->AC_dust_density, my_fields->SiO2_dust_density, my_fields->MgO_dust_density, my_fields->FeS_dust_density, my_fields->Al2O3_dust_density,
-             my_fields->ref_org_dust_density, my_fields->vol_org_dust_density, my_fields->H2O_ice_dust_density,
-             metal.data(), my_fields->local_ISM_metal_density,
-             my_fields->ccsn13_metal_density, my_fields->ccsn20_metal_density, my_fields->ccsn25_metal_density, my_fields->ccsn30_metal_density,
-             my_fields->fsn13_metal_density, my_fields->fsn15_metal_density, my_fields->fsn50_metal_density, my_fields->fsn80_metal_density,
-             my_fields->pisn170_metal_density, my_fields->pisn200_metal_density, my_fields->y19_metal_density,
-             &my_rates->SN0_N,
-             my_rates->SN0_fSiM, my_rates->SN0_fFeM, my_rates->SN0_fMg2SiO4, my_rates->SN0_fMgSiO3,
-             my_rates->SN0_fFe3O4, my_rates->SN0_fAC, my_rates->SN0_fSiO2D, my_rates->SN0_fMgO,
-             my_rates->SN0_fFeS, my_rates->SN0_fAl2O3,
-             my_rates->SN0_freforg, my_rates->SN0_fvolorg, my_rates->SN0_fH2Oice,
-             my_rates->SN0_r0SiM, my_rates->SN0_r0FeM, my_rates->SN0_r0Mg2SiO4, my_rates->SN0_r0MgSiO3,
-             my_rates->SN0_r0Fe3O4, my_rates->SN0_r0AC, my_rates->SN0_r0SiO2D, my_rates->SN0_r0MgO,
-             my_rates->SN0_r0FeS, my_rates->SN0_r0Al2O3,
-             my_rates->SN0_r0reforg, my_rates->SN0_r0volorg, my_rates->SN0_r0H2Oice,
-             my_rates->gr_N, &my_rates->gr_Size, &my_rates->gr_dT, my_rates->gr_Td,
-             my_rates->SN0_kpSiM, my_rates->SN0_kpFeM, my_rates->SN0_kpMg2SiO4, my_rates->SN0_kpMgSiO3,
-             my_rates->SN0_kpFe3O4, my_rates->SN0_kpAC, my_rates->SN0_kpSiO2D, my_rates->SN0_kpMgO,
-             my_rates->SN0_kpFeS, my_rates->SN0_kpAl2O3,
-             my_rates->SN0_kpreforg, my_rates->SN0_kpvolorg, my_rates->SN0_kpH2Oice,
-             sgSiM.data(), sgFeM.data(), sgMg2SiO4.data(), sgMgSiO3.data(), sgFe3O4.data(), sgAC.data(),
-             sgSiO2D.data(), sgMgO.data(), sgFeS.data(), sgAl2O3.data(),
-             sgreforg.data(), sgvolorg.data(), sgH2Oice.data(), sgtot.data(),
-             alSiM.data(), alFeM.data(), alMg2SiO4.data(), alMgSiO3.data(), alFe3O4.data(), alAC.data(),
-             alSiO2D.data(), alMgO.data(), alFeS.data(), alAl2O3.data(),
-             alreforg.data(), alvolorg.data(), alH2Oice.data(), altot.data()
-          );
+    // TODO: check position, is this if alwas true when anydust != MASK_FALSE?
+    grackle::impl::InternalDustPropBuf internal_dust_prop_buf = grackle::impl::new_InternalDustPropBuf(sgtot.size(), altot.size());
 
+    grackle::impl::fortran_wrapper::calc_grain_size_increment_1d(dom, idx_range, itmask_metal, my_chemistry,
+                                                                 my_rates, my_fields, internal_dust_prop_buf);
   }
 
   // Calculate dust to gas ratio AND interstellar radiation field
@@ -1013,31 +986,32 @@ void grackle::impl::cool1d_multi_g(
 
   // compute dust temperature and cooling due to dust
   if (anydust != MASK_FALSE)  {
+    // TODO: what about smart pointers, can we use them?
+    GrainSpeciesCollection gas_grainsp_heatrate = new_GrainSpeciesCollection(my_fields->grid_dimension[0]);
+    GrainSpeciesCollection grain_kappa = new_GrainSpeciesCollection(my_fields->grid_dimension[0]);
 
-     FORTRAN_NAME(calc_all_tdust_gasgr_1d_g)(&my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &my_chemistry->NumberOfTemperatureBins,
-                 &my_chemistry->use_dust_density_field, &idx_range.i_start, &idx_range.i_end, &idx_range.jp1, &idx_range.kp1, &my_chemistry->local_dust_to_gas_ratio, &my_rates->gamma_isrf,
-                 &comp2, my_rates->gas_grain, logTlininterp_buf.indixe, logTlininterp_buf.tdef, tgas, tdust,
-                 metallicity, dust2gas, cool1dmulti_buf.mynh, cool1dmulti_buf.gasgr_tdust,
-                 itmask_metal,
-                 &my_chemistry->dust_species, &my_chemistry->use_multiple_dust_temperatures, my_rates->gr_N, &my_rates->gr_Size, &my_rates->gr_dT,
-                 my_rates->gr_Td, grain_temperatures.data[OnlyGrainSpLUT::SiM_dust], grain_temperatures.data[OnlyGrainSpLUT::FeM_dust], grain_temperatures.data[OnlyGrainSpLUT::Mg2SiO4_dust], grain_temperatures.data[OnlyGrainSpLUT::MgSiO3_dust], grain_temperatures.data[OnlyGrainSpLUT::Fe3O4_dust],
-                 grain_temperatures.data[OnlyGrainSpLUT::AC_dust], grain_temperatures.data[OnlyGrainSpLUT::SiO2_dust], grain_temperatures.data[OnlyGrainSpLUT::MgO_dust], grain_temperatures.data[OnlyGrainSpLUT::FeS_dust], grain_temperatures.data[OnlyGrainSpLUT::Al2O3_dust], grain_temperatures.data[OnlyGrainSpLUT::ref_org_dust],
-                 grain_temperatures.data[OnlyGrainSpLUT::vol_org_dust], grain_temperatures.data[OnlyGrainSpLUT::H2O_ice_dust], my_rates->gas_grain2, &my_rates->gamma_isrf2,
-                 &coolunit, gasgr.data(), myisrf.data(), sgSiM.data(), sgFeM.data(), sgMg2SiO4.data(),
-                 sgMgSiO3.data(), sgFe3O4.data(), sgAC.data(), sgSiO2D.data(), sgMgO.data(), sgFeS.data(),
-                 sgAl2O3.data(), sgreforg.data(), sgvolorg.data(), sgH2Oice.data(), sgtot.data(),
-                 alSiM.data(), alFeM.data(), alMg2SiO4.data(), alMgSiO3.data(), alFe3O4.data(), alAC.data(),
-                 alSiO2D.data(), alMgO.data(), alFeS.data(), alAl2O3.data(), alreforg.data(),
-                 alvolorg.data(), alH2Oice.data(), altot.data(), kpSiM.data(), kpFeM.data(),
-                 kpMg2SiO4.data(), kpMgSiO3.data(), kpFe3O4.data(), kpAC.data(), kpSiO2D.data(),
-                 kpMgO.data(), kpFeS.data(), kpAl2O3.data(), kpreforg.data(), kpvolorg.data(),
-                 kpH2Oice.data(), kptot.data(), gasSiM.data(), gasFeM.data(), gasMg2SiO4.data(),
-                 gasMgSiO3.data(), gasFe3O4.data(), gasAC.data(), gasSiO2D.data(), gasMgO.data(),
-                 gasFeS.data(), gasAl2O3.data(), gasreforg.data(), gasvolorg.data(),
-                 gasH2Oice.data()
-               );
+    // TODO: trad -> comp2
+    grackle::impl::fortran_wrapper::calc_all_tdust_gasgr_1d_g(
+      comp2, tgas, tdust, metallicity,
+      dust2gas, cool1dmulti_buf.mynh, cool1dmulti_buf.gasgr_tdust, itmask_metal,
+      coolunit, gasgr.data(), myisrf.data(), kptot.data(),
+      my_chemistry, my_rates,
+      my_fields, idx_range,
+      grain_temperatures,
+      gas_grainsp_heatrate,
+      grain_kappa,
+      logTlininterp_buf,
+      internal_dust_prop_buf);
+
+      // TODO: check position
+      drop_GrainSpeciesCollection(&gas_grainsp_heatrate);
+      // TODO: check position
+      drop_GrainSpeciesCollection(&grain_kappa);
 
   }
+  // TODO: check position
+  grackle::impl::drop_InternalDustPropBuf(&internal_dust_prop_buf);
+
 
   // Calculate dust cooling rate
   if (anydust != MASK_FALSE)  {
