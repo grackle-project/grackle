@@ -23,8 +23,7 @@ cooling and update internal energy; and calculate cooling time, temperature,
 pressure, and ratio of specific heats (γ).
 The library offers
 
-- two options for primordial chemistry and cooling.
-  It can (i) evolve a non-equilibrium primordial chemistry network for atomic H, D, and He as well as H<sub>2</sub> and HD (including H<sub>2</sub> formation on dust grains) **OR** (ii) use tabulated H and He cooling rates calculated with the photo-ionization code, [Cloudy](http://nublado.org).
+- two options for primordial chemistry and cooling. It can (i) evolve a non-equilibrium chemistry network  **OR** (ii) use tabulated cooling rates calculated with the photo-ionization code, [Cloudy](http://nublado.org).
 
 - tabulated metal cooling rates calculated with [Cloudy](http://nublado.org).
 
@@ -32,8 +31,7 @@ The library offers
 
 - support for user-provided arrays of volumetric and specific heating rates.
 
-For more information on features, installation, and integration with simulation
-codes and models, see our [online documentation](https://grackle.readthedocs.io/).
+Our [method paper](http://adsabs.harvard.edu/abs/2017MNRAS.466.2217S) and [capabilities guide](https://grackle.readthedocs.io/en/latest/CapabilityGuide.html#grackle-s-capabilities) provide more information.
 
 ## Projects that provide out-of-the-box support for Grackle
 
@@ -96,15 +94,6 @@ To help you start using Grackle, we provide:
 Grackle is a community project!
 We welcome patches, features, and bugfixes from any member of the community!
 For more details, please see our [Constribution Guide](https://grackle.readthedocs.io/en/latest/Contributing.html) and our [Code of Conduct](https://grackle.readthedocs.io/en/latest/Conduct.html)
-
-
-## Resources
-
-- documentation: https://grackle.readthedocs.io/
-
-- source code repository: https://github.com/grackle-project/grackle
-
-- method paper: [Smith et al. (2017)](http://adsabs.harvard.edu/abs/2017MNRAS.466.2217S)
 
 
 [^1]: You currently **NEED** to invoke the examples from the directory where they are located.
