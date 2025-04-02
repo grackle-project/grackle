@@ -263,7 +263,6 @@ def main_cmp(args):
 
     ref_rslt, target_rslt = result_l
     atol, rtol = args.atol, args.rtol
-    print(f"Comparing Results: atol = {atol}, rtol = {rtol}")
 
     successful_check = isclose_resultpacks(
         actual=target_rslt,
