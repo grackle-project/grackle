@@ -77,7 +77,6 @@ void grackle::impl::cool1d_multi_g(
   const double mh_local_var = mh_grflt;
   // approx. mean molecular weight of metals
   const double mu_metal = 16.;
-  const int ti_max = 20;
 
   // Locals
 
