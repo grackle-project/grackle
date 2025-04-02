@@ -9,7 +9,7 @@
 #include <cstdio>
 #include <vector>
 
-#include "cool1d_multi_g-cpp.h"
+#include "cool1d_multi_g.hpp"
 #include "cool_multi_time_g-cpp.h"
 #include "grackle.h"
 #include "fortran_func_wrappers.hpp"

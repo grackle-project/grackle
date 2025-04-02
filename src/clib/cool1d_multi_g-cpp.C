@@ -10,7 +10,7 @@
 #include <vector>
 #include <iostream>
 
-#include "cool1d_multi_g-cpp.h"
+#include "cool1d_multi_g.hpp"
 #include "grackle.h"
 #include "fortran_func_decls.h"
 #include "fortran_func_wrappers.hpp"

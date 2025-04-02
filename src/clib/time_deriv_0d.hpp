@@ -6,7 +6,7 @@
 #ifndef TIME_DERIV_0D_HPP
 #define TIME_DERIV_0D_HPP
 
-#include "cool1d_multi_g-cpp.h"
+#include "cool1d_multi_g.hpp"
 #include "chemistry_solver_funcs.hpp"
 #include "fortran_func_wrappers.hpp"
 #include "grackle.h"

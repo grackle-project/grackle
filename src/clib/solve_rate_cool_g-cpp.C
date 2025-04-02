@@ -18,7 +18,7 @@
 #include "step_rate_newton_raphson.hpp"
 #include "utils-cpp.hpp"
 
-#include "cool1d_multi_g-cpp.h"
+#include "cool1d_multi_g.hpp"
 #include "solve_rate_cool_g-cpp.h"
 
 /// overrides the subcycle timestep (for each index in the index-range that is
