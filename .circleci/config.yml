@@ -18,10 +18,10 @@ commands:
             fi
 
   install-cmake-dependencies:
-    description: "Install just the dependencies needed for a CMake build"
+    description: "Install minimal dependencies needed for a CMake build"
     steps:
       - run:
-          name: "Install only the basic dependencies for a CMake build"
+          name: "Install minimal dependencies needed for a CMake build"
           command: |
             git submodule update --init --remote
             sudo apt update
@@ -398,7 +398,7 @@ jobs:
                   -GNinja -Bbuild
             cmake --build build
       - run:
-          name: "description: Run the suite of tests that operate directly on the core-library."
+          name: "Run the suite of tests that operate directly on the core-library."
           command: |
             cd build
             ctest --output-on-failure
