@@ -57,7 +57,7 @@ commands:
             flake8 pygrackle examples tests
 
   install-grackle:
-    description: "Install grackle."
+    description: "Install the core Grackle Library & Pygrackle."
     parameters:
       omp:
         type: enum
@@ -231,6 +231,31 @@ commands:
               fi
             fi
 
+  store-pygrackle-suite-gold-standard-answers:
+    description: "Store the pygrackle test answers"
+    parameters:
+      gold-standard-tag:
+        description: "The gold-standard to use for generating the answers"
+        type: string
+        default: "gold-standard-v3"
+    steps:
+      - run:
+          name: "Build Pygrackle from Gold-Standard Commit (<< parameters.gold-standard-tag >>)"
+          command: |
+            source $HOME/venv/bin/activate
+            pip uninstall pygrackle # it's ok if pygrackle wasn't installed yet
+            git checkout << parameters.gold-standard-tag >>
+            pip install -e .[dev]
+      - run-pygrackle-tests:
+          omp: 'false'
+          build_kind: 'standalone-pygrackle'
+          generate: 'true'
+      - run:
+          command: |
+            source $HOME/venv/bin/activate
+            pip uninstall pygrackle
+
+
   run-classic-omp-test:
     description: "Run the OpenMP test with the classic build-system"
     steps:
@@ -282,23 +307,13 @@ jobs:
       - install-dependencies
       - lint
       - download-test-data
-
-      # record results of answer-tests using the gold-standard
-      - install-grackle:
-          omp: 'false'
-          classic_build: 'false'
-          tag: gold-standard-v3
-      - run-pygrackle-tests:
-          omp: 'false'
-          build_kind: 'cmake'
-          generate: 'true'
+      - store-pygrackle-suite-gold-standard-answers
 
       # run full pygrackle test-suite on latest commit (CMake-build)
       - install-grackle:
           omp: 'false'
           classic_build: 'false'
           tag: $CIRCLE_BRANCH
-
       - run-pygrackle-tests:
           omp: 'false'
           build_kind: 'cmake'
@@ -309,7 +324,6 @@ jobs:
           omp: 'false'
           classic_build: 'true'
           tag: $CIRCLE_BRANCH
-
       - run-pygrackle-tests:
           omp: 'false'
           build_kind: 'classic'
@@ -320,7 +334,6 @@ jobs:
           omp: 'true'
           classic_build: 'true'
           tag: $CIRCLE_BRANCH
-
       - run-classic-omp-test
 
   test-standalone-pygrackle:
@@ -339,14 +352,13 @@ jobs:
       - set-env
       - install-dependencies
       - download-test-data
-      - install-standalone-pygrackle:
-          tag: gold-standard-v3
-      - run-pygrackle-tests:
-          omp: 'false'
-          build_kind: 'standalone-pygrackle'
-          generate: 'true'
-      - install-standalone-pygrackle:
-          tag: $CIRCLE_BRANCH
+      - store-pygrackle-suite-gold-standard-answers
+      - run:
+          name: "Build Pygrackle from the commit that triggered CI."
+          command: |
+            source $HOME/venv/bin/activate
+            git checkout $CIRCLE_BRANCH
+            pip install -e .[dev]
       - run-pygrackle-tests:
           omp: 'false'
           build_kind: 'standalone-pygrackle'
