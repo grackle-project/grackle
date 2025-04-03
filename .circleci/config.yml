@@ -243,7 +243,7 @@ commands:
           name: "Build Pygrackle from Gold-Standard Commit (<< parameters.gold-standard-tag >>)"
           command: |
             source $HOME/venv/bin/activate
-            pip uninstall pygrackle # it's ok if pygrackle wasn't installed yet
+            pip uninstall --yes pygrackle # it's ok if pygrackle wasn't installed yet
             git checkout << parameters.gold-standard-tag >>
             pip install -e .[dev]
       - run-pygrackle-tests:
@@ -253,7 +253,7 @@ commands:
       - run:
           command: |
             source $HOME/venv/bin/activate
-            pip uninstall pygrackle
+            pip uninstall --yes pygrackle
 
 
   run-classic-omp-test:
