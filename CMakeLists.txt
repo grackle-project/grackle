@@ -205,8 +205,8 @@ endif()
 if(GRACKLE_BUILD_TESTS)
   # the GTest dependency has already been found
 
-  # load CMake's built-in module that defines functions to registering unit
-  # tests implemented with GoogleTest into CMake's test-runner, CTest
+  # load CMake's built-in module that defines functions to register unit tests
+  # implemented with GoogleTest with CMake's test-runner, CTest
   include(GoogleTest)
   enable_testing() # enable the test-runner, CTest
   add_subdirectory(tests) # declare the recipes for each test
