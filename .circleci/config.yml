@@ -88,9 +88,6 @@ commands:
             cd src/clib
             make clean
             cd -
-            cd src/python
-            make clean
-            cd -
             # remove the files produced by ./configure
             rm -f src/clib/Make.config.override src/clib/Make.config.machine src/clib/DEPEND
             # remove the files produced in a cmake-build
@@ -222,30 +219,11 @@ commands:
               echo "ERROR: pygrackle tests can't be run in this configuration"
               exit 1
 
-            elif [ ! -f ./src/python/tests/conftest.py ]; then
-              # NOTE: these tests should run if using OpenMP without the
-              #       classic build-system
-
-              # here we use the old way to control the answer-test mode (i.e.
-              # defining environment variables)
-              # - We can stop supporting this case once the most recent gold
-              #   standard tags a repository version containing conftest.py
-              if [ '<< parameters.generate >>' == 'true' ]; then
-                export GENERATE_PYGRACKLE_TEST_RESULTS=1
-              else
-                export GENERATE_PYGRACKLE_TEST_RESULTS=0
-              fi
-              cd src
-              py.test python/tests
-
             else
               # NOTE: these tests should run if using OpenMP without the
               #       classic build-system
 
-              # ANSWER_DIR was picked to ensure that it matches up with the old
-              # hardcoded location (we can change it once the most recent gold
-              # standard tags a repository version containing conftest.py)
-              ANSWER_DIR=./src/python/tests/test_answers
+              ANSWER_DIR=./my-test_answers
               if [ '<< parameters.generate >>' == 'true' ]; then
                 py.test --answer-dir=${ANSWER_DIR} --answer-store
               else
@@ -309,7 +287,7 @@ jobs:
       - install-grackle:
           omp: 'false'
           classic_build: 'false'
-          tag: gold-standard-v2
+          tag: gold-standard-v3
       - run-pygrackle-tests:
           omp: 'false'
           build_kind: 'cmake'
@@ -345,8 +323,6 @@ jobs:
 
       - run-classic-omp-test
 
-# TODO: once we merge in GH-#208, we need to issue a new gold standard, and then we should
-#       issue a followup PR where we uncomment the remainder of this test
   test-standalone-pygrackle:
     parameters:
       tag:
@@ -363,18 +339,18 @@ jobs:
       - set-env
       - install-dependencies
       - download-test-data
-      #- install-standalone-pygrackle:
-      #    tag: gold-standard-v2
-      #- run-pygrackle-tests:
-      #    omp: 'false'
-      #    build_kind: 'standalone-pygrackle'
-      #    generate: 'true'
+      - install-standalone-pygrackle:
+          tag: gold-standard-v3
+      - run-pygrackle-tests:
+          omp: 'false'
+          build_kind: 'standalone-pygrackle'
+          generate: 'true'
       - install-standalone-pygrackle:
           tag: $CIRCLE_BRANCH
-      #- run-pygrackle-tests:
-      #    omp: 'false'
-      #    build_kind: 'standalone-pygrackle'
-      #    generate: 'false'
+      - run-pygrackle-tests:
+          omp: 'false'
+          build_kind: 'standalone-pygrackle'
+          generate: 'false'
 
   corelib-tests:
     # we're only using a python docker-image out of convenience (We only care
