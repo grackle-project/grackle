@@ -215,12 +215,12 @@ commands:
           command: |
             source $BASH_ENV
             source $HOME/venv/bin/activate
-            set -x
 
             # actually execute the tests
             if [[ '<< parameters.build_kind >>' == 'classic' &&
                   '<< parameters.omp >>' == 'true' ]]; then
-              echo "the pygrackle tests can't be run in this configuration"
+              echo "ERROR: pygrackle tests can't be run in this configuration"
+              exit 1
 
             elif [ ! -f ./src/python/tests/conftest.py ]; then
               # NOTE: these tests should run if using OpenMP without the
@@ -230,7 +230,7 @@ commands:
               # defining environment variables)
               # - We can stop supporting this case once the most recent gold
               #   standard tags a repository version containing conftest.py
-              if [ << parameters.generate >> == 'true' ]; then
+              if [ '<< parameters.generate >>' == 'true' ]; then
                 export GENERATE_PYGRACKLE_TEST_RESULTS=1
               else
                 export GENERATE_PYGRACKLE_TEST_RESULTS=0
@@ -245,7 +245,7 @@ commands:
               # ANSWER_DIR was picked to ensure that it matches up with the old
               # hardcoded location (we can change it once the most recent gold
               # standard tags a repository version containing conftest.py)
-              ANSWER_DIR=./python/tests/test_answers
+              ANSWER_DIR=./src/python/tests/test_answers
               if [ '<< parameters.generate >>' == 'true' ]; then
                 py.test --answer-dir=${ANSWER_DIR} --answer-store
               else
