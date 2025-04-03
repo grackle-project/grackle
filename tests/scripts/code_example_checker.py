@@ -25,6 +25,7 @@ import re
 import stat
 import subprocess
 import sys
+import textwrap
 
 # Common machinery used for multiple subcommands
 # ----------------------------------------------
@@ -262,41 +263,132 @@ def main_cmp(args):
 
     ref_rslt, target_rslt = result_l
     atol, rtol = args.atol, args.rtol
-    print(f"Comparing Results: atol = {atol}, rtol = {rtol}")
 
-    mismatch_fields = []
-    for field_name, ref_val_pair in ref_rslt.items():
-        actual_val_pair = target_rslt[field_name]
-        if args.verbose:
-            print(field_name, actual_val_pair, ref_val_pair)
-        if (ref_val_pair is None) or (actual_val_pair is None):
-            is_equal = (ref_val == actual_val)
-        else:
-            ref_val, ref_units = ref_val_pair
-            actual_val, actual_units = actual_val_pair
-            
-            absdiff = abs(ref_val - actual_val)
-            is_equal = (
-                (actual_units == ref_units) and
-                (absdiff <= (atol + rtol * abs(ref_val)))
-            )
-        if not is_equal:
-            mismatch_fields.append(field_name)
-
-    if len(mismatch_fields) == 0:
+    successful_check = isclose_resultpacks(
+        actual=target_rslt,
+        reference=ref_rslt,
+        atol=args.atol,
+        rtol=args.rtol,
+        verbose=args.verbose
+    )
+    if successful_check:
         print("SUCCESS")
         return 0
-
-    # report the error
-    print("FAIL")
-    for field_name in mismatch_fields:
-        ref_val = ref_rslt[field_name]
-        actual_val = target_rslt[field_name]
-        print(
-            f"  {field_name!r} has a mismatch -"
-            f"ref: {ref_val}, target: {actual_val}"
-        )
     return 1
+
+class CmpErrorRecorder:
+    # as we perform a comparison, instances of this class record errors
+    def __init__(self): self.log = []
+    def record_err(self, s): self.log.append(s)
+    def any_err(self): return len(self.log) > 0
+    def __iter__(self): return iter(self.log)
+
+def _consistent_keys(actual, reference, err_recorder):
+    # returns iterable for the keys shared by actual and reference
+    refkeys = reference.keys()
+    refkey_set = set(refkeys)
+    mismatch_keys = refkey_set.symmetric_difference(actual.keys())
+    if len(mismatch_keys) == 0:
+        return actual.keys()
+    else:
+        shared_keys = list(refkey_set.intersection(actual.keys()))
+        extra_ref, extra_actual = [], []
+        for k in mismatch_keys:
+            if k in refkeys:
+                extra_ref.append(k)
+            else:
+                extra_actual.append(k)
+        err_recorder.record_err(textwrap.dedent(f"""\
+            Key Mismatch Error: the following are extra (unmatched) keys
+              actual:    {extra_actual!r}
+              reference: {extra_ref!r}"""
+        ))
+        return shared_keys
+
+
+def isclose_resultpacks(actual, reference, rtol, atol, verbose=False):
+    """
+    Returns True if entries of the result packs are equal within a tolerance.
+
+    Parameters
+    ----------
+    actual, reference : mapping
+        A mapping holding results obtained in calculations. The keys are the
+        names of quantities. Each value is a tuple where the first element is
+        a number and the second value is a string (corresponding to a uniy)
+    rtol : float
+        The relative tolerance parameter
+    atol : float
+        The absolute tolerance parameter
+    verbose : bool
+        Print information
+    announce_mismatch : bool
+        Print detailed error-reports on failure
+    """
+
+    if verbose:
+        print(f"Comparing Results with atol = {atol}, rtol = {rtol}")
+
+    match_count = 0
+    checked_cases = 0
+    err_recorder = CmpErrorRecorder()
+    keys = _consistent_keys(actual, reference, err_recorder)
+    for key in keys:
+        checked_cases += 1
+        actual_pair, ref_pair = actual[key], reference[key]
+
+        if verbose:
+            print(f"  comparing {key}: actual={actual!r}, ref={ref!r}")
+
+        if (ref_pair is None) or (actual_pair is None):
+            if actual_pair != ref_pair:
+                err_recorder.record_err(textwrap.dedent(f"""\
+                    {key!r}: one of the values is None
+                      actual: {actual_pair!r}
+                      ref: {ref_pair!r}"""
+                ))
+            else:
+                match_count += 1
+            continue
+
+        # we use numpy's convention of asymmetric relative differences
+        ref_val, ref_units = ref_pair
+        actual_val, actual_units = actual_pair
+        diff = actual_val - ref_val
+
+        if ref_units != actual_units:
+            err_recorder.record_err(textwrap.dedent(f"""\
+                {key!r}: Unit mismatch!
+                  units: actual = {actual_units!r}, ref = {ref_units!r}
+                  values: actual = {actual_val!r}, ref = {ref_val!r}"""
+            ))
+        elif (abs(diff) > (atol + rtol * abs(ref_val))):
+            rdiff_str = f'{diff/ref_val:g}' if (ref_val != 0) else 'undefined'
+            err_recorder.record_err(textwrap.dedent(f"""\
+                {key!r}: not equal to specified tolerance
+                  relative Difference: {rdiff_str}
+                  absolute Difference: {abs(diff):g}
+                  values: actual = {actual_val!r}, ref = {ref_val!r}
+                  units: {ref_units!r}"""
+            ))
+        else:
+            match_count+=1
+
+    if not err_recorder.any_err():
+        return True
+
+    msg = textwrap.dedent(f"""
+        FAIL: Result-packs not equal to tolerance rtol={rtol}, atol={atol}
+          Context:
+            compared results for the following keys:
+              {repr(list(keys))[1:-1]}
+            {match_count} of these {checked_cases} results matched"""
+    )
+    print(
+        msg, *(textwrap.indent(e,prefix='  ') for e in err_recorder), sep='\n'
+    )
+    return False
+
 
 # datacheck subcommand
 # --------------------
