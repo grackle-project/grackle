@@ -185,6 +185,9 @@ if (UNIX AND NOT CMAKE_SYSTEM_NAME STREQUAL "Darwin")
   set_target_properties(toolchain::m PROPERTIES IMPORTED_LIBNAME "m")
 endif()
 
+# most of the above logic will be moved into the following file
+include(dependencies.cmake)
+
 # Main build targets
 # ------------------
 add_subdirectory(src/clib)
@@ -200,9 +203,8 @@ endif()
 # if desired, setup Grackle's tests that use CTest/GoogleTest (this has no
 # impact on the tests run via pytest, those are handled outside of cmake)
 if(GRACKLE_BUILD_TESTS)
-  # setup GoogleTest framework (search for an installed copy on the machine
-  # OR download it & add its compilation to the rest of the build procedure)
-  include(setup_GTest)
+  # the GTest dependency has already been found
+
   # load CMake's built-in module that defines functions to registering unit
   # tests implemented with GoogleTest into CMake's test-runner, CTest
   include(GoogleTest)
