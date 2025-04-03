@@ -98,13 +98,13 @@ commands:
 
 
             # Next, we actually perform the installation
-            if [ << parameters.classic_build >> == 'true' ]; then
+            if [ '<< parameters.classic_build >>' == 'true' ]; then
               mkdir -p $HOME/local # installation location
               ./configure
               cd src/clib
               make clean
               make machine-linux-gnu
-              if [ << parameters.omp >> == 'true' ]; then
+              if [ '<< parameters.omp >>' == 'true' ]; then
                 make omp-on
               fi
               make
@@ -217,11 +217,11 @@ commands:
             source $HOME/venv/bin/activate
 
             # actually execute the tests
-            if [[ << parameters.build_kind >> == 'classic' &&
-                  << parameters.omp >> == 'true' ]]; then
+            if [[ '<< parameters.build_kind >>' == 'classic' &&
+                  '<< parameters.omp >>' == 'true' ]]; then
               echo "the pygrackle tests can't be run in this configuration"
 
-            elif [ ! -f ./python/tests/conftest.py ]; then
+            elif [ ! -f ./src/python/tests/conftest.py ]; then
               # NOTE: these tests should run if using OpenMP without the
               #       classic build-system
 
@@ -245,7 +245,7 @@ commands:
               # hardcoded location (we can change it once the most recent gold
               # standard tags a repository version containing conftest.py)
               ANSWER_DIR=./python/tests/test_answers
-              if [ << parameters.generate >> == 'true' ]; then
+              if [ '<< parameters.generate >>' == 'true' ]; then
                 py.test --answer-dir=${ANSWER_DIR} --answer-store
               else
                 py.test --answer-dir=${ANSWER_DIR}
