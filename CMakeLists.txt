@@ -158,34 +158,7 @@ set(GRACKLE_GENRATED_PUBLIC_HEADERS
 
 # Dependencies
 # ------------
-find_package(HDF5 REQUIRED COMPONENTS C)
-add_library(GRACKLE_HDF5_C INTERFACE IMPORTED)
-target_link_libraries(GRACKLE_HDF5_C INTERFACE ${HDF5_C_LIBRARIES})
-target_include_directories(GRACKLE_HDF5_C INTERFACE ${HDF5_C_INCLUDE_DIRS})
-target_compile_definitions(GRACKLE_HDF5_C INTERFACE ${HDF5_C_DEFINITIONS})
-if (HDF5_VERSION VERSION_LESS "1.6")
-  message(FATAL_ERROR "HDF5 version 1.6 or newer is required")
-elseif(HDF5_VERSION VERSION_GREATER "1.6")
-  target_compile_definitions(GRACKLE_HDF5_C INTERFACE -DH5_USE_16_API)
-endif()
-
 option(GRACKLE_USE_OPENMP "Use OpenMP" OFF)
-if (GRACKLE_USE_OPENMP)
-  find_package(OpenMP REQUIRED COMPONENTS C Fortran)
-endif()
-
-# define target to link the math functions of the C standard library
-# (i.e. the -lm flag). This is commonly needed on unix-like platforms
-# -> For platforms that don't need libm, this target acts as a dummy
-#    placeholder (that does nothing)
-# -> The -lm flag should NOT be used on MacOS (while CMake is smart enough to
-#    not pass it to the linker, it will mess with exporting linker flags)
-add_library(toolchain::m INTERFACE IMPORTED)
-if (UNIX AND NOT CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-  set_target_properties(toolchain::m PROPERTIES IMPORTED_LIBNAME "m")
-endif()
-
-# most of the above logic will be moved into the following file
 include(dependencies.cmake)
 
 # Main build targets
