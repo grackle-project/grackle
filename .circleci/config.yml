@@ -304,33 +304,17 @@ jobs:
       - lint
       - download-test-data
 
-      - install-grackle:
-          omp: 'false'
-          classic_build: 'true'
-          tag: $CIRCLE_BRANCH
-
-      - run-pygrackle-tests:
-          omp: 'false'
-          build_kind: 'classic'
-          generate: 'true'
-
-      - install-grackle:
-          omp: 'true'
-          classic_build: 'true'
-          tag: $CIRCLE_BRANCH
-
-      - run-classic-omp-test
-
+      # record results of answer-tests using the gold-standard
       - install-grackle:
           omp: 'false'
           classic_build: 'false'
           tag: gold-standard-v2
-
       - run-pygrackle-tests:
           omp: 'false'
           build_kind: 'cmake'
           generate: 'true'
 
+      # run full pygrackle test-suite on latest commit (CMake-build)
       - install-grackle:
           omp: 'false'
           classic_build: 'false'
@@ -340,6 +324,25 @@ jobs:
           omp: 'false'
           build_kind: 'cmake'
           generate: 'false'
+
+      # run full pygrackle test-suite on latest commit (classic-build)
+      - install-grackle:
+          omp: 'false'
+          classic_build: 'true'
+          tag: $CIRCLE_BRANCH
+
+      - run-pygrackle-tests:
+          omp: 'false'
+          build_kind: 'classic'
+          generate: 'false'
+
+      # setup and run classic-omp-test on latest commit
+      - install-grackle:
+          omp: 'true'
+          classic_build: 'true'
+          tag: $CIRCLE_BRANCH
+
+      - run-classic-omp-test
 
 # TODO: once we merge in GH-#208, we need to issue a new gold standard, and then we should
 #       issue a followup PR where we uncomment the remainder of this test
