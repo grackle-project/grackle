@@ -35,6 +35,9 @@ Our [method paper](http://adsabs.harvard.edu/abs/2017MNRAS.466.2217S) provides m
 
 ## Projects that provide out-of-the-box support for Grackle
 
+Grackle is a popular tool (the [method paper](http://adsabs.harvard.edu/abs/2017MNRAS.466.2217S) has over 275 citations) and has been used in a wide variety of calculations.
+Below, we list open source projects that provide out-of-the-box support for Grackle:
+
 [ChaNGa](https://github.com/N-BodyShop/changa),
 [Cholla](https://github.com/cholla-hydro/cholla),
 [Enzo](https://enzo-project.org/),
