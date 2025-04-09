@@ -153,18 +153,20 @@ The remainder of this subsection is primarily intended for readers who are relat
 
    .. code-block:: shell-session
 
-      ~/grackle $ cmake --build <build-dir>
-      ~/grackle $ cmake --install <build-dir>
+      ~/grackle $ cmake --build <build-dir>    # the build-step
+      ~/grackle $ cmake --install <build-dir>  # the install-step
 
-   .. note::
+   .. hint::
 
-      The above commands show the most generic commands that can be executed.
+      The above snippet show the most generic commands that can be executed.
       Other tutorials that you see online may show slight variations in these commands (where you manually make the build directory) and then manually execute the build-system from within the build-directory...
 
    .. note::
 
-      Just like with the classic build-system, Grackle currently needs to be installed to be used.
-      If you install it in a non-standard location, then you also need to ensure that you properly set the LD_LIBRARY_PATH (or DYLD_LIBRARY_PATH on macOS) to make use of it.
+      In some cases, projects can use Grackle, built with CMake, with requiring a full installation.
+      But, for historical reasons, you should generally assume that an external project requires a full installation step (unless that's project tells you otherwise).
+
+      If you install Grackle in a non-standard location, then you also need to ensure that you properly set the ``LD_LIBRARY_PATH`` (or ``DYLD_LIBRARY_PATH`` on macOS) env variable to make use of it.
 
 
 4. Test your Build.
