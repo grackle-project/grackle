@@ -31,7 +31,7 @@ The library offers
 
 - support for user-provided arrays of volumetric and specific heating rates.
 
-Our [method paper](http://adsabs.harvard.edu/abs/2017MNRAS.466.2217S) and [capabilities guide](https://grackle.readthedocs.io/en/latest/CapabilityGuide.html#grackle-s-capabilities) provide more information.
+Our [method paper](http://adsabs.harvard.edu/abs/2017MNRAS.466.2217S) provides more information.
 
 ## Projects that provide out-of-the-box support for Grackle
 
@@ -87,7 +87,7 @@ To help you start using Grackle, we provide:
 - a [Usage Guide](https://grackle.readthedocs.io/en/latest/Interaction.html)
 - example Grackle programs written in [C, C++, and Fortran](https://github.com/grackle-project/grackle/tree/main/src/example)
 - an [Integration Guide](https://grackle.readthedocs.io/en/latest/Integration.html) (for linking Grackle)
-- a curated [guide](https://grackle.readthedocs.io/en/latest/Python.html#running-the-example-scripts) for the [Pygrackle examples](https://grackle.readthedocs.io/en/latest/Python.html#running-the-example-scripts)
+- a curated [guide](https://grackle.readthedocs.io/en/latest/Python.html#running-the-example-scripts) for the Pygrackle examples
 
 ## Contributing
 
