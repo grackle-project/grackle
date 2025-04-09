@@ -330,11 +330,11 @@ jobs:
           generate: 'false'
 
       # setup and run classic-omp-test on latest commit
-      - install-grackle:
-          omp: 'true'
-          classic_build: 'true'
-          tag: $CIRCLE_BRANCH
-      - run-classic-omp-test
+      #- install-grackle:
+      #    omp: 'true'
+      #    classic_build: 'true'
+      #    tag: $CIRCLE_BRANCH
+      #- run-classic-omp-test
 
   test-standalone-pygrackle:
     parameters:

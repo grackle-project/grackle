@@ -20,6 +20,7 @@
 #include "grackle_macros.h"
 #include "grackle_types.h"
 #include "grackle_chemistry_data.h"
+#include "interp_table_utils.h" // free_interp_grid_
 #include "phys_constants.h"
 #ifdef _OPENMP
 #include <omp.h>
@@ -38,7 +39,6 @@ void auto_show_config(FILE *fp);
 void auto_show_flags(FILE *fp);
 grackle_version get_grackle_version();
 void show_parameters(FILE *fp, chemistry_data *my_chemistry);
-
 int _free_cloudy_data(cloudy_data *my_cloudy, chemistry_data *my_chemistry, int primordial);
 int initialize_cloudy_data(chemistry_data *my_chemistry,
                            chemistry_data_storage *my_rates,
@@ -50,6 +50,9 @@ int initialize_UVbackground_data(chemistry_data *my_chemistry,
                                  chemistry_data_storage *my_rates);
 
 int local_free_chemistry_data(chemistry_data *my_chemistry, chemistry_data_storage *my_rates);
+
+int local_free_metal_chemistry_rates(chemistry_data *my_chemistry, chemistry_data_storage *my_rates);
+int local_free_dust_yields(chemistry_data *my_chemistry, chemistry_data_storage *my_rates);
 
 int initialize_rates(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, code_units *my_units,
                 double co_length_units, double co_density_units);
@@ -67,16 +70,33 @@ static void show_version(FILE *fp)
 }
 
 /**
+ * Initialize an empty #gr_interp_grid
+ */
+static void initialize_empty_interp_grid_(gr_interp_grid* grid)
+{
+  grid->props.rank = 0;
+  for (int i = 0; i < GRACKLE_CLOUDY_TABLE_MAX_DIMENSION; i++){
+    grid->props.dimension[i] = 0;
+    grid->props.parameters[i] = NULL;
+    grid->props.parameter_spacing[i] = 0.0;
+  }
+  grid->props.data_size = 0;
+  grid->data=NULL;
+}
+
+/**
  * Initializes an empty #chemistry_data_storage struct with zeros and NULLs.
  */
 void initialize_empty_chemistry_data_storage_struct(chemistry_data_storage *my_rates)
 {
+
   my_rates->k1 = NULL;
   my_rates->k2 = NULL;
   my_rates->k3 = NULL;
   my_rates->k4 = NULL;
   my_rates->k5 = NULL;
   my_rates->k6 = NULL;
+
   my_rates->k7 = NULL;
   my_rates->k8 = NULL;
   my_rates->k9 = NULL;
@@ -95,14 +115,17 @@ void initialize_empty_chemistry_data_storage_struct(chemistry_data_storage *my_r
   my_rates->k22 = NULL;
   my_rates->k23 = NULL;
   my_rates->k13dd = NULL;
+
   my_rates->k24 = 0.;
   my_rates->k25 = 0.;
   my_rates->k26 = 0.;
+
   my_rates->k27 = 0.;
   my_rates->k28 = 0.;
   my_rates->k29 = 0.;
   my_rates->k30 = 0.;
   my_rates->k31 = 0.;
+
   my_rates->k50 = NULL;
   my_rates->k51 = NULL;
   my_rates->k52 = NULL;
@@ -110,12 +133,78 @@ void initialize_empty_chemistry_data_storage_struct(chemistry_data_storage *my_r
   my_rates->k54 = NULL;
   my_rates->k55 = NULL;
   my_rates->k56 = NULL;
+
   my_rates->k57 = NULL;
   my_rates->k58 = NULL;
+
+  my_rates->k125 = NULL;
+  my_rates->k129 = NULL;
+  my_rates->k130 = NULL;
+  my_rates->k131 = NULL;
+  my_rates->k132 = NULL;
+  my_rates->k133 = NULL;
+  my_rates->k134 = NULL;
+  my_rates->k135 = NULL;
+  my_rates->k136 = NULL;
+  my_rates->k137 = NULL;
+  my_rates->k148 = NULL;
+  my_rates->k149 = NULL;
+  my_rates->k150 = NULL;
+  my_rates->k151 = NULL;
+  my_rates->k152 = NULL;
+  my_rates->k153 = NULL;
+
+  my_rates->kz15 = NULL;
+  my_rates->kz16 = NULL;
+  my_rates->kz17 = NULL;
+  my_rates->kz18 = NULL;
+  my_rates->kz19 = NULL;
+  my_rates->kz20 = NULL;
+  my_rates->kz21 = NULL;
+  my_rates->kz22 = NULL;
+  my_rates->kz23 = NULL;
+  my_rates->kz24 = NULL;
+  my_rates->kz25 = NULL;
+  my_rates->kz26 = NULL;
+  my_rates->kz27 = NULL;
+  my_rates->kz28 = NULL;
+  my_rates->kz29 = NULL;
+  my_rates->kz30 = NULL;
+  my_rates->kz31 = NULL;
+  my_rates->kz32 = NULL;
+  my_rates->kz33 = NULL;
+  my_rates->kz34 = NULL;
+  my_rates->kz35 = NULL;
+  my_rates->kz36 = NULL;
+  my_rates->kz37 = NULL;
+  my_rates->kz38 = NULL;
+  my_rates->kz39 = NULL;
+  my_rates->kz40 = NULL;
+  my_rates->kz41 = NULL;
+  my_rates->kz42 = NULL;
+  my_rates->kz43 = NULL;
+  my_rates->kz44 = NULL;
+  my_rates->kz45 = NULL;
+  my_rates->kz46 = NULL;
+  my_rates->kz47 = NULL;
+  my_rates->kz48 = NULL;
+  my_rates->kz49 = NULL;
+  my_rates->kz50 = NULL;
+  my_rates->kz51 = NULL;
+  my_rates->kz52 = NULL;
+  my_rates->kz53 = NULL;
+  my_rates->kz54 = NULL;
+
   my_rates->h2dust = NULL;
+  my_rates->h2dustS = NULL;
+  my_rates->h2dustC = NULL;
+
+  my_rates->grain_growth_rate = NULL;
+
   my_rates->n_cr_n = NULL;
   my_rates->n_cr_d1 = NULL;
   my_rates->n_cr_d2 = NULL;
+
   my_rates->ceHI = NULL;
   my_rates->ceHeI = NULL;
   my_rates->ceHeII = NULL;
@@ -131,12 +220,15 @@ void initialize_empty_chemistry_data_storage_struct(chemistry_data_storage *my_r
   my_rates->comp = 0.;
   my_rates->comp_xray = 0.;
   my_rates->temp_xray = 0.;
+
   my_rates->piHI = 0.;
   my_rates->piHeI = 0.;
   my_rates->piHeII = 0.;
+
   my_rates->crsHI = 0.;
   my_rates->crsHeI = 0.;
   my_rates->crsHeII = 0.;
+
   my_rates->hyd01k = NULL;
   my_rates->h2k01 = NULL;
   my_rates->vibh = NULL;
@@ -144,19 +236,104 @@ void initialize_empty_chemistry_data_storage_struct(chemistry_data_storage *my_r
   my_rates->rotl = NULL;
   my_rates->GP99LowDensityLimit = NULL;
   my_rates->GP99HighDensityLimit = NULL;
+
   my_rates->GAHI = NULL;
   my_rates->GAH2 = NULL;
   my_rates->GAHe = NULL;
   my_rates->GAHp = NULL;
   my_rates->GAel = NULL;
+
   my_rates->H2LTE = NULL;
+
   my_rates->HDlte = NULL;
   my_rates->HDlow = NULL;
+
   my_rates->cieco = NULL;
+
   my_rates->gammah = 0.;
+
   my_rates->regr = NULL;
+
   my_rates->gamma_isrf = 0.;
+  my_rates->gamma_isrf2 = 0.;
+
   my_rates->gas_grain = NULL;
+  my_rates->gas_grain2 = NULL;
+
+  my_rates->cieY06 = NULL;
+
+  initialize_empty_interp_grid_(&my_rates->LH2);
+  initialize_empty_interp_grid_(&my_rates->LHD);
+
+  initialize_empty_interp_grid_(&my_rates->LCI);
+  initialize_empty_interp_grid_(&my_rates->LCII);
+  initialize_empty_interp_grid_(&my_rates->LOI);
+
+  initialize_empty_interp_grid_(&my_rates->LCO);
+  initialize_empty_interp_grid_(&my_rates->LOH);
+  initialize_empty_interp_grid_(&my_rates->LH2O);
+
+  initialize_empty_interp_grid_(&my_rates->alphap);
+
+  my_rates->gr_N = NULL;
+  my_rates->gr_Size = 0;
+  my_rates->gr_dT = 0.;
+  my_rates->gr_Td = NULL;
+  my_rates->SN0_N = 0;
+  my_rates->SN0_XC = NULL;
+  my_rates->SN0_XO = NULL;
+  my_rates->SN0_XMg = NULL;
+  my_rates->SN0_XAl = NULL;
+  my_rates->SN0_XSi = NULL;
+  my_rates->SN0_XS = NULL;
+  my_rates->SN0_XFe = NULL;
+  my_rates->SN0_fC = NULL;
+  my_rates->SN0_fO = NULL;
+  my_rates->SN0_fMg = NULL;
+  my_rates->SN0_fAl = NULL;
+  my_rates->SN0_fSi = NULL;
+  my_rates->SN0_fS = NULL;
+  my_rates->SN0_fFe = NULL;
+  my_rates->SN0_fSiM = NULL;
+  my_rates->SN0_fFeM = NULL;
+  my_rates->SN0_fMg2SiO4 = NULL;
+  my_rates->SN0_fMgSiO3 = NULL;
+  my_rates->SN0_fFe3O4 = NULL;
+  my_rates->SN0_fAC = NULL;
+  my_rates->SN0_fSiO2D = NULL;
+  my_rates->SN0_fMgO = NULL;
+  my_rates->SN0_fFeS = NULL;
+  my_rates->SN0_fAl2O3 = NULL;
+  my_rates->SN0_freforg = NULL;
+  my_rates->SN0_fvolorg = NULL;
+  my_rates->SN0_fH2Oice = NULL;
+  my_rates->SN0_r0SiM = NULL;
+  my_rates->SN0_r0FeM = NULL;
+  my_rates->SN0_r0Mg2SiO4 = NULL;
+  my_rates->SN0_r0MgSiO3 = NULL;
+  my_rates->SN0_r0Fe3O4 = NULL;
+  my_rates->SN0_r0AC = NULL;
+  my_rates->SN0_r0SiO2D = NULL;
+  my_rates->SN0_r0MgO = NULL;
+  my_rates->SN0_r0FeS = NULL;
+  my_rates->SN0_r0Al2O3 = NULL;
+  my_rates->SN0_r0reforg = NULL;
+  my_rates->SN0_r0volorg = NULL;
+  my_rates->SN0_r0H2Oice = NULL;
+  my_rates->SN0_kpSiM = NULL;
+  my_rates->SN0_kpFeM = NULL;
+  my_rates->SN0_kpMg2SiO4 = NULL;
+  my_rates->SN0_kpMgSiO3 = NULL;
+  my_rates->SN0_kpFe3O4 = NULL;
+  my_rates->SN0_kpAC = NULL;
+  my_rates->SN0_kpSiO2D = NULL;
+  my_rates->SN0_kpMgO = NULL;
+  my_rates->SN0_kpFeS = NULL;
+  my_rates->SN0_kpAl2O3 = NULL;
+  my_rates->SN0_kpreforg = NULL;
+  my_rates->SN0_kpvolorg = NULL;
+  my_rates->SN0_kpH2Oice = NULL;
+
   my_rates->cloudy_data_new = -1;
 }
 
@@ -171,6 +348,20 @@ int local_initialize_chemistry_data(chemistry_data *my_chemistry,
   if (grackle_verbose) {
     show_version(stdout);
     fprintf(stdout, "Initializing grackle data.\n");
+  }
+
+  /* Set the minimum temperature for using tabulated metal cooling. */
+  if (my_chemistry->tabulated_cooling_minimum_temperature < -1.0) {
+    if (my_chemistry->metal_chemistry > 0) {
+      my_chemistry->tabulated_cooling_minimum_temperature = 1e4;
+    }
+    else {
+      my_chemistry->tabulated_cooling_minimum_temperature = -1.0;
+    }
+    if (grackle_verbose) {
+      fprintf(stdout, "Setting tabulated_cooling_minimum_temperature to %g.\n",
+              my_chemistry->tabulated_cooling_minimum_temperature);
+    }
   }
 
   // Activate dust chemistry machinery.
@@ -461,6 +652,17 @@ int local_free_chemistry_data(chemistry_data *my_chemistry,
     GRACKLE_FREE(my_rates->GAel);
     GRACKLE_FREE(my_rates->H2LTE);
     GRACKLE_FREE(my_rates->gas_grain);
+    GRACKLE_FREE(my_rates->gas_grain2);
+
+    free_interp_grid_(&my_rates->LH2);
+    free_interp_grid_(&my_rates->LHD);
+
+    // we deal with freeing other interp grids inside of
+    // local_free_metal_chemistry_rates
+
+    free_interp_grid_(&my_rates->alphap);
+
+    GRACKLE_FREE(my_rates->gr_N);
 
     GRACKLE_FREE(my_rates->k1);
     GRACKLE_FREE(my_rates->k2);
@@ -499,9 +701,10 @@ int local_free_chemistry_data(chemistry_data *my_chemistry,
     GRACKLE_FREE(my_rates->n_cr_n);
     GRACKLE_FREE(my_rates->n_cr_d1);
     GRACKLE_FREE(my_rates->n_cr_d2);
+    GRACKLE_FREE(my_rates->h2dustS);
+    GRACKLE_FREE(my_rates->h2dustC);
+    GRACKLE_FREE(my_rates->grain_growth_rate);
   }
-
-
 
   _free_cloudy_data(&my_rates->cloudy_primordial, my_chemistry, /* primordial */ 1);
   _free_cloudy_data(&my_rates->cloudy_metal, my_chemistry, /* primordial */ 0);
@@ -527,6 +730,16 @@ int local_free_chemistry_data(chemistry_data *my_chemistry,
     GRACKLE_FREE(my_rates->UVbackground_table.crsHI);
     GRACKLE_FREE(my_rates->UVbackground_table.crsHeII);
     GRACKLE_FREE(my_rates->UVbackground_table.crsHeI);
+  }
+
+  if (local_free_metal_chemistry_rates(my_chemistry, my_rates) == FAIL) {
+    fprintf(stderr, "Error in local_free_metal_chemistry_rates.\n");
+    return FAIL;
+  }
+
+  if (local_free_dust_yields(my_chemistry, my_rates) == FAIL) {
+    fprintf(stderr, "Error in local_free_dust_yields.\n");
+    return FAIL;
   }
 
   return GR_SUCCESS;
