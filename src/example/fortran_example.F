@@ -49,6 +49,7 @@ c     Field data arrays
      &     DI_density(field_size), DII_density(field_size),
      &     HDI_density(field_size),
      &     e_density(field_size), metal_density(field_size),
+     &     dust_density(field_size),
      &     volumetric_heating_rate(field_size),
      &     specific_heating_rate(field_size),
      &     RT_HI_ionization_rate(field_size), 
