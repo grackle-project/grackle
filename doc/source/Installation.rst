@@ -129,17 +129,17 @@ The remainder of this subsection is primarily intended for readers who are relat
       This is be specified via the ``CMAKE_INSTALL_PREFIX`` cmake configuration variable.
       On UNIX-like systems, it defaults to ``/usr/local/``.
 
-   To configure a build where Grackle is compiled as a static library, use
+   The following snippets illustrates how to configure Grackle as a static/shared library:
 
-   .. code-block:: shell-session
+   .. tabs::
 
-      ~/grackle $ cmake -DCMAKE_INSTALL_PREFIX=<install-prefix> -B <build-dir>
+      .. code-tab:: shell-session static lib
 
-   To configure a build where Grackle is compiled as a shared library, use
+         ~/grackle $ cmake -DCMAKE_INSTALL_PREFIX=<install-prefix> -B <build-dir>
 
-   .. code-block:: shell-session
+      .. code-tab:: shell-session shared lib
 
-      ~/grackle $ cmake -DCMAKE_INSTALL_PREFIX=<install-prefix> -DBUILD_SHARED_LIBS=ON -B <build-dir>
+         ~/grackle $ cmake -DCMAKE_INSTALL_PREFIX=<install-prefix> -DBUILD_SHARED_LIBS=ON -B <build-dir>
 
    .. note::
 
@@ -230,12 +230,13 @@ These host-files should generally not be necessary, but they may specify archite
 This should be specified during the configuration stage with the ``-C`` flag followed by the path to the host-file.
 For example, one might invoke:
 
-   .. code-block:: shell-session
+.. code-block:: shell-session
 
-      ~/grackle $ cmake -C config/host-config/tacc-frontera-intel.cmake \
-      > -D CMAKE_INSTALL_PREFIX=<install-prefix> \
-      > -D BUILD_SHARED_LIBS=ON \
-      > -B <build-dir>
+   ~/grackle $ cmake \
+       -C config/host-config/tacc-frontera-intel.cmake \
+       -D CMAKE_INSTALL_PREFIX=<install-prefix> \
+       -D BUILD_SHARED_LIBS=ON \
+       -B <build-dir>
 
 The order of ``-D`` and ``-C`` flags matters.
 If they are both used to specify values for a given variable, the last one to appear "wins."
