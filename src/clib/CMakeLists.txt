@@ -111,6 +111,7 @@ add_library(Grackle_Grackle
   dust_props.hpp
   internal_types.C internal_types.hpp
   scale_fields.hpp
+  scale_fields_g-cpp.C scale_fields_g-cpp.h
   solve_rate_cool_g-cpp.C solve_rate_cool_g-cpp.h
   step_rate_newton_raphson.hpp
   time_deriv_0d.hpp

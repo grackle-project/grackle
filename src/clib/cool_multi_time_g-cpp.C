@@ -17,6 +17,7 @@
 #include "utils-cpp.hpp"
 
 #include "cool_multi_time_g-cpp.h"
+#include "scale_fields_g-cpp.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -36,7 +37,7 @@ void cool_multi_time_g(
   // Convert densities from comoving to 'proper'
   if (internalu.extfields_in_comoving == 1)  {
     gr_float factor = (gr_float)(std::pow(internalu.a_value,(-3)) );
-    f_wrap::scale_fields_g(imetal, factor, my_chemistry, my_fields);
+    scale_fields_g(&imetal, &factor, my_chemistry, my_fields);
   }
 
 
@@ -126,7 +127,7 @@ void cool_multi_time_g(
   // Convert densities back to comoving from 'proper'
   if (internalu.extfields_in_comoving == 1)  {
     gr_float factor = (gr_float)(std::pow(internalu.a_value,3) );
-    f_wrap::scale_fields_g(imetal, factor, my_chemistry, my_fields);
+    scale_fields_g(&imetal, &factor, my_chemistry, my_fields);
   }
 
   return;

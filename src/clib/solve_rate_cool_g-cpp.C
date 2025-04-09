@@ -18,6 +18,7 @@
 #include "step_rate_newton_raphson.hpp"
 #include "utils-cpp.hpp"
 
+#include "scale_fields_g-cpp.h"
 #include "solve_rate_cool_g-cpp.h"
 
 /// overrides the subcycle timestep (for each index in the index-range that is
@@ -666,7 +667,7 @@ int solve_rate_cool_g(
 
   if (internalu.extfields_in_comoving == 1)  {
     gr_float factor = (gr_float)(std::pow(internalu.a_value,(-3)) );
-    f_wrap::scale_fields_g(imetal, factor, my_chemistry, my_fields);
+    scale_fields_g(&imetal, &factor, my_chemistry, my_fields);
   }
 
 #ifdef ABUNDANCE_CORRECTION
@@ -1005,7 +1006,7 @@ int solve_rate_cool_g(
 
   if (internalu.extfields_in_comoving == 1)  {
     gr_float factor = (gr_float)(std::pow(internalu.a_value,3) );
-    f_wrap::scale_fields_g(imetal, factor, my_chemistry, my_fields);
+    scale_fields_g(&imetal, &factor, my_chemistry, my_fields);
   }
 
   if (my_chemistry->primordial_chemistry > 0)  {
