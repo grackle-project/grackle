@@ -1,8 +1,8 @@
 // Header file containing all rate function declarations.
-#include "grackle_chemistry_data.h"
+#include "grackle.h"
 
-#ifndef RATE_FUNCTIONS_H
-#define RATE_FUNCTIONS_H
+#ifndef GRACKLE_RATE_FUNCTIONS_H
+#define GRACKLE_RATE_FUNCTIONS_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -97,4 +97,4 @@ double gamma_isrf_rate(double units, chemistry_data *my_chemistry);
 } /* extern "C" */
 #endif /* __cplusplus */
 
-#endif /* RATE_FUNCTIONS_H */
+#endif /* GRACKLE_RATE_FUNCTIONS_H */
