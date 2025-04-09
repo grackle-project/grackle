@@ -5,17 +5,17 @@ Installation
 
 There are 3 steps to setting up Grackle on your system
 
-   1. :ref:`Install Grackle's Dependencies <install_grackle_dependencies>`
+1. :ref:`Install Grackle's Dependencies <install_grackle_dependencies>`
 
-   2. :ref:`Download Grackle <download_grackle>`
+2. :ref:`Download Grackle <download_grackle>`
 
-   3. Build and install Grackle using the :ref:`classic build system <classic_build>` or the :ref:`CMake build system <cmake_build>`.
+3. :ref:`Build and install Grackle <cmake_build>`.
 
+.. attention::
 
-.. note::
+   Please use the :ref:`CMake build system <cmake_build>` (it is far more robust and maintainable) and :doc:`let us know <Help>` if you encounter **any problems**.
 
-   Given a smooth roll-out of the :ref:`CMake build system <cmake_build>`, it is our intention to deprecate and remove the :ref:`classic build system <classic_build>`.
-   If you encounter any problems with the CMake system or anticipate any issues with this plan, :doc:`please let us know <Help>`.
+   The :ref:`classic build system <classic_build>` is **deprecated since version 3.4** and is **scheduled for removal in version 3.5**.
 
 We include a :ref:`note on compiler toolchain compatability <compiler_toolchain_compatability>` at the end of this page.
 
@@ -32,19 +32,21 @@ also be installed:
      HDF5 also may require the szip and zlib libraries, which can be
      found at the HDF5 website.
 
-     * For the :ref:`classic build system <classic_build>`, compiling with HDF5 1.8 or greater requires that the ``H5_USE_16_API`` compatability directive is manually specified.
-       This can be done by adding ``-DH5_USE_16_API`` to the list of compiler flags given in machine-specific make files.
+     .. note::
 
-     * The :ref:`CMake build system <cmake_build>`, automatically handles these details for you.
+        If using the :ref:`classic build system <classic_build>`: compiling with HDF5 1.8 or greater requires that the ``H5_USE_16_API`` compatability directive is manually specified.
+        This can be done by manually adding ``-DH5_USE_16_API`` to the list of compiler flags given in machine-specific make files.
+
+        You don't have to think about this when using :ref:`CMake build system <cmake_build>` (it is handled automatically).
 
 Although many systems already have them installed, both build systems have additional dependencies:
-
-   * the :ref:`classic build system <classic_build>`, employs the ``makedepend`` and the `libtool <https://www.gnu.org/software/libtool/>`_ utilities.
-     It's often easiest to download these dependencies through your system's package manager.
 
    * the :ref:`CMake build system <cmake_build>` requires cmake to be installed.
      It's easiest download a binary distribution from the `CMake website <https://cmake.org/download/>`_ or use your system's package manager.
      We require version 3.16 or newer.
+
+   * the :ref:`classic build system <classic_build>`, employs the ``makedepend`` and the `libtool <https://www.gnu.org/software/libtool/>`_ utilities.
+     It's often easiest to download these dependencies through your system's package manager.
 
 .. _download_grackle:
 
@@ -79,7 +81,7 @@ following command from anywhere within the repository:
 Building with CMake
 -------------------
 
-Grackle provides a Modern CMake build-system.
+Grackle's primary build-system uses Modern CMake.
 While CMake has some baggage (primarily due to the maintenace of backwards compatability), it is arguably the most-portable mainstream build-system that is easiest to integrate with simulation codes.
 
 An overview of our design philosophy is provided :ref:`here <cmake_buildsystem_design_rationale>`.
@@ -402,6 +404,12 @@ While embedded builds currently respect ``GRACKLE_OPTIMIZATION_FLIST_INIT``, tha
 
 Building with Classic Build-System
 ----------------------------------
+
+.. attention::
+
+   This build system is **deprecated since version 3.4** and is **scheduled for removal in version 3.5**.
+
+   Please use the :ref:`CMake build system <cmake_build>` (it is far more robust and maintainable) and :doc:`let us know <Help>` if you encounter **any problems**.
 
 The classic compilation process for grackle is very similar to that of
 `Enzo <http://enzo-project.org>`_.  For more details on the Enzo build 
