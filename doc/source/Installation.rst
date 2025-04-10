@@ -50,8 +50,8 @@ Although many systems already have them installed, both build systems have addit
 
 .. _download_grackle:
 
-Downloading
------------
+Downloading Source Code
+-----------------------
 
 Grackle is available in a git repository
 `here <https://github.com/grackle-project/grackle>`__. Excellent guides
@@ -59,21 +59,11 @@ to git and GitHub are available at
 `guides.github.com <https://guides.github.com/>`__. To clone the Grackle
 repo, do the following:
 
-.. highlight:: none
+.. code-block:: shell-session
 
-::
+    ~ $ git clone --recursive https://github.com/grackle-project/grackle
 
-    ~ $ git clone https://github.com/grackle-project/grackle
-
-Additional files containing cooling tables and test results are stored in
-a submodule linked to the Grackle repository. To get these, run the
-following command from anywhere within the repository:
-
-.. highlight:: none
-
-::
-
-    ~ $ git submodule update --init
+The presences of the ``--recursive`` flag in the above snippet instructs git to fetch additional files, containing cooling tables, from a submodule linked to the Grackle repository.
 
 
 .. _cmake_build:
