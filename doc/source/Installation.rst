@@ -466,7 +466,7 @@ For example, one might invoke:
 
    .. code-block:: shell-session
 
-      ~/grackle $ cmake -C config/host-config/tacc-frontera-intel.cmake \
+      ~/grackle $ cmake -C support/host-config/tacc-frontera-intel.cmake \
       > -D CMAKE_INSTALL_PREFIX=<install-prefix> \
       > -D BUILD_SHARED_LIBS=ON \
       > -B <build-dir>
