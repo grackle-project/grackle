@@ -133,6 +133,12 @@ These tests include:
 
 We refer to the location where the results of answer-tests are stored as the "answer-directory." This is an arbitrary user-specified location.
 
+.. note::
+
+   The test of the **src/python/examples/yt_grackle.py** python-example requires that you supply test-data.
+   The location of the test-data is specified through the :envvar:`!YT_DATA_DIR` environment variable.
+   The **scripts/ci/fetch-test-data.py** script is provided as a convenience to fetch this data after the environment variable has been set.
+
 Quick Primer on the Test Runner's CLI
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
