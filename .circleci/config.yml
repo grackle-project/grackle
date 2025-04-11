@@ -108,19 +108,7 @@ commands:
               make install
               cd ../../ # go back to the root level
 
-              if [ ! -f ./pyproject.toml ]; then
-                # this is the old way to install pygrackle. 
-                # - We need to support this as long as the most recent gold
-                #   standard tags a version of the repository from before we
-                #   transitioned away from setuptools
-                # - previously, we checked the value held by parameters.tag,
-                #   but that was less robust than the current solution
-
-                cd src/python
-                pip install -e .[dev]
-              else
-                PYGRACKLE_LEGACY_LINK=classic pip install -v -e .[dev]
-              fi
+              PYGRACKLE_LEGACY_LINK=classic pip install -v -e .[dev]
             else # this branch builds grackle with cmake
 
               cmake -DGRACKLE_USE_DOUBLE=ON                   \
@@ -130,24 +118,7 @@ commands:
                     -Bbuild
               cmake --build build
               
-              if [ ! -f ./pyproject.toml ]; then
-                # this is the old way to install pygrackle. 
-                # - We need to support this as long as the most recent gold
-                #   standard tags a version of the repository from before we
-                #   transitioned away from setuptools
-                # - previously, we checked the value held by parameters.tag,
-                #   but that was less robust than the current solution
-
-                # we DO need a full installation of the c-library
-                cmake --install build 
-
-                cd src/python
-                PYGRACKLE_CMAKE_BUILD_DIR=../../build pip install -e .[dev]
-              else
-                # we DO NOT need a full installation of the c-library
-                #cmake --install build 
-                Grackle_DIR=${PWD}/build pip install -v -e .[dev]
-              fi
+              Grackle_DIR=${PWD}/build pip install -v -e .[dev]
             fi
 
   install-standalone-pygrackle:
