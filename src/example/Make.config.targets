@@ -99,6 +99,23 @@ c_local_example: $(MODULES) c_local_example.o
          fi)
 
 #-----------------------------------------------------------------------
+# C99 SIMPLIFIED EXAMPLE
+#-----------------------------------------------------------------------
+c99_simple_example: $(MODULES) c99_simple_example.o
+	@rm -f $@
+	@echo "Linking"
+	-@$(CC) $(LDFLAGS) -o c99_simple_example c99_simple_example.o -lm $(LIBS) $(GRACKLE_LIB) >& $(OUTPUT)
+	@(if [ -e $@ ]; then \
+             echo "Success!"; \
+         else \
+             echo "$(CC) $(LDFLAGS) -o c99_simple_example c99_simple_example.o -lm $(LIBS) $(GRACKLE_LIB)" >> temp1; \
+             cat temp1 $(OUTPUT) > temp2; \
+             rm -f temp1; \
+             mv -f temp2 $(OUTPUT); \
+             echo "Failed! See $(OUTPUT) for error messages"; \
+         fi)
+
+#-----------------------------------------------------------------------
 # FORTRAN EXAMPLE
 #-----------------------------------------------------------------------
 
