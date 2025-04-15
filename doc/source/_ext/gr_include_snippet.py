@@ -17,7 +17,13 @@ from docutils.parsers.rst import directives
 
 from sphinx.application import Sphinx
 from sphinx.util.docutils import SphinxDirective
-from sphinx.util.typing import ExtensionMetadata
+
+try:
+    from sphinx.util.typing import ExtensionMetadata
+except ImportError:
+    from typing import Any
+
+    ExtensionMetadata = Any
 
 _IGNORE_REGEX = re.compile(r"^\s*" + re.escape(r"//@%"))
 
