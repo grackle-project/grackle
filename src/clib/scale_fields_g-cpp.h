@@ -10,7 +10,6 @@
 #define SCALE_FIELDS_G_CPP_H
 
 #include "grackle.h"             // gr_float
-#include "fortran_func_decls.h"  // gr_mask_int
 
 #ifdef __cplusplus
 extern "C" {
