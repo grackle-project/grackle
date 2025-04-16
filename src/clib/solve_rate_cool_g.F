@@ -1437,7 +1437,7 @@ c -------------------------------------------------------------------
                   endif
                enddo
 !              (rho / divrho) is the Sobolev-like length in cell widths
-               l_H2shield = min(dx_cgs * d(i,j,k) / abs(divrho), xbase1)
+               l_H2shield = min(dx_cgs * d(i,j,k) / (2._DKIND * abs(divrho)), xbase1)
 
 !              User-supplied length-scale field.
                else if (iH2shield == 2) then
@@ -1470,7 +1470,7 @@ c -------------------------------------------------------------------
                x = 2.0E-15_DKIND * N_H2
                b_doppler = 1E-5_DKIND *
      &                 sqrt(2._DKIND * kboltz *
-     &                      tgas1d(i) / mass_h)
+     &                      tgas1d(i) / (2._DKIND * mass_h))
                f_shield = 0.965_DKIND /
      &              (1._DKIND + x/b_doppler)**aWG2019 +
      &              0.035_DKIND * exp(-8.5e-4_DKIND *
