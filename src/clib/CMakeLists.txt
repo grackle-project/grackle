@@ -127,7 +127,6 @@ add_library(Grackle_Grackle
   cool1d_cloudy_old_tables_g.F
   cool1d_multi_g.F
   interpolators_g.F
-  solve_rate_cool_g.F
   calc_grain_size_increment_1d.F
   gaussj_g.F
   scale_fields_g.F
