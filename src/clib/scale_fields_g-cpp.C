@@ -101,7 +101,6 @@ void scale_fields_g(
   {
     int i, j, k;
   
-    //_// TODO: move relevant variable declarations to here to replace OMP private
     OMP_PRAGMA("omp for schedule(runtime)")
     for (int t = 0; t<=(dk * dj - 1); t++) {
       k = t/dj      + my_fields->grid_start[2];
