@@ -226,6 +226,9 @@ c     get the temperature_units
 c        solar metallicity
          metal_density(i) = grackle_data%SolarMetalFractionByMass *
      &        density(i)
+c        local dust to gas ratio
+         dust_density(i) = grackle_data%local_dust_to_gas_ratio *
+     &        density(i)
 
          x_velocity(i) = 0.0
          y_velocity(i) = 0.0
