@@ -582,42 +582,6 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
 
       dlogtem = (log(temend) - log(temstart))/real(nratec-1, DKIND)
 
-!     We better make consistent at first GC202002
-
-      if (ispecies .gt. 0) then
-
-#define ABUNDANCE_CORRECTION
-#ifdef ABUNDANCE_CORRECTION
-      call make_consistent_g(de, HI, HII, HeI, HeII, HeIII,
-     &                     HM, H2I, H2II, DI, DII, HDI, metal, dust,
-     &                     d, is, ie, js, je, ks, ke,
-     &                     in, jn, kn, ispecies, imetal, fh, dtoh
-     &                   , idustfield, imchem, igrgr, dom
-     &                   , DM, HDII, HeHII
-     &                   , CI, CII, CO, CO2
-     &                   , OI, OH, H2O, O2
-     &                   , SiI, SiOI, SiO2I
-     &                   , CH, CH2, COII, OII
-     &                   , OHII, H2OII, H3OII, O2II
-     &                   , Mg, Al, S, Fe
-     &                   , SiM, FeM, Mg2SiO4, MgSiO3, Fe3O4
-     &                   , AC, SiO2D, MgO, FeS, Al2O3
-     &                   , reforg, volorg, H2Oice
-     &                   , immulti, imabund, idspecies, itdmulti, idsub
-     &                   , metal_loc
-     &                   , metal_C13, metal_C20, metal_C25, metal_C30
-     &                   , metal_F13, metal_F15, metal_F50, metal_F80
-     &                   , metal_P170, metal_P200, metal_Y19
-     &                   , SN0_N
-     &                   , SN0_XC, SN0_XO, SN0_XMg, SN0_XAl, SN0_XSi
-     &                   , SN0_XS, SN0_XFe
-     &                   , SN0_fC, SN0_fO, SN0_fMg, SN0_fAl, SN0_fSi
-     &                   , SN0_fS, SN0_fFe
-     &                      )
-#endif
-
-      endif
-
 !  Convert densities from comoving to proper
 
       if (iexpand .eq. 1) then
@@ -646,7 +610,6 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
 
       endif
 
-#ifdef ABUNDANCE_CORRECTION
       call ceiling_species_g(d, de, HI, HII, HeI, HeII, HeIII,
      &                     HM, H2I, H2II, DI, DII, HDI, metal, dust,
      &                     is, ie, js, je, ks, ke,
@@ -667,7 +630,6 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
      &                   , metal_C13, metal_C20, metal_C25, metal_C30
      &                   , metal_F13, metal_F15, metal_F50, metal_F80
      &                   , metal_P170, metal_P200, metal_Y19)
-#endif
 
 
 !  Loop over zones, and do an entire i-column in one go
@@ -1461,7 +1423,6 @@ c            WARNING_MESSAGE
 
 !     Correct the species to ensure consistency (i.e. type conservation)
 
-#ifdef ABUNDANCE_CORRECTION
       call make_consistent_g(de, HI, HII, HeI, HeII, HeIII,
      &                     HM, H2I, H2II, DI, DII, HDI, metal, dust,
      &                     d, is, ie, js, je, ks, ke,
@@ -1488,28 +1449,6 @@ c            WARNING_MESSAGE
      &                   , SN0_fC, SN0_fO, SN0_fMg, SN0_fAl, SN0_fSi
      &                   , SN0_fS, SN0_fFe
      &                      )
-
-      call ceiling_species_g(d, de, HI, HII, HeI, HeII, HeIII,
-     &                     HM, H2I, H2II, DI, DII, HDI, metal, dust,
-     &                     is, ie, js, je, ks, ke,
-     &                     in, jn, kn, ispecies, imetal, idustfield
-     &                   , DM, HDII, HeHII
-     &                   , imabund, imchem, idspecies, immulti
-     &                   , igrgr, idsub
-     &                   , CI, CII, CO, CO2
-     &                   , OI, OH, H2O, O2
-     &                   , SiI, SiOI, SiO2I
-     &                   , CH, CH2, COII, OII
-     &                   , OHII, H2OII, H3OII, O2II
-     &                   , Mg, Al, S, Fe
-     &                   , SiM, FeM, Mg2SiO4, MgSiO3, Fe3O4
-     &                   , AC, SiO2D, MgO, FeS, Al2O3
-     &                   , reforg, volorg, H2Oice
-     &                   , metal_loc
-     &                   , metal_C13, metal_C20, metal_C25, metal_C30
-     &                   , metal_F13, metal_F15, metal_F50, metal_F80
-     &                   , metal_P170, metal_P200, metal_Y19)
-#endif
 
       endif
 
@@ -5080,7 +5019,7 @@ C***** H2Oice **********
 
       integer i, j, k
       real*8 totalH(in), totalHe(in),
-     &       totalD, metalfree(in), my_dtoh
+     &       totalD, metalfree(in)
       R_PREC correctH, correctHe, correctD
       real*8 totalZ
       real*8 totalC, totalO, totalMg, totalAl
@@ -5105,12 +5044,6 @@ C***** H2Oice **********
      &     , Sig(in), Sg(in), Feg(in)
       real*8 Cd(in), Od(in), Mgd(in), Ald(in)
      &     , Sid(in), Sd(in), Fed(in)
-
-      if (ispecies .gt. 2) then
-         my_dtoh = dtoh
-      else
-         my_dtoh = 0._DKIND
-      endif
 
 !     Loop over all zones
 
@@ -5329,9 +5262,7 @@ C           enddo
 !     Correct densities by keeping fractions the same
 
       do i = is+1, ie+1
-!        Only include D/H ratio if using D species
-         correctH = real(fh*(1._DKIND - my_dtoh)*metalfree(i)/totalH(i),
-     &        RKIND)
+         correctH = real(fh*metalfree(i)/totalH(i), RKIND)
          HI(i,j,k)  = HI(i,j,k)*correctH
          HII(i,j,k) = HII(i,j,k)*correctH
 
