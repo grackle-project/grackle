@@ -3,8 +3,19 @@
 add_library(testdeps INTERFACE)
 target_link_libraries(testdeps INTERFACE Grackle::Grackle GTest::gtest_main)
 
-# short-term hack to let tests invoke Fortran functions from C
-target_compile_definitions(testdeps INTERFACE "$<$<PLATFORM_ID:Linux,Darwin>:LINUX>")
+# compiler defs are short-term hacks to help tests invoke internal functions
+# from Grackle (both of these will become unnecessary in the near future)
+target_compile_definitions(testdeps
+  # needed to invoke Fortran functions from C
+  INTERFACE "$<$<PLATFORM_ID:Linux,Darwin>:LINUX>"
+  # suppresses warnings about C internal headers using our deprecated public
+  # headers (the files should include grackle.h instead). We're currently
+  # holding off on properly fixing this to minimize conflicts with pending PRs
+  # on the newchem-cpp branch
+  INTERFACE GRIMPL_PUBLIC_INCLUDE=1
+)
+
+# needed to let tests call internal functions from C
 target_include_directories(testdeps INTERFACE ${PROJECT_SOURCE_DIR}/src/clib)
 
 # declare the grtest utility library
