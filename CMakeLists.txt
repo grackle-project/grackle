@@ -78,9 +78,17 @@ elseif (GRACKLE_IS_TOP_LEVEL)
 endif()
 
 option(GRACKLE_USE_DOUBLE "compile the code with double precision" ON)
-option(GRACKLE_EXAMPLES "compile grackle examples" ${GRACKLE_IS_TOP_LEVEL})
 option(GRACKLE_DEFINE_INSTALL_RULES
   "enable Grackle's installation rules" ${GRACKLE_IS_TOP_LEVEL})
+option(GRACKLE_BUILD_TESTS "build Grackle tests driven by CTest" OFF)
+
+if (GRACKLE_BUILD_TESTS)
+  set(_GRACKLE_EXAMPLES_DEFAULT ON)
+else()
+  set(_GRACKLE_EXAMPLES_DEFAULT ${GRACKLE_IS_TOP_LEVEL})
+endif()
+option(GRACKLE_EXAMPLES
+  "compile grackle examples" ${_GRACKLE_EXAMPLES_DEFAULT})
 
 # configure custom machine-specific optimization-flags (specified in host-config
 # files). I'm not really sure we should support this when Grackle isn't the
@@ -188,13 +196,9 @@ endif()
 
 # Tests
 # -----
-# (this is where we will add targets for integration tests)
 
-# Add BUILD_TESTS option available
-option(GRACKLE_BUILD_TESTS "build Grackle tests using GoogleTest" OFF)
-
-# if desired, setup Grackle's tests that use GoogleTest (this has no impact on
-# the tests run via pytest, those are handled outside of cmake)
+# if desired, setup Grackle's tests that use CTest/GoogleTest (this has no
+# impact on the tests run via pytest, those are handled outside of cmake)
 if(GRACKLE_BUILD_TESTS)
   # setup GoogleTest framework (search for an installed copy on the machine
   # OR download it & add its compilation to the rest of the build procedure)
