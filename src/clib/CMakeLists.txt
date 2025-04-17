@@ -41,7 +41,7 @@ configure_file(../include/grackle_float.h.in
 #    "dev" suffix)
 
 set(_query_version
-  "${CMAKE_CURRENT_SOURCE_DIR}/../../support/query_version.py")
+  "${CMAKE_CURRENT_SOURCE_DIR}/../../scripts/query_version.py")
 function(query_version option OUTVAR)
   execute_process(
       COMMAND ${_query_version} ${option}
