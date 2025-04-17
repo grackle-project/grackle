@@ -21,7 +21,6 @@
 
 #define mh     1.67262171e-24   
 #define kboltz 1.3806504e-16
-#define sec_per_Myr 31.5576e12
 
 int main(int argc, char *argv[])
 {
@@ -33,6 +32,12 @@ int main(int argc, char *argv[])
 
   // Set initial redshift (for internal units).
   double initial_redshift = 0.;
+
+  // Check the consistency
+  if (gr_check_consistency() != GR_SUCCESS) {
+    fprintf(stderr, "Error in gr_check_consistency.\n");
+    return EXIT_FAILURE;
+  }
 
   // Enable output
   grackle_verbose = 1;
@@ -192,124 +197,74 @@ int main(int argc, char *argv[])
   / These routines can now be called during the simulation.
   *********************************************************************/
 
+  // Evolving the chemistry.
+  // some timestep
+  double dt = 3.15e7 * 1e6 / my_units.time_units;
+
+  if (local_solve_chemistry(my_grackle_data, &my_grackle_rates, &my_units, &my_fields, dt) == 0) {
+    fprintf(stderr, "Error in solve_chemistry.\n");
+    return EXIT_FAILURE;
+  }
+
   // Calculate cooling time.
   gr_float *cooling_time;
   cooling_time = malloc(field_size * sizeof(gr_float));
-  if (local_calculate_cooling_time(my_grackle_data, &my_grackle_rates,
-                                   &my_units, &my_fields,
-                                   cooling_time) == 0) {
+  if (local_calculate_cooling_time(my_grackle_data, &my_grackle_rates, &my_units, &my_fields,
+                                    cooling_time) == 0) {
     fprintf(stderr, "Error in calculate_cooling_time.\n");
     return EXIT_FAILURE;
   }
-  fprintf(stdout, "Before - cooling_time = %g s.\n", cooling_time[0] *
+
+  fprintf(stdout, "cooling_time = %24.16g s\n", cooling_time[0] *
           my_units.time_units);
 
   // Calculate temperature.
   gr_float *temperature;
   temperature = malloc(field_size * sizeof(gr_float));
-  if (local_calculate_temperature(my_grackle_data, &my_grackle_rates,
-                                  &my_units, &my_fields,
-                                  temperature) == 0) {
+  if (local_calculate_temperature(my_grackle_data, &my_grackle_rates, &my_units, &my_fields,
+                            temperature) == 0) {
     fprintf(stderr, "Error in calculate_temperature.\n");
     return EXIT_FAILURE;
   }
-  fprintf(stdout, "Before - temperature = %g K.\n", temperature[0]);
+
+  fprintf(stdout, "temperature = %24.16g K\n", temperature[0]);
 
   // Calculate pressure.
   gr_float *pressure;
   double pressure_units = my_units.density_units *
     pow(my_units.velocity_units, 2);
   pressure = malloc(field_size * sizeof(gr_float));
-  if (local_calculate_pressure(my_grackle_data, &my_grackle_rates,
-                               &my_units, &my_fields,
-                               pressure) == 0) {
+  if (local_calculate_pressure(my_grackle_data, &my_grackle_rates, &my_units, &my_fields,
+                         pressure) == 0) {
     fprintf(stderr, "Error in calculate_pressure.\n");
     return EXIT_FAILURE;
   }
-  fprintf(stdout, "Before - pressure = %g dyne/cm^2.\n",
-          pressure[0]*pressure_units);
+
+  fprintf(stdout, "pressure = %24.16g dyne/cm^2\n", pressure[0]*pressure_units);
 
   // Calculate gamma.
   gr_float *gamma;
   gamma = malloc(field_size * sizeof(gr_float));
-  if (local_calculate_gamma(my_grackle_data, &my_grackle_rates,
-                            &my_units, &my_fields,
-                            gamma) == 0) {
+  if (local_calculate_gamma(my_grackle_data, &my_grackle_rates, &my_units, &my_fields,
+                      gamma) == 0) {
     fprintf(stderr, "Error in calculate_gamma.\n");
     return EXIT_FAILURE;
   }
-  fprintf(stdout, "Before - gamma = %g.\n", gamma[0]);
+
+  fprintf(stdout, "gamma = %24.16g\n", gamma[0]);
 
   // Calculate dust temperature.
   gr_float *dust_temperature;
   dust_temperature = malloc(field_size * sizeof(gr_float));
-  if (local_calculate_dust_temperature(my_grackle_data, &my_grackle_rates,
-                                       &my_units, &my_fields,
-                                       dust_temperature) == 0) {
+  if (local_calculate_dust_temperature(my_grackle_data, &my_grackle_rates, &my_units, &my_fields,
+                      dust_temperature) == 0) {
     fprintf(stderr, "Error in calculate_dust_temperature.\n");
     return EXIT_FAILURE;
   }
-  fprintf(stdout, "Before - dust_temperature = %g K.\n", dust_temperature[0]);
 
-  // Evolving the chemistry.
-  // some timestep
-  double dt = sec_per_Myr / my_units.time_units;
-  fprintf(stderr, "Calling solve_chemistry with dt = %g Myr.\n",
-          (dt * my_units.time_units / sec_per_Myr));
-  if (local_solve_chemistry(my_grackle_data, &my_grackle_rates,
-                            &my_units, &my_fields, dt) == 0) {
-    fprintf(stderr, "Error in solve_chemistry.\n");
-    return EXIT_FAILURE;
-  }
+  fprintf(stdout, "dust_temperature = %24.16g K\n", dust_temperature[0]);
 
-  // Calculate cooling time.
-  if (local_calculate_cooling_time(my_grackle_data, &my_grackle_rates,
-                                   &my_units, &my_fields,
-                                   cooling_time) == 0) {
-    fprintf(stderr, "Error in calculate_cooling_time.\n");
-    return EXIT_FAILURE;
-  }
-  fprintf(stdout, "After - cooling_time = %g s.\n", cooling_time[0] *
-          my_units.time_units);
-
-  // Calculate temperature.
-  if (local_calculate_temperature(my_grackle_data, &my_grackle_rates,
-                                  &my_units, &my_fields,
-                                  temperature) == 0) {
-    fprintf(stderr, "Error in calculate_temperature.\n");
-    return EXIT_FAILURE;
-  }
-  fprintf(stdout, "After - temperature = %g K.\n", temperature[0]);
-
-  // Calculate pressure.
-  if (local_calculate_pressure(my_grackle_data, &my_grackle_rates,
-                               &my_units, &my_fields,
-                               pressure) == 0) {
-    fprintf(stderr, "Error in calculate_pressure.\n");
-    return EXIT_FAILURE;
-  }
-  fprintf(stdout, "After - pressure = %g dyne/cm^2.\n",
-          pressure[0]*pressure_units);
-
-  // Calculate gamma.
-  if (local_calculate_gamma(my_grackle_data, &my_grackle_rates,
-                            &my_units, &my_fields,
-                            gamma) == 0) {
-    fprintf(stderr, "Error in calculate_gamma.\n");
-    return EXIT_FAILURE;
-  }
-  fprintf(stdout, "After - gamma = %g.\n", gamma[0]);
-
-  // Calculate dust temperature.
-  if (local_calculate_dust_temperature(my_grackle_data, &my_grackle_rates,
-                                       &my_units, &my_fields,
-                                       dust_temperature) == 0) {
-    fprintf(stderr, "Error in calculate_dust_temperature.\n");
-    return EXIT_FAILURE;
-  }
-  fprintf(stdout, "After - dust_temperature = %g K.\n", dust_temperature[0]);
-
-  local_free_chemistry_data(&my_grackle_data, &my_grackle_rates);
+  local_free_chemistry_data(my_grackle_data, &my_grackle_rates);
 
   return EXIT_SUCCESS;
 }
