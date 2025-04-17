@@ -222,6 +222,10 @@ ERRFMT_ATTR_(2) NORETURN_ATTR_ void grimpl_abort_with_internal_err_(
 /// any arguments). There is no portable way around this until C++ 20.
 #define GR_INTERNAL_ERROR(...)                                            \
   { grimpl_abort_with_internal_err_(__GRIMPL_SRCLOC__, __VA_ARGS__); }
+// we define GRIMPL_ERROR to avoid merge conflicts. The plan is to remove it in
+// the future (after avoiding merge conflicts)
+#define GRIMPL_ERROR(...)                                                 \
+  { grimpl_abort_with_internal_err_(__GRIMPL_SRCLOC__, __VA_ARGS__); }
 
 /// @def GR_INTERNAL_REQUIRE
 /// @brief implements functionality analogous to the assert() macro
@@ -241,6 +245,11 @@ ERRFMT_ATTR_(2) NORETURN_ATTR_ void grimpl_abort_with_internal_err_(
 /// The behavior is independent of the ``NDEBUG`` macro
 #define GR_INTERNAL_REQUIRE(cond, ...)                                     \
   {  if (!(cond))                                                              \
+      { grimpl_abort_with_internal_err_(__GRIMPL_SRCLOC__, __VA_ARGS__); } }
+// we define GRIMPL_REQUIRE to avoid merge conflicts. The plan is to remove it
+// in the future (after avoiding merge conflicts)
+#define GRIMPL_REQUIRE(cond, ...)                                             \
+  {  if (!(cond))                                                             \
       { grimpl_abort_with_internal_err_(__GRIMPL_SRCLOC__, __VA_ARGS__); } }
 
 // helper function
