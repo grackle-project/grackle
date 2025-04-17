@@ -38,6 +38,7 @@ OBJS_CONFIG_LIB = \
         set_default_chemistry_parameters.lo \
         solve_chemistry.lo \
         solve_rate_cool_g.lo \
+        status_reporting.lo \
         update_UVbackground_rates.lo \
         lookup_cool_rates0d.lo \
         calc_tdust_1d_g.lo \
@@ -45,6 +46,7 @@ OBJS_CONFIG_LIB = \
         calc_grain_size_increment_1d.lo \
         rate_functions.lo \
         gaussj_g.lo \
+        initialize_rates.lo \
         utils.lo \
         step_rate_newton_raphson.lo \
         utils-cpp.lo \
