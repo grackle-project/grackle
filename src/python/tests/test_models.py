@@ -5,22 +5,15 @@ import yt
 
 from numpy.testing import assert_allclose
 
-from pygrackle.utilities.model_tests import model_sets
+from pygrackle.utilities.model_tests import model_parametrization
 from pygrackle.utilities.testing import run_command
 
 from testing_common import grackle_python_dir
 
 python_example_dir = os.path.join(grackle_python_dir, "examples")
 
-# collect all of the python-examples and various model configurations into
-# a list of tuples
-all_sets = []
-for model_name, model in model_sets.items():
-    for par_index in range(len(model["parameter_sets"])):
-        for input_index in range(len(model["input_sets"])):
-            all_sets.append((model_name, par_index, input_index))
-
-@pytest.mark.parametrize("model_name, par_index, input_index", all_sets)
+@pytest.mark.parametrize("model_name, par_index, input_index",
+                         model_parametrization)
 def test_model(answertestspec, tmp_path, model_name, par_index, input_index):
     """
     Each execution tests a python example with a set of inputs
