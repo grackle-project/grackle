@@ -50,10 +50,15 @@ def compare_model_results(compare_dir, model_par, ds1, ds2):
         yaml.dump(my_pars, stream=f)
 
     output_lines = ["\nMax relative differences:"]
+    do_diff = ds1.data["data", my_ivar].size == ds2.data["data", my_ivar].size
+
     for field in ds1.field_list:
         if field[1] in _exclude_fields:
             continue
         if field[1] == my_ivar:
+            continue
+
+        if (ds1.data[field] == 0).all() and (ds2.data[field] == 0).all():
             continue
 
         has_positive = False
@@ -75,25 +80,29 @@ def compare_model_results(compare_dir, model_par, ds1, ds2):
             plt.loglog(ds2.data["data", my_ivar], -ds2.data[field],
                        color="green", linestyle="--", label=label2, alpha=0.8)
 
-        xunits = getattr(ds1.field_info['data', my_ivar], "units", "")
+        xunits = getattr(ds1.field_info["data", my_ivar], "units", "")
         yunits = getattr(ds1.field_info[field], "units", "")
         plt.xlabel(f"{my_ivar} [{xunits}]")
         plt.ylabel(f"{field[1]} [{yunits}]")
         plt.legend(loc="best")
 
-        diff = np.abs(ds1.data[field] - ds2.data[field]) / ds2.data[field]
-        my_line = f"\t{field[1]}: {diff.max().d}."
-        output_lines.append(my_line)
+        if do_diff:
+            diff = np.abs(ds1.data[field] - ds2.data[field]) / ds2.data[field]
+            my_line = f"\t{field[1]}: {diff.max().d}."
+            output_lines.append(my_line)
 
-        if (diff > 0).any():
-            plt.twinx()
-            plt.loglog(ds1.data["data", my_ivar], diff,
-                       color="black", alpha=0.8)
-            plt.ylabel("relative difference")
+            if (diff > 0).any():
+                plt.twinx()
+                plt.loglog(ds1.data["data", my_ivar], diff,
+                           color="black", alpha=0.8)
+                plt.ylabel("relative difference")
 
         plt.tight_layout()
         plt.savefig(os.path.join(test_dir, f"{field[1]}.png"))
         plt.clf()
+
+    if not do_diff:
+        output_lines = ["\nData arrays have different sizes."]
 
     output_lines.append("")
     with open(notes_fn, mode="a") as f:
