@@ -126,6 +126,12 @@ int main(int argc, char *argv[])
   float T_DustC_t1=0.0, T_DustC_tN=0.0;
 
 
+  // Check the consistency
+  if (gr_check_consistency() != GR_SUCCESS) {
+    fprintf(stderr, "Error in gr_check_consistency.\n");
+    return EXIT_FAILURE;
+  }
+
   // Disable output
   grackle_verbose = 0;
 
