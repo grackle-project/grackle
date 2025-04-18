@@ -10,6 +10,7 @@
 import argparse
 import contextlib
 import filecmp
+import functools
 import hashlib
 import io
 from math import log10
@@ -55,7 +56,7 @@ The key feature of this system is its support for versioning:
   versions.
 
 One minor caveat: a given version of this tool is ONLY able to download
-data for the grackle version specified by the ``--version-grackle`` flag
+data for the grackle version specified by the ``grackle-version`` subcommand
 (i.e. this is the grackle version that the tool ships with). However, it
 does support listing and deleting data associated with other grackle
 versions.
@@ -137,7 +138,7 @@ Protocol Version
 ++++++++++++++++
 
 This internal logic has an associated protocol-version, (you can query
-this via the ``--version-protocol`` flag). The logic may change between
+this via the ``protocol-version`` subcommand). The logic may change between
 protocol versions. The protocol version will change very rarely (if it
 ever changes at all)
 
@@ -298,14 +299,6 @@ else:
 
 class GenericToolError(RuntimeError):
     pass
-
-
-class ToolConfig(NamedTuple):
-    """Tracks basic information about this tool"""
-
-    grackle_version: str
-    protocol_version: str = "1"
-    checksum_kind: str = "sha1"
 
 
 def _ensure_all_removed(fnames):
@@ -483,18 +476,19 @@ class Fetcher(NamedTuple):
             _ensure_all_removed([tmp_name])
 
 
-class DataStoreConfig(NamedTuple):
-    """Track basic configuration information
-
-    In principle, this information is intended to be a little more
-    flexible and might not be known as early as ToolConfig.
-    """
+class Config(NamedTuple):
+    """Track basic configuration information."""
 
     data_dir: str
-    store_location: str
-    checksum_kind: str
     default_fetcher: Fetcher
     file_registry_file: Union[str, bytes, os.PathLike, IO, None]
+    grackle_version: str
+    protocol_version: str = "1"
+    checksum_kind: str = "sha1"
+
+    @property
+    def store_location(self):
+        return os.path.join(self.data_dir, f"data-store-v{self.protocol_version}")
 
     @property
     def tmp_dir(self):
@@ -565,16 +559,10 @@ def _get_data_dir():
 @contextlib.contextmanager
 def _file_openner(f, mode, **kwargs):
     """Open a file or pass through an already open file"""
-    if (sys.version_info.major, sys.version_info.minor) < (3, 6):
-        if not isinstance(f, io.IOBase):
-            path = f
-        else:
-            path = None
-    else:
-        try:
-            path = os.fspath(f)
-        except TypeError:
-            path = None
+    try:
+        path = os.fspath(f)
+    except TypeError:
+        path = None
     if path is None:
         yield f
     else:
@@ -691,8 +679,8 @@ class LockFileContext:
         # don't suppress it!
 
 
-def standard_lockfile(data_store_config):
-    return LockFileContext(os.path.join(data_store_config.data_dir, "lockfile"))
+def standard_lockfile(config):
+    return LockFileContext(os.path.join(config.data_dir, "lockfile"))
 
 
 def calc_checksum(fname, alg_name, *, chunksize=_CHUNKSIZE):
@@ -852,7 +840,7 @@ class _HardlinkStrat:
             os.link(full_fname, shared_fname)
 
 
-def _ensure_data_dir_exists(data_store_config):
+def _ensure_data_dir_exists(config):
     """Creates the data_dir if it doesn't exist
 
     the data_dir is a directory that contains:
@@ -860,22 +848,22 @@ def _ensure_data_dir_exists(data_store_config):
      -> (possibly) data-store directories for data managed by other protocol version
      -> (possibly) a directory called `user-data/` where users can put custom data
     """
-    _ensure_exists(data_store_config.data_dir, "that will hold all Grackle data")
+    _ensure_exists(config.data_dir, "that will hold all Grackle data")
 
     # even though it isn't used for anything right now, make the directory that is
     # reserved for user content
-    _ensure_exists(data_store_config.user_data_dir, "reserved for user-defined data")
+    _ensure_exists(config.user_data_dir, "reserved for user-defined data")
 
     # primarily for testing whether hard-links are supported
-    _ensure_exists(data_store_config.tmp_dir, "reserved for scratch-space")
+    _ensure_exists(config.tmp_dir, "reserved for scratch-space")
 
 
-def get_version_dir(tool_config, data_store_config):
-    return os.path.join(data_store_config.store_location, tool_config.grackle_version)
+def get_version_dir(config):
+    return os.path.join(config.store_location, config.grackle_version)
 
 
-def get_object_dir(data_store_config):
-    return os.path.join(data_store_config.store_location, _OBJECT_STORE_SUBDIR)
+def get_object_dir(config):
+    return os.path.join(config.store_location, _OBJECT_STORE_SUBDIR)
 
 
 class VersionDataManager(NamedTuple):
@@ -920,9 +908,9 @@ class VersionDataManager(NamedTuple):
     # registry and is known by the associated grackle-version.
     version_dir: str
 
-    # data_store_config holds a little more information than we actually need
+    # config holds a little more information than we actually need
     # -> we may chooise to redefine this in the future
-    data_store_config: Optional[DataStoreConfig]
+    config: Optional[Config]
 
     # encodes the configuration (and logic) for fetching the files
     fetcher: Fetcher
@@ -930,8 +918,7 @@ class VersionDataManager(NamedTuple):
     @classmethod
     def create(
         cls,
-        tool_config,
-        data_store_config,
+        config,
         *,
         untracked_dest_dir=None,
         override_fetcher=None,
@@ -941,8 +928,7 @@ class VersionDataManager(NamedTuple):
 
         Parameters
         ----------
-        tool_config : ToolConfig
-        data_store_config : DataStoreConfig
+        config : Config
         untracked_dest_dir : str, optional
             When specified the constructed object will be used to manage
             fetched files are placed in the specified
@@ -950,27 +936,27 @@ class VersionDataManager(NamedTuple):
             the data-directory.
         override_fetcher : Fetcher, optional
             When specified, this fetcher is used in place of the standard
-            default fetcher provided by data_store_config.
+            default fetcher provided by config.
         """
 
         fetcher = override_fetcher
         if fetcher is None:
-            fetcher = data_store_config.default_fetcher
+            fetcher = config.default_fetcher
 
         if untracked_dest_dir is None:
-            version_dir = get_version_dir(tool_config, data_store_config)
+            version_dir = get_version_dir(config)
         else:
             version_dir = untracked_dest_dir
-            data_store_config = None
+            config = None
 
         return cls(
             version_dir=version_dir,
-            data_store_config=data_store_config,
+            config=config,
             fetcher=fetcher,
         )
 
     def manages_untracked_data(self):
-        return self.data_store_config is None
+        return self.config is None
 
     def _object_dir(self):
         """
@@ -980,9 +966,9 @@ class VersionDataManager(NamedTuple):
         (Linking with files in this directory is the mechanism used to aid
         deduplication)
         """
-        if self.data_store_config is None:
+        if self.config is None:
             return None
-        return get_object_dir(self.data_store_config)
+        return get_object_dir(self.config)
 
     def _setup_file_system(self):
         """
@@ -993,20 +979,18 @@ class VersionDataManager(NamedTuple):
         if self.manages_untracked_data():
             lockfile_ctx = nullcontext()
         else:
-            _ensure_data_dir_exists(self.data_store_config)
+            _ensure_data_dir_exists(self.config)
 
-            lockfile_ctx = standard_lockfile(self.data_store_config)
+            lockfile_ctx = standard_lockfile(self.config)
             with lockfile_ctx:
                 # let's validate we can actually use hardlinks
                 if not hasattr(os, "link"):
                     raise GenericToolError("operating system doesn't support hardlinks")
-                elif not _HardlinkStrat.is_supported(self.data_store_config.tmp_dir):
+                elif not _HardlinkStrat.is_supported(self.config.tmp_dir):
                     raise GenericToolError("The file system does not support hardlinks")
 
                 # a little more set up
-                _ensure_exists(
-                    self.data_store_config.store_location, "that holds the data-store"
-                )
+                _ensure_exists(self.config.store_location, "that holds the data-store")
                 _ensure_exists(self._object_dir(), "")
 
             assert not lockfile_ctx.locked()  # sanity check!
@@ -1066,7 +1050,7 @@ class VersionDataManager(NamedTuple):
         if self.manages_untracked_data():
             req_cksum_kind = None
         else:
-            req_cksum_kind = self.data_store_config.checksum_kind
+            req_cksum_kind = self.config.checksum_kind
             if cur_cksum_kind != req_cksum_kind:
                 raise ValueError(
                     "To download a file as part of Grackle's data file management "
@@ -1198,7 +1182,7 @@ Something bizare (& extremely unlikely) happened:
             _pretty_log("-> no files needed to be retrieved", indent_all=True)
 
 
-def fetch_command(args, tool_config, data_store_config):
+def fetch_command(args, config):
     override_fetcher = None
     if args.from_dir is not None:
         override_fetcher = Fetcher.configure_src_dir(args.from_dir)
@@ -1206,12 +1190,11 @@ def fetch_command(args, tool_config, data_store_config):
     fnames = None if len(args.fnames) == 0 else args.fnames
 
     man = VersionDataManager.create(
-        tool_config=tool_config,
-        data_store_config=data_store_config,
+        config=config,
         untracked_dest_dir=args.untracked_dest_dir,
         override_fetcher=override_fetcher,
     )
-    registry = _parse_file_registry(data_store_config.file_registry_file)
+    registry = _parse_file_registry(config.file_registry_file)
     man.fetch_all(registry, fnames=fnames)
 
 
@@ -1324,200 +1307,17 @@ def direntry_iter(path, *, ftype="file", mismatch="skip", ignore=None):
         raise ValueError("mismatch must be 'eager_err', 'lazy_err' or 'skip'")
 
 
-def rm_command(args, tool_config, data_store_config):
-    """Logic for removing files"""
-    if args.vdata is _UNSPECIFIED:
-        # this means that we are removing the whole data store
-        if not args.data_store:
-            raise RuntimeError("SOMETHING WENT HORRIBLY, HORRIBLY WRONG")
-
-        _descr = os.path.basename(data_store_config.store_location)
-        target_path = data_store_config.store_location
-        operation_description = (
-            f"deleting ALL files in the data-store associated with this tool, {_descr}"
-        )
-        if not os.path.isdir(target_path):
-            raise GenericToolError(
-                "intended to recursively delete all contents of the associated "
-                "data-store. But no such directory can be found."
-            )
-
-        fn = shutil.rmtree
-
-    else:
-        if args.vdata is None:
-            target = tool_config.grackle_version
-            _descr = f"associated with this tool (`{tool_config.grackle_version}`)"
-        else:
-            target = args.vdata
-            _descr = f"`{target}`"
-        target_path = os.path.join(data_store_config.store_location, target)
-        operation_description = (
-            f"deleting all data file references for the grackle-version {_descr}. "
-            "Any files for which the reference-count drops to zero will also be "
-            "removed."
-        )
-
-        if not os.path.isdir(target_path):
-            raise GenericToolError(
-                "intended to delete all data-file references for the grackle-version "
-                f"{_descr}, but no such data is tracked in the data-store."
-            )
-
-        def fn(path):
-            object_dir = os.path.join(
-                data_store_config.store_location, _OBJECT_STORE_SUBDIR
-            )
-            if not os.path.isdir(object_dir):
-                raise RuntimeError(
-                    "SOMETHING IS HORRIBLY WRONG!!! THE {object_dir} IS MISSING"
-                )
-
-            # we throw an err if this directory contains some unexpected stuff
-            it = direntry_iter(path, ftype="file", mismatch="eager_err")
-            for name, full_path in it:
-                # get path to corresponding hardlinked file in _OBJECT_STORE_SUBDIR
-                checksum = calc_checksum(full_path, alg_name=tool_config.checksum_kind)
-                cksum_fname = os.path.join(object_dir, checksum)
-                cksum_fname_exists = os.path.isfile(cksum_fname)
-
-                if not cksum_fname_exists:
-                    warnings.warn(
-                        "Something weird has happened. There is no deduplication file "
-                        f"associated with {full_path}"
-                    )
-                os.remove(full_path)
-                if cksum_fname_exists:
-                    _HardlinkStrat.remove_if_norefs(cksum_fname)
-            os.rmdir(path)
-
-    with standard_lockfile(data_store_config):
-        if not args.force:
-            _pretty_log(
-                f"{operation_description}\n"
-                "-> essentially, we are recursively removing\n"
-                f"     `{target_path}`\n"
-                "-> to actually perform this command, pass the --force flag"
-            )
-        else:
-            fn(target_path)
-
-
-def _register_rm_command(subparsers):
-    parser_rm = subparsers.add_parser(
-        "rm", help="remove data associated with a given version"
-    )
-    parser_rm.add_argument(
-        "-f",
-        "--force",
-        action="store_true",
-        help="This option must be present to actually remove things",
-    )
-    rm_spec_grp = parser_rm.add_argument_group(
-        title="Target", description="specifies the target that will be removed"
-    ).add_mutually_exclusive_group(required=True)
-    rm_spec_grp.add_argument(
-        "--data-store", action="store_true", help="remove the full data-store"
-    )
-    rm_spec_grp.add_argument(
-        "--vdata",
-        default=_UNSPECIFIED,
-        nargs="?",
-        help="remove all data associated with the contemporaneous grackle version",
-    )
-    parser_rm.set_defaults(func=rm_command)
-
-
-def lsversions_command(args, tool_config, data_store_config):
-    if not os.path.exists(data_store_config.store_location):
-        print("there is no data")
-    with standard_lockfile(data_store_config):
-        it = direntry_iter(
-            data_store_config.store_location,
-            ftype="dir",
-            mismatch="lazy_err",
-            ignore=[_OBJECT_STORE_SUBDIR],
-        )
-        print(*sorted(pair[0] for pair in it), sep="\n")
-
-
-def _register_lsversions_command(subparsers):
-    parser_ls = subparsers.add_parser("ls-versions", help="list the versions")
-    parser_ls.set_defaults(func=lsversions_command)
-
-
-def getpath_command(args, tool_config, data_store_config):
-    if args.data_dir:
-        print(data_store_config.data_dir)
-    elif args.data_store:
-        print(data_store_config.store_location)
-    else:
-        assert args.vdata is not _UNSPECIFIED  # sanity check!
-        if args.vdata is None:
-            version = tool_config.grackle_version
-        else:
-            version = args.vdata
-        print(os.path.join(data_store_config.store_location, version))
-
-
-def _register_getpath_command(subparsers):
-    parser_getpath = subparsers.add_parser(
-        "getpath",
-        description=(
-            "Provides the expected filesystem location for data. This command "
-            "doesn't care about whether the filesystem location actually exists."
-        ),
-        help="show expected filesystem location for data.",
-    )
-    getpath_spec_grp = parser_getpath.add_argument_group(
-        title="Target",
-        description="specifies the target that we retrieve the path for.",
-    ).add_mutually_exclusive_group(required=True)
-    getpath_spec_grp.add_argument(
-        "--data-dir", action="store_true", help="get path to the data directory"
-    )
-    getpath_spec_grp.add_argument(
-        "--data-store",
-        action="store_true",
-        help="get path to the data-store (for the protocol version used by this tool)",
-    )
-    getpath_spec_grp.add_argument(
-        "--vdata",
-        default=_UNSPECIFIED,
-        nargs="?",
-        help=(
-            "get path to the directory of files-references associated with the "
-            "specified version. This command assumes that the version-data was "
-            "managed by a version of this tool that uses the same protocol version "
-            "as the version returned by --version-protocol. If no version is "
-            "specified, it uses the version associated with the --version-dir flag."
-        ),
-    )
-    parser_getpath.set_defaults(func=getpath_command)
-
-
-def showknownreg_command(args, tool_config, data_store_config):
-    f = data_store_config.file_registry_file
+def showknownreg_command(args, config):
+    f = config.file_registry_file
     if isinstance(f, io.IOBase):
         lines = f.readlines()
     else:
-        with open(data_store_config.file_registry_file, "r") as f:
+        with open(config.file_registry_file, "r") as f:
             lines = f.readlines()
     contents = [
         line for line in lines if len(line.strip()) > 0 and not line.startswith("//")
     ]
     print(*contents, sep="", end="")
-
-
-def _register_showknownreg_command(subparsers):
-    parser_showknownreg = subparsers.add_parser(
-        "showknownreg",
-        help=(
-            "prints the pre-registered file registry expected by the current version "
-            "of Grackle"
-        ),
-    )
-    parser_showknownreg.set_defaults(func=showknownreg_command)
 
 
 def _fmt_registry_lines(fname_cksum_pairs, hash_alg):
@@ -1528,7 +1328,7 @@ def _fmt_registry_lines(fname_cksum_pairs, hash_alg):
     ]
 
 
-def calcreg_command(args, tool_config, data_store_config):
+def calcreg_command(args, config):
     # print the properly file registry information (in the proper format that can be
     # used to configure newer versions of Grackle
 
@@ -1598,7 +1398,7 @@ def _register_calcreg_command(subparsers):
     parser_calcregistry.set_defaults(func=calcreg_command)
 
 
-def help_command(*args, **kwargs):
+def _show_help(*args, **kwargs):
     # it might be nice to pipe to a pager (specified by PAGER env variable or
 
     # here is some logic to strip anchors
@@ -1620,36 +1420,23 @@ def help_command(*args, **kwargs):
             print(line)
 
 
-def _register_help_command(subparsers):
-    parser_help = subparsers.add_parser(
-        "help", help="Display detailed help information about this tool"
-    )
-    parser_help.set_defaults(func=help_command)
+def register_show_subcommand(name, short_descr, target=None, *, subparsers):
+    # register subcommand that simply shows information and then exits
+
+    if callable(target):
+        _command = target
+    else:
+        target = name.replace("-", "_") if target is None else target
+
+        def _command(args, config):
+            print(getattr(config, target))
+
+    _descr = f"show {short_descr} & exit"
+    p = subparsers.add_parser(name, help=_descr, description=_descr)
+    p.set_defaults(func=_command)
 
 
-def _add_program_prop_query(parser, flag, value, short_descr):
-    """
-    add a flag to parser to trigger a control flow that:
-    1. shows a fundamental piece of information about the command line program (like a
-        version number or the ``--help`` option)
-    2. then immediately exits the program
-    """
-
-    class _Action(argparse.Action):
-        def __call__(self, *args, **kwargs):
-            print(value)
-            sys.exit(0)
-
-    parser.add_argument(
-        flag,
-        metavar="",
-        action=_Action,
-        nargs=0,
-        help=f"show associated {short_descr} and exit",
-    )
-
-
-def build_parser(tool_config, prog_name):
+def build_parser(prog_name):
     parser = argparse.ArgumentParser(
         prog=prog_name,
         description=(
@@ -1659,45 +1446,35 @@ def build_parser(tool_config, prog_name):
         epilog=f"Invoke `{prog_name} help` to get a detailed overview of the tool",
     )
 
-    # This is a hidden argument. It is only used for sake of testing (we may remove it
-    # any time in the future)
-    parser.add_argument(
-        "--testing-override-registry-file",
-        help=argparse.SUPPRESS,  # hides the help message
-        default=argparse.SUPPRESS,  # adds no attribute if option wasn't specified
-    )
-    parser.add_argument(
-        "--testing-override-version-grackle",
-        help=argparse.SUPPRESS,  # hides the help message
-        default=argparse.SUPPRESS,  # adds no attribute if option wasn't specified
-    )
-
-    query_l = [
-        ("--version-grackle", "Grackle version", tool_config.grackle_version),
-        (
-            "--version-protocol",
-            "data-store protocol version",
-            tool_config.protocol_version,
-        ),
-        ("--cksum-alg", "name of the checksum algorithm", tool_config.checksum_kind),
+    # These are hidden arguments for testing (we may remove them any time in the future)
+    flag_attr_pairs = [
+        ("--testing-override-registry-file", "file_registry_file"),
+        ("--testing-override-grackle-version", "grackle_version"),
     ]
-    for flag, short_descr, val in query_l:
-        _add_program_prop_query(parser, flag, val, short_descr)
+    for flag, attr in flag_attr_pairs:
+        dest = f"override_{attr}"
+        parser.add_argument(
+            flag, dest=dest, help=argparse.SUPPRESS, default=argparse.SUPPRESS
+        )
 
     subparsers = parser.add_subparsers(required=True)
 
     _register_fetch_command(subparsers)
-    _register_rm_command(subparsers)
-    _register_lsversions_command(subparsers)
-    _register_getpath_command(subparsers)
-    _register_showknownreg_command(subparsers)
     _register_calcreg_command(subparsers)
-    _register_help_command(subparsers)
+
+    show = functools.partial(register_show_subcommand, subparsers=subparsers)
+    show("grackle-version", "associated Grackle version")
+    show("protocol-version", "associated data-store protocol version")
+    show("checksum-kind", "associated checksum algorithm")
+    show("getpath", "path for data-dir (regardless of whether it exists)", "data_dir")
+    show("help", "detailed help information", _show_help)
+    showknownreg_descr = "pre-registered file registry (for associated Grackle version)"
+    show("showknownreg", showknownreg_descr, showknownreg_command)
 
     return parser
 
 
-def main(tool_config, data_store_config, prog_name, *, args=None):
+def main(config, prog_name, *, args=None):
     """
     Launch the command
 
@@ -1706,23 +1483,17 @@ def main(tool_config, data_store_config, prog_name, *, args=None):
     int
         Specified the exit code
     """
-    parser = build_parser(tool_config, prog_name)
+    parser = build_parser(prog_name)
     args = parser.parse_args(args=args)
 
     # handle testing overrides
-    if hasattr(args, "testing_override_registry_file"):
-        # _replace makes a copy & in the copy any specified attributes are overridden
-        data_store_config = data_store_config._replace(
-            file_registry_file=args.testing_override_registry_file
-        )
-    if hasattr(args, "testing_override_version_grackle"):
-        # _replace makes a copy & in the copy any specified attributes are overridden
-        tool_config = tool_config._replace(
-            grackle_version=args.testing_override_version_grackle
-        )
+    for attr in ["file_registry_file", "grackle_version"]:
+        val = getattr(args, f"override_{attr}", None)
+        if val is not None:
+            config = config._replace(**{attr: val})
 
     try:
-        args.func(args, tool_config=tool_config, data_store_config=data_store_config)
+        args.func(args, config=config)
     except SystemExit:
         pass  # this shouldn't come up!
     except LockFileExistsError as err:
@@ -1747,31 +1518,8 @@ ERROR: The `{lock_file_path}` lock-file already exists.
         return 0
 
 
-def _default_data_store_config(tool_config, file_registry_file):
-    """Provides default data configuration"""
-    _REPO_URL = "https://github.com/grackle-project/grackle_data_files/"
-
-    # this is hash that holds the versions of the datafiles from the time when this
-    # version of the file was shipped
-    _CONTEMPORANEOUS_COMMIT_HASH = "9a63dbefeb1410483df0071eefcbff666f40816d"
-
-    # FILE_REGISTRY is in a format that could be injected into a C file as a literal
-    data_dir = _get_data_dir()
-    protocol_version = tool_config.protocol_version
-    return DataStoreConfig(
-        data_dir=data_dir,
-        store_location=os.path.join(data_dir, f"data-store-v{protocol_version}"),
-        default_fetcher=Fetcher.configure_GitHub_url(
-            data_repository_url=_REPO_URL,
-            contemporaneous_git_hash=_CONTEMPORANEOUS_COMMIT_HASH,
-        ),
-        checksum_kind=tool_config.checksum_kind,
-        file_registry_file=file_registry_file,
-    )
-
-
-def make_config_objects(grackle_version, file_registry_file):
-    """Construct the pair of configuration objects used for running the calculation
+def make_config_object(grackle_version, file_registry_file):
+    """Construct the configuration object used for running the calculation
 
     Parameters
     ----------
@@ -1780,9 +1528,21 @@ def make_config_objects(grackle_version, file_registry_file):
     file_registry_file : file or str or bytes or ``os.PathLike``
         Contains the file registry
     """
-    tool_config = ToolConfig(grackle_version=grackle_version)
-    data_store_config = _default_data_store_config(tool_config, file_registry_file)
-    return tool_config, data_store_config
+    _REPO_URL = "https://github.com/grackle-project/grackle_data_files/"
+
+    # this is hash that holds the versions of the datafiles from the time when this
+    # version of the file was shipped
+    _CONTEMPORANEOUS_COMMIT_HASH = "9a63dbefeb1410483df0071eefcbff666f40816d"
+
+    return Config(
+        data_dir=_get_data_dir(),
+        default_fetcher=Fetcher.configure_GitHub_url(
+            data_repository_url=_REPO_URL,
+            contemporaneous_git_hash=_CONTEMPORANEOUS_COMMIT_HASH,
+        ),
+        file_registry_file=file_registry_file,
+        grackle_version=grackle_version,
+    )
 
 
 # Here, we define machinery employed when used as a standalone program
@@ -1805,7 +1565,7 @@ if __name__ == "__main__":
     def _check_substitution_problems(var_name, var_value):
         # we use unicode escape sequence, \u0040, that python automatically converts
         # to the "at sign" to prevent the configure_file.py script (used by Grackle's
-        # Grackle's build-system) from falsely reporting an error
+        # build-system) from falsely reporting an error
         if (
             (var_name in var_value)
             or ("\u0040" in var_value)
@@ -1820,8 +1580,8 @@ if __name__ == "__main__":
     _check_substitution_problems("GRACKLE_VERSION", _GRACKLE_VERSION)
     _check_substitution_problems("FILE_REGISTRY_CONTENTS", _FILE_REGISTRY_CONTENTS)
 
-    _CONFIG_PAIR = make_config_objects(
+    _CONFIG = make_config_object(
         grackle_version=_GRACKLE_VERSION,
         file_registry_file=io.StringIO(_FILE_REGISTRY_CONTENTS),
     )
-    sys.exit(main(*_CONFIG_PAIR, prog_name="grdata"))
+    sys.exit(main(*_CONFIG, prog_name="grdata"))

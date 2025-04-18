@@ -18,7 +18,7 @@ import sys
 from pygrackle.__config__ import _is_editable_installation
 from pygrackle.grackle_wrapper import get_grackle_version
 from pygrackle.utilities.grdata import (
-    make_config_objects,
+    make_config_object,
     VersionDataManager,
     _parse_file_registry,
 )
@@ -49,27 +49,27 @@ def _get_file_registry_contents():
     return io.StringIO(contents)
 
 
-def _make_config_pair(grackle_version=None):
+def _make_config(grackle_version=None):
     if grackle_version is None:
         grackle_version = get_grackle_version()["version"]
-    return make_config_objects(
+    return make_config_object(
         grackle_version=grackle_version,
         file_registry_file=_get_file_registry_contents(),
     )
 
 
-_CONFIG_PAIR = _make_config_pair()
-_MANAGER = VersionDataManager.create(*_CONFIG_PAIR)
+_CONFIG = _make_config()
+_MANAGER = VersionDataManager.create(_CONFIG)
 
 
 def _fnames_in_registry():
     # used for testing/debugging
-    return tuple(_parse_file_registry(_CONFIG_PAIR[1].file_registry_file).keys())
+    return tuple(_parse_file_registry(_CONFIG.file_registry_file).keys())
 
 
 def _download_all_datafiles():
     """Download all datafiles if it hasn't been downloaded already."""
-    registry = _parse_file_registry(_CONFIG_PAIR[1].file_registry_file)
+    registry = _parse_file_registry(_CONFIG.file_registry_file)
     return _MANAGER.fetch_all(registry)
 
 
