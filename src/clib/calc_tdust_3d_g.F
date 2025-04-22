@@ -92,14 +92,6 @@
      &      , metal_F50(in,jn,kn), metal_F80(in,jn,kn)
      &      , metal_P170(in,jn,kn), metal_P200(in,jn,kn)
      &      , metal_Y19(in,jn,kn)
-     &   , CI(in,jn,kn)   , CII(in,jn,kn)    , CO(in,jn,kn)
-     &   , CO2(in,jn,kn)  , OI(in,jn,kn)     , OH(in,jn,kn)
-     &   , H2O(in,jn,kn)  , O2(in,jn,kn)     , SiI(in,jn,kn)
-     &   , SiOI(in,jn,kn) , SiO2I(in,jn,kn)  , CH(in,jn,kn)
-     &   , CH2(in,jn,kn)  , COII(in,jn,kn)   , OII(in,jn,kn)
-     &   , OHII(in,jn,kn) , H2OII(in,jn,kn)  , H3OII(in,jn,kn)
-     &   , O2II(in,jn,kn) , Mg(in,jn,kn)     , Al(in,jn,kn)
-     &   , S(in,jn,kn)    , Fe(in,jn,kn)     
       R_PREC  SiM(in,jn,kn), FeM(in,jn,kn), Mg2SiO4(in,jn,kn)
      &      , MgSiO3(in,jn,kn), Fe3O4(in,jn,kn), AC(in,jn,kn)
      &      , SiO2D(in,jn,kn), MgO(in,jn,kn), FeS(in,jn,kn)
@@ -199,22 +191,11 @@
 
 !  Slice locals
  
-      integer indixe(in)
-      R_PREC  t1(in), t2(in), logtem(in), tdef(in), 
+      integer*8 indixe(in)
+      real*8  t1(in), t2(in), logtem(in), tdef(in), 
      &     tgas(in), tdust(in), nh(in), gasgr(in),
      &     myisrf(in)
 
-!  Additional slice locals
-      R_PREC brem(in), ceHeI(in), ceHeII(in), ceHI(in),
-     & cieco(in), ciHeI(in), ciHeII(in), ciHeIS(in),
-     & ciHI(in), comp1(in), comp2(in), edot(in),
-     & energy(in), gammaha_eff(in), gasgr_tdust(in),
-     & gphdl(in), gpldl(in), h2k01(in), hdlow(in),
-     & hdlte(in), hyd01k(in), mmw(in), myde(in),
-     & mynh(in), p2d(in), regr(in), reHeII1(in),
-     & reHeIII(in), reHII(in), rhoH(in), reHeII(in),
-     & reHeII2(in), roth(in), rotl(in), tgasold(in),
-     & vibh(in)
 !  Iteration mask for multi_cool
 
       MASK_TYPE itmask(in)
@@ -250,21 +231,7 @@
 ! parallelize the k and j loops with OpenMP
 ! flat j and k loops for better parallelism
 #ifdef _OPENMP
-!$omp parallel do schedule(runtime) private(
-!$omp&   i, j, k,
-!$omp&   comp1, comp2, energy,
-!$omp&   indixe,
-!$omp&   t1, t2, logtem, tdef, p2d,
-!$omp&   tgas, tgasold,
-!$omp&   tdust, metallicity, dust2gas, rhoH, mmw,
-!$omp&   mynh, myde, gammaha_eff, gasgr_tdust, regr, edot,
-!$omp&   ceHI, ceHeI, ceHeII,
-!$omp&   ciHI, ciHeI, ciHeIS, ciHeII,
-!$omp&   reHII, reHeII1, reHeII2, reHeIII,
-!$omp&   brem, cieco,
-!$omp&   hyd01k, h2k01, vibh, roth, rotl,
-!$omp&   gpldl, gphdl, hdlte, hdlow,
-!$omp&   itmask )
+!$omp parallel do schedule(runtime) private(i, j, k)
 #endif
       do t = 0, dk*dj-1
         k = t/dj      + ks+1
@@ -287,39 +254,6 @@
                  metal_P200(i,j,k)=metal_P200(i,j,k)/real(aye**3, RKIND)
                  metal_Y19(i,j,k) = metal_Y19(i,j,k)/real(aye**3, RKIND)
               endif
-!!            if (metal(i,j,k) .gt. 1.d-9 * d(i,j,k)) then
-              if (imchem .eq. 1) then
-                 CI(i,j,k)      = CI(i,j,k)/real(aye**3, RKIND)
-                 CII(i,j,k)     = CII(i,j,k)/real(aye**3, RKIND)
-                 CO(i,j,k)      = CO(i,j,k)/real(aye**3, RKIND)
-                 CO2(i,j,k)     = CO2(i,j,k)/real(aye**3, RKIND)
-                 OI(i,j,k)      = OI(i,j,k)/real(aye**3, RKIND)
-                 OH(i,j,k)      = OH(i,j,k)/real(aye**3, RKIND)
-                 H2O(i,j,k)     = H2O(i,j,k)/real(aye**3, RKIND)
-                 O2(i,j,k)      = O2(i,j,k)/real(aye**3, RKIND)
-                 SiI(i,j,k)     = SiI(i,j,k)/real(aye**3, RKIND)
-                 SiOI(i,j,k)    = SiOI(i,j,k)/real(aye**3, RKIND)
-                 SiO2I(i,j,k)   = SiO2I(i,j,k)/real(aye**3, RKIND)
-                 CH(i,j,k)      = CH(i,j,k)/real(aye**3, RKIND)
-                 CH2(i,j,k)     = CH2(i,j,k)/real(aye**3, RKIND)
-                 COII(i,j,k)    = COII(i,j,k)/real(aye**3, RKIND)
-                 OII(i,j,k)     = OII(i,j,k)/real(aye**3, RKIND)
-                 OHII(i,j,k)    = OHII(i,j,k)/real(aye**3, RKIND)
-                 H2OII(i,j,k)   = H2OII(i,j,k)/real(aye**3, RKIND)
-                 H3OII(i,j,k)   = H3OII(i,j,k)/real(aye**3, RKIND)
-                 O2II(i,j,k)    = O2II(i,j,k)/real(aye**3, RKIND)
-                 if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1 ) ) then
-                 if (idspecies .gt. 0) then
-                 Mg(i,j,k)      = Mg(i,j,k)/real(aye**3, RKIND)
-                 endif
-                 if (idspecies .gt. 1) then
-                 Al(i,j,k)      = Al(i,j,k)/real(aye**3, RKIND)
-                 S(i,j,k)       = S(i,j,k)/real(aye**3, RKIND)
-                 Fe(i,j,k)      = Fe(i,j,k)/real(aye**3, RKIND)
-                 endif
-                 endif
-              endif
-!!            endif
            enddo
         endif
         if (idustfield .eq. 1) then
@@ -759,21 +693,7 @@ C          endif
 ! parallelize the k and j loops with OpenMP
 ! flat j and k loops for better parallelism
 #ifdef _OPENMP
-!$omp parallel do schedule(runtime) private(
-!$omp&   i, j, k,
-!$omp&   comp1, comp2, energy,
-!$omp&   indixe,
-!$omp&   t1, t2, logtem, tdef, p2d,
-!$omp&   tgas, tgasold,
-!$omp&   tdust, metallicity, dust2gas, rhoH, mmw,
-!$omp&   mynh, myde, gammaha_eff, gasgr_tdust, regr, edot,
-!$omp&   ceHI, ceHeI, ceHeII,
-!$omp&   ciHI, ciHeI, ciHeIS, ciHeII,
-!$omp&   reHII, reHeII1, reHeII2, reHeIII,
-!$omp&   brem, cieco,
-!$omp&   hyd01k, h2k01, vibh, roth, rotl,
-!$omp&   gpldl, gphdl, hdlte, hdlow,
-!$omp&   itmask )
+!$omp parallel do schedule(runtime) private(i, j, k)
 #endif
       do t = 0, dk*dj-1
         k = t/dj      + ks+1
@@ -796,39 +716,6 @@ C          endif
                  metal_P200(i,j,k)=metal_P200(i,j,k)*real(aye**3, RKIND)
                  metal_Y19(i,j,k) = metal_Y19(i,j,k)*real(aye**3, RKIND)
               endif
-!!            if (metal(i,j,k) .gt. 1.d-9 * d(i,j,k)) then
-              if (imchem .eq. 1) then
-                 CI(i,j,k)      = CI(i,j,k)*real(aye**3, RKIND)
-                 CII(i,j,k)     = CII(i,j,k)*real(aye**3, RKIND)
-                 CO(i,j,k)      = CO(i,j,k)*real(aye**3, RKIND)
-                 CO2(i,j,k)     = CO2(i,j,k)*real(aye**3, RKIND)
-                 OI(i,j,k)      = OI(i,j,k)*real(aye**3, RKIND)
-                 OH(i,j,k)      = OH(i,j,k)*real(aye**3, RKIND)
-                 H2O(i,j,k)     = H2O(i,j,k)*real(aye**3, RKIND)
-                 O2(i,j,k)      = O2(i,j,k)*real(aye**3, RKIND)
-                 SiI(i,j,k)     = SiI(i,j,k)*real(aye**3, RKIND)
-                 SiOI(i,j,k)    = SiOI(i,j,k)*real(aye**3, RKIND)
-                 SiO2I(i,j,k)   = SiO2I(i,j,k)*real(aye**3, RKIND)
-                 CH(i,j,k)      = CH(i,j,k)*real(aye**3, RKIND)
-                 CH2(i,j,k)     = CH2(i,j,k)*real(aye**3, RKIND)
-                 COII(i,j,k)    = COII(i,j,k)*real(aye**3, RKIND)
-                 OII(i,j,k)     = OII(i,j,k)*real(aye**3, RKIND)
-                 OHII(i,j,k)    = OHII(i,j,k)*real(aye**3, RKIND)
-                 H2OII(i,j,k)   = H2OII(i,j,k)*real(aye**3, RKIND)
-                 H3OII(i,j,k)   = H3OII(i,j,k)*real(aye**3, RKIND)
-                 O2II(i,j,k)    = O2II(i,j,k)*real(aye**3, RKIND)
-                 if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1 ) ) then
-                 if (idspecies .gt. 0) then
-                 Mg(i,j,k)      = Mg(i,j,k)*real(aye**3, RKIND)
-                 endif
-                 if (idspecies .gt. 1) then
-                 Al(i,j,k)      = Al(i,j,k)*real(aye**3, RKIND)
-                 S(i,j,k)       = S(i,j,k)*real(aye**3, RKIND)
-                 Fe(i,j,k)      = Fe(i,j,k)*real(aye**3, RKIND)
-                 endif
-                 endif
-              endif
-!!            endif
            enddo
         endif
         if (idustfield .eq. 1) then
