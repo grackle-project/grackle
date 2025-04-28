@@ -36,6 +36,7 @@ OBJS_CONFIG_LIB = \
         set_default_chemistry_parameters.lo \
         solve_chemistry.lo \
         solve_rate_cool_g.lo \
+        status_reporting.lo \
         update_UVbackground_rates.lo \
         rate_functions.lo \
         initialize_rates.lo \
