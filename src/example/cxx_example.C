@@ -33,6 +33,12 @@ int main(int argc, char *argv[])
   // Set initial redshift (for internal units).
   double initial_redshift = 0.;
 
+  // Check the consistency
+  if (gr_check_consistency() != GR_SUCCESS) {
+    fprintf(stderr, "Error in gr_check_consistency.\n");
+    return EXIT_FAILURE;
+  }
+
   // Enable output
   grackle_verbose = 1;
 
@@ -200,7 +206,7 @@ int main(int argc, char *argv[])
     return EXIT_FAILURE;
   }
 
-  fprintf(stdout, "cooling_time = %le s.\n", cooling_time[0] *
+  fprintf(stdout, "cooling_time = %24.16g s\n", cooling_time[0] *
           my_units.time_units);
 
   // Calculate temperature.
@@ -212,7 +218,7 @@ int main(int argc, char *argv[])
     return EXIT_FAILURE;
   }
 
-  fprintf(stdout, "temperature = %le K.\n", temperature[0]);
+  fprintf(stdout, "temperature = %24.16g K\n", temperature[0]);
 
   // Calculate pressure.
   gr_float *pressure;
@@ -225,7 +231,7 @@ int main(int argc, char *argv[])
     return EXIT_FAILURE;
   }
 
-  fprintf(stdout, "pressure = %le dyne/cm^2.\n", pressure[0]*pressure_units);
+  fprintf(stdout, "pressure = %24.16g dyne/cm^2\n", pressure[0]*pressure_units);
 
   // Calculate gamma.
   gr_float *gamma;
@@ -236,7 +242,7 @@ int main(int argc, char *argv[])
     return EXIT_FAILURE;
   }
 
-  fprintf(stdout, "gamma = %le.\n", gamma[0]);
+  fprintf(stdout, "gamma = %24.16g\n", gamma[0]);
 
     // Calculate dust temperature.
   gr_float *dust_temperature;
@@ -247,7 +253,7 @@ int main(int argc, char *argv[])
     return EXIT_FAILURE;
   }
 
-  fprintf(stdout, "dust_temperature = %g K.\n", dust_temperature[0]);
+  fprintf(stdout, "dust_temperature = %24.16g K\n", dust_temperature[0]);
 
   free_chemistry_data();
 

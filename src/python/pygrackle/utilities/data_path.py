@@ -22,9 +22,6 @@ from pygrackle.utilities.grdata import (
 )
 from pygrackle.utilities.misc import dirname
 
-# maybe it would be better to export nothing?
-__all__ = ["grackle_data_dir"]
-
 
 def _get_file_registry_contents():
     if _is_editable_installation():
