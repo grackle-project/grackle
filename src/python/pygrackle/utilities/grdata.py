@@ -1,70 +1,39 @@
 #!/usr/bin/env python3
+"""A tool for managing grackle data files usable as part of pygrackle and as a
+standalone command line tool (when pygrackle IS NOT installed)
 
-# A tool for managing grackle data files. (More details provided after imports)
-#
-# This file should be usable as both (i) a part of pygrackle and (ii) a standalone
-# command line tool (when pygrackle IS NOT installed)
-#
-# To support scenario 1, this CAN ONLY use python's built in modules.
+Just below, we provide a detailed description that will also be used for documentation
+on the website AND as queryable documentation via the ``help`` subcommand. We enclose
+some text in triple braces for 2 purposes:
+- it is designed to be anchors used by sphinx to include the documentation.
+- to help format output of the ``help`` subcommand. Anchors of the format
+  ``[[[BEGIN-SECTION:<name>]]]`` will be replaced with a section title ``<name>``,
+  and all other anchors are removed.
 
-import argparse
-import contextlib
-import filecmp
-import functools
-import hashlib
-import io
-from math import log10
-import os
-import re
-import shutil
-import stat
-import sys
-import traceback
-from typing import IO, NamedTuple, Optional, Union
-import urllib.request
-from urllib.error import URLError, HTTPError
-import warnings
 
-# Down below, we provide a detailed description that serves 3 purposes
-#   1. to act as a description of this files contents for developers
-#   2. to serve as documentation on the website
-#   3. to serve as queryable documentation via the `help` subcommand
-#
-# The text enclosed in triple braces serves 2 purposes:
-# -> it is designed to be anchors used by sphinx to include the documentation.
-# -> while executing the `help` subcommand, anchors of the format
-#    `[[[BEGIN-SECTION:<name>]]]` will be replaced with a section title `<name>`,
-#    and all other anchors are removed.
-
-_EXTENDED_DESCRIPTION = """\
 [[[BEGIN-SECTION:DESCRIPTION]]]
-This is a management system for managing Grackle data files. The command line
-interface provides commands to fetch these data files, list all of the
-available data, and delete the data.
+This is a command line tool provided with a Grackle installation. It fetches
+and caches data files used by that associated Grackle version (the
+``show-grackle-version`` subcommand shows that associated version).
 
-The system stores the data files at a single global location. (Grackle,
-itself, will soon be able to access files from this location).
+In more detail:
 
-The key feature of this system is its support for versioning:
+- the tool caches downloaded data files in a central data-store that is
+  accessible by pygrackle (and soon, Grackle, itself).
 
-- it is able to support management of sets of datafiles (associated with
-  different grackle versions) where the datafiles have been renamed,
-  modified, or deleted between Grackle versions.
+- within the data-store, this tool groups data-files inside of a directory
+  named after the associated Grackle version. Consequently, the data-store
+  (as a whole) is forwards AND backwards compatible, even if datafiles are
+  renamed/mutated/added/deleted between Grackle versions.
 
-- additionally, the system implements deduplication for the (very common)
-  scenario when the contents of a file are unchanged between grackle
-  versions.
-
-One minor caveat: a given version of this tool is ONLY able to download
-data for the grackle version specified by the ``grackle-version`` subcommand
-(i.e. this is the grackle version that the tool ships with). However, it
-does support listing and deleting data associated with other grackle
-versions.
+- for the common scenario where the contents/names of data-files don't
+  change between Grackle versions, this tool tries to deduplicate files.
+  (This is accomplished with hard-links)
 
 The location of the data is controlled by the ``GRACKLE_DATA_DIR``
 environment variable. When this variable isn't specified, the tool uses
 the operating-system recommendation for user-site-data. This location can
-be queried with the ``getpath`` subcomand.
+be queried with the ``show-data-dir`` subcomand.
 [[[END-SECTION:DESCRIPTION]]]
 
 [[[BEGIN-SECTION:MOTIVATION]]]
@@ -84,41 +53,41 @@ However, this manual management of datafiles becomes problematic in any
 use-case that is marginally more complex. There are 3 considerations worth
 highlighting:
 
-  1. **Portability:** Currently, there is no out-of-the-box approach for
-     any program using Grackle configured to run on one computer to run on
-     another machine without manual intervention.
+1. **Portability:** Currently, there is no out-of-the-box approach for
+   any program using Grackle configured to run on one computer to run on
+   another machine without manual intervention.
 
-     - If there are differences in how the machines are set up (e.g. where
-       the data files are placed), the paths to the Grackle data file(s) need
-       to be updated. This is relevant if you want to use a Pygrackle script
-       on a different machine or if you want to use a configuration script to
-       rerun a simulation (involving Grackle) on a different machine.
+   - If there are differences in how the machines are set up (e.g. where
+     the data files are placed), the paths to the Grackle data file(s) need
+     to be updated. This is relevant if you want to use a Pygrackle script
+     on a different machine or if you want to use a configuration script to
+     rerun a simulation (involving Grackle) on a different machine.
 
-     - This is particularly noteworthy when it comes to automated testing! For
-       example, before this tool existed, Pygrackle, made some assumptions that
-       it was installed as an editable installation to run some examples. The
-       test-suite of Enzo-E is another example where extra book-keeping is
-       required for all test-problems that invoke Grackle.
+   - This is particularly noteworthy when it comes to automated testing! For
+     example, before this tool existed, Pygrackle, made some assumptions that
+     it was installed as an editable installation to run some examples. The
+     test-suite of Enzo-E is another example where extra book-keeping is
+     required for all test-problems that invoke Grackle.
 
-  2. **If the Grackle repository isn't present:** This includes the case where
-     a user deletes the repository after installing Grackle. It is more
-     important to consider the case where users are installing programs that use
-     Grackle without downloading the repository (or, even if the repository is
-     downloaded, it is done so without the user's knowledge). This latter case
-     will become increasingly common as we make pygrackle easier to install.
-     This is also plausible for cmake-builds of downstream projects that embed
-     Grackle compilation as part of their build.
+2. **If the Grackle repository isn't present:** This includes the case where
+   a user deletes the repository after installing Grackle. It is more
+   important to consider the case where users are installing programs that use
+   Grackle without downloading the repository (or, even if the repository is
+   downloaded, it is done so without the user's knowledge). This latter case
+   will become increasingly common as we make pygrackle easier to install.
+   This is also plausible for cmake-builds of downstream projects that embed
+   Grackle compilation as part of their build.
 
-  3. **Having multiple Grackle Versions Installed:** This is going to be
-     increasingly common as Pygrackle becomes easier to install. Users have 2
-     existing options in this case: (i) they maintain separate repositories of
-     data files for each version or (ii) they assume that they can just use
-     the newest version of the data-file repository. The latter option, has
-     historically been true (and will probably continue to be true). But, it could
-     conceivably lead to cases where people could unintentionally use a data-file
-     created for a newer version of grackle. (While this likely won't be a
-     problem, users should probably be explicitly aware that they are doing this
-     on the off-chance that problems do arise).
+3. **Having multiple Grackle Versions Installed:** This is going to be
+   increasingly common as Pygrackle becomes easier to install. Users have 2
+   existing options in this case: (i) they maintain separate repositories of
+   data files for each version or (ii) they assume that they can just use
+   the newest version of the data-file repository. The latter option, has
+   historically been true (and will probably continue to be true). But, it could
+   conceivably lead to cases where people could unintentionally use a data-file
+   created for a newer version of grackle. (While this likely won't be a
+   problem, users should probably be explicitly aware that they are doing this
+   on the off-chance that problems do arise).
 
 This tool is a first step to addressing these cases.
 
@@ -128,259 +97,173 @@ this tool.
 [[[END-SECTION:MOTIVATION]]]
 
 [[[BEGIN-SECTION:INTERNALS-OVERVIEW]]]
-We now turn our attention to describing how the internals of the
-management system work.
-
-Fundamentally, the data management system manages a **data store**.
-We will return to that in a moment.
+We now turn our attention to describing how the organization of the data. It
+all revolves around the idea of a **data-store** (more on that in a moment)
 
 Protocol Version
 ++++++++++++++++
-
-This internal logic has an associated protocol-version, (you can query
-this via the ``protocol-version`` subcommand). The logic may change between
-protocol versions. The protocol version will change very rarely (if it
-ever changes at all)
+These internal details have an associated protocol-version, (queryable via the
+``show-protocol-version`` subcommand). The details may change between protocol
+versions. The protocol version will change very rarely (if it ever changes).
 
 Data Directory
 ++++++++++++++
-
-This is simply the data directory that includes all grackle data. This path
-is given by the ``GRACKLE_DATA_DIR`` environment variable, if it exists.
-Otherwise it defaults to the operating-system's recommendation for
-user-site-data.
+This is the directory that includes all grackle data. It's location is the
+absolute path held by the ``GRACKLE_DATA_DIR`` environment variable. If the
+variable isn't defined, it's placed at the location recommended by the
+operating-system for user-site-data.
 
 This contains several entries including the:
 
-  - a **user-data** directory. This directory currently isn't used yet, but
-    it is reserved for users to put custom data-files in the future.
+- a **user-data** directory. This directory currently isn't used yet, but
+  it is reserved for users to put custom data-files in the future.
 
-  - a **tmp** directory (used by the data-management tool)
+- the **data store** directory(ies). This is named
+  ``data-store-v<PROTOCOL-VERSION>`` so that earlier versions of this
+  tool will continue to function if we ever change the protocol.
 
-  - it sometimes holds a lockfile (used to ensure that multiple instances of
-    this tool aren't running at once)
-
-  - the **data store** directory(ies). This is named
-    ``data-store-v<PROTOCOL-VERSION>`` so that earlier versions of this
-    tool will continue to function if we ever change the protocol. (Each of
-    these directories are completely independent of each other).
-
-Outside of the **user-data** directory, users should not modify/create/delete
-any files within Data Directory (unless the tool instructs them to).
+Outside of the **user-data** directory, users should not modify/create
+any files within Data Directory (it's okay to delete things).
 
 Data Store
 ++++++++++
+This is where we cache the data files managed by this system. This holds 1 or
+more "version-directories". Each version-directory is named after a Grackle
+version (**NOT** a Pygrackle version). A version-directory holds entries for
+1 or more of the data-files that were shipped with the Grackle-version that
+corresponds to the directory's name.
 
-This is where we track the data files managed by this system. This holds a
-directory called **object-store** and 1 or more "version-directories".
+When this tool downloads new files, it applies basic deduplication logic:
+After the file is downloaded, it checks whether a file already exists in an
+adjacent version-directory with the same name and contents. If so, the
+downloaded file is deleted and a hardlink is made to the pre-existing file.
 
-The primary-representation of each file is tracked within the ``object-store``
-subdirectory.
+- Users can be somewhat ignorant of our use of hardlinks. They are free to
+  delete files (but the underlying data won't be removed until all of its links
+  have been removed)
 
-- The name of each item in this directory is a unique key. This key is the
-  file’s SHA-1 checksum.
-
-- Git internally tracks objects in a very similar way (they have historically
-  used SHA-1 checksums as unique keys). The chance of an accidental collision
-  in the checksum in a large Git repository is extremely tiny. It was only 10 or
-  12 years after Git was created that the developers started worrying about
-  collisions (and they are primarily concerned with intentional collisions from
-  maclicious actors).
-
-Each version-directory is named after a Grackle version (**NOT** a Pygrackle
-version).
-
-- a given version directory holds data-file references.
-- the references have the contemporaneous name of each of the data-files that
-  was shipped with the Grackle-version that corresponds to the directory's name.
-- each reference is linked to the corresponding file in the ``object-store``.
-
-When a program outside of this tool accesses a data-file, they will **ONLY**
-access the references in the version-directory that shares its name with the
-version of Grackle that the program is linked against.
-
-This tool makes use of references and the ``object-store`` to effectively
-deduplicate data. Whenever this tool deletes a "data-file" reference it will
-also delete the corresponding file from the ``object-store`` if it had no other
-references. We choose to implement references as "hard links" in order to make
-it easy to determine when a file in ``object-store`` has no reference.
+- This logic will **NOT** deduplicate renamed files. Doing that efficiently
+  requires a different, more complex system (deleting the files is tricky). You
+  can look at the commit history for an earlier version of this tool that can
+  handle this scenario.
 [[[END-SECTION:INTERNALS-OVERVIEW]]]
 
 Sample Directory Structure
 ++++++++++++++++++++++++++
-
 Down below, we sketch out what the directory-structure might look like:
 
 [[[BEGIN:DIRECTORY-CARTOON]]]
-GRACKLE_DATA_DIR/
+${GRACKLE_DATA_DIR}/
  ├── data-store-v1/                      # <- the data-store
  │    ├── 3.3.1-dev/                     # <- a version-dir
  │    │    ├── CloudyData_UVB=FG2011.h5
  │    │    ├── ...
  │    │    └── cloudy_metals_2008_3D.h5
- │    ├── 3.4.0/                         # <- another version-dir
- │    │    ├── CloudyData_UVB=FG2011.h5
- │    │    ├── ...
- │    │    └── cloudy_metals_2008_3D.h5
- │    └── object-store/                  # <- the object-store
+ │    └── 3.4.0/                         # <- another version-dir
+ │         ├── CloudyData_UVB=FG2011.h5
  │         ├── ...
- │         └── ...
- ├── tmp/                                # <- reserved for scratch-space
- ├── user-data/                          # <- reserved for user data
- │    ├── ...
- │    └── ...
- └── lockfile                            # <- temporary file
+ │         └── cloudy_metals_2008_3D.h5
+ └── user-data/                          # <- reserved for user data
+      ├── ...
+      └── ...
 [[[END:DIRECTORY-CARTOON]]]
+
+[[[BEGIN-SECTION:INTERNALS FILE REGISTRY]]]
+The file registry refers to a small file that maps the names of Grackle's
+datafiles with a checksum. At the time of writing we use sha1 checksums.
+
+In the long term, the registry is important in 2 -ish contexts:
+
+1. Embed the contents of the registry within the core Grackle library in order
+   to provide the option to directly read in files from the data-store without
+   being provided a full path. This embedding is handled by the build-system.
+   PR #237 proposes an implmentation for this logic.
+
+2. It's important for making make this tool work when:
+
+   - this tool is part of the pygrackle module.
+   - this tool is run as a portable single-file executable.
+[[[END-SECTION:INTERNALS-REGISTRY]]]
 """
 
-
-# Notes on the file registry
-# --------------------------
-# The file registry refers to a small file that associates a filename with a checksum.
-#
-# In the long term, we plan to support 3 cases involving hashes checksums:
-#
-# 1. have the C layer of Grackle provide the option to directly read in files from the
-#    data-store without being provided a full path
-#     -> this logic is already mostly implemented
-#     -> In this case, we will also need to have access to the file checksum so we can
-#        validate that the correct file is being accessed. (This is mostly to ensure we
-#        don't break other people's results because we make a mistake). The checksum
-#        validation will be performed with a tool like picohash
-#     -> When we do this, we will directly embed the information encoded in the file
-#        registry inside of scikit-build-core (we picked the file format to ensure that
-#        the information is easy to embed in a C file)
-#
-# 2. Continue supporting the functionality (and cli) implemented by this file within
-#    pygrackle
-#
-# 3. Support running using this script as a standalone command-line program.
-#    -> See the end of this file for what that entails
+# For use as a standalone command line tool this MUST ONLY use python's built-in modules
+import argparse
+import contextlib
+import filecmp
+import functools
+import hashlib
+import io
+from math import log10
+import os
+import re
+import shutil
+import stat
+import sys
+import traceback
+from typing import IO, NamedTuple, Union
+import urllib.request
+from urllib.error import URLError, HTTPError
+import warnings
 
 
-# define some constants
-# =====================
-
-# default chunksize used for file operations
-_CHUNKSIZE = 4096
-
-# the name of the subdirectory in a data-store where we handle deduplication
-_OBJECT_STORE_SUBDIR = "object-store"
-
-# Alternative to `None` for specifying that a value wasn't specified. This is primarily
-# used as a default value for an optional command line flag that requires an argument.
-# In that case, a value of _UNSPECIFIED means that the flag wasn't specified while a
-# value of `None` means that the flag doesn't have an associated value.
-_UNSPECIFIED = object()
-
-
-# Version check and define some backports
-# =======================================
-
-if sys.version_info < (3, 6, 1):
-    # 3.6.0 doesn't support all NamedTuple features
+if sys.version_info < (3, 6, 1):  # 3.6.0 doesn't support all NamedTuple features
     raise RuntimeError("python 3.6.1 or newer is required")
 
-elif sys.version_info < (3, 7, 0):
-
-    class nullcontext:
-        def __init__(self, enter_result=None):
-            self.enter_result = enter_result
-
-        def __enter__(self):
-            return self.enter_result
-
-        def __exit__(self, *args):
-            pass
-
-else:
-    nullcontext = contextlib.nullcontext
+_CHUNKSIZE = 8192  # default chunksize used for file operations
 
 
 class GenericToolError(RuntimeError):
     pass
 
 
-def _ensure_all_removed(fnames):
-    for fname in fnames:
-        try:
-            os.remove(fname)
-        except FileNotFoundError:
-            continue
-
-
-_MAX_BAR = 160 * "="
-
-
 @contextlib.contextmanager
-def _progress_bar(ncols, total_bytes, *, use_dummy=False):
-    """
-    ContextManager that provides a function used for drawing/updating progress bars
-
-    If the program wasn't excuted from a shell, or the caller want to draw
-    too few columns, the returned function does nothing.
-    """
-    # the main template is '[<progress-bar>] <size>/<size> <unit>'
-    # -> <progress-bar> is some fraction of _FULL_BAR and empty space
-    # -> <size> describes the current/total download size (takes up to 6 characters)
-    # -> <unit> is 1 or 2 characters
-    # -> thus, we need 19 characters for everything other than <progress-bar>
-    bar_len = min(len(_MAX_BAR), ncols - 19)
-
-    if use_dummy or (total_bytes <= 0) or (bar_len <= 0) or not sys.stdout.isatty():
-        use_dummy = True
-
-        def _update(size):
-            return None
+def _file_openner(f, mode, **kwargs):
+    if isinstance(f, (str, bytes, os.PathLike)):
+        with open(f, mode, **kwargs) as file:
+            yield file
     else:
-        power_div_3 = int(log10(total_bytes)) // 3
-        factor, unit = 1000.0**power_div_3, ("B", "KB", "MB", "GB")[power_div_3]
-        fmt = "\r[{bar:{len}.{nfill}}] {size:.2f}" + f"/{total_bytes/factor:.2f} {unit}"
+        yield f
 
-        def _update(size):
-            nfill = bar_len * int(size / total_bytes)
-            val = fmt.format(bar=_MAX_BAR, len=bar_len, nfill=nfill, size=size / factor)
+
+def _progress_bar(total_bytes):
+    """provides a function for drawing/updating progress bars"""
+    ncols = shutil.get_terminal_size()[0] - 1
+    power_div_3 = int(log10(total_bytes) // 3) if total_bytes > 0 else 0
+    factor, unit = 1000.0**power_div_3, (" B", "KB", "MB", "GB")[power_div_3]
+    # the output line has the form: '[<progress-bar>] <size>/<size> <unit>'
+    fmt = "\r[{bar:{barlen}.{nfill}}] {size:.2f}" + f"/{total_bytes/factor:.2f} {unit}"
+    barlen = ncols - 19  # for context, 15 <= (len(fmt.format(...)) - barlen) <= 19
+    bar = (barlen * "=") if (barlen >= 1) and sys.stdout.isatty() else None
+
+    def _update(size):
+        nonlocal bar
+        if size is None and bar is not None:
+            print(flush=True)
+            bar = None
+        elif bar is not None:
+            nfill = barlen * int(size / total_bytes)
+            val = fmt.format(bar=bar, barlen=barlen, nfill=nfill, size=size / factor)
             print(val, end="", flush=True)
 
+    return _update
+
+
+def _retrieve_url(url, dst, *, chunksize=_CHUNKSIZE):
+    """download the file from url to dst"""
+    # Online discussion about calling `response.read(chunksize)`, where `response` is a
+    # context manager object from `url.request.urlopen`, implies that there is an upper
+    # limit on the amount of data read from the http request into memory at a given
+    # point in time. This is unlikely to ever be a problem (the biggest file we
+    # currently fetch is under 10 Megabytes). However, if it does become a problem, we
+    # could just wrap the ``curl``/``wget`` cli tools.
     try:
-        yield _update
-    finally:
-        # always execute this clause when exiting the context manager. If an exception
-        # caused the exit, it will be re-raised after this clause
-        if not use_dummy:
-            print(flush=True)
-
-
-def _retrieve_url(url, dest, fname, *, use_progress_bar=True, chunksize=_CHUNKSIZE):
-    """
-    download the file from url to dest
-
-    Note
-    ----
-    Online discussion about calling `response.read(chunksize)`, where
-    `response` is the context manager object produced by
-    `url.request.urlopen`, seems to strongly imply that this limits the
-    amount of data read from the http request into memory at a given
-    point in time. However, the documentation seems vague on this point.
-
-    This is unlikely to ever be a problem (the biggest file we need is
-    currently under 10 Megabytes). However, if it does become a problem,
-    we have 2 options:
-      1. we could conditionally fall back to ``curl`` (cli tool) or
-         ``Requests`` (python package) if they are present on the system
-      2. we could craft custom http requests
-    """
-    ncols = shutil.get_terminal_size()[0] - 1
-    req = urllib.request.Request(url)
-    try:
+        req = urllib.request.Request(url)
         with contextlib.ExitStack() as stack:
-            # enter context managers for http-response, progress-bar, & output-file
+            out_file = stack.enter_context(open(dst, "wb"))
             response = stack.enter_context(urllib.request.urlopen(req))
             total_bytes = int(response.headers.get("Content-Length", -1))
-            update_progress = stack.enter_context(
-                _progress_bar(ncols, total_bytes, use_dummy=not use_progress_bar)
-            )
-            out_file = stack.enter_context(open(dest, "wb"))
+            update_progress = _progress_bar(total_bytes)
+            stack.callback(update_progress, size=None)
 
             # write downloaded data to a file
             downloaded_bytes = 0
@@ -392,1130 +275,63 @@ def _retrieve_url(url, dest, fname, *, use_progress_bar=True, chunksize=_CHUNKSI
                 downloaded_bytes += len(block)
                 out_file.write(block)
     except HTTPError as e:
-        raise GenericToolError(
-            f"The server couldn't fulfill the request for retrieving {fname} from "
-            f"{url}.\nError code: {e.code}"
-        )
+        raise GenericToolError(f"server can't fulfill request to fetch {url}: {e.code}")
     except URLError as e:
-        raise GenericToolError(
-            f"The server couldn't be reached while trying to retrieve {fname} from "
-            f"{url}.\nError code: {e.code}"
-        )
+        raise GenericToolError(f"server can't be reached to fetch {url}: {e.code}")
 
 
-class Fetcher(NamedTuple):
-    """Encodes information for fetching data files
+def _get_data_dir(system_str=None):
+    """Returns a string specifying the data directory"""
+    system_str = sys.platform if system_str is None else system_str
+    if system_str.startswith("win32"):
+        raise RuntimeError()
+    is_darwin = system_str.startswith("darwin")
 
-    Note
-    ----
-    Right now, we always assume that we want to support downloading from
-    GitHub, but in the future, we can also support fetching from a
-    directory
-    """
+    # the following list specifies the order of directories in order of precedence
+    # -> defaults inspired by the API description of the platformdirs python package
+    #    from the online documentation (https://platformdirs.readthedocs.io/en/latest/).
+    #    We have NOT looked at source code!
+    # -> https://specifications.freedesktop.org/basedir-spec/latest/ instructs us to
+    #    simply skip over XDG_DATA_HOME if it specifies a relative path
+    data_dir_chain = [  # tuple fmt: (envvar, suffix_path, fatal_if_rel, is_enabled)
+        ("GRACKLE_DATA_DIR", None, True, True),
+        ("XDG_DATA_HOME", "grackle", False, True),
+        ("HOME", "Library/Application Support/grackle", True, is_darwin),
+        ("HOME", ".local/share/grackle", True, True),
+    ]
 
-    base_path: str
-    holds_url: bool
+    for envvar, suffix_path, fatal_if_rel, is_enabled in data_dir_chain:
+        if not is_enabled:
+            continue
 
-    @classmethod
-    def configure_GitHub_url(cls, data_repository_url, contemporaneous_git_hash):
-        repo_url = data_repository_url
-        repo_version = contemporaneous_git_hash
-        # we could also use the name of a branch (instead of a commit-hash) if we think
-        # that would be better
-        return cls(base_path=f"{repo_url}/raw/{repo_version}/input/", holds_url=True)
+        prefix = os.getenv(envvar, None)
+        if prefix is None and envvar == "HOME":
+            prefix = os.path.expanduser("~")
+        elif prefix is None or len(prefix) == 0:
+            continue
 
-    @classmethod
-    def configure_src_dir(cls, dir_path):
-        return cls(base_path=dir_path, holds_url=False)
-
-    def __call__(self, fname, checksum, checksum_kind, dest_dir):
-        """
-        Retrieve the file named ``fname`` to a location dest_dir
-
-        Returns
-        -------
-        full_path: str
-            Upon success, we return the full path of the newly fetched file
-
-        Notes
-        -----
-        We follow the following procedure (inspired by pooch):
-          1. downloads the file to a temporary location
-          2. verifies that the checksum is correct
-          3. move the file to the appropriate destination
-
-        This provides robust behavior if the program is interupted. In
-        principle, we could combine steps 1 and 2. But, there may be some
-        minor benefits to keeping our procedure like this (theoretically,
-        we may be more likely to catch corruption from harddrive hardware
-        errors).
-        """
-        src = os.path.join(self.base_path, fname)
-        dst = os.path.join(dest_dir, fname)
-        _pretty_log(f"-> fetching `{fname}`", indent_all=True)
-        tmp_name = os.path.join(dest_dir, "_tempfile")
-        # tmp_name can safely be removed if it exists (it only exists if this logic
-        # previously crashed or was interupted by SIGKILL)
-        _ensure_all_removed([tmp_name])
-
-        try:
-            if self.holds_url:
-                _retrieve_url(src, tmp_name, fname)
-            else:
-                # copy the file
-                shutil.copyfile(src, tmp_name)
-            if not matches_checksum(tmp_name, checksum_kind, checksum):
-                if matches_checksum(src, checksum_kind, checksum):
-                    raise GenericToolError(
-                        f"while copying from {src}, data may have been corrupted"
-                    )
-                raise GenericToolError(f"{src} does't have the expected checksum")
-            os.rename(tmp_name, dst)
-
-        finally:
-            _ensure_all_removed([tmp_name])
+        if prefix[0] == "~":
+            msg = f"core grackle-lib forbids {envvar!r} path starting with '~'"
+            raise RuntimeError(msg)
+        elif prefix[0] != "/" and fatal_if_rel:
+            raise RuntimeError(f"{envvar} holds a relative path")
+        elif prefix[0] != "/":
+            continue
+        elif suffix_path is None:
+            return prefix
+        else:
+            return os.path.join(prefix, suffix_path)
 
 
 class Config(NamedTuple):
     """Track basic configuration information."""
 
     data_dir: str
-    default_fetcher: Fetcher
+    base_url: str
     file_registry_file: Union[str, bytes, os.PathLike, IO, None]
     grackle_version: str
     protocol_version: str = "1"
     checksum_kind: str = "sha1"
-
-    @property
-    def store_location(self):
-        return os.path.join(self.data_dir, f"data-store-v{self.protocol_version}")
-
-    @property
-    def tmp_dir(self):
-        """Used for hardlink test and scratch-space"""
-        return os.path.join(self.data_dir, "tmp")
-
-    @property
-    def user_data_dir(self):
-        """Reserved for user data"""
-        return os.path.join(self.data_dir, "user-data")
-
-
-def _get_platform_data_dir(appname="grackle", system_str=None):
-    """Returns a string specifying the default data directory
-
-    All of these choices are inspired by the API description of the platformdirs python
-    package
-        * we only looked at online documentation:
-          https://platformdirs.readthedocs.io/en/latest/
-        * we have NOT read any source code
-    """
-    if system_str is None:
-        system_str = sys.platform
-    if system_str.startswith("win32"):
-        raise RuntimeError()
-    elif system_str.startswith("darwin"):
-        return os.path.expanduser(f"~/Library/Application Support/{appname}")
-    else:  # assume linux/unix
-        # https://specifications.freedesktop.org/basedir-spec/latest/
-        dflt = "~/.local/share"
-        env_str = os.getenv("XDG_DATA_HOME", default=dflt)
-        if env_str[:1] not in ["~", "/"]:
-            # this is what the specification tells us to do
-            warnings.warn(
-                "ignoring XDG_DATA_HOME because it doesn't hold an " "absolute path"
-            )
-            env_str = dflt
-
-        # now actually infer the absolute path
-        if env_str[0] == "~":
-            if env_str[:2] != "~/":  # for parity with C-version of this function
-                raise RuntimeError(
-                    "can't expand can't expand env-variable, XDG_DATA_HOME when "
-                    "it starts with `~user/` or just contains `~`"
-                )
-            return os.path.expanduser(f"{env_str}/{appname}")
-        else:
-            return f"{env_str}/{appname}"
-
-
-def _get_data_dir():
-    manual_choice = os.getenv("GRACKLE_DATA_DIR", default=None)
-    if (manual_choice is None) or (len(manual_choice) == 0):
-        return _get_platform_data_dir()
-    elif (manual_choice[0] != "~") and (not os.path.isabs(manual_choice)):
-        raise RuntimeError("GRACKLE_DATA_DIR must specify an absolute path")
-    elif manual_choice[0] == "~":
-        if not manual_choice[:2] != "~/":  # for parity with C-version of this function
-            raise RuntimeError(
-                "can't expand can't expand env-variable, GRACKLE_DATA_DIR when "
-                "it starts with `~user/` or just contains `~`"
-            )
-        return os.path.expanduser(manual_choice)
-    else:
-        return manual_choice
-
-
-@contextlib.contextmanager
-def _file_openner(f, mode, **kwargs):
-    """Open a file or pass through an already open file"""
-    try:
-        path = os.fspath(f)
-    except TypeError:
-        path = None
-    if path is None:
-        yield f
-    else:
-        with open(path, mode, **kwargs) as fobj:
-            yield fobj
-
-
-def _parse_file_registry(f):
-    """Read the file registry, as a dict from a text file
-
-    Parameters
-    ----------
-    f : file or str or bytes or ``os.PathLike``
-        Contains the data to be read in
-
-    Notes
-    -----
-    We describe the format below. This format was choosen so that the
-    contents could be injected into a C to be used as a literal.
-
-      * empty lines and lines that start with ``//`` are ignored
-
-      * all other lines should look like ``{"<file-name>", "<hash>"}``
-        and there is allowed to be a trailing comma
-    """
-
-    with _file_openner(f, "r") as file:
-        file_registry = {}
-        for i, line in enumerate(file):  # iterater over lines
-            if (len(line) == 0) or line.isspace() or line.startswith("//"):
-                continue
-            m = re.match(
-                r'^\s*{\s*"(?P<fname>[^"]+)"\s*,\s*"(?P<cksum>[^"]+)"\s*},?\s*', line
-            )
-            if m is None:
-                raise RuntimeError(
-                    f"Something went wrong with parsing line {i+1} of {f}:\n "
-                    f"  `{line}`"
-                )
-            file_registry[m["fname"]] = m["cksum"]
-    return file_registry
-
-
-class LockFileExistsError(FileExistsError):
-    pass
-
-
-class LockFileContext:
-    """Reentrant context manager that creates a "lockfile".
-
-    The context-manager will delete the file when we finish. If the lock
-    already exists, the program will abort with an explanatory error
-    (this ensures that only 1 copy of the program will try to run at a
-    time).
-
-    Examples
-    --------
-    To use this you might invoke:
-
-    >>> dir_lock = LockFileContext("path/to/lockfile")
-    >>> with dir_lock:
-    ...     # do something critical
-
-    This is reentrant in the sense that you can perform something like the
-    following (the real value here is that you can mover internal
-    with-statement inside of functions)
-
-    >>> dir_lock = LockFileContext("path/to/lockfile")
-    >>> with dir_lock:
-    ...     # do something critical
-    ...     with dir_lock:
-    ...         # do something else critical
-    """
-
-    def __init__(self, lock_file_path):
-        self.lock_file_path = lock_file_path
-
-        # the following is always non-negative. It can exceed 1 if the same context
-        # manager is used in nested with-statements
-        self._acquisition_count = 0
-
-    def locked(self):
-        return self._acquisition_count > 0
-
-    def __enter__(self):
-        if self._acquisition_count == 0:
-            # try to acquire the lock (by trying to create the file)
-            try:
-                f = open(self.lock_file_path, "x")
-                f.close()
-            except FileExistsError as err:
-                raise LockFileExistsError(
-                    err.errno,
-                    err.strerror,
-                    err.filename,
-                    getattr(err, "winerror", None),
-                    err.filename2,
-                ) from None
-        else:
-            # this is a nested with-statement, in a process that already owns the lock
-            pass
-
-        self._acquisition_count += 1  # only executed if process owns the lock
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        if exc_type is FileExistsError:
-            return False
-        elif self._acquisition_count <= 0:
-            raise RuntimeError("the contextmanager has a totally invalid state!")
-        elif self._acquisition_count == 1:
-            os.remove(self.lock_file_path)
-        self._acquisition_count -= 1
-        return False  # if an exception triggered the exitting of a context manager,
-        # don't suppress it!
-
-
-def standard_lockfile(config):
-    return LockFileContext(os.path.join(config.data_dir, "lockfile"))
-
-
-def calc_checksum(fname, alg_name, *, chunksize=_CHUNKSIZE):
-    """Calculate the checksum for a given fname"""
-    # construct the object to track intermediate state of the checksum
-    # calculation as we stream through the data
-    hash_obj = hashlib.new(alg_name)
-    with _file_openner(fname, "rb") as f:
-        if f is fname:
-            f.seek(0, os.SEEK_SET)
-
-        buffer = bytearray(chunksize)
-        while True:
-            nbytes = f.readinto(buffer)
-            if nbytes == chunksize:
-                hash_obj.update(buffer)
-            elif nbytes:  # equivalent to: (nbytes is not None) and (nbytes > 0)
-                hash_obj.update(buffer[:nbytes])
-            else:
-                break
-    return hash_obj.hexdigest()
-
-
-def matches_checksum(fname, alg_name, checksum):
-    return checksum == calc_checksum(fname, alg_name)
-
-
-def _pretty_log(arg, *, indent_all=False):
-    """indent messages so it's clear when multiline messages are a single thought"""
-    lines = arg.splitlines()
-    if len(lines) and not indent_all:
-        formatted = [f"-- {lines[0]}"] + [f"   {e}" for e in lines[1:]]
-    else:
-        formatted = [f"   {e}" for e in lines]
-    print(*formatted, sep="\n")
-
-
-def _ensure_exists(path, content_description):
-    if not os.path.isdir(path):
-        if len(content_description) > 0:
-            _pretty_log(f"creating directory {content_description}\n-> {path}")
-        os.mkdir(path)
-
-
-# to be used with os.chmod to set permissions to prevent mutations of files (you can
-# always delete it if you own it)
-_IMMUTABLE_MODE = stat.S_IREAD | stat.S_IRGRP | stat.S_IROTH
-
-
-class _HardlinkStrat:
-    """
-    Acts as a "namespace" for functions related to our deduplication strategy
-    that uses Hardlinks
-    """
-
-    @staticmethod
-    def is_supported(dirname):
-        """returns whether the OS (and filesystem supports hardlinks)"""
-
-        fnames = [os.path.join(dirname, f"linktest_f{i}.txt") for i in [0, 1]]
-        _ensure_all_removed(fnames)
-
-        try:
-            _contents = "THIS IS SOME TEST DATA"
-            with open(fnames[0], "w") as f:
-                f.write(_contents)
-            os.link(fnames[0], fnames[1])
-            os.remove(fnames[0])
-            with open(fnames[1], "r") as f:
-                support_hardlinks = f.read() == _contents
-        except OSError:
-            support_hardlinks = False
-        finally:
-            _ensure_all_removed(fnames)
-        return support_hardlinks
-
-    @staticmethod
-    def are_linked(fname, fname2):
-        """return whether ``fname`` & ``fname2`` specify paths that are hardlinks"""
-        try:
-            statinfo1 = os.stat(fname, follow_symlinks=False)
-            statinfo2 = os.stat(fname2, follow_symlinks=False)
-        except FileNotFoundError:
-            return False
-        return statinfo1.st_ino == statinfo2.st_ino
-
-    @staticmethod
-    def remove_if_norefs(fname):
-        """
-        Removes the specified file if there are no other references to it.
-
-        Parameters
-        ----------
-        fname : str
-            Path to the file that we are operating on
-
-        Returns
-        -------
-        bool
-            Indicates if any file was removed
-        """
-        statinfo = os.stat(fname, follow_symlinks=False)
-
-        # statinfo.st_nlink == 1 means that the only hardlink is the hardlink of
-        # associated with fname
-        # -> it should be possible for ``os.stat(fname).st_nlink`` to return ``0``
-        if statinfo.st_nlink == 1:
-            os.remove(fname)
-            return True
-        return False
-
-    @staticmethod
-    def deduplicate(full_fname, shared_fname):
-        """
-        Perform logic to ensure that ``full_fname`` and ``shared_fname``
-        are both paths that refer to the same hardlink.
-
-        This handles 3 main cases:
-
-          1. ``full_fname`` and ``shared_fname`` are already hardlinked.
-
-             * Nothing is done.
-
-          2. ``full_fname`` exists and ``shared_fname`` doesn't.
-
-             * A hardlink will be created at ``shared_fname`` that refers
-               to ``full_fname``.
-
-          3. ``full_fname`` and ``shared_fname`` specify existing distinct
-             copies of the same existing file.
-
-             * in this case, ``full_fname`` is deleted and then replaced
-               with a hardlink that refers to ``shared_fname``.
-
-        Parameters
-        ----------
-        full_fname : str
-            Specifies an existing file-path that already exists
-        shared_fname : str
-            Specifies a file-path that may or may not exist. If it does
-            already exist, it will be preserved (in case it is already in
-            use for deduplicating other existing files)
-        """
-        if not os.path.isfile(full_fname):
-            raise FileNotFoundError(full_fname)
-        elif _HardlinkStrat.are_linked(full_fname, shared_fname):
-            pass  # do nothing!
-        elif os.path.isfile(shared_fname):
-            if not filecmp.cmp(full_fname, shared_fname, shallow=False):
-                raise ValueError(
-                    f"`{full_fname}` and `{shared_fname}` specify files that aren't "
-                    "perfect copies"
-                )
-            os.remove(full_fname)
-            os.link(shared_fname, full_fname)
-        else:
-            os.link(full_fname, shared_fname)
-
-
-def _ensure_data_dir_exists(config):
-    """Creates the data_dir if it doesn't exist
-
-    the data_dir is a directory that contains:
-     -> the data-store directory for data managed by the current protocol version
-     -> (possibly) data-store directories for data managed by other protocol version
-     -> (possibly) a directory called `user-data/` where users can put custom data
-    """
-    _ensure_exists(config.data_dir, "that will hold all Grackle data")
-
-    # even though it isn't used for anything right now, make the directory that is
-    # reserved for user content
-    _ensure_exists(config.user_data_dir, "reserved for user-defined data")
-
-    # primarily for testing whether hard-links are supported
-    _ensure_exists(config.tmp_dir, "reserved for scratch-space")
-
-
-def get_version_dir(config):
-    return os.path.join(config.store_location, config.grackle_version)
-
-
-def get_object_dir(config):
-    return os.path.join(config.store_location, _OBJECT_STORE_SUBDIR)
-
-
-class VersionDataManager(NamedTuple):
-    """
-    Actually manages downloads of files to a directory where the
-    directory and files are associated with single Grackle version.
-
-    Instances of this class support 2 modes of operation:
-      1. The instance manages a data file directory that is part of the
-         larger data-management system. This data-management system may
-         include multiple version directories and data-files are
-         deduplicated.
-      2. The instance manages a data file directory that is completely
-         isolated from any data-management system (i.e. there is no
-         deduplication)
-
-    The first mode is the primary usecase of this class. (The second mode
-    is mostly provided as a convenience)
-
-    Warnings
-    --------
-    This should not be considered part of a public API. The names and
-    existence of all attributes and methods are subject to change
-
-    Notes
-    -----
-    A major motivating factor in the design was providing the capacity
-    to create the necessary directories only when absolutely necessary
-    (i.e. when we are about to download data)
-
-    Some future methods that might be worth implmenting
-
-      * a method to download a single file
-
-      * a method to check the validity of a single Version file (i.e. it
-        ONLY contains files listed in the specified registry, all files
-        match the specified checksum, AND they are all properly linked to
-        a file in the object directory)
-    """
-
-    # Path to output directory, where the file-name matches the name given in the
-    # registry and is known by the associated grackle-version.
-    version_dir: str
-
-    # config holds a little more information than we actually need
-    # -> we may chooise to redefine this in the future
-    config: Optional[Config]
-
-    # encodes the configuration (and logic) for fetching the files
-    fetcher: Fetcher
-
-    @classmethod
-    def create(
-        cls,
-        config,
-        *,
-        untracked_dest_dir=None,
-        override_fetcher=None,
-    ):
-        """
-        Create a new instance
-
-        Parameters
-        ----------
-        config : Config
-        untracked_dest_dir : str, optional
-            When specified the constructed object will be used to manage
-            fetched files are placed in the specified
-            directory and no attempt is made to track the file as part of
-            the data-directory.
-        override_fetcher : Fetcher, optional
-            When specified, this fetcher is used in place of the standard
-            default fetcher provided by config.
-        """
-
-        fetcher = override_fetcher
-        if fetcher is None:
-            fetcher = config.default_fetcher
-
-        if untracked_dest_dir is None:
-            version_dir = get_version_dir(config)
-        else:
-            version_dir = untracked_dest_dir
-            config = None
-
-        return cls(
-            version_dir=version_dir,
-            config=config,
-            fetcher=fetcher,
-        )
-
-    def manages_untracked_data(self):
-        return self.config is None
-
-    def _object_dir(self):
-        """
-        If the instance manages data as part of a larger data management
-        system, then this method returns the path to the object directory.
-        This is the directory where checksum names are used as filenames.
-        (Linking with files in this directory is the mechanism used to aid
-        deduplication)
-        """
-        if self.config is None:
-            return None
-        return get_object_dir(self.config)
-
-    def _setup_file_system(self):
-        """
-        helper function that ensures that the file system is set up for
-        fetching new files and returns the configured lockfile context
-        manager (it isn't locked yet)
-        """
-        if self.manages_untracked_data():
-            lockfile_ctx = nullcontext()
-        else:
-            _ensure_data_dir_exists(self.config)
-
-            lockfile_ctx = standard_lockfile(self.config)
-            with lockfile_ctx:
-                # let's validate we can actually use hardlinks
-                if not hasattr(os, "link"):
-                    raise GenericToolError("operating system doesn't support hardlinks")
-                elif not _HardlinkStrat.is_supported(self.config.tmp_dir):
-                    raise GenericToolError("The file system does not support hardlinks")
-
-                # a little more set up
-                _ensure_exists(self.config.store_location, "that holds the data-store")
-                _ensure_exists(self._object_dir(), "")
-
-            assert not lockfile_ctx.locked()  # sanity check!
-
-        with lockfile_ctx:
-            _ensure_exists(
-                self.version_dir, "that holds data for current Grackle version"
-            )
-
-        return lockfile_ctx
-
-    def _fetch_file(self, fname, full_checksum_str, *, lockfile_ctx=None):
-        """
-        Helper method to fetch a single file. Provides the full path
-
-        Parameters
-        ----------
-        fname : str
-            The name of the file to be fetched
-        full_checksum_str : str
-            The checksum of the file.
-        lockfile_ctx : LockFileContext, optional
-            When this is None, the calling process doesn't already own the
-            lock for the data-directory (and this function will try to
-            acquire the lock)
-
-        Returns
-        -------
-        any_work : bool
-            Indicates whether any work was actually required to fetch the
-            file. the file was freshly fetched. ``True`` indicates that we
-            actually needed to go get the file, while ``False`` denotes
-            that the file already existed
-        full_fname : str
-            Specifies the absolute path to the file. When a tracked file
-            is fetched, then this is path to the file entry where
-            `os.path.basename(full_fname)` is equal `fname`
-        """
-
-        if lockfile_ctx is None:
-            lockfile_ctx = self._setup_file_system()
-
-        # extract the checksum_kind and string that are stored in the registry
-        if ":" in full_checksum_str:
-            cur_cksum_kind, checksum = full_checksum_str.split(":")
-        else:
-            raise ValueError(
-                f"the checksum for {fname} does not specify the checksum kind"
-            )
-
-        # when tracking files as part of the data file management system, there are
-        # strict requirements on the kind of checksum that is used.
-        # -> This is because the entries in the object directory (used for
-        #    deduplication) use the checksum string (without the algorithm tag) as
-        #    file names.
-        # -> here, we check this requirement
-        if self.manages_untracked_data():
-            req_cksum_kind = None
-        else:
-            req_cksum_kind = self.config.checksum_kind
-            if cur_cksum_kind != req_cksum_kind:
-                raise ValueError(
-                    "To download a file as part of Grackle's data file management "
-                    "system, we must know the file's checksum computed with the "
-                    f"{req_cksum_kind} checksum algorithm. The provided checksum "
-                    f"for {fname} was computed with the {cur_cksum_kind} algorithm."
-                )
-
-        # now we actually fetch the file (if necessary)
-        with lockfile_ctx:
-            # get the full path to the downloaded file
-            full_fname = os.path.join(self.version_dir, fname)
-
-            # if the file already exists we are done
-            if os.path.exists(full_fname):
-                if not matches_checksum(full_fname, cur_cksum_kind, checksum):
-                    raise RuntimeError(
-                        f"{full_fname} already exists but has the wrong hash"
-                    )
-                # when we're handling tracked data, we could theoretically check whether
-                # this data is properly linked. But I don't think I would want to take
-                # any kind of action if it isn't properly tracked (the most action I
-                # would recommend is providing the user with a warning)
-                return (False, full_fname)
-
-            # download the file
-            fetcher = self.fetcher
-            fetcher(
-                fname,
-                checksum=checksum,
-                checksum_kind=cur_cksum_kind,
-                dest_dir=self.version_dir,
-            )
-            if not self.manages_untracked_data():
-                # by changing permissions, certain platforms (like MacOS) will ask
-                # users "are you sure you want to delete this file" when the ``rm``
-                # command is used:
-                # -> this is desirable for files managed by the grackle data management
-                #    systems (when we don't want users removing individual files)
-                # -> but, we avoid doing this for untracked data files (because it's
-                #    just an annoyance for the end-user)
-                os.chmod(full_fname, _IMMUTABLE_MODE)
-
-            if not self.manages_untracked_data():
-                # handle deduplication (since the data files are part of the larger
-                # grackle data file management system)
-                cksum_fname = os.path.join(self._object_dir(), checksum)
-
-                try:
-                    _HardlinkStrat.deduplicate(full_fname, cksum_fname)
-
-                    # not strictly necessary, but doing this for safety reasons
-                    os.chmod(cksum_fname, _IMMUTABLE_MODE)
-
-                except Exception as err:
-                    # remove full_fname
-                    # -> we don't want users to use it before resolving the issues
-                    # -> We also want to make the errors as reproducible as possible
-                    #    (ideally, rerunning the command should produce the same error
-                    #    if you haven't changed anything)
-                    os.remove(full_fname)
-                    if os.path.is_file(cksum_fname) and not isinstance(err, ValueError):
-                        raise err
-
-                    # this should only happens when full_fname and cksum_fname both
-                    # exist, but aren't perfect matches of each other. Here, we try to
-                    # provide a more informative error message
-                    if not matches_checksum(cksum_fname, req_cksum_kind, checksum):
-                        raise GenericToolError(f"""\
-A file (used for deduplication) that already existed on disk
-   `{cksum_fname}`
-which is probably a version of `{fname}`,
-doesn't have the appropriate {req_cksum_kind} checksum.
--> expected: {calc_checksum(cksum_fname, req_cksum_kind)}
--> actual: {checksum}
--> This implies that the data was corrupted and it needs to be dealt with.
-   To avoid confusion we have deleted the newly downloaded version of
-   `{fname}`
--> The safest bet is probably to delete the data directory""")
-                    else:
-                        raise GenericToolError(f"""\
-Something bizare (& extremely unlikely) happened:
--> a previous invocation of this tool appears to have installed a data file
-   with the same checksum as {fname}, but has different contents.
--> we adopt a similar system to git and the odds for this to organically
-   happen for a small collection of files is truly astronomical!
--> this is probably a sign that something went wrong. We deleted the newly
-   downloaded version of the file""")
-        return (True, full_fname)
-
-    def fetch_all(self, registry, *, fnames=None):
-        """
-        Ensures that files in the specified registry are downloaded
-
-        Parameters
-        ----------
-        registry : dict
-            maps file names to associated checksums
-        fnames : sequence, optional
-            Optionally specifies a list of files, with corresponding
-            registry entries to fetch. When this is ``None``, all files in
-            the registry are fetched.
-        """
-
-        if fnames is None:
-            fname_cksum_pairs = registry.items()
-        else:
-            for fname in filter(lambda fname: fname not in registry, fnames):
-                raise ValueError(
-                    f"{fname} is not the name of a file with a registry "
-                    "entry. Thus it can't be downloaded.\n\nFiles with "
-                    f"registry entries include: {list(registry.keys())!r}"
-                )
-            fname_cksum_pairs = ((fname, registry[fname]) for fname in fnames)
-
-        # ensure all needed directories exist and fetch the lockfile context manager
-        lockfile_ctx = self._setup_file_system()
-
-        with lockfile_ctx:
-            num_fetched = 0
-            _pretty_log(f"preparing to fetch files from: {self.fetcher.base_path}")
-            for fname, full_checksum_str in fname_cksum_pairs:
-                any_work, _ = self._fetch_file(
-                    fname, full_checksum_str, lockfile_ctx=lockfile_ctx
-                )
-                num_fetched += any_work
-
-        if num_fetched == 0:
-            _pretty_log("-> no files needed to be retrieved", indent_all=True)
-
-
-def fetch_command(args, config):
-    override_fetcher = None
-    if args.from_dir is not None:
-        override_fetcher = Fetcher.configure_src_dir(args.from_dir)
-
-    fnames = None if len(args.fnames) == 0 else args.fnames
-
-    man = VersionDataManager.create(
-        config=config,
-        untracked_dest_dir=args.untracked_dest_dir,
-        override_fetcher=override_fetcher,
-    )
-    registry = _parse_file_registry(config.file_registry_file)
-    man.fetch_all(registry, fnames=fnames)
-
-
-def _register_fetch_command(subparsers):
-    parser_fetch = subparsers.add_parser(
-        "fetch",
-        help=(
-            "fetch data files if we don't already have the data for the "
-            "associated version of grackle"
-        ),
-    )
-    parser_fetch.add_argument(
-        "fnames",
-        nargs="*",
-        help=(
-            "Optionally specify the names of files that should be fetched. "
-            "Each listed file must have a corresponding entry in the file "
-            "registry used by this tool. If no files are specified, then the "
-            "tool will fetch every known file."
-        ),
-    )
-    parser_fetch.add_argument(
-        "--untracked-dest-dir",
-        default=None,
-        help=(
-            "This flag can be used to instruct to download files to an "
-            "arbitrary directory where the data files will NOT be stored as "
-            "part of the data file management system. This provided as a "
-            "convenience. The specified directory should NOT be located "
-            "inside the grackle data directory. The tool also won't use any "
-            "kind of lock files (thus, it's the user's responsibility to "
-            "ensure that only a single process is modifying the specified "
-            "directory at any given time. This is provided mostly as a "
-            "convenience. Management of the files in this directory is "
-            "outside this tool's scope."
-        ),
-    )
-    parser_fetch.add_argument(
-        "--from-dir",
-        default=None,
-        help=(
-            "optionally specify a path to a directory where we copy the files from "
-            "(instead of downloading them)"
-        ),
-    )
-    parser_fetch.set_defaults(func=fetch_command)
-
-
-def direntry_iter(path, *, ftype="file", mismatch="skip", ignore=None):
-    """
-    Iterate over the contents of a single directory with focus on a
-    particular file type assumption that all.
-
-    Parameters
-    ----------
-    path : str
-        path to the directory
-    ftype : {None, 'file', 'dir'}
-        When not ``None``, the iterator only produces entries for the
-        specified file-type
-    mismatch : {'skip', 'lazy_err', 'eager_err'}
-        Specifies the action to take when this generator encounters an
-        entry in ``path`` that doesn't have the specified type.
-          * ``'skip'`` means to simply skip the entry
-          * ``'lazy_err'`` means that we raise an error
-          * ``'eager_err'`` means that we check for any mismatches and
-            raise an error if any mismatch is encountered and afterwards,
-            we start yielding elements
-    ignore : container of str, optional
-        Optional container of strings that are ignored
-
-    Yields
-    ------
-    pair : tuple of two str
-        The first element is the entry's base filename and the second is the full path
-    """
-
-    def always_true(*args):
-        return True
-
-    if ftype is None:
-        has_ftype = always_true
-    elif ftype == "dir":
-        has_ftype = os.path.isdir
-    elif ftype == "file":
-        has_ftype = os.path.isfile
-    else:
-        raise ValueError("ftype must be None, 'file' or 'dir'")
-
-    if ignore is None:
-        ignore = []
-    elif isinstance(ignore, str):
-        raise TypeError("ignore can't be a string")
-
-    it = map(
-        lambda e: (e, os.path.join(path, e)),
-        filter(lambda e: e not in ignore, os.listdir(path)),
-    )
-    if mismatch == "eager_err":
-        for pair in direntry_iter(path, ftype=ftype, mismatch="lazy_err"):
-            pass
-        yield from it
-    elif mismatch in ["lazy_err", "skip"]:
-        for pair in it:
-            if has_ftype(pair[1]):
-                yield pair
-            elif mismatch == "lazy_err":
-                raise RuntimeError(f"{pair[1]} isn't a {ftype}")
-    else:
-        raise ValueError("mismatch must be 'eager_err', 'lazy_err' or 'skip'")
-
-
-def showknownreg_command(args, config):
-    f = config.file_registry_file
-    if isinstance(f, io.IOBase):
-        lines = f.readlines()
-    else:
-        with open(config.file_registry_file, "r") as f:
-            lines = f.readlines()
-    contents = [
-        line for line in lines if len(line.strip()) > 0 and not line.startswith("//")
-    ]
-    print(*contents, sep="", end="")
-
-
-def _fmt_registry_lines(fname_cksum_pairs, hash_alg):
-    length, suffix = len(fname_cksum_pairs), (",\n", "\n")
-    return [
-        f'{{"{fname}", "{hash_alg}:{cksum}"}}{suffix[(i+1) == length]}'
-        for i, (fname, cksum) in enumerate(sorted(fname_cksum_pairs))
-    ]
-
-
-def calcreg_command(args, config):
-    # print the properly file registry information (in the proper format that can be
-    # used to configure newer versions of Grackle
-
-    # we use listdir since we are targetting 3.3, but we set things up so that we could
-    # use os.scandir
-    try:
-        it = direntry_iter(args.path, ftype="file", mismatch="eager_err")
-    except FileNotFoundError:
-        raise ValueError(f"{args.path!r} doesn't specify a directory or file")
-    except NotADirectoryError:
-        it = [(os.path.basename(args.path), args.path)]
-
-    pairs = [(name, calc_checksum(path, args.hash_name)) for name, path in it]
-
-    with contextlib.ExitStack() as stack:
-        if args.output is None:
-            file = sys.stdout
-        else:
-            file = stack.enter_context(open(args.output, "w"))
-
-        '''
-        if file is not None:
-            file.write(f"""\
-// This is a file registry generated by the grackle data management tool
-// To overwrite this file with an updated copy (assuming that pygrackle is
-// installed), you might invoke:
-//    python -m pygrackle --hash_name {args.hash_name} --output <outpath> <dir>
-// in this sample command, you would substitute:
-//    -> ``<outpath>`` with a path to the output file
-//    -> ``<dir>`` with a path to the directory containing all files that are
-//       to be included in the registry
-""")
-        '''
-        print(*_fmt_registry_lines(pairs, args.hash_name), sep="", end="", file=file)
-
-
-def _register_calcreg_command(subparsers):
-    parser_calcregistry = subparsers.add_parser(
-        "calcreg",
-        help=(
-            "prints the file registry (file hash pairs) for a given directory. This "
-            "computed registry can be used to configure future versions of Grackle."
-        ),
-    )
-    parser_calcregistry.add_argument(
-        "-o",
-        "--output",
-        metavar="FILE",
-        help=(
-            "Write the output to a file instead of stdout. The file will include extra "
-            "metadata (as comments)."
-        ),
-    )
-    parser_calcregistry.add_argument(
-        "--hash-name",
-        required=True,
-        metavar="HASH",
-        choices=hashlib.algorithms_guaranteed,
-        help=(
-            "the kind of checksum to compute. Must be one of: "
-            f"{ ', '.join(sorted(hashlib.algorithms_guaranteed))}"
-        ),
-    )
-    parser_calcregistry.add_argument(
-        "path", help="path to the directory containing the files in the registry"
-    )
-    parser_calcregistry.set_defaults(func=calcreg_command)
-
-
-def _show_help(*args, **kwargs):
-    # it might be nice to pipe to a pager (specified by PAGER env variable or
-
-    # here is some logic to strip anchors
-    # replace the [[[BEGIN:...]]] & [[[END:...]]] anchors
-    _open, _close = r"\[\[\[", r"\]\]\]"
-    section_start_anchor = re.compile(
-        rf"^{_open}BEGIN-SECTION:([-,_+.! 0-9A-Za-z]+){_close}[ \t]*$"
-    )
-    generic_anchor = re.compile(rf"^{_open}[-:,_+.! 0-9A-Za-z]+{_close}[ \t]*$")
-
-    for line in _EXTENDED_DESCRIPTION.splitlines():
-        m = section_start_anchor.match(line)
-        if m:
-            section_name = m.group(1)
-            print(section_name, len(section_name) * "-", sep="\n")
-        elif generic_anchor.match(line):
-            continue
-        else:
-            print(line)
-
-
-def register_show_subcommand(name, short_descr, target=None, *, subparsers):
-    # register subcommand that simply shows information and then exits
-
-    if callable(target):
-        _command = target
-    else:
-        target = name.replace("-", "_") if target is None else target
-
-        def _command(args, config):
-            print(getattr(config, target))
-
-    _descr = f"show {short_descr} & exit"
-    p = subparsers.add_parser(name, help=_descr, description=_descr)
-    p.set_defaults(func=_command)
-
-
-def build_parser(prog_name):
-    parser = argparse.ArgumentParser(
-        prog=prog_name,
-        description=(
-            "This is a management system for Grackle's data files. Subcommands are "
-            "provided to fetch data files, list all available data, and delete data"
-        ),
-        epilog=f"Invoke `{prog_name} help` to get a detailed overview of the tool",
-    )
-
-    # These are hidden arguments for testing (we may remove them any time in the future)
-    flag_attr_pairs = [
-        ("--testing-override-registry-file", "file_registry_file"),
-        ("--testing-override-grackle-version", "grackle_version"),
-    ]
-    for flag, attr in flag_attr_pairs:
-        dest = f"override_{attr}"
-        parser.add_argument(
-            flag, dest=dest, help=argparse.SUPPRESS, default=argparse.SUPPRESS
-        )
-
-    subparsers = parser.add_subparsers(required=True)
-
-    _register_fetch_command(subparsers)
-    _register_calcreg_command(subparsers)
-
-    show = functools.partial(register_show_subcommand, subparsers=subparsers)
-    show("grackle-version", "associated Grackle version")
-    show("protocol-version", "associated data-store protocol version")
-    show("checksum-kind", "associated checksum algorithm")
-    show("getpath", "path for data-dir (regardless of whether it exists)", "data_dir")
-    show("help", "detailed help information", _show_help)
-    showknownreg_descr = "pre-registered file registry (for associated Grackle version)"
-    show("showknownreg", showknownreg_descr, showknownreg_command)
-
-    return parser
-
-
-def main(config, prog_name, *, args=None):
-    """
-    Launch the command
-
-    Returns
-    -------
-    int
-        Specified the exit code
-    """
-    parser = build_parser(prog_name)
-    args = parser.parse_args(args=args)
-
-    # handle testing overrides
-    for attr in ["file_registry_file", "grackle_version"]:
-        val = getattr(args, f"override_{attr}", None)
-        if val is not None:
-            config = config._replace(**{attr: val})
-
-    try:
-        args.func(args, config=config)
-    except SystemExit:
-        pass  # this shouldn't come up!
-    except LockFileExistsError as err:
-        lock_file_path = err.filename
-        print(
-            f"""\
-ERROR: The `{lock_file_path}` lock-file already exists.
--> This probably means that another copy of this tool is currently running.
--> If you are absolutely sure that's not the case, that probably means that a copy
-   of this tool previously crashed""",
-            file=sys.stderr,
-        )
-        return 78  # https://www.man7.org/linux/man-pages/man3/sysexits.h.3head.html
-    except GenericToolError as err:
-        print(f"ERROR: {err.args[0]}")
-        return 70  # https://www.man7.org/linux/man-pages/man3/sysexits.h.3head.html
-    except BaseException:
-        print("Unexpected error:", file=sys.stderr)
-        traceback.print_exc(file=sys.stderr)
-        return 70  # https://www.man7.org/linux/man-pages/man3/sysexits.h.3head.html
-    else:
-        return 0
 
 
 def make_config_object(grackle_version, file_registry_file):
@@ -1529,59 +345,429 @@ def make_config_object(grackle_version, file_registry_file):
         Contains the file registry
     """
     _REPO_URL = "https://github.com/grackle-project/grackle_data_files/"
-
-    # this is hash that holds the versions of the datafiles from the time when this
+    # this is the hash that holds the versions of the datafiles from the time when this
     # version of the file was shipped
     _CONTEMPORANEOUS_COMMIT_HASH = "9a63dbefeb1410483df0071eefcbff666f40816d"
 
     return Config(
         data_dir=_get_data_dir(),
-        default_fetcher=Fetcher.configure_GitHub_url(
-            data_repository_url=_REPO_URL,
-            contemporaneous_git_hash=_CONTEMPORANEOUS_COMMIT_HASH,
-        ),
+        base_url=f"{_REPO_URL}/raw/{_CONTEMPORANEOUS_COMMIT_HASH}/input/",
         file_registry_file=file_registry_file,
         grackle_version=grackle_version,
     )
 
 
+def _datastoredir_and_versiondir(conf):
+    data_store_dir = os.path.join(conf.data_dir, f"data-store-v{conf.protocol_version}")
+    version_dir = os.path.join(data_store_dir, conf.grackle_version)
+    return data_store_dir, version_dir
+
+
+def _setup_and_get_dirs(dest):
+    """ensures file system is set up for fetching new files
+    Returns dest-dir and list of directories to search for deduplication
+    """
+
+    def _ensure_dirs_exist(*path_descr_pairs):
+        for path, descr in path_descr_pairs:
+            if not os.path.isdir(path):
+                _pretty_log(f"creating directory ({descr})\n-> {path}")
+                os.mkdir(path)
+
+    if isinstance(dest, Config):
+        c = dest
+        data_store_dir, dest_dir = _datastoredir_and_versiondir(c)
+        _ensure_dirs_exist(
+            (c.data_dir, "holds the data-store"),
+            (os.path.join(c.data_dir, "user-data"), "reserved for user-defined data"),
+            (data_store_dir, "holds data for various Grackle versions"),
+            (dest_dir, "holds data for current Grackle version"),
+        )
+        with os.scandir(data_store_dir) as it:
+            dirs = (entry.path for entry in it if entry.is_dir())
+            search_dirs = [d for d in dirs if not os.path.samefile(dest_dir, d)]
+    else:
+        dest_dir = dest
+        _ensure_dirs_exist((dest_dir, "holds output data"))
+        search_dirs = None  # intentionally set to None (rather than to [])
+
+    return dest_dir, search_dirs
+
+
+def _parse_file_registry(f):
+    """Read the file registry, as a dict from a text file
+
+    Parameters
+    ----------
+    f : file or ``os.PathLike``
+        Contains the data to be read in
+    """
+    # This format was choosen so that the contents could be injected into a C file to
+    # be used as a literal. Consequently:
+    #   * empty lines & lines that start with `//` are ignored
+    #   * other lines look like `{"<file-name>", "<hash>"}` (maybe with a trailing comma)
+
+    pattern = re.compile(
+        r'^\s*{\s*"(?P<fname>[^"]+)"\s*,\s*"(?P<cksum>[^"]+)"\s*},?\s*'
+    )
+    with _file_openner(f, "r") as file:
+        file_registry = {}
+        for i, line in enumerate(file):  # iterater over lines
+            if (len(line) == 0) or line.isspace() or line.startswith("//"):
+                continue
+            m = pattern.match(line)
+            if m is None:
+                raise RuntimeError(f"Problem parsing line {i+1} of {f}:\n   `{line}`")
+            file_registry[m["fname"]] = m["cksum"]
+    return file_registry
+
+
+def calc_checksum(fname, alg_name, *, chunksize=_CHUNKSIZE):
+    """Calculate the checksum for a given fname"""
+    hash_calculator = hashlib.new(alg_name)
+    with open(fname, "rb") as f:
+        buffer = bytearray(chunksize)
+        while True:
+            nbytes = f.readinto(buffer)
+            if nbytes == chunksize:
+                hash_calculator.update(buffer)
+            elif nbytes:  # equivalent to: (nbytes is not None) and (nbytes > 0)
+                hash_calculator.update(buffer[:nbytes])
+            else:
+                break
+    return ":".join([alg_name.lower(), hash_calculator.hexdigest()])
+
+
+def matches_checksum(fname, checksum):
+    alg_name, _ = checksum.split(":")
+    return checksum == calc_checksum(fname, alg_name)
+
+
+def _pretty_log(arg, *, indent_all=False):
+    """indent messages so it's clear when multiline messages are a single thought"""
+    lines = arg.splitlines()
+    if len(lines) and not indent_all:
+        formatted = [f"-- {lines[0]}"] + [f"   {e}" for e in lines[1:]]
+    else:
+        formatted = [f"   {e}" for e in lines]
+    print(*formatted, sep="\n")
+
+
+def _fetch(url, dst_dir, checksum, search_dirs):
+    """Helper method to fetch a single file.
+
+    Parameters
+    ----------
+    url: str
+        The source url (e.g. file://path/to/fname, https://url/to/fname)
+    dst_dir: str
+        Path to the output directory
+    checksum: str
+        The checksum of the file.
+    search_dirs: sequence of paths or None
+        Should be ``None`` if ``dst_dir`` is an arbitrary location. Otherwise,
+        this should point to a sequence of paths to all directories in the same
+        datastore as dest_dir (other than ``dest_dir``). The other directories
+        are used for deduplication. To disable deduplication, pass an empty
+        sequence.
+    """
+    fname = os.path.basename(url)
+    dst = os.path.join(dst_dir, fname)
+    tmp_path = os.path.join(dst_dir, "_tempfile")
+    if os.path.exists(tmp_path):
+        os.remove(tmp_path)
+
+    try:
+        if url.startswith("file:"):
+            shutil.copyfile(url[5:], dst=tmp_path)
+        else:
+            _retrieve_url(url, dst=tmp_path)
+        if not matches_checksum(tmp_path, checksum):
+            raise GenericToolError(f"downloaded {fname} does't have expected checksum")
+        os.rename(src=tmp_path, dst=dst)
+
+        if search_dirs is not None:
+            paths = list(
+                filter(os.path.isfile, (os.path.join(d, fname) for d in search_dirs))
+            )
+            for path in paths:
+                assert not os.path.samefile(path, dst)
+                os.link(src=path, dst=tmp_path)
+                if filecmp.cmp(tmp_path, dst, shallow=False):
+                    os.remove(dst)
+                    os.rename(src=tmp_path, dst=dst)
+                    break
+                os.remove(tmp_path)
+
+            # set permissions to prevent accidental file-mutation/corruption (but still
+            # allows deletion). We skip this for untracked data-dirs to avoid "are you
+            # sure you want to delete this file?" prompts (on some platforms, like MacOS)
+            os.chmod(dst, stat.S_IREAD | stat.S_IRGRP | stat.S_IROTH)
+    finally:
+        if os.path.exists(tmp_path):
+            os.remove(tmp_path)
+
+
+def fetch_all(config, *, fnames=None, override_dest=None):
+    """Ensures that files in the specified registry are downloaded
+
+    Parameters
+    ----------
+    config: Config
+        basic configuration
+    fnames: sequence, optional
+        Optionally specifies a list of files, with corresponding
+        registry entries to fetch. When this is ``None``, all files in
+        the registry are fetched.
+    override_dest: os.PathLike, optional
+        When provided, fetched files are placed in this directory &
+        no attempt is made to track the files as part of the standard
+        grackle data-directory.
+    """
+
+    registry = _parse_file_registry(config.file_registry_file)
+
+    # determine the files we will read (& their associated checksums)
+    if fnames is None:
+        fname_cksum_pairs = registry.items()
+    else:
+        for fname in filter(lambda fname: fname not in registry, fnames):
+            raise ValueError(
+                f"{fname} can't be downloaded since it doesn't have a registry entry."
+                f"\n\nFiles with registry entries include: {list(registry.keys())!r}"
+            )
+        fname_cksum_pairs = ((fname, registry[fname]) for fname in fnames)
+
+    # determine the output directory
+    dest_dir, search_dirs = _setup_and_get_dirs(
+        config if override_dest is None else override_dest
+    )
+
+    _pretty_log(f"preparing to fetch files from: {config.base_url}")
+    num_fetched = 0
+    checksum_prefix = f"{config.checksum_kind}:"
+    for fname, cksum_str in fname_cksum_pairs:
+        dest_path = os.path.join(dest_dir, fname)
+
+        if not cksum_str.startswith(checksum_prefix):
+            if ":" in cksum_str:
+                explanation = "was computed with a different algorithm"
+            else:
+                explanation = "is missing the `<cksum-alg>:` prefix"
+            raise GenericToolError(
+                "To download a file, we must know the file's checksum computed with "
+                f"the {config.checksum_kind} checksum algorithm. The provided checksum "
+                f"for {fname} ({cksum_str}) {explanation}"
+            )
+        elif os.path.exists(dest_path):  # if the file already exists, we're done
+            if not matches_checksum(dest_path, cksum_str):
+                raise GenericToolError(f"{dest_path} already exists but has wrong hash")
+            continue
+        else:
+            _pretty_log(f"-> fetching `{fname}`", indent_all=True)
+            url = os.path.join(config.base_url, fname)
+            _fetch(url, dest_dir, cksum_str, search_dirs)
+            num_fetched += 1
+
+    if num_fetched == 0:
+        _pretty_log("-> no files needed to be retrieved", indent_all=True)
+
+
+def _register_fetch_command(subparsers):
+    parser_fetch = subparsers.add_parser(
+        "fetch", help="fetch data files for associated Grackle version"
+    )
+    parser_fetch.add_argument(
+        "fnames", nargs="*", help="Optional subset of files from the registry to fetch"
+    )
+    parser_fetch.add_argument(
+        "--untracked-dest-dir",
+        default=None,
+        help=(
+            "Download files to the specified arbitrary directory where we will not "
+            "perform deduplication. This provided as a convenience. The specified "
+            "directory should NOT be located inside the grackle data directory."
+        ),
+    )
+
+    def fetch_command(args, config):
+        fnames = None if len(args.fnames) == 0 else args.fnames
+        fetch_all(config, fnames=fnames, override_dest=args.untracked_dest_dir)
+
+    parser_fetch.set_defaults(func=fetch_command)
+
+
+def calcreg_command(args, config):
+    # print the file registry information (in the proper format that can be used to
+    # configure newer versions of Grackle)
+    try:
+        with os.scandir(args.path) as scan_it:
+            it = [(entry.name, entry.path) for entry in scan_it if entry.is_file()]
+    except FileNotFoundError:
+        raise ValueError(f"{args.path!r} doesn't specify a directory or file")
+    except NotADirectoryError:
+        it = [(os.path.basename(args.path), args.path)]
+
+    pairs = [(name, calc_checksum(path, args.hash_alg)) for name, path in it]
+
+    if not args.no_comments:
+        print(f"""\
+// This is a file registry generated by the grackle data management tool
+// To overwrite this file with an updated copy (assuming that pygrackle is
+// installed), you might invoke:
+//    python -m pygrackle --hash-alg {args.hash_alg} {{dir}} > {{out-path}}
+// where {{dir}} is the directory containing all files in the registry\
+""")
+
+    for i, (fname, cksum) in enumerate(pairs):
+        end = ",\n" if ((i + 1) < len(pairs)) else "\n"
+        print(f'{{"{fname}", "{cksum}"}}', end=end)
+
+
+def _register_calcreg_command(subparsers):
+    descr = "compute & print file registry (file hash pairs) for a given directory."
+    parser_calcreg = subparsers.add_parser("calc-reg", description=descr, help=descr)
+    parser_calcreg.add_argument(
+        "--no-comments", action="store_true", help="exclude comments from output"
+    )
+    _kinds = hashlib.algorithms_guaranteed
+    parser_calcreg.add_argument(
+        "--hash-alg", required=True, choices=_kinds, help="kind of checksum to compute"
+    )
+    parser_calcreg.add_argument(
+        "path", help="path to the directory containing the files in the registry"
+    )
+    parser_calcreg.set_defaults(func=calcreg_command)
+
+
+def _show_help(*args, **kwargs):
+    # replace the anchors: they look like [[[<KIND>:<VALUE>]]]
+    def repl(matchobj):
+        anchor_kind, anchor_val = matchobj.group(1), matchobj.group(2)
+        if anchor_kind == "BEGIN-SECTION":  # anchor_val is a section-name
+            return "\n".join([anchor_val, len(anchor_val) * "-"])
+        return "<SKIP>"
+
+    _open, _close = re.escape("[[["), re.escape(r"]]]")
+    p = re.compile(rf"^{_open}([-+0-9A-Za-z]+):([-,_+.! 0-9A-Za-z]+){_close}[ \t]*$")
+
+    start = __doc__.index("[[[BEGIN-SECTION:DESCRIPTION]]]")
+    it = (p.sub(repl, e).rstrip() for e in __doc__[start:].splitlines(keepends=False))
+
+    for line in filter(lambda line: line != "<SKIP>", it):
+        print(line)
+
+
+def register_show_subcommand(name, short_descr, fn=None, *, subparsers):
+    """register subcommand that simply shows information and then exits"""
+
+    def _fn(args, config, attr):
+        print(getattr(config, attr))
+
+    func = functools.partial(_fn, attr=name.replace("-", "_")) if fn is None else fn
+    _descr = f"show {short_descr} & exit"
+    p = subparsers.add_parser(f"show-{name}", help=_descr, description=_descr)
+    p.set_defaults(func=func)
+
+
+def build_parser(prog_name):
+    parser = argparse.ArgumentParser(
+        prog=prog_name,
+        description="Command line tool for downloading & caching Grackle's data files",
+        epilog=f"Invoke `{prog_name} show-help` to get a detailed overview of the tool",
+    )
+
+    # Add flags for overriding some Config attrs (flags with the --testing-override-
+    # prefix may be removed at any time in the future)
+    def _add_override(attr, descr):
+        prefix = "--testing-override-" if descr is None else "--override-"
+        flag = prefix + attr.replace("_", "-")
+        _help = argparse.SUPPRESS if descr is None else descr
+        parser.add_argument(flag, dest=f"_override_{attr}", help=_help)
+
+    override_baseurl_descr = (
+        "overrides the urlfiles are downloaded from. To copy files from a directory, "
+        "you can specify `file:/path/to/dir`"
+    )
+    _add_override("base_url", override_baseurl_descr)
+    _add_override("file_registry_file", None)
+    _add_override("grackle_version", None)
+
+    subparsers = parser.add_subparsers(required=True)
+    _register_fetch_command(subparsers)
+    _register_calcreg_command(subparsers)
+
+    show = functools.partial(register_show_subcommand, subparsers=subparsers)
+    show("grackle-version", "associated Grackle version")
+    show("protocol-version", "associated data-store protocol version")
+    show("checksum-kind", "associated checksum algorithm")
+    show("data-dir", "path for data-dir (regardless of whether it exists)")
+    show("help", "detailed help information", _show_help)
+
+    def _showknownreg_command(args, config):
+        with _file_openner(config.file_registry_file, "r") as f:
+            print(*f.readlines(), sep="", end="")
+
+    showknownreg_descr = "pre-registered file registry (for associated Grackle version)"
+    show("known-reg", showknownreg_descr, _showknownreg_command)
+
+    return parser
+
+
+def main(config, prog_name, *, args=None):
+    """Launch the command"""
+    args = build_parser(prog_name).parse_args(args=args)
+
+    # handle any overrides of config-attributes
+    for attr in ["file_registry_file", "grackle_version", "base_url"]:
+        if hasattr(args, f"_override_{attr}"):
+            config = config._replace(**{attr: getattr(args, f"_override_{attr}")})
+
+    try:
+        args.func(args, config=config)
+    except GenericToolError as err:
+        print(f"ERROR: {err.args[0]}")
+        return 70  # https://www.man7.org/linux/man-pages/man3/sysexits.h.3head.html
+    except BaseException:
+        print("Unexpected error:", file=sys.stderr)
+        traceback.print_exc(file=sys.stderr)
+        return 70  # https://www.man7.org/linux/man-pages/man3/sysexits.h.3head.html
+    else:
+        return 0
+
+
 # Here, we define machinery employed when used as a standalone program
 # ====================================================================
+def _exec_as_standalone_program():
+    """executes the grdata program as a standlone program."""
+    # To install the grdata as a standalone program, the build-system must:
+    # - treat this file as a template-file & configure it with CMake's ``configure_file``
+    #   command (or invoke ``configure_file.py`` under the classic build system) in order
+    #   to substitute the names enclosed by the "at sign" symbol
+    # - make resulting file executable
+    # - install it into the bin directory alongside the grackle libraries
 
-# to support installing this file as a standalone program, we will need to introduce the
-# following procedure to the build-system:
-#    - treat this file as a template-file and configure it with CMake's
-#      ``configure_file`` command (or invoke ``configure_file.py`` under the classic
-#      build system) in order to substitute the names enclosed by the "at sign" symbol
-#    - make resulting file executable (and maybe drop the .py suffix)
-#    - install it into the bin directory alongside the grackle libraries
+    variables = {  # holds the substituted variables
+        "_GRDATA_GRACKLE_VERSION": "@_GRDATA_GRACKLE_VERSION@",
+        "_GRDATA_FILE_REGISTRY_CONTENTS": """\
+@_GRDATA_FILE_REGISTRY_CONTENTS@
+""",
+    }
 
-if __name__ == "__main__":
-    _GRACKLE_VERSION = "@GRACKLE_VERSION@"
-    _FILE_REGISTRY_CONTENTS = """\
-@FILE_REGISTRY_CONTENTS@
-"""
-
-    def _check_substitution_problems(var_name, var_value):
+    # check that substitution was sucessful
+    for name, val in variables.items():
         # we use unicode escape sequence, \u0040, that python automatically converts
         # to the "at sign" to prevent the configure_file.py script (used by Grackle's
         # build-system) from falsely reporting an error
-        if (
-            (var_name in var_value)
-            or ("\u0040" in var_value)
-            or (len(var_value) == 0)
-            or (var_value.isspace())
-        ):
-            raise RuntimeError(
-                "something went wrong when the build-system was configuring the "
-                f"{var_name} variable"
-            )
-
-    _check_substitution_problems("GRACKLE_VERSION", _GRACKLE_VERSION)
-    _check_substitution_problems("FILE_REGISTRY_CONTENTS", _FILE_REGISTRY_CONTENTS)
+        if (name in val) or ("\u0040" in val) or (len(val) == 0) or (val.isspace()):
+            raise RuntimeError(f"the build-system misconfigured the {name} variable")
 
     _CONFIG = make_config_object(
-        grackle_version=_GRACKLE_VERSION,
-        file_registry_file=io.StringIO(_FILE_REGISTRY_CONTENTS),
+        grackle_version=variables["_GRDATA_GRACKLE_VERSION"],
+        file_registry_file=io.StringIO(variables["_GRDATA_FILE_REGISTRY_CONTENTS"]),
     )
     sys.exit(main(*_CONFIG, prog_name="grdata"))
+
+
+if __name__ == "__main__":
+    _exec_as_standalone_program()

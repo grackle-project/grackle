@@ -18,9 +18,7 @@ import sys
 from pygrackle.__config__ import _is_editable_installation
 from pygrackle.grackle_wrapper import get_grackle_version
 from pygrackle.utilities.grdata import (
-    make_config_object,
-    VersionDataManager,
-    _parse_file_registry,
+    fetch_all, make_config_object, _datastoredir_and_versiondir
 )
 from pygrackle.utilities.misc import dirname
 
@@ -59,18 +57,9 @@ def _make_config(grackle_version=None):
 
 
 _CONFIG = _make_config()
-_MANAGER = VersionDataManager.create(_CONFIG)
-
-
-def _fnames_in_registry():
-    # used for testing/debugging
-    return tuple(_parse_file_registry(_CONFIG.file_registry_file).keys())
+grackle_data_dir = _datastoredir_and_versiondir(_CONFIG)[1]
 
 
 def _download_all_datafiles():
     """Download all datafiles if it hasn't been downloaded already."""
-    registry = _parse_file_registry(_CONFIG.file_registry_file)
-    return _MANAGER.fetch_all(registry)
-
-
-grackle_data_dir = _MANAGER.version_dir
+    return fetch_all(_CONFIG)
