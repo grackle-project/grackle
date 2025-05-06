@@ -193,6 +193,7 @@ import filecmp
 import functools
 import hashlib
 import io
+import logging
 from math import log10
 import os
 import re
@@ -203,7 +204,6 @@ import traceback
 from typing import IO, NamedTuple, Union
 import urllib.request
 from urllib.error import URLError, HTTPError
-import warnings
 
 
 if sys.version_info < (3, 6, 1):  # 3.6.0 doesn't support all NamedTuple features
@@ -211,8 +211,12 @@ if sys.version_info < (3, 6, 1):  # 3.6.0 doesn't support all NamedTuple feature
 
 _CHUNKSIZE = 8192  # default chunksize used for file operations
 
+logger = logging.getLogger("grdata")
+logger.setLevel(logging.DEBUG)
+logger.addHandler(logging.StreamHandler())
 
-class GenericToolError(RuntimeError):
+
+class GrdataError(RuntimeError):
     pass
 
 
@@ -275,9 +279,9 @@ def _retrieve_url(url, dst, *, chunksize=_CHUNKSIZE):
                 downloaded_bytes += len(block)
                 out_file.write(block)
     except HTTPError as e:
-        raise GenericToolError(f"server can't fulfill request to fetch {url}: {e.code}")
+        raise GrdataError(f"server can't fulfill request to fetch {url}: {e.code}")
     except URLError as e:
-        raise GenericToolError(f"server can't be reached to fetch {url}: {e.code}")
+        raise GrdataError(f"server can't be reached to fetch {url}: {e.code}")
 
 
 def _get_data_dir(system_str=None):
@@ -318,9 +322,9 @@ def _get_data_dir(system_str=None):
         elif prefix[0] != "/":
             continue
         elif suffix_path is None:
-            return prefix
+            return os.path.normpath(prefix)
         else:
-            return os.path.join(prefix, suffix_path)
+            return os.path.normpath(os.path.join(prefix, suffix_path))
 
 
 class Config(NamedTuple):
@@ -328,7 +332,7 @@ class Config(NamedTuple):
 
     data_dir: str
     base_url: str
-    file_registry_file: Union[str, bytes, os.PathLike, IO, None]
+    file_registry_file: Union[str, bytes, os.PathLike, IO]
     grackle_version: str
     protocol_version: str = "1"
     checksum_kind: str = "sha1"
@@ -344,7 +348,7 @@ def make_config_object(grackle_version, file_registry_file):
     file_registry_file : file or str or bytes or ``os.PathLike``
         Contains the file registry
     """
-    _REPO_URL = "https://github.com/grackle-project/grackle_data_files/"
+    _REPO_URL = "https://github.com/grackle-project/grackle_data_files"
     # this is the hash that holds the versions of the datafiles from the time when this
     # version of the file was shipped
     _CONTEMPORANEOUS_COMMIT_HASH = "9a63dbefeb1410483df0071eefcbff666f40816d"
@@ -363,33 +367,29 @@ def _datastoredir_and_versiondir(conf):
     return data_store_dir, version_dir
 
 
-def _setup_and_get_dirs(dest):
+def _setup_and_get_dirs(conf):
     """ensures file system is set up for fetching new files
     Returns dest-dir and list of directories to search for deduplication
     """
 
-    def _ensure_dirs_exist(*path_descr_pairs):
-        for path, descr in path_descr_pairs:
-            if not os.path.isdir(path):
-                _pretty_log(f"creating directory ({descr})\n-> {path}")
-                os.mkdir(path)
+    # special handling for the fallback case on (non-macOS) Unix-like systems
+    _path = os.path.normpath(os.path.expanduser(os.path.join("~", ".local", "share")))
+    if os.fsdecode(conf.data_dir).startswith(_path):
+        os.makedirs(_path, exist_ok=True)
 
-    if isinstance(dest, Config):
-        c = dest
-        data_store_dir, dest_dir = _datastoredir_and_versiondir(c)
-        _ensure_dirs_exist(
-            (c.data_dir, "holds the data-store"),
-            (os.path.join(c.data_dir, "user-data"), "reserved for user-defined data"),
-            (data_store_dir, "holds data for various Grackle versions"),
-            (dest_dir, "holds data for current Grackle version"),
-        )
-        with os.scandir(data_store_dir) as it:
-            dirs = (entry.path for entry in it if entry.is_dir())
-            search_dirs = [d for d in dirs if not os.path.samefile(dest_dir, d)]
-    else:
-        dest_dir = dest
-        _ensure_dirs_exist((dest_dir, "holds output data"))
-        search_dirs = None  # intentionally set to None (rather than to [])
+    def _mkdir(path):
+        if not os.path.isdir(path):
+            os.mkdir(path)
+
+    data_store_dir, dest_dir = _datastoredir_and_versiondir(conf)
+    _mkdir(conf.data_dir)  # holds the data-store
+    _mkdir(os.path.join(conf.data_dir, "user-data"))  # reserved for users' data
+    _mkdir(data_store_dir)  # holds data for various Grackle versions
+    _mkdir(dest_dir)  # holds data for current Grackle version
+
+    with os.scandir(data_store_dir) as it:
+        dirs = (entry.path for entry in it if entry.is_dir())
+        search_dirs = [d for d in dirs if not os.path.samefile(dest_dir, d)]
 
     return dest_dir, search_dirs
 
@@ -404,8 +404,8 @@ def _parse_file_registry(f):
     """
     # This format was choosen so that the contents could be injected into a C file to
     # be used as a literal. Consequently:
-    #   * empty lines & lines that start with `//` are ignored
-    #   * other lines look like `{"<file-name>", "<hash>"}` (maybe with a trailing comma)
+    #  * empty lines & lines that start with `//` are ignored
+    #  * other lines look like `{"<file-name>", "<hash>"}` (maybe with a trailing comma)
 
     pattern = re.compile(
         r'^\s*{\s*"(?P<fname>[^"]+)"\s*,\s*"(?P<cksum>[^"]+)"\s*},?\s*'
@@ -443,16 +443,6 @@ def matches_checksum(fname, checksum):
     return checksum == calc_checksum(fname, alg_name)
 
 
-def _pretty_log(arg, *, indent_all=False):
-    """indent messages so it's clear when multiline messages are a single thought"""
-    lines = arg.splitlines()
-    if len(lines) and not indent_all:
-        formatted = [f"-- {lines[0]}"] + [f"   {e}" for e in lines[1:]]
-    else:
-        formatted = [f"   {e}" for e in lines]
-    print(*formatted, sep="\n")
-
-
 def _fetch(url, dst_dir, checksum, search_dirs):
     """Helper method to fetch a single file.
 
@@ -483,7 +473,7 @@ def _fetch(url, dst_dir, checksum, search_dirs):
         else:
             _retrieve_url(url, dst=tmp_path)
         if not matches_checksum(tmp_path, checksum):
-            raise GenericToolError(f"downloaded {fname} does't have expected checksum")
+            raise GrdataError(f"downloaded {fname} does't have expected checksum")
         os.rename(src=tmp_path, dst=dst)
 
         if search_dirs is not None:
@@ -524,7 +514,6 @@ def fetch_all(config, *, fnames=None, override_dest=None):
         no attempt is made to track the files as part of the standard
         grackle data-directory.
     """
-
     registry = _parse_file_registry(config.file_registry_file)
 
     # determine the files we will read (& their associated checksums)
@@ -539,11 +528,16 @@ def fetch_all(config, *, fnames=None, override_dest=None):
         fname_cksum_pairs = ((fname, registry[fname]) for fname in fnames)
 
     # determine the output directory
-    dest_dir, search_dirs = _setup_and_get_dirs(
-        config if override_dest is None else override_dest
-    )
+    if override_dest is None:
+        dest_dir, search_dirs = _setup_and_get_dirs(config)
+        logger.info(f"destination dir: {dest_dir}")
+    else:
+        if not os.path.isdir(override_dest):
+            os.mkdir(override_dest)
+        dest_dir, search_dirs = override_dest, None
+        logger.info("using override destination directory")
 
-    _pretty_log(f"preparing to fetch files from: {config.base_url}")
+    logger.info(f"preparing to fetch files from: {config.base_url}")
     num_fetched = 0
     checksum_prefix = f"{config.checksum_kind}:"
     for fname, cksum_str in fname_cksum_pairs:
@@ -554,23 +548,23 @@ def fetch_all(config, *, fnames=None, override_dest=None):
                 explanation = "was computed with a different algorithm"
             else:
                 explanation = "is missing the `<cksum-alg>:` prefix"
-            raise GenericToolError(
+            raise GrdataError(
                 "To download a file, we must know the file's checksum computed with "
                 f"the {config.checksum_kind} checksum algorithm. The provided checksum "
                 f"for {fname} ({cksum_str}) {explanation}"
             )
         elif os.path.exists(dest_path):  # if the file already exists, we're done
             if not matches_checksum(dest_path, cksum_str):
-                raise GenericToolError(f"{dest_path} already exists but has wrong hash")
+                raise GrdataError(f"{dest_path} already exists but has wrong hash")
             continue
         else:
-            _pretty_log(f"-> fetching `{fname}`", indent_all=True)
+            logger.info(f"   fetching `{fname}`")
             url = os.path.join(config.base_url, fname)
             _fetch(url, dest_dir, cksum_str, search_dirs)
             num_fetched += 1
 
     if num_fetched == 0:
-        _pretty_log("-> no files needed to be retrieved", indent_all=True)
+        logger.info("(no files needed to be retrieved)")
 
 
 def _register_fetch_command(subparsers):
@@ -683,7 +677,7 @@ def build_parser(prog_name):
         prefix = "--testing-override-" if descr is None else "--override-"
         flag = prefix + attr.replace("_", "-")
         _help = argparse.SUPPRESS if descr is None else descr
-        parser.add_argument(flag, dest=f"_override_{attr}", help=_help)
+        parser.add_argument(flag, dest=attr, default=argparse.SUPPRESS, help=_help)
 
     override_baseurl_descr = (
         "overrides the urlfiles are downloaded from. To copy files from a directory, "
@@ -714,26 +708,33 @@ def build_parser(prog_name):
     return parser
 
 
-def main(config, prog_name, *, args=None):
+def main(default_config, prog_name, *, args=None):
     """Launch the command"""
+    # modify the logger
+    global logger
+    for handler in logger.handlers:
+        logger.removeHandler(handler)
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(logging.Formatter("> %(message)s"))
+    logger.addHandler(console_handler)
+
+    # build parser & immediately parse arguments
     args = build_parser(prog_name).parse_args(args=args)
 
     # handle any overrides of config-attributes
-    for attr in ["file_registry_file", "grackle_version", "base_url"]:
-        if hasattr(args, f"_override_{attr}"):
-            config = config._replace(**{attr: getattr(args, f"_override_{attr}")})
+    overrides = {f: getattr(args, f) for f in Config._fields if hasattr(args, f)}
+    config = default_config._replace(**overrides)  # <- ok if len(overrides) == 0
 
     try:
         args.func(args, config=config)
-    except GenericToolError as err:
+        return 0
+    except GrdataError as err:
         print(f"ERROR: {err.args[0]}")
         return 70  # https://www.man7.org/linux/man-pages/man3/sysexits.h.3head.html
     except BaseException:
         print("Unexpected error:", file=sys.stderr)
         traceback.print_exc(file=sys.stderr)
         return 70  # https://www.man7.org/linux/man-pages/man3/sysexits.h.3head.html
-    else:
-        return 0
 
 
 # Here, we define machinery employed when used as a standalone program
@@ -741,9 +742,9 @@ def main(config, prog_name, *, args=None):
 def _exec_as_standalone_program():
     """executes the grdata program as a standlone program."""
     # To install the grdata as a standalone program, the build-system must:
-    # - treat this file as a template-file & configure it with CMake's ``configure_file``
-    #   command (or invoke ``configure_file.py`` under the classic build system) in order
-    #   to substitute the names enclosed by the "at sign" symbol
+    # - treat this file as a template & configure it with CMake's ``configure_file``
+    #   command (or invoke ``configure_file.py`` under the classic build system) in
+    #   order to substitute the names enclosed by the "at sign" symbol
     # - make resulting file executable
     # - install it into the bin directory alongside the grackle libraries
 
@@ -766,7 +767,7 @@ def _exec_as_standalone_program():
         grackle_version=variables["_GRDATA_GRACKLE_VERSION"],
         file_registry_file=io.StringIO(variables["_GRDATA_FILE_REGISTRY_CONTENTS"]),
     )
-    sys.exit(main(*_CONFIG, prog_name="grdata"))
+    sys.exit(main(default_config=_CONFIG, prog_name="grdata"))
 
 
 if __name__ == "__main__":
