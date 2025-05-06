@@ -61,9 +61,11 @@ def modified_env(new_env_vals, extra_cleared_variables=None):
     try:
         yield
     finally:
-        it = (pair for pair in original_vals.items() if pair[1] is not _UNSET)
-        for var, value in it:
-            os.environ[var] = value
+        for var, value in original_vals.items():
+            if value is _UNSET:
+                del os.environ[var]
+            else:
+                os.environ[var] = value
 
 
 @dataclasses.dataclass(frozen=True)
