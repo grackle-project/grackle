@@ -17,7 +17,6 @@ import filecmp
 import functools
 import hashlib
 import io
-import operator
 import os
 import shutil
 import subprocess
