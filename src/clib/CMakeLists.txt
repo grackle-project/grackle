@@ -99,6 +99,7 @@ add_library(Grackle_Grackle
   update_UVbackground_rates.c
   initialize_dust_yields.c
   initialize_metal_chemistry_rates.c
+  rate_utils.c
   utils.c
 
   # auto-generated C source files
@@ -148,6 +149,7 @@ add_library(Grackle_Grackle
   index_helper.h
   interp_table_utils.h
   phys_constants.h
+  col_rec_rxn_rate_members.def # <-- acts as a C header
   utils.h
   dust_const.def
 
