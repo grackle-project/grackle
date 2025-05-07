@@ -3,6 +3,10 @@
 Installation
 ============
 
+This page describes how to install Grackle from source.
+When installing Grackle as a dependency of a simulation code, consult the code's documentation before continuing.
+Build systems of some codes, like `Enzo-E <https://enzo-e.readthedocs.io/en/latest/>`__, are configured to automatically download & install Grackle as part of the build-process (our :doc:`Integration Guide <Integration>` provides more details).
+
 There are 3 steps to setting up Grackle on your system
 
 1. :ref:`Install Grackle's Dependencies <install_grackle_dependencies>`
