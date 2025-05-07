@@ -17,16 +17,27 @@ commands:
               git fetch --tags https://github.com/$CIRCLE_PR_USERNAME/$CIRCLE_PR_REPONAME
             fi
 
+  install-cmake-dependencies:
+    description: "Install minimal dependencies needed for a CMake build"
+    steps:
+      - run:
+          name: "Install minimal dependencies needed for a CMake build"
+          command: |
+            git submodule update --init --remote
+            sudo apt update
+            sudo apt install -y libhdf5-serial-dev gfortran ninja-build cmake
+
   install-dependencies:
     description: "Install dependencies."
     steps:
+      - install-cmake-dependencies
       - run:
-          name: "Install dependencies."
+          name: "Install all other dependencies."
           command: |
-            git submodule update --init --remote
             source $BASH_ENV
-            sudo apt update
-            sudo apt install -y libhdf5-serial-dev gfortran libtool-bin castxml
+            # libtool-bin is a requirement of the classic build-system
+            # castxml is a requirement of the pygrackle test-suite
+            sudo apt install -y libtool-bin castxml
             python3 -m venv $HOME/venv
             source $HOME/venv/bin/activate
             pip install --upgrade pip
@@ -46,7 +57,7 @@ commands:
             flake8 pygrackle examples tests
 
   install-grackle:
-    description: "Install grackle."
+    description: "Install the core Grackle Library & Pygrackle."
     parameters:
       omp:
         type: enum
@@ -77,9 +88,6 @@ commands:
             cd src/clib
             make clean
             cd -
-            cd src/python
-            make clean
-            cd -
             # remove the files produced by ./configure
             rm -f src/clib/Make.config.override src/clib/Make.config.machine src/clib/DEPEND
             # remove the files produced in a cmake-build
@@ -87,13 +95,13 @@ commands:
 
 
             # Next, we actually perform the installation
-            if [ << parameters.classic_build >> == 'true' ]; then
+            if [ '<< parameters.classic_build >>' == 'true' ]; then
               mkdir -p $HOME/local # installation location
               ./configure
               cd src/clib
               make clean
               make machine-linux-gnu
-              if [ << parameters.omp >> == 'true' ]; then
+              if [ '<< parameters.omp >>' == 'true' ]; then
                 make omp-on
               fi
               make
@@ -183,8 +191,8 @@ commands:
             tar xzf IsolatedGalaxy.tar.gz
             rm IsolatedGalaxy.tar.gz
 
-  run-tests:
-    description: "Run all tests."
+  run-pygrackle-tests:
+    description: "Run the pytest test-suite. This suite includes a mix of general tests and pygrackle-specific tests."
     parameters:
       omp:
         type: enum
@@ -200,38 +208,67 @@ commands:
         enum: ['true', 'false']
     steps:
       - run:
-          name: "Run all tests (build_kind: << parameters.build_kind >>, omp: << parameters.omp >>, generate: << parameters.generate >>)."
+          name: "Run the pytest test-suite (build_kind: << parameters.build_kind >>, omp: << parameters.omp >>, generate: << parameters.generate >>)."
           command: |
             source $BASH_ENV
             source $HOME/venv/bin/activate
-            cd src
-
-            # configure env variable for test_code_examples.py
-            if [ << parameters.build_kind >> == 'classic' ]; then
-              export PYTEST_CODE_LINK_CHOICE="classic"
-            elif [ << parameters.build_kind >> == 'cmake' ]; then
-              export PYTEST_CODE_LINK_CHOICE="cmake:../build"
-            else
-              export PYTEST_CODE_LINK_CHOICE="" # we skip test_code_examples.py
-            fi
-
-            # configure variables for generating test answers
-            if [ << parameters.generate >> == 'true' ]; then
-              export GENERATE_PYGRACKLE_TEST_RESULTS=1
-            else
-              export GENERATE_PYGRACKLE_TEST_RESULTS=0
-            fi
 
             # actually execute the tests
-            if [ << parameters.omp >> == 'true' ]; then
-              export OMP_NUM_THREADS=4
-              cd example
-              make cxx_omp_example
-              ./cxx_omp_example
-              make clean
+            if [[ '<< parameters.build_kind >>' == 'classic' &&
+                  '<< parameters.omp >>' == 'true' ]]; then
+              echo "ERROR: pygrackle tests can't be run in this configuration"
+              exit 1
+
             else
-              py.test python/tests
+              # NOTE: these tests should run if using OpenMP without the
+              #       classic build-system
+
+              ANSWER_DIR=./my-test_answers
+              if [ '<< parameters.generate >>' == 'true' ]; then
+                py.test --answer-dir=${ANSWER_DIR} --answer-store
+              else
+                py.test --answer-dir=${ANSWER_DIR}
+              fi
             fi
+
+  store-pygrackle-suite-gold-standard-answers:
+    description: "Store the pygrackle test answers"
+    parameters:
+      gold-standard-tag:
+        description: "The gold-standard to use for generating the answers"
+        type: string
+        default: "gold-standard-v3"
+    steps:
+      - run:
+          name: "Build Pygrackle from Gold-Standard Commit (<< parameters.gold-standard-tag >>)"
+          command: |
+            source $HOME/venv/bin/activate
+            pip uninstall --yes pygrackle # it's ok if pygrackle wasn't installed yet
+            git checkout << parameters.gold-standard-tag >>
+            pip install -e .[dev]
+      - run-pygrackle-tests:
+          omp: 'false'
+          build_kind: 'standalone-pygrackle'
+          generate: 'true'
+      - run:
+          command: |
+            source $HOME/venv/bin/activate
+            pip uninstall --yes pygrackle
+
+
+  run-classic-omp-test:
+    description: "Run the OpenMP test with the classic build-system"
+    steps:
+      - run:
+          name: "Run the OpenMP test with the classic build system"
+          command: |
+            source $BASH_ENV
+            cd src
+            export OMP_NUM_THREADS=4
+            cd example
+            make cxx_omp_example
+            ./cxx_omp_example
+            make clean
 
   build-docs:
     description: "Test the docs build."
@@ -270,48 +307,35 @@ jobs:
       - install-dependencies
       - lint
       - download-test-data
+      - store-pygrackle-suite-gold-standard-answers
 
-      - install-grackle:
-          omp: 'false'
-          classic_build: 'true'
-          tag: $CIRCLE_BRANCH
-
-      - run-tests:
-          omp: 'false'
-          build_kind: 'classic'
-          generate: 'true'
-
-      - install-grackle:
-          omp: 'true'
-          classic_build: 'true'
-          tag: $CIRCLE_BRANCH
-
-      - run-tests:
-          omp: 'true'
-          build_kind: 'classic'
-
-      - install-grackle:
-          omp: 'false'
-          classic_build: 'false'
-          tag: gold-standard-v2
-
-      - run-tests:
-          omp: 'false'
-          build_kind: 'cmake'
-          generate: 'true'
-
+      # run full pygrackle test-suite on latest commit (CMake-build)
       - install-grackle:
           omp: 'false'
           classic_build: 'false'
           tag: $CIRCLE_BRANCH
-
-      - run-tests:
+      - run-pygrackle-tests:
           omp: 'false'
           build_kind: 'cmake'
           generate: 'false'
 
-# TODO: once we merge in GH-#208, we need to issue a new gold standard, and then we should
-#       issue a followup PR where we uncomment the remainder of this test
+      # run full pygrackle test-suite on latest commit (classic-build)
+      - install-grackle:
+          omp: 'false'
+          classic_build: 'true'
+          tag: $CIRCLE_BRANCH
+      - run-pygrackle-tests:
+          omp: 'false'
+          build_kind: 'classic'
+          generate: 'false'
+
+      # setup and run classic-omp-test on latest commit
+      #- install-grackle:
+      #    omp: 'true'
+      #    classic_build: 'true'
+      #    tag: $CIRCLE_BRANCH
+      #- run-classic-omp-test
+
   test-standalone-pygrackle:
     parameters:
       tag:
@@ -328,18 +352,45 @@ jobs:
       - set-env
       - install-dependencies
       - download-test-data
-      #- install-standalone-pygrackle:
-      #    tag: gold-standard-v2
-      #- run-tests:
-      #    omp: 'false'
-      #    build_kind: 'standalone-pygrackle'
-      #    generate: 'true'
-      - install-standalone-pygrackle:
-          tag: $CIRCLE_BRANCH
-      #- run-tests:
-      #    omp: 'false'
-      #    build_kind: 'standalone-pygrackle'
-      #    generate: 'false'
+      - store-pygrackle-suite-gold-standard-answers
+      - run:
+          name: "Build Pygrackle from the commit that triggered CI."
+          command: |
+            source $HOME/venv/bin/activate
+            git checkout $CIRCLE_BRANCH
+            pip install -e .[dev]
+      - run-pygrackle-tests:
+          omp: 'false'
+          build_kind: 'standalone-pygrackle'
+          generate: 'false'
+
+  corelib-tests:
+    # we're only using a python docker-image out of convenience (We only care
+    # that a version of python exists with a version of 3.7 or newer to run
+    # our scripts).
+    executor:
+      name: python
+      tag: 3.8.14
+
+    working_directory: ~/grackle
+
+    steps:
+      - checkout
+      - install-cmake-dependencies
+      - run:
+          name: "Build libgrackle and all of the core library's tests"
+          command: |
+            cmake -DGRACKLE_USE_DOUBLE=ON                   \
+                  -DGRACKLE_USE_OPENMP=OFF                  \
+                  -DGRACKLE_BUILD_TESTS=ON                  \
+                  -DCMAKE_BUILD_TYPE=Release                \
+                  -GNinja -Bbuild
+            cmake --build build
+      - run:
+          name: "Run the suite of tests that operate directly on the core-library."
+          command: |
+            cd build
+            ctest --output-on-failure
 
   docs-build:
     parameters:
@@ -363,12 +414,15 @@ workflows:
    tests:
      jobs:
        - test-suite:
-           name: "Full test suite - Python 3.8"
+           name: "Pygrackle test suite - Python 3.8"
            tag: "3.8.14"
 
        - test-standalone-pygrackle:
-           name: "Standalone Python 3.8 tests"
+           name: "Standalone Pygrackle tests - Python 3.8"
            tag: "3.8.14"
+
+       - corelib-tests:
+           name: "Core library test suite"
 
        - docs-build:
            name: "Docs build"
@@ -384,12 +438,15 @@ workflows:
                 - main
      jobs:
        - test-suite:
-           name: "Full test suite - Python 3.8"
+           name: "Pygrackle test suite - Python 3.8"
            tag: "3.8.14"
 
        - test-standalone-pygrackle:
-           name: "Standalone Python 3.8 tests"
+           name: "Standalone Pygrackle tests - Python 3.8"
            tag: "3.8.14"
+
+       - corelib-tests:
+           name: "Core library test suite"
 
        - docs-build:
            name: "Docs build"

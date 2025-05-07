@@ -501,6 +501,9 @@ This first table describes the Grackle-specific options to configure the build.
    * - ``GRACKLE_USE_OPENMP``
      - Turn on to build Grackle with OpenMP
      - ``"OFF"``
+   * - ``GRACKLE_BUILD_TESTS``
+     - Turn on to build tests of the core Grackle library (these are totally unrelated to the ``pytest`` suite).
+     - ``"OFF"``
 
 This second table highlights a subset of standardized CMake options that may also be useful.
 
