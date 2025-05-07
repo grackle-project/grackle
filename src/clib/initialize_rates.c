@@ -83,10 +83,9 @@
 #include <stdio.h>
 #include <math.h>
 
+#include "grackle.h"
 #include "grackle_macros.h"
-#include "grackle_types.h"
 #include "grackle_rate_functions.h"
-#include "grackle_chemistry_data.h"
 #include "phys_constants.h"
 
 int initialize_metal_chemistry_rates(chemistry_data *my_chemistry,
@@ -212,6 +211,7 @@ int add_h2dust_reaction_rate(double **rate_ptr, double units, chemistry_data *my
             (*rate_ptr)[i + my_chemistry->NumberOfTemperatureBins*j] = h2dust_rate(T, T_dust, units, my_chemistry);
         }
     }
+    return GR_SUCCESS;
 }
 
 // Define a function which will calculate h2dust_C rates.
@@ -352,15 +352,6 @@ int initialize_rates(chemistry_data *my_chemistry, chemistry_data_storage *my_ra
                           / (densityBase1 * pow(timeBase1, 3));
 
     // These always need to be allocated since we define other variables by them.
-    my_rates->LH2_N = calloc(3, sizeof(int));
-    my_rates->LHD_N = calloc(3, sizeof(int));
-    my_rates->LCI_N = calloc(3, sizeof(int));
-    my_rates->LCII_N = calloc(3, sizeof(int));
-    my_rates->LOI_N = calloc(3, sizeof(int));
-    my_rates->LCO_N = calloc(3, sizeof(int));
-    my_rates->LOH_N = calloc(3, sizeof(int));
-    my_rates->LH2O_N = calloc(3, sizeof(int));
-    my_rates->alphap_N = calloc(2, sizeof(int));
     my_rates->gr_N = calloc(2, sizeof(int));
 
     if (my_chemistry->use_primordial_continuum_opacity == 1) {

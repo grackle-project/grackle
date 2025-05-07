@@ -11,6 +11,17 @@
 / software.
 ************************************************************************/
 
+// this should go before the header-guard
+#ifndef GRIMPL_PUBLIC_INCLUDE
+  #include "grackle_misc.h"
+  GRIMPL_COMPTIME_WARNING(
+    "You are using a deprecated header file; include the public \"grackle.h\" "
+    "header file instead! In a future Grackle version, "
+    "\"grackle_chemistry_data.h\" may cease to exist (or contents may change "
+    "in an incompatible manner)."
+  );
+#endif
+
 #ifndef __CHEMISTRY_DATA_H__
 #define __CHEMISTRY_DATA_H__
 
@@ -382,6 +393,51 @@ typedef struct
 } UVBtable;
 
 /******************************************
+ ******* Generic Interpolation Table ******
+ ******************************************/
+// as with the other components of chemistry_data_storage, this struct and its
+// contents should be treated as an implementation detail
+// -> in the future, it would be nice to unify this with cloudy_data
+// -> to help facillitate this goal, we track the grid properties in a data
+//    structure (that we can probably reuse) that doesn't hold the values that
+//    are actually interpolated.
+// -> this may be useful since there may be a variable number of grids that
+//    need to be interpolated (e.g. cloudy-primordial tables have 3 grids,
+//    cloudy-metal tables have 2 grids, generic interpolation tables have 1
+//    grid). But maybe we should revisit this in the future?
+
+typedef struct gr_interp_grid_props
+{
+  /// Rank of dataset
+  ///
+  /// TODO: do we need this attribute? In most cases, we know the rank
+  ///       of a table ahead of time
+  long long rank;
+
+  /// Dimension of dataset.
+  long long dimension[GRACKLE_CLOUDY_TABLE_MAX_DIMENSION];
+
+  /// Dataset parameter values (in the common case where there there is
+  /// constant spacing, we could probably track less data).
+  double *parameters[GRACKLE_CLOUDY_TABLE_MAX_DIMENSION];
+
+  /// Value of the constant paramter spacing
+  double parameter_spacing[GRACKLE_CLOUDY_TABLE_MAX_DIMENSION];
+
+  /// Length of 1D flattened data grid
+  long long data_size;
+
+} gr_interp_grid_props;
+
+typedef struct gr_interp_grid
+{
+  /// properties of the interpolation grid
+  gr_interp_grid_props props;
+  /// the actual data that gets interpolated
+  double* data;
+} gr_interp_grid;
+
+/******************************************
  *** Chemistry and cooling data storage ***
  ******************************************/
 typedef struct
@@ -602,32 +658,31 @@ typedef struct
   /* CIE cooling rate (Yoshida et al. 2006) */
   double *cieY06;
 
+  /* The next 8 attributes hold interpolation grids representing collision
+   * rates of a species with HI or H2I. The parameters along each axis are:
+   *   grid.parameter[0]: log10( ndens_{species} / (dv/dr) )
+   *   grid.parameter[1]: log10( T )
+   *   grid.parameter[2]: log10( ndens_HI ) OR log10( ndens_H2I )
+   */
+
   /* H2 and HD cooling rates (collision with HI; Hollenbach & McKee 1979) */
-  int    *LH2_N, LH2_Size;
-  double *LH2_D, *LH2_T, *LH2_H, LH2_dD, LH2_dT, LH2_dH, *LH2_L;
-  int    *LHD_N, LHD_Size;
-  double *LHD_D, *LHD_T, *LHD_H, LHD_dD, LHD_dT, LHD_dH, *LHD_L;
+  gr_interp_grid LH2;
+  gr_interp_grid LHD;
 
   /* Fine-structure cooling rates (collision with HI; Maio et al. 2007) */
-  int    *LCI_N, LCI_Size;
-  double *LCI_D, *LCI_T, *LCI_H, LCI_dD, LCI_dT, LCI_dH, *LCI_L;
-  int    *LCII_N, LCII_Size;
-  double *LCII_D, *LCII_T, *LCII_H, LCII_dD, LCII_dT, LCII_dH, *LCII_L;
-  int    *LOI_N, LOI_Size;
-  double *LOI_D, *LOI_T, *LOI_H, LOI_dD, LOI_dT, LOI_dH, *LOI_L;
+  gr_interp_grid LCI;
+  gr_interp_grid LCII;
+  gr_interp_grid LOI;
 
   /* metal molecular cooling rates (collision with H2I; UMIST table) */
-  int    *LCO_N, LCO_Size;
-  double *LCO_D, *LCO_T, *LCO_H, LCO_dD, LCO_dT, LCO_dH, *LCO_L;
-  int    *LOH_N, LOH_Size;
-  double *LOH_D, *LOH_T, *LOH_H, LOH_dD, LOH_dT, LOH_dH, *LOH_L;
-  int    *LH2O_N, LH2O_Size;
-  double *LH2O_D, *LH2O_T, *LH2O_H, LH2O_dD, LH2O_dT, LH2O_dH, *LH2O_L;
+  gr_interp_grid LCO;
+  gr_interp_grid LOH;
+  gr_interp_grid LH2O;
 
-  /* primordial opacity */
-  int    *alphap_N, alphap_Size;
-  double *alphap_D, *alphap_T, alphap_dD, alphap_dT;
-  double *alphap_Data;
+  /* primordial opacity table
+   * -> alphap.parameters[0] is log10(mass density)
+   * -> alphap.parameters[1] is log10(temperature) */
+  gr_interp_grid alphap;
 
   /* metal/dust abundance */
   int    *gr_N, gr_Size;

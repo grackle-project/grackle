@@ -14,6 +14,18 @@
 #ifndef __GRACKLE_H__
 #define __GRACKLE_H__
 
+// this logic must occur before including Grackle's headers
+#ifndef GRIMPL_PUBLIC_INCLUDE
+  #define GRIMPL_PUBLIC_INCLUDE 0
+#elif GRIMPL_PUBLIC_INCLUDE == 1
+  // we temporarily allow this case for internal use within the Grackle lib to
+  // avoid merge conflicts (external Grackle users shouldn't depend on this!)
+#else
+  #error "it is an error for GRIMPL_PUBLIC_INCLUDE to be defined"
+#endif /* GRIMPL_PUBLIC_INCLUDE */
+
+
+// include the private headers
 #include "grackle_types.h"
 #include "grackle_chemistry_data.h"
 
@@ -129,6 +141,15 @@ int free_chemistry_data(void);
 int local_free_chemistry_data(chemistry_data *my_chemistry, chemistry_data_storage *my_rates);
 
 grackle_version get_grackle_version(void);
+
+// the following function is NOT part of the public API (and it NEVER will be)
+// - it does a lot of heavy lifting for `gr_check_consistency`
+// - the signature may change in the future
+int grimpl_check_consistency_(int gr_float_hdrsize);
+
+static inline int gr_check_consistency(void) {
+  return grimpl_check_consistency_((int)sizeof(gr_float));
+}
 
 int gr_initialize_field_data(grackle_field_data *my_fields);
 
@@ -264,5 +285,11 @@ const char* grunstable_ith_rate(
 #ifdef __cplusplus
 } /* extern "C" */
 #endif /* __cplusplus */
+
+
+// this is important for letting us diagnose improper use of private headrs
+#if GRIMPL_PUBLIC_INCLUDE == 0
+  #undef GRIMPL_PUBLIC_INCLUDE
+#endif
 
 #endif /* __GRACKLE_H__ */
