@@ -42,7 +42,7 @@ also be installed:
 Although many systems already have them installed, both build systems have additional dependencies:
 
    * the :ref:`CMake build system <cmake_build>` requires cmake to be installed.
-     It's easiest download a binary distribution from the `CMake website <https://cmake.org/download/>`_ or use your system's package manager.
+     It's easiest to download a binary distribution from the `CMake website <https://cmake.org/download/>`_ or use your system's package manager.
      We require version 3.16 or newer.
 
    * the :ref:`classic build system <classic_build>`, employs the ``makedepend`` and the `libtool <https://www.gnu.org/software/libtool/>`_ utilities.
@@ -64,6 +64,7 @@ repo, do the following:
     ~ $ git clone --recursive https://github.com/grackle-project/grackle
 
 The presences of the ``--recursive`` flag in the above snippet instructs git to fetch additional files, containing cooling tables, from a submodule linked to the Grackle repository.
+If you have already cloned the git repository and you forgot to include the ``--recursive`` flag, you can invoke ``git submodule update --init``.
 
 
 .. _cmake_build:
@@ -148,12 +149,12 @@ The remainder of this subsection is primarily intended for readers who are relat
 
    .. hint::
 
-      The above snippet show the most generic commands that can be executed.
+      The above snippet shows the most generic commands that can be executed.
       Other tutorials that you see online may show slight variations in these commands (where you manually make the build directory) and then manually execute the build-system from within the build-directory...
 
    .. note::
 
-      In some cases, projects can use Grackle, built with CMake, with requiring a full installation.
+      In some cases, projects can use Grackle, built with CMake, without requiring a full installation.
       But, for historical reasons, you should generally assume that an external project requires a full installation step (unless that's project tells you otherwise).
 
       If you install Grackle in a non-standard location, then you also need to ensure that you properly set the ``LD_LIBRARY_PATH`` (or ``DYLD_LIBRARY_PATH`` on macOS) env variable to make use of it.
