@@ -650,17 +650,6 @@ int solve_rate_cool_g(
     (double)(my_chemistry->NumberOfTemperatureBins-1 )
   );
 
-  // We better make consistent at first GC202002
-
-  if (my_chemistry->primordial_chemistry > 0)  {
-
-#define ABUNDANCE_CORRECTION
-#ifdef ABUNDANCE_CORRECTION
-    f_wrap::make_consistent_g(imetal, dom, my_chemistry, my_rates, my_fields);
-#endif
-
-  }
-
   // Convert densities from comoving to proper
 
   if (internalu.extfields_in_comoving == 1)  {
@@ -668,9 +657,7 @@ int solve_rate_cool_g(
     f_wrap::scale_fields_g(imetal, factor, my_chemistry, my_fields);
   }
 
-#ifdef ABUNDANCE_CORRECTION
   f_wrap::ceiling_species_g(imetal, my_chemistry, my_fields);
-#endif
 
   const grackle_index_helper idx_helper = build_index_helper_(my_fields);
 
@@ -1010,10 +997,7 @@ int solve_rate_cool_g(
 
     // Correct the species to ensure consistency (i.e. type conservation)
 
-#ifdef ABUNDANCE_CORRECTION
     f_wrap::make_consistent_g(imetal, dom, my_chemistry, my_rates, my_fields);
-    f_wrap::ceiling_species_g(imetal, my_chemistry, my_fields);
-#endif
 
   }
 
