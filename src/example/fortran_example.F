@@ -49,13 +49,15 @@ c     Field data arrays
      &     DI_density(field_size), DII_density(field_size),
      &     HDI_density(field_size),
      &     e_density(field_size), metal_density(field_size),
+     &     dust_density(field_size),
      &     volumetric_heating_rate(field_size),
      &     specific_heating_rate(field_size),
      &     RT_HI_ionization_rate(field_size), 
      &     RT_HeI_ionization_rate(field_size),
      &     RT_HeII_ionization_rate(field_size),
      &     RT_H2_dissociation_rate(field_size),
-     &     RT_heating_rate(field_size)
+     &     RT_heating_rate(field_size),
+     &     isrf_habing(field_size)
 
       R_PREC, TARGET :: cooling_time(field_size), gamma(field_size),
      &     pressure(field_size), temperature(field_Size),
@@ -107,10 +109,11 @@ c     Set parameters
       grackle_data%use_grackle = 1            ! chemistry on
       grackle_data%with_radiative_cooling = 1 ! cooling on
       grackle_data%primordial_chemistry = 3   ! network with H, He, D
-      grackle_data%dust_chemistry = 1         ! dust processes
       grackle_data%metal_cooling = 1          ! metal cooling on
       grackle_data%UVbackground = 1           ! UV background on
-c     cooling data for Haardt & Madau 2012 background
+      grackle_data%dust_chemistry = 1         ! dust processes
+      grackle_data%use_dust_density_field = 1 ! follow dust density field
+      grackle_data%use_isrf_field = 1         ! follow interstellar radiation field
       filename = "../../input/CloudyData_UVB=HM2012.h5"//C_NULL_CHAR
       grackle_data%grackle_data_file = C_LOC(filename(1:1))
 
@@ -177,6 +180,8 @@ c     for primordial_chemistry >= 3
       my_fields%HDI_density = C_LOC(HDI_density)
 c     for metal_cooling = 1
       my_fields%metal_density = C_LOC(metal_density)
+c     for use_dust_density_field = 1
+      my_fields%dust_density = C_LOC(dust_density)
 
 c     volumetric heating rate (provide in units [erg s^-1 cm^-3])
       my_fields%volumetric_heating_rate =
@@ -195,6 +200,9 @@ c     (provide in units of [1/s])
 c     radiative transfer heating rate field
 c     (provide in units of [erg s^-1 cm^-3])
       my_fields%RT_heating_rate = C_LOC(RT_heating_rate)
+
+c     interstellar radiation field strength
+      my_fields%isrf_habing = C_LOC(isrf_habing)
 
 c     get the temperature_units
       temperature_units = get_temperature_units(my_units)
@@ -218,6 +226,9 @@ c     get the temperature_units
 c        solar metallicity
          metal_density(i) = grackle_data%SolarMetalFractionByMass *
      &        density(i)
+c        local dust to gas ratio
+         dust_density(i) = grackle_data%local_dust_to_gas_ratio *
+     &        density(i)
 
          x_velocity(i) = 0.0
          y_velocity(i) = 0.0
@@ -233,6 +244,8 @@ c        initilize internal energy (here 1000 K for no reason)
          RT_HeII_ionization_rate(i) = 0.0
          RT_H2_dissociation_rate(i) = 0.0
          RT_heating_rate(i) = 0.0
+
+         isrf_habing(i) = grackle_data%interstellar_radiation_field
       enddo
 
 c
