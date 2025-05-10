@@ -11,6 +11,12 @@
 #    should ensure that the paths to the datafiles are correct
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/../../examples)
 
+if (GRACKLE_USE_DOUBLE)
+  # this example requires C99 or newer since it uses designated initializers
+  add_executable(c99_simple_example c99_simple_example.c)
+  target_link_libraries(c99_simple_example Grackle::Grackle)
+  target_compile_features(c99_simple_example PUBLIC c_std_99)
+endif()
 
 add_executable(c_example c_example.c)
 target_link_libraries(c_example Grackle::Grackle)

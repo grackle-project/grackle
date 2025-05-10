@@ -148,8 +148,8 @@ density, length, time, and the expansion factor must be set
 manually. Units for velocity are then set by calling
 :c:data:`set_velocity_units`. When using the proper frame (i.e.,
 setting :c:data:`comoving_coordinates` to 0), :c:data:`a_units` (units
-for the expansion factor) must be set to 1.0. See below for
-recommendations on choosing appropriate units.
+for the expansion factor) must be set to 1.0.
+:ref:`See below <choosing_appropriate_units>` for recommendations on choosing appropriate units.
 
 .. c:type:: code_units
 
@@ -210,6 +210,8 @@ recommendations on choosing appropriate units.
   my_units.a_value = 1. / (1. + current_redshift) / my_units.a_units;
   // set velocity units
   set_velocity_units(&my_units);
+
+.. _choosing_appropriate_units:
 
 Choosing Appropriate Units
 ^^^^^^^^^^^^^^^^^^^^^^^^^^

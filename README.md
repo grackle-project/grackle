@@ -87,6 +87,7 @@ For more about installation see our [Pygrackle installation guide](https://grack
 
 To help you start using Grackle, we provide:
 
+- a [Tutorial](https://grackle.readthedocs.io/en/latest/Tutorial.html)
 - a [Usage Guide](https://grackle.readthedocs.io/en/latest/Interaction.html)
 - example Grackle programs written in [C, C++, and Fortran](https://github.com/grackle-project/grackle/tree/main/src/example)
 - an [Integration Guide](https://grackle.readthedocs.io/en/latest/Integration.html) (for linking Grackle)
