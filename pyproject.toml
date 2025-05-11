@@ -111,7 +111,19 @@ minimum-version = "build-system.requires"
 
 # Files to exclude from the SDist (even if they're included by default).
 # Supports gitignore syntax.
-sdist.exclude = [".circleci",".readthedocs.yml"]
+sdist.exclude = [
+    # exclude continuous integration:
+    ".circleci", ".readthedocs.yml", ".github",
+    # exclude data files (the sdist is subject to the same rules as wheels)
+    "input", "grackle_data_files",
+    # exclude files related to creating precompiled wheels
+    "scripts/wheels",
+    # exclude miscellaneous classic-build-system machinery
+    "configure", "src/Makefile", "src/examples/Make*"
+    # exclude classic-build-system machinery from src/clib
+    "src/clib/Makefile", "src/clib/Make.*"
+    # should we exclude "tests" and "src/examples"?
+]
 
 # A list of packages to auto-copy into the wheel.
 wheel.packages = ["./src/python/pygrackle"]
@@ -125,3 +137,19 @@ wheel.exclude = [
     # No need to package template files
     "**.py.in"
 ]
+
+
+[tool.cibuildwheel]
+build = "cp310-*"  # <- FIXME: "cp310-* cp311-* cp312-* cp313-*"
+# we compile high-level hdf5 api purely so we can run the test-command on musllinux
+# -> h5py doesn't ship binary-wheels for that platform
+# -> depending on how long h5py takes to compile, it may be better to simply use
+#    test-skip = "*-musllinux*"
+before-build = "python {project}/scripts/wheels/cibw_before_build.py --compile-hl-h5 3rdparty {project}"
+# once we deal with removing the editable-install requirement, we should use:
+#test-extras = "dev"  # <- this installs the test dependencies
+#test-command = "pytest -c {project}/pyproject.toml --color=yes {project}"
+test-command = 'python -c "from pygrackle import chemistry_data"'
+
+[tool.cibuildwheel.linux]
+archs = "x86_64"
