@@ -1,0 +1,97 @@
+# inspired by
+# - https://learn.scientific-python.org/development/guides/gha-wheels/
+# - https://cibuildwheel.pypa.io/en/stable/setup/#github-actions
+# - https://github.com/yt-project/yt/blob/main/.github/workflows/wheels.yaml
+
+name: Wheel
+
+on:
+  push:
+    branches:
+      - main
+      - stable
+    tags:
+      - 'grackle-*'
+  pull_request:
+    paths:
+      - '.github/workflows/wheels.yaml'
+  workflow_dispatch:
+
+jobs:
+  make_sdist:
+    name: Make SDist
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Optional, use if you use setuptools_scm
+          submodules: true # Optional, use if you have submodules
+
+      - name: Build SDist
+        run: pipx run build --sdist
+
+      - name: Test sdist
+        run: |
+          python -m pip install "$(echo dist/*.tar.gz)[dev]"
+          python -m pip list
+          project_dir=$(pwd)
+          python -c "from pygrackle import chemistry_data"
+          # todo: run some more tests
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cibw-sdist
+          path: dist/*.tar.gz
+
+  build_wheels:
+    name: Build wheels on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        # macos-13 is an intel runner, macos-14 is apple silicon
+        os: [ubuntu-latest, macos-13, macos-14] # ubuntu-24.04-arm
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v2.23.3
+        # env:
+        #   CIBW_SOME_OPTION: value
+        #    ...
+        # with:
+        #   package-dir: .
+        #   output-dir: wheelhouse
+        #   config-file: "{package}/pyproject.toml"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cibw-wheels-${{ matrix.os }}-${{ strategy.job-index }}
+          path: ./dist/*.whl
+
+#  upload_all:
+#    name: Publish to
+#    needs: [build_wheels, make_sdist]
+#    environment: pypi
+#    permissions:
+#      id-token: write
+#      attestations: write
+#      contents: read
+#
+#    runs-on: ubuntu-latest
+#    #if: github.event_name == 'release' && github.event.action == 'published'
+#    # upload to PyPI on every tag starting with 'grackle-'
+#    if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/grackle-')
+#    steps:
+#      - uses: actions/download-artifact@v4
+#        with:
+#          pattern: cibw-*
+#          path: dist
+#          merge-multiple: true
+#
+#      - name: Generate artifact attestations
+#        uses: actions/attest-build-provenance@v2
+#        with:
+#          subject-path: "dist/*"
+#
+#      - uses: pypa/gh-action-pypi-publish@release/v1
