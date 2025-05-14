@@ -119,7 +119,7 @@ sdist.exclude = [
     # exclude files related to creating precompiled wheels
     "scripts/wheels",
     # exclude miscellaneous classic-build-system machinery
-    "configure", "src/Makefile", "src/examples/Make*"
+    "configure", "src/Makefile", "src/examples/Make*",
     # exclude classic-build-system machinery from src/clib
     "src/clib/Makefile", "src/clib/Make.*"
     # should we exclude "tests" and "src/examples"?
