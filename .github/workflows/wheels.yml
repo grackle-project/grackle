@@ -32,6 +32,7 @@ jobs:
 
       - name: Test sdist
         run: |
+          sudo apt-get install libhdf5-dev
           python -m pip install "$(echo dist/*.tar.gz)[dev]"
           python -m pip list
           project_dir=$(pwd)
@@ -48,8 +49,12 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        # macos-13 is an intel runner, macos-14 is apple silicon
-        os: [ubuntu-latest, macos-13, macos-14] # ubuntu-24.04-arm
+        os: [
+          ubuntu-latest,
+          # ubuntu-24.04-arm,
+          # macos-13,  # (runs on intel-CPUs)
+          macos-14  #(runs on arm cpus)
+        ]
 
     steps:
       - uses: actions/checkout@v4
