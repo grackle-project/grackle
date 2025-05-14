@@ -1,5 +1,5 @@
 == Version 3.4 ==
-_Release date - May 12, 2025_
+_Release date - May 14, 2025_
 
   * Enhancement: headers can now be directly included in C++ source files (without wrapping them in `extern "C"` blocks)
     https://github.com/grackle-project/grackle/pull/199
