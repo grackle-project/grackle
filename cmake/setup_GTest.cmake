@@ -3,9 +3,7 @@ find_package(GTest)
 
 if (NOT GTest_FOUND)
     message(STATUS
-    "Preparing to download GTest from GitHub & configure its build. Don't "
-    "worry about any mentions of Python in the following text -- that is "
-    "only used internally by the Google test build"
+      "GTest not found. Fetching via FetchContent and configuring its build"
     )
 
     # NOTE: it is idiomatic to use FetchContent with a git hash rather than the
@@ -15,10 +13,13 @@ if (NOT GTest_FOUND)
 
     include(FetchContent)
     FetchContent_Declare(
-      googletest # the url contains the hash for v1.13.0
-      URL https://github.com/google/googletest/archive/b796f7d44681514f58a683a3a71ff17c94edb0c1.zip
+      googletest # the url contains the hash for v1.15.2
+      URL https://github.com/google/googletest/archive/b514bdc898e2951020cbdca1304b75f5950d1f59.zip
     )
 
+    # Tell GoogleTest's build-system not to define installation rules (since we
+    # only use it to run tests from the build-directory)
+    set(INSTALL_GTEST OFF)
     # For Windows: Prevent overriding the parent project's compiler/linker settings
     set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
     FetchContent_MakeAvailable(googletest)
