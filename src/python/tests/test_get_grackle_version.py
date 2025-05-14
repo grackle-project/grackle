@@ -17,6 +17,8 @@ from packaging.version import Version, InvalidVersion
 import os
 import subprocess
 
+import pytest
+
 def query_grackle_version_props():
     # retrieve the current version information with git
 
@@ -29,16 +31,13 @@ def query_grackle_version_props():
         return _rslt.stdout.decode().rstrip()
 
     # get the name of the most recent tag preceeding this commit:
-    most_recent_tag = _run(["git", "describe", "--abbrev=0", "--tags"])
-    if most_recent_tag.startswith("grackle-"):
-        latest_tagged_version = most_recent_tag[8:]
-    elif most_recent_tag.startswith("gold-standard-v"):
-        latest_tagged_version = most_recent_tag[15:]
-    else:
-        raise RuntimeError(
-            "expected the most recent git-tag to start with "
-            "'grackle-' or 'gold-standard-v'"
-        )
+    prefix = "grackle-"
+    descr_args = ["git", "describe", "--abbrev=0", "--tags", "--match", (prefix + "*")]
+    try:
+        most_recent_tag = _run(descr_args)
+    except subprocess.CalledProcessError:
+        pytest.skip("could not find git-tag that starts with {prefix!r}")
+    latest_tagged_version = most_recent_tag[len(prefix) :]
 
     # get the actual revision when most_recent tag was introduced
     revision_of_tag = _run(["git", "rev-parse", "-n", "1", most_recent_tag])
