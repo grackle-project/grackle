@@ -142,7 +142,10 @@ def get_hdf5(depend_dir, compile_hl_api=False):
         "-DHDF5_ENABLE_Z_LIB_SUPPORT=OFF",  # the option-name changes in HDF5 2.0
     )
     _run("cmake", "--build", build_dir)  # compile hdf5
-    _run("cmake", "--install", build_dir)  # install hdf5 to install_dir
+    if _IS_MACOS:
+        _run("sudo", "cmake", "--install", build_dir)
+    else:
+        _run("cmake", "--install", build_dir)
 
 
 def handle_license(project_dir):
