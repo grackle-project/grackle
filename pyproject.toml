@@ -26,7 +26,7 @@ description = "A wrapper for the Grackle chemistry library"
 #    https://scikit-build-core.readthedocs.io/en/latest/configuration.html#dynamic-metadata
 # but pygrackle can't (currently) do this since it lives in a "monorepo"
 #    https://github.com/pypa/setuptools_scm/issues/1056
-version = "1.1.dev0"
+version = "1.1.0"
 classifiers=[
   "Development Status :: 5 - Production/Stable",
   "Environment :: Console",
