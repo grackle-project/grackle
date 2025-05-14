@@ -55,12 +55,17 @@ jobs:
           # macos-13,  # (runs on intel-CPUs)
           macos-14  #(runs on arm cpus)
         ]
-        include:
-          - os: macos-14
-            env: MACOSX_DEPLOYMENT_TARGET=12.3  # required by gfortran
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Set MACOSX_DEPLOYMENT_TARGET on ARM
+        if: matrix.os == 'macos-14'
+        run: |
+          # we may be able to reduce the following version number (or pick
+          # something consistent with Intel-Macs once all fortran code is
+          # removed)
+          echo "CIBW_ENVIRONMENT=MACOSX_DEPLOYMENT_TARGET=12.3" >> "$GITHUB_ENV"
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.23.3
