@@ -94,7 +94,7 @@ jobs:
         with:
           subject-path: "dist/*"
 
-      - name: Publish to pypi
-        uses: pypa/gh-action-pypi-publish@release/v1
-          password: ${{ secrets.TEST_PYPI_API_TOKEN }}
-          repository-url: https://test.pypi.org/legacy/
+      #- name: Publish to pypi
+      #  uses: pypa/gh-action-pypi-publish@release/v1
+      #    password: ${{ secrets.TEST_PYPI_API_TOKEN }}
+      #    repository-url: https://test.pypi.org/legacy/
