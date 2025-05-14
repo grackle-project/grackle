@@ -9,7 +9,7 @@ on:
   push:
     branches:
       - main
-      - stable
+      - binary-wheel  # just for initial testing purposes
     tags:
       - 'grackle-*'
   pull_request:
