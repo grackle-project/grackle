@@ -69,15 +69,15 @@ jobs:
           name: cibw-wheels-${{ matrix.os }}-${{ strategy.job-index }}
           path: ./dist/*.whl
 
-  upload_all:
-    name: Publish to PyPI
-    needs: [build_wheels, make_sdist]
-    environment: testpypi
-    permissions:
-      id-token: write
-      attestations: write
-      contents: read
-
+#  upload_all:
+#    name: Publish to PyPI
+#    needs: [build_wheels, make_sdist]
+#    environment: testpypi
+#    permissions:
+#      id-token: write
+#      attestations: write
+#      contents: read
+#
 #    runs-on: ubuntu-latest
 #    #if: github.event_name == 'release' && github.event.action == 'published'
 #    # upload to PyPI on every tag starting with 'grackle-'
