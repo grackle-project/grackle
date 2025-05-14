@@ -69,29 +69,32 @@ jobs:
           name: cibw-wheels-${{ matrix.os }}-${{ strategy.job-index }}
           path: ./dist/*.whl
 
-#  upload_all:
-#    name: Publish to
-#    needs: [build_wheels, make_sdist]
-#    environment: pypi
-#    permissions:
-#      id-token: write
-#      attestations: write
-#      contents: read
-#
-#    runs-on: ubuntu-latest
-#    #if: github.event_name == 'release' && github.event.action == 'published'
-#    # upload to PyPI on every tag starting with 'grackle-'
-#    if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/grackle-')
-#    steps:
-#      - uses: actions/download-artifact@v4
-#        with:
-#          pattern: cibw-*
-#          path: dist
-#          merge-multiple: true
-#
-#      - name: Generate artifact attestations
-#        uses: actions/attest-build-provenance@v2
-#        with:
-#          subject-path: "dist/*"
-#
-#      - uses: pypa/gh-action-pypi-publish@release/v1
+  upload_all:
+    name: Publish to PyPI
+    needs: [build_wheels, make_sdist]
+    environment: testpypi
+    permissions:
+      id-token: write
+      attestations: write
+      contents: read
+
+    runs-on: ubuntu-latest
+    #if: github.event_name == 'release' && github.event.action == 'published'
+    # upload to PyPI on every tag starting with 'grackle-'
+    if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/grackle-')
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: cibw-*
+          path: dist
+          merge-multiple: true
+
+      - name: Generate artifact attestations
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: "dist/*"
+
+      - name: Publish to pypi
+        uses: pypa/gh-action-pypi-publish@release/v1
+          password: ${{ secrets.TEST_PYPI_API_TOKEN }}
+          repository-url: https://test.pypi.org/legacy/
