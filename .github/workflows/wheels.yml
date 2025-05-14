@@ -55,6 +55,9 @@ jobs:
           # macos-13,  # (runs on intel-CPUs)
           macos-14  #(runs on arm cpus)
         ]
+        include:
+          - os: macos-14
+            env: MACOSX_DEPLOYMENT_TARGET=12.3  # required by gfortran
 
     steps:
       - uses: actions/checkout@v4
