@@ -88,6 +88,13 @@
 #include "grackle_rate_functions.h"
 #include "phys_constants.h"
 
+int initialize_metal_chemistry_rates(chemistry_data *my_chemistry,
+                                     chemistry_data_storage *my_rates,
+                                     code_units *my_units);
+int initialize_dust_yields(chemistry_data *my_chemistry,
+                           chemistry_data_storage *my_rates,
+                           code_units *my_units);
+
 //Define the type of a scalar rate function.
 typedef double (*scalar_rate_function)(double, chemistry_data*);
 
@@ -207,6 +214,68 @@ int add_h2dust_reaction_rate(double **rate_ptr, double units, chemistry_data *my
     return GR_SUCCESS;
 }
 
+// Define a function which will calculate h2dust_C rates.
+int add_h2dust_C_reaction_rate(double **rate_ptr, double units, chemistry_data *my_chemistry)
+{
+    //Allocate memory for h2dust.
+    *rate_ptr = malloc(my_chemistry->NumberOfTemperatureBins * my_chemistry->NumberOfDustTemperatureBins
+                        * sizeof(double));
+
+    //Calculate temperature spacing.
+    double T, logT, logT_start, d_logT, T_dust, logT_dust, logT_start_dust, d_logT_dust;
+    logT_spacing(&logT_start, &d_logT, my_chemistry);
+    logT_spacing_dust(&logT_start_dust, &d_logT_dust, my_chemistry);
+    
+    //Calculate h2dust.
+    for (int i = 0; i < my_chemistry->NumberOfTemperatureBins; i++)
+    {   
+        //Calculate bin temperature.
+        logT = logT_start + i*d_logT;
+        T = exp(logT);
+
+        for (int j = 0; j < my_chemistry->NumberOfDustTemperatureBins; j++)
+        {
+            //Calculate dust bin temperature.
+            logT_dust = logT_start_dust + j*d_logT_dust;
+            T_dust = exp(logT_dust);
+
+            //Calculate rate and store.
+            (*rate_ptr)[i + my_chemistry->NumberOfTemperatureBins*j] = h2dust_C_rate(T, T_dust, units, my_chemistry);
+        }
+    }
+}
+
+// Define a function which will calculate h2dust_S rates.
+int add_h2dust_S_reaction_rate(double **rate_ptr, double units, chemistry_data *my_chemistry)
+{
+    //Allocate memory for h2dust.
+    *rate_ptr = malloc(my_chemistry->NumberOfTemperatureBins * my_chemistry->NumberOfDustTemperatureBins
+                        * sizeof(double));
+
+    //Calculate temperature spacing.
+    double T, logT, logT_start, d_logT, T_dust, logT_dust, logT_start_dust, d_logT_dust;
+    logT_spacing(&logT_start, &d_logT, my_chemistry);
+    logT_spacing_dust(&logT_start_dust, &d_logT_dust, my_chemistry);
+    
+    //Calculate h2dust.
+    for (int i = 0; i < my_chemistry->NumberOfTemperatureBins; i++)
+    {   
+        //Calculate bin temperature.
+        logT = logT_start + i*d_logT;
+        T = exp(logT);
+
+        for (int j = 0; j < my_chemistry->NumberOfDustTemperatureBins; j++)
+        {
+            //Calculate dust bin temperature.
+            logT_dust = logT_start_dust + j*d_logT_dust;
+            T_dust = exp(logT_dust);
+
+            //Calculate rate and store.
+            (*rate_ptr)[i + my_chemistry->NumberOfTemperatureBins*j] = h2dust_S_rate(T, T_dust, units, my_chemistry);
+        }
+    }
+}
+
 //Definition of the initialise_rates function.
 int initialize_rates(chemistry_data *my_chemistry, chemistry_data_storage *my_rates,
                    code_units *my_units, double co_length_unit, double co_density_unit)
@@ -281,6 +350,13 @@ int initialize_rates(chemistry_data *my_chemistry, chemistry_data_storage *my_ra
     */
     double coolingUnits = (pow(my_units->a_units, 5) * pow(lengthBase1, 2) * pow(mh, 2))
                           / (densityBase1 * pow(timeBase1, 3));
+
+    // These always need to be allocated since we define other variables by them.
+    my_rates->gr_N = calloc(2, sizeof(int));
+
+    if (my_chemistry->use_primordial_continuum_opacity == 1) {
+      initialize_primordial_opacity(my_chemistry, my_rates);
+    }
 
     //* 3) Units for radiative transfer coefficients are 1/[time].
 
@@ -421,6 +497,12 @@ int initialize_rates(chemistry_data *my_chemistry, chemistry_data_storage *my_ra
         //from Glover (2015, MNRAS, 451, 2082)
         add_reaction_rate(&my_rates->H2LTE, H2LTE_rate, coolingUnits, my_chemistry);
 
+        // Chiaki & Wise 2019 rates
+        // Note: these are still defined in initialize_metal_chemistry_rates.c.
+        // They should be moved someday.
+        initialize_cooling_rate_H2(my_chemistry, my_rates, coolingUnits);
+        initialize_cooling_rate_HD(my_chemistry, my_rates, coolingUnits);
+
         //* f) HD cooling.
 
         //HD cooling function has units of ergs cm^3 / s
@@ -448,7 +530,20 @@ int initialize_rates(chemistry_data *my_chemistry, chemistry_data_storage *my_ra
 
         //Electron recombination onto dust grains.
         //(Equation 9, Wolfire et al., 1995)
-        add_reaction_rate(&my_rates->regr, regr_rate, coolingUnits, my_chemistry); 
+        add_reaction_rate(&my_rates->regr, regr_rate, coolingUnits, my_chemistry);
+
+        //H2 formation on dust grains with C and S compositions
+        add_h2dust_C_reaction_rate(&my_rates->h2dustC, kUnit, my_chemistry);
+        add_h2dust_S_reaction_rate(&my_rates->h2dustS, kUnit, my_chemistry);
+
+        //Heating of dust by interstellar radiation field, with an arbitrary grain size distribution
+        add_scalar_reaction_rate(&my_rates->gamma_isrf2, gamma_isrf2_rate, coolingUnits, my_chemistry);
+
+        //Gas-grain energy transfer, with an arbitrary grain size distribution
+        add_reaction_rate(&my_rates->gas_grain2, gasGrain2_rate, coolingUnits, my_chemistry);
+
+        //Grain growth rate
+        add_reaction_rate(&my_rates->grain_growth_rate, grain_growth_rate, kUnit, my_chemistry);
 
     }//End of anyDust if-statement.
 
@@ -464,7 +559,18 @@ int initialize_rates(chemistry_data *my_chemistry, chemistry_data_storage *my_ra
     //(Equation B15, Krumholz, 2014)
     add_scalar_reaction_rate(&my_rates->gamma_isrf, gamma_isrf_rate, coolingUnits, my_chemistry); 
 
-    
+    /* Metal chemistry rates */
+    if (initialize_metal_chemistry_rates(my_chemistry, my_rates, my_units) == FAIL) {
+      fprintf(stderr, "Error in initialize_metal_chemistry_rates.\n");
+      return FAIL;
+    }
+    /* Dust rates */
+    if (initialize_dust_yields(my_chemistry, my_rates, my_units) == FAIL) {
+      fprintf(stderr, "Error in initialize_dust_yields.\n");
+      return FAIL;
+    }
+
     //End of function definition.
     return SUCCESS;
 }
+

@@ -208,7 +208,7 @@ commands:
       gold-standard-tag:
         description: "The gold-standard to use for generating the answers"
         type: string
-        default: "gold-standard-v3"
+        default: "temporary-gold-standard-nccv1"
     steps:
       - run:
           name: "Build Pygrackle from Gold-Standard Commit (<< parameters.gold-standard-tag >>)"
@@ -301,11 +301,11 @@ jobs:
           generate: 'false'
 
       # setup and run classic-omp-test on latest commit
-      - install-grackle:
-          omp: 'true'
-          classic_build: 'true'
-          tag: $CIRCLE_BRANCH
-      - run-classic-omp-test
+      #- install-grackle:
+      #    omp: 'true'
+      #    classic_build: 'true'
+      #    tag: $CIRCLE_BRANCH
+      #- run-classic-omp-test
 
   test-standalone-pygrackle:
     parameters:

@@ -14,9 +14,13 @@
 from collections import defaultdict
 import numpy as np
 
+from pygrackle.fluid_container import _indirectly_calculated_fields
+
 from .physical_constants import \
     gravitational_constant_cgs, \
     sec_per_year
+
+
 
 def evolve_freefall(fc, final_density, safety_factor=0.01,
                     include_pressure=True):
@@ -148,12 +152,25 @@ def add_to_data(fc, data, extra=None):
     Add current fluid container values to the data structure.
     """
 
+    # for indirectly calculated fields, we get more than one field from a call.
+    # keep a list of what we've called so we don't have to call them again.
+    called = []
+
     for field in fc.all_fields:
         if field not in fc.input_fields:
-            func = getattr(fc, f"calculate_{field}")
+            if field in _indirectly_calculated_fields:
+                fname = _indirectly_calculated_fields[field]
+            else:
+                fname = f"calculate_{field}"
+
+            func = getattr(fc, fname, None)
             if func is None:
                 raise RuntimeError(f"No function for calculating {field}.")
-            func()
+
+            if fname not in called:
+                func()
+                called.append(fname)
+
         data[field].append(fc[field].copy())
 
     if extra is not None:
