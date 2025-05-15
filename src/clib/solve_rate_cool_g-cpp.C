@@ -18,6 +18,7 @@
 #include "step_rate_newton_raphson.hpp"
 #include "utils-cpp.hpp"
 
+#include "ceiling_species-cpp.h"
 #include "solve_rate_cool_g-cpp.h"
 
 /// overrides the subcycle timestep (for each index in the index-range that is
@@ -670,7 +671,7 @@ int solve_rate_cool_g(
   }
 
 #ifdef ABUNDANCE_CORRECTION
-  f_wrap::ceiling_species_g(imetal, my_chemistry, my_fields);
+  ceiling_species_g(&imetal, my_chemistry, my_fields);
 #endif
 
   const grackle_index_helper idx_helper = build_index_helper_(my_fields);
@@ -1014,7 +1015,7 @@ int solve_rate_cool_g(
 
 #ifdef ABUNDANCE_CORRECTION
     f_wrap::make_consistent_g(imetal, dom, my_chemistry, my_rates, my_fields);
-    f_wrap::ceiling_species_g(imetal, my_chemistry, my_fields);
+    ceiling_species_g(&imetal, my_chemistry, my_fields);
 #endif
 
   }
