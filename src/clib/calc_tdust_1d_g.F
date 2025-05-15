@@ -68,8 +68,11 @@
       ! grain sublimation temperature
       real*8, parameter :: t_subl = 1.5e3_DKIND
       real*8, parameter :: radf = 4._DKIND * sigma_sb
-      real*8, parameter :: kgr1 = 4.0e-4_DKIND / 0.009387d0
-         !! should be normalized with local fgr. [GC20200701]
+
+! grain opacity from Omukai (2000, equation 17) normalized by
+! the local dust-to-gas ratio, which in this work is 0.934e-2.
+      real*8, parameter :: kgr1 = 4.0e-4_DKIND / 0.00934d0
+
       real*8 gamma_isrf(in)
       real*8, parameter :: tol = 1.e-5_DKIND
       real*8, parameter :: bi_tol = 1.e-3_DKIND
@@ -383,10 +386,17 @@ c               ERROR_MESSAGE
 
 !  Parameters
 
-      real*8, parameter :: kgr1 = 4.0e-4_DKIND / 0.009387d0
-      real*8, parameter :: kgr200 = 16.0_DKIND / 0.009387d0
-         !! should be normalized with local fgr. [GC20200701]
-         !! This value is valid only for Td < 50 K (Omukai 2000).
+! grain opacity from Omukai (2000, equation 17) normalized by
+! the local dust-to-gas ratio, which in this work is 0.934e-2.
+      real*8, parameter :: kgr1 = 4.0e-4_DKIND / 0.00934d0
+
+! We then apply a Td^2 scaling up to 200 K following Dopcke et al. (2011).
+! However, note that Dopcke et al. (2011) adopt a different
+! normalization (i.e., for kgr1).
+! Also note that Omukai (2000) says the Td^2 proportionality is only valid
+! for Td < 50 K. We go with this because Omukai (2000) does not suggest
+! what should be done for Td > 50 K.
+      real*8, parameter :: kgr200 = 16.0_DKIND / 0.00934d0
 
 !  Opacity table
 
@@ -419,6 +429,7 @@ c               ERROR_MESSAGE
 
 !           Temperature dependence from Dopcke et al. (2011).
 !           Normalized to Omukai (2000).
+!           See comment above for note about Td dependence for kgr.
             if (tdust(i) .lt. 200._DKIND) then
                kgr(i) = kgr1 * tdust(i)**2
             else if (tdust(i) .lt. t_subl) then
@@ -427,8 +438,6 @@ c               ERROR_MESSAGE
                kgr(i) = max(tiny, 
      &              (kgr200 * (tdust(i) / 1.5e3_DKIND)**(-12)))
             endif
-c           This approximation kgr1 * tgr^2 is valid only for 
-c             Tgr < 50 K (Omukai 2000).
 
          else
 
@@ -439,7 +448,6 @@ c             Tgr < 50 K (Omukai 2000).
      &           log10tdust, gr_N_i64, gr_Td, gr_dT,
      &           gr_N_i64(1), logalsp1, logkgr)
             kgr(i) = 10._DKIND**logkgr
-!!          write(*,*) 'fff', i, kgr(i)
 
          endif
 
