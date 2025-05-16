@@ -47,7 +47,6 @@ keywords=[
 ]
 requires-python = ">=3.7"
 dependencies = [
-  'cython',
   'h5py',
   'numpy',
   'matplotlib',
