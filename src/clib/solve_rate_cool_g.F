@@ -532,9 +532,9 @@
      &               k28shield, k29shield, k30shield,
      &               k31shield, h2dust, ncrn, ncrd1, ncrd2, 
      &               t1, t2, tdef, logtem, indixe, 
-     &               dom, coolunit, tbase1, xbase1, dx_cgs, c_ljeans,
-     &               iradtrans, kdissH2I, xH2shield, iH2shieldcustom, 
-     &               f_shield_custom,  itmask)
+     &               dom, coolunit, tbase1, uxyz, xbase1, dx_cgs,
+     &               c_ljeans,iradtrans, kdissH2I, xH2shield, 
+     &               iH2shieldcustom, f_shield_custom, itmask)
 
 !           Compute dedot and HIdot, the rates of change of de and HI
 !             (should add itmask to this call)
@@ -1103,9 +1103,9 @@ c -------------------------------------------------------------------
      &                k28shield, k29shield, k30shield, k31shield,
      &                h2dust, ncrn, ncrd1, ncrd2,
      &                t1, t2, tdef, logtem, indixe, 
-     &                dom, coolunit, tbase1, xbase1, dx_cgs, c_ljeans,
-     &                iradtrans, kdissH2I, xH2shield, iH2shieldcustom, 
-     &                f_shield_custom, itmask)
+     &                dom, coolunit, tbase1, uxyz, xbase1, dx_cgs,
+     &                c_ljeans, iradtrans, kdissH2I, xH2shield, 
+     &                iH2shieldcustom, f_shield_custom, itmask)
 ! -------------------------------------------------------------------
 
       implicit NONE
@@ -1119,7 +1119,7 @@ c -------------------------------------------------------------------
      &        iH2shieldcustom
       real*8 temstart, temend, tgas1d(in), mmw(in), dom,
      &       dtemstart, dtemend
-      real*8 coolunit, tbase1, xbase1, dx_cgs, c_ljeans
+      real*8 coolunit, tbase1, uxyz, xbase1, dx_cgs, c_ljeans
       logical itmask(in), anydust
 
 !     Chemistry rates as a function of temperature
@@ -1441,7 +1441,7 @@ c -------------------------------------------------------------------
 
 !              User-supplied length-scale field.
                else if (iH2shield == 2) then
-                  l_H2shield = xH2shield(i,j,k) * xbase1
+                  l_H2shield = xH2shield(i,j,k) * uxyz
 
 !              Jeans Length
                else if (iH2shield == 3) then
