@@ -34,7 +34,7 @@ _model_test_grids = \
         {
             "use_grackle": (1,),
             "primordial_chemistry": (0, 1, 2, 3),
-            "dust_chemistry": (1,),
+            "dust_chemistry": (0, 1,),
             "metal_cooling": (1,),
             "UVbackground": (0, 1),
             "cmb_temperature_floor": (1,),
