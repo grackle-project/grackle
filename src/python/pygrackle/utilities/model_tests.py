@@ -24,98 +24,315 @@ _parameter_exclude = (
     {"dust_chemistry": 1, "metal_cooling": 0},
     {"dust_chemistry": 1, "primordial_chemistry": 0},
     {"dust_chemistry": 1, "primordial_chemistry": 1},
+    {"metal_chemistry": 1, "primordial_chemistry": 0},
+    {"metal_chemistry": 1, "primordial_chemistry": 1},
+    {"metal_chemistry": 1, "metal_cooling": 0},
+    {"grackle_data_file": "CloudyData_noUVB.h5", "UVbackground": 1},
 )
 
 _model_test_grids = \
 {
     "cooling_rate": \
     {
-        "standard": \
+        "standard_variants": \
         {
-            "parameter_grid": \
+            "parameters":
             {
-                "use_grackle": (1,),
-                "primordial_chemistry": (0, 1, 2, 3),
-                "dust_chemistry": (0, 1,),
-                "metal_cooling": (1,),
-                "UVbackground": (0, 1),
-                "cmb_temperature_floor": (1,),
-                "grackle_data_file": ("CloudyData_UVB=HM2012.h5",),
+                "defaults": \
+                {
+                    "use_grackle": 1,
+                    "primordial_chemistry": 4,
+                    "dust_chemistry": 1,
+                    "metal_cooling": 1,
+                    "UVbackground": 1,
+                    "cmb_temperature_floor": 1,
+                    "grackle_data_file": "CloudyData_UVB=HM2012.h5",
+                },
+                "variants": \
+                {
+                    "UVbackground": (0,),
+                    "cmb_temperature_floor": (0,),
+                }
             },
-            "input_grid": \
+            "inputs": \
             {
-                "metallicity": (0., 1.),
-                "redshift": (0., 2.),
-                "specific_heating_rate": (0.,),
-                "volumetric_heating_rate": (0.,),
+                "defaults": \
+                {
+                    "metallicity": 1.,
+                    "redshift": 0.,
+                    "specific_heating_rate": 0.,
+                    "volumetric_heating_rate": 0.,
+                },
+                "variants": \
+                {
+                    "metallicity": (0.,),
+                    "redshift": (2.,),
+                    "specific_heating_rate": (1.,),
+                    "volumetric_heating_rate": (1e-24,),
+                },
             }
-        }
+        },
+
+        "standard_combinations": \
+        {
+            "parameters": \
+            {
+                "defaults": \
+                {
+                    "use_grackle": 1,
+                    "metal_cooling": 1,
+                    "UVbackground": 1,
+                    "cmb_temperature_floor": 1,
+                    "grackle_data_file": "CloudyData_UVB=HM2012.h5",
+                },
+                "grid": \
+                {
+                    "primordial_chemistry": (0, 1, 2, 3, 4),
+                    "dust_chemistry": (0, 1),
+                    "metal_cooling": (0, 1),
+                    "metal_chemistry": (0, 1),
+                },
+            },
+            "inputs": \
+            {
+                "defaults": \
+                {
+                    "metallicity": 1.,
+                    "redshift": 0.,
+                    "specific_heating_rate": 0.,
+                    "volumetric_heating_rate": 0.,
+                }
+            }
+        },
+
+        "cloudy_table_combinations": \
+        {
+            "parameters":
+            {
+                "defaults": \
+                {
+                    "use_grackle": 1,
+                    "metal_cooling": 1,
+                    "cmb_temperature_floor": 1,
+                },
+                "grid": \
+                {
+                    "primordial_chemistry": (0, 4),
+                    "UVbackground": (0, 1),
+                    "grackle_data_file": ("CloudyData_noUVB.h5",
+                                          "CloudyData_UVB=FG2011_shielded.h5",
+                                          "CloudyData_UVB=FG2011.h5",
+                                          "CloudyData_UVB=HM2012_high_density.h5",
+                                          "CloudyData_UVB=HM2012_shielded.h5",
+                                          "CloudyData_UVB=HM2012.h5"),
+                }
+            },
+            "inputs": \
+            {
+                "defaults": \
+                {
+                    "metallicity": 1.,
+                    "redshift": 0.,
+                    "specific_heating_rate": 0.,
+                    "volumetric_heating_rate": 0.,
+                },
+            }
+        },
+
+        "self_shielding_combinations": \
+        {
+            "parameters":
+            {
+                "defaults": \
+                {
+                    "use_grackle": 1,
+                    "metal_cooling": 1,
+                    "cmb_temperature_floor": 1,
+                    "UVbackground": 1,
+                },
+                "grid": \
+                {
+                    "primordial_chemistry": (0, 4),
+                    "grackle_data_file": ("CloudyData_UVB=FG2011_shielded.h5",
+                                          "CloudyData_UVB=HM2012_shielded.h5"),
+                    "self_shielding_method": (1, 2, 3),
+                }
+            },
+            "inputs": \
+            {
+                "defaults": \
+                {
+                    "metallicity": 0.1,
+                    "redshift": 2.,
+                    "specific_heating_rate": 0.,
+                    "volumetric_heating_rate": 0.,
+                },
+            }
+        },
     },
+
     "cooling_cell": \
     {
-        "standard": \
+        "standard_combinations": \
         {
-            "parameter_grid": \
+            "parameters": \
             {
-                "use_grackle": (1,),
-                "primordial_chemistry": (0, 1, 2, 3),
-                "metal_cooling": (1,),
-                "UVbackground": (1,),
-                "cmb_temperature_floor": (1,),
-                "grackle_data_file": ("CloudyData_UVB=HM2012.h5",),
+                "defaults": \
+                {
+                    "use_grackle": 1,
+                    "metal_cooling": 1,
+                    "cmb_temperature_floor": 1,
+                    "grackle_data_file": "CloudyData_UVB=HM2012.h5",
+                    "temperature_floor_scalar": 5e4,
+                },
+                "grid": \
+                {
+                    "primordial_chemistry": (0, 1, 2, 3),
+                    "metal_chemistry": (0, 1),
+                    "UVbackground": (0, 1),
+                    "use_temperature_floor": (0, 1),
+                }
             },
-            "input_grid": \
+            "inputs": \
             {
-                "metallicity": (0.1,),
-                "redshift": (0.,),
+                "defaults": \
+                {
+                    "metallicity": 0.1,
+                    "redshift": 0.,
+                }
             }
         }
     },
+
     "freefall": \
     {
-        "standard": \
+        "standard_combinations": \
         {
-            "parameter_grid": \
+            "parameters": \
             {
-                "use_grackle": (1,),
-                "primordial_chemistry": (2, 3),
-                "metal_cooling": (0, 1),
-                "dust_chemistry": (0, 1),
-                "photoelectric_heating": (0,),
-                "cmb_temperature_floor": (1,),
-                "CaseBRecombination": (1,),
-                "cie_cooling": (1,),
-                "h2_optical_depth_approximation": (1,),
-                "grackle_data_file": ("cloudy_metals_2008_3D.h5",),
+                "defaults": \
+                {
+                    "use_grackle": 1,
+                    "photoelectric_heating": 0,
+                    "cmb_temperature_floor": 1,
+                    "CaseBRecombination": 1,
+                    "cie_cooling": 1,
+                    "h2_optical_depth_approximation": 1,
+                    "use_primordial_continuum_opacity": 1,
+                    "grackle_data_file": "cloudy_metals_2008_3D.h5",
+                },
+                "grid": \
+                {
+                    "primordial_chemistry": (2, 3, 4),
+                    "metal_cooling": (0, 1),
+                    "dust_chemistry": (0, 1),
+                }
             },
-            "input_grid": \
+            "inputs": \
             {
-                "metallicity": (1e-10, 1e-4, 1e-3),
+                "grid": \
+                {
+                    "metallicity": (1e-10, 1e-4, 1e-3),
+                }
+            }
+        },
+
+        "primordial_rate_variants": \
+        {
+            "parameters": \
+            {
+                "defaults": \
+                {
+                    "use_grackle": 1,
+                    "primordial_chemistry": 4,
+                    "CaseBRecombination": 1,
+                    "cie_cooling": 1,
+                    "h2_optical_depth_approximation": 1,
+                    "use_primordial_continuum_opacity": 1,
+                    "h2_charge_exchange_rate": 1,
+                    "h2_h_cooling_rate": 1,
+                    "h2_cooling_rate": 2,
+                    "hd_reaction_rates": 0,
+                    "H2_self_shielding": 0,
+                    "three_body_rate": 0,
+                },
+                "variants": \
+                {
+                    "CaseBRecombination": (0,),
+                    "cie_cooling": (0, 2),
+                    "h2_optical_depth_approximation": (0,),
+                    "use_primordial_continuum_opacity": (0,),
+                    "h2_charge_exchange_rate": (2,),
+                    "h2_cooling_rate": (0, 1, 3),
+                    "h2_h_cooling_rate": (2,),
+                    "hd_reaction_rates": (1,),
+                    "H2_self_shielding": (3,),
+                    "three_body_rate": (1, 2, 3, 4, 5),
+                }
+            },
+            "inputs": \
+            {
+                "defaults": \
+                {
+                    "metallicity": 0.,
+                }
             }
         }
     },
+
     "yt_grackle": \
     {
         "standard": \
         {
-            "parameter_grid": {},
-            "input_grid": {}
+            "parameters": {},
+            "inputs": {}
         }
     }
 }
 
-def generate_value_sets(parameter_grid, exclude_sets=None):
+def generate_value_sets(config, exclude_sets=None):
     """
-    Generate all permutations of values excepting exclusions.
+    Generate all sets of values excepting exclusions.
+
+    These sets can be generated either as all permutations of a grid
+    or as a default and a set of single-parameter variations.
     """
 
     if exclude_sets is None:
         exclude_sets = {}
 
+    par_defaults = config.get("defaults", {})
+
+    if "grid" in config and "variants" in config:
+        raise ValueError("Must provide grid or variants, but not both.")
+
+    my_sets = []
+
+    # do all permutations of a grid of parameters
+    if "grid" in config:
+        pars = config["grid"].keys()
+        for perm in itertools.product(*config["grid"].values()):
+            my_sets.append(dict(zip(pars, perm)))
+
+    # do variants of the default parameters one at a time
+    elif "variants" in config:
+        # do the default
+        my_sets.append({})
+
+        # add the variants
+        for par, vals in config["variants"].items():
+            for val in vals:
+                my_sets.append({par: val})
+
+    # just do the defaults
+    else:
+        my_sets.append({})
+
+    # remove excluded parameter combinations
     par_sets = []
-    pars = parameter_grid.keys()
-    for perm in itertools.product(*parameter_grid.values()):
-        my_dict = dict(zip(pars, perm))
+    for my_set in my_sets:
+        my_dict = par_defaults.copy()
+        my_dict.update(my_set)
 
         exclude = False
         for my_exclude in exclude_sets:
@@ -124,11 +341,11 @@ def generate_value_sets(parameter_grid, exclude_sets=None):
             if matches == len(my_exclude):
                 exclude = True
                 break
-
         if exclude:
             continue
 
         par_sets.append(my_dict)
+
     return par_sets
 
 def generate_model_sets():
@@ -141,11 +358,11 @@ def generate_model_sets():
             my_model = {}
             if "parameter_sets" not in model:
                 my_model["parameter_sets"] = \
-                  generate_value_sets(model["parameter_grid"],
+                  generate_value_sets(model["parameters"],
                                       exclude_sets=_parameter_exclude)
             if "input_sets" not in model:
                 my_model["input_sets"] = \
-                  generate_value_sets(model["input_grid"])
+                  generate_value_sets(model["inputs"])
             model_store[model_name][model_label] = my_model
 
             for par_index in range(len(my_model["parameter_sets"])):
