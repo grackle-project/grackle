@@ -119,7 +119,10 @@ def generate_value_sets(parameter_grid, exclude_sets=None):
         par_sets.append(my_dict)
     return par_sets
 
-def generate_model_sets(model_store):
+def generate_model_sets():
+    model_store = {}
+    model_parametrization = []
+
     for model_name, model in _model_test_grids.items():
         my_model = {}
         if "parameter_sets" not in model:
@@ -131,9 +134,14 @@ def generate_model_sets(model_store):
               generate_value_sets(model["input_grid"])
         model_store[model_name] = my_model
 
+        for par_index in range(len(my_model["parameter_sets"])):
+            for input_index in range(len(my_model["input_sets"])):
+                model_parametrization.append(
+                    (model_name, par_index, input_index))
 
-model_sets = {}
-generate_model_sets(model_sets)
+    return model_store, model_parametrization
+
+model_sets, model_parametrization = generate_model_sets()
 
 def get_model_set(model_name, parameter_index, input_index):
     """
@@ -148,9 +156,41 @@ def get_model_set(model_name, parameter_index, input_index):
     par_set = my_model["parameter_sets"][parameter_index]
     input_set = my_model["input_sets"][input_index]
 
+    return par_set, input_set
+
+def get_test_variables(model_name, par_index, input_index):
+    """
+    Setup objects and variables for a model test.
+
+    This is called from one of the Python example scripts
+    when being run from pytest. This avoids cluttering the
+    script with a bunch of code that a user just wanting to
+    play with it shouldn't have to see.
+    """
+
+    par_set, input_set = get_model_set(
+        model_name, par_index, input_index)
+
+    # setup chemistry data object
     my_chemistry = chemistry_data()
     for par, val in par_set.items():
         if par == "grackle_data_file":
             val = os.path.join(grackle_data_dir, val)
         setattr(my_chemistry, par, val)
-    return my_chemistry, input_set
+
+    output_name = f"{model_name}_{par_index}_{input_index}"
+    extra_attrs = {"format_version": model_test_format_version}
+    extra_attrs.update(par_set)
+    extra_attrs.update(input_set)
+    extra_attrs = {k: str(v) for k, v in extra_attrs.items()}
+
+    # all variables to be set as globals in the script
+    my_globals = {
+        "my_chemistry": my_chemistry,
+        "output_name": output_name,
+        "extra_attrs": extra_attrs,
+    }
+    # input variables used in the script
+    my_globals.update(input_set)
+
+    return my_globals

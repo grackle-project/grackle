@@ -26,8 +26,7 @@ from pygrackle.utilities.physical_constants import \
     sec_per_Myr, \
     cm_per_mpc
 from pygrackle.utilities.model_tests import \
-    get_model_set, \
-    model_test_format_version
+    get_test_variables
 
 output_name = os.path.basename(__file__[:-3]) # strip off ".py"
 
@@ -38,12 +37,9 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         par_index = int(sys.argv[1])
         input_index = int(sys.argv[2])
-        my_chemistry, input_set = get_model_set(
-            output_name, par_index, input_index)
-        for var, val in input_set.items():
+        my_vars = get_test_variables(output_name, par_index, input_index)
+        for var, val in my_vars.items():
             globals()[var] = val
-        output_name = f"{output_name}_{par_index}_{input_index}"
-        extra_attrs = {"format_version": model_test_format_version}
 
     # Just run the script as is.
     else:
