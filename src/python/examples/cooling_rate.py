@@ -35,9 +35,7 @@ if __name__ == "__main__":
     # then we will pass in two integers corresponding to the sets
     # of parameters and inputs.
     if len(sys.argv) > 1:
-        par_index = int(sys.argv[1])
-        input_index = int(sys.argv[2])
-        my_vars = get_test_variables(output_name, par_index, input_index)
+        my_vars = get_test_variables(output_name, *sys.argv[1:])
         for var, val in my_vars.items():
             globals()[var] = val
 

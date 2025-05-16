@@ -108,9 +108,10 @@ def compare_model_results(compare_dir, model_par, ds1, ds2):
     with open(notes_fn, mode="a") as f:
         f.write("\n".join(output_lines))
 
-@pytest.mark.parametrize("model_name, par_index, input_index",
+@pytest.mark.parametrize("model_name, model_variant, par_index, input_index",
                          model_parametrization)
-def test_model(answertestspec, tmp_path, model_name, par_index, input_index):
+def test_model(answertestspec, tmp_path, model_name, model_variant,
+               par_index, input_index):
     """
     Each execution tests a python example with a set of inputs
 
@@ -129,9 +130,9 @@ def test_model(answertestspec, tmp_path, model_name, par_index, input_index):
         pytest.skip("YT_DATA_DIR env variable isn't defined")
 
     script_path = os.path.join(python_example_dir, f"{model_name}.py")
-    command = f"{sys.executable} {script_path} {par_index} {input_index}"
+    command = f"{sys.executable} {script_path} {model_variant} {par_index} {input_index}"
 
-    model_par = f"{model_name}_{par_index}_{input_index}"
+    model_par = f"{model_name}_{model_variant}_{par_index}_{input_index}"
     rval = run_command(command, timeout=60, cwd=tmp_path)
     assert rval, f"Model {model_par} didn't complete succesfully."
 
@@ -155,7 +156,7 @@ def test_model(answertestspec, tmp_path, model_name, par_index, input_index):
                                   model_par, ds1, ds2)
 
         for field in ds1.field_list:
-            err_msg = f"Model mismatch: {model_name}, {par_index}, " + \
-              f"{input_index}: {field}."
+            err_msg = f"Model mismatch: {model_name}, {model_variant}, " + \
+              f"{par_index}, {input_index}: {field}."
             assert_allclose(ds1.data[field], ds2.data[field],
                             atol=0, rtol=1e-8, err_msg=err_msg)
