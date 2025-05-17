@@ -45,9 +45,6 @@ def test_model(answertestspec, tmp_path, model_name, par_index, input_index):
         f"--param-preset {par_index} "
         f"--input-preset {input_index} "
     )
-    with temporary_directory():
-        rval = run_command(command, timeout=60)
-        assert rval
 
     if True:
         rval = run_command(command, timeout=60, cwd=tmp_path)
