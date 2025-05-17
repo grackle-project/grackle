@@ -22,6 +22,12 @@ endif()
 cmake_minimum_required(VERSION 3.16)
 cmake_policy(SET CMP0077 NEW)
 cmake_policy(SET CMP0082 NEW)
+
+if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.24)
+  cmake_policy(SET CMP0135 NEW) # makes automatic dependency downloads more
+                                # robust (& addresses noisy warnings)
+endif()
+
 project(Grackle VERSION ${_GRACKLE_VERSION_NO_DEVTAG} LANGUAGES C CXX Fortran)
 
 # Specify that `./cmake` contains cmake modules defining useful functionality
@@ -72,9 +78,17 @@ elseif (GRACKLE_IS_TOP_LEVEL)
 endif()
 
 option(GRACKLE_USE_DOUBLE "compile the code with double precision" ON)
-option(GRACKLE_EXAMPLES "compile grackle examples" ${GRACKLE_IS_TOP_LEVEL})
 option(GRACKLE_DEFINE_INSTALL_RULES
   "enable Grackle's installation rules" ${GRACKLE_IS_TOP_LEVEL})
+option(GRACKLE_BUILD_TESTS "build Grackle tests driven by CTest" OFF)
+
+if (GRACKLE_BUILD_TESTS)
+  set(_GRACKLE_EXAMPLES_DEFAULT ON)
+else()
+  set(_GRACKLE_EXAMPLES_DEFAULT ${GRACKLE_IS_TOP_LEVEL})
+endif()
+option(GRACKLE_EXAMPLES
+  "compile grackle examples" ${_GRACKLE_EXAMPLES_DEFAULT})
 
 # configure custom machine-specific optimization-flags (specified in host-config
 # files). I'm not really sure we should support this when Grackle isn't the
@@ -157,6 +171,14 @@ endif()
 
 option(GRACKLE_USE_OPENMP "Use OpenMP" OFF)
 if (GRACKLE_USE_OPENMP)
+  if (CMAKE_GENERATOR STREQUAL "Ninja")
+    message(WARNING
+      "using Ninja with GRACKLE_USE_OPENMP=ON may cause compilation problems."
+      "The issues manifest as error with finding the \"omp_lib.h\" header "
+      "that is conditionally included by some Fortran source files when using "
+      "CMake. The quick fix is use Makefiles. See the docs for more info"
+    )
+  endif()
   find_package(OpenMP REQUIRED COMPONENTS C Fortran)
 endif()
 
@@ -182,8 +204,19 @@ endif()
 
 # Tests
 # -----
-# (this is where we will add targets for integration tests)
 
+# if desired, setup Grackle's tests that use CTest/GoogleTest (this has no
+# impact on the tests run via pytest, those are handled outside of cmake)
+if(GRACKLE_BUILD_TESTS)
+  # setup GoogleTest framework (search for an installed copy on the machine
+  # OR download it & add its compilation to the rest of the build procedure)
+  include(setup_GTest)
+  # load CMake's built-in module that defines functions to registering unit
+  # tests implemented with GoogleTest into CMake's test-runner, CTest
+  include(GoogleTest)
+  enable_testing() # enable the test-runner, CTest
+  add_subdirectory(tests) # declare the recipes for each test
+endif()
 
 # Packaging
 # ---------

@@ -22,11 +22,7 @@ from pygrackle.utilities.model_tests import parse_model_cliargs
 output_name = os.path.basename(__file__[:-3]) # strip off ".py"
 
 DS_NAME = "IsolatedGalaxy/galaxy0030/galaxy0030"
-
-if 'YT_DATA_DIR' in os.environ:
-    ds_path = os.sep.join([os.environ['YT_DATA_DIR'], DS_NAME])
-else:
-    ds_path = DS_NAME
+ds_path = os.path.join(os.environ.get('YT_DATA_DIR', default='.'), DS_NAME)
 
 if __name__ == "__main__":
     # If we are running the script through the testing framework, then we will
@@ -37,6 +33,11 @@ if __name__ == "__main__":
             sys.exit(0) # exit early
         output_name = tmp.output_name
         extra_attrs = tmp.extra_attrs
+
+        if 'YT_DATA_DIR' not in os.environ:
+            raise RuntimeError(
+                "YT_DATA_DIR env var must be defined when called by test suite"
+            )
 
     # Just run the script as is.
     else:
