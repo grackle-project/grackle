@@ -77,12 +77,13 @@ endmacro()
 # STEP 0: PREAMBLE
 # ----------------
 
-# We use if(...IN_LIST...), make sure it is available
+# this file uses `if(...IN_LIST...)`, which was introduced in CMake 3.3
+# -> important: the `cmake_minimum_required` command is not the right tool for
+#    enforcing this (e.g. calling `cmake_minimum_required(VERSION 3.3)` will
+#    call versions of CMake with version >= 4.0 to abort
 if(CMAKE_VERSION VERSION_LESS 3.3)
   _FIND_GRACKLE_FAIL("Grackle requires CMake 3.3 or later")
 endif()
-
-cmake_minimum_required(VERSION 3.3)
 
 # store options directly taken from the build
 set(_GRACKLEBUILD_USE_DOUBLE @GRACKLE_USE_DOUBLE@)
