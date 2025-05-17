@@ -107,7 +107,6 @@ python_add_library(grackle_wrapper MODULE grackle_wrapper.c WITH_SOABI)
 target_compile_definitions(grackle_wrapper
   PRIVATE TRADITIONAL_IN_SOURCE_BUILD=${traditional_in_source_build})
 target_link_libraries(grackle_wrapper PUBLIC Grackle::Grackle)
-target_include_directories(grackle_wrapper PRIVATE ${Python_NumPy_INCLUDE_DIRS})
 
 # Installation Logic
 # ------------------
