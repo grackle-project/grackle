@@ -75,6 +75,7 @@ commands:
           name: "Install grackle (classic_build: << parameters.classic_build >>, omp: << parameters.omp >>, tag: << parameters.tag >> )"
           command: |
             source $HOME/venv/bin/activate
+            pip uninstall --yes pygrackle # it's ok if pygrackle wasn't installed yet
             git checkout << parameters.tag >>
 
             # First, try resetting things to a pristine condition (in the event
@@ -173,59 +174,42 @@ commands:
         type: enum
         default: 'classic'
         enum: ['classic', 'cmake', 'standalone-pygrackle']
-      generate:
-        type: enum
-        default: 'true'
-        enum: ['true', 'false']
+      answer-dir:
+        description: "Path to directory where answers were previously stored"
+        type: string
     steps:
       - run:
-          name: "Run the pytest test-suite (build_kind: << parameters.build_kind >>, omp: << parameters.omp >>, generate: << parameters.generate >>)."
+          name: "Run the pytest test-suite (build_kind: << parameters.build_kind >>, omp: << parameters.omp >>)."
           command: |
-            source $BASH_ENV
+            source $BASH_ENV # <- needed for YT_DATA_DIR
             source $HOME/venv/bin/activate
 
             # actually execute the tests
             if [[ '<< parameters.build_kind >>' == 'classic' &&
                   '<< parameters.omp >>' == 'true' ]]; then
+              # it's ok to compile with openmp if using cmake
               echo "ERROR: pygrackle tests can't be run in this configuration"
               exit 1
-
-            else
-              # NOTE: these tests should run if using OpenMP without the
-              #       classic build-system
-
-              ANSWER_DIR=./my-test_answers
-              if [ '<< parameters.generate >>' == 'true' ]; then
-                py.test --answer-dir=${ANSWER_DIR} --answer-store
-              else
-                py.test --answer-dir=${ANSWER_DIR}
-              fi
             fi
+
+            py.test --answer-dir=<< parameters.answer-dir >>
 
   store-pygrackle-suite-gold-standard-answers:
     description: "Store the pygrackle test answers"
     parameters:
-      gold-standard-tag:
-        description: "The gold-standard to use for generating the answers"
+      answer-dir:
+        description: "Path to directory where answers will be stored"
         type: string
-        default: "gold-standard-v3"
     steps:
       - run:
-          name: "Build Pygrackle from Gold-Standard Commit (<< parameters.gold-standard-tag >>)"
+          name: "Build Pygrackle from Gold-Standard Commit"
           command: |
-            source $HOME/venv/bin/activate
-            pip uninstall --yes pygrackle # it's ok if pygrackle wasn't installed yet
-            git checkout << parameters.gold-standard-tag >>
-            pip install -e .[dev]
-      - run-pygrackle-tests:
-          omp: 'false'
-          build_kind: 'standalone-pygrackle'
-          generate: 'true'
-      - run:
-          command: |
-            source $HOME/venv/bin/activate
-            pip uninstall --yes pygrackle
-
+            # no need to source venv (an isolated one is automatically made)
+            source $BASH_ENV # <- needed for YT_DATA_DIR
+            ./scripts/ci/record-answers.py      \
+                --color                         \
+                --git-rev=gold-standard-v3      \
+                << parameters.answer-dir >>
 
   run-classic-omp-test:
     description: "Run the OpenMP test with the classic build-system"
@@ -278,7 +262,8 @@ jobs:
       - install-dependencies
       - lint
       - download-test-data
-      - store-pygrackle-suite-gold-standard-answers
+      - store-pygrackle-suite-gold-standard-answers:
+          answer-dir: ./my-answer-dir
 
       # run full pygrackle test-suite on latest commit (CMake-build)
       - install-grackle:
@@ -288,7 +273,7 @@ jobs:
       - run-pygrackle-tests:
           omp: 'false'
           build_kind: 'cmake'
-          generate: 'false'
+          answer-dir: ./my-answer-dir
 
       # run full pygrackle test-suite on latest commit (classic-build)
       - install-grackle:
@@ -298,7 +283,7 @@ jobs:
       - run-pygrackle-tests:
           omp: 'false'
           build_kind: 'classic'
-          generate: 'false'
+          answer-dir: ./my-answer-dir
 
       # setup and run classic-omp-test on latest commit
       - install-grackle:
@@ -323,7 +308,8 @@ jobs:
       - set-env
       - install-dependencies
       - download-test-data
-      - store-pygrackle-suite-gold-standard-answers
+      - store-pygrackle-suite-gold-standard-answers:
+          answer-dir: ./my-answer-dir
       - run:
           name: "Build Pygrackle from the commit that triggered CI."
           command: |
@@ -333,7 +319,7 @@ jobs:
       - run-pygrackle-tests:
           omp: 'false'
           build_kind: 'standalone-pygrackle'
-          generate: 'false'
+          answer-dir: ./my-answer-dir
 
   corelib-tests:
     # we're only using a python docker-image out of convenience (We only care
