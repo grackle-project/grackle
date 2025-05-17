@@ -1,8 +1,20 @@
+# This file is only to be used when building the pygrackle python module
+# -> the python build-backend, scikit-build-core, is responsible for reading in
+#    this file (it defines predefines certain variables and certain commands)
+# -> scikit-build-core is configured in ${GRACKLE_REPO_ROOT}/pyproject.toml
 set(GRACKLE_REPO_ROOT  ${CMAKE_CURRENT_SOURCE_DIR}/../../)
 
 # Prologue
 # --------
-cmake_minimum_required(VERSION 3.16)
+
+# we require 3.21 at the recommendation of the cython-cmake python-package
+#   https://github.com/scikit-build/cython-cmake
+# it's ok if this exceeds the version required for the core-grackle lib (which
+# is linked to the lowest CMake version provided on common Linux distributions)
+# since the scikit-build-core backend has been configured to automatically
+# download a newer version of CMake, when necessary
+cmake_minimum_required(VERSION 3.21)
+
 project(${SKBUILD_PROJECT_NAME} LANGUAGES C)
 
 # Dependencies
@@ -10,6 +22,8 @@ project(${SKBUILD_PROJECT_NAME} LANGUAGES C)
 
 # find required python components
 find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
+# read in cython utilities (provided by cython-cmake python-package)
+include(UseCython)
 
 # deal with dependency on Grackle and define _PYGRACKLE_CONSUME_MODE
 if ("$ENV{PYGRACKLE_LEGACY_LINK}" STREQUAL "classic")
@@ -82,28 +96,23 @@ endif()
 
 # Actual build Logic
 # ------------------
-# -> we build a shared-library represented by the grackle_wrapper library
 
+# take the __config__.py.in template file and use it to create __config__.py
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/pygrackle/__config__.py.in
   ${CMAKE_CURRENT_BINARY_DIR}/__config__.py @ONLY
 )
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/__config__.py
   DESTINATION ${SKBUILD_PROJECT_NAME})
-  
 
-add_custom_command(
-  OUTPUT grackle_wrapper.c
-  COMMENT
-    "Making ${CMAKE_CURRENT_BINARY_DIR}/grackle_wrapper.c from ${CMAKE_CURRENT_SOURCE_DIR}/pygrackle/grackle_wrapper.pyx"
-  COMMAND Python::Interpreter -m cython
-          -3
-          "${CMAKE_CURRENT_SOURCE_DIR}/pygrackle/grackle_wrapper.pyx"
-          --output-file grackle_wrapper.c
-  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/pygrackle/grackle_wrapper.pyx
-          ${CMAKE_CURRENT_SOURCE_DIR}/pygrackle/grackle_defs.pxd
-  VERBATIM)
-
-python_add_library(grackle_wrapper MODULE grackle_wrapper.c WITH_SOABI)
+# transpile gracke_wrapper.pyx to a C file and then compile into a shared
+# represented by the grackle_wrapper target
+cython_transpile(
+  pygrackle/grackle_wrapper.pyx
+  LANGUAGE C
+  CYTHON_ARGS -3
+  OUTPUT_VARIABLE grackle_wrapper_c
+)
+python_add_library(grackle_wrapper MODULE "${grackle_wrapper_c}" WITH_SOABI)
 target_compile_definitions(grackle_wrapper
   PRIVATE TRADITIONAL_IN_SOURCE_BUILD=${traditional_in_source_build})
 target_link_libraries(grackle_wrapper PUBLIC Grackle::Grackle)
