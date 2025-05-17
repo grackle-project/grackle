@@ -153,7 +153,7 @@ the structure of this directory
 endif()
 
 # create a directory where we will store auto-generated generated public headers
-set(GRACKLE_GENRATED_PUBLIC_HEADERS
+set(GRACKLE_GENERATED_PUBLIC_HEADERS
   ${CMAKE_CURRENT_BINARY_DIR}/generated_public_headers)
 
 # Dependencies
