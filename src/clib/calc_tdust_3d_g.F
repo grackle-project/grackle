@@ -92,14 +92,6 @@
      &      , metal_F50(in,jn,kn), metal_F80(in,jn,kn)
      &      , metal_P170(in,jn,kn), metal_P200(in,jn,kn)
      &      , metal_Y19(in,jn,kn)
-     &   , CI(in,jn,kn)   , CII(in,jn,kn)    , CO(in,jn,kn)
-     &   , CO2(in,jn,kn)  , OI(in,jn,kn)     , OH(in,jn,kn)
-     &   , H2O(in,jn,kn)  , O2(in,jn,kn)     , SiI(in,jn,kn)
-     &   , SiOI(in,jn,kn) , SiO2I(in,jn,kn)  , CH(in,jn,kn)
-     &   , CH2(in,jn,kn)  , COII(in,jn,kn)   , OII(in,jn,kn)
-     &   , OHII(in,jn,kn) , H2OII(in,jn,kn)  , H3OII(in,jn,kn)
-     &   , O2II(in,jn,kn) , Mg(in,jn,kn)     , Al(in,jn,kn)
-     &   , S(in,jn,kn)    , Fe(in,jn,kn)     
       R_PREC  SiM(in,jn,kn), FeM(in,jn,kn), Mg2SiO4(in,jn,kn)
      &      , MgSiO3(in,jn,kn), Fe3O4(in,jn,kn), AC(in,jn,kn)
      &      , SiO2D(in,jn,kn), MgO(in,jn,kn), FeS(in,jn,kn)
@@ -199,22 +191,11 @@
 
 !  Slice locals
  
-      integer indixe(in)
-      R_PREC  t1(in), t2(in), logtem(in), tdef(in), 
-     &     tgas(in), tdust(in), nh(in), gasgr(in),
+      integer*8 indixe(in)
+      real*8  t1(in), t2(in), logtem(in), tdef(in), 
+     &     tgas(in), tdust(in), nh(in), gasgr(in), gasgr_tdust(in),
      &     myisrf(in)
 
-!  Additional slice locals
-      R_PREC brem(in), ceHeI(in), ceHeII(in), ceHI(in),
-     & cieco(in), ciHeI(in), ciHeII(in), ciHeIS(in),
-     & ciHI(in), comp1(in), comp2(in), edot(in),
-     & energy(in), gammaha_eff(in), gasgr_tdust(in),
-     & gphdl(in), gpldl(in), h2k01(in), hdlow(in),
-     & hdlte(in), hyd01k(in), mmw(in), myde(in),
-     & mynh(in), p2d(in), regr(in), reHeII1(in),
-     & reHeIII(in), reHII(in), rhoH(in), reHeII(in),
-     & reHeII2(in), roth(in), rotl(in), tgasold(in),
-     & vibh(in)
 !  Iteration mask for multi_cool
 
       MASK_TYPE itmask(in)
@@ -250,21 +231,7 @@
 ! parallelize the k and j loops with OpenMP
 ! flat j and k loops for better parallelism
 #ifdef _OPENMP
-!$omp parallel do schedule(runtime) private(
-!$omp&   i, j, k,
-!$omp&   comp1, comp2, energy,
-!$omp&   indixe,
-!$omp&   t1, t2, logtem, tdef, p2d,
-!$omp&   tgas, tgasold,
-!$omp&   tdust, metallicity, dust2gas, rhoH, mmw,
-!$omp&   mynh, myde, gammaha_eff, gasgr_tdust, regr, edot,
-!$omp&   ceHI, ceHeI, ceHeII,
-!$omp&   ciHI, ciHeI, ciHeIS, ciHeII,
-!$omp&   reHII, reHeII1, reHeII2, reHeIII,
-!$omp&   brem, cieco,
-!$omp&   hyd01k, h2k01, vibh, roth, rotl,
-!$omp&   gpldl, gphdl, hdlte, hdlow,
-!$omp&   itmask )
+!$omp parallel do schedule(runtime) private(i, j, k)
 #endif
       do t = 0, dk*dj-1
         k = t/dj      + ks+1
@@ -287,39 +254,6 @@
                  metal_P200(i,j,k)=metal_P200(i,j,k)/real(aye**3, RKIND)
                  metal_Y19(i,j,k) = metal_Y19(i,j,k)/real(aye**3, RKIND)
               endif
-!!            if (metal(i,j,k) .gt. 1.d-9 * d(i,j,k)) then
-              if (imchem .eq. 1) then
-                 CI(i,j,k)      = CI(i,j,k)/real(aye**3, RKIND)
-                 CII(i,j,k)     = CII(i,j,k)/real(aye**3, RKIND)
-                 CO(i,j,k)      = CO(i,j,k)/real(aye**3, RKIND)
-                 CO2(i,j,k)     = CO2(i,j,k)/real(aye**3, RKIND)
-                 OI(i,j,k)      = OI(i,j,k)/real(aye**3, RKIND)
-                 OH(i,j,k)      = OH(i,j,k)/real(aye**3, RKIND)
-                 H2O(i,j,k)     = H2O(i,j,k)/real(aye**3, RKIND)
-                 O2(i,j,k)      = O2(i,j,k)/real(aye**3, RKIND)
-                 SiI(i,j,k)     = SiI(i,j,k)/real(aye**3, RKIND)
-                 SiOI(i,j,k)    = SiOI(i,j,k)/real(aye**3, RKIND)
-                 SiO2I(i,j,k)   = SiO2I(i,j,k)/real(aye**3, RKIND)
-                 CH(i,j,k)      = CH(i,j,k)/real(aye**3, RKIND)
-                 CH2(i,j,k)     = CH2(i,j,k)/real(aye**3, RKIND)
-                 COII(i,j,k)    = COII(i,j,k)/real(aye**3, RKIND)
-                 OII(i,j,k)     = OII(i,j,k)/real(aye**3, RKIND)
-                 OHII(i,j,k)    = OHII(i,j,k)/real(aye**3, RKIND)
-                 H2OII(i,j,k)   = H2OII(i,j,k)/real(aye**3, RKIND)
-                 H3OII(i,j,k)   = H3OII(i,j,k)/real(aye**3, RKIND)
-                 O2II(i,j,k)    = O2II(i,j,k)/real(aye**3, RKIND)
-                 if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1 ) ) then
-                 if (idspecies .gt. 0) then
-                 Mg(i,j,k)      = Mg(i,j,k)/real(aye**3, RKIND)
-                 endif
-                 if (idspecies .gt. 1) then
-                 Al(i,j,k)      = Al(i,j,k)/real(aye**3, RKIND)
-                 S(i,j,k)       = S(i,j,k)/real(aye**3, RKIND)
-                 Fe(i,j,k)      = Fe(i,j,k)/real(aye**3, RKIND)
-                 endif
-                 endif
-              endif
-!!            endif
            enddo
         endif
         if (idustfield .eq. 1) then
@@ -477,51 +411,6 @@ C          endif
               myisrf(i) = isrf
            endif
 
-         if (idspecies .eq. 0 ) then
-            if (idustfield .gt. 0) then
-               mygisrf(i) = gamma_isrfa
-     &                    * fgr / dust2gas(i) * metallicity(i)
-               !! correct with the depletion or enhancement of condensation rate.
-!!             write(*,*) 'a', mygisrf(i)
-            else
-               mygisrf(i) = gamma_isrfa
-            endif
-
-         else ! idspecies
-
-            if (itdmulti .eq. 0) then
-            
-               mygisrf(i) = gamma_isrf2a * sgtot(i)
-               !! in UV, absorption coefficient Q ~ 1 (Goldsmith 2001)
-               !! so we use the geometrical cross-section of grains [cgs]
-!!             write(*,*) 'b', mygisrf(i) / dust2gas(i)
-
-            else
-
-            if (idspecies .gt. 0) then
-               gisrfMgSiO3  (i) = gamma_isrf2a * sgMgSiO3  (i)
-!!             write(*,*) d(i,j,k), gamma_isrf2a, sgMgSiO3(i)
-               gisrfAC      (i) = gamma_isrf2a * sgAC      (i)
-            endif
-            if (idspecies .gt. 1) then
-               gisrfSiM     (i) = gamma_isrf2a * sgSiM     (i)
-               gisrfFeM     (i) = gamma_isrf2a * sgFeM     (i)
-               gisrfMg2SiO4 (i) = gamma_isrf2a * sgMg2SiO4 (i)
-               gisrfFe3O4   (i) = gamma_isrf2a * sgFe3O4   (i)
-               gisrfSiO2D   (i) = gamma_isrf2a * sgSiO2D   (i)
-               gisrfMgO     (i) = gamma_isrf2a * sgMgO     (i)
-               gisrfFeS     (i) = gamma_isrf2a * sgFeS     (i)
-               gisrfAl2O3   (i) = gamma_isrf2a * sgAl2O3   (i)
-            endif
-            if (idspecies .gt. 2) then
-               gisrfreforg  (i) = gamma_isrf2a * sgreforg  (i)
-               gisrfvolorg  (i) = gamma_isrf2a * sgvolorg  (i)
-               gisrfH2Oice  (i) = gamma_isrf2a * sgH2Oice  (i)
-            endif
-
-            endif
-
-         endif
 
 !     Compute hydrogen number density
 
@@ -549,173 +438,33 @@ C          endif
            t2(i) = (logtem0 + (indixe(i)    )*dlogtem)
            tdef(i) = (logtem(i) - t1(i)) / (t2(i) - t1(i))
 
-!     Lookup values and do a linear temperature in log(T)
-!     Convert back to cgs
-
-            if(idspecies .eq. 0) then
-
-               gasgr(i) = gasgra(indixe(i)) + tdef(i)
-     &              *(gasgra(indixe(i)+1) -gasgra(indixe(i)))
-
-!!             gasgr(i) = fgr * gasgr(i) * coolunit / mh
-               gasgr(i) = (dust2gas(i) / metallicity(i))
-     &                              * gasgr(i) * coolunit / mh
-                    !! apply to (idustfield .eq. 1) GC20200701
-!!             write(*,*) 'a', gasgr(i)
-
-            else
-
-               fv2k    = gasgr2a(indixe(i)) + tdef(i)
-     &              *(gasgr2a(indixe(i)+1) -gasgr2a(indixe(i)))
-                 
-               fac = coolunit / mh
-
-               if ( itdmulti .eq. 0 ) then
-
-               gasgr(i) = fv2k * sgtot(i) * fac
-!!             write(*,*) 'b', gasgr(i) / metallicity(i)
-
-               else
-
-               if (idspecies .gt. 0) then
-               gasMgSiO3  (i) = fv2k * sgMgSiO3  (i) * fac
-!!             write(*,*) fv2k, sgMgSiO3(i), fac
-               gasAC      (i) = fv2k * sgAC      (i) * fac
-               endif
-               if (idspecies .gt. 1) then
-               gasSiM     (i) = fv2k * sgSiM     (i) * fac
-               gasFeM     (i) = fv2k * sgFeM     (i) * fac
-               gasMg2SiO4 (i) = fv2k * sgMg2SiO4 (i) * fac
-               gasFe3O4   (i) = fv2k * sgFe3O4   (i) * fac
-               gasSiO2D   (i) = fv2k * sgSiO2D   (i) * fac
-               gasMgO     (i) = fv2k * sgMgO     (i) * fac
-               gasFeS     (i) = fv2k * sgFeS     (i) * fac
-               gasAl2O3   (i) = fv2k * sgAl2O3   (i) * fac
-               endif
-               if (idspecies .gt. 2) then
-               gasreforg  (i) = fv2k * sgreforg  (i) * fac
-               gasvolorg  (i) = fv2k * sgvolorg  (i) * fac
-               gasH2Oice  (i) = fv2k * sgH2Oice  (i) * fac
-               endif
-
-               endif
-
-            endif
-
         endif ! itmask
         enddo
-
-!        if (idspecies .eq. 0) then
-!           do itd = 1, gr_N(2)
-!              do i = is+1, ie + 1
-!              if(itmask(i)) then
-!                 altot(itd,i)=
-!    &                (SN0_kpFeM    (4*itd,1)*SN0_fFeM    (1)
-!    &                /SN0_r0FeM    (3    ,1)
-!    &                +SN0_kpMg2SiO4(4*itd,1)*SN0_fMg2SiO4(1)
-!    &                /SN0_r0Mg2SiO4(3    ,1)
-!    &                +SN0_kpMgSiO3 (4*itd,1)*SN0_fMgSiO3 (1)
-!    &                /SN0_r0MgSiO3 (3    ,1)
-!    &                +SN0_kpFeS    (4*itd,1)*SN0_fFeS    (1)
-!    &                /SN0_r0FeS    (3    ,1)
-!    &                +SN0_kpreforg (4*itd,1)*SN0_freforg (1)
-!    &                /SN0_r0reforg (3    ,1)
-!    &                +SN0_kpvolorg (4*itd,1)*SN0_fvolorg (1)
-!    &                /SN0_r0volorg (3    ,1)
-!    &                +SN0_kpH2Oice (4*itd,1)*SN0_fH2Oice (1)
-!    &                /SN0_r0H2Oice (3    ,1))
-!    &                  * metal(i,j,k) / d(i,j,k)
-!              endif
-!              enddo
-!           enddo
-!        endif
-
 !     --- Compute dust temperature in a slice ---
 
-         if (itdmulti .eq. 0) then
+        call calc_all_tdust_gasgr_1d_g(in, jn, kn, nratec,
+     &                idustfield, is, ie, j, k, fgr, gamma_isrfa,
+     &                trad, gasgra, indixe, tdef, tgas, tdust,
+     &                metallicity, dust2gas, nh, gasgr_tdust,
+     &                itmask,
+     &                idspecies, itdmulti, gr_N, gr_Size, gr_dT,
+     &                gr_Td, tSiM, tFeM, tMg2SiO4, tMgSiO3, tFe3O4,
+     &                tAC, tSiO2D, tMgO, tFeS, tAl2O3, treforg,
+     &                tvolorg, tH2Oice, gasgr2a, gamma_isrf2a,
+     &                coolunit, gasgr, myisrf, sgSiM, sgFeM, sgMg2SiO4,
+     &                sgMgSiO3, sgFe3O4, sgAC, sgSiO2D, sgMgO, sgFeS,
+     &                sgAl2O3, sgreforg, sgvolorg, sgH2Oice, sgtot,
+     &                alSiM, alFeM, alMg2SiO4, alMgSiO3, alFe3O4, alAC,
+     &                alSiO2D, alMgO, alFeS, alAl2O3, alreforg,
+     &                alvolorg, alH2Oice, altot, kpSiM, kpFeM,
+     &                kpMg2SiO4, kpMgSiO3, kpFe3O4, kpAC, kpSiO2D,
+     &                kpMgO, kpFeS, kpAl2O3, kpreforg, kpvolorg,
+     &                kpH2Oice, kptot, gasSiM, gasFeM, gasMg2SiO4,
+     &                gasMgSiO3, gasFe3O4, gasAC, gasSiO2D, gasMgO,
+     &                gasFeS, gasAl2O3, gasreforg, gasvolorg,
+     &                gasH2Oice
+     &              )
 
-            call calc_tdust_1d_g(tdust, tgas, nh, gasgr,
-     &           mygisrf, myisrf, itmask, trad, in, is, ie, j, k
-     &         , gr_N, gr_Size, gr_dT, gr_Td, altot, kptot, idspecies)
-
-!!          write(*,*) tdust
-
-         else
-          
-            if (idspecies .gt. 0) then
-            call calc_tdust_1d_g(tMgSiO3  , tgas, nh, gasMgSiO3  ,
-     &           gisrfMgSiO3  , myisrf, itmask, trad, in, is, ie, j, k
-     &         , gr_N, gr_Size, gr_dT, gr_Td, alMgSiO3  , kpMgSiO3 
-     &         , idspecies)
-!!          write(*,*) 'bb2', gasMgSiO3, gisrfMgSiO3, myisrf, tMgSiO3
-          
-            call calc_tdust_1d_g(tAC      , tgas, nh, gasAC      ,
-     &           gisrfAC      , myisrf, itmask, trad, in, is, ie, j, k
-     &         , gr_N, gr_Size, gr_dT, gr_Td, alAC      , kpAC       
-     &         , idspecies)
-!!          write(*,*) 'bb2', gasAC    , gisrfAC    , myisrf, tAC
-            endif
-
-            if (idspecies .gt. 1) then
-            call calc_tdust_1d_g(tSiM     , tgas, nh, gasSiM     ,
-     &           gisrfSiM     , myisrf, itmask, trad, in, is, ie, j, k
-     &         , gr_N, gr_Size, gr_dT, gr_Td, alSiM     , kpSiM      
-     &         , idspecies)
-          
-            call calc_tdust_1d_g(tFeM     , tgas, nh, gasFeM     ,
-     &           gisrfFeM     , myisrf, itmask, trad, in, is, ie, j, k
-     &         , gr_N, gr_Size, gr_dT, gr_Td, alFeM     , kpFeM      
-     &         , idspecies)
-          
-            call calc_tdust_1d_g(tMg2SiO4 , tgas, nh, gasMg2SiO4 ,
-     &           gisrfMg2SiO4 , myisrf, itmask, trad, in, is, ie, j, k
-     &         , gr_N, gr_Size, gr_dT, gr_Td, alMg2SiO4 , kpMg2SiO4  
-     &         , idspecies)
-          
-            call calc_tdust_1d_g(tFe3O4   , tgas, nh, gasFe3O4   ,
-     &           gisrfFe3O4   , myisrf, itmask, trad, in, is, ie, j, k
-     &         , gr_N, gr_Size, gr_dT, gr_Td, alFe3O4   , kpFe3O4    
-     &         , idspecies)
-          
-            call calc_tdust_1d_g(tSiO2D   , tgas, nh, gasSiO2D   ,
-     &           gisrfSiO2D   , myisrf, itmask, trad, in, is, ie, j, k
-     &         , gr_N, gr_Size, gr_dT, gr_Td, alSiO2D   , kpSiO2D    
-     &         , idspecies)
-          
-            call calc_tdust_1d_g(tMgO     , tgas, nh, gasMgO     ,
-     &           gisrfMgO     , myisrf, itmask, trad, in, is, ie, j, k
-     &         , gr_N, gr_Size, gr_dT, gr_Td, alMgO     , kpMgO      
-     &         , idspecies)
-          
-            call calc_tdust_1d_g(tFeS     , tgas, nh, gasFeS     ,
-     &           gisrfFeS     , myisrf, itmask, trad, in, is, ie, j, k
-     &         , gr_N, gr_Size, gr_dT, gr_Td, alFeS     , kpFeS      
-     &         , idspecies)
-          
-            call calc_tdust_1d_g(tAl2O3   , tgas, nh, gasAl2O3   ,
-     &           gisrfAl2O3   , myisrf, itmask, trad, in, is, ie, j, k
-     &         , gr_N, gr_Size, gr_dT, gr_Td, alAl2O3   , kpAl2O3    
-     &         , idspecies)
-            endif
-
-            if (idspecies .gt. 2) then
-            call calc_tdust_1d_g(treforg  , tgas, nh, gasreforg  ,
-     &           gisrfreforg  , myisrf, itmask, trad, in, is, ie, j, k
-     &         , gr_N, gr_Size, gr_dT, gr_Td, alreforg  , kpreforg   
-     &         , idspecies)
-          
-            call calc_tdust_1d_g(tvolorg  , tgas, nh, gasvolorg  ,
-     &           gisrfvolorg  , myisrf, itmask, trad, in, is, ie, j, k
-     &         , gr_N, gr_Size, gr_dT, gr_Td, alvolorg  , kpvolorg   
-     &         , idspecies)
-          
-            call calc_tdust_1d_g(tH2Oice  , tgas, nh, gasH2Oice  ,
-     &           gisrfH2Oice  , myisrf, itmask, trad, in, is, ie, j, k
-     &         , gr_N, gr_Size, gr_dT, gr_Td, alH2Oice  , kpH2Oice   
-     &         , idspecies)
-            endif
-
-         endif
 
 !     Copy slice values back to grid
 
@@ -759,21 +508,7 @@ C          endif
 ! parallelize the k and j loops with OpenMP
 ! flat j and k loops for better parallelism
 #ifdef _OPENMP
-!$omp parallel do schedule(runtime) private(
-!$omp&   i, j, k,
-!$omp&   comp1, comp2, energy,
-!$omp&   indixe,
-!$omp&   t1, t2, logtem, tdef, p2d,
-!$omp&   tgas, tgasold,
-!$omp&   tdust, metallicity, dust2gas, rhoH, mmw,
-!$omp&   mynh, myde, gammaha_eff, gasgr_tdust, regr, edot,
-!$omp&   ceHI, ceHeI, ceHeII,
-!$omp&   ciHI, ciHeI, ciHeIS, ciHeII,
-!$omp&   reHII, reHeII1, reHeII2, reHeIII,
-!$omp&   brem, cieco,
-!$omp&   hyd01k, h2k01, vibh, roth, rotl,
-!$omp&   gpldl, gphdl, hdlte, hdlow,
-!$omp&   itmask )
+!$omp parallel do schedule(runtime) private(i, j, k)
 #endif
       do t = 0, dk*dj-1
         k = t/dj      + ks+1
@@ -796,39 +531,6 @@ C          endif
                  metal_P200(i,j,k)=metal_P200(i,j,k)*real(aye**3, RKIND)
                  metal_Y19(i,j,k) = metal_Y19(i,j,k)*real(aye**3, RKIND)
               endif
-!!            if (metal(i,j,k) .gt. 1.d-9 * d(i,j,k)) then
-              if (imchem .eq. 1) then
-                 CI(i,j,k)      = CI(i,j,k)*real(aye**3, RKIND)
-                 CII(i,j,k)     = CII(i,j,k)*real(aye**3, RKIND)
-                 CO(i,j,k)      = CO(i,j,k)*real(aye**3, RKIND)
-                 CO2(i,j,k)     = CO2(i,j,k)*real(aye**3, RKIND)
-                 OI(i,j,k)      = OI(i,j,k)*real(aye**3, RKIND)
-                 OH(i,j,k)      = OH(i,j,k)*real(aye**3, RKIND)
-                 H2O(i,j,k)     = H2O(i,j,k)*real(aye**3, RKIND)
-                 O2(i,j,k)      = O2(i,j,k)*real(aye**3, RKIND)
-                 SiI(i,j,k)     = SiI(i,j,k)*real(aye**3, RKIND)
-                 SiOI(i,j,k)    = SiOI(i,j,k)*real(aye**3, RKIND)
-                 SiO2I(i,j,k)   = SiO2I(i,j,k)*real(aye**3, RKIND)
-                 CH(i,j,k)      = CH(i,j,k)*real(aye**3, RKIND)
-                 CH2(i,j,k)     = CH2(i,j,k)*real(aye**3, RKIND)
-                 COII(i,j,k)    = COII(i,j,k)*real(aye**3, RKIND)
-                 OII(i,j,k)     = OII(i,j,k)*real(aye**3, RKIND)
-                 OHII(i,j,k)    = OHII(i,j,k)*real(aye**3, RKIND)
-                 H2OII(i,j,k)   = H2OII(i,j,k)*real(aye**3, RKIND)
-                 H3OII(i,j,k)   = H3OII(i,j,k)*real(aye**3, RKIND)
-                 O2II(i,j,k)    = O2II(i,j,k)*real(aye**3, RKIND)
-                 if ( ( igrgr .eq. 1 ) .or. ( idsub .eq. 1 ) ) then
-                 if (idspecies .gt. 0) then
-                 Mg(i,j,k)      = Mg(i,j,k)*real(aye**3, RKIND)
-                 endif
-                 if (idspecies .gt. 1) then
-                 Al(i,j,k)      = Al(i,j,k)*real(aye**3, RKIND)
-                 S(i,j,k)       = S(i,j,k)*real(aye**3, RKIND)
-                 Fe(i,j,k)      = Fe(i,j,k)*real(aye**3, RKIND)
-                 endif
-                 endif
-              endif
-!!            endif
            enddo
         endif
         if (idustfield .eq. 1) then
