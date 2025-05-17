@@ -121,7 +121,7 @@ install(DIRECTORY ${PROJECT_SOURCE_DIR}/src/include/
   REGEX "grackle_float.h$" EXCLUDE # <- can be removed after GH-203 or after we
 )                                  #    remove the traditional build-system
 
-install(DIRECTORY ${GRACKLE_GENRATED_PUBLIC_HEADERS}/
+install(DIRECTORY ${GRACKLE_GENERATED_PUBLIC_HEADERS}/
   TYPE INCLUDE COMPONENT Grackle_Development
   FILES_MATCHING PATTERN "*.h" PATTERN "*.def"
 )
