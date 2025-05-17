@@ -80,6 +80,7 @@ To help you start using Grackle, we provide:
 
    Installation.rst
    Testing.rst
+   Tutorial.rst
    Integration.rst
    Interaction.rst
    Parameters.rst
