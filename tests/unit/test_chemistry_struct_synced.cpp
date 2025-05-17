@@ -18,11 +18,13 @@ using MemberTypeNameMap = std::map<std::string, std::string>;
 #error "stringify or stringify_helper was already defined"
 #elif !defined(GR_SRC_ROOT_PATH)
 #error "GR_SRC_ROOT_PATH macro isn't defined"
+#elif !defined(IFLAG_DIR_GENERATED)
 #else
 #define stringify(s) stringify_helper(s)
 #define stringify_helper(s) #s
 
-static const char* grackle_src_root_path = stringify(GR_SRC_ROOT_PATH);
+static const char* GLOBAL_grackle_src_root_path = stringify(GR_SRC_ROOT_PATH);
+static const char* GLOBAL_iflag_0 = "-I" stringify(IFLAG_DIR_GENERATED);
 #endif
 
 bool program_exists(std::string program) {
@@ -100,7 +102,7 @@ std::optional<MemberTypeNameMap> query_struct_members(
 {
   // step 0: basic setup
   // ===================
-  std::string src_root = grackle_src_root_path + std::string("/");
+  std::string src_root = GLOBAL_grackle_src_root_path + std::string("/");
   // -> get path to header file
   std::string hdr_path = src_root + path_relative_to_src_root;
   // -> get path to xml-reader
@@ -117,6 +119,8 @@ std::optional<MemberTypeNameMap> query_struct_members(
   castxml_cmd.args = {
     // tell castxml's compiler to preprocess/compile but don't link
     "-c",
+    // tell castxml about IFLAGs
+    GLOBAL_iflag_0,
     // tell castxml's compiler that the language is c++
     "-x", "c++",
     // the next required option configure castxml's internal Clang compiler.
@@ -233,6 +237,5 @@ TEST(ChemistryData, SynchronizedMembers) {
   }
 
   // here we check
-  EXPECT_MEMBERS(member_map, "chemistry_data",
-                 "src/include/grackle_chemistry_data.h");
+  EXPECT_MEMBERS(member_map, "chemistry_data", "src/include/grackle.h");
 }

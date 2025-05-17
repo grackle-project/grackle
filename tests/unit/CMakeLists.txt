@@ -53,5 +53,6 @@ add_executable(runSyncedChemistryData test_chemistry_struct_synced.cpp)
 target_link_libraries(runSyncedChemistryData grtest_utils testdeps)
 target_compile_definitions(runSyncedChemistryData
   PRIVATE GR_SRC_ROOT_PATH=${PROJECT_SOURCE_DIR}
+          IFLAG_DIR_GENERATED=${GRACKLE_GENERATED_PUBLIC_HEADERS}
 )
 gtest_discover_tests(runSyncedChemistryData)
