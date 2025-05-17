@@ -36,12 +36,15 @@ def test_model(answertestspec, tmp_path, model_name, par_index, input_index):
         temporary directory that is named for the current test
     """
 
+    if (model_name == "yt_grackle") and ("YT_DATA_DIR" not in os.environ):
+        pytest.skip("YT_DATA_DIR env variable isn't defined")
+
     script_path = os.path.join(python_example_dir, f"{model_name}.py")
     command = f"{sys.executable} {script_path} {par_index} {input_index}"
 
     if True:
         rval = run_command(command, timeout=60, cwd=tmp_path)
-        assert rval
+        assert rval, "example didn't complete succesfully"
 
         output_basename = f"{model_name}_{par_index}_{input_index}.h5"
         output_file = os.path.join(str(tmp_path), output_basename)
