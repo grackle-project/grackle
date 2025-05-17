@@ -8,6 +8,7 @@
 
 #include <cstdio>
 #include <cstdlib> // std::malloc, std::free
+#include <cstring> // std::memcpy
 #include <vector>
 
 #include "grackle.h"
