@@ -351,17 +351,11 @@ jobs:
       - run:
           name: "Build libgrackle and all of the core library's tests"
           command: |
-            cmake -DGRACKLE_USE_DOUBLE=ON                   \
-                  -DGRACKLE_USE_OPENMP=OFF                  \
-                  -DGRACKLE_BUILD_TESTS=ON                  \
-                  -DCMAKE_BUILD_TYPE=Release                \
-                  -GNinja -Bbuild
-            cmake --build build
+            cmake --preset ci-linux
+            cmake --build build/ci-linux
       - run:
           name: "Run the suite of tests that operate directly on the core-library."
-          command: |
-            cd build
-            ctest --output-on-failure
+          command: ctest --test-dir build/ci-linux --output-on-failure
 
   docs-build:
     parameters:
