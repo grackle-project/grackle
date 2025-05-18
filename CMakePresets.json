@@ -30,7 +30,7 @@
           "hidden": true,
           "cacheVariables" : {
             "CMAKE_COMPILE_WARNING_AS_ERROR": "ON",
-            "CMAKE_C_FLAGS": "-Wall -Wpedantic -Wno-error=unused-but-set-variable -Wno-error=unused-variable",
+            "CMAKE_C_FLAGS": "-Wall -Wpedantic -Wno-error=unused-but-set-variable -Wno-error=unused-variable -Wno-error=maybe-uninitialized",
             "CMAKE_CXX_FLAGS": "-Wall -Wpedantic -Wno-error=unused-but-set-variable -Wno-error=unused-variable -Wno-c++17-attribute-extensions"
           }
       },
