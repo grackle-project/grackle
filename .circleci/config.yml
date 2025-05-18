@@ -349,6 +349,14 @@ jobs:
       - checkout
       - install-cmake-dependencies
       - run:
+          name: "update CMake to newer version"
+          command: |
+            sudo apt remove cmake -y
+            sudo apt install python3-pip
+            # this is a hack to install a newer version of CMake (through PyPI)
+            pip3 install cmake
+
+      - run:
           name: "Build libgrackle and all of the core library's tests"
           command: |
             cmake --preset ci-linux

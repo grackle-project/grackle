@@ -30,6 +30,16 @@
           "hidden": true,
           "cacheVariables" : {
             "CMAKE_COMPILE_WARNING_AS_ERROR": "ON",
+            "CMAKE_C_FLAGS": "-Wall -Wpedantic -Wno-error=unused-but-set-variable -Wno-error=unused-variable",
+            "CMAKE_CXX_FLAGS": "-Wall -Wpedantic -Wno-error=unused-but-set-variable -Wno-error=unused-variable -Wno-c++17-attribute-extensions"
+          }
+      },
+      {
+          "name": "ci-flags-warnings-appleClang",
+          "description": "Flags from appleClang for CI",
+          "hidden": true,
+          "cacheVariables" : {
+            "CMAKE_COMPILE_WARNING_AS_ERROR": "ON",
             "CMAKE_C_FLAGS": "-Wall -Wpedantic -Wno-error=unused-but-set-variable -Wno-error=unused-variable -Wno-error=newline-eof",
             "CMAKE_CXX_FLAGS": "-Wall -Wpedantic -Wno-error=unused-but-set-variable -Wno-error=unused-variable -Wno-c++17-attribute-extensions"
           }
@@ -43,7 +53,7 @@
       {
           "name": "ci-macos",
           "description": "the general configuration preset for macOS",
-          "inherits": ["ci-flags-warnings-gcc-clang", "ci-common-config"],
+          "inherits": ["ci-flags-warnings-appleClang", "ci-common-config"],
           "cacheVariables": { "CMAKE_BUILD_TYPE": "RELEASE" }
       }
   ]
