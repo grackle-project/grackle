@@ -110,14 +110,14 @@ libgrackle.la: $(MODULES) autogen dep $(OBJS_LIB) MACHNOTES
 	@rm -f $@
 	@(if [ $(VERBOSE) -eq 0 ]; then \
 	  echo "Linking" ; \
-	  $(LIBTOOL) --mode=link --tag=CC $(LD) $(LDFLAGS) -o $@ $(OBJS_LIB) $(LIBS) -rpath $(INSTALL_LIB_DIR) -release $(LIB_RELEASE_VERSION) >> $(OUTPUT) 2>&1 ; \
+	  $(LIBTOOL) --mode=link --tag=CXX $(CXX) $(LDFLAGS) -o $@ $(OBJS_LIB) $(LIBS) -rpath $(INSTALL_LIB_DIR) -release $(LIB_RELEASE_VERSION) >> $(OUTPUT) 2>&1 ; \
 	  if [ -e $@ ]; then \
 	     echo "Success!"; \
 	  else \
 	     echo "Failed! See $(OUTPUT) for error messages"; \
 	fi ; \
 	else \
-	  $(LIBTOOL) --mode=link --tag=CC $(LD) $(LDFLAGS) -o $@ $(OBJS_LIB) $(LIBS) -rpath $(INSTALL_LIB_DIR) -release $(LIB_RELEASE_VERSION) ; \
+	  $(LIBTOOL) --mode=link --tag=CXX $(CXX) $(LDFLAGS) -o $@ $(OBJS_LIB) $(LIBS) -rpath $(INSTALL_LIB_DIR) -release $(LIB_RELEASE_VERSION) ; \
 	fi)
 	@(if [ $(ASSEMBLE_PRECISION_NUMBER) == "4" ]; then \
 	  echo "WARNING: Grackle compiled with precision-32."; \
