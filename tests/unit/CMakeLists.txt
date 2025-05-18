@@ -46,13 +46,39 @@ add_executable(runGhostZoneTests test_ghost_zone.cpp)
 target_link_libraries(runGhostZoneTests grtest_utils testdeps)
 gtest_discover_tests(runGhostZoneTests)
 
-# this tests that the members of the chemistry_data struct can be accessed
-# through the chemistry_data api (it's a special case since it involves invoking
-# the system command and so it should remain separate from the other tests)
+
+# this target tests that the members of the chemistry_data struct can be
+# accessed through the "dynamic api." The test cases in this target are
+# "special" since they invoke shell commands, which involves the equivalent of
+# calling fork/exec or posix_spawn. There is a remote chance this could create
+# problems for "death-tests", so these test-cases should remain separate from
+# the rest of the gtest framework
 add_executable(runSyncedChemistryData test_chemistry_struct_synced.cpp)
 target_link_libraries(runSyncedChemistryData grtest_utils testdeps)
 target_compile_definitions(runSyncedChemistryData
-  PRIVATE GR_SRC_ROOT_PATH=${PROJECT_SOURCE_DIR}
-          IFLAG_DIR_GENERATED=${GRACKLE_GENERATED_PUBLIC_HEADERS}
+  PRIVATE
+    READER_PATH=${PROJECT_SOURCE_DIR}/tests/scripts/castxml_output_reader.py
+    XML_PATH=${CMAKE_CURRENT_BINARY_DIR}/grackle.h.xml
 )
+# every (re)build runSyncedChemistryData triggers this custom command:
+# -> the castxml_wrapper.py script forwards all arguments to the castxml tool,
+#    if the tool is installed. Otherwise, it injects an empty file at the output
+#    location
+# -> the information in the XML-file is always produced from the same version of
+#    the header file used to compile runSyncedChemistryData (even if the header
+#    file is modified)
+add_custom_command(
+  TARGET runSyncedChemistryData POST_BUILD
+  COMMAND ${PROJECT_SOURCE_DIR}/tests/scripts/castxml_wrapper.py
+                  -c
+                  -I${GRACKLE_GENERATED_PUBLIC_HEADERS}
+                  -x c++
+                  --castxml-cc-gnu g++
+                  --castxml-output=1
+                  -o "grackle.h.xml"
+                  ${PROJECT_SOURCE_DIR}/src/include/grackle.h
+  BYPRODUCTS "grackle.h.xml"
+  VERBATIM
+)
+
 gtest_discover_tests(runSyncedChemistryData)
