@@ -8,6 +8,7 @@
 #include <map>
 #include <optional>
 #include <regex>
+#include <sstream>
 #include <string>
 #include <utility>
 
@@ -117,23 +118,19 @@ MemberTypeNameMapResult query_struct_members(std::string struct_name)
 
   // step 2: parse the xml
   // =====================
-  grtest::Command xmlread_cmd;
-  xmlread_cmd.program = xml_reader;
-  xmlread_cmd.args = {"--input", xml_path, "--type", struct_name};
-  xmlread_cmd.stdout_path = "";  // capture stdout
-  xmlread_cmd.stderr_path = "";  // capture stderr
-  grtest::ProcessOutput xmlread_rslt = grtest::process_output(xmlread_cmd);
-  if (xmlread_rslt.status != 0) {
-    std::string tmp = grtest::summarize_cmd_and_rslt(xmlread_cmd, xmlread_rslt);
-    std::fprintf(stderr, "unexpected outcome:\n%s\n", tmp.c_str());
-    return MemberTypeNameMapResult{"Something weird happened", {}};
-  } else if (xmlread_rslt.stderr_str.size() != 0) {
-    std::fprintf(stderr, "%s\n", xmlread_rslt.stderr_str.c_str());
+  std::stringstream buf;
+  buf << xml_reader << " --input " << xml_path << " --type " << struct_name;
+  std::string cmd = buf.str();
+  grtest::ProcessStatusAndStdout rslt = grtest::capture_status_and_output(cmd);
+  if (rslt.status != 0) {
+    return MemberTypeNameMapResult{
+      "Something weird happened while invoking " + cmd , {}
+    };
   }
 
   // step 3: create the output object
   // ================================
-  return try_parse_(xmlread_rslt.stdout_str);
+  return try_parse_(rslt.stdout_str);
 }
 
 /// an empty string indicates that the mappings are consistent
