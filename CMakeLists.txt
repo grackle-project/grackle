@@ -171,6 +171,14 @@ endif()
 
 option(GRACKLE_USE_OPENMP "Use OpenMP" OFF)
 if (GRACKLE_USE_OPENMP)
+  if (CMAKE_GENERATOR STREQUAL "Ninja")
+    message(WARNING
+      "using Ninja with GRACKLE_USE_OPENMP=ON may cause compilation problems."
+      "The issues manifest as error with finding the \"omp_lib.h\" header "
+      "that is conditionally included by some Fortran source files when using "
+      "CMake. The quick fix is use Makefiles. See the docs for more info"
+    )
+  endif()
   find_package(OpenMP REQUIRED COMPONENTS C Fortran)
 endif()
 
