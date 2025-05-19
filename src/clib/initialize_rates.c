@@ -243,6 +243,7 @@ int add_h2dust_C_reaction_rate(double **rate_ptr, double units, chemistry_data *
             (*rate_ptr)[i + my_chemistry->NumberOfTemperatureBins*j] = h2dust_C_rate(T, T_dust, units, my_chemistry);
         }
     }
+    return GR_SUCCESS;
 }
 
 // Define a function which will calculate h2dust_S rates.
@@ -274,6 +275,7 @@ int add_h2dust_S_reaction_rate(double **rate_ptr, double units, chemistry_data *
             (*rate_ptr)[i + my_chemistry->NumberOfTemperatureBins*j] = h2dust_S_rate(T, T_dust, units, my_chemistry);
         }
     }
+    return GR_SUCCESS;
 }
 
 //Definition of the initialise_rates function.
