@@ -114,15 +114,25 @@ minimum-version = "build-system.requires"
 sdist.exclude = [
     # exclude continuous integration:
     ".circleci", ".readthedocs.yml", ".github",
-    # exclude data files (the sdist is subject to the same rules as wheels)
-    "input", "grackle_data_files",
     # exclude files related to creating precompiled wheels
     "scripts/wheels",
+    # exclude data files since we want the sdist to follow the same rules as wheels
+    # when it comes to data file distribution (for simplicity).
+    # -> the main value of including the files would be if somebody wanted to download
+    #    the sdist, untar it, and run tests. But, I would argue that they should be
+    #    cloning the git repository for that purpose
+    # -> this would also make the sdist ~65 times bigger
+    "input", "grackle_data_files",
+    # if we aren't including data-files, there's no reason to include pygrackle-tests
+    # (all meaningful tests will currently fail)
+    "src/python/tests",
+    # if we aren't including data-files, there's no reason to include the pygrackle
+    # code examples (they currently require editable installations)
+    "src/python/examples",
+    # for consistency, we exclude the core-library tests and examples
+    "tests", "src/examples",
     # exclude miscellaneous classic-build-system machinery
-    "configure", "src/Makefile", "src/examples/Make*",
-    # exclude classic-build-system machinery from src/clib
-    "src/clib/Makefile", "src/clib/Make.*"
-    # should we exclude "tests" and "src/examples"?
+    "configure", "src/Makefile", "src/examples/Make*", "src/clib/Make*"
 ]
 
 # A list of packages to auto-copy into the wheel.
