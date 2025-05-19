@@ -52,20 +52,26 @@ jobs:
         os: [
           ubuntu-latest,
           # ubuntu-24.04-arm,
-          # macos-13,  # (runs on intel-CPUs)
+          macos-13,  # (runs on intel-CPUs)
           macos-14  #(runs on arm cpus)
         ]
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set MACOSX_DEPLOYMENT_TARGET on ARM
-        if: matrix.os == 'macos-14'
+      - name: Set MACOSX_DEPLOYMENT_TARGET
+        if: startsWith( matrix.os, 'macos-' )
         run: |
-          # we may be able to reduce the following version number (or pick
-          # something consistent with Intel-Macs once all fortran code is
-          # removed)
-          echo "CIBW_ENVIRONMENT=MACOSX_DEPLOYMENT_TARGET=12.3" >> "$GITHUB_ENV"
+          # we may be able to reduce the following version numbers (or pick
+          # something consistent b/t Intel & Arm) once all fortran code is
+          # removed
+          RUNNER=${{ matrix.OS }}
+          if [ "$RUNNER" = "macos-14" ]; then  # ARM-builds
+            echo "CIBW_ENVIRONMENT=MACOSX_DEPLOYMENT_TARGET=12.3" >> "$GITHUB_ENV"
+          elif [ "$RUNNER" = "macos-13" ]; then  # Intel-builds
+            echo "CIBW_ENVIRONMENT=MACOSX_DEPLOYMENT_TARGET=10.14" >> "$GITHUB_ENV"
+          fi
+
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.23.3
