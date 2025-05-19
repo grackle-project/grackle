@@ -78,27 +78,54 @@ def get_gfortran(depend_dir):
     print("downloading gfortran")
 
     release, _, machine = platform.mac_ver()
+
+    # both branches are inspired by scipy's tool/wheels/cibw_before_build_macos.sh
     if machine == "arm64":
-        # this branch is inspired by scipy's tool/wheels/cibw_before_build_macos.sh
         dmg_path = download_file(
             url="https://github.com/fxcoudert/gfortran-for-macOS/releases/download/12.1-monterey/gfortran-ARM-12.1-Monterey.dmg",
             cksum="sha256:e2e32f491303a00092921baebac7ffb7ae98de4ca82ebbe9e6a866dd8501acdf",
             dst=f"{depend_dir}/gfortran.dmg",
         )
+
+        # install the disk image
+        _run("hdiutil", "attach", "-mountpoint", "/Volumes/gfortran", dmg_path)
+        _run(
+            "sudo",
+            "installer",
+            "-pkg",
+            "/Volumes/gfortran/gfortran.pkg",
+            "-target",
+            "/",
+        )
+        _run("type", "-p", "gfortran")
     else:
-        dmg_path = download_file(
-            url="https://github.com/fxcoudert/gfortran-for-macOS/releases/download/12.1-monterey/gfortran-Intel-12.1-Monterey.dmg",
-            cksum="sha256:ef3e1b4fa981c60bbe97aea8a67691d0040a74bc0962d9d9eaf9b00b536b97e0",
-            dst=f"{depend_dir}/gfortran.dmg",
+        tgz_path = download_file(
+            url="https://github.com/isuruf/gcc/releases/download/gcc-11.3.0-2/gfortran-darwin-x86_64-native.tar.gz",
+            cksum="sha256:981367dd0ad4335613e91bbee453d60b6669f5d7e976d18c7bdb7f1966f26ae4",
+            dst=f"{depend_dir}/gfortran.tar.gz",
         )
 
-    # install the disk image
-    _run("hdiutil", "attach", "-mountpoint", "/Volumes/gfortran", dmg_path)
-    _run(
-        "sudo", "installer", "-pkg", "/Volumes/gfortran/gfortran.pkg", "-target", "/"
-    )
-    _run("type", "-p", "gfortran")
+        if not os.path.isdir("/opt"):
+            _run("sudo", "mkdir", "/opt/")
+        _run("sudo", "tar", "-xv", "-C", "/opt", "-f", tgz_path)
 
+        # link the following libraries into /usr/local so we don't need to provide the
+        # -L and -rpath flags to give hints to the static linker and dynamic loader
+        libs = [
+            "libgfortran.dylib",
+            "libgfortran.5.dylib",
+            "libgcc_s.1.dylib",
+            "libgcc_s.1.1.dylib",
+            "libquadmath.dylib",
+            "libquadmath.0.dylib",
+        ]
+        for lib in libs:
+            os.symlink(
+                f"/opt/gfortran-darwin-x86_64-native/lib/{lib}", f"/usr/local/lib/{lib}"
+            )
+        os.symlink(
+            "/opt/gfortran-darwin-x86_64-native/bin/gfortran", "/usr/local/bin/gfortran"
+        )
 
 
 def get_hdf5(depend_dir, compile_hl_api=False):
@@ -162,9 +189,8 @@ def handle_license(project_dir):
         "--clobber",
         f"PREFIX={prefix}",
         "--literal-linenos",
-        *literal_linenos
+        *literal_linenos,
     )
-
 
     license_path = os.path.join(project_dir, "LICENSE")
     assert os.path.isfile(license_path)
@@ -172,7 +198,6 @@ def handle_license(project_dir):
     with open(license_path, "a") as fout:
         with open(annex_path, "r") as fsrc:
             shutil.copyfileobj(fsrc, fout)
-
 
 
 parser = argparse.ArgumentParser()
