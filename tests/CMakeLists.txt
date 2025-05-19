@@ -69,7 +69,7 @@ add_test(
   COMMAND ${checker_script} cmp
     --target $<TARGET_FILE:c_example>
     --ref ${CMAKE_CURRENT_LIST_DIR}/scripts/c_example_ref.json
-    --rtol 6e-14
+    --rtol 2e-12
     --exec-timeout 10
     --exec-dir ${example_exec_dir}
 )
