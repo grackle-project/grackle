@@ -214,6 +214,7 @@ _model_test_grids = \
                 {
                     "use_grackle": 1,
                     "photoelectric_heating": 0,
+                    "dust_recombination_cooling": 0,
                     "cmb_temperature_floor": 1,
                     "CaseBRecombination": 1,
                     "cie_cooling": 1,
@@ -277,7 +278,55 @@ _model_test_grids = \
                     "metallicity": 0.,
                 }
             }
+        },
+
+        "metal_dust_chemistry_variants": \
+        {
+            "parameters": \
+            {
+                "defaults": \
+                {
+                    "use_grackle": 1,
+                    "primordial_chemistry": 4,
+                    "CaseBRecombination": 1,
+                    "cie_cooling": 2,
+                    "h2_optical_depth_approximation": 1,
+                    "use_primordial_continuum_opacity": 1,
+                    "h2_charge_exchange_rate": 1,
+                    "h2_h_cooling_rate": 1,
+                    "h2_cooling_rate": 3,
+                    "hd_reaction_rates": 1,
+                    "grackle_data_file": "cloudy_metals_2008_3D.h5",
+                    "metal_cooling": 1,
+                    "metal_chemistry": 1,
+                    "three_body_rate": 4,
+                    "dust_chemistry": 1,
+                    "use_dust_density_field": 1,
+                    "photoelectric_heating": 0,
+                    "dust_recombination_cooling": 0,
+                    "dust_sublimation": 1,
+                    "grain_growth": 1,
+                    "dust_species": 1,
+                    "use_multiple_dust_temperatures": 1,
+                    "multi_metals": 0,
+                    "metal_abundances": 0,
+                },
+                "variants": \
+                {
+                    "dust_species": (2, 3),
+                    "multi_metals": (1,),
+                    "metal_abundances": (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11),
+                }
+            },
+            "inputs": \
+            {
+                "defaults": \
+                {
+                    "metallicity": 1e-3,
+                }
+            }
         }
+
     },
 
     "yt_grackle": \
