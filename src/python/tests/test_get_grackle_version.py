@@ -64,6 +64,10 @@ def test_get_grackle_version():
         raise RuntimeError(
             "get_grackle_version should return a dictionary with the 3 items"
         )
+    elif results["branch"] == "N/A" and results["revision"] == "N/A":
+        # in this scenario the core library was compiled outside of a git repository
+        # so we skip checks of branch and revision
+        pass
     elif results['branch'] != branch:
         raise RuntimeError(
             f"expected get_grackle_version()['branch'] to be '{branch}', not "
