@@ -282,25 +282,23 @@ jobs:
           build_kind: 'standalone-pygrackle'
           generate: 'false'
 
-      # run full pygrackle test-suite on latest commit (CMake-build)
+      # run pygrackle-test (without answer-tests) on latest commit (CMake-build)
       - install-grackle:
           omp: 'false'
           classic_build: 'false'
           tag: $CIRCLE_BRANCH
-      - run-pygrackle-tests:
-          omp: 'false'
-          build_kind: 'cmake'
-          generate: 'false'
+      - run:
+          name: "pygrackle-tests (no answer-tests) on latest commit (corelib manually built with CMake)"
+          command: py.test
 
       # run full pygrackle test-suite on latest commit (classic-build)
       - install-grackle:
           omp: 'false'
           classic_build: 'true'
           tag: $CIRCLE_BRANCH
-      - run-pygrackle-tests:
-          omp: 'false'
-          build_kind: 'classic'
-          generate: 'false'
+      - run:
+          name: "pygrackle-tests (no answer-tests) on latest commit (corelib manually created with classic-build)"
+          command: py.test
 
   corelib-tests:
     # we're only using a python docker-image out of convenience (We only care
