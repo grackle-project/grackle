@@ -51,16 +51,21 @@ def gen_plot(fc,  data, fname):
     pyplot.savefig(fname)
 
 
-if __name__ == "__main__":
+def main(args=None, output_name=output_name):
+    args = sys.argv[1:] if args is None else args
     # If we are running the script through the testing framework,
     # then we will pass in two integers corresponding to the sets
     # of parameters and inputs.
-    if len(sys.argv) > 1:
-        par_index = int(sys.argv[1])
-        input_index = int(sys.argv[2])
+    if len(args) > 1:
+        par_index = int(args[0])
+        input_index = int(args[1])
         my_vars = get_test_variables(output_name, par_index, input_index)
-        for var, val in my_vars.items():
-            globals()[var] = val
+
+        metallicity = my_vars["metallicity"]
+        redshift = my_vars["redshift"]
+        extra_attrs = my_vars["extra_attrs"]
+        my_chemistry = my_vars["my_chemistry"]
+        output_name = my_vars["output_name"]
 
         in_testing_framework = True
 
@@ -116,3 +121,7 @@ if __name__ == "__main__":
     # save data arrays as a yt dataset
     yt.save_as_dataset({}, f"{output_name}.h5",
                        data=data, extra_attrs=extra_attrs)
+    return 0
+
+if __name__ == '__main__':
+    sys.exit(main())

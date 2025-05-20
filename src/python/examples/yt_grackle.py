@@ -24,13 +24,14 @@ output_name = os.path.basename(__file__[:-3]) # strip off ".py"
 DS_NAME = "IsolatedGalaxy/galaxy0030/galaxy0030"
 ds_path = os.path.join(os.environ.get('YT_DATA_DIR', default='.'), DS_NAME)
 
-if __name__ == "__main__":
+def main(args=None, output_name=output_name):
+    args = sys.argv[1:] if args is None else args
     # If we are running the script through the testing framework,
     # then we will pass in two integers corresponding to the sets
     # of parameters and inputs.
-    if len(sys.argv) > 1:
-        par_index = int(sys.argv[1])
-        input_index = int(sys.argv[2])
+    if len(args) > 1:
+        par_index = int(args[0])
+        input_index = int(args[1])
         output_name = f"{output_name}_{par_index}_{input_index}"
         extra_attrs = {"format_version": model_test_format_version}
 
@@ -70,3 +71,7 @@ if __name__ == "__main__":
     data = {field: sp[field] for field in fields}
     yt.save_as_dataset(ds, filename=f"{output_name}.h5",
                        data=data, extra_attrs=extra_attrs)
+    return 0
+
+if __name__ == "__main__":
+    sys.exit(main())
