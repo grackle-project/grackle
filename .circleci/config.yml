@@ -243,8 +243,12 @@ executors:
       tag:
         type: string
         default: latest
+      resource_class:
+        type: string
+        default: small
     docker:
       - image: cimg/python:<< parameters.tag >>
+    resource_class: << parameters.resource_class >>
 
 jobs:
   test-suite:
@@ -255,6 +259,7 @@ jobs:
     executor:
       name: python
       tag: << parameters.tag >>
+      resource_class: small  # <- 1 core
 
     working_directory: ~/grackle
 
@@ -294,6 +299,7 @@ jobs:
     executor:
       name: python
       tag: << parameters.tag >>
+      resource_class: small  # <- 1 core
 
     working_directory: ~/grackle
 
@@ -321,6 +327,7 @@ jobs:
     executor:
       name: python
       tag: 3.8.14
+      resource_class: medium  # <- 2 cores
 
     working_directory: ~/grackle
 
@@ -367,6 +374,7 @@ jobs:
     executor:
       name: python
       tag: << parameters.tag >>
+      resource_class: small  # <- 1 core
 
     working_directory: ~/grackle
 
