@@ -227,20 +227,6 @@ commands:
             pip uninstall --yes pygrackle
 
 
-  run-classic-omp-test:
-    description: "Run the OpenMP test with the classic build-system"
-    steps:
-      - run:
-          name: "Run the OpenMP test with the classic build system"
-          command: |
-            source $BASH_ENV
-            cd src
-            export OMP_NUM_THREADS=4
-            cd example
-            make cxx_omp_example
-            ./cxx_omp_example
-            make clean
-
   build-docs:
     description: "Test the docs build."
     steps:
@@ -300,13 +286,6 @@ jobs:
           build_kind: 'classic'
           generate: 'false'
 
-      # setup and run classic-omp-test on latest commit
-      - install-grackle:
-          omp: 'true'
-          classic_build: 'true'
-          tag: $CIRCLE_BRANCH
-      - run-classic-omp-test
-
   test-standalone-pygrackle:
     parameters:
       tag:
@@ -362,6 +341,23 @@ jobs:
           command: |
             cd build
             ctest --output-on-failure
+            cd -
+      - run:
+          name: "Build libgrackle with OpenMP enabled"
+          command: |
+            # we explicitly use Makefiles rather than Ninja due
+            # to a documented bug between gfortran/omp/ninja
+            cmake -DGRACKLE_USE_DOUBLE=ON                   \
+                  -DGRACKLE_USE_OPENMP=ON                   \
+                  -DGRACKLE_BUILD_TESTS=OFF                 \
+                  -DCMAKE_BUILD_TYPE=Release                \
+                  -Bbuild-omp
+            cmake --build build-omp
+      - run:
+          name: "run the OpenMP example"
+          command: cd build-omp/examples && ./cxx_omp_example
+          environment:
+            OMP_NUM_THREADS: 4
 
   docs-build:
     parameters:
