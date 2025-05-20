@@ -289,7 +289,7 @@ jobs:
           tag: $CIRCLE_BRANCH
       - run:
           name: "pygrackle-tests (no answer-tests) on latest commit (corelib manually built with CMake)"
-          command: py.test
+          command: source $BASH_ENV && source $HOME/venv/bin/activate && py.test
 
       # run full pygrackle test-suite on latest commit (classic-build)
       - install-grackle:
@@ -298,7 +298,7 @@ jobs:
           tag: $CIRCLE_BRANCH
       - run:
           name: "pygrackle-tests (no answer-tests) on latest commit (corelib manually created with classic-build)"
-          command: py.test
+          command: source $BASH_ENV && source $HOME/venv/bin/activate && py.test
 
   corelib-tests:
     # we're only using a python docker-image out of convenience (We only care
