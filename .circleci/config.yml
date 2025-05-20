@@ -271,6 +271,17 @@ jobs:
       - download-test-data
       - store-pygrackle-suite-gold-standard-answers
 
+      - run:
+          name: "Build Standalone Pygrackle from the commit that triggered CI."
+          command: |
+            source $HOME/venv/bin/activate
+            git checkout $CIRCLE_BRANCH
+            pip install -e .[dev]
+      - run-pygrackle-tests:
+          omp: 'false'
+          build_kind: 'standalone-pygrackle'
+          generate: 'false'
+
       # run full pygrackle test-suite on latest commit (CMake-build)
       - install-grackle:
           omp: 'false'
@@ -289,35 +300,6 @@ jobs:
       - run-pygrackle-tests:
           omp: 'false'
           build_kind: 'classic'
-          generate: 'false'
-
-  test-standalone-pygrackle:
-    parameters:
-      tag:
-        type: string
-        default: latest
-    executor:
-      name: python
-      tag: << parameters.tag >>
-      resource_class: small  # <- 1 core
-
-    working_directory: ~/grackle
-
-    steps:
-      - checkout
-      - set-env
-      - install-dependencies
-      - download-test-data
-      - store-pygrackle-suite-gold-standard-answers
-      - run:
-          name: "Build Pygrackle from the commit that triggered CI."
-          command: |
-            source $HOME/venv/bin/activate
-            git checkout $CIRCLE_BRANCH
-            pip install -e .[dev]
-      - run-pygrackle-tests:
-          omp: 'false'
-          build_kind: 'standalone-pygrackle'
           generate: 'false'
 
   corelib-tests:
@@ -392,10 +374,6 @@ workflows:
            name: "Pygrackle test suite - Python 3.8"
            tag: "3.8.14"
 
-       - test-standalone-pygrackle:
-           name: "Standalone Pygrackle tests - Python 3.8"
-           tag: "3.8.14"
-
        - corelib-tests:
            name: "Core library test suite"
 
@@ -414,10 +392,6 @@ workflows:
      jobs:
        - test-suite:
            name: "Pygrackle test suite - Python 3.8"
-           tag: "3.8.14"
-
-       - test-standalone-pygrackle:
-           name: "Standalone Pygrackle tests - Python 3.8"
            tag: "3.8.14"
 
        - corelib-tests:
