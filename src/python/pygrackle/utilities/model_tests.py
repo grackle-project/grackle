@@ -421,6 +421,7 @@ def generate_model_sets():
 
     return model_store, model_parametrization
 
+
 model_sets, model_parametrization = generate_model_sets()
 
 def get_model_set(model_name, model_variant, parameter_index, input_index):

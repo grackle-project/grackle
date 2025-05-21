@@ -1,9 +1,9 @@
+import json
 import numpy as np
 from matplotlib import pyplot as plt
 import os
 import pytest
 import sys
-import yaml
 import yt
 
 from numpy.testing import assert_allclose
@@ -27,6 +27,7 @@ def get_ivar(my_test):
             return ivar
     return None
 
+
 _exclude_fields = [f"{ax}_velocity" for ax in "xyz"]
 
 def compare_model_results(compare_dir, model_par, ds1, ds2):
@@ -47,7 +48,7 @@ def compare_model_results(compare_dir, model_par, ds1, ds2):
     notes_fn = os.path.join(test_dir, "notes.txt")
     with open(notes_fn, mode="w") as f:
         my_pars = {k: str(v) for k, v in ds1.parameters.items()}
-        yaml.dump(my_pars, stream=f)
+        json.dump(my_pars, f, indent=2)
 
     output_lines = ["\nMax relative differences:"]
     do_diff = ds1.data["data", my_ivar].size == ds2.data["data", my_ivar].size
