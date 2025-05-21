@@ -27,6 +27,7 @@ def get_ivar(my_test):
             return ivar
     return None
 
+
 _exclude_fields = [f"{ax}_velocity" for ax in "xyz"]
 
 def compare_model_results(compare_dir, model_par, ds1, ds2):

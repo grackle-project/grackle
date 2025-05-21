@@ -50,6 +50,7 @@ def gen_plot(fc,  data, fname):
     pyplot.tight_layout()
     pyplot.savefig(fname)
 
+
 if __name__ == "__main__":
     # If we are running the script through the testing framework,
     # then we will pass in two integers corresponding to the sets
