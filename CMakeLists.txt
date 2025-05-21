@@ -179,7 +179,12 @@ if (GRACKLE_USE_OPENMP)
       "CMake. The quick fix is use Makefiles. See the docs for more info"
     )
   endif()
-  find_package(OpenMP REQUIRED COMPONENTS C Fortran)
+  if(GRACKLE_EXAMPLES)
+    set(_GRACKLE_OMP_COMPONENTS C Fortran CXX)
+  else()
+    set(_GRACKLE_OMP_COMPONENTS C Fortran)
+  endif()
+  find_package(OpenMP REQUIRED COMPONENTS ${_GRACKLE_OMP_COMPONENTS})
 endif()
 
 # define target to link the math functions of the C standard library
