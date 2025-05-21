@@ -17,7 +17,7 @@ import yt
 
 from pygrackle import add_grackle_fields
 from pygrackle.utilities.data_path import grackle_data_dir
-from pygrackle.utilities.model_tests import model_test_format_version
+from pygrackle.utilities.model_tests import parse_model_cliargs
 
 output_name = os.path.basename(__file__[:-3]) # strip off ".py"
 
@@ -25,14 +25,14 @@ DS_NAME = "IsolatedGalaxy/galaxy0030/galaxy0030"
 ds_path = os.path.join(os.environ.get('YT_DATA_DIR', default='.'), DS_NAME)
 
 if __name__ == "__main__":
-    # If we are running the script through the testing framework,
-    # then we will pass in two integers corresponding to the sets
-    # of parameters and inputs.
+    # If we are running the script through the testing framework, then we will
+    # pass in arguments (recall sys.argv is just the file name)
     if len(sys.argv) > 1:
-        par_index = int(sys.argv[1])
-        input_index = int(sys.argv[2])
-        output_name = f"{output_name}_{par_index}_{input_index}"
-        extra_attrs = {"format_version": model_test_format_version}
+        tmp = parse_model_cliargs(sys.argv[1:], output_name)
+        if tmp is None:
+            sys.exit(0) # exit early
+        output_name = tmp.output_name
+        extra_attrs = tmp.extra_attrs
 
         if 'YT_DATA_DIR' not in os.environ:
             raise RuntimeError(

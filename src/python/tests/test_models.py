@@ -40,7 +40,11 @@ def test_model(answertestspec, tmp_path, model_name, par_index, input_index):
         pytest.skip("YT_DATA_DIR env variable isn't defined")
 
     script_path = os.path.join(python_example_dir, f"{model_name}.py")
-    command = f"{sys.executable} {script_path} {par_index} {input_index}"
+    command = (
+        f"{sys.executable} {script_path} run-test "
+        f"--param-preset {par_index} "
+        f"--input-preset {input_index} "
+    )
 
     if True:
         rval = run_command(command, timeout=60, cwd=tmp_path)
