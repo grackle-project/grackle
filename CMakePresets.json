@@ -8,10 +8,10 @@
   "configurePresets": [
       {
           "name": "ci-basic",
-          "description": "Some basic configuration with Ninja generator",
+          "description": "Some basic configuration with Ninja generator. In case a user tries to use a preset, binaryDir was picked so they can run an example from ${binaryDir}/examples (the narrative docs explicitly tell people to do this).",
           "generator": "Ninja",
           "hidden": true,
-          "binaryDir": "${sourceDir}/build/${presetName}"
+          "binaryDir": "${sourceDir}/build_${presetName}"
       },
       {
           "name": "ci-common-config",

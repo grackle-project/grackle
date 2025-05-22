@@ -326,19 +326,19 @@ jobs:
           name: "Build libgrackle and all of the core library's tests"
           command: |
             cmake --preset ci-linux
-            cmake --build build/ci-linux
+            cmake --build build_ci-linux
       - run:
           name: "Run the suite of tests that operate directly on the core-library."
-          command: ctest --test-dir build/ci-linux --output-on-failure
+          command: ctest --test-dir build_ci-linux --output-on-failure
       - run:
           name: "Build libgrackle with OpenMP enabled"
           command: |
             cmake --preset ci-linux-omp
-            cmake --build build/ci-linux-omp
+            cmake --build build_ci-linux-omp
       - run:
           name: "run the OpenMP example"
           command: ./cxx_omp_example
-          working_directory: build/ci-linux-omp/examples
+          working_directory: build_ci-linux-omp/examples
           environment:
             OMP_NUM_THREADS: 4
 
