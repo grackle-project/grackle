@@ -11,6 +11,7 @@
 [build-system]
 requires=[
   "cython",
+  "cython-cmake>=0.2",
   # since tool.scikit-build.minimum-version is set to "build-system.requires",
   # the minimum build-requirement for scikit-build-core controls some default
   # behaviors when newer versions of scikit-build-core are installed
@@ -95,9 +96,9 @@ testpaths = [
 # redirect to the appropriate CMakeLists.txt file
 cmake.source-dir = "./src/python"
 
-# if the following version of CMake isn't found, scikit-build-core will
-# download and use a compatible CMake-verison
-cmake.version = ">=3.16"
+# if the version of CMake (in {cmake.source-dir}/CMakeLists.txt) isn't found,
+# scikit-build-core will download and use a compatible CMake-verison
+cmake.version = "CMakeLists.txt"
 
 # The build type to use when building the project. Valid options are: "Debug",
 # "Release", "RelWithDebInfo", "MinSizeRel", "", etc.
