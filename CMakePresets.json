@@ -22,7 +22,17 @@
             "GRACKLE_USE_DOUBLE": "ON",
             "GRACKLE_USE_OPENMP": "OFF",
             "GRACKLE_BUILD_TESTS": "ON"
-         }
+          }
+      },
+      {
+          "name": "ci-omp-config",
+          "description": "Standard configuration of Grackle with OpenMP. To a weird \"cross-reaction\" between gfortran, OpenMP, & the Ninja generator, we override the generator.",
+          "generator": "Unix Makefiles",
+          "hidden": true,
+          "inherits": "ci-common-config",
+          "cacheVariables": {
+            "GRACKLE_USE_OPENMP": "ON"
+          }
       },
       {
           "name": "ci-flags-warnings-gcc-clang",
@@ -48,6 +58,12 @@
           "name": "ci-linux",
           "description": "the general configuration preset for linux",
           "inherits": ["ci-flags-warnings-gcc-clang", "ci-common-config"],
+          "cacheVariables": { "CMAKE_BUILD_TYPE": "RELEASE" }
+      },
+      {
+          "name": "ci-linux-omp",
+          "description": "a preset for linux with OpenMP",
+          "inherits": ["ci-flags-warnings-gcc-clang", "ci-omp-config"],
           "cacheVariables": { "CMAKE_BUILD_TYPE": "RELEASE" }
       },
       {

@@ -31,7 +31,7 @@ else()
   set(GRACKLE_FLOAT_MACRO "GRACKLE_FLOAT_4")
 endif()
 configure_file(../include/grackle_float.h.in
-  ${GRACKLE_GENRATED_PUBLIC_HEADERS}/grackle_float.h @ONLY)
+  ${GRACKLE_GENERATED_PUBLIC_HEADERS}/grackle_float.h @ONLY)
 
 # next, declare recipe for generating auto_general.c:
 
@@ -123,7 +123,7 @@ add_library(Grackle_Grackle
   # -> In that scenario, CMake doesn't realize it needs to generate the
   #    header(s) because the compiler can finds versions of the headers from
   #    the prior build in the standard system location.
-  ${GRACKLE_GENRATED_PUBLIC_HEADERS}/grackle_float.h
+  ${GRACKLE_GENERATED_PUBLIC_HEADERS}/grackle_float.h
 
   # although not strictly necessary, listing out other header files is a "best
   # practice" (and is needed to make them show up in certain IDEs)
@@ -214,7 +214,7 @@ target_include_directories(Grackle_Grackle
   # grackle AND when linking against grackle under inclusion approach #1
   # -> while it may seem unnecessary to specify the ordinary headers' directory
   #    while building grackle, it's necessary to compile auto_general.c
-  PUBLIC $<BUILD_INTERFACE:${GRACKLE_GENRATED_PUBLIC_HEADERS}> # generated hdrs
+  PUBLIC $<BUILD_INTERFACE:${GRACKLE_GENERATED_PUBLIC_HEADERS}> # generated hdrs
          $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include> # public hdrs
          $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}> # private hdrs
 

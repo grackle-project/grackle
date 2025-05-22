@@ -227,20 +227,6 @@ commands:
             pip uninstall --yes pygrackle
 
 
-  run-classic-omp-test:
-    description: "Run the OpenMP test with the classic build-system"
-    steps:
-      - run:
-          name: "Run the OpenMP test with the classic build system"
-          command: |
-            source $BASH_ENV
-            cd src
-            export OMP_NUM_THREADS=4
-            cd example
-            make cxx_omp_example
-            ./cxx_omp_example
-            make clean
-
   build-docs:
     description: "Test the docs build."
     steps:
@@ -257,8 +243,12 @@ executors:
       tag:
         type: string
         default: latest
+      resource_class:
+        type: string
+        default: small
     docker:
       - image: cimg/python:<< parameters.tag >>
+    resource_class: << parameters.resource_class >>
 
 jobs:
   test-suite:
@@ -269,6 +259,7 @@ jobs:
     executor:
       name: python
       tag: << parameters.tag >>
+      resource_class: small  # <- 1 core
 
     working_directory: ~/grackle
 
@@ -280,52 +271,8 @@ jobs:
       - download-test-data
       - store-pygrackle-suite-gold-standard-answers
 
-      # run full pygrackle test-suite on latest commit (CMake-build)
-      - install-grackle:
-          omp: 'false'
-          classic_build: 'false'
-          tag: $CIRCLE_BRANCH
-      - run-pygrackle-tests:
-          omp: 'false'
-          build_kind: 'cmake'
-          generate: 'false'
-
-      # run full pygrackle test-suite on latest commit (classic-build)
-      - install-grackle:
-          omp: 'false'
-          classic_build: 'true'
-          tag: $CIRCLE_BRANCH
-      - run-pygrackle-tests:
-          omp: 'false'
-          build_kind: 'classic'
-          generate: 'false'
-
-      # setup and run classic-omp-test on latest commit
-      - install-grackle:
-          omp: 'true'
-          classic_build: 'true'
-          tag: $CIRCLE_BRANCH
-      - run-classic-omp-test
-
-  test-standalone-pygrackle:
-    parameters:
-      tag:
-        type: string
-        default: latest
-    executor:
-      name: python
-      tag: << parameters.tag >>
-
-    working_directory: ~/grackle
-
-    steps:
-      - checkout
-      - set-env
-      - install-dependencies
-      - download-test-data
-      - store-pygrackle-suite-gold-standard-answers
       - run:
-          name: "Build Pygrackle from the commit that triggered CI."
+          name: "Build Standalone Pygrackle from the commit that triggered CI."
           command: |
             source $HOME/venv/bin/activate
             git checkout $CIRCLE_BRANCH
@@ -335,6 +282,24 @@ jobs:
           build_kind: 'standalone-pygrackle'
           generate: 'false'
 
+      # run pygrackle-test (without answer-tests) on latest commit (CMake-build)
+      - install-grackle:
+          omp: 'false'
+          classic_build: 'false'
+          tag: $CIRCLE_BRANCH
+      - run:
+          name: "pygrackle-tests (no answer-tests) on latest commit (corelib manually built with CMake)"
+          command: source $BASH_ENV && source $HOME/venv/bin/activate && py.test
+
+      # run full pygrackle test-suite on latest commit (classic-build)
+      - install-grackle:
+          omp: 'false'
+          classic_build: 'true'
+          tag: $CIRCLE_BRANCH
+      - run:
+          name: "pygrackle-tests (no answer-tests) on latest commit (corelib manually created with classic-build)"
+          command: source $BASH_ENV && source $HOME/venv/bin/activate && py.test
+
   corelib-tests:
     # we're only using a python docker-image out of convenience (We only care
     # that a version of python exists with a version of 3.7 or newer to run
@@ -342,6 +307,7 @@ jobs:
     executor:
       name: python
       tag: 3.8.14
+      resource_class: medium  # <- 2 cores
 
     working_directory: ~/grackle
 
@@ -364,6 +330,17 @@ jobs:
       - run:
           name: "Run the suite of tests that operate directly on the core-library."
           command: ctest --test-dir build/ci-linux --output-on-failure
+      - run:
+          name: "Build libgrackle with OpenMP enabled"
+          command: |
+            cmake --preset ci-linux-omp
+            cmake --build build/ci-linux-omp
+      - run:
+          name: "run the OpenMP example"
+          command: ./cxx_omp_example
+          working_directory: build/ci-linux-omp/examples
+          environment:
+            OMP_NUM_THREADS: 4
 
   docs-build:
     parameters:
@@ -373,6 +350,7 @@ jobs:
     executor:
       name: python
       tag: << parameters.tag >>
+      resource_class: small  # <- 1 core
 
     working_directory: ~/grackle
 
@@ -388,10 +366,6 @@ workflows:
      jobs:
        - test-suite:
            name: "Pygrackle test suite - Python 3.8"
-           tag: "3.8.14"
-
-       - test-standalone-pygrackle:
-           name: "Standalone Pygrackle tests - Python 3.8"
            tag: "3.8.14"
 
        - corelib-tests:
@@ -412,10 +386,6 @@ workflows:
      jobs:
        - test-suite:
            name: "Pygrackle test suite - Python 3.8"
-           tag: "3.8.14"
-
-       - test-standalone-pygrackle:
-           name: "Standalone Pygrackle tests - Python 3.8"
            tag: "3.8.14"
 
        - corelib-tests:

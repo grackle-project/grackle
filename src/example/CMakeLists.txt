@@ -25,7 +25,7 @@ target_link_libraries(cxx_example Grackle::Grackle)
 
 if (GRACKLE_USE_OPENMP)
   add_executable(cxx_omp_example cxx_omp_example.C)
-  target_link_libraries(cxx_omp_example Grackle::Grackle)
+  target_link_libraries(cxx_omp_example Grackle::Grackle OpenMP::OpenMP_CXX)
 endif()
 
 if (GRACKLE_USE_DOUBLE)
