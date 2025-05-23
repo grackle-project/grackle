@@ -97,6 +97,7 @@ add_library(Grackle_Grackle
   rate_functions.c
   set_default_chemistry_parameters.c
   solve_chemistry.c
+  status_reporting.c status_reporting.h
   update_UVbackground_rates.c
   utils.c
 
