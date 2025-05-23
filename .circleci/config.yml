@@ -108,7 +108,7 @@ commands:
               make install
               cd ../../ # go back to the root level
 
-              PYGRACKLE_LEGACY_LINK=classic pip install -v -e .[dev]
+              PYGRACKLE_LEGACY_LINK=classic pip install -v -e .[test]
             else # this branch builds grackle with cmake
 
               cmake -DGRACKLE_USE_DOUBLE=ON                   \
@@ -118,7 +118,7 @@ commands:
                     -Bbuild
               cmake --build build
               
-              Grackle_DIR=${PWD}/build pip install -v -e .[dev]
+              Grackle_DIR=${PWD}/build pip install -v -e .[test]
             fi
 
   install-standalone-pygrackle:
@@ -133,7 +133,7 @@ commands:
           command: |
             source $HOME/venv/bin/activate
             git checkout << parameters.tag >>
-            pip install -e .[dev]
+            pip install -e .[test]
 
   install-docs-dependencies:
     description: "Install dependencies for docs build."
@@ -216,7 +216,7 @@ commands:
             source $HOME/venv/bin/activate
             pip uninstall --yes pygrackle # it's ok if pygrackle wasn't installed yet
             git checkout << parameters.gold-standard-tag >>
-            pip install -e .[dev]
+            pip install -e .[test]
       - run-pygrackle-tests:
           omp: 'false'
           build_kind: 'standalone-pygrackle'

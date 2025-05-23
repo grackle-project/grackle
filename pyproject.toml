@@ -64,14 +64,13 @@ Source = 'https://github.com/grackle-project/grackle'
 Tracker = 'https://github.com/grackle-project/grackle/issues'
 
 [project.optional-dependencies]
-dev = [
-  'flake8',
-  'packaging',
-  'pytest',
-  'sphinx',
-  'sphinx-tabs',
-  'sphinx_rtd_theme',
+test = [
+  'flake8', 'packaging', 'pytest'
 ]
+doc = [
+  'sphinx', 'sphinx-tabs', 'sphinx_rtd_theme'
+]
+dev = ['pygrackle[doc,test]']
 
 
 [tool.pytest.ini_options]
