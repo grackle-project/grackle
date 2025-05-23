@@ -26,10 +26,18 @@ from pygrackle.utilities.physical_constants import \
     sec_per_Myr, \
     cm_per_mpc
 from pygrackle.utilities.model_tests import \
-    get_model_set, \
-    model_test_format_version
+    get_test_variables
 
 output_name = os.path.basename(__file__[:-3]) # strip off ".py"
+
+def gen_plot(fc, data, fname):
+    pyplot.loglog(data["temperature"], np.abs(data["cooling_rate"]),
+                  color="black")
+    pyplot.xlabel('T [K]')
+    pyplot.ylabel('$\\Lambda$ [erg s$^{-1}$ cm$^{3}$]')
+    pyplot.tight_layout()
+    pyplot.savefig(fname)
+
 
 if __name__ == "__main__":
     # If we are running the script through the testing framework,
@@ -38,12 +46,11 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         par_index = int(sys.argv[1])
         input_index = int(sys.argv[2])
-        my_chemistry, input_set = get_model_set(
-            output_name, par_index, input_index)
-        for var, val in input_set.items():
+        my_vars = get_test_variables(output_name, par_index, input_index)
+        for var, val in my_vars.items():
             globals()[var] = val
-        output_name = f"{output_name}_{par_index}_{input_index}"
-        extra_attrs = {"format_version": model_test_format_version}
+
+        in_testing_framework = True
 
     # Just run the script as is.
     else:
@@ -68,6 +75,8 @@ if __name__ == "__main__":
 
         my_chemistry.use_specific_heating_rate = 1
         my_chemistry.use_volumetric_heating_rate = 1
+
+        in_testing_framework = False
 
     # max_iterations needs to be increased for the colder temperatures
     my_chemistry.max_iterations = 4*10000
@@ -101,11 +110,8 @@ if __name__ == "__main__":
     # get data arrays with symbolic units
     data = fc.finalize_data()
 
-    pyplot.loglog(data["temperature"], np.abs(data["cooling_rate"]),
-                  color="black")
-    pyplot.xlabel('T [K]')
-    pyplot.ylabel('$\\Lambda$ [erg s$^{-1}$ cm$^{3}$]')
-    pyplot.tight_layout()
-    pyplot.savefig(f"{output_name}.png")
+    if not in_testing_framework:
+        gen_plot(fc, data, fname=f"{output_name}.png")
+
     yt.save_as_dataset({}, filename=f"{output_name}.h5",
                        data=data, extra_attrs=extra_attrs)
