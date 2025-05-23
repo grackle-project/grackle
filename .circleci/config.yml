@@ -57,7 +57,7 @@ commands:
             flake8 pygrackle examples tests
 
   install-grackle:
-    description: "Install grackle."
+    description: "Install the core Grackle Library & Pygrackle."
     parameters:
       omp:
         type: enum
@@ -88,9 +88,6 @@ commands:
             cd src/clib
             make clean
             cd -
-            cd src/python
-            make clean
-            cd -
             # remove the files produced by ./configure
             rm -f src/clib/Make.config.override src/clib/Make.config.machine src/clib/DEPEND
             # remove the files produced in a cmake-build
@@ -111,19 +108,7 @@ commands:
               make install
               cd ../../ # go back to the root level
 
-              if [ ! -f ./pyproject.toml ]; then
-                # this is the old way to install pygrackle. 
-                # - We need to support this as long as the most recent gold
-                #   standard tags a version of the repository from before we
-                #   transitioned away from setuptools
-                # - previously, we checked the value held by parameters.tag,
-                #   but that was less robust than the current solution
-
-                cd src/python
-                pip install -e .[dev]
-              else
-                PYGRACKLE_LEGACY_LINK=classic pip install -v -e .[dev]
-              fi
+              PYGRACKLE_LEGACY_LINK=classic pip install -v -e .[dev]
             else # this branch builds grackle with cmake
 
               cmake -DGRACKLE_USE_DOUBLE=ON                   \
@@ -133,24 +118,7 @@ commands:
                     -Bbuild
               cmake --build build
               
-              if [ ! -f ./pyproject.toml ]; then
-                # this is the old way to install pygrackle. 
-                # - We need to support this as long as the most recent gold
-                #   standard tags a version of the repository from before we
-                #   transitioned away from setuptools
-                # - previously, we checked the value held by parameters.tag,
-                #   but that was less robust than the current solution
-
-                # we DO need a full installation of the c-library
-                cmake --install build 
-
-                cd src/python
-                PYGRACKLE_CMAKE_BUILD_DIR=../../build pip install -e .[dev]
-              else
-                # we DO NOT need a full installation of the c-library
-                #cmake --install build 
-                Grackle_DIR=${PWD}/build pip install -v -e .[dev]
-              fi
+              Grackle_DIR=${PWD}/build pip install -v -e .[dev]
             fi
 
   install-standalone-pygrackle:
@@ -222,30 +190,11 @@ commands:
               echo "ERROR: pygrackle tests can't be run in this configuration"
               exit 1
 
-            elif [ ! -f ./src/python/tests/conftest.py ]; then
-              # NOTE: these tests should run if using OpenMP without the
-              #       classic build-system
-
-              # here we use the old way to control the answer-test mode (i.e.
-              # defining environment variables)
-              # - We can stop supporting this case once the most recent gold
-              #   standard tags a repository version containing conftest.py
-              if [ '<< parameters.generate >>' == 'true' ]; then
-                export GENERATE_PYGRACKLE_TEST_RESULTS=1
-              else
-                export GENERATE_PYGRACKLE_TEST_RESULTS=0
-              fi
-              cd src
-              py.test python/tests
-
             else
               # NOTE: these tests should run if using OpenMP without the
               #       classic build-system
 
-              # ANSWER_DIR was picked to ensure that it matches up with the old
-              # hardcoded location (we can change it once the most recent gold
-              # standard tags a repository version containing conftest.py)
-              ANSWER_DIR=./src/python/tests/test_answers
+              ANSWER_DIR=./my-test_answers
               if [ '<< parameters.generate >>' == 'true' ]; then
                 py.test --answer-dir=${ANSWER_DIR} --answer-store
               else
@@ -253,19 +202,30 @@ commands:
               fi
             fi
 
-  run-classic-omp-test:
-    description: "Run the OpenMP test with the classic build-system"
+  store-pygrackle-suite-gold-standard-answers:
+    description: "Store the pygrackle test answers"
+    parameters:
+      gold-standard-tag:
+        description: "The gold-standard to use for generating the answers"
+        type: string
+        default: "gold-standard-v3"
     steps:
       - run:
-          name: "Run the OpenMP test with the classic build system"
+          name: "Build Pygrackle from Gold-Standard Commit (<< parameters.gold-standard-tag >>)"
           command: |
-            source $BASH_ENV
-            cd src
-            export OMP_NUM_THREADS=4
-            cd example
-            make cxx_omp_example
-            ./cxx_omp_example
-            make clean
+            source $HOME/venv/bin/activate
+            pip uninstall --yes pygrackle # it's ok if pygrackle wasn't installed yet
+            git checkout << parameters.gold-standard-tag >>
+            pip install -e .[dev]
+      - run-pygrackle-tests:
+          omp: 'false'
+          build_kind: 'standalone-pygrackle'
+          generate: 'true'
+      - run:
+          command: |
+            source $HOME/venv/bin/activate
+            pip uninstall --yes pygrackle
+
 
   build-docs:
     description: "Test the docs build."
@@ -283,8 +243,12 @@ executors:
       tag:
         type: string
         default: latest
+      resource_class:
+        type: string
+        default: small
     docker:
       - image: cimg/python:<< parameters.tag >>
+    resource_class: << parameters.resource_class >>
 
 jobs:
   test-suite:
@@ -295,6 +259,7 @@ jobs:
     executor:
       name: python
       tag: << parameters.tag >>
+      resource_class: small  # <- 1 core
 
     working_directory: ~/grackle
 
@@ -304,77 +269,36 @@ jobs:
       - install-dependencies
       - lint
       - download-test-data
+      - store-pygrackle-suite-gold-standard-answers
 
-      # record results of answer-tests using the gold-standard
-      - install-grackle:
-          omp: 'false'
-          classic_build: 'false'
-          tag: gold-standard-v2
+      - run:
+          name: "Build Standalone Pygrackle from the commit that triggered CI."
+          command: |
+            source $HOME/venv/bin/activate
+            git checkout $CIRCLE_BRANCH
+            pip install -e .[dev]
       - run-pygrackle-tests:
           omp: 'false'
-          build_kind: 'cmake'
-          generate: 'true'
+          build_kind: 'standalone-pygrackle'
+          generate: 'false'
 
-      # run full pygrackle test-suite on latest commit (CMake-build)
+      # run pygrackle-test (without answer-tests) on latest commit (CMake-build)
       - install-grackle:
           omp: 'false'
           classic_build: 'false'
           tag: $CIRCLE_BRANCH
-
-      - run-pygrackle-tests:
-          omp: 'false'
-          build_kind: 'cmake'
-          generate: 'false'
+      - run:
+          name: "pygrackle-tests (no answer-tests) on latest commit (corelib manually built with CMake)"
+          command: source $BASH_ENV && source $HOME/venv/bin/activate && py.test
 
       # run full pygrackle test-suite on latest commit (classic-build)
       - install-grackle:
           omp: 'false'
           classic_build: 'true'
           tag: $CIRCLE_BRANCH
-
-      - run-pygrackle-tests:
-          omp: 'false'
-          build_kind: 'classic'
-          generate: 'false'
-
-      # setup and run classic-omp-test on latest commit
-      - install-grackle:
-          omp: 'true'
-          classic_build: 'true'
-          tag: $CIRCLE_BRANCH
-
-      - run-classic-omp-test
-
-# TODO: once we merge in GH-#208, we need to issue a new gold standard, and then we should
-#       issue a followup PR where we uncomment the remainder of this test
-  test-standalone-pygrackle:
-    parameters:
-      tag:
-        type: string
-        default: latest
-    executor:
-      name: python
-      tag: << parameters.tag >>
-
-    working_directory: ~/grackle
-
-    steps:
-      - checkout
-      - set-env
-      - install-dependencies
-      - download-test-data
-      #- install-standalone-pygrackle:
-      #    tag: gold-standard-v2
-      #- run-pygrackle-tests:
-      #    omp: 'false'
-      #    build_kind: 'standalone-pygrackle'
-      #    generate: 'true'
-      - install-standalone-pygrackle:
-          tag: $CIRCLE_BRANCH
-      #- run-pygrackle-tests:
-      #    omp: 'false'
-      #    build_kind: 'standalone-pygrackle'
-      #    generate: 'false'
+      - run:
+          name: "pygrackle-tests (no answer-tests) on latest commit (corelib manually created with classic-build)"
+          command: source $BASH_ENV && source $HOME/venv/bin/activate && py.test
 
   corelib-tests:
     # we're only using a python docker-image out of convenience (We only care
@@ -383,6 +307,7 @@ jobs:
     executor:
       name: python
       tag: 3.8.14
+      resource_class: medium  # <- 2 cores
 
     working_directory: ~/grackle
 
@@ -390,19 +315,32 @@ jobs:
       - checkout
       - install-cmake-dependencies
       - run:
+          name: "update CMake to newer version"
+          command: |
+            sudo apt remove cmake -y
+            sudo apt install python3-pip
+            # this is a hack to install a newer version of CMake (through PyPI)
+            pip3 install cmake
+
+      - run:
           name: "Build libgrackle and all of the core library's tests"
           command: |
-            cmake -DGRACKLE_USE_DOUBLE=ON                   \
-                  -DGRACKLE_USE_OPENMP=OFF                  \
-                  -DGRACKLE_BUILD_TESTS=ON                  \
-                  -DCMAKE_BUILD_TYPE=Release                \
-                  -GNinja -Bbuild
-            cmake --build build
+            cmake --preset ci-linux
+            cmake --build build_ci-linux
       - run:
           name: "Run the suite of tests that operate directly on the core-library."
+          command: ctest --test-dir build_ci-linux --output-on-failure
+      - run:
+          name: "Build libgrackle with OpenMP enabled"
           command: |
-            cd build
-            ctest --output-on-failure
+            cmake --preset ci-linux-omp
+            cmake --build build_ci-linux-omp
+      - run:
+          name: "run the OpenMP example"
+          command: ./cxx_omp_example
+          working_directory: build_ci-linux-omp/examples
+          environment:
+            OMP_NUM_THREADS: 4
 
   docs-build:
     parameters:
@@ -412,6 +350,7 @@ jobs:
     executor:
       name: python
       tag: << parameters.tag >>
+      resource_class: small  # <- 1 core
 
     working_directory: ~/grackle
 
@@ -427,10 +366,6 @@ workflows:
      jobs:
        - test-suite:
            name: "Pygrackle test suite - Python 3.8"
-           tag: "3.8.14"
-
-       - test-standalone-pygrackle:
-           name: "Standalone Pygrackle tests - Python 3.8"
            tag: "3.8.14"
 
        - corelib-tests:
@@ -451,10 +386,6 @@ workflows:
      jobs:
        - test-suite:
            name: "Pygrackle test suite - Python 3.8"
-           tag: "3.8.14"
-
-       - test-standalone-pygrackle:
-           name: "Standalone Pygrackle tests - Python 3.8"
            tag: "3.8.14"
 
        - corelib-tests:
