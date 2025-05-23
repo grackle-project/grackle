@@ -107,10 +107,7 @@ int initialize_metal_chemistry_rates(chemistry_data *my_chemistry,
       double  utim     = my_units->time_units;
 
       int i;
-      double logttt, ttt, tev,
-        tbase1, xbase1, kunit, coolunit,
-        dbase1, dlogtem, kunit_3bdy,
-        ttt300;
+      double logttt, ttt, tbase1, xbase1, kunit, coolunit, dbase1, dlogtem, ttt300;
 //
 //
 // Get conversion units
@@ -263,7 +260,6 @@ int initialize_metal_chemistry_rates(chemistry_data *my_chemistry,
         logttt = log(temstart) + (double)(i  )*dlogtem;
         ttt = exp(logttt);
         ttt300 = ttt / 300.0;
-        tev = ttt/tevk;
 
         my_rates->cieY06[i] =
          pow(10.0, -116.6                                                        
