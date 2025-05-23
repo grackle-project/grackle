@@ -178,7 +178,7 @@ If you use ``zsh`` as your shell, you will need quotes around
 Running the Example Scripts
 ---------------------------
 
-A number of example scripts are available in the **src/python/examples**
+A number of example scripts are available in the :source:`src/python/examples`
 directory.  These scripts provide examples of ways that Grackle can be
 used in simplified models, such as solving the temperature evolution of
 a parcel of gas at constant density or in a free-fall model.  Each example
@@ -208,7 +208,7 @@ repository.
 
 .. note::
 
-   `GitHub PR #235 <https://github.com/grackle-project/grackle/pull/235>`__ is a pending pull request that seeks to add functionality to make this work in a regular Pygrackle installation (i.e. a non-'editable' install).
+   :gh-pr:`235` is a pending pull request that seeks to add functionality to make this work in a regular Pygrackle installation (i.e. a non-'editable' install).
 
 Cooling Rate Figure Example
 +++++++++++++++++++++++++++
