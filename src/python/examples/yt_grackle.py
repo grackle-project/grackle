@@ -17,7 +17,8 @@ import yt
 
 from pygrackle import add_grackle_fields
 from pygrackle.utilities.data_path import grackle_data_dir
-from pygrackle.utilities.model_tests import model_test_format_version
+from pygrackle.utilities.model_tests import \
+    get_test_variables
 
 output_name = os.path.basename(__file__[:-3]) # strip off ".py"
 
@@ -29,10 +30,9 @@ if __name__ == "__main__":
     # then we will pass in two integers corresponding to the sets
     # of parameters and inputs.
     if len(sys.argv) > 1:
-        par_index = int(sys.argv[1])
-        input_index = int(sys.argv[2])
-        output_name = f"{output_name}_{par_index}_{input_index}"
-        extra_attrs = {"format_version": model_test_format_version}
+        my_vars = get_test_variables(output_name, *sys.argv[1:])
+        for var, val in my_vars.items():
+            globals()[var] = val
 
         if 'YT_DATA_DIR' not in os.environ:
             raise RuntimeError(
