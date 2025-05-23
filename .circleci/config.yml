@@ -315,34 +315,30 @@ jobs:
       - checkout
       - install-cmake-dependencies
       - run:
+          name: "update CMake to newer version"
+          command: |
+            sudo apt remove cmake -y
+            sudo apt install python3-pip
+            # this is a hack to install a newer version of CMake (through PyPI)
+            pip3 install cmake
+
+      - run:
           name: "Build libgrackle and all of the core library's tests"
           command: |
-            cmake -DGRACKLE_USE_DOUBLE=ON                   \
-                  -DGRACKLE_USE_OPENMP=OFF                  \
-                  -DGRACKLE_BUILD_TESTS=ON                  \
-                  -DCMAKE_BUILD_TYPE=Release                \
-                  -GNinja -Bbuild
-            cmake --build build
+            cmake --preset ci-linux
+            cmake --build build_ci-linux
       - run:
           name: "Run the suite of tests that operate directly on the core-library."
-          command: |
-            cd build
-            ctest --output-on-failure
-            cd -
+          command: ctest --test-dir build_ci-linux --output-on-failure
       - run:
           name: "Build libgrackle with OpenMP enabled"
           command: |
-            # we explicitly use Makefiles rather than Ninja due
-            # to a documented bug between gfortran/omp/ninja
-            cmake -DGRACKLE_USE_DOUBLE=ON                   \
-                  -DGRACKLE_USE_OPENMP=ON                   \
-                  -DGRACKLE_BUILD_TESTS=OFF                 \
-                  -DCMAKE_BUILD_TYPE=Release                \
-                  -Bbuild-omp
-            cmake --build build-omp
+            cmake --preset ci-linux-omp
+            cmake --build build_ci-linux-omp
       - run:
           name: "run the OpenMP example"
-          command: cd build-omp/examples && ./cxx_omp_example
+          command: ./cxx_omp_example
+          working_directory: build_ci-linux-omp/examples
           environment:
             OMP_NUM_THREADS: 4
 
