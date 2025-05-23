@@ -3,8 +3,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to grackle's documentation!
-===================================
+Grackle Documentation
+=====================
 
 Grackle is a chemistry and radiative cooling library for astrophysical simulations and models.
 The core library provides interfaces for C, C++ and Fortran simulation codes.
@@ -31,7 +31,7 @@ Getting Grackle
 ---------------
 
 Currently, Grackle must be built from source.
-If you only need Grackle as a dependency of a simulation code and that code is built with CMake, then that code's build system might be configured to automatically fetch, build, and link Grackle into the code for you.
+If you only need Grackle as a dependency of a simulation code and that code is built with CMake, then that code's build system might be configured to automatically fetch, build, and link Grackle into the code for you (`Enzo-E <https://enzo-e.readthedocs.io/en/latest/>`__ is an example of a code configured in this manner).
 
 If you contribute to a simulation code, our `Integration Guide <https://grackle.readthedocs.io/en/latest/Integration.html>`__ provides guidance on simplifying the process (for you and your users) of configuring your code to use Grackle.
 
@@ -46,7 +46,7 @@ On most platforms, compilation with the CMake build system (3.16 or newer) is as
    cmake -B build          # configure the build-directory
    cmake --build ./build   # perform the build
 
-You can run invoke the examples from within the ``build/examples`` directory.[^1]
+You can run invoke the examples from within the ``build/examples`` directory.\ [#f1]_
 To build Grackle as a shared lib, replace the first command with ``cmake -DBUILD_SHARED_LIBS=ON -Bbuild``.
 To install Grackle, invoke ``cmake --install ./build [--prefix <prefix/path>]`` (the optional part lets you specify an install-path).
 
@@ -75,21 +75,53 @@ To help you start using Grackle, we provide:
 - a curated `guide <https://grackle.readthedocs.io/en/latest/Python.html#running-the-example-scripts>`__ for the Pygrackle examples
 
 .. toctree::
+   :maxdepth: 1
+   :hidden:
+
+   Introduction <self>
+
+.. toctree::
+   :caption: Getting Started
+   :maxdepth: 2
+   :hidden:
+
+   Installation.rst
+   Python.rst
+   Getting Help <Help.rst>
+
+.. toctree::
+   :caption: Using Grackle in Your Code
    :hidden:
    :maxdepth: 2
 
-   Installation.rst
-   Testing.rst
    Integration.rst
    Interaction.rst
    Parameters.rst
    RateFunctions.rst
    Reference.rst
+
+.. toctree::
+   :caption: Project Details
+   :hidden:
+
+   Citing.rst
    Versioning.rst
-   Python.rst
+   Changelog.rst
+
+.. toctree::
+   :caption: Contributing
+   :hidden:
+
+   Testing.rst
    Conduct.rst
    Contributing.rst
-   Help.rst
+
+.. toctree::
+   :caption: Useful links
+   :hidden:
+
+   GitHub <https://github.com/grackle-project/grackle>
+   Tracker <https://github.com/grackle-project/grackle/issues>
 
 .. include:: Help.rst
 
@@ -101,25 +133,13 @@ Development of Grackle happens in the open on GitHub `here
 contributors. Please, see the :ref:`conduct`.  For a guide to developing
 Grackle, see :ref:`contributing-code`.
 
-Citing grackle
+Citing Grackle
 --------------
 
-The Grackle method paper can be found
-`here <http://adsabs.harvard.edu/abs/2017MNRAS.466.2217S>`__.
+If you use Grackle please cite it.
+More instructions are provided :ref:`here <citing>`.
 
-The Grackle library was born out of the chemistry and cooling routines of the 
-`Enzo <http://enzo-project.org/>`__ simulation code.  As such, all of those who 
-have contributed to Enzo development, and especially to the chemistry and 
-cooling, have contributed to the Grackle.
+.. rubric:: Footnotes
 
-If you used the Grackle library in your work, please cite it as "the Grackle 
-chemistry and cooling library (`Smith et al. 2017
-<http://adsabs.harvard.edu/abs/2017MNRAS.466.2217S>`_)."  Also, please add a
-footnote to `https://grackle.readthedocs.io/ <https://grackle.readthedocs.io/>`_.
-
-
-Search
-------
-
-* :ref:`search`
-
+.. [#f1] You currently **NEED** to invoke the examples from the directory where they are located.
+         We have a `"fix" in the pipeline <https://github.com/grackle-project/grackle/pull/246>`__ to make this more flexible.
