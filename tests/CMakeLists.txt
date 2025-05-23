@@ -57,6 +57,19 @@ set_tests_properties(GrExample.cmp_omp PROPERTIES
 )
 endif()
 
+# this case simply runs the c99_simple_example and verifies that it exits with an
+# exit code of 0 (we may want to check the outputs in the future, but this is
+# good enough to start)
+if (TARGET c99_simple_example)
+  add_test(NAME GrExample.c99_simple_example
+    COMMAND c99_simple_example
+    WORKING_DIRECTORY ${example_exec_dir}
+  )
+  set_tests_properties(GrExample.c99_simple_example PROPERTIES
+    FIXTURES_REQUIRED GREXAMPLE_PREREQS
+  )
+endif()
+
 # the remaining tests are more rigorous:
 #
 # first, we check the results of c_example against the historical results
