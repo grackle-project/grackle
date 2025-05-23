@@ -3,19 +3,23 @@
 Installation
 ============
 
+This page describes how to install Grackle from source.
+When installing Grackle as a dependency of a simulation code, consult the code's documentation before continuing.
+Build systems of some codes, like `Enzo-E <https://enzo-e.readthedocs.io/en/latest/>`__, are configured to automatically download & install Grackle as part of the build-process (our :doc:`Integration Guide <Integration>` provides more details).
+
 There are 3 steps to setting up Grackle on your system
 
-   1. :ref:`Install Grackle's Dependencies <install_grackle_dependencies>`
+1. :ref:`Install Grackle's Dependencies <install_grackle_dependencies>`
 
-   2. :ref:`Download Grackle <download_grackle>`
+2. :ref:`Download Grackle <download_grackle>`
 
-   3. Build and install Grackle using the :ref:`classic build system <classic_build>` or the :ref:`CMake build system <cmake_build>`.
+3. :ref:`Build and install Grackle <cmake_build>`.
 
+.. attention::
 
-.. note::
+   Please use the :ref:`CMake build system <cmake_build>` (it is far more robust and maintainable) and :doc:`let us know <Help>` if you encounter **any problems**.
 
-   Given a smooth roll-out of the :ref:`CMake build system <cmake_build>`, it is our intention to deprecate and remove the :ref:`classic build system <classic_build>`.
-   If you encounter any problems with the CMake system or anticipate any issues with this plan, :doc:`please let us know <Help>`.
+   The :ref:`classic build system <classic_build>` is **deprecated since version 3.4** and is **scheduled for removal in version 3.5**.
 
 We include a :ref:`note on compiler toolchain compatability <compiler_toolchain_compatability>` at the end of this page.
 
@@ -32,24 +36,26 @@ also be installed:
      HDF5 also may require the szip and zlib libraries, which can be
      found at the HDF5 website.
 
-     * For the :ref:`classic build system <classic_build>`, compiling with HDF5 1.8 or greater requires that the ``H5_USE_16_API`` compatability directive is manually specified.
-       This can be done by adding ``-DH5_USE_16_API`` to the list of compiler flags given in machine-specific make files.
+     .. note::
 
-     * The :ref:`CMake build system <cmake_build>`, automatically handles these details for you.
+        If using the :ref:`classic build system <classic_build>`: compiling with HDF5 1.8 or greater requires that the ``H5_USE_16_API`` compatability directive is manually specified.
+        This can be done by manually adding ``-DH5_USE_16_API`` to the list of compiler flags given in machine-specific make files.
+
+        You don't have to think about this when using :ref:`CMake build system <cmake_build>` (it is handled automatically).
 
 Although many systems already have them installed, both build systems have additional dependencies:
+
+   * the :ref:`CMake build system <cmake_build>` requires cmake to be installed.
+     It's easiest to download a binary distribution from the `CMake website <https://cmake.org/download/>`_ or use your system's package manager.
+     We require version 3.16 or newer.
 
    * the :ref:`classic build system <classic_build>`, employs the ``makedepend`` and the `libtool <https://www.gnu.org/software/libtool/>`_ utilities.
      It's often easiest to download these dependencies through your system's package manager.
 
-   * the :ref:`CMake build system <cmake_build>` requires cmake to be installed.
-     It's easiest download a binary distribution from the `CMake website <https://cmake.org/download/>`_ or use your system's package manager.
-     We require version 3.16 or newer.
-
 .. _download_grackle:
 
-Downloading
------------
+Downloading Source Code
+-----------------------
 
 Grackle is available in a git repository
 `here <https://github.com/grackle-project/grackle>`__. Excellent guides
@@ -57,27 +63,420 @@ to git and GitHub are available at
 `guides.github.com <https://guides.github.com/>`__. To clone the Grackle
 repo, do the following:
 
-.. highlight:: none
+.. code-block:: shell-session
 
-::
+    ~ $ git clone --recursive https://github.com/grackle-project/grackle
 
-    ~ $ git clone https://github.com/grackle-project/grackle
+The presences of the ``--recursive`` flag in the above snippet instructs git to fetch additional files, containing cooling tables, from a submodule linked to the Grackle repository.
+If you have already cloned the git repository and you forgot to include the ``--recursive`` flag, you can invoke ``git submodule update --init``.
 
-Additional files containing cooling tables and test results are stored in
-a submodule linked to the Grackle repository. To get these, run the
-following command from anywhere within the repository:
 
-.. highlight:: none
+.. _cmake_build:
 
-::
+Building with CMake
+-------------------
 
-    ~ $ git submodule update --init
+Grackle's primary build-system uses Modern CMake.
+While CMake has some baggage (primarily due to the maintenace of backwards compatability), it is arguably the most-portable mainstream build-system that is easiest to integrate with simulation codes.
 
+An overview of our design philosophy is provided :ref:`here <cmake_buildsystem_design_rationale>`.
+This build-system makes integration of Grackle into simulation codes that are themselves built with CMake extremely easy.
+Steps have also been taken simplify integration of Grackle into simulation codes built with any other build-systems (they just need to call the standardized ``pkg-config`` command-line tool).
+More details about integration are provided :doc:`on this page <Integration>`.
+This current section focuses on installation.
+
+For the uninitiated, the CMake build-system performs an out-of-source build.
+An out-of-source build places all build artifacts (auto-generated source/header files, object files, etc.) into a "build-directory."
+The build-directory is at a user-specified location that is organized into a hierarchy that resembles the source directory hierarchy.
+Cleaning up from a CMake-build is as simple as deleting this build-directory.
+In contrast, the "classic build system" performs an in-source build (because that type of build distributes build artifacts throughout the source directory hierarchy, clean up requires more complex logic encapsulated by the ``make clean`` command).
+
+.. warning::
+
+   While the "classic build system" has been modified to better coexist with the CMake build-system, issues can potentially arise if build-artifacts produced in a "classic" build of an earlier Grackle-revision are not properly removed.
+   Specifically, the issues relate to the presence of auto-generated header-files.
+   We have built checks into the CMake build-system to prevent these issues in most cases, but they may not help in certain pathological scenarios.
+
+Procedure
++++++++++
+
+The build/installation procedure follows the standard steps of any CMake build.
+The remainder of this subsection is primarily intended for readers who are relatively inexperienced with using CMake.
+
+1. Proceed to the grackle directory
+
+   .. code-block:: shell-session
+
+      ~$ cd grackle
+
+
+2. Initialize and configure the build-system.
+   In these example snippets, we show the minimum required configuration options (this should work on most machines) and provide more details later about :ref:`additional configuration options <available_cmake_options>` and :ref:`how to specify configuration options <how_to_configure>` down below.
+   During this step you might also specifiy :ref:`machine-specific host files <cmake_host-files>` (but that usually isn't absolutely necessary).
+
+   For now, we make 2 basic decisions:
+
+   #. Decide on the directory, ``<build-dir>``, where you want to build Grackle. [#f1]_
+      This is referred to as the build-directory and is generally placed at the root level of the grackle repository.
+      A common choice is ``build`` (but this is fairly arbitrary).
+
+   #. Decide on the installation directory prefix, ``<install-prefix>``, where Grackle will be installed.
+      This is be specified via the ``CMAKE_INSTALL_PREFIX`` cmake configuration variable.
+      On UNIX-like systems, it defaults to ``/usr/local/``.
+
+   The following snippets illustrates how to configure Grackle as a static/shared library:
+
+   .. tabs::
+
+      .. code-tab:: shell-session static lib
+
+         ~/grackle $ cmake -DCMAKE_INSTALL_PREFIX=<install-prefix> -B <build-dir>
+
+      .. code-tab:: shell-session shared lib
+
+         ~/grackle $ cmake -DCMAKE_INSTALL_PREFIX=<install-prefix> -DBUILD_SHARED_LIBS=ON -B <build-dir>
+
+   .. note::
+
+       If you are building Grackle to be used with a downstream simulation-code, that doesn't mention any preferences about how Grackle is built, you will probably have more luck compiling Grackle as a shared library.
+
+
+   It is idiomatic for a given CMake build to just compile Grackle as either a static or shared library, not both (you usually just need one).
+   But if you must have both, see :ref:`this section <cmake_shared_and_static>`.
+
+3. Compile and install grackle.
+
+   .. code-block:: shell-session
+
+      ~/grackle $ cmake --build <build-dir>    # the build-step
+      ~/grackle $ cmake --install <build-dir>  # the install-step
+
+   .. hint::
+
+      The above snippet shows the most generic commands that can be executed.
+      Other tutorials that you see online may show slight variations in these commands (where you manually make the build directory) and then manually execute the build-system from within the build-directory...
+
+   .. note::
+
+      In some cases, projects can use Grackle, built with CMake, without requiring a full installation.
+      But, for historical reasons, you should generally assume that an external project requires a full installation step (unless that's project tells you otherwise).
+
+      If you install Grackle in a non-standard location, then you also need to ensure that you properly set the ``LD_LIBRARY_PATH`` (or ``DYLD_LIBRARY_PATH`` on macOS) env variable to make use of it.
+
+
+4. Test your Build.
+
+   Once you have compiled Grackle, you can run one of the provided example to test if it functions correctly.
+   These examples are automatically compiled with Grackle.
+
+   .. code-block:: shell-session
+
+      ~/grackle $ cd <build-dir>/examples
+      ~/grackle/<build-dir>/examples $ ./cxx_example
+
+   .. warning::
+
+      The examples make certain assumptions about the location of the input files.
+      The examples are only guaranteed to work if both:
+
+         1. you execute the example-binary from the same-directory where the example-binary is found
+
+         2. ``<build-dir>`` is a top-level directory in the grackle repository (e.g. something like ``my-build`` is fine, but choices like ``../my-grackle-build`` and ``my_builds/my-first-build`` are problematic).
+
+   .. note::
+
+      For reference, the Classic build-system always links Grackle against the shared-library version of Grackle and requires that Grackle is fully installed in a location known by the system (either a standard system location OR a location specified by ``LD_LIBRARY_PATH``/``DYLD_LIBRARY_PATH``).
+      In contrast, cmake automatically takes special-steps to try to ensure that each example-binary will link to the copy of the Grackle library (whether it is shared or static) that is in the ``<build-dir>``; in fact, Grackle doesn't even need to be installed to run the Grackle library.
+
+      With that said, if you compile Grackle as a shared library in a cmake build, an example-binary **might** try to use a copy of a shared grackle library found in a directory specified by ``LD_LIBRARY_PATH``/``DYLD_LIBRARY_PATH`` if one exists.
+      The exact behavior may be platform dependent and also depends on whether CMake instructs the linker to use RPATH or RUNPATH (this is not specified by the cmake docs).
+
+In order to verify that Grackle is fully functional, you can try :ref:`running the test suite <testing>`.
+
+.. _how_to_configure:
+
+How to Specify Configuration Options
+++++++++++++++++++++++++++++++++++++
+
+All configuration options can be specified when invoking cmake during configuration of the build.
+Specifically you can specify the values by inserting an argument of the form ``-D<variable>=<value>`` to the list of arguments passed to ``cmake``.
+This is illustrated in the prior subsection where we pass ``-DCMAKE_INSTALL_PREFIX=/my/install/path...`` and ``-DBUILD_SHARED_LIBS=OFF``.
+
+Alternatively, you can replace the call to ``cmake`` during configuration with a call to ``ccmake`` to provide a TUI (text-based user interface) where you can manually configure options.
+For example, a call to ``ccmake -B<build-dir>`` will bring up a TUI to configure a build in the specified directory.
+CMake also provides a GUI (graphical user interface) for this purpose (it may not be available based on how exactly you installed CMake).
+The CMake documentation provide more details about the GUI and how to more generally use cmake `here <https://cmake.org/cmake/help/latest/guide/user-interaction/index.html#guide:User%20Interaction%20Guide>`__.
+
+A summary of all Grackle-specific configuration options and a subset of useful generic CMake configurations is provided in the :ref:`next subsection <available_cmake_options>`.
+
+The idiomatic way to control optimization/debugger flags is to specify a build-type via the standard ``CMAKE_BUILD_TYPE`` variable.
+Choices include:
+
+* ``-DCMAKE_BUILD_TYPE=Release`` (typically ``-O3``)
+
+* ``-DCMAKE_BUILD_TYPE=RelWithDebInfo`` (typically ``-O2 -g``)
+
+* ``-DCMAKE_BUILD_TYPE=Debug`` (typically ``-O0 -g``)
+
+The first choice is generally fastest, while the second is a sensible choice during development (the compiler performs most optimizations and includes debugging information in the library).
+
+Machine-specific compilation options can also be specified with host-files.
+These host-files should generally not be necessary, but they may specify architecture-specific optimization flags.
+This should be specified during the configuration stage with the ``-C`` flag followed by the path to the host-file.
+For example, one might invoke:
+
+.. code-block:: shell-session
+
+   ~/grackle $ cmake \
+       -C config/tacc-frontera-intel.cmake \
+       -D CMAKE_INSTALL_PREFIX=<install-prefix> \
+       -D BUILD_SHARED_LIBS=ON \
+       -B <build-dir>
+
+The order of ``-D`` and ``-C`` flags matters.
+If they are both used to specify values for a given variable, the last one to appear "wins."
+More information about writing host-files are provided :ref:`below <cmake_host-files>`.
+
+
+.. _available_cmake_options:
+
+Available Configuration Options
++++++++++++++++++++++++++++++++
+
+The compilation (and installation) of Grackle can be configured using various options.
+These options are described in the following 2 tables.
+
+Many of these options are binary choices that accept a boolean value. [#f2]_
+
+This first table describes the Grackle-specific options to configure the build.
+
+.. list-table:: Grackle-Specific Options
+   :widths: 12 30 5
+   :header-rows: 1
+
+   * - Name
+     - Description
+     - Default
+   * - ``GRACKLE_USE_DOUBLE``
+     - Turn off to build Grackle with single precision.
+     - ``"ON"``
+   * - ``GRACKLE_USE_OPENMP``\ [#about-cmake-openmp]_
+     - Turn on to build Grackle with OpenMP
+     - ``"OFF"``
+   * - ``GRACKLE_BUILD_TESTS``
+     - Turn on to build tests of the core Grackle library (these are totally unrelated to the ``pytest`` suite).
+     - ``"OFF"``
+
+This second table highlights a subset of standardized CMake options that may also be useful.
+
+.. list-table:: Standard CMake Options
+   :widths: 12 30 5
+   :header-rows: 1
+
+   * - Name
+     - Description
+     - Default
+
+   * - ``BUILD_SHARED_LIBS``
+     - When turned ``"ON"``, Grackle is built as a shared library. When turned ``"OFF"`` (or if its undefined), Grackle is built as a static library.
+     - ``<undefined>``
+
+   * - ``CMAKE_BUILD_TYPE``
+     - Specifies the desired build configuration (for single-configuration generators [#f3]_).
+       Grackle currently supports the standard choices ``Debug``, ``Release``, ``RelWithDebInfo`` and ``MinSizeRel``.
+     - ``<undefined>``
+
+   * - ``CMAKE_INSTALL_PREFIX``
+     - Specifies the path-prefix where Grackle will be installed when you invoke ``make install`` from within the build-directory (or using a non-Makefile generator, you use the generator-specific command to build the ``install``-target).
+       Note, that if you use ``cmake --install path/to/builddir`` to invoke installation, you can use ``--prefix`` to specify a different prefix
+     - ``/usr/local``
+
+   * - ``HDF5_ROOT``
+     - When cmake has trouble finding your hdf5 installation, you can set this variable equal to the path to the HDF5 installation to serve as a hint for cmake
+     - ``<undefined>``
+
+   * - ``HDF5_PREFER_PARALLEL``
+     - Set to ``true`` to express a preference for linking against parallel hdf5 (by default, the serial version will be preferentially choosen)
+     - ``<undefined>``
+
+   * - ``CMAKE_<LANG>_COMPILER``
+     - Set of variables (where ``<LANG>`` is replaced by ``C``, ``Fortran`` or ``CXX``) to overide the compiler choice.
+       This is commonly set by host-files.
+     - ``<undefined>``
+
+There are also additional standard options for BOTH configuring other aspects of the build and for finding the correct/preferred HDF5 library and configuring the correct openmp library.
+
+Addtionally, CMake will also respect the values of certain environment variables.
+For example, if you don't manually specify the choice of compilers with the ``CMAKE_<LANG>_COMPILER`` flag, then CMake will use the values in the ``CC``, ``FC``, and ``CXX`` environment variables.
+
+We strongly encourage users and developers to make use of the options described in this section.
+They exist to provide a curated/consistent experience in a variety of scenarios.
+:doc:`Please let us know <Help>` if you think we are missing a useful Grackle-specific option.
+You can also add the new option yourself (it may be useful to review :ref:`the design philosophy for the CMake build-system <cmake_buildsystem_design_rationale>`).
+
+With that said, we also recognize that the need may arise where a user/developer may want to specify arbitrary flags.
+You can use the standardized ``CMAKE_<LANG>_FLAGS`` variables for that purpose (where ``<LANG>`` is ``C``, ``CXX``, ``Fortran``).
+For example, passing ``-DCMAKE_C_FLAGS="-Wall -Wpedantic -funroll-loops"`` will pass these flags to every invocation of the C compiler (for compiling Grackle itself as well as any examples or tests).
+Technically, these flags are passed to every invocation of the C compiler-frontend (even during linking), but that usually isn't a problem.
+
+
+
+.. _cmake_shared_and_static:
+
+Installing both Shared and Static Libraries
++++++++++++++++++++++++++++++++++++++++++++
+
+It's idiomatic for a given ``cmake``-build to build either a shared library OR a static library (not both). This is controlled by the standard ``BUILD_SHARED_LIBS`` flag (you usually don't need both).
+
+With that said, if you really want to install both of them, you could trigger 2 separate builds that install to the same destination. [#f4]_
+The following code snippet illustrates how you might do this (for concreteness, the snippet uses build-directories called ``build-static`` and ``build-shared`` and installs into a directory called ``$HOME/local`` -- but these are all arbitrary choices).
+   
+.. code-block:: shell-session
+
+   ~ grackle $ cmake -DCMAKE_INSTALL_PREFIX=$HOME/local -B build-static
+   ~ grackle $ cmake --build build-static
+   ~ grackle $ cmake --install build-static
+   ~ grackle $ cmake -DCMAKE_INSTALL_PREFIX=$HOME/local -DBUILD_SHARED_LIBS=ON -B build-shared
+   ~ grackle $ cmake --build build-shared
+   ~ grackle $ cmake --install build-shared
+
+.. _cmake_host-files:
+
+More About Host-Files
++++++++++++++++++++++
+
+As noted above, we provide support for setting default value for particular machines by providing support for *host-files*\ .
+These files are provided mostly for convenience (and to provide parity with machine files provided by the classic build-system).
+They are most useful on HPC systems that provide multiple compiler toolchains.
+These are the *\*.cmake* files in the **config** directory.
+
+Importantly, the usage of *host-files* is optional (and usually not required).
+They usually aren't needed on local systems (if you find that Grackle won't compile without a host-file, please let us know -- that may indicative of a bug).
+They should generally **NOT** be used when Grackle is embedded within another CMake project.
+
+While there are a couple of ways to implement this concept, our current strategy draws some inspiration from `here <https://llnl-blt.readthedocs.io/en/develop/tutorial/host_configs.html>`__.
+Essentially, our strategy leverages cmake functionality to pre-load a script to populate some cache variables.
+
+Usually, will specify the desired compilers.
+If a HPC machine properly manages the ``CC``, ``FC``, and ``CXX`` environment variables this isn't strictly necessary.
+If the machine places HDF5 in an unusual location, you might also hardcode hints into the config-file.
+
+The most important role is to specify cluster-specific optimization flags via the special Grackle-specific ``GRACKLE_OPTIMIZATION_FLIST_INIT`` variable.
+These flags will **ONLY** be used when compiling Grackle with the ``Release`` or ``RelWithDebInfo`` build-types.
+Here are 2 illustrative examples:
+
+ * First we show that in order to pass multiple flags, the flags need to be specified by a semicolon delimited list.
+   If you stored ``"-xCORE-AVX512;-funroll-loops"`` within ``GRACKLE_OPTIMIZATION_FLIST_INIT``, then all source files will be compiled with these options (they won't be passed to the linker).
+
+ * Next we show that to properly pass "option groups" you may need to make use of CMake's shell-like quoting with the ``SHELL:`` prefix (this relates to option de-duplication performed by CMake).
+   Thus, storing ``"SHELL:-option1 A;-Wall;SHELL:-option2 B"`` within ``GRACKLE_OPTIMIZATION_FLIST_INIT`` would cause all compiler invocations for source files used in Grackle to be passed ``-option1 A -Wall -option2 B``.
+
+While embedded builds currently respect ``GRACKLE_OPTIMIZATION_FLIST_INIT``, that is something we may stop supporting.
+
+.. COMMENT-BLOCK
+
+   The tone of this section should make it clear that host-files usually aren't necessary in most scenarios.
+   There's a chance that may change if we start supporting CUDA or HIP, these may become more important.
+   Until then, I'm a little hesitant to really encourage them since it may unnecessarily complicate things.
+
+.. note::
+
+   If you want to pass language-specific optimization options, let us know.
+   That is something we can easily support.
+   Until then, this could be addressed by enclosing a given option (or option-group) within a `language-specific generator expressions <https://cmake.org/cmake/help/latest/manual/cmake-generator-expressions.7.html#genex:COMPILE_LANGUAGE>`__.
+
+.. note::
+
+   In terms of modern, idiomatic CMake features, a host-file could be replaced by a combination of a `toolchain-file <https://cmake.org/cmake/help/latest/manual/cmake-toolchains.7.html>`__ and a `preset-file <https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html>`__.
+
+   * toolchain files usually define compiler-toolchain related-options and are commonly used for cross-compiling. 
+     As a basic rule of thumb: you should be able to recycle toolchain-files between unrelated projects (i.e. they don't include project-specific variables)
+
+   * a preset file (``CMakePresets.json`` or ``CMakeUserPresets.json``) is intended to be used to specify common project-specific compilation options.
+     These can be read by IDEs.
+
+   * after we update the minimum required CMake version for compiling Grackle to at least 3.19, we may transition to using these features.
+
+CMake Troubleshooting
++++++++++++++++++++++
+
+This section discusses how to resolve some common issues that could arise while building Grackle with the CMake build-system.
+
+"Could NOT find HDF5"
+~~~~~~~~~~~~~~~~~~~~~
+CMake could not find the hdf5 installation.
+
+If you are on a local machine (not a cluster) consider the following scenarios:
+
+* Did you remember to install hdf5?
+* If you installed hdf5 with a package manager, did you make sure that the package includes files for development?
+  (For example, apt commonly supports a ``libhdf5-<vers>`` package that only contains a shared library and a ``libhdf5-dev`` package that supports everything you need).
+
+If you are confident that HDF5 is installed, you can provide a hint about its location with the ``HDF5_ROOT`` cmake-configuration variable (you can also use ``HDF5_DIR``, but the semantics are a little different).
+
+.. _ninja-openmp:
+
+"Fatal Error: omp_lib.h: No such file or directory"
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+This error appears when configuring a CMake build using the `Ninja <https://ninja-build.org>`__ backend\ [#about-ninja]_ and with ``GRACKLE_USE_OPENMP=ON``.
+The most robust solution: **"have CMake use the default (Makefile) backend."**
+
+In more detail, this error seems related to a preprocessing step of Fortran source files that is related to Ninja.
+This preprocessing step may be for generating module dependency information (`as described here <https://cmake.org/cmake/help/latest/prop_tgt/Fortran_PREPROCESS.html>`__).
+
+.. note::
+
+   There are ongoing efforts to convert all internal source code from Fortran to C++.
+   By the 3.5 release, the core library should no longer contain any Fortran code (and this problem will be moot)
+
+.. COMMENT-BLOCK
+
+   I've only encountered this issue with gfortran (but I don't currently have any other Fortran compilers at my disposal).
+   It appears to be some kind of weird cross-reaction between the ``-fopenmp`` and ``-E`` flag.
+   I think we could probably work around this issue by injecting the following block of logic
+
+   .. code-block:: cmake
+
+     target_include_directories(Grackle_Grackle SYSTEM
+       PRIVATE $<$<BOOL:${GRACKLE_USE_OPENMP}>:${OpenMP_Fortran_INCLUDE_DIRS}>
+     )
+
+   But, I am not sure its worth the effort. As the next section notes, there are some generic issues with using Fortran
+
+Generic Fortran Compiler Errors
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+There are some well-known bugs between Fortran and CMake's `Ninja <https://ninja-build.org>`__ backend\ [#about-ninja]_ (these seem more prominent if you are using a compiler other than gfortran).
+You could try to update CMake and Ninja to their latest versions.
+The most robust solution: **"have CMake use the default (Makefile) backend."**
+
+.. note::
+
+   There are ongoing efforts to convert all internal source code from Fortran to C++.
+   By the 3.5 release, the core library should no longer contain any Fortran code (and this problem will be moot)
+
+
+.. COMMENT-BLOCK
+
+   I'm not totally sure that these problems are "real."
+   I encountered these issues almost a year ago when the CMake build-system was less polished -- it's possible that I resolved the underlying issues as I refined things.
+   I don't currently have access to non-CMake build files to try to replicate things.
+   (I honestly forgot about it until describing the omp_lib.h issues since the problems went away when I used the Makefile-backend or gfortran with the Ninja-backend)
+
+   I've only encountered this issue with gfortran (but I don't currently have any other Fortran compilers at my disposal).
+   It appears to be some kind of weird cross-reaction between the ``-fopenmp`` and ``-E`` flag.
+   I think we could probably work around this issue by injecting the following block of logic
 
 .. _classic_build:
 
 Building with Classic Build-System
 ----------------------------------
+
+.. attention::
+
+   This build system is **deprecated since version 3.4** and is **scheduled for removal in version 3.5**.
+
+   Please use the :ref:`CMake build system <cmake_build>` (it is far more robust and maintainable) and :doc:`let us know <Help>` if you encounter **any problems**.
 
 The classic compilation process for grackle is very similar to that of
 `Enzo <http://enzo-project.org>`_.  For more details on the Enzo build 
@@ -312,329 +711,6 @@ wrong during linking.
 In order to verify that Grackle is fully functional, try :ref:`running the
 test suite <testing>`.
 
-.. _cmake_build:
-
-Building with CMake
--------------------
-
-Grackle provides a Modern CMake build-system.
-While CMake has some baggage (primarily due to the maintenace of backwards compatability), it is arguably the most-portable mainstream build-system that is easiest to integrate with simulation codes.
-
-An overview of our design philosophy is provided :ref:`here <cmake_buildsystem_design_rationale>`.
-This build-system makes integration of Grackle into simulation codes that are themselves built with CMake extremely easy.
-Steps have also been taken simplify integration of Grackle into simulation codes built with any other build-systems (they just need to call the standardized ``pkg-config`` command-line tool).
-More details about integration are provided :doc:`on this page <Integration>`.
-This current section focuses on installation.
-
-For the uninitiated, the CMake build-system performs an out-of-source build.
-An out-of-source build places all build artifacts (auto-generated source/header files, object files, etc.) into a "build-directory."
-The build-directory is at a user-specified location that is organized into a hierarchy that resembles the source directory hierarchy.
-Cleaning up from a CMake-build is as simple as deleting this build-directory.
-In contrast, the "classic build system" performs an in-source build (because that type of build distributes build artifacts throughout the source directory hierarchy, clean up requires more complex logic encapsulated by the ``make clean`` command).
-
-.. warning::
-
-   While the "classic build system" has been modified to better coexist with the CMake build-system, issues can potentially arise if build-artifacts produced in a "classic" build of an earlier Grackle-revision are not properly removed.
-   Specifically, the issues relate to the presence of auto-generated header-files.
-   We have built checks into the CMake build-system to prevent these issues in most cases, but they may not help in certain pathological scenarios.
-
-Procedure
-+++++++++
-
-The build/installation procedure follows the standard steps of any CMake build.
-The remainder of this subsection is primarily intended for readers who are relatively inexperienced with using CMake.
-
-1. Proceed to the grackle directory
-
-   .. code-block:: shell-session
-
-      ~$ cd grackle
-
-
-2. Initialize and configure the build-system.
-   In these example snippets, we show the minimum required configuration options (this should work on most machines) and provide more details later about :ref:`additional configuration options <available_cmake_options>` and :ref:`how to specify configuration options <how_to_configure>` down below.
-   During this step you might also specifiy :ref:`machine-specific host files <cmake_host-files>` (but that usually isn't absolutely necessary).
-
-   For now, we make 2 basic decisions:
-
-   #. Decide on the directory, ``<build-dir>``, where you want to build Grackle. [#f1]_
-      This is referred to as the build-directory and is generally placed at the root level of the grackle repository.
-      A common choice is ``build`` (but this is fairly arbitrary).
-
-   #. Decide on the installation directory prefix, ``<install-prefix>``, where Grackle will be installed.
-      This is be specified via the ``CMAKE_INSTALL_PREFIX`` cmake configuration variable.
-      On UNIX-like systems, it defaults to ``/usr/local/``.
-
-   To configure a build where Grackle is compiled as a static library, use
-
-   .. code-block:: shell-session
-
-      ~/grackle $ cmake -DCMAKE_INSTALL_PREFIX=<install-prefix> -B <build-dir>
-
-   To configure a build where Grackle is compiled as a shared library, use
-
-   .. code-block:: shell-session
-
-      ~/grackle $ cmake -DCMAKE_INSTALL_PREFIX=<install-prefix> -DBUILD_SHARED_LIBS=ON -B <build-dir>
-
-   .. note::
-
-       If you are building Grackle to be used with a downstream simulation-code, that doesn't mention any preferences about how Grackle is built, you will probably have more luck compiling Grackle as a shared library.
-
-
-   It is idiomatic for a given CMake build to just compile Grackle as either a static or shared library, not both (you usually just need one).
-   But if you must have both, see :ref:`this section <cmake_shared_and_static>`.
-
-3. Compile and install grackle.
-
-   .. code-block:: shell-session
-
-      ~/grackle $ cmake --build <build-dir>
-      ~/grackle $ cmake --install <build-dir>
-
-   .. note::
-
-      The above commands show the most generic commands that can be executed.
-      Other tutorials that you see online may show slight variations in these commands (where you manually make the build directory) and then manually execute the build-system from within the build-directory...
-
-   .. note::
-
-      Just like with the classic build-system, Grackle currently needs to be installed to be used.
-      If you install it in a non-standard location, then you also need to ensure that you properly set the LD_LIBRARY_PATH (or DYLD_LIBRARY_PATH on macOS) to make use of it.
-
-
-4. Test your Build.
-
-   Once you have compiled Grackle, you can run one of the provided example to test if it functions correctly.
-   These examples are automatically compiled with Grackle.
-
-   .. code-block:: shell-session
-
-      ~/grackle $ cd <build-dir>/examples
-      ~/grackle/<build-dir>/examples $ ./cxx_example
-
-   .. warning::
-
-      The examples make certain assumptions about the location of the input files.
-      The examples are only guaranteed to work if both:
-
-         1. you execute the example-binary from the same-directory where the example-binary is found
-
-         2. ``<build-dir>`` is a top-level directory in the grackle repository (e.g. something like ``my-build`` is fine, but choices like ``../my-grackle-build`` and ``my_builds/my-first-build`` are problematic).
-
-   .. note::
-
-      For reference, the Classic build-system always links Grackle against the shared-library version of Grackle and requires that Grackle is fully installed in a location known by the system (either a standard system location OR a location specified by ``LD_LIBRARY_PATH``/``DYLD_LIBRARY_PATH``).
-      In contrast, cmake automatically takes special-steps to try to ensure that each example-binary will link to the copy of the Grackle library (whether it is shared or static) that is in the ``<build-dir>``; in fact, Grackle doesn't even need to be installed to run the Grackle library.
-
-      With that said, if you compile Grackle as a shared library in a cmake build, an example-binary **might** try to use a copy of a shared grackle library found in a directory specified by ``LD_LIBRARY_PATH``/``DYLD_LIBRARY_PATH`` if one exists.
-      The exact behavior may be platform dependent and also depends on whether CMake instructs the linker to use RPATH or RUNPATH (this is not specified by the cmake docs).
-
-In order to verify that Grackle is fully functional, you can try :ref:`running the test suite <testing>`.
-
-.. _how_to_configure:
-
-How to Specify Configuration Options
-++++++++++++++++++++++++++++++++++++
-
-All configuration options can be specified when invoking cmake during configuration of the build.
-Specifically you can specify the values by inserting an argument of the form ``-D<variable>=<value>`` to the list of arguments passed to ``cmake``.
-This is illustrated in the prior subsection where we pass ``-DCMAKE_INSTALL_PREFIX=/my/install/path...`` and ``-DBUILD_SHARED_LIBS=OFF``.
-
-Alternatively, you can replace the call to ``cmake`` during configuration with a call to ``ccmake`` to provide a TUI (text-based user interface) where you can manually configure options.
-For example, a call to ``ccmake -B<build-dir>`` will bring up a TUI to configure a build in the specified directory.
-CMake also provides a GUI (graphical user interface) for this purpose (it may not be available based on how exactly you installed CMake).
-The CMake documentation provide more details about the GUI and how to more generally use cmake `here <https://cmake.org/cmake/help/latest/guide/user-interaction/index.html#guide:User%20Interaction%20Guide>`__.
-
-A summary of all Grackle-specific configuration options and a subset of useful generic CMake configurations is provided in the :ref:`next subsection <available_cmake_options>`.
-
-The idiomatic way to control optimization/debugger flags is to specify a build-type via the standard ``CMAKE_BUILD_TYPE`` variable.
-Choices include:
-
-* ``-DCMAKE_BUILD_TYPE=Release`` (typically ``-O3``)
-
-* ``-DCMAKE_BUILD_TYPE=RelWithDebInfo`` (typically ``-O2 -g``)
-
-* ``-DCMAKE_BUILD_TYPE=Debug`` (typically ``-O0 -g``)
-
-The first choice is generally fastest, while the second is a sensible choice during development (the compiler performs most optimizations and includes debugging information in the library).
-
-Machine-specific compilation options can also be specified with host-files.
-These host-files should generally not be necessary, but they may specify architecture-specific optimization flags.
-This should be specified during the configuration stage with the ``-C`` flag followed by the path to the host-file.
-For example, one might invoke:
-
-   .. code-block:: shell-session
-
-      ~/grackle $ cmake -C config/host-config/tacc-frontera-intel.cmake \
-      > -D CMAKE_INSTALL_PREFIX=<install-prefix> \
-      > -D BUILD_SHARED_LIBS=ON \
-      > -B <build-dir>
-
-The order of ``-D`` and ``-C`` flags matters.
-If they are both used to specify values for a given variable, the last one to appear "wins."
-More information about writing host-files are provided :ref:`below <cmake_host-files>`.
-
-
-.. _available_cmake_options:
-
-Available Configuration Options
-+++++++++++++++++++++++++++++++
-
-The compilation (and installation) of Grackle can be configured using various options.
-These options are described in the following 2 tables.
-
-Many of these options are binary choices that accept a boolean value. [#f2]_
-
-This first table describes the Grackle-specific options to configure the build.
-
-.. list-table:: Grackle-Specific Options
-   :widths: 12 30 5
-   :header-rows: 1
-
-   * - Name
-     - Description
-     - Default
-   * - ``GRACKLE_USE_DOUBLE``
-     - Turn off to build Grackle with single precision.
-     - ``"ON"``
-   * - ``GRACKLE_USE_OPENMP``
-     - Turn on to build Grackle with OpenMP
-     - ``"OFF"``
-   * - ``GRACKLE_BUILD_TESTS``
-     - Turn on to build tests of the core Grackle library (these are totally unrelated to the ``pytest`` suite).
-     - ``"OFF"``
-
-This second table highlights a subset of standardized CMake options that may also be useful.
-
-.. list-table:: Standard CMake Options
-   :widths: 12 30 5
-   :header-rows: 1
-
-   * - Name
-     - Description
-     - Default
-
-   * - ``BUILD_SHARED_LIBS``
-     - When turned ``"ON"``, Grackle is built as a shared library. When turned ``"OFF"`` (or if its undefined), Grackle is built as a static library.
-     - ``<undefined>``
-
-   * - ``CMAKE_BUILD_TYPE``
-     - Specifies the desired build configuration (for single-configuration generators [#f3]_).
-       Grackle currently supports the standard choices ``Debug``, ``Release``, ``RelWithDebInfo`` and ``MinSizeRel``.
-     - ``<undefined>``
-
-   * - ``CMAKE_INSTALL_PREFIX``
-     - Specifies the path-prefix where Grackle will be installed when you invoke ``make install`` from within the build-directory (or using a non-Makefile generator, you use the generator-specific command to build the ``install``-target).
-       Note, that if you use ``cmake --install path/to/builddir`` to invoke installation, you can use ``--prefix`` to specify a different prefix
-     - ``/usr/local``
-
-   * - ``HDF5_ROOT``
-     - When cmake has trouble finding your hdf5 installation, you can set this variable equal to the path to the HDF5 installation to serve as a hint for cmake
-     - ``<undefined>``
-
-   * - ``HDF5_PREFER_PARALLEL``
-     - Set to ``true`` to express a preference for linking against parallel hdf5 (by default, the serial version will be preferentially choosen)
-     - ``<undefined>``
-
-   * - ``CMAKE_<LANG>_COMPILER``
-     - Set of variables (where ``<LANG>`` is replaced by ``C``, ``Fortran`` or ``CXX``) to overide the compiler choice.
-       This is commonly set by host-files.
-     - ``<undefined>``
-
-There are also additional standard options for BOTH configuring other aspects of the build and for finding the correct/preferred HDF5 library and configuring the correct openmp library.
-
-Addtionally, CMake will also respect the values of certain environment variables.
-For example, if you don't manually specify the choice of compilers with the ``CMAKE_<LANG>_COMPILER`` flag, then CMake will use the values in the ``CC``, ``FC``, and ``CXX`` environment variables.
-
-We strongly encourage users and developers to make use of the options described in this section.
-They exist to provide a curated/consistent experience in a variety of scenarios.
-:doc:`Please let us know <Help>` if you think we are missing a useful Grackle-specific option.
-You can also add the new option yourself (it may be useful to review :ref:`the design philosophy for the CMake build-system <cmake_buildsystem_design_rationale>`).
-
-With that said, we also recognize that the need may arise where a user/developer may want to specify arbitrary flags.
-You can use the standardized ``CMAKE_<LANG>_FLAGS`` variables for that purpose (where ``<LANG>`` is ``C``, ``CXX``, ``Fortran``).
-For example, passing ``-DCMAKE_C_FLAGS="-Wall -Wpedantic -funroll-loops"`` will pass these flags to every invocation of the C compiler (for compiling Grackle itself as well as any examples or tests).
-Technically, these flags are passed to every invocation of the C compiler-frontend (even during linking), but that usually isn't a problem.
-
-
-
-.. _cmake_shared_and_static:
-
-Installing both Shared and Static Libraries
-+++++++++++++++++++++++++++++++++++++++++++
-
-It's idiomatic for a given ``cmake``-build to build either a shared library OR a static library (not both). This is controlled by the standard ``BUILD_SHARED_LIBS`` flag (you usually don't need both).
-
-With that said, if you really want to install both of them, you could trigger 2 separate builds that install to the same destination. [#f4]_
-The following code snippet illustrates how you might do this (for concreteness, the snippet uses build-directories called ``build-static`` and ``build-shared`` and installs into a directory called ``$HOME/local`` -- but these are all arbitrary choices).
-   
-.. code-block:: shell-session
-
-   ~ grackle $ cmake -DCMAKE_INSTALL_PREFIX=$HOME/local -B build-static
-   ~ grackle $ cmake --build build-static
-   ~ grackle $ cmake --install build-static
-   ~ grackle $ cmake -DCMAKE_INSTALL_PREFIX=$HOME/local -DBUILD_SHARED_LIBS=ON -B build-shared
-   ~ grackle $ cmake --build build-shared
-   ~ grackle $ cmake --install build-shared
-
-.. _cmake_host-files:
-
-More About Host-Files
-+++++++++++++++++++++
-
-As noted above, we provide support for setting default value for particular machines by providing support for *host-files*\ .
-These files are provided mostly for convenience (and to provide parity with machine files provided by the classic build-system).
-They are most useful on HPC systems that provide multiple compiler toolchains.
-These are the *\*.cmake* files in the **config/host-config** directory.
-
-Importantly, the usage of *host-files* is optional (and usually not required).
-They usually aren't needed on local systems (if you find that Grackle won't compile without a host-file, please let us know -- that may indicative of a bug).
-They should generally **NOT** be used when Grackle is embedded within another CMake project.
-
-While there are a couple of ways to implement this concept, our current strategy draws some inspiration from `here <https://llnl-blt.readthedocs.io/en/develop/tutorial/host_configs.html>`__.
-Essentially, our strategy leverages cmake functionality to pre-load a script to populate some cache variables.
-
-Usually, will specify the desired compilers.
-If a HPC machine properly manages the ``CC``, ``FC``, and ``CXX`` environment variables this isn't strictly necessary.
-If the machine places HDF5 in an unusual location, you might also hardcode hints into the config-file.
-
-The most important role is to specify cluster-specific optimization flags via the special Grackle-specific ``GRACKLE_OPTIMIZATION_FLIST_INIT`` variable.
-These flags will **ONLY** be used when compiling Grackle with the ``Release`` or ``RelWithDebInfo`` build-types.
-Here are 2 illustrative examples:
-
- * First we show that in order to pass multiple flags, the flags need to be specified by a semicolon delimited list.
-   If you stored ``"-xCORE-AVX512;-funroll-loops"`` within ``GRACKLE_OPTIMIZATION_FLIST_INIT``, then all source files will be compiled with these options (they won't be passed to the linker).
-
- * Next we show that to properly pass "option groups" you may need to make use of CMake's shell-like quoting with the ``SHELL:`` prefix (this relates to option de-duplication performed by CMake).
-   Thus, storing ``"SHELL:-option1 A;-Wall;SHELL:-option2 B"`` within ``GRACKLE_OPTIMIZATION_FLIST_INIT`` would cause all compiler invocations for source files used in Grackle to be passed ``-option1 A -Wall -option2 B``.
-
-While embedded builds currently respect ``GRACKLE_OPTIMIZATION_FLIST_INIT``, that is something we may stop supporting.
-
-.. COMMENT-BLOCK
-
-   The tone of this section should make it clear that host-files usually aren't necessary in most scenarios.
-   There's a chance that may change if we start supporting CUDA or HIP, these may become more important.
-   Until then, I'm a little hesitant to really encourage them since it may unnecessarily complicate things.
-
-.. note::
-
-   If you want to pass language-specific optimization options, let us know.
-   That is something we can easily support.
-   Until then, this could be addressed by enclosing a given option (or option-group) within a `language-specific generator expressions <https://cmake.org/cmake/help/latest/manual/cmake-generator-expressions.7.html#genex:COMPILE_LANGUAGE>`__.
-
-.. note::
-
-   In terms of modern, idiomatic CMake features, a host-file could be replaced by a combination of a `toolchain-file <https://cmake.org/cmake/help/latest/manual/cmake-toolchains.7.html>`__ and a `preset-file <https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html>`__.
-
-   * toolchain files usually define compiler-toolchain related-options and are commonly used for cross-compiling. 
-     As a basic rule of thumb: you should be able to recycle toolchain-files between unrelated projects (i.e. they don't include project-specific variables)
-
-   * a preset file (``CMakePresets.json`` or ``CMakeUserPresets.json``) is intended to be used to specify common project-specific compilation options.
-     These can be read by IDEs.
-
-   * after we update the minimum required CMake version for compiling Grackle to at least 3.19, we may transition to using these features.
-
 
 .. _compiler_toolchain_compatability:
 
@@ -675,14 +751,16 @@ For example, adding GPU-support with the likes of CUDA or HIP would involve link
 .. [#f1] For the uninitiated, Grackle performs "out of source builds," in which the build-artifacts, like generated headers, object files, linked libraries, are placed inside a build directory (rather than putting them inside the source-directory next to the source files).
          There are a couple of advantages to this approach such as (i) you can maintain multiple builds at the same time (e.g. if you are switching between development branches) or (ii) it's really easy to clean up from a build (you just delete the build-directory).
 
-
-
 .. [#f2] CMake boolean variables map a variety of values to ``true`` (e.g. ``1``, ``ON``, ``TRUE``, ``YES``, ``Y``) and a variety of values to ``false`` (e.g. ``0``, ``OFF``, ``FALSE``, ``NO``, ``N``).
+
+.. [#about-cmake-openmp] Using Ninja with ``GRACKLE_USE_OPENMP=ON`` has been known to cause compilation problems (more detail provided :ref:`here <ninja-openmp>`).
 
 .. [#f3] If you are simply following the above compilation instructions, you definitely don't need to worry about the distinction between a single-configuration generator (e.g. Makefiles and standard Ninja) and multi-configuration generators.
 
 .. [#f4] Aside: performing these 2 separate CMake builds compiles the source files the same number of times as the Classic build system.
          Behind the scenes, the classic build system always compile each source file twice (once with position independent code and once without).
 
-
-
+.. [#about-ninja] For the uninitiated: if you're simply following the above compilation instructions, you probably aren't using CMake's Ninja backend.
+   In more detail, CMake can be configured with different backends; on the command line, it uses Makefiles (by default) or Ninja.
+   Many CMake guides suggest using Ninja since its faster than Makefile (since it's a more specialized tool).
+   However, as noted above, this may cause some esoteric Fortran issues.
