@@ -629,7 +629,8 @@ c -------------------------------------------------------------------
      &                k28shield, k29shield, k30shield,
      &                k31shield, h2dust, ncrn, ncrd1, ncrd2, 
      &                t1, t2, tdef, logtem, indixe, 
-     &                dom, coolunit, tbase1, xbase1, dx_cgs, c_ljeans,
+     &                dom, coolunit, tbase1, uxyz, xbase1, dx_cgs,
+     &                c_ljeans,
      &                iradtrans, kdissH2I, xH2shield, itmask,
      &                itmask_metal
      &              , fh, metal
