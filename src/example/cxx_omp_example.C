@@ -111,8 +111,6 @@ int main(int argc, char *argv[])
   const gr_float FAmp  = 0.1;     // perturbation amplitude
   const int      RSeed = 123;     // random seed
 
-  timeval tv1, tv2;               // timing variables
-
   float T_CoolT_t1=0.0, T_CoolT_tN=0.0; // computation time for different routines
   float T_TimeT_t1=0.0, T_TimeT_tN=0.0;
   float T_TempT_t1=0.0, T_TempT_tN=0.0;
@@ -219,8 +217,8 @@ int main(int argc, char *argv[])
   }
 
   // Allocate field arrays. (t1/tN for single-/multi-thread results)
-  gr_float *energy_t1, *cooling_time_t1, *temperature_t1, *pressure_t1, *gamma_t1, *dust_temperature_t1;
-  gr_float *energy_tN, *cooling_time_tN, *temperature_tN, *pressure_tN, *gamma_tN, *dust_temperature_tN;
+  gr_float *cooling_time_t1, *temperature_t1, *pressure_t1, *gamma_t1, *dust_temperature_t1;
+  gr_float *cooling_time_tN, *temperature_tN, *pressure_tN, *gamma_tN, *dust_temperature_tN;
 
   my_fields_t1.density          = new gr_float[N3];
   my_fields_t1.x_velocity       = new gr_float[N3];

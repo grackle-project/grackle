@@ -37,7 +37,7 @@ extern chemistry_data_storage grackle_rates;
 
 void auto_show_config(FILE *fp);
 void auto_show_flags(FILE *fp);
-grackle_version get_grackle_version();
+grackle_version get_grackle_version(void);
 void show_parameters(FILE *fp, chemistry_data *my_chemistry);
 int _free_cloudy_data(cloudy_data *my_cloudy, chemistry_data *my_chemistry, int primordial);
 int initialize_cloudy_data(chemistry_data *my_chemistry,
