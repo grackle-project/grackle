@@ -24,6 +24,7 @@ temp.show-*
 Make.config.machine
 Make.config.override
 *.mod
+CMakeUserPresets.json
 
 src/clib/autogen
 src/clib/libgrackle.so

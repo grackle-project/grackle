@@ -78,9 +78,7 @@ double k3_rate(double T, double units, chemistry_data *my_chemistry)
 double k4_rate(double T, double units, chemistry_data *my_chemistry)
 {
     double T_ev = T / 11605.0;
-    double logT_ev = log(T_ev);
 
-    double k4;
     //If case B recombination on.
     if (my_chemistry->CaseBRecombination == 1){
         return 1.26e-14 * pow(5.7067e5/T, 0.75) / units;
@@ -924,13 +922,13 @@ double brem_rate(double T, double units, chemistry_data *my_chemistry)
 //Calculation of vibh.
 double vibh_rate(double T, double units, chemistry_data *my_chemistry)
 {
-    //Dummy parameter used in the calculation.
-    double par_dum;
-    if (T > 1635.0) {
-        par_dum = 1.0e-12 * sqrt(T) * exp(-1000.0 / T);
-    } else {
-        par_dum = 1.4e-13 * exp( (T / 125.0) - pow(T / 577.0, 2) );
-    }
+    // The following snippet seems to be duplicated from hyd01k_rate
+    //double par_dum;
+    //if (T > 1635.0) {
+    //    par_dum = 1.0e-12 * sqrt(T) * exp(-1000.0 / T);
+    //} else {
+    //    par_dum = 1.4e-13 * exp( (T / 125.0) - pow(T / 577.0, 2) );
+    //}
 
     return 1.1e-18 * exp( -fmin(log(dhuge), 6744.0 / T) ) / units;
 }
@@ -1274,6 +1272,19 @@ double cie_thin_cooling_rate(double T){
                    / ( t_cie_c[maxInd] - t_cie_c[minInd] );
         }
     }
+
+    // the following logic was added as a quick way to address the compiler
+    // warnings about a control flow that doesn't return get addressed.
+    // - In the future, we may want to consider a way to handle failure more
+    //   gracefully (if failure is even possible)
+    // - for now, loudly exitting with a failure is better than quietly
+    //   continuing with a garbage value
+    fprintf(
+      stderr,
+      "INTERNAL ERROR: something went horribly wrong while computing the "
+      "optically thin cooling rate due to CIE cooling. Aborting\n"
+    );
+    abort();
 }
 
 //Calculation of cieco.

@@ -15,7 +15,6 @@ import itertools
 import os
 
 from pygrackle import chemistry_data
-from pygrackle.utilities.data_path import grackle_data_dir
 
 model_test_format_version = 1
 
@@ -140,6 +139,10 @@ def get_model_set(model_name, parameter_index, input_index):
     Create objects and variables to be used in testing one
     of the Python example scripts.
     """
+
+    # we import this here, rather than at global scope to let us import the
+    # module when we don't have an editable install (for testing purposes)
+    from pygrackle.utilities.data_path import grackle_data_dir
 
     if model_name not in model_sets:
         raise ValueError("Unkown model name: {model_name}.")
