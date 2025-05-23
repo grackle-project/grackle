@@ -366,7 +366,7 @@ For all on/off integer flags, 0 is off and 1 is on.
    :c:data:`RT_HeI_ionization_rate`, and :c:data:`RT_HeII_ionization_rate`
    fields, respectively, of the :c:data:`grackle_field_data` struct.
    Associated heating rate is provided in the :c:data:`RT_heating_rate`
-   field, and H\ :sub:`2`\ photodissociation rate can also be provided in the
+   field, and H\ :sub:`2` photodissociation rate can also be provided in the
    :c:data:`RT_H2_dissociation_rate` field when
    :c:data:`primordial_chemistry` is set to either 2 or 3. Default: 0.
 
@@ -466,9 +466,9 @@ For all on/off integer flags, 0 is off and 1 is on.
 
    For consistency, when ``primordial_chemistry > 2``, the self-shielding
    attenutation factors calculated for HI and HeI are applied to the 
-   H\ :sub:`2`\ ionization (15.4 eV) and H\ :sub:`2`\ :sup:`+` dissociation
+   H\ :sub:`2` ionization (15.4 eV) and H\ :sub:`2`\ :sup:`+` dissociation
    rates (30 eV) respectively. These reaction rates are distinct from the
-   H\ :sub:`2`\ self-shielding computed using the ``H2_self_shielding``
+   H\ :sub:`2` self-shielding computed using the ``H2_self_shielding``
    flag.
 
 .. c:var:: int h2_charge_exchange_rate
