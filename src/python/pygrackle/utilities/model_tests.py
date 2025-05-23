@@ -149,10 +149,6 @@ def get_model_set(model_name, parameter_index, input_index):
     of the Python example scripts.
     """
 
-    # we import this here, rather than at global scope to let us import the
-    # module when we don't have an editable install (for testing purposes)
-    from pygrackle.utilities.data_path import grackle_data_dir
-
     if model_name not in model_sets:
         raise ValueError("Unkown model name: {model_name}.")
 
@@ -171,6 +167,10 @@ def get_test_variables(model_name, par_index, input_index):
     script with a bunch of code that a user just wanting to
     play with it shouldn't have to see.
     """
+
+    # we import this here, rather than at global scope to let us import the
+    # module when we don't have an editable install (for testing purposes)
+    from pygrackle.utilities.data_path import grackle_data_dir
 
     par_set, input_set = get_model_set(
         model_name, par_index, input_index)
