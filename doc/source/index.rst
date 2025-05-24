@@ -56,6 +56,7 @@ It provides more context for inexperienced CMake users, describes additional con
 Building Pygrackle from Source
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+
 Once you have a Fortran compiler and a copy of HDF5 (1.6 or newer), simply invoke the following from the root of the Grackle repository
 
 .. code-block:: shell-session
@@ -85,6 +86,7 @@ To help you start using Grackle, we provide:
    :maxdepth: 2
    :hidden:
 
+   CapabilityGuide.rst
    Installation.rst
    Python.rst
    Getting Help <Help.rst>
