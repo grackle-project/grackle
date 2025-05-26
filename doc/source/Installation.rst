@@ -348,7 +348,8 @@ More About Host-Files
 As noted above, we provide support for setting default value for particular machines by providing support for *host-files*\ .
 These files are provided mostly for convenience (and to provide parity with machine files provided by the classic build-system).
 They are most useful on HPC systems that provide multiple compiler toolchains.
-These are the *\*.cmake* files in the **config** directory.
+These are the *\*.cmake* files in the :source:`config` directory.
+
 
 Importantly, the usage of *host-files* is optional (and usually not required).
 They usually aren't needed on local systems (if you find that Grackle won't compile without a host-file, please let us know -- that may indicative of a bug).
