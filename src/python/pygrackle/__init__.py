@@ -14,6 +14,9 @@
 from .__config__ import \
     __version__
 
+from ._pygrackle_utils import \
+    evolve_constant_density
+
 from .fluid_container import \
     FluidContainer
 
@@ -24,7 +27,6 @@ from .utilities.convenience import \
     setup_fluid_container
 
 from .utilities.evolve import \
-    evolve_constant_density, \
     evolve_freefall
 
 from .utilities.units import \

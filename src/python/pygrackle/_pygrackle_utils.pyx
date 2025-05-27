@@ -15,7 +15,8 @@ from .grackle_defs cimport (
 from .grackle_wrapper cimport GrackleTypePack_ExtType
 
 # runtime imports:
-from collections import defaultdict
+from collections import ChainMap
+import functools
 import numpy as np
 from .fluid_container import FluidContainer, _calculated_fields, _fc_calculated_fields
 from .grackle_wrapper import _get_grackle_type_pack
@@ -26,6 +27,13 @@ cdef extern from "grtest/evolve/evolve.hpp" namespace "grtest":
         IntegrationState()
         unsigned int cycle
         double t
+
+    cdef cppclass EvolveRslt:
+        const char* problem_phase
+        int task_id
+        CppBool triggered_stopping
+        EvolveRslt()
+        CppString to_err_msg()
 
     cdef cppclass GrackleTypePack:
         GrackleTypePack()
@@ -47,189 +55,152 @@ cdef extern from "grtest/evolve/evolve.hpp" namespace "grtest":
 
 cdef extern from *:
     """
-    #include <map>
-    #include <string>
-    #include <utility>
-
     #include "grtest/evolve/evolve.hpp"
-    typedef int (*callbackFn)(void* callback_ctx, unsigned int cur_cycle);
 
-    std::string create_and_exec_integrator(
-      grtest::IntegrationState& state,
+    struct IntegratorWrapper {
+      grtest::IntegratorFn fn;
+      grtest::EvolveRslt operator()(grtest::IntegrationState& state,
+                                    unsigned int n_cycles)
+      { return fn(state, n_cycles); }
+    };
+
+    std::string mk_wrapper(
+      IntegratorWrapper& wrapper,
       const grtest::IntegratorBuilder& builder,
       const grtest::GrackleTypePack& pack,
       std::map<std::string, gr_float*> chem_register_map,
       std::map<std::string, gr_float*> output_bufs,
-      int buffer_len,
-      unsigned int callback_every_n,
-      callbackFn callback,
-      void* callback_ctx
+      int buffer_len
     ) {
-      if ((callback == nullptr) || (callback_ctx == nullptr)) {
-        return "callback and callback_ctx must be non-NULL";
-      }
-
       std::pair<std::string, grtest::IntegratorFn> rslt_pair = builder.build(
         pack, chem_register_map, output_bufs, buffer_len
       );
-
-      if (rslt_pair.first.size() != 0) {
-        return "Error while building integrator:" + rslt_pair.first;
-      }
-      grtest::IntegratorFn& integrator_fn = rslt_pair.second;
-
-      while (true) {
-        grtest::EvolveRslt rslt = integrator_fn(state, callback_every_n);
-        if (rslt.problem_phase != nullptr) {
-          return rslt.to_err_msg();
-        } else if ((callback(callback_ctx, state.cycle) != 1) ||
-                   rslt.triggered_stopping) {
-          return "";
-        }
-      }
+      wrapper.fn = rslt_pair.second;
+      return rslt_pair.first;
     }
     """
-    ctypedef int (*callbackFn)(void*, unsigned int)
+    cdef cppclass IntegratorWrapper:
+        GrackleTypePack()
+        EvolveRslt operator()(IntegrationState&, unsigned int)
 
-    cdef CppString create_and_exec_integrator(
-        const IntegrationState& state,
+    cdef CppString mk_wrapper(
+        IntegratorWrapper& wrapper,
         const IntegratorBuilder& builder,
         const GrackleTypePack& pack,
         CppMap[CppString, gr_float*] chem_register_map,
         CppMap[CppString, gr_float*] output_bufs,
-        int buffer_len,
-        unsigned int callback_every_n,
-        callbackFn callback,
-        void* callback_ctx
+        int buffer_len
     )
-
-cdef int invoke_callable(void* python_callable,
-                         unsigned int current_cycle) noexcept:
-    cdef object rslt = (<object>python_callable)(current_cycle)
-    return rslt
-
 
 _DERIVED_FIELDS = _calculated_fields + _fc_calculated_fields
 
-class DataFlushCallback:
-    """
-    This is a callback for data recording with an integrator.
+def _flush_func(cycle, *, flush_cadence, src_dict, dst_dict, preflush_callback):
+    """Performs a flush
 
-    Every cycle, the integrator will directly record values to each of the
-    buffers, held in the `tmp_buffer` attribute. Every `n_cylces_per_flush`,
-    this callback is invoked to copy the data out of `tmp_buffer` into the
-    `dict` attribute (i.e. we flush the data).
-
-    Attributes
+    Parameters
     ----------
-    n_cycles_per_flush: int
-        Specifies the cadence for flushing the buffers
-        The integrator fills the buffers, held by the tmp_buffers
-        attribute ). Then every
-        `n_cycles_per_flush`, this callback is invoked and moves the data out
-        of self.tmp_buffers into self.data.
-    compute_derived_quan: bool
-        When True, we computed derived chemistry quantities during each flush.
+    cycle: int
+        The total number of integrated cycles.
+    flush_cadence: int
+        The nominal number of cycles between flushes
+    src_dict: dict
+        Data is flushed from this dict
+    dst_dict: dict
+        Data is flushed to the lists in this dict
+    preflush_callback: optional callable
+        Called before the flush is performed
+    """
+    cycles_since_last_flush = cycle - (cycle % flush_cadence)
+
+    if preflush_callback is not None:
+        preflush_callback(cycles_since_last_flush)
+
+    dst_dict["time"].extend(src_dict["time"][0:cycles_since_last_flush])
+    register_len = src_dict["density"].size // flush_cadence
+    slc = slice(0, register_len * cycles_since_last_flush)
+    # we explicitly read the keys from dst_dict (rather than src_dict)
+    for key in filter(lambda key: key != "time", dst_dict.keys()):
+        dst_dict[key].extend(src_dict[key][slc])
+
+
+def setup_plumbing(fc, flush_cadence=1, derived_quan=False, extra_buffers=None):
+    """Setup plumbing machinery
+
+    Parameters
+    ----------
+    fc: FluidContainer
+        This holds the information used during integration
+    flush_cadence: int
+        The nominal number of cycles between flushes
+    derived_quan: bool
+        When True, we computed derived chemistry quantities during flushes.
+    extra_buffers
+        A sequence of non-chemistry quantity buffers that should be copied.
+        This should not contain "time" or any derived quantites
+
+    Returns
+    -------
+    tmp_buffer: dict
+        Used to configure the integrator
+    dst_dict: dict
+        Where the output data is stored
+    flush_fn: callable
+        A function used to update dst_dict based on the values in tmp_buffer
     """
 
-    def __init__(
-        self,
-        fc,
-        n_cycles_per_flush=1,
-        compute_derived_quan=False,
-        extra_buffers = None
-    ):
-        """
-        Initializes a new instance
+    if flush_cadence <= 0:
+        raise ValueError("flush_cadence must be positive")
+    register_len = fc["density"].size  # number of values updated per cycle
+    buffer_len = register_len * flush_cadence
+    dtype = fc["density"].dtype
 
-        Parameters
-        ----------
-        fc: FluidContainer
-            This holds the information used during integration
-        n_cycles_per_flush: int
-            The cadence for flushing data
-        compute_derived_quan: bool
-            When True, we computed derived chemistry quantities during flushes.
-        extra_buffers
-            A sequence of non-chemistry quantity buffers that should be copied.
-            This should not contain "time" or any derived quantites
-        """
-        self.data = defaultdict(list)
-        if n_cycles_per_flush <= 0:
-            raise ValueError("n_cycles_per_flush must be positive")
-        self.n_cycles_per_flush = n_cycles_per_flush
+    # most of the work involves assembling tmp_buffers
+    tmp_buffers = {"time" : np.empty(buffer_len, dtype=dtype)}
 
-        shape = (fc["density"].size * n_cycles_per_flush,)
-        dtype = fc["density"].dtype
-        if compute_derived_quan:
-            self._secondary_fc = FluidContainer(
-                fc.chemistry_data, shape[0], dtype=dtype
-            )
-            self.tmp_buffers = {k: self._secondary_fc[k] for k in fc.input_fields}
-        else:
-            self._secondary_fc = None
-            self.tmp_buffers = {
-                k: np.empty(shape=shape, dtype=dtype) for k in fc.input_fields
-            }
+    # add entries for the extra buffers
+    if extra_buffers is not None:
+        for key in extra_buffers:
+            if key == "time" or key in fc or key in _DERIVED_FIELDS:
+                raise ValueError(f"extra_buffers can't hold {key}")
+            tmp_buffers[key] = np.empty(buffer_len, dtype=dtype)
 
-        self.tmp_buffers["time"] = np.empty(shape=shape, dtype=dtype)
-        if extra_buffers is not None:
-            for key in extra_buffers:
-                if key in self.tmp_buffers or key in _DERIVED_FIELDS:
-                    raise ValueError(f"extra_buffers can't hold {key}")
-                self.tmp_buffers[key] = np.empty(shape=shape, dtype=dtype)
+    # add entries for the input grackle fields. We use FluidContainer as a
+    # convenient way to allocate these buffers (it plays a secondary role when
+    # derived_quan is True)
+    _secondary_fc = FluidContainer(fc.chemistry_data, buffer_len, dtype=dtype)
+    for key in _secondary_fc.input_fields:
+        tmp_buffers[key] = _secondary_fc[key]
 
-    @property
-    def compute_derived_quan(self):
-        """When True, we compute derived quantities during each flush."""
-        return self._secondary_fc is not None
+    dst_dict = {key: [] for key in tmp_buffers.keys()}
 
-    @property
-    def buffer_len(self):
-        return self.tmp_buffers["density"].size
+    # setup _flush_func's kwargs and if relevant, modfiy to dst_dict
+    if not derived_quan:
+        src_dict_kwarg = tmp_buffers
+        callback = None
+    else:
+        for key in _DERIVED_FIELDS:
+            dst_dict[key] = []
+        src_dict_kwarg = ChainMap(tmp_buffers, _secondary_fc)
 
-    def __call__(self, cycle):
-        """
-        This is the "flush". We copy the values out of self.tmp_buffers into
-        self.data
-        """
-        copy_n_cycles = self.n_cycles_per_flush - (cycle % self.n_cycles_per_flush)
-        stop = copy_n_cycles * self.buffer_len
-        for key, buf in self.tmp_buffers.items():
-            self.data[key].extend(buf[:stop])
-
-        if self.compute_derived_quan:
-            is_first_flush = len(self.data["temperature"]) == 0
-            if stop != self.n_cycles_per_flush and is_first_flush:
-                for key in self._secondary_fc.input_fields:
-                    self.tmp_buffers[key][stop:] = self.tmp_buffers[key][0]
+        def callback(cycles_since_last_flush):  # compute derived quantities
+            if flush_cadence != cycles_since_last_flush:
+                slc = slice(register_len*cycles_since_last_flush, None)
+                for key in _secondary_fc.input_fields:
+                    _secondary_fc[key][slc] = _secondary_fc[key][0]
             for key in _DERIVED_FIELDS:
-                func = getattr(self._secondary_fc, f"calculate_{key}")
-                if func is None:
-                    raise RuntimeError(f"No function for calculating {key}.")
+                func = getattr(_secondary_fc, f"calculate_{key}")
+                assert func is not None, f"No function for calculating {key}"
                 func()
-                buf = self._secondary_fc[key]
-                self.data[key].extend(self._secondary_fc[key][:stop])
 
-class CallbackLogAndFlush:
-    def __init__(self, log_prefix, flusher, chemistry_data):
-        self.log_prefix = log_prefix
-        self.flusher = flusher
-        self.time_units = chemistry_data.time_units
-        self.density_units = chemistry_data.density_units
-        self.exception = None
+    flush_func = functools.partial(
+        _flush_func,
+        flush_cadence=flush_cadence,
+        src_dict=src_dict_kwarg,
+        dst_dict=dst_dict,
+        preflush_callback=callback
+    )
 
-    def __call__(self, cycle):
-        try:
-            self.flusher(cycle)
-            t = self.flusher.data["time"][-1] * self.time_units / sec_per_year
-            rho = self.flusher.data["density"][-1] * self.density_units
-            T = self.flusher.data["temperature"][-1]
-            print(f"{self.log_prefix}t: {t:e} yr, rho: {rho:e} g/cm^3, T: {T:e} K.")
-            return 1
-        except BaseException as e:
-            exception = e
-            return 0
+    return tmp_buffers, dst_dict, flush_func
 
 
 cdef CppMap[CppString, gr_float*] construct_ptr_map(object d, object keys=None):
@@ -247,7 +218,7 @@ cdef CppMap[CppString, gr_float*] construct_ptr_map(object d, object keys=None):
 cdef object invoke_integrator(
     object fc,
     const IntegratorBuilder& builder,
-    int n_cycles_per_flush=1,
+    unsigned int flush_cadence=1,
     object compute_derived_quan=False,
     object extra_buffers=None,
     object log_prefix=""
@@ -258,11 +229,7 @@ cdef object invoke_integrator(
     fc: FluidContainer
         The fluid container
     """
-    cdef IntegrationState state
-    state.cycle = 0
-    state.t = 0.0
-
-    # now create and initialize GrackleTypePack
+    # Step 1: Prepare to build the integrator
     cdef GrackleTypePack_ExtType pack_ext_type = _get_grackle_type_pack(fc)
     cdef GrackleTypePack pack
     pack.my_chem = pack_ext_type.my_chem
@@ -270,40 +237,47 @@ cdef object invoke_integrator(
     pack.my_units = pack_ext_type.my_units
     pack.my_fields = &pack_ext_type.my_fields
 
-    # in the future, chem_register_map won't be necessary
-    cdef CppMap[CppString, gr_float*] chem_register_map = construct_ptr_map(
-        fc, keys=fc.input_fields
-    )
-
-    cdef object flusher = DataFlushCallback(
+    tmp_buffers, data, flush_func = setup_plumbing(
         fc,
-        n_cycles_per_flush=n_cycles_per_flush,
-        compute_derived_quan=compute_derived_quan,
+        flush_cadence=flush_cadence,
+        derived_quan=compute_derived_quan,
         extra_buffers=extra_buffers
     )
 
-    cdef object cb = CallbackLogAndFlush(log_prefix, flusher, fc.chemistry_data)
-
-    cdef CppString result_str = create_and_exec_integrator(
-        state=state,
+    # Step 2: construct the integrator
+    cdef IntegratorWrapper integrator
+    cdef CppString error_str = mk_wrapper(
+        wrapper=integrator,
         builder=builder,
         pack=pack,
-        chem_register_map=chem_register_map,
-        output_bufs=construct_ptr_map(flusher.tmp_buffers),
-        buffer_len=flusher.buffer_len,
-        callback_every_n=n_cycles_per_flush,
-        callback=invoke_callable,
-        callback_ctx=<void*>cb
+        # in the future, chem_register_map won't be necessary
+        chem_register_map=construct_ptr_map(fc, keys=fc.input_fields),
+        output_bufs=construct_ptr_map(tmp_buffers),
+        buffer_len=tmp_buffers["density"].size
     )
 
-    if (result_str.size() != 0):
-        raise RuntimeError(result_str.decode("ascii"))
-    elif cb.exception is not None:
+    if (error_str.size() != 0):
         raise RuntimeError(
-            "The callback used during integration encountered an exception"
-        ) from cb.exception
-    else:
-        return flusher.data
+            "Error while creating integrator: " + error_str.decode("ascii")
+        )
+
+    # Step 3: invoke the integrator
+    cdef IntegrationState state  # default constructor sets cycle=0 & t =0
+    cdef EvolveRslt tmp_rslt  # forward declaration
+    cdef object time_units = fc.chemistry_data.time_units
+    cdef object density_units = fc.chemistry_data.density_units
+
+    while True:
+        tmp_rslt = integrator(state, flush_cadence)
+        if tmp_rslt.problem_phase != NULL:
+            raise RuntimeError(tmp_rslt.to_err_msg().decode("ascii"))
+        flush_func(state.cycle) # flush the data
+        t = data["time"][-1] * time_units / sec_per_year
+        rho = data["density"][-1] * density_units
+        T = data["temperature"][-1]
+        print(f"{log_prefix}t: {t:e} yr, rho: {rho:e} g/cm^3, T: {T:e} K.")
+        if tmp_rslt.triggered_stopping:
+            return data
 
 def evolve_constant_density(
     fc, final_temperature = None, final_time = None, safety_factor = 0.01,

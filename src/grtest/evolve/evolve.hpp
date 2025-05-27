@@ -109,8 +109,6 @@ struct GrackleTypePack {
   grackle_field_data* my_fields;
 };
 
-/// A shorthand alias
-//typedef std::function<EvolveRslt(IntegrationState&, unsigned int)> IntegratorFn;
 
 /// This type is used to construct an ``IntegratorFn`` instance via a builder
 /// pattern.
@@ -122,8 +120,6 @@ struct GrackleTypePack {
 /// @note
 /// Many of the builder methods return IntegratorBuilder& to make it possible
 /// to chain methods together.
-///
-///
 class IntegratorBuilder {
   /// the courant safety factor
   double safety_factor_ = 0.01;
