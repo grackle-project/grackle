@@ -9,7 +9,7 @@ At its core, the library provides machinery to specify the :ref:`"physical model
 
 
 The fine-grained configurability of the physical model is Grackle's "killer feature."
-Users can choose from rich selection of battle-tested options, which allows Grackle to:
+Users can choose from a rich selection of battle-tested options, which allows Grackle to:
 
 - support state of the art calculations capturing lots of detailed physics
 - allows users to :ref:`tailor the model <why-tailor>` to suit the needs of a given calculation
@@ -20,9 +20,9 @@ What is a "physical model"?
 ---------------------------
 
 In the current discussion we define the "physical model" as the collection of assumptions and physics that affect the properties (e.g. thermal properties/composition) of the fluid, itself.
-Grackle primarily cares about details relevant to a fluid-element's **local micro-scale evolution**; it doesn't need to know any details about interactions between fluid elements (gravity, fluid dynamics, viscosity, conduction, etc.).
+Grackle primarily cares about details relevant to a fluid element's **local micro-scale evolution**; it doesn't need to know any details about interactions between fluid elements (gravity, fluid dynamics, viscosity, conduction, etc.).
 
-Fluid-calculations **almost always** have a physical model.
+Fluid calculations **almost always** have a physical model.
 There's usually an assumption about the equation of state.
 An assumption is also made about radiative effects (or the lack thereof).
 Grackle becomes useful to calculations as soon as you want to start considering how radiative cooling (and heating) affect your calculation (**and it can do much more**).
@@ -45,7 +45,7 @@ We order these in terms of increasing complexity:
 
 - You might be running high resolution simulations focused on the formation of Population III stars, where a more complete chemical network of primordial species is useful.
 
-- Then, of course there are the simulations where you want as much as possible (e.g. you're trying to model self-consistent star formation and feedback).
+- Then, of course there are the simulations where you want as much sophistication as possible (e.g. you're trying to model self-consistent star formation and feedback).
   You might even couple a radiative transfer solver to Grackle.
   You could also couple external sources of heating.
 
@@ -98,16 +98,16 @@ We summarize the different values down below:
 
 Dust Chemistry
 ^^^^^^^^^^^^^^
-Grackle has basic dust chemistry, which includes heating, cooling, and H\ :sub:`2` formation.
+Grackle has basic dust chemistry to model the influence of a non-evolving dust population on the chemothermal evolution of the gas. This includes H\ :sub:`2` formation on dust grains, photo-electric heating, and dust recombination cooling.
 This is controlled by the :c:data:`dust_chemistry` parameter.
 
-Grackle optionally gives users fine-grained control over the interstellar radiation field used to compute photoelectric heating.
+Grackle optionally gives users fine-grained control over the interstellar radiation field used to compute the dust temperature and photoelectric heating.
 
 .. note:: In Development: Dust Grain Chemistry Network
 
 Metal Cooling
 ^^^^^^^^^^^^^
-Grackle supports metallicity-dependant metal cooling (using tabulated rates calculate with `Cloudy`_).
+Grackle supports metallicity-dependant cooling from heavy elements (using tabulated rates calculate with `Cloudy`_).
 This is enabled by the :c:data:`metal_cooling` parameter.
 
 .. note:: In Development: Metal Chemistry Network
@@ -115,14 +115,14 @@ This is enabled by the :c:data:`metal_cooling` parameter.
 UV Background
 ^^^^^^^^^^^^^
 
-Grackle supports photo-heating and photo-ionization from two UV backgrounds:
+Grackle supports photo-heating and photo-ionization from two models of the time-evolving, spatially-independent UV metal-galactic background:
 
    1. `Faucher-Giguere et al. (2009) <http://adsabs.harvard.edu/abs/2009ApJ...703.1416F>`__.
 
    2. `Haardt & Madau (2012) <http://adsabs.harvard.edu/abs/2012ApJ...746..125H>`__.
 
 Configuration of this functionality is tied to the :ref:`data files <data-files>` that Grackle provides.
-
+Additionally, the cooling and heating rates can be modified to include the effects of atomic self-shielding in a few different ways.
 User-Extendability
 ^^^^^^^^^^^^^^^^^^
 
