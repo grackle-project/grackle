@@ -136,6 +136,6 @@ std::pair<std::string, grtest::IntegratorFn> grtest::IntegratorBuilder::build(
   );
 
   grtest::IntegratorFn integrator_fn;
-  integrator_fn.fn_ = grtest::IntegratorFn::InnerFn(tmp);
+  integrator_fn.fn = grtest::IntegratorFn::InnerFn(tmp);
   return {std::string(), integrator_fn};
 }

@@ -42,6 +42,10 @@ cdef extern from "grtest/evolve/evolve.hpp" namespace "grtest":
         c_code_units* my_units
         c_field_data* my_fields
 
+    cdef cppclass IntegratorFn:
+        IntegratorFn()
+        EvolveRslt operator()(IntegrationState&, unsigned int)
+
     cdef cppclass IntegratorBuilder:
         IntegratorBuilder()
         IntegratorBuilder& safety_factor(double)
@@ -52,45 +56,12 @@ cdef extern from "grtest/evolve/evolve.hpp" namespace "grtest":
                                            CppBool pressure_free,
                                            vector[CppString] density_fields,
                                            CppBool strict_density_field_match)
-
-cdef extern from *:
-    """
-    #include "grtest/evolve/evolve.hpp"
-
-    struct IntegratorWrapper {
-      grtest::IntegratorFn fn;
-      grtest::EvolveRslt operator()(grtest::IntegrationState& state,
-                                    unsigned int n_cycles)
-      { return fn(state, n_cycles); }
-    };
-
-    std::string mk_wrapper(
-      IntegratorWrapper& wrapper,
-      const grtest::IntegratorBuilder& builder,
-      const grtest::GrackleTypePack& pack,
-      std::map<std::string, gr_float*> chem_register_map,
-      std::map<std::string, gr_float*> output_bufs,
-      int buffer_len
-    ) {
-      std::pair<std::string, grtest::IntegratorFn> rslt_pair = builder.build(
-        pack, chem_register_map, output_bufs, buffer_len
-      );
-      wrapper.fn = rslt_pair.second;
-      return rslt_pair.first;
-    }
-    """
-    cdef cppclass IntegratorWrapper:
-        GrackleTypePack()
-        EvolveRslt operator()(IntegrationState&, unsigned int)
-
-    cdef CppString mk_wrapper(
-        IntegratorWrapper& wrapper,
-        const IntegratorBuilder& builder,
-        const GrackleTypePack& pack,
-        CppMap[CppString, gr_float*] chem_register_map,
-        CppMap[CppString, gr_float*] output_bufs,
-        int buffer_len
-    )
+        pair[CppString,IntegratorFn] build(
+            const GrackleTypePack& pack,
+            CppMap[CppString, gr_float*] chem_register_map,
+            CppMap[CppString, gr_float*] output_bufs,
+            int buffer_len
+        )
 
 _DERIVED_FIELDS = _calculated_fields + _fc_calculated_fields
 
@@ -255,10 +226,7 @@ cdef object invoke_integrator(
     )
 
     # Step 2: construct the integrator
-    cdef IntegratorWrapper integrator
-    cdef CppString error_str = mk_wrapper(
-        wrapper=integrator,
-        builder=builder,
+    cdef pair[CppString, IntegratorFn] tmp_pair = builder.build(
         pack=pack,
         # in the future, chem_register_map won't be necessary
         chem_register_map=construct_ptr_map(fc, keys=fc.input_fields),
@@ -266,10 +234,11 @@ cdef object invoke_integrator(
         buffer_len=tmp_buffers["density"].size
     )
 
-    if (error_str.size() != 0):
+    if (tmp_pair.first.size() != 0):
         raise RuntimeError(
-            "Error while creating integrator: " + error_str.decode("ascii")
+            "Error while creating integrator: " + tmp_pair.first.decode("ascii")
         )
+    cdef IntegratorFn integrator = tmp_pair.second
 
     # Step 3: invoke the integrator
     cdef IntegrationState state  # default constructor sets cycle=0 & t =0

@@ -56,32 +56,27 @@ struct EvolveRslt {
 /// This is the integrator type that external is handed. In practice this is a
 /// simple wrapper type.
 ///
-/// @note
-/// This class is a lot of boilerplate. It would be simpler to replace it with
+/// The original plan was to use
 /// ``typedef std::function<EvolveRslt(IntegrationState&, unsigned int)> ...``.
-/// Unfortunately, we need the boilerplate to play nicely with Cython.
+/// Unfortunately, that doesn't play well with Cython. Thus we introduce this
+/// really lightweight wrapper type.
 ///
 /// @par Background
 /// The purpose of this type is to perform "type-erasure":
-/// - different integrator-configurations are implemented using distinct types
-///   that have specialized implementations to improve performance (this is
-///   accomplished with templates, but is not necessary). To make it possible
+/// - different integrator-configurations can be implemented using distinct
+///   types that have specialized implementations to improve performance (this
+///   can be done with templates or more manually). To make it possible
 ///   to write code (without templates) that treats the various configurations
 ///   in a consistent manner, our factories return a "wrapper-type".
 /// - The implementation is extremely trivial since the integrator acts like
 ///   a function.
-class IntegratorFn {
-  friend class IntegratorBuilder;
+struct IntegratorFn {
   typedef std::function<EvolveRslt(IntegrationState&, unsigned int)> InnerFn;
-  InnerFn fn_;
-
-public:
-  /// check whether the type is valid
-  bool is_valid() const noexcept { return bool(fn_); }
+  InnerFn fn;
 
   /// evaluate the integrator
   EvolveRslt operator()(IntegrationState& state, unsigned int n_cycles) {
-    return fn_(state, n_cycles);
+    return fn(state, n_cycles);
   }
 };
 
