@@ -141,5 +141,6 @@ def main(args=None, output_name=output_name):
                        data=data, extra_attrs=extra_attrs)
     return 0
 
+
 if __name__ == "__main__":
     sys.exit(main())
