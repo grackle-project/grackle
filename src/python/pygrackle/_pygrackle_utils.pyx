@@ -110,7 +110,8 @@ def _flush_func(cycle, *, flush_cadence, src_dict, dst_dict, preflush_callback):
     preflush_callback: optional callable
         Called before the flush is performed
     """
-    cycles_since_last_flush = cycle - (cycle % flush_cadence)
+    tmp = flush_cadence * (cycle // flush_cadence)
+    cycles_since_last_flush = flush_cadence if tmp == cycle else cycle - tmp
 
     if preflush_callback is not None:
         preflush_callback(cycles_since_last_flush)
@@ -219,16 +220,25 @@ cdef object invoke_integrator(
     object fc,
     const IntegratorBuilder& builder,
     unsigned int flush_cadence=1,
-    object compute_derived_quan=False,
+    object derived_quan=False,
     object extra_buffers=None,
     object log_prefix=""
 ) except+:
-    """
-    Parameters
-    ----------
-    fc: FluidContainer
-        The fluid container
-    """
+    # Constructs an integrator, use it to evolve the input data, and return a
+    # dictionary of arrays holding the values computed during each integration
+    # cycle
+    #
+    # Parameters
+    # ----------
+    # fc: The fluid container to evolve
+    # builder: contains configuration information about the integrator
+    # flush_cadence: The nominal number of cycles between flushes
+    # derived_quan: whether to compute derived chemistry quantities
+    # extra_buffers: A sequence of non-chemistry quantity buffers that should
+    #    be copied into the output array. This should not contain "time" or any
+    #    derived quantites. This will contain quantities like "force_factor"
+    # log_prefix: A prefix for each log message
+
     # Step 1: Prepare to build the integrator
     cdef GrackleTypePack_ExtType pack_ext_type = _get_grackle_type_pack(fc)
     cdef GrackleTypePack pack
@@ -240,7 +250,7 @@ cdef object invoke_integrator(
     tmp_buffers, data, flush_func = setup_plumbing(
         fc,
         flush_cadence=flush_cadence,
-        derived_quan=compute_derived_quan,
+        derived_quan=derived_quan,
         extra_buffers=extra_buffers
     )
 
@@ -282,27 +292,36 @@ cdef object invoke_integrator(
 def evolve_constant_density(
     fc, final_temperature = None, final_time = None, safety_factor = 0.01,
 ):
-    """
-    Evolves the fluid_container while holding density constant
+    """Evolves the fluid_container while holding density constant
     """
     cdef IntegratorBuilder builder
 
     if final_temperature is not None:
-        if final_temperature <= 0:
-            raise ValueError("final_temperature must exceed 0")
+        # the value is checked while building the integrator
         builder.min_stopping_temperature_cgs(final_temperature)
 
     if final_time is not None:
-        if final_time <= 0:
-            raise ValueError("final_time must exceed 0")
         builder.max_time(final_time)
 
     builder.safety_factor(safety_factor)
 
-    prefix = "Evolve constant density - "
+    # determine flux_cadence (this is fairly ad hoc). Considerations:
+    # - we bound flux_cadence based on register_len since we need to allocate
+    #   register_len * flux_cadence * len(fc.input_fields) floating point vals
+    # - from some quick and dirty test, I saw marginal benefits for values
+    #   above 20 and register_len == 1
+    # - maybe we should make this a kwarg in the future?
+    register_len = fc["density"].size
+    flush_cadence = max(20, min(256 // register_len, 1))
+
     data = invoke_integrator(
-        fc, builder, 1, compute_derived_quan=True, extra_buffers=[], log_prefix=prefix
+        fc=fc,
+        builder=builder,
+        flush_cadence=flush_cadence,
+        derived_quan=True,  # <- for historical purposes
+        extra_buffers=[],
+        log_prefix="Evolve constant density - "
     )
     for field in data:
-        data[field] = np.squeeze(np.array(data[field]))
+        data[field] = np.array(data[field])
     return fc.finalize_data(data=data)
