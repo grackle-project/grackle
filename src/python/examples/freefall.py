@@ -125,7 +125,7 @@ def main(args=None, output_name=output_name):
     # down to a lower temperature to get the species fractions in a
     # reasonable state.
     cooling_temperature = 100.
-    data0 = evolve_constant_density(
+    data0 = evolve_constant_density(  # noqa: F841
         fc, final_temperature=cooling_temperature,
         safety_factor=0.1)
 
