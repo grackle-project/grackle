@@ -5,6 +5,7 @@
 #define GRTEST_EVOLVE_MISC_HPP
 
 #include <grackle.h>
+#include <cmath>
 #include <limits>
 #include <optional>
 #include <string>
