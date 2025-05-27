@@ -194,7 +194,7 @@ cdef object invoke_integrator(
     object derived_quan=False,
     object extra_buffers=None,
     object log_prefix=""
-) except+:
+):
     # Constructs an integrator, use it to evolve the input data, and return a
     # dictionary of arrays holding the values computed during each integration
     # cycle
@@ -209,6 +209,9 @@ cdef object invoke_integrator(
     #    be copied into the output array. This should not contain "time" or any
     #    derived quantites. This will contain quantities like "force_factor"
     # log_prefix: A prefix for each log message
+    #
+    # Note: Since this routine returns a python-object, cython knows to check
+    #       for exceptions
 
     # Step 1: Prepare to build the integrator
     cdef GrackleTypePack_ExtType pack_ext_type = _get_grackle_type_pack(fc)

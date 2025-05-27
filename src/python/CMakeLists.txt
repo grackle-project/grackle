@@ -97,6 +97,8 @@ endif()
 if (NOT TARGET gtest_evolve)
   add_subdirectory(${GRACKLE_REPO_ROOT}/src/grtest grtest_sub-build-dir)
 endif()
+# the next line may be redundant in some cases
+set_target_properties(grtest_evolve PROPERTIES POSITION_INDEPENDENT_CODE True)
 
 # Actual build Logic
 # ------------------
