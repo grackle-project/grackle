@@ -116,6 +116,9 @@ struct GrackleTypePack {
 /// Many of the builder methods return IntegratorBuilder& to make it possible
 /// to chain methods together.
 class IntegratorBuilder {
+  /// indicates preference for recording at the start or end of cycle.
+  bool prefer_trailing_record_ = true;
+
   /// the courant safety factor
   double safety_factor_ = 0.01;
 
@@ -130,6 +133,13 @@ class IntegratorBuilder {
   std::optional<impl::FreeFallConfig_> ff_config_;
 
 public:
+
+  /// set preference for placement of the recording-task
+  IntegratorBuilder& prefer_trailing_record(bool value)
+  {
+    prefer_trailing_record_ = value;
+    return *this;
+  }
 
   /// set the safety factor
   IntegratorBuilder& safety_factor(double value)

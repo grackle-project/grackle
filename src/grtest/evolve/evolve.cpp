@@ -79,20 +79,22 @@ std::pair<std::string, grtest::IntegratorFn> grtest::IntegratorBuilder::build(
   int buffer_len
 ) const
 {
+  namespace grimpl = ::grtest::impl;
+
   if (buffer_len < 0) {return {"buffer_len must be positive", {}}; }
 
-  int register_len = grtest::impl::elements_per_field_ptr(*pack.my_fields);
+  int register_len = grimpl::elements_per_field_ptr(*pack.my_fields);
 
   std::map<std::string, gr_float*> extra_registers;
   std::function<double()> calc_dt_fn;
-  std::vector<grtest::impl::TaskFn> task_vec;
+  std::vector<grimpl::TaskFn> task_vec;
 
   if (ff_config_.has_value()) {
     // extra_registers["force"] = ...
     return {"NOT IMPLEMENTED YET", {}};
   } else {
     // get a function to compute the timestep from the minimum cooling time
-    std::function<double()> tmp_fn = grtest::impl::make_tcool_dt_func(
+    std::function<double()> tmp_fn = grimpl::make_tcool_dt_func(
       safety_factor_, pack
     );
     // we just want to work with the value based on
@@ -104,26 +106,38 @@ std::pair<std::string, grtest::IntegratorFn> grtest::IntegratorBuilder::build(
     calc_dt_fn = [initial_dt]() { return initial_dt; };
 
     // now set up the tasks
-    grtest::impl::SolveChemistryTask chem_task{pack};
+    grimpl::SolveChemistryTask chem_task{pack};
     task_vec.push_back(chem_task);
   }
 
+  // setup RecordTask
   bool any_bufs = output_bufs.size() > 0;
   if (any_bufs && buffer_len == 0) {
     return {"buffer_len can't be zero when buffers are provided", {}};
+
   } else if ((!any_bufs) && buffer_len == 0) {
     return {"buffers can't be provided when buffer_len is 0", {}};
-  } else {
-    std::pair<std::string, grtest::impl::RecordTask> pair =
-      grtest::impl::RecordTask::create(
-        register_len, buffer_len, chem_registers, extra_registers, output_bufs);
-    if (pair.first.size() > 0) { return {pair.first, {}}; }
 
-    task_vec.push_back(std::move(pair.second));
+  } else {
+    bool end_of_timestep = prefer_trailing_record_;
+    std::string err_msg; // only used if there is an error
+    std::optional<grimpl::RecordTask> maybe_task = grimpl::RecordTask::create(
+      register_len, buffer_len, end_of_timestep, chem_registers,
+      extra_registers, output_bufs, err_msg
+    );
+    if (!maybe_task) {
+      return {err_msg, {}};
+    } else if (prefer_trailing_record_) {
+      task_vec.push_back(std::move(*maybe_task));
+    } else {
+      task_vec.insert(task_vec.begin(), std::move(*maybe_task));
+    }
   }
 
-  std::pair<std::string, grtest::impl::FieldStopTrigger> trigger_rslt =
-    grtest::impl::FieldStopTrigger::create(stop_field_kind_,
+  // setup the machinery to detect whether a field-value (such as density or
+  // temperature) triggered the stopping condition
+  std::pair<std::string, grimpl::FieldStopTrigger> trigger_rslt =
+    grimpl::FieldStopTrigger::create(stop_field_kind_,
                                            field_thresh_val_cgs_,
                                            pack);
   if (trigger_rslt.first.size() > 0) { return {trigger_rslt.first, {}}; }

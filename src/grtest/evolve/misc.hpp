@@ -113,6 +113,12 @@ public:
     FieldStopThresh kind, double threshold_cgs, grtest::GrackleTypePack pack
   ) {
     FieldStopTrigger trigger;
+    trigger.kind = kind;
+    trigger.threshold_cgs = threshold_cgs;
+    trigger.n_elements = elements_per_field_ptr(*pack.my_fields);
+    trigger.buffer = std::vector<gr_float>((std::size_t)trigger.n_elements);
+    trigger.pack = pack;
+
     if (kind != FieldStopThresh::None) {
       if (has_ghost_padding(*pack.my_fields)) {
         return {"FieldStopTrigger doesn't support ghost padding yet", trigger};
@@ -120,11 +126,6 @@ public:
         return {"FieldStopTrigger needs positive threshold", trigger};
       }
     }
-    trigger.kind = kind;
-    trigger.threshold_cgs = threshold_cgs;
-    trigger.n_elements = elements_per_field_ptr(*pack.my_fields);
-    trigger.buffer = std::vector<gr_float>((std::size_t)trigger.n_elements);
-    trigger.pack = pack;
     return {"", trigger};
   }
 };

@@ -6,7 +6,8 @@
 
 #include <grackle.h>
 #include <string>
-#include <utility>  // std::move, std::pair
+#include <utility>  // std::pair
+#include <optional>
 #include <vector>
 
 #include "evolve.hpp"
@@ -41,6 +42,7 @@ class RecordTask {
 
   int register_len;
   int batches_before_wrap;
+  bool end_of_timestep;
   std::vector<RegisterBufferPair> pairs;
   gr_float* dt_buffer = nullptr;
 
@@ -52,7 +54,8 @@ public:
     int batch = state.cycle % batches_before_wrap;
     // dt_buffer is special because it always holds a single element
     if (dt_buffer != nullptr) {
-      dt_buffer[batch] = static_cast<gr_float>(state.t + dt);
+      double t = (end_of_timestep) ? state.t + dt : state.t;
+      dt_buffer[batch] = static_cast<gr_float>(t);
     }
 
     int buffer_start = batch * register_len;
@@ -67,38 +70,52 @@ public:
   }
 
   /// factory method that creates a new RecordTask
-  static std::pair<std::string, RecordTask> create(
-    int register_len, int buffer_len,
+  ///
+  /// we wrap the returned RecordTask instance in an optional to avoid certain
+  /// compiler warnings about using potentially using uninitialized instances
+  static std::optional<RecordTask> create(
+    int register_len, int buffer_len, bool end_of_timestep,
     std::map<std::string, gr_float*> chem_registers,
     std::map<std::string, gr_float*> extra_registers,
-    std::map<std::string, gr_float*> buffer_map
-  ) {
-    RecordTask task;
+    std::map<std::string, gr_float*> buffer_map,
+    std::string& err_msg
+  )
+  {
+    // lambda-function that prepares an error output in a single line
+    auto err = [&err_msg](std::string msg) -> std::optional<RecordTask> {
+      err_msg = msg;
+      return {};
+    };
+
     if ((register_len <= 0) || (buffer_len < register_len)) {
-      return {"register_len must be positive & can't exceed buffer_len", task};
+      return err("register_len must be positive & can't exceed buffer_len");
     }
+
+    RecordTask task;
     task.register_len = register_len;
     task.batches_before_wrap = buffer_len / register_len;
+    task.end_of_timestep = end_of_timestep;
 
     // extract buffers from buffer_map
     for (const auto& [key, buffer_ptr]: buffer_map) {
       gr_float* tmp_reg = nullptr;
 
       if (buffer_ptr == nullptr) {
-        return {"nullptr buffer for: " + key, task};
+        return err("nullptr buffer for: " + key);
 
       } else if (chain_find_(tmp_reg, key, chem_registers, extra_registers)) {
-        if (tmp_reg == nullptr) { return {"register is nullptr: " + key, task}; }
+        if (tmp_reg == nullptr) { return err("register is nullptr: " + key); }
         task.pairs.push_back({tmp_reg, buffer_ptr});
 
       } else if (key == "time") {
         task.dt_buffer = buffer_ptr;
 
       } else {
-        return {"unknown register: " + key, task};
+        return err("unknown_register: " + key);
+
       }
     }
-    return {"", task};
+    return {task};
   }
 
 };
