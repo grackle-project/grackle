@@ -8,8 +8,8 @@ everything is working properly.
 
 The tests are primarily organized into 2 test suites:
 
-  1. the :ref:`core-library test suite <corelib-suite>`, which performs tests on the Core library
-  2. the :ref:`pygrackle test suite <pygrackle-suite>`, which performs tests on the pygrackle bindings
+1. the :ref:`core-library test suite <corelib-suite>`, which performs tests on the Core library
+2. the :ref:`pygrackle test suite <pygrackle-suite>`, which performs tests on the pygrackle bindings
 
 Our continuous integration system is also set up to ensure that all Python code conforms to `PEP 8 <https://www.python.org/dev/peps/pep-0008/>`__
 
@@ -27,10 +27,10 @@ The "compilation tests" verify that all code examples build, run, and return con
 
 The core-library tests are driven by the ``ctest`` program that is shipped as part of ``CMake``.
 
-  - the ``CTest`` test-driver is integrated with ``CMake`` and it is designed to flexibly run various kinds of tests by invoking the command-line
+- the ``CTest`` test-driver is integrated with ``CMake`` and it is designed to flexibly run various kinds of tests by invoking the command-line
 
-  - the unit tests that the ``CTest`` driver invokes are all implemented using the `GoogleTest testing Framework <https://google.github.io/googletest/>`__.
-    Note: the dependency on GoogleTest is handled automatically (if you don't configure the build-system to use an existing installation, the build system will know to automatically fetch/compile the framework when instructed to compile the tests).
+- the unit tests that the ``CTest`` driver invokes are all implemented using the `GoogleTest testing Framework <https://google.github.io/googletest/>`__.
+  Note: the dependency on GoogleTest is handled automatically (if you don't configure the build-system to use an existing installation, the build system will know to automatically fetch/compile the framework when instructed to compile the tests).
 
 To configure Grackle builds to run the core-library tests, you must enable the ``GRACKLE_BUILD_TESTS`` option when you configure a CMake build of Grackle.
 This option just enables ``CTest`` and some extra build-recipes needed to run the tests (it has no impact on how libgrackle is compiled/linked).
@@ -49,11 +49,11 @@ The following snippet illustrates how you might invoke the unit tests when perfo
 In the above snippet, ``<build-dir>`` should be replaced with your chosen build-directory's name (see the section on :ref:`CMake builds <cmake_build>` for more info); a common choice might be ``build``.
 Let's quickly talk through the commands:
 
-  - First, we configure the build.
-    You can add :ref:`other configuration options <available_cmake_options>` (e.g. ``GNinja``, ``GRACKLE_USE_OPENMP``, ``BUILD_SHARED_LIBS``, ``CMAKE_BUILD_TYPE``, etc.)
-  - Next, we invoke the build
-  - The final 2 commands move into the build-directory and invoke the tests from there (the ``--output-on-failure`` flag is completely optional).
-    Starting in CMake 3.20 these 2 commands can be replaced with ``cmake --output-on-failure --test-dir <build-dir>``
+- First, we configure the build.
+  You can add :ref:`other configuration options <available_cmake_options>` (e.g. ``GNinja``, ``GRACKLE_USE_OPENMP``, ``BUILD_SHARED_LIBS``, ``CMAKE_BUILD_TYPE``, etc.)
+- Next, we invoke the build
+- The final 2 commands move into the build-directory and invoke the tests from there (the ``--output-on-failure`` flag is completely optional).
+  Starting in CMake 3.20 these 2 commands can be replaced with ``cmake --output-on-failure --test-dir <build-dir>``
 
 When you launch the tests, the output will look like the following:
 
@@ -107,16 +107,16 @@ As already noted, the pygrackle suite includes unit tests and answer tests.
 Unit tests (i.e., those with explicitly known correct answers) include
 the following:
 
- - correct library versioning
+- correct library versioning
 
- - correct behavior of the dynamic API
+- correct behavior of the dynamic API
 
- - proper and comoving unit systems are consistent
+- proper and comoving unit systems are consistent
 
- - mean molecular weight increases with metallicity
+- mean molecular weight increases with metallicity
 
- - atomic, primordial collisional ionization equilibrium agrees with
-   the analytical solution
+- atomic, primordial collisional ionization equilibrium agrees with
+  the analytical solution
 
 Answer tests are those whose correct answers must be generated from a
 prior, trusted version of Grackle (i.e., the "gold standard"). The
@@ -125,11 +125,11 @@ results (in *store-mode*), then run again on the latest version to
 compare (in *compare-mode*).
 These tests include:
 
- - all python examples run and give correct results for a range of
-   parameter values
+- all python examples run and give correct results for a range of
+  parameter values
 
- - all grackle 'calculate' functions return correct results for sets
-   of random field values
+- all grackle 'calculate' functions return correct results for sets
+  of random field values
 
 We refer to the location where the results of answer-tests are stored as the "answer-directory." This is an arbitrary user-specified location.
 
@@ -138,21 +138,21 @@ Quick Primer on the Test Runner's CLI
 
 By default, the pytest test-runner always runs all available test cases.
 
- - The suite's unit tests are **ALWAYS** available.
+- The suite's unit tests are **ALWAYS** available.
 
- - By default, **all** answer-tests are fully disabled.
-   These tests are made available, in *store-mode* or *compare-mode*, when the :option:`--answer-dir` command-line option is provided.
-   The :option:`--answer-store` command line flag enables *store-mode*, while its absence enables *compare-mode*.
+- By default, **all** answer-tests are fully disabled.
+  These tests are made available, in *store-mode* or *compare-mode*, when the :option:`--answer-dir` command-line option is provided.
+  The :option:`--answer-store` command line flag enables *store-mode*, while its absence enables *compare-mode*.
 
-   .. option:: --answer-dir=<PATH>
+  .. option:: --answer-dir=<PATH>
 
-      Specifies the path to the "answer-directory".
-      This is the custom user-specified directory where answer-tests are stored (in *store-mode*) or read from (in *compare-mode*).
+     Specifies the path to the "answer-directory".
+     This is the custom user-specified directory where answer-tests are stored (in *store-mode*) or read from (in *compare-mode*).
 
-   .. option:: --answer-store
+  .. option:: --answer-store
 
-      The presence of this flag enables *store-mode*, where answer-tests results are stored to the answer-directory (any previously recorded answers will be overwritten).
-      When :option:`--answer-dir` is specified and this flag is omitted, *compare-mode* is enabled.
+     The presence of this flag enables *store-mode*, where answer-tests results are stored to the answer-directory (any previously recorded answers will be overwritten).
+     When :option:`--answer-dir` is specified and this flag is omitted, *compare-mode* is enabled.
 
 *For contributors:* you may find pytest's `build-in command-line interface <https://docs.pytest.org/en/stable/how-to/usage.html>`__ useful during debugging (e.g. you can instruct pytest to only run a subset of all available tests).
 
