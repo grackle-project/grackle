@@ -1,3 +1,4 @@
+import importlib
 import json
 import numpy as np
 from matplotlib import pyplot as plt
@@ -18,17 +19,21 @@ pytestmark = pytest.mark.skipif(
     reason="this module currently requires an editable installation"
 )
 
-sys.path.append(os.path.join(grackle_python_dir, "examples"))
-from cooling_cell import main as _cooling_cell_main
-from cooling_rate import main as _cooling_rate_main
-from freefall import main as _freefall_main
-from yt_grackle import main as _yt_grackle_main
+def _get_model_main_fn(module_name):
+    # the implementation is inspired by
+    # https://docs.python.org/3/library/importlib.html#importing-a-source-file-directly
+    file_path = os.path.abspath(
+        os.path.join(grackle_python_dir, "examples", f"{module_name}.py"))
+    spec = importlib.util.spec_from_file_location(module_name, file_path)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = module
+    spec.loader.exec_module(module)
+    return module.main
+
 
 model_fns = {
-    "cooling_cell" : _cooling_cell_main,
-    "cooling_rate" : _cooling_rate_main,
-    "freefall" : _freefall_main,
-    "yt_grackle" : _yt_grackle_main
+    model : _get_model_main_fn(module_name=model)
+    for model in ["cooling_cell", "cooling_rate", "freefall", "yt_grackle"]
 }
 
 _ivars = {
