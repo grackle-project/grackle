@@ -41,9 +41,7 @@ commands:
             python3 -m venv $HOME/venv
             source $HOME/venv/bin/activate
             pip install --upgrade pip
-            pip install --upgrade wheel
-            pip install --upgrade setuptools
-            pip install flake8
+            pip install --group dev
 
   lint:
     description: "Lint."
@@ -108,7 +106,7 @@ commands:
               make install
               cd ../../ # go back to the root level
 
-              PYGRACKLE_LEGACY_LINK=classic pip install -v -e .[dev]
+              PYGRACKLE_LEGACY_LINK=classic pip install -v -e .
             else # this branch builds grackle with cmake
 
               cmake -DGRACKLE_USE_DOUBLE=ON                   \
@@ -118,7 +116,7 @@ commands:
                     -Bbuild
               cmake --build build
               
-              Grackle_DIR=${PWD}/build pip install -v -e .[dev]
+              Grackle_DIR=${PWD}/build pip install -v -e .
             fi
 
   install-standalone-pygrackle:
@@ -133,7 +131,7 @@ commands:
           command: |
             source $HOME/venv/bin/activate
             git checkout << parameters.tag >>
-            pip install -e .[dev]
+            pip install -e .
 
   install-docs-dependencies:
     description: "Install dependencies for docs build."
@@ -144,9 +142,7 @@ commands:
             python3 -m venv $HOME/venv
             source $HOME/venv/bin/activate
             pip install --upgrade pip
-            pip install --upgrade wheel
-            pip install --upgrade setuptools
-            pip install sphinx --requirement doc/source/requirements.txt
+            pip install --group docs
 
   download-test-data:
     description: "Download test data."
@@ -216,7 +212,7 @@ commands:
             source $HOME/venv/bin/activate
             pip uninstall --yes pygrackle # it's ok if pygrackle wasn't installed yet
             git checkout << parameters.gold-standard-tag >>
-            pip install -e .[dev]
+            pip install -e .
       - run-pygrackle-tests:
           omp: 'false'
           build_kind: 'standalone-pygrackle'
@@ -276,7 +272,7 @@ jobs:
           command: |
             source $HOME/venv/bin/activate
             git checkout $CIRCLE_BRANCH
-            pip install -e .[dev]
+            pip install -e .
       - run-pygrackle-tests:
           omp: 'false'
           build_kind: 'standalone-pygrackle'

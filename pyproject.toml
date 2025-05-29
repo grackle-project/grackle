@@ -63,16 +63,10 @@ Documentation = 'https://grackle.readthedocs.io/'
 Source = 'https://github.com/grackle-project/grackle'
 Tracker = 'https://github.com/grackle-project/grackle/issues'
 
-[project.optional-dependencies]
-dev = [
-  'flake8',
-  'packaging',
-  'pytest',
-  'sphinx',
-  'sphinx-tabs',
-  'furo',
-]
-
+[dependency-groups]
+docs = ['sphinx', 'sphinx-tabs', 'furo']
+test = ['pytest', 'packaging']
+dev = ['flake8', {include-group = 'test'}]
 
 [tool.pytest.ini_options]
 # settings inspired by: learn.scientific-python.org/development/guides/pytest/
