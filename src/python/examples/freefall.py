@@ -29,7 +29,7 @@ from pygrackle.utilities.data_path import grackle_data_dir
 from pygrackle.utilities.model_tests import \
     get_test_variables
 
-output_name = os.path.basename(__file__[:-3]) # strip off ".py"
+_MODEL_NAME = os.path.basename(__file__[:-3]) # strip off ".py"
 
 def gen_plot(fc, data, fname):
     plots = pyplot.loglog(data["density"], data["temperature"],
@@ -52,15 +52,10 @@ def gen_plot(fc, data, fname):
     pyplot.savefig(fname)
 
 
-def main(args=None, output_name=output_name):
+def main(args=None):
     args = sys.argv[1:] if args is None else args
-    # If we are running the script through the testing framework,
-    # then we will pass in two integers corresponding to the sets
-    # of parameters and inputs.
-    if len(args) > 0:
-        par_index = int(args[0])
-        input_index = int(args[1])
-        my_vars = get_test_variables(output_name, par_index, input_index)
+    if len(args) != 0:  # we are using the testing framework
+        my_vars = get_test_variables(_MODEL_NAME, args)
 
         metallicity = my_vars["metallicity"]
         extra_attrs = my_vars["extra_attrs"]
@@ -69,8 +64,7 @@ def main(args=None, output_name=output_name):
 
         in_testing_framework = True
 
-    # Just run the script as is.
-    else:
+    else:  # Just run the script as is.
         metallicity = 0.
         # dictionary to store extra information in output dataset
         extra_attrs = {}
@@ -91,6 +85,7 @@ def main(args=None, output_name=output_name):
         my_chemistry.grackle_data_file = os.path.join(
             grackle_data_dir, "cloudy_metals_2008_3D.h5")
 
+        output_name = _MODEL_NAME
         in_testing_framework = False
 
     redshift = 0.

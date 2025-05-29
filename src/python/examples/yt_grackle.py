@@ -17,23 +17,19 @@ import yt
 
 from pygrackle import add_grackle_fields
 from pygrackle.utilities.data_path import grackle_data_dir
-from pygrackle.utilities.model_tests import model_test_format_version
+from pygrackle.utilities.model_tests import get_test_variables
 
-output_name = os.path.basename(__file__[:-3]) # strip off ".py"
+_MODEL_NAME = os.path.basename(__file__[:-3]) # strip off ".py"
 
 DS_NAME = "IsolatedGalaxy/galaxy0030/galaxy0030"
 ds_path = os.path.join(os.environ.get('YT_DATA_DIR', default='.'), DS_NAME)
 
-def main(args=None, output_name=output_name):
+def main(args=None):
     args = sys.argv[1:] if args is None else args
-    # If we are running the script through the testing framework,
-    # then we will pass in two integers corresponding to the sets
-    # of parameters and inputs.
-    if len(args) > 1:
-        par_index = int(args[0])
-        input_index = int(args[1])
-        output_name = f"{output_name}_{par_index}_{input_index}"
-        extra_attrs = {"format_version": model_test_format_version}
+    if len(args) != 0:  # we are using the testing framework
+        my_vars = get_test_variables(_MODEL_NAME, args)
+        extra_attrs = my_vars["extra_attrs"]
+        output_name = my_vars["output_name"]
 
         if 'YT_DATA_DIR' not in os.environ:
             raise RuntimeError(
@@ -44,6 +40,7 @@ def main(args=None, output_name=output_name):
     else:
         # dictionary to store extra information in output dataset
         extra_attrs = {}
+        output_name = _MODEL_NAME
 
     ds = yt.load(ds_path)
 

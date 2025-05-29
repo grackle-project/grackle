@@ -145,14 +145,9 @@ def test_model(answertestspec, tmp_path, model_name, par_index, input_index):
     if (model_name == "yt_grackle") and ("YT_DATA_DIR" not in os.environ):
         pytest.skip("YT_DATA_DIR env variable isn't defined")
 
-    # TODO: figure out how to instruct the examples where to store the results as a
-    #       function argument (so we can stop using os.chdir)
-    original_cwd = os.getcwd()
-    os.chdir(tmp_path)
-    try:
-        return_val = model_fns[model_name](args=[str(par_index), str(input_index)])
-    finally:
-        os.chdir(original_cwd)
+    return_val = model_fns[model_name](
+        args=[f"--out-dir={tmp_path!s}", str(par_index), str(input_index)],
+    )
 
     model_par = f"{model_name}_{par_index}_{input_index}"
     assert return_val == 0, f"Model {model_par} didn't complete succesfully."
