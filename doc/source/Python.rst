@@ -169,12 +169,6 @@ The above snippet, includes the optional ``-e`` flag to perform an editable-inst
 
    The high level interface of the `uv python package manager <https://docs.astral.sh/uv/>`__ automatically installs the "dev" dependency-group when you install Pygrackle from source.
 
-.. note::
-
-   At one point, over the course of a few months, the documentation indicated that you should install development dependencies with commands like ``pip install -e '.[dev]``.
-   That will no longer work (those commands relied on separate machinery for "extrathat wasn't as well-suited to this task).
-
-
 Running the Example Scripts
 ---------------------------
 
