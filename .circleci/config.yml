@@ -41,7 +41,8 @@ commands:
             python3 -m venv $HOME/venv
             source $HOME/venv/bin/activate
             pip install --upgrade pip
-            pip install --group dev
+            pip install --group test
+            pip install flake8
 
   lint:
     description: "Lint."
