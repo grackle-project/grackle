@@ -148,7 +148,7 @@ Installing Pygrackle Development Requirements
 
 There are a handful of additional packages required purely for developing
 Grackle. For example, these will enable :ref:`testing` and building
-the documentation locally. These depdendencies are specified as dependency
+the documentation locally. These dependencies are specified as dependency
 groups, which can be installed with pip (v25.1).
 To install all of these dependencies, you can invoke
 
