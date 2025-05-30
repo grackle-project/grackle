@@ -176,6 +176,9 @@ endif()
 # if desired, setup Grackle's tests that use CTest/GoogleTest (this has no
 # impact on the tests run via pytest, those are handled outside of cmake)
 if(GRACKLE_BUILD_TESTS)
+  # add testing utilities
+  add_subdirectory(src/grtest)
+
   # the GTest dependency has already been found
 
   # load CMake's built-in module that defines functions to register unit tests
