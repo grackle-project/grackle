@@ -177,6 +177,10 @@ commands:
         type: enum
         default: 'true'
         enum: ['true', 'false']
+      overwrite:
+        type: enum
+        default: 'true'
+        enum: ['true', 'false']
     steps:
       - run:
           name: "Run the pytest test-suite (build_kind: << parameters.build_kind >>, omp: << parameters.omp >>, generate: << parameters.generate >>)."
@@ -196,7 +200,11 @@ commands:
 
               ANSWER_DIR=./my-test_answers
               if [ '<< parameters.generate >>' == 'true' ]; then
-                py.test --answer-dir=${ANSWER_DIR} --answer-store
+                if [[ '<< parameters.overwrite >>' == 'true' || ! -d ${ANSWER_DIR} ]]; then
+                  py.test --answer-dir=${ANSWER_DIR} --answer-store
+                else
+                  echo "Answers already exist; skipping."
+                fi
               else
                 py.test --answer-dir=${ANSWER_DIR}
               fi
@@ -209,6 +217,10 @@ commands:
         description: "The gold-standard to use for generating the answers"
         type: string
         default: "gold-standard-nccv1"
+      cache-tag:
+        description: "A unique tag to append to the cache name"
+        type: string
+        default: "1"
     steps:
       - run:
           name: "Build Pygrackle from Gold-Standard Commit (<< parameters.gold-standard-tag >>)"
@@ -217,10 +229,20 @@ commands:
             pip uninstall --yes pygrackle # it's ok if pygrackle wasn't installed yet
             git checkout << parameters.gold-standard-tag >>
             pip install -e .[dev]
+            rm -rf ./my-test_answers # in case answers have already been generated
+      - restore_cache:
+          name: "Restore gold standard answers from cache."
+          key: << parameters.gold-standard-tag >>-cache<< parameters.cache-tag >>
       - run-pygrackle-tests:
           omp: 'false'
           build_kind: 'standalone-pygrackle'
           generate: 'true'
+          overwrite: 'false'
+      - save_cache:
+          name: "Save gold standard answers to cache."
+          key: << parameters.gold-standard-tag >>-cache<< parameters.cache-tag >>
+          paths:
+            - ./my-test_answers
       - run:
           command: |
             source $HOME/venv/bin/activate
