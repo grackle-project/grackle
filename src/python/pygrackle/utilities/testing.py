@@ -57,18 +57,3 @@ def requires_module(module):
         return ffalse
     else:
         return ftrue
-
-def run_command(command, timeout=None, cwd=None):
-    try:
-        proc = subprocess.run(command, shell=True, timeout=timeout, cwd=cwd)
-        if proc.returncode == 0:
-            success = True
-        else:
-            success = False
-    except subprocess.TimeoutExpired:
-        print ("Process reached timeout of %d s. (%s)" % (timeout, command))
-        success = False
-    except KeyboardInterrupt:
-        print ("Killed by keyboard interrupt!")
-        success = False
-    return success

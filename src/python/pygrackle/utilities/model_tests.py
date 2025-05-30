@@ -11,10 +11,17 @@
 # software.
 ########################################################################
 
+import argparse
 import itertools
 import os
+import sys
 
 from pygrackle import chemistry_data
+
+if sys.version_info < (3, 9):
+    from functools import lru_cache as cache
+else:
+    from functools import cache
 
 model_test_format_version = 1
 
@@ -150,7 +157,7 @@ def get_model_set(model_name, parameter_index, input_index):
     """
 
     if model_name not in model_sets:
-        raise ValueError("Unkown model name: {model_name}.")
+        raise ValueError(f"Unkown model name: {model_name}.")
 
     my_model = model_sets[model_name]
     par_set = my_model["parameter_sets"][parameter_index]
@@ -158,7 +165,21 @@ def get_model_set(model_name, parameter_index, input_index):
 
     return par_set, input_set
 
-def get_test_variables(model_name, par_index, input_index):
+@cache
+def _build_parser():
+    p = argparse.ArgumentParser(
+        description=(
+            "This script illustrates an example of using Grackle. To use the "
+            "the script for learning, invoke it without any args (the command "
+            "line arguments are ONLY for tests)"
+        )
+    )
+    p.add_argument("--out-dir", default=".", help="the output directory")
+    p.add_argument("parameter_index", type=int)
+    p.add_argument("input_index", type=int)
+    return p
+
+def get_test_variables(model_name, arg_l):
     """
     Setup objects and variables for a model test.
 
@@ -172,6 +193,9 @@ def get_test_variables(model_name, par_index, input_index):
     # module when we don't have an editable install (for testing purposes)
     from pygrackle.utilities.data_path import grackle_data_dir
 
+    args = _build_parser().parse_args(args=arg_l)
+    par_index, input_index = args.parameter_index, args.input_index
+
     par_set, input_set = get_model_set(
         model_name, par_index, input_index)
 
@@ -182,7 +206,8 @@ def get_test_variables(model_name, par_index, input_index):
             val = os.path.join(grackle_data_dir, val)
         setattr(my_chemistry, par, val)
 
-    output_name = f"{model_name}_{par_index}_{input_index}"
+    output_name = os.path.join(
+        args.out_dir, f"{model_name}_{par_index}_{input_index}")
     extra_attrs = {"format_version": model_test_format_version}
     extra_attrs.update(par_set)
     extra_attrs.update(input_set)
