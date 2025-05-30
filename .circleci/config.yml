@@ -303,7 +303,7 @@ jobs:
     # our scripts).
     executor:
       name: python
-      tag: 3.8.14
+      tag: 3.9.22
       resource_class: medium  # <- 2 cores
 
     working_directory: ~/grackle
@@ -362,15 +362,15 @@ workflows:
    tests:
      jobs:
        - test-suite:
-           name: "Pygrackle test suite - Python 3.8"
-           tag: "3.8.14"
+           name: "Pygrackle test suite - Python 3.9"
+           tag: "3.9.22"
 
        - corelib-tests:
            name: "Core library test suite"
 
        - docs-build:
            name: "Docs build"
-           tag: "3.8.14"
+           tag: "3.9.22"
 
    weekly:
      triggers:
@@ -382,12 +382,12 @@ workflows:
                 - main
      jobs:
        - test-suite:
-           name: "Pygrackle test suite - Python 3.8"
-           tag: "3.8.14"
+           name: "Pygrackle test suite - Python 3.9"
+           tag: "3.9.22"
 
        - corelib-tests:
            name: "Core library test suite"
 
        - docs-build:
            name: "Docs build"
-           tag: "3.8.14"
+           tag: "3.9.22"
