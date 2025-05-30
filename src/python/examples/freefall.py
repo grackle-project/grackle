@@ -27,10 +27,30 @@ from pygrackle.utilities.physical_constants import \
     cm_per_mpc
 from pygrackle.utilities.data_path import grackle_data_dir
 from pygrackle.utilities.model_tests import \
-    get_model_set, \
-    model_test_format_version
+    get_test_variables
 
 output_name = os.path.basename(__file__[:-3]) # strip off ".py"
+
+def gen_plot(fc, data, fname):
+    plots = pyplot.loglog(data["density"], data["temperature"],
+                          color="black", label="T$_{gas}$")
+    if fc.chemistry_data.dust_chemistry == 1:
+        plots.extend(
+            pyplot.loglog(data["density"], data["dust_temperature"],
+                          color="black", linestyle="--", label="T$_{dust}$"))
+    pyplot.xlabel("$\\rho$ [g/cm$^{3}$]")
+    pyplot.ylabel("T [K]")
+
+    pyplot.twinx()
+    plots.extend(
+        pyplot.loglog(data["density"], data["H2I_density"] / data["density"],
+                      color="red", label="f$_{H2}$"))
+    pyplot.ylabel("H$_{2}$ fraction")
+    pyplot.legend(plots, [plot.get_label() for plot in plots],
+                  loc="lower right")
+    pyplot.tight_layout()
+    pyplot.savefig(fname)
+
 
 if __name__=="__main__":
     # If we are running the script through the testing framework,
@@ -39,12 +59,11 @@ if __name__=="__main__":
     if len(sys.argv) > 1:
         par_index = int(sys.argv[1])
         input_index = int(sys.argv[2])
-        my_chemistry, input_set = get_model_set(
-            output_name, par_index, input_index)
-        for var, val in input_set.items():
+        my_vars = get_test_variables(output_name, par_index, input_index)
+        for var, val in my_vars.items():
             globals()[var] = val
-        output_name = f"{output_name}_{par_index}_{input_index}"
-        extra_attrs = {"format_version": model_test_format_version}
+
+        in_testing_framework = True
 
     # Just run the script as is.
     else:
@@ -67,6 +86,8 @@ if __name__=="__main__":
         my_chemistry.h2_optical_depth_approximation = 1
         my_chemistry.grackle_data_file = os.path.join(
             grackle_data_dir, "cloudy_metals_2008_3D.h5")
+
+        in_testing_framework = False
 
     redshift = 0.
 
@@ -108,25 +129,8 @@ if __name__=="__main__":
     data = evolve_freefall(fc, final_density,
                            safety_factor=0.01,
                            include_pressure=True)
-
-    plots = pyplot.loglog(data["density"], data["temperature"],
-                          color="black", label="T$_{gas}$")
-    if fc.chemistry_data.dust_chemistry == 1:
-        plots.extend(
-            pyplot.loglog(data["density"], data["dust_temperature"],
-                          color="black", linestyle="--", label="T$_{dust}$"))
-    pyplot.xlabel("$\\rho$ [g/cm$^{3}$]")
-    pyplot.ylabel("T [K]")
-
-    pyplot.twinx()
-    plots.extend(
-        pyplot.loglog(data["density"], data["H2I_density"] / data["density"],
-                      color="red", label="f$_{H2}$"))
-    pyplot.ylabel("H$_{2}$ fraction")
-    pyplot.legend(plots, [plot.get_label() for plot in plots],
-                  loc="lower right")
-    pyplot.tight_layout()
-    pyplot.savefig(f"{output_name}.png")
+    if not in_testing_framework:
+        gen_plot(fc, data, fname=f"{output_name}.png")
 
     # save data arrays as a yt dataset
     yt.save_as_dataset({}, f"{output_name}.h5",
