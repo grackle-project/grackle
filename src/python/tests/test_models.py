@@ -1,3 +1,4 @@
+import importlib
 import json
 import numpy as np
 from matplotlib import pyplot as plt
@@ -10,7 +11,6 @@ from numpy.testing import assert_allclose
 
 from pygrackle.__config__ import _is_editable_installation
 from pygrackle.utilities.model_tests import model_parametrization
-from pygrackle.utilities.testing import run_command
 
 from testing_common import grackle_python_dir
 
@@ -19,7 +19,22 @@ pytestmark = pytest.mark.skipif(
     reason="this module currently requires an editable installation"
 )
 
-python_example_dir = os.path.join(grackle_python_dir, "examples")
+def _get_model_main_fn(module_name):
+    # the implementation is inspired by
+    # https://docs.python.org/3/library/importlib.html#importing-a-source-file-directly
+    file_path = os.path.abspath(
+        os.path.join(grackle_python_dir, "examples", f"{module_name}.py"))
+    spec = importlib.util.spec_from_file_location(module_name, file_path)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = module
+    spec.loader.exec_module(module)
+    return module.main
+
+
+model_fns = {
+    model : _get_model_main_fn(module_name=model)
+    for model in ["cooling_cell", "cooling_rate", "freefall", "yt_grackle"]
+}
 
 _ivars = {
     "cooling_rate": "temperature",
@@ -136,12 +151,17 @@ def test_model(answertestspec, tmp_path, model_name, model_variant,
     if (model_name == "yt_grackle") and ("YT_DATA_DIR" not in os.environ):
         pytest.skip("YT_DATA_DIR env variable isn't defined")
 
-    script_path = os.path.join(python_example_dir, f"{model_name}.py")
-    command = f"{sys.executable} {script_path} {model_variant} {par_index} {input_index}"
+    return_val = model_fns[model_name](
+        args=[
+            f"--out-dir={tmp_path!s}",
+            model_variant,
+            str(par_index),
+            str(input_index)
+        ],
+    )
 
     model_par = f"{model_name}_{model_variant}_{par_index}_{input_index}"
-    rval = run_command(command, timeout=60, cwd=tmp_path)
-    assert rval, f"Model {model_par} didn't complete succesfully."
+    assert return_val == 0, f"Model {model_par} didn't complete succesfully."
 
     output_basename = f"{model_par}.h5"
     output_file = os.path.join(str(tmp_path), output_basename)
@@ -150,7 +170,8 @@ def test_model(answertestspec, tmp_path, model_name, model_variant,
     if answertestspec.generate_answers:
         os.rename(output_file, answer_path)
     else:
-        assert os.path.exists(answer_path)
+        assert os.path.exists(answer_path), \
+            f"No gold-standard answer file exists at {answer_path}"
 
         ds1 = yt.load(output_file)
         ds2 = yt.load(answer_path)
