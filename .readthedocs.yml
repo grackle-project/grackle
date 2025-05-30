@@ -6,6 +6,8 @@ build:
     python: "3.13"
   jobs:
     install:
+      - pwd
+      - pip --version
       - pip install --group 'docs'
 
 sphinx:
