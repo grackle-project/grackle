@@ -4,30 +4,20 @@ Pygrackle: Running Grackle in Python
 ====================================
 
 Grackle comes with a Python interface, called Pygrackle, which provides
-access to all of Grackle's functionality.  Pygrackle requires the following
-Python packages:
+access to all of Grackle's functionality.
 
-- `Cython <https://cython.org/>`__
+To install Pygackle, you'll need to make sure that HDF5 and a fortran compiler are installed (for building the Grackle library itself).
 
-- flake8 (only required for the test suite)
+Pygrackle's runtime-dependencies are:
 
 - `h5py <https://www.h5py.org/>`__
-
 - `matplotlib <https://matplotlib.org/>`__
-
 - `NumPy <https://www.numpy.org/>`__
-
-- packaging (only required for the test suite)
-
-- py.test (only required for the test suite)
-
 - `yt <https://yt-project.org/>`__
 
-The easiest thing to do is follow the instructions for installing yt,
-which will provide you with Cython, matplotlib, and NumPy.  Flake8 and
-py.test can then be installed via pip.
+The above dependencies are automatically installed with pip (alternatively you can follow instructions for installing yt).
 
-You also need to have a fortran compiler installed (for building the Grackle library itself).
+If you want to run the pygrackle test-suite, you'll need the ``packaging`` and ``py.test`` packages. If pip is up to date (25.1 or newer), you can simply invoke ``pip install --group dev`` from the root of the repository.
 
 .. _install-pygrackle:
 
@@ -156,24 +146,28 @@ If this command executes without raising any errors, then you have successfully 
 Installing Pygrackle Development Requirements
 +++++++++++++++++++++++++++++++++++++++++++++
 
-There are a handful of additional packages required for developing
+There are a handful of additional packages required purely for developing
 Grackle. For example, these will enable :ref:`testing` and building
-the documentation locally. To install the development dependencies,
-repeat the last line of the :ref:`pygrackle installation instructions
-<install-pygrackle>` with ``[dev]`` appended.
+the documentation locally. These dependencies are specified as dependency
+groups, which can be installed with pip (v25.1).
+To install all of these dependencies, you can invoke
 
 .. code-block:: shell-session
 
-   ~/grackle $ pip install -e .[dev]
+   ~/grackle $ pip install --group dev
 
-
-If you use ``zsh`` as your shell, you will need quotes around
-'.[dev]'.
+The above command will install the dependencies independently of Pygrackle.
+To install these dependencies at the same time as Pygrackle, you can replace last line of the :ref:`pygrackle installation instructions <install-pygrackle>` with:
 
 .. code-block:: shell-session
 
-   ~/grackle $ pip install -e '.[dev]'
+   ~/grackle $ pip install --group=dev -e .
 
+The above snippet, includes the optional ``-e`` flag to perform an editable-install, which is necessary to run most tests.
+
+.. tip::
+
+   The high level interface of the `uv python package manager <https://docs.astral.sh/uv/>`__ automatically installs the "dev" dependency-group when you install Pygrackle from source.
 
 Running the Example Scripts
 ---------------------------

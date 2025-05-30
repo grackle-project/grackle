@@ -64,15 +64,15 @@ Source = 'https://github.com/grackle-project/grackle'
 Tracker = 'https://github.com/grackle-project/grackle/issues'
 
 [project.optional-dependencies]
-dev = [
-  'flake8',
-  'packaging',
-  'pytest',
-  'sphinx',
-  'sphinx-tabs',
-  'furo',
-]
+# currently the next line duplicates the dependency-groups purely for
+# historical reasons. We should delete the following entry in the near-future
+# (since they are actually dependencies of the pygrackle-wheel).
+dev = ['flake8', 'packaging', 'pytest', 'sphinx', 'sphinx-tabs', 'furo']
 
+[dependency-groups]
+docs = ['sphinx', 'sphinx-tabs', 'furo']
+test = ['pytest', 'packaging']
+dev = ['flake8', {include-group = "docs"}, {include-group = 'test'}]
 
 [tool.pytest.ini_options]
 # settings inspired by: learn.scientific-python.org/development/guides/pytest/
