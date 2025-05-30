@@ -167,7 +167,7 @@ The above snippet, includes the optional ``-e`` flag to perform an editable-inst
 
 .. tip::
 
-   The high level interface of the ``uv python package manager <https://docs.astral.sh/uv/>``__ automatically installs the "dev" dependency-group when you install Pygrackle from source.
+   The high level interface of the `uv python package manager <https://docs.astral.sh/uv/>`__ automatically installs the "dev" dependency-group when you install Pygrackle from source.
 
 .. note::
 
