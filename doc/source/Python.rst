@@ -7,21 +7,21 @@ Grackle comes with a Python interface, called Pygrackle, which provides
 access to all of Grackle's functionality.  Pygrackle requires the following
 Python packages:
 
- - `Cython <https://cython.org/>`__
+- `Cython <https://cython.org/>`__
 
- - flake8 (only required for the test suite)
+- flake8 (only required for the test suite)
 
- - `h5py <https://www.h5py.org/>`__
+- `h5py <https://www.h5py.org/>`__
 
- - `matplotlib <https://matplotlib.org/>`__
+- `matplotlib <https://matplotlib.org/>`__
 
- - `NumPy <https://www.numpy.org/>`__
+- `NumPy <https://www.numpy.org/>`__
 
- - packaging (only required for the test suite)
+- packaging (only required for the test suite)
 
- - py.test (only required for the test suite)
+- py.test (only required for the test suite)
 
- - `yt <https://yt-project.org/>`__
+- `yt <https://yt-project.org/>`__
 
 The easiest thing to do is follow the instructions for installing yt,
 which will provide you with Cython, matplotlib, and NumPy.  Flake8 and
@@ -38,14 +38,14 @@ Currently, the only way to get Pygrackle is to build it from source.
 
 There are 3 ways to build Pygrackle:
 
- 1. As a standalone, self-contained module.
-    The build command creates a fresh build of the Grackle library and packages it with the Pygrackle module.
-    **(This is the recommended approach)**
+1. As a standalone, self-contained module.
+   The build command creates a fresh build of the Grackle library and packages it with the Pygrackle module.
+   **(This is the recommended approach)**
 
- 2. As a module that links to an external copy of Grackle that was compiled with the :ref:`Classic build system <classic_build>`.
-    (This is consistent with the legacy approach for building Pygrackle).
+2. As a module that links to an external copy of Grackle that was compiled with the :ref:`Classic build system <classic_build>`.
+   (This is consistent with the legacy approach for building Pygrackle).
 
- 3. As a module that links to an external copy of Grackle that was created with the :ref:`CMake build system <cmake_build>`.
+3. As a module that links to an external copy of Grackle that was created with the :ref:`CMake build system <cmake_build>`.
 
 Currently, Pygrackle should be used with Grackle builds where OpenMP is disabled.
 

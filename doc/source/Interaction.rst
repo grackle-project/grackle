@@ -24,15 +24,15 @@ The grackle source code contains examples for C, C++, and Fortran codes.
 They are located in the :source:`src/example` directory and provide examples
 of calling all of grackle's functions.
 
-    * :code-example:`c_example.c` - C example
+* :code-example:`c_example.c` - C example
 
-    * :code-example:`c_local_example.c` - C example using only :ref:`local_functions`
+* :code-example:`c_local_example.c` - C example using only :ref:`local_functions`
 
-    * :code-example:`cxx_example.C` - C++ example
+* :code-example:`cxx_example.C` - C++ example
 
-    * :code-example:`cxx_omp_example.C` - C++ example using OpenMP
+* :code-example:`cxx_omp_example.C` - C++ example using OpenMP
 
-    * :code-example:`fortran_example.F` - Fortran example
+* :code-example:`fortran_example.F` - Fortran example
 
 The instructions for building and executing the examples vary based on the build-system:
 
@@ -415,9 +415,9 @@ As of version 2.2, Grackle can be run with OpenMP parallelism.
 To do this, the library must be compiled with OpenMP support.
 When compiling Grackle
 
-  * with the :ref:`classic build system <classic_build>`, you should execute ``make omp-on`` before compiling (more information about modifying settings in this system are provided :ref:`here <compiler-settings>`)
+* with the :ref:`classic build system <classic_build>`, you should execute ``make omp-on`` before compiling (more information about modifying settings in this system are provided :ref:`here <compiler-settings>`)
 
-  * with the :ref:`CMake build system <cmake_build>`, you should configure the build by assigning the ``GRACKLE_USE_OPENMP`` cmake-variable a value of ``ON`` (more information about modifying settings in this system are provided :ref:`here <how_to_configure>`)
+* with the :ref:`CMake build system <cmake_build>`, you should configure the build by assigning the ``GRACKLE_USE_OPENMP`` cmake-variable a value of ``ON`` (more information about modifying settings in this system are provided :ref:`here <how_to_configure>`)
 
 For an example of how to compile your code with OpenMP, see the
 :code-example:`cxx_omp_example.C` code example (:ref:`examples`).  Once your code has
@@ -934,9 +934,9 @@ The obvious way to configure this feature is to include the following snippet in
 
 However, inclusion of the above snippet will prevent the simulation code from compiling if the user has a version of Grackle installed in which :c:data:`chemistry_data` does not have the ``use_fancy_feature`` and ``fancy_feature_param`` fields. Consequently, such users will have to update Grackle.
 
-  * This can be inconvenient when a user has no interest in using this new feature, but needs an unrelated feature/bugfix introduced to the code in a subsequent changeset
+* This can be inconvenient when a user has no interest in using this new feature, but needs an unrelated feature/bugfix introduced to the code in a subsequent changeset
 
-  * This is especially inconvenient if a user is prototying a new feature in a custom Grackle branch in which the :c:data:`chemistry_data` struct is missing these fields.
+* This is especially inconvenient if a user is prototying a new feature in a custom Grackle branch in which the :c:data:`chemistry_data` struct is missing these fields.
 
 The following snippet shows how the dynamic access API can be used in the same way for versions of Grackle that include these parameters, and don't set the features in cases 
 
@@ -960,10 +960,10 @@ The following snippet shows how the dynamic access API can be used in the same w
 
 There are a few points worth noting:
 
-  * As the above snippets show, the dynamic api clearly produces more verbose code when configuring :c:data:`chemistry_data` field-by-field. However, in codes where users configure Grackle by specifying the name of fields in the :c:data:`chemistry_data` struct and the associated values in a parameter file, the dynamic API can facillitate MUCH less verbose code. Under certain implementations, it may not even be necessary to modify a simulation code to support newly-introduced grackle parameters.
+* As the above snippets show, the dynamic api clearly produces more verbose code when configuring :c:data:`chemistry_data` field-by-field. However, in codes where users configure Grackle by specifying the name of fields in the :c:data:`chemistry_data` struct and the associated values in a parameter file, the dynamic API can facillitate MUCH less verbose code. Under certain implementations, it may not even be necessary to modify a simulation code to support newly-introduced grackle parameters.
 
-  * The dynamic API is slower than configuring :c:data:`chemistry_data` in the classic approach. However, this shouldn't be an issue since :c:data:`chemistry_data` is usually just configured once when the simulation code starts up.
+* The dynamic API is slower than configuring :c:data:`chemistry_data` in the classic approach. However, this shouldn't be an issue since :c:data:`chemistry_data` is usually just configured once when the simulation code starts up.
 
-  * The highlighted functions can also be used in tandem with other functions described in :ref:`dynamic_api_functions` to simplify (de)serialization of :c:data:`chemistry_data`.
+* The highlighted functions can also be used in tandem with other functions described in :ref:`dynamic_api_functions` to simplify (de)serialization of :c:data:`chemistry_data`.
 
-  * For completeness, the dynamic API also provides an analogous function for configuring string parameters.
+* For completeness, the dynamic API also provides an analogous function for configuring string parameters.
