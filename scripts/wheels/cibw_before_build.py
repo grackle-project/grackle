@@ -12,7 +12,7 @@ _LOCAL_DIR = os.path.dirname(__file__)
 _IS_MACOS = platform.system() == "Darwin"
 
 def _run(*args, check=True, **kwargs):
-    print(">", *args, sep=" ")
+    print(">", *args, sep=" ", flush=True)
     return subprocess.run(args, check=check, **kwargs)
 
 
@@ -155,27 +155,37 @@ def get_hdf5(depend_dir, compile_hl_api=False, build_type="Release"):
     _run("tar", "-xf", h5_archive_path, "-C", h5_srcdir, "--strip-components=1")
 
     # 2. handle the zlib dependency (when we include it in the precompiled wheel)
-    #    - we'll use the machinery of the HDF5 build-system to compile and build zlib as
-    #      part of building HDF5.
-    #    - while this machinery automatically downloads hdf5, by default, it currently
-    #      doesn't validate checksums. Thus, we download it ourselves
+    #    - In an earlier version, I spent a little time trying to use the machinery of
+    #      the HDF5 build-system to try to compile and build zlib as part of building
+    #      HDF5. I was trying to manually download the file, so we could validate the
+    #      checksum (the HDF5 can't currently do that!), but I couldn't get it to work
+    #    - thus, we manually install it ourselves
     if sys.platform.startswith("win32"):
         raise RuntimeError("we need to implement logic to download & install zlib")
     elif _IS_MACOS:
-        zlib_version = "1.3.1"
-        zlib_url, zlib_cksum = (
-            f"https://github.com/madler/zlib/archive/refs/tags/v{zlib_version}.tar.gz",
-            "sha256:17e88863f3600672ab49182f217281b6fc4d3c762bde361935e436a95214d05c"
+        zlib_version, zlib_url, zlib_cksum = (
+            "1.3.1",
+            "https://github.com/madler/zlib/releases/download/v1.3.1/zlib-1.3.1.tar.gz",
+            "sha256:9a93b2b7dfdac77ceba5a558a580e74667dd6fede4585b91eefb60f03b72df23"
         )
+        assert f"/v{zlib_version}/" in zlib_url # sanity-check!
         with open(f"{h5_srcdir}/config/cmake/ZLIB/CMakeLists.txt", "r") as f:
             assert f'set(VERSION "{zlib_version}")' in f.read() # sanity-check!
         zlib_archive_path = download_file(
             url=zlib_url, cksum=zlib_cksum, dst_dir=depend_dir
         )
         # create the list of zlib-related args to pass to CMake
+        #external_zlib_args = [
+        #    "-DHDF5_ALLOW_EXTERNAL_SUPPORT=TGZ",
+        #    f"-DZLIB_TGZ_NAME={os.path.abspath(zlib_archive_path)}",
+        #    f"-DTGZPATH={os.path.abspath(zlib_archive_path)}"
+        #]
+
         external_zlib_args = [
             "-DHDF5_ALLOW_EXTERNAL_SUPPORT=TGZ",
-            f"-DZLIB_TGZ_NAME={os.path.abspath(zlib_archive_path)}"
+            f"-DZLIB_TGZ_NAME={os.path.basename(zlib_archive_path)}",
+            f"-DZLIB_TGZ_ORIGPATH={os.path.abspath(zlib_archive_path)}",
+            f"-DZLIB_USE_LOCALCONTENT=ON"
         ]
     else:
         # in this case, we use zlib installation provided by the
@@ -269,9 +279,7 @@ if __name__ == "__main__":
         print("the directory already exists -- nothing needs to be done", flush=True)
     else:
         os.mkdir(args.depend_dir)
-
         # install gfortran (does nothing on linux, where gfortran is already installed)
         get_gfortran(args.depend_dir)
-
         # download, build, and install HDF5
         get_hdf5(args.depend_dir, compile_hl_api=args.compile_hl_h5)
