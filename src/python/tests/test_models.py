@@ -130,9 +130,10 @@ def compare_model_results(compare_dir, model_par, ds1, ds2):
     with open(notes_fn, mode="a") as f:
         f.write("\n".join(output_lines))
 
-@pytest.mark.parametrize("model_name, par_index, input_index",
+@pytest.mark.parametrize("model_name, model_variant, par_index, input_index",
                          model_parametrization)
-def test_model(answertestspec, tmp_path, model_name, par_index, input_index):
+def test_model(answertestspec, tmp_path, model_name, model_variant,
+               par_index, input_index):
     """
     Each execution tests a python example with a set of inputs
 
@@ -151,10 +152,15 @@ def test_model(answertestspec, tmp_path, model_name, par_index, input_index):
         pytest.skip("YT_DATA_DIR env variable isn't defined")
 
     return_val = model_fns[model_name](
-        args=[f"--out-dir={tmp_path!s}", str(par_index), str(input_index)],
+        args=[
+            f"--out-dir={tmp_path!s}",
+            model_variant,
+            str(par_index),
+            str(input_index)
+        ],
     )
 
-    model_par = f"{model_name}_{par_index}_{input_index}"
+    model_par = f"{model_name}_{model_variant}_{par_index}_{input_index}"
     assert return_val == 0, f"Model {model_par} didn't complete succesfully."
 
     output_basename = f"{model_par}.h5"
@@ -164,7 +170,8 @@ def test_model(answertestspec, tmp_path, model_name, par_index, input_index):
     if answertestspec.generate_answers:
         os.rename(output_file, answer_path)
     else:
-        assert os.path.exists(answer_path)
+        assert os.path.exists(answer_path), \
+            f"No gold-standard answer file exists at {answer_path}"
 
         ds1 = yt.load(output_file)
         ds2 = yt.load(answer_path)
@@ -177,7 +184,7 @@ def test_model(answertestspec, tmp_path, model_name, par_index, input_index):
                                   model_par, ds1, ds2)
 
         for field in ds1.field_list:
-            err_msg = f"Model mismatch: {model_name}, {par_index}, " + \
-              f"{input_index}: {field}."
+            err_msg = f"Model mismatch: {model_name}, {model_variant}, " + \
+              f"{par_index}, {input_index}: {field}."
             assert_allclose(ds1.data[field], ds2.data[field],
                             atol=0, rtol=1e-8, err_msg=err_msg)

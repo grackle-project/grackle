@@ -396,6 +396,18 @@ int local_initialize_chemistry_data(chemistry_data *my_chemistry,
 
   }
 
+  if (my_chemistry->dust_species > 0 &&
+      my_chemistry->use_dust_density_field == 0) {
+    fprintf(stderr, "ERROR: dust_species > 0 requires use_dust_density_field > 0.\n");
+    return GR_FAIL;
+  }
+
+  if (my_chemistry->dust_species == 0 &&
+      my_chemistry->use_multiple_dust_temperatures > 0) {
+    fprintf(stderr, "ERROR: dust_species = 0 requires use_multiple_dust_temperatures = 0.\n");
+    return GR_FAIL;
+  }
+
   // Default photo-electric heating to off if unset.
   if (my_chemistry->photoelectric_heating < 0) {
     my_chemistry->photoelectric_heating = 0;
