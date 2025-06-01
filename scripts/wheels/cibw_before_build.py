@@ -74,7 +74,7 @@ def download_file(url, *, dst=None, dst_dir=None, quiet=None, cksum=None):
 def get_gfortran(depend_dir):
     if not _IS_MACOS:
         return None  # gfortran already exists on Linux
-    print("downloading gfortran")
+    print("downloading gfortran", flush=True)
 
     release, _, machine = platform.mac_ver()
 
@@ -162,12 +162,11 @@ def get_hdf5(depend_dir, compile_hl_api=False, build_type="Release"):
     if sys.platform.startswith("win32"):
         raise RuntimeError("we need to implement logic to download & install zlib")
     elif _IS_MACOS:
-        zlib_version, zlib_url, zlib_cksum = (
-            "1.3.1",
-            "https://github.com/madler/zlib/releases/download/v1.3.1/zlib-1.3.1.tar.gz",
-            "sha256:9a93b2b7dfdac77ceba5a558a580e74667dd6fede4585b91eefb60f03b72df23"
+        zlib_version = "1.3.1"
+        zlib_url, zlib_cksum = (
+            f"https://github.com/madler/zlib/archive/refs/tags/v{zlib_version}.tar.gz",
+            "sha256:17e88863f3600672ab49182f217281b6fc4d3c762bde361935e436a95214d05c"
         )
-        assert f"/v{zlib_version}/" in zlib_url # sanity-check!
         with open(f"{h5_srcdir}/config/cmake/ZLIB/CMakeLists.txt", "r") as f:
             assert f'set(VERSION "{zlib_version}")' in f.read() # sanity-check!
         zlib_archive_path = download_file(
@@ -260,13 +259,14 @@ if __name__ == "__main__":
     print("Showing Environment")
     for key, value in os.environ.items():
         print(f"  {key!s}={value!s}")
+    print("", end="\n", flush=True)
 
     handle_license(args.project_dir)
 
     # make the dependency-directory
-    print(f"creating: {depend_dir}")
+    print(f"creating: {depend_dir}",flush=True)
     if os.path.isdir(args.depend_dir):
-        print("the directory already exists -- nothing needs to be done")
+        print("the directory already exists -- nothing needs to be done", flush=True)
     else:
         os.mkdir(args.depend_dir)
 
