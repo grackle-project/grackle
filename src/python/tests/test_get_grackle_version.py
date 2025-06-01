@@ -14,8 +14,11 @@
 from pygrackle.grackle_wrapper import get_grackle_version
 from packaging.version import Version, InvalidVersion
 
+import shutil
 import os
 import subprocess
+
+import pytest
 
 def query_grackle_version_props():
     # retrieve the current version information with git
@@ -51,6 +54,7 @@ def query_grackle_version_props():
     tagged_on_current_revision = revision == revision_of_tag
     return latest_tagged_version, branch, revision, tagged_on_current_revision
 
+@pytest.mark.skipif(shutil.which("git") is None, reason="git is required")
 def test_get_grackle_version():
     # this test assumes that Grackle was compiled with the currently checked
     # out version of the repository

@@ -24,8 +24,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Optional, use if you use setuptools_scm
-          submodules: true # Optional, use if you have submodules
+          # fetch the full git history to let us run all our tests
+          fetch-depth: 0
+          # fetch the submodules to let us run the tests
+          submodules: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
 
       - name: Build SDist
         run: pipx run build --sdist
@@ -33,7 +40,11 @@ jobs:
       - name: Test sdist
         run: |
           sudo apt-get install libhdf5-dev
-          python -m pip install "$(echo dist/*.tar.gz)[dev]"
+          # it may not be necessary to setup a venv
+          python -m venv my-venv
+          source my-venv/bin/activate
+          pip install --upgrade pip
+          python -m pip install --group test "$(echo dist/*.tar.gz)"
           python -m pip list
           pytest
 
@@ -57,6 +68,11 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          # fetch the full git history to let us run all our tests
+          fetch-depth: 0
+          # fetch the submodules to let us run the tests
+          submodules: true
 
       - name: Set MACOSX_DEPLOYMENT_TARGET
         if: startsWith( matrix.os, 'macos-' )
