@@ -28,7 +28,7 @@ from pygrackle.utilities.physical_constants import \
 from pygrackle.utilities.model_tests import \
     get_test_variables
 
-output_name = os.path.basename(__file__[:-3]) # strip off ".py"
+_MODEL_NAME = os.path.basename(__file__[:-3]) # strip off ".py"
 
 def gen_plot(fc, data, fname):
     pyplot.loglog(data["temperature"], np.abs(data["cooling_rate"]),
@@ -39,21 +39,22 @@ def gen_plot(fc, data, fname):
     pyplot.savefig(fname)
 
 
-if __name__ == "__main__":
-    # If we are running the script through the testing framework,
-    # then we will pass in two integers corresponding to the sets
-    # of parameters and inputs.
-    if len(sys.argv) > 1:
-        par_index = int(sys.argv[1])
-        input_index = int(sys.argv[2])
-        my_vars = get_test_variables(output_name, par_index, input_index)
-        for var, val in my_vars.items():
-            globals()[var] = val
+def main(args=None):
+    args = sys.argv[1:] if args is None else args
+    if len(args) != 0:  # we are using the testing framework
+        my_vars = get_test_variables(_MODEL_NAME, args)
+
+        metallicity = my_vars["metallicity"]
+        redshift = my_vars["redshift"]
+        specific_heating_rate = my_vars["specific_heating_rate"]
+        volumetric_heating_rate = my_vars["volumetric_heating_rate"]
+        extra_attrs = my_vars["extra_attrs"]
+        my_chemistry = my_vars["my_chemistry"]
+        output_name = my_vars["output_name"]
 
         in_testing_framework = True
 
-    # Just run the script as is.
-    else:
+    else:  # Just run the script as is.
         metallicity = 1. # Solar
         redshift = 0.
         specific_heating_rate = 0.
@@ -76,6 +77,7 @@ if __name__ == "__main__":
         my_chemistry.use_specific_heating_rate = 1
         my_chemistry.use_volumetric_heating_rate = 1
 
+        output_name = _MODEL_NAME
         in_testing_framework = False
 
     # max_iterations needs to be increased for the colder temperatures
@@ -115,3 +117,8 @@ if __name__ == "__main__":
 
     yt.save_as_dataset({}, filename=f"{output_name}.h5",
                        data=data, extra_attrs=extra_attrs)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
