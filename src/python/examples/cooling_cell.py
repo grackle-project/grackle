@@ -32,7 +32,7 @@ from pygrackle.utilities.data_path import grackle_data_dir
 from pygrackle.utilities.model_tests import \
     get_test_variables
 
-output_name = os.path.basename(__file__[:-3]) # strip off ".py"
+_MODEL_NAME = os.path.basename(__file__[:-3]) # strip off ".py"
 
 def gen_plot(fc,  data, fname):
     p1, = pyplot.loglog(data["time"].to("Myr"),
@@ -51,19 +51,20 @@ def gen_plot(fc,  data, fname):
     pyplot.savefig(fname)
 
 
-if __name__ == "__main__":
-    # If we are running the script through the testing framework,
-    # then we will pass in two integers corresponding to the sets
-    # of parameters and inputs.
-    if len(sys.argv) > 1:
-        my_vars = get_test_variables(output_name, *sys.argv[1:])
-        for var, val in my_vars.items():
-            globals()[var] = val
+def main(args=None):
+    args = sys.argv[1:] if args is None else args
+    if len(args) != 0:  # we are using the testing framework
+        my_vars = get_test_variables(_MODEL_NAME, args)
+
+        metallicity = my_vars["metallicity"]
+        redshift = my_vars["redshift"]
+        extra_attrs = my_vars["extra_attrs"]
+        my_chemistry = my_vars["my_chemistry"]
+        output_name = my_vars["output_name"]
 
         in_testing_framework = True
 
-    # Just run the script as is.
-    else:
+    else:  # Just run the script as is.
         metallicity = 0.1 # Solar
         redshift = 0.
         # dictionary to store extra information in output dataset
@@ -78,6 +79,7 @@ if __name__ == "__main__":
         my_chemistry.grackle_data_file = \
           os.path.join(grackle_data_dir, "CloudyData_UVB=HM2012.h5")
 
+        output_name = _MODEL_NAME
         in_testing_framework = False
 
     density = 0.1 * mass_hydrogen_cgs # g /cm^3
@@ -114,3 +116,8 @@ if __name__ == "__main__":
     # save data arrays as a yt dataset
     yt.save_as_dataset({}, f"{output_name}.h5",
                        data=data, extra_attrs=extra_attrs)
+    return 0
+
+
+if __name__ == '__main__':
+    sys.exit(main())
