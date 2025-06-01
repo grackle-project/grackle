@@ -41,8 +41,7 @@ commands:
             python3 -m venv $HOME/venv
             source $HOME/venv/bin/activate
             pip install --upgrade pip
-            pip install --upgrade wheel
-            pip install --upgrade setuptools
+            pip install --group test
             pip install flake8
 
   lint:
@@ -108,7 +107,7 @@ commands:
               make install
               cd ../../ # go back to the root level
 
-              PYGRACKLE_LEGACY_LINK=classic pip install -v -e .[dev]
+              PYGRACKLE_LEGACY_LINK=classic pip install -v -e .
             else # this branch builds grackle with cmake
 
               cmake -DGRACKLE_USE_DOUBLE=ON                   \
@@ -118,7 +117,7 @@ commands:
                     -Bbuild
               cmake --build build
               
-              Grackle_DIR=${PWD}/build pip install -v -e .[dev]
+              Grackle_DIR=${PWD}/build pip install -v -e .
             fi
 
   install-standalone-pygrackle:
@@ -133,7 +132,7 @@ commands:
           command: |
             source $HOME/venv/bin/activate
             git checkout << parameters.tag >>
-            pip install -e .[dev]
+            pip install -e .
 
   install-docs-dependencies:
     description: "Install dependencies for docs build."
@@ -144,9 +143,7 @@ commands:
             python3 -m venv $HOME/venv
             source $HOME/venv/bin/activate
             pip install --upgrade pip
-            pip install --upgrade wheel
-            pip install --upgrade setuptools
-            pip install sphinx sphinx-tabs sphinx_rtd_theme
+            pip install --group docs
 
   download-test-data:
     description: "Download test data."
@@ -228,7 +225,7 @@ commands:
             source $HOME/venv/bin/activate
             pip uninstall --yes pygrackle # it's ok if pygrackle wasn't installed yet
             git checkout << parameters.gold-standard-tag >>
-            pip install -e .[dev]
+            pip install -e .
             rm -rf ./my-test_answers # in case answers have already been generated
       - restore_cache:
           name: "Restore gold standard answers from cache."
@@ -298,7 +295,7 @@ jobs:
           command: |
             source $HOME/venv/bin/activate
             git checkout $CIRCLE_BRANCH
-            pip install -e .[dev]
+            pip install -e .
       - run-pygrackle-tests:
           omp: 'false'
           build_kind: 'standalone-pygrackle'
@@ -323,12 +320,11 @@ jobs:
           command: source $BASH_ENV && source $HOME/venv/bin/activate && py.test
 
   corelib-tests:
-    # we're only using a python docker-image out of convenience (We only care
-    # that a version of python exists with a version of 3.7 or newer to run
-    # our scripts).
     executor:
       name: python
-      tag: 3.8.14
+      tag: 3.7.17  # we are explicitly using an older python version here, to
+                   # make sure that any python scripts used in compiling the
+                   # core-library maintain backwards compatability
       resource_class: medium  # <- 2 cores
 
     working_directory: ~/grackle
@@ -390,15 +386,15 @@ workflows:
    tests:
      jobs:
        - test-suite:
-           name: "Pygrackle test suite - Python 3.8"
-           tag: "3.8.14"
+           name: "Pygrackle test suite - Python 3.10"
+           tag: "3.10.3"
 
        - corelib-tests:
            name: "Core library test suite"
 
        - docs-build:
            name: "Docs build"
-           tag: "3.8.14"
+           tag: "3.10.3"
 
    weekly:
      triggers:
@@ -410,12 +406,12 @@ workflows:
                 - main
      jobs:
        - test-suite:
-           name: "Pygrackle test suite - Python 3.8"
-           tag: "3.8.14"
+           name: "Pygrackle test suite - Python 3.10"
+           tag: "3.10.3"
 
        - corelib-tests:
            name: "Core library test suite"
 
        - docs-build:
            name: "Docs build"
-           tag: "3.8.14"
+           tag: "3.10.3"

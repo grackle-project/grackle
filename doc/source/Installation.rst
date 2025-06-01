@@ -32,25 +32,25 @@ Dependencies
 In addition to C/C++ and Fortran compilers, the following dependency must 
 also be installed:
 
-   * `HDF5 <http://www.hdfgroup.org/HDF5/>`_, the hierarchical data format.
-     HDF5 also may require the szip and zlib libraries, which can be
-     found at the HDF5 website.
+* `HDF5 <http://www.hdfgroup.org/HDF5/>`_, the hierarchical data format.
+  HDF5 also may require the szip and zlib libraries, which can be
+  found at the HDF5 website.
 
-     .. note::
+  .. note::
 
-        If using the :ref:`classic build system <classic_build>`: compiling with HDF5 1.8 or greater requires that the ``H5_USE_16_API`` compatability directive is manually specified.
-        This can be done by manually adding ``-DH5_USE_16_API`` to the list of compiler flags given in machine-specific make files.
+     If using the :ref:`classic build system <classic_build>`: compiling with HDF5 1.8 or greater requires that the ``H5_USE_16_API`` compatability directive is manually specified.
+     This can be done by manually adding ``-DH5_USE_16_API`` to the list of compiler flags given in machine-specific make files.
 
-        You don't have to think about this when using :ref:`CMake build system <cmake_build>` (it is handled automatically).
+     You don't have to think about this when using :ref:`CMake build system <cmake_build>` (it is handled automatically).
 
 Although many systems already have them installed, both build systems have additional dependencies:
 
-   * the :ref:`CMake build system <cmake_build>` requires cmake to be installed.
-     It's easiest to download a binary distribution from the `CMake website <https://cmake.org/download/>`_ or use your system's package manager.
-     We require version 3.16 or newer.
+* the :ref:`CMake build system <cmake_build>` requires cmake to be installed.
+  It's easiest to download a binary distribution from the `CMake website <https://cmake.org/download/>`_ or use your system's package manager.
+  We require version 3.16 or newer.
 
-   * the :ref:`classic build system <classic_build>`, employs the ``makedepend`` and the `libtool <https://www.gnu.org/software/libtool/>`_ utilities.
-     It's often easiest to download these dependencies through your system's package manager.
+* the :ref:`classic build system <classic_build>`, employs the ``makedepend`` and the `libtool <https://www.gnu.org/software/libtool/>`_ utilities.
+  It's often easiest to download these dependencies through your system's package manager.
 
 .. _download_grackle:
 
@@ -348,7 +348,8 @@ More About Host-Files
 As noted above, we provide support for setting default value for particular machines by providing support for *host-files*\ .
 These files are provided mostly for convenience (and to provide parity with machine files provided by the classic build-system).
 They are most useful on HPC systems that provide multiple compiler toolchains.
-These are the *\*.cmake* files in the **config** directory.
+These are the *\*.cmake* files in the :source:`config` directory.
+
 
 Importantly, the usage of *host-files* is optional (and usually not required).
 They usually aren't needed on local systems (if you find that Grackle won't compile without a host-file, please let us know -- that may indicative of a bug).
@@ -365,11 +366,11 @@ The most important role is to specify cluster-specific optimization flags via th
 These flags will **ONLY** be used when compiling Grackle with the ``Release`` or ``RelWithDebInfo`` build-types.
 Here are 2 illustrative examples:
 
- * First we show that in order to pass multiple flags, the flags need to be specified by a semicolon delimited list.
-   If you stored ``"-xCORE-AVX512;-funroll-loops"`` within ``GRACKLE_OPTIMIZATION_FLIST_INIT``, then all source files will be compiled with these options (they won't be passed to the linker).
+* First we show that in order to pass multiple flags, the flags need to be specified by a semicolon delimited list.
+  If you stored ``"-xCORE-AVX512;-funroll-loops"`` within ``GRACKLE_OPTIMIZATION_FLIST_INIT``, then all source files will be compiled with these options (they won't be passed to the linker).
 
- * Next we show that to properly pass "option groups" you may need to make use of CMake's shell-like quoting with the ``SHELL:`` prefix (this relates to option de-duplication performed by CMake).
-   Thus, storing ``"SHELL:-option1 A;-Wall;SHELL:-option2 B"`` within ``GRACKLE_OPTIMIZATION_FLIST_INIT`` would cause all compiler invocations for source files used in Grackle to be passed ``-option1 A -Wall -option2 B``.
+* Next we show that to properly pass "option groups" you may need to make use of CMake's shell-like quoting with the ``SHELL:`` prefix (this relates to option de-duplication performed by CMake).
+  Thus, storing ``"SHELL:-option1 A;-Wall;SHELL:-option2 B"`` within ``GRACKLE_OPTIMIZATION_FLIST_INIT`` would cause all compiler invocations for source files used in Grackle to be passed ``-option1 A -Wall -option2 B``.
 
 While embedded builds currently respect ``GRACKLE_OPTIMIZATION_FLIST_INIT``, that is something we may stop supporting.
 
@@ -719,8 +720,8 @@ Compiler Toolchain Compatability
 
 As a general rule of thumb, the easiest, most reliable thing to do is  to ensure that Grackle is built with the same compiler toolchain (or a compatible one) as the
 
-   * the downstream application itself (whether it's a simulation code or pygrackle)
-   * any other dependencies of the application (whether it's other software libraries or other python extension-modules loaded at the same time).
+* the downstream application itself (whether it's a simulation code or pygrackle)
+* any other dependencies of the application (whether it's other software libraries or other python extension-modules loaded at the same time).
 
 This is only something you need to consider on platforms with multiple compiler toolchains present. 
 
