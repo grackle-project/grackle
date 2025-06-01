@@ -11,7 +11,6 @@ import sys
 _LOCAL_DIR = os.path.dirname(__file__)
 _IS_MACOS = platform.system() == "Darwin"
 
-
 def _run(*args, check=True, **kwargs):
     print(">", *args, sep=" ")
     return subprocess.run(args, check=check, **kwargs)
@@ -136,60 +135,58 @@ def get_hdf5(depend_dir, compile_hl_api=False, build_type="Release"):
     #    because it means that downstream simulation codes can't link against hdf5)
     # -> The advantage to keeping this separate is we can avoid recompiling hdf5 each
     #    time we compile a wheel with a different ABI (py310, py311) on a given platform
-    # -> I suspect that the practice of distributing the optional libaec dependency
-    #    with the wheel would make converting this into CMake, quite a bit more complex
+    # -> the practice of distributing the optional libz dependency with the wheel on a
+    #    subset of platforms makes complicates transcription of this logic into CMake
+    # -> we would also need to make sure that hdf5 and zlib (where applicable) are
+    #    properly renamed & put into the appropriate directories when "repairing" the
+    #    wheel with auditwheel/delocate
 
-    def _unzip_and_get_dirnames(archive_path, prefix):
-        src_dir = os.path.join(depend_dir, f"{prefix}-src")
-        build_dir = os.path.join(depend_dir, f"{prefix}-build")
-        os.mkdir(src_dir)
-        _run("tar", "-xf", archive_path, "-C", src_dir, "--strip-components=1")
-        return src_dir, build_dir
+    # we decided that we want to ship hdf5 with builtin gzip compression support
+    # (like h5py, we don't ship SZIP support due to patent considerations)
 
-    # we decided that we probably want to ship hdf5 with builtin compression support
-    # (using ZLIB and SZIP -- honestly, I'm not sure the latter makes sense)
-
-    # 1. handle the zlib dependency
-    if sys.platform.startswith("win32"):
-        raise RuntimeError("we need to implement logic to download & install zlib")
-    else:
-        pass # we are going to use the version of zlib provided by the OS
-
-    # 2. handle the libaec dependency
-    libaec_archive_path = download_file(
-        url="https://github.com/MathisRosenhauer/libaec/releases/download/v1.1.3/libaec-1.1.3.tar.gz",
-        cksum="sha256:bd8bea8b69ca602796b2daf17b0a7de019ce3c3bd0ad56fa9ef4a631a4088058",
-        dst_dir=depend_dir
-    )
-    libaec_src_dir, libaec_build_dir = _unzip_and_get_dirnames(
-        libaec_archive_path, prefix="libaec"
-    )
-    _run(  # configure the build
-        "cmake",
-        f"-S{libaec_src_dir}",
-        f"-B{libaec_build_dir}",
-        f"-DCMAKE_BUILD_TYPE={build_type}",
-        "-DCMAKE_INSTALL_PREFIX=/usr/local/",
-        "-DBUILD_STATIC_LIBS=OFF",
-    )
-    _run("cmake", "--build", libaec_build_dir)  # compile libaec
-    if _IS_MACOS:
-        _run("sudo", "cmake", "--install", libaec_build_dir)
-    else:
-        _run("cmake", "--install", libaec_build_dir)
-
-    # 3. handle hdf5 itself
-
+    # 1. Pre-download & unpack the archive for HDF5
     h5_archive_path = download_file(
         url="https://github.com/HDFGroup/hdf5/archive/refs/tags/hdf5_1.14.6.tar.gz",
         cksum="sha256:09ee1c671a87401a5201c06106650f62badeea5a3b3941e9b1e2e1e08317357f",
         dst_dir=depend_dir,
     )
-    h5_src_dir, h5_build_dir = _unzip_and_get_dirnames(h5_archive_path, prefix="h5")
+    h5_srcdir, h5_builddir = [os.path.join(depend_dir, p) for p in ("h5src", "h5build")]
+    os.mkdir(h5_srcdir)
+    _run("tar", "-xf", h5_archive_path, "-C", h5_srcdir, "--strip-components=1")
+
+    # 2. handle the zlib dependency (when we include it in the precompiled wheel)
+    #    - we'll use the machinery of the HDF5 build-system to compile and build zlib as
+    #      part of building HDF5.
+    #    - while this machinery automatically downloads hdf5, by default, it currently
+    #      doesn't validate checksums. Thus, we download it ourselves
+    if sys.platform.startswith("win32"):
+        raise RuntimeError("we need to implement logic to download & install zlib")
+    elif _IS_MACOS:
+        zlib_version, zlib_url, zlib_cksum = (
+            "1.3.1",
+            "https://github.com/madler/zlib/releases/download/v1.3.1/zlib-1.3.1.tar.gz",
+            "sha256:9a93b2b7dfdac77ceba5a558a580e74667dd6fede4585b91eefb60f03b72df23"
+        )
+        assert f"/v{zlib_version}/" in zlib_url # sanity-check!
+        with open(f"{h5_srcdir}/config/cmake/ZLIB/CMakeLists.txt", "r") as f:
+            assert f'set(VERSION "{zlib_version}")' in f.read() # sanity-check!
+        zlib_archive_path = download_file(
+            url=zlib_url, cksum=zlib_cksum, dst_dir=depend_dir
+        )
+        # create the list of zlib-related args to pass to CMake
+        external_zlib_args = [
+            "-DHDF5_ALLOW_EXTERNAL_SUPPORT=TGZ",
+            f"-DZLIB_TGZ_NAME={os.path.abspath(zlib_archive_path)}"
+        ]
+    else:
+        # in this case, we use zlib installation provided by the
+        external_zlib_args = []
+
+    # 3. Configure, Compile, and Install HDF5
     _run(  # configure the build
         "cmake",
-        f"-S{h5_src_dir}",
-        f"-B{h5_build_dir}",
+        f"-S{h5_srcdir}",
+        f"-B{h5_builddir}",
         f"-DCMAKE_BUILD_TYPE={build_type}",
         "-DCMAKE_INSTALL_PREFIX=/usr/local/",
         "-DBUILD_STATIC_LIBS=OFF",
@@ -205,15 +202,16 @@ def get_hdf5(depend_dir, compile_hl_api=False, build_type="Release"):
         "-DHDF5_BUILD_TOOLS=OFF",
         "-DHDF5_BUILD_PARALLEL_TOOLS=OFF",
         "-DHDF5_BUILD_STATIC_TOOLS=OFF",
-        # at this time, we don't need the following:
-        "-DHDF5_ENABLE_SZIP_SUPPORT=ON",
+        "-DHDF5_ENABLE_SZIP_SUPPORT=OFF",
+        "-DHDF5_USE_ZLIB_STATIC=OFF",
         "-DHDF5_ENABLE_Z_LIB_SUPPORT=ON",  # the option-name changes in HDF5 2.0
+        *external_zlib_args
     )
-    _run("cmake", "--build", h5_build_dir)  # compile hdf5
+    _run("cmake", "--build", h5_builddir)  # compile hdf5
     if _IS_MACOS:
-        _run("sudo", "cmake", "--install", h5_build_dir)
+        _run("sudo", "cmake", "--install", h5_builddir)
     else:
-        _run("cmake", "--install", h5_build_dir)
+        _run("cmake", "--install", h5_builddir)
 
 
 def handle_license(project_dir):
@@ -222,7 +220,7 @@ def handle_license(project_dir):
     print(f"replacing @PREFIX@ with {prefix} in {template_path}")
     configure_bin = os.path.join(_LOCAL_DIR, "..", "configure_file.py")
     annex_path = os.path.join(_LOCAL_DIR, "_binary_license_annex.txt")
-    literal_linenos = ["145", "146", "935"]
+    literal_linenos = ["112", "113", "902"]
     _run(
         configure_bin,
         f"--input={template_path}",
@@ -233,12 +231,17 @@ def handle_license(project_dir):
         *literal_linenos,
     )
 
+    annex_list = [annex_path]
+    if _IS_MACOS:
+        annex_list.append(os.path.join(_LOCAL_DIR, "zlib_license_for_macos.txt"))
+
     license_path = os.path.join(project_dir, "LICENSE")
     assert os.path.isfile(license_path)
     print(f"append binary-license-annex to {license_path}")
     with open(license_path, "a") as fout:
-        with open(annex_path, "r") as fsrc:
-            shutil.copyfileobj(fsrc, fout)
+        for path in annex_list:
+            with open(path, "r") as fsrc:
+                shutil.copyfileobj(fsrc, fout)
 
 
 parser = argparse.ArgumentParser()
