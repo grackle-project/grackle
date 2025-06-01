@@ -128,28 +128,69 @@ def get_gfortran(depend_dir):
         )
 
 
-def get_hdf5(depend_dir, compile_hl_api=False):
+def get_hdf5(depend_dir, compile_hl_api=False, build_type="Release"):
     # this logic could ostensibly be placed into src/python/CMakeLists.txt (to be
     # invoked by scikit-build-core)
     # -> if we do that, we need to make it **VERY** clear not to use the logic within
     #    the CMake build of the core grackle-library (people almost never want that
     #    because it means that downstream simulation codes can't link against hdf5)
-    # -> The advantage to keeping this separate is that we can avoid recompiling hdf5
-    #    for each time we compile a wheel with a different ABI (py310, py311, on a
-    #    given platform)
-    archive_path = download_file(
+    # -> The advantage to keeping this separate is we can avoid recompiling hdf5 each
+    #    time we compile a wheel with a different ABI (py310, py311) on a given platform
+    # -> I suspect that the practice of distributing the optional libaec dependency
+    #    with the wheel would make converting this into CMake, quite a bit more complex
+
+    def _unzip_and_get_dirnames(archive_path, prefix):
+        src_dir = os.path.join(depend_dir, f"{prefix}-src")
+        build_dir = os.path.join(depend_dir, f"{prefix}-build")
+        os.mkdir(src_dir)
+        _run("tar", "-xf", archive_path, "-C", src_dir, "--strip-components=1")
+        return src_dir, build_dir
+
+    # we decided that we probably want to ship hdf5 with builtin compression support
+    # (using ZLIB and SZIP -- honestly, I'm not sure the latter makes sense)
+
+    # 1. handle the zlib dependency
+    if sys.platform.startswith("win32"):
+        raise RuntimeError("we need to implement logic to download & install zlib")
+    else:
+        pass # we are going to use the version of zlib provided by the OS
+
+    # 2. handle the libaec dependency
+    libaec_archive_path = download_file(
+        url="https://github.com/MathisRosenhauer/libaec/releases/download/v1.1.3/libaec-1.1.3.tar.gz",
+        cksum="sha256:bd8bea8b69ca602796b2daf17b0a7de019ce3c3bd0ad56fa9ef4a631a4088058",
+        dst_dir=depend_dir
+    )
+    libaec_src_dir, libaec_build_dir = _unzip_and_get_dirnames(
+        libaec_archive_path, prefix="libaec"
+    )
+    _run(  # configure the build
+        "cmake",
+        f"-S{libaec_src_dir}",
+        f"-B{libaec_build_dir}",
+        f"-DCMAKE_BUILD_TYPE={build_type}",
+        "-DCMAKE_INSTALL_PREFIX=/usr/local/",
+        "-DBUILD_STATIC_LIBS=OFF",
+    )
+    _run("cmake", "--build", libaec_build_dir)  # compile libaec
+    if _IS_MACOS:
+        _run("sudo", "cmake", "--install", libaec_build_dir)
+    else:
+        _run("cmake", "--install", libaec_build_dir)
+
+    # 3. handle hdf5 itself
+
+    h5_archive_path = download_file(
         url="https://github.com/HDFGroup/hdf5/archive/refs/tags/hdf5_1.14.6.tar.gz",
         cksum="sha256:09ee1c671a87401a5201c06106650f62badeea5a3b3941e9b1e2e1e08317357f",
         dst_dir=depend_dir,
     )
-
-    src_dir, build_dir = [os.path.join(depend_dir, p) for p in ("h5-src", "h5-build")]
-    os.mkdir(src_dir)
-    _run("tar", "-xf", archive_path, "-C", src_dir, "--strip-components=1")
+    h5_src_dir, h5_build_dir = _unzip_and_get_dirnames(h5_archive_path, prefix="h5")
     _run(  # configure the build
         "cmake",
-        f"-S{src_dir}",
-        f"-B{build_dir}",
+        f"-S{h5_src_dir}",
+        f"-B{h5_build_dir}",
+        f"-DCMAKE_BUILD_TYPE={build_type}",
         "-DCMAKE_INSTALL_PREFIX=/usr/local/",
         "-DBUILD_STATIC_LIBS=OFF",
         # we only compile the high-level api if we want to be able to compile h5py on
@@ -165,14 +206,14 @@ def get_hdf5(depend_dir, compile_hl_api=False):
         "-DHDF5_BUILD_PARALLEL_TOOLS=OFF",
         "-DHDF5_BUILD_STATIC_TOOLS=OFF",
         # at this time, we don't need the following:
-        "-DHDF5_ENABLE_SZIP_SUPPORT=OFF",
-        "-DHDF5_ENABLE_Z_LIB_SUPPORT=OFF",  # the option-name changes in HDF5 2.0
+        "-DHDF5_ENABLE_SZIP_SUPPORT=ON",
+        "-DHDF5_ENABLE_Z_LIB_SUPPORT=ON",  # the option-name changes in HDF5 2.0
     )
-    _run("cmake", "--build", build_dir)  # compile hdf5
+    _run("cmake", "--build", h5_build_dir)  # compile hdf5
     if _IS_MACOS:
-        _run("sudo", "cmake", "--install", build_dir)
+        _run("sudo", "cmake", "--install", h5_build_dir)
     else:
-        _run("cmake", "--install", build_dir)
+        _run("cmake", "--install", h5_build_dir)
 
 
 def handle_license(project_dir):
@@ -181,7 +222,7 @@ def handle_license(project_dir):
     print(f"replacing @PREFIX@ with {prefix} in {template_path}")
     configure_bin = os.path.join(_LOCAL_DIR, "..", "configure_file.py")
     annex_path = os.path.join(_LOCAL_DIR, "_binary_license_annex.txt")
-    literal_linenos = ["112", "113", "902"]
+    literal_linenos = ["145", "146", "935"]
     _run(
         configure_bin,
         f"--input={template_path}",
@@ -226,7 +267,7 @@ if __name__ == "__main__":
     else:
         os.mkdir(args.depend_dir)
 
-        # install gfortran (does nothing on linux -- where gfortran is already installed)
+        # install gfortran (does nothing on linux, where gfortran is already installed)
         get_gfortran(args.depend_dir)
 
         # download, build, and install HDF5
