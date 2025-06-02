@@ -11,7 +11,10 @@ import sys
 _LOCAL_DIR = os.path.dirname(__file__)
 _IS_MACOS = platform.system() == "Darwin"
 
-def _run(*args, check=True, **kwargs):
+
+def _run(*args, check=True, sudo=False, **kwargs):
+    if sudo:
+        args = ("sudo",) + args
     print(">", *args, sep=" ", flush=True)
     return subprocess.run(args, check=check, **kwargs)
 
@@ -39,7 +42,6 @@ def download_file(url, *, dst=None, dst_dir=None, quiet=None, cksum=None):
     """download the file from url to dst"""
 
     # logic is duplicated by scripts in PR #235 AND #307
-
     basename = os.path.basename(url if dst is None else dst)
     if (dst is not None) and (dst_dir is not None):
         raise ValueError("dst and dst_dir can't both be specified")
@@ -144,54 +146,62 @@ def get_hdf5(depend_dir, compile_hl_api=False, build_type="Release"):
     # we decided that we want to ship hdf5 with builtin gzip compression support
     # (like h5py, we don't ship SZIP support due to patent considerations)
 
-    # 1. Pre-download & unpack the archive for HDF5
-    h5_archive_path = download_file(
+    install_prefix = "/usr/local"
+
+    # 1. handle the zlib dependency (when we include it in the precompiled wheel)
+    #    - In an earlier version, I spent a little time trying to use the machinery of
+    #      the HDF5 build-system to try to compile and build zlib as part of building
+    #      HDF5. I was trying to manually download the file, so we could validate the
+    #      checksum (the HDF5 can't currently do that!), but I couldn't get it to work
+    #    - thus, we manually install it ourselves
+    #    - I think CMake support is improving within zlib, so at the next zlib release
+    #      this may be easier
+    if sys.platform.startswith("win32"):
+        raise RuntimeError("we need to implement logic to download & install zlib")
+    elif _IS_MACOS:
+        # h5py distributes copies of zlib (rather than using the system-installed
+        # version), so we do too. I'm not 100% sure why, but I think it's because
+        # different OS versions can ship incompatible versions (and I think that they
+        # may ship old versions)
+        zlib_url, zlib_cksum = (
+            "https://github.com/madler/zlib/releases/download/v1.3.1/zlib-1.3.1.tar.gz",
+            "sha256:9a93b2b7dfdac77ceba5a558a580e74667dd6fede4585b91eefb60f03b72df23",
+        )
+        zlib_archive = download_file(url=zlib_url, cksum=zlib_cksum, dst_dir=depend_dir)
+        zlib_srcdir = os.path.join(depend_dir, "zlib-src")
+        zlib_builddir = os.path.join(depend_dir, "zlib-build")
+        os.mkdir(zlib_srcdir)
+        _run("tar", "-xf", zlib_archive, "-C", zlib_srcdir, "--strip-components=1")
+
+        _run(  # configure the build
+            "cmake",
+            f"-S{zlib_srcdir}",
+            f"-B{zlib_builddir}",
+            f"-DCMAKE_BUILD_TYPE={build_type}",
+            f"-DCMAKE_INSTALL_PREFIX={install_prefix}",
+            "-DBUILD_SHARED_LIBS=ON",
+            "-DBUILD_STATIC_LIBS=OFF",
+        )
+        _run("cmake", "--build", zlib_builddir)  # compile zlib
+        _run("cmake", "--install", zlib_builddir, sudo=True)
+        external_zlib_args = [
+            f"-DZLIB_INCLUDE_DIR={install_prefix}/include",
+            f"-DZLIB_LIBRARY={install_prefix}/lib/libz.dylib",
+            "-DZLIB_USE_EXTERNAL=OFF",
+        ]
+    else:
+        # in this case, we use zlib installation provided by the
+        external_zlib_args = []
+
+    # 2. Setup HDF5, itself
+    h5_archive = download_file(
         url="https://github.com/HDFGroup/hdf5/archive/refs/tags/hdf5_1.14.6.tar.gz",
         cksum="sha256:09ee1c671a87401a5201c06106650f62badeea5a3b3941e9b1e2e1e08317357f",
         dst_dir=depend_dir,
     )
     h5_srcdir, h5_builddir = [os.path.join(depend_dir, p) for p in ("h5src", "h5build")]
     os.mkdir(h5_srcdir)
-    _run("tar", "-xf", h5_archive_path, "-C", h5_srcdir, "--strip-components=1")
-
-    # 2. handle the zlib dependency (when we include it in the precompiled wheel)
-    #    - In an earlier version, I spent a little time trying to use the machinery of
-    #      the HDF5 build-system to try to compile and build zlib as part of building
-    #      HDF5. I was trying to manually download the file, so we could validate the
-    #      checksum (the HDF5 can't currently do that!), but I couldn't get it to work
-    #    - thus, we manually install it ourselves
-    if sys.platform.startswith("win32"):
-        raise RuntimeError("we need to implement logic to download & install zlib")
-    elif _IS_MACOS:
-        zlib_version, zlib_url, zlib_cksum = (
-            "1.3.1",
-            "https://github.com/madler/zlib/releases/download/v1.3.1/zlib-1.3.1.tar.gz",
-            "sha256:9a93b2b7dfdac77ceba5a558a580e74667dd6fede4585b91eefb60f03b72df23"
-        )
-        assert f"/v{zlib_version}/" in zlib_url # sanity-check!
-        with open(f"{h5_srcdir}/config/cmake/ZLIB/CMakeLists.txt", "r") as f:
-            assert f'set(VERSION "{zlib_version}")' in f.read() # sanity-check!
-        zlib_archive_path = download_file(
-            url=zlib_url, cksum=zlib_cksum, dst_dir=depend_dir
-        )
-        # create the list of zlib-related args to pass to CMake
-        #external_zlib_args = [
-        #    "-DHDF5_ALLOW_EXTERNAL_SUPPORT=TGZ",
-        #    f"-DZLIB_TGZ_NAME={os.path.abspath(zlib_archive_path)}",
-        #    f"-DTGZPATH={os.path.abspath(zlib_archive_path)}"
-        #]
-
-        external_zlib_args = [
-            "-DHDF5_ALLOW_EXTERNAL_SUPPORT=TGZ",
-            f"-DZLIB_TGZ_NAME={os.path.basename(zlib_archive_path)}",
-            f"-DZLIB_TGZ_ORIGPATH={os.path.abspath(zlib_archive_path)}",
-            f"-DZLIB_USE_LOCALCONTENT=ON"
-        ]
-    else:
-        # in this case, we use zlib installation provided by the
-        external_zlib_args = []
-
-    # 3. Configure, Compile, and Install HDF5
+    _run("tar", "-xf", h5_archive, "-C", h5_srcdir, "--strip-components=1")
     _run(  # configure the build
         "cmake",
         f"-S{h5_srcdir}",
@@ -214,13 +224,10 @@ def get_hdf5(depend_dir, compile_hl_api=False, build_type="Release"):
         "-DHDF5_ENABLE_SZIP_SUPPORT=OFF",
         "-DHDF5_USE_ZLIB_STATIC=OFF",
         "-DHDF5_ENABLE_Z_LIB_SUPPORT=ON",  # the option-name changes in HDF5 2.0
-        *external_zlib_args
+        *external_zlib_args,
     )
     _run("cmake", "--build", h5_builddir)  # compile hdf5
-    if _IS_MACOS:
-        _run("sudo", "cmake", "--install", h5_builddir)
-    else:
-        _run("cmake", "--install", h5_builddir)
+    _run("cmake", "--install", h5_builddir, sudo=_IS_MACOS)
 
 
 def handle_license(project_dir):
@@ -266,7 +273,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
     depend_dir, project_dir = args.depend_dir, args.project_dir
 
-    print("Showing Environment")
     for key, value in os.environ.items():
         print(f"  {key!s}={value!s}")
     print("", end="\n", flush=True)
@@ -274,7 +280,7 @@ if __name__ == "__main__":
     handle_license(args.project_dir)
 
     # make the dependency-directory
-    print(f"creating: {depend_dir}",flush=True)
+    print(f"creating: {depend_dir}", flush=True)
     if os.path.isdir(args.depend_dir):
         print("the directory already exists -- nothing needs to be done", flush=True)
     else:
