@@ -7,6 +7,7 @@ Name: HDF5
 Files: @PREFIX@/libhdf5*
 Description: bundled as a dynamically linked library
 Availability: https://github.com/HDFGroup/hdf5
+License: HDF5
   Copyright Notice and License Terms for
   HDF5 (Hierarchical Data Format 5) Software Library and Utilities
   -----------------------------------------------------------------------------
@@ -108,7 +109,7 @@ Name: GCC runtime library
 Files: @PREFIX@/libgfortran*
 Description: dynamically linked to files compiled with gcc
 Availability: https://gcc.gnu.org/git/?p=gcc.git;a=tree;f=libgfortran
-License: GPL-3.0-with-GCC-exception
+License: GPL-3.0-or-later WITH GCC-exception-3.1
      Copyright (C) 2002-2025 Free Software Foundation, Inc.
      Contributed by Paul Brook <paul@nowt.org>, and
      Andy Vaught <andy@xena.eas.asu.edu>
