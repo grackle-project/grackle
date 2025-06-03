@@ -85,7 +85,7 @@ While the above command should "just work," you have a few options for customizi
 
          You can either:
 
-            1. use the :envvar:`!SKBUILD_CMAKE_ARGS` env variable, where each argument is separated by a semicolong (e.g. ``"-DCMAKE_C_COMPILER=gcc-14;-DHDF5_ROOT=/path/to/hdf5"``).
+            1. use the :envvar:`!SKBUILD_CMAKE_ARGS` env variable, where each argument is separated by a semicolon (e.g. ``"-DCMAKE_C_COMPILER=gcc-14;-DHDF5_ROOT=/path/to/hdf5"``).
             2. use the :envvar:`!CMAKE_ARGS` env variable, where each argumenjt is separated by a space (e.g. ``"-DCMAKE_C_COMPILER=gcc-14 -DHDF5_ROOT=/path/to/hdf5"``).
 
 .. tip::
@@ -384,5 +384,5 @@ loaded dataset. Optionally, parameters can be specified manually to override.
 .. rubric:: Footnotes
 
 .. [#f1] When you want to overwrite a flag in a CMake build, we generally encourage use of CMake-specific counterparts to environment variables (e.g. prefer passing ``-DCMAKE_C_COMPILER=<blah>`` on the command-line to exporting ``CC=<blah>``), since the former has precedence and is more case.
-         However, in this case of driving a python build (that internally creates a CMake build, installs the products, and cleans up the build-directory), the use of environment variables is somewhat more common.
+         However, in this case of driving a python build (that internally creates a CMake build, installs the products, and cleans up the build directory), the use of environment variables is somewhat more common.
          Plus, the flags follow fairly standard Unix conventions.
