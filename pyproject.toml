@@ -190,15 +190,11 @@ For more context:
 
 [tool.cibuildwheel]
 build = "cp310-*"  # <- FIXME: "cp310-* cp311-* cp312-* cp313-*"
+skip = ["*_i686", "*_ppc64le", "*_s390x", "*_universal2"]
 # we compile high-level hdf5 api purely so we can run the test-command on musllinux
 # -> h5py doesn't ship binary-wheels for that platform
 # -> depending on how long h5py takes to compile, it may be better to simply use
 #    test-skip = "*-musllinux*"
 before-build = "python {project}/scripts/wheels/cibw_before_build.py --compile-hl-h5 3rdparty {project}"
-# once we deal with removing the editable-install requirement, we should use:
 test-groups = "test"  # <- this installs the test dependencies
-#test-command = "pytest -c {project}/pyproject.toml --color=yes {project}"
-test-command = "cd {project} && pytest --color=yes"
-
-[tool.cibuildwheel.linux]
-archs = "x86_64"
+test-command = "bash {project}/scripts/wheels/cibw_test_command.sh {project}"
