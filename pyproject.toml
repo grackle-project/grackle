@@ -130,7 +130,7 @@ sdist.exclude = [
     # code examples (they currently require editable installations)
     "src/python/examples",
     # for consistency, we exclude the core-library tests and examples
-    "tests", "src/examples",
+    "tests", "src/example",
     # exclude miscellaneous classic-build-system machinery
     "configure", "src/Makefile", "src/examples/Make*", "src/clib/Make*"
 ]
