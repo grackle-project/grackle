@@ -37,6 +37,11 @@ jobs:
       - name: Build SDist
         run: pipx run build --sdist
 
+      - name: Check README rendering for PyPI
+        run: |
+          python -mpip install twine
+          twine check dist/*
+
       - name: Test sdist
         run: |
           sudo apt-get install libhdf5-dev
