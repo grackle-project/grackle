@@ -82,10 +82,15 @@ def main():
         patterns = entry.files.split()  # patterns may be separated by whitespace
         for pat in patterns:
             matches = fnmatch.filter(lib_paths, str(pygrackle_dir.parent / pat))
-            if len(matches) == 0:
+            if len(matches) == 0 and pat.endswith("libgcc_s*"):
+                # this we make an exception for this case because it's needed for some
+                # linux-wheels, but not all of them
+                continue
+            elif len(matches) == 0:
                 print(
-                    f"ERROR: the file pattern `{pat}` describe a packaged library. This "
-                    f"pattern describes `{entry.location}`, from `{entry.location}`"
+                    f"ERROR: the file pattern `{pat}` doesn't describe a packaged "
+                    f"library. This pattern describes `{entry.location}`, which is "
+                    f"defined, starting at `{entry.location}`"
                 )
                 return 1
             all_matches.update(matches)
