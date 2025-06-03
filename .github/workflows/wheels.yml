@@ -61,7 +61,9 @@ jobs:
       matrix:
         os: [
           ubuntu-latest,
-          ubuntu-24.04-arm,
+          # we should revisit arm-based builds in the future
+          # -> the tests run REALLY slowly because wheels aren't shipped by yt/matplotlib
+          #ubuntu-24.04-arm,
           macos-13, # (runs on intel-CPUs)
           macos-14  #(runs on arm cpus)
         ]
@@ -125,3 +127,5 @@ jobs:
 
       - name: Publish to pypi
         uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
