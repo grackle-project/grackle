@@ -236,7 +236,7 @@ def handle_license(project_dir):
     print(f"replacing @PREFIX@ with {prefix} in {template_path}")
     configure_bin = os.path.join(_LOCAL_DIR, "..", "configure_file.py")
     annex_path = os.path.join(_LOCAL_DIR, "_binary_license_annex.txt")
-    literal_linenos = ["112", "113", "902"]
+    literal_linenos = ["113", "114", "903"]
     _run(
         configure_bin,
         f"--input={template_path}",
