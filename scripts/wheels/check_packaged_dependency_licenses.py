@@ -14,6 +14,12 @@ import platform
 from typing import Optional
 import sys
 
+_IS_LINUX = sys.platform.startswith('linux')
+_IS_LINUX_AARCH64 = _IS_LINUX and platform.machine() == "aarch64"
+_IS_LINUX_GLIBC = _IS_LINUX and platform.libc_ver()[0] == "glibc"
+# note: while platform.libc_ver() can reliably detect whether we're using glibc,
+#       it may provide "" rather than the actual name for some other libraries
+
 
 @dataclass
 class LicenseInfo:
@@ -77,16 +83,19 @@ def main():
 
     # now, we will go through and make sure every license_entry corresponds to 1 or more
     # lib_path entries (and vice-versa)
+
     all_matches = set()
     for entry in license_entries:
         patterns = entry.files.split()  # patterns may be separated by whitespace
         for pat in patterns:
             matches = fnmatch.filter(lib_paths, str(pygrackle_dir.parent / pat))
-            if len(matches) == 0 and pat.endswith("libgcc_s*"):
-                # this we make an exception for this case because it's needed for some
-                # linux-wheels, but not all of them
+            if len(matches) > 0:
+                all_matches.update(matches)
+            elif pat.endswith("libgcc_s*") and _IS_LINUX_GLIBC:
+                continue # libgcc_s needs to be distributed for musl, not glibc
+            elif pat.endswith("libquadmath*") and _IS_LINUX_AARCH64:
                 continue
-            elif len(matches) == 0:
+            else:
                 print(
                     f"ERROR: the file pattern `{pat}` doesn't describe a packaged "
                     f"library. This pattern describes `{entry.location}`, which is "
