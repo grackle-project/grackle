@@ -61,7 +61,7 @@ If a new enough version of CMake cannot be found, the above command will automat
 
 While the above command should "just work," you have a few options for customizing the build:
 
-1. In most cases, you probably want to use the standard environment variables directly understood by CMake: [#f1]_
+1. In most cases, you probably want to use the standard environment variables directly understood by CMake:\ [#f1]_
 
    - you can specifiy your choice of C and Fortran compilers that are used for this by manipulating the :envvar:`!CC` and :envvar:`!FC` environment variables.
    - if you must pass extra compiler flags to all invocations of the C or Fortran compiler (this *shouldn't* really be necessary), you can use the :envvar:`!CFLAGS` or :envvar:`!FFLAGS` environment variable.
