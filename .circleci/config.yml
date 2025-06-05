@@ -151,13 +151,8 @@ commands:
       - run:
           name: "Download test data."
           command: |
-            source $BASH_ENV
-            source $HOME/venv/bin/activate
-            mkdir -p $YT_DATA_DIR
-            cd $YT_DATA_DIR
-            wget --quiet http://yt-project.org/data/IsolatedGalaxy.tar.gz
-            tar xzf IsolatedGalaxy.tar.gz
-            rm IsolatedGalaxy.tar.gz
+            source $BASH_ENV  # sets up YT_DATA_DIR, env variable
+            ./scripts/ci/fetch-test-data.py
 
   run-pygrackle-tests:
     description: "Run the pytest test-suite. This suite includes a mix of general tests and pygrackle-specific tests."
