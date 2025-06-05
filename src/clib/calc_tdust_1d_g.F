@@ -5,7 +5,9 @@
 
       subroutine calc_tdust_1d_g(
      &     tdust, tgas, nh, gasgr, gamma_isrfa, isrf, itmask,
-     &     trad, in, is, ie, j, k)
+     &     trad, in, is, ie, j, k
+     &   , gr_N, gr_Size, gr_dT, gr_Td, alsp, kgr, idspecies
+     &   )
 
 !  CALCULATE EQUILIBRIUM DUST TEMPERATURE
 !
@@ -46,25 +48,37 @@
       integer in, is, ie, j, k
 
       real*8 tdust(in), tgas(in), nh(in), gasgr(in), isrf(in)
-      real*8 gamma_isrfa, trad
+      real*8 gamma_isrfa(in), trad
+
+!  opacity table of a grain species
+      integer gr_N(2), gr_Size
+      real*8  gr_dT, gr_Td(gr_N(2))
+      R_PREC  alsp(gr_N(2),in)
+      R_PREC logalsp(gr_N(2),in)
+      integer Td_N(1), Td_Size
+      real*8  logkgr
 
 !  Iteration mask
 
-      logical itmask(in)
+      MASK_TYPE itmask(in)
 
 !  Parameters
 
-      real*8 t_subl
-      parameter(t_subl = 1.5e3_DKIND) ! grain sublimation temperature
-      real*8 radf
-      parameter(radf = 4._DKIND * sigma_sb)
-      real*8 kgr1
-      parameter(kgr1 = 4.0e-4_DKIND)
-      real*8 tol, bi_tol, minpert, gamma_isrf(in)
-      parameter(tol = 1.e-5_DKIND, bi_tol = 1.e-3_DKIND, 
-     &     minpert = 1.e-10_DKIND)
-      integer itmax, bi_itmax
-      parameter(itmax = 50, bi_itmax = 30)
+      integer idspecies
+      ! grain sublimation temperature
+      real*8, parameter :: t_subl = 1.5e3_DKIND
+      real*8, parameter :: radf = 4._DKIND * sigma_sb
+
+! grain opacity from Omukai (2000, equation 17) normalized by
+! the local dust-to-gas ratio, which in this work is 0.934e-2.
+      real*8, parameter :: kgr1 = 4.0e-4_DKIND / 0.00934d0
+
+      real*8 gamma_isrf(in)
+      real*8, parameter :: tol = 1.e-5_DKIND
+      real*8, parameter :: bi_tol = 1.e-3_DKIND
+      real*8, parameter :: minpert = 1.e-10_DKIND
+      integer, parameter :: itmax = 50
+      integer, parameter :: bi_itmax = 30
 
 !  Locals
 
@@ -78,15 +92,26 @@
      &       slope(in), tdplus(in), tdustnow(in), tdustold(in),
      &       pert(in),
      &       bi_t_mid(in), bi_t_high(in)
-      logical nm_itmask(in), bi_itmask(in)
+      MASK_TYPE nm_itmask(in), bi_itmask(in)
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
 !=======================================================================
+!!    write(*,*) 'aa', gasgr, gamma_isrfa, isrf
 
       pert_i = 1.e-3_DKIND
 
       trad  = max(1._DKIND, trad)
       trad4 = trad**4
+
+!     \sum rho_SN kappa_SN / \sum rho_SN ndust_SN
+
+      Td_N(1) = gr_N(2)
+      Td_Size = gr_N(2)
+      do i = is+1, ie+1
+         if ( itmask(i) .ne. MASK_FALSE ) then
+            logalsp(:,i) = log10(alsp(:,i))
+         endif
+      enddo
 
 !     Set total cells for calculation
 
@@ -97,25 +122,25 @@
 !     Set local iteration mask and initial guess
 
       do i = is+1, ie+1
-         if ( itmask(i) ) then
-            gamma_isrf(i) = isrf(i) * gamma_isrfa
+         if ( itmask(i) .ne. MASK_FALSE ) then
+            gamma_isrf(i) = isrf(i) * gamma_isrfa(i)
          endif
       enddo
 
       do i = is+1, ie+1
          nm_itmask(i) = itmask(i)
          bi_itmask(i) = itmask(i)
-         if ( nm_itmask(i) ) then
+         if ( nm_itmask(i) .ne. MASK_FALSE ) then
 
             if (trad .ge. tgas(i)) then
                tdustnow(i) = trad
-               nm_itmask(i) = .false.
-               bi_itmask(i) = .false.
+               nm_itmask(i) = MASK_FALSE
+               bi_itmask(i) = MASK_FALSE
                c_done = c_done + 1
                nm_done = nm_done + 1
             else if (tgas(i) .gt. t_subl) then
 !     Use bisection if T_gas > grain sublimation temperature.
-               nm_itmask(i) = .false.
+               nm_itmask(i) = MASK_FALSE
                nm_done = nm_done + 1
             else
                tdustnow(i) = max(trad,
@@ -136,7 +161,7 @@
 !     Loop over slice
 
          do i = is+1, ie+1
-            if ( nm_itmask(i) ) then
+            if ( nm_itmask(i) .ne. MASK_FALSE ) then
 
                tdplus(i) = max(1.e-3_DKIND, ((1._DKIND + pert(i))
      &              * tdustnow(i)))
@@ -147,10 +172,12 @@
 !     Calculate grain opacities
 
          call calc_kappa_gr_g(tdustnow, kgr, nm_itmask,
-     &        in, is, ie, t_subl)
+     &        in, is, ie, t_subl
+     &      , Td_N, Td_Size, gr_dT, gr_Td, logalsp, idspecies)
 
          call calc_kappa_gr_g(tdplus, kgrplus, nm_itmask,
-     &        in, is, ie, t_subl)
+     &        in, is, ie, t_subl
+     &      , Td_N, Td_Size, gr_dT, gr_Td, logalsp, idspecies)
 
 !     Calculate heating/cooling balance
 
@@ -161,7 +188,7 @@
      &        gamma_isrf, nh, nm_itmask, solplus, in, is, ie)
 
          do i = is+1, ie+1
-            if ( nm_itmask(i) ) then
+            if ( nm_itmask(i) .ne. MASK_FALSE ) then
 
 !     Use Newton's method to solve for Tdust
 
@@ -169,7 +196,9 @@
      &              (pert(i) * tdustnow(i))
 
                tdustold(i) = tdustnow(i)
-               tdustnow(i) = tdustnow(i) - (sol(i) / slope(i))
+!              tdustnow(i) = tdustnow(i) - (sol(i) / slope(i))
+               tdustnow(i) = min(tdustnow(i) - (sol(i) / slope(i))
+     &                         , 3e3_DKIND)
 
                pert(i) = max(min(pert(i), 
      &              (0.5_DKIND * abs(tdustnow(i) - tdustold(i)) / 
@@ -177,13 +206,13 @@
 
 !     If negative solution calculated, give up and wait for bisection step.
                if (tdustnow(i) .lt. trad) then
-                  nm_itmask(i) = .false.
+                  nm_itmask(i) = MASK_FALSE
                   nm_done = nm_done + 1
 !     Check for convergence of solution
                else if (abs(sol(i) / solplus(i)) .lt. tol) then
-                  nm_itmask(i) = .false.
+                  nm_itmask(i) = MASK_FALSE
                   c_done = c_done + 1
-                  bi_itmask(i) = .false.
+                  bi_itmask(i) = MASK_FALSE
                   nm_done = nm_done + 1
                endif
 
@@ -208,16 +237,17 @@
 !     If iteration count exceeded, try once more with bisection
       if (c_done .lt. c_total) then
          do i = is+1, ie+1
-            if ( bi_itmask(i) ) then
+            if ( bi_itmask(i) .ne. MASK_FALSE ) then
                tdustnow(i)  = trad
-               bi_t_high(i) = tgas(i)
+!              bi_t_high(i) = tgas(i)
+               bi_t_high(i) = 3e3_DKIND
             endif
          enddo
 
          do iter = 1, bi_itmax
 
             do i = is+1, ie+1
-               if ( bi_itmask(i) ) then
+               if ( bi_itmask(i) .ne. MASK_FALSE ) then
 
                   bi_t_mid(i) = 0.5_DKIND * (tdustnow(i) + bi_t_high(i))
                   if (iter .eq. 1) then
@@ -228,13 +258,14 @@
             enddo
 
             call calc_kappa_gr_g(bi_t_mid, kgr, bi_itmask,
-     &           in, is, ie, t_subl)
+     &           in, is, ie, t_subl
+     &         , Td_N, Td_Size, gr_dT, gr_Td, logalsp, idspecies)
 
             call calc_gr_balance_g(bi_t_mid, tgas, kgr, trad4, gasgr,
      &           gamma_isrf, nh, bi_itmask, sol, in, is, ie)
 
             do i = is+1, ie+1
-               if ( bi_itmask(i) ) then
+               if ( bi_itmask(i) .ne. MASK_FALSE ) then
 
                   if (sol(i) .gt. 0._DKIND) then
                      tdustnow(i) = bi_t_mid(i)
@@ -244,7 +275,7 @@
 
                   if ((abs(bi_t_high(i) - tdustnow(i)) / tdustnow(i)) 
      &                 .le. bi_tol) then
-                     bi_itmask(i) = .false.
+                     bi_itmask(i) = MASK_FALSE
                      c_done = c_done + 1
                   endif
 
@@ -280,7 +311,7 @@ c            ERROR_MESSAGE
 
 !     Copy values back to thrown slice
       do i = is+1, ie+1
-         if ( itmask(i) ) then
+         if ( itmask(i) .ne. MASK_FALSE ) then
 
 !     Check for bad solutions
             if (tdustnow(i) .lt. 0._DKIND) then
@@ -309,7 +340,8 @@ c               ERROR_MESSAGE
 !////////////////////  SUBROUTINE CALC_KAPPA_GR_G  \\\\\\\\\\\\\\\\\\\\\
 
       subroutine calc_kappa_gr_g(
-     &     tdust, kgr, itmask, in, is, ie, t_subl)
+     &     tdust, kgr, itmask, in, is, ie, t_subl
+     &   , gr_N, gr_Size, gr_dT, gr_Td, logalsp, idspecies)
 
 !  CALCULATE GRAIN PLANK MEAN OPACITY
 !
@@ -344,21 +376,40 @@ c               ERROR_MESSAGE
 !  Arguments
 
       integer in, is, ie
+      integer idspecies
       real*8 t_subl
       real*8 tdust(in)
 
 !  Iteration mask
 
-      logical itmask(in)
+      MASK_TYPE itmask(in)
 
 !  Parameters
 
-      real*8 kgr1, kgr200
-      parameter(kgr1 = 4.0e-4_DKIND, kgr200 = 16.0_DKIND)
+! grain opacity from Omukai (2000, equation 17) normalized by
+! the local dust-to-gas ratio, which in this work is 0.934e-2.
+      real*8, parameter :: kgr1 = 4.0e-4_DKIND / 0.00934d0
+
+! We then apply a Td^2 scaling up to 200 K following Dopcke et al. (2011).
+! However, note that Dopcke et al. (2011) adopt a different
+! normalization (i.e., for kgr1).
+! Also note that Omukai (2000) says the Td^2 proportionality is only valid
+! for Td < 50 K. We go with this because Omukai (2000) does not suggest
+! what should be done for Td > 50 K.
+      real*8, parameter :: kgr200 = 16.0_DKIND / 0.00934d0
+
+!  Opacity table
+
+      integer gr_N(1), gr_Size
+      real*8  gr_dT, gr_Td(gr_N(1))
+      R_PREC  logalsp(gr_N(1),in)
 
 !  Locals
 
       integer i
+      R_PREC  logalsp1(gr_Size), logkgr
+      integer*8 gr_N_i64(1)
+      real*8 log10tdust
 
 !  Slice Locals
 
@@ -366,13 +417,19 @@ c               ERROR_MESSAGE
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
 !=======================================================================
+      if(idspecies.ne.0) then
+         gr_N_i64(1) = int(gr_N(1), 8)
+      endif
+
 
       do i = is+1, ie+1
-         if ( itmask(i) ) then
+      if ( itmask(i) .ne. MASK_FALSE ) then
 
-!     Temperature dependence from Dopcke et al. (2011).
-!     Normalized to Omukai (2000).
+         if(idspecies.eq.0) then
 
+!           Temperature dependence from Dopcke et al. (2011).
+!           Normalized to Omukai (2000).
+!           See comment above for note about Td dependence for kgr.
             if (tdust(i) .lt. 200._DKIND) then
                kgr(i) = kgr1 * tdust(i)**2
             else if (tdust(i) .lt. t_subl) then
@@ -382,7 +439,19 @@ c               ERROR_MESSAGE
      &              (kgr200 * (tdust(i) / 1.5e3_DKIND)**(-12)))
             endif
 
+         else
+
+            logalsp1(:) = logalsp(:,i)
+            log10tdust = log10(tdust(i))
+       
+            call interpolate_1D_g(
+     &           log10tdust, gr_N_i64, gr_Td, gr_dT,
+     &           gr_N_i64(1), logalsp1, logkgr)
+            kgr(i) = 10._DKIND**logkgr
+
          endif
+
+      endif
       enddo
 
       return
@@ -438,12 +507,11 @@ c               ERROR_MESSAGE
 
 !  Iteration mask
 
-      logical itmask(in)
+      MASK_TYPE itmask(in)
 
 !  Parameters
 
-      real*8 radf
-      parameter(radf = 4._DKIND * sigma_sb)
+      real*8, parameter :: radf = 4._DKIND * sigma_sb
 
 !  Locals
 
@@ -457,12 +525,14 @@ c               ERROR_MESSAGE
 !=======================================================================
 
       do i = is+1, ie+1
-         if ( itmask(i) ) then
+         if ( itmask(i) .ne. MASK_FALSE ) then
 
             sol(i) = gamma_isrf(i) + radf * kgr(i) *
      &           (trad4 - tdust(i)**4) +
      &           (gasgr(i) * nh(i) *
      &           (tgas(i) - tdust(i)))
+       ! emission/absorption rate per unit grain mass [erg/s/g]
+       ! for Z = Zsun (default)
 
          endif
       enddo

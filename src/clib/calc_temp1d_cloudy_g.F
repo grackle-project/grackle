@@ -78,14 +78,13 @@
 
 !  Iteration mask
 
-      logical itmask(in)
+      MASK_TYPE itmask(in)
 
 !  Parameters
 
-      integer ti_max
-      real*8 mu_metal
-      parameter (mu_metal = 16._DKIND)    ! approx. mean molecular weight of metals
-      parameter (ti_max = 20)
+      ! approx. mean molecular weight of metals
+      real*8, parameter :: mu_metal = 16._DKIND
+      integer, parameter :: ti_max = 20
 
 !  Locals
 
@@ -148,14 +147,14 @@
       endif
 
       do i=is+1, ie+1
-         if ( itmask(i) ) then
+         if ( itmask(i) .ne. MASK_FALSE ) then
 !              Calculate proper log(n_H)
                log_n_h(i) = log10(rhoH(i) * dom)
          endif
       enddo
 
       do i=is+1, ie+1
-         if ( itmask(i) ) then
+         if ( itmask(i) .ne. MASK_FALSE ) then
             munew = 1._DKIND
             do ti = 1, ti_max
                muold = munew

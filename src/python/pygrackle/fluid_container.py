@@ -34,6 +34,13 @@ _element_masses = {
     "H": 1,
     "D": 2,
     "He": 4,
+    "C": 12,
+    "O": 16,
+    "Mg": 24,
+    "Al": 27,
+    "Si": 28,
+    "S": 32,
+    "Fe": 56,
     "e": 1,
     "metal": 16,
 }
@@ -50,6 +57,28 @@ _species_info = {
     "DI": {"D": 1},
     "DII": {"D": 1},
     "HDI": {"H": 1, "D": 1},
+    "DM": {"D": 1},
+    "HDII": {"H": 1, "D": 1},
+    "HeHII": {"He": 1, "H": 1},
+    "CI": {"C": 1},
+    "CII": {"C": 1},
+    "CO": {"C": 1, "O": 1},
+    "CO2": {"C": 1, "O": 2},
+    "OI": {"O": 1},
+    "OH": {"O": 1, "H": 1},
+    "H2O": {"H": 2, "O": 1},
+    "O2": {"O": 2},
+    "SiI": {"Si": 1},
+    "SiOI": {"Si": 1, "O": 1},
+    "SiO2I": {"Si": 1, "O": 2},
+    "CH": {"C": 1, "H": 1},
+    "CH2": {"C": 1, "H": 2},
+    "COII": {"C": 1, "O": 1},
+    "OII": {"O": 1},
+    "OHII": {"O": 1, "H": 1},
+    "H2OII": {"H": 1, "O": 1},
+    "H3OII": {"H": 3, "O": 1},
+    "O2II": {"O": 2},
     "e": {"e": 1},
     "metal": {"metal": 1},
 }
@@ -99,6 +128,8 @@ _calculated_fields = \
    "pressure",
    "temperature"]
 
+_indirectly_calculated_fields = {}
+
 # These are calculated by the FluidContainer as
 # combinations of other fields. They do not
 # require pre-allocated memory.
@@ -106,8 +137,8 @@ _fc_calculated_fields = \
   ["cooling_rate",
    "mean_molecular_weight"]
 
-_primordial_chemistry_densities = {}
-_primordial_chemistry_densities[0] = _base_densities
+# controlled by primordial_chemistry parameter
+_primordial_chemistry_densities = {0: _base_densities}
 _primordial_chemistry_densities[1] = \
   _primordial_chemistry_densities[0] + \
   ["HI_density",
@@ -126,8 +157,93 @@ _primordial_chemistry_densities[3] = \
   ["DI_density",
    "DII_density",
    "HDI_density"]
+_primordial_chemistry_densities[4] = \
+  _primordial_chemistry_densities[3] + \
+  ["DM_density",
+   "HDII_density",
+   "HeHII_density"]
 
-_radiation_transfer_fields = \
+# controlled by metal_chemistry parameter
+_metal_chemistry_densities = {0: []}
+_metal_chemistry_densities[1] = \
+  ["CI_density",
+   "CII_density",
+   "CO_density",
+   "CO2_density",
+   "OI_density",
+   "OH_density",
+   "H2O_density",
+   "O2_density",
+   "SiI_density",
+   "SiOI_density",
+   "SiO2I_density",
+   "CH_density",
+   "CH2_density",
+   "COII_density",
+   "OII_density",
+   "OHII_density",
+   "H2OII_density",
+   "H3OII_density",
+   "O2II_density"]
+
+# controlled by dust_species parameter
+_dust_metal_densities = {0: []}
+_dust_metal_densities[1] = \
+  ["Mg_density"]
+_dust_metal_densities[2] = \
+  _dust_metal_densities[1] + \
+  ["Al_density",
+   "S_density",
+   "Fe_density"]
+_dust_metal_densities[3] = \
+  _dust_metal_densities[2]
+
+# controlled by dust_species parameter
+_dust_species = {0: []}
+_dust_species[1] = \
+  ["MgSiO3",
+   "AC"]
+_dust_species[2] = \
+  _dust_species[1] + \
+  ["SiM",
+   "FeM",
+   "Mg2SiO4",
+   "Fe3O4",
+   "SiO2",
+   "MgO",
+   "FeS",
+   "Al2O3"]
+_dust_species[3] = \
+  _dust_species[2] + \
+  ["ref_org",
+   "vol_org",
+   "H2O_ice"]
+_dust_densities = {idust: [f"{spec}_dust_density"
+                           for spec in _dust_species[idust]]
+                   for idust in _dust_species}
+_dust_temperatures = {idust: [f"{spec}_dust_temperature"
+                              for spec in _dust_species[idust]]
+                      for idust in _dust_species}
+_indirectly_calculated_fields.update(
+    {field: "calculate_dust_temperature"
+     for field in _dust_temperatures[max(_dust_temperatures.keys())]}
+)
+
+_metal_yield_densities = \
+  ["local_ISM_metal_density",
+   "ccsn13_metal_density",
+   "ccsn20_metal_density",
+   "ccsn25_metal_density",
+   "ccsn30_metal_density",
+   "fsn13_metal_density",
+   "fsn15_metal_density",
+   "fsn50_metal_density",
+   "fsn80_metal_density",
+   "pisn170_metal_density",
+   "pisn200_metal_density",
+   "y19_metal_density"]
+
+_base_radiation_transfer_fields = \
   ["RT_heating_rate",
    "RT_HI_ionization_rate",
    "RT_HeI_ionization_rate",
@@ -135,12 +251,33 @@ _radiation_transfer_fields = \
    "RT_H2_dissociation_rate"]
 
 def _required_density_fields(my_chemistry):
-    my_fields = _primordial_chemistry_densities[
-        my_chemistry.primordial_chemistry].copy()
+    my_fields = \
+      _primordial_chemistry_densities[my_chemistry.primordial_chemistry].copy() + \
+      _metal_chemistry_densities[my_chemistry.metal_chemistry].copy()
     if my_chemistry.metal_cooling == 1:
         my_fields.append("metal_density")
     if my_chemistry.dust_chemistry == 1:
         my_fields.append("dust_density")
+    if my_chemistry.metal_chemistry > 0:
+        my_fields.extend(_dust_metal_densities[my_chemistry.dust_species] +
+                         _dust_densities[my_chemistry.dust_species])
+        if my_chemistry.multi_metals == 0:
+            my_fields.append(_metal_yield_densities[my_chemistry.metal_abundances])
+        else:
+            my_fields.extend(_metal_yield_densities)
+    return my_fields
+
+def _required_radiation_transfer_fields(my_chemistry):
+    my_fields = _base_radiation_transfer_fields.copy()
+    if my_chemistry.radiative_transfer_HDI_dissociation:
+        my_fields.append("RT_HDI_dissociation_rate")
+    if my_chemistry.radiative_transfer_metal_ionization:
+        my_fields.extend(["RT_CI_ionization_rate",
+                          "RT_OI_ionization_rate"])
+    if my_chemistry.radiative_transfer_metal_dissociation:
+        my_fields.extend(["RT_CO_dissociation_rate",
+                          "RT_OH_dissociation_rate",
+                          "RT_H2O_dissociation_rate"])
     return my_fields
 
 def _required_extra_fields(my_chemistry):
@@ -152,13 +289,19 @@ def _required_extra_fields(my_chemistry):
     if my_chemistry.use_temperature_floor == 2:
         my_fields.append("temperature_floor")
     if my_chemistry.use_radiative_transfer == 1:
-        my_fields.extend(_radiation_transfer_fields)
+        my_fields.extend(_required_radiation_transfer_fields(my_chemistry))
     if my_chemistry.H2_self_shielding == 2:
         my_fields.append("H2_self_shielding_length")
     if my_chemistry.H2_custom_shielding == 1:
         my_fields.append("H2_custom_shielding_factor")
     if my_chemistry.use_isrf_field == 1:
         my_fields.append("isrf_habing")
+    return my_fields
+
+def _required_calculated_fields(my_chemistry):
+    my_fields = _calculated_fields.copy()
+    if my_chemistry.use_multiple_dust_temperatures:
+        my_fields.extend(_dust_temperatures[my_chemistry.dust_species])
     return my_fields
 
 def _photo_units(my_chemistry):
@@ -200,7 +343,8 @@ class FluidContainer(dict):
         self.chemistry_data = chemistry_data
         self.n_vals = n_vals
 
-        for field in self.input_fields + _calculated_fields:
+        for field in self.input_fields + \
+          _required_calculated_fields(self.chemistry_data):
             self._setup_fluid(field)
 
     def __getitem__(self, key):
@@ -234,7 +378,9 @@ class FluidContainer(dict):
 
     @property
     def all_fields(self):
-        return self.input_fields + _calculated_fields + _fc_calculated_fields
+        return self.input_fields + \
+          _required_calculated_fields(self.chemistry_data) + \
+          _fc_calculated_fields
 
     def calculate_hydrogen_number_density(self):
         warn = "calculate_hydrogen_number_density is deprecated and will " + \
@@ -325,6 +471,8 @@ class FluidContainer(dict):
             if field in ["density", "dust_density"]:
                 continue
             spec = field[:-8]
+            if spec not in _species_masses:
+                continue
             n += self[field] / _species_masses[spec]
         if (n == 0).any():
             warnings.warn("FluidContainer object has zero densities. "
@@ -362,12 +510,26 @@ class FluidContainer(dict):
             data = self
             all_fields = self.all_fields
 
+            # for indirectly calculated fields, we get more than one field from a call.
+            # keep a list of what we've called so we don't have to call them again.
+            called = []
+
             # call all calculate functions
-            for field in _calculated_fields + _fc_calculated_fields:
-                func = getattr(self, f"calculate_{field}", None)
+            for field in _required_calculated_fields(self.chemistry_data) + \
+              _fc_calculated_fields:
+
+                if field in _indirectly_calculated_fields:
+                    fname = _indirectly_calculated_fields[field]
+                else:
+                    fname = f"calculate_{field}"
+
+                func = getattr(self, fname, None)
                 if func is None:
                     raise RuntimeError(f"No function for calculating {field}.")
-                func()
+
+                if fname not in called:
+                    func()
+                    called.append(fname)
 
         else:
             all_fields = data.keys()
