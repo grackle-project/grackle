@@ -126,19 +126,43 @@ wheel.exclude = [
     "**.py.in"
 ]
 
-[tool.ruff]
-# This following option adds files to the standard set of ruff's exclusions. It
-# contains all python files that were already part of Grackle before we
-# introduced ruff
+[tool.ruff.per-file-target-version]
+# By default, ruff uses project.requires-python to infer the project-wide
+# python version (certain linting/formatting options may be enabled or disabled
+# based on this choice). Here, we are overwriting this version for our
+# developer/build scripts
+"scripts/**" = "py37"
+"tests/scripts/**" = "py37"
+
+[tool.ruff.lint]
+# By default, Ruff enables Flake8's F rules, along with a subset of the E rules,
+# omitting any stylistic rules that overlap with the use of a formatter, like
+# ruff format
+select = ["E4", "E7", "E9", "F"]
+# our ignore-list is based on our old flake8 ignore-list
+ignore = ["E402", "E502", "E701", "E731"]
+
+exclude = [
+    # these are based on flake8's exclude-list
+    "src/python/pygrackle/api.py",
+    "src/python/pygrackle/__init__.py",
+    "src/python/pygrackle/utilities/testing.py",
+    "src/python/pygrackle/utilities/api.py"
+]
+
+[tool.ruff.format]
+# This following option adds files to the standard set of ruff-format's
+# exclusions. It contains all python files that were already part of Grackle
+# before we introduced ruff
 # - per our discussion in GH-#218, we aren't applying formatters to old code
 #   yet (to avoid merge-conflicts)
 # - We plan to "rip the bandaid off" and remove all the files from this list
 #   after the next release
 # - No new files should be added to this list
-extend-exclude = [
-    "config/configure_file.py",
-    "config/query_version.py",
+exclude = [
     "doc/source/conf.py",
+    "scripts/configure_file.py",
+    "scripts/query_version.py",
     "src/python/examples/cooling_cell.py",
     "src/python/examples/cooling_rate.py",
     "src/python/examples/freefall.py",
