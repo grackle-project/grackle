@@ -93,6 +93,12 @@ if __name__ == "__main__":
         fc, final_time=final_time,
         safety_factor=0.01)
 
+    # this is a "hack" for backwards compatability (I think that this
+    # convention, associating the updated value with start of the timestep is
+    # confusing)
+    data["time"][1:] = data["time"][:-1]
+    data["time"][0] = 0.0
+
     p1, = pyplot.loglog(data["time"].to("Myr"),
                         data["temperature"],
                         color="black", label="T")
