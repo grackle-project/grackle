@@ -3,7 +3,7 @@
 #include <numeric>
 #include <vector>
 
-#include "gauss_j.hpp"
+#include "gaussj_g.hpp"
 
 int gaussj_g_cpp(int n, double* coef_matrix, double* vector, double* solution) {
 
@@ -32,9 +32,9 @@ int gaussj_g_cpp(int n, double* coef_matrix, double* vector, double* solution) {
 #endif
 
     // Find pivot based ordering of coef_matrix rows 
-    std::vector<unsigned int> sortedRows(n);
-    std::iota(sortedRows.begin(), sortedRows.end(), 0);
-    std::sort(sortedRows.begin(), sortedRows.end(), [&](unsigned int i, unsigned int j){
+    std::vector<unsigned int> rows_sorting(n);
+    std::iota(rows_sorting.begin(), rows_sorting.end(), 0);
+    std::sort(rows_sorting.begin(), rows_sorting.end(), [&](unsigned int i, unsigned int j){
         return pivot[i] < pivot[j];
     });
 
@@ -43,7 +43,7 @@ int gaussj_g_cpp(int n, double* coef_matrix, double* vector, double* solution) {
     std::cout << std::endl;
     std::cout << "Sorted rows: ";
     for(unsigned int i = 0; i < n; ++i) {
-        std::cout << sortedRows[i] << " ";
+        std::cout << rows_sorting[i] << " ";
     }
     std::cout << std::endl;
 #endif
@@ -51,24 +51,20 @@ int gaussj_g_cpp(int n, double* coef_matrix, double* vector, double* solution) {
     // Reorder matrix, vector and pivot (TODO: debug only, not mandatory)
     std::vector<double> reord_coef_matrix(n*n);
     std::vector<double> reord_vector(n);
-    std::vector<double> pivotReord(n);
-    std::vector<unsigned int> sortedRowsReord(n);
+    std::vector<double> reord_pivot(n);
     for(unsigned int i = 0; i < n; ++i) {
         for(unsigned int j = 0; j < n; ++j) {
-            reord_coef_matrix[i*n+j] = coef_matrix[sortedRows[i]*n+j];
+            reord_coef_matrix[i*n+j] = coef_matrix[rows_sorting[i]*n+j];
         }
     }
     for(unsigned int i = 0; i < n; ++i) {
-        reord_vector[i] = vector[sortedRows[i]];
+        reord_vector[i] = vector[rows_sorting[i]];
     }
     for(unsigned int i = 0; i < n; ++i) {
-        reord_vector[i] = vector[sortedRows[i]];
+        reord_vector[i] = vector[rows_sorting[i]];
     }
     for(unsigned int i = 0; i < n; ++i) {
-        pivotReord[i] = pivot[sortedRows[i]];
-    }
-    for(unsigned int i = 0; i < n; ++i) {
-        sortedRowsReord[i] = sortedRows[i];
+        reord_pivot[i] = pivot[rows_sorting[i]];
     }
 
 #ifdef DEBUG
@@ -89,14 +85,14 @@ int gaussj_g_cpp(int n, double* coef_matrix, double* vector, double* solution) {
         std::cout<<std::endl;
         rowScaled = false;
         for(unsigned int i = n-1; i>0; i--){
-            if(pivotReord[i] == pivotReord[i-1]) {
-                const double scalingFactor = - reord_coef_matrix[i*n + pivotReord[i]]/reord_coef_matrix[(i-1)*n + pivotReord[i-1]];
-                reord_coef_matrix[i*n+pivotReord[i]] = 0.0;
-                for(unsigned int j=pivotReord[i]+1; j<n; j++) {
+            if(reord_pivot[i] == reord_pivot[i-1]) {
+                const double scalingFactor = - reord_coef_matrix[i*n + reord_pivot[i]]/reord_coef_matrix[(i-1)*n + reord_pivot[i-1]];
+                reord_coef_matrix[i*n+reord_pivot[i]] = 0.0;
+                for(unsigned int j=reord_pivot[i]+1; j<n; j++) {
                     reord_coef_matrix[i*n + j] += scalingFactor * reord_coef_matrix[(i-1)*n + j];
                     if(std::abs(reord_coef_matrix[i*n + j]) < eps_zero) {
                         reord_coef_matrix[i*n + j] = 0.0;
-                        // pivotReord[i] += 1;// TODO: can be done here?
+                        // reord_pivot[i] += 1;// TODO: can be done here?
                     }
                 }
                 reord_vector[i] += scalingFactor * reord_vector[i-1];
@@ -149,8 +145,8 @@ int gaussj_g_cpp(int n, double* coef_matrix, double* vector, double* solution) {
             }
             std::cout << std::endl;
 #endif 
-            std::iota(sortedRows.begin(), sortedRows.end(), 0);
-            std::sort(sortedRows.begin(), sortedRows.end(), [&](unsigned int i, unsigned int j){
+            std::iota(rows_sorting.begin(), rows_sorting.end(), 0);
+            std::sort(rows_sorting.begin(), rows_sorting.end(), [&](unsigned int i, unsigned int j){
                 return pivot[i] < pivot[j];
             });
 
@@ -158,7 +154,7 @@ int gaussj_g_cpp(int n, double* coef_matrix, double* vector, double* solution) {
             std::cout << std::endl;
             std::cout << "Updated sorted rows: ";
             for(unsigned int i = 0; i < n; ++i) {
-                std::cout << sortedRows[i] << " ";
+                std::cout << rows_sorting[i] << " ";
             }
             std::cout << std::endl; 
 #endif 
@@ -166,20 +162,15 @@ int gaussj_g_cpp(int n, double* coef_matrix, double* vector, double* solution) {
             std::vector<double> reord_coef_matrix_tmp(reord_coef_matrix);
             for(unsigned int i = 0; i < n; ++i) {
                 for(unsigned int j = 0; j < n; ++j) {
-                    reord_coef_matrix[i*n+j] = reord_coef_matrix_tmp[sortedRows[i]*n+j];
+                    reord_coef_matrix[i*n+j] = reord_coef_matrix_tmp[rows_sorting[i]*n+j];
                 }
             }
             std::vector<double> reord_vector_tmp(reord_vector);
             for(unsigned int i = 0; i < n; ++i) {
-                reord_vector[i] = reord_vector_tmp[sortedRows[i]];
+                reord_vector[i] = reord_vector_tmp[rows_sorting[i]];
             }
             for(unsigned int i = 0; i < n; ++i) {
-                pivotReord[i] = pivot[sortedRows[i]];
-            }
-            // TODO: avoid memory duplication
-            std::vector<unsigned int> sortedRowsTmp(sortedRowsReord);
-            for(unsigned int i = 0; i < n; ++i) {
-                sortedRowsReord[i] = sortedRowsTmp[sortedRows[i]];
+                reord_pivot[i] = pivot[rows_sorting[i]];
             }
         }
     }    
@@ -199,13 +190,6 @@ int gaussj_g_cpp(int n, double* coef_matrix, double* vector, double* solution) {
     }
 
 #ifdef DEBUG
-    // Print sorted rows reordering
-    std::cout << "Sorted Rows Reordering: ";
-    for(unsigned int i = 0; i < n; ++i) {
-        std::cout << sortedRowsReord[i] << " ";
-    }
-    std::cout << std::endl; 
-
     // Print solution
     std::cout << "Reord Solution: ";
     for(unsigned int i = 0; i < n; ++i) {
