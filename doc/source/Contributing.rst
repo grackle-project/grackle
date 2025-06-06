@@ -2,54 +2,6 @@
 
 .. _adding-new-params:
 
-Style Formatting
-----------------
-All python code contributed in new files will be formatted by automated tools (for the time being, code in older files will not be formatted to avoid merge-conflicts).
-
-.. note::
-
-   In the near future (see `PR #222 <https://github.com/grackle-project/grackle/pull/222>`__), we plan to start formatting C/C++ code.
-
-The formatters are run by the `pre-commit.ci <https://pre-commit.ci/>`__ continuous integration tool.
-This form of continuous integration is built on top of the `pre-commit <https://pre-commit.com/>`__ software, which is the framework responsible for calling individual linting tools.
-
-Running the Checks Locally
-++++++++++++++++++++++++++
-
-To run the checks locally, we strongly encourage you to install the pre-commit software.
-This software is written in python and can be installed with ``pip``.
-The `installation instructions <https://pre-commit.com/#installation>`__ also mention an alternative approach where you can run download and run pre-commit without fully installing it (as a "zipapp").
-
-Once you have installed ``pre-commit``, you can enforce the checks by invoking the following command from the root of your Grackle repository:
-
-.. code-block:: shell-session
-
-   ~/grackle $ pre-commit run --all-files
-
-The above command does 2 things:
-
- 1. First, it ensure that local copies of the correct versions of the required enforcement tools are installed.
-    These local copies are only accessed by pre-commit and won't affect other parts of your system.
-    These copies are also cached (so that the tools don't need to be reinstalled on every invocation).
-
- 2. Then the command applies the enforcement tools on the files in your repository (tool-specific exclusions, like files listed by ``tool.ruff.extend-exclude`` in **pyproject.toml**, are obviously respected).
-
-.. caution::
-
-   The above command will modify the files in your repository (after all, that's the whole point of the command).
-   The pre-commit software does not provide a way to reverse this change.
-
-.. important::
-
-   As already noted, we **strongly** recommend using pre-commit to run the checks locally in order to make sure the version you are using is consistent with the version used in Continuous Integration.
-   Manually downloading and invoking a tool like ``ruff``, **probably** won't cause many issues.
-   However, using pre-commit will become very important when we start formatting C/C++ code.
-
-``ruff`` (Python formatting)
-++++++++++++++++++++++++++++
-
-Python code is formatted by the popular `ruff <https://github.com/astral-sh/ruff>`__ tool.
-
 Adding a New Parameter
 ----------------------
 

@@ -115,6 +115,7 @@ To help you start using Grackle, we provide:
    Testing.rst
    Conduct.rst
    Contributing.rst
+   CodeFormatting.rst
 
 .. toctree::
    :caption: Useful links
