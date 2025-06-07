@@ -55,7 +55,7 @@ The above command does 2 things:
    These local copies are only accessed by pre-commit and won't affect other parts of your system.
    These copies are also cached (so that the tools don't need to be reinstalled on every invocation).
 
-2. Then the command applies the enforcement tools on the files in your repository (tool-specific exclusions, like files listed by ``tool.ruff.extend-exclude`` in **pyproject.toml**, are obviously respected).
+2. Then the command applies the enforcement tools on the files in your repository (tool-specific exclusions, like files listed by ``tool.ruff.format.exclude`` in **pyproject.toml**, are obviously respected).
 
 .. caution::
 
