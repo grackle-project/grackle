@@ -1,0 +1,25 @@
+# This is a placeholder file. The plan is to introduce pre-commit and
+# pre-commit.ci into the newchem-cpp development branch. This file exists to
+# prevent the pre-commit.ci service from reporting errors on the main branch
+# (or for PRs into the main branch) because pre-commit.ci is unable to find
+# a .pre-commit-config.yaml file.
+#
+# Right now, this enables some extremely simplistic checks.
+
+ci:
+    autofix_prs: false
+    autoupdate_schedule: monthly
+
+repos:
+
+# there are some other useful hooks we could enable from here in the future
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v5.0.0
+  hooks:
+  - id: check-executables-have-shebangs
+  - id: check-case-conflict # make sure no filenames would conflict on
+                            # case-insensitive filesystems
+  # these hooks check that .json, .toml, .yaml files have valid syntax
+  - id: check-json
+  - id: check-toml
+  - id: check-yaml
