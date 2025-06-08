@@ -1,0 +1,76 @@
+{
+  "version" : 5,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 24,
+    "patch": 0
+  },
+  "configurePresets": [
+      {
+          "name": "ci-basic",
+          "description": "Some basic configuration with Ninja generator. In case a user tries to use a preset, binaryDir was picked so they can run an example from ${binaryDir}/examples (the narrative docs explicitly tell people to do this).",
+          "generator": "Ninja",
+          "hidden": true,
+          "binaryDir": "${sourceDir}/build_${presetName}"
+      },
+      {
+          "name": "ci-common-config",
+          "description": "Standard configuration of Grackle",
+          "hidden": true,
+          "inherits": "ci-basic",
+          "cacheVariables": {
+            "GRACKLE_USE_DOUBLE": "ON",
+            "GRACKLE_USE_OPENMP": "OFF",
+            "GRACKLE_BUILD_TESTS": "ON"
+          }
+      },
+      {
+          "name": "ci-omp-config",
+          "description": "Standard configuration of Grackle with OpenMP. To a weird \"cross-reaction\" between gfortran, OpenMP, & the Ninja generator, we override the generator.",
+          "generator": "Unix Makefiles",
+          "hidden": true,
+          "inherits": "ci-common-config",
+          "cacheVariables": {
+            "GRACKLE_USE_OPENMP": "ON"
+          }
+      },
+      {
+          "name": "ci-flags-warnings-gcc-clang",
+          "description": "Flags common to gcc and clang for CI (theoretically we may want to maintain a separate set of flags for apple-clang)",
+          "hidden": true,
+          "cacheVariables" : {
+            "CMAKE_COMPILE_WARNING_AS_ERROR": "ON",
+            "CMAKE_C_FLAGS": "-Wall -Wpedantic -Wextra -Wno-error=unused-variable -Wno-error=maybe-uninitialized -Wno-unused-parameter",
+            "CMAKE_CXX_FLAGS": "-Wall -Wpedantic -Wextra -Wno-unused-parameter"
+          }
+      },
+      {
+          "name": "ci-flags-warnings-appleClang",
+          "description": "Flags from appleClang for CI",
+          "hidden": true,
+          "cacheVariables" : {
+            "CMAKE_COMPILE_WARNING_AS_ERROR": "ON",
+            "CMAKE_C_FLAGS": "-Wall -Wpedantic -Wextra -Wno-error=unused-variable -Wno-error=newline-eof -Wno-unused-parameter",
+            "CMAKE_CXX_FLAGS": "-Wall -Wpedantic -Wno-c++17-attribute-extensions -Wno-unused-parameter"
+          }
+      },
+      {
+          "name": "ci-linux",
+          "description": "the general configuration preset for linux",
+          "inherits": ["ci-flags-warnings-gcc-clang", "ci-common-config"],
+          "cacheVariables": { "CMAKE_BUILD_TYPE": "RELEASE" }
+      },
+      {
+          "name": "ci-linux-omp",
+          "description": "a preset for linux with OpenMP",
+          "inherits": ["ci-flags-warnings-gcc-clang", "ci-omp-config"],
+          "cacheVariables": { "CMAKE_BUILD_TYPE": "RELEASE" }
+      },
+      {
+          "name": "ci-macos",
+          "description": "the general configuration preset for macOS",
+          "inherits": ["ci-flags-warnings-appleClang", "ci-common-config"],
+          "cacheVariables": { "CMAKE_BUILD_TYPE": "RELEASE" }
+      }
+  ]
+}
