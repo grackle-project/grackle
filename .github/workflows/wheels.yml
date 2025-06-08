@@ -2,10 +2,23 @@
 # - https://learn.scientific-python.org/development/guides/gha-wheels/
 # - https://cibuildwheel.pypa.io/en/stable/setup/#github-actions
 # - https://github.com/yt-project/yt/blob/main/.github/workflows/wheels.yaml
+#
+# the numpy action that does the exact same thing
+#   https://github.com/numpy/numpy/blob/main/.github/workflows/wheels.yml
+# illustrates a nifty trick for configuring the action to run whenever a commit
+# is pushed where the commit-message is prefixed with [wheel build]
 
 name: Wheel
 
 on:
+  schedule:
+    #        ┌───────────── minute (0 - 59)
+    #        │  ┌───────────── hour (0 - 23)
+    #        │  │ ┌───────────── day of the month (1 - 31)
+    #        │  │ │ ┌───────────── month (1 - 12 or JAN-DEC)
+    #        │  │ │ │ ┌───────────── day of the week (0 - 6 or SUN-SAT)
+    #        │  │ │ │ │
+    - cron: "17 0 * * MON"
   push:
     branches:
       - main
@@ -62,7 +75,7 @@ jobs:
     name: Build wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
-      fail-fast: false
+      fail-fast: false # don't exit abruptly if another wheel can't be built
       matrix:
         os: [
           ubuntu-latest,
@@ -108,15 +121,15 @@ jobs:
   upload_all:
     name: Publish to PyPI
     needs: [build_wheels, make_sdist]
-    environment: testpypi
+    environment: testpypi # CHANGEME to pypi (to start uploading to PyPI)
     permissions:
       id-token: write
       attestations: write
       contents: read
 
     runs-on: ubuntu-latest
-    #if: github.event_name == 'release' && github.event.action == 'published'
     # upload to PyPI on every tag starting with 'grackle-'
+    # uncomment the following line when we start uploading to PyPI
     #if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/grackle-')
     steps:
       - uses: actions/download-artifact@v4
@@ -132,5 +145,5 @@ jobs:
 
       - name: Publish to pypi
         uses: pypa/gh-action-pypi-publish@release/v1
-        with:
+        with:  # DELETEME (and the next line) to start uploading to PyPI
           repository-url: https://test.pypi.org/legacy/
