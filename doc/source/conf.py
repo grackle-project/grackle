@@ -18,7 +18,7 @@ import sys, os
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #sys.path.insert(0, os.path.abspath('.'))
 
-sys.path.insert(0, os.path.abspath('../../config'))
+sys.path.insert(0, os.path.abspath('../../scripts'))
 
 from query_version import query_version
 
@@ -29,8 +29,8 @@ from query_version import query_version
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx_tabs.tabs',
-              'sphinx_rtd_theme']
+extensions = ['sphinx.ext.extlinks',
+              'sphinx_tabs.tabs']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -97,7 +97,7 @@ highlight_language = "bash"
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'sphinx_rtd_theme'
+html_theme = 'furo'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -246,3 +246,26 @@ texinfo_documents = [
 
 # How to display URL addresses: 'footnote', 'no', or 'inline'.
 #texinfo_show_urls = 'footnote'
+
+
+# Extension Options
+# =================
+
+# sphinx.ext.extlinks
+# -------------------
+# https://www.sphinx-doc.org/en/master/usage/extensions/extlinks.html#module-sphinx.ext.extlinks
+
+# This config is a dictionary of external sites, where the key is used as a
+# name of a role and the value is the name of a tuple of strings that serve as
+# templates for an external url and a template for the text that gets used.
+_GITHUB_BASE = 'https://github.com/grackle-project/grackle'
+_SRC_BASE = f'{_GITHUB_BASE}/tree/main'
+extlinks = {
+    'source': (_SRC_BASE + '/%s', '%s'),
+    'code-example' : (_SRC_BASE + '/src/example/%s', '%s'),
+    'gh-issue' : (_GITHUB_BASE + '/issues/%s', 'gh-issue#%s'),
+    'gh-pr' : (_GITHUB_BASE + '/pull/%s', 'gh-pr#%s')
+}
+# for example :code-example-file:`c_local_example.c` should link to the GitHub
+# page for c_local_example.c
+

@@ -11,6 +11,7 @@
 [build-system]
 requires=[
   "cython",
+  "cython-cmake>=0.2",
   # since tool.scikit-build.minimum-version is set to "build-system.requires",
   # the minimum build-requirement for scikit-build-core controls some default
   # behaviors when newer versions of scikit-build-core are installed
@@ -26,7 +27,7 @@ description = "A wrapper for the Grackle chemistry library"
 #    https://scikit-build-core.readthedocs.io/en/latest/configuration.html#dynamic-metadata
 # but pygrackle can't (currently) do this since it lives in a "monorepo"
 #    https://github.com/pypa/setuptools_scm/issues/1056
-version = "1.1.dev0"
+version = "1.1.1.dev0"
 classifiers=[
   "Development Status :: 5 - Production/Stable",
   "Environment :: Console",
@@ -47,7 +48,6 @@ keywords=[
 ]
 requires-python = ">=3.7"
 dependencies = [
-  'cython',
   'h5py',
   'numpy',
   'matplotlib',
@@ -64,15 +64,15 @@ Source = 'https://github.com/grackle-project/grackle'
 Tracker = 'https://github.com/grackle-project/grackle/issues'
 
 [project.optional-dependencies]
-dev = [
-  'flake8',
-  'packaging',
-  'pytest',
-  'sphinx',
-  'sphinx-tabs',
-  'sphinx_rtd_theme',
-]
+# currently the next line duplicates the dependency-groups purely for
+# historical reasons. We should delete the following entry in the near-future
+# (since they are actually dependencies of the pygrackle-wheel).
+dev = ['flake8', 'packaging', 'pytest', 'sphinx', 'sphinx-tabs', 'furo']
 
+[dependency-groups]
+docs = ['sphinx', 'sphinx-tabs', 'furo']
+test = ['pytest', 'packaging']
+dev = ['flake8', {include-group = "docs"}, {include-group = 'test'}]
 
 [tool.pytest.ini_options]
 # settings inspired by: learn.scientific-python.org/development/guides/pytest/
@@ -96,9 +96,9 @@ testpaths = [
 # redirect to the appropriate CMakeLists.txt file
 cmake.source-dir = "./src/python"
 
-# if the following version of CMake isn't found, scikit-build-core will
-# download and use a compatible CMake-verison
-cmake.version = ">=3.16"
+# if the version of CMake (in {cmake.source-dir}/CMakeLists.txt) isn't found,
+# scikit-build-core will download and use a compatible CMake-verison
+cmake.version = "CMakeLists.txt"
 
 # The build type to use when building the project. Valid options are: "Debug",
 # "Release", "RelWithDebInfo", "MinSizeRel", "", etc.
