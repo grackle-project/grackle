@@ -76,9 +76,9 @@ Primary Functions
    Returns the factor that includes unit conversions and fundamental constants that must be multiplied by :c:data:`internal_energy` (in units of :c:data:`velocity_units`\ :sup:`2`) to get temperature (in units of K).
    In more detail:
 
-     - the returned value is defined as m\ :sub:`H`\ \*\ :c:data:`velocity_units`\ :sup:`2`\ /\ k\ :sub:`b`, where m\ :sub:`H` is the Hydrogen mass and k\ :sub:`b` is the Boltzmann constant.
+   - the returned value is defined as m\ :sub:`H`\ \*\ :c:data:`velocity_units`\ :sup:`2`\ /\ k\ :sub:`b`, where m\ :sub:`H` is the Hydrogen mass and k\ :sub:`b` is the Boltzmann constant.
 
-     - under the standard assumption of an ideal gas, temperature is given by :c:data:`internal_energy`\ \*\ ``temperature_units``\ \*\ :math:`(\gamma - 1)`\ \*\ :math:`\mu`, where :math:`\gamma` is the adiabatic index and :math:`\mu` is the mean molecular weight.
+   - under the standard assumption of an ideal gas, temperature is given by :c:data:`internal_energy`\ \*\ ``temperature_units``\ \*\ :math:`(\gamma - 1)`\ \*\ :math:`\mu`, where :math:`\gamma` is the adiabatic index and :math:`\mu` is the mean molecular weight.
 
    :param code_units* my_units: code units conversions
    :rtype: double

@@ -163,8 +163,3 @@ fortran_example: $(MODULES) fortran_example.o
              echo; \
              exit 1; \
           fi)
-
-#-----------------------------------------------------------------------
-
-clean:
-	-@rm -f *.o *.mod *.f *.f90 *~ *.exe $(OUTPUT) cxx_example cxx_omp_example c_example fortran_example
