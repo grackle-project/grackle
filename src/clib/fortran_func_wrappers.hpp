@@ -230,7 +230,7 @@ inline void lookup_cool_rates1d_g(
                    kshield_buf.k28, kshield_buf.k29, kshield_buf.k30,
                    kshield_buf.k31, h2dust, chemheatrates_buf.n_cr_n, chemheatrates_buf.n_cr_d1, chemheatrates_buf.n_cr_d2,
                    logTlininterp_buf.t1, logTlininterp_buf.t2, logTlininterp_buf.tdef, logTlininterp_buf.logtem, logTlininterp_buf.indixe,
-                   &dom, &internalu.coolunit, &internalu.tbase1, &internalu.xbase1, &dx_cgs, &c_ljeans,
+                   &dom, &internalu.coolunit, &internalu.tbase1, &internalu.uxyz, &internalu.xbase1, &dx_cgs, &c_ljeans,
                    &my_chemistry->use_radiative_transfer, my_fields->RT_H2_dissociation_rate, my_fields->H2_self_shielding_length, itmask,
                    itmask_metal,
                    &my_chemistry->HydrogenFractionByMass, my_fields->metal_density,
