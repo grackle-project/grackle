@@ -58,7 +58,7 @@ Below, we list open source projects that provide out-of-the-box support for Grac
 ## Getting Grackle
 
 Currently, Grackle must be built from source.
-If you only need Grackle as a dependency of a simulation code and that code is built with CMake, then that code's build system might be configured to automatically fetch, build, and link Grackle into the code for you.
+If you only need Grackle as a dependency of a simulation code and that code is built with CMake, then that code's build system might be configured to automatically fetch, build, and link Grackle into the code for you ([Enzo-E](https://enzo-e.readthedocs.io/en/latest/) is an example of a code configured in this manner).
 
 If you contribute to a simulation code, our [Integration Guide](https://grackle.readthedocs.io/en/latest/Integration.html) provides guidance on simplifying the process (for you and your users) of configuring your code to use Grackle.
 
