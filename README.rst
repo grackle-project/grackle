@@ -19,6 +19,8 @@ Grackle
 `Contributing <https://grackle.readthedocs.io/en/latest/Contributing.html>`__ |
 `Getting Help <https://grackle.readthedocs.io/en/latest/Help.html>`__
 
+.. COMMENT:  README-MAIN-BODY-START-ANCHOR
+
 Grackle is a chemistry and radiative cooling library for astrophysical simulations and models.
 The core library provides interfaces for C, C++ and Fortran simulation codes.
 The project also offers the Pygrackle package to provide Python bindings.
