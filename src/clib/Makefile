@@ -36,8 +36,8 @@ OUTPUT      = out.compile
 VERBOSE     = 0
 GRACKLE_DIR = .
 DEFAULT_INSTALL_PREFIX = /usr/local
-CONFIG_DIR = $(GRACKLE_DIR)/../../config
-QUERY_VERSION = $(CONFIG_DIR)/query_version.py
+SCRIPTS_DIR = $(GRACKLE_DIR)/../../scripts
+QUERY_VERSION = $(SCRIPTS_DIR)/query_version.py
 
 #-----------------------------------------------------------------------
 # Make.config.settings is used for setting default values to all compile-time 
@@ -219,7 +219,7 @@ autogen: config_type $(AUTOGEN_DIR)/auto_general.c
 .PHONY: config_type
 config_type: $(PUBLIC_HEADER_SRCDIR)/grackle_float.h.in
 	-@(mkdir -p $(AUTOGEN_DIR))
-	@($(CONFIG_DIR)/configure_file.py --clobber \
+	@($(SCRIPTS_DIR)/configure_file.py --clobber \
 	    --input $< \
 	    --output $(AUTOGEN_DIR)/grackle_float.h \
 	    GRACKLE_FLOAT_MACRO=GRACKLE_FLOAT_$(ASSEMBLE_PRECISION_NUMBER));
@@ -230,7 +230,7 @@ $(AUTOGEN_DIR)/auto_general.c: auto_general.c.in
 	-@(mkdir -p $(AUTOGEN_DIR))
 	-@$(MAKE) -s show-config  >& $(AUTOGEN_DIR)/temp.show-config
 	-@$(MAKE) -s show-flags  >& $(AUTOGEN_DIR)/temp.show-flags
-	@$(CONFIG_DIR)/configure_file.py --clobber \
+	@$(SCRIPTS_DIR)/configure_file.py --clobber \
 	    --input auto_general.c.in \
 	    --output $(AUTOGEN_DIR)/auto_general.c \
 	    --variable-use-file-contents SHOW_FLAGS_STR=$(AUTOGEN_DIR)/temp.show-flags \

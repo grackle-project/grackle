@@ -4,30 +4,20 @@ Pygrackle: Running Grackle in Python
 ====================================
 
 Grackle comes with a Python interface, called Pygrackle, which provides
-access to all of Grackle's functionality.  Pygrackle requires the following
-Python packages:
+access to all of Grackle's functionality.
 
- - `Cython <https://cython.org/>`__
+To install Pygackle, you'll need to make sure that HDF5 and a fortran compiler are installed (for building the Grackle library itself).
 
- - flake8 (only required for the test suite)
+Pygrackle's runtime-dependencies are:
 
- - `h5py <https://www.h5py.org/>`__
+- `h5py <https://www.h5py.org/>`__
+- `matplotlib <https://matplotlib.org/>`__
+- `NumPy <https://www.numpy.org/>`__
+- `yt <https://yt-project.org/>`__
 
- - `matplotlib <https://matplotlib.org/>`__
+The above dependencies are automatically installed with pip (alternatively you can follow instructions for installing yt).
 
- - `NumPy <https://www.numpy.org/>`__
-
- - packaging (only required for the test suite)
-
- - py.test (only required for the test suite)
-
- - `yt <https://yt-project.org/>`__
-
-The easiest thing to do is follow the instructions for installing yt,
-which will provide you with Cython, matplotlib, and NumPy.  Flake8 and
-py.test can then be installed via pip.
-
-You also need to have a fortran compiler installed (for building the Grackle library itself).
+If you want to run the pygrackle test-suite, you'll need the ``packaging`` and ``py.test`` packages. If pip is up to date (25.1 or newer), you can simply invoke ``pip install --group dev`` from the root of the repository.
 
 .. _install-pygrackle:
 
@@ -38,14 +28,14 @@ Currently, the only way to get Pygrackle is to build it from source.
 
 There are 3 ways to build Pygrackle:
 
- 1. As a standalone, self-contained module.
-    The build command creates a fresh build of the Grackle library and packages it with the Pygrackle module.
-    **(This is the recommended approach)**
+1. As a standalone, self-contained module.
+   The build command creates a fresh build of the Grackle library and packages it with the Pygrackle module.
+   **(This is the recommended approach)**
 
- 2. As a module that links to an external copy of Grackle that was compiled with the :ref:`Classic build system <classic_build>`.
-    (This is consistent with the legacy approach for building Pygrackle).
+2. As a module that links to an external copy of Grackle that was compiled with the :ref:`Classic build system <classic_build>`.
+   (This is consistent with the legacy approach for building Pygrackle).
 
- 3. As a module that links to an external copy of Grackle that was created with the :ref:`CMake build system <cmake_build>`.
+3. As a module that links to an external copy of Grackle that was created with the :ref:`CMake build system <cmake_build>`.
 
 Currently, Pygrackle should be used with Grackle builds where OpenMP is disabled.
 
@@ -156,29 +146,33 @@ If this command executes without raising any errors, then you have successfully 
 Installing Pygrackle Development Requirements
 +++++++++++++++++++++++++++++++++++++++++++++
 
-There are a handful of additional packages required for developing
+There are a handful of additional packages required purely for developing
 Grackle. For example, these will enable :ref:`testing` and building
-the documentation locally. To install the development dependencies,
-repeat the last line of the :ref:`pygrackle installation instructions
-<install-pygrackle>` with ``[dev]`` appended.
+the documentation locally. These dependencies are specified as dependency
+groups, which can be installed with pip (v25.1).
+To install all of these dependencies, you can invoke
 
 .. code-block:: shell-session
 
-   ~/grackle $ pip install -e .[dev]
+   ~/grackle $ pip install --group dev
 
-
-If you use ``zsh`` as your shell, you will need quotes around
-'.[dev]'.
+The above command will install the dependencies independently of Pygrackle.
+To install these dependencies at the same time as Pygrackle, you can replace last line of the :ref:`pygrackle installation instructions <install-pygrackle>` with:
 
 .. code-block:: shell-session
 
-   ~/grackle $ pip install -e '.[dev]'
+   ~/grackle $ pip install --group=dev -e .
 
+The above snippet, includes the optional ``-e`` flag to perform an editable-install, which is necessary to run most tests.
+
+.. tip::
+
+   The high level interface of the `uv python package manager <https://docs.astral.sh/uv/>`__ automatically installs the "dev" dependency-group when you install Pygrackle from source.
 
 Running the Example Scripts
 ---------------------------
 
-A number of example scripts are available in the **src/python/examples**
+A number of example scripts are available in the :source:`src/python/examples`
 directory.  These scripts provide examples of ways that Grackle can be
 used in simplified models, such as solving the temperature evolution of
 a parcel of gas at constant density or in a free-fall model.  Each example
@@ -208,7 +202,7 @@ repository.
 
 .. note::
 
-   `GitHub PR #235 <https://github.com/grackle-project/grackle/pull/235>`__ is a pending pull request that seeks to add functionality to make this work in a regular Pygrackle installation (i.e. a non-'editable' install).
+   :gh-pr:`235` is a pending pull request that seeks to add functionality to make this work in a regular Pygrackle installation (i.e. a non-'editable' install).
 
 Cooling Rate Figure Example
 +++++++++++++++++++++++++++
