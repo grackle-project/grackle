@@ -112,6 +112,10 @@ add_library(Grackle_Grackle
   solve_rate_cool_g-cpp.C solve_rate_cool_g-cpp.h
   utils-cpp.C utils-cpp.hpp
   fortran_func_wrappers.hpp
+  visitor/common.hpp
+  visitor/copy.hpp
+  visitor/memory.hpp
+  visitor/printer.hpp
 
   # Fortran Source Files
   calc_all_tdust_gasgr_1d_g.F
