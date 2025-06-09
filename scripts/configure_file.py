@@ -60,7 +60,7 @@ def configure_file(lines, variable_map, out_fname):
         if err_msg is not None:
             out_f.close()
             os.remove(out_fname)
-            raise RuntimeError(rslt)
+            raise RuntimeError(err_msg)
 
     unused_variables = used_variable_set.symmetric_difference(variable_map)
 

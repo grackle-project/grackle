@@ -1,0 +1,58 @@
+
+# per discussion in GH-#218, we aren't applying formatters to old code yet (to
+# avoid merge conflicts).
+# - most exclusions are specified in formtter-specific files, like
+#   .clang-format-ignore or the [tool.ruff.format.exclude] section of
+#   pyproject.toml
+# - here we list the remaining files that should be excluded.
+exclude: "^(\
+src/python/pygrackle/grackle_defs.pxd\
+|src/python/pygrackle/grackle_wrapper.pyx\
+)"
+
+ci:
+    autofix_prs: false
+    autoupdate_schedule: monthly
+
+repos:
+
+# there are some other useful hooks we could enable from here in the future
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v5.0.0
+  hooks:
+  - id: check-executables-have-shebangs
+  - id: check-case-conflict # make sure no filenames would conflict on
+                            # case-insensitive filesystems
+  # these hooks check that .json, .toml, .yaml files have valid syntax
+  - id: check-json
+  - id: check-toml
+  - id: check-yaml
+
+- repo: https://github.com/pre-commit/mirrors-clang-format
+  # unlike many pre-commit tools, the version of the repository exactly
+  # matches the version of the tool being used
+  rev: v20.1.5
+  hooks:
+  - id: clang-format
+    verbose: true
+    types_or: [c++, c]
+    args: ["-style=file", "--verbose"]
+
+- repo: https://github.com/astral-sh/ruff-pre-commit
+  rev: v0.11.13
+  hooks:
+  # run the linter
+  - id: ruff-check
+    types_or: [ python, pyi, jupyter ]  # <- adopted from yt
+    args: [--fix, "--show-fixes"]
+  # run the formatter
+  - id: ruff-format
+    types_or: [ python, pyi, jupyter ]  # <- adopted from yt
+
+# uncomment the following, when we stop excluding cython files
+# (settings adopted from yt)
+#- repo: https://github.com/MarcoGorelli/cython-lint
+#  rev: v0.16.2
+#  hooks:
+#  - id: cython-lint
+#    args: [--no-pycodestyle]
