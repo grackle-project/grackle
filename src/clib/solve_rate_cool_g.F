@@ -875,7 +875,8 @@ c     chunit = (1.60218e-12_DKIND)/(2._DKIND*uvel*uvel*mh)   ! 1 eV per H2 forme
      &               k28shield, k29shield, k30shield,
      &               k31shield, h2dust, ncrn, ncrd1, ncrd2, 
      &               t1, t2, tdef, logtem, indixe, 
-     &               dom, coolunit, tbase1, xbase1, dx_cgs, c_ljeans,
+     &               dom, coolunit, tbase1, uxyz, xbase1, dx_cgs,
+     &               c_ljeans,
      &               iradtrans, kdissH2I, xH2shield, itmask,
      &               itmask_metal
      &              , fh, metal
@@ -1693,7 +1694,8 @@ C                 endif
      &                k28shield, k29shield, k30shield, k31shield,
      &                h2dust, ncrn, ncrd1, ncrd2,
      &                t1, t2, tdef, logtem, indixe, 
-     &                dom, coolunit, tbase1, xbase1, dx_cgs, c_ljeans,
+     &                dom, coolunit, tbase1, uxyz, xbase1, dx_cgs,
+     &                c_ljeans,
      &                iradtrans, kdissH2I, xH2shield, itmask,
      &                itmask_metal
      &              , fh, metal
@@ -1772,7 +1774,7 @@ C                 endif
      &        iH2shieldcustom
       real*8 temstart, temend, tgas1d(in), mmw(in), dom,
      &       dtemstart, dtemend
-      real*8 coolunit, tbase1, xbase1, dx_cgs, c_ljeans
+      real*8 coolunit, tbase1, uxyz, xbase1, dx_cgs, c_ljeans
       MASK_TYPE itmask(in), anydust
 
 !     Chemistry rates as a function of temperature
@@ -2761,7 +2763,7 @@ C                 endif
 
 !              User-supplied length-scale field.
                else if (iH2shield == 2) then
-                  l_H2shield = xH2shield(i,j,k) * xbase1
+                  l_H2shield = xH2shield(i,j,k) * uxyz
 
 !              Jeans Length
                else if (iH2shield == 3) then
