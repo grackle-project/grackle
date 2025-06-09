@@ -13,8 +13,8 @@ Our general policy to keep Grackle's main branch stable and in working order.
 Periodically, we "release" new versions of Grackle.
 A release serves 2 purposes:
 
-  1. It's way to designate a development milestone (whether it's new functionality, changes in the public API, bugfixes) at a snapshot in the project's development.
-  2. It's a way to announce the latest changes to the library since the last milestone.
+1. It's way to designate a development milestone (whether it's new functionality, changes in the public API, bugfixes) at a snapshot in the project's development.
+2. It's a way to announce the latest changes to the library since the last milestone.
 
 Currently, the repository tracks 2 separate version numbers: the primary version number (used by the documentation and the shared/static library) **and** the pygrackle version number.
 

@@ -17,6 +17,8 @@ int calc_rates_dust_P170(int iSN, chemistry_data *my_chemistry, chemistry_data_s
 int calc_rates_dust_P200(int iSN, chemistry_data *my_chemistry, chemistry_data_storage *my_rates);
 int calc_rates_dust_Y19(int iSN, chemistry_data *my_chemistry, chemistry_data_storage *my_rates);
 
+typedef int calc_yield_rate_fn(int, chemistry_data*, chemistry_data_storage*);
+
 int initialize_dust_yields(chemistry_data *my_chemistry,
                            chemistry_data_storage *my_rates,
                            code_units *my_units)
@@ -41,8 +43,7 @@ int initialize_dust_yields(chemistry_data *my_chemistry,
 //-------kdvolorg  :    CO   +   2H2I        -> volorg (CH3OH)
 //-------kdH2Oice  :    H2O                  -> H2Oice
 
-      int ifunc;
-      int NSN, NTd, Nfd, Nmom;
+      int NSN, NTd, Nmom;
       double Td0, dTd;
       int iSN, iTd, imom, itab;
 
@@ -194,18 +195,19 @@ int initialize_dust_yields(chemistry_data *my_chemistry,
         }
       }
 
-      ifunc = calc_rates_dust_loc ( 0, my_chemistry, my_rates);
-      ifunc = calc_rates_dust_C13 ( 1, my_chemistry, my_rates);
-      ifunc = calc_rates_dust_C20 ( 2, my_chemistry, my_rates);
-      ifunc = calc_rates_dust_C25 ( 3, my_chemistry, my_rates);
-      ifunc = calc_rates_dust_C30 ( 4, my_chemistry, my_rates);
-      ifunc = calc_rates_dust_F13 ( 5, my_chemistry, my_rates);
-      ifunc = calc_rates_dust_F15 ( 6, my_chemistry, my_rates);
-      ifunc = calc_rates_dust_F50 ( 7, my_chemistry, my_rates);
-      ifunc = calc_rates_dust_F80 ( 8, my_chemistry, my_rates);
-      ifunc = calc_rates_dust_P170( 9, my_chemistry, my_rates);
-      ifunc = calc_rates_dust_P200(10, my_chemistry, my_rates);
-      ifunc = calc_rates_dust_Y19 (11, my_chemistry, my_rates);
+      calc_yield_rate_fn* fn_list[] = {
+        &calc_rates_dust_loc, &calc_rates_dust_C13, &calc_rates_dust_C20,
+        &calc_rates_dust_C25, &calc_rates_dust_C30, &calc_rates_dust_F13,
+        &calc_rates_dust_F15, &calc_rates_dust_F50, &calc_rates_dust_F80,
+        &calc_rates_dust_P170, &calc_rates_dust_P200, &calc_rates_dust_Y19
+      };
+
+      int n_funcs = (int)(sizeof(fn_list) / sizeof(calc_yield_rate_fn*));
+
+      for (int i = 0; i < n_funcs; i++) {
+        int rv = fn_list[i](i, my_chemistry, my_rates);
+        if (rv != SUCCESS) { return rv; }
+      }
 
   return SUCCESS;
 }
