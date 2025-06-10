@@ -23,6 +23,7 @@ build-backend = "scikit_build_core.build"
 [project]
 name = "pygrackle"
 description = "A wrapper for the Grackle chemistry library"
+readme = "README.rst"
 # A simpler project could infer used to infer the version number from git:
 #    https://scikit-build-core.readthedocs.io/en/latest/configuration.html#dynamic-metadata
 # but pygrackle can't (currently) do this since it lives in a "monorepo"
