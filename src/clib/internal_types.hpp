@@ -19,60 +19,10 @@
 #endif
 
 #include "LUT.hpp"
+#include "visitor/common.hpp"
+#include "utils-cpp.hpp"
 
 namespace grackle::impl {
-
-/// this specifies the kind of member being visited
-///
-/// @note
-/// This is a scoped enum, which are more type-safe than regular enums. If we
-/// choose to use a regular enum, we should stick the definition inside of its
-/// own namespace
-enum struct MemberKind { i64_buffer, f64_buffer };
-
-/// an instance of this struct is passed to the visitor
-/// -> for a subset of ScratchBuf Data Structures, `name` may be a nullptr
-///
-/// @note
-/// In the future, it may be nice to add another member to this struct in order
-/// for the visitor to know whether the member is actively being used under
-/// grackle's current configuration (there are a couple of ways to accomplish
-/// this)
-struct MemberInfo {
-  const char* name;
-  MemberKind kind;
-};
-
-/// the visitor function signature
-typedef void visitor_callback(
-  MemberInfo member_info, void* member_ptr, void* visitor_ctx
-);
-
-/// this is a macro used to help implement the visit_member_... function
-#define GRIMPL_IMPL_VISIT_MEMBER(visit_mempair_fn, Tobj, objptr, fn, ctxptr)  \
-  {                                                                           \
-    /* create a stack allocated instance of Tobj, which holds garbage data */ \
-    Tobj dummy;                                                               \
-                                                                              \
-    /* we create a lambda function to wrap fn and ctx_ptr                     \
-     * - it captures both the function-pointer and context pointer by value   \
-     * - it recieves references to corresponding members of objptr & dummy    \
-     */                                                                       \
-    auto wrapper = [ctxptr, fn](MemberInfo member_info,                       \
-                                auto& reference_to_obj_member,                \
-                                auto& reference_to_dummy_member) {            \
-      /* reference_to_obj_member is always a reference to the member.         \
-       * I need to make it a pointer to the member type                       \
-       *  -> if `reference_to_obj_member.kind == MemberKind.f64_buffer`,      \
-       *     then we effectively are converting from double*& to double**     \
-       *     before casting to void*                                          \
-       */                                                                     \
-      void* mem_ptr = (void*)(&reference_to_obj_member);                      \
-      fn(member_info, mem_ptr, ctxptr);                                       \
-    };                                                                        \
-                                                                              \
-    visit_mempair_fn(*objptr, dummy, wrapper);                                \
-  }
 
 /// Holds 1D arrays used for cooling and heating
 ///
@@ -113,40 +63,41 @@ template<class BinaryFn>
 void visit_member_pair(
   CoolHeatScratchBuf& obj0, CoolHeatScratchBuf& obj1, BinaryFn f
 ) {
-  f(MemberInfo{"ceHI", MemberKind::f64_buffer}, obj0.ceHI, obj1.ceHI);
-  f(MemberInfo{"ceHeI", MemberKind::f64_buffer}, obj0.ceHeI, obj1.ceHeI);
-  f(MemberInfo{"ceHeII", MemberKind::f64_buffer}, obj0.ceHeII, obj1.ceHeII);
-  f(MemberInfo{"ciHI", MemberKind::f64_buffer}, obj0.ciHI, obj1.ciHI);
-  f(MemberInfo{"ciHeI", MemberKind::f64_buffer}, obj0.ciHeI, obj1.ciHeI);
-  f(MemberInfo{"ciHeIS", MemberKind::f64_buffer}, obj0.ciHeIS, obj1.ciHeIS);
-  f(MemberInfo{"ciHeII", MemberKind::f64_buffer}, obj0.ciHeII, obj1.ciHeII);
-  f(MemberInfo{"reHII", MemberKind::f64_buffer}, obj0.reHII, obj1.reHII);
-  f(MemberInfo{"reHeII1", MemberKind::f64_buffer}, obj0.reHeII1, obj1.reHeII1);
-  f(MemberInfo{"reHeII2", MemberKind::f64_buffer}, obj0.reHeII2, obj1.reHeII2);
-  f(MemberInfo{"reHeIII", MemberKind::f64_buffer}, obj0.reHeIII, obj1.reHeIII);
-  f(MemberInfo{"brem", MemberKind::f64_buffer}, obj0.brem, obj1.brem);
-  f(MemberInfo{"cieco", MemberKind::f64_buffer}, obj0.cieco, obj1.cieco);
-  f(MemberInfo{"hyd01k", MemberKind::f64_buffer}, obj0.hyd01k, obj1.hyd01k);
-  f(MemberInfo{"h2k01", MemberKind::f64_buffer}, obj0.h2k01, obj1.h2k01);
-  f(MemberInfo{"vibh", MemberKind::f64_buffer}, obj0.vibh, obj1.vibh);
-  f(MemberInfo{"roth", MemberKind::f64_buffer}, obj0.roth, obj1.roth);
-  f(MemberInfo{"rotl", MemberKind::f64_buffer}, obj0.rotl, obj1.rotl);
-  f(MemberInfo{"gpldl", MemberKind::f64_buffer}, obj0.gpldl, obj1.gpldl);
-  f(MemberInfo{"gphdl", MemberKind::f64_buffer}, obj0.gphdl, obj1.gphdl);
-  f(MemberInfo{"hdlte", MemberKind::f64_buffer}, obj0.hdlte, obj1.hdlte);
-  f(MemberInfo{"hdlow", MemberKind::f64_buffer}, obj0.hdlow, obj1.hdlow);
+  namespace vis = ::grackle::impl::visitor;
+
+  vis::begin_visit("CoolHeatScratchBuf", f);
+  f(VIS_MEMBER_NAME("ceHI"), obj0.ceHI, obj1.ceHI, vis::idx_range_len_multiple(1));
+  f(VIS_MEMBER_NAME("ceHeI"), obj0.ceHeI, obj1.ceHeI, vis::idx_range_len_multiple(1));
+  f(VIS_MEMBER_NAME("ceHeII"), obj0.ceHeII, obj1.ceHeII, vis::idx_range_len_multiple(1));
+  f(VIS_MEMBER_NAME("ciHI"), obj0.ciHI, obj1.ciHI, vis::idx_range_len_multiple(1));
+  f(VIS_MEMBER_NAME("ciHeI"), obj0.ciHeI, obj1.ciHeI, vis::idx_range_len_multiple(1));
+  f(VIS_MEMBER_NAME("ciHeIS"), obj0.ciHeIS, obj1.ciHeIS, vis::idx_range_len_multiple(1));
+  f(VIS_MEMBER_NAME("ciHeII"), obj0.ciHeII, obj1.ciHeII, vis::idx_range_len_multiple(1));
+  f(VIS_MEMBER_NAME("reHII"), obj0.reHII, obj1.reHII, vis::idx_range_len_multiple(1));
+  f(VIS_MEMBER_NAME("reHeII1"), obj0.reHeII1, obj1.reHeII1, vis::idx_range_len_multiple(1));
+  f(VIS_MEMBER_NAME("reHeII2"), obj0.reHeII2, obj1.reHeII2, vis::idx_range_len_multiple(1));
+  f(VIS_MEMBER_NAME("reHeIII"), obj0.reHeIII, obj1.reHeIII, vis::idx_range_len_multiple(1));
+  f(VIS_MEMBER_NAME("brem"), obj0.brem, obj1.brem, vis::idx_range_len_multiple(1));
+  f(VIS_MEMBER_NAME("cieco"), obj0.cieco, obj1.cieco, vis::idx_range_len_multiple(1));
+  f(VIS_MEMBER_NAME("hyd01k"), obj0.hyd01k, obj1.hyd01k, vis::idx_range_len_multiple(1));
+  f(VIS_MEMBER_NAME("h2k01"), obj0.h2k01, obj1.h2k01, vis::idx_range_len_multiple(1));
+  f(VIS_MEMBER_NAME("vibh"), obj0.vibh, obj1.vibh, vis::idx_range_len_multiple(1));
+  f(VIS_MEMBER_NAME("roth"), obj0.roth, obj1.roth, vis::idx_range_len_multiple(1));
+  f(VIS_MEMBER_NAME("rotl"), obj0.rotl, obj1.rotl, vis::idx_range_len_multiple(1));
+  f(VIS_MEMBER_NAME("gpldl"), obj0.gpldl, obj1.gpldl, vis::idx_range_len_multiple(1));
+  f(VIS_MEMBER_NAME("gphdl"), obj0.gphdl, obj1.gphdl, vis::idx_range_len_multiple(1));
+  f(VIS_MEMBER_NAME("hdlte"), obj0.hdlte, obj1.hdlte, vis::idx_range_len_multiple(1));
+  f(VIS_MEMBER_NAME("hdlow"), obj0.hdlow, obj1.hdlow, vis::idx_range_len_multiple(1));
+  vis::end_visit(f);
 }
 
 /// implements the visitor design pattern
 ///
 /// @param ptr[in,out] Members of the specified object will be visited
 /// @param fn[in] Calls function that will be applied to each function
-/// @param visitor_ctx[in,out] User-defined callback function context
-inline void visit_member_CoolHeatScratchBuf(
-  CoolHeatScratchBuf* ptr, visitor_callback* fn, void* visitor_ctx
-) {
-  GRIMPL_IMPL_VISIT_MEMBER(visit_member_pair, CoolHeatScratchBuf, ptr, fn,
-                           visitor_ctx)
+template <class UnaryVisitor>
+inline void visit_member(CoolHeatScratchBuf* ptr, UnaryVisitor fn) {
+  GRIMPL_IMPL_VISIT_MEMBER(visit_member_pair, CoolHeatScratchBuf, ptr, fn);
 }
 
 /// allocates the contents of a new CoolHeatScratchBuf
@@ -186,26 +137,25 @@ template<class BinaryFn>
 void visit_member_pair(
   Cool1DMultiScratchBuf& obj0, Cool1DMultiScratchBuf& obj1, BinaryFn f
 ) {
-  f(MemberInfo{"tgasold", MemberKind::f64_buffer}, obj0.tgasold, obj1.tgasold);
-  f(MemberInfo{"mynh", MemberKind::f64_buffer}, obj0.mynh, obj1.mynh);
-  f(MemberInfo{"myde", MemberKind::f64_buffer}, obj0.myde, obj1.myde);
-  f(MemberInfo{"gammaha_eff", MemberKind::f64_buffer},
-    obj0.gammaha_eff, obj1.gammaha_eff);
-  f(MemberInfo{"gasgr_tdust", MemberKind::f64_buffer},
-    obj0.gasgr_tdust, obj1.gasgr_tdust);
-  f(MemberInfo{"regr", MemberKind::f64_buffer}, obj0.regr, obj1.regr);
+  namespace vis = ::grackle::impl::visitor;
+
+  vis::begin_visit("Cool1DMultiScratchBuf", f);
+  f(VIS_MEMBER_NAME("tgasold"), obj0.tgasold, obj1.tgasold, vis::idx_range_len_multiple(1));
+  f(VIS_MEMBER_NAME("mynh"), obj0.mynh, obj1.mynh, vis::idx_range_len_multiple(1));
+  f(VIS_MEMBER_NAME("myde"), obj0.myde, obj1.myde, vis::idx_range_len_multiple(1));
+  f(VIS_MEMBER_NAME("gammaha_eff"), obj0.gammaha_eff, obj1.gammaha_eff, vis::idx_range_len_multiple(1));
+  f(VIS_MEMBER_NAME("gasgr_tdust"), obj0.gasgr_tdust, obj1.gasgr_tdust, vis::idx_range_len_multiple(1));
+  f(VIS_MEMBER_NAME("regr"), obj0.regr, obj1.regr, vis::idx_range_len_multiple(1));
+  vis::end_visit(f);
 }
 
 /// implements the visitor design pattern
 ///
 /// @param ptr[in,out] Members of the specified object will be visited
 /// @param fn[in] Calls function that will be applied to each function
-/// @param visitor_ctx[in,out] User-defined callback function context
-inline void visit_member_Cool1DMultiScratchBuf(
-  Cool1DMultiScratchBuf* ptr, visitor_callback* fn, void* visitor_ctx
-) {
-  GRIMPL_IMPL_VISIT_MEMBER(visit_member_pair, Cool1DMultiScratchBuf, ptr, fn,
-                           visitor_ctx)
+template <class UnaryVisitor>
+inline void visit_member(Cool1DMultiScratchBuf* ptr, UnaryVisitor fn) {
+  GRIMPL_IMPL_VISIT_MEMBER(visit_member_pair, Cool1DMultiScratchBuf, ptr, fn);
 }
 
 /// allocates the contents of a new Cool1DMultiScratchBuf
@@ -255,23 +205,24 @@ template<class BinaryFn>
 void visit_member_pair(
   LogTLinInterpScratchBuf& obj0, LogTLinInterpScratchBuf& obj1, BinaryFn f
 ) {
-  f(MemberInfo{"indixe", MemberKind::i64_buffer}, obj0.indixe, obj1.indixe);
-  f(MemberInfo{"t1", MemberKind::f64_buffer}, obj0.t1, obj1.t1);
-  f(MemberInfo{"t2", MemberKind::f64_buffer}, obj0.t2, obj1.t2);
-  f(MemberInfo{"logtem", MemberKind::f64_buffer}, obj0.logtem, obj1.logtem);
-  f(MemberInfo{"tdef", MemberKind::f64_buffer}, obj0.tdef, obj1.tdef);
+  namespace vis = ::grackle::impl::visitor;
+
+  vis::begin_visit("LogTLinInterpScratchBuf", f);
+  f(VIS_MEMBER_NAME("indixe"), obj0.indixe, obj1.indixe, vis::idx_range_len_multiple(1));
+  f(VIS_MEMBER_NAME("t1"), obj0.t1, obj1.t1, vis::idx_range_len_multiple(1));
+  f(VIS_MEMBER_NAME("t2"), obj0.t2, obj1.t2, vis::idx_range_len_multiple(1));
+  f(VIS_MEMBER_NAME("logtem"), obj0.logtem, obj1.logtem, vis::idx_range_len_multiple(1));
+  f(VIS_MEMBER_NAME("tdef"), obj0.tdef, obj1.tdef, vis::idx_range_len_multiple(1));
+  vis::end_visit(f);
 }
 
 /// implements the visitor design pattern
 ///
 /// @param ptr[in,out] Members of the specified object will be visited
 /// @param fn[in] Calls function that will be applied to each function
-/// @param visitor_ctx[in,out] User-defined callback function context
-inline void visit_member_LogTLinInterpScratchBuf(
-  LogTLinInterpScratchBuf* ptr, visitor_callback* fn, void* visitor_ctx
-) {
-  GRIMPL_IMPL_VISIT_MEMBER(visit_member_pair, LogTLinInterpScratchBuf, ptr, fn,
-                           visitor_ctx)
+template <class UnaryVisitor>
+inline void visit_member(LogTLinInterpScratchBuf* ptr, UnaryVisitor fn) {
+  GRIMPL_IMPL_VISIT_MEMBER(visit_member_pair, LogTLinInterpScratchBuf, ptr, fn);
 }
 
 /// allocates the contents of a new LogTLinInterpScratchBuf
@@ -314,26 +265,27 @@ template<class BinaryFn>
 void visit_member_pair(
   PhotoRxnRateCollection& obj0, PhotoRxnRateCollection& obj1, BinaryFn f
 ) {
-  f(MemberInfo{"k24", MemberKind::f64_buffer}, obj0.k24, obj1.k24);
-  f(MemberInfo{"k25", MemberKind::f64_buffer}, obj0.k25, obj1.k25);
-  f(MemberInfo{"k26", MemberKind::f64_buffer}, obj0.k26, obj1.k26);
-  f(MemberInfo{"k27", MemberKind::f64_buffer}, obj0.k27, obj1.k27);
-  f(MemberInfo{"k28", MemberKind::f64_buffer}, obj0.k28, obj1.k28);
-  f(MemberInfo{"k29", MemberKind::f64_buffer}, obj0.k29, obj1.k29);
-  f(MemberInfo{"k30", MemberKind::f64_buffer}, obj0.k30, obj1.k30);
-  f(MemberInfo{"k31", MemberKind::f64_buffer}, obj0.k31, obj1.k31);
+  namespace vis = ::grackle::impl::visitor;
+
+  vis::begin_visit("PhotoRxnRateCollection", f);
+  f(VIS_MEMBER_NAME("k24"), obj0.k24, obj1.k24, vis::idx_range_len_multiple(1));
+  f(VIS_MEMBER_NAME("k25"), obj0.k25, obj1.k25, vis::idx_range_len_multiple(1));
+  f(VIS_MEMBER_NAME("k26"), obj0.k26, obj1.k26, vis::idx_range_len_multiple(1));
+  f(VIS_MEMBER_NAME("k27"), obj0.k27, obj1.k27, vis::idx_range_len_multiple(1));
+  f(VIS_MEMBER_NAME("k28"), obj0.k28, obj1.k28, vis::idx_range_len_multiple(1));
+  f(VIS_MEMBER_NAME("k29"), obj0.k29, obj1.k29, vis::idx_range_len_multiple(1));
+  f(VIS_MEMBER_NAME("k30"), obj0.k30, obj1.k30, vis::idx_range_len_multiple(1));
+  f(VIS_MEMBER_NAME("k31"), obj0.k31, obj1.k31, vis::idx_range_len_multiple(1));
+  vis::end_visit(f);
 }
 
 /// implements the visitor design pattern
 ///
 /// @param ptr[in,out] Members of the specified object will be visited
 /// @param fn[in] Calls function that will be applied to each function
-/// @param visitor_ctx[in,out] User-defined callback function context
-inline void visit_member_PhotoRxnRateCollection(
-  PhotoRxnRateCollection* ptr, visitor_callback* fn, void* visitor_ctx
-) {
-  GRIMPL_IMPL_VISIT_MEMBER(visit_member_pair, PhotoRxnRateCollection, ptr, fn,
-                           visitor_ctx)
+template <class UnaryVisitor>
+inline void visit_member(PhotoRxnRateCollection* ptr, UnaryVisitor fn) {
+  GRIMPL_IMPL_VISIT_MEMBER(visit_member_pair, PhotoRxnRateCollection, ptr, fn)
 }
 
 /// allocates the contents of a new PhotoRxnRateCollection
@@ -372,21 +324,22 @@ template<class BinaryFn>
 void visit_member_pair(
   ChemHeatingRates& obj0, ChemHeatingRates& obj1, BinaryFn f
 ) {
-  f(MemberInfo{"n_cr_n", MemberKind::f64_buffer}, obj0.n_cr_n, obj1.n_cr_n);
-  f(MemberInfo{"n_cr_d1", MemberKind::f64_buffer}, obj0.n_cr_d1, obj1.n_cr_d1);
-  f(MemberInfo{"n_cr_d2", MemberKind::f64_buffer}, obj0.n_cr_d2, obj1.n_cr_d2);
+  namespace vis = ::grackle::impl::visitor;
+
+  vis::begin_visit("ChemHeatingRates", f);
+  f(VIS_MEMBER_NAME("n_cr_n"), obj0.n_cr_n, obj1.n_cr_n, vis::idx_range_len_multiple(1));
+  f(VIS_MEMBER_NAME("n_cr_d1"), obj0.n_cr_d1, obj1.n_cr_d1, vis::idx_range_len_multiple(1));
+  f(VIS_MEMBER_NAME("n_cr_d2"), obj0.n_cr_d2, obj1.n_cr_d2, vis::idx_range_len_multiple(1));
+  vis::end_visit(f);
 }
 
 /// implements the visitor design pattern
 ///
 /// @param ptr[in,out] Members of the specified object will be visited
 /// @param fn[in] Calls function that will be applied to each function
-/// @param visitor_ctx[in,out] User-defined callback function context
-inline void visit_member_ChemHeatingRates(
-  ChemHeatingRates* ptr, visitor_callback* fn, void* visitor_ctx
-) {
-  GRIMPL_IMPL_VISIT_MEMBER(visit_member_pair, ChemHeatingRates, ptr, fn,
-                           visitor_ctx)
+template <class UnaryVisitor>
+inline void visit_member(ChemHeatingRates* ptr, UnaryVisitor fn) {
+  GRIMPL_IMPL_VISIT_MEMBER(visit_member_pair, ChemHeatingRates, ptr, fn)
 }
 
 /// allocates the contents of a new ChemHeatingRates
@@ -443,26 +396,27 @@ template<class BinaryFn>
 void visit_member_pair(
   SpeciesCollection& obj0, SpeciesCollection& obj1, BinaryFn f
 ) {
-  // it's okay that we aren't specifing the name of the visited member.
+  // it's okay that we aren't specifying the name of the visited member.
   // -> if we need this info, we could easily write a function mapping the
   //    LUT index to the species name
   // -> frankly, this function is totally unnecessary. We're only implementing
   //    it for the sake of consistency/convenience
+  namespace vis = ::grackle::impl::visitor;
+
+  vis::begin_visit("SpeciesCollection", f);
   for (int i = 0; i < SpLUT::NUM_ENTRIES; i++) {
-    f(MemberInfo{nullptr, MemberKind::f64_buffer}, obj0.data[i], obj1.data[i]);
+    f(VIS_MEMBER_NAME("data[...]"), obj0.data[i], obj1.data[i], vis::idx_range_len_multiple(1));
   }
+  vis::end_visit(f);
 }
 
 /// implements the visitor design pattern
 ///
 /// @param ptr[in,out] Members of the specified object will be visited
 /// @param fn[in] Calls function that will be applied to each function
-/// @param visitor_ctx[in,out] User-defined callback function context
-inline void visit_member_SpeciesCollection(
-  SpeciesCollection* ptr, visitor_callback* fn, void* visitor_ctx
-) {
-  GRIMPL_IMPL_VISIT_MEMBER(visit_member_pair, SpeciesCollection, ptr, fn,
-                           visitor_ctx)
+template <class UnaryVisitor>
+inline void visit_member(SpeciesCollection* ptr, UnaryVisitor fn) {
+  GRIMPL_IMPL_VISIT_MEMBER(visit_member_pair, SpeciesCollection, ptr, fn);
 }
 
 /// allocates the contents of a new SpeciesCollection
@@ -497,21 +451,22 @@ template<class BinaryFn>
 void visit_member_pair(
   GrainSpeciesCollection& obj0, GrainSpeciesCollection& obj1, BinaryFn f
 ) {
+  namespace vis = ::grackle::impl::visitor;
+
+  vis::begin_visit("GrainSpeciesCollection", f);
   for (int i = 0; i < OnlyGrainSpLUT::NUM_ENTRIES; i++) {
-    f(MemberInfo{nullptr, MemberKind::f64_buffer}, obj0.data[i], obj1.data[i]);
+    f(VIS_MEMBER_NAME("data[...]"), obj0.data[i], obj1.data[i], vis::idx_range_len_multiple(1));
   }
+  vis::end_visit(f);
 }
 
 /// implements the visitor design pattern
 ///
 /// @param ptr[in,out] Members of the specified object will be visited
 /// @param fn[in] Calls function that will be applied to each function
-/// @param visitor_ctx[in,out] User-defined callback function context
-inline void visit_member_GrainSpeciesCollection(
-  GrainSpeciesCollection* ptr, visitor_callback* fn, void* visitor_ctx
-) {
-  GRIMPL_IMPL_VISIT_MEMBER(visit_member_pair, GrainSpeciesCollection, ptr, fn,
-                           visitor_ctx)
+template <class UnaryVisitor>
+inline void visit_member(GrainSpeciesCollection* ptr, UnaryVisitor fn) {
+  GRIMPL_IMPL_VISIT_MEMBER(visit_member_pair, GrainSpeciesCollection, ptr, fn)
 }
 
 /// allocates the contents of a new GrainSpeciesCollection
@@ -543,21 +498,22 @@ template<class BinaryFn>
 void visit_member_pair(
   ColRecRxnRateCollection& obj0, ColRecRxnRateCollection& obj1, BinaryFn f
 ) {
+  namespace vis = ::grackle::impl::visitor;
+
+  vis::begin_visit("ColRecRxnRateCollection", f);
   for (int i = 0; i < ColRecRxnLUT::NUM_ENTRIES; i++) {
-    f(MemberInfo{nullptr, MemberKind::f64_buffer}, obj0.data[i], obj1.data[i]);
+    f(VIS_MEMBER_NAME("data[...]"), obj0.data[i], obj1.data[i], vis::idx_range_len_multiple(1));
   }
+  vis::end_visit(f);
 }
 
 /// implements the visitor design pattern
 ///
 /// @param ptr[in,out] Members of the specified object will be visited
 /// @param fn[in] Calls function that will be applied to each function
-/// @param visitor_ctx[in,out] User-defined callback function context
-inline void visit_member_ColRecRxnRateCollection(
-  ColRecRxnRateCollection* ptr, visitor_callback* fn, void* visitor_ctx
-) {
-  GRIMPL_IMPL_VISIT_MEMBER(visit_member_pair, ColRecRxnRateCollection, ptr, fn,
-                           visitor_ctx)
+template <class UnaryVisitor>
+inline void visit_member(ColRecRxnRateCollection* ptr, UnaryVisitor fn) {
+  GRIMPL_IMPL_VISIT_MEMBER(visit_member_pair, ColRecRxnRateCollection, ptr, fn)
 }
 
 /// allocates the contents of a new ColRecRxnRateCollection
@@ -571,7 +527,5 @@ ColRecRxnRateCollection new_ColRecRxnRateCollection(int nelem);
 void drop_ColRecRxnRateCollection(ColRecRxnRateCollection*);
 
 } // namespace grackle::impl
-
-#undef GRIMPL_IMPL_VISIT_MEMBER
 
 #endif /* INTERNAL_TYPES_HPP */
