@@ -17,6 +17,8 @@
 #include "internal_types.hpp"
 #include "internal_units.h"
 #include "utils-cpp.hpp"
+#include "visitor/common.hpp"
+#include "visitor/memory.hpp"
 
 #include "solve_rate_cool_g-cpp.h"
 
@@ -545,34 +547,59 @@ struct SpeciesRateSolverScratchBuf {
 
 };
 
+/// used to help implement the visitor design pattern
+///
+/// (avoid using this unless you really have to)
+template <class BinaryVisitor>
+void visit_member_pair(SpeciesRateSolverScratchBuf& obj0,
+                       SpeciesRateSolverScratchBuf& obj1,
+                       BinaryVisitor f) {
+  namespace vis = ::grackle::impl::visitor;
+
+  vis::begin_visit("SpeciesRateSolverScratchBuf", f);
+  f(VIS_MEMBER_NAME("ddom"), obj0.ddom, obj1.ddom, vis::idx_range_len_multiple(1));
+  f(VIS_MEMBER_NAME("dedot"), obj0.dedot, obj1.dedot, vis::idx_range_len_multiple(1));
+  f(VIS_MEMBER_NAME("HIdot"), obj0.HIdot, obj1.HIdot, vis::idx_range_len_multiple(1));
+  f(VIS_MEMBER_NAME("dedot_prev"), obj0.dedot_prev, obj1.dedot_prev, vis::idx_range_len_multiple(1));
+  f(VIS_MEMBER_NAME("HIdot_prev"), obj0.HIdot_prev, obj1.HIdot_prev, vis::idx_range_len_multiple(1));
+  // the next line is NOT a typo
+  f(VIS_MEMBER_NAME("k13dd"), obj0.k13dd, obj1.k13dd, vis::idx_range_len_multiple(14));
+  f(VIS_MEMBER_NAME("h2dust"), obj0.h2dust, obj1.h2dust, vis::idx_range_len_multiple(1));
+  f(VIS_MEMBER_NAME("itmask_nr"), obj0.itmask_nr, obj1.itmask_nr, vis::idx_range_len_multiple(1));
+  f(VIS_MEMBER_NAME("imp_eng"), obj0.imp_eng, obj1.imp_eng, vis::idx_range_len_multiple(1));
+
+  vis::previsit_struct_member(VIS_MEMBER_NAME("species_tmpdens"), f);
+  visit_member_pair(obj0.species_tmpdens, obj1.species_tmpdens, f);
+
+  vis::previsit_struct_member(VIS_MEMBER_NAME("kcr_buf"), f);
+  visit_member_pair(obj0.kcr_buf, obj1.kcr_buf, f);
+
+  vis::previsit_struct_member(VIS_MEMBER_NAME("kshield_buf"), f);
+  visit_member_pair(obj0.kshield_buf, obj1.kshield_buf, f);
+
+  vis::previsit_struct_member(VIS_MEMBER_NAME("chemheatrates_buf"), f);
+  visit_member_pair(obj0.chemheatrates_buf, obj1.chemheatrates_buf, f);
+
+  vis::previsit_struct_member(VIS_MEMBER_NAME("grain_growth_rates"), f);
+  visit_member_pair(obj0.grain_growth_rates, obj1.grain_growth_rates, f);
+
+  vis::end_visit(f);
+}
+
+template <class UnaryFn>
+void visit_member(SpeciesRateSolverScratchBuf* obj, UnaryFn fn) {
+  GRIMPL_IMPL_VISIT_MEMBER(visit_member_pair, SpeciesRateSolverScratchBuf, obj, fn)
+}
+
 /// allocates the contents of a new SpeciesRateSolverScratchBuf
 ///
 /// @param nelem The number of elements a buffer is expected to have in order
 ///    to store values for the standard sized index-range
 SpeciesRateSolverScratchBuf new_SpeciesRateSolverScratchBuf(int nelem) {
+  GRIMPL_REQUIRE(nelem > 0, "nelem must be positive");
   SpeciesRateSolverScratchBuf out;
-
-  out.ddom = (double*)malloc(sizeof(double)*nelem);
-
-  out.dedot = (double*)malloc(sizeof(double)*nelem);
-  out.HIdot = (double*)malloc(sizeof(double)*nelem);
-  out.dedot_prev = (double*)malloc(sizeof(double)*nelem);
-  out.HIdot_prev = (double*)malloc(sizeof(double)*nelem);
-
-  out.k13dd = (double*)malloc(sizeof(double)*nelem*14);
-
-  out.h2dust = (double*)malloc(sizeof(double)*nelem);
-
-  out.itmask_nr = (gr_mask_type*)malloc(sizeof(gr_mask_type)*nelem);
-
-  out.imp_eng = (int*)malloc(sizeof(int)*nelem);
-
-  out.species_tmpdens = grackle::impl::new_SpeciesCollection(nelem);
-  out.kcr_buf = grackle::impl::new_ColRecRxnRateCollection(nelem);
-  out.kshield_buf = grackle::impl::new_PhotoRxnRateCollection(nelem);
-  out.chemheatrates_buf = grackle::impl::new_ChemHeatingRates(nelem);
-  out.grain_growth_rates = grackle::impl::new_GrainSpeciesCollection(nelem);
-
+  grackle::impl::visitor::VisitorCtx ctx{static_cast<unsigned int>(nelem)};
+  grackle::impl::visit_member(&out, grackle::impl::visitor::AllocateMembers{ctx});
   return out;
 }
 
@@ -580,25 +607,7 @@ SpeciesRateSolverScratchBuf new_SpeciesRateSolverScratchBuf(int nelem) {
 ///
 /// This effectively invokes a destructor
 void drop_SpeciesRateSolverScratchBuf(SpeciesRateSolverScratchBuf* ptr) {
-  free(ptr->ddom);
-
-  free(ptr->dedot);
-  free(ptr->HIdot);
-  free(ptr->dedot_prev);
-  free(ptr->HIdot_prev);
-
-  free(ptr->k13dd);
-
-  free(ptr->h2dust);
-
-  free(ptr->itmask_nr);
-  free(ptr->imp_eng);
-
-  grackle::impl::drop_SpeciesCollection(&ptr->species_tmpdens);
-  grackle::impl::drop_ColRecRxnRateCollection(&ptr->kcr_buf);
-  grackle::impl::drop_PhotoRxnRateCollection(&ptr->kshield_buf);
-  grackle::impl::drop_ChemHeatingRates(&ptr->chemheatrates_buf);
-  grackle::impl::drop_GrainSpeciesCollection(&ptr->grain_growth_rates);
+  grackle::impl::visit_member(ptr, grackle::impl::visitor::FreeMembers{});
 }
 
 
