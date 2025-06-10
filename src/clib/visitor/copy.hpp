@@ -23,6 +23,12 @@ public:
   CopyMembers() = delete;
   explicit CopyMembers(VisitorCtx ctx) : ctx(ctx) {}
 
+  void operator()(const char* name, int*& src, int*& dst,
+                  const BufLenSpec& spec) const {
+    std::size_t n_elem = get_buf_len(spec, ctx);
+    std::memcpy(dst, src, sizeof(int) * n_elem);
+  }
+
   void operator()(const char* name, long long*& src, long long*& dst,
                   const BufLenSpec& spec) const {
     std::size_t n_elem = get_buf_len(spec, ctx);

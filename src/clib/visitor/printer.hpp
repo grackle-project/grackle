@@ -7,9 +7,13 @@
 #define VISITOR_PRINTER_HPP
 
 #include "common.hpp"
-#include <cstdio>  // printf
+#include "status_reporting.h"  // GR_INTERNAL_REQUIRE
+#include <cstdio>              // printf
 
 namespace grackle::impl::visitor {
+
+// there's probably an opportunity to reduce some code duplication with
+// grackle::impl::print_contiguous_row_
 
 /// A visitor that prints the contents of a type (intended for debugging
 /// purposes)
@@ -26,12 +30,17 @@ namespace grackle::impl::visitor {
 class Printer {
   VisitorCtx ctx;
   int indent_width;
+  /// modified by previsit_struct_member and begin_visit
+  const char* name_of_struct_;
 
   template <typename Visitor>
-  friend void begin_visit(const char* type_name, Visitor& visitor);
+  friend void previsit_struct_member(const char*, Visitor&);
 
   template <typename Visitor>
-  friend void end_visit(Visitor& visitor);
+  friend void begin_visit(const char*, Visitor&);
+
+  template <typename Visitor>
+  friend void end_visit(Visitor&);
 
   void print_indent_() const {
     if (indent_width > 0) {
@@ -49,7 +58,23 @@ class Printer {
 public:
   Printer() = delete;
   Printer(VisitorCtx ctx, int indent_width)
-      : ctx(ctx), indent_width(indent_width) {}
+      : ctx(ctx), indent_width(indent_width), name_of_struct_(nullptr) {}
+
+  void operator()(const char* name, int*& val, const BufLenSpec& spec) const {
+    print_prefix_(name);
+    if (val == nullptr) {
+      std::printf("nullptr");
+    } else {
+      std::printf("[");
+      std::printf("%d", val[0]);
+      std::size_t n_elem = get_buf_len(spec, ctx);
+      for (std::size_t i = 1; i < n_elem; i++) {
+        std::printf(", %d", val[i]);
+      }
+      std::printf("]");
+    }
+    std::printf(",\n");
+  }
 
   void operator()(const char* name, long long*& val,
                   const BufLenSpec& spec) const {
@@ -87,10 +112,22 @@ public:
 };
 
 template <>
+inline void previsit_struct_member(const char* name, Printer& visitor) {
+  GR_INTERNAL_REQUIRE(visitor.name_of_struct_ == nullptr,
+                      "sanity check failed!");
+  visitor.name_of_struct_ = name;
+}
+
+template <>
 inline void begin_visit(const char* type_name, Printer& visitor) {
-  visitor.print_indent_();
-  std::printf("{\n");
+  visitor.print_prefix_(visitor.name_of_struct_);
+  if (type_name) {
+    std::printf("%s {\n", type_name);
+  } else {
+    std::printf("{\n");
+  }
   visitor.indent_width += 2;
+  visitor.name_of_struct_ = nullptr;
 }
 
 template <>

@@ -30,6 +30,11 @@ public:
   AllocateMembers() = delete;
   explicit AllocateMembers(VisitorCtx ctx) : ctx{ctx} {}
 
+  void operator()(const char* name, int*& mem, const BufLenSpec& spec) const {
+    std::size_t n_elem = get_buf_len(spec, ctx);
+    mem = static_cast<int*>(malloc(sizeof(int) * n_elem));
+  }
+
   void operator()(const char* name, long long*& mem,
                   const BufLenSpec& spec) const {
     std::size_t n_elem = get_buf_len(spec, ctx);
@@ -48,6 +53,10 @@ public:
 /// Visitor that separately deallocates memory for each visited member
 struct FreeMembers {
   FreeMembers() = default;
+
+  void operator()(const char* name, int*& mem, const BufLenSpec& spec) {
+    GRACKLE_FREE(mem);
+  }
 
   void operator()(const char* name, long long*& mem,
                   const BufLenSpec& spec) const {

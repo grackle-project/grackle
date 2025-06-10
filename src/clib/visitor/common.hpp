@@ -225,6 +225,16 @@ inline std::size_t get_buf_len(const BufLenSpec& spec, const VisitorCtx& ctx) {
   return ctx.idx_range_len * spec.idxrange_len_multiple + spec.constant;
 }
 
+/// informs the visitor that we are about to visit a member that is itself a
+/// struct
+///
+/// This can be specialized for different Visitors, but the default
+/// implementation does nothing.
+template <typename Visitor>
+inline void previsit_struct_member(const char* name, Visitor& visitor) {
+  /* NO-OP */
+}
+
 /// informs the visitor that we are beginning the visit with the given type
 ///
 /// This can be specialized for different Visitors, but the default
@@ -247,6 +257,11 @@ struct UnaryAdaptor {
 
   explicit UnaryAdaptor(T& adaptee) : adaptee(adaptee) {}
 
+  void operator()(const char* name, int*& val, int*& dummy,
+                  const BufLenSpec& spec) {
+    adaptee(name, val, spec);
+  }
+
   void operator()(const char* name, long long*& val, long long*& dummy,
                   const BufLenSpec& spec) {
     adaptee(name, val, spec);
@@ -257,6 +272,11 @@ struct UnaryAdaptor {
     adaptee(name, val, spec);
   }
 };
+
+template <typename T>
+inline void previsit_struct_member(const char* name, UnaryAdaptor<T>& visitor) {
+  previsit_struct_member(name, visitor.adaptee);
+}
 
 template <typename T>
 inline void begin_visit(const char* type_name, UnaryAdaptor<T>& visitor) {
