@@ -11,7 +11,6 @@
 # software.
 ########################################################################
 
-import contextlib
 import importlib
 import numpy as np
 from numpy.testing import assert_array_equal, assert_almost_equal, \
@@ -21,7 +20,6 @@ from numpy.testing import assert_array_equal, assert_almost_equal, \
 import os
 import shutil
 import subprocess
-import tempfile
 
 def assert_rel_equal(a1, a2, decimals, err_msg='', verbose=True):
     if isinstance(a1, np.ndarray):
@@ -59,43 +57,3 @@ def requires_module(module):
         return ffalse
     else:
         return ftrue
-
-def run_command(command, timeout=None):
-    try:
-        proc = subprocess.run(command, shell=True, timeout=timeout)
-        if proc.returncode == 0:
-            success = True
-        else:
-            success = False
-    except subprocess.TimeoutExpired:
-        print ("Process reached timeout of %d s. (%s)" % (timeout, command))
-        success = False
-    except KeyboardInterrupt:
-        print ("Killed by keyboard interrupt!")
-        success = False
-    return success
-
-@contextlib.contextmanager
-def temporary_directory():
-    curdir = os.getcwd()
-    tmpdir = tempfile.mkdtemp(dir=curdir)
-    os.chdir(tmpdir)
-    try:
-        yield tmpdir
-    finally:
-        os.chdir(curdir)
-        shutil.rmtree(tmpdir)
-
-def ensure_dir(path):
-    r"""Parallel safe directory maker."""
-    if os.path.exists(path):
-        return path
-
-    try:
-        os.makedirs(path)
-    except OSError as e:
-        if e.errno == errno.EEXIST:
-            pass
-        else:
-            raise
-    return path

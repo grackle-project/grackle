@@ -17,31 +17,30 @@ import yt
 
 from pygrackle import add_grackle_fields
 from pygrackle.utilities.data_path import grackle_data_dir
-from pygrackle.utilities.model_tests import model_test_format_version
+from pygrackle.utilities.model_tests import get_test_variables
 
-output_name = os.path.basename(__file__[:-3]) # strip off ".py"
+_MODEL_NAME = os.path.basename(__file__[:-3]) # strip off ".py"
 
 DS_NAME = "IsolatedGalaxy/galaxy0030/galaxy0030"
+ds_path = os.path.join(os.environ.get('YT_DATA_DIR', default='.'), DS_NAME)
 
-if 'YT_DATA_DIR' in os.environ:
-    ds_path = os.sep.join([os.environ['YT_DATA_DIR'], DS_NAME])
-else:
-    ds_path = DS_NAME
+def main(args=None):
+    args = sys.argv[1:] if args is None else args
+    if len(args) != 0:  # we are using the testing framework
+        my_vars = get_test_variables(_MODEL_NAME, args)
+        extra_attrs = my_vars["extra_attrs"]
+        output_name = my_vars["output_name"]
 
-if __name__ == "__main__":
-    # If we are running the script through the testing framework,
-    # then we will pass in two integers corresponding to the sets
-    # of parameters and inputs.
-    if len(sys.argv) > 1:
-        par_index = int(sys.argv[1])
-        input_index = int(sys.argv[2])
-        output_name = f"{output_name}_{par_index}_{input_index}"
-        extra_attrs = {"format_version": model_test_format_version}
+        if 'YT_DATA_DIR' not in os.environ:
+            raise RuntimeError(
+                "YT_DATA_DIR env var must be defined when called by test suite"
+            )
 
     # Just run the script as is.
     else:
         # dictionary to store extra information in output dataset
         extra_attrs = {}
+        output_name = _MODEL_NAME
 
     ds = yt.load(ds_path)
 
@@ -69,3 +68,8 @@ if __name__ == "__main__":
     data = {field: sp[field] for field in fields}
     yt.save_as_dataset(ds, filename=f"{output_name}.h5",
                        data=data, extra_attrs=extra_attrs)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

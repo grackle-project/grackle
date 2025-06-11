@@ -21,8 +21,6 @@
 //   will be hard for the transcription tools to automatically handle the
 //   shortenning of the fully qualified name)
 
-
-
 /// This is collection of enumerators (localized to the `SpLUT::` scope), with
 /// an enumerator named for EVERY species (primordial-species, metal-species,
 /// grain-species, etc). The enumerator values are intended to be used in a
@@ -82,24 +80,21 @@
 ///   a lookup table any more (this all assumes, of course, that such a system
 ///   is adequately performant)
 struct SpLUT {
-
   // in the future, we may want to reimplement the following in terms of the
   // XMacros provided in grackle_field_data_fdatamembers.def (or we may need to
   // slightly revise the system?)
   enum {
-    #define ENTRY(NAME) NAME,
-    #include "field_data_evolved_species.def"
-    #undef ENTRY
- 
-    NUM_ENTRIES // <- always last (so it specifies the number of species)
-  }; // enum
+#define ENTRY(NAME) NAME,
+#include "field_data_evolved_species.def"
+#undef ENTRY
 
-}; // SpLUT struct
+    NUM_ENTRIES  // <- always last (so it specifies the number of species)
+  };  // enum
 
+};  // SpLUT struct
 
 /// Define a LUT that ONLY contains grain species
 struct OnlyGrainSpLUT {
-
   // in the future, we may want to reimplement the following in terms of the
   // XMacros provided in grackle_field_data_fdatamembers.def (or we may need to
   // slightly revise the system?)
@@ -118,23 +113,20 @@ struct OnlyGrainSpLUT {
     vol_org_dust,
     H2O_ice_dust,
 
-    NUM_ENTRIES // <- always last (so it specifies the number of species)
+    NUM_ENTRIES  // <- always last (so it specifies the number of species)
   };
-}; // struct OnlyGrainSpLUT
-
+};  // struct OnlyGrainSpLUT
 
 /// Defines the LUT for Standard Collisional and Recombination reaction rates
 struct ColRecRxnLUT {
-
   enum {
-    #define ENTRY(NAME) NAME,
-    #include "col_rec_rxn_rate_members.def"
-    #undef ENTRY
+#define ENTRY(NAME) NAME,
+#include "col_rec_rxn_rate_members.def"
+#undef ENTRY
 
-    NUM_ENTRIES // <- always last (so it specifies the number of species)
-  }; // enum
+    NUM_ENTRIES  // <- always last (so it specifies the number of species)
+  };  // enum
 
-}; // ColRecRxnLUT struct
-
+};  // ColRecRxnLUT struct
 
 #endif /* LUT_HPP */
