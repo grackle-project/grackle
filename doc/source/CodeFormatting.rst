@@ -1,9 +1,9 @@
 Style Formatting
 ================
 
-The Grackle repository is configured with tools to enforce checks (such as running the linter or applying code-formatting) on the various files in the repository.
+The Grackle repository is configured with tools to enforce checks (such as running the linter or applying code formatting) on the various files in the repository.
 
-The primary checks pertain to python code: all python code is linted and all new python files are formatted by automated tools (for the time being, code in older files will not be formatted to avoid merge-conflicts).
+The primary checks pertain to python code: all python code is linted and all new python files are formatted by automated tools (for the time being, code in older files will not be formatted to avoid merge conflicts).
 
 .. note::
 
@@ -21,7 +21,7 @@ In fact, you are free to entirely ignore the existence of these tools until it c
 When you submit a Pull Request (and whenever you update it), various forms of continuous integration are triggered.
 
 For the present discussion, the `pre-commit.ci <https://pre-commit.ci/>`__ continuous integration tool is of primary relevance.\ [#f1]_
-This tool executes all of the formatting tools and if your submission doesn't satisfy all of the requirements, it will fail and report each problems.
+This tool executes all of the formatting tools and if your submission doesn't satisfy all of the requirements, it will fail and report each problem.
 
 If you don't want to install anything locally, there are 2 approaches for addressing problems:
 
@@ -41,7 +41,7 @@ Running the Checks Locally
 
 To run the checks locally, we strongly encourage you to install the pre-commit software.
 This software is written in python and can be installed with ``pip``.
-The `installation instructions <https://pre-commit.com/#installation>`__ also mention an alternative approach where you can run download and run pre-commit without fully installing it (as a "zipapp").
+The `installation instructions <https://pre-commit.com/#installation>`__ also mention an alternative approach where you can download and run pre-commit without fully installing it (as a "zipapp").
 
 Once you have installed ``pre-commit``, you can enforce the checks by invoking the following command from the root of your Grackle repository:
 
