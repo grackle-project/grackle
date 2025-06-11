@@ -104,19 +104,21 @@ set_tests_properties(GrExampleCMP.cxx PROPERTIES
   FIXTURES_REQUIRED GREXAMPLE_PREREQS
 )
 
-# we allow for the Fortran to deviate from c_example to a small degree
-# -> to require an exact match, we probably need to rewrite all of the examples
-#    so that they use hardcoded values
-add_test(
-  NAME GrExampleCMP.fortran
-  COMMAND ${checker_script} cmp
-    --target $<TARGET_FILE:fortran_example>
-    --ref $<TARGET_FILE:c_example>
-    --rtol 6e-7
-    --exec-timeout 10
-    --exec-dir ${example_exec_dir}
-)
-set_tests_properties(GrExampleCMP.fortran PROPERTIES
-  FIXTURES_REQUIRED GREXAMPLE_PREREQS
-)
+if (TARGET fortran_example)
+  # we allow for the Fortran to deviate from c_example to a small degree
+  # -> to require an exact match, we probably need to rewrite all of the
+  #    examples so that they use hardcoded values
+  add_test(
+    NAME GrExampleCMP.fortran
+    COMMAND ${checker_script} cmp
+      --target $<TARGET_FILE:fortran_example>
+      --ref $<TARGET_FILE:c_example>
+      --rtol 6e-7
+      --exec-timeout 10
+      --exec-dir ${example_exec_dir}
+  )
+  set_tests_properties(GrExampleCMP.fortran PROPERTIES
+    FIXTURES_REQUIRED GREXAMPLE_PREREQS
+  )
+endif()
 
