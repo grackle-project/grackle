@@ -152,7 +152,7 @@ commands:
           name: "Download test data."
           command: |
             source $BASH_ENV  # sets up YT_DATA_DIR, env variable
-            ./scripts/ci/fetch-test-data.py
+            ./scripts/ci/fetch_test_data.py
 
   run-pygrackle-tests:
     description: "Run the pytest test-suite. This suite includes a mix of general tests and pygrackle-specific tests."

@@ -1,7 +1,7 @@
 # the goal is for this script to be very portable
 
 import argparse
-import hashlib
+import importlib.util
 import os
 import platform
 import shutil
@@ -12,65 +12,26 @@ _LOCAL_DIR = os.path.dirname(__file__)
 _IS_MACOS = platform.system() == "Darwin"
 
 
+def _import_standalone_module(dir_path, module_name):
+    path = os.path.join(dir_path, f"{module_name}.py")
+    spec = importlib.util.spec_from_file_location(module_name, path)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+fetch_test_data = _import_standalone_module(
+    os.path.join(_LOCAL_DIR, "..", "ci"), "fetch_test_data"
+)
+download_file = fetch_test_data.download_file
+
+
 def _run(*args, check=True, sudo=False, **kwargs):
     if sudo:
         args = ("sudo",) + args
     print(">", *args, sep=" ", flush=True)
     return subprocess.run(args, check=check, **kwargs)
-
-
-def calc_checksum(fname, *, alg_name, chunksize=8192):
-    """Calculate the checksum for a given fname"""
-
-    # logic is duplicated by scripts in PR #235 AND #307
-
-    hash_obj = hashlib.new(alg_name)
-    with open(fname, "rb") as f:
-        buffer = bytearray(chunksize)
-        while True:
-            nbytes = f.readinto(buffer)
-            if nbytes == chunksize:
-                hash_obj.update(buffer)
-            elif nbytes:  # equivalent to: (nbytes is not None) and (nbytes > 0)
-                hash_obj.update(buffer[:nbytes])
-            else:
-                break
-    return f"{alg_name.lower()}:{hash_obj.hexdigest()}"
-
-
-def download_file(url, *, dst=None, dst_dir=None, quiet=None, cksum=None):
-    """download the file from url to dst"""
-
-    # logic is duplicated by scripts in PR #235 AND #307
-    basename = os.path.basename(url if dst is None else dst)
-    if (dst is not None) and (dst_dir is not None):
-        raise ValueError("dst and dst_dir can't both be specified")
-    elif dst is None:
-        dst = os.path.join("." if dst_dir is None else dst_dir, basename)
-
-    quiet = quiet if quiet is not None else "true" == os.getenv("CI", None)
-
-    choices = [
-        ("wget", None, "--output-document", "--quiet"),
-        ("curl", "-L", "--output", "--silent"),
-    ]
-    for tool, loc_flag, outflag, quietflag in choices:
-        if shutil.which(tool) is not None:
-            quiet_args = [quietflag] if quiet else []
-            url_args = [url] if loc_flag is None else [loc_flag, url]
-            _cmd = [tool, outflag, dst] + quiet_args + url_args
-            _run(*_cmd, check=True)
-
-            if cksum is not None:
-                alg_name, _ = cksum.split(":")
-                actual = calc_checksum(fname=dst, alg_name=alg_name)
-                if cksum != actual:
-                    raise RuntimeError(
-                        f"cksum mismatch for {basename}\n"
-                        f"  expected={cksum}\n  actual={actual}"
-                    )
-            return dst
-    raise RuntimeError("neither wget nor curl is installed")
 
 
 def get_gfortran(depend_dir):
