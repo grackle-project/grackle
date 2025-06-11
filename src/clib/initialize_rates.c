@@ -85,9 +85,7 @@
 
 #include "grackle.h"
 #include "grackle_macros.h"
-#include "grackle_types.h"
 #include "grackle_rate_functions.h"
-#include "grackle_chemistry_data.h"
 #include "phys_constants.h"
 
 int initialize_metal_chemistry_rates(chemistry_data *my_chemistry,
