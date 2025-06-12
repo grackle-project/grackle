@@ -151,8 +151,8 @@ struct SpLUT {
 }; // SpLUT struct
 
 
-/// Defines the LUT for Standard Collisional and Recombination reaction rates
-struct ColRecRxnLUT {
+/// Defines the LUT for Standard Collisional reaction rates
+struct CollisionalRxnLUT {
 
   enum {
     #define ENTRY(NAME) NAME,
@@ -162,7 +162,7 @@ struct ColRecRxnLUT {
     NUM_ENTRIES // <- always last (so it specifies the number of species)
   }; // enum
 
-}; // ColRecRxnLUT struct
+}; // CollisionalRxnLUT struct
 
 
 #endif /* LUT_HPP */

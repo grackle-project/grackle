@@ -285,25 +285,24 @@ SpeciesCollection new_SpeciesCollection(int nelem);
 void drop_SpeciesCollection(SpeciesCollection*);
 
 
-/// holds properties about Collisional and Recombination Reaction Rates that
-/// behave in the "standard" way (i.e. we interpolate in 1D with respect to
-/// log T)
+/// holds properties about Collisional Reaction Rates that behave in the
+/// "standard" way (i.e. we interpolate in 1D with respect to log T)
 ///
 /// This operates in a similar manner to SpeciesCollection (i.e. we use
-/// `ColRecRxnLUT::<entry>` to lookup values for the desired rate).
-struct ColRecRxnRateCollection {
-  double* data[ColRecRxnLUT::NUM_ENTRIES];
+/// `CollisionalRxnLUT::<entry>` to lookup values for the desired rate).
+struct CollisionalRxnRateCollection {
+  double* data[CollisionalRxnLUT::NUM_ENTRIES];
 };
 
-/// allocates the contents of a new ColRecRxnRateCollection
+/// allocates the contents of a new CollisionalRxnRateCollection
 ///
 /// @param nelem The number of elements in each buffer
-ColRecRxnRateCollection new_ColRecRxnRateCollection(int nelem);
+CollisionalRxnRateCollection new_CollisionalRxnRateCollection(int nelem);
 
-/// performs cleanup of the contents of ColRecRxnRateCollection
+/// performs cleanup of the contents of CollisionalRxnRateCollection
 ///
 /// This effectively invokes a destructor
-void drop_ColRecRxnRateCollection(ColRecRxnRateCollection*);
+void drop_CollisionalRxnRateCollection(CollisionalRxnRateCollection*);
 
 /// holds radiative reaction rate buffers
 ///
@@ -358,7 +357,7 @@ struct ChemHeatingRates{
 /// @param nelem The number of elements in each buffer
 ChemHeatingRates new_ChemHeatingRates(int nelem);
 
-/// performs cleanup of the contents of ColRecRxnRateCollection
+/// performs cleanup of the contents of ChemHeatingRates
 ///
 /// This effectively invokes a destructor
 void drop_ChemHeatingRates(ChemHeatingRates*);
