@@ -56,12 +56,83 @@ To install Pygrackle, you just need to invoke the following from the root direct
 
     ~/grackle $ pip install -v .
 
-You can configure the exact C and Fortran compilers that are used for this by manipulating the ``CC`` and ``FC`` environment variables.
-If you must pass extra compiler flags to all invocations of the C or Fortran compiler, you can use the ``CFLAGS`` or ``FFLAGS`` environment variable.
+Under this approach, pygrackle's python build backend, `scikit-build-core <https://scikit-build-core.readthedocs.io/en/latest/>`__, automatically builds the core Grackle library (:ref:`in a CMake build <cmake_build>`), packages the resulting library as part of the pygrackle package, and cleans up from the build.
+If a new enough version of CMake cannot be found, the above command will automatically download CMake (it will only be accessible during the build).
+
+While the above command should "just work," you have a few options for customizing the build:
+
+1. In most cases, you probably want to use the standard environment variables directly understood by CMake:\ [#f1]_
+
+   - you can specifiy your choice of C and Fortran compilers that are used for this by manipulating the :envvar:`!CC` and :envvar:`!FC` environment variables.
+   - if you must pass extra compiler flags to all invocations of the C or Fortran compiler (this *shouldn't* really be necessary), you can use the :envvar:`!CFLAGS` or :envvar:`!FFLAGS` environment variable.
+   - to provide a hint about the location of the hdf5 library you can use :envvar:`!HDF5_ROOT` or :envvar:`!HDF5_DIR` (these behave similarly to the CMake variables of the same name).
+
+2. Alternatively, you can specify the values of CMake variables.
+
+   - Recall that when you are directly using the CMake build system to build a project, you configure build-properties by defining CMake variables.
+     :ref:`As we explain elsewhere, <how_to_configure>` this is commonly accomplished by listing arguments of the form ``-D<variable>=<value>`` when we call CMake on the command line.
+   - Things are a little different in the context of building pygrackle, since we aren't  invoking CMake, directly.
+     Instead we need to instruct the `scikit-build-core <https://scikit-build-core.readthedocs.io/en/latest/>`__ python build-backend to forward arguments onto CMake.
+   - There are effectively 2 ways of doing this: (i) specify this information as extra command line arguments when invoking ``pip install`` OR (ii) we can specify it through an environment variable understood by scikit-build-core
+
+   For the sake of concreteness, let's imagine that you want to assign the CMake variables ``CMAKE_C_COMPILER`` and ``HDF5_ROOT`` values of ``gcc-14`` and ``/path/to/hdf5``.
+   The following code-snippets illustrate how to do this:
+
+   .. tabs::
+
+      .. group-tab:: pip argument
+
+         If using a version of pip from before 23.1, you need to replace ``-C`` with ``--config-settings=`` in the following snippet.
+
+         .. code-block:: shell-session
+
+            ~/grackle $ pip install -v . -Ccmake.args=-DCMAKE_C_COMPILER=gcc-14;-DHDF5_ROOT=/path/to/hdf5
+
+      .. group-tab:: Environment Variable
+
+         You can use the use the :envvar:`!SKBUILD_CMAKE_ARGS` env variable, where each argument is separated by semicolons, or :envvar:`!CMAKE_ARGS`, where each argument is separated by a space.
+
+         .. tabs::
+
+            .. code-tab:: shell-session :envvar:`!SKBUILD_CMAKE_ARGS`
+
+               ~/grackle $ export SKBUILD_CMAKE_ARGS="-DCMAKE_C_COMPILER=gcc-14;-DHDF5_ROOT=/path/to/hdf5"
+               ~/grackle $ pip install -v .
+
+
+            .. code-tab:: shell-session :envvar:`!CMAKE_ARGS`
+
+               ~/grackle $ export CMAKE_ARGS="-DCMAKE_C_COMPILER=gcc-14 -DHDF5_ROOT=/path/to/hdf5"
+               ~/grackle $ pip install -v .
+
+
+.. tip::
+
+   If you are looking to modify a standard CMake option, you should generally check scikit-build-core's `documentation  <https://scikit-build-core.readthedocs.io/en/latest/>`__; there are some special cases.
+
+   Consider the ``CMAKE_BUILD_TYPE`` variable, which controls :ref:`optimiziation flags and the presence of debugger symbols <how_to_configure>`.
+   Rather than directly modifying this variable, you should modify scikit-build-core's ``cmake.build-type`` variable.
+   If you wanted to set it to ``Debug``, you might do one of the following options:
+
+   .. tabs::
+
+      .. group-tab:: pip argument
+
+         If using a version of pip from before 23.1, you need to replace ``-C`` with ``--config-settings=`` in the following snippet.
+
+         .. code-block:: shell-session
+
+            ~/grackle $ pip install -v . -Ccmake.build-type="Debug"
+
+      .. group-tab:: Environment Variable
+
+         You can would store ``"Debug"`` within the :envvar:`!SKBUILD_CMAKE_BUILD_TYPE` env variable
+
 
 If you encounter any compilation problems, you can also link Pygrackle against a version of the Grackle library that you already built.
 
-(In the event that you are writing an external python package that depends on directly linking to the underlying Grackle library, be aware that the underlying organization of files in the resulting package may change)
+(In the event that you are writing an external python package that depends on directly linking to the underlying Grackle library, be aware that the underlying organization of files in the resulting package may change.
+We have no plans to support this scenario.)
 
 2. Link to external Grackle library (built with Classic build system)
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -326,3 +397,10 @@ Through ``pygrackle``, the following ``yt`` fields are defined:
 These fields are created after calling the ``add_grackle_fields`` function.
 This function will initialize Grackle with settings from parameters in the
 loaded dataset. Optionally, parameters can be specified manually to override.
+
+
+.. rubric:: Footnotes
+
+.. [#f1] When you want to overwrite a configuration-default in a CMake build, we generally encourage use of CMake variables that are counterparts to environment variables (e.g. prefer passing ``-DCMAKE_C_COMPILER=<blah>`` on the command-line to exporting ``CC=<blah>``), since the former has precedence and it provides more fine-grained control (i.e. some options are only influenced by CMake variables).
+         However, in this case of driving a python build (that internally creates a CMake build, installs the products, and cleans up the build directory), the use of environment variables is somewhat more common, and you usually don't need as much fine-grain control.
+         Furthermore, the names of the environment variables follow fairly standard Unix conventions.
