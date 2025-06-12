@@ -1,10 +1,9 @@
 /***********************************************************************
 /
-/ this file lists each member of the collisional and recombination
-/ species reaction rates that we interpolate in 1d as a function of
-/ temperature. This list is intended to be used with X-Macros in *.c
-/ files (to reduce the amount of code required to
-/ interact with these fields)
+/ this file lists each member of the collisional species reaction rates
+/ that we interpolate in 1d as a function of temperature. This list is
+/ intended to be used with X-Macros (to reduce the amount of code
+/ required to interact with these data-members)
 /
 / Currently, we just specify each rate name. In the future, we will
 / probably add other metadata to track the initializer function.

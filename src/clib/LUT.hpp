@@ -156,7 +156,7 @@ struct ColRecRxnLUT {
 
   enum {
     #define ENTRY(NAME) NAME,
-    #include "col_rec_rxn_rate_members.def"
+    #include "collisional_rxn_rate_members.def"
     #undef ENTRY
 
     NUM_ENTRIES // <- always last (so it specifies the number of species)
