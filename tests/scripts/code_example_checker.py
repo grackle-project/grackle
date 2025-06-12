@@ -104,7 +104,7 @@ def run_and_parse(full_path, timeout, env=None, exec_dir=None,
         log = proc.stdout
     else:
         raise RuntimeError(
-            f"Command {command} failed with return value "
+            f"Command {exec_path} failed with return value "
             f"{proc.returncode} and the following stderr output "
             f"{proc.stderr}")
 
@@ -262,7 +262,6 @@ def main_cmp(args):
         result_l.append(rslt)
 
     ref_rslt, target_rslt = result_l
-    atol, rtol = args.atol, args.rtol
 
     successful_check = isclose_resultpacks(
         actual=target_rslt,
@@ -338,7 +337,7 @@ def isclose_resultpacks(actual, reference, rtol, atol, verbose=False):
         actual_pair, ref_pair = actual[key], reference[key]
 
         if verbose:
-            print(f"  comparing {key}: actual={actual!r}, ref={ref!r}")
+            print(f"  comparing {key}: actual={actual!r}, ref={reference!r}")
 
         if (ref_pair is None) or (actual_pair is None):
             if actual_pair != ref_pair:
