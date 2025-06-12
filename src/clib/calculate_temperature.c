@@ -98,7 +98,7 @@ int local_calculate_temperature(chemistry_data *my_chemistry,
   }
 
   /* Compute properties used to index the field. */
-  const grackle_index_helper ind_helper = _build_index_helper(my_fields);
+  const grackle_index_helper ind_helper = build_index_helper_(my_fields);
   int outer_ind, index;
 
   /* Compute temperature with mu calculated directly. */
@@ -111,7 +111,8 @@ int local_calculate_temperature(chemistry_data *my_chemistry,
 # endif
   for (outer_ind = 0; outer_ind < ind_helper.outer_ind_size; outer_ind++){
 
-    const grackle_index_range range = _inner_range(outer_ind, &ind_helper);
+    const field_flat_index_range range = inner_flat_range_(outer_ind,
+                                                           &ind_helper);
 
     for (index = range.start; index <= range.end; index++) {
  
@@ -189,15 +190,15 @@ int local_calculate_temperature_table(chemistry_data *my_chemistry,
         my_fields->internal_energy,
         my_fields->metal_density,
         temperature,
-        my_fields->grid_dimension,
+        my_fields->grid_dimension+0,
         my_fields->grid_dimension+1,
         my_fields->grid_dimension+2,
         &my_units->comoving_coordinates,
         &metal_field_present,
-        my_fields->grid_start,
+        my_fields->grid_start+0,
         my_fields->grid_start+1,
         my_fields->grid_start+2,
-        my_fields->grid_end,
+        my_fields->grid_end+0,
         my_fields->grid_end+1,
         my_fields->grid_end+2,
         &my_units->a_value,
