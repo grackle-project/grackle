@@ -31,7 +31,6 @@ class LicenseInfo:
 
 
 def parse_license_file(path):
-
     def _chunks(f):
         chunk = None
         for lineno, line in enumerate(f, start=1):
@@ -48,7 +47,6 @@ def parse_license_file(path):
                 setattr(chunk, m.group("field").lower(), m.group("value"))
         yield chunk
 
-    out = {}
     with open(path, "r") as f:
         return [chunk for chunk in _chunks(f) if chunk is not None]
 
