@@ -46,7 +46,6 @@ static void vprint_err_(
     stderr, "Grackle-%s %s:%d in %s] %s\n", descr, locinfo.file,
     locinfo.lineno, santized_func_name, msg_buf
   );
-  fflush(stderr);  // probably unnecessary for stderr
 
   if (dynamic_msg_buf != NULL) { free(dynamic_msg_buf); }
 }
@@ -57,6 +56,9 @@ void grimpl_abort_with_internal_err_(
   va_list args;
   va_start(args, msg);
   vprint_err_(1, locinfo, msg, args);
+  // while stderr should flush by default, people may overwrite this behavior.
+  // We want to force flushing here since we are aborting the program
+  fflush(stderr);
   abort();
 }
 
