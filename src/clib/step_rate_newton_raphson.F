@@ -76,7 +76,7 @@
      &                kdissHDI, iionZ, kphCI, kphOI, idissZ, kdissCO,
      &                kdissOH, kdissH2O, iuseH2shield, iisrffield,
      &                isrf_habing, iH2shieldcustom, f_shield_custom,
-     &                ierror, j, k, iter, dom, comp1,
+     &                j, k, iter, dom, comp1,
      &                comp2, coolunit, tbase1, xbase1, chunit, dx_cgs,
      &                c_ljeans, indixe, t1, t2, logtem, tdef, dtit,
      &                p2d, tgas, tgasold, tdust, metallicity, dust2gas,
@@ -88,7 +88,7 @@
      &                reHII, reHeII1, reHeII2, reHeIII, brem, edot,
      &                hyd01k, h2k01, vibh, roth, rotl, gpldl, gphdl,
      &                hdlte, hdlow, cieco, anydust, itmask_nr,
-     &                itmask_metal, itr, imp_eng
+     &                itmask_metal, imp_eng
      &              )
 
 !  PURPOSE:
@@ -101,7 +101,7 @@
 !  General Arguments
 
       integer icool, in, jn, kn, is, ie, nratec, iexpand, ih2co, ipiht,
-     &        ispecies, imetal, ierror, imcool, idust, idustall,
+     &        ispecies, imetal, imcool, idust, idustall,
      &        idustfield, idustrec, igammah, ih2optical, iciecool,
      &        ithreebody, ih2cr, ihdcr, ndratec, clnew, iVheat, iMheat,
      &        iTfloor, iH2shield, iradshield, iradtrans, irt_honly,
@@ -330,9 +330,16 @@
       MASK_TYPE anydust
       MASK_TYPE itmask_nr(in)
       MASK_TYPE itmask_metal(in)
-      integer itr, imp_eng(in)
+      integer imp_eng(in)
+
+!  ierror local variable
+!    - this variable is only used internally by this subroutine for
+!      determining control-flow
+!    - it does NOT report whether or not this function succeeded (maybe
+!      we should change the name?)
+      integer ierror
 !  Local variable
-      integer itr_time
+      integer itr, itr_time
       integer nsp, isp, jsp, id
       real*8  dspj, err, err_max
       integer,parameter   :: i_eng = 52

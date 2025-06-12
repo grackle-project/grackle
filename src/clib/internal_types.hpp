@@ -98,6 +98,8 @@
 #error "This file must be used by a c++ compiler"
 #endif
 
+#include "LUT.hpp"
+
 namespace grackle::impl {
 
 /// Holds 1D arrays used for cooling and heating
@@ -210,29 +212,15 @@ void drop_LogTLinInterpScratchBuf(LogTLinInterpScratchBuf*);
 /// holds properties about each kind of dust grain
 ///
 /// @note
-/// There may be some value in tracking a dynamic collection of dust species.
-/// Whatever we do, we should try to be somewhat consistent with how we handle
-/// species
+/// This operates in a similar manner to SpeciesCollection (i.e. we use
+/// `OnlyGrainSpLUT::<entry>` to lookup values for the desired rate).
 ///
 /// @note
 /// This is something we may want to reuse. If we are willing to embrace C++,
 /// then we may want to use templates
 struct GrainSpeciesCollection {
-  double* SiM = nullptr;
-  double* FeM = nullptr;
-  double* Mg2SiO4 = nullptr;
-  double* MgSiO3 = nullptr;
-  double* Fe3O4 = nullptr;
-  double* AC = nullptr;
-  double* SiO2D = nullptr;
-  double* MgO = nullptr;
-  double* FeS = nullptr;
-  double* Al2O3 = nullptr;
-  double* reforg = nullptr;
-  double* volorg = nullptr;
-  double* H2Oice = nullptr;
+  double* data[OnlyGrainSpLUT::NUM_ENTRIES];
 };
-
 
 /// allocates the contents of a new GrainSpeciesCollection
 ///
@@ -243,6 +231,124 @@ GrainSpeciesCollection new_GrainSpeciesCollection(int nelem);
 ///
 /// This effectively invokes a destructor
 void drop_GrainSpeciesCollection(GrainSpeciesCollection*);
+
+
+/// holds properties about each kind of species
+///
+/// The basic premise is that we can use `SpLUT::<entry>` to lookup values
+/// for the desired species
+///
+/// @note
+/// The way this is currently a lot like a struct of arrays (i.e. there is an
+/// extra level of indirection).
+/// - For concreteness, to access index `idx` of the data for HeI, you
+///   would write `obj.data[SpLUT::HeI][idx]`.
+/// - in terms of performance, this is very similar to what came before (and
+///   is good enough for now)
+/// - in the long term, it would be even better to replace this with a
+///   `View<double**>`, but I want to wait until after we have transcribed the
+///   bulk of grackle before we do that.
+///
+/// @note
+/// At the time of writing, both this data structure and the
+/// GrainSpeciesCollection data structure both reserve space for each of the
+/// dust species. Maybe this data structure shouldn't do this? (If we remove
+/// the grain species, maybe we rename this so that it is called
+/// ChemSpeciesCollection?)
+struct SpeciesCollection {
+  double* data[SpLUT::NUM_ENTRIES];
+};
+
+
+/// allocates the contents of a new SpeciesCollection
+///
+/// @param nelem The number of elements in each buffer
+SpeciesCollection new_SpeciesCollection(int nelem);
+
+/// performs cleanup of the contents of SpeciesCollection
+///
+/// This effectively invokes a destructor
+void drop_SpeciesCollection(SpeciesCollection*);
+
+
+/// holds properties about Collisional Reaction Rates that behave in the
+/// "standard" way (i.e. we interpolate in 1D with respect to log T)
+///
+/// This operates in a similar manner to SpeciesCollection (i.e. we use
+/// `CollisionalRxnLUT::<entry>` to lookup values for the desired rate).
+struct CollisionalRxnRateCollection {
+  double* data[CollisionalRxnLUT::NUM_ENTRIES];
+};
+
+/// allocates the contents of a new CollisionalRxnRateCollection
+///
+/// @param nelem The number of elements in each buffer
+CollisionalRxnRateCollection new_CollisionalRxnRateCollection(int nelem);
+
+/// performs cleanup of the contents of CollisionalRxnRateCollection
+///
+/// This effectively invokes a destructor
+void drop_CollisionalRxnRateCollection(CollisionalRxnRateCollection*);
+
+/// holds radiative reaction rate buffers
+///
+/// @note
+/// In the future, it would be nice to use this within the general rate
+/// storage struct (and maybe also within the photo_rate_storage struct).
+/// Since the storage struct only needs to store these rates as scalars we
+/// would need to adopt the LUT strategy (or templates)
+struct PhotoRxnRateCollection {
+  /* Radiative rates for 6-species. */
+  double* k24;
+  double* k25;
+  double* k26;
+
+  /* Radiative rates for 6-species. */
+  double* k27;
+  double* k28;
+  double* k29;
+  double* k30;
+  double* k31;
+};
+
+/// allocates the contents of a new PhotoRxnRateCollection
+///
+/// @param nelem The number of elements in each buffer
+PhotoRxnRateCollection new_PhotoRxnRateCollection(int nelem);
+
+/// performs cleanup of the contents of PhotoRxnRateCollection
+///
+/// This effectively invokes a destructor
+void drop_PhotoRxnRateCollection(PhotoRxnRateCollection*);
+
+/// holds reaction rates chemical heating reaction rates
+///
+/// @note
+/// In the future, it would be nice to use this within the general rate
+/// storage struct
+///
+/// @note
+/// For now, the modelled rates are fairly limited, but the idea is this could
+/// be extended in the future
+struct ChemHeatingRates{
+  // Chemical heating from H2 formation.
+  // numerator and denominator of Eq 23 of Omukai ea. 2000.
+  double *n_cr_n;
+  double *n_cr_d1;
+  double *n_cr_d2;
+};
+
+/// allocates the contents of a new ChemHeatingRates
+///
+/// @param nelem The number of elements in each buffer
+ChemHeatingRates new_ChemHeatingRates(int nelem);
+
+/// performs cleanup of the contents of ChemHeatingRates
+///
+/// This effectively invokes a destructor
+void drop_ChemHeatingRates(ChemHeatingRates*);
+
+
 
 } // namespace grackle::impl
 
