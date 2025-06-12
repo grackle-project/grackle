@@ -311,7 +311,8 @@ static void set_subcycle_dt_from_chemistry_scheme_(
   const chemistry_data* my_chemistry, const chemistry_data_storage* my_rates,
   double dlogtem,
   const grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf,
-  grackle_field_data* my_fields, grackle::impl::ColRecRxnRateCollection kcr_buf
+  grackle_field_data* my_fields,
+  grackle::impl::CollisionalRxnRateCollection kcr_buf
 ) {
   const int j = idx_range.j;
   const int k = idx_range.k;
@@ -356,9 +357,9 @@ static void set_subcycle_dt_from_chemistry_scheme_(
       // If the net rate is almost perfectly balanced then set
       //     it to zero (since it is zero to available precision)
       {
-        double ion_rate = std::fabs(kcr_buf.data[ColRecRxnLUT::k1][i] *
+        double ion_rate = std::fabs(kcr_buf.data[CollisionalRxnLUT::k1][i] *
                                     de(i,j,k) * HI(i,j,k));
-        double recomb_rate = std::fabs(kcr_buf.data[ColRecRxnLUT::k2][i] *
+        double recomb_rate = std::fabs(kcr_buf.data[CollisionalRxnLUT::k2][i] *
                                        HII(i,j,k) * de(i,j,k));
         double ratio = (std::fmin(ion_rate, recomb_rate) /
                         std::fmax(std::fabs(dedot[i]), std::fabs(HIdot[i])));
@@ -393,7 +394,8 @@ static void set_subcycle_dt_from_chemistry_scheme_(
         // Hydrogen changes by 10% or less
         double Heq_div_dHeqdt = calc_Heq_div_dHeqdt_(
           my_chemistry, my_rates, dlogtem, logTlininterp_buf,
-          kcr_buf.data[ColRecRxnLUT::k13], kcr_buf.data[ColRecRxnLUT::k22],
+          kcr_buf.data[CollisionalRxnLUT::k13],
+          kcr_buf.data[CollisionalRxnLUT::k22],
           d(i,j,k), tgas, p2d, edot, i
         );
 
@@ -530,9 +532,9 @@ struct SpeciesRateSolverScratchBuf {
   grackle::impl::SpeciesCollection species_tmpdens;
 
   // buffers in the following data structure are used to temporarily hold
-  // the interpolated Collisional/Recombination Rates that have been
+  // the interpolated Collisional Rxn Rates that have been
   // interpolated using the standard 1D log temperature table.
-  grackle::impl::ColRecRxnRateCollection kcr_buf;
+  grackle::impl::CollisionalRxnRateCollection kcr_buf;
 
   // buffers in the following data structure are used to temporarily hold
   // the computed radiative reaction rates
