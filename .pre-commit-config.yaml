@@ -1,8 +1,9 @@
 
 # per discussion in GH-#218, we aren't applying formatters to old code yet (to
 # avoid merge conflicts).
-# - most exclusions are specified in formtter-specific files (namely, the
-#   [tool.ruff.format.exclude] section of pyproject.toml)
+# - most exclusions are specified in formtter-specific files, like
+#   .clang-format-ignore or the [tool.ruff.format.exclude] section of
+#   pyproject.toml
 # - here we list the remaining files that should be excluded.
 exclude: "^(\
 src/python/pygrackle/grackle_defs.pxd\
@@ -27,6 +28,16 @@ repos:
   - id: check-json
   - id: check-toml
   - id: check-yaml
+
+- repo: https://github.com/pre-commit/mirrors-clang-format
+  # unlike many pre-commit tools, the version of the repository exactly
+  # matches the version of the tool being used
+  rev: v20.1.5
+  hooks:
+  - id: clang-format
+    verbose: true
+    types_or: [c++, c]
+    args: ["-style=file", "--verbose"]
 
 - repo: https://github.com/astral-sh/ruff-pre-commit
   rev: v0.11.13
