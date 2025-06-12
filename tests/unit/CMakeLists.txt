@@ -6,6 +6,7 @@ target_link_libraries(testdeps INTERFACE Grackle::Grackle GTest::gtest_main)
 # short-term hack to let tests invoke Fortran functions from C
 target_compile_definitions(testdeps INTERFACE "$<$<PLATFORM_ID:Linux,Darwin>:LINUX>")
 target_include_directories(testdeps INTERFACE ${PROJECT_SOURCE_DIR}/src/clib)
+target_compile_features(testdeps INTERFACE cxx_std_17)
 
 # declare the grtest utility library
 # ----------------------------------
@@ -16,6 +17,7 @@ target_include_directories(testdeps INTERFACE ${PROJECT_SOURCE_DIR}/src/clib)
 add_library(grtest_utils
   grtest_cmd.hpp grtest_cmd.cpp
   grtest_utils.hpp grtest_utils.cpp
+  grtest_os.hpp grtest_os.cpp
 )
 # we are being a little lazy with our usage of testdeps right here
 target_link_libraries(grtest_utils PUBLIC testdeps)
@@ -40,12 +42,15 @@ target_link_libraries(runInterpolationTests testdeps)
 
 gtest_discover_tests(runInterpolationTests)
 
+add_executable(runStatusReporting test_status_reporting.cpp)
+target_link_libraries(runStatusReporting grtest_utils)
+gtest_discover_tests(runStatusReporting)
+
 # one might argue that the following is more of an integration or end-to-end
 # test than a unit-test
 add_executable(runGhostZoneTests test_ghost_zone.cpp)
 target_link_libraries(runGhostZoneTests grtest_utils testdeps)
 gtest_discover_tests(runGhostZoneTests)
-
 
 # this target tests that the members of the chemistry_data struct can be
 # accessed through the "dynamic api." The test cases in this target are
