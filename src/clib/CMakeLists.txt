@@ -157,7 +157,7 @@ add_library(Grackle_Grackle
   index_helper.h
   interp_table_utils.h
   phys_constants.h
-  col_rec_rxn_rate_members.def # <-- acts as a C header
+  collisional_rxn_rate_members.def # <-- acts as a C header
   utils.h
   dust_const.def
 
