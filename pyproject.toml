@@ -206,10 +206,8 @@ ignore = ["E402", "E502", "E701", "E731"]
 
 exclude = [
     # these are based on flake8's exclude-list
-    "src/python/pygrackle/api.py",
     "src/python/pygrackle/__init__.py",
     "src/python/pygrackle/utilities/testing.py",
-    "src/python/pygrackle/utilities/api.py"
 ]
 
 [tool.ruff.format]
