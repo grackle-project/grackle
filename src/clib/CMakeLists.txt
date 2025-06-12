@@ -112,6 +112,7 @@ add_library(Grackle_Grackle
   utils-cpp.C utils-cpp.hpp
 
   # Fortran Source Files
+  calc_all_tdust_gasgr_1d_g.F
   calc_tdust_1d_g.F
   calc_tdust_3d_g.F
   calc_temp1d_cloudy_g.F

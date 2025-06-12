@@ -41,6 +41,7 @@ OBJS_CONFIG_LIB = \
         status_reporting.lo \
         update_UVbackground_rates.lo \
         lookup_cool_rates0d.lo \
+        calc_all_tdust_gasgr_1d_g.lo \
         calc_tdust_1d_g.lo \
         calc_tdust_3d_g.lo \
         calc_grain_size_increment_1d.lo \
