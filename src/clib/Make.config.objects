@@ -46,6 +46,7 @@ OBJS_CONFIG_LIB = \
         calc_tdust_3d_g.lo \
         calc_grain_size_increment_1d.lo \
         rate_functions.lo \
+        rate_utils.lo \
         gaussj_g.lo \
         utils.lo \
         step_rate_newton_raphson.lo \
