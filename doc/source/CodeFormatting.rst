@@ -89,7 +89,7 @@ C/C++ code is formatted by `clang-format <https://releases.llvm.org/18.1.8/tools
 
 About ``clang-format``:
 
-* At the time of writing, ``clang-format`` enforces formatting rules that are largely derived from the google-style (with a handful of tweaks that derive from the llvm style guide).
+* At the time of writing, ``clang-format`` enforces formatting rules that are largely derived from the google style (with a handful of tweaks that derive from the llvm style guide).
   Details about the enforced style are configured in the ``.clang-format`` file at the root of the Grackle repository.
 
 * files that are formatted this way will generally have far fewer merge conflicts.
