@@ -59,6 +59,12 @@ gtest_discover_tests(runStatusReporting)
 
 # one might argue that the following is more of an integration or end-to-end
 # test than a unit-test
+add_executable(runVisitorTests test_visitor.cpp)
+target_link_libraries(runVisitorTests testdeps)
+gtest_discover_tests(runVisitorTests)
+
+# one might argue that the following is more of an integration or end-to-end
+# test than a unit-test
 add_executable(runGhostZoneTests test_ghost_zone.cpp)
 target_link_libraries(runGhostZoneTests grtest_utils testdeps)
 gtest_discover_tests(runGhostZoneTests)
