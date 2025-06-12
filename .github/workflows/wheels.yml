@@ -22,7 +22,6 @@ on:
   push:
     branches:
       - main
-      - binary-wheel  # just for initial testing purposes
     tags:
       - 'grackle-*'
   pull_request:
@@ -129,8 +128,7 @@ jobs:
 
     runs-on: ubuntu-latest
     # upload to PyPI on every tag starting with 'grackle-'
-    # uncomment the following line when we start uploading to PyPI
-    #if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/grackle-')
+    if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/grackle-')
     steps:
       - uses: actions/download-artifact@v4
         with:

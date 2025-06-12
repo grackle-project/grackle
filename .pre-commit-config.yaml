@@ -9,6 +9,7 @@ src/python/pygrackle/grackle_defs.pxd\
 |src/python/pygrackle/grackle_wrapper.pyx\
 )"
 
+
 ci:
     autofix_prs: false
     autoupdate_schedule: monthly

@@ -31,6 +31,7 @@ class LicenseInfo:
 
 
 def parse_license_file(path):
+
     def _chunks(f):
         chunk = None
         for lineno, line in enumerate(f, start=1):

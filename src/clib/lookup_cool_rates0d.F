@@ -409,6 +409,7 @@ c -------------------------------------------------------------------
       integer imp_eng, isp
       real*8 scoef, acoef
       real*8 atten, H2delta, h2heatfac, min_metallicity
+      integer my_local_iter
 
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
@@ -496,13 +497,14 @@ c -------------------------------------------------------------------
 !     Compute the cooling rate, tgas, tdust, and metallicity for this row
 
       if (imp_eng .eq. 1) then
+            my_local_iter = 1   ! <-- this is a hacky bugfix
             call cool1d_multi_g(
      &                d, e, u, v, w, de, HI, HII, HeI, HeII, HeIII,
      &                 1,  1,  1, nratec, 
      &                iexpand, ispecies, imetal, imcool,
      &                idust, idustall, idustfield, idustrec,
-     &                   1,  0,  0, 1, 1, ih2co, ipiht, iter, igammah,
-     &                aye, temstart, temend, z_solar, fgr,
+     &                   1,  0,  0, 1, 1, ih2co, ipiht, my_local_iter,
+     &                igammah, aye, temstart, temend, z_solar, fgr,
      &                utem, uxyz, uaye, urho, utim,
      &                gamma, fh,
      &                ceHIa, ceHeIa, ceHeIIa, ciHIa, ciHeIa, 
