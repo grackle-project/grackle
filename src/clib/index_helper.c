@@ -14,7 +14,7 @@
 #include "grackle_types.h"
 #include "index_helper.h"
 
-grackle_index_helper _build_index_helper(const grackle_field_data *my_fields)
+grackle_index_helper build_index_helper_(const grackle_field_data *my_fields)
 {
   grackle_index_helper out;
   const int rank = my_fields->grid_rank;
