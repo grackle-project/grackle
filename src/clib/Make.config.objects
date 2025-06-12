@@ -23,7 +23,7 @@ OBJS_CONFIG_LIB = \
         cool1d_cloudy_g.lo \
         cool1d_cloudy_old_tables_g.lo \
         cool1d_multi_g.lo \
-        cool_multi_time_g.lo \
+        cool_multi_time_g-cpp.lo \
         dynamic_api.lo \
         grackle_units.lo \
 	index_helper.lo \
@@ -38,6 +38,7 @@ OBJS_CONFIG_LIB = \
         set_default_chemistry_parameters.lo \
         solve_chemistry.lo \
         solve_rate_cool_g.lo \
+        status_reporting.lo \
         update_UVbackground_rates.lo \
         lookup_cool_rates0d.lo \
         calc_all_tdust_gasgr_1d_g.lo \
@@ -47,4 +48,6 @@ OBJS_CONFIG_LIB = \
         rate_functions.lo \
         gaussj_g.lo \
         utils.lo \
-        step_rate_newton_raphson.lo
+        step_rate_newton_raphson.lo \
+        utils-cpp.lo \
+        internal_types.lo

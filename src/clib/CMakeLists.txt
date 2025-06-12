@@ -97,6 +97,7 @@ add_library(Grackle_Grackle
   rate_functions.c
   set_default_chemistry_parameters.c
   solve_chemistry.c
+  status_reporting.c status_reporting.h
   update_UVbackground_rates.c
   initialize_dust_yields.c
   initialize_metal_chemistry_rates.c
@@ -104,6 +105,11 @@ add_library(Grackle_Grackle
 
   # auto-generated C source files
   ${CMAKE_CURRENT_BINARY_DIR}/auto_general.c
+
+  # C++ Source (and Private Header Files)
+  cool_multi_time_g-cpp.C cool_multi_time_g-cpp.h
+  internal_types.C internal_types.hpp
+  utils-cpp.C utils-cpp.hpp
 
   # Fortran Source Files
   calc_all_tdust_gasgr_1d_g.F
@@ -114,7 +120,6 @@ add_library(Grackle_Grackle
   cool1d_cloudy_g.F
   cool1d_cloudy_old_tables_g.F
   cool1d_multi_g.F
-  cool_multi_time_g.F
   interpolators_g.F
   solve_rate_cool_g.F
   step_rate_newton_raphson.F
@@ -143,8 +148,9 @@ add_library(Grackle_Grackle
   ../include/grackle_rate_functions.h
   ../include/grackle_types.h
 
-  # C private headers
+  # private headers
   cie_thin_cooling_rate_tables.h
+  fortran_func_decls.h
   grackle_chemistry_data_fields.def # <-- acts as a C header
   grackle_macros.h
   index_helper.h
@@ -161,6 +167,8 @@ add_library(Grackle_Grackle
   # Fortran private headers
   phys_const.def
 )
+
+target_compile_features(Grackle_Grackle PRIVATE cxx_std_17)
 
 # A downstream application built with CMake generally has 2 inclusion
 # approaches (ways that they can make use of this build):
