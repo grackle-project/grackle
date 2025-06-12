@@ -55,8 +55,8 @@ static inline rateprop_ mk_rateprop_(double* rate, const char* name){
 #define MKPROP_SCALAR_(PTR, NAME) \
   mk_rateprop_((PTR == NULL) ? NULL : &(PTR->NAME), #NAME)
 
-// Create machinery to lookup Standard-Form Collisional Recombination Rates
-// ------------------------------------------------------------------------
+// Create machinery to lookup Standard-Form Collisional Reaction Rates
+// -------------------------------------------------------------------
 // see the next section for other macros
 
 // We define an enum down for internal use
@@ -64,20 +64,20 @@ static inline rateprop_ mk_rateprop_(double* rate, const char* name){
 //    1 larger than the previous value (if a value isn't explicitly specified)
 // -> we also leverage the property that the 1st enumeration-constant is 0
 //    (if a value isn't explicitly specified)
-enum ColRecRxnRateKind_ {
-  #define ENTRY(NAME) ColRecRxn_ ## NAME,
-  #include "col_rec_rxn_rate_members.def"
+enum CollisionalRxnRateKind_ {
+  #define ENTRY(NAME) CollisionalRxn_ ## NAME,
+  #include "collisional_rxn_rate_members.def"
   #undef ENTRY
-  ColRecRxn_NRATES // <- will hold the number of reactions
+  CollisionalRxn_NRATES // <- will hold the number of reactions
 };
 
-static rateprop_ get_ColRecRxn_rateprop_(chemistry_data_storage* my_rates,
-                                         int i)
+static rateprop_ get_CollisionalRxn_rateprop_(chemistry_data_storage* my_rates,
+                                              int i)
 {
   switch(i) {
-    #define ENTRY(NAME)                                            \
-      case ColRecRxn_ ## NAME: { return MKPROP_(my_rates, NAME); }
-    #include "col_rec_rxn_rate_members.def"
+    #define ENTRY(NAME)                                                      \
+      case CollisionalRxn_ ## NAME: { return MKPROP_(my_rates, NAME); }
+    #include "collisional_rxn_rate_members.def"
     #undef ENTRY
     default: {
       rateprop_ out = {NULL, NULL};
@@ -100,7 +100,7 @@ enum MiscRxnRateKind_ {
 static rateprop_ get_MiscRxn_rateprop_(chemistry_data_storage* my_rates, int i)
 {
   switch(i) {
-    // density dependent version of k13 (which is a ColRecRxn)
+    // density dependent version of k13 (which is a CollisionalRxn)
     case MiscRxn_k13dd: return MKPROP_(my_rates, k13dd);
     // Radiative rates for 6-species (for external field):
     case MiscRxn_k24: return MKPROP_SCALAR_(my_rates, k24);
@@ -133,7 +133,7 @@ struct rate_registry_type_ {
 static const struct rate_registry_type_ rate_registry_ = {
   /* len: */ RATE_SET_COUNT,
   /* sets: */ {
-    { 1000, ColRecRxn_NRATES, &get_ColRecRxn_rateprop_},
+    { 1000, CollisionalRxn_NRATES, &get_CollisionalRxn_rateprop_},
     { 2000, MiscRxn_NRATES, &get_MiscRxn_rateprop_}
   }
 };
