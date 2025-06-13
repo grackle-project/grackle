@@ -11,6 +11,7 @@
 # software.
 ########################################################################
 
+from importlib import resources
 import io
 import os
 import sys
@@ -34,10 +35,6 @@ def _get_file_registry_contents():
             )
         return fname
 
-    if (sys.version_info.major, sys.version_info.minor) < (3, 9):
-        import importlib_resources as resources
-    else:
-        from importlib import resources
     ref = resources.files("pygrackle.file_registry") / "file_registry.txt"
 
     contents = ref.read_text(encoding="utf-8")
