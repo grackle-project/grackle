@@ -11,6 +11,7 @@
 [build-system]
 requires=[
   "cython",
+  "cython-cmake>=0.2",
   # since tool.scikit-build.minimum-version is set to "build-system.requires",
   # the minimum build-requirement for scikit-build-core controls some default
   # behaviors when newer versions of scikit-build-core are installed
@@ -22,11 +23,12 @@ build-backend = "scikit_build_core.build"
 [project]
 name = "pygrackle"
 description = "A wrapper for the Grackle chemistry library"
+readme = "README.rst"
 # A simpler project could infer used to infer the version number from git:
 #    https://scikit-build-core.readthedocs.io/en/latest/configuration.html#dynamic-metadata
 # but pygrackle can't (currently) do this since it lives in a "monorepo"
 #    https://github.com/pypa/setuptools_scm/issues/1056
-version = "1.1.dev0"
+version = "1.1.1.dev1"
 classifiers=[
   "Development Status :: 5 - Production/Stable",
   "Environment :: Console",
@@ -37,17 +39,16 @@ classifiers=[
   "Operating System :: POSIX :: Linux",
   "Operating System :: Unix",
   "Natural Language :: English",
-  "Programming Language :: Python :: 3.8",
-  "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
 ]
 keywords=[
   "simulation", "chemistry", "cooling", "astronomy", "astrophysics"
 ]
-requires-python = ">=3.7"
+requires-python = ">=3.10"
 dependencies = [
-  'cython',
   'h5py',
   'numpy',
   'matplotlib',
@@ -65,15 +66,15 @@ Source = 'https://github.com/grackle-project/grackle'
 Tracker = 'https://github.com/grackle-project/grackle/issues'
 
 [project.optional-dependencies]
-dev = [
-  'flake8',
-  'packaging',
-  'pytest',
-  'sphinx',
-  'sphinx-tabs',
-  'sphinx_rtd_theme',
-]
+# currently the next line duplicates the dependency-groups purely for
+# historical reasons. We should delete the following entry in the near-future
+# (since they are actually dependencies of the pygrackle-wheel).
+dev = ['flake8', 'packaging', 'pytest', 'sphinx', 'sphinx-tabs', 'furo']
 
+[dependency-groups]
+docs = ['sphinx', 'sphinx-tabs', 'furo']
+test = ['pytest', 'packaging']
+dev = ['flake8', {include-group = "docs"}, {include-group = 'test'}]
 
 [tool.pytest.ini_options]
 # settings inspired by: learn.scientific-python.org/development/guides/pytest/
@@ -97,9 +98,9 @@ testpaths = [
 # redirect to the appropriate CMakeLists.txt file
 cmake.source-dir = "./src/python"
 
-# if the following version of CMake isn't found, scikit-build-core will
-# download and use a compatible CMake-verison
-cmake.version = ">=3.16"
+# if the version of CMake (in {cmake.source-dir}/CMakeLists.txt) isn't found,
+# scikit-build-core will download and use a compatible CMake-verison
+cmake.version = "CMakeLists.txt"
 
 # The build type to use when building the project. Valid options are: "Debug",
 # "Release", "RelWithDebInfo", "MinSizeRel", "", etc.
@@ -112,7 +113,29 @@ minimum-version = "build-system.requires"
 
 # Files to exclude from the SDist (even if they're included by default).
 # Supports gitignore syntax.
-sdist.exclude = [".circleci",".readthedocs.yml"]
+sdist.exclude = [
+    # exclude continuous integration:
+    ".circleci", ".readthedocs.yml", ".github",
+    # exclude files related to creating precompiled wheels
+    "scripts/wheels",
+    # exclude data files since we want the sdist to follow the same rules as wheels
+    # when it comes to data file distribution (for simplicity).
+    # -> the main value of including the files would be if somebody wanted to download
+    #    the sdist, untar it, and run tests. But, I would argue that they should be
+    #    cloning the git repository for that purpose
+    # -> this would also make the sdist ~65 times bigger
+    "input", "grackle_data_files",
+    # if we aren't including data-files, there's no reason to include pygrackle-tests
+    # (all meaningful tests will currently fail)
+    "src/python/tests",
+    # if we aren't including data-files, there's no reason to include the pygrackle
+    # code examples (they currently require editable installations)
+    "src/python/examples",
+    # for consistency, we exclude the core-library tests and examples
+    "tests", "src/example",
+    # exclude miscellaneous classic-build-system machinery
+    "configure", "src/Makefile", "src/examples/Make*", "src/clib/Make*"
+]
 
 # A list of packages to auto-copy into the wheel.
 wheel.packages = ["./src/python/pygrackle"]
@@ -126,3 +149,54 @@ wheel.exclude = [
     # No need to package template files
     "**.py.in"
 ]
+
+[[tool.scikit-build.overrides]]
+# we are using scikit-build-core's override-functionality to provide a detailed
+# error message when a build from a sdist fails
+if.from-sdist = true
+# maybe we should move most of this message to the website and provide a link
+# to the website
+messages.after-failure = """
+{bold.red}Your build of pygrackle from a sdist failed.{normal} (You should
+ignore the rest of this message if you were explicitly want to install from an
+sdist).
+
+For more context:
+
+- The sdist and wheel formats are the 2 modern standardized formats for python
+  package distribution. At a high-level, both of them handle a package's python
+  code in a similar manner. The largest differences occurs when packages (like
+  grackle) have extension modules, written in compiled languages (like C).
+  1. A sdist (source-distribution) includes the extension modules' source code.
+     When installing an sdist, your package manager (e.g. pip) directly compiles
+     the extension module & links it against dependencies, as part of process.
+  2. A wheel ships a precompiled copy of extension module (& copies of external
+     dependencies). During installation, your package manager copies the
+     precompiled extension module & any dependencies to the installation
+
+- Since your package manager tried to install pygrackle from a sdist, that
+  probably means that a wheel isn't available for your current python version
+  on the {platform.platform} (with the {platform.machine}). If this is a common
+  Unix platform, please let the us (the Grackle developers know) and we can
+  consider adding wheels for this platform in the future.
+
+- Your build probably failed because you are missing a compiler, your compiler
+  is too old, you are missing a dependency (e.g. hdf5), or the build-system
+  can't automatically infer some of this info.
+
+- We recommend installing pygrackle directly from the git repository. We provide
+  detailed instructions on our website (https://grackle.readthedocs.io). If you
+  encounter further problems, please reach out.
+"""
+
+
+[tool.cibuildwheel]
+build = "cp310-* cp311-* cp312-* cp313-*"
+skip = ["*_i686", "*_ppc64le", "*_s390x", "*_universal2"]
+# we compile high-level hdf5 api purely so we can run the test-command on musllinux
+# -> h5py doesn't ship binary-wheels for that platform
+# -> depending on how long h5py takes to compile, it may be better to simply use
+#    test-skip = "*-musllinux*"
+before-build = "python {project}/scripts/wheels/cibw_before_build.py --compile-hl-h5 3rdparty {project}"
+test-groups = "test"  # <- this installs the test dependencies
+test-command = "bash {project}/scripts/wheels/cibw_test_command.sh {project}"
