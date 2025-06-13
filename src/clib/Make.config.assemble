@@ -204,9 +204,14 @@
                $(ASSEMBLE_LDFLAGS)
     LDOUTPUT_FLAGS = $(ASSEMBLE_LDOUTPUT_FLAGS)
 
+    # the use of -DGRIMPL_PUBLIC_INCLUDE=1 is a temporary measure until we
+    # modify all C/C++ source files to stop referencing the deprecated public
+    # headers (and include grackle.h instead). We're currently holding off on
+    # this to minimize conflicts with the newchem-cpp branch
     DEFINES = $(MACH_DEFINES) \
               $(ASSEMBLE_IO_DEFINES) \
               $(PLATFORM_DEFINES)
+              -DGRIMPL_PUBLIC_INCLUDE=1
 
     PUBLIC_HEADER_SRCDIR = $(GRACKLE_DIR)/../include
     AUTOGEN_DIR = $(GRACKLE_DIR)/autogen

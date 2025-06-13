@@ -22,6 +22,12 @@ endif()
 cmake_minimum_required(VERSION 3.16)
 cmake_policy(SET CMP0077 NEW)
 cmake_policy(SET CMP0082 NEW)
+
+if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.24)
+  cmake_policy(SET CMP0135 NEW) # makes automatic dependency downloads more
+                                # robust (& addresses noisy warnings)
+endif()
+
 project(Grackle VERSION ${_GRACKLE_VERSION_NO_DEVTAG} LANGUAGES C CXX Fortran)
 
 # Specify that `./cmake` contains cmake modules defining useful functionality
@@ -72,9 +78,17 @@ elseif (GRACKLE_IS_TOP_LEVEL)
 endif()
 
 option(GRACKLE_USE_DOUBLE "compile the code with double precision" ON)
-option(GRACKLE_EXAMPLES "compile grackle examples" ${GRACKLE_IS_TOP_LEVEL})
 option(GRACKLE_DEFINE_INSTALL_RULES
   "enable Grackle's installation rules" ${GRACKLE_IS_TOP_LEVEL})
+option(GRACKLE_BUILD_TESTS "build Grackle tests driven by CTest" OFF)
+
+if (GRACKLE_BUILD_TESTS)
+  set(_GRACKLE_EXAMPLES_DEFAULT ON)
+else()
+  set(_GRACKLE_EXAMPLES_DEFAULT ${GRACKLE_IS_TOP_LEVEL})
+endif()
+option(GRACKLE_EXAMPLES
+  "compile grackle examples" ${_GRACKLE_EXAMPLES_DEFAULT})
 
 # configure custom machine-specific optimization-flags (specified in host-config
 # files). I'm not really sure we should support this when Grackle isn't the
@@ -139,37 +153,13 @@ the structure of this directory
 endif()
 
 # create a directory where we will store auto-generated generated public headers
-set(GRACKLE_GENRATED_PUBLIC_HEADERS
+set(GRACKLE_GENERATED_PUBLIC_HEADERS
   ${CMAKE_CURRENT_BINARY_DIR}/generated_public_headers)
 
 # Dependencies
 # ------------
-find_package(HDF5 REQUIRED COMPONENTS C)
-add_library(GRACKLE_HDF5_C INTERFACE IMPORTED)
-target_link_libraries(GRACKLE_HDF5_C INTERFACE ${HDF5_C_LIBRARIES})
-target_include_directories(GRACKLE_HDF5_C INTERFACE ${HDF5_C_INCLUDE_DIRS})
-target_compile_definitions(GRACKLE_HDF5_C INTERFACE ${HDF5_C_DEFINITIONS})
-if (HDF5_VERSION VERSION_LESS "1.6")
-  message(FATAL_ERROR "HDF5 version 1.6 or newer is required")
-elseif(HDF5_VERSION VERSION_GREATER "1.6")
-  target_compile_definitions(GRACKLE_HDF5_C INTERFACE -DH5_USE_16_API)
-endif()
-
 option(GRACKLE_USE_OPENMP "Use OpenMP" OFF)
-if (GRACKLE_USE_OPENMP)
-  find_package(OpenMP REQUIRED COMPONENTS C Fortran)
-endif()
-
-# define target to link the math functions of the C standard library
-# (i.e. the -lm flag). This is commonly needed on unix-like platforms
-# -> For platforms that don't need libm, this target acts as a dummy
-#    placeholder (that does nothing)
-# -> The -lm flag should NOT be used on MacOS (while CMake is smart enough to
-#    not pass it to the linker, it will mess with exporting linker flags)
-add_library(toolchain::m INTERFACE IMPORTED)
-if (UNIX AND NOT CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-  set_target_properties(toolchain::m PROPERTIES IMPORTED_LIBNAME "m")
-endif()
+include(dependencies.cmake)
 
 
 # picohash is a vendored, self-contained, header-only library
@@ -209,8 +199,18 @@ endif()
 
 # Tests
 # -----
-# (this is where we will add targets for integration tests)
 
+# if desired, setup Grackle's tests that use CTest/GoogleTest (this has no
+# impact on the tests run via pytest, those are handled outside of cmake)
+if(GRACKLE_BUILD_TESTS)
+  # the GTest dependency has already been found
+
+  # load CMake's built-in module that defines functions to register unit tests
+  # implemented with GoogleTest with CMake's test-runner, CTest
+  include(GoogleTest)
+  enable_testing() # enable the test-runner, CTest
+  add_subdirectory(tests) # declare the recipes for each test
+endif()
 
 # Packaging
 # ---------

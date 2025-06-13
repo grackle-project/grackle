@@ -27,20 +27,20 @@ For all on/off integer flags, 0 is off and 1 is on.
    Flag to control which primordial chemistry network is used.
    Default: 0.
 
-    - 0: no chemistry network.  Radiative cooling for primordial
-      species is solved by interpolating from lookup tables
-      calculated with Cloudy.
-    - 1: 6-species atomic H and He.  Active species: H, H\ :sup:`+`,
-      He, He\ :sup:`+`, \ :sup:`++`, e\ :sup:`-`.
-    - 2: 9-species network including atomic species above and species
-      for molecular hydrogen formation.  This network includes
-      formation from the H\ :sup:`-` and H\ :sub:`2`\ :sup:`+`
-      channels, three-body formation (H+H+H and H+H+H\ :sub:`2`),
-      H\ :sub:`2` rotational transitions, chemical heating, and
-      collision-induced emission (optional).  Active species: above +
-      H\ :sup:`-`, H\ :sub:`2`, H\ :sub:`2`\ :sup:`+`.
-    - 3: 12-species network include all above plus HD rotation cooling.
-      Active species: above + D, D\ :sup:`+`, HD.
+   - 0: no chemistry network.  Radiative cooling for primordial
+     species is solved by interpolating from lookup tables
+     calculated with Cloudy.
+   - 1: 6-species atomic H and He.  Active species: H, H\ :sup:`+`,
+     He, He\ :sup:`+`, \ :sup:`++`, e\ :sup:`-`.
+   - 2: 9-species network including atomic species above and species
+     for molecular hydrogen formation.  This network includes
+     formation from the H\ :sup:`-` and H\ :sub:`2`\ :sup:`+`
+     channels, three-body formation (H+H+H and H+H+H\ :sub:`2`),
+     H\ :sub:`2` rotational transitions, chemical heating, and
+     collision-induced emission (optional).  Active species: above +
+     H\ :sup:`-`, H\ :sub:`2`, H\ :sub:`2`\ :sup:`+`.
+   - 3: 12-species network include all above plus HD rotation cooling.
+     Active species: above + D, D\ :sup:`+`, HD.
 
 .. note:: In order to make use of the non-equilibrium chemistry
    network (:c:data:`primordial_chemistry` options 1-3), you must add
@@ -55,17 +55,17 @@ For all on/off integer flags, 0 is off and 1 is on.
    - 0: no dust-related processes included.
    - 1: adds the following processes:
 
-        #. photo-electric heating (sets :c:data:`photoelectric_heating` to 2).
-        #. cooling from electron recombination onto dust (equation 9 from
-           `Wolfire et al. 1995
-           <https://ui.adsabs.harvard.edu/abs/1995ApJ...443..152W/abstract>`__).
-           Both the photo-electric heating and recombination cooling are scaled
-           by the value of the :c:data:`interstellar_radiation_field`.
-        #. H\ :sub:`2`\  formation on dust (sets :c:data:`h2_on_dust` to 1
-           if :c:data:`primordial_chemistry` > 1).
+     #. photo-electric heating (sets :c:data:`photoelectric_heating` to 2).
+     #. cooling from electron recombination onto dust (equation 9 from
+        `Wolfire et al. 1995
+        <https://ui.adsabs.harvard.edu/abs/1995ApJ...443..152W/abstract>`__).
+        Both the photo-electric heating and recombination cooling are scaled
+        by the value of the :c:data:`interstellar_radiation_field`.
+     #. H\ :sub:`2`\  formation on dust (sets :c:data:`h2_on_dust` to 1
+        if :c:data:`primordial_chemistry` > 1).
 
-        Setting :c:data:`dust_chemistry` greater than 0 requires
-        :c:data:`metal_cooling` to be enabled.
+   Setting :c:data:`dust_chemistry` greater than 0 requires
+   :c:data:`metal_cooling` to be enabled.
 
 .. note:: Other values for :c:data:`photoelectric_heating` may also be used
    in conjunction with setting the :c:data:`dust_chemistry` parameter. It will
@@ -139,8 +139,8 @@ For all on/off integer flags, 0 is off and 1 is on.
    this parameter will be set to the lowest redshift of the UV background
    data being used.
 
-.. image:: _images/ramp.png
-   :width: 300
+   .. image:: _images/ramp.png
+      :width: 300
 
 .. c:var:: char* grackle_data_file
 
@@ -192,23 +192,23 @@ For all on/off integer flags, 0 is off and 1 is on.
 
    Flag to control which three-body H\ :sub:`2` formation rate is used.
 
-    - 0: `Abel, Bryan & Norman (2002)
-      <http://adsabs.harvard.edu/abs/2002Sci...295...93A>`_
+   - 0: `Abel, Bryan & Norman (2002)
+     <http://adsabs.harvard.edu/abs/2002Sci...295...93A>`_
 
-    - 1: `Palla, Salpeter & Stahler (1983)
-      <http://adsabs.harvard.edu/abs/1983ApJ...271..632P>`_
+   - 1: `Palla, Salpeter & Stahler (1983)
+     <http://adsabs.harvard.edu/abs/1983ApJ...271..632P>`_
 
-    - 2: `Cohen & Westberg (1983)
-      <http://adsabs.harvard.edu/abs/1983JPCRD..12..531C>`_
+   - 2: `Cohen & Westberg (1983)
+     <http://adsabs.harvard.edu/abs/1983JPCRD..12..531C>`_
 
-    - 3: `Flower & Harris (2007)
-      <http://adsabs.harvard.edu/abs/2007MNRAS.377..705F>`_
+   - 3: `Flower & Harris (2007)
+     <http://adsabs.harvard.edu/abs/2007MNRAS.377..705F>`_
 
-    - 4: `Glover (2008)
-      <http://adsabs.harvard.edu/abs/2008AIPC..990...25G>`_
+   - 4: `Glover (2008)
+     <http://adsabs.harvard.edu/abs/2008AIPC..990...25G>`_
 
-    - 5: `Forrey (2013)
-      <http://adsabs.harvard.edu/abs/2013ApJ...773L..25F>`_.
+   - 5: `Forrey (2013)
+     <http://adsabs.harvard.edu/abs/2013ApJ...773L..25F>`_.
 
    The first five options are discussed in `Turk et. al. (2011)
    <http://adsabs.harvard.edu/abs/2011ApJ...726...55T>`_.  Default: 0.
@@ -230,22 +230,22 @@ For all on/off integer flags, 0 is off and 1 is on.
    Flag to enable photo-electric heating from irradiated dust grains.
    Default: 0.
 
-    - 0: no photo-electric heating.
-    - 1: a spatially uniform heating term from `Tasker & Bryan (2008)
-      <http://adsabs.harvard.edu/abs/2008ApJ...673..810T>`__. The exact
-      heating rate used must be specified with the
-      :c:data:`photoelectric_heating_rate` parameter. For temperatures
-      above 20,000 K, the photo-electric heating rate is set to 0.
-    - 2: similar to option 1, except the heating rate is calculated
-      using equation 1 of `Wolfire et al. (1995)
-      <https://ui.adsabs.harvard.edu/abs/1995ApJ...443..152W/abstract>`__
-      and the user must supply the intensity of the interstellar radiation
-      field with the :c:data:`interstellar_radiation_field` parameter. The
-      value of epsilon is taken as a constant equal to 0.05 for gas below
-      20,000 K and 0 otherwise.
-    - 3: similar to option 1, except the value of epsilon is calculated
-      directly from equation 2 of `Wolfire et al. (1995)
-      <https://ui.adsabs.harvard.edu/abs/1995ApJ...443..152W/abstract>`__.
+   - 0: no photo-electric heating.
+   - 1: a spatially uniform heating term from `Tasker & Bryan (2008)
+     <http://adsabs.harvard.edu/abs/2008ApJ...673..810T>`__. The exact
+     heating rate used must be specified with the
+     :c:data:`photoelectric_heating_rate` parameter. For temperatures
+     above 20,000 K, the photo-electric heating rate is set to 0.
+   - 2: similar to option 1, except the heating rate is calculated
+     using equation 1 of `Wolfire et al. (1995)
+     <https://ui.adsabs.harvard.edu/abs/1995ApJ...443..152W/abstract>`__
+     and the user must supply the intensity of the interstellar radiation
+     field with the :c:data:`interstellar_radiation_field` parameter. The
+     value of epsilon is taken as a constant equal to 0.05 for gas below
+     20,000 K and 0 otherwise.
+   - 3: similar to option 1, except the value of epsilon is calculated
+     directly from equation 2 of `Wolfire et al. (1995)
+     <https://ui.adsabs.harvard.edu/abs/1995ApJ...443..152W/abstract>`__.
 
 .. c:var:: int dust_recombination_cooling
 
@@ -401,7 +401,7 @@ For all on/off integer flags, 0 is off and 1 is on.
    :c:data:`RT_HeI_ionization_rate`, and :c:data:`RT_HeII_ionization_rate`
    fields, respectively, of the :c:data:`grackle_field_data` struct.
    Associated heating rate is provided in the :c:data:`RT_heating_rate`
-   field, and H\ :sub:`2`\ photodissociation rate can also be provided in the
+   field, and H\ :sub:`2` photodissociation rate can also be provided in the
    :c:data:`RT_H2_dissociation_rate` field when
    :c:data:`primordial_chemistry` is set to either 2 or 3. Default: 0.
 
@@ -439,15 +439,15 @@ For all on/off integer flags, 0 is off and 1 is on.
    exist for the length scale used in calculating the H\ :sub:`2`\  column
    density. Default: 0.
 
-    - 1: Use a Sobolev-like, spherically averaged method from
-      `Wolcott-Green \& Haiman (2019)
-      <https://ui.adsabs.harvard.edu/abs/2019MNRAS.484.2467W/>`__. Prior to
-      Grackle version 3.2, this option used the method of `Wolcott-Green et. al.
-      (2011) <https://ui.adsabs.harvard.edu/abs/2011MNRAS.418..838W/>`__.
-      This option is only valid for Cartesian grid codes in 3D.
-    - 2: Supply an array of lengths using the :c:data:`H2_self_shielding_length`
-      field.
-    - 3: Use the local Jeans length.
+   - 1: Use a Sobolev-like, spherically averaged method from
+     `Wolcott-Green \& Haiman (2019)
+     <https://ui.adsabs.harvard.edu/abs/2019MNRAS.484.2467W/>`__. Prior to
+     Grackle version 3.2, this option used the method of `Wolcott-Green et. al.
+     (2011) <https://ui.adsabs.harvard.edu/abs/2011MNRAS.418..838W/>`__.
+     This option is only valid for Cartesian grid codes in 3D.
+   - 2: Supply an array of lengths using the :c:data:`H2_self_shielding_length`
+     field.
+   - 3: Use the local Jeans length.
 
 .. c:var:: int H2_custom_shielding
 
@@ -485,14 +485,14 @@ For all on/off integer flags, 0 is off and 1 is on.
    avenue of future research in developing a more complete self-shielding model.
    Each self-shielding option is described below.
 
-     - 0: No self shielding. Elements are optically thin to the UV background.
-     - 1: Not Recommended. Approximate self-shielding in HI only. 
-          HeI and HeII are left as optically thin.
-     - 2: Approximate self-shielding in both HI and HeI. HeII remains
-          optically thin.
-     - 3: Approximate self-shielding in both HI and HeI, but ignoring
-          HeII ionization and heating from the UV background entirely
-          (HeII ionization and heating rates are set to zero). 
+   - 0: No self shielding. Elements are optically thin to the UV background.
+   - 1: Not Recommended. Approximate self-shielding in HI only. 
+        HeI and HeII are left as optically thin.
+   - 2: Approximate self-shielding in both HI and HeI. HeII remains
+        optically thin.
+   - 3: Approximate self-shielding in both HI and HeI, but ignoring
+        HeII ionization and heating from the UV background entirely
+        (HeII ionization and heating rates are set to zero). 
 
    These methods only work in conjunction with using updated Cloudy
    cooling tables, denoted with "_shielding". These tables properly account
@@ -501,9 +501,9 @@ For all on/off integer flags, 0 is off and 1 is on.
 
    For consistency, when ``primordial_chemistry > 2``, the self-shielding
    attenutation factors calculated for HI and HeI are applied to the 
-   H\ :sub:`2`\ ionization (15.4 eV) and H\ :sub:`2`\ :sup:`+` dissociation
+   H\ :sub:`2` ionization (15.4 eV) and H\ :sub:`2`\ :sup:`+` dissociation
    rates (30 eV) respectively. These reaction rates are distinct from the
-   H\ :sub:`2`\ self-shielding computed using the ``H2_self_shielding``
+   H\ :sub:`2` self-shielding computed using the ``H2_self_shielding``
    flag.
 
 .. c:var:: int h2_charge_exchange_rate
@@ -511,24 +511,24 @@ For all on/off integer flags, 0 is off and 1 is on.
    Flag which selects the formula used for calculating the ``k11`` rate 
    coefficient. Default: 1.
 
-      - 1: Equation 4 from `Savin et. al., 2004 <https://arxiv.org/abs/astro-ph/0404288>`_.
-      - 2: Table 3, Equation 11 from `Abel et. al., 1996 <https://arxiv.org/abs/astro-ph/9608040>`_.
+   - 1: Equation 4 from `Savin et. al., 2004 <https://arxiv.org/abs/astro-ph/0404288>`_.
+   - 2: Table 3, Equation 11 from `Abel et. al., 1996 <https://arxiv.org/abs/astro-ph/9608040>`_.
 
 .. c:var:: int h2_dust_rate
 
    Flag which selects the formula used for calculating the ``h2dust`` rate
    coefficient. Default: 1.
 
-      - 1: Table 1, Equation 23 from `Omukai, 2000 <https://arxiv.org/abs/astro-ph/0003212>`_.
-      - 2: Equation 3.8 from `Hollenbach & McKee, 1979 <https://ui.adsabs.harvard.edu/abs/1979ApJS...41..555H/abstract>`_.
+   - 1: Table 1, Equation 23 from `Omukai, 2000 <https://arxiv.org/abs/astro-ph/0003212>`_.
+   - 2: Equation 3.8 from `Hollenbach & McKee, 1979 <https://ui.adsabs.harvard.edu/abs/1979ApJS...41..555H/abstract>`_.
 
 .. c:var:: int h2_h_cooling_rate
 
    Flag which selects the formula for calculating the ``GAHI`` rate coefficient.
    Default: 1.
 
-      - 1: Equation based on `Lique, 2015 <https://academic.oup.com/mnras/article/453/1/810/1752438>`_. 
-      - 2: Equation 40 with fitting coefficients found in Table 8, from `Glover & Abel, 2008 <https://arxiv.org/abs/0803.1768>`_.
+   - 1: Equation based on `Lique, 2015 <https://academic.oup.com/mnras/article/453/1/810/1752438>`_. 
+   - 2: Equation 40 with fitting coefficients found in Table 8, from `Glover & Abel, 2008 <https://arxiv.org/abs/0803.1768>`_.
 
    Notes on setting 1:
       This fit is accurate to within ~5% over the temperature range 100 < T < 5000 K. Lique (2015)
@@ -606,31 +606,31 @@ solar metallicity and scaled linearly with the metallicity of the gas.
 
 Valid range:
 
- - number density: -10 < log\ :sub:`10` (n\ :sub:`H` / cm\ :sup:`-3`) < 4
+- number density: -10 < log\ :sub:`10` (n\ :sub:`H` / cm\ :sup:`-3`) < 4
 
- - temperature: the temperature range is 1 < log\ :sub:`10` (T / K) < 9.
+- temperature: the temperature range is 1 < log\ :sub:`10` (T / K) < 9.
 
 Data files:
 
- - **CloudyData_noUVB.h5** - cooling rates for collisional ionization
-   equilibrium.
+- **CloudyData_noUVB.h5** - cooling rates for collisional ionization
+  equilibrium.
 
- - **CloudyData_UVB=FG2011.h5** - heating and cooling rates and UV
-   background rates from the work of `Faucher-Giguere et. al. (2009)
-   <http://adsabs.harvard.edu/abs/2009ApJ...703.1416F>`_, updated in 2011.
-   The maxmimum redshift is 10.6.  Above that, collisional ionization
-   equilibrium is assumed.
+- **CloudyData_UVB=FG2011.h5** - heating and cooling rates and UV
+  background rates from the work of `Faucher-Giguere et. al. (2009)
+  <http://adsabs.harvard.edu/abs/2009ApJ...703.1416F>`_, updated in 2011.
+  The maxmimum redshift is 10.6.  Above that, collisional ionization
+  equilibrium is assumed.
 
- - **CloudyData_UVB=HM2012.h5** - heating and cooling rates and UV
-   background rates from the work of `Haardt & Madau (2012)
-   <http://adsabs.harvard.edu/abs/2012ApJ...746..125H>`_.  The maximum
-   redshift is 15.13.  Above that, collisional ionization equilibrium is
-   assumed.
+- **CloudyData_UVB=HM2012.h5** - heating and cooling rates and UV
+  background rates from the work of `Haardt & Madau (2012)
+  <http://adsabs.harvard.edu/abs/2012ApJ...746..125H>`_.  The maximum
+  redshift is 15.13.  Above that, collisional ionization equilibrium is
+  assumed.
 
- - **CloudyData_UVB=HM2012_high_density.h5** - same as
-   **CloudyData_UVB=HM2012.h5** but goes to higher density (10\ :sup:`10`
-   atom / cm\ :sup:`3`) and was computed with a more recent version of
-   Cloudy (17.06).
+- **CloudyData_UVB=HM2012_high_density.h5** - same as
+  **CloudyData_UVB=HM2012.h5** but goes to higher density (10\ :sup:`10`
+  atom / cm\ :sup:`3`) and was computed with a more recent version of
+  Cloudy (17.06).
 
 To use the self-shielding approximation (see ``self_shielding_method``),
 one must properly account for the change in metal line cooling rates in
@@ -659,11 +659,11 @@ approximations. Currently only the HM2012 table has been recomputed.
    :c:data:`self_shielding_method` enabled. **It is not recommended to
    use these files with primordial_chemistry set to 0.**
 
- - **CloudyData_UVB=HM2012_shielded.h5** - updated heating and cooling
-   rates with the HM2012 UV background, accounting for self-shielding.
+- **CloudyData_UVB=HM2012_shielded.h5** - updated heating and cooling
+  rates with the HM2012 UV background, accounting for self-shielding.
 
- - **CloudyData_UVB=FG2011_shielded.h5** - updated heating and cooling
-   rates with the FG2011 UV background, accounting for self-shielding.
+- **CloudyData_UVB=FG2011_shielded.h5** - updated heating and cooling
+  rates with the FG2011 UV background, accounting for self-shielding.
 
 The final file includes only metal cooling rates under collisional
 ionization equilibrium, i.e., no incident radiation field.  This table
@@ -674,13 +674,13 @@ table more appropriate for simulations of collapsing gas-clouds.
 
 Valid range:
 
- - number density: -6 < log\ :sub:`10` (n\ :sub:`H` / cm\ :sup:`-3`) < 12
+- number density: -6 < log\ :sub:`10` (n\ :sub:`H` / cm\ :sup:`-3`) < 12
 
- - metallicity: -6 < log\ :sub:`10` (Z / Z\ :sub:`sun`) < 1
+- metallicity: -6 < log\ :sub:`10` (Z / Z\ :sub:`sun`) < 1
 
- - temperature: the temperature range is 1 < log\ :sub:`10` (T / K) < 8.
+- temperature: the temperature range is 1 < log\ :sub:`10` (T / K) < 8.
 
 Data file:
 
- - **cloudy_metals_2008_3D.h5** - collisional ionization equilibrium,
-   metal cooling rates only.
+- **cloudy_metals_2008_3D.h5** - collisional ionization equilibrium,
+  metal cooling rates only.

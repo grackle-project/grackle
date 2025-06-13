@@ -23,7 +23,7 @@ def is_valid_varname(s, start = None, stop = None):
     return re.fullmatch(_VALID_VARNAME_STR, s[slice(start, stop)]) is not None
     
 
-def configure_file(lines, variable_map, out_fname):
+def configure_file(lines, variable_map, out_fname, literal_linenos):
     """
     Writes a new file to out_fname, line-by-line, while performing variable
     substituions
@@ -53,9 +53,12 @@ def configure_file(lines, variable_map, out_fname):
         # make sure to drop any trailing '\n'
         assert line[-1] == '\n', "sanity check!"
         line = line[:-1]
-        match_count = 0
-
-        out_f.write(_PATTERN.sub(replace,line))
+        if line_num in literal_linenos:
+            subbed = line
+        else:
+            match_count = 0
+            subbed = _PATTERN.sub(replace,line)
+        out_f.write(subbed)
         out_f.write('\n')
         if err_msg is not None:
             out_f.close()
@@ -142,12 +145,16 @@ def main(args):
     _parse_variables(variable_map, args.variable_use_literal_file_contents,
                      val_kind = 'file-path-literal-contents')
 
+    literal_linenos = set()
+    if args.literal_linenos is not None:
+        literal_linenos = set(args.literal_linenos)
     # use variable_map to actually create the output file
     with open(args.input, 'r') as f_input:
         line_iterator = iter(f_input)
         configure_file(lines = line_iterator,
                        variable_map = variable_map,
-                       out_fname = out_fname)
+                       out_fname = out_fname,
+                       literal_linenos=literal_linenos)
 
     return 0
 
@@ -181,6 +188,10 @@ parser.add_argument(
 parser.add_argument(
     "--clobber", action = "store_true",
     help = "overwrite the output file if it already exists"
+)
+parser.add_argument(
+    "--literal-linenos", nargs="*", type=int,
+    help = "line numbers corresponding to lines that are treated as literals"
 )
 
 if __name__ == '__main__':

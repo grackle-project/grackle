@@ -31,7 +31,7 @@ else()
   set(GRACKLE_FLOAT_MACRO "GRACKLE_FLOAT_4")
 endif()
 configure_file(../include/grackle_float.h.in
-  ${GRACKLE_GENRATED_PUBLIC_HEADERS}/grackle_float.h @ONLY)
+  ${GRACKLE_GENERATED_PUBLIC_HEADERS}/grackle_float.h @ONLY)
 
 # now, declare recipe for generating file_registry.h:
 set(GRACKLE_GENERATED_PRIVATE_HEADERS "${CMAKE_CURRENT_BINARY_DIR}")
@@ -54,7 +54,8 @@ set_property(
 # -> VERSION_NUM may hold more information than Grackle_VERSION (e.g. like the
 #    "dev" suffix)
 
-set(_query_version "${CMAKE_CURRENT_SOURCE_DIR}/../../config/query_version.py")
+set(_query_version
+  "${CMAKE_CURRENT_SOURCE_DIR}/../../scripts/query_version.py")
 function(query_version option OUTVAR)
   execute_process(
       COMMAND ${_query_version} ${option}
@@ -112,6 +113,7 @@ add_library(Grackle_Grackle
   rate_functions.c
   set_default_chemistry_parameters.c
   solve_chemistry.c
+  status_reporting.c status_reporting.h
   update_UVbackground_rates.c
   utils.c
 
@@ -138,7 +140,7 @@ add_library(Grackle_Grackle
   # -> In that scenario, CMake doesn't realize it needs to generate the
   #    header(s) because the compiler can finds versions of the headers from
   #    the prior build in the standard system location.
-  ${GRACKLE_GENRATED_PUBLIC_HEADERS}/grackle_float.h
+  ${GRACKLE_GENERATED_PUBLIC_HEADERS}/grackle_float.h
 
   # although not strictly necessary, listing out other header files is a "best
   # practice" (and is needed to make them show up in certain IDEs)
@@ -146,6 +148,7 @@ add_library(Grackle_Grackle
   # C/C++ public headers
   ../include/grackle.h
   ../include/grackle_chemistry_data.h
+  ../include/grackle_misc.h
   ../include/grackle_rate_functions.h
   ../include/grackle_types.h
 
@@ -230,7 +233,15 @@ target_include_directories(Grackle_Grackle
   # when building grackle)
   # -> while it may seem unnecessary to specify the ordinary private headers'
   #    directory, it's necessary to compile auto_general.c
-  PRIVATE ${GRACKLE_GENERATED_PRIVATE_HEADERS} ${CMAKE_CURRENT_SOURCE_DIR}
+  PRIVATE $<BUILD_INTERFACE:${GRACKLE_GENERATED_PRIVATE_HEADERS}>
+
+  # specify where to search for generated and ordinary headers when building
+  # grackle AND when linking against grackle under inclusion approach #1
+  # -> while it may seem unnecessary to specify the ordinary headers' directory
+  #    while building grackle, it's necessary to compile auto_general.c
+  PUBLIC $<BUILD_INTERFACE:${GRACKLE_GENERATED_PUBLIC_HEADERS}> # generated hdrs
+         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include> # public hdrs
+         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}> # private hdrs
 
   # specify where to search for generated/ordinary public headers when building
   # grackle AND when linking against grackle under inclusion approach #1
@@ -297,13 +308,7 @@ else()
 endif()
 
 
-# If we are building a shared library, construct a "configuration Makefile"
-# that is used to build the code examples
-# - we're mostly just doing this to let us run the code examples as part of the
-#   pytest test suite (hence why we only do this for shared libraries)
-if (BUILD_SHARED_LIBS)
-  include(CreateExampleConfigMakefile)
-  create_example_config_Makefile(
-    "Make.examples-config" "Grackle::Grackle" "${GRACKLE_FC_FLAG}"
-  )
-endif()
+# define macro to suppress warnings about C files using our deprecated public
+# headers (the files should include grackle.h instead). We're currently holding
+# off on this to minimize conflicts with the newchem-cpp branch
+target_compile_definitions(Grackle_Grackle PRIVATE GRIMPL_PUBLIC_INCLUDE=1)

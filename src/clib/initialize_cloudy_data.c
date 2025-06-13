@@ -15,6 +15,7 @@
 #include <string.h>
 #include <math.h>
 #include "hdf5.h"
+#include "grackle.h"
 #include "grackle_macros.h"
 #include "grackle_types.h"
 #include "grackle_chemistry_data.h"
@@ -330,4 +331,5 @@ int _free_cloudy_data(cloudy_data *my_cloudy, chemistry_data *my_chemistry, int 
   if (my_chemistry->primordial_chemistry == 0 && primordial) {
     GRACKLE_FREE(my_cloudy->mmw_data);
   }
+  return GR_SUCCESS;
 }

@@ -193,7 +193,7 @@ c     The following define the fortran interfaces to the C routines
             IMPORT
             TYPE(grackle_units), INTENT(IN) :: my_units
             TYPE(grackle_field_data), INTENT(IN) :: my_fields
-            REAL(C_DOUBLE), INTENT(IN) :: dt
+            REAL(C_DOUBLE), VALUE, INTENT(IN) :: dt
          END FUNCTION solve_chemistry
       END INTERFACE
 
