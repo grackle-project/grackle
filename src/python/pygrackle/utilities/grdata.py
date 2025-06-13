@@ -229,7 +229,7 @@ def _file_openner(f, mode, **kwargs):
         yield f
 
 
-def _progress_bar(total_bytes):
+def _progress_bar(total_bytes, silent=False):
     """provides a function for drawing/updating progress bars"""
     ncols = shutil.get_terminal_size()[0] - 1
     power_div_3 = int(log10(total_bytes) // 3) if total_bytes > 0 else 0
@@ -237,7 +237,8 @@ def _progress_bar(total_bytes):
     # the output line has the form: '[<progress-bar>] <size>/<size> <unit>'
     fmt = "\r[{bar:{barlen}.{nfill}}] {size:.2f}" + f"/{total_bytes/factor:.2f} {unit}"
     barlen = ncols - 19  # for context, 15 <= (len(fmt.format(...)) - barlen) <= 19
-    bar = (barlen * "=") if (barlen >= 1) and sys.stdout.isatty() else None
+    suppress = (barlen < 1) or silent or not sys.stdout.isatty()
+    bar = None if suppress else (barlen * "=")
 
     def _update(size):
         nonlocal bar
@@ -245,28 +246,22 @@ def _progress_bar(total_bytes):
             print(flush=True)
             bar = None
         elif bar is not None:
-            nfill = barlen * int(size / total_bytes)
+            nfill = int(barlen * (size / total_bytes))
             val = fmt.format(bar=bar, barlen=barlen, nfill=nfill, size=size / factor)
             print(val, end="", flush=True)
 
     return _update
 
 
-def _retrieve_url(url, dst, *, chunksize=_CHUNKSIZE):
+def _retrieve_url(url, dst, *, silent=False, chunksize=_CHUNKSIZE):
     """download the file from url to dst"""
-    # Online discussion about calling `response.read(chunksize)`, where `response` is a
-    # context manager object from `url.request.urlopen`, implies that there is an upper
-    # limit on the amount of data read from the http request into memory at a given
-    # point in time. This is unlikely to ever be a problem (the biggest file we
-    # currently fetch is under 10 Megabytes). However, if it does become a problem, we
-    # could just wrap the ``curl``/``wget`` cli tools.
     try:
         req = urllib.request.Request(url)
         with contextlib.ExitStack() as stack:
             out_file = stack.enter_context(open(dst, "wb"))
             response = stack.enter_context(urllib.request.urlopen(req))
             total_bytes = int(response.headers.get("Content-Length", -1))
-            update_progress = _progress_bar(total_bytes)
+            update_progress = _progress_bar(total_bytes, silent=silent)
             stack.callback(update_progress, size=None)
 
             # write downloaded data to a file
