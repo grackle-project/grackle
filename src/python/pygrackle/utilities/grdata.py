@@ -706,7 +706,6 @@ def build_parser(prog_name):
 def main(default_config, prog_name, *, args=None):
     """Launch the command"""
     # modify the logger
-    global logger
     for handler in logger.handlers:
         logger.removeHandler(handler)
     console_handler = logging.StreamHandler()

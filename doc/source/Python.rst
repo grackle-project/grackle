@@ -267,7 +267,7 @@ make a guess at where the Grackle input files are located.
 .. caution::
 
    This snippet is **NOT** part of the public API.
-   It is a short-term solution that is being used until functionality proposed by :ghpr:`237` can be reviewed.
+   It is a short-term solution that is being used until functionality proposed by :gh-pr:`237` can be reviewed.
 
 .. code-block:: python
 
