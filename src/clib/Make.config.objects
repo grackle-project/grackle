@@ -40,4 +40,6 @@ OBJS_CONFIG_LIB = \
         update_UVbackground_rates.lo \
         rate_functions.lo \
         initialize_rates.lo \
-        utils.lo
+        utils.lo \
+        data_file_utils.lo \
+        os_utils.lo

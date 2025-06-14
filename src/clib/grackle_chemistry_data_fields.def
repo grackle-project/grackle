@@ -53,6 +53,9 @@ ENTRY(UVbackground, INT, 0)
 /* data file containing cooling and UV background tables */
 ENTRY(grackle_data_file, STRING, "")
 
+/* specifies handling of grackle_data_file */
+ENTRY(grackle_data_file_options, INT, -1)
+
 /* Use a CMB temperature floor
    0) no, 1) yes */
 ENTRY(cmb_temperature_floor, INT, 1)
