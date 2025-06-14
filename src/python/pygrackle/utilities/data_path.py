@@ -14,7 +14,6 @@
 from importlib import resources
 import io
 import os
-import sys
 
 from pygrackle.__config__ import _is_editable_installation
 from pygrackle.grackle_wrapper import get_grackle_version
