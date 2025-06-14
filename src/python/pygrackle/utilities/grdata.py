@@ -229,13 +229,13 @@ def _file_openner(f, mode, **kwargs):
         yield f
 
 
-def _progress_bar(total_bytes, silent=False):
+def _progress_bar(tot_bytes, silent=False):
     """provides a function for drawing/updating progress bars"""
     ncols = shutil.get_terminal_size()[0] - 1
-    power_div_3 = int(log10(total_bytes) // 3) if total_bytes > 0 else 0
+    power_div_3 = int(log10(tot_bytes) // 3) if tot_bytes > 0 else 0
     factor, unit = 1000.0**power_div_3, (" B", "KB", "MB", "GB")[power_div_3]
     # the output line has the form: '[<progress-bar>] <size>/<size> <unit>'
-    fmt = "\r[{bar:{barlen}.{nfill}}] {size:.2f}" + f"/{total_bytes/factor:.2f} {unit}"
+    fmt = "\r[{bar:{barlen}.{nfill}}] {size:.2f}" + f"/{tot_bytes / factor:.2f} {unit}"
     barlen = ncols - 19  # for context, 15 <= (len(fmt.format(...)) - barlen) <= 19
     suppress = (barlen < 1) or silent or not sys.stdout.isatty()
     bar = None if suppress else (barlen * "=")
@@ -246,7 +246,7 @@ def _progress_bar(total_bytes, silent=False):
             print(flush=True)
             bar = None
         elif bar is not None:
-            nfill = int(barlen * (size / total_bytes))
+            nfill = int(barlen * (size / tot_bytes))
             val = fmt.format(bar=bar, barlen=barlen, nfill=nfill, size=size / factor)
             print(val, end="", flush=True)
 
@@ -284,32 +284,26 @@ def _get_data_dir(system_str=None):
     system_str = sys.platform if system_str is None else system_str
     if system_str.startswith("win32"):
         raise RuntimeError()
-    is_darwin = system_str.startswith("darwin")
 
     # the following list specifies the order of directories in order of precedence
-    # -> defaults inspired by the API description of the platformdirs python package
-    #    from the online documentation (https://platformdirs.readthedocs.io/en/latest/).
-    #    We have NOT looked at source code!
     # -> https://specifications.freedesktop.org/basedir-spec/latest/ instructs us to
     #    simply skip over XDG_DATA_HOME if it specifies a relative path
-    data_dir_chain = [  # tuple fmt: (envvar, suffix_path, fatal_if_rel, is_enabled)
-        ("GRACKLE_DATA_DIR", None, True, True),
-        ("XDG_DATA_HOME", "grackle", False, True),
-        ("HOME", "Library/Application Support/grackle", True, is_darwin),
-        ("HOME", ".local/share/grackle", True, True),
+    # -> if you look back through the commit-history, you will see that an earlier
+    #    version of the functionality used "$HOME/Library/Application Support/grackle"
+    #    on macOS. For simplicity, we treat macOS like any other Unix
+    data_dir_chain = [  # tuple fmt: (envvar, suffix_path, fatal_if_rel)
+        ("GRACKLE_DATA_DIR", None, True),
+        ("XDG_DATA_HOME", "grackle", False),
+        ("HOME", ".local/share/grackle", True),
     ]
 
-    for envvar, suffix_path, fatal_if_rel, is_enabled in data_dir_chain:
-        if not is_enabled:
-            continue
-
+    for envvar, suffix_path, fatal_if_rel in data_dir_chain:
+        # an earlier version of this function had special handling when envvar=="HOME"
+        # & the variable wasn't defined (for simplicity we now treat that as an error)
         prefix = os.getenv(envvar, None)
-        if prefix is None and envvar == "HOME":
-            prefix = os.path.expanduser("~")
-        elif prefix is None or len(prefix) == 0:
+        if prefix is None or len(prefix) == 0:
             continue
-
-        if prefix[0] == "~":
+        elif prefix[0] == "~":
             msg = f"core grackle-lib forbids {envvar!r} path starting with '~'"
             raise RuntimeError(msg)
         elif prefix[0] != "/" and fatal_if_rel:
@@ -412,7 +406,7 @@ def _parse_file_registry(f):
                 continue
             m = pattern.match(line)
             if m is None:
-                raise RuntimeError(f"Problem parsing line {i+1} of {f}:\n   `{line}`")
+                raise RuntimeError(f"Problem parsing line {i + 1} of {f}:\n   `{line}`")
             file_registry[m["fname"]] = m["cksum"]
     return file_registry
 
