@@ -39,8 +39,16 @@ target_compile_definitions(grtest_utils
 # ---------------------------------
 add_executable(runInterpolationTests test_unit_interpolators_g.cpp)
 target_link_libraries(runInterpolationTests testdeps)
-
 gtest_discover_tests(runInterpolationTests)
+
+# keep this separate because the tests use setenv and unsetenv, which are POSIX
+# functions that aren't threadsafe (these functions may also be available on
+# windows)
+if (UNIX)
+  add_executable(runDataDirTests test_data_dir.cpp)
+  target_link_libraries(runDataDirTests grtest_utils)
+  gtest_discover_tests(runDataDirTests)
+endif()
 
 add_executable(runStatusReporting test_status_reporting.cpp)
 target_link_libraries(runStatusReporting grtest_utils)

@@ -8,17 +8,19 @@
 /
 / Distributed under the terms of the Enzo Public Licence.
 /
-/ The full license is in the file LICENSE, distributed with this 
+/ The full license is in the file LICENSE, distributed with this
 / software.
 ************************************************************************/
 
-#include <errno.h>  // ERANGE
-#include <stdio.h>  // fprintf, stderr
+#include <stdbool.h>
+#include <stddef.h>  // size_t
+#include <stdio.h>   // fprintf, stdout, fflush
 #include <stdlib.h>  // malloc, realloc, free, abort
 #include <string.h>  // memcpy, strlen
 
 #include "os_utils.h"
-#include "grackle.h" // grackle_verbose
+#include "grackle.h"           // grackle_verbose
+#include "status_reporting.h"  // GrPrintErrMsg
 
 /// Just like getenv, except it returns NULL in place of strings of length 0.
 static const char* getenv_nonempty_(const char* name) {
@@ -54,10 +56,10 @@ char* join_parts_(char sep, const char** parts, int nparts) {
   size_t total_len = 0;
   for (int i = 0; i < nparts; i++) {
     if (parts[i] == NULL) return NULL;
-    total_len += strlen(parts[i]); // we don't include the nul-terminator
+    total_len += strlen(parts[i]);  // we don't include the nul-terminator
   }
-  total_len += (nparts - 1); // account for the size of sep and
-  total_len++; // account for trailing nul-terminator
+  total_len += (nparts - 1);  // account for the size of sep and
+  total_len++;                // account for trailing nul-terminator
 
   char* out = malloc(total_len);
   size_t cur_offset = 0;
@@ -71,203 +73,94 @@ char* join_parts_(char sep, const char** parts, int nparts) {
     cur_offset += cur_part_len;
   }
   out[cur_offset] = '\0';
-  if ((cur_offset+1) != total_len) abort();
+  GR_INTERNAL_REQUIRE((cur_offset + 1) == total_len, "sanity-check failed!");
   return out;
 }
 
-
-// Platform-Specific Stuff
-// -----------------------
-
 enum platform_kind get_platform_(void) {
-#if defined(PLATFORM_GENERIC_UNIX) && defined(PLATFORM_MACOS)
-  #error "more than 1 platform macro was defined"
-#elif defined(PLATFORM_GENERIC_UNIX)
+#if defined(PLATFORM_GENERIC_UNIX)
   return platform_kind_generic_unix;
-#elif defined(PLATFORM_MACOS)
-  return platform_kind_macos;
 #else
   return platform_kind_unknown;
 #endif
 }
 
-// define a function to get the home directory
+struct DataDirSpec {
+  const char* envvar;
+  const char* suffix_path;
+  bool fatal_if_relative_path;
+};
 
-/// returns the user's home directory
-///
-/// If it is defined with a non-empty value, the function honors the value in
-/// the ``HOME`` environment variable. Otherwise, the function falls back to
-/// fetching the value using platform specific apis.
-///
-/// @return a string pointing to the current user's home directory. ``NULL`` is
-///     returned if there was an error. The caller is always responsible for
-///     deallocating this string.
-static char* get_home_dir(void);
+char* get_data_dir_(enum platform_kind kind) {
+  const char* msg_common = "can't infer the data directory";
 
-#if defined(PLATFORM_GENERIC_UNIX) || defined(PLATFORM_MACOS)
-
-// assume a posix-platform, the following headers are all standard 
-
-
-#include <sys/types.h> // uid_t
-#include <unistd.h> // getuid, sysconf
-#include <pwd.h> // getpwuid, struct passwd
-
-static char* get_home_dir(void)
-{
-  // first, try to get the value set in the environment
-  const char* env_str = getenv_nonempty_("HOME");
-  if (env_str != NULL) return my_strdup_(env_str);
-
-  // fall back to checking the user database (standard on posix systems)
-
-  // ask the system for an upper limit on the buffersize to hold the results
-  const long initial_bufsize_guess = sysconf(_SC_GETPW_R_SIZE_MAX);
-
-  // If the system can't give a firm answer, we guess.
-  long bufsize = (initial_bufsize_guess == -1) ? 2048 : initial_bufsize_guess;
-  char* buffer = NULL;
-
-  struct passwd pwd, *result;
-  int return_code;
-
-  do {
-    if (buffer == NULL) { // our 1st attempt
-      buffer = malloc(sizeof(char)*bufsize);
-    } else { // our next attempt
-      bufsize *= 2;
-      char* tmp = realloc(buffer, sizeof(char)*bufsize);
-      if (tmp == NULL) break;
-      buffer = tmp;
-    }
-    return_code = getpwuid_r(getuid(), &pwd, buffer, bufsize, &result);
-  } while ((return_code == ERANGE) && (bufsize < 1000000000));
-
-  if (return_code != 0) {
-    free(buffer);
-    fprintf(stderr, "ERROR while determining the HOME directory\n");
+  if (kind == platform_kind_unknown) {
+    GrPrintErrMsg("%s on an unknown platform.\n", msg_common);
     return NULL;
   }
 
-  char* out = my_strdup_(pwd.pw_dir);
-  free(buffer);
-  return out;
-}
-#else
-static char* get_home_dir(void) {
-  fprintf(stderr,
-          "Don't know how to determine HOME directory on current platform\n");
-  return NULL;
-}
-#endif
+  // following list specifies the order of directories in order of precedence
+  // -> https://specifications.freedesktop.org/basedir-spec/latest/ instructs
+  //    us to simply skip over XDG_DATA_HOME if it specifies a relative path
+  // if you look back through the commit-history, you'll see that earlier drafts
+  // of this functionality:
+  // -> used "$HOME/Library/Application Support/grackle" on macOS. For
+  //    simplicity, we now treat macOS like any other Unix
+  // -> used standard posix functionality to infer $HOME if the envvar wasn't
+  //    defined
+  //
+  static const struct DataDirSpec data_dir_chain[] = {
+      {"GRACKLE_DATA_DIR", NULL, true},
+      {"XDG_DATA_HOME", "grackle", false},
+      {"HOME", ".local/share/grackle", true},
+  };
 
-/// Returns a string specifying the default data directory
-///
-/// All of these choices are inspired by the API description of the
-/// platformdirs python package
-/// * we only looked at online documentation:
-///   https://platformdirs.readthedocs.io/en/latest/
-/// * we have NOT read any source code
-static char* default_data_dir_(enum platform_kind kind) {
-  const char* appname = "grackle";
-  switch(kind) {
+  const size_t n_entries = sizeof(data_dir_chain) / sizeof(struct DataDirSpec);
+  for (size_t i = 0; i < n_entries; i++) {
+    const char* env_str = getenv_nonempty_(data_dir_chain[i].envvar);
 
-    case platform_kind_unknown: {
-      fprintf(
-        stderr,
-        ("ERROR: can't infer default data dir on unknown platform.\n"
-         " -> can only infer data directories on macOS and unix systems\n")
-      );
+    if (env_str == NULL) {
+      if (grackle_verbose) {
+        fprintf(stdout, "INFO: %s using \"%s\" envvar (it isn't defined)\n",
+                msg_common, data_dir_chain[i].envvar);
+        fflush(stdout);  // flush in case we run into an error in the next call
+      }
+      continue;
+
+    } else if (env_str[0] == '~') {
+      GrPrintErrMsg("%s when \"%s\" envvar path starts with '~'\n", msg_common,
+                    data_dir_chain[i].envvar);
       return NULL;
-    }
 
-    case platform_kind_macos: {
-      // https://developer.apple.com/library/archive/documentation/FileManagement/Conceptual/FileSystemProgrammingGuide/MacOSXDirectories/MacOSXDirectories.html
-      char* home_dir = get_home_dir();
-      const char * parts[3] = {
-        home_dir, "Library/Application Support", appname
-      };
-      char* out = join_parts_('/', parts, 3);
-      free(home_dir);
+    } else if (env_str[0] != '/' && data_dir_chain[i].fatal_if_relative_path) {
+      GrPrintErrMsg("%s when \"%s\" envvar specifies a relative path\n",
+                    msg_common, data_dir_chain[i].envvar);
+      return NULL;
+
+    } else if (env_str[0] != '/') {
+      if (grackle_verbose) {
+        fprintf(stdout, "INFO: %s using \"%s\" envvar (it's a relative path)\n",
+                msg_common, data_dir_chain[i].envvar);
+        fflush(stdout);  // flush in case we run into an error in the next call
+      }
+      continue;
+
+    } else {  // we are done!
+      char* out = NULL;
+      if (data_dir_chain[i].suffix_path == NULL) {
+        out = my_strdup_(env_str);
+      } else {
+        const char* parts[2] = {env_str, data_dir_chain[i].suffix_path};
+        out = join_parts_('/', parts, 2);
+      }
+
+      if (grackle_verbose) {
+        fprintf(stdout, "INFO: the data-directory is: `%s`\n", out);
+      }
       return out;
     }
-
-    case platform_kind_generic_unix: {
-      // https://specifications.freedesktop.org/basedir-spec/latest/
-      const char* env_str = getenv_nonempty_("XDG_DATA_HOME");
-
-      // check if we need to fall back to the default
-      const char* dflt = "~/.local/share";
-      if (env_str == NULL) {
-        env_str = dflt;
-      } else if ((env_str[0] != '~') && (env_str[0] != '/')) {
-        // this is what the specification tells us to do
-        fprintf(stderr,
-                "WARNING: ignoring XDG_DATA_HOME because it doesn't hold an "
-                "absolute path\n");
-        env_str = dflt;
-      }
-
-      // now actually infer the absolute path
-      if (env_str[0] == '~') {
-        if (post_prefix_ptr_(env_str, "~/") == NULL) {
-          fprintf(stderr,
-                  "ERROR: can't expand env-variable, XDG_DATA_HOME when it "
-                  "starts with `~user/` or just contains `~`\n");
-          return NULL;
-        }
-
-        char* home_dir = get_home_dir();
-        const char* parts[3] = {home_dir, env_str + 1, appname};
-        char* out = join_parts_('/', parts, 3);
-        free(home_dir);
-        return out;
-
-      } else {
-        const char* parts[2] = {env_str, appname};
-        char* out = join_parts_('/', parts, 2);
-        return out;
-
-      }
-    }
-  
   }
-
-  fprintf(stderr,
-          "ERROR: This part of the function should be unreachable! Did you add "
-          "a new platform_kind and forget to update the function?\n");
-  abort();
-}
-
-char* get_data_dir_(enum platform_kind kind) {
-  const char* env_str = getenv_nonempty_("GRACKLE_DATA_DIR");
-  char* out;
-  const char* description;
-  if (env_str != NULL) {
-    out = my_strdup_(env_str);
-    description = "from the `GRACKLE_DATA_DIR` environment variable";
-  } else {
-    if (grackle_verbose) {
-      fprintf(stdout,
-              ("INFO: looking up system-default for the data directory since "
-               "`GRACKLE_DATA_DIR` env variable is empty\n"));
-      fflush(stdout); // flush in case we run into an error in the next call
-    }
-    out = default_data_dir_(kind);
-    description = "inferred from the system defaults";
-  }
-
-  // confirm we are providing an absolute path
-  if (out[0] != '/') {
-    fprintf(stderr,
-            "ERROR: the data-directory %s, `%s` is not an absolute path\n",
-            description, out);
-    free(out);
-    return out;
-  }
-  if (grackle_verbose) {
-    fprintf(stdout, "INFO: the data-directory (%s) is: `%s`\n",
-            description, out);
-  }
-  return out;
+  GrPrintErrMsg("%s: this probably means the \"HOME\" isn't an env variable\n",
+                msg_common);
+  return NULL;
 }

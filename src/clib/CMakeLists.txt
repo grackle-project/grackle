@@ -293,18 +293,8 @@ endif()
 # -> this is used to define functionality that specifies the default
 #    location where data is stored (this location is prefered by OS)
 #    when the GRACKLE_DATA_DIR isn't specified
-if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Darwin")
-  target_compile_definitions(Grackle_Grackle PRIVATE PLATFORM_MACOS)
-else()
-  # check if we can treat the platform as a generic unix-like OS that provides
-  # a few standard headers
-
-  include(CheckIncludeFiles)
-  unset(HAS_POSIX_HDRS CACHE)
-  CHECK_INCLUDE_FILES("unistd.h;sys/types.h;pwd.h" HAS_POSIX_HDRS)
-  if(UNIX AND "${HAS_POSIX_HDRS}" STREQUAL "1")
-    target_compile_definitions(Grackle_Grackle PRIVATE PLATFORM_GENERIC_UNIX)
-  endif()
+if(UNIX)
+  target_compile_definitions(Grackle_Grackle PRIVATE PLATFORM_GENERIC_UNIX)
 endif()
 
 
