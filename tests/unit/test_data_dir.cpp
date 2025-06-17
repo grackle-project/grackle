@@ -10,7 +10,7 @@
 #include "os_utils.h"
 
 // UNCOMMENT in PR 246
-#include "grtest_cmd.hpp"
+// #include "grtest_cmd.hpp"
 
 /// a very standard shorthand for abbreviating std::filesystem
 namespace fs = std::filesystem;
@@ -65,55 +65,29 @@ static std::optional<fs::path> get_dir_(
 /// an environment variable and at the end of the test, it restores the
 /// environment to the original state
 class DataDirTest : public testing::TestWithParam<DataDirImpl> {
+  std::unique_ptr<grtest::EnvManager> env_manager;
+
 protected:
-  // attributes used by the fixture
-  std::map<std::string, std::optional<std::string>> orig_vals_;
+  void SetUp() override {
+    env_manager = grtest::EnvManager::create();
+    if (env_manager == nullptr) {
+      GTEST_SKIP()
+        << "EnvManager doesn't seem to be supported on the current platform";
+    }
+  }
 
   /// overrides the value of the environment variable.
   void override_envvar(const std::string& envvar,
                        const std::optional<std::string>& val) {
-    const char* cur_val = getenv(envvar.c_str());
-
-    // record the original value so we can restore it at the end of the test
-    if (orig_vals_.find(envvar) != orig_vals_.end()) {
-      // cur_val isn't the original value (the original is already recorded)
-    } else {
-      orig_vals_[envvar] = (cur_val == nullptr)
-                               ? std::nullopt
-                               : std::make_optional(std::string(cur_val));
-    }
-
-    if (cur_val == nullptr && !val.has_value()) {
-      // nothing needs to be done
-    } else if (!val.has_value()) {
-      unsetenv(envvar.c_str());
-    } else {
-      setenv(envvar.c_str(), val.value().c_str(), /*overwrite:*/ 1);
-    }
+    env_manager->override_envvar(envvar, val);
   }
 
   void override_envvar(const std::string& envvar, const std::string& val) {
-    override_envvar(envvar, std::make_optional(val));
+    env_manager->override_envvar(envvar, val);
   }
 
   void override_envvar(const std::string& envvar, const char* val) {
     override_envvar(envvar, std::make_optional(val));
-  }
-
-  ~DataDirTest() override {  // restore env to original state
-    for (const auto& kv_pair : orig_vals_) {
-      const std::string& envvar = kv_pair.first;
-      bool currently_has_value = getenv(envvar.c_str()) != nullptr;
-      bool originally_has_value = kv_pair.second.has_value();
-      if (currently_has_value && !originally_has_value) {
-        unsetenv(envvar.c_str());
-      } else if (!originally_has_value) {  // && !currently_has_value
-        // do nothing!
-      } else {
-        setenv(envvar.c_str(), kv_pair.second.value().c_str(),
-               /*overwrite:*/ 1);
-      }
-    }
   }
 };
 

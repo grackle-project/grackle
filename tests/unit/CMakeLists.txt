@@ -48,14 +48,12 @@ target_compile_features(runSha256Tests PRIVATE cxx_std_17)
 #target_link_libraries(runSha256Tests testdeps)
 gtest_discover_tests(runSha256Tests)
 
-# keep this separate because the tests use setenv and unsetenv, which are POSIX
-# functions that aren't threadsafe (these functions may also be available on
-# windows)
-if (UNIX)
-  add_executable(runDataDirTests test_data_dir.cpp)
-  target_link_libraries(runDataDirTests grtest_utils)
-  gtest_discover_tests(runDataDirTests)
-endif()
+# keep this separate because the tests use the POSIX setenv and unsetenv
+# functions that aren't threadsafe (NOTE: safeguards are in place to compile
+# these targets on non-POSIX platforms -- relevant tests are skipped)
+add_executable(runDataFileTests test_data_dir.cpp)
+target_link_libraries(runDataFileTests grtest_utils)
+gtest_discover_tests(runDataFileTests)
 
 add_executable(runStatusReporting test_status_reporting.cpp)
 target_link_libraries(runStatusReporting grtest_utils)
