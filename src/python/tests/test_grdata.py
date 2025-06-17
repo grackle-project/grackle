@@ -38,7 +38,7 @@ except ImportError:
     grdata_main, _parse_file_registry = None, None
 
 
-_CKSUM_ALG = "sha1"
+_CKSUM_ALG = "sha256"
 _UNSET = object()
 
 

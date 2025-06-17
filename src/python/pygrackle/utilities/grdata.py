@@ -170,7 +170,7 @@ ${GRACKLE_DATA_DIR}/
 
 [[[BEGIN-SECTION:INTERNALS FILE REGISTRY]]]
 The file registry refers to a small file that maps the names of Grackle's
-datafiles with a checksum. At the time of writing we use sha1 checksums.
+datafiles with a checksum. At the time of writing we use sha256 checksums.
 
 In the long term, the registry is important in 2 -ish contexts:
 
@@ -324,7 +324,7 @@ class Config(NamedTuple):
     file_registry_file: Union[str, bytes, os.PathLike, IO]
     grackle_version: str
     protocol_version: str = "1"
-    checksum_kind: str = "sha1"
+    checksum_kind: str = "sha256"
 
 
 def make_config_object(grackle_version, file_registry_file):
