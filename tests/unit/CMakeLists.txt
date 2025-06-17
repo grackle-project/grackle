@@ -41,6 +41,13 @@ add_executable(runInterpolationTests test_unit_interpolators_g.cpp)
 target_link_libraries(runInterpolationTests testdeps)
 gtest_discover_tests(runInterpolationTests)
 
+add_executable(runSha256Tests test_sha256.cpp)
+target_include_directories(runSha256Tests PRIVATE ${PROJECT_SOURCE_DIR}/src/clib)
+target_link_libraries(runSha256Tests PRIVATE GTest::gtest_main)
+target_compile_features(runSha256Tests PRIVATE cxx_std_17)
+#target_link_libraries(runSha256Tests testdeps)
+gtest_discover_tests(runSha256Tests)
+
 # keep this separate because the tests use setenv and unsetenv, which are POSIX
 # functions that aren't threadsafe (these functions may also be available on
 # windows)
