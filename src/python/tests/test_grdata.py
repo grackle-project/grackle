@@ -11,6 +11,7 @@
 # software.
 ########################################################################
 
+from collections import ChainMap
 import contextlib
 import dataclasses
 import filecmp
@@ -22,7 +23,7 @@ import shutil
 import subprocess
 import sys
 from textwrap import indent
-from typing import Callable, Collection, ClassVar, Dict, List, Optional, Tuple
+from typing import Callable, Collection, ClassVar
 
 import pytest
 
@@ -37,49 +38,61 @@ except ImportError:
     grdata_main, _parse_file_registry = None, None
 
 
-# _ENV_VAR holds environment variables that can influence data directory location
-_ENV_VARS = ("GRACKLE_DATA_DIR", "XDG_DATA_HOME", "HOME")
 _CKSUM_ALG = "sha1"
+_UNSET = object()
 
 
-@contextlib.contextmanager
-def modified_env(new_env_vals, extra_cleared_variables=None):
-    """
-    Temporarily overwrite the environment variables. This is necessary to test C
-    extensions that rely upon the environment variables
-    """
+def _update_dict(target, overrides):
+    for key, val in overrides.items():
+        if val is not _UNSET:
+            target[key] = val
+        elif key in target:
+            del target[key]
 
-    _UNSET = object()
-    modify_set = set(new_env_vals.keys())
-    if extra_cleared_variables is not None:
-        modify_set.update(extra_cleared_variables)
 
-    original_vals = {var: os.environ.pop(var, _UNSET) for var in modify_set}
-    for var, value in new_env_vals.items():
-        os.environ[var] = value
-    try:
-        yield
-    finally:
-        for var, value in original_vals.items():
-            if value is _UNSET:
-                del os.environ[var]
-            else:
-                os.environ[var] = value
+def _invoke_grdata(
+    args: Collection[str], use_subprocess: bool, overide_data_dir: str | None = None
+) -> tuple[int, str, str]:
+    """actually invokes the grdata tool."""
+
+    _DATA_ENV_VAR = "GRACKLE_DATA_DIR"
+    if use_subprocess:
+        env = None
+        if overide_data_dir is not None:
+            env = ChainMap({_DATA_ENV_VAR: overide_data_dir}, os.environ)
+        tmp = subprocess.run(args, capture_output=True, env=env)
+        returncode = tmp.returncode
+        stdout, stderr = tmp.stdout.decode("ascii"), tmp.stderr.decode("ascii")
+    elif grdata_main is None:
+        raise RuntimeError("can't be configured to run without subprocess")
+    else:
+        with contextlib.ExitStack() as stack:
+            if overide_data_dir is not None:
+                _orig = {_DATA_ENV_VAR: os.environ.get(_DATA_ENV_VAR, _UNSET)}
+                os.environ[_DATA_ENV_VAR] = overide_data_dir
+                stack.callback(_update_dict, os.environ, _orig)
+            f_out, f_err = [
+                stack.enter_context(contextlib.redirect_stdout(io.StringIO())),
+                stack.enter_context(contextlib.redirect_stderr(io.StringIO())),
+            ]
+            returncode = grdata_main(args)
+            stdout, stderr = f_out.getvalue(), f_err.getvalue()
+    return returncode, stdout, stderr
 
 
 @dataclasses.dataclass(frozen=True)
 class CLIApp:
     """A wrapper around the grdata tool"""
 
-    cli_launcher_args: Tuple[str, ...]
+    cli_launcher_args: tuple[str, ...]
     # the following are all used to override the choices within grdata
-    override_datadir: Optional[str] = None
-    override_grackle_version: Optional[str] = None
-    override_file_registry_file: Optional[str] = None
-    override_base_url: Optional[str] = None
+    override_datadir: str | None = None
+    override_grackle_version: str | None = None
+    override_file_registry_file: str | None = None
+    override_base_url: str | None = None
 
     # maps flags to override-attrs
-    _OVERRIDE_FLAG_MAP: ClassVar[Dict[str, str]] = {
+    _OVERRIDE_FLAG_MAP: ClassVar[dict[str, str]] = {
         "--override-base-url": "override_base_url",
         "--testing-override-file-registry-file": "override_file_registry_file",
         "--testing-override-grackle-version": "override_grackle_version",
@@ -95,7 +108,7 @@ class CLIApp:
         return dataclasses.replace(self, **kwargs)
 
     @functools.cached_property
-    def _common_args(self) -> List[str]:
+    def _common_args(self) -> list[str]:
         args = [elem for elem in self.cli_launcher_args]
         for flag, attr in self._OVERRIDE_FLAG_MAP.items():
             val = getattr(self, attr)
@@ -116,32 +129,23 @@ class CLIApp:
             all_args = self._common_args.copy()
             all_args.extend(subcommand_args)
 
-        with contextlib.ExitStack() as stack:
-            if self.override_datadir is not None:
-                new_env_vals = {"GRACKLE_DATA_DIR": self.override_datadir}
-                stack.enter_context(modified_env(new_env_vals))
+        returncode, stdout, stderr = _invoke_grdata(
+            args=all_args,
+            use_subprocess=len(self.cli_launcher_args) > 0,
+            overide_data_dir=self.override_datadir,
+        )
 
-            if len(self.cli_launcher_args) > 0:
-                tmp = subprocess.run(all_args, capture_output=True)
-                returncode = tmp.returncode
-                stdout, stderr = tmp.stdout.decode("ascii"), tmp.stderr.decode("ascii")
-            elif grdata_main is None:
-                raise RuntimeError("can't be configured to run without subprocess")
+        if (returncode == 0) == expect_success:
+            return stdout.rstrip()
+        else:  # handle error message
+            if self.override_datadir is None:
+                env = os.environ
             else:
-                f_out, f_err = [
-                    stack.enter_context(contextlib.redirect_stdout(io.StringIO())),
-                    stack.enter_context(contextlib.redirect_stderr(io.StringIO())),
-                ]
-                returncode = grdata_main(all_args)
-                stdout, stderr = f_out.getvalue(), f_err.getvalue()
+                env = ChainMap({"GRACKLE_DATA_DIR": self.overide_datadir}, os.environ)
 
-            if (returncode == 0) == expect_success:
-                return stdout.rstrip()
-
-            # handle error message
             details = {"args": all_args}
-            for v in _ENV_VARS:
-                details[f"environ[{v!r}]"] = os.environ.get(v, "<unset>")
+            for v in ("GRACKLE_DATA_DIR", "XDG_DATA_HOME", "HOME"):
+                details[f"environ[{v!r}]"] = env.get(v, "<unset>")
             details.update({"code": returncode, "stdout": stdout, "stderr": stderr})
 
             outcome = "succeeded" if returncode == 0 else "failed"
@@ -160,7 +164,7 @@ class DummyFileSpec:
 
 
 @functools.lru_cache
-def _spec_map(return_v1: bool, cksum_alg: str) -> Dict[str, DummyFileSpec]:
+def _spec_map(return_v1: bool, cksum_alg: str) -> dict[str, DummyFileSpec]:
     def make_spec(variant: str, trailing_text: str = ""):
         content = f"I am a test-file: Variant {variant}\n{trailing_text}"
         content_bytes = content.encode("ascii")
@@ -237,9 +241,9 @@ def _setup_cliapp(root_path: os.PathLike, return_v1: bool, prototype: CLIApp):
     for fname, file_spec in spec_map.items():
         with open(os.path.join(src_file_dir, fname), "w") as f:
             f.write(file_spec.contents_str)
-        registry_lines.append(f'{{"{fname}", "{file_spec.cksum}"}}')
+        registry_lines.append(f'"{fname} {file_spec.cksum}",')
     with open(registry_path, "w") as f:
-        print(*registry_lines, sep=",\n", end="\n", file=f)
+        print(*registry_lines, sep="\n", file=f)
 
     return prototype.replace(
         override_datadir=os.fsdecode(data_dir),
@@ -330,10 +334,10 @@ def _get_version_dir(app: CLIApp) -> str:
 
 def check_fetched_dir_contents(
     app: CLIApp,
-    fetch_dir: Optional[str] = None,
+    fetch_dir: str | None = None,
     *,
-    fname_subset: Optional[Collection[str]] = None,
-    errmsg_writer: Optional[Callable] = None,
+    fname_subset: Collection[str] | None = None,
+    errmsg_writer: Callable | None = None,
 ):
     __tracebackhide__ = True  # suppress noisy pytest tracebacks
 
@@ -359,8 +363,8 @@ def check_fetched_dir_contents(
 
 def check_version_data_dir(
     app: CLIApp,
-    fname_subset: Optional[Collection[str]] = None,
-    err_msg: Optional[str] = None,
+    fname_subset: Collection[str] | None = None,
+    err_msg: str | None = None,
 ):
     __tracebackhide__ = True  # suppress noisy pytest tracebacks
     if not app.all_overriden():
