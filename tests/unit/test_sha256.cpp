@@ -2,8 +2,10 @@
 
 #include "gtest/gtest.h"
 #include "sha256.h"
+#include "grtest_os.hpp"
 
 #include <filesystem>
+#include <string>
 
 #include <stdio.h>
 #include <string.h>
@@ -113,18 +115,21 @@ static char* calc_checksum_str_(const char* fname) {
 }
 
 static std::string get_sha256_cksum(const std::string& str) {
-  const char* path = "my-temp-dummy.txt";
-  std::FILE* fp = std::fopen(path, "w");
+  // we are going to work out of a temporary dir
+  grtest::TempDir tmpdir = grtest::TempDir::create();
+  std::string path = (tmpdir.get_path() / "my-file.txt").string();
+
+  std::FILE* fp = std::fopen(path.c_str(), "w");
+  if (fp == nullptr) { return ""; }
   std::fprintf(fp, "%s", str.c_str());
   std::fclose(fp);
 
-  char* tmp = calc_checksum_str_(path);
+  char* tmp = calc_checksum_str_(path.c_str());
   std::string out;
-  if (tmp != NULL) {
+  if (tmp != nullptr) {
     out = tmp;
     std::free(tmp);
   }
-  std::filesystem::remove(path);
   return out;
 }
 
