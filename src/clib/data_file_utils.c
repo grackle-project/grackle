@@ -21,6 +21,7 @@
 
 #include "data_file_utils.h"
 #include "file_registry.h"
+#include "status_reporting.h"
 #include "os_utils.h"
 
 #include "grackle.h" // get_grackle_version
@@ -43,7 +44,7 @@
 /// returns whether 2 null-terminated checksum strings are equal
 ///
 /// A checksum string consists of 2 parts:
-/// - a prefix that includes the name of a hash algorthim used to compute the
+/// - a prefix that includes the name of a hash algorithm used to compute the
 ///   checksum followed by a colon (e.g. `md5:`, `sha1:`, `sha256:`)
 /// - the suffix that specifies the actual values of the checksum as a string
 ///   of hexadecimal digits.
@@ -123,15 +124,12 @@ static void assert_valid_cksum_str_(const char* cksum_str,
   // let's perform some sanity checks on the contents of this string!
   if (err != NULL) {
     const char* extra_fmt = (extra_fmt_arg == NULL) ? "" : extra_fmt_arg;
-    fprintf(
-      stderr,
-      ("INTERNAL ERROR: There is a problem with a checksum string\n"
+    GR_INTERNAL_ERROR(
+      ("Problem with a checksum\n"
        "  string value: \"%s\"\n"
        "  origin: %s %s\n"
        "  issue: %s\n"),
-      cksum_str, cksum_origin_descr, extra_fmt_arg, err);
-    free(err);
-    abort();
+      cksum_str, cksum_origin_descr, extra_fmt, err);
   }
 }
 
@@ -145,10 +143,10 @@ static void assert_valid_cksum_str_(const char* cksum_str,
 ///     `str[i*2:i*2+2]` specifies the value of `digest[i]` in
 ///     hexadecimal notation. `str[digest_len*2]` will be assigned
 ///     the null terminator.
-static void convert_to_hex_(char* digest, int digest_len, char* str) {
+static void convert_to_hex_(const char* digest, int digest_len, char* str) {
 
   // some important context: the standard does not specify whether `char` is 
-  //   signed or unsigned and the call to snprintf will only only work if we
+  //   signed or unsigned and the call to snprintf will only work if we
   //   pass the values of each byte as an unsigned char.
   //
   // Thus: we need to explicitly reinterpret the value of each element digest
@@ -185,10 +183,8 @@ static char* calc_checksum_str_(const char* fname) {
 
   FILE* fp = fopen(fname, "rb");
   if (!fp) {
-    fprintf(stderr,
-            ("ERROR: unable to open `%s` to calculate checksum. Does the file "
-             "actually exist?"),
-            fname);
+    GrPrintErrMsg("can't open `%s` to calculate checksum. Does it exist?\n",
+                  fname);
     return NULL;
   }
 
@@ -211,14 +207,14 @@ static char* calc_checksum_str_(const char* fname) {
   fclose(fp);
 
   if (!any_data_read) {
-    fprintf(stderr, "ERROR: `%s` either specifies a path to an empty file\n",
-            fname);
+    GrPrintErrMsg("`%s` specifies a path to an empty file\n", fname);
+    return NULL;
   }
 
   char digest[PICOHASH_SHA1_DIGEST_LENGTH];
   picohash_final(&ctx, digest);
 
-  // now we just need to convert all of the bytes to a string of hexadecimal
+  // now we just need to convert all the bytes to a string of hexadecimal
   // digits for the sake of comparison
   const char prefix[] = CKSUM_STR_PREFIX;
   size_t prefix_len = strlen(prefix); // excludes nul character
@@ -283,20 +279,18 @@ static struct generic_file_props file_from_data_dir_(
   if (measured_cksum_str == NULL) {
     return out;
   } else if (cksum_str_eq_(measured_cksum_str, expected_cksum_str) == 0) {
-    fprintf(stderr,
-            "ERROR: the measured checksums doesn't match expectations\n"
-            "     -> measured: \"%s\"\n"
-            "     -> expected: \"%s\"\n"
-            "     -> path: `%s`\n"
-            "  This error is indicative of 1 of 3 scenarios:\n"
-            "     1. There is a bug in the core Grackle library for locating\n"
-            "        the file or computing the checksum\n"
-            "     2. There is a bug in the Grackle's data-file management\n"
-            "        tool.\n"
-            "     3. It isn't Grackle's fault. Either the datafile was\n"
-            "        corrupted or its the fault of the user/some other tool\n"
-            "        that tried to modify the file.\n",
-            measured_cksum_str, expected_cksum_str, full_path);
+    GrPrintErrMsg(
+        "The measured checksums doesn't match expectations\n"
+        "    -> measured: \"%s\"\n"
+        "    -> expected: \"%s\"\n"
+        "    -> path: `%s`\n"
+        "  This error is indicative of 1 of 3 possible scenarios:\n"
+        "     1. There is a bug in the core Grackle library.\n"
+        "     2. There is a bug in the Grackle's data-file management tool.\n"
+        "     3. It isn't Grackle's fault. Either the datafile was\n"
+        "        corrupted or its the fault of the user/some other tool\n"
+        "        that tried to modify the file.\n",
+        measured_cksum_str, expected_cksum_str, full_path);
     free(measured_cksum_str);
     free(full_path);
   } else {

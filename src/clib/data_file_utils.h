@@ -15,6 +15,10 @@
 #ifndef DATA_FILE_UTILS_H
 #define DATA_FILE_UTILS_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /// used as the return type when determining the self-shielding location
 ///
 /// if ``path`` is ``NULL``, then there is an error. This struct should NEVER
@@ -44,5 +48,9 @@ struct generic_file_props determine_data_file_(const char* grackle_data_file,
 
 /// Deallocates the memory held within a given ``struct generic_file_props``
 void free_generic_file_props_(struct generic_file_props* ptr);
+
+#ifdef __cplusplus
+}  // extern "C"
+#endif
 
 #endif /* DATA_FILE_UTILS_H */
