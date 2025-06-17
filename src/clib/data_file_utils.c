@@ -17,20 +17,18 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "picohash.h"
-
 #include "data_file_utils.h"
 #include "file_registry.h"
+#include "sha256.h"
 #include "status_reporting.h"
 #include "os_utils.h"
 
 #include "grackle.h" // get_grackle_version
 
 
-#define CKSUM_ALGORITHM "sha1"
+#define CKSUM_ALGORITHM "sha256"
 #define CKSUM_STR_PREFIX CKSUM_ALGORITHM ":"
-#define CKSUM_DIGEST_N_BYTES PICOHASH_SHA1_DIGEST_LENGTH
-//#define CKSUM_DIGEST_N_BYTES 20
+#define CKSUM_DIGEST_N_BYTES 32
 #define CKSUM_DIGEST_N_HEXDIGITS (2*CKSUM_DIGEST_N_BYTES)
 
 // confirm a byte is 8 bits
@@ -143,7 +141,7 @@ static void assert_valid_cksum_str_(const char* cksum_str,
 ///     `str[i*2:i*2+2]` specifies the value of `digest[i]` in
 ///     hexadecimal notation. `str[digest_len*2]` will be assigned
 ///     the null terminator.
-static void convert_to_hex_(const char* digest, int digest_len, char* str) {
+static void convert_to_hex_(const unsigned char* digest, int digest_len, char* str) {
 
   // some important context: the standard does not specify whether `char` is 
   //   signed or unsigned and the call to snprintf will only work if we
@@ -178,8 +176,7 @@ static void convert_to_hex_(const char* digest, int digest_len, char* str) {
   }
 }
 
-/// calculate the checksum for the specified file
-static char* calc_checksum_str_(const char* fname) {
+char* calc_checksum_str_(const char* fname) {
 
   FILE* fp = fopen(fname, "rb");
   if (!fp) {
@@ -188,8 +185,8 @@ static char* calc_checksum_str_(const char* fname) {
     return NULL;
   }
 
-  picohash_ctx_t ctx;
-  picohash_init_sha1(&ctx);
+  hash_state ctx;
+  sha256_init(&ctx);
 
   const size_t CHUNKSIZE = 4096;
   char* buffer = malloc(CHUNKSIZE);
@@ -199,8 +196,9 @@ static char* calc_checksum_str_(const char* fname) {
   do {
     cur_len = fread(buffer, 1, CHUNKSIZE, fp);
     if (cur_len != 0) {
-      picohash_update(&ctx, buffer, cur_len);
-      any_data_read = 1;
+      sha256_process(&ctx, (unsigned char*)buffer,
+                     (unsigned long)cur_len);
+      any_data_read += cur_len;
     }
   } while(cur_len == CHUNKSIZE);
   free(buffer);
@@ -211,8 +209,8 @@ static char* calc_checksum_str_(const char* fname) {
     return NULL;
   }
 
-  char digest[PICOHASH_SHA1_DIGEST_LENGTH];
-  picohash_final(&ctx, digest);
+  unsigned char digest[CKSUM_DIGEST_N_BYTES];
+  sha256_done(&ctx, digest);
 
   // now we just need to convert all the bytes to a string of hexadecimal
   // digits for the sake of comparison

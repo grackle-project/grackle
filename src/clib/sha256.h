@@ -11,6 +11,8 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "grackle.h"  // GR_SUCCESS, GR_FAIL
+
 // I confirmed that this is consistent
 #define ulong32 uint_fast32_t
 #define ulong64 uint_fast64_t
@@ -33,8 +35,6 @@ typedef union Hash_state {
 
 #define ROR(x, y) ( ((((ulong32)(x)&0xFFFFFFFFUL)>>(ulong32)((y)&31)) | ((ulong32)(x)<<(ulong32)((32-((y)&31))&31))) & 0xFFFFFFFFUL)
 #define RORc(x, y) ( ((((ulong32)(x)&0xFFFFFFFFUL)>>(ulong32)((y)&31)) | ((ulong32)(x)<<(ulong32)((32-((y)&31))&31))) & 0xFFFFFFFFUL)
-#define GR_SUCCESS 1
-#define GR_FAIL 0
 #define CRYPT_NOP GR_SUCCESS
 #define CRYPT_INVALID_ARG GR_FAIL
 #define CRYPT_HASH_OVERFLOW GR_FAIL

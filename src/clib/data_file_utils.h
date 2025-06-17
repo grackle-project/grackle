@@ -19,6 +19,11 @@
 extern "C" {
 #endif
 
+/// temporarily declared for testing purposes
+///
+/// (in the future, we probably don't want to use this one)
+char* calc_checksum_str_(const char* fname);
+
 /// used as the return type when determining the self-shielding location
 ///
 /// if ``path`` is ``NULL``, then there is an error. This struct should NEVER
