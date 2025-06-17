@@ -15,29 +15,82 @@
 #ifndef FILE_REGISTRY_H
 #define FILE_REGISTRY_H
 
-#include <string.h> // strcmp
+#include <string.h> // strlen, strncmp
 
-typedef struct { const char* fname; const char* cksum; } registry_entry;
 
-static registry_entry file_registry[] = {
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/// entries in this array (other than the trailing NULL) have the format:
+///   "<fname>  <cksum>"
+/// (there is 1 or more space in the center)
+static const char* file_registry_lines[] = {
 @FILE_REGISTRY_CONTENTS@
+  NULL  // <- a sentinel denoting the end of the list
 };
 
-/// return the full checksum string of the file if it is in the registry
+/// copy the name of the ith filename from the registry to `buf`.
+///
+/// - When `bufsz` is `0`, nothing is written (`buf` may be a null pointer) and
+///   the function returns the number of charcters nothing is written and the
+///   function returns the length of the filename (not including a null
+///   terminator)
+/// - In all other cases, `bufsz - 1` characters are written to `buf` and the
+///   resulting character string is terminated by a null character. Returns the
+///   number of characters written (exluding the null terminator)
+///
+/// A returned value of 0 indicates that `i` is an invalid index and a negative
+/// value denotes an error.
+///
+/// @note
+/// This exists purely intended for testing purposes
+static inline int get_ith_fname_(char* buf, size_t bufsz, int file_idx) {
+  // subtract 1 to account for the sentinel
+  size_t n_lines = sizeof(file_registry_lines) / sizeof(char*) - 1;
+  if (file_idx < 0 || (size_t)file_idx >= n_lines) { return 0; }
+  const char* line = file_registry_lines[file_idx];
+
+  if (bufsz == 0) {  // this branch returns filename length
+    for (size_t i = 0;; i++) {  // infinite loop
+      if (line[i] == ' ') { return i; }
+      if (line[i] == '\0') { return -1; }  // there is a problem!
+    }
+  }
+
+  for (size_t i = 0; i < bufsz; i++) {  // copy the string
+    char chr = line[i];
+    if (chr == ' ' || chr == '\0') {
+      buf[i] = '\0';
+      return i;
+    }
+    buf[i] = chr;
+  }
+  buf[bufsz-1] = '\0';
+  return bufsz - 2;
+}
+
+/// return the full checksum string of the file if it's in the registry
 ///
 /// returns NULL if there is no match!
 static inline const char* expected_file_cksum_(const char* fname) {
   if (fname == NULL) return NULL;
+  const size_t namelen = strlen(fname);
 
-  const size_t n_entries = sizeof(file_registry) / sizeof(registry_entry);
-  const char* cksum_str = NULL;
-  for (size_t i = 0; i < n_entries; i++) {
-    if (strcmp(fname, file_registry[i].fname) == 0) {
-      return file_registry[i].cksum;
+  for (int i = 0;; i++) { // infinite loop
+    const char* line = file_registry_lines[i];
+    // reminder: line has form: "<fname> <cksum>"
+    if (line == NULL) {
+      return NULL;
+    } else if (strncmp(line, fname, namelen) == 0 && line[namelen] == ' ') {
+      size_t nspaces = strspn(line+namelen, " ");
+      return line + (namelen + nspaces);
     }
   }
-  return NULL;
 }
 
+#ifdef __cplusplus
+}  // extern "C"
+#endif
 
 #endif /* FILE_REGISTRY_H */
