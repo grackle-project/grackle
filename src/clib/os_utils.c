@@ -12,10 +12,11 @@
 / software.
 ************************************************************************/
 
+#include <stdarg.h>
 #include <stdbool.h>
 #include <stddef.h>  // size_t
-#include <stdio.h>   // fprintf, stdout, fflush
-#include <stdlib.h>  // malloc, realloc, free, abort
+#include <stdio.h>   // fprintf, vfprintf
+#include <stdlib.h>  // malloc, free
 #include <string.h>  // memcpy, strlen
 
 #include "os_utils.h"
@@ -63,6 +64,16 @@ enum platform_kind get_platform_(void) {
 #endif
 }
 
+// it may make sense to factor this out (& put it in status_reporting.h)
+static void printf_debug_(const char* format, ...) {
+  if (grackle_verbose) {
+    fprintf(stderr, "GRACKLE DEBUG: ");  // TODO: avoid 2 calls to fprintf
+    va_list args;
+    va_start(args, format);
+    vfprintf(stderr, format, args);
+  }
+}
+
 struct DataDirSpec {
   const char* envvar;
   const char* suffix_path;
@@ -97,11 +108,8 @@ char* get_data_dir_(enum platform_kind kind) {
     const char* env_str = getenv_nonempty_(data_dir_chain[i].envvar);
 
     if (env_str == NULL) {
-      if (grackle_verbose) {
-        fprintf(stdout, "INFO: %s using \"%s\" envvar (it isn't defined)\n",
-                msg_common, data_dir_chain[i].envvar);
-        fflush(stdout);  // flush in case we run into an error in the next call
-      }
+      printf_debug_("%s using \"%s\" envvar (it isn't defined)\n",
+                    msg_common, data_dir_chain[i].envvar);
       continue;
 
     } else if (env_str[0] == '~') {
@@ -115,22 +123,17 @@ char* get_data_dir_(enum platform_kind kind) {
       return NULL;
 
     } else if (env_str[0] != '/') {
-      if (grackle_verbose) {
-        fprintf(stdout, "INFO: %s using \"%s\" envvar (it's a relative path)\n",
-                msg_common, data_dir_chain[i].envvar);
-        fflush(stdout);  // flush in case we run into an error in the next call
-      }
+      printf_debug_("%s using \"%s\" envvar (it's a relative path)\n",
+                    msg_common, data_dir_chain[i].envvar);
       continue;
 
     } else {  // we are done!
       const char* parts[2] = {env_str, data_dir_chain[i].suffix_path};
       int nparts = 1 + (parts[1] != NULL);
       char* out = join_parts_('/', parts, nparts);
-
-      if (grackle_verbose) {
-        fprintf(stdout, "INFO: the data-directory is: `%s`\n", out);
-      }
+      printf_debug_("the data-directory is: `%s`\n", out);
       return out;
+
     }
   }
   GrPrintErrMsg("%s: this probably means the \"HOME\" isn't an env variable\n",
