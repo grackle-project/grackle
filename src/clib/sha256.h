@@ -107,11 +107,7 @@ static const ulong32 K[64] = {
 #define Gamma1(x)       (S(x, 17) ^ S(x, 19) ^ R(x, 10))
 
 /* compress 512-bits */
-#ifdef LTC_CLEAN_STACK
-static int _sha256_compress(hash_state * md, const unsigned char *buf)
-#else
 static int  sha256_compress(hash_state * md, const unsigned char *buf)
-#endif
 {
     ulong32 S[8], W[64], t0, t1;
 #ifdef LTC_SMALL_CODE
@@ -230,15 +226,6 @@ static int  sha256_compress(hash_state * md, const unsigned char *buf)
     return GR_SUCCESS;
 }
 
-#ifdef LTC_CLEAN_STACK
-static inline int sha256_compress(hash_state * md, const unsigned char *buf)
-{
-    int err;
-    err = _sha256_compress(md, buf);
-    burn_stack(sizeof(ulong32) * 74);
-    return err;
-}
-#endif
 
 /**
    Initialize the hash state
@@ -360,9 +347,6 @@ static inline int sha256_done(hash_state * md, unsigned char *out)
     for (i = 0; i < 8; i++) {
         STORE32H(md->sha256.state[i], out+(4*i));
     }
-#ifdef LTC_CLEAN_STACK
-    zeromem(md, sizeof(hash_state));
-#endif
     return GR_SUCCESS;
 }
 
