@@ -40,6 +40,8 @@ char* join_parts_(char sep, const char** parts, int nparts) {
   total_len += (nparts - 1);  // account for the size of sep and
   total_len++;                // account for trailing nul-terminator
 
+  // the following is needed to address some warnings
+  if (total_len > 1000) { return NULL; }
   char* out = malloc(total_len);
   size_t cur_offset = 0;
   for (int i = 0; i < nparts; i++) {
