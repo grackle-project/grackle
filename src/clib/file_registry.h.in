@@ -34,9 +34,9 @@ static const char* file_registry_lines[] = {
 
 /// return the full checksum string of the file if it's in the registry
 ///
-/// @param fname The name of the file to get the checksum for
-/// @param registry
-/// @returns NULL if there is no match!
+/// the registry argument is only used for testing purposes!
+///
+/// returns NULL if there is no match!
 static inline const char* expected_file_cksum_(const char* fname,
                                                const char** registry) {
   registry = (registry != NULL) ? registry : file_registry_lines;
