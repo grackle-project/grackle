@@ -11,7 +11,6 @@
 / software.
 ************************************************************************/
 
-#include <ctype.h> // tolower
 #include <limits.h> // CHAR_BIT
 #include <stdio.h>
 #include <stdlib.h>
@@ -41,35 +40,14 @@
 
 /// returns whether 2 null-terminated checksum strings are equal
 ///
-/// A checksum string consists of 2 parts:
+/// A checksum string is composed of lowercase letters & has 2 parts:
 /// - a prefix that includes the name of a hash algorithm used to compute the
 ///   checksum followed by a colon (e.g. `md5:`, `sha1:`, `sha256:`)
 /// - the suffix that specifies the actual values of the checksum as a string
 ///   of hexadecimal digits.
-///
-/// @note
-/// We could make this faster by encoding the checksum as an array of bytes
-/// (rather than a string of hexadecimal digits).
-///  - This would involve half the memory and we wouldn't need to worry about
-///    case-insensitivity.
-///  - But it's not worth the effort to do this to perform just a single
-///    checksum comparison. (we need to compute the string-representation
-///    anyway in order to effectively communicate issues with library users)
-static int cksum_str_eq_(const char* lhs, const char*rhs)
-{
-  // locales could theoretically be an issue here... (but we should be fine)
-  // as long as the strings only contain latin letters (without modifiers)
-  // and arabic numerals
+static int cksum_str_eq_(const char* lhs, const char*rhs) {
   if ((lhs == NULL) || (rhs == NULL)) return 0;
-
-  size_t len = strlen(lhs); // excludes trailing '\0'
-  if ((len == 0) || (len != strlen(rhs))) return 0;
-
-  int neq = 0;
-  for (size_t i = 0; i < len; i++){
-    neq += (tolower(lhs[i]) == tolower(rhs[i]));
-  }
-  return (len == (size_t)neq);
+  return strcmp(lhs, rhs) == 0;
 }
 
 /// Converts a checksum digest into a hexadecimal string
