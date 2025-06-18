@@ -227,7 +227,7 @@ char* calc_checksum_str_(const char* fname) {
 
 static struct generic_file_props file_from_data_dir_(
   const char* grackle_data_file, int grackle_data_file_options,
-  int calculate_checksum
+  int calculate_checksum, const char** registry
 )
 {
   // initialize output struct in a format that will denote an error (if is
@@ -235,16 +235,16 @@ static struct generic_file_props file_from_data_dir_(
   struct generic_file_props out = {NULL, 0, NULL, 0};
 
   // first, let's check if the specified file name is known to Grackle
-  const char* expected_cksum_str = expected_file_cksum_(grackle_data_file);
+  const char* expected_cksum_str = expected_file_cksum_(grackle_data_file,
+                                                        registry);
   if (expected_cksum_str == NULL) {
     // in the future, depending on the value of grackle_data_file_options,
     // we may want to provide special handling for the case where
     // grackle_data_file starts with `"user-data/..."
 
-    fprintf(stderr,
-            "ERROR: can't load %s from data directory, no such file is in "
-            "the file registry\n",
-            grackle_data_file);
+    GrPrintErrMsg(
+      "can't load %s from data directory (it isn't in the file registry)\n",
+      grackle_data_file);
     return out;
   }
 
@@ -302,14 +302,15 @@ static struct generic_file_props file_from_data_dir_(
 
 
 struct generic_file_props determine_data_file_(const char* grackle_data_file,
-                                               int grackle_data_file_options)
+                                               int grackle_data_file_options,
+                                               const char** registry)
 {
   // initialize output struct in a format that will denote an error (if is
   // never modified)
   struct generic_file_props out = {NULL, 0, NULL, 0};
 
   if (grackle_data_file == NULL) {
-    fprintf(stderr, "grackle_data_file must not be NULL\n");
+    GrPrintErrMsg("grackle_data_file must not be NULL\n");
     return out;
   }
 
@@ -324,11 +325,11 @@ struct generic_file_props determine_data_file_(const char* grackle_data_file,
     }
     case GR_DFOPT_MANAGED: {
       return file_from_data_dir_(grackle_data_file, grackle_data_file_options,
-                                 1);
+                                 1, registry);
     }
     case GR_DFOPT_MANAGED_NO_CKSUM: {
       return file_from_data_dir_(grackle_data_file, grackle_data_file_options,
-                                 0);
+                                 0, registry);
     }
     default: {
       fprintf(stderr, "grackle_data_file_options has an unexpected value: %d\n",

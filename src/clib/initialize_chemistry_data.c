@@ -318,7 +318,8 @@ int local_initialize_chemistry_data(chemistry_data *my_chemistry,
 
   struct generic_file_props file_props =
     determine_data_file_(my_chemistry->grackle_data_file,
-                         my_chemistry->grackle_data_file_options);
+                         my_chemistry->grackle_data_file_options,
+                         NULL);
   if (file_props.path == NULL) {
     return GR_FAIL;
   }

@@ -21,7 +21,7 @@ extern "C" {
 
 /// temporarily declared for testing purposes
 ///
-/// (in the future, we probably don't want to use this one)
+/// (in the future, we probably don't want tests to directly use this)
 char* calc_checksum_str_(const char* fname);
 
 /// used as the return type when determining the self-shielding location
@@ -41,15 +41,20 @@ struct generic_file_props {
 /// @param[in]  grackle_data_file specified grackle data file
 /// @param[in]  grackle_data_file_options specifies how to interpret the first
 ///     argument
+/// @param[in]  registry When testing, this can be used to specify a file
+///     registry. In production, this should always be NULL.
 ///
 /// @note
-/// If this functionality ever get's exposed as part of the public API, we
-/// should stop using generic_data_file_props as a return type. We should also
-/// make it possible for the caller to pre-allocate any buffers to hold the
-/// file path and the computed checksum (in that case, we should consider
-/// adopting an interface sorta like snprintf)
+/// If this functionality ever gets exposed as part of the public API, we
+/// should:
+/// - stop using generic_data_file_props as a return type.
+/// - make it possible for the caller to pre-allocate any buffers to hold the
+///   file path and the computed checksum (in that case, we should consider
+///   adopting an interface sorta like snprintf)
+/// - want to remove registry as an argument
 struct generic_file_props determine_data_file_(const char* grackle_data_file,
-                                               int grackle_data_file_options);
+                                               int grackle_data_file_options,
+                                               const char** registry);
 
 /// Deallocates the memory held within a given ``struct generic_file_props``
 void free_generic_file_props_(struct generic_file_props* ptr);
