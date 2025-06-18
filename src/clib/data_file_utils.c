@@ -72,65 +72,6 @@ static int cksum_str_eq_(const char* lhs, const char*rhs)
   return (len == (size_t)neq);
 }
 
-/// abort the program with an error message if the checksum string
-/// isn't valid
-///
-/// we abort, rather than return NULL because there is a programming error
-/// (and people can simply avoid this error by running their program without
-/// any cksum calculations)
-///
-/// behavior is undefined when cksum_str is NULL
-static void assert_valid_cksum_str_(const char* cksum_str,
-                                    const char* cksum_origin_descr,
-                                    const char* extra_fmt_arg) {
-  char* err = NULL;
-
-  const char* hexstr_start = post_prefix_ptr_(cksum_str, CKSUM_STR_PREFIX);
-  const char* colon_pos = strchr(cksum_str, ':');
-
-  // ignore '\0' in length calculation
-  size_t hexstr_len = (hexstr_start == NULL) ? 0 : strlen(hexstr_start);
-
-  if ((hexstr_start == NULL) && (colon_pos == NULL)){
-    err = my_strdup_(
-      "no prefix specifying an algorithm name (e.g. \"" CKSUM_STR_PREFIX "\")"
-    );
-  } else if (hexstr_start == NULL) {
-    err = my_strdup_(
-      "the algorithm name (i.e. characters before the colon), doesn't match"
-      "  \"" CKSUM_ALGORITHM "\""
-    );
-  } else if (hexstr_len != CKSUM_DIGEST_N_HEXDIGITS) {
-    const char fmt[] = "it should have %d characters after the prefix, not %d";
-    int sz = snprintf(err, 0, fmt, CKSUM_DIGEST_N_HEXDIGITS, (int)hexstr_len);
-    err = malloc(sz+1);
-    snprintf(err, sz, fmt, CKSUM_DIGEST_N_HEXDIGITS, (int)hexstr_len);
-
-  } else {
-    const char hexdigits[] = "0123456789abcdefABCDEF";
-    int bad_digits = 0;
-    for (int i = 0; i < CKSUM_DIGEST_N_HEXDIGITS; i++) {
-      bad_digits += (strchr(hexdigits, hexstr_start[i]) == NULL);
-    }
-    if (bad_digits) {
-      err = strdup(
-        "the characters after the prefix include non-hexadecimal digit(s)"
-      );
-    }
-  }
-
-  // let's perform some sanity checks on the contents of this string!
-  if (err != NULL) {
-    const char* extra_fmt = (extra_fmt_arg == NULL) ? "" : extra_fmt_arg;
-    GR_INTERNAL_ERROR(
-      ("Problem with a checksum\n"
-       "  string value: \"%s\"\n"
-       "  origin: %s %s\n"
-       "  issue: %s\n"),
-      cksum_str, cksum_origin_descr, extra_fmt, err);
-  }
-}
-
 /// Converts a checksum digest into a hexadecimal string
 ///
 /// @param[in] digest is an array of bytes where each byte has an
@@ -246,11 +187,6 @@ static struct generic_file_props file_from_data_dir_(
       grackle_data_file);
     return out;
   }
-
-  // sanity check that checksum from the file registry was properly formatted
-  assert_valid_cksum_str_(expected_cksum_str,
-                          "from the file-registry for the file named",
-                          grackle_data_file);
 
   // now it's time to construct the full path to the file (if it exists)
   grackle_version version_info = get_grackle_version();

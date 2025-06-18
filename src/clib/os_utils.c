@@ -28,30 +28,8 @@ static const char* getenv_nonempty_(const char* name) {
   return ((out == NULL) || (out[0] == '\0')) ? NULL : out;
 }
 
-char* my_strdup_(const char* src) {
-  size_t len_with_nul = strlen(src) + 1;
-  char* out = malloc(sizeof(char) * len_with_nul);
-  memcpy(out, src, len_with_nul);
-  return out;
-}
-
-const char* post_prefix_ptr_(const char* s, const char* prefix) {
-  if ((s == NULL) || (prefix == NULL)) return NULL;
-
-  // these lengths don't include the null terminator
-  size_t len_s = strlen(s);
-  size_t len_prefix = strlen(prefix);
-  if ((len_s < len_prefix) || (len_prefix == 0)) return NULL;
-
-  if (memcmp(s, prefix, len_prefix) != 0) return NULL;
-
-  return s + len_prefix;
-}
-
 char* join_parts_(char sep, const char** parts, int nparts) {
-  if (nparts < 2) return NULL;
-
-  // in principle, we could give sep == '\0' special significance
+  if (nparts < 1) return NULL;
 
   size_t total_len = 0;
   for (int i = 0; i < nparts; i++) {
@@ -108,7 +86,6 @@ char* get_data_dir_(enum platform_kind kind) {
   //    simplicity, we now treat macOS like any other Unix
   // -> used standard posix functionality to infer $HOME if the envvar wasn't
   //    defined
-  //
   static const struct DataDirSpec data_dir_chain[] = {
       {"GRACKLE_DATA_DIR", NULL, true},
       {"XDG_DATA_HOME", "grackle", false},
@@ -146,13 +123,9 @@ char* get_data_dir_(enum platform_kind kind) {
       continue;
 
     } else {  // we are done!
-      char* out = NULL;
-      if (data_dir_chain[i].suffix_path == NULL) {
-        out = my_strdup_(env_str);
-      } else {
-        const char* parts[2] = {env_str, data_dir_chain[i].suffix_path};
-        out = join_parts_('/', parts, 2);
-      }
+      const char* parts[2] = {env_str, data_dir_chain[i].suffix_path};
+      int nparts = 1 + (parts[1] != NULL);
+      char* out = join_parts_('/', parts, nparts);
 
       if (grackle_verbose) {
         fprintf(stdout, "INFO: the data-directory is: `%s`\n", out);

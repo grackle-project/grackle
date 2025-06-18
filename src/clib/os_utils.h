@@ -19,23 +19,10 @@
 extern "C" {
 #endif
 
-/// a portable version of strdup, which is provided on posix and in C23
-char* my_strdup_(const char* src);
-
-/// For a string ``s`` that starts with prefix ``prefix``, this returns
-/// the first character in ``s`` after the prefix. Otherwise, it returns NULL.
-///
-/// If the returned non-NULL ptr points to a '\0' character, then both strings
-/// are identical.
-///
-/// @param s the full string that may begin with the prefix
-/// @param prefix the prefix that the full string may begin with
-///
-/// @return ``NULL`` either argument was ``NULL`` or if ``path`` does not
-///   start with ``prefix``. Otherwise, this returns ``path + strlen(prefix)``
-const char* post_prefix_ptr_(const char* s, const char* prefix);
-
 /// join together fragments of a string into 1 newly allocated string
+///
+/// @note
+/// in principle, we could give sep == '\0' special significance
 char* join_parts_(char sep, const char** parts, int nparts);
 
 /// represents the known platform types (that produce different results)
