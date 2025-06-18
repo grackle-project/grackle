@@ -14,8 +14,8 @@
 #include "grackle.h"  // GR_SUCCESS, GR_FAIL
 
 // I confirmed that this is consistent
-#define ulong32 uint_fast32_t
-#define ulong64 uint_fast64_t
+#define ulong32 uint32_t
+#define ulong64 uint64_t
 
 struct sha256_state {
   ulong64 length;
@@ -33,8 +33,15 @@ typedef union Hash_state {
 #define XMEMCPY  memcpy
 #endif
 
+#ifdef __clang__
+// I think gcc may also provide these builtins
+#define ROR(x, y) __builtin_rotateright32(x, y)
+#define RORc(x, y) __builtin_rotateright32(x, y)
+#else
 #define ROR(x, y) ( ((((ulong32)(x)&0xFFFFFFFFUL)>>(ulong32)((y)&31)) | ((ulong32)(x)<<(ulong32)((32-((y)&31))&31))) & 0xFFFFFFFFUL)
 #define RORc(x, y) ( ((((ulong32)(x)&0xFFFFFFFFUL)>>(ulong32)((y)&31)) | ((ulong32)(x)<<(ulong32)((32-((y)&31))&31))) & 0xFFFFFFFFUL)
+#endif
+
 #define CRYPT_NOP GR_SUCCESS
 #define CRYPT_INVALID_ARG GR_FAIL
 #define CRYPT_HASH_OVERFLOW GR_FAIL
