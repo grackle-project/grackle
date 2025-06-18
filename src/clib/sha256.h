@@ -13,52 +13,36 @@
 
 #include "grackle.h"  // GR_SUCCESS, GR_FAIL
 
-// I confirmed that this is consistent
-#define ulong32 uint32_t
-#define ulong64 uint64_t
-
 struct sha256_state {
-  ulong64 length;
-  ulong32 state[8], curlen;
+  uint64_t length;
+  uint32_t state[8], curlen;
   unsigned char buf[64];
 };
 
-typedef union Hash_state {
-  char dummy[1];
+typedef struct hash_state {
   struct sha256_state sha256;
-  void *data;
 } hash_state;
-
-#ifndef XMEMCPY
-#define XMEMCPY  memcpy
-#endif
 
 #ifdef __clang__
 // I think gcc may also provide these builtins
 #define ROR(x, y) __builtin_rotateright32(x, y)
 #define RORc(x, y) __builtin_rotateright32(x, y)
 #else
-#define ROR(x, y) ( ((((ulong32)(x)&0xFFFFFFFFUL)>>(ulong32)((y)&31)) | ((ulong32)(x)<<(ulong32)((32-((y)&31))&31))) & 0xFFFFFFFFUL)
-#define RORc(x, y) ( ((((ulong32)(x)&0xFFFFFFFFUL)>>(ulong32)((y)&31)) | ((ulong32)(x)<<(ulong32)((32-((y)&31))&31))) & 0xFFFFFFFFUL)
+#define ROR(x, y) ( ((((uint32_t)(x)&0xFFFFFFFFUL)>>(uint32_t)((y)&31)) | ((uint32_t)(x)<<(uint32_t)((32-((y)&31))&31))) & 0xFFFFFFFFUL)
+#define RORc(x, y) ( ((((uint32_t)(x)&0xFFFFFFFFUL)>>(uint32_t)((y)&31)) | ((uint32_t)(x)<<(uint32_t)((32-((y)&31))&31))) & 0xFFFFFFFFUL)
 #endif
 
-#define CRYPT_NOP GR_SUCCESS
 #define CRYPT_INVALID_ARG GR_FAIL
 #define CRYPT_HASH_OVERFLOW GR_FAIL
 
-
-#define LTC_ARGCHK(arg) /* no-op */
-
-#ifndef MIN
-#define MIN(x, y) ( ((x)<(y))?(x):(y) )
-#endif
+#define GR_LOCAL_MIN(x, y) ( ((x)<(y))?(x):(y) )
 
 // this was the endian neutral implementation
 #define LOAD32H(x, y)                            \
-  do { x = ((ulong32)((y)[0] & 255)<<24) | \
-           ((ulong32)((y)[1] & 255)<<16) | \
-           ((ulong32)((y)[2] & 255)<<8)  | \
-           ((ulong32)((y)[3] & 255)); } while(0)
+  do { x = ((uint32_t)((y)[0] & 255)<<24) | \
+           ((uint32_t)((y)[1] & 255)<<16) | \
+           ((uint32_t)((y)[2] & 255)<<8)  | \
+           ((uint32_t)((y)[3] & 255)); } while(0)
 
 #define STORE32H(x, y)                                                        \
   do { (y)[0] = (unsigned char)(((x)>>24)&255);                               \
@@ -92,7 +76,7 @@ typedef union Hash_state {
 /* compress 512-bits */
 static int  sha256_compress(hash_state * md, const unsigned char *buf)
 {
-    static const ulong32 K[64] = {
+    static const uint32_t K[64] = {
         0x428a2f98UL, 0x71374491UL, 0xb5c0fbcfUL, 0xe9b5dba5UL, 0x3956c25bUL,
         0x59f111f1UL, 0x923f82a4UL, 0xab1c5ed5UL, 0xd807aa98UL, 0x12835b01UL,
         0x243185beUL, 0x550c7dc3UL, 0x72be5d74UL, 0x80deb1feUL, 0x9bdc06a7UL,
@@ -107,8 +91,8 @@ static int  sha256_compress(hash_state * md, const unsigned char *buf)
         0x682e6ff3UL, 0x748f82eeUL, 0x78a5636fUL, 0x84c87814UL, 0x8cc70208UL,
         0x90befffaUL, 0xa4506cebUL, 0xbef9a3f7UL, 0xc67178f2UL
     };
-    ulong32 S[8], W[64], t0, t1;
-    ulong32 t;
+    uint32_t S[8], W[64], t0, t1;
+    uint32_t t;
     int i;
 
     /* copy state into S */
@@ -155,8 +139,6 @@ static int  sha256_compress(hash_state * md, const unsigned char *buf)
 */
 static inline int sha256_init(hash_state * md)
 {
-    LTC_ARGCHK(md != NULL);
-
     md->sha256.curlen = 0;
     md->sha256.length = 0;
     md->sha256.state[0] = 0x6A09E667UL;
@@ -176,8 +158,6 @@ int func_name (hash_state * md, const unsigned char *in, unsigned long inlen)   
 {                                                                                           \
     unsigned long n;                                                                        \
     int           err;                                                                      \
-    LTC_ARGCHK(md != NULL);                                                                 \
-    LTC_ARGCHK(in != NULL);                                                                 \
     if (md-> state_var .curlen > sizeof(md-> state_var .buf)) {                             \
        return CRYPT_INVALID_ARG;                                                            \
     }                                                                                       \
@@ -193,8 +173,8 @@ int func_name (hash_state * md, const unsigned char *in, unsigned long inlen)   
            in             += block_size;                                                    \
            inlen          -= block_size;                                                    \
         } else {                                                                            \
-           n = MIN(inlen, (block_size - md-> state_var .curlen));                           \
-           XMEMCPY(md-> state_var .buf + md-> state_var.curlen, in, (size_t)n);             \
+           n = GR_LOCAL_MIN(inlen, (block_size - md-> state_var .curlen));                  \
+           memcpy(md-> state_var .buf + md-> state_var.curlen, in, (size_t)n);              \
            md-> state_var .curlen += n;                                                     \
            in             += n;                                                             \
            inlen          -= n;                                                             \
@@ -228,9 +208,6 @@ HASH_PROCESS(sha256_process, sha256_compress, sha256, 64)
 static inline int sha256_done(hash_state * md, unsigned char *out)
 {
     int i;
-
-    LTC_ARGCHK(md  != NULL);
-    LTC_ARGCHK(out != NULL);
 
     if (md->sha256.curlen >= sizeof(md->sha256.buf)) {
        return GR_FAIL;  // invalid argument
@@ -270,5 +247,8 @@ static inline int sha256_done(hash_state * md, unsigned char *out)
     }
     return GR_SUCCESS;
 }
+
+#undef HASH_PROCESS
+#undef GR_LOCAL_MIN
 
 #endif  // SHA256_H
