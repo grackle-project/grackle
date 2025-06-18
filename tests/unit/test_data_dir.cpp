@@ -8,6 +8,7 @@
 
 #include "grtest_os.hpp"
 #include "os_utils.h"
+#include "status_reporting.h"
 
 // UNCOMMENT in PR 246
 // #include "grtest_cmd.hpp"
@@ -57,6 +58,7 @@ static std::optional<fs::path> get_dir_(
       // return {std::filesystem::path(tmp)};
     }
   }
+  GR_INTERNAL_ERROR("THIS SHOULD BE UNREACHABLE!");
 }
 
 /// a test-fixture for testing get_data_dir_
@@ -216,4 +218,5 @@ INSTANTIATE_TEST_SUITE_P(
           return std::string("grdata_cli_tool");
         }
       }
+      return std::string("SomethingIsWrong");
     });

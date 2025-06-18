@@ -172,7 +172,7 @@ static void convert_to_hex_(const unsigned char* digest, int digest_len, char* s
 #else
     unsigned char *uchar_ptr = (unsigned char*)(&elem);
 #endif
-    snprintf(str + 2*i, 3, "%02hhx\n", *uchar_ptr);
+    snprintf(str + 2*i, 3, "%02hhx", *uchar_ptr);
   }
 }
 
@@ -192,15 +192,15 @@ char* calc_checksum_str_(const char* fname) {
   char* buffer = malloc(CHUNKSIZE);
 
   int any_data_read = 0;
-  int cur_len;
+  size_t cur_chunk_len;
   do {
-    cur_len = fread(buffer, 1, CHUNKSIZE, fp);
-    if (cur_len != 0) {
+    cur_chunk_len = fread(buffer, 1, CHUNKSIZE, fp);
+    if (cur_chunk_len != 0) {
       sha256_process(&ctx, (unsigned char*)buffer,
-                     (unsigned long)cur_len);
-      any_data_read += cur_len;
+                     (unsigned long)cur_chunk_len);
+      any_data_read = 1;
     }
-  } while(cur_len == CHUNKSIZE);
+  } while(cur_chunk_len == CHUNKSIZE);
   free(buffer);
   fclose(fp);
 
@@ -230,8 +230,7 @@ static struct generic_file_props file_from_data_dir_(
   int calculate_checksum, const char** registry
 )
 {
-  // initialize output struct in a format that will denote an error (if is
-  // never modified)
+  // initialize out in a format that denotes an error (if its never modified)
   struct generic_file_props out = {NULL, 0, NULL, 0};
 
   // first, let's check if the specified file name is known to Grackle
@@ -332,8 +331,8 @@ struct generic_file_props determine_data_file_(const char* grackle_data_file,
                                  0, registry);
     }
     default: {
-      fprintf(stderr, "grackle_data_file_options has an unexpected value: %d\n",
-              grackle_data_file_options);
+      GrPrintErrMsg("grackle_data_file_options has an unexpected value: %d\n",
+                    grackle_data_file_options);
       return out;
     }
   }
