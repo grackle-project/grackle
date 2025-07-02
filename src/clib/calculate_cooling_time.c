@@ -18,6 +18,7 @@
 #include "grackle_macros.h"
 #include "cool_multi_time_g-cpp.h"
 #include "grackle_types.h"
+#include "internal_units.h"
 #include "phys_constants.h"
 #include "utils.h"
 
@@ -85,17 +86,7 @@ int local_calculate_cooling_time(chemistry_data *my_chemistry,
   if (my_fields->metal_density == NULL)
     metal_field_present = FALSE;
 
-  double co_length_units, co_density_units;
-  if (my_units->comoving_coordinates == TRUE) {
-    co_length_units = my_units->length_units;
-    co_density_units = my_units->density_units;
-  }
-  else {
-    co_length_units = my_units->length_units *
-      my_units->a_value * my_units->a_units;
-    co_density_units = my_units->density_units /
-      POW(my_units->a_value * my_units->a_units, 3);
-  }
+  InternalGrUnits internalu = new_internalu_(my_units);
 
   /* Error checking for H2 shielding approximation */
   if (self_shielding_err_check(my_chemistry, my_fields,
@@ -103,14 +94,10 @@ int local_calculate_cooling_time(chemistry_data *my_chemistry,
     return FAIL;
   }
 
-  /* Calculate temperature units. */
-
-  double temperature_units = get_temperature_units(my_units);
-
   /* Solve cooling equations. */
   cool_multi_time_g(
-    cooling_time, &metal_field_present, &temperature_units, &co_length_units,
-    &co_density_units, my_chemistry, my_rates, my_units, my_fields, &my_uvb_rates
+    cooling_time, metal_field_present, internalu, my_chemistry, my_rates,
+    my_fields, my_uvb_rates
   );
  
   return SUCCESS;
