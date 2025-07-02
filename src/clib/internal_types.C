@@ -148,39 +148,18 @@ void grackle::impl::drop_LogTLinInterpScratchBuf(
 
 // -----------------------------------------------------------------
 
-/// Apply a function to each data member of GrainSpeciesCollection
-///
-/// @note
-/// If we are willing to embrace C++, then this should accept a template
-/// argument (instead of a function pointer and the callback_ctx pointer)
-static void for_each_grainspeciescol_member(
-  grackle::impl::GrainSpeciesCollection* ptr,
-  modify_member_callback* fn,
-  void* callback_ctx
-) {
-  fn(&ptr->SiM, callback_ctx);
-  fn(&ptr->FeM, callback_ctx);
-  fn(&ptr->Mg2SiO4, callback_ctx);
-  fn(&ptr->MgSiO3, callback_ctx);
-  fn(&ptr->Fe3O4, callback_ctx);
-  fn(&ptr->AC, callback_ctx);
-  fn(&ptr->SiO2D, callback_ctx);
-  fn(&ptr->MgO, callback_ctx);
-  fn(&ptr->FeS, callback_ctx);
-  fn(&ptr->Al2O3, callback_ctx);
-  fn(&ptr->reforg, callback_ctx);
-  fn(&ptr->volorg, callback_ctx);
-  fn(&ptr->H2Oice, callback_ctx);
-}
-
 grackle::impl::GrainSpeciesCollection grackle::impl::new_GrainSpeciesCollection(
   int nelem
 )
 {
   GRIMPL_REQUIRE(nelem > 0, "nelem must be positive");
   GrainSpeciesCollection out;
-  MemberAllocCtx_ ctx{nelem};
-  for_each_grainspeciescol_member(&out, &allocate_member_, (void*)(&ctx));
+  double* ptr = (double*)malloc(
+    sizeof(double) * nelem * OnlyGrainSpLUT::NUM_ENTRIES
+  );
+  for (int i = 0; i < OnlyGrainSpLUT::NUM_ENTRIES; i++) {
+    out.data[i] = ptr + (i * nelem);
+  }
   return out;
 }
 
@@ -188,7 +167,113 @@ void grackle::impl::drop_GrainSpeciesCollection(
   grackle::impl::GrainSpeciesCollection* ptr
 )
 {
-  for_each_grainspeciescol_member(ptr, &cleanup_member_, NULL);
+  // since we only allocate a single pointer, we only need to call free once
+  free(ptr->data[0]);
+}
+
+// -----------------------------------------------------------------
+
+grackle::impl::SpeciesCollection grackle::impl::new_SpeciesCollection(
+  int nelem
+) {
+  GRIMPL_REQUIRE(nelem > 0, "nelem must be positive");
+  grackle::impl::SpeciesCollection out;
+  double* ptr = (double*)malloc(sizeof(double) * nelem * SpLUT::NUM_ENTRIES);
+  for (int i = 0; i < SpLUT::NUM_ENTRIES; i++) {
+    out.data[i] = ptr + (i * nelem);
+  }
+  return out;
+}
+
+void grackle::impl::drop_SpeciesCollection(
+  grackle::impl::SpeciesCollection *ptr
+) {
+  // since we only allocate a single pointer, we only need to call free once
+  free(ptr->data[0]);
+}
+
+// -----------------------------------------------------------------
+
+grackle::impl::CollisionalRxnRateCollection grackle::impl::new_CollisionalRxnRateCollection(
+  int nelem
+) {
+  GRIMPL_REQUIRE(nelem > 0, "nelem must be positive");
+  grackle::impl::CollisionalRxnRateCollection out;
+  double* ptr = (double*)malloc(
+    sizeof(double) * nelem * CollisionalRxnLUT::NUM_ENTRIES
+  );
+  for (int i = 0; i < CollisionalRxnLUT::NUM_ENTRIES; i++) {
+    out.data[i] = ptr + (i * nelem);
+  }
+  return out;
+}
+
+void grackle::impl::drop_CollisionalRxnRateCollection(
+  grackle::impl::CollisionalRxnRateCollection *ptr
+) {
+  // since we only allocate a single pointer, we only need to call free once
+  free(ptr->data[0]);
+}
+
+// -----------------------------------------------------------------
+
+/// Apply a function to each data member of PhotoRxnRateCollection
+///
+/// @note
+/// If we are willing to embrace C++, then this should accept a template
+/// argument (instead of a function pointer and the callback_ctx pointer)
+static void for_each_kphotoCollection_member(
+  grackle::impl::PhotoRxnRateCollection* ptr,
+  modify_member_callback* fn,
+  void* callback_ctx
+) {
+  fn(&ptr->k24, callback_ctx);
+  fn(&ptr->k25, callback_ctx);
+  fn(&ptr->k26, callback_ctx);
+  fn(&ptr->k27, callback_ctx);
+  fn(&ptr->k28, callback_ctx);
+  fn(&ptr->k29, callback_ctx);
+  fn(&ptr->k30, callback_ctx);
+  fn(&ptr->k31, callback_ctx);
+}
+
+grackle::impl::PhotoRxnRateCollection grackle::impl::new_PhotoRxnRateCollection(
+  int nelem
+) {
+  GRIMPL_REQUIRE(nelem > 0, "nelem must be positive");
+  grackle::impl::PhotoRxnRateCollection out;
+  MemberAllocCtx_ ctx{nelem};
+  for_each_kphotoCollection_member(&out, &allocate_member_, (void*)(&ctx));
+  return out;
+}
+
+void grackle::impl::drop_PhotoRxnRateCollection(
+  grackle::impl::PhotoRxnRateCollection* ptr
+)
+{
+  for_each_kphotoCollection_member(ptr, &cleanup_member_, NULL);
 }
 
 
+// -----------------------------------------------------------------
+
+grackle::impl::ChemHeatingRates grackle::impl::new_ChemHeatingRates(
+  int nelem
+)
+{
+  GRIMPL_REQUIRE(nelem > 0, "nelem must be positive");
+  ChemHeatingRates out;
+  out.n_cr_n = (double*)malloc(sizeof(double)*nelem);
+  out.n_cr_d1 = (double*)malloc(sizeof(double)*nelem);
+  out.n_cr_d2 = (double*)malloc(sizeof(double)*nelem);
+  return out;
+}
+
+void grackle::impl::drop_ChemHeatingRates(
+  grackle::impl::ChemHeatingRates* ptr
+)
+{
+  GRACKLE_FREE(ptr->n_cr_n);
+  GRACKLE_FREE(ptr->n_cr_d1);
+  GRACKLE_FREE(ptr->n_cr_d2);
+}
