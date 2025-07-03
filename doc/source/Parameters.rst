@@ -31,7 +31,7 @@ For all on/off integer flags, 0 is off and 1 is on.
      species is solved by interpolating from lookup tables
      calculated with Cloudy.
    - 1: 6-species atomic H and He.  Active species: H, H\ :sup:`+`,
-     He, He\ :sup:`+`, \ :sup:`++`, e\ :sup:`-`.
+     He, He\ :sup:`+`, He\ :sup:`++`, e\ :sup:`-`.
    - 2: 9-species network including atomic species above and species
      for molecular hydrogen formation.  This network includes
      formation from the H\ :sup:`-` and H\ :sub:`2`\ :sup:`+`
