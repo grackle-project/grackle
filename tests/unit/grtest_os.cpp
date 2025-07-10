@@ -1,4 +1,6 @@
 #include "grtest_os.hpp"
+#include "grtest_utils.hpp"
+#include "status_reporting.h"
 
 // the following 2 headers are the c versions of the headers (rather than the
 // C++ versions) since it seems more likely that posix-specific functions are
@@ -6,8 +8,132 @@
 #include <stdio.h> // fflush, tmpfile, fread, fileno
 #include <stdlib.h> // mkstemp, getenv
 
+#include <filesystem>
 #include <memory>
 #include <string>
+#include <system_error>
+#include <random>
+#include <utility>  // std::swap
+
+void grtest::TempDir::swap(TempDir& other) noexcept {
+  std::swap(this->path, other.path);
+  std::swap(this->is_open, other.is_open);
+}
+
+grtest::TempDir grtest::TempDir::create(const std::string& prefix) {
+  // NOTE: at some point we should give more thought to whether we want to use
+  // exceptions. Grackle-proper doesn't use exceptions. But, it can be tricky
+  // to use std::filesystem without exceptions (as I understand it, even
+  // though some functions use std::error_code you can still encounter
+  // exceptions)
+  std::filesystem::path p;
+  if (prefix.empty()) {
+    p = std::filesystem::temp_directory_path() / "my-tmpdir-";
+  } else {
+    p = std::filesystem::absolute(prefix);
+    char last = prefix[prefix.size() - 1];
+    if (last == '/' || last == std::filesystem::path::preferred_separator) {
+      p = p / "my-tmpdir-";
+    }
+    GR_INTERNAL_REQUIRE(std::filesystem::is_directory(p.parent_path()),
+                        "prefix doesn't specify a path in an existing dir");
+  }
+
+  std::string prefix_str = p.string();
+  std::minstd_rand rng(std::random_device{}());
+  std::string full_path;
+
+  // I think python does something similar
+  for (int i = 0; i < 100; i++) {
+    int random_int =
+        static_cast<int>(999999 * grtest::random::uniform_dist_transform(rng));
+    full_path = prefix_str + std::to_string(random_int);
+
+    std::error_code ec;
+    std::filesystem::create_directory(full_path, ec);
+    if (!ec) {
+      break;
+    }
+    full_path.clear();
+  }
+
+  GR_INTERNAL_REQUIRE(!full_path.empty(), "could not create directory");
+  grtest::TempDir out;
+  out.path = full_path;
+  out.is_open = true;
+  return out;
+}
+
+void grtest::TempDir::close() noexcept {
+  // we are just going to abort if an exception comes up
+  if (is_open) {
+    // technically the next function can raise an exception about memory
+    // allocations, but noexcept will mean we just abort the program
+    std::error_code ec;
+    std::filesystem::remove_all(path, ec);
+    if (ec) {
+      std::string path_string = path;
+      GR_INTERNAL_ERROR(
+          "there was a problem recursively removing contents of %s",
+          path_string.c_str());
+    }
+    is_open = false;
+  }
+}
+
+#ifndef PLATFORM_GENERIC_UNIX
+// provide dummy implementations that will never work
+#define unsetenv(var) /* ... */
+#define setenv(var, val, overwrite) /* ... */
+std::unique_ptr<grtest::EnvManager> grtest::EnvManager::create() {
+  return nullptr;
+}
+#else
+std::unique_ptr<grtest::EnvManager> grtest::EnvManager::create() {
+  return std::unique_ptr<grtest::EnvManager>(new grtest::EnvManager());
+}
+#endif
+
+
+
+void grtest::EnvManager::override_envvar(const std::string& envvar,
+                                         const std::optional<std::string>& val) {
+  const char* cur_val = getenv(envvar.c_str());
+
+  // record the original value so we can restore it at the end of the test
+  if (orig_vals_.find(envvar) != orig_vals_.end()) {
+    // cur_val isn't the original value (the original is already recorded)
+  } else {
+    orig_vals_[envvar] = (cur_val == nullptr)
+                             ? std::nullopt
+                             : std::make_optional(std::string(cur_val));
+  }
+
+  if (cur_val == nullptr && !val.has_value()) {
+    // nothing needs to be done
+  } else if (!val.has_value()) {
+    unsetenv(envvar.c_str());
+  } else {
+    setenv(envvar.c_str(), val.value().c_str(), /*overwrite:*/ 1);
+  }
+}
+
+grtest::EnvManager::~EnvManager() noexcept{
+  for (const auto& kv_pair : orig_vals_) {
+    const std::string& envvar = kv_pair.first;
+    bool currently_has_value = getenv(envvar.c_str()) != nullptr;
+    bool originally_has_value = kv_pair.second.has_value();
+    if (currently_has_value && !originally_has_value) {
+      unsetenv(envvar.c_str());
+    } else if (!originally_has_value) {  // && !currently_has_value
+      // do nothing!
+    } else {
+      setenv(envvar.c_str(), kv_pair.second.value().c_str(),
+             /*overwrite:*/ 1);
+    }
+  }
+}
+
 
 #ifndef PLATFORM_GENERIC_UNIX
 

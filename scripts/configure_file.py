@@ -73,7 +73,9 @@ def configure_file(lines, variable_map, out_fname, literal_linenos):
                            "were unused: {!r}".format(unused_variables))
 
 def _parse_variables(dict_to_update, var_val_assignment_str_l,
-                     val_is_file_path = False):
+                     val_kind = 'literal'):
+    assert val_kind in ['literal', 'file-path-escaped-contents',
+                        'file-path-literal-contents']
     for var_val_assignment_str in var_val_assignment_str_l:
         stripped_str = var_val_assignment_str.strip() # for safety
 
@@ -107,7 +109,7 @@ def _parse_variables(dict_to_update, var_val_assignment_str_l,
             raise RuntimeError(
                 "the {!r} variable is defined more than once".format(var_name))
 
-        if val_is_file_path:
+        if val_kind != 'literal': # val_kind is some kind of file path
             path = value
             if not os.path.isfile(path):
                 raise RuntimeError(
@@ -115,11 +117,15 @@ def _parse_variables(dict_to_update, var_val_assignment_str_l,
                      "at {!r} with the {!r} variable: no such file exists"
                      ).format(path, var_name))
             with open(value, "r") as f:
-                # we generally treat the characters in the file as literals
-                # -> we do need to make a point of properly escaping the
-                #    newline characters
-                assert os.linesep == '\n' # implicit assumption
-                value = f.read().replace(os.linesep, r'\n')
+                if val_kind == 'file-path-escaped-contents':
+                    # we generally treat the characters in the file as literals
+                    # -> we do need to make a point of properly escaping the
+                    #    newline characters
+                    assert os.linesep == '\n' # implicit assumption
+                    value = f.read().replace(os.linesep, r'\n')
+                else: # val_kind == 'file-path-literal-contents'
+                    value = f.read()
+
         dict_to_update[var_name] = value
 
 def main(args):
@@ -133,9 +139,11 @@ def main(args):
     # fill variable_map with the specified variables and values
     variable_map = {}
     _parse_variables(variable_map, args.variables,
-                     val_is_file_path = False)
+                     val_kind = 'literal')
     _parse_variables(variable_map, args.variable_use_file_contents,
-                     val_is_file_path = True)
+                     val_kind = 'file-path-escaped-contents')
+    _parse_variables(variable_map, args.variable_use_literal_file_contents,
+                     val_kind = 'file-path-literal-contents')
 
     literal_linenos = set()
     if args.literal_linenos is not None:
@@ -155,7 +163,16 @@ parser.add_argument(
     '--variable-use-file-contents',  action = 'append', default = [],
     metavar = 'VAR=path/to/file',
     help = ("associates the (possibly multi-line) contents contained by the "
-            "specified file with VAR")
+            "specified file with VAR. This replaces each newline character "
+            "with the pair of characters \"\\n\". This is useful if the "
+            "contents represent a string to be printed")
+)
+
+parser.add_argument(
+    '--variable-use-literal-file-contents',  action = 'append', default = [],
+    metavar = 'VAR=path/to/file',
+    help = ("associates the (possibly multi-line) contents contained by the "
+            "specified file with VAR. This does NOT escape newline characters.")
 )
 parser.add_argument(
     "variables", nargs = '*', action = 'store', default = [],

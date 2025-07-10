@@ -39,8 +39,18 @@ target_compile_definitions(grtest_utils
 # ---------------------------------
 add_executable(runInterpolationTests test_unit_interpolators_g.cpp)
 target_link_libraries(runInterpolationTests testdeps)
-
 gtest_discover_tests(runInterpolationTests)
+
+add_executable(runSha256Tests test_sha256.cpp)
+target_link_libraries(runSha256Tests grtest_utils)
+gtest_discover_tests(runSha256Tests)
+
+# keep this separate because the tests use the POSIX setenv and unsetenv
+# functions that aren't threadsafe (NOTE: safeguards are in place to compile
+# these targets on non-POSIX platforms -- relevant tests are skipped)
+add_executable(runDataFileTests test_data_dir.cpp test_auto_files.cpp)
+target_link_libraries(runDataFileTests grtest_utils)
+gtest_discover_tests(runDataFileTests)
 
 add_executable(runStatusReporting test_status_reporting.cpp)
 target_link_libraries(runStatusReporting grtest_utils)

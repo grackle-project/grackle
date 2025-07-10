@@ -18,6 +18,7 @@ import yt
 
 from pygrackle import \
     chemistry_data, \
+    constants, \
     evolve_constant_density, \
     evolve_freefall, \
     setup_fluid_container
@@ -25,7 +26,6 @@ from pygrackle.utilities.physical_constants import \
     mass_hydrogen_cgs, \
     sec_per_Myr, \
     cm_per_mpc
-from pygrackle.utilities.data_path import grackle_data_dir
 from pygrackle.utilities.model_tests import \
     get_model_set, \
     model_test_format_version
@@ -65,8 +65,8 @@ if __name__=="__main__":
         my_chemistry.CaseBRecombination = 1
         my_chemistry.cie_cooling = 1
         my_chemistry.h2_optical_depth_approximation = 1
-        my_chemistry.grackle_data_file = os.path.join(
-            grackle_data_dir, "cloudy_metals_2008_3D.h5")
+        my_chemistry.grackle_data_file = "cloudy_metals_2008_3D.h5"
+        my_chemistry.grackle_data_file_options = constants.GR_DFOPT_MANAGED
 
     redshift = 0.
 

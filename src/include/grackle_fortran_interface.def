@@ -89,6 +89,7 @@ c     This is the fortran definition of grackle_chemistry_data
          INTEGER(C_INT) :: metal_cooling
          INTEGER(C_INT) :: UVbackground
          TYPE(C_PTR)    :: grackle_data_file
+         INTEGER(C_INT) :: grackle_data_file_options
          INTEGER(C_INT) :: cmb_temperature_floor
          REAL(C_DOUBLE) :: Gamma
          INTEGER(C_INT) :: h2_on_dust
