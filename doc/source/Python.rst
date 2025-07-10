@@ -212,6 +212,17 @@ To make sure everything is installed properly, you can try invoking pygrackle fr
 
 If this command executes without raising any errors, then you have successfully installed Pygrackle.
 
+Installing DataFiles
+++++++++++++++++++++
+
+To install the datafiles in a location usable for automatic usage in the Pygrackle examples (and tests) we recommend invoking the following command (from any directory):
+
+.. code-block:: shell-session
+
+   $ python -m pygrackle fetch
+
+:ref:`This section <manage-data-files>` for more details about customizing the the location where data is stored and about managing datafiles in general.
+
 .. _pygrackle-dev:
 
 Installing Pygrackle Development Requirements
@@ -250,30 +261,17 @@ a parcel of gas at constant density or in a free-fall model.  Each example
 will produce a figure as well as a dataset that can be loaded and analyzed
 with `yt <http://yt-project.org/>`__.
 
-Editable Install Requirement
-++++++++++++++++++++++++++++
-
 All of the example scripts discussed below use the following line to
 make a guess at where the Grackle input files are located.
 
 .. caution::
 
    This snippet is **NOT** part of the public API.
-   It is a short-term solution that is being used until functionality proposed by `GitHub PR #237 <https://github.com/grackle-project/grackle/pull/237>`__ can be reviewed.
+   It is a short-term solution that is being used until functionality proposed by :gh-pr:`237` can be reviewed.
 
 .. code-block:: python
 
    from pygrackle.utilities.data_path import grackle_data_dir
-
-This currently **ONLY** works for an 'editable' Pygrackle installation
-(i.e., one installed with ``pip install -e .`` as directed
-above). In this case, it will be assumed that the data files can be
-found in a directory called ``input`` in the top level of the source
-repository.
-
-.. note::
-
-   :gh-pr:`235` is a pending pull request that seeks to add functionality to make this work in a regular Pygrackle installation (i.e. a non-'editable' install).
 
 Cooling Rate Figure Example
 +++++++++++++++++++++++++++
