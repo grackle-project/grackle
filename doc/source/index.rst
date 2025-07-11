@@ -36,6 +36,7 @@ Grackle Documentation
    Parameters.rst
    RateFunctions.rst
    Reference.rst
+   Network.rst
 
 .. toctree::
    :caption: Project Details
