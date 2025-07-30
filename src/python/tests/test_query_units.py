@@ -15,16 +15,16 @@ import os
 import numpy as np
 import pytest
 
-from pygrackle import \
+from gracklepy import \
     chemistry_data, \
     set_cosmology_units
 
-from pygrackle.utilities.physical_constants import \
+from gracklepy.utilities.physical_constants import \
     mass_hydrogen_cgs, \
     sec_per_Myr, \
     cm_per_mpc
 
-from pygrackle.grackle_wrapper import _query_units
+from gracklepy.grackle_wrapper import _query_units
 
 _local_dir = os.path.dirname(os.path.abspath(__file__))
 def _setup_generic_chemistry_data(initial_redshift, current_redshift = None):

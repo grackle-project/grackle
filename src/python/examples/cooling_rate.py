@@ -17,15 +17,15 @@ import os
 import sys
 import yt
 
-from pygrackle import \
+from gracklepy import \
     chemistry_data, \
     setup_fluid_container
-from pygrackle.utilities.data_path import grackle_data_dir
-from pygrackle.utilities.physical_constants import \
+from gracklepy.utilities.data_path import grackle_data_dir
+from gracklepy.utilities.physical_constants import \
     mass_hydrogen_cgs, \
     sec_per_Myr, \
     cm_per_mpc
-from pygrackle.utilities.model_tests import \
+from gracklepy.utilities.model_tests import \
     get_model_set, \
     model_test_format_version
 

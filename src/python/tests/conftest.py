@@ -1,8 +1,8 @@
 # this defines some basic utilities shared among all of the tests
 #
-# DO NOT import pygrackle into global scope in this file (or in any file
+# DO NOT import gracklepy into global scope in this file (or in any file
 # imported by this file). Some tests need to be runable without installing
-# pygrackle
+# gracklepy
 
 import os
 from typing import NamedTuple

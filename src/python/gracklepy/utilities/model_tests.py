@@ -14,7 +14,7 @@
 import itertools
 import os
 
-from pygrackle import chemistry_data
+from gracklepy import chemistry_data
 
 model_test_format_version = 1
 
@@ -142,7 +142,7 @@ def get_model_set(model_name, parameter_index, input_index):
 
     # we import this here, rather than at global scope to let us import the
     # module when we don't have an editable install (for testing purposes)
-    from pygrackle.utilities.data_path import grackle_data_dir
+    from gracklepy.utilities.data_path import grackle_data_dir
 
     if model_name not in model_sets:
         raise ValueError("Unkown model name: {model_name}.")
