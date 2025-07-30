@@ -13,7 +13,7 @@ Grackle
 
 `Documentation <https://grackle.readthedocs.io/en/latest/>`__ |
 `Installation <https://grackle.readthedocs.io/en/latest/Installation.html>`__ |
-`Pygrackle Installation <https://grackle.readthedocs.io/en/latest/Python.html>`__ |
+`Gracklepy Installation <https://grackle.readthedocs.io/en/latest/Python.html>`__ |
 `Usage Guide <https://grackle.readthedocs.io/en/latest/Interaction.html>`__ |
 `Integration Guide <https://grackle.readthedocs.io/en/latest/Integration.html>`__ |
 `Contributing <https://grackle.readthedocs.io/en/latest/Contributing.html>`__ |
@@ -23,7 +23,7 @@ Grackle
 
 Grackle is a chemistry and radiative cooling library for astrophysical simulations and models.
 The core library provides interfaces for C, C++ and Fortran simulation codes.
-The project also offers the Pygrackle package to provide Python bindings.
+The project also offers the Gracklepy package to provide Python bindings.
 
 Features
 --------
@@ -86,7 +86,7 @@ To install Grackle, invoke ``cmake --install ./build [--prefix <prefix/path>]`` 
 For more details **(especially if you encounter any errors),** see our comprehensive `Installation Guide <https://grackle.readthedocs.io/en/latest/Installation.html>`__.
 It provides more context for inexperienced CMake users, describes additional configuration options (relevant if you encounter issues), and describes Grackle's "classic" build-system.
 
-Building Pygrackle from Source
+Building Gracklepy from Source
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Once you have a Fortran compiler and a copy of HDF5 (1.6 or newer), simply invoke the following from the root of the Grackle repository
@@ -95,7 +95,7 @@ Once you have a Fortran compiler and a copy of HDF5 (1.6 or newer), simply invok
 
    ~/grackle $ pip install .
 
-For more about installation see our `Pygrackle installation guide <https://grackle.readthedocs.io/en/latest/Python.html>`__.
+For more about installation see our `Gracklepy installation guide <https://grackle.readthedocs.io/en/latest/Python.html>`__.
 
 Getting Started
 ---------------
@@ -105,7 +105,7 @@ To help you start using Grackle, we provide:
 - a `Usage Guide <https://grackle.readthedocs.io/en/latest/Interaction.html>`__
 - example Grackle programs written in `C, C++, and Fortran <https://github.com/grackle-project/grackle/tree/main/src/example>`__
 - an `Integration Guide <https://grackle.readthedocs.io/en/latest/Integration.html>`__ (for linking Grackle)
-- a curated `guide <https://grackle.readthedocs.io/en/latest/Python.html#running-the-example-scripts>`__ for the Pygrackle examples
+- a curated `guide <https://grackle.readthedocs.io/en/latest/Python.html#running-the-example-scripts>`__ for the Gracklepy examples
 
 Contributing
 ------------

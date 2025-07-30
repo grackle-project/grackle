@@ -1,6 +1,6 @@
 ########################################################################
 #
-# Pygrackle imports
+# Gracklepy imports
 #
 #
 # Copyright (c) Grackle Development Team. All rights reserved.

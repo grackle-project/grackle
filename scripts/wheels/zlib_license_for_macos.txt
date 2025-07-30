@@ -1,7 +1,7 @@
 ----
 
 Name: zlib
-Files: pygrackle/.dylibs/libz*
+Files: gracklepy/.dylibs/libz*
 Description: general purpose compression library
 Availability: https://github.com/madler/zlib
 License: Zlib

@@ -720,7 +720,7 @@ Compiler Toolchain Compatability
 
 As a general rule of thumb, the easiest, most reliable thing to do is  to ensure that Grackle is built with the same compiler toolchain (or a compatible one) as the
 
-* the downstream application itself (whether it's a simulation code or pygrackle)
+* the downstream application itself (whether it's a simulation code or gracklepy)
 * any other dependencies of the application (whether it's other software libraries or other python extension-modules loaded at the same time).
 
 This is only something you need to consider on platforms with multiple compiler toolchains present. 
