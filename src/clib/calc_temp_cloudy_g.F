@@ -147,7 +147,12 @@
          do i = is+1, ie+1
             itmask(i) = .true.
 
-            rhoH(i) = fh * d(i,j,k)
+            if (imetal .eq. 1) then
+               rhoH(i) = fh * (d(i,j,k) - metal(i,j,k))
+            else
+               rhoH(i) = fh * d(i,j,k)
+            endif
+
          enddo
 
 !     Calculate temperature and mean molecular weight
