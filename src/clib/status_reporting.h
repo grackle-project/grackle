@@ -24,7 +24,7 @@
 ///   - we print some context information in the Fortran
 ///
 /// Ideally, we would adopt a solution that provides the downstream application
-/// (i.e. the simulation-code or PyGrackle) control over whether/how this info
+/// (i.e. the simulation-code or Gracklepy) control over whether/how this info
 /// is consumed/recorded.
 ///
 /// Motivating Perspective
@@ -54,7 +54,7 @@
 /// - if the sanity check is a direct result of the application's action, we
 ///   should prefer to gracefully communicate this to the application
 /// - always consider, should this error crash an interactive Jupyter session
-///   using PyGrackle?
+///   using Gracklepy?
 /// - loudly failing is ALWAYS better than silently failing. Since these errors
 ///   are quick and easy to add, these can be a quick temporary solution to
 ///   address a problematic code path (and an indication that we need to more

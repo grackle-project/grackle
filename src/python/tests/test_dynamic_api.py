@@ -13,9 +13,9 @@
 
 from numpy.testing import assert_raises
 
-from pygrackle import chemistry_data
+from gracklepy import chemistry_data
 
-from pygrackle.grackle_wrapper import _wrapped_c_chemistry_data
+from gracklepy.grackle_wrapper import _wrapped_c_chemistry_data
 
 def _test_dynamic_api(param_list, ok_vals, bad_vals, expected_output_type):
     # test that the chemistry_data() class supports access to an attribute

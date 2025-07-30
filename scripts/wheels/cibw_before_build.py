@@ -192,7 +192,7 @@ def get_hdf5(depend_dir, compile_hl_api=False, build_type="Release"):
 
 
 def handle_license(project_dir):
-    prefix = "pygrackle/.dylibs" if _IS_MACOS else "pygrackle.libs"
+    prefix = "gracklepy/.dylibs" if _IS_MACOS else "gracklepy.libs"
     template_path = os.path.join(_LOCAL_DIR, "binary_license_annex.txt.in")
     print(f"replacing @PREFIX@ with {prefix} in {template_path}")
     configure_bin = os.path.join(_LOCAL_DIR, "..", "configure_file.py")

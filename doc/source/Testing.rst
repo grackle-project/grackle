@@ -9,13 +9,13 @@ everything is working properly.
 The tests are primarily organized into 2 test suites:
 
 1. the :ref:`core-library test suite <corelib-suite>`, which performs tests on the Core library
-2. the :ref:`pygrackle test suite <pygrackle-suite>`, which performs tests on the pygrackle bindings
+2. the :ref:`gracklepy test suite <gracklepy-suite>`, which performs tests on the gracklepy bindings
 
 Our continuous integration system is also set up to ensure that all Python code conforms to `PEP 8 <https://www.python.org/dev/peps/pep-0008/>`__
 
-Historically, the pygrackle test suite included **all tests**.
-More recently, the core-library test suite was introduced to make it easier to run unit tests on functionality that isn't directly exposed through pygrackle and to run tests involving compilation.
-At this point, the pygrackle test suite includes a mix of unit tests and "answer tests" (we describe "answer tests" more down below). 
+Historically, the gracklepy test suite included **all tests**.
+More recently, the core-library test suite was introduced to make it easier to run unit tests on functionality that isn't directly exposed through gracklepy and to run tests involving compilation.
+At this point, the gracklepy test suite includes a mix of unit tests and "answer tests" (we describe "answer tests" more down below). 
 
 .. _corelib-suite:
 
@@ -97,12 +97,12 @@ When you launch the tests, the output will look like the following:
 
    Total Test time (real) =   0.80 sec
 
-.. _pygrackle-suite:
+.. _gracklepy-suite:
 
-Running the pygrackle Test Suite
+Running the gracklepy Test Suite
 --------------------------------
 
-As already noted, the pygrackle suite includes unit tests and answer tests.
+As already noted, the gracklepy suite includes unit tests and answer tests.
 
 Unit tests (i.e., those with explicitly known correct answers) include
 the following:
@@ -163,19 +163,19 @@ By default, the pytest test-runner always runs all available test cases.
 *For contributors:* you may find pytest's `build-in command-line interface <https://docs.pytest.org/en/stable/how-to/usage.html>`__ useful during debugging (e.g. you can instruct pytest to only run a subset of all available tests).
 
 
-Sample Usage of the pygrackle Test Suite
+Sample Usage of the gracklepy Test Suite
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The following snippets illustrate ways how you might invoke the pygrackle test suite in different scenarios.
+The following snippets illustrate ways how you might invoke the gracklepy test suite in different scenarios.
 
-Unless noted otherwise, each scenario assumes that you have already :ref:`installed pygrackle <install-pygrackle>` (reminder, you currently need editable installs for these tests).
+Unless noted otherwise, each scenario assumes that you have already :ref:`installed gracklepy <install-gracklepy>` (reminder, you currently need editable installs for these tests).
 Each shows snippets assuming that you are at the root of the Grackle directory.
 
 .. tabs::
 
    .. tab:: No Answer Tests
 
-      In this scenario, we illustrate how to run the unit-tests in the pygrackle test suite and skip all answer tests (**NOTE:** there currently isn't an easy way to do the opposite).
+      In this scenario, we illustrate how to run the unit-tests in the gracklepy test suite and skip all answer tests (**NOTE:** there currently isn't an easy way to do the opposite).
       To do this, invoke:
 
       .. code-block:: shell-session
@@ -235,13 +235,13 @@ Each shows snippets assuming that you are at the root of the Grackle directory.
 
       .. note::
 
-         This scenario involves installing (and uninstalling) different versions of Pygrackle.
-         These examples all use the simplest (and recommended) approach for installing Pygrackle, which builds it as a standalone library (and automatically manages all details about the core library).
+         This scenario involves installing (and uninstalling) different versions of Gracklepy.
+         These examples all use the simplest (and recommended) approach for installing Gracklepy, which builds it as a standalone library (and automatically manages all details about the core library).
 
-         You could also run the tests using :ref:`the other methods of installing Pygrackle <install-pygrackle>`, but that involves extra steps (in those cases you need to manually build and install/link the associated version of the core library).
+         You could also run the tests using :ref:`the other methods of installing Gracklepy <install-gracklepy>`, but that involves extra steps (in those cases you need to manually build and install/link the associated version of the core library).
          
 
-      The basic premise is that you want to run the full pygrackle test suite (with answer verification) on a target version of the code called ``<target>``.
+      The basic premise is that you want to run the full gracklepy test suite (with answer verification) on a target version of the code called ``<target>``.
       ``<target>`` is a placeholder for commit hash or a branch name (e.g. ``main``).
 
       .. rubric:: Basic Setup: Idetifying the Gold Standard Tag
@@ -259,12 +259,12 @@ Each shows snippets assuming that you are at the root of the Grackle directory.
 
       For concreteness, let's assume that we are generating test results from ``gold-standard-v3`` and storing them in an answer-directory called **./my_test_answers**.
 
-      We need to checkout the gold standard version and installs the included version of pygrackle:
+      We need to checkout the gold standard version and installs the included version of gracklepy:
 
       .. code-block:: shell-session
 
          ~/grackle $ git checkout gold-standard-v3 # replace <version>
-         ~/grackle $ pip uninstall pygrackle
+         ~/grackle $ pip uninstall gracklepy
          ~/grackle $ pip install -e .
 
       The following command runs the full test suite, with the answer-tests configured in *store-mode* (results are stored to **./my_test_answers**):
@@ -274,12 +274,12 @@ Each shows snippets assuming that you are at the root of the Grackle directory.
       .. rubric:: Run the full test suite on ``<target>``
 
       Now, it's time to go back to the ``<target>`` version. 
-      The following checks out that version of Grackle and installs the included version of pygrackle:
+      The following checks out that version of Grackle and installs the included version of gracklepy:
 
       .. code-block:: shell-session
 
          ~/grackle $ git checkout <target>
-         ~/grackle $ pip uninstall pygrackle
+         ~/grackle $ pip uninstall gracklepy
          ~/grackle $ pip install -e .
 
       Finally, the following command runs the full suite, with the answer-tests enabled in **compare-mode** (answer tests only pass if the results are consistent with the answers we previously recorded to the answer directory).
