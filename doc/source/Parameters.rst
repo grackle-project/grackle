@@ -147,6 +147,41 @@ For all on/off integer flags, 0 is off and 1 is on.
    Path to the data file containing the metal cooling and UV background
    tables.  Default: "".
 
+.. c:var:: int grackle_data_file_options
+
+   This controls how the string passed to the :c:data:`grackle_data_file` parameter is interpretted.
+   Allowable values are represented by global constants specified in the header file.
+   The primary choices include:
+
+     * :c:macro:`!GR_DFOPT_FULLPATH_NO_CKSUM` indicates that the user wants to use the data file at an arbitrary path specified by :c:data:`grackle_data_file`.
+       This is the legacy behavior.
+       If no value is specified, we fall back to this choice.
+
+     * :c:macro:`!GR_DFOPT_MANAGED` indicates that the caller wants to use one of the standard datafiles shipped with the current version of grackle and that is managed by the :ref:`data management tool <manage-data-files>`.
+
+       * In this case, :c:data:`grackle_data_file` holds a string that **EXACTLY** matches the name of a standard data file.
+         For example, ``"CloudyData_UVB=HM2012.h5"`` is valid but "path/to/CloudyData_UVB=HM2012.h5" is **NOT** valid.
+
+       * Grackle uses the same algorithm as :ref:`the data management tool <manage-data-files>` to infer the path to data file that is explicitly associated with the current version of Grackle (if a different version of Grackle ever ships a different version of the same data file, this will never use that version).
+
+       * For safety reasons, Grackle will always validate the contents of the file; it will compute the checksum and compare it with its internal expectations.
+         If the checksums don't match Grackle will report an error.
+         The overhead of the checksum calculation is minimal and it only affects initialization of Grackle (i.e. you just pay the cost once)
+
+       * At the moment, this option is most useful when used with pygrackle (since that is currently the only way to invoke :ref:`the data management tool <manage-data-files>`).
+         In the near future, we expect this to become easier to use.
+
+       .. note::
+
+          The primary reason we validate the checksum is to protect users from the unlikely scenarios where logical bugs get introduced into the core grackle library or the :ref:`data-management-tool <manage-data-files>`.
+          The concern is that a hypothetical bug could cause the logic to silently load the wrong data file (or worse, a partially corrupted datafile) and continue operating with any indication of a problem.
+
+          With that said, we recognize that some parallel filesystems can be very fragile.
+          Thus we introduce :c:macro:`!GR_DFOPT_MANAGED_NO_CKSUM`, which is exactly the same as :c:macro:`!GR_DFOPT_MANAGED`, except that the the checksum is not computed and compared against expectations.
+          This should **ONLY** be used in a parallel operation where at least 1 of the processed is using the :c:macro:`!GR_DFOPT_MANAGED` choice.
+          (If you choose to use :c:macro:`!GR_DFOPT_MANAGED_NO_CKSUM`, be aware that you are giving up all safety checks)
+
+
 .. c:var:: float Gamma
 
    The ratio of specific heats for an ideal gas.  A direct calculation

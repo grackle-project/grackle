@@ -19,8 +19,8 @@ import yt
 
 from pygrackle import \
     chemistry_data, \
+    constants, \
     setup_fluid_container
-from pygrackle.utilities.data_path import grackle_data_dir
 from pygrackle.utilities.physical_constants import \
     mass_hydrogen_cgs, \
     sec_per_Myr, \
@@ -63,8 +63,8 @@ if __name__ == "__main__":
         my_chemistry.UVbackground = 1
         my_chemistry.self_shielding_method = 0
         my_chemistry.H2_self_shielding = 0
-        my_chemistry.grackle_data_file = \
-          os.path.join(grackle_data_dir, "CloudyData_UVB=HM2012.h5")
+        my_chemistry.grackle_data_file = "CloudyData_UVB=HM2012.h5"
+        my_chemistry.grackle_data_file_options = constants.GR_DFOPT_MANAGED
 
         my_chemistry.use_specific_heating_rate = 1
         my_chemistry.use_volumetric_heating_rate = 1

@@ -15,8 +15,7 @@ import os
 import sys
 import yt
 
-from pygrackle import add_grackle_fields
-from pygrackle.utilities.data_path import grackle_data_dir
+from pygrackle import add_grackle_fields, constants
 from pygrackle.utilities.model_tests import model_test_format_version
 
 output_name = os.path.basename(__file__[:-3]) # strip off ".py"
@@ -46,9 +45,11 @@ if __name__ == "__main__":
 
     ds = yt.load(ds_path)
 
-    grackle_data_file = os.path.join(grackle_data_dir, "CloudyData_UVB=HM2012.h5")
+    grackle_data_file = "CloudyData_UVB=HM2012.h5"
+    grackle_data_file_options = constants.GR_DFOPT_MANAGED
 
     grackle_pars = {'grackle_data_file': grackle_data_file,
+                    'grackle_data_file_options': grackle_data_file_options,
                     'UVbackground': 1,
                     'h2_on_dust': 1}
 

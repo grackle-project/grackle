@@ -180,6 +180,11 @@ cdef extern from "grackle.h":
     cdef int GRACKLE_FAIL_VALUE "GR_FAIL"
     cdef int GR_SPECIFY_INITIAL_A_VALUE
 
+    # options for grackle_data_field_option
+    cdef int GR_DFOPT_FULLPATH_NO_CKSUM
+    cdef int GR_DFOPT_MANAGED
+    cdef int GR_DFOPT_MANAGED_NO_CKSUM
+
     int local_initialize_chemistry_parameters(c_chemistry_data *my_chemistry)
 
     void set_velocity_units(c_code_units *my_units)

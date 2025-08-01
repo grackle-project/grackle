@@ -162,6 +162,18 @@
     endif
 
 #=======================================================================
+# DETERMIN PLATFORM-SPECIFIC DEFINES
+#=======================================================================
+
+    # this is only used within os_utils.c
+    PLATFORM := $(shell uname)
+    ifeq  ($(PLATFORM),Darwin)
+       PLATFORM_DEFINES = -DPLATFORM_MACOS
+    else
+       PLATFORM_DEFINES = -DPLATFORM_GENERIC_UNIX
+    endif
+
+#=======================================================================
 # ASSIGN ALL OUTPUT VARIABLES
 #=======================================================================
 
@@ -198,12 +210,15 @@
     # this to minimize conflicts with the newchem-cpp branch
     DEFINES = $(MACH_DEFINES) \
               $(ASSEMBLE_IO_DEFINES) \
+              $(PLATFORM_DEFINES)
               -DGRIMPL_PUBLIC_INCLUDE=1
 
     PUBLIC_HEADER_SRCDIR = $(GRACKLE_DIR)/../include
     AUTOGEN_DIR = $(GRACKLE_DIR)/autogen
 
-    BUILD_INCLUDES = -I$(PUBLIC_HEADER_SRCDIR) -I$(AUTOGEN_DIR)
+    BUILD_INCLUDES = -I$(PUBLIC_HEADER_SRCDIR) \
+                     -I$(AUTOGEN_DIR) \
+                     -I$(GRACKLE_DIR)/../../external
 
     INCLUDES = $(MACH_INCLUDES) \
                $(MAKEFILE_INCLUDES) \

@@ -65,3 +65,14 @@ def answertestspec(request):
         os.makedirs(answer_dir, exist_ok=True)
 
     return AnswerTestSpec(generate_answers=generate_answers, answer_dir=answer_dir)
+
+
+def pytest_sessionstart(session):
+    # this is a hook that is called just before collecting tests and entering
+    # the test loop.
+
+    from pygrackle.utilities.data_path import _download_all_datafiles
+
+    # All we want to do is make sure that we have all of the data files that we
+    # need downloaded (This might not be the right place to put this logic)
+    _download_all_datafiles()

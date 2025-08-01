@@ -39,6 +39,14 @@ extern "C" {
 
 #define GR_SPECIFY_INITIAL_A_VALUE -1
 
+// here, we define the precise values passed to the grackle_data_file_options
+// to specify how data files are handled. The precise values are experimental
+// (passing -1 will always map to the legacy behavior) and may change. But,
+// we will do our best to avoid changing anything.
+#define GR_DFOPT_FULLPATH_NO_CKSUM 1
+#define GR_DFOPT_MANAGED 2
+#define GR_DFOPT_MANAGED_NO_CKSUM 3
+
 extern int grackle_verbose;
 
 extern chemistry_data *grackle_data;

@@ -1,0 +1,62 @@
+/***********************************************************************
+/
+/ Template header-file that is used to internally specify the file
+/ registry. This is only intended to be included once
+/
+/
+/ Copyright (c) 2013, Enzo/Grackle Development Team.
+/
+/ Distributed under the terms of the Enzo Public Licence.
+/
+/ The full license is in the file LICENSE, distributed with this 
+/ software.
+************************************************************************/
+
+#ifndef FILE_REGISTRY_H
+#define FILE_REGISTRY_H
+
+#include <string.h> // strlen, strncmp
+#include <stdio.h>
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/// entries in this array (other than the trailing NULL) have the format:
+///   "<fname>  <cksum>"
+/// (there is 1 or more space in the center)
+static const char* file_registry_lines[] = {
+@FILE_REGISTRY_CONTENTS@
+  NULL  // <- a sentinel denoting the end of the list
+};
+
+
+/// return the full checksum string of the file if it's in the registry
+///
+/// the registry argument is only used for testing purposes!
+///
+/// returns NULL if there is no match!
+static inline const char* expected_file_cksum_(const char* fname,
+                                               const char** registry) {
+  registry = (registry != NULL) ? registry : file_registry_lines;
+  if (fname == NULL) return NULL;
+  const size_t namelen = strlen(fname);
+
+  for (int i = 0;; i++) { // infinite loop
+    const char* line = registry[i];
+    // reminder: line has form: "<fname> <cksum>"
+    if (line == NULL) {
+      return NULL;
+    } else if (strncmp(line, fname, namelen) == 0 && line[namelen] == ' ') {
+      size_t nspaces = strspn(line+namelen, " ");
+      return line + (namelen + nspaces);
+    }
+  }
+}
+
+#ifdef __cplusplus
+}  // extern "C"
+#endif
+
+#endif /* FILE_REGISTRY_H */

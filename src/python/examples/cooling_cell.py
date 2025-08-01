@@ -22,13 +22,13 @@ import yt
 
 from pygrackle import \
     chemistry_data, \
+    constants, \
     evolve_constant_density, \
     setup_fluid_container
 from pygrackle.utilities.physical_constants import \
     mass_hydrogen_cgs, \
     sec_per_Myr, \
     cm_per_mpc
-from pygrackle.utilities.data_path import grackle_data_dir
 from pygrackle.utilities.model_tests import \
     get_model_set, \
     model_test_format_version
@@ -62,8 +62,10 @@ if __name__ == "__main__":
         my_chemistry.primordial_chemistry = 0
         my_chemistry.metal_cooling = 1
         my_chemistry.UVbackground = 1
-        my_chemistry.grackle_data_file = \
-          os.path.join(grackle_data_dir, "CloudyData_UVB=HM2012.h5")
+        my_chemistry.grackle_data_file = "CloudyData_UVB=HM2012.h5"
+        my_chemistry.grackle_data_file_options = constants.GR_DFOPT_MANAGED
+
+
 
     density = 0.1 * mass_hydrogen_cgs # g /cm^3
     temperature = 1e6 # K

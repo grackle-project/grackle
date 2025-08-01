@@ -71,6 +71,9 @@ typedef struct
   /* data file containing cooling and UV background tables */
   const char *grackle_data_file;
 
+  /* specifies handling of grackle_data_file */
+  int grackle_data_file_options;
+
   /* Use a CMB temperature floor
      0) no, 1) yes */
   int cmb_temperature_floor;
