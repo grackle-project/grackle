@@ -43,6 +43,7 @@ Grackle Documentation
 
    Citing.rst
    Versioning.rst
+   Tools.rst
    Changelog.rst
 
 .. toctree::
