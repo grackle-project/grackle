@@ -15,7 +15,7 @@ set(GRACKLE_REPO_ROOT  ${CMAKE_CURRENT_SOURCE_DIR}/../../)
 # download a newer version of CMake, when necessary
 cmake_minimum_required(VERSION 3.21)
 
-project(${SKBUILD_PROJECT_NAME} LANGUAGES C)
+project(${SKBUILD_PROJECT_NAME} LANGUAGES C CXX)
 
 # Dependencies
 # ------------
@@ -94,6 +94,12 @@ else()
   endif()
 endif()
 
+if (NOT TARGET gtest_evolve)
+  add_subdirectory(${GRACKLE_REPO_ROOT}/src/grtest grtest_sub-build-dir)
+endif()
+# the next line may be redundant in some cases
+set_target_properties(grtest_evolve PROPERTIES POSITION_INDEPENDENT_CODE True)
+
 # Actual build Logic
 # ------------------
 
@@ -108,16 +114,29 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/__config__.py
 # represented by the grackle_wrapper target
 cython_transpile(
   pygrackle/grackle_wrapper.pyx
-  LANGUAGE C
+  LANGUAGE CXX
   CYTHON_ARGS -3
-  OUTPUT_VARIABLE grackle_wrapper_c
+  OUTPUT_VARIABLE grackle_wrapper_cxx
 )
-python_add_library(grackle_wrapper MODULE "${grackle_wrapper_c}" WITH_SOABI)
+python_add_library(grackle_wrapper MODULE "${grackle_wrapper_cxx}" WITH_SOABI)
 target_compile_definitions(grackle_wrapper
   PRIVATE TRADITIONAL_IN_SOURCE_BUILD=${traditional_in_source_build})
 target_link_libraries(grackle_wrapper PUBLIC Grackle::Grackle)
 
+cython_transpile(
+  pygrackle/_pygrackle_utils.pyx
+  LANGUAGE CXX
+  CYTHON_ARGS -3
+  OUTPUT_VARIABLE _pygrackle_utils_cxx
+)
+python_add_library(_pygrackle_utils MODULE "${_pygrackle_utils_cxx}" WITH_SOABI)
+target_link_libraries(_pygrackle_utils PUBLIC Grackle::Grackle grtest_evolve)
+
 # Installation Logic
 # ------------------
-install(TARGETS grackle_wrapper DESTINATION ${SKBUILD_PROJECT_NAME})
+install(
+  TARGETS grackle_wrapper _pygrackle_utils
+  DESTINATION ${SKBUILD_PROJECT_NAME}
+)
+
 

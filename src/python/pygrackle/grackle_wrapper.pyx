@@ -812,6 +812,14 @@ def calculate_dust_temperature(fc):
                       "local_calculate_dust_temperature",
                       &c_local_calculate_dust_temperature)
 
+cdef class _GrackleTypePack:
+    cdef c_chemistry_data* my_chem
+    cdef c_chemistry_data_storage* my_rates
+    cdef c_code_units* my_units
+    cdef c_field_data* my_fields
+
+
+
 def get_grackle_version():
     cdef c_grackle_version version_struct = c_get_grackle_version()
     # all members of version_struct are string literals (i.e. don't call free)
@@ -988,3 +996,36 @@ def _query_units(chemistry_data chem_data, object name,
         casted_current_a_value = current_a_value
 
     return gr_query_units(rates, units_name, casted_current_a_value)
+
+def _get_grackle_type_pack(fc):
+    """
+    Returns an instance of GrackleTypePack_ExtType which is used to temporarily
+    hold grackle types.
+
+    Parameters
+    ----------
+    fc: FluidContainer
+
+    Returns
+    -------
+    GrackleType_ExtType
+        This is a temporary object that is only guaranteed to be valid for as
+        long as the input argument is valid
+
+    Notes
+    -----
+    This only exists in order to let us split some details between 2 cython
+    files without exposing all details.
+
+    If/when PR #271 and #280 are merged, we can refactor FluidContainer to wrap
+    the gr_fields type. That should simplify things.
+    """
+
+    cdef GrackleTypePack_ExtType out = GrackleTypePack_ExtType()
+    cdef chemistry_data chem_data = fc.chemistry_data
+    out.my_chem = &chem_data.data.data
+    out.my_rates = &chem_data.rates
+    out.my_units = &chem_data.units
+    out.buffer = np.empty(dtype = np.intc, shape = (7,))
+    out.my_fields = setup_field_data(fc, out.buffer, True)
+    return out
