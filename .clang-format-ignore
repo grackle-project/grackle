@@ -40,7 +40,6 @@ src/clib/initialize_cloudy_data.c
 src/clib/initialize_dust_yields.c
 src/clib/initialize_metal_chemistry_rates.c
 src/clib/initialize_rates.c
-src/clib/internal_types.C
 src/clib/internal_types.hpp
 src/clib/internal_units.h
 src/clib/interp_table_utils.h
