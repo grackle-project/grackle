@@ -212,29 +212,15 @@ void drop_LogTLinInterpScratchBuf(LogTLinInterpScratchBuf*);
 /// holds properties about each kind of dust grain
 ///
 /// @note
-/// There may be some value in tracking a dynamic collection of dust species.
-/// Whatever we do, we should try to be somewhat consistent with how we handle
-/// species
+/// This operates in a similar manner to SpeciesCollection (i.e. we use
+/// `OnlyGrainSpLUT::<entry>` to lookup values for the desired rate).
 ///
 /// @note
 /// This is something we may want to reuse. If we are willing to embrace C++,
 /// then we may want to use templates
 struct GrainSpeciesCollection {
-  double* SiM = nullptr;
-  double* FeM = nullptr;
-  double* Mg2SiO4 = nullptr;
-  double* MgSiO3 = nullptr;
-  double* Fe3O4 = nullptr;
-  double* AC = nullptr;
-  double* SiO2D = nullptr;
-  double* MgO = nullptr;
-  double* FeS = nullptr;
-  double* Al2O3 = nullptr;
-  double* reforg = nullptr;
-  double* volorg = nullptr;
-  double* H2Oice = nullptr;
+  double* data[OnlyGrainSpLUT::NUM_ENTRIES];
 };
-
 
 /// allocates the contents of a new GrainSpeciesCollection
 ///

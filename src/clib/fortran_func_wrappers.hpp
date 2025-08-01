@@ -182,9 +182,9 @@ inline void cool1d_multi_g(
                  my_rates->SN0_kpFe3O4, my_rates->SN0_kpAC, my_rates->SN0_kpSiO2D, my_rates->SN0_kpMgO,
                  my_rates->SN0_kpFeS, my_rates->SN0_kpAl2O3,
                  my_rates->SN0_kpreforg, my_rates->SN0_kpvolorg, my_rates->SN0_kpH2Oice,
-                 grain_temperatures.SiM, grain_temperatures.FeM, grain_temperatures.Mg2SiO4, grain_temperatures.MgSiO3, grain_temperatures.Fe3O4,
-                 grain_temperatures.AC, grain_temperatures.SiO2D, grain_temperatures.MgO, grain_temperatures.FeS, grain_temperatures.Al2O3,
-                 grain_temperatures.reforg, grain_temperatures.volorg, grain_temperatures.H2Oice,
+                 grain_temperatures.data[OnlyGrainSpLUT::SiM], grain_temperatures.data[OnlyGrainSpLUT::FeM], grain_temperatures.data[OnlyGrainSpLUT::Mg2SiO4], grain_temperatures.data[OnlyGrainSpLUT::MgSiO3], grain_temperatures.data[OnlyGrainSpLUT::Fe3O4],
+                 grain_temperatures.data[OnlyGrainSpLUT::AC], grain_temperatures.data[OnlyGrainSpLUT::SiO2D], grain_temperatures.data[OnlyGrainSpLUT::MgO], grain_temperatures.data[OnlyGrainSpLUT::FeS], grain_temperatures.data[OnlyGrainSpLUT::Al2O3],
+                 grain_temperatures.data[OnlyGrainSpLUT::reforg], grain_temperatures.data[OnlyGrainSpLUT::volorg], grain_temperatures.data[OnlyGrainSpLUT::H2Oice],
                  my_rates->gas_grain2, &my_rates->gamma_isrf2
             );
 
@@ -288,12 +288,12 @@ inline void lookup_cool_rates1d_g(
                    my_rates->SN0_kpFeS, my_rates->SN0_kpAl2O3,
                    my_rates->SN0_kpreforg, my_rates->SN0_kpvolorg, my_rates->SN0_kpH2Oice,
                    my_rates->h2dustS, my_rates->h2dustC, rhoH, my_rates->grain_growth_rate, &dt,
-                   grain_growth_rates.SiM, grain_growth_rates.FeM, grain_growth_rates.Mg2SiO4,
-                   grain_growth_rates.MgSiO3, grain_growth_rates.Fe3O4, grain_growth_rates.AC, grain_growth_rates.SiO2D, grain_growth_rates.MgO, grain_growth_rates.FeS,
-                   grain_growth_rates.Al2O3, grain_growth_rates.reforg, grain_growth_rates.volorg, grain_growth_rates.H2Oice,
-                   grain_temperatures.SiM, grain_temperatures.FeM, grain_temperatures.Mg2SiO4, grain_temperatures.MgSiO3, grain_temperatures.Fe3O4,
-                   grain_temperatures.AC, grain_temperatures.SiO2D, grain_temperatures.MgO, grain_temperatures.FeS, grain_temperatures.Al2O3,
-                   grain_temperatures.reforg, grain_temperatures.volorg, grain_temperatures.H2Oice, &my_chemistry->radiative_transfer_use_H2_shielding,
+                   grain_growth_rates.data[OnlyGrainSpLUT::SiM], grain_growth_rates.data[OnlyGrainSpLUT::FeM], grain_growth_rates.data[OnlyGrainSpLUT::Mg2SiO4],
+                   grain_growth_rates.data[OnlyGrainSpLUT::MgSiO3], grain_growth_rates.data[OnlyGrainSpLUT::Fe3O4], grain_growth_rates.data[OnlyGrainSpLUT::AC], grain_growth_rates.data[OnlyGrainSpLUT::SiO2D], grain_growth_rates.data[OnlyGrainSpLUT::MgO], grain_growth_rates.data[OnlyGrainSpLUT::FeS],
+                   grain_growth_rates.data[OnlyGrainSpLUT::Al2O3], grain_growth_rates.data[OnlyGrainSpLUT::reforg], grain_growth_rates.data[OnlyGrainSpLUT::volorg], grain_growth_rates.data[OnlyGrainSpLUT::H2Oice],
+                   grain_temperatures.data[OnlyGrainSpLUT::SiM], grain_temperatures.data[OnlyGrainSpLUT::FeM], grain_temperatures.data[OnlyGrainSpLUT::Mg2SiO4], grain_temperatures.data[OnlyGrainSpLUT::MgSiO3], grain_temperatures.data[OnlyGrainSpLUT::Fe3O4],
+                   grain_temperatures.data[OnlyGrainSpLUT::AC], grain_temperatures.data[OnlyGrainSpLUT::SiO2D], grain_temperatures.data[OnlyGrainSpLUT::MgO], grain_temperatures.data[OnlyGrainSpLUT::FeS], grain_temperatures.data[OnlyGrainSpLUT::Al2O3],
+                   grain_temperatures.data[OnlyGrainSpLUT::reforg], grain_temperatures.data[OnlyGrainSpLUT::volorg], grain_temperatures.data[OnlyGrainSpLUT::H2Oice], &my_chemistry->radiative_transfer_use_H2_shielding,
                    &my_chemistry->H2_custom_shielding, my_fields->H2_custom_shielding_factor
           );
 
@@ -456,9 +456,9 @@ inline void step_rate_g(
                         species_tmpdens.data[SpLUT::SiM], species_tmpdens.data[SpLUT::FeM], species_tmpdens.data[SpLUT::Mg2SiO4], species_tmpdens.data[SpLUT::MgSiO3], species_tmpdens.data[SpLUT::Fe3O4],
                         species_tmpdens.data[SpLUT::AC], species_tmpdens.data[SpLUT::SiO2D], species_tmpdens.data[SpLUT::MgO], species_tmpdens.data[SpLUT::FeS], species_tmpdens.data[SpLUT::Al2O3],
                         species_tmpdens.data[SpLUT::reforg], species_tmpdens.data[SpLUT::volorg], species_tmpdens.data[SpLUT::H2Oice],
-                        grain_growth_rates.SiM, grain_growth_rates.FeM, grain_growth_rates.Mg2SiO4, grain_growth_rates.MgSiO3, grain_growth_rates.Fe3O4,
-                        grain_growth_rates.AC, grain_growth_rates.SiO2D, grain_growth_rates.MgO, grain_growth_rates.FeS, grain_growth_rates.Al2O3,
-                        grain_growth_rates.reforg, grain_growth_rates.volorg, grain_growth_rates.H2Oice,
+                        grain_growth_rates.data[OnlyGrainSpLUT::SiM], grain_growth_rates.data[OnlyGrainSpLUT::FeM], grain_growth_rates.data[OnlyGrainSpLUT::Mg2SiO4], grain_growth_rates.data[OnlyGrainSpLUT::MgSiO3], grain_growth_rates.data[OnlyGrainSpLUT::Fe3O4],
+                        grain_growth_rates.data[OnlyGrainSpLUT::AC], grain_growth_rates.data[OnlyGrainSpLUT::SiO2D], grain_growth_rates.data[OnlyGrainSpLUT::MgO], grain_growth_rates.data[OnlyGrainSpLUT::FeS], grain_growth_rates.data[OnlyGrainSpLUT::Al2O3],
+                        grain_growth_rates.data[OnlyGrainSpLUT::reforg], grain_growth_rates.data[OnlyGrainSpLUT::volorg], grain_growth_rates.data[OnlyGrainSpLUT::H2Oice],
                         &my_chemistry->radiative_transfer_HDI_dissociation, my_fields->RT_HDI_dissociation_rate, &my_chemistry->radiative_transfer_metal_ionization, my_fields->RT_CI_ionization_rate, my_fields->RT_OI_ionization_rate,
                         &my_chemistry->radiative_transfer_metal_dissociation, my_fields->RT_CO_dissociation_rate, my_fields->RT_OH_dissociation_rate, my_fields->RT_H2O_dissociation_rate
                );
@@ -570,9 +570,9 @@ inline void step_rate_newton_raphson(
                     &c_ljeans, logTlininterp_buf.indixe, logTlininterp_buf.t1, logTlininterp_buf.t2, logTlininterp_buf.logtem, logTlininterp_buf.tdef, dtit,
                     p2d, tgas, cool1dmulti_buf.tgasold, tdust, metallicity, dust2gas,
                     rhoH, mmw, cool1dmulti_buf.mynh, cool1dmulti_buf.myde, cool1dmulti_buf.gammaha_eff, cool1dmulti_buf.gasgr_tdust,
-                    cool1dmulti_buf.regr, h2dust, chemheatrates_buf.n_cr_n, chemheatrates_buf.n_cr_d1, chemheatrates_buf.n_cr_d2, grain_temperatures.SiM, grain_temperatures.FeM,
-                    grain_temperatures.Mg2SiO4, grain_temperatures.MgSiO3, grain_temperatures.Fe3O4, grain_temperatures.AC, grain_temperatures.SiO2D, grain_temperatures.MgO,
-                    grain_temperatures.FeS, grain_temperatures.Al2O3, grain_temperatures.reforg, grain_temperatures.volorg, grain_temperatures.H2Oice, coolingheating_buf.ceHI,
+                    cool1dmulti_buf.regr, h2dust, chemheatrates_buf.n_cr_n, chemheatrates_buf.n_cr_d1, chemheatrates_buf.n_cr_d2, grain_temperatures.data[OnlyGrainSpLUT::SiM], grain_temperatures.data[OnlyGrainSpLUT::FeM],
+                    grain_temperatures.data[OnlyGrainSpLUT::Mg2SiO4], grain_temperatures.data[OnlyGrainSpLUT::MgSiO3], grain_temperatures.data[OnlyGrainSpLUT::Fe3O4], grain_temperatures.data[OnlyGrainSpLUT::AC], grain_temperatures.data[OnlyGrainSpLUT::SiO2D], grain_temperatures.data[OnlyGrainSpLUT::MgO],
+                    grain_temperatures.data[OnlyGrainSpLUT::FeS], grain_temperatures.data[OnlyGrainSpLUT::Al2O3], grain_temperatures.data[OnlyGrainSpLUT::reforg], grain_temperatures.data[OnlyGrainSpLUT::volorg], grain_temperatures.data[OnlyGrainSpLUT::H2Oice], coolingheating_buf.ceHI,
                     coolingheating_buf.ceHeI, coolingheating_buf.ceHeII, coolingheating_buf.ciHI, coolingheating_buf.ciHeI, coolingheating_buf.ciHeIS, coolingheating_buf.ciHeII,
                     coolingheating_buf.reHII, coolingheating_buf.reHeII1, coolingheating_buf.reHeII2, coolingheating_buf.reHeIII, coolingheating_buf.brem, edot,
                     coolingheating_buf.hyd01k, coolingheating_buf.h2k01, coolingheating_buf.vibh, coolingheating_buf.roth, coolingheating_buf.rotl, coolingheating_buf.gpldl, coolingheating_buf.gphdl,
