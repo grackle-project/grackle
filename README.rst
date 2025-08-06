@@ -97,6 +97,9 @@ Once you have a Fortran compiler and a copy of HDF5 (1.6 or newer), simply invok
 
 For more about installation see our `Gracklepy installation guide <https://grackle.readthedocs.io/en/latest/Python.html>`__.
 
+**NOTE:** Gracklepy was formerly known as Pygrackle.
+If you previously installed Pygrackle, you should uninstall it before you install GracklePy.
+
 Getting Started
 ---------------
 
