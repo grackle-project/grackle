@@ -137,7 +137,7 @@ sdist.exclude = [
 ]
 
 # A list of packages to auto-copy into the wheel.
-wheel.packages = ["./src/python/gracklepy"]
+wheel.packages = ["./src/python/gracklepy", "./src/python/pygrackle"]
 
 # A set of patterns to exclude from the wheel. This is additive to the SDist
 # exclude patterns.
