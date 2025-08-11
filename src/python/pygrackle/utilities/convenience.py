@@ -194,3 +194,109 @@ def setup_fluid_container(my_chemistry,
             f"ERROR: solver did not converge in {max_iterations} iterations.")
 
     return fc
+
+
+def infer_eint_for_temperature_tabulated(
+    chem,
+    target_temperature,
+    density,
+    metal_density,
+    *,
+    cgs_density=False,
+    xtol=None,
+    rtol=None,
+    maxiter=None
+):
+    """Infers internal energy assocaited with the target temperature
+
+    Parameters
+    ----------
+    chem
+        Chemistry object
+    target_temperature
+        Holds the target temperature (units of Kelvin)
+    density
+        Holds the total mass density (units are determined by the
+        ``cgs_density`` kwarg)
+    metal_density
+        Holds the metal mass density (units are determined by the
+        ``cgs_density`` kwarg)
+
+    Note
+    ----
+    This function uses numerical root finding.
+
+    While we could theoretically lookup a temperature by directly reading
+    the cloudy table, that result wouldn't be exactly right. As the Grackle
+    paper explains, Grackle uses a "dampener" when it computes the
+    temperature a cloudy table. Consequently, it
+    is "more correct" to use numerical root finding.
+    """
+    # TODO: don't require scipy (what we are doing is **REALLY** simple
+    from scipy.optimize import root_scalar
+
+    densityU = chem.density_units
+    eintU = chem.get_velocity_units()**2
+    gm1 = chem.Gamma - 1.0
+
+    density = np.array(density)
+    metal_density = np.array(metal_density)
+    target_temperature = np.array(target_temperature)
+
+    # todo: get a little more flexible about broadcasting
+    # todo: allow metal_density to be omitted
+    assert (density.ndim == 1) and (density.size > 0)
+    assert density.shape == metal_density.shape == target_temperature.shape
+
+    if chem.primordial_chemistry != 0:
+        raise ValueError("Grackle wasn't configured in tabulated mode")
+
+    # ensure that density & metal_density reference values in code units
+    if cgs_density:
+        density, metal_density = density / densityU, metal_density / densityU
+    else:
+        density, metal_density = density, metal_density
+
+    # allocate the output array
+    eint = np.empty(shape=density.shape, dtype="f8")
+
+    # we are going to repeatedly call scipy.optimize.root_scalar. Let's set some stuff
+    # up that we will reuse every time...
+    fc = FluidContainer(chem, n_vals=1)
+
+    def f(specific_internal_energy, target_T):
+        fc["internal_energy"][0] = specific_internal_energy
+        fc.calculate_temperature()
+        return fc["temperature"] - target_T
+
+    common_kwargs = {
+        "f": f, "method": "bisect", "xtol": xtol, "rtol": rtol, "maxiter": maxiter
+    }
+
+    # move onto the actual loop:
+    for i in range(density.size):
+        # lets get bounds on the specific internal energy:
+        # -> we could give more precise bounds on the mmw, and the way
+        #    that metal density influences the value by reading the code
+        #    or reading the discussion in GH-issue#67 (the paper actually
+        #    discusses this, but actually had a mistake)
+        mmw_bounds = np.array([0.6, 2.0])
+        eint_bounds_cgs = (
+            (boltzmann_constant_cgs * target_temperature[i]) /
+            (gm1 * mmw_bounds * mass_hydrogen_cgs)
+        )
+        # convert to code units
+        eint_bounds = eint_bounds_cgs / eintU
+ 
+        # define the function used in root finding
+        fc["density"][0] = density[i]
+        fc["metal_density"][0] = metal_density[i]
+ 
+        root_result = root_scalar(
+            args=(target_temperature[i],), bracket=eint_bounds, **common_kwargs
+        )
+        if root_result.converged:
+            eint[i] = root_result.root
+        else:
+            eint[i] = np.nan
+    return eint
