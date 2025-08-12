@@ -347,7 +347,7 @@ inline void visit_member(ChemHeatingRates* ptr, UnaryVisitor fn) {
 /// @param nelem The number of elements in each buffer
 ChemHeatingRates new_ChemHeatingRates(int nelem);
 
-/// performs cleanup of the contents of ColRecRxnRateCollection
+/// performs cleanup of the contents of ChemHeatingRates
 ///
 /// This effectively invokes a destructor
 void drop_ChemHeatingRates(ChemHeatingRates*);
@@ -481,14 +481,13 @@ void drop_GrainSpeciesCollection(GrainSpeciesCollection*);
 
 // -----------------------------------------------------------------
 
-/// holds properties about Collisional and Recombination Reaction Rates that
-/// behave in the "standard" way (i.e. we interpolate in 1D with respect to
-/// log T)
+/// holds properties about Collisional Reaction Rates that behave in the
+/// "standard" way (i.e. we interpolate in 1D with respect to log T)
 ///
 /// This operates in a similar manner to SpeciesCollection (i.e. we use
-/// `ColRecRxnLUT::<entry>` to lookup values for the desired rate).
-struct ColRecRxnRateCollection {
-  double* data[ColRecRxnLUT::NUM_ENTRIES];
+/// `CollisionalRxnLUT::<entry>` to lookup values for the desired rate).
+struct CollisionalRxnRateCollection {
+  double* data[CollisionalRxnLUT::NUM_ENTRIES];
 };
 
 /// used to help implement the visitor design pattern
@@ -496,12 +495,12 @@ struct ColRecRxnRateCollection {
 /// (avoid using this unless you really have to)
 template<class BinaryFn>
 void visit_member_pair(
-  ColRecRxnRateCollection& obj0, ColRecRxnRateCollection& obj1, BinaryFn f
+  CollisionalRxnRateCollection& obj0, CollisionalRxnRateCollection& obj1, BinaryFn f
 ) {
   namespace vis = ::grackle::impl::visitor;
 
-  vis::begin_visit("ColRecRxnRateCollection", f);
-  for (int i = 0; i < ColRecRxnLUT::NUM_ENTRIES; i++) {
+  vis::begin_visit("CollisionalRxnRateCollection", f);
+  for (int i = 0; i < CollisionalRxnLUT::NUM_ENTRIES; i++) {
     f(VIS_MEMBER_NAME("data[...]"), obj0.data[i], obj1.data[i], vis::idx_range_len_multiple(1));
   }
   vis::end_visit(f);
@@ -512,19 +511,19 @@ void visit_member_pair(
 /// @param ptr[in,out] Members of the specified object will be visited
 /// @param fn[in] Calls function that will be applied to each function
 template <class UnaryVisitor>
-inline void visit_member(ColRecRxnRateCollection* ptr, UnaryVisitor fn) {
-  GRIMPL_IMPL_VISIT_MEMBER(visit_member_pair, ColRecRxnRateCollection, ptr, fn)
+inline void visit_member(CollisionalRxnRateCollection* ptr, UnaryVisitor fn) {
+  GRIMPL_IMPL_VISIT_MEMBER(visit_member_pair, CollisionalRxnRateCollection, ptr, fn)
 }
 
-/// allocates the contents of a new ColRecRxnRateCollection
+/// allocates the contents of a new CollisionalRxnRateCollection
 ///
 /// @param nelem The number of elements in each buffer
-ColRecRxnRateCollection new_ColRecRxnRateCollection(int nelem);
+CollisionalRxnRateCollection new_CollisionalRxnRateCollection(int nelem);
 
-/// performs cleanup of the contents of ColRecRxnRateCollection
+/// performs cleanup of the contents of CollisionalRxnRateCollection
 ///
 /// This effectively invokes a destructor
-void drop_ColRecRxnRateCollection(ColRecRxnRateCollection*);
+void drop_CollisionalRxnRateCollection(CollisionalRxnRateCollection*);
 
 } // namespace grackle::impl
 
