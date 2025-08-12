@@ -329,3 +329,16 @@ cdef extern from "grackle.h":
     c_grackle_version c_get_grackle_version "get_grackle_version"()
 
     int gr_initialize_field_data(c_field_data *my_fields)
+
+    # the unstable API
+    ctypedef long long grunstable_rateid_type
+
+    grunstable_rateid_type grunstable_ratequery_id(const char* name)
+
+    double* grunstable_ratequery_get_ptr(
+        c_chemistry_data_storage* my_rates,
+        grunstable_rateid_type rate_id)
+
+    const char* grunstable_ith_rate(
+        unsigned long long i,
+        grunstable_rateid_type* out_rate_id)
