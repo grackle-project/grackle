@@ -66,13 +66,16 @@
 /// might want to report. 2 are currently relevant. 2 more may become relevant
 /// in the future. These result/statuses may include
 /// - the API function successfully completed an operation
-/// - (may become relevant with GPUs) a function can be configured to be
-///   either synchronous or asynchronous just succesfully launched a GPU
-///   kernel. (honestly, we may choose to simply denote success)
-/// - A(may become relevant with GPUs) a temporary  error
-///   occurred that could be overcome by trying again. For example, a GPU had
-///   too much pending work (honestly, we may want to configure Grackle so it
-///   knows to try again).
+/// - (may become relevant with GPUs) a function, which can be configured to be
+///   either synchronous or asynchronous (@ compile-time or runtime), wants to
+///   report that it is being invoked in an "asynchronous mode" and that it
+///   succesfully launched a GPU kernel. The premise is that the function would
+///   report the successful-completion status if the function had been
+///   configured in its "synchronous mode," and the whole operation had been a
+///   success. (Honestly, we may choose to simply denote success in both cases)
+/// - (may become relevant with GPUs) a temporary error occurred that could be
+///   overcome by trying again. For example, a GPU had too much pending work
+///   (honestly, we may want to configure Grackle so it knows to try again).
 /// - A generic error occurred that requires human-intervention
 ///
 /// It is useful to highlight categories of these generic errors (the last of

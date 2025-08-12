@@ -1,12 +1,12 @@
 Style Formatting
 ================
 
-The Grackle repository is configured with tools to enforce checks (such as running the linter or applying code-formatting) on the various files in the repository.
+The Grackle repository is configured with tools to enforce checks (such as running the linter or applying code formatting) on the various files in the repository.
 
 The primary checks pertain to python and C/C++ code.
 All python code is linted and all new python files are formatted by automated tools.
 Likewise all new C/C++ code in new files are formatted by automated tools.
-For the time being, code in older files will not be formatted to avoid merge-conflicts.
+For the time being, code in older files will not be formatted to avoid merge conflicts.
 
 Because we realize that these tools may seem overwhelming or complicated, we have configured the repository to try to simplify the experience to the greatest extent possible.
 All of these checks are managed by the `pre-commit <https://pre-commit.com/>`__ software.
@@ -20,7 +20,7 @@ In fact, you are free to entirely ignore the existence of these tools until it c
 When you submit a Pull Request (and whenever you update it), various forms of continuous integration are triggered.
 
 For the present discussion, the `pre-commit.ci <https://pre-commit.ci/>`__ continuous integration tool is of primary relevance.\ [#f1]_
-This tool executes all of the formatting tools and if your submission doesn't satisfy all of the requirements, it will fail and report each problems.
+This tool executes all of the formatting tools and if your submission doesn't satisfy all of the requirements, it will fail and report each problem.
 
 If you don't want to install anything locally, there are 2 approaches for addressing problems:
 
@@ -89,7 +89,7 @@ C/C++ code is formatted by `clang-format <https://releases.llvm.org/18.1.8/tools
 
 About ``clang-format``:
 
-* At the time of writing, ``clang-format`` enforces formatting rules that are largely derived from the google-style (with a handful of tweaks that derive from the llvm style guide).
+* At the time of writing, ``clang-format`` enforces formatting rules that are largely derived from the google style (with a handful of tweaks that derive from the llvm style guide).
   Details about the enforced style are configured in the ``.clang-format`` file at the root of the Grackle repository.
 
 * files that are formatted this way will generally have far fewer merge conflicts.

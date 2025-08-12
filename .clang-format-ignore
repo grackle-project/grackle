@@ -45,7 +45,6 @@ src/clib/interp_table_utils.h
 src/clib/interpolate.hpp
 src/clib/phys_constants.h
 src/clib/rate_functions.c
-src/clib/rate_utils.c
 src/clib/scale_fields.hpp
 src/clib/scale_fields_table.hpp
 src/clib/set_default_chemistry_parameters.c

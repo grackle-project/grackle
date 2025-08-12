@@ -12,6 +12,7 @@
 ########################################################################
 
 import copy
+import functools
 from pygrackle.utilities.physical_constants import \
     boltzmann_constant_cgs, \
     mass_hydrogen_cgs
@@ -24,6 +25,9 @@ cdef class chemistry_data:
     cdef _wrapped_c_chemistry_data data
     cdef c_chemistry_data_storage rates
     cdef c_code_units units
+    # the chemistry_data extension type forwards accesses of various rates (at
+    # the moment it only a subset of all rates) to instances of this object
+    cdef _rate_mapping_access _rate_map
     # When self.rates is uninitialized, the following is set to None. When
     # self.initialize() is called, the following is set to a deepcopy of the
     # instance of data from that moment in time. We do this because:
@@ -34,6 +38,12 @@ cdef class chemistry_data:
 
     def __cinit__(self):
         self.data = _wrapped_c_chemistry_data()
+        self._rate_map = _rate_mapping_access.from_ptr_and_callback(
+            ptr=&self.rates,
+            callback=functools.partial(
+                _get_rate_shape, wrapped_chemistry_data_obj = self.data
+            )
+        )
         self.data_copy_from_init = None
 
     cdef void _try_uninitialize(self):
@@ -73,18 +83,31 @@ cdef class chemistry_data:
     def get_velocity_units(self):
         return get_velocity_units(&self.units)
 
+    def _unsafe_get_rate_map(self):
+        # this only exists for debugging purposes. It is extremely unsafe
+        # -> you can end up with accesses to dangling you try to use the
+        #    returned object after `self` goes out of scope
+        return self._rate_map
+
     def __getattr__(self, name):
         # This has been implemented to maintain backwards compatibility.
         #
-        # This method is only called whan an attribute can't be found through
-        # the normal mechanism - this tries to retrieve name from self.data
+        # it is only called whan an attribute can't be found through the normal
+        # mechanism (it tries to retrievename from self.data or self.rate_map)
         try:
-            return self.data[name]
-        except:
-            # this method is expected to raise AttributeError when it fails
-            raise AttributeError(
-                f"'{type(self).__name__}' object has no attribute '{name}'"
-            )
+            return self.data[name] # case where name specifies a parameter
+        except KeyError:
+            pass
+
+        try:
+            return self._rate_map[name] # case where name specifies a rate
+        except KeyError:
+            pass
+
+        # this method is expected to raise AttributeError when it fails
+        raise AttributeError(
+            f"'{type(self).__name__}' object has no attribute '{name}'"
+        )
 
     def __setattr__(self, name, value):
         # This has been implemented to maintain backwards compatibility. This
@@ -124,222 +147,17 @@ cdef class chemistry_data:
             self.data[name] = value
             return # early exit
         except KeyError:
-            raise AttributeError(
-                f"'{type(self).__name__}' object has no attribute '{name}'"
-            )
+            pass
 
-    property k1:
-        def __get__(self):
-            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.k1)
-            return np.asarray(memview)
+        try:
+            self._rate_map[name] = value
+            return # early exit
+        except KeyError:
+            pass
 
-    property k2:
-        def __get__(self):
-            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.k2)
-            return np.asarray(memview)
-
-    property k3:
-        def __get__(self):
-            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.k3)
-            return np.asarray(memview)
-
-    property k4:
-        def __get__(self):
-            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.k4)
-            return np.asarray(memview)
-
-    property k5:
-        def __get__(self):
-            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.k5)
-            return np.asarray(memview)
-
-    property k6:
-        def __get__(self):
-            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.k6)
-            return np.asarray(memview)
-
-    property k7:
-        def __get__(self):
-            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.k7)
-            return np.asarray(memview)
-    
-    property k8:
-        def __get__(self):
-            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.k8)
-            return np.asarray(memview)
-
-    property k9:
-        def __get__(self):
-            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.k9)
-            return np.asarray(memview)
-
-    property k10:
-        def __get__(self):
-            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.k10)
-            return np.asarray(memview)
-
-    property k11:
-        def __get__(self):
-            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.k11)
-            return np.asarray(memview)
-
-    property k12:
-        def __get__(self):
-            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.k12)
-            return np.asarray(memview)
-
-    property k13:
-        def __get__(self):
-            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.k13)
-            return np.asarray(memview)
-
-    property k14:
-        def __get__(self):
-            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.k14)
-            return np.asarray(memview)
-
-    property k15:
-        def __get__(self):
-            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.k15)
-            return np.asarray(memview)
-
-    property k16:
-        def __get__(self):
-            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.k16)
-            return np.asarray(memview)
-
-    property k17:
-        def __get__(self):
-            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.k17)
-            return np.asarray(memview)
-
-    property k18:
-        def __get__(self):
-            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.k18)
-            return np.asarray(memview)
-
-    property k19:
-        def __get__(self):
-            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.k19)
-            return np.asarray(memview)
-
-    property k20:
-        def __get__(self):
-            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.k20)
-            return np.asarray(memview)
-
-    property k21:
-        def __get__(self):
-            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.k21)
-            return np.asarray(memview)
-
-    property k22:
-        def __get__(self):
-            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.k22)
-            return np.asarray(memview)
-
-    property k23:
-        def __get__(self):
-            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.k23)
-            return np.asarray(memview)
-    
-    property k13dd:
-        def __get__(self):
-            cdef double[:] memview = <double[:self.NumberOfTemperatureBins*14]>(<double*> self.rates.k13dd)
-            return np.asarray(memview)
-
-    property k24:
-        def __get__(self):
-            return self.rates.k24
-        def __set__(self, val):
-            self.rates.k24 = val
-
-    property k25:
-        def __get__(self):
-            return self.rates.k25
-        def __set__(self, val):
-            self.rates.k25 = val
-
-    property k26:
-        def __get__(self):
-            return self.rates.k26
-        def __set__(self, val):
-            self.rates.k26 = val
-
-    property k27:
-        def __get__(self):
-            return self.rates.k27
-        def __set__(self, val):
-            self.rates.k27 = val
-
-    property k28:
-        def __get__(self):
-            return self.rates.k28
-        def __set__(self, val):
-            self.rates.k28 = val
-
-    property k29:
-        def __get__(self):
-            return self.rates.k29
-        def __set__(self, val):
-            self.rates.k29 = val
-
-    property k30:
-        def __get__(self):
-             return self.rates.k30
-        def __set__(self, val):
-             self.rates.k30 = val
-
-    property k31:
-        def __get__(self):
-             return self.rates.k31
-        def __set__(self, val):
-             self.rates.k31 = val
-
-    property k50:
-        def __get__(self):
-            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.k50)
-            return np.asarray(memview)
-
-    property k51:
-        def __get__(self):
-            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.k51)
-            return np.asarray(memview)
-
-    property k52:
-        def __get__(self):
-            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.k52)
-            return np.asarray(memview)
-
-    property k53:
-        def __get__(self):
-            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.k53)
-            return np.asarray(memview)
-
-    property k54:
-        def __get__(self):
-            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.k54)
-            return np.asarray(memview)
-
-    property k55:
-        def __get__(self):
-            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.k55)
-            return np.asarray(memview)
-    
-    property k56:
-        def __get__(self):
-            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.k56)
-            return np.asarray(memview)
-        
-    property k57:
-        def __get__(self):
-            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.k57)
-            return np.asarray(memview)
-
-    property k58:
-        def __get__(self):
-            cdef double[:] memview = <double[:self.NumberOfTemperatureBins]>(<double*> self.rates.k58)
-            return np.asarray(memview)
+        raise AttributeError(
+            f"'{type(self).__name__}' object has no attribute '{name}'"
+        )
 
     property h2dust:
         def __get__(self):
@@ -923,6 +741,8 @@ cdef list _get_parameter_name_list(const char*(*get_param)(unsigned int)):
             out.append(tmp.decode('UTF-8'))
             i+=1
 
+_NOSETVAL = object() # <- acts as a dummy argument
+
 cdef class _wrapped_c_chemistry_data:
 
     cdef c_chemistry_data data
@@ -954,7 +774,7 @@ cdef class _wrapped_c_chemistry_data:
         cdef c_chemistry_data* data_ptr = &self.data
 
         # determine whether the field needs to be updated
-        update_field = (val is not None)
+        update_field = (val is not _NOSETVAL)
 
         # coerce key to a bytes object and then get the analogous null
         # terminated string to pass to the C functions
@@ -1011,12 +831,9 @@ cdef class _wrapped_c_chemistry_data:
         raise KeyError(key) # the key is not recognized
 
     def __getitem__(self, key):
-        return self._access_struct_field(key, val = None)
+        return self._access_struct_field(key, val = _NOSETVAL)
 
     def __setitem__(self, key, value):
-        if value is None:
-            raise ValueError("Members of c_chemistry_data are not allowed to "
-                             "be assigned values of None")
         self._access_struct_field(key, val = value)
 
     @staticmethod
@@ -1053,6 +870,132 @@ cdef class _wrapped_c_chemistry_data:
         for k in self:
             out[k] = self[k]
         return out
+
+def _get_rate_shape(wrapped_chemistry_data_obj, rate_name):
+    # for now we need to manually keep this updated.
+    # -> in the future, we could add probably encode some/all of this
+    #    information within Grackle's ratequery API
+
+    def _is_standard_colrecombination_rate(rate_name):
+        if rate_name[:2] == 'kz' and rate_name[2:].isdecimal():
+            return 11 <= int(rate_name[2:]) <= 54
+        elif rate_name[:1] == 'k' and rate_name[1:].isdecimal():
+            digit = int(rate_name[1:])
+            return ( (1 <= digit <= 23) or
+                     (50 <= digit <= 58) or
+                     (125 <= digit <= 153) )
+        return False
+
+    if rate_name in ("k24", "k25", "k26", "k27", "k28", "k29", "k30", "k31"):
+        return () # the rate is a scalar
+    elif _is_standard_colrecombination_rate(rate_name):
+        return (wrapped_chemistry_data_obj['NumberOfTemperatureBins'],)
+    elif rate_name == 'k13dd':
+        return (wrapped_chemistry_data_obj['NumberOfTemperatureBins'] * 14,)
+    else:
+        raise RuntimeError(
+            "the shape of the rate {rate_name!r} has not been specified yet"
+        )
+
+@functools.lru_cache   # (could use functools.cache starting in python3.9)
+def _name_rateid_map():
+    cdef dict out = {}
+    cdef const char* rate_name
+    cdef grunstable_rateid_type rate_id
+    cdef unsigned long long i = 0
+    while True:
+        rate_name = grunstable_ith_rate(i, &rate_id)
+        if rate_name is NULL:
+            return out
+        out[rate_name.decode('UTF-8')] = int(rate_id)
+        i+=1
+
+cdef class _rate_mapping_access:
+    # This class is used internally by the chemistry_data extension class to
+    # wrap its chemistry_data_storage ptr and provide access to the stored
+    # rates (that are registered with the string lookup API functions)
+    #
+    # - chemistry_data_storage is responsible for making sure that instances of
+    #   this object are destroyed and overwritten as necessary (otherwise, this
+    #   could try to access garbage data)
+    # - we support a case where the ptr is NULL to ensure that chemistry_data
+    #   extension type has sensible behavior when the chemistry_data_storage
+    #   is uninitialized (if we wanted this to exist as a standalone object,
+    #   we might make some different choices)
+
+    cdef c_chemistry_data_storage *_ptr
+    cdef object _rate_shape_callback
+
+    def __cinit__(self):
+        self._ptr = NULL
+        self._rate_shape_callback = None
+
+    def __init__(self):
+        # Prevent accidental instantiation from normal Python code
+        raise TypeError("This class cannot be instantiated directly.")
+
+    @staticmethod
+    cdef _rate_mapping_access from_ptr_and_callback(
+        c_chemistry_data_storage *ptr, object callback
+    ):
+        cdef _rate_mapping_access out = _rate_mapping_access.__new__(
+            _rate_mapping_access
+        )
+        out._ptr = ptr
+        out._rate_shape_callback = callback
+        return out
+
+    def _access_rate(self, key, val):
+        # determine whether the rate needs to be updated
+        update_rate = (val is not _NOSETVAL)
+
+        rate_id = _name_rateid_map()[key] # will raise a KeyError if not known
+
+        if self._ptr is NULL:
+            raise RuntimeError(
+                "this instance hasn't been configured with a pointer for it "
+                "access retrieve data from"
+            )
+
+        # retrieve the pointer
+        cdef double* rate_ptr = grunstable_ratequery_get_ptr(self._ptr, rate_id)
+
+        # lookup the shape of the rates
+        callback = self._rate_shape_callback
+        shape = callback(rate_name=key)
+
+        # predeclare a memoryview to use with 1d arrays
+        cdef double[:] memview
+
+        if shape == (): # handle the scalar case!
+            if update_rate:
+                rate_ptr[0] = <double?>val # <double?> cast performs type check
+            return float(rate_ptr[0])
+        elif len(shape) == 1:
+            if update_rate:
+                raise RuntimeError(
+                    f"You cannot assign a value to the {key!r} rate.\n\n"
+                    "If you are looking to modify the rate's values, you "
+                    f"should retrieve the {key!r} rate's value (a numpy "
+                    "array), and modify the values in place"
+                )
+            size = shape[0]
+            memview = <double[:size]>(rate_ptr)
+            return np.asarray(memview)
+        else:
+            raise RuntimeError(
+                "no support is in place for higher dimensional arrays"
+            )
+
+    def __getitem__(self, key): return self._access_rate(key, _NOSETVAL)
+
+    def __setitem__(self, key, value): self._access_rate(key, value)
+
+    def __iter__(self): return iter(_name_rateid_map())
+
+    def __len__(self): return len(_name_rateid_map())
+
+
 
 def _query_units(chemistry_data chem_data, object name,
                  object current_a_value):

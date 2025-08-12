@@ -106,20 +106,20 @@ void grackle::impl::drop_SpeciesCollection(
 
 // -----------------------------------------------------------------
 
-grackle::impl::ColRecRxnRateCollection
-grackle::impl::new_ColRecRxnRateCollection(int nelem) {
+grackle::impl::CollisionalRxnRateCollection
+grackle::impl::new_CollisionalRxnRateCollection(int nelem) {
   GRIMPL_REQUIRE(nelem > 0, "nelem must be positive");
-  grackle::impl::ColRecRxnRateCollection out;
+  grackle::impl::CollisionalRxnRateCollection out;
   double* ptr =
-      (double*)malloc(sizeof(double) * nelem * ColRecRxnLUT::NUM_ENTRIES);
-  for (int i = 0; i < ColRecRxnLUT::NUM_ENTRIES; i++) {
+      (double*)malloc(sizeof(double) * nelem * CollisionalRxnLUT::NUM_ENTRIES);
+  for (int i = 0; i < CollisionalRxnLUT::NUM_ENTRIES; i++) {
     out.data[i] = ptr + (i * nelem);
   }
   return out;
 }
 
-void grackle::impl::drop_ColRecRxnRateCollection(
-    grackle::impl::ColRecRxnRateCollection* ptr) {
+void grackle::impl::drop_CollisionalRxnRateCollection(
+    grackle::impl::CollisionalRxnRateCollection* ptr) {
   // since we only allocate a single pointer, we only need to call free once
   free(ptr->data[0]);
 }
