@@ -9,7 +9,6 @@
 #   after the next
 # - No new files should be added to this list
 
-src/clib/LUT.hpp
 src/clib/c_wrappers/wrap_interpolators_g.c
 src/clib/calc_tdust_3d.C
 src/clib/calc_tdust_3d.h

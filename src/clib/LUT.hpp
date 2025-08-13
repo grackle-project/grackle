@@ -21,8 +21,6 @@
 //   will be hard for the transcription tools to automatically handle the
 //   shortenning of the fully qualified name)
 
-
-
 /// This is collection of enumerators (localized to the `SpLUT::` scope), with
 /// an enumerator named for EVERY species (primordial-species, metal-species,
 /// grain-species, etc). The enumerator values are intended to be used in a
@@ -82,113 +80,53 @@
 ///   a lookup table any more (this all assumes, of course, that such a system
 ///   is adequately performant)
 struct SpLUT {
-
   // in the future, we may want to reimplement the following in terms of the
   // XMacros provided in grackle_field_data_fdatamembers.def (or we may need to
   // slightly revise the system?)
   enum {
-    e,
-    HI,
-    HII,
-    HeI,
-    HeII,
-    HeIII,
- 
-    HM,
-    H2I,
-    H2II,
- 
-    DI,
-    DII,
-    HDI,
- 
-    DM,
-    HDII,
-    HeHII,
- 
-    CI,
-    CII,
-    CO,
-    CO2,
-    OI,
-    OH,
-    H2O,
-    O2,
-    SiI,
-    SiOI,
-    SiO2I,
-    CH,
-    CH2,
-    COII,
-    OII,
-    OHII,
-    H2OII,
-    H3OII,
-    O2II,
- 
-    Mg,
-    Al,
-    S,
-    Fe,
- 
-    SiM,
-    FeM,
-    Mg2SiO4,
-    MgSiO3,
-    Fe3O4,
-    AC,
-    SiO2D,
-    MgO,
-    FeS,
-    Al2O3,
-    reforg,
-    volorg,
-    H2Oice,
- 
-    NUM_ENTRIES // <- always last (so it specifies the number of species)
-  }; // enum
+#define ENTRY(NAME) NAME,
+#include "field_data_evolved_species.def"
+#undef ENTRY
 
-}; // SpLUT struct
+    NUM_ENTRIES  // <- always last (so it specifies the number of species)
+  };  // enum
 
+};  // SpLUT struct
 
 /// Define a LUT that ONLY contains grain species
 struct OnlyGrainSpLUT {
-
   // in the future, we may want to reimplement the following in terms of the
   // XMacros provided in grackle_field_data_fdatamembers.def (or we may need to
   // slightly revise the system?)
   enum {
-    SiM,
-    FeM,
-    Mg2SiO4,
-    MgSiO3,
-    Fe3O4,
-    AC,
-    SiO2D,
-    MgO,
-    FeS,
-    Al2O3,
-    reforg,
-    volorg,
-    H2Oice,
+    SiM_dust,
+    FeM_dust,
+    Mg2SiO4_dust,
+    MgSiO3_dust,
+    Fe3O4_dust,
+    AC_dust,
+    SiO2_dust,
+    MgO_dust,
+    FeS_dust,
+    Al2O3_dust,
+    ref_org_dust,
+    vol_org_dust,
+    H2O_ice_dust,
 
-    NUM_ENTRIES // <- always last (so it specifies the number of species)
+    NUM_ENTRIES  // <- always last (so it specifies the number of species)
   };
-}; // struct OnlyGrainSpLUT
-
+};  // struct OnlyGrainSpLUT
 
 /// Defines the LUT for Standard Collisional reaction rates
 struct CollisionalRxnLUT {
-
   enum {
-    #define ENTRY(NAME) NAME,
-    #include "collisional_rxn_rate_members.def"
-    #undef ENTRY
+#define ENTRY(NAME) NAME,
+#include "collisional_rxn_rate_members.def"
+#undef ENTRY
 
-    NUM_ENTRIES // <- always last (so it specifies the number of species)
-  }; // enum
+    NUM_ENTRIES  // <- always last (so it specifies the number of species)
+  };  // enum
 
-}; // CollisionalRxnLUT struct
-
+};  // CollisionalRxnLUT struct
 
 #endif /* LUT_HPP */

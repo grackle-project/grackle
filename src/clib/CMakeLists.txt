@@ -158,6 +158,8 @@ add_library(Grackle_Grackle
   # private headers
   cie_thin_cooling_rate_tables.h
   fortran_func_decls.h
+  field_data_evolved_species.def    # <-- acts as a C header
+  field_data_misc_fdatamembers.def  # <-- acts as a C header
   grackle_chemistry_data_fields.def # <-- acts as a C header
   grackle_macros.h
   index_helper.h
