@@ -8,155 +8,70 @@
 ///
 /// We may ultimately choose to shift to more idiomatic C++
 
-#include <cstdlib>
+#include <cstdlib>  // std::malloc
 
 #include "internal_types.hpp"
 #include "utils-cpp.hpp"
-
-/// common function signature
-typedef void modify_member_callback(double**, void*);
-
-/// represents the context for allocation
-struct MemberAllocCtx_{ int nelem; };
-
-/// allocates the member
-static void allocate_member_(double** member, void* ctx) {
-  int nelem = ((MemberAllocCtx_*)ctx)->nelem;
-  *member = (double*)malloc(sizeof(double)*nelem);
-}
-
-/// frees the member
-static void cleanup_member_(double** member, void* ctx) {
-  GRACKLE_FREE(*member);
-}
+#include "visitor/memory.hpp"
 
 // -----------------------------------------------------------------
 
-/// Apply a function to each data member of CoolHeatScratchBuf
-///
-/// @note
-/// If we are willing to embrace C++, then this should accept a template
-/// argument (instead of a function pointer and the callback_ctx pointer)
-static void for_each_coolingheating_member(
-  grackle::impl::CoolHeatScratchBuf* ptr,
-  modify_member_callback* fn,
-  void* callback_ctx
-) {
-  fn(&ptr->ceHI, callback_ctx);
-  fn(&ptr->ceHeI, callback_ctx);
-  fn(&ptr->ceHeII, callback_ctx);
-  fn(&ptr->ciHI, callback_ctx);
-  fn(&ptr->ciHeI, callback_ctx);
-  fn(&ptr->ciHeIS, callback_ctx);
-  fn(&ptr->ciHeII, callback_ctx);
-  fn(&ptr->reHII, callback_ctx);
-  fn(&ptr->reHeII1, callback_ctx);
-  fn(&ptr->reHeII2, callback_ctx);
-  fn(&ptr->reHeIII, callback_ctx);
-  fn(&ptr->brem, callback_ctx);
-  fn(&ptr->cieco, callback_ctx);
-  fn(&ptr->hyd01k, callback_ctx);
-  fn(&ptr->h2k01, callback_ctx);
-  fn(&ptr->vibh, callback_ctx);
-  fn(&ptr->roth, callback_ctx);
-  fn(&ptr->rotl, callback_ctx);
-  fn(&ptr->gpldl, callback_ctx);
-  fn(&ptr->gphdl, callback_ctx);
-  fn(&ptr->hdlte, callback_ctx);
-  fn(&ptr->hdlow, callback_ctx);
-}
-
 grackle::impl::CoolHeatScratchBuf grackle::impl::new_CoolHeatScratchBuf(
-  int nelem
-)
-{
+    int nelem) {
   GRIMPL_REQUIRE(nelem > 0, "nelem must be positive");
   CoolHeatScratchBuf out;
-  MemberAllocCtx_ ctx{nelem};
-  for_each_coolingheating_member(&out, &allocate_member_, (void*)(&ctx));
+  grackle::impl::visitor::VisitorCtx ctx{static_cast<unsigned int>(nelem)};
+  grackle::impl::visit_member(&out,
+                              grackle::impl::visitor::AllocateMembers{ctx});
   return out;
 }
 
-void grackle::impl::drop_CoolHeatScratchBuf(CoolHeatScratchBuf* ptr)
-{
-  for_each_coolingheating_member(ptr, &cleanup_member_, NULL);
+void grackle::impl::drop_CoolHeatScratchBuf(CoolHeatScratchBuf* ptr) {
+  grackle::impl::visit_member(ptr, grackle::impl::visitor::FreeMembers{});
 }
 
 // -----------------------------------------------------------------
 
-/// Apply a function to each data member of Cool1DMultiScratchBuf
-///
-/// @note
-/// If we are willing to embrace C++, then this should accept a template
-/// argument (instead of a function pointer and the callback_ctx pointer)
-static void for_each_cool1dmultibuf_member(
-  grackle::impl::Cool1DMultiScratchBuf* ptr,
-  modify_member_callback* fn,
-  void* callback_ctx
-) {
-  fn(&ptr->tgasold, callback_ctx);
-  fn(&ptr->mynh, callback_ctx);
-  fn(&ptr->myde, callback_ctx);
-  fn(&ptr->gammaha_eff, callback_ctx);
-  fn(&ptr->gasgr_tdust, callback_ctx);
-  fn(&ptr->regr, callback_ctx);
-}
-
 grackle::impl::Cool1DMultiScratchBuf grackle::impl::new_Cool1DMultiScratchBuf(
-  int nelem
-)
-{
+    int nelem) {
   GRIMPL_REQUIRE(nelem > 0, "nelem must be positive");
   Cool1DMultiScratchBuf out;
-  MemberAllocCtx_ ctx{nelem};
-  for_each_cool1dmultibuf_member(&out, &allocate_member_, (void*)(&ctx));
+  grackle::impl::visitor::VisitorCtx ctx{static_cast<unsigned int>(nelem)};
+  grackle::impl::visit_member(&out,
+                              grackle::impl::visitor::AllocateMembers{ctx});
   return out;
 }
 
 void grackle::impl::drop_Cool1DMultiScratchBuf(
-  grackle::impl::Cool1DMultiScratchBuf* ptr
-)
-{
-  for_each_cool1dmultibuf_member(ptr, &cleanup_member_, NULL);
+    grackle::impl::Cool1DMultiScratchBuf* ptr) {
+  grackle::impl::visit_member(ptr, grackle::impl::visitor::FreeMembers{});
 }
 
 // -----------------------------------------------------------------
 
 grackle::impl::LogTLinInterpScratchBuf
-grackle::impl::new_LogTLinInterpScratchBuf(int nelem)
-{
+grackle::impl::new_LogTLinInterpScratchBuf(int nelem) {
   GRIMPL_REQUIRE(nelem > 0, "nelem must be positive");
   grackle::impl::LogTLinInterpScratchBuf out;
-  out.indixe = (long long*)malloc(sizeof(long long)*nelem);
-  out.t1 = (double*)malloc(sizeof(double)*nelem);
-  out.t2 = (double*)malloc(sizeof(double)*nelem);
-  out.logtem = (double*)malloc(sizeof(double)*nelem);
-  out.tdef = (double*)malloc(sizeof(double)*nelem);
+  grackle::impl::visitor::VisitorCtx ctx{static_cast<unsigned int>(nelem)};
+  grackle::impl::visit_member(&out,
+                              grackle::impl::visitor::AllocateMembers{ctx});
   return out;
 }
 
 void grackle::impl::drop_LogTLinInterpScratchBuf(
-  grackle::impl::LogTLinInterpScratchBuf* ptr
-)
-{
-  GRACKLE_FREE(ptr->indixe);
-  GRACKLE_FREE(ptr->t1);
-  GRACKLE_FREE(ptr->t2);
-  GRACKLE_FREE(ptr->logtem);
-  GRACKLE_FREE(ptr->tdef);
+    grackle::impl::LogTLinInterpScratchBuf* ptr) {
+  grackle::impl::visit_member(ptr, grackle::impl::visitor::FreeMembers{});
 }
 
 // -----------------------------------------------------------------
 
 grackle::impl::GrainSpeciesCollection grackle::impl::new_GrainSpeciesCollection(
-  int nelem
-)
-{
+    int nelem) {
   GRIMPL_REQUIRE(nelem > 0, "nelem must be positive");
   GrainSpeciesCollection out;
-  double* ptr = (double*)malloc(
-    sizeof(double) * nelem * OnlyGrainSpLUT::NUM_ENTRIES
-  );
+  double* ptr =
+      (double*)malloc(sizeof(double) * nelem * OnlyGrainSpLUT::NUM_ENTRIES);
   for (int i = 0; i < OnlyGrainSpLUT::NUM_ENTRIES; i++) {
     out.data[i] = ptr + (i * nelem);
   }
@@ -164,9 +79,7 @@ grackle::impl::GrainSpeciesCollection grackle::impl::new_GrainSpeciesCollection(
 }
 
 void grackle::impl::drop_GrainSpeciesCollection(
-  grackle::impl::GrainSpeciesCollection* ptr
-)
-{
+    grackle::impl::GrainSpeciesCollection* ptr) {
   // since we only allocate a single pointer, we only need to call free once
   free(ptr->data[0]);
 }
@@ -174,11 +87,11 @@ void grackle::impl::drop_GrainSpeciesCollection(
 // -----------------------------------------------------------------
 
 grackle::impl::SpeciesCollection grackle::impl::new_SpeciesCollection(
-  int nelem
-) {
+    int nelem) {
   GRIMPL_REQUIRE(nelem > 0, "nelem must be positive");
   grackle::impl::SpeciesCollection out;
-  double* ptr = (double*)malloc(sizeof(double) * nelem * SpLUT::NUM_ENTRIES);
+  double* ptr =
+      (double*)std::malloc(sizeof(double) * nelem * SpLUT::NUM_ENTRIES);
   for (int i = 0; i < SpLUT::NUM_ENTRIES; i++) {
     out.data[i] = ptr + (i * nelem);
   }
@@ -186,22 +99,19 @@ grackle::impl::SpeciesCollection grackle::impl::new_SpeciesCollection(
 }
 
 void grackle::impl::drop_SpeciesCollection(
-  grackle::impl::SpeciesCollection *ptr
-) {
+    grackle::impl::SpeciesCollection* ptr) {
   // since we only allocate a single pointer, we only need to call free once
   free(ptr->data[0]);
 }
 
 // -----------------------------------------------------------------
 
-grackle::impl::CollisionalRxnRateCollection grackle::impl::new_CollisionalRxnRateCollection(
-  int nelem
-) {
+grackle::impl::CollisionalRxnRateCollection
+grackle::impl::new_CollisionalRxnRateCollection(int nelem) {
   GRIMPL_REQUIRE(nelem > 0, "nelem must be positive");
   grackle::impl::CollisionalRxnRateCollection out;
-  double* ptr = (double*)malloc(
-    sizeof(double) * nelem * CollisionalRxnLUT::NUM_ENTRIES
-  );
+  double* ptr =
+      (double*)malloc(sizeof(double) * nelem * CollisionalRxnLUT::NUM_ENTRIES);
   for (int i = 0; i < CollisionalRxnLUT::NUM_ENTRIES; i++) {
     out.data[i] = ptr + (i * nelem);
   }
@@ -209,71 +119,40 @@ grackle::impl::CollisionalRxnRateCollection grackle::impl::new_CollisionalRxnRat
 }
 
 void grackle::impl::drop_CollisionalRxnRateCollection(
-  grackle::impl::CollisionalRxnRateCollection *ptr
-) {
+    grackle::impl::CollisionalRxnRateCollection* ptr) {
   // since we only allocate a single pointer, we only need to call free once
   free(ptr->data[0]);
 }
 
 // -----------------------------------------------------------------
 
-/// Apply a function to each data member of PhotoRxnRateCollection
-///
-/// @note
-/// If we are willing to embrace C++, then this should accept a template
-/// argument (instead of a function pointer and the callback_ctx pointer)
-static void for_each_kphotoCollection_member(
-  grackle::impl::PhotoRxnRateCollection* ptr,
-  modify_member_callback* fn,
-  void* callback_ctx
-) {
-  fn(&ptr->k24, callback_ctx);
-  fn(&ptr->k25, callback_ctx);
-  fn(&ptr->k26, callback_ctx);
-  fn(&ptr->k27, callback_ctx);
-  fn(&ptr->k28, callback_ctx);
-  fn(&ptr->k29, callback_ctx);
-  fn(&ptr->k30, callback_ctx);
-  fn(&ptr->k31, callback_ctx);
-}
-
 grackle::impl::PhotoRxnRateCollection grackle::impl::new_PhotoRxnRateCollection(
-  int nelem
-) {
+    int nelem) {
   GRIMPL_REQUIRE(nelem > 0, "nelem must be positive");
   grackle::impl::PhotoRxnRateCollection out;
-  MemberAllocCtx_ ctx{nelem};
-  for_each_kphotoCollection_member(&out, &allocate_member_, (void*)(&ctx));
+  grackle::impl::visitor::VisitorCtx ctx{static_cast<unsigned int>(nelem)};
+  grackle::impl::visit_member(&out,
+                              grackle::impl::visitor::AllocateMembers{ctx});
   return out;
 }
 
 void grackle::impl::drop_PhotoRxnRateCollection(
-  grackle::impl::PhotoRxnRateCollection* ptr
-)
-{
-  for_each_kphotoCollection_member(ptr, &cleanup_member_, NULL);
+    grackle::impl::PhotoRxnRateCollection* ptr) {
+  grackle::impl::visit_member(ptr, grackle::impl::visitor::FreeMembers{});
 }
-
 
 // -----------------------------------------------------------------
 
-grackle::impl::ChemHeatingRates grackle::impl::new_ChemHeatingRates(
-  int nelem
-)
-{
+grackle::impl::ChemHeatingRates grackle::impl::new_ChemHeatingRates(int nelem) {
   GRIMPL_REQUIRE(nelem > 0, "nelem must be positive");
   ChemHeatingRates out;
-  out.n_cr_n = (double*)malloc(sizeof(double)*nelem);
-  out.n_cr_d1 = (double*)malloc(sizeof(double)*nelem);
-  out.n_cr_d2 = (double*)malloc(sizeof(double)*nelem);
+  grackle::impl::visitor::VisitorCtx ctx{static_cast<unsigned int>(nelem)};
+  grackle::impl::visit_member(&out,
+                              grackle::impl::visitor::AllocateMembers{ctx});
   return out;
 }
 
 void grackle::impl::drop_ChemHeatingRates(
-  grackle::impl::ChemHeatingRates* ptr
-)
-{
-  GRACKLE_FREE(ptr->n_cr_n);
-  GRACKLE_FREE(ptr->n_cr_d1);
-  GRACKLE_FREE(ptr->n_cr_d2);
+    grackle::impl::ChemHeatingRates* ptr) {
+  grackle::impl::visit_member(ptr, grackle::impl::visitor::FreeMembers{});
 }
