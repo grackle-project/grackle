@@ -6,7 +6,12 @@ Gracklepy: Running Grackle in Python
 Grackle comes with a Python interface, called Gracklepy, which provides
 access to all of Grackle's functionality.
 
-To install Pygackle, you'll need to make sure that HDF5 and a fortran compiler are installed (for building the Grackle library itself).
+.. note::
+
+   Gracklepy was formerly known as Pygrackle.
+   If you previously installed Pygrackle, you should make sure that you uninstall it before upgrading
+
+To install Gracklepy, you'll need to make sure that HDF5 and a fortran compiler are installed (for building the Grackle library itself).
 
 Gracklepy's runtime-dependencies are:
 
