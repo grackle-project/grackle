@@ -1,4 +1,5 @@
 #include "gtest/gtest.h"
+#include <cstdint>
 
 extern "C" {
     #include "grackle_macros.h"
@@ -33,7 +34,7 @@ extern "C" void FORTRAN_NAME(interpolate_3dz_g)(double *input1, double *input2, 
                                                 double *gridPar2, long long *index2,
                                                 double *gridPar3, double *dgridPar3,
                                                 long long *dataSize, double *dataField,
-                                                int *end_int,
+                                                std::int64_t *end_int,
                                                 double *value);
 
 extern "C" void FORTRAN_NAME(interpolate_2df3d_g)(double *input1, double *input3,
@@ -183,7 +184,7 @@ TEST(InterpolationTest, Interpolate3Dz) {
     double dgridPar2 = 1.5;
     long long index2 = 3;
     double dgridPar3 = 2.5;
-    int end_int = 0;
+    std::int64_t end_int = 0;
     double input1 = 2.4;
     double input2 = 5.3;
     double input3 = 1.5;

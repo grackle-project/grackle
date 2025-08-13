@@ -575,7 +575,7 @@ void FORTRAN_NAME(lookup_cool_rates1d_g)(
   double* k29shield, double* k30shield, double* k31shield, double* h2dust,
   double* ncrn, double* ncrd1, double* ncrd2, double* t1, double* t2,
   double* tdef, double* logtem, long long* indixe, double* dom,
-  double* coolunit, double* tbase1, double* xbase1, double* dx_cgs,
+  double* coolunit, double* tbase1, double* uxyz, double* xbase1, double* dx_cgs,
   double* c_ljeans, int* iradtrans, gr_float* kdissH2I_data_ptr,
   gr_float* xH2shield_data_ptr, gr_mask_type* itmask,
   gr_mask_type* itmask_metal, double* fh, gr_float* metal_data_ptr,
