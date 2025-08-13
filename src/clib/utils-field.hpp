@@ -22,8 +22,7 @@ namespace grackle::impl {
 ///
 /// @note
 /// This may not be the best spot for this definition
-inline int layoutleft_3D_index_to_1D_(const int* extent, int i, int j, int k)
-{
+inline int layoutleft_3D_index_to_1D_(const int* extent, int i, int j, int k) {
   return i + extent[0] * (j + extent[1] * k);
 }
 
