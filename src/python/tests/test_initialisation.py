@@ -12,9 +12,9 @@ import os
 from numpy.testing import assert_allclose
 
 #Chemistry_data struct from grackle
-from pygrackle import chemistry_data
+from gracklepy import chemistry_data
 #Necessary constants from grackle
-from pygrackle.utilities.physical_constants import mass_hydrogen_cgs
+from gracklepy.utilities.physical_constants import mass_hydrogen_cgs
 
 #* Function which returns chemistry_data instance with default initialisation settings.
 def get_defChem():

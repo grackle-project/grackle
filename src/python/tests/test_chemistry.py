@@ -16,12 +16,12 @@ import os
 
 from numpy.testing import assert_array_less
 
-from pygrackle import \
+from gracklepy import \
     chemistry_data, \
     setup_fluid_container, \
     set_cosmology_units
 
-from pygrackle.utilities.testing import random_logscale, assert_rel_equal
+from gracklepy.utilities.testing import random_logscale, assert_rel_equal
 
 from testing_common import grackle_data_dir
 

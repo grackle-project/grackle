@@ -14,10 +14,10 @@
 import numpy as np
 import sys
 
-from pygrackle.fluid_container import \
+from gracklepy.fluid_container import \
     FluidContainer
 
-from pygrackle.utilities.physical_constants import \
+from gracklepy.utilities.physical_constants import \
     mass_hydrogen_cgs, \
     sec_per_Myr
 

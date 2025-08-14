@@ -2,7 +2,7 @@
 """
 Check that the vendored dependencies & binary licenses all match
 
-This is intended to be installed once the pygrackle wheel has been installed
+This is intended to be installed once the gracklepy wheel has been installed
 """
 
 from dataclasses import dataclass
@@ -51,11 +51,11 @@ def parse_license_file(path):
         return [chunk for chunk in _chunks(f) if chunk is not None]
 
 
-def get_vendored_libs(pygrackle_dir):
+def get_vendored_libs(gracklepy_dir):
     if platform.system() == "Darwin":
-        lib_dir = pygrackle_dir / ".dylibs"
+        lib_dir = gracklepy_dir / ".dylibs"
     else:
-        lib_dir = pygrackle_dir.parent / "pygrackle.libs"
+        lib_dir = gracklepy_dir.parent / "gracklepy.libs"
     lib_paths = []
     with os.scandir(lib_dir) as it:
         for entry in it:
@@ -68,17 +68,17 @@ def get_vendored_libs(pygrackle_dir):
 
 def main():
     try:
-        import pygrackle
+        import gracklepy
     except ImportError:
-        print("ERROR: this check requires pygrackle to be installed")
+        print("ERROR: this check requires gracklepy to be installed")
         return 1
-    pygrackle_dir = pathlib.Path(pygrackle.__file__).parent
+    gracklepy_dir = pathlib.Path(gracklepy.__file__).parent
 
     # get a list of external libraries that we have packaged
-    lib_paths = get_vendored_libs(pygrackle_dir)
+    lib_paths = get_vendored_libs(gracklepy_dir)
 
     # find and parse the license file
-    distinfo = list(pygrackle_dir.parent.glob("pygrackle-*.dist-info"))[0]
+    distinfo = list(gracklepy_dir.parent.glob("gracklepy-*.dist-info"))[0]
     license_entries = parse_license_file(distinfo / "licenses" / "LICENSE")
 
     # now, we will go through and make sure every license_entry corresponds to 1 or more
@@ -88,7 +88,7 @@ def main():
     for entry in license_entries:
         patterns = entry.files.split()  # patterns may be separated by whitespace
         for pat in patterns:
-            matches = fnmatch.filter(lib_paths, str(pygrackle_dir.parent / pat))
+            matches = fnmatch.filter(lib_paths, str(gracklepy_dir.parent / pat))
             if len(matches) > 0:
                 all_matches.update(matches)
             elif pat.endswith("libgcc_s*") and _IS_LINUX_GLIBC:
