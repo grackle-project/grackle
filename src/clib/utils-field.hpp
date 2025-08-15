@@ -11,6 +11,21 @@
 
 namespace grackle::impl {
 
+/// maps a 3D index to the underlying 1D index of a contiguous memory buffer
+/// "using a layout_left mapping policy." We assume 0-based indexing
+///
+/// "layout_left" is terminology adapted from the C++ standard:
+/// - it refers to the idea that the leftmost extent/index has a stride of 1
+///   and the sizes of strides increase as you go left to right
+/// - this is the mapping used by default in fortran (note - we sill use
+///   0-based indexing). It is sometimes called "column-major order"
+///
+/// @note
+/// This may not be the best spot for this definition
+inline int layoutleft_3D_index_to_1D_(const int* extent, int i, int j, int k) {
+  return i + extent[0] * (j + extent[1] * k);
+}
+
 /// This helper function essentially is used to make a kind of slice of an
 /// instance of grackle_field_data
 ///
