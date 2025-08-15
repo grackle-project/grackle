@@ -16,7 +16,7 @@
      &               ciHeISa, ciHeIIa, reHIIa, reHeII1a, 
      &               reHeII2a, reHeIIIa, brema, compa, gammaha,
      &               isrf, regra, gamma_isrfa, comp_xraya, comp_temp,
-     &               piHI, piHeI, piHeII, comp1, comp2,
+     &               piHI, piHeI, piHeII,
      &               metal, dust,
      &               hyd01ka, h2k01a, vibha, rotha, rotla,
      &               hyd01k, h2k01, vibh, roth, rotl,

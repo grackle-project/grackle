@@ -50,6 +50,5 @@ OBJS_CONFIG_LIB = \
         rate_utils.lo \
         gaussj_g.lo \
         utils.lo \
-        step_rate_newton_raphson.lo \
         utils-cpp.lo \
         internal_types.lo
