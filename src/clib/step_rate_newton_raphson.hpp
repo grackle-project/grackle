@@ -177,6 +177,13 @@ inline void step_rate_newton_raphson(
     frozen_tderiv_args, main_scratch_buf
   );
 
+  // the following check was inspired by a compiler warning indicating that
+  // nsp won't be initialized if this condition isn't met
+  GRIMPL_REQUIRE((my_chemistry->primordial_chemistry > 0),
+    "this function can't support primordial_chemistry == %d",
+    my_chemistry->primordial_chemistry
+  );
+
   // The following was extracted from another subroutine
   for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
     const int j = idx_range.j;
@@ -199,7 +206,7 @@ inline void step_rate_newton_raphson(
       }
 
       // initialize arrays
-      if (my_chemistry->primordial_chemistry > 0) { nsp = 6; }
+      nsp = 6; // (my_chemistry->primordial_chemistry >= 1)
       if (my_chemistry->primordial_chemistry > 1) { nsp = nsp + 3; }
       if (my_chemistry->primordial_chemistry > 2) { nsp = nsp + 3; }
       if (my_chemistry->primordial_chemistry > 3) { nsp = nsp + 3; }
