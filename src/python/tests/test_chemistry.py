@@ -14,15 +14,14 @@
 import numpy as np
 import os
 
-from pygrackle import \
+from numpy.testing import assert_array_less
+
+from gracklepy import \
     chemistry_data, \
     setup_fluid_container, \
     set_cosmology_units
 
-from pygrackle.utilities.testing import \
-    random_logscale, \
-    assert_rel_equal, \
-    assert_array_less
+from gracklepy.utilities.testing import random_logscale, assert_rel_equal
 
 from testing_common import grackle_data_dir
 

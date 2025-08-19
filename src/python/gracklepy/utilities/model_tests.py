@@ -16,7 +16,7 @@ import itertools
 import os
 import sys
 
-from pygrackle import chemistry_data
+from gracklepy import chemistry_data
 
 if sys.version_info < (3, 9):
     from functools import lru_cache as cache
@@ -476,7 +476,7 @@ def get_test_variables(model_name, arg_l):
 
     # we import this here, rather than at global scope to let us import the
     # module when we don't have an editable install (for testing purposes)
-    from pygrackle.utilities.data_path import grackle_data_dir
+    from gracklepy.utilities.data_path import grackle_data_dir
 
     args = _build_parser().parse_args(args=arg_l)
     model_variant = args.model_variant

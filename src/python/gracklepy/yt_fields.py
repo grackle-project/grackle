@@ -6,7 +6,7 @@ from yt.frontends.enzo.data_structures import \
     EnzoDataset
 from yt.utilities.physical_constants import \
     me, mp
-from pygrackle import \
+from gracklepy import \
     FluidContainer, \
     chemistry_data
 

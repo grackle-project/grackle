@@ -15,9 +15,9 @@ import os
 import sys
 import yt
 
-from pygrackle import add_grackle_fields
-from pygrackle.utilities.data_path import grackle_data_dir
-from pygrackle.utilities.model_tests import get_test_variables
+from gracklepy import add_grackle_fields
+from gracklepy.utilities.data_path import grackle_data_dir
+from gracklepy.utilities.model_tests import get_test_variables
 
 _MODEL_NAME = os.path.basename(__file__[:-3]) # strip off ".py"
 

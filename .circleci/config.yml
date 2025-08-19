@@ -36,7 +36,7 @@ commands:
           command: |
             source $BASH_ENV
             # libtool-bin is a requirement of the classic build-system
-            # castxml is a requirement of the pygrackle test-suite
+            # castxml is a requirement of the gracklepy test-suite
             sudo apt install -y libtool-bin castxml
             python3 -m venv $HOME/venv
             source $HOME/venv/bin/activate
@@ -53,7 +53,7 @@ commands:
             source $BASH_ENV
             source $HOME/venv/bin/activate
             cd src/python
-            flake8 pygrackle examples tests
+            flake8 gracklepy examples tests
 
   install-grackle:
     description: "Install the core Grackle Library & Pygrackle."
@@ -120,15 +120,15 @@ commands:
               Grackle_DIR=${PWD}/build pip install -v -e .
             fi
 
-  install-standalone-pygrackle:
-    description: "Install pygrackle without explicitly building the grackle library."
+  install-standalone-gracklepy:
+    description: "Install gracklepy without explicitly building the grackle library."
     parameters:
       tag:
         type: string
         default: $CIRCLE_BRANCH
     steps:
       - run:
-          name: "Install pygrackle."
+          name: "Install gracklepy."
           command: |
             source $HOME/venv/bin/activate
             git checkout << parameters.tag >>
@@ -151,16 +151,11 @@ commands:
       - run:
           name: "Download test data."
           command: |
-            source $BASH_ENV
-            source $HOME/venv/bin/activate
-            mkdir -p $YT_DATA_DIR
-            cd $YT_DATA_DIR
-            wget --quiet http://yt-project.org/data/IsolatedGalaxy.tar.gz
-            tar xzf IsolatedGalaxy.tar.gz
-            rm IsolatedGalaxy.tar.gz
+            source $BASH_ENV  # sets up YT_DATA_DIR, env variable
+            ./scripts/ci/fetch_test_data.py
 
-  run-pygrackle-tests:
-    description: "Run the pytest test-suite. This suite includes a mix of general tests and pygrackle-specific tests."
+  run-gracklepy-tests:
+    description: "Run the pytest test-suite. This suite includes a mix of general tests and gracklepy-specific tests."
     parameters:
       omp:
         type: enum
@@ -169,7 +164,7 @@ commands:
       build_kind:
         type: enum
         default: 'classic'
-        enum: ['classic', 'cmake', 'standalone-pygrackle']
+        enum: ['classic', 'cmake', 'standalone-gracklepy']
       generate:
         type: enum
         default: 'true'
@@ -188,7 +183,7 @@ commands:
             # actually execute the tests
             if [[ '<< parameters.build_kind >>' == 'classic' &&
                   '<< parameters.omp >>' == 'true' ]]; then
-              echo "ERROR: pygrackle tests can't be run in this configuration"
+              echo "ERROR: gracklepy tests can't be run in this configuration"
               exit 1
 
             else
@@ -207,8 +202,8 @@ commands:
               fi
             fi
 
-  store-pygrackle-suite-gold-standard-answers:
-    description: "Store the pygrackle test answers"
+  store-gracklepy-suite-gold-standard-answers:
+    description: "Store the gracklepy test answers"
     parameters:
       gold-standard-tag:
         description: "The gold-standard to use for generating the answers"
@@ -223,16 +218,16 @@ commands:
           name: "Build Pygrackle from Gold-Standard Commit (<< parameters.gold-standard-tag >>)"
           command: |
             source $HOME/venv/bin/activate
-            pip uninstall --yes pygrackle # it's ok if pygrackle wasn't installed yet
+            pip uninstall --yes gracklepy # it's ok if gracklepy wasn't installed yet
             git checkout << parameters.gold-standard-tag >>
             pip install -e .
             rm -rf ./my-test_answers # in case answers have already been generated
       - restore_cache:
           name: "Restore gold standard answers from cache."
           key: << parameters.gold-standard-tag >>-cache<< parameters.cache-tag >>
-      - run-pygrackle-tests:
+      - run-gracklepy-tests:
           omp: 'false'
-          build_kind: 'standalone-pygrackle'
+          build_kind: 'standalone-gracklepy'
           generate: 'true'
           overwrite: 'false'
       - save_cache:
@@ -243,7 +238,7 @@ commands:
       - run:
           command: |
             source $HOME/venv/bin/activate
-            pip uninstall --yes pygrackle
+            pip uninstall --yes gracklepy
 
 
   build-docs:
@@ -288,7 +283,7 @@ jobs:
       - install-dependencies
       - lint
       - download-test-data
-      - store-pygrackle-suite-gold-standard-answers
+      - store-gracklepy-suite-gold-standard-answers
 
       - run:
           name: "Build Standalone Pygrackle from the commit that triggered CI."
@@ -296,27 +291,27 @@ jobs:
             source $HOME/venv/bin/activate
             git checkout $CIRCLE_BRANCH
             pip install -e .
-      - run-pygrackle-tests:
+      - run-gracklepy-tests:
           omp: 'false'
-          build_kind: 'standalone-pygrackle'
+          build_kind: 'standalone-gracklepy'
           generate: 'false'
 
-      # run pygrackle-test (without answer-tests) on latest commit (CMake-build)
+      # run gracklepy-test (without answer-tests) on latest commit (CMake-build)
       - install-grackle:
           omp: 'false'
           classic_build: 'false'
           tag: $CIRCLE_BRANCH
       - run:
-          name: "pygrackle-tests (no answer-tests) on latest commit (corelib manually built with CMake)"
+          name: "gracklepy-tests (no answer-tests) on latest commit (corelib manually built with CMake)"
           command: source $BASH_ENV && source $HOME/venv/bin/activate && py.test
 
-      # run full pygrackle test-suite on latest commit (classic-build)
+      # run full gracklepy test-suite on latest commit (classic-build)
       - install-grackle:
           omp: 'false'
           classic_build: 'true'
           tag: $CIRCLE_BRANCH
       - run:
-          name: "pygrackle-tests (no answer-tests) on latest commit (corelib manually created with classic-build)"
+          name: "gracklepy-tests (no answer-tests) on latest commit (corelib manually created with classic-build)"
           command: source $BASH_ENV && source $HOME/venv/bin/activate && py.test
 
   corelib-tests:
