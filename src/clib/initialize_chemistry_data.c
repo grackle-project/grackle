@@ -37,7 +37,7 @@ extern chemistry_data_storage grackle_rates;
 
 void auto_show_config(FILE *fp);
 void auto_show_flags(FILE *fp);
-grackle_version get_grackle_version();
+grackle_version get_grackle_version(void);
 void show_parameters(FILE *fp, chemistry_data *my_chemistry);
 int _free_cloudy_data(cloudy_data *my_cloudy, chemistry_data *my_chemistry, int primordial);
 int initialize_cloudy_data(chemistry_data *my_chemistry,
@@ -396,6 +396,18 @@ int local_initialize_chemistry_data(chemistry_data *my_chemistry,
 
   }
 
+  if (my_chemistry->dust_species > 0 &&
+      my_chemistry->use_dust_density_field == 0) {
+    fprintf(stderr, "ERROR: dust_species > 0 requires use_dust_density_field > 0.\n");
+    return GR_FAIL;
+  }
+
+  if (my_chemistry->dust_species == 0 &&
+      my_chemistry->use_multiple_dust_temperatures > 0) {
+    fprintf(stderr, "ERROR: dust_species = 0 requires use_multiple_dust_temperatures = 0.\n");
+    return GR_FAIL;
+  }
+
   // Default photo-electric heating to off if unset.
   if (my_chemistry->photoelectric_heating < 0) {
     my_chemistry->photoelectric_heating = 0;
@@ -743,4 +755,16 @@ int local_free_chemistry_data(chemistry_data *my_chemistry,
   }
 
   return GR_SUCCESS;
+}
+
+int grimpl_check_consistency_(int gr_float_hdrsize) {
+  if (gr_float_hdrsize != ((int)sizeof(gr_float))) {
+    fprintf(stderr, "ERROR: Inconsistent floating-point precisions.\n"
+                    "       size of gr_float in the headers used during compilation = %d\n"
+                    "       size of gr_float in the library linked against during runtime = %d\n",
+                    gr_float_hdrsize, (int)sizeof(gr_float));
+    return GR_FAIL;
+  } else {
+    return GR_SUCCESS;
+  }
 }

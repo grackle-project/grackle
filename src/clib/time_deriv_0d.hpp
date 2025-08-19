@@ -95,12 +95,12 @@ struct Assorted1ElemBuf {
 /// in a single zone
 ///
 /// most of the data here acts a little like an adaptor layer
-/// - we effectively adapt a representation of all species (and possibly internal
-///   energy) from a vector form to the standard data structures to do typical
-///   calculations and then we adapt back to the vector format
+/// - we effectively adapt a representation of all species (and possibly
+///   internal energy) from a vector form to the standard data structures to do
+///   typical calculations and then we adapt back to the vector format
 /// - to facillitate this, we effectively create an instance of
-///   grackle_field_data that acts like a 1-elemt slice of the grackle_field_data
-///   instance that the user passed in.
+///   grackle_field_data that acts like a 1-element slice of the
+///   grackle_field_data instance that the user passed in.
 /// - this is highly inefficient, but it is logically consistent with the
 ///   original fortran code from before transcription. (We should refactor this
 ///   in the future after we finish transcription)
@@ -245,8 +245,11 @@ inline void scratchbufs_copy_into_pack(
   {
     // to help out, we define a lambda function (it captures index by value)
     auto copy_fn = [index](
-      MemberInfo member_info, auto*& pack_buf, auto*& external_buf
-    ) { pack_buf[0] = external_buf[index]; };
+      const char* name, auto*& pack_buf, auto*& external_buf,
+      const grackle::impl::visitor::BufLenSpec& spec
+    ) {
+      pack_buf[0] = external_buf[index];
+    };
 
     // unclear if the current implementation depends on the following copy, but
     // it SHOULD never be necessary
@@ -314,7 +317,8 @@ inline void scratchbufs_copy_from_pack(
   {
     // to help out, we define a lambda function (it captures index by value)
     auto copy_fn = [index](
-      MemberInfo member_info, auto*& pack_buf, auto*& external_buf
+      const char* name, auto*& pack_buf, auto*& external_buf,
+      const grackle::impl::visitor::BufLenSpec& spec
     ) { external_buf[index] = pack_buf[0]; };
 
     visit_member_pair(

@@ -1,8 +1,10 @@
-cdef extern from "grackle_types.h":
+cdef extern from "grackle.h":
+
     # This does not need to be exactly correct, only of the right basic type
     ctypedef float gr_float
 
-cdef extern from "grackle_chemistry_data.h":
+    # currently defined within "grackle_chemistry_data.h"
+    # ---------------------------------------------------
     ctypedef struct c_chemistry_data "chemistry_data":
         # no need to declare the members since there is no cython code that
         # directly accesses the struct members (dynamic api is used instead)
@@ -119,7 +121,8 @@ cdef extern from "grackle_chemistry_data.h":
         double hei_avg_crs
         double heii_avg_crs
 
-cdef extern from "grackle_types.h":
+    # currently defined within "grackle_types.h"
+    # ------------------------------------------
     ctypedef struct c_code_units "code_units":
       int comoving_coordinates
       double density_units
@@ -241,7 +244,9 @@ cdef extern from "grackle_types.h":
       const char* branch;
       const char* revision;
 
-cdef extern from "grackle.h":
+
+    # defined in "grackle.h"
+    # ----------------------
     cdef int GRACKLE_FAIL_VALUE "GR_FAIL"
     cdef int GR_SPECIFY_INITIAL_A_VALUE
 
@@ -324,3 +329,16 @@ cdef extern from "grackle.h":
     c_grackle_version c_get_grackle_version "get_grackle_version"()
 
     int gr_initialize_field_data(c_field_data *my_fields)
+
+    # the unstable API
+    ctypedef long long grunstable_rateid_type
+
+    grunstable_rateid_type grunstable_ratequery_id(const char* name)
+
+    double* grunstable_ratequery_get_ptr(
+        c_chemistry_data_storage* my_rates,
+        grunstable_rateid_type rate_id)
+
+    const char* grunstable_ith_rate(
+        unsigned long long i,
+        grunstable_rateid_type* out_rate_id)
