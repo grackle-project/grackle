@@ -453,28 +453,6 @@ inline void step_rate_newton_raphson(
         coolingheating_buf, chemheatrates_buf
       );
 
-      // before we merge the gen2024 branch into the main grackle branch we
-      // need to resolve the following issue (or at least exit gracefully)
-      // -> the easiest short-term solution is to temporarily overwrite the
-      //    value of iter
-      // -> Alternatively, we could try to reuse the existing value of tgasold.
-      //    Doing that requires some care; we need to use meaningful values
-      //    of tgasold when we iteratively call lookup_cool_rates0d for the
-      //    sake of estimating elements in the jacobian matrix.
-      GRIMPL_REQUIRE(
-        ((iter == 1) || (imp_eng[i] != 1)),
-        "there is a logical issue in the original lookup_cool_rates0d "
-        "Fortran routine when (iter != 1) AND (imp_eng == 1).\n"
-        " -> as it was originally written the routine, allocates storage\n"
-        "    for the tgasold buffer (on the stack) and leaves the value\n"
-        "    unitialized.\n"
-        " -> this is a problem when (iter != 1) and (imp_eng == 1) because\n"
-        "    cool1d_multi_g will try to make use of the unitialized variable\n"
-        " -> this isn't a problem when (iter == 1) and (imp_eng == 1) since\n"
-        "    cool1d_multi_g knows it needs to initialize tgasold. It isn't\n"
-        "    a problem when (imp_eng != 1) since cool1d_multi_g isn't called"
-      );
-
       // Save arrays at ttot(ip1)
 
       std::memcpy(dsp0.data(), dsp.data(), sizeof(double)*i_eng);
