@@ -14,7 +14,6 @@
 import importlib
 import numpy as np
 from numpy.testing import assert_almost_equal
-import subprocess
 
 def assert_rel_equal(a1, a2, decimals, err_msg='', verbose=True):
     if isinstance(a1, np.ndarray):
