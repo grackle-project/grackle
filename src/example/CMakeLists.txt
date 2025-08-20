@@ -23,17 +23,19 @@ set(CMAKE_CXX_STANDARD 11) # needed by apple-clang compiler for some examples
 add_executable(cxx_example cxx_example.C)
 target_link_libraries(cxx_example Grackle::Grackle)
 
-add_executable(cxx_grid_example cxx_grid_example.C)
-target_link_libraries(cxx_grid_example Grackle::Grackle)
-
 if (GRACKLE_USE_OPENMP)
   add_executable(cxx_omp_example cxx_omp_example.C)
-  target_link_libraries(cxx_omp_example Grackle::Grackle)
+  target_link_libraries(cxx_omp_example Grackle::Grackle OpenMP::OpenMP_CXX)
 endif()
 
-# the following target uses -O1 optimization because problems can arise with
-# higher levels of optimization. A comment in fortran_example.F provides more
-# details about the problems
-add_executable(fortran_example fortran_example.F)
-target_compile_options(fortran_example PRIVATE "-O1")
-target_link_libraries(fortran_example Grackle::Grackle)
+if (GRACKLE_USE_DOUBLE)
+  # we don't really have a good reason for why this disabled. This should
+  # really be fixed to work in single precision
+
+  # the following target uses -O1 optimization because problems can arise with
+  # higher levels of optimization. A comment in fortran_example.F provides more
+  # details about the problems
+  add_executable(fortran_example fortran_example.F)
+  target_compile_options(fortran_example PRIVATE "-O1")
+  target_link_libraries(fortran_example Grackle::Grackle)
+endif()

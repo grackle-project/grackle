@@ -1,0 +1,132 @@
+/***********************************************************************
+/
+/ this file lists each member of the collisional species reaction rates
+/ that we interpolate in 1d as a function of temperature. This list is
+/ intended to be used with X-Macros (to reduce the amount of code
+/ required to interact with these data-members)
+/
+/ Currently, we just specify each rate name. In the future, we will
+/ probably add other metadata to track the initializer function.
+/
+/ Copyright (c) 2013, Enzo/Grackle Development Team.
+/
+/ Distributed under the terms of the Enzo Public Licence.
+/
+/ The full license is in the file LICENSE, distributed with this
+/ software.
+************************************************************************/
+
+
+/**********************************
+ * primordial chemistry rate data *
+ **********************************/
+
+/* 6 species rates */
+ENTRY(k1)
+ENTRY(k2)
+ENTRY(k3)
+ENTRY(k4)
+ENTRY(k5)
+ENTRY(k6)
+
+/* 9 species rates (including H2) */
+ENTRY(k7)
+ENTRY(k8)
+ENTRY(k9)
+ENTRY(k10)
+ENTRY(k11)
+ENTRY(k12)
+ENTRY(k13)
+ENTRY(k14)
+ENTRY(k15)
+ENTRY(k16)
+ENTRY(k17)
+ENTRY(k18)
+ENTRY(k19)
+ENTRY(k20)  /* currently not used */
+ENTRY(k21)  /* currently not used */
+ENTRY(k22)  /* 3-body H2 formation */
+ENTRY(k23)  /* H2-H2 dissociation */
+
+// k13dd is currently omitted from this list. It holds the density dependent
+// version of k13 (collisional H2 dissociation)
+
+// radiative rates for 6-species (k24, k25, k26) are omitted
+// radiative rates for 9-species (k27, k28, k29, k30, k31) are omitted
+
+// 12 species rates (with Deuterium)
+ENTRY(k50)
+ENTRY(k51)
+ENTRY(k52)
+ENTRY(k53)
+ENTRY(k54)
+ENTRY(k55)
+ENTRY(k56)
+
+// New H-ionizing reactions, used for 6, 9 & 12 species chemistry
+ENTRY(k57)
+ENTRY(k58)
+
+// 15 species rates (with DM, HDII, HeHII)
+ENTRY(k125)
+ENTRY(k129)
+ENTRY(k130)
+ENTRY(k131)
+ENTRY(k132)
+ENTRY(k133)
+ENTRY(k134)
+ENTRY(k135)
+ENTRY(k136)
+ENTRY(k137)
+ENTRY(k148)
+ENTRY(k149)
+ENTRY(k150)
+ENTRY(k151)
+ENTRY(k152)
+ENTRY(k153)
+
+// Metal species chemistry rate data
+// ---------------------------------
+
+ENTRY(kz15)
+ENTRY(kz16)
+ENTRY(kz17)
+ENTRY(kz18)
+ENTRY(kz19)
+ENTRY(kz20)
+ENTRY(kz21)
+ENTRY(kz22)
+ENTRY(kz23)
+ENTRY(kz24)
+ENTRY(kz25)
+ENTRY(kz26)
+ENTRY(kz27)
+ENTRY(kz28)
+ENTRY(kz29)
+ENTRY(kz30)
+ENTRY(kz31)
+ENTRY(kz32)
+ENTRY(kz33)
+ENTRY(kz34)
+ENTRY(kz35)
+ENTRY(kz36)
+ENTRY(kz37)
+ENTRY(kz38)
+ENTRY(kz39)
+ENTRY(kz40)
+ENTRY(kz41)
+ENTRY(kz42)
+ENTRY(kz43)
+ENTRY(kz44)
+ENTRY(kz45)
+ENTRY(kz46)
+ENTRY(kz47)
+ENTRY(kz48)
+ENTRY(kz49)
+ENTRY(kz50)
+ENTRY(kz51)
+ENTRY(kz52)
+ENTRY(kz53)
+ENTRY(kz54)
+
+
