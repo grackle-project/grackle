@@ -10,6 +10,7 @@
 #endif
 
 #include "fortran_func_decls.h" // gr_mask_type
+#include "status_reporting.h"
 
 #include <cmath>
 #include <cstdio> // printf
@@ -148,90 +149,6 @@
 #else
   #define GRIMPL_RESTRICT /* ... */
 #endif
-
-// -----------------------------------------------------------------------
-// define functions/function-like-macros for internal unrecoverable errors
-// -----------------------------------------------------------------------
-// -> this section could be removed in the near future
-
-namespace grackle::impl {
-
-/// helper function that prints an error message & aborts the program.
-///
-/// This is called by function-like macros. Instead macros
-///
-/// @note
-/// On the next line ``[[noreturn]]`` is syntax used to introduce a function
-/// attribute (the double-bracket syntax was supported by C++11 and C23).
-/// In this case, ``noreturn`` informs the compiler that the function will not
-/// return (i.e. the program exits). Without this information the compiler may
-/// produce spurious compiler warnings.
-[[noreturn]] void Abort_With_Err_(const char* func_name, const char* file_name, int line_num, const char* msg, ...);
-
-} // namespace grackle::internal
-
-/// @def      __GRIMPL_FUNC__
-/// @brief    a magic contant like __LINE__ or __FILE__ used to specify the name
-///           of the current function
-///
-/// In more detail:
-/// - The C++11 standard ensures __func__ is provided on all platforms, but it
-///   only provides limited information (just the name of the function).
-/// - note that __func__ is technically not a macro. It's a static constant
-///   string implicitly defined by the compiler within each function definition
-/// - Where available, we prefer to use compiler-specific features that provide
-///   more information about the function (like the scope of the function, the
-///   the function signature, any template specialization, etc.).
-#ifdef __GNUG__
-  #define __GRIMPL_PRETTY_FUNC__ __PRETTY_FUNCTION__
-#else
-  #define __GRIMPL_PRETTY_FUNC__ __func__
-#endif
-
-
-/// @def GRIMPL_ERROR
-/// @brief function-like macro that handles a (lethal) error message
-///
-/// This macro should be treated as a function with the signature:
-///
-///   [[noreturn]] void GRIMPL_ERROR(const char* fmt, ...);
-///
-/// The ``msg`` arg is printf-style format argument specifying the error
-/// message. The remaining args arguments are used to format error message
-///
-/// @note
-/// the ``msg`` string is part of the variadic args so that there is always
-/// at least 1 variadic argument (even in cases when ``msg`` doesn't format
-/// any arguments). There is no portable way around this until C++ 20.
-///
-/// @note
-/// the ``msg`` string is part of the variadic args so that there is always
-/// at least 1 variadic argument (even in cases when ``msg`` doesn't format
-/// any arguments). There is no portable way around this until C++ 20.
-#define GRIMPL_ERROR(...)                                                      \
-  { grackle::impl::Abort_With_Err_                                             \
-      (__GRIMPL_PRETTY_FUNC__, __FILE__, __LINE__, __VA_ARGS__); }
-
-/// @def GRIMPL_REQUIRE
-/// @brief implements functionality analogous to the assert() macro
-///
-/// if the condition is false, print an error-message (with printf
-/// formatting) & abort the program.
-///
-/// This macro should be treated as a function with the signature:
-///
-///   void GRIMPL_REQUIRE(bool cond, const char* fmt, ...);
-///
-/// - The 1st arg is a boolean condition. When true, this does nothing
-/// - The 2nd arg is printf-style format argument specifying the error message
-/// - The remaining args arguments are used to format error message
-///
-/// @note
-/// The behavior is independent of the ``NDEBUG`` macro
-#define GRIMPL_REQUIRE(cond, ...)                                              \
-  {  if (!(cond))                                                              \
-      { grackle::impl::Abort_With_Err_                                         \
-         (__GRIMPL_PRETTY_FUNC__, __FILE__, __LINE__, __VA_ARGS__); } }
 
 // ---------------------------------------------
 // define some functions used in the translation
