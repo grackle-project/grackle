@@ -85,7 +85,7 @@ public:
     this->dataField_ = dataField;
 
     // sanity check:
-    if (this->dataSize() != dataField_.size()) {
+    if (this->dataSize() != (gr_i64)dataField_.size()) {
       error("InterpTable::InterpTable()",
             "dataField has the wrong number of entries.");
     }
@@ -415,7 +415,7 @@ InterpTable build_table(std::uint32_t seed,
 
   // now initialize field_data
   std::vector<double> field_data(field_size);
-  for (int i = 0; i < field_size; i++) {
+  for (std::size_t i = 0; i < field_size; i++) {
     field_data[i] = 100.0 * uniform_dist_transform_(prng) - 50.0;
   }
 
