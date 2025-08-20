@@ -116,11 +116,16 @@
 #define NULL      0
 #endif
 
+// TODO: switch every occurence of FAIL to GR_FAIL
+//  -> the use of FAIL conflicts with a macro defined by googletest
+//  -> for the moment, we provide a crude hack to work around this
+#ifndef SKIP_DEF_FAIL
 #ifdef FAIL
 #undef FAIL
 #endif
 #define FAIL      0
 #define SUCCESS   1
+#endif /* SKIP_DEF_FAIL */
 
 #ifndef FALSE
 #define FALSE     0
