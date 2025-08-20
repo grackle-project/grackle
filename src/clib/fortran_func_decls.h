@@ -179,12 +179,6 @@ void FORTRAN_NAME(calc_temp1d_cloudy_g)(
   double* clPar3, long long* clDataSize, double* clMMW, gr_mask_type* itmask
 );
 
-void FORTRAN_NAME(scale_fields_table_g)(
-  gr_float* d_data_ptr, gr_float* metal_data_ptr, int* is, int* ie, int* js,
-  int* je, int* ks, int* ke, int* in, int* jn, int* kn, int* imetal,
-  double* factor
-);
-
 void FORTRAN_NAME(cool1d_cloudy_g)(
   gr_float* d_data_ptr, double* rhoH, double* metallicity, int* in, int* jn,
   int* kn, int* is, int* ie, int* j, int* k, double* logtem, double* edot,
@@ -451,7 +445,7 @@ void FORTRAN_NAME(lookup_cool_rates1d_g)(
   double* k29shield, double* k30shield, double* k31shield, double* h2dust,
   double* ncrn, double* ncrd1, double* ncrd2, double* t1, double* t2,
   double* tdef, double* logtem, long long* indixe, double* dom,
-  double* coolunit, double* tbase1, double* xbase1, double* dx_cgs,
+  double* coolunit, double* tbase1, double* uxyz, double* xbase1, double* dx_cgs,
   double* c_ljeans, int* iradtrans, gr_float* kdissH2I_data_ptr,
   gr_float* xH2shield_data_ptr, gr_mask_type* itmask,
   gr_mask_type* itmask_metal, double* fh, gr_float* metal_data_ptr,

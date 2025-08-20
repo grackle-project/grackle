@@ -243,7 +243,8 @@ C                 endif
      &                k28shield, k29shield, k30shield, k31shield,
      &                h2dust, ncrn, ncrd1, ncrd2,
      &                t1, t2, tdef, logtem, indixe, 
-     &                dom, coolunit, tbase1, xbase1, dx_cgs, c_ljeans,
+     &                dom, coolunit, tbase1, uxyz, xbase1, dx_cgs,
+     &                c_ljeans,
      &                iradtrans, kdissH2I, xH2shield, itmask,
      &                itmask_metal
      &              , fh, metal
@@ -322,7 +323,7 @@ C                 endif
      &        iH2shieldcustom
       real*8 temstart, temend, tgas1d(in), mmw(in), dom,
      &       dtemstart, dtemend
-      real*8 coolunit, tbase1, xbase1, dx_cgs, c_ljeans
+      real*8 coolunit, tbase1, uxyz, xbase1, dx_cgs, c_ljeans
       MASK_TYPE itmask(in), anydust
 
 !     Chemistry rates as a function of temperature
@@ -1307,11 +1308,11 @@ C                 endif
                   endif
                enddo
 !              (rho / divrho) is the Sobolev-like length in cell widths
-               l_H2shield = min(dx_cgs * d(i,j,k) / abs(divrho), xbase1)
+               l_H2shield = min(dx_cgs * d(i,j,k) / (2._DKIND * abs(divrho)), xbase1)
 
 !              User-supplied length-scale field.
                else if (iH2shield == 2) then
-                  l_H2shield = xH2shield(i,j,k) * xbase1
+                  l_H2shield = xH2shield(i,j,k) * uxyz
 
 !              Jeans Length
                else if (iH2shield == 3) then
@@ -1340,7 +1341,7 @@ C                 endif
                x = 2.0E-15_DKIND * N_H2
                b_doppler = 1E-5_DKIND *
      &                 sqrt(2._DKIND * kboltz *
-     &                      tgas1d(i) / mass_h)
+     &                      tgas1d(i) / (2._DKIND * mass_h))
                f_shield = 0.965_DKIND /
      &              (1._DKIND + x/b_doppler)**aWG2019 +
      &              0.035_DKIND * exp(-8.5e-4_DKIND *
@@ -3812,10 +3813,7 @@ C           enddo
 !     Correct densities by keeping fractions the same
 
       do i = is+1, ie+1
-         correctH = real(fh*(1._DKIND - dtoh)*metalfree(i)/totalH(i)
-     &              , RKIND)
-         !! GC202005
-!!       correctH = real(fh*metalfree(i)/totalH(i), RKIND)
+         correctH = real(fh*metalfree(i)/totalH(i), RKIND)
          HI(i,j,k)  = HI(i,j,k)*correctH
          HII(i,j,k) = HII(i,j,k)*correctH
 
