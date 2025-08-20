@@ -86,7 +86,7 @@ inline std::string vec_to_string(const std::vector<double>& vec) {
     }
 
     char buf[30];
-    sprintf(buf, "%g", vec[i]);
+    snprintf(buf, 30, "%g", vec[i]);
     out += buf;
   }
   return out + "}";
