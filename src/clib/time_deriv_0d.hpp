@@ -434,9 +434,6 @@ void lookup_cool_rates0d(
 
   const int i_eng = 52;
 
-  double comp1, comp2;  // in the future, these won't need to be passed to
-                        // cool1d_multi_g
-
   // these should not be re-allocated every time we enter this function...
   // (they should all be preallocated ahead of time!)
   double dedot[1];
@@ -452,7 +449,6 @@ void lookup_cool_rates0d(
   // locals
 
   double scoef, acoef;
-  double atten, H2delta, h2heatfac, min_metallicity;
 
   // we want to avoid directly constructing an IndexRange (if the internals
   // change we don't want to fix it here). But we should probably preconstruct
@@ -557,7 +553,8 @@ void lookup_cool_rates0d(
   gr_float& reforg  = pack.fields.ref_org_dust_density[0];
   gr_float& volorg  = pack.fields.vol_org_dust_density[0];
   gr_float& H2Oice  = pack.fields.H2O_ice_dust_density[0];
-  gr_float& e       = pack.fields.internal_energy[0];
+  // the next line isn't used (we can delete it)
+  //gr_float& e       = pack.fields.internal_energy[0];
 
   grackle_field_data* my_fields = &pack.fields;
   GRIMPL_REQUIRE(
