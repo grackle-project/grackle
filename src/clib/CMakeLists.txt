@@ -31,7 +31,7 @@ else()
   set(GRACKLE_FLOAT_MACRO "GRACKLE_FLOAT_4")
 endif()
 configure_file(../include/grackle_float.h.in
-  ${GRACKLE_GENRATED_PUBLIC_HEADERS}/grackle_float.h @ONLY)
+  ${GRACKLE_GENERATED_PUBLIC_HEADERS}/grackle_float.h @ONLY)
 
 # next, declare recipe for generating auto_general.c:
 
@@ -40,7 +40,8 @@ configure_file(../include/grackle_float.h.in
 # -> VERSION_NUM may hold more information than Grackle_VERSION (e.g. like the
 #    "dev" suffix)
 
-set(_query_version "${CMAKE_CURRENT_SOURCE_DIR}/../../config/query_version.py")
+set(_query_version
+  "${CMAKE_CURRENT_SOURCE_DIR}/../../scripts/query_version.py")
 function(query_version option OUTVAR)
   execute_process(
       COMMAND ${_query_version} ${option}
@@ -96,9 +97,11 @@ add_library(Grackle_Grackle
   rate_functions.c
   set_default_chemistry_parameters.c
   solve_chemistry.c
+  status_reporting.c status_reporting.h
   update_UVbackground_rates.c
   initialize_dust_yields.c
   initialize_metal_chemistry_rates.c
+  rate_utils.c
   utils.c
 
   # auto-generated C source files
@@ -114,6 +117,10 @@ add_library(Grackle_Grackle
   utils-cpp.C utils-cpp.hpp
   utils-field.hpp
   fortran_func_wrappers.hpp
+  visitor/common.hpp
+  visitor/copy.hpp
+  visitor/memory.hpp
+  visitor/printer.hpp
 
   # Fortran Source Files
   calc_all_tdust_gasgr_1d_g.F
@@ -138,7 +145,7 @@ add_library(Grackle_Grackle
   # -> In that scenario, CMake doesn't realize it needs to generate the
   #    header(s) because the compiler can finds versions of the headers from
   #    the prior build in the standard system location.
-  ${GRACKLE_GENRATED_PUBLIC_HEADERS}/grackle_float.h
+  ${GRACKLE_GENERATED_PUBLIC_HEADERS}/grackle_float.h
 
   # although not strictly necessary, listing out other header files is a "best
   # practice" (and is needed to make them show up in certain IDEs)
@@ -146,6 +153,7 @@ add_library(Grackle_Grackle
   # C/C++ public headers
   ../include/grackle.h
   ../include/grackle_chemistry_data.h
+  ../include/grackle_misc.h
   ../include/grackle_rate_functions.h
   ../include/grackle_types.h
 
@@ -159,6 +167,7 @@ add_library(Grackle_Grackle
   index_helper.h
   interp_table_utils.h
   phys_constants.h
+  collisional_rxn_rate_members.def # <-- acts as a C header
   utils.h
   dust_const.def
 
@@ -235,7 +244,7 @@ target_include_directories(Grackle_Grackle
   # grackle AND when linking against grackle under inclusion approach #1
   # -> while it may seem unnecessary to specify the ordinary headers' directory
   #    while building grackle, it's necessary to compile auto_general.c
-  PUBLIC $<BUILD_INTERFACE:${GRACKLE_GENRATED_PUBLIC_HEADERS}> # generated hdrs
+  PUBLIC $<BUILD_INTERFACE:${GRACKLE_GENERATED_PUBLIC_HEADERS}> # generated hdrs
          $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include> # public hdrs
          $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}> # private hdrs
 
@@ -279,13 +288,7 @@ if ("${CMAKE_SYSTEM_NAME}" MATCHES "^(Linux)|(Darwin)$")
   target_compile_definitions(Grackle_Grackle PRIVATE "LINUX")
 endif()
 
-# If we are building a shared library, construct a "configuration Makefile"
-# that is used to build the code examples
-# - we're mostly just doing this to let us run the code examples as part of the
-#   pytest test suite (hence why we only do this for shared libraries)
-if (BUILD_SHARED_LIBS)
-  include(CreateExampleConfigMakefile)
-  create_example_config_Makefile(
-    "Make.examples-config" "Grackle::Grackle" "${GRACKLE_FC_FLAG}"
-  )
-endif()
+# define macro to suppress warnings about C files using our deprecated public
+# headers (the files should include grackle.h instead). We're currently holding
+# off on this to minimize conflicts with the newchem-cpp branch
+target_compile_definitions(Grackle_Grackle PRIVATE GRIMPL_PUBLIC_INCLUDE=1)

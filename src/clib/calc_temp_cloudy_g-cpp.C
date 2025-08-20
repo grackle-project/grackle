@@ -55,6 +55,17 @@ void calc_temp_cloudy_g(
       my_fields->grid_dimension[2]
     );
 
+    grackle::impl::View<gr_float***> metal;
+
+    if (imetal == 1) {
+      metal = grackle::impl::View<gr_float***>(
+        my_fields->metal_density,
+        my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1],
+        my_fields->grid_dimension[2]
+      );
+    }
+
     grackle::impl::View<gr_float***> temperature(
       temperature_data_,
       my_fields->grid_dimension[0],
@@ -83,7 +94,15 @@ void calc_temp_cloudy_g(
       const double f_H = my_chemistry->HydrogenFractionByMass;
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         itmask[i] = MASK_TRUE;
-        rhoH[i] = f_H * d(i, idx_range.j, idx_range.k);
+
+        if (imetal == 1) {
+          gr_float metal_free_density = (
+            d(i, idx_range.j, idx_range.k) - metal(i, idx_range.j, idx_range.k)
+          );
+          rhoH[i] = f_H * metal_free_density;
+        } else {
+          rhoH[i] = f_H * d(i, idx_range.j, idx_range.k);
+        }
       }
 
       // Calculate temperature and mean molecular weight
