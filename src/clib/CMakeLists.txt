@@ -112,6 +112,7 @@ add_library(Grackle_Grackle
   internal_types.C internal_types.hpp
   solve_rate_cool_g-cpp.C solve_rate_cool_g-cpp.h
   step_rate_newton_raphson.hpp
+  time_deriv_0d.hpp
   utils-cpp.C utils-cpp.hpp
   utils-field.hpp
   fortran_func_wrappers.hpp

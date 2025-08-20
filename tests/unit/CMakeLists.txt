@@ -53,6 +53,10 @@ target_link_libraries(runInterpolationTests testdeps)
 
 gtest_discover_tests(runInterpolationTests)
 
+add_executable(runLinAlgTests test_linalg.cpp)
+target_link_libraries(runLinAlgTests testdeps)
+gtest_discover_tests(runLinAlgTests)
+
 add_executable(runStatusReporting test_status_reporting.cpp)
 target_link_libraries(runStatusReporting grtest_utils)
 gtest_discover_tests(runStatusReporting)
