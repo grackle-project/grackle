@@ -476,19 +476,19 @@ std::vector<std::vector<double>> get_combinations_(
 
   int choice[5] = {0, 0, 0, 0, 0};
 
-  int out_count = pow(2, rank) - 1;
+  std::size_t out_count = std::size_t(pow(2, rank) - 1);
   std::vector<std::vector<double>> out;
   out.reserve(out_count - 1);
 
   while (out.size() < out_count) {
     std::vector<double> cur(rank);
-    for (int i = 0; i < rank; i++) {
+    for (std::size_t i = 0; i < rank; i++) {
       cur[i] = (choice[i] == 0) ? special_vals[i] : ordinary_vals[i];
     }
     out.push_back(cur);
 
     // now increment choice
-    for (int i = 0; i < rank; i++) {
+    for (std::size_t i = 0; i < rank; i++) {
       if (choice[i] == 0) {
         choice[i] = 1;
         break;
