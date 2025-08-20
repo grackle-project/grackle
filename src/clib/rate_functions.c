@@ -78,9 +78,7 @@ double k3_rate(double T, double units, chemistry_data *my_chemistry)
 double k4_rate(double T, double units, chemistry_data *my_chemistry)
 {
     double T_ev = T / 11605.0;
-    double logT_ev = log(T_ev);
 
-    double k4;
     //If case B recombination on.
     if (my_chemistry->CaseBRecombination == 1){
         return 1.26e-14 * pow(5.7067e5/T, 0.75) / units;
@@ -1004,13 +1002,13 @@ double brem_rate(double T, double units, chemistry_data *my_chemistry)
 //Calculation of vibh.
 double vibh_rate(double T, double units, chemistry_data *my_chemistry)
 {
-    //Dummy parameter used in the calculation.
-    double par_dum;
-    if (T > 1635.0) {
-        par_dum = 1.0e-12 * sqrt(T) * exp(-1000.0 / T);
-    } else {
-        par_dum = 1.4e-13 * exp( (T / 125.0) - pow(T / 577.0, 2) );
-    }
+    // The following snippet seems to be duplicated from hyd01k_rate
+    //double par_dum;
+    //if (T > 1635.0) {
+    //    par_dum = 1.0e-12 * sqrt(T) * exp(-1000.0 / T);
+    //} else {
+    //    par_dum = 1.4e-13 * exp( (T / 125.0) - pow(T / 577.0, 2) );
+    //}
 
     return 1.1e-18 * exp( -fmin(log(dhuge), 6744.0 / T) ) / units;
 }
