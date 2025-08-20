@@ -25,6 +25,7 @@ namespace grackle::impl::time_deriv_0d {
 struct FrozenSimpleArgs {
   // the following batch of args are all forwarded
   int imetal;
+  // todo: we can delete `iter`. This is only here for historical reasons
   int iter;
   double dom;
   double chunit;
@@ -54,7 +55,7 @@ struct MainScratchBuf {
 
   // the remaining buffers were originally reallocated (mostly on the stack)
   // every time calculated the time derivatives were computed
-  ColRecRxnRateCollection kcr_buf;
+  CollisionalRxnRateCollection kcr_buf;
   PhotoRxnRateCollection kshield_buf;
   GrainSpeciesCollection grain_growth_rates;
   double* k13dd; // <- only used within lookup_cool_rates1d_g
@@ -69,7 +70,7 @@ MainScratchBuf new_MainScratchBuf(void) {
   out.coolingheating_buf = new_CoolHeatScratchBuf(nelem);
   out.chemheatrates_buf = new_ChemHeatingRates(nelem);
 
-  out.kcr_buf = new_ColRecRxnRateCollection(nelem);
+  out.kcr_buf = new_CollisionalRxnRateCollection(nelem);
   out.kshield_buf = new_PhotoRxnRateCollection(nelem);
   out.grain_growth_rates = new_GrainSpeciesCollection(nelem);
   out.k13dd = (double*)malloc(sizeof(double)*14*nelem);
@@ -83,7 +84,7 @@ void drop_MainScratchBuf(MainScratchBuf* ptr) {
   drop_CoolHeatScratchBuf(&ptr->coolingheating_buf);
   drop_ChemHeatingRates(&ptr->chemheatrates_buf);
 
-  drop_ColRecRxnRateCollection(&ptr->kcr_buf);
+  drop_CollisionalRxnRateCollection(&ptr->kcr_buf);
   drop_PhotoRxnRateCollection(&ptr->kshield_buf);
   drop_GrainSpeciesCollection(&ptr->grain_growth_rates);
   GRACKLE_FREE(ptr->k13dd);
@@ -121,12 +122,12 @@ struct Assorted1ElemBuf {
 /// in a single zone
 ///
 /// most of the data here acts a little like an adaptor layer
-/// - we effectively adapt a representation of all species (and possibly internal
-///   energy) from a vector form to the standard data structures to do typical
-///   calculations and then we adapt back to the vector format
+/// - we effectively adapt a representation of all species (and possibly
+///   internal energy) from a vector form to the standard data structures to do
+///   typical calculations and then we adapt back to the vector format
 /// - to facillitate this, we effectively create an instance of
-///   grackle_field_data that acts like a 1-elemt slice of the grackle_field_data
-///   instance that the user passed in.
+///   grackle_field_data that acts like a 1-element slice of the
+///   grackle_field_data instance that the user passed in.
 /// - this is highly inefficient, but it is logically consistent with the
 ///   original fortran code from before transcription. (We should refactor this
 ///   in the future after we finish transcription)
@@ -281,8 +282,11 @@ inline void scratchbufs_copy_into_pack(
   {
     // to help out, we define a lambda function (it captures index by value)
     auto copy_fn = [index](
-      MemberInfo member_info, auto*& pack_buf, auto*& external_buf
-    ) { pack_buf[0] = external_buf[index]; };
+      const char* name, auto*& pack_buf, auto*& external_buf,
+      const grackle::impl::visitor::BufLenSpec& spec
+    ) {
+      pack_buf[0] = external_buf[index];
+    };
 
     // unclear if the current implementation depends on the following copy, but
     // it SHOULD never be necessary
@@ -350,7 +354,8 @@ inline void scratchbufs_copy_from_pack(
   {
     // to help out, we define a lambda function (it captures index by value)
     auto copy_fn = [index](
-      MemberInfo member_info, auto*& pack_buf, auto*& external_buf
+      const char* name, auto*& pack_buf, auto*& external_buf,
+      const grackle::impl::visitor::BufLenSpec& spec
     ) { external_buf[index] = pack_buf[0]; };
 
     visit_member_pair(
@@ -458,12 +463,16 @@ void derivatives(
   copy_contigSpTable_fieldmember_ptrs_(&pack.fields, rhosp, 1);
   pack.fields.internal_energy = &eint[0];
 
-
   // Compute the cooling rate, tgas, tdust, and metallicity for this row
 
   if (pack.local_edot_handling == 1) {
+    // this is a hacky bugfix
+    // -> we need my_local_iter to be 1. If it has any other value,
+    //    `cool1d_multi_g` will assume that `tgasold` was previously
+    //    initialized (it's not!) and try to use its contained value
+    int my_local_iter = 1;
     f_wrap::cool1d_multi_g(
-      pack.fwd_args.imetal, pack.idx_range_1_element, pack.fwd_args.iter,
+      pack.fwd_args.imetal, pack.idx_range_1_element, my_local_iter,
       pack.other_scratch_buf.edot, pack.other_scratch_buf.tgas,
       pack.other_scratch_buf.mmw, pack.other_scratch_buf.p2d,
       pack.other_scratch_buf.tdust, pack.other_scratch_buf.metallicity,
