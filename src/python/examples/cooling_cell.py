@@ -20,37 +20,52 @@ import os
 import sys
 import yt
 
-from pygrackle import \
+from gracklepy import \
     chemistry_data, \
     evolve_constant_density, \
     setup_fluid_container
-from pygrackle.utilities.physical_constants import \
+from gracklepy.utilities.physical_constants import \
     mass_hydrogen_cgs, \
     sec_per_Myr, \
     cm_per_mpc
-from pygrackle.utilities.data_path import grackle_data_dir
-from pygrackle.utilities.model_tests import \
-    get_model_set, \
-    model_test_format_version
 
-output_name = os.path.basename(__file__[:-3]) # strip off ".py"
+from gracklepy.utilities.data_path import grackle_data_dir
+from gracklepy.utilities.model_tests import \
+    get_test_variables
 
-if __name__ == "__main__":
-    # If we are running the script through the testing framework,
-    # then we will pass in two integers corresponding to the sets
-    # of parameters and inputs.
-    if len(sys.argv) > 1:
-        par_index = int(sys.argv[1])
-        input_index = int(sys.argv[2])
-        my_chemistry, input_set = get_model_set(
-            output_name, par_index, input_index)
-        for var, val in input_set.items():
-            globals()[var] = val
-        output_name = f"{output_name}_{par_index}_{input_index}"
-        extra_attrs = {"format_version": model_test_format_version}
+_MODEL_NAME = os.path.basename(__file__[:-3]) # strip off ".py"
 
-    # Just run the script as is.
-    else:
+def gen_plot(fc,  data, fname):
+    p1, = pyplot.loglog(data["time"].to("Myr"),
+                        data["temperature"],
+                        color="black", label="T")
+    pyplot.xlabel("Time [Myr]")
+    pyplot.ylabel("T [K]")
+    pyplot.twinx()
+    p2, = pyplot.semilogx(data["time"].to("Myr"),
+                          data["mean_molecular_weight"],
+                          color="red", label="$\\mu$")
+    pyplot.ylabel("$\\mu$")
+    pyplot.legend([p1,p2],["T","$\\mu$"], fancybox=True,
+                  loc="center left")
+    pyplot.tight_layout()
+    pyplot.savefig(fname)
+
+
+def main(args=None):
+    args = sys.argv[1:] if args is None else args
+    if len(args) != 0:  # we are using the testing framework
+        my_vars = get_test_variables(_MODEL_NAME, args)
+
+        metallicity = my_vars["metallicity"]
+        redshift = my_vars["redshift"]
+        extra_attrs = my_vars["extra_attrs"]
+        my_chemistry = my_vars["my_chemistry"]
+        output_name = my_vars["output_name"]
+
+        in_testing_framework = True
+
+    else:  # Just run the script as is.
         metallicity = 0.1 # Solar
         redshift = 0.
         # dictionary to store extra information in output dataset
@@ -64,6 +79,9 @@ if __name__ == "__main__":
         my_chemistry.UVbackground = 1
         my_chemistry.grackle_data_file = \
           os.path.join(grackle_data_dir, "CloudyData_UVB=HM2012.h5")
+
+        output_name = _MODEL_NAME
+        in_testing_framework = False
 
     density = 0.1 * mass_hydrogen_cgs # g /cm^3
     temperature = 1e6 # K
@@ -93,21 +111,14 @@ if __name__ == "__main__":
         fc, final_time=final_time,
         safety_factor=0.01)
 
-    p1, = pyplot.loglog(data["time"].to("Myr"),
-                        data["temperature"],
-                        color="black", label="T")
-    pyplot.xlabel("Time [Myr]")
-    pyplot.ylabel("T [K]")
-    pyplot.twinx()
-    p2, = pyplot.semilogx(data["time"].to("Myr"),
-                          data["mean_molecular_weight"],
-                          color="red", label="$\\mu$")
-    pyplot.ylabel("$\\mu$")
-    pyplot.legend([p1,p2],["T","$\\mu$"], fancybox=True,
-                  loc="center left")
-    pyplot.tight_layout()
-    pyplot.savefig(f"{output_name}.png")
+    if not in_testing_framework:
+        gen_plot(fc, data, fname=f"{output_name}.png")
 
     # save data arrays as a yt dataset
     yt.save_as_dataset({}, f"{output_name}.h5",
                        data=data, extra_attrs=extra_attrs)
+    return 0
+
+
+if __name__ == '__main__':
+    sys.exit(main())

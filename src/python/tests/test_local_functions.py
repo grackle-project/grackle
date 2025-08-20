@@ -17,29 +17,21 @@ import numpy as np
 import os
 
 from numpy.testing import assert_approx_equal
-from unittest import TestCase
 
-from pygrackle import \
+from gracklepy import \
     FluidContainer, \
     chemistry_data, \
     setup_fluid_container
 
-from pygrackle.utilities.physical_constants import \
+from gracklepy.utilities.physical_constants import \
     cm_per_mpc, \
     mass_hydrogen_cgs, \
     sec_per_Myr
 
-from pygrackle.utilities.testing import ensure_dir
-
-from testing_common import \
-    generate_test_results, \
-    grackle_data_dir, \
-    test_answers_dir
+from testing_common import grackle_data_dir
 
 local_function_test_format_version = 1
 _meta_data = {"format_version": local_function_test_format_version}
-
-ensure_dir(test_answers_dir)
 
 parameter_grid = {
     "use_grackle": (1,),
@@ -100,7 +92,7 @@ def failure_str(my_pars, my_units, my_in, my_out, comp_out, field):
     msg += f"stored output: {comp_out[field]}"
     return msg
 
-class LocalFunctionsTest(TestCase):
+class TestLocalFunctions:
     """
     Tests for the local functions.
     """
@@ -108,11 +100,11 @@ class LocalFunctionsTest(TestCase):
     n_input_sets = 10
     seed = 21062024
     digits = 12
-    test_file = os.path.join(test_answers_dir, "local_function_tests.json")
+    test_file_basename = "local_function_tests.json"
 
-    def setUp(self):
+    def setup_parameter_sets(self, generate_answers, test_file):
         """
-        Setup local function tests.
+        Setup parameter-sets for local function tests.
 
         If we are generating results, then create a list of parameter values
         from the parameter_grid and exclude_sets structures defined above.
@@ -121,29 +113,31 @@ class LocalFunctionsTest(TestCase):
         If we are not generating results, then read everything in from the
         json test file.
         """
+        # if we need to reuse this functionality, we need should remove this
+        # from the class and convert it into a pytest fixture
 
-        if generate_test_results:
+        if generate_answers:
             my_sets = self.generate_parameter_sets()
             self.test_sets = [{"parameters": my_set, "units": base_units}
                               for my_set in my_sets]
         else:
-            if not os.path.exists(self.test_file):
-                self.skipTest(f"Test file not found: {self.test_file}.")
-            with open(self.test_file, mode="r") as f:
+            if not os.path.exists(test_file):
+                self.skipTest(f"Test file not found: {test_file}.")
+            with open(test_file, mode="r") as f:
                 self.test_sets = json.load(f)
             load_meta = self.test_sets.pop(0)
             assert load_meta["format_version"] == _meta_data["format_version"], \
               f"Test version mismatch: data file is {load_meta['format_version']}, " + \
               f"source code is {_meta_data['format_version']}."
 
-    def tearDown(self):
+    def finish_tests(self, generate_answers, test_file):
         """
         Write json test file if we are generating resuls.
         """
-        if generate_test_results:
+        if generate_answers:
             # add the format version to the output
             self.test_sets.insert(0, _meta_data)
-            with open(self.test_file, mode="w") as f:
+            with open(test_file, mode="w") as f:
                 f.write(json.dumps(self.test_sets, indent=4))
 
     def generate_parameter_sets(self):
@@ -194,7 +188,9 @@ class LocalFunctionsTest(TestCase):
                        for i in range(self.n_input_sets)]
         return base_inputs
 
-    def test_local_functions(self):
+    def test_local_functions(self, answertestspec):
+        test_file = os.path.join(answertestspec.answer_dir, self.test_file_basename)
+        self.setup_parameter_sets(answertestspec.generate_answers, test_file)
         for test_set in self.test_sets:
 
             par_set = test_set["parameters"]
@@ -209,7 +205,7 @@ class LocalFunctionsTest(TestCase):
                 setattr(my_chemistry, "grackle_data_file",
                         os.path.join(grackle_data_dir, par_set["grackle_data_file"]))
 
-            if generate_test_results:
+            if answertestspec.generate_answers:
                 my_tests = []
                 base_inputs = self.generate_base_inputs()
                 n_input_sets = len(base_inputs)
@@ -220,7 +216,7 @@ class LocalFunctionsTest(TestCase):
 
             for itest in range(n_input_sets):
                 my_units = base_units.copy()
-                if generate_test_results:
+                if answertestspec.generate_answers:
                     base_input_set = base_inputs[itest]
                     redshift = base_input_set["redshift"]
                 else:
@@ -232,7 +228,7 @@ class LocalFunctionsTest(TestCase):
                     setattr(my_chemistry, unit, val)
                 my_chemistry.set_velocity_units()
 
-                if generate_test_results:
+                if answertestspec.generate_answers:
                     fc = setup_fluid_container(
                         my_chemistry,
                         density=base_input_set["density"],
@@ -262,7 +258,7 @@ class LocalFunctionsTest(TestCase):
                     my_out[fname] = fc[fname][0]
 
                 # Compare with existing results unless we are generating them.
-                if generate_test_results:
+                if answertestspec.generate_answers:
                     my_tests.append({"input": my_in, "output": my_out})
                 else:
                     comp_out = my_tests[itest]["output"]
@@ -275,5 +271,6 @@ class LocalFunctionsTest(TestCase):
                             significant=self.digits,
                             err_msg=err_msg)
 
-            if generate_test_results:
+            if answertestspec.generate_answers:
                 test_set["tests"] = my_tests
+        self.finish_tests(answertestspec.generate_answers, test_file)
