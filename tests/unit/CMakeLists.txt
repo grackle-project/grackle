@@ -19,14 +19,6 @@ target_compile_definitions(testdeps
 target_include_directories(testdeps INTERFACE ${PROJECT_SOURCE_DIR}/src/clib)
 target_compile_features(testdeps INTERFACE cxx_std_17)
 
-target_compile_definitions(testdeps
-  # short-term hack to get path input-file directory
-  # - an alternative, slightly nicer hack is introduced by PR #254
-  # - we can totally remove this hack once we introduce automatic file
-  #   management in PR 235, PR 237, and PR 246
-  INTERFACE GR_DATADIR=${CMAKE_CURRENT_SOURCE_DIR}/../../grackle_data_files/input/
-)
-
 # declare the grtest utility library
 # ----------------------------------
 # -> this is an internal library that defines reusable testing utilities
@@ -59,7 +51,7 @@ target_compile_definitions(grtest_utils
 add_executable(runInterpolationTests
   test_unit_interpolators_g.cpp test_interpolators_comparisons.cpp
 )
-target_link_libraries(runInterpolationTests testdeps)
+target_link_libraries(runInterpolationTests grtest_utils)
 
 gtest_discover_tests(runInterpolationTests)
 

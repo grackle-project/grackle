@@ -22,6 +22,8 @@
 #define SKIP_DEF_FAIL
 #endif /* SKIP_DEF_FAIL */
 
+#include "grtest_utils.hpp"
+
 
 extern "C" {
   #include <grackle.h>
@@ -254,9 +256,9 @@ struct DummyGrackleConfig{
     if ((n_tab_dims <= 0) || (n_tab_dims > 3)) {
       error("n_tab_dims must be 1, 2, or 3\n");
     } else if (n_tab_dims <= 2) {
-      my_chem.grackle_data_file = stringify(GR_DATADIR) "/CloudyData_noUVB.h5";
+      grtest::set_standard_datafile(my_chem, "CloudyData_noUVB.h5");
     } else {
-      my_chem.grackle_data_file = stringify(GR_DATADIR) "/CloudyData_UVB=HM2012.h5";
+      grtest::set_standard_datafile(my_chem, "CloudyData_UVB=HM2012.h5");
     }
 
     chemistry_data_storage my_rates;
