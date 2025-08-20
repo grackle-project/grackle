@@ -1,7 +1,7 @@
 
 -------
 
-This binary distribution of Pygrackle also distributes the following software:
+This binary distribution of Gracklepy also distributes the following software:
 
 Name: HDF5
 Files: @PREFIX@/libhdf5*

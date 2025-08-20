@@ -14,13 +14,13 @@
 import numpy as np
 import sys
 
-from pygrackle.fluid_container import \
+from gracklepy.fluid_container import \
     _element_masses, \
     _metal_yield_densities, \
     FluidContainer
 
-from pygrackle.utilities.atomic import solar_abundance
-from pygrackle.utilities.physical_constants import \
+from gracklepy.utilities.atomic import solar_abundance
+from gracklepy.utilities.physical_constants import \
     mass_hydrogen_cgs, \
     sec_per_Myr
 

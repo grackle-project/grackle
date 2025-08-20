@@ -11,7 +11,7 @@
 # software.
 ########################################################################
 
-from pygrackle.grackle_wrapper import get_grackle_version
+from gracklepy.grackle_wrapper import get_grackle_version
 from packaging.version import Version, InvalidVersion
 
 import shutil

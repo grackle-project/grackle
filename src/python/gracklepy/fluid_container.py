@@ -15,7 +15,7 @@ import numpy as np
 from unyt import unyt_array
 import warnings
 
-from pygrackle.grackle_wrapper import \
+from gracklepy.grackle_wrapper import \
     calculate_cooling_time, \
     calculate_gamma, \
     calculate_pressure, \
@@ -23,10 +23,10 @@ from pygrackle.grackle_wrapper import \
     calculate_dust_temperature, \
     solve_chemistry
 
-from pygrackle.utilities.misc import \
+from gracklepy.utilities.misc import \
     issue_deprecation_warning
 
-from pygrackle.utilities.physical_constants import \
+from gracklepy.utilities.physical_constants import \
     mass_hydrogen_cgs
 
 # approximate masses of each "element" we follow
@@ -351,7 +351,7 @@ class FluidContainer(dict):
         if key in _deprecations:
             new_field = _deprecations[key]
             warn = f"The {key} field is deprecated and will be removed in " + \
-              f"Pygrackle 1.1. Use {new_field} instead."
+              f"Gracklepy 1.1. Use {new_field} instead."
             issue_deprecation_warning(warn)
             return self[new_field]
 
@@ -363,7 +363,7 @@ class FluidContainer(dict):
     @property
     def cooling_units(self):
         warn = "The cooling_units attribute is deprecated and will be " +\
-          "removed in Pygrackle 1.1. Use chemistry_data.cooling_units instead."
+          "removed in Gracklepy 1.1. Use chemistry_data.cooling_units instead."
         issue_deprecation_warning(warn)
         return self.chemistry_data.cooling_units
 
@@ -384,7 +384,7 @@ class FluidContainer(dict):
 
     def calculate_hydrogen_number_density(self):
         warn = "calculate_hydrogen_number_density is deprecated and will " + \
-          "be removed in Pygrackle 1.1. Use calculate_nuclei_density(\"H\") " + \
+          "be removed in Gracklepy 1.1. Use calculate_nuclei_density(\"H\") " + \
           "instead."
         issue_deprecation_warning(warn)
         self.calculate_nuclei_density("H")

@@ -13,17 +13,11 @@
 
 import importlib
 import numpy as np
-from numpy.testing import assert_array_equal, assert_almost_equal, \
-    assert_approx_equal, assert_array_almost_equal, assert_equal, \
-    assert_array_less, assert_string_equal, assert_array_almost_equal_nulp,\
-    assert_allclose, assert_raises
-import os
-import shutil
-import subprocess
+from numpy.testing import assert_almost_equal
 
 def assert_rel_equal(a1, a2, decimals, err_msg='', verbose=True):
     if isinstance(a1, np.ndarray):
-        assert(a1.size == a2.size)
+        assert a1.size == a2.size
         # Mask out NaNs
         a1[np.isnan(a1)] = 1.0
         a2[np.isnan(a2)] = 1.0
@@ -49,6 +43,7 @@ def requires_module(module):
     """
     def ffalse(func):
         return lambda: None
+
     def ftrue(func):
         return func
     try:
