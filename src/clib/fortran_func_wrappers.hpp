@@ -28,10 +28,31 @@
 #include "internal_types.hpp"
 #include "internal_units.h"
 #include "LUT.hpp"
+#include "utils-cpp.hpp"
 
 // callers of these functions are generally expected to locally shorten the
 // namespace name when they call these routines
 namespace grackle::impl::fortran_wrapper {
+
+inline void calc_temp1d_cloudy_g(
+  double* rhoH, IndexRange idx_range, double* tgas, double* mmw, double dom,
+  double zr, int imetal, cloudy_data cloudy_primordial, gr_mask_type* itmask,
+  chemistry_data* my_chemistry, grackle_field_data* my_fields,
+  InternalGrUnits internalu
+) {
+  FORTRAN_NAME(calc_temp1d_cloudy_g)(
+    my_fields->density, my_fields->metal_density, my_fields->internal_energy, rhoH,
+    &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &my_fields->grid_start[0], &my_fields->grid_end[0], &idx_range.jp1, &idx_range.kp1,
+    tgas, mmw, &dom, &zr,
+    &my_chemistry->TemperatureStart, &my_chemistry->TemperatureEnd,
+    &my_chemistry->Gamma, &internalu.utem, &imetal,
+    &cloudy_primordial.grid_rank, cloudy_primordial.grid_dimension,
+    cloudy_primordial.grid_parameters[0], cloudy_primordial.grid_parameters[1], cloudy_primordial.grid_parameters[2],
+    &cloudy_primordial.data_size, cloudy_primordial.mmw_data,
+    itmask
+  );
+
+}
 
 inline void ceiling_species_g(
   int imetal, chemistry_data* my_chemistry, grackle_field_data* my_fields
@@ -189,8 +210,230 @@ inline void cool1d_multi_g(
 
 }
 
+
+/// Performs Gauss-Jordan elimination to solve the specified system of linear
+/// equations and inverts the coefficient matrix.
+///
+/// In more detail, it solves the linear matrix `ax=b`, where `a` is the
+/// square coefficient matrix, `b` is the right-hand side vector and `x`
+/// is the solution vector
+///
+/// @param[in]     n The number of linear equations being solved
+/// @param[in,out] coef_matrix An n by n array that initially specifies the
+///    coefficient matrix. It's overwritten by the inverted matrix.
+/// @param[in,out] vec An n element array that initially specifies the
+///    right-hand side vector. It's overwritten by the solution vector.
+///
+/// @retval 0 indicates success
+/// @retval 1 indicates that the matrix is singular
+///
+/// > [!important]
+/// > This appears to be taken directly from a routine provided in
+/// > "Numerical Recipes" and slightly adapted. The original text allows
+/// > `b` to hold multiple right-hand side vectors (and then we compute
+/// > solutions for each right-hand side vector at the same time). In
+/// > contrast, only allow 1 vector).
+/// >
+/// > The original Numerical Recipes snippet can be found here
+/// > https://phys.uri.edu/nigh/NumRec/bookfpdf/f2-1.pdf
+/// >
+/// > Code from Numerical Recipes CANNOT be merged into Grackle (the
+/// > licensing is fundamentally incompatible)
+///
+/// @todo
+/// We need to replace this for reasons highlighted up above. When we do that,
+/// we should account that the only place that calls this routine only needs
+/// the solution to the system of equations (i.e. it does not need the
+/// inverted matrix). For that reason, we may want to rename this to something
+/// a little more generic. We should also consider information highlighted
+/// within https://github.com/grackle-project/grackle/issues/255
+inline int gaussj_g(int n, double* coef_matrix, double* vector) {
+  int ierr;
+  FORTRAN_NAME(gaussj_g)(&n, coef_matrix, vector, &ierr);
+  return ierr;
+}
+
+/// wrapper for 1d interpolation
+inline double interpolate_1d_g(
+  double input1,
+  const gr_i64 * GRIMPL_RESTRICT gridDim, // 1 elements
+  const double * GRIMPL_RESTRICT gridPar1, double dgridPar1,
+  gr_i64 dataSize, const double * GRIMPL_RESTRICT dataField
+) {
+  double value;
+  FORTRAN_NAME(interpolate_1d_g)(
+    &input1, gridDim, gridPar1, &dgridPar1, &dataSize, dataField, &value
+  );
+  return value;
+}
+
+/// wrapper for 2d interpolation
+inline double interpolate_2d_g(
+  double input1, double input2,
+  const gr_i64 * GRIMPL_RESTRICT gridDim, // 2 elements
+  const double * GRIMPL_RESTRICT gridPar1, double dgridPar1,
+  const double * GRIMPL_RESTRICT gridPar2, double dgridPar2,
+  gr_i64 dataSize, const double* dataField
+) {
+  double value;
+  FORTRAN_NAME(interpolate_2d_g)(
+    &input1, &input2,
+    gridDim,
+    gridPar1, &dgridPar1, gridPar2, &dgridPar2,
+    &dataSize, dataField, &value
+  );
+  return value;
+}
+
+/// Helper function used to implement interpolate_3dz_g
+inline double interpolate_2df3d_g(
+  double input1, double input3,
+  const gr_i64* GRIMPL_RESTRICT gridDim, // 3 elements
+  const double* GRIMPL_RESTRICT gridPar1, double dgridPar1,
+  gr_i64 index2,
+  const double* GRIMPL_RESTRICT gridPar3, double dgridPar3,
+  gr_i64 dataSize,
+  const double* GRIMPL_RESTRICT dataField
+) {
+
+  double value;
+  FORTRAN_NAME(interpolate_2df3d_g)(
+    &input1, &input3,
+    gridDim,
+    gridPar1, &dgridPar1, &index2, gridPar3, &dgridPar3,
+    &dataSize, dataField, &value
+  );
+  return value;
+
+}
+
+/// Similar to interpolate_3d_g except index2 is calculated ahead of time
+/// because it corresponds to redshift, which will not change for the entire
+/// grid during the current calculation.
+inline double interpolate_3dz_g(
+  double input1, double input2, double input3,
+  const gr_i64 * GRIMPL_RESTRICT gridDim, // 3 elements
+  const double * GRIMPL_RESTRICT gridPar1, double dgridPar1,
+  const double * GRIMPL_RESTRICT gridPar2, gr_i64 index2,
+  const double * GRIMPL_RESTRICT gridPar3, double dgridPar3,
+  gr_i64 dataSize, const double * GRIMPL_RESTRICT dataField,
+  gr_i64 end_int
+) {
+
+  double value;
+  FORTRAN_NAME(interpolate_3dz_g)(
+    &input1, &input2, &input3,
+    gridDim,
+    gridPar1, &dgridPar1, gridPar2, &index2, gridPar3, &dgridPar3,
+    &dataSize, dataField, &end_int, &value
+  );
+  return value;
+
+}
+
+/// wraps 3d interpolator functions
+inline double interpolate_3d_g(
+  double input1, double input2, double input3,
+  const gr_i64 * GRIMPL_RESTRICT gridDim, // 3 elements
+  const double * GRIMPL_RESTRICT gridPar1, double dgridPar1,
+  const double * GRIMPL_RESTRICT gridPar2, double dgridPar2,
+  const double * GRIMPL_RESTRICT gridPar3, double dgridPar3,
+  gr_i64 dataSize, const double * GRIMPL_RESTRICT dataField
+) {
+
+  double value;
+  FORTRAN_NAME(interpolate_3d_g)(
+    &input1, &input2, &input3,
+    gridDim,
+    gridPar1, &dgridPar1, gridPar2, &dgridPar2, gridPar3, &dgridPar3,
+    &dataSize, dataField, &value
+  );
+  return value;
+
+}
+
+/// wraps 4d interpolator functions
+inline double interpolate_4d_g(
+  double input1, double input2, double input3, double input4,
+  const gr_i64 * GRIMPL_RESTRICT gridDim, // 4 elements
+  const double * GRIMPL_RESTRICT gridPar1, double dgridPar1,
+  const double * GRIMPL_RESTRICT gridPar2, double dgridPar2,
+  const double * GRIMPL_RESTRICT gridPar3, double dgridPar3,
+  const double * GRIMPL_RESTRICT gridPar4, double dgridPar4,
+  gr_i64 dataSize, const double * GRIMPL_RESTRICT dataField
+) {
+
+  double value;
+  FORTRAN_NAME(interpolate_4d_g)(
+    &input1, &input2, &input3, &input4,
+    gridDim,
+    gridPar1, &dgridPar1, gridPar2, &dgridPar2, gridPar3, &dgridPar3,
+    gridPar4, &dgridPar4,
+    &dataSize, dataField, &value
+  );
+  return value;
+
+}
+
+/// wraps 5d interpolation routine
+inline double interpolate_5d_g(
+  double input1, double input2, double input3, double input4, double input5,
+  const gr_i64 * GRIMPL_RESTRICT gridDim, // 5 elements
+  const double * GRIMPL_RESTRICT gridPar1, double dgridPar1,
+  const double * GRIMPL_RESTRICT gridPar2, double dgridPar2,
+  const double * GRIMPL_RESTRICT gridPar3, double dgridPar3,
+  const double * GRIMPL_RESTRICT gridPar4, double dgridPar4,
+  const double * GRIMPL_RESTRICT gridPar5, double dgridPar5,
+  gr_i64 dataSize, const double * GRIMPL_RESTRICT dataField
+) {
+
+  double value;
+  FORTRAN_NAME(interpolate_5d_g)(
+    &input1, &input2, &input3, &input4, &input5,
+    gridDim,
+    gridPar1, &dgridPar1, gridPar2, &dgridPar2, gridPar3, &dgridPar3,
+    gridPar4, &dgridPar4, gridPar5, &dgridPar5,
+    &dataSize, dataField, &value
+  );
+  return value;
+
+}
+
 /// This routine uses the temperature to look up the chemical rates that are
 /// tabulated in a log table as a function of temperature
+///
+/// > [!important]
+/// > TODO: The role of the `dt` argument **MUST** be clarified! It is passed
+/// > different values in different areas of the codebase!!!!
+/// > - `solve_rate_cool_g` passes in the value of the total timestep that the
+/// >   chemistry is evolved. This is the traditional meaning of `dt`
+/// > - the time derivative calculation within `step_rate_newton_raphson`
+/// >   passes the timestep of the current subcycle (effectively the whole
+/// >   function is only being called for a single element idx_range)
+/// >
+/// > Internally, this arg only appears to be used to determine dust grain
+/// > destruction rate.
+/// > - the dust destruction rate is 0 for all temperatures below some
+/// >   threshold (the threshold depends on the grain species)
+/// > - above the threshold, the destruction rate is essentially the current
+/// >   grain density divided by the value of the `dt` argument
+/// >
+/// > If you think about it:
+/// > - I'd argue that setting `dt` to the whole timestep that we are evolving
+/// >   the zone over is blatantly wrong. It violates the principle that you
+/// >   should get consistent results whether you invoke grackle 100 separate
+/// >   times or just 1 time. (The amount of dust heating would change)
+/// > - setting `dt` to the current subcycle timestep makes a lot more sense
+/// >   (and is the only logical choice)
+/// >   - It is roughly equivalent to saying that dust is immediately destroyed
+/// >     once the gas reaches a threshold temperature.
+/// >   - the model is overly simplistic since dust grains can survive for
+/// >     quite in ionized gas (see for example
+/// >     https://ui.adsabs.harvard.edu/abs/2024ApJ...974...81R/abstract)
+/// >
+/// > If we stick with this instantaneous destruction model, then all
+/// > dust-grain related heating and cooling should probably assume that the
+/// > dust-grain density is already 0.
 inline void lookup_cool_rates1d_g(
   IndexRange idx_range, gr_mask_type anydust, double* tgas1d, double* mmw,
   double* tdust, double* dust2gas, double* k13dd, double* h2dust,

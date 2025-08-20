@@ -11,6 +11,21 @@
 
 namespace grackle::impl {
 
+/// maps a 3D index to the underlying 1D index of a contiguous memory buffer
+/// "using a layout_left mapping policy." We assume 0-based indexing
+///
+/// "layout_left" is terminology adapted from the C++ standard:
+/// - it refers to the idea that the leftmost extent/index has a stride of 1
+///   and the sizes of strides increase as you go left to right
+/// - this is the mapping used by default in fortran (note - we sill use
+///   0-based indexing). It is sometimes called "column-major order"
+///
+/// @note
+/// This may not be the best spot for this definition
+inline int layoutleft_3D_index_to_1D_(const int* extent, int i, int j, int k) {
+  return i + extent[0] * (j + extent[1] * k);
+}
+
 /// This helper function essentially is used to make a kind of slice of an
 /// instance of grackle_field_data
 ///
@@ -38,6 +53,32 @@ inline void copy_offset_fieldmember_ptrs_(grackle_field_data* dest,
 #undef ENTRY
 
 #undef GRIMPL_OFFSET_PTR_CPY
+}
+
+/// This helper function is used to store store pointers corresponding to
+/// contiguous chunks of a species density table within pointers of a
+/// grackle_field_data struct.
+///
+/// The underlying assumption is that the species table is organized as a
+/// (nelem_elem_per_species, SpLUT::NUM_ENTRIES) array, where the values of
+/// a given species are all contiguous
+///
+/// @note
+/// This should only be used as a temporary measure during initial
+/// transcription. In the long-term, the full grackle_field_data struct is not
+/// well suited to be the common container that all chemistry functions operate
+/// on.
+inline void copy_contigSpTable_fieldmember_ptrs_(grackle_field_data* my_fields,
+                                                 gr_float* species_table,
+                                                 long long nelem_per_species) {
+  GRIMPL_REQUIRE(nelem_per_species > 0,
+                 "The number of elements per species must exceed 0");
+
+#define ENTRY(SPECIES_NAME)                                                    \
+  my_fields->SPECIES_NAME##_density =                                          \
+      (&species_table[nelem_per_species * SpLUT::SPECIES_NAME]);
+#include "field_data_evolved_species.def"
+#undef ENTRY
 }
 
 /// this is an adaptor to support using SpLUT with grackle_field_data
