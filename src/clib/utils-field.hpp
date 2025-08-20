@@ -55,7 +55,6 @@ inline void copy_offset_fieldmember_ptrs_(grackle_field_data* dest,
 #undef GRIMPL_OFFSET_PTR_CPY
 }
 
-
 /// This helper function is used to store store pointers corresponding to
 /// contiguous chunks of a species density table within pointers of a
 /// grackle_field_data struct.
@@ -69,20 +68,17 @@ inline void copy_offset_fieldmember_ptrs_(grackle_field_data* dest,
 /// transcription. In the long-term, the full grackle_field_data struct is not
 /// well suited to be the common container that all chemistry functions operate
 /// on.
-inline void copy_contigSpTable_fieldmember_ptrs_(grackle_field_data *my_fields,
+inline void copy_contigSpTable_fieldmember_ptrs_(grackle_field_data* my_fields,
                                                  gr_float* species_table,
-                                                 long long nelem_per_species)
-{
+                                                 long long nelem_per_species) {
   GRIMPL_REQUIRE(nelem_per_species > 0,
                  "The number of elements per species must exceed 0");
 
-  #define ENTRY(SPECIES_NAME)                                  \
-    my_fields->SPECIES_NAME ## _density = (                    \
-      &species_table[nelem_per_species * SpLUT::SPECIES_NAME]  \
-    );
-  #include "field_data_evolved_species.def"
-  #undef ENTRY
-
+#define ENTRY(SPECIES_NAME)                                                    \
+  my_fields->SPECIES_NAME##_density =                                          \
+      (&species_table[nelem_per_species * SpLUT::SPECIES_NAME]);
+#include "field_data_evolved_species.def"
+#undef ENTRY
 }
 
 /// this is an adaptor to support using SpLUT with grackle_field_data
