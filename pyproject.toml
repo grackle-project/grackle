@@ -5,8 +5,8 @@
 # (rather than in src/python):
 #   1. it ensures that the source-distribution of our source-directory and the
 #      SDist we'll eventually distribute via PyPI will have the same structure
-#   2. it ensures that pygrackle can be installable by invoking
-#      pip install pygrackle @ git+https://github.com/grackle-project/grackle
+#   2. it ensures that gracklepy can be installable by invoking
+#      pip install gracklepy @ git+https://github.com/grackle-project/grackle
 
 [build-system]
 requires=[
@@ -21,12 +21,12 @@ requires=[
 build-backend = "scikit_build_core.build"
 
 [project]
-name = "pygrackle"
+name = "gracklepy"
 description = "A wrapper for the Grackle chemistry library"
 readme = "README.rst"
 # A simpler project could infer used to infer the version number from git:
 #    https://scikit-build-core.readthedocs.io/en/latest/configuration.html#dynamic-metadata
-# but pygrackle can't (currently) do this since it lives in a "monorepo"
+# but gracklepy can't (currently) do this since it lives in a "monorepo"
 #    https://github.com/pypa/setuptools_scm/issues/1056
 version = "1.1.1.dev1"
 classifiers=[
@@ -67,7 +67,7 @@ Tracker = 'https://github.com/grackle-project/grackle/issues'
 [project.optional-dependencies]
 # currently the next line duplicates the dependency-groups purely for
 # historical reasons. We should delete the following entry in the near-future
-# (since they are actually dependencies of the pygrackle-wheel).
+# (since they are actually dependencies of the gracklepy-wheel).
 dev = ['flake8', 'packaging', 'pytest', 'sphinx', 'sphinx-tabs', 'furo']
 
 [dependency-groups]
@@ -124,10 +124,10 @@ sdist.exclude = [
     #    cloning the git repository for that purpose
     # -> this would also make the sdist ~65 times bigger
     "input", "grackle_data_files",
-    # if we aren't including data-files, there's no reason to include pygrackle-tests
+    # if we aren't including data-files, there's no reason to include gracklepy-tests
     # (all meaningful tests will currently fail)
     "src/python/tests",
-    # if we aren't including data-files, there's no reason to include the pygrackle
+    # if we aren't including data-files, there's no reason to include the gracklepy
     # code examples (they currently require editable installations)
     "src/python/examples",
     # for consistency, we exclude the core-library tests and examples
@@ -137,7 +137,7 @@ sdist.exclude = [
 ]
 
 # A list of packages to auto-copy into the wheel.
-wheel.packages = ["./src/python/pygrackle"]
+wheel.packages = ["./src/python/gracklepy"]
 
 # A set of patterns to exclude from the wheel. This is additive to the SDist
 # exclude patterns.
@@ -156,7 +156,7 @@ if.from-sdist = true
 # maybe we should move most of this message to the website and provide a link
 # to the website
 messages.after-failure = """
-{bold.red}Your build of pygrackle from a sdist failed.{normal} (You should
+{bold.red}Your build of gracklepy from a sdist failed.{normal} (You should
 ignore the rest of this message if you were explicitly want to install from an
 sdist).
 
@@ -173,7 +173,7 @@ For more context:
      dependencies). During installation, your package manager copies the
      precompiled extension module & any dependencies to the installation
 
-- Since your package manager tried to install pygrackle from a sdist, that
+- Since your package manager tried to install gracklepy from a sdist, that
   probably means that a wheel isn't available for your current python version
   on the {platform.platform} (with the {platform.machine}). If this is a common
   Unix platform, please let the us (the Grackle developers know) and we can
@@ -183,7 +183,7 @@ For more context:
   is too old, you are missing a dependency (e.g. hdf5), or the build-system
   can't automatically infer some of this info.
 
-- We recommend installing pygrackle directly from the git repository. We provide
+- We recommend installing gracklepy directly from the git repository. We provide
   detailed instructions on our website (https://grackle.readthedocs.io). If you
   encounter further problems, please reach out.
 """
@@ -206,8 +206,8 @@ ignore = ["E402", "E502", "E701", "E731"]
 
 exclude = [
     # these are based on flake8's exclude-list
-    "src/python/pygrackle/__init__.py",
-    "src/python/pygrackle/utilities/testing.py",
+    "src/python/gracklepy/__init__.py",
+    "src/python/gracklepy/utilities/testing.py",
 ]
 
 [tool.ruff.format]
@@ -227,21 +227,21 @@ exclude = [
     "src/python/examples/cooling_rate.py",
     "src/python/examples/freefall.py",
     "src/python/examples/yt_grackle.py",
-    "src/python/pygrackle/__init__.py",
-    "src/python/pygrackle/api.py",
-    "src/python/pygrackle/fluid_container.py",
-    "src/python/pygrackle/utilities/__init__.py",
-    "src/python/pygrackle/utilities/api.py",
-    "src/python/pygrackle/utilities/convenience.py",
-    "src/python/pygrackle/utilities/data_path.py",
-    "src/python/pygrackle/utilities/evolve.py",
-    "src/python/pygrackle/utilities/misc.py",
-    "src/python/pygrackle/utilities/model_tests.py",
-    "src/python/pygrackle/utilities/physical_constants.py",
-    "src/python/pygrackle/utilities/primordial_equilibrium.py",
-    "src/python/pygrackle/utilities/testing.py",
-    "src/python/pygrackle/utilities/units.py",
-    "src/python/pygrackle/yt_fields.py",
+    "src/python/gracklepy/__init__.py",
+    "src/python/gracklepy/api.py",
+    "src/python/gracklepy/fluid_container.py",
+    "src/python/gracklepy/utilities/__init__.py",
+    "src/python/gracklepy/utilities/api.py",
+    "src/python/gracklepy/utilities/convenience.py",
+    "src/python/gracklepy/utilities/data_path.py",
+    "src/python/gracklepy/utilities/evolve.py",
+    "src/python/gracklepy/utilities/misc.py",
+    "src/python/gracklepy/utilities/model_tests.py",
+    "src/python/gracklepy/utilities/physical_constants.py",
+    "src/python/gracklepy/utilities/primordial_equilibrium.py",
+    "src/python/gracklepy/utilities/testing.py",
+    "src/python/gracklepy/utilities/units.py",
+    "src/python/gracklepy/yt_fields.py",
     "src/python/tests/conftest.py",
     "src/python/tests/test_chemistry.py",
     "src/python/tests/test_chemistry_struct_synched.py",
@@ -256,7 +256,7 @@ exclude = [
     "src/python/tests/test_volumetric_heating_rate.py",
     "src/python/tests/testing_common.py",
     "tests/scripts/code_example_checker.py",
-    "src/python/pygrackle/utilities/atomic.py"
+    "src/python/gracklepy/utilities/atomic.py"
 ]
 
 [tool.cibuildwheel]

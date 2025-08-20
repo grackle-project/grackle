@@ -9,8 +9,8 @@ import yt
 
 from numpy.testing import assert_allclose
 
-from pygrackle.__config__ import _is_editable_installation
-from pygrackle.utilities.model_tests import model_parametrization
+from gracklepy.__config__ import _is_editable_installation
+from gracklepy.utilities.model_tests import model_parametrization
 
 from testing_common import grackle_python_dir
 

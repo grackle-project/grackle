@@ -14,7 +14,7 @@
 from collections import defaultdict
 import numpy as np
 
-from pygrackle.fluid_container import _indirectly_calculated_fields
+from gracklepy.fluid_container import _indirectly_calculated_fields
 
 from .physical_constants import \
     gravitational_constant_cgs, \

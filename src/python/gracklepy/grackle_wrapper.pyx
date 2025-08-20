@@ -13,7 +13,7 @@
 
 import copy
 import functools
-from pygrackle.utilities.physical_constants import \
+from gracklepy.utilities.physical_constants import \
     boltzmann_constant_cgs, \
     mass_hydrogen_cgs
 
