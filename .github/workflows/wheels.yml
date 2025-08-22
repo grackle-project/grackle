@@ -120,7 +120,7 @@ jobs:
   upload_all:
     name: Publish to PyPI
     needs: [build_wheels, make_sdist]
-    environment: testpypi # CHANGEME to pypi (to start uploading to PyPI)
+    environment: pypi
     permissions:
       id-token: write
       attestations: write
@@ -143,5 +143,3 @@ jobs:
 
       - name: Publish to pypi
         uses: pypa/gh-action-pypi-publish@release/v1
-        with:  # DELETEME (and the next line) to start uploading to PyPI
-          repository-url: https://test.pypi.org/legacy/
