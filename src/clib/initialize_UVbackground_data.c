@@ -14,11 +14,10 @@
 #include <stdlib.h>
 #include <math.h>
 #include "hdf5.h"
+#include "grackle.h"
 #include "grackle_macros.h"
-#include "grackle_types.h"
-#include "grackle_chemistry_data.h"
 
-extern int grackle_verbose;
+#include "initialize_UVbackground_data.h"
 
 // function prototypes
 int read_dataset(hid_t file_id, char *dset_name, double *buffer);

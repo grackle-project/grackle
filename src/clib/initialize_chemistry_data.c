@@ -19,7 +19,9 @@
 #include "grackle.h"
 #include "grackle_macros.h"
 #include "interp_table_utils.h" // free_interp_grid_
+#include "initialize_UVbackground_data.h"
 #include "phys_constants.h"
+
 #ifdef _OPENMP
 #include <omp.h>
 #endif
@@ -40,16 +42,11 @@ int initialize_cloudy_data(chemistry_data *my_chemistry,
                            code_units *my_units,
                            int read_data);
 
-int initialize_UVbackground_data(chemistry_data *my_chemistry,
-                                 chemistry_data_storage *my_rates);
-
 int local_free_metal_chemistry_rates(chemistry_data *my_chemistry, chemistry_data_storage *my_rates);
 int local_free_dust_yields(chemistry_data *my_chemistry, chemistry_data_storage *my_rates);
 
 int initialize_rates(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, code_units *my_units,
                 double co_length_units, double co_density_units);
-
-void initialize_empty_UVBtable_struct(UVBtable *table);
 
 static void show_version(FILE *fp)
 {
