@@ -17,12 +17,9 @@
 #include "hdf5.h"
 #include "grackle.h"
 #include "grackle_macros.h"
-#include "grackle_types.h"
-#include "grackle_chemistry_data.h"
+#include "initialize_cloudy_data.h"
 
 #define SMALL_LOG_VALUE -99.0
-
-extern int grackle_verbose;
 
 
 /**
@@ -41,7 +38,7 @@ void initialize_empty_cloudy_data_struct(cloudy_data *my_cloudy)
   my_cloudy->data_size = 0LL;
 }
 
-// Initialize Cloudy cooling data
+// initialize cloudy cooling data
 int initialize_cloudy_data(chemistry_data *my_chemistry,
                            chemistry_data_storage *my_rates,
                            cloudy_data *my_cloudy, char *group_name,
