@@ -18,8 +18,6 @@
 #include <math.h>
 #include "grackle.h"
 #include "grackle_macros.h"
-#include "grackle_types.h"
-#include "grackle_chemistry_data.h"
 #include "interp_table_utils.h" // free_interp_grid_
 #include "phys_constants.h"
 #ifdef _OPENMP
@@ -30,10 +28,6 @@
 #error "Sanity check failure: GR_SUCCESS must be consistent with SUCCESS and GR_FAIL must be consistent with FAIL"
 #endif
 
-extern int grackle_verbose;
-
-extern chemistry_data *grackle_data;
-extern chemistry_data_storage grackle_rates;
 
 void auto_show_config(FILE *fp);
 void auto_show_flags(FILE *fp);
@@ -48,8 +42,6 @@ int initialize_cloudy_data(chemistry_data *my_chemistry,
 
 int initialize_UVbackground_data(chemistry_data *my_chemistry,
                                  chemistry_data_storage *my_rates);
-
-int local_free_chemistry_data(chemistry_data *my_chemistry, chemistry_data_storage *my_rates);
 
 int local_free_metal_chemistry_rates(chemistry_data *my_chemistry, chemistry_data_storage *my_rates);
 int local_free_dust_yields(chemistry_data *my_chemistry, chemistry_data_storage *my_rates);
