@@ -56,22 +56,22 @@ This table below maps the chemical species used above to the relevent Grackle fi
 ================
 Chemical Species
 ================
-===================== ========================             
-variable               Reaction Network                       
-===================== ========================              
-H                     :c:data:`HI_density` 
-H\ :sup:`+`           :c:data:`HII_density` 
-H\ :sup:`-`           :c:data:`HM_density`  
-H\ :sub:`2`           :c:data:`H2I_density` 
-H\ :sub:`2`:sup:`+`   :c:data:`H2II_density` 
-He                    :c:data:`HeI_density`        
-He\ :sup:`+`          :c:data:`HeII_density`  
+====================== ========================             
+variable                Reaction Network                       
+====================== ========================              
+H                      :c:data:`HI_density` 
+H\ :sup:`+`            :c:data:`HII_density` 
+H\ :sup:`-`            :c:data:`HM_density`  
+H\ :sub:`2`            :c:data:`H2I_density` 
+H\ :sub:`2`:sup:`+`    :c:data:`H2II_density` 
+He                     :c:data:`HeI_density`        
+He\ :sup:`+`           :c:data:`HeII_density`  
 He\ :sup:`+`\ :sup:`+` :c:data:`HeIII_density` 
-e\ :sup:`-`           :c:data:`e_density`  
-D                     :c:data:`DI_density`
-D\ :sup:`+`           :c:data:`DII_density`
-HD                    :c:data:`HDI_density`
-===================== ======================== 
+e\ :sup:`-`            :c:data:`e_density`  
+D                      :c:data:`DI_density`
+D\ :sup:`+`            :c:data:`DII_density`
+HD                     :c:data:`HDI_density`
+====================== ======================== 
 
 =============
 K22 Citations
