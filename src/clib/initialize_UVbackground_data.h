@@ -13,7 +13,7 @@
 #ifndef INITIALIZE_UVBACKGROUND_DATA_H
 #define INITIALIZE_UVBACKGROUND_DATA_H
 
-#include "grackle_chemistry_data.h"
+#include "grackle.h"
 
 /// Initializes an empty UVBtable struct with zeros and NULLs.
 void initialize_empty_UVBtable_struct(UVBtable *table);

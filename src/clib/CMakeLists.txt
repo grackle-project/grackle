@@ -92,7 +92,7 @@ add_library(Grackle_Grackle
   index_helper.c
   initialize_chemistry_data.c
   initialize_cloudy_data.c
-  initialize_rates.c
+  initialize_rates.c initialize_rates.h
   initialize_UVbackground_data.c  initialize_UVbackground_data.h
   rate_functions.c
   set_default_chemistry_parameters.c
