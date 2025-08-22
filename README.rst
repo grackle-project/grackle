@@ -46,7 +46,7 @@ Our `method paper <http://adsabs.harvard.edu/abs/2017MNRAS.466.2217S>`__ provide
 Projects that provide out-of-the-box support for Grackle
 --------------------------------------------------------
 
-Grackle is a popular tool (the `method paper <http://adsabs.harvard.edu/abs/2017MNRAS.466.2217S>`__ has over 290 citations) and has been used in a wide variety of calculations.
+Grackle is a popular tool (the `method paper <http://adsabs.harvard.edu/abs/2017MNRAS.466.2217S>`__ has over 300 citations) and has been used in a wide variety of calculations.
 Below, we list open source projects that provide out-of-the-box support for Grackle:
 
 `ChaNGa <https://github.com/N-BodyShop/changa>`__,
@@ -63,7 +63,7 @@ Below, we list open source projects that provide out-of-the-box support for Grac
 Getting Grackle
 ---------------
 
-Currently, Grackle must be built from source.
+Currently, the core Grackle library must be built from source.
 If you only need Grackle as a dependency of a simulation code and that code is built with CMake, then that code's build system might be configured to automatically fetch, build, and link Grackle into the code for you (`Enzo-E <https://enzo-e.readthedocs.io/en/latest/>`__ is an example of a code configured in this manner).
 
 If you contribute to a simulation code, our `Integration Guide <https://grackle.readthedocs.io/en/latest/Integration.html>`__ provides guidance on simplifying the process (for you and your users) of configuring your code to use Grackle.
@@ -86,16 +86,21 @@ To install Grackle, invoke ``cmake --install ./build [--prefix <prefix/path>]`` 
 For more details **(especially if you encounter any errors),** see our comprehensive `Installation Guide <https://grackle.readthedocs.io/en/latest/Installation.html>`__.
 It provides more context for inexperienced CMake users, describes additional configuration options (relevant if you encounter issues), and describes Grackle's "classic" build-system.
 
-Building Gracklepy from Source
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Installing Gracklepy
+~~~~~~~~~~~~~~~~~~~~
 
-Once you have a Fortran compiler and a copy of HDF5 (1.6 or newer), simply invoke the following from the root of the Grackle repository
+The easiest way to get Gracklepy is to invoke the following command
 
 .. code-block:: shell-session
 
-   ~/grackle $ pip install .
+   ~/grackle $ pip install gracklepy
 
-For more about installation see our `Gracklepy installation guide <https://grackle.readthedocs.io/en/latest/Python.html>`__.
+This will download a pre-built version (called a wheel) of Gracklepy from PyPI. This should "just work," unless you use a highly unusual system (if it fails please let us know).
+
+Be aware that the vast majority of Grackle calculation requires Grackle's data files.
+At this time you must download manually download these files (see the installation guide); we're working on streamlining this in the future.
+
+For more about installation (and downloading data files), see our `Gracklepy installation guide <https://grackle.readthedocs.io/en/latest/Python.html>`__ .
 
 **NOTE:** Gracklepy was formerly known as Pygrackle.
 If you previously installed Pygrackle, you should uninstall it before you install GracklePy.
