@@ -1,204 +1,76 @@
-#include <iomanip>
-#include <iostream>
 #include <numeric>
 #include <vector>
 
 #include "gaussj_g.hpp"
 
-int gaussj_g_cpp(int n, double* coef_matrix, double* vector, double* solution) {
+namespace grackle::impl {
 
-    // Find pivot position of each row
-    std::vector<unsigned int> pivot(n,n-1);
-    for(unsigned int i = 0; i < n; ++i) {
-        for(unsigned int j = 0; j < n; ++j) {
-            if(std::abs(coef_matrix[i*n+j]) > eps_zero) {
-                pivot[i] = j;
-                break;
-            }
-            if(pivot[i] == 0) {
-                std::cerr << "Matrix is singular." << std::endl;
-                return -1;
-            }
+int gaussj_g(int n, double* coef_matrix_fortran, double* vector) {
+
+    // TODO: to be removed
+    // Copy the matrix to a C-style layout (column-major order)
+    std::vector<double> coef_matrix(n*n);
+    for (int i = 0; i < n; ++i) {
+        for (int j = 0; j < n; ++j) {
+        coef_matrix[j*n + i] = coef_matrix_fortran[i*n + j];
         }
     }
 
-#ifdef DEBUG
-    // Debug: print pivot positions
-    std::cout << "Pivot positions: ";
-    for(unsigned int i = 0; i < n; ++i) {
-        std::cout << pivot[i] << " ";
-    }
-    std::cout << std::endl;
-#endif
+    // Loop over columns
+    for(unsigned int col=0; col<n; col++) {
 
-    // Find pivot based ordering of coef_matrix rows 
-    std::vector<unsigned int> rows_sorting(n);
-    std::iota(rows_sorting.begin(), rows_sorting.end(), 0);
-    std::sort(rows_sorting.begin(), rows_sorting.end(), [&](unsigned int i, unsigned int j){
-        return pivot[i] < pivot[j];
-    });
-
-#ifdef DEBUG
-    // Debug: print sorted rows
-    std::cout << std::endl;
-    std::cout << "Sorted rows: ";
-    for(unsigned int i = 0; i < n; ++i) {
-        std::cout << rows_sorting[i] << " ";
-    }
-    std::cout << std::endl;
-#endif
-
-    // Reorder matrix, vector and pivot (TODO: debug only, not mandatory)
-    std::vector<double> reord_coef_matrix(n*n);
-    std::vector<double> reord_vector(n);
-    std::vector<double> reord_pivot(n);
-    for(unsigned int i = 0; i < n; ++i) {
-        for(unsigned int j = 0; j < n; ++j) {
-            reord_coef_matrix[i*n+j] = coef_matrix[rows_sorting[i]*n+j];
-        }
-    }
-    for(unsigned int i = 0; i < n; ++i) {
-        reord_vector[i] = vector[rows_sorting[i]];
-    }
-    for(unsigned int i = 0; i < n; ++i) {
-        reord_vector[i] = vector[rows_sorting[i]];
-    }
-    for(unsigned int i = 0; i < n; ++i) {
-        reord_pivot[i] = pivot[rows_sorting[i]];
-    }
-
-#ifdef DEBUG
-    std::cout << std::endl;
-    std::cout << "Reordered matrix:" << std::endl;
-    for(unsigned int i = 0; i < n; ++i) {
-        for(unsigned int j = 0; j < n; ++j) {
-            std::cout << reord_coef_matrix[i*n + j] << " ";
-        }
-        std::cout << "| " << reord_vector[i] << std::endl;
-    }
-    std::cout << std::endl;
-#endif
-
-    // Perform Gaussian elimination and transform the matrix in echelon form
-    bool rowScaled = true;
-    while(rowScaled) {    
-        std::cout<<std::endl;
-        rowScaled = false;
-        for(unsigned int i = n-1; i>0; i--){
-            if(reord_pivot[i] == reord_pivot[i-1]) {
-                const double scalingFactor = - reord_coef_matrix[i*n + reord_pivot[i]]/reord_coef_matrix[(i-1)*n + reord_pivot[i-1]];
-                reord_coef_matrix[i*n+reord_pivot[i]] = 0.0;
-                for(unsigned int j=reord_pivot[i]+1; j<n; j++) {
-                    reord_coef_matrix[i*n + j] += scalingFactor * reord_coef_matrix[(i-1)*n + j];
-                    if(std::abs(reord_coef_matrix[i*n + j]) < eps_zero) {
-                        reord_coef_matrix[i*n + j] = 0.0;
-                        // reord_pivot[i] += 1;// TODO: can be done here?
-                    }
-                }
-                reord_vector[i] += scalingFactor * reord_vector[i-1];
-                if(std::abs(reord_vector[i]) < eps_zero) {
-                    reord_vector[i] = 0.0;
-                }
-                rowScaled = true;
+        // Find the largest (absolute value) element in the column
+        double max_val = std::abs(coef_matrix[col*n + col]);
+        unsigned int max_row = col;
+        for(unsigned int row = col+1; row < n; row++) {
+            if(std::abs(coef_matrix[row*n + col]) > max_val) {
+                max_val = std::abs(coef_matrix[row*n + col]);
+                max_row = row;
             }
         }
 
-
-        if(rowScaled) {
-
-
-#ifdef DEBUG
-            // Debug: print the matrix after scaling
-            std::cout << std::endl;
-            std::cout << "Matrix after scaling:" << std::endl;
-            for(unsigned int i = 0; i < n; ++i) {
-                for(unsigned int j = 0; j < n; ++j) {
-                    std::cout << reord_coef_matrix[i*n + j] << " ";
-                }
-                std::cout << "| " << reord_vector[i] << std::endl;
-            }
-            std::cout<<std::endl;
-#endif
-
-            // Update pivot positions after scaling
-            for(unsigned int i = 0; i < n; ++i) {
-                pivot[i] = n-1; // reset pivot positions
-            }
-            for(unsigned int i = 0; i < n; ++i) {
-                for(unsigned int j = 0; j < n; ++j) {
-                    if(std::abs(reord_coef_matrix[i*n+j]) > eps_zero) {
-                        pivot[i] = j;
-                        break;
-                    }
-                    if(pivot[i] == 0) {
-                        std::cerr << "Matrix is singular or not square." << std::endl;
-                        return -1;
-                    }
-                }
-            }
-
-#ifdef DEBUG
-            std::cout << std::endl;
-            std::cout << "Updated pivot positions: ";
-            for(unsigned int i = 0; i < n; ++i) {
-                std::cout << pivot[i] << " ";
-            }
-            std::cout << std::endl;
-#endif 
-            std::iota(rows_sorting.begin(), rows_sorting.end(), 0);
-            std::sort(rows_sorting.begin(), rows_sorting.end(), [&](unsigned int i, unsigned int j){
-                return pivot[i] < pivot[j];
-            });
-
-#ifdef DEBUG
-            std::cout << std::endl;
-            std::cout << "Updated sorted rows: ";
-            for(unsigned int i = 0; i < n; ++i) {
-                std::cout << rows_sorting[i] << " ";
-            }
-            std::cout << std::endl; 
-#endif 
-
-            std::vector<double> reord_coef_matrix_tmp(reord_coef_matrix);
-            for(unsigned int i = 0; i < n; ++i) {
-                for(unsigned int j = 0; j < n; ++j) {
-                    reord_coef_matrix[i*n+j] = reord_coef_matrix_tmp[rows_sorting[i]*n+j];
-                }
-            }
-            std::vector<double> reord_vector_tmp(reord_vector);
-            for(unsigned int i = 0; i < n; ++i) {
-                reord_vector[i] = reord_vector_tmp[rows_sorting[i]];
-            }
-            for(unsigned int i = 0; i < n; ++i) {
-                reord_pivot[i] = pivot[rows_sorting[i]];
-            }
+        // Check for singularity
+        if(max_val < eps_zero) {
+            return 1;
         }
-    }    
 
-    // Perform back substitution to solve the system
-    for(int i = n-1; i >= 0; --i) {
-        std::cout << "Solving for solution[" << i << "]" << std::endl;
-        solution[i] = reord_vector[i];
-        std::cout << "solution[" << i << "] = " << solution[i] << std::endl;
-        for(unsigned int j = i+1; j<n; ++j) {
-            solution[i] -= reord_coef_matrix[i*n + j]*solution[j];
-            std::cout << "solution[" << i << "] = " << solution[i] << std::endl;
+        // Do partial pivoting by swaping rows
+        if(max_row != col) {
+            for(unsigned int col_p=0; col_p<n; col_p++) {
+                std::swap(coef_matrix[col*n + col_p], coef_matrix[max_row*n + col_p]);
+            }
+            std::swap(vector[col], vector[max_row]);
         }
-        solution[i] /= reord_coef_matrix[i*n + i]; 
-        std::cout << "solution[" << i << "] = " << solution[i] << std::endl;
+
+        // Scale the pivot row with pivot value (optional, this should increase stability)
+        const double pivot_val = coef_matrix[col*n + col];
+        coef_matrix[col*n + col] = 1.0;
+        for(unsigned int col_p = col+1; col_p<n; col_p++) {
+            coef_matrix[col*n + col_p] /= pivot_val;
+        }
+        vector[col] /= pivot_val;
+
+        // Eliminate elements of rows below the pivot
+        for(unsigned int row = col+1; row<n; row++){
+            const double scaling_factor = -coef_matrix[row*n+col]/coef_matrix[col*n + col];
+            coef_matrix[row*n + col] = 0.0;
+            for(unsigned int col_p = col+1; col_p<n; col_p++) {
+                coef_matrix[row*n + col_p] += scaling_factor*coef_matrix[col*n + col_p];
+            }
+            vector[row] += scaling_factor*vector[col];
+        }
 
     }
 
-#ifdef DEBUG
-    // Print solution
-    std::cout << "Reord Solution: ";
-    for(unsigned int i = 0; i < n; ++i) {
-        std::cout << solution[i] << " ";
+    // Compute back substitution
+    for(unsigned int row=n-1; row<n; row--) {
+        for(unsigned int col=row+1; col<n; col++) {
+            vector[row] -= coef_matrix[row*n +col]*vector[col];
+        }
+        vector[row] /= coef_matrix[row*n + row];
     }
-    std::cout << std::endl;
-#endif
-
-
 
     return 0;
 }
+
+} // namespace grackle::impl

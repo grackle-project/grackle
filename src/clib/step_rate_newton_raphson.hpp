@@ -13,7 +13,8 @@
 
 #include "grackle.h"             // gr_float
 #include "fortran_func_decls.h"  // gr_mask_int
-#include "fortran_func_wrappers.hpp" // grackle::impl::fortran_wrapper::gaussj_g
+//#include "fortran_func_wrappers.hpp" // grackle::impl::fortran_wrapper::gaussj_g
+#include "gaussj_g.hpp"
 #include "index_helper.h"
 #include "internal_types.hpp"
 #include "internal_units.h"
@@ -602,7 +603,7 @@ inline void step_rate_newton_raphson(
             vec[isp-1] = vec[isp-1]/d(i,j,k);
           }
 
-          ierror = f_wrap::gaussj_g(nsp, mtrx.data(), vec.data());
+          ierror = grackle::impl::gaussj_g(nsp, mtrx.data(), vec.data());
           if(ierror == 1)  {
             goto label_9998;
           }
