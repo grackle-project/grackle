@@ -11,6 +11,12 @@ Grackle
 .. image:: https://readthedocs.org/projects/grackle/badge/?version=latest
    :target: https://grackle.readthedocs.io/en/latest/?badge=latest)
 
+.. image:: https://img.shields.io/pypi/v/gracklepy?label=gracklepy%40pypi
+   :target: https://pypi.org/project/gracklepy/
+
+.. image:: https://img.shields.io/pypi/pyversions/gracklepy
+   :target: https://pypi.org/project/gracklepy/
+
 `Documentation <https://grackle.readthedocs.io/en/latest/>`__ |
 `Installation <https://grackle.readthedocs.io/en/latest/Installation.html>`__ |
 `Gracklepy Installation <https://grackle.readthedocs.io/en/latest/Python.html>`__ |
