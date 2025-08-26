@@ -8,6 +8,9 @@ Grackle
 .. image:: https://circleci.com/gh/grackle-project/grackle/tree/main.svg?style=svg
    :target: https://circleci.com/gh/grackle-project/grackle/tree/main
 
+.. image:: https://results.pre-commit.ci/badge/github/grackle-project/grackle/main.svg
+   :target: https://results.pre-commit.ci/latest/github/grackle-project/grackle/main
+
 .. image:: https://readthedocs.org/projects/grackle/badge/?version=latest
    :target: https://grackle.readthedocs.io/en/latest/?badge=latest)
 
