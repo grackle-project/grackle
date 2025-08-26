@@ -5,7 +5,7 @@ Grackle
 .. image:: https://img.shields.io/badge/Users-List-lightgrey.svg
    :target: https://groups.google.com/forum/#!forum/grackle-cooling-users
 
-.. image:: https://circleci.com/gh/grackle-project/grackle/tree/main.svg?style=svg
+.. image:: https://circleci.com/gh/grackle-project/grackle/tree/main.svg?style=shield
    :target: https://circleci.com/gh/grackle-project/grackle/tree/main
 
 .. image:: https://results.pre-commit.ci/badge/github/grackle-project/grackle/main.svg
