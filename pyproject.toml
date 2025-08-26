@@ -199,3 +199,24 @@ skip = ["*_i686", "*_ppc64le", "*_s390x", "*_universal2"]
 before-build = "python {project}/scripts/wheels/cibw_before_build.py --compile-hl-h5 3rdparty {project}"
 test-groups = "test"  # <- this installs the test dependencies
 test-command = "bash {project}/scripts/wheels/cibw_test_command.sh {project}"
+
+
+[tool.uv]
+# uv is an all-in-one python management tool (it can be used in place of a bunch of
+# tools such as pip, pyenv, venv, ...). We define the cache-keys setting to instruct uv
+# when it should trigger rebuilds, whenever a contributor is using uv to develop
+# Grackle/Gracklepy (note: the cache-keys setting has no effect on downstream packages
+# that consume Gracklepy)
+cache-keys = [
+    { git = { commit = true} },
+    { file = "pyproject.toml" },
+    { file = "CMakeLists.txt" },
+    { file = "dependencies.cmake" },
+    { file = "VERSION"},
+    { file = "cmake/**" },
+    { file = "scripts/query_version.py" },
+    { file = "src/clib/**" },
+    { file = "src/python/CMakeLists.txt" },
+    { file = "src/python/gracklepy/*.pyx" },
+    { file = "src/python/gracklepy/*.pxd" }
+]
