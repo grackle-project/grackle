@@ -99,6 +99,7 @@ add_library(Grackle_Grackle
   solve_chemistry.c
   status_reporting.c status_reporting.h
   update_UVbackground_rates.c
+  unit_handling.h
   utils.c
 
   # auto-generated C source files
