@@ -3,7 +3,6 @@
 /// @file gaussj_g.hpp
 /// @brief Implementation of Gauss-Jordan elimination for solving linear systems
 
-
 #ifndef GAUSSJ_G_HPP
 #define GAUSSJ_G_HPP
 
@@ -30,6 +29,6 @@ const double eps_zero = 1e-20;
 ///
 int gaussj_g(int n, double* coef_matrix, double* vector);
 
-} // namespace grackle::impl
+}  // namespace grackle::impl
 
-#endif // GAUSSJ_G_HPP
+#endif  // GAUSSJ_G_HPP
