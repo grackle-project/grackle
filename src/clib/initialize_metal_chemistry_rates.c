@@ -107,11 +107,7 @@ int initialize_metal_chemistry_rates(chemistry_data *my_chemistry,
       double  utim     = my_units->time_units;
 
       int i;
-      double logttt, ttt, tev, logtev,
-        tbase1, xbase1, kunit, coolunit,
-        dbase1, dlogtem, kunit_3bdy, cierate,
-        grain_coef, fgr, d_ttt, d_dlogtem,
-        ttt2, ttt300, tk9;
+      double logttt, ttt, tbase1, xbase1, kunit, coolunit, dbase1, dlogtem, ttt300;
 //
 //
 // Get conversion units
@@ -145,7 +141,8 @@ int initialize_metal_chemistry_rates(chemistry_data *my_chemistry,
 //             densities must be converted from comoving to proper.
 //
       kunit   = (pow(uaye, 3) * mh) / (dbase1 * tbase1);
-      kunit_3bdy  = kunit * (pow(uaye, 3) * mh) / dbase1;
+      // unused:
+      // double kunit_3bdy  = kunit * (pow(uaye, 3) * mh) / dbase1;
 //
 // 2) Set the dimension of the cooling coefficients (including constants)
 //    (this equation has a rho because e is the specifi//energy, not
@@ -172,8 +169,10 @@ int initialize_metal_chemistry_rates(chemistry_data *my_chemistry,
 // 4) Energy transfer from gas to dust grains, following equation 2.15
 //    of Hollenbach & McKee (1989).
 //    Normalize to the HM89 dust to gas ratio.
-      fgr = 0.009387;
-      grain_coef = 1.2e-31 * pow(1.0e3, -0.5) / fgr;
+
+      // unused:
+      // double fgr = 0.009387;
+      // double grain_coef = 1.2e-31 * pow(1.0e3, -0.5) / fgr;
 //
 // Compute log spacing in temperature
 //
@@ -260,10 +259,7 @@ int initialize_metal_chemistry_rates(chemistry_data *my_chemistry,
 //
         logttt = log(temstart) + (double)(i  )*dlogtem;
         ttt = exp(logttt);
-        ttt2 = ttt / 100.0;
         ttt300 = ttt / 300.0;
-        tev = ttt/tevk;
-        logtev = log(tev);
 
         my_rates->cieY06[i] =
          pow(10.0, -116.6                                                        

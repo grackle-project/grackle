@@ -9,7 +9,7 @@
 #ifndef MY_FILE_CPP_H
 #define MY_FILE_CPP_H
 
-#include "grackle.h"             // gr_float
+#include "grackle.h"  // gr_float
 #include "internal_units.h"
 
 #ifdef __cplusplus
@@ -21,11 +21,10 @@ extern "C" {
 ///
 /// @par History
 /// written by: Britton Smith July 2011
-void calc_tdust_3d_g(
-  gr_float* gas_temp_data_, gr_float* dust_temp_data_, int imetal,
-  chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
-  grackle_field_data* my_fields, InternalGrUnits internalu
-);
+void calc_tdust_3d_g(gr_float* gas_temp_data_, gr_float* dust_temp_data_,
+                     int imetal, chemistry_data* my_chemistry,
+                     chemistry_data_storage* my_rates,
+                     grackle_field_data* my_fields, InternalGrUnits internalu);
 
 #ifdef __cplusplus
 }  // extern "C"

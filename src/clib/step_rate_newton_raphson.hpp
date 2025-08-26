@@ -230,6 +230,13 @@ inline void step_rate_newton_raphson(
   grackle::impl::SpeciesCollection rhosp_dot =
     grackle::impl::new_SpeciesCollection(1);
 
+  // the following check was inspired by a compiler warning indicating that
+  // nsp won't be initialized if this condition isn't met
+  GRIMPL_REQUIRE((my_chemistry->primordial_chemistry > 0),
+    "this function can't support primordial_chemistry == %d",
+    my_chemistry->primordial_chemistry
+  );
+
   // The following was extracted from another subroutine
   for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
     const int j = idx_range.j;
@@ -252,7 +259,7 @@ inline void step_rate_newton_raphson(
       }
 
       // initialize arrays
-      if (my_chemistry->primordial_chemistry > 0) { nsp = 6; }
+      nsp = 6; // (my_chemistry->primordial_chemistry >= 1)
       if (my_chemistry->primordial_chemistry > 1) { nsp = nsp + 3; }
       if (my_chemistry->primordial_chemistry > 2) { nsp = nsp + 3; }
       if (my_chemistry->primordial_chemistry > 3) { nsp = nsp + 3; }
@@ -497,28 +504,6 @@ inline void step_rate_newton_raphson(
         i, &pack, p2d, tgas, tdust, metallicity, dust2gas, rhoH, mmw, h2dust,
         edot, grain_temperatures, logTlininterp_buf, cool1dmulti_buf,
         coolingheating_buf, chemheatrates_buf
-      );
-
-      // before we merge the gen2024 branch into the main grackle branch we
-      // need to resolve the following issue (or at least exit gracefully)
-      // -> the easiest short-term solution is to temporarily overwrite the
-      //    value of iter
-      // -> Alternatively, we could try to reuse the existing value of tgasold.
-      //    Doing that requires some care; we need to use meaningful values
-      //    of tgasold when we iteratively call lookup_cool_rates0d for the
-      //    sake of estimating elements in the jacobian matrix.
-      GRIMPL_REQUIRE(
-        ((iter == 1) || (imp_eng[i] != 1)),
-        "there is a logical issue in the original lookup_cool_rates0d "
-        "Fortran routine when (iter != 1) AND (imp_eng == 1).\n"
-        " -> as it was originally written the routine, allocates storage\n"
-        "    for the tgasold buffer (on the stack) and leaves the value\n"
-        "    unitialized.\n"
-        " -> this is a problem when (iter != 1) and (imp_eng == 1) because\n"
-        "    cool1d_multi_g will try to make use of the unitialized variable\n"
-        " -> this isn't a problem when (iter == 1) and (imp_eng == 1) since\n"
-        "    cool1d_multi_g knows it needs to initialize tgasold. It isn't\n"
-        "    a problem when (imp_eng != 1) since cool1d_multi_g isn't called"
       );
 
       // Save arrays at ttot(ip1)
