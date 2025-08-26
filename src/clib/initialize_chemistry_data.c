@@ -700,8 +700,8 @@ int local_free_chemistry_data(chemistry_data *my_chemistry,
     GRACKLE_FREE(my_rates->grain_growth_rate);
   }
 
-  _free_cloudy_data(&my_rates->cloudy_primordial, my_chemistry, /* primordial */ 1);
-  _free_cloudy_data(&my_rates->cloudy_metal, my_chemistry, /* primordial */ 0);
+  free_cloudy_data(&my_rates->cloudy_primordial, my_chemistry, /* primordial */ 1);
+  free_cloudy_data(&my_rates->cloudy_metal, my_chemistry, /* primordial */ 0);
 
   GRACKLE_FREE(my_rates->UVbackground_table.z);
   GRACKLE_FREE(my_rates->UVbackground_table.k24);

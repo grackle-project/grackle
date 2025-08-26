@@ -318,7 +318,7 @@ int initialize_cloudy_data(chemistry_data *my_chemistry,
   return SUCCESS;
 }
 
-int _free_cloudy_data(cloudy_data *my_cloudy, chemistry_data *my_chemistry, int primordial) {
+int free_cloudy_data(cloudy_data *my_cloudy, chemistry_data *my_chemistry, int primordial) {
   int i;
 
   for(i = 0; i < my_cloudy->grid_rank; i++) {

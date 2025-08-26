@@ -24,8 +24,8 @@ int initialize_cloudy_data(chemistry_data *my_chemistry,
                            cloudy_data *my_cloudy, char *group_name,
                            code_units *my_units, int read_data);
 
-int _free_cloudy_data(cloudy_data *my_cloudy,
-                      chemistry_data *my_chemistry,
-                      int primordial);
+int free_cloudy_data(cloudy_data *my_cloudy,
+                     chemistry_data *my_chemistry,
+                     int primordial);
 
 #endif /* INITIALIZE_CLOUDY_DATA_H */
