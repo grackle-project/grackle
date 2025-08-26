@@ -1,4 +1,4 @@
-#include <numeric>
+//#include <numeric>
 #include <vector>
 
 #include "gaussj_g.hpp"
@@ -10,8 +10,8 @@ int gaussj_g(int n, double* coef_matrix_fortran, double* vector) {
     // TODO: to be removed
     // Copy the matrix to a C-style layout (column-major order)
     std::vector<double> coef_matrix(n*n);
-    for (int i = 0; i < n; ++i) {
-        for (int j = 0; j < n; ++j) {
+    for (unsigned int i = 0; i < n; ++i) {
+        for (unsigned int j = 0; j < n; ++j) {
         coef_matrix[j*n + i] = coef_matrix_fortran[i*n + j];
         }
     }
