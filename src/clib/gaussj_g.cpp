@@ -1,4 +1,4 @@
-//#include <numeric>
+#include <cmath>
 #include <vector>
 
 #include "gaussj_g.hpp"
@@ -20,11 +20,11 @@ int gaussj_g(int n, double* coef_matrix_fortran, double* vector) {
     for(unsigned int col=0; col<n; col++) {
 
         // Find the largest (absolute value) element in the column
-        double max_val = std::abs(coef_matrix[col*n + col]);
+        double max_val = std::fabs(coef_matrix[col*n + col]);
         unsigned int max_row = col;
         for(unsigned int row = col+1; row < n; row++) {
-            if(std::abs(coef_matrix[row*n + col]) > max_val) {
-                max_val = std::abs(coef_matrix[row*n + col]);
+            if(std::fabs(coef_matrix[row*n + col]) > max_val) {
+                max_val = std::fabs(coef_matrix[row*n + col]);
                 max_row = row;
             }
         }
