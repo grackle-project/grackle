@@ -15,10 +15,8 @@
 
 #include "grackle.h"
 
-int initialize_rates(chemistry_data *my_chemistry,
-                     chemistry_data_storage *my_rates,
-                     code_units *my_units,
-                     double co_length_unit,
-                     double co_density_unit);
+int initialize_rates(chemistry_data* my_chemistry,
+                     chemistry_data_storage* my_rates, code_units* my_units,
+                     double co_length_unit, double co_density_unit);
 
 #endif /* INITIALIZE_RATES_H */

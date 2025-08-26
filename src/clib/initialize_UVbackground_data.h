@@ -16,10 +16,10 @@
 #include "grackle.h"
 
 /// Initializes an empty UVBtable struct with zeros and NULLs.
-void initialize_empty_UVBtable_struct(UVBtable *table);
+void initialize_empty_UVBtable_struct(UVBtable* table);
 
 /// Initialize UV Background data
-int initialize_UVbackground_data(chemistry_data *my_chemistry,
-                                 chemistry_data_storage *my_rates);
+int initialize_UVbackground_data(chemistry_data* my_chemistry,
+                                 chemistry_data_storage* my_rates);
 
 #endif /* INITIALIZE_UVBACKGROUND_DATA_H */
