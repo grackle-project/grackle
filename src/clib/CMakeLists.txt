@@ -106,6 +106,8 @@ add_library(Grackle_Grackle
 
   # auto-generated C source files
   ${CMAKE_CURRENT_BINARY_DIR}/auto_general.c
+  # here is the companion header file (not generated)
+  auto_general.h
 
   # C++ Source (and Private Header Files)
   cool_multi_time_g-cpp.C cool_multi_time_g-cpp.h

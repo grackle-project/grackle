@@ -18,6 +18,7 @@
 #include <math.h>
 #include "grackle.h"
 #include "grackle_macros.h"
+#include "auto_general.h"
 #include "interp_table_utils.h" // free_interp_grid_
 #include "initialize_cloudy_data.h"
 #include "initialize_rates.h"
@@ -32,10 +33,6 @@
 #error "Sanity check failure: GR_SUCCESS must be consistent with SUCCESS and GR_FAIL must be consistent with FAIL"
 #endif
 
-
-void auto_show_config(FILE *fp);
-void auto_show_flags(FILE *fp);
-grackle_version get_grackle_version(void);
 void show_parameters(FILE *fp, chemistry_data *my_chemistry);
 
 int local_free_metal_chemistry_rates(chemistry_data *my_chemistry, chemistry_data_storage *my_rates);
