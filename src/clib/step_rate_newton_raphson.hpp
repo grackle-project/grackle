@@ -13,7 +13,8 @@
 
 #include "grackle.h"             // gr_float
 #include "fortran_func_decls.h"  // gr_mask_int
-#include "fortran_func_wrappers.hpp" // grackle::impl::fortran_wrapper::gaussj_g
+//#include "fortran_func_wrappers.hpp" // grackle::impl::fortran_wrapper::gaussj_g
+#include "gaussj_g.hpp"
 #include "index_helper.h"
 #include "internal_types.hpp"
 #include "internal_units.h"
@@ -80,6 +81,54 @@ int sanity_check_() {
   //GRIMPL_REQUIRE(false, "early abort");
 
   return 1;
+}
+
+/// acts as a temporary adaptor layer for time_deriv_0d::derivatives:
+///
+/// @note
+/// Some additional context
+/// - during transcription, time_deriv_0d::derivatives (formerly called
+///   lookup_cool_rates0d) needed to be adapted to make use of data structures
+///   already adopted in other parts of the transcribed code
+///   - (recall that these data structures were introduced to remove HUNDREDS
+///     of function arguments and HUNDREDS of local variables)
+/// - since the newton-raphson solver already does a bunch of "translation"
+///   between data representations, it should directly map into these preferred
+///   data structures
+/// - as a short-term (and extremely temporary) solution, we this function
+///   to copy between formats & wrap the time_deriv_0d::derivatives function.
+///   This allows to finish polishing time_deriv_0d::derivatives without
+///   refactoring the newton-raphson scheme)
+inline void wrapped_calc_derivatives(
+  double dt,
+  const double* dsp,
+  double* dspdot,
+  grackle::impl::time_deriv_0d::ContextPack& pack,
+  std::vector<gr_float>& rhosp_grflt,         // <- preallocated temp buffer
+  grackle::impl::SpeciesCollection& rhosp_dot // <- preallocated temp buffer
+) {
+
+  gr_float local_eint[1];
+  double eint_dot_specific[1];
+
+  // 1. copy values out of dsp into rhosp_grflt and local_eint
+  //    - at some point, we need to add some logic to deal with edge cases
+  //      that can arise when `sizeof(gr_float) < sizeof(double)
+  for (int sp_idx = 0; sp_idx < SpLUT::NUM_ENTRIES; sp_idx++) {
+    rhosp_grflt[sp_idx] = static_cast<gr_float>(dsp[sp_idx]);
+  }
+  local_eint[0] = static_cast<gr_float>(dsp[SpLUT::NUM_ENTRIES]);
+
+  // 2. call the wrapped function
+  grackle::impl::time_deriv_0d::derivatives(
+    dt, rhosp_grflt.data(), rhosp_dot, local_eint, eint_dot_specific, pack
+  );
+
+  // 3. copy the computed derivatives into dspdot
+  for (int sp_idx = 0; sp_idx < SpLUT::NUM_ENTRIES; sp_idx++) {
+    dspdot[sp_idx] = rhosp_dot.data[sp_idx][0];
+  }
+  dspdot[SpLUT::NUM_ENTRIES] = eint_dot_specific[0];
 }
 
 /// An alternative to step_rate_g for evolving the species rate equations that
@@ -176,6 +225,10 @@ inline void step_rate_newton_raphson(
   t_deriv::ContextPack pack = t_deriv::new_ContextPack(
     frozen_tderiv_args, main_scratch_buf
   );
+
+  std::vector<gr_float> rhosp_grflt(SpLUT::NUM_ENTRIES);
+  grackle::impl::SpeciesCollection rhosp_dot =
+    grackle::impl::new_SpeciesCollection(1);
 
   // the following check was inspired by a compiler warning indicating that
   // nsp won't be initialized if this condition isn't met
@@ -480,7 +533,9 @@ inline void step_rate_newton_raphson(
           }
 
           // calc the time derivatives
-          t_deriv::derivatives(dt_FIXME, dsp.data(), dspdot.data(), pack);
+          wrapped_calc_derivatives(
+            dt_FIXME, dsp.data(), dspdot.data(), pack, rhosp_grflt, rhosp_dot
+          );
 
           for (jsp = 1; jsp<=(nsp); jsp++) {
             dspj = eps * dsp[idsp[jsp-1]];
@@ -492,7 +547,10 @@ inline void step_rate_newton_raphson(
               }
             }
 
-            t_deriv::derivatives(dt_FIXME, dsp1.data(), dspdot1.data(), pack);
+            wrapped_calc_derivatives(
+              dt_FIXME, dsp1.data(), dspdot1.data(), pack, rhosp_grflt,
+              rhosp_dot
+            );
 
             for (isp = 1; isp<=(nsp); isp++) {
               if ( (dsp[idsp[isp-1]]==0.e0)
@@ -530,7 +588,7 @@ inline void step_rate_newton_raphson(
             vec[isp-1] = vec[isp-1]/d(i,j,k);
           }
 
-          ierror = f_wrap::gaussj_g(nsp, mtrx.data(), vec.data());
+          ierror = grackle::impl::gaussj_g(nsp, mtrx.data(), vec.data());
           if(ierror == 1)  {
             goto label_9998;
           }
@@ -700,6 +758,7 @@ label_9996:
   }
 
   t_deriv::drop_MainScratchBuf(&main_scratch_buf);
+  grackle::impl::drop_SpeciesCollection(&rhosp_dot);
 
 }
 
