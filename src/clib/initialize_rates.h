@@ -15,8 +15,16 @@
 
 #include "grackle.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
 int initialize_rates(chemistry_data* my_chemistry,
                      chemistry_data_storage* my_rates, code_units* my_units,
                      double co_length_unit, double co_density_unit);
+
+#ifdef __cplusplus
+}  // extern "C"
+#endif /* __cplusplus */
 
 #endif /* INITIALIZE_RATES_H */

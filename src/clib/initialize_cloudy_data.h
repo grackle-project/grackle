@@ -15,6 +15,10 @@
 
 #include "grackle.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
 /// Initializes an empty #cloudy_data struct with zeros and NULLs.
 void initialize_empty_cloudy_data_struct(cloudy_data* my_cloudy);
 
@@ -26,5 +30,9 @@ int initialize_cloudy_data(chemistry_data* my_chemistry,
 
 int free_cloudy_data(cloudy_data* my_cloudy, chemistry_data* my_chemistry,
                      int primordial);
+
+#ifdef __cplusplus
+}  // extern "C"
+#endif /* __cplusplus */
 
 #endif /* INITIALIZE_CLOUDY_DATA_H */
