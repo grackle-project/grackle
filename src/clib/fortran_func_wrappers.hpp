@@ -189,8 +189,84 @@ inline void cool1d_multi_g(
 
 }
 
+
+/// Performs Gauss-Jordan elimination to solve the specified system of linear
+/// equations and inverts the coefficient matrix.
+///
+/// In more detail, it solves the linear matrix `ax=b`, where `a` is the
+/// square coefficient matrix, `b` is the right-hand side vector and `x`
+/// is the solution vector
+///
+/// @param[in]     n The number of linear equations being solved
+/// @param[in,out] coef_matrix An n by n array that initially specifies the
+///    coefficient matrix. It's overwritten by the inverted matrix.
+/// @param[in,out] vec An n element array that initially specifies the
+///    right-hand side vector. It's overwritten by the solution vector.
+///
+/// @retval 0 indicates success
+/// @retval 1 indicates that the matrix is singular
+///
+/// > [!important]
+/// > This appears to be taken directly from a routine provided in
+/// > "Numerical Recipes" and slightly adapted. The original text allows
+/// > `b` to hold multiple right-hand side vectors (and then we compute
+/// > solutions for each right-hand side vector at the same time). In
+/// > contrast, only allow 1 vector).
+/// >
+/// > The original Numerical Recipes snippet can be found here
+/// > https://phys.uri.edu/nigh/NumRec/bookfpdf/f2-1.pdf
+/// >
+/// > Code from Numerical Recipes CANNOT be merged into Grackle (the
+/// > licensing is fundamentally incompatible)
+///
+/// @todo
+/// We need to replace this for reasons highlighted up above. When we do that,
+/// we should account that the only place that calls this routine only needs
+/// the solution to the system of equations (i.e. it does not need the
+/// inverted matrix). For that reason, we may want to rename this to something
+/// a little more generic. We should also consider information highlighted
+/// within https://github.com/grackle-project/grackle/issues/255
+inline int gaussj_g(int n, double* coef_matrix, double* vector) {
+  int ierr;
+  FORTRAN_NAME(gaussj_g)(&n, coef_matrix, vector, &ierr);
+  return ierr;
+}
+
 /// This routine uses the temperature to look up the chemical rates that are
 /// tabulated in a log table as a function of temperature
+///
+/// > [!important]
+/// > TODO: The role of the `dt` argument **MUST** be clarified! It is passed
+/// > different values in different areas of the codebase!!!!
+/// > - `solve_rate_cool_g` passes in the value of the total timestep that the
+/// >   chemistry is evolved. This is the traditional meaning of `dt`
+/// > - the time derivative calculation within `step_rate_newton_raphson`
+/// >   passes the timestep of the current subcycle (effectively the whole
+/// >   function is only being called for a single element idx_range)
+/// >
+/// > Internally, this arg only appears to be used to determine dust grain
+/// > destruction rate.
+/// > - the dust destruction rate is 0 for all temperatures below some
+/// >   threshold (the threshold depends on the grain species)
+/// > - above the threshold, the destruction rate is essentially the current
+/// >   grain density divided by the value of the `dt` argument
+/// >
+/// > If you think about it:
+/// > - I'd argue that setting `dt` to the whole timestep that we are evolving
+/// >   the zone over is blatantly wrong. It violates the principle that you
+/// >   should get consistent results whether you invoke grackle 100 separate
+/// >   times or just 1 time. (The amount of dust heating would change)
+/// > - setting `dt` to the current subcycle timestep makes a lot more sense
+/// >   (and is the only logical choice)
+/// >   - It is roughly equivalent to saying that dust is immediately destroyed
+/// >     once the gas reaches a threshold temperature.
+/// >   - the model is overly simplistic since dust grains can survive for
+/// >     quite in ionized gas (see for example
+/// >     https://ui.adsabs.harvard.edu/abs/2024ApJ...974...81R/abstract)
+/// >
+/// > If we stick with this instantaneous destruction model, then all
+/// > dust-grain related heating and cooling should probably assume that the
+/// > dust-grain density is already 0.
 inline void lookup_cool_rates1d_g(
   IndexRange idx_range, gr_mask_type anydust, double* tgas1d, double* mmw,
   double* tdust, double* dust2gas, double* k13dd, double* h2dust,
