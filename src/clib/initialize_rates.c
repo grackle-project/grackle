@@ -86,15 +86,11 @@
 #include "grackle.h"
 #include "grackle_macros.h"
 #include "grackle_rate_functions.h"
+#include "initialize_dust_yields.h"
+#include "initialize_metal_chemistry_rates.h"
 #include "initialize_rates.h"
 #include "phys_constants.h"
 
-int initialize_metal_chemistry_rates(chemistry_data *my_chemistry,
-                                     chemistry_data_storage *my_rates,
-                                     code_units *my_units);
-int initialize_dust_yields(chemistry_data *my_chemistry,
-                           chemistry_data_storage *my_rates,
-                           code_units *my_units);
 
 //Define the type of a scalar rate function.
 typedef double (*scalar_rate_function)(double, chemistry_data*);

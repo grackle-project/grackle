@@ -99,8 +99,8 @@ add_library(Grackle_Grackle
   solve_chemistry.c
   status_reporting.c status_reporting.h
   update_UVbackground_rates.c
-  initialize_dust_yields.c
-  initialize_metal_chemistry_rates.c
+  initialize_dust_yields.c initialize_dust_yields.h
+  initialize_metal_chemistry_rates.c initialize_metal_chemistry_rates.h
   rate_utils.c
   utils.c
 

@@ -21,6 +21,8 @@
 #include "auto_general.h"
 #include "interp_table_utils.h" // free_interp_grid_
 #include "initialize_cloudy_data.h"
+#include "initialize_dust_yields.h"
+#include "initialize_metal_chemistry_rates.h"
 #include "initialize_rates.h"
 #include "initialize_UVbackground_data.h"
 #include "phys_constants.h"
@@ -34,9 +36,6 @@
 #endif
 
 void show_parameters(FILE *fp, chemistry_data *my_chemistry);
-
-int local_free_metal_chemistry_rates(chemistry_data *my_chemistry, chemistry_data_storage *my_rates);
-int local_free_dust_yields(chemistry_data *my_chemistry, chemistry_data_storage *my_rates);
 
 static void show_version(FILE *fp)
 {
