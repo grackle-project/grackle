@@ -68,12 +68,12 @@ Tracker = 'https://github.com/grackle-project/grackle/issues'
 # currently the next line duplicates the dependency-groups purely for
 # historical reasons. We should delete the following entry in the near-future
 # (since they are actually dependencies of the gracklepy-wheel).
-dev = ['flake8', 'packaging', 'pytest', 'sphinx', 'sphinx-tabs', 'furo']
+dev = ['packaging', 'pytest', 'sphinx', 'sphinx-tabs', 'furo']
 
 [dependency-groups]
 docs = ['sphinx', 'sphinx-tabs', 'furo']
 test = ['pytest', 'packaging']
-dev = ['flake8', {include-group = "docs"}, {include-group = 'test'}]
+dev = [{include-group = "docs"}, {include-group = 'test'}]
 
 [tool.pytest.ini_options]
 # settings inspired by: learn.scientific-python.org/development/guides/pytest/
@@ -203,12 +203,6 @@ For more context:
 select = ["E4", "E7", "E9", "F"]
 # our ignore-list is based on our old flake8 ignore-list
 ignore = ["E402", "E502", "E701", "E731"]
-
-exclude = [
-    # these are based on flake8's exclude-list
-    "src/python/gracklepy/__init__.py",
-    "src/python/gracklepy/utilities/testing.py",
-]
 
 [tool.ruff.format]
 # This following option adds files to the standard set of ruff-format's
