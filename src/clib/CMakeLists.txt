@@ -113,7 +113,7 @@ add_library(Grackle_Grackle
   solve_rate_cool_g-cpp.cpp solve_rate_cool_g-cpp.h
   step_rate_newton_raphson.hpp
   time_deriv_0d.hpp
-  utils-cpp.C utils-cpp.hpp
+  utils-cpp.cpp utils-cpp.hpp
   utils-field.hpp
   fortran_func_wrappers.hpp
   visitor/common.hpp
