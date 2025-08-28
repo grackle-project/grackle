@@ -90,7 +90,6 @@ add_library(Grackle_Grackle
   dynamic_api.c
   grackle_units.c
   index_helper.c
-  initialize_chemistry_data.c
   initialize_cloudy_data.c initialize_cloudy_data.h
   initialize_rates.c initialize_rates.h
   initialize_UVbackground_data.c  initialize_UVbackground_data.h
@@ -111,6 +110,7 @@ add_library(Grackle_Grackle
 
   # C++ Source (and Private Header Files)
   cool_multi_time_g-cpp.C cool_multi_time_g-cpp.h
+  initialize_chemistry_data.cpp
   internal_types.C internal_types.hpp
   solve_rate_cool_g-cpp.C solve_rate_cool_g-cpp.h
   step_rate_newton_raphson.hpp
