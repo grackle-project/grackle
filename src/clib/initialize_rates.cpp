@@ -88,7 +88,7 @@
 #include "grackle_rate_functions.h"
 #include "initialize_dust_yields.h"
 #include "initialize_metal_chemistry_rates.h"
-#include "initialize_rates.h"
+#include "initialize_rates.hpp"
 #include "phys_constants.h"
 
 // We define the function pointers inside an extern "C" block because they
@@ -286,8 +286,9 @@ int add_h2dust_S_reaction_rate(double **rate_ptr, double units, chemistry_data *
 } // anonymous namespace
 
 //Definition of the initialise_rates function.
-extern "C" int initialize_rates(chemistry_data *my_chemistry, chemistry_data_storage *my_rates,
-                   code_units *my_units, double co_length_unit, double co_density_unit)
+int grackle::impl::initialize_rates(
+  chemistry_data *my_chemistry, chemistry_data_storage *my_rates,
+  code_units *my_units, double co_length_unit, double co_density_unit)
 { 
     //* Set the flag for dust calculations.
     int anyDust;

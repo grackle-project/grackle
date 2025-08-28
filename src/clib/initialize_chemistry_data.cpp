@@ -23,7 +23,7 @@
 #include "initialize_cloudy_data.h"
 #include "initialize_dust_yields.h"
 #include "initialize_metal_chemistry_rates.h"
-#include "initialize_rates.h"
+#include "initialize_rates.hpp"
 #include "initialize_UVbackground_data.h"
 #include "phys_constants.h"
 
@@ -492,7 +492,8 @@ extern "C" int local_initialize_chemistry_data(chemistry_data *my_chemistry,
   }
 
   //* Call initialise_rates to compute rate tables.
-  initialize_rates(my_chemistry, my_rates, my_units, co_length_units, co_density_units);
+  grackle::impl::initialize_rates(
+    my_chemistry, my_rates, my_units, co_length_units, co_density_units);
 
   /* Initialize Cloudy cooling. */
   my_rates->cloudy_data_new = 1;

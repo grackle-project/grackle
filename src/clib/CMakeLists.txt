@@ -110,7 +110,7 @@ add_library(Grackle_Grackle
   # C++ Source (and Private Header Files)
   cool_multi_time_g-cpp.C cool_multi_time_g-cpp.h
   initialize_chemistry_data.cpp
-  initialize_rates.cpp initialize_rates.h
+  initialize_rates.cpp initialize_rates.hpp
   internal_types.C internal_types.hpp
   solve_rate_cool_g-cpp.C solve_rate_cool_g-cpp.h
   step_rate_newton_raphson.hpp
