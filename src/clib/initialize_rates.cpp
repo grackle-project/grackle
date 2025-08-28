@@ -87,7 +87,7 @@
 #include "grackle_macros.h"
 #include "grackle_rate_functions.h"
 #include "initialize_dust_yields.h"
-#include "initialize_metal_chemistry_rates.h"
+#include "initialize_metal_chemistry_rates.hpp"  // initialize_metal_chemistry_rates
 #include "initialize_rates.hpp"
 #include "phys_constants.h"
 
@@ -570,7 +570,7 @@ int grackle::impl::initialize_rates(
     add_scalar_reaction_rate(&my_rates->gamma_isrf, gamma_isrf_rate, coolingUnits, my_chemistry); 
 
     /* Metal chemistry rates */
-    if (initialize_metal_chemistry_rates(my_chemistry, my_rates, my_units) == FAIL) {
+    if (grackle::impl::initialize_metal_chemistry_rates(my_chemistry, my_rates, my_units) == FAIL) {
       fprintf(stderr, "Error in initialize_metal_chemistry_rates.\n");
       return FAIL;
     }

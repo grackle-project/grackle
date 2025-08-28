@@ -98,7 +98,6 @@ add_library(Grackle_Grackle
   status_reporting.c status_reporting.h
   update_UVbackground_rates.c
   initialize_dust_yields.c initialize_dust_yields.h
-  initialize_metal_chemistry_rates.c initialize_metal_chemistry_rates.h
   rate_utils.c
   utils.c
 
@@ -111,6 +110,7 @@ add_library(Grackle_Grackle
   cool_multi_time_g-cpp.C cool_multi_time_g-cpp.h
   initialize_chemistry_data.cpp
   initialize_rates.cpp initialize_rates.hpp
+  initialize_metal_chemistry_rates.cpp initialize_metal_chemistry_rates.hpp
   internal_types.C internal_types.hpp
   solve_rate_cool_g-cpp.C solve_rate_cool_g-cpp.h
   step_rate_newton_raphson.hpp

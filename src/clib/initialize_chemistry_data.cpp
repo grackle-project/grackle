@@ -22,7 +22,7 @@
 #include "interp_table_utils.h" // free_interp_grid_
 #include "initialize_cloudy_data.h"
 #include "initialize_dust_yields.h"
-#include "initialize_metal_chemistry_rates.h"
+#include "initialize_metal_chemistry_rates.hpp"  // free_metal_chemistry_rates
 #include "initialize_rates.hpp"
 #include "initialize_UVbackground_data.h"
 #include "phys_constants.h"
@@ -723,8 +723,8 @@ extern "C" int local_free_chemistry_data(chemistry_data *my_chemistry,
     GRACKLE_FREE(my_rates->UVbackground_table.crsHeI);
   }
 
-  if (local_free_metal_chemistry_rates(my_chemistry, my_rates) == FAIL) {
-    fprintf(stderr, "Error in local_free_metal_chemistry_rates.\n");
+  if (grackle::impl::free_metal_chemistry_rates(my_chemistry, my_rates) == FAIL) {
+    fprintf(stderr, "Error in free_metal_chemistry_rates.\n");
     return FAIL;
   }
 
