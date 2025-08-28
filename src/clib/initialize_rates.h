@@ -10,8 +10,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef INITIALIZE_RATES_H
-#define INITIALIZE_RATES_H
+#ifndef INITIALIZE_RATES_HPP
+#define INITIALIZE_RATES_HPP
 
 #include "grackle.h"
 
@@ -27,4 +27,4 @@ int initialize_rates(chemistry_data* my_chemistry,
 }  // extern "C"
 #endif /* __cplusplus */
 
-#endif /* INITIALIZE_RATES_H */
+#endif /* INITIALIZE_RATES_HPP */

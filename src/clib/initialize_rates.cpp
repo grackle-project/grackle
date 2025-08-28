@@ -91,12 +91,20 @@
 #include "initialize_rates.h"
 #include "phys_constants.h"
 
+// We define the function pointers inside an extern "C" block because they
+// are used to describe the functions declared in grackle_rate_functions.h,
+// and all of these functions have C linkage
+extern "C" {
 
 //Define the type of a scalar rate function.
 typedef double (*scalar_rate_function)(double, chemistry_data*);
 
 //Define the type of a generic rate function.
 typedef double (*rate_function)(double, double, chemistry_data*);
+
+} // extern "C"
+
+namespace { // stuff inside an anonymous namespace are only locally visible
 
 //Define a function which calculates start temperature and increments in log space.
 void logT_spacing(double *logT_start, double *d_logT, chemistry_data *my_chemistry)
@@ -129,7 +137,7 @@ int add_reaction_rate(double **rate_ptr, rate_function my_function, double units
                         chemistry_data *my_chemistry)
 {
     //Allocate memory for rate.
-    *rate_ptr = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    *rate_ptr = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
 
     //Calculate temperature spacing.
     double T, logT, logT_start, d_logT;
@@ -154,7 +162,7 @@ int add_reaction_rate(double **rate_ptr, rate_function my_function, double units
 int add_k13dd_reaction_rate(double **rate_ptr, double units, chemistry_data *my_chemistry)
 {
     //Allocate array memory to the pointer.
-    *rate_ptr = malloc(14 * my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    *rate_ptr = (double*)malloc(14 * my_chemistry->NumberOfTemperatureBins * sizeof(double));
 
     //Create a temporary array to retrieve the 14 coefficients calculated by the k13dd function.
     double temp_array[14];
@@ -183,7 +191,7 @@ int add_k13dd_reaction_rate(double **rate_ptr, double units, chemistry_data *my_
 int add_h2dust_reaction_rate(double **rate_ptr, double units, chemistry_data *my_chemistry)
 {
     //Allocate memory for h2dust.
-    *rate_ptr = malloc(my_chemistry->NumberOfTemperatureBins * my_chemistry->NumberOfDustTemperatureBins
+    *rate_ptr = (double*)malloc(my_chemistry->NumberOfTemperatureBins * my_chemistry->NumberOfDustTemperatureBins
                         * sizeof(double));
 
     //Calculate temperature spacing.
@@ -215,7 +223,7 @@ int add_h2dust_reaction_rate(double **rate_ptr, double units, chemistry_data *my
 int add_h2dust_C_reaction_rate(double **rate_ptr, double units, chemistry_data *my_chemistry)
 {
     //Allocate memory for h2dust.
-    *rate_ptr = malloc(my_chemistry->NumberOfTemperatureBins * my_chemistry->NumberOfDustTemperatureBins
+    *rate_ptr = (double*)malloc(my_chemistry->NumberOfTemperatureBins * my_chemistry->NumberOfDustTemperatureBins
                         * sizeof(double));
 
     //Calculate temperature spacing.
@@ -247,7 +255,7 @@ int add_h2dust_C_reaction_rate(double **rate_ptr, double units, chemistry_data *
 int add_h2dust_S_reaction_rate(double **rate_ptr, double units, chemistry_data *my_chemistry)
 {
     //Allocate memory for h2dust.
-    *rate_ptr = malloc(my_chemistry->NumberOfTemperatureBins * my_chemistry->NumberOfDustTemperatureBins
+    *rate_ptr = (double*)malloc(my_chemistry->NumberOfTemperatureBins * my_chemistry->NumberOfDustTemperatureBins
                         * sizeof(double));
 
     //Calculate temperature spacing.
@@ -275,8 +283,10 @@ int add_h2dust_S_reaction_rate(double **rate_ptr, double units, chemistry_data *
     return GR_SUCCESS;
 }
 
+} // anonymous namespace
+
 //Definition of the initialise_rates function.
-int initialize_rates(chemistry_data *my_chemistry, chemistry_data_storage *my_rates,
+extern "C" int initialize_rates(chemistry_data *my_chemistry, chemistry_data_storage *my_rates,
                    code_units *my_units, double co_length_unit, double co_density_unit)
 { 
     //* Set the flag for dust calculations.
@@ -351,7 +361,7 @@ int initialize_rates(chemistry_data *my_chemistry, chemistry_data_storage *my_ra
                           / (densityBase1 * pow(timeBase1, 3));
 
     // These always need to be allocated since we define other variables by them.
-    my_rates->gr_N = calloc(2, sizeof(int));
+    my_rates->gr_N = (int*)calloc(2, sizeof(int));
 
     if (my_chemistry->use_primordial_continuum_opacity == 1) {
       initialize_primordial_opacity(my_chemistry, my_rates);
