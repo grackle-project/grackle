@@ -86,8 +86,7 @@
 
 !  Parameters
 
-      real*8 mh
-      parameter (mh = mass_h)
+      real*8, parameter :: mh = mass_h
 
 !  Locals
 
@@ -102,7 +101,7 @@
 
 !  Iteration mask
 
-      logical itmask(in)
+      MASK_TYPE itmask(in)
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
 !=======================================================================
@@ -145,7 +144,7 @@
 !     Initialize iteration mask to true for all cells.
 
          do i = is+1, ie+1
-            itmask(i) = .true.
+            itmask(i) = MASK_TRUE
 
             if (imetal .eq. 1) then
                rhoH(i) = fh * (d(i,j,k) - metal(i,j,k))
