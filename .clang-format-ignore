@@ -48,7 +48,7 @@ src/clib/scale_fields.hpp
 src/clib/scale_fields_table.hpp
 src/clib/set_default_chemistry_parameters.c
 src/clib/solve_chemistry.c
-src/clib/solve_rate_cool_g-cpp.C
+src/clib/solve_rate_cool_g-cpp.cpp
 src/clib/solve_rate_cool_g-cpp.h
 src/clib/status_reporting.c
 src/clib/status_reporting.h

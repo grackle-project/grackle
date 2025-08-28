@@ -1,13 +1,20 @@
-// See LICENSE file for license and copyright information
-
-/// @file solve_rate_cool_g-cpp.h
-/// @brief Declares signature of solve_rate_cool_g
+//===----------------------------------------------------------------------===//
+//
+// See the LICENSE file for license and copyright information
+// SPDX-License-Identifier: NCSA AND BSD-3-Clause
+//
+//===----------------------------------------------------------------------===//
+///
+/// @file
+/// Declares the signature of the solve_rate_cool_g function
+///
+//===----------------------------------------------------------------------===//
 
 // This file was initially generated automatically during conversion of the
 // solve_rate_cool_g function from FORTRAN to C++
 
-#ifndef MY_FILE_CPP_H
-#define MY_FILE_CPP_H
+#ifndef SOLVE_RATE_COOL_G_CPP_H
+#define SOLVE_RATE_COOL_G_CPP_H
 
 #include "grackle.h"             // gr_float
 #include "fortran_func_decls.h"  // gr_mask_int
@@ -47,4 +54,4 @@ int solve_rate_cool_g(
 }  // extern "C"
 #endif /* __cplusplus */
 
-#endif /* MY_FILE_CPP_H */
+#endif /* SOLVE_RATE_COOL_G_CPP_H */
