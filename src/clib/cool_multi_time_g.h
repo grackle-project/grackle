@@ -39,11 +39,11 @@ extern "C" {
 /// C++ compiler, modify this function (prototype & implementation) such that:
 /// - it's not enclosed by a `extern "C"` block
 /// - it's defined within a `grackle::impl` namespace
-void cool_multi_time_g(
-  gr_float* cooltime_data_, int imetal, InternalGrUnits internalu,
-  chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
-  grackle_field_data* my_fields, photo_rate_storage my_uvb_rates
-);
+void cool_multi_time_g(gr_float* cooltime_data_, int imetal,
+                       InternalGrUnits internalu, chemistry_data* my_chemistry,
+                       chemistry_data_storage* my_rates,
+                       grackle_field_data* my_fields,
+                       photo_rate_storage my_uvb_rates);
 
 #ifdef __cplusplus
 }  // extern "C"
