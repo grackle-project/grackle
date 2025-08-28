@@ -108,7 +108,7 @@ add_library(Grackle_Grackle
   ${CMAKE_CURRENT_BINARY_DIR}/auto_general.c
 
   # C++ Source (and Private Header Files)
-  cool_multi_time_g-cpp.C cool_multi_time_g-cpp.h
+  cool_multi_time_g.cpp cool_multi_time_g.h
   internal_types.C internal_types.hpp
   solve_rate_cool_g-cpp.C solve_rate_cool_g-cpp.h
   step_rate_newton_raphson.hpp
