@@ -5,11 +5,20 @@ Grackle
 .. image:: https://img.shields.io/badge/Users-List-lightgrey.svg
    :target: https://groups.google.com/forum/#!forum/grackle-cooling-users
 
-.. image:: https://circleci.com/gh/grackle-project/grackle/tree/main.svg?style=svg
+.. image:: https://circleci.com/gh/grackle-project/grackle/tree/main.svg?style=shield
    :target: https://circleci.com/gh/grackle-project/grackle/tree/main
+
+.. image:: https://results.pre-commit.ci/badge/github/grackle-project/grackle/main.svg
+   :target: https://results.pre-commit.ci/latest/github/grackle-project/grackle/main
 
 .. image:: https://readthedocs.org/projects/grackle/badge/?version=latest
    :target: https://grackle.readthedocs.io/en/latest/?badge=latest)
+
+.. image:: https://img.shields.io/pypi/v/gracklepy?label=gracklepy%40pypi
+   :target: https://pypi.org/project/gracklepy/
+
+.. image:: https://img.shields.io/pypi/pyversions/gracklepy
+   :target: https://pypi.org/project/gracklepy/
 
 `Documentation <https://grackle.readthedocs.io/en/latest/>`__ |
 `Installation <https://grackle.readthedocs.io/en/latest/Installation.html>`__ |

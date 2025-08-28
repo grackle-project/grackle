@@ -59,5 +59,6 @@ Grackle Documentation
    :hidden:
 
    GitHub <https://github.com/grackle-project/grackle>
+   Gracklepy @ PyPI <https://pypi.org/project/gracklepy/>
    Tracker <https://github.com/grackle-project/grackle/issues>
 
