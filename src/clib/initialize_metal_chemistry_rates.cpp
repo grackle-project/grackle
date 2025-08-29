@@ -104,29 +104,26 @@ int grackle::impl::initialize_metal_chemistry_rates(
   InternalGrUnits internalu = new_internalu_(my_units);
 
       int  nratec      = my_chemistry->NumberOfTemperatureBins;
-      double  aye      = my_units->a_value;
+      double  aye      = internalu.a_value;
       double  temstart = my_chemistry->TemperatureStart;
       double  temend   = my_chemistry->TemperatureEnd;
-      double  uxyz     = internalu.uxyz;
-      double  uaye     = my_units->a_units;
-      double  urho     = internalu.urho;
+      double  uaye     = internalu.a_units;
       double  utim     = my_units->time_units;
 
       int i;
       double logttt, ttt, tbase1, xbase1, kunit, coolunit, dbase1, dlogtem, ttt300;
-//
-//
+
 // Get conversion units
 //
 //    t/x/dbase1 is the number (z dependant) that converts from the
 //      dimensionless code units to physical units.  Also, in the
 //      code aye = 1 at z=zinit, so to convert the usual a (=1 at z=0)
 //      to a~ (written in the code as aye), we use a = a~*[a] 
-//
+
       tbase1 = utim;
-      xbase1 = uxyz/(aye*uaye);      // uxyz is [x]*a     
-      dbase1 = urho*pow(aye*uaye, 3);// urho is [dens]/a^3
-//
+      xbase1 = internalu.uxyz/(aye*uaye);        // uxyz is [x]*a
+      dbase1 = internalu.urho*pow(aye*uaye, 3);  // urho is [dens]/a^3
+
 // 1) Set the dimensions of the (non-radiative) rate coefficients.  
 //   Note that we have included the units that convert density to 
 //   number density, so the rate equations should look like 
