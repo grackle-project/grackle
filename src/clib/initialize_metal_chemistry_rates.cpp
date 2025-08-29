@@ -20,6 +20,7 @@
 #include "grackle_macros.h"
 #include "interp_table_utils.h" // free_interp_grid_
 #include "initialize_metal_chemistry_rates.hpp"  // forward declarations
+#include "internal_units.h"  // InternalGrUnits
 #include "phys_constants.h"
 #include "grackle_rate_functions.h" // forward declarations of some funcs
 
@@ -97,26 +98,18 @@ int grackle::impl::initialize_metal_chemistry_rates(
 //-------z53:  SiI    +  O2   ->  SiOI   +  OI
 //-------z54:  SiOI   +  OH   ->  SiO2I  +  HI
 
-
-      double co_length_units, co_density_units;
-      if (my_units->comoving_coordinates == TRUE) {
-        co_length_units = my_units->length_units;
-        co_density_units = my_units->density_units;
-      }
-      else {
-        co_length_units = my_units->length_units *
-          my_units->a_value * my_units->a_units;
-        co_density_units = my_units->density_units /
-          POW(my_units->a_value * my_units->a_units, 3);
-      }
+  // temporarily construct the InternalGrUnits struct
+  // -> the construction logic deduplicates a lot of logic that was
+  //    previously copied and pasted across a lot of fortran files
+  InternalGrUnits internalu = new_internalu_(my_units);
 
       int  nratec      = my_chemistry->NumberOfTemperatureBins;
       double  aye      = my_units->a_value;
       double  temstart = my_chemistry->TemperatureStart;
       double  temend   = my_chemistry->TemperatureEnd;
-      double  uxyz     = co_length_units;
+      double  uxyz     = internalu.uxyz;
       double  uaye     = my_units->a_units;
-      double  urho     = co_density_units;
+      double  urho     = internalu.urho;
       double  utim     = my_units->time_units;
 
       int i;
