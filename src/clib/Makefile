@@ -138,11 +138,11 @@ verbose: VERBOSE = 1
 # Implicit rules
 #-----------------------------------------------------------------------
 
-.SUFFIXES: .c .C .F .lo .o
+.SUFFIXES: .c .cpp .C .F .lo .o
 
 # Inhibit removing any *.o files after compiling
 
-.PRECIOUS: %.o %.lo %.c %.C %.F
+.PRECIOUS: %.o %.lo %.c %.cpp %.C %.F
 
 .F.lo:
 	@rm -f $@
@@ -163,6 +163,37 @@ verbose: VERBOSE = 1
 	  fi ; \
 	fi)
 
+# Keep this synchronized with the .C.lo implicit rule
+# -> the historic convention in the Grackle project was to use .C as the suffix
+#    for C++ source files. Thus, when we began transcribing files, we used the
+#    .C suffix (even though it is a less common choice than .cpp)
+# -> however, it turns out that converting a file named `<prefix>.c` to
+#    `<prefix>.C` causes lots of issues performing Git operations when your
+#    machine has a case-insensitive file-system (common on macOS).
+# -> consequently, we will be transitioning to the .cpp suffix
+.cpp.lo:
+	@rm -f $@
+	@(if [ $(VERBOSE) -eq 0 ]; then \
+	  echo "Compiling $<" ; \
+	  $(LIBTOOL) --mode=compile --tag=CXX $(CXX) -c $(DEFINES) $(CXXFLAGS) $(INCLUDES) $*.cpp -o $@ \
+	    >& $(OUTPUT) ; \
+	  if [ ! -e $@ ]; then \
+             echo; \
+	     echo "Compiling $< failed!"; \
+	     echo "See $(OUTPUT) for error messages."; \
+             echo; \
+             exit 1; \
+          fi ; \
+	else \
+	  $(LIBTOOL) --mode=compile --tag=CXX $(CXX) -c $(DEFINES) $(CXXFLAGS) $(INCLUDES) $*.cpp -o $@; \
+	  if [ ! -e $@ ]; then \
+	     exit 1; \
+	  fi ; \
+	fi)
+
+# Keep this synchronized with the .cpp.lo implicit rule. This is mostly for
+# legacy purposes. We'll be transitioning to "just" .cpp.lo in the future.
+# Justification for why we have both .cpp.lo AND .C.lo is provided up above
 .C.lo:
 	@rm -f $@
 	@(if [ $(VERBOSE) -eq 0 ]; then \
@@ -251,7 +282,7 @@ clean_autogen:
 .PHONY: dep
 dep:
 	@echo "Updating DEPEND"
-	-@(makedepend $(DEFINES) $(INCLUDES) -a -fDEPEND -o.o -m -- -- *.C) >> out.make.DEPEND 2>&1
+	-@(makedepend $(DEFINES) $(INCLUDES) -a -fDEPEND -o.o -m -- -- *.cpp *.C) >> out.make.DEPEND 2>&1
 	-@(makedepend $(DEFINES) $(INCLUDES) -a -fDEPEND -o.o -m -- -- *.c) >> out.make.DEPEND 2>&1
 	-@(makedepend $(DEFINES) $(INCLUDES) -a -fDEPEND -o.o -m -- -- *.F) >> out.make.DEPEND 2>&1
 	-@(makedepend $(DEFINES) $(INCLUDES) -a -fDEPEND -o.o -m -- -- *.h) >> out.make.DEPEND 2>&1

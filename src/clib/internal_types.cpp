@@ -1,12 +1,19 @@
-// See LICENSE file for license and copyright information
-
-/// @file internal_types.C
-/// @brief Implements some types used internally by Grackle
+//===----------------------------------------------------------------------===//
+//
+// See the LICENSE file for license and copyright information
+// SPDX-License-Identifier: NCSA AND BSD-3-Clause
+//
+//===----------------------------------------------------------------------===//
+///
+/// @file
+/// Implements some types used internally by Grackle
 ///
 /// To start out, we respect the choice to try to make this a subset of C++
 /// that closely resembles C, plus (con|de)structors & namespaces
 ///
 /// We may ultimately choose to shift to more idiomatic C++
+///
+//===----------------------------------------------------------------------===//
 
 #include <cstdlib>  // std::malloc
 
