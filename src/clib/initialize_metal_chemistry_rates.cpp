@@ -108,21 +108,20 @@ int grackle::impl::initialize_metal_chemistry_rates(
       double  temstart = my_chemistry->TemperatureStart;
       double  temend   = my_chemistry->TemperatureEnd;
       double  uaye     = internalu.a_units;
-      double  utim     = my_units->time_units;
 
       int i;
-      double logttt, ttt, tbase1, xbase1, kunit, coolunit, dbase1, dlogtem, ttt300;
+      double logttt, ttt, kunit, coolunit, dlogtem, ttt300;
 
-// Get conversion units
-//
-//    t/x/dbase1 is the number (z dependant) that converts from the
-//      dimensionless code units to physical units.  Also, in the
-//      code aye = 1 at z=zinit, so to convert the usual a (=1 at z=0)
-//      to a~ (written in the code as aye), we use a = a~*[a] 
-
-      tbase1 = utim;
-      xbase1 = internalu.uxyz/(aye*uaye);        // uxyz is [x]*a
-      dbase1 = internalu.urho*pow(aye*uaye, 3);  // urho is [dens]/a^3
+  // Overview of conversion units:
+  // -> internalu.tbase1, internalu.xbase1, & internalu.dbase1 respectively
+  //    hold the (z dependent) number that converts from the dimensionless code
+  //    units to physical units.  Also, in the code aye = 1 at z=zinit, so to
+  //    convert the usual a (=1 at z=0) to a~ (written in the code as aye), we
+  //    use a = a~*[a]
+  // -> TODO: can we delete this comment? This overview was adapted from a
+  //    comment that preceded the calculation of tbase1, xbase1, and dbase1.
+  //    This may not be necessary now that these are computed within internalu
+  //    (we may want to add this comment to the documentation of internalu)
 
 // 1) Set the dimensions of the (non-radiative) rate coefficients.  
 //   Note that we have included the units that convert density to 
@@ -143,9 +142,9 @@ int grackle::impl::initialize_metal_chemistry_rates(
 //             is not a constant (it has a factor a^3), so the number
 //             densities must be converted from comoving to proper.
 //
-      kunit   = (pow(uaye, 3) * mh) / (dbase1 * tbase1);
+      kunit   = (pow(uaye, 3) * mh) / (internalu.dbase1 * internalu.tbase1);
       // unused:
-      // double kunit_3bdy  = kunit * (pow(uaye, 3) * mh) / dbase1;
+      // double kunit_3bdy  = kunit * (pow(uaye, 3) * mh) / internalu.dbase1;
 //
 // 2) Set the dimension of the cooling coefficients (including constants)
 //    (this equation has a rho because e is the specifi//energy, not
@@ -157,7 +156,7 @@ int grackle::impl::initialize_metal_chemistry_rates(
 //      but [e] = ([a]*[x])**2 / [time]**2 and ([a] = 1 / (1 + zri) )
 //     [L] = ([a]**5 * [x]**2 * mh**2) / ([dens] * [time]**3)
 //
-      coolunit = (pow(uaye, 5) * pow(xbase1, 2) * pow(mh, 2)) / (pow(tbase1, 3) * dbase1);
+      coolunit = (pow(uaye, 5) * pow(internalu.xbase1, 2) * pow(mh, 2)) / (pow(internalu.tbase1, 3) * internalu.dbase1);
 //
 //   Note: some of the coffiecients have only one power of n.  These
 //         do not have the /a^3 factor, also they have units
