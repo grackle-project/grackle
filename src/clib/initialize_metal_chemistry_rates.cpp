@@ -9,6 +9,73 @@
 /// Implement machinery for initializing the reaction and cooling rates related
 /// to metal species
 ///
+/// Table of rate coefficients for primordial_chemistry >= 4:
+///
+/// | rate-name | Reaction                          |
+/// | --------- | --------------------------------- |
+/// | k125      | HDII +  HI   ->  HII  +  HDI      |
+/// | k129      | DI   +  HII  ->  HDII +  p        |
+/// | k130      | DII  +  HI   ->  HDII +  p        |
+/// | k131      | HDII +  e    ->  HI   +  DI       |
+/// | k132      | DI   +  e    ->  DM   +  p        |
+/// | k133      | DII  +  DM   ->  DI   +  DI       |
+/// | k134      | HII  +  DM   ->  DI   +  HI       |
+/// | k135      | HM   +  DI   ->  HI   +  DM       |
+/// | k136      | DM   +  HI   ->  DI   +  HM       |
+/// | k137      | DM   +  HI   ->  HDI  +  e        |
+/// | -         | -                                 |
+/// | k148      | HeI    +  HII  ->  HeHII  +  p    |
+/// | k149      | HeI    +  HII  ->  HeHII  +  p    |
+/// | k150      | HeI    +  H2II ->  HeHII  +  HI   |
+/// | k151      | HeII   +  HI   ->  HeHII  +  p    |
+/// | k152      | HeHII  +  HI   ->  HeI    +  H2II |
+/// | k153      | HeHII  +  e    ->  HeI    +  HI   |
+///
+/// Table of rate coefficients for metal species:
+///
+/// | rate-name | Reactions                        |
+/// | --------- | -------------------------------- |
+/// | kz15      | HI     +  CH   ->  CI     +  H2I |
+/// | kz16      | HI     +  CH2  ->  CH     +  H2I |
+/// | kz17      | HI     +  OH   ->  H2I    +  OI  |
+/// | kz18      | HI     +  H2O  ->  OH     +  H2I |
+/// | kz19      | HI     +  O2   ->  OH     +  OI  |
+/// | kz20      | CI     +  H2I  ->  CH     +  HI  |
+/// | kz21      | OI     +  H2I  ->  OH     +  HI  |
+/// | kz22      | HII    +  OI   ->  OII    +  HI  |
+/// | kz23      | H2I    +  CH   ->  CH2    +  HI  |
+/// | kz24      | H2I    +  OH   ->  H2O    +  HI  |
+/// | kz25      | OH     +  OH   ->  H2O    +  OI  |
+/// | kz26      | OH     +  CO   ->  CO2    +  HI  |
+/// | kz27      | CI     +  HI   ->  CH     +  p   |
+/// | kz28      | CI     +  OH   ->  CO     +  HI  |
+/// | kz29      | CI     +  O2   ->  CO     +  OI  |
+/// | kz30      | OI     +  HI   ->  OH     +  p   |
+/// | kz31      | OI     +  OI   ->  O2     +  p   |
+/// | kz32      | OI     +  CH   ->  CO     +  HI  |
+/// | kz33      | OI     +  OH   ->  O2     +  HI  |
+/// | kz34      | HII    +  OH   ->  OHII   +  HI  |
+/// | kz35      | HII    +  H2O  ->  H2OII  +  HI  |
+/// | kz36      | HII    +  O2   ->  O2II   +  HI  |
+/// | kz37      | CII    +  OH   ->  COII   +  HI  |
+/// | kz38      | CII    +  O2   ->  OII    +  CO  |
+/// | kz39      | OII    +  HI   ->  HII    +  OI  |
+/// | kz40      | OII    +  H2I  ->  OHII   +  HI  |
+/// | kz41      | OHII   +  H2I  ->  H2OII  +  HI  |
+/// | kz42      | H2OII  +  H2I  ->  H3OII  +  HI  |
+/// | kz43      | COII   +  HI   ->  HII    +  CO  |
+/// | kz44      | CII    +  e    ->  CI     +  p   |
+/// | kz45      | OII    +  e    ->  OI     +  p   |
+/// | kz46      | H2OII  +  e    ->  OH     +  HI  |
+/// | kz47      | H2OII  +  e    ->  OI     +  H2I |
+/// | kz48      | H3OII  +  e    ->  H2O    +  HI  |
+/// | kz49      | H3OII  +  e    ->  OH     +  HI  |
+/// | kz50      | O2II   +  e    ->  OI     +  OI  |
+/// | kz51      | H2I    +  CI   ->  CH2    +  p   |
+/// | kz52      | SiI    +  OH   ->  SiOI   +  HI  |
+/// | kz53      | SiI    +  O2   ->  SiOI   +  OI  |
+/// | kz54      | SiOI   +  OH   ->  SiO2I  +  HI  |
+///
 //===----------------------------------------------------------------------===//
 
 #include <stdlib.h> 
@@ -39,64 +106,6 @@ int grackle::impl::initialize_metal_chemistry_rates(
   if (my_chemistry->primordial_chemistry == 0)
     return SUCCESS;
 
-//-------125:   HDII +  HI   ->  HII  +  HDI
-//-------129:   DI   +  HII  ->  HDII +  p
-//-------130:   DII  +  HI   ->  HDII +  p
-//-------131:   HDII +  e    ->  HI   +  DI
-//-------132:   DI   +  e    ->  DM   +  p
-//-------133:   DII  +  DM   ->  DI   +  DI
-//-------134:   HII  +  DM   ->  DI   +  HI
-//-------135:   HM   +  DI   ->  HI   +  DM
-//-------136:   DM   +  HI   ->  DI   +  HM
-//-------137:   DM   +  HI   ->  HDI  +  e 
-
-//-------148:  HeI    +  HII  ->  HeHII  +  p 
-//-------149:  HeI    +  HII  ->  HeHII  +  p 
-//-------150:  HeI    +  H2II ->  HeHII  +  HI
-//-------151:  HeII   +  HI   ->  HeHII  +  p 
-//-------152:  HeHII  +  HI   ->  HeI    +  H2II
-//-------153:  HeHII  +  e    ->  HeI    +  HI
-
-//-------z15:  HI     +  CH   ->  CI     +  H2I
-//-------z16:  HI     +  CH2  ->  CH     +  H2I
-//-------z17:  HI     +  OH   ->  H2I    +  OI
-//-------z18:  HI     +  H2O  ->  OH     +  H2I
-//-------z19:  HI     +  O2   ->  OH     +  OI
-//-------z20:  CI     +  H2I  ->  CH     +  HI
-//-------z21:  OI     +  H2I  ->  OH     +  HI
-//-------z22:  HII    +  OI   ->  OII    +  HI
-//-------z23:  H2I    +  CH   ->  CH2    +  HI
-//-------z24:  H2I    +  OH   ->  H2O    +  HI
-//-------z25:  OH     +  OH   ->  H2O    +  OI
-//-------z26:  OH     +  CO   ->  CO2    +  HI
-//-------z27:  CI     +  HI   ->  CH     +  p
-//-------z28:  CI     +  OH   ->  CO     +  HI
-//-------z29:  CI     +  O2   ->  CO     +  OI
-//-------z30:  OI     +  HI   ->  OH     +  p
-//-------z31:  OI     +  OI   ->  O2     +  p
-//-------z32:  OI     +  CH   ->  CO     +  HI
-//-------z33:  OI     +  OH   ->  O2     +  HI
-//-------z34:  HII    +  OH   ->  OHII   +  HI
-//-------z35:  HII    +  H2O  ->  H2OII  +  HI
-//-------z36:  HII    +  O2   ->  O2II   +  HI
-//-------z37:  CII    +  OH   ->  COII   +  HI
-//-------z38:  CII    +  O2   ->  OII    +  CO
-//-------z39:  OII    +  HI   ->  HII    +  OI
-//-------z40:  OII    +  H2I  ->  OHII   +  HI
-//-------z41:  OHII   +  H2I  ->  H2OII  +  HI
-//-------z42:  H2OII  +  H2I  ->  H3OII  +  HI
-//-------z43:  COII   +  HI   ->  HII    +  CO
-//-------z44:  CII    +  e    ->  CI     +  p
-//-------z45:  OII    +  e    ->  OI     +  p
-//-------z46:  H2OII  +  e    ->  OH     +  HI
-//-------z47:  H2OII  +  e    ->  OI     +  H2I
-//-------z48:  H3OII  +  e    ->  H2O    +  HI
-//-------z49:  H3OII  +  e    ->  OH     +  HI
-//-------z50:  O2II   +  e    ->  OI     +  OI
-//-------z51:  H2I    +  CI   ->  CH2    +  p
-//-------z52:  SiI    +  OH   ->  SiOI   +  HI
-//-------z53:  SiI    +  O2   ->  SiOI   +  OI
-//-------z54:  SiOI   +  OH   ->  SiO2I  +  HI
 
   // temporarily construct the InternalGrUnits struct
   // -> the construction logic deduplicates a lot of logic that was
