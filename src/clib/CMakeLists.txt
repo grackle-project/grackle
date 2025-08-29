@@ -97,7 +97,6 @@ add_library(Grackle_Grackle
   solve_chemistry.c
   status_reporting.c status_reporting.h
   update_UVbackground_rates.c
-  initialize_dust_yields.c initialize_dust_yields.h
   rate_utils.c
   utils.c
 
@@ -109,6 +108,7 @@ add_library(Grackle_Grackle
   # C++ Source (and Private Header Files)
   cool_multi_time_g-cpp.C cool_multi_time_g-cpp.h
   initialize_chemistry_data.cpp
+  initialize_dust_yields.cpp initialize_dust_yields.hpp
   initialize_rates.cpp initialize_rates.hpp
   initialize_metal_chemistry_rates.cpp initialize_metal_chemistry_rates.hpp
   internal_types.C internal_types.hpp

@@ -21,7 +21,7 @@
 #include "auto_general.h"
 #include "interp_table_utils.h" // free_interp_grid_
 #include "initialize_cloudy_data.h"
-#include "initialize_dust_yields.h"
+#include "initialize_dust_yields.hpp"  // free_dust_yields
 #include "initialize_metal_chemistry_rates.hpp"  // free_metal_chemistry_rates
 #include "initialize_rates.hpp"
 #include "initialize_UVbackground_data.h"
@@ -728,7 +728,7 @@ extern "C" int local_free_chemistry_data(chemistry_data *my_chemistry,
     return FAIL;
   }
 
-  if (local_free_dust_yields(my_chemistry, my_rates) == FAIL) {
+  if (grackle::impl::free_dust_yields(my_chemistry, my_rates) == FAIL) {
     fprintf(stderr, "Error in local_free_dust_yields.\n");
     return FAIL;
   }

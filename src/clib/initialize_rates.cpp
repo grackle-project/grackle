@@ -86,7 +86,7 @@
 #include "grackle.h"
 #include "grackle_macros.h"
 #include "grackle_rate_functions.h"
-#include "initialize_dust_yields.h"
+#include "initialize_dust_yields.hpp"  // initialize_dust_yields
 #include "initialize_metal_chemistry_rates.hpp"  // initialize_metal_chemistry_rates
 #include "initialize_rates.hpp"
 #include "phys_constants.h"
@@ -575,7 +575,7 @@ int grackle::impl::initialize_rates(
       return FAIL;
     }
     /* Dust rates */
-    if (initialize_dust_yields(my_chemistry, my_rates, my_units) == FAIL) {
+    if (grackle::impl::initialize_dust_yields(my_chemistry, my_rates, my_units) == FAIL) {
       fprintf(stderr, "Error in initialize_dust_yields.\n");
       return FAIL;
     }
