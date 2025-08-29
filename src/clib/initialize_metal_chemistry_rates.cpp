@@ -1,23 +1,36 @@
+//===----------------------------------------------------------------------===//
+//
+// See the LICENSE file for license and copyright information
+// SPDX-License-Identifier: NCSA AND BSD-3-Clause
+//
+//===----------------------------------------------------------------------===//
+///
+/// @file
+/// Implement machinery for initializing the reaction and cooling rates related
+/// to metal species
+///
+//===----------------------------------------------------------------------===//
+
 #include <stdlib.h> 
 #include <string.h>
 #include <stdio.h>
 #include <math.h>
+
+#include "grackle.h"
 #include "grackle_macros.h"
-#include "grackle_types.h"
-#include "grackle_chemistry_data.h"
 #include "interp_table_utils.h" // free_interp_grid_
+#include "initialize_metal_chemistry_rates.hpp"  // forward declarations
 #include "phys_constants.h"
-#include "grackle_rate_functions.h"
+#include "grackle_rate_functions.h" // forward declarations of some funcs
 
 #define tiny 1.0e-20
 #define tevk 1.1605e+4
 
-int allocate_rates_metal(chemistry_data *my_chemistry, chemistry_data_storage *my_rates);
+static int allocate_rates_metal(chemistry_data *my_chemistry, chemistry_data_storage *my_rates);
 
-
-int initialize_metal_chemistry_rates(chemistry_data *my_chemistry,
-                                     chemistry_data_storage *my_rates,
-                                     code_units *my_units)
+int grackle::impl::initialize_metal_chemistry_rates(
+  chemistry_data *my_chemistry, chemistry_data_storage *my_rates,
+  code_units *my_units)
 {
 
   /* TO-DO: k125 - k153 are primordial_chemistry=4.
@@ -261,6 +274,7 @@ int initialize_metal_chemistry_rates(chemistry_data *my_chemistry,
         ttt = exp(logttt);
         ttt300 = ttt / 300.0;
 
+        // CIE H2 cooling rate from Yoshida et al. (2006)
         my_rates->cieY06[i] =
          pow(10.0, -116.6                                                        
                    + 96.34  * log10(ttt)                                         
@@ -416,8 +430,8 @@ int initialize_metal_chemistry_rates(chemistry_data *my_chemistry,
   return SUCCESS;
 }
 
-int local_free_metal_chemistry_rates(chemistry_data *my_chemistry,
-                                     chemistry_data_storage *my_rates)
+int grackle::impl::free_metal_chemistry_rates(chemistry_data *my_chemistry,
+                                              chemistry_data_storage *my_rates)
 {
 
   /* TO-DO: k125 - k153 are primordial_chemistry=4.
@@ -514,7 +528,7 @@ static void setup_generic_grid_props_(gr_interp_grid_props* grid_props,
   for (int i = 0; i < rank; i++) {
     const struct regular_range_ par_range = parameters[i];
 
-    double* arr = malloc(par_range.count * sizeof(double));
+    double* arr = (double*)malloc(par_range.count * sizeof(double));
     for(int j = 0; j < par_range.count; j++) {
       arr[j] = par_range.start + (double)j * par_range.step;
     }
@@ -538,14 +552,16 @@ static void setup_cool_interp_grid_(gr_interp_grid* grid,
 {
   setup_generic_grid_props_(&grid->props, rank, parameters);
   const long long data_size = grid->props.data_size;
-  grid->data = malloc(data_size * sizeof(double));
+  grid->data = (double*)malloc(data_size * sizeof(double));
   for(long long i = 0; i < data_size; i++) {
     grid->data[i] = data[i] + log_coolrate;
   }
 }
 
+// all of the following functions are declared extern "C" because (at the time
+// of writing) 
 
-void initialize_cooling_rate_H2(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit)
+extern "C" void initialize_cooling_rate_H2(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit)
 {
   const int rank = 3;
   const struct regular_range_ params[3] = {
@@ -736,7 +752,7 @@ void initialize_cooling_rate_H2(chemistry_data *my_chemistry, chemistry_data_sto
 }
 
 
-void initialize_cooling_rate_HD(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit)
+extern "C" void initialize_cooling_rate_HD(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit)
 {
   const int rank = 3;
   const struct regular_range_ params[3] = {
@@ -927,7 +943,7 @@ void initialize_cooling_rate_HD(chemistry_data *my_chemistry, chemistry_data_sto
 }
 
 
-void initialize_cooling_rate_CI(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit)
+extern "C" void initialize_cooling_rate_CI(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit)
 {
   const int rank = 3;
   const struct regular_range_ params[3] = {
@@ -1150,7 +1166,7 @@ void initialize_cooling_rate_CI(chemistry_data *my_chemistry, chemistry_data_sto
 }
 
 
-void initialize_cooling_rate_CII(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit)
+extern "C" void initialize_cooling_rate_CII(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit)
 {
   const int rank = 3;
   const struct regular_range_ params[3] = {
@@ -1374,7 +1390,7 @@ void initialize_cooling_rate_CII(chemistry_data *my_chemistry, chemistry_data_st
 }
 
 
-void initialize_cooling_rate_OI(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit)
+extern "C" void initialize_cooling_rate_OI(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit)
 {
   const int rank = 3;
   const struct regular_range_ params[3] = {
@@ -1597,7 +1613,7 @@ void initialize_cooling_rate_OI(chemistry_data *my_chemistry, chemistry_data_sto
 }
 
 
-void initialize_cooling_rate_CO(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit)
+extern "C" void initialize_cooling_rate_CO(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit)
 {
   const int rank = 3;
   const struct regular_range_ params[3] = {
@@ -1733,7 +1749,7 @@ void initialize_cooling_rate_CO(chemistry_data *my_chemistry, chemistry_data_sto
 }
 
 
-void initialize_cooling_rate_OH(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit)
+extern "C" void initialize_cooling_rate_OH(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit)
 {
   const int rank = 3;
   const struct regular_range_ params[3] = {
@@ -1802,7 +1818,7 @@ void initialize_cooling_rate_OH(chemistry_data *my_chemistry, chemistry_data_sto
 }
 
 
-void initialize_cooling_rate_H2O(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit)
+extern "C" void initialize_cooling_rate_H2O(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit)
 {
   const int rank = 3;
   const struct regular_range_ params[3] = {
@@ -1937,7 +1953,7 @@ void initialize_cooling_rate_H2O(chemistry_data *my_chemistry, chemistry_data_st
 }
 
 
-void initialize_primordial_opacity(chemistry_data *my_chemistry, chemistry_data_storage *my_rates)
+extern "C" void initialize_primordial_opacity(chemistry_data *my_chemistry, chemistry_data_storage *my_rates)
 {
   const int rank = 2;
   const struct regular_range_ params[2] = {
@@ -1978,7 +1994,7 @@ void initialize_primordial_opacity(chemistry_data *my_chemistry, chemistry_data_
 
   setup_generic_grid_props_(&my_rates->alphap.props, rank, params);
 
-  my_rates->alphap.data = malloc(my_rates->alphap.props.data_size * sizeof(double));
+  my_rates->alphap.data = (double*)malloc(my_rates->alphap.props.data_size * sizeof(double));
   for(int iD=0; iD<params[0].count; iD++) {
     double log_rho = params[0].start + iD*params[0].step;
     for(int iT=0; iT<params[1].count; iT++) {
@@ -1990,67 +2006,67 @@ void initialize_primordial_opacity(chemistry_data *my_chemistry, chemistry_data_
 }
 
 
-int allocate_rates_metal(chemistry_data *my_chemistry, chemistry_data_storage *my_rates)
+static int allocate_rates_metal(chemistry_data *my_chemistry, chemistry_data_storage *my_rates)
 {
-    my_rates->k125 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->k129 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->k130 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->k131 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->k132 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->k133 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->k134 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->k135 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->k136 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->k137 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->k148 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->k149 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->k150 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->k151 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->k152 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->k153 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->k125 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->k129 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->k130 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->k131 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->k132 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->k133 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->k134 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->k135 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->k136 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->k137 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->k148 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->k149 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->k150 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->k151 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->k152 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->k153 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
 
-    my_rates->kz15 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz16 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz17 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz18 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz19 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz20 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz21 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz22 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz23 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz24 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz25 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz26 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz27 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz28 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz29 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz30 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz31 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz32 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz33 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz34 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz35 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz36 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz37 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz38 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz39 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz40 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz41 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz42 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz43 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz44 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz45 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz46 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz47 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz48 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz49 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz50 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz51 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz52 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz53 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz54 = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz15 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz16 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz17 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz18 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz19 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz20 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz21 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz22 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz23 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz24 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz25 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz26 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz27 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz28 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz29 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz30 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz31 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz32 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz33 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz34 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz35 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz36 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz37 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz38 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz39 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz40 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz41 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz42 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz43 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz44 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz45 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz46 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz47 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz48 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz49 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz50 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz51 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz52 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz53 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->kz54 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
 
-    my_rates->cieY06  = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    my_rates->cieY06  = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
 
     return SUCCESS;
 }
