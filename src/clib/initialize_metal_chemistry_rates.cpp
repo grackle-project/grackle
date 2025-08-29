@@ -103,11 +103,8 @@ int grackle::impl::initialize_metal_chemistry_rates(
   //    previously copied and pasted across a lot of fortran files
   InternalGrUnits internalu = new_internalu_(my_units);
 
-      double  aye      = internalu.a_value;
-      double  uaye     = internalu.a_units;
-
-      int i;
-      double logttt, ttt, kunit, coolunit, ttt300;
+  double aye  = internalu.a_value;
+  double uaye = internalu.a_units;
 
   // Overview of conversion units:
   // -> internalu.tbase1, internalu.xbase1, & internalu.dbase1 respectively
@@ -139,9 +136,9 @@ int grackle::impl::initialize_metal_chemistry_rates(
 //             is not a constant (it has a factor a^3), so the number
 //             densities must be converted from comoving to proper.
 //
-      kunit   = (pow(uaye, 3) * mh) / (internalu.dbase1 * internalu.tbase1);
-      // unused:
-      // double kunit_3bdy  = kunit * (pow(uaye, 3) * mh) / internalu.dbase1;
+  const double kunit   = (pow(uaye, 3) * mh) / (internalu.dbase1 * internalu.tbase1);
+  // unused:
+  // const double kunit_3bdy  = kunit * (pow(uaye, 3) * mh) / internalu.dbase1;
 //
 // 2) Set the dimension of the cooling coefficients (including constants)
 //    (this equation has a rho because e is the specifi//energy, not
@@ -153,7 +150,7 @@ int grackle::impl::initialize_metal_chemistry_rates(
 //      but [e] = ([a]*[x])**2 / [time]**2 and ([a] = 1 / (1 + zri) )
 //     [L] = ([a]**5 * [x]**2 * mh**2) / ([dens] * [time]**3)
 //
-      coolunit = (pow(uaye, 5) * pow(internalu.xbase1, 2) * pow(mh, 2)) / (pow(internalu.tbase1, 3) * internalu.dbase1);
+  const double coolunit = (pow(uaye, 5) * pow(internalu.xbase1, 2) * pow(mh, 2)) / (pow(internalu.tbase1, 3) * internalu.dbase1);
 //
 //   Note: some of the coffiecients have only one power of n.  These
 //         do not have the /a^3 factor, also they have units
@@ -194,7 +191,7 @@ int grackle::impl::initialize_metal_chemistry_rates(
   allocate_rates_metal(my_chemistry, my_rates);
 
   // Initialize constants to tiny
-  for (i = 0; i < my_chemistry->NumberOfTemperatureBins; i++) {
+  for (int i = 0; i < my_chemistry->NumberOfTemperatureBins; i++) {
         my_rates->cieY06[i] = tiny;
 
         my_rates->k125[i] = tiny;
@@ -254,7 +251,7 @@ int grackle::impl::initialize_metal_chemistry_rates(
         my_rates->kz52[i] = tiny;
         my_rates->kz53[i] = tiny;
         my_rates->kz54[i] = tiny;
-      }
+  }
 
   // Fill in tables of
   //   - CIE H2 cooling rates,
@@ -263,21 +260,21 @@ int grackle::impl::initialize_metal_chemistry_rates(
   //
   // We do this for every temperature in the range spanned by
   // my_chemistry->TemperatureStart & my_chemistry->TemperatureEnd
-      for (i = 0; i < my_chemistry->NumberOfTemperatureBins; i++) {
-//
-//       Compute temperature of this bin (in eV)
-//
-        logttt = log(my_chemistry->TemperatureStart) + (double)(i  )*dlogtem;
-        ttt = exp(logttt);
-        ttt300 = ttt / 300.0;
+  for (int i = 0; i < my_chemistry->NumberOfTemperatureBins; i++) {
+    // Compute the current temperature
+    // NOTE: an earlier version of this comment notes that temperature is in
+    //       eV, but I think that's incorrect
+    double logttt = log(my_chemistry->TemperatureStart) + (double)(i  )*dlogtem;
+    double ttt = exp(logttt);
+    double ttt300 = ttt / 300.0;
 
-        // CIE H2 cooling rate from Yoshida et al. (2006)
-        my_rates->cieY06[i] =
-         pow(10.0, -116.6                                                        
-                   + 96.34  * log10(ttt)                                         
-                   - 47.153 * pow(log10(ttt), 2)                                 
-                   + 10.744 * pow(log10(ttt), 3)                                 
-                   -  0.916 * pow(log10(ttt), 4) ) / coolunit;
+    // CIE H2 cooling rate from Yoshida et al. (2006)
+    my_rates->cieY06[i] =
+      pow(10.0,
+          -116.6 + 96.34  * log10(ttt)
+                 - 47.153 * pow(log10(ttt), 2)
+                 + 10.744 * pow(log10(ttt), 3)
+                 -  0.916 * pow(log10(ttt), 4) ) / coolunit;
 
         my_rates->k125[i] = 6.4e-10;
         my_rates->k129[i] = 3.9e-19 * pow(ttt300, 1.8) * exp(20.0/ttt);
@@ -353,10 +350,9 @@ int grackle::impl::initialize_metal_chemistry_rates(
 //         , my_rates->k125[i]
 //         , my_rates->k129[i]
 //         , my_rates->k130[i]);
-      }
+  }
 
-      for (i = 0; i < my_chemistry->NumberOfTemperatureBins; i++) {
-//
+  for (int i = 0; i < my_chemistry->NumberOfTemperatureBins; i++) {
         my_rates->k125[i] = fmax(my_rates->k125[i], tiny) / kunit;
         my_rates->k129[i] = fmax(my_rates->k129[i], tiny) / kunit;
         my_rates->k130[i] = fmax(my_rates->k130[i], tiny) / kunit;
@@ -415,7 +411,7 @@ int grackle::impl::initialize_metal_chemistry_rates(
         my_rates->kz52[i] = fmax(my_rates->kz52[i], tiny) / kunit;
         my_rates->kz53[i] = fmax(my_rates->kz53[i], tiny) / kunit;
         my_rates->kz54[i] = fmax(my_rates->kz54[i], tiny) / kunit;
-      }
+  }
 
       initialize_cooling_rate_CI (my_chemistry, my_rates, coolunit);
       initialize_cooling_rate_CII(my_chemistry, my_rates, coolunit);
