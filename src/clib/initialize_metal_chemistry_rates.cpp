@@ -110,7 +110,7 @@ int grackle::impl::initialize_metal_chemistry_rates(
   // temporarily construct the InternalGrUnits struct
   // -> the construction logic deduplicates a lot of logic that was
   //    previously copied and pasted across a lot of fortran files
-  InternalGrUnits internalu = new_internalu_(my_units);
+  InternalGrUnits internalu = new_internalu_legacy_C_(my_units);
 
   double aye  = internalu.a_value;
   double uaye = internalu.a_units;

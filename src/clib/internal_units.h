@@ -103,6 +103,17 @@ typedef struct InternalGrUnits{
   /// comoving frame
   double utem;
 
+  /// Specifies which constant to use for the hydrogen mass.
+  /// - A value of 1 indicates that we'll use `mh_grflt` (the constant is
+  ///   expressed as a value of type gr_float -- this is consistent with what
+  ///   Grackle's Fortran routines have historically done).
+  /// - A value of 0 indicates that we'll use `mh` (the constant is always
+  ///   expressed as a double -- consistent with what has historically happened
+  ///   in Grackle's C functions)
+  ///
+  /// TODO: Once we finish transcription, we should remove this!
+  int use_mh_grflt_;
+
 } InternalGrUnits;
 
 /// Return the version of hydrogen mass constant used by the internal units
@@ -110,7 +121,11 @@ static inline double internalu_get_mh_(InternalGrUnits internalu) {
   // purely for the sake of consistency, this value of the hydrogen mass is
   // initialized as a floating point literal (with the same precision as
   // gr_float and then it is casted to a double)
-  return (double)(mh_grflt);
+  if (internalu.use_mh_grflt_ == 1) {
+    return (double)(mh_grflt);
+  } else {
+    return mh;
+  }
 }
 
 /// Return the cm*a_unit/s per 1 velocity unit
@@ -155,9 +170,15 @@ static inline double internalu_calc_coef_ljeans_(InternalGrUnits internalu,
               (GravConst_grflt * mh_local_var * internalu.dbase1));
 }
 
-/// Construct an instance of InternalGrUnits from the frontend_units
-static inline InternalGrUnits new_internalu_(
-  const code_units* frontend_units
+/// Helper function for constructing an instance of InternalGrUnits from the
+/// frontend_units
+///
+/// @note
+/// You should call new_internalu_ or new_internalu_legacy_C_convention_
+/// instead of calling this function directly
+static inline InternalGrUnits new_internalu_helper_(
+  const code_units* frontend_units,
+  int uses_mh_grflt
 ) {
   // rename the frontend_units object for convenience
   const code_units* my_units = frontend_units;
@@ -221,6 +242,7 @@ static inline InternalGrUnits new_internalu_(
   internalu.dbase1   = internalu.urho*pow((my_units->a_value*my_units->a_units),3); // urho is [dens]/a^3 = [dens]/([a]*a')^3 '
 
   // lastly, compute coolunit (make sure we use the correct version of mh)
+  internalu.use_mh_grflt_ = uses_mh_grflt;
   const double mh_local_var = internalu_get_mh_(internalu);
   internalu.coolunit = (
     pow(my_units->a_units,5) * pow(internalu.xbase1,2) * pow(mh_local_var,2)
@@ -228,6 +250,28 @@ static inline InternalGrUnits new_internalu_(
 
   return internalu;
 }
+
+/// Construct an instance of InternalGrUnits from the frontend_units
+///
+/// This is primarily used in routines transcribed from Fortran
+static inline InternalGrUnits new_internalu_(
+  const code_units* frontend_units
+) {
+  return new_internalu_helper_(frontend_units, 1);
+}
+
+/// Construct an instance of InternalGrUnits from the frontend_units, while
+/// following the conventions for defining the hydrogen that have historically
+/// been observed in the C layer
+///
+/// The goal is to eliminate the distinction between this and new_internalu_
+/// after we finish up with transcription
+static inline InternalGrUnits new_internalu_legacy_C_(
+  const code_units* frontend_units
+) {
+  return new_internalu_helper_(frontend_units, 0);
+}
+
 
 #ifdef __cplusplus
 } // extern "C"
