@@ -103,10 +103,7 @@ int grackle::impl::initialize_metal_chemistry_rates(
   //    previously copied and pasted across a lot of fortran files
   InternalGrUnits internalu = new_internalu_(my_units);
 
-      int  nratec      = my_chemistry->NumberOfTemperatureBins;
       double  aye      = internalu.a_value;
-      double  temstart = my_chemistry->TemperatureStart;
-      double  temend   = my_chemistry->TemperatureEnd;
       double  uaye     = internalu.a_units;
 
       int i;
@@ -193,13 +190,11 @@ int grackle::impl::initialize_metal_chemistry_rates(
   );
 
 
-// Allocate rates
-      allocate_rates_metal(my_chemistry, my_rates);
-//
-// Initialize constants to tiny
-//
-      for (i = 0; i < nratec; i++) {
-//
+  // Allocate buffers to hold the rates
+  allocate_rates_metal(my_chemistry, my_rates);
+
+  // Initialize constants to tiny
+  for (i = 0; i < my_chemistry->NumberOfTemperatureBins; i++) {
         my_rates->cieY06[i] = tiny;
 
         my_rates->k125[i] = tiny;
@@ -268,7 +263,7 @@ int grackle::impl::initialize_metal_chemistry_rates(
   //
   // We do this for every temperature in the range spanned by
   // my_chemistry->TemperatureStart & my_chemistry->TemperatureEnd
-      for (i = 0; i < nratec; i++) {
+      for (i = 0; i < my_chemistry->NumberOfTemperatureBins; i++) {
 //
 //       Compute temperature of this bin (in eV)
 //
@@ -360,7 +355,7 @@ int grackle::impl::initialize_metal_chemistry_rates(
 //         , my_rates->k130[i]);
       }
 
-      for (i = 0; i < nratec; i++) {
+      for (i = 0; i < my_chemistry->NumberOfTemperatureBins; i++) {
 //
         my_rates->k125[i] = fmax(my_rates->k125[i], tiny) / kunit;
         my_rates->k129[i] = fmax(my_rates->k129[i], tiny) / kunit;
