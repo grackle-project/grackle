@@ -110,7 +110,7 @@ int grackle::impl::initialize_metal_chemistry_rates(
       double  uaye     = internalu.a_units;
 
       int i;
-      double logttt, ttt, kunit, coolunit, dlogtem, ttt300;
+      double logttt, ttt, kunit, coolunit, ttt300;
 
   // Overview of conversion units:
   // -> internalu.tbase1, internalu.xbase1, & internalu.dbase1 respectively
@@ -178,9 +178,20 @@ int grackle::impl::initialize_metal_chemistry_rates(
 //
 // Compute log spacing in temperature
 //
-      ttt    = temstart;
-      logttt = log(ttt);
-      dlogtem= (log(temend) - log(temstart))/(double)(nratec-1);
+
+  // compute log spacing of the temperature table
+  //
+  // TODO: address the ubiquity of this variable (among transcribed routines).
+  //       To ensure that every part of the code uses exactly the same value,
+  //       we should either:
+  //       1. cache this quantity
+  //       2. have a function that we use everywhere to call it
+  const double dlogtem = (
+    (log(my_chemistry->TemperatureEnd) -
+     log(my_chemistry->TemperatureStart)) /
+    (double)(my_chemistry->NumberOfTemperatureBins-1)
+  );
+
 
 // Allocate rates
       allocate_rates_metal(my_chemistry, my_rates);
@@ -249,17 +260,19 @@ int grackle::impl::initialize_metal_chemistry_rates(
         my_rates->kz53[i] = tiny;
         my_rates->kz54[i] = tiny;
       }
-//
-//  Fill in tables over the range temstart to temend
-//
-// -------------------------------------------------
-//  1) rate coefficients (excluding external radiation field)
-//
+
+  // Fill in tables of
+  //   - CIE H2 cooling rates,
+  //   - collisional rate coefficients for primordial_chemistry >= 4 species
+  //   - collisional rate coefficients for metal species
+  //
+  // We do this for every temperature in the range spanned by
+  // my_chemistry->TemperatureStart & my_chemistry->TemperatureEnd
       for (i = 0; i < nratec; i++) {
 //
 //       Compute temperature of this bin (in eV)
 //
-        logttt = log(temstart) + (double)(i  )*dlogtem;
+        logttt = log(my_chemistry->TemperatureStart) + (double)(i  )*dlogtem;
         ttt = exp(logttt);
         ttt300 = ttt / 300.0;
 
