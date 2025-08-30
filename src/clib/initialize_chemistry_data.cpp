@@ -25,6 +25,8 @@
 #include "initialize_metal_chemistry_rates.hpp"  // free_metal_chemistry_rates
 #include "initialize_rates.hpp"
 #include "initialize_UVbackground_data.h"
+#include "internal_types.hpp" // drop_CollisionalRxnRateCollection
+#include "opaque_storage.hpp" // gr_opaque_storage
 #include "phys_constants.h"
 
 #ifdef _OPENMP
@@ -313,6 +315,8 @@ static void initialize_empty_chemistry_data_storage_struct(chemistry_data_storag
   my_rates->SN0_kpH2Oice = NULL;
 
   my_rates->cloudy_data_new = -1;
+
+  my_rates->opaque_storage = NULL;
 }
 
 extern "C" int local_initialize_chemistry_data(chemistry_data *my_chemistry,
@@ -478,6 +482,13 @@ extern "C" int local_initialize_chemistry_data(chemistry_data *my_chemistry,
       my_chemistry->HydrogenFractionByMass = default_Hfrac;
     }
   }
+
+  // it's time to start initializing values in my_rates
+
+  // perform some basic allocations
+  my_rates->opaque_storage = (struct gr_opaque_storage*)malloc
+    (sizeof(struct gr_opaque_storage));
+  my_rates->opaque_storage->kcol_rate_tables = NULL;
 
   double co_length_units, co_density_units;
   if (my_units->comoving_coordinates == TRUE) {
@@ -732,6 +743,12 @@ extern "C" int local_free_chemistry_data(chemistry_data *my_chemistry,
     fprintf(stderr, "Error in local_free_dust_yields.\n");
     return FAIL;
   }
+
+  if (my_rates->opaque_storage->kcol_rate_tables != nullptr) {
+    drop_CollisionalRxnRateCollection(my_rates->opaque_storage->kcol_rate_tables);
+    GRACKLE_FREE(my_rates->opaque_storage->kcol_rate_tables);
+  }
+  GRACKLE_FREE(my_rates->opaque_storage);
 
   return GR_SUCCESS;
 }

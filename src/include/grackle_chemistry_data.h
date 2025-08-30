@@ -437,6 +437,16 @@ typedef struct gr_interp_grid
   double* data;
 } gr_interp_grid;
 
+
+/******************************************
+ ********** Forward declarations **********
+ ******************************************/
+
+// the following is an opaque type. The definition is intentionally opaque to
+// consumers of the Grackle library. Ideally, the entire chemistry_data_storage
+// struct will become opaque in the future
+struct gr_opaque_storage;
+
 /******************************************
  *** Chemistry and cooling data storage ***
  ******************************************/
@@ -714,6 +724,9 @@ typedef struct
 
   /* tracks the initial value of the code-units */
   code_units initial_units;
+
+  /// holds data that in a manner opaque to consumers of grackle
+  struct gr_opaque_storage* opaque_storage;
 } chemistry_data_storage;
 
 /**************************
