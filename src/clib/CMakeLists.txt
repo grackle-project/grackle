@@ -97,7 +97,6 @@ add_library(Grackle_Grackle
   solve_chemistry.c
   status_reporting.c status_reporting.h
   update_UVbackground_rates.c
-  rate_utils.c
   utils.c
 
   # auto-generated C source files
@@ -106,16 +105,17 @@ add_library(Grackle_Grackle
   auto_general.h
 
   # C++ Source (and Private Header Files)
-  cool_multi_time_g-cpp.C cool_multi_time_g-cpp.h
+  cool_multi_time_g.cpp cool_multi_time_g.h
   initialize_chemistry_data.cpp
   initialize_dust_yields.cpp initialize_dust_yields.hpp
   initialize_rates.cpp initialize_rates.hpp
   initialize_metal_chemistry_rates.cpp initialize_metal_chemistry_rates.hpp
-  internal_types.C internal_types.hpp
-  solve_rate_cool_g-cpp.C solve_rate_cool_g-cpp.h
+  internal_types.cpp internal_types.hpp
+  rate_utils.cpp
+  solve_rate_cool_g-cpp.cpp solve_rate_cool_g-cpp.h
   step_rate_newton_raphson.hpp
   time_deriv_0d.hpp
-  utils-cpp.C utils-cpp.hpp
+  utils-cpp.cpp utils-cpp.hpp
   utils-field.hpp
   fortran_func_wrappers.hpp
   visitor/common.hpp
