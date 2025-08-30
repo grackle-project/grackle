@@ -288,9 +288,17 @@ static inline double internalu_calc_coef_ljeans_(InternalGrUnits internalu,
 /// densities must be converted from comoving to proper.
 static inline double internalu_calc_kunit_(InternalGrUnits internalu) {
   double uaye = internalu.a_units;
-  const double mh_local_var = internalu_get_mh_(internalu);
+  double mh_local_var = internalu_get_mh_(internalu);
   return (pow(uaye, 3) * mh) / (internalu.dbase1 * internalu.tbase1);
 }
+
+// unused and untested:
+//static inline double internalu_calc_kunit_3bdy_(InternalGrUnits internalu) {
+//  double uaye = internalu.a_units;
+//  double mh_local_uvar = internalu_get_mh_(internalu);
+//  double kunit = internalu_calc_kunit_(internalu);
+//  return kunit*(pow(uaye, 3) * mh) / internalu.dbase1;
+//}
 
 /// Helper function for constructing an instance of InternalGrUnits from the
 /// frontend_units

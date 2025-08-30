@@ -111,76 +111,8 @@ int grackle::impl::initialize_metal_chemistry_rates(
   // -> the construction logic deduplicates a lot of logic that was
   //    previously copied and pasted across a lot of fortran files
   InternalGrUnits internalu = new_internalu_legacy_C_(my_units);
-
-  double aye  = internalu.a_value;
-  double uaye = internalu.a_units;
-
-  // Overview of conversion units:
-  // -> internalu.tbase1, internalu.xbase1, & internalu.dbase1 respectively
-  //    hold the (z dependent) number that converts from the dimensionless code
-  //    units to physical units.  Also, in the code aye = 1 at z=zinit, so to
-  //    convert the usual a (=1 at z=0) to a~ (written in the code as aye), we
-  //    use a = a~*[a]
-  // -> TODO: can we delete this comment? This overview was adapted from a
-  //    comment that preceded the calculation of tbase1, xbase1, and dbase1.
-  //    This may not be necessary now that these are computed within internalu
-  //    (we may want to add this comment to the documentation of internalu)
-
-// 1) Set the dimensions of the (non-radiative) rate coefficients.  
-//   Note that we have included the units that convert density to 
-//   number density, so the rate equations should look like 
-//   (in dimensionless units, hence the primes):
-//
-//      d(d0~)/dt~ = k~ * d1~ * d2~ / a~^3
-//
-//   where k~ is the dimenionless rate coefficients and d0-2~ are three
-//    dimensionless densities (i.e. d = [dens]*d~) and a~ is the 
-//    dimensionless expansion coefficient (see above).
-//
-//   rate eqn        : delta(n0)  = k  * n1        * n2        * dt     / a^3
-//   rate eqn units  : [dens]/mh  = k  * [dens]/mh * [dens]/mh * [time] / [a]^3
-//   rate eqn dimless: delta(n0~) = k~ * n1~       * n2~       * dt~    / a~^3
-//   so: k = [k] * k~  where [k] = ( [a]^3 * mh ) / ( [dens] * [time] )  (~)
-//   reminder: the number densities here are normalized with [dens] which
-//             is not a constant (it has a factor a^3), so the number
-//             densities must be converted from comoving to proper.
-//
-  const double kunit   = (pow(uaye, 3) * mh) / (internalu.dbase1 * internalu.tbase1);
-  // unused:
-  // const double kunit_3bdy  = kunit * (pow(uaye, 3) * mh) / internalu.dbase1;
-//
-// 2) Set the dimension of the cooling coefficients (including constants)
-//    (this equation has a rho because e is the specifi//energy, not
-//     energy/unit volume).
-//      delta(e)  = L     * n1        * n2        * dt     / dens   / a^3
-//      [e]       = L     * [dens]/mh * [dens]/mh * [time] / [dens] / [a]^3
-//      delta(e~) = L~    * n1~       * n2~       * dt~    / dens~  / a~^3 [~]
-//    so L = [L] * L~ where [L] = [e] * mh**2 * [a]^3 / ([dens] * [time]) [~]
-//      but [e] = ([a]*[x])**2 / [time]**2 and ([a] = 1 / (1 + zri) )
-//     [L] = ([a]**5 * [x]**2 * mh**2) / ([dens] * [time]**3)
-//
-  const double coolunit = (pow(uaye, 5) * pow(internalu.xbase1, 2) * pow(mh, 2)) / (pow(internalu.tbase1, 3) * internalu.dbase1);
-//
-//   Note: some of the coffiecients have only one power of n.  These
-//         do not have the /a^3 factor, also they have units
-//         [L1] = ([a]**2 * [x]**2 * mh) / [time]**3
-//              = [L] * [dens] * [a]**3 / mh
-//         This is done through the dom variable in cool.src
-//        (some have three powers of n and they are different by the
-//         reciprocal of the above factor multiplying [L]).
-//
-// 3) the units for the radiative rate coefficients is just 1/[time]
-//
-// 4) Energy transfer from gas to dust grains, following equation 2.15
-//    of Hollenbach & McKee (1989).
-//    Normalize to the HM89 dust to gas ratio.
-
-      // unused:
-      // double fgr = 0.009387;
-      // double grain_coef = 1.2e-31 * pow(1.0e3, -0.5) / fgr;
-//
-// Compute log spacing in temperature
-//
+  const double kunit = internalu_calc_kunit_(internalu);
+  const double coolunit = internalu.coolunit;
 
   // compute log spacing of the temperature table
   //
