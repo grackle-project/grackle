@@ -101,7 +101,6 @@ add_library(Grackle_Grackle
   update_UVbackground_rates.c
   initialize_dust_yields.c
   initialize_metal_chemistry_rates.c
-  rate_utils.c
   utils.c
 
   # auto-generated C source files
@@ -110,6 +109,7 @@ add_library(Grackle_Grackle
   # C++ Source (and Private Header Files)
   cool_multi_time_g.cpp cool_multi_time_g.h
   internal_types.cpp internal_types.hpp
+  rate_utils.cpp
   solve_rate_cool_g-cpp.cpp solve_rate_cool_g-cpp.h
   step_rate_newton_raphson.hpp
   time_deriv_0d.hpp

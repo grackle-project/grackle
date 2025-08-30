@@ -191,7 +191,7 @@ static struct ratequery_rslt_ query_rateprop_(chemistry_data_storage* my_rates,
 // here we implement the public API
 // --------------------------------
 
-grunstable_rateid_type grunstable_ratequery_id(const char* name) {
+extern "C" grunstable_rateid_type grunstable_ratequery_id(const char* name) {
   if (name == NULL) {
     return UNDEFINED_RATE_ID_;
   }
@@ -208,13 +208,13 @@ grunstable_rateid_type grunstable_ratequery_id(const char* name) {
   return UNDEFINED_RATE_ID_;
 }
 
-double* grunstable_ratequery_get_ptr(chemistry_data_storage* my_rates,
-                                     grunstable_rateid_type rate_id) {
+extern "C" double* grunstable_ratequery_get_ptr(
+    chemistry_data_storage* my_rates, grunstable_rateid_type rate_id) {
   return query_rateprop_(my_rates, rate_id, true).prop.data;
 }
 
-const char* grunstable_ith_rate(unsigned long long i,
-                                grunstable_rateid_type* out_rate_id) {
+extern "C" const char* grunstable_ith_rate(
+    unsigned long long i, grunstable_rateid_type* out_rate_id) {
   const long long sanitized_i = (i < LLONG_MAX) ? (long long)i : -1;
   struct ratequery_rslt_ tmp = query_rateprop_(NULL, sanitized_i, false);
   if (out_rate_id != NULL) {
