@@ -1,15 +1,14 @@
-/***********************************************************************
-/
-/ Defines functions that perform basic utilities related to rate data.
-/
-/
-/ Copyright (c) 2013, Enzo/Grackle Development Team.
-/
-/ Distributed under the terms of the Enzo Public Licence.
-/
-/ The full license is in the file LICENSE, distributed with this
-/ software.
-************************************************************************/
+//===----------------------------------------------------------------------===//
+//
+// See the LICENSE file for license and copyright information
+// SPDX-License-Identifier: NCSA AND BSD-3-Clause
+//
+//===----------------------------------------------------------------------===//
+///
+/// @file
+/// Defines functions that perform basic utilities related to rate data.
+///
+//===----------------------------------------------------------------------===//
 
 #include <stdbool.h>  // bool, true, and false are defined
 #include <string.h>   // strcmp
