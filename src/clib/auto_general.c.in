@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "grackle.h"
+#include "auto_general.h"
 
 grackle_version get_grackle_version(void) {
   grackle_version out;
