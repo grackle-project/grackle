@@ -89,6 +89,9 @@
 #include "initialize_dust_yields.hpp"  // initialize_dust_yields
 #include "initialize_metal_chemistry_rates.hpp"  // initialize_metal_chemistry_rates
 #include "initialize_rates.hpp"
+#include "internal_types.hpp" // new_CollisionalRxnRateCollection
+#include "LUT.hpp" // CollisionalRxnLUT
+#include "opaque_storage.hpp" // gr_opaque_storage
 #include "phys_constants.h"
 
 // We define the function pointers inside an extern "C" block because they
@@ -290,7 +293,42 @@ int grackle::impl::initialize_rates(
   chemistry_data *my_chemistry, chemistry_data_storage *my_rates,
   code_units *my_units, double co_length_unit, double co_density_unit)
 { 
-    //* Set the flag for dust calculations.
+    // TODO: we REALLY need to do an error check that
+    //    my_chemistry->NumberOfTemperatureBins >= 2
+    //  is satisfied. We should give some thought about whether this should
+    //  produce errors when primordial_chemistry == 0
+
+    // TODO: also add error-checks for:
+    //   TemperatureStart, TemperatureEnd, NumberOfDustTemperatureBins,
+    //   DustTemperatureStart, DustTemperatureEnd
+
+    // handle some allocations up front
+    // TODO: we should really make a separate function that fully initializes
+    //   the kcol_rate_tables (rather than what we do now and partially
+    //   initialize the contents).
+    if (my_chemistry->primordial_chemistry > 0) {
+      // allocate storage for kcol_rate_tables
+      my_rates->opaque_storage->kcol_rate_tables =
+        (grackle::impl::CollisionalRxnRateCollection*) malloc
+          (sizeof(grackle::impl::CollisionalRxnRateCollection));
+
+      // allocate storage within kcol_rate_tables
+      (*my_rates->opaque_storage->kcol_rate_tables) =
+        grackle::impl::new_CollisionalRxnRateCollection
+          (my_chemistry->NumberOfTemperatureBins);
+
+      // set all of the entries within kcol_rate_tables to tiny
+      // (this is very important for primordial_chemistry == 4 rates and
+      // the metal chemistry rates)
+      for (int i = 0; i < CollisionalRxnLUT::NUM_ENTRIES; i++) {
+        double* ptr = my_rates->opaque_storage->kcol_rate_tables->data[i];
+        for (int j = 0; j < my_chemistry->NumberOfTemperatureBins; j++) {
+          ptr[j] = tiny;
+        }
+      }
+
+    }
+
     int anyDust;
     if ( my_chemistry->h2_on_dust > 0 || my_chemistry->dust_chemistry > 0 || my_chemistry->dust_recombination_cooling > 0) {
         anyDust = TRUE;
