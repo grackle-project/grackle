@@ -96,23 +96,65 @@
 
 static int allocate_rates_metal(chemistry_data *my_chemistry, chemistry_data_storage *my_rates);
 
+/// calculate CIE H2 cooling rate from Yoshida et al. (2006)
+///
+/// @note
+/// At some point, we should coerce this into the standard format for
+/// heating/cooling rates
+static int add_cieY06_cool_rate(double **rate_ptr, double coolunit,
+                                chemistry_data* my_chemistry) {
+
+  *rate_ptr = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+
+  // compute log spacing of the temperature table
+  //
+  // TODO: address the ubiquity of this variable (among transcribed routines).
+  //       To ensure that every part of the code uses exactly the same value,
+  //       we should either:
+  //       1. cache this quantity
+  //       2. have a function that we use everywhere to call it
+  const double dlogtem = (
+    (log(my_chemistry->TemperatureEnd) -
+     log(my_chemistry->TemperatureStart)) /
+    (double)(my_chemistry->NumberOfTemperatureBins-1)
+  );
+
+  for (int i = 0; i < my_chemistry->NumberOfTemperatureBins; i++) {
+    // Set rate to tiny for safety.
+    (*rate_ptr)[i] = tiny;
+
+    // calculate local temperature
+    double ln_T = log(my_chemistry->TemperatureStart) + (double)(i)*dlogtem;
+    double T = exp(ln_T);
+
+    // store the rate
+    (*rate_ptr)[i] =
+      pow(10.0,
+          -116.6 + 96.34  * log10(T)
+                 - 47.153 * pow(log10(T), 2)
+                 + 10.744 * pow(log10(T), 3)
+                 -  0.916 * pow(log10(T), 4) ) / coolunit;
+  }
+
+  return GR_SUCCESS;
+}
+
 int grackle::impl::initialize_metal_chemistry_rates(
   chemistry_data *my_chemistry, chemistry_data_storage *my_rates,
   code_units *my_units)
 {
 
-  /* TO-DO: k125 - k153 are primordial_chemistry=4.
-     These should be moved to initialize_rates.c so this is only metal species. */
-  if (my_chemistry->primordial_chemistry == 0)
-    return SUCCESS;
-
+  // TO-DO: k125 - k153 are primordial_chemistry=4.
+  // These should be moved to initialize_rates.c so this is only metal species
+  if (my_chemistry->primordial_chemistry == 0) {
+    return GR_SUCCESS;
+  }
 
   // temporarily construct the InternalGrUnits struct
   // -> the construction logic deduplicates a lot of logic that was
   //    previously copied and pasted across a lot of fortran files
   InternalGrUnits internalu = new_internalu_legacy_C_(my_units);
   const double kunit = internalu_calc_kunit_(internalu);
-  const double coolunit = internalu.coolunit;
 
   // compute log spacing of the temperature table
   //
@@ -133,8 +175,6 @@ int grackle::impl::initialize_metal_chemistry_rates(
 
   // Initialize constants to tiny
   for (int i = 0; i < my_chemistry->NumberOfTemperatureBins; i++) {
-        my_rates->cieY06[i] = tiny;
-
         my_rates->k125[i] = tiny;
         my_rates->k129[i] = tiny;
         my_rates->k130[i] = tiny;
@@ -195,7 +235,6 @@ int grackle::impl::initialize_metal_chemistry_rates(
   }
 
   // Fill in tables of
-  //   - CIE H2 cooling rates,
   //   - collisional rate coefficients for primordial_chemistry >= 4 species
   //   - collisional rate coefficients for metal species
   //
@@ -208,14 +247,6 @@ int grackle::impl::initialize_metal_chemistry_rates(
     double logttt = log(my_chemistry->TemperatureStart) + (double)(i  )*dlogtem;
     double ttt = exp(logttt);
     double ttt300 = ttt / 300.0;
-
-    // CIE H2 cooling rate from Yoshida et al. (2006)
-    my_rates->cieY06[i] =
-      pow(10.0,
-          -116.6 + 96.34  * log10(ttt)
-                 - 47.153 * pow(log10(ttt), 2)
-                 + 10.744 * pow(log10(ttt), 3)
-                 -  0.916 * pow(log10(ttt), 4) ) / coolunit;
 
         my_rates->k125[i] = 6.4e-10;
         my_rates->k129[i] = 3.9e-19 * pow(ttt300, 1.8) * exp(20.0/ttt);
@@ -354,14 +385,16 @@ int grackle::impl::initialize_metal_chemistry_rates(
         my_rates->kz54[i] = fmax(my_rates->kz54[i], tiny) / kunit;
   }
 
-      initialize_cooling_rate_CI (my_chemistry, my_rates, coolunit);
-      initialize_cooling_rate_CII(my_chemistry, my_rates, coolunit);
-      initialize_cooling_rate_OI (my_chemistry, my_rates, coolunit);
-      initialize_cooling_rate_CO (my_chemistry, my_rates, coolunit);
-      initialize_cooling_rate_OH (my_chemistry, my_rates, coolunit);
-      initialize_cooling_rate_H2O(my_chemistry, my_rates, coolunit);
+  initialize_cooling_rate_CI (my_chemistry, my_rates, internalu.coolunit);
+  initialize_cooling_rate_CII(my_chemistry, my_rates, internalu.coolunit);
+  initialize_cooling_rate_OI (my_chemistry, my_rates, internalu.coolunit);
+  initialize_cooling_rate_CO (my_chemistry, my_rates, internalu.coolunit);
+  initialize_cooling_rate_OH (my_chemistry, my_rates, internalu.coolunit);
+  initialize_cooling_rate_H2O(my_chemistry, my_rates, internalu.coolunit);
 
-  return SUCCESS;
+  add_cieY06_cool_rate(&my_rates->cieY06, internalu.coolunit, my_chemistry);
+
+  return GR_SUCCESS;
 }
 
 int grackle::impl::free_metal_chemistry_rates(chemistry_data *my_chemistry,
@@ -1999,8 +2032,6 @@ static int allocate_rates_metal(chemistry_data *my_chemistry, chemistry_data_sto
     my_rates->kz52 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
     my_rates->kz53 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
     my_rates->kz54 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-
-    my_rates->cieY06  = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
 
     return SUCCESS;
 }
