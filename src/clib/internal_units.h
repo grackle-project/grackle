@@ -58,6 +58,14 @@ extern "C" {
 typedef struct InternalGrUnits{
   /// gives the comoving scale-factor when multiplied by a_units
   double a_value;
+
+  /// this is the factor that is multiplied by `a_value` to get the
+  /// cosmological scale factor using the standard definition (a=1 when z=0).
+  ///
+  /// Recall that Grackle's comoving unit system comes from Enzo. Cosmological
+  /// Enzo simulations set `a_units = 1/(1+zinit)`, where `zinit` is the
+  /// simulation's initial redshift. This choice meanse that, `a_value=1` for
+  /// z=zinit.
   double a_units;
 
   /// specifies whether user specifies fields in Grackle's comoving coordinates
@@ -80,12 +88,67 @@ typedef struct InternalGrUnits{
   /// it is independent of a)
   double tbase1;
 
-  /// erg*cm^3/s per cooling rate unit (this is defined in our comoving unit
-  /// system such that it's the same in the proper & comoving frames. In other
-  /// words, it's independent of a).
+  /// erg*cm^3/s per cooling rate unit (this is defined in Grackle's comoving
+  /// unit system such that it's the same in the proper & comoving frames. In
+  /// other words, it's independent of the scale factor, a).
   ///
   /// This is needed in the vast majority of cases where internal units is
   /// accessed so we precompute it
+  ///
+  /// More Details Adapted from Fortran routines
+  /// ==========================================
+  /// For completeness, the we include a description of this quantity down
+  /// below that was adapted from comments in the original Fortran routines for
+  /// computing rate coefficients.
+  ///
+  /// To understand this description, you need to think about "code units" as
+  /// being "dimensionless" (this may not be immediately obvious if you think
+  /// about code units in manner consistent with the likes of yt). For a
+  /// quantity `q`, we define `q = q~ * [q]`, where
+  ///
+  /// -  q~ denotes the value in "dimensionless code units"
+  /// - [q] denotes the "dimensions" (its a multiplicative factor)
+  /// -  q  has cgs units
+  ///
+  /// The original Fortran routines for computing rate coefficients framed this
+  /// quantity as the "dimensions of the cooling coefficients (including
+  /// constants)." This description is only meaningful in the context of the
+  /// equation we show down.
+  /// - Note, this equation includes a factor of rho (total density) in the
+  ///   denominator because e is the specific energy (energy/unit mass), not
+  ///   energy density (i.e. energy/unit volume).
+  ///
+  /// Here is the equation:
+  ///
+  /// ```
+  /// δe   = Λ    * n1        * n2        * δt     / dens   / a^3
+  /// [e]  = Λ    * [dens]/mh * [dens]/mh * [time] / [dens] / [a]^3
+  /// δe~  = Λ~   * n1~       * n2~       * δt~    / dens~  / a~^3 [~]
+  /// ```
+  ///
+  /// Putting things together, `Λ = [Λ] * Λ~` where,
+  /// `[Λ] = [e] * mh**2 * [a]^3 / ([dens] * [time]) [~]`. We can further
+  /// simplify this expression by using both
+  ///
+  /// - `[e] = ([a]*[x])**2 / [time]**2`,
+  /// - `[a] = 1 / (1 + zinit)`, which is defined so that a~ = 1 when z=zinit
+  ///
+  /// The resulting equation is:
+  ///   `[Λ] = ([a]**5 * [x]**2 * mh**2) / ([dens] * [time]**3)`
+  ///
+  /// > [!note]
+  /// > Some of the energy evolution "coefficients" are only used with a
+  /// > single power of number density, n. These do not have the /a^3 factor,
+  /// > and they have the units
+  /// > ```
+  /// > [Λ1] = ([a]**2 * [x]**2 * mh) / [time]**3
+  /// >      =  [Λ] * [dens] * [a]**3 / mh
+  /// > ```
+  /// >
+  /// > The difference is accounted for through the `dom` variable in cool.src
+  /// >
+  /// > Some coefficients are used with 3 powers of n, and they have units
+  /// > `[Λ3] = [Λ] * mh / [dens] / [a]**3`
   double coolunit;
 
   /// constant coefficients (including unit conversions) that must be
@@ -168,6 +231,65 @@ static inline double internalu_calc_coef_ljeans_(InternalGrUnits internalu,
   const double mh_local_var = internalu_get_mh_(internalu);
   return sqrt((gamma * pi_fortran_val * kboltz_grflt) /
               (GravConst_grflt * mh_local_var * internalu.dbase1));
+}
+
+
+/// computes the conversion factor that is multiplied by the (non-radiative)
+/// rate coefficient to get the value in cgs units. (This unit is defined in
+/// Grackle's comoving unit system such that it's the same in the proper &
+/// comoving frames. In other words, it's independent of the scale factor, a).
+///
+/// More Detailed Description (Adapted from Fortran routines)
+/// =========================================================
+/// For completeness, the we include a description of this quantity down
+/// below that was adapted from comments in the original Fortran routines for
+/// computing rate coefficients.
+///
+/// To understand this description, you need to think about "code units" as
+/// being "dimensionless" (this may not be immediately obvious if you think
+/// about code units in manner consistent with the likes of yt). For a quantity
+/// `q`, we define `q = q~ * [q]`, where
+///
+/// -  q~ denotes the value in "dimensionless code units"
+/// - [q] denotes the "dimensions" (its a multiplicative factor)
+/// -  q  has cgs units
+///
+/// The original Fortran routines described this quantity as the "dimensions"
+/// of the (non-radiative) rate coefficients or [k]. Note, we have chosen to
+/// define the the rate coefficients such that they include the units that
+/// convert density to number density. As a result of this choice, the rate
+/// equations should look like (in dimensionless units, hence the primes):
+///
+/// ```
+/// d(d0~)/dt~ = k~ * d1~ * d2~ / a~^3
+/// ```
+///
+/// where:
+///  - k~ is the dimenionless rate coefficient
+///  - d0~, d1~, and d2~ are 3 dimensionless species mass densities
+///    (importantly, `d = [dens]*d~`)
+///  - a~ is the dimensionless expansion coefficient. The standard scale factor
+///    (i.e. a=1 for z=0) is given by `a = a~ * [a]`. In slightly more detail,
+///    `[a] = 1 / (1 + zinit)`, which is defined so that a~ = 1 when z=zinit.
+///
+/// To get the definition of [k] let's consider:
+///
+/// ```
+/// rate eqn        :  δn0      = k  * n1        * n2        * δt     / a^3
+//  rate eqn units  : [dens]/mh = k  * [dens]/mh * [dens]/mh * [time] / [a]^3
+/// rate eqn dimless:  δn0~     = k~ * n1~       * n2~       * δt~    / a~^3
+/// ```
+///
+/// Putting this together we find that `k = [k] * k~`, where
+/// `[k] = ( [a]^3 * mh ) / ( [dens] * [time] )  (~)`
+///
+/// **Reminder:** the number densities in these equations are normalized with
+/// [dens] which is not a constant (it has a factor a^3), so the number
+/// densities must be converted from comoving to proper.
+static inline double internalu_calc_kunit_(InternalGrUnits internalu) {
+  double uaye = internalu.a_units;
+  const double mh_local_var = internalu_get_mh_(internalu);
+  return (pow(uaye, 3) * mh) / (internalu.dbase1 * internalu.tbase1);
 }
 
 /// Helper function for constructing an instance of InternalGrUnits from the
