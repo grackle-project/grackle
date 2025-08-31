@@ -87,7 +87,7 @@
 #include "grackle_macros.h"
 #include "interp_table_utils.h" // free_interp_grid_
 #include "initialize_metal_chemistry_rates.hpp"  // forward declarations
-#include "internal_types.hpp" // new_CollisionalRxnRateCollection
+#include "internal_types.hpp" // CollisionalRxnRateCollection
 #include "internal_units.h"  // InternalGrUnits
 #include "LUT.hpp" // CollisionalRxnLUT
 #include "opaque_storage.hpp" // gr_opaque_storage
@@ -269,67 +269,55 @@ int grackle::impl::initialize_metal_chemistry_rates(
 //     , kcol_rate_tables->data[CollisionalRxnLUT::k130][i]);
   }
 
-  for (int i = 0; i < my_chemistry->NumberOfTemperatureBins; i++) {
-    // we use std::fmax, rather than fmax to avoid overloading issues with the
-    // custom fmax introduced in utils-cpp.hpp that operates on 3 arguments
-    kcol_rate_tables->data[CollisionalRxnLUT::k125][i] = std::fmax(kcol_rate_tables->data[CollisionalRxnLUT::k125][i], tiny) / kunit;
-    kcol_rate_tables->data[CollisionalRxnLUT::k129][i] = std::fmax(kcol_rate_tables->data[CollisionalRxnLUT::k129][i], tiny) / kunit;
-    kcol_rate_tables->data[CollisionalRxnLUT::k130][i] = std::fmax(kcol_rate_tables->data[CollisionalRxnLUT::k130][i], tiny) / kunit;
-    kcol_rate_tables->data[CollisionalRxnLUT::k131][i] = std::fmax(kcol_rate_tables->data[CollisionalRxnLUT::k131][i], tiny) / kunit;
-    kcol_rate_tables->data[CollisionalRxnLUT::k132][i] = std::fmax(kcol_rate_tables->data[CollisionalRxnLUT::k132][i], tiny) / kunit;
-    kcol_rate_tables->data[CollisionalRxnLUT::k133][i] = std::fmax(kcol_rate_tables->data[CollisionalRxnLUT::k133][i], tiny) / kunit;
-    kcol_rate_tables->data[CollisionalRxnLUT::k134][i] = std::fmax(kcol_rate_tables->data[CollisionalRxnLUT::k134][i], tiny) / kunit;
-    kcol_rate_tables->data[CollisionalRxnLUT::k135][i] = std::fmax(kcol_rate_tables->data[CollisionalRxnLUT::k135][i], tiny) / kunit;
-    kcol_rate_tables->data[CollisionalRxnLUT::k136][i] = std::fmax(kcol_rate_tables->data[CollisionalRxnLUT::k136][i], tiny) / kunit;
-    kcol_rate_tables->data[CollisionalRxnLUT::k137][i] = std::fmax(kcol_rate_tables->data[CollisionalRxnLUT::k137][i], tiny) / kunit;
+  // at this point, all values in kcol_rate_tables initialized by this
+  // function have cgs units. We need to convert to code units & enforce a
+  // minimum value
+  //
+  // TODO: in the future, we should refactor to make this logic look more
+  //       consistent with the logic for other similar rates in
+  //       initialize_rates
 
-    kcol_rate_tables->data[CollisionalRxnLUT::k148][i] = std::fmax(kcol_rate_tables->data[CollisionalRxnLUT::k148][i], tiny) / kunit;
-    kcol_rate_tables->data[CollisionalRxnLUT::k149][i] = std::fmax(kcol_rate_tables->data[CollisionalRxnLUT::k149][i], tiny) / kunit;
-    kcol_rate_tables->data[CollisionalRxnLUT::k150][i] = std::fmax(kcol_rate_tables->data[CollisionalRxnLUT::k150][i], tiny) / kunit;
-    kcol_rate_tables->data[CollisionalRxnLUT::k151][i] = std::fmax(kcol_rate_tables->data[CollisionalRxnLUT::k151][i], tiny) / kunit;
-    kcol_rate_tables->data[CollisionalRxnLUT::k152][i] = std::fmax(kcol_rate_tables->data[CollisionalRxnLUT::k152][i], tiny) / kunit;
-    kcol_rate_tables->data[CollisionalRxnLUT::k153][i] = std::fmax(kcol_rate_tables->data[CollisionalRxnLUT::k153][i], tiny) / kunit;
+  int tmp_rateid_list[] = {
+    // primordial chemistry >= 4 rates
+    CollisionalRxnLUT::k125, CollisionalRxnLUT::k129, CollisionalRxnLUT::k130,
+    CollisionalRxnLUT::k131, CollisionalRxnLUT::k132, CollisionalRxnLUT::k133,
+    CollisionalRxnLUT::k134, CollisionalRxnLUT::k135, CollisionalRxnLUT::k136,
+    CollisionalRxnLUT::k137, CollisionalRxnLUT::k148, CollisionalRxnLUT::k149,
+    CollisionalRxnLUT::k150, CollisionalRxnLUT::k151, CollisionalRxnLUT::k152,
+    CollisionalRxnLUT::k153,
+    // metal chemistry rates
+    CollisionalRxnLUT::kz15, CollisionalRxnLUT::kz16, CollisionalRxnLUT::kz17,
+    CollisionalRxnLUT::kz18, CollisionalRxnLUT::kz19, CollisionalRxnLUT::kz20,
+    CollisionalRxnLUT::kz21, CollisionalRxnLUT::kz22, CollisionalRxnLUT::kz23,
+    CollisionalRxnLUT::kz24, CollisionalRxnLUT::kz25, CollisionalRxnLUT::kz26,
+    CollisionalRxnLUT::kz27, CollisionalRxnLUT::kz28, CollisionalRxnLUT::kz29,
+    CollisionalRxnLUT::kz30, CollisionalRxnLUT::kz31, CollisionalRxnLUT::kz32,
+    CollisionalRxnLUT::kz33, CollisionalRxnLUT::kz34, CollisionalRxnLUT::kz35,
+    CollisionalRxnLUT::kz36, CollisionalRxnLUT::kz37, CollisionalRxnLUT::kz38,
+    CollisionalRxnLUT::kz39, CollisionalRxnLUT::kz40, CollisionalRxnLUT::kz41,
+    CollisionalRxnLUT::kz42, CollisionalRxnLUT::kz43, CollisionalRxnLUT::kz44,
+    CollisionalRxnLUT::kz45, CollisionalRxnLUT::kz46, CollisionalRxnLUT::kz47,
+    CollisionalRxnLUT::kz48, CollisionalRxnLUT::kz49, CollisionalRxnLUT::kz50,
+    CollisionalRxnLUT::kz51, CollisionalRxnLUT::kz52, CollisionalRxnLUT::kz53,
+    CollisionalRxnLUT::kz54
+  };
 
-    kcol_rate_tables->data[CollisionalRxnLUT::kz15][i] = std::fmax(kcol_rate_tables->data[CollisionalRxnLUT::kz15][i], tiny) / kunit;
-    kcol_rate_tables->data[CollisionalRxnLUT::kz16][i] = std::fmax(kcol_rate_tables->data[CollisionalRxnLUT::kz16][i], tiny) / kunit;
-    kcol_rate_tables->data[CollisionalRxnLUT::kz17][i] = std::fmax(kcol_rate_tables->data[CollisionalRxnLUT::kz17][i], tiny) / kunit;
-    kcol_rate_tables->data[CollisionalRxnLUT::kz18][i] = std::fmax(kcol_rate_tables->data[CollisionalRxnLUT::kz18][i], tiny) / kunit;
-    kcol_rate_tables->data[CollisionalRxnLUT::kz19][i] = std::fmax(kcol_rate_tables->data[CollisionalRxnLUT::kz19][i], tiny) / kunit;
-    kcol_rate_tables->data[CollisionalRxnLUT::kz20][i] = std::fmax(kcol_rate_tables->data[CollisionalRxnLUT::kz20][i], tiny) / kunit;
-    kcol_rate_tables->data[CollisionalRxnLUT::kz21][i] = std::fmax(kcol_rate_tables->data[CollisionalRxnLUT::kz21][i], tiny) / kunit;
-    kcol_rate_tables->data[CollisionalRxnLUT::kz22][i] = std::fmax(kcol_rate_tables->data[CollisionalRxnLUT::kz22][i], tiny) / kunit;
-    kcol_rate_tables->data[CollisionalRxnLUT::kz23][i] = std::fmax(kcol_rate_tables->data[CollisionalRxnLUT::kz23][i], tiny) / kunit;
-    kcol_rate_tables->data[CollisionalRxnLUT::kz24][i] = std::fmax(kcol_rate_tables->data[CollisionalRxnLUT::kz24][i], tiny) / kunit;
-    kcol_rate_tables->data[CollisionalRxnLUT::kz25][i] = std::fmax(kcol_rate_tables->data[CollisionalRxnLUT::kz25][i], tiny) / kunit;
-    kcol_rate_tables->data[CollisionalRxnLUT::kz26][i] = std::fmax(kcol_rate_tables->data[CollisionalRxnLUT::kz26][i], tiny) / kunit;
-    kcol_rate_tables->data[CollisionalRxnLUT::kz27][i] = std::fmax(kcol_rate_tables->data[CollisionalRxnLUT::kz27][i], tiny) / kunit;
-    kcol_rate_tables->data[CollisionalRxnLUT::kz28][i] = std::fmax(kcol_rate_tables->data[CollisionalRxnLUT::kz28][i], tiny) / kunit;
-    kcol_rate_tables->data[CollisionalRxnLUT::kz29][i] = std::fmax(kcol_rate_tables->data[CollisionalRxnLUT::kz29][i], tiny) / kunit;
-    kcol_rate_tables->data[CollisionalRxnLUT::kz30][i] = std::fmax(kcol_rate_tables->data[CollisionalRxnLUT::kz30][i], tiny) / kunit;
-    kcol_rate_tables->data[CollisionalRxnLUT::kz31][i] = std::fmax(kcol_rate_tables->data[CollisionalRxnLUT::kz31][i], tiny) / kunit;
-    kcol_rate_tables->data[CollisionalRxnLUT::kz32][i] = std::fmax(kcol_rate_tables->data[CollisionalRxnLUT::kz32][i], tiny) / kunit;
-    kcol_rate_tables->data[CollisionalRxnLUT::kz33][i] = std::fmax(kcol_rate_tables->data[CollisionalRxnLUT::kz33][i], tiny) / kunit;
-    kcol_rate_tables->data[CollisionalRxnLUT::kz34][i] = std::fmax(kcol_rate_tables->data[CollisionalRxnLUT::kz34][i], tiny) / kunit;
-    kcol_rate_tables->data[CollisionalRxnLUT::kz35][i] = std::fmax(kcol_rate_tables->data[CollisionalRxnLUT::kz35][i], tiny) / kunit;
-    kcol_rate_tables->data[CollisionalRxnLUT::kz36][i] = std::fmax(kcol_rate_tables->data[CollisionalRxnLUT::kz36][i], tiny) / kunit;
-    kcol_rate_tables->data[CollisionalRxnLUT::kz37][i] = std::fmax(kcol_rate_tables->data[CollisionalRxnLUT::kz37][i], tiny) / kunit;
-    kcol_rate_tables->data[CollisionalRxnLUT::kz38][i] = std::fmax(kcol_rate_tables->data[CollisionalRxnLUT::kz38][i], tiny) / kunit;
-    kcol_rate_tables->data[CollisionalRxnLUT::kz39][i] = std::fmax(kcol_rate_tables->data[CollisionalRxnLUT::kz39][i], tiny) / kunit;
-    kcol_rate_tables->data[CollisionalRxnLUT::kz40][i] = std::fmax(kcol_rate_tables->data[CollisionalRxnLUT::kz40][i], tiny) / kunit;
-    kcol_rate_tables->data[CollisionalRxnLUT::kz41][i] = std::fmax(kcol_rate_tables->data[CollisionalRxnLUT::kz41][i], tiny) / kunit;
-    kcol_rate_tables->data[CollisionalRxnLUT::kz42][i] = std::fmax(kcol_rate_tables->data[CollisionalRxnLUT::kz42][i], tiny) / kunit;
-    kcol_rate_tables->data[CollisionalRxnLUT::kz43][i] = std::fmax(kcol_rate_tables->data[CollisionalRxnLUT::kz43][i], tiny) / kunit;
-    kcol_rate_tables->data[CollisionalRxnLUT::kz44][i] = std::fmax(kcol_rate_tables->data[CollisionalRxnLUT::kz44][i], tiny) / kunit;
-    kcol_rate_tables->data[CollisionalRxnLUT::kz45][i] = std::fmax(kcol_rate_tables->data[CollisionalRxnLUT::kz45][i], tiny) / kunit;
-    kcol_rate_tables->data[CollisionalRxnLUT::kz46][i] = std::fmax(kcol_rate_tables->data[CollisionalRxnLUT::kz46][i], tiny) / kunit;
-    kcol_rate_tables->data[CollisionalRxnLUT::kz47][i] = std::fmax(kcol_rate_tables->data[CollisionalRxnLUT::kz47][i], tiny) / kunit;
-    kcol_rate_tables->data[CollisionalRxnLUT::kz48][i] = std::fmax(kcol_rate_tables->data[CollisionalRxnLUT::kz48][i], tiny) / kunit;
-    kcol_rate_tables->data[CollisionalRxnLUT::kz49][i] = std::fmax(kcol_rate_tables->data[CollisionalRxnLUT::kz49][i], tiny) / kunit;
-    kcol_rate_tables->data[CollisionalRxnLUT::kz50][i] = std::fmax(kcol_rate_tables->data[CollisionalRxnLUT::kz50][i], tiny) / kunit;
-    kcol_rate_tables->data[CollisionalRxnLUT::kz51][i] = std::fmax(kcol_rate_tables->data[CollisionalRxnLUT::kz51][i], tiny) / kunit;
-    kcol_rate_tables->data[CollisionalRxnLUT::kz52][i] = std::fmax(kcol_rate_tables->data[CollisionalRxnLUT::kz52][i], tiny) / kunit;
-    kcol_rate_tables->data[CollisionalRxnLUT::kz53][i] = std::fmax(kcol_rate_tables->data[CollisionalRxnLUT::kz53][i], tiny) / kunit;
-    kcol_rate_tables->data[CollisionalRxnLUT::kz54][i] = std::fmax(kcol_rate_tables->data[CollisionalRxnLUT::kz54][i], tiny) / kunit;
+  size_t tmp_rateid_list_len = sizeof(tmp_rateid_list) / sizeof(int);
+
+  for (size_t list_idx = 0; list_idx < tmp_rateid_list_len; list_idx++) {
+    // get the lut_idx (lookup table index)
+    int lut_idx = tmp_rateid_list[list_idx];
+    // load the data corresponding to the specified rate
+    double* ptr = kcol_rate_tables->data[lut_idx];
+
+    // now do the "heavy lifting" of setting up appropriate units (and
+    // enforcing a minimum value)
+    for (int i = 0; i < my_chemistry->NumberOfTemperatureBins; i++) {
+      // we use std::fmax, rather than fmax to avoid overloading issues with
+      // the custom fmax introduced in utils-cpp.hpp that operates on 3
+      // arguments (that function is used in code transcribed from Fortran)
+      ptr[i] = std::fmax(ptr[i], tiny) / kunit;
+    }
   }
 
   initialize_cooling_rate_CI (my_chemistry, my_rates, internalu.coolunit);
