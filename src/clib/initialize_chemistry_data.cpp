@@ -502,9 +502,13 @@ extern "C" int local_initialize_chemistry_data(chemistry_data *my_chemistry,
       POW(my_units->a_value * my_units->a_units, 3);
   }
 
-  //* Call initialise_rates to compute rate tables.
-  grackle::impl::initialize_rates(
-    my_chemistry, my_rates, my_units, co_length_units, co_density_units);
+  // Compute rate tables.
+  if (grackle::impl::initialize_rates(my_chemistry, my_rates, my_units,
+                                      co_length_units, co_density_units)
+      != GR_SUCCESS) {
+    fprintf(stderr, "Error in initialize_rates.\n");
+    return GR_FAIL;
+  }
 
   /* Initialize Cloudy cooling. */
   my_rates->cloudy_data_new = 1;
@@ -666,39 +670,44 @@ extern "C" int local_free_chemistry_data(chemistry_data *my_chemistry,
 
     GRACKLE_FREE(my_rates->gr_N);
 
-    GRACKLE_FREE(my_rates->k1);
-    GRACKLE_FREE(my_rates->k2);
-    GRACKLE_FREE(my_rates->k3);
-    GRACKLE_FREE(my_rates->k4);
-    GRACKLE_FREE(my_rates->k5);
-    GRACKLE_FREE(my_rates->k6);
-    GRACKLE_FREE(my_rates->k7);
-    GRACKLE_FREE(my_rates->k8);
-    GRACKLE_FREE(my_rates->k9);
-    GRACKLE_FREE(my_rates->k10);
-    GRACKLE_FREE(my_rates->k11);
-    GRACKLE_FREE(my_rates->k12);
-    GRACKLE_FREE(my_rates->k13);
+    // all of the buffers for "standard collision reaction rates" alias
+    // pointers managed by my_rates->opaque_storage->kcol_rate_tables, which
+    // is deallocated separately (this block of code will be deleted in the
+    // next few commits)
+    my_rates->k1 = nullptr;
+    my_rates->k2 = nullptr;
+    my_rates->k3 = nullptr;
+    my_rates->k4 = nullptr;
+    my_rates->k5 = nullptr;
+    my_rates->k6 = nullptr;
+    my_rates->k7 = nullptr;
+    my_rates->k8 = nullptr;
+    my_rates->k9 = nullptr;
+    my_rates->k10 = nullptr;
+    my_rates->k11 = nullptr;
+    my_rates->k12 = nullptr;
+    my_rates->k13 = nullptr;
+    my_rates->k14 = nullptr;
+    my_rates->k15 = nullptr;
+    my_rates->k16 = nullptr;
+    my_rates->k17 = nullptr;
+    my_rates->k18 = nullptr;
+    my_rates->k19 = nullptr;
+    my_rates->k20 = nullptr;
+    my_rates->k21 = nullptr;
+    my_rates->k22 = nullptr;
+    my_rates->k23 = nullptr;
+    my_rates->k50 = nullptr;
+    my_rates->k51 = nullptr;
+    my_rates->k52 = nullptr;
+    my_rates->k53 = nullptr;
+    my_rates->k54 = nullptr;
+    my_rates->k55 = nullptr;
+    my_rates->k56 = nullptr;
+    my_rates->k57 = nullptr;
+    my_rates->k58 = nullptr;
+
     GRACKLE_FREE(my_rates->k13dd);
-    GRACKLE_FREE(my_rates->k14);
-    GRACKLE_FREE(my_rates->k15);
-    GRACKLE_FREE(my_rates->k16);
-    GRACKLE_FREE(my_rates->k17);
-    GRACKLE_FREE(my_rates->k18);
-    GRACKLE_FREE(my_rates->k19);
-    GRACKLE_FREE(my_rates->k20);
-    GRACKLE_FREE(my_rates->k21);
-    GRACKLE_FREE(my_rates->k22);
-    GRACKLE_FREE(my_rates->k23);
-    GRACKLE_FREE(my_rates->k50);
-    GRACKLE_FREE(my_rates->k51);
-    GRACKLE_FREE(my_rates->k52);
-    GRACKLE_FREE(my_rates->k53);
-    GRACKLE_FREE(my_rates->k54);
-    GRACKLE_FREE(my_rates->k55);
-    GRACKLE_FREE(my_rates->k56);
-    GRACKLE_FREE(my_rates->k57);
-    GRACKLE_FREE(my_rates->k58);
     GRACKLE_FREE(my_rates->h2dust);
     GRACKLE_FREE(my_rates->n_cr_n);
     GRACKLE_FREE(my_rates->n_cr_d1);

@@ -94,8 +94,6 @@
 #define tiny 1.0e-20
 #define tevk 1.1605e+4
 
-static int allocate_rates_metal(chemistry_data *my_chemistry, chemistry_data_storage *my_rates);
-
 /// calculate CIE H2 cooling rate from Yoshida et al. (2006)
 ///
 /// @note
@@ -170,11 +168,10 @@ int grackle::impl::initialize_metal_chemistry_rates(
   );
 
 
-  // Allocate buffers to hold the rates
-  allocate_rates_metal(my_chemistry, my_rates);
-
   // Initialize constants to tiny
   for (int i = 0; i < my_chemistry->NumberOfTemperatureBins; i++) {
+    // todo: delete this block of code (this is taken care of right after we
+    //       allocate all of the buffers)
         my_rates->k125[i] = tiny;
         my_rates->k129[i] = tiny;
         my_rates->k130[i] = tiny;
@@ -415,63 +412,67 @@ int grackle::impl::free_metal_chemistry_rates(chemistry_data *my_chemistry,
   free_interp_grid_(&my_rates->LOH);
   free_interp_grid_(&my_rates->LH2O);
 
-  GRACKLE_FREE(my_rates->k125);
-  GRACKLE_FREE(my_rates->k129);
-  GRACKLE_FREE(my_rates->k130);
-  GRACKLE_FREE(my_rates->k131);
-  GRACKLE_FREE(my_rates->k132);
-  GRACKLE_FREE(my_rates->k133);
-  GRACKLE_FREE(my_rates->k134);
-  GRACKLE_FREE(my_rates->k135);
-  GRACKLE_FREE(my_rates->k136);
-  GRACKLE_FREE(my_rates->k137);
-  GRACKLE_FREE(my_rates->k148);
-  GRACKLE_FREE(my_rates->k149);
-  GRACKLE_FREE(my_rates->k150);
-  GRACKLE_FREE(my_rates->k151);
-  GRACKLE_FREE(my_rates->k152);
-  GRACKLE_FREE(my_rates->k153);
+  // all of the buffers for "standard collision reaction rates" alias
+  // pointers managed by my_rates->opaque_storage->kcol_rate_tables, which
+  // is deallocated separately (this block of code will be deleted in the
+  // next few commits)
+  my_rates->k125 = nullptr;
+  my_rates->k129 = nullptr;
+  my_rates->k130 = nullptr;
+  my_rates->k131 = nullptr;
+  my_rates->k132 = nullptr;
+  my_rates->k133 = nullptr;
+  my_rates->k134 = nullptr;
+  my_rates->k135 = nullptr;
+  my_rates->k136 = nullptr;
+  my_rates->k137 = nullptr;
+  my_rates->k148 = nullptr;
+  my_rates->k149 = nullptr;
+  my_rates->k150 = nullptr;
+  my_rates->k151 = nullptr;
+  my_rates->k152 = nullptr;
+  my_rates->k153 = nullptr;
 
-  GRACKLE_FREE(my_rates->kz15);
-  GRACKLE_FREE(my_rates->kz16);
-  GRACKLE_FREE(my_rates->kz17);
-  GRACKLE_FREE(my_rates->kz18);
-  GRACKLE_FREE(my_rates->kz19);
-  GRACKLE_FREE(my_rates->kz20);
-  GRACKLE_FREE(my_rates->kz21);
-  GRACKLE_FREE(my_rates->kz22);
-  GRACKLE_FREE(my_rates->kz23);
-  GRACKLE_FREE(my_rates->kz24);
-  GRACKLE_FREE(my_rates->kz25);
-  GRACKLE_FREE(my_rates->kz26);
-  GRACKLE_FREE(my_rates->kz27);
-  GRACKLE_FREE(my_rates->kz28);
-  GRACKLE_FREE(my_rates->kz29);
-  GRACKLE_FREE(my_rates->kz30);
-  GRACKLE_FREE(my_rates->kz31);
-  GRACKLE_FREE(my_rates->kz32);
-  GRACKLE_FREE(my_rates->kz33);
-  GRACKLE_FREE(my_rates->kz34);
-  GRACKLE_FREE(my_rates->kz35);
-  GRACKLE_FREE(my_rates->kz36);
-  GRACKLE_FREE(my_rates->kz37);
-  GRACKLE_FREE(my_rates->kz38);
-  GRACKLE_FREE(my_rates->kz39);
-  GRACKLE_FREE(my_rates->kz40);
-  GRACKLE_FREE(my_rates->kz41);
-  GRACKLE_FREE(my_rates->kz42);
-  GRACKLE_FREE(my_rates->kz43);
-  GRACKLE_FREE(my_rates->kz44);
-  GRACKLE_FREE(my_rates->kz45);
-  GRACKLE_FREE(my_rates->kz46);
-  GRACKLE_FREE(my_rates->kz47);
-  GRACKLE_FREE(my_rates->kz48);
-  GRACKLE_FREE(my_rates->kz49);
-  GRACKLE_FREE(my_rates->kz50);
-  GRACKLE_FREE(my_rates->kz51);
-  GRACKLE_FREE(my_rates->kz52);
-  GRACKLE_FREE(my_rates->kz53);
-  GRACKLE_FREE(my_rates->kz54);
+  my_rates->kz15 = nullptr;
+  my_rates->kz16 = nullptr;
+  my_rates->kz17 = nullptr;
+  my_rates->kz18 = nullptr;
+  my_rates->kz19 = nullptr;
+  my_rates->kz20 = nullptr;
+  my_rates->kz21 = nullptr;
+  my_rates->kz22 = nullptr;
+  my_rates->kz23 = nullptr;
+  my_rates->kz24 = nullptr;
+  my_rates->kz25 = nullptr;
+  my_rates->kz26 = nullptr;
+  my_rates->kz27 = nullptr;
+  my_rates->kz28 = nullptr;
+  my_rates->kz29 = nullptr;
+  my_rates->kz30 = nullptr;
+  my_rates->kz31 = nullptr;
+  my_rates->kz32 = nullptr;
+  my_rates->kz33 = nullptr;
+  my_rates->kz34 = nullptr;
+  my_rates->kz35 = nullptr;
+  my_rates->kz36 = nullptr;
+  my_rates->kz37 = nullptr;
+  my_rates->kz38 = nullptr;
+  my_rates->kz39 = nullptr;
+  my_rates->kz40 = nullptr;
+  my_rates->kz41 = nullptr;
+  my_rates->kz42 = nullptr;
+  my_rates->kz43 = nullptr;
+  my_rates->kz44 = nullptr;
+  my_rates->kz45 = nullptr;
+  my_rates->kz46 = nullptr;
+  my_rates->kz47 = nullptr;
+  my_rates->kz48 = nullptr;
+  my_rates->kz49 = nullptr;
+  my_rates->kz50 = nullptr;
+  my_rates->kz51 = nullptr;
+  my_rates->kz52 = nullptr;
+  my_rates->kz53 = nullptr;
+  my_rates->kz54 = nullptr;
 
   GRACKLE_FREE(my_rates->cieY06 );
 
@@ -1972,66 +1973,3 @@ extern "C" void initialize_primordial_opacity(chemistry_data *my_chemistry, chem
 
 }
 
-
-static int allocate_rates_metal(chemistry_data *my_chemistry, chemistry_data_storage *my_rates)
-{
-    my_rates->k125 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->k129 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->k130 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->k131 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->k132 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->k133 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->k134 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->k135 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->k136 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->k137 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->k148 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->k149 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->k150 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->k151 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->k152 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->k153 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-
-    my_rates->kz15 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz16 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz17 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz18 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz19 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz20 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz21 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz22 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz23 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz24 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz25 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz26 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz27 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz28 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz29 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz30 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz31 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz32 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz33 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz34 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz35 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz36 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz37 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz38 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz39 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz40 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz41 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz42 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz43 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz44 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz45 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz46 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz47 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz48 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz49 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz50 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz51 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz52 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz53 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz54 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-
-    return SUCCESS;
-}
