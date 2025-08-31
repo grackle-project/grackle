@@ -70,30 +70,6 @@ static void initialize_empty_interp_grid_(gr_interp_grid* grid)
 static void initialize_empty_chemistry_data_storage_struct(chemistry_data_storage *my_rates)
 {
 
-  my_rates->k1 = NULL;
-  my_rates->k2 = NULL;
-  my_rates->k3 = NULL;
-  my_rates->k4 = NULL;
-  my_rates->k5 = NULL;
-  my_rates->k6 = NULL;
-
-  my_rates->k7 = NULL;
-  my_rates->k8 = NULL;
-  my_rates->k9 = NULL;
-  my_rates->k10 = NULL;
-  my_rates->k11 = NULL;
-  my_rates->k12 = NULL;
-  my_rates->k13 = NULL;
-  my_rates->k14 = NULL;
-  my_rates->k15 = NULL;
-  my_rates->k16 = NULL;
-  my_rates->k17 = NULL;
-  my_rates->k18 = NULL;
-  my_rates->k19 = NULL;
-  my_rates->k20 = NULL;
-  my_rates->k21 = NULL;
-  my_rates->k22 = NULL;
-  my_rates->k23 = NULL;
   my_rates->k13dd = NULL;
 
   my_rates->k24 = 0.;
@@ -105,75 +81,6 @@ static void initialize_empty_chemistry_data_storage_struct(chemistry_data_storag
   my_rates->k29 = 0.;
   my_rates->k30 = 0.;
   my_rates->k31 = 0.;
-
-  my_rates->k50 = NULL;
-  my_rates->k51 = NULL;
-  my_rates->k52 = NULL;
-  my_rates->k53 = NULL;
-  my_rates->k54 = NULL;
-  my_rates->k55 = NULL;
-  my_rates->k56 = NULL;
-
-  my_rates->k57 = NULL;
-  my_rates->k58 = NULL;
-
-  my_rates->k125 = NULL;
-  my_rates->k129 = NULL;
-  my_rates->k130 = NULL;
-  my_rates->k131 = NULL;
-  my_rates->k132 = NULL;
-  my_rates->k133 = NULL;
-  my_rates->k134 = NULL;
-  my_rates->k135 = NULL;
-  my_rates->k136 = NULL;
-  my_rates->k137 = NULL;
-  my_rates->k148 = NULL;
-  my_rates->k149 = NULL;
-  my_rates->k150 = NULL;
-  my_rates->k151 = NULL;
-  my_rates->k152 = NULL;
-  my_rates->k153 = NULL;
-
-  my_rates->kz15 = NULL;
-  my_rates->kz16 = NULL;
-  my_rates->kz17 = NULL;
-  my_rates->kz18 = NULL;
-  my_rates->kz19 = NULL;
-  my_rates->kz20 = NULL;
-  my_rates->kz21 = NULL;
-  my_rates->kz22 = NULL;
-  my_rates->kz23 = NULL;
-  my_rates->kz24 = NULL;
-  my_rates->kz25 = NULL;
-  my_rates->kz26 = NULL;
-  my_rates->kz27 = NULL;
-  my_rates->kz28 = NULL;
-  my_rates->kz29 = NULL;
-  my_rates->kz30 = NULL;
-  my_rates->kz31 = NULL;
-  my_rates->kz32 = NULL;
-  my_rates->kz33 = NULL;
-  my_rates->kz34 = NULL;
-  my_rates->kz35 = NULL;
-  my_rates->kz36 = NULL;
-  my_rates->kz37 = NULL;
-  my_rates->kz38 = NULL;
-  my_rates->kz39 = NULL;
-  my_rates->kz40 = NULL;
-  my_rates->kz41 = NULL;
-  my_rates->kz42 = NULL;
-  my_rates->kz43 = NULL;
-  my_rates->kz44 = NULL;
-  my_rates->kz45 = NULL;
-  my_rates->kz46 = NULL;
-  my_rates->kz47 = NULL;
-  my_rates->kz48 = NULL;
-  my_rates->kz49 = NULL;
-  my_rates->kz50 = NULL;
-  my_rates->kz51 = NULL;
-  my_rates->kz52 = NULL;
-  my_rates->kz53 = NULL;
-  my_rates->kz54 = NULL;
 
   my_rates->h2dust = NULL;
   my_rates->h2dustS = NULL;
@@ -669,43 +576,6 @@ extern "C" int local_free_chemistry_data(chemistry_data *my_chemistry,
     free_interp_grid_(&my_rates->alphap);
 
     GRACKLE_FREE(my_rates->gr_N);
-
-    // all of the buffers for "standard collision reaction rates" alias
-    // pointers managed by my_rates->opaque_storage->kcol_rate_tables, which
-    // is deallocated separately (this block of code will be deleted in the
-    // next few commits)
-    my_rates->k1 = nullptr;
-    my_rates->k2 = nullptr;
-    my_rates->k3 = nullptr;
-    my_rates->k4 = nullptr;
-    my_rates->k5 = nullptr;
-    my_rates->k6 = nullptr;
-    my_rates->k7 = nullptr;
-    my_rates->k8 = nullptr;
-    my_rates->k9 = nullptr;
-    my_rates->k10 = nullptr;
-    my_rates->k11 = nullptr;
-    my_rates->k12 = nullptr;
-    my_rates->k13 = nullptr;
-    my_rates->k14 = nullptr;
-    my_rates->k15 = nullptr;
-    my_rates->k16 = nullptr;
-    my_rates->k17 = nullptr;
-    my_rates->k18 = nullptr;
-    my_rates->k19 = nullptr;
-    my_rates->k20 = nullptr;
-    my_rates->k21 = nullptr;
-    my_rates->k22 = nullptr;
-    my_rates->k23 = nullptr;
-    my_rates->k50 = nullptr;
-    my_rates->k51 = nullptr;
-    my_rates->k52 = nullptr;
-    my_rates->k53 = nullptr;
-    my_rates->k54 = nullptr;
-    my_rates->k55 = nullptr;
-    my_rates->k56 = nullptr;
-    my_rates->k57 = nullptr;
-    my_rates->k58 = nullptr;
 
     GRACKLE_FREE(my_rates->k13dd);
     GRACKLE_FREE(my_rates->h2dust);

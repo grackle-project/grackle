@@ -335,12 +335,9 @@ int grackle::impl::initialize_metal_chemistry_rates(
 int grackle::impl::free_metal_chemistry_rates(chemistry_data *my_chemistry,
                                               chemistry_data_storage *my_rates)
 {
-
-  /* TO-DO: k125 - k153 are primordial_chemistry=4.
-     These should be moved to initialize_rates.c so this is only metal species. */
-  if (my_chemistry->primordial_chemistry == 0)
-    return SUCCESS;
-
+  if (my_chemistry->primordial_chemistry == 0) {
+    return GR_SUCCESS;
+  }
 
   free_interp_grid_(&my_rates->LCI);
   free_interp_grid_(&my_rates->LCII);
@@ -350,71 +347,9 @@ int grackle::impl::free_metal_chemistry_rates(chemistry_data *my_chemistry,
   free_interp_grid_(&my_rates->LOH);
   free_interp_grid_(&my_rates->LH2O);
 
-  // all of the buffers for "standard collision reaction rates" alias
-  // pointers managed by my_rates->opaque_storage->kcol_rate_tables, which
-  // is deallocated separately (this block of code will be deleted in the
-  // next few commits)
-  my_rates->k125 = nullptr;
-  my_rates->k129 = nullptr;
-  my_rates->k130 = nullptr;
-  my_rates->k131 = nullptr;
-  my_rates->k132 = nullptr;
-  my_rates->k133 = nullptr;
-  my_rates->k134 = nullptr;
-  my_rates->k135 = nullptr;
-  my_rates->k136 = nullptr;
-  my_rates->k137 = nullptr;
-  my_rates->k148 = nullptr;
-  my_rates->k149 = nullptr;
-  my_rates->k150 = nullptr;
-  my_rates->k151 = nullptr;
-  my_rates->k152 = nullptr;
-  my_rates->k153 = nullptr;
-
-  my_rates->kz15 = nullptr;
-  my_rates->kz16 = nullptr;
-  my_rates->kz17 = nullptr;
-  my_rates->kz18 = nullptr;
-  my_rates->kz19 = nullptr;
-  my_rates->kz20 = nullptr;
-  my_rates->kz21 = nullptr;
-  my_rates->kz22 = nullptr;
-  my_rates->kz23 = nullptr;
-  my_rates->kz24 = nullptr;
-  my_rates->kz25 = nullptr;
-  my_rates->kz26 = nullptr;
-  my_rates->kz27 = nullptr;
-  my_rates->kz28 = nullptr;
-  my_rates->kz29 = nullptr;
-  my_rates->kz30 = nullptr;
-  my_rates->kz31 = nullptr;
-  my_rates->kz32 = nullptr;
-  my_rates->kz33 = nullptr;
-  my_rates->kz34 = nullptr;
-  my_rates->kz35 = nullptr;
-  my_rates->kz36 = nullptr;
-  my_rates->kz37 = nullptr;
-  my_rates->kz38 = nullptr;
-  my_rates->kz39 = nullptr;
-  my_rates->kz40 = nullptr;
-  my_rates->kz41 = nullptr;
-  my_rates->kz42 = nullptr;
-  my_rates->kz43 = nullptr;
-  my_rates->kz44 = nullptr;
-  my_rates->kz45 = nullptr;
-  my_rates->kz46 = nullptr;
-  my_rates->kz47 = nullptr;
-  my_rates->kz48 = nullptr;
-  my_rates->kz49 = nullptr;
-  my_rates->kz50 = nullptr;
-  my_rates->kz51 = nullptr;
-  my_rates->kz52 = nullptr;
-  my_rates->kz53 = nullptr;
-  my_rates->kz54 = nullptr;
-
   GRACKLE_FREE(my_rates->cieY06 );
 
-  return SUCCESS;
+  return GR_SUCCESS;
 }
 
 struct regular_range_{
