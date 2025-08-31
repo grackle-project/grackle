@@ -335,6 +335,105 @@ int grackle::impl::initialize_rates(
         }
       }
 
+      // make the my_rates->k[0-9]+ and my_rates->kz[0-9]+ alias the pointers
+      // allocated within kcol_rate_tables
+      // -> this logic is temporary! It exists to let us more gradually change
+      //    other pieces of code so that it refers to kcol_rate_tables
+      // -> (the logic will be removed before we try merging the commits
+      //    introducing kcol_rate_tables into the newchem-cpp branch)
+      grackle::impl::CollisionalRxnRateCollection* kcol_rate_tables =
+        my_rates->opaque_storage->kcol_rate_tables;
+
+      my_rates->k1 = kcol_rate_tables->data[CollisionalRxnLUT::k1];
+      my_rates->k2 = kcol_rate_tables->data[CollisionalRxnLUT::k2];
+      my_rates->k3 = kcol_rate_tables->data[CollisionalRxnLUT::k3];
+      my_rates->k4 = kcol_rate_tables->data[CollisionalRxnLUT::k4];
+      my_rates->k5 = kcol_rate_tables->data[CollisionalRxnLUT::k5];
+      my_rates->k6 = kcol_rate_tables->data[CollisionalRxnLUT::k6];
+      my_rates->k7 = kcol_rate_tables->data[CollisionalRxnLUT::k7];
+      my_rates->k8 = kcol_rate_tables->data[CollisionalRxnLUT::k8];
+      my_rates->k9 = kcol_rate_tables->data[CollisionalRxnLUT::k9];
+      my_rates->k10 = kcol_rate_tables->data[CollisionalRxnLUT::k10];
+      my_rates->k11 = kcol_rate_tables->data[CollisionalRxnLUT::k11];
+      my_rates->k12 = kcol_rate_tables->data[CollisionalRxnLUT::k12];
+      my_rates->k13 = kcol_rate_tables->data[CollisionalRxnLUT::k13];
+      my_rates->k14 = kcol_rate_tables->data[CollisionalRxnLUT::k14];
+      my_rates->k15 = kcol_rate_tables->data[CollisionalRxnLUT::k15];
+      my_rates->k16 = kcol_rate_tables->data[CollisionalRxnLUT::k16];
+      my_rates->k17 = kcol_rate_tables->data[CollisionalRxnLUT::k17];
+      my_rates->k18 = kcol_rate_tables->data[CollisionalRxnLUT::k18];
+      my_rates->k19 = kcol_rate_tables->data[CollisionalRxnLUT::k19];
+      my_rates->k20 = kcol_rate_tables->data[CollisionalRxnLUT::k20];
+      my_rates->k21 = kcol_rate_tables->data[CollisionalRxnLUT::k21];
+      my_rates->k22 = kcol_rate_tables->data[CollisionalRxnLUT::k22];
+      my_rates->k23 = kcol_rate_tables->data[CollisionalRxnLUT::k23];
+      my_rates->k50 = kcol_rate_tables->data[CollisionalRxnLUT::k50];
+      my_rates->k51 = kcol_rate_tables->data[CollisionalRxnLUT::k51];
+      my_rates->k52 = kcol_rate_tables->data[CollisionalRxnLUT::k52];
+      my_rates->k53 = kcol_rate_tables->data[CollisionalRxnLUT::k53];
+      my_rates->k54 = kcol_rate_tables->data[CollisionalRxnLUT::k54];
+      my_rates->k55 = kcol_rate_tables->data[CollisionalRxnLUT::k55];
+      my_rates->k56 = kcol_rate_tables->data[CollisionalRxnLUT::k56];
+      my_rates->k57 = kcol_rate_tables->data[CollisionalRxnLUT::k57];
+      my_rates->k58 = kcol_rate_tables->data[CollisionalRxnLUT::k58];
+
+      my_rates->k125 = kcol_rate_tables->data[CollisionalRxnLUT::k125];
+      my_rates->k129 = kcol_rate_tables->data[CollisionalRxnLUT::k129];
+      my_rates->k130 = kcol_rate_tables->data[CollisionalRxnLUT::k130];
+      my_rates->k131 = kcol_rate_tables->data[CollisionalRxnLUT::k131];
+      my_rates->k132 = kcol_rate_tables->data[CollisionalRxnLUT::k132];
+      my_rates->k133 = kcol_rate_tables->data[CollisionalRxnLUT::k133];
+      my_rates->k134 = kcol_rate_tables->data[CollisionalRxnLUT::k134];
+      my_rates->k135 = kcol_rate_tables->data[CollisionalRxnLUT::k135];
+      my_rates->k136 = kcol_rate_tables->data[CollisionalRxnLUT::k136];
+      my_rates->k137 = kcol_rate_tables->data[CollisionalRxnLUT::k137];
+      my_rates->k148 = kcol_rate_tables->data[CollisionalRxnLUT::k148];
+      my_rates->k149 = kcol_rate_tables->data[CollisionalRxnLUT::k149];
+      my_rates->k150 = kcol_rate_tables->data[CollisionalRxnLUT::k150];
+      my_rates->k151 = kcol_rate_tables->data[CollisionalRxnLUT::k151];
+      my_rates->k152 = kcol_rate_tables->data[CollisionalRxnLUT::k152];
+      my_rates->k153 = kcol_rate_tables->data[CollisionalRxnLUT::k153];
+
+      my_rates->kz15 = kcol_rate_tables->data[CollisionalRxnLUT::kz15];
+      my_rates->kz16 = kcol_rate_tables->data[CollisionalRxnLUT::kz16];
+      my_rates->kz17 = kcol_rate_tables->data[CollisionalRxnLUT::kz17];
+      my_rates->kz18 = kcol_rate_tables->data[CollisionalRxnLUT::kz18];
+      my_rates->kz19 = kcol_rate_tables->data[CollisionalRxnLUT::kz19];
+      my_rates->kz20 = kcol_rate_tables->data[CollisionalRxnLUT::kz20];
+      my_rates->kz21 = kcol_rate_tables->data[CollisionalRxnLUT::kz21];
+      my_rates->kz22 = kcol_rate_tables->data[CollisionalRxnLUT::kz22];
+      my_rates->kz23 = kcol_rate_tables->data[CollisionalRxnLUT::kz23];
+      my_rates->kz24 = kcol_rate_tables->data[CollisionalRxnLUT::kz24];
+      my_rates->kz25 = kcol_rate_tables->data[CollisionalRxnLUT::kz25];
+      my_rates->kz26 = kcol_rate_tables->data[CollisionalRxnLUT::kz26];
+      my_rates->kz27 = kcol_rate_tables->data[CollisionalRxnLUT::kz27];
+      my_rates->kz28 = kcol_rate_tables->data[CollisionalRxnLUT::kz28];
+      my_rates->kz29 = kcol_rate_tables->data[CollisionalRxnLUT::kz29];
+      my_rates->kz30 = kcol_rate_tables->data[CollisionalRxnLUT::kz30];
+      my_rates->kz31 = kcol_rate_tables->data[CollisionalRxnLUT::kz31];
+      my_rates->kz32 = kcol_rate_tables->data[CollisionalRxnLUT::kz32];
+      my_rates->kz33 = kcol_rate_tables->data[CollisionalRxnLUT::kz33];
+      my_rates->kz34 = kcol_rate_tables->data[CollisionalRxnLUT::kz34];
+      my_rates->kz35 = kcol_rate_tables->data[CollisionalRxnLUT::kz35];
+      my_rates->kz36 = kcol_rate_tables->data[CollisionalRxnLUT::kz36];
+      my_rates->kz37 = kcol_rate_tables->data[CollisionalRxnLUT::kz37];
+      my_rates->kz38 = kcol_rate_tables->data[CollisionalRxnLUT::kz38];
+      my_rates->kz39 = kcol_rate_tables->data[CollisionalRxnLUT::kz39];
+      my_rates->kz40 = kcol_rate_tables->data[CollisionalRxnLUT::kz40];
+      my_rates->kz41 = kcol_rate_tables->data[CollisionalRxnLUT::kz41];
+      my_rates->kz42 = kcol_rate_tables->data[CollisionalRxnLUT::kz42];
+      my_rates->kz43 = kcol_rate_tables->data[CollisionalRxnLUT::kz43];
+      my_rates->kz44 = kcol_rate_tables->data[CollisionalRxnLUT::kz44];
+      my_rates->kz45 = kcol_rate_tables->data[CollisionalRxnLUT::kz45];
+      my_rates->kz46 = kcol_rate_tables->data[CollisionalRxnLUT::kz46];
+      my_rates->kz47 = kcol_rate_tables->data[CollisionalRxnLUT::kz47];
+      my_rates->kz48 = kcol_rate_tables->data[CollisionalRxnLUT::kz48];
+      my_rates->kz49 = kcol_rate_tables->data[CollisionalRxnLUT::kz49];
+      my_rates->kz50 = kcol_rate_tables->data[CollisionalRxnLUT::kz50];
+      my_rates->kz51 = kcol_rate_tables->data[CollisionalRxnLUT::kz51];
+      my_rates->kz52 = kcol_rate_tables->data[CollisionalRxnLUT::kz52];
+      my_rates->kz53 = kcol_rate_tables->data[CollisionalRxnLUT::kz53];
+      my_rates->kz54 = kcol_rate_tables->data[CollisionalRxnLUT::kz54];
     }
 
     int anyDust;
