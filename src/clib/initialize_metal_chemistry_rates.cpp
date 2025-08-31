@@ -167,69 +167,8 @@ int grackle::impl::initialize_metal_chemistry_rates(
     (double)(my_chemistry->NumberOfTemperatureBins-1)
   );
 
-
-  // Initialize constants to tiny
-  for (int i = 0; i < my_chemistry->NumberOfTemperatureBins; i++) {
-    // todo: delete this block of code (this is taken care of right after we
-    //       allocate all of the buffers)
-        my_rates->k125[i] = tiny;
-        my_rates->k129[i] = tiny;
-        my_rates->k130[i] = tiny;
-        my_rates->k131[i] = tiny;
-        my_rates->k132[i] = tiny;
-        my_rates->k133[i] = tiny;
-        my_rates->k134[i] = tiny;
-        my_rates->k135[i] = tiny;
-        my_rates->k136[i] = tiny;
-        my_rates->k137[i] = tiny;
-        my_rates->k148[i] = tiny;
-        my_rates->k149[i] = tiny;
-        my_rates->k150[i] = tiny;
-        my_rates->k151[i] = tiny;
-        my_rates->k152[i] = tiny;
-        my_rates->k153[i] = tiny;
-
-        my_rates->kz15[i] = tiny;
-        my_rates->kz16[i] = tiny;
-        my_rates->kz17[i] = tiny;
-        my_rates->kz18[i] = tiny;
-        my_rates->kz19[i] = tiny;
-        my_rates->kz20[i] = tiny;
-        my_rates->kz21[i] = tiny;
-        my_rates->kz22[i] = tiny;
-        my_rates->kz23[i] = tiny;
-        my_rates->kz24[i] = tiny;
-        my_rates->kz25[i] = tiny;
-        my_rates->kz26[i] = tiny;
-        my_rates->kz27[i] = tiny;
-        my_rates->kz28[i] = tiny;
-        my_rates->kz29[i] = tiny;
-        my_rates->kz30[i] = tiny;
-        my_rates->kz31[i] = tiny;
-        my_rates->kz32[i] = tiny;
-        my_rates->kz33[i] = tiny;
-        my_rates->kz34[i] = tiny;
-        my_rates->kz35[i] = tiny;
-        my_rates->kz36[i] = tiny;
-        my_rates->kz37[i] = tiny;
-        my_rates->kz38[i] = tiny;
-        my_rates->kz39[i] = tiny;
-        my_rates->kz40[i] = tiny;
-        my_rates->kz41[i] = tiny;
-        my_rates->kz42[i] = tiny;
-        my_rates->kz43[i] = tiny;
-        my_rates->kz44[i] = tiny;
-        my_rates->kz45[i] = tiny;
-        my_rates->kz46[i] = tiny;
-        my_rates->kz47[i] = tiny;
-        my_rates->kz48[i] = tiny;
-        my_rates->kz49[i] = tiny;
-        my_rates->kz50[i] = tiny;
-        my_rates->kz51[i] = tiny;
-        my_rates->kz52[i] = tiny;
-        my_rates->kz53[i] = tiny;
-        my_rates->kz54[i] = tiny;
-  }
+  // when we allocated all of the rate buffers, we also initialized all rate
+  // constants to have values of tiny
 
   // Fill in tables of
   //   - collisional rate coefficients for primordial_chemistry >= 4 species
