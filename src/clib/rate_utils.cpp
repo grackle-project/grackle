@@ -55,9 +55,23 @@ static inline rateprop_ mk_rateprop_(double* rate, const char* name) {
   out.name = name;
   return out;
 }
+
+static inline rateprop_ mk_rateprop_standard_kcol_(
+    chemistry_data_storage* my_rates, const char* name, int index) {
+  if ((my_rates == nullptr) || (my_rates->opaque_storage == nullptr) ||
+      (my_rates->opaque_storage->kcol_rate_tables == nullptr)) {
+    return mk_rateprop_(nullptr, name);
+  } else {
+    return mk_rateprop_(my_rates->opaque_storage->kcol_rate_tables->data[index],
+                        name);
+  }
+}
+
 #define MKPROP_(PTR, NAME) mk_rateprop_((PTR == NULL) ? NULL : PTR->NAME, #NAME)
 #define MKPROP_SCALAR_(PTR, NAME)                                              \
   mk_rateprop_((PTR == NULL) ? NULL : &(PTR->NAME), #NAME)
+#define MKPROP_STANDARD_KCOL_(PTR, NAME, INDEX)                                \
+  mk_rateprop_standard_kcol_(PTR, #NAME, INDEX)
 
 // Create machinery to lookup Standard-Form Collisional Reaction Rates
 // -------------------------------------------------------------------
@@ -77,7 +91,7 @@ static rateprop_ get_CollisionalRxn_rateprop_(chemistry_data_storage* my_rates,
   switch (i) {
 #define ENTRY(NAME)                                                            \
   case CollisionalRxnLUT::NAME: {                                              \
-    return MKPROP_(my_rates, NAME);                                            \
+    return MKPROP_STANDARD_KCOL_(my_rates, NAME, CollisionalRxnLUT::NAME);     \
   }
 #include "collisional_rxn_rate_members.def"
 #undef ENTRY
