@@ -135,30 +135,38 @@ int add_scalar_reaction_rate(double *rate_ptr, scalar_rate_function my_function,
     return SUCCESS;
 }
 
-//Define a function which is able to add a rate to the calculation.
-int add_reaction_rate(double **rate_ptr, rate_function my_function, double units,
-                        chemistry_data *my_chemistry)
+/// Initialize values in a pre-allocated rate_ptr
+static int init_preallocated_rate(double *rate_ptr, rate_function my_function,
+                                  double units, chemistry_data *my_chemistry)
 {
-    //Allocate memory for rate.
-    *rate_ptr = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+  // Calculate temperature spacing.
+  double logT_start, d_logT;
+  logT_spacing(&logT_start, &d_logT, my_chemistry);
 
-    //Calculate temperature spacing.
-    double T, logT, logT_start, d_logT;
-    logT_spacing(&logT_start, &d_logT, my_chemistry);
+  //Calculate rate at each temperature.
+  for (int i = 0; i < my_chemistry->NumberOfTemperatureBins; i++){
+    // Set rate to tiny for safety.
+    rate_ptr[i] = tiny;
 
-    //Calculate rate at each temperature.
-    for (int i = 0; i < my_chemistry->NumberOfTemperatureBins; i++){
-        //Set rate to tiny for safety.
-        (*rate_ptr)[i] = tiny;
+    // Calculate bin temperature.
+    double logT = logT_start + i*d_logT;
+    double T = exp(logT);
 
-        //Calculate bin temperature.
-        logT = logT_start + i*d_logT;
-        T = exp(logT);
+    // Calculate rate and store.
+    rate_ptr[i] = my_function(T, units, my_chemistry);
+  }
 
-        //Calculate rate and store.
-        (*rate_ptr)[i] = my_function(T, units, my_chemistry);
-    }
-    return SUCCESS;
+  return GR_SUCCESS;
+}
+
+/// Allocate and initialize a reaction rate
+static int add_reaction_rate(double **rate_ptr, rate_function my_function,
+                             double units,
+                             chemistry_data *my_chemistry)
+{
+  *rate_ptr = (double*)malloc(my_chemistry->NumberOfTemperatureBins
+                              * sizeof(double));
+  return init_preallocated_rate(*rate_ptr, my_function, units, my_chemistry);
 }
 
 //Define a function which will calculate the k13dd rates.
