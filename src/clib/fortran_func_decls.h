@@ -14,6 +14,7 @@ extern "C" {
 #include "phys_constants.h" // physical constants
 #include <stdint.h>         // int32_t
 typedef int32_t gr_mask_type;
+typedef long long gr_i64;
 
 #define MASK_TRUE 1
 #define MASK_FALSE 0
@@ -120,56 +121,6 @@ void FORTRAN_NAME(calc_gr_balance_g)(
   int* is, int* ie
 );
 
-void FORTRAN_NAME(calc_tdust_3d_g)(
-  gr_float* d_data_ptr, gr_float* de_data_ptr, gr_float* HI_data_ptr,
-  gr_float* HII_data_ptr, gr_float* HeI_data_ptr, gr_float* HeII_data_ptr,
-  gr_float* HeIII_data_ptr, gr_float* HM_data_ptr, gr_float* H2I_data_ptr,
-  gr_float* H2II_data_ptr, int* in, int* jn, int* kn, int* nratec, int* iexpand,
-  int* ispecies, int* idim, int* is, int* js, int* ks, int* ie, int* je,
-  int* ke, double* aye, double* temstart, double* temend, double* fgr,
-  double* gasgra, double* gamma_isrfa, double* isrf, double* utem, double* uxyz,
-  double* uaye, double* urho, double* utim, gr_float* gas_temp_data_ptr,
-  gr_float* dust_temp_data_ptr, int* iisrffield, gr_float* isrf_habing_data_ptr,
-  int* imetal, int* imchem, int* idustfield, int* igrgr, double* z_solar,
-  gr_float* metal_data_ptr, gr_float* dust_data_ptr, gr_float* SiM_data_ptr,
-  gr_float* FeM_data_ptr, gr_float* Mg2SiO4_data_ptr, gr_float* MgSiO3_data_ptr,
-  gr_float* Fe3O4_data_ptr, gr_float* AC_data_ptr, gr_float* SiO2D_data_ptr,
-  gr_float* MgO_data_ptr, gr_float* FeS_data_ptr, gr_float* Al2O3_data_ptr,
-  gr_float* reforg_data_ptr, gr_float* volorg_data_ptr,
-  gr_float* H2Oice_data_ptr, int* immulti, int* imabund, int* idspecies,
-  int* itdmulti, int* idsub, gr_float* metal_loc_data_ptr,
-  gr_float* metal_C13_data_ptr, gr_float* metal_C20_data_ptr,
-  gr_float* metal_C25_data_ptr, gr_float* metal_C30_data_ptr,
-  gr_float* metal_F13_data_ptr, gr_float* metal_F15_data_ptr,
-  gr_float* metal_F50_data_ptr, gr_float* metal_F80_data_ptr,
-  gr_float* metal_P170_data_ptr, gr_float* metal_P200_data_ptr,
-  gr_float* metal_Y19_data_ptr, int* SN0_N, double* SN0_fSiM, double* SN0_fFeM,
-  double* SN0_fMg2SiO4, double* SN0_fMgSiO3, double* SN0_fFe3O4,
-  double* SN0_fAC, double* SN0_fSiO2D, double* SN0_fMgO, double* SN0_fFeS,
-  double* SN0_fAl2O3, double* SN0_freforg, double* SN0_fvolorg,
-  double* SN0_fH2Oice, double* SN0_r0SiM_data_ptr, double* SN0_r0FeM_data_ptr,
-  double* SN0_r0Mg2SiO4_data_ptr, double* SN0_r0MgSiO3_data_ptr,
-  double* SN0_r0Fe3O4_data_ptr, double* SN0_r0AC_data_ptr,
-  double* SN0_r0SiO2D_data_ptr, double* SN0_r0MgO_data_ptr,
-  double* SN0_r0FeS_data_ptr, double* SN0_r0Al2O3_data_ptr,
-  double* SN0_r0reforg_data_ptr, double* SN0_r0volorg_data_ptr,
-  double* SN0_r0H2Oice_data_ptr, int* gr_N, int* gr_Size, double* gr_dT,
-  double* gr_Td, double* SN0_kpSiM_data_ptr, double* SN0_kpFeM_data_ptr,
-  double* SN0_kpMg2SiO4_data_ptr, double* SN0_kpMgSiO3_data_ptr,
-  double* SN0_kpFe3O4_data_ptr, double* SN0_kpAC_data_ptr,
-  double* SN0_kpSiO2D_data_ptr, double* SN0_kpMgO_data_ptr,
-  double* SN0_kpFeS_data_ptr, double* SN0_kpAl2O3_data_ptr,
-  double* SN0_kpreforg_data_ptr, double* SN0_kpvolorg_data_ptr,
-  double* SN0_kpH2Oice_data_ptr, double* gasgr2a, double* gamma_isrf2a,
-  gr_float* SiM_temp_data_ptr, gr_float* FeM_temp_data_ptr,
-  gr_float* Mg2SiO4_temp_data_ptr, gr_float* MgSiO3_temp_data_ptr,
-  gr_float* Fe3O4_temp_data_ptr, gr_float* AC_temp_data_ptr,
-  gr_float* SiO2D_temp_data_ptr, gr_float* MgO_temp_data_ptr,
-  gr_float* FeS_temp_data_ptr, gr_float* Al2O3_temp_data_ptr,
-  gr_float* reforg_temp_data_ptr, gr_float* volorg_temp_data_ptr,
-  gr_float* H2Oice_temp_data_ptr
-);
-
 void FORTRAN_NAME(calc_temp1d_cloudy_g)(
   gr_float* d_data_ptr, gr_float* metal_data_ptr, gr_float* e_data_ptr,
   double* rhoH, int* in, int* jn, int* kn, int* is, int* ie, int* j, int* k,
@@ -177,22 +128,6 @@ void FORTRAN_NAME(calc_temp1d_cloudy_g)(
   double* temend, double* gamma, double* utem, int* imetal,
   long long* clGridRank, long long* clGridDim, double* clPar1, double* clPar2,
   double* clPar3, long long* clDataSize, double* clMMW, gr_mask_type* itmask
-);
-
-void FORTRAN_NAME(calc_temp_cloudy_g)(
-  gr_float* d_data_ptr, gr_float* e_data_ptr, gr_float* metal_data_ptr,
-  gr_float* temperature_data_ptr, int* in, int* jn, int* kn, int* iexpand,
-  int* imetal, int* is, int* js, int* ks, int* ie, int* je, int* ke,
-  double* aye, double* temstart, double* temend, double* utem, double* uxyz,
-  double* uaye, double* urho, double* utim, double* gamma, double* fh,
-  long long* priGridRank, long long* priGridDim, double* priPar1,
-  double* priPar2, double* priPar3, long long* priDataSize, double* priMMW
-);
-
-void FORTRAN_NAME(scale_fields_table_g)(
-  gr_float* d_data_ptr, gr_float* metal_data_ptr, int* is, int* ie, int* js,
-  int* je, int* ks, int* ke, int* in, int* jn, int* kn, int* imetal,
-  double* factor
 );
 
 void FORTRAN_NAME(cool1d_cloudy_g)(
@@ -325,164 +260,60 @@ void FORTRAN_NAME(gaussj_g)(
   int* n, double* a_data_ptr, double* b, int* ierr
 );
 
+// in the following interpolate functions, all of the arguments are const
+// pointers other than value. (but I have just annotated the subset of
+// arguments with const that are necessary to get the desired wrapper function
+// signature)
+
 void FORTRAN_NAME(interpolate_1d_g)(
-  double* input1, long long* gridDim, double* gridPar1, double* dgridPar1,
-  long long* dataSize, double* dataField, double* value
+  double* input1, const long long* gridDim, const double* gridPar1,
+  double* dgridPar1, long long* dataSize, const double* dataField, double* value
 );
 
 void FORTRAN_NAME(interpolate_2d_g)(
-  double* input1, double* input2, long long* gridDim, double* gridPar1,
-  double* dgridPar1, double* gridPar2, double* dgridPar2, long long* dataSize,
-  double* dataField, double* value
-);
-
-void FORTRAN_NAME(interpolate_3d_g)(
-  double* input1, double* input2, double* input3, long long* gridDim,
-  double* gridPar1, double* dgridPar1, double* gridPar2, double* dgridPar2,
-  double* gridPar3, double* dgridPar3, long long* dataSize, double* dataField,
+  double* input1, double* input2, const long long* gridDim,
+  const double* gridPar1, double* dgridPar1, const double* gridPar2,
+  double* dgridPar2, long long* dataSize, const double* dataField,
   double* value
 );
 
+void FORTRAN_NAME(interpolate_3d_g)(
+  double* input1, double* input2, double* input3, const long long* gridDim,
+  const double* gridPar1, double* dgridPar1, const double* gridPar2,
+  double* dgridPar2, const double* gridPar3, double* dgridPar3,
+  long long* dataSize, const double* dataField, double* value
+);
+
 void FORTRAN_NAME(interpolate_3dz_g)(
-  double* input1, double* input2, double* input3, long long* gridDim,
-  double* gridPar1, double* dgridPar1, double* gridPar2, long long* index2,
-  double* gridPar3, double* dgridPar3, long long* dataSize, double* dataField,
-  long long* end_int, double* value
+  double* input1, double* input2, double* input3, const long long* gridDim,
+  const double* gridPar1, double* dgridPar1, const double* gridPar2,
+  long long* index2, const double* gridPar3, double* dgridPar3,
+  long long* dataSize, const double* dataField, long long* end_int,
+  double* value
 );
 
 void FORTRAN_NAME(interpolate_2df3d_g)(
-  double* input1, double* input3, long long* gridDim, double* gridPar1,
-  double* dgridPar1, long long* index2, double* gridPar3, double* dgridPar3,
-  long long* dataSize, double* dataField, double* value
+  double* input1, double* input3, const long long* gridDim,
+  const double* gridPar1, double* dgridPar1, long long* index2,
+  const double* gridPar3, double* dgridPar3,
+  long long* dataSize, const double* dataField, double* value
 );
 
 void FORTRAN_NAME(interpolate_4d_g)(
   double* input1, double* input2, double* input3, double* input4,
-  long long* gridDim, double* gridPar1, double* dgridPar1, double* gridPar2,
-  double* dgridPar2, double* gridPar3, double* dgridPar3, double* gridPar4,
-  double* dgridPar4, long long* dataSize, double* dataField, double* value
+  const long long* gridDim, const double* gridPar1, double* dgridPar1,
+  const double* gridPar2, double* dgridPar2, const double* gridPar3,
+  double* dgridPar3, const double* gridPar4, double* dgridPar4,
+  long long* dataSize, const double* dataField, double* value
 );
 
 void FORTRAN_NAME(interpolate_5d_g)(
   double* input1, double* input2, double* input3, double* input4,
-  double* input5, long long* gridDim, double* gridPar1, double* dgridPar1,
-  double* gridPar2, double* dgridPar2, double* gridPar3, double* dgridPar3,
-  double* gridPar4, double* dgridPar4, double* gridPar5, double* dgridPar5,
-  long long* dataSize, double* dataField, double* value
-);
-
-void FORTRAN_NAME(lookup_cool_rates0d)(
-  double* dtit, gr_float* d, gr_float* u, gr_float* v, gr_float* w, int* nsp,
-  double* dsp, double* dspdot, int* nratec, int* iexpand, int* ispecies,
-  int* imetal, int* imcool, int* idust, int* idustall, int* idustfield,
-  int* idustrec, int* ih2co, int* ipiht, int* iter, int* igammah, double* aye,
-  double* temstart, double* temend, double* z_solar, double* fgr, double* utem,
-  double* uxyz, double* uaye, double* urho, double* utim, double* gamma,
-  double* fh, double* ceHIa, double* ceHeIa, double* ceHeIIa, double* ciHIa,
-  double* ciHeIa, double* ciHeISa, double* ciHeIIa, double* reHIIa,
-  double* reHeII1a, double* reHeII2a, double* reHeIIIa, double* brema,
-  double* compa, double* gammaha, double* isrf, double* regra,
-  double* gamma_isrfa, double* comp_xraya, double* comp_temp, double* piHI,
-  double* piHeI, double* piHeII, gr_float* metal,
-  gr_float* dust, double* hyd01ka, double* h2k01a, double* vibha, double* rotha,
-  double* rotla, double* hyd01k, double* h2k01, double* vibh, double* roth,
-  double* rotl, double* gpldla, double* gphdla, double* gpldl, double* gphdl,
-  double* hdltea, double* hdlowa, double* hdlte, double* hdlow, double* gaHIa,
-  double* gaH2a, double* gaHea, double* gaHpa, double* gaela, double* h2ltea,
-  double* gasgra, double* ceHI, double* ceHeI, double* ceHeII, double* ciHI,
-  double* ciHeI, double* ciHeIS, double* ciHeII, double* reHII, double* reHeII1,
-  double* reHeII2, double* reHeIII, double* brem, long long* indixe, double* t1,
-  double* t2, double* logtem, double* tdef, double* edot, double* tgas,
-  double* tgasold, double* mmw, double* p2d, double* tdust, double* metallicity,
-  double* dust2gas, double* rhoH, double* mynh, double* myde,
-  double* gammaha_eff, double* gasgr_tdust, double* regr, int* iradshield,
-  double* avgsighi, double* avgsighei, double* avgsigheii, int* iradtrans,
-  int* irt_honly, int* ih2optical, int* iciecool, int* ih2cr, int* ihdcr,
-  double* ciecoa, double* cieco, int* icmbTfloor, int* iClHeat,
-  double* clEleFra, long long* priGridRank, long long* priGridDim,
-  double* priPar1, double* priPar2, double* priPar3, double* priPar4,
-  double* priPar5, long long* priDataSize, double* priCooling,
-  double* priHeating, double* priMMW, long long* metGridRank,
-  long long* metGridDim, double* metPar1, double* metPar2, double* metPar3,
-  double* metPar4, double* metPar5, long long* metDataSize, double* metCooling,
-  double* metHeating, int* clnew, int* iVheat, int* iMheat, gr_float* Vheat,
-  gr_float* Mheat, int* iTfloor, double* Tfloor_scalar, gr_float* Tfloor,
-  int* iisrffield, gr_float* isrf_habing, int* ithreebody,
-  gr_mask_type* anydust, int* iH2shield, double* k1a, double* k2a, double* k3a,
-  double* k4a, double* k5a, double* k6a, double* k7a, double* k8a, double* k9a,
-  double* k10a, double* k11a, double* k12a, double* k13a,
-  double* k13dda_data_ptr, double* k14a, double* k15a, double* k16a,
-  double* k17a, double* k18a, double* k19a, double* k22a, double* k24,
-  double* k25, double* k26, double* k27, double* k28, double* k29, double* k30,
-  double* k31, double* k50a, double* k51a, double* k52a, double* k53a,
-  double* k54a, double* k55a, double* k56a, double* k57a, double* k58a,
-  int* ndratec, double* dtemstart, double* dtemend, double* h2dusta_data_ptr,
-  double* ncrna, double* ncrd1a, double* ncrd2a, double* h2dust, double* ncrn,
-  double* ncrd1, double* ncrd2, double* dom, double* coolunit, double* tbase1,
-  double* xbase1, double* dx_cgs, double* c_ljeans, gr_float* kphHI,
-  gr_float* kphHeI, gr_float* kphHeII, gr_float* kdissH2I, gr_float* photogamma,
-  gr_float* xH2shield, double* chunit, gr_mask_type* itmask,
-  gr_mask_type* itmask_metal, int* imchem, int* igrgr, int* ipcont,
-  double* tmcool, double* k125a, double* k129a, double* k130a, double* k131a,
-  double* k132a, double* k133a, double* k134a, double* k135a, double* k136a,
-  double* k137a, double* k148a, double* k149a, double* k150a, double* k151a,
-  double* k152a, double* k153a, double* kz15a, double* kz16a, double* kz17a,
-  double* kz18a, double* kz19a, double* kz20a, double* kz21a, double* kz22a,
-  double* kz23a, double* kz24a, double* kz25a, double* kz26a, double* kz27a,
-  double* kz28a, double* kz29a, double* kz30a, double* kz31a, double* kz32a,
-  double* kz33a, double* kz34a, double* kz35a, double* kz36a, double* kz37a,
-  double* kz38a, double* kz39a, double* kz40a, double* kz41a, double* kz42a,
-  double* kz43a, double* kz44a, double* kz45a, double* kz46a, double* kz47a,
-  double* kz48a, double* kz49a, double* kz50a, double* kz51a, double* kz52a,
-  double* kz53a, double* kz54a, double* cieY06a, long long* LH2_N,
-  long long* LH2_Size, double* LH2_D, double* LH2_T, double* LH2_H,
-  double* LH2_dD, double* LH2_dT, double* LH2_dH, double* LH2_L,
-  long long* LHD_N, long long* LHD_Size, double* LHD_D, double* LHD_T,
-  double* LHD_H, double* LHD_dD, double* LHD_dT, double* LHD_dH, double* LHD_L,
-  long long* LCI_N, long long* LCI_Size, double* LCI_D, double* LCI_T,
-  double* LCI_H, double* LCI_dD, double* LCI_dT, double* LCI_dH, double* LCI_L,
-  long long* LCII_N, long long* LCII_Size, double* LCII_D, double* LCII_T,
-  double* LCII_H, double* LCII_dD, double* LCII_dT, double* LCII_dH,
-  double* LCII_L, long long* LOI_N, long long* LOI_Size, double* LOI_D,
-  double* LOI_T, double* LOI_H, double* LOI_dD, double* LOI_dT, double* LOI_dH,
-  double* LOI_L, long long* LCO_N, long long* LCO_Size, double* LCO_D,
-  double* LCO_T, double* LCO_H, double* LCO_dD, double* LCO_dT, double* LCO_dH,
-  double* LCO_L, long long* LOH_N, long long* LOH_Size, double* LOH_D,
-  double* LOH_T, double* LOH_H, double* LOH_dD, double* LOH_dT, double* LOH_dH,
-  double* LOH_L, long long* LH2O_N, long long* LH2O_Size, double* LH2O_D,
-  double* LH2O_T, double* LH2O_H, double* LH2O_dD, double* LH2O_dT,
-  double* LH2O_dH, double* LH2O_L, long long* alphap_N, long long* alphap_Size,
-  double* alphap_D, double* alphap_T, double* alphap_dD, double* alphap_dT,
-  double* alphap_Data, int* immulti, int* imabund, int* idspecies,
-  int* itdmulti, int* idsub, gr_float* metal_loc, gr_float* metal_C13,
-  gr_float* metal_C20, gr_float* metal_C25, gr_float* metal_C30,
-  gr_float* metal_F13, gr_float* metal_F15, gr_float* metal_F50,
-  gr_float* metal_F80, gr_float* metal_P170, gr_float* metal_P200,
-  gr_float* metal_Y19, int* SN0_N, double* SN0_fSiM, double* SN0_fFeM,
-  double* SN0_fMg2SiO4, double* SN0_fMgSiO3, double* SN0_fFe3O4,
-  double* SN0_fAC, double* SN0_fSiO2D, double* SN0_fMgO, double* SN0_fFeS,
-  double* SN0_fAl2O3, double* SN0_freforg, double* SN0_fvolorg,
-  double* SN0_fH2Oice, double* SN0_r0SiM_data_ptr, double* SN0_r0FeM_data_ptr,
-  double* SN0_r0Mg2SiO4_data_ptr, double* SN0_r0MgSiO3_data_ptr,
-  double* SN0_r0Fe3O4_data_ptr, double* SN0_r0AC_data_ptr,
-  double* SN0_r0SiO2D_data_ptr, double* SN0_r0MgO_data_ptr,
-  double* SN0_r0FeS_data_ptr, double* SN0_r0Al2O3_data_ptr,
-  double* SN0_r0reforg_data_ptr, double* SN0_r0volorg_data_ptr,
-  double* SN0_r0H2Oice_data_ptr, int* gr_N, int* gr_Size, double* gr_dT,
-  double* gr_Td, double* SN0_kpSiM_data_ptr, double* SN0_kpFeM_data_ptr,
-  double* SN0_kpMg2SiO4_data_ptr, double* SN0_kpMgSiO3_data_ptr,
-  double* SN0_kpFe3O4_data_ptr, double* SN0_kpAC_data_ptr,
-  double* SN0_kpSiO2D_data_ptr, double* SN0_kpMgO_data_ptr,
-  double* SN0_kpFeS_data_ptr, double* SN0_kpAl2O3_data_ptr,
-  double* SN0_kpreforg_data_ptr, double* SN0_kpvolorg_data_ptr,
-  double* SN0_kpH2Oice_data_ptr, double* h2dustSa, double* h2dustCa,
-  double* grogra, double* tSiM, double* tFeM, double* tMg2SiO4, double* tMgSiO3,
-  double* tFe3O4, double* tAC, double* tSiO2D, double* tMgO, double* tFeS,
-  double* tAl2O3, double* treforg, double* tvolorg, double* tH2Oice,
-  double* gasgr2a, double* gamma_isrf2a, int* imp_eng, int* idissHDI,
-  gr_float* kdissHDI, int* iionZ, gr_float* kphCI, gr_float* kphOI, int* idissZ,
-  gr_float* kdissCO, gr_float* kdissOH, gr_float* kdissH2O, int* iuseH2shield,
-  int* iH2shieldcustom, gr_float* f_shield_custom
+  double* input5, const long long* gridDim, const double* gridPar1,
+  double* dgridPar1, const double* gridPar2, double* dgridPar2,
+  const double* gridPar3, double* dgridPar3, const double* gridPar4,
+  double* dgridPar4, const double* gridPar5, double* dgridPar5,
+  long long* dataSize, const double* dataField, double* value
 );
 
 void FORTRAN_NAME(scale_fields_g)(
