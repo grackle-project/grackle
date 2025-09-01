@@ -1,3 +1,12 @@
+
+! C++ versions of these routines already exist in interpolate.hpp
+! 
+! It is highly irregular for equivalent C++ and Fortran bindings to
+! coexist in the core codebase, but this is a special case:
+!   1. These routines are used fairly pervasively
+!   2. Rigorous tests exist ensuring consistency between the C++ and
+!      Fortran versions
+
 !=======================================================================
 !////////////////////  SUBROUTINE INTERPOLATE_1D  \\\\\\\\\\\\\\\\\\\\\\
 

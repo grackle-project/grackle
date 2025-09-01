@@ -48,8 +48,10 @@ target_compile_definitions(grtest_utils
 
 # start declaring targets for tests
 # ---------------------------------
-add_executable(runInterpolationTests test_unit_interpolators_g.cpp)
-target_link_libraries(runInterpolationTests testdeps)
+add_executable(runInterpolationTests
+  test_unit_interpolators_g.cpp test_interpolators_comparisons.cpp
+)
+target_link_libraries(runInterpolationTests grtest_utils)
 
 gtest_discover_tests(runInterpolationTests)
 
