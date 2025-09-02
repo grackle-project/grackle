@@ -22,53 +22,52 @@
 extern "C" {
 #endif /* __cplusplus */
 
-void calc_temp_cloudy_g(
-  gr_float* temperature_data_, int imetal, chemistry_data* my_chemistry,
-  cloudy_data cloudy_primordial, grackle_field_data* my_fields,
-  InternalGrUnits internalu
-)
-{
+void calc_temp_cloudy_g(gr_float* temperature_data_, int imetal,
+                        chemistry_data* my_chemistry,
+                        cloudy_data cloudy_primordial,
+                        grackle_field_data* my_fields,
+                        InternalGrUnits internalu) {
   // shorten `grackle::impl::fortran_wrapper` to `f_wrap` within this function
   namespace f_wrap = ::grackle::impl::fortran_wrapper;
 
   // Calc quantities using values specified by internalu
   const double dom = internalu_calc_dom_(internalu);
-  const double zr = 1./(internalu.a_value*internalu.a_units) - 1.;
+  const double zr = 1. / (internalu.a_value * internalu.a_units) - 1.;
 
   // Convert densities from comoving to proper
 
-  if (internalu.extfields_in_comoving == 1)  {
-    double factor = std::pow(internalu.a_value,(-3));
+  if (internalu.extfields_in_comoving == 1) {
+    double factor = std::pow(internalu.a_value, -3);
     grackle::impl::scale_fields_table(my_fields, factor);
   }
 
   const grackle_index_helper idx_helper = build_index_helper_(my_fields);
 
-  OMP_PRAGMA("omp parallel")
-  {
+  OMP_PRAGMA("omp parallel") {
     // each OMP thread separately initializes/allocates variables defined in
     // the current scope and then enters the for-loop
 
     grackle::impl::View<gr_float***> d(
-      my_fields->density,
-      my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1],
-      my_fields->grid_dimension[2]
-    );
+        my_fields->density, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+
+    grackle::impl::View<gr_float***> metal;
+
+    if (imetal == 1) {
+      metal = grackle::impl::View<gr_float***>(
+          my_fields->metal_density, my_fields->grid_dimension[0],
+          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    }
 
     grackle::impl::View<gr_float***> temperature(
-      temperature_data_,
-      my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1],
-      my_fields->grid_dimension[2]
-    );
+        temperature_data_, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
     // these are used to temporarily hold values from each idx_range
     std::vector<double> tgas(my_fields->grid_dimension[0]);
     std::vector<double> rhoH(my_fields->grid_dimension[0]);
     std::vector<double> mmw(my_fields->grid_dimension[0]);
     std::vector<gr_mask_type> itmask(my_fields->grid_dimension[0]);
-
 
     // The following for-loop is a flattened loop over every k,j combination.
     // OpenMP divides this loop between all threads. Within the loop, we
@@ -84,27 +83,32 @@ void calc_temp_cloudy_g(
       const double f_H = my_chemistry->HydrogenFractionByMass;
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         itmask[i] = MASK_TRUE;
-        rhoH[i] = f_H * d(i, idx_range.j, idx_range.k);
+
+        if (imetal == 1) {
+          gr_float metal_free_density = (d(i, idx_range.j, idx_range.k) -
+                                         metal(i, idx_range.j, idx_range.k));
+          rhoH[i] = f_H * metal_free_density;
+        } else {
+          rhoH[i] = f_H * d(i, idx_range.j, idx_range.k);
+        }
       }
 
       // Calculate temperature and mean molecular weight
       f_wrap::calc_temp1d_cloudy_g(
-        rhoH.data(), idx_range, tgas.data(), mmw.data(), dom, zr, imetal,
-        cloudy_primordial, itmask.data(), my_chemistry, my_fields, internalu
-      );
+          rhoH.data(), idx_range, tgas.data(), mmw.data(), dom, zr, imetal,
+          cloudy_primordial, itmask.data(), my_chemistry, my_fields, internalu);
 
       // Record the computed temperature values in the output array
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         temperature(i, idx_range.j, idx_range.k) = tgas[i];
       }
-
     }
   }  // OMP_PRAGMA("omp parallel")
 
   // Convert densities back to comoving from proper
 
-  if (internalu.extfields_in_comoving == 1)  {
-    double factor = std::pow(internalu.a_value,3);
+  if (internalu.extfields_in_comoving == 1) {
+    double factor = std::pow(internalu.a_value, 3);
     grackle::impl::scale_fields_table(my_fields, factor);
   }
 
@@ -114,4 +118,3 @@ void calc_temp_cloudy_g(
 #ifdef __cplusplus
 }  // extern "C"
 #endif /* __cplusplus */
-

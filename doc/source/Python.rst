@@ -1,96 +1,162 @@
 .. _python:
 
-Pygrackle: Running Grackle in Python
+Gracklepy: Running Grackle in Python
 ====================================
 
-Grackle comes with a Python interface, called Pygrackle, which provides
-access to all of Grackle's functionality.  Pygrackle requires the following
-Python packages:
+Grackle comes with a Python interface, called Gracklepy, which provides
+access to all of Grackle's functionality.
 
- - `Cython <https://cython.org/>`__
+.. note::
 
- - flake8 (only required for the test suite)
+   Gracklepy was formerly known as Pygrackle.
+   If you previously installed Pygrackle, you should make sure that you uninstall it before upgrading
 
- - `h5py <https://www.h5py.org/>`__
+To install Gracklepy, you'll need to make sure that HDF5 and a fortran compiler are installed (for building the Grackle library itself).
 
- - `matplotlib <https://matplotlib.org/>`__
+Gracklepy's runtime-dependencies are:
 
- - `NumPy <https://www.numpy.org/>`__
+- `h5py <https://www.h5py.org/>`__
+- `matplotlib <https://matplotlib.org/>`__
+- `NumPy <https://www.numpy.org/>`__
+- `yt <https://yt-project.org/>`__
 
- - packaging (only required for the test suite)
+The above dependencies are automatically installed with pip (alternatively you can follow instructions for installing yt).
 
- - py.test (only required for the test suite)
+If you want to run the gracklepy test-suite, you'll need the ``packaging`` and ``py.test`` packages. If pip is up to date (25.1 or newer), you can simply invoke ``pip install --group dev`` from the root of the repository.
 
- - `yt <https://yt-project.org/>`__
+.. _install-gracklepy:
 
-The easiest thing to do is follow the instructions for installing yt,
-which will provide you with Cython, matplotlib, and NumPy.  Flake8 and
-py.test can then be installed via pip.
-
-You also need to have a fortran compiler installed (for building the Grackle library itself).
-
-.. _install-pygrackle:
-
-Installing Pygrackle
+Installing Gracklepy
 --------------------
 
-Currently, the only way to get Pygrackle is to build it from source.
+Currently, the only way to get Gracklepy is to build it from source.
 
-There are 3 ways to build Pygrackle:
+There are 3 ways to build Gracklepy:
 
- 1. As a standalone, self-contained module.
-    The build command creates a fresh build of the Grackle library and packages it with the Pygrackle module.
-    **(This is the recommended approach)**
+1. As a standalone, self-contained module.
+   The build command creates a fresh build of the Grackle library and packages it with the Gracklepy module.
+   **(This is the recommended approach)**
 
- 2. As a module that links to an external copy of Grackle that was compiled with the :ref:`Classic build system <classic_build>`.
-    (This is consistent with the legacy approach for building Pygrackle).
+2. As a module that links to an external copy of Grackle that was compiled with the :ref:`Classic build system <classic_build>`.
+   (This is consistent with the legacy approach for building Gracklepy).
 
- 3. As a module that links to an external copy of Grackle that was created with the :ref:`CMake build system <cmake_build>`.
+3. As a module that links to an external copy of Grackle that was created with the :ref:`CMake build system <cmake_build>`.
 
-Currently, Pygrackle should be used with Grackle builds where OpenMP is disabled.
+Currently, Gracklepy should be used with Grackle builds where OpenMP is disabled.
 
 .. warning::
 
-   We strongly encourage you to use the first approach so that your Pygrackle installation is independent of other Grackle installations on your machine.
+   We strongly encourage you to use the first approach so that your Gracklepy installation is independent of other Grackle installations on your machine.
 
    The latter 2 approaches are primarily intended for testing-purposes.
-   If you use the latter 2 approaches, it's your responsibility to ensure that you delete the old version of Pygrackle and reinstall it whenever the external Grackle library is updated.
-   If you forget, Pygrackle may still work, but it's more likely to produce a segmentation fault or (even worse!) silently give incorrect results.
+   If you use the latter 2 approaches, it's your responsibility to ensure that you delete the old version of Gracklepy and reinstall it whenever the external Grackle library is updated.
+   If you forget, Gracklepy may still work, but it's more likely to produce a segmentation fault or (even worse!) silently give incorrect results.
 
-1. Build Pygrackle as a standalone module (recommended)
+1. Build Gracklepy as a standalone module (recommended)
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-To install Pygrackle, you just need to invoke the following from the root directory.
+To install Gracklepy, you just need to invoke the following from the root directory.
 
 .. code-block:: shell-session
 
     ~/grackle $ pip install -v .
 
-You can configure the exact C and Fortran compilers that are used for this by manipulating the ``CC`` and ``FC`` environment variables.
-If you must pass extra compiler flags to all invocations of the C or Fortran compiler, you can use the ``CFLAGS`` or ``FFLAGS`` environment variable.
+Under this approach, gracklepy's python build backend, `scikit-build-core <https://scikit-build-core.readthedocs.io/en/latest/>`__, automatically builds the core Grackle library (:ref:`in a CMake build <cmake_build>`), packages the resulting library as part of the gracklepy package, and cleans up from the build.
+If a new enough version of CMake cannot be found, the above command will automatically download CMake (it will only be accessible during the build).
 
-If you encounter any compilation problems, you can also link Pygrackle against a version of the Grackle library that you already built.
+While the above command should "just work," you have a few options for customizing the build:
 
-(In the event that you are writing an external python package that depends on directly linking to the underlying Grackle library, be aware that the underlying organization of files in the resulting package may change)
+1. In most cases, you probably want to use the standard environment variables directly understood by CMake:\ [#f1]_
+
+   - you can specifiy your choice of C and Fortran compilers that are used for this by manipulating the :envvar:`!CC` and :envvar:`!FC` environment variables.
+   - if you must pass extra compiler flags to all invocations of the C or Fortran compiler (this *shouldn't* really be necessary), you can use the :envvar:`!CFLAGS` or :envvar:`!FFLAGS` environment variable.
+   - to provide a hint about the location of the hdf5 library you can use :envvar:`!HDF5_ROOT` or :envvar:`!HDF5_DIR` (these behave similarly to the CMake variables of the same name).
+
+2. Alternatively, you can specify the values of CMake variables.
+
+   - Recall that when you are directly using the CMake build system to build a project, you configure build-properties by defining CMake variables.
+     :ref:`As we explain elsewhere, <how_to_configure>` this is commonly accomplished by listing arguments of the form ``-D<variable>=<value>`` when we call CMake on the command line.
+   - Things are a little different in the context of building gracklepy, since we aren't  invoking CMake, directly.
+     Instead we need to instruct the `scikit-build-core <https://scikit-build-core.readthedocs.io/en/latest/>`__ python build-backend to forward arguments onto CMake.
+   - There are effectively 2 ways of doing this: (i) specify this information as extra command line arguments when invoking ``pip install`` OR (ii) we can specify it through an environment variable understood by scikit-build-core
+
+   For the sake of concreteness, let's imagine that you want to assign the CMake variables ``CMAKE_C_COMPILER`` and ``HDF5_ROOT`` values of ``gcc-14`` and ``/path/to/hdf5``.
+   The following code-snippets illustrate how to do this:
+
+   .. tabs::
+
+      .. group-tab:: pip argument
+
+         If using a version of pip from before 23.1, you need to replace ``-C`` with ``--config-settings=`` in the following snippet.
+
+         .. code-block:: shell-session
+
+            ~/grackle $ pip install -v . -Ccmake.args=-DCMAKE_C_COMPILER=gcc-14;-DHDF5_ROOT=/path/to/hdf5
+
+      .. group-tab:: Environment Variable
+
+         You can use the use the :envvar:`!SKBUILD_CMAKE_ARGS` env variable, where each argument is separated by semicolons, or :envvar:`!CMAKE_ARGS`, where each argument is separated by a space.
+
+         .. tabs::
+
+            .. code-tab:: shell-session :envvar:`!SKBUILD_CMAKE_ARGS`
+
+               ~/grackle $ export SKBUILD_CMAKE_ARGS="-DCMAKE_C_COMPILER=gcc-14;-DHDF5_ROOT=/path/to/hdf5"
+               ~/grackle $ pip install -v .
+
+
+            .. code-tab:: shell-session :envvar:`!CMAKE_ARGS`
+
+               ~/grackle $ export CMAKE_ARGS="-DCMAKE_C_COMPILER=gcc-14 -DHDF5_ROOT=/path/to/hdf5"
+               ~/grackle $ pip install -v .
+
+
+.. tip::
+
+   If you are looking to modify a standard CMake option, you should generally check scikit-build-core's `documentation  <https://scikit-build-core.readthedocs.io/en/latest/>`__; there are some special cases.
+
+   Consider the ``CMAKE_BUILD_TYPE`` variable, which controls :ref:`optimiziation flags and the presence of debugger symbols <how_to_configure>`.
+   Rather than directly modifying this variable, you should modify scikit-build-core's ``cmake.build-type`` variable.
+   If you wanted to set it to ``Debug``, you might do one of the following options:
+
+   .. tabs::
+
+      .. group-tab:: pip argument
+
+         If using a version of pip from before 23.1, you need to replace ``-C`` with ``--config-settings=`` in the following snippet.
+
+         .. code-block:: shell-session
+
+            ~/grackle $ pip install -v . -Ccmake.build-type="Debug"
+
+      .. group-tab:: Environment Variable
+
+         You can would store ``"Debug"`` within the :envvar:`!SKBUILD_CMAKE_BUILD_TYPE` env variable
+
+
+If you encounter any compilation problems, you can also link Gracklepy against a version of the Grackle library that you already built.
+
+(In the event that you are writing an external python package that depends on directly linking to the underlying Grackle library, be aware that the underlying organization of files in the resulting package may change.
+We have no plans to support this scenario.)
 
 2. Link to external Grackle library (built with Classic build system)
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 *Prerequisite:* This scenario assumes that you have already built Grackle with the :ref:`Class build system <classic_build>`.
 
-To build Pygrackle, we use the ``PYGRACKLE_LEGACY_LINK`` environment variable to indicate that we want to that external build.
-Specifically, that variable must be configured as ``PYGRACKLE_LEGACY_LINK=classic``.
+To build Gracklepy, we use the ``GRACKLEPY_LEGACY_LINK`` environment variable to indicate that we want to that external build.
+Specifically, that variable must be configured as ``GRACKLEPY_LEGACY_LINK=classic``.
 
 .. code-block:: shell-session
 
-    ~/grackle $ PYGRACKLE_LEGACY_LINK=classic pip install .
+    ~/grackle $ GRACKLEPY_LEGACY_LINK=classic pip install .
 
 .. note::
 
    We explicitly try to maintain the legacy behavior of the older setuptools-based python build-system.
-   This means that we use the copy of the Grackle shared library from the build directory during linking (i.e. Pygrackle will happily build even if Grackle isn't fully installed).
+   This means that we use the copy of the Grackle shared library from the build directory during linking (i.e. Gracklepy will happily build even if Grackle isn't fully installed).
    
-   We then **ASSUME** that a copy of the Grackle shared library will be in a location known to the system, when you try to run Pygrackle.
+   We then **ASSUME** that a copy of the Grackle shared library will be in a location known to the system, when you try to run Gracklepy.
    This could be a standard system location for libraries (on some systems you may need to invoke ``ldconfig`` after installation).
    This could also be a location specified by the relevant variable; ``LD_LIBRARY_PATH`` if you're on Linux (or most unix-like systems) or ``DYLD_LIBRARY_PATH`` (if you're on macOS)
 
@@ -100,17 +166,17 @@ Specifically, that variable must be configured as ``PYGRACKLE_LEGACY_LINK=classi
 *Prerequisite:*  This scenario assumes that you have already built (and possibly installed) Grackle with the :ref:`CMake build system <cmake_build>`.
 Specifically, that cmake build must have compiled Grackle as a shared library (the primary way to ensure this happens is by passing the ``-DBUILD_SHARED_LIBS=ON`` flag when using ``cmake`` to configure the build).
 
-To build Pygrackle in this way, you must initialize either the ``Grackle_DIR`` environment variable or the ``Grackle_ROOT`` environment variable with the relevant path for your prebuilt Grackle library.
+To build Gracklepy in this way, you must initialize either the ``Grackle_DIR`` environment variable or the ``Grackle_ROOT`` environment variable with the relevant path for your prebuilt Grackle library.
 This path can either point to cmake build directory (where Grackle is built) OR an installation directory.
 
-We illustrates how to install Pygrackle under this approach down below.
+We illustrates how to install Gracklepy under this approach down below.
 For the sake of example, we assume that we previously used ``cmake`` to build (and compile) Grackle as a shared library in a build directory called **~/grackle/build**.
 
 .. tabs::
 
    .. tab:: Default Case (libgrackle won't move after building)
 
-      The default command to build Pygrackle against a CMake-built is shown below.
+      The default command to build Gracklepy against a CMake-built is shown below.
       **By default, this approach assumes that the Grackle shared library will never move.**
       This means that issues will occur if you delete or move the Grackle library.
       (This is a necessary assumption in order to support build directories).
@@ -121,8 +187,8 @@ For the sake of example, we assume that we previously used ``cmake`` to build (a
 
    .. tab:: Legacy Linking
 
-      It's also possible to achieve linking behavior more similar to the case where we build Pygrackle against an external Grackle library that was built with the classic build system (this is consistent with the behavior implemented by Pygrackle's former ``setuptools`` build system).
-      Under this scenario, no relationship is assumed between the path to the Grackle shared library that is used while building Pygrackle and the path that is used while running Pygrackle.
+      It's also possible to achieve linking behavior more similar to the case where we build Gracklepy against an external Grackle library that was built with the classic build system (this is consistent with the behavior implemented by Gracklepy's former ``setuptools`` build system).
+      Under this scenario, no relationship is assumed between the path to the Grackle shared library that is used while building Gracklepy and the path that is used while running Gracklepy.
       Instead, we assume that the Grackle shared library will be at an arbitrary location known to the system at runtime (e.g. either it's in a standard location that the OS knows to check or you use ``LD_LIBRARY_PATH``/``DYLD_LIBRARY_PATH``.
 
       To easily invoke this linking behavior, you can either pass an additional argument to ``pip`` or define an environment variable.
@@ -143,71 +209,76 @@ For the sake of example, we assume that we previously used ``cmake`` to build (a
 Testing Your Installation
 -------------------------
 
-To make sure everything is installed properly, you can try invoking pygrackle from the command line:
+To make sure everything is installed properly, you can try invoking gracklepy from the command line:
 
 .. code-block:: shell-session
 
-   $ python -c "import pygrackle"
+   $ python -c "import gracklepy"
 
-If this command executes without raising any errors, then you have successfully installed Pygrackle.
+If this command executes without raising any errors, then you have successfully installed Gracklepy.
 
-.. _pygrackle-dev:
+.. _gracklepy-dev:
 
-Installing Pygrackle Development Requirements
+Installing Gracklepy Development Requirements
 +++++++++++++++++++++++++++++++++++++++++++++
 
-There are a handful of additional packages required for developing
+There are a handful of additional packages required purely for developing
 Grackle. For example, these will enable :ref:`testing` and building
-the documentation locally. To install the development dependencies,
-repeat the last line of the :ref:`pygrackle installation instructions
-<install-pygrackle>` with ``[dev]`` appended.
+the documentation locally. These dependencies are specified as dependency
+groups, which can be installed with pip (v25.1).
+To install all of these dependencies, you can invoke
 
 .. code-block:: shell-session
 
-   ~/grackle $ pip install -e .[dev]
+   ~/grackle $ pip install --group dev
 
-
-If you use ``zsh`` as your shell, you will need quotes around
-'.[dev]'.
+The above command will install the dependencies independently of Gracklepy.
+To install these dependencies at the same time as Gracklepy, you can replace last line of the :ref:`gracklepy installation instructions <install-gracklepy>` with:
 
 .. code-block:: shell-session
 
-   ~/grackle $ pip install -e '.[dev]'
+   ~/grackle $ pip install --group=dev -e .
 
+The above snippet, includes the optional ``-e`` flag to perform an editable-install, which is necessary to run most tests.
+
+.. tip::
+
+   The high level interface of the `uv python package manager <https://docs.astral.sh/uv/>`__ automatically installs the "dev" dependency-group when you install Gracklepy from source.
 
 Running the Example Scripts
 ---------------------------
 
-A number of example scripts are available in the **src/python/examples**
+A number of example scripts are available in the :source:`src/python/examples`
 directory.  These scripts provide examples of ways that Grackle can be
 used in simplified models, such as solving the temperature evolution of
 a parcel of gas at constant density or in a free-fall model.  Each example
 will produce a figure as well as a dataset that can be loaded and analyzed
 with `yt <http://yt-project.org/>`__.
 
-Configuring the path to Grackle input data
-++++++++++++++++++++++++++++++++++++++++++
+Editable Install Requirement
+++++++++++++++++++++++++++++
 
 All of the example scripts discussed below use the following line to
 make a guess at where the Grackle input files are located.
 
+.. caution::
+
+   This snippet is **NOT** part of the public API.
+   It is a short-term solution that is being used until functionality proposed by `GitHub PR #237 <https://github.com/grackle-project/grackle/pull/237>`__ can be reviewed.
+
 .. code-block:: python
 
-   from pygrackle.utilities.data_path import grackle_data_dir
+   from gracklepy.utilities.data_path import grackle_data_dir
 
-This will typically work for any 'editable' Pygrackle installation
+This currently **ONLY** works for an 'editable' Gracklepy installation
 (i.e., one installed with ``pip install -e .`` as directed
 above). In this case, it will be assumed that the data files can be
 found in a directory called ``input`` in the top level of the source
-repository. However, this will not work with non-editable
-installations. In this case you can use the ``GRACKLE_DATA_DIR``
-environment variable to set the path to the data. This will be picked
-up by the Python code above and the ``grackle_data_dir`` variable will
-contain the proper path.
+repository.
 
-.. code-block:: shell-session
+.. note::
 
-   export GRACKLE_DATA_DIR=/path/to/data
+   :gh-pr:`235` is a pending pull request that seeks to add functionality to make this work in a regular Gracklepy installation (i.e. a non-'editable' install).
 
 Cooling Rate Figure Example
 +++++++++++++++++++++++++++
@@ -319,7 +390,7 @@ same session.
    [12937.90890302 12953.99126155 13234.96820101 ... 11824.51319307
     11588.16161462 10173.0168747 ] K
 
-Through ``pygrackle``, the following ``yt`` fields are defined:
+Through ``gracklepy``, the following ``yt`` fields are defined:
 
 - ``('gas', 'grackle_cooling_time')``
 - ``('gas', 'grackle_gamma')``
@@ -331,3 +402,10 @@ Through ``pygrackle``, the following ``yt`` fields are defined:
 These fields are created after calling the ``add_grackle_fields`` function.
 This function will initialize Grackle with settings from parameters in the
 loaded dataset. Optionally, parameters can be specified manually to override.
+
+
+.. rubric:: Footnotes
+
+.. [#f1] When you want to overwrite a configuration-default in a CMake build, we generally encourage use of CMake variables that are counterparts to environment variables (e.g. prefer passing ``-DCMAKE_C_COMPILER=<blah>`` on the command-line to exporting ``CC=<blah>``), since the former has precedence and it provides more fine-grained control (i.e. some options are only influenced by CMake variables).
+         However, in this case of driving a python build (that internally creates a CMake build, installs the products, and cleans up the build directory), the use of environment variables is somewhat more common, and you usually don't need as much fine-grain control.
+         Furthermore, the names of the environment variables follow fairly standard Unix conventions.

@@ -1,8 +1,8 @@
 // Header file containing all rate function declarations.
-#include "grackle_chemistry_data.h"
+#include "grackle.h"
 
-#ifndef RATE_FUNCTIONS_H
-#define RATE_FUNCTIONS_H
+#ifndef GRACKLE_RATE_FUNCTIONS_H
+#define GRACKLE_RATE_FUNCTIONS_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -113,4 +113,4 @@ void initialize_cooling_rate_H2O(chemistry_data *my_chemistry, chemistry_data_st
 } /* extern "C" */
 #endif /* __cplusplus */
 
-#endif /* RATE_FUNCTIONS_H */
+#endif /* GRACKLE_RATE_FUNCTIONS_H */

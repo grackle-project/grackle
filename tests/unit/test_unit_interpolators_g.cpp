@@ -1,12 +1,11 @@
 #include "gtest/gtest.h"
+#include <cstdint>
 
 #include "fortran_func_wrappers.hpp"
 
 extern "C" {
     #include "grackle_macros.h"
 }
-
-
 
 TEST(InterpolationTest, Interpolate1D) {
 
@@ -129,7 +128,7 @@ TEST(InterpolationTest, Interpolate3Dz) {
     double dgridPar2 = 1.5;
     long long index2 = 3;
     double dgridPar3 = 2.5;
-    int end_int = 0;
+    std::int64_t end_int = 0;
     double input1 = 2.4;
     double input2 = 5.3;
     double input3 = 1.5;
