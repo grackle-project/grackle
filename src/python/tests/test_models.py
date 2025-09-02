@@ -1,5 +1,6 @@
 import os
 import pytest
+import shutil
 import sys
 import yt
 
@@ -57,7 +58,14 @@ def test_model(answertestspec, tmp_path, model_name, par_index, input_index):
         answer_path = os.path.join(answertestspec.answer_dir, output_basename)
 
         if answertestspec.generate_answers:
-            os.rename(output_file, answer_path)
+            # use shutil.move over os.rename in case output_file & answer_path
+            # specify locations on different file systems
+            # -> this is common since we using pytest's tmp_path machinery to
+            #    determine output_file. Unless overriden, this use's the
+            #    platform's standard directory for temporary files
+            # -> On some platforms, especially linux, this location is entirely
+            #    stored in RAM
+            shutil.move(output_file, answer_path)
         else:
             assert os.path.exists(answer_path)
 
