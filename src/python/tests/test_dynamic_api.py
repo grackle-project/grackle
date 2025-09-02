@@ -42,7 +42,7 @@ def _test_dynamic_api(param_list, ok_vals, bad_vals, expected_output_type):
             _check_expected_type(param, val)
 
             # check equality between val_to_set and val
-            if isinstance(val_to_set, str) and (expected_output_type == bytes):
+            if isinstance(val_to_set, str) and expected_output_type is bytes:
                 assert val.decode('ascii') == val_to_set
             else:
                 assert val == val_to_set

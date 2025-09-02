@@ -1,0 +1,87 @@
+# the .clang-format-ignore file is only respected by version 18 or newer of
+# clang-format (earlier versions will simply ignore the file)
+#
+# This file contains all c/c++ files that were already part of Grackle before
+# we introduced clang-format
+# - per our discussion in GH-#218, we aren't applying formatters to old code
+#   yet (to avoid merge-conflicts)
+# - We plan to "rip the bandaid off" and remove all the files from this list
+#   after the next
+# - No new files should be added to this list
+
+src/clib/c_wrappers/wrap_interpolators_g.c
+src/clib/calc_tdust_3d.C
+src/clib/calc_tdust_3d.h
+src/clib/calc_temp_cloudy_g-cpp.C
+src/clib/calc_temp_cloudy_g-cpp.h
+src/clib/calculate_cooling_time.c
+src/clib/calculate_dust_temperature.c
+src/clib/calculate_gamma.c
+src/clib/calculate_pressure.c
+src/clib/calculate_temperature.c
+src/clib/chemistry_solver_funcs.hpp
+src/clib/cie_thin_cooling_rate_tables.h
+src/clib/cool1d_multi_g-cpp.C
+src/clib/cool1d_multi_g-cpp.h
+src/clib/cool_multi_time_g-cpp.C
+src/clib/cool_multi_time_g-cpp.h
+src/clib/dust_props.hpp
+src/clib/dynamic_api.c
+src/clib/fortran_func_decls.h
+src/clib/fortran_func_wrappers.hpp
+src/clib/grackle_macros.h
+src/clib/grackle_units.c
+src/clib/index_helper.c
+src/clib/index_helper.h
+src/clib/initialize_UVbackground_data.c
+src/clib/initialize_chemistry_data.c
+src/clib/initialize_cloudy_data.c
+src/clib/initialize_dust_yields.c
+src/clib/initialize_metal_chemistry_rates.c
+src/clib/initialize_rates.c
+src/clib/internal_types.hpp
+src/clib/internal_units.h
+src/clib/interp_table_utils.h
+src/clib/interpolate.hpp
+src/clib/phys_constants.h
+src/clib/rate_functions.c
+src/clib/scale_fields.hpp
+src/clib/scale_fields_table.hpp
+src/clib/set_default_chemistry_parameters.c
+src/clib/solve_chemistry.c
+src/clib/solve_rate_cool_g-cpp.C
+src/clib/solve_rate_cool_g-cpp.h
+src/clib/status_reporting.c
+src/clib/status_reporting.h
+src/clib/step_rate_newton_raphson.hpp
+src/clib/time_deriv_0d.hpp
+src/clib/update_UVbackground_rates.c
+src/clib/utils-cpp.C
+src/clib/utils-cpp.hpp
+src/clib/utils.c
+src/clib/utils.h
+src/example/c_example.c
+src/example/c_local_example.c
+src/example/cxx_example.C
+src/example/cxx_grid_example.C
+src/example/cxx_omp_example.C
+src/include/grackle.h
+src/include/grackle_chemistry_data.h
+src/include/grackle_float.h.in
+src/include/grackle_misc.h
+src/include/grackle_rate_functions.h
+src/include/grackle_types.h
+tests/unit/grtest_cmd.cpp
+tests/unit/grtest_cmd.hpp
+tests/unit/grtest_os.cpp
+tests/unit/grtest_os.hpp
+tests/unit/grtest_utils.cpp
+tests/unit/grtest_utils.hpp
+tests/unit/test_chemistry_struct_synced.cpp
+tests/unit/test_ghost_zone.cpp
+tests/unit/test_interpolators_comparisons.cpp
+tests/unit/test_linalg.cpp
+tests/unit/test_status_reporting.cpp
+tests/unit/test_unit_interpolators_g.cpp
+tests/unit/utest_helpers.hpp
+

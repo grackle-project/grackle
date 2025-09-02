@@ -36,10 +36,23 @@ def pytest_addoption(parser):
         ),
     )
 
+    parser.addoption(
+        "--model-comparison-dir",
+        action="store",
+        default=None,
+        help=(
+            "Path to directory used to store additional comparison of model "
+            "tests between two versions of the code. This is only used when "
+            "running in comparison mode, i.e., when --answer-store has not "
+            "been given."
+        ),
+    )
+
 
 class AnswerTestSpec(NamedTuple):
     generate_answers: bool
     answer_dir: str
+    model_comparison_dir: str
 
 
 @pytest.fixture(scope="session")
@@ -53,6 +66,8 @@ def answertestspec(request):
 
     answer_dir = request.config.getoption("--answer-dir")
 
+    model_comparison_dir = request.config.getoption("--model-comparison-dir")
+
     if (answer_dir is None) and generate_answers:
         raise ValueError(
             "--answer-store option can't be specified without --answer-dir"
@@ -64,4 +79,13 @@ def answertestspec(request):
     else:
         os.makedirs(answer_dir, exist_ok=True)
 
-    return AnswerTestSpec(generate_answers=generate_answers, answer_dir=answer_dir)
+    if model_comparison_dir is not None:
+        if generate_answers:
+            raise ValueError(
+                "--answer-store option can't be specified with "
+                "--model-comparison-dir"
+            )
+        os.makedirs(model_comparison_dir, exist_ok=True)
+
+    return AnswerTestSpec(generate_answers=generate_answers, answer_dir=answer_dir,
+                          model_comparison_dir=model_comparison_dir)
