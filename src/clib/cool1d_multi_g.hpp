@@ -14,24 +14,23 @@
 #include "internal_units.h"      // InternalGrUnits
 #include "internal_types.hpp"    // GrainSpeciesCollection
 #include "index_helper.h"        // IndexRange
-//TODO: manually removed from signature (double* comp1, double* comp2)
+// TODO: manually removed from signature (double* comp1, double* comp2)
 
 namespace grackle::impl {
 
-void cool1d_multi_g(
-  int imetal, int iter, //double* comp1, double* comp2, 
-  double* edot,
-  double* tgas, double* mmw, double* p2d, double* tdust, double* metallicity,
-  double* dust2gas, double* rhoH, gr_mask_type* itmask,
-  gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
-  chemistry_data_storage* my_rates, grackle_field_data* my_fields,
-  photo_rate_storage my_uvb_rates, InternalGrUnits internalu,
-  IndexRange idx_range,
-  grackle::impl::GrainSpeciesCollection grain_temperatures,
-  grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf,
-  grackle::impl::Cool1DMultiScratchBuf cool1dmulti_buf,
-  grackle::impl::CoolHeatScratchBuf coolingheating_buf
-);
+void cool1d_multi_g(int imetal, int iter,  // double* comp1, double* comp2,
+                    double* edot, double* tgas, double* mmw, double* p2d,
+                    double* tdust, double* metallicity, double* dust2gas,
+                    double* rhoH, gr_mask_type* itmask,
+                    gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
+                    chemistry_data_storage* my_rates,
+                    grackle_field_data* my_fields,
+                    photo_rate_storage my_uvb_rates, InternalGrUnits internalu,
+                    IndexRange idx_range,
+                    grackle::impl::GrainSpeciesCollection grain_temperatures,
+                    grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf,
+                    grackle::impl::Cool1DMultiScratchBuf cool1dmulti_buf,
+                    grackle::impl::CoolHeatScratchBuf coolingheating_buf);
 
 };
 
