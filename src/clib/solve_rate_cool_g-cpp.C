@@ -90,8 +90,8 @@ static void enforce_max_heatcool_subcycle_dt_(
 
 // -------------------------------------------------------------
 
-/// Selects the scheme that will be used to evolve the chemistry network and
-/// then accordingly updates the iteration masks (and `imp_eng`)
+/// Set up the masks (and `imp_eng`) that identify the schemes that will be
+/// used to evolve the chemistry network
 ///
 /// There are 2 schemes:
 ///   1. Gauss-Seidel (for low-density zones)
@@ -100,71 +100,60 @@ static void enforce_max_heatcool_subcycle_dt_(
 ///        chemistry network)
 ///      - internal energy is coupled with the rest of the chemistry network
 ///
-/// @param[in]     idx_range Specifies the current index-range
-/// @param[in,out] itmask Initially specifies all locations to be evolved
-///     during the current subcycle (in `idx_range`). Will be updated to only
-///     specify the locations to apply Gauss-Seidel scheme
-/// @param[out]    itmask_nr Buffer for `idx_range` that is used to specify
+/// @param[in]  idx_range Specifies the current index-range
+/// @param[in]  itmask Specifies all locations to be evolved
+///     during the current subcycle (in `idx_range`).
+/// @param[out] itmask_gs Buffer for `idx_range` that is used to specify
+///     locations where we will apply Gauss-Seidel scheme
+/// @param[out] itmask_nr Buffer for `idx_range` that is used to specify
 ///     locations where we will apply Newton-Raphson scheme
-/// @param[out]    imp_eng Buffer for `idx_range` where the choice of
+/// @param[out] imp_eng Buffer for `idx_range` where the choice of
 ///     energy-evolution handling is recorded for the Newton-Raphson scheme
-/// @param[out]    itmask_tmp Buffer where the initial values of itmask are
-///     copied into
-/// @param[in]     mask_len the length of the iteration masks
-/// @param[in]     imetal specifies whether or not the caller provided a metal
+/// @param[in]  mask_len the length of the iteration masks
+/// @param[in]  imetal specifies whether or not the caller provided a metal
 ///     density field
-/// @param[in]     min_metallicity specifies the minimum metallicity where we
+/// @param[in]  min_metallicity specifies the minimum metallicity where we
 ///     consider metal chemistry/cooling
-/// @param[in]     ddom specifies precomputed product of mass density and the
+/// @param[in]  ddom specifies precomputed product of mass density and the
 ///    `dom` quantity for each location in `idx_range`
-/// @param[in]     tgas specifies the gas temperatures for the `idx_range`
-/// @param[in]     metallicity specifies the metallicity for the `idx_range`
-///
-/// @todo
-/// It might make more sense to create `itmask_tmp` before calling this
-/// function and then completely ignore the initial values in `itmask` (this
-/// would be far less confusing)
-static void select_chem_scheme_update_masks_(
-  IndexRange idx_range, gr_mask_type* itmask, gr_mask_type* itmask_nr,
-  int* imp_eng, gr_mask_type* itmask_tmp, int mask_len, int imetal,
+/// @param[in]  tgas specifies the gas temperatures for the `idx_range`
+/// @param[in]  metallicity specifies the metallicity for the `idx_range`
+static void setup_chem_scheme_masks_(
+  IndexRange idx_range, const gr_mask_type* itmask, gr_mask_type* itmask_gs,
+  gr_mask_type* itmask_nr, int* imp_eng, int mask_len, int imetal,
   double min_metallicity, const double* ddom, const double* tgas,
   const double* metallicity, const chemistry_data* my_chemistry
 ) {
 
-  std::memcpy(itmask_tmp, itmask, sizeof(gr_mask_type)*mask_len);
+  std::memcpy(itmask_gs, itmask, sizeof(gr_mask_type)*mask_len);
   std::memcpy(itmask_nr, itmask, sizeof(gr_mask_type)*mask_len);
 
   // would it be more robust to use my_chemistry->metal_cooling than imetal?
 
+  // netwon-raphson solver can only coevolves energy when this is true
+  const bool has_nr_coevolve_eint_prereqs = (
+    (my_chemistry->with_radiative_cooling == 1) &&
+    (my_chemistry->primordial_chemistry > 1)
+  );
+
   for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-    if ( itmask_tmp[i] != MASK_FALSE )  {
+    if ( itmask[i] != MASK_FALSE )  {
+      bool usemetal = (imetal == 1) && (metallicity[i] > min_metallicity);
+      bool is_hi_dens = (ddom[i] >= 1.e8) || (usemetal && (ddom[i] >= 1.0e6));
 
-      if ( (imetal == 0) && (ddom[i] < 1.e8) ) {
-        itmask_nr[i] = MASK_FALSE;
-      } else if (
-        (imetal == 1) &&
-        (((metallicity[i] <= min_metallicity) && (ddom[i] < 1.e8)) ||
-         ((metallicity[i] > min_metallicity) && (ddom[i] < 1.e6)))
-      ) {
-        itmask_nr[i] = MASK_FALSE;
-      } else {
-        itmask[i] = MASK_FALSE;
-      }
+      itmask_gs[i] = (!is_hi_dens) ? MASK_TRUE : MASK_FALSE;
+      itmask_nr[i] = (is_hi_dens) ? MASK_TRUE : MASK_FALSE;
 
+      // when true, the newton-raphson scheme coevolves internal-energy
+      // alongside chemistry
+      bool nr_coevolve_energy = (
+        has_nr_coevolve_eint_prereqs && (ddom[i] > 1.e7) && (tgas[i] > 1650.0)
+      );
+      // we don't care about imp_eng[i] where itmask_nr[i] == MASK_FALSE
+      imp_eng[i] = (nr_coevolve_energy) ? 1 : 0;
     }
   }
 
-  for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-    if (itmask_nr[i] != MASK_FALSE)  {
-      if ((my_chemistry->with_radiative_cooling == 1) &&
-          (my_chemistry->primordial_chemistry > 1) &&
-          (ddom[i] > 1.e7) && (tgas[i] > 1650.0)) {
-        imp_eng[i] = 1;
-      } else {
-        imp_eng[i] = 0;
-      }
-    }
-  }
 }
 
 // -------------------------------------------------------------
@@ -268,7 +257,7 @@ static double calc_Heq_div_dHeqdt_(
 ///    eventually add up to
 /// @param[in] ttot tracks the total time that has already elapsed from
 ///    previous subcycles for each location in `idx_range`
-/// @param[in] itmask Specifies the `idx_range`'s iteration-mask for the
+/// @param[in] itmask_gs Specifies the `idx_range`'s iteration-mask for the
 ///    Gauss-Seidel scheme
 /// @param[in] itmask_nr Specifies the `idx_range`'s iteration-mask for the
 ///    Newton-Raphson scheme
@@ -306,8 +295,8 @@ static double calc_Heq_div_dHeqdt_(
 /// it sets the timestep based on the energy evolution)
 static void set_subcycle_dt_from_chemistry_scheme_(
   double* dtit, IndexRange idx_range, int iter, double dt, const double* ttot,
-  const gr_mask_type* itmask, const gr_mask_type* itmask_nr, const int* imp_eng,
-  double* dedot, double* HIdot,
+  const gr_mask_type* itmask_gs, const gr_mask_type* itmask_nr,
+  const int* imp_eng, double* dedot, double* HIdot,
   const double* dedot_prev, const double* HIdot_prev,
   const double* ddom, const double* tgas, const double* p2d, const double* edot,
   const chemistry_data* my_chemistry, const chemistry_data_storage* my_rates,
@@ -342,7 +331,7 @@ static void set_subcycle_dt_from_chemistry_scheme_(
 
 
   for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-    if (itmask[i] != MASK_FALSE) {
+    if (itmask_gs[i] != MASK_FALSE) {
       // in this case, the chemical network will be evolved with Gauss-Seidel
 
       // Part 1 of 2: adjust values of dedot and HIdot
@@ -522,6 +511,9 @@ struct SpeciesRateSolverScratchBuf {
   /// (with minimal refactoring, this buffer could probably be removed)
   double *k13dd;
 
+  /// iteration mask denoting where the Gauss-Seidel scheme will be used
+  gr_mask_type* itmask_gs;
+
   /// iteration mask denoting where the Newton-Raphson scheme will be used
   gr_mask_type* itmask_nr;
 
@@ -569,6 +561,7 @@ void visit_member_pair(SpeciesRateSolverScratchBuf& obj0,
   // the next line is NOT a typo
   f(VIS_MEMBER_NAME("k13dd"), obj0.k13dd, obj1.k13dd, vis::idx_range_len_multiple(14));
   f(VIS_MEMBER_NAME("h2dust"), obj0.h2dust, obj1.h2dust, vis::idx_range_len_multiple(1));
+  f(VIS_MEMBER_NAME("itmask_gs"), obj0.itmask_gs, obj1.itmask_gs, vis::idx_range_len_multiple(1));
   f(VIS_MEMBER_NAME("itmask_nr"), obj0.itmask_nr, obj1.itmask_nr, vis::idx_range_len_multiple(1));
   f(VIS_MEMBER_NAME("imp_eng"), obj0.imp_eng, obj1.imp_eng, vis::idx_range_len_multiple(1));
 
@@ -718,7 +711,6 @@ int solve_rate_cool_g(
 
     // iteration masks
     std::vector<gr_mask_type> itmask(my_fields->grid_dimension[0]);
-    std::vector<gr_mask_type> itmask_tmp(my_fields->grid_dimension[0]);
     std::vector<gr_mask_type> itmask_metal(my_fields->grid_dimension[0]);
 
     // create views of density and internal energy fields to support 3D access
@@ -783,7 +775,6 @@ int solve_rate_cool_g(
         }
 
         // Compute the cooling rate, tgas, tdust, and metallicity for this row
-
         cool1d_multi_g(
           imetal, iter,
           edot.data(),
@@ -796,16 +787,8 @@ int solve_rate_cool_g(
           grain_temperatures, logTlininterp_buf,
           cool1dmulti_buf, coolingheating_buf
         );
-        
-        if (my_chemistry->primordial_chemistry == 0)  {
-          // This is some basic book-keeping to ensure that itmask_tmp has
-          // sensible values when ispecies is 0
-          // -> see the comment following this if-else statement suggesting how
-          //    we could refactor itmask-handling (eliminating this branch)
-          std::memcpy(itmask_tmp.data(), itmask.data(),
-                      sizeof(gr_mask_type)*my_fields->grid_dimension[0]);
 
-        } else {
+        if (my_chemistry->primordial_chemistry > 0)  {
 
           // Look-up rates as a function of temperature for 1D set of zones
           //  (maybe should add itmask to this call)
@@ -833,18 +816,15 @@ int solve_rate_cool_g(
             spsolvbuf.chemheatrates_buf
           );
 
-          // First, copy itmask's current values into a temporary array
-          // (itmask_tmp). Then setup masks to identify which chemistry schemes
-          // to use. We split cells by density:
-          //    => low-density: Gauss-Seidel scheme, tracked by itmask
+          // Setup masks to identify which chemistry schemes to use. We split
+          // cells by density:
+          //    => low-density: Gauss-Seidel scheme, tracked by itmask_gs
           //    => high-density: Newton-Raphson scheme, tracked by itmask_nr
-          //
-          // (the values stored within itmask will change within the function)
-          select_chem_scheme_update_masks_(
-            idx_range, itmask.data(), spsolvbuf.itmask_nr, spsolvbuf.imp_eng,
-            itmask_tmp.data(), my_fields->grid_dimension[0], imetal,
-            min_metallicity, spsolvbuf.ddom, tgas.data(),
-            metallicity.data(), my_chemistry
+          setup_chem_scheme_masks_(
+            idx_range, itmask.data(), spsolvbuf.itmask_gs, spsolvbuf.itmask_nr,
+            spsolvbuf.imp_eng, my_fields->grid_dimension[0], imetal,
+            min_metallicity, spsolvbuf.ddom, tgas.data(), metallicity.data(),
+            my_chemistry
           );
 
           // Set the max timestep for the current subcycle based on our scheme
@@ -854,7 +834,7 @@ int solve_rate_cool_g(
           // - do something else for Newton-Raphson
 
           set_subcycle_dt_from_chemistry_scheme_(
-            dtit.data(), idx_range, iter, dt, ttot.data(), itmask.data(),
+            dtit.data(), idx_range, iter, dt, ttot.data(), spsolvbuf.itmask_gs,
             spsolvbuf.itmask_nr, spsolvbuf.imp_eng,
             spsolvbuf.dedot, spsolvbuf.HIdot,
             spsolvbuf.dedot_prev, spsolvbuf.HIdot_prev,
@@ -864,27 +844,15 @@ int solve_rate_cool_g(
           );
         }
 
-        // TODO: Consider refactoring the iteration mask handling:
-        //  1. introduce `itmask_gs` as a member of `spsolvbuf` and have the
-        //     `select_chem_scheme_update_masks_` function store locations in
-        //     `spsolvbuf.itmask_gs` where we will apply Gauss-Seidel scheme
-        //  2. replace `itmask` with `spsolvbuf.itmask_gs` in arg-lists of
-        //     `set_subcycle_dt_from_chemistry_scheme_` & `f_wrap::step_rate_g`
-        //  3. insert following chunk of logic RIGHT HERE
-        //      > const gr_mask_type* energy_itmask =
-        //      >   (my_chemistry->primordial_chemistry == 0)
-        //      >   ? itmask.data() : spsolvbuf.itmask_gs;
-        //  4. replace `itmask` with `energy_itmask` in arg-list of
-        //     `enforce_max_heatcool_subcycle_dt_` & within energy update loop
-        //  5. stop modifying `itmask` in `select_chem_scheme_update_masks_`
-        //  6. remove declaration of `itmask_tmp`, logic that initializes, and
-        //     the loop that uses it to override `itmask`
+        const gr_mask_type* energy_itmask =
+          (my_chemistry->primordial_chemistry == 0)
+          ? itmask.data() : spsolvbuf.itmask_gs;
 
         // Update dtit (the current subcycle timestep) to ensure it doesn't
         // exceed the max timestep for cooling/heating
         // -> zones that will use Newton-Raphson scheme are ignored
         enforce_max_heatcool_subcycle_dt_(
-          dtit.data(), idx_range, dt, ttot.data(), itmask.data(), tgas.data(),
+          dtit.data(), idx_range, dt, ttot.data(), energy_itmask, tgas.data(),
           p2d.data(), edot.data(), my_chemistry
         );
 
@@ -892,7 +860,7 @@ int solve_rate_cool_g(
         // -> zones that will use Newton-Raphson scheme are ignored
         if (my_chemistry->with_radiative_cooling == 1)  {
           for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-            if (itmask[i] != MASK_FALSE) {
+            if (energy_itmask[i] != MASK_FALSE) {
               e(i,j,k) = e(i,j,k) + (gr_float)(edot[i]/d(i,j,k)*dtit[i]);
             }
           }
@@ -902,11 +870,10 @@ int solve_rate_cool_g(
 
           // Solve rate equations with one linearly implicit Gauss-Seidel
           // sweep of a backward Euler method (for all cells specified by
-          // itmask)
-
+          // itmask_gs)
           f_wrap::step_rate_g(
             dtit.data(), idx_range, anydust, spsolvbuf.h2dust, rhoH.data(),
-            spsolvbuf.dedot_prev, spsolvbuf.HIdot_prev, itmask.data(),
+            spsolvbuf.dedot_prev, spsolvbuf.HIdot_prev, spsolvbuf.itmask_gs,
             itmask_metal.data(), imetal, my_chemistry, my_fields,
             *my_uvb_rates, spsolvbuf.grain_growth_rates,
             spsolvbuf.species_tmpdens, spsolvbuf.kcr_buf, spsolvbuf.kshield_buf
@@ -926,11 +893,6 @@ int solve_rate_cool_g(
             spsolvbuf.chemheatrates_buf
           );
 
-        }
-
-        // restore the values of itmask from the backup that we made earlier
-        for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-          itmask[i] = itmask_tmp[i];
         }
 
         // Add the timestep to the elapsed time for each cell and find
