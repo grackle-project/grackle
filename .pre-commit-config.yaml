@@ -14,7 +14,7 @@ repos:
 
 # there are some other useful hooks we could enable from here in the future
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v5.0.0
+  rev: v6.0.0
   hooks:
   - id: check-executables-have-shebangs
   - id: check-case-conflict # make sure no filenames would conflict on
