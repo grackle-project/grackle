@@ -1,3 +1,24 @@
+#if defined(__STDC__) || defined(__cplusplus)
+  // this block is hidden from all Fortran compilers
+  // -> the block will also be hidden from K&R C compilers (i.e. pre C89).
+  //    This is ok since this block just implements a warning. Frankly, I
+  //    suspect K&R C may be incompatible with Grackle.
+  // -> the alternative to hiding this block from K&R C is defining a special
+  //    macro (maybe GRIMPL_FORTRAN_LANG) before this file is included in each
+  //    relevant `.def` file.
+
+  // this logic should occur before the header guards
+  #ifndef GRIMPL_PUBLIC_INCLUDE
+    #include "grackle_misc.h"
+    GRIMPL_COMPTIME_WARNING(
+      "You are using a deprecated header file; include the public "
+      "\"grackle.h\" header file instead! In a future Grackle version, "
+      "\"grackle_float.h\" may cease to exist (or contents may change in an "
+      "incompatible manner)."
+    );
+  #endif
+#endif
+
 #ifndef __GRACKLE_FLOAT_H__
 #define __GRACKLE_FLOAT_H__
 #define @GRACKLE_FLOAT_MACRO@

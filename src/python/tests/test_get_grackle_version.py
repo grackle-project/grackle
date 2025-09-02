@@ -11,47 +11,47 @@
 # software.
 ########################################################################
 
-from pygrackle.grackle_wrapper import get_grackle_version
+from gracklepy.grackle_wrapper import get_grackle_version
 from packaging.version import Version, InvalidVersion
 
+import shutil
 import os
 import subprocess
 
+import pytest
+
 def query_grackle_version_props():
     # retrieve the current version information with git
-    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
+    cur_dir = os.path.dirname(os.path.abspath(__file__))
+
+    def _run(args):
+        _rslt = subprocess.run(
+            args, cwd=cur_dir, check=True, capture_output=True,
+        )
+        return _rslt.stdout.decode().rstrip()
 
     # get the name of the most recent tag preceeding this commit:
-    _rslt = subprocess.run(["git", "describe", "--abbrev=0", "--tags"],
-                           check = True, capture_output = True)
-    most_recent_tag = _rslt.stdout.decode().rstrip()
-    if most_recent_tag.startswith("grackle-"):
-        latest_tagged_version = most_recent_tag[8:]
-    elif most_recent_tag.startswith("gold-standard-v"):
-        latest_tagged_version = most_recent_tag[15:]
-    else:
-        raise RuntimeError(
-            "expected the most recent git-tag to start with "
-            "'grackle-' or 'gold-standard-v'"
-        )
+    prefix = "grackle-"
+    descr_args = ["git", "describe", "--abbrev=0", "--tags", "--match", (prefix + "*")]
+    try:
+        most_recent_tag = _run(descr_args)
+    except subprocess.CalledProcessError:
+        pytest.skip("could not find git-tag that starts with {prefix!r}")
+    latest_tagged_version = most_recent_tag[len(prefix) :]
 
     # get the actual revision when most_recent tag was introduced
-    _rslt = subprocess.run(["git", "rev-parse", "-n", "1", most_recent_tag],
-                           check = True, capture_output = True)
-    revision_of_tag = _rslt.stdout.decode().rstrip()
+    revision_of_tag = _run(["git", "rev-parse", "-n", "1", most_recent_tag])
 
     # get the branch name and current revision
-    _rslt = subprocess.run(["git", "rev-parse", "--abbrev-ref", "HEAD"],
-                           check = True, capture_output = True)
-    branch = _rslt.stdout.decode().rstrip()
+    branch = _run(["git", "rev-parse", "--abbrev-ref", "HEAD"])
 
-    _rslt = subprocess.run(["git", "rev-parse", "HEAD"],
-                           check = True, capture_output = True)
-    revision = _rslt.stdout.decode().rstrip()
+    revision = _run(["git", "rev-parse", "HEAD"])
 
     tagged_on_current_revision = revision == revision_of_tag
     return latest_tagged_version, branch, revision, tagged_on_current_revision
 
+@pytest.mark.skipif(shutil.which("git") is None, reason="git is required")
 def test_get_grackle_version():
     # this test assumes that Grackle was compiled with the currently checked
     # out version of the repository
@@ -65,6 +65,10 @@ def test_get_grackle_version():
         raise RuntimeError(
             "get_grackle_version should return a dictionary with the 3 items"
         )
+    elif results["branch"] == "N/A" and results["revision"] == "N/A":
+        # in this scenario the core library was compiled outside of a git repository
+        # so we skip checks of branch and revision
+        pass
     elif results['branch'] != branch:
         raise RuntimeError(
             f"expected get_grackle_version()['branch'] to be '{branch}', not "
