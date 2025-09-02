@@ -457,32 +457,9 @@ typedef struct
    * primordial chemistry rate data *
    **********************************/
 
-  /* 6 species rates */
-  double *k1;
-  double *k2;
-  double *k3;
-  double *k4;
-  double *k5;
-  double *k6;
+  // the (non-radiative) collisional rates, that are handled in a standard
+  // manner, are now tracked within opaque_storage
 
-  /* 9 species rates (including H2) */
-  double *k7;
-  double *k8;
-  double *k9;
-  double *k10;
-  double *k11;
-  double *k12;
-  double *k13;
-  double *k14;
-  double *k15;
-  double *k16;
-  double *k17;
-  double *k18;
-  double *k19;
-  double *k20;  /* currently not used */
-  double *k21;  /* currently not used */
-  double *k22;  /* 3-body H2 formation */
-  double *k23;  /* H2-H2 dissociation */
   double *k13dd;  /* density dependent version of k13 (collisional H2
                     dissociation); actually 7 functions instead of 1. */
 
@@ -497,79 +474,6 @@ typedef struct
   double k29;
   double k30;
   double k31;
-
-  /* 12 species rates (with Deuterium). */
-  double *k50;
-  double *k51;
-  double *k52;
-  double *k53;
-  double *k54;
-  double *k55;
-  double *k56;
-
-  /* New H-ionizing reactions, used for 6, 9 & 12 species chemistry */
-  double *k57;
-  double *k58;
-
-  /* 15 species rates (with DM, HDII, HeHII) */
-  double *k125;
-  double *k129;
-  double *k130;
-  double *k131;
-  double *k132;
-  double *k133;
-  double *k134;
-  double *k135;
-  double *k136;
-  double *k137;
-  double *k148;
-  double *k149;
-  double *k150;
-  double *k151;
-  double *k152;
-  double *k153;
-
-  /* Metal species */
-  double *kz15;
-  double *kz16;
-  double *kz17;
-  double *kz18;
-  double *kz19;
-  double *kz20;
-  double *kz21;
-  double *kz22;
-  double *kz23;
-  double *kz24;
-  double *kz25;
-  double *kz26;
-  double *kz27;
-  double *kz28;
-  double *kz29;
-  double *kz30;
-  double *kz31;
-  double *kz32;
-  double *kz33;
-  double *kz34;
-  double *kz35;
-  double *kz36;
-  double *kz37;
-  double *kz38;
-  double *kz39;
-  double *kz40;
-  double *kz41;
-  double *kz42;
-  double *kz43;
-  double *kz44;
-  double *kz45;
-  double *kz46;
-  double *kz47;
-  double *kz48;
-  double *kz49;
-  double *kz50;
-  double *kz51;
-  double *kz52;
-  double *kz53;
-  double *kz54;
 
   /* H2 formation on dust grains */
   double *h2dust;
