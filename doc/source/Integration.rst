@@ -135,9 +135,9 @@ This file format is recognized by most popular build systems like autotools, Mes
 If your application's build system consists of bare Makefiles, you can employ this file by invoking the ``pkg-config`` directly.
 The basic usage is extremely simple:
 
-  * ``pkg-config --cflags grackle`` provides compiler flags (namely the ``-I`` flag)
+* ``pkg-config --cflags grackle`` provides compiler flags (namely the ``-I`` flag)
 
-  * ``pkg-config --libs grackle`` provides linker flags (namely the ``-L`` and ``-l`` flags)
+* ``pkg-config --libs grackle`` provides linker flags (namely the ``-L`` and ``-l`` flags)
 
 If Grackle isn't installed in a standard system installation directly, you or the end-user needs to set the ``PKG_CONFIG_PATH`` variable to tell ``pkg-config`` where to find **grackle.pc** (if Grackle is a shared library, the relevant runtime-challenges LINK still need to be addressed).
 

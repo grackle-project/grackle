@@ -9,7 +9,7 @@
 #ifndef MY_FILE_CPP_H
 #define MY_FILE_CPP_H
 
-#include "grackle.h"             // gr_float
+#include "grackle.h"  // gr_float
 #include "internal_units.h"
 
 #ifdef __cplusplus
@@ -32,11 +32,11 @@ extern "C" {
 ///
 /// @note
 /// We are specifying way more information than necessary!
-void calc_temp_cloudy_g(
-  gr_float* temperature_data_, int imetal, chemistry_data* my_chemistry,
-  cloudy_data cloudy_primordial, grackle_field_data* my_fields,
-  InternalGrUnits internalu
-);
+void calc_temp_cloudy_g(gr_float* temperature_data_, int imetal,
+                        chemistry_data* my_chemistry,
+                        cloudy_data cloudy_primordial,
+                        grackle_field_data* my_fields,
+                        InternalGrUnits internalu);
 
 #ifdef __cplusplus
 }  // extern "C"

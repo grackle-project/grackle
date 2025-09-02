@@ -9,20 +9,12 @@
 #Standard modules
 import h5py
 import os
+from numpy.testing import assert_allclose
 
 #Chemistry_data struct from grackle
-from pygrackle import chemistry_data
+from gracklepy import chemistry_data
 #Necessary constants from grackle
-from pygrackle.utilities.physical_constants import mass_hydrogen_cgs
-from pygrackle.utilities.testing import \
-    assert_allclose, \
-    ensure_dir
-
-from testing_common import \
-    generate_test_results, \
-    test_answers_dir
-
-ensure_dir(test_answers_dir)
+from gracklepy.utilities.physical_constants import mass_hydrogen_cgs
 
 #* Function which returns chemistry_data instance with default initialisation settings.
 def get_defChem():
@@ -108,8 +100,13 @@ def set_parameters(parSet, my_chemistry):
 
 
 #* Function which tests that the rates have been initialised correctly for each parameter set.
-def test_rate_initialisation(printParameters=False, printOOMdiscrepanices=False, testCustomFile=False, parSets=[1,2,3,4,5,6,7],
-                                fileName="rate_coefficients.h5"):
+def test_rate_initialisation(answertestspec,
+                             tmp_path,
+                             printParameters=False,
+                             printOOMdiscrepanices=False,
+                             testCustomFile=False,
+                             parSets=[1,2,3,4,5,6,7],
+                             fileName="rate_coefficients.h5"):
     """
     Test that the rate tables are initialized correctly.
 
@@ -117,12 +114,15 @@ def test_rate_initialisation(printParameters=False, printOOMdiscrepanices=False,
     be saved into a hdf5 file. This should be used for testing and is not meant for frequent use.
 
     printParameters (bool) --> If set to True will print the parameter settings for each parameter set.
-    """
 
-    #* Navigate to the directory where the file is located.
-    filePath = os.path.abspath(__file__)
-    dirPath = os.path.dirname(filePath)
-    os.chdir(dirPath)
+    Fixtures
+    --------
+    answertestspec : AnswerTestSpec
+        A fixture used for all answer tests
+    tmp_path : pathlib.Path
+        A custom built-in fixture provided by pytest that specifies a pre-made temporary directory
+        that is named to be used with tmp_path
+    """
 
     #* List of all rate variable names which will be checked.
     testRates = "k1,k3,k4,k2,k5,k6,k7,k8,k9,k10,k11,k12,k14,k15,k16,k17,k18,k19,k20,k23,"\
@@ -134,8 +134,10 @@ def test_rate_initialisation(printParameters=False, printOOMdiscrepanices=False,
 
     #* Calculate rates for each parameter set and write to hdf5 file
     #Create and open file. If the file already exists this will overwrite it.
-    if generate_test_results:
-        fileName = os.path.join(test_answers_dir, fileName)
+    if answertestspec.generate_answers:
+        fileName = os.path.join(answertestspec.answer_dir, fileName)
+    else:
+        fileName = str(tmp_path / fileName)
     f = h5py.File(fileName, "w")
 
     #Iterate over parameter sets.
@@ -163,11 +165,11 @@ def test_rate_initialisation(printParameters=False, printOOMdiscrepanices=False,
     f.close()
 
     # Just generate results and leave.
-    if generate_test_results:
+    if answertestspec.generate_answers:
         return
 
     #* Compare rates with the expected (correct) ones which are stored and check they are in agreement
-    expectedRates = h5py.File(os.path.join(test_answers_dir, fileName), "r")
+    expectedRates = h5py.File(os.path.join(answertestspec.answer_dir, fileName), "r")
     initialisedRates = h5py.File(fileName, "r")
 
 
