@@ -27,8 +27,10 @@
 
 namespace grackle::impl {
 
+/// This routine uses the temperature to look up the chemical rates which are
+/// tabulated in a log table as a function of temperature.
 inline void lookup_cool_rates1d_g(
-  gr_mask_type* anydust, double* tgas1d, double* mmw, double* tdust,
+  const gr_mask_type* anydust, double* tgas1d, double* mmw, double* tdust,
   double* dust2gas, double* k13dd_data_, double* h2dust, double* dom,
   double* dx_cgs, double* c_ljeans, gr_mask_type* itmask,
   gr_mask_type* itmask_metal, int* imetal, gr_float* rhoH, double* dt,
