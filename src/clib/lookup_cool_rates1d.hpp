@@ -1347,11 +1347,10 @@ inline void lookup_cool_rates1d_g(
         if (itmask_metal[i - 1] != MASK_FALSE) {
           if (my_chemistry->grain_growth == 1) {
             if (my_chemistry->dust_species > 0) {
-              FORTRAN_NAME(interpolate_1d_g)(&logTlininterp_buf.logtem[i - 1],
-                                             nratec_single_elem_arr.data(),
-                                             d_Tg.data(), &d_dTg,
-                                             &nratec_single_elem_arr[1 - 1],
-                                             my_rates->grain_growth_rate, &kd);
+              kd = f_wrap::interpolate_1d_g(
+                  logTlininterp_buf.logtem[i - 1],
+                  nratec_single_elem_arr.data(), d_Tg.data(), d_dTg,
+                  nratec_single_elem_arr[0], my_rates->grain_growth_rate);
 
               grain_growth_rates.data[OnlyGrainSpLUT::MgSiO3_dust][i - 1] =
                   kd * sgMgSiO3[i - 1] *
