@@ -1198,15 +1198,15 @@ inline void lookup_cool_rates1d_g(
           if (my_chemistry->use_multiple_dust_temperatures == 0) {
             if (my_chemistry->dust_species > 0) {
               d_logtem[i - 1] = std::log(tdust[i - 1]);
-              FORTRAN_NAME(interpolate_2d_g)(
-                  &d_logtem[i - 1], &logTlininterp_buf.logtem[i - 1],
-                  d_N.data(), d_Td.data(), &d_dTd, d_Tg.data(), &d_dTg, &d_Size,
-                  my_rates->h2dustS, &h2MgSiO3);
+              h2MgSiO3 = f_wrap::interpolate_2d_g(
+                  d_logtem[i - 1], logTlininterp_buf.logtem[i - 1], d_N.data(),
+                  d_Td.data(), d_dTd, d_Tg.data(), d_dTg, d_Size,
+                  my_rates->h2dustS);
 
-              FORTRAN_NAME(interpolate_2d_g)(
-                  &d_logtem[i - 1], &logTlininterp_buf.logtem[i - 1],
-                  d_N.data(), d_Td.data(), &d_dTd, d_Tg.data(), &d_dTg, &d_Size,
-                  my_rates->h2dustC, &h2AC);
+              h2AC = f_wrap::interpolate_2d_g(
+                  d_logtem[i - 1], logTlininterp_buf.logtem[i - 1], d_N.data(),
+                  d_Td.data(), d_dTd, d_Tg.data(), d_dTg, d_Size,
+                  my_rates->h2dustC);
 
               h2dust[i - 1] = h2MgSiO3 * sgMgSiO3[i - 1] + h2AC * sgAC[i - 1];
             }
@@ -1228,98 +1228,98 @@ inline void lookup_cool_rates1d_g(
             if (my_chemistry->dust_species > 0) {
               d_logtem[i - 1] = std::log(
                   grain_temperatures.data[OnlyGrainSpLUT::MgSiO3_dust][i - 1]);
-              FORTRAN_NAME(interpolate_2d_g)(
-                  &d_logtem[i - 1], &logTlininterp_buf.logtem[i - 1],
-                  d_N.data(), d_Td.data(), &d_dTd, d_Tg.data(), &d_dTg, &d_Size,
-                  my_rates->h2dustS, &h2MgSiO3);
+              h2MgSiO3 = f_wrap::interpolate_2d_g(
+                  d_logtem[i - 1], logTlininterp_buf.logtem[i - 1], d_N.data(),
+                  d_Td.data(), d_dTd, d_Tg.data(), d_dTg, d_Size,
+                  my_rates->h2dustS);
 
               d_logtem[i - 1] = std::log(
                   grain_temperatures.data[OnlyGrainSpLUT::AC_dust][i - 1]);
-              FORTRAN_NAME(interpolate_2d_g)(
-                  &d_logtem[i - 1], &logTlininterp_buf.logtem[i - 1],
-                  d_N.data(), d_Td.data(), &d_dTd, d_Tg.data(), &d_dTg, &d_Size,
-                  my_rates->h2dustC, &h2AC);
+              h2AC = f_wrap::interpolate_2d_g(
+                  d_logtem[i - 1], logTlininterp_buf.logtem[i - 1], d_N.data(),
+                  d_Td.data(), d_dTd, d_Tg.data(), d_dTg, d_Size,
+                  my_rates->h2dustC);
             }
 
             if (my_chemistry->dust_species > 1) {
               d_logtem[i - 1] = std::log(
                   grain_temperatures.data[OnlyGrainSpLUT::SiM_dust][i - 1]);
-              FORTRAN_NAME(interpolate_2d_g)(
-                  &d_logtem[i - 1], &logTlininterp_buf.logtem[i - 1],
-                  d_N.data(), d_Td.data(), &d_dTd, d_Tg.data(), &d_dTg, &d_Size,
-                  my_rates->h2dustS, &h2SiM);
+              h2SiM = f_wrap::interpolate_2d_g(
+                  d_logtem[i - 1], logTlininterp_buf.logtem[i - 1], d_N.data(),
+                  d_Td.data(), d_dTd, d_Tg.data(), d_dTg, d_Size,
+                  my_rates->h2dustS);
 
               d_logtem[i - 1] = std::log(
                   grain_temperatures.data[OnlyGrainSpLUT::FeM_dust][i - 1]);
-              FORTRAN_NAME(interpolate_2d_g)(
-                  &d_logtem[i - 1], &logTlininterp_buf.logtem[i - 1],
-                  d_N.data(), d_Td.data(), &d_dTd, d_Tg.data(), &d_dTg, &d_Size,
-                  my_rates->h2dustS, &h2FeM);
+              h2FeM = f_wrap::interpolate_2d_g(
+                  d_logtem[i - 1], logTlininterp_buf.logtem[i - 1], d_N.data(),
+                  d_Td.data(), d_dTd, d_Tg.data(), d_dTg, d_Size,
+                  my_rates->h2dustS);
 
               d_logtem[i - 1] = std::log(
                   grain_temperatures.data[OnlyGrainSpLUT::Mg2SiO4_dust][i - 1]);
-              FORTRAN_NAME(interpolate_2d_g)(
-                  &d_logtem[i - 1], &logTlininterp_buf.logtem[i - 1],
-                  d_N.data(), d_Td.data(), &d_dTd, d_Tg.data(), &d_dTg, &d_Size,
-                  my_rates->h2dustS, &h2Mg2SiO4);
+              h2Mg2SiO4 = f_wrap::interpolate_2d_g(
+                  d_logtem[i - 1], logTlininterp_buf.logtem[i - 1], d_N.data(),
+                  d_Td.data(), d_dTd, d_Tg.data(), d_dTg, d_Size,
+                  my_rates->h2dustS);
 
               d_logtem[i - 1] = std::log(
                   grain_temperatures.data[OnlyGrainSpLUT::Fe3O4_dust][i - 1]);
-              FORTRAN_NAME(interpolate_2d_g)(
-                  &d_logtem[i - 1], &logTlininterp_buf.logtem[i - 1],
-                  d_N.data(), d_Td.data(), &d_dTd, d_Tg.data(), &d_dTg, &d_Size,
-                  my_rates->h2dustS, &h2Fe3O4);
+              h2Fe3O4 = f_wrap::interpolate_2d_g(
+                  d_logtem[i - 1], logTlininterp_buf.logtem[i - 1], d_N.data(),
+                  d_Td.data(), d_dTd, d_Tg.data(), d_dTg, d_Size,
+                  my_rates->h2dustS);
 
               d_logtem[i - 1] = std::log(
                   grain_temperatures.data[OnlyGrainSpLUT::SiO2_dust][i - 1]);
-              FORTRAN_NAME(interpolate_2d_g)(
-                  &d_logtem[i - 1], &logTlininterp_buf.logtem[i - 1],
-                  d_N.data(), d_Td.data(), &d_dTd, d_Tg.data(), &d_dTg, &d_Size,
-                  my_rates->h2dustS, &h2SiO2D);
+              h2SiO2D = f_wrap::interpolate_2d_g(
+                  d_logtem[i - 1], logTlininterp_buf.logtem[i - 1], d_N.data(),
+                  d_Td.data(), d_dTd, d_Tg.data(), d_dTg, d_Size,
+                  my_rates->h2dustS);
 
               d_logtem[i - 1] = std::log(
                   grain_temperatures.data[OnlyGrainSpLUT::MgO_dust][i - 1]);
-              FORTRAN_NAME(interpolate_2d_g)(
-                  &d_logtem[i - 1], &logTlininterp_buf.logtem[i - 1],
-                  d_N.data(), d_Td.data(), &d_dTd, d_Tg.data(), &d_dTg, &d_Size,
-                  my_rates->h2dustS, &h2MgO);
+              h2MgO = f_wrap::interpolate_2d_g(
+                  d_logtem[i - 1], logTlininterp_buf.logtem[i - 1], d_N.data(),
+                  d_Td.data(), d_dTd, d_Tg.data(), d_dTg, d_Size,
+                  my_rates->h2dustS);
 
               d_logtem[i - 1] = std::log(
                   grain_temperatures.data[OnlyGrainSpLUT::FeS_dust][i - 1]);
-              FORTRAN_NAME(interpolate_2d_g)(
-                  &d_logtem[i - 1], &logTlininterp_buf.logtem[i - 1],
-                  d_N.data(), d_Td.data(), &d_dTd, d_Tg.data(), &d_dTg, &d_Size,
-                  my_rates->h2dustS, &h2FeS);
+              h2FeS = f_wrap::interpolate_2d_g(
+                  d_logtem[i - 1], logTlininterp_buf.logtem[i - 1], d_N.data(),
+                  d_Td.data(), d_dTd, d_Tg.data(), d_dTg, d_Size,
+                  my_rates->h2dustS);
 
               d_logtem[i - 1] = std::log(
                   grain_temperatures.data[OnlyGrainSpLUT::Al2O3_dust][i - 1]);
-              FORTRAN_NAME(interpolate_2d_g)(
-                  &d_logtem[i - 1], &logTlininterp_buf.logtem[i - 1],
-                  d_N.data(), d_Td.data(), &d_dTd, d_Tg.data(), &d_dTg, &d_Size,
-                  my_rates->h2dustS, &h2Al2O3);
+              h2Al2O3 = f_wrap::interpolate_2d_g(
+                  d_logtem[i - 1], logTlininterp_buf.logtem[i - 1], d_N.data(),
+                  d_Td.data(), d_dTd, d_Tg.data(), d_dTg, d_Size,
+                  my_rates->h2dustS);
             }
 
             if (my_chemistry->dust_species > 2) {
               d_logtem[i - 1] = std::log(
                   grain_temperatures.data[OnlyGrainSpLUT::ref_org_dust][i - 1]);
-              FORTRAN_NAME(interpolate_2d_g)(
-                  &d_logtem[i - 1], &logTlininterp_buf.logtem[i - 1],
-                  d_N.data(), d_Td.data(), &d_dTd, d_Tg.data(), &d_dTg, &d_Size,
-                  my_rates->h2dustS, &h2reforg);
+              h2reforg = f_wrap::interpolate_2d_g(
+                  d_logtem[i - 1], logTlininterp_buf.logtem[i - 1], d_N.data(),
+                  d_Td.data(), d_dTd, d_Tg.data(), d_dTg, d_Size,
+                  my_rates->h2dustS);
 
               d_logtem[i - 1] = std::log(
                   grain_temperatures.data[OnlyGrainSpLUT::vol_org_dust][i - 1]);
-              FORTRAN_NAME(interpolate_2d_g)(
-                  &d_logtem[i - 1], &logTlininterp_buf.logtem[i - 1],
-                  d_N.data(), d_Td.data(), &d_dTd, d_Tg.data(), &d_dTg, &d_Size,
-                  my_rates->h2dustS, &h2volorg);
+              h2volorg = f_wrap::interpolate_2d_g(
+                  d_logtem[i - 1], logTlininterp_buf.logtem[i - 1], d_N.data(),
+                  d_Td.data(), d_dTd, d_Tg.data(), d_dTg, d_Size,
+                  my_rates->h2dustS);
 
               d_logtem[i - 1] = std::log(
                   grain_temperatures.data[OnlyGrainSpLUT::H2O_ice_dust][i - 1]);
-              FORTRAN_NAME(interpolate_2d_g)(
-                  &d_logtem[i - 1], &logTlininterp_buf.logtem[i - 1],
-                  d_N.data(), d_Td.data(), &d_dTd, d_Tg.data(), &d_dTg, &d_Size,
-                  my_rates->h2dustS, &h2H2Oice);
+              h2H2Oice = f_wrap::interpolate_2d_g(
+                  d_logtem[i - 1], logTlininterp_buf.logtem[i - 1], d_N.data(),
+                  d_Td.data(), d_dTd, d_Tg.data(), d_dTg, d_Size,
+                  my_rates->h2dustS);
             }
 
             if (my_chemistry->dust_species > 0) {
