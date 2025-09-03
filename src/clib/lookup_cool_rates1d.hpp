@@ -20,7 +20,9 @@
 #include <vector>
 
 #include "grackle.h"
+#include "dust_props.hpp"
 #include "fortran_func_decls.h"
+#include "fortran_func_wrappers.hpp"
 #include "internal_types.hpp"
 #include "utils-cpp.hpp"
 
@@ -28,6 +30,39 @@ namespace grackle::impl {
 
 /// This routine uses the temperature to look up the chemical rates which are
 /// tabulated in a log table as a function of temperature.
+///
+/// > [!important]
+/// > TODO: The role of the `dt` argument **MUST** be clarified! It is passed
+/// > different values in different areas of the codebase!!!!
+/// > - `solve_rate_cool_g` passes in the value of the total timestep that the
+/// >   chemistry is evolved. This is the traditional meaning of `dt`
+/// > - the time derivative calculation within `step_rate_newton_raphson`
+/// >   passes the timestep of the current subcycle (effectively the whole
+/// >   function is only being called for a single element idx_range)
+/// >
+/// > Internally, this arg only appears to be used to determine dust grain
+/// > destruction rate.
+/// > - the dust destruction rate is 0 for all temperatures below some
+/// >   threshold (the threshold depends on the grain species)
+/// > - above the threshold, the destruction rate is essentially the current
+/// >   grain density divided by the value of the `dt` argument
+/// >
+/// > If you think about it:
+/// > - I'd argue that setting `dt` to the whole timestep that we are evolving
+/// >   the zone over is blatantly wrong. It violates the principle that you
+/// >   should get consistent results whether you invoke grackle 100 separate
+/// >   times or just 1 time. (The amount of dust heating would change)
+/// > - setting `dt` to the current subcycle timestep makes a lot more sense
+/// >   (and is the only logical choice)
+/// >   - It is roughly equivalent to saying that dust is immediately destroyed
+/// >     once the gas reaches a threshold temperature.
+/// >   - the model is overly simplistic since dust grains can survive for
+/// >     quite in ionized gas (see for example
+/// >     https://ui.adsabs.harvard.edu/abs/2024ApJ...974...81R/abstract)
+/// >
+/// > If we stick with this instantaneous destruction model, then all
+/// > dust-grain related heating and cooling should probably assume that the
+/// > dust-grain density is already 0.
 inline void lookup_cool_rates1d_g(
     const gr_mask_type* anydust, double* tgas1d, double* mmw, double* tdust,
     double* dust2gas, double* k13dd_data_, double* h2dust, double* dom,
@@ -43,6 +78,9 @@ inline void lookup_cool_rates1d_g(
     grackle::impl::CollisionalRxnRateCollection kcol_rate_tables,
     grackle::impl::PhotoRxnRateCollection kshield_buf,
     grackle::impl::ChemHeatingRates chemheatrates_buf) {
+  // shorten `grackle::impl::fortran_wrapper` to `f_wrap` within this function
+  namespace f_wrap = ::grackle::impl::fortran_wrapper;
+
   // -------------------------------------------------------------------
 
   // Arguments
@@ -213,49 +251,47 @@ inline void lookup_cool_rates1d_g(
   std::vector<double> logrho(my_fields->grid_dimension[0]);
   // opacity table
   double log_kh2, log_kgg;
-  // grain growth
-  std::vector<double> sgSiM(my_fields->grid_dimension[0]);
-  std::vector<double> sgFeM(my_fields->grid_dimension[0]);
-  std::vector<double> sgMg2SiO4(my_fields->grid_dimension[0]);
-  std::vector<double> sgMgSiO3(my_fields->grid_dimension[0]);
-  std::vector<double> sgFe3O4(my_fields->grid_dimension[0]);
-  std::vector<double> sgAC(my_fields->grid_dimension[0]);
-  std::vector<double> sgSiO2D(my_fields->grid_dimension[0]);
-  std::vector<double> sgMgO(my_fields->grid_dimension[0]);
-  std::vector<double> sgFeS(my_fields->grid_dimension[0]);
-  std::vector<double> sgAl2O3(my_fields->grid_dimension[0]);
-  std::vector<double> sgreforg(my_fields->grid_dimension[0]);
-  std::vector<double> sgvolorg(my_fields->grid_dimension[0]);
-  std::vector<double> sgH2Oice(my_fields->grid_dimension[0]);
-  std::vector<double> sgtot(my_fields->grid_dimension[0]);
-  std::vector<double> alSiM(my_rates->gr_N[2 - 1] *
-                            my_fields->grid_dimension[0]);
-  std::vector<double> alFeM(my_rates->gr_N[2 - 1] *
-                            my_fields->grid_dimension[0]);
-  std::vector<double> alMg2SiO4(my_rates->gr_N[2 - 1] *
-                                my_fields->grid_dimension[0]);
-  std::vector<double> alMgSiO3(my_rates->gr_N[2 - 1] *
-                               my_fields->grid_dimension[0]);
-  std::vector<double> alFe3O4(my_rates->gr_N[2 - 1] *
-                              my_fields->grid_dimension[0]);
-  std::vector<double> alAC(my_rates->gr_N[2 - 1] *
-                           my_fields->grid_dimension[0]);
-  std::vector<double> alSiO2D(my_rates->gr_N[2 - 1] *
-                              my_fields->grid_dimension[0]);
-  std::vector<double> alMgO(my_rates->gr_N[2 - 1] *
-                            my_fields->grid_dimension[0]);
-  std::vector<double> alFeS(my_rates->gr_N[2 - 1] *
-                            my_fields->grid_dimension[0]);
-  std::vector<double> alAl2O3(my_rates->gr_N[2 - 1] *
-                              my_fields->grid_dimension[0]);
-  std::vector<double> alreforg(my_rates->gr_N[2 - 1] *
-                               my_fields->grid_dimension[0]);
-  std::vector<double> alvolorg(my_rates->gr_N[2 - 1] *
-                               my_fields->grid_dimension[0]);
-  std::vector<double> alH2Oice(my_rates->gr_N[2 - 1] *
-                               my_fields->grid_dimension[0]);
-  std::vector<double> altot(my_rates->gr_N[2 - 1] *
-                            my_fields->grid_dimension[0]);
+
+  // stuff related to grain-growth
+  //
+  // internal_dust_prop_buf holds buffers of intermediate quantities used
+  // within dust-routines
+  grackle::impl::InternalDustPropBuf internal_dust_prop_buf =
+      grackle::impl::new_InternalDustPropBuf(my_fields->grid_dimension[0],
+                                             my_rates->gr_N[1]);
+  // these are some legacy variables that referene allocations now tracked
+  // within internal_dust_prop_buf.
+  //
+  // TODO: directly access members of internal_dust_prop_buf (and get rid of
+  // these demporary variables)
+  double* sgSiM = internal_dust_prop_buf.grain_sigma_per_gas_mass
+                      .data[OnlyGrainSpLUT::SiM_dust];
+  double* sgFeM = internal_dust_prop_buf.grain_sigma_per_gas_mass
+                      .data[OnlyGrainSpLUT::FeM_dust];
+  double* sgMg2SiO4 = internal_dust_prop_buf.grain_sigma_per_gas_mass
+                          .data[OnlyGrainSpLUT::Mg2SiO4_dust];
+  double* sgMgSiO3 = internal_dust_prop_buf.grain_sigma_per_gas_mass
+                         .data[OnlyGrainSpLUT::MgSiO3_dust];
+  double* sgFe3O4 = internal_dust_prop_buf.grain_sigma_per_gas_mass
+                        .data[OnlyGrainSpLUT::Fe3O4_dust];
+  double* sgAC = internal_dust_prop_buf.grain_sigma_per_gas_mass
+                     .data[OnlyGrainSpLUT::AC_dust];
+  double* sgSiO2D = internal_dust_prop_buf.grain_sigma_per_gas_mass
+                        .data[OnlyGrainSpLUT::SiO2_dust];
+  double* sgMgO = internal_dust_prop_buf.grain_sigma_per_gas_mass
+                      .data[OnlyGrainSpLUT::MgO_dust];
+  double* sgFeS = internal_dust_prop_buf.grain_sigma_per_gas_mass
+                      .data[OnlyGrainSpLUT::FeS_dust];
+  double* sgAl2O3 = internal_dust_prop_buf.grain_sigma_per_gas_mass
+                        .data[OnlyGrainSpLUT::Al2O3_dust];
+  double* sgreforg = internal_dust_prop_buf.grain_sigma_per_gas_mass
+                         .data[OnlyGrainSpLUT::ref_org_dust];
+  double* sgvolorg = internal_dust_prop_buf.grain_sigma_per_gas_mass
+                         .data[OnlyGrainSpLUT::vol_org_dust];
+  double* sgH2Oice = internal_dust_prop_buf.grain_sigma_per_gas_mass
+                         .data[OnlyGrainSpLUT::H2O_ice_dust];
+  double* sgtot = internal_dust_prop_buf.sigma_per_gas_mass_tot;
+
   double h2SiM, h2FeM, h2Mg2SiO4, h2MgSiO3, h2Fe3O4, h2AC, h2SiO2D, h2MgO,
       h2FeS, h2Al2O3, h2reforg, h2volorg, h2H2Oice;
   // tabulate h2 formation rate
@@ -1075,42 +1111,9 @@ inline void lookup_cool_rates1d_g(
   // Compute grain size increment
 
   if (((*anydust) != MASK_FALSE) && (my_chemistry->dust_species > 0)) {
-    FORTRAN_NAME(calc_grain_size_increment_1d)(
-        &my_chemistry->multi_metals, &my_chemistry->metal_abundances,
-        &my_chemistry->dust_species, &my_chemistry->grain_growth, itmask_metal,
-        &my_fields->grid_dimension[0], &my_fields->grid_dimension[1],
-        &my_fields->grid_dimension[2], &idx_range.i_start, &idx_range.i_end,
-        &idx_range.jp1, &idx_range.kp1, dom, d.data(), SiM.data(), FeM.data(),
-        Mg2SiO4.data(), MgSiO3.data(), Fe3O4.data(), AC.data(), SiO2D.data(),
-        MgO.data(), FeS.data(), Al2O3.data(), reforg.data(), volorg.data(),
-        H2Oice.data(), my_fields->metal_density,
-        my_fields->local_ISM_metal_density, my_fields->ccsn13_metal_density,
-        my_fields->ccsn20_metal_density, my_fields->ccsn25_metal_density,
-        my_fields->ccsn30_metal_density, my_fields->fsn13_metal_density,
-        my_fields->fsn15_metal_density, my_fields->fsn50_metal_density,
-        my_fields->fsn80_metal_density, my_fields->pisn170_metal_density,
-        my_fields->pisn200_metal_density, my_fields->y19_metal_density,
-        &my_rates->SN0_N, my_rates->SN0_fSiM, my_rates->SN0_fFeM,
-        my_rates->SN0_fMg2SiO4, my_rates->SN0_fMgSiO3, my_rates->SN0_fFe3O4,
-        my_rates->SN0_fAC, my_rates->SN0_fSiO2D, my_rates->SN0_fMgO,
-        my_rates->SN0_fFeS, my_rates->SN0_fAl2O3, my_rates->SN0_freforg,
-        my_rates->SN0_fvolorg, my_rates->SN0_fH2Oice, my_rates->SN0_r0SiM,
-        my_rates->SN0_r0FeM, my_rates->SN0_r0Mg2SiO4, my_rates->SN0_r0MgSiO3,
-        my_rates->SN0_r0Fe3O4, my_rates->SN0_r0AC, my_rates->SN0_r0SiO2D,
-        my_rates->SN0_r0MgO, my_rates->SN0_r0FeS, my_rates->SN0_r0Al2O3,
-        my_rates->SN0_r0reforg, my_rates->SN0_r0volorg, my_rates->SN0_r0H2Oice,
-        my_rates->gr_N, &my_rates->gr_Size, &my_rates->gr_dT, my_rates->gr_Td,
-        my_rates->SN0_kpSiM, my_rates->SN0_kpFeM, my_rates->SN0_kpMg2SiO4,
-        my_rates->SN0_kpMgSiO3, my_rates->SN0_kpFe3O4, my_rates->SN0_kpAC,
-        my_rates->SN0_kpSiO2D, my_rates->SN0_kpMgO, my_rates->SN0_kpFeS,
-        my_rates->SN0_kpAl2O3, my_rates->SN0_kpreforg, my_rates->SN0_kpvolorg,
-        my_rates->SN0_kpH2Oice, sgSiM.data(), sgFeM.data(), sgMg2SiO4.data(),
-        sgMgSiO3.data(), sgFe3O4.data(), sgAC.data(), sgSiO2D.data(),
-        sgMgO.data(), sgFeS.data(), sgAl2O3.data(), sgreforg.data(),
-        sgvolorg.data(), sgH2Oice.data(), sgtot.data(), alSiM.data(),
-        alFeM.data(), alMg2SiO4.data(), alMgSiO3.data(), alFe3O4.data(),
-        alAC.data(), alSiO2D.data(), alMgO.data(), alFeS.data(), alAl2O3.data(),
-        alreforg.data(), alvolorg.data(), alH2Oice.data(), altot.data());
+    f_wrap::calc_grain_size_increment_1d(*dom, idx_range, itmask_metal,
+                                         my_chemistry, my_rates, my_fields,
+                                         internal_dust_prop_buf);
   }
 
   // Look-up for H2 formation on dust
@@ -2079,6 +2082,8 @@ inline void lookup_cool_rates1d_g(
   //            endif
   // #endif
 #endif  //  USE_DENSITY_DEPENDENT_H2_DISSOCIATION_RATE
+
+  drop_InternalDustPropBuf(&internal_dust_prop_buf);
 
   return;
 }
