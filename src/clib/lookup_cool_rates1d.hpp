@@ -241,11 +241,8 @@ inline void lookup_cool_rates1d(
   double x, logtem0, logtem9, dlogtem, nh, d_logtem0, d_logtem9, d_dlogtem,
       divrho, N_H2, f_shield, b_doppler, l_H2shield;
   double k13_CID, k13_DT;
-  double k13ind;
   std::vector<double> logT(my_fields->grid_dimension[0]);
   std::vector<double> logrho(my_fields->grid_dimension[0]);
-  // opacity table
-  double log_kh2, log_kgg;
 
   // stuff related to grain-growth
   //
@@ -285,7 +282,6 @@ inline void lookup_cool_rates1d(
                          .data[OnlyGrainSpLUT::vol_org_dust];
   double* sgH2Oice = internal_dust_prop_buf.grain_sigma_per_gas_mass
                          .data[OnlyGrainSpLUT::H2O_ice_dust];
-  double* sgtot = internal_dust_prop_buf.sigma_per_gas_mass_tot;
 
   double h2SiM, h2FeM, h2Mg2SiO4, h2MgSiO3, h2Fe3O4, h2AC, h2SiO2D, h2MgO,
       h2FeS, h2Al2O3, h2reforg, h2volorg, h2H2Oice;
@@ -297,7 +293,6 @@ inline void lookup_cool_rates1d(
   std::vector<double> d_Tg(my_chemistry->NumberOfTemperatureBins);
   int idratec, iratec;
   double kd;
-  const double mh_local_var = mh_grflt;
 
   // locals for H2 self-shielding as WG+19
 
