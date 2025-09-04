@@ -170,6 +170,13 @@ if (GRACKLE_EXAMPLES)
   add_subdirectory(src/example)
 endif()
 
+if (_GRACKLE_CODE_COVERAGE)
+  # in the future, we may want to add CODE_COVERAGE or GRACKLE_CODE_COVERAGE
+  # as an option. For now, we don't want to do that
+  include(Coverage)
+  target_add_coverage_flags(Grackle_Grackle)
+endif()
+
 # Tests
 # -----
 
