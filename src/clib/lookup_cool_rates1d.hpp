@@ -64,21 +64,20 @@ namespace grackle::impl {
 /// > dust-grain related heating and cooling should probably assume that the
 /// > dust-grain density is already 0.
 inline void lookup_cool_rates1d_g(
-    IndexRange idx_range, gr_mask_type anydust,
-    double* tgas1d, double* mmw, double* tdust,
-    double* dust2gas, double* k13dd_data_, double* h2dust, double* dom,
-    double* dx_cgs, double* c_ljeans, gr_mask_type* itmask,
-    gr_mask_type* itmask_metal, int* imetal, gr_float* rhoH, double* dt,
-    chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
-    grackle_field_data* my_fields, photo_rate_storage my_uvb_rates,
-    InternalGrUnits internalu,
-    grackle::impl::GrainSpeciesCollection grain_growth_rates,
-    grackle::impl::GrainSpeciesCollection grain_temperatures,
-    grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf,
-    grackle::impl::CollisionalRxnRateCollection kcr_buf,
-    grackle::impl::CollisionalRxnRateCollection kcol_rate_tables,
-    grackle::impl::PhotoRxnRateCollection kshield_buf,
-    grackle::impl::ChemHeatingRates chemheatrates_buf) {
+  IndexRange idx_range, gr_mask_type anydust, double* tgas1d, double* mmw,
+  double* tdust, double* dust2gas, double* k13dd_data_, double* h2dust,
+  double dom, double dx_cgs, double c_ljeans, gr_mask_type* itmask,
+  gr_mask_type* itmask_metal, int* imetal, gr_float* rhoH, double* dt,
+  chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
+  grackle_field_data* my_fields, photo_rate_storage my_uvb_rates,
+  InternalGrUnits internalu,
+  grackle::impl::GrainSpeciesCollection grain_growth_rates,
+  grackle::impl::GrainSpeciesCollection grain_temperatures,
+  grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf,
+  grackle::impl::CollisionalRxnRateCollection kcr_buf,
+  grackle::impl::CollisionalRxnRateCollection kcol_rate_tables,
+  grackle::impl::PhotoRxnRateCollection kshield_buf,
+  grackle::impl::ChemHeatingRates chemheatrates_buf) {
   // shorten `grackle::impl::fortran_wrapper` to `f_wrap` within this function
   namespace f_wrap = ::grackle::impl::fortran_wrapper;
 
@@ -1112,7 +1111,7 @@ inline void lookup_cool_rates1d_g(
   // Compute grain size increment
 
   if ((anydust != MASK_FALSE) && (my_chemistry->dust_species > 0)) {
-    f_wrap::calc_grain_size_increment_1d(*dom, idx_range, itmask_metal,
+    f_wrap::calc_grain_size_increment_1d(dom, idx_range, itmask_metal,
                                          my_chemistry, my_rates, my_fields,
                                          internal_dust_prop_buf);
   }
@@ -1745,7 +1744,7 @@ inline void lookup_cool_rates1d_g(
             }
             // (rho / divrho) is the Sobolev-like length in cell widths
             l_H2shield = std::fmin(
-                (*dx_cgs) * d(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1) /
+                dx_cgs * d(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1) /
                     (2. * std::fabs(divrho)),
                 internalu.xbase1);
 
@@ -1757,7 +1756,7 @@ inline void lookup_cool_rates1d_g(
 
             // Jeans Length
           } else if (my_chemistry->H2_self_shielding == 3) {
-            l_H2shield = (*c_ljeans) *
+            l_H2shield = c_ljeans *
                          std::sqrt(tgas1d[i - 1] / (d(i - 1, idx_range.jp1 - 1,
                                                       idx_range.kp1 - 1) *
                                                     mmw[i - 1]));
@@ -1766,7 +1765,7 @@ inline void lookup_cool_rates1d_g(
             l_H2shield = (gr_float)(0.);
           }
 
-          N_H2 = (*dom) * H2I(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1) *
+          N_H2 = dom * H2I(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1) *
                  l_H2shield;
 
           // update: self-shielding following Wolcott-Green & Haiman (2019)
@@ -1774,7 +1773,7 @@ inline void lookup_cool_rates1d_g(
 
           tgas_touse = std::fmax(tgas1d[i - 1], 1e2);
           tgas_touse = std::fmin(tgas_touse, 8e3);
-          ngas_touse = d(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1) * (*dom) /
+          ngas_touse = d(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1) * dom /
                        mmw[i - 1];
           ngas_touse = std::fmin(ngas_touse, 1e7);
 
@@ -1852,7 +1851,7 @@ inline void lookup_cool_rates1d_g(
           }
         }
 
-        nratio = nratio * (*dom) / nSSh;
+        nratio = nratio * dom / nSSh;
 
         f_shield_H[i - 1] =
             (0.98 * std::pow((1.0 + std::pow(nratio, (1.64))), (-2.28)) +
@@ -1870,7 +1869,7 @@ inline void lookup_cool_rates1d_g(
                  (HeI(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1) +
                   HeII(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1) +
                   HeIII(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1)) *
-                 (*dom) / nSSh;
+                 dom / nSSh;
 
         f_shield_He[i - 1] =
             (0.98 * std::pow((1.0 + std::pow(nratio, (1.64))), (-2.28)) +
@@ -2039,7 +2038,7 @@ inline void lookup_cool_rates1d_g(
       my_chemistry->three_body_rate == 0) {
     for (i = idx_range.i_start + 1; i <= (idx_range.i_end + 1); i++) {
       if (itmask[i - 1] != MASK_FALSE) {
-        nh = std::fmin(HI(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1) * (*dom),
+        nh = std::fmin(HI(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1) * dom,
                        1.0e9);
         kcr_buf.data[CollisionalRxnLUT::k13][i - 1] = tiny8;
         if (tgas1d[i - 1] >= 500. && tgas1d[i - 1] < 1.0e6) {
