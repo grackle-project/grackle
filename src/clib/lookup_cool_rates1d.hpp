@@ -1342,13 +1342,13 @@ inline void lookup_cool_rates1d(
 
               grain_growth_rates.data[OnlyGrainSpLUT::MgSiO3_dust][i - 1] =
                   kd * sgMgSiO3[i - 1] *
-                  d(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1) *
+                  d(i - 1, idx_range.j, idx_range.k) *
                   grackle::impl::fmin(
-                      Mg(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1) /
+                      Mg(i - 1, idx_range.j, idx_range.k) /
                           std::pow(24., 1.5),
-                      SiOI(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1) /
+                      SiOI(i - 1, idx_range.j, idx_range.k) /
                           std::pow(44., 1.5),
-                      H2O(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1) /
+                      H2O(i - 1, idx_range.j, idx_range.k) /
                           std::pow(18., 1.5) / 2.);
               // !             if ( idsub .eq. 1 )
               // !   &            kdMgSiO3  (i) = kdMgSiO3  (i) * ( 1.d0 -
@@ -1363,71 +1363,71 @@ inline void lookup_cool_rates1d(
 
               grain_growth_rates.data[OnlyGrainSpLUT::AC_dust][i - 1] =
                   kd * sgAC[i - 1] *
-                  d(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1) *
-                  CI(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1) /
+                  d(i - 1, idx_range.j, idx_range.k) *
+                  CI(i - 1, idx_range.j, idx_range.k) /
                   std::pow(12., 1.5);
             }
 
             if (my_chemistry->dust_species > 1) {
               grain_growth_rates.data[OnlyGrainSpLUT::SiM_dust][i - 1] =
                   kd * sgSiM[i - 1] *
-                  d(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1) *
-                  SiI(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1) /
+                  d(i - 1, idx_range.j, idx_range.k) *
+                  SiI(i - 1, idx_range.j, idx_range.k) /
                   std::pow(28., 1.5);
 
               grain_growth_rates.data[OnlyGrainSpLUT::FeM_dust][i - 1] =
                   kd * sgFeM[i - 1] *
-                  d(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1) *
-                  Fe(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1) /
+                  d(i - 1, idx_range.j, idx_range.k) *
+                  Fe(i - 1, idx_range.j, idx_range.k) /
                   std::pow(56., 1.5);
 
               grain_growth_rates.data[OnlyGrainSpLUT::Mg2SiO4_dust][i - 1] =
                   kd * sgMg2SiO4[i - 1] *
-                  d(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1) *
+                  d(i - 1, idx_range.j, idx_range.k) *
                   grackle::impl::fmin(
-                      Mg(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1) /
+                      Mg(i - 1, idx_range.j, idx_range.k) /
                           std::pow(24., 1.5) / 2.,
-                      SiOI(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1) /
+                      SiOI(i - 1, idx_range.j, idx_range.k) /
                           std::pow(44., 1.5),
-                      H2O(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1) /
+                      H2O(i - 1, idx_range.j, idx_range.k) /
                           std::pow(18., 1.5) / 3.);
 
               grain_growth_rates.data[OnlyGrainSpLUT::Fe3O4_dust][i - 1] =
                   kd * sgFe3O4[i - 1] *
-                  d(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1) *
-                  std::fmin(Fe(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1) /
+                  d(i - 1, idx_range.j, idx_range.k) *
+                  std::fmin(Fe(i - 1, idx_range.j, idx_range.k) /
                                 std::pow(56., 1.5) / 3.,
-                            H2O(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1) /
+                            H2O(i - 1, idx_range.j, idx_range.k) /
                                 std::pow(18., 1.5) / 4.);
 
               grain_growth_rates.data[OnlyGrainSpLUT::SiO2_dust][i - 1] =
                   kd * sgSiO2D[i - 1] *
-                  d(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1) *
-                  SiO2I(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1) /
+                  d(i - 1, idx_range.j, idx_range.k) *
+                  SiO2I(i - 1, idx_range.j, idx_range.k) /
                   std::pow(60., 1.5);
 
               grain_growth_rates.data[OnlyGrainSpLUT::MgO_dust][i - 1] =
                   kd * sgMgO[i - 1] *
-                  d(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1) *
-                  std::fmin(Mg(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1) /
+                  d(i - 1, idx_range.j, idx_range.k) *
+                  std::fmin(Mg(i - 1, idx_range.j, idx_range.k) /
                                 std::pow(24., 1.5),
-                            H2O(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1) /
+                            H2O(i - 1, idx_range.j, idx_range.k) /
                                 std::pow(18., 1.5));
 
               grain_growth_rates.data[OnlyGrainSpLUT::FeS_dust][i - 1] =
                   kd * sgFeS[i - 1] *
-                  d(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1) *
-                  std::fmin(S(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1) /
+                  d(i - 1, idx_range.j, idx_range.k) *
+                  std::fmin(S(i - 1, idx_range.j, idx_range.k) /
                                 std::pow(32., 1.5),
-                            Fe(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1) /
+                            Fe(i - 1, idx_range.j, idx_range.k) /
                                 std::pow(56., 1.5));
 
               grain_growth_rates.data[OnlyGrainSpLUT::Al2O3_dust][i - 1] =
                   kd * sgAl2O3[i - 1] *
-                  d(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1) *
-                  std::fmin(Al(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1) /
+                  d(i - 1, idx_range.j, idx_range.k) *
+                  std::fmin(Al(i - 1, idx_range.j, idx_range.k) /
                                 std::pow(27., 1.5) / 2.,
-                            H2O(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1) /
+                            H2O(i - 1, idx_range.j, idx_range.k) /
                                 std::pow(18., 1.5) / 3.);
             }
 
@@ -1475,13 +1475,13 @@ inline void lookup_cool_rates1d(
                 if (tdust[i - 1] > 1222.e0) {
                   grain_growth_rates.data[OnlyGrainSpLUT::MgSiO3_dust][i - 1] =
                       (tiny8 -
-                       MgSiO3(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1)) /
+                       MgSiO3(i - 1, idx_range.j, idx_range.k)) /
                       dt;
                 }
                 if (tdust[i - 1] > 1800.e0) {
                   grain_growth_rates.data[OnlyGrainSpLUT::AC_dust][i - 1] =
                       (tiny8 -
-                       AC(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1)) /
+                       AC(i - 1, idx_range.j, idx_range.k)) /
                       dt;
                 }
               }
@@ -1490,49 +1490,49 @@ inline void lookup_cool_rates1d(
                 if (tdust[i - 1] > 1500.e0) {
                   grain_growth_rates.data[OnlyGrainSpLUT::SiM_dust][i - 1] =
                       (tiny8 -
-                       SiM(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1)) /
+                       SiM(i - 1, idx_range.j, idx_range.k)) /
                       dt;
                 }
                 if (tdust[i - 1] > 1500.e0) {
                   grain_growth_rates.data[OnlyGrainSpLUT::FeM_dust][i - 1] =
                       (tiny8 -
-                       FeM(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1)) /
+                       FeM(i - 1, idx_range.j, idx_range.k)) /
                       dt;
                 }
                 if (tdust[i - 1] > 1277.e0) {
                   grain_growth_rates.data[OnlyGrainSpLUT::Mg2SiO4_dust][i - 1] =
                       (tiny8 -
-                       Mg2SiO4(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1)) /
+                       Mg2SiO4(i - 1, idx_range.j, idx_range.k)) /
                       dt;
                 }
                 if (tdust[i - 1] > 1500.e0) {
                   grain_growth_rates.data[OnlyGrainSpLUT::Fe3O4_dust][i - 1] =
                       (tiny8 -
-                       Fe3O4(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1)) /
+                       Fe3O4(i - 1, idx_range.j, idx_range.k)) /
                       dt;
                 }
                 if (tdust[i - 1] > 1500.e0) {
                   grain_growth_rates.data[OnlyGrainSpLUT::SiO2_dust][i - 1] =
                       (tiny8 -
-                       SiO2D(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1)) /
+                       SiO2D(i - 1, idx_range.j, idx_range.k)) /
                       dt;
                 }
                 if (tdust[i - 1] > 1500.e0) {
                   grain_growth_rates.data[OnlyGrainSpLUT::MgO_dust][i - 1] =
                       (tiny8 -
-                       MgO(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1)) /
+                       MgO(i - 1, idx_range.j, idx_range.k)) /
                       dt;
                 }
                 if (tdust[i - 1] > 680.e0) {
                   grain_growth_rates.data[OnlyGrainSpLUT::FeS_dust][i - 1] =
                       (tiny8 -
-                       FeS(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1)) /
+                       FeS(i - 1, idx_range.j, idx_range.k)) /
                       dt;
                 }
                 if (tdust[i - 1] > 1500.e0) {
                   grain_growth_rates.data[OnlyGrainSpLUT::Al2O3_dust][i - 1] =
                       (tiny8 -
-                       Al2O3(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1)) /
+                       Al2O3(i - 1, idx_range.j, idx_range.k)) /
                       dt;
                 }
               }
@@ -1541,19 +1541,19 @@ inline void lookup_cool_rates1d(
                 if (tdust[i - 1] > 575.e0) {
                   grain_growth_rates.data[OnlyGrainSpLUT::ref_org_dust][i - 1] =
                       (tiny8 -
-                       reforg(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1)) /
+                       reforg(i - 1, idx_range.j, idx_range.k)) /
                       dt;
                 }
                 if (tdust[i - 1] > 375.e0) {
                   grain_growth_rates.data[OnlyGrainSpLUT::vol_org_dust][i - 1] =
                       (tiny8 -
-                       volorg(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1)) /
+                       volorg(i - 1, idx_range.j, idx_range.k)) /
                       dt;
                 }
                 if (tdust[i - 1] > 153.e0) {
                   grain_growth_rates.data[OnlyGrainSpLUT::H2O_ice_dust][i - 1] =
                       (tiny8 -
-                       H2Oice(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1)) /
+                       H2Oice(i - 1, idx_range.j, idx_range.k)) /
                       dt;
                 }
               }
@@ -1564,14 +1564,14 @@ inline void lookup_cool_rates1d(
                         .data[OnlyGrainSpLUT::MgSiO3_dust][i - 1] > 1222.e0) {
                   grain_growth_rates.data[OnlyGrainSpLUT::MgSiO3_dust][i - 1] =
                       (tiny8 -
-                       MgSiO3(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1)) /
+                       MgSiO3(i - 1, idx_range.j, idx_range.k)) /
                       dt;
                 }
                 if (grain_temperatures.data[OnlyGrainSpLUT::AC_dust][i - 1] >
                     1800.e0) {
                   grain_growth_rates.data[OnlyGrainSpLUT::AC_dust][i - 1] =
                       (tiny8 -
-                       AC(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1)) /
+                       AC(i - 1, idx_range.j, idx_range.k)) /
                       dt;
                 }
               }
@@ -1581,56 +1581,56 @@ inline void lookup_cool_rates1d(
                     1500.e0) {
                   grain_growth_rates.data[OnlyGrainSpLUT::SiM_dust][i - 1] =
                       (tiny8 -
-                       SiM(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1)) /
+                       SiM(i - 1, idx_range.j, idx_range.k)) /
                       dt;
                 }
                 if (grain_temperatures.data[OnlyGrainSpLUT::FeM_dust][i - 1] >
                     1500.e0) {
                   grain_growth_rates.data[OnlyGrainSpLUT::FeM_dust][i - 1] =
                       (tiny8 -
-                       FeM(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1)) /
+                       FeM(i - 1, idx_range.j, idx_range.k)) /
                       dt;
                 }
                 if (grain_temperatures
                         .data[OnlyGrainSpLUT::Mg2SiO4_dust][i - 1] > 1277.e0) {
                   grain_growth_rates.data[OnlyGrainSpLUT::Mg2SiO4_dust][i - 1] =
                       (tiny8 -
-                       Mg2SiO4(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1)) /
+                       Mg2SiO4(i - 1, idx_range.j, idx_range.k)) /
                       dt;
                 }
                 if (grain_temperatures.data[OnlyGrainSpLUT::Fe3O4_dust][i - 1] >
                     1500.e0) {
                   grain_growth_rates.data[OnlyGrainSpLUT::Fe3O4_dust][i - 1] =
                       (tiny8 -
-                       Fe3O4(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1)) /
+                       Fe3O4(i - 1, idx_range.j, idx_range.k)) /
                       dt;
                 }
                 if (grain_temperatures.data[OnlyGrainSpLUT::SiO2_dust][i - 1] >
                     1500.e0) {
                   grain_growth_rates.data[OnlyGrainSpLUT::SiO2_dust][i - 1] =
                       (tiny8 -
-                       SiO2D(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1)) /
+                       SiO2D(i - 1, idx_range.j, idx_range.k)) /
                       dt;
                 }
                 if (grain_temperatures.data[OnlyGrainSpLUT::MgO_dust][i - 1] >
                     1500.e0) {
                   grain_growth_rates.data[OnlyGrainSpLUT::MgO_dust][i - 1] =
                       (tiny8 -
-                       MgO(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1)) /
+                       MgO(i - 1, idx_range.j, idx_range.k)) /
                       dt;
                 }
                 if (grain_temperatures.data[OnlyGrainSpLUT::FeS_dust][i - 1] >
                     680.e0) {
                   grain_growth_rates.data[OnlyGrainSpLUT::FeS_dust][i - 1] =
                       (tiny8 -
-                       FeS(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1)) /
+                       FeS(i - 1, idx_range.j, idx_range.k)) /
                       dt;
                 }
                 if (grain_temperatures.data[OnlyGrainSpLUT::Al2O3_dust][i - 1] >
                     1500.e0) {
                   grain_growth_rates.data[OnlyGrainSpLUT::Al2O3_dust][i - 1] =
                       (tiny8 -
-                       Al2O3(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1)) /
+                       Al2O3(i - 1, idx_range.j, idx_range.k)) /
                       dt;
                 }
               }
@@ -1640,21 +1640,21 @@ inline void lookup_cool_rates1d(
                         .data[OnlyGrainSpLUT::ref_org_dust][i - 1] > 575.e0) {
                   grain_growth_rates.data[OnlyGrainSpLUT::ref_org_dust][i - 1] =
                       (tiny8 -
-                       reforg(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1)) /
+                       reforg(i - 1, idx_range.j, idx_range.k)) /
                       dt;
                 }
                 if (grain_temperatures
                         .data[OnlyGrainSpLUT::vol_org_dust][i - 1] > 375.e0) {
                   grain_growth_rates.data[OnlyGrainSpLUT::vol_org_dust][i - 1] =
                       (tiny8 -
-                       volorg(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1)) /
+                       volorg(i - 1, idx_range.j, idx_range.k)) /
                       dt;
                 }
                 if (grain_temperatures
                         .data[OnlyGrainSpLUT::H2O_ice_dust][i - 1] > 153.e0) {
                   grain_growth_rates.data[OnlyGrainSpLUT::H2O_ice_dust][i - 1] =
                       (tiny8 -
-                       H2Oice(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1)) /
+                       H2Oice(i - 1, idx_range.j, idx_range.k)) /
                       dt;
                 }
               }
@@ -1695,7 +1695,7 @@ inline void lookup_cool_rates1d(
         if (itmask[i - 1] != MASK_FALSE) {
           kshield_buf.k31[i - 1] =
               my_uvb_rates.k31 +
-              kdissH2I(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1);
+              kdissH2I(i - 1, idx_range.j, idx_range.k);
         }
       }
     }
@@ -1706,23 +1706,23 @@ inline void lookup_cool_rates1d(
           // Calculate a Sobolev-like length assuming a 3D grid.
           if (my_chemistry->H2_self_shielding == 1) {
             divrhoa[1 - 1] =
-                d(i + 1 - 1, idx_range.jp1 - 1, idx_range.kp1 - 1) -
-                d(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1);
+                d(i + 1 - 1, idx_range.j, idx_range.k) -
+                d(i - 1, idx_range.j, idx_range.k);
             divrhoa[2 - 1] =
-                d(i - 1 - 1, idx_range.jp1 - 1, idx_range.kp1 - 1) -
-                d(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1);
+                d(i - 1 - 1, idx_range.j, idx_range.k) -
+                d(i - 1, idx_range.j, idx_range.k);
             divrhoa[3 - 1] =
-                d(i - 1, idx_range.jp1 + 1 - 1, idx_range.kp1 - 1) -
-                d(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1);
+                d(i - 1, idx_range.jp1 + 1 - 1, idx_range.k) -
+                d(i - 1, idx_range.j, idx_range.k);
             divrhoa[4 - 1] =
-                d(i - 1, idx_range.jp1 - 1 - 1, idx_range.kp1 - 1) -
-                d(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1);
+                d(i - 1, idx_range.j - 1, idx_range.k) -
+                d(i - 1, idx_range.j, idx_range.k);
             divrhoa[5 - 1] =
-                d(i - 1, idx_range.jp1 - 1, idx_range.kp1 + 1 - 1) -
-                d(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1);
+                d(i - 1, idx_range.j, idx_range.kp1 + 1 - 1) -
+                d(i - 1, idx_range.j, idx_range.k);
             divrhoa[6 - 1] =
-                d(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1 - 1) -
-                d(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1);
+                d(i - 1, idx_range.j, idx_range.k - 1) -
+                d(i - 1, idx_range.j, idx_range.k);
             divrho = tiny_fortran_val;
             // Exclude directions with (drho/ds > 0)
             for (n1 = 1; n1 <= (6); n1++) {
@@ -1732,28 +1732,28 @@ inline void lookup_cool_rates1d(
             }
             // (rho / divrho) is the Sobolev-like length in cell widths
             l_H2shield = std::fmin(
-                dx_cgs * d(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1) /
+                dx_cgs * d(i - 1, idx_range.j, idx_range.k) /
                     (2. * std::fabs(divrho)),
                 internalu.xbase1);
 
             // User-supplied length-scale field.
           } else if (my_chemistry->H2_self_shielding == 2) {
             l_H2shield =
-                xH2shield(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1) *
+                xH2shield(i - 1, idx_range.j, idx_range.k) *
                 internalu.uxyz;
 
             // Jeans Length
           } else if (my_chemistry->H2_self_shielding == 3) {
             l_H2shield = c_ljeans *
-                         std::sqrt(tgas1d[i - 1] / (d(i - 1, idx_range.jp1 - 1,
-                                                      idx_range.kp1 - 1) *
+                         std::sqrt(tgas1d[i - 1] / (d(i - 1, idx_range.j,
+                                                      idx_range.k) *
                                                     mmw[i - 1]));
 
           } else {
             l_H2shield = (gr_float)(0.);
           }
 
-          N_H2 = dom * H2I(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1) *
+          N_H2 = dom * H2I(i - 1, idx_range.j, idx_range.k) *
                  l_H2shield;
 
           // update: self-shielding following Wolcott-Green & Haiman (2019)
@@ -1762,7 +1762,7 @@ inline void lookup_cool_rates1d(
           double tgas_touse = std::fmax(tgas1d[i - 1], 1e2);
           tgas_touse = std::fmin(tgas_touse, 8e3);
           double ngas_touse =
-              d(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1) * dom / mmw[i - 1];
+              d(i - 1, idx_range.j, idx_range.k) * dom / mmw[i - 1];
           ngas_touse = std::fmin(ngas_touse, 1e7);
 
           double aWG2019 = (0.8711 * std::log10(tgas_touse) - 1.928) *
@@ -1792,7 +1792,7 @@ inline void lookup_cool_rates1d(
         if (itmask[i - 1] != MASK_FALSE) {
           kshield_buf.k31[i - 1] =
               kshield_buf.k31[i - 1] +
-              kdissH2I(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1);
+              kdissH2I(i - 1, idx_range.j, idx_range.k);
         }
       }
     }
@@ -1802,7 +1802,7 @@ inline void lookup_cool_rates1d(
       for (i = idx_range.i_start + 1; i <= (idx_range.i_end + 1); i++) {
         if (itmask[i - 1] != MASK_FALSE) {
           kshield_buf.k31[i - 1] =
-              f_shield_custom(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1) *
+              f_shield_custom(i - 1, idx_range.j, idx_range.k) *
               kshield_buf.k31[i - 1];
         }
       }
@@ -1820,19 +1820,19 @@ inline void lookup_cool_rates1d(
                         (2.0 / 3.0));
 
         // Compute the total Hydrogen number density
-        nratio = (HI(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1) +
-                  HII(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1));
+        nratio = (HI(i - 1, idx_range.j, idx_range.k) +
+                  HII(i - 1, idx_range.j, idx_range.k));
         if (my_chemistry->primordial_chemistry > 1) {
-          nratio = nratio + HM(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1) +
-                   H2I(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1) +
-                   H2II(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1);
+          nratio = nratio + HM(i - 1, idx_range.j, idx_range.k) +
+                   H2I(i - 1, idx_range.j, idx_range.k) +
+                   H2II(i - 1, idx_range.j, idx_range.k);
 
           if (my_chemistry->primordial_chemistry > 2) {
             nratio =
                 nratio +
-                0.5 * (DI(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1) +
-                       DII(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1)) +
-                2.0 * HDI(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1) / 3.0;
+                0.5 * (DI(i - 1, idx_range.j, idx_range.k) +
+                       DII(i - 1, idx_range.j, idx_range.k)) +
+                2.0 * HDI(i - 1, idx_range.j, idx_range.k) / 3.0;
           }
         }
 
@@ -1851,9 +1851,9 @@ inline void lookup_cool_rates1d(
                         (2.0 / 3.0));
 
         nratio = 0.25 *
-                 (HeI(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1) +
-                  HeII(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1) +
-                  HeIII(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1)) *
+                 (HeI(i - 1, idx_range.j, idx_range.k) +
+                  HeII(i - 1, idx_range.j, idx_range.k) +
+                  HeIII(i - 1, idx_range.j, idx_range.k)) *
                  dom / nSSh;
 
         f_shield_He[i - 1] =
@@ -1996,9 +1996,9 @@ inline void lookup_cool_rates1d(
 
   for (i = idx_range.i_start + 1; i <= (idx_range.i_end + 1); i++) {
     if (itmask[i - 1] != MASK_FALSE) {
-      x = std::fmax(HII(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1) /
-                        (HI(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1) +
-                         HII(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1)),
+      x = std::fmax(HII(i - 1, idx_range.j, idx_range.k) /
+                        (HI(i - 1, idx_range.j, idx_range.k) +
+                         HII(i - 1, idx_range.j, idx_range.k)),
                     1.0e-4);
       double factor = 0.3908 * std::pow((1. - std::pow(x, 0.4092)), 1.7592);
       kshield_buf.k24[i - 1] =
@@ -2026,7 +2026,7 @@ inline void lookup_cool_rates1d(
       my_chemistry->three_body_rate == 0) {
     for (i = idx_range.i_start + 1; i <= (idx_range.i_end + 1); i++) {
       if (itmask[i - 1] != MASK_FALSE) {
-        nh = std::fmin(HI(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1) * dom,
+        nh = std::fmin(HI(i - 1, idx_range.j, idx_range.k) * dom,
                        1.0e9);
         kcr_buf.data[CollisionalRxnLUT::k13][i - 1] = tiny8;
         if (tgas1d[i - 1] >= 500. && tgas1d[i - 1] < 1.0e6) {
