@@ -235,17 +235,11 @@ inline void lookup_cool_rates1d(
   std::vector<double> f_shield_H(my_fields->grid_dimension[0]);
   std::vector<double> f_shield_He(my_fields->grid_dimension[0]);
 
-  // Parameters
-
-  const double everg = ev2erg_grflt;
-  const double e24 = 13.6;
-  const double e26 = 24.6;
-
   // locals
 
   int i, n1;
-  double factor, x, logtem0, logtem9, dlogtem, nh, d_logtem0, d_logtem9,
-      d_dlogtem, divrho, N_H2, f_shield, b_doppler, l_H2shield;
+  double x, logtem0, logtem9, dlogtem, nh, d_logtem0, d_logtem9, d_dlogtem,
+      divrho, N_H2, f_shield, b_doppler, l_H2shield;
   double k13_CID, k13_DT;
   double k13ind;
   std::vector<double> logT(my_fields->grid_dimension[0]);
@@ -2006,6 +2000,9 @@ inline void lookup_cool_rates1d(
   // If using a high-energy radiation field, then account for
   //   effects of secondary electrons (Shull * Steenberg 1985)
   //   (see calc_rate.src)
+  const double everg = ev2erg_grflt;
+  const double e24 = 13.6;
+  const double e26 = 24.6;
 
   for (i = idx_range.i_start + 1; i <= (idx_range.i_end + 1); i++) {
     if (itmask[i - 1] != MASK_FALSE) {
@@ -2013,7 +2010,7 @@ inline void lookup_cool_rates1d(
                         (HI(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1) +
                          HII(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1)),
                     1.0e-4);
-      factor = 0.3908 * std::pow((1. - std::pow(x, 0.4092)), 1.7592);
+      double factor = 0.3908 * std::pow((1. - std::pow(x, 0.4092)), 1.7592);
       kshield_buf.k24[i - 1] =
           kshield_buf.k24[i - 1] +
           factor * (my_uvb_rates.piHI + 0.08 * my_uvb_rates.piHeI) /
