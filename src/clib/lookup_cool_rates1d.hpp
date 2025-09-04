@@ -64,13 +64,14 @@ namespace grackle::impl {
 /// > dust-grain related heating and cooling should probably assume that the
 /// > dust-grain density is already 0.
 inline void lookup_cool_rates1d_g(
-    const gr_mask_type* anydust, double* tgas1d, double* mmw, double* tdust,
+    IndexRange idx_range, gr_mask_type anydust,
+    double* tgas1d, double* mmw, double* tdust,
     double* dust2gas, double* k13dd_data_, double* h2dust, double* dom,
     double* dx_cgs, double* c_ljeans, gr_mask_type* itmask,
     gr_mask_type* itmask_metal, int* imetal, gr_float* rhoH, double* dt,
     chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
     grackle_field_data* my_fields, photo_rate_storage my_uvb_rates,
-    InternalGrUnits internalu, IndexRange idx_range,
+    InternalGrUnits internalu,
     grackle::impl::GrainSpeciesCollection grain_growth_rates,
     grackle::impl::GrainSpeciesCollection grain_temperatures,
     grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf,
@@ -1110,7 +1111,7 @@ inline void lookup_cool_rates1d_g(
 
   // Compute grain size increment
 
-  if (((*anydust) != MASK_FALSE) && (my_chemistry->dust_species > 0)) {
+  if ((anydust != MASK_FALSE) && (my_chemistry->dust_species > 0)) {
     f_wrap::calc_grain_size_increment_1d(*dom, idx_range, itmask_metal,
                                          my_chemistry, my_rates, my_fields,
                                          internal_dust_prop_buf);
@@ -1118,7 +1119,7 @@ inline void lookup_cool_rates1d_g(
 
   // Look-up for H2 formation on dust
 
-  if ((*anydust) != MASK_FALSE) {
+  if (anydust != MASK_FALSE) {
     d_logtem0 = std::log(my_chemistry->DustTemperatureStart);
     d_logtem9 = std::log(my_chemistry->DustTemperatureEnd);
     d_dlogtem = (std::log(my_chemistry->DustTemperatureEnd) -
