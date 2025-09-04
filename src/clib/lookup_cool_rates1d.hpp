@@ -65,26 +65,26 @@ namespace grackle::impl {
 /// > dust-grain related heating and cooling should probably assume that the
 /// > dust-grain density is already 0.
 inline void lookup_cool_rates1d(
-  IndexRange idx_range, gr_mask_type anydust, double* tgas1d, double* mmw,
-  double* tdust, double* dust2gas, double* k13dd_data_, double* h2dust,
-  double dom, double dx_cgs, double c_ljeans, gr_mask_type* itmask,
-  gr_mask_type* itmask_metal, gr_float* rhoH, double dt,
-  chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
-  grackle_field_data* my_fields, photo_rate_storage my_uvb_rates,
-  InternalGrUnits internalu,
-  grackle::impl::GrainSpeciesCollection grain_growth_rates,
-  grackle::impl::GrainSpeciesCollection grain_temperatures,
-  grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf,
-  grackle::impl::CollisionalRxnRateCollection kcr_buf,
-  grackle::impl::PhotoRxnRateCollection kshield_buf,
-  grackle::impl::ChemHeatingRates chemheatrates_buf) {
+    IndexRange idx_range, gr_mask_type anydust, double* tgas1d, double* mmw,
+    double* tdust, double* dust2gas, double* k13dd_data_, double* h2dust,
+    double dom, double dx_cgs, double c_ljeans, gr_mask_type* itmask,
+    gr_mask_type* itmask_metal, gr_float* rhoH, double dt,
+    chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
+    grackle_field_data* my_fields, photo_rate_storage my_uvb_rates,
+    InternalGrUnits internalu,
+    grackle::impl::GrainSpeciesCollection grain_growth_rates,
+    grackle::impl::GrainSpeciesCollection grain_temperatures,
+    grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf,
+    grackle::impl::CollisionalRxnRateCollection kcr_buf,
+    grackle::impl::PhotoRxnRateCollection kshield_buf,
+    grackle::impl::ChemHeatingRates chemheatrates_buf) {
   // shorten `grackle::impl::fortran_wrapper` to `f_wrap` within this function
   namespace f_wrap = ::grackle::impl::fortran_wrapper;
 
   // -------------------------------------------------------------------
 
   grackle::impl::CollisionalRxnRateCollection kcol_rate_tables =
-    *(my_rates->opaque_storage->kcol_rate_tables);
+      *(my_rates->opaque_storage->kcol_rate_tables);
 
   // Chemistry rates as a function of temperature
 
@@ -1774,8 +1774,8 @@ inline void lookup_cool_rates1d(
 
           tgas_touse = std::fmax(tgas1d[i - 1], 1e2);
           tgas_touse = std::fmin(tgas_touse, 8e3);
-          ngas_touse = d(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1) * dom /
-                       mmw[i - 1];
+          ngas_touse =
+              d(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1) * dom / mmw[i - 1];
           ngas_touse = std::fmin(ngas_touse, 1e7);
 
           //_// PORT:                aWG2019 = (0.8711_DKIND *
