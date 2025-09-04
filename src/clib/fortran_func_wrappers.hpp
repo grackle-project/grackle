@@ -663,41 +663,5 @@ inline void step_rate_g(
 
 } // namespace grackle::impl::fortran_wrapper
 
-// temporary include
-#include "lookup_cool_rates1d.hpp"
-
-namespace grackle::impl::fortran_wrapper {
-
-/// This routine uses the temperature to look up the chemical rates that are
-/// tabulated in a log table as a function of temperature
-inline void lookup_cool_rates1d_g(
-  IndexRange idx_range, gr_mask_type anydust, double* tgas1d, double* mmw,
-  double* tdust, double* dust2gas, double* k13dd, double* h2dust,
-  double dom, double dx_cgs, double c_ljeans, gr_mask_type* itmask,
-  gr_mask_type* itmask_metal, int imetal, gr_float* rhoH, double dt,
-  chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
-  grackle_field_data* my_fields, photo_rate_storage my_uvb_rates,
-  InternalGrUnits internalu,
-  grackle::impl::GrainSpeciesCollection grain_growth_rates,
-  grackle::impl::GrainSpeciesCollection grain_temperatures,
-  grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf,
-  grackle::impl::CollisionalRxnRateCollection kcr_buf,
-  grackle::impl::PhotoRxnRateCollection kshield_buf,
-  grackle::impl::ChemHeatingRates chemheatrates_buf
-) {
-
-
-  // TODO: get rid of wrapper around this function
-  grackle::impl::lookup_cool_rates1d_g(
-    idx_range, anydust, tgas1d, mmw, tdust, dust2gas, k13dd, h2dust,
-    dom, dx_cgs, c_ljeans, itmask, itmask_metal, imetal, rhoH, dt,
-    my_chemistry, my_rates, my_fields, my_uvb_rates, internalu,
-    grain_growth_rates, grain_temperatures, logTlininterp_buf, kcr_buf,
-    kshield_buf, chemheatrates_buf
-  );
-}
-
-} // namespace grackle::impl::fortran_wrapper
-
 #endif /* FORTRAN_FUNC_WRAPPERS_HPP */
 
