@@ -283,8 +283,6 @@ inline void lookup_cool_rates1d(
   double* sgH2Oice = internal_dust_prop_buf.grain_sigma_per_gas_mass
                          .data[OnlyGrainSpLUT::H2O_ice_dust];
 
-  double h2SiM, h2FeM, h2Mg2SiO4, h2MgSiO3, h2Fe3O4, h2AC, h2SiO2D, h2MgO,
-      h2FeS, h2Al2O3, h2reforg, h2volorg, h2H2Oice;
   // tabulate h2 formation rate
   long long d_Size;
   std::vector<long long> d_N(2);
@@ -1104,7 +1102,7 @@ inline void lookup_cool_rates1d(
                                          internal_dust_prop_buf);
   }
 
-  // Look-up for H2 formation on dust
+  // Look-up rate for H2 formation on dust (store rate in h2dust)
 
   if (anydust != MASK_FALSE) {
     d_logtem0 = std::log(my_chemistry->DustTemperatureStart);
@@ -1113,10 +1111,20 @@ inline void lookup_cool_rates1d(
                  std::log(my_chemistry->DustTemperatureStart)) /
                 (double)(my_chemistry->NumberOfDustTemperatureBins - 1);
 
+    // we should probably enforce the following at initialization!
+    GRIMPL_REQUIRE(my_chemistry->dust_species >= 0, "sanity-check!");
+
     if (my_chemistry->dust_species == 0) {
+      // in this branch, we are just tracking a single generic dust field
       for (i = idx_range.i_start; i < idx_range.i_stop; i++) {
         if (itmask_metal[i] != MASK_FALSE) {
-          // Assume dust melting at T > 1500 K
+          // Assume dust melts at Tdust > DustTemperatureEnd, in the context of
+          // computing the H2 formation rate
+          //
+          // important: at the time of writing, whem using a generic dust
+          // density field (my_chemistry->use_dust_density_field > 0), I'm
+          // 99% sure that we don't mutate that density field. This contrasts
+          // with Grackle's behavior when tracking dust species fields.
 
           if (tdust[i] > my_chemistry->DustTemperatureEnd) {
             h2dust[i] = tiny8;
@@ -1160,13 +1168,23 @@ inline void lookup_cool_rates1d(
         }
       }
 
-    } else {
-      // create table for interpolation
+    } else {  // my_chemistry->dust_species > 0
+
+      // in this branch, the we are effectively computing:
+      //   h2dust[i]
+      //     = ∑ₛ coef_fnₛ(Tgas[i], Tdustₛ[i]) * grain_sigma_per_gas_massₛ[i]
+      // where, the "s" subscript corresponds to a dust species.
+      //
+      // In practice, `coef_fnₛ` is implemented through 2D interpolation
+      // of tabulated values
+
+      // load properties of the interpolation table
       d_N[1 - 1] = (long long)(my_chemistry->NumberOfDustTemperatureBins);
       d_N[2 - 1] = (long long)(my_chemistry->NumberOfTemperatureBins);
       d_Size = d_N[1 - 1] * d_N[2 - 1];
       d_dTd = d_dlogtem;
       d_dTg = dlogtem;
+      // note: it is inefficient to repeatedly reinitialize d_Td & d_Tg
       for (idratec = 1; idratec <= (my_chemistry->NumberOfDustTemperatureBins);
            idratec++) {
         d_Td[idratec - 1] = d_logtem0 + (double)(idratec - 1) * d_dlogtem;
@@ -1176,50 +1194,89 @@ inline void lookup_cool_rates1d(
         d_Tg[iratec - 1] = logtem0 + (double)(iratec - 1) * dlogtem;
       }
 
+      // load the tables that we are interpolating over
+      //
+      // TODO: remove these local variables
+      // - strictly speaking, these local variables are **NOT** necessary even
+      //   now. They just exist for expositionary purposes
+      // - we should only delete these local variables **AFTER** the struct
+      //   members holding the values have better names
+      const double* h2rate_silicate_coef_table = my_rates->h2dustS;
+      const double* h2rate_carbonaceous_coef_table = my_rates->h2dustC;
+
+      // At the time of writing:
+      // - we **only** use h2rate_carbonaceous_coef_table for the AC_dust
+      //   species (amorphous carbon grains)
+      // - we use h2rate_silicate_coef_table for **ALL** other grain species
+      //   (including species that are obviously NOT silicates)
+      //
+      // It is not obvious at all why this is the case...
+      //
+      // TODO: we should add documentation clearly addressing each of the
+      // following questions and replace this todo-item with a reference to the
+      // part of the documentation that discusses this! The documentation
+      // should make sure to address:
+      // - if this choice physically motivated or a common convention? (or if
+      //   it was a quick & dirty choice because Gen didn't know what to do)
+      // - do we have a sense for how "wrong" the choice is? (e.g. will it
+      //   generally overpredict/underpredict?)
+      // - why don't we use the generic my_rates->h2dusta rate as a generic
+      //   fallback for non-silicate grains instead of using h2dustS? I realize
+      //   that h2dusta has very different units...
+
+      // now its time to actually perform the calculation
       for (i = idx_range.i_start; i < idx_range.i_stop; i++) {
         if (itmask_metal[i] != MASK_FALSE) {
+          // don't forget, we are only executing this logic if we already know
+          // that my_chemistry->dust_species > 0
           if (my_chemistry->use_multiple_dust_temperatures == 0) {
-            if (my_chemistry->dust_species > 0) {
-              d_logtem[i] = std::log(tdust[i]);
-              h2MgSiO3 = f_wrap::interpolate_2d_g(
-                  d_logtem[i], logTlininterp_buf.logtem[i], d_N.data(),
-                  d_Td.data(), d_dTd, d_Tg.data(), d_dTg, d_Size,
-                  my_rates->h2dustS);
+            // in this branch, all grains share a single dust temperature
 
-              h2AC = f_wrap::interpolate_2d_g(
-                  d_logtem[i], logTlininterp_buf.logtem[i], d_N.data(),
-                  d_Td.data(), d_dTd, d_Tg.data(), d_dTg, d_Size,
-                  my_rates->h2dustC);
+            d_logtem[i] = std::log(tdust[i]);
+            double h2dust_silicate_coef = f_wrap::interpolate_2d_g(
+                d_logtem[i], logTlininterp_buf.logtem[i], d_N.data(),
+                d_Td.data(), d_dTd, d_Tg.data(), d_dTg, d_Size,
+                h2rate_silicate_coef_table);
 
-              h2dust[i] = h2MgSiO3 * sgMgSiO3[i] + h2AC * sgAC[i];
-            }
+            double h2AC = f_wrap::interpolate_2d_g(
+                d_logtem[i], logTlininterp_buf.logtem[i], d_N.data(),
+                d_Td.data(), d_dTd, d_Tg.data(), d_dTg, d_Size,
+                h2rate_carbonaceous_coef_table);
+
+            h2dust[i] = h2dust_silicate_coef * sgMgSiO3[i] + h2AC * sgAC[i];
             if (my_chemistry->dust_species > 1) {
-              h2dust[i] = h2dust[i] + h2MgSiO3 * sgSiM[i] +
-                          h2MgSiO3 * sgFeM[i] + h2MgSiO3 * sgMg2SiO4[i] +
-                          h2MgSiO3 * sgFe3O4[i] + h2MgSiO3 * sgSiO2D[i] +
-                          h2MgSiO3 * sgMgO[i] + h2MgSiO3 * sgFeS[i] +
-                          h2MgSiO3 * sgAl2O3[i];
+              h2dust[i] = h2dust[i] + h2dust_silicate_coef * sgSiM[i] +
+                          h2dust_silicate_coef * sgFeM[i] +
+                          h2dust_silicate_coef * sgMg2SiO4[i] +
+                          h2dust_silicate_coef * sgFe3O4[i] +
+                          h2dust_silicate_coef * sgSiO2D[i] +
+                          h2dust_silicate_coef * sgMgO[i] +
+                          h2dust_silicate_coef * sgFeS[i] +
+                          h2dust_silicate_coef * sgAl2O3[i];
             }
             if (my_chemistry->dust_species > 2) {
-              h2dust[i] = h2dust[i] + h2MgSiO3 * sgreforg[i] +
-                          h2MgSiO3 * sgvolorg[i] + h2MgSiO3 * sgH2Oice[i];
+              h2dust[i] = h2dust[i] + h2dust_silicate_coef * sgreforg[i] +
+                          h2dust_silicate_coef * sgvolorg[i] +
+                          h2dust_silicate_coef * sgH2Oice[i];
             }
 
           } else {
+            double h2SiM, h2FeM, h2Mg2SiO4, h2MgSiO3, h2Fe3O4, h2AC, h2SiO2D,
+                h2MgO, h2FeS, h2Al2O3, h2reforg, h2volorg, h2H2Oice;
             if (my_chemistry->dust_species > 0) {
               d_logtem[i] = std::log(
                   grain_temperatures.data[OnlyGrainSpLUT::MgSiO3_dust][i]);
               h2MgSiO3 = f_wrap::interpolate_2d_g(
                   d_logtem[i], logTlininterp_buf.logtem[i], d_N.data(),
                   d_Td.data(), d_dTd, d_Tg.data(), d_dTg, d_Size,
-                  my_rates->h2dustS);
+                  h2rate_silicate_coef_table);
 
               d_logtem[i] =
                   std::log(grain_temperatures.data[OnlyGrainSpLUT::AC_dust][i]);
               h2AC = f_wrap::interpolate_2d_g(
                   d_logtem[i], logTlininterp_buf.logtem[i], d_N.data(),
                   d_Td.data(), d_dTd, d_Tg.data(), d_dTg, d_Size,
-                  my_rates->h2dustC);
+                  h2rate_carbonaceous_coef_table);
             }
 
             if (my_chemistry->dust_species > 1) {
@@ -1228,56 +1285,56 @@ inline void lookup_cool_rates1d(
               h2SiM = f_wrap::interpolate_2d_g(
                   d_logtem[i], logTlininterp_buf.logtem[i], d_N.data(),
                   d_Td.data(), d_dTd, d_Tg.data(), d_dTg, d_Size,
-                  my_rates->h2dustS);
+                  h2rate_silicate_coef_table);
 
               d_logtem[i] = std::log(
                   grain_temperatures.data[OnlyGrainSpLUT::FeM_dust][i]);
               h2FeM = f_wrap::interpolate_2d_g(
                   d_logtem[i], logTlininterp_buf.logtem[i], d_N.data(),
                   d_Td.data(), d_dTd, d_Tg.data(), d_dTg, d_Size,
-                  my_rates->h2dustS);
+                  h2rate_silicate_coef_table);
 
               d_logtem[i] = std::log(
                   grain_temperatures.data[OnlyGrainSpLUT::Mg2SiO4_dust][i]);
               h2Mg2SiO4 = f_wrap::interpolate_2d_g(
                   d_logtem[i], logTlininterp_buf.logtem[i], d_N.data(),
                   d_Td.data(), d_dTd, d_Tg.data(), d_dTg, d_Size,
-                  my_rates->h2dustS);
+                  h2rate_silicate_coef_table);
 
               d_logtem[i] = std::log(
                   grain_temperatures.data[OnlyGrainSpLUT::Fe3O4_dust][i]);
               h2Fe3O4 = f_wrap::interpolate_2d_g(
                   d_logtem[i], logTlininterp_buf.logtem[i], d_N.data(),
                   d_Td.data(), d_dTd, d_Tg.data(), d_dTg, d_Size,
-                  my_rates->h2dustS);
+                  h2rate_silicate_coef_table);
 
               d_logtem[i] = std::log(
                   grain_temperatures.data[OnlyGrainSpLUT::SiO2_dust][i]);
               h2SiO2D = f_wrap::interpolate_2d_g(
                   d_logtem[i], logTlininterp_buf.logtem[i], d_N.data(),
                   d_Td.data(), d_dTd, d_Tg.data(), d_dTg, d_Size,
-                  my_rates->h2dustS);
+                  h2rate_silicate_coef_table);
 
               d_logtem[i] = std::log(
                   grain_temperatures.data[OnlyGrainSpLUT::MgO_dust][i]);
               h2MgO = f_wrap::interpolate_2d_g(
                   d_logtem[i], logTlininterp_buf.logtem[i], d_N.data(),
                   d_Td.data(), d_dTd, d_Tg.data(), d_dTg, d_Size,
-                  my_rates->h2dustS);
+                  h2rate_silicate_coef_table);
 
               d_logtem[i] = std::log(
                   grain_temperatures.data[OnlyGrainSpLUT::FeS_dust][i]);
               h2FeS = f_wrap::interpolate_2d_g(
                   d_logtem[i], logTlininterp_buf.logtem[i], d_N.data(),
                   d_Td.data(), d_dTd, d_Tg.data(), d_dTg, d_Size,
-                  my_rates->h2dustS);
+                  h2rate_silicate_coef_table);
 
               d_logtem[i] = std::log(
                   grain_temperatures.data[OnlyGrainSpLUT::Al2O3_dust][i]);
               h2Al2O3 = f_wrap::interpolate_2d_g(
                   d_logtem[i], logTlininterp_buf.logtem[i], d_N.data(),
                   d_Td.data(), d_dTd, d_Tg.data(), d_dTg, d_Size,
-                  my_rates->h2dustS);
+                  h2rate_silicate_coef_table);
             }
 
             if (my_chemistry->dust_species > 2) {
@@ -1286,21 +1343,21 @@ inline void lookup_cool_rates1d(
               h2reforg = f_wrap::interpolate_2d_g(
                   d_logtem[i], logTlininterp_buf.logtem[i], d_N.data(),
                   d_Td.data(), d_dTd, d_Tg.data(), d_dTg, d_Size,
-                  my_rates->h2dustS);
+                  h2rate_silicate_coef_table);
 
               d_logtem[i] = std::log(
                   grain_temperatures.data[OnlyGrainSpLUT::vol_org_dust][i]);
               h2volorg = f_wrap::interpolate_2d_g(
                   d_logtem[i], logTlininterp_buf.logtem[i], d_N.data(),
                   d_Td.data(), d_dTd, d_Tg.data(), d_dTg, d_Size,
-                  my_rates->h2dustS);
+                  h2rate_silicate_coef_table);
 
               d_logtem[i] = std::log(
                   grain_temperatures.data[OnlyGrainSpLUT::H2O_ice_dust][i]);
               h2H2Oice = f_wrap::interpolate_2d_g(
                   d_logtem[i], logTlininterp_buf.logtem[i], d_N.data(),
                   d_Td.data(), d_dTd, d_Tg.data(), d_dTg, d_Size,
-                  my_rates->h2dustS);
+                  h2rate_silicate_coef_table);
             }
 
             if (my_chemistry->dust_species > 0) {
