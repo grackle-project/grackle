@@ -693,7 +693,7 @@ inline void lookup_cool_rates1d_g(
   // TODO: get rid of wrapper around this function
   grackle::impl::lookup_cool_rates1d_g(
     idx_range, anydust, tgas1d, mmw, tdust, dust2gas, k13dd, h2dust,
-    &dom, &dx_cgs, &c_ljeans, itmask, itmask_metal, &imetal, rhoH, &dt,
+    dom, dx_cgs, c_ljeans, itmask, itmask_metal, imetal, rhoH, dt,
     my_chemistry, my_rates, my_fields, my_uvb_rates, internalu,
     grain_growth_rates, grain_temperatures, logTlininterp_buf, kcr_buf,
     *kcol_rate_tables, kshield_buf, chemheatrates_buf
