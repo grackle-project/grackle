@@ -24,6 +24,7 @@
 #include "fortran_func_decls.h"
 #include "fortran_func_wrappers.hpp"
 #include "internal_types.hpp"
+#include "opaque_storage.hpp"
 #include "utils-cpp.hpp"
 
 namespace grackle::impl {
@@ -75,7 +76,6 @@ inline void lookup_cool_rates1d_g(
   grackle::impl::GrainSpeciesCollection grain_temperatures,
   grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf,
   grackle::impl::CollisionalRxnRateCollection kcr_buf,
-  grackle::impl::CollisionalRxnRateCollection kcol_rate_tables,
   grackle::impl::PhotoRxnRateCollection kshield_buf,
   grackle::impl::ChemHeatingRates chemheatrates_buf) {
   // shorten `grackle::impl::fortran_wrapper` to `f_wrap` within this function
@@ -83,7 +83,8 @@ inline void lookup_cool_rates1d_g(
 
   // -------------------------------------------------------------------
 
-  // Arguments
+  grackle::impl::CollisionalRxnRateCollection kcol_rate_tables =
+    *(my_rates->opaque_storage->kcol_rate_tables);
 
   // Chemistry rates as a function of temperature
 

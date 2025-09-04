@@ -29,7 +29,6 @@
 #include "internal_types.hpp"
 #include "internal_units.h"
 #include "LUT.hpp"
-#include "opaque_storage.hpp"
 #include "utils-cpp.hpp"
 
 // callers of these functions are generally expected to locally shorten the
@@ -687,8 +686,6 @@ inline void lookup_cool_rates1d_g(
   grackle::impl::ChemHeatingRates chemheatrates_buf
 ) {
 
-  grackle::impl::CollisionalRxnRateCollection* kcol_rate_tables =
-    my_rates->opaque_storage->kcol_rate_tables;
 
   // TODO: get rid of wrapper around this function
   grackle::impl::lookup_cool_rates1d_g(
@@ -696,7 +693,7 @@ inline void lookup_cool_rates1d_g(
     dom, dx_cgs, c_ljeans, itmask, itmask_metal, imetal, rhoH, dt,
     my_chemistry, my_rates, my_fields, my_uvb_rates, internalu,
     grain_growth_rates, grain_temperatures, logTlininterp_buf, kcr_buf,
-    *kcol_rate_tables, kshield_buf, chemheatrates_buf
+    kshield_buf, chemheatrates_buf
   );
 }
 
