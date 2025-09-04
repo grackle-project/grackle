@@ -348,68 +348,68 @@ inline void lookup_cool_rates1d(
       // Do linear table lookup (in log temperature)
 
       kcr_buf.data[CollisionalRxnLUT::k1][i] =
-          kcol_rate_tables.data[CollisionalRxnLUT::k1]
-                               [logTlininterp_buf.indixe[i] - 1] +
+          kcol_rate_tables
+              .data[CollisionalRxnLUT::k1][logTlininterp_buf.indixe[i] - 1] +
           (kcol_rate_tables.data[CollisionalRxnLUT::k1]
                                 [logTlininterp_buf.indixe[i] + 1 - 1] -
-           kcol_rate_tables.data[CollisionalRxnLUT::k1]
-                                [logTlininterp_buf.indixe[i] - 1]) *
+           kcol_rate_tables
+               .data[CollisionalRxnLUT::k1][logTlininterp_buf.indixe[i] - 1]) *
               logTlininterp_buf.tdef[i];
       kcr_buf.data[CollisionalRxnLUT::k2][i] =
-          kcol_rate_tables.data[CollisionalRxnLUT::k2]
-                               [logTlininterp_buf.indixe[i] - 1] +
+          kcol_rate_tables
+              .data[CollisionalRxnLUT::k2][logTlininterp_buf.indixe[i] - 1] +
           (kcol_rate_tables.data[CollisionalRxnLUT::k2]
                                 [logTlininterp_buf.indixe[i] + 1 - 1] -
-           kcol_rate_tables.data[CollisionalRxnLUT::k2]
-                                [logTlininterp_buf.indixe[i] - 1]) *
+           kcol_rate_tables
+               .data[CollisionalRxnLUT::k2][logTlininterp_buf.indixe[i] - 1]) *
               logTlininterp_buf.tdef[i];
       kcr_buf.data[CollisionalRxnLUT::k3][i] =
-          kcol_rate_tables.data[CollisionalRxnLUT::k3]
-                               [logTlininterp_buf.indixe[i] - 1] +
+          kcol_rate_tables
+              .data[CollisionalRxnLUT::k3][logTlininterp_buf.indixe[i] - 1] +
           (kcol_rate_tables.data[CollisionalRxnLUT::k3]
                                 [logTlininterp_buf.indixe[i] + 1 - 1] -
-           kcol_rate_tables.data[CollisionalRxnLUT::k3]
-                                [logTlininterp_buf.indixe[i] - 1]) *
+           kcol_rate_tables
+               .data[CollisionalRxnLUT::k3][logTlininterp_buf.indixe[i] - 1]) *
               logTlininterp_buf.tdef[i];
       kcr_buf.data[CollisionalRxnLUT::k4][i] =
-          kcol_rate_tables.data[CollisionalRxnLUT::k4]
-                               [logTlininterp_buf.indixe[i] - 1] +
+          kcol_rate_tables
+              .data[CollisionalRxnLUT::k4][logTlininterp_buf.indixe[i] - 1] +
           (kcol_rate_tables.data[CollisionalRxnLUT::k4]
                                 [logTlininterp_buf.indixe[i] + 1 - 1] -
-           kcol_rate_tables.data[CollisionalRxnLUT::k4]
-                                [logTlininterp_buf.indixe[i] - 1]) *
+           kcol_rate_tables
+               .data[CollisionalRxnLUT::k4][logTlininterp_buf.indixe[i] - 1]) *
               logTlininterp_buf.tdef[i];
       kcr_buf.data[CollisionalRxnLUT::k5][i] =
-          kcol_rate_tables.data[CollisionalRxnLUT::k5]
-                               [logTlininterp_buf.indixe[i] - 1] +
+          kcol_rate_tables
+              .data[CollisionalRxnLUT::k5][logTlininterp_buf.indixe[i] - 1] +
           (kcol_rate_tables.data[CollisionalRxnLUT::k5]
                                 [logTlininterp_buf.indixe[i] + 1 - 1] -
-           kcol_rate_tables.data[CollisionalRxnLUT::k5]
-                                [logTlininterp_buf.indixe[i] - 1]) *
+           kcol_rate_tables
+               .data[CollisionalRxnLUT::k5][logTlininterp_buf.indixe[i] - 1]) *
               logTlininterp_buf.tdef[i];
       kcr_buf.data[CollisionalRxnLUT::k6][i] =
-          kcol_rate_tables.data[CollisionalRxnLUT::k6]
-                               [logTlininterp_buf.indixe[i] - 1] +
+          kcol_rate_tables
+              .data[CollisionalRxnLUT::k6][logTlininterp_buf.indixe[i] - 1] +
           (kcol_rate_tables.data[CollisionalRxnLUT::k6]
                                 [logTlininterp_buf.indixe[i] + 1 - 1] -
-           kcol_rate_tables.data[CollisionalRxnLUT::k6]
-                                [logTlininterp_buf.indixe[i] - 1]) *
+           kcol_rate_tables
+               .data[CollisionalRxnLUT::k6][logTlininterp_buf.indixe[i] - 1]) *
               logTlininterp_buf.tdef[i];
       kcr_buf.data[CollisionalRxnLUT::k57][i] =
-          kcol_rate_tables.data[CollisionalRxnLUT::k57]
-                               [logTlininterp_buf.indixe[i] - 1] +
+          kcol_rate_tables
+              .data[CollisionalRxnLUT::k57][logTlininterp_buf.indixe[i] - 1] +
           (kcol_rate_tables.data[CollisionalRxnLUT::k57]
                                 [logTlininterp_buf.indixe[i] + 1 - 1] -
-           kcol_rate_tables.data[CollisionalRxnLUT::k57]
-                                [logTlininterp_buf.indixe[i] - 1]) *
+           kcol_rate_tables
+               .data[CollisionalRxnLUT::k57][logTlininterp_buf.indixe[i] - 1]) *
               logTlininterp_buf.tdef[i];
       kcr_buf.data[CollisionalRxnLUT::k58][i] =
-          kcol_rate_tables.data[CollisionalRxnLUT::k58]
-                               [logTlininterp_buf.indixe[i] - 1] +
+          kcol_rate_tables
+              .data[CollisionalRxnLUT::k58][logTlininterp_buf.indixe[i] - 1] +
           (kcol_rate_tables.data[CollisionalRxnLUT::k58]
                                 [logTlininterp_buf.indixe[i] + 1 - 1] -
-           kcol_rate_tables.data[CollisionalRxnLUT::k58]
-                                [logTlininterp_buf.indixe[i] - 1]) *
+           kcol_rate_tables
+               .data[CollisionalRxnLUT::k58][logTlininterp_buf.indixe[i] - 1]) *
               logTlininterp_buf.tdef[i];
     }
   }
@@ -420,112 +420,112 @@ inline void lookup_cool_rates1d(
     for (i = idx_range.i_start; i < idx_range.i_stop; i++) {
       if (itmask[i] != MASK_FALSE) {
         kcr_buf.data[CollisionalRxnLUT::k7][i] =
-            kcol_rate_tables.data[CollisionalRxnLUT::k7]
-                                 [logTlininterp_buf.indixe[i] - 1] +
+            kcol_rate_tables
+                .data[CollisionalRxnLUT::k7][logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::k7]
                                   [logTlininterp_buf.indixe[i] + 1 - 1] -
              kcol_rate_tables.data[CollisionalRxnLUT::k7]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
         kcr_buf.data[CollisionalRxnLUT::k8][i] =
-            kcol_rate_tables.data[CollisionalRxnLUT::k8]
-                                 [logTlininterp_buf.indixe[i] - 1] +
+            kcol_rate_tables
+                .data[CollisionalRxnLUT::k8][logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::k8]
                                   [logTlininterp_buf.indixe[i] + 1 - 1] -
              kcol_rate_tables.data[CollisionalRxnLUT::k8]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
         kcr_buf.data[CollisionalRxnLUT::k9][i] =
-            kcol_rate_tables.data[CollisionalRxnLUT::k9]
-                                 [logTlininterp_buf.indixe[i] - 1] +
+            kcol_rate_tables
+                .data[CollisionalRxnLUT::k9][logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::k9]
                                   [logTlininterp_buf.indixe[i] + 1 - 1] -
              kcol_rate_tables.data[CollisionalRxnLUT::k9]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
         kcr_buf.data[CollisionalRxnLUT::k10][i] =
-            kcol_rate_tables.data[CollisionalRxnLUT::k10]
-                                 [logTlininterp_buf.indixe[i] - 1] +
+            kcol_rate_tables
+                .data[CollisionalRxnLUT::k10][logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::k10]
                                   [logTlininterp_buf.indixe[i] + 1 - 1] -
              kcol_rate_tables.data[CollisionalRxnLUT::k10]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
         kcr_buf.data[CollisionalRxnLUT::k11][i] =
-            kcol_rate_tables.data[CollisionalRxnLUT::k11]
-                                 [logTlininterp_buf.indixe[i] - 1] +
+            kcol_rate_tables
+                .data[CollisionalRxnLUT::k11][logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::k11]
                                   [logTlininterp_buf.indixe[i] + 1 - 1] -
              kcol_rate_tables.data[CollisionalRxnLUT::k11]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
         kcr_buf.data[CollisionalRxnLUT::k12][i] =
-            kcol_rate_tables.data[CollisionalRxnLUT::k12]
-                                 [logTlininterp_buf.indixe[i] - 1] +
+            kcol_rate_tables
+                .data[CollisionalRxnLUT::k12][logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::k12]
                                   [logTlininterp_buf.indixe[i] + 1 - 1] -
              kcol_rate_tables.data[CollisionalRxnLUT::k12]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
         kcr_buf.data[CollisionalRxnLUT::k13][i] =
-            kcol_rate_tables.data[CollisionalRxnLUT::k13]
-                                 [logTlininterp_buf.indixe[i] - 1] +
+            kcol_rate_tables
+                .data[CollisionalRxnLUT::k13][logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::k13]
                                   [logTlininterp_buf.indixe[i] + 1 - 1] -
              kcol_rate_tables.data[CollisionalRxnLUT::k13]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
         kcr_buf.data[CollisionalRxnLUT::k14][i] =
-            kcol_rate_tables.data[CollisionalRxnLUT::k14]
-                                 [logTlininterp_buf.indixe[i] - 1] +
+            kcol_rate_tables
+                .data[CollisionalRxnLUT::k14][logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::k14]
                                   [logTlininterp_buf.indixe[i] + 1 - 1] -
              kcol_rate_tables.data[CollisionalRxnLUT::k14]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
         kcr_buf.data[CollisionalRxnLUT::k15][i] =
-            kcol_rate_tables.data[CollisionalRxnLUT::k15]
-                                 [logTlininterp_buf.indixe[i] - 1] +
+            kcol_rate_tables
+                .data[CollisionalRxnLUT::k15][logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::k15]
                                   [logTlininterp_buf.indixe[i] + 1 - 1] -
              kcol_rate_tables.data[CollisionalRxnLUT::k15]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
         kcr_buf.data[CollisionalRxnLUT::k16][i] =
-            kcol_rate_tables.data[CollisionalRxnLUT::k16]
-                                 [logTlininterp_buf.indixe[i] - 1] +
+            kcol_rate_tables
+                .data[CollisionalRxnLUT::k16][logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::k16]
                                   [logTlininterp_buf.indixe[i] + 1 - 1] -
              kcol_rate_tables.data[CollisionalRxnLUT::k16]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
         kcr_buf.data[CollisionalRxnLUT::k17][i] =
-            kcol_rate_tables.data[CollisionalRxnLUT::k17]
-                                 [logTlininterp_buf.indixe[i] - 1] +
+            kcol_rate_tables
+                .data[CollisionalRxnLUT::k17][logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::k17]
                                   [logTlininterp_buf.indixe[i] + 1 - 1] -
              kcol_rate_tables.data[CollisionalRxnLUT::k17]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
         kcr_buf.data[CollisionalRxnLUT::k18][i] =
-            kcol_rate_tables.data[CollisionalRxnLUT::k18]
-                                 [logTlininterp_buf.indixe[i] - 1] +
+            kcol_rate_tables
+                .data[CollisionalRxnLUT::k18][logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::k18]
                                   [logTlininterp_buf.indixe[i] + 1 - 1] -
              kcol_rate_tables.data[CollisionalRxnLUT::k18]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
         kcr_buf.data[CollisionalRxnLUT::k19][i] =
-            kcol_rate_tables.data[CollisionalRxnLUT::k19]
-                                 [logTlininterp_buf.indixe[i] - 1] +
+            kcol_rate_tables
+                .data[CollisionalRxnLUT::k19][logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::k19]
                                   [logTlininterp_buf.indixe[i] + 1 - 1] -
              kcol_rate_tables.data[CollisionalRxnLUT::k19]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
         kcr_buf.data[CollisionalRxnLUT::k22][i] =
-            kcol_rate_tables.data[CollisionalRxnLUT::k22]
-                                 [logTlininterp_buf.indixe[i] - 1] +
+            kcol_rate_tables
+                .data[CollisionalRxnLUT::k22][logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::k22]
                                   [logTlininterp_buf.indixe[i] + 1 - 1] -
              kcol_rate_tables.data[CollisionalRxnLUT::k22]
@@ -571,56 +571,56 @@ inline void lookup_cool_rates1d(
     for (i = idx_range.i_start; i < idx_range.i_stop; i++) {
       if (itmask[i] != MASK_FALSE) {
         kcr_buf.data[CollisionalRxnLUT::k50][i] =
-            kcol_rate_tables.data[CollisionalRxnLUT::k50]
-                                 [logTlininterp_buf.indixe[i] - 1] +
+            kcol_rate_tables
+                .data[CollisionalRxnLUT::k50][logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::k50]
                                   [logTlininterp_buf.indixe[i] + 1 - 1] -
              kcol_rate_tables.data[CollisionalRxnLUT::k50]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
         kcr_buf.data[CollisionalRxnLUT::k51][i] =
-            kcol_rate_tables.data[CollisionalRxnLUT::k51]
-                                 [logTlininterp_buf.indixe[i] - 1] +
+            kcol_rate_tables
+                .data[CollisionalRxnLUT::k51][logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::k51]
                                   [logTlininterp_buf.indixe[i] + 1 - 1] -
              kcol_rate_tables.data[CollisionalRxnLUT::k51]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
         kcr_buf.data[CollisionalRxnLUT::k52][i] =
-            kcol_rate_tables.data[CollisionalRxnLUT::k52]
-                                 [logTlininterp_buf.indixe[i] - 1] +
+            kcol_rate_tables
+                .data[CollisionalRxnLUT::k52][logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::k52]
                                   [logTlininterp_buf.indixe[i] + 1 - 1] -
              kcol_rate_tables.data[CollisionalRxnLUT::k52]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
         kcr_buf.data[CollisionalRxnLUT::k53][i] =
-            kcol_rate_tables.data[CollisionalRxnLUT::k53]
-                                 [logTlininterp_buf.indixe[i] - 1] +
+            kcol_rate_tables
+                .data[CollisionalRxnLUT::k53][logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::k53]
                                   [logTlininterp_buf.indixe[i] + 1 - 1] -
              kcol_rate_tables.data[CollisionalRxnLUT::k53]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
         kcr_buf.data[CollisionalRxnLUT::k54][i] =
-            kcol_rate_tables.data[CollisionalRxnLUT::k54]
-                                 [logTlininterp_buf.indixe[i] - 1] +
+            kcol_rate_tables
+                .data[CollisionalRxnLUT::k54][logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::k54]
                                   [logTlininterp_buf.indixe[i] + 1 - 1] -
              kcol_rate_tables.data[CollisionalRxnLUT::k54]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
         kcr_buf.data[CollisionalRxnLUT::k55][i] =
-            kcol_rate_tables.data[CollisionalRxnLUT::k55]
-                                 [logTlininterp_buf.indixe[i] - 1] +
+            kcol_rate_tables
+                .data[CollisionalRxnLUT::k55][logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::k55]
                                   [logTlininterp_buf.indixe[i] + 1 - 1] -
              kcol_rate_tables.data[CollisionalRxnLUT::k55]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
         kcr_buf.data[CollisionalRxnLUT::k56][i] =
-            kcol_rate_tables.data[CollisionalRxnLUT::k56]
-                                 [logTlininterp_buf.indixe[i] - 1] +
+            kcol_rate_tables
+                .data[CollisionalRxnLUT::k56][logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::k56]
                                   [logTlininterp_buf.indixe[i] + 1 - 1] -
              kcol_rate_tables.data[CollisionalRxnLUT::k56]
@@ -1132,31 +1132,26 @@ inline void lookup_cool_rates1d(
             d_indixe[i] = std::fmin(
                 my_chemistry->NumberOfDustTemperatureBins - 1,
                 std::fmax(
-                    1, (long long)((d_logtem[i] - d_logtem0) / d_dlogtem) +
-                           1));
+                    1, (long long)((d_logtem[i] - d_logtem0) / d_dlogtem) + 1));
             d_t1[i] = (d_logtem0 + (d_indixe[i] - 1) * d_dlogtem);
             d_t2[i] = (d_logtem0 + (d_indixe[i]) * d_dlogtem);
-            d_tdef[i] =
-                (d_logtem[i] - d_t1[i]) / (d_t2[i] - d_t1[i]);
+            d_tdef[i] = (d_logtem[i] - d_t1[i]) / (d_t2[i] - d_t1[i]);
 
             // Get rate from 2D interpolation
 
-            dusti1[i] = h2dusta(logTlininterp_buf.indixe[i] - 1,
-                                    d_indixe[i] - 1) +
-                            (h2dusta(logTlininterp_buf.indixe[i] + 1 - 1,
-                                     d_indixe[i] - 1) -
-                             h2dusta(logTlininterp_buf.indixe[i] - 1,
-                                     d_indixe[i] - 1)) *
-                                logTlininterp_buf.tdef[i];
-            dusti2[i] = h2dusta(logTlininterp_buf.indixe[i] - 1,
-                                    d_indixe[i] + 1 - 1) +
-                            (h2dusta(logTlininterp_buf.indixe[i] + 1 - 1,
-                                     d_indixe[i] + 1 - 1) -
-                             h2dusta(logTlininterp_buf.indixe[i] - 1,
-                                     d_indixe[i] + 1 - 1)) *
-                                logTlininterp_buf.tdef[i];
-            h2dust[i] =
-                dusti1[i] + (dusti2[i] - dusti1[i]) * d_tdef[i];
+            dusti1[i] =
+                h2dusta(logTlininterp_buf.indixe[i] - 1, d_indixe[i] - 1) +
+                (h2dusta(logTlininterp_buf.indixe[i] + 1 - 1, d_indixe[i] - 1) -
+                 h2dusta(logTlininterp_buf.indixe[i] - 1, d_indixe[i] - 1)) *
+                    logTlininterp_buf.tdef[i];
+            dusti2[i] =
+                h2dusta(logTlininterp_buf.indixe[i] - 1, d_indixe[i] + 1 - 1) +
+                (h2dusta(logTlininterp_buf.indixe[i] + 1 - 1,
+                         d_indixe[i] + 1 - 1) -
+                 h2dusta(logTlininterp_buf.indixe[i] - 1,
+                         d_indixe[i] + 1 - 1)) *
+                    logTlininterp_buf.tdef[i];
+            h2dust[i] = dusti1[i] + (dusti2[i] - dusti1[i]) * d_tdef[i];
 
             // Multiply by dust to gas ratio
 
@@ -1199,17 +1194,15 @@ inline void lookup_cool_rates1d(
               h2dust[i] = h2MgSiO3 * sgMgSiO3[i] + h2AC * sgAC[i];
             }
             if (my_chemistry->dust_species > 1) {
-              h2dust[i] =
-                  h2dust[i] + h2MgSiO3 * sgSiM[i] +
-                  h2MgSiO3 * sgFeM[i] + h2MgSiO3 * sgMg2SiO4[i] +
-                  h2MgSiO3 * sgFe3O4[i] + h2MgSiO3 * sgSiO2D[i] +
-                  h2MgSiO3 * sgMgO[i] + h2MgSiO3 * sgFeS[i] +
-                  h2MgSiO3 * sgAl2O3[i];
+              h2dust[i] = h2dust[i] + h2MgSiO3 * sgSiM[i] +
+                          h2MgSiO3 * sgFeM[i] + h2MgSiO3 * sgMg2SiO4[i] +
+                          h2MgSiO3 * sgFe3O4[i] + h2MgSiO3 * sgSiO2D[i] +
+                          h2MgSiO3 * sgMgO[i] + h2MgSiO3 * sgFeS[i] +
+                          h2MgSiO3 * sgAl2O3[i];
             }
             if (my_chemistry->dust_species > 2) {
               h2dust[i] = h2dust[i] + h2MgSiO3 * sgreforg[i] +
-                              h2MgSiO3 * sgvolorg[i] +
-                              h2MgSiO3 * sgH2Oice[i];
+                          h2MgSiO3 * sgvolorg[i] + h2MgSiO3 * sgH2Oice[i];
             }
 
           } else {
@@ -1221,8 +1214,8 @@ inline void lookup_cool_rates1d(
                   d_Td.data(), d_dTd, d_Tg.data(), d_dTg, d_Size,
                   my_rates->h2dustS);
 
-              d_logtem[i] = std::log(
-                  grain_temperatures.data[OnlyGrainSpLUT::AC_dust][i]);
+              d_logtem[i] =
+                  std::log(grain_temperatures.data[OnlyGrainSpLUT::AC_dust][i]);
               h2AC = f_wrap::interpolate_2d_g(
                   d_logtem[i], logTlininterp_buf.logtem[i], d_N.data(),
                   d_Td.data(), d_dTd, d_Tg.data(), d_dTg, d_Size,
@@ -1314,16 +1307,14 @@ inline void lookup_cool_rates1d(
               h2dust[i] = h2MgSiO3 * sgMgSiO3[i] + h2AC * sgAC[i];
             }
             if (my_chemistry->dust_species > 1) {
-              h2dust[i] =
-                  h2dust[i] + h2SiM * sgSiM[i] + h2FeM * sgFeM[i] +
-                  h2Mg2SiO4 * sgMg2SiO4[i] + h2Fe3O4 * sgFe3O4[i] +
-                  h2SiO2D * sgSiO2D[i] + h2MgO * sgMgO[i] +
-                  h2FeS * sgFeS[i] + h2Al2O3 * sgAl2O3[i];
+              h2dust[i] = h2dust[i] + h2SiM * sgSiM[i] + h2FeM * sgFeM[i] +
+                          h2Mg2SiO4 * sgMg2SiO4[i] + h2Fe3O4 * sgFe3O4[i] +
+                          h2SiO2D * sgSiO2D[i] + h2MgO * sgMgO[i] +
+                          h2FeS * sgFeS[i] + h2Al2O3 * sgAl2O3[i];
             }
             if (my_chemistry->dust_species > 2) {
               h2dust[i] = h2dust[i] + h2reforg * sgreforg[i] +
-                              h2volorg * sgvolorg[i] +
-                              h2H2Oice * sgH2Oice[i];
+                          h2volorg * sgvolorg[i] + h2H2Oice * sgH2Oice[i];
             }
           }
         }
@@ -1336,20 +1327,17 @@ inline void lookup_cool_rates1d(
           if (my_chemistry->grain_growth == 1) {
             if (my_chemistry->dust_species > 0) {
               kd = f_wrap::interpolate_1d_g(
-                  logTlininterp_buf.logtem[i],
-                  nratec_single_elem_arr.data(), d_Tg.data(), d_dTg,
-                  nratec_single_elem_arr[0], my_rates->grain_growth_rate);
+                  logTlininterp_buf.logtem[i], nratec_single_elem_arr.data(),
+                  d_Tg.data(), d_dTg, nratec_single_elem_arr[0],
+                  my_rates->grain_growth_rate);
 
               grain_growth_rates.data[OnlyGrainSpLUT::MgSiO3_dust][i] =
-                  kd * sgMgSiO3[i] *
-                  d(i, idx_range.j, idx_range.k) *
+                  kd * sgMgSiO3[i] * d(i, idx_range.j, idx_range.k) *
                   grackle::impl::fmin(
-                      Mg(i, idx_range.j, idx_range.k) /
-                          std::pow(24., 1.5),
-                      SiOI(i, idx_range.j, idx_range.k) /
-                          std::pow(44., 1.5),
-                      H2O(i, idx_range.j, idx_range.k) /
-                          std::pow(18., 1.5) / 2.);
+                      Mg(i, idx_range.j, idx_range.k) / std::pow(24., 1.5),
+                      SiOI(i, idx_range.j, idx_range.k) / std::pow(44., 1.5),
+                      H2O(i, idx_range.j, idx_range.k) / std::pow(18., 1.5) /
+                          2.);
               // !             if ( idsub .eq. 1 )
               // !   &            kdMgSiO3  (i) = kdMgSiO3  (i) * ( 1.d0 -
               // !   &           sqrt(tMgSiO3 (i) / tgas1d(i))
@@ -1362,99 +1350,77 @@ inline void lookup_cool_rates1d(
               // !             Formulation from Nozawa et al. (2003, 2012)
 
               grain_growth_rates.data[OnlyGrainSpLUT::AC_dust][i] =
-                  kd * sgAC[i] *
-                  d(i, idx_range.j, idx_range.k) *
-                  CI(i, idx_range.j, idx_range.k) /
-                  std::pow(12., 1.5);
+                  kd * sgAC[i] * d(i, idx_range.j, idx_range.k) *
+                  CI(i, idx_range.j, idx_range.k) / std::pow(12., 1.5);
             }
 
             if (my_chemistry->dust_species > 1) {
               grain_growth_rates.data[OnlyGrainSpLUT::SiM_dust][i] =
-                  kd * sgSiM[i] *
-                  d(i, idx_range.j, idx_range.k) *
-                  SiI(i, idx_range.j, idx_range.k) /
-                  std::pow(28., 1.5);
+                  kd * sgSiM[i] * d(i, idx_range.j, idx_range.k) *
+                  SiI(i, idx_range.j, idx_range.k) / std::pow(28., 1.5);
 
               grain_growth_rates.data[OnlyGrainSpLUT::FeM_dust][i] =
-                  kd * sgFeM[i] *
-                  d(i, idx_range.j, idx_range.k) *
-                  Fe(i, idx_range.j, idx_range.k) /
-                  std::pow(56., 1.5);
+                  kd * sgFeM[i] * d(i, idx_range.j, idx_range.k) *
+                  Fe(i, idx_range.j, idx_range.k) / std::pow(56., 1.5);
 
               grain_growth_rates.data[OnlyGrainSpLUT::Mg2SiO4_dust][i] =
-                  kd * sgMg2SiO4[i] *
-                  d(i, idx_range.j, idx_range.k) *
+                  kd * sgMg2SiO4[i] * d(i, idx_range.j, idx_range.k) *
                   grackle::impl::fmin(
-                      Mg(i, idx_range.j, idx_range.k) /
-                          std::pow(24., 1.5) / 2.,
-                      SiOI(i, idx_range.j, idx_range.k) /
-                          std::pow(44., 1.5),
-                      H2O(i, idx_range.j, idx_range.k) /
-                          std::pow(18., 1.5) / 3.);
+                      Mg(i, idx_range.j, idx_range.k) / std::pow(24., 1.5) / 2.,
+                      SiOI(i, idx_range.j, idx_range.k) / std::pow(44., 1.5),
+                      H2O(i, idx_range.j, idx_range.k) / std::pow(18., 1.5) /
+                          3.);
 
               grain_growth_rates.data[OnlyGrainSpLUT::Fe3O4_dust][i] =
-                  kd * sgFe3O4[i] *
-                  d(i, idx_range.j, idx_range.k) *
-                  std::fmin(Fe(i, idx_range.j, idx_range.k) /
-                                std::pow(56., 1.5) / 3.,
-                            H2O(i, idx_range.j, idx_range.k) /
-                                std::pow(18., 1.5) / 4.);
+                  kd * sgFe3O4[i] * d(i, idx_range.j, idx_range.k) *
+                  std::fmin(
+                      Fe(i, idx_range.j, idx_range.k) / std::pow(56., 1.5) / 3.,
+                      H2O(i, idx_range.j, idx_range.k) / std::pow(18., 1.5) /
+                          4.);
 
               grain_growth_rates.data[OnlyGrainSpLUT::SiO2_dust][i] =
-                  kd * sgSiO2D[i] *
-                  d(i, idx_range.j, idx_range.k) *
-                  SiO2I(i, idx_range.j, idx_range.k) /
-                  std::pow(60., 1.5);
+                  kd * sgSiO2D[i] * d(i, idx_range.j, idx_range.k) *
+                  SiO2I(i, idx_range.j, idx_range.k) / std::pow(60., 1.5);
 
               grain_growth_rates.data[OnlyGrainSpLUT::MgO_dust][i] =
-                  kd * sgMgO[i] *
-                  d(i, idx_range.j, idx_range.k) *
-                  std::fmin(Mg(i, idx_range.j, idx_range.k) /
-                                std::pow(24., 1.5),
-                            H2O(i, idx_range.j, idx_range.k) /
-                                std::pow(18., 1.5));
+                  kd * sgMgO[i] * d(i, idx_range.j, idx_range.k) *
+                  std::fmin(
+                      Mg(i, idx_range.j, idx_range.k) / std::pow(24., 1.5),
+                      H2O(i, idx_range.j, idx_range.k) / std::pow(18., 1.5));
 
               grain_growth_rates.data[OnlyGrainSpLUT::FeS_dust][i] =
-                  kd * sgFeS[i] *
-                  d(i, idx_range.j, idx_range.k) *
-                  std::fmin(S(i, idx_range.j, idx_range.k) /
-                                std::pow(32., 1.5),
-                            Fe(i, idx_range.j, idx_range.k) /
-                                std::pow(56., 1.5));
+                  kd * sgFeS[i] * d(i, idx_range.j, idx_range.k) *
+                  std::fmin(
+                      S(i, idx_range.j, idx_range.k) / std::pow(32., 1.5),
+                      Fe(i, idx_range.j, idx_range.k) / std::pow(56., 1.5));
 
               grain_growth_rates.data[OnlyGrainSpLUT::Al2O3_dust][i] =
-                  kd * sgAl2O3[i] *
-                  d(i, idx_range.j, idx_range.k) *
-                  std::fmin(Al(i, idx_range.j, idx_range.k) /
-                                std::pow(27., 1.5) / 2.,
-                            H2O(i, idx_range.j, idx_range.k) /
-                                std::pow(18., 1.5) / 3.);
+                  kd * sgAl2O3[i] * d(i, idx_range.j, idx_range.k) *
+                  std::fmin(
+                      Al(i, idx_range.j, idx_range.k) / std::pow(27., 1.5) / 2.,
+                      H2O(i, idx_range.j, idx_range.k) / std::pow(18., 1.5) /
+                          3.);
             }
 
             // We do not consider the growth of refractory organics, volatile
             // organics, and water ice because their sublimation temperatures
             // are low (100-600 K). They sublimate before the growth occurs.
             if (my_chemistry->dust_species > 2) {
-              grain_growth_rates.data[OnlyGrainSpLUT::ref_org_dust][i] =
-                  0.e0;
-              grain_growth_rates.data[OnlyGrainSpLUT::vol_org_dust][i] =
-                  0.e0;
-              grain_growth_rates.data[OnlyGrainSpLUT::H2O_ice_dust][i] =
-                  0.e0;
+              grain_growth_rates.data[OnlyGrainSpLUT::ref_org_dust][i] = 0.e0;
+              grain_growth_rates.data[OnlyGrainSpLUT::vol_org_dust][i] = 0.e0;
+              grain_growth_rates.data[OnlyGrainSpLUT::H2O_ice_dust][i] = 0.e0;
             }
           }
 
           if (my_chemistry->dust_sublimation == 1) {
             if (my_chemistry->dust_species > 0) {
-              grain_growth_rates.data[OnlyGrainSpLUT::MgSiO3_dust][i] =
-                  0.e0;
+              grain_growth_rates.data[OnlyGrainSpLUT::MgSiO3_dust][i] = 0.e0;
               grain_growth_rates.data[OnlyGrainSpLUT::AC_dust][i] = 0.e0;
             }
             if (my_chemistry->dust_species > 1) {
               grain_growth_rates.data[OnlyGrainSpLUT::SiM_dust][i] = 0.e0;
               grain_growth_rates.data[OnlyGrainSpLUT::FeM_dust][i] = 0.e0;
-              grain_growth_rates.data[OnlyGrainSpLUT::Mg2SiO4_dust][i] =
-                  0.e0;
+              grain_growth_rates.data[OnlyGrainSpLUT::Mg2SiO4_dust][i] = 0.e0;
               grain_growth_rates.data[OnlyGrainSpLUT::Fe3O4_dust][i] = 0.e0;
               grain_growth_rates.data[OnlyGrainSpLUT::SiO2_dust][i] = 0.e0;
               grain_growth_rates.data[OnlyGrainSpLUT::MgO_dust][i] = 0.e0;
@@ -1462,117 +1428,84 @@ inline void lookup_cool_rates1d(
               grain_growth_rates.data[OnlyGrainSpLUT::Al2O3_dust][i] = 0.e0;
             }
             if (my_chemistry->dust_species > 2) {
-              grain_growth_rates.data[OnlyGrainSpLUT::ref_org_dust][i] =
-                  0.e0;
-              grain_growth_rates.data[OnlyGrainSpLUT::vol_org_dust][i] =
-                  0.e0;
-              grain_growth_rates.data[OnlyGrainSpLUT::H2O_ice_dust][i] =
-                  0.e0;
+              grain_growth_rates.data[OnlyGrainSpLUT::ref_org_dust][i] = 0.e0;
+              grain_growth_rates.data[OnlyGrainSpLUT::vol_org_dust][i] = 0.e0;
+              grain_growth_rates.data[OnlyGrainSpLUT::H2O_ice_dust][i] = 0.e0;
             }
 
             if (my_chemistry->use_multiple_dust_temperatures == 0) {
               if (my_chemistry->dust_species > 0) {
                 if (tdust[i] > 1222.e0) {
                   grain_growth_rates.data[OnlyGrainSpLUT::MgSiO3_dust][i] =
-                      (tiny8 -
-                       MgSiO3(i, idx_range.j, idx_range.k)) /
-                      dt;
+                      (tiny8 - MgSiO3(i, idx_range.j, idx_range.k)) / dt;
                 }
                 if (tdust[i] > 1800.e0) {
                   grain_growth_rates.data[OnlyGrainSpLUT::AC_dust][i] =
-                      (tiny8 -
-                       AC(i, idx_range.j, idx_range.k)) /
-                      dt;
+                      (tiny8 - AC(i, idx_range.j, idx_range.k)) / dt;
                 }
               }
 
               if (my_chemistry->dust_species > 1) {
                 if (tdust[i] > 1500.e0) {
                   grain_growth_rates.data[OnlyGrainSpLUT::SiM_dust][i] =
-                      (tiny8 -
-                       SiM(i, idx_range.j, idx_range.k)) /
-                      dt;
+                      (tiny8 - SiM(i, idx_range.j, idx_range.k)) / dt;
                 }
                 if (tdust[i] > 1500.e0) {
                   grain_growth_rates.data[OnlyGrainSpLUT::FeM_dust][i] =
-                      (tiny8 -
-                       FeM(i, idx_range.j, idx_range.k)) /
-                      dt;
+                      (tiny8 - FeM(i, idx_range.j, idx_range.k)) / dt;
                 }
                 if (tdust[i] > 1277.e0) {
                   grain_growth_rates.data[OnlyGrainSpLUT::Mg2SiO4_dust][i] =
-                      (tiny8 -
-                       Mg2SiO4(i, idx_range.j, idx_range.k)) /
-                      dt;
+                      (tiny8 - Mg2SiO4(i, idx_range.j, idx_range.k)) / dt;
                 }
                 if (tdust[i] > 1500.e0) {
                   grain_growth_rates.data[OnlyGrainSpLUT::Fe3O4_dust][i] =
-                      (tiny8 -
-                       Fe3O4(i, idx_range.j, idx_range.k)) /
-                      dt;
+                      (tiny8 - Fe3O4(i, idx_range.j, idx_range.k)) / dt;
                 }
                 if (tdust[i] > 1500.e0) {
                   grain_growth_rates.data[OnlyGrainSpLUT::SiO2_dust][i] =
-                      (tiny8 -
-                       SiO2D(i, idx_range.j, idx_range.k)) /
-                      dt;
+                      (tiny8 - SiO2D(i, idx_range.j, idx_range.k)) / dt;
                 }
                 if (tdust[i] > 1500.e0) {
                   grain_growth_rates.data[OnlyGrainSpLUT::MgO_dust][i] =
-                      (tiny8 -
-                       MgO(i, idx_range.j, idx_range.k)) /
-                      dt;
+                      (tiny8 - MgO(i, idx_range.j, idx_range.k)) / dt;
                 }
                 if (tdust[i] > 680.e0) {
                   grain_growth_rates.data[OnlyGrainSpLUT::FeS_dust][i] =
-                      (tiny8 -
-                       FeS(i, idx_range.j, idx_range.k)) /
-                      dt;
+                      (tiny8 - FeS(i, idx_range.j, idx_range.k)) / dt;
                 }
                 if (tdust[i] > 1500.e0) {
                   grain_growth_rates.data[OnlyGrainSpLUT::Al2O3_dust][i] =
-                      (tiny8 -
-                       Al2O3(i, idx_range.j, idx_range.k)) /
-                      dt;
+                      (tiny8 - Al2O3(i, idx_range.j, idx_range.k)) / dt;
                 }
               }
 
               if (my_chemistry->dust_species > 2) {
                 if (tdust[i] > 575.e0) {
                   grain_growth_rates.data[OnlyGrainSpLUT::ref_org_dust][i] =
-                      (tiny8 -
-                       reforg(i, idx_range.j, idx_range.k)) /
-                      dt;
+                      (tiny8 - reforg(i, idx_range.j, idx_range.k)) / dt;
                 }
                 if (tdust[i] > 375.e0) {
                   grain_growth_rates.data[OnlyGrainSpLUT::vol_org_dust][i] =
-                      (tiny8 -
-                       volorg(i, idx_range.j, idx_range.k)) /
-                      dt;
+                      (tiny8 - volorg(i, idx_range.j, idx_range.k)) / dt;
                 }
                 if (tdust[i] > 153.e0) {
                   grain_growth_rates.data[OnlyGrainSpLUT::H2O_ice_dust][i] =
-                      (tiny8 -
-                       H2Oice(i, idx_range.j, idx_range.k)) /
-                      dt;
+                      (tiny8 - H2Oice(i, idx_range.j, idx_range.k)) / dt;
                 }
               }
 
             } else {
               if (my_chemistry->dust_species > 0) {
-                if (grain_temperatures
-                        .data[OnlyGrainSpLUT::MgSiO3_dust][i] > 1222.e0) {
+                if (grain_temperatures.data[OnlyGrainSpLUT::MgSiO3_dust][i] >
+                    1222.e0) {
                   grain_growth_rates.data[OnlyGrainSpLUT::MgSiO3_dust][i] =
-                      (tiny8 -
-                       MgSiO3(i, idx_range.j, idx_range.k)) /
-                      dt;
+                      (tiny8 - MgSiO3(i, idx_range.j, idx_range.k)) / dt;
                 }
                 if (grain_temperatures.data[OnlyGrainSpLUT::AC_dust][i] >
                     1800.e0) {
                   grain_growth_rates.data[OnlyGrainSpLUT::AC_dust][i] =
-                      (tiny8 -
-                       AC(i, idx_range.j, idx_range.k)) /
-                      dt;
+                      (tiny8 - AC(i, idx_range.j, idx_range.k)) / dt;
                 }
               }
 
@@ -1580,82 +1513,60 @@ inline void lookup_cool_rates1d(
                 if (grain_temperatures.data[OnlyGrainSpLUT::SiM_dust][i] >
                     1500.e0) {
                   grain_growth_rates.data[OnlyGrainSpLUT::SiM_dust][i] =
-                      (tiny8 -
-                       SiM(i, idx_range.j, idx_range.k)) /
-                      dt;
+                      (tiny8 - SiM(i, idx_range.j, idx_range.k)) / dt;
                 }
                 if (grain_temperatures.data[OnlyGrainSpLUT::FeM_dust][i] >
                     1500.e0) {
                   grain_growth_rates.data[OnlyGrainSpLUT::FeM_dust][i] =
-                      (tiny8 -
-                       FeM(i, idx_range.j, idx_range.k)) /
-                      dt;
+                      (tiny8 - FeM(i, idx_range.j, idx_range.k)) / dt;
                 }
-                if (grain_temperatures
-                        .data[OnlyGrainSpLUT::Mg2SiO4_dust][i] > 1277.e0) {
+                if (grain_temperatures.data[OnlyGrainSpLUT::Mg2SiO4_dust][i] >
+                    1277.e0) {
                   grain_growth_rates.data[OnlyGrainSpLUT::Mg2SiO4_dust][i] =
-                      (tiny8 -
-                       Mg2SiO4(i, idx_range.j, idx_range.k)) /
-                      dt;
+                      (tiny8 - Mg2SiO4(i, idx_range.j, idx_range.k)) / dt;
                 }
                 if (grain_temperatures.data[OnlyGrainSpLUT::Fe3O4_dust][i] >
                     1500.e0) {
                   grain_growth_rates.data[OnlyGrainSpLUT::Fe3O4_dust][i] =
-                      (tiny8 -
-                       Fe3O4(i, idx_range.j, idx_range.k)) /
-                      dt;
+                      (tiny8 - Fe3O4(i, idx_range.j, idx_range.k)) / dt;
                 }
                 if (grain_temperatures.data[OnlyGrainSpLUT::SiO2_dust][i] >
                     1500.e0) {
                   grain_growth_rates.data[OnlyGrainSpLUT::SiO2_dust][i] =
-                      (tiny8 -
-                       SiO2D(i, idx_range.j, idx_range.k)) /
-                      dt;
+                      (tiny8 - SiO2D(i, idx_range.j, idx_range.k)) / dt;
                 }
                 if (grain_temperatures.data[OnlyGrainSpLUT::MgO_dust][i] >
                     1500.e0) {
                   grain_growth_rates.data[OnlyGrainSpLUT::MgO_dust][i] =
-                      (tiny8 -
-                       MgO(i, idx_range.j, idx_range.k)) /
-                      dt;
+                      (tiny8 - MgO(i, idx_range.j, idx_range.k)) / dt;
                 }
                 if (grain_temperatures.data[OnlyGrainSpLUT::FeS_dust][i] >
                     680.e0) {
                   grain_growth_rates.data[OnlyGrainSpLUT::FeS_dust][i] =
-                      (tiny8 -
-                       FeS(i, idx_range.j, idx_range.k)) /
-                      dt;
+                      (tiny8 - FeS(i, idx_range.j, idx_range.k)) / dt;
                 }
                 if (grain_temperatures.data[OnlyGrainSpLUT::Al2O3_dust][i] >
                     1500.e0) {
                   grain_growth_rates.data[OnlyGrainSpLUT::Al2O3_dust][i] =
-                      (tiny8 -
-                       Al2O3(i, idx_range.j, idx_range.k)) /
-                      dt;
+                      (tiny8 - Al2O3(i, idx_range.j, idx_range.k)) / dt;
                 }
               }
 
               if (my_chemistry->dust_species > 2) {
-                if (grain_temperatures
-                        .data[OnlyGrainSpLUT::ref_org_dust][i] > 575.e0) {
+                if (grain_temperatures.data[OnlyGrainSpLUT::ref_org_dust][i] >
+                    575.e0) {
                   grain_growth_rates.data[OnlyGrainSpLUT::ref_org_dust][i] =
-                      (tiny8 -
-                       reforg(i, idx_range.j, idx_range.k)) /
-                      dt;
+                      (tiny8 - reforg(i, idx_range.j, idx_range.k)) / dt;
                 }
-                if (grain_temperatures
-                        .data[OnlyGrainSpLUT::vol_org_dust][i] > 375.e0) {
+                if (grain_temperatures.data[OnlyGrainSpLUT::vol_org_dust][i] >
+                    375.e0) {
                   grain_growth_rates.data[OnlyGrainSpLUT::vol_org_dust][i] =
-                      (tiny8 -
-                       volorg(i, idx_range.j, idx_range.k)) /
-                      dt;
+                      (tiny8 - volorg(i, idx_range.j, idx_range.k)) / dt;
                 }
-                if (grain_temperatures
-                        .data[OnlyGrainSpLUT::H2O_ice_dust][i] > 153.e0) {
+                if (grain_temperatures.data[OnlyGrainSpLUT::H2O_ice_dust][i] >
+                    153.e0) {
                   grain_growth_rates.data[OnlyGrainSpLUT::H2O_ice_dust][i] =
-                      (tiny8 -
-                       H2Oice(i, idx_range.j, idx_range.k)) /
-                      dt;
+                      (tiny8 - H2Oice(i, idx_range.j, idx_range.k)) / dt;
                 }
               }
             }
@@ -1694,8 +1605,7 @@ inline void lookup_cool_rates1d(
       for (i = idx_range.i_start; i < idx_range.i_stop; i++) {
         if (itmask[i] != MASK_FALSE) {
           kshield_buf.k31[i] =
-              my_uvb_rates.k31 +
-              kdissH2I(i, idx_range.j, idx_range.k);
+              my_uvb_rates.k31 + kdissH2I(i, idx_range.j, idx_range.k);
         }
       }
     }
@@ -1705,24 +1615,18 @@ inline void lookup_cool_rates1d(
         if (itmask[i] != MASK_FALSE) {
           // Calculate a Sobolev-like length assuming a 3D grid.
           if (my_chemistry->H2_self_shielding == 1) {
-            divrhoa[1 - 1] =
-                d(i + 1 - 1, idx_range.j, idx_range.k) -
-                d(i, idx_range.j, idx_range.k);
-            divrhoa[2 - 1] =
-                d(i - 1, idx_range.j, idx_range.k) -
-                d(i, idx_range.j, idx_range.k);
-            divrhoa[3 - 1] =
-                d(i, idx_range.jp1 + 1 - 1, idx_range.k) -
-                d(i, idx_range.j, idx_range.k);
-            divrhoa[4 - 1] =
-                d(i, idx_range.j - 1, idx_range.k) -
-                d(i, idx_range.j, idx_range.k);
-            divrhoa[5 - 1] =
-                d(i, idx_range.j, idx_range.kp1 + 1 - 1) -
-                d(i, idx_range.j, idx_range.k);
-            divrhoa[6 - 1] =
-                d(i, idx_range.j, idx_range.k - 1) -
-                d(i, idx_range.j, idx_range.k);
+            divrhoa[1 - 1] = d(i + 1 - 1, idx_range.j, idx_range.k) -
+                             d(i, idx_range.j, idx_range.k);
+            divrhoa[2 - 1] = d(i - 1, idx_range.j, idx_range.k) -
+                             d(i, idx_range.j, idx_range.k);
+            divrhoa[3 - 1] = d(i, idx_range.jp1 + 1 - 1, idx_range.k) -
+                             d(i, idx_range.j, idx_range.k);
+            divrhoa[4 - 1] = d(i, idx_range.j - 1, idx_range.k) -
+                             d(i, idx_range.j, idx_range.k);
+            divrhoa[5 - 1] = d(i, idx_range.j, idx_range.kp1 + 1 - 1) -
+                             d(i, idx_range.j, idx_range.k);
+            divrhoa[6 - 1] = d(i, idx_range.j, idx_range.k - 1) -
+                             d(i, idx_range.j, idx_range.k);
             divrho = tiny_fortran_val;
             // Exclude directions with (drho/ds > 0)
             for (n1 = 1; n1 <= (6); n1++) {
@@ -1731,38 +1635,33 @@ inline void lookup_cool_rates1d(
               }
             }
             // (rho / divrho) is the Sobolev-like length in cell widths
-            l_H2shield = std::fmin(
-                dx_cgs * d(i, idx_range.j, idx_range.k) /
-                    (2. * std::fabs(divrho)),
-                internalu.xbase1);
+            l_H2shield = std::fmin(dx_cgs * d(i, idx_range.j, idx_range.k) /
+                                       (2. * std::fabs(divrho)),
+                                   internalu.xbase1);
 
             // User-supplied length-scale field.
           } else if (my_chemistry->H2_self_shielding == 2) {
             l_H2shield =
-                xH2shield(i, idx_range.j, idx_range.k) *
-                internalu.uxyz;
+                xH2shield(i, idx_range.j, idx_range.k) * internalu.uxyz;
 
             // Jeans Length
           } else if (my_chemistry->H2_self_shielding == 3) {
-            l_H2shield = c_ljeans *
-                         std::sqrt(tgas1d[i] / (d(i, idx_range.j,
-                                                      idx_range.k) *
-                                                    mmw[i]));
+            l_H2shield =
+                c_ljeans * std::sqrt(tgas1d[i] /
+                                     (d(i, idx_range.j, idx_range.k) * mmw[i]));
 
           } else {
             l_H2shield = (gr_float)(0.);
           }
 
-          N_H2 = dom * H2I(i, idx_range.j, idx_range.k) *
-                 l_H2shield;
+          N_H2 = dom * H2I(i, idx_range.j, idx_range.k) * l_H2shield;
 
           // update: self-shielding following Wolcott-Green & Haiman (2019)
           // range of validity: T=100-8000 K, n<=1e7 cm^-3
 
           double tgas_touse = std::fmax(tgas1d[i], 1e2);
           tgas_touse = std::fmin(tgas_touse, 8e3);
-          double ngas_touse =
-              d(i, idx_range.j, idx_range.k) * dom / mmw[i];
+          double ngas_touse = d(i, idx_range.j, idx_range.k) * dom / mmw[i];
           ngas_touse = std::fmin(ngas_touse, 1e7);
 
           double aWG2019 = (0.8711 * std::log10(tgas_touse) - 1.928) *
@@ -1770,8 +1669,8 @@ inline void lookup_cool_rates1d(
                            (-0.9639 * std::log10(tgas_touse) + 3.892);
 
           x = 2.0e-15 * N_H2;
-          b_doppler = 1e-5 * std::sqrt(2. * kboltz_grflt * tgas1d[i] /
-                                       (2. * mh_grflt));
+          b_doppler =
+              1e-5 * std::sqrt(2. * kboltz_grflt * tgas1d[i] / (2. * mh_grflt));
           f_shield =
               0.965 / std::pow((1. + x / b_doppler), aWG2019) +
               0.035 * std::exp(-8.5e-4 * std::sqrt(1. + x)) / std::sqrt(1. + x);
@@ -1791,8 +1690,7 @@ inline void lookup_cool_rates1d(
       for (i = idx_range.i_start; i < idx_range.i_stop; i++) {
         if (itmask[i] != MASK_FALSE) {
           kshield_buf.k31[i] =
-              kshield_buf.k31[i] +
-              kdissH2I(i, idx_range.j, idx_range.k);
+              kshield_buf.k31[i] + kdissH2I(i, idx_range.j, idx_range.k);
         }
       }
     }
@@ -1802,8 +1700,7 @@ inline void lookup_cool_rates1d(
       for (i = idx_range.i_start; i < idx_range.i_stop; i++) {
         if (itmask[i] != MASK_FALSE) {
           kshield_buf.k31[i] =
-              f_shield_custom(i, idx_range.j, idx_range.k) *
-              kshield_buf.k31[i];
+              f_shield_custom(i, idx_range.j, idx_range.k) * kshield_buf.k31[i];
         }
       }
     }
@@ -1828,11 +1725,10 @@ inline void lookup_cool_rates1d(
                    H2II(i, idx_range.j, idx_range.k);
 
           if (my_chemistry->primordial_chemistry > 2) {
-            nratio =
-                nratio +
-                0.5 * (DI(i, idx_range.j, idx_range.k) +
-                       DII(i, idx_range.j, idx_range.k)) +
-                2.0 * HDI(i, idx_range.j, idx_range.k) / 3.0;
+            nratio = nratio +
+                     0.5 * (DI(i, idx_range.j, idx_range.k) +
+                            DII(i, idx_range.j, idx_range.k)) +
+                     2.0 * HDI(i, idx_range.j, idx_range.k) / 3.0;
           }
         }
 
@@ -1996,10 +1892,10 @@ inline void lookup_cool_rates1d(
 
   for (i = idx_range.i_start; i < idx_range.i_stop; i++) {
     if (itmask[i] != MASK_FALSE) {
-      x = std::fmax(HII(i, idx_range.j, idx_range.k) /
-                        (HI(i, idx_range.j, idx_range.k) +
-                         HII(i, idx_range.j, idx_range.k)),
-                    1.0e-4);
+      x = std::fmax(
+          HII(i, idx_range.j, idx_range.k) / (HI(i, idx_range.j, idx_range.k) +
+                                              HII(i, idx_range.j, idx_range.k)),
+          1.0e-4);
       double factor = 0.3908 * std::pow((1. - std::pow(x, 0.4092)), 1.7592);
       kshield_buf.k24[i] =
           kshield_buf.k24[i] +
@@ -2026,27 +1922,26 @@ inline void lookup_cool_rates1d(
       my_chemistry->three_body_rate == 0) {
     for (i = idx_range.i_start; i < idx_range.i_stop; i++) {
       if (itmask[i] != MASK_FALSE) {
-        nh = std::fmin(HI(i, idx_range.j, idx_range.k) * dom,
-                       1.0e9);
+        nh = std::fmin(HI(i, idx_range.j, idx_range.k) * dom, 1.0e9);
         kcr_buf.data[CollisionalRxnLUT::k13][i] = tiny8;
         if (tgas1d[i] >= 500. && tgas1d[i] < 1.0e6) {
           // Direct collisional dissociation
           k13_CID =
               k13dd(i, 1 - 1) -
-              k13dd(i, 2 - 1) / (1. + std::pow((nh / k13dd(i, 5 - 1)),
-                                                   k13dd(i, 7 - 1))) +
+              k13dd(i, 2 - 1) /
+                  (1. + std::pow((nh / k13dd(i, 5 - 1)), k13dd(i, 7 - 1))) +
               k13dd(i, 3 - 1) -
-              k13dd(i, 4 - 1) / (1. + std::pow((nh / k13dd(i, 6 - 1)),
-                                                   k13dd(i, 7 - 1)));
+              k13dd(i, 4 - 1) /
+                  (1. + std::pow((nh / k13dd(i, 6 - 1)), k13dd(i, 7 - 1)));
           k13_CID = std::fmax(std::pow(10., k13_CID), tiny8);
           // Dissociative tunnelling
           k13_DT =
               k13dd(i, 8 - 1) -
-              k13dd(i, 9 - 1) / (1. + std::pow((nh / k13dd(i, 12 - 1)),
-                                                   k13dd(i, 14 - 1))) +
+              k13dd(i, 9 - 1) /
+                  (1. + std::pow((nh / k13dd(i, 12 - 1)), k13dd(i, 14 - 1))) +
               k13dd(i, 10 - 1) -
-              k13dd(i, 11 - 1) / (1. + std::pow((nh / k13dd(i, 13 - 1)),
-                                                    k13dd(i, 14 - 1)));
+              k13dd(i, 11 - 1) /
+                  (1. + std::pow((nh / k13dd(i, 13 - 1)), k13dd(i, 14 - 1)));
           k13_DT = std::fmax(std::pow(10., k13_DT), tiny8);
           //
           kcr_buf.data[CollisionalRxnLUT::k13][i] = k13_DT + k13_CID;
