@@ -296,8 +296,6 @@ inline void lookup_cool_rates1d(
 
   // locals for H2 self-shielding as WG+19
 
-  double tgas_touse, ngas_touse, aWG2019;
-
   double nSSh, nratio;
 
   // this is a temporary variable to help with transcription
@@ -1761,18 +1759,15 @@ inline void lookup_cool_rates1d(
           // update: self-shielding following Wolcott-Green & Haiman (2019)
           // range of validity: T=100-8000 K, n<=1e7 cm^-3
 
-          tgas_touse = std::fmax(tgas1d[i - 1], 1e2);
+          double tgas_touse = std::fmax(tgas1d[i - 1], 1e2);
           tgas_touse = std::fmin(tgas_touse, 8e3);
-          ngas_touse =
+          double ngas_touse =
               d(i - 1, idx_range.jp1 - 1, idx_range.kp1 - 1) * dom / mmw[i - 1];
           ngas_touse = std::fmin(ngas_touse, 1e7);
 
-          //_// PORT:                aWG2019 = (0.8711_DKIND *
-          //_// PORT:      &              log10(tgas_touse) - 1.928_DKIND) *
-          //_// PORT:      &              exp(-0.2856_DKIND * log10(ngas_touse))
-          //+
-          //_// PORT:      &              (-0.9639_DKIND * log10(tgas_touse)
-          //+ 3.892_DKIND)
+          double aWG2019 = (0.8711 * std::log10(tgas_touse) - 1.928) *
+                               std::exp(-0.2856 * std::log10(ngas_touse)) +
+                           (-0.9639 * std::log10(tgas_touse) + 3.892);
 
           x = 2.0e-15 * N_H2;
           b_doppler = 1e-5 * std::sqrt(2. * kboltz_grflt * tgas1d[i - 1] /
