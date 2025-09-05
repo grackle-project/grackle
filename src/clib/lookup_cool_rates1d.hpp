@@ -65,10 +65,11 @@ namespace grackle::impl {
 /// > dust-grain related heating and cooling should probably assume that the
 /// > dust-grain density is already 0.
 inline void lookup_cool_rates1d(
-    IndexRange idx_range, gr_mask_type anydust, double* tgas1d, double* mmw,
-    double* tdust, double* dust2gas, double* k13dd_data_, double* h2dust,
-    double dom, double dx_cgs, double c_ljeans, gr_mask_type* itmask,
-    gr_mask_type* itmask_metal, gr_float* rhoH, double dt,
+    IndexRange idx_range, gr_mask_type anydust, const double* tgas1d,
+    const double* mmw, const double* tdust, const double* dust2gas,
+    double* k13dd_data_, double* h2dust, double dom, double dx_cgs,
+    double c_ljeans, const gr_mask_type* itmask,
+    const gr_mask_type* itmask_metal, gr_float* rhoH, double dt,
     chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
     grackle_field_data* my_fields, photo_rate_storage my_uvb_rates,
     InternalGrUnits internalu,

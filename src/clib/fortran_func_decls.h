@@ -48,10 +48,10 @@ void FORTRAN_NAME(calc_all_tdust_gasgr_1d_g)(
 );
 
 void FORTRAN_NAME(calc_grain_size_increment_1d)(
-  int* immulti, int* imabund, int* idspecies, int* igrgr, gr_mask_type* itmask,
-  int* in, int* jn, int* kn, int* is, int* ie, int* j, int* k, double* dom,
-  gr_float* d_data_ptr, gr_float* SiM_data_ptr, gr_float* FeM_data_ptr,
-  gr_float* Mg2SiO4_data_ptr, gr_float* MgSiO3_data_ptr,
+  int* immulti, int* imabund, int* idspecies, int* igrgr,
+  const gr_mask_type* itmask, int* in, int* jn, int* kn, int* is, int* ie,
+  int* j, int* k, double* dom, gr_float* d_data_ptr, gr_float* SiM_data_ptr,
+  gr_float* FeM_data_ptr, gr_float* Mg2SiO4_data_ptr, gr_float* MgSiO3_data_ptr,
   gr_float* Fe3O4_data_ptr, gr_float* AC_data_ptr, gr_float* SiO2D_data_ptr,
   gr_float* MgO_data_ptr, gr_float* FeS_data_ptr, gr_float* Al2O3_data_ptr,
   gr_float* reforg_data_ptr, gr_float* volorg_data_ptr,

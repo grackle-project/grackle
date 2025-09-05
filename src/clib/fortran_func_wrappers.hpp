@@ -90,7 +90,7 @@ inline void calc_all_tdust_gasgr_1d_g(
 /// @param[in,out] internal_dust_prop_buf Holds dust-specific information that
 ///     gets updated by this function
 inline void calc_grain_size_increment_1d (
-  double dom, IndexRange idx_range, gr_mask_type* itmask_metal,
+  double dom, IndexRange idx_range, const gr_mask_type* itmask_metal,
   chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
   grackle_field_data* my_fields,
   grackle::impl::InternalDustPropBuf internal_dust_prop_buf
