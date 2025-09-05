@@ -237,7 +237,7 @@ inline void lookup_cool_rates1d(
 
   // locals
 
-  int i, n1;
+  int n1;
   double x, logtem0, logtem9, dlogtem, nh, d_logtem0, d_logtem9, d_dlogtem,
       divrho, N_H2, f_shield, b_doppler, l_H2shield;
   double k13_CID, k13_DT;
@@ -271,8 +271,6 @@ inline void lookup_cool_rates1d(
   std::vector<long long> nratec_single_elem_arr(1);
 
   // Cast nratec
-  nratec_single_elem_arr[1 - 1] =
-      (long long)(my_chemistry->NumberOfTemperatureBins);
 
   // Set log values of start and end of lookup tables
 
@@ -282,7 +280,7 @@ inline void lookup_cool_rates1d(
              std::log(my_chemistry->TemperatureStart)) /
             (double)(my_chemistry->NumberOfTemperatureBins - 1);
 
-  for (i = idx_range.i_start; i < idx_range.i_stop; i++) {
+  for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
     if (itmask[i] != MASK_FALSE) {
       // Compute temp-centered temperature (and log)
 
@@ -380,7 +378,7 @@ inline void lookup_cool_rates1d(
   // Look-up for 9-species model
 
   if (my_chemistry->primordial_chemistry > 1) {
-    for (i = idx_range.i_start; i < idx_range.i_stop; i++) {
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
       if (itmask[i] != MASK_FALSE) {
         kcr_buf.data[CollisionalRxnLUT::k7][i] =
             kcol_rate_tables
@@ -516,7 +514,7 @@ inline void lookup_cool_rates1d(
     }
 
     for (n1 = 1; n1 <= (14); n1++) {
-      for (i = idx_range.i_start; i < idx_range.i_stop; i++) {
+      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         if (itmask[i] != MASK_FALSE) {
           k13dd(i, n1 - 1) =
               k13dda(logTlininterp_buf.indixe[i] - 1, n1 - 1) +
@@ -531,7 +529,7 @@ inline void lookup_cool_rates1d(
   // Look-up for 12-species model
 
   if (my_chemistry->primordial_chemistry > 2) {
-    for (i = idx_range.i_start; i < idx_range.i_stop; i++) {
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
       if (itmask[i] != MASK_FALSE) {
         kcr_buf.data[CollisionalRxnLUT::k50][i] =
             kcol_rate_tables
@@ -596,7 +594,7 @@ inline void lookup_cool_rates1d(
   // Look-up for 15-species model
 
   if (my_chemistry->primordial_chemistry > 3) {
-    for (i = idx_range.i_start; i < idx_range.i_stop; i++) {
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
       if (itmask[i] != MASK_FALSE) {
         kcr_buf.data[CollisionalRxnLUT::k125][i] =
             kcol_rate_tables.data[CollisionalRxnLUT::k125]
@@ -733,7 +731,7 @@ inline void lookup_cool_rates1d(
   // Look-up for metal species model
 
   if (my_chemistry->metal_chemistry == 1) {
-    for (i = idx_range.i_start; i < idx_range.i_stop; i++) {
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
       if (itmask[i] != MASK_FALSE) {
         kcr_buf.data[CollisionalRxnLUT::kz15][i] =
             kcol_rate_tables.data[CollisionalRxnLUT::kz15]
@@ -1113,7 +1111,7 @@ inline void lookup_cool_rates1d(
 
     if (my_chemistry->dust_species == 0) {
       // in this branch, we are just tracking a single generic dust field
-      for (i = idx_range.i_start; i < idx_range.i_stop; i++) {
+      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         if (itmask_metal[i] != MASK_FALSE) {
           // Assume dust melts at Tdust > DustTemperatureEnd, in the context of
           // computing the H2 formation rate
@@ -1222,7 +1220,7 @@ inline void lookup_cool_rates1d(
       //   that h2dusta has very different units...
 
       // now its time to actually perform the calculation
-      for (i = idx_range.i_start; i < idx_range.i_stop; i++) {
+      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         if (itmask_metal[i] != MASK_FALSE) {
           // don't forget, we are only executing this logic if we already know
           // that my_chemistry->dust_species > 0
@@ -1366,12 +1364,16 @@ inline void lookup_cool_rates1d(
 
       // Compute grain growth rate
 
-      for (i = idx_range.i_start; i < idx_range.i_stop; i++) {
+      long long nratec_single_elem_arr[1] = {
+        (long long)(my_chemistry->NumberOfTemperatureBins)
+      };
+
+      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         if (itmask_metal[i] != MASK_FALSE) {
           if (my_chemistry->grain_growth == 1) {
             if (my_chemistry->dust_species > 0) {
               kd = f_wrap::interpolate_1d_g(
-                  logTlininterp_buf.logtem[i], nratec_single_elem_arr.data(),
+                  logTlininterp_buf.logtem[i], nratec_single_elem_arr,
                   d_Tg.data(), d_dTg, nratec_single_elem_arr[0],
                   my_rates->grain_growth_rate);
 
@@ -1622,7 +1624,7 @@ inline void lookup_cool_rates1d(
 
   // Include approximate self-shielding factors if requested
 
-  for (i = idx_range.i_start; i < idx_range.i_stop; i++) {
+  for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
     if (itmask[i] != MASK_FALSE) {
       kshield_buf.k24[i] = my_uvb_rates.k24;
       kshield_buf.k25[i] = my_uvb_rates.k25;
@@ -1640,13 +1642,13 @@ inline void lookup_cool_rates1d(
     // your hydro code, add kdissH2I later
     if (my_chemistry->use_radiative_transfer == 0 ||
         my_chemistry->radiative_transfer_use_H2_shielding == 1) {
-      for (i = idx_range.i_start; i < idx_range.i_stop; i++) {
+      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         if (itmask[i] != MASK_FALSE) {
           kshield_buf.k31[i] = my_uvb_rates.k31;
         }
       }
     } else {
-      for (i = idx_range.i_start; i < idx_range.i_stop; i++) {
+      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         if (itmask[i] != MASK_FALSE) {
           kshield_buf.k31[i] =
               my_uvb_rates.k31 + kdissH2I(i, idx_range.j, idx_range.k);
@@ -1655,7 +1657,7 @@ inline void lookup_cool_rates1d(
     }
 
     if (my_chemistry->H2_self_shielding > 0) {
-      for (i = idx_range.i_start; i < idx_range.i_stop; i++) {
+      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         if (itmask[i] != MASK_FALSE) {
           // Calculate a Sobolev-like length assuming a 3D grid.
           if (my_chemistry->H2_self_shielding == 1) {
@@ -1731,7 +1733,7 @@ inline void lookup_cool_rates1d(
     if (my_chemistry->use_radiative_transfer == 1 &&
         my_chemistry->radiative_transfer_use_H2_shielding == 1) {
       // write(*,*) 'kdissH2I included'
-      for (i = idx_range.i_start; i < idx_range.i_stop; i++) {
+      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         if (itmask[i] != MASK_FALSE) {
           kshield_buf.k31[i] =
               kshield_buf.k31[i] + kdissH2I(i, idx_range.j, idx_range.k);
@@ -1741,7 +1743,7 @@ inline void lookup_cool_rates1d(
 
     // Custom H2 shielding
     if (my_chemistry->H2_custom_shielding > 0) {
-      for (i = idx_range.i_start; i < idx_range.i_stop; i++) {
+      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         if (itmask[i] != MASK_FALSE) {
           kshield_buf.k31[i] =
               f_shield_custom(i, idx_range.j, idx_range.k) * kshield_buf.k31[i];
@@ -1752,7 +1754,7 @@ inline void lookup_cool_rates1d(
 
   if (my_chemistry->self_shielding_method > 0) {
     // Compute shielding factors
-    for (i = idx_range.i_start; i < idx_range.i_stop; i++) {
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
       if (itmask[i] != MASK_FALSE) {
         // Compute shielding factor for H
         nSSh = 6.73e-3 * std::pow((my_uvb_rates.crsHI / 2.49e-18), (-2. / 3.)) *
@@ -1810,7 +1812,7 @@ inline void lookup_cool_rates1d(
 
     //   Attenuate radiation rates for direct H2 ionization (15.4 eV)
     //   using same scaling. (rate k29)
-    for (i = idx_range.i_start; i < idx_range.i_stop; i++) {
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
       if (itmask[i] != MASK_FALSE) {
         if (my_uvb_rates.k24 < tiny8) {
           kshield_buf.k24[i] = 0.;
@@ -1841,7 +1843,7 @@ inline void lookup_cool_rates1d(
     //   Attenuate radiation rates for H2+ dissociation (30 eV)
     //   using same scaling as HeII. (rate k28 and k30)
 
-    for (i = idx_range.i_start; i < idx_range.i_stop; i++) {
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
       if (itmask[i] != MASK_FALSE) {
         if (my_uvb_rates.k24 < tiny8) {
           kshield_buf.k24[i] = 0.;
@@ -1885,7 +1887,7 @@ inline void lookup_cool_rates1d(
     // shielding using Eq. 13 and 14 from
     // Rahmati et. al. 2013 (MNRAS, 430, 2427-2445)
     // in HI and HeI, but ignoring HeII heating entirely
-    for (i = idx_range.i_start; i < idx_range.i_stop; i++) {
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
       if (itmask[i] != MASK_FALSE) {
         if (my_uvb_rates.k24 < tiny8) {
           kshield_buf.k24[i] = 0.;
@@ -1934,7 +1936,7 @@ inline void lookup_cool_rates1d(
   const double e24 = 13.6;
   const double e26 = 24.6;
 
-  for (i = idx_range.i_start; i < idx_range.i_stop; i++) {
+  for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
     if (itmask[i] != MASK_FALSE) {
       x = std::fmax(
           HII(i, idx_range.j, idx_range.k) / (HI(i, idx_range.j, idx_range.k) +
@@ -1964,7 +1966,7 @@ inline void lookup_cool_rates1d(
 #ifdef USE_DENSITY_DEPENDENT_H2_DISSOCIATION_RATE
   if (my_chemistry->primordial_chemistry > 1 &&
       my_chemistry->three_body_rate == 0) {
-    for (i = idx_range.i_start; i < idx_range.i_stop; i++) {
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
       if (itmask[i] != MASK_FALSE) {
         nh = std::fmin(HI(i, idx_range.j, idx_range.k) * dom, 1.0e9);
         kcr_buf.data[CollisionalRxnLUT::k13][i] = tiny8;
