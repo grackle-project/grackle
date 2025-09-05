@@ -75,7 +75,7 @@ inline void lookup_cool_rates1d(
     grackle::impl::GrainSpeciesCollection grain_growth_rates,
     grackle::impl::GrainSpeciesCollection grain_temperatures,
     grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf,
-    grackle::impl::CollisionalRxnRateCollection kcr_buf,
+    grackle::impl::CollisionalRxnRateCollection kcol_buf,
     grackle::impl::PhotoRxnRateCollection kshield_buf,
     grackle::impl::ChemHeatingRates chemheatrates_buf) {
   // shorten `grackle::impl::fortran_wrapper` to `f_wrap` within this function
@@ -305,7 +305,7 @@ inline void lookup_cool_rates1d(
 
       // Do linear table lookup (in log temperature)
 
-      kcr_buf.data[CollisionalRxnLUT::k1][i] =
+      kcol_buf.data[CollisionalRxnLUT::k1][i] =
           kcol_rate_tables
               .data[CollisionalRxnLUT::k1][logTlininterp_buf.indixe[i] - 1] +
           (kcol_rate_tables.data[CollisionalRxnLUT::k1]
@@ -313,7 +313,7 @@ inline void lookup_cool_rates1d(
            kcol_rate_tables
                .data[CollisionalRxnLUT::k1][logTlininterp_buf.indixe[i] - 1]) *
               logTlininterp_buf.tdef[i];
-      kcr_buf.data[CollisionalRxnLUT::k2][i] =
+      kcol_buf.data[CollisionalRxnLUT::k2][i] =
           kcol_rate_tables
               .data[CollisionalRxnLUT::k2][logTlininterp_buf.indixe[i] - 1] +
           (kcol_rate_tables.data[CollisionalRxnLUT::k2]
@@ -321,7 +321,7 @@ inline void lookup_cool_rates1d(
            kcol_rate_tables
                .data[CollisionalRxnLUT::k2][logTlininterp_buf.indixe[i] - 1]) *
               logTlininterp_buf.tdef[i];
-      kcr_buf.data[CollisionalRxnLUT::k3][i] =
+      kcol_buf.data[CollisionalRxnLUT::k3][i] =
           kcol_rate_tables
               .data[CollisionalRxnLUT::k3][logTlininterp_buf.indixe[i] - 1] +
           (kcol_rate_tables.data[CollisionalRxnLUT::k3]
@@ -329,7 +329,7 @@ inline void lookup_cool_rates1d(
            kcol_rate_tables
                .data[CollisionalRxnLUT::k3][logTlininterp_buf.indixe[i] - 1]) *
               logTlininterp_buf.tdef[i];
-      kcr_buf.data[CollisionalRxnLUT::k4][i] =
+      kcol_buf.data[CollisionalRxnLUT::k4][i] =
           kcol_rate_tables
               .data[CollisionalRxnLUT::k4][logTlininterp_buf.indixe[i] - 1] +
           (kcol_rate_tables.data[CollisionalRxnLUT::k4]
@@ -337,7 +337,7 @@ inline void lookup_cool_rates1d(
            kcol_rate_tables
                .data[CollisionalRxnLUT::k4][logTlininterp_buf.indixe[i] - 1]) *
               logTlininterp_buf.tdef[i];
-      kcr_buf.data[CollisionalRxnLUT::k5][i] =
+      kcol_buf.data[CollisionalRxnLUT::k5][i] =
           kcol_rate_tables
               .data[CollisionalRxnLUT::k5][logTlininterp_buf.indixe[i] - 1] +
           (kcol_rate_tables.data[CollisionalRxnLUT::k5]
@@ -345,7 +345,7 @@ inline void lookup_cool_rates1d(
            kcol_rate_tables
                .data[CollisionalRxnLUT::k5][logTlininterp_buf.indixe[i] - 1]) *
               logTlininterp_buf.tdef[i];
-      kcr_buf.data[CollisionalRxnLUT::k6][i] =
+      kcol_buf.data[CollisionalRxnLUT::k6][i] =
           kcol_rate_tables
               .data[CollisionalRxnLUT::k6][logTlininterp_buf.indixe[i] - 1] +
           (kcol_rate_tables.data[CollisionalRxnLUT::k6]
@@ -353,7 +353,7 @@ inline void lookup_cool_rates1d(
            kcol_rate_tables
                .data[CollisionalRxnLUT::k6][logTlininterp_buf.indixe[i] - 1]) *
               logTlininterp_buf.tdef[i];
-      kcr_buf.data[CollisionalRxnLUT::k57][i] =
+      kcol_buf.data[CollisionalRxnLUT::k57][i] =
           kcol_rate_tables
               .data[CollisionalRxnLUT::k57][logTlininterp_buf.indixe[i] - 1] +
           (kcol_rate_tables.data[CollisionalRxnLUT::k57]
@@ -361,7 +361,7 @@ inline void lookup_cool_rates1d(
            kcol_rate_tables
                .data[CollisionalRxnLUT::k57][logTlininterp_buf.indixe[i] - 1]) *
               logTlininterp_buf.tdef[i];
-      kcr_buf.data[CollisionalRxnLUT::k58][i] =
+      kcol_buf.data[CollisionalRxnLUT::k58][i] =
           kcol_rate_tables
               .data[CollisionalRxnLUT::k58][logTlininterp_buf.indixe[i] - 1] +
           (kcol_rate_tables.data[CollisionalRxnLUT::k58]
@@ -377,7 +377,7 @@ inline void lookup_cool_rates1d(
   if (my_chemistry->primordial_chemistry > 1) {
     for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
       if (itmask[i] != MASK_FALSE) {
-        kcr_buf.data[CollisionalRxnLUT::k7][i] =
+        kcol_buf.data[CollisionalRxnLUT::k7][i] =
             kcol_rate_tables
                 .data[CollisionalRxnLUT::k7][logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::k7]
@@ -385,7 +385,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::k7]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::k8][i] =
+        kcol_buf.data[CollisionalRxnLUT::k8][i] =
             kcol_rate_tables
                 .data[CollisionalRxnLUT::k8][logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::k8]
@@ -393,7 +393,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::k8]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::k9][i] =
+        kcol_buf.data[CollisionalRxnLUT::k9][i] =
             kcol_rate_tables
                 .data[CollisionalRxnLUT::k9][logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::k9]
@@ -401,7 +401,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::k9]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::k10][i] =
+        kcol_buf.data[CollisionalRxnLUT::k10][i] =
             kcol_rate_tables
                 .data[CollisionalRxnLUT::k10][logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::k10]
@@ -409,7 +409,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::k10]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::k11][i] =
+        kcol_buf.data[CollisionalRxnLUT::k11][i] =
             kcol_rate_tables
                 .data[CollisionalRxnLUT::k11][logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::k11]
@@ -417,7 +417,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::k11]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::k12][i] =
+        kcol_buf.data[CollisionalRxnLUT::k12][i] =
             kcol_rate_tables
                 .data[CollisionalRxnLUT::k12][logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::k12]
@@ -425,7 +425,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::k12]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::k13][i] =
+        kcol_buf.data[CollisionalRxnLUT::k13][i] =
             kcol_rate_tables
                 .data[CollisionalRxnLUT::k13][logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::k13]
@@ -433,7 +433,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::k13]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::k14][i] =
+        kcol_buf.data[CollisionalRxnLUT::k14][i] =
             kcol_rate_tables
                 .data[CollisionalRxnLUT::k14][logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::k14]
@@ -441,7 +441,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::k14]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::k15][i] =
+        kcol_buf.data[CollisionalRxnLUT::k15][i] =
             kcol_rate_tables
                 .data[CollisionalRxnLUT::k15][logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::k15]
@@ -449,7 +449,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::k15]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::k16][i] =
+        kcol_buf.data[CollisionalRxnLUT::k16][i] =
             kcol_rate_tables
                 .data[CollisionalRxnLUT::k16][logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::k16]
@@ -457,7 +457,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::k16]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::k17][i] =
+        kcol_buf.data[CollisionalRxnLUT::k17][i] =
             kcol_rate_tables
                 .data[CollisionalRxnLUT::k17][logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::k17]
@@ -465,7 +465,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::k17]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::k18][i] =
+        kcol_buf.data[CollisionalRxnLUT::k18][i] =
             kcol_rate_tables
                 .data[CollisionalRxnLUT::k18][logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::k18]
@@ -473,7 +473,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::k18]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::k19][i] =
+        kcol_buf.data[CollisionalRxnLUT::k19][i] =
             kcol_rate_tables
                 .data[CollisionalRxnLUT::k19][logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::k19]
@@ -481,7 +481,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::k19]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::k22][i] =
+        kcol_buf.data[CollisionalRxnLUT::k22][i] =
             kcol_rate_tables
                 .data[CollisionalRxnLUT::k22][logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::k22]
@@ -527,7 +527,7 @@ inline void lookup_cool_rates1d(
   if (my_chemistry->primordial_chemistry > 2) {
     for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
       if (itmask[i] != MASK_FALSE) {
-        kcr_buf.data[CollisionalRxnLUT::k50][i] =
+        kcol_buf.data[CollisionalRxnLUT::k50][i] =
             kcol_rate_tables
                 .data[CollisionalRxnLUT::k50][logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::k50]
@@ -535,7 +535,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::k50]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::k51][i] =
+        kcol_buf.data[CollisionalRxnLUT::k51][i] =
             kcol_rate_tables
                 .data[CollisionalRxnLUT::k51][logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::k51]
@@ -543,7 +543,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::k51]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::k52][i] =
+        kcol_buf.data[CollisionalRxnLUT::k52][i] =
             kcol_rate_tables
                 .data[CollisionalRxnLUT::k52][logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::k52]
@@ -551,7 +551,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::k52]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::k53][i] =
+        kcol_buf.data[CollisionalRxnLUT::k53][i] =
             kcol_rate_tables
                 .data[CollisionalRxnLUT::k53][logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::k53]
@@ -559,7 +559,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::k53]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::k54][i] =
+        kcol_buf.data[CollisionalRxnLUT::k54][i] =
             kcol_rate_tables
                 .data[CollisionalRxnLUT::k54][logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::k54]
@@ -567,7 +567,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::k54]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::k55][i] =
+        kcol_buf.data[CollisionalRxnLUT::k55][i] =
             kcol_rate_tables
                 .data[CollisionalRxnLUT::k55][logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::k55]
@@ -575,7 +575,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::k55]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::k56][i] =
+        kcol_buf.data[CollisionalRxnLUT::k56][i] =
             kcol_rate_tables
                 .data[CollisionalRxnLUT::k56][logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::k56]
@@ -592,7 +592,7 @@ inline void lookup_cool_rates1d(
   if (my_chemistry->primordial_chemistry > 3) {
     for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
       if (itmask[i] != MASK_FALSE) {
-        kcr_buf.data[CollisionalRxnLUT::k125][i] =
+        kcol_buf.data[CollisionalRxnLUT::k125][i] =
             kcol_rate_tables.data[CollisionalRxnLUT::k125]
                                  [logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::k125]
@@ -600,7 +600,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::k125]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::k129][i] =
+        kcol_buf.data[CollisionalRxnLUT::k129][i] =
             kcol_rate_tables.data[CollisionalRxnLUT::k129]
                                  [logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::k129]
@@ -608,7 +608,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::k129]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::k130][i] =
+        kcol_buf.data[CollisionalRxnLUT::k130][i] =
             kcol_rate_tables.data[CollisionalRxnLUT::k130]
                                  [logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::k130]
@@ -616,7 +616,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::k130]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::k131][i] =
+        kcol_buf.data[CollisionalRxnLUT::k131][i] =
             kcol_rate_tables.data[CollisionalRxnLUT::k131]
                                  [logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::k131]
@@ -624,7 +624,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::k131]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::k132][i] =
+        kcol_buf.data[CollisionalRxnLUT::k132][i] =
             kcol_rate_tables.data[CollisionalRxnLUT::k132]
                                  [logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::k132]
@@ -632,7 +632,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::k132]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::k133][i] =
+        kcol_buf.data[CollisionalRxnLUT::k133][i] =
             kcol_rate_tables.data[CollisionalRxnLUT::k133]
                                  [logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::k133]
@@ -640,7 +640,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::k133]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::k134][i] =
+        kcol_buf.data[CollisionalRxnLUT::k134][i] =
             kcol_rate_tables.data[CollisionalRxnLUT::k134]
                                  [logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::k134]
@@ -648,7 +648,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::k134]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::k135][i] =
+        kcol_buf.data[CollisionalRxnLUT::k135][i] =
             kcol_rate_tables.data[CollisionalRxnLUT::k135]
                                  [logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::k135]
@@ -656,7 +656,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::k135]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::k136][i] =
+        kcol_buf.data[CollisionalRxnLUT::k136][i] =
             kcol_rate_tables.data[CollisionalRxnLUT::k136]
                                  [logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::k136]
@@ -664,7 +664,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::k136]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::k137][i] =
+        kcol_buf.data[CollisionalRxnLUT::k137][i] =
             kcol_rate_tables.data[CollisionalRxnLUT::k137]
                                  [logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::k137]
@@ -672,7 +672,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::k137]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::k148][i] =
+        kcol_buf.data[CollisionalRxnLUT::k148][i] =
             kcol_rate_tables.data[CollisionalRxnLUT::k148]
                                  [logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::k148]
@@ -680,7 +680,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::k148]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::k149][i] =
+        kcol_buf.data[CollisionalRxnLUT::k149][i] =
             kcol_rate_tables.data[CollisionalRxnLUT::k149]
                                  [logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::k149]
@@ -688,7 +688,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::k149]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::k150][i] =
+        kcol_buf.data[CollisionalRxnLUT::k150][i] =
             kcol_rate_tables.data[CollisionalRxnLUT::k150]
                                  [logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::k150]
@@ -696,7 +696,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::k150]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::k151][i] =
+        kcol_buf.data[CollisionalRxnLUT::k151][i] =
             kcol_rate_tables.data[CollisionalRxnLUT::k151]
                                  [logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::k151]
@@ -704,7 +704,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::k151]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::k152][i] =
+        kcol_buf.data[CollisionalRxnLUT::k152][i] =
             kcol_rate_tables.data[CollisionalRxnLUT::k152]
                                  [logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::k152]
@@ -712,7 +712,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::k152]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::k153][i] =
+        kcol_buf.data[CollisionalRxnLUT::k153][i] =
             kcol_rate_tables.data[CollisionalRxnLUT::k153]
                                  [logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::k153]
@@ -729,7 +729,7 @@ inline void lookup_cool_rates1d(
   if (my_chemistry->metal_chemistry == 1) {
     for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
       if (itmask[i] != MASK_FALSE) {
-        kcr_buf.data[CollisionalRxnLUT::kz15][i] =
+        kcol_buf.data[CollisionalRxnLUT::kz15][i] =
             kcol_rate_tables.data[CollisionalRxnLUT::kz15]
                                  [logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::kz15]
@@ -737,7 +737,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::kz15]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::kz16][i] =
+        kcol_buf.data[CollisionalRxnLUT::kz16][i] =
             kcol_rate_tables.data[CollisionalRxnLUT::kz16]
                                  [logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::kz16]
@@ -745,7 +745,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::kz16]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::kz17][i] =
+        kcol_buf.data[CollisionalRxnLUT::kz17][i] =
             kcol_rate_tables.data[CollisionalRxnLUT::kz17]
                                  [logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::kz17]
@@ -753,7 +753,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::kz17]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::kz18][i] =
+        kcol_buf.data[CollisionalRxnLUT::kz18][i] =
             kcol_rate_tables.data[CollisionalRxnLUT::kz18]
                                  [logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::kz18]
@@ -761,7 +761,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::kz18]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::kz19][i] =
+        kcol_buf.data[CollisionalRxnLUT::kz19][i] =
             kcol_rate_tables.data[CollisionalRxnLUT::kz19]
                                  [logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::kz19]
@@ -769,7 +769,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::kz19]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::kz20][i] =
+        kcol_buf.data[CollisionalRxnLUT::kz20][i] =
             kcol_rate_tables.data[CollisionalRxnLUT::kz20]
                                  [logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::kz20]
@@ -777,7 +777,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::kz20]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::kz21][i] =
+        kcol_buf.data[CollisionalRxnLUT::kz21][i] =
             kcol_rate_tables.data[CollisionalRxnLUT::kz21]
                                  [logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::kz21]
@@ -785,7 +785,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::kz21]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::kz22][i] =
+        kcol_buf.data[CollisionalRxnLUT::kz22][i] =
             kcol_rate_tables.data[CollisionalRxnLUT::kz22]
                                  [logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::kz22]
@@ -793,7 +793,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::kz22]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::kz23][i] =
+        kcol_buf.data[CollisionalRxnLUT::kz23][i] =
             kcol_rate_tables.data[CollisionalRxnLUT::kz23]
                                  [logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::kz23]
@@ -801,7 +801,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::kz23]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::kz24][i] =
+        kcol_buf.data[CollisionalRxnLUT::kz24][i] =
             kcol_rate_tables.data[CollisionalRxnLUT::kz24]
                                  [logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::kz24]
@@ -809,7 +809,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::kz24]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::kz25][i] =
+        kcol_buf.data[CollisionalRxnLUT::kz25][i] =
             kcol_rate_tables.data[CollisionalRxnLUT::kz25]
                                  [logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::kz25]
@@ -817,7 +817,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::kz25]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::kz26][i] =
+        kcol_buf.data[CollisionalRxnLUT::kz26][i] =
             kcol_rate_tables.data[CollisionalRxnLUT::kz26]
                                  [logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::kz26]
@@ -825,7 +825,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::kz26]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::kz27][i] =
+        kcol_buf.data[CollisionalRxnLUT::kz27][i] =
             kcol_rate_tables.data[CollisionalRxnLUT::kz27]
                                  [logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::kz27]
@@ -833,7 +833,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::kz27]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::kz28][i] =
+        kcol_buf.data[CollisionalRxnLUT::kz28][i] =
             kcol_rate_tables.data[CollisionalRxnLUT::kz28]
                                  [logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::kz28]
@@ -841,7 +841,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::kz28]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::kz29][i] =
+        kcol_buf.data[CollisionalRxnLUT::kz29][i] =
             kcol_rate_tables.data[CollisionalRxnLUT::kz29]
                                  [logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::kz29]
@@ -849,7 +849,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::kz29]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::kz30][i] =
+        kcol_buf.data[CollisionalRxnLUT::kz30][i] =
             kcol_rate_tables.data[CollisionalRxnLUT::kz30]
                                  [logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::kz30]
@@ -857,7 +857,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::kz30]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::kz31][i] =
+        kcol_buf.data[CollisionalRxnLUT::kz31][i] =
             kcol_rate_tables.data[CollisionalRxnLUT::kz31]
                                  [logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::kz31]
@@ -865,7 +865,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::kz31]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::kz32][i] =
+        kcol_buf.data[CollisionalRxnLUT::kz32][i] =
             kcol_rate_tables.data[CollisionalRxnLUT::kz32]
                                  [logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::kz32]
@@ -873,7 +873,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::kz32]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::kz33][i] =
+        kcol_buf.data[CollisionalRxnLUT::kz33][i] =
             kcol_rate_tables.data[CollisionalRxnLUT::kz33]
                                  [logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::kz33]
@@ -881,7 +881,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::kz33]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::kz34][i] =
+        kcol_buf.data[CollisionalRxnLUT::kz34][i] =
             kcol_rate_tables.data[CollisionalRxnLUT::kz34]
                                  [logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::kz34]
@@ -889,7 +889,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::kz34]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::kz35][i] =
+        kcol_buf.data[CollisionalRxnLUT::kz35][i] =
             kcol_rate_tables.data[CollisionalRxnLUT::kz35]
                                  [logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::kz35]
@@ -897,7 +897,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::kz35]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::kz36][i] =
+        kcol_buf.data[CollisionalRxnLUT::kz36][i] =
             kcol_rate_tables.data[CollisionalRxnLUT::kz36]
                                  [logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::kz36]
@@ -905,7 +905,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::kz36]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::kz37][i] =
+        kcol_buf.data[CollisionalRxnLUT::kz37][i] =
             kcol_rate_tables.data[CollisionalRxnLUT::kz37]
                                  [logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::kz37]
@@ -913,7 +913,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::kz37]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::kz38][i] =
+        kcol_buf.data[CollisionalRxnLUT::kz38][i] =
             kcol_rate_tables.data[CollisionalRxnLUT::kz38]
                                  [logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::kz38]
@@ -921,7 +921,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::kz38]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::kz39][i] =
+        kcol_buf.data[CollisionalRxnLUT::kz39][i] =
             kcol_rate_tables.data[CollisionalRxnLUT::kz39]
                                  [logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::kz39]
@@ -929,7 +929,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::kz39]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::kz40][i] =
+        kcol_buf.data[CollisionalRxnLUT::kz40][i] =
             kcol_rate_tables.data[CollisionalRxnLUT::kz40]
                                  [logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::kz40]
@@ -937,7 +937,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::kz40]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::kz41][i] =
+        kcol_buf.data[CollisionalRxnLUT::kz41][i] =
             kcol_rate_tables.data[CollisionalRxnLUT::kz41]
                                  [logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::kz41]
@@ -945,7 +945,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::kz41]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::kz42][i] =
+        kcol_buf.data[CollisionalRxnLUT::kz42][i] =
             kcol_rate_tables.data[CollisionalRxnLUT::kz42]
                                  [logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::kz42]
@@ -953,7 +953,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::kz42]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::kz43][i] =
+        kcol_buf.data[CollisionalRxnLUT::kz43][i] =
             kcol_rate_tables.data[CollisionalRxnLUT::kz43]
                                  [logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::kz43]
@@ -961,7 +961,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::kz43]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::kz44][i] =
+        kcol_buf.data[CollisionalRxnLUT::kz44][i] =
             kcol_rate_tables.data[CollisionalRxnLUT::kz44]
                                  [logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::kz44]
@@ -969,7 +969,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::kz44]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::kz45][i] =
+        kcol_buf.data[CollisionalRxnLUT::kz45][i] =
             kcol_rate_tables.data[CollisionalRxnLUT::kz45]
                                  [logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::kz45]
@@ -977,7 +977,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::kz45]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::kz46][i] =
+        kcol_buf.data[CollisionalRxnLUT::kz46][i] =
             kcol_rate_tables.data[CollisionalRxnLUT::kz46]
                                  [logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::kz46]
@@ -985,7 +985,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::kz46]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::kz47][i] =
+        kcol_buf.data[CollisionalRxnLUT::kz47][i] =
             kcol_rate_tables.data[CollisionalRxnLUT::kz47]
                                  [logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::kz47]
@@ -993,7 +993,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::kz47]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::kz48][i] =
+        kcol_buf.data[CollisionalRxnLUT::kz48][i] =
             kcol_rate_tables.data[CollisionalRxnLUT::kz48]
                                  [logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::kz48]
@@ -1001,7 +1001,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::kz48]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::kz49][i] =
+        kcol_buf.data[CollisionalRxnLUT::kz49][i] =
             kcol_rate_tables.data[CollisionalRxnLUT::kz49]
                                  [logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::kz49]
@@ -1009,7 +1009,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::kz49]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::kz50][i] =
+        kcol_buf.data[CollisionalRxnLUT::kz50][i] =
             kcol_rate_tables.data[CollisionalRxnLUT::kz50]
                                  [logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::kz50]
@@ -1017,7 +1017,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::kz50]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::kz51][i] =
+        kcol_buf.data[CollisionalRxnLUT::kz51][i] =
             kcol_rate_tables.data[CollisionalRxnLUT::kz51]
                                  [logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::kz51]
@@ -1025,7 +1025,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::kz51]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::kz52][i] =
+        kcol_buf.data[CollisionalRxnLUT::kz52][i] =
             kcol_rate_tables.data[CollisionalRxnLUT::kz52]
                                  [logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::kz52]
@@ -1033,7 +1033,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::kz52]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::kz53][i] =
+        kcol_buf.data[CollisionalRxnLUT::kz53][i] =
             kcol_rate_tables.data[CollisionalRxnLUT::kz53]
                                  [logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::kz53]
@@ -1041,7 +1041,7 @@ inline void lookup_cool_rates1d(
              kcol_rate_tables.data[CollisionalRxnLUT::kz53]
                                   [logTlininterp_buf.indixe[i] - 1]) *
                 logTlininterp_buf.tdef[i];
-        kcr_buf.data[CollisionalRxnLUT::kz54][i] =
+        kcol_buf.data[CollisionalRxnLUT::kz54][i] =
             kcol_rate_tables.data[CollisionalRxnLUT::kz54]
                                  [logTlininterp_buf.indixe[i] - 1] +
             (kcol_rate_tables.data[CollisionalRxnLUT::kz54]
@@ -1958,7 +1958,7 @@ inline void lookup_cool_rates1d(
     for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
       if (itmask[i] != MASK_FALSE) {
         nh = std::fmin(HI(i, idx_range.j, idx_range.k) * dom, 1.0e9);
-        kcr_buf.data[CollisionalRxnLUT::k13][i] = tiny8;
+        kcol_buf.data[CollisionalRxnLUT::k13][i] = tiny8;
         if (tgas1d[i] >= 500. && tgas1d[i] < 1.0e6) {
           // Direct collisional dissociation
           k13_CID =
@@ -1979,7 +1979,7 @@ inline void lookup_cool_rates1d(
                   (1. + std::pow((nh / k13dd(i, 13 - 1)), k13dd(i, 14 - 1)));
           k13_DT = std::fmax(std::pow(10., k13_DT), tiny8);
           //
-          kcr_buf.data[CollisionalRxnLUT::k13][i] = k13_DT + k13_CID;
+          kcol_buf.data[CollisionalRxnLUT::k13][i] = k13_DT + k13_CID;
         }
       }
     }
