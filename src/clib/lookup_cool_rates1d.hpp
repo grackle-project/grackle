@@ -128,33 +128,6 @@ inline void lookup_cool_rates1d(
   grackle::impl::View<gr_float***> HDI(
       my_fields->HDI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> CI(
-      my_fields->CI_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> H2O(
-      my_fields->H2O_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> SiI(
-      my_fields->SiI_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> SiOI(
-      my_fields->SiOI_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> SiO2I(
-      my_fields->SiO2I_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> Mg(
-      my_fields->Mg_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> Al(
-      my_fields->Al_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> S(
-      my_fields->S_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> Fe(
-      my_fields->Fe_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
   // Radiation fields
 
@@ -978,7 +951,7 @@ inline void lookup_cool_rates1d(
                                          internal_dust_prop_buf);
   }
 
-  // Look-up rate for H2 formation on dust (store rate in h2dust)
+  // Look-up rate for H2 formation on dust & (when relevant) grain growth rates
 
   if (anydust != MASK_FALSE) {
     // these are some legacy variables that referene allocations now tracked
@@ -1081,7 +1054,99 @@ inline void lookup_cool_rates1d(
 
     } else {  // my_chemistry->dust_species > 0
 
-      // in this branch, the we are effectively computing:
+      // before we do anything else, let's construct views of some species
+      // density fields (we only need it for part of the calculation, but there
+      // is enough boilerplate here that breaks everything up, a lot!)
+
+      // The Fortran version of this function implicitly assumed that the
+      // following condition was satisfied when my_chemistry->dust_species > 0
+      // (we are just making it more explicit)
+      GRIMPL_REQUIRE(my_chemistry->metal_chemistry == 1, "sanity-check!");
+
+      // load views of some metal species and molecular species
+      grackle::impl::View<gr_float***> CI(
+          my_fields->CI_density, my_fields->grid_dimension[0],
+          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+      grackle::impl::View<gr_float***> H2O(
+          my_fields->H2O_density, my_fields->grid_dimension[0],
+          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+      grackle::impl::View<gr_float***> SiI(
+          my_fields->SiI_density, my_fields->grid_dimension[0],
+          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+      grackle::impl::View<gr_float***> SiOI(
+          my_fields->SiOI_density, my_fields->grid_dimension[0],
+          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+      grackle::impl::View<gr_float***> SiO2I(
+          my_fields->SiO2I_density, my_fields->grid_dimension[0],
+          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+      grackle::impl::View<gr_float***> Mg(
+          my_fields->Mg_density, my_fields->grid_dimension[0],
+          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+      grackle::impl::View<gr_float***> Al(
+          my_fields->Al_density, my_fields->grid_dimension[0],
+          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+      grackle::impl::View<gr_float***> S(
+          my_fields->S_density, my_fields->grid_dimension[0],
+          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+      grackle::impl::View<gr_float***> Fe(
+          my_fields->Fe_density, my_fields->grid_dimension[0],
+          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+
+      // construct some views of dust grain densities (only load in species
+      // that are explicitly enabled by my_chemistry->dust_species)
+      grackle::impl::View<gr_float***> MgSiO3, AC, SiM, FeM, Mg2SiO4, Fe3O4,
+          SiO2D, MgO, FeS, Al2O3, reforg, volorg, H2Oice;
+
+      if (my_chemistry->dust_species > 0) {
+        MgSiO3 = grackle::impl::View<gr_float***>(
+            my_fields->MgSiO3_dust_density, my_fields->grid_dimension[0],
+            my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+        AC = grackle::impl::View<gr_float***>(
+            my_fields->AC_dust_density, my_fields->grid_dimension[0],
+            my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+      }
+
+      if (my_chemistry->dust_species > 1) {
+        SiM = grackle::impl::View<gr_float***>(
+            my_fields->SiM_dust_density, my_fields->grid_dimension[0],
+            my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+        FeM = grackle::impl::View<gr_float***>(
+            my_fields->FeM_dust_density, my_fields->grid_dimension[0],
+            my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+        Mg2SiO4 = grackle::impl::View<gr_float***>(
+            my_fields->Mg2SiO4_dust_density, my_fields->grid_dimension[0],
+            my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+        Fe3O4 = grackle::impl::View<gr_float***>(
+            my_fields->Fe3O4_dust_density, my_fields->grid_dimension[0],
+            my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+        SiO2D = grackle::impl::View<gr_float***>(
+            my_fields->SiO2_dust_density, my_fields->grid_dimension[0],
+            my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+        MgO = grackle::impl::View<gr_float***>(
+            my_fields->MgO_dust_density, my_fields->grid_dimension[0],
+            my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+        FeS = grackle::impl::View<gr_float***>(
+            my_fields->FeS_dust_density, my_fields->grid_dimension[0],
+            my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+        Al2O3 = grackle::impl::View<gr_float***>(
+            my_fields->Al2O3_dust_density, my_fields->grid_dimension[0],
+            my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+      }
+      if (my_chemistry->dust_species > 2) {
+        reforg = grackle::impl::View<gr_float***>(
+            my_fields->ref_org_dust_density, my_fields->grid_dimension[0],
+            my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+        volorg = grackle::impl::View<gr_float***>(
+            my_fields->vol_org_dust_density, my_fields->grid_dimension[0],
+            my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+        H2Oice = grackle::impl::View<gr_float***>(
+            my_fields->H2O_ice_dust_density, my_fields->grid_dimension[0],
+            my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+      }
+
+      // Look-up rate for H2 formation on dust
+      // -------------------------------------
+      // in this branch, we are effectively computing:
       //   h2dust[i]
       //     = ∑ₛ coef_fnₛ(Tgas[i], Tdustₛ[i]) * grain_sigma_per_gas_massₛ[i]
       // where, the "s" subscript corresponds to a dust species.
@@ -1278,58 +1343,8 @@ inline void lookup_cool_rates1d(
         }
       }
 
-      // Compute net grain growth rate
-
-      // construct some views of dust species
-      grackle::impl::View<gr_float***> MgSiO3, AC, SiM, FeM, Mg2SiO4, Fe3O4,
-          SiO2D, MgO, FeS, Al2O3, reforg, volorg, H2Oice;
-
-      if (my_chemistry->dust_species > 0) {
-        MgSiO3 = grackle::impl::View<gr_float***>(
-            my_fields->MgSiO3_dust_density, my_fields->grid_dimension[0],
-            my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-        AC = grackle::impl::View<gr_float***>(
-            my_fields->AC_dust_density, my_fields->grid_dimension[0],
-            my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-      }
-
-      if (my_chemistry->dust_species > 1) {
-        SiM = grackle::impl::View<gr_float***>(
-            my_fields->SiM_dust_density, my_fields->grid_dimension[0],
-            my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-        FeM = grackle::impl::View<gr_float***>(
-            my_fields->FeM_dust_density, my_fields->grid_dimension[0],
-            my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-        Mg2SiO4 = grackle::impl::View<gr_float***>(
-            my_fields->Mg2SiO4_dust_density, my_fields->grid_dimension[0],
-            my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-        Fe3O4 = grackle::impl::View<gr_float***>(
-            my_fields->Fe3O4_dust_density, my_fields->grid_dimension[0],
-            my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-        SiO2D = grackle::impl::View<gr_float***>(
-            my_fields->SiO2_dust_density, my_fields->grid_dimension[0],
-            my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-        MgO = grackle::impl::View<gr_float***>(
-            my_fields->MgO_dust_density, my_fields->grid_dimension[0],
-            my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-        FeS = grackle::impl::View<gr_float***>(
-            my_fields->FeS_dust_density, my_fields->grid_dimension[0],
-            my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-        Al2O3 = grackle::impl::View<gr_float***>(
-            my_fields->Al2O3_dust_density, my_fields->grid_dimension[0],
-            my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-      }
-      if (my_chemistry->dust_species > 2) {
-        reforg = grackle::impl::View<gr_float***>(
-            my_fields->ref_org_dust_density, my_fields->grid_dimension[0],
-            my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-        volorg = grackle::impl::View<gr_float***>(
-            my_fields->vol_org_dust_density, my_fields->grid_dimension[0],
-            my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-        H2Oice = grackle::impl::View<gr_float***>(
-            my_fields->H2O_ice_dust_density, my_fields->grid_dimension[0],
-            my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-      }
+      // Compute net grain growth rates
+      // ------------------------------
 
       long long nratec_single_elem_arr[1] = {
           (long long)(my_chemistry->NumberOfTemperatureBins)};
