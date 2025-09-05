@@ -1180,19 +1180,17 @@ inline void lookup_cool_rates1d(
       // of tabulated values
 
       // load properties of the interpolation table
-      d_N[1 - 1] = (long long)(my_chemistry->NumberOfDustTemperatureBins);
-      d_N[2 - 1] = (long long)(my_chemistry->NumberOfTemperatureBins);
-      d_Size = d_N[1 - 1] * d_N[2 - 1];
+      d_N[0] = (long long)(my_chemistry->NumberOfDustTemperatureBins);
+      d_N[1] = (long long)(my_chemistry->NumberOfTemperatureBins);
+      d_Size = d_N[0] * d_N[1];
       d_dTd = d_dlogtem;
       d_dTg = dlogtem;
       // note: it is inefficient to repeatedly reinitialize d_Td & d_Tg
-      for (idratec = 1; idratec <= (my_chemistry->NumberOfDustTemperatureBins);
-           idratec++) {
-        d_Td[idratec - 1] = d_logtem0 + (double)(idratec - 1) * d_dlogtem;
+      for (int idx = 0; idx < my_chemistry->NumberOfDustTemperatureBins; idx++) {
+        d_Td[idx] = d_logtem0 + (double)idx * d_dlogtem;
       }
-      for (iratec = 1; iratec <= (my_chemistry->NumberOfTemperatureBins);
-           iratec++) {
-        d_Tg[iratec - 1] = logtem0 + (double)(iratec - 1) * dlogtem;
+      for (int idx = 0; idx < my_chemistry->NumberOfTemperatureBins; idx++) {
+        d_Tg[idx] = logtem0 + (double)idx * dlogtem;
       }
 
       // load the tables that we are interpolating over
