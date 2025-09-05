@@ -80,8 +80,6 @@ inline void lookup_cool_rates1d(
   // shorten `grackle::impl::fortran_wrapper` to `f_wrap` within this function
   namespace f_wrap = ::grackle::impl::fortran_wrapper;
 
-  // -------------------------------------------------------------------
-
   grackle::impl::CollisionalRxnRateCollection kcol_rate_tables =
       *(my_rates->opaque_storage->kcol_rate_tables);
 
@@ -105,18 +103,25 @@ inline void lookup_cool_rates1d(
   grackle::impl::View<gr_float***> HeIII(
       my_fields->HeIII_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> H2I(
-      my_fields->H2I_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> H2II(
-      my_fields->H2II_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
-  // Radiation fields
+  grackle::impl::View<gr_float***> H2I, H2II;
+  if (my_chemistry->primordial_chemistry > 1) {
+    H2I = grackle::impl::View<gr_float***>(
+        my_fields->H2I_density, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    H2II = grackle::impl::View<gr_float***>(
+        my_fields->H2II_density, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  }
 
-  grackle::impl::View<gr_float***> kdissH2I(
-      my_fields->RT_H2_dissociation_rate, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  // Conditionally make a view of a the H2 dissociation radiation field
+  grackle::impl::View<gr_float***> kdissH2I;
+  if (my_chemistry->primordial_chemistry > 1 &&
+      my_chemistry->use_radiative_transfer == 1) {
+    kdissH2I = grackle::impl::View<gr_float***>(
+        my_fields->RT_H2_dissociation_rate, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  }
 
   // Returned rate values
 
