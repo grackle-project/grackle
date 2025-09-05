@@ -231,15 +231,12 @@ inline void lookup_cool_rates1d(
   std::vector<double> d_tdef(my_fields->grid_dimension[0]);
   std::vector<double> dusti1(my_fields->grid_dimension[0]);
   std::vector<double> dusti2(my_fields->grid_dimension[0]);
-  std::vector<double> divrhoa(6);
   std::vector<double> f_shield_H(my_fields->grid_dimension[0]);
   std::vector<double> f_shield_He(my_fields->grid_dimension[0]);
 
   // locals
-
-  int n1;
   double x, logtem0, logtem9, dlogtem, nh, d_logtem0, d_logtem9, d_dlogtem,
-      divrho, N_H2, f_shield, b_doppler, l_H2shield;
+      N_H2, f_shield, b_doppler, l_H2shield;
   double k13_CID, k13_DT;
   std::vector<double> logT(my_fields->grid_dimension[0]);
   std::vector<double> logrho(my_fields->grid_dimension[0]);
@@ -513,14 +510,13 @@ inline void lookup_cool_rates1d(
       }
     }
 
-    for (n1 = 1; n1 <= (14); n1++) {
+    for (int n1 = 0; n1 < 14; n1++) {
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         if (itmask[i] != MASK_FALSE) {
-          k13dd(i, n1 - 1) =
-              k13dda(logTlininterp_buf.indixe[i] - 1, n1 - 1) +
-              (k13dda(logTlininterp_buf.indixe[i] + 1 - 1, n1 - 1) -
-               k13dda(logTlininterp_buf.indixe[i] - 1, n1 - 1)) *
-                  logTlininterp_buf.tdef[i];
+          k13dd(i, n1) = k13dda(logTlininterp_buf.indixe[i] - 1, n1) +
+                         (k13dda(logTlininterp_buf.indixe[i] + 1 - 1, n1) -
+                          k13dda(logTlininterp_buf.indixe[i] - 1, n1)) *
+                             logTlininterp_buf.tdef[i];
         }
       }
     }
@@ -1660,23 +1656,17 @@ inline void lookup_cool_rates1d(
         if (itmask[i] != MASK_FALSE) {
           // Calculate a Sobolev-like length assuming a 3D grid.
           if (my_chemistry->H2_self_shielding == 1) {
-            divrhoa[0] = d(i + 1, idx_range.j, idx_range.k) -
-                         d(i, idx_range.j, idx_range.k);
-            divrhoa[1] = d(i - 1, idx_range.j, idx_range.k) -
-                         d(i, idx_range.j, idx_range.k);
-            divrhoa[2] = d(i, idx_range.j + 1, idx_range.k) -
-                         d(i, idx_range.j, idx_range.k);
-            divrhoa[3] = d(i, idx_range.j - 1, idx_range.k) -
-                         d(i, idx_range.j, idx_range.k);
-            divrhoa[4] = d(i, idx_range.j, idx_range.k + 1) -
-                         d(i, idx_range.j, idx_range.k);
-            divrhoa[5] = d(i, idx_range.j, idx_range.k - 1) -
-                         d(i, idx_range.j, idx_range.k);
-            divrho = tiny_fortran_val;
+            int j = idx_range.j;
+            int k = idx_range.k;
+            double divrhoa[6] = {
+                d(i + 1, j, k) - d(i, j, k), d(i - 1, j, k) - d(i, j, k),
+                d(i, j + 1, k) - d(i, j, k), d(i, j - 1, k) - d(i, j, k),
+                d(i, j, k + 1) - d(i, j, k), d(i, j, k - 1) - d(i, j, k)};
+            double divrho = tiny_fortran_val;
             // Exclude directions with (drho/ds > 0)
-            for (n1 = 1; n1 <= (6); n1++) {
-              if (divrhoa[n1 - 1] < 0.) {
-                divrho = divrho + divrhoa[n1 - 1];
+            for (int n1 = 0; n1 < 6; n1++) {
+              if (divrhoa[n1] < 0.) {
+                divrho = divrho + divrhoa[n1];
               }
             }
             // (rho / divrho) is the Sobolev-like length in cell widths
