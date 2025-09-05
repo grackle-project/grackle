@@ -227,10 +227,7 @@ inline void lookup_cool_rates1d(
   std::vector<double> f_shield_He(my_fields->grid_dimension[0]);
 
   // locals
-  double x, nh, N_H2, f_shield, b_doppler, l_H2shield;
-  double k13_CID, k13_DT;
-  std::vector<double> logT(my_fields->grid_dimension[0]);
-  std::vector<double> logrho(my_fields->grid_dimension[0]);
+  double nh, N_H2, l_H2shield;
 
   // stuff related to grain-growth
   //
@@ -243,7 +240,6 @@ inline void lookup_cool_rates1d(
   // tabulate h2 formation rate
   std::vector<double> d_Td(my_chemistry->NumberOfDustTemperatureBins);
   std::vector<double> d_Tg(my_chemistry->NumberOfTemperatureBins);
-  double kd;
 
   // locals for H2 self-shielding as WG+19
 
@@ -1348,6 +1344,7 @@ inline void lookup_cool_rates1d(
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         if (itmask_metal[i] != MASK_FALSE) {
           if (my_chemistry->grain_growth == 1) {
+            double kd;
             if (my_chemistry->dust_species > 0) {
               kd = f_wrap::interpolate_1d_g(logTlininterp_buf.logtem[i],
                                             nratec_single_elem_arr, d_Tg.data(),
@@ -1685,10 +1682,10 @@ inline void lookup_cool_rates1d(
                                std::exp(-0.2856 * std::log10(ngas_touse)) +
                            (-0.9639 * std::log10(tgas_touse) + 3.892);
 
-          x = 2.0e-15 * N_H2;
-          b_doppler =
+          double x = 2.0e-15 * N_H2;
+          double b_doppler =
               1e-5 * std::sqrt(2. * kboltz_grflt * tgas1d[i] / (2. * mh_grflt));
-          f_shield =
+          double f_shield =
               0.965 / std::pow((1. + x / b_doppler), aWG2019) +
               0.035 * std::exp(-8.5e-4 * std::sqrt(1. + x)) / std::sqrt(1. + x);
 
@@ -1909,7 +1906,7 @@ inline void lookup_cool_rates1d(
 
   for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
     if (itmask[i] != MASK_FALSE) {
-      x = std::fmax(
+      double x = std::fmax(
           HII(i, idx_range.j, idx_range.k) / (HI(i, idx_range.j, idx_range.k) +
                                               HII(i, idx_range.j, idx_range.k)),
           1.0e-4);
@@ -1943,7 +1940,7 @@ inline void lookup_cool_rates1d(
         kcol_buf.data[CollisionalRxnLUT::k13][i] = tiny8;
         if (tgas1d[i] >= 500. && tgas1d[i] < 1.0e6) {
           // Direct collisional dissociation
-          k13_CID =
+          double k13_CID =
               k13dd(i, 1 - 1) -
               k13dd(i, 2 - 1) /
                   (1. + std::pow((nh / k13dd(i, 5 - 1)), k13dd(i, 7 - 1))) +
@@ -1952,7 +1949,7 @@ inline void lookup_cool_rates1d(
                   (1. + std::pow((nh / k13dd(i, 6 - 1)), k13dd(i, 7 - 1)));
           k13_CID = std::fmax(std::pow(10., k13_CID), tiny8);
           // Dissociative tunnelling
-          k13_DT =
+          double k13_DT =
               k13dd(i, 8 - 1) -
               k13dd(i, 9 - 1) /
                   (1. + std::pow((nh / k13dd(i, 12 - 1)), k13dd(i, 14 - 1))) +
