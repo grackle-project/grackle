@@ -6,7 +6,7 @@
 //===----------------------------------------------------------------------===//
 ///
 /// @file
-/// Declares signature of lookup_cool_rates1d_g
+/// Implements the lookup_cool_rates1d_g function.
 ///
 //===----------------------------------------------------------------------===//
 
@@ -1936,21 +1936,17 @@ inline void lookup_cool_rates1d(
         if (tgas1d[i] >= 500. && tgas1d[i] < 1.0e6) {
           // Direct collisional dissociation
           double k13_CID =
-              k13dd(i, 1 - 1) -
-              k13dd(i, 2 - 1) /
-                  (1. + std::pow((nh / k13dd(i, 5 - 1)), k13dd(i, 7 - 1))) +
-              k13dd(i, 3 - 1) -
-              k13dd(i, 4 - 1) /
-                  (1. + std::pow((nh / k13dd(i, 6 - 1)), k13dd(i, 7 - 1)));
+              k13dd(i, 0) -
+              k13dd(i, 1) / (1. + std::pow((nh / k13dd(i, 4)), k13dd(i, 6))) +
+              k13dd(i, 2) -
+              k13dd(i, 3) / (1. + std::pow((nh / k13dd(i, 5)), k13dd(i, 6)));
           k13_CID = std::fmax(std::pow(10., k13_CID), tiny8);
           // Dissociative tunnelling
           double k13_DT =
-              k13dd(i, 8 - 1) -
-              k13dd(i, 9 - 1) /
-                  (1. + std::pow((nh / k13dd(i, 12 - 1)), k13dd(i, 14 - 1))) +
-              k13dd(i, 10 - 1) -
-              k13dd(i, 11 - 1) /
-                  (1. + std::pow((nh / k13dd(i, 13 - 1)), k13dd(i, 14 - 1)));
+              k13dd(i, 7) -
+              k13dd(i, 8) / (1. + std::pow((nh / k13dd(i, 11)), k13dd(i, 13))) +
+              k13dd(i, 9) -
+              k13dd(i, 10) / (1. + std::pow((nh / k13dd(i, 12)), k13dd(i, 13)));
           k13_DT = std::fmax(std::pow(10., k13_DT), tiny8);
           //
           kcol_buf.data[CollisionalRxnLUT::k13][i] = k13_DT + k13_CID;
