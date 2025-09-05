@@ -1365,17 +1365,16 @@ inline void lookup_cool_rates1d(
       // Compute grain growth rate
 
       long long nratec_single_elem_arr[1] = {
-        (long long)(my_chemistry->NumberOfTemperatureBins)
-      };
+          (long long)(my_chemistry->NumberOfTemperatureBins)};
 
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         if (itmask_metal[i] != MASK_FALSE) {
           if (my_chemistry->grain_growth == 1) {
             if (my_chemistry->dust_species > 0) {
-              kd = f_wrap::interpolate_1d_g(
-                  logTlininterp_buf.logtem[i], nratec_single_elem_arr,
-                  d_Tg.data(), d_dTg, nratec_single_elem_arr[0],
-                  my_rates->grain_growth_rate);
+              kd = f_wrap::interpolate_1d_g(logTlininterp_buf.logtem[i],
+                                            nratec_single_elem_arr, d_Tg.data(),
+                                            d_dTg, nratec_single_elem_arr[0],
+                                            my_rates->grain_growth_rate);
 
               grain_growth_rates.data[OnlyGrainSpLUT::MgSiO3_dust][i] =
                   kd * sgMgSiO3[i] * d(i, idx_range.j, idx_range.k) *
@@ -1661,18 +1660,18 @@ inline void lookup_cool_rates1d(
         if (itmask[i] != MASK_FALSE) {
           // Calculate a Sobolev-like length assuming a 3D grid.
           if (my_chemistry->H2_self_shielding == 1) {
-            divrhoa[1 - 1] = d(i + 1 - 1, idx_range.j, idx_range.k) -
-                             d(i, idx_range.j, idx_range.k);
-            divrhoa[2 - 1] = d(i - 1, idx_range.j, idx_range.k) -
-                             d(i, idx_range.j, idx_range.k);
-            divrhoa[3 - 1] = d(i, idx_range.jp1 + 1 - 1, idx_range.k) -
-                             d(i, idx_range.j, idx_range.k);
-            divrhoa[4 - 1] = d(i, idx_range.j - 1, idx_range.k) -
-                             d(i, idx_range.j, idx_range.k);
-            divrhoa[5 - 1] = d(i, idx_range.j, idx_range.kp1 + 1 - 1) -
-                             d(i, idx_range.j, idx_range.k);
-            divrhoa[6 - 1] = d(i, idx_range.j, idx_range.k - 1) -
-                             d(i, idx_range.j, idx_range.k);
+            divrhoa[0] = d(i + 1, idx_range.j, idx_range.k) -
+                         d(i, idx_range.j, idx_range.k);
+            divrhoa[1] = d(i - 1, idx_range.j, idx_range.k) -
+                         d(i, idx_range.j, idx_range.k);
+            divrhoa[2] = d(i, idx_range.j + 1, idx_range.k) -
+                         d(i, idx_range.j, idx_range.k);
+            divrhoa[3] = d(i, idx_range.j - 1, idx_range.k) -
+                         d(i, idx_range.j, idx_range.k);
+            divrhoa[4] = d(i, idx_range.j, idx_range.k + 1) -
+                         d(i, idx_range.j, idx_range.k);
+            divrhoa[5] = d(i, idx_range.j, idx_range.k - 1) -
+                         d(i, idx_range.j, idx_range.k);
             divrho = tiny_fortran_val;
             // Exclude directions with (drho/ds > 0)
             for (n1 = 1; n1 <= (6); n1++) {
