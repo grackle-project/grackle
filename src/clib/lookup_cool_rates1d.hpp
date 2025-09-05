@@ -227,8 +227,7 @@ inline void lookup_cool_rates1d(
   std::vector<double> f_shield_He(my_fields->grid_dimension[0]);
 
   // locals
-  double x, logtem0, logtem9, dlogtem, nh, d_logtem0, d_logtem9, d_dlogtem,
-      N_H2, f_shield, b_doppler, l_H2shield;
+  double x, dlogtem, nh, d_dlogtem, N_H2, f_shield, b_doppler, l_H2shield;
   double k13_CID, k13_DT;
   std::vector<double> logT(my_fields->grid_dimension[0]);
   std::vector<double> logrho(my_fields->grid_dimension[0]);
@@ -252,8 +251,8 @@ inline void lookup_cool_rates1d(
 
   // Set log values of start and end of lookup tables
 
-  logtem0 = std::log(my_chemistry->TemperatureStart);
-  logtem9 = std::log(my_chemistry->TemperatureEnd);
+  const double logtem_start = std::log(my_chemistry->TemperatureStart);
+  const double logtem_end = std::log(my_chemistry->TemperatureEnd);
   dlogtem = (std::log(my_chemistry->TemperatureEnd) -
              std::log(my_chemistry->TemperatureStart)) /
             (double)(my_chemistry->NumberOfTemperatureBins - 1);
@@ -265,21 +264,22 @@ inline void lookup_cool_rates1d(
       // logtem(i) = log(0.5_DKIND*(tgas(i)+tgasold(i)))
       logTlininterp_buf.logtem[i] = std::log(tgas1d[i]);
       logTlininterp_buf.logtem[i] =
-          std::fmax(logTlininterp_buf.logtem[i], logtem0);
+          std::fmax(logTlininterp_buf.logtem[i], logtem_start);
       logTlininterp_buf.logtem[i] =
-          std::fmin(logTlininterp_buf.logtem[i], logtem9);
+          std::fmin(logTlininterp_buf.logtem[i], logtem_end);
 
       // Find index into tble and precompute interpolation values
 
       logTlininterp_buf.indixe[i] = std::fmin(
           my_chemistry->NumberOfTemperatureBins - 1,
-          std::fmax(1, (long long)((logTlininterp_buf.logtem[i] - logtem0) /
-                                   dlogtem) +
-                           1));
+          std::fmax(1,
+                    (long long)((logTlininterp_buf.logtem[i] - logtem_start) /
+                                dlogtem) +
+                        1));
       logTlininterp_buf.t1[i] =
-          (logtem0 + (logTlininterp_buf.indixe[i] - 1) * dlogtem);
+          (logtem_start + (logTlininterp_buf.indixe[i] - 1) * dlogtem);
       logTlininterp_buf.t2[i] =
-          (logtem0 + (logTlininterp_buf.indixe[i]) * dlogtem);
+          (logtem_start + (logTlininterp_buf.indixe[i]) * dlogtem);
       logTlininterp_buf.tdef[i] =
           (logTlininterp_buf.logtem[i] - logTlininterp_buf.t1[i]) /
           (logTlininterp_buf.t2[i] - logTlininterp_buf.t1[i]);
@@ -1077,8 +1077,8 @@ inline void lookup_cool_rates1d(
     double* sgH2Oice = internal_dust_prop_buf.grain_sigma_per_gas_mass
                            .data[OnlyGrainSpLUT::H2O_ice_dust];
 
-    d_logtem0 = std::log(my_chemistry->DustTemperatureStart);
-    d_logtem9 = std::log(my_chemistry->DustTemperatureEnd);
+    const double logtdust_start = std::log(my_chemistry->DustTemperatureStart);
+    const double logtdust_end = std::log(my_chemistry->DustTemperatureEnd);
     d_dlogtem = (std::log(my_chemistry->DustTemperatureEnd) -
                  std::log(my_chemistry->DustTemperatureStart)) /
                 (double)(my_chemistry->NumberOfDustTemperatureBins - 1);
@@ -1104,17 +1104,18 @@ inline void lookup_cool_rates1d(
             // Get log dust temperature
 
             double d_logtem = std::log(tdust[i]);
-            d_logtem = std::fmax(d_logtem, d_logtem0);
-            d_logtem = std::fmin(d_logtem, d_logtem9);
+            d_logtem = std::fmax(d_logtem, logtdust_start);
+            d_logtem = std::fmin(d_logtem, logtdust_end);
 
             // Find index into table and precompute interpolation values
 
             long long d_indixe = std::fmin(
                 my_chemistry->NumberOfDustTemperatureBins - 1,
-                std::fmax(1,
-                          (long long)((d_logtem - d_logtem0) / d_dlogtem) + 1));
-            double d_t1 = (d_logtem0 + (d_indixe - 1) * d_dlogtem);
-            double d_t2 = (d_logtem0 + d_indixe * d_dlogtem);
+                std::fmax(
+                    1,
+                    (long long)((d_logtem - logtdust_start) / d_dlogtem) + 1));
+            double d_t1 = (logtdust_start + (d_indixe - 1) * d_dlogtem);
+            double d_t2 = (logtdust_start + d_indixe * d_dlogtem);
             double d_tdef = (d_logtem - d_t1) / (d_t2 - d_t1);
 
             // Get rate from 2D interpolation
@@ -1159,10 +1160,10 @@ inline void lookup_cool_rates1d(
       // note: it is inefficient to repeatedly reinitialize d_Td & d_Tg
       for (int idx = 0; idx < my_chemistry->NumberOfDustTemperatureBins;
            idx++) {
-        d_Td[idx] = d_logtem0 + (double)idx * d_dlogtem;
+        d_Td[idx] = logtdust_start + (double)idx * d_dlogtem;
       }
       for (int idx = 0; idx < my_chemistry->NumberOfTemperatureBins; idx++) {
-        d_Tg[idx] = logtem0 + (double)idx * dlogtem;
+        d_Tg[idx] = logtem_start + (double)idx * dlogtem;
       }
 
       // load the tables that we are interpolating over
