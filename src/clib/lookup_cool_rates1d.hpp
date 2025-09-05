@@ -16,7 +16,7 @@
 #ifndef LOOKUP_COOL_RATES1D_HPP
 #define LOOKUP_COOL_RATES1D_HPP
 
-#include <cstdio>
+#include <algorithm>  // std::clamp
 #include <vector>
 
 #include "grackle.h"
@@ -253,18 +253,14 @@ inline void lookup_cool_rates1d(
       // logtem(i) = log(0.5_DKIND*(tgas(i)+tgasold(i)))
       logTlininterp_buf.logtem[i] = std::log(tgas1d[i]);
       logTlininterp_buf.logtem[i] =
-          std::fmax(logTlininterp_buf.logtem[i], logtem_start);
-      logTlininterp_buf.logtem[i] =
-          std::fmin(logTlininterp_buf.logtem[i], logtem_end);
+          std::clamp(logTlininterp_buf.logtem[i], logtem_start, logtem_end);
 
       // Find index into tble and precompute interpolation values
 
-      logTlininterp_buf.indixe[i] = std::fmin(
-          my_chemistry->NumberOfTemperatureBins - 1,
-          std::fmax(1,
-                    (long long)((logTlininterp_buf.logtem[i] - logtem_start) /
-                                dlogtem) +
-                        1));
+      logTlininterp_buf.indixe[i] = std::clamp(
+          (long long)((logTlininterp_buf.logtem[i] - logtem_start) / dlogtem) +
+              1LL,
+          1LL, (long long)my_chemistry->NumberOfTemperatureBins - 1LL);
       logTlininterp_buf.t1[i] =
           (logtem_start + (logTlininterp_buf.indixe[i] - 1) * dlogtem);
       logTlininterp_buf.t2[i] =
@@ -1093,17 +1089,14 @@ inline void lookup_cool_rates1d(
           } else {
             // Get log dust temperature
 
-            double logTdust = std::log(tdust[i]);
-            logTdust = std::fmax(logTdust, logTdust_start);
-            logTdust = std::fmin(logTdust, logTdust_end);
+            double logTdust =
+                std::clamp(std::log(tdust[i]), logTdust_start, logTdust_end);
 
             // Find index into table and precompute interpolation values
 
-            long long d_indixe = std::fmin(
-                my_chemistry->NumberOfDustTemperatureBins - 1,
-                std::fmax(
-                    1,
-                    (long long)((logTdust - logTdust_start) / dlogTdust) + 1));
+            long long d_indixe = std::clamp(
+                (long long)((logTdust - logTdust_start) / dlogTdust) + 1LL, 1LL,
+                (long long)(my_chemistry->NumberOfDustTemperatureBins) - 1LL);
             double d_t1 = (logTdust_start + (d_indixe - 1) * dlogTdust);
             double d_t2 = (logTdust_start + d_indixe * dlogTdust);
             double d_tdef = (logTdust - d_t1) / (d_t2 - d_t1);
@@ -1666,10 +1659,9 @@ inline void lookup_cool_rates1d(
           // update: self-shielding following Wolcott-Green & Haiman (2019)
           // range of validity: T=100-8000 K, n<=1e7 cm^-3
 
-          double tgas_touse = std::fmax(tgas1d[i], 1e2);
-          tgas_touse = std::fmin(tgas_touse, 8e3);
-          double ngas_touse = d(i, idx_range.j, idx_range.k) * dom / mmw[i];
-          ngas_touse = std::fmin(ngas_touse, 1e7);
+          double tgas_touse = std::clamp(tgas1d[i], 1e2, 8e3);
+          double ngas_touse =
+              std::fmin(d(i, idx_range.j, idx_range.k) * dom / mmw[i], 1e7);
 
           double aWG2019 = (0.8711 * std::log10(tgas_touse) - 1.928) *
                                std::exp(-0.2856 * std::log10(ngas_touse)) +
