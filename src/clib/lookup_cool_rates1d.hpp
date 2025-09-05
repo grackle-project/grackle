@@ -16,7 +16,6 @@
 #ifndef LOOKUP_COOL_RATES1D_HPP
 #define LOOKUP_COOL_RATES1D_HPP
 
-#include <algorithm>  // std::clamp
 #include <vector>
 
 #include "grackle.h"
@@ -252,12 +251,12 @@ inline void lookup_cool_rates1d(
 
       // logtem(i) = log(0.5_DKIND*(tgas(i)+tgasold(i)))
       logTlininterp_buf.logtem[i] = std::log(tgas1d[i]);
-      logTlininterp_buf.logtem[i] =
-          std::clamp(logTlininterp_buf.logtem[i], logtem_start, logtem_end);
+      logTlininterp_buf.logtem[i] = grackle::impl::clamp(
+          logTlininterp_buf.logtem[i], logtem_start, logtem_end);
 
       // Find index into tble and precompute interpolation values
 
-      logTlininterp_buf.indixe[i] = std::clamp(
+      logTlininterp_buf.indixe[i] = grackle::impl::clamp(
           (long long)((logTlininterp_buf.logtem[i] - logtem_start) / dlogtem) +
               1LL,
           1LL, (long long)my_chemistry->NumberOfTemperatureBins - 1LL);
@@ -1089,12 +1088,12 @@ inline void lookup_cool_rates1d(
           } else {
             // Get log dust temperature
 
-            double logTdust =
-                std::clamp(std::log(tdust[i]), logTdust_start, logTdust_end);
+            double logTdust = grackle::impl::clamp(
+                std::log(tdust[i]), logTdust_start, logTdust_end);
 
             // Find index into table and precompute interpolation values
 
-            long long d_indixe = std::clamp(
+            long long d_indixe = grackle::impl::clamp(
                 (long long)((logTdust - logTdust_start) / dlogTdust) + 1LL, 1LL,
                 (long long)(my_chemistry->NumberOfDustTemperatureBins) - 1LL);
             double d_t1 = (logTdust_start + (d_indixe - 1) * dlogTdust);
@@ -1659,7 +1658,7 @@ inline void lookup_cool_rates1d(
           // update: self-shielding following Wolcott-Green & Haiman (2019)
           // range of validity: T=100-8000 K, n<=1e7 cm^-3
 
-          double tgas_touse = std::clamp(tgas1d[i], 1e2, 8e3);
+          double tgas_touse = grackle::impl::clamp(tgas1d[i], 1e2, 8e3);
           double ngas_touse =
               std::fmin(d(i, idx_range.j, idx_range.k) * dom / mmw[i], 1e7);
 
