@@ -251,37 +251,6 @@ inline void lookup_cool_rates1d(
   grackle::impl::InternalDustPropBuf internal_dust_prop_buf =
       grackle::impl::new_InternalDustPropBuf(my_fields->grid_dimension[0],
                                              my_rates->gr_N[1]);
-  // these are some legacy variables that referene allocations now tracked
-  // within internal_dust_prop_buf.
-  //
-  // TODO: directly access members of internal_dust_prop_buf (and get rid of
-  // these demporary variables)
-  double* sgSiM = internal_dust_prop_buf.grain_sigma_per_gas_mass
-                      .data[OnlyGrainSpLUT::SiM_dust];
-  double* sgFeM = internal_dust_prop_buf.grain_sigma_per_gas_mass
-                      .data[OnlyGrainSpLUT::FeM_dust];
-  double* sgMg2SiO4 = internal_dust_prop_buf.grain_sigma_per_gas_mass
-                          .data[OnlyGrainSpLUT::Mg2SiO4_dust];
-  double* sgMgSiO3 = internal_dust_prop_buf.grain_sigma_per_gas_mass
-                         .data[OnlyGrainSpLUT::MgSiO3_dust];
-  double* sgFe3O4 = internal_dust_prop_buf.grain_sigma_per_gas_mass
-                        .data[OnlyGrainSpLUT::Fe3O4_dust];
-  double* sgAC = internal_dust_prop_buf.grain_sigma_per_gas_mass
-                     .data[OnlyGrainSpLUT::AC_dust];
-  double* sgSiO2D = internal_dust_prop_buf.grain_sigma_per_gas_mass
-                        .data[OnlyGrainSpLUT::SiO2_dust];
-  double* sgMgO = internal_dust_prop_buf.grain_sigma_per_gas_mass
-                      .data[OnlyGrainSpLUT::MgO_dust];
-  double* sgFeS = internal_dust_prop_buf.grain_sigma_per_gas_mass
-                      .data[OnlyGrainSpLUT::FeS_dust];
-  double* sgAl2O3 = internal_dust_prop_buf.grain_sigma_per_gas_mass
-                        .data[OnlyGrainSpLUT::Al2O3_dust];
-  double* sgreforg = internal_dust_prop_buf.grain_sigma_per_gas_mass
-                         .data[OnlyGrainSpLUT::ref_org_dust];
-  double* sgvolorg = internal_dust_prop_buf.grain_sigma_per_gas_mass
-                         .data[OnlyGrainSpLUT::vol_org_dust];
-  double* sgH2Oice = internal_dust_prop_buf.grain_sigma_per_gas_mass
-                         .data[OnlyGrainSpLUT::H2O_ice_dust];
 
   // tabulate h2 formation rate
   long long d_Size;
@@ -1105,6 +1074,38 @@ inline void lookup_cool_rates1d(
   // Look-up rate for H2 formation on dust (store rate in h2dust)
 
   if (anydust != MASK_FALSE) {
+    // these are some legacy variables that referene allocations now tracked
+    // within internal_dust_prop_buf.
+    //
+    // TODO: directly access members of internal_dust_prop_buf (and get rid of
+    // these demporary variables)
+    double* sgSiM = internal_dust_prop_buf.grain_sigma_per_gas_mass
+                        .data[OnlyGrainSpLUT::SiM_dust];
+    double* sgFeM = internal_dust_prop_buf.grain_sigma_per_gas_mass
+                        .data[OnlyGrainSpLUT::FeM_dust];
+    double* sgMg2SiO4 = internal_dust_prop_buf.grain_sigma_per_gas_mass
+                            .data[OnlyGrainSpLUT::Mg2SiO4_dust];
+    double* sgMgSiO3 = internal_dust_prop_buf.grain_sigma_per_gas_mass
+                           .data[OnlyGrainSpLUT::MgSiO3_dust];
+    double* sgFe3O4 = internal_dust_prop_buf.grain_sigma_per_gas_mass
+                          .data[OnlyGrainSpLUT::Fe3O4_dust];
+    double* sgAC = internal_dust_prop_buf.grain_sigma_per_gas_mass
+                       .data[OnlyGrainSpLUT::AC_dust];
+    double* sgSiO2D = internal_dust_prop_buf.grain_sigma_per_gas_mass
+                          .data[OnlyGrainSpLUT::SiO2_dust];
+    double* sgMgO = internal_dust_prop_buf.grain_sigma_per_gas_mass
+                        .data[OnlyGrainSpLUT::MgO_dust];
+    double* sgFeS = internal_dust_prop_buf.grain_sigma_per_gas_mass
+                        .data[OnlyGrainSpLUT::FeS_dust];
+    double* sgAl2O3 = internal_dust_prop_buf.grain_sigma_per_gas_mass
+                          .data[OnlyGrainSpLUT::Al2O3_dust];
+    double* sgreforg = internal_dust_prop_buf.grain_sigma_per_gas_mass
+                           .data[OnlyGrainSpLUT::ref_org_dust];
+    double* sgvolorg = internal_dust_prop_buf.grain_sigma_per_gas_mass
+                           .data[OnlyGrainSpLUT::vol_org_dust];
+    double* sgH2Oice = internal_dust_prop_buf.grain_sigma_per_gas_mass
+                           .data[OnlyGrainSpLUT::H2O_ice_dust];
+
     d_logtem0 = std::log(my_chemistry->DustTemperatureStart);
     d_logtem9 = std::log(my_chemistry->DustTemperatureEnd);
     d_dlogtem = (std::log(my_chemistry->DustTemperatureEnd) -
