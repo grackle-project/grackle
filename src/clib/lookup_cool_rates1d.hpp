@@ -226,9 +226,6 @@ inline void lookup_cool_rates1d(
   std::vector<double> f_shield_H(my_fields->grid_dimension[0]);
   std::vector<double> f_shield_He(my_fields->grid_dimension[0]);
 
-  // locals
-  double nh, N_H2, l_H2shield;
-
   // stuff related to grain-growth
   //
   // internal_dust_prop_buf holds buffers of intermediate quantities used
@@ -240,10 +237,6 @@ inline void lookup_cool_rates1d(
   // tabulate h2 formation rate
   std::vector<double> d_Td(my_chemistry->NumberOfDustTemperatureBins);
   std::vector<double> d_Tg(my_chemistry->NumberOfTemperatureBins);
-
-  // locals for H2 self-shielding as WG+19
-
-  double nSSh, nratio;
 
   // Set log values of start and end of lookup tables
 
@@ -1633,6 +1626,7 @@ inline void lookup_cool_rates1d(
     if (my_chemistry->H2_self_shielding > 0) {
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         if (itmask[i] != MASK_FALSE) {
+          double l_H2shield;
           // Calculate a Sobolev-like length assuming a 3D grid.
           if (my_chemistry->H2_self_shielding == 1) {
             int j = idx_range.j;
@@ -1668,7 +1662,7 @@ inline void lookup_cool_rates1d(
             l_H2shield = (gr_float)(0.);
           }
 
-          N_H2 = dom * H2I(i, idx_range.j, idx_range.k) * l_H2shield;
+          double N_H2 = dom * H2I(i, idx_range.j, idx_range.k) * l_H2shield;
 
           // update: self-shielding following Wolcott-Green & Haiman (2019)
           // range of validity: T=100-8000 K, n<=1e7 cm^-3
@@ -1725,14 +1719,15 @@ inline void lookup_cool_rates1d(
     for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
       if (itmask[i] != MASK_FALSE) {
         // Compute shielding factor for H
-        nSSh = 6.73e-3 * std::pow((my_uvb_rates.crsHI / 2.49e-18), (-2. / 3.)) *
-               std::pow((tgas1d[i] / 1.0e4), (0.17)) *
-               std::pow((my_uvb_rates.k24 / internalu.tbase1 / 1.0e-12),
-                        (2.0 / 3.0));
+        double nSSh = 6.73e-3 *
+                      std::pow((my_uvb_rates.crsHI / 2.49e-18), (-2. / 3.)) *
+                      std::pow((tgas1d[i] / 1.0e4), (0.17)) *
+                      std::pow((my_uvb_rates.k24 / internalu.tbase1 / 1.0e-12),
+                               (2.0 / 3.0));
 
         // Compute the total Hydrogen number density
-        nratio = (HI(i, idx_range.j, idx_range.k) +
-                  HII(i, idx_range.j, idx_range.k));
+        double nratio = (HI(i, idx_range.j, idx_range.k) +
+                         HII(i, idx_range.j, idx_range.k));
         if (my_chemistry->primordial_chemistry > 1) {
           nratio = nratio + HM(i, idx_range.j, idx_range.k) +
                    H2I(i, idx_range.j, idx_range.k) +
@@ -1936,7 +1931,7 @@ inline void lookup_cool_rates1d(
       my_chemistry->three_body_rate == 0) {
     for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
       if (itmask[i] != MASK_FALSE) {
-        nh = std::fmin(HI(i, idx_range.j, idx_range.k) * dom, 1.0e9);
+        double nh = std::fmin(HI(i, idx_range.j, idx_range.k) * dom, 1.0e9);
         kcol_buf.data[CollisionalRxnLUT::k13][i] = tiny8;
         if (tgas1d[i] >= 500. && tgas1d[i] < 1.0e6) {
           // Direct collisional dissociation
