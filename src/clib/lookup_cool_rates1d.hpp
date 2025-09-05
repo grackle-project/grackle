@@ -224,13 +224,7 @@ inline void lookup_cool_rates1d(
 
   // 1D temporaries (locally allocated)
 
-  std::vector<long long> d_indixe(my_fields->grid_dimension[0]);
-  std::vector<double> d_t1(my_fields->grid_dimension[0]);
-  std::vector<double> d_t2(my_fields->grid_dimension[0]);
   std::vector<double> d_logtem(my_fields->grid_dimension[0]);
-  std::vector<double> d_tdef(my_fields->grid_dimension[0]);
-  std::vector<double> dusti1(my_fields->grid_dimension[0]);
-  std::vector<double> dusti2(my_fields->grid_dimension[0]);
   std::vector<double> f_shield_H(my_fields->grid_dimension[0]);
   std::vector<double> f_shield_He(my_fields->grid_dimension[0]);
 
@@ -1128,29 +1122,28 @@ inline void lookup_cool_rates1d(
 
             // Find index into table and precompute interpolation values
 
-            d_indixe[i] = std::fmin(
+            long long d_indixe = std::fmin(
                 my_chemistry->NumberOfDustTemperatureBins - 1,
                 std::fmax(
                     1, (long long)((d_logtem[i] - d_logtem0) / d_dlogtem) + 1));
-            d_t1[i] = (d_logtem0 + (d_indixe[i] - 1) * d_dlogtem);
-            d_t2[i] = (d_logtem0 + (d_indixe[i]) * d_dlogtem);
-            d_tdef[i] = (d_logtem[i] - d_t1[i]) / (d_t2[i] - d_t1[i]);
+            double d_t1 = (d_logtem0 + (d_indixe - 1) * d_dlogtem);
+            double d_t2 = (d_logtem0 + d_indixe * d_dlogtem);
+            double d_tdef = (d_logtem[i] - d_t1) / (d_t2 - d_t1);
 
             // Get rate from 2D interpolation
 
-            dusti1[i] =
-                h2dusta(logTlininterp_buf.indixe[i] - 1, d_indixe[i] - 1) +
-                (h2dusta(logTlininterp_buf.indixe[i] + 1 - 1, d_indixe[i] - 1) -
-                 h2dusta(logTlininterp_buf.indixe[i] - 1, d_indixe[i] - 1)) *
+            double dusti1 =
+                h2dusta(logTlininterp_buf.indixe[i] - 1, d_indixe - 1) +
+                (h2dusta(logTlininterp_buf.indixe[i] + 1 - 1, d_indixe - 1) -
+                 h2dusta(logTlininterp_buf.indixe[i] - 1, d_indixe - 1)) *
                     logTlininterp_buf.tdef[i];
-            dusti2[i] =
-                h2dusta(logTlininterp_buf.indixe[i] - 1, d_indixe[i] + 1 - 1) +
+            double dusti2 =
+                h2dusta(logTlininterp_buf.indixe[i] - 1, d_indixe + 1 - 1) +
                 (h2dusta(logTlininterp_buf.indixe[i] + 1 - 1,
-                         d_indixe[i] + 1 - 1) -
-                 h2dusta(logTlininterp_buf.indixe[i] - 1,
-                         d_indixe[i] + 1 - 1)) *
+                         d_indixe + 1 - 1) -
+                 h2dusta(logTlininterp_buf.indixe[i] - 1, d_indixe + 1 - 1)) *
                     logTlininterp_buf.tdef[i];
-            h2dust[i] = dusti1[i] + (dusti2[i] - dusti1[i]) * d_tdef[i];
+            h2dust[i] = dusti1 + (dusti2 - dusti1) * d_tdef;
 
             // Multiply by dust to gas ratio
 
