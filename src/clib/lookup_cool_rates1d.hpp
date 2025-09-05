@@ -227,7 +227,7 @@ inline void lookup_cool_rates1d(
   std::vector<double> f_shield_He(my_fields->grid_dimension[0]);
 
   // locals
-  double x, dlogtem, nh, d_dlogtem, N_H2, f_shield, b_doppler, l_H2shield;
+  double x, nh, N_H2, f_shield, b_doppler, l_H2shield;
   double k13_CID, k13_DT;
   std::vector<double> logT(my_fields->grid_dimension[0]);
   std::vector<double> logrho(my_fields->grid_dimension[0]);
@@ -253,9 +253,9 @@ inline void lookup_cool_rates1d(
 
   const double logtem_start = std::log(my_chemistry->TemperatureStart);
   const double logtem_end = std::log(my_chemistry->TemperatureEnd);
-  dlogtem = (std::log(my_chemistry->TemperatureEnd) -
-             std::log(my_chemistry->TemperatureStart)) /
-            (double)(my_chemistry->NumberOfTemperatureBins - 1);
+  const double dlogtem = (std::log(my_chemistry->TemperatureEnd) -
+                          std::log(my_chemistry->TemperatureStart)) /
+                         (double)(my_chemistry->NumberOfTemperatureBins - 1);
 
   for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
     if (itmask[i] != MASK_FALSE) {
@@ -1079,9 +1079,10 @@ inline void lookup_cool_rates1d(
 
     const double logtdust_start = std::log(my_chemistry->DustTemperatureStart);
     const double logtdust_end = std::log(my_chemistry->DustTemperatureEnd);
-    d_dlogtem = (std::log(my_chemistry->DustTemperatureEnd) -
-                 std::log(my_chemistry->DustTemperatureStart)) /
-                (double)(my_chemistry->NumberOfDustTemperatureBins - 1);
+    const double dlogtdust =
+        (std::log(my_chemistry->DustTemperatureEnd) -
+         std::log(my_chemistry->DustTemperatureStart)) /
+        (double)(my_chemistry->NumberOfDustTemperatureBins - 1);
 
     // we should probably enforce the following at initialization!
     GRIMPL_REQUIRE(my_chemistry->dust_species >= 0, "sanity-check!");
@@ -1113,9 +1114,9 @@ inline void lookup_cool_rates1d(
                 my_chemistry->NumberOfDustTemperatureBins - 1,
                 std::fmax(
                     1,
-                    (long long)((d_logtem - logtdust_start) / d_dlogtem) + 1));
-            double d_t1 = (logtdust_start + (d_indixe - 1) * d_dlogtem);
-            double d_t2 = (logtdust_start + d_indixe * d_dlogtem);
+                    (long long)((d_logtem - logtdust_start) / dlogtdust) + 1));
+            double d_t1 = (logtdust_start + (d_indixe - 1) * dlogtdust);
+            double d_t2 = (logtdust_start + d_indixe * dlogtdust);
             double d_tdef = (d_logtem - d_t1) / (d_t2 - d_t1);
 
             // Get rate from 2D interpolation
@@ -1155,12 +1156,12 @@ inline void lookup_cool_rates1d(
           (long long)(my_chemistry->NumberOfDustTemperatureBins),
           (long long)(my_chemistry->NumberOfTemperatureBins)};
       long long d_Size = d_N[0] * d_N[1];
-      double d_dTd = d_dlogtem;
+      double d_dTd = dlogtdust;
       double d_dTg = dlogtem;
       // note: it is inefficient to repeatedly reinitialize d_Td & d_Tg
       for (int idx = 0; idx < my_chemistry->NumberOfDustTemperatureBins;
            idx++) {
-        d_Td[idx] = logtdust_start + (double)idx * d_dlogtem;
+        d_Td[idx] = logtdust_start + (double)idx * dlogtdust;
       }
       for (int idx = 0; idx < my_chemistry->NumberOfTemperatureBins; idx++) {
         d_Tg[idx] = logtem_start + (double)idx * dlogtem;
