@@ -223,8 +223,6 @@ inline void lookup_cool_rates1d(
                                       14);
 
   // 1D temporaries (locally allocated)
-
-  std::vector<double> d_logtem(my_fields->grid_dimension[0]);
   std::vector<double> f_shield_H(my_fields->grid_dimension[0]);
   std::vector<double> f_shield_He(my_fields->grid_dimension[0]);
 
@@ -251,17 +249,6 @@ inline void lookup_cool_rates1d(
   // locals for H2 self-shielding as WG+19
 
   double nSSh, nratio;
-
-  // this is a temporary variable to help with transcription
-  // -> we do this to circumvent the transcription issue of casting a
-  //    variable and passing the result by reference.
-  // -> we make this a 1 element array to let us avoid some warnings
-  //    from some simple analysis-routines that check that the array
-  //    rank of a variable (or the lack thereof) is consistent with the
-  //    declaration within the called subroutine
-  std::vector<long long> nratec_single_elem_arr(1);
-
-  // Cast nratec
 
   // Set log values of start and end of lookup tables
 
