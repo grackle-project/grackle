@@ -808,12 +808,12 @@ int solve_rate_cool_g(
           //    the C++ docstring for a longer discussion
           grackle::impl::lookup_cool_rates1d(
             idx_range, anydust, tgas.data(), mmw.data(), tdust.data(),
-            dust2gas.data(), spsolvbuf.k13dd, spsolvbuf.h2dust,
-            dom, dx_cgs, c_ljeans, itmask.data(), itmask_metal.data(),
-            rhoH.data(), dt, my_chemistry, my_rates, my_fields,
-            *my_uvb_rates, internalu, spsolvbuf.grain_growth_rates,
-            grain_temperatures, logTlininterp_buf, spsolvbuf.kcr_buf,
-            spsolvbuf.kshield_buf, spsolvbuf.chemheatrates_buf
+            dust2gas.data(), spsolvbuf.k13dd, spsolvbuf.h2dust, dom, dx_cgs,
+            c_ljeans, itmask.data(), itmask_metal.data(), dt, my_chemistry,
+            my_rates, my_fields, *my_uvb_rates, internalu,
+            spsolvbuf.grain_growth_rates, grain_temperatures,
+            logTlininterp_buf, spsolvbuf.kcr_buf, spsolvbuf.kshield_buf,
+            spsolvbuf.chemheatrates_buf
           );
 
           // Compute dedot and HIdot, the rates of change of de and HI
