@@ -85,11 +85,6 @@ inline void lookup_cool_rates1d(
   grackle::impl::CollisionalRxnRateCollection kcol_rate_tables =
       *(my_rates->opaque_storage->kcol_rate_tables);
 
-  // Chemistry rates as a function of temperature
-
-  grackle::impl::View<double**> k13dda(
-      my_rates->k13dd, my_chemistry->NumberOfTemperatureBins, 14);
-
   // Density fields
 
   grackle::impl::View<gr_float***> d(
@@ -110,35 +105,17 @@ inline void lookup_cool_rates1d(
   grackle::impl::View<gr_float***> HeIII(
       my_fields->HeIII_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> HM(
-      my_fields->HM_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> H2I(
       my_fields->H2I_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> H2II(
       my_fields->H2II_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> DI(
-      my_fields->DI_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> DII(
-      my_fields->DII_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> HDI(
-      my_fields->HDI_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
   // Radiation fields
 
   grackle::impl::View<gr_float***> kdissH2I(
       my_fields->RT_H2_dissociation_rate, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-
-  // H2 self-shielding length-scale field
-
-  grackle::impl::View<gr_float***> xH2shield(
-      my_fields->H2_self_shielding_length, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
   // Returned rate values
@@ -399,6 +376,10 @@ inline void lookup_cool_rates1d(
                 logTlininterp_buf.tdef[i];
       }
     }
+
+    // construct the view of the k13 table
+    grackle::impl::View<double**> k13dda(
+        my_rates->k13dd, my_chemistry->NumberOfTemperatureBins, 14);
 
     for (int n1 = 0; n1 < 14; n1++) {
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
@@ -1639,6 +1620,15 @@ inline void lookup_cool_rates1d(
     }
 
     if (my_chemistry->H2_self_shielding > 0) {
+      // conditionally construct a view
+      grackle::impl::View<gr_float***> xH2shield;
+      if (my_chemistry->H2_self_shielding == 2) {
+        xH2shield = grackle::impl::View<gr_float***>(
+            my_fields->H2_self_shielding_length, my_fields->grid_dimension[0],
+            my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+      }
+
+      // now compute the self-shielding
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         if (itmask[i] != MASK_FALSE) {
           double l_H2shield;
@@ -1735,6 +1725,29 @@ inline void lookup_cool_rates1d(
 
   if (my_chemistry->self_shielding_method > 0) {
     // Compute shielding factors
+
+    // conditionally construct some views of primordial species
+
+    grackle::impl::View<gr_float***> HM, DI, DII, HDI;
+
+    if (my_chemistry->primordial_chemistry > 1) {
+      HM = grackle::impl::View<gr_float***>(
+          my_fields->HM_density, my_fields->grid_dimension[0],
+          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+      if (my_chemistry->primordial_chemistry > 2) {
+        DI = grackle::impl::View<gr_float***>(
+            my_fields->DI_density, my_fields->grid_dimension[0],
+            my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+        DII = grackle::impl::View<gr_float***>(
+            my_fields->DII_density, my_fields->grid_dimension[0],
+            my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+        HDI = grackle::impl::View<gr_float***>(
+            my_fields->HDI_density, my_fields->grid_dimension[0],
+            my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+      }
+    }
+
+    // now do the actual calculation
     for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
       if (itmask[i] != MASK_FALSE) {
         // Compute shielding factor for H
