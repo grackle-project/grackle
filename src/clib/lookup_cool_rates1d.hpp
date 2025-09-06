@@ -147,18 +147,6 @@ inline void lookup_cool_rates1d(
   grackle::impl::View<gr_float***> HI(
       my_fields->HI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> HII(
-      my_fields->HII_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> HeI(
-      my_fields->HeI_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> HeII(
-      my_fields->HeII_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> HeIII(
-      my_fields->HeIII_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
   grackle::impl::View<gr_float***> H2I, H2II;
   if (my_chemistry->primordial_chemistry > 1) {
@@ -1787,10 +1775,21 @@ inline void lookup_cool_rates1d(
   if (my_chemistry->self_shielding_method > 0) {
     // Compute shielding factors
 
-    // conditionally construct some views of primordial species
+    // conditionally construct views of some primordial species density fields
+    grackle::impl::View<gr_float***> HII(
+        my_fields->HII_density, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    grackle::impl::View<gr_float***> HeI(
+        my_fields->HeI_density, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    grackle::impl::View<gr_float***> HeII(
+        my_fields->HeII_density, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    grackle::impl::View<gr_float***> HeIII(
+        my_fields->HeIII_density, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
     grackle::impl::View<gr_float***> HM, DI, DII, HDI;
-
     if (my_chemistry->primordial_chemistry > 1) {
       HM = grackle::impl::View<gr_float***>(
           my_fields->HM_density, my_fields->grid_dimension[0],
