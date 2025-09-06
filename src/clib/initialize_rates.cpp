@@ -86,6 +86,7 @@
 #include "grackle.h"
 #include "grackle_macros.h"
 #include "grackle_rate_functions.h"
+#include "init_extra_collisional_rates.hpp"  // init_extra_collisional_rates
 #include "initialize_dust_yields.hpp"  // initialize_dust_yields
 #include "initialize_metal_chemistry_rates.hpp"  // initialize_metal_chemistry_rates
 #include "initialize_rates.hpp"
@@ -617,6 +618,11 @@ int grackle::impl::initialize_rates(
     //Heating of dust by interstellar radiation field.
     //(Equation B15, Krumholz, 2014)
     add_scalar_reaction_rate(&my_rates->gamma_isrf, gamma_isrf_rate, coolingUnits, my_chemistry); 
+
+    if (grackle::impl::init_extra_collisional_rates(my_chemistry, my_rates, my_units) != GR_SUCCESS) {
+      fprintf(stderr, "Error in init_extra_collisional_rates.\n");
+      return GR_FAIL;
+    }
 
     /* Metal chemistry rates */
     if (grackle::impl::initialize_metal_chemistry_rates(my_chemistry, my_rates, my_units) == FAIL) {

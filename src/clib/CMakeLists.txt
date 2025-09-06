@@ -106,6 +106,7 @@ add_library(Grackle_Grackle
 
   # C++ Source (and Private Header Files)
   cool_multi_time_g.cpp cool_multi_time_g.h
+  init_extra_collisional_rates.hpp
   initialize_chemistry_data.cpp
   initialize_dust_yields.cpp initialize_dust_yields.hpp
   initialize_rates.cpp initialize_rates.hpp
