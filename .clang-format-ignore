@@ -32,11 +32,11 @@ src/clib/grackle_macros.h
 src/clib/grackle_units.c
 src/clib/index_helper.c
 src/clib/index_helper.h
+src/clib/init_misc_species_cool_rates.cpp
 src/clib/initialize_UVbackground_data.c
 src/clib/initialize_chemistry_data.cpp
 src/clib/initialize_cloudy_data.c
 src/clib/initialize_dust_yields.cpp
-src/clib/initialize_metal_chemistry_rates.cpp
 src/clib/initialize_rates.cpp
 src/clib/internal_types.hpp
 src/clib/internal_units.h

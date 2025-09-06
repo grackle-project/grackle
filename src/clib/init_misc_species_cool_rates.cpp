@@ -6,7 +6,7 @@
 //===----------------------------------------------------------------------===//
 ///
 /// @file
-/// Implement machinery for initializing various (non-reaction) rates
+/// Implement machinery for initializing miscellaneous species cooling rates
 ///
 //===----------------------------------------------------------------------===//
 
@@ -18,7 +18,7 @@
 #include "grackle.h"
 #include "grackle_macros.h"
 #include "interp_table_utils.h" // free_interp_grid_
-#include "initialize_metal_chemistry_rates.hpp"  // forward declarations
+#include "init_misc_species_cool_rates.hpp"  // forward declarations
 #include "internal_units.h"
 #include "phys_constants.h"
 #include "grackle_rate_functions.h" // forward declarations of some funcs
@@ -66,7 +66,7 @@ static int add_cieY06_cool_rate(double **rate_ptr, double coolunit,
   return GR_SUCCESS;
 }
 
-int grackle::impl::initialize_metal_chemistry_rates(
+int grackle::impl::init_misc_species_cool_rates(
   chemistry_data *my_chemistry, chemistry_data_storage *my_rates,
   code_units *my_units)
 {
@@ -81,7 +81,6 @@ int grackle::impl::initialize_metal_chemistry_rates(
   // -> the construction logic deduplicates a lot of logic that was
   //    previously copied and pasted across a lot of fortran files
   InternalGrUnits internalu = new_internalu_legacy_C_(my_units);
-  const double kunit = internalu_calc_kunit_(internalu);
 
   initialize_cooling_rate_CI (my_chemistry, my_rates, internalu.coolunit);
   initialize_cooling_rate_CII(my_chemistry, my_rates, internalu.coolunit);
@@ -95,8 +94,8 @@ int grackle::impl::initialize_metal_chemistry_rates(
   return GR_SUCCESS;
 }
 
-int grackle::impl::free_metal_chemistry_rates(chemistry_data *my_chemistry,
-                                              chemistry_data_storage *my_rates)
+int grackle::impl::free_misc_species_cool_rates(chemistry_data *my_chemistry,
+                                                chemistry_data_storage *my_rates)
 {
   if (my_chemistry->primordial_chemistry == 0) {
     return GR_SUCCESS;
