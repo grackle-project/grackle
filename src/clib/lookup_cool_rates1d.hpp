@@ -28,6 +28,62 @@
 
 namespace grackle::impl {
 
+/// This function tries to account for secondary electron ionization in
+/// high-energy radiation fields (Shull & Steenberg 1985)
+///
+/// For context, when a photon ionizes a given atom, the resulting photoelectron
+/// (that was previously bound) has a kinetic energy given by the difference
+/// between the photon's energy and the ionization energy. The photoelectron
+/// subsequently undergoes collisions that transfers excess kinetic energy:
+/// - collisions with free electrons eventually convert it to heat
+/// - collisions can also excite energy states bound electrons and molecular
+///   energy states
+/// If they have energy, photoelectrons and secondary electrons may produce
+/// collisional ionization, which are called secondary ionization.
+///
+/// Cecondary ionization is most relevant in high-energy radiation fields.
+///
+/// @note
+/// The impetus for factoring out this logic is that it existed behind an ifdef
+/// statement that was not being used. By placing the logic in a function, we
+/// can confirm that the logic is valid C++ even if the logic isn't used.
+void secondary_ionization_adjustments(
+    IndexRange idx_range, const gr_mask_type* itmask,
+    grackle_field_data* my_fields, photo_rate_storage my_uvb_rates,
+    InternalGrUnits internalu,
+    grackle::impl::PhotoRxnRateCollection kshield_buf) {
+  // construct views of HI_density & HII_density fields
+  grackle::impl::View<gr_float***> HI(
+      my_fields->HI_density, my_fields->grid_dimension[0],
+      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  grackle::impl::View<gr_float***> HII(
+      my_fields->HII_density, my_fields->grid_dimension[0],
+      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+
+  const double everg = ev2erg_grflt;
+  const double e24 = 13.6;
+  const double e26 = 24.6;
+
+  for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+    if (itmask[i] != MASK_FALSE) {
+      double x = std::fmax(
+          HII(i, idx_range.j, idx_range.k) / (HI(i, idx_range.j, idx_range.k) +
+                                              HII(i, idx_range.j, idx_range.k)),
+          1.0e-4);
+      double factor = 0.3908 * std::pow((1. - std::pow(x, 0.4092)), 1.7592);
+      kshield_buf.k24[i] =
+          kshield_buf.k24[i] +
+          factor * (my_uvb_rates.piHI + 0.08 * my_uvb_rates.piHeI) /
+              (e24 * everg) * internalu.coolunit * internalu.tbase1;
+      factor = 0.0554 * std::pow((1. - std::pow(x, 0.4614)), 1.6660);
+      kshield_buf.k26[i] =
+          kshield_buf.k26[i] +
+          factor * (my_uvb_rates.piHI / 0.08 + my_uvb_rates.piHeI) /
+              (e26 * everg) * internalu.coolunit * internalu.tbase1;
+    }
+  }
+}
+
 /// This routine uses the temperature to look up the chemical rates which are
 /// tabulated in a log table as a function of temperature.
 ///
@@ -1932,28 +1988,8 @@ inline void lookup_cool_rates1d(
   // If using a high-energy radiation field, then account for
   //   effects of secondary electrons (Shull * Steenberg 1985)
   //   (see calc_rate.src)
-  const double everg = ev2erg_grflt;
-  const double e24 = 13.6;
-  const double e26 = 24.6;
-
-  for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-    if (itmask[i] != MASK_FALSE) {
-      double x = std::fmax(
-          HII(i, idx_range.j, idx_range.k) / (HI(i, idx_range.j, idx_range.k) +
-                                              HII(i, idx_range.j, idx_range.k)),
-          1.0e-4);
-      double factor = 0.3908 * std::pow((1. - std::pow(x, 0.4092)), 1.7592);
-      kshield_buf.k24[i] =
-          kshield_buf.k24[i] +
-          factor * (my_uvb_rates.piHI + 0.08 * my_uvb_rates.piHeI) /
-              (e24 * everg) * internalu.coolunit * internalu.tbase1;
-      factor = 0.0554 * std::pow((1. - std::pow(x, 0.4614)), 1.6660);
-      kshield_buf.k26[i] =
-          kshield_buf.k26[i] +
-          factor * (my_uvb_rates.piHI / 0.08 + my_uvb_rates.piHeI) /
-              (e26 * everg) * internalu.coolunit * internalu.tbase1;
-    }
-  }
+  secondary_ionization_adjustments(idx_range, itmask, my_fields, my_uvb_rates,
+                                   internalu, kshield_buf);
 #endif
 
   //   If using H2, and using the density-dependent collisional
