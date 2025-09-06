@@ -136,11 +136,32 @@ inline void lookup_cool_rates1d(
   // shorten `grackle::impl::fortran_wrapper` to `f_wrap` within this function
   namespace f_wrap = ::grackle::impl::fortran_wrapper;
 
-  grackle::impl::CollisionalRxnRateCollection kcol_rate_tables =
-      *(my_rates->opaque_storage->kcol_rate_tables);
+  // Allocate temporary buffers
+  // --------------------------
+  // TODO: we should create a struct that holds the k13dd_data_ scratch
+  //       buffer and all other pre-allocated buffers that we reference
+  //       here (to avoid heap allocations in this function)
 
-  // Density fields
+  // collection of buffers for intermediate quantities used in dust-routines
+  grackle::impl::InternalDustPropBuf internal_dust_prop_buf =
+      grackle::impl::new_InternalDustPropBuf(my_fields->grid_dimension[0],
+                                             my_rates->gr_N[1]);
+  // with some refactoring, we may be able to avoid allocating these buffers
+  std::vector<double> f_shield_H(my_fields->grid_dimension[0]);
+  std::vector<double> f_shield_He(my_fields->grid_dimension[0]);
+  // TODO: these buffers should really be pre-initialized and tracked somewhere
+  //       within my_rates (maybe in a gr_interp_grid_props instance). The fact
+  //       that we reinitialize these every single time is EXTREMELY inefficient
+  std::vector<double> d_Td(my_chemistry->NumberOfDustTemperatureBins);
+  std::vector<double> d_Tg(my_chemistry->NumberOfTemperatureBins);
 
+  // Construct some Views
+  // --------------------
+  // with some refactoring, we could entirely eliminate the k13dd_data_ buffer
+  grackle::impl::View<double**> k13dd(k13dd_data_, my_fields->grid_dimension[0],
+                                      14);
+
+  // Construct views of fields referenced in several parts of this function.
   grackle::impl::View<gr_float***> d(
       my_fields->density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
@@ -148,7 +169,7 @@ inline void lookup_cool_rates1d(
       my_fields->HI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
-  grackle::impl::View<gr_float***> H2I, H2II;
+  grackle::impl::View<gr_float***> H2I, H2II, kdissH2I;
   if (my_chemistry->primordial_chemistry > 1) {
     H2I = grackle::impl::View<gr_float***>(
         my_fields->H2I_density, my_fields->grid_dimension[0],
@@ -156,40 +177,22 @@ inline void lookup_cool_rates1d(
     H2II = grackle::impl::View<gr_float***>(
         my_fields->H2II_density, my_fields->grid_dimension[0],
         my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+
+    if (my_chemistry->use_radiative_transfer == 1) {
+      kdissH2I = grackle::impl::View<gr_float***>(
+          my_fields->RT_H2_dissociation_rate, my_fields->grid_dimension[0],
+          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    }
   }
 
-  // Conditionally make a view of a the H2 dissociation radiation field
-  grackle::impl::View<gr_float***> kdissH2I;
-  if (my_chemistry->primordial_chemistry > 1 &&
-      my_chemistry->use_radiative_transfer == 1) {
-    kdissH2I = grackle::impl::View<gr_float***>(
-        my_fields->RT_H2_dissociation_rate, my_fields->grid_dimension[0],
-        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  }
+  // Linearly Interpolate the Collisional Rxn Rates
+  // ----------------------------------------------
 
-  // Returned rate values
-
-  grackle::impl::View<double**> k13dd(k13dd_data_, my_fields->grid_dimension[0],
-                                      14);
-
-  // 1D temporaries (locally allocated)
-  std::vector<double> f_shield_H(my_fields->grid_dimension[0]);
-  std::vector<double> f_shield_He(my_fields->grid_dimension[0]);
-
-  // stuff related to grain-growth
-  //
-  // internal_dust_prop_buf holds buffers of intermediate quantities used
-  // within dust-routines
-  grackle::impl::InternalDustPropBuf internal_dust_prop_buf =
-      grackle::impl::new_InternalDustPropBuf(my_fields->grid_dimension[0],
-                                             my_rates->gr_N[1]);
-
-  // tabulate h2 formation rate
-  std::vector<double> d_Td(my_chemistry->NumberOfDustTemperatureBins);
-  std::vector<double> d_Tg(my_chemistry->NumberOfTemperatureBins);
+  // access the kcol_rate_tables from my_rates
+  grackle::impl::CollisionalRxnRateCollection kcol_rate_tables =
+      *(my_rates->opaque_storage->kcol_rate_tables);
 
   // Set log values of start and end of lookup tables
-
   const double logtem_start = std::log(my_chemistry->TemperatureStart);
   const double logtem_end = std::log(my_chemistry->TemperatureEnd);
   const double dlogtem = (std::log(my_chemistry->TemperatureEnd) -
@@ -1634,7 +1637,11 @@ inline void lookup_cool_rates1d(
     }
   }
 
-  // Include approximate self-shielding factors if requested
+  // Deal with the photo reaction rates
+  // ----------------------------------
+  // In the simplest configuration, these rates are same everywhere. Things get
+  // messier if Grackle is configured to approximate self-shielding or use
+  // custom external radiation fields.
 
   for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
     if (itmask[i] != MASK_FALSE) {
