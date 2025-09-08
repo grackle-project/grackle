@@ -102,60 +102,114 @@
 // 2. We **MUST** figure out what the comment before kz22_rate_ actually means
 //    and update the docstrings of all rate functions that the comment is
 //    talking about accordingly
-// 3. replace `static` with `extern "C"` in the signatures of each of these
-//    functions
+// 3. delete all occurrences of GRIMPL_NOEXPORT in this file
 
-static double k125_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+
+/// Annotating a function with this macro means that "symbol" is hidden when
+/// compiling shared libraries.
+///
+/// If the gnu::visibility attribute is not known to the compiler (e.g. you
+/// aren't using g++ or clang++), this doesn't do anything.
+///
+/// When to use
+/// ===========
+/// This is currently intended to be used over the `static` keyword when we
+/// want a function to have C linkage but not be publicly exposed. To 0th
+/// order, you can think of this as being equivalent to the `static` keyword.
+/// (In reality it means something somewhat different).
+///
+/// More Context
+/// ============
+/// If you aren't familiar with the concept of symbol visibility, this paper
+/// may be useful to read
+/// https://cs.dartmouth.edu/~sergey/cs258/ABI/UlrichDrepper-How-To-Write-Shared-Libraries.pdf
+///
+/// But, let's give a quick overview. When you create a shared C library,
+/// all functions and global variables are associated with "symbols". By
+/// default, in unix environments, all of the symbols (except functions/global
+/// variables declared with `static`) are fully exposed (i.e. visible) to
+/// external programs in a table (stored in the shared library).
+/// - An external C program typically accesses these functions by forward
+///   declaring the signatures. The convention is to only access the symbols
+///   with declarations provided in public headers and expressly described as
+///   part of the public API (but in principle, a user could access any visible
+///   symbol).
+/// - An external C program might dynamically load symbols at runtime (via
+///   dlopen), but that's a topic for another time.
+///
+/// The macro described here explicitly indicates that all annotated functions
+/// should not be visible (i.e. they are hidden from external programs).
+///
+/// If we want to apply this more broadly
+/// =====================================
+/// In an ideal world, every single Grackle function, other than public API,
+/// would be hidden. The benefits include:
+/// - reducing the size of the Grackle shared library
+/// - improving startup time of programs linked agains a Grackle shared library
+/// - enforcing that private functions shouldn't be used everywhere
+///
+/// If we choose to go this path, then it would be better to make all functions
+/// have hidden visibility, by default, and explicitly annotate the public
+/// functions. This exact strategy is used on Windows. CMake has support to
+/// help do this across compiler vendors
+///   https://cmake.org/cmake/help/latest/module/GenerateExportHeader.html
+/// Here is a guide that applies to gcc (and probably clang)
+///   https://gcc.gnu.org/wiki/Visibility
+#define GRIMPL_NOEXPORT [[gnu::visibility("hidden")]]
+
+extern "C" {
+
+[[gnu::visibility("hidden")]] double k125_rate_(double T, double kunit, chemistry_data* my_chemistry) {
   double k125 = 6.4e-10;
   return std::fmax(k125, tiny) / kunit;
 }
 
-static double k129_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+[[gnu::visibility("hidden")]] double k129_rate_(double T, double kunit, chemistry_data* my_chemistry) {
   double k129 = 3.9e-19 * pow((T/300.0), 1.8) * exp(20.0/T);
   return std::fmax(k129, tiny) / kunit;
 }
 
-static double k130_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+[[gnu::visibility("hidden")]] double k130_rate_(double T, double kunit, chemistry_data* my_chemistry) {
   double k130 = 3.9e-19 * pow((T/300.0), 1.8) * exp(20.0/T);
   return std::fmax(k130, tiny) / kunit;
 }
 
-static double k131_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+[[gnu::visibility("hidden")]] double k131_rate_(double T, double kunit, chemistry_data* my_chemistry) {
   double k131 = 3.4e-9 * pow((T/300.0), -0.4);
   return std::fmax(k131, tiny) / kunit;
 }
 
-static double k132_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+[[gnu::visibility("hidden")]] double k132_rate_(double T, double kunit, chemistry_data* my_chemistry) {
   double k132 = 3.0e-16 * pow((T/300.0), 0.95) * exp(-T/9320.0);
   return std::fmax(k132, tiny) / kunit;
 }
 
-static double k133_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+[[gnu::visibility("hidden")]] double k133_rate_(double T, double kunit, chemistry_data* my_chemistry) {
   double k133 = 5.7e-8 * pow((T/300.0), -0.50);
   return std::fmax(k133, tiny) / kunit;
 }
 
-static double k134_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+[[gnu::visibility("hidden")]] double k134_rate_(double T, double kunit, chemistry_data* my_chemistry) {
   double k134 = 4.6e-8 * pow((T/300.0), -0.50);
   return std::fmax(k134, tiny) / kunit;
 }
 
-static double k135_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+[[gnu::visibility("hidden")]] double k135_rate_(double T, double kunit, chemistry_data* my_chemistry) {
   double k135 = 4.6e-8 * pow((T/300.0), -0.50);
   return std::fmax(k135, tiny) / kunit;
 }
 
-static double k136_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+[[gnu::visibility("hidden")]] double k136_rate_(double T, double kunit, chemistry_data* my_chemistry) {
   double k136 = 6.4e-9 * pow((T/300.0), 0.41);
   return std::fmax(k136, tiny) / kunit;
 }
 
-static double k137_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+[[gnu::visibility("hidden")]] double k137_rate_(double T, double kunit, chemistry_data* my_chemistry) {
   double k137 = 1.5e-9 * pow((T/300.0), -0.1);
   return std::fmax(k137, tiny) / kunit;
 }
 
-static double k148_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+[[gnu::visibility("hidden")]] double k148_rate_(double T, double kunit, chemistry_data* my_chemistry) {
   double k148 = 5.0e-21;
   return std::fmax(k148, tiny) / kunit;
 }
@@ -170,12 +224,12 @@ double k149_rate_(double T, double kunit, chemistry_data *my_chemistry) {
   return std::fmax(k149, tiny) / kunit;
 }
 
-static double k150_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+[[gnu::visibility("hidden")]] double k150_rate_(double T, double kunit, chemistry_data* my_chemistry) {
   double k150 = 3.0e-10 * exp(-6717.0/T);
   return std::fmax(k150, tiny) / kunit;
 }
 
-static double k151_rate_(double T, double kunit, chemistry_data *my_chemistry) {
+[[gnu::visibility("hidden")]] double k151_rate_(double T, double kunit, chemistry_data *my_chemistry) {
   double k151;
   if(T < 4000.0) {
     k151 = 1.6e-14 * pow(T, -0.33);
@@ -185,49 +239,49 @@ static double k151_rate_(double T, double kunit, chemistry_data *my_chemistry) {
   return std::fmax(k151, tiny) / kunit;
 }
 
-static double k152_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+[[gnu::visibility("hidden")]] double k152_rate_(double T, double kunit, chemistry_data* my_chemistry) {
   double k152 = 9.1e-10;
   return std::fmax(k152, tiny) / kunit;
 }
 
-static double k153_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+[[gnu::visibility("hidden")]] double k153_rate_(double T, double kunit, chemistry_data* my_chemistry) {
   double k153 = 1.7e-7 * pow(T, -0.5);
   return std::fmax(k153, tiny) / kunit;
 }
 
   
-static double kz15_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+[[gnu::visibility("hidden")]] double kz15_rate_(double T, double kunit, chemistry_data* my_chemistry) {
   double kz15 = 4.98e-11;
   return std::fmax(kz15, tiny) / kunit;
 }
 
-static double kz16_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+[[gnu::visibility("hidden")]] double kz16_rate_(double T, double kunit, chemistry_data* my_chemistry) {
   double kz16 = 2.70e-10;
   return std::fmax(kz16, tiny) / kunit;
 }
 
-static double kz17_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+[[gnu::visibility("hidden")]] double kz17_rate_(double T, double kunit, chemistry_data* my_chemistry) {
   double kz17 = 7.00e-14 * pow((T/300.0), 2.80) * exp(-1950.0/T);
   return std::fmax(kz17, tiny) / kunit;
 }
 
-static double kz18_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+[[gnu::visibility("hidden")]] double kz18_rate_(double T, double kunit, chemistry_data* my_chemistry) {
   double kz18 = 6.83e-12 * pow((T/300.0), 1.60) * exp(-9720.0/T);
   return std::fmax(kz18, tiny) / kunit;
 }
 
-static double kz19_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+[[gnu::visibility("hidden")]] double kz19_rate_(double T, double kunit, chemistry_data* my_chemistry) {
   double kz19 = 3.30e-10 * exp(-8460.0/T);
   return std::fmax(kz19, tiny) / kunit;
 }
 
-static double kz20_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+[[gnu::visibility("hidden")]] double kz20_rate_(double T, double kunit, chemistry_data* my_chemistry) {
   double kz20 = 6.64e-10 * exp(-11700.0/T);
   return std::fmax(kz20, tiny) / kunit;
 }
 
 
-static double kz21_rate_(double T, double kunit, chemistry_data *my_chemistry) {
+[[gnu::visibility("hidden")]] double kz21_rate_(double T, double kunit, chemistry_data *my_chemistry) {
   double kz21;
   if(T < 1.0e7) {
     kz21 = 3.43e-13 * pow((T / 300.0), 2.67) * exp(-3160.0/T);
@@ -251,170 +305,172 @@ static double kz21_rate_(double T, double kunit, chemistry_data *my_chemistry) {
 //    - but, we don't obviously do that. It seems like we use the values at ALL
 //      temperatures.
 
-static double kz22_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+[[gnu::visibility("hidden")]] double kz22_rate_(double T, double kunit, chemistry_data* my_chemistry) {
   double kz22 = 7.00e-10 * exp(-232.0/T);
   return std::fmax(kz22, tiny) / kunit;
 }
 
-static double kz23_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+[[gnu::visibility("hidden")]] double kz23_rate_(double T, double kunit, chemistry_data* my_chemistry) {
   double kz23 = 2.38e-10 * exp(-1760.0/T);
   return std::fmax(kz23, tiny) / kunit;
 }
 
-static double kz24_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+[[gnu::visibility("hidden")]] double kz24_rate_(double T, double kunit, chemistry_data* my_chemistry) {
   double kz24 = 1.55e-12 * pow((T/300.0), 1.60) * exp(-1660.0/T);
   return std::fmax(kz24, tiny) / kunit;
 }
 
-static double kz25_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+[[gnu::visibility("hidden")]] double kz25_rate_(double T, double kunit, chemistry_data* my_chemistry) {
   double kz25 = 1.65e-12 * pow((T/300.0), 1.14) * exp(-50.0/T);
   return std::fmax(kz25, tiny) / kunit;
 }
 
-static double kz26_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+[[gnu::visibility("hidden")]] double kz26_rate_(double T, double kunit, chemistry_data* my_chemistry) {
   double kz26 = 1.0e-13;
   return std::fmax(kz26, tiny) / kunit;
 }
 
-static double kz27_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+[[gnu::visibility("hidden")]] double kz27_rate_(double T, double kunit, chemistry_data* my_chemistry) {
   double kz27 = 1.0e-17;
   return std::fmax(kz27, tiny) / kunit;
 }
 
-static double kz28_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+[[gnu::visibility("hidden")]] double kz28_rate_(double T, double kunit, chemistry_data* my_chemistry) {
   double kz28 = 1.1e-10 * pow((T/300.0), 0.5);
   return std::fmax(kz28, tiny) / kunit;
 }
 
-static double kz29_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+[[gnu::visibility("hidden")]] double kz29_rate_(double T, double kunit, chemistry_data* my_chemistry) {
   double kz29 = 3.3e-11;
   return std::fmax(kz29, tiny) / kunit;
 }
 
-static double kz30_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+[[gnu::visibility("hidden")]] double kz30_rate_(double T, double kunit, chemistry_data* my_chemistry) {
   double kz30 = 9.9e-19 * pow((T/300.0), -0.38);
   return std::fmax(kz30, tiny) / kunit;
 }
 
-static double kz31_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+[[gnu::visibility("hidden")]] double kz31_rate_(double T, double kunit, chemistry_data* my_chemistry) {
   double kz31 = 4.9e-20 * pow((T/300.0), 1.58);
   return std::fmax(kz31, tiny) / kunit;
 }
 
-static double kz32_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+[[gnu::visibility("hidden")]] double kz32_rate_(double T, double kunit, chemistry_data* my_chemistry) {
   double kz32 = 6.6e-11;
   return std::fmax(kz32, tiny) / kunit;
 }
 
-static double kz33_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+[[gnu::visibility("hidden")]] double kz33_rate_(double T, double kunit, chemistry_data* my_chemistry) {
   double kz33 = 4.34e-11 * pow((T/300.0), -0.5) * exp(-30.0/T);
   return std::fmax(kz33, tiny) / kunit;
 }
 
-static double kz34_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+[[gnu::visibility("hidden")]] double kz34_rate_(double T, double kunit, chemistry_data* my_chemistry) {
   double kz34 = 2.1e-9;
   return std::fmax(kz34, tiny) / kunit;
 }
 
-static double kz35_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+[[gnu::visibility("hidden")]] double kz35_rate_(double T, double kunit, chemistry_data* my_chemistry) {
   double kz35 = 6.9e-9;
   return std::fmax(kz35, tiny) / kunit;
 }
 
-static double kz36_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+[[gnu::visibility("hidden")]] double kz36_rate_(double T, double kunit, chemistry_data* my_chemistry) {
   double kz36 = 2.0e-9;
   return std::fmax(kz36, tiny) / kunit;
 }
 
-static double kz37_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+[[gnu::visibility("hidden")]] double kz37_rate_(double T, double kunit, chemistry_data* my_chemistry) {
   double kz37 = 7.7e-10;
   return std::fmax(kz37, tiny) / kunit;
 }
 
-static double kz38_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+[[gnu::visibility("hidden")]] double kz38_rate_(double T, double kunit, chemistry_data* my_chemistry) {
   double kz38 = 6.2e-10;
   return std::fmax(kz38, tiny) / kunit;
 }
 
-static double kz39_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+[[gnu::visibility("hidden")]] double kz39_rate_(double T, double kunit, chemistry_data* my_chemistry) {
   double kz39 = 6.8e-10;
   return std::fmax(kz39, tiny) / kunit;
 }
 
-static double kz40_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+[[gnu::visibility("hidden")]] double kz40_rate_(double T, double kunit, chemistry_data* my_chemistry) {
   double kz40 = 1.7e-9;
   return std::fmax(kz40, tiny) / kunit;
 }
 
-static double kz41_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+[[gnu::visibility("hidden")]] double kz41_rate_(double T, double kunit, chemistry_data* my_chemistry) {
   double kz41 = 1.01e-9;
   return std::fmax(kz41, tiny) / kunit;
 }
 
-static double kz42_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+[[gnu::visibility("hidden")]] double kz42_rate_(double T, double kunit, chemistry_data* my_chemistry) {
   double kz42 = 8.3e-10;
   return std::fmax(kz42, tiny) / kunit;
 }
 
-static double kz43_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+[[gnu::visibility("hidden")]] double kz43_rate_(double T, double kunit, chemistry_data* my_chemistry) {
   double kz43 = 7.5e-10;
   return std::fmax(kz43, tiny) / kunit;
 }
 
-static double kz44_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+[[gnu::visibility("hidden")]] double kz44_rate_(double T, double kunit, chemistry_data* my_chemistry) {
   double kz44 = 4.4e-12 * pow((T/300.0), -0.61);
   return std::fmax(kz44, tiny) / kunit;
 }
 
-static double kz45_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+[[gnu::visibility("hidden")]] double kz45_rate_(double T, double kunit, chemistry_data* my_chemistry) {
   double kz45 = 3.4e-12 * pow((T/300.0), -0.63);
   return std::fmax(kz45, tiny) / kunit;
 }
 
-static double kz46_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+[[gnu::visibility("hidden")]] double kz46_rate_(double T, double kunit, chemistry_data* my_chemistry) {
   double kz46 = 1.6e-7 * pow((T/300.0), -0.5);
   return std::fmax(kz46, tiny) / kunit;
 }
 
-static double kz47_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+[[gnu::visibility("hidden")]] double kz47_rate_(double T, double kunit, chemistry_data* my_chemistry) {
   double kz47 = 2.0e-7 * pow((T/300.0), -0.5);
   return std::fmax(kz47, tiny) / kunit;
 }
 
-static double kz48_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+[[gnu::visibility("hidden")]] double kz48_rate_(double T, double kunit, chemistry_data* my_chemistry) {
   double kz48 = 3.5e-7 * pow((T/300.0), -0.5);
   return std::fmax(kz48, tiny) / kunit;
 }
 
-static double kz49_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+[[gnu::visibility("hidden")]] double kz49_rate_(double T, double kunit, chemistry_data* my_chemistry) {
   double kz49 = 6.5e-7 * pow((T/300.0), -0.5);
   return std::fmax(kz49, tiny) / kunit;
 }
 
-static double kz50_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+[[gnu::visibility("hidden")]] double kz50_rate_(double T, double kunit, chemistry_data* my_chemistry) {
   double kz50 = 1.95e-7 * pow((T/300.0), -0.7);
   return std::fmax(kz50, tiny) / kunit;
 }
 
-static double kz51_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+[[gnu::visibility("hidden")]] double kz51_rate_(double T, double kunit, chemistry_data* my_chemistry) {
   double kz51 = 1.0e-17;
   return std::fmax(kz51, tiny) / kunit;
 }
 
-static double kz52_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+[[gnu::visibility("hidden")]] double kz52_rate_(double T, double kunit, chemistry_data* my_chemistry) {
   double kz52 = 3.00e-11;
   return std::fmax(kz52, tiny) / kunit;
 }
 
-static double kz53_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+[[gnu::visibility("hidden")]] double kz53_rate_(double T, double kunit, chemistry_data* my_chemistry) {
   double kz53 = 1.30e-11 * exp(-111.0/T);
   return std::fmax(kz53, tiny) / kunit;
 }
 
-static double kz54_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+[[gnu::visibility("hidden")]] double kz54_rate_(double T, double kunit, chemistry_data* my_chemistry) {
   double kz54 = 2.00e-13;
   return std::fmax(kz54, tiny) / kunit;
 }
+
+} // extern "C"
 
 // define functions directly exposed to other parts of Grackle
 // -----------------------------------------------------------
