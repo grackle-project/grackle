@@ -86,7 +86,7 @@
 #include "grackle.h"
 #include "grackle_macros.h"
 #include "grackle_rate_functions.h"
-#include "init_extra_collisional_rates.hpp"  // init_extra_collisional_rates
+#include "collisional_rate_props.hpp"  // init_extra_collisional_rates
 #include "init_misc_species_cool_rates.hpp"  // init_misc_species_cool_rates
 #include "initialize_dust_yields.hpp"  // initialize_dust_yields
 #include "initialize_rates.hpp"
