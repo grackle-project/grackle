@@ -218,10 +218,6 @@ inline void lookup_cool_rates1d(
   // Linearly Interpolate the Collisional Rxn Rates
   // ----------------------------------------------
 
-  // access the kcol_rate_tables from my_rates
-  grackle::impl::CollisionalRxnRateCollection kcol_rate_tables =
-      *(my_rates->opaque_storage->kcol_rate_tables);
-
   // Set log values of start and end of lookup tables
   const double logtem_start = std::log(my_chemistry->TemperatureStart);
   const double logtem_end = std::log(my_chemistry->TemperatureEnd);
@@ -255,95 +251,11 @@ inline void lookup_cool_rates1d(
   }
 
   // Do linear table lookup (in log temperature)
-
-  {  // for primordial_chemistry > 0
-    int kcol_lut_indices_pc1[] = {
-        CollisionalRxnLUT::k1,  CollisionalRxnLUT::k2, CollisionalRxnLUT::k3,
-        CollisionalRxnLUT::k4,  CollisionalRxnLUT::k5, CollisionalRxnLUT::k6,
-        CollisionalRxnLUT::k57, CollisionalRxnLUT::k58};
-    int n_indices = (int)(sizeof(kcol_lut_indices_pc1) / sizeof(int));
-    interpolate_kcol_rate_tables_(
-        kcol_buf, kcol_rate_tables, kcol_lut_indices_pc1, n_indices, itmask,
-        idx_range.i_start, idx_range.i_stop, logTlininterp_buf);
-  }
-
-  // Look-up for 9-species model
-  if (my_chemistry->primordial_chemistry > 1) {
-    int kcol_lut_indices_pc2[] = {
-        CollisionalRxnLUT::k7,  CollisionalRxnLUT::k8,  CollisionalRxnLUT::k9,
-        CollisionalRxnLUT::k10, CollisionalRxnLUT::k11, CollisionalRxnLUT::k12,
-        CollisionalRxnLUT::k13, CollisionalRxnLUT::k14, CollisionalRxnLUT::k15,
-        CollisionalRxnLUT::k16, CollisionalRxnLUT::k17, CollisionalRxnLUT::k18,
-        CollisionalRxnLUT::k19, CollisionalRxnLUT::k22,
-    };
-    int n_indices = (int)(sizeof(kcol_lut_indices_pc2) / sizeof(int));
-    interpolate_kcol_rate_tables_(
-        kcol_buf, kcol_rate_tables, kcol_lut_indices_pc2, n_indices, itmask,
-        idx_range.i_start, idx_range.i_stop, logTlininterp_buf);
-  }
-
-  // Look-up for 12-species model
-  if (my_chemistry->primordial_chemistry > 2) {
-    int kcol_lut_indices_pc3[] = {
-        CollisionalRxnLUT::k50, CollisionalRxnLUT::k51, CollisionalRxnLUT::k52,
-        CollisionalRxnLUT::k53, CollisionalRxnLUT::k54, CollisionalRxnLUT::k55,
-        CollisionalRxnLUT::k56};
-
-    int n_indices = (int)(sizeof(kcol_lut_indices_pc3) / sizeof(int));
-    interpolate_kcol_rate_tables_(
-        kcol_buf, kcol_rate_tables, kcol_lut_indices_pc3, n_indices, itmask,
-        idx_range.i_start, idx_range.i_stop, logTlininterp_buf);
-  }
-
-  // Look-up for 15-species model
-
-  if (my_chemistry->primordial_chemistry > 3) {
-    int kcol_lut_indices_pc4[] = {
-        CollisionalRxnLUT::k125, CollisionalRxnLUT::k129,
-        CollisionalRxnLUT::k130, CollisionalRxnLUT::k131,
-        CollisionalRxnLUT::k132, CollisionalRxnLUT::k133,
-        CollisionalRxnLUT::k134, CollisionalRxnLUT::k135,
-        CollisionalRxnLUT::k136, CollisionalRxnLUT::k137,
-        CollisionalRxnLUT::k148, CollisionalRxnLUT::k149,
-        CollisionalRxnLUT::k150, CollisionalRxnLUT::k151,
-        CollisionalRxnLUT::k152, CollisionalRxnLUT::k153};
-
-    int n_indices = (int)(sizeof(kcol_lut_indices_pc4) / sizeof(int));
-    interpolate_kcol_rate_tables_(
-        kcol_buf, kcol_rate_tables, kcol_lut_indices_pc4, n_indices, itmask,
-        idx_range.i_start, idx_range.i_stop, logTlininterp_buf);
-  }
-
-  // Look-up for metal species model
-
-  if (my_chemistry->metal_chemistry == 1) {
-    int kcol_lut_indices_metal[] = {
-        CollisionalRxnLUT::kz15, CollisionalRxnLUT::kz16,
-        CollisionalRxnLUT::kz17, CollisionalRxnLUT::kz18,
-        CollisionalRxnLUT::kz19, CollisionalRxnLUT::kz20,
-        CollisionalRxnLUT::kz21, CollisionalRxnLUT::kz22,
-        CollisionalRxnLUT::kz23, CollisionalRxnLUT::kz24,
-        CollisionalRxnLUT::kz25, CollisionalRxnLUT::kz26,
-        CollisionalRxnLUT::kz27, CollisionalRxnLUT::kz28,
-        CollisionalRxnLUT::kz29, CollisionalRxnLUT::kz30,
-        CollisionalRxnLUT::kz31, CollisionalRxnLUT::kz32,
-        CollisionalRxnLUT::kz33, CollisionalRxnLUT::kz34,
-        CollisionalRxnLUT::kz35, CollisionalRxnLUT::kz36,
-        CollisionalRxnLUT::kz37, CollisionalRxnLUT::kz38,
-        CollisionalRxnLUT::kz39, CollisionalRxnLUT::kz40,
-        CollisionalRxnLUT::kz41, CollisionalRxnLUT::kz42,
-        CollisionalRxnLUT::kz43, CollisionalRxnLUT::kz44,
-        CollisionalRxnLUT::kz45, CollisionalRxnLUT::kz46,
-        CollisionalRxnLUT::kz47, CollisionalRxnLUT::kz48,
-        CollisionalRxnLUT::kz49, CollisionalRxnLUT::kz50,
-        CollisionalRxnLUT::kz51, CollisionalRxnLUT::kz52,
-        CollisionalRxnLUT::kz53, CollisionalRxnLUT::kz54};
-
-    int n_indices = (int)(sizeof(kcol_lut_indices_metal) / sizeof(int));
-    interpolate_kcol_rate_tables_(
-        kcol_buf, kcol_rate_tables, kcol_lut_indices_metal, n_indices, itmask,
-        idx_range.i_start, idx_range.i_stop, logTlininterp_buf);
-  }
+  interpolate_kcol_rate_tables_(
+      kcol_buf, *(my_rates->opaque_storage->kcol_rate_tables),
+      my_rates->opaque_storage->used_kcol_rate_indices,
+      my_rates->opaque_storage->n_kcol_rate_indices, itmask, idx_range.i_start,
+      idx_range.i_stop, logTlininterp_buf);
 
   // interpolate a few more rate tables
   if (my_chemistry->primordial_chemistry > 1) {
