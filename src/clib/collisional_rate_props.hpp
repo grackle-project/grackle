@@ -21,7 +21,8 @@ extern "C" {
 
 /// describes the signature of a generic function used  that is used to diges
 /// the type of a generic temperature dependent rate function
-typedef double (*rate_function)(double T, double k_unit, chemistry_data* my_chemistry);
+typedef double (*rate_function)(double T, double k_unit,
+                                chemistry_data* my_chemistry);
 
 }  // extern "C"
 
@@ -67,10 +68,8 @@ typedef void visit_kcol_prop_callback(struct KColProp rate_prop, void* ctx);
 /// idiomatic to eliminate the `context` argument and make `fn` a template
 /// argument
 int visit_rate_props(const chemistry_data* my_chemistry,
-                     visit_kcol_prop_callback* cb,
-                     void* ctx);
+                     visit_kcol_prop_callback* cb, void* ctx);
 
-} // namespace grackle::impl
+}  // namespace grackle::impl
 
 #endif /* COLLISIONAL_RATE_PROPS_HPP */
-

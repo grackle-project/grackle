@@ -155,7 +155,6 @@
 //    talking about accordingly
 // 3. delete all occurrences of GRIMPL_NOEXPORT in this file
 
-
 /// Annotating a function with this macro means that "symbol" is hidden when
 /// compiling shared libraries.
 ///
@@ -210,64 +209,75 @@
 
 extern "C" {
 
-GRIMPL_NOEXPORT double k125_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+GRIMPL_NOEXPORT double k125_rate_(double T, double kunit,
+                                  chemistry_data* my_chemistry) {
   double k125 = 6.4e-10;
   return std::fmax(k125, tiny) / kunit;
 }
 
-GRIMPL_NOEXPORT double k129_rate_(double T, double kunit, chemistry_data* my_chemistry) {
-  double k129 = 3.9e-19 * pow((T/300.0), 1.8) * exp(20.0/T);
+GRIMPL_NOEXPORT double k129_rate_(double T, double kunit,
+                                  chemistry_data* my_chemistry) {
+  double k129 = 3.9e-19 * pow((T / 300.0), 1.8) * exp(20.0 / T);
   return std::fmax(k129, tiny) / kunit;
 }
 
-GRIMPL_NOEXPORT double k130_rate_(double T, double kunit, chemistry_data* my_chemistry) {
-  double k130 = 3.9e-19 * pow((T/300.0), 1.8) * exp(20.0/T);
+GRIMPL_NOEXPORT double k130_rate_(double T, double kunit,
+                                  chemistry_data* my_chemistry) {
+  double k130 = 3.9e-19 * pow((T / 300.0), 1.8) * exp(20.0 / T);
   return std::fmax(k130, tiny) / kunit;
 }
 
-GRIMPL_NOEXPORT double k131_rate_(double T, double kunit, chemistry_data* my_chemistry) {
-  double k131 = 3.4e-9 * pow((T/300.0), -0.4);
+GRIMPL_NOEXPORT double k131_rate_(double T, double kunit,
+                                  chemistry_data* my_chemistry) {
+  double k131 = 3.4e-9 * pow((T / 300.0), -0.4);
   return std::fmax(k131, tiny) / kunit;
 }
 
-GRIMPL_NOEXPORT double k132_rate_(double T, double kunit, chemistry_data* my_chemistry) {
-  double k132 = 3.0e-16 * pow((T/300.0), 0.95) * exp(-T/9320.0);
+GRIMPL_NOEXPORT double k132_rate_(double T, double kunit,
+                                  chemistry_data* my_chemistry) {
+  double k132 = 3.0e-16 * pow((T / 300.0), 0.95) * exp(-T / 9320.0);
   return std::fmax(k132, tiny) / kunit;
 }
 
-GRIMPL_NOEXPORT double k133_rate_(double T, double kunit, chemistry_data* my_chemistry) {
-  double k133 = 5.7e-8 * pow((T/300.0), -0.50);
+GRIMPL_NOEXPORT double k133_rate_(double T, double kunit,
+                                  chemistry_data* my_chemistry) {
+  double k133 = 5.7e-8 * pow((T / 300.0), -0.50);
   return std::fmax(k133, tiny) / kunit;
 }
 
-GRIMPL_NOEXPORT double k134_rate_(double T, double kunit, chemistry_data* my_chemistry) {
-  double k134 = 4.6e-8 * pow((T/300.0), -0.50);
+GRIMPL_NOEXPORT double k134_rate_(double T, double kunit,
+                                  chemistry_data* my_chemistry) {
+  double k134 = 4.6e-8 * pow((T / 300.0), -0.50);
   return std::fmax(k134, tiny) / kunit;
 }
 
-GRIMPL_NOEXPORT double k135_rate_(double T, double kunit, chemistry_data* my_chemistry) {
-  double k135 = 4.6e-8 * pow((T/300.0), -0.50);
+GRIMPL_NOEXPORT double k135_rate_(double T, double kunit,
+                                  chemistry_data* my_chemistry) {
+  double k135 = 4.6e-8 * pow((T / 300.0), -0.50);
   return std::fmax(k135, tiny) / kunit;
 }
 
-GRIMPL_NOEXPORT double k136_rate_(double T, double kunit, chemistry_data* my_chemistry) {
-  double k136 = 6.4e-9 * pow((T/300.0), 0.41);
+GRIMPL_NOEXPORT double k136_rate_(double T, double kunit,
+                                  chemistry_data* my_chemistry) {
+  double k136 = 6.4e-9 * pow((T / 300.0), 0.41);
   return std::fmax(k136, tiny) / kunit;
 }
 
-GRIMPL_NOEXPORT double k137_rate_(double T, double kunit, chemistry_data* my_chemistry) {
-  double k137 = 1.5e-9 * pow((T/300.0), -0.1);
+GRIMPL_NOEXPORT double k137_rate_(double T, double kunit,
+                                  chemistry_data* my_chemistry) {
+  double k137 = 1.5e-9 * pow((T / 300.0), -0.1);
   return std::fmax(k137, tiny) / kunit;
 }
 
-GRIMPL_NOEXPORT double k148_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+GRIMPL_NOEXPORT double k148_rate_(double T, double kunit,
+                                  chemistry_data* my_chemistry) {
   double k148 = 5.0e-21;
   return std::fmax(k148, tiny) / kunit;
 }
 
-double k149_rate_(double T, double kunit, chemistry_data *my_chemistry) {
+double k149_rate_(double T, double kunit, chemistry_data* my_chemistry) {
   double k149;
-  if(T < 1000.0) {
+  if (T < 1000.0) {
     k149 = 7.60e-18 * pow(T, -0.50);
   } else {
     k149 = 3.45e-16 * pow(T, -1.06);
@@ -275,14 +285,16 @@ double k149_rate_(double T, double kunit, chemistry_data *my_chemistry) {
   return std::fmax(k149, tiny) / kunit;
 }
 
-GRIMPL_NOEXPORT double k150_rate_(double T, double kunit, chemistry_data* my_chemistry) {
-  double k150 = 3.0e-10 * exp(-6717.0/T);
+GRIMPL_NOEXPORT double k150_rate_(double T, double kunit,
+                                  chemistry_data* my_chemistry) {
+  double k150 = 3.0e-10 * exp(-6717.0 / T);
   return std::fmax(k150, tiny) / kunit;
 }
 
-GRIMPL_NOEXPORT double k151_rate_(double T, double kunit, chemistry_data *my_chemistry) {
+GRIMPL_NOEXPORT double k151_rate_(double T, double kunit,
+                                  chemistry_data* my_chemistry) {
   double k151;
-  if(T < 4000.0) {
+  if (T < 4000.0) {
     k151 = 1.6e-14 * pow(T, -0.33);
   } else {
     k151 = 1.0e-15;
@@ -290,54 +302,61 @@ GRIMPL_NOEXPORT double k151_rate_(double T, double kunit, chemistry_data *my_che
   return std::fmax(k151, tiny) / kunit;
 }
 
-GRIMPL_NOEXPORT double k152_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+GRIMPL_NOEXPORT double k152_rate_(double T, double kunit,
+                                  chemistry_data* my_chemistry) {
   double k152 = 9.1e-10;
   return std::fmax(k152, tiny) / kunit;
 }
 
-GRIMPL_NOEXPORT double k153_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+GRIMPL_NOEXPORT double k153_rate_(double T, double kunit,
+                                  chemistry_data* my_chemistry) {
   double k153 = 1.7e-7 * pow(T, -0.5);
   return std::fmax(k153, tiny) / kunit;
 }
 
-  
-GRIMPL_NOEXPORT double kz15_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+GRIMPL_NOEXPORT double kz15_rate_(double T, double kunit,
+                                  chemistry_data* my_chemistry) {
   double kz15 = 4.98e-11;
   return std::fmax(kz15, tiny) / kunit;
 }
 
-GRIMPL_NOEXPORT double kz16_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+GRIMPL_NOEXPORT double kz16_rate_(double T, double kunit,
+                                  chemistry_data* my_chemistry) {
   double kz16 = 2.70e-10;
   return std::fmax(kz16, tiny) / kunit;
 }
 
-GRIMPL_NOEXPORT double kz17_rate_(double T, double kunit, chemistry_data* my_chemistry) {
-  double kz17 = 7.00e-14 * pow((T/300.0), 2.80) * exp(-1950.0/T);
+GRIMPL_NOEXPORT double kz17_rate_(double T, double kunit,
+                                  chemistry_data* my_chemistry) {
+  double kz17 = 7.00e-14 * pow((T / 300.0), 2.80) * exp(-1950.0 / T);
   return std::fmax(kz17, tiny) / kunit;
 }
 
-GRIMPL_NOEXPORT double kz18_rate_(double T, double kunit, chemistry_data* my_chemistry) {
-  double kz18 = 6.83e-12 * pow((T/300.0), 1.60) * exp(-9720.0/T);
+GRIMPL_NOEXPORT double kz18_rate_(double T, double kunit,
+                                  chemistry_data* my_chemistry) {
+  double kz18 = 6.83e-12 * pow((T / 300.0), 1.60) * exp(-9720.0 / T);
   return std::fmax(kz18, tiny) / kunit;
 }
 
-GRIMPL_NOEXPORT double kz19_rate_(double T, double kunit, chemistry_data* my_chemistry) {
-  double kz19 = 3.30e-10 * exp(-8460.0/T);
+GRIMPL_NOEXPORT double kz19_rate_(double T, double kunit,
+                                  chemistry_data* my_chemistry) {
+  double kz19 = 3.30e-10 * exp(-8460.0 / T);
   return std::fmax(kz19, tiny) / kunit;
 }
 
-GRIMPL_NOEXPORT double kz20_rate_(double T, double kunit, chemistry_data* my_chemistry) {
-  double kz20 = 6.64e-10 * exp(-11700.0/T);
+GRIMPL_NOEXPORT double kz20_rate_(double T, double kunit,
+                                  chemistry_data* my_chemistry) {
+  double kz20 = 6.64e-10 * exp(-11700.0 / T);
   return std::fmax(kz20, tiny) / kunit;
 }
 
-
-GRIMPL_NOEXPORT double kz21_rate_(double T, double kunit, chemistry_data *my_chemistry) {
+GRIMPL_NOEXPORT double kz21_rate_(double T, double kunit,
+                                  chemistry_data* my_chemistry) {
   double kz21;
-  if(T < 1.0e7) {
-    kz21 = 3.43e-13 * pow((T / 300.0), 2.67) * exp(-3160.0/T);
+  if (T < 1.0e7) {
+    kz21 = 3.43e-13 * pow((T / 300.0), 2.67) * exp(-3160.0 / T);
   } else {
-    kz21 = 3.43e-13 * pow(1.0e7/300.0, 2.67) * exp(-3160.0/1.0e7);
+    kz21 = 3.43e-13 * pow(1.0e7 / 300.0, 2.67) * exp(-3160.0 / 1.0e7);
   }
   return std::fmax(kz21, tiny) / kunit;
 }
@@ -356,177 +375,209 @@ GRIMPL_NOEXPORT double kz21_rate_(double T, double kunit, chemistry_data *my_che
 //    - but, we don't obviously do that. It seems like we use the values at ALL
 //      temperatures.
 
-GRIMPL_NOEXPORT double kz22_rate_(double T, double kunit, chemistry_data* my_chemistry) {
-  double kz22 = 7.00e-10 * exp(-232.0/T);
+GRIMPL_NOEXPORT double kz22_rate_(double T, double kunit,
+                                  chemistry_data* my_chemistry) {
+  double kz22 = 7.00e-10 * exp(-232.0 / T);
   return std::fmax(kz22, tiny) / kunit;
 }
 
-GRIMPL_NOEXPORT double kz23_rate_(double T, double kunit, chemistry_data* my_chemistry) {
-  double kz23 = 2.38e-10 * exp(-1760.0/T);
+GRIMPL_NOEXPORT double kz23_rate_(double T, double kunit,
+                                  chemistry_data* my_chemistry) {
+  double kz23 = 2.38e-10 * exp(-1760.0 / T);
   return std::fmax(kz23, tiny) / kunit;
 }
 
-GRIMPL_NOEXPORT double kz24_rate_(double T, double kunit, chemistry_data* my_chemistry) {
-  double kz24 = 1.55e-12 * pow((T/300.0), 1.60) * exp(-1660.0/T);
+GRIMPL_NOEXPORT double kz24_rate_(double T, double kunit,
+                                  chemistry_data* my_chemistry) {
+  double kz24 = 1.55e-12 * pow((T / 300.0), 1.60) * exp(-1660.0 / T);
   return std::fmax(kz24, tiny) / kunit;
 }
 
-GRIMPL_NOEXPORT double kz25_rate_(double T, double kunit, chemistry_data* my_chemistry) {
-  double kz25 = 1.65e-12 * pow((T/300.0), 1.14) * exp(-50.0/T);
+GRIMPL_NOEXPORT double kz25_rate_(double T, double kunit,
+                                  chemistry_data* my_chemistry) {
+  double kz25 = 1.65e-12 * pow((T / 300.0), 1.14) * exp(-50.0 / T);
   return std::fmax(kz25, tiny) / kunit;
 }
 
-GRIMPL_NOEXPORT double kz26_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+GRIMPL_NOEXPORT double kz26_rate_(double T, double kunit,
+                                  chemistry_data* my_chemistry) {
   double kz26 = 1.0e-13;
   return std::fmax(kz26, tiny) / kunit;
 }
 
-GRIMPL_NOEXPORT double kz27_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+GRIMPL_NOEXPORT double kz27_rate_(double T, double kunit,
+                                  chemistry_data* my_chemistry) {
   double kz27 = 1.0e-17;
   return std::fmax(kz27, tiny) / kunit;
 }
 
-GRIMPL_NOEXPORT double kz28_rate_(double T, double kunit, chemistry_data* my_chemistry) {
-  double kz28 = 1.1e-10 * pow((T/300.0), 0.5);
+GRIMPL_NOEXPORT double kz28_rate_(double T, double kunit,
+                                  chemistry_data* my_chemistry) {
+  double kz28 = 1.1e-10 * pow((T / 300.0), 0.5);
   return std::fmax(kz28, tiny) / kunit;
 }
 
-GRIMPL_NOEXPORT double kz29_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+GRIMPL_NOEXPORT double kz29_rate_(double T, double kunit,
+                                  chemistry_data* my_chemistry) {
   double kz29 = 3.3e-11;
   return std::fmax(kz29, tiny) / kunit;
 }
 
-GRIMPL_NOEXPORT double kz30_rate_(double T, double kunit, chemistry_data* my_chemistry) {
-  double kz30 = 9.9e-19 * pow((T/300.0), -0.38);
+GRIMPL_NOEXPORT double kz30_rate_(double T, double kunit,
+                                  chemistry_data* my_chemistry) {
+  double kz30 = 9.9e-19 * pow((T / 300.0), -0.38);
   return std::fmax(kz30, tiny) / kunit;
 }
 
-GRIMPL_NOEXPORT double kz31_rate_(double T, double kunit, chemistry_data* my_chemistry) {
-  double kz31 = 4.9e-20 * pow((T/300.0), 1.58);
+GRIMPL_NOEXPORT double kz31_rate_(double T, double kunit,
+                                  chemistry_data* my_chemistry) {
+  double kz31 = 4.9e-20 * pow((T / 300.0), 1.58);
   return std::fmax(kz31, tiny) / kunit;
 }
 
-GRIMPL_NOEXPORT double kz32_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+GRIMPL_NOEXPORT double kz32_rate_(double T, double kunit,
+                                  chemistry_data* my_chemistry) {
   double kz32 = 6.6e-11;
   return std::fmax(kz32, tiny) / kunit;
 }
 
-GRIMPL_NOEXPORT double kz33_rate_(double T, double kunit, chemistry_data* my_chemistry) {
-  double kz33 = 4.34e-11 * pow((T/300.0), -0.5) * exp(-30.0/T);
+GRIMPL_NOEXPORT double kz33_rate_(double T, double kunit,
+                                  chemistry_data* my_chemistry) {
+  double kz33 = 4.34e-11 * pow((T / 300.0), -0.5) * exp(-30.0 / T);
   return std::fmax(kz33, tiny) / kunit;
 }
 
-GRIMPL_NOEXPORT double kz34_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+GRIMPL_NOEXPORT double kz34_rate_(double T, double kunit,
+                                  chemistry_data* my_chemistry) {
   double kz34 = 2.1e-9;
   return std::fmax(kz34, tiny) / kunit;
 }
 
-GRIMPL_NOEXPORT double kz35_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+GRIMPL_NOEXPORT double kz35_rate_(double T, double kunit,
+                                  chemistry_data* my_chemistry) {
   double kz35 = 6.9e-9;
   return std::fmax(kz35, tiny) / kunit;
 }
 
-GRIMPL_NOEXPORT double kz36_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+GRIMPL_NOEXPORT double kz36_rate_(double T, double kunit,
+                                  chemistry_data* my_chemistry) {
   double kz36 = 2.0e-9;
   return std::fmax(kz36, tiny) / kunit;
 }
 
-GRIMPL_NOEXPORT double kz37_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+GRIMPL_NOEXPORT double kz37_rate_(double T, double kunit,
+                                  chemistry_data* my_chemistry) {
   double kz37 = 7.7e-10;
   return std::fmax(kz37, tiny) / kunit;
 }
 
-GRIMPL_NOEXPORT double kz38_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+GRIMPL_NOEXPORT double kz38_rate_(double T, double kunit,
+                                  chemistry_data* my_chemistry) {
   double kz38 = 6.2e-10;
   return std::fmax(kz38, tiny) / kunit;
 }
 
-GRIMPL_NOEXPORT double kz39_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+GRIMPL_NOEXPORT double kz39_rate_(double T, double kunit,
+                                  chemistry_data* my_chemistry) {
   double kz39 = 6.8e-10;
   return std::fmax(kz39, tiny) / kunit;
 }
 
-GRIMPL_NOEXPORT double kz40_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+GRIMPL_NOEXPORT double kz40_rate_(double T, double kunit,
+                                  chemistry_data* my_chemistry) {
   double kz40 = 1.7e-9;
   return std::fmax(kz40, tiny) / kunit;
 }
 
-GRIMPL_NOEXPORT double kz41_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+GRIMPL_NOEXPORT double kz41_rate_(double T, double kunit,
+                                  chemistry_data* my_chemistry) {
   double kz41 = 1.01e-9;
   return std::fmax(kz41, tiny) / kunit;
 }
 
-GRIMPL_NOEXPORT double kz42_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+GRIMPL_NOEXPORT double kz42_rate_(double T, double kunit,
+                                  chemistry_data* my_chemistry) {
   double kz42 = 8.3e-10;
   return std::fmax(kz42, tiny) / kunit;
 }
 
-GRIMPL_NOEXPORT double kz43_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+GRIMPL_NOEXPORT double kz43_rate_(double T, double kunit,
+                                  chemistry_data* my_chemistry) {
   double kz43 = 7.5e-10;
   return std::fmax(kz43, tiny) / kunit;
 }
 
-GRIMPL_NOEXPORT double kz44_rate_(double T, double kunit, chemistry_data* my_chemistry) {
-  double kz44 = 4.4e-12 * pow((T/300.0), -0.61);
+GRIMPL_NOEXPORT double kz44_rate_(double T, double kunit,
+                                  chemistry_data* my_chemistry) {
+  double kz44 = 4.4e-12 * pow((T / 300.0), -0.61);
   return std::fmax(kz44, tiny) / kunit;
 }
 
-GRIMPL_NOEXPORT double kz45_rate_(double T, double kunit, chemistry_data* my_chemistry) {
-  double kz45 = 3.4e-12 * pow((T/300.0), -0.63);
+GRIMPL_NOEXPORT double kz45_rate_(double T, double kunit,
+                                  chemistry_data* my_chemistry) {
+  double kz45 = 3.4e-12 * pow((T / 300.0), -0.63);
   return std::fmax(kz45, tiny) / kunit;
 }
 
-GRIMPL_NOEXPORT double kz46_rate_(double T, double kunit, chemistry_data* my_chemistry) {
-  double kz46 = 1.6e-7 * pow((T/300.0), -0.5);
+GRIMPL_NOEXPORT double kz46_rate_(double T, double kunit,
+                                  chemistry_data* my_chemistry) {
+  double kz46 = 1.6e-7 * pow((T / 300.0), -0.5);
   return std::fmax(kz46, tiny) / kunit;
 }
 
-GRIMPL_NOEXPORT double kz47_rate_(double T, double kunit, chemistry_data* my_chemistry) {
-  double kz47 = 2.0e-7 * pow((T/300.0), -0.5);
+GRIMPL_NOEXPORT double kz47_rate_(double T, double kunit,
+                                  chemistry_data* my_chemistry) {
+  double kz47 = 2.0e-7 * pow((T / 300.0), -0.5);
   return std::fmax(kz47, tiny) / kunit;
 }
 
-GRIMPL_NOEXPORT double kz48_rate_(double T, double kunit, chemistry_data* my_chemistry) {
-  double kz48 = 3.5e-7 * pow((T/300.0), -0.5);
+GRIMPL_NOEXPORT double kz48_rate_(double T, double kunit,
+                                  chemistry_data* my_chemistry) {
+  double kz48 = 3.5e-7 * pow((T / 300.0), -0.5);
   return std::fmax(kz48, tiny) / kunit;
 }
 
-GRIMPL_NOEXPORT double kz49_rate_(double T, double kunit, chemistry_data* my_chemistry) {
-  double kz49 = 6.5e-7 * pow((T/300.0), -0.5);
+GRIMPL_NOEXPORT double kz49_rate_(double T, double kunit,
+                                  chemistry_data* my_chemistry) {
+  double kz49 = 6.5e-7 * pow((T / 300.0), -0.5);
   return std::fmax(kz49, tiny) / kunit;
 }
 
-GRIMPL_NOEXPORT double kz50_rate_(double T, double kunit, chemistry_data* my_chemistry) {
-  double kz50 = 1.95e-7 * pow((T/300.0), -0.7);
+GRIMPL_NOEXPORT double kz50_rate_(double T, double kunit,
+                                  chemistry_data* my_chemistry) {
+  double kz50 = 1.95e-7 * pow((T / 300.0), -0.7);
   return std::fmax(kz50, tiny) / kunit;
 }
 
-GRIMPL_NOEXPORT double kz51_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+GRIMPL_NOEXPORT double kz51_rate_(double T, double kunit,
+                                  chemistry_data* my_chemistry) {
   double kz51 = 1.0e-17;
   return std::fmax(kz51, tiny) / kunit;
 }
 
-GRIMPL_NOEXPORT double kz52_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+GRIMPL_NOEXPORT double kz52_rate_(double T, double kunit,
+                                  chemistry_data* my_chemistry) {
   double kz52 = 3.00e-11;
   return std::fmax(kz52, tiny) / kunit;
 }
 
-GRIMPL_NOEXPORT double kz53_rate_(double T, double kunit, chemistry_data* my_chemistry) {
-  double kz53 = 1.30e-11 * exp(-111.0/T);
+GRIMPL_NOEXPORT double kz53_rate_(double T, double kunit,
+                                  chemistry_data* my_chemistry) {
+  double kz53 = 1.30e-11 * exp(-111.0 / T);
   return std::fmax(kz53, tiny) / kunit;
 }
 
-GRIMPL_NOEXPORT double kz54_rate_(double T, double kunit, chemistry_data* my_chemistry) {
+GRIMPL_NOEXPORT double kz54_rate_(double T, double kunit,
+                                  chemistry_data* my_chemistry) {
   double kz54 = 2.00e-13;
   return std::fmax(kz54, tiny) / kunit;
 }
 
-} // extern "C"
+}  // extern "C"
 
 int grackle::impl::visit_rate_props(const chemistry_data* my_chemistry,
                                     grackle::impl::visit_kcol_prop_callback* cb,
-                                    void* ctx)
-{
+                                    void* ctx) {
   // shorten `grackle::impl` to `grimpl` within this function
   namespace grimpl = ::grackle::impl;
 
@@ -588,14 +639,14 @@ int grackle::impl::visit_rate_props(const chemistry_data* my_chemistry,
     cb(grimpl::KColProp{CollisionalRxnLUT::k135, &k135_rate_, true}, ctx);
     cb(grimpl::KColProp{CollisionalRxnLUT::k136, &k136_rate_, true}, ctx);
     cb(grimpl::KColProp{CollisionalRxnLUT::k137, &k137_rate_, true}, ctx);
-  
+
     cb(grimpl::KColProp{CollisionalRxnLUT::k148, &k148_rate_, true}, ctx);
     cb(grimpl::KColProp{CollisionalRxnLUT::k149, &k149_rate_, true}, ctx);
     cb(grimpl::KColProp{CollisionalRxnLUT::k150, &k150_rate_, true}, ctx);
     cb(grimpl::KColProp{CollisionalRxnLUT::k151, &k151_rate_, true}, ctx);
     cb(grimpl::KColProp{CollisionalRxnLUT::k152, &k152_rate_, true}, ctx);
     cb(grimpl::KColProp{CollisionalRxnLUT::k153, &k153_rate_, true}, ctx);
-    
+
     // primordial_chem > 3 && metal_chemistry == 1
     cb(grimpl::KColProp{CollisionalRxnLUT::kz15, &kz15_rate_, true}, ctx);
     cb(grimpl::KColProp{CollisionalRxnLUT::kz16, &kz16_rate_, true}, ctx);
