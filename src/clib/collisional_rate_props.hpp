@@ -6,7 +6,7 @@
 //===----------------------------------------------------------------------===//
 ///
 /// @file
-/// Defines the function to initialize extra collisional rates
+/// Defines machinery to help initialize collisional rates
 ///
 //===----------------------------------------------------------------------===//
 

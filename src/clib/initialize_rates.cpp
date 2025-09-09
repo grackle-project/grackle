@@ -1,4 +1,4 @@
-/*******************************************************************************/
+/******************************************************************************/
 /*
  * ----------Function to Calculate Multispecies Rate Lookup Table---------------
  * 
@@ -29,55 +29,13 @@
  *  used in the rate equations.
  * 
  * Rate Coefficients:
- *   --All rates are labelled as in Abel et al., 1996 (astro-ph/9608040)--
- *   @  k1  @     HI + e --> HII + 2e
- *   @  k2  @     HII + e --> HI + photon
- *   @  k3  @     HeI + e --> HeII + 2e
- *   @  k4  @     HeII + e --> HeI + photon
- *   @  k5  @     HeII + e --> HeIII + 2e
- *   @  k6  @     HeIII + e --> HeII + photon
- *   @  k7  @     HI + e --> HM + photon
- *   @  k8  @     HI + HM --> H2I* + e
- *   @  k9  @     HI + HII --> H2II + photon
- *   @  k10 @     H2II + HI --> H2I* + HII
- *   @  k11 @     H2I + HII --> H2II + HI
- *   @  k12 @     H2I + e --> 2HI + e
+ *   We only list the rates explicitly mentioned by name in this file
  *   @  k13 @     H2I + HI --> 3HI
- *   @  k14 @     HM + e --> HI + 2e
- *   @  k15 @     HM + HI --> 2HI + e
- *   @  k16 @     HM + HI --> 2HI
- *   @  k17 @     HM + HI --> H2I + e
- *   @  k18 @     H2I + e --> 2HI
- *   @  k19 @     H2I + HM --> H2I + HI
- *   @  k20 @     Not Used
- *   @  k21 @     2HI + H2I --> H2I + H2I
- *   @  k22 @     2HI + HI --> H2I + HI
- *   @  k24 @     HI + p --> HII + e
- *   @  k25 @     HeIII + p --> HeII + e
- *   @  k26 @     HeI + p --> HeII + e
- *   @  k27 @     HM + p --> HI + e
- *   @  k28 @     H2II + p --> HI + HII
- *   @  k29 @     H2I + p --> H2II + e
- *   @  k30 @     H2II + p --> 2HII + e
- *   @  k31 @     H2I + p --> 2HI
- *   @  k50 @     HII + DI --> HI + DII
- *   @  k51 @     HI + DII --> HII + DI
- *   @  k52 @     H2I + DII --> HDI + HII
- *   @  k53 @     HDI + HII --> H2I + DII
- *   @  k54 @     H2I + DI --> HDI + HI
- *   @  k55 @     HDI + HI --> H2I + DI
- *   @  k56 @     DI + HM --> HDI + e
- *   @      @     DM + HI --> HDI + e  //This is included implicitly by multiplying k56 by two as they are assumed to have the same rate.
- *   @  k57 @     HI + HI --> HII + HI + e
- *   @  k58 @     HI + HeI --> HII + HeI + e
- *   
- *   @  h2dust @     2H + grain --> H2 + grain
- * 
- * 
- * 
- * This code is a refactoring of the original Grackle fortran function of the same name.
+ *   @  h2dust @  2H + grain --> H2 + grain
+ *
+ * The logic in this file was originally transcribed from Fortran
  */
-/*******************************************************************************/
+/******************************************************************************/
 
 #include <stdlib.h> 
 #include <stdio.h>
