@@ -84,6 +84,49 @@ void secondary_ionization_adjustments(
   }
 }
 
+/// interpolate terms used to compute heating due to H2 formation for each each
+/// index in the index-range that is also selected by the given itmask
+///
+/// @param[out] chemheatrates_buf A struct containing the buffers that are
+///     filled by this call
+/// @param[in]  idx_rage Specifies the current index-range
+/// @param[in]  my_rates Contains the input interpolation tables
+/// @param[in]  itmask Specifies the `idx_range`'s iteration-mask for this
+///    calculation
+/// @param[in]  logTlininterp_buf Specifies the information related to the
+///    position in the logT interpolations (for a number of chemistry zones)
+///
+/// @todo
+/// Ideally, we wouldn't need to pass in the full
+/// grackle::impl::ChemHeatingRates and chemistry_data_storage structs, and
+/// we could pass in just what we need
+inline void interpolate_h2_heating_terms_(
+    grackle::impl::ChemHeatingRates chemheatrates_buf, IndexRange idx_range,
+    chemistry_data_storage* my_rates, const gr_mask_type* itmask,
+    grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf)
+{
+  for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+    if (itmask[i] != MASK_FALSE) {
+      chemheatrates_buf.n_cr_n[i] =
+          my_rates->n_cr_n[logTlininterp_buf.indixe[i] - 1] +
+          (my_rates->n_cr_n[logTlininterp_buf.indixe[i]] -
+           my_rates->n_cr_n[logTlininterp_buf.indixe[i] - 1]) *
+              logTlininterp_buf.tdef[i];
+      chemheatrates_buf.n_cr_d1[i] =
+          my_rates->n_cr_d1[logTlininterp_buf.indixe[i] - 1] +
+          (my_rates->n_cr_d1[logTlininterp_buf.indixe[i]] -
+           my_rates->n_cr_d1[logTlininterp_buf.indixe[i] - 1]) *
+              logTlininterp_buf.tdef[i];
+      chemheatrates_buf.n_cr_d2[i] =
+          my_rates->n_cr_d2[logTlininterp_buf.indixe[i] - 1] +
+          (my_rates->n_cr_d2[logTlininterp_buf.indixe[i]] -
+           my_rates->n_cr_d2[logTlininterp_buf.indixe[i] - 1]) *
+              logTlininterp_buf.tdef[i];
+    }
+  }
+}
+
+
 inline void simple_interp_lnT_rate(
     double* out, const double* table, const gr_mask_type* itmask, int i_start,
     int i_stop, grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf) {
@@ -257,29 +300,16 @@ inline void lookup_cool_rates1d(
       my_rates->opaque_storage->n_kcol_rate_indices, itmask, idx_range.i_start,
       idx_range.i_stop, logTlininterp_buf);
 
+  // interpolate terms used to compute H2 formation heating terms.
+  // (this is honestly a little out of place in this function)
+  if (my_chemistry->primordial_chemistry > 1) {
+    interpolate_h2_heating_terms_(chemheatrates_buf, idx_range, my_rates,
+                                  itmask, logTlininterp_buf);
+  }
+
+
   // interpolate a few more rate tables
   if (my_chemistry->primordial_chemistry > 1) {
-    // H2 formation heating terms.
-
-    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-      if (itmask[i] != MASK_FALSE) {
-        chemheatrates_buf.n_cr_n[i] =
-            my_rates->n_cr_n[logTlininterp_buf.indixe[i] - 1] +
-            (my_rates->n_cr_n[logTlininterp_buf.indixe[i]] -
-             my_rates->n_cr_n[logTlininterp_buf.indixe[i] - 1]) *
-                logTlininterp_buf.tdef[i];
-        chemheatrates_buf.n_cr_d1[i] =
-            my_rates->n_cr_d1[logTlininterp_buf.indixe[i] - 1] +
-            (my_rates->n_cr_d1[logTlininterp_buf.indixe[i]] -
-             my_rates->n_cr_d1[logTlininterp_buf.indixe[i] - 1]) *
-                logTlininterp_buf.tdef[i];
-        chemheatrates_buf.n_cr_d2[i] =
-            my_rates->n_cr_d2[logTlininterp_buf.indixe[i] - 1] +
-            (my_rates->n_cr_d2[logTlininterp_buf.indixe[i]] -
-             my_rates->n_cr_d2[logTlininterp_buf.indixe[i] - 1]) *
-                logTlininterp_buf.tdef[i];
-      }
-    }
 
     // construct the view of the k13 table
     grackle::impl::View<double**> k13dda(
