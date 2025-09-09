@@ -363,33 +363,6 @@ int grackle::impl::initialize_rates(
     //   TemperatureStart, TemperatureEnd, NumberOfDustTemperatureBins,
     //   DustTemperatureStart, DustTemperatureEnd
 
-    // handle some allocations up front
-    // TODO: we should really make a separate function that fully initializes
-    //   the kcol_rate_tables (rather than what we do now and partially
-    //   initialize the contents).
-    if (my_chemistry->primordial_chemistry > 0) {
-      // allocate storage for kcol_rate_tables
-      my_rates->opaque_storage->kcol_rate_tables =
-        (grackle::impl::CollisionalRxnRateCollection*) malloc
-          (sizeof(grackle::impl::CollisionalRxnRateCollection));
-
-      // allocate storage within kcol_rate_tables
-      (*my_rates->opaque_storage->kcol_rate_tables) =
-        grackle::impl::new_CollisionalRxnRateCollection
-          (my_chemistry->NumberOfTemperatureBins);
-
-      // set all of the entries within kcol_rate_tables to tiny
-      // (this is very important for primordial_chemistry == 4 rates and
-      // the metal chemistry rates)
-      for (int i = 0; i < CollisionalRxnLUT::NUM_ENTRIES; i++) {
-        double* ptr = my_rates->opaque_storage->kcol_rate_tables->data[i];
-        for (int j = 0; j < my_chemistry->NumberOfTemperatureBins; j++) {
-          ptr[j] = tiny;
-        }
-      }
-
-    }
-
     int anyDust;
     if ( my_chemistry->h2_on_dust > 0 || my_chemistry->dust_chemistry > 0 || my_chemistry->dust_recombination_cooling > 0) {
         anyDust = TRUE;
@@ -472,31 +445,15 @@ int grackle::impl::initialize_rates(
     //* Compute rates for primordial chemistry.
 
     //* 1) Rate Coefficients (excluding the external radiation field)
-    if (my_chemistry->primordial_chemistry > 0){ 
-        grackle::impl::CollisionalRxnRateCollection* kcol_rate_tables =
-          my_rates->opaque_storage->kcol_rate_tables;
+    if (my_chemistry->primordial_chemistry > 0){
 
-        //--------Calculate multispecies collissional rates--------
-        init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k1], k1_rate, kUnit, my_chemistry);
-        init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k3], k3_rate, kUnit, my_chemistry);
-        init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k4], k4_rate, kUnit, my_chemistry);
-        init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k2], k2_rate, kUnit, my_chemistry);
-        init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k5], k5_rate, kUnit, my_chemistry);
-        init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k6], k6_rate, kUnit, my_chemistry);
-        init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k7], k7_rate, kUnit, my_chemistry);
-        init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k8], k8_rate, kUnit, my_chemistry);
-        init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k9], k9_rate, kUnit, my_chemistry);
-        init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k10], k10_rate, kUnit, my_chemistry);
-        init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k11], k11_rate, kUnit, my_chemistry);
-        init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k12], k12_rate, kUnit, my_chemistry);
-        init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k14], k14_rate, kUnit, my_chemistry);
-        init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k15], k15_rate, kUnit, my_chemistry);
-        init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k16], k16_rate, kUnit, my_chemistry);
-        init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k17], k17_rate, kUnit, my_chemistry);
-        init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k18], k18_rate, kUnit, my_chemistry);
-        init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k19], k19_rate, kUnit, my_chemistry);
-        init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k20], k20_rate, kUnit, my_chemistry);
-        init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k23], k23_rate, kUnit, my_chemistry);
+      // handle all "standard" collisional rates
+      if (init_kcol_rate_tables(
+            my_rates->opaque_storage, my_chemistry, kUnit, kUnit_3Bdy
+          ) != GR_SUCCESS) {
+        fprintf(stderr, "Error in init_kcol_rate_tables.\n");
+        return GR_FAIL;
+      }
 
         //--------Calculate coefficients for density-dependent collisional H2 dissociation rate--------
         //
@@ -512,30 +469,6 @@ int grackle::impl::initialize_rates(
         // k13dd = {coeff1(idt=0, Tbin1), coeff1(idt=0, Tbin2), ..., coeff1(idt=0, TbinFinal), coeff2(idt=0, Tbin1), ..., 
         //          coeff7(idt=0, TbinFinal), coeff1(idt=1, Tbin1), ..., coeff7(idt=1, TbinFinal)}
         add_k13dd_reaction_rate(&my_rates->k13dd, kUnit, my_chemistry);
-
-        //--------Calculate 3-body H2 rate--------
-
-        // Calculated by the same method as done in the original code. First is the fit to 
-        // A.E. Orel 1987, J.Chem.Phys., 87, 314, which is matched to the 1/T of 
-        // Palla etal (1983) -- which is four times smaller than the Palla rate.
-        
-        //Varying threebody and corresponding collisional dissociation rates from Simon.
-        init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k13], k13_rate, kUnit, my_chemistry);
-        init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k21], k21_rate, kUnit_3Bdy, my_chemistry);
-        init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k22], k22_rate, kUnit_3Bdy, my_chemistry);
-        
-        //--------Deuterium Rates--------
-        init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k50], k50_rate, kUnit, my_chemistry);
-        init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k51], k51_rate, kUnit, my_chemistry);
-        init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k52], k52_rate, kUnit, my_chemistry);
-        init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k53], k53_rate, kUnit, my_chemistry);
-        init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k54], k54_rate, kUnit, my_chemistry);
-        init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k55], k55_rate, kUnit, my_chemistry);
-        init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k56], k56_rate, kUnit, my_chemistry);
-
-        //--------New H Ionization Rates--------
-        init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k57], k57_rate, kUnit, my_chemistry);
-        init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k58], k58_rate, kUnit, my_chemistry);
 
         //H2 formation on dust grains requires loop over the dust temperature.
         add_h2dust_reaction_rate(&my_rates->h2dust, kUnit, my_chemistry);
@@ -672,10 +605,10 @@ int grackle::impl::initialize_rates(
     add_scalar_reaction_rate(&my_rates->gamma_isrf, gamma_isrf_rate, coolingUnits, my_chemistry); 
 
     // initialize some extra collisional rates
-    if (grackle::impl::init_extra_collisional_rates(my_chemistry, my_rates, my_units) != GR_SUCCESS) {
-      fprintf(stderr, "Error in init_extra_collisional_rates.\n");
-      return GR_FAIL;
-    }
+    // if (grackle::impl::init_extra_collisional_rates(my_chemistry, my_rates, my_units) != GR_SUCCESS) {
+    //   fprintf(stderr, "Error in init_extra_collisional_rates.\n");
+    //   return GR_FAIL;
+    // }
 
     // Miscellaneous species-based cooling rates
     if (grackle::impl::init_misc_species_cool_rates(my_chemistry, my_rates, my_units) != GR_SUCCESS) {
