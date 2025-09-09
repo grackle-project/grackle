@@ -103,8 +103,7 @@ void secondary_ionization_adjustments(
 inline void interpolate_h2_heating_terms_(
     grackle::impl::ChemHeatingRates chemheatrates_buf, IndexRange idx_range,
     chemistry_data_storage* my_rates, const gr_mask_type* itmask,
-    grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf)
-{
+    grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf) {
   for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
     if (itmask[i] != MASK_FALSE) {
       chemheatrates_buf.n_cr_n[i] =
@@ -125,7 +124,6 @@ inline void interpolate_h2_heating_terms_(
     }
   }
 }
-
 
 inline void simple_interp_lnT_rate(
     double* out, const double* table, const gr_mask_type* itmask, int i_start,
@@ -166,20 +164,17 @@ inline void interpolate_kcol_rate_tables_(
 /// @param[in] tgas specifies the gas temperatures for the `idx_range`
 /// @param[in] itmask Specifies the `idx_range`'s iteration-mask for this
 ///    calculation
-/// @param[inout] k13dd_data_ scratch space for the calculation
-/// @param[in] my_chemistry holds a number of configuration parameters 
+/// @param[in] my_chemistry holds a number of configuration parameters
 /// @param[in] my_rates Contains the input interpolation tables
 /// @param[in] my_fields specifies the field data
 /// @param[in] logTlininterp_buf Specifies the information related to the
 ///    position in the logT interpolations (for a number of chemistry zones)
 inline void interpolate_collisional_rxn_rates_(
-    grackle::impl::CollisionalRxnRateCollection kcol_buf,
-    IndexRange idx_range, const double* tgas1d,
-    const gr_mask_type* itmask, double* k13dd_data_, double dom,
+    grackle::impl::CollisionalRxnRateCollection kcol_buf, IndexRange idx_range,
+    const double* tgas1d, const gr_mask_type* itmask, double dom,
     chemistry_data* my_chemistry, grackle_field_data* my_fields,
     chemistry_data_storage* my_rates,
     grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf) {
-
   // Do linear table lookup (in log temperature)
   interpolate_kcol_rate_tables_(
       kcol_buf, *(my_rates->opaque_storage->kcol_rate_tables),
@@ -197,26 +192,26 @@ inline void interpolate_collisional_rxn_rates_(
     grackle::impl::View<double**> k13dda(
         my_rates->k13dd, my_chemistry->NumberOfTemperatureBins, 14);
 
-    // with some refactoring, we could entirely eliminate the k13dd_data_ buffer
-    grackle::impl::View<double**> k13dd(k13dd_data_,
-                                        my_fields->grid_dimension[0], 14);
-
-    for (int n1 = 0; n1 < 14; n1++) {
-      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-        if (itmask[i] != MASK_FALSE) {
-          k13dd(i, n1) = k13dda(logTlininterp_buf.indixe[i] - 1, n1) +
-                         (k13dda(logTlininterp_buf.indixe[i], n1) -
-                          k13dda(logTlininterp_buf.indixe[i] - 1, n1)) *
-                             logTlininterp_buf.tdef[i];
-        }
+    // define an inline function to fill an array with the 14 interpolated
+    // k13dda values for an arbitrary `i`
+    // -> important: `i` must satisfy: `itmask[i] != MASK_FALSE` (so that
+    //    logTlininterp_buf.indixe[i] corresponds to a valid index)
+    auto fill_k13dd_buf_fn = [k13dda, logTlininterp_buf](int i, double* out) {
+      for (int n1 = 0; n1 < 14; n1++) {
+        out[n1] = k13dda(logTlininterp_buf.indixe[i] - 1, n1) +
+                  (k13dda(logTlininterp_buf.indixe[i], n1) -
+                   k13dda(logTlininterp_buf.indixe[i] - 1, n1)) *
+                      logTlininterp_buf.tdef[i];
       }
-    }
+    };
 
-  //   If using H2, and using the density-dependent collisional
-  //     H2 dissociation rate, then replace the the density-independant
-  //        k13 rate with the new one.
-  // May/00: there appears to be a problem with the density-dependent
-  //     collisional rates.  Currently turned off until further notice.
+    double l_k13dd[14];
+
+    //   If using H2, and using the density-dependent collisional
+    //     H2 dissociation rate, then replace the the density-independant
+    //        k13 rate with the new one.
+    // May/00: there appears to be a problem with the density-dependent
+    //     collisional rates.  Currently turned off until further notice.
 
 #define USE_DENSITY_DEPENDENT_H2_DISSOCIATION_RATE
 #ifdef USE_DENSITY_DEPENDENT_H2_DISSOCIATION_RATE
@@ -226,19 +221,23 @@ inline void interpolate_collisional_rxn_rates_(
           double nh = std::fmin(HI(i, idx_range.j, idx_range.k) * dom, 1.0e9);
           kcol_buf.data[CollisionalRxnLUT::k13][i] = tiny8;
           if (tgas1d[i] >= 500. && tgas1d[i] < 1.0e6) {
+            // define a local buffer and fill it with values
+            double k13dd[14];
+            fill_k13dd_buf_fn(i, k13dd);
+
             // Direct collisional dissociation
             double k13_CID =
-                k13dd(i, 0) -
-                k13dd(i, 1) / (1. + std::pow((nh / k13dd(i, 4)), k13dd(i, 6))) +
-                k13dd(i, 2) -
-                k13dd(i, 3) / (1. + std::pow((nh / k13dd(i, 5)), k13dd(i, 6)));
+                k13dd[0] -
+                k13dd[1] / (1. + std::pow((nh / k13dd[4]), k13dd[6])) +
+                k13dd[2] -
+                k13dd[3] / (1. + std::pow((nh / k13dd[5]), k13dd[6]));
             k13_CID = std::fmax(std::pow(10., k13_CID), tiny8);
             // Dissociative tunnelling
             double k13_DT =
-                k13dd(i, 7) -
-                k13dd(i, 8) / (1. + std::pow((nh / k13dd(i, 11)), k13dd(i, 13))) +
-                k13dd(i, 9) -
-                k13dd(i, 10) / (1. + std::pow((nh / k13dd(i, 12)), k13dd(i, 13)));
+                k13dd[7] -
+                k13dd[8] / (1. + std::pow((nh / k13dd[11]), k13dd[13])) +
+                k13dd[9] -
+                k13dd[10] / (1. + std::pow((nh / k13dd[12]), k13dd[13]));
             k13_DT = std::fmax(std::pow(10., k13_DT), tiny8);
             //
             kcol_buf.data[CollisionalRxnLUT::k13][i] = k13_DT + k13_CID;
@@ -246,24 +245,23 @@ inline void interpolate_collisional_rxn_rates_(
         }
       }
     }
-  // #define USE_PALLA_SALPETER_STAHLER1983
-  // #ifdef USE_PALLA_SALPETER_STAHLER1983
-  //            if (ispecies .gt. 1 .and. ithreebody .eq. 1) then
-  //               do i = is+1, ie+1
-  //                  if (itmask(i)) then
-  //                  nh = (HI(i,j,k) + H2I(i,j,k)/2._DKIND)*dom
-  //                  k13ind = 1._DKIND / (1._DKIND + nh / k13dd(i,3))
-  //                  k13(i) = 10._DKIND**(
-  //     &                     (1._DKIND-k13ind) * k13dd(i,2)
-  //     &                             + k13ind  * k13dd(i,1) )
-  //                  endif
-  //               enddo
-  //            endif
-  // #endif
+    // #define USE_PALLA_SALPETER_STAHLER1983
+    // #ifdef USE_PALLA_SALPETER_STAHLER1983
+    //            if (ispecies .gt. 1 .and. ithreebody .eq. 1) then
+    //               do i = is+1, ie+1
+    //                  if (itmask(i)) then
+    //                  nh = (HI(i,j,k) + H2I(i,j,k)/2._DKIND)*dom
+    //                  k13ind = 1._DKIND / (1._DKIND + nh / k13dd(i,3))
+    //                  k13(i) = 10._DKIND**(
+    //     &                     (1._DKIND-k13ind) * k13dd(i,2)
+    //     &                             + k13ind  * k13dd(i,1) )
+    //                  endif
+    //               enddo
+    //            endif
+    // #endif
 #endif  //  USE_DENSITY_DEPENDENT_H2_DISSOCIATION_RATE
   }
 }
-
 
 /// This routine uses the temperature to look up the chemical rates which are
 /// tabulated in a log table as a function of temperature.
@@ -336,7 +334,6 @@ inline void lookup_cool_rates1d(
   std::vector<double> d_Td(my_chemistry->NumberOfDustTemperatureBins);
   std::vector<double> d_Tg(my_chemistry->NumberOfTemperatureBins);
 
-
   // Construct views of fields referenced in several parts of this function.
   grackle::impl::View<gr_float***> d(
       my_fields->density, my_fields->grid_dimension[0],
@@ -397,10 +394,9 @@ inline void lookup_cool_rates1d(
   }
 
   // interpolate all collisional reaction rates
-  interpolate_collisional_rxn_rates_(
-     kcol_buf, idx_range, tgas1d, itmask, k13dd_data_, dom,
-     my_chemistry, my_fields, my_rates, logTlininterp_buf);
-
+  interpolate_collisional_rxn_rates_(kcol_buf, idx_range, tgas1d, itmask, dom,
+                                     my_chemistry, my_fields, my_rates,
+                                     logTlininterp_buf);
 
   // interpolate terms used to compute H2 formation heating terms.
   // (this is honestly a little out of place in this function)
@@ -408,8 +404,6 @@ inline void lookup_cool_rates1d(
     interpolate_h2_heating_terms_(chemheatrates_buf, idx_range, my_rates,
                                   itmask, logTlininterp_buf);
   }
-
-
 
   // Compute grain size increment
 
@@ -1432,7 +1426,6 @@ inline void lookup_cool_rates1d(
   secondary_ionization_adjustments(idx_range, itmask, my_fields, my_uvb_rates,
                                    internalu, kshield_buf);
 #endif
-
 
   drop_InternalDustPropBuf(&internal_dust_prop_buf);
 
