@@ -240,6 +240,7 @@ inline void lookup_cool_rates1d(
           (logTlininterp_buf.t2[i] - logTlininterp_buf.t1[i]);
     }
   }
+
   // Do linear table lookup (in log temperature)
   simple_interp_lnT_rate(kcol_buf.data[CollisionalRxnLUT::k1], kcol_rate_tables.data[CollisionalRxnLUT::k1], itmask, idx_range.i_start, idx_range.i_stop, logTlininterp_buf);
   simple_interp_lnT_rate(kcol_buf.data[CollisionalRxnLUT::k2], kcol_rate_tables.data[CollisionalRxnLUT::k2], itmask, idx_range.i_start, idx_range.i_stop, logTlininterp_buf);
@@ -251,7 +252,6 @@ inline void lookup_cool_rates1d(
   simple_interp_lnT_rate(kcol_buf.data[CollisionalRxnLUT::k58], kcol_rate_tables.data[CollisionalRxnLUT::k58], itmask, idx_range.i_start, idx_range.i_stop, logTlininterp_buf);
 
   // Look-up for 9-species model
-
   if (my_chemistry->primordial_chemistry > 1) {
     simple_interp_lnT_rate(kcol_buf.data[CollisionalRxnLUT::k7], kcol_rate_tables.data[CollisionalRxnLUT::k7], itmask, idx_range.i_start, idx_range.i_stop, logTlininterp_buf);
     simple_interp_lnT_rate(kcol_buf.data[CollisionalRxnLUT::k8], kcol_rate_tables.data[CollisionalRxnLUT::k8], itmask, idx_range.i_start, idx_range.i_stop, logTlininterp_buf);
@@ -267,47 +267,10 @@ inline void lookup_cool_rates1d(
     simple_interp_lnT_rate(kcol_buf.data[CollisionalRxnLUT::k18], kcol_rate_tables.data[CollisionalRxnLUT::k18], itmask, idx_range.i_start, idx_range.i_stop, logTlininterp_buf);
     simple_interp_lnT_rate(kcol_buf.data[CollisionalRxnLUT::k19], kcol_rate_tables.data[CollisionalRxnLUT::k19], itmask, idx_range.i_start, idx_range.i_stop, logTlininterp_buf);
     simple_interp_lnT_rate(kcol_buf.data[CollisionalRxnLUT::k22], kcol_rate_tables.data[CollisionalRxnLUT::k22], itmask, idx_range.i_start, idx_range.i_stop, logTlininterp_buf);
-
-        // H2 formation heating terms.
-
-    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-      if (itmask[i] != MASK_FALSE) {
-        chemheatrates_buf.n_cr_n[i] =
-            my_rates->n_cr_n[logTlininterp_buf.indixe[i] - 1] +
-            (my_rates->n_cr_n[logTlininterp_buf.indixe[i]] -
-             my_rates->n_cr_n[logTlininterp_buf.indixe[i] - 1]) *
-                logTlininterp_buf.tdef[i];
-        chemheatrates_buf.n_cr_d1[i] =
-            my_rates->n_cr_d1[logTlininterp_buf.indixe[i] - 1] +
-            (my_rates->n_cr_d1[logTlininterp_buf.indixe[i]] -
-             my_rates->n_cr_d1[logTlininterp_buf.indixe[i] - 1]) *
-                logTlininterp_buf.tdef[i];
-        chemheatrates_buf.n_cr_d2[i] =
-            my_rates->n_cr_d2[logTlininterp_buf.indixe[i] - 1] +
-            (my_rates->n_cr_d2[logTlininterp_buf.indixe[i]] -
-             my_rates->n_cr_d2[logTlininterp_buf.indixe[i] - 1]) *
-                logTlininterp_buf.tdef[i];
-      }
-    }
-
-    // construct the view of the k13 table
-    grackle::impl::View<double**> k13dda(
-        my_rates->k13dd, my_chemistry->NumberOfTemperatureBins, 14);
-
-    for (int n1 = 0; n1 < 14; n1++) {
-      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-        if (itmask[i] != MASK_FALSE) {
-          k13dd(i, n1) = k13dda(logTlininterp_buf.indixe[i] - 1, n1) +
-                         (k13dda(logTlininterp_buf.indixe[i], n1) -
-                          k13dda(logTlininterp_buf.indixe[i] - 1, n1)) *
-                             logTlininterp_buf.tdef[i];
-        }
-      }
-    }
   }
 
-  // Look-up for 12-species model
 
+  // Look-up for 12-species model
   if (my_chemistry->primordial_chemistry > 2) {
     simple_interp_lnT_rate(kcol_buf.data[CollisionalRxnLUT::k50], kcol_rate_tables.data[CollisionalRxnLUT::k50], itmask, idx_range.i_start, idx_range.i_stop, logTlininterp_buf);
     simple_interp_lnT_rate(kcol_buf.data[CollisionalRxnLUT::k51], kcol_rate_tables.data[CollisionalRxnLUT::k51], itmask, idx_range.i_start, idx_range.i_stop, logTlininterp_buf);
@@ -382,6 +345,46 @@ inline void lookup_cool_rates1d(
     simple_interp_lnT_rate(kcol_buf.data[CollisionalRxnLUT::kz52], kcol_rate_tables.data[CollisionalRxnLUT::kz52], itmask, idx_range.i_start, idx_range.i_stop, logTlininterp_buf);
     simple_interp_lnT_rate(kcol_buf.data[CollisionalRxnLUT::kz53], kcol_rate_tables.data[CollisionalRxnLUT::kz53], itmask, idx_range.i_start, idx_range.i_stop, logTlininterp_buf);
     simple_interp_lnT_rate(kcol_buf.data[CollisionalRxnLUT::kz54], kcol_rate_tables.data[CollisionalRxnLUT::kz54], itmask, idx_range.i_start, idx_range.i_stop, logTlininterp_buf);
+  }
+
+  // interpolate a few more rate tables
+  if (my_chemistry->primordial_chemistry > 1) {
+        // H2 formation heating terms.
+
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+      if (itmask[i] != MASK_FALSE) {
+        chemheatrates_buf.n_cr_n[i] =
+            my_rates->n_cr_n[logTlininterp_buf.indixe[i] - 1] +
+            (my_rates->n_cr_n[logTlininterp_buf.indixe[i]] -
+             my_rates->n_cr_n[logTlininterp_buf.indixe[i] - 1]) *
+                logTlininterp_buf.tdef[i];
+        chemheatrates_buf.n_cr_d1[i] =
+            my_rates->n_cr_d1[logTlininterp_buf.indixe[i] - 1] +
+            (my_rates->n_cr_d1[logTlininterp_buf.indixe[i]] -
+             my_rates->n_cr_d1[logTlininterp_buf.indixe[i] - 1]) *
+                logTlininterp_buf.tdef[i];
+        chemheatrates_buf.n_cr_d2[i] =
+            my_rates->n_cr_d2[logTlininterp_buf.indixe[i] - 1] +
+            (my_rates->n_cr_d2[logTlininterp_buf.indixe[i]] -
+             my_rates->n_cr_d2[logTlininterp_buf.indixe[i] - 1]) *
+                logTlininterp_buf.tdef[i];
+      }
+    }
+
+    // construct the view of the k13 table
+    grackle::impl::View<double**> k13dda(
+        my_rates->k13dd, my_chemistry->NumberOfTemperatureBins, 14);
+
+    for (int n1 = 0; n1 < 14; n1++) {
+      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+        if (itmask[i] != MASK_FALSE) {
+          k13dd(i, n1) = k13dda(logTlininterp_buf.indixe[i] - 1, n1) +
+                         (k13dda(logTlininterp_buf.indixe[i], n1) -
+                          k13dda(logTlininterp_buf.indixe[i] - 1, n1)) *
+                             logTlininterp_buf.tdef[i];
+        }
+      }
+    }
   }
 
   // Compute grain size increment
