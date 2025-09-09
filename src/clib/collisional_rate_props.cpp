@@ -623,9 +623,7 @@ int grackle::impl::visit_rate_props(const chemistry_data* my_chemistry,
 
     cb(grimpl::KColProp{CollisionalRxnLUT::k23, &k23_rate, true}, ctx);
 
-    // todo: cleanup handling of:
-    // - k20, k21, & k23 (they're never used)
-    // - k13 (we always override the values)
+    // todo: cleanup handling of k20, k21, & k23 (they're never used)
   }
 
   if (my_chemistry->primordial_chemistry > 2) {  // Deuterium Rates
