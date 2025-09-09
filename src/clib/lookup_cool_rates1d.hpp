@@ -100,6 +100,26 @@ inline void simple_interp_lnT_rate(
   }
 }
 
+inline void interpolate_kcol_rate_tables_(
+    grackle::impl::CollisionalRxnRateCollection kcol_buf,
+    grackle::impl::CollisionalRxnRateCollection kcol_rate_tables,
+    int* kcol_lut_indices, int n_rates,
+    const gr_mask_type* itmask, int i_start, int i_stop,
+    grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf
+) {
+
+  // it may be more efficient to make i_start, i_stop the outer-loop for as
+  // long as we observe itmask
+  for (int counter = 0; counter < n_rates; counter++) {
+    int idx = kcol_lut_indices[counter];
+    simple_interp_lnT_rate(
+      kcol_buf.data[idx], kcol_rate_tables.data[idx], itmask, i_start, i_stop,
+      logTlininterp_buf
+    );
+  }
+
+}
+
 
 /// This routine uses the temperature to look up the chemical rates which are
 /// tabulated in a log table as a function of temperature.
@@ -242,14 +262,16 @@ inline void lookup_cool_rates1d(
   }
 
   // Do linear table lookup (in log temperature)
-  simple_interp_lnT_rate(kcol_buf.data[CollisionalRxnLUT::k1], kcol_rate_tables.data[CollisionalRxnLUT::k1], itmask, idx_range.i_start, idx_range.i_stop, logTlininterp_buf);
-  simple_interp_lnT_rate(kcol_buf.data[CollisionalRxnLUT::k2], kcol_rate_tables.data[CollisionalRxnLUT::k2], itmask, idx_range.i_start, idx_range.i_stop, logTlininterp_buf);
-  simple_interp_lnT_rate(kcol_buf.data[CollisionalRxnLUT::k3], kcol_rate_tables.data[CollisionalRxnLUT::k3], itmask, idx_range.i_start, idx_range.i_stop, logTlininterp_buf);
-  simple_interp_lnT_rate(kcol_buf.data[CollisionalRxnLUT::k4], kcol_rate_tables.data[CollisionalRxnLUT::k4], itmask, idx_range.i_start, idx_range.i_stop, logTlininterp_buf);
-  simple_interp_lnT_rate(kcol_buf.data[CollisionalRxnLUT::k5], kcol_rate_tables.data[CollisionalRxnLUT::k5], itmask, idx_range.i_start, idx_range.i_stop, logTlininterp_buf);
-  simple_interp_lnT_rate(kcol_buf.data[CollisionalRxnLUT::k6], kcol_rate_tables.data[CollisionalRxnLUT::k6], itmask, idx_range.i_start, idx_range.i_stop, logTlininterp_buf);
-  simple_interp_lnT_rate(kcol_buf.data[CollisionalRxnLUT::k57], kcol_rate_tables.data[CollisionalRxnLUT::k57], itmask, idx_range.i_start, idx_range.i_stop, logTlininterp_buf);
-  simple_interp_lnT_rate(kcol_buf.data[CollisionalRxnLUT::k58], kcol_rate_tables.data[CollisionalRxnLUT::k58], itmask, idx_range.i_start, idx_range.i_stop, logTlininterp_buf);
+  int kcol_lut_indices_pc1[] = {
+    CollisionalRxnLUT::k1, CollisionalRxnLUT::k2, CollisionalRxnLUT::k3,
+    CollisionalRxnLUT::k4, CollisionalRxnLUT::k5, CollisionalRxnLUT::k6,
+    CollisionalRxnLUT::k57, CollisionalRxnLUT::k58
+  };
+  int n_indices = (int)(sizeof(kcol_lut_indices_pc1) / sizeof(int));
+  interpolate_kcol_rate_tables_(
+    kcol_buf, kcol_rate_tables, kcol_lut_indices_pc1, n_indices,
+    itmask, idx_range.i_start, idx_range.i_stop, logTlininterp_buf
+  );
 
   // Look-up for 9-species model
   if (my_chemistry->primordial_chemistry > 1) {
