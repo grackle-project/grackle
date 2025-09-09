@@ -301,11 +301,11 @@ inline void interpolate_collisional_rxn_rates_(
 inline void lookup_cool_rates1d(
     IndexRange idx_range, gr_mask_type anydust, const double* tgas1d,
     const double* mmw, const double* tdust, const double* dust2gas,
-    double* k13dd_data_, double* h2dust, double dom, double dx_cgs,
-    double c_ljeans, const gr_mask_type* itmask,
-    const gr_mask_type* itmask_metal, double dt, chemistry_data* my_chemistry,
-    chemistry_data_storage* my_rates, grackle_field_data* my_fields,
-    photo_rate_storage my_uvb_rates, InternalGrUnits internalu,
+    double* h2dust, double dom, double dx_cgs, double c_ljeans,
+    const gr_mask_type* itmask, const gr_mask_type* itmask_metal, double dt,
+    chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
+    grackle_field_data* my_fields, photo_rate_storage my_uvb_rates,
+    InternalGrUnits internalu,
     grackle::impl::GrainSpeciesCollection grain_growth_rates,
     grackle::impl::GrainSpeciesCollection grain_temperatures,
     grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf,
@@ -317,9 +317,8 @@ inline void lookup_cool_rates1d(
 
   // Allocate temporary buffers
   // --------------------------
-  // TODO: we should create a struct that holds the k13dd_data_ scratch
-  //       buffer and all other pre-allocated buffers that we reference
-  //       here (to avoid heap allocations in this function)
+  // TODO: we should create a struct that holds pre-allocated buffers that we
+  //       reference here (to avoid heap allocations in this function)
 
   // collection of buffers for intermediate quantities used in dust-routines
   grackle::impl::InternalDustPropBuf internal_dust_prop_buf =

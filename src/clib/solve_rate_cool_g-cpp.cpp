@@ -520,12 +520,6 @@ struct SpeciesRateSolverScratchBuf {
   /// buffer used to track the rate of H2 formation on dust grains
   double* h2dust;
 
-  /// scratch space used only within lookup_cool_rates1d_g. This is 14 times
-  /// larger than most of the other buffers.
-  ///
-  /// (with minimal refactoring, this buffer could probably be removed)
-  double *k13dd;
-
   /// iteration mask denoting where the Gauss-Seidel scheme will be used
   gr_mask_type* itmask_gs;
 
@@ -573,8 +567,6 @@ void visit_member_pair(SpeciesRateSolverScratchBuf& obj0,
   f(VIS_MEMBER_NAME("HIdot"), obj0.HIdot, obj1.HIdot, vis::idx_range_len_multiple(1));
   f(VIS_MEMBER_NAME("dedot_prev"), obj0.dedot_prev, obj1.dedot_prev, vis::idx_range_len_multiple(1));
   f(VIS_MEMBER_NAME("HIdot_prev"), obj0.HIdot_prev, obj1.HIdot_prev, vis::idx_range_len_multiple(1));
-  // the next line is NOT a typo
-  f(VIS_MEMBER_NAME("k13dd"), obj0.k13dd, obj1.k13dd, vis::idx_range_len_multiple(14));
   f(VIS_MEMBER_NAME("h2dust"), obj0.h2dust, obj1.h2dust, vis::idx_range_len_multiple(1));
   f(VIS_MEMBER_NAME("itmask_gs"), obj0.itmask_gs, obj1.itmask_gs, vis::idx_range_len_multiple(1));
   f(VIS_MEMBER_NAME("itmask_nr"), obj0.itmask_nr, obj1.itmask_nr, vis::idx_range_len_multiple(1));
@@ -808,7 +800,7 @@ int solve_rate_cool_g(
           //    the C++ docstring for a longer discussion
           grackle::impl::lookup_cool_rates1d(
             idx_range, anydust, tgas.data(), mmw.data(), tdust.data(),
-            dust2gas.data(), spsolvbuf.k13dd, spsolvbuf.h2dust, dom, dx_cgs,
+            dust2gas.data(), spsolvbuf.h2dust, dom, dx_cgs,
             c_ljeans, itmask.data(), itmask_metal.data(), dt, my_chemistry,
             my_rates, my_fields, *my_uvb_rates, internalu,
             spsolvbuf.grain_growth_rates, grain_temperatures,
