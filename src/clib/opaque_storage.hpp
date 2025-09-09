@@ -42,8 +42,18 @@
 /// state. The gr_opaque_storage struct can be used to help us gradually
 /// transition towards this case
 struct gr_opaque_storage {
-  // we will add more contents as it becomes necessary
+  // in the future, we may want refactor the following set of members into
+  // a separate datatype that takes full responsibility for "normal"
+  // collisional rates
+
+  /// holds the collision rate tables
   grackle::impl::CollisionalRxnRateCollection* kcol_rate_tables;
+
+  /// a list of the indices that are actualy used from kcol_rate_tables in the
+  /// current calculation
+  int* used_kcol_rate_indices;
+  /// length of used_kcol_rate_indices
+  int n_kcol_rate_indices;
 };
 
 #endif /* OPAQUE_STORAGE_HPP */
