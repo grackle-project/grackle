@@ -604,12 +604,6 @@ int grackle::impl::initialize_rates(
     //(Equation B15, Krumholz, 2014)
     add_scalar_reaction_rate(&my_rates->gamma_isrf, gamma_isrf_rate, coolingUnits, my_chemistry); 
 
-    // initialize some extra collisional rates
-    // if (grackle::impl::init_extra_collisional_rates(my_chemistry, my_rates, my_units) != GR_SUCCESS) {
-    //   fprintf(stderr, "Error in init_extra_collisional_rates.\n");
-    //   return GR_FAIL;
-    // }
-
     // Miscellaneous species-based cooling rates
     if (grackle::impl::init_misc_species_cool_rates(my_chemistry, my_rates, my_units) != GR_SUCCESS) {
       fprintf(stderr, "Error in initialize_metal_chemistry_rates.\n");

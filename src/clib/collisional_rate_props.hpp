@@ -19,13 +19,13 @@
 // described functions have C linkage
 extern "C" {
 
+/// describes the signature of a generic function used  that is used to diges
 /// the type of a generic temperature dependent rate function
-typedef double (*rate_function)(double, double, chemistry_data*);
+typedef double (*rate_function)(double T, double k_unit, chemistry_data* my_chemistry);
 
 }  // extern "C"
 
 namespace grackle::impl {
-
 
 /// holds properties about a collisional rate.
 ///
@@ -51,10 +51,15 @@ struct KColProp {
 /// a function-specific `void*` context that is used argument to pass extra
 /// information to the callback and track information between calls to the
 /// callback
-typedef void visit_kcol_prop_callback(struct KColProp, void*);
+typedef void visit_kcol_prop_callback(struct KColProp rate_prop, void* ctx);
 
 /// calls visit_kcol_prop_callback for each rate relevant to the Chemical
 /// Network configuration specifier by `my_chemistry`
+///
+/// @param[in] my_chemistry Specifies grackle's configuration
+/// @param[in] cb The callback function called on every @ref KColProp instance
+/// @param[in,out] ctx A pointer to user-defined data that is passed into the
+///     callback function
 ///
 /// Implementation Notes
 /// ====================
@@ -64,15 +69,6 @@ typedef void visit_kcol_prop_callback(struct KColProp, void*);
 int visit_rate_props(const chemistry_data* my_chemistry,
                      visit_kcol_prop_callback* cb,
                      void* ctx);
-
-/// initialize misc primordial_chemistry == 4 and metal chemistry rates
-///
-/// @todo
-/// we should refactor this logic so it is implemented that all "standard"
-/// collisional rate initialization logic is implemented in a consistent way
-int init_extra_collisional_rates(chemistry_data *my_chemistry,
-                                 chemistry_data_storage *my_rates,
-                                 code_units *my_units);
 
 } // namespace grackle::impl
 
