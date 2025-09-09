@@ -125,33 +125,47 @@ inline void interpolate_h2_heating_terms_(
   }
 }
 
-inline void simple_interp_lnT_rate(
-    double* out, const double* table, const gr_mask_type* itmask, int i_start,
-    int i_stop, grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf) {
-  // todo: we REALLY want to get rid of references to itmask in this loop,
-  //       (for better performance). To do that, we need to ensure that
-  //       logTlininterp_buf has reasonable values at every index!
-  for (int i = i_start; i < i_stop; i++) {
-    if (itmask[i] != MASK_FALSE) {
-      out[i] = table[logTlininterp_buf.indixe[i] - 1] +
-               (table[logTlininterp_buf.indixe[i]] -
-                table[logTlininterp_buf.indixe[i] - 1]) *
-                   logTlininterp_buf.tdef[i];
-    }
-  }
-}
-
+/// interpolate the "standard" collisional reaction rates for each each index
+/// in the index-range that is also selected by the given itmask
+///
+/// @param[out] kcol_buf A struct containing the buffers that are filled by
+///    this function
+/// @param[in] idx_range Specifies the current index-range
+/// @param[in] kcol_rate_tables The 1D tables of "standard" collisional
+///    reaction rates
+/// @param[in] kcol_lut_indices A list of indices corresponding to the reaction
+///    rates that need to be interpolated
+/// @param[in] n_rates The number of elements in kcol_lut_indices
+/// @param[in] itmask Specifies the `idx_range`'s iteration-mask for this
+///    calculation
+/// @param[in] logTlininterp_buf Specifies the information related to the
+///    position in the logT interpolations (for a number of chemistry zones)
 inline void interpolate_kcol_rate_tables_(
-    grackle::impl::CollisionalRxnRateCollection kcol_buf,
+    grackle::impl::CollisionalRxnRateCollection kcol_buf, IndexRange idx_range,
     grackle::impl::CollisionalRxnRateCollection kcol_rate_tables,
-    int* kcol_lut_indices, int n_rates, const gr_mask_type* itmask, int i_start,
-    int i_stop, grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf) {
-  // it may be more efficient to make i_start, i_stop the outer-loop for as
-  // long as we observe itmask
-  for (int counter = 0; counter < n_rates; counter++) {
-    int idx = kcol_lut_indices[counter];
-    simple_interp_lnT_rate(kcol_buf.data[idx], kcol_rate_tables.data[idx],
-                           itmask, i_start, i_stop, logTlininterp_buf);
+    int* kcol_lut_indices, int n_rates, const gr_mask_type* itmask,
+    grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf) {
+  // TODO: make this more efficient
+  // -> to accomplish this, we probably need to account for the fact that all
+  //    of the buffers within grackle::impl::CollisionalRxnRateCollection are
+  //    allocated as a single buffer (in other words, they can be treated as a
+  //    monolithic 2D array)
+  // -> to maximize performance, we may want to change order of values in the
+  //    tables and possibly change transpose the data layout. But, we may want
+  //    to get GPU support working before we head down this path
+
+  for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+    if (itmask[i] != MASK_FALSE) {
+      for (int counter = 0; counter < n_rates; counter++) {
+        int idx = kcol_lut_indices[counter];
+        const double* table = kcol_rate_tables.data[idx];
+
+        kcol_buf.data[idx][i] = table[logTlininterp_buf.indixe[i] - 1] +
+                                (table[logTlininterp_buf.indixe[i]] -
+                                 table[logTlininterp_buf.indixe[i] - 1]) *
+                                    logTlininterp_buf.tdef[i];
+      }
+    }
   }
 }
 
@@ -175,14 +189,16 @@ inline void interpolate_collisional_rxn_rates_(
     chemistry_data* my_chemistry, grackle_field_data* my_fields,
     chemistry_data_storage* my_rates,
     grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf) {
-  // Do linear table lookup (in log temperature)
-  interpolate_kcol_rate_tables_(
-      kcol_buf, *(my_rates->opaque_storage->kcol_rate_tables),
-      my_rates->opaque_storage->used_kcol_rate_indices,
-      my_rates->opaque_storage->n_kcol_rate_indices, itmask, idx_range.i_start,
-      idx_range.i_stop, logTlininterp_buf);
+  // There are 2 parts to this function
+  // ----------------------------------
 
-  // possibly override k13 using density dependent values
+  // Part 1: Handle interpolations for most collisional rxn rates
+  interpolate_kcol_rate_tables_(
+      kcol_buf, idx_range, *(my_rates->opaque_storage->kcol_rate_tables),
+      my_rates->opaque_storage->used_kcol_rate_indices,
+      my_rates->opaque_storage->n_kcol_rate_indices, itmask, logTlininterp_buf);
+
+  // Part 2: possibly override k13 using density dependent values
   if (my_chemistry->primordial_chemistry > 1) {
     grackle::impl::View<gr_float***> HI(
         my_fields->HI_density, my_fields->grid_dimension[0],
@@ -204,8 +220,6 @@ inline void interpolate_collisional_rxn_rates_(
                       logTlininterp_buf.tdef[i];
       }
     };
-
-    double l_k13dd[14];
 
     //   If using H2, and using the density-dependent collisional
     //     H2 dissociation rate, then replace the the density-independant
