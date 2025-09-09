@@ -8,6 +8,56 @@
 /// @file
 /// Defines the function to initialize extra collisional rates
 ///
+/// "Classic" Rate coefficients. All rates are labelled as in Abel et al., 1996
+/// (astro-ph/9608040)
+///
+/// | rate-name | Reaction                         |
+/// | --------- | -------------------------------- |
+/// |  k1       | HI + e --> HII + 2e              |
+/// |  k2       | HII + e --> HI + photon          |
+/// |  k3       | HeI + e --> HeII + 2e            |
+/// |  k4       | HeII + e --> HeI + photon        |
+/// |  k5       | HeII + e --> HeIII + 2e          |
+/// |  k6       | HeIII + e --> HeII + photon      |
+/// |  k7       | HI + e --> HM + photon           |
+/// |  k8       | HI + HM --> H2I* + e             |
+/// |  k9       | HI + HII --> H2II + photon       |
+/// |  k10      | H2II + HI --> H2I* + HII         |
+/// |  k11      | H2I + HII --> H2II + HI          |
+/// |  k12      | H2I + e --> 2HI + e              |
+/// |  k13      | H2I + HI --> 3HI                 |
+/// |  k14      | HM + e --> HI + 2e               |
+/// |  k15      | HM + HI --> 2HI + e              |
+/// |  k16      | HM + HI --> 2HI                  |
+/// |  k17      | HM + HI --> H2I + e              |
+/// |  k18      | H2I + e --> 2HI                  |
+/// |  k19      | H2I + HM --> H2I + HI            |
+/// |  k20      | Not Used                         |
+/// |  k21      | 2HI + H2I --> H2I + H2I          |
+/// |  k22      | 2HI + HI --> H2I + HI            |
+/// |  k24      | HI + p --> HII + e               |
+/// |  k25      | HeIII + p --> HeII + e           |
+/// |  k26      | HeI + p --> HeII + e             |
+/// |  k27      | HM + p --> HI + e                |
+/// |  k28      | H2II + p --> HI + HII            |
+/// |  k29      | H2I + p --> H2II + e             |
+/// |  k30      | H2II + p --> 2HII + e            |
+/// |  k31      | H2I + p --> 2HI                  |
+/// |  k50      | HII + DI --> HI + DII            |
+/// |  k51      | HI + DII --> HII + DI            |
+/// |  k52      | H2I + DII --> HDI + HII          |
+/// |  k53      | HDI + HII --> H2I + DII          |
+/// |  k54      | H2I + DI --> HDI + HI            |
+/// |  k55      | HDI + HI --> H2I + DI            |
+/// |  k56      | DI + HM --> HDI + e              |
+/// |           | DM + HI --> HDI + e  (SEE BELOW) |
+/// |  k57      | HI + HI --> HII + HI + e         |
+/// |  k58      | HI + HeI --> HII + HeI + e       |
+///
+/// DM + HI --> HDI + e is included implicitly by multiplying k56 by two as
+/// they are assumed to have the same rate.
+///
+///
 /// Table of rate coefficients for primordial_chemistry >= 4:
 ///
 /// | rate-name | Reaction                          |
@@ -80,6 +130,7 @@
 #include <cmath>
 
 #include "grackle.h"
+#include "grackle_rate_functions.h"
 #include "collisional_rate_props.hpp"  // forward declaration
 #include "grackle_macros.h"            // tiny
 #include "internal_types.hpp"          // CollisionalRxnRateCollection
@@ -580,3 +631,122 @@ int grackle::impl::init_extra_collisional_rates(
   return GR_SUCCESS;
 }
 
+
+int grackle::impl::visit_rate_props(const chemistry_data* my_chemistry,
+                                    grackle::impl::visit_kcol_prop_callback* cb,
+                                    void* ctx)
+{
+  // shorten `grackle::impl` to `grimpl` within this function
+  namespace grimpl = ::grackle::impl;
+
+  if (my_chemistry->primordial_chemistry > 0) {
+    cb(grimpl::KColProp{CollisionalRxnLUT::k1, &k1_rate, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::k3, &k3_rate, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::k4, &k4_rate, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::k2, &k2_rate, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::k5, &k5_rate, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::k6, &k6_rate, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::k7, &k7_rate, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::k8, &k8_rate, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::k9, &k9_rate, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::k10, &k10_rate, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::k11, &k11_rate, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::k12, &k12_rate, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::k14, &k14_rate, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::k15, &k15_rate, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::k16, &k16_rate, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::k17, &k17_rate, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::k18, &k18_rate, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::k19, &k19_rate, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::k20, &k20_rate, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::k23, &k23_rate, true}, ctx);
+
+    //--------Calculate 3-body H2 rate--------
+
+    // Calculated by the same method as done in the original code. First is the
+    // fit to A.E. Orel 1987, J.Chem.Phys., 87, 314, which is matched to the 1/T
+    // of Palla e tal (1983) -- which is four times smaller than the Palla rate.
+
+    // Varying threebody and corresponding collisional dissociation rates from
+    // Simon.
+    cb(grimpl::KColProp{CollisionalRxnLUT::k13, &k13_rate, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::k21, &k21_rate, false}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::k22, &k22_rate, false}, ctx);
+
+    //--------Deuterium Rates--------
+    cb(grimpl::KColProp{CollisionalRxnLUT::k50, &k50_rate, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::k51, &k51_rate, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::k52, &k52_rate, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::k53, &k53_rate, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::k54, &k54_rate, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::k55, &k55_rate, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::k56, &k56_rate, true}, ctx);
+
+    //--------New H Ionization Rates--------
+    cb(grimpl::KColProp{CollisionalRxnLUT::k57, &k57_rate, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::k58, &k58_rate, true}, ctx);
+
+    // primordial_chem > 3:
+    cb(grimpl::KColProp{CollisionalRxnLUT::k125, &k125_rate_, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::k129, &k129_rate_, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::k130, &k130_rate_, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::k131, &k131_rate_, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::k132, &k132_rate_, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::k133, &k133_rate_, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::k134, &k134_rate_, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::k135, &k135_rate_, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::k136, &k136_rate_, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::k137, &k137_rate_, true}, ctx);
+  
+    cb(grimpl::KColProp{CollisionalRxnLUT::k148, &k148_rate_, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::k149, &k149_rate_, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::k150, &k150_rate_, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::k151, &k151_rate_, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::k152, &k152_rate_, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::k153, &k153_rate_, true}, ctx);
+    
+    // primordial_chem > 3 && metal_chemistry == 1
+    cb(grimpl::KColProp{CollisionalRxnLUT::kz15, &kz15_rate_, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::kz16, &kz16_rate_, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::kz17, &kz17_rate_, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::kz18, &kz18_rate_, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::kz19, &kz19_rate_, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::kz20, &kz20_rate_, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::kz21, &kz21_rate_, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::kz22, &kz22_rate_, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::kz23, &kz23_rate_, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::kz24, &kz24_rate_, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::kz25, &kz25_rate_, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::kz26, &kz26_rate_, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::kz27, &kz27_rate_, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::kz28, &kz28_rate_, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::kz29, &kz29_rate_, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::kz30, &kz30_rate_, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::kz31, &kz31_rate_, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::kz32, &kz32_rate_, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::kz33, &kz33_rate_, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::kz34, &kz34_rate_, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::kz35, &kz35_rate_, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::kz36, &kz36_rate_, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::kz37, &kz37_rate_, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::kz38, &kz38_rate_, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::kz39, &kz39_rate_, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::kz40, &kz40_rate_, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::kz41, &kz41_rate_, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::kz42, &kz42_rate_, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::kz43, &kz43_rate_, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::kz44, &kz44_rate_, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::kz45, &kz45_rate_, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::kz46, &kz46_rate_, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::kz47, &kz47_rate_, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::kz48, &kz48_rate_, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::kz49, &kz49_rate_, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::kz50, &kz50_rate_, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::kz51, &kz51_rate_, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::kz52, &kz52_rate_, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::kz53, &kz53_rate_, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::kz54, &kz54_rate_, true}, ctx);
+  }
+
+  return GR_SUCCESS;
+}
