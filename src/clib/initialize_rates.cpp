@@ -271,21 +271,19 @@ int setup_h2dust_grain_rates(chemistry_data* my_chemistry,
   double* d_Tg = (double*)malloc(n_Tgas * sizeof(double));
 
   const double logtem_start = std::log(my_chemistry->TemperatureStart);
-  const double logtem_end = std::log(my_chemistry->TemperatureEnd);
   const double dlogtem = (std::log(my_chemistry->TemperatureEnd) -
                           std::log(my_chemistry->TemperatureStart)) /
                          (double)(my_chemistry->NumberOfTemperatureBins - 1);
 
   const double logTdust_start = std::log(my_chemistry->DustTemperatureStart);
-  const double logTdust_end = std::log(my_chemistry->DustTemperatureEnd);
   const double dlogTdust = (std::log(my_chemistry->DustTemperatureEnd) -
                             std::log(my_chemistry->DustTemperatureStart)) /
                            (double)(my_chemistry->NumberOfDustTemperatureBins - 1);
 
-  for (int idx = 0; idx < n_Tdust; idx++) {
+  for (long long idx = 0; idx < n_Tdust; idx++) {
     d_Td[idx] = logTdust_start + (double)idx * dlogTdust;
   }
-  for (int idx = 0; idx < n_Tgas; idx++) {
+  for (long long idx = 0; idx < n_Tgas; idx++) {
     d_Tg[idx] = logtem_start + (double)idx * dlogtem;
   }
 
