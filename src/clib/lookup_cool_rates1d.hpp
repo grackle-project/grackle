@@ -605,9 +605,6 @@ inline void lookup_cool_rates1d(
   grackle::impl::InternalDustPropBuf internal_dust_prop_buf =
       grackle::impl::new_InternalDustPropBuf(my_fields->grid_dimension[0],
                                              my_rates->gr_N[1]);
-  // with some refactoring, we may be able to avoid allocating these buffers
-  std::vector<double> f_shield_H(my_fields->grid_dimension[0]);
-  std::vector<double> f_shield_He(my_fields->grid_dimension[0]);
 
   // Construct views of fields referenced in several parts of this function.
   grackle::impl::View<gr_float***> d(
@@ -1488,143 +1485,14 @@ inline void lookup_cool_rates1d(
     }
   }
 
+  // apply some miscellaneous self-shielding adjustments
   if (my_chemistry->self_shielding_method > 0) {
-    // Compute shielding factors
-
     ShieldFactorCalculator calculator =
         setup_shield_factor_calculator(tgas1d, idx_range, dom, my_chemistry,
                                        my_fields, my_uvb_rates, internalu);
-
-    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-      if (itmask[i] != MASK_FALSE) {
-        ShieldFactor tmp = calc_shield_factor(&calculator, i);
-        f_shield_H[i] = tmp.f_shield_H;
-        f_shield_He[i] = tmp.f_shield_He;
-      }
-    }
-  }
-
-  if (my_chemistry->self_shielding_method == 1) {
-    // approximate self shielding using Eq. 13 and 14 from
-    // Rahmati et. al. 2013 (MNRAS, 430, 2427-2445)
-    // to shield HI, while leaving HeI and HeII optically thin
-
-    //   Attenuate radiation rates for direct H2 ionization (15.4 eV)
-    //   using same scaling. (rate k29)
-    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-      if (itmask[i] != MASK_FALSE) {
-        if (my_uvb_rates.k24 < tiny8) {
-          kshield_buf.k24[i] = 0.;
-        } else {
-          kshield_buf.k24[i] = kshield_buf.k24[i] * f_shield_H[i];
-        }
-
-        // Scale H2 direct ionization radiation
-        if (my_uvb_rates.k29 < tiny8) {
-          kshield_buf.k29[i] = 0.;
-        } else {
-          kshield_buf.k29[i] = kshield_buf.k29[i] * f_shield_H[i];
-        }
-
-        kshield_buf.k25[i] = my_uvb_rates.k25;
-        kshield_buf.k26[i] = my_uvb_rates.k26;
-      }
-    }
-
-  } else if (my_chemistry->self_shielding_method == 2) {
-    // Better self-shielding in HI using Eq. 13 and 14 from
-    // Rahmati et. al. 2013 (MNRAS, 430, 2427-2445)
-    // approximate self shielding in HeI and HeII
-
-    //   Attenuate radiation rates for direct H2 ionization (15.4 eV)
-    //   using same scaling as HI. (rate k29)
-
-    //   Attenuate radiation rates for H2+ dissociation (30 eV)
-    //   using same scaling as HeII. (rate k28 and k30)
-
-    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-      if (itmask[i] != MASK_FALSE) {
-        if (my_uvb_rates.k24 < tiny8) {
-          kshield_buf.k24[i] = 0.;
-        } else {
-          kshield_buf.k24[i] = kshield_buf.k24[i] * f_shield_H[i];
-        }
-
-        // Scale H2 direct ionization radiation
-        if (my_uvb_rates.k29 < tiny8) {
-          kshield_buf.k29[i] = 0.;
-        } else {
-          kshield_buf.k29[i] = kshield_buf.k29[i] * f_shield_H[i];
-        }
-
-        // Apply same equations to HeI (assumes HeI closely follows HI)
-
-        if (my_uvb_rates.k26 < tiny8) {
-          kshield_buf.k26[i] = 0.;
-        } else {
-          kshield_buf.k26[i] = kshield_buf.k26[i] * f_shield_He[i];
-        }
-
-        // Scale H2+ dissociation radiation
-        if (my_uvb_rates.k28 < tiny8) {
-          kshield_buf.k28[i] = 0.0;
-        } else {
-          kshield_buf.k28[i] = kshield_buf.k28[i] * f_shield_He[i];
-        }
-
-        if (my_uvb_rates.k30 < tiny8) {
-          kshield_buf.k30[i] = 0.0;
-        } else {
-          kshield_buf.k30[i] = kshield_buf.k30[i] * f_shield_He[i];
-        }
-
-        kshield_buf.k25[i] = my_uvb_rates.k25;
-      }
-    }
-
-  } else if (my_chemistry->self_shielding_method == 3) {
-    // shielding using Eq. 13 and 14 from
-    // Rahmati et. al. 2013 (MNRAS, 430, 2427-2445)
-    // in HI and HeI, but ignoring HeII heating entirely
-    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-      if (itmask[i] != MASK_FALSE) {
-        if (my_uvb_rates.k24 < tiny8) {
-          kshield_buf.k24[i] = 0.;
-        } else {
-          kshield_buf.k24[i] = kshield_buf.k24[i] * f_shield_H[i];
-        }
-
-        // Scale H2 direct ionization radiation
-        if (my_uvb_rates.k29 < tiny8) {
-          kshield_buf.k29[i] = 0.;
-        } else {
-          kshield_buf.k29[i] = kshield_buf.k29[i] * f_shield_H[i];
-        }
-
-        // Apply same equations to HeI (assumes HeI closely follows HI)
-
-        if (my_uvb_rates.k26 < tiny8) {
-          kshield_buf.k26[i] = 0.;
-        } else {
-          kshield_buf.k26[i] = kshield_buf.k26[i] * f_shield_He[i];
-        }
-
-        // Scale H2+ dissociation radiation
-        if (my_uvb_rates.k28 < tiny8) {
-          kshield_buf.k28[i] = 0.0;
-        } else {
-          kshield_buf.k28[i] = kshield_buf.k28[i] * f_shield_He[i];
-        }
-
-        if (my_uvb_rates.k30 < tiny8) {
-          kshield_buf.k30[i] = 0.0;
-        } else {
-          kshield_buf.k30[i] = kshield_buf.k30[i] * f_shield_He[i];
-        }
-
-        kshield_buf.k25[i] = 0.0;
-      }
-    }
+    apply_misc_shield_factors(
+        kshield_buf, idx_range, itmask, my_chemistry->self_shielding_method,
+        my_uvb_rates, &calculator);
   }
 
 #ifdef SECONDARY_IONIZATION_NOT_YET_IMPLEMENTED
