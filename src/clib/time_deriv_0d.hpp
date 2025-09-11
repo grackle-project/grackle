@@ -7,6 +7,7 @@
 #define TIME_DERIV_0D_HPP
 
 #include "chemistry_solver_funcs.hpp"
+#include "dust_props.hpp"
 #include "fortran_func_wrappers.hpp"
 #include "grackle.h"
 #include "grackle_macros.h" // GRACKLE_FREE
@@ -53,6 +54,7 @@ struct MainScratchBuf {
   Cool1DMultiScratchBuf cool1dmulti_buf;
   CoolHeatScratchBuf coolingheating_buf;
   ChemHeatingRates chemheatrates_buf;
+  InternalDustPropBuf internal_dust_prop_scratch_buf;
 
   // the remaining buffers were originally reallocated (mostly on the stack)
   // every time calculated the time derivatives were computed
@@ -61,7 +63,10 @@ struct MainScratchBuf {
   GrainSpeciesCollection grain_growth_rates;
 };
 
-MainScratchBuf new_MainScratchBuf(void) {
+
+/// @param[in] opacity_table_size The number of elements in a dynamically
+///    computed dust grain opacity table
+MainScratchBuf new_MainScratchBuf(int grain_opacity_table_size) {
   int nelem = 1;
   MainScratchBuf out;
   out.grain_temperatures = new_GrainSpeciesCollection(nelem);
@@ -69,6 +74,9 @@ MainScratchBuf new_MainScratchBuf(void) {
   out.cool1dmulti_buf = new_Cool1DMultiScratchBuf(nelem);
   out.coolingheating_buf = new_CoolHeatScratchBuf(nelem);
   out.chemheatrates_buf = new_ChemHeatingRates(nelem);
+  out.internal_dust_prop_scratch_buf =
+    new_InternalDustPropBuf(nelem, grain_opacity_table_size);
+
 
   out.kcr_buf = new_CollisionalRxnRateCollection(nelem);
   out.kshield_buf = new_PhotoRxnRateCollection(nelem);
@@ -82,6 +90,7 @@ void drop_MainScratchBuf(MainScratchBuf* ptr) {
   drop_Cool1DMultiScratchBuf(&ptr->cool1dmulti_buf);
   drop_CoolHeatScratchBuf(&ptr->coolingheating_buf);
   drop_ChemHeatingRates(&ptr->chemheatrates_buf);
+  drop_InternalDustPropBuf(&ptr->internal_dust_prop_scratch_buf);
 
   drop_CollisionalRxnRateCollection(&ptr->kcr_buf);
   drop_PhotoRxnRateCollection(&ptr->kshield_buf);
@@ -498,7 +507,8 @@ void derivatives(
     pack.main_scratch_buf.grain_temperatures,
     pack.main_scratch_buf.logTlininterp_buf,
     pack.main_scratch_buf.kcr_buf, pack.main_scratch_buf.kshield_buf,
-    pack.main_scratch_buf.chemheatrates_buf
+    pack.main_scratch_buf.chemheatrates_buf,
+    pack.main_scratch_buf.internal_dust_prop_scratch_buf
   );
 
 

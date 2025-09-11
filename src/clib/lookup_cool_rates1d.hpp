@@ -598,19 +598,10 @@ inline void lookup_cool_rates1d(
     grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf,
     grackle::impl::CollisionalRxnRateCollection kcol_buf,
     grackle::impl::PhotoRxnRateCollection kshield_buf,
-    grackle::impl::ChemHeatingRates chemheatrates_buf) {
+    grackle::impl::ChemHeatingRates chemheatrates_buf,
+    grackle::impl::InternalDustPropBuf internal_dust_prop_scratch_buf) {
   // shorten `grackle::impl::fortran_wrapper` to `f_wrap` within this function
   namespace f_wrap = ::grackle::impl::fortran_wrapper;
-
-  // Allocate temporary buffers
-  // --------------------------
-  // TODO: we should create a struct that holds pre-allocated buffers that we
-  //       reference here (to avoid heap allocations in this function)
-
-  // collection of buffers for intermediate quantities used in dust-routines
-  grackle::impl::InternalDustPropBuf internal_dust_prop_buf =
-      grackle::impl::new_InternalDustPropBuf(my_fields->grid_dimension[0],
-                                             my_rates->gr_N[1]);
 
   // Construct views of fields referenced in several parts of this function.
   grackle::impl::View<gr_float***> d(
@@ -688,42 +679,42 @@ inline void lookup_cool_rates1d(
   if ((anydust != MASK_FALSE) && (my_chemistry->dust_species > 0)) {
     f_wrap::calc_grain_size_increment_1d(dom, idx_range, itmask_metal,
                                          my_chemistry, my_rates, my_fields,
-                                         internal_dust_prop_buf);
+                                         internal_dust_prop_scratch_buf);
   }
 
   // Look-up rate for H2 formation on dust & (when relevant) grain growth rates
 
   if (anydust != MASK_FALSE) {
     // these are some legacy variables that referene allocations now tracked
-    // within internal_dust_prop_buf.
+    // within internal_dust_prop_scratch_buf.
     //
-    // TODO: directly access members of internal_dust_prop_buf (and get rid of
-    // these demporary variables)
-    double* sgSiM = internal_dust_prop_buf.grain_sigma_per_gas_mass
+    // TODO: directly access members of internal_dust_prop_scratch_buf (and get
+    // rid of these temporary variables)
+    double* sgSiM = internal_dust_prop_scratch_buf.grain_sigma_per_gas_mass
                         .data[OnlyGrainSpLUT::SiM_dust];
-    double* sgFeM = internal_dust_prop_buf.grain_sigma_per_gas_mass
+    double* sgFeM = internal_dust_prop_scratch_buf.grain_sigma_per_gas_mass
                         .data[OnlyGrainSpLUT::FeM_dust];
-    double* sgMg2SiO4 = internal_dust_prop_buf.grain_sigma_per_gas_mass
+    double* sgMg2SiO4 = internal_dust_prop_scratch_buf.grain_sigma_per_gas_mass
                             .data[OnlyGrainSpLUT::Mg2SiO4_dust];
-    double* sgMgSiO3 = internal_dust_prop_buf.grain_sigma_per_gas_mass
+    double* sgMgSiO3 = internal_dust_prop_scratch_buf.grain_sigma_per_gas_mass
                            .data[OnlyGrainSpLUT::MgSiO3_dust];
-    double* sgFe3O4 = internal_dust_prop_buf.grain_sigma_per_gas_mass
+    double* sgFe3O4 = internal_dust_prop_scratch_buf.grain_sigma_per_gas_mass
                           .data[OnlyGrainSpLUT::Fe3O4_dust];
-    double* sgAC = internal_dust_prop_buf.grain_sigma_per_gas_mass
+    double* sgAC = internal_dust_prop_scratch_buf.grain_sigma_per_gas_mass
                        .data[OnlyGrainSpLUT::AC_dust];
-    double* sgSiO2D = internal_dust_prop_buf.grain_sigma_per_gas_mass
+    double* sgSiO2D = internal_dust_prop_scratch_buf.grain_sigma_per_gas_mass
                           .data[OnlyGrainSpLUT::SiO2_dust];
-    double* sgMgO = internal_dust_prop_buf.grain_sigma_per_gas_mass
+    double* sgMgO = internal_dust_prop_scratch_buf.grain_sigma_per_gas_mass
                         .data[OnlyGrainSpLUT::MgO_dust];
-    double* sgFeS = internal_dust_prop_buf.grain_sigma_per_gas_mass
+    double* sgFeS = internal_dust_prop_scratch_buf.grain_sigma_per_gas_mass
                         .data[OnlyGrainSpLUT::FeS_dust];
-    double* sgAl2O3 = internal_dust_prop_buf.grain_sigma_per_gas_mass
+    double* sgAl2O3 = internal_dust_prop_scratch_buf.grain_sigma_per_gas_mass
                           .data[OnlyGrainSpLUT::Al2O3_dust];
-    double* sgreforg = internal_dust_prop_buf.grain_sigma_per_gas_mass
+    double* sgreforg = internal_dust_prop_scratch_buf.grain_sigma_per_gas_mass
                            .data[OnlyGrainSpLUT::ref_org_dust];
-    double* sgvolorg = internal_dust_prop_buf.grain_sigma_per_gas_mass
+    double* sgvolorg = internal_dust_prop_scratch_buf.grain_sigma_per_gas_mass
                            .data[OnlyGrainSpLUT::vol_org_dust];
-    double* sgH2Oice = internal_dust_prop_buf.grain_sigma_per_gas_mass
+    double* sgH2Oice = internal_dust_prop_scratch_buf.grain_sigma_per_gas_mass
                            .data[OnlyGrainSpLUT::H2O_ice_dust];
 
     const double logTdust_start = std::log(my_chemistry->DustTemperatureStart);
@@ -1508,10 +1499,6 @@ inline void lookup_cool_rates1d(
   secondary_ionization_adjustments(idx_range, itmask, my_fields, my_uvb_rates,
                                    internalu, kshield_buf);
 #endif
-
-  drop_InternalDustPropBuf(&internal_dust_prop_buf);
-
-  return;
 }
 
 }  // namespace grackle::impl
