@@ -1490,9 +1490,9 @@ inline void lookup_cool_rates1d(
     ShieldFactorCalculator calculator =
         setup_shield_factor_calculator(tgas1d, idx_range, dom, my_chemistry,
                                        my_fields, my_uvb_rates, internalu);
-    apply_misc_shield_factors(
-        kshield_buf, idx_range, itmask, my_chemistry->self_shielding_method,
-        my_uvb_rates, &calculator);
+    apply_misc_shield_factors(kshield_buf, idx_range, itmask,
+                              my_chemistry->self_shielding_method, my_uvb_rates,
+                              &calculator);
   }
 
 #ifdef SECONDARY_IONIZATION_NOT_YET_IMPLEMENTED
