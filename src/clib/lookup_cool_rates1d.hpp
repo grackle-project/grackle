@@ -408,6 +408,142 @@ inline ShieldFactor calc_shield_factor(const ShieldFactorCalculator* calc,
   return ShieldFactor{f_shield_H, f_shield_He};
 }
 
+/// Use self-shielding factors to adjust miscellaneous photorates
+///
+/// @note
+/// The caller should ensure that the value of `idx_range` passed to this
+/// function matches the value that was used to construct `calculator`
+void apply_misc_shield_factors(
+    grackle::impl::PhotoRxnRateCollection kshield_buf, IndexRange idx_range,
+    const gr_mask_type* itmask, int self_shielding_method,
+    photo_rate_storage my_uvb_rates, const ShieldFactorCalculator* calculator) {
+  if (self_shielding_method == 1) {
+    // approximate self shielding using Eq. 13 and 14 from
+    // Rahmati et. al. 2013 (MNRAS, 430, 2427-2445)
+    // to shield HI, while leaving HeI and HeII optically thin
+
+    //   Attenuate radiation rates for direct H2 ionization (15.4 eV)
+    //   using same scaling. (rate k29)
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+      if (itmask[i] != MASK_FALSE) {
+        ShieldFactor tmp = calc_shield_factor(calculator, i);
+        if (my_uvb_rates.k24 < tiny8) {
+          kshield_buf.k24[i] = 0.;
+        } else {
+          kshield_buf.k24[i] = kshield_buf.k24[i] * tmp.f_shield_H;
+        }
+
+        // Scale H2 direct ionization radiation
+        if (my_uvb_rates.k29 < tiny8) {
+          kshield_buf.k29[i] = 0.;
+        } else {
+          kshield_buf.k29[i] = kshield_buf.k29[i] * tmp.f_shield_H;
+        }
+
+        kshield_buf.k25[i] = my_uvb_rates.k25;
+        kshield_buf.k26[i] = my_uvb_rates.k26;
+      }
+    }
+
+  } else if (self_shielding_method == 2) {
+    // Better self-shielding in HI using Eq. 13 and 14 from
+    // Rahmati et. al. 2013 (MNRAS, 430, 2427-2445)
+    // approximate self shielding in HeI and HeII
+
+    //   Attenuate radiation rates for direct H2 ionization (15.4 eV)
+    //   using same scaling as HI. (rate k29)
+
+    //   Attenuate radiation rates for H2+ dissociation (30 eV)
+    //   using same scaling as HeII. (rate k28 and k30)
+
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+      if (itmask[i] != MASK_FALSE) {
+        ShieldFactor tmp = calc_shield_factor(calculator, i);
+        if (my_uvb_rates.k24 < tiny8) {
+          kshield_buf.k24[i] = 0.;
+        } else {
+          kshield_buf.k24[i] = kshield_buf.k24[i] * tmp.f_shield_H;
+        }
+
+        // Scale H2 direct ionization radiation
+        if (my_uvb_rates.k29 < tiny8) {
+          kshield_buf.k29[i] = 0.;
+        } else {
+          kshield_buf.k29[i] = kshield_buf.k29[i] * tmp.f_shield_H;
+        }
+
+        // Apply same equations to HeI (assumes HeI closely follows HI)
+
+        if (my_uvb_rates.k26 < tiny8) {
+          kshield_buf.k26[i] = 0.;
+        } else {
+          kshield_buf.k26[i] = kshield_buf.k26[i] * tmp.f_shield_He;
+        }
+
+        // Scale H2+ dissociation radiation
+        if (my_uvb_rates.k28 < tiny8) {
+          kshield_buf.k28[i] = 0.0;
+        } else {
+          kshield_buf.k28[i] = kshield_buf.k28[i] * tmp.f_shield_He;
+        }
+
+        if (my_uvb_rates.k30 < tiny8) {
+          kshield_buf.k30[i] = 0.0;
+        } else {
+          kshield_buf.k30[i] = kshield_buf.k30[i] * tmp.f_shield_He;
+        }
+
+        kshield_buf.k25[i] = my_uvb_rates.k25;
+      }
+    }
+
+  } else if (self_shielding_method == 3) {
+    // shielding using Eq. 13 and 14 from
+    // Rahmati et. al. 2013 (MNRAS, 430, 2427-2445)
+    // in HI and HeI, but ignoring HeII heating entirely
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+      if (itmask[i] != MASK_FALSE) {
+        ShieldFactor tmp = calc_shield_factor(calculator, i);
+        if (my_uvb_rates.k24 < tiny8) {
+          kshield_buf.k24[i] = 0.;
+        } else {
+          kshield_buf.k24[i] = kshield_buf.k24[i] * tmp.f_shield_H;
+        }
+
+        // Scale H2 direct ionization radiation
+        if (my_uvb_rates.k29 < tiny8) {
+          kshield_buf.k29[i] = 0.;
+        } else {
+          kshield_buf.k29[i] = kshield_buf.k29[i] * tmp.f_shield_H;
+        }
+
+        // Apply same equations to HeI (assumes HeI closely follows HI)
+
+        if (my_uvb_rates.k26 < tiny8) {
+          kshield_buf.k26[i] = 0.;
+        } else {
+          kshield_buf.k26[i] = kshield_buf.k26[i] * tmp.f_shield_He;
+        }
+
+        // Scale H2+ dissociation radiation
+        if (my_uvb_rates.k28 < tiny8) {
+          kshield_buf.k28[i] = 0.0;
+        } else {
+          kshield_buf.k28[i] = kshield_buf.k28[i] * tmp.f_shield_He;
+        }
+
+        if (my_uvb_rates.k30 < tiny8) {
+          kshield_buf.k30[i] = 0.0;
+        } else {
+          kshield_buf.k30[i] = kshield_buf.k30[i] * tmp.f_shield_He;
+        }
+
+        kshield_buf.k25[i] = 0.0;
+      }
+    }
+  }
+}
+
 /// This routine uses the temperature to look up the chemical rates which are
 /// tabulated in a log table as a function of temperature.
 ///
