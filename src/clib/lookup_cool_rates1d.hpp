@@ -277,6 +277,12 @@ inline void interpolate_collisional_rxn_rates_(
   }
 }
 
+// ShieldFactorCalculator should be treated like a "callable class." In
+// idiomatic C++:
+// - setup_shield_factor_calculator would be the constructor
+// - calc_shield_factor would be `ShieldFactorCalculator::operator()` method
+//   (which is like __call__ in python)
+
 struct ShieldFactorCalculator {
   const double* tgas1d;
   double k24_div_tbase1;
