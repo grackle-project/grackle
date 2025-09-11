@@ -110,6 +110,7 @@ add_library(Grackle_Grackle
   # C++ Source (and Private Header Files)
   cool_multi_time_g-cpp.C cool_multi_time_g-cpp.h
   internal_types.C internal_types.hpp
+  make_consistent.C make_consistent.hpp
   solve_rate_cool_g-cpp.C solve_rate_cool_g-cpp.h
   step_rate_newton_raphson.hpp
   time_deriv_0d.hpp

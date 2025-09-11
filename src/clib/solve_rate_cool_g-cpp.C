@@ -16,6 +16,7 @@
 #include "index_helper.h"
 #include "internal_types.hpp"
 #include "internal_units.h"
+#include "make_consistent.hpp"
 #include "step_rate_newton_raphson.hpp"
 #include "utils-cpp.hpp"
 #include "visitor/common.hpp"
@@ -974,7 +975,7 @@ int solve_rate_cool_g(
 
     // Correct the species to ensure consistency (i.e. type conservation)
 
-    f_wrap::make_consistent_g(imetal, dom, my_chemistry, my_rates, my_fields);
+    grackle::impl::make_consistent(&imetal, &dom, my_chemistry, my_rates, my_fields);
 
   }
 
