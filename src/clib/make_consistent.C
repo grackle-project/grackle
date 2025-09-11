@@ -106,14 +106,12 @@ void make_consistent(
   std::vector<double> totalHe(my_fields->grid_dimension[0]);
   std::vector<double> metalfree(my_fields->grid_dimension[0]);
   gr_float correctH, correctHe, correctD;
-  double totalZ;
   double totalC, totalO, totalMg, totalAl, totalSi, totalS, totalFe;
-  double totalCg, totalOg, totalMgg, totalAlg, totalSig, totalSg, totalFeg;
-  double totalCd, totalOd, totalMgd, totalAld, totalSid, totalSd, totalFed;
+  double totalCg, totalOg, totalMgg, totalSig, totalFeg;
+  double totalCd, totalOd, totalMgd, totalSid, totalFed;
   gr_float correctC, correctO, correctMg, correctAl, correctSi, correctS, correctFe;
-  gr_float correctCg, correctOg, correctMgg, correctAlg, correctSig, correctSg, correctFeg;
-  gr_float correctCd, correctOd, correctMgd, correctAld, correctSid, correctSd, correctFed;
-  gr_float correctZ;
+  gr_float correctCg, correctOg, correctMgg, correctSig, correctFeg;
+  gr_float correctCd, correctOd, correctMgd, correctSid, correctFed;
   int iSN, nSN, iSN0;
   std::vector<int> SN_i(my_rates->SN0_N);
   std::vector<gr_float> SN_metal_data_(my_fields->grid_dimension[0] * my_rates->SN0_N);
