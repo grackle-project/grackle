@@ -277,6 +277,78 @@ inline void interpolate_collisional_rxn_rates_(
   }
 }
 
+struct ShieldFactor {
+  double f_shield_H;
+  double f_shield_He;
+};
+
+struct ShieldFactorCalculator {
+  const double* tgas1d;
+  double k24_div_tbase1;
+  double k26_div_tbase1;
+  double crsHI;
+  double crsHeI;
+  double dom;
+  int primordial_chemistry;
+  IndexRange idx_range;
+
+  grackle::impl::View<const gr_float***> HI;
+  grackle::impl::View<const gr_float***> HII;
+  grackle::impl::View<const gr_float***> HeI;
+  grackle::impl::View<const gr_float***> HeII;
+  grackle::impl::View<const gr_float***> HeIII;
+  grackle::impl::View<const gr_float***> HM;
+  grackle::impl::View<const gr_float***> H2I;
+  grackle::impl::View<const gr_float***> H2II;
+  grackle::impl::View<const gr_float***> DI;
+  grackle::impl::View<const gr_float***> DII;
+  grackle::impl::View<const gr_float***> HDI;
+};
+
+ShieldFactor calc_shield_factor(const ShieldFactorCalculator* calc, int i) {
+  // Compute shielding factor for H
+  double nSSh = 6.73e-3 * std::pow((calc->crsHI / 2.49e-18), (-2. / 3.)) *
+                std::pow((calc->tgas1d[i] / 1.0e4), (0.17)) *
+                std::pow((calc->k24_div_tbase1 / 1.0e-12), (2.0 / 3.0));
+
+  // Compute the total Hydrogen number density
+  double nratio = (calc->HI(i, calc->idx_range.j, calc->idx_range.k) +
+                   calc->HII(i, calc->idx_range.j, calc->idx_range.k));
+  if (calc->primordial_chemistry > 1) {
+    nratio = nratio + calc->HM(i, calc->idx_range.j, calc->idx_range.k) +
+             calc->H2I(i, calc->idx_range.j, calc->idx_range.k) +
+             calc->H2II(i, calc->idx_range.j, calc->idx_range.k);
+
+    if (calc->primordial_chemistry > 2) {
+      nratio = nratio +
+               0.5 * (calc->DI(i, calc->idx_range.j, calc->idx_range.k) +
+                      calc->DII(i, calc->idx_range.j, calc->idx_range.k)) +
+               2.0 * calc->HDI(i, calc->idx_range.j, calc->idx_range.k) / 3.0;
+    }
+  }
+
+  nratio = nratio * calc->dom / nSSh;
+
+  double f_shield_H = (0.98 * std::pow((1.0 + std::pow(nratio, 1.64)), -2.28) +
+                       0.02 * std::pow(1.0 + nratio, -0.84));
+
+  // Compute shielding factor for He
+
+  nSSh = 6.73e-3 * std::pow((calc->crsHeI / 2.49e-18), (-2. / 3.)) *
+         std::pow((calc->tgas1d[i] / 1.0e4), (0.17)) *
+         std::pow((calc->k26_div_tbase1 / 1.0e-12), (2.0 / 3.0));
+
+  nratio = 0.25 *
+           (calc->HeI(i, calc->idx_range.j, calc->idx_range.k) +
+            calc->HeII(i, calc->idx_range.j, calc->idx_range.k) +
+            calc->HeIII(i, calc->idx_range.j, calc->idx_range.k)) *
+           calc->dom / nSSh;
+
+  double f_shield_He = (0.98 * std::pow(1.0 + std::pow(nratio, 1.64), -2.28) +
+                        0.02 * std::pow(1.0 + nratio, -0.84));
+  return ShieldFactor{f_shield_H, f_shield_He};
+}
+
 /// This routine uses the temperature to look up the chemical rates which are
 /// tabulated in a log table as a function of temperature.
 ///
