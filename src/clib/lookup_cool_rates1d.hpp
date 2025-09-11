@@ -277,11 +277,6 @@ inline void interpolate_collisional_rxn_rates_(
   }
 }
 
-struct ShieldFactor {
-  double f_shield_H;
-  double f_shield_He;
-};
-
 struct ShieldFactorCalculator {
   const double* tgas1d;
   double k24_div_tbase1;
@@ -305,7 +300,71 @@ struct ShieldFactorCalculator {
   grackle::impl::View<const gr_float***> HDI;
 };
 
-ShieldFactor calc_shield_factor(const ShieldFactorCalculator* calc, int i) {
+/// construct a ShieldFactorCalculator instance
+inline ShieldFactorCalculator setup_shield_factor_calculator(
+    const double* tgas1d, IndexRange idx_range, double dom,
+    chemistry_data* my_chemistry, grackle_field_data* my_fields,
+    photo_rate_storage my_uvb_rates, InternalGrUnits internalu) {
+  ShieldFactorCalculator calc;
+  calc.tgas1d = tgas1d;
+  calc.k24_div_tbase1 = my_uvb_rates.k24 / internalu.tbase1;
+  calc.k26_div_tbase1 = my_uvb_rates.k26 / internalu.tbase1;
+  calc.crsHI = my_uvb_rates.crsHI;
+  calc.crsHeI = my_uvb_rates.crsHeI;
+  calc.dom = dom;
+  calc.primordial_chemistry = my_chemistry->primordial_chemistry;
+  calc.idx_range = idx_range;
+
+  calc.HI = grackle::impl::View<const gr_float***>(
+      my_fields->HI_density, my_fields->grid_dimension[0],
+      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  calc.HII = grackle::impl::View<const gr_float***>(
+      my_fields->HII_density, my_fields->grid_dimension[0],
+      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+
+  calc.HeI = grackle::impl::View<const gr_float***>(
+      my_fields->HeI_density, my_fields->grid_dimension[0],
+      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  calc.HeII = grackle::impl::View<const gr_float***>(
+      my_fields->HeII_density, my_fields->grid_dimension[0],
+      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  calc.HeIII = grackle::impl::View<const gr_float***>(
+      my_fields->HeIII_density, my_fields->grid_dimension[0],
+      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+
+  if (my_chemistry->primordial_chemistry > 1) {
+    calc.HM = grackle::impl::View<const gr_float***>(
+        my_fields->HM_density, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    calc.H2I = grackle::impl::View<const gr_float***>(
+        my_fields->H2I_density, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    calc.H2II = grackle::impl::View<const gr_float***>(
+        my_fields->H2II_density, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+
+    if (my_chemistry->primordial_chemistry > 2) {
+      calc.DI = grackle::impl::View<const gr_float***>(
+          my_fields->DI_density, my_fields->grid_dimension[0],
+          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+      calc.DII = grackle::impl::View<const gr_float***>(
+          my_fields->DII_density, my_fields->grid_dimension[0],
+          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+      calc.HDI = grackle::impl::View<const gr_float***>(
+          my_fields->HDI_density, my_fields->grid_dimension[0],
+          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    }
+  }
+  return calc;
+}
+
+struct ShieldFactor {
+  double f_shield_H;
+  double f_shield_He;
+};
+
+inline ShieldFactor calc_shield_factor(const ShieldFactorCalculator* calc,
+                                       int i) {
   // Compute shielding factor for H
   double nSSh = 6.73e-3 * std::pow((calc->crsHI / 2.49e-18), (-2. / 3.)) *
                 std::pow((calc->tgas1d[i] / 1.0e4), (0.17)) *
@@ -1296,87 +1355,15 @@ inline void lookup_cool_rates1d(
   if (my_chemistry->self_shielding_method > 0) {
     // Compute shielding factors
 
-    // conditionally construct views of some primordial species density fields
-    grackle::impl::View<gr_float***> HII(
-        my_fields->HII_density, my_fields->grid_dimension[0],
-        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-    grackle::impl::View<gr_float***> HeI(
-        my_fields->HeI_density, my_fields->grid_dimension[0],
-        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-    grackle::impl::View<gr_float***> HeII(
-        my_fields->HeII_density, my_fields->grid_dimension[0],
-        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-    grackle::impl::View<gr_float***> HeIII(
-        my_fields->HeIII_density, my_fields->grid_dimension[0],
-        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    ShieldFactorCalculator calculator =
+        setup_shield_factor_calculator(tgas1d, idx_range, dom, my_chemistry,
+                                       my_fields, my_uvb_rates, internalu);
 
-    grackle::impl::View<gr_float***> HM, DI, DII, HDI;
-    if (my_chemistry->primordial_chemistry > 1) {
-      HM = grackle::impl::View<gr_float***>(
-          my_fields->HM_density, my_fields->grid_dimension[0],
-          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-      if (my_chemistry->primordial_chemistry > 2) {
-        DI = grackle::impl::View<gr_float***>(
-            my_fields->DI_density, my_fields->grid_dimension[0],
-            my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-        DII = grackle::impl::View<gr_float***>(
-            my_fields->DII_density, my_fields->grid_dimension[0],
-            my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-        HDI = grackle::impl::View<gr_float***>(
-            my_fields->HDI_density, my_fields->grid_dimension[0],
-            my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-      }
-    }
-
-    // now do the actual calculation
     for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
       if (itmask[i] != MASK_FALSE) {
-        // Compute shielding factor for H
-        double nSSh = 6.73e-3 *
-                      std::pow((my_uvb_rates.crsHI / 2.49e-18), (-2. / 3.)) *
-                      std::pow((tgas1d[i] / 1.0e4), (0.17)) *
-                      std::pow((my_uvb_rates.k24 / internalu.tbase1 / 1.0e-12),
-                               (2.0 / 3.0));
-
-        // Compute the total Hydrogen number density
-        double nratio = (HI(i, idx_range.j, idx_range.k) +
-                         HII(i, idx_range.j, idx_range.k));
-        if (my_chemistry->primordial_chemistry > 1) {
-          nratio = nratio + HM(i, idx_range.j, idx_range.k) +
-                   H2I(i, idx_range.j, idx_range.k) +
-                   H2II(i, idx_range.j, idx_range.k);
-
-          if (my_chemistry->primordial_chemistry > 2) {
-            nratio = nratio +
-                     0.5 * (DI(i, idx_range.j, idx_range.k) +
-                            DII(i, idx_range.j, idx_range.k)) +
-                     2.0 * HDI(i, idx_range.j, idx_range.k) / 3.0;
-          }
-        }
-
-        nratio = nratio * dom / nSSh;
-
-        f_shield_H[i] =
-            (0.98 * std::pow((1.0 + std::pow(nratio, (1.64))), (-2.28)) +
-             0.02 * std::pow((1.0 + nratio), (-0.84)));
-
-        // Compute shielding factor for He
-
-        nSSh = 6.73e-3 *
-               std::pow((my_uvb_rates.crsHeI / 2.49e-18), (-2. / 3.)) *
-               std::pow((tgas1d[i] / 1.0e4), (0.17)) *
-               std::pow((my_uvb_rates.k26 / internalu.tbase1 / 1.0e-12),
-                        (2.0 / 3.0));
-
-        nratio = 0.25 *
-                 (HeI(i, idx_range.j, idx_range.k) +
-                  HeII(i, idx_range.j, idx_range.k) +
-                  HeIII(i, idx_range.j, idx_range.k)) *
-                 dom / nSSh;
-
-        f_shield_He[i] =
-            (0.98 * std::pow((1.0 + std::pow(nratio, (1.64))), (-2.28)) +
-             0.02 * std::pow((1.0 + nratio), (-0.84)));
+        ShieldFactor tmp = calc_shield_factor(&calculator, i);
+        f_shield_H[i] = tmp.f_shield_H;
+        f_shield_He[i] = tmp.f_shield_He;
       }
     }
   }
