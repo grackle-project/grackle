@@ -281,8 +281,8 @@ inline void interpolate_collisional_rxn_rates_(
 inline void model_H2I_dissociation_shielding(
     grackle::impl::PhotoRxnRateCollection kshield_buf, IndexRange idx_range,
     const double* tgas1d, const double* mmw, double dom, double dx_cgs,
-    double c_ljeans, const gr_mask_type* itmask, double dt,
-    chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
+    double c_ljeans, const gr_mask_type* itmask,
+    chemistry_data* my_chemistry,
     grackle_field_data* my_fields, photo_rate_storage my_uvb_rates,
     InternalGrUnits internalu) {
   if (my_chemistry->primordial_chemistry <= 1) {
@@ -758,28 +758,6 @@ inline void lookup_cool_rates1d(
   namespace f_wrap = ::grackle::impl::fortran_wrapper;
 
   // Construct views of fields referenced in several parts of this function.
-  grackle::impl::View<gr_float***> d(
-      my_fields->density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> HI(
-      my_fields->HI_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-
-  grackle::impl::View<gr_float***> H2I, H2II, kdissH2I;
-  if (my_chemistry->primordial_chemistry > 1) {
-    H2I = grackle::impl::View<gr_float***>(
-        my_fields->H2I_density, my_fields->grid_dimension[0],
-        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-    H2II = grackle::impl::View<gr_float***>(
-        my_fields->H2II_density, my_fields->grid_dimension[0],
-        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-
-    if (my_chemistry->use_radiative_transfer == 1) {
-      kdissH2I = grackle::impl::View<gr_float***>(
-          my_fields->RT_H2_dissociation_rate, my_fields->grid_dimension[0],
-          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-    }
-  }
 
   // Linearly Interpolate the Collisional Rxn Rates
   // ----------------------------------------------
@@ -947,6 +925,10 @@ inline void lookup_cool_rates1d(
       // following condition was satisfied when my_chemistry->dust_species > 0
       // (we are just making it more explicit)
       GRIMPL_REQUIRE(my_chemistry->metal_chemistry == 1, "sanity-check!");
+
+      grackle::impl::View<const gr_float***> d(
+          my_fields->density, my_fields->grid_dimension[0],
+          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
       // load views of some metal species and molecular species
       grackle::impl::View<gr_float***> CI(
@@ -1515,8 +1497,8 @@ inline void lookup_cool_rates1d(
 
   if (my_chemistry->primordial_chemistry > 1) {
     model_H2I_dissociation_shielding(
-        kshield_buf, idx_range, tgas1d, mmw, dom, dx_cgs, c_ljeans, itmask, dt,
-        my_chemistry, my_rates, my_fields, my_uvb_rates, internalu);
+        kshield_buf, idx_range, tgas1d, mmw, dom, dx_cgs, c_ljeans, itmask,
+        my_chemistry, my_fields, my_uvb_rates, internalu);
   }
 
   // apply some miscellaneous self-shielding adjustments
