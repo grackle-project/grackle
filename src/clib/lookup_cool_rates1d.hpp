@@ -277,6 +277,161 @@ inline void interpolate_collisional_rxn_rates_(
   }
 }
 
+/// adjust the rate of neutral H2 photodissoication by modelling self-shielding
+inline void model_H2I_dissociation_shielding(
+    grackle::impl::PhotoRxnRateCollection kshield_buf, IndexRange idx_range,
+    const double* tgas1d, const double* mmw, double dom, double dx_cgs,
+    double c_ljeans, const gr_mask_type* itmask, double dt,
+    chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
+    grackle_field_data* my_fields, photo_rate_storage my_uvb_rates,
+    InternalGrUnits internalu) {
+  if (my_chemistry->primordial_chemistry <= 1) {
+    return;
+  }
+
+  // Construct views of fields referenced in several parts of this function.
+  grackle::impl::View<gr_float***> d(
+      my_fields->density, my_fields->grid_dimension[0],
+      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  grackle::impl::View<gr_float***> HI(
+      my_fields->HI_density, my_fields->grid_dimension[0],
+      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+
+  grackle::impl::View<gr_float***> H2I, H2II, kdissH2I;
+  H2I = grackle::impl::View<gr_float***>(
+      my_fields->H2I_density, my_fields->grid_dimension[0],
+      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  H2II = grackle::impl::View<gr_float***>(
+      my_fields->H2II_density, my_fields->grid_dimension[0],
+      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+
+  if (my_chemistry->use_radiative_transfer == 1) {
+    kdissH2I = grackle::impl::View<gr_float***>(
+        my_fields->RT_H2_dissociation_rate, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  }
+
+  // If radiative transfer for LW photons have been already solved in
+  // your hydro code, add kdissH2I later
+  if (my_chemistry->use_radiative_transfer == 0 ||
+      my_chemistry->radiative_transfer_use_H2_shielding == 1) {
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+      if (itmask[i] != MASK_FALSE) {
+        kshield_buf.k31[i] = my_uvb_rates.k31;
+      }
+    }
+  } else {
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+      if (itmask[i] != MASK_FALSE) {
+        kshield_buf.k31[i] =
+            my_uvb_rates.k31 + kdissH2I(i, idx_range.j, idx_range.k);
+      }
+    }
+  }
+
+  if (my_chemistry->H2_self_shielding > 0) {
+    // conditionally construct a view
+    grackle::impl::View<gr_float***> xH2shield;
+    if (my_chemistry->H2_self_shielding == 2) {
+      xH2shield = grackle::impl::View<gr_float***>(
+          my_fields->H2_self_shielding_length, my_fields->grid_dimension[0],
+          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    }
+
+    // now compute the self-shielding
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+      if (itmask[i] != MASK_FALSE) {
+        double l_H2shield;
+        // Calculate a Sobolev-like length assuming a 3D grid.
+        if (my_chemistry->H2_self_shielding == 1) {
+          int j = idx_range.j;
+          int k = idx_range.k;
+          double divrhoa[6] = {
+              d(i + 1, j, k) - d(i, j, k), d(i - 1, j, k) - d(i, j, k),
+              d(i, j + 1, k) - d(i, j, k), d(i, j - 1, k) - d(i, j, k),
+              d(i, j, k + 1) - d(i, j, k), d(i, j, k - 1) - d(i, j, k)};
+          double divrho = tiny_fortran_val;
+          // Exclude directions with (drho/ds > 0)
+          for (int n1 = 0; n1 < 6; n1++) {
+            if (divrhoa[n1] < 0.) {
+              divrho = divrho + divrhoa[n1];
+            }
+          }
+          // (rho / divrho) is the Sobolev-like length in cell widths
+          l_H2shield = std::fmin(dx_cgs * d(i, idx_range.j, idx_range.k) /
+                                     (2. * std::fabs(divrho)),
+                                 internalu.xbase1);
+
+          // User-supplied length-scale field.
+        } else if (my_chemistry->H2_self_shielding == 2) {
+          l_H2shield = xH2shield(i, idx_range.j, idx_range.k) * internalu.uxyz;
+
+          // Jeans Length
+        } else if (my_chemistry->H2_self_shielding == 3) {
+          l_H2shield =
+              c_ljeans *
+              std::sqrt(tgas1d[i] / (d(i, idx_range.j, idx_range.k) * mmw[i]));
+
+        } else {
+          l_H2shield = (gr_float)(0.);
+        }
+
+        double N_H2 = dom * H2I(i, idx_range.j, idx_range.k) * l_H2shield;
+
+        // update: self-shielding following Wolcott-Green & Haiman (2019)
+        // range of validity: T=100-8000 K, n<=1e7 cm^-3
+
+        double tgas_touse = grackle::impl::clamp(tgas1d[i], 1e2, 8e3);
+        double ngas_touse =
+            std::fmin(d(i, idx_range.j, idx_range.k) * dom / mmw[i], 1e7);
+
+        double aWG2019 = (0.8711 * std::log10(tgas_touse) - 1.928) *
+                             std::exp(-0.2856 * std::log10(ngas_touse)) +
+                         (-0.9639 * std::log10(tgas_touse) + 3.892);
+
+        double x = 2.0e-15 * N_H2;
+        double b_doppler =
+            1e-5 * std::sqrt(2. * kboltz_grflt * tgas1d[i] / (2. * mh_grflt));
+        double f_shield =
+            0.965 / std::pow((1. + x / b_doppler), aWG2019) +
+            0.035 * std::exp(-8.5e-4 * std::sqrt(1. + x)) / std::sqrt(1. + x);
+
+        // avoid f>1
+        f_shield = std::fmin(f_shield, 1.);
+
+        kshield_buf.k31[i] = f_shield * kshield_buf.k31[i];
+      }
+    }
+  }
+  // If radiative transfer for LW photons have been already solved in
+  // your hydro code, add kdissH2I here
+  if (my_chemistry->use_radiative_transfer == 1 &&
+      my_chemistry->radiative_transfer_use_H2_shielding == 1) {
+    // write(*,*) 'kdissH2I included'
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+      if (itmask[i] != MASK_FALSE) {
+        kshield_buf.k31[i] =
+            kshield_buf.k31[i] + kdissH2I(i, idx_range.j, idx_range.k);
+      }
+    }
+  }
+
+  // Custom H2 shielding
+  if (my_chemistry->H2_custom_shielding > 0) {
+    // create a view of the field of custom shielding values
+    grackle::impl::View<gr_float***> f_shield_custom(
+        my_fields->H2_custom_shielding_factor, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+      if (itmask[i] != MASK_FALSE) {
+        kshield_buf.k31[i] =
+            f_shield_custom(i, idx_range.j, idx_range.k) * kshield_buf.k31[i];
+      }
+    }
+  }
+}
+
 // ShieldFactorCalculator should be treated like a "callable class." In
 // idiomatic C++:
 // - setup_shield_factor_calculator would be the constructor
@@ -1360,126 +1515,9 @@ inline void lookup_cool_rates1d(
   // H2 self-shielding (Sobolev-like, spherically averaged, Wolcott-Green+ 2011)
 
   if (my_chemistry->primordial_chemistry > 1) {
-    // If radiative transfer for LW photons have been already solved in
-    // your hydro code, add kdissH2I later
-    if (my_chemistry->use_radiative_transfer == 0 ||
-        my_chemistry->radiative_transfer_use_H2_shielding == 1) {
-      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-        if (itmask[i] != MASK_FALSE) {
-          kshield_buf.k31[i] = my_uvb_rates.k31;
-        }
-      }
-    } else {
-      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-        if (itmask[i] != MASK_FALSE) {
-          kshield_buf.k31[i] =
-              my_uvb_rates.k31 + kdissH2I(i, idx_range.j, idx_range.k);
-        }
-      }
-    }
-
-    if (my_chemistry->H2_self_shielding > 0) {
-      // conditionally construct a view
-      grackle::impl::View<gr_float***> xH2shield;
-      if (my_chemistry->H2_self_shielding == 2) {
-        xH2shield = grackle::impl::View<gr_float***>(
-            my_fields->H2_self_shielding_length, my_fields->grid_dimension[0],
-            my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-      }
-
-      // now compute the self-shielding
-      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-        if (itmask[i] != MASK_FALSE) {
-          double l_H2shield;
-          // Calculate a Sobolev-like length assuming a 3D grid.
-          if (my_chemistry->H2_self_shielding == 1) {
-            int j = idx_range.j;
-            int k = idx_range.k;
-            double divrhoa[6] = {
-                d(i + 1, j, k) - d(i, j, k), d(i - 1, j, k) - d(i, j, k),
-                d(i, j + 1, k) - d(i, j, k), d(i, j - 1, k) - d(i, j, k),
-                d(i, j, k + 1) - d(i, j, k), d(i, j, k - 1) - d(i, j, k)};
-            double divrho = tiny_fortran_val;
-            // Exclude directions with (drho/ds > 0)
-            for (int n1 = 0; n1 < 6; n1++) {
-              if (divrhoa[n1] < 0.) {
-                divrho = divrho + divrhoa[n1];
-              }
-            }
-            // (rho / divrho) is the Sobolev-like length in cell widths
-            l_H2shield = std::fmin(dx_cgs * d(i, idx_range.j, idx_range.k) /
-                                       (2. * std::fabs(divrho)),
-                                   internalu.xbase1);
-
-            // User-supplied length-scale field.
-          } else if (my_chemistry->H2_self_shielding == 2) {
-            l_H2shield =
-                xH2shield(i, idx_range.j, idx_range.k) * internalu.uxyz;
-
-            // Jeans Length
-          } else if (my_chemistry->H2_self_shielding == 3) {
-            l_H2shield =
-                c_ljeans * std::sqrt(tgas1d[i] /
-                                     (d(i, idx_range.j, idx_range.k) * mmw[i]));
-
-          } else {
-            l_H2shield = (gr_float)(0.);
-          }
-
-          double N_H2 = dom * H2I(i, idx_range.j, idx_range.k) * l_H2shield;
-
-          // update: self-shielding following Wolcott-Green & Haiman (2019)
-          // range of validity: T=100-8000 K, n<=1e7 cm^-3
-
-          double tgas_touse = grackle::impl::clamp(tgas1d[i], 1e2, 8e3);
-          double ngas_touse =
-              std::fmin(d(i, idx_range.j, idx_range.k) * dom / mmw[i], 1e7);
-
-          double aWG2019 = (0.8711 * std::log10(tgas_touse) - 1.928) *
-                               std::exp(-0.2856 * std::log10(ngas_touse)) +
-                           (-0.9639 * std::log10(tgas_touse) + 3.892);
-
-          double x = 2.0e-15 * N_H2;
-          double b_doppler =
-              1e-5 * std::sqrt(2. * kboltz_grflt * tgas1d[i] / (2. * mh_grflt));
-          double f_shield =
-              0.965 / std::pow((1. + x / b_doppler), aWG2019) +
-              0.035 * std::exp(-8.5e-4 * std::sqrt(1. + x)) / std::sqrt(1. + x);
-
-          // avoid f>1
-          f_shield = std::fmin(f_shield, 1.);
-
-          kshield_buf.k31[i] = f_shield * kshield_buf.k31[i];
-        }
-      }
-    }
-    // If radiative transfer for LW photons have been already solved in
-    // your hydro code, add kdissH2I here
-    if (my_chemistry->use_radiative_transfer == 1 &&
-        my_chemistry->radiative_transfer_use_H2_shielding == 1) {
-      // write(*,*) 'kdissH2I included'
-      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-        if (itmask[i] != MASK_FALSE) {
-          kshield_buf.k31[i] =
-              kshield_buf.k31[i] + kdissH2I(i, idx_range.j, idx_range.k);
-        }
-      }
-    }
-
-    // Custom H2 shielding
-    if (my_chemistry->H2_custom_shielding > 0) {
-      // create a view of the field of custom shielding values
-      grackle::impl::View<gr_float***> f_shield_custom(
-          my_fields->H2_custom_shielding_factor, my_fields->grid_dimension[0],
-          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-
-      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-        if (itmask[i] != MASK_FALSE) {
-          kshield_buf.k31[i] =
-              f_shield_custom(i, idx_range.j, idx_range.k) * kshield_buf.k31[i];
-        }
-      }
-    }
+    model_H2I_dissociation_shielding(
+        kshield_buf, idx_range, tgas1d, mmw, dom, dx_cgs, c_ljeans, itmask, dt,
+        my_chemistry, my_rates, my_fields, my_uvb_rates, internalu);
   }
 
   // apply some miscellaneous self-shielding adjustments
