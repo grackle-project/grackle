@@ -21,11 +21,11 @@
 
 namespace grackle::impl {
 
-  void make_consistent(
-  const int* imetal, const double* dom, chemistry_data* my_chemistry,
-  chemistry_data_storage* my_rates, grackle_field_data* my_fields
-);
+void make_consistent(const int* imetal, const double* dom,
+                     chemistry_data* my_chemistry,
+                     chemistry_data_storage* my_rates,
+                     grackle_field_data* my_fields);
 
-} // namespace grackle::impl
+}  // namespace grackle::impl
 
 #endif /* MAKE_CONSISTENT_HPP */
