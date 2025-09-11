@@ -419,7 +419,7 @@ inline ShieldFactor calc_shield_factor(const ShieldFactorCalculator* calc,
 /// @note
 /// The caller should ensure that the value of `idx_range` passed to this
 /// function matches the value that was used to construct `calculator`
-void apply_misc_shield_factors(
+inline void apply_misc_shield_factors(
     grackle::impl::PhotoRxnRateCollection kshield_buf, IndexRange idx_range,
     const gr_mask_type* itmask, int self_shielding_method,
     photo_rate_storage my_uvb_rates, const ShieldFactorCalculator* calculator) {
