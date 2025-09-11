@@ -290,23 +290,22 @@ inline void model_H2I_dissociation_shielding(
   }
 
   // Construct views of fields referenced in several parts of this function.
-  grackle::impl::View<gr_float***> d(
+  grackle::impl::View<const gr_float***> d(
       my_fields->density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> HI(
+  grackle::impl::View<const gr_float***> HI(
       my_fields->HI_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-
-  grackle::impl::View<gr_float***> H2I, H2II, kdissH2I;
-  H2I = grackle::impl::View<gr_float***>(
+  grackle::impl::View<const gr_float***> H2I(
       my_fields->H2I_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  H2II = grackle::impl::View<gr_float***>(
+  grackle::impl::View<const gr_float***> H2II(
       my_fields->H2II_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
+  grackle::impl::View<const gr_float***> kdissH2I;
   if (my_chemistry->use_radiative_transfer == 1) {
-    kdissH2I = grackle::impl::View<gr_float***>(
+    kdissH2I = grackle::impl::View<const gr_float***>(
         my_fields->RT_H2_dissociation_rate, my_fields->grid_dimension[0],
         my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   }
@@ -331,9 +330,9 @@ inline void model_H2I_dissociation_shielding(
 
   if (my_chemistry->H2_self_shielding > 0) {
     // conditionally construct a view
-    grackle::impl::View<gr_float***> xH2shield;
+    grackle::impl::View<const gr_float***> xH2shield;
     if (my_chemistry->H2_self_shielding == 2) {
-      xH2shield = grackle::impl::View<gr_float***>(
+      xH2shield = grackle::impl::View<const gr_float***>(
           my_fields->H2_self_shielding_length, my_fields->grid_dimension[0],
           my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
     }
@@ -419,7 +418,7 @@ inline void model_H2I_dissociation_shielding(
   // Custom H2 shielding
   if (my_chemistry->H2_custom_shielding > 0) {
     // create a view of the field of custom shielding values
-    grackle::impl::View<gr_float***> f_shield_custom(
+    grackle::impl::View<const gr_float***> f_shield_custom(
         my_fields->H2_custom_shielding_factor, my_fields->grid_dimension[0],
         my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
