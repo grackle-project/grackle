@@ -125,6 +125,22 @@ inline void drop_InternalDustPropBuf(InternalDustPropBuf* ptr) {
   std::free(ptr->dyntab_kappa_tot);
 }
 
+/// return the number of grain species
+///
+/// @param[in] dust_species_parameter The parameter tracked by #chemistry_data
+inline int get_n_grain_species(int dust_species_parameter) {
+  switch (dust_species_parameter) {
+    case 1:
+      return 2;
+    case 2:
+      return 10;
+    case 3:
+      return 13;
+    default:
+      return 0;
+  }
+}
+
 } // namespace grackle::impl
 
 #endif // DUST_PROPS_HPP
