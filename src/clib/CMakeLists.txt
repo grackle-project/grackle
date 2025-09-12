@@ -108,7 +108,7 @@ add_library(Grackle_Grackle
   ${CMAKE_CURRENT_BINARY_DIR}/auto_general.c
 
   # C++ Source (and Private Header Files)
-  calc_temp_cloudy_g-cpp.C calc_temp_cloudy_g-cpp.h
+  calc_temp_cloudy_g.cpp calc_temp_cloudy_g.h
   cool_multi_time_g.cpp cool_multi_time_g.h
   internal_types.cpp internal_types.hpp
   scale_fields_table.hpp

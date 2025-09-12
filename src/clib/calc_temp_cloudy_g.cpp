@@ -1,7 +1,14 @@
-// See LICENSE file for license and copyright information
-
-/// @file calc_temp_cloudy_g-cpp.C
-/// @brief Declares signature of calc_temp_cloudy_g
+//===----------------------------------------------------------------------===//
+//
+// See the LICENSE file for license and copyright information
+// SPDX-License-Identifier: NCSA AND BSD-3-Clause
+//
+//===----------------------------------------------------------------------===//
+///
+/// @file
+/// Implements the calc_temp_cloudy_g function
+///
+//===----------------------------------------------------------------------===//
 
 // This file was initially generated automatically during conversion of the
 // calc_temp_cloudy_g function from FORTRAN to C++
@@ -16,7 +23,7 @@
 #include "scale_fields_table.hpp"
 #include "utils-cpp.hpp"
 
-#include "calc_temp_cloudy_g-cpp.h"
+#include "calc_temp_cloudy_g.h"
 
 #ifdef __cplusplus
 extern "C" {
