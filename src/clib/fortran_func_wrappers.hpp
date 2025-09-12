@@ -33,6 +33,26 @@
 // namespace name when they call these routines
 namespace grackle::impl::fortran_wrapper {
 
+inline void calc_temp1d_cloudy_g(
+  double* rhoH, IndexRange idx_range, double* tgas, double* mmw, double dom,
+  double zr, int imetal, cloudy_data cloudy_primordial, gr_mask_type* itmask,
+  chemistry_data* my_chemistry, grackle_field_data* my_fields,
+  InternalGrUnits internalu
+) {
+  FORTRAN_NAME(calc_temp1d_cloudy_g)(
+    my_fields->density, my_fields->metal_density, my_fields->internal_energy, rhoH,
+    &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &my_fields->grid_start[0], &my_fields->grid_end[0], &idx_range.jp1, &idx_range.kp1,
+    tgas, mmw, &dom, &zr,
+    &my_chemistry->TemperatureStart, &my_chemistry->TemperatureEnd,
+    &my_chemistry->Gamma, &internalu.utem, &imetal,
+    &cloudy_primordial.grid_rank, cloudy_primordial.grid_dimension,
+    cloudy_primordial.grid_parameters[0], cloudy_primordial.grid_parameters[1], cloudy_primordial.grid_parameters[2],
+    &cloudy_primordial.data_size, cloudy_primordial.mmw_data,
+    itmask
+  );
+
+}
+
 inline void ceiling_species_g(
   int imetal, chemistry_data* my_chemistry, grackle_field_data* my_fields
 ) {
@@ -467,6 +487,17 @@ inline void scale_fields_g(
       my_fields->fsn13_metal_density, my_fields->fsn15_metal_density, my_fields->fsn50_metal_density, my_fields->fsn80_metal_density,
       my_fields->pisn170_metal_density, my_fields->pisn200_metal_density, my_fields->y19_metal_density);
 
+}
+
+/// Scales density and metal_density (if available) by factor
+inline void scale_fields_table_g(grackle_field_data* my_fields, double factor) {
+  int imetal = (my_fields->metal_density != nullptr) ? 1 : 0;
+
+  FORTRAN_NAME(scale_fields_table_g)(
+    my_fields->density, my_fields->metal_density,
+    &my_fields->grid_start[0], &my_fields->grid_end[0], &my_fields->grid_start[1], &my_fields->grid_end[1], &my_fields->grid_start[2], &my_fields->grid_end[2],
+    &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &imetal, &factor
+  );
 }
 
 /// Uses one linearly implicit Gauss-Seidel sweep of a backward-Euler time
