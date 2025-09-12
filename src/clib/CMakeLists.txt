@@ -108,10 +108,12 @@ add_library(Grackle_Grackle
   ${CMAKE_CURRENT_BINARY_DIR}/auto_general.c
 
   # C++ Source (and Private Header Files)
+  calc_tdust_3d.C calc_tdust_3d.h
   calc_temp_cloudy_g.cpp calc_temp_cloudy_g.h
   cool_multi_time_g.cpp cool_multi_time_g.h
+  dust_props.hpp
   internal_types.cpp internal_types.hpp
-  scale_fields_table.hpp
+  scale_fields.hpp
   solve_rate_cool_g-cpp.cpp solve_rate_cool_g-cpp.h
   step_rate_newton_raphson.hpp
   time_deriv_0d.hpp
@@ -126,7 +128,6 @@ add_library(Grackle_Grackle
   # Fortran Source Files
   calc_all_tdust_gasgr_1d_g.F
   calc_tdust_1d_g.F
-  calc_tdust_3d_g.F
   calc_temp1d_cloudy_g.F
   cool1d_cloudy_g.F
   cool1d_cloudy_old_tables_g.F

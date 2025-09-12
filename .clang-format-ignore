@@ -11,7 +11,6 @@
 
 src/clib/c_wrappers/wrap_interpolators_g.c
 src/clib/calc_tdust_3d.C
-src/clib/calc_tdust_3d.h
 src/clib/calculate_cooling_time.c
 src/clib/calculate_dust_temperature.c
 src/clib/calculate_gamma.c
@@ -42,7 +41,6 @@ src/clib/interp_table_utils.h
 src/clib/interpolate.hpp
 src/clib/phys_constants.h
 src/clib/rate_functions.c
-src/clib/scale_fields.hpp
 src/clib/set_default_chemistry_parameters.c
 src/clib/solve_chemistry.c
 src/clib/solve_rate_cool_g-cpp.cpp

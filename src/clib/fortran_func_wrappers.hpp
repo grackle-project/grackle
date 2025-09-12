@@ -23,6 +23,7 @@
 #endif
 
 #include "grackle.h"
+#include "dust_props.hpp"
 #include "fortran_func_decls.h"
 #include "index_helper.h"
 #include "internal_types.hpp"
@@ -33,6 +34,100 @@
 // callers of these functions are generally expected to locally shorten the
 // namespace name when they call these routines
 namespace grackle::impl::fortran_wrapper {
+
+inline void calc_all_tdust_gasgr_1d_g(
+  double trad, double* tgas, double* tdust, double* metallicity,
+  double* dust2gas, double* nh, double* gasgr_tdust, gr_mask_type* itmask_metal,
+  double coolunit, double* gasgr, double* myisrf, double* kappa_tot,
+  chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
+  grackle_field_data* my_fields, IndexRange idx_range,
+  grackle::impl::GrainSpeciesCollection grain_temperatures,
+  grackle::impl::GrainSpeciesCollection gas_grainsp_heatrate,
+  grackle::impl::GrainSpeciesCollection grain_kappa,
+  grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf,
+  grackle::impl::InternalDustPropBuf internal_dust_prop_buf
+) {
+
+  FORTRAN_NAME(calc_all_tdust_gasgr_1d_g)(
+    &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &my_chemistry->NumberOfTemperatureBins,
+    &my_chemistry->use_dust_density_field, &idx_range.i_start, &idx_range.i_end, &idx_range.jp1, &idx_range.kp1, &my_chemistry->local_dust_to_gas_ratio, &my_rates->gamma_isrf,
+    &trad, my_rates->gas_grain, logTlininterp_buf.indixe, logTlininterp_buf.tdef, tgas, tdust,
+    metallicity, dust2gas, nh, gasgr_tdust,
+    itmask_metal,
+    &my_chemistry->dust_species, &my_chemistry->use_multiple_dust_temperatures, my_rates->gr_N, &my_rates->gr_Size, &my_rates->gr_dT,
+    my_rates->gr_Td, grain_temperatures.data[OnlyGrainSpLUT::SiM_dust], grain_temperatures.data[OnlyGrainSpLUT::FeM_dust], grain_temperatures.data[OnlyGrainSpLUT::Mg2SiO4_dust], grain_temperatures.data[OnlyGrainSpLUT::MgSiO3_dust], grain_temperatures.data[OnlyGrainSpLUT::Fe3O4_dust],
+    grain_temperatures.data[OnlyGrainSpLUT::AC_dust], grain_temperatures.data[OnlyGrainSpLUT::SiO2_dust], grain_temperatures.data[OnlyGrainSpLUT::MgO_dust], grain_temperatures.data[OnlyGrainSpLUT::FeS_dust], grain_temperatures.data[OnlyGrainSpLUT::Al2O3_dust], grain_temperatures.data[OnlyGrainSpLUT::ref_org_dust],
+    grain_temperatures.data[OnlyGrainSpLUT::vol_org_dust], grain_temperatures.data[OnlyGrainSpLUT::H2O_ice_dust], my_rates->gas_grain2, &my_rates->gamma_isrf2,
+    &coolunit, gasgr, myisrf, internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::SiM_dust], internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::FeM_dust], internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::Mg2SiO4_dust],
+    internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::MgSiO3_dust], internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::Fe3O4_dust], internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::AC_dust], internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::SiO2_dust], internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::MgO_dust], internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::FeS_dust],
+    internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::Al2O3_dust], internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::ref_org_dust], internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::vol_org_dust], internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::H2O_ice_dust], internal_dust_prop_buf.sigma_per_gas_mass_tot,
+    internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::SiM_dust], internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::FeM_dust], internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::Mg2SiO4_dust], internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::MgSiO3_dust], internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::Fe3O4_dust], internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::AC_dust],
+    internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::SiO2_dust], internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::MgO_dust], internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::FeS_dust], internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::Al2O3_dust], internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::ref_org_dust],
+    internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::vol_org_dust], internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::H2O_ice_dust], internal_dust_prop_buf.dyntab_kappa_tot, grain_kappa.data[OnlyGrainSpLUT::SiM_dust], grain_kappa.data[OnlyGrainSpLUT::FeM_dust],
+    grain_kappa.data[OnlyGrainSpLUT::Mg2SiO4_dust], grain_kappa.data[OnlyGrainSpLUT::MgSiO3_dust], grain_kappa.data[OnlyGrainSpLUT::Fe3O4_dust], grain_kappa.data[OnlyGrainSpLUT::AC_dust], grain_kappa.data[OnlyGrainSpLUT::SiO2_dust],
+    grain_kappa.data[OnlyGrainSpLUT::MgO_dust], grain_kappa.data[OnlyGrainSpLUT::FeS_dust], grain_kappa.data[OnlyGrainSpLUT::Al2O3_dust], grain_kappa.data[OnlyGrainSpLUT::ref_org_dust], grain_kappa.data[OnlyGrainSpLUT::vol_org_dust],
+    grain_kappa.data[OnlyGrainSpLUT::H2O_ice_dust], kappa_tot, gas_grainsp_heatrate.data[OnlyGrainSpLUT::SiM_dust], gas_grainsp_heatrate.data[OnlyGrainSpLUT::FeM_dust], gas_grainsp_heatrate.data[OnlyGrainSpLUT::Mg2SiO4_dust],
+    gas_grainsp_heatrate.data[OnlyGrainSpLUT::MgSiO3_dust], gas_grainsp_heatrate.data[OnlyGrainSpLUT::Fe3O4_dust], gas_grainsp_heatrate.data[OnlyGrainSpLUT::AC_dust], gas_grainsp_heatrate.data[OnlyGrainSpLUT::SiO2_dust], gas_grainsp_heatrate.data[OnlyGrainSpLUT::MgO_dust],
+    gas_grainsp_heatrate.data[OnlyGrainSpLUT::FeS_dust], gas_grainsp_heatrate.data[OnlyGrainSpLUT::Al2O3_dust], gas_grainsp_heatrate.data[OnlyGrainSpLUT::ref_org_dust], gas_grainsp_heatrate.data[OnlyGrainSpLUT::vol_org_dust],
+    gas_grainsp_heatrate.data[OnlyGrainSpLUT::H2O_ice_dust]
+  );
+
+}
+
+/// Compute grain size increment
+///
+/// @note
+/// The description could obviously be improved! My general sense is that we
+/// are computing dust-properties in each zone. Among other things, this
+/// computes size and precomputes the dust opacity table
+///
+/// @param[in] dom a standard quantity used throughout the codebase
+/// @param[in] idx_range Specifies the current index-range
+/// @param[in] itmask_metal Specifies the `idx_range`'s iteration-mask
+/// @param[in] my_chemistry holds a number of configuration parameters
+/// @param[in] my_rates holds assorted rate data.
+/// @param[in] my_fields specifies the field data
+/// @param[in,out] internal_dust_prop_buf Holds dust-specific information that
+///     gets updated by this function
+inline void calc_grain_size_increment_1d (
+  double dom, IndexRange idx_range, gr_mask_type* itmask_metal,
+  chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
+  grackle_field_data* my_fields,
+  grackle::impl::InternalDustPropBuf internal_dust_prop_buf
+) {
+
+  FORTRAN_NAME(calc_grain_size_increment_1d)(
+    &my_chemistry->multi_metals, &my_chemistry->metal_abundances, &my_chemistry->dust_species, &my_chemistry->grain_growth, itmask_metal,
+    &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &idx_range.i_start, &idx_range.i_end, &idx_range.jp1, &idx_range.kp1, &dom, my_fields->density,
+    my_fields->SiM_dust_density, my_fields->FeM_dust_density, my_fields->Mg2SiO4_dust_density, my_fields->MgSiO3_dust_density, my_fields->Fe3O4_dust_density,
+    my_fields->AC_dust_density, my_fields->SiO2_dust_density, my_fields->MgO_dust_density, my_fields->FeS_dust_density, my_fields->Al2O3_dust_density,
+    my_fields->ref_org_dust_density, my_fields->vol_org_dust_density, my_fields->H2O_ice_dust_density,
+    my_fields->metal_density, my_fields->local_ISM_metal_density,
+    my_fields->ccsn13_metal_density, my_fields->ccsn20_metal_density, my_fields->ccsn25_metal_density, my_fields->ccsn30_metal_density,
+    my_fields->fsn13_metal_density, my_fields->fsn15_metal_density, my_fields->fsn50_metal_density, my_fields->fsn80_metal_density,
+    my_fields->pisn170_metal_density, my_fields->pisn200_metal_density, my_fields->y19_metal_density,
+    &my_rates->SN0_N,
+    my_rates->SN0_fSiM, my_rates->SN0_fFeM, my_rates->SN0_fMg2SiO4, my_rates->SN0_fMgSiO3,
+    my_rates->SN0_fFe3O4, my_rates->SN0_fAC, my_rates->SN0_fSiO2D, my_rates->SN0_fMgO,
+    my_rates->SN0_fFeS, my_rates->SN0_fAl2O3,
+    my_rates->SN0_freforg, my_rates->SN0_fvolorg, my_rates->SN0_fH2Oice,
+    my_rates->SN0_r0SiM, my_rates->SN0_r0FeM, my_rates->SN0_r0Mg2SiO4, my_rates->SN0_r0MgSiO3,
+    my_rates->SN0_r0Fe3O4, my_rates->SN0_r0AC, my_rates->SN0_r0SiO2D, my_rates->SN0_r0MgO,
+    my_rates->SN0_r0FeS, my_rates->SN0_r0Al2O3,
+    my_rates->SN0_r0reforg, my_rates->SN0_r0volorg, my_rates->SN0_r0H2Oice,
+    my_rates->gr_N, &my_rates->gr_Size, &my_rates->gr_dT, my_rates->gr_Td,
+    my_rates->SN0_kpSiM, my_rates->SN0_kpFeM, my_rates->SN0_kpMg2SiO4, my_rates->SN0_kpMgSiO3,
+    my_rates->SN0_kpFe3O4, my_rates->SN0_kpAC, my_rates->SN0_kpSiO2D, my_rates->SN0_kpMgO,
+    my_rates->SN0_kpFeS, my_rates->SN0_kpAl2O3,
+    my_rates->SN0_kpreforg, my_rates->SN0_kpvolorg, my_rates->SN0_kpH2Oice,
+    internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::SiM_dust], internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::FeM_dust], internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::Mg2SiO4_dust], internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::MgSiO3_dust], internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::Fe3O4_dust], internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::AC_dust],
+    internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::SiO2_dust], internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::MgO_dust], internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::FeS_dust], internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::Al2O3_dust],
+    internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::ref_org_dust], internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::vol_org_dust], internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::H2O_ice_dust], internal_dust_prop_buf.sigma_per_gas_mass_tot,
+    internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::SiM_dust], internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::FeM_dust], internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::Mg2SiO4_dust], internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::MgSiO3_dust], internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::Fe3O4_dust], internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::AC_dust],
+    internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::SiO2_dust], internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::MgO_dust], internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::FeS_dust], internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::Al2O3_dust],
+    internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::ref_org_dust], internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::vol_org_dust], internal_dust_prop_buf.grain_dyntab_kappa.data[OnlyGrainSpLUT::H2O_ice_dust], internal_dust_prop_buf.dyntab_kappa_tot
+  );
+}
 
 inline void calc_temp1d_cloudy_g(
   double* rhoH, IndexRange idx_range, double* tgas, double* mmw, double dom,
