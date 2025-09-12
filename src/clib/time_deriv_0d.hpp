@@ -2,16 +2,17 @@
 
 /// @file time_deriv_0d.hpp
 /// @brief Defines machinery to calculate the time derivative for a single zone
-///
-/// When we transcribe `lookup_cool_rates0d`, the plan is directly embed its
-/// logic into the `grackle::impl::time_deriv_0d::derivatives` function.
 
 #ifndef TIME_DERIV_0D_HPP
 #define TIME_DERIV_0D_HPP
 
+#include "chemistry_solver_funcs.hpp"
+#include "fortran_func_wrappers.hpp"
 #include "grackle.h"
-#include "utils-field.hpp"
+#include "grackle_macros.h" // GRACKLE_FREE
+#include "index_helper.h"
 #include "internal_types.hpp"
+#include "utils-field.hpp"
 
 // we choose to adopt a longer, more descriptive namespace here so that the
 // handful of functions defined in this file can have shorter names (in the
@@ -24,6 +25,7 @@ namespace grackle::impl::time_deriv_0d {
 struct FrozenSimpleArgs {
   // the following batch of args are all forwarded
   int imetal;
+  // todo: we can delete `iter`. This is only here for historical reasons
   int iter;
   double dom;
   double chunit;
@@ -50,15 +52,28 @@ struct MainScratchBuf {
   Cool1DMultiScratchBuf cool1dmulti_buf;
   CoolHeatScratchBuf coolingheating_buf;
   ChemHeatingRates chemheatrates_buf;
+
+  // the remaining buffers were originally reallocated (mostly on the stack)
+  // every time calculated the time derivatives were computed
+  CollisionalRxnRateCollection kcr_buf;
+  PhotoRxnRateCollection kshield_buf;
+  GrainSpeciesCollection grain_growth_rates;
+  double* k13dd; // <- only used within lookup_cool_rates1d_g
 };
 
 MainScratchBuf new_MainScratchBuf(void) {
+  int nelem = 1;
   MainScratchBuf out;
-  out.grain_temperatures = new_GrainSpeciesCollection(1);
-  out.logTlininterp_buf = new_LogTLinInterpScratchBuf(1);
-  out.cool1dmulti_buf = new_Cool1DMultiScratchBuf(1);
-  out.coolingheating_buf = new_CoolHeatScratchBuf(1);
-  out.chemheatrates_buf = new_ChemHeatingRates(1);
+  out.grain_temperatures = new_GrainSpeciesCollection(nelem);
+  out.logTlininterp_buf = new_LogTLinInterpScratchBuf(nelem);
+  out.cool1dmulti_buf = new_Cool1DMultiScratchBuf(nelem);
+  out.coolingheating_buf = new_CoolHeatScratchBuf(nelem);
+  out.chemheatrates_buf = new_ChemHeatingRates(nelem);
+
+  out.kcr_buf = new_CollisionalRxnRateCollection(nelem);
+  out.kshield_buf = new_PhotoRxnRateCollection(nelem);
+  out.grain_growth_rates = new_GrainSpeciesCollection(nelem);
+  out.k13dd = (double*)malloc(sizeof(double)*14*nelem);
   return out;
 }
 
@@ -68,6 +83,11 @@ void drop_MainScratchBuf(MainScratchBuf* ptr) {
   drop_Cool1DMultiScratchBuf(&ptr->cool1dmulti_buf);
   drop_CoolHeatScratchBuf(&ptr->coolingheating_buf);
   drop_ChemHeatingRates(&ptr->chemheatrates_buf);
+
+  drop_CollisionalRxnRateCollection(&ptr->kcr_buf);
+  drop_PhotoRxnRateCollection(&ptr->kshield_buf);
+  drop_GrainSpeciesCollection(&ptr->grain_growth_rates);
+  GRACKLE_FREE(ptr->k13dd);
 }
 
 /// this is a collections of values intended to act as 1-element arrays and
@@ -88,6 +108,13 @@ struct Assorted1ElemBuf {
   double mmw[1];
   double h2dust[1];
   double edot[1];
+
+  // the remaining buffers were originally reallocated (on the stack)
+  // every time calculated the time derivatives were computed.
+  gr_mask_type itmask[1];
+  // These are used to compute values that we totally ignore in this context
+  double dedot[1];
+  double HIdot[1];
 };
 
 /// this struct is used to organize some temporary data that is used for
@@ -110,6 +137,12 @@ struct ContextPack {
   /// specifies how we handling edot in the calculation. This comes from
   /// an array historically known as imp_eng
   int local_edot_handling;
+
+  /// this represents the precomputed index-range
+  /// - if we transition to an implementation where we compute the time
+  ///   derivatives for multiple sets of physical conditions at a time, this
+  ///   will need to be computed on the fly
+  IndexRange idx_range_1_element;
 
   /// the idea is that this will hold data for a single zone
   grackle_field_data fields;
@@ -167,13 +200,20 @@ inline ContextPack new_ContextPack(
   for (int i = 0; i < 3; i++) {
     pack.grid_dimension[i] = 1;
     pack.grid_start[i] = 0;
-    pack.grid_end[i] = 1;
+    pack.grid_end[i] = 0;
   }
   gr_initialize_field_data(&pack.fields);
   pack.fields.grid_rank=3;
   pack.fields.grid_dimension = pack.grid_dimension;
   pack.fields.grid_start = pack.grid_start;
   pack.fields.grid_end = pack.grid_end;
+
+  // precompute the 1-element index-range
+  // - we explicitly follow the standard idiom for constructing an IndexRange
+  //   and avoid directly constructing it (if the internals change we don't
+  //   want to fix it here).
+  const grackle_index_helper idx_helper = build_index_helper_(&pack.fields);
+  pack.idx_range_1_element = make_idx_range_(0, &idx_helper);
 
   // initialize other members
   pack.fwd_args = fwd_args;
@@ -204,9 +244,6 @@ inline void configure_ContextPack(
   // each field in my_fields corresponding to the current location (i,j,k)
   copy_offset_fieldmember_ptrs_(&pack->fields, my_fields, field_idx1d);
 
-  // in the near future, we will overwrite the pointers of each
-  // species-field (& the internal_energy) in pack.fields_1zone with a
-  // pointer corresponding to the appropriate entry in `dsp`
 }
 
 /// here we copy the values from the scratch buffers (used by grackle's main
@@ -351,17 +388,25 @@ inline void scratchbufs_copy_from_pack(
 
 }
 
+
 /// calculate the time derivatives
 ///
 /// @param[in] dt_FIXME Specifies the timestep passed to the
-///   lookup_cool_rates0d_g function. See the C++ docstring for that function
+///   lookup_cool_rates1d_g function. See the C++ docstring for that function
 ///   for more details (this needs to be revisited)
-/// @param[in] ycur A buffer representing a mathematical vector that holds the
-///   initial values. This always has enough space for each species and the
-///   internal energy (even if some entries are not evolved)
-/// @param[out] ydot A buffer representing a mathematical vector that holds the
-///   computed derivatives. This always has enough space for each species and
-///   the internal energy (even if some entries are not evolved)
+/// @param[in] rhosp Specifies the species mass densities to use for computing
+///   the time derivatives. This always has enough space for each species (it
+///   is indexed by SpLUT), even if some entries are not evolved.
+/// @param[out] rhosp_dot Buffers to hold computed time derivatives of the mass
+///   density for each relevant species. (We do not specify how/whether this
+///   function modifies values stored in buffers corresponding to unevolved
+///   species)
+/// @param[in] eint Specifies the nominal specific internal energy to use in
+///   the calculations. Based on the context, this may or may not be used
+/// @param[out] eint_dot_specific Buffer to hold the time derivative of the
+///   **specific** internal energy. The fact that the specific quantity is
+///   written is noteworth. In certain contexts, a meaningful value may not be
+///   written here.
 /// @param[in] pack Specifies extra buffers and information to be used in the
 ///   calculation
 ///
@@ -372,161 +417,135 @@ inline void scratchbufs_copy_from_pack(
 ///      once (one might pick multiple simultaneous inputs for use in the
 ///      finite derivatives that are used to estimate the jacobian matrix)
 ///
-/// @todo
-/// when we transcribe `lookup_cool_rates0d`, we should replace `ycur` and
-/// `ydot` with instances of `SpeciesCollection` and then pass
-/// `internal_energy` and `edot` as separate arguments.
-///   - This will allow make the code easier to understand at a glance (and
-///     will be important for reducing code duplication between this function
-///     and `step_rate_g`)
-///   - Furthermore, `step_rate_newton_raphson` already is responsible for
-///     remapping for remapping to the `ycur` format. Effectively, we're only
-///     tweaking the format and not producing any extra work.
+/// @note
+/// If we ever redefine `SpeciesCollection` to be a class template, it would be
+/// natural to represent `rhosp` with `SpeciesCollection<gr_float>`
+///
+/// @par Future Performance Considerations:
+/// From a performance perspective, a compelling case could be made that we
+/// should be wiring up the members of the `grackle_field_data` struct to point
+/// to the entries of `rhosp` and `eint` ahead of time (before we call this
+/// function). In that scenario, it would probably make the most sense:
+/// - to replace `rhosp` and `eint` arguments with an argument passing the
+///   struct AND to manage the struct entirely outside of the logic in the
+///   time_deriv_0d namespace (this could make a lot of sense if we transition
+///   this function to operating on arrays of inputs)
+/// - Alternatively, we could organize all of the routines in this namespace so
+///   that they represent a single well-defined data-structure with explicitly
+///   documented semantics for the order of invoking commands. Essentially, it
+///   would need to be a state-machine.
+/// - (no matter what, we should try to avoid a bunch of implicit "magic")
+/// In reality, `grackle_field_data` is very poorly suited for its current role
+/// as a universal data-structure for passing around any/all kinds of field
+/// data. And, we should work on coming up with a superior alternative for
+/// use within Grackle
 void derivatives(
-  double dt_FIXME, double* ycur, double* ydot, ContextPack& pack
+  double dt_FIXME, gr_float* rhosp, grackle::impl::SpeciesCollection rhosp_dot,
+  gr_float* eint, double* eint_dot_specific, ContextPack& pack
 ) {
 
-  // once we transcribe lookup_cool_rates0d, we will need to update the
-  // appropriate members of pack.fields to point to entries of ycur
+  // introduce some namespace abbreviations for use within this function
+  namespace f_wrap = ::grackle::impl::fortran_wrapper;
+  namespace gr_chem = ::grackle::impl::chemistry;
 
   chemistry_data* my_chemistry = pack.fwd_args.my_chemistry;
   chemistry_data_storage* my_rates = pack.fwd_args.my_rates;
   photo_rate_storage my_uvb_rates = pack.fwd_args.my_uvb_rates;
   InternalGrUnits internalu = pack.fwd_args.internalu;
 
-  // todo: remove this variable
-  gr_mask_type local_itmask_nr = MASK_TRUE;
+  pack.other_scratch_buf.itmask[0] = MASK_TRUE;
 
-  // todo: remove this variable
-  int nsp = -1; // <- dummy value! (it isn't actually used)
 
-  FORTRAN_NAME(lookup_cool_rates0d)(&dt_FIXME,
-    pack.fields.density, pack.fields.x_velocity, pack.fields.y_velocity, pack.fields.z_velocity,
-    &nsp, ycur, ydot, &my_chemistry->NumberOfTemperatureBins,
-    &internalu.extfields_in_comoving, &my_chemistry->primordial_chemistry, &pack.fwd_args.imetal, &my_chemistry->metal_cooling,
-    &my_chemistry->h2_on_dust, &my_chemistry->dust_chemistry, &my_chemistry->use_dust_density_field, &my_chemistry->dust_recombination_cooling,
-    &my_chemistry->ih2co, &my_chemistry->ipiht, &pack.fwd_args.iter, &my_chemistry->photoelectric_heating,
-    &internalu.a_value, &my_chemistry->TemperatureStart, &my_chemistry->TemperatureEnd, &my_chemistry->SolarMetalFractionByMass, &my_chemistry->local_dust_to_gas_ratio,
-    &internalu.utem, &internalu.uxyz, &internalu.a_units, &internalu.urho, &internalu.tbase1,
-    &my_chemistry->Gamma, &my_chemistry->HydrogenFractionByMass,
-    my_rates->ceHI, my_rates->ceHeI, my_rates->ceHeII, my_rates->ciHI, my_rates->ciHeI,
-    my_rates->ciHeIS, my_rates->ciHeII, my_rates->reHII, my_rates->reHeII1,
-    my_rates->reHeII2, my_rates->reHeIII, my_rates->brem, &my_rates->comp, &my_rates->gammah,
-    &my_chemistry->interstellar_radiation_field, my_rates->regr, &my_rates->gamma_isrf, &my_uvb_rates.comp_xray, &my_uvb_rates.temp_xray,
-    &my_uvb_rates.piHI, &my_uvb_rates.piHeI, &my_uvb_rates.piHeII,
-    pack.fields.metal_density, pack.fields.dust_density,
-    my_rates->hyd01k, my_rates->h2k01, my_rates->vibh, my_rates->roth, my_rates->rotl,
-    pack.main_scratch_buf.coolingheating_buf.hyd01k, pack.main_scratch_buf.coolingheating_buf.h2k01, pack.main_scratch_buf.coolingheating_buf.vibh, pack.main_scratch_buf.coolingheating_buf.roth, pack.main_scratch_buf.coolingheating_buf.rotl,
-    my_rates->GP99LowDensityLimit, my_rates->GP99HighDensityLimit, pack.main_scratch_buf.coolingheating_buf.gpldl, pack.main_scratch_buf.coolingheating_buf.gphdl,
-    my_rates->HDlte, my_rates->HDlow, pack.main_scratch_buf.coolingheating_buf.hdlte, pack.main_scratch_buf.coolingheating_buf.hdlow,
-    my_rates->GAHI, my_rates->GAH2, my_rates->GAHe,
-    my_rates->GAHp, my_rates->GAel,
-    my_rates->H2LTE, my_rates->gas_grain,
-    pack.main_scratch_buf.coolingheating_buf.ceHI, pack.main_scratch_buf.coolingheating_buf.ceHeI, pack.main_scratch_buf.coolingheating_buf.ceHeII, pack.main_scratch_buf.coolingheating_buf.ciHI, pack.main_scratch_buf.coolingheating_buf.ciHeI,
-    pack.main_scratch_buf.coolingheating_buf.ciHeIS, pack.main_scratch_buf.coolingheating_buf.ciHeII,
-    pack.main_scratch_buf.coolingheating_buf.reHII, pack.main_scratch_buf.coolingheating_buf.reHeII1, pack.main_scratch_buf.coolingheating_buf.reHeII2, pack.main_scratch_buf.coolingheating_buf.reHeIII, pack.main_scratch_buf.coolingheating_buf.brem,
-    pack.main_scratch_buf.logTlininterp_buf.indixe, pack.main_scratch_buf.logTlininterp_buf.t1, pack.main_scratch_buf.logTlininterp_buf.t2, pack.main_scratch_buf.logTlininterp_buf.logtem, pack.main_scratch_buf.logTlininterp_buf.tdef, pack.other_scratch_buf.edot,
-    pack.other_scratch_buf.tgas, pack.main_scratch_buf.cool1dmulti_buf.tgasold, pack.other_scratch_buf.mmw, pack.other_scratch_buf.p2d, pack.other_scratch_buf.tdust, pack.other_scratch_buf.metallicity,
-    pack.other_scratch_buf.dust2gas, pack.other_scratch_buf.rhoH, pack.main_scratch_buf.cool1dmulti_buf.mynh, pack.main_scratch_buf.cool1dmulti_buf.myde,
-    pack.main_scratch_buf.cool1dmulti_buf.gammaha_eff, pack.main_scratch_buf.cool1dmulti_buf.gasgr_tdust, pack.main_scratch_buf.cool1dmulti_buf.regr,
-    &my_chemistry->self_shielding_method, &my_uvb_rates.crsHI, &my_uvb_rates.crsHeI, &my_uvb_rates.crsHeII,
-    &my_chemistry->use_radiative_transfer, &my_chemistry->radiative_transfer_hydrogen_only,
-    &my_chemistry->h2_optical_depth_approximation, &my_chemistry->cie_cooling, &my_chemistry->h2_cooling_rate, &my_chemistry->hd_cooling_rate, my_rates->cieco, pack.main_scratch_buf.coolingheating_buf.cieco,
-    &my_chemistry->cmb_temperature_floor, &my_chemistry->UVbackground, &my_chemistry->cloudy_electron_fraction_factor,
-    &my_rates->cloudy_primordial.grid_rank, my_rates->cloudy_primordial.grid_dimension,
-    my_rates->cloudy_primordial.grid_parameters[0], my_rates->cloudy_primordial.grid_parameters[1], my_rates->cloudy_primordial.grid_parameters[2], my_rates->cloudy_primordial.grid_parameters[3], my_rates->cloudy_primordial.grid_parameters[4],
-    &my_rates->cloudy_primordial.data_size, my_rates->cloudy_primordial.cooling_data, my_rates->cloudy_primordial.heating_data, my_rates->cloudy_primordial.mmw_data,
-    &my_rates->cloudy_metal.grid_rank, my_rates->cloudy_metal.grid_dimension,
-    my_rates->cloudy_metal.grid_parameters[0], my_rates->cloudy_metal.grid_parameters[1], my_rates->cloudy_metal.grid_parameters[2], my_rates->cloudy_metal.grid_parameters[3], my_rates->cloudy_metal.grid_parameters[4],
-    &my_rates->cloudy_metal.data_size, my_rates->cloudy_metal.cooling_data, my_rates->cloudy_metal.heating_data, &my_rates->cloudy_data_new,
-    &my_chemistry->use_volumetric_heating_rate, &my_chemistry->use_specific_heating_rate, pack.fields.volumetric_heating_rate, pack.fields.specific_heating_rate,
-    &my_chemistry->use_temperature_floor, &my_chemistry->temperature_floor_scalar, pack.fields.temperature_floor,
-    &my_chemistry->use_isrf_field, pack.fields.isrf_habing,
-    &my_chemistry->three_body_rate, &pack.fwd_args.anydust, &my_chemistry->H2_self_shielding,
-    my_rates->k1, my_rates->k2, my_rates->k3, my_rates->k4, my_rates->k5, my_rates->k6, my_rates->k7, my_rates->k8, my_rates->k9, my_rates->k10,
-    my_rates->k11, my_rates->k12, my_rates->k13, my_rates->k13dd, my_rates->k14, my_rates->k15, my_rates->k16,
-    my_rates->k17, my_rates->k18, my_rates->k19, my_rates->k22,
-    &my_uvb_rates.k24, &my_uvb_rates.k25, &my_uvb_rates.k26, &my_uvb_rates.k27, &my_uvb_rates.k28, &my_uvb_rates.k29, &my_uvb_rates.k30, &my_uvb_rates.k31,
-    my_rates->k50, my_rates->k51, my_rates->k52, my_rates->k53, my_rates->k54, my_rates->k55, my_rates->k56,
-    my_rates->k57, my_rates->k58, &my_chemistry->NumberOfDustTemperatureBins, &my_chemistry->DustTemperatureStart, &my_chemistry->DustTemperatureEnd, my_rates->h2dust,
-    my_rates->n_cr_n, my_rates->n_cr_d1, my_rates->n_cr_d2,
-    pack.other_scratch_buf.h2dust, pack.main_scratch_buf.chemheatrates_buf.n_cr_n, pack.main_scratch_buf.chemheatrates_buf.n_cr_d1, pack.main_scratch_buf.chemheatrates_buf.n_cr_d2,
-    &pack.fwd_args.dom, &internalu.coolunit, &internalu.tbase1, &internalu.xbase1, &pack.fwd_args.dx_cgs, &pack.fwd_args.c_ljeans,
-    pack.fields.RT_HI_ionization_rate, pack.fields.RT_HeI_ionization_rate, pack.fields.RT_HeII_ionization_rate, pack.fields.RT_H2_dissociation_rate,
-    pack.fields.RT_heating_rate, pack.fields.H2_self_shielding_length, &pack.fwd_args.chunit, &local_itmask_nr,
-    &pack.local_itmask_metal,
-     &my_chemistry->metal_chemistry, &my_chemistry->grain_growth, &my_chemistry->use_primordial_continuum_opacity, &my_chemistry->tabulated_cooling_minimum_temperature,
-     my_rates->k125, my_rates->k129, my_rates->k130, my_rates->k131, my_rates->k132,
-     my_rates->k133, my_rates->k134, my_rates->k135, my_rates->k136, my_rates->k137,
-     my_rates->k148, my_rates->k149, my_rates->k150, my_rates->k151, my_rates->k152,
-     my_rates->k153,
-     my_rates->kz15, my_rates->kz16, my_rates->kz17, my_rates->kz18, my_rates->kz19,
-     my_rates->kz20, my_rates->kz21, my_rates->kz22, my_rates->kz23, my_rates->kz24,
-     my_rates->kz25, my_rates->kz26, my_rates->kz27, my_rates->kz28, my_rates->kz29,
-     my_rates->kz30, my_rates->kz31, my_rates->kz32, my_rates->kz33, my_rates->kz34,
-     my_rates->kz35, my_rates->kz36, my_rates->kz37, my_rates->kz38, my_rates->kz39,
-     my_rates->kz40, my_rates->kz41, my_rates->kz42, my_rates->kz43, my_rates->kz44,
-     my_rates->kz45, my_rates->kz46, my_rates->kz47, my_rates->kz48, my_rates->kz49,
-     my_rates->kz50, my_rates->kz51, my_rates->kz52, my_rates->kz53, my_rates->kz54,
-     my_rates->cieY06,
-     my_rates->LH2.props.dimension, &my_rates->LH2.props.data_size,
-     my_rates->LH2.props.parameters[0], my_rates->LH2.props.parameters[1], my_rates->LH2.props.parameters[2],
-     &my_rates->LH2.props.parameter_spacing[0], &my_rates->LH2.props.parameter_spacing[1], &my_rates->LH2.props.parameter_spacing[2], my_rates->LH2.data,
-     my_rates->LHD.props.dimension, &my_rates->LHD.props.data_size,
-     my_rates->LHD.props.parameters[0], my_rates->LHD.props.parameters[1], my_rates->LHD.props.parameters[2],
-     &my_rates->LHD.props.parameter_spacing[0], &my_rates->LHD.props.parameter_spacing[1], &my_rates->LHD.props.parameter_spacing[2], my_rates->LHD.data,
-     my_rates->LCI.props.dimension, &my_rates->LCI.props.data_size,
-     my_rates->LCI.props.parameters[0], my_rates->LCI.props.parameters[1], my_rates->LCI.props.parameters[2],
-     &my_rates->LCI.props.parameter_spacing[0], &my_rates->LCI.props.parameter_spacing[1], &my_rates->LCI.props.parameter_spacing[2], my_rates->LCI.data,
-     my_rates->LCII.props.dimension, &my_rates->LCII.props.data_size,
-     my_rates->LCII.props.parameters[0], my_rates->LCII.props.parameters[1], my_rates->LCII.props.parameters[2],
-     &my_rates->LCII.props.parameter_spacing[0], &my_rates->LCII.props.parameter_spacing[1], &my_rates->LCII.props.parameter_spacing[2], my_rates->LCII.data,
-     my_rates->LOI.props.dimension, &my_rates->LOI.props.data_size,
-     my_rates->LOI.props.parameters[0], my_rates->LOI.props.parameters[1], my_rates->LOI.props.parameters[2],
-     &my_rates->LOI.props.parameter_spacing[0], &my_rates->LOI.props.parameter_spacing[1], &my_rates->LOI.props.parameter_spacing[2], my_rates->LOI.data,
-     my_rates->LCO.props.dimension, &my_rates->LCO.props.data_size,
-     my_rates->LCO.props.parameters[0], my_rates->LCO.props.parameters[1], my_rates->LCO.props.parameters[2],
-     &my_rates->LCO.props.parameter_spacing[0], &my_rates->LCO.props.parameter_spacing[1], &my_rates->LCO.props.parameter_spacing[2], my_rates->LCO.data,
-     my_rates->LOH.props.dimension, &my_rates->LOH.props.data_size,
-     my_rates->LOH.props.parameters[0], my_rates->LOH.props.parameters[1], my_rates->LOH.props.parameters[2],
-     &my_rates->LOH.props.parameter_spacing[0], &my_rates->LOH.props.parameter_spacing[1], &my_rates->LOH.props.parameter_spacing[2], my_rates->LOH.data,
-     my_rates->LH2O.props.dimension, &my_rates->LH2O.props.data_size,
-     my_rates->LH2O.props.parameters[0], my_rates->LH2O.props.parameters[1], my_rates->LH2O.props.parameters[2],
-     &my_rates->LH2O.props.parameter_spacing[0], &my_rates->LH2O.props.parameter_spacing[1], &my_rates->LH2O.props.parameter_spacing[2], my_rates->LH2O.data,
-     my_rates->alphap.props.dimension, &my_rates->alphap.props.data_size,
-     my_rates->alphap.props.parameters[0], my_rates->alphap.props.parameters[1], &my_rates->alphap.props.parameter_spacing[0], &my_rates->alphap.props.parameter_spacing[1],
-     my_rates->alphap.data,
-     &my_chemistry->multi_metals, &my_chemistry->metal_abundances, &my_chemistry->dust_species, &my_chemistry->use_multiple_dust_temperatures, &my_chemistry->dust_sublimation,
-     pack.fields.local_ISM_metal_density, pack.fields.ccsn13_metal_density, pack.fields.ccsn20_metal_density,
-     pack.fields.ccsn25_metal_density, pack.fields.ccsn30_metal_density, pack.fields.fsn13_metal_density,
-     pack.fields.fsn15_metal_density, pack.fields.fsn50_metal_density, pack.fields.fsn80_metal_density,
-     pack.fields.pisn170_metal_density, pack.fields.pisn200_metal_density, pack.fields.y19_metal_density,
-     &my_rates->SN0_N,
-     my_rates->SN0_fSiM, my_rates->SN0_fFeM, my_rates->SN0_fMg2SiO4, my_rates->SN0_fMgSiO3,
-     my_rates->SN0_fFe3O4, my_rates->SN0_fAC, my_rates->SN0_fSiO2D, my_rates->SN0_fMgO,
-     my_rates->SN0_fFeS, my_rates->SN0_fAl2O3,
-     my_rates->SN0_freforg, my_rates->SN0_fvolorg, my_rates->SN0_fH2Oice,
-     my_rates->SN0_r0SiM, my_rates->SN0_r0FeM, my_rates->SN0_r0Mg2SiO4, my_rates->SN0_r0MgSiO3,
-     my_rates->SN0_r0Fe3O4, my_rates->SN0_r0AC, my_rates->SN0_r0SiO2D, my_rates->SN0_r0MgO,
-     my_rates->SN0_r0FeS, my_rates->SN0_r0Al2O3,
-     my_rates->SN0_r0reforg, my_rates->SN0_r0volorg, my_rates->SN0_r0H2Oice,
-     my_rates->gr_N, &my_rates->gr_Size, &my_rates->gr_dT, my_rates->gr_Td,
-     my_rates->SN0_kpSiM, my_rates->SN0_kpFeM, my_rates->SN0_kpMg2SiO4, my_rates->SN0_kpMgSiO3,
-     my_rates->SN0_kpFe3O4, my_rates->SN0_kpAC, my_rates->SN0_kpSiO2D, my_rates->SN0_kpMgO,
-     my_rates->SN0_kpFeS, my_rates->SN0_kpAl2O3,
-     my_rates->SN0_kpreforg, my_rates->SN0_kpvolorg, my_rates->SN0_kpH2Oice,
-     my_rates->h2dustS, my_rates->h2dustC, my_rates->grain_growth_rate,
-     pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::SiM_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::FeM_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::Mg2SiO4_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::MgSiO3_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::Fe3O4_dust],
-     pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::AC_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::SiO2_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::MgO_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::FeS_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::Al2O3_dust],
-     pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::ref_org_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::vol_org_dust], pack.main_scratch_buf.grain_temperatures.data[OnlyGrainSpLUT::H2O_ice_dust],
-     my_rates->gas_grain2, &my_rates->gamma_isrf2,
-     &pack.local_edot_handling,
-     &my_chemistry->radiative_transfer_HDI_dissociation, pack.fields.RT_HDI_dissociation_rate, &my_chemistry->radiative_transfer_metal_ionization, pack.fields.RT_CI_ionization_rate, pack.fields.RT_OI_ionization_rate,
-     &my_chemistry->radiative_transfer_metal_dissociation, pack.fields.RT_CO_dissociation_rate, pack.fields.RT_OH_dissociation_rate, pack.fields.RT_H2O_dissociation_rate,
-     &my_chemistry->radiative_transfer_use_H2_shielding, &my_chemistry->H2_custom_shielding, pack.fields.H2_custom_shielding_factor
+  // configure the relevant members of `pack.fields` to point to the buffers
+  // specified by the rhosp and eint argument.
+  // -> the "Future Performance Considerations" section of the docstring has
+  //    a relevant discussion about this operation
+  copy_contigSpTable_fieldmember_ptrs_(&pack.fields, rhosp, 1);
+  pack.fields.internal_energy = &eint[0];
+
+  // Compute the cooling rate, tgas, tdust, and metallicity for this row
+
+  if (pack.local_edot_handling == 1) {
+    // this is a hacky bugfix
+    // -> we need my_local_iter to be 1. If it has any other value,
+    //    `cool1d_multi_g` will assume that `tgasold` was previously
+    //    initialized (it's not!) and try to use its contained value
+    int my_local_iter = 1;
+    f_wrap::cool1d_multi_g(
+      pack.fwd_args.imetal, pack.idx_range_1_element, my_local_iter,
+      pack.other_scratch_buf.edot, pack.other_scratch_buf.tgas,
+      pack.other_scratch_buf.mmw, pack.other_scratch_buf.p2d,
+      pack.other_scratch_buf.tdust, pack.other_scratch_buf.metallicity,
+      pack.other_scratch_buf.dust2gas, pack.other_scratch_buf.rhoH,
+      pack.other_scratch_buf.itmask, &pack.local_itmask_metal, my_chemistry,
+      my_rates, &pack.fields,
+      my_uvb_rates, internalu, pack.main_scratch_buf.grain_temperatures,
+      pack.main_scratch_buf.logTlininterp_buf,
+      pack.main_scratch_buf.cool1dmulti_buf,
+      pack.main_scratch_buf.coolingheating_buf
     );
+  }
 
+  // uses the temperature to look up the chemical rates (they are interpolated
+  // with respect to log temperature from input tables)
+  f_wrap::lookup_cool_rates1d_g(
+    pack.idx_range_1_element, pack.fwd_args.anydust,
+    pack.other_scratch_buf.tgas, pack.other_scratch_buf.mmw,
+    pack.other_scratch_buf.tdust, pack.other_scratch_buf.dust2gas,
+    pack.main_scratch_buf.k13dd, pack.other_scratch_buf.h2dust,
+    pack.fwd_args.dom, pack.fwd_args.dx_cgs,
+    pack.fwd_args.c_ljeans, pack.other_scratch_buf.itmask,
+    &pack.local_itmask_metal, pack.fwd_args.imetal,
+    pack.other_scratch_buf.rhoH, dt_FIXME,
+    my_chemistry, my_rates, &pack.fields, my_uvb_rates, internalu,
+    pack.main_scratch_buf.grain_growth_rates,
+    pack.main_scratch_buf.grain_temperatures,
+    pack.main_scratch_buf.logTlininterp_buf,
+    pack.main_scratch_buf.kcr_buf, pack.main_scratch_buf.kshield_buf,
+    pack.main_scratch_buf.chemheatrates_buf
+  );
+
+
+  // The following function nominally computes dedot and HIdot (the time
+  // derivatives in the mass densities of electrons and HI)
+  // -> we don't care about these quantities (we recompute them later)
+  // -> I'm pretty sure we care about how the following function also modifies
+  //    edot
+  if (pack.local_edot_handling == 1)  {
+
+    f_wrap::rate_timestep_g(
+      pack.other_scratch_buf.dedot, pack.other_scratch_buf.HIdot,
+      pack.fwd_args.anydust, pack.idx_range_1_element,
+      pack.other_scratch_buf.h2dust, pack.other_scratch_buf.rhoH,
+      pack.other_scratch_buf.itmask, pack.other_scratch_buf.edot,
+      pack.fwd_args.chunit, pack.fwd_args.dom, my_chemistry, &pack.fields,
+      my_uvb_rates, pack.main_scratch_buf.kcr_buf,
+      pack.main_scratch_buf.kshield_buf,
+      pack.main_scratch_buf.chemheatrates_buf
+    );
+  }
+
+  // Heating/cooling rate (per unit volume -> gas mass)
+  eint_dot_specific[0] = (
+    pack.other_scratch_buf.edot[0] / pack.fields.density[0]
+  );
+
+  // Initialize entries of the derivatives buffer to 0
+  // -> we could define a function associated with SpeciesCollection to perform
+  //    a much more optimized version of this operation by taking advantage of
+  //    the underlying implementation
+  for (int sp_idx = 0; sp_idx < SpLUT::NUM_ENTRIES; sp_idx++) {
+    rhosp_dot.data[sp_idx][0] = 0.0;
+  }
+
+  gr_chem::species_density_derivatives_0d(
+    rhosp_dot, pack.fwd_args.anydust, pack.other_scratch_buf.h2dust,
+    pack.other_scratch_buf.rhoH, &pack.local_itmask_metal, my_chemistry,
+    &pack.fields, my_uvb_rates, pack.main_scratch_buf.grain_growth_rates,
+    pack.main_scratch_buf.kcr_buf, pack.main_scratch_buf.kshield_buf
+  );
 }
+
 
 } // namespace grackle::impl::time_deriv_0d
 
