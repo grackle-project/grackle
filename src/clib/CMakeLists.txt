@@ -111,6 +111,7 @@ add_library(Grackle_Grackle
   calc_temp_cloudy_g-cpp.C calc_temp_cloudy_g-cpp.h
   cool_multi_time_g-cpp.C cool_multi_time_g-cpp.h
   internal_types.C internal_types.hpp
+  scale_fields_table.hpp
   solve_rate_cool_g-cpp.C solve_rate_cool_g-cpp.h
   step_rate_newton_raphson.hpp
   time_deriv_0d.hpp
@@ -127,7 +128,6 @@ add_library(Grackle_Grackle
   calc_tdust_1d_g.F
   calc_tdust_3d_g.F
   calc_temp1d_cloudy_g.F
-  calc_temp_cloudy_g.F
   cool1d_cloudy_g.F
   cool1d_cloudy_old_tables_g.F
   cool1d_multi_g.F

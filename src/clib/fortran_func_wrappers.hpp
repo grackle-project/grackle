@@ -489,17 +489,6 @@ inline void scale_fields_g(
 
 }
 
-/// Scales density and metal_density (if available) by factor
-inline void scale_fields_table_g(grackle_field_data* my_fields, double factor) {
-  int imetal = (my_fields->metal_density != nullptr) ? 1 : 0;
-
-  FORTRAN_NAME(scale_fields_table_g)(
-    my_fields->density, my_fields->metal_density,
-    &my_fields->grid_start[0], &my_fields->grid_end[0], &my_fields->grid_start[1], &my_fields->grid_end[1], &my_fields->grid_start[2], &my_fields->grid_end[2],
-    &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &imetal, &factor
-  );
-}
-
 /// Uses one linearly implicit Gauss-Seidel sweep of a backward-Euler time
 /// integrator to advance the rate equations by one (sub-)cycle (dtit).
 inline void step_rate_g(
