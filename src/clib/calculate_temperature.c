@@ -10,56 +10,28 @@
 / The full license is in the file LICENSE, distributed with this 
 / software.
 ************************************************************************/
- 
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
-#include "grackle_macros.h"
-#include "grackle_types.h"
-#include "grackle_chemistry_data.h"
-#include "phys_constants.h"
+#include "calc_temp_cloudy_g.h"
+#include "grackle.h"
 #include "index_helper.h"
+#include "internal_units.h"
+#include "phys_constants.h"
+
 #ifdef _OPENMP
 #include <omp.h>
 #endif
 
-extern chemistry_data *grackle_data;
-extern chemistry_data_storage grackle_rates;
-
-/* Set the mean molecular mass. */
- 
+// Set the mean molecular mass for metals
+// -> TODO: this should really be defined by a (internal) header
+// -> currently, it's also defined by cool1d_multi_g and calc_temp1d_cloudy_g
 #define MU_METAL 16.0
  
 /* This is minimum returned temperature. (K) */
  
 #define MINIMUM_TEMPERATURE 1.0
- 
-/* function prototypes */ 
-
-extern void FORTRAN_NAME(calc_temp_cloudy_g)(
-        gr_float *d, gr_float *e, gr_float *metal, gr_float *temperature,
-	int *in, int *jn, int *kn, int *iexpand, int *imetal,
-	int *is, int *js, int *ks, int *ie, int *je, int *ke,
-	double *aye, double *temstart, double *temend,
-	double *utem, double *uxyz, double *uaye, double *urho, double *utim,
-	double *gamma, double *fh,
-        long long *priGridRank, long long *priGridDim,
-        double *priPar1, double *priPar2, double *priPar3, 
- 	long long *priDataSize, double *priMMW);
-
-double get_temperature_units(code_units *my_units);
-
-int local_calculate_pressure(chemistry_data *my_chemistry,
-                             chemistry_data_storage *my_rates,
-                             code_units *my_units,
-                             grackle_field_data *my_fields,
-                             gr_float *pressure);
-
-int local_calculate_temperature_table(chemistry_data *my_chemistry,
-                                      chemistry_data_storage *my_rates,
-                                      code_units *my_units,
-                                      grackle_field_data *my_fields,
-                                      gr_float *temperature);
  
 int local_calculate_temperature(chemistry_data *my_chemistry,
                                 chemistry_data_storage *my_rates,
@@ -67,18 +39,24 @@ int local_calculate_temperature(chemistry_data *my_chemistry,
                                 grackle_field_data *my_fields,
                                 gr_float *temperature)
 {
+  if (!my_chemistry->use_grackle) { return GR_SUCCESS; }
 
-  if (!my_chemistry->use_grackle)
-    return SUCCESS;
+  const int imetal = (my_fields->metal_density != NULL) ? 1 : 0;
+
+  // we have special handling for tabulated-chemistry-mode
+  if (my_chemistry->primordial_chemistry == 0) {
+    calc_temp_cloudy_g(temperature, imetal, my_chemistry,
+                       my_rates->cloudy_primordial, my_fields,
+                       new_internalu_(my_units));
+    return GR_SUCCESS;
+  };
+
 
   /* Compute the pressure first. */
- 
-  if (my_chemistry->primordial_chemistry > 0) {
-    if (local_calculate_pressure(my_chemistry, my_rates, my_units,
-                                 my_fields, temperature) == FAIL) {
-      fprintf(stderr, "Error in calculate_pressure.\n");
-      return FAIL;
-    }
+  if (local_calculate_pressure(my_chemistry, my_rates, my_units,
+                               my_fields, temperature) != GR_SUCCESS) {
+    fprintf(stderr, "Error in calculate_pressure.\n");
+    return GR_FAIL;
   }
 
   /* Calculate temperature units. */
@@ -87,15 +65,6 @@ int local_calculate_temperature(chemistry_data *my_chemistry,
 
   double number_density, tiny_number = 1.-20;
   double inv_metal_mol = 1.0 / MU_METAL;
-  
-  if (my_chemistry->primordial_chemistry == 0) {
-    if (local_calculate_temperature_table(my_chemistry, my_rates, my_units,
-                                          my_fields, temperature) == FAIL) {
-      fprintf(stderr, "Error in local_calculcate_temperature_table.\n");
-      return FAIL;
-    }
-    return SUCCESS;
-  }
 
   /* Compute properties used to index the field. */
   const grackle_index_helper ind_helper = build_index_helper_(my_fields);
@@ -133,103 +102,30 @@ int local_calculate_temperature(chemistry_data *my_chemistry,
 		 my_fields->H2II_density[index]);
       }
 
-      if (my_fields->metal_density != NULL) {
+      if (imetal) {
 	number_density += my_fields->metal_density[index] * inv_metal_mol;
       }
  
       /* Ignore deuterium. */
  
-      temperature[index] *= temperature_units / max(number_density,
+      temperature[index] *= temperature_units / fmax(number_density,
 						    tiny_number);
-      temperature[index] = max(temperature[index], MINIMUM_TEMPERATURE);
+      temperature[index] = fmax(temperature[index], MINIMUM_TEMPERATURE);
     } // end: loop over i
   } // end: loop over outer_ind
 
-  return SUCCESS;
+  return GR_SUCCESS;
 }
 
-int local_calculate_temperature_table(chemistry_data *my_chemistry,
-                                      chemistry_data_storage *my_rates,
-                                      code_units *my_units,
-                                      grackle_field_data *my_fields,
-                                      gr_float *temperature)
-{
-
-  if (!my_chemistry->use_grackle)
-    return SUCCESS;
-
-  if (my_chemistry->primordial_chemistry != 0) {
-    fprintf(stderr, "ERROR: this function requires primordial_chemistry set to 0.\n");
-    return FAIL;
-  }
-
-  /* Check for a metal field. */
-
-  int metal_field_present = TRUE;
-  if (my_fields->metal_density == NULL)
-    metal_field_present = FALSE;
-
-  double co_length_units, co_density_units;
-  if (my_units->comoving_coordinates == TRUE) {
-    co_length_units = my_units->length_units;
-    co_density_units = my_units->density_units;
-  }
-  else {
-    co_length_units = my_units->length_units *
-      my_units->a_value * my_units->a_units;
-    co_density_units = my_units->density_units /
-      POW(my_units->a_value * my_units->a_units, 3);
-  }
-
-  /* Calculate temperature units. */
-
-  double temperature_units = get_temperature_units(my_units);
-
-  FORTRAN_NAME(calc_temp_cloudy_g)(
-        my_fields->density,
-        my_fields->internal_energy,
-        my_fields->metal_density,
-        temperature,
-        my_fields->grid_dimension+0,
-        my_fields->grid_dimension+1,
-        my_fields->grid_dimension+2,
-        &my_units->comoving_coordinates,
-        &metal_field_present,
-        my_fields->grid_start+0,
-        my_fields->grid_start+1,
-        my_fields->grid_start+2,
-        my_fields->grid_end+0,
-        my_fields->grid_end+1,
-        my_fields->grid_end+2,
-        &my_units->a_value,
-        &my_chemistry->TemperatureStart,
-        &my_chemistry->TemperatureEnd,
-        &temperature_units,
-        &co_length_units,
-        &my_units->a_units,
-        &co_density_units,
-        &my_units->time_units,
-        &my_chemistry->Gamma,
-        &my_chemistry->HydrogenFractionByMass,
-        &my_rates->cloudy_primordial.grid_rank,
-        my_rates->cloudy_primordial.grid_dimension,
-        my_rates->cloudy_primordial.grid_parameters[0],
-        my_rates->cloudy_primordial.grid_parameters[1],
-        my_rates->cloudy_primordial.grid_parameters[2],
-        &my_rates->cloudy_primordial.data_size,
-        my_rates->cloudy_primordial.mmw_data);
-
-  return SUCCESS;
-}
 
 int calculate_temperature(code_units *my_units,
                           grackle_field_data *my_fields,
                           gr_float *temperature)
 {
   if (local_calculate_temperature(grackle_data, &grackle_rates, my_units,
-                                  my_fields, temperature) == FAIL) {
+                                  my_fields, temperature) != GR_SUCCESS) {
     fprintf(stderr, "Error in local_calculate_temperature.\n");
-    return FAIL;
+    return GR_FAIL;
   }
-  return SUCCESS;
+  return GR_SUCCESS;
 }
