@@ -1,7 +1,14 @@
-// See LICENSE file for license and copyright information
-
-/// @file solve_rate_cool_g-cpp.C
-/// @brief Declares signature of solve_rate_cool_g
+//===----------------------------------------------------------------------===//
+//
+// See the LICENSE file for license and copyright information
+// SPDX-License-Identifier: NCSA AND BSD-3-Clause
+//
+//===----------------------------------------------------------------------===//
+///
+/// @file
+/// Implements the solve_rate_cool_g function
+///
+//===----------------------------------------------------------------------===//
 
 // This file was initially generated automatically during conversion of the
 // solve_rate_cool_g function from FORTRAN to C++
