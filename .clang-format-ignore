@@ -10,7 +10,7 @@
 # - No new files should be added to this list
 
 src/clib/c_wrappers/wrap_interpolators_g.c
-src/clib/calc_tdust_3d.C
+src/clib/calc_tdust_3d.cpp
 src/clib/calculate_cooling_time.c
 src/clib/calculate_dust_temperature.c
 src/clib/calculate_gamma.c

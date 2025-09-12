@@ -106,7 +106,7 @@ add_library(Grackle_Grackle
 
   # C++ Source (and Private Header Files)
   calc_temp_cloudy_g.cpp calc_temp_cloudy_g.h
-  calc_tdust_3d.C calc_tdust_3d.h
+  calc_tdust_3d.cpp calc_tdust_3d.h
   cool_multi_time_g.cpp cool_multi_time_g.h
   dust_props.hpp
   initialize_chemistry_data.cpp
