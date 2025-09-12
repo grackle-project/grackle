@@ -19,7 +19,7 @@ OBJS_CONFIG_LIB = \
         calculate_pressure.lo \
         calculate_temperature.lo \
         calc_temp1d_cloudy_g.lo \
-        calc_temp_cloudy_g-cpp.lo \
+        calc_temp_cloudy_g.lo \
         collisional_rate_props.lo \
         cool1d_cloudy_g.lo \
         cool1d_cloudy_old_tables_g.lo \

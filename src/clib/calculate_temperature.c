@@ -14,9 +14,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
-#include "calc_temp_cloudy_g-cpp.h"
+#include "calc_temp_cloudy_g.h"
 #include "grackle.h"
-#include "grackle_macros.h"
 #include "index_helper.h"
 #include "internal_units.h"
 #include "phys_constants.h"
@@ -34,30 +33,30 @@
  
 #define MINIMUM_TEMPERATURE 1.0
  
-int local_calculate_temperature_table(chemistry_data *my_chemistry,
-                                      chemistry_data_storage *my_rates,
-                                      code_units *my_units,
-                                      grackle_field_data *my_fields,
-                                      gr_float *temperature);
- 
 int local_calculate_temperature(chemistry_data *my_chemistry,
                                 chemistry_data_storage *my_rates,
                                 code_units *my_units,
                                 grackle_field_data *my_fields,
                                 gr_float *temperature)
 {
+  if (!my_chemistry->use_grackle) { return GR_SUCCESS; }
 
-  if (!my_chemistry->use_grackle)
-    return SUCCESS;
+  const int imetal = (my_fields->metal_density != NULL) ? 1 : 0;
+
+  // we have special handling for tabulated-chemistry-mode
+  if (my_chemistry->primordial_chemistry == 0) {
+    calc_temp_cloudy_g(temperature, imetal, my_chemistry,
+                       my_rates->cloudy_primordial, my_fields,
+                       new_internalu_(my_units));
+    return GR_SUCCESS;
+  };
+
 
   /* Compute the pressure first. */
- 
-  if (my_chemistry->primordial_chemistry > 0) {
-    if (local_calculate_pressure(my_chemistry, my_rates, my_units,
-                                 my_fields, temperature) == FAIL) {
-      fprintf(stderr, "Error in calculate_pressure.\n");
-      return FAIL;
-    }
+  if (local_calculate_pressure(my_chemistry, my_rates, my_units,
+                               my_fields, temperature) != GR_SUCCESS) {
+    fprintf(stderr, "Error in calculate_pressure.\n");
+    return GR_FAIL;
   }
 
   /* Calculate temperature units. */
@@ -66,15 +65,6 @@ int local_calculate_temperature(chemistry_data *my_chemistry,
 
   double number_density, tiny_number = 1.-20;
   double inv_metal_mol = 1.0 / MU_METAL;
-  
-  if (my_chemistry->primordial_chemistry == 0) {
-    if (local_calculate_temperature_table(my_chemistry, my_rates, my_units,
-                                          my_fields, temperature) == FAIL) {
-      fprintf(stderr, "Error in local_calculcate_temperature_table.\n");
-      return FAIL;
-    }
-    return SUCCESS;
-  }
 
   /* Compute properties used to index the field. */
   const grackle_index_helper ind_helper = build_index_helper_(my_fields);
@@ -112,59 +102,30 @@ int local_calculate_temperature(chemistry_data *my_chemistry,
 		 my_fields->H2II_density[index]);
       }
 
-      if (my_fields->metal_density != NULL) {
+      if (imetal) {
 	number_density += my_fields->metal_density[index] * inv_metal_mol;
       }
  
       /* Ignore deuterium. */
  
-      temperature[index] *= temperature_units / max(number_density,
+      temperature[index] *= temperature_units / fmax(number_density,
 						    tiny_number);
-      temperature[index] = max(temperature[index], MINIMUM_TEMPERATURE);
+      temperature[index] = fmax(temperature[index], MINIMUM_TEMPERATURE);
     } // end: loop over i
   } // end: loop over outer_ind
 
-  return SUCCESS;
+  return GR_SUCCESS;
 }
 
-int local_calculate_temperature_table(chemistry_data *my_chemistry,
-                                      chemistry_data_storage *my_rates,
-                                      code_units *my_units,
-                                      grackle_field_data *my_fields,
-                                      gr_float *temperature)
-{
-
-  if (!my_chemistry->use_grackle)
-    return SUCCESS;
-
-  if (my_chemistry->primordial_chemistry != 0) {
-    fprintf(stderr, "ERROR: this function requires primordial_chemistry set to 0.\n");
-    return FAIL;
-  }
-
-  InternalGrUnits internalu = new_internalu_(my_units);
-
-  /* Check for a metal field. */
-
-  int metal_field_present = TRUE;
-  if (my_fields->metal_density == NULL)
-    metal_field_present = FALSE;
-
-  calc_temp_cloudy_g(
-    temperature, metal_field_present, my_chemistry, my_rates->cloudy_primordial,
-    my_fields, internalu
-  );
-  return SUCCESS;
-}
 
 int calculate_temperature(code_units *my_units,
                           grackle_field_data *my_fields,
                           gr_float *temperature)
 {
   if (local_calculate_temperature(grackle_data, &grackle_rates, my_units,
-                                  my_fields, temperature) == FAIL) {
+                                  my_fields, temperature) != GR_SUCCESS) {
     fprintf(stderr, "Error in local_calculate_temperature.\n");
-    return FAIL;
+    return GR_FAIL;
   }
-  return SUCCESS;
+  return GR_SUCCESS;
 }
