@@ -1,13 +1,20 @@
-// See LICENSE file for license and copyright information
-
-/// @file calc_tdust_3d.h
-/// @brief Declares signature of calc_tdust_3d_g
+//===----------------------------------------------------------------------===//
+//
+// See the LICENSE file for license and copyright information
+// SPDX-License-Identifier: NCSA AND BSD-3-Clause
+//
+//===----------------------------------------------------------------------===//
+///
+/// @file
+/// Declares signature of calc_tdust_3d_g
+///
+//===----------------------------------------------------------------------===//
 
 // This file was initially generated automatically during conversion of the
 // calc_tdust_3d_g function from FORTRAN to C++
 
-#ifndef MY_FILE_CPP_H
-#define MY_FILE_CPP_H
+#ifndef CALC_TDUST_3D_H
+#define CALC_TDUST_3D_H
 
 #include "grackle.h"  // gr_float
 #include "internal_units.h"
@@ -30,4 +37,4 @@ void calc_tdust_3d_g(gr_float* gas_temp_data_, gr_float* dust_temp_data_,
 }  // extern "C"
 #endif /* __cplusplus */
 
-#endif /* MY_FILE_CPP_H */
+#endif /* CALC_TDUST_3D_H */
