@@ -1,20 +1,22 @@
-/***********************************************************************
-/
-/ Defines functions that perform basic utilities related to rate data.
-/
-/
-/ Copyright (c) 2013, Enzo/Grackle Development Team.
-/
-/ Distributed under the terms of the Enzo Public Licence.
-/
-/ The full license is in the file LICENSE, distributed with this
-/ software.
-************************************************************************/
+//===----------------------------------------------------------------------===//
+//
+// See the LICENSE file for license and copyright information
+// SPDX-License-Identifier: NCSA AND BSD-3-Clause
+//
+//===----------------------------------------------------------------------===//
+///
+/// @file
+/// Defines functions that perform basic utilities related to rate data.
+///
+//===----------------------------------------------------------------------===//
 
 #include <stdbool.h>  // bool, true, and false are defined
 #include <string.h>   // strcmp
 #include <limits.h>   // LLONG_MAX
 #include "grackle.h"
+#include "internal_types.hpp"  // CollisionalRxnRateCollection
+#include "LUT.hpp"             // CollisionalRxnLUT
+#include "opaque_storage.hpp"  // gr_opaque_storage
 
 // In comparison to the dynamic API for accessing elements of chemistry_data,
 // we have explicitly opted NOT to make use of offsetof to access arbitrary
@@ -53,32 +55,43 @@ static inline rateprop_ mk_rateprop_(double* rate, const char* name) {
   out.name = name;
   return out;
 }
+
+static inline rateprop_ mk_rateprop_standard_kcol_(
+    chemistry_data_storage* my_rates, const char* name, int index) {
+  if ((my_rates == nullptr) || (my_rates->opaque_storage == nullptr) ||
+      (my_rates->opaque_storage->kcol_rate_tables == nullptr)) {
+    return mk_rateprop_(nullptr, name);
+  } else {
+    return mk_rateprop_(my_rates->opaque_storage->kcol_rate_tables->data[index],
+                        name);
+  }
+}
+
 #define MKPROP_(PTR, NAME) mk_rateprop_((PTR == NULL) ? NULL : PTR->NAME, #NAME)
 #define MKPROP_SCALAR_(PTR, NAME)                                              \
   mk_rateprop_((PTR == NULL) ? NULL : &(PTR->NAME), #NAME)
+#define MKPROP_STANDARD_KCOL_(PTR, NAME, INDEX)                                \
+  mk_rateprop_standard_kcol_(PTR, #NAME, INDEX)
 
 // Create machinery to lookup Standard-Form Collisional Reaction Rates
 // -------------------------------------------------------------------
 // see the next section for other macros
 
-// We define an enum down for internal use
-// -> we leverage the property that the value of an enumeration-constant is
-//    1 larger than the previous value (if a value isn't explicitly specified)
-// -> we also leverage the property that the 1st enumeration-constant is 0
-//    (if a value isn't explicitly specified)
-enum CollisionalRxnRateKind_ {
-#define ENTRY(NAME) CollisionalRxn_##NAME,
-#include "collisional_rxn_rate_members.def"
-#undef ENTRY
-  CollisionalRxn_NRATES  // <- will hold the number of reactions
-};
-
+// this fn leverages the following properties of the CollisionalRxnLUT enum:
+// - each entry of collisional_rxn_rate_members.def has a corresponding
+//   enumeration-constant
+// - the very first enumeration constant has a value of 0 (since a value wasn't
+//   explicitly specified)
+// - the value of each other enumeration constants is 1 larger than the value
+//   of the previous value (if a value isn't explicitly specified)
+// - CollisionalRxnLUT::NUM_ENTRIES specifies the number of other enumeration
+//   constants (excluding CollisionalRxnLUT::NUM_ENTRIES) in the enum
 static rateprop_ get_CollisionalRxn_rateprop_(chemistry_data_storage* my_rates,
                                               int i) {
   switch (i) {
 #define ENTRY(NAME)                                                            \
-  case CollisionalRxn_##NAME: {                                                \
-    return MKPROP_(my_rates, NAME);                                            \
+  case CollisionalRxnLUT::NAME: {                                              \
+    return MKPROP_STANDARD_KCOL_(my_rates, NAME, CollisionalRxnLUT::NAME);     \
   }
 #include "collisional_rxn_rate_members.def"
 #undef ENTRY
@@ -154,8 +167,9 @@ struct rate_registry_type_ {
 
 static const struct rate_registry_type_ rate_registry_ = {
     /* len: */ RATE_SET_COUNT,
-    /* sets: */ {{1000, CollisionalRxn_NRATES, &get_CollisionalRxn_rateprop_},
-                 {2000, MiscRxn_NRATES, &get_MiscRxn_rateprop_}}};
+    /* sets: */ {
+        {1000, CollisionalRxnLUT::NUM_ENTRIES, &get_CollisionalRxn_rateprop_},
+        {2000, MiscRxn_NRATES, &get_MiscRxn_rateprop_}}};
 
 struct ratequery_rslt_ {
   grunstable_rateid_type rate_id;
@@ -191,7 +205,7 @@ static struct ratequery_rslt_ query_rateprop_(chemistry_data_storage* my_rates,
 // here we implement the public API
 // --------------------------------
 
-grunstable_rateid_type grunstable_ratequery_id(const char* name) {
+extern "C" grunstable_rateid_type grunstable_ratequery_id(const char* name) {
   if (name == NULL) {
     return UNDEFINED_RATE_ID_;
   }
@@ -208,13 +222,13 @@ grunstable_rateid_type grunstable_ratequery_id(const char* name) {
   return UNDEFINED_RATE_ID_;
 }
 
-double* grunstable_ratequery_get_ptr(chemistry_data_storage* my_rates,
-                                     grunstable_rateid_type rate_id) {
+extern "C" double* grunstable_ratequery_get_ptr(
+    chemistry_data_storage* my_rates, grunstable_rateid_type rate_id) {
   return query_rateprop_(my_rates, rate_id, true).prop.data;
 }
 
-const char* grunstable_ith_rate(unsigned long long i,
-                                grunstable_rateid_type* out_rate_id) {
+extern "C" const char* grunstable_ith_rate(
+    unsigned long long i, grunstable_rateid_type* out_rate_id) {
   const long long sanitized_i = (i < LLONG_MAX) ? (long long)i : -1;
   struct ratequery_rslt_ tmp = query_rateprop_(NULL, sanitized_i, false);
   if (out_rate_id != NULL) {
