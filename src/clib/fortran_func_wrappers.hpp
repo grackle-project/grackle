@@ -22,6 +22,7 @@
 #error "This file must be read by a c++ compiler"
 #endif
 
+#include "gaussj_g.hpp"
 #include "grackle.h"
 #include "dust_props.hpp"
 #include "fortran_func_decls.h"
@@ -303,50 +304,6 @@ inline void cool1d_multi_g(
                  my_rates->gas_grain2, &my_rates->gamma_isrf2
             );
 
-}
-
-
-/// Performs Gauss-Jordan elimination to solve the specified system of linear
-/// equations and inverts the coefficient matrix.
-///
-/// In more detail, it solves the linear matrix `ax=b`, where `a` is the
-/// square coefficient matrix, `b` is the right-hand side vector and `x`
-/// is the solution vector
-///
-/// @param[in]     n The number of linear equations being solved
-/// @param[in,out] coef_matrix An n by n column major array that initially
-///    specifies the coefficient matrix. This function overwrites this matrix
-///    with the inverted matrix.
-/// @param[in,out] vec An n element array that initially specifies the
-///    right-hand side vector. It's overwritten by the solution vector.
-///
-/// @retval 0 indicates success
-/// @retval 1 indicates that the matrix is singular
-///
-/// > [!important]
-/// > This appears to be taken directly from a routine provided in
-/// > "Numerical Recipes" and slightly adapted. The original text allows
-/// > `b` to hold multiple right-hand side vectors (and then we compute
-/// > solutions for each right-hand side vector at the same time). In
-/// > contrast, only allow 1 vector).
-/// >
-/// > The original Numerical Recipes snippet can be found here
-/// > https://phys.uri.edu/nigh/NumRec/bookfpdf/f2-1.pdf
-/// >
-/// > Code from Numerical Recipes CANNOT be merged into Grackle (the
-/// > licensing is fundamentally incompatible)
-///
-/// @todo
-/// We need to replace this for reasons highlighted up above. When we do that,
-/// we should account that the only place that calls this routine only needs
-/// the solution to the system of equations (i.e. it does not need the
-/// inverted matrix). For that reason, we may want to rename this to something
-/// a little more generic. We should also consider information highlighted
-/// within https://github.com/grackle-project/grackle/issues/255
-inline int gaussj_g(int n, double* coef_matrix, double* vector) {
-  int ierr;
-  FORTRAN_NAME(gaussj_g)(&n, coef_matrix, vector, &ierr);
-  return ierr;
 }
 
 /// wrapper for 1d interpolation
