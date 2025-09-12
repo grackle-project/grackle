@@ -1,6 +1,14 @@
-/// @file utils.hpp
-/// @brief Header file defining various C++ utilities used in the routines
-///        transcribed from Fortran
+//===----------------------------------------------------------------------===//
+//
+// See the LICENSE file for license and copyright information
+// SPDX-License-Identifier: NCSA AND BSD-3-Clause
+//
+//===----------------------------------------------------------------------===//
+///
+/// @file
+/// Declares various C++ utilities used in routines transcribed from Fortran
+///
+//===----------------------------------------------------------------------===//
 
 #ifndef UTILS_HPP
 #define UTILS_HPP

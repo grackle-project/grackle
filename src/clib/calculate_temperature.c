@@ -14,7 +14,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
-#include "calc_temp_cloudy_g-cpp.h"
+#include "calc_temp_cloudy_g.h"
 #include "grackle.h"
 #include "index_helper.h"
 #include "internal_units.h"
