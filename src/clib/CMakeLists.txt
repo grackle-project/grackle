@@ -90,28 +90,30 @@ add_library(Grackle_Grackle
   dynamic_api.c
   grackle_units.c
   index_helper.c
-  initialize_chemistry_data.c
-  initialize_cloudy_data.c
-  initialize_rates.c
-  initialize_UVbackground_data.c
+  initialize_cloudy_data.c initialize_cloudy_data.h
+  initialize_UVbackground_data.c  initialize_UVbackground_data.h
   rate_functions.c
   set_default_chemistry_parameters.c
   solve_chemistry.c
   status_reporting.c status_reporting.h
   update_UVbackground_rates.c
-  initialize_dust_yields.c
-  initialize_metal_chemistry_rates.c
   rate_utils.c
   utils.c
 
   # auto-generated C source files
   ${CMAKE_CURRENT_BINARY_DIR}/auto_general.c
+  # here is the companion header file (not generated)
+  auto_general.h
 
   # C++ Source (and Private Header Files)
   calc_temp_cloudy_g-cpp.C calc_temp_cloudy_g-cpp.h
   calc_tdust_3d.C calc_tdust_3d.h
   cool_multi_time_g-cpp.C cool_multi_time_g-cpp.h
   dust_props.hpp
+  initialize_chemistry_data.cpp
+  initialize_dust_yields.cpp initialize_dust_yields.hpp
+  initialize_rates.cpp initialize_rates.hpp
+  initialize_metal_chemistry_rates.cpp initialize_metal_chemistry_rates.hpp
   internal_types.C internal_types.hpp
   scale_fields.hpp
   solve_rate_cool_g-cpp.C solve_rate_cool_g-cpp.h
