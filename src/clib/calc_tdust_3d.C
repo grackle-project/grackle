@@ -15,6 +15,7 @@
 #include "grackle.h"
 #include "index_helper.h"
 #include "internal_types.hpp"
+#include "scale_fields.hpp"
 #include "utils-cpp.hpp"
 
 #ifdef __cplusplus
@@ -29,34 +30,6 @@ void calc_tdust_3d_g(
 {
   // shorten `grackle::impl::fortran_wrapper` to `f_wrap` within this function
   namespace f_wrap = ::grackle::impl::fortran_wrapper;
-
-  grackle::impl::View<gr_float***> metal(my_fields->metal_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> dust(my_fields->dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_loc(my_fields->local_ISM_metal_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_C13(my_fields->ccsn13_metal_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_C20(my_fields->ccsn20_metal_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_C25(my_fields->ccsn25_metal_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_C30(my_fields->ccsn30_metal_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_F13(my_fields->fsn13_metal_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_F15(my_fields->fsn15_metal_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_F50(my_fields->fsn50_metal_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_F80(my_fields->fsn80_metal_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_P170(my_fields->pisn170_metal_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_P200(my_fields->pisn200_metal_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal_Y19(my_fields->y19_metal_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> SiM(my_fields->SiM_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> FeM(my_fields->FeM_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> Mg2SiO4(my_fields->Mg2SiO4_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> MgSiO3(my_fields->MgSiO3_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> Fe3O4(my_fields->Fe3O4_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> AC(my_fields->AC_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> SiO2D(my_fields->SiO2_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> MgO(my_fields->MgO_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> FeS(my_fields->FeS_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> Al2O3(my_fields->Al2O3_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> reforg(my_fields->ref_org_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> volorg(my_fields->vol_org_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> H2Oice(my_fields->H2O_ice_dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
   const double mh_local_var = mh_grflt;
 
@@ -76,67 +49,10 @@ void calc_tdust_3d_g(
   // Loop over zones, and do an entire i-column in one go
   const grackle_index_helper idx_helper = build_index_helper_(my_fields);
 
+  // Convert densities to 'proper' from comoving
   if (internalu.extfields_in_comoving == 1)  {
-
-    // we will get rid of this unnecessary level of scope in the near future
-    {
-      OMP_PRAGMA("omp parallel for schedule(runtime)")
-      for (int t = 0; t < idx_helper.outer_ind_size; t++) {
-        // construct an index-range corresponding to "i-slice"
-        const IndexRange idx_range = make_idx_range_(t, &idx_helper);
-        const int k = idx_range.k;
-        const int j = idx_range.j;
-
-        if (imetal == 1)  {
-          for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-            metal(i,j,k) = metal(i,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
-            if (my_chemistry->multi_metals > 0)  {
-              metal_loc(i,j,k) = metal_loc(i,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
-              metal_C13(i,j,k) = metal_C13(i,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
-              metal_C20(i,j,k) = metal_C20(i,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
-              metal_C25(i,j,k) = metal_C25(i,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
-              metal_C30(i,j,k) = metal_C30(i,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
-              metal_F13(i,j,k) = metal_F13(i,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
-              metal_F15(i,j,k) = metal_F15(i,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
-              metal_F50(i,j,k) = metal_F50(i,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
-              metal_F80(i,j,k) = metal_F80(i,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
-              metal_P170(i,j,k)=metal_P170(i,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
-              metal_P200(i,j,k)=metal_P200(i,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
-              metal_Y19(i,j,k) = metal_Y19(i,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
-            }
-          }
-        }
-        if (my_chemistry->use_dust_density_field == 1)  {
-          for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-            dust(i,j,k) = dust(i,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
-            if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1 ) )  {
-              // !            if (metal(i,j,k) .gt. 1.d-9 * d(i,j,k)) then
-              if (my_chemistry->dust_species > 0)  {
-                MgSiO3(i,j,k)  = MgSiO3(i,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
-                AC(i,j,k)      = AC(i,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
-              }
-              if (my_chemistry->dust_species > 1)  {
-                SiM(i,j,k)     = SiM(i,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
-                FeM(i,j,k)     = FeM(i,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
-                Mg2SiO4(i,j,k) = Mg2SiO4(i,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
-                Fe3O4(i,j,k)   = Fe3O4(i,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
-                SiO2D(i,j,k)   = SiO2D(i,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
-                MgO(i,j,k)     = MgO(i,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
-                FeS(i,j,k)     = FeS(i,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
-                Al2O3(i,j,k)   = Al2O3(i,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
-              }
-              if (my_chemistry->dust_species > 2)  {
-                reforg(i,j,k)  = reforg(i,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
-                volorg(i,j,k)  = volorg(i,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
-                H2Oice(i,j,k)  = H2Oice(i,j,k)/(gr_float)(std::pow(internalu.a_value,3) );
-              }
-              // !            endif
-            }
-          }
-        }
-      }
-    }
- 
+    gr_float factor = (gr_float)(1.0)/(gr_float)std::pow(internalu.a_value,3);
+    grackle::impl::scale_fields_dust(my_chemistry, my_fields, imetal, factor);
   }
 
   OMP_PRAGMA("omp parallel")
@@ -152,6 +68,8 @@ void calc_tdust_3d_g(
     grackle::impl::View<gr_float***> gas_temp(gas_temp_data_, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
     grackle::impl::View<gr_float***> dust_temp(dust_temp_data_, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
     grackle::impl::View<gr_float***> isrf_habing(my_fields->isrf_habing, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    grackle::impl::View<gr_float***> metal(my_fields->metal_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    grackle::impl::View<gr_float***> dust(my_fields->dust_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
     grackle::impl::View<gr_float***> SiM_temp(my_fields->SiM_dust_temperature, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
     grackle::impl::View<gr_float***> FeM_temp(my_fields->FeM_dust_temperature, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
@@ -371,73 +289,9 @@ void calc_tdust_3d_g(
   }  // OMP_PRAGMA("omp parallel")
 
   // Convert densities back to comoving from 'proper'
-
   if (internalu.extfields_in_comoving == 1)  {
-
-    // we will get rid of this unnecessary level of scope in the near future
-    {
-
-      // The following for-loop is a flattened loop over every k,j combination.
-      // OpenMP divides this loop between all threads. Within the loop, we
-      // complete calculations for the constructed index-range construct
-      // (an index range corresponds to an "i-slice")
-      OMP_PRAGMA("omp parallel for schedule(runtime)")
-      for (int t = 0; t < idx_helper.outer_ind_size; t++) {
-        // construct an index-range corresponding to "i-slice"
-        const IndexRange idx_range = make_idx_range_(t, &idx_helper);
-        const int k = idx_range.k;
-        const int j = idx_range.j;
-
-        if (imetal == 1)  {
-          for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-            metal(i,j,k) = metal(i,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
-            if (my_chemistry->multi_metals > 0)  {
-              metal_loc(i,j,k) = metal_loc(i,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
-              metal_C13(i,j,k) = metal_C13(i,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
-              metal_C20(i,j,k) = metal_C20(i,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
-              metal_C25(i,j,k) = metal_C25(i,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
-              metal_C30(i,j,k) = metal_C30(i,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
-              metal_F13(i,j,k) = metal_F13(i,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
-              metal_F15(i,j,k) = metal_F15(i,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
-              metal_F50(i,j,k) = metal_F50(i,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
-              metal_F80(i,j,k) = metal_F80(i,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
-              metal_P170(i,j,k)=metal_P170(i,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
-              metal_P200(i,j,k)=metal_P200(i,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
-              metal_Y19(i,j,k) = metal_Y19(i,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
-            }
-          }
-        }
-        if (my_chemistry->use_dust_density_field == 1)  {
-          for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-            dust(i,j,k) = dust(i,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
-            if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1 ) )  {
-              // !            if (metal(i,j,k) .gt. 1.d-9 * d(i,j,k)) then
-              if (my_chemistry->dust_species > 0)  {
-                MgSiO3(i,j,k)  = MgSiO3(i,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
-                AC(i,j,k)      = AC(i,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
-              }
-              if (my_chemistry->dust_species > 1)  {
-                SiM(i,j,k)     = SiM(i,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
-                FeM(i,j,k)     = FeM(i,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
-                Mg2SiO4(i,j,k) = Mg2SiO4(i,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
-                Fe3O4(i,j,k)   = Fe3O4(i,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
-                SiO2D(i,j,k)   = SiO2D(i,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
-                MgO(i,j,k)     = MgO(i,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
-                FeS(i,j,k)     = FeS(i,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
-                Al2O3(i,j,k)   = Al2O3(i,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
-              }
-              if (my_chemistry->dust_species > 2)  {
-                reforg(i,j,k)  = reforg(i,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
-                volorg(i,j,k)  = volorg(i,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
-                H2Oice(i,j,k)  = H2Oice(i,j,k)*(gr_float)(std::pow(internalu.a_value,3) );
-              }
-              // !            endif
-            }
-          }
-        }
-      }
-    }
-
+    gr_float factor = (gr_float)std::pow(internalu.a_value,3);
+    grackle::impl::scale_fields_dust(my_chemistry, my_fields, imetal, factor);
   }
 
   return;

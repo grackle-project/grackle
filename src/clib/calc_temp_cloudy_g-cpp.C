@@ -13,7 +13,7 @@
 #include "fortran_func_decls.h"
 #include "fortran_func_wrappers.hpp"
 #include "index_helper.h"
-#include "scale_fields_table.hpp"
+#include "scale_fields.hpp"
 #include "utils-cpp.hpp"
 
 #include "calc_temp_cloudy_g-cpp.h"
