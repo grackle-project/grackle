@@ -281,8 +281,7 @@ inline void interpolate_collisional_rxn_rates_(
 inline void model_H2I_dissociation_shielding(
     grackle::impl::PhotoRxnRateCollection kshield_buf, IndexRange idx_range,
     const double* tgas1d, const double* mmw, double dom, double dx_cgs,
-    double c_ljeans, const gr_mask_type* itmask,
-    chemistry_data* my_chemistry,
+    double c_ljeans, const gr_mask_type* itmask, chemistry_data* my_chemistry,
     grackle_field_data* my_fields, photo_rate_storage my_uvb_rates,
     InternalGrUnits internalu) {
   if (my_chemistry->primordial_chemistry <= 1) {
@@ -1493,12 +1492,11 @@ inline void lookup_cool_rates1d(
     }
   }
 
-  // H2 self-shielding (Sobolev-like, spherically averaged, Wolcott-Green+ 2011)
-
+  // model the effects of H2 self-shielding
   if (my_chemistry->primordial_chemistry > 1) {
-    model_H2I_dissociation_shielding(
-        kshield_buf, idx_range, tgas1d, mmw, dom, dx_cgs, c_ljeans, itmask,
-        my_chemistry, my_fields, my_uvb_rates, internalu);
+    model_H2I_dissociation_shielding(kshield_buf, idx_range, tgas1d, mmw, dom,
+                                     dx_cgs, c_ljeans, itmask, my_chemistry,
+                                     my_fields, my_uvb_rates, internalu);
   }
 
   // apply some miscellaneous self-shielding adjustments
