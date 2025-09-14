@@ -21,13 +21,18 @@
 extern "C" {
 #endif
 
+/// Free memory associated with a #gr_interp_grid_props instance
+static inline void free_interp_grid_props_(gr_interp_grid_props* props)
+{
+  for (int i = 0; i < GRACKLE_CLOUDY_TABLE_MAX_DIMENSION; i++) {
+    GRACKLE_FREE(props->parameters[i]);
+  }
+}
 
 /// Free memory associated with a #gr_interp_grid
 static inline void free_interp_grid_(gr_interp_grid* grid)
 {
-  for (int i = 0; i < GRACKLE_CLOUDY_TABLE_MAX_DIMENSION; i++) {
-    GRACKLE_FREE(grid->props.parameters[i]);
-  }
+  free_interp_grid_props_(&(grid->props));
   GRACKLE_FREE(grid->data);
 }
 
