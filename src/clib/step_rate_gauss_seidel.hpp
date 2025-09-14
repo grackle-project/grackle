@@ -139,9 +139,9 @@ inline void step_rate_gauss_seidel(
           OMP_PRAGMA_CRITICAL
           {
             printf("HUGE HIp! ::  %d %d %d %g %g %g %g %g %g %g %g\n",
-                   i+1,
-                   idx_range.jp1,
-                   idx_range.kp1,
+                   i,
+                   j,
+                   k,
                    species_tmpdens.data[SpLUT::HI] [ i ],
                    HI ( i, j, k ),
                    HII ( i, j, k ),
@@ -170,9 +170,9 @@ inline void step_rate_gauss_seidel(
           OMP_PRAGMA_CRITICAL
           {
             printf("negative HIIp! ::  %d %d %d %g %g %g %g %g %g %g %g %g %g\n",
-                   i+1,
-                   idx_range.jp1,
-                   idx_range.kp1,
+                   i,
+                   j,
+                   k,
                    species_tmpdens.data[SpLUT::HII] [ i ],
                    scoef,
                    dtit [ i ],
@@ -396,9 +396,9 @@ inline void step_rate_gauss_seidel(
           OMP_PRAGMA_CRITICAL
           {
             printf("HUGE HIp! ::  %d %d %d %g %g %g %g %g %g\n",
-                   i+1,
-                   idx_range.jp1,
-                   idx_range.kp1,
+                   i,
+                   j,
+                   k,
                    species_tmpdens.data[SpLUT::HI] [ i ],
                    HI ( i, j, k ),
                    HII ( i, j, k ),
@@ -1485,10 +1485,7 @@ inline void step_rate_gauss_seidel(
       OMP_PRAGMA_CRITICAL
       {
         printf("HUGE HI! ::  %d %d %d %g\n",
-               i+1,
-               idx_range.jp1,
-               idx_range.kp1,
-               HI ( i, j, k ));
+               i, j, k, HI ( i, j, k ));
       }
     }
 
