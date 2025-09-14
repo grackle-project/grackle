@@ -32,9 +32,9 @@ namespace grackle::impl {
 /// Uses one linearly implicit Gauss-Seidel sweep of a backward-Euler time
 /// integrator to advance the rate equations by one (sub-)cycle (dtit).
 inline void step_rate_gauss_seidel(
-  double* dtit, gr_mask_type* anydust, double* h2dust, double* rhoH,
+  double* dtit, gr_mask_type anydust, double* h2dust, double* rhoH,
   double* dedot_prev, double* HIdot_prev, gr_mask_type* itmask,
-  gr_mask_type* itmask_metal, int* imetal, chemistry_data* my_chemistry,
+  gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
   grackle_field_data* my_fields, photo_rate_storage my_uvb_rates,
   IndexRange idx_range,
   grackle::impl::GrainSpeciesCollection grain_growth_rates,
@@ -43,16 +43,9 @@ inline void step_rate_gauss_seidel(
   grackle::impl::PhotoRxnRateCollection kshield_buf
 )
 {
-  // -------------------------------------------------------------------
 
-
-  // arguments
-
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-
-  // Density fields
+  // Construct views of various species fields
+  // -----------------------------------------
 
   grackle::impl::View<gr_float***> de(my_fields->e_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> HI(my_fields->HI_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
@@ -111,27 +104,12 @@ inline void step_rate_gauss_seidel(
   grackle::impl::View<gr_float***> kphHI(my_fields->RT_HI_ionization_rate, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> kphHeI(my_fields->RT_HeI_ionization_rate, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> kphHeII(my_fields->RT_HeII_ionization_rate, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-
-  // -- removed line (previously just declared arg types) -- 
   grackle::impl::View<gr_float***> kdissHDI(my_fields->RT_HDI_dissociation_rate, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> kphCI(my_fields->RT_CI_ionization_rate, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> kphOI(my_fields->RT_OI_ionization_rate, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> kdissCO(my_fields->RT_CO_dissociation_rate, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> kdissOH(my_fields->RT_OH_dissociation_rate, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> kdissH2O(my_fields->RT_H2O_dissociation_rate, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-
-
-  // Rate values
-
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-
-  // temporaries (passed in)
-
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
-  // -- removed line (previously just declared arg types) -- 
 
   // locals
 
@@ -343,7 +321,7 @@ inline void step_rate_gauss_seidel(
           }
         }
 
-        if ((*anydust) != MASK_FALSE)  {
+        if (anydust != MASK_FALSE)  {
           if(itmask_metal[i-1] != MASK_FALSE)  {
             acoef = acoef + 2. * h2dust[i-1] * rhoH[i-1];
           }
@@ -557,7 +535,7 @@ inline void step_rate_gauss_seidel(
                 + kcol_buf.data[CollisionalRxnLUT::k12][i-1]*de(i-1,idx_range.jp1-1,idx_range.kp1-1) )
                 + kshield_buf.k29[i-1] + kshield_buf.k31[i-1];
 
-        if ((*anydust) != MASK_FALSE)  {
+        if (anydust != MASK_FALSE)  {
           if(itmask_metal[i-1] != MASK_FALSE)  {
             scoef = scoef + 2. * h2dust[i-1] *
                  HI(i-1,idx_range.jp1-1,idx_range.kp1-1) * rhoH[i-1];
