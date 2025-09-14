@@ -577,8 +577,8 @@ inline void step_rate_g(
   grackle::impl::PhotoRxnRateCollection kshield_buf
 ) {
   grackle::impl::step_rate_gauss_seidel(
-    dtit, &anydust, h2dust, rhoH, dedot_prev, HIdot_prev, itmask, itmask_metal,
-    &imetal, my_chemistry, my_fields, my_uvb_rates, idx_range, grain_growth_rates,
+    dtit, anydust, h2dust, rhoH, dedot_prev, HIdot_prev, itmask, itmask_metal,
+    my_chemistry, my_fields, my_uvb_rates, idx_range, grain_growth_rates,
     species_tmpdens, kcr_buf, kshield_buf
   );
 }
