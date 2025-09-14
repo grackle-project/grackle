@@ -32,9 +32,10 @@ namespace grackle::impl {
 /// Uses one linearly implicit Gauss-Seidel sweep of a backward-Euler time
 /// integrator to advance the rate equations by one (sub-)cycle (dtit).
 inline void step_rate_gauss_seidel(
-  double* dtit, IndexRange idx_range, gr_mask_type anydust, double* h2dust,
-  double* rhoH, double* dedot_prev, double* HIdot_prev, gr_mask_type* itmask,
-  gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
+  const double* dtit, IndexRange idx_range, gr_mask_type anydust,
+  const double* h2dust, const double* rhoH, double* dedot_prev,
+  double* HIdot_prev, const gr_mask_type* itmask,
+  const gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
   grackle_field_data* my_fields, photo_rate_storage my_uvb_rates,
   grackle::impl::GrainSpeciesCollection grain_growth_rates,
   grackle::impl::SpeciesCollection species_tmpdens,
