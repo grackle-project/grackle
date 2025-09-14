@@ -403,6 +403,7 @@ extern "C" int local_initialize_chemistry_data(chemistry_data *my_chemistry,
   my_rates->opaque_storage->n_kcol_rate_indices = 0;
   init_empty_interp_grid_props_(
     &my_rates->opaque_storage->h2dust_grain_interp_props);
+  my_rates->opaque_storage->grain_species_info = NULL;
 
   double co_length_units, co_density_units;
   if (my_units->comoving_coordinates == TRUE) {
@@ -636,6 +637,7 @@ extern "C" int local_free_chemistry_data(chemistry_data *my_chemistry,
   }
   GRACKLE_FREE(my_rates->opaque_storage->used_kcol_rate_indices);
   free_interp_grid_props_(&my_rates->opaque_storage->h2dust_grain_interp_props);
+  GRACKLE_FREE(my_rates->opaque_storage->grain_species_info);
   GRACKLE_FREE(my_rates->opaque_storage);
 
 

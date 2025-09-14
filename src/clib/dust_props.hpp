@@ -19,6 +19,7 @@
 
 #include <cstdlib> // malloc, free
 #include "internal_types.hpp"
+#include "LUT.hpp"
 
 namespace grackle::impl {
 
@@ -124,6 +125,7 @@ inline void drop_InternalDustPropBuf(InternalDustPropBuf* ptr) {
   );
   std::free(ptr->dyntab_kappa_tot);
 }
+
 
 } // namespace grackle::impl
 
