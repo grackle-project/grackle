@@ -664,7 +664,7 @@ int solve_rate_cool_g(
     f_wrap::scale_fields_g(imetal, factor, my_chemistry, my_fields);
   }
 
-  grackle::impl::ceiling_species_g(imetal, my_chemistry, my_fields);
+  grackle::impl::ceiling_species(imetal, my_chemistry, my_fields);
 
   const grackle_index_helper idx_helper = build_index_helper_(my_fields);
 

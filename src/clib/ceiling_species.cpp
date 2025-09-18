@@ -18,8 +18,8 @@
 namespace grackle::impl {
 
 
-void ceiling_species_g(int imetal, chemistry_data* my_chemistry,
-                       grackle_field_data* my_fields) {
+void ceiling_species(int imetal, chemistry_data* my_chemistry,
+                     grackle_field_data* my_fields) {
   // -------------------------------------------------------------------
 
   // Arguments
