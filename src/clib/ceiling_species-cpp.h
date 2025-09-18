@@ -12,7 +12,11 @@
 #include "grackle.h"             // gr_float
 #include "fortran_func_decls.h"  // gr_mask_int
 
-void ceiling_species_g(int* imetal, chemistry_data* my_chemistry,
+namespace grackle::impl {
+
+void ceiling_species_g(int imetal, chemistry_data* my_chemistry,
                        grackle_field_data* my_fields);
+
+} // namespace grackle::impl
 
 #endif /* CEILING_SPECIES_CPP_H */

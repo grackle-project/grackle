@@ -15,7 +15,10 @@
 
 #include "solve_rate_cool_g-cpp.h"
 
-void ceiling_species_g(int* imetal, chemistry_data* my_chemistry,
+namespace grackle::impl {
+
+
+void ceiling_species_g(int imetal, chemistry_data* my_chemistry,
                        grackle_field_data* my_fields) {
   // -------------------------------------------------------------------
 
@@ -336,3 +339,5 @@ void ceiling_species_g(int* imetal, chemistry_data* my_chemistry,
 
   return;
 }
+
+} // namespace grackle::impl
