@@ -12,8 +12,8 @@ For all on/off integer flags, 0 is off and 1 is on.
 
 .. c:var:: int use_grackle
 
-   Flag to activate the grackle machinery.  Default: 0.
-
+   Flag to activate the grackle machinery.  Default: 0. 
+  
 .. c:var:: int with_radiative_cooling
 
    Flag to include radiative cooling and actually update the thermal
@@ -25,7 +25,8 @@ For all on/off integer flags, 0 is off and 1 is on.
 .. c:var:: int primordial_chemistry
 
    Flag to control which primordial chemistry network is used.
-   Default: 0.
+   Default: 0.  See :ref:`network` for an illustration of all reactions
+   appearing in the chemistry network.
 
    - 0: no chemistry network.  Radiative cooling for primordial
      species is solved by interpolating from lookup tables
