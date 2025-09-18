@@ -13,8 +13,8 @@
 // This file was initially generated automatically during conversion of the
 // ceiling_species_g function from FORTRAN to C++
 
-#ifndef CEILING_SPECIES_CPP_H
-#define CEILING_SPECIES_CPP_H
+#ifndef CEILING_SPECIES_HPP
+#define CEILING_SPECIES_HPP
 
 #include "grackle.h"             // gr_float
 #include "fortran_func_decls.h"  // gr_mask_int
