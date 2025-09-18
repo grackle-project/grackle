@@ -975,7 +975,7 @@ int solve_rate_cool_g(
 
     // Correct the species to ensure consistency (i.e. type conservation)
 
-    grackle::impl::make_consistent(&imetal, &dom, my_chemistry, my_rates, my_fields);
+    grackle::impl::make_consistent(imetal, dom, my_chemistry, my_rates, my_fields);
 
   }
 
