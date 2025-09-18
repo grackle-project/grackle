@@ -24,8 +24,7 @@
 
 namespace grackle::impl {
 
-void make_consistent(int imetal, double dom,
-                     chemistry_data* my_chemistry,
+void make_consistent(int imetal, double dom, chemistry_data* my_chemistry,
                      chemistry_data_storage* my_rates,
                      grackle_field_data* my_fields) {
   // Arguments
@@ -384,7 +383,7 @@ void make_consistent(int imetal, double dom,
           //        enddo
 
           nSN = 12;
-          SN_i[0] = 0; // TODO: should this be 0 for C++ indexing?
+          SN_i[0] = 0;  // TODO: should this be 0 for C++ indexing?
           SN_i[1] = 1;
           SN_i[2] = 2;
           SN_i[3] = 3;
@@ -431,27 +430,19 @@ void make_consistent(int imetal, double dom,
 
               Ct[i] = Ct[i] + my_rates->SN0_XC[iSN0] * SN_metal(i, iSN);
               Ot[i] = Ot[i] + my_rates->SN0_XO[iSN0] * SN_metal(i, iSN);
-              Mgt[i] =
-                  Mgt[i] + my_rates->SN0_XMg[iSN0] * SN_metal(i, iSN);
-              Alt[i] =
-                  Alt[i] + my_rates->SN0_XAl[iSN0] * SN_metal(i, iSN);
-              Sit[i] =
-                  Sit[i] + my_rates->SN0_XSi[iSN0] * SN_metal(i, iSN);
+              Mgt[i] = Mgt[i] + my_rates->SN0_XMg[iSN0] * SN_metal(i, iSN);
+              Alt[i] = Alt[i] + my_rates->SN0_XAl[iSN0] * SN_metal(i, iSN);
+              Sit[i] = Sit[i] + my_rates->SN0_XSi[iSN0] * SN_metal(i, iSN);
               St[i] = St[i] + my_rates->SN0_XS[iSN0] * SN_metal(i, iSN);
-              Fet[i] =
-                  Fet[i] + my_rates->SN0_XFe[iSN0] * SN_metal(i, iSN);
+              Fet[i] = Fet[i] + my_rates->SN0_XFe[iSN0] * SN_metal(i, iSN);
 
               Cg[i] = Cg[i] + my_rates->SN0_fC[iSN0] * SN_metal(i, iSN);
               Og[i] = Og[i] + my_rates->SN0_fO[iSN0] * SN_metal(i, iSN);
-              Mgg[i] =
-                  Mgg[i] + my_rates->SN0_fMg[iSN0] * SN_metal(i, iSN);
-              Alg[i] =
-                  Alg[i] + my_rates->SN0_fAl[iSN0] * SN_metal(i, iSN);
-              Sig[i] =
-                  Sig[i] + my_rates->SN0_fSi[iSN0] * SN_metal(i, iSN);
+              Mgg[i] = Mgg[i] + my_rates->SN0_fMg[iSN0] * SN_metal(i, iSN);
+              Alg[i] = Alg[i] + my_rates->SN0_fAl[iSN0] * SN_metal(i, iSN);
+              Sig[i] = Sig[i] + my_rates->SN0_fSi[iSN0] * SN_metal(i, iSN);
               Sg[i] = Sg[i] + my_rates->SN0_fS[iSN0] * SN_metal(i, iSN);
-              Feg[i] =
-                  Feg[i] + my_rates->SN0_fFe[iSN0] * SN_metal(i, iSN);
+              Feg[i] = Feg[i] + my_rates->SN0_fFe[iSN0] * SN_metal(i, iSN);
             }
           }
         }
@@ -617,9 +608,9 @@ void make_consistent(int imetal, double dom,
           // !   &       ,1.e6_DKIND)) then
           if (((imetal == 0) && (d(i, j, k) * dom < 1.e8)) ||
               ((imetal == 1) && (((metal(i, j, k) <= 1.e-9 * d(i, j, k)) &&
-                                     (d(i, j, k) * dom < 1.e8)) ||
-                                    ((metal(i, j, k) > 1.e-9 * d(i, j, k)) &&
-                                     (d(i, j, k) * dom < 1.e6))))) {
+                                  (d(i, j, k) * dom < 1.e8)) ||
+                                 ((metal(i, j, k) > 1.e-9 * d(i, j, k)) &&
+                                  (d(i, j, k) * dom < 1.e6))))) {
             totalOg = 16. / 28. * CO(i, j, k) + 32. / 44. * CO2(i, j, k) +
                       OI(i, j, k) + 16. / 17. * OH(i, j, k) +
                       16. / 18. * H2O(i, j, k) + O2(i, j, k) +
