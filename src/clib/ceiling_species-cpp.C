@@ -15,8 +15,11 @@
 
 #include "solve_rate_cool_g-cpp.h"
 
+namespace grackle::impl {
+
+
 void ceiling_species_g(
-  int* imetal, chemistry_data* my_chemistry, grackle_field_data* my_fields
+  int imetal, chemistry_data* my_chemistry, grackle_field_data* my_fields
 )
 {
   // -------------------------------------------------------------------
@@ -132,7 +135,7 @@ void ceiling_species_g(
       }
     }
   }
-  if ((*imetal) == 1)  {
+  if (imetal == 1)  {
     for (k = my_fields->grid_start[2]; k<=my_fields->grid_end[2]; k++) {
       for (j = my_fields->grid_start[1]; j<=my_fields->grid_end[1]; j++) {
         for (i = my_fields->grid_start[0]; i<=my_fields->grid_end[0]; i++) {
@@ -232,3 +235,5 @@ void ceiling_species_g(
 
   return;
 }
+
+} // namespace grackle::impl::chemistry
