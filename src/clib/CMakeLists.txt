@@ -113,6 +113,7 @@ add_library(Grackle_Grackle
   cool_multi_time_g-cpp.C cool_multi_time_g-cpp.h
   dust_props.hpp
   internal_types.C internal_types.hpp
+  make_consistent.cpp make_consistent.hpp
   scale_fields.hpp
   solve_rate_cool_g-cpp.C solve_rate_cool_g-cpp.h
   step_rate_newton_raphson.hpp
