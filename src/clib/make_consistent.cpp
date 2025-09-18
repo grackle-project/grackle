@@ -237,7 +237,8 @@ void make_consistent(int imetal, double dom,
   double totalC, totalO, totalMg, totalAl, totalSi, totalS, totalFe;
   double totalCg, totalOg, totalMgg, totalSig, totalFeg;
   double totalCd, totalOd, totalMgd, totalSid, totalFed;
-  gr_float correctC, correctO, correctMg, correctAl, correctSi, correctS, correctFe;
+  gr_float correctC, correctO, correctMg, correctAl, correctSi, correctS,
+      correctFe;
   gr_float correctCg, correctOg, correctMgg, correctSig, correctFeg;
   gr_float correctCd, correctOd, correctMgd, correctSid, correctFed;
   int iSN, nSN, iSN0;
