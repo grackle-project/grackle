@@ -1,7 +1,14 @@
-// See LICENSE file for license and copyright information
-
-/// @file solve_rate_cool_g-cpp.C
-/// @brief Declares signature of ceiling_species_g
+//===----------------------------------------------------------------------===//
+//
+// See the LICENSE file for license and copyright information
+// SPDX-License-Identifier: NCSA AND BSD-3-Clause
+//
+//===----------------------------------------------------------------------===//
+///
+/// @file ceiling_species.cpp
+/// @brief Implements ceiling_species
+///
+//===----------------------------------------------------------------------===//
 
 // This file was initially generated automatically during conversion of the
 // ceiling_species_g function from FORTRAN to C++
