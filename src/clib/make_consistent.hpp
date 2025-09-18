@@ -21,7 +21,7 @@
 
 namespace grackle::impl {
 
-void make_consistent(const int* imetal, const double* dom,
+void make_consistent(int imetal, double dom,
                      chemistry_data* my_chemistry,
                      chemistry_data_storage* my_rates,
                      grackle_field_data* my_fields);

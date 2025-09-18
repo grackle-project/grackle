@@ -6,7 +6,7 @@
 //===----------------------------------------------------------------------===//
 ///
 /// @file
-/// Declares signature of make_consistent_g
+/// Implements the `make_consistent_g` function
 ///
 //===----------------------------------------------------------------------===//
 
@@ -24,7 +24,7 @@
 
 namespace grackle::impl {
 
-void make_consistent(const int* imetal, const double* dom,
+void make_consistent(int imetal, double dom,
                      chemistry_data* my_chemistry,
                      chemistry_data_storage* my_rates,
                      grackle_field_data* my_fields) {
@@ -275,7 +275,7 @@ void make_consistent(const int* imetal, const double* dom,
       // Compute total densities of H and He
       //     (ensure non-negativity)
 
-      if ((*imetal) == 1) {
+      if ((imetal) == 1) {
         for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
           metalfree[i] = d(i, j, k) - metal(i, j, k);
         }
@@ -339,23 +339,23 @@ void make_consistent(const int* imetal, const double* dom,
 
       if (my_chemistry->metal_chemistry > 0) {
         if (my_chemistry->multi_metals == 0) {
-          iSN0 = my_chemistry->metal_abundances + 1;
+          iSN0 = my_chemistry->metal_abundances;
           for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
-            Ct[i] = my_rates->SN0_XC[iSN0 - 1] * metal(i, j, k);
-            Ot[i] = my_rates->SN0_XO[iSN0 - 1] * metal(i, j, k);
-            Mgt[i] = my_rates->SN0_XMg[iSN0 - 1] * metal(i, j, k);
-            Alt[i] = my_rates->SN0_XAl[iSN0 - 1] * metal(i, j, k);
-            Sit[i] = my_rates->SN0_XSi[iSN0 - 1] * metal(i, j, k);
-            St[i] = my_rates->SN0_XS[iSN0 - 1] * metal(i, j, k);
-            Fet[i] = my_rates->SN0_XFe[iSN0 - 1] * metal(i, j, k);
+            Ct[i] = my_rates->SN0_XC[iSN0] * metal(i, j, k);
+            Ot[i] = my_rates->SN0_XO[iSN0] * metal(i, j, k);
+            Mgt[i] = my_rates->SN0_XMg[iSN0] * metal(i, j, k);
+            Alt[i] = my_rates->SN0_XAl[iSN0] * metal(i, j, k);
+            Sit[i] = my_rates->SN0_XSi[iSN0] * metal(i, j, k);
+            St[i] = my_rates->SN0_XS[iSN0] * metal(i, j, k);
+            Fet[i] = my_rates->SN0_XFe[iSN0] * metal(i, j, k);
 
-            Cg[i] = my_rates->SN0_fC[iSN0 - 1] * metal(i, j, k);
-            Og[i] = my_rates->SN0_fO[iSN0 - 1] * metal(i, j, k);
-            Mgg[i] = my_rates->SN0_fMg[iSN0 - 1] * metal(i, j, k);
-            Alg[i] = my_rates->SN0_fAl[iSN0 - 1] * metal(i, j, k);
-            Sig[i] = my_rates->SN0_fSi[iSN0 - 1] * metal(i, j, k);
-            Sg[i] = my_rates->SN0_fS[iSN0 - 1] * metal(i, j, k);
-            Feg[i] = my_rates->SN0_fFe[iSN0 - 1] * metal(i, j, k);
+            Cg[i] = my_rates->SN0_fC[iSN0] * metal(i, j, k);
+            Og[i] = my_rates->SN0_fO[iSN0] * metal(i, j, k);
+            Mgg[i] = my_rates->SN0_fMg[iSN0] * metal(i, j, k);
+            Alg[i] = my_rates->SN0_fAl[iSN0] * metal(i, j, k);
+            Sig[i] = my_rates->SN0_fSi[iSN0] * metal(i, j, k);
+            Sg[i] = my_rates->SN0_fS[iSN0] * metal(i, j, k);
+            Feg[i] = my_rates->SN0_fFe[iSN0] * metal(i, j, k);
           }
 
         } else {
@@ -383,30 +383,32 @@ void make_consistent(const int* imetal, const double* dom,
           //        enddo
 
           nSN = 12;
-          SN_i[1 - 1] = 1;
-          //_// PORT:             SN_metal(:, 1) = metal_loc(:,j,k)
-          SN_i[2 - 1] = 2;
-          //_// PORT:             SN_metal(:, 2) = metal_C13(:,j,k)
-          SN_i[3 - 1] = 3;
-          //_// PORT:             SN_metal(:, 3) = metal_C20(:,j,k)
-          SN_i[4 - 1] = 4;
-          //_// PORT:             SN_metal(:, 4) = metal_C25(:,j,k)
-          SN_i[5 - 1] = 5;
-          //_// PORT:             SN_metal(:, 5) = metal_C30(:,j,k)
-          SN_i[6 - 1] = 6;
-          //_// PORT:             SN_metal(:, 6) = metal_F13(:,j,k)
-          SN_i[7 - 1] = 7;
-          //_// PORT:             SN_metal(:, 7) = metal_F15(:,j,k)
-          SN_i[8 - 1] = 8;
-          //_// PORT:             SN_metal(:, 8) = metal_F50(:,j,k)
-          SN_i[9 - 1] = 9;
-          //_// PORT:             SN_metal(:, 9) = metal_F80(:,j,k)
-          SN_i[10 - 1] = 10;
-          //_// PORT:             SN_metal(:,10) = metal_P170(:,j,k)
-          SN_i[11 - 1] = 11;
-          //_// PORT:             SN_metal(:,11) = metal_P200(:,j,k)
-          SN_i[12 - 1] = 12;
-          //_// PORT:             SN_metal(:,12) = metal_Y19(:,j,k)
+          SN_i[0] = 0; // TODO: should this be 0 for C++ indexing?
+          SN_i[1] = 1;
+          SN_i[2] = 2;
+          SN_i[3] = 3;
+          SN_i[4] = 4;
+          SN_i[5] = 5;
+          SN_i[6] = 6;
+          SN_i[7] = 7;
+          SN_i[8] = 8;
+          SN_i[9] = 9;
+          SN_i[10] = 10;
+          SN_i[11] = 11;
+          for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
+            SN_metal(i, 0) = metal_loc(i, j, k);
+            SN_metal(i, 1) = metal_C13(i, j, k);
+            SN_metal(i, 2) = metal_C20(i, j, k);
+            SN_metal(i, 3) = metal_C25(i, j, k);
+            SN_metal(i, 4) = metal_C30(i, j, k);
+            SN_metal(i, 5) = metal_F13(i, j, k);
+            SN_metal(i, 6) = metal_F15(i, j, k);
+            SN_metal(i, 7) = metal_F50(i, j, k);
+            SN_metal(i, 8) = metal_F80(i, j, k);
+            SN_metal(i, 9) = metal_P170(i, j, k);
+            SN_metal(i, 10) = metal_P200(i, j, k);
+            SN_metal(i, 11) = metal_Y19(i, j, k);
+          }
 
           for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
             Ct[i] = 0.;
@@ -423,32 +425,32 @@ void make_consistent(const int* imetal, const double* dom,
             Sg[i] = 0.;
             Fet[i] = 0.;
             Feg[i] = 0.;
-            for (iSN = 1; iSN <= (nSN); iSN++) {
-              iSN0 = SN_i[iSN - 1];
+            for (iSN = 0; iSN < nSN; iSN++) {
+              iSN0 = SN_i[iSN];
 
-              Ct[i] = Ct[i] + my_rates->SN0_XC[iSN0 - 1] * SN_metal(i, iSN - 1);
-              Ot[i] = Ot[i] + my_rates->SN0_XO[iSN0 - 1] * SN_metal(i, iSN - 1);
+              Ct[i] = Ct[i] + my_rates->SN0_XC[iSN0] * SN_metal(i, iSN);
+              Ot[i] = Ot[i] + my_rates->SN0_XO[iSN0] * SN_metal(i, iSN);
               Mgt[i] =
-                  Mgt[i] + my_rates->SN0_XMg[iSN0 - 1] * SN_metal(i, iSN - 1);
+                  Mgt[i] + my_rates->SN0_XMg[iSN0] * SN_metal(i, iSN);
               Alt[i] =
-                  Alt[i] + my_rates->SN0_XAl[iSN0 - 1] * SN_metal(i, iSN - 1);
+                  Alt[i] + my_rates->SN0_XAl[iSN0] * SN_metal(i, iSN);
               Sit[i] =
-                  Sit[i] + my_rates->SN0_XSi[iSN0 - 1] * SN_metal(i, iSN - 1);
-              St[i] = St[i] + my_rates->SN0_XS[iSN0 - 1] * SN_metal(i, iSN - 1);
+                  Sit[i] + my_rates->SN0_XSi[iSN0] * SN_metal(i, iSN);
+              St[i] = St[i] + my_rates->SN0_XS[iSN0] * SN_metal(i, iSN);
               Fet[i] =
-                  Fet[i] + my_rates->SN0_XFe[iSN0 - 1] * SN_metal(i, iSN - 1);
+                  Fet[i] + my_rates->SN0_XFe[iSN0] * SN_metal(i, iSN);
 
-              Cg[i] = Cg[i] + my_rates->SN0_fC[iSN0 - 1] * SN_metal(i, iSN - 1);
-              Og[i] = Og[i] + my_rates->SN0_fO[iSN0 - 1] * SN_metal(i, iSN - 1);
+              Cg[i] = Cg[i] + my_rates->SN0_fC[iSN0] * SN_metal(i, iSN);
+              Og[i] = Og[i] + my_rates->SN0_fO[iSN0] * SN_metal(i, iSN);
               Mgg[i] =
-                  Mgg[i] + my_rates->SN0_fMg[iSN0 - 1] * SN_metal(i, iSN - 1);
+                  Mgg[i] + my_rates->SN0_fMg[iSN0] * SN_metal(i, iSN);
               Alg[i] =
-                  Alg[i] + my_rates->SN0_fAl[iSN0 - 1] * SN_metal(i, iSN - 1);
+                  Alg[i] + my_rates->SN0_fAl[iSN0] * SN_metal(i, iSN);
               Sig[i] =
-                  Sig[i] + my_rates->SN0_fSi[iSN0 - 1] * SN_metal(i, iSN - 1);
-              Sg[i] = Sg[i] + my_rates->SN0_fS[iSN0 - 1] * SN_metal(i, iSN - 1);
+                  Sig[i] + my_rates->SN0_fSi[iSN0] * SN_metal(i, iSN);
+              Sg[i] = Sg[i] + my_rates->SN0_fS[iSN0] * SN_metal(i, iSN);
               Feg[i] =
-                  Feg[i] + my_rates->SN0_fFe[iSN0 - 1] * SN_metal(i, iSN - 1);
+                  Feg[i] + my_rates->SN0_fFe[iSN0] * SN_metal(i, iSN);
             }
           }
         }
@@ -612,11 +614,11 @@ void make_consistent(const int* imetal, const double* dom,
           // !       if (d(i,j,k)*dom .lt.
           // !   &    min(1.e6_DKIND/(metal(i,j,k)/d(i,j,k)/0.02d-4)**2
           // !   &       ,1.e6_DKIND)) then
-          if ((((*imetal) == 0) && (d(i, j, k) * (*dom) < 1.e8)) ||
-              (((*imetal) == 1) && (((metal(i, j, k) <= 1.e-9 * d(i, j, k)) &&
-                                     (d(i, j, k) * (*dom) < 1.e8)) ||
+          if (((imetal == 0) && (d(i, j, k) * dom < 1.e8)) ||
+              ((imetal == 1) && (((metal(i, j, k) <= 1.e-9 * d(i, j, k)) &&
+                                     (d(i, j, k) * dom < 1.e8)) ||
                                     ((metal(i, j, k) > 1.e-9 * d(i, j, k)) &&
-                                     (d(i, j, k) * (*dom) < 1.e6))))) {
+                                     (d(i, j, k) * dom < 1.e6))))) {
             totalOg = 16. / 28. * CO(i, j, k) + 32. / 44. * CO2(i, j, k) +
                       OI(i, j, k) + 16. / 17. * OH(i, j, k) +
                       16. / 18. * H2O(i, j, k) + O2(i, j, k) +
