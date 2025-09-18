@@ -14,6 +14,7 @@ extern "C" {
 #include "phys_constants.h" // physical constants
 #include <stdint.h>         // int32_t
 typedef int32_t gr_mask_type;
+typedef long long gr_i64;
 
 #define MASK_TRUE 1
 #define MASK_FALSE 0
@@ -120,56 +121,6 @@ void FORTRAN_NAME(calc_gr_balance_g)(
   int* is, int* ie
 );
 
-void FORTRAN_NAME(calc_tdust_3d_g)(
-  gr_float* d_data_ptr, gr_float* de_data_ptr, gr_float* HI_data_ptr,
-  gr_float* HII_data_ptr, gr_float* HeI_data_ptr, gr_float* HeII_data_ptr,
-  gr_float* HeIII_data_ptr, gr_float* HM_data_ptr, gr_float* H2I_data_ptr,
-  gr_float* H2II_data_ptr, int* in, int* jn, int* kn, int* nratec, int* iexpand,
-  int* ispecies, int* idim, int* is, int* js, int* ks, int* ie, int* je,
-  int* ke, double* aye, double* temstart, double* temend, double* fgr,
-  double* gasgra, double* gamma_isrfa, double* isrf, double* utem, double* uxyz,
-  double* uaye, double* urho, double* utim, gr_float* gas_temp_data_ptr,
-  gr_float* dust_temp_data_ptr, int* iisrffield, gr_float* isrf_habing_data_ptr,
-  int* imetal, int* imchem, int* idustfield, int* igrgr, double* z_solar,
-  gr_float* metal_data_ptr, gr_float* dust_data_ptr, gr_float* SiM_data_ptr,
-  gr_float* FeM_data_ptr, gr_float* Mg2SiO4_data_ptr, gr_float* MgSiO3_data_ptr,
-  gr_float* Fe3O4_data_ptr, gr_float* AC_data_ptr, gr_float* SiO2D_data_ptr,
-  gr_float* MgO_data_ptr, gr_float* FeS_data_ptr, gr_float* Al2O3_data_ptr,
-  gr_float* reforg_data_ptr, gr_float* volorg_data_ptr,
-  gr_float* H2Oice_data_ptr, int* immulti, int* imabund, int* idspecies,
-  int* itdmulti, int* idsub, gr_float* metal_loc_data_ptr,
-  gr_float* metal_C13_data_ptr, gr_float* metal_C20_data_ptr,
-  gr_float* metal_C25_data_ptr, gr_float* metal_C30_data_ptr,
-  gr_float* metal_F13_data_ptr, gr_float* metal_F15_data_ptr,
-  gr_float* metal_F50_data_ptr, gr_float* metal_F80_data_ptr,
-  gr_float* metal_P170_data_ptr, gr_float* metal_P200_data_ptr,
-  gr_float* metal_Y19_data_ptr, int* SN0_N, double* SN0_fSiM, double* SN0_fFeM,
-  double* SN0_fMg2SiO4, double* SN0_fMgSiO3, double* SN0_fFe3O4,
-  double* SN0_fAC, double* SN0_fSiO2D, double* SN0_fMgO, double* SN0_fFeS,
-  double* SN0_fAl2O3, double* SN0_freforg, double* SN0_fvolorg,
-  double* SN0_fH2Oice, double* SN0_r0SiM_data_ptr, double* SN0_r0FeM_data_ptr,
-  double* SN0_r0Mg2SiO4_data_ptr, double* SN0_r0MgSiO3_data_ptr,
-  double* SN0_r0Fe3O4_data_ptr, double* SN0_r0AC_data_ptr,
-  double* SN0_r0SiO2D_data_ptr, double* SN0_r0MgO_data_ptr,
-  double* SN0_r0FeS_data_ptr, double* SN0_r0Al2O3_data_ptr,
-  double* SN0_r0reforg_data_ptr, double* SN0_r0volorg_data_ptr,
-  double* SN0_r0H2Oice_data_ptr, int* gr_N, int* gr_Size, double* gr_dT,
-  double* gr_Td, double* SN0_kpSiM_data_ptr, double* SN0_kpFeM_data_ptr,
-  double* SN0_kpMg2SiO4_data_ptr, double* SN0_kpMgSiO3_data_ptr,
-  double* SN0_kpFe3O4_data_ptr, double* SN0_kpAC_data_ptr,
-  double* SN0_kpSiO2D_data_ptr, double* SN0_kpMgO_data_ptr,
-  double* SN0_kpFeS_data_ptr, double* SN0_kpAl2O3_data_ptr,
-  double* SN0_kpreforg_data_ptr, double* SN0_kpvolorg_data_ptr,
-  double* SN0_kpH2Oice_data_ptr, double* gasgr2a, double* gamma_isrf2a,
-  gr_float* SiM_temp_data_ptr, gr_float* FeM_temp_data_ptr,
-  gr_float* Mg2SiO4_temp_data_ptr, gr_float* MgSiO3_temp_data_ptr,
-  gr_float* Fe3O4_temp_data_ptr, gr_float* AC_temp_data_ptr,
-  gr_float* SiO2D_temp_data_ptr, gr_float* MgO_temp_data_ptr,
-  gr_float* FeS_temp_data_ptr, gr_float* Al2O3_temp_data_ptr,
-  gr_float* reforg_temp_data_ptr, gr_float* volorg_temp_data_ptr,
-  gr_float* H2Oice_temp_data_ptr
-);
-
 void FORTRAN_NAME(calc_temp1d_cloudy_g)(
   gr_float* d_data_ptr, gr_float* metal_data_ptr, gr_float* e_data_ptr,
   double* rhoH, int* in, int* jn, int* kn, int* is, int* ie, int* j, int* k,
@@ -177,22 +128,6 @@ void FORTRAN_NAME(calc_temp1d_cloudy_g)(
   double* temend, double* gamma, double* utem, int* imetal,
   long long* clGridRank, long long* clGridDim, double* clPar1, double* clPar2,
   double* clPar3, long long* clDataSize, double* clMMW, gr_mask_type* itmask
-);
-
-void FORTRAN_NAME(calc_temp_cloudy_g)(
-  gr_float* d_data_ptr, gr_float* e_data_ptr, gr_float* metal_data_ptr,
-  gr_float* temperature_data_ptr, int* in, int* jn, int* kn, int* iexpand,
-  int* imetal, int* is, int* js, int* ks, int* ie, int* je, int* ke,
-  double* aye, double* temstart, double* temend, double* utem, double* uxyz,
-  double* uaye, double* urho, double* utim, double* gamma, double* fh,
-  long long* priGridRank, long long* priGridDim, double* priPar1,
-  double* priPar2, double* priPar3, long long* priDataSize, double* priMMW
-);
-
-void FORTRAN_NAME(scale_fields_table_g)(
-  gr_float* d_data_ptr, gr_float* metal_data_ptr, int* is, int* ie, int* js,
-  int* je, int* ks, int* ke, int* in, int* jn, int* kn, int* imetal,
-  double* factor
 );
 
 void FORTRAN_NAME(cool1d_cloudy_g)(
@@ -325,50 +260,60 @@ void FORTRAN_NAME(gaussj_g)(
   int* n, double* a_data_ptr, double* b, int* ierr
 );
 
+// in the following interpolate functions, all of the arguments are const
+// pointers other than value. (but I have just annotated the subset of
+// arguments with const that are necessary to get the desired wrapper function
+// signature)
+
 void FORTRAN_NAME(interpolate_1d_g)(
-  double* input1, long long* gridDim, double* gridPar1, double* dgridPar1,
-  long long* dataSize, double* dataField, double* value
+  double* input1, const long long* gridDim, const double* gridPar1,
+  double* dgridPar1, long long* dataSize, const double* dataField, double* value
 );
 
 void FORTRAN_NAME(interpolate_2d_g)(
-  double* input1, double* input2, long long* gridDim, double* gridPar1,
-  double* dgridPar1, double* gridPar2, double* dgridPar2, long long* dataSize,
-  double* dataField, double* value
-);
-
-void FORTRAN_NAME(interpolate_3d_g)(
-  double* input1, double* input2, double* input3, long long* gridDim,
-  double* gridPar1, double* dgridPar1, double* gridPar2, double* dgridPar2,
-  double* gridPar3, double* dgridPar3, long long* dataSize, double* dataField,
+  double* input1, double* input2, const long long* gridDim,
+  const double* gridPar1, double* dgridPar1, const double* gridPar2,
+  double* dgridPar2, long long* dataSize, const double* dataField,
   double* value
 );
 
+void FORTRAN_NAME(interpolate_3d_g)(
+  double* input1, double* input2, double* input3, const long long* gridDim,
+  const double* gridPar1, double* dgridPar1, const double* gridPar2,
+  double* dgridPar2, const double* gridPar3, double* dgridPar3,
+  long long* dataSize, const double* dataField, double* value
+);
+
 void FORTRAN_NAME(interpolate_3dz_g)(
-  double* input1, double* input2, double* input3, long long* gridDim,
-  double* gridPar1, double* dgridPar1, double* gridPar2, long long* index2,
-  double* gridPar3, double* dgridPar3, long long* dataSize, double* dataField,
-  long long* end_int, double* value
+  double* input1, double* input2, double* input3, const long long* gridDim,
+  const double* gridPar1, double* dgridPar1, const double* gridPar2,
+  long long* index2, const double* gridPar3, double* dgridPar3,
+  long long* dataSize, const double* dataField, long long* end_int,
+  double* value
 );
 
 void FORTRAN_NAME(interpolate_2df3d_g)(
-  double* input1, double* input3, long long* gridDim, double* gridPar1,
-  double* dgridPar1, long long* index2, double* gridPar3, double* dgridPar3,
-  long long* dataSize, double* dataField, double* value
+  double* input1, double* input3, const long long* gridDim,
+  const double* gridPar1, double* dgridPar1, long long* index2,
+  const double* gridPar3, double* dgridPar3,
+  long long* dataSize, const double* dataField, double* value
 );
 
 void FORTRAN_NAME(interpolate_4d_g)(
   double* input1, double* input2, double* input3, double* input4,
-  long long* gridDim, double* gridPar1, double* dgridPar1, double* gridPar2,
-  double* dgridPar2, double* gridPar3, double* dgridPar3, double* gridPar4,
-  double* dgridPar4, long long* dataSize, double* dataField, double* value
+  const long long* gridDim, const double* gridPar1, double* dgridPar1,
+  const double* gridPar2, double* dgridPar2, const double* gridPar3,
+  double* dgridPar3, const double* gridPar4, double* dgridPar4,
+  long long* dataSize, const double* dataField, double* value
 );
 
 void FORTRAN_NAME(interpolate_5d_g)(
   double* input1, double* input2, double* input3, double* input4,
-  double* input5, long long* gridDim, double* gridPar1, double* dgridPar1,
-  double* gridPar2, double* dgridPar2, double* gridPar3, double* dgridPar3,
-  double* gridPar4, double* dgridPar4, double* gridPar5, double* dgridPar5,
-  long long* dataSize, double* dataField, double* value
+  double* input5, const long long* gridDim, const double* gridPar1,
+  double* dgridPar1, const double* gridPar2, double* dgridPar2,
+  const double* gridPar3, double* dgridPar3, const double* gridPar4,
+  double* dgridPar4, const double* gridPar5, double* dgridPar5,
+  long long* dataSize, const double* dataField, double* value
 );
 
 void FORTRAN_NAME(scale_fields_g)(
