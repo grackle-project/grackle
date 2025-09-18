@@ -21,6 +21,7 @@
 #include "visitor/common.hpp"
 #include "visitor/memory.hpp"
 
+#include "ceiling_species.hpp"
 #include "solve_rate_cool_g-cpp.h"
 
 /// overrides the subcycle timestep (for each index in the index-range that is
@@ -663,7 +664,7 @@ int solve_rate_cool_g(
     f_wrap::scale_fields_g(imetal, factor, my_chemistry, my_fields);
   }
 
-  f_wrap::ceiling_species_g(imetal, my_chemistry, my_fields);
+  grackle::impl::ceiling_species(imetal, my_chemistry, my_fields);
 
   const grackle_index_helper idx_helper = build_index_helper_(my_fields);
 
