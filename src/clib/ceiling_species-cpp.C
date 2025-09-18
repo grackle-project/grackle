@@ -241,7 +241,7 @@ void ceiling_species_g(int imetal, chemistry_data* my_chemistry,
       }
     }
   }
-  if ((*imetal) == 1) {
+  if (imetal == 1) {
     for (k = my_fields->grid_start[2]; k <= my_fields->grid_end[2]; k++) {
       for (j = my_fields->grid_start[1]; j <= my_fields->grid_end[1]; j++) {
         for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
