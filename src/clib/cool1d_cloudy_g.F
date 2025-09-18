@@ -75,7 +75,7 @@
 
 !  Iteration mask
 
-      logical itmask(in)
+      MASK_TYPE itmask(in)
 
 !  Parameters
 
@@ -84,7 +84,7 @@
       integer i, get_heat
       integer*8 zindex, zmidpt, zhighpt
       real*8 dclPar(clGridRank), inv_log10, log10_tCMB
-      logical end_int
+      integer*8 end_int
 
 !  Slice locals
 
@@ -95,7 +95,7 @@
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
 !=======================================================================
 
-      end_int = .false.
+      end_int = 0
       get_heat = iClHeat
 
       inv_log10 = 1._DKIND / log(10._DKIND)
@@ -115,7 +115,7 @@
       endif
 
       do i=is+1, ie+1
-         if ( itmask(i) ) then
+         if (itmask(i) .ne. MASK_FALSE) then
 
             log10tem(i) = logtem(i) * inv_log10
 
@@ -133,7 +133,7 @@
                   zindex = 1
                else if (zr .ge. clPar2(clGridDim(2)-1)) then
                   zindex = clGridDim(2)
-                  end_int = .true.
+                  end_int = 1
                   get_heat = 0
                else if (zr .ge. clPar2(clGridDim(2)-2)) then
                   zindex = clGridDim(2) - 2

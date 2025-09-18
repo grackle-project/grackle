@@ -65,12 +65,13 @@ int main(int argc, char *argv[])
   // Access the parameter storage with the struct you've created
   // or with the grackle_data pointer declared in grackle.h (see further below).
   grackle_data->use_grackle = 1;            // chemistry on
-  grackle_data->use_isrf_field = 1;
   grackle_data->with_radiative_cooling = 1; // cooling on
   grackle_data->primordial_chemistry = 3;   // molecular network with H, He, D
-  grackle_data->dust_chemistry = 1;
   grackle_data->metal_cooling = 1;          // metal cooling on
   grackle_data->UVbackground = 1;           // UV background on
+  grackle_data->dust_chemistry = 1;         // dust processes
+  grackle_data->use_dust_density_field = 1; // follow dust density field
+  grackle_data->use_isrf_field = 1;         // follow interstellar radiation field
   grackle_data->grackle_data_file = "../../input/CloudyData_UVB=HM2012.h5"; // data file
 
   // Finally, initialize the chemistry object.
@@ -92,6 +93,7 @@ int main(int argc, char *argv[])
   my_fields.grid_dimension = new int[3];
   my_fields.grid_start = new int[3];
   my_fields.grid_end = new int[3];
+  my_fields.grid_dx = 0.0; // used only for H2 self-shielding approximation
   for (int i = 0;i < 3;i++) {
     my_fields.grid_dimension[i] = 1; // the active dimension not including ghost zones.
     my_fields.grid_start[i] = 0;
@@ -99,7 +101,6 @@ int main(int argc, char *argv[])
   }
   my_fields.grid_dimension[0] = field_size;
   my_fields.grid_end[0] = field_size - 1;
-  my_fields.grid_dx = 0.0; // used only for H2 self-shielding approximation
 
   my_fields.density         = new gr_float[field_size];
   my_fields.internal_energy = new gr_float[field_size];
@@ -123,6 +124,8 @@ int main(int argc, char *argv[])
   my_fields.HDI_density     = new gr_float[field_size];
   // for metal_cooling = 1
   my_fields.metal_density   = new gr_float[field_size];
+  // for use_dust_density_field = 1
+  my_fields.dust_density    = new gr_float[field_size];
 
   // volumetric heating rate (provide in units [erg s^-1 cm^-3])
   my_fields.volumetric_heating_rate = new gr_float[field_size];
@@ -143,8 +146,7 @@ int main(int argc, char *argv[])
   // set temperature units
   double temperature_units = get_temperature_units(&my_units);
 
-  int i;
-  for (i = 0;i < field_size;i++) {
+  for (int i = 0;i < field_size;i++) {
     my_fields.density[i] = 1.0;
     my_fields.HI_density[i] = grackle_data->HydrogenFractionByMass *
       my_fields.density[i];
@@ -162,6 +164,9 @@ int main(int argc, char *argv[])
     my_fields.e_density[i] = tiny_number * my_fields.density[i];
     // solar metallicity
     my_fields.metal_density[i] = grackle_data->SolarMetalFractionByMass *
+      my_fields.density[i];
+    // local dust to gas ratio
+    my_fields.dust_density[i] = grackle_data->local_dust_to_gas_ratio *
       my_fields.density[i];
 
     my_fields.x_velocity[i] = 0.0;
