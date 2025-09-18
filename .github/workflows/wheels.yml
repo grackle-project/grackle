@@ -34,7 +34,7 @@ jobs:
     name: Make SDist
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           # fetch the full git history to let us run all our tests
           fetch-depth: 0
@@ -86,7 +86,7 @@ jobs:
         ]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           # fetch the full git history to let us run all our tests
           fetch-depth: 0
@@ -108,7 +108,7 @@ jobs:
 
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v3.1.3
+        uses: pypa/cibuildwheel@v3.1.4
         with:
           output-dir: dist
 
@@ -120,7 +120,7 @@ jobs:
   upload_all:
     name: Publish to PyPI
     needs: [build_wheels, make_sdist]
-    environment: testpypi # CHANGEME to pypi (to start uploading to PyPI)
+    environment: pypi
     permissions:
       id-token: write
       attestations: write
@@ -130,18 +130,16 @@ jobs:
     # upload to PyPI on every tag starting with 'grackle-'
     if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/grackle-')
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           pattern: cibw-*
           path: dist
           merge-multiple: true
 
       - name: Generate artifact attestations
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@v3
         with:
           subject-path: "dist/*"
 
       - name: Publish to pypi
         uses: pypa/gh-action-pypi-publish@release/v1
-        with:  # DELETEME (and the next line) to start uploading to PyPI
-          repository-url: https://test.pypi.org/legacy/
