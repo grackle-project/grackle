@@ -21,7 +21,7 @@
 #include "visitor/common.hpp"
 #include "visitor/memory.hpp"
 
-#include "ceiling_species-cpp.h"
+#include "ceiling_species.hpp"
 #include "solve_rate_cool_g-cpp.h"
 
 /// overrides the subcycle timestep (for each index in the index-range that is
