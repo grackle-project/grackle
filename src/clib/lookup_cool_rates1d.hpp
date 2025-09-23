@@ -1333,40 +1333,37 @@ inline void lookup_cool_rates1d(
       //       it makes no sense to let users enable both options!
 
       if (my_chemistry->dust_sublimation == 1) {
-        for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-          if (itmask_metal[i] != MASK_FALSE) {
-            // zero out the grain growth rate
-            for (int gsp_idx = 0; gsp_idx < n_grain_species; gsp_idx++) {
-              grain_growth_rates.data[gsp_idx][i] = 0.e0;
-            }
+        for (int gsp_idx = 0; gsp_idx < n_grain_species; gsp_idx++) {
+          // load the sublimation temperature for the current grain species
+          double temdust_sublimation =
+              gsp_info->species_info[gsp_idx].sublimation_temperature;
 
-            if (my_chemistry->use_multiple_dust_temperatures == 0) {
-              for (int gsp_idx = 0; gsp_idx < n_grain_species; gsp_idx++) {
-                double temdust_sublimation =
-                    gsp_info->species_info[gsp_idx].sublimation_temperature;
-                if (tdust[i] > temdust_sublimation) {
-                  grain_growth_rates.data[gsp_idx][i] =
-                      (tiny8 -
-                       gsp_views[gsp_idx](i, idx_range.j, idx_range.k)) /
-                      dt;
-                }
-              }
+          // get pointer to the dust temperatures for the current grain species
+          const double* temdust_arr =
+              (my_chemistry->use_multiple_dust_temperatures == 0)
+                  ? tdust
+                  : grain_temperatures.data[gsp_idx];
 
-            } else {
-              for (int gsp_idx = 0; gsp_idx < n_grain_species; gsp_idx++) {
-                double temdust_sublimation =
-                    gsp_info->species_info[gsp_idx].sublimation_temperature;
-                if (grain_temperatures.data[gsp_idx][i] > temdust_sublimation) {
-                  grain_growth_rates.data[gsp_idx][i] =
-                      (tiny8 -
-                       gsp_views[gsp_idx](i, idx_range.j, idx_range.k)) /
-                      dt;
-                }
+          // get the view of the grain species's current mass density
+          grackle::impl::View<gr_float***> rho_gsp = gsp_views[gsp_idx];
+
+          // iterate over the current index range
+          for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+            if (itmask_metal[i] != MASK_FALSE) {
+              // zero-out the grain growth rate
+              grain_growth_rates.data[gsp_idx][i] = 0.0;
+
+              // set the growth rate to a negative value that will destroy the
+              // grain over the interval `dt` if the dust temperature exceeds
+              // the grain species's sublimation temperature
+              if (temdust_arr[i] > temdust_sublimation) {
+                grain_growth_rates.data[gsp_idx][i] =
+                    (tiny8 - rho_gsp(i, idx_range.j, idx_range.k)) / dt;
               }
             }
           }
         }
-      }
+      }  // (my_chemistry->dust_sublimation == 1)
     }
   }
 
