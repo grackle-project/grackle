@@ -1018,6 +1018,12 @@ inline void lookup_cool_rates1d(
                 my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
       }
 
+      grackle::impl::GrainSpeciesInfo* gsp_info =
+          my_rates->opaque_storage->grain_species_info;
+      GRIMPL_REQUIRE(gsp_info != nullptr, "sanity check!");
+
+      int n_grain_species = gsp_info->n_species;
+
       // Look-up rate for H2 formation on dust
       // -------------------------------------
       // in this branch, we are effectively computing:
@@ -1321,33 +1327,17 @@ inline void lookup_cool_rates1d(
         }
       }
 
-      // todo: determine better behavior when my_chemistry->dust_sublimation ==
-      // 1
-      //       and my_chemistry->grain_growth == 1. When the former option is
-      //       enabled, the latter option has no impact. Thus it makes no sense
-      //       to let users enable both options!
+      // todo: determine better behavior when my_chemistry->dust_sublimation
+      //       and my_chemistry->grain_growth are both equal to 1. When the
+      //       former option is enabled, the latter option has no impact. Thus
+      //       it makes no sense to let users enable both options!
 
       if (my_chemistry->dust_sublimation == 1) {
         for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
           if (itmask_metal[i] != MASK_FALSE) {
-            if (my_chemistry->dust_species > 0) {
-              grain_growth_rates.data[OnlyGrainSpLUT::MgSiO3_dust][i] = 0.e0;
-              grain_growth_rates.data[OnlyGrainSpLUT::AC_dust][i] = 0.e0;
-            }
-            if (my_chemistry->dust_species > 1) {
-              grain_growth_rates.data[OnlyGrainSpLUT::SiM_dust][i] = 0.e0;
-              grain_growth_rates.data[OnlyGrainSpLUT::FeM_dust][i] = 0.e0;
-              grain_growth_rates.data[OnlyGrainSpLUT::Mg2SiO4_dust][i] = 0.e0;
-              grain_growth_rates.data[OnlyGrainSpLUT::Fe3O4_dust][i] = 0.e0;
-              grain_growth_rates.data[OnlyGrainSpLUT::SiO2_dust][i] = 0.e0;
-              grain_growth_rates.data[OnlyGrainSpLUT::MgO_dust][i] = 0.e0;
-              grain_growth_rates.data[OnlyGrainSpLUT::FeS_dust][i] = 0.e0;
-              grain_growth_rates.data[OnlyGrainSpLUT::Al2O3_dust][i] = 0.e0;
-            }
-            if (my_chemistry->dust_species > 2) {
-              grain_growth_rates.data[OnlyGrainSpLUT::ref_org_dust][i] = 0.e0;
-              grain_growth_rates.data[OnlyGrainSpLUT::vol_org_dust][i] = 0.e0;
-              grain_growth_rates.data[OnlyGrainSpLUT::H2O_ice_dust][i] = 0.e0;
+            // zero out the grain growth rate
+            for (int gsp_idx = 0; gsp_idx < n_grain_species; gsp_idx++) {
+              grain_growth_rates.data[gsp_idx][i] = 0.e0;
             }
 
             if (my_chemistry->use_multiple_dust_temperatures == 0) {
