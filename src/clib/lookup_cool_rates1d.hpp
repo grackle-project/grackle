@@ -1341,190 +1341,25 @@ inline void lookup_cool_rates1d(
             }
 
             if (my_chemistry->use_multiple_dust_temperatures == 0) {
-              if (my_chemistry->dust_species > 0) {
-                if (tdust[i] > 1222.e0) {
-                  grain_growth_rates.data[OnlyGrainSpLUT::MgSiO3_dust][i] =
-                      (tiny8 - gsp_views[OnlyGrainSpLUT::MgSiO3_dust](
-                                   i, idx_range.j, idx_range.k)) /
-                      dt;
-                }
-                if (tdust[i] > 1800.e0) {
-                  grain_growth_rates.data[OnlyGrainSpLUT::AC_dust][i] =
-                      (tiny8 - gsp_views[OnlyGrainSpLUT::AC_dust](
-                                   i, idx_range.j, idx_range.k)) /
-                      dt;
-                }
-              }
-
-              if (my_chemistry->dust_species > 1) {
-                if (tdust[i] > 1500.e0) {
-                  grain_growth_rates.data[OnlyGrainSpLUT::SiM_dust][i] =
-                      (tiny8 - gsp_views[OnlyGrainSpLUT::SiM_dust](
-                                   i, idx_range.j, idx_range.k)) /
-                      dt;
-                }
-                if (tdust[i] > 1500.e0) {
-                  grain_growth_rates.data[OnlyGrainSpLUT::FeM_dust][i] =
-                      (tiny8 - gsp_views[OnlyGrainSpLUT::FeM_dust](
-                                   i, idx_range.j, idx_range.k)) /
-                      dt;
-                }
-                if (tdust[i] > 1277.e0) {
-                  grain_growth_rates.data[OnlyGrainSpLUT::Mg2SiO4_dust][i] =
-                      (tiny8 - gsp_views[OnlyGrainSpLUT::Mg2SiO4_dust](
-                                   i, idx_range.j, idx_range.k)) /
-                      dt;
-                }
-                if (tdust[i] > 1500.e0) {
-                  grain_growth_rates.data[OnlyGrainSpLUT::Fe3O4_dust][i] =
-                      (tiny8 - gsp_views[OnlyGrainSpLUT::Fe3O4_dust](
-                                   i, idx_range.j, idx_range.k)) /
-                      dt;
-                }
-                if (tdust[i] > 1500.e0) {
-                  grain_growth_rates.data[OnlyGrainSpLUT::SiO2_dust][i] =
-                      (tiny8 - gsp_views[OnlyGrainSpLUT::SiO2_dust](
-                                   i, idx_range.j, idx_range.k)) /
-                      dt;
-                }
-                if (tdust[i] > 1500.e0) {
-                  grain_growth_rates.data[OnlyGrainSpLUT::MgO_dust][i] =
-                      (tiny8 - gsp_views[OnlyGrainSpLUT::MgO_dust](
-                                   i, idx_range.j, idx_range.k)) /
-                      dt;
-                }
-                if (tdust[i] > 680.e0) {
-                  grain_growth_rates.data[OnlyGrainSpLUT::FeS_dust][i] =
-                      (tiny8 - gsp_views[OnlyGrainSpLUT::FeS_dust](
-                                   i, idx_range.j, idx_range.k)) /
-                      dt;
-                }
-                if (tdust[i] > 1500.e0) {
-                  grain_growth_rates.data[OnlyGrainSpLUT::Al2O3_dust][i] =
-                      (tiny8 - gsp_views[OnlyGrainSpLUT::Al2O3_dust](
-                                   i, idx_range.j, idx_range.k)) /
-                      dt;
-                }
-              }
-
-              if (my_chemistry->dust_species > 2) {
-                if (tdust[i] > 575.e0) {
-                  grain_growth_rates.data[OnlyGrainSpLUT::ref_org_dust][i] =
-                      (tiny8 - gsp_views[OnlyGrainSpLUT::ref_org_dust](
-                                   i, idx_range.j, idx_range.k)) /
-                      dt;
-                }
-                if (tdust[i] > 375.e0) {
-                  grain_growth_rates.data[OnlyGrainSpLUT::vol_org_dust][i] =
-                      (tiny8 - gsp_views[OnlyGrainSpLUT::vol_org_dust](
-                                   i, idx_range.j, idx_range.k)) /
-                      dt;
-                }
-                if (tdust[i] > 153.e0) {
-                  grain_growth_rates.data[OnlyGrainSpLUT::H2O_ice_dust][i] =
-                      (tiny8 - gsp_views[OnlyGrainSpLUT::H2O_ice_dust](
-                                   i, idx_range.j, idx_range.k)) /
+              for (int gsp_idx = 0; gsp_idx < n_grain_species; gsp_idx++) {
+                double temdust_sublimation =
+                    gsp_info->species_info[gsp_idx].sublimation_temperature;
+                if (tdust[i] > temdust_sublimation) {
+                  grain_growth_rates.data[gsp_idx][i] =
+                      (tiny8 -
+                       gsp_views[gsp_idx](i, idx_range.j, idx_range.k)) /
                       dt;
                 }
               }
 
             } else {
-              if (my_chemistry->dust_species > 0) {
-                if (grain_temperatures.data[OnlyGrainSpLUT::MgSiO3_dust][i] >
-                    1222.e0) {
-                  grain_growth_rates.data[OnlyGrainSpLUT::MgSiO3_dust][i] =
-                      (tiny8 - gsp_views[OnlyGrainSpLUT::MgSiO3_dust](
-                                   i, idx_range.j, idx_range.k)) /
-                      dt;
-                }
-                if (grain_temperatures.data[OnlyGrainSpLUT::AC_dust][i] >
-                    1800.e0) {
-                  grain_growth_rates.data[OnlyGrainSpLUT::AC_dust][i] =
-                      (tiny8 - gsp_views[OnlyGrainSpLUT::AC_dust](
-                                   i, idx_range.j, idx_range.k)) /
-                      dt;
-                }
-              }
-
-              if (my_chemistry->dust_species > 1) {
-                if (grain_temperatures.data[OnlyGrainSpLUT::SiM_dust][i] >
-                    1500.e0) {
-                  grain_growth_rates.data[OnlyGrainSpLUT::SiM_dust][i] =
-                      (tiny8 - gsp_views[OnlyGrainSpLUT::SiM_dust](
-                                   i, idx_range.j, idx_range.k)) /
-                      dt;
-                }
-                if (grain_temperatures.data[OnlyGrainSpLUT::FeM_dust][i] >
-                    1500.e0) {
-                  grain_growth_rates.data[OnlyGrainSpLUT::FeM_dust][i] =
-                      (tiny8 - gsp_views[OnlyGrainSpLUT::FeM_dust](
-                                   i, idx_range.j, idx_range.k)) /
-                      dt;
-                }
-                if (grain_temperatures.data[OnlyGrainSpLUT::Mg2SiO4_dust][i] >
-                    1277.e0) {
-                  grain_growth_rates.data[OnlyGrainSpLUT::Mg2SiO4_dust][i] =
-                      (tiny8 - gsp_views[OnlyGrainSpLUT::Mg2SiO4_dust](
-                                   i, idx_range.j, idx_range.k)) /
-                      dt;
-                }
-                if (grain_temperatures.data[OnlyGrainSpLUT::Fe3O4_dust][i] >
-                    1500.e0) {
-                  grain_growth_rates.data[OnlyGrainSpLUT::Fe3O4_dust][i] =
-                      (tiny8 - gsp_views[OnlyGrainSpLUT::Fe3O4_dust](
-                                   i, idx_range.j, idx_range.k)) /
-                      dt;
-                }
-                if (grain_temperatures.data[OnlyGrainSpLUT::SiO2_dust][i] >
-                    1500.e0) {
-                  grain_growth_rates.data[OnlyGrainSpLUT::SiO2_dust][i] =
-                      (tiny8 - gsp_views[OnlyGrainSpLUT::SiO2_dust](
-                                   i, idx_range.j, idx_range.k)) /
-                      dt;
-                }
-                if (grain_temperatures.data[OnlyGrainSpLUT::MgO_dust][i] >
-                    1500.e0) {
-                  grain_growth_rates.data[OnlyGrainSpLUT::MgO_dust][i] =
-                      (tiny8 - gsp_views[OnlyGrainSpLUT::MgO_dust](
-                                   i, idx_range.j, idx_range.k)) /
-                      dt;
-                }
-                if (grain_temperatures.data[OnlyGrainSpLUT::FeS_dust][i] >
-                    680.e0) {
-                  grain_growth_rates.data[OnlyGrainSpLUT::FeS_dust][i] =
-                      (tiny8 - gsp_views[OnlyGrainSpLUT::FeS_dust](
-                                   i, idx_range.j, idx_range.k)) /
-                      dt;
-                }
-                if (grain_temperatures.data[OnlyGrainSpLUT::Al2O3_dust][i] >
-                    1500.e0) {
-                  grain_growth_rates.data[OnlyGrainSpLUT::Al2O3_dust][i] =
-                      (tiny8 - gsp_views[OnlyGrainSpLUT::Al2O3_dust](
-                                   i, idx_range.j, idx_range.k)) /
-                      dt;
-                }
-              }
-
-              if (my_chemistry->dust_species > 2) {
-                if (grain_temperatures.data[OnlyGrainSpLUT::ref_org_dust][i] >
-                    575.e0) {
-                  grain_growth_rates.data[OnlyGrainSpLUT::ref_org_dust][i] =
-                      (tiny8 - gsp_views[OnlyGrainSpLUT::ref_org_dust](
-                                   i, idx_range.j, idx_range.k)) /
-                      dt;
-                }
-                if (grain_temperatures.data[OnlyGrainSpLUT::vol_org_dust][i] >
-                    375.e0) {
-                  grain_growth_rates.data[OnlyGrainSpLUT::vol_org_dust][i] =
-                      (tiny8 - gsp_views[OnlyGrainSpLUT::vol_org_dust](
-                                   i, idx_range.j, idx_range.k)) /
-                      dt;
-                }
-                if (grain_temperatures.data[OnlyGrainSpLUT::H2O_ice_dust][i] >
-                    153.e0) {
-                  grain_growth_rates.data[OnlyGrainSpLUT::H2O_ice_dust][i] =
-                      (tiny8 - gsp_views[OnlyGrainSpLUT::H2O_ice_dust](
-                                   i, idx_range.j, idx_range.k)) /
+              for (int gsp_idx = 0; gsp_idx < n_grain_species; gsp_idx++) {
+                double temdust_sublimation =
+                    gsp_info->species_info[gsp_idx].sublimation_temperature;
+                if (grain_temperatures.data[gsp_idx][i] > temdust_sublimation) {
+                  grain_growth_rates.data[gsp_idx][i] =
+                      (tiny8 -
+                       gsp_views[gsp_idx](i, idx_range.j, idx_range.k)) /
                       dt;
                 }
               }
