@@ -18,10 +18,15 @@
 #include <math.h>
 #include "grackle.h"
 #include "grackle_macros.h"
-#include "grackle_types.h"
-#include "grackle_chemistry_data.h"
+#include "auto_general.h"
 #include "interp_table_utils.h" // free_interp_grid_
+#include "initialize_cloudy_data.h"
+#include "initialize_dust_yields.h"
+#include "initialize_metal_chemistry_rates.h"
+#include "initialize_rates.h"
+#include "initialize_UVbackground_data.h"
 #include "phys_constants.h"
+
 #ifdef _OPENMP
 #include <omp.h>
 #endif
@@ -30,34 +35,7 @@
 #error "Sanity check failure: GR_SUCCESS must be consistent with SUCCESS and GR_FAIL must be consistent with FAIL"
 #endif
 
-extern int grackle_verbose;
-
-extern chemistry_data *grackle_data;
-extern chemistry_data_storage grackle_rates;
-
-void auto_show_config(FILE *fp);
-void auto_show_flags(FILE *fp);
-grackle_version get_grackle_version(void);
 void show_parameters(FILE *fp, chemistry_data *my_chemistry);
-int _free_cloudy_data(cloudy_data *my_cloudy, chemistry_data *my_chemistry, int primordial);
-int initialize_cloudy_data(chemistry_data *my_chemistry,
-                           chemistry_data_storage *my_rates,
-                           cloudy_data *my_cloudy, char *group_name,
-                           code_units *my_units,
-                           int read_data);
-
-int initialize_UVbackground_data(chemistry_data *my_chemistry,
-                                 chemistry_data_storage *my_rates);
-
-int local_free_chemistry_data(chemistry_data *my_chemistry, chemistry_data_storage *my_rates);
-
-int local_free_metal_chemistry_rates(chemistry_data *my_chemistry, chemistry_data_storage *my_rates);
-int local_free_dust_yields(chemistry_data *my_chemistry, chemistry_data_storage *my_rates);
-
-int initialize_rates(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, code_units *my_units,
-                double co_length_units, double co_density_units);
-
-void initialize_empty_UVBtable_struct(UVBtable *table);
 
 static void show_version(FILE *fp)
 {
@@ -718,8 +696,8 @@ int local_free_chemistry_data(chemistry_data *my_chemistry,
     GRACKLE_FREE(my_rates->grain_growth_rate);
   }
 
-  _free_cloudy_data(&my_rates->cloudy_primordial, my_chemistry, /* primordial */ 1);
-  _free_cloudy_data(&my_rates->cloudy_metal, my_chemistry, /* primordial */ 0);
+  free_cloudy_data(&my_rates->cloudy_primordial, my_chemistry, /* primordial */ 1);
+  free_cloudy_data(&my_rates->cloudy_metal, my_chemistry, /* primordial */ 0);
 
   GRACKLE_FREE(my_rates->UVbackground_table.z);
   GRACKLE_FREE(my_rates->UVbackground_table.k24);
