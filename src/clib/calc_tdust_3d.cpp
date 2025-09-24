@@ -1,7 +1,14 @@
-// See LICENSE file for license and copyright information
-
-/// @file calc_tdust_3d.C
-/// @brief Declares signature of calc_tdust_3d_g
+//===----------------------------------------------------------------------===//
+//
+// See the LICENSE file for license and copyright information
+// SPDX-License-Identifier: NCSA AND BSD-3-Clause
+//
+//===----------------------------------------------------------------------===//
+///
+/// @file
+/// Implements the calc_tdust_3d_g function
+///
+//===----------------------------------------------------------------------===//
 
 // This file was initially generated automatically during conversion of the
 // calc_tdust_3d_g function from FORTRAN to C++
