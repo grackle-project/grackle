@@ -26,6 +26,7 @@
 #include "internal_types.hpp"
 #include "opaque_storage.hpp"
 #include "utils-cpp.hpp"
+#include "utils-field.hpp"
 
 namespace grackle::impl {
 
@@ -959,64 +960,13 @@ inline void lookup_cool_rates1d(
           my_fields->Fe_density, my_fields->grid_dimension[0],
           my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
-      // construct some views of dust grain densities (only load in species
-      // that are explicitly enabled by my_chemistry->dust_species)
-
-      grackle::impl::View<gr_float***> gsp_views[OnlyGrainSpLUT::NUM_ENTRIES];
-
-      if (my_chemistry->dust_species > 0) {
-        gsp_views[OnlyGrainSpLUT::MgSiO3_dust] =
-            grackle::impl::View<gr_float***>(
-                my_fields->MgSiO3_dust_density, my_fields->grid_dimension[0],
-                my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-        gsp_views[OnlyGrainSpLUT::AC_dust] = grackle::impl::View<gr_float***>(
-            my_fields->AC_dust_density, my_fields->grid_dimension[0],
-            my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-      }
-
-      if (my_chemistry->dust_species > 1) {
-        gsp_views[OnlyGrainSpLUT::SiM_dust] = grackle::impl::View<gr_float***>(
-            my_fields->SiM_dust_density, my_fields->grid_dimension[0],
-            my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-        gsp_views[OnlyGrainSpLUT::FeM_dust] = grackle::impl::View<gr_float***>(
-            my_fields->FeM_dust_density, my_fields->grid_dimension[0],
-            my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-        gsp_views[OnlyGrainSpLUT::Mg2SiO4_dust] =
-            grackle::impl::View<gr_float***>(
-                my_fields->Mg2SiO4_dust_density, my_fields->grid_dimension[0],
-                my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-        gsp_views[OnlyGrainSpLUT::Fe3O4_dust] =
-            grackle::impl::View<gr_float***>(
-                my_fields->Fe3O4_dust_density, my_fields->grid_dimension[0],
-                my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-        gsp_views[OnlyGrainSpLUT::SiO2_dust] = grackle::impl::View<gr_float***>(
-            my_fields->SiO2_dust_density, my_fields->grid_dimension[0],
-            my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-        gsp_views[OnlyGrainSpLUT::MgO_dust] = grackle::impl::View<gr_float***>(
-            my_fields->MgO_dust_density, my_fields->grid_dimension[0],
-            my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-        gsp_views[OnlyGrainSpLUT::FeS_dust] = grackle::impl::View<gr_float***>(
-            my_fields->FeS_dust_density, my_fields->grid_dimension[0],
-            my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-        gsp_views[OnlyGrainSpLUT::Al2O3_dust] =
-            grackle::impl::View<gr_float***>(
-                my_fields->Al2O3_dust_density, my_fields->grid_dimension[0],
-                my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-      }
-      if (my_chemistry->dust_species > 2) {
-        gsp_views[OnlyGrainSpLUT::ref_org_dust] =
-            grackle::impl::View<gr_float***>(
-                my_fields->ref_org_dust_density, my_fields->grid_dimension[0],
-                my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-        gsp_views[OnlyGrainSpLUT::vol_org_dust] =
-            grackle::impl::View<gr_float***>(
-                my_fields->vol_org_dust_density, my_fields->grid_dimension[0],
-                my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-        gsp_views[OnlyGrainSpLUT::H2O_ice_dust] =
-            grackle::impl::View<gr_float***>(
-                my_fields->H2O_ice_dust_density, my_fields->grid_dimension[0],
-                my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-      }
+      // the use of SpeciesLUTFieldAdaptor with dynamic indices is suboptimal
+      // (it triggers indices). But, I think its ok here for 2 reasons:
+      // 1. we aren't using it deep in a loop
+      // 2. it makes the code significantly easier to manage! Plus, if somebody
+      //    is using this configuration, speed is clearly not a huge priority
+      //    (given all of the extra passive scalars that must be tracked)
+      grackle::impl::SpeciesLUTFieldAdaptor field_data_adaptor{*my_fields};
 
       grackle::impl::GrainSpeciesInfo* gsp_info =
           my_rates->opaque_storage->grain_species_info;
@@ -1345,7 +1295,11 @@ inline void lookup_cool_rates1d(
                   : grain_temperatures.data[gsp_idx];
 
           // get the view of the grain species's current mass density
-          grackle::impl::View<gr_float***> rho_gsp = gsp_views[gsp_idx];
+          const gr_float* rho_gsp_ptr = field_data_adaptor.get_ptr_dynamic(
+              gsp_info->species_info[gsp_idx].species_idx);
+          grackle::impl::View<const gr_float***> rho_gsp(
+              rho_gsp_ptr, my_fields->grid_dimension[0],
+              my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
           // iterate over the current index range
           for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
