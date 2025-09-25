@@ -16,6 +16,7 @@
 #ifndef LOOKUP_COOL_RATES1D_HPP
 #define LOOKUP_COOL_RATES1D_HPP
 
+#include <cfloat>  // DBL_MAX
 #include <vector>
 
 #include "grackle.h"
@@ -931,35 +932,6 @@ inline void lookup_cool_rates1d(
           my_fields->density, my_fields->grid_dimension[0],
           my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
-      // load views of some metal species and molecular species
-      grackle::impl::View<gr_float***> CI(
-          my_fields->CI_density, my_fields->grid_dimension[0],
-          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-      grackle::impl::View<gr_float***> H2O(
-          my_fields->H2O_density, my_fields->grid_dimension[0],
-          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-      grackle::impl::View<gr_float***> SiI(
-          my_fields->SiI_density, my_fields->grid_dimension[0],
-          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-      grackle::impl::View<gr_float***> SiOI(
-          my_fields->SiOI_density, my_fields->grid_dimension[0],
-          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-      grackle::impl::View<gr_float***> SiO2I(
-          my_fields->SiO2I_density, my_fields->grid_dimension[0],
-          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-      grackle::impl::View<gr_float***> Mg(
-          my_fields->Mg_density, my_fields->grid_dimension[0],
-          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-      grackle::impl::View<gr_float***> Al(
-          my_fields->Al_density, my_fields->grid_dimension[0],
-          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-      grackle::impl::View<gr_float***> S(
-          my_fields->S_density, my_fields->grid_dimension[0],
-          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-      grackle::impl::View<gr_float***> Fe(
-          my_fields->Fe_density, my_fields->grid_dimension[0],
-          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-
       // the use of SpeciesLUTFieldAdaptor with dynamic indices is suboptimal
       // (it triggers indices). But, I think its ok here for 2 reasons:
       // 1. we aren't using it deep in a loop
@@ -1185,96 +1157,78 @@ inline void lookup_cool_rates1d(
           (long long)(my_chemistry->NumberOfTemperatureBins)};
 
       if (my_chemistry->grain_growth == 1) {
-        for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-          if (itmask_metal[i] != MASK_FALSE) {
-            double kd;
-            if (my_chemistry->dust_species > 0) {
-              kd = f_wrap::interpolate_1d_g(
+        // NOTE: an earlier version of this logic included a large block of
+        //       commented code that appeared to calculate growth rates for
+        //       the MgSiO3 dust grain species
+        //  - the block included a comment stating that
+        //    "Formulation from Nozawa et al. (2003, 2012)"
+        //  - importantly, this logic totally deviated from the highly
+        //    standard logic that we currently use for computing growth rates
+        //    MgSiO3 and all other grain species
+
+        // iterate over the grain species
+        for (int gsp_idx = 0; gsp_idx < n_grain_species; gsp_idx++) {
+          //  get the number of ingredients for the current grain species &
+          //  the actual ingredient list
+          int n_ingred = gsp_info->species_info[gsp_idx].n_growth_ingredients;
+          const GrainGrowthIngredient* ingredient_l =
+              gsp_info->species_info[gsp_idx].growth_ingredients;
+
+          // preload views of each ingredient's current mass density
+          grackle::impl::View<const gr_float***>
+              ingred_view[grackle::impl::max_ingredients_per_grain_species];
+          for (int ingred_idx = 0; ingred_idx < n_ingred; ingred_idx++) {
+            // printf("ingred_idx = %d\n", ingred_idx);
+            // printf("species_idx = %d\n",
+            // ingredient_l[ingred_idx].species_idx);
+            const gr_float* ptr = field_data_adaptor.get_ptr_dynamic(
+                ingredient_l[ingred_idx].species_idx);
+            ingred_view[ingred_idx] = grackle::impl::View<const gr_float***>(
+                ptr, my_fields->grid_dimension[0], my_fields->grid_dimension[1],
+                my_fields->grid_dimension[2]);
+          }
+
+          // preload the grain species's grain_sigma_per_gas_mass
+          const double* grain_sigma_per_gas_mass =
+              internal_dust_prop_scratch_buf.grain_sigma_per_gas_mass
+                  .data[gsp_idx];
+
+          // compute the growth rate at each location in idx_range
+          for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+            if (itmask_metal[i] != MASK_FALSE) {
+              // calculate the factor that depends on ingredient availability
+              double availability_factor = DBL_MAX;  // <- max finite value
+              for (int ingred_idx = 0; ingred_idx < n_ingred; ingred_idx++) {
+                // note: it would be faster to precompute
+                //   std::pow(mparticle_amu, 1.5) / coef
+                // (this would probably change the gold-standard)
+
+                // load the particle mass for the current ingredient
+                double mparticle_amu = ingredient_l[ingred_idx].mparticle_amu;
+                // load the stoichiometric coefficient
+                double coef = ingredient_l[ingred_idx].coef;
+
+                // check if we should update factor
+                availability_factor = std::fmin(
+                    availability_factor,
+                    ingred_view[ingred_idx](i, idx_range.j, idx_range.k) /
+                        std::pow(mparticle_amu, 1.5) / coef);
+              }
+              // if ingredient_l is empty, set factor to 0
+              availability_factor *= (n_ingred > 0);
+
+              // finally, we're ready to compute the rate
+              double kd = f_wrap::interpolate_1d_g(
                   logTlininterp_buf.logtem[i], nratec_single_elem_arr,
                   interp_props.parameters[1], dlogtem,
                   nratec_single_elem_arr[0], my_rates->grain_growth_rate);
 
               grain_growth_rates.data[OnlyGrainSpLUT::MgSiO3_dust][i] =
-                  kd * sgMgSiO3[i] * d(i, idx_range.j, idx_range.k) *
-                  grackle::impl::fmin(
-                      Mg(i, idx_range.j, idx_range.k) / std::pow(24., 1.5),
-                      SiOI(i, idx_range.j, idx_range.k) / std::pow(44., 1.5),
-                      H2O(i, idx_range.j, idx_range.k) / std::pow(18., 1.5) /
-                          2.);
-              // !             if ( idsub .eq. 1 )
-              // !   &            kdMgSiO3  (i) = kdMgSiO3  (i) * ( 1.d0 -
-              // !   &           sqrt(tMgSiO3 (i) / tgas1d(i))
-              // !   &         * exp(-min(37.2400d4/tgas1d(i) -
-              // 104.872d0, 5.d1)) / ( !   &           (     Mg
-              // (i,j,k)*dom/24._DKIND * kboltz*tgas1d(i)) !   &         * (
-              // SiOI(i,j,k)*dom/44._DKIND * kboltz*tgas1d(i)) !   &         *
-              // (2.d0*H2O (i,j,k)*dom/18._DKIND * kboltz*tgas1d(i)) !   & /
-              // (1.d0*H2I (i,j,k)*dom/ 2._DKIND * kboltz*tgas1d(i)) !   & ) )
-              // !             Formulation from Nozawa et al. (2003, 2012)
-
-              grain_growth_rates.data[OnlyGrainSpLUT::AC_dust][i] =
-                  kd * sgAC[i] * d(i, idx_range.j, idx_range.k) *
-                  CI(i, idx_range.j, idx_range.k) / std::pow(12., 1.5);
+                  kd * grain_sigma_per_gas_mass[i] *
+                  d(i, idx_range.j, idx_range.k) * availability_factor;
             }
-
-            if (my_chemistry->dust_species > 1) {
-              grain_growth_rates.data[OnlyGrainSpLUT::SiM_dust][i] =
-                  kd * sgSiM[i] * d(i, idx_range.j, idx_range.k) *
-                  SiI(i, idx_range.j, idx_range.k) / std::pow(28., 1.5);
-
-              grain_growth_rates.data[OnlyGrainSpLUT::FeM_dust][i] =
-                  kd * sgFeM[i] * d(i, idx_range.j, idx_range.k) *
-                  Fe(i, idx_range.j, idx_range.k) / std::pow(56., 1.5);
-
-              grain_growth_rates.data[OnlyGrainSpLUT::Mg2SiO4_dust][i] =
-                  kd * sgMg2SiO4[i] * d(i, idx_range.j, idx_range.k) *
-                  grackle::impl::fmin(
-                      Mg(i, idx_range.j, idx_range.k) / std::pow(24., 1.5) / 2.,
-                      SiOI(i, idx_range.j, idx_range.k) / std::pow(44., 1.5),
-                      H2O(i, idx_range.j, idx_range.k) / std::pow(18., 1.5) /
-                          3.);
-
-              grain_growth_rates.data[OnlyGrainSpLUT::Fe3O4_dust][i] =
-                  kd * sgFe3O4[i] * d(i, idx_range.j, idx_range.k) *
-                  std::fmin(
-                      Fe(i, idx_range.j, idx_range.k) / std::pow(56., 1.5) / 3.,
-                      H2O(i, idx_range.j, idx_range.k) / std::pow(18., 1.5) /
-                          4.);
-
-              grain_growth_rates.data[OnlyGrainSpLUT::SiO2_dust][i] =
-                  kd * sgSiO2D[i] * d(i, idx_range.j, idx_range.k) *
-                  SiO2I(i, idx_range.j, idx_range.k) / std::pow(60., 1.5);
-
-              grain_growth_rates.data[OnlyGrainSpLUT::MgO_dust][i] =
-                  kd * sgMgO[i] * d(i, idx_range.j, idx_range.k) *
-                  std::fmin(
-                      Mg(i, idx_range.j, idx_range.k) / std::pow(24., 1.5),
-                      H2O(i, idx_range.j, idx_range.k) / std::pow(18., 1.5));
-
-              grain_growth_rates.data[OnlyGrainSpLUT::FeS_dust][i] =
-                  kd * sgFeS[i] * d(i, idx_range.j, idx_range.k) *
-                  std::fmin(
-                      S(i, idx_range.j, idx_range.k) / std::pow(32., 1.5),
-                      Fe(i, idx_range.j, idx_range.k) / std::pow(56., 1.5));
-
-              grain_growth_rates.data[OnlyGrainSpLUT::Al2O3_dust][i] =
-                  kd * sgAl2O3[i] * d(i, idx_range.j, idx_range.k) *
-                  std::fmin(
-                      Al(i, idx_range.j, idx_range.k) / std::pow(27., 1.5) / 2.,
-                      H2O(i, idx_range.j, idx_range.k) / std::pow(18., 1.5) /
-                          3.);
-            }
-
-            // We do not consider the growth of refractory organics, volatile
-            // organics, and water ice because their sublimation temperatures
-            // are low (100-600 K). They sublimate before the growth occurs.
-            if (my_chemistry->dust_species > 2) {
-              grain_growth_rates.data[OnlyGrainSpLUT::ref_org_dust][i] = 0.e0;
-              grain_growth_rates.data[OnlyGrainSpLUT::vol_org_dust][i] = 0.e0;
-              grain_growth_rates.data[OnlyGrainSpLUT::H2O_ice_dust][i] = 0.e0;
-            }
-          }
-        }
+          }  // idx_range loop
+        }  // n_grain_species loop
       }
 
       // todo: determine better behavior when my_chemistry->dust_sublimation
