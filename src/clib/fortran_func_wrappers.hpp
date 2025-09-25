@@ -185,8 +185,9 @@ inline void ceiling_species_g(
 /// is the solution vector
 ///
 /// @param[in]     n The number of linear equations being solved
-/// @param[in,out] coef_matrix An n by n array that initially specifies the
-///    coefficient matrix. It's overwritten by the inverted matrix.
+/// @param[in,out] coef_matrix An n by n column major array that initially
+///    specifies the coefficient matrix. This function overwrites this matrix
+///    with the inverted matrix.
 /// @param[in,out] vec An n element array that initially specifies the
 ///    right-hand side vector. It's overwritten by the solution vector.
 ///

@@ -1,7 +1,14 @@
-// See LICENSE file for license and copyright information
-
-/// @file cool_multi_time_g-cpp.C
-/// @brief Declares signature of cool_multi_time_g
+//===----------------------------------------------------------------------===//
+//
+// See the LICENSE file for license and copyright information
+// SPDX-License-Identifier: NCSA AND BSD-3-Clause
+//
+//===----------------------------------------------------------------------===//
+///
+/// @file
+/// Implements the cool_multi_time_g function
+///
+//===----------------------------------------------------------------------===//
 
 // This file was initially generated automatically during conversion of the
 // cool_multi_time_g function from FORTRAN to C++
@@ -10,13 +17,14 @@
 #include <vector>
 
 #include "cool1d_multi_g.hpp"
-#include "cool_multi_time_g-cpp.h"
+#include "cool_multi_time_g.h"
 #include "grackle.h"
 #include "fortran_func_wrappers.hpp"
 #include "index_helper.h"
 #include "internal_units.h"
 #include "internal_types.hpp"
 #include "utils-cpp.hpp"
+
 
 #ifdef __cplusplus
 extern "C" {

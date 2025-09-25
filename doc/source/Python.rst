@@ -6,12 +6,43 @@ Gracklepy: Running Grackle in Python
 Grackle comes with a Python interface, called Gracklepy, which provides
 access to all of Grackle's functionality.
 
+If you are new user, we **strongly recommend** that you use a :ref:`pre-built version of Gracklepy <install-gracklepy-prebuilt>`.
+
 .. note::
 
    Gracklepy was formerly known as Pygrackle.
    If you previously installed Pygrackle, you should make sure that you uninstall it before upgrading
 
-To install Gracklepy, you'll need to make sure that HDF5 and a fortran compiler are installed (for building the Grackle library itself).
+
+.. _install-gracklepy-prebuilt:
+
+Pre-built installation (recommended)
+------------------------------------
+
+The easiest way to get Gracklepy is install a pre-built Gracklepy wheel from PyPI. This can be accomplished by invoking
+
+.. code-block:: shell-session
+
+   pip install gracklepy
+
+This command will install the Gracklepy package. Prebuilt copies of all dependencies, including the core Grackle library, are bundled with the installation (the package will use these versions of the dependencies instead of any copies you have installed on your machine).
+
+Be aware that the vast majority of Grackle calculation requires Grackle's data files.
+At this time you must download manually download these files (:gh-pr:`235` is a pending pull request that seeks to streamline this for the future).
+
+You can download the datafiles from `here <https://github.com/grackle-project/grackle_data_files/tree/main/input>`__.
+
+.. important::
+
+   **DO NOT** try linking arbitrary external C/C++ programs against the prebuilt copy of the core Grackle library that is bundled with Gracklepy.
+   This is something that we explicitly do not support (it is not a portable solution!)
+
+.. _install-gracklepy-source:
+
+Installation from Source Code
+-----------------------------
+
+To install Gracklepy from its source code, you'll need to make sure that HDF5 and a fortran compiler are installed (for building the Grackle library itself).
 
 Gracklepy's runtime-dependencies are:
 
@@ -24,10 +55,6 @@ The above dependencies are automatically installed with pip (alternatively you c
 
 If you want to run the gracklepy test-suite, you'll need the ``packaging`` and ``py.test`` packages. If pip is up to date (25.1 or newer), you can simply invoke ``pip install --group dev`` from the root of the repository.
 
-.. _install-gracklepy:
-
-Installing Gracklepy
---------------------
 
 Currently, the only way to get Gracklepy is to build it from source.
 
@@ -35,14 +62,14 @@ There are 3 ways to build Gracklepy:
 
 1. As a standalone, self-contained module.
    The build command creates a fresh build of the Grackle library and packages it with the Gracklepy module.
-   **(This is the recommended approach)**
+   **(If you are going to build Gracklepy from source, this is the recommended way to do it)**
 
 2. As a module that links to an external copy of Grackle that was compiled with the :ref:`Classic build system <classic_build>`.
    (This is consistent with the legacy approach for building Gracklepy).
 
 3. As a module that links to an external copy of Grackle that was created with the :ref:`CMake build system <cmake_build>`.
 
-Currently, Gracklepy should be used with Grackle builds where OpenMP is disabled.
+Currently, Gracklepy should only be used with Grackle builds where OpenMP is disabled.
 
 .. warning::
 
@@ -226,14 +253,15 @@ There are a handful of additional packages required purely for developing
 Grackle. For example, these will enable :ref:`testing` and building
 the documentation locally. These dependencies are specified as dependency
 groups, which can be installed with pip (v25.1).
-To install all of these dependencies, you can invoke
+
+After downloading the git repository, you can install all of these dependencies by invoking
 
 .. code-block:: shell-session
 
    ~/grackle $ pip install --group dev
 
 The above command will install the dependencies independently of Gracklepy.
-To install these dependencies at the same time as Gracklepy, you can replace last line of the :ref:`gracklepy installation instructions <install-gracklepy>` with:
+To install these dependencies at the same time as you build Gracklepy from source, you can replace last line of the :ref:`installation instructions <install-gracklepy-source>` with:
 
 .. code-block:: shell-session
 
