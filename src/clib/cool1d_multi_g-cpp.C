@@ -82,9 +82,8 @@ void grackle::impl::cool1d_multi_g(
 
   // Locals
 
-  int i, ti, iradfield;
+  int i;
   double dom, qq, vibl, logtem0, logtem9, dlogtem, zr, hdlte1, hdlow1, gamma2, x, fudge, fH2, gphdl1, dom_inv, tau, ciefudge, coolunit, tbase1, nH2, nother, nSSh, nratio, nssh_he, nratio_he, fSShHI, fSShHeI, pe_eps, pe_X, grbeta, ih2cox, min_metallicity;
-  int itd;
   double comp1, comp2;
 
   // Performing heap allocations for all of the subsequent buffers within this
@@ -109,10 +108,8 @@ void grackle::impl::cool1d_multi_g(
   std::vector<double> gasgr(my_fields->grid_dimension[0]);
   // holds values of the interstellar radiation field
   std::vector<double> myisrf(my_fields->grid_dimension[0]);
-  int iden, item, itab;
   std::vector<double> cieY06(my_fields->grid_dimension[0]);
 
-  double logdom;
   std::vector<double> logT(my_fields->grid_dimension[0]);
   std::vector<double> logTcmb(my_fields->grid_dimension[0]);
   std::vector<double> logrho(my_fields->grid_dimension[0]);
@@ -144,7 +141,7 @@ void grackle::impl::cool1d_multi_g(
   std::vector<double> alphad(my_fields->grid_dimension[0]);
   std::vector<double> lshield_con(my_fields->grid_dimension[0]);
   std::vector<double> tau_con(my_fields->grid_dimension[0]);
-  double log_a, log_L, log_G;
+  double log_a;
 
   // buffers of intermediate quantities used within dust-routines (for
   // calculating quantites related to heating/cooling)
@@ -206,7 +203,6 @@ void grackle::impl::cool1d_multi_g(
 
   zr       = 1./(internalu.a_value*internalu.a_units) - 1.;
   fudge    = 1.;
-  iradfield = -1;
 
   // Set compton cooling coefficients (and temperature)
 
@@ -405,7 +401,6 @@ void grackle::impl::cool1d_multi_g(
 
   // Compute log densities
 
-  logdom = std::log10(dom);
   for (i = idx_range.i_start; i<=idx_range.i_end; i++) {
     if ( itmask[i] != MASK_FALSE )  {
       logT[i] = std::log10(tgas[i]);
