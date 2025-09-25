@@ -1033,26 +1033,8 @@ inline void lookup_cool_rates1d(
               components[gsp_idx] = coef * sigma_per_gas_mass;
             }
 
-            // Part 2: sum the components
-            // handle components for my_chemistry->dust_species > 0
-            h2dust[i] = components[OnlyGrainSpLUT::MgSiO3_dust] +
-                        components[OnlyGrainSpLUT::AC_dust];
-            if (my_chemistry->dust_species > 1) {
-              h2dust[i] = h2dust[i] + components[OnlyGrainSpLUT::SiM_dust] +
-                          components[OnlyGrainSpLUT::FeM_dust] +
-                          components[OnlyGrainSpLUT::Mg2SiO4_dust] +
-                          components[OnlyGrainSpLUT::Fe3O4_dust] +
-                          components[OnlyGrainSpLUT::SiO2_dust] +
-                          components[OnlyGrainSpLUT::MgO_dust] +
-                          components[OnlyGrainSpLUT::FeS_dust] +
-                          components[OnlyGrainSpLUT::Al2O3_dust];
-            }
-            if (my_chemistry->dust_species > 2) {
-              h2dust[i] = h2dust[i] + components[OnlyGrainSpLUT::ref_org_dust] +
-                          components[OnlyGrainSpLUT::vol_org_dust] +
-                          components[OnlyGrainSpLUT::H2O_ice_dust];
-            }
           } else {
+            // legacy version
             double logTdust = std::log(
                 grain_temperatures.data[OnlyGrainSpLUT::MgSiO3_dust][i]);
             double h2MgSiO3 = f_wrap::interpolate_2d_g(
@@ -1068,6 +1050,9 @@ inline void lookup_cool_rates1d(
                 interp_props.parameters[0], dlogTdust,
                 interp_props.parameters[1], dlogtem, interp_props.data_size,
                 h2rate_carbonaceous_coef_table);
+
+            components[OnlyGrainSpLUT::MgSiO3_dust] = h2MgSiO3 * sgMgSiO3[i];
+            components[OnlyGrainSpLUT::AC_dust] = h2AC * sgAC[i];
 
             h2dust[i] = h2MgSiO3 * sgMgSiO3[i] + h2AC * sgAC[i];
 
@@ -1140,6 +1125,15 @@ inline void lookup_cool_rates1d(
                           h2Mg2SiO4 * sgMg2SiO4[i] + h2Fe3O4 * sgFe3O4[i] +
                           h2SiO2D * sgSiO2D[i] + h2MgO * sgMgO[i] +
                           h2FeS * sgFeS[i] + h2Al2O3 * sgAl2O3[i];
+
+              components[OnlyGrainSpLUT::FeM_dust] = h2FeM * sgFeM[i];
+              components[OnlyGrainSpLUT::Mg2SiO4_dust] =
+                  h2Mg2SiO4 * sgMg2SiO4[i];
+              components[OnlyGrainSpLUT::Fe3O4_dust] = h2Fe3O4 * sgFe3O4[i];
+              components[OnlyGrainSpLUT::SiO2_dust] = h2SiO2D * sgSiO2D[i];
+              components[OnlyGrainSpLUT::MgO_dust] = h2MgO * sgMgO[i];
+              components[OnlyGrainSpLUT::FeS_dust] = h2FeS * sgFeS[i];
+              components[OnlyGrainSpLUT::Al2O3_dust] = h2Al2O3 * sgAl2O3[i];
             }
 
             if (my_chemistry->dust_species > 2) {
@@ -1169,7 +1163,53 @@ inline void lookup_cool_rates1d(
 
               h2dust[i] = h2dust[i] + h2reforg * sgreforg[i] +
                           h2volorg * sgvolorg[i] + h2H2Oice * sgH2Oice[i];
+
+              components[OnlyGrainSpLUT::ref_org_dust] = h2reforg * sgreforg[i];
+              components[OnlyGrainSpLUT::vol_org_dust] = h2volorg * sgvolorg[i];
+              components[OnlyGrainSpLUT::H2O_ice_dust] = h2H2Oice * sgH2Oice[i];
             }
+
+            // newer version
+            // =============
+            for (int gsp_idx = 0; gsp_idx < n_grain_species; gsp_idx++) {
+              const double* coef_table = (gsp_idx == OnlyGrainSpLUT::AC_dust)
+                                             ? h2rate_carbonaceous_coef_table
+                                             : h2rate_silicate_coef_table;
+              double logTdust = std::log(grain_temperatures.data[gsp_idx][i]);
+              double coef = f_wrap::interpolate_2d_g(
+                  logTdust, logTlininterp_buf.logtem[i], interp_props.dimension,
+                  interp_props.parameters[0], dlogTdust,
+                  interp_props.parameters[1], dlogtem, interp_props.data_size,
+                  coef_table);
+              double sigma_per_gas_mass =
+                  internal_dust_prop_scratch_buf.grain_sigma_per_gas_mass
+                      .data[gsp_idx][i];
+              components[gsp_idx] = coef * sigma_per_gas_mass;
+            }
+          }
+
+          // Part 2: sum the components
+          // handle components for my_chemistry->dust_species > 0
+          double h2dust_new = 0.0;
+          for (int gsp_idx = 0; gsp_idx < n_grain_species; gsp_idx++) {
+            h2dust_new += components[gsp_idx];
+          }
+
+          if (my_chemistry->use_multiple_dust_temperatures == 0) {
+            h2dust[i] = h2dust_new;
+          } else {
+            // h2dust[i] = h2dust_new;
+
+            printf("my_chemistry->dust_species = %d\n",
+                   my_chemistry->dust_species);
+            fflush(stdout);
+
+            GRIMPL_REQUIRE(h2dust[i] == h2dust_new,
+                           "\n"
+                           "  existing value: %.17g\n"
+                           "  new value:      %.17g\n"
+                           "  abs diff:       %.17g\n",
+                           h2dust[i], h2dust_new, h2dust_new - h2dust[i]);
           }
         }
       }
