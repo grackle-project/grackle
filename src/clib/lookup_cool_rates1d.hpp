@@ -990,11 +990,21 @@ inline void lookup_cool_rates1d(
       //   fallback for non-silicate grains instead of using h2dustS? I realize
       //   that h2dusta has very different units...
 
-      // now its time to actually perform the calculation
+      // now it's time to actually compute h2dust
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
         if (itmask_metal[i] != MASK_FALSE) {
-          // don't forget, we are only executing this logic if we already know
-          // that my_chemistry->dust_species > 0
+          // We currently compute h2dust[i] in 2 steps
+          // 1. calculate all components of the summation
+          // 2. add the components together
+
+          // TODO: as each component is computed add to a running sum
+          // the current approach is **ONLY** used for historical consistency
+          // (i.e. to avoid changing gold-standard test answers)
+
+          // reserve space for the components
+          // (recall: n_grain_species <= OnlyGrainSpLUT::NUM_ENTRIES)
+          double components[OnlyGrainSpLUT::NUM_ENTRIES];
+
           if (my_chemistry->use_multiple_dust_temperatures == 0) {
             // in this branch, all grains share a single dust temperature
 
@@ -1011,23 +1021,37 @@ inline void lookup_cool_rates1d(
                 interp_props.parameters[1], dlogtem, interp_props.data_size,
                 h2rate_carbonaceous_coef_table);
 
-            h2dust[i] = h2dust_silicate_coef * sgMgSiO3[i] + h2AC * sgAC[i];
-            if (my_chemistry->dust_species > 1) {
-              h2dust[i] = h2dust[i] + h2dust_silicate_coef * sgSiM[i] +
-                          h2dust_silicate_coef * sgFeM[i] +
-                          h2dust_silicate_coef * sgMg2SiO4[i] +
-                          h2dust_silicate_coef * sgFe3O4[i] +
-                          h2dust_silicate_coef * sgSiO2D[i] +
-                          h2dust_silicate_coef * sgMgO[i] +
-                          h2dust_silicate_coef * sgFeS[i] +
-                          h2dust_silicate_coef * sgAl2O3[i];
-            }
-            if (my_chemistry->dust_species > 2) {
-              h2dust[i] = h2dust[i] + h2dust_silicate_coef * sgreforg[i] +
-                          h2dust_silicate_coef * sgvolorg[i] +
-                          h2dust_silicate_coef * sgH2Oice[i];
+            // calculate the components of the sum
+            // (recall: n_grain_species <= OnlyGrainSpLUT::NUM_ENTRIES)
+            for (int gsp_idx = 0; gsp_idx < n_grain_species; gsp_idx++) {
+              double coef = (gsp_idx == OnlyGrainSpLUT::AC_dust)
+                                ? h2AC
+                                : h2dust_silicate_coef;
+              double sigma_per_gas_mass =
+                  internal_dust_prop_scratch_buf.grain_sigma_per_gas_mass
+                      .data[gsp_idx][i];
+              components[gsp_idx] = coef * sigma_per_gas_mass;
             }
 
+            // Part 2: sum the components
+            // handle components for my_chemistry->dust_species > 0
+            h2dust[i] = components[OnlyGrainSpLUT::MgSiO3_dust] +
+                        components[OnlyGrainSpLUT::AC_dust];
+            if (my_chemistry->dust_species > 1) {
+              h2dust[i] = h2dust[i] + components[OnlyGrainSpLUT::SiM_dust] +
+                          components[OnlyGrainSpLUT::FeM_dust] +
+                          components[OnlyGrainSpLUT::Mg2SiO4_dust] +
+                          components[OnlyGrainSpLUT::Fe3O4_dust] +
+                          components[OnlyGrainSpLUT::SiO2_dust] +
+                          components[OnlyGrainSpLUT::MgO_dust] +
+                          components[OnlyGrainSpLUT::FeS_dust] +
+                          components[OnlyGrainSpLUT::Al2O3_dust];
+            }
+            if (my_chemistry->dust_species > 2) {
+              h2dust[i] = h2dust[i] + components[OnlyGrainSpLUT::ref_org_dust] +
+                          components[OnlyGrainSpLUT::vol_org_dust] +
+                          components[OnlyGrainSpLUT::H2O_ice_dust];
+            }
           } else {
             double logTdust = std::log(
                 grain_temperatures.data[OnlyGrainSpLUT::MgSiO3_dust][i]);
