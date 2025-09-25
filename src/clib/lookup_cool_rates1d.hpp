@@ -808,19 +808,9 @@ inline void lookup_cool_rates1d(
                                   itmask, logTlininterp_buf);
   }
 
-  // Compute grain size increment
-
-  if ((anydust != MASK_FALSE) && (my_chemistry->dust_species > 0)) {
-    f_wrap::calc_grain_size_increment_1d(dom, idx_range, itmask_metal,
-                                         my_chemistry, my_rates, my_fields,
-                                         internal_dust_prop_scratch_buf);
-  }
-
   // Look-up rate for H2 formation on dust & (when relevant) grain growth rates
 
   if (anydust != MASK_FALSE) {
-    const double logTdust_start = std::log(my_chemistry->DustTemperatureStart);
-    const double logTdust_end = std::log(my_chemistry->DustTemperatureEnd);
     const double dlogTdust =
         (std::log(my_chemistry->DustTemperatureEnd) -
          std::log(my_chemistry->DustTemperatureStart)) /
@@ -832,6 +822,9 @@ inline void lookup_cool_rates1d(
     if (my_chemistry->dust_species == 0) {
       // in this branch, we are just tracking a single generic dust field
 
+      const double logTdust_start =
+          std::log(my_chemistry->DustTemperatureStart);
+      const double logTdust_end = std::log(my_chemistry->DustTemperatureEnd);
       // construct a view the h2dust interpolation table
       grackle::impl::View<double**> h2dusta(
           my_rates->h2dust, my_chemistry->NumberOfTemperatureBins,
@@ -891,6 +884,11 @@ inline void lookup_cool_rates1d(
       // following condition was satisfied when my_chemistry->dust_species > 0
       // (we are just making it more explicit)
       GRIMPL_REQUIRE(my_chemistry->metal_chemistry == 1, "sanity-check!");
+
+      // Compute grain size increment
+      f_wrap::calc_grain_size_increment_1d(dom, idx_range, itmask_metal,
+                                           my_chemistry, my_rates, my_fields,
+                                           internal_dust_prop_scratch_buf);
 
       grackle::impl::View<const gr_float***> d(
           my_fields->density, my_fields->grid_dimension[0],
@@ -1025,9 +1023,6 @@ inline void lookup_cool_rates1d(
           grackle::impl::View<const gr_float***>
               ingred_view[grackle::impl::max_ingredients_per_grain_species];
           for (int ingred_idx = 0; ingred_idx < n_ingred; ingred_idx++) {
-            // printf("ingred_idx = %d\n", ingred_idx);
-            // printf("species_idx = %d\n",
-            // ingredient_l[ingred_idx].species_idx);
             const gr_float* ptr = field_data_adaptor.get_ptr_dynamic(
                 ingredient_l[ingred_idx].species_idx);
             ingred_view[ingred_idx] = grackle::impl::View<const gr_float***>(
