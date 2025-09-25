@@ -83,8 +83,9 @@ void grackle::impl::cool1d_multi_g(
   // Locals
 
   int i;
-  double dom, qq, vibl, logtem0, logtem9, dlogtem, zr, hdlte1, hdlow1, gamma2, x, fudge, fH2, gphdl1, dom_inv, tau, ciefudge, coolunit, tbase1, nH2, nother, nSSh, nratio, nssh_he, nratio_he, fSShHI, fSShHeI, pe_eps, pe_X, grbeta, ih2cox, min_metallicity;
+  double dom, qq, vibl, logtem0, logtem9, dlogtem, zr, hdlte1, hdlow1, gamma2, x, fudge, gphdl1, dom_inv, tau, ciefudge, coolunit, tbase1, nH2, nother, nSSh, nratio, nssh_he, nratio_he, fSShHI, fSShHeI, pe_eps, pe_X, grbeta, ih2cox, min_metallicity;
   double comp1, comp2;
+  [[maybe_unused]] double fH2;
 
   // Performing heap allocations for all of the subsequent buffers within this
   // function is a major impediment to (i) CPU performance and (ii) adding GPU
@@ -163,11 +164,6 @@ void grackle::impl::cool1d_multi_g(
 
   gr_mask_type anydust, interp;
   std::vector<gr_mask_type> itmask_tab(my_fields->grid_dimension[0]);
-  // !#define CALCULATE_TGAS_SELF_CONSISTENTLY
-  // #ifdef CALCULATE_TGAS_SELF_CONSISTENTLY
-  int iter_tgas;
-  double tgas_err, tgas0;
-  // #endif /* NOT important */
 
   // \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
   // =======================================================================
@@ -310,11 +306,12 @@ void grackle::impl::cool1d_multi_g(
                HeIII(i,idx_range.j,idx_range.k))/4. +
                HI(i,idx_range.j,idx_range.k) + HII(i,idx_range.j,idx_range.k) + de(i,idx_range.j,idx_range.k);
 
-          iter_tgas = 0;
-          tgas_err = huge8;
+          int iter_tgas = 0;
+          double tgas_err = huge8;
           while ((iter_tgas < 100)
                 && (tgas_err > 1.e-3)) {
-            tgas0 = tgas[i];
+            // tgas0 is used when CALCULATE_TGAS_SELF_CONSISTENTLY is defined
+            [[maybe_unused]] double tgas0 = tgas[i];
             if (nH2/nother > 1.0e-3)  {
               x = 6100./tgas[i]; // not quite self-consistent
               if (x > 10.)  {
