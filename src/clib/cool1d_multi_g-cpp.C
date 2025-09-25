@@ -85,7 +85,6 @@ void grackle::impl::cool1d_multi_g(
   int i;
   double dom, qq, vibl, logtem0, logtem9, dlogtem, zr, hdlte1, hdlow1, gamma2, x, fudge, gphdl1, dom_inv, tau, ciefudge, coolunit, tbase1, nH2, nother, nSSh, nratio, nssh_he, nratio_he, fSShHI, fSShHeI, pe_eps, pe_X, grbeta, ih2cox, min_metallicity;
   double comp1, comp2;
-  [[maybe_unused]] double fH2;
 
   // Performing heap allocations for all of the subsequent buffers within this
   // function is a major impediment to (i) CPU performance and (ii) adding GPU
@@ -629,7 +628,7 @@ void grackle::impl::cool1d_multi_g(
           nother = (HeI(i,idx_range.j,idx_range.k) + HeII(i,idx_range.j,idx_range.k) +
                HeIII(i,idx_range.j,idx_range.k))/4. +
                HI(i,idx_range.j,idx_range.k) + HII(i,idx_range.j,idx_range.k) + de(i,idx_range.j,idx_range.k);
-          fH2 = nH2/(nH2 + nother);
+          double fH2 = nH2/(nH2 + nother);
           fudge = std::sqrt((40. * std::pow(10.,(4.8 * std::sqrt(std::max(std::log10(tgas[i]),2.)-2.))) / std::pow(fH2,2))/
                             ((nH2 + nother)*dom) );
           fudge = std::fmin(fudge, 1.);
@@ -679,7 +678,7 @@ void grackle::impl::cool1d_multi_g(
           nother = (HeI(i,idx_range.j,idx_range.k) + HeII(i,idx_range.j,idx_range.k) +
                HeIII(i,idx_range.j,idx_range.k))/4. +
                HI(i,idx_range.j,idx_range.k) + HII(i,idx_range.j,idx_range.k) + de(i,idx_range.j,idx_range.k);
-          fH2 = nH2/(nH2 + nother);
+          double fH2 = nH2/(nH2 + nother);
           // TODO: code duplication with line 726
           fudge = std::sqrt((40. * std::pow(10.,(4.8 * std::sqrt(std::max(std::log10(tgas[i]),2.)-2.))) / std::pow(fH2,2))/
           ((nH2 + nother)*dom) )
@@ -734,7 +733,7 @@ void grackle::impl::cool1d_multi_g(
           nother = (HeI(i,idx_range.j,idx_range.k) + HeII(i,idx_range.j,idx_range.k) +
                HeIII(i,idx_range.j,idx_range.k))/4. +
                HI(i,idx_range.j,idx_range.k) + HII(i,idx_range.j,idx_range.k) + de(i,idx_range.j,idx_range.k);
-          fH2 = nH2/(nH2 + nother);
+          double fH2 = nH2/(nH2 + nother);
           fudge = std::sqrt((40. * std::pow(10.,(4.8 * std::sqrt(std::max(std::log10(tgas[i]),2.)-2.))) / std::pow(fH2,2))/
           ((nH2 + nother)*dom) )
           fudge = std::fmin(fudge, 1.);
