@@ -1019,15 +1019,25 @@ inline void lookup_cool_rates1d(
           const GrainGrowthIngredient* ingredient_l =
               gsp_info->species_info[gsp_idx].growth_ingredients;
 
-          // preload views of each ingredient's current mass density
+          // preload views of each ingredient's current mass density &
+          // precompute the divisor divided by the mass density
           grackle::impl::View<const gr_float***>
               ingred_view[grackle::impl::max_ingredients_per_grain_species];
+          double
+              ingred_divisor[grackle::impl::max_ingredients_per_grain_species];
+
           for (int ingred_idx = 0; ingred_idx < n_ingred; ingred_idx++) {
             const gr_float* ptr = field_data_adaptor.get_ptr_dynamic(
                 ingredient_l[ingred_idx].species_idx);
             ingred_view[ingred_idx] = grackle::impl::View<const gr_float***>(
                 ptr, my_fields->grid_dimension[0], my_fields->grid_dimension[1],
                 my_fields->grid_dimension[2]);
+
+            // load the particle mass for the current ingredient
+            double mparticle_amu = ingredient_l[ingred_idx].mparticle_amu;
+            // load the stoichiometric coefficient
+            double coef = ingredient_l[ingred_idx].coef;
+            ingred_divisor[ingred_idx] = std::pow(mparticle_amu, 1.5) * coef;
           }
 
           // preload the grain species's grain_sigma_per_gas_mass
@@ -1038,26 +1048,16 @@ inline void lookup_cool_rates1d(
           // compute the growth rate at each location in idx_range
           for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
             if (itmask_metal[i] != MASK_FALSE) {
-              // calculate the factor that depends on ingredient availability
-              double availability_factor = DBL_MAX;  // <- max finite value
+              // calculate the factor that depends on the limiting reactant
+              double limiting_factor = DBL_MAX;  // <- max finite value
               for (int ingred_idx = 0; ingred_idx < n_ingred; ingred_idx++) {
-                // note: it would be faster to precompute
-                //   std::pow(mparticle_amu, 1.5) / coef
-                // (this would probably change the gold-standard)
-
-                // load the particle mass for the current ingredient
-                double mparticle_amu = ingredient_l[ingred_idx].mparticle_amu;
-                // load the stoichiometric coefficient
-                double coef = ingredient_l[ingred_idx].coef;
-
-                // check if we should update factor
-                availability_factor = std::fmin(
-                    availability_factor,
+                limiting_factor = std::fmin(
+                    limiting_factor,
                     ingred_view[ingred_idx](i, idx_range.j, idx_range.k) /
-                        std::pow(mparticle_amu, 1.5) / coef);
+                        ingred_divisor[ingred_idx]);
               }
-              // if ingredient_l is empty, set factor to 0
-              availability_factor *= (n_ingred > 0);
+              // if ingredient_l is empty, set limiting_factor to 0
+              limiting_factor *= (n_ingred > 0);
 
               // finally, we're ready to compute the rate
               double kd = f_wrap::interpolate_1d_g(
@@ -1067,7 +1067,7 @@ inline void lookup_cool_rates1d(
 
               grain_growth_rates.data[OnlyGrainSpLUT::MgSiO3_dust][i] =
                   kd * grain_sigma_per_gas_mass[i] *
-                  d(i, idx_range.j, idx_range.k) * availability_factor;
+                  d(i, idx_range.j, idx_range.k) * limiting_factor;
             }
           }  // idx_range loop
         }  // n_grain_species loop
