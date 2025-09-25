@@ -661,7 +661,7 @@ int solve_rate_cool_g(
 
   if (internalu.extfields_in_comoving == 1)  {
     gr_float factor = (gr_float)(std::pow(internalu.a_value,(-3)) );
-    scale_fields_g(&imetal, &factor, my_chemistry, my_fields);
+    grackle::impl::scale_fields_g(imetal, &factor, my_chemistry, my_fields);
   }
 
   f_wrap::ceiling_species_g(imetal, my_chemistry, my_fields);
@@ -968,7 +968,7 @@ int solve_rate_cool_g(
 
   if (internalu.extfields_in_comoving == 1)  {
     gr_float factor = (gr_float)(std::pow(internalu.a_value,3) );
-    scale_fields_g(&imetal, &factor, my_chemistry, my_fields);
+    grackle::impl::scale_fields_g(imetal, &factor, my_chemistry, my_fields);
   }
 
   if (my_chemistry->primordial_chemistry > 0)  {

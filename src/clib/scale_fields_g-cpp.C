@@ -15,11 +15,9 @@
 
 #include "scale_fields_g-cpp.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif /* __cplusplus */
+namespace grackle::impl {
 
-void scale_fields_g(int* imetal, gr_float* factor, chemistry_data* my_chemistry,
+void scale_fields_g(int imetal, gr_float* factor, chemistry_data* my_chemistry,
                     grackle_field_data* my_fields) {
   grackle::impl::View<gr_float***> d(
       my_fields->density, my_fields->grid_dimension[0],
@@ -270,7 +268,7 @@ void scale_fields_g(int* imetal, gr_float* factor, chemistry_data* my_chemistry,
         }
       }
 
-      if ((*imetal) == 1) {
+      if (imetal == 1) {
         for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
           metal(i, j, k) = metal(i, j, k) * (*factor);
         }
@@ -378,6 +376,4 @@ void scale_fields_g(int* imetal, gr_float* factor, chemistry_data* my_chemistry,
   return;
 }
 
-#ifdef __cplusplus
-}  // extern "C"
-#endif /* __cplusplus */
+}

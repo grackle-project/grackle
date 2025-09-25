@@ -37,7 +37,7 @@ void cool_multi_time_g(
   // Convert densities from comoving to 'proper'
   if (internalu.extfields_in_comoving == 1)  {
     gr_float factor = (gr_float)(std::pow(internalu.a_value,(-3)) );
-    scale_fields_g(&imetal, &factor, my_chemistry, my_fields);
+    grackle::impl::scale_fields_g(imetal, &factor, my_chemistry, my_fields);
   }
 
 
@@ -127,7 +127,7 @@ void cool_multi_time_g(
   // Convert densities back to comoving from 'proper'
   if (internalu.extfields_in_comoving == 1)  {
     gr_float factor = (gr_float)(std::pow(internalu.a_value,3) );
-    scale_fields_g(&imetal, &factor, my_chemistry, my_fields);
+    grackle::impl::scale_fields_g(imetal, &factor, my_chemistry, my_fields);
   }
 
   return;
