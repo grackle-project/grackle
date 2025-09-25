@@ -171,10 +171,6 @@ void grackle::impl::cool1d_multi_g(
   int iter_tgas;
   double tgas_err, tgas0;
   // #endif /* NOT important */
-  //      debug
-  double edotunit;
-  int i_max;
-  gr_float d_max;
 
   // \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
   // =======================================================================
