@@ -25,27 +25,51 @@
 
 namespace grackle::impl {
 
-/// Look-up rate for H2 formation on dust & (when relevant) grain growth rates
-/// for each location in the index-range.
+// Some ideas for refactoring
+// - we probably want to break the following function up into its constituent
+//   parts.
+// - If nothing else, it would be nice to more cleanly separate logic for the
+//   different dust models (i.e. variants of the classic 1-field model and the
+//   multi-grain-species model)
+// - we may also want to give some thought to possibly grouping subsets of the
+//   arguments that are only used for certain dust models.
+
+/// Look-up rate for H2 formation on dust & (in certain configurations) the
+/// grain growth rates for each location in the index-range.
 ///
-/// @param[in] idx_range
-/// @param[in] tdust Precomputed dust temperatures (in certain configurations,
-///     may not be used)
-/// @param[in] dust2gas
-/// @param[out] h2dust
-/// @param[in] dom
-/// @param[in] itmask_metal
+/// > [!note]
+/// > This function should not be invoked when we aren't using any dust model
+///
+/// @param[in] idx_range Specifies the current index-range
+/// @param[in] tdust Precomputed dust temperatures at each location in the
+///     index range. This **ONLY** holds meaningful values when using variants
+///     of the classic 1-field dust-model or using variant of the
+///     multi-grain-species model where all grains are configured to share a
+///     single temperature.
+/// @param[in] dust2gas Holds the dust-to-gas ratio at each location in the
+///     index range. In other words, this holds the dust mass per unit gas mass
+///     (only used in certain configuration)
+/// @param[out] h2dust Buffer that gets filled with the rate for forming
+///     molecular hydrogen on dust grains. **THIS IS ALWAYS FILLED**
+/// @param[in] dom a standard quantity used throughout the codebase
+/// @param[in] itmask_metal Specifies the iteration-mask for the @p idx_range
+///     performing metal and dust calculations.
 /// @param[in] dt See the warning at the end of the docstring
-/// @param[in] my_chemistry
-/// @param[in] my_rates
-/// @param[in] my_fields
-/// @param[out] grain_growth_rates output buffers (that are used in certain
+/// @param[in] my_chemistry holds a number of configuration parameters.
+/// @param[in] my_rates Holds assorted rate data and other internal
+///     configuration info.
+/// @param[in] my_fields Specifies the field data.
+/// @param[out] grain_growth_rates output buffers that are used to hold the
+///     net grain growth rates at each @p idx_range (only used in certain
 ///     configurations)
-/// @param[in] grain_temperatures individual grain species temperatures (only
-///     used in certain configurations)
-/// @param[in] logTlininterp_buf
+/// @param[in] grain_temperatures individual grain species temperatures. This
+///     is only used in certain configurations (i.e. when we aren't using the
+///     tdust argument)
+/// @param[in] logTlininterp_buf Specifies precomputed arrays of values (for
+///    each location in the index range) that are used to linearly interpolate
+///    tables with respect to logT (the natural log of the gas temperature).
 /// @param[inout] internal_dust_prop_scratch_buf Scratch space used to hold
-///     temporary grain properties (only used in certain configurations)
+///     temporary grain species properties (only used in certain configurations)
 ///
 /// > [!important]
 /// > TODO: The role of the `dt` argument **MUST** be clarified! It is passed
@@ -90,8 +114,6 @@ inline void lookup_dust_rates1d(
     grackle::impl::InternalDustPropBuf internal_dust_prop_scratch_buf) {
   // shorten `grackle::impl::fortran_wrapper` to `f_wrap` within this function
   namespace f_wrap = ::grackle::impl::fortran_wrapper;
-
-  // we probably want to break this function up into its constituent parts
 
   // TODO: get rid of dlogtem argument!
 
