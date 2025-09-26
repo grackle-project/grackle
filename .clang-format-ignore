@@ -10,7 +10,7 @@
 # - No new files should be added to this list
 
 src/clib/c_wrappers/wrap_interpolators_g.c
-src/clib/calc_tdust_3d.C
+src/clib/calc_tdust_3d.cpp
 src/clib/calculate_cooling_time.c
 src/clib/calculate_dust_temperature.c
 src/clib/calculate_gamma.c
@@ -20,8 +20,7 @@ src/clib/chemistry_solver_funcs.hpp
 src/clib/cie_thin_cooling_rate_tables.h
 src/clib/cool1d_multi_g-cpp.C
 src/clib/cool1d_multi_g-cpp.h
-src/clib/cool_multi_time_g-cpp.C
-src/clib/cool_multi_time_g-cpp.h
+src/clib/cool_multi_time_g.cpp
 src/clib/dust_props.hpp
 src/clib/dynamic_api.c
 src/clib/fortran_func_decls.h
@@ -44,14 +43,13 @@ src/clib/phys_constants.h
 src/clib/rate_functions.c
 src/clib/set_default_chemistry_parameters.c
 src/clib/solve_chemistry.c
-src/clib/solve_rate_cool_g-cpp.C
-src/clib/solve_rate_cool_g-cpp.h
+src/clib/solve_rate_cool_g-cpp.cpp
 src/clib/status_reporting.c
 src/clib/status_reporting.h
 src/clib/step_rate_newton_raphson.hpp
 src/clib/time_deriv_0d.hpp
 src/clib/update_UVbackground_rates.c
-src/clib/utils-cpp.C
+src/clib/utils-cpp.cpp
 src/clib/utils-cpp.hpp
 src/clib/utils.c
 src/clib/utils.h

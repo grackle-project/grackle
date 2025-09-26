@@ -16,7 +16,7 @@
 #include <math.h>
 #include "grackle.h"
 #include "grackle_macros.h"
-#include "cool_multi_time_g-cpp.h"
+#include "cool_multi_time_g.h"
 #include "grackle_types.h"
 #include "internal_units.h"
 #include "phys_constants.h"
