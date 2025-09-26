@@ -479,12 +479,7 @@ void make_consistent(int imetal, double dom, chemistry_data* my_chemistry,
       for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
         correctH =
             (gr_float)(my_chemistry->HydrogenFractionByMass * metalfree[i] /
-                       totalH[i]);  // TODO: which one is correct?
-        // correctH = (gr_float)(my_chemistry->HydrogenFractionByMass*(1. -
-        // my_chemistry->DeuteriumToHydrogenRatio)*metalfree[i]/totalH[i]
-        //              );
-        // // ! GC202005
-        // //- !       correctH = real(fh*metalfree(i)/totalH(i), RKIND)
+                       totalH[i]);
         HI(i, j, k) = HI(i, j, k) * correctH;
         HII(i, j, k) = HII(i, j, k) * correctH;
 
