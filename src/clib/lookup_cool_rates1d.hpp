@@ -174,7 +174,7 @@ inline void interpolate_kcol_rate_tables_(
 /// @param[out] kcol_buf A struct containing the buffers that are filled by
 ///    this function
 /// @param[in] idx_range Specifies the current index-range
-/// @param[in] tgas specifies the gas temperatures for the `idx_range`
+/// @param[in] tgas1d specifies the gas temperatures for the `idx_range`
 /// @param[in] itmask Specifies the `idx_range`'s iteration-mask for this
 ///    calculation
 /// @param[in] my_chemistry holds a number of configuration parameters
@@ -702,8 +702,69 @@ inline void apply_misc_shield_factors(
   }
 }
 
-/// This routine uses the temperature to look up the chemical rates which are
-/// tabulated in a log table as a function of temperature.
+/// This routine uses the gas temperature to calculate rate at each location
+/// in the specified index range.
+///
+/// In more detail, this function does a lot (probably too much):
+/// - it computes collisional reaction rates
+/// - shielding-adjusted photo-rates (related to the UV background)
+/// - a few heating/cooling rates
+/// - dust-related rates (details depend on the dust model)
+/// - logTlininterp_buf is considered an output too (at the time of writing, it
+///   is used for some subsequent calculations)
+///
+/// > [!note]
+/// > A case could be made to handle the dust-related rates in a separate
+/// > function
+///
+/// @param[in] idx_range Specifies the current index-range
+/// @param[in] anydust Whether to model any dust
+/// @param[in] tgas1d specifies the gas temperatures for the @p idx_range
+/// @param[in] mmw specifies the mean molecular weight for the @p idx_range
+/// @param[in] tdust Precomputed dust temperatures at each location in the
+///     index range. This **ONLY** holds meaningful values when using variants
+///     of the classic 1-field dust-model or using variant of the
+///     multi-grain-species model where all grains are configured to share a
+///     single temperature.
+/// @param[in] dust2gas Holds the dust-to-gas ratio at each location in the
+///     index range. In other words, this holds the dust mass per unit gas mass
+///     (only used in certain configuration)
+/// @param[out] h2dust Buffer that gets filled with the rate for forming
+///     molecular hydrogen on dust grains. (This is filled whenever @p anydust
+///     holds `MASK_TRUE`.
+/// @param[in] dom a standard quantity used throughout the codebase
+/// @param[in] dx_cgs The width of a cell in comoving cm (I think). Used in
+///     certain self-shielding calculations.
+/// @param[in] c_ljeans Coefficient used for computing the Jeans length
+/// @param[in] itmask Specifies the general iteration-mask of the @p idx_range
+///     for this calculation.
+/// @param[in] itmask_metal Specifies the iteration-mask of the @p idx_range for
+///     performing metal and dust calculations.
+/// @param[in] dt See the warning at the end of the docstring
+/// @param[in] my_chemistry holds a number of configuration parameters.
+/// @param[in] my_rates Holds assorted rate data and other internal
+///     configuration info.
+/// @param[in] my_fields Specifies the field data.
+/// @param[in] my_uvb_rates Holds precomputed photorates that depend on the UV
+///     background. These rates do not include the effects of self-shielding.
+/// @param[in] internalu Specifies Grackle's internal unit-system
+/// @param[out] grain_growth_rates output buffers that are used to hold the
+///     net grain growth rates at each @p idx_range (only used in certain
+///     configurations)
+/// @param[in] grain_temperatures individual grain species temperatures. This
+///     is only used in certain configurations (i.e. when we aren't using the
+///     tdust argument)
+/// @param[out] logTlininterp_buf Buffers that are filled with values for each
+///     location in @p idx_range with valuea that are used to linearly
+///     interpolate tables with respect to the natural log of @p tgas1d
+/// @param[out] kcol_buf Buffers filled with the collisional reaction rates for
+///     each location in @p idx_range
+/// @param[out] kshield_buf Buffers filled with shielding-adjusted photo
+///     reaction rates for @p idx_range
+/// @param[out] chemheatrates_buf Buffers that are filled with interpolated
+///     values that are used to compute heating from certain chemical reactions.
+/// @param[inout] internal_dust_prop_scratch_buf Scratch space used to hold
+///     temporary grain species properties (only used in certain configurations)
 ///
 /// > [!important]
 /// > TODO: The role of the `dt` argument **MUST** be clarified! See the
