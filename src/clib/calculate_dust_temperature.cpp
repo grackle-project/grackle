@@ -11,27 +11,22 @@
 / software.
 ************************************************************************/
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <math.h>
+#include <cstdio>
 #include "calc_tdust_3d.h"
 #include "grackle.h"
-#include "grackle_macros.h"
 #include "internal_units.h"
-#include "phys_constants.h"
 
-int local_calculate_dust_temperature(chemistry_data *my_chemistry,
-                                     chemistry_data_storage *my_rates,
-                                     code_units *my_units,
-                                     grackle_field_data *my_fields,
-                                     gr_float *dust_temperature)
+extern "C" int local_calculate_dust_temperature(
+    chemistry_data *my_chemistry, chemistry_data_storage *my_rates,
+    code_units *my_units, grackle_field_data *my_fields,
+    gr_float *dust_temperature)
 {
 
   if (!my_chemistry->use_grackle)
-    return SUCCESS;
+    return GR_SUCCESS;
 
   if (my_chemistry->dust_chemistry < 1 && my_chemistry->h2_on_dust < 1)
-    return SUCCESS;
+    return GR_SUCCESS;
 
   InternalGrUnits internalu = new_internalu_(my_units);
 
@@ -47,20 +42,20 @@ int local_calculate_dust_temperature(chemistry_data *my_chemistry,
   for (dim = 0; dim < my_fields->grid_rank; dim++)
     size *= my_fields->grid_dimension[dim];
 
-  gr_float *temperature = malloc(size * sizeof(gr_float));
+  gr_float *temperature = new gr_float[size];
   if (local_calculate_temperature(my_chemistry, my_rates, my_units,
-                                  my_fields, temperature) == FAIL) {
-    fprintf(stderr, "Error in local_calculate_temperature.\n");
-    return FAIL;
+                                  my_fields, temperature) != GR_SUCCESS) {
+    std::fprintf(stderr, "Error in local_calculate_temperature.\n");
+    return GR_FAIL;
   }
 
   calc_tdust_3d_g(
     temperature, dust_temperature, metal_field_present, my_chemistry, my_rates,
     my_fields, internalu
   );
-  free(temperature);
+  delete[] temperature;
 
-  return SUCCESS;
+  return GR_SUCCESS;
 }
 
 int calculate_dust_temperature(code_units *my_units,
@@ -69,9 +64,9 @@ int calculate_dust_temperature(code_units *my_units,
 {
   if (local_calculate_dust_temperature(
           grackle_data, &grackle_rates, my_units,
-          my_fields, dust_temperature) == FAIL) {
-    fprintf(stderr, "Error in local_calculate_dust_temperature.\n");
-    return FAIL;
+          my_fields, dust_temperature) != GR_SUCCESS) {
+    std::fprintf(stderr, "Error in local_calculate_dust_temperature.\n");
+    return GR_FAIL;
   }
-  return SUCCESS;
+  return GR_SUCCESS;
 }
