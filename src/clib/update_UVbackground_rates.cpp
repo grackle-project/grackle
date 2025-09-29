@@ -16,10 +16,10 @@
 #include "grackle.h"
 #include "internal_units.h"
 
-int grackle::impl::update_UVbackground_rates(chemistry_data *my_chemistry,
-                                             chemistry_data_storage *my_rates,
+int grackle::impl::update_UVbackground_rates(const chemistry_data *my_chemistry,
+                                             const chemistry_data_storage *my_rates,
                                              photo_rate_storage *my_uvb_rates,
-                                             code_units *my_units)
+                                             const code_units *my_units)
 {
   /* Return if there is no radiation (rates should be all zero). */
 

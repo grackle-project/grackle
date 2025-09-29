@@ -18,10 +18,10 @@
 namespace grackle::impl {
 
 /// Update UV background rates to current redshift
-int update_UVbackground_rates(chemistry_data* my_chemistry,
-                              chemistry_data_storage* my_rates,
+int update_UVbackground_rates(const chemistry_data* my_chemistry,
+                              const chemistry_data_storage* my_rates,
                               photo_rate_storage* my_uvb_rates,
-                              code_units* my_units);
+                              const code_units* my_units);
 
 }  // namespace grackle::impl
 
