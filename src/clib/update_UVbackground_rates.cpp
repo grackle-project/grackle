@@ -20,6 +20,7 @@
 
 #include "grackle.h"
 #include "grackle_macros.h"
+#include "internal_units.h"
 
 int grackle::impl::update_UVbackground_rates(chemistry_data *my_chemistry,
                                              chemistry_data_storage *my_rates,
@@ -172,34 +173,12 @@ int grackle::impl::update_UVbackground_rates(chemistry_data *my_chemistry,
   }
 
   // Now convert the rates to code units.
-  // TODO: consider using the internal_units machinery
 
-  /* Get conversion units. */
-
-  double co_length_units, co_density_units;
-  if (my_units->comoving_coordinates == TRUE) {
-    co_length_units = my_units->length_units;
-    co_density_units = my_units->density_units;
-  }
-  else {
-    co_length_units = my_units->length_units *
-      my_units->a_value * my_units->a_units;
-    co_density_units = my_units->density_units /
-      POW(my_units->a_value * my_units->a_units, 3);
-  }
-
-  double tbase1 = my_units->time_units;
-  double xbase1 = co_length_units /
-    (my_units->a_value * my_units->a_units);
-  double dbase1 = co_density_units *
-    POW(my_units->a_value * my_units->a_units, 3);
-  double mh     = 1.67262171e-24;
+  InternalGrUnits internalu = new_internalu_legacy_C_(my_units);
   double ev2erg = 1.60217653e-12;
   /* compared to Enzo source, there's an additional factor of
      1/ev2erg here, because the heating rates are stored as eV/s. */
-  double CoolingUnits = (POW(my_units->a_units, 5) * xbase1*xbase1 * mh*mh) /
-    (POW(tbase1, 3) * dbase1) / ev2erg;
-
+  double CoolingUnits = internalu.coolunit / ev2erg;
 
   my_uvb_rates->k24 *= my_units->time_units;
   my_uvb_rates->k25 *= my_units->time_units;
