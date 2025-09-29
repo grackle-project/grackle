@@ -11,34 +11,33 @@
 / software.
 ************************************************************************/
 
+#include "update_UVbackground_rates.hpp"
+
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 
+#include "grackle.h"
 #include "grackle_macros.h"
-#include "grackle_types.h"
-#include "grackle_chemistry_data.h"
 
-/* function prototypes */
-
-int update_UVbackground_rates(chemistry_data *my_chemistry,
-                              chemistry_data_storage *my_rates,
-                              photo_rate_storage *my_uvb_rates,
-                              code_units *my_units)
+int grackle::impl::update_UVbackground_rates(chemistry_data *my_chemistry,
+                                             chemistry_data_storage *my_rates,
+                                             photo_rate_storage *my_uvb_rates,
+                                             code_units *my_units)
 {
   /* Return if there is no radiation (rates should be all zero). */
 
   if (my_chemistry->UVbackground == 0 ||
       my_chemistry->primordial_chemistry == 0)
-    return SUCCESS;
+    return GR_SUCCESS;
 
   /* Return if redshift is outside of on/off redshifts. */
 
   double Redshift = 1.0 / (my_units->a_value * my_units->a_units) - 1;
   if ( (Redshift < my_chemistry->UVbackground_redshift_off) ||
        (Redshift > my_chemistry->UVbackground_redshift_on) )
-    return SUCCESS;
+    return GR_SUCCESS;
 
   /* ------------------------------------------------------------------ */
   /* First, calculate the ramp value, a number between 0 and 1 which
@@ -173,6 +172,7 @@ int update_UVbackground_rates(chemistry_data *my_chemistry,
   }
 
   // Now convert the rates to code units.
+  // TODO: consider using the internal_units machinery
 
   /* Get conversion units. */
 
@@ -285,5 +285,5 @@ int update_UVbackground_rates(chemistry_data *my_chemistry,
 
   }
 
-  return SUCCESS;
+  return GR_SUCCESS;
 }

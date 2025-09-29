@@ -48,7 +48,7 @@ src/clib/status_reporting.c
 src/clib/status_reporting.h
 src/clib/step_rate_newton_raphson.hpp
 src/clib/time_deriv_0d.hpp
-src/clib/update_UVbackground_rates.c
+src/clib/update_UVbackground_rates.cpp
 src/clib/utils-cpp.cpp
 src/clib/utils-cpp.hpp
 src/clib/utils.c

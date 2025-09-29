@@ -90,7 +90,6 @@ add_library(Grackle_Grackle
   rate_functions.c
   set_default_chemistry_parameters.c
   status_reporting.c status_reporting.h
-  update_UVbackground_rates.c
   utils.c
 
   # auto-generated C source files
@@ -120,6 +119,7 @@ add_library(Grackle_Grackle
   solve_rate_cool_g-cpp.cpp solve_rate_cool_g-cpp.h
   step_rate_newton_raphson.hpp
   time_deriv_0d.hpp
+  update_UVbackground_rates.cpp update_UVbackground_rates.hpp
   utils-cpp.cpp utils-cpp.hpp
   utils-field.hpp
   fortran_func_wrappers.hpp
