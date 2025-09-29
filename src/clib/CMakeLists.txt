@@ -94,7 +94,6 @@ add_library(Grackle_Grackle
   initialize_UVbackground_data.c  initialize_UVbackground_data.h
   rate_functions.c
   set_default_chemistry_parameters.c
-  solve_chemistry.c
   status_reporting.c status_reporting.h
   update_UVbackground_rates.c
   utils.c
@@ -116,6 +115,7 @@ add_library(Grackle_Grackle
   internal_types.cpp internal_types.hpp
   opaque_storage.hpp
   rate_utils.cpp
+  solve_chemistry.cpp
   scale_fields.hpp
   solve_rate_cool_g-cpp.cpp solve_rate_cool_g-cpp.h
   step_rate_newton_raphson.hpp
