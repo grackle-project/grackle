@@ -12,14 +12,8 @@
 ************************************************************************/
 
 #include "update_UVbackground_rates.hpp"
-
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <cmath>
-
 #include "grackle.h"
-#include "grackle_macros.h"
 #include "internal_units.h"
 
 int grackle::impl::update_UVbackground_rates(chemistry_data *my_chemistry,
