@@ -11,14 +11,11 @@
 / software.
 ************************************************************************/
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <math.h>
+#include <cstdio>
 #include "calc_temp_cloudy_g.h"
 #include "grackle.h"
 #include "index_helper.h"
 #include "internal_units.h"
-#include "phys_constants.h"
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -33,11 +30,11 @@
  
 #define MINIMUM_TEMPERATURE 1.0
  
-int local_calculate_temperature(chemistry_data *my_chemistry,
-                                chemistry_data_storage *my_rates,
-                                code_units *my_units,
-                                grackle_field_data *my_fields,
-                                gr_float *temperature)
+extern "C" int local_calculate_temperature(chemistry_data *my_chemistry,
+                                           chemistry_data_storage *my_rates,
+                                           code_units *my_units,
+                                           grackle_field_data *my_fields,
+                                           gr_float *temperature)
 {
   if (!my_chemistry->use_grackle) { return GR_SUCCESS; }
 
@@ -55,7 +52,7 @@ int local_calculate_temperature(chemistry_data *my_chemistry,
   /* Compute the pressure first. */
   if (local_calculate_pressure(my_chemistry, my_rates, my_units,
                                my_fields, temperature) != GR_SUCCESS) {
-    fprintf(stderr, "Error in calculate_pressure.\n");
+    std::fprintf(stderr, "Error in calculate_pressure.\n");
     return GR_FAIL;
   }
 
@@ -118,13 +115,13 @@ int local_calculate_temperature(chemistry_data *my_chemistry,
 }
 
 
-int calculate_temperature(code_units *my_units,
-                          grackle_field_data *my_fields,
-                          gr_float *temperature)
+extern "C" int calculate_temperature(code_units *my_units,
+                                     grackle_field_data *my_fields,
+                                     gr_float *temperature)
 {
   if (local_calculate_temperature(grackle_data, &grackle_rates, my_units,
                                   my_fields, temperature) != GR_SUCCESS) {
-    fprintf(stderr, "Error in local_calculate_temperature.\n");
+    std::fprintf(stderr, "Error in local_calculate_temperature.\n");
     return GR_FAIL;
   }
   return GR_SUCCESS;
