@@ -84,7 +84,6 @@ add_library(Grackle_Grackle
   # C source files
   calculate_cooling_time.c
   calculate_dust_temperature.c
-  calculate_gamma.c
   dynamic_api.c
   grackle_units.c
   index_helper.c
@@ -104,6 +103,7 @@ add_library(Grackle_Grackle
   # C++ Source (and Private Header Files)
   calc_tdust_3d.cpp calc_tdust_3d.h
   calc_temp_cloudy_g.cpp calc_temp_cloudy_g.h
+  calculate_gamma.cpp
   calculate_pressure.cpp
   calculate_temperature.cpp
   cool_multi_time_g.cpp cool_multi_time_g.h
