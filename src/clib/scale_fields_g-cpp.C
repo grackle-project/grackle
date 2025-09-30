@@ -380,4 +380,4 @@ void scale_fields_g(int imetal, gr_float factor, chemistry_data* my_chemistry,
   return;
 }
 
-}
+}  // namespace grackle::impl
