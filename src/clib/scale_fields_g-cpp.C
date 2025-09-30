@@ -1,10 +1,14 @@
-// See LICENSE file for license and copyright information
-
-/// @file scale_fields_g-cpp.C
-/// @brief Implements scale_fields_g
-
-// This file was initially generated automatically during conversion of the
-// scale_fields_g function from FORTRAN to C++
+//===----------------------------------------------------------------------===//
+//
+// See the LICENSE file for license and copyright information
+// SPDX-License-Identifier: NCSA AND BSD-3-Clause
+//
+//===----------------------------------------------------------------------===//
+///
+/// @file
+/// Implements the scale_fields_g function
+///
+//===----------------------------------------------------------------------===//
 
 #include <cstdio>
 #include <vector>
