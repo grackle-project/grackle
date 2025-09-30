@@ -59,9 +59,9 @@ extern "C" int local_calculate_dust_temperature(
   return GR_SUCCESS;
 }
 
-int calculate_dust_temperature(code_units *my_units,
-                               grackle_field_data *my_fields,
-                               gr_float *dust_temperature)
+extern "C" int calculate_dust_temperature(code_units *my_units,
+                                          grackle_field_data *my_fields,
+                                          gr_float *dust_temperature)
 {
   if (local_calculate_dust_temperature(
           grackle_data, &grackle_rates, my_units,
