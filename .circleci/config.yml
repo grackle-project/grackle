@@ -129,6 +129,7 @@ commands:
       - run:
           name: "Install dependencies for docs build."
           command: |
+            sudo apt install -y doxygen
             python3 -m venv $HOME/venv
             source $HOME/venv/bin/activate
             pip install --upgrade pip
@@ -239,6 +240,13 @@ commands:
             source $HOME/venv/bin/activate
             cd doc/source
             python -m sphinx -M html "." "_build" -W
+      # if we start using the breathe extension for sphinx, we'll probably
+      # start building the doxygen documentation alongside the sphinx docs &
+      # we won't try need an explicit test
+      - run:
+          name: "Trigger a doxygen-build of internal C++ code"
+          command: cd doc/doxygen && doxygen Doxyfile
+
 
 executors:
   python:
