@@ -10,24 +10,19 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef INITIALIZE_METAL_CHEMISTRY_RATES_H
-#define INITIALIZE_METAL_CHEMISTRY_RATES_H
+#ifndef INITIALIZE_METAL_CHEMISTRY_RATES_HPP
+#define INITIALIZE_METAL_CHEMISTRY_RATES_HPP
 
 #include "grackle.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif /* __cplusplus */
+namespace grackle::impl {
 
 int initialize_metal_chemistry_rates(chemistry_data* my_chemistry,
                                      chemistry_data_storage* my_rates,
                                      code_units* my_units);
 
-int local_free_metal_chemistry_rates(chemistry_data* my_chemistry,
-                                     chemistry_data_storage* my_rates);
+int free_metal_chemistry_rates(chemistry_data* my_chemistry,
+                               chemistry_data_storage* my_rates);
+}  // namespace grackle::impl
 
-#ifdef __cplusplus
-}  // extern "C"
-#endif /* __cplusplus */
-
-#endif /* INITIALIZE_METAL_CHEMISTRY_RATES_H */
+#endif /* INITIALIZE_METAL_CHEMISTRY_RATES_HPP */

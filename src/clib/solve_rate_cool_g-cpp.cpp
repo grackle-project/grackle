@@ -23,6 +23,7 @@
 #include "index_helper.h"
 #include "internal_types.hpp"
 #include "internal_units.h"
+#include "opaque_storage.hpp"
 #include "step_rate_newton_raphson.hpp"
 #include "utils-cpp.hpp"
 #include "visitor/common.hpp"
@@ -206,6 +207,13 @@ static double calc_Heq_div_dHeqdt_(
   int i
 ) {
 
+  // load the tables of rates that the `k13` & `k22` arugments were previously
+  // interpolated from
+  const double* k13_table =
+    my_rates->opaque_storage->kcol_rate_tables->data[CollisionalRxnLUT::k13];
+  const double* k22_table =
+    my_rates->opaque_storage->kcol_rate_tables->data[CollisionalRxnLUT::k22];
+
   // Equilibrium value for H is:
   // Heq = (-1._DKIND / (4*k22)) * (k13 - sqrt(8 k13 k22 rho + k13^2))
   // We want to know dH_eq/dt.
@@ -222,10 +230,10 @@ static double calc_Heq_div_dHeqdt_(
   // difference in the equilibrium
   double eqt2 = std::fmin(std::log(tgas[i]) + 0.1*dlogtem, logTlininterp_buf.t2[i]);
   double eqtdef = (eqt2 - logTlininterp_buf.t1[i])/(logTlininterp_buf.t2[i] - logTlininterp_buf.t1[i]);
-  double eqk222 = my_rates->k22[logTlininterp_buf.indixe[i]-1] +
-    (my_rates->k22[logTlininterp_buf.indixe[i]+1-1] -my_rates->k22[logTlininterp_buf.indixe[i]-1])*eqtdef;
-  double eqk132 = my_rates->k13[logTlininterp_buf.indixe[i]-1] +
-    (my_rates->k13[logTlininterp_buf.indixe[i]+1-1] -my_rates->k13[logTlininterp_buf.indixe[i]-1])*eqtdef;
+  double eqk222 = k22_table[logTlininterp_buf.indixe[i]-1] +
+    (k22_table[logTlininterp_buf.indixe[i]+1-1] - k22_table[logTlininterp_buf.indixe[i]-1])*eqtdef;
+  double eqk132 = k13_table[logTlininterp_buf.indixe[i]-1] +
+    (k13_table[logTlininterp_buf.indixe[i]+1-1] - k13_table[logTlininterp_buf.indixe[i]-1])*eqtdef;
   double heq2 = (-1. / (4.*eqk222)) * (eqk132-
     std::sqrt(8.*eqk132*eqk222*
               my_chemistry->HydrogenFractionByMass*local_rho+
@@ -233,10 +241,10 @@ static double calc_Heq_div_dHeqdt_(
 
   double eqt1 = std::fmax(std::log(tgas[i]) - 0.1*dlogtem, logTlininterp_buf.t1[i]);
   eqtdef = (eqt1 - logTlininterp_buf.t1[i])/(logTlininterp_buf.t2[i] - logTlininterp_buf.t1[i]);
-  double eqk221 = my_rates->k22[logTlininterp_buf.indixe[i]-1] +
-    (my_rates->k22[logTlininterp_buf.indixe[i]+1-1] -my_rates->k22[logTlininterp_buf.indixe[i]-1])*eqtdef;
-  double eqk131 = my_rates->k13[logTlininterp_buf.indixe[i]-1] +
-    (my_rates->k13[logTlininterp_buf.indixe[i]+1-1] -my_rates->k13[logTlininterp_buf.indixe[i]-1])*eqtdef;
+  double eqk221 = k22_table[logTlininterp_buf.indixe[i]-1] +
+    (k22_table[logTlininterp_buf.indixe[i]+1-1] - k22_table[logTlininterp_buf.indixe[i]-1])*eqtdef;
+  double eqk131 = k13_table[logTlininterp_buf.indixe[i]-1] +
+    (k13_table[logTlininterp_buf.indixe[i]+1-1] - k13_table[logTlininterp_buf.indixe[i]-1])*eqtdef;
   double heq1 = (-1. / (4.*eqk221)) * (eqk131-
     std::sqrt(8.*eqk131*eqk221*
               my_chemistry->HydrogenFractionByMass*local_rho+std::pow(eqk131,2.)));
