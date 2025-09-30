@@ -13,7 +13,7 @@
 
 namespace grackle::impl {
 
-void scale_fields_g(int imetal, gr_float* factor, chemistry_data* my_chemistry,
+void scale_fields_g(int imetal, gr_float factor, chemistry_data* my_chemistry,
                     grackle_field_data* my_fields);
 
 } // namespace grackle::impl
