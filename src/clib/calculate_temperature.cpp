@@ -56,40 +56,36 @@ extern "C" int local_calculate_temperature(chemistry_data *my_chemistry,
     return GR_FAIL;
   }
 
-  /* Calculate temperature units. */
+  // Calculate temperature units and fetch some constants
 
-  double temperature_units = get_temperature_units(my_units);
-
-  double number_density, tiny_number = 1.-20;
-  double inv_metal_mol = 1.0 / MU_METAL;
+  const double temperature_units = get_temperature_units(my_units);
+  const double tiny_number = 1.-20;
+  const double inv_metal_mol = 1.0 / MU_METAL;
 
   /* Compute properties used to index the field. */
   const grackle_index_helper ind_helper = build_index_helper_(my_fields);
-  int outer_ind, index;
 
   /* Compute temperature with mu calculated directly. */
 
   /* parallelize the k and j loops with OpenMP
    * (these loops are flattened them for better parallelism) */
 # ifdef _OPENMP
-# pragma omp parallel for schedule( runtime ) \
-  private( outer_ind, index, number_density )
+# pragma omp parallel for schedule( runtime )
 # endif
-  for (outer_ind = 0; outer_ind < ind_helper.outer_ind_size; outer_ind++){
+  for (int outer_ind = 0; outer_ind < ind_helper.outer_ind_size; outer_ind++){
 
     const field_flat_index_range range = inner_flat_range_(outer_ind,
                                                            &ind_helper);
 
-    for (index = range.start; index <= range.end; index++) {
- 
-      if (my_chemistry->primordial_chemistry > 0) {
-	number_density =
-	  0.25 * (my_fields->HeI_density[index] +
-		  my_fields->HeII_density[index] +
-		  my_fields->HeIII_density[index]) +
-	  my_fields->HI_density[index] + my_fields->HII_density[index] +
-	  my_fields->e_density[index];
-      }
+    for (int index = range.start; index <= range.end; index++) {
+
+      // we will only be in this loop if primordial_chemistry > 0
+      double number_density =
+        0.25 * (my_fields->HeI_density[index] +
+		    my_fields->HeII_density[index] +
+        my_fields->HeIII_density[index]) +
+        my_fields->HI_density[index] + my_fields->HII_density[index] +
+        my_fields->e_density[index];
 
       /* Add in H2. */
  
