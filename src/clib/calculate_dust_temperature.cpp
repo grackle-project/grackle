@@ -38,9 +38,10 @@ extern "C" int local_calculate_dust_temperature(
 
   /* Compute the size of the fields. */
  
-  int i, dim, size = 1;
-  for (dim = 0; dim < my_fields->grid_rank; dim++)
+  int size = 1;
+  for (int dim = 0; dim < my_fields->grid_rank; dim++) {
     size *= my_fields->grid_dimension[dim];
+  }
 
   gr_float *temperature = new gr_float[size];
   if (local_calculate_temperature(my_chemistry, my_rates, my_units,
