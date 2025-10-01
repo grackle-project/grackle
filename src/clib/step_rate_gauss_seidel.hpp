@@ -25,9 +25,48 @@
 #include "index_helper.h"
 #include "internal_types.hpp"
 #include "LUT.hpp"
+#include "utils-field.hpp"
+
+namespace grackle::impl::gauss_seidel {
+
+/// groups some arguments together that are used with update_densities
+struct DensityUpdateArgPack {
+  SpeciesLUTFieldAdaptor field_adaptor;
+  IndexRange idx_range;
+  const gr_mask_type* itmask;
+  grackle::impl::SpeciesCollection species_tmpdens;
+};
+
+/// update the specified field entry with values from species_tmpdens
+///
+/// this is a template function because we can have machinery to let us use
+/// the SpeciesLUTFieldAdaptor machinery without incurring a runtime cost
+///
+/// @note
+/// This is mostly intended to serve as a short-term placeholder to reduce a
+/// bunch of boilerplate code while we refactor other parts of Grackle. We will
+/// probably eventually remove this code
+template<int lut_idx>
+void update_densities(DensityUpdateArgPack& pack, gr_float floor_val)
+{
+  grackle::impl::View<gr_float***> view(
+      pack.field_adaptor.get_ptr_static<lut_idx>(),
+      pack.field_adaptor.data.grid_dimension[0],
+      pack.field_adaptor.data.grid_dimension[1],
+      pack.field_adaptor.data.grid_dimension[2]);
+  const double* src_vals = pack.species_tmpdens.data[lut_idx];
+
+  for (int i = pack.idx_range.i_start; i < pack.idx_range.i_stop; i++) {
+    if (pack.itmask[i] != MASK_FALSE)  {
+      view(i, pack.idx_range.j, pack.idx_range.k) =
+        std::fmax((gr_float)(src_vals[i]), floor_val);
+    }
+  }
+}
+
+}  // namespace grackle::impl::gauss_seidel
 
 namespace grackle::impl {
-
 
 /// This function overwrites the species density field values using the values
 /// in @p species_tmpdens, which holds the values from the end of the current
@@ -100,65 +139,84 @@ inline void update_fields_from_tmpdens_gauss_seidel(
   const int j = idx_range.j;
   const int k = idx_range.k;
 
+  // handle the primordial species
+  {
+    // record the time derivative of neutral Hydrogen
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+      if (itmask[i] != MASK_FALSE)  {
+        HIdot_prev[i] = std::fabs(HI(i,j,k)-species_tmpdens.data[SpLUT::HI][i])
+          / std::fmax((double)(dtit[i]), tiny8);
+      }
+    }
+
+    gauss_seidel::DensityUpdateArgPack pack{
+      SpeciesLUTFieldAdaptor{*my_fields}, idx_range, itmask, species_tmpdens};
+
+    // primordial_chemistry == 1 updates
+    gauss_seidel::update_densities<SpLUT::HI>(pack, tiny_fortran_val);
+    gauss_seidel::update_densities<SpLUT::HII>(pack, tiny_fortran_val);
+    gauss_seidel::update_densities<SpLUT::HeI>(pack, tiny_fortran_val);
+    gauss_seidel::update_densities<SpLUT::HeII>(pack, tiny_fortran_val);
+    gauss_seidel::update_densities<SpLUT::HeIII>(pack, (gr_float)(1e-5)*tiny_fortran_val);
+
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+      if (itmask[i] != MASK_FALSE)  {
+        // temporarily store the electron density from the start of the current
+        // subcycle.
+        dedot_prev[i] = de(i,j,k);
+
+        // Use charge conservation to determine electron fraction
+        // -> in other words, we ignore species_tmpdens.data[SpLUT::e] (in
+        //    practice, I think that array holds garbage values)
+        de(i,j,k) = HII(i,j,k) + HeII(i,j,k)/(gr_float)(4.) +
+             HeIII(i,j,k)/(gr_float)(2.);
+        if (my_chemistry->primordial_chemistry > 1)
+             { de(i,j,k) = de(i,j,k) - HM(i,j,k) + H2II(i,j,k)/(gr_float)(2.); }
+
+        if (my_chemistry->primordial_chemistry > 2)
+             { de(i,j,k) = de(i,j,k) + DII(i,j,k)/(gr_float)(2.); }
+        if (my_chemistry->primordial_chemistry > 3)
+             { de(i,j,k) = de(i,j,k) - DM(i,j,k)/(gr_float)(2.)
+                  + HDII(i,j,k)/(gr_float)(3.) + HeHII(i,j,k)/(gr_float)(5.); }
+        if ( (my_chemistry->metal_chemistry == 1) &&
+             (itmask_metal[i] != MASK_FALSE) )
+             { de(i,j,k) = de(i,j,k)
+                  + CII(i,j,k)/(gr_float)(12.) + COII(i,j,k)/(gr_float)(28.)
+                  + OII(i,j,k)/(gr_float)(16.) + OHII(i,j,k)/(gr_float)(17.)
+                  + H2OII(i,j,k)/(gr_float)(18.) + H3OII(i,j,k)/(gr_float)(19.)
+                  + O2II(i,j,k)/(gr_float)(32.); }
+
+        // store the time-derivative of the electron-density in dedot
+        // (don't forget that we previously stored the value from the start of
+        // the current cycle within dedot_prev)
+        dedot_prev[i] = std::fabs(de(i,j,k)-dedot_prev[i])/
+             std::fmax(dtit[i],tiny8);
+      }
+    }
+
+    if (my_chemistry->primordial_chemistry > 1)  {
+      gauss_seidel::update_densities<SpLUT::HM>(pack, tiny_fortran_val);
+      gauss_seidel::update_densities<SpLUT::H2I>(pack, tiny_fortran_val);
+      gauss_seidel::update_densities<SpLUT::H2II>(pack, tiny_fortran_val);
+    }
+
+    if (my_chemistry->primordial_chemistry > 2)  {
+      gauss_seidel::update_densities<SpLUT::DI>(pack, tiny_fortran_val);
+      gauss_seidel::update_densities<SpLUT::DII>(pack, tiny_fortran_val);
+      gauss_seidel::update_densities<SpLUT::HDI>(pack, tiny_fortran_val);
+    }
+
+    if (my_chemistry->primordial_chemistry > 3)  {
+      gauss_seidel::update_densities<SpLUT::DM>(pack, tiny_fortran_val);
+      gauss_seidel::update_densities<SpLUT::HDII>(pack, tiny_fortran_val);
+      gauss_seidel::update_densities<SpLUT::HeHII>(pack, tiny_fortran_val);
+    }
+  }
+
+  // handle metal species & dust grain species
+
   for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
     if (itmask[i] != MASK_FALSE)  {
-      HIdot_prev[i] = std::fabs(HI(i,j,k)-species_tmpdens.data[SpLUT::HI][i]) /
-              std::fmax((double)(dtit[i] ), tiny8);
-      HI(i,j,k)    = std::fmax((gr_float)(species_tmpdens.data[SpLUT::HI][i] ), tiny_fortran_val);
-      HII(i,j,k)   = std::fmax((gr_float)(species_tmpdens.data[SpLUT::HII][i] ), tiny_fortran_val);
-      HeI(i,j,k)   = std::fmax((gr_float)(species_tmpdens.data[SpLUT::HeI][i] ), tiny_fortran_val);
-      HeII(i,j,k)  = std::fmax((gr_float)(species_tmpdens.data[SpLUT::HeII][i] ), tiny_fortran_val);
-      HeIII(i,j,k) = std::fmax((gr_float)(species_tmpdens.data[SpLUT::HeIII][i] ), (gr_float)(1e-5)*tiny_fortran_val);
-
-      // temporarily store the electron density from the start of the current
-      // subcycle.
-      dedot_prev[i] = de(i,j,k);
-
-      // Use charge conservation to determine electron fraction
-      // -> in other words, we ignore species_tmpdens.data[SpLUT::e] (in
-      //    practice, I think that array holds garbage values)
-      de(i,j,k) = HII(i,j,k) + HeII(i,j,k)/(gr_float)(4.) +
-           HeIII(i,j,k)/(gr_float)(2.);
-      if (my_chemistry->primordial_chemistry > 1)
-           { de(i,j,k) = de(i,j,k) - HM(i,j,k) + H2II(i,j,k)/(gr_float)(2.); }
-
-      if (my_chemistry->primordial_chemistry > 2)
-           { de(i,j,k) = de(i,j,k) + DII(i,j,k)/(gr_float)(2.); }
-      if (my_chemistry->primordial_chemistry > 3)
-           { de(i,j,k) = de(i,j,k) - DM(i,j,k)/(gr_float)(2.)
-                + HDII(i,j,k)/(gr_float)(3.) + HeHII(i,j,k)/(gr_float)(5.); }
-      if ( (my_chemistry->metal_chemistry == 1)  && 
-           (itmask_metal[i] != MASK_FALSE) )
-           { de(i,j,k) = de(i,j,k)
-                + CII(i,j,k)/(gr_float)(12.) + COII(i,j,k)/(gr_float)(28.)
-                + OII(i,j,k)/(gr_float)(16.) + OHII(i,j,k)/(gr_float)(17.)
-                + H2OII(i,j,k)/(gr_float)(18.) + H3OII(i,j,k)/(gr_float)(19.)
-                + O2II(i,j,k)/(gr_float)(32.); }
-
-      // store the time-derivative of the electron-density in dedot
-      // (don't forget that we previously stored the value from the start of
-      // the current cycle within dedot_prev)
-      dedot_prev[i] = std::fabs(de(i,j,k)-dedot_prev[i])/
-           std::fmax(dtit[i],tiny8);
-
-      if (my_chemistry->primordial_chemistry > 1)  {
-        HM(i,j,k)    = std::fmax((gr_float)(species_tmpdens.data[SpLUT::HM][i] ), tiny_fortran_val);
-        H2I(i,j,k)   = std::fmax((gr_float)(species_tmpdens.data[SpLUT::H2I][i]), tiny_fortran_val);
-        H2II(i,j,k)  = std::fmax((gr_float)(species_tmpdens.data[SpLUT::H2II][i] ), tiny_fortran_val);
-      }
-
-      if (my_chemistry->primordial_chemistry > 2)  {
-        DI(i,j,k)    = std::fmax((gr_float)(species_tmpdens.data[SpLUT::DI][i] ), tiny_fortran_val);
-        DII(i,j,k)   = std::fmax((gr_float)(species_tmpdens.data[SpLUT::DII][i] ), tiny_fortran_val);
-        HDI(i,j,k)   = std::fmax((gr_float)(species_tmpdens.data[SpLUT::HDI][i] ), tiny_fortran_val);
-      }
-
-      if (my_chemistry->primordial_chemistry > 3)  {
-        DM(i,j,k)    = std::fmax((gr_float)(species_tmpdens.data[SpLUT::DM][i] ), tiny_fortran_val);
-        HDII(i,j,k)  = std::fmax((gr_float)(species_tmpdens.data[SpLUT::HDII][i] ), tiny_fortran_val);
-        HeHII(i,j,k) = std::fmax((gr_float)(species_tmpdens.data[SpLUT::HeHII][i] ), tiny_fortran_val);
-      }
-
       if ( (my_chemistry->metal_chemistry == 1)  && 
            (itmask_metal[i] != MASK_FALSE) )  {
         CI(i,j,k)      = std::fmax((gr_float)(species_tmpdens.data[SpLUT::CI][i]      ), tiny_fortran_val);
