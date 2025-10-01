@@ -141,6 +141,11 @@ inline void update_fields_from_tmpdens_gauss_seidel(
 
   // handle the primordial species
   {
+    // initialize the pack variable to group a set of arguments that gets
+    // repeatedly passed to a helper function
+    gauss_seidel::DensityUpdateArgPack pack{
+      SpeciesLUTFieldAdaptor{*my_fields}, idx_range, itmask, species_tmpdens};
+
     // record the time derivative of neutral Hydrogen
     for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
       if (itmask[i] != MASK_FALSE)  {
@@ -148,9 +153,6 @@ inline void update_fields_from_tmpdens_gauss_seidel(
           / std::fmax((double)(dtit[i]), tiny8);
       }
     }
-
-    gauss_seidel::DensityUpdateArgPack pack{
-      SpeciesLUTFieldAdaptor{*my_fields}, idx_range, itmask, species_tmpdens};
 
     // primordial_chemistry == 1 updates
     gauss_seidel::update_densities<SpLUT::HI>(pack, tiny_fortran_val);
@@ -213,42 +215,50 @@ inline void update_fields_from_tmpdens_gauss_seidel(
     }
   }
 
-  // handle metal species & dust grain species
+  // handle metal species
+  if (my_chemistry->metal_chemistry == 1) {
+    // initialize the pack variable to group a set of arguments that gets
+    // repeatedly passed to a helper function
+    // -> we explicitly use itmask_metal instead of itmask
+    gauss_seidel::DensityUpdateArgPack pack{
+      SpeciesLUTFieldAdaptor{*my_fields}, idx_range, itmask_metal,
+      species_tmpdens};
+
+    gauss_seidel::update_densities<SpLUT::CI>(pack, tiny_fortran_val);
+    gauss_seidel::update_densities<SpLUT::CII>(pack, tiny_fortran_val);
+    gauss_seidel::update_densities<SpLUT::CO>(pack, tiny_fortran_val);
+    gauss_seidel::update_densities<SpLUT::CO2>(pack, tiny_fortran_val);
+    gauss_seidel::update_densities<SpLUT::OI>(pack, tiny_fortran_val);
+    gauss_seidel::update_densities<SpLUT::OH>(pack, tiny_fortran_val);
+    gauss_seidel::update_densities<SpLUT::H2O>(pack, tiny_fortran_val);
+    gauss_seidel::update_densities<SpLUT::O2>(pack, tiny_fortran_val);
+    gauss_seidel::update_densities<SpLUT::SiI>(pack, tiny_fortran_val);
+    gauss_seidel::update_densities<SpLUT::SiOI>(pack, tiny_fortran_val);
+    gauss_seidel::update_densities<SpLUT::SiO2I>(pack, tiny_fortran_val);
+    gauss_seidel::update_densities<SpLUT::CH>(pack, tiny_fortran_val);
+    gauss_seidel::update_densities<SpLUT::CH2>(pack, tiny_fortran_val);
+    gauss_seidel::update_densities<SpLUT::COII>(pack, tiny_fortran_val);
+    gauss_seidel::update_densities<SpLUT::OII>(pack, tiny_fortran_val);
+    gauss_seidel::update_densities<SpLUT::OHII>(pack, tiny_fortran_val);
+    gauss_seidel::update_densities<SpLUT::H2OII>(pack, tiny_fortran_val);
+    gauss_seidel::update_densities<SpLUT::H3OII>(pack, tiny_fortran_val);
+    gauss_seidel::update_densities<SpLUT::O2II>(pack, tiny_fortran_val);
+    if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
+      if (my_chemistry->dust_species > 0)  {
+        gauss_seidel::update_densities<SpLUT::Mg>(pack, tiny_fortran_val);
+      }
+      if (my_chemistry->dust_species > 1)  {
+        gauss_seidel::update_densities<SpLUT::Al>(pack, tiny_fortran_val);
+        gauss_seidel::update_densities<SpLUT::S>(pack, tiny_fortran_val);
+        gauss_seidel::update_densities<SpLUT::Fe>(pack, tiny_fortran_val);
+      }
+    }
+  }
+
+  // handle dust grain species
 
   for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
     if (itmask[i] != MASK_FALSE)  {
-      if ( (my_chemistry->metal_chemistry == 1)  && 
-           (itmask_metal[i] != MASK_FALSE) )  {
-        CI(i,j,k)      = std::fmax((gr_float)(species_tmpdens.data[SpLUT::CI][i]      ), tiny_fortran_val);
-        CII(i,j,k)     = std::fmax((gr_float)(species_tmpdens.data[SpLUT::CII][i]     ), tiny_fortran_val);
-        CO(i,j,k)      = std::fmax((gr_float)(species_tmpdens.data[SpLUT::CO][i]      ), tiny_fortran_val);
-        CO2(i,j,k)     = std::fmax((gr_float)(species_tmpdens.data[SpLUT::CO2][i]     ), tiny_fortran_val);
-        OI(i,j,k)      = std::fmax((gr_float)(species_tmpdens.data[SpLUT::OI][i]      ), tiny_fortran_val);
-        OH(i,j,k)      = std::fmax((gr_float)(species_tmpdens.data[SpLUT::OH][i]      ), tiny_fortran_val);
-        H2O(i,j,k)     = std::fmax((gr_float)(species_tmpdens.data[SpLUT::H2O][i]     ), tiny_fortran_val);
-        O2(i,j,k)      = std::fmax((gr_float)(species_tmpdens.data[SpLUT::O2][i]      ), tiny_fortran_val);
-        SiI(i,j,k)     = std::fmax((gr_float)(species_tmpdens.data[SpLUT::SiI][i]     ), tiny_fortran_val);
-        SiOI(i,j,k)    = std::fmax((gr_float)(species_tmpdens.data[SpLUT::SiOI][i]    ), tiny_fortran_val);
-        SiO2I(i,j,k)   = std::fmax((gr_float)(species_tmpdens.data[SpLUT::SiO2I][i]   ), tiny_fortran_val);
-        CH(i,j,k)      = std::fmax((gr_float)(species_tmpdens.data[SpLUT::CH][i]      ), tiny_fortran_val);
-        CH2(i,j,k)     = std::fmax((gr_float)(species_tmpdens.data[SpLUT::CH2][i]     ), tiny_fortran_val);
-        COII(i,j,k)    = std::fmax((gr_float)(species_tmpdens.data[SpLUT::COII][i]    ), tiny_fortran_val);
-        OII(i,j,k)     = std::fmax((gr_float)(species_tmpdens.data[SpLUT::OII][i]     ), tiny_fortran_val);
-        OHII(i,j,k)    = std::fmax((gr_float)(species_tmpdens.data[SpLUT::OHII][i]    ), tiny_fortran_val);
-        H2OII(i,j,k)   = std::fmax((gr_float)(species_tmpdens.data[SpLUT::H2OII][i]   ), tiny_fortran_val);
-        H3OII(i,j,k)   = std::fmax((gr_float)(species_tmpdens.data[SpLUT::H3OII][i]   ), tiny_fortran_val);
-        O2II(i,j,k)    = std::fmax((gr_float)(species_tmpdens.data[SpLUT::O2II][i]    ), tiny_fortran_val);
-        if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
-          if (my_chemistry->dust_species > 0)  {
-            Mg(i,j,k)      = std::fmax((gr_float)(species_tmpdens.data[SpLUT::Mg][i]      ), tiny_fortran_val);
-          }
-          if (my_chemistry->dust_species > 1)  {
-            Al(i,j,k)      = std::fmax((gr_float)(species_tmpdens.data[SpLUT::Al][i]      ), tiny_fortran_val);
-            S(i,j,k)       = std::fmax((gr_float)(species_tmpdens.data[SpLUT::S][i]       ), tiny_fortran_val);
-            Fe(i,j,k)      = std::fmax((gr_float)(species_tmpdens.data[SpLUT::Fe][i]      ), tiny_fortran_val);
-          }
-        }
-      }
 
       if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
         if (my_chemistry->dust_species > 0)  {
