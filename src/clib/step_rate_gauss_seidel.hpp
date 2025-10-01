@@ -65,12 +65,18 @@ void update_densities(DensityUpdateArgPack& pack, gr_float floor_val) {
 
 /// update my_fields->e_density using charge conservation and write the time
 /// derivative to @p dedot_prev
+///
+/// @note
+/// Once PR #417 is merged, we should consider consolidating in this function
+/// with the (nearly) equivalent logic from `make_consistent_g`.
 inline void update_electron_densities(const double* dtit, IndexRange idx_range,
                                       double* dedot_prev,
                                       const gr_mask_type* itmask,
                                       const gr_mask_type* itmask_metal,
                                       const chemistry_data* my_chemistry,
                                       grackle_field_data* my_fields) {
+  // ideally, we would not need to preload everything
+  // (doing that will almost certainly break the gold-standard)
   grackle::impl::View<gr_float***> de(
       my_fields->e_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
@@ -177,26 +183,24 @@ inline void update_fields_from_tmpdens_gauss_seidel(
     const gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
     grackle_field_data* my_fields,
     grackle::impl::SpeciesCollection species_tmpdens) {
-  grackle::impl::View<gr_float***> HI(
-      my_fields->HI_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-
-  const int j = idx_range.j;
-  const int k = idx_range.k;
-
-  // handle the primordial species
+  // Part 1: handle the primordial species
   {
     // initialize the pack variable to group a set of arguments that gets
     // repeatedly passed to a helper function
     gauss_seidel::DensityUpdateArgPack pack{SpeciesLUTFieldAdaptor{*my_fields},
                                             idx_range, itmask, species_tmpdens};
 
+    // build a view of the HI mass density
+    grackle::impl::View<gr_float***> HI(
+        my_fields->HI_density, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+
     // record the time derivative of neutral Hydrogen
     for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
       if (itmask[i] != MASK_FALSE) {
-        HIdot_prev[i] =
-            std::fabs(HI(i, j, k) - species_tmpdens.data[SpLUT::HI][i]) /
-            std::fmax((double)(dtit[i]), tiny8);
+        HIdot_prev[i] = std::fabs(HI(i, idx_range.j, idx_range.k) -
+                                  species_tmpdens.data[SpLUT::HI][i]) /
+                        std::fmax((double)(dtit[i]), tiny8);
       }
     }
 
@@ -207,6 +211,20 @@ inline void update_fields_from_tmpdens_gauss_seidel(
     gauss_seidel::update_densities<SpLUT::HeII>(pack, tiny_fortran_val);
     gauss_seidel::update_densities<SpLUT::HeIII>(
         pack, (gr_float)(1e-5) * tiny_fortran_val);
+
+    // warn users about irregular HI densities
+    // -> this is unaltered from the original version of the code
+    // -> it appears that it was intended to warn users when there was a large
+    //    value, but it only triggers when HI is a NaN (it won't trigger when
+    //    its an inf)
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+      if (HI(i, idx_range.j, idx_range.k) != HI(i, idx_range.j, idx_range.k)) {
+        // the Fortran version of this logic was enclosed in an openmp critical
+        // section, but this should be unnecessary for C/C++
+        std::printf("HUGE HI! ::  %d %d %d %g\n", i, idx_range.j, idx_range.k,
+                    HI(i, idx_range.j, idx_range.k));
+      }
+    }
 
     // Use charge conservation to determine electron fraction
     // -> in other words, we ignore species_tmpdens.data[SpLUT::e] (in
@@ -241,7 +259,7 @@ inline void update_fields_from_tmpdens_gauss_seidel(
     }
   }
 
-  // handle metal species
+  // Part 2: handle metal species
   if (my_chemistry->metal_chemistry == 1) {
     // initialize the pack variable to group a set of arguments that gets
     // repeatedly passed to a helper function
@@ -282,8 +300,7 @@ inline void update_fields_from_tmpdens_gauss_seidel(
     }
   }
 
-  // handle dust grain species
-
+  // Part 3: handle dust grain species
   if ((my_chemistry->grain_growth == 1) ||
       (my_chemistry->dust_sublimation == 1)) {
     // initialize the pack variable to group a set of arguments that gets
@@ -316,19 +333,6 @@ inline void update_fields_from_tmpdens_gauss_seidel(
                                                           tiny_fortran_val);
       gauss_seidel::update_densities<SpLUT::H2O_ice_dust>(pack,
                                                           tiny_fortran_val);
-    }
-  }
-
-  // warn users about irregular HI densities
-  // -> this is unaltered from the original version of the code
-  // -> it appears that it was intended to warn users when there was a large
-  //    value, but it only triggers when HI is a NaN (it won't trigger when its
-  //    an inf)
-  for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-    if (HI(i, j, k) != HI(i, j, k)) {
-      OMP_PRAGMA_CRITICAL {
-        std::printf("HUGE HI! ::  %d %d %d %g\n", i, j, k, HI(i, j, k));
-      }
     }
   }
 }
