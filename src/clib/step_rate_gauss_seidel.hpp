@@ -110,11 +110,13 @@ inline void update_fields_from_tmpdens_gauss_seidel(
       HeII(i,j,k)  = std::fmax((gr_float)(species_tmpdens.data[SpLUT::HeII][i] ), tiny_fortran_val);
       HeIII(i,j,k) = std::fmax((gr_float)(species_tmpdens.data[SpLUT::HeIII][i] ), (gr_float)(1e-5)*tiny_fortran_val);
 
-      // de(i,j,k)    = dep(i)
+      // temporarily store the electron density from the start of the current
+      // subcycle.
+      dedot_prev[i] = de(i,j,k);
 
       // Use charge conservation to determine electron fraction
-
-      dedot_prev[i] = de(i,j,k);
+      // -> in other words, we ignore species_tmpdens.data[SpLUT::e] (in
+      //    practice, I think that array holds garbage values)
       de(i,j,k) = HII(i,j,k) + HeII(i,j,k)/(gr_float)(4.) +
            HeIII(i,j,k)/(gr_float)(2.);
       if (my_chemistry->primordial_chemistry > 1)
@@ -133,6 +135,9 @@ inline void update_fields_from_tmpdens_gauss_seidel(
                 + H2OII(i,j,k)/(gr_float)(18.) + H3OII(i,j,k)/(gr_float)(19.)
                 + O2II(i,j,k)/(gr_float)(32.); }
 
+      // store the time-derivative of the electron-density in dedot
+      // (don't forget that we previously stored the value from the start of
+      // the current cycle within dedot_prev)
       dedot_prev[i] = std::fabs(de(i,j,k)-dedot_prev[i])/
            std::fmax(dtit[i],tiny8);
 
@@ -215,8 +220,8 @@ inline void update_fields_from_tmpdens_gauss_seidel(
     if (HI(i,j,k) != HI(i,j,k))  {
       OMP_PRAGMA_CRITICAL
       {
-        printf("HUGE HI! ::  %d %d %d %g\n",
-               i, j, k, HI ( i, j, k ));
+        std::printf("HUGE HI! ::  %d %d %d %g\n",
+                    i, j, k, HI ( i, j, k ));
       }
     }
   }
@@ -240,9 +245,9 @@ inline void step_rate_gauss_seidel(
   // perform the Gauss-Seidel sweep to compute the species densities at the
   // end of the current timestep. The results are saved in species_tmpdens
   grackle::impl::chemistry::species_density_updates_gauss_seidel(
-      dtit, idx_range, anydust, h2dust, rhoH, itmask, itmask_metal,
-      my_chemistry, my_fields, my_uvb_rates, grain_growth_rates,
-      species_tmpdens, kcol_buf, kshield_buf);
+      species_tmpdens, idx_range, dtit, anydust, h2dust, rhoH, itmask,
+      itmask_metal, my_chemistry, my_fields, my_uvb_rates, grain_growth_rates,
+      kcol_buf, kshield_buf);
 
   // update the entries from my_fields with the values in species_tmpdens
   update_fields_from_tmpdens_gauss_seidel(

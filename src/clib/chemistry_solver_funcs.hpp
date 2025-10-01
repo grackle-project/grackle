@@ -27,8 +27,30 @@
 namespace grackle::impl::chemistry {
 
 /// Perform an implicit Gauss-Seidel sweep of a backward-Euler time integrator
-/// to advance the rate equations by one (sub-)cycle (dtit) and store the
-/// results within @p species_tmpdens
+/// to advance the rate equations by one (sub-)cycle (for each index in the
+/// index-range that is selected by the given itmask)
+///
+/// @param[out] out_spdens Holds buffers that are used to store the updated
+///     species densities for the @p idx_range.
+/// @param[in] idx_range Specifies the current index-range
+/// @param[in] dtit Specifies the timestep of the current sub-cycle for each
+///     index in @p idx_range.
+/// @param[in] anydust Indicates whether we are modelling dust
+/// @param[in] h2dust Specifies the rate of H2 dust-formation on dust grains
+///     for eacg k
+/// @param[in] rhoH Indicates the mass density of all Hydrogen
+/// @param[in] itmask The general iteration mask for @p idx_range.
+/// @param[in] itmask_metal The iteration mask @p idx_range that specifies
+///     where we should account for metal-species chemistry and grain-species
+///     chemistry.
+/// @param[in] my_chemistry Provides various runtime parameters (we probably
+///     don't need to pass the whole thing)
+/// @param[in] my_fields Specifies the current values of the field data
+/// @param[in] my_uvb_rates specifies precomputed rxn rates dependent on the
+///     UV background, without accounting for self-shield (we probably don't
+///     need to pass the whole thing since we also pass kshield_buf)
+/// @param[in] grain_growth_rates, kcr_buf, kshield_buf specifies the
+///     precomputed rxn rates (depends on local physical conditions)
 ///
 /// Refactoring Goals
 /// -----------------
@@ -77,12 +99,12 @@ namespace grackle::impl::chemistry {
 ///   maybe even primordial_chemistry == 3 (but, we'll obviously need to test
 ///   performance).
 inline void species_density_updates_gauss_seidel(
-  const double* dtit, IndexRange idx_range, gr_mask_type anydust,
-  const double* h2dust, const double* rhoH, const gr_mask_type* itmask,
+  grackle::impl::SpeciesCollection out_spdens, IndexRange idx_range,
+  const double* dtit, gr_mask_type anydust, const double* h2dust,
+  const double* rhoH, const gr_mask_type* itmask,
   const gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
   grackle_field_data* my_fields, photo_rate_storage my_uvb_rates,
   grackle::impl::GrainSpeciesCollection grain_growth_rates,
-  grackle::impl::SpeciesCollection species_tmpdens,
   grackle::impl::CollisionalRxnRateCollection kcol_buf,
   grackle::impl::PhotoRxnRateCollection kshield_buf
 )
@@ -175,16 +197,16 @@ inline void species_density_updates_gauss_seidel(
                + kcol_buf.data[CollisionalRxnLUT::k58][i]*HeI(i,j,k)/4.
                + kshield_buf.k24[i];
         if (my_chemistry->use_radiative_transfer == 1) { acoef = acoef + kphHI(i,j,k); }
-        species_tmpdens.data[SpLUT::HI][i]  = (scoef*dtit[i] + HI(i,j,k))/
+        out_spdens.data[SpLUT::HI][i]  = (scoef*dtit[i] + HI(i,j,k))/
              (1. + acoef*dtit[i]);
-        if (species_tmpdens.data[SpLUT::HI][i] != species_tmpdens.data[SpLUT::HI][i])  {
+        if (out_spdens.data[SpLUT::HI][i] != out_spdens.data[SpLUT::HI][i])  {
           OMP_PRAGMA_CRITICAL
           {
-            printf("HUGE HIp! ::  %d %d %d %g %g %g %g %g %g %g %g\n",
+            std::printf("HUGE HIp! ::  %d %d %d %g %g %g %g %g %g %g %g\n",
                    i,
                    j,
                    k,
-                   species_tmpdens.data[SpLUT::HI] [ i ],
+                   out_spdens.data[SpLUT::HI] [ i ],
                    HI ( i, j, k ),
                    HII ( i, j, k ),
                    de ( i, j, k ),
@@ -197,25 +219,25 @@ inline void species_density_updates_gauss_seidel(
         }
 
         // 2) HII
-        scoef  = kcol_buf.data[CollisionalRxnLUT::k1][i]*species_tmpdens.data[SpLUT::HI][i]*de(i,j,k)
-               + kcol_buf.data[CollisionalRxnLUT::k57][i]*species_tmpdens.data[SpLUT::HI][i]*species_tmpdens.data[SpLUT::HI][i]
-               + kcol_buf.data[CollisionalRxnLUT::k58][i]*species_tmpdens.data[SpLUT::HI][i]*HeI(i,j,k)/4.
-               + kshield_buf.k24[i]*species_tmpdens.data[SpLUT::HI][i];
+        scoef  = kcol_buf.data[CollisionalRxnLUT::k1][i]*out_spdens.data[SpLUT::HI][i]*de(i,j,k)
+               + kcol_buf.data[CollisionalRxnLUT::k57][i]*out_spdens.data[SpLUT::HI][i]*out_spdens.data[SpLUT::HI][i]
+               + kcol_buf.data[CollisionalRxnLUT::k58][i]*out_spdens.data[SpLUT::HI][i]*HeI(i,j,k)/4.
+               + kshield_buf.k24[i]*out_spdens.data[SpLUT::HI][i];
         if (my_chemistry->use_radiative_transfer == 1)
-            { scoef = scoef + kphHI(i,j,k)*species_tmpdens.data[SpLUT::HI][i]; }
+            { scoef = scoef + kphHI(i,j,k)*out_spdens.data[SpLUT::HI][i]; }
         acoef  = kcol_buf.data[CollisionalRxnLUT::k2][i]*de (i,j,k);
-        species_tmpdens.data[SpLUT::HII][i] = (scoef*dtit[i] + HII(i,j,k))/
+        out_spdens.data[SpLUT::HII][i] = (scoef*dtit[i] + HII(i,j,k))/
              (1. +acoef*dtit[i]);
         // 
-        if (species_tmpdens.data[SpLUT::HII][i] <= 0.)   //#####
+        if (out_spdens.data[SpLUT::HII][i] <= 0.)   //#####
         {
           OMP_PRAGMA_CRITICAL
           {
-            printf("negative HIIp! ::  %d %d %d %g %g %g %g %g %g %g %g %g %g\n",
+            std::printf("negative HIIp! ::  %d %d %d %g %g %g %g %g %g %g %g %g %g\n",
                    i,
                    j,
                    k,
-                   species_tmpdens.data[SpLUT::HII] [ i ],
+                   out_spdens.data[SpLUT::HII] [ i ],
                    scoef,
                    dtit [ i ],
                    HII ( i, j, k ),
@@ -223,7 +245,7 @@ inline void species_density_updates_gauss_seidel(
                    kcol_buf.data[CollisionalRxnLUT::k2] [ i ],
                    de ( i, j, k ),
                    kphHI ( i, j, k ),
-                   species_tmpdens.data[SpLUT::HI] [ i ],
+                   out_spdens.data[SpLUT::HI] [ i ],
                    kshield_buf.k24 [ i ]);
           }
         }
@@ -231,8 +253,8 @@ inline void species_density_updates_gauss_seidel(
         // 3) Electron density
 
         scoef = 0.
-                   + kcol_buf.data[CollisionalRxnLUT::k57][i]*species_tmpdens.data[SpLUT::HI][i]*species_tmpdens.data[SpLUT::HI][i]
-                   + kcol_buf.data[CollisionalRxnLUT::k58][i]*species_tmpdens.data[SpLUT::HI][i]*HeI(i,j,k)/4.
+                   + kcol_buf.data[CollisionalRxnLUT::k57][i]*out_spdens.data[SpLUT::HI][i]*out_spdens.data[SpLUT::HI][i]
+                   + kcol_buf.data[CollisionalRxnLUT::k58][i]*out_spdens.data[SpLUT::HI][i]*HeI(i,j,k)/4.
                    + kshield_buf.k24[i]*HI(i,j,k)
                    + kshield_buf.k25[i]*HeII(i,j,k)/4.
                    + kshield_buf.k26[i]*HeI(i,j,k)/4.;
@@ -251,7 +273,7 @@ inline void species_density_updates_gauss_seidel(
              kcol_buf.data[CollisionalRxnLUT::k6][i]*HeIII(i,j,k)/4.
                 + kcol_buf.data[CollisionalRxnLUT::k5][i]*HeII(i,j,k)/4. -
              kcol_buf.data[CollisionalRxnLUT::k4][i]*HeII(i,j,k)/4.);
-        species_tmpdens.data[SpLUT::e][i]   = (scoef*dtit[i] + de(i,j,k))
+        out_spdens.data[SpLUT::e][i]   = (scoef*dtit[i] + de(i,j,k))
                        / (1. + acoef*dtit[i]);
 
       }
@@ -282,17 +304,17 @@ inline void species_density_updates_gauss_seidel(
             + kcol_buf.data[CollisionalRxnLUT::k149][i] *   HII(i,j,k)
             + kcol_buf.data[CollisionalRxnLUT::k150][i] *  H2II(i,j,k) /  2.;
       }
-      species_tmpdens.data[SpLUT::HeI][i]   = ( scoef*dtit[i] + HeI(i,j,k) )
+      out_spdens.data[SpLUT::HeI][i]   = ( scoef*dtit[i] + HeI(i,j,k) )
                  / ( 1. + acoef*dtit[i] );
 
       // 5) HeII
 
-      scoef  = kcol_buf.data[CollisionalRxnLUT::k3][i]*species_tmpdens.data[SpLUT::HeI][i]*de(i,j,k)
+      scoef  = kcol_buf.data[CollisionalRxnLUT::k3][i]*out_spdens.data[SpLUT::HeI][i]*de(i,j,k)
              + kcol_buf.data[CollisionalRxnLUT::k6][i]*HeIII(i,j,k)*de(i,j,k)
-             + kshield_buf.k26[i]*species_tmpdens.data[SpLUT::HeI][i];
+             + kshield_buf.k26[i]*out_spdens.data[SpLUT::HeI][i];
      
       if ( (my_chemistry->use_radiative_transfer == 1)  &&  (my_chemistry->radiative_transfer_hydrogen_only == 0))
-          { scoef = scoef + kphHeI(i,j,k)*species_tmpdens.data[SpLUT::HeI][i]; }
+          { scoef = scoef + kphHeI(i,j,k)*out_spdens.data[SpLUT::HeI][i]; }
 
       acoef  = kcol_buf.data[CollisionalRxnLUT::k4][i]*de(i,j,k) + kcol_buf.data[CollisionalRxnLUT::k5][i]*de(i,j,k)
              + kshield_buf.k25[i];
@@ -303,17 +325,17 @@ inline void species_density_updates_gauss_seidel(
         acoef = acoef
             + kcol_buf.data[CollisionalRxnLUT::k151][i] *    HI(i,j,k);
       }
-      species_tmpdens.data[SpLUT::HeII][i]  = ( scoef*dtit[i] + HeII(i,j,k) )
+      out_spdens.data[SpLUT::HeII][i]  = ( scoef*dtit[i] + HeII(i,j,k) )
                  / ( 1. + acoef*dtit[i] );
 
       // 6) HeIII
 
-      scoef   = kcol_buf.data[CollisionalRxnLUT::k5][i]*species_tmpdens.data[SpLUT::HeII][i]*de(i,j,k)
-              + kshield_buf.k25[i]*species_tmpdens.data[SpLUT::HeII][i];
+      scoef   = kcol_buf.data[CollisionalRxnLUT::k5][i]*out_spdens.data[SpLUT::HeII][i]*de(i,j,k)
+              + kshield_buf.k25[i]*out_spdens.data[SpLUT::HeII][i];
       if ((my_chemistry->use_radiative_transfer == 1)  &&  (my_chemistry->radiative_transfer_hydrogen_only == 0))
-          { scoef = scoef + kphHeII(i,j,k) * species_tmpdens.data[SpLUT::HeII][i]; }
+          { scoef = scoef + kphHeII(i,j,k) * out_spdens.data[SpLUT::HeII][i]; }
       acoef   = kcol_buf.data[CollisionalRxnLUT::k6][i]*de(i,j,k);
-      species_tmpdens.data[SpLUT::HeIII][i]  = ( scoef*dtit[i] + HeIII(i,j,k) )
+      out_spdens.data[SpLUT::HeIII][i]  = ( scoef*dtit[i] + HeIII(i,j,k) )
                    / ( 1. + acoef*dtit[i] );
 
     }
@@ -432,16 +454,16 @@ inline void species_density_updates_gauss_seidel(
               + kcol_buf.data[CollisionalRxnLUT::kz39][i] *   OII(i,j,k) / 16.
               + kcol_buf.data[CollisionalRxnLUT::kz43][i] *  COII(i,j,k) / 28.;
         }
-        species_tmpdens.data[SpLUT::HI][i]  = ( scoef*dtit[i] + HI(i,j,k) ) /
+        out_spdens.data[SpLUT::HI][i]  = ( scoef*dtit[i] + HI(i,j,k) ) /
                         ( 1.f + acoef*dtit[i] );
-        if (species_tmpdens.data[SpLUT::HI][i] != species_tmpdens.data[SpLUT::HI][i])  {
+        if (out_spdens.data[SpLUT::HI][i] != out_spdens.data[SpLUT::HI][i])  {
           OMP_PRAGMA_CRITICAL
           {
-            printf("HUGE HIp! ::  %d %d %d %g %g %g %g %g %g\n",
+            std::printf("HUGE HIp! ::  %d %d %d %g %g %g %g %g %g\n",
                    i,
                    j,
                    k,
-                   species_tmpdens.data[SpLUT::HI] [ i ],
+                   out_spdens.data[SpLUT::HI] [ i ],
                    HI ( i, j, k ),
                    HII ( i, j, k ),
                    de ( i, j, k ),
@@ -497,7 +519,7 @@ inline void species_density_updates_gauss_seidel(
               + kcol_buf.data[CollisionalRxnLUT::kz35][i] *   H2O(i,j,k) / 18.
               + kcol_buf.data[CollisionalRxnLUT::kz36][i] *    O2(i,j,k) / 32.;
         }
-        species_tmpdens.data[SpLUT::HII][i]   = ( scoef*dtit[i] + HII(i,j,k) )
+        out_spdens.data[SpLUT::HII][i]   = ( scoef*dtit[i] + HII(i,j,k) )
                         / ( 1. + acoef*dtit[i] );
         
         // 3) electrons:
@@ -508,16 +530,16 @@ inline void species_density_updates_gauss_seidel(
                +  kcol_buf.data[CollisionalRxnLUT::k57][i]* HI(i,j,k) * HI(i,j,k)
                +  kcol_buf.data[CollisionalRxnLUT::k58][i]* HI(i,j,k) * HeI(i,j,k)/4.
         // 
-               + kshield_buf.k24[i]*species_tmpdens.data[SpLUT::HI][i]
-               + kshield_buf.k25[i]*species_tmpdens.data[SpLUT::HeII][i]/4.
-               + kshield_buf.k26[i]*species_tmpdens.data[SpLUT::HeI][i]/4.;
+               + kshield_buf.k24[i]*out_spdens.data[SpLUT::HI][i]
+               + kshield_buf.k25[i]*out_spdens.data[SpLUT::HeII][i]/4.
+               + kshield_buf.k26[i]*out_spdens.data[SpLUT::HeI][i]/4.;
 
         if ( (my_chemistry->use_radiative_transfer == 1)  &&  (my_chemistry->radiative_transfer_hydrogen_only == 0) )
-            { scoef = scoef + kphHI(i,j,k) * species_tmpdens.data[SpLUT::HI][i]
-                  + kphHeI(i,j,k)  * species_tmpdens.data[SpLUT::HeI][i]  / 4.
-                  + kphHeII(i,j,k) * species_tmpdens.data[SpLUT::HeII][i] / 4.; }
+            { scoef = scoef + kphHI(i,j,k) * out_spdens.data[SpLUT::HI][i]
+                  + kphHeI(i,j,k)  * out_spdens.data[SpLUT::HeI][i]  / 4.
+                  + kphHeII(i,j,k) * out_spdens.data[SpLUT::HeII][i] / 4.; }
         if ( (my_chemistry->use_radiative_transfer == 1)  &&  (my_chemistry->radiative_transfer_hydrogen_only == 1) )
-            { scoef = scoef + kphHI(i,j,k) * species_tmpdens.data[SpLUT::HI][i]; }
+            { scoef = scoef + kphHI(i,j,k) * out_spdens.data[SpLUT::HI][i]; }
         if (my_chemistry->use_radiative_transfer == 1)  {
           if ( (my_chemistry->metal_chemistry == 1)  && 
                (itmask_metal[i] != MASK_FALSE) )  {
@@ -567,7 +589,7 @@ inline void species_density_updates_gauss_seidel(
               + kcol_buf.data[CollisionalRxnLUT::kz49][i] * H3OII(i,j,k) / 19.
               + kcol_buf.data[CollisionalRxnLUT::kz50][i] *  O2II(i,j,k) / 32.;
         }
-        species_tmpdens.data[SpLUT::e][i]  = ( scoef*dtit[i] + de(i,j,k) )
+        out_spdens.data[SpLUT::e][i]  = ( scoef*dtit[i] + de(i,j,k) )
                   / ( 1. + acoef*dtit[i] );
 
         // 7) H2
@@ -635,7 +657,7 @@ inline void species_density_updates_gauss_seidel(
             }
           }
         }
-        species_tmpdens.data[SpLUT::H2I][i] = ( scoef*dtit[i] + H2I(i,j,k) )
+        out_spdens.data[SpLUT::H2I][i] = ( scoef*dtit[i] + H2I(i,j,k) )
                   / ( 1. + acoef*dtit[i] );
 
         // 8) H-
@@ -657,32 +679,32 @@ inline void species_density_updates_gauss_seidel(
           acoef = acoef
               + kcol_buf.data[CollisionalRxnLUT::k135][i] *    DI(i,j,k) /  2.;
         }
-        species_tmpdens.data[SpLUT::HM][i] = (scoef*dtit[i] + HM(i,j,k))
+        out_spdens.data[SpLUT::HM][i] = (scoef*dtit[i] + HM(i,j,k))
              / (1.0f + acoef*dtit[i]);
 
 
         // 9) H2+
 
-        species_tmpdens.data[SpLUT::H2II][i] = 2.*( kcol_buf.data[CollisionalRxnLUT::k9] [i]*species_tmpdens.data[SpLUT::HI][i]*species_tmpdens.data[SpLUT::HII][i]
-                      +   kcol_buf.data[CollisionalRxnLUT::k11][i]*species_tmpdens.data[SpLUT::H2I][i]/2.*species_tmpdens.data[SpLUT::HII][i]
-                      +   kcol_buf.data[CollisionalRxnLUT::k17][i]*species_tmpdens.data[SpLUT::HM][i]*species_tmpdens.data[SpLUT::HII][i]
-                      + kshield_buf.k29[i]*species_tmpdens.data[SpLUT::H2I][i]
+        out_spdens.data[SpLUT::H2II][i] = 2.*( kcol_buf.data[CollisionalRxnLUT::k9] [i]*out_spdens.data[SpLUT::HI][i]*out_spdens.data[SpLUT::HII][i]
+                      +   kcol_buf.data[CollisionalRxnLUT::k11][i]*out_spdens.data[SpLUT::H2I][i]/2.*out_spdens.data[SpLUT::HII][i]
+                      +   kcol_buf.data[CollisionalRxnLUT::k17][i]*out_spdens.data[SpLUT::HM][i]*out_spdens.data[SpLUT::HII][i]
+                      + kshield_buf.k29[i]*out_spdens.data[SpLUT::H2I][i]
                       )
-                   /  ( kcol_buf.data[CollisionalRxnLUT::k10][i]*species_tmpdens.data[SpLUT::HI][i] + kcol_buf.data[CollisionalRxnLUT::k18][i]*species_tmpdens.data[SpLUT::e][i]
-                      + kcol_buf.data[CollisionalRxnLUT::k19][i]*species_tmpdens.data[SpLUT::HM][i]
+                   /  ( kcol_buf.data[CollisionalRxnLUT::k10][i]*out_spdens.data[SpLUT::HI][i] + kcol_buf.data[CollisionalRxnLUT::k18][i]*out_spdens.data[SpLUT::e][i]
+                      + kcol_buf.data[CollisionalRxnLUT::k19][i]*out_spdens.data[SpLUT::HM][i]
                       + (kshield_buf.k28[i]+kshield_buf.k30[i])
                       );
         if (my_chemistry->primordial_chemistry > 3)  {
-          species_tmpdens.data[SpLUT::H2II][i] = 2. * (  kcol_buf.data[CollisionalRxnLUT::k9] [i]*species_tmpdens.data[SpLUT::HI][i]*species_tmpdens.data[SpLUT::HII][i]
-                       +   kcol_buf.data[CollisionalRxnLUT::k11][i]*species_tmpdens.data[SpLUT::H2I][i]/2.*species_tmpdens.data[SpLUT::HII][i]
-                       +   kcol_buf.data[CollisionalRxnLUT::k17][i]*species_tmpdens.data[SpLUT::HM][i]*species_tmpdens.data[SpLUT::HII][i]
-                       + kshield_buf.k29[i]*species_tmpdens.data[SpLUT::H2I][i]
-                       + kcol_buf.data[CollisionalRxnLUT::k152][i]*HeHII(i,j,k)*species_tmpdens.data[SpLUT::HI][i]/5.
+          out_spdens.data[SpLUT::H2II][i] = 2. * (  kcol_buf.data[CollisionalRxnLUT::k9] [i]*out_spdens.data[SpLUT::HI][i]*out_spdens.data[SpLUT::HII][i]
+                       +   kcol_buf.data[CollisionalRxnLUT::k11][i]*out_spdens.data[SpLUT::H2I][i]/2.*out_spdens.data[SpLUT::HII][i]
+                       +   kcol_buf.data[CollisionalRxnLUT::k17][i]*out_spdens.data[SpLUT::HM][i]*out_spdens.data[SpLUT::HII][i]
+                       + kshield_buf.k29[i]*out_spdens.data[SpLUT::H2I][i]
+                       + kcol_buf.data[CollisionalRxnLUT::k152][i]*HeHII(i,j,k)*out_spdens.data[SpLUT::HI][i]/5.
                        )
-                    /  ( kcol_buf.data[CollisionalRxnLUT::k10][i]*species_tmpdens.data[SpLUT::HI][i] + kcol_buf.data[CollisionalRxnLUT::k18][i]*species_tmpdens.data[SpLUT::e][i]
-                       + kcol_buf.data[CollisionalRxnLUT::k19][i]*species_tmpdens.data[SpLUT::HM][i]
+                    /  ( kcol_buf.data[CollisionalRxnLUT::k10][i]*out_spdens.data[SpLUT::HI][i] + kcol_buf.data[CollisionalRxnLUT::k18][i]*out_spdens.data[SpLUT::e][i]
+                       + kcol_buf.data[CollisionalRxnLUT::k19][i]*out_spdens.data[SpLUT::HM][i]
                        + (kshield_buf.k28[i]+kshield_buf.k30[i])
-                       + kcol_buf.data[CollisionalRxnLUT::k150][i]*species_tmpdens.data[SpLUT::HeI][i]/4.
+                       + kcol_buf.data[CollisionalRxnLUT::k150][i]*out_spdens.data[SpLUT::HeI][i]/4.
                        );
         }
       }
@@ -725,7 +747,7 @@ inline void species_density_updates_gauss_seidel(
               + 2. * kdissHDI(i,j,k) * HDI(i,j,k)/3.0;
           }
         }
-        species_tmpdens.data[SpLUT::DI][i]    = ( scoef*dtit[i] + DI(i,j,k) ) /
+        out_spdens.data[SpLUT::DI][i]    = ( scoef*dtit[i] + DI(i,j,k) ) /
                     ( 1. + acoef*dtit[i] );
 
         // 2) DII
@@ -745,7 +767,7 @@ inline void species_density_updates_gauss_seidel(
               + kcol_buf.data[CollisionalRxnLUT::k130][i] *    HI(i,j,k)
               + kcol_buf.data[CollisionalRxnLUT::k133][i] *    DM(i,j,k) /  2.;
         }
-        species_tmpdens.data[SpLUT::DII][i]   = ( scoef*dtit[i] + DII(i,j,k) )
+        out_spdens.data[SpLUT::DII][i]   = ( scoef*dtit[i] + DII(i,j,k) )
                    / ( 1. + acoef*dtit[i] );
 
         // 3) HDI
@@ -770,7 +792,7 @@ inline void species_density_updates_gauss_seidel(
               + kcol_buf.data[CollisionalRxnLUT::k137][i] *    DM(i,j,k) *    HI(i,j,k) /  2.
               );
         }
-        species_tmpdens.data[SpLUT::HDI][i]   = ( scoef*dtit[i] + HDI(i,j,k) )
+        out_spdens.data[SpLUT::HDI][i]   = ( scoef*dtit[i] + HDI(i,j,k) )
                    / ( 1. + acoef*dtit[i] );
 
       }
@@ -792,7 +814,7 @@ inline void species_density_updates_gauss_seidel(
             + kcol_buf.data[CollisionalRxnLUT::k136][i] *    HI(i,j,k)
             + kcol_buf.data[CollisionalRxnLUT::k137][i] *    HI(i,j,k);
 
-        species_tmpdens.data[SpLUT::DM][i]    = ( scoef*dtit[i] + DM(i,j,k) ) /
+        out_spdens.data[SpLUT::DM][i]    = ( scoef*dtit[i] + DM(i,j,k) ) /
                     ( 1. + acoef*dtit[i] );
 
         // 2) HDII
@@ -804,7 +826,7 @@ inline void species_density_updates_gauss_seidel(
               kcol_buf.data[CollisionalRxnLUT::k125][i] *    HI(i,j,k)
             + kcol_buf.data[CollisionalRxnLUT::k131][i] *    de(i,j,k);
 
-        species_tmpdens.data[SpLUT::HDII][i]   = ( scoef*dtit[i] + HDII(i,j,k) )
+        out_spdens.data[SpLUT::HDII][i]   = ( scoef*dtit[i] + HDII(i,j,k) )
                    / ( 1. + acoef*dtit[i] );
 
         // 3) HeHII
@@ -818,7 +840,7 @@ inline void species_density_updates_gauss_seidel(
               kcol_buf.data[CollisionalRxnLUT::k152][i] *    HI(i,j,k)
             + kcol_buf.data[CollisionalRxnLUT::k153][i] *    de(i,j,k);
 
-        species_tmpdens.data[SpLUT::HeHII][i]   = ( scoef*dtit[i] + HeHII(i,j,k) )
+        out_spdens.data[SpLUT::HeHII][i]   = ( scoef*dtit[i] + HeHII(i,j,k) )
                    / ( 1. + acoef*dtit[i] );
 
       }
@@ -858,7 +880,7 @@ inline void species_density_updates_gauss_seidel(
           }
         }
 
-        species_tmpdens.data[SpLUT::CI][i]   = ( scoef*dtit[i] + CI(i,j,k) )
+        out_spdens.data[SpLUT::CI][i]   = ( scoef*dtit[i] + CI(i,j,k) )
                    / ( 1. + acoef*dtit[i] );
 
 
@@ -876,7 +898,7 @@ inline void species_density_updates_gauss_seidel(
           }
         }
 
-        species_tmpdens.data[SpLUT::CII][i]   = ( scoef*dtit[i] + CII(i,j,k) )
+        out_spdens.data[SpLUT::CII][i]   = ( scoef*dtit[i] + CII(i,j,k) )
                    / ( 1. + acoef*dtit[i] );
 
 
@@ -904,7 +926,7 @@ inline void species_density_updates_gauss_seidel(
           }
         }
 
-        species_tmpdens.data[SpLUT::CO][i]   = ( scoef*dtit[i] + CO(i,j,k) )
+        out_spdens.data[SpLUT::CO][i]   = ( scoef*dtit[i] + CO(i,j,k) )
                    / ( 1. + acoef*dtit[i] );
 
 
@@ -914,7 +936,7 @@ inline void species_density_updates_gauss_seidel(
            );
         acoef = 0.;
 
-        species_tmpdens.data[SpLUT::CO2][i]   = ( scoef*dtit[i] + CO2(i,j,k) )
+        out_spdens.data[SpLUT::CO2][i]   = ( scoef*dtit[i] + CO2(i,j,k) )
                    / ( 1. + acoef*dtit[i] );
 
 
@@ -949,7 +971,7 @@ inline void species_density_updates_gauss_seidel(
           }
         }
 
-        species_tmpdens.data[SpLUT::OI][i]   = ( scoef*dtit[i] + OI(i,j,k) )
+        out_spdens.data[SpLUT::OI][i]   = ( scoef*dtit[i] + OI(i,j,k) )
                    / ( 1. + acoef*dtit[i] );
 
 
@@ -982,7 +1004,7 @@ inline void species_density_updates_gauss_seidel(
           }
         }
 
-        species_tmpdens.data[SpLUT::OH][i]   = ( scoef*dtit[i] + OH(i,j,k) )
+        out_spdens.data[SpLUT::OH][i]   = ( scoef*dtit[i] + OH(i,j,k) )
                    / ( 1. + acoef*dtit[i] );
 
 
@@ -1019,7 +1041,7 @@ inline void species_density_updates_gauss_seidel(
           }
         }
 
-        species_tmpdens.data[SpLUT::H2O][i]   = ( scoef*dtit[i] + H2O(i,j,k) )
+        out_spdens.data[SpLUT::H2O][i]   = ( scoef*dtit[i] + H2O(i,j,k) )
                    / ( 1. + acoef*dtit[i] );
 
 
@@ -1035,7 +1057,7 @@ inline void species_density_updates_gauss_seidel(
             + kcol_buf.data[CollisionalRxnLUT::kz38][i] *   CII(i,j,k) / 12.
             + kcol_buf.data[CollisionalRxnLUT::kz53][i] *   SiI(i,j,k) / 28.;
 
-        species_tmpdens.data[SpLUT::O2][i]   = ( scoef*dtit[i] + O2(i,j,k) )
+        out_spdens.data[SpLUT::O2][i]   = ( scoef*dtit[i] + O2(i,j,k) )
                    / ( 1. + acoef*dtit[i] );
 
 
@@ -1052,7 +1074,7 @@ inline void species_density_updates_gauss_seidel(
           }
         }
 
-        species_tmpdens.data[SpLUT::SiI][i]   = ( scoef*dtit[i] + SiI(i,j,k) )
+        out_spdens.data[SpLUT::SiI][i]   = ( scoef*dtit[i] + SiI(i,j,k) )
                    / ( 1. + acoef*dtit[i] );
 
 
@@ -1074,7 +1096,7 @@ inline void species_density_updates_gauss_seidel(
           }
         }
 
-        species_tmpdens.data[SpLUT::SiOI][i]   = ( scoef*dtit[i] + SiOI(i,j,k) )
+        out_spdens.data[SpLUT::SiOI][i]   = ( scoef*dtit[i] + SiOI(i,j,k) )
                    / ( 1. + acoef*dtit[i] );
 
 
@@ -1090,7 +1112,7 @@ inline void species_density_updates_gauss_seidel(
           }
         }
 
-        species_tmpdens.data[SpLUT::SiO2I][i]   = ( scoef*dtit[i] + SiO2I(i,j,k) )
+        out_spdens.data[SpLUT::SiO2I][i]   = ( scoef*dtit[i] + SiO2I(i,j,k) )
                    / ( 1. + acoef*dtit[i] );
 
         // MINOR BUT IMPORTANT SPECIES FOR MOLECULAR FORMATION
@@ -1105,7 +1127,7 @@ inline void species_density_updates_gauss_seidel(
             + kcol_buf.data[CollisionalRxnLUT::kz23][i] *   H2I(i,j,k) /  2.
             + kcol_buf.data[CollisionalRxnLUT::kz32][i] *    OI(i,j,k) / 16.;
 
-        species_tmpdens.data[SpLUT::CH][i]   = ( scoef*dtit[i] + CH(i,j,k) )
+        out_spdens.data[SpLUT::CH][i]   = ( scoef*dtit[i] + CH(i,j,k) )
                    / ( 1. + acoef*dtit[i] );
 
 
@@ -1123,7 +1145,7 @@ inline void species_density_updates_gauss_seidel(
           }
         }
 
-        species_tmpdens.data[SpLUT::CH2][i]   = ( scoef*dtit[i] + CH2(i,j,k) )
+        out_spdens.data[SpLUT::CH2][i]   = ( scoef*dtit[i] + CH2(i,j,k) )
                    / ( 1. + acoef*dtit[i] );
 
 
@@ -1134,7 +1156,7 @@ inline void species_density_updates_gauss_seidel(
         acoef = 0.
             + kcol_buf.data[CollisionalRxnLUT::kz43][i] *    HI(i,j,k);
 
-        species_tmpdens.data[SpLUT::COII][i]   = ( scoef*dtit[i] + COII(i,j,k) )
+        out_spdens.data[SpLUT::COII][i]   = ( scoef*dtit[i] + COII(i,j,k) )
                    / ( 1. + acoef*dtit[i] );
 
 
@@ -1154,7 +1176,7 @@ inline void species_density_updates_gauss_seidel(
           }
         }
 
-        species_tmpdens.data[SpLUT::OII][i]   = ( scoef*dtit[i] + OII(i,j,k) )
+        out_spdens.data[SpLUT::OII][i]   = ( scoef*dtit[i] + OII(i,j,k) )
                    / ( 1. + acoef*dtit[i] );
 
 
@@ -1166,7 +1188,7 @@ inline void species_density_updates_gauss_seidel(
         acoef = 0.
             + kcol_buf.data[CollisionalRxnLUT::kz41][i] *   H2I(i,j,k) /  2.;
 
-        species_tmpdens.data[SpLUT::OHII][i]   = ( scoef*dtit[i] + OHII(i,j,k) )
+        out_spdens.data[SpLUT::OHII][i]   = ( scoef*dtit[i] + OHII(i,j,k) )
                    / ( 1. + acoef*dtit[i] );
 
 
@@ -1180,7 +1202,7 @@ inline void species_density_updates_gauss_seidel(
             + kcol_buf.data[CollisionalRxnLUT::kz46][i] *    de(i,j,k)
             + kcol_buf.data[CollisionalRxnLUT::kz47][i] *    de(i,j,k);
 
-        species_tmpdens.data[SpLUT::H2OII][i]   = ( scoef*dtit[i] + H2OII(i,j,k) )
+        out_spdens.data[SpLUT::H2OII][i]   = ( scoef*dtit[i] + H2OII(i,j,k) )
                    / ( 1. + acoef*dtit[i] );
 
 
@@ -1192,7 +1214,7 @@ inline void species_density_updates_gauss_seidel(
             + kcol_buf.data[CollisionalRxnLUT::kz48][i] *    de(i,j,k)
             + kcol_buf.data[CollisionalRxnLUT::kz49][i] *    de(i,j,k);
 
-        species_tmpdens.data[SpLUT::H3OII][i]   = ( scoef*dtit[i] + H3OII(i,j,k) )
+        out_spdens.data[SpLUT::H3OII][i]   = ( scoef*dtit[i] + H3OII(i,j,k) )
                    / ( 1. + acoef*dtit[i] );
 
 
@@ -1203,7 +1225,7 @@ inline void species_density_updates_gauss_seidel(
         acoef = 0.
             + kcol_buf.data[CollisionalRxnLUT::kz50][i] *    de(i,j,k);
 
-        species_tmpdens.data[SpLUT::O2II][i]   = ( scoef*dtit[i] + O2II(i,j,k) )
+        out_spdens.data[SpLUT::O2II][i]   = ( scoef*dtit[i] + O2II(i,j,k) )
                    / ( 1. + acoef*dtit[i] );
 
 
@@ -1220,7 +1242,7 @@ inline void species_density_updates_gauss_seidel(
               + grain_growth_rates.data[OnlyGrainSpLUT::MgO_dust]     [i] / Mg(i,j,k) * 24.;
             }
 
-            species_tmpdens.data[SpLUT::Mg][i]   = ( scoef*dtit[i] + Mg(i,j,k) )
+            out_spdens.data[SpLUT::Mg][i]   = ( scoef*dtit[i] + Mg(i,j,k) )
                        / ( 1. + acoef*dtit[i] );
 
           }
@@ -1232,7 +1254,7 @@ inline void species_density_updates_gauss_seidel(
             acoef = acoef
             + grain_growth_rates.data[OnlyGrainSpLUT::Al2O3_dust]   [i] / Al(i,j,k) * 27. * 2.;
 
-            species_tmpdens.data[SpLUT::Al][i]   = ( scoef*dtit[i] + Al(i,j,k) )
+            out_spdens.data[SpLUT::Al][i]   = ( scoef*dtit[i] + Al(i,j,k) )
                        / ( 1. + acoef*dtit[i] );
 
 
@@ -1242,7 +1264,7 @@ inline void species_density_updates_gauss_seidel(
             acoef = acoef
             + grain_growth_rates.data[OnlyGrainSpLUT::FeS_dust]     [i] / S(i,j,k) * 32.;
 
-            species_tmpdens.data[SpLUT::S][i]    = ( scoef*dtit[i] + S(i,j,k) )
+            out_spdens.data[SpLUT::S][i]    = ( scoef*dtit[i] + S(i,j,k) )
                        / ( 1. + acoef*dtit[i] );
 
 
@@ -1254,7 +1276,7 @@ inline void species_density_updates_gauss_seidel(
             + grain_growth_rates.data[OnlyGrainSpLUT::Fe3O4_dust]   [i] / Fe(i,j,k) * 56. * 3.
             + grain_growth_rates.data[OnlyGrainSpLUT::FeS_dust]     [i] / Fe(i,j,k) * 56.;
 
-            species_tmpdens.data[SpLUT::Fe][i]   = ( scoef*dtit[i] + Fe(i,j,k) )
+            out_spdens.data[SpLUT::Fe][i]   = ( scoef*dtit[i] + Fe(i,j,k) )
                        / ( 1. + acoef*dtit[i] );
 
           }
@@ -1276,7 +1298,7 @@ inline void species_density_updates_gauss_seidel(
           + grain_growth_rates.data[OnlyGrainSpLUT::MgSiO3_dust]  [i] * 100.;
           acoef = 0.;
 
-          species_tmpdens.data[SpLUT::MgSiO3_dust][i]   = ( scoef*dtit[i] + MgSiO3(i,j,k) )
+          out_spdens.data[SpLUT::MgSiO3_dust][i]   = ( scoef*dtit[i] + MgSiO3(i,j,k) )
                      / ( 1. + acoef*dtit[i] );
 
 
@@ -1286,7 +1308,7 @@ inline void species_density_updates_gauss_seidel(
           + grain_growth_rates.data[OnlyGrainSpLUT::AC_dust]      [i] * 12.;
           acoef = 0.;
 
-          species_tmpdens.data[SpLUT::AC_dust][i]   = ( scoef*dtit[i] + AC(i,j,k) )
+          out_spdens.data[SpLUT::AC_dust][i]   = ( scoef*dtit[i] + AC(i,j,k) )
                      / ( 1. + acoef*dtit[i] );
 
         }
@@ -1298,7 +1320,7 @@ inline void species_density_updates_gauss_seidel(
           + grain_growth_rates.data[OnlyGrainSpLUT::SiM_dust]     [i] * 28.;
           acoef = 0.;
 
-          species_tmpdens.data[SpLUT::SiM_dust][i]   = ( scoef*dtit[i] + SiM(i,j,k) )
+          out_spdens.data[SpLUT::SiM_dust][i]   = ( scoef*dtit[i] + SiM(i,j,k) )
                      / ( 1. + acoef*dtit[i] );
 
 
@@ -1308,7 +1330,7 @@ inline void species_density_updates_gauss_seidel(
           + grain_growth_rates.data[OnlyGrainSpLUT::FeM_dust]     [i] * 56.;
           acoef = 0.;
 
-          species_tmpdens.data[SpLUT::FeM_dust][i]   = ( scoef*dtit[i] + FeM(i,j,k) )
+          out_spdens.data[SpLUT::FeM_dust][i]   = ( scoef*dtit[i] + FeM(i,j,k) )
                      / ( 1. + acoef*dtit[i] );
 
 
@@ -1318,7 +1340,7 @@ inline void species_density_updates_gauss_seidel(
           + grain_growth_rates.data[OnlyGrainSpLUT::Mg2SiO4_dust] [i] * 140.;
           acoef = 0.;
 
-          species_tmpdens.data[SpLUT::Mg2SiO4_dust][i]   = ( scoef*dtit[i] + Mg2SiO4(i,j,k) )
+          out_spdens.data[SpLUT::Mg2SiO4_dust][i]   = ( scoef*dtit[i] + Mg2SiO4(i,j,k) )
                      / ( 1. + acoef*dtit[i] );
 
 
@@ -1328,7 +1350,7 @@ inline void species_density_updates_gauss_seidel(
           + grain_growth_rates.data[OnlyGrainSpLUT::Fe3O4_dust]   [i] * 232.;
           acoef = 0.;
 
-          species_tmpdens.data[SpLUT::Fe3O4_dust][i]   = ( scoef*dtit[i] + Fe3O4(i,j,k) )
+          out_spdens.data[SpLUT::Fe3O4_dust][i]   = ( scoef*dtit[i] + Fe3O4(i,j,k) )
                      / ( 1. + acoef*dtit[i] );
 
 
@@ -1338,7 +1360,7 @@ inline void species_density_updates_gauss_seidel(
           + grain_growth_rates.data[OnlyGrainSpLUT::SiO2_dust]   [i] * 60.;
           acoef = 0.;
 
-          species_tmpdens.data[SpLUT::SiO2_dust][i]   = ( scoef*dtit[i] + SiO2D(i,j,k) )
+          out_spdens.data[SpLUT::SiO2_dust][i]   = ( scoef*dtit[i] + SiO2D(i,j,k) )
                      / ( 1. + acoef*dtit[i] );
 
 
@@ -1348,7 +1370,7 @@ inline void species_density_updates_gauss_seidel(
           + grain_growth_rates.data[OnlyGrainSpLUT::MgO_dust]     [i] * 40.;
           acoef = 0.;
 
-          species_tmpdens.data[SpLUT::MgO_dust][i]   = ( scoef*dtit[i] + MgO(i,j,k) )
+          out_spdens.data[SpLUT::MgO_dust][i]   = ( scoef*dtit[i] + MgO(i,j,k) )
                      / ( 1. + acoef*dtit[i] );
 
 
@@ -1358,7 +1380,7 @@ inline void species_density_updates_gauss_seidel(
           + grain_growth_rates.data[OnlyGrainSpLUT::FeS_dust]     [i] * 88.;
           acoef = 0.;
 
-          species_tmpdens.data[SpLUT::FeS_dust][i]   = ( scoef*dtit[i] + FeS(i,j,k) )
+          out_spdens.data[SpLUT::FeS_dust][i]   = ( scoef*dtit[i] + FeS(i,j,k) )
                      / ( 1. + acoef*dtit[i] );
 
 
@@ -1368,7 +1390,7 @@ inline void species_density_updates_gauss_seidel(
           + grain_growth_rates.data[OnlyGrainSpLUT::Al2O3_dust]   [i] * 102.;
           acoef = 0.;
 
-          species_tmpdens.data[SpLUT::Al2O3_dust][i]   = ( scoef*dtit[i] + Al2O3(i,j,k) )
+          out_spdens.data[SpLUT::Al2O3_dust][i]   = ( scoef*dtit[i] + Al2O3(i,j,k) )
                      / ( 1. + acoef*dtit[i] );
 
         }
@@ -1380,7 +1402,7 @@ inline void species_density_updates_gauss_seidel(
           + grain_growth_rates.data[OnlyGrainSpLUT::ref_org_dust]  [i] * 22.68;
           acoef = 0.;
 
-          species_tmpdens.data[SpLUT::ref_org_dust][i]   = ( scoef*dtit[i] + reforg(i,j,k) )
+          out_spdens.data[SpLUT::ref_org_dust][i]   = ( scoef*dtit[i] + reforg(i,j,k) )
                      / ( 1. + acoef*dtit[i] );
 
 
@@ -1390,7 +1412,7 @@ inline void species_density_updates_gauss_seidel(
           + grain_growth_rates.data[OnlyGrainSpLUT::vol_org_dust]  [i] * 32.;
           acoef = 0.;
 
-          species_tmpdens.data[SpLUT::vol_org_dust][i]   = ( scoef*dtit[i] + volorg(i,j,k) )
+          out_spdens.data[SpLUT::vol_org_dust][i]   = ( scoef*dtit[i] + volorg(i,j,k) )
                      / ( 1. + acoef*dtit[i] );
 
 
@@ -1400,7 +1422,7 @@ inline void species_density_updates_gauss_seidel(
           + grain_growth_rates.data[OnlyGrainSpLUT::H2O_ice_dust]  [i] * 18.;
           acoef = 0.;
 
-          species_tmpdens.data[SpLUT::H2O_ice_dust][i]   = ( scoef*dtit[i] + H2Oice(i,j,k) )
+          out_spdens.data[SpLUT::H2O_ice_dust][i]   = ( scoef*dtit[i] + H2Oice(i,j,k) )
                      / ( 1. + acoef*dtit[i] );
 
         }
