@@ -257,34 +257,41 @@ inline void update_fields_from_tmpdens_gauss_seidel(
 
   // handle dust grain species
 
-  for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-    if (itmask[i] != MASK_FALSE)  {
+  if ( (my_chemistry->grain_growth == 1) || (my_chemistry->dust_sublimation == 1) )  {
+    // initialize the pack variable to group a set of arguments that gets
+    // repeatedly passed to a helper function
+    // -> we explicitly use itmask_metal instead of itmask
+    gauss_seidel::DensityUpdateArgPack pack{
+      SpeciesLUTFieldAdaptor{*my_fields}, idx_range, itmask_metal,
+      species_tmpdens};
 
-      if ( ( my_chemistry->grain_growth == 1 )  ||  ( my_chemistry->dust_sublimation == 1) )  {
-        if (my_chemistry->dust_species > 0)  {
-          MgSiO3(i,j,k)  = std::fmax((gr_float)(species_tmpdens.data[SpLUT::MgSiO3_dust][i]  ), tiny_fortran_val);
-          AC(i,j,k)      = std::fmax((gr_float)(species_tmpdens.data[SpLUT::AC_dust][i]      ), tiny_fortran_val);
-        }
-        if (my_chemistry->dust_species > 1)  {
-          SiM(i,j,k)     = std::fmax((gr_float)(species_tmpdens.data[SpLUT::SiM_dust][i]     ), tiny_fortran_val);
-          FeM(i,j,k)     = std::fmax((gr_float)(species_tmpdens.data[SpLUT::FeM_dust][i]     ), tiny_fortran_val);
-          Mg2SiO4(i,j,k) = std::fmax((gr_float)(species_tmpdens.data[SpLUT::Mg2SiO4_dust][i] ), tiny_fortran_val);
-          Fe3O4(i,j,k)   = std::fmax((gr_float)(species_tmpdens.data[SpLUT::Fe3O4_dust][i]   ), tiny_fortran_val);
-          SiO2D(i,j,k)   = std::fmax((gr_float)(species_tmpdens.data[SpLUT::SiO2_dust][i]   ), tiny_fortran_val);
-          MgO(i,j,k)     = std::fmax((gr_float)(species_tmpdens.data[SpLUT::MgO_dust][i]     ), tiny_fortran_val);
-          FeS(i,j,k)     = std::fmax((gr_float)(species_tmpdens.data[SpLUT::FeS_dust][i]     ), tiny_fortran_val);
-          Al2O3(i,j,k)   = std::fmax((gr_float)(species_tmpdens.data[SpLUT::Al2O3_dust][i]   ), tiny_fortran_val);
-        }
-        if (my_chemistry->dust_species > 2)  {
-          reforg(i,j,k)  = std::fmax((gr_float)(species_tmpdens.data[SpLUT::ref_org_dust][i]   ), tiny_fortran_val);
-          volorg(i,j,k)  = std::fmax((gr_float)(species_tmpdens.data[SpLUT::vol_org_dust][i]   ), tiny_fortran_val);
-          H2Oice(i,j,k)  = std::fmax((gr_float)(species_tmpdens.data[SpLUT::H2O_ice_dust][i]   ), tiny_fortran_val);
-        }
-      }
-
+    if (my_chemistry->dust_species > 0)  {
+      gauss_seidel::update_densities<SpLUT::MgSiO3_dust>(pack, tiny_fortran_val);
+      gauss_seidel::update_densities<SpLUT::AC_dust>(pack, tiny_fortran_val);
     }
-    // 
+    if (my_chemistry->dust_species > 1)  {
+      gauss_seidel::update_densities<SpLUT::SiM_dust>(pack, tiny_fortran_val);
+      gauss_seidel::update_densities<SpLUT::FeM_dust>(pack, tiny_fortran_val);
+      gauss_seidel::update_densities<SpLUT::Mg2SiO4_dust>(pack, tiny_fortran_val);
+      gauss_seidel::update_densities<SpLUT::Fe3O4_dust>(pack, tiny_fortran_val);
+      gauss_seidel::update_densities<SpLUT::SiO2_dust>(pack, tiny_fortran_val);
+      gauss_seidel::update_densities<SpLUT::MgO_dust>(pack, tiny_fortran_val);
+      gauss_seidel::update_densities<SpLUT::FeS_dust>(pack, tiny_fortran_val);
+      gauss_seidel::update_densities<SpLUT::Al2O3_dust>(pack, tiny_fortran_val);
+    }
+    if (my_chemistry->dust_species > 2)  {
+      gauss_seidel::update_densities<SpLUT::ref_org_dust>(pack, tiny_fortran_val);
+      gauss_seidel::update_densities<SpLUT::vol_org_dust>(pack, tiny_fortran_val);
+      gauss_seidel::update_densities<SpLUT::H2O_ice_dust>(pack, tiny_fortran_val);
+    }
+  }
 
+  // warn users about irregular HI densities
+  // -> this is unaltered from the original version of the code
+  // -> it appears that it was intended to warn users when there was a large
+  //    value, but it only triggers when HI is a NaN (it won't trigger when its
+  //    an inf)
+  for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
     if (HI(i,j,k) != HI(i,j,k))  {
       OMP_PRAGMA_CRITICAL
       {
