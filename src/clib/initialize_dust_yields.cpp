@@ -1,8 +1,25 @@
+//===----------------------------------------------------------------------===//
+//
+// See the LICENSE file for license and copyright information
+// SPDX-License-Identifier: NCSA AND BSD-3-Clause
+//
+//===----------------------------------------------------------------------===//
+///
+/// @file
+/// Implements the functions to initialize the dust yields
+///
+//===----------------------------------------------------------------------===//
+
 #include <stdlib.h> 
 #include <stdio.h>
 #include <math.h>
 #include "grackle_macros.h"
 #include "grackle_chemistry_data.h"
+#include "initialize_dust_yields.hpp" // forward declarations
+
+// forward declare some functions
+
+namespace {  // stuff inside an anonymous namespace is local to this file
 
 int calc_rates_dust_loc(int iSN, chemistry_data *my_chemistry, chemistry_data_storage *my_rates);
 int calc_rates_dust_C13(int iSN, chemistry_data *my_chemistry, chemistry_data_storage *my_rates);
@@ -17,11 +34,13 @@ int calc_rates_dust_P170(int iSN, chemistry_data *my_chemistry, chemistry_data_s
 int calc_rates_dust_P200(int iSN, chemistry_data *my_chemistry, chemistry_data_storage *my_rates);
 int calc_rates_dust_Y19(int iSN, chemistry_data *my_chemistry, chemistry_data_storage *my_rates);
 
+}  // anonymous namespace
+
 typedef int calc_yield_rate_fn(int, chemistry_data*, chemistry_data_storage*);
 
-int initialize_dust_yields(chemistry_data *my_chemistry,
-                           chemistry_data_storage *my_rates,
-                           code_units *my_units)
+int grackle::impl::initialize_dust_yields(chemistry_data *my_chemistry,
+                                          chemistry_data_storage *my_rates,
+                                          code_units *my_units)
 {
 
   if (my_chemistry->metal_chemistry == 0)
@@ -50,35 +69,35 @@ int initialize_dust_yields(chemistry_data *my_chemistry,
       NSN = 12;
       my_rates->SN0_N = NSN;
 
-      my_rates->SN0_XC  = malloc(NSN * sizeof(double));
-      my_rates->SN0_XO  = malloc(NSN * sizeof(double));
-      my_rates->SN0_XMg = malloc(NSN * sizeof(double));
-      my_rates->SN0_XAl = malloc(NSN * sizeof(double));
-      my_rates->SN0_XSi = malloc(NSN * sizeof(double));
-      my_rates->SN0_XS  = malloc(NSN * sizeof(double));
-      my_rates->SN0_XFe = malloc(NSN * sizeof(double));
+      my_rates->SN0_XC  = (double*)malloc(NSN * sizeof(double));
+      my_rates->SN0_XO  = (double*)malloc(NSN * sizeof(double));
+      my_rates->SN0_XMg = (double*)malloc(NSN * sizeof(double));
+      my_rates->SN0_XAl = (double*)malloc(NSN * sizeof(double));
+      my_rates->SN0_XSi = (double*)malloc(NSN * sizeof(double));
+      my_rates->SN0_XS  = (double*)malloc(NSN * sizeof(double));
+      my_rates->SN0_XFe = (double*)malloc(NSN * sizeof(double));
 
-      my_rates->SN0_fC  = malloc(NSN * sizeof(double));
-      my_rates->SN0_fO  = malloc(NSN * sizeof(double));
-      my_rates->SN0_fMg = malloc(NSN * sizeof(double));
-      my_rates->SN0_fAl = malloc(NSN * sizeof(double));
-      my_rates->SN0_fSi = malloc(NSN * sizeof(double));
-      my_rates->SN0_fS  = malloc(NSN * sizeof(double));
-      my_rates->SN0_fFe = malloc(NSN * sizeof(double));
+      my_rates->SN0_fC  = (double*)malloc(NSN * sizeof(double));
+      my_rates->SN0_fO  = (double*)malloc(NSN * sizeof(double));
+      my_rates->SN0_fMg = (double*)malloc(NSN * sizeof(double));
+      my_rates->SN0_fAl = (double*)malloc(NSN * sizeof(double));
+      my_rates->SN0_fSi = (double*)malloc(NSN * sizeof(double));
+      my_rates->SN0_fS  = (double*)malloc(NSN * sizeof(double));
+      my_rates->SN0_fFe = (double*)malloc(NSN * sizeof(double));
 
-      my_rates->SN0_fSiM      = malloc(NSN * sizeof(double));
-      my_rates->SN0_fFeM      = malloc(NSN * sizeof(double));
-      my_rates->SN0_fMg2SiO4  = malloc(NSN * sizeof(double));
-      my_rates->SN0_fMgSiO3   = malloc(NSN * sizeof(double));
-      my_rates->SN0_fFe3O4    = malloc(NSN * sizeof(double));
-      my_rates->SN0_fAC       = malloc(NSN * sizeof(double));
-      my_rates->SN0_fSiO2D    = malloc(NSN * sizeof(double));
-      my_rates->SN0_fMgO      = malloc(NSN * sizeof(double));
-      my_rates->SN0_fFeS      = malloc(NSN * sizeof(double));
-      my_rates->SN0_fAl2O3    = malloc(NSN * sizeof(double));
-      my_rates->SN0_freforg   = malloc(NSN * sizeof(double));
-      my_rates->SN0_fvolorg   = malloc(NSN * sizeof(double));
-      my_rates->SN0_fH2Oice   = malloc(NSN * sizeof(double));
+      my_rates->SN0_fSiM      = (double*)malloc(NSN * sizeof(double));
+      my_rates->SN0_fFeM      = (double*)malloc(NSN * sizeof(double));
+      my_rates->SN0_fMg2SiO4  = (double*)malloc(NSN * sizeof(double));
+      my_rates->SN0_fMgSiO3   = (double*)malloc(NSN * sizeof(double));
+      my_rates->SN0_fFe3O4    = (double*)malloc(NSN * sizeof(double));
+      my_rates->SN0_fAC       = (double*)malloc(NSN * sizeof(double));
+      my_rates->SN0_fSiO2D    = (double*)malloc(NSN * sizeof(double));
+      my_rates->SN0_fMgO      = (double*)malloc(NSN * sizeof(double));
+      my_rates->SN0_fFeS      = (double*)malloc(NSN * sizeof(double));
+      my_rates->SN0_fAl2O3    = (double*)malloc(NSN * sizeof(double));
+      my_rates->SN0_freforg   = (double*)malloc(NSN * sizeof(double));
+      my_rates->SN0_fvolorg   = (double*)malloc(NSN * sizeof(double));
+      my_rates->SN0_fH2Oice   = (double*)malloc(NSN * sizeof(double));
 
       for(iSN = 0; iSN < NSN; iSN++) {
         my_rates->SN0_XC [iSN] = 0.0;
@@ -112,19 +131,19 @@ int initialize_dust_yields(chemistry_data *my_chemistry,
         my_rates->SN0_fH2Oice  [iSN] = 0.0;
       }
 
-      my_rates->SN0_r0SiM      = malloc(NSN * 3 * sizeof(double));
-      my_rates->SN0_r0FeM      = malloc(NSN * 3 * sizeof(double));
-      my_rates->SN0_r0Mg2SiO4  = malloc(NSN * 3 * sizeof(double));
-      my_rates->SN0_r0MgSiO3   = malloc(NSN * 3 * sizeof(double));
-      my_rates->SN0_r0Fe3O4    = malloc(NSN * 3 * sizeof(double));
-      my_rates->SN0_r0AC       = malloc(NSN * 3 * sizeof(double));
-      my_rates->SN0_r0SiO2D    = malloc(NSN * 3 * sizeof(double));
-      my_rates->SN0_r0MgO      = malloc(NSN * 3 * sizeof(double));
-      my_rates->SN0_r0FeS      = malloc(NSN * 3 * sizeof(double));
-      my_rates->SN0_r0Al2O3    = malloc(NSN * 3 * sizeof(double));
-      my_rates->SN0_r0reforg   = malloc(NSN * 3 * sizeof(double));
-      my_rates->SN0_r0volorg   = malloc(NSN * 3 * sizeof(double));
-      my_rates->SN0_r0H2Oice   = malloc(NSN * 3 * sizeof(double));
+      my_rates->SN0_r0SiM      = (double*)malloc(NSN * 3 * sizeof(double));
+      my_rates->SN0_r0FeM      = (double*)malloc(NSN * 3 * sizeof(double));
+      my_rates->SN0_r0Mg2SiO4  = (double*)malloc(NSN * 3 * sizeof(double));
+      my_rates->SN0_r0MgSiO3   = (double*)malloc(NSN * 3 * sizeof(double));
+      my_rates->SN0_r0Fe3O4    = (double*)malloc(NSN * 3 * sizeof(double));
+      my_rates->SN0_r0AC       = (double*)malloc(NSN * 3 * sizeof(double));
+      my_rates->SN0_r0SiO2D    = (double*)malloc(NSN * 3 * sizeof(double));
+      my_rates->SN0_r0MgO      = (double*)malloc(NSN * 3 * sizeof(double));
+      my_rates->SN0_r0FeS      = (double*)malloc(NSN * 3 * sizeof(double));
+      my_rates->SN0_r0Al2O3    = (double*)malloc(NSN * 3 * sizeof(double));
+      my_rates->SN0_r0reforg   = (double*)malloc(NSN * 3 * sizeof(double));
+      my_rates->SN0_r0volorg   = (double*)malloc(NSN * 3 * sizeof(double));
+      my_rates->SN0_r0H2Oice   = (double*)malloc(NSN * 3 * sizeof(double));
 
       itab = 0;
       for(iSN = 0; iSN < NSN; iSN++) {
@@ -151,7 +170,7 @@ int initialize_dust_yields(chemistry_data *my_chemistry,
       dTd =     0.1000000;
      Nmom =             4;
 
-      my_rates->gr_Td = malloc(NTd * Nmom * sizeof(double));
+      my_rates->gr_Td = (double*)malloc(NTd * Nmom * sizeof(double));
       my_rates->gr_Size = NTd * Nmom;
       my_rates->gr_N[0] = Nmom;
       my_rates->gr_N[1] = NTd;
@@ -159,19 +178,19 @@ int initialize_dust_yields(chemistry_data *my_chemistry,
       for(iTd = 0; iTd < NTd; iTd++)
         my_rates->gr_Td[iTd] = Td0 + (double)iTd * dTd;
 
-      my_rates->SN0_kpSiM      = malloc(NSN * Nmom * NTd * sizeof(double));
-      my_rates->SN0_kpFeM      = malloc(NSN * Nmom * NTd * sizeof(double));
-      my_rates->SN0_kpMg2SiO4  = malloc(NSN * Nmom * NTd * sizeof(double));
-      my_rates->SN0_kpMgSiO3   = malloc(NSN * Nmom * NTd * sizeof(double));
-      my_rates->SN0_kpFe3O4    = malloc(NSN * Nmom * NTd * sizeof(double));
-      my_rates->SN0_kpAC       = malloc(NSN * Nmom * NTd * sizeof(double));
-      my_rates->SN0_kpSiO2D    = malloc(NSN * Nmom * NTd * sizeof(double));
-      my_rates->SN0_kpMgO      = malloc(NSN * Nmom * NTd * sizeof(double));
-      my_rates->SN0_kpFeS      = malloc(NSN * Nmom * NTd * sizeof(double));
-      my_rates->SN0_kpAl2O3    = malloc(NSN * Nmom * NTd * sizeof(double));
-      my_rates->SN0_kpreforg   = malloc(NSN * Nmom * NTd * sizeof(double));
-      my_rates->SN0_kpvolorg   = malloc(NSN * Nmom * NTd * sizeof(double));
-      my_rates->SN0_kpH2Oice   = malloc(NSN * Nmom * NTd * sizeof(double));
+      my_rates->SN0_kpSiM      = (double*)malloc(NSN * Nmom * NTd * sizeof(double));
+      my_rates->SN0_kpFeM      = (double*)malloc(NSN * Nmom * NTd * sizeof(double));
+      my_rates->SN0_kpMg2SiO4  = (double*)malloc(NSN * Nmom * NTd * sizeof(double));
+      my_rates->SN0_kpMgSiO3   = (double*)malloc(NSN * Nmom * NTd * sizeof(double));
+      my_rates->SN0_kpFe3O4    = (double*)malloc(NSN * Nmom * NTd * sizeof(double));
+      my_rates->SN0_kpAC       = (double*)malloc(NSN * Nmom * NTd * sizeof(double));
+      my_rates->SN0_kpSiO2D    = (double*)malloc(NSN * Nmom * NTd * sizeof(double));
+      my_rates->SN0_kpMgO      = (double*)malloc(NSN * Nmom * NTd * sizeof(double));
+      my_rates->SN0_kpFeS      = (double*)malloc(NSN * Nmom * NTd * sizeof(double));
+      my_rates->SN0_kpAl2O3    = (double*)malloc(NSN * Nmom * NTd * sizeof(double));
+      my_rates->SN0_kpreforg   = (double*)malloc(NSN * Nmom * NTd * sizeof(double));
+      my_rates->SN0_kpvolorg   = (double*)malloc(NSN * Nmom * NTd * sizeof(double));
+      my_rates->SN0_kpH2Oice   = (double*)malloc(NSN * Nmom * NTd * sizeof(double));
 
       itab = 0;
       for(iSN = 0; iSN < NSN; iSN++) {
@@ -212,8 +231,8 @@ int initialize_dust_yields(chemistry_data *my_chemistry,
   return SUCCESS;
 }
 
-int local_free_dust_yields(chemistry_data *my_chemistry,
-                           chemistry_data_storage *my_rates)
+int grackle::impl::free_dust_yields(chemistry_data *my_chemistry,
+                                    chemistry_data_storage *my_rates)
 {
 
   if (my_chemistry->metal_chemistry == 0)
@@ -281,6 +300,8 @@ int local_free_dust_yields(chemistry_data *my_chemistry,
 
   return SUCCESS;
 }
+
+namespace {  // stuff inside an anonymous namespace is local to this file
 
 int calc_rates_dust_loc(int iSN, chemistry_data *my_chemistry, chemistry_data_storage *my_rates)
 {
@@ -4367,3 +4388,5 @@ int calc_rates_dust_Y19(int iSN, chemistry_data *my_chemistry, chemistry_data_st
 
   return SUCCESS;
 }
+
+}  // anonymous namespace
