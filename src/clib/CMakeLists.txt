@@ -97,7 +97,6 @@ add_library(Grackle_Grackle
   solve_chemistry.c
   status_reporting.c status_reporting.h
   update_UVbackground_rates.c
-  rate_utils.c
   utils.c
 
   # auto-generated C source files
@@ -115,6 +114,7 @@ add_library(Grackle_Grackle
   initialize_rates.cpp initialize_rates.hpp
   initialize_metal_chemistry_rates.cpp initialize_metal_chemistry_rates.hpp
   internal_types.cpp internal_types.hpp
+  rate_utils.cpp
   scale_fields.hpp
   solve_rate_cool_g-cpp.cpp solve_rate_cool_g-cpp.h
   step_rate_newton_raphson.hpp
