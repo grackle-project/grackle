@@ -17,7 +17,7 @@
 
 namespace grackle::impl {
 
-void cool1d_multi_g(int imetal, int iter,  // double* comp1, double* comp2,
+void cool1d_multi_g(int imetal, int iter,
                     double* edot, double* tgas, double* mmw, double* p2d,
                     double* tdust, double* metallicity, double* dust2gas,
                     double* rhoH, gr_mask_type* itmask,
