@@ -70,19 +70,13 @@ void grackle::impl::cool1d_multi_g(
   grackle::impl::View<gr_float***> OH(my_fields->OH_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   grackle::impl::View<gr_float***> H2O(my_fields->H2O_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
-  // Cloudy cooling data
 
-  int iZscale, mycmbTfloor;
-
-  // Parameters
-
+  // Declare some constants:
   const double mh_local_var = mh_grflt;
-  // approx. mean molecular weight of metals
-  const double mu_metal = 16.;
+  const double mu_metal = 16.; // approx. mean molecular weight of metals
 
   // Locals
-
-  int i;
+  int i, iZscale, mycmbTfloor;
   double dom, qq, vibl, logtem0, logtem9, dlogtem, zr, hdlte1, hdlow1, gamma2, x, fudge, gphdl1, dom_inv, tau, ciefudge, coolunit, tbase1, nH2, nother, nSSh, nratio, nssh_he, nratio_he, fSShHI, fSShHeI, pe_eps, pe_X, grbeta, ih2cox, min_metallicity;
   double comp1, comp2;
 
