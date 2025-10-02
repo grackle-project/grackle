@@ -10,21 +10,17 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef INITIALIZE_RATES_H
-#define INITIALIZE_RATES_H
+#ifndef INITIALIZE_RATES_HPP
+#define INITIALIZE_RATES_HPP
 
 #include "grackle.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif /* __cplusplus */
+namespace grackle::impl {
 
 int initialize_rates(chemistry_data* my_chemistry,
                      chemistry_data_storage* my_rates, code_units* my_units,
                      double co_length_unit, double co_density_unit);
 
-#ifdef __cplusplus
-}  // extern "C"
-#endif /* __cplusplus */
+}  // namespace grackle::impl
 
-#endif /* INITIALIZE_RATES_H */
+#endif /* INITIALIZE_RATES_HPP */

@@ -10,24 +10,20 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef INITIALIZE_DUST_YIELDS_H
-#define INITIALIZE_DUST_YIELDS_H
+#ifndef INITIALIZE_DUST_YIELDS_HPP
+#define INITIALIZE_DUST_YIELDS_HPP
 
 #include "grackle.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif /* __cplusplus */
+namespace grackle::impl {
 
 int initialize_dust_yields(chemistry_data* my_chemistry,
                            chemistry_data_storage* my_rates,
                            code_units* my_units);
 
-int local_free_dust_yields(chemistry_data* my_chemistry,
-                           chemistry_data_storage* my_rates);
+int free_dust_yields(chemistry_data* my_chemistry,
+                     chemistry_data_storage* my_rates);
 
-#ifdef __cplusplus
-}  // extern "C"
-#endif /* __cplusplus */
+}  // namespace grackle::impl
 
-#endif /* INITIALIZE_DUST_YIELDS_H */
+#endif /* INITIALIZE_DUST_YIELDS_HPP */
