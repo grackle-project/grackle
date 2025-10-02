@@ -6,75 +6,7 @@
 //===----------------------------------------------------------------------===//
 ///
 /// @file
-/// Implement machinery for initializing the reaction and cooling rates related
-/// to metal species
-///
-/// Table of rate coefficients for primordial_chemistry >= 4:
-///
-/// | rate-name | Reaction                          |
-/// | --------- | --------------------------------- |
-/// | k125      | HDII +  HI   ->  HII  +  HDI      |
-/// | k129      | DI   +  HII  ->  HDII +  p        |
-/// | k130      | DII  +  HI   ->  HDII +  p        |
-/// | k131      | HDII +  e    ->  HI   +  DI       |
-/// | k132      | DI   +  e    ->  DM   +  p        |
-/// | k133      | DII  +  DM   ->  DI   +  DI       |
-/// | k134      | HII  +  DM   ->  DI   +  HI       |
-/// | k135      | HM   +  DI   ->  HI   +  DM       |
-/// | k136      | DM   +  HI   ->  DI   +  HM       |
-/// | k137      | DM   +  HI   ->  HDI  +  e        |
-/// | -         | -                                 |
-/// | k148      | HeI    +  HII  ->  HeHII  +  p    |
-/// | k149      | HeI    +  HII  ->  HeHII  +  p    |
-/// | k150      | HeI    +  H2II ->  HeHII  +  HI   |
-/// | k151      | HeII   +  HI   ->  HeHII  +  p    |
-/// | k152      | HeHII  +  HI   ->  HeI    +  H2II |
-/// | k153      | HeHII  +  e    ->  HeI    +  HI   |
-///
-/// Table of rate coefficients for metal species:
-///
-/// | rate-name | Reactions                        |
-/// | --------- | -------------------------------- |
-/// | kz15      | HI     +  CH   ->  CI     +  H2I |
-/// | kz16      | HI     +  CH2  ->  CH     +  H2I |
-/// | kz17      | HI     +  OH   ->  H2I    +  OI  |
-/// | kz18      | HI     +  H2O  ->  OH     +  H2I |
-/// | kz19      | HI     +  O2   ->  OH     +  OI  |
-/// | kz20      | CI     +  H2I  ->  CH     +  HI  |
-/// | kz21      | OI     +  H2I  ->  OH     +  HI  |
-/// | kz22      | HII    +  OI   ->  OII    +  HI  |
-/// | kz23      | H2I    +  CH   ->  CH2    +  HI  |
-/// | kz24      | H2I    +  OH   ->  H2O    +  HI  |
-/// | kz25      | OH     +  OH   ->  H2O    +  OI  |
-/// | kz26      | OH     +  CO   ->  CO2    +  HI  |
-/// | kz27      | CI     +  HI   ->  CH     +  p   |
-/// | kz28      | CI     +  OH   ->  CO     +  HI  |
-/// | kz29      | CI     +  O2   ->  CO     +  OI  |
-/// | kz30      | OI     +  HI   ->  OH     +  p   |
-/// | kz31      | OI     +  OI   ->  O2     +  p   |
-/// | kz32      | OI     +  CH   ->  CO     +  HI  |
-/// | kz33      | OI     +  OH   ->  O2     +  HI  |
-/// | kz34      | HII    +  OH   ->  OHII   +  HI  |
-/// | kz35      | HII    +  H2O  ->  H2OII  +  HI  |
-/// | kz36      | HII    +  O2   ->  O2II   +  HI  |
-/// | kz37      | CII    +  OH   ->  COII   +  HI  |
-/// | kz38      | CII    +  O2   ->  OII    +  CO  |
-/// | kz39      | OII    +  HI   ->  HII    +  OI  |
-/// | kz40      | OII    +  H2I  ->  OHII   +  HI  |
-/// | kz41      | OHII   +  H2I  ->  H2OII  +  HI  |
-/// | kz42      | H2OII  +  H2I  ->  H3OII  +  HI  |
-/// | kz43      | COII   +  HI   ->  HII    +  CO  |
-/// | kz44      | CII    +  e    ->  CI     +  p   |
-/// | kz45      | OII    +  e    ->  OI     +  p   |
-/// | kz46      | H2OII  +  e    ->  OH     +  HI  |
-/// | kz47      | H2OII  +  e    ->  OI     +  H2I |
-/// | kz48      | H3OII  +  e    ->  H2O    +  HI  |
-/// | kz49      | H3OII  +  e    ->  OH     +  HI  |
-/// | kz50      | O2II   +  e    ->  OI     +  OI  |
-/// | kz51      | H2I    +  CI   ->  CH2    +  p   |
-/// | kz52      | SiI    +  OH   ->  SiOI   +  HI  |
-/// | kz53      | SiI    +  O2   ->  SiOI   +  OI  |
-/// | kz54      | SiOI   +  OH   ->  SiO2I  +  HI  |
+/// Implement machinery for initializing miscellaneous species cooling rates
 ///
 //===----------------------------------------------------------------------===//
 
@@ -86,15 +18,10 @@
 #include "grackle.h"
 #include "grackle_macros.h"
 #include "interp_table_utils.h" // free_interp_grid_
-#include "initialize_metal_chemistry_rates.hpp"  // forward declarations
-#include "internal_units.h"  // InternalGrUnits
+#include "init_misc_species_cool_rates.hpp"  // forward declarations
+#include "internal_units.h"
 #include "phys_constants.h"
 #include "grackle_rate_functions.h" // forward declarations of some funcs
-
-#define tiny 1.0e-20
-#define tevk 1.1605e+4
-
-static int allocate_rates_metal(chemistry_data *my_chemistry, chemistry_data_storage *my_rates);
 
 /// calculate CIE H2 cooling rate from Yoshida et al. (2006)
 ///
@@ -139,7 +66,7 @@ static int add_cieY06_cool_rate(double **rate_ptr, double coolunit,
   return GR_SUCCESS;
 }
 
-int grackle::impl::initialize_metal_chemistry_rates(
+int grackle::impl::init_misc_species_cool_rates(
   chemistry_data *my_chemistry, chemistry_data_storage *my_rates,
   code_units *my_units)
 {
@@ -154,236 +81,6 @@ int grackle::impl::initialize_metal_chemistry_rates(
   // -> the construction logic deduplicates a lot of logic that was
   //    previously copied and pasted across a lot of fortran files
   InternalGrUnits internalu = new_internalu_legacy_C_(my_units);
-  const double kunit = internalu_calc_kunit_(internalu);
-
-  // compute log spacing of the temperature table
-  //
-  // TODO: address the ubiquity of this variable (among transcribed routines).
-  //       To ensure that every part of the code uses exactly the same value,
-  //       we should either:
-  //       1. cache this quantity
-  //       2. have a function that we use everywhere to call it
-  const double dlogtem = (
-    (log(my_chemistry->TemperatureEnd) -
-     log(my_chemistry->TemperatureStart)) /
-    (double)(my_chemistry->NumberOfTemperatureBins-1)
-  );
-
-
-  // Allocate buffers to hold the rates
-  allocate_rates_metal(my_chemistry, my_rates);
-
-  // Initialize constants to tiny
-  for (int i = 0; i < my_chemistry->NumberOfTemperatureBins; i++) {
-        my_rates->k125[i] = tiny;
-        my_rates->k129[i] = tiny;
-        my_rates->k130[i] = tiny;
-        my_rates->k131[i] = tiny;
-        my_rates->k132[i] = tiny;
-        my_rates->k133[i] = tiny;
-        my_rates->k134[i] = tiny;
-        my_rates->k135[i] = tiny;
-        my_rates->k136[i] = tiny;
-        my_rates->k137[i] = tiny;
-        my_rates->k148[i] = tiny;
-        my_rates->k149[i] = tiny;
-        my_rates->k150[i] = tiny;
-        my_rates->k151[i] = tiny;
-        my_rates->k152[i] = tiny;
-        my_rates->k153[i] = tiny;
-
-        my_rates->kz15[i] = tiny;
-        my_rates->kz16[i] = tiny;
-        my_rates->kz17[i] = tiny;
-        my_rates->kz18[i] = tiny;
-        my_rates->kz19[i] = tiny;
-        my_rates->kz20[i] = tiny;
-        my_rates->kz21[i] = tiny;
-        my_rates->kz22[i] = tiny;
-        my_rates->kz23[i] = tiny;
-        my_rates->kz24[i] = tiny;
-        my_rates->kz25[i] = tiny;
-        my_rates->kz26[i] = tiny;
-        my_rates->kz27[i] = tiny;
-        my_rates->kz28[i] = tiny;
-        my_rates->kz29[i] = tiny;
-        my_rates->kz30[i] = tiny;
-        my_rates->kz31[i] = tiny;
-        my_rates->kz32[i] = tiny;
-        my_rates->kz33[i] = tiny;
-        my_rates->kz34[i] = tiny;
-        my_rates->kz35[i] = tiny;
-        my_rates->kz36[i] = tiny;
-        my_rates->kz37[i] = tiny;
-        my_rates->kz38[i] = tiny;
-        my_rates->kz39[i] = tiny;
-        my_rates->kz40[i] = tiny;
-        my_rates->kz41[i] = tiny;
-        my_rates->kz42[i] = tiny;
-        my_rates->kz43[i] = tiny;
-        my_rates->kz44[i] = tiny;
-        my_rates->kz45[i] = tiny;
-        my_rates->kz46[i] = tiny;
-        my_rates->kz47[i] = tiny;
-        my_rates->kz48[i] = tiny;
-        my_rates->kz49[i] = tiny;
-        my_rates->kz50[i] = tiny;
-        my_rates->kz51[i] = tiny;
-        my_rates->kz52[i] = tiny;
-        my_rates->kz53[i] = tiny;
-        my_rates->kz54[i] = tiny;
-  }
-
-  // Fill in tables of
-  //   - collisional rate coefficients for primordial_chemistry >= 4 species
-  //   - collisional rate coefficients for metal species
-  //
-  // We do this for every temperature in the range spanned by
-  // my_chemistry->TemperatureStart & my_chemistry->TemperatureEnd
-  for (int i = 0; i < my_chemistry->NumberOfTemperatureBins; i++) {
-    // Compute the current temperature
-    // NOTE: an earlier version of this comment notes that temperature is in
-    //       eV, but I think that's incorrect
-    double logttt = log(my_chemistry->TemperatureStart) + (double)(i  )*dlogtem;
-    double ttt = exp(logttt);
-    double ttt300 = ttt / 300.0;
-
-        my_rates->k125[i] = 6.4e-10;
-        my_rates->k129[i] = 3.9e-19 * pow(ttt300, 1.8) * exp(20.0/ttt);
-        my_rates->k130[i] = 3.9e-19 * pow(ttt300, 1.8) * exp(20.0/ttt);
-        my_rates->k131[i] = 3.4e-9 * pow(ttt300, -0.4);
-        my_rates->k132[i] = 3.0e-16 * pow(ttt300, 0.95) * exp(-ttt/9320.0);
-        my_rates->k133[i] = 5.7e-8 * pow(ttt300, -0.50);
-        my_rates->k134[i] = 4.6e-8 * pow(ttt300, -0.50);
-        my_rates->k135[i] = 4.6e-8 * pow(ttt300, -0.50);
-        my_rates->k136[i] = 6.4e-9 * pow(ttt300, 0.41);
-        my_rates->k137[i] = 1.5e-9 * pow(ttt300, -0.1);
-  
-        my_rates->k148[i] = 5.0e-21;
-        if(ttt < 1000.0)
-          my_rates->k149[i] = 7.60e-18 * pow(ttt, -0.50);
-        else
-          my_rates->k149[i] = 3.45e-16 * pow(ttt, -1.06);
-        my_rates->k150[i] = 3.0e-10 * exp(-6717.0/ttt);
-        if(ttt < 4000.0)
-          my_rates->k151[i] = 1.6e-14 * pow(ttt, -0.33);
-        else
-          my_rates->k151[i] = 1.0e-15;
-        my_rates->k152[i] = 9.1e-10;
-        my_rates->k153[i] = 1.7e-7 * pow(ttt, -0.5);
-  
-        my_rates->kz15[i] = 4.98e-11;
-        my_rates->kz16[i] = 2.70e-10;
-        my_rates->kz17[i] = 7.00e-14 * pow(ttt300, 2.80) * exp(-1950.0/ttt);
-        my_rates->kz18[i] = 6.83e-12 * pow(ttt300, 1.60) * exp(-9720.0/ttt);
-        my_rates->kz19[i] = 3.30e-10 * exp(-8460.0/ttt);
-        my_rates->kz20[i] = 6.64e-10 * exp(-11700.0/ttt);
-        if(ttt < 1.0e7)
-            my_rates->kz21[i] = 3.43e-13 * pow(ttt300, 2.67) * exp(-3160.0/ttt);
-        else
-            my_rates->kz21[i] = 3.43e-13 * pow(1.0e7/300.0, 2.67) * exp(-3160.0/1.0e7);
-        // The rate comes from an experiment (297-3532 K).
-        // We refrain to extrapolate it to high temperatures.
-        my_rates->kz22[i] = 7.00e-10 * exp(-232.0/ttt);
-        my_rates->kz23[i] = 2.38e-10 * exp(-1760.0/ttt);
-        my_rates->kz24[i] = 1.55e-12 * pow(ttt300, 1.60) * exp(-1660.0/ttt);
-        my_rates->kz25[i] = 1.65e-12 * pow(ttt300, 1.14) * exp(-50.0/ttt);
-        my_rates->kz26[i] = 1.0e-13;
-        my_rates->kz27[i] = 1.0e-17;
-        my_rates->kz28[i] = 1.1e-10 * pow(ttt300, 0.5);
-        my_rates->kz29[i] = 3.3e-11;
-        my_rates->kz30[i] = 9.9e-19 * pow(ttt300, -0.38);
-        my_rates->kz31[i] = 4.9e-20 * pow(ttt300, 1.58);
-        my_rates->kz32[i] = 6.6e-11;
-        my_rates->kz33[i] = 4.34e-11 * pow(ttt300, -0.5) * exp(-30.0/ttt);
-        my_rates->kz34[i] = 2.1e-9;
-        my_rates->kz35[i] = 6.9e-9;
-        my_rates->kz36[i] = 2.0e-9;
-        my_rates->kz37[i] = 7.7e-10;
-        my_rates->kz38[i] = 6.2e-10;
-        my_rates->kz39[i] = 6.8e-10;
-        my_rates->kz40[i] = 1.7e-9;
-        my_rates->kz41[i] = 1.01e-9;
-        my_rates->kz42[i] = 8.3e-10;
-        my_rates->kz43[i] = 7.5e-10;
-        my_rates->kz44[i] = 4.4e-12 * pow(ttt300, -0.61);
-        my_rates->kz45[i] = 3.4e-12 * pow(ttt300, -0.63);
-        my_rates->kz46[i] = 1.6e-7 * pow(ttt300, -0.5);
-        my_rates->kz47[i] = 2.0e-7 * pow(ttt300, -0.5);
-        my_rates->kz48[i] = 3.5e-7 * pow(ttt300, -0.5);
-        my_rates->kz49[i] = 6.5e-7 * pow(ttt300, -0.5);
-        my_rates->kz50[i] = 1.95e-7 * pow(ttt300, -0.7);
-        my_rates->kz51[i] = 1.0e-17;
-        my_rates->kz52[i]  = 3.00e-11;
-        my_rates->kz53[i]  = 1.30e-11 * exp(-111.0/ttt);
-        my_rates->kz54[i]  = 2.00e-13;
-
-//      printf("CHECK %13.5e %13.5e %13.5e %13.5e\n", ttt
-//         , my_rates->k125[i]
-//         , my_rates->k129[i]
-//         , my_rates->k130[i]);
-  }
-
-  for (int i = 0; i < my_chemistry->NumberOfTemperatureBins; i++) {
-        my_rates->k125[i] = fmax(my_rates->k125[i], tiny) / kunit;
-        my_rates->k129[i] = fmax(my_rates->k129[i], tiny) / kunit;
-        my_rates->k130[i] = fmax(my_rates->k130[i], tiny) / kunit;
-        my_rates->k131[i] = fmax(my_rates->k131[i], tiny) / kunit;
-        my_rates->k132[i] = fmax(my_rates->k132[i], tiny) / kunit;
-        my_rates->k133[i] = fmax(my_rates->k133[i], tiny) / kunit;
-        my_rates->k134[i] = fmax(my_rates->k134[i], tiny) / kunit;
-        my_rates->k135[i] = fmax(my_rates->k135[i], tiny) / kunit;
-        my_rates->k136[i] = fmax(my_rates->k136[i], tiny) / kunit;
-        my_rates->k137[i] = fmax(my_rates->k137[i], tiny) / kunit;
-
-        my_rates->k148[i] = fmax(my_rates->k148[i], tiny) / kunit;
-        my_rates->k149[i] = fmax(my_rates->k149[i], tiny) / kunit;
-        my_rates->k150[i] = fmax(my_rates->k150[i], tiny) / kunit;
-        my_rates->k151[i] = fmax(my_rates->k151[i], tiny) / kunit;
-        my_rates->k152[i] = fmax(my_rates->k152[i], tiny) / kunit;
-        my_rates->k153[i] = fmax(my_rates->k153[i], tiny) / kunit;
-
-        my_rates->kz15[i] = fmax(my_rates->kz15[i], tiny) / kunit;
-        my_rates->kz16[i] = fmax(my_rates->kz16[i], tiny) / kunit;
-        my_rates->kz17[i] = fmax(my_rates->kz17[i], tiny) / kunit;
-        my_rates->kz18[i] = fmax(my_rates->kz18[i], tiny) / kunit;
-        my_rates->kz19[i] = fmax(my_rates->kz19[i], tiny) / kunit;
-        my_rates->kz20[i] = fmax(my_rates->kz20[i], tiny) / kunit;
-        my_rates->kz21[i] = fmax(my_rates->kz21[i], tiny) / kunit;
-        my_rates->kz22[i] = fmax(my_rates->kz22[i], tiny) / kunit;
-        my_rates->kz23[i] = fmax(my_rates->kz23[i], tiny) / kunit;
-        my_rates->kz24[i] = fmax(my_rates->kz24[i], tiny) / kunit;
-        my_rates->kz25[i] = fmax(my_rates->kz25[i], tiny) / kunit;
-        my_rates->kz26[i] = fmax(my_rates->kz26[i], tiny) / kunit;
-        my_rates->kz27[i] = fmax(my_rates->kz27[i], tiny) / kunit;
-        my_rates->kz28[i] = fmax(my_rates->kz28[i], tiny) / kunit;
-        my_rates->kz29[i] = fmax(my_rates->kz29[i], tiny) / kunit;
-        my_rates->kz30[i] = fmax(my_rates->kz30[i], tiny) / kunit;
-        my_rates->kz31[i] = fmax(my_rates->kz31[i], tiny) / kunit;
-        my_rates->kz32[i] = fmax(my_rates->kz32[i], tiny) / kunit;
-        my_rates->kz33[i] = fmax(my_rates->kz33[i], tiny) / kunit;
-        my_rates->kz34[i] = fmax(my_rates->kz34[i], tiny) / kunit;
-        my_rates->kz35[i] = fmax(my_rates->kz35[i], tiny) / kunit;
-        my_rates->kz36[i] = fmax(my_rates->kz36[i], tiny) / kunit;
-        my_rates->kz37[i] = fmax(my_rates->kz37[i], tiny) / kunit;
-        my_rates->kz38[i] = fmax(my_rates->kz38[i], tiny) / kunit;
-        my_rates->kz39[i] = fmax(my_rates->kz39[i], tiny) / kunit;
-        my_rates->kz40[i] = fmax(my_rates->kz40[i], tiny) / kunit;
-        my_rates->kz41[i] = fmax(my_rates->kz41[i], tiny) / kunit;
-        my_rates->kz42[i] = fmax(my_rates->kz42[i], tiny) / kunit;
-        my_rates->kz43[i] = fmax(my_rates->kz43[i], tiny) / kunit;
-        my_rates->kz44[i] = fmax(my_rates->kz44[i], tiny) / kunit;
-        my_rates->kz45[i] = fmax(my_rates->kz45[i], tiny) / kunit;
-        my_rates->kz46[i] = fmax(my_rates->kz46[i], tiny) / kunit;
-        my_rates->kz47[i] = fmax(my_rates->kz47[i], tiny) / kunit;
-        my_rates->kz48[i] = fmax(my_rates->kz48[i], tiny) / kunit;
-        my_rates->kz49[i] = fmax(my_rates->kz49[i], tiny) / kunit;
-        my_rates->kz50[i] = fmax(my_rates->kz50[i], tiny) / kunit;
-        my_rates->kz51[i] = fmax(my_rates->kz51[i], tiny) / kunit;
-        my_rates->kz52[i] = fmax(my_rates->kz52[i], tiny) / kunit;
-        my_rates->kz53[i] = fmax(my_rates->kz53[i], tiny) / kunit;
-        my_rates->kz54[i] = fmax(my_rates->kz54[i], tiny) / kunit;
-  }
 
   initialize_cooling_rate_CI (my_chemistry, my_rates, internalu.coolunit);
   initialize_cooling_rate_CII(my_chemistry, my_rates, internalu.coolunit);
@@ -397,15 +94,12 @@ int grackle::impl::initialize_metal_chemistry_rates(
   return GR_SUCCESS;
 }
 
-int grackle::impl::free_metal_chemistry_rates(chemistry_data *my_chemistry,
-                                              chemistry_data_storage *my_rates)
+int grackle::impl::free_misc_species_cool_rates(chemistry_data *my_chemistry,
+                                                chemistry_data_storage *my_rates)
 {
-
-  /* TO-DO: k125 - k153 are primordial_chemistry=4.
-     These should be moved to initialize_rates.c so this is only metal species. */
-  if (my_chemistry->primordial_chemistry == 0)
-    return SUCCESS;
-
+  if (my_chemistry->primordial_chemistry == 0) {
+    return GR_SUCCESS;
+  }
 
   free_interp_grid_(&my_rates->LCI);
   free_interp_grid_(&my_rates->LCII);
@@ -415,67 +109,9 @@ int grackle::impl::free_metal_chemistry_rates(chemistry_data *my_chemistry,
   free_interp_grid_(&my_rates->LOH);
   free_interp_grid_(&my_rates->LH2O);
 
-  GRACKLE_FREE(my_rates->k125);
-  GRACKLE_FREE(my_rates->k129);
-  GRACKLE_FREE(my_rates->k130);
-  GRACKLE_FREE(my_rates->k131);
-  GRACKLE_FREE(my_rates->k132);
-  GRACKLE_FREE(my_rates->k133);
-  GRACKLE_FREE(my_rates->k134);
-  GRACKLE_FREE(my_rates->k135);
-  GRACKLE_FREE(my_rates->k136);
-  GRACKLE_FREE(my_rates->k137);
-  GRACKLE_FREE(my_rates->k148);
-  GRACKLE_FREE(my_rates->k149);
-  GRACKLE_FREE(my_rates->k150);
-  GRACKLE_FREE(my_rates->k151);
-  GRACKLE_FREE(my_rates->k152);
-  GRACKLE_FREE(my_rates->k153);
-
-  GRACKLE_FREE(my_rates->kz15);
-  GRACKLE_FREE(my_rates->kz16);
-  GRACKLE_FREE(my_rates->kz17);
-  GRACKLE_FREE(my_rates->kz18);
-  GRACKLE_FREE(my_rates->kz19);
-  GRACKLE_FREE(my_rates->kz20);
-  GRACKLE_FREE(my_rates->kz21);
-  GRACKLE_FREE(my_rates->kz22);
-  GRACKLE_FREE(my_rates->kz23);
-  GRACKLE_FREE(my_rates->kz24);
-  GRACKLE_FREE(my_rates->kz25);
-  GRACKLE_FREE(my_rates->kz26);
-  GRACKLE_FREE(my_rates->kz27);
-  GRACKLE_FREE(my_rates->kz28);
-  GRACKLE_FREE(my_rates->kz29);
-  GRACKLE_FREE(my_rates->kz30);
-  GRACKLE_FREE(my_rates->kz31);
-  GRACKLE_FREE(my_rates->kz32);
-  GRACKLE_FREE(my_rates->kz33);
-  GRACKLE_FREE(my_rates->kz34);
-  GRACKLE_FREE(my_rates->kz35);
-  GRACKLE_FREE(my_rates->kz36);
-  GRACKLE_FREE(my_rates->kz37);
-  GRACKLE_FREE(my_rates->kz38);
-  GRACKLE_FREE(my_rates->kz39);
-  GRACKLE_FREE(my_rates->kz40);
-  GRACKLE_FREE(my_rates->kz41);
-  GRACKLE_FREE(my_rates->kz42);
-  GRACKLE_FREE(my_rates->kz43);
-  GRACKLE_FREE(my_rates->kz44);
-  GRACKLE_FREE(my_rates->kz45);
-  GRACKLE_FREE(my_rates->kz46);
-  GRACKLE_FREE(my_rates->kz47);
-  GRACKLE_FREE(my_rates->kz48);
-  GRACKLE_FREE(my_rates->kz49);
-  GRACKLE_FREE(my_rates->kz50);
-  GRACKLE_FREE(my_rates->kz51);
-  GRACKLE_FREE(my_rates->kz52);
-  GRACKLE_FREE(my_rates->kz53);
-  GRACKLE_FREE(my_rates->kz54);
-
   GRACKLE_FREE(my_rates->cieY06 );
 
-  return SUCCESS;
+  return GR_SUCCESS;
 }
 
 struct regular_range_{
@@ -1972,66 +1608,3 @@ extern "C" void initialize_primordial_opacity(chemistry_data *my_chemistry, chem
 
 }
 
-
-static int allocate_rates_metal(chemistry_data *my_chemistry, chemistry_data_storage *my_rates)
-{
-    my_rates->k125 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->k129 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->k130 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->k131 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->k132 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->k133 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->k134 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->k135 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->k136 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->k137 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->k148 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->k149 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->k150 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->k151 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->k152 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->k153 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-
-    my_rates->kz15 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz16 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz17 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz18 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz19 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz20 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz21 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz22 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz23 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz24 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz25 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz26 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz27 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz28 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz29 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz30 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz31 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz32 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz33 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz34 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz35 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz36 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz37 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz38 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz39 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz40 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz41 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz42 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz43 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz44 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz45 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz46 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz47 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz48 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz49 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz50 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz51 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz52 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz53 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-    my_rates->kz54 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-
-    return SUCCESS;
-}

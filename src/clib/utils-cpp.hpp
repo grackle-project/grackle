@@ -292,6 +292,36 @@ inline double dabs(double a) { return std::fabs(a); }
 
 } // namespace grackle::internal
 
+// ----------------------
+// other useful machinery
+// ----------------------
+
+namespace grackle::impl {
+
+///@{
+/// Implements alternatives to std::clamp that always works with floating point
+/// values
+///
+/// For context, std::clamp, produces undefined behavior when a NaN is passed
+/// into the function
+inline int clamp(int v, int lo, int hi) {
+  return (v < lo) ? lo : (v > hi) ? hi : v;
+}
+inline long clamp(long v, long lo, long hi) {
+  return (v < lo) ? lo : (v > hi) ? hi : v;
+}
+inline long long clamp(long long v, long long lo, long long hi) {
+  return (v < lo) ? lo : (v > hi) ? hi : v;
+}
+inline float clamp(float v, float lo, float hi) {
+  return std::fmax(lo, std::fmin(v, hi));
+}
+inline double clamp(double v, double lo, double hi) {
+  return std::fmax(lo, std::fmin(v, hi));
+}
+///@}
+
+} // namespace grackle::impl
 
 // ---------------------------------------------------
 // define machinery related to the View class template
