@@ -14,7 +14,6 @@
 #include "internal_units.h"      // InternalGrUnits
 #include "internal_types.hpp"    // GrainSpeciesCollection
 #include "index_helper.h"        // IndexRange
-// TODO: manually removed from signature (double* comp1, double* comp2)
 
 namespace grackle::impl {
 
