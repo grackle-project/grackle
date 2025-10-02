@@ -77,11 +77,16 @@ inline void update_electron_densities(const double* dtit, IndexRange idx_range,
                                       const gr_mask_type* itmask_metal,
                                       const chemistry_data* my_chemistry,
                                       grackle_field_data* my_fields) {
-  // ideally, we would not need to preload everything
-  // (doing that will almost certainly break the gold-standard)
-  grackle::impl::View<gr_float***> de(
+  // reminder: the electron density has some "funky" units. Users of Grackle
+  //     specify a field that holds the number density of electrons multiplied
+  //     by the hydrogen mass.
+
+  // build a view of the electron density
+  grackle::impl::View<gr_float***> e_density(
       my_fields->e_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+
+  // build views of all species available with primordial_chemistry == 1
   grackle::impl::View<gr_float***> HII(
       my_fields->HII_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
@@ -91,45 +96,6 @@ inline void update_electron_densities(const double* dtit, IndexRange idx_range,
   grackle::impl::View<gr_float***> HeIII(
       my_fields->HeIII_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> HM(
-      my_fields->HM_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> H2II(
-      my_fields->H2II_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> DII(
-      my_fields->DII_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> DM(
-      my_fields->DM_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> HDII(
-      my_fields->HDII_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> HeHII(
-      my_fields->HeHII_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> CII(
-      my_fields->CII_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> COII(
-      my_fields->COII_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> OII(
-      my_fields->OII_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> OHII(
-      my_fields->OHII_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> H2OII(
-      my_fields->H2OII_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> H3OII(
-      my_fields->H3OII_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> O2II(
-      my_fields->O2II_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
   const int j = idx_range.j;
   const int k = idx_range.k;
@@ -137,37 +103,96 @@ inline void update_electron_densities(const double* dtit, IndexRange idx_range,
   for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
     if (itmask[i] != MASK_FALSE) {
       // temporarily store electron density from start of the current subcycle
-      dedot_prev[i] = de(i, j, k);
+      dedot_prev[i] = e_density(i, j, k);
 
-      de(i, j, k) = HII(i, j, k) + HeII(i, j, k) / (gr_float)(4.) +
-                    HeIII(i, j, k) / (gr_float)(2.);
-      if (my_chemistry->primordial_chemistry > 1) {
-        de(i, j, k) =
-            de(i, j, k) - HM(i, j, k) + H2II(i, j, k) / (gr_float)(2.);
-      }
+      e_density(i, j, k) = HII(i, j, k) + HeII(i, j, k) / (gr_float)(4.) +
+                           HeIII(i, j, k) / (gr_float)(2.);
+    }
+  }
 
-      if (my_chemistry->primordial_chemistry > 2) {
-        de(i, j, k) = de(i, j, k) + DII(i, j, k) / (gr_float)(2.);
+  if (my_chemistry->primordial_chemistry > 1) {
+    grackle::impl::View<gr_float***> HM(
+        my_fields->HM_density, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    grackle::impl::View<gr_float***> H2II(
+        my_fields->H2II_density, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+      if (itmask[i] != MASK_FALSE) {
+        e_density(i, j, k) += -HM(i, j, k) + H2II(i, j, k) / (gr_float)(2.);
       }
-      if (my_chemistry->primordial_chemistry > 3) {
-        de(i, j, k) = de(i, j, k) - DM(i, j, k) / (gr_float)(2.) +
-                      HDII(i, j, k) / (gr_float)(3.) +
-                      HeHII(i, j, k) / (gr_float)(5.);
+    }
+  }
+
+  if (my_chemistry->primordial_chemistry > 2) {
+    grackle::impl::View<gr_float***> DII(
+        my_fields->DII_density, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+      if (itmask[i] != MASK_FALSE) {
+        e_density(i, j, k) += DII(i, j, k) / (gr_float)(2.);
       }
-      if ((my_chemistry->metal_chemistry == 1) &&
-          (itmask_metal[i] != MASK_FALSE)) {
-        de(i, j, k) =
-            de(i, j, k) + CII(i, j, k) / (gr_float)(12.) +
-            COII(i, j, k) / (gr_float)(28.) + OII(i, j, k) / (gr_float)(16.) +
-            OHII(i, j, k) / (gr_float)(17.) + H2OII(i, j, k) / (gr_float)(18.) +
+    }
+  }
+  if (my_chemistry->primordial_chemistry > 3) {
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+      grackle::impl::View<gr_float***> DM(
+          my_fields->DM_density, my_fields->grid_dimension[0],
+          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+      grackle::impl::View<gr_float***> HDII(
+          my_fields->HDII_density, my_fields->grid_dimension[0],
+          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+      grackle::impl::View<gr_float***> HeHII(
+          my_fields->HeHII_density, my_fields->grid_dimension[0],
+          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+      if (itmask[i] != MASK_FALSE) {
+        e_density(i, j, k) += -DM(i, j, k) / (gr_float)(2.) +
+                              HDII(i, j, k) / (gr_float)(3.) +
+                              HeHII(i, j, k) / (gr_float)(5.);
+      }
+    }
+  }
+
+  if (my_chemistry->metal_chemistry == 1) {
+    grackle::impl::View<gr_float***> CII(
+        my_fields->CII_density, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    grackle::impl::View<gr_float***> COII(
+        my_fields->COII_density, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    grackle::impl::View<gr_float***> OII(
+        my_fields->OII_density, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    grackle::impl::View<gr_float***> OHII(
+        my_fields->OHII_density, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    grackle::impl::View<gr_float***> H2OII(
+        my_fields->H2OII_density, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    grackle::impl::View<gr_float***> H3OII(
+        my_fields->H3OII_density, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    grackle::impl::View<gr_float***> O2II(
+        my_fields->O2II_density, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+      if (itmask_metal[i] != MASK_FALSE) {
+        e_density(i, j, k) +=
+            CII(i, j, k) / (gr_float)(12.) + COII(i, j, k) / (gr_float)(28.) +
+            OII(i, j, k) / (gr_float)(16.) + OHII(i, j, k) / (gr_float)(17.) +
+            H2OII(i, j, k) / (gr_float)(18.) +
             H3OII(i, j, k) / (gr_float)(19.) + O2II(i, j, k) / (gr_float)(32.);
       }
+    }
+  }
 
+  for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+    if (itmask[i] != MASK_FALSE) {
       // store the time-derivative of the electron-density in dedot
       // (don't forget that we previously stored the value from the start of
       // the current cycle within dedot_prev)
-      dedot_prev[i] =
-          std::fabs(de(i, j, k) - dedot_prev[i]) / std::fmax(dtit[i], tiny8);
+      dedot_prev[i] = std::fabs(e_density(i, j, k) - dedot_prev[i]) /
+                      std::fmax(dtit[i], tiny8);
     }
   }
 }
