@@ -39,8 +39,8 @@ namespace grackle::impl {
 ///     in the @p idx_range
 /// @param[in] p2d 1D array to hold the computed thermal gas pressures for
 ///     the @p idx_range. This is computed using the user-specified nominal
-///     adiabatic index value (i.e. no attempts are made to correct for
-///     presence of H2)
+///     adiabatic index value (i.e. no attempts are made to correct for presence
+///     of H2)
 /// @param[out] tdust 1D array to hold the computed dust temperatures at
 ///     each location in the @p index range. This **ONLY** used when using
 ///     variants of the classic 1-field dust-model or using the variant of the
@@ -84,11 +84,11 @@ namespace grackle::impl {
 /// modified3: February, 2003 by Robert Harkness; iteration mask
 /// modified4: September, 2009 by BDS to include cloudy cooling
 /// modified5: March, 2025 by Christopher Bignamini & Matthew Abruzzo; C++ port
-void cool1d_multi_g(int imetal, int iter,
-                    double* edot, double* tgas, double* mmw, double* p2d,
-                    double* tdust, double* metallicity, double* dust2gas,
-                    double* rhoH, gr_mask_type* itmask,
-                    gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
+void cool1d_multi_g(int imetal, int iter, double* edot, double* tgas,
+                    double* mmw, double* p2d, double* tdust,
+                    double* metallicity, double* dust2gas, double* rhoH,
+                    gr_mask_type* itmask, gr_mask_type* itmask_metal,
+                    chemistry_data* my_chemistry,
                     chemistry_data_storage* my_rates,
                     grackle_field_data* my_fields,
                     photo_rate_storage my_uvb_rates, InternalGrUnits internalu,
@@ -98,6 +98,6 @@ void cool1d_multi_g(int imetal, int iter,
                     grackle::impl::Cool1DMultiScratchBuf cool1dmulti_buf,
                     grackle::impl::CoolHeatScratchBuf coolingheating_buf);
 
-};
+};  // namespace grackle::impl
 
 #endif /* COOL1D_MULTI_G_HPP */
