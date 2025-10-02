@@ -39,8 +39,8 @@ namespace grackle::impl {
 ///     in the @p idx_range
 /// @param[in] p2d 1D array to hold the computed thermal gas pressures for
 ///     the @p idx_range. This is computed using the user-specified nominal
-///     adiabatic index value (i.e. no attempts are made to correct for presence of
-///     H2)
+///     adiabatic index value (i.e. no attempts are made to correct for presence
+///     of H2)
 /// @param[out] tdust 1D array to hold the computed dust temperatures at
 ///     each location in the @p index range. This **ONLY** used when using
 ///     variants of the classic 1-field dust-model or using the variant of the
@@ -49,8 +49,8 @@ namespace grackle::impl {
 /// @param[in]  metallicity 1D array to hold the computed metallicity for the
 ///     @p idx_range
 /// @param[out] dust2gas Holds the computed dust-to-gas ratio at each
-///     location in the index range. In other words, this holds the dust mass per
-///     unit gas mass (only used in certain configuration)
+///     location in the index range. In other words, this holds the dust mass
+///     per unit gas mass (only used in certain configuration)
 /// @param[out] rhoH 1D array to hold the computed Hydrogen mass density
 ///     for the @p idx_range
 /// @param[in] itmask Specifies the general iteration-mask of the @p idx_range
@@ -65,12 +65,12 @@ namespace grackle::impl {
 /// @param[in] internalu Specifies Grackle's internal unit-system
 /// @param[in] idx_range Specifies the current index-range
 /// @param[in] grain_temperatures buffers to hold individual grain species
-///     temperatures. This is only used in certain configurations (i.e. when we aren't
-///     using the tdust argument)
+///     temperatures. This is only used in certain configurations (i.e. when we
+///     aren't using the tdust argument)
 /// @param[in] logTlininterp_buf Scratch space used to temporarily hold values
 ///     for each location in @p idx_range with valuea that are used to linearly
-///     interpolate tables with respect to the natural log of @p tgas1d. (Any values
-///     previously stored here will be overwritten)
+///     interpolate tables with respect to the natural log of @p tgas1d. (Any
+///     values previously stored here will be overwritten)
 /// @param[in] cool1dmulti_buf Pre-allocated buffers that are used by this
 ///     function for scratch space (to hold a variety of quantities)
 /// @param[in] coolingheating_buf Pre-allocated buffers that are used by this
@@ -83,13 +83,14 @@ namespace grackle::impl {
 /// modified2: October, 1996 by GB; moved to AMR
 /// modified3: February, 2003 by Robert Harkness; iteration mask
 /// modified4: September, 2009 by BDS to include cloudy cooling
-/// modified5: March, 2025 by Christopher Bignamini & Matthew Abruzzo; ported to C++
+/// modified5: March, 2025 by Christopher Bignamini & Matthew Abruzzo; ported to
+/// C++
 
-void cool1d_multi_g(int imetal, int iter,
-                    double* edot, double* tgas, double* mmw, double* p2d,
-                    double* tdust, double* metallicity, double* dust2gas,
-                    double* rhoH, gr_mask_type* itmask,
-                    gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
+void cool1d_multi_g(int imetal, int iter, double* edot, double* tgas,
+                    double* mmw, double* p2d, double* tdust,
+                    double* metallicity, double* dust2gas, double* rhoH,
+                    gr_mask_type* itmask, gr_mask_type* itmask_metal,
+                    chemistry_data* my_chemistry,
                     chemistry_data_storage* my_rates,
                     grackle_field_data* my_fields,
                     photo_rate_storage my_uvb_rates, InternalGrUnits internalu,
@@ -99,6 +100,6 @@ void cool1d_multi_g(int imetal, int iter,
                     grackle::impl::Cool1DMultiScratchBuf cool1dmulti_buf,
                     grackle::impl::CoolHeatScratchBuf coolingheating_buf);
 
-};
+};  // namespace grackle::impl
 
 #endif /* COOL1D_MULTI_G_HPP */
