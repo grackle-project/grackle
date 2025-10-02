@@ -9,6 +9,73 @@
 /// Implement machinery for initializing the reaction and cooling rates related
 /// to metal species
 ///
+/// Table of rate coefficients for primordial_chemistry >= 4:
+///
+/// | rate-name | Reaction                          |
+/// | --------- | --------------------------------- |
+/// | k125      | HDII +  HI   ->  HII  +  HDI      |
+/// | k129      | DI   +  HII  ->  HDII +  p        |
+/// | k130      | DII  +  HI   ->  HDII +  p        |
+/// | k131      | HDII +  e    ->  HI   +  DI       |
+/// | k132      | DI   +  e    ->  DM   +  p        |
+/// | k133      | DII  +  DM   ->  DI   +  DI       |
+/// | k134      | HII  +  DM   ->  DI   +  HI       |
+/// | k135      | HM   +  DI   ->  HI   +  DM       |
+/// | k136      | DM   +  HI   ->  DI   +  HM       |
+/// | k137      | DM   +  HI   ->  HDI  +  e        |
+/// | -         | -                                 |
+/// | k148      | HeI    +  HII  ->  HeHII  +  p    |
+/// | k149      | HeI    +  HII  ->  HeHII  +  p    |
+/// | k150      | HeI    +  H2II ->  HeHII  +  HI   |
+/// | k151      | HeII   +  HI   ->  HeHII  +  p    |
+/// | k152      | HeHII  +  HI   ->  HeI    +  H2II |
+/// | k153      | HeHII  +  e    ->  HeI    +  HI   |
+///
+/// Table of rate coefficients for metal species:
+///
+/// | rate-name | Reactions                        |
+/// | --------- | -------------------------------- |
+/// | kz15      | HI     +  CH   ->  CI     +  H2I |
+/// | kz16      | HI     +  CH2  ->  CH     +  H2I |
+/// | kz17      | HI     +  OH   ->  H2I    +  OI  |
+/// | kz18      | HI     +  H2O  ->  OH     +  H2I |
+/// | kz19      | HI     +  O2   ->  OH     +  OI  |
+/// | kz20      | CI     +  H2I  ->  CH     +  HI  |
+/// | kz21      | OI     +  H2I  ->  OH     +  HI  |
+/// | kz22      | HII    +  OI   ->  OII    +  HI  |
+/// | kz23      | H2I    +  CH   ->  CH2    +  HI  |
+/// | kz24      | H2I    +  OH   ->  H2O    +  HI  |
+/// | kz25      | OH     +  OH   ->  H2O    +  OI  |
+/// | kz26      | OH     +  CO   ->  CO2    +  HI  |
+/// | kz27      | CI     +  HI   ->  CH     +  p   |
+/// | kz28      | CI     +  OH   ->  CO     +  HI  |
+/// | kz29      | CI     +  O2   ->  CO     +  OI  |
+/// | kz30      | OI     +  HI   ->  OH     +  p   |
+/// | kz31      | OI     +  OI   ->  O2     +  p   |
+/// | kz32      | OI     +  CH   ->  CO     +  HI  |
+/// | kz33      | OI     +  OH   ->  O2     +  HI  |
+/// | kz34      | HII    +  OH   ->  OHII   +  HI  |
+/// | kz35      | HII    +  H2O  ->  H2OII  +  HI  |
+/// | kz36      | HII    +  O2   ->  O2II   +  HI  |
+/// | kz37      | CII    +  OH   ->  COII   +  HI  |
+/// | kz38      | CII    +  O2   ->  OII    +  CO  |
+/// | kz39      | OII    +  HI   ->  HII    +  OI  |
+/// | kz40      | OII    +  H2I  ->  OHII   +  HI  |
+/// | kz41      | OHII   +  H2I  ->  H2OII  +  HI  |
+/// | kz42      | H2OII  +  H2I  ->  H3OII  +  HI  |
+/// | kz43      | COII   +  HI   ->  HII    +  CO  |
+/// | kz44      | CII    +  e    ->  CI     +  p   |
+/// | kz45      | OII    +  e    ->  OI     +  p   |
+/// | kz46      | H2OII  +  e    ->  OH     +  HI  |
+/// | kz47      | H2OII  +  e    ->  OI     +  H2I |
+/// | kz48      | H3OII  +  e    ->  H2O    +  HI  |
+/// | kz49      | H3OII  +  e    ->  OH     +  HI  |
+/// | kz50      | O2II   +  e    ->  OI     +  OI  |
+/// | kz51      | H2I    +  CI   ->  CH2    +  p   |
+/// | kz52      | SiI    +  OH   ->  SiOI   +  HI  |
+/// | kz53      | SiI    +  O2   ->  SiOI   +  OI  |
+/// | kz54      | SiOI   +  OH   ->  SiO2I  +  HI  |
+///
 //===----------------------------------------------------------------------===//
 
 #include <stdlib.h> 
@@ -20,6 +87,7 @@
 #include "grackle_macros.h"
 #include "interp_table_utils.h" // free_interp_grid_
 #include "initialize_metal_chemistry_rates.hpp"  // forward declarations
+#include "internal_units.h"  // InternalGrUnits
 #include "phys_constants.h"
 #include "grackle_rate_functions.h" // forward declarations of some funcs
 
@@ -28,180 +96,85 @@
 
 static int allocate_rates_metal(chemistry_data *my_chemistry, chemistry_data_storage *my_rates);
 
+/// calculate CIE H2 cooling rate from Yoshida et al. (2006)
+///
+/// @note
+/// At some point, we should coerce this into the standard format for
+/// heating/cooling rates
+static int add_cieY06_cool_rate(double **rate_ptr, double coolunit,
+                                chemistry_data* my_chemistry) {
+
+  *rate_ptr = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+
+  // compute log spacing of the temperature table
+  //
+  // TODO: address the ubiquity of this variable (among transcribed routines).
+  //       To ensure that every part of the code uses exactly the same value,
+  //       we should either:
+  //       1. cache this quantity
+  //       2. have a function that we use everywhere to call it
+  const double dlogtem = (
+    (log(my_chemistry->TemperatureEnd) -
+     log(my_chemistry->TemperatureStart)) /
+    (double)(my_chemistry->NumberOfTemperatureBins-1)
+  );
+
+  for (int i = 0; i < my_chemistry->NumberOfTemperatureBins; i++) {
+    // Set rate to tiny for safety.
+    (*rate_ptr)[i] = tiny;
+
+    // calculate local temperature
+    double ln_T = log(my_chemistry->TemperatureStart) + (double)(i)*dlogtem;
+    double T = exp(ln_T);
+
+    // store the rate
+    (*rate_ptr)[i] =
+      pow(10.0,
+          -116.6 + 96.34  * log10(T)
+                 - 47.153 * pow(log10(T), 2)
+                 + 10.744 * pow(log10(T), 3)
+                 -  0.916 * pow(log10(T), 4) ) / coolunit;
+  }
+
+  return GR_SUCCESS;
+}
+
 int grackle::impl::initialize_metal_chemistry_rates(
   chemistry_data *my_chemistry, chemistry_data_storage *my_rates,
   code_units *my_units)
 {
 
-  /* TO-DO: k125 - k153 are primordial_chemistry=4.
-     These should be moved to initialize_rates.c so this is only metal species. */
-  if (my_chemistry->primordial_chemistry == 0)
-    return SUCCESS;
+  // TO-DO: k125 - k153 are primordial_chemistry=4.
+  // These should be moved to initialize_rates.c so this is only metal species
+  if (my_chemistry->primordial_chemistry == 0) {
+    return GR_SUCCESS;
+  }
 
-//-------125:   HDII +  HI   ->  HII  +  HDI
-//-------129:   DI   +  HII  ->  HDII +  p
-//-------130:   DII  +  HI   ->  HDII +  p
-//-------131:   HDII +  e    ->  HI   +  DI
-//-------132:   DI   +  e    ->  DM   +  p
-//-------133:   DII  +  DM   ->  DI   +  DI
-//-------134:   HII  +  DM   ->  DI   +  HI
-//-------135:   HM   +  DI   ->  HI   +  DM
-//-------136:   DM   +  HI   ->  DI   +  HM
-//-------137:   DM   +  HI   ->  HDI  +  e 
+  // temporarily construct the InternalGrUnits struct
+  // -> the construction logic deduplicates a lot of logic that was
+  //    previously copied and pasted across a lot of fortran files
+  InternalGrUnits internalu = new_internalu_legacy_C_(my_units);
+  const double kunit = internalu_calc_kunit_(internalu);
 
-//-------148:  HeI    +  HII  ->  HeHII  +  p 
-//-------149:  HeI    +  HII  ->  HeHII  +  p 
-//-------150:  HeI    +  H2II ->  HeHII  +  HI
-//-------151:  HeII   +  HI   ->  HeHII  +  p 
-//-------152:  HeHII  +  HI   ->  HeI    +  H2II
-//-------153:  HeHII  +  e    ->  HeI    +  HI
-
-//-------z15:  HI     +  CH   ->  CI     +  H2I
-//-------z16:  HI     +  CH2  ->  CH     +  H2I
-//-------z17:  HI     +  OH   ->  H2I    +  OI
-//-------z18:  HI     +  H2O  ->  OH     +  H2I
-//-------z19:  HI     +  O2   ->  OH     +  OI
-//-------z20:  CI     +  H2I  ->  CH     +  HI
-//-------z21:  OI     +  H2I  ->  OH     +  HI
-//-------z22:  HII    +  OI   ->  OII    +  HI
-//-------z23:  H2I    +  CH   ->  CH2    +  HI
-//-------z24:  H2I    +  OH   ->  H2O    +  HI
-//-------z25:  OH     +  OH   ->  H2O    +  OI
-//-------z26:  OH     +  CO   ->  CO2    +  HI
-//-------z27:  CI     +  HI   ->  CH     +  p
-//-------z28:  CI     +  OH   ->  CO     +  HI
-//-------z29:  CI     +  O2   ->  CO     +  OI
-//-------z30:  OI     +  HI   ->  OH     +  p
-//-------z31:  OI     +  OI   ->  O2     +  p
-//-------z32:  OI     +  CH   ->  CO     +  HI
-//-------z33:  OI     +  OH   ->  O2     +  HI
-//-------z34:  HII    +  OH   ->  OHII   +  HI
-//-------z35:  HII    +  H2O  ->  H2OII  +  HI
-//-------z36:  HII    +  O2   ->  O2II   +  HI
-//-------z37:  CII    +  OH   ->  COII   +  HI
-//-------z38:  CII    +  O2   ->  OII    +  CO
-//-------z39:  OII    +  HI   ->  HII    +  OI
-//-------z40:  OII    +  H2I  ->  OHII   +  HI
-//-------z41:  OHII   +  H2I  ->  H2OII  +  HI
-//-------z42:  H2OII  +  H2I  ->  H3OII  +  HI
-//-------z43:  COII   +  HI   ->  HII    +  CO
-//-------z44:  CII    +  e    ->  CI     +  p
-//-------z45:  OII    +  e    ->  OI     +  p
-//-------z46:  H2OII  +  e    ->  OH     +  HI
-//-------z47:  H2OII  +  e    ->  OI     +  H2I
-//-------z48:  H3OII  +  e    ->  H2O    +  HI
-//-------z49:  H3OII  +  e    ->  OH     +  HI
-//-------z50:  O2II   +  e    ->  OI     +  OI
-//-------z51:  H2I    +  CI   ->  CH2    +  p
-//-------z52:  SiI    +  OH   ->  SiOI   +  HI
-//-------z53:  SiI    +  O2   ->  SiOI   +  OI
-//-------z54:  SiOI   +  OH   ->  SiO2I  +  HI
+  // compute log spacing of the temperature table
+  //
+  // TODO: address the ubiquity of this variable (among transcribed routines).
+  //       To ensure that every part of the code uses exactly the same value,
+  //       we should either:
+  //       1. cache this quantity
+  //       2. have a function that we use everywhere to call it
+  const double dlogtem = (
+    (log(my_chemistry->TemperatureEnd) -
+     log(my_chemistry->TemperatureStart)) /
+    (double)(my_chemistry->NumberOfTemperatureBins-1)
+  );
 
 
-      double co_length_units, co_density_units;
-      if (my_units->comoving_coordinates == TRUE) {
-        co_length_units = my_units->length_units;
-        co_density_units = my_units->density_units;
-      }
-      else {
-        co_length_units = my_units->length_units *
-          my_units->a_value * my_units->a_units;
-        co_density_units = my_units->density_units /
-          POW(my_units->a_value * my_units->a_units, 3);
-      }
+  // Allocate buffers to hold the rates
+  allocate_rates_metal(my_chemistry, my_rates);
 
-      int  nratec      = my_chemistry->NumberOfTemperatureBins;
-      double  aye      = my_units->a_value;
-      double  temstart = my_chemistry->TemperatureStart;
-      double  temend   = my_chemistry->TemperatureEnd;
-      double  uxyz     = co_length_units;
-      double  uaye     = my_units->a_units;
-      double  urho     = co_density_units;
-      double  utim     = my_units->time_units;
-
-      int i;
-      double logttt, ttt, tbase1, xbase1, kunit, coolunit, dbase1, dlogtem, ttt300;
-//
-//
-// Get conversion units
-//
-//    t/x/dbase1 is the number (z dependant) that converts from the
-//      dimensionless code units to physical units.  Also, in the
-//      code aye = 1 at z=zinit, so to convert the usual a (=1 at z=0)
-//      to a~ (written in the code as aye), we use a = a~*[a] 
-//
-      tbase1 = utim;
-      xbase1 = uxyz/(aye*uaye);      // uxyz is [x]*a     
-      dbase1 = urho*pow(aye*uaye, 3);// urho is [dens]/a^3
-//
-// 1) Set the dimensions of the (non-radiative) rate coefficients.  
-//   Note that we have included the units that convert density to 
-//   number density, so the rate equations should look like 
-//   (in dimensionless units, hence the primes):
-//
-//      d(d0~)/dt~ = k~ * d1~ * d2~ / a~^3
-//
-//   where k~ is the dimenionless rate coefficients and d0-2~ are three
-//    dimensionless densities (i.e. d = [dens]*d~) and a~ is the 
-//    dimensionless expansion coefficient (see above).
-//
-//   rate eqn        : delta(n0)  = k  * n1        * n2        * dt     / a^3
-//   rate eqn units  : [dens]/mh  = k  * [dens]/mh * [dens]/mh * [time] / [a]^3
-//   rate eqn dimless: delta(n0~) = k~ * n1~       * n2~       * dt~    / a~^3
-//   so: k = [k] * k~  where [k] = ( [a]^3 * mh ) / ( [dens] * [time] )  (~)
-//   reminder: the number densities here are normalized with [dens] which
-//             is not a constant (it has a factor a^3), so the number
-//             densities must be converted from comoving to proper.
-//
-      kunit   = (pow(uaye, 3) * mh) / (dbase1 * tbase1);
-      // unused:
-      // double kunit_3bdy  = kunit * (pow(uaye, 3) * mh) / dbase1;
-//
-// 2) Set the dimension of the cooling coefficients (including constants)
-//    (this equation has a rho because e is the specifi//energy, not
-//     energy/unit volume).
-//      delta(e)  = L     * n1        * n2        * dt     / dens   / a^3
-//      [e]       = L     * [dens]/mh * [dens]/mh * [time] / [dens] / [a]^3
-//      delta(e~) = L~    * n1~       * n2~       * dt~    / dens~  / a~^3 [~]
-//    so L = [L] * L~ where [L] = [e] * mh**2 * [a]^3 / ([dens] * [time]) [~]
-//      but [e] = ([a]*[x])**2 / [time]**2 and ([a] = 1 / (1 + zri) )
-//     [L] = ([a]**5 * [x]**2 * mh**2) / ([dens] * [time]**3)
-//
-      coolunit = (pow(uaye, 5) * pow(xbase1, 2) * pow(mh, 2)) / (pow(tbase1, 3) * dbase1);
-//
-//   Note: some of the coffiecients have only one power of n.  These
-//         do not have the /a^3 factor, also they have units
-//         [L1] = ([a]**2 * [x]**2 * mh) / [time]**3
-//              = [L] * [dens] * [a]**3 / mh
-//         This is done through the dom variable in cool.src
-//        (some have three powers of n and they are different by the
-//         reciprocal of the above factor multiplying [L]).
-//
-// 3) the units for the radiative rate coefficients is just 1/[time]
-//
-// 4) Energy transfer from gas to dust grains, following equation 2.15
-//    of Hollenbach & McKee (1989).
-//    Normalize to the HM89 dust to gas ratio.
-
-      // unused:
-      // double fgr = 0.009387;
-      // double grain_coef = 1.2e-31 * pow(1.0e3, -0.5) / fgr;
-//
-// Compute log spacing in temperature
-//
-      ttt    = temstart;
-      logttt = log(ttt);
-      dlogtem= (log(temend) - log(temstart))/(double)(nratec-1);
-
-// Allocate rates
-      allocate_rates_metal(my_chemistry, my_rates);
-//
-// Initialize constants to tiny
-//
-      for (i = 0; i < nratec; i++) {
-//
-        my_rates->cieY06[i] = tiny;
-
+  // Initialize constants to tiny
+  for (int i = 0; i < my_chemistry->NumberOfTemperatureBins; i++) {
         my_rates->k125[i] = tiny;
         my_rates->k129[i] = tiny;
         my_rates->k130[i] = tiny;
@@ -259,28 +232,21 @@ int grackle::impl::initialize_metal_chemistry_rates(
         my_rates->kz52[i] = tiny;
         my_rates->kz53[i] = tiny;
         my_rates->kz54[i] = tiny;
-      }
-//
-//  Fill in tables over the range temstart to temend
-//
-// -------------------------------------------------
-//  1) rate coefficients (excluding external radiation field)
-//
-      for (i = 0; i < nratec; i++) {
-//
-//       Compute temperature of this bin (in eV)
-//
-        logttt = log(temstart) + (double)(i  )*dlogtem;
-        ttt = exp(logttt);
-        ttt300 = ttt / 300.0;
+  }
 
-        // CIE H2 cooling rate from Yoshida et al. (2006)
-        my_rates->cieY06[i] =
-         pow(10.0, -116.6                                                        
-                   + 96.34  * log10(ttt)                                         
-                   - 47.153 * pow(log10(ttt), 2)                                 
-                   + 10.744 * pow(log10(ttt), 3)                                 
-                   -  0.916 * pow(log10(ttt), 4) ) / coolunit;
+  // Fill in tables of
+  //   - collisional rate coefficients for primordial_chemistry >= 4 species
+  //   - collisional rate coefficients for metal species
+  //
+  // We do this for every temperature in the range spanned by
+  // my_chemistry->TemperatureStart & my_chemistry->TemperatureEnd
+  for (int i = 0; i < my_chemistry->NumberOfTemperatureBins; i++) {
+    // Compute the current temperature
+    // NOTE: an earlier version of this comment notes that temperature is in
+    //       eV, but I think that's incorrect
+    double logttt = log(my_chemistry->TemperatureStart) + (double)(i  )*dlogtem;
+    double ttt = exp(logttt);
+    double ttt300 = ttt / 300.0;
 
         my_rates->k125[i] = 6.4e-10;
         my_rates->k129[i] = 3.9e-19 * pow(ttt300, 1.8) * exp(20.0/ttt);
@@ -356,10 +322,9 @@ int grackle::impl::initialize_metal_chemistry_rates(
 //         , my_rates->k125[i]
 //         , my_rates->k129[i]
 //         , my_rates->k130[i]);
-      }
+  }
 
-      for (i = 0; i < nratec; i++) {
-//
+  for (int i = 0; i < my_chemistry->NumberOfTemperatureBins; i++) {
         my_rates->k125[i] = fmax(my_rates->k125[i], tiny) / kunit;
         my_rates->k129[i] = fmax(my_rates->k129[i], tiny) / kunit;
         my_rates->k130[i] = fmax(my_rates->k130[i], tiny) / kunit;
@@ -418,16 +383,18 @@ int grackle::impl::initialize_metal_chemistry_rates(
         my_rates->kz52[i] = fmax(my_rates->kz52[i], tiny) / kunit;
         my_rates->kz53[i] = fmax(my_rates->kz53[i], tiny) / kunit;
         my_rates->kz54[i] = fmax(my_rates->kz54[i], tiny) / kunit;
-      }
+  }
 
-      initialize_cooling_rate_CI (my_chemistry, my_rates, coolunit);
-      initialize_cooling_rate_CII(my_chemistry, my_rates, coolunit);
-      initialize_cooling_rate_OI (my_chemistry, my_rates, coolunit);
-      initialize_cooling_rate_CO (my_chemistry, my_rates, coolunit);
-      initialize_cooling_rate_OH (my_chemistry, my_rates, coolunit);
-      initialize_cooling_rate_H2O(my_chemistry, my_rates, coolunit);
+  initialize_cooling_rate_CI (my_chemistry, my_rates, internalu.coolunit);
+  initialize_cooling_rate_CII(my_chemistry, my_rates, internalu.coolunit);
+  initialize_cooling_rate_OI (my_chemistry, my_rates, internalu.coolunit);
+  initialize_cooling_rate_CO (my_chemistry, my_rates, internalu.coolunit);
+  initialize_cooling_rate_OH (my_chemistry, my_rates, internalu.coolunit);
+  initialize_cooling_rate_H2O(my_chemistry, my_rates, internalu.coolunit);
 
-  return SUCCESS;
+  add_cieY06_cool_rate(&my_rates->cieY06, internalu.coolunit, my_chemistry);
+
+  return GR_SUCCESS;
 }
 
 int grackle::impl::free_metal_chemistry_rates(chemistry_data *my_chemistry,
@@ -2065,8 +2032,6 @@ static int allocate_rates_metal(chemistry_data *my_chemistry, chemistry_data_sto
     my_rates->kz52 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
     my_rates->kz53 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
     my_rates->kz54 = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
-
-    my_rates->cieY06  = (double*)malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
 
     return SUCCESS;
 }
