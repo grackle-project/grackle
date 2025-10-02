@@ -27,6 +27,8 @@
 #include "LUT.hpp"
 #include "utils-field.hpp"
 
+/// This namespace groups functions/structs that are used to implement our
+/// Gauss-Seidel method
 namespace grackle::impl::gauss_seidel {
 
 /// groups some arguments together that are used with update_densities
@@ -170,14 +172,10 @@ inline void update_electron_densities(const double* dtit, IndexRange idx_range,
   }
 }
 
-}  // namespace grackle::impl::gauss_seidel
-
-namespace grackle::impl {
-
 /// This function overwrites the species density field values using the values
 /// in @p species_tmpdens, which holds the values from the end of the current
 /// (sub-)cycle.
-inline void update_fields_from_tmpdens_gauss_seidel(
+inline void update_fields_from_tmpdens(
     const double* dtit, IndexRange idx_range, double* dedot_prev,
     double* HIdot_prev, const gr_mask_type* itmask,
     const gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
@@ -187,8 +185,8 @@ inline void update_fields_from_tmpdens_gauss_seidel(
   {
     // initialize the pack variable to group a set of arguments that gets
     // repeatedly passed to a helper function
-    gauss_seidel::DensityUpdateArgPack pack{SpeciesLUTFieldAdaptor{*my_fields},
-                                            idx_range, itmask, species_tmpdens};
+    DensityUpdateArgPack pack{SpeciesLUTFieldAdaptor{*my_fields}, idx_range,
+                              itmask, species_tmpdens};
 
     // build a view of the HI mass density
     grackle::impl::View<gr_float***> HI(
@@ -205,12 +203,11 @@ inline void update_fields_from_tmpdens_gauss_seidel(
     }
 
     // primordial_chemistry == 1 updates
-    gauss_seidel::update_densities<SpLUT::HI>(pack, tiny_fortran_val);
-    gauss_seidel::update_densities<SpLUT::HII>(pack, tiny_fortran_val);
-    gauss_seidel::update_densities<SpLUT::HeI>(pack, tiny_fortran_val);
-    gauss_seidel::update_densities<SpLUT::HeII>(pack, tiny_fortran_val);
-    gauss_seidel::update_densities<SpLUT::HeIII>(
-        pack, (gr_float)(1e-5) * tiny_fortran_val);
+    update_densities<SpLUT::HI>(pack, tiny_fortran_val);
+    update_densities<SpLUT::HII>(pack, tiny_fortran_val);
+    update_densities<SpLUT::HeI>(pack, tiny_fortran_val);
+    update_densities<SpLUT::HeII>(pack, tiny_fortran_val);
+    update_densities<SpLUT::HeIII>(pack, (gr_float)(1e-5) * tiny_fortran_val);
 
     // warn users about irregular HI densities
     // -> this is unaltered from the original version of the code
@@ -236,26 +233,25 @@ inline void update_fields_from_tmpdens_gauss_seidel(
     //    densities using only a subset of updated species densities
     //    (this is probably ok since hydrogen and helium are **SO** abundant).
     //    This is the historical behavior.
-    gauss_seidel::update_electron_densities(dtit, idx_range, dedot_prev, itmask,
-                                            itmask_metal, my_chemistry,
-                                            my_fields);
+    update_electron_densities(dtit, idx_range, dedot_prev, itmask, itmask_metal,
+                              my_chemistry, my_fields);
 
     if (my_chemistry->primordial_chemistry > 1) {
-      gauss_seidel::update_densities<SpLUT::HM>(pack, tiny_fortran_val);
-      gauss_seidel::update_densities<SpLUT::H2I>(pack, tiny_fortran_val);
-      gauss_seidel::update_densities<SpLUT::H2II>(pack, tiny_fortran_val);
+      update_densities<SpLUT::HM>(pack, tiny_fortran_val);
+      update_densities<SpLUT::H2I>(pack, tiny_fortran_val);
+      update_densities<SpLUT::H2II>(pack, tiny_fortran_val);
     }
 
     if (my_chemistry->primordial_chemistry > 2) {
-      gauss_seidel::update_densities<SpLUT::DI>(pack, tiny_fortran_val);
-      gauss_seidel::update_densities<SpLUT::DII>(pack, tiny_fortran_val);
-      gauss_seidel::update_densities<SpLUT::HDI>(pack, tiny_fortran_val);
+      update_densities<SpLUT::DI>(pack, tiny_fortran_val);
+      update_densities<SpLUT::DII>(pack, tiny_fortran_val);
+      update_densities<SpLUT::HDI>(pack, tiny_fortran_val);
     }
 
     if (my_chemistry->primordial_chemistry > 3) {
-      gauss_seidel::update_densities<SpLUT::DM>(pack, tiny_fortran_val);
-      gauss_seidel::update_densities<SpLUT::HDII>(pack, tiny_fortran_val);
-      gauss_seidel::update_densities<SpLUT::HeHII>(pack, tiny_fortran_val);
+      update_densities<SpLUT::DM>(pack, tiny_fortran_val);
+      update_densities<SpLUT::HDII>(pack, tiny_fortran_val);
+      update_densities<SpLUT::HeHII>(pack, tiny_fortran_val);
     }
   }
 
@@ -264,38 +260,37 @@ inline void update_fields_from_tmpdens_gauss_seidel(
     // initialize the pack variable to group a set of arguments that gets
     // repeatedly passed to a helper function
     // -> we explicitly use itmask_metal instead of itmask
-    gauss_seidel::DensityUpdateArgPack pack{SpeciesLUTFieldAdaptor{*my_fields},
-                                            idx_range, itmask_metal,
-                                            species_tmpdens};
+    DensityUpdateArgPack pack{SpeciesLUTFieldAdaptor{*my_fields}, idx_range,
+                              itmask_metal, species_tmpdens};
 
-    gauss_seidel::update_densities<SpLUT::CI>(pack, tiny_fortran_val);
-    gauss_seidel::update_densities<SpLUT::CII>(pack, tiny_fortran_val);
-    gauss_seidel::update_densities<SpLUT::CO>(pack, tiny_fortran_val);
-    gauss_seidel::update_densities<SpLUT::CO2>(pack, tiny_fortran_val);
-    gauss_seidel::update_densities<SpLUT::OI>(pack, tiny_fortran_val);
-    gauss_seidel::update_densities<SpLUT::OH>(pack, tiny_fortran_val);
-    gauss_seidel::update_densities<SpLUT::H2O>(pack, tiny_fortran_val);
-    gauss_seidel::update_densities<SpLUT::O2>(pack, tiny_fortran_val);
-    gauss_seidel::update_densities<SpLUT::SiI>(pack, tiny_fortran_val);
-    gauss_seidel::update_densities<SpLUT::SiOI>(pack, tiny_fortran_val);
-    gauss_seidel::update_densities<SpLUT::SiO2I>(pack, tiny_fortran_val);
-    gauss_seidel::update_densities<SpLUT::CH>(pack, tiny_fortran_val);
-    gauss_seidel::update_densities<SpLUT::CH2>(pack, tiny_fortran_val);
-    gauss_seidel::update_densities<SpLUT::COII>(pack, tiny_fortran_val);
-    gauss_seidel::update_densities<SpLUT::OII>(pack, tiny_fortran_val);
-    gauss_seidel::update_densities<SpLUT::OHII>(pack, tiny_fortran_val);
-    gauss_seidel::update_densities<SpLUT::H2OII>(pack, tiny_fortran_val);
-    gauss_seidel::update_densities<SpLUT::H3OII>(pack, tiny_fortran_val);
-    gauss_seidel::update_densities<SpLUT::O2II>(pack, tiny_fortran_val);
+    update_densities<SpLUT::CI>(pack, tiny_fortran_val);
+    update_densities<SpLUT::CII>(pack, tiny_fortran_val);
+    update_densities<SpLUT::CO>(pack, tiny_fortran_val);
+    update_densities<SpLUT::CO2>(pack, tiny_fortran_val);
+    update_densities<SpLUT::OI>(pack, tiny_fortran_val);
+    update_densities<SpLUT::OH>(pack, tiny_fortran_val);
+    update_densities<SpLUT::H2O>(pack, tiny_fortran_val);
+    update_densities<SpLUT::O2>(pack, tiny_fortran_val);
+    update_densities<SpLUT::SiI>(pack, tiny_fortran_val);
+    update_densities<SpLUT::SiOI>(pack, tiny_fortran_val);
+    update_densities<SpLUT::SiO2I>(pack, tiny_fortran_val);
+    update_densities<SpLUT::CH>(pack, tiny_fortran_val);
+    update_densities<SpLUT::CH2>(pack, tiny_fortran_val);
+    update_densities<SpLUT::COII>(pack, tiny_fortran_val);
+    update_densities<SpLUT::OII>(pack, tiny_fortran_val);
+    update_densities<SpLUT::OHII>(pack, tiny_fortran_val);
+    update_densities<SpLUT::H2OII>(pack, tiny_fortran_val);
+    update_densities<SpLUT::H3OII>(pack, tiny_fortran_val);
+    update_densities<SpLUT::O2II>(pack, tiny_fortran_val);
     if ((my_chemistry->grain_growth == 1) ||
         (my_chemistry->dust_sublimation == 1)) {
       if (my_chemistry->dust_species > 0) {
-        gauss_seidel::update_densities<SpLUT::Mg>(pack, tiny_fortran_val);
+        update_densities<SpLUT::Mg>(pack, tiny_fortran_val);
       }
       if (my_chemistry->dust_species > 1) {
-        gauss_seidel::update_densities<SpLUT::Al>(pack, tiny_fortran_val);
-        gauss_seidel::update_densities<SpLUT::S>(pack, tiny_fortran_val);
-        gauss_seidel::update_densities<SpLUT::Fe>(pack, tiny_fortran_val);
+        update_densities<SpLUT::Al>(pack, tiny_fortran_val);
+        update_densities<SpLUT::S>(pack, tiny_fortran_val);
+        update_densities<SpLUT::Fe>(pack, tiny_fortran_val);
       }
     }
   }
@@ -306,36 +301,34 @@ inline void update_fields_from_tmpdens_gauss_seidel(
     // initialize the pack variable to group a set of arguments that gets
     // repeatedly passed to a helper function
     // -> we explicitly use itmask_metal instead of itmask
-    gauss_seidel::DensityUpdateArgPack pack{SpeciesLUTFieldAdaptor{*my_fields},
-                                            idx_range, itmask_metal,
-                                            species_tmpdens};
+    DensityUpdateArgPack pack{SpeciesLUTFieldAdaptor{*my_fields}, idx_range,
+                              itmask_metal, species_tmpdens};
 
     if (my_chemistry->dust_species > 0) {
-      gauss_seidel::update_densities<SpLUT::MgSiO3_dust>(pack,
-                                                         tiny_fortran_val);
-      gauss_seidel::update_densities<SpLUT::AC_dust>(pack, tiny_fortran_val);
+      update_densities<SpLUT::MgSiO3_dust>(pack, tiny_fortran_val);
+      update_densities<SpLUT::AC_dust>(pack, tiny_fortran_val);
     }
     if (my_chemistry->dust_species > 1) {
-      gauss_seidel::update_densities<SpLUT::SiM_dust>(pack, tiny_fortran_val);
-      gauss_seidel::update_densities<SpLUT::FeM_dust>(pack, tiny_fortran_val);
-      gauss_seidel::update_densities<SpLUT::Mg2SiO4_dust>(pack,
-                                                          tiny_fortran_val);
-      gauss_seidel::update_densities<SpLUT::Fe3O4_dust>(pack, tiny_fortran_val);
-      gauss_seidel::update_densities<SpLUT::SiO2_dust>(pack, tiny_fortran_val);
-      gauss_seidel::update_densities<SpLUT::MgO_dust>(pack, tiny_fortran_val);
-      gauss_seidel::update_densities<SpLUT::FeS_dust>(pack, tiny_fortran_val);
-      gauss_seidel::update_densities<SpLUT::Al2O3_dust>(pack, tiny_fortran_val);
+      update_densities<SpLUT::SiM_dust>(pack, tiny_fortran_val);
+      update_densities<SpLUT::FeM_dust>(pack, tiny_fortran_val);
+      update_densities<SpLUT::Mg2SiO4_dust>(pack, tiny_fortran_val);
+      update_densities<SpLUT::Fe3O4_dust>(pack, tiny_fortran_val);
+      update_densities<SpLUT::SiO2_dust>(pack, tiny_fortran_val);
+      update_densities<SpLUT::MgO_dust>(pack, tiny_fortran_val);
+      update_densities<SpLUT::FeS_dust>(pack, tiny_fortran_val);
+      update_densities<SpLUT::Al2O3_dust>(pack, tiny_fortran_val);
     }
     if (my_chemistry->dust_species > 2) {
-      gauss_seidel::update_densities<SpLUT::ref_org_dust>(pack,
-                                                          tiny_fortran_val);
-      gauss_seidel::update_densities<SpLUT::vol_org_dust>(pack,
-                                                          tiny_fortran_val);
-      gauss_seidel::update_densities<SpLUT::H2O_ice_dust>(pack,
-                                                          tiny_fortran_val);
+      update_densities<SpLUT::ref_org_dust>(pack, tiny_fortran_val);
+      update_densities<SpLUT::vol_org_dust>(pack, tiny_fortran_val);
+      update_densities<SpLUT::H2O_ice_dust>(pack, tiny_fortran_val);
     }
   }
 }
+
+}  // namespace grackle::impl::gauss_seidel
+
+namespace grackle::impl {
 
 /// Uses one linearly implicit Gauss-Seidel sweep of a backward-Euler time
 /// integrator to advance the rate equations by one (sub-)cycle (dtit).
@@ -357,7 +350,7 @@ inline void step_rate_gauss_seidel(
       kcol_buf, kshield_buf);
 
   // update the entries from my_fields with the values in species_tmpdens
-  update_fields_from_tmpdens_gauss_seidel(
+  grackle::impl::gauss_seidel::update_fields_from_tmpdens(
       dtit, idx_range, dedot_prev, HIdot_prev, itmask, itmask_metal,
       my_chemistry, my_fields, species_tmpdens);
 }
