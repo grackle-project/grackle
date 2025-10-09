@@ -351,8 +351,7 @@ int init_kcol_rate_tables(
 ) {
   // allocate storage for kcol_rate_tables
   grackle::impl::CollisionalRxnRateCollection* tables =
-    (grackle::impl::CollisionalRxnRateCollection*) malloc
-      (sizeof(grackle::impl::CollisionalRxnRateCollection));
+    new grackle::impl::CollisionalRxnRateCollection;
 
   // allocate storage within kcol_rate_tables
   *tables = grackle::impl::new_CollisionalRxnRateCollection(
@@ -368,7 +367,7 @@ int init_kcol_rate_tables(
     return GrPrintAndReturnErr("this logic shouldn't be executed in a config "
                                "with 0 \"ordinary\" collisional rxn rates");
   }
-  int* used_kcol_rate_indices = (int*)malloc(n_kcol_rate_indices * sizeof(int));
+  int* used_kcol_rate_indices = new int[n_kcol_rate_indices];
 
   // now its time to initialize the storage
   TablesInitCallbackCtx ctx{
