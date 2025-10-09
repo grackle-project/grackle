@@ -477,9 +477,8 @@ void make_consistent(int imetal, double dom, chemistry_data* my_chemistry,
       // Correct densities by keeping fractions the same
 
       for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
-        correctH =
-            (gr_float)(my_chemistry->HydrogenFractionByMass * metalfree[i] /
-                       totalH[i]);
+        correctH = (gr_float)(my_chemistry->HydrogenFractionByMass *
+                              metalfree[i] / totalH[i]);
         HI(i, j, k) = HI(i, j, k) * correctH;
         HII(i, j, k) = HII(i, j, k) * correctH;
 
