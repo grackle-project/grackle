@@ -86,13 +86,28 @@
 #include "grackle.h"
 #include "grackle_macros.h"
 #include "grackle_rate_functions.h"
+#include "initialize_dust_yields.hpp"  // initialize_dust_yields
+#include "initialize_metal_chemistry_rates.hpp"  // initialize_metal_chemistry_rates
+#include "initialize_rates.hpp"
+#include "internal_types.hpp" // new_CollisionalRxnRateCollection
+#include "LUT.hpp" // CollisionalRxnLUT
+#include "opaque_storage.hpp" // gr_opaque_storage
 #include "phys_constants.h"
+
+// We define the function pointers inside an extern "C" block because they
+// are used to describe the functions declared in grackle_rate_functions.h,
+// and all of these functions have C linkage
+extern "C" {
 
 //Define the type of a scalar rate function.
 typedef double (*scalar_rate_function)(double, chemistry_data*);
 
 //Define the type of a generic rate function.
 typedef double (*rate_function)(double, double, chemistry_data*);
+
+} // extern "C"
+
+namespace { // stuff inside an anonymous namespace are only locally visible
 
 //Define a function which calculates start temperature and increments in log space.
 void logT_spacing(double *logT_start, double *d_logT, chemistry_data *my_chemistry)
@@ -120,37 +135,45 @@ int add_scalar_reaction_rate(double *rate_ptr, scalar_rate_function my_function,
     return SUCCESS;
 }
 
-//Define a function which is able to add a rate to the calculation.
-int add_reaction_rate(double **rate_ptr, rate_function my_function, double units,
-                        chemistry_data *my_chemistry)
+/// Initialize values in a pre-allocated rate_ptr
+static int init_preallocated_rate(double *rate_ptr, rate_function my_function,
+                                  double units, chemistry_data *my_chemistry)
 {
-    //Allocate memory for rate.
-    *rate_ptr = malloc(my_chemistry->NumberOfTemperatureBins * sizeof(double));
+  // Calculate temperature spacing.
+  double logT_start, d_logT;
+  logT_spacing(&logT_start, &d_logT, my_chemistry);
 
-    //Calculate temperature spacing.
-    double T, logT, logT_start, d_logT;
-    logT_spacing(&logT_start, &d_logT, my_chemistry);
+  //Calculate rate at each temperature.
+  for (int i = 0; i < my_chemistry->NumberOfTemperatureBins; i++){
+    // Set rate to tiny for safety.
+    rate_ptr[i] = tiny;
 
-    //Calculate rate at each temperature.
-    for (int i = 0; i < my_chemistry->NumberOfTemperatureBins; i++){
-        //Set rate to tiny for safety.
-        (*rate_ptr)[i] = tiny;
+    // Calculate bin temperature.
+    double logT = logT_start + i*d_logT;
+    double T = exp(logT);
 
-        //Calculate bin temperature.
-        logT = logT_start + i*d_logT;
-        T = exp(logT);
+    // Calculate rate and store.
+    rate_ptr[i] = my_function(T, units, my_chemistry);
+  }
 
-        //Calculate rate and store.
-        (*rate_ptr)[i] = my_function(T, units, my_chemistry);
-    }
-    return SUCCESS;
+  return GR_SUCCESS;
+}
+
+/// Allocate and initialize a reaction rate
+static int add_reaction_rate(double **rate_ptr, rate_function my_function,
+                             double units,
+                             chemistry_data *my_chemistry)
+{
+  *rate_ptr = (double*)malloc(my_chemistry->NumberOfTemperatureBins
+                              * sizeof(double));
+  return init_preallocated_rate(*rate_ptr, my_function, units, my_chemistry);
 }
 
 //Define a function which will calculate the k13dd rates.
 int add_k13dd_reaction_rate(double **rate_ptr, double units, chemistry_data *my_chemistry)
 {
     //Allocate array memory to the pointer.
-    *rate_ptr = malloc(14 * my_chemistry->NumberOfTemperatureBins * sizeof(double));
+    *rate_ptr = (double*)malloc(14 * my_chemistry->NumberOfTemperatureBins * sizeof(double));
 
     //Create a temporary array to retrieve the 14 coefficients calculated by the k13dd function.
     double temp_array[14];
@@ -179,7 +202,7 @@ int add_k13dd_reaction_rate(double **rate_ptr, double units, chemistry_data *my_
 int add_h2dust_reaction_rate(double **rate_ptr, double units, chemistry_data *my_chemistry)
 {
     //Allocate memory for h2dust.
-    *rate_ptr = malloc(my_chemistry->NumberOfTemperatureBins * my_chemistry->NumberOfDustTemperatureBins
+    *rate_ptr = (double*)malloc(my_chemistry->NumberOfTemperatureBins * my_chemistry->NumberOfDustTemperatureBins
                         * sizeof(double));
 
     //Calculate temperature spacing.
@@ -207,11 +230,113 @@ int add_h2dust_reaction_rate(double **rate_ptr, double units, chemistry_data *my
     return GR_SUCCESS;
 }
 
+// Define a function which will calculate h2dust_C rates.
+int add_h2dust_C_reaction_rate(double **rate_ptr, double units, chemistry_data *my_chemistry)
+{
+    //Allocate memory for h2dust.
+    *rate_ptr = (double*)malloc(my_chemistry->NumberOfTemperatureBins * my_chemistry->NumberOfDustTemperatureBins
+                        * sizeof(double));
+
+    //Calculate temperature spacing.
+    double T, logT, logT_start, d_logT, T_dust, logT_dust, logT_start_dust, d_logT_dust;
+    logT_spacing(&logT_start, &d_logT, my_chemistry);
+    logT_spacing_dust(&logT_start_dust, &d_logT_dust, my_chemistry);
+    
+    //Calculate h2dust.
+    for (int i = 0; i < my_chemistry->NumberOfTemperatureBins; i++)
+    {   
+        //Calculate bin temperature.
+        logT = logT_start + i*d_logT;
+        T = exp(logT);
+
+        for (int j = 0; j < my_chemistry->NumberOfDustTemperatureBins; j++)
+        {
+            //Calculate dust bin temperature.
+            logT_dust = logT_start_dust + j*d_logT_dust;
+            T_dust = exp(logT_dust);
+
+            //Calculate rate and store.
+            (*rate_ptr)[i + my_chemistry->NumberOfTemperatureBins*j] = h2dust_C_rate(T, T_dust, units, my_chemistry);
+        }
+    }
+    return GR_SUCCESS;
+}
+
+// Define a function which will calculate h2dust_S rates.
+int add_h2dust_S_reaction_rate(double **rate_ptr, double units, chemistry_data *my_chemistry)
+{
+    //Allocate memory for h2dust.
+    *rate_ptr = (double*)malloc(my_chemistry->NumberOfTemperatureBins * my_chemistry->NumberOfDustTemperatureBins
+                        * sizeof(double));
+
+    //Calculate temperature spacing.
+    double T, logT, logT_start, d_logT, T_dust, logT_dust, logT_start_dust, d_logT_dust;
+    logT_spacing(&logT_start, &d_logT, my_chemistry);
+    logT_spacing_dust(&logT_start_dust, &d_logT_dust, my_chemistry);
+    
+    //Calculate h2dust.
+    for (int i = 0; i < my_chemistry->NumberOfTemperatureBins; i++)
+    {   
+        //Calculate bin temperature.
+        logT = logT_start + i*d_logT;
+        T = exp(logT);
+
+        for (int j = 0; j < my_chemistry->NumberOfDustTemperatureBins; j++)
+        {
+            //Calculate dust bin temperature.
+            logT_dust = logT_start_dust + j*d_logT_dust;
+            T_dust = exp(logT_dust);
+
+            //Calculate rate and store.
+            (*rate_ptr)[i + my_chemistry->NumberOfTemperatureBins*j] = h2dust_S_rate(T, T_dust, units, my_chemistry);
+        }
+    }
+    return GR_SUCCESS;
+}
+
+} // anonymous namespace
+
 //Definition of the initialise_rates function.
-int initialize_rates(chemistry_data *my_chemistry, chemistry_data_storage *my_rates,
-                   code_units *my_units, double co_length_unit, double co_density_unit)
+int grackle::impl::initialize_rates(
+  chemistry_data *my_chemistry, chemistry_data_storage *my_rates,
+  code_units *my_units, double co_length_unit, double co_density_unit)
 { 
-    //* Set the flag for dust calculations.
+    // TODO: we REALLY need to do an error check that
+    //    my_chemistry->NumberOfTemperatureBins >= 2
+    //  is satisfied. We should give some thought about whether this should
+    //  produce errors when primordial_chemistry == 0
+
+    // TODO: also add error-checks for:
+    //   TemperatureStart, TemperatureEnd, NumberOfDustTemperatureBins,
+    //   DustTemperatureStart, DustTemperatureEnd
+
+    // handle some allocations up front
+    // TODO: we should really make a separate function that fully initializes
+    //   the kcol_rate_tables (rather than what we do now and partially
+    //   initialize the contents).
+    if (my_chemistry->primordial_chemistry > 0) {
+      // allocate storage for kcol_rate_tables
+      my_rates->opaque_storage->kcol_rate_tables =
+        (grackle::impl::CollisionalRxnRateCollection*) malloc
+          (sizeof(grackle::impl::CollisionalRxnRateCollection));
+
+      // allocate storage within kcol_rate_tables
+      (*my_rates->opaque_storage->kcol_rate_tables) =
+        grackle::impl::new_CollisionalRxnRateCollection
+          (my_chemistry->NumberOfTemperatureBins);
+
+      // set all of the entries within kcol_rate_tables to tiny
+      // (this is very important for primordial_chemistry == 4 rates and
+      // the metal chemistry rates)
+      for (int i = 0; i < CollisionalRxnLUT::NUM_ENTRIES; i++) {
+        double* ptr = my_rates->opaque_storage->kcol_rate_tables->data[i];
+        for (int j = 0; j < my_chemistry->NumberOfTemperatureBins; j++) {
+          ptr[j] = tiny;
+        }
+      }
+
+    }
+
     int anyDust;
     if ( my_chemistry->h2_on_dust > 0 || my_chemistry->dust_chemistry > 0 || my_chemistry->dust_recombination_cooling > 0) {
         anyDust = TRUE;
@@ -282,33 +407,43 @@ int initialize_rates(chemistry_data *my_chemistry, chemistry_data_storage *my_ra
     double coolingUnits = (pow(my_units->a_units, 5) * pow(lengthBase1, 2) * pow(mh, 2))
                           / (densityBase1 * pow(timeBase1, 3));
 
+    // These always need to be allocated since we define other variables by them.
+    my_rates->gr_N = (int*)calloc(2, sizeof(int));
+
+    if (my_chemistry->use_primordial_continuum_opacity == 1) {
+      initialize_primordial_opacity(my_chemistry, my_rates);
+    }
+
     //* 3) Units for radiative transfer coefficients are 1/[time].
 
     //* Compute rates for primordial chemistry.
 
     //* 1) Rate Coefficients (excluding the external radiation field)
     if (my_chemistry->primordial_chemistry > 0){ 
+        grackle::impl::CollisionalRxnRateCollection* kcol_rate_tables =
+          my_rates->opaque_storage->kcol_rate_tables;
+
         //--------Calculate multispecies collissional rates--------
-        add_reaction_rate(&my_rates->k1, k1_rate, kUnit, my_chemistry);
-        add_reaction_rate(&my_rates->k3, k3_rate, kUnit, my_chemistry);
-        add_reaction_rate(&my_rates->k4, k4_rate, kUnit, my_chemistry);
-        add_reaction_rate(&my_rates->k2, k2_rate, kUnit, my_chemistry);
-        add_reaction_rate(&my_rates->k5, k5_rate, kUnit, my_chemistry);
-        add_reaction_rate(&my_rates->k6, k6_rate, kUnit, my_chemistry);
-        add_reaction_rate(&my_rates->k7, k7_rate, kUnit, my_chemistry);
-        add_reaction_rate(&my_rates->k8, k8_rate, kUnit, my_chemistry);
-        add_reaction_rate(&my_rates->k9, k9_rate, kUnit, my_chemistry);
-        add_reaction_rate(&my_rates->k10, k10_rate, kUnit, my_chemistry);
-        add_reaction_rate(&my_rates->k11, k11_rate, kUnit, my_chemistry);
-        add_reaction_rate(&my_rates->k12, k12_rate, kUnit, my_chemistry);
-        add_reaction_rate(&my_rates->k14, k14_rate, kUnit, my_chemistry);
-        add_reaction_rate(&my_rates->k15, k15_rate, kUnit, my_chemistry);
-        add_reaction_rate(&my_rates->k16, k16_rate, kUnit, my_chemistry);
-        add_reaction_rate(&my_rates->k17, k17_rate, kUnit, my_chemistry);
-        add_reaction_rate(&my_rates->k18, k18_rate, kUnit, my_chemistry);
-        add_reaction_rate(&my_rates->k19, k19_rate, kUnit, my_chemistry);
-        add_reaction_rate(&my_rates->k20, k20_rate, kUnit, my_chemistry);
-        add_reaction_rate(&my_rates->k23, k23_rate, kUnit, my_chemistry);
+        init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k1], k1_rate, kUnit, my_chemistry);
+        init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k3], k3_rate, kUnit, my_chemistry);
+        init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k4], k4_rate, kUnit, my_chemistry);
+        init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k2], k2_rate, kUnit, my_chemistry);
+        init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k5], k5_rate, kUnit, my_chemistry);
+        init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k6], k6_rate, kUnit, my_chemistry);
+        init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k7], k7_rate, kUnit, my_chemistry);
+        init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k8], k8_rate, kUnit, my_chemistry);
+        init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k9], k9_rate, kUnit, my_chemistry);
+        init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k10], k10_rate, kUnit, my_chemistry);
+        init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k11], k11_rate, kUnit, my_chemistry);
+        init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k12], k12_rate, kUnit, my_chemistry);
+        init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k14], k14_rate, kUnit, my_chemistry);
+        init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k15], k15_rate, kUnit, my_chemistry);
+        init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k16], k16_rate, kUnit, my_chemistry);
+        init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k17], k17_rate, kUnit, my_chemistry);
+        init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k18], k18_rate, kUnit, my_chemistry);
+        init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k19], k19_rate, kUnit, my_chemistry);
+        init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k20], k20_rate, kUnit, my_chemistry);
+        init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k23], k23_rate, kUnit, my_chemistry);
 
         //--------Calculate coefficients for density-dependent collisional H2 dissociation rate--------
         //
@@ -332,22 +467,22 @@ int initialize_rates(chemistry_data *my_chemistry, chemistry_data_storage *my_ra
         // Palla etal (1983) -- which is four times smaller than the Palla rate.
         
         //Varying threebody and corresponding collisional dissociation rates from Simon.
-        add_reaction_rate(&my_rates->k13, k13_rate, kUnit, my_chemistry);
-        add_reaction_rate(&my_rates->k21, k21_rate, kUnit_3Bdy, my_chemistry);
-        add_reaction_rate(&my_rates->k22, k22_rate, kUnit_3Bdy, my_chemistry);
+        init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k13], k13_rate, kUnit, my_chemistry);
+        init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k21], k21_rate, kUnit_3Bdy, my_chemistry);
+        init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k22], k22_rate, kUnit_3Bdy, my_chemistry);
         
         //--------Deuterium Rates--------
-        add_reaction_rate(&my_rates->k50, k50_rate, kUnit, my_chemistry);
-        add_reaction_rate(&my_rates->k51, k51_rate, kUnit, my_chemistry);
-        add_reaction_rate(&my_rates->k52, k52_rate, kUnit, my_chemistry);
-        add_reaction_rate(&my_rates->k53, k53_rate, kUnit, my_chemistry);
-        add_reaction_rate(&my_rates->k54, k54_rate, kUnit, my_chemistry);
-        add_reaction_rate(&my_rates->k55, k55_rate, kUnit, my_chemistry);
-        add_reaction_rate(&my_rates->k56, k56_rate, kUnit, my_chemistry);
+        init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k50], k50_rate, kUnit, my_chemistry);
+        init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k51], k51_rate, kUnit, my_chemistry);
+        init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k52], k52_rate, kUnit, my_chemistry);
+        init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k53], k53_rate, kUnit, my_chemistry);
+        init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k54], k54_rate, kUnit, my_chemistry);
+        init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k55], k55_rate, kUnit, my_chemistry);
+        init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k56], k56_rate, kUnit, my_chemistry);
 
         //--------New H Ionization Rates--------
-        add_reaction_rate(&my_rates->k57, k57_rate, kUnit, my_chemistry);
-        add_reaction_rate(&my_rates->k58, k58_rate, kUnit, my_chemistry);
+        init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k57], k57_rate, kUnit, my_chemistry);
+        init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k58], k58_rate, kUnit, my_chemistry);
 
         //H2 formation on dust grains requires loop over the dust temperature.
         add_h2dust_reaction_rate(&my_rates->h2dust, kUnit, my_chemistry);
@@ -421,6 +556,12 @@ int initialize_rates(chemistry_data *my_chemistry, chemistry_data_storage *my_ra
         //from Glover (2015, MNRAS, 451, 2082)
         add_reaction_rate(&my_rates->H2LTE, H2LTE_rate, coolingUnits, my_chemistry);
 
+        // Chiaki & Wise 2019 rates
+        // Note: these are still defined in initialize_metal_chemistry_rates.c.
+        // They should be moved someday.
+        initialize_cooling_rate_H2(my_chemistry, my_rates, coolingUnits);
+        initialize_cooling_rate_HD(my_chemistry, my_rates, coolingUnits);
+
         //* f) HD cooling.
 
         //HD cooling function has units of ergs cm^3 / s
@@ -448,7 +589,20 @@ int initialize_rates(chemistry_data *my_chemistry, chemistry_data_storage *my_ra
 
         //Electron recombination onto dust grains.
         //(Equation 9, Wolfire et al., 1995)
-        add_reaction_rate(&my_rates->regr, regr_rate, coolingUnits, my_chemistry); 
+        add_reaction_rate(&my_rates->regr, regr_rate, coolingUnits, my_chemistry);
+
+        //H2 formation on dust grains with C and S compositions
+        add_h2dust_C_reaction_rate(&my_rates->h2dustC, kUnit, my_chemistry);
+        add_h2dust_S_reaction_rate(&my_rates->h2dustS, kUnit, my_chemistry);
+
+        //Heating of dust by interstellar radiation field, with an arbitrary grain size distribution
+        add_scalar_reaction_rate(&my_rates->gamma_isrf2, gamma_isrf2_rate, coolingUnits, my_chemistry);
+
+        //Gas-grain energy transfer, with an arbitrary grain size distribution
+        add_reaction_rate(&my_rates->gas_grain2, gasGrain2_rate, coolingUnits, my_chemistry);
+
+        //Grain growth rate
+        add_reaction_rate(&my_rates->grain_growth_rate, grain_growth_rate, kUnit, my_chemistry);
 
     }//End of anyDust if-statement.
 
@@ -464,7 +618,18 @@ int initialize_rates(chemistry_data *my_chemistry, chemistry_data_storage *my_ra
     //(Equation B15, Krumholz, 2014)
     add_scalar_reaction_rate(&my_rates->gamma_isrf, gamma_isrf_rate, coolingUnits, my_chemistry); 
 
-    
+    /* Metal chemistry rates */
+    if (grackle::impl::initialize_metal_chemistry_rates(my_chemistry, my_rates, my_units) == FAIL) {
+      fprintf(stderr, "Error in initialize_metal_chemistry_rates.\n");
+      return FAIL;
+    }
+    /* Dust rates */
+    if (grackle::impl::initialize_dust_yields(my_chemistry, my_rates, my_units) == FAIL) {
+      fprintf(stderr, "Error in initialize_dust_yields.\n");
+      return FAIL;
+    }
+
     //End of function definition.
     return SUCCESS;
 }
+

@@ -11,35 +11,27 @@
 / software.
 ************************************************************************/
  
-#include <stdlib.h>
-#include <stdio.h>
-#include <math.h>
-#include "grackle_macros.h"
-#include "grackle_types.h"
-#include "grackle_chemistry_data.h"
+#include <cstdio>
+#include <cmath>  // std::fmax
+#include "grackle.h"
 #include "phys_constants.h"
 #include "index_helper.h"
 #ifdef _OPENMP
 #include <omp.h>
 #endif
 
-extern chemistry_data *grackle_data;
-extern chemistry_data_storage grackle_rates;
-
-double get_temperature_units(code_units *my_units);
-
-int local_calculate_pressure(chemistry_data *my_chemistry,
-                             chemistry_data_storage *my_rates,
-                             code_units *my_units,
-                             grackle_field_data *my_fields,
-                             gr_float *pressure)
+extern "C" int local_calculate_pressure(chemistry_data *my_chemistry,
+                                        chemistry_data_storage *my_rates,
+                                        code_units *my_units,
+                                        grackle_field_data *my_fields,
+                                        gr_float *pressure)
 {
 
   if (!my_chemistry->use_grackle)
-    return SUCCESS;
+    return GR_SUCCESS;
 
   double tiny_number = 1.e-20;
-  const grackle_index_helper ind_helper = _build_index_helper(my_fields);
+  const grackle_index_helper ind_helper = build_index_helper_(my_fields);
   int outer_ind, index;
 
   /* parallelize the k and j loops with OpenMP
@@ -49,7 +41,8 @@ int local_calculate_pressure(chemistry_data *my_chemistry,
 # endif
   for (outer_ind = 0; outer_ind < ind_helper.outer_ind_size; outer_ind++){
 
-    const grackle_index_range range = _inner_range(outer_ind, &ind_helper);
+    const field_flat_index_range range = inner_flat_range_(outer_ind,
+                                                           &ind_helper);
 
     for (index = range.start; index <= range.end; index++) {
 
@@ -80,7 +73,8 @@ int local_calculate_pressure(chemistry_data *my_chemistry,
 #   endif
     for (int outer_ind = 0; outer_ind < ind_helper.outer_ind_size; outer_ind++){
 
-      const grackle_index_range range = _inner_range(outer_ind, &ind_helper);
+      const field_flat_index_range range = inner_flat_range_(outer_ind,
+                                                             &ind_helper);
 
       for (index = range.start; index <= range.end; index++) {
 
@@ -98,7 +92,7 @@ int local_calculate_pressure(chemistry_data *my_chemistry,
 
         if (number_density == 0)
           number_density = tiny_number;
-        temp = max(temperature_units * pressure[index] / (number_density + nH2),
+        temp = std::fmax(temperature_units * pressure[index] / (number_density + nH2),
 		   1);
 
         /* Only do full computation if there is a reasonable amount of H2.
@@ -124,17 +118,17 @@ int local_calculate_pressure(chemistry_data *my_chemistry,
  
   } // end: if (my_chemistry->primordial_chemistry > 1)
  
-  return SUCCESS;
+  return GR_SUCCESS;
 }
 
-int calculate_pressure(code_units *my_units,
-                       grackle_field_data *my_fields,
-                       gr_float *pressure)
+extern "C" int calculate_pressure(code_units *my_units,
+                                  grackle_field_data *my_fields,
+                                  gr_float *pressure)
 {
   if (local_calculate_pressure(grackle_data, &grackle_rates, my_units,
-                               my_fields, pressure) == FAIL) {
-    fprintf(stderr, "Error in local_calculate_pressure.\n");
-    return FAIL;
+                               my_fields, pressure) != GR_SUCCESS) {
+    std::fprintf(stderr, "Error in local_calculate_pressure.\n");
+    return GR_FAIL;
   }
-  return SUCCESS;
+  return GR_SUCCESS;
 }
