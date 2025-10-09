@@ -7,6 +7,9 @@
 ///
 /// @file ceiling_species.hpp
 /// @brief Declares signature of ceiling_species
+/// Applies a floor to all species densities.
+///
+/// @todo consider renaming this (maybe enforce_species_floor)
 ///
 //===----------------------------------------------------------------------===//
 
