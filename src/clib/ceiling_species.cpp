@@ -71,7 +71,6 @@ void ceiling_species(int imetal, chemistry_data* my_chemistry,
   grackle::impl::View<gr_float***> dust(
       my_fields->dust_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  // -- removed line (previously just declared arg types) --
   grackle::impl::View<gr_float***> DM(
       my_fields->DM_density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
