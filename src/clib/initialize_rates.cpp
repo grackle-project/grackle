@@ -317,8 +317,7 @@ int grackle::impl::initialize_rates(
     if (my_chemistry->primordial_chemistry > 0) {
       // allocate storage for kcol_rate_tables
       my_rates->opaque_storage->kcol_rate_tables =
-        (grackle::impl::CollisionalRxnRateCollection*) malloc
-          (sizeof(grackle::impl::CollisionalRxnRateCollection));
+        new grackle::impl::CollisionalRxnRateCollection;
 
       // allocate storage within kcol_rate_tables
       (*my_rates->opaque_storage->kcol_rate_tables) =
@@ -425,9 +424,9 @@ int grackle::impl::initialize_rates(
 
         //--------Calculate multispecies collissional rates--------
         init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k1], k1_rate, kUnit, my_chemistry);
+        init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k2], k2_rate, kUnit, my_chemistry);
         init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k3], k3_rate, kUnit, my_chemistry);
         init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k4], k4_rate, kUnit, my_chemistry);
-        init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k2], k2_rate, kUnit, my_chemistry);
         init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k5], k5_rate, kUnit, my_chemistry);
         init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k6], k6_rate, kUnit, my_chemistry);
         init_preallocated_rate(kcol_rate_tables->data[CollisionalRxnLUT::k7], k7_rate, kUnit, my_chemistry);
