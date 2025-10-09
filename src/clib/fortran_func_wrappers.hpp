@@ -29,6 +29,7 @@
 #include "internal_types.hpp"
 #include "internal_units.h"
 #include "LUT.hpp"
+#include "opaque_storage.hpp"
 #include "utils-cpp.hpp"
 
 // callers of these functions are generally expected to locally shorten the
@@ -153,155 +154,26 @@ inline void ceiling_species_g(
   int imetal, chemistry_data* my_chemistry, grackle_field_data* my_fields
 ) {
 
-   FORTRAN_NAME(ceiling_species_g)(my_fields->density, my_fields->e_density, my_fields->HI_density, my_fields->HII_density, my_fields->HeI_density, my_fields->HeII_density, my_fields->HeIII_density,
-                       my_fields->HM_density, my_fields->H2I_density, my_fields->H2II_density, my_fields->DI_density, my_fields->DII_density, my_fields->HDI_density, my_fields->metal_density, my_fields->dust_density,
-                       &my_fields->grid_start[0], &my_fields->grid_end[0], &my_fields->grid_start[1], &my_fields->grid_end[1], &my_fields->grid_start[2], &my_fields->grid_end[2],
-                       &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &my_chemistry->primordial_chemistry, &imetal, &my_chemistry->use_dust_density_field,
-                      my_fields->DM_density, my_fields->HDII_density, my_fields->HeHII_density,
-                      &my_chemistry->metal_abundances, &my_chemistry->metal_chemistry, &my_chemistry->dust_species, &my_chemistry->multi_metals,
-                      &my_chemistry->grain_growth, &my_chemistry->dust_sublimation,
-                      my_fields->CI_density, my_fields->CII_density, my_fields->CO_density, my_fields->CO2_density,
-                      my_fields->OI_density, my_fields->OH_density, my_fields->H2O_density, my_fields->O2_density,
-                      my_fields->SiI_density, my_fields->SiOI_density, my_fields->SiO2I_density,
-                      my_fields->CH_density, my_fields->CH2_density, my_fields->COII_density, my_fields->OII_density,
-                      my_fields->OHII_density, my_fields->H2OII_density, my_fields->H3OII_density, my_fields->O2II_density,
-                      my_fields->Mg_density, my_fields->Al_density, my_fields->S_density, my_fields->Fe_density,
-                      my_fields->SiM_dust_density, my_fields->FeM_dust_density, my_fields->Mg2SiO4_dust_density, my_fields->MgSiO3_dust_density, my_fields->Fe3O4_dust_density,
-                      my_fields->AC_dust_density, my_fields->SiO2_dust_density, my_fields->MgO_dust_density, my_fields->FeS_dust_density, my_fields->Al2O3_dust_density,
-                      my_fields->ref_org_dust_density, my_fields->vol_org_dust_density, my_fields->H2O_ice_dust_density,
-                      my_fields->local_ISM_metal_density,
-                      my_fields->ccsn13_metal_density, my_fields->ccsn20_metal_density, my_fields->ccsn25_metal_density, my_fields->ccsn30_metal_density,
-                      my_fields->fsn13_metal_density, my_fields->fsn15_metal_density, my_fields->fsn50_metal_density, my_fields->fsn80_metal_density,
-                      my_fields->pisn170_metal_density, my_fields->pisn200_metal_density, my_fields->y19_metal_density);
-
-}
-
-inline void cool1d_multi_g(
-  int imetal, IndexRange idx_range, int iter, double* edot, double* tgas,
-  double* mmw, double* p2d, double* tdust, double* metallicity,
-  double* dust2gas, double* rhoH, gr_mask_type* itmask,
-  gr_mask_type* itmask_metal, chemistry_data* my_chemistry,
-  chemistry_data_storage* my_rates, grackle_field_data* my_fields,
-  photo_rate_storage my_uvb_rates, InternalGrUnits internalu,
-  grackle::impl::GrainSpeciesCollection grain_temperatures,
-  grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf,
-  grackle::impl::Cool1DMultiScratchBuf cool1dmulti_buf,
-  grackle::impl::CoolHeatScratchBuf coolingheating_buf
-) {
-
-  // the following 2 variables should not be arguments (they are only inside
-  // of cool1d_multi_g to temporarily store a local value)
-  //
-  // We will fix this in the future
-  double comp1, comp2;
-
-  // TODO: we should really pass in a value for min_metallicity (this is
-  // computed in a few independent places)
-
-         FORTRAN_NAME(cool1d_multi_g)(
-                  my_fields->density, my_fields->internal_energy, my_fields->x_velocity, my_fields->y_velocity, my_fields->z_velocity, my_fields->e_density, my_fields->HI_density, my_fields->HII_density, my_fields->HeI_density, my_fields->HeII_density, my_fields->HeIII_density,
-                  &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &my_chemistry->NumberOfTemperatureBins,
-                  &internalu.extfields_in_comoving, &my_chemistry->primordial_chemistry, &imetal, &my_chemistry->metal_cooling,
-                  &my_chemistry->h2_on_dust, &my_chemistry->dust_chemistry, &my_chemistry->use_dust_density_field, &my_chemistry->dust_recombination_cooling,
-                  &my_fields->grid_rank, &idx_range.i_start, &idx_range.i_end, &idx_range.jp1, &idx_range.kp1, &my_chemistry->ih2co, &my_chemistry->ipiht, &iter, &my_chemistry->photoelectric_heating,
-                  &internalu.a_value, &my_chemistry->TemperatureStart, &my_chemistry->TemperatureEnd, &my_chemistry->SolarMetalFractionByMass, &my_chemistry->local_dust_to_gas_ratio,
-                  &internalu.utem, &internalu.uxyz, &internalu.a_units, &internalu.urho, &internalu.tbase1,
-                  &my_chemistry->Gamma, &my_chemistry->HydrogenFractionByMass,
-                  my_rates->ceHI, my_rates->ceHeI, my_rates->ceHeII, my_rates->ciHI, my_rates->ciHeI,
-                  my_rates->ciHeIS, my_rates->ciHeII, my_rates->reHII, my_rates->reHeII1,
-                  my_rates->reHeII2, my_rates->reHeIII, my_rates->brem, &my_rates->comp, &my_rates->gammah,
-                  &my_chemistry->interstellar_radiation_field, my_rates->regr, &my_rates->gamma_isrf, &my_uvb_rates.comp_xray, &my_uvb_rates.temp_xray,
-                  &my_uvb_rates.piHI, &my_uvb_rates.piHeI, &my_uvb_rates.piHeII, &comp1, &comp2,
-                  my_fields->HM_density, my_fields->H2I_density, my_fields->H2II_density, my_fields->DI_density, my_fields->DII_density, my_fields->HDI_density, my_fields->metal_density, my_fields->dust_density,
-                  my_rates->hyd01k, my_rates->h2k01, my_rates->vibh, my_rates->roth, my_rates->rotl,
-                  coolingheating_buf.hyd01k, coolingheating_buf.h2k01, coolingheating_buf.vibh, coolingheating_buf.roth, coolingheating_buf.rotl,
-                  my_rates->GP99LowDensityLimit, my_rates->GP99HighDensityLimit, coolingheating_buf.gpldl, coolingheating_buf.gphdl,
-                  my_rates->HDlte, my_rates->HDlow, coolingheating_buf.hdlte, coolingheating_buf.hdlow,
-                  my_rates->GAHI, my_rates->GAH2, my_rates->GAHe, my_rates->GAHp, my_rates->GAel,
-                  my_rates->H2LTE, my_rates->gas_grain,
-                  coolingheating_buf.ceHI, coolingheating_buf.ceHeI, coolingheating_buf.ceHeII, coolingheating_buf.ciHI, coolingheating_buf.ciHeI, coolingheating_buf.ciHeIS, coolingheating_buf.ciHeII,
-                  coolingheating_buf.reHII, coolingheating_buf.reHeII1, coolingheating_buf.reHeII2, coolingheating_buf.reHeIII, coolingheating_buf.brem,
-                  logTlininterp_buf.indixe, logTlininterp_buf.t1, logTlininterp_buf.t2, logTlininterp_buf.logtem, logTlininterp_buf.tdef, edot,
-                  tgas, cool1dmulti_buf.tgasold, mmw, p2d, tdust, metallicity,
-                  dust2gas, rhoH, cool1dmulti_buf.mynh, cool1dmulti_buf.myde,
-                  cool1dmulti_buf.gammaha_eff, cool1dmulti_buf.gasgr_tdust, cool1dmulti_buf.regr,
-                  &my_chemistry->self_shielding_method, &my_uvb_rates.crsHI, &my_uvb_rates.crsHeI, &my_uvb_rates.crsHeII,
-                  &my_uvb_rates.k24, &my_uvb_rates.k26,
-                  &my_chemistry->use_radiative_transfer, my_fields->RT_heating_rate,
-                  &my_chemistry->h2_optical_depth_approximation, &my_chemistry->cie_cooling, &my_chemistry->h2_cooling_rate, &my_chemistry->hd_cooling_rate, my_rates->cieco, coolingheating_buf.cieco,
-                  &my_chemistry->cmb_temperature_floor, &my_chemistry->UVbackground, &my_chemistry->cloudy_electron_fraction_factor,
-                  &my_rates->cloudy_primordial.grid_rank, my_rates->cloudy_primordial.grid_dimension,
-                  my_rates->cloudy_primordial.grid_parameters[0], my_rates->cloudy_primordial.grid_parameters[1], my_rates->cloudy_primordial.grid_parameters[2], my_rates->cloudy_primordial.grid_parameters[3], my_rates->cloudy_primordial.grid_parameters[4],
-                  &my_rates->cloudy_primordial.data_size, my_rates->cloudy_primordial.cooling_data, my_rates->cloudy_primordial.heating_data, my_rates->cloudy_primordial.mmw_data,
-                  &my_rates->cloudy_metal.grid_rank, my_rates->cloudy_metal.grid_dimension,
-                  my_rates->cloudy_metal.grid_parameters[0], my_rates->cloudy_metal.grid_parameters[1], my_rates->cloudy_metal.grid_parameters[2], my_rates->cloudy_metal.grid_parameters[3], my_rates->cloudy_metal.grid_parameters[4],
-                  &my_rates->cloudy_metal.data_size, my_rates->cloudy_metal.cooling_data, my_rates->cloudy_metal.heating_data, &my_rates->cloudy_data_new,
-                  &my_chemistry->use_volumetric_heating_rate, &my_chemistry->use_specific_heating_rate, my_fields->volumetric_heating_rate, my_fields->specific_heating_rate,
-                  &my_chemistry->use_temperature_floor, &my_chemistry->temperature_floor_scalar, my_fields->temperature_floor,
-                  &my_chemistry->use_isrf_field, my_fields->isrf_habing, itmask, itmask_metal,
-                 &my_chemistry->metal_chemistry, &my_chemistry->grain_growth, &my_chemistry->use_primordial_continuum_opacity, &my_chemistry->tabulated_cooling_minimum_temperature,
-                 my_fields->DM_density, my_fields->HDII_density, my_fields->HeHII_density,
-                 my_fields->CI_density, my_fields->CII_density, my_fields->CO_density, my_fields->CO2_density,
-                 my_fields->OI_density, my_fields->OH_density, my_fields->H2O_density, my_fields->O2_density,
-                 my_fields->SiI_density, my_fields->SiOI_density, my_fields->SiO2I_density,
-                 my_fields->CH_density, my_fields->CH2_density, my_fields->COII_density, my_fields->OII_density,
-                 my_fields->OHII_density, my_fields->H2OII_density, my_fields->H3OII_density, my_fields->O2II_density,
-                 my_fields->Mg_density, my_fields->Al_density, my_fields->S_density, my_fields->Fe_density,
-                 my_fields->SiM_dust_density, my_fields->FeM_dust_density, my_fields->Mg2SiO4_dust_density, my_fields->MgSiO3_dust_density, my_fields->Fe3O4_dust_density,
-                 my_fields->AC_dust_density, my_fields->SiO2_dust_density, my_fields->MgO_dust_density, my_fields->FeS_dust_density, my_fields->Al2O3_dust_density,
-                 my_fields->ref_org_dust_density, my_fields->vol_org_dust_density, my_fields->H2O_ice_dust_density,
-                 my_rates->cieY06,
-                 my_rates->LH2.props.dimension, &my_rates->LH2.props.data_size,
-                 my_rates->LH2.props.parameters[0], my_rates->LH2.props.parameters[1], my_rates->LH2.props.parameters[2],
-                 &my_rates->LH2.props.parameter_spacing[0], &my_rates->LH2.props.parameter_spacing[1], &my_rates->LH2.props.parameter_spacing[2], my_rates->LH2.data,
-                 my_rates->LHD.props.dimension, &my_rates->LHD.props.data_size,
-                 my_rates->LHD.props.parameters[0], my_rates->LHD.props.parameters[1], my_rates->LHD.props.parameters[2],
-                 &my_rates->LHD.props.parameter_spacing[0], &my_rates->LHD.props.parameter_spacing[1], &my_rates->LHD.props.parameter_spacing[2], my_rates->LHD.data,
-                 my_rates->LCI.props.dimension, &my_rates->LCI.props.data_size,
-                 my_rates->LCI.props.parameters[0], my_rates->LCI.props.parameters[1], my_rates->LCI.props.parameters[2],
-                 &my_rates->LCI.props.parameter_spacing[0], &my_rates->LCI.props.parameter_spacing[1], &my_rates->LCI.props.parameter_spacing[2], my_rates->LCI.data,
-                 my_rates->LCII.props.dimension, &my_rates->LCII.props.data_size,
-                 my_rates->LCII.props.parameters[0], my_rates->LCII.props.parameters[1], my_rates->LCII.props.parameters[2],
-                 &my_rates->LCII.props.parameter_spacing[0], &my_rates->LCII.props.parameter_spacing[1], &my_rates->LCII.props.parameter_spacing[2], my_rates->LCII.data,
-                 my_rates->LOI.props.dimension, &my_rates->LOI.props.data_size,
-                 my_rates->LOI.props.parameters[0], my_rates->LOI.props.parameters[1], my_rates->LOI.props.parameters[2],
-                 &my_rates->LOI.props.parameter_spacing[0], &my_rates->LOI.props.parameter_spacing[1], &my_rates->LOI.props.parameter_spacing[2], my_rates->LOI.data,
-                 my_rates->LCO.props.dimension, &my_rates->LCO.props.data_size,
-                 my_rates->LCO.props.parameters[0], my_rates->LCO.props.parameters[1], my_rates->LCO.props.parameters[2],
-                 &my_rates->LCO.props.parameter_spacing[0], &my_rates->LCO.props.parameter_spacing[1], &my_rates->LCO.props.parameter_spacing[2], my_rates->LCO.data,
-                 my_rates->LOH.props.dimension, &my_rates->LOH.props.data_size,
-                 my_rates->LOH.props.parameters[0], my_rates->LOH.props.parameters[1], my_rates->LOH.props.parameters[2],
-                 &my_rates->LOH.props.parameter_spacing[0], &my_rates->LOH.props.parameter_spacing[1], &my_rates->LOH.props.parameter_spacing[2], my_rates->LOH.data,
-                 my_rates->LH2O.props.dimension, &my_rates->LH2O.props.data_size,
-                 my_rates->LH2O.props.parameters[0], my_rates->LH2O.props.parameters[1], my_rates->LH2O.props.parameters[2],
-                 &my_rates->LH2O.props.parameter_spacing[0], &my_rates->LH2O.props.parameter_spacing[1], &my_rates->LH2O.props.parameter_spacing[2], my_rates->LH2O.data,
-                 my_rates->alphap.props.dimension, &my_rates->alphap.props.data_size,
-                 my_rates->alphap.props.parameters[0], my_rates->alphap.props.parameters[1], &my_rates->alphap.props.parameter_spacing[0], &my_rates->alphap.props.parameter_spacing[1],
-                 my_rates->alphap.data,
-                 &my_chemistry->multi_metals, &my_chemistry->metal_abundances, &my_chemistry->dust_species, &my_chemistry->use_multiple_dust_temperatures, &my_chemistry->dust_sublimation,
-                 my_fields->local_ISM_metal_density,
-                 my_fields->ccsn13_metal_density, my_fields->ccsn20_metal_density, my_fields->ccsn25_metal_density, my_fields->ccsn30_metal_density,
-                 my_fields->fsn13_metal_density, my_fields->fsn15_metal_density, my_fields->fsn50_metal_density, my_fields->fsn80_metal_density,
-                 my_fields->pisn170_metal_density, my_fields->pisn200_metal_density, my_fields->y19_metal_density,
-                 &my_rates->SN0_N,
-                 my_rates->SN0_fSiM, my_rates->SN0_fFeM, my_rates->SN0_fMg2SiO4, my_rates->SN0_fMgSiO3,
-                 my_rates->SN0_fFe3O4, my_rates->SN0_fAC, my_rates->SN0_fSiO2D, my_rates->SN0_fMgO,
-                 my_rates->SN0_fFeS, my_rates->SN0_fAl2O3,
-                 my_rates->SN0_freforg, my_rates->SN0_fvolorg, my_rates->SN0_fH2Oice,
-                 my_rates->SN0_r0SiM, my_rates->SN0_r0FeM, my_rates->SN0_r0Mg2SiO4, my_rates->SN0_r0MgSiO3,
-                 my_rates->SN0_r0Fe3O4, my_rates->SN0_r0AC, my_rates->SN0_r0SiO2D, my_rates->SN0_r0MgO,
-                 my_rates->SN0_r0FeS, my_rates->SN0_r0Al2O3,
-                 my_rates->SN0_r0reforg, my_rates->SN0_r0volorg, my_rates->SN0_r0H2Oice,
-                 my_rates->gr_N, &my_rates->gr_Size, &my_rates->gr_dT, my_rates->gr_Td,
-                 my_rates->SN0_kpSiM, my_rates->SN0_kpFeM, my_rates->SN0_kpMg2SiO4, my_rates->SN0_kpMgSiO3,
-                 my_rates->SN0_kpFe3O4, my_rates->SN0_kpAC, my_rates->SN0_kpSiO2D, my_rates->SN0_kpMgO,
-                 my_rates->SN0_kpFeS, my_rates->SN0_kpAl2O3,
-                 my_rates->SN0_kpreforg, my_rates->SN0_kpvolorg, my_rates->SN0_kpH2Oice,
-                 grain_temperatures.data[OnlyGrainSpLUT::SiM_dust], grain_temperatures.data[OnlyGrainSpLUT::FeM_dust], grain_temperatures.data[OnlyGrainSpLUT::Mg2SiO4_dust], grain_temperatures.data[OnlyGrainSpLUT::MgSiO3_dust], grain_temperatures.data[OnlyGrainSpLUT::Fe3O4_dust],
-                 grain_temperatures.data[OnlyGrainSpLUT::AC_dust], grain_temperatures.data[OnlyGrainSpLUT::SiO2_dust], grain_temperatures.data[OnlyGrainSpLUT::MgO_dust], grain_temperatures.data[OnlyGrainSpLUT::FeS_dust], grain_temperatures.data[OnlyGrainSpLUT::Al2O3_dust],
-                 grain_temperatures.data[OnlyGrainSpLUT::ref_org_dust], grain_temperatures.data[OnlyGrainSpLUT::vol_org_dust], grain_temperatures.data[OnlyGrainSpLUT::H2O_ice_dust],
-                 my_rates->gas_grain2, &my_rates->gamma_isrf2
-            );
+  FORTRAN_NAME(ceiling_species_g)(my_fields->density, my_fields->e_density, my_fields->HI_density, my_fields->HII_density, my_fields->HeI_density, my_fields->HeII_density, my_fields->HeIII_density,
+    my_fields->HM_density, my_fields->H2I_density, my_fields->H2II_density, my_fields->DI_density, my_fields->DII_density, my_fields->HDI_density, my_fields->metal_density, my_fields->dust_density,
+    &my_fields->grid_start[0], &my_fields->grid_end[0], &my_fields->grid_start[1], &my_fields->grid_end[1], &my_fields->grid_start[2], &my_fields->grid_end[2],
+    &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &my_chemistry->primordial_chemistry, &imetal, &my_chemistry->use_dust_density_field,
+    my_fields->DM_density, my_fields->HDII_density, my_fields->HeHII_density,
+    &my_chemistry->metal_abundances, &my_chemistry->metal_chemistry, &my_chemistry->dust_species, &my_chemistry->multi_metals,
+    &my_chemistry->grain_growth, &my_chemistry->dust_sublimation,
+    my_fields->CI_density, my_fields->CII_density, my_fields->CO_density, my_fields->CO2_density,
+    my_fields->OI_density, my_fields->OH_density, my_fields->H2O_density, my_fields->O2_density,
+    my_fields->SiI_density, my_fields->SiOI_density, my_fields->SiO2I_density,
+    my_fields->CH_density, my_fields->CH2_density, my_fields->COII_density, my_fields->OII_density,
+    my_fields->OHII_density, my_fields->H2OII_density, my_fields->H3OII_density, my_fields->O2II_density,
+    my_fields->Mg_density, my_fields->Al_density, my_fields->S_density, my_fields->Fe_density,
+    my_fields->SiM_dust_density, my_fields->FeM_dust_density, my_fields->Mg2SiO4_dust_density, my_fields->MgSiO3_dust_density, my_fields->Fe3O4_dust_density,
+    my_fields->AC_dust_density, my_fields->SiO2_dust_density, my_fields->MgO_dust_density, my_fields->FeS_dust_density, my_fields->Al2O3_dust_density,
+    my_fields->ref_org_dust_density, my_fields->vol_org_dust_density, my_fields->H2O_ice_dust_density,
+    my_fields->local_ISM_metal_density,
+    my_fields->ccsn13_metal_density, my_fields->ccsn20_metal_density, my_fields->ccsn25_metal_density, my_fields->ccsn30_metal_density,
+    my_fields->fsn13_metal_density, my_fields->fsn15_metal_density, my_fields->fsn50_metal_density, my_fields->fsn80_metal_density,
+    my_fields->pisn170_metal_density, my_fields->pisn200_metal_density, my_fields->y19_metal_density);
 
 }
 
@@ -546,6 +418,9 @@ inline void lookup_cool_rates1d_g(
   grackle::impl::ChemHeatingRates chemheatrates_buf
 ) {
 
+  grackle::impl::CollisionalRxnRateCollection* kcol_rate_tables =
+    my_rates->opaque_storage->kcol_rate_tables;
+
   FORTRAN_NAME(lookup_cool_rates1d_g)(&my_chemistry->TemperatureStart, &my_chemistry->TemperatureEnd, &my_chemistry->NumberOfTemperatureBins, &idx_range.jp1, &idx_range.kp1,
                    &idx_range.i_start, &idx_range.i_end, &my_chemistry->three_body_rate,
                    &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &my_chemistry->primordial_chemistry, &anydust,
@@ -553,11 +428,11 @@ inline void lookup_cool_rates1d_g(
                    tgas1d, mmw, my_fields->density, my_fields->HI_density, my_fields->HII_density, my_fields->HeI_density, my_fields->HeII_density, my_fields->HeIII_density,
                    my_fields->HM_density, my_fields->H2I_density, my_fields->H2II_density, my_fields->DI_density, my_fields->DII_density, my_fields->HDI_density,
                    tdust, dust2gas,
-                   my_rates->k1, my_rates->k2, my_rates->k3, my_rates->k4, my_rates->k5, my_rates->k6, my_rates->k7, my_rates->k8, my_rates->k9, my_rates->k10,
-                   my_rates->k11, my_rates->k12, my_rates->k13, my_rates->k13dd, my_rates->k14, my_rates->k15, my_rates->k16,
-                   my_rates->k17, my_rates->k18, my_rates->k19, my_rates->k22,
-                   my_rates->k50, my_rates->k51, my_rates->k52, my_rates->k53, my_rates->k54, my_rates->k55, my_rates->k56,
-                   my_rates->k57, my_rates->k58, &my_chemistry->NumberOfDustTemperatureBins, &my_chemistry->DustTemperatureStart, &my_chemistry->DustTemperatureEnd, my_rates->h2dust,
+                   kcol_rate_tables->data[CollisionalRxnLUT::k1], kcol_rate_tables->data[CollisionalRxnLUT::k2], kcol_rate_tables->data[CollisionalRxnLUT::k3], kcol_rate_tables->data[CollisionalRxnLUT::k4], kcol_rate_tables->data[CollisionalRxnLUT::k5], kcol_rate_tables->data[CollisionalRxnLUT::k6], kcol_rate_tables->data[CollisionalRxnLUT::k7], kcol_rate_tables->data[CollisionalRxnLUT::k8], kcol_rate_tables->data[CollisionalRxnLUT::k9], kcol_rate_tables->data[CollisionalRxnLUT::k10],
+                   kcol_rate_tables->data[CollisionalRxnLUT::k11], kcol_rate_tables->data[CollisionalRxnLUT::k12], kcol_rate_tables->data[CollisionalRxnLUT::k13], my_rates->k13dd, kcol_rate_tables->data[CollisionalRxnLUT::k14], kcol_rate_tables->data[CollisionalRxnLUT::k15], kcol_rate_tables->data[CollisionalRxnLUT::k16],
+                   kcol_rate_tables->data[CollisionalRxnLUT::k17], kcol_rate_tables->data[CollisionalRxnLUT::k18], kcol_rate_tables->data[CollisionalRxnLUT::k19], kcol_rate_tables->data[CollisionalRxnLUT::k22],
+                   kcol_rate_tables->data[CollisionalRxnLUT::k50], kcol_rate_tables->data[CollisionalRxnLUT::k51], kcol_rate_tables->data[CollisionalRxnLUT::k52], kcol_rate_tables->data[CollisionalRxnLUT::k53], kcol_rate_tables->data[CollisionalRxnLUT::k54], kcol_rate_tables->data[CollisionalRxnLUT::k55], kcol_rate_tables->data[CollisionalRxnLUT::k56],
+                   kcol_rate_tables->data[CollisionalRxnLUT::k57], kcol_rate_tables->data[CollisionalRxnLUT::k58], &my_chemistry->NumberOfDustTemperatureBins, &my_chemistry->DustTemperatureStart, &my_chemistry->DustTemperatureEnd, my_rates->h2dust,
                    my_rates->n_cr_n, my_rates->n_cr_d1, my_rates->n_cr_d2,
                    &my_uvb_rates.crsHI, &my_uvb_rates.crsHeI, &my_uvb_rates.crsHeII, &my_uvb_rates.piHI, &my_uvb_rates.piHeI,
                    kcr_buf.data[CollisionalRxnLUT::k1], kcr_buf.data[CollisionalRxnLUT::k2], kcr_buf.data[CollisionalRxnLUT::k3], kcr_buf.data[CollisionalRxnLUT::k4], kcr_buf.data[CollisionalRxnLUT::k5], kcr_buf.data[CollisionalRxnLUT::k6], kcr_buf.data[CollisionalRxnLUT::k7], kcr_buf.data[CollisionalRxnLUT::k8], kcr_buf.data[CollisionalRxnLUT::k9], kcr_buf.data[CollisionalRxnLUT::k10],
@@ -582,18 +457,18 @@ inline void lookup_cool_rates1d_g(
                    my_fields->SiM_dust_density, my_fields->FeM_dust_density, my_fields->Mg2SiO4_dust_density, my_fields->MgSiO3_dust_density, my_fields->Fe3O4_dust_density,
                    my_fields->AC_dust_density, my_fields->SiO2_dust_density, my_fields->MgO_dust_density, my_fields->FeS_dust_density, my_fields->Al2O3_dust_density,
                    my_fields->ref_org_dust_density, my_fields->vol_org_dust_density, my_fields->H2O_ice_dust_density,
-                   my_rates->k125, my_rates->k129, my_rates->k130, my_rates->k131, my_rates->k132,
-                   my_rates->k133, my_rates->k134, my_rates->k135, my_rates->k136, my_rates->k137,
-                   my_rates->k148, my_rates->k149, my_rates->k150, my_rates->k151, my_rates->k152,
-                   my_rates->k153,
-                   my_rates->kz15, my_rates->kz16, my_rates->kz17, my_rates->kz18, my_rates->kz19,
-                   my_rates->kz20, my_rates->kz21, my_rates->kz22, my_rates->kz23, my_rates->kz24,
-                   my_rates->kz25, my_rates->kz26, my_rates->kz27, my_rates->kz28, my_rates->kz29,
-                   my_rates->kz30, my_rates->kz31, my_rates->kz32, my_rates->kz33, my_rates->kz34,
-                   my_rates->kz35, my_rates->kz36, my_rates->kz37, my_rates->kz38, my_rates->kz39,
-                   my_rates->kz40, my_rates->kz41, my_rates->kz42, my_rates->kz43, my_rates->kz44,
-                   my_rates->kz45, my_rates->kz46, my_rates->kz47, my_rates->kz48, my_rates->kz49,
-                   my_rates->kz50, my_rates->kz51, my_rates->kz52, my_rates->kz53, my_rates->kz54,
+                   kcol_rate_tables->data[CollisionalRxnLUT::k125], kcol_rate_tables->data[CollisionalRxnLUT::k129], kcol_rate_tables->data[CollisionalRxnLUT::k130], kcol_rate_tables->data[CollisionalRxnLUT::k131], kcol_rate_tables->data[CollisionalRxnLUT::k132],
+                   kcol_rate_tables->data[CollisionalRxnLUT::k133], kcol_rate_tables->data[CollisionalRxnLUT::k134], kcol_rate_tables->data[CollisionalRxnLUT::k135], kcol_rate_tables->data[CollisionalRxnLUT::k136], kcol_rate_tables->data[CollisionalRxnLUT::k137],
+                   kcol_rate_tables->data[CollisionalRxnLUT::k148], kcol_rate_tables->data[CollisionalRxnLUT::k149], kcol_rate_tables->data[CollisionalRxnLUT::k150], kcol_rate_tables->data[CollisionalRxnLUT::k151], kcol_rate_tables->data[CollisionalRxnLUT::k152],
+                   kcol_rate_tables->data[CollisionalRxnLUT::k153],
+                   kcol_rate_tables->data[CollisionalRxnLUT::kz15], kcol_rate_tables->data[CollisionalRxnLUT::kz16], kcol_rate_tables->data[CollisionalRxnLUT::kz17], kcol_rate_tables->data[CollisionalRxnLUT::kz18], kcol_rate_tables->data[CollisionalRxnLUT::kz19],
+                   kcol_rate_tables->data[CollisionalRxnLUT::kz20], kcol_rate_tables->data[CollisionalRxnLUT::kz21], kcol_rate_tables->data[CollisionalRxnLUT::kz22], kcol_rate_tables->data[CollisionalRxnLUT::kz23], kcol_rate_tables->data[CollisionalRxnLUT::kz24],
+                   kcol_rate_tables->data[CollisionalRxnLUT::kz25], kcol_rate_tables->data[CollisionalRxnLUT::kz26], kcol_rate_tables->data[CollisionalRxnLUT::kz27], kcol_rate_tables->data[CollisionalRxnLUT::kz28], kcol_rate_tables->data[CollisionalRxnLUT::kz29],
+                   kcol_rate_tables->data[CollisionalRxnLUT::kz30], kcol_rate_tables->data[CollisionalRxnLUT::kz31], kcol_rate_tables->data[CollisionalRxnLUT::kz32], kcol_rate_tables->data[CollisionalRxnLUT::kz33], kcol_rate_tables->data[CollisionalRxnLUT::kz34],
+                   kcol_rate_tables->data[CollisionalRxnLUT::kz35], kcol_rate_tables->data[CollisionalRxnLUT::kz36], kcol_rate_tables->data[CollisionalRxnLUT::kz37], kcol_rate_tables->data[CollisionalRxnLUT::kz38], kcol_rate_tables->data[CollisionalRxnLUT::kz39],
+                   kcol_rate_tables->data[CollisionalRxnLUT::kz40], kcol_rate_tables->data[CollisionalRxnLUT::kz41], kcol_rate_tables->data[CollisionalRxnLUT::kz42], kcol_rate_tables->data[CollisionalRxnLUT::kz43], kcol_rate_tables->data[CollisionalRxnLUT::kz44],
+                   kcol_rate_tables->data[CollisionalRxnLUT::kz45], kcol_rate_tables->data[CollisionalRxnLUT::kz46], kcol_rate_tables->data[CollisionalRxnLUT::kz47], kcol_rate_tables->data[CollisionalRxnLUT::kz48], kcol_rate_tables->data[CollisionalRxnLUT::kz49],
+                   kcol_rate_tables->data[CollisionalRxnLUT::kz50], kcol_rate_tables->data[CollisionalRxnLUT::kz51], kcol_rate_tables->data[CollisionalRxnLUT::kz52], kcol_rate_tables->data[CollisionalRxnLUT::kz53], kcol_rate_tables->data[CollisionalRxnLUT::kz54],
                    kcr_buf.data[CollisionalRxnLUT::k125],  kcr_buf.data[CollisionalRxnLUT::k129],  kcr_buf.data[CollisionalRxnLUT::k130],  kcr_buf.data[CollisionalRxnLUT::k131],  kcr_buf.data[CollisionalRxnLUT::k132],
                    kcr_buf.data[CollisionalRxnLUT::k133],  kcr_buf.data[CollisionalRxnLUT::k134],  kcr_buf.data[CollisionalRxnLUT::k135],  kcr_buf.data[CollisionalRxnLUT::k136],  kcr_buf.data[CollisionalRxnLUT::k137],
                    kcr_buf.data[CollisionalRxnLUT::k148],  kcr_buf.data[CollisionalRxnLUT::k149],  kcr_buf.data[CollisionalRxnLUT::k150],  kcr_buf.data[CollisionalRxnLUT::k151],  kcr_buf.data[CollisionalRxnLUT::k152],
@@ -667,34 +542,6 @@ inline void rate_timestep_g(
                         &my_chemistry->radiative_transfer_HDI_dissociation, my_fields->RT_HDI_dissociation_rate, &my_chemistry->radiative_transfer_metal_ionization, my_fields->RT_CI_ionization_rate, my_fields->RT_OI_ionization_rate,
                         &my_chemistry->radiative_transfer_metal_dissociation, my_fields->RT_CO_dissociation_rate, my_fields->RT_OH_dissociation_rate, my_fields->RT_H2O_dissociation_rate
                               );
-}
-
-
-inline void scale_fields_g(
-  int imetal, gr_float factor, chemistry_data* my_chemistry,
-  grackle_field_data* my_fields
-) {
-
-  FORTRAN_NAME(scale_fields_g)(
-      &my_chemistry->primordial_chemistry, &imetal, &my_chemistry->use_dust_density_field, &my_chemistry->metal_chemistry,
-      &my_chemistry->metal_abundances, &my_chemistry->dust_species, &my_chemistry->multi_metals, &my_chemistry->grain_growth, &my_chemistry->dust_sublimation, &factor,
-      &my_fields->grid_start[0], &my_fields->grid_end[0], &my_fields->grid_start[1], &my_fields->grid_end[1], &my_fields->grid_start[2], &my_fields->grid_end[2], &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2],
-      my_fields->density, my_fields->e_density, my_fields->HI_density, my_fields->HII_density, my_fields->HeI_density, my_fields->HeII_density, my_fields->HeIII_density,
-      my_fields->HM_density, my_fields->H2I_density, my_fields->H2II_density, my_fields->DI_density, my_fields->DII_density, my_fields->HDI_density, my_fields->DM_density, my_fields->HDII_density, my_fields->HeHII_density,
-      my_fields->metal_density, my_fields->dust_density,
-      my_fields->CI_density, my_fields->CII_density, my_fields->CO_density, my_fields->CO2_density,
-      my_fields->OI_density, my_fields->OH_density, my_fields->H2O_density, my_fields->O2_density,
-      my_fields->SiI_density, my_fields->SiOI_density, my_fields->SiO2I_density,
-      my_fields->CH_density, my_fields->CH2_density, my_fields->COII_density, my_fields->OII_density,
-      my_fields->OHII_density, my_fields->H2OII_density, my_fields->H3OII_density, my_fields->O2II_density,
-      my_fields->Mg_density, my_fields->Al_density, my_fields->S_density, my_fields->Fe_density,
-      my_fields->SiM_dust_density, my_fields->FeM_dust_density, my_fields->Mg2SiO4_dust_density, my_fields->MgSiO3_dust_density, my_fields->Fe3O4_dust_density,
-      my_fields->AC_dust_density, my_fields->SiO2_dust_density, my_fields->MgO_dust_density, my_fields->FeS_dust_density, my_fields->Al2O3_dust_density,
-      my_fields->ref_org_dust_density, my_fields->vol_org_dust_density, my_fields->H2O_ice_dust_density,
-      my_fields->local_ISM_metal_density, my_fields->ccsn13_metal_density, my_fields->ccsn20_metal_density, my_fields->ccsn25_metal_density, my_fields->ccsn30_metal_density,
-      my_fields->fsn13_metal_density, my_fields->fsn15_metal_density, my_fields->fsn50_metal_density, my_fields->fsn80_metal_density,
-      my_fields->pisn170_metal_density, my_fields->pisn200_metal_density, my_fields->y19_metal_density);
-
 }
 
 /// Uses one linearly implicit Gauss-Seidel sweep of a backward-Euler time

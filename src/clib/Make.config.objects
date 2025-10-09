@@ -19,11 +19,11 @@ OBJS_CONFIG_LIB = \
         calculate_pressure.lo \
         calculate_temperature.lo \
         calc_temp1d_cloudy_g.lo \
-        calc_temp_cloudy_g-cpp.lo \
+        calc_temp_cloudy_g.lo \
         cool1d_cloudy_g.lo \
         cool1d_cloudy_old_tables_g.lo \
         cool1d_multi_g.lo \
-        cool_multi_time_g-cpp.lo \
+        cool_multi_time_g.lo \
         dynamic_api.lo \
         grackle_units.lo \
 	index_helper.lo \
@@ -35,7 +35,7 @@ OBJS_CONFIG_LIB = \
         initialize_UVbackground_data.lo \
         interpolators_g.lo \
         make_consistent.lo \
-        scale_fields_g.lo \
+        scale_fields.lo \
         set_default_chemistry_parameters.lo \
         solve_chemistry.lo \
         solve_rate_cool_g.lo \

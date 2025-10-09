@@ -1,7 +1,14 @@
-// See LICENSE file for license and copyright information
-
-/// @file solve_rate_cool_g-cpp.C
-/// @brief Declares signature of solve_rate_cool_g
+//===----------------------------------------------------------------------===//
+//
+// See the LICENSE file for license and copyright information
+// SPDX-License-Identifier: NCSA AND BSD-3-Clause
+//
+//===----------------------------------------------------------------------===//
+///
+/// @file
+/// Implements the solve_rate_cool_g function
+///
+//===----------------------------------------------------------------------===//
 
 // This file was initially generated automatically during conversion of the
 // solve_rate_cool_g function from FORTRAN to C++
@@ -10,18 +17,21 @@
 #include <cstdlib> // std::malloc, std::free
 #include <cstring> // std::memcpy
 #include <vector>
-
+#include <iostream>
 #include "grackle.h"
 #include "fortran_func_wrappers.hpp"
 #include "index_helper.h"
 #include "internal_types.hpp"
 #include "internal_units.h"
 #include "make_consistent.hpp"
+#include "opaque_storage.hpp"
 #include "step_rate_newton_raphson.hpp"
 #include "utils-cpp.hpp"
 #include "visitor/common.hpp"
 #include "visitor/memory.hpp"
 
+#include "cool1d_multi_g.hpp"
+#include "scale_fields_g-cpp.h"
 #include "solve_rate_cool_g-cpp.h"
 
 /// overrides the subcycle timestep (for each index in the index-range that is
@@ -200,6 +210,13 @@ static double calc_Heq_div_dHeqdt_(
   int i
 ) {
 
+  // load the tables of rates that the `k13` & `k22` arugments were previously
+  // interpolated from
+  const double* k13_table =
+    my_rates->opaque_storage->kcol_rate_tables->data[CollisionalRxnLUT::k13];
+  const double* k22_table =
+    my_rates->opaque_storage->kcol_rate_tables->data[CollisionalRxnLUT::k22];
+
   // Equilibrium value for H is:
   // Heq = (-1._DKIND / (4*k22)) * (k13 - sqrt(8 k13 k22 rho + k13^2))
   // We want to know dH_eq/dt.
@@ -216,10 +233,10 @@ static double calc_Heq_div_dHeqdt_(
   // difference in the equilibrium
   double eqt2 = std::fmin(std::log(tgas[i]) + 0.1*dlogtem, logTlininterp_buf.t2[i]);
   double eqtdef = (eqt2 - logTlininterp_buf.t1[i])/(logTlininterp_buf.t2[i] - logTlininterp_buf.t1[i]);
-  double eqk222 = my_rates->k22[logTlininterp_buf.indixe[i]-1] +
-    (my_rates->k22[logTlininterp_buf.indixe[i]+1-1] -my_rates->k22[logTlininterp_buf.indixe[i]-1])*eqtdef;
-  double eqk132 = my_rates->k13[logTlininterp_buf.indixe[i]-1] +
-    (my_rates->k13[logTlininterp_buf.indixe[i]+1-1] -my_rates->k13[logTlininterp_buf.indixe[i]-1])*eqtdef;
+  double eqk222 = k22_table[logTlininterp_buf.indixe[i]-1] +
+    (k22_table[logTlininterp_buf.indixe[i]+1-1] - k22_table[logTlininterp_buf.indixe[i]-1])*eqtdef;
+  double eqk132 = k13_table[logTlininterp_buf.indixe[i]-1] +
+    (k13_table[logTlininterp_buf.indixe[i]+1-1] - k13_table[logTlininterp_buf.indixe[i]-1])*eqtdef;
   double heq2 = (-1. / (4.*eqk222)) * (eqk132-
     std::sqrt(8.*eqk132*eqk222*
               my_chemistry->HydrogenFractionByMass*local_rho+
@@ -227,10 +244,10 @@ static double calc_Heq_div_dHeqdt_(
 
   double eqt1 = std::fmax(std::log(tgas[i]) - 0.1*dlogtem, logTlininterp_buf.t1[i]);
   eqtdef = (eqt1 - logTlininterp_buf.t1[i])/(logTlininterp_buf.t2[i] - logTlininterp_buf.t1[i]);
-  double eqk221 = my_rates->k22[logTlininterp_buf.indixe[i]-1] +
-    (my_rates->k22[logTlininterp_buf.indixe[i]+1-1] -my_rates->k22[logTlininterp_buf.indixe[i]-1])*eqtdef;
-  double eqk131 = my_rates->k13[logTlininterp_buf.indixe[i]-1] +
-    (my_rates->k13[logTlininterp_buf.indixe[i]+1-1] -my_rates->k13[logTlininterp_buf.indixe[i]-1])*eqtdef;
+  double eqk221 = k22_table[logTlininterp_buf.indixe[i]-1] +
+    (k22_table[logTlininterp_buf.indixe[i]+1-1] - k22_table[logTlininterp_buf.indixe[i]-1])*eqtdef;
+  double eqk131 = k13_table[logTlininterp_buf.indixe[i]-1] +
+    (k13_table[logTlininterp_buf.indixe[i]+1-1] - k13_table[logTlininterp_buf.indixe[i]-1])*eqtdef;
   double heq1 = (-1. / (4.*eqk221)) * (eqk131-
     std::sqrt(8.*eqk131*eqk221*
               my_chemistry->HydrogenFractionByMass*local_rho+std::pow(eqk131,2.)));
@@ -661,7 +678,7 @@ int solve_rate_cool_g(
 
   if (internalu.extfields_in_comoving == 1)  {
     gr_float factor = (gr_float)(std::pow(internalu.a_value,(-3)) );
-    f_wrap::scale_fields_g(imetal, factor, my_chemistry, my_fields);
+    grackle::impl::scale_fields_g(imetal, factor, my_chemistry, my_fields);
   }
 
   f_wrap::ceiling_species_g(imetal, my_chemistry, my_fields);
@@ -775,13 +792,17 @@ int solve_rate_cool_g(
         }
 
         // Compute the cooling rate, tgas, tdust, and metallicity for this row
-        f_wrap::cool1d_multi_g(
-          imetal, idx_range, iter, edot.data(), tgas.data(),
-          mmw.data(), p2d.data(), tdust.data(), metallicity.data(),
-          dust2gas.data(), rhoH.data(), itmask.data(), itmask_metal.data(),
-          my_chemistry, my_rates, my_fields, *my_uvb_rates, internalu,
-          grain_temperatures, logTlininterp_buf, cool1dmulti_buf,
-          coolingheating_buf
+        cool1d_multi_g(
+          imetal, iter,
+          edot.data(),
+          tgas.data(), mmw.data(), p2d.data(), tdust.data(), metallicity.data(),
+          dust2gas.data(), rhoH.data(), itmask.data(),
+          itmask_metal.data(), my_chemistry,
+          my_rates, my_fields,
+          *my_uvb_rates, internalu,
+          idx_range,
+          grain_temperatures, logTlininterp_buf,
+          cool1dmulti_buf, coolingheating_buf
         );
 
         if (my_chemistry->primordial_chemistry > 0)  {
@@ -968,7 +989,7 @@ int solve_rate_cool_g(
 
   if (internalu.extfields_in_comoving == 1)  {
     gr_float factor = (gr_float)(std::pow(internalu.a_value,3) );
-    f_wrap::scale_fields_g(imetal, factor, my_chemistry, my_fields);
+    grackle::impl::scale_fields_g(imetal, factor, my_chemistry, my_fields);
   }
 
   if (my_chemistry->primordial_chemistry > 0)  {

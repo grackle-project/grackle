@@ -1,7 +1,14 @@
-// See LICENSE file for license and copyright information
-
-/// @file cool_multi_time_g-cpp.C
-/// @brief Declares signature of cool_multi_time_g
+//===----------------------------------------------------------------------===//
+//
+// See the LICENSE file for license and copyright information
+// SPDX-License-Identifier: NCSA AND BSD-3-Clause
+//
+//===----------------------------------------------------------------------===//
+///
+/// @file
+/// Implements the cool_multi_time_g function
+///
+//===----------------------------------------------------------------------===//
 
 // This file was initially generated automatically during conversion of the
 // cool_multi_time_g function from FORTRAN to C++
@@ -9,6 +16,8 @@
 #include <cstdio>
 #include <vector>
 
+#include "cool1d_multi_g.hpp"
+#include "cool_multi_time_g.h"
 #include "grackle.h"
 #include "fortran_func_wrappers.hpp"
 #include "index_helper.h"
@@ -16,7 +25,8 @@
 #include "internal_types.hpp"
 #include "utils-cpp.hpp"
 
-#include "cool_multi_time_g-cpp.h"
+#include "cool_multi_time_g.h"
+#include "scale_fields_g-cpp.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -36,7 +46,7 @@ void cool_multi_time_g(
   // Convert densities from comoving to 'proper'
   if (internalu.extfields_in_comoving == 1)  {
     gr_float factor = (gr_float)(std::pow(internalu.a_value,(-3)) );
-    f_wrap::scale_fields_g(imetal, factor, my_chemistry, my_fields);
+    grackle::impl::scale_fields_g(imetal, factor, my_chemistry, my_fields);
   }
 
 
@@ -94,11 +104,11 @@ void cool_multi_time_g(
       // Compute the cooling rate
       int dummy_iter_arg=1;
 
-      f_wrap::cool1d_multi_g(
-        imetal, idx_range, dummy_iter_arg, edot.data(), tgas.data(),
+      cool1d_multi_g(
+        imetal, dummy_iter_arg, edot.data(), tgas.data(),
         mmw.data(), p2d.data(), tdust.data(), metallicity.data(),
         dust2gas.data(), rhoH.data(), itmask.data(), itmask_metal.data(),
-        my_chemistry, my_rates, my_fields, my_uvb_rates, internalu,
+        my_chemistry, my_rates, my_fields, my_uvb_rates, internalu, idx_range,
         grain_temperatures, logTlininterp_buf, cool1dmulti_buf,
         coolingheating_buf
       );
@@ -126,7 +136,7 @@ void cool_multi_time_g(
   // Convert densities back to comoving from 'proper'
   if (internalu.extfields_in_comoving == 1)  {
     gr_float factor = (gr_float)(std::pow(internalu.a_value,3) );
-    f_wrap::scale_fields_g(imetal, factor, my_chemistry, my_fields);
+    grackle::impl::scale_fields_g(imetal, factor, my_chemistry, my_fields);
   }
 
   return;

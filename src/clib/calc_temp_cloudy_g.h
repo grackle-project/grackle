@@ -1,4 +1,14 @@
-// See LICENSE file for license and copyright information
+//===----------------------------------------------------------------------===//
+//
+// See the LICENSE file for license and copyright information
+// SPDX-License-Identifier: NCSA AND BSD-3-Clause
+//
+//===----------------------------------------------------------------------===//
+///
+/// @file
+/// Declares the calc_temp_cloudy_g function
+///
+//===----------------------------------------------------------------------===//
 
 /// @file calc_temp_cloudy_g-cpp.h
 /// @brief Declares signature of calc_temp_cloudy_g
@@ -6,8 +16,8 @@
 // This file was initially generated automatically during conversion of the
 // calc_temp_cloudy_g function from FORTRAN to C++
 
-#ifndef MY_FILE_CPP_H
-#define MY_FILE_CPP_H
+#ifndef CALC_TEMP_CLOUDY_G_H
+#define CALC_TEMP_CLOUDY_G_H
 
 #include "grackle.h"  // gr_float
 #include "internal_units.h"
@@ -42,4 +52,4 @@ void calc_temp_cloudy_g(gr_float* temperature_data_, int imetal,
 }  // extern "C"
 #endif /* __cplusplus */
 
-#endif /* MY_FILE_CPP_H */
+#endif /* CALC_TEMP_CLOUDY_G_H */
