@@ -396,14 +396,13 @@ extern "C" int local_initialize_chemistry_data(chemistry_data *my_chemistry,
   // it's time to start initializing values in my_rates
 
   // perform some basic allocations
-  my_rates->opaque_storage = (struct gr_opaque_storage*)malloc
-    (sizeof(struct gr_opaque_storage));
-  my_rates->opaque_storage->kcol_rate_tables = NULL;
-  my_rates->opaque_storage->used_kcol_rate_indices = NULL;
+  my_rates->opaque_storage = new gr_opaque_storage;
+  my_rates->opaque_storage->kcol_rate_tables = nullptr;
+  my_rates->opaque_storage->used_kcol_rate_indices = nullptr;
   my_rates->opaque_storage->n_kcol_rate_indices = 0;
   init_empty_interp_grid_props_(
     &my_rates->opaque_storage->h2dust_grain_interp_props);
-  my_rates->opaque_storage->grain_species_info = NULL;
+  my_rates->opaque_storage->grain_species_info = nullptr;
 
   double co_length_units, co_density_units;
   if (my_units->comoving_coordinates == TRUE) {
@@ -633,13 +632,13 @@ extern "C" int local_free_chemistry_data(chemistry_data *my_chemistry,
 
   if (my_rates->opaque_storage->kcol_rate_tables != nullptr) {
     drop_CollisionalRxnRateCollection(my_rates->opaque_storage->kcol_rate_tables);
-    GRACKLE_FREE(my_rates->opaque_storage->kcol_rate_tables);
+    delete my_rates->opaque_storage->kcol_rate_tables;
   }
-  GRACKLE_FREE(my_rates->opaque_storage->used_kcol_rate_indices);
+  delete[] my_rates->opaque_storage->used_kcol_rate_indices;
   free_interp_grid_props_(&my_rates->opaque_storage->h2dust_grain_interp_props);
   GRACKLE_FREE(my_rates->opaque_storage->grain_species_info);
-  GRACKLE_FREE(my_rates->opaque_storage);
-
+  delete my_rates->opaque_storage;
+  my_rates->opaque_storage = nullptr;
 
   return GR_SUCCESS;
 }
