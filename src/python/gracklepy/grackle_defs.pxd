@@ -11,30 +11,6 @@ cdef extern from "grackle.h":
         pass
 
     ctypedef struct c_chemistry_data_storage "chemistry_data_storage":
-        double *k1
-        double *k2
-        double *k3
-        double *k4
-        double *k5
-        double *k6
-
-        double *k7
-        double *k8
-        double *k9
-        double *k10
-        double *k11
-        double *k12
-        double *k13
-        double *k14
-        double *k15
-        double *k16
-        double *k17
-        double *k18
-        double *k19
-        double *k20
-        double *k21
-        double *k22
-        double *k23
         double *k13dd
 
         double k24
@@ -46,17 +22,6 @@ cdef extern from "grackle.h":
         double k29
         double k30
         double k31
-
-        double *k50
-        double *k51
-        double *k52
-        double *k53
-        double *k54
-        double *k55
-        double *k56
-
-        double *k57
-        double *k58
 
         double *h2dust
 

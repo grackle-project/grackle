@@ -115,8 +115,9 @@ add_library(Grackle_Grackle
   initialize_rates.cpp initialize_rates.hpp
   initialize_metal_chemistry_rates.cpp initialize_metal_chemistry_rates.hpp
   internal_types.cpp internal_types.hpp
-  scale_fields.cpp scale_fields.hpp
+  opaque_storage.hpp
   rate_utils.cpp
+  scale_fields.cpp scale_fields.hpp
   solve_rate_cool_g-cpp.cpp solve_rate_cool_g-cpp.h
   step_rate_newton_raphson.hpp
   time_deriv_0d.hpp
