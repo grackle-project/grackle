@@ -55,9 +55,8 @@ src/clib/utils.c
 src/clib/utils.h
 src/example/c_example.c
 src/example/c_local_example.c
-src/example/cxx_example.C
-src/example/cxx_grid_example.C
-src/example/cxx_omp_example.C
+src/example/cxx_example.cpp
+src/example/cxx_omp_example.cpp
 src/include/grackle.h
 src/include/grackle_chemistry_data.h
 src/include/grackle_float.h.in
