@@ -6,7 +6,7 @@
 //===----------------------------------------------------------------------===//
 ///
 /// @file
-/// Implements the scale_fields_g function
+/// Implements the scale_fields function
 ///
 //===----------------------------------------------------------------------===//
 
@@ -17,12 +17,12 @@
 #include "fortran_func_decls.h"
 #include "utils-cpp.hpp"
 
-#include "scale_fields_g-cpp.h"
+#include "scale_fields.hpp"
 
 namespace grackle::impl {
 
-void scale_fields_g(int imetal, gr_float factor, chemistry_data* my_chemistry,
-                    grackle_field_data* my_fields) {
+void scale_fields(int imetal, gr_float factor, chemistry_data* my_chemistry,
+                  grackle_field_data* my_fields) {
   grackle::impl::View<gr_float***> d(
       my_fields->density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
