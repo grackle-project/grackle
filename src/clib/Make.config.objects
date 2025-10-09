@@ -20,7 +20,6 @@ OBJS_CONFIG_LIB = \
         calculate_temperature.lo \
         calc_temp1d_cloudy_g.lo \
         calc_temp_cloudy_g.lo \
-        ceiling_species.lo \
         cool1d_cloudy_g.lo \
         cool1d_cloudy_old_tables_g.lo \
         cool1d_multi_g.lo \
