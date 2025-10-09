@@ -6,6 +6,7 @@
 #ifndef TIME_DERIV_0D_HPP
 #define TIME_DERIV_0D_HPP
 
+#include "cool1d_multi_g.hpp"
 #include "chemistry_solver_funcs.hpp"
 #include "fortran_func_wrappers.hpp"
 #include "grackle.h"
@@ -464,20 +465,15 @@ void derivatives(
   // Compute the cooling rate, tgas, tdust, and metallicity for this row
 
   if (pack.local_edot_handling == 1) {
-    // this is a hacky bugfix
-    // -> we need my_local_iter to be 1. If it has any other value,
-    //    `cool1d_multi_g` will assume that `tgasold` was previously
-    //    initialized (it's not!) and try to use its contained value
-    int my_local_iter = 1;
-    f_wrap::cool1d_multi_g(
-      pack.fwd_args.imetal, pack.idx_range_1_element, my_local_iter,
+
+    cool1d_multi_g(
+      pack.fwd_args.imetal, pack.fwd_args.iter,
       pack.other_scratch_buf.edot, pack.other_scratch_buf.tgas,
       pack.other_scratch_buf.mmw, pack.other_scratch_buf.p2d,
       pack.other_scratch_buf.tdust, pack.other_scratch_buf.metallicity,
       pack.other_scratch_buf.dust2gas, pack.other_scratch_buf.rhoH,
-      pack.other_scratch_buf.itmask, &pack.local_itmask_metal, my_chemistry,
-      my_rates, &pack.fields,
-      my_uvb_rates, internalu, pack.main_scratch_buf.grain_temperatures,
+      pack.other_scratch_buf.itmask, &pack.local_itmask_metal, my_chemistry, my_rates, &pack.fields,
+      my_uvb_rates, internalu, pack.idx_range_1_element, pack.main_scratch_buf.grain_temperatures,
       pack.main_scratch_buf.logTlininterp_buf,
       pack.main_scratch_buf.cool1dmulti_buf,
       pack.main_scratch_buf.coolingheating_buf
