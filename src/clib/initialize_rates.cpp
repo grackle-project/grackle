@@ -286,8 +286,7 @@ int init_kcol_rate_tables(
 ) {
   // allocate storage for kcol_rate_tables
   grackle::impl::CollisionalRxnRateCollection* tables =
-    (grackle::impl::CollisionalRxnRateCollection*) malloc
-      (sizeof(grackle::impl::CollisionalRxnRateCollection));
+    new grackle::impl::CollisionalRxnRateCollection;
 
   // allocate storage within kcol_rate_tables
   *tables = grackle::impl::new_CollisionalRxnRateCollection(

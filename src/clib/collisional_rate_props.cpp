@@ -583,9 +583,9 @@ int grackle::impl::visit_rate_props(const chemistry_data* my_chemistry,
 
   if (my_chemistry->primordial_chemistry > 0) {
     cb(grimpl::KColProp{CollisionalRxnLUT::k1, &k1_rate, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::k2, &k2_rate, true}, ctx);
     cb(grimpl::KColProp{CollisionalRxnLUT::k3, &k3_rate, true}, ctx);
     cb(grimpl::KColProp{CollisionalRxnLUT::k4, &k4_rate, true}, ctx);
-    cb(grimpl::KColProp{CollisionalRxnLUT::k2, &k2_rate, true}, ctx);
     cb(grimpl::KColProp{CollisionalRxnLUT::k5, &k5_rate, true}, ctx);
     cb(grimpl::KColProp{CollisionalRxnLUT::k6, &k6_rate, true}, ctx);
     cb(grimpl::KColProp{CollisionalRxnLUT::k7, &k7_rate, true}, ctx);
