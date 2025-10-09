@@ -650,7 +650,7 @@ int grackle::impl::initialize_rates(
     // (it may make sense want to handle more of the dust separately)
     if (my_chemistry->dust_species > 0) {
       my_rates->opaque_storage->grain_species_info = 
-        (grackle::impl::GrainSpeciesInfo*)malloc(sizeof(grackle::impl::GrainSpeciesInfo));
+        new grackle::impl::GrainSpeciesInfo;
       *(my_rates->opaque_storage->grain_species_info) =
         grackle::impl::new_GrainSpeciesInfo(my_chemistry->dust_species);
     }
