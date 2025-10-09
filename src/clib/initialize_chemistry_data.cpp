@@ -18,10 +18,15 @@
 #include <math.h>
 #include "grackle.h"
 #include "grackle_macros.h"
-#include "grackle_types.h"
-#include "grackle_chemistry_data.h"
+#include "auto_general.h"
 #include "interp_table_utils.h" // free_interp_grid_
+#include "initialize_cloudy_data.h"
+#include "initialize_dust_yields.hpp"  // free_dust_yields
+#include "initialize_metal_chemistry_rates.hpp"  // free_metal_chemistry_rates
+#include "initialize_rates.hpp"
+#include "initialize_UVbackground_data.h"
 #include "phys_constants.h"
+
 #ifdef _OPENMP
 #include <omp.h>
 #endif
@@ -30,34 +35,7 @@
 #error "Sanity check failure: GR_SUCCESS must be consistent with SUCCESS and GR_FAIL must be consistent with FAIL"
 #endif
 
-extern int grackle_verbose;
-
-extern chemistry_data *grackle_data;
-extern chemistry_data_storage grackle_rates;
-
-void auto_show_config(FILE *fp);
-void auto_show_flags(FILE *fp);
-grackle_version get_grackle_version(void);
-void show_parameters(FILE *fp, chemistry_data *my_chemistry);
-int _free_cloudy_data(cloudy_data *my_cloudy, chemistry_data *my_chemistry, int primordial);
-int initialize_cloudy_data(chemistry_data *my_chemistry,
-                           chemistry_data_storage *my_rates,
-                           cloudy_data *my_cloudy, char *group_name,
-                           code_units *my_units,
-                           int read_data);
-
-int initialize_UVbackground_data(chemistry_data *my_chemistry,
-                                 chemistry_data_storage *my_rates);
-
-int local_free_chemistry_data(chemistry_data *my_chemistry, chemistry_data_storage *my_rates);
-
-int local_free_metal_chemistry_rates(chemistry_data *my_chemistry, chemistry_data_storage *my_rates);
-int local_free_dust_yields(chemistry_data *my_chemistry, chemistry_data_storage *my_rates);
-
-int initialize_rates(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, code_units *my_units,
-                double co_length_units, double co_density_units);
-
-void initialize_empty_UVBtable_struct(UVBtable *table);
+static void show_parameters(FILE *fp, chemistry_data *my_chemistry);
 
 static void show_version(FILE *fp)
 {
@@ -87,7 +65,7 @@ static void initialize_empty_interp_grid_(gr_interp_grid* grid)
 /**
  * Initializes an empty #chemistry_data_storage struct with zeros and NULLs.
  */
-void initialize_empty_chemistry_data_storage_struct(chemistry_data_storage *my_rates)
+static void initialize_empty_chemistry_data_storage_struct(chemistry_data_storage *my_rates)
 {
 
   my_rates->k1 = NULL;
@@ -337,9 +315,9 @@ void initialize_empty_chemistry_data_storage_struct(chemistry_data_storage *my_r
   my_rates->cloudy_data_new = -1;
 }
 
-int local_initialize_chemistry_data(chemistry_data *my_chemistry,
-                                    chemistry_data_storage *my_rates,
-                                    code_units *my_units)
+extern "C" int local_initialize_chemistry_data(chemistry_data *my_chemistry,
+                                               chemistry_data_storage *my_rates,
+                                               code_units *my_units)
 {
 
   /* Better safe than sorry: Initialize everything to NULL/0 */
@@ -514,7 +492,8 @@ int local_initialize_chemistry_data(chemistry_data *my_chemistry,
   }
 
   //* Call initialise_rates to compute rate tables.
-  initialize_rates(my_chemistry, my_rates, my_units, co_length_units, co_density_units);
+  grackle::impl::initialize_rates(
+    my_chemistry, my_rates, my_units, co_length_units, co_density_units);
 
   /* Initialize Cloudy cooling. */
   my_rates->cloudy_data_new = 1;
@@ -595,7 +574,7 @@ int local_initialize_chemistry_data(chemistry_data *my_chemistry,
   return GR_SUCCESS;
 }
 
-int initialize_chemistry_data(code_units *my_units)
+extern "C" int initialize_chemistry_data(code_units *my_units)
 {
   if (local_initialize_chemistry_data(grackle_data, &grackle_rates,
                                       my_units) == GR_FAIL) {
@@ -608,22 +587,22 @@ int initialize_chemistry_data(code_units *my_units)
 // Define helpers for the show_parameters function
 // NOTE: it's okay that these functions all begin with an underscore since they
 //       each have internal linkage (i.e. they are each declared static)
-static void _show_field_INT(FILE *fp, const char* field, int val)
+static void show_field_INT(FILE *fp, const char* field, int val)
 { fprintf(fp, "%-33s = %d\n", field, val); }
-static void _show_field_DOUBLE(FILE *fp, const char* field, double val)
+static void show_field_DOUBLE(FILE *fp, const char* field, double val)
 { fprintf(fp, "%-33s = %g\n", field, val); }
-static void _show_field_STRING(FILE *fp, const char* field, const char* val)
+static void show_field_STRING(FILE *fp, const char* field, const char* val)
 { fprintf(fp, "%-33s = %s\n", field, val); }
 
 // this function writes each field of my_chemistry to fp
-void show_parameters(FILE *fp, chemistry_data *my_chemistry){
+static void show_parameters(FILE *fp, chemistry_data *my_chemistry){
   #define ENTRY(FIELD, TYPE, DEFAULT_VAL) \
-    _show_field_ ## TYPE (fp, #FIELD, my_chemistry->FIELD);
+    show_field_ ## TYPE (fp, #FIELD, my_chemistry->FIELD);
   #include "grackle_chemistry_data_fields.def"
   #undef ENTRY
 }
 
-int free_chemistry_data(void){
+extern "C" int free_chemistry_data(void){
   if (local_free_chemistry_data(grackle_data, &grackle_rates) == GR_FAIL) {
     fprintf(stderr, "Error in local_free_chemistry_data.\n");
     return GR_FAIL;
@@ -631,8 +610,8 @@ int free_chemistry_data(void){
   return GR_SUCCESS;
 }
 
-int local_free_chemistry_data(chemistry_data *my_chemistry,
-                              chemistry_data_storage *my_rates) {
+extern "C" int local_free_chemistry_data(chemistry_data *my_chemistry,
+                                         chemistry_data_storage *my_rates) {
   if (my_chemistry->primordial_chemistry > 0) {
     GRACKLE_FREE(my_rates->ceHI);
     GRACKLE_FREE(my_rates->ceHeI);
@@ -718,8 +697,8 @@ int local_free_chemistry_data(chemistry_data *my_chemistry,
     GRACKLE_FREE(my_rates->grain_growth_rate);
   }
 
-  _free_cloudy_data(&my_rates->cloudy_primordial, my_chemistry, /* primordial */ 1);
-  _free_cloudy_data(&my_rates->cloudy_metal, my_chemistry, /* primordial */ 0);
+  free_cloudy_data(&my_rates->cloudy_primordial, my_chemistry, /* primordial */ 1);
+  free_cloudy_data(&my_rates->cloudy_metal, my_chemistry, /* primordial */ 0);
 
   GRACKLE_FREE(my_rates->UVbackground_table.z);
   GRACKLE_FREE(my_rates->UVbackground_table.k24);
@@ -744,12 +723,12 @@ int local_free_chemistry_data(chemistry_data *my_chemistry,
     GRACKLE_FREE(my_rates->UVbackground_table.crsHeI);
   }
 
-  if (local_free_metal_chemistry_rates(my_chemistry, my_rates) == FAIL) {
-    fprintf(stderr, "Error in local_free_metal_chemistry_rates.\n");
+  if (grackle::impl::free_metal_chemistry_rates(my_chemistry, my_rates) == FAIL) {
+    fprintf(stderr, "Error in free_metal_chemistry_rates.\n");
     return FAIL;
   }
 
-  if (local_free_dust_yields(my_chemistry, my_rates) == FAIL) {
+  if (grackle::impl::free_dust_yields(my_chemistry, my_rates) == FAIL) {
     fprintf(stderr, "Error in local_free_dust_yields.\n");
     return FAIL;
   }
@@ -757,7 +736,7 @@ int local_free_chemistry_data(chemistry_data *my_chemistry,
   return GR_SUCCESS;
 }
 
-int grimpl_check_consistency_(int gr_float_hdrsize) {
+extern "C" int grimpl_check_consistency_(int gr_float_hdrsize) {
   if (gr_float_hdrsize != ((int)sizeof(gr_float))) {
     fprintf(stderr, "ERROR: Inconsistent floating-point precisions.\n"
                     "       size of gr_float in the headers used during compilation = %d\n"

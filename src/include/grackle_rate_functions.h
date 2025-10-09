@@ -98,6 +98,11 @@ double gammah_rate(double units, chemistry_data *my_chemistry);
 double gamma_isrf_rate(double units, chemistry_data *my_chemistry);
 double gamma_isrf2_rate(double units, chemistry_data *my_chemistry);
 
+// given that all of the following are interpolation tables, I don't think we
+// should be exposing these functions as part of the public api. These are
+// fundamentally different from the other functions: they are initializing
+// entries tracked by chemistry_data_storage
+
 void initialize_cooling_rate_H2(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit);
 void initialize_cooling_rate_HD(chemistry_data *my_chemistry, chemistry_data_storage *my_rates, double coolunit);
 void initialize_primordial_opacity(chemistry_data *my_chemistry, chemistry_data_storage *my_rates);
