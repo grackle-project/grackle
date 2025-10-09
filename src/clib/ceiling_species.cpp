@@ -24,10 +24,8 @@
 
 namespace grackle::impl {
 
-
 void ceiling_species(int imetal, chemistry_data* my_chemistry,
                      grackle_field_data* my_fields) {
-
   grackle::impl::View<gr_float***> d(
       my_fields->density, my_fields->grid_dimension[0],
       my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
@@ -343,4 +341,4 @@ void ceiling_species(int imetal, chemistry_data* my_chemistry,
   return;
 }
 
-} // namespace grackle::impl
+}  // namespace grackle::impl

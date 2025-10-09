@@ -27,6 +27,6 @@ namespace grackle::impl {
 void ceiling_species(int imetal, chemistry_data* my_chemistry,
                      grackle_field_data* my_fields);
 
-} // namespace grackle::impl
+}  // namespace grackle::impl
 
 #endif /* CEILING_SPECIES_CPP_H */
