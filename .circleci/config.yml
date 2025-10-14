@@ -346,6 +346,47 @@ jobs:
       #    environment:
       #      OMP_NUM_THREADS: 4
 
+
+      # the following step currently uses the llvm hosted repositories
+      # (described at https://apt.llvm.org/)
+      # -> if the day ever comes where we need to install using a different
+      #    mechanism, we could always install it from the package on PyPI
+      # -> we could also leverage the current installation approach to make
+      #    test-builds with llvm
+      - run:
+          name: "Install clang-tidy"
+          command: |
+            # at the moment, we are trying to keep this synchronized with the
+            # version of clang-format used in pre-commit
+            LLVM_VERSION=20
+            wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
+            apt install -y clang-tidy-${LLVM_VERSION}
+
+            bin_path="/usr/bin/clang-tidy-${LLVM_VERSION}"
+            if [ ! -f ${bin_path} ]; then
+              echo "Our assumptions about where the file is installed is wrong"
+              exit 1
+            elif [ -f /usr/bin/clang-tidy ]; then
+              echo "another version of clang-tidy seems to be installed"
+              exit 1
+            else
+              # this is pretty hacky!
+              ln -s ${bin_path} /usr/bin/clang-tidy
+            fi
+
+
+      # it's important that the following is run with CMake>=3.25
+      - run:
+          name: "Run clang-tidy"
+          command: |
+            rm -rf build_ci-linux
+
+            cmake \
+              --preset ci-linux \
+              -D 'GRACKLE_CLANG_TIDY=clang-tidy;-warnings-as-errors=*'
+            cmake --build build_ci-linux
+
+
   docs-build:
     parameters:
       tag:
