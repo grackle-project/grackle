@@ -359,8 +359,35 @@ jobs:
             # at the moment, we are trying to keep this synchronized with the
             # version of clang-format used in pre-commit
             LLVM_VERSION=20
-            wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
-            apt install -y clang-tidy-${LLVM_VERSION}
+
+            set -x
+
+            # in general we could replace a lot of the following with with the
+            # script downloaded via `wget https://apt.llvm.org/llvm.sh`
+            # -> it seems like the script may do a lot of extra unnecessary work
+
+            # add the llvm key for authenticating packages
+            GPG_DST=/etc/apt/trusted.gpg.d/apt.llvm.org.asc
+            if [[ ! -f "${GPG_DST}" ]]; then
+                GPG_SRC_URL="https://apt.llvm.org/llvm-snapshot.gpg.key"
+                wget -qO- "${GPG_SRC_URL}" | sudo tee "${GPG_DST}"
+            fi
+
+            # lookup the codename of the distribution (e.g. 
+            source <(grep -F 'UBUNTU_CODENAME' /etc/os-release)
+            CODENAME="${UBUNTU_CODENAME}"
+            # the formula for determining the uri and suite-name is fairly
+            # consistent unless you are describing Debian Testing or the LLVM
+            # version under active development
+            uri="http://apt.llvm.org/${CODENAME}/"
+            suite="llvm-toolchain-${CODENAME}-${LLVM_VERSION}"
+            sudo add-apt-repository \
+                --yes \
+                --sourceslist "deb ${uri} ${suite} main"
+
+            sudo apt-get update
+            sudo apt-get install -y clang-tidy-${LLVM_VERSION}
+
 
             bin_path="/usr/bin/clang-tidy-${LLVM_VERSION}"
             if [ ! -f ${bin_path} ]; then
@@ -371,7 +398,7 @@ jobs:
               exit 1
             else
               # this is pretty hacky!
-              ln -s ${bin_path} /usr/bin/clang-tidy
+              sudo ln -s ${bin_path} /usr/bin/clang-tidy
             fi
 
 
@@ -383,7 +410,7 @@ jobs:
 
             cmake \
               --preset ci-linux \
-              -D 'GRACKLE_CLANG_TIDY=clang-tidy;-warnings-as-errors=*'
+              -D 'GRACKLE_DEV_CLANG_TIDY=clang-tidy;-warnings-as-errors=*'
             cmake --build build_ci-linux
 
 
