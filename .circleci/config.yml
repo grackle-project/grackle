@@ -360,35 +360,46 @@ jobs:
             # version of clang-format used in pre-commit
             LLVM_VERSION=20
 
-            set -x
+            # todo: maybe move this logic into a script
 
             # in general we could replace a lot of the following with with the
             # script downloaded via `wget https://apt.llvm.org/llvm.sh`
             # -> it seems like the script may do a lot of extra unnecessary work
 
-            # add the llvm key for authenticating packages
-            GPG_DST=/etc/apt/trusted.gpg.d/apt.llvm.org.asc
-            if [[ ! -f "${GPG_DST}" ]]; then
-                GPG_SRC_URL="https://apt.llvm.org/llvm-snapshot.gpg.key"
-                wget -qO- "${GPG_SRC_URL}" | sudo tee "${GPG_DST}"
-            fi
+            # Step 1: register LLVM's official apt registry
+            # =============================================
 
-            # lookup the codename of the distribution (e.g. 
+            # Step 1a: add the llvm key for authenticating packages
+            GPG_DST=/etc/apt/trusted.gpg.d/apt.llvm.org.asc
+            GPG_SRC_URL="https://apt.llvm.org/llvm-snapshot.gpg.key"
+            wget -qO- "${GPG_SRC_URL}" | sudo tee "${GPG_DST}"
+
+            # Step 1b: lookup the codename of the distribution (e.g. jammy)
+            # -> Debian: only provides VERSION_CODENAME
+            # -> vanilla Ubuntu: UBUNTU_CODENAME & VERSION_CODENAME are same
+            # -> distinction is more important for (some) Ubuntu derivatives
             source <(grep -F 'UBUNTU_CODENAME' /etc/os-release)
             CODENAME="${UBUNTU_CODENAME}"
-            # the formula for determining the uri and suite-name is fairly
-            # consistent unless you are describing Debian Testing or the LLVM
-            # version under active development
+
+            # step 1c: record the actual source of the package
+            # -> the formula for determining the uri and suite-name is fairly
+            #    consistent unless you are describing Debian Testing or the
+            #    LLVM version under active development
             uri="http://apt.llvm.org/${CODENAME}/"
             suite="llvm-toolchain-${CODENAME}-${LLVM_VERSION}"
             sudo add-apt-repository \
                 --yes \
                 --sourceslist "deb ${uri} ${suite} main"
 
+            # Step 2: actually download clang-tidy
+            # ====================================
             sudo apt-get update
             sudo apt-get install -y clang-tidy-${LLVM_VERSION}
 
-
+            # Step 3: Santity Check and make a symlink
+            # ========================================
+            # The symlink is VERY hacky, but it lets us avoid carrying the
+            # LLVM_VERSION variable between job steps
             bin_path="/usr/bin/clang-tidy-${LLVM_VERSION}"
             if [ ! -f ${bin_path} ]; then
               echo "Our assumptions about where the file is installed is wrong"
@@ -401,17 +412,15 @@ jobs:
               sudo ln -s ${bin_path} /usr/bin/clang-tidy
             fi
 
-
-      # it's important that the following is run with CMake>=3.25
       - run:
           name: "Run clang-tidy"
           command: |
-            rm -rf build_ci-linux
-
+            # ci-linux-nowarn preset is designed to work with static analysis
+            # (it disables compiler warnings)
             cmake \
-              --preset ci-linux \
+              --preset ci-linux-nowarn \
               -D 'GRACKLE_DEV_CLANG_TIDY=clang-tidy;-warnings-as-errors=*'
-            cmake --build build_ci-linux
+            cmake --build build_ci-linux-nowarn
 
 
   docs-build:
