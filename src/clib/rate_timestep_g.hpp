@@ -22,16 +22,16 @@
 
 namespace grackle::impl {
 
-void rate_timestep_g(
-  double* dedot, double* HIdot, gr_mask_type anydust, double* h2dust,
-  double* rhoH, gr_mask_type* itmask, double* edot, double chunit, double dom,
-  chemistry_data* my_chemistry, grackle_field_data* my_fields,
-  photo_rate_storage my_uvb_rates, IndexRange idx_range,
-  grackle::impl::CollisionalRxnRateCollection kcr_buf,
-  grackle::impl::PhotoRxnRateCollection kshield_buf,
-  grackle::impl::ChemHeatingRates chemheatrates_buf
-);
+void rate_timestep_g(double* dedot, double* HIdot, gr_mask_type anydust,
+                     double* h2dust, double* rhoH, gr_mask_type* itmask,
+                     double* edot, double chunit, double dom,
+                     chemistry_data* my_chemistry,
+                     grackle_field_data* my_fields,
+                     photo_rate_storage my_uvb_rates, IndexRange idx_range,
+                     grackle::impl::CollisionalRxnRateCollection kcr_buf,
+                     grackle::impl::PhotoRxnRateCollection kshield_buf,
+                     grackle::impl::ChemHeatingRates chemheatrates_buf);
 
-} // namespace grackle::impl
+}  // namespace grackle::impl
 
 #endif /* RATE_TIMESTEP_H */
