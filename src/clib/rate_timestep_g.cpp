@@ -73,13 +73,9 @@ void rate_timestep_g(
   // locals
 
   int i;
-  double H2dmag, atten, tau;
+  double atten;
   std::vector<double> h2heatfac(my_fields->grid_dimension[0]);
   std::vector<double> H2delta(my_fields->grid_dimension[0]);
-
-  // Debug
-  int i_max;
-  gr_float d_max;
 
   if (my_chemistry->primordial_chemistry == 1)  {
 
