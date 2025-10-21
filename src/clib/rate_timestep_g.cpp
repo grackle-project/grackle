@@ -122,7 +122,6 @@ void rate_timestep_g(double* dedot, double* HIdot, gr_mask_type anydust,
   std::vector<double> h2heatfac(my_fields->grid_dimension[0]);
   std::vector<double> H2delta(my_fields->grid_dimension[0]);
 
-
   if (my_chemistry->primordial_chemistry == 1) {
     for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
       if (itmask[i] != MASK_FALSE) {
