@@ -29,6 +29,7 @@
 #include "internal_types.hpp"
 #include "internal_units.h"
 #include "LUT.hpp"
+#include "opaque_storage.hpp"
 #include "utils-cpp.hpp"
 
 // callers of these functions are generally expected to locally shorten the
@@ -389,6 +390,9 @@ inline void lookup_cool_rates1d_g(
   grackle::impl::ChemHeatingRates chemheatrates_buf
 ) {
 
+  grackle::impl::CollisionalRxnRateCollection* kcol_rate_tables =
+    my_rates->opaque_storage->kcol_rate_tables;
+
   FORTRAN_NAME(lookup_cool_rates1d_g)(&my_chemistry->TemperatureStart, &my_chemistry->TemperatureEnd, &my_chemistry->NumberOfTemperatureBins, &idx_range.jp1, &idx_range.kp1,
                    &idx_range.i_start, &idx_range.i_end, &my_chemistry->three_body_rate,
                    &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &my_chemistry->primordial_chemistry, &anydust,
@@ -396,11 +400,11 @@ inline void lookup_cool_rates1d_g(
                    tgas1d, mmw, my_fields->density, my_fields->HI_density, my_fields->HII_density, my_fields->HeI_density, my_fields->HeII_density, my_fields->HeIII_density,
                    my_fields->HM_density, my_fields->H2I_density, my_fields->H2II_density, my_fields->DI_density, my_fields->DII_density, my_fields->HDI_density,
                    tdust, dust2gas,
-                   my_rates->k1, my_rates->k2, my_rates->k3, my_rates->k4, my_rates->k5, my_rates->k6, my_rates->k7, my_rates->k8, my_rates->k9, my_rates->k10,
-                   my_rates->k11, my_rates->k12, my_rates->k13, my_rates->k13dd, my_rates->k14, my_rates->k15, my_rates->k16,
-                   my_rates->k17, my_rates->k18, my_rates->k19, my_rates->k22,
-                   my_rates->k50, my_rates->k51, my_rates->k52, my_rates->k53, my_rates->k54, my_rates->k55, my_rates->k56,
-                   my_rates->k57, my_rates->k58, &my_chemistry->NumberOfDustTemperatureBins, &my_chemistry->DustTemperatureStart, &my_chemistry->DustTemperatureEnd, my_rates->h2dust,
+                   kcol_rate_tables->data[CollisionalRxnLUT::k1], kcol_rate_tables->data[CollisionalRxnLUT::k2], kcol_rate_tables->data[CollisionalRxnLUT::k3], kcol_rate_tables->data[CollisionalRxnLUT::k4], kcol_rate_tables->data[CollisionalRxnLUT::k5], kcol_rate_tables->data[CollisionalRxnLUT::k6], kcol_rate_tables->data[CollisionalRxnLUT::k7], kcol_rate_tables->data[CollisionalRxnLUT::k8], kcol_rate_tables->data[CollisionalRxnLUT::k9], kcol_rate_tables->data[CollisionalRxnLUT::k10],
+                   kcol_rate_tables->data[CollisionalRxnLUT::k11], kcol_rate_tables->data[CollisionalRxnLUT::k12], kcol_rate_tables->data[CollisionalRxnLUT::k13], my_rates->k13dd, kcol_rate_tables->data[CollisionalRxnLUT::k14], kcol_rate_tables->data[CollisionalRxnLUT::k15], kcol_rate_tables->data[CollisionalRxnLUT::k16],
+                   kcol_rate_tables->data[CollisionalRxnLUT::k17], kcol_rate_tables->data[CollisionalRxnLUT::k18], kcol_rate_tables->data[CollisionalRxnLUT::k19], kcol_rate_tables->data[CollisionalRxnLUT::k22],
+                   kcol_rate_tables->data[CollisionalRxnLUT::k50], kcol_rate_tables->data[CollisionalRxnLUT::k51], kcol_rate_tables->data[CollisionalRxnLUT::k52], kcol_rate_tables->data[CollisionalRxnLUT::k53], kcol_rate_tables->data[CollisionalRxnLUT::k54], kcol_rate_tables->data[CollisionalRxnLUT::k55], kcol_rate_tables->data[CollisionalRxnLUT::k56],
+                   kcol_rate_tables->data[CollisionalRxnLUT::k57], kcol_rate_tables->data[CollisionalRxnLUT::k58], &my_chemistry->NumberOfDustTemperatureBins, &my_chemistry->DustTemperatureStart, &my_chemistry->DustTemperatureEnd, my_rates->h2dust,
                    my_rates->n_cr_n, my_rates->n_cr_d1, my_rates->n_cr_d2,
                    &my_uvb_rates.crsHI, &my_uvb_rates.crsHeI, &my_uvb_rates.crsHeII, &my_uvb_rates.piHI, &my_uvb_rates.piHeI,
                    kcr_buf.data[CollisionalRxnLUT::k1], kcr_buf.data[CollisionalRxnLUT::k2], kcr_buf.data[CollisionalRxnLUT::k3], kcr_buf.data[CollisionalRxnLUT::k4], kcr_buf.data[CollisionalRxnLUT::k5], kcr_buf.data[CollisionalRxnLUT::k6], kcr_buf.data[CollisionalRxnLUT::k7], kcr_buf.data[CollisionalRxnLUT::k8], kcr_buf.data[CollisionalRxnLUT::k9], kcr_buf.data[CollisionalRxnLUT::k10],
@@ -425,18 +429,18 @@ inline void lookup_cool_rates1d_g(
                    my_fields->SiM_dust_density, my_fields->FeM_dust_density, my_fields->Mg2SiO4_dust_density, my_fields->MgSiO3_dust_density, my_fields->Fe3O4_dust_density,
                    my_fields->AC_dust_density, my_fields->SiO2_dust_density, my_fields->MgO_dust_density, my_fields->FeS_dust_density, my_fields->Al2O3_dust_density,
                    my_fields->ref_org_dust_density, my_fields->vol_org_dust_density, my_fields->H2O_ice_dust_density,
-                   my_rates->k125, my_rates->k129, my_rates->k130, my_rates->k131, my_rates->k132,
-                   my_rates->k133, my_rates->k134, my_rates->k135, my_rates->k136, my_rates->k137,
-                   my_rates->k148, my_rates->k149, my_rates->k150, my_rates->k151, my_rates->k152,
-                   my_rates->k153,
-                   my_rates->kz15, my_rates->kz16, my_rates->kz17, my_rates->kz18, my_rates->kz19,
-                   my_rates->kz20, my_rates->kz21, my_rates->kz22, my_rates->kz23, my_rates->kz24,
-                   my_rates->kz25, my_rates->kz26, my_rates->kz27, my_rates->kz28, my_rates->kz29,
-                   my_rates->kz30, my_rates->kz31, my_rates->kz32, my_rates->kz33, my_rates->kz34,
-                   my_rates->kz35, my_rates->kz36, my_rates->kz37, my_rates->kz38, my_rates->kz39,
-                   my_rates->kz40, my_rates->kz41, my_rates->kz42, my_rates->kz43, my_rates->kz44,
-                   my_rates->kz45, my_rates->kz46, my_rates->kz47, my_rates->kz48, my_rates->kz49,
-                   my_rates->kz50, my_rates->kz51, my_rates->kz52, my_rates->kz53, my_rates->kz54,
+                   kcol_rate_tables->data[CollisionalRxnLUT::k125], kcol_rate_tables->data[CollisionalRxnLUT::k129], kcol_rate_tables->data[CollisionalRxnLUT::k130], kcol_rate_tables->data[CollisionalRxnLUT::k131], kcol_rate_tables->data[CollisionalRxnLUT::k132],
+                   kcol_rate_tables->data[CollisionalRxnLUT::k133], kcol_rate_tables->data[CollisionalRxnLUT::k134], kcol_rate_tables->data[CollisionalRxnLUT::k135], kcol_rate_tables->data[CollisionalRxnLUT::k136], kcol_rate_tables->data[CollisionalRxnLUT::k137],
+                   kcol_rate_tables->data[CollisionalRxnLUT::k148], kcol_rate_tables->data[CollisionalRxnLUT::k149], kcol_rate_tables->data[CollisionalRxnLUT::k150], kcol_rate_tables->data[CollisionalRxnLUT::k151], kcol_rate_tables->data[CollisionalRxnLUT::k152],
+                   kcol_rate_tables->data[CollisionalRxnLUT::k153],
+                   kcol_rate_tables->data[CollisionalRxnLUT::kz15], kcol_rate_tables->data[CollisionalRxnLUT::kz16], kcol_rate_tables->data[CollisionalRxnLUT::kz17], kcol_rate_tables->data[CollisionalRxnLUT::kz18], kcol_rate_tables->data[CollisionalRxnLUT::kz19],
+                   kcol_rate_tables->data[CollisionalRxnLUT::kz20], kcol_rate_tables->data[CollisionalRxnLUT::kz21], kcol_rate_tables->data[CollisionalRxnLUT::kz22], kcol_rate_tables->data[CollisionalRxnLUT::kz23], kcol_rate_tables->data[CollisionalRxnLUT::kz24],
+                   kcol_rate_tables->data[CollisionalRxnLUT::kz25], kcol_rate_tables->data[CollisionalRxnLUT::kz26], kcol_rate_tables->data[CollisionalRxnLUT::kz27], kcol_rate_tables->data[CollisionalRxnLUT::kz28], kcol_rate_tables->data[CollisionalRxnLUT::kz29],
+                   kcol_rate_tables->data[CollisionalRxnLUT::kz30], kcol_rate_tables->data[CollisionalRxnLUT::kz31], kcol_rate_tables->data[CollisionalRxnLUT::kz32], kcol_rate_tables->data[CollisionalRxnLUT::kz33], kcol_rate_tables->data[CollisionalRxnLUT::kz34],
+                   kcol_rate_tables->data[CollisionalRxnLUT::kz35], kcol_rate_tables->data[CollisionalRxnLUT::kz36], kcol_rate_tables->data[CollisionalRxnLUT::kz37], kcol_rate_tables->data[CollisionalRxnLUT::kz38], kcol_rate_tables->data[CollisionalRxnLUT::kz39],
+                   kcol_rate_tables->data[CollisionalRxnLUT::kz40], kcol_rate_tables->data[CollisionalRxnLUT::kz41], kcol_rate_tables->data[CollisionalRxnLUT::kz42], kcol_rate_tables->data[CollisionalRxnLUT::kz43], kcol_rate_tables->data[CollisionalRxnLUT::kz44],
+                   kcol_rate_tables->data[CollisionalRxnLUT::kz45], kcol_rate_tables->data[CollisionalRxnLUT::kz46], kcol_rate_tables->data[CollisionalRxnLUT::kz47], kcol_rate_tables->data[CollisionalRxnLUT::kz48], kcol_rate_tables->data[CollisionalRxnLUT::kz49],
+                   kcol_rate_tables->data[CollisionalRxnLUT::kz50], kcol_rate_tables->data[CollisionalRxnLUT::kz51], kcol_rate_tables->data[CollisionalRxnLUT::kz52], kcol_rate_tables->data[CollisionalRxnLUT::kz53], kcol_rate_tables->data[CollisionalRxnLUT::kz54],
                    kcr_buf.data[CollisionalRxnLUT::k125],  kcr_buf.data[CollisionalRxnLUT::k129],  kcr_buf.data[CollisionalRxnLUT::k130],  kcr_buf.data[CollisionalRxnLUT::k131],  kcr_buf.data[CollisionalRxnLUT::k132],
                    kcr_buf.data[CollisionalRxnLUT::k133],  kcr_buf.data[CollisionalRxnLUT::k134],  kcr_buf.data[CollisionalRxnLUT::k135],  kcr_buf.data[CollisionalRxnLUT::k136],  kcr_buf.data[CollisionalRxnLUT::k137],
                    kcr_buf.data[CollisionalRxnLUT::k148],  kcr_buf.data[CollisionalRxnLUT::k149],  kcr_buf.data[CollisionalRxnLUT::k150],  kcr_buf.data[CollisionalRxnLUT::k151],  kcr_buf.data[CollisionalRxnLUT::k152],

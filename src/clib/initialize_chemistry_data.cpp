@@ -25,6 +25,8 @@
 #include "initialize_metal_chemistry_rates.hpp"  // free_metal_chemistry_rates
 #include "initialize_rates.hpp"
 #include "initialize_UVbackground_data.h"
+#include "internal_types.hpp" // drop_CollisionalRxnRateCollection
+#include "opaque_storage.hpp" // gr_opaque_storage
 #include "phys_constants.h"
 
 #ifdef _OPENMP
@@ -68,30 +70,6 @@ static void initialize_empty_interp_grid_(gr_interp_grid* grid)
 static void initialize_empty_chemistry_data_storage_struct(chemistry_data_storage *my_rates)
 {
 
-  my_rates->k1 = NULL;
-  my_rates->k2 = NULL;
-  my_rates->k3 = NULL;
-  my_rates->k4 = NULL;
-  my_rates->k5 = NULL;
-  my_rates->k6 = NULL;
-
-  my_rates->k7 = NULL;
-  my_rates->k8 = NULL;
-  my_rates->k9 = NULL;
-  my_rates->k10 = NULL;
-  my_rates->k11 = NULL;
-  my_rates->k12 = NULL;
-  my_rates->k13 = NULL;
-  my_rates->k14 = NULL;
-  my_rates->k15 = NULL;
-  my_rates->k16 = NULL;
-  my_rates->k17 = NULL;
-  my_rates->k18 = NULL;
-  my_rates->k19 = NULL;
-  my_rates->k20 = NULL;
-  my_rates->k21 = NULL;
-  my_rates->k22 = NULL;
-  my_rates->k23 = NULL;
   my_rates->k13dd = NULL;
 
   my_rates->k24 = 0.;
@@ -103,75 +81,6 @@ static void initialize_empty_chemistry_data_storage_struct(chemistry_data_storag
   my_rates->k29 = 0.;
   my_rates->k30 = 0.;
   my_rates->k31 = 0.;
-
-  my_rates->k50 = NULL;
-  my_rates->k51 = NULL;
-  my_rates->k52 = NULL;
-  my_rates->k53 = NULL;
-  my_rates->k54 = NULL;
-  my_rates->k55 = NULL;
-  my_rates->k56 = NULL;
-
-  my_rates->k57 = NULL;
-  my_rates->k58 = NULL;
-
-  my_rates->k125 = NULL;
-  my_rates->k129 = NULL;
-  my_rates->k130 = NULL;
-  my_rates->k131 = NULL;
-  my_rates->k132 = NULL;
-  my_rates->k133 = NULL;
-  my_rates->k134 = NULL;
-  my_rates->k135 = NULL;
-  my_rates->k136 = NULL;
-  my_rates->k137 = NULL;
-  my_rates->k148 = NULL;
-  my_rates->k149 = NULL;
-  my_rates->k150 = NULL;
-  my_rates->k151 = NULL;
-  my_rates->k152 = NULL;
-  my_rates->k153 = NULL;
-
-  my_rates->kz15 = NULL;
-  my_rates->kz16 = NULL;
-  my_rates->kz17 = NULL;
-  my_rates->kz18 = NULL;
-  my_rates->kz19 = NULL;
-  my_rates->kz20 = NULL;
-  my_rates->kz21 = NULL;
-  my_rates->kz22 = NULL;
-  my_rates->kz23 = NULL;
-  my_rates->kz24 = NULL;
-  my_rates->kz25 = NULL;
-  my_rates->kz26 = NULL;
-  my_rates->kz27 = NULL;
-  my_rates->kz28 = NULL;
-  my_rates->kz29 = NULL;
-  my_rates->kz30 = NULL;
-  my_rates->kz31 = NULL;
-  my_rates->kz32 = NULL;
-  my_rates->kz33 = NULL;
-  my_rates->kz34 = NULL;
-  my_rates->kz35 = NULL;
-  my_rates->kz36 = NULL;
-  my_rates->kz37 = NULL;
-  my_rates->kz38 = NULL;
-  my_rates->kz39 = NULL;
-  my_rates->kz40 = NULL;
-  my_rates->kz41 = NULL;
-  my_rates->kz42 = NULL;
-  my_rates->kz43 = NULL;
-  my_rates->kz44 = NULL;
-  my_rates->kz45 = NULL;
-  my_rates->kz46 = NULL;
-  my_rates->kz47 = NULL;
-  my_rates->kz48 = NULL;
-  my_rates->kz49 = NULL;
-  my_rates->kz50 = NULL;
-  my_rates->kz51 = NULL;
-  my_rates->kz52 = NULL;
-  my_rates->kz53 = NULL;
-  my_rates->kz54 = NULL;
 
   my_rates->h2dust = NULL;
   my_rates->h2dustS = NULL;
@@ -313,6 +222,8 @@ static void initialize_empty_chemistry_data_storage_struct(chemistry_data_storag
   my_rates->SN0_kpH2Oice = NULL;
 
   my_rates->cloudy_data_new = -1;
+
+  my_rates->opaque_storage = NULL;
 }
 
 extern "C" int local_initialize_chemistry_data(chemistry_data *my_chemistry,
@@ -479,6 +390,12 @@ extern "C" int local_initialize_chemistry_data(chemistry_data *my_chemistry,
     }
   }
 
+  // it's time to start initializing values in my_rates
+
+  // perform some basic allocations
+  my_rates->opaque_storage = new gr_opaque_storage;
+  my_rates->opaque_storage->kcol_rate_tables = nullptr;
+
   double co_length_units, co_density_units;
   if (my_units->comoving_coordinates == TRUE) {
     co_length_units = my_units->length_units;
@@ -491,9 +408,13 @@ extern "C" int local_initialize_chemistry_data(chemistry_data *my_chemistry,
       POW(my_units->a_value * my_units->a_units, 3);
   }
 
-  //* Call initialise_rates to compute rate tables.
-  grackle::impl::initialize_rates(
-    my_chemistry, my_rates, my_units, co_length_units, co_density_units);
+  // Compute rate tables.
+  if (grackle::impl::initialize_rates(my_chemistry, my_rates, my_units,
+                                      co_length_units, co_density_units)
+      != GR_SUCCESS) {
+    fprintf(stderr, "Error in initialize_rates.\n");
+    return GR_FAIL;
+  }
 
   /* Initialize Cloudy cooling. */
   my_rates->cloudy_data_new = 1;
@@ -655,39 +576,7 @@ extern "C" int local_free_chemistry_data(chemistry_data *my_chemistry,
 
     GRACKLE_FREE(my_rates->gr_N);
 
-    GRACKLE_FREE(my_rates->k1);
-    GRACKLE_FREE(my_rates->k2);
-    GRACKLE_FREE(my_rates->k3);
-    GRACKLE_FREE(my_rates->k4);
-    GRACKLE_FREE(my_rates->k5);
-    GRACKLE_FREE(my_rates->k6);
-    GRACKLE_FREE(my_rates->k7);
-    GRACKLE_FREE(my_rates->k8);
-    GRACKLE_FREE(my_rates->k9);
-    GRACKLE_FREE(my_rates->k10);
-    GRACKLE_FREE(my_rates->k11);
-    GRACKLE_FREE(my_rates->k12);
-    GRACKLE_FREE(my_rates->k13);
     GRACKLE_FREE(my_rates->k13dd);
-    GRACKLE_FREE(my_rates->k14);
-    GRACKLE_FREE(my_rates->k15);
-    GRACKLE_FREE(my_rates->k16);
-    GRACKLE_FREE(my_rates->k17);
-    GRACKLE_FREE(my_rates->k18);
-    GRACKLE_FREE(my_rates->k19);
-    GRACKLE_FREE(my_rates->k20);
-    GRACKLE_FREE(my_rates->k21);
-    GRACKLE_FREE(my_rates->k22);
-    GRACKLE_FREE(my_rates->k23);
-    GRACKLE_FREE(my_rates->k50);
-    GRACKLE_FREE(my_rates->k51);
-    GRACKLE_FREE(my_rates->k52);
-    GRACKLE_FREE(my_rates->k53);
-    GRACKLE_FREE(my_rates->k54);
-    GRACKLE_FREE(my_rates->k55);
-    GRACKLE_FREE(my_rates->k56);
-    GRACKLE_FREE(my_rates->k57);
-    GRACKLE_FREE(my_rates->k58);
     GRACKLE_FREE(my_rates->h2dust);
     GRACKLE_FREE(my_rates->n_cr_n);
     GRACKLE_FREE(my_rates->n_cr_d1);
@@ -732,6 +621,13 @@ extern "C" int local_free_chemistry_data(chemistry_data *my_chemistry,
     fprintf(stderr, "Error in local_free_dust_yields.\n");
     return FAIL;
   }
+
+  if (my_rates->opaque_storage->kcol_rate_tables != nullptr) {
+    drop_CollisionalRxnRateCollection(my_rates->opaque_storage->kcol_rate_tables);
+    delete my_rates->opaque_storage->kcol_rate_tables;
+  }
+  delete my_rates->opaque_storage;
+  my_rates->opaque_storage = nullptr;
 
   return GR_SUCCESS;
 }
