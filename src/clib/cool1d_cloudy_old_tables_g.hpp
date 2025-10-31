@@ -19,19 +19,20 @@
 #ifndef COOL1D_CLOUDY_OLD_TABLES_G_HPP
 #define COOL1D_CLOUDY_OLD_TABLES_G_HPP
 
-#include "grackle.h"             // gr_float
+#include "grackle.h"  // gr_float
 #include "index_helper.h"
 #include "fortran_func_decls.h"  // gr_mask_int
 
 namespace grackle::impl {
 
 // TODO: check my_chemistry->UVbackground argument position
-void cool1d_cloudy_old_tables_g(
-  double* rhoH, double* metallicity, double* logtem, double* edot,
-  double comp2, double dom, double zr, gr_mask_type* itmask,
-  chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
-  grackle_field_data* my_fields, IndexRange idx_range
-);
+void cool1d_cloudy_old_tables_g(double* rhoH, double* metallicity,
+                                double* logtem, double* edot, double comp2,
+                                double dom, double zr, gr_mask_type* itmask,
+                                chemistry_data* my_chemistry,
+                                chemistry_data_storage* my_rates,
+                                grackle_field_data* my_fields,
+                                IndexRange idx_range);
 
-} // namespace grackle::impl
+}  // namespace grackle::impl
 #endif /* COOL1D_CLOUDY_OLD_TABLES_G_HPP */
