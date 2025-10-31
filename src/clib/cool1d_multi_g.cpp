@@ -17,6 +17,7 @@
 #include <vector>
 #include <iostream>
 
+#include "cool1d_cloudy_old_tables_g.hpp"
 #include "cool1d_multi_g.hpp"
 #include "grackle.h"
 #include "fortran_func_decls.h"
@@ -1674,9 +1675,10 @@ void grackle::impl::cool1d_multi_g(
           my_rates->cloudy_metal.heating_data, itmask_tab.data());
 
     } else {
-      grackle::impl::fortran_wrapper::cool1D_cloudy_old_tables_g(
-        rhoH, metallicity, my_fields, idx_range, logTlininterp_buf.logtem, edot, comp2,
-        dom, zr, my_chemistry, my_rates, itmask_tab);
+      grackle::impl::cool1d_cloudy_old_tables_g(
+        rhoH, metallicity, logTlininterp_buf.logtem, edot, comp2,
+        dom, zr, itmask_tab.data(), my_chemistry, my_rates,
+        my_fields, idx_range);
     }
 
     if (my_chemistry->metal_chemistry == 1) {
