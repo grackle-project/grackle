@@ -590,28 +590,6 @@ inline void step_rate_g(
 
 }
 
-// Solve cloudy cooling by interpolating from the data. This version uses tables
-// formatted for the original Cloudy cooling functionality in Enzo.
-// TODO: check my_chemistry->UVbackground argument position
-inline void cool1D_cloudy_old_tables_g(
-  double* rhoH, double* metallicity, grackle_field_data* my_fields, IndexRange idx_range,
-  double* logtem, double* edot, double comp2, double dom, double zr, chemistry_data* my_chemistry,
-  chemistry_data_storage* my_rates, std::vector<gr_mask_type> itmask_tab
-) {
-   FORTRAN_NAME(cool1d_cloudy_old_tables_g)(my_fields->density, my_fields->internal_energy,
-          rhoH, metallicity, &my_fields->grid_dimension[0],
-          &my_fields->grid_dimension[1], &my_fields->grid_dimension[2],
-          &idx_range.i_start, &idx_range.i_end, &idx_range.jp1, &idx_range.kp1,
-          logtem, edot, &comp2, &my_chemistry->primordial_chemistry, &dom, &zr,
-          &my_chemistry->cmb_temperature_floor, &my_chemistry->UVbackground,
-          &my_chemistry->cloudy_electron_fraction_factor, &my_rates->cloudy_metal.grid_rank,
-          my_rates->cloudy_metal.grid_dimension, my_rates->cloudy_metal.grid_parameters[0],
-          my_rates->cloudy_metal.grid_parameters[1], my_rates->cloudy_metal.grid_parameters[2],
-          my_rates->cloudy_metal.grid_parameters[3], my_rates->cloudy_metal.grid_parameters[4],
-          &my_rates->cloudy_metal.data_size, my_rates->cloudy_metal.cooling_data,
-          my_rates->cloudy_metal.heating_data, itmask_tab.data());
-}
-
 } // namespace grackle::impl::fortran_wrapper
 
 #endif /* FORTRAN_FUNC_WRAPPERS_HPP */
