@@ -25,7 +25,6 @@
 
 namespace grackle::impl {
 
-// TODO: check my_chemistry->UVbackground argument position
 void cool1d_cloudy_old_tables_g(double* rhoH, double* metallicity,
                                 double* logtem, double* edot, double comp2,
                                 double dom, double zr, gr_mask_type* itmask,
