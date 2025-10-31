@@ -13,8 +13,8 @@
 // This file was initially generated automatically during conversion of the
 // rate_timestep_g function from FORTRAN to C++
 
-#ifndef RATE_TIMESTEP_H
-#define RATE_TIMESTEP_H
+#ifndef RATE_TIMESTEP_HPP
+#define RATE_TIMESTEP_HPP
 
 #include "grackle.h"             // gr_float
 #include "fortran_func_decls.h"  // gr_mask_int
