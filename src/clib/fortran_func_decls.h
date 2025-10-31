@@ -139,16 +139,6 @@ void FORTRAN_NAME(cool1d_cloudy_g)(
   double* clHeating, gr_mask_type* itmask
 );
 
-void FORTRAN_NAME(cool1d_cloudy_old_tables_g)(
-  gr_float* d_data_ptr, gr_float* de_data_ptr, double* rhoH,
-  double* metallicity, int* in, int* jn, int* kn, int* is, int* ie, int* j,
-  int* k, double* logtem, double* edot, double* comp2, int* ispecies,
-  double* dom, double* zr, int* icmbTfloor, int* iClHeat, double* clEleFra,
-  long long* clGridRank, long long* clGridDim, double* clPar1, double* clPar2,
-  double* clPar3, double* clPar4, double* clPar5, long long* clDataSize,
-  double* clCooling, double* clHeating, gr_mask_type* itmask
-);
-
 void FORTRAN_NAME(gaussj_g)(
   int* n, double* a_data_ptr, double* b, int* ierr
 );
@@ -341,32 +331,6 @@ void FORTRAN_NAME(lookup_cool_rates1d_g)(
   double* tAC, double* tSiO2D, double* tMgO, double* tFeS, double* tAl2O3,
   double* treforg, double* tvolorg, double* tH2Oice, int* iuseH2shield,
   int* iH2shieldcustom, gr_float* f_shield_custom_data_ptr
-);
-
-void FORTRAN_NAME(rate_timestep_g)(
-  double* dedot, double* HIdot, int* ispecies, gr_mask_type* anydust,
-  gr_float* de_data_ptr, gr_float* HI_data_ptr, gr_float* HII_data_ptr,
-  gr_float* HeI_data_ptr, gr_float* HeII_data_ptr, gr_float* HeIII_data_ptr,
-  gr_float* d_data_ptr, gr_float* HM_data_ptr, gr_float* H2I_data_ptr,
-  gr_float* H2II_data_ptr, int* in, int* jn, int* kn, int* is, int* ie, int* j,
-  int* k, double* k1, double* k2, double* k3, double* k4, double* k5,
-  double* k6, double* k7, double* k8, double* k9, double* k10, double* k11,
-  double* k12, double* k13, double* k14, double* k15, double* k16, double* k17,
-  double* k18, double* k19, double* k22, double* k24, double* k25, double* k26,
-  double* k27, double* k28, double* k29, double* k30, double* k50, double* k51,
-  double* k52, double* k53, double* k54, double* k55, double* k56, double* k57,
-  double* k58, double* h2dust, double* ncrn, double* ncrd1, double* ncrd2,
-  double* rhoH, double* k24shield, double* k25shield, double* k26shield,
-  double* k28shield, double* k29shield, double* k30shield, double* k31shield,
-  int* iradtrans, int* irt_honly, gr_float* kphHI_data_ptr,
-  gr_float* kphHeI_data_ptr, gr_float* kphHeII_data_ptr, gr_mask_type* itmask,
-  double* edot, double* chunit, double* dom, gr_float* metal_data_ptr,
-  gr_float* HDI_data_ptr, int* imchem, gr_float* CI_data_ptr,
-  gr_float* OI_data_ptr, gr_float* OH_data_ptr, gr_float* CO_data_ptr,
-  gr_float* H2O_data_ptr, int* idissHDI, gr_float* kdissHDI_data_ptr,
-  int* iionZ, gr_float* kphCI_data_ptr, gr_float* kphOI_data_ptr, int* idissZ,
-  gr_float* kdissCO_data_ptr, gr_float* kdissOH_data_ptr,
-  gr_float* kdissH2O_data_ptr
 );
 
 void FORTRAN_NAME(step_rate_g)(
