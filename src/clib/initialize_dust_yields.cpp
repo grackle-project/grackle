@@ -16,6 +16,7 @@
 #include "grackle_macros.h"
 #include "grackle_chemistry_data.h"
 #include "initialize_dust_yields.hpp" // forward declarations
+#include "opaque_storage.hpp"
 
 // forward declare some functions
 
@@ -47,12 +48,19 @@ int grackle::impl::initialize_dust_yields(chemistry_data *my_chemistry,
     return SUCCESS;
   }
 
-      int NSN, NTd, Nmom;
-      double Td0, dTd;
-      int iSN, iTd, imom, itab;
+  int n_pathways = 12;
+  my_rates->opaque_storage->inject_pathway_props =
+    new grackle::impl::GrainMetalInjectPathways;
+  *(my_rates->opaque_storage->inject_pathway_props) =
+    new_GrainMetalInjectPathways(n_pathways);
 
-      NSN = 12;
-      my_rates->SN0_N = NSN;
+
+  int NTd, Nmom;
+  double Td0, dTd;
+  int iSN, iTd, imom, itab;
+
+  int NSN = n_pathways;  // todo: delete me!
+  my_rates->SN0_N = n_pathways;
 
       my_rates->SN0_XC  = (double*)malloc(NSN * sizeof(double));
       my_rates->SN0_XO  = (double*)malloc(NSN * sizeof(double));
