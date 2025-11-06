@@ -16,6 +16,7 @@
 #include "grackle_macros.h"
 #include "grackle_chemistry_data.h"
 #include "initialize_dust_yields.hpp" // forward declarations
+#include "LUT.hpp"
 #include "opaque_storage.hpp"
 
 // forward declare some functions
@@ -84,21 +85,6 @@ int grackle::impl::initialize_dust_yields(chemistry_data *my_chemistry,
   my_rates->SN0_fS  = inject_pathway_props->gas_metal_nuclide_yields.S;
   my_rates->SN0_fFe = inject_pathway_props->gas_metal_nuclide_yields.Fe;
 
-  // we can simply delete these when we have the oportunity
-  my_rates->SN0_fSiM      = (double*)malloc(NSN * sizeof(double));
-  my_rates->SN0_fFeM      = (double*)malloc(NSN * sizeof(double));
-  my_rates->SN0_fMg2SiO4  = (double*)malloc(NSN * sizeof(double));
-  my_rates->SN0_fMgSiO3   = (double*)malloc(NSN * sizeof(double));
-  my_rates->SN0_fFe3O4    = (double*)malloc(NSN * sizeof(double));
-  my_rates->SN0_fAC       = (double*)malloc(NSN * sizeof(double));
-  my_rates->SN0_fSiO2D    = (double*)malloc(NSN * sizeof(double));
-  my_rates->SN0_fMgO      = (double*)malloc(NSN * sizeof(double));
-  my_rates->SN0_fFeS      = (double*)malloc(NSN * sizeof(double));
-  my_rates->SN0_fAl2O3    = (double*)malloc(NSN * sizeof(double));
-  my_rates->SN0_freforg   = (double*)malloc(NSN * sizeof(double));
-  my_rates->SN0_fvolorg   = (double*)malloc(NSN * sizeof(double));
-  my_rates->SN0_fH2Oice   = (double*)malloc(NSN * sizeof(double));
-
   for(int iSN = 0; iSN < NSN; iSN++) {
     inject_pathway_props->total_metal_nuclide_yields.C [iSN] = 0.0;
     inject_pathway_props->total_metal_nuclide_yields.O [iSN] = 0.0;
@@ -116,19 +102,19 @@ int grackle::impl::initialize_dust_yields(chemistry_data *my_chemistry,
     inject_pathway_props->gas_metal_nuclide_yields.S [iSN] = 0.0;
     inject_pathway_props->gas_metal_nuclide_yields.Fe[iSN] = 0.0;
 
-    my_rates->SN0_fSiM     [iSN] = 0.0;
-    my_rates->SN0_fFeM     [iSN] = 0.0;
-    my_rates->SN0_fMg2SiO4 [iSN] = 0.0;
-    my_rates->SN0_fMgSiO3  [iSN] = 0.0;
-    my_rates->SN0_fFe3O4   [iSN] = 0.0;
-    my_rates->SN0_fAC      [iSN] = 0.0;
-    my_rates->SN0_fSiO2D   [iSN] = 0.0;
-    my_rates->SN0_fMgO     [iSN] = 0.0;
-    my_rates->SN0_fFeS     [iSN] = 0.0;
-    my_rates->SN0_fAl2O3   [iSN] = 0.0;
-    my_rates->SN0_freforg  [iSN] = 0.0;
-    my_rates->SN0_fvolorg  [iSN] = 0.0;
-    my_rates->SN0_fH2Oice  [iSN] = 0.0;
+    inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::SiM_dust]     [iSN] = 0.0;
+    inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::FeM_dust]     [iSN] = 0.0;
+    inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::Mg2SiO4_dust] [iSN] = 0.0;
+    inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::MgSiO3_dust]  [iSN] = 0.0;
+    inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::Fe3O4_dust]   [iSN] = 0.0;
+    inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::AC_dust]      [iSN] = 0.0;
+    inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::SiO2_dust]   [iSN] = 0.0;
+    inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::MgO_dust]     [iSN] = 0.0;
+    inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::FeS_dust]     [iSN] = 0.0;
+    inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::Al2O3_dust]   [iSN] = 0.0;
+    inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::ref_org_dust]  [iSN] = 0.0;
+    inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::vol_org_dust]  [iSN] = 0.0;
+    inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::H2O_ice_dust]  [iSN] = 0.0;
   }
 
       my_rates->SN0_r0SiM      = (double*)malloc(NSN * 3 * sizeof(double));
@@ -258,20 +244,6 @@ int grackle::impl::free_dust_yields(chemistry_data *my_chemistry,
   my_rates->SN0_fS = nullptr;
   my_rates->SN0_fFe = nullptr;
 
-  GRACKLE_FREE(my_rates->SN0_fSiM);
-  GRACKLE_FREE(my_rates->SN0_fFeM);
-  GRACKLE_FREE(my_rates->SN0_fMg2SiO4);
-  GRACKLE_FREE(my_rates->SN0_fMgSiO3);
-  GRACKLE_FREE(my_rates->SN0_fFe3O4);
-  GRACKLE_FREE(my_rates->SN0_fAC);
-  GRACKLE_FREE(my_rates->SN0_fSiO2D);
-  GRACKLE_FREE(my_rates->SN0_fMgO);
-  GRACKLE_FREE(my_rates->SN0_fFeS);
-  GRACKLE_FREE(my_rates->SN0_fAl2O3);
-  GRACKLE_FREE(my_rates->SN0_freforg);
-  GRACKLE_FREE(my_rates->SN0_fvolorg);
-  GRACKLE_FREE(my_rates->SN0_fH2Oice);
-
   GRACKLE_FREE(my_rates->SN0_r0SiM);
   GRACKLE_FREE(my_rates->SN0_r0FeM);
   GRACKLE_FREE(my_rates->SN0_r0Mg2SiO4);
@@ -332,13 +304,13 @@ int calc_rates_dust_loc(int iSN, chemistry_data *my_chemistry, chemistry_data_st
   inject_pathway_props->gas_metal_nuclide_yields.S [iSN] =   0.00000e+00;
   inject_pathway_props->gas_metal_nuclide_yields.Fe[iSN] =   1.66568e-04;
 
-  my_rates->SN0_fFeM     [iSN] =   1.35403e-02;
-  my_rates->SN0_fMg2SiO4 [iSN] =   1.36165e-01;
-  my_rates->SN0_fMgSiO3  [iSN] =   3.84003e-02;
-  my_rates->SN0_fFeS     [iSN] =   3.04389e-02;
-  my_rates->SN0_freforg  [iSN] =   1.86114e-01;
-  my_rates->SN0_fvolorg  [iSN] =   3.81956e-02;
-  my_rates->SN0_fH2Oice  [iSN] =   6.33011e-02;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::FeM_dust]    [iSN] =   1.35403e-02;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::Mg2SiO4_dust][iSN] =   1.36165e-01;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::MgSiO3_dust] [iSN] =   3.84003e-02;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::FeS_dust]    [iSN] =   3.04389e-02;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::ref_org_dust][iSN] =   1.86114e-01;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::vol_org_dust][iSN] =   3.81956e-02;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::H2O_ice_dust][iSN] =   6.33011e-02;
 
   itab0 = 3 * iSN;
   my_rates->SN0_r0FeM     [itab0 + 0] =   8.33039e-07;
@@ -672,14 +644,14 @@ int calc_rates_dust_C13(int iSN, chemistry_data *my_chemistry, chemistry_data_st
   inject_pathway_props->gas_metal_nuclide_yields.S [iSN] =   3.40903e-02;
   inject_pathway_props->gas_metal_nuclide_yields.Fe[iSN] =   7.22586e-02;
 
-  my_rates->SN0_fSiM     [iSN] =   1.65746e-02;
-  my_rates->SN0_fFeM     [iSN] =   2.39849e-02;
-  my_rates->SN0_fMg2SiO4 [iSN] =   8.69522e-04;
-  my_rates->SN0_fMgSiO3  [iSN] =   2.87802e-06;
-  my_rates->SN0_fAC      [iSN] =   4.85826e-02;
-  my_rates->SN0_fSiO2D   [iSN] =   2.52534e-03;
-  my_rates->SN0_fMgO     [iSN] =   1.28672e-05;
-  my_rates->SN0_fFeS     [iSN] =   2.09730e-06;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::SiM_dust]     [iSN] =   1.65746e-02;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::FeM_dust]     [iSN] =   2.39849e-02;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::Mg2SiO4_dust] [iSN] =   8.69522e-04;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::MgSiO3_dust]  [iSN] =   2.87802e-06;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::AC_dust]      [iSN] =   4.85826e-02;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::SiO2_dust]   [iSN] =   2.52534e-03;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::MgO_dust]     [iSN] =   1.28672e-05;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::FeS_dust]     [iSN] =   2.09730e-06;
 
   itab0 = 3 * iSN;
   my_rates->SN0_r0SiM     [itab0 + 0] =   1.68557e-06;
@@ -1054,15 +1026,15 @@ int calc_rates_dust_C20(int iSN, chemistry_data *my_chemistry, chemistry_data_st
   inject_pathway_props->gas_metal_nuclide_yields.S [iSN] =   6.02018e-02;
   inject_pathway_props->gas_metal_nuclide_yields.Fe[iSN] =   2.69505e-02;
 
-  my_rates->SN0_fSiM     [iSN] =   3.44388e-02;
-  my_rates->SN0_fFeM     [iSN] =   3.77223e-03;
-  my_rates->SN0_fMg2SiO4 [iSN] =   1.90086e-03;
-  my_rates->SN0_fMgSiO3  [iSN] =   2.57266e-06;
-  my_rates->SN0_fAC      [iSN] =   1.27270e-02;
-  my_rates->SN0_fSiO2D   [iSN] =   1.65484e-03;
-  my_rates->SN0_fMgO     [iSN] =   9.48713e-04;
-  my_rates->SN0_fFeS     [iSN] =   5.23050e-05;
-  my_rates->SN0_fAl2O3   [iSN] =   1.31693e-29;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::SiM_dust]     [iSN] =   3.44388e-02;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::FeM_dust]     [iSN] =   3.77223e-03;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::Mg2SiO4_dust] [iSN] =   1.90086e-03;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::MgSiO3_dust]  [iSN] =   2.57266e-06;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::AC_dust]      [iSN] =   1.27270e-02;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::SiO2_dust]   [iSN] =   1.65484e-03;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::MgO_dust]     [iSN] =   9.48713e-04;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::FeS_dust]     [iSN] =   5.23050e-05;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::Al2O3_dust]   [iSN] =   1.31693e-29;
 
   itab0 = 3 * iSN;
   my_rates->SN0_r0SiM     [itab0 + 0] =   1.24861e-05;
@@ -1478,15 +1450,15 @@ int calc_rates_dust_C25(int iSN, chemistry_data *my_chemistry, chemistry_data_st
   inject_pathway_props->gas_metal_nuclide_yields.S [iSN] =   4.72556e-02;
   inject_pathway_props->gas_metal_nuclide_yields.Fe[iSN] =   1.46955e-02;
 
-  my_rates->SN0_fSiM     [iSN] =   3.83373e-02;
-  my_rates->SN0_fFeM     [iSN] =   4.88366e-03;
-  my_rates->SN0_fMg2SiO4 [iSN] =   1.68068e-02;
-  my_rates->SN0_fMgSiO3  [iSN] =   2.49736e-05;
-  my_rates->SN0_fAC      [iSN] =   4.13961e-02;
-  my_rates->SN0_fSiO2D   [iSN] =   1.46546e-02;
-  my_rates->SN0_fMgO     [iSN] =   1.09289e-03;
-  my_rates->SN0_fFeS     [iSN] =   3.77935e-04;
-  my_rates->SN0_fAl2O3   [iSN] =   1.65550e-31;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::SiM_dust]     [iSN] =   3.83373e-02;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::FeM_dust]     [iSN] =   4.88366e-03;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::Mg2SiO4_dust] [iSN] =   1.68068e-02;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::MgSiO3_dust]  [iSN] =   2.49736e-05;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::AC_dust]      [iSN] =   4.13961e-02;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::SiO2_dust]   [iSN] =   1.46546e-02;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::MgO_dust]     [iSN] =   1.09289e-03;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::FeS_dust]     [iSN] =   3.77935e-04;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::Al2O3_dust]   [iSN] =   1.65550e-31;
 
   itab0 = 3 * iSN;
   my_rates->SN0_r0SiM     [itab0 + 0] =   1.72153e-05;
@@ -1902,15 +1874,15 @@ int calc_rates_dust_C30(int iSN, chemistry_data *my_chemistry, chemistry_data_st
   inject_pathway_props->gas_metal_nuclide_yields.S [iSN] =   3.68812e-02;
   inject_pathway_props->gas_metal_nuclide_yields.Fe[iSN] =   1.23641e-02;
 
-  my_rates->SN0_fSiM     [iSN] =   2.91389e-02;
-  my_rates->SN0_fFeM     [iSN] =   1.93065e-03;
-  my_rates->SN0_fMg2SiO4 [iSN] =   7.73041e-04;
-  my_rates->SN0_fMgSiO3  [iSN] =   4.17376e-06;
-  my_rates->SN0_fAC      [iSN] =   6.19235e-04;
-  my_rates->SN0_fSiO2D   [iSN] =   5.27016e-03;
-  my_rates->SN0_fMgO     [iSN] =   1.33978e-03;
-  my_rates->SN0_fFeS     [iSN] =   4.51744e-04;
-  my_rates->SN0_fAl2O3   [iSN] =   5.79251e-12;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::SiM_dust]     [iSN] =   2.91389e-02;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::FeM_dust]     [iSN] =   1.93065e-03;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::Mg2SiO4_dust] [iSN] =   7.73041e-04;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::MgSiO3_dust]  [iSN] =   4.17376e-06;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::AC_dust]      [iSN] =   6.19235e-04;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::SiO2_dust]   [iSN] =   5.27016e-03;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::MgO_dust]     [iSN] =   1.33978e-03;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::FeS_dust]     [iSN] =   4.51744e-04;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::Al2O3_dust]   [iSN] =   5.79251e-12;
 
   itab0 = 3 * iSN;
   my_rates->SN0_r0SiM     [itab0 + 0] =   2.56305e-05;
@@ -2326,13 +2298,13 @@ int calc_rates_dust_F13(int iSN, chemistry_data *my_chemistry, chemistry_data_st
   inject_pathway_props->gas_metal_nuclide_yields.S [iSN] =   0.00000e+00;
   inject_pathway_props->gas_metal_nuclide_yields.Fe[iSN] =   8.90341e-06;
 
-  my_rates->SN0_fFeM     [iSN] =   6.31648e-26;
-  my_rates->SN0_fMg2SiO4 [iSN] =   2.06081e-16;
-  my_rates->SN0_fMgSiO3  [iSN] =   3.19262e-15;
-  my_rates->SN0_fFe3O4   [iSN] =   4.37192e-15;
-  my_rates->SN0_fAC      [iSN] =   1.75542e-01;
-  my_rates->SN0_fSiO2D   [iSN] =   1.92019e-16;
-  my_rates->SN0_fAl2O3   [iSN] =   6.23283e-17;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::FeM_dust]     [iSN] =   6.31648e-26;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::Mg2SiO4_dust] [iSN] =   2.06081e-16;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::MgSiO3_dust]  [iSN] =   3.19262e-15;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::Fe3O4_dust]   [iSN] =   4.37192e-15;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::AC_dust]      [iSN] =   1.75542e-01;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::SiO2_dust]   [iSN] =   1.92019e-16;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::Al2O3_dust]   [iSN] =   6.23283e-17;
 
   itab0 = 3 * iSN;
   my_rates->SN0_r0FeM     [itab0 + 0] =   4.02937e-08;
@@ -2666,13 +2638,13 @@ int calc_rates_dust_F15(int iSN, chemistry_data *my_chemistry, chemistry_data_st
   inject_pathway_props->gas_metal_nuclide_yields.S [iSN] =   0.00000e+00;
   inject_pathway_props->gas_metal_nuclide_yields.Fe[iSN] =   9.66658e-06;
 
-  my_rates->SN0_fFeM     [iSN] =   1.53361e-25;
-  my_rates->SN0_fMg2SiO4 [iSN] =   1.56864e-15;
-  my_rates->SN0_fMgSiO3  [iSN] =   2.13810e-14;
-  my_rates->SN0_fFe3O4   [iSN] =   1.22287e-14;
-  my_rates->SN0_fAC      [iSN] =   1.89229e-01;
-  my_rates->SN0_fSiO2D   [iSN] =   1.47463e-15;
-  my_rates->SN0_fAl2O3   [iSN] =   2.15191e-16;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::FeM_dust]     [iSN] =   1.53361e-25;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::Mg2SiO4_dust] [iSN] =   1.56864e-15;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::MgSiO3_dust]  [iSN] =   2.13810e-14;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::Fe3O4_dust]   [iSN] =   1.22287e-14;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::AC_dust]      [iSN] =   1.89229e-01;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::SiO2_dust]   [iSN] =   1.47463e-15;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::Al2O3_dust]   [iSN] =   2.15191e-16;
 
   itab0 = 3 * iSN;
   my_rates->SN0_r0FeM     [itab0 + 0] =   4.02634e-08;
@@ -3006,13 +2978,13 @@ int calc_rates_dust_F50(int iSN, chemistry_data *my_chemistry, chemistry_data_st
   inject_pathway_props->gas_metal_nuclide_yields.S [iSN] =   0.00000e+00;
   inject_pathway_props->gas_metal_nuclide_yields.Fe[iSN] =   4.15804e-06;
 
-  my_rates->SN0_fFeM     [iSN] =   2.33171e-24;
-  my_rates->SN0_fMg2SiO4 [iSN] =   2.62486e-10;
-  my_rates->SN0_fMgSiO3  [iSN] =   1.21446e-09;
-  my_rates->SN0_fFe3O4   [iSN] =   2.41799e-13;
-  my_rates->SN0_fAC      [iSN] =   1.09849e-04;
-  my_rates->SN0_fSiO2D   [iSN] =   3.41863e-11;
-  my_rates->SN0_fAl2O3   [iSN] =   2.53950e-17;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::FeM_dust]     [iSN] =   2.33171e-24;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::Mg2SiO4_dust] [iSN] =   2.62486e-10;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::MgSiO3_dust]  [iSN] =   1.21446e-09;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::Fe3O4_dust]   [iSN] =   2.41799e-13;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::AC_dust]      [iSN] =   1.09849e-04;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::SiO2_dust]   [iSN] =   3.41863e-11;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::Al2O3_dust]   [iSN] =   2.53950e-17;
 
   itab0 = 3 * iSN;
   my_rates->SN0_r0FeM     [itab0 + 0] =   4.02891e-08;
@@ -3346,13 +3318,13 @@ int calc_rates_dust_F80(int iSN, chemistry_data *my_chemistry, chemistry_data_st
   inject_pathway_props->gas_metal_nuclide_yields.S [iSN] =   0.00000e+00;
   inject_pathway_props->gas_metal_nuclide_yields.Fe[iSN] =   2.43915e-06;
 
-  my_rates->SN0_fFeM     [iSN] =   3.87590e-26;
-  my_rates->SN0_fMg2SiO4 [iSN] =   2.36180e-13;
-  my_rates->SN0_fMgSiO3  [iSN] =   2.48190e-12;
-  my_rates->SN0_fFe3O4   [iSN] =   3.01120e-15;
-  my_rates->SN0_fAC      [iSN] =   8.68025e-03;
-  my_rates->SN0_fSiO2D   [iSN] =   3.70132e-14;
-  my_rates->SN0_fAl2O3   [iSN] =   3.77811e-18;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::FeM_dust]     [iSN] =   3.87590e-26;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::Mg2SiO4_dust] [iSN] =   2.36180e-13;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::MgSiO3_dust]  [iSN] =   2.48190e-12;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::Fe3O4_dust]   [iSN] =   3.01120e-15;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::AC_dust]      [iSN] =   8.68025e-03;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::SiO2_dust]   [iSN] =   3.70132e-14;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::Al2O3_dust]   [iSN] =   3.77811e-18;
 
   itab0 = 3 * iSN;
   my_rates->SN0_r0FeM     [itab0 + 0] =   4.02891e-08;
@@ -3686,13 +3658,13 @@ int calc_rates_dust_P170(int iSN, chemistry_data *my_chemistry, chemistry_data_s
   inject_pathway_props->gas_metal_nuclide_yields.S [iSN] =   8.06035e-02;
   inject_pathway_props->gas_metal_nuclide_yields.Fe[iSN] =   5.29394e-02;
 
-  my_rates->SN0_fSiM     [iSN] =   1.31079e-02;
-  my_rates->SN0_fFeM     [iSN] =   3.34688e-05;
-  my_rates->SN0_fMg2SiO4 [iSN] =   2.84952e-13;
-  my_rates->SN0_fMgSiO3  [iSN] =   7.72302e-25;
-  my_rates->SN0_fAC      [iSN] =   4.47758e-05;
-  my_rates->SN0_fSiO2D   [iSN] =   1.23405e-04;
-  my_rates->SN0_fMgO     [iSN] =   1.41247e-07;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::SiM_dust]     [iSN] =   1.31079e-02;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::FeM_dust]     [iSN] =   3.34688e-05;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::Mg2SiO4_dust] [iSN] =   2.84952e-13;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::MgSiO3_dust]  [iSN] =   7.72302e-25;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::AC_dust]      [iSN] =   4.47758e-05;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::SiO2_dust]   [iSN] =   1.23405e-04;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::MgO_dust]     [iSN] =   1.41247e-07;
 
   itab0 = 3 * iSN;
   my_rates->SN0_r0SiM     [itab0 + 0] =   2.72050e-06;
@@ -4026,12 +3998,12 @@ int calc_rates_dust_P200(int iSN, chemistry_data *my_chemistry, chemistry_data_s
   inject_pathway_props->gas_metal_nuclide_yields.S [iSN] =   1.15582e-01;
   inject_pathway_props->gas_metal_nuclide_yields.Fe[iSN] =   6.75026e-02;
 
-  my_rates->SN0_fSiM     [iSN] =   5.90622e-05;
-  my_rates->SN0_fFeM     [iSN] =   4.26809e-04;
-  my_rates->SN0_fMg2SiO4 [iSN] =   4.08246e-15;
-  my_rates->SN0_fAC      [iSN] =   3.72287e-05;
-  my_rates->SN0_fSiO2D   [iSN] =   4.59330e-04;
-  my_rates->SN0_fMgO     [iSN] =   5.38389e-09;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::SiM_dust]     [iSN] =   5.90622e-05;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::FeM_dust]     [iSN] =   4.26809e-04;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::Mg2SiO4_dust] [iSN] =   4.08246e-15;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::AC_dust]      [iSN] =   3.72287e-05;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::SiO2_dust]   [iSN] =   4.59330e-04;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::MgO_dust]     [iSN] =   5.38389e-09;
 
   itab0 = 3 * iSN;
   my_rates->SN0_r0SiM     [itab0 + 0] =   8.86269e-07;
@@ -4324,8 +4296,8 @@ int calc_rates_dust_Y19(int iSN, chemistry_data *my_chemistry, chemistry_data_st
   inject_pathway_props->gas_metal_nuclide_yields.S [iSN] =   1.58191e-02;
   inject_pathway_props->gas_metal_nuclide_yields.Fe[iSN] =   6.64078e-02;
 
-  my_rates->SN0_fMgSiO3  [iSN] =   2.50000e-01;
-  my_rates->SN0_fAC      [iSN] =   2.50000e-01;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::MgSiO3_dust][iSN] =   2.50000e-01;
+  inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::AC_dust]    [iSN] =   2.50000e-01;
 
   itab0 = 3 * iSN;
   my_rates->SN0_r0MgSiO3  [itab0 + 0] =   1.00000e-05;
