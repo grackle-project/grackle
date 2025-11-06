@@ -54,6 +54,9 @@ int grackle::impl::initialize_dust_yields(chemistry_data *my_chemistry,
   *(my_rates->opaque_storage->inject_pathway_props) =
     new_GrainMetalInjectPathways(n_pathways);
 
+  grackle::impl::GrainMetalInjectPathways* inject_pathway_props
+    = my_rates->opaque_storage->inject_pathway_props;
+
 
   int NTd, Nmom;
   double Td0, dTd;
@@ -62,35 +65,39 @@ int grackle::impl::initialize_dust_yields(chemistry_data *my_chemistry,
   int NSN = n_pathways;  // todo: delete me!
   my_rates->SN0_N = n_pathways;
 
-      my_rates->SN0_XC  = (double*)malloc(NSN * sizeof(double));
-      my_rates->SN0_XO  = (double*)malloc(NSN * sizeof(double));
-      my_rates->SN0_XMg = (double*)malloc(NSN * sizeof(double));
-      my_rates->SN0_XAl = (double*)malloc(NSN * sizeof(double));
-      my_rates->SN0_XSi = (double*)malloc(NSN * sizeof(double));
-      my_rates->SN0_XS  = (double*)malloc(NSN * sizeof(double));
-      my_rates->SN0_XFe = (double*)malloc(NSN * sizeof(double));
+  // crude hack (until we delete all of chemistry_data_storage's SN0_X* and
+  // SN0_f* members -- this has to wait until after we merge in the
+  // transcription of make_consistent)
+  my_rates->SN0_XC  = inject_pathway_props->total_metal_nuclide_yields.C;
+  my_rates->SN0_XO = inject_pathway_props->total_metal_nuclide_yields.O;  
+  my_rates->SN0_XMg = inject_pathway_props->total_metal_nuclide_yields.Mg; 
+  my_rates->SN0_XAl = inject_pathway_props->total_metal_nuclide_yields.Al; 
+  my_rates->SN0_XSi = inject_pathway_props->total_metal_nuclide_yields.Si; 
+  my_rates->SN0_XS = inject_pathway_props->total_metal_nuclide_yields.S;  
+  my_rates->SN0_XFe = inject_pathway_props->total_metal_nuclide_yields.Fe; 
 
-      my_rates->SN0_fC  = (double*)malloc(NSN * sizeof(double));
-      my_rates->SN0_fO  = (double*)malloc(NSN * sizeof(double));
-      my_rates->SN0_fMg = (double*)malloc(NSN * sizeof(double));
-      my_rates->SN0_fAl = (double*)malloc(NSN * sizeof(double));
-      my_rates->SN0_fSi = (double*)malloc(NSN * sizeof(double));
-      my_rates->SN0_fS  = (double*)malloc(NSN * sizeof(double));
-      my_rates->SN0_fFe = (double*)malloc(NSN * sizeof(double));
+  my_rates->SN0_fC  = inject_pathway_props->gas_metal_nuclide_yields.C;
+  my_rates->SN0_fO  = inject_pathway_props->gas_metal_nuclide_yields.O;
+  my_rates->SN0_fMg = inject_pathway_props->gas_metal_nuclide_yields.Mg;
+  my_rates->SN0_fAl = inject_pathway_props->gas_metal_nuclide_yields.Al;
+  my_rates->SN0_fSi = inject_pathway_props->gas_metal_nuclide_yields.Si;
+  my_rates->SN0_fS  = inject_pathway_props->gas_metal_nuclide_yields.S;
+  my_rates->SN0_fFe = inject_pathway_props->gas_metal_nuclide_yields.Fe;
 
-      my_rates->SN0_fSiM      = (double*)malloc(NSN * sizeof(double));
-      my_rates->SN0_fFeM      = (double*)malloc(NSN * sizeof(double));
-      my_rates->SN0_fMg2SiO4  = (double*)malloc(NSN * sizeof(double));
-      my_rates->SN0_fMgSiO3   = (double*)malloc(NSN * sizeof(double));
-      my_rates->SN0_fFe3O4    = (double*)malloc(NSN * sizeof(double));
-      my_rates->SN0_fAC       = (double*)malloc(NSN * sizeof(double));
-      my_rates->SN0_fSiO2D    = (double*)malloc(NSN * sizeof(double));
-      my_rates->SN0_fMgO      = (double*)malloc(NSN * sizeof(double));
-      my_rates->SN0_fFeS      = (double*)malloc(NSN * sizeof(double));
-      my_rates->SN0_fAl2O3    = (double*)malloc(NSN * sizeof(double));
-      my_rates->SN0_freforg   = (double*)malloc(NSN * sizeof(double));
-      my_rates->SN0_fvolorg   = (double*)malloc(NSN * sizeof(double));
-      my_rates->SN0_fH2Oice   = (double*)malloc(NSN * sizeof(double));
+  // we can simply delete these when we have the oportunity
+  my_rates->SN0_fSiM      = (double*)malloc(NSN * sizeof(double));
+  my_rates->SN0_fFeM      = (double*)malloc(NSN * sizeof(double));
+  my_rates->SN0_fMg2SiO4  = (double*)malloc(NSN * sizeof(double));
+  my_rates->SN0_fMgSiO3   = (double*)malloc(NSN * sizeof(double));
+  my_rates->SN0_fFe3O4    = (double*)malloc(NSN * sizeof(double));
+  my_rates->SN0_fAC       = (double*)malloc(NSN * sizeof(double));
+  my_rates->SN0_fSiO2D    = (double*)malloc(NSN * sizeof(double));
+  my_rates->SN0_fMgO      = (double*)malloc(NSN * sizeof(double));
+  my_rates->SN0_fFeS      = (double*)malloc(NSN * sizeof(double));
+  my_rates->SN0_fAl2O3    = (double*)malloc(NSN * sizeof(double));
+  my_rates->SN0_freforg   = (double*)malloc(NSN * sizeof(double));
+  my_rates->SN0_fvolorg   = (double*)malloc(NSN * sizeof(double));
+  my_rates->SN0_fH2Oice   = (double*)malloc(NSN * sizeof(double));
 
       for(iSN = 0; iSN < NSN; iSN++) {
         my_rates->SN0_XC [iSN] = 0.0;
@@ -231,21 +238,25 @@ int grackle::impl::free_dust_yields(chemistry_data *my_chemistry,
   if (my_chemistry->metal_chemistry == 0)
     return SUCCESS;
 
-  GRACKLE_FREE(my_rates->SN0_XC);
-  GRACKLE_FREE(my_rates->SN0_XO);
-  GRACKLE_FREE(my_rates->SN0_XMg);
-  GRACKLE_FREE(my_rates->SN0_XAl);
-  GRACKLE_FREE(my_rates->SN0_XSi);
-  GRACKLE_FREE(my_rates->SN0_XS);
-  GRACKLE_FREE(my_rates->SN0_XFe);
+  // reminder: we have adopted a crude hack (until we delete all of
+  // chemistry_data_storage's SN0_X* and SN0_f* members -- this has to wait
+  // until after we merge in the transcription of make_consistent), where
+  // the yield fraction for each metal nuclide is an alias to a pointer
+  my_rates->SN0_XC = nullptr;
+  my_rates->SN0_XO = nullptr;
+  my_rates->SN0_XMg = nullptr;
+  my_rates->SN0_XAl = nullptr;
+  my_rates->SN0_XSi = nullptr;
+  my_rates->SN0_XS = nullptr;
+  my_rates->SN0_XFe = nullptr;
 
-  GRACKLE_FREE(my_rates->SN0_fC);
-  GRACKLE_FREE(my_rates->SN0_fO);
-  GRACKLE_FREE(my_rates->SN0_fMg);
-  GRACKLE_FREE(my_rates->SN0_fAl);
-  GRACKLE_FREE(my_rates->SN0_fSi);
-  GRACKLE_FREE(my_rates->SN0_fS);
-  GRACKLE_FREE(my_rates->SN0_fFe);
+  my_rates->SN0_fC = nullptr;
+  my_rates->SN0_fO = nullptr;
+  my_rates->SN0_fMg = nullptr;
+  my_rates->SN0_fAl = nullptr;
+  my_rates->SN0_fSi = nullptr;
+  my_rates->SN0_fS = nullptr;
+  my_rates->SN0_fFe = nullptr;
 
   GRACKLE_FREE(my_rates->SN0_fSiM);
   GRACKLE_FREE(my_rates->SN0_fFeM);
