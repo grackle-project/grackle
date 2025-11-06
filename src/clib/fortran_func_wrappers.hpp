@@ -25,10 +25,12 @@
 #include "grackle.h"
 #include "dust_props.hpp"
 #include "fortran_func_decls.h"
+#include "grain_metal_inject_pathways.hpp"
 #include "index_helper.h"
 #include "internal_types.hpp"
 #include "internal_units.h"
 #include "LUT.hpp"
+#include "opaque_storage.hpp"
 #include "utils-cpp.hpp"
 
 // callers of these functions are generally expected to locally shorten the
@@ -107,10 +109,19 @@ inline void calc_grain_size_increment_1d (
     my_fields->fsn13_metal_density, my_fields->fsn15_metal_density, my_fields->fsn50_metal_density, my_fields->fsn80_metal_density,
     my_fields->pisn170_metal_density, my_fields->pisn200_metal_density, my_fields->y19_metal_density,
     &my_rates->SN0_N,
-    my_rates->SN0_fSiM, my_rates->SN0_fFeM, my_rates->SN0_fMg2SiO4, my_rates->SN0_fMgSiO3,
-    my_rates->SN0_fFe3O4, my_rates->SN0_fAC, my_rates->SN0_fSiO2D, my_rates->SN0_fMgO,
-    my_rates->SN0_fFeS, my_rates->SN0_fAl2O3,
-    my_rates->SN0_freforg, my_rates->SN0_fvolorg, my_rates->SN0_fH2Oice,
+    my_rates->opaque_storage->inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::SiM_dust],
+    my_rates->opaque_storage->inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::FeM_dust],
+    my_rates->opaque_storage->inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::Mg2SiO4_dust],
+    my_rates->opaque_storage->inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::MgSiO3_dust],
+    my_rates->opaque_storage->inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::Fe3O4_dust],
+    my_rates->opaque_storage->inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::AC_dust],
+    my_rates->opaque_storage->inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::SiO2_dust],
+    my_rates->opaque_storage->inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::MgO_dust],
+    my_rates->opaque_storage->inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::FeS_dust],
+    my_rates->opaque_storage->inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::Al2O3_dust],
+    my_rates->opaque_storage->inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::ref_org_dust],
+    my_rates->opaque_storage->inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::vol_org_dust],
+    my_rates->opaque_storage->inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::H2O_ice_dust],
     my_rates->SN0_r0SiM, my_rates->SN0_r0FeM, my_rates->SN0_r0Mg2SiO4, my_rates->SN0_r0MgSiO3,
     my_rates->SN0_r0Fe3O4, my_rates->SN0_r0AC, my_rates->SN0_r0SiO2D, my_rates->SN0_r0MgO,
     my_rates->SN0_r0FeS, my_rates->SN0_r0Al2O3,
