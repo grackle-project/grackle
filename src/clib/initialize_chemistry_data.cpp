@@ -18,7 +18,7 @@
 #include <math.h>
 #include "grackle.h"
 #include "grackle_macros.h"
-#include "auto_general.h"
+#include "auto_general.hpp"
 #include "interp_table_utils.h" // free_interp_grid_
 #include "initialize_cloudy_data.h"
 #include "initialize_dust_yields.hpp"  // free_dust_yields
