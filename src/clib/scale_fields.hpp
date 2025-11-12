@@ -1,10 +1,15 @@
-// See LICENSE file for license and copyright information
-
-/// @file scale_fields.hpp
-/// @brief Defines field-scaling functions (to account for cosmology)
-
-// This file was initially generated automatically during conversion of the
-// scale_fields_table_g function from FORTRAN to C++
+//===----------------------------------------------------------------------===//
+//
+// See the LICENSE file for license and copyright information
+// SPDX-License-Identifier: NCSA AND BSD-3-Clause
+//
+//===----------------------------------------------------------------------===//
+///
+/// @file
+/// Declares (and in several cases also defines) field-scaling functions to
+/// account for cosmology
+///
+//===----------------------------------------------------------------------===//
 
 #ifndef SCALE_FIELDS_HPP
 #define SCALE_FIELDS_HPP
@@ -14,6 +19,9 @@
 #include "utils-cpp.hpp"
 
 namespace grackle::impl {
+
+void scale_fields(int imetal, gr_float factor, chemistry_data* my_chemistry,
+                  grackle_field_data* my_fields);
 
 /// Scales density and metal_density (if available) by factor
 inline void scale_fields_table(grackle_field_data* my_fields, double factor) {
