@@ -23,13 +23,14 @@
 #include "index_helper.h"
 #include "internal_types.hpp"
 #include "internal_units.h"
+#include "lookup_cool_rates1d.hpp"
 #include "opaque_storage.hpp"
 #include "step_rate_newton_raphson.hpp"
 #include "utils-cpp.hpp"
 #include "visitor/common.hpp"
 #include "visitor/memory.hpp"
 
-#include "cool1d_multi_g.hpp"
+#include "ceiling_species.hpp"
 #include "scale_fields_g-cpp.h"
 #include "solve_rate_cool_g-cpp.h"
 
@@ -680,7 +681,7 @@ int solve_rate_cool_g(
     grackle::impl::scale_fields_g(imetal, factor, my_chemistry, my_fields);
   }
 
-  f_wrap::ceiling_species_g(imetal, my_chemistry, my_fields);
+  grackle::impl::ceiling_species(imetal, my_chemistry, my_fields);
 
   const grackle_index_helper idx_helper = build_index_helper_(my_fields);
 
@@ -811,14 +812,14 @@ int solve_rate_cool_g(
           //
           // -> TODO: passing dt to this function is probably incorrect. See
           //    the C++ docstring for a longer discussion
-          f_wrap::lookup_cool_rates1d_g(
+          grackle::impl::lookup_cool_rates1d(
             idx_range, anydust, tgas.data(), mmw.data(), tdust.data(),
-            dust2gas.data(), spsolvbuf.k13dd, spsolvbuf.h2dust,
-            dom, dx_cgs, c_ljeans, itmask.data(), itmask_metal.data(),
-            imetal, rhoH.data(), dt, my_chemistry, my_rates, my_fields,
-            *my_uvb_rates, internalu, spsolvbuf.grain_growth_rates,
-            grain_temperatures, logTlininterp_buf, spsolvbuf.kcr_buf,
-            spsolvbuf.kshield_buf, spsolvbuf.chemheatrates_buf
+            dust2gas.data(), spsolvbuf.k13dd, spsolvbuf.h2dust, dom, dx_cgs,
+            c_ljeans, itmask.data(), itmask_metal.data(), dt, my_chemistry,
+            my_rates, my_fields, *my_uvb_rates, internalu,
+            spsolvbuf.grain_growth_rates, grain_temperatures,
+            logTlininterp_buf, spsolvbuf.kcr_buf, spsolvbuf.kshield_buf,
+            spsolvbuf.chemheatrates_buf
           );
 
           // Compute dedot and HIdot, the rates of change of de and HI
