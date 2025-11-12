@@ -17,7 +17,7 @@
 #include <cstdlib> // std::malloc, std::free
 #include <cstring> // std::memcpy
 #include <vector>
-
+#include <iostream>
 #include "grackle.h"
 #include "fortran_func_wrappers.hpp"
 #include "index_helper.h"
@@ -30,6 +30,7 @@
 #include "visitor/common.hpp"
 #include "visitor/memory.hpp"
 
+#include "ceiling_species.hpp"
 #include "scale_fields_g-cpp.h"
 #include "solve_rate_cool_g-cpp.h"
 
@@ -672,7 +673,7 @@ int solve_rate_cool_g(
     grackle::impl::scale_fields_g(imetal, factor, my_chemistry, my_fields);
   }
 
-  f_wrap::ceiling_species_g(imetal, my_chemistry, my_fields);
+  grackle::impl::ceiling_species(imetal, my_chemistry, my_fields);
 
   const grackle_index_helper idx_helper = build_index_helper_(my_fields);
 
@@ -792,13 +793,17 @@ int solve_rate_cool_g(
         }
 
         // Compute the cooling rate, tgas, tdust, and metallicity for this row
-        f_wrap::cool1d_multi_g(
-          imetal, idx_range, iter, edot.data(), tgas.data(),
-          mmw.data(), p2d.data(), tdust.data(), metallicity.data(),
-          dust2gas.data(), rhoH.data(), itmask.data(), itmask_metal.data(),
-          my_chemistry, my_rates, my_fields, *my_uvb_rates, internalu,
-          grain_temperatures, logTlininterp_buf, cool1dmulti_buf,
-          coolingheating_buf
+        cool1d_multi_g(
+          imetal, iter,
+          edot.data(),
+          tgas.data(), mmw.data(), p2d.data(), tdust.data(), metallicity.data(),
+          dust2gas.data(), rhoH.data(), itmask.data(),
+          itmask_metal.data(), my_chemistry,
+          my_rates, my_fields,
+          *my_uvb_rates, internalu,
+          idx_range,
+          grain_temperatures, logTlininterp_buf,
+          cool1dmulti_buf, coolingheating_buf
         );
 
         if (my_chemistry->primordial_chemistry > 0)  {

@@ -107,7 +107,9 @@ add_library(Grackle_Grackle
   # C++ Source (and Private Header Files)
   calc_tdust_3d.cpp calc_tdust_3d.h
   calc_temp_cloudy_g.cpp calc_temp_cloudy_g.h
+  ceiling_species.hpp
   collisional_rate_props.cpp collisional_rate_props.hpp
+  cool1d_multi_g.cpp cool1d_multi_g.hpp
   cool_multi_time_g.cpp cool_multi_time_g.h
   dust_props.hpp
   init_misc_species_cool_rates.cpp init_misc_species_cool_rates.hpp
@@ -137,7 +139,6 @@ add_library(Grackle_Grackle
   calc_temp1d_cloudy_g.F
   cool1d_cloudy_g.F
   cool1d_cloudy_old_tables_g.F
-  cool1d_multi_g.F
   interpolators_g.F
   solve_rate_cool_g.F
   calc_grain_size_increment_1d.F
