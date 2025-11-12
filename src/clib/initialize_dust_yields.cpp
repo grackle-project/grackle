@@ -59,10 +59,6 @@ int grackle::impl::initialize_dust_yields(chemistry_data *my_chemistry,
     = my_rates->opaque_storage->inject_pathway_props;
 
 
-  int NTd, Nmom;
-  double Td0, dTd;
-  int iTd, imom, itab;
-
   int NSN = n_pathways;  // todo: delete me!
   my_rates->SN0_N = n_pathways;
 
@@ -131,9 +127,9 @@ int grackle::impl::initialize_dust_yields(chemistry_data *my_chemistry,
       my_rates->SN0_r0volorg   = (double*)malloc(NSN * 3 * sizeof(double));
       my_rates->SN0_r0H2Oice   = (double*)malloc(NSN * 3 * sizeof(double));
 
-      itab = 0;
+      int itab = 0;
       for(int iSN = 0; iSN < NSN; iSN++) {
-        for(imom = 0; imom < 3; imom++) {
+        for(int imom = 0; imom < 3; imom++) {
           my_rates->SN0_r0SiM     [itab] = 0.0;
           my_rates->SN0_r0FeM     [itab] = 0.0;
           my_rates->SN0_r0Mg2SiO4 [itab] = 0.0;
@@ -151,18 +147,41 @@ int grackle::impl::initialize_dust_yields(chemistry_data *my_chemistry,
         }
       }
 
-      NTd =            35;
-      Td0 =     0.0000000;
-      dTd =     0.1000000;
-     Nmom =             4;
+  // write out the opacity related quantities
 
+  // todo: consider renaming Nmom -> Ncoef
+  int Nmom = 4; // todo: remove me!
+  // todo: more this into GrainMetalInjectPathways
+  // - essentially, each SN0_kpGRSP array is a 3D array of shape
+  //   (n_pathways, NTd, Nmom). This shape uses numpy conventions (i.e. Nmom is
+  //   the fast-axis).
+  // - In more detail:
+  //   - n_pathways is the number of injection pathways
+  //   - NTd corresponds to the number of dust temperatures we consider
+  //   - Nmom corresponds to the number of coefficients that we track for
+  //     computing an opacity related quantity. This quantity is given by
+  //       4πζ/3 * ( SN0_kpGRSP[path_j, iTd, 3] +
+  //                 SN0_kpGRSP[path_j, iTd, 2] * δr(t) +
+  //                 SN0_kpGRSP[path_j, iTd, 1] * δr²(t) +
+  //                 SN0_kpGRSP[path_j, iTd, 0] * δr³(t))
+  //     where
+  //       - ζ is the mass density of a single grain (in g/cm³)
+  //       - δr(t) refers to the derived "size increment" (it is a central
+  //         quantity in the model)
+  //       - I **think** the resulting quantity is the optical cross-section
+  double NTd = 35;  // todo: remove me!
+  double Td0 = 0.0000000; // todo: remove me!
+  double dTd = 0.1000000; // todo: remove me!
+
+  // todo: rename gr_Td, dTd since they are related to log10(Tdust) or ln(Tdust)
       my_rates->gr_Td = (double*)malloc(NTd * Nmom * sizeof(double));
       my_rates->gr_Size = NTd * Nmom;
       my_rates->gr_N[0] = Nmom;
       my_rates->gr_N[1] = NTd;
       my_rates->gr_dT   = dTd;
-      for(iTd = 0; iTd < NTd; iTd++)
+      for(int iTd = 0; iTd < NTd; iTd++) {
         my_rates->gr_Td[iTd] = Td0 + (double)iTd * dTd;
+      }
 
       my_rates->SN0_kpSiM      = (double*)malloc(NSN * Nmom * NTd * sizeof(double));
       my_rates->SN0_kpFeM      = (double*)malloc(NSN * Nmom * NTd * sizeof(double));
@@ -180,8 +199,11 @@ int grackle::impl::initialize_dust_yields(chemistry_data *my_chemistry,
 
       itab = 0;
       for(int iSN = 0; iSN < NSN; iSN++) {
-        for(imom = 0; imom < Nmom; imom++) {
-          for(iTd = 0; iTd < NTd; iTd++) {
+        // TODO: I'm pretty sure we want to flip the order of inner loops
+        // - while it doesn't actually effect the result this is extremely
+        //   confusing if the grain-temperature axis isn't the fast axis.
+        for(int imom = 0; imom < Nmom; imom++) {
+          for(int iTd = 0; iTd < NTd; iTd++) {
             my_rates->SN0_kpSiM     [itab] = 0.0;
             my_rates->SN0_kpFeM     [itab] = 0.0;
             my_rates->SN0_kpMg2SiO4 [itab] = 0.0;
