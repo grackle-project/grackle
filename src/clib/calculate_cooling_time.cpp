@@ -11,38 +11,30 @@
 / software.
 ************************************************************************/
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <math.h>
+#include <cstdio>
 #include "grackle.h"
-#include "grackle_macros.h"
 #include "cool_multi_time_g.h"
-#include "grackle_types.h"
 #include "internal_units.h"
-#include "phys_constants.h"
 #include "utils.h"
-
-extern chemistry_data *grackle_data;
-extern chemistry_data_storage grackle_rates;
 
 /* function prototypes */
 
-int update_UVbackground_rates(chemistry_data *my_chemistry,
-                              chemistry_data_storage *my_rates,
-                              photo_rate_storage *my_uvb_rates,
-                              code_units *my_units);
+extern "C" int update_UVbackground_rates(chemistry_data *my_chemistry,
+                                         chemistry_data_storage *my_rates,
+                                         photo_rate_storage *my_uvb_rates,
+                                         code_units *my_units);
  
-int local_calculate_cooling_time(chemistry_data *my_chemistry,
-                                 chemistry_data_storage *my_rates,
-                                 code_units *my_units,
-                                 grackle_field_data *my_fields,
-                                 gr_float *cooling_time)
+extern "C" int local_calculate_cooling_time(chemistry_data *my_chemistry,
+                                            chemistry_data_storage *my_rates,
+                                            code_units *my_units,
+                                            grackle_field_data *my_fields,
+                                            gr_float *cooling_time)
 {
  
   /* Return if this doesn't concern us. */
 
   if (!my_chemistry->use_grackle)
-    return SUCCESS;
+    return GR_SUCCESS;
 
   /* Update UV background rates. */
   photo_rate_storage my_uvb_rates;
@@ -56,9 +48,9 @@ int local_calculate_cooling_time(chemistry_data *my_chemistry,
 
   if (my_chemistry->UVbackground == 1) {
     if (update_UVbackground_rates(my_chemistry, my_rates,
-                                  &my_uvb_rates, my_units) == FAIL) {
-      fprintf(stderr, "Error in update_UVbackground_rates.\n");
-      return FAIL;
+                                  &my_uvb_rates, my_units) != GR_SUCCESS) {
+      std::fprintf(stderr, "Error in update_UVbackground_rates.\n");
+      return GR_FAIL;
     }
   }
   else {
@@ -81,17 +73,14 @@ int local_calculate_cooling_time(chemistry_data *my_chemistry,
   }
 
   /* Check for a metal field. */
-
-  int metal_field_present = TRUE;
-  if (my_fields->metal_density == NULL)
-    metal_field_present = FALSE;
+  int metal_field_present = (my_fields->metal_density != NULL) ? TRUE : FALSE;
 
   InternalGrUnits internalu = new_internalu_(my_units);
 
   /* Error checking for H2 shielding approximation */
   if (self_shielding_err_check(my_chemistry, my_fields,
-                               "local_calculate_temperature") == FAIL) {
-    return FAIL;
+                               "local_calculate_temperature") != GR_SUCCESS) {
+    return GR_FAIL;
   }
 
   /* Solve cooling equations. */
@@ -100,17 +89,17 @@ int local_calculate_cooling_time(chemistry_data *my_chemistry,
     my_fields, my_uvb_rates
   );
  
-  return SUCCESS;
+  return GR_SUCCESS;
 }
 
-int calculate_cooling_time(code_units *my_units,
-                           grackle_field_data *my_fields,
-                           gr_float *cooling_time)
+extern "C" int calculate_cooling_time(code_units *my_units,
+                                      grackle_field_data *my_fields,
+                                      gr_float *cooling_time)
 {
   if (local_calculate_cooling_time(grackle_data, &grackle_rates, my_units,
-                                   my_fields, cooling_time) == FAIL) {
-    fprintf(stderr, "Error in local_calculate_cooling_time.\n");
-    return FAIL;
+                                   my_fields, cooling_time) != GR_SUCCESS) {
+    std::fprintf(stderr, "Error in local_calculate_cooling_time.\n");
+    return GR_FAIL;
   }
-  return SUCCESS;
+  return GR_SUCCESS;
 }
