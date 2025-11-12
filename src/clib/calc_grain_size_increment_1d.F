@@ -485,28 +485,10 @@
       real*8 drsp(in)
       real*8, parameter :: pi = pi_val
       real*8, parameter :: mh = mass_h
-!     debug
-      real*8 SN_dsp(SN0_N), SN_msp(SN0_N), dsp1
       integer iTd, iTd0
-
-!       write(*,*) SN_fsp(1)
-!       write(*,*) SN_r0sp(1,1)
-!    &           , SN_r0sp(2,1)
-!    &           , SN_r0sp(3,1)
-!     do iTd = 1, gr_N(2)
-!       iTd0 = (iTd-1)*gr_N(1)
-!       write(*,*) gr_Td(iTd)
-!    &           , SN_kp0sp(iTd0+1,1)
-!    &           , SN_kp0sp(iTd0+2,1)
-!    &           , SN_kp0sp(iTd0+3,1)
-!    &           , SN_kp0sp(iTd0+4,1)
-!     enddo
  
       do i = is+1, ie+1
          if ( itmask(i) .ne. MASK_FALSE ) then
-!!!!!!!!!!!!!
-!!!!     if( dsp(i,j,k) .gt. 1.d-15*d(i,j,k) ) then
-!!!!!!!!!!!!!
 
 ! Step 1: compute the total mass density of the current grain species
 !         that was injected (by summing the amounts injected by each
@@ -514,8 +496,6 @@
             do iSN = 1, nSN
                if(SN_fsp(iSN) .gt. 0.d0) then
                   SN_dsp0(iSN) = SN_fsp(iSN) * SN_metal(i, iSN)
-!!                write(*,*)  iSN, SN_fsp(iSN)
-!!   &                      , SN_metal(i, iSN) 
                endif
             enddo
 
@@ -664,11 +644,6 @@
                   SN_sgsp = 0.d0
                endif
                sgsp(i) = sgsp(i) + SN_nsp0(iSN) * SN_sgsp
-!!             if(iSN.eq.1)
-!!   &           write(*,*) dsp(i,j,k)/d(i,j,k)
-!!   &                  , SN_dsp0(iSN)/d(i,j,k)
-!!   &              , ssp, SN_r0sp(3, iSN), SN_r0sp(2,iSN) 
-!!   &                  , drsp(i), sgsp(i)/d(i,j,k)
             enddo
             sgsp(i) = sgsp(i) / d(i,j,k)
     
@@ -688,47 +663,10 @@
                      SN_kpsp = 0.d0
                   endif
                   alsp(iTd,i) = alsp(iTd,i) + SN_nsp0(iSN) * SN_kpsp
-!                 if(iSN.eq.1)
-!    &               write(*,*) gr_Td(iTd)
-!    &                        , SN_dsp0(iSN)/d(i,j,k)
-!    &             , (4.d0*pi/3.d0 * ssp * SN_kp0sp(iTd0+4,iSN))
-!    &             / (4.d0*pi/3.d0 * ssp * SN_r0sp(3,iSN))
                enddo
                alsp(iTd,i) = alsp(iTd,i) / d(i,j,k)
             enddo
 
-! decompose grain mass density for each SN model !!!!!!!!!!!!!!!!!!!!!!!
-!           dsp0 = 0.d0
-!           dsp1 = 0.d0
-!           do iSN = 1, nSN
-!              dsp0 = dsp0 + SN_dsp0(iSN)
-!              if( SN_fsp(iSN) .gt. 0.d0) then
-!                 SN_dsp(iSN) = 4.d0*pi/3.d0 * ssp * (
-!    &                        SN_nsp0(iSN) * SN_r0sp(3,iSN)
-!    &               + 3.d0 * SN_nsp0(iSN) * SN_r0sp(2,iSN) * drsp(i)
-!    &               + 3.d0 * SN_nsp0(iSN) * SN_r0sp(1,iSN) * drsp(i)**2
-!    &               +        SN_nsp0(iSN)                  * drsp(i)**3
-!    &               )
-!                 SN_msp(iSN) = 4.d0*pi/3.d0 * ssp * (
-!    &                        SN_r0sp(3,iSN)
-!    &               + 3.d0 * SN_r0sp(2,iSN) * drsp(i)
-!    &               + 3.d0 * SN_r0sp(1,iSN) * drsp(i)**2
-!    &               +                         drsp(i)**3
-!    &               )
-!!                if(iSN.eq.2)
-!!   &            write(*,*) iSN, (SN_dsp(iSN)/SN_msp(iSN))/SN_nsp0(iSN)
-!                 dsp1 = dsp1 + SN_dsp(iSN)
-!              endif
-!           enddo
-!           write(*,*) drsp(i), dsp1/dsp(i,j,k)
-!!!!!!!!!!!!!
-!!!!     else
-
-!!!!        sgsp  (i) = tiny8
-!!!!        alsp(:,i) = tiny8
-
-!!!!     endif
-!!!!!!!!!!!!!
 
          endif ! itmask
       enddo
