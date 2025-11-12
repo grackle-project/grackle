@@ -257,11 +257,12 @@ int setup_h2dust_grain_rates(chemistry_data* my_chemistry,
                              double kUnit) {
 
   //H2 formation on dust grains with C and S compositions
-  if (add_h2dust_C_reaction_rate(&my_rates->h2dustC, kUnit, my_chemistry)
-      != GR_SUCCESS) {
-    return GR_FAIL;
-  } else if (add_h2dust_S_reaction_rate(&my_rates->h2dustS, kUnit,
-                                        my_chemistry) != GR_SUCCESS) {
+  if (
+    (add_h2dust_C_reaction_rate(&my_rates->h2dustC, kUnit, my_chemistry)
+      != GR_SUCCESS) ||
+    (add_h2dust_S_reaction_rate(&my_rates->h2dustS, kUnit, my_chemistry)
+      != GR_SUCCESS)
+  ) {
     return GR_FAIL;
   }
 
