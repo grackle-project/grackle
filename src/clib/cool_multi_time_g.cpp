@@ -25,7 +25,6 @@
 #include "internal_types.hpp"
 #include "utils-cpp.hpp"
 
-#include "cool_multi_time_g.h"
 #include "scale_fields_g-cpp.h"
 
 #ifdef __cplusplus
@@ -38,9 +37,6 @@ void cool_multi_time_g(
   grackle_field_data* my_fields, photo_rate_storage my_uvb_rates
 )
 {
-  // shorten `grackle::impl::fortran_wrapper` to `f_wrap` within this function
-  namespace f_wrap = ::grackle::impl::fortran_wrapper;
-
   const grackle_index_helper idx_helper = build_index_helper_(my_fields);
 
   // Convert densities from comoving to 'proper'

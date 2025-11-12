@@ -13,6 +13,7 @@
 #include "grackle_macros.h" // GRACKLE_FREE
 #include "index_helper.h"
 #include "internal_types.hpp"
+#include "lookup_cool_rates1d.hpp"
 #include "utils-field.hpp"
 
 // we choose to adopt a longer, more descriptive namespace here so that the
@@ -59,7 +60,7 @@ struct MainScratchBuf {
   CollisionalRxnRateCollection kcr_buf;
   PhotoRxnRateCollection kshield_buf;
   GrainSpeciesCollection grain_growth_rates;
-  double* k13dd; // <- only used within lookup_cool_rates1d_g
+  double* k13dd; // <- only used within lookup_cool_rates1d
 };
 
 MainScratchBuf new_MainScratchBuf(void) {
@@ -393,7 +394,7 @@ inline void scratchbufs_copy_from_pack(
 /// calculate the time derivatives
 ///
 /// @param[in] dt_FIXME Specifies the timestep passed to the
-///   lookup_cool_rates1d_g function. See the C++ docstring for that function
+///   lookup_cool_rates1d function. See the docstring for that function
 ///   for more details (this needs to be revisited)
 /// @param[in] rhosp Specifies the species mass densities to use for computing
 ///   the time derivatives. This always has enough space for each species (it
@@ -484,15 +485,13 @@ void derivatives(
 
   // uses the temperature to look up the chemical rates (they are interpolated
   // with respect to log temperature from input tables)
-  f_wrap::lookup_cool_rates1d_g(
+  grackle::impl::lookup_cool_rates1d(
     pack.idx_range_1_element, pack.fwd_args.anydust,
     pack.other_scratch_buf.tgas, pack.other_scratch_buf.mmw,
     pack.other_scratch_buf.tdust, pack.other_scratch_buf.dust2gas,
     pack.main_scratch_buf.k13dd, pack.other_scratch_buf.h2dust,
-    pack.fwd_args.dom, pack.fwd_args.dx_cgs,
-    pack.fwd_args.c_ljeans, pack.other_scratch_buf.itmask,
-    &pack.local_itmask_metal, pack.fwd_args.imetal,
-    pack.other_scratch_buf.rhoH, dt_FIXME,
+    pack.fwd_args.dom, pack.fwd_args.dx_cgs, pack.fwd_args.c_ljeans,
+    pack.other_scratch_buf.itmask, &pack.local_itmask_metal, dt_FIXME,
     my_chemistry, my_rates, &pack.fields, my_uvb_rates, internalu,
     pack.main_scratch_buf.grain_growth_rates,
     pack.main_scratch_buf.grain_temperatures,

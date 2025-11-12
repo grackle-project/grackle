@@ -365,7 +365,7 @@ static void setup_generic_grid_props_(gr_interp_grid_props* grid_props,
 {
   grid_props->rank = rank;
 
-  long long data_size = 1ll ? (rank > 0) : 0ll;
+  long long data_size = (rank > 0) ? 1ll : 0ll;
   for (int i = 0; i < rank; i++) {
     const struct regular_range_ par_range = parameters[i];
 

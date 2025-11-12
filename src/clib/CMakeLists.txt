@@ -107,6 +107,7 @@ add_library(Grackle_Grackle
   # C++ Source (and Private Header Files)
   calc_tdust_3d.cpp calc_tdust_3d.h
   calc_temp_cloudy_g.cpp calc_temp_cloudy_g.h
+  ceiling_species.hpp
   cool1d_multi_g.cpp cool1d_multi_g.hpp
   cool_multi_time_g.cpp cool_multi_time_g.h
   dust_props.hpp
@@ -115,6 +116,7 @@ add_library(Grackle_Grackle
   initialize_rates.cpp initialize_rates.hpp
   initialize_metal_chemistry_rates.cpp initialize_metal_chemistry_rates.hpp
   internal_types.cpp internal_types.hpp
+  lookup_cool_rates1d.hpp
   make_consistent.cpp make_consistent.hpp
   opaque_storage.hpp
   rate_utils.cpp
