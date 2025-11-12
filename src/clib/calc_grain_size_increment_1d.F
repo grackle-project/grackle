@@ -444,7 +444,17 @@
      &        , gr_N, gr_Size, gr_dT, gr_Td, SN_kp0sp
      &            )
 
-
+!
+!  Calculates properties that are derived from the grain size increment
+!  for a single grain species.
+!
+!  NOTE: the subroutine's name should be more descriptive
+!
+!  INPUTS:
+!    ssp - the density of an individual dust grain species. At the time
+!          of writing it has units of g/cm^3
+!
+!
       implicit NONE
 
 #include "grackle_fortran_types.def"
@@ -469,6 +479,7 @@
 ! local
       integer i
       real*8 coef0, coef1, coef2, coef3
+      real*8 dsp_inject_sum
       real*8 dsp0, SN_sgsp, SN_kpsp
       real*8 SN_dsp0(SN0_N), SN_nsp0(SN0_N)
       real*8 drsp(in)
@@ -496,6 +507,10 @@
 !!!!!!!!!!!!!
 !!!!     if( dsp(i,j,k) .gt. 1.d-15*d(i,j,k) ) then
 !!!!!!!!!!!!!
+
+! Step 1: compute the total mass density of the current grain species
+!         that was injected (by summing the amounts injected by each
+!         injection pathway)
             do iSN = 1, nSN
                if(SN_fsp(iSN) .gt. 0.d0) then
                   SN_dsp0(iSN) = SN_fsp(iSN) * SN_metal(i, iSN)
@@ -504,63 +519,139 @@
                endif
             enddo
 
+! Step 2: Compute the size increment for the grain species
+!
+! Let's go into detail:
+! - todo: maybe we move most of this description into the docstring
+!   and possibly move some of it into the narrative documentation
+! - let's define some notation:
+!    - for some time t, let φ(r,t) denote the grain species's
+!      differential size distribution at time t, ρ(t) denote the grain
+!      species's mass density, and n(t) denote it number density.
+!    - we define <rᵖ>(t) as the `p`th order moment of `φ(r,t)`. In
+!      other words, <rᵖ>ⱼ = ∫ rᵖ φⱼ dr, where the integral is taken
+!      from 0 to infinity
+!    - for additional context:
+!      - φ(r,t) is normalized such that the p=0 moment is 1
+!      - n(t)*φ(r,t) specifies the number density of the grain with
+!        radii between r and r+dr
+!      - given the mass density of a single grain, ζ, the variables
+!        are related via ρ(t) = (4π/3) ζ n(t) <r³>(t).
+!    - we define Φⱼ(r) as the grain species's initial differential
+!      size distribution when distributed by injection pathway j.
+!    - for notational convenience, we define <rᵖ>ⱼ as the `p`th order
+!      moment of `Φⱼ(r)`
+!    - NOTE: we don't explicitly track φ(r,t) or Φⱼ(r), instead we
+!      track moments
+! - The underlying model assumes that all injection pathways inject
+!   the grain species at a single time t_inj.
+!   - In other words:  φ(r,t_inj) = (∑ⱼ nⱼ Φⱼ(r)) / (∑ⱼ nⱼ)
+!   - Consequently:
+!         <rᵖ>(t_inj) = (∑ⱼ nⱼ <rᵖ>ⱼ) / (∑ⱼ nⱼ)
+!         OR
+!         <rᵖ>(t_inj) = (∑ⱼ <rᵖ>ⱼ ρⱼ/<r³>ⱼ) / (∑ⱼ ρⱼ/<r³>ⱼ)
+! - Furthermore we assume that:
+!   - grains can only be created via injection (i.e. the number
+!     density of the grain species is frozen)
+!   - φ(r,t) can't be deformed. However it can be translated (which
+!     is exactly what happens when grains undergo growth).
+! - Thus, when we model growth, φ(r,t) = φ(r - δr(t), t_inj) where
+!   we call δr(t) the "size increment"
+!
+! Anybody reading this might notice that several limitations to this
+! model. This is discussed in detail in GH Issue 444 (the description
+! should be made part of the narrative docs
+
             if(igrgr .eq. 0) then
+! the model is constructed such that δr(t) = 0 if we aren't
+! modelling grain growth
 
             drsp(i) = 0.d0
 
             else
 
-!!! TEST !!!!!! TEST !!!!!! TEST !!!!!! TEST !!!!!! TEST !!!!!! TEST !!!
-!!!         dsp(i,j,k) = 3.d0 * dsp(i,j,k)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! here we calculate the current grain size increment, δr(t), using
+! conservation of grain number (i.e. grains are only created via
+! injection pathways)
+! - recall that to model growth we effectively assume that each
+!   occurrence of a grain species was injected at a single time, t_inj
+! - conservation of grain number tells us that
+!   <r³>(t) = <r³>(t_inj) * ρ(t) / ρ(t_inj),
+!   where ρ(t_inj) = ∑ⱼ ρⱼ
+! - Equation A3 of Chiaki & Wise 2019 indicates that the grain-size
+!   increment is the root of the following cubic equation
+!    [<r³>(t_inj) - <r³>(t)] + [3 * <r²>(t_inj)] * δr(t)
+!       + [3 * <r¹>(t_inj)] * δr²(t) + δr³(t) = 0
+! - Let's rewrite the expression (<r³>(t_inj) - <r³>(t)). First,
+!   let's plug in the equation from conservation of grain number:
+!     <r³>(t_inj) - <r³>(t) = <r³>(t_inj) * [ 1 - (ρ(t)/∑ⱼρⱼ)]
+!   Now, let's plug in <r³>(t_inj) = (∑ⱼρⱼ) / (∑ⱼ ρⱼ/<r³>ⱼ), which
+!   comes from the generic formula for <rᵖ>(t_inj) defined earlier:
+!     <r³>(t_inj) - <r³>(t) = [(∑ⱼρⱼ) - ρ(t)] / (∑ⱼ ρⱼ/<r³>ⱼ)
+! - If we plug this into the preceding cubic equation and multiply the
+!   resulting equation by (∑ⱼ ρⱼ/<r³>ⱼ), we get:
+!       coef0 + coef1 * δr(t) + coef2 * δr²(t) + coef3 * δr³(t) = 0
+!   where:
+!       - coef0 = (∑ⱼ ρⱼ) - ρ(t)
+!       - coef1 = ∑ⱼ 3 <r²>ⱼ ρⱼ/<r³>ⱼ
+!       - coef2 = ∑ⱼ 3 <r¹>ⱼ ρⱼ/<r³>ⱼ
+!       - coef3 = ∑ⱼ ρⱼ/<r³>ⱼ
 
-! calculate grain size increment from the conservation of mass
-
-            coef0 = 0.d0
+! Let's compute these coefficients
+            dsp_inject_sum = 0.d0
+! We'll use dsp_inject_sum to compute coef0
             coef1 = 0.d0
             coef2 = 0.d0
             coef3 = 0.d0
+
+!  Loop over each injection pathway
             do iSN = 1, nSN
                if(SN_fsp(iSN) .gt. 0.d0) then
+!  Calculate 4πζnⱼ/3 = ρⱼ/<r³>ⱼ
+!  -> recall: that ζ is the mass density of a single grain of the
+!     current grain species (i.e. it's a constant)
+!  -> TODO: its very confusing that we store the result within SN_nsp0
+!     since that variable is later reused to directly hold nⱼ
                   SN_nsp0(iSN) = SN_dsp0(iSN) / SN_r0sp(3,iSN)
-                  coef0 = coef0 +        SN_dsp0(iSN)
+
+                  dsp_inject_sum = dsp_inject_sum + SN_dsp0(iSN)
                   coef1 = coef1 + 3.d0 * SN_nsp0(iSN) * SN_r0sp(2,iSN)
                   coef2 = coef2 + 3.d0 * SN_nsp0(iSN) * SN_r0sp(1,iSN)
                   coef3 = coef3 +        SN_nsp0(iSN)
                endif
             enddo
-!!          write(*,*) coef0, dsp(i,j,k)
-            coef0 = coef0 - dsp(i,j,k)
-!!          write(*,*) coef0, coef1, coef2, coef3
 
+            coef0 = dsp_inject_sum - dsp(i,j,k)
+
+!  Let's actually solve for the δr(t), the root of the cubic equation
+!  - before we do that, we divide both sides of the equation by the
+!    value of coef3. This ensures that the rescaled value of coef3 is
+!    exactly 1 (a requirement of the solve_cubic_equation routine)
+!  - todo: consider not modifying the variables in-place or performing
+!    this operation within the solve_cubic_equation
             coef0 = coef0 / coef3
             coef1 = coef1 / coef3
             coef2 = coef2 / coef3
-            
+
             call solve_cubic_equation(coef2, coef1, coef0, drsp(i))
-!!          write(*,*) coef0, coef1, coef2, coef3, drsp(i)
 
             drsp(i) = max(drsp(i), 0.d0)
 
             endif
 
 
-! calculate number density (code_density / g)
+! Step 3: calculate number density (code_density / g)
 
             do iSN = 1, nSN
                if(SN_fsp(iSN) .gt. 0.d0) then
                   SN_nsp0(iSN) = SN_dsp0(iSN)
      &             / (4.d0*pi/3.d0 * ssp * SN_r0sp(3,iSN))
-!                 if(iSN.eq.1)
-!    &              write(*,*) 'aa', SN_dsp0(iSN), dsp(i,j,k)
-!    &             , (4.d0*pi/3.d0 * ssp * SN_r0sp(3,iSN))
-!    &                      , SN_nsp0(iSN)
                else
                   SN_nsp0(iSN) = 0.d0
                endif
             enddo
 
-! calculate geometrical cross-section per unit gas mass
+! Step 4: calculate geometrical cross-section per unit gas mass
             sgsp(i) = 0.d0
             do iSN = 1, nSN
                if( SN_fsp(iSN) .gt. 0.d0) then
@@ -581,7 +672,7 @@
             enddo
             sgsp(i) = sgsp(i) / d(i,j,k)
     
-! calculate optical cross-section per unit gas mass
+! Step 5: calculate optical cross-section per unit gas mass
             do iTd = 1, gr_N(2)
                iTd0 = (iTd-1)*gr_N(1)
                alsp(iTd,i) = 0.d0
