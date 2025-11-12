@@ -40,6 +40,19 @@ if (NOT CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
   set(GRACKLE_IS_TOP_LEVEL OFF)
 endif()
 
+if (GRACKLE_IS_TOP_LEVEL AND ("${CMAKE_EXPORT_COMPILE_COMMANDS}" STREQUAL ""))
+  # aside: replacing the string-comparison with a check for whether
+  #        CMAKE_EXPORT_COMPILE_COMMANDS exists doesn't seem work properly
+  set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
+endif()
+
+# it's really important that the following is called at the directory-level
+# BEFORE we declare any targets (and after we make sure GRACKLE_IS_TOP_LEVEL
+# and CMAKE_EXPORT_COMPILE_COMMANDS are both defined)
+include(PrepareClangTidy)
+convenience_prepare_clang_tidy()
+
+
 # Project-Wide Configuration
 # --------------------------
 
