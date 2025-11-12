@@ -30,7 +30,7 @@
 #include "visitor/common.hpp"
 #include "visitor/memory.hpp"
 
-#include "cool1d_multi_g.hpp"
+#include "ceiling_species.hpp"
 #include "scale_fields_g-cpp.h"
 #include "solve_rate_cool_g-cpp.h"
 
@@ -673,7 +673,7 @@ int solve_rate_cool_g(
     grackle::impl::scale_fields_g(imetal, factor, my_chemistry, my_fields);
   }
 
-  f_wrap::ceiling_species_g(imetal, my_chemistry, my_fields);
+  grackle::impl::ceiling_species(imetal, my_chemistry, my_fields);
 
   const grackle_index_helper idx_helper = build_index_helper_(my_fields);
 
