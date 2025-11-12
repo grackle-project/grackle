@@ -115,6 +115,7 @@ add_library(Grackle_Grackle
   initialize_rates.cpp initialize_rates.hpp
   initialize_metal_chemistry_rates.cpp initialize_metal_chemistry_rates.hpp
   internal_types.cpp internal_types.hpp
+  lookup_cool_rates1d.hpp
   opaque_storage.hpp
   rate_utils.cpp
   scale_fields.cpp scale_fields.hpp
