@@ -88,6 +88,7 @@ add_library(Grackle_Grackle
   calculate_pressure.c
   calculate_temperature.c
   dynamic_api.c
+  FrozenKeyIdxBiMap.c FrozenKeyIdxBiMap.h FrozenKeyIdxBiMap_details.h
   grackle_units.c
   index_helper.c
   initialize_cloudy_data.c initialize_cloudy_data.h
