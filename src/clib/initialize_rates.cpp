@@ -52,6 +52,7 @@
 #include "LUT.hpp" // CollisionalRxnLUT
 #include "opaque_storage.hpp" // gr_opaque_storage
 #include "phys_constants.h"
+#include "status_reporting.h"
 
 // this function pointer type is defined inside an extern "C" block because all
 // described functions have C linkage
@@ -249,32 +250,97 @@ int add_h2dust_S_reaction_rate(double **rate_ptr, double units, chemistry_data *
     return GR_SUCCESS;
 }
 
+/// sets up the species-specific h2dust grain coefficient grids
+int setup_h2dust_grain_rates(chemistry_data* my_chemistry,
+                             chemistry_data_storage *my_rates,
+                             double kUnit) {
+
+  //H2 formation on dust grains with C and S compositions
+  if (
+    (add_h2dust_C_reaction_rate(&my_rates->h2dustC, kUnit, my_chemistry)
+      != GR_SUCCESS) ||
+    (add_h2dust_S_reaction_rate(&my_rates->h2dustS, kUnit, my_chemistry)
+      != GR_SUCCESS)
+  ) {
+    return GR_FAIL;
+  }
+
+  // initialize my_rates->opaque_storage->h2dust_grain_interp_props
+  long long n_Tdust = (long long)(my_chemistry->NumberOfDustTemperatureBins);
+  long long n_Tgas = (long long)(my_chemistry->NumberOfTemperatureBins);
+  double* d_Td = (double*)malloc(n_Tdust * sizeof(double));
+  double* d_Tg = (double*)malloc(n_Tgas * sizeof(double));
+
+  const double logtem_start = std::log(my_chemistry->TemperatureStart);
+  const double dlogtem = (std::log(my_chemistry->TemperatureEnd) -
+                          std::log(my_chemistry->TemperatureStart)) /
+                         (double)(my_chemistry->NumberOfTemperatureBins - 1);
+
+  const double logTdust_start = std::log(my_chemistry->DustTemperatureStart);
+  const double dlogTdust = (std::log(my_chemistry->DustTemperatureEnd) -
+                            std::log(my_chemistry->DustTemperatureStart)) /
+                           (double)(my_chemistry->NumberOfDustTemperatureBins - 1);
+
+  for (long long idx = 0; idx < n_Tdust; idx++) {
+    d_Td[idx] = logTdust_start + (double)idx * dlogTdust;
+  }
+  for (long long idx = 0; idx < n_Tgas; idx++) {
+    d_Tg[idx] = logtem_start + (double)idx * dlogtem;
+  }
+
+  gr_interp_grid_props* interp_props
+    = &(my_rates->opaque_storage->h2dust_grain_interp_props);
+  interp_props->rank = 2ll;
+  interp_props->dimension[0] = n_Tdust;
+  interp_props->dimension[1] = n_Tgas;
+  interp_props->parameters[0] = d_Td;
+  interp_props->parameters[1] = d_Tg;
+  interp_props->parameter_spacing[0] = dlogTdust;
+  interp_props->parameter_spacing[0] = dlogtem;
+  interp_props->data_size = n_Tdust*n_Tgas;
+
+  return GR_SUCCESS;
+}
+
 // Down below we define functionality to initialize the table of ordinary
 // collisional rates. If we more fully embraced C++ (and used templates rather
 // than C-style function pointers), this could all be a lot more concise.
 
+/// this is a callback function that simply counts up the number of rates that
+/// will be used from a grackle::impl::CollisionalRxnRateCollection instance
+/// during a given calculation
+///
+/// @param ctx A pointer to an unsigned int
+void tables_counter_callback(grackle::impl::KColProp /* ignored */, void* ctx) {
+  *((unsigned int*)ctx) = 1u + *((unsigned int*)ctx);
+}
+
+
 /// tracks state between calls to @ref table_init_callback
-struct TablesInitCallbackContext{
+struct TablesInitCallbackCtx{
   grackle::impl::CollisionalRxnRateCollection* tables;
+  int* used_kcol_rate_indices;
   chemistry_data* my_chemistry;
   double kunit_2bdy;
   double kunit_3bdy;
-  int counter;
+  unsigned int counter;
 };
 
 /// this function is repeatedly called once for each rate table that will be
 /// held by a grackle::impl::CollisionalRxnRateCollection instance
 ///
 /// @param rate_prop Specifies information about the current rate
-/// @param ctx A pointer to an instance of @ref TablesInitCallbackContext
-void tables_init_callback(struct grackle::impl::KColProp rate_prop, void* ctx) {
-  TablesInitCallbackContext& my_ctx = *((TablesInitCallbackContext*)ctx);
+/// @param ctx A pointer to an instance of @ref TablesInitCallbackCtx
+void tables_init_callback(struct grackle::impl::KColProp rate_prop,
+                          void* ctx) {
+  TablesInitCallbackCtx& my_ctx = *((TablesInitCallbackCtx*)ctx);
   init_preallocated_rate(
     my_ctx.tables->data[rate_prop.kcol_lut_index],
     rate_prop.fn_ptr,
     (rate_prop.is_2body) ? my_ctx.kunit_2bdy : my_ctx.kunit_3bdy,
     my_ctx.my_chemistry
   );
+  my_ctx.used_kcol_rate_indices[my_ctx.counter] = rate_prop.kcol_lut_index;
   my_ctx.counter++;
 }
 
@@ -292,15 +358,29 @@ int init_kcol_rate_tables(
   *tables = grackle::impl::new_CollisionalRxnRateCollection(
     my_chemistry->NumberOfTemperatureBins);
 
+  // count up the number of rates & allocate used_kcol_rate_indices
+  unsigned int n_kcol_rate_indices = 0;
+  grackle::impl::visit_rate_props(my_chemistry, &tables_counter_callback,
+                                  (void*)(&n_kcol_rate_indices));
+  if (n_kcol_rate_indices > (unsigned int)CollisionalRxnLUT::NUM_ENTRIES) {
+    GRIMPL_ERROR("something went very wrong when counting up rates");
+  } else if (n_kcol_rate_indices == 0) {
+    return GrPrintAndReturnErr("this logic shouldn't be executed in a config "
+                               "with 0 \"ordinary\" collisional rxn rates");
+  }
+  int* used_kcol_rate_indices = new int[n_kcol_rate_indices];
+
   // now its time to initialize the storage
-  TablesInitCallbackContext ctx{
-    tables, my_chemistry, kunit_2bdy, kunit_3bdy, 0
+  TablesInitCallbackCtx ctx{
+    tables, used_kcol_rate_indices, my_chemistry, kunit_2bdy, kunit_3bdy, 0
   };
   grackle::impl::visit_rate_props(my_chemistry, &tables_init_callback,
                                   (void*)(&ctx));
 
   // wrap things up!
   opaque_storage->kcol_rate_tables = tables;
+  opaque_storage->used_kcol_rate_indices = used_kcol_rate_indices;
+  opaque_storage->n_kcol_rate_indices = (int)n_kcol_rate_indices;
   return GR_SUCCESS;
 }
 
@@ -534,9 +614,8 @@ int grackle::impl::initialize_rates(
         //(Equation 9, Wolfire et al., 1995)
         add_reaction_rate(&my_rates->regr, regr_rate, coolingUnits, my_chemistry);
 
-        //H2 formation on dust grains with C and S compositions
-        add_h2dust_C_reaction_rate(&my_rates->h2dustC, kUnit, my_chemistry);
-        add_h2dust_S_reaction_rate(&my_rates->h2dustS, kUnit, my_chemistry);
+        // set up the species-specific h2dust grain coefficient grids
+        setup_h2dust_grain_rates(my_chemistry, my_rates, kUnit);
 
         //Heating of dust by interstellar radiation field, with an arbitrary grain size distribution
         add_scalar_reaction_rate(&my_rates->gamma_isrf2, gamma_isrf2_rate, coolingUnits, my_chemistry);
