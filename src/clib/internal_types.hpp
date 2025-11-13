@@ -440,6 +440,14 @@ void drop_SpeciesCollection(SpeciesCollection*);
 /// @note
 /// This is something we may want to reuse. If we are willing to embrace C++,
 /// then we may want to use templates
+///
+/// @important
+/// In the near-term to mid-term, we want to refactor to move away from using
+/// @ref OnlyGrainSpLUT and instead start relying upon the order of grain
+/// species tracked by @ref grackle::impl::GrainSpeciesInfo (at the moment
+/// grains have the same order). This is possible because every block of logic
+/// using this struct applies the same logic to each grain species (in other
+/// words, the logic can be replaced with a for-loop over the grain species)
 struct GrainSpeciesCollection {
   double* data[OnlyGrainSpLUT::NUM_ENTRIES];
 };

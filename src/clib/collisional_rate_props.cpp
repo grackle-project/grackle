@@ -588,6 +588,13 @@ int grackle::impl::visit_rate_props(const chemistry_data* my_chemistry,
     cb(grimpl::KColProp{CollisionalRxnLUT::k4, &k4_rate, true}, ctx);
     cb(grimpl::KColProp{CollisionalRxnLUT::k5, &k5_rate, true}, ctx);
     cb(grimpl::KColProp{CollisionalRxnLUT::k6, &k6_rate, true}, ctx);
+
+    //--------New H Ionization Rates--------
+    cb(grimpl::KColProp{CollisionalRxnLUT::k57, &k57_rate, true}, ctx);
+    cb(grimpl::KColProp{CollisionalRxnLUT::k58, &k58_rate, true}, ctx);
+  }
+
+  if (my_chemistry->primordial_chemistry > 1) {
     cb(grimpl::KColProp{CollisionalRxnLUT::k7, &k7_rate, true}, ctx);
     cb(grimpl::KColProp{CollisionalRxnLUT::k8, &k8_rate, true}, ctx);
     cb(grimpl::KColProp{CollisionalRxnLUT::k9, &k9_rate, true}, ctx);
@@ -601,7 +608,6 @@ int grackle::impl::visit_rate_props(const chemistry_data* my_chemistry,
     cb(grimpl::KColProp{CollisionalRxnLUT::k18, &k18_rate, true}, ctx);
     cb(grimpl::KColProp{CollisionalRxnLUT::k19, &k19_rate, true}, ctx);
     cb(grimpl::KColProp{CollisionalRxnLUT::k20, &k20_rate, true}, ctx);
-    cb(grimpl::KColProp{CollisionalRxnLUT::k23, &k23_rate, true}, ctx);
 
     //--------Calculate 3-body H2 rate--------
 
@@ -615,7 +621,12 @@ int grackle::impl::visit_rate_props(const chemistry_data* my_chemistry,
     cb(grimpl::KColProp{CollisionalRxnLUT::k21, &k21_rate, false}, ctx);
     cb(grimpl::KColProp{CollisionalRxnLUT::k22, &k22_rate, false}, ctx);
 
-    //--------Deuterium Rates--------
+    cb(grimpl::KColProp{CollisionalRxnLUT::k23, &k23_rate, true}, ctx);
+
+    // todo: cleanup handling of k20, k21, & k23 (they're never used)
+  }
+
+  if (my_chemistry->primordial_chemistry > 2) {  // Deuterium Rates
     cb(grimpl::KColProp{CollisionalRxnLUT::k50, &k50_rate, true}, ctx);
     cb(grimpl::KColProp{CollisionalRxnLUT::k51, &k51_rate, true}, ctx);
     cb(grimpl::KColProp{CollisionalRxnLUT::k52, &k52_rate, true}, ctx);
@@ -623,12 +634,9 @@ int grackle::impl::visit_rate_props(const chemistry_data* my_chemistry,
     cb(grimpl::KColProp{CollisionalRxnLUT::k54, &k54_rate, true}, ctx);
     cb(grimpl::KColProp{CollisionalRxnLUT::k55, &k55_rate, true}, ctx);
     cb(grimpl::KColProp{CollisionalRxnLUT::k56, &k56_rate, true}, ctx);
+  }
 
-    //--------New H Ionization Rates--------
-    cb(grimpl::KColProp{CollisionalRxnLUT::k57, &k57_rate, true}, ctx);
-    cb(grimpl::KColProp{CollisionalRxnLUT::k58, &k58_rate, true}, ctx);
-
-    // primordial_chem > 3:
+  if (my_chemistry->primordial_chemistry > 3) {
     cb(grimpl::KColProp{CollisionalRxnLUT::k125, &k125_rate_, true}, ctx);
     cb(grimpl::KColProp{CollisionalRxnLUT::k129, &k129_rate_, true}, ctx);
     cb(grimpl::KColProp{CollisionalRxnLUT::k130, &k130_rate_, true}, ctx);
@@ -646,8 +654,12 @@ int grackle::impl::visit_rate_props(const chemistry_data* my_chemistry,
     cb(grimpl::KColProp{CollisionalRxnLUT::k151, &k151_rate_, true}, ctx);
     cb(grimpl::KColProp{CollisionalRxnLUT::k152, &k152_rate_, true}, ctx);
     cb(grimpl::KColProp{CollisionalRxnLUT::k153, &k153_rate_, true}, ctx);
+  }
 
-    // primordial_chem > 3 && metal_chemistry == 1
+  if (my_chemistry->metal_chemistry == 1) {
+    // TODO: at the time of writing, there is an implicit assumption that
+    //       primordial_chemistry must be 4. If that continues to be a
+    //       requirement, we should make sure it is clearly enforced!
     cb(grimpl::KColProp{CollisionalRxnLUT::kz15, &kz15_rate_, true}, ctx);
     cb(grimpl::KColProp{CollisionalRxnLUT::kz16, &kz16_rate_, true}, ctx);
     cb(grimpl::KColProp{CollisionalRxnLUT::kz17, &kz17_rate_, true}, ctx);
