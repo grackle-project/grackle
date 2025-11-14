@@ -632,6 +632,7 @@
             enddo
 
 ! Step 4: calculate geometrical cross-section per unit gas mass
+! -> units of cm^2/g
             sgsp(i) = 0.d0
             do iSN = 1, nSN
                if( SN_fsp(iSN) .gt. 0.d0) then
@@ -647,7 +648,14 @@
             enddo
             sgsp(i) = sgsp(i) / d(i,j,k)
     
-! Step 5: calculate optical cross-section per unit gas mass
+! Step 5: calculate optical opacity related quantities
+! -> we are effectively constructing a 1d table of values, at various
+!    possible grain temperature for each injection pathway (in other
+!    words, its a 2D table)
+! -> I'm pretty sure that the values we are the opacity (per unit gas
+!    mass)
+! -> I'm pretty confident that the units are independent of code units
+!    (I think the units are cm^2/g)
             do iTd = 1, gr_N(2)
                iTd0 = (iTd-1)*gr_N(1)
                alsp(iTd,i) = 0.d0
