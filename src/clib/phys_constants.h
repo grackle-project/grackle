@@ -122,6 +122,11 @@
  *     are hardcoded based on the values currently held by these constants.
  */
 
+// these constants are give the intrinsic density of an individual grain for
+// each grain species in units of g/cm^3.
+// - Equation A1 of Chiaki & Wise 2019 represents these quantities using the
+//   zeta_i variable. Equation 2 of Chiaki+15 denotes the variable as s_i
+
 #define sSiM      2.34118e0
 #define sFeM      7.95995e0
 #define sMg2SiO4  3.22133e0
