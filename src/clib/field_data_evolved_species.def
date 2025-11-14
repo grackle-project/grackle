@@ -1,0 +1,94 @@
+/***********************************************************************
+/
+/ this file holds a list with an entry for each member of the
+/ grackle_field_data struct that is intended to hold field data for a
+/ species that grackle dynamically evolves.
+/
+/ This list is intended to be used with X-Macros in *.c files (to reduce
+/ the amount of code required to interact with these fields)
+/
+/ Currently, we just specify the name of each species.
+/  - The corresponding entry in the grackle_field_data struct has an
+/    "_density" suffix
+/  - In the future, we will probably add other metadata such as the kind
+/    of species (e.g. primordial, metal, dust-grain, etc) and a description
+/    of the context when we expect the field to be used.
+/
+/ Copyright (c) 2013, Enzo/Grackle Development Team.
+/
+/ Distributed under the terms of the Enzo Public Licence.
+/
+/ The full license is in the file LICENSE, distributed with this
+/ software.
+************************************************************************/
+
+  // primordial_chemistry = 1
+ENTRY(e) // free-electrons
+ENTRY(HI)
+ENTRY(HII)
+ENTRY(HeI)
+ENTRY(HeII)
+ENTRY(HeIII)
+
+  // primordial_chemistry = 2
+ENTRY(HM)
+ENTRY(H2I)
+ENTRY(H2II)
+
+  // primordial_chemistry = 3
+ENTRY(DI)
+ENTRY(DII)
+ENTRY(HDI)
+
+  // primordial_chemistry = 4
+ENTRY(DM)
+ENTRY(HDII)
+ENTRY(HeHII)
+
+  // metal_chemistry = 1
+ENTRY(CI)
+ENTRY(CII)
+ENTRY(CO)
+ENTRY(CO2)
+ENTRY(OI)
+ENTRY(OH)
+ENTRY(H2O)
+ENTRY(O2)
+ENTRY(SiI)
+ENTRY(SiOI)
+ENTRY(SiO2I)
+ENTRY(CH)
+ENTRY(CH2)
+ENTRY(COII)
+ENTRY(OII)
+ENTRY(OHII)
+ENTRY(H2OII)
+ENTRY(H3OII)
+ENTRY(O2II)
+
+  // dust_species = 1
+ENTRY(Mg)
+
+  // dust_species = 2
+ENTRY(Al)
+ENTRY(S)
+ENTRY(Fe)
+
+  // dust_species = 1
+ENTRY(MgSiO3_dust) // enstatite
+ENTRY(AC_dust) // amorphous carbon
+
+  // dust_species = 2
+ENTRY(SiM_dust) // metallic silicon
+ENTRY(FeM_dust) // metallic iron
+ENTRY(Mg2SiO4_dust) // forsterite
+ENTRY(Fe3O4_dust) // magnetite
+ENTRY(SiO2_dust) // silica
+ENTRY(MgO_dust) // magnesia
+ENTRY(FeS_dust) // troilite
+ENTRY(Al2O3_dust) // alumina
+
+  // dust_species = 3
+ENTRY(ref_org_dust) // refractory organics
+ENTRY(vol_org_dust) // volatile organics
+ENTRY(H2O_ice_dust) // water ice

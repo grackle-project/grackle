@@ -343,7 +343,7 @@ class APIConventionTest : public testing::TestWithParam<int> {
     }
   }
 
-  ~APIConventionTest() {
+  void TearDown() override {
     cleanup_grackle_conditions(this->pack_);
   }
 

@@ -53,6 +53,7 @@ Grackle Documentation
    Testing.rst
    Conduct.rst
    Contributing.rst
+   CodeFormatting.rst
 
 .. toctree::
    :caption: Useful links
