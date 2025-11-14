@@ -395,6 +395,8 @@ extern "C" int local_initialize_chemistry_data(chemistry_data *my_chemistry,
   // perform some basic allocations
   my_rates->opaque_storage = new gr_opaque_storage;
   my_rates->opaque_storage->kcol_rate_tables = nullptr;
+  my_rates->opaque_storage->used_kcol_rate_indices = nullptr;
+  my_rates->opaque_storage->n_kcol_rate_indices = 0;
 
   double co_length_units, co_density_units;
   if (my_units->comoving_coordinates == TRUE) {
@@ -626,6 +628,7 @@ extern "C" int local_free_chemistry_data(chemistry_data *my_chemistry,
     drop_CollisionalRxnRateCollection(my_rates->opaque_storage->kcol_rate_tables);
     delete my_rates->opaque_storage->kcol_rate_tables;
   }
+  delete[] my_rates->opaque_storage->used_kcol_rate_indices;
   delete my_rates->opaque_storage;
   my_rates->opaque_storage = nullptr;
 

@@ -52,6 +52,7 @@
 #include "LUT.hpp" // CollisionalRxnLUT
 #include "opaque_storage.hpp" // gr_opaque_storage
 #include "phys_constants.h"
+#include "status_reporting.h"
 
 // this function pointer type is defined inside an extern "C" block because all
 // described functions have C linkage
@@ -253,28 +254,41 @@ int add_h2dust_S_reaction_rate(double **rate_ptr, double units, chemistry_data *
 // collisional rates. If we more fully embraced C++ (and used templates rather
 // than C-style function pointers), this could all be a lot more concise.
 
+/// this is a callback function that simply counts up the number of rates that
+/// will be used from a grackle::impl::CollisionalRxnRateCollection instance
+/// during a given calculation
+///
+/// @param ctx A pointer to an unsigned int
+void tables_counter_callback(grackle::impl::KColProp /* ignored */, void* ctx) {
+  *((unsigned int*)ctx) = 1u + *((unsigned int*)ctx);
+}
+
+
 /// tracks state between calls to @ref table_init_callback
-struct TablesInitCallbackContext{
+struct TablesInitCallbackCtx{
   grackle::impl::CollisionalRxnRateCollection* tables;
+  int* used_kcol_rate_indices;
   chemistry_data* my_chemistry;
   double kunit_2bdy;
   double kunit_3bdy;
-  int counter;
+  unsigned int counter;
 };
 
 /// this function is repeatedly called once for each rate table that will be
 /// held by a grackle::impl::CollisionalRxnRateCollection instance
 ///
 /// @param rate_prop Specifies information about the current rate
-/// @param ctx A pointer to an instance of @ref TablesInitCallbackContext
-void tables_init_callback(struct grackle::impl::KColProp rate_prop, void* ctx) {
-  TablesInitCallbackContext& my_ctx = *((TablesInitCallbackContext*)ctx);
+/// @param ctx A pointer to an instance of @ref TablesInitCallbackCtx
+void tables_init_callback(struct grackle::impl::KColProp rate_prop,
+                          void* ctx) {
+  TablesInitCallbackCtx& my_ctx = *((TablesInitCallbackCtx*)ctx);
   init_preallocated_rate(
     my_ctx.tables->data[rate_prop.kcol_lut_index],
     rate_prop.fn_ptr,
     (rate_prop.is_2body) ? my_ctx.kunit_2bdy : my_ctx.kunit_3bdy,
     my_ctx.my_chemistry
   );
+  my_ctx.used_kcol_rate_indices[my_ctx.counter] = rate_prop.kcol_lut_index;
   my_ctx.counter++;
 }
 
@@ -292,15 +306,29 @@ int init_kcol_rate_tables(
   *tables = grackle::impl::new_CollisionalRxnRateCollection(
     my_chemistry->NumberOfTemperatureBins);
 
+  // count up the number of rates & allocate used_kcol_rate_indices
+  unsigned int n_kcol_rate_indices = 0;
+  grackle::impl::visit_rate_props(my_chemistry, &tables_counter_callback,
+                                  (void*)(&n_kcol_rate_indices));
+  if (n_kcol_rate_indices > (unsigned int)CollisionalRxnLUT::NUM_ENTRIES) {
+    GRIMPL_ERROR("something went very wrong when counting up rates");
+  } else if (n_kcol_rate_indices == 0) {
+    return GrPrintAndReturnErr("this logic shouldn't be executed in a config "
+                               "with 0 \"ordinary\" collisional rxn rates");
+  }
+  int* used_kcol_rate_indices = new int[n_kcol_rate_indices];
+
   // now its time to initialize the storage
-  TablesInitCallbackContext ctx{
-    tables, my_chemistry, kunit_2bdy, kunit_3bdy, 0
+  TablesInitCallbackCtx ctx{
+    tables, used_kcol_rate_indices, my_chemistry, kunit_2bdy, kunit_3bdy, 0
   };
   grackle::impl::visit_rate_props(my_chemistry, &tables_init_callback,
                                   (void*)(&ctx));
 
   // wrap things up!
   opaque_storage->kcol_rate_tables = tables;
+  opaque_storage->used_kcol_rate_indices = used_kcol_rate_indices;
+  opaque_storage->n_kcol_rate_indices = (int)n_kcol_rate_indices;
   return GR_SUCCESS;
 }
 
