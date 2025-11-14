@@ -24,6 +24,7 @@
 #include "internal_types.hpp"
 #include "internal_units.h"
 #include "lookup_cool_rates1d.hpp"
+#include "make_consistent.hpp"
 #include "opaque_storage.hpp"
 #include "step_rate_newton_raphson.hpp"
 #include "utils-cpp.hpp"
@@ -996,7 +997,7 @@ int solve_rate_cool_g(
 
     // Correct the species to ensure consistency (i.e. type conservation)
 
-    f_wrap::make_consistent_g(imetal, dom, my_chemistry, my_rates, my_fields);
+    grackle::impl::make_consistent(imetal, dom, my_chemistry, my_rates, my_fields);
 
   }
 
