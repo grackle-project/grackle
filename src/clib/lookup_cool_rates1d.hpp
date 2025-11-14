@@ -277,6 +277,432 @@ inline void interpolate_collisional_rxn_rates_(
   }
 }
 
+/// adjust the rate of neutral H2 photodissoication by modelling self-shielding
+inline void model_H2I_dissociation_shielding(
+    grackle::impl::PhotoRxnRateCollection kshield_buf, IndexRange idx_range,
+    const double* tgas1d, const double* mmw, double dom, double dx_cgs,
+    double c_ljeans, const gr_mask_type* itmask, chemistry_data* my_chemistry,
+    grackle_field_data* my_fields, photo_rate_storage my_uvb_rates,
+    InternalGrUnits internalu) {
+  if (my_chemistry->primordial_chemistry <= 1) {
+    return;
+  }
+
+  // Construct views of fields referenced in several parts of this function.
+  grackle::impl::View<const gr_float***> d(
+      my_fields->density, my_fields->grid_dimension[0],
+      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  grackle::impl::View<const gr_float***> HI(
+      my_fields->HI_density, my_fields->grid_dimension[0],
+      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  grackle::impl::View<const gr_float***> H2I(
+      my_fields->H2I_density, my_fields->grid_dimension[0],
+      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  grackle::impl::View<const gr_float***> H2II(
+      my_fields->H2II_density, my_fields->grid_dimension[0],
+      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+
+  grackle::impl::View<const gr_float***> kdissH2I;
+  if (my_chemistry->use_radiative_transfer == 1) {
+    kdissH2I = grackle::impl::View<const gr_float***>(
+        my_fields->RT_H2_dissociation_rate, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  }
+
+  // If radiative transfer for LW photons have been already solved in
+  // your hydro code, add kdissH2I later
+  if (my_chemistry->use_radiative_transfer == 0 ||
+      my_chemistry->radiative_transfer_use_H2_shielding == 1) {
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+      if (itmask[i] != MASK_FALSE) {
+        kshield_buf.k31[i] = my_uvb_rates.k31;
+      }
+    }
+  } else {
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+      if (itmask[i] != MASK_FALSE) {
+        kshield_buf.k31[i] =
+            my_uvb_rates.k31 + kdissH2I(i, idx_range.j, idx_range.k);
+      }
+    }
+  }
+
+  if (my_chemistry->H2_self_shielding > 0) {
+    // conditionally construct a view
+    grackle::impl::View<const gr_float***> xH2shield;
+    if (my_chemistry->H2_self_shielding == 2) {
+      xH2shield = grackle::impl::View<const gr_float***>(
+          my_fields->H2_self_shielding_length, my_fields->grid_dimension[0],
+          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    }
+
+    // now compute the self-shielding
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+      if (itmask[i] != MASK_FALSE) {
+        double l_H2shield;
+        // Calculate a Sobolev-like length assuming a 3D grid.
+        if (my_chemistry->H2_self_shielding == 1) {
+          int j = idx_range.j;
+          int k = idx_range.k;
+          double divrhoa[6] = {
+              d(i + 1, j, k) - d(i, j, k), d(i - 1, j, k) - d(i, j, k),
+              d(i, j + 1, k) - d(i, j, k), d(i, j - 1, k) - d(i, j, k),
+              d(i, j, k + 1) - d(i, j, k), d(i, j, k - 1) - d(i, j, k)};
+          double divrho = tiny_fortran_val;
+          // Exclude directions with (drho/ds > 0)
+          for (int n1 = 0; n1 < 6; n1++) {
+            if (divrhoa[n1] < 0.) {
+              divrho = divrho + divrhoa[n1];
+            }
+          }
+          // (rho / divrho) is the Sobolev-like length in cell widths
+          l_H2shield = std::fmin(dx_cgs * d(i, idx_range.j, idx_range.k) /
+                                     (2. * std::fabs(divrho)),
+                                 internalu.xbase1);
+
+          // User-supplied length-scale field.
+        } else if (my_chemistry->H2_self_shielding == 2) {
+          l_H2shield = xH2shield(i, idx_range.j, idx_range.k) * internalu.uxyz;
+
+          // Jeans Length
+        } else if (my_chemistry->H2_self_shielding == 3) {
+          l_H2shield =
+              c_ljeans *
+              std::sqrt(tgas1d[i] / (d(i, idx_range.j, idx_range.k) * mmw[i]));
+
+        } else {
+          l_H2shield = (gr_float)(0.);
+        }
+
+        double N_H2 = dom * H2I(i, idx_range.j, idx_range.k) * l_H2shield;
+
+        // update: self-shielding following Wolcott-Green & Haiman (2019)
+        // range of validity: T=100-8000 K, n<=1e7 cm^-3
+
+        double tgas_touse = grackle::impl::clamp(tgas1d[i], 1e2, 8e3);
+        double ngas_touse =
+            std::fmin(d(i, idx_range.j, idx_range.k) * dom / mmw[i], 1e7);
+
+        double aWG2019 = (0.8711 * std::log10(tgas_touse) - 1.928) *
+                             std::exp(-0.2856 * std::log10(ngas_touse)) +
+                         (-0.9639 * std::log10(tgas_touse) + 3.892);
+
+        double x = 2.0e-15 * N_H2;
+        double b_doppler =
+            1e-5 * std::sqrt(2. * kboltz_grflt * tgas1d[i] / (2. * mh_grflt));
+        double f_shield =
+            0.965 / std::pow((1. + x / b_doppler), aWG2019) +
+            0.035 * std::exp(-8.5e-4 * std::sqrt(1. + x)) / std::sqrt(1. + x);
+
+        // avoid f>1
+        f_shield = std::fmin(f_shield, 1.);
+
+        kshield_buf.k31[i] = f_shield * kshield_buf.k31[i];
+      }
+    }
+  }
+  // If radiative transfer for LW photons have been already solved in
+  // your hydro code, add kdissH2I here
+  if (my_chemistry->use_radiative_transfer == 1 &&
+      my_chemistry->radiative_transfer_use_H2_shielding == 1) {
+    // write(*,*) 'kdissH2I included'
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+      if (itmask[i] != MASK_FALSE) {
+        kshield_buf.k31[i] =
+            kshield_buf.k31[i] + kdissH2I(i, idx_range.j, idx_range.k);
+      }
+    }
+  }
+
+  // Custom H2 shielding
+  if (my_chemistry->H2_custom_shielding > 0) {
+    // create a view of the field of custom shielding values
+    grackle::impl::View<const gr_float***> f_shield_custom(
+        my_fields->H2_custom_shielding_factor, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+      if (itmask[i] != MASK_FALSE) {
+        kshield_buf.k31[i] =
+            f_shield_custom(i, idx_range.j, idx_range.k) * kshield_buf.k31[i];
+      }
+    }
+  }
+}
+
+// ShieldFactorCalculator should be treated like a "callable class." In
+// idiomatic C++:
+// - setup_shield_factor_calculator would be the constructor
+// - calc_shield_factor would be `ShieldFactorCalculator::operator()` method
+//   (which is like __call__ in python)
+
+struct ShieldFactorCalculator {
+  const double* tgas1d;
+  double k24_div_tbase1;
+  double k26_div_tbase1;
+  double crsHI;
+  double crsHeI;
+  double dom;
+  int primordial_chemistry;
+  IndexRange idx_range;
+
+  grackle::impl::View<const gr_float***> HI;
+  grackle::impl::View<const gr_float***> HII;
+  grackle::impl::View<const gr_float***> HeI;
+  grackle::impl::View<const gr_float***> HeII;
+  grackle::impl::View<const gr_float***> HeIII;
+  grackle::impl::View<const gr_float***> HM;
+  grackle::impl::View<const gr_float***> H2I;
+  grackle::impl::View<const gr_float***> H2II;
+  grackle::impl::View<const gr_float***> DI;
+  grackle::impl::View<const gr_float***> DII;
+  grackle::impl::View<const gr_float***> HDI;
+};
+
+/// construct a ShieldFactorCalculator instance
+inline ShieldFactorCalculator setup_shield_factor_calculator(
+    const double* tgas1d, IndexRange idx_range, double dom,
+    chemistry_data* my_chemistry, grackle_field_data* my_fields,
+    photo_rate_storage my_uvb_rates, InternalGrUnits internalu) {
+  ShieldFactorCalculator calc;
+  calc.tgas1d = tgas1d;
+  calc.k24_div_tbase1 = my_uvb_rates.k24 / internalu.tbase1;
+  calc.k26_div_tbase1 = my_uvb_rates.k26 / internalu.tbase1;
+  calc.crsHI = my_uvb_rates.crsHI;
+  calc.crsHeI = my_uvb_rates.crsHeI;
+  calc.dom = dom;
+  calc.primordial_chemistry = my_chemistry->primordial_chemistry;
+  calc.idx_range = idx_range;
+
+  calc.HI = grackle::impl::View<const gr_float***>(
+      my_fields->HI_density, my_fields->grid_dimension[0],
+      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  calc.HII = grackle::impl::View<const gr_float***>(
+      my_fields->HII_density, my_fields->grid_dimension[0],
+      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+
+  calc.HeI = grackle::impl::View<const gr_float***>(
+      my_fields->HeI_density, my_fields->grid_dimension[0],
+      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  calc.HeII = grackle::impl::View<const gr_float***>(
+      my_fields->HeII_density, my_fields->grid_dimension[0],
+      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  calc.HeIII = grackle::impl::View<const gr_float***>(
+      my_fields->HeIII_density, my_fields->grid_dimension[0],
+      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+
+  if (my_chemistry->primordial_chemistry > 1) {
+    calc.HM = grackle::impl::View<const gr_float***>(
+        my_fields->HM_density, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    calc.H2I = grackle::impl::View<const gr_float***>(
+        my_fields->H2I_density, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    calc.H2II = grackle::impl::View<const gr_float***>(
+        my_fields->H2II_density, my_fields->grid_dimension[0],
+        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+
+    if (my_chemistry->primordial_chemistry > 2) {
+      calc.DI = grackle::impl::View<const gr_float***>(
+          my_fields->DI_density, my_fields->grid_dimension[0],
+          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+      calc.DII = grackle::impl::View<const gr_float***>(
+          my_fields->DII_density, my_fields->grid_dimension[0],
+          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+      calc.HDI = grackle::impl::View<const gr_float***>(
+          my_fields->HDI_density, my_fields->grid_dimension[0],
+          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+    }
+  }
+  return calc;
+}
+
+struct ShieldFactor {
+  double f_shield_H;
+  double f_shield_He;
+};
+
+inline ShieldFactor calc_shield_factor(const ShieldFactorCalculator* calc,
+                                       int i) {
+  // Compute shielding factor for H
+  double nSSh = 6.73e-3 * std::pow((calc->crsHI / 2.49e-18), (-2. / 3.)) *
+                std::pow((calc->tgas1d[i] / 1.0e4), (0.17)) *
+                std::pow((calc->k24_div_tbase1 / 1.0e-12), (2.0 / 3.0));
+
+  // Compute the total Hydrogen number density
+  double nratio = (calc->HI(i, calc->idx_range.j, calc->idx_range.k) +
+                   calc->HII(i, calc->idx_range.j, calc->idx_range.k));
+  if (calc->primordial_chemistry > 1) {
+    nratio = nratio + calc->HM(i, calc->idx_range.j, calc->idx_range.k) +
+             calc->H2I(i, calc->idx_range.j, calc->idx_range.k) +
+             calc->H2II(i, calc->idx_range.j, calc->idx_range.k);
+
+    if (calc->primordial_chemistry > 2) {
+      nratio = nratio +
+               0.5 * (calc->DI(i, calc->idx_range.j, calc->idx_range.k) +
+                      calc->DII(i, calc->idx_range.j, calc->idx_range.k)) +
+               2.0 * calc->HDI(i, calc->idx_range.j, calc->idx_range.k) / 3.0;
+    }
+  }
+
+  nratio = nratio * calc->dom / nSSh;
+
+  double f_shield_H = (0.98 * std::pow((1.0 + std::pow(nratio, 1.64)), -2.28) +
+                       0.02 * std::pow(1.0 + nratio, -0.84));
+
+  // Compute shielding factor for He
+
+  nSSh = 6.73e-3 * std::pow((calc->crsHeI / 2.49e-18), (-2. / 3.)) *
+         std::pow((calc->tgas1d[i] / 1.0e4), (0.17)) *
+         std::pow((calc->k26_div_tbase1 / 1.0e-12), (2.0 / 3.0));
+
+  nratio = 0.25 *
+           (calc->HeI(i, calc->idx_range.j, calc->idx_range.k) +
+            calc->HeII(i, calc->idx_range.j, calc->idx_range.k) +
+            calc->HeIII(i, calc->idx_range.j, calc->idx_range.k)) *
+           calc->dom / nSSh;
+
+  double f_shield_He = (0.98 * std::pow(1.0 + std::pow(nratio, 1.64), -2.28) +
+                        0.02 * std::pow(1.0 + nratio, -0.84));
+  return ShieldFactor{f_shield_H, f_shield_He};
+}
+
+/// Use self-shielding factors to adjust miscellaneous photorates
+///
+/// @note
+/// The caller should ensure that the value of `idx_range` passed to this
+/// function matches the value that was used to construct `calculator`
+inline void apply_misc_shield_factors(
+    grackle::impl::PhotoRxnRateCollection kshield_buf, IndexRange idx_range,
+    const gr_mask_type* itmask, int self_shielding_method,
+    photo_rate_storage my_uvb_rates, const ShieldFactorCalculator* calculator) {
+  if (self_shielding_method == 1) {
+    // approximate self shielding using Eq. 13 and 14 from
+    // Rahmati et. al. 2013 (MNRAS, 430, 2427-2445)
+    // to shield HI, while leaving HeI and HeII optically thin
+
+    //   Attenuate radiation rates for direct H2 ionization (15.4 eV)
+    //   using same scaling. (rate k29)
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+      if (itmask[i] != MASK_FALSE) {
+        ShieldFactor tmp = calc_shield_factor(calculator, i);
+        if (my_uvb_rates.k24 < tiny8) {
+          kshield_buf.k24[i] = 0.;
+        } else {
+          kshield_buf.k24[i] = kshield_buf.k24[i] * tmp.f_shield_H;
+        }
+
+        // Scale H2 direct ionization radiation
+        if (my_uvb_rates.k29 < tiny8) {
+          kshield_buf.k29[i] = 0.;
+        } else {
+          kshield_buf.k29[i] = kshield_buf.k29[i] * tmp.f_shield_H;
+        }
+
+        kshield_buf.k25[i] = my_uvb_rates.k25;
+        kshield_buf.k26[i] = my_uvb_rates.k26;
+      }
+    }
+
+  } else if (self_shielding_method == 2) {
+    // Better self-shielding in HI using Eq. 13 and 14 from
+    // Rahmati et. al. 2013 (MNRAS, 430, 2427-2445)
+    // approximate self shielding in HeI and HeII
+
+    //   Attenuate radiation rates for direct H2 ionization (15.4 eV)
+    //   using same scaling as HI. (rate k29)
+
+    //   Attenuate radiation rates for H2+ dissociation (30 eV)
+    //   using same scaling as HeII. (rate k28 and k30)
+
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+      if (itmask[i] != MASK_FALSE) {
+        ShieldFactor tmp = calc_shield_factor(calculator, i);
+        if (my_uvb_rates.k24 < tiny8) {
+          kshield_buf.k24[i] = 0.;
+        } else {
+          kshield_buf.k24[i] = kshield_buf.k24[i] * tmp.f_shield_H;
+        }
+
+        // Scale H2 direct ionization radiation
+        if (my_uvb_rates.k29 < tiny8) {
+          kshield_buf.k29[i] = 0.;
+        } else {
+          kshield_buf.k29[i] = kshield_buf.k29[i] * tmp.f_shield_H;
+        }
+
+        // Apply same equations to HeI (assumes HeI closely follows HI)
+
+        if (my_uvb_rates.k26 < tiny8) {
+          kshield_buf.k26[i] = 0.;
+        } else {
+          kshield_buf.k26[i] = kshield_buf.k26[i] * tmp.f_shield_He;
+        }
+
+        // Scale H2+ dissociation radiation
+        if (my_uvb_rates.k28 < tiny8) {
+          kshield_buf.k28[i] = 0.0;
+        } else {
+          kshield_buf.k28[i] = kshield_buf.k28[i] * tmp.f_shield_He;
+        }
+
+        if (my_uvb_rates.k30 < tiny8) {
+          kshield_buf.k30[i] = 0.0;
+        } else {
+          kshield_buf.k30[i] = kshield_buf.k30[i] * tmp.f_shield_He;
+        }
+
+        kshield_buf.k25[i] = my_uvb_rates.k25;
+      }
+    }
+
+  } else if (self_shielding_method == 3) {
+    // shielding using Eq. 13 and 14 from
+    // Rahmati et. al. 2013 (MNRAS, 430, 2427-2445)
+    // in HI and HeI, but ignoring HeII heating entirely
+    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
+      if (itmask[i] != MASK_FALSE) {
+        ShieldFactor tmp = calc_shield_factor(calculator, i);
+        if (my_uvb_rates.k24 < tiny8) {
+          kshield_buf.k24[i] = 0.;
+        } else {
+          kshield_buf.k24[i] = kshield_buf.k24[i] * tmp.f_shield_H;
+        }
+
+        // Scale H2 direct ionization radiation
+        if (my_uvb_rates.k29 < tiny8) {
+          kshield_buf.k29[i] = 0.;
+        } else {
+          kshield_buf.k29[i] = kshield_buf.k29[i] * tmp.f_shield_H;
+        }
+
+        // Apply same equations to HeI (assumes HeI closely follows HI)
+
+        if (my_uvb_rates.k26 < tiny8) {
+          kshield_buf.k26[i] = 0.;
+        } else {
+          kshield_buf.k26[i] = kshield_buf.k26[i] * tmp.f_shield_He;
+        }
+
+        // Scale H2+ dissociation radiation
+        if (my_uvb_rates.k28 < tiny8) {
+          kshield_buf.k28[i] = 0.0;
+        } else {
+          kshield_buf.k28[i] = kshield_buf.k28[i] * tmp.f_shield_He;
+        }
+
+        if (my_uvb_rates.k30 < tiny8) {
+          kshield_buf.k30[i] = 0.0;
+        } else {
+          kshield_buf.k30[i] = kshield_buf.k30[i] * tmp.f_shield_He;
+        }
+
+        kshield_buf.k25[i] = 0.0;
+      }
+    }
+  }
+}
+
 /// This routine uses the temperature to look up the chemical rates which are
 /// tabulated in a log table as a function of temperature.
 ///
@@ -325,51 +751,12 @@ inline void lookup_cool_rates1d(
     grackle::impl::LogTLinInterpScratchBuf logTlininterp_buf,
     grackle::impl::CollisionalRxnRateCollection kcol_buf,
     grackle::impl::PhotoRxnRateCollection kshield_buf,
-    grackle::impl::ChemHeatingRates chemheatrates_buf) {
+    grackle::impl::ChemHeatingRates chemheatrates_buf,
+    grackle::impl::InternalDustPropBuf internal_dust_prop_scratch_buf) {
   // shorten `grackle::impl::fortran_wrapper` to `f_wrap` within this function
   namespace f_wrap = ::grackle::impl::fortran_wrapper;
 
-  // Allocate temporary buffers
-  // --------------------------
-  // TODO: we should create a struct that holds pre-allocated buffers that we
-  //       reference here (to avoid heap allocations in this function)
-
-  // collection of buffers for intermediate quantities used in dust-routines
-  grackle::impl::InternalDustPropBuf internal_dust_prop_buf =
-      grackle::impl::new_InternalDustPropBuf(my_fields->grid_dimension[0],
-                                             my_rates->gr_N[1]);
-  // with some refactoring, we may be able to avoid allocating these buffers
-  std::vector<double> f_shield_H(my_fields->grid_dimension[0]);
-  std::vector<double> f_shield_He(my_fields->grid_dimension[0]);
-  // TODO: these buffers should really be pre-initialized and tracked somewhere
-  //       within my_rates (maybe in a gr_interp_grid_props instance). The fact
-  //       that we reinitialize these every single time is EXTREMELY inefficient
-  std::vector<double> d_Td(my_chemistry->NumberOfDustTemperatureBins);
-  std::vector<double> d_Tg(my_chemistry->NumberOfTemperatureBins);
-
   // Construct views of fields referenced in several parts of this function.
-  grackle::impl::View<gr_float***> d(
-      my_fields->density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> HI(
-      my_fields->HI_density, my_fields->grid_dimension[0],
-      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-
-  grackle::impl::View<gr_float***> H2I, H2II, kdissH2I;
-  if (my_chemistry->primordial_chemistry > 1) {
-    H2I = grackle::impl::View<gr_float***>(
-        my_fields->H2I_density, my_fields->grid_dimension[0],
-        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-    H2II = grackle::impl::View<gr_float***>(
-        my_fields->H2II_density, my_fields->grid_dimension[0],
-        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-
-    if (my_chemistry->use_radiative_transfer == 1) {
-      kdissH2I = grackle::impl::View<gr_float***>(
-          my_fields->RT_H2_dissociation_rate, my_fields->grid_dimension[0],
-          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-    }
-  }
 
   // Linearly Interpolate the Collisional Rxn Rates
   // ----------------------------------------------
@@ -423,42 +810,42 @@ inline void lookup_cool_rates1d(
   if ((anydust != MASK_FALSE) && (my_chemistry->dust_species > 0)) {
     f_wrap::calc_grain_size_increment_1d(dom, idx_range, itmask_metal,
                                          my_chemistry, my_rates, my_fields,
-                                         internal_dust_prop_buf);
+                                         internal_dust_prop_scratch_buf);
   }
 
   // Look-up rate for H2 formation on dust & (when relevant) grain growth rates
 
   if (anydust != MASK_FALSE) {
     // these are some legacy variables that referene allocations now tracked
-    // within internal_dust_prop_buf.
+    // within internal_dust_prop_scratch_buf.
     //
-    // TODO: directly access members of internal_dust_prop_buf (and get rid of
-    // these demporary variables)
-    double* sgSiM = internal_dust_prop_buf.grain_sigma_per_gas_mass
+    // TODO: directly access members of internal_dust_prop_scratch_buf (and get
+    // rid of these temporary variables)
+    double* sgSiM = internal_dust_prop_scratch_buf.grain_sigma_per_gas_mass
                         .data[OnlyGrainSpLUT::SiM_dust];
-    double* sgFeM = internal_dust_prop_buf.grain_sigma_per_gas_mass
+    double* sgFeM = internal_dust_prop_scratch_buf.grain_sigma_per_gas_mass
                         .data[OnlyGrainSpLUT::FeM_dust];
-    double* sgMg2SiO4 = internal_dust_prop_buf.grain_sigma_per_gas_mass
+    double* sgMg2SiO4 = internal_dust_prop_scratch_buf.grain_sigma_per_gas_mass
                             .data[OnlyGrainSpLUT::Mg2SiO4_dust];
-    double* sgMgSiO3 = internal_dust_prop_buf.grain_sigma_per_gas_mass
+    double* sgMgSiO3 = internal_dust_prop_scratch_buf.grain_sigma_per_gas_mass
                            .data[OnlyGrainSpLUT::MgSiO3_dust];
-    double* sgFe3O4 = internal_dust_prop_buf.grain_sigma_per_gas_mass
+    double* sgFe3O4 = internal_dust_prop_scratch_buf.grain_sigma_per_gas_mass
                           .data[OnlyGrainSpLUT::Fe3O4_dust];
-    double* sgAC = internal_dust_prop_buf.grain_sigma_per_gas_mass
+    double* sgAC = internal_dust_prop_scratch_buf.grain_sigma_per_gas_mass
                        .data[OnlyGrainSpLUT::AC_dust];
-    double* sgSiO2D = internal_dust_prop_buf.grain_sigma_per_gas_mass
+    double* sgSiO2D = internal_dust_prop_scratch_buf.grain_sigma_per_gas_mass
                           .data[OnlyGrainSpLUT::SiO2_dust];
-    double* sgMgO = internal_dust_prop_buf.grain_sigma_per_gas_mass
+    double* sgMgO = internal_dust_prop_scratch_buf.grain_sigma_per_gas_mass
                         .data[OnlyGrainSpLUT::MgO_dust];
-    double* sgFeS = internal_dust_prop_buf.grain_sigma_per_gas_mass
+    double* sgFeS = internal_dust_prop_scratch_buf.grain_sigma_per_gas_mass
                         .data[OnlyGrainSpLUT::FeS_dust];
-    double* sgAl2O3 = internal_dust_prop_buf.grain_sigma_per_gas_mass
+    double* sgAl2O3 = internal_dust_prop_scratch_buf.grain_sigma_per_gas_mass
                           .data[OnlyGrainSpLUT::Al2O3_dust];
-    double* sgreforg = internal_dust_prop_buf.grain_sigma_per_gas_mass
+    double* sgreforg = internal_dust_prop_scratch_buf.grain_sigma_per_gas_mass
                            .data[OnlyGrainSpLUT::ref_org_dust];
-    double* sgvolorg = internal_dust_prop_buf.grain_sigma_per_gas_mass
+    double* sgvolorg = internal_dust_prop_scratch_buf.grain_sigma_per_gas_mass
                            .data[OnlyGrainSpLUT::vol_org_dust];
-    double* sgH2Oice = internal_dust_prop_buf.grain_sigma_per_gas_mass
+    double* sgH2Oice = internal_dust_prop_scratch_buf.grain_sigma_per_gas_mass
                            .data[OnlyGrainSpLUT::H2O_ice_dust];
 
     const double logTdust_start = std::log(my_chemistry->DustTemperatureStart);
@@ -537,6 +924,10 @@ inline void lookup_cool_rates1d(
       // following condition was satisfied when my_chemistry->dust_species > 0
       // (we are just making it more explicit)
       GRIMPL_REQUIRE(my_chemistry->metal_chemistry == 1, "sanity-check!");
+
+      grackle::impl::View<const gr_float***> d(
+          my_fields->density, my_fields->grid_dimension[0],
+          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
 
       // load views of some metal species and molecular species
       grackle::impl::View<gr_float***> CI(
@@ -630,18 +1021,8 @@ inline void lookup_cool_rates1d(
       // of tabulated values
 
       // load properties of the interpolation table
-      long long d_N[2] = {
-          (long long)(my_chemistry->NumberOfDustTemperatureBins),
-          (long long)(my_chemistry->NumberOfTemperatureBins)};
-      long long d_Size = d_N[0] * d_N[1];
-      // note: it is inefficient to repeatedly reinitialize d_Td & d_Tg
-      for (int idx = 0; idx < my_chemistry->NumberOfDustTemperatureBins;
-           idx++) {
-        d_Td[idx] = logTdust_start + (double)idx * dlogTdust;
-      }
-      for (int idx = 0; idx < my_chemistry->NumberOfTemperatureBins; idx++) {
-        d_Tg[idx] = logtem_start + (double)idx * dlogtem;
-      }
+      gr_interp_grid_props& interp_props =
+          my_rates->opaque_storage->h2dust_grain_interp_props;
 
       // load the tables that we are interpolating over
       //
@@ -683,13 +1064,15 @@ inline void lookup_cool_rates1d(
 
             double logTdust = std::log(tdust[i]);
             double h2dust_silicate_coef = f_wrap::interpolate_2d_g(
-                logTdust, logTlininterp_buf.logtem[i], d_N, d_Td.data(),
-                dlogTdust, d_Tg.data(), dlogtem, d_Size,
+                logTdust, logTlininterp_buf.logtem[i], interp_props.dimension,
+                interp_props.parameters[0], dlogTdust,
+                interp_props.parameters[1], dlogtem, interp_props.data_size,
                 h2rate_silicate_coef_table);
 
             double h2AC = f_wrap::interpolate_2d_g(
-                logTdust, logTlininterp_buf.logtem[i], d_N, d_Td.data(),
-                dlogTdust, d_Tg.data(), dlogtem, d_Size,
+                logTdust, logTlininterp_buf.logtem[i], interp_props.dimension,
+                interp_props.parameters[0], dlogTdust,
+                interp_props.parameters[1], dlogtem, interp_props.data_size,
                 h2rate_carbonaceous_coef_table);
 
             h2dust[i] = h2dust_silicate_coef * sgMgSiO3[i] + h2AC * sgAC[i];
@@ -713,15 +1096,17 @@ inline void lookup_cool_rates1d(
             double logTdust = std::log(
                 grain_temperatures.data[OnlyGrainSpLUT::MgSiO3_dust][i]);
             double h2MgSiO3 = f_wrap::interpolate_2d_g(
-                logTdust, logTlininterp_buf.logtem[i], d_N, d_Td.data(),
-                dlogTdust, d_Tg.data(), dlogtem, d_Size,
+                logTdust, logTlininterp_buf.logtem[i], interp_props.dimension,
+                interp_props.parameters[0], dlogTdust,
+                interp_props.parameters[1], dlogtem, interp_props.data_size,
                 h2rate_silicate_coef_table);
 
             logTdust =
                 std::log(grain_temperatures.data[OnlyGrainSpLUT::AC_dust][i]);
             double h2AC = f_wrap::interpolate_2d_g(
-                logTdust, logTlininterp_buf.logtem[i], d_N, d_Td.data(),
-                dlogTdust, d_Tg.data(), dlogtem, d_Size,
+                logTdust, logTlininterp_buf.logtem[i], interp_props.dimension,
+                interp_props.parameters[0], dlogTdust,
+                interp_props.parameters[1], dlogtem, interp_props.data_size,
                 h2rate_carbonaceous_coef_table);
 
             h2dust[i] = h2MgSiO3 * sgMgSiO3[i] + h2AC * sgAC[i];
@@ -730,57 +1115,65 @@ inline void lookup_cool_rates1d(
               logTdust = std::log(
                   grain_temperatures.data[OnlyGrainSpLUT::SiM_dust][i]);
               double h2SiM = f_wrap::interpolate_2d_g(
-                  logTdust, logTlininterp_buf.logtem[i], d_N, d_Td.data(),
-                  dlogTdust, d_Tg.data(), dlogtem, d_Size,
+                  logTdust, logTlininterp_buf.logtem[i], interp_props.dimension,
+                  interp_props.parameters[0], dlogTdust,
+                  interp_props.parameters[1], dlogtem, interp_props.data_size,
                   h2rate_silicate_coef_table);
 
               logTdust = std::log(
                   grain_temperatures.data[OnlyGrainSpLUT::FeM_dust][i]);
               double h2FeM = f_wrap::interpolate_2d_g(
-                  logTdust, logTlininterp_buf.logtem[i], d_N, d_Td.data(),
-                  dlogTdust, d_Tg.data(), dlogtem, d_Size,
+                  logTdust, logTlininterp_buf.logtem[i], interp_props.dimension,
+                  interp_props.parameters[0], dlogTdust,
+                  interp_props.parameters[1], dlogtem, interp_props.data_size,
                   h2rate_silicate_coef_table);
 
               logTdust = std::log(
                   grain_temperatures.data[OnlyGrainSpLUT::Mg2SiO4_dust][i]);
               double h2Mg2SiO4 = f_wrap::interpolate_2d_g(
-                  logTdust, logTlininterp_buf.logtem[i], d_N, d_Td.data(),
-                  dlogTdust, d_Tg.data(), dlogtem, d_Size,
+                  logTdust, logTlininterp_buf.logtem[i], interp_props.dimension,
+                  interp_props.parameters[0], dlogTdust,
+                  interp_props.parameters[1], dlogtem, interp_props.data_size,
                   h2rate_silicate_coef_table);
 
               logTdust = std::log(
                   grain_temperatures.data[OnlyGrainSpLUT::Fe3O4_dust][i]);
               double h2Fe3O4 = f_wrap::interpolate_2d_g(
-                  logTdust, logTlininterp_buf.logtem[i], d_N, d_Td.data(),
-                  dlogTdust, d_Tg.data(), dlogtem, d_Size,
+                  logTdust, logTlininterp_buf.logtem[i], interp_props.dimension,
+                  interp_props.parameters[0], dlogTdust,
+                  interp_props.parameters[1], dlogtem, interp_props.data_size,
                   h2rate_silicate_coef_table);
 
               logTdust = std::log(
                   grain_temperatures.data[OnlyGrainSpLUT::SiO2_dust][i]);
               double h2SiO2D = f_wrap::interpolate_2d_g(
-                  logTdust, logTlininterp_buf.logtem[i], d_N, d_Td.data(),
-                  dlogTdust, d_Tg.data(), dlogtem, d_Size,
+                  logTdust, logTlininterp_buf.logtem[i], interp_props.dimension,
+                  interp_props.parameters[0], dlogTdust,
+                  interp_props.parameters[1], dlogtem, interp_props.data_size,
                   h2rate_silicate_coef_table);
 
               logTdust = std::log(
                   grain_temperatures.data[OnlyGrainSpLUT::MgO_dust][i]);
               double h2MgO = f_wrap::interpolate_2d_g(
-                  logTdust, logTlininterp_buf.logtem[i], d_N, d_Td.data(),
-                  dlogTdust, d_Tg.data(), dlogtem, d_Size,
+                  logTdust, logTlininterp_buf.logtem[i], interp_props.dimension,
+                  interp_props.parameters[0], dlogTdust,
+                  interp_props.parameters[1], dlogtem, interp_props.data_size,
                   h2rate_silicate_coef_table);
 
               logTdust = std::log(
                   grain_temperatures.data[OnlyGrainSpLUT::FeS_dust][i]);
               double h2FeS = f_wrap::interpolate_2d_g(
-                  logTdust, logTlininterp_buf.logtem[i], d_N, d_Td.data(),
-                  dlogTdust, d_Tg.data(), dlogtem, d_Size,
+                  logTdust, logTlininterp_buf.logtem[i], interp_props.dimension,
+                  interp_props.parameters[0], dlogTdust,
+                  interp_props.parameters[1], dlogtem, interp_props.data_size,
                   h2rate_silicate_coef_table);
 
               logTdust = std::log(
                   grain_temperatures.data[OnlyGrainSpLUT::Al2O3_dust][i]);
               double h2Al2O3 = f_wrap::interpolate_2d_g(
-                  logTdust, logTlininterp_buf.logtem[i], d_N, d_Td.data(),
-                  dlogTdust, d_Tg.data(), dlogtem, d_Size,
+                  logTdust, logTlininterp_buf.logtem[i], interp_props.dimension,
+                  interp_props.parameters[0], dlogTdust,
+                  interp_props.parameters[1], dlogtem, interp_props.data_size,
                   h2rate_silicate_coef_table);
 
               h2dust[i] = h2dust[i] + h2SiM * sgSiM[i] + h2FeM * sgFeM[i] +
@@ -793,22 +1186,25 @@ inline void lookup_cool_rates1d(
               logTdust = std::log(
                   grain_temperatures.data[OnlyGrainSpLUT::ref_org_dust][i]);
               double h2reforg = f_wrap::interpolate_2d_g(
-                  logTdust, logTlininterp_buf.logtem[i], d_N, d_Td.data(),
-                  dlogTdust, d_Tg.data(), dlogtem, d_Size,
+                  logTdust, logTlininterp_buf.logtem[i], interp_props.dimension,
+                  interp_props.parameters[0], dlogTdust,
+                  interp_props.parameters[1], dlogtem, interp_props.data_size,
                   h2rate_silicate_coef_table);
 
               logTdust = std::log(
                   grain_temperatures.data[OnlyGrainSpLUT::vol_org_dust][i]);
               double h2volorg = f_wrap::interpolate_2d_g(
-                  logTdust, logTlininterp_buf.logtem[i], d_N, d_Td.data(),
-                  dlogTdust, d_Tg.data(), dlogtem, d_Size,
+                  logTdust, logTlininterp_buf.logtem[i], interp_props.dimension,
+                  interp_props.parameters[0], dlogTdust,
+                  interp_props.parameters[1], dlogtem, interp_props.data_size,
                   h2rate_silicate_coef_table);
 
               logTdust = std::log(
                   grain_temperatures.data[OnlyGrainSpLUT::H2O_ice_dust][i]);
               double h2H2Oice = f_wrap::interpolate_2d_g(
-                  logTdust, logTlininterp_buf.logtem[i], d_N, d_Td.data(),
-                  dlogTdust, d_Tg.data(), dlogtem, d_Size,
+                  logTdust, logTlininterp_buf.logtem[i], interp_props.dimension,
+                  interp_props.parameters[0], dlogTdust,
+                  interp_props.parameters[1], dlogtem, interp_props.data_size,
                   h2rate_silicate_coef_table);
 
               h2dust[i] = h2dust[i] + h2reforg * sgreforg[i] +
@@ -829,10 +1225,10 @@ inline void lookup_cool_rates1d(
           if (my_chemistry->grain_growth == 1) {
             double kd;
             if (my_chemistry->dust_species > 0) {
-              kd = f_wrap::interpolate_1d_g(logTlininterp_buf.logtem[i],
-                                            nratec_single_elem_arr, d_Tg.data(),
-                                            dlogtem, nratec_single_elem_arr[0],
-                                            my_rates->grain_growth_rate);
+              kd = f_wrap::interpolate_1d_g(
+                  logTlininterp_buf.logtem[i], nratec_single_elem_arr,
+                  interp_props.parameters[1], dlogtem,
+                  nratec_single_elem_arr[0], my_rates->grain_growth_rate);
 
               grain_growth_rates.data[OnlyGrainSpLUT::MgSiO3_dust][i] =
                   kd * sgMgSiO3[i] * d(i, idx_range.j, idx_range.k) *
@@ -1096,340 +1492,21 @@ inline void lookup_cool_rates1d(
     }
   }
 
-  // H2 self-shielding (Sobolev-like, spherically averaged, Wolcott-Green+ 2011)
-
+  // model the effects of H2 self-shielding
   if (my_chemistry->primordial_chemistry > 1) {
-    // If radiative transfer for LW photons have been already solved in
-    // your hydro code, add kdissH2I later
-    if (my_chemistry->use_radiative_transfer == 0 ||
-        my_chemistry->radiative_transfer_use_H2_shielding == 1) {
-      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-        if (itmask[i] != MASK_FALSE) {
-          kshield_buf.k31[i] = my_uvb_rates.k31;
-        }
-      }
-    } else {
-      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-        if (itmask[i] != MASK_FALSE) {
-          kshield_buf.k31[i] =
-              my_uvb_rates.k31 + kdissH2I(i, idx_range.j, idx_range.k);
-        }
-      }
-    }
-
-    if (my_chemistry->H2_self_shielding > 0) {
-      // conditionally construct a view
-      grackle::impl::View<gr_float***> xH2shield;
-      if (my_chemistry->H2_self_shielding == 2) {
-        xH2shield = grackle::impl::View<gr_float***>(
-            my_fields->H2_self_shielding_length, my_fields->grid_dimension[0],
-            my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-      }
-
-      // now compute the self-shielding
-      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-        if (itmask[i] != MASK_FALSE) {
-          double l_H2shield;
-          // Calculate a Sobolev-like length assuming a 3D grid.
-          if (my_chemistry->H2_self_shielding == 1) {
-            int j = idx_range.j;
-            int k = idx_range.k;
-            double divrhoa[6] = {
-                d(i + 1, j, k) - d(i, j, k), d(i - 1, j, k) - d(i, j, k),
-                d(i, j + 1, k) - d(i, j, k), d(i, j - 1, k) - d(i, j, k),
-                d(i, j, k + 1) - d(i, j, k), d(i, j, k - 1) - d(i, j, k)};
-            double divrho = tiny_fortran_val;
-            // Exclude directions with (drho/ds > 0)
-            for (int n1 = 0; n1 < 6; n1++) {
-              if (divrhoa[n1] < 0.) {
-                divrho = divrho + divrhoa[n1];
-              }
-            }
-            // (rho / divrho) is the Sobolev-like length in cell widths
-            l_H2shield = std::fmin(dx_cgs * d(i, idx_range.j, idx_range.k) /
-                                       (2. * std::fabs(divrho)),
-                                   internalu.xbase1);
-
-            // User-supplied length-scale field.
-          } else if (my_chemistry->H2_self_shielding == 2) {
-            l_H2shield =
-                xH2shield(i, idx_range.j, idx_range.k) * internalu.uxyz;
-
-            // Jeans Length
-          } else if (my_chemistry->H2_self_shielding == 3) {
-            l_H2shield =
-                c_ljeans * std::sqrt(tgas1d[i] /
-                                     (d(i, idx_range.j, idx_range.k) * mmw[i]));
-
-          } else {
-            l_H2shield = (gr_float)(0.);
-          }
-
-          double N_H2 = dom * H2I(i, idx_range.j, idx_range.k) * l_H2shield;
-
-          // update: self-shielding following Wolcott-Green & Haiman (2019)
-          // range of validity: T=100-8000 K, n<=1e7 cm^-3
-
-          double tgas_touse = grackle::impl::clamp(tgas1d[i], 1e2, 8e3);
-          double ngas_touse =
-              std::fmin(d(i, idx_range.j, idx_range.k) * dom / mmw[i], 1e7);
-
-          double aWG2019 = (0.8711 * std::log10(tgas_touse) - 1.928) *
-                               std::exp(-0.2856 * std::log10(ngas_touse)) +
-                           (-0.9639 * std::log10(tgas_touse) + 3.892);
-
-          double x = 2.0e-15 * N_H2;
-          double b_doppler =
-              1e-5 * std::sqrt(2. * kboltz_grflt * tgas1d[i] / (2. * mh_grflt));
-          double f_shield =
-              0.965 / std::pow((1. + x / b_doppler), aWG2019) +
-              0.035 * std::exp(-8.5e-4 * std::sqrt(1. + x)) / std::sqrt(1. + x);
-
-          // avoid f>1
-          f_shield = std::fmin(f_shield, 1.);
-
-          kshield_buf.k31[i] = f_shield * kshield_buf.k31[i];
-        }
-      }
-    }
-    // If radiative transfer for LW photons have been already solved in
-    // your hydro code, add kdissH2I here
-    if (my_chemistry->use_radiative_transfer == 1 &&
-        my_chemistry->radiative_transfer_use_H2_shielding == 1) {
-      // write(*,*) 'kdissH2I included'
-      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-        if (itmask[i] != MASK_FALSE) {
-          kshield_buf.k31[i] =
-              kshield_buf.k31[i] + kdissH2I(i, idx_range.j, idx_range.k);
-        }
-      }
-    }
-
-    // Custom H2 shielding
-    if (my_chemistry->H2_custom_shielding > 0) {
-      // create a view of the field of custom shielding values
-      grackle::impl::View<gr_float***> f_shield_custom(
-          my_fields->H2_custom_shielding_factor, my_fields->grid_dimension[0],
-          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-
-      for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-        if (itmask[i] != MASK_FALSE) {
-          kshield_buf.k31[i] =
-              f_shield_custom(i, idx_range.j, idx_range.k) * kshield_buf.k31[i];
-        }
-      }
-    }
+    model_H2I_dissociation_shielding(kshield_buf, idx_range, tgas1d, mmw, dom,
+                                     dx_cgs, c_ljeans, itmask, my_chemistry,
+                                     my_fields, my_uvb_rates, internalu);
   }
 
+  // apply some miscellaneous self-shielding adjustments
   if (my_chemistry->self_shielding_method > 0) {
-    // Compute shielding factors
-
-    // conditionally construct views of some primordial species density fields
-    grackle::impl::View<gr_float***> HII(
-        my_fields->HII_density, my_fields->grid_dimension[0],
-        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-    grackle::impl::View<gr_float***> HeI(
-        my_fields->HeI_density, my_fields->grid_dimension[0],
-        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-    grackle::impl::View<gr_float***> HeII(
-        my_fields->HeII_density, my_fields->grid_dimension[0],
-        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-    grackle::impl::View<gr_float***> HeIII(
-        my_fields->HeIII_density, my_fields->grid_dimension[0],
-        my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-
-    grackle::impl::View<gr_float***> HM, DI, DII, HDI;
-    if (my_chemistry->primordial_chemistry > 1) {
-      HM = grackle::impl::View<gr_float***>(
-          my_fields->HM_density, my_fields->grid_dimension[0],
-          my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-      if (my_chemistry->primordial_chemistry > 2) {
-        DI = grackle::impl::View<gr_float***>(
-            my_fields->DI_density, my_fields->grid_dimension[0],
-            my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-        DII = grackle::impl::View<gr_float***>(
-            my_fields->DII_density, my_fields->grid_dimension[0],
-            my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-        HDI = grackle::impl::View<gr_float***>(
-            my_fields->HDI_density, my_fields->grid_dimension[0],
-            my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-      }
-    }
-
-    // now do the actual calculation
-    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-      if (itmask[i] != MASK_FALSE) {
-        // Compute shielding factor for H
-        double nSSh = 6.73e-3 *
-                      std::pow((my_uvb_rates.crsHI / 2.49e-18), (-2. / 3.)) *
-                      std::pow((tgas1d[i] / 1.0e4), (0.17)) *
-                      std::pow((my_uvb_rates.k24 / internalu.tbase1 / 1.0e-12),
-                               (2.0 / 3.0));
-
-        // Compute the total Hydrogen number density
-        double nratio = (HI(i, idx_range.j, idx_range.k) +
-                         HII(i, idx_range.j, idx_range.k));
-        if (my_chemistry->primordial_chemistry > 1) {
-          nratio = nratio + HM(i, idx_range.j, idx_range.k) +
-                   H2I(i, idx_range.j, idx_range.k) +
-                   H2II(i, idx_range.j, idx_range.k);
-
-          if (my_chemistry->primordial_chemistry > 2) {
-            nratio = nratio +
-                     0.5 * (DI(i, idx_range.j, idx_range.k) +
-                            DII(i, idx_range.j, idx_range.k)) +
-                     2.0 * HDI(i, idx_range.j, idx_range.k) / 3.0;
-          }
-        }
-
-        nratio = nratio * dom / nSSh;
-
-        f_shield_H[i] =
-            (0.98 * std::pow((1.0 + std::pow(nratio, (1.64))), (-2.28)) +
-             0.02 * std::pow((1.0 + nratio), (-0.84)));
-
-        // Compute shielding factor for He
-
-        nSSh = 6.73e-3 *
-               std::pow((my_uvb_rates.crsHeI / 2.49e-18), (-2. / 3.)) *
-               std::pow((tgas1d[i] / 1.0e4), (0.17)) *
-               std::pow((my_uvb_rates.k26 / internalu.tbase1 / 1.0e-12),
-                        (2.0 / 3.0));
-
-        nratio = 0.25 *
-                 (HeI(i, idx_range.j, idx_range.k) +
-                  HeII(i, idx_range.j, idx_range.k) +
-                  HeIII(i, idx_range.j, idx_range.k)) *
-                 dom / nSSh;
-
-        f_shield_He[i] =
-            (0.98 * std::pow((1.0 + std::pow(nratio, (1.64))), (-2.28)) +
-             0.02 * std::pow((1.0 + nratio), (-0.84)));
-      }
-    }
-  }
-
-  if (my_chemistry->self_shielding_method == 1) {
-    // approximate self shielding using Eq. 13 and 14 from
-    // Rahmati et. al. 2013 (MNRAS, 430, 2427-2445)
-    // to shield HI, while leaving HeI and HeII optically thin
-
-    //   Attenuate radiation rates for direct H2 ionization (15.4 eV)
-    //   using same scaling. (rate k29)
-    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-      if (itmask[i] != MASK_FALSE) {
-        if (my_uvb_rates.k24 < tiny8) {
-          kshield_buf.k24[i] = 0.;
-        } else {
-          kshield_buf.k24[i] = kshield_buf.k24[i] * f_shield_H[i];
-        }
-
-        // Scale H2 direct ionization radiation
-        if (my_uvb_rates.k29 < tiny8) {
-          kshield_buf.k29[i] = 0.;
-        } else {
-          kshield_buf.k29[i] = kshield_buf.k29[i] * f_shield_H[i];
-        }
-
-        kshield_buf.k25[i] = my_uvb_rates.k25;
-        kshield_buf.k26[i] = my_uvb_rates.k26;
-      }
-    }
-
-  } else if (my_chemistry->self_shielding_method == 2) {
-    // Better self-shielding in HI using Eq. 13 and 14 from
-    // Rahmati et. al. 2013 (MNRAS, 430, 2427-2445)
-    // approximate self shielding in HeI and HeII
-
-    //   Attenuate radiation rates for direct H2 ionization (15.4 eV)
-    //   using same scaling as HI. (rate k29)
-
-    //   Attenuate radiation rates for H2+ dissociation (30 eV)
-    //   using same scaling as HeII. (rate k28 and k30)
-
-    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-      if (itmask[i] != MASK_FALSE) {
-        if (my_uvb_rates.k24 < tiny8) {
-          kshield_buf.k24[i] = 0.;
-        } else {
-          kshield_buf.k24[i] = kshield_buf.k24[i] * f_shield_H[i];
-        }
-
-        // Scale H2 direct ionization radiation
-        if (my_uvb_rates.k29 < tiny8) {
-          kshield_buf.k29[i] = 0.;
-        } else {
-          kshield_buf.k29[i] = kshield_buf.k29[i] * f_shield_H[i];
-        }
-
-        // Apply same equations to HeI (assumes HeI closely follows HI)
-
-        if (my_uvb_rates.k26 < tiny8) {
-          kshield_buf.k26[i] = 0.;
-        } else {
-          kshield_buf.k26[i] = kshield_buf.k26[i] * f_shield_He[i];
-        }
-
-        // Scale H2+ dissociation radiation
-        if (my_uvb_rates.k28 < tiny8) {
-          kshield_buf.k28[i] = 0.0;
-        } else {
-          kshield_buf.k28[i] = kshield_buf.k28[i] * f_shield_He[i];
-        }
-
-        if (my_uvb_rates.k30 < tiny8) {
-          kshield_buf.k30[i] = 0.0;
-        } else {
-          kshield_buf.k30[i] = kshield_buf.k30[i] * f_shield_He[i];
-        }
-
-        kshield_buf.k25[i] = my_uvb_rates.k25;
-      }
-    }
-
-  } else if (my_chemistry->self_shielding_method == 3) {
-    // shielding using Eq. 13 and 14 from
-    // Rahmati et. al. 2013 (MNRAS, 430, 2427-2445)
-    // in HI and HeI, but ignoring HeII heating entirely
-    for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
-      if (itmask[i] != MASK_FALSE) {
-        if (my_uvb_rates.k24 < tiny8) {
-          kshield_buf.k24[i] = 0.;
-        } else {
-          kshield_buf.k24[i] = kshield_buf.k24[i] * f_shield_H[i];
-        }
-
-        // Scale H2 direct ionization radiation
-        if (my_uvb_rates.k29 < tiny8) {
-          kshield_buf.k29[i] = 0.;
-        } else {
-          kshield_buf.k29[i] = kshield_buf.k29[i] * f_shield_H[i];
-        }
-
-        // Apply same equations to HeI (assumes HeI closely follows HI)
-
-        if (my_uvb_rates.k26 < tiny8) {
-          kshield_buf.k26[i] = 0.;
-        } else {
-          kshield_buf.k26[i] = kshield_buf.k26[i] * f_shield_He[i];
-        }
-
-        // Scale H2+ dissociation radiation
-        if (my_uvb_rates.k28 < tiny8) {
-          kshield_buf.k28[i] = 0.0;
-        } else {
-          kshield_buf.k28[i] = kshield_buf.k28[i] * f_shield_He[i];
-        }
-
-        if (my_uvb_rates.k30 < tiny8) {
-          kshield_buf.k30[i] = 0.0;
-        } else {
-          kshield_buf.k30[i] = kshield_buf.k30[i] * f_shield_He[i];
-        }
-
-        kshield_buf.k25[i] = 0.0;
-      }
-    }
+    ShieldFactorCalculator calculator =
+        setup_shield_factor_calculator(tgas1d, idx_range, dom, my_chemistry,
+                                       my_fields, my_uvb_rates, internalu);
+    apply_misc_shield_factors(kshield_buf, idx_range, itmask,
+                              my_chemistry->self_shielding_method, my_uvb_rates,
+                              &calculator);
   }
 
 #ifdef SECONDARY_IONIZATION_NOT_YET_IMPLEMENTED
@@ -1439,10 +1516,6 @@ inline void lookup_cool_rates1d(
   secondary_ionization_adjustments(idx_range, itmask, my_fields, my_uvb_rates,
                                    internalu, kshield_buf);
 #endif
-
-  drop_InternalDustPropBuf(&internal_dust_prop_buf);
-
-  return;
 }
 
 }  // namespace grackle::impl
