@@ -99,12 +99,12 @@ struct OnlyGrainSpLUT {
   // XMacros provided in grackle_field_data_fdatamembers.def (or we may need to
   // slightly revise the system?)
   enum {
+    MgSiO3_dust,
+    AC_dust,
     SiM_dust,
     FeM_dust,
     Mg2SiO4_dust,
-    MgSiO3_dust,
     Fe3O4_dust,
-    AC_dust,
     SiO2_dust,
     MgO_dust,
     FeS_dust,

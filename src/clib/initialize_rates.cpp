@@ -45,6 +45,7 @@
 #include "grackle_macros.h"
 #include "grackle_rate_functions.h"
 #include "collisional_rate_props.hpp"  // init_extra_collisional_rates
+#include "dust/grain_species_info.hpp"
 #include "init_misc_species_cool_rates.hpp"  // init_misc_species_cool_rates
 #include "initialize_dust_yields.hpp"  // initialize_dust_yields
 #include "initialize_rates.hpp"
@@ -248,6 +249,58 @@ int add_h2dust_S_reaction_rate(double **rate_ptr, double units, chemistry_data *
         }
     }
     return GR_SUCCESS;
+}
+
+/// sets up the species-specific h2dust grain coefficient grids
+int setup_h2dust_grain_rates(chemistry_data* my_chemistry,
+                             chemistry_data_storage *my_rates,
+                             double kUnit) {
+
+  //H2 formation on dust grains with C and S compositions
+  if (
+    (add_h2dust_C_reaction_rate(&my_rates->h2dustC, kUnit, my_chemistry)
+      != GR_SUCCESS) ||
+    (add_h2dust_S_reaction_rate(&my_rates->h2dustS, kUnit, my_chemistry)
+      != GR_SUCCESS)
+  ) {
+    return GR_FAIL;
+  }
+
+  // initialize my_rates->opaque_storage->h2dust_grain_interp_props
+  long long n_Tdust = (long long)(my_chemistry->NumberOfDustTemperatureBins);
+  long long n_Tgas = (long long)(my_chemistry->NumberOfTemperatureBins);
+  double* d_Td = (double*)malloc(n_Tdust * sizeof(double));
+  double* d_Tg = (double*)malloc(n_Tgas * sizeof(double));
+
+  const double logtem_start = std::log(my_chemistry->TemperatureStart);
+  const double dlogtem = (std::log(my_chemistry->TemperatureEnd) -
+                          std::log(my_chemistry->TemperatureStart)) /
+                         (double)(my_chemistry->NumberOfTemperatureBins - 1);
+
+  const double logTdust_start = std::log(my_chemistry->DustTemperatureStart);
+  const double dlogTdust = (std::log(my_chemistry->DustTemperatureEnd) -
+                            std::log(my_chemistry->DustTemperatureStart)) /
+                           (double)(my_chemistry->NumberOfDustTemperatureBins - 1);
+
+  for (long long idx = 0; idx < n_Tdust; idx++) {
+    d_Td[idx] = logTdust_start + (double)idx * dlogTdust;
+  }
+  for (long long idx = 0; idx < n_Tgas; idx++) {
+    d_Tg[idx] = logtem_start + (double)idx * dlogtem;
+  }
+
+  gr_interp_grid_props* interp_props
+    = &(my_rates->opaque_storage->h2dust_grain_interp_props);
+  interp_props->rank = 2ll;
+  interp_props->dimension[0] = n_Tdust;
+  interp_props->dimension[1] = n_Tgas;
+  interp_props->parameters[0] = d_Td;
+  interp_props->parameters[1] = d_Tg;
+  interp_props->parameter_spacing[0] = dlogTdust;
+  interp_props->parameter_spacing[0] = dlogtem;
+  interp_props->data_size = n_Tdust*n_Tgas;
+
+  return GR_SUCCESS;
 }
 
 // Down below we define functionality to initialize the table of ordinary
@@ -562,9 +615,8 @@ int grackle::impl::initialize_rates(
         //(Equation 9, Wolfire et al., 1995)
         add_reaction_rate(&my_rates->regr, regr_rate, coolingUnits, my_chemistry);
 
-        //H2 formation on dust grains with C and S compositions
-        add_h2dust_C_reaction_rate(&my_rates->h2dustC, kUnit, my_chemistry);
-        add_h2dust_S_reaction_rate(&my_rates->h2dustS, kUnit, my_chemistry);
+        // set up the species-specific h2dust grain coefficient grids
+        setup_h2dust_grain_rates(my_chemistry, my_rates, kUnit);
 
         //Heating of dust by interstellar radiation field, with an arbitrary grain size distribution
         add_scalar_reaction_rate(&my_rates->gamma_isrf2, gamma_isrf2_rate, coolingUnits, my_chemistry);
@@ -594,7 +646,17 @@ int grackle::impl::initialize_rates(
       fprintf(stderr, "Error in initialize_metal_chemistry_rates.\n");
       return GR_FAIL;
     }
-    /* Dust rates */
+
+    // Dust Grain Species Information
+    // (it may make sense want to handle more of the dust separately)
+    if (my_chemistry->dust_species > 0) {
+      my_rates->opaque_storage->grain_species_info = 
+        new grackle::impl::GrainSpeciesInfo;
+      *(my_rates->opaque_storage->grain_species_info) =
+        grackle::impl::new_GrainSpeciesInfo(my_chemistry->dust_species);
+    }
+
+    // Dust rates
     if (grackle::impl::initialize_dust_yields(my_chemistry, my_rates, my_units) == FAIL) {
       fprintf(stderr, "Error in initialize_dust_yields.\n");
       return FAIL;

@@ -1,7 +1,12 @@
-// See LICENSE file for license and copyright information
-
-/// @file dust_props.hpp
-/// @brief Declarations related to computing dust properties.
+//===----------------------------------------------------------------------===//
+//
+// See the LICENSE file for license and copyright information
+// SPDX-License-Identifier: NCSA AND BSD-3-Clause
+//
+//===----------------------------------------------------------------------===//
+///
+/// @file
+/// Declarations related to computing dust properties.
 ///
 /// In slightly more detail, these is a series of dust-related calculations
 /// that are largely independent of the gas chemistry. These calculations all
@@ -9,21 +14,27 @@
 /// filled by calc_grain_size_increment_1d. They are used to compute quantities
 /// that is important for the gas
 /// -> by calc_all_tdust_gasgr_1d_g
-/// -> by some logic lookup_cool_rates1d_g (this logic should be excised)
+/// -> by some logic lookup_cool_rates1d (this logic should be excised)
 ///
 /// The premise is that we should try to keep these properties as separated as
 /// possible from the gas-physics
+///
+//===----------------------------------------------------------------------===//
 
 #ifndef DUST_PROPS_HPP
 #define DUST_PROPS_HPP
 
-#include <cstdlib> // malloc, free
+// In the near future (after GH PR #405 is merged), we plan to:
+// 1. rename InternalDustPropBuf to InternalGrainPropBuf so that type's role in
+//    the multi-grain-species dust model is more obvious
+// 2. move this file into the dust subdirectory
+
 #include "internal_types.hpp"
+#include "LUT.hpp"
 
 namespace grackle::impl {
 
 struct InternalDustPropBuf {
-
   // a decent argument could be made that this should track grain temperature
 
   /// geometric cross-section per unit gas mass of each grain species
@@ -38,7 +49,7 @@ struct InternalDustPropBuf {
   grackle::impl::GrainSpeciesCollection grain_sigma_per_gas_mass;
 
   /// buffer closely related to grain_sigma_per_gas_mass
-  double * sigma_per_gas_mass_tot;
+  double* sigma_per_gas_mass_tot;
 
   /// holds 1D opacity tables at each zone for each grain species zone
   /// - the values are tabulated with respect to dust temperature. After
@@ -84,8 +95,7 @@ struct InternalDustPropBuf {
   grackle::impl::GrainSpeciesCollection grain_dyntab_kappa;
 
   /// buffer closely related to grain_dyntab_kappa
-  double * dyntab_kappa_tot;
-
+  double* dyntab_kappa_tot;
 };
 
 /// allocates the contents of a new InternalDustPropBuf
@@ -93,21 +103,18 @@ struct InternalDustPropBuf {
 /// @param nelem The number of elements in each buffer
 /// @param opacity_table_size The number of elements in a dynamically computed
 ///    opacity table
-inline InternalDustPropBuf new_InternalDustPropBuf(
-  int nelem, int opacity_table_size
-) {
+inline InternalDustPropBuf new_InternalDustPropBuf(int nelem,
+                                                   int opacity_table_size) {
   InternalDustPropBuf out;
-  out.grain_sigma_per_gas_mass = grackle::impl::new_GrainSpeciesCollection(
-    nelem
-  );
-  out.sigma_per_gas_mass_tot = (double*)std::malloc(sizeof(double)*nelem);
+  out.grain_sigma_per_gas_mass =
+      grackle::impl::new_GrainSpeciesCollection(nelem);
+  out.sigma_per_gas_mass_tot = new double[nelem];
 
   // this is a little bit of a hack!
   int table_len = (opacity_table_size < 1) ? 1 : opacity_table_size;
-  out.grain_dyntab_kappa = grackle::impl::new_GrainSpeciesCollection(
-    nelem * table_len
-  );
-  out.dyntab_kappa_tot = (double*)std::malloc(sizeof(double)*nelem*table_len);
+  out.grain_dyntab_kappa =
+      grackle::impl::new_GrainSpeciesCollection(nelem * table_len);
+  out.dyntab_kappa_tot = new double[nelem * table_len];
 
   return out;
 }
@@ -117,14 +124,12 @@ inline InternalDustPropBuf new_InternalDustPropBuf(
 /// This effectively invokes the destructor
 inline void drop_InternalDustPropBuf(InternalDustPropBuf* ptr) {
   grackle::impl::drop_GrainSpeciesCollection(&ptr->grain_sigma_per_gas_mass);
-  std::free(ptr->sigma_per_gas_mass_tot);
+  delete[] ptr->sigma_per_gas_mass_tot;
 
-  grackle::impl::drop_GrainSpeciesCollection(
-    &ptr->grain_dyntab_kappa
-  );
-  std::free(ptr->dyntab_kappa_tot);
+  grackle::impl::drop_GrainSpeciesCollection(&ptr->grain_dyntab_kappa);
+  delete[] ptr->dyntab_kappa_tot;
 }
 
-} // namespace grackle::impl
+}  // namespace grackle::impl
 
-#endif // DUST_PROPS_HPP
+#endif  // DUST_PROPS_HPP

@@ -13,6 +13,8 @@
 #ifndef OPAQUE_STORAGE_HPP
 #define OPAQUE_STORAGE_HPP
 
+#include "grackle.h"
+#include "dust/grain_species_info.hpp"
 #include "internal_types.hpp"
 
 /// a struct that used to wrap some private storage details
@@ -60,6 +62,39 @@ struct gr_opaque_storage {
   /// length of used_kcol_rate_indices
   int n_kcol_rate_indices;
   ///@}
+
+  /// tracks the grid of values used for interpolating grain-species specific
+  /// coefficients for computing rates of H2 formation on dust grains. (At the
+  /// time of writing, chemistry_data_storage::h2dustS &
+  /// chemistry_data_storage::h2dustC hold the interpolated values)
+  ///
+  /// In more detail, this represents a 2D grid, where ln(Tdust) varies along
+  /// axis 0 and ln(Tgas) varies along axis 1. Below we highlight a few notes
+  /// about the properties of these grid:
+  /// - Importantly, the set of ln(Tgas) values is very same grid of ln(Tgas)
+  ///   values that is used for 1D interpolation of the majority of other rates
+  /// - For context, all of other uses of this ln(Tgas) grid have historically
+  ///   avoided the explicit construction of the ln(Tgas) grid
+  /// - Furthermore, interpolation of the h2dust table (which holds
+  ///   coefficients for computing H2 formation on dust grains) has been
+  ///   interpolated on the same 2D [ln(Tdust), ln(Tgas)] grid. We have also
+  ///   historically avoided the explicit construction of the grid while
+  ///   interpolating h2dust).
+  /// - In the future we should give some thought to whether we really want to
+  ///   track this grid. An argument could be made for breaking this up and
+  ///   explicitly tracking a grid of ln(Tgas) values and a grid of ln(Tdust)
+  ///   values (for debugging purposes).
+  gr_interp_grid_props h2dust_grain_interp_props;
+
+  /// Tracks basic information about each relevant grain species
+  ///
+  /// > [!note]
+  /// > A case could be made that we may not want to directly store a
+  /// > GrainSpeciesInfo instances directly inside of this struct (since it
+  /// > contains some extra information that is unnecessary during the
+  /// > calculations). An alternative would be to briefly initialize an
+  /// > instance during setup and then repack the data.
+  grackle::impl::GrainSpeciesInfo* grain_species_info;
 };
 
 #endif /* OPAQUE_STORAGE_HPP */
