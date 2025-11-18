@@ -49,18 +49,21 @@ static void show_version(FILE *fp)
   fprintf (fp, "\n");
 }
 
-/**
- * Initialize an empty #gr_interp_grid
- */
+/// initialize an empty #gr_interp_grid_props
+static void init_empty_interp_grid_props_(gr_interp_grid_props* props) {
+  props->rank = 0;
+  for (int i = 0; i < GRACKLE_CLOUDY_TABLE_MAX_DIMENSION; i++){
+    props->dimension[i] = 0;
+    props->parameters[i] = nullptr;
+    props->parameter_spacing[i] = 0.0;
+  }
+  props->data_size = 0;
+}
+
+/// Initialize an empty #gr_interp_grid
 static void initialize_empty_interp_grid_(gr_interp_grid* grid)
 {
-  grid->props.rank = 0;
-  for (int i = 0; i < GRACKLE_CLOUDY_TABLE_MAX_DIMENSION; i++){
-    grid->props.dimension[i] = 0;
-    grid->props.parameters[i] = NULL;
-    grid->props.parameter_spacing[i] = 0.0;
-  }
-  grid->props.data_size = 0;
+  init_empty_interp_grid_props_(&(grid->props));
   grid->data=NULL;
 }
 
@@ -397,6 +400,8 @@ extern "C" int local_initialize_chemistry_data(chemistry_data *my_chemistry,
   my_rates->opaque_storage->kcol_rate_tables = nullptr;
   my_rates->opaque_storage->used_kcol_rate_indices = nullptr;
   my_rates->opaque_storage->n_kcol_rate_indices = 0;
+  init_empty_interp_grid_props_(
+    &my_rates->opaque_storage->h2dust_grain_interp_props);
 
   double co_length_units, co_density_units;
   if (my_units->comoving_coordinates == TRUE) {
@@ -629,6 +634,7 @@ extern "C" int local_free_chemistry_data(chemistry_data *my_chemistry,
     delete my_rates->opaque_storage->kcol_rate_tables;
   }
   delete[] my_rates->opaque_storage->used_kcol_rate_indices;
+  free_interp_grid_props_(&my_rates->opaque_storage->h2dust_grain_interp_props);
   delete my_rates->opaque_storage;
   my_rates->opaque_storage = nullptr;
 

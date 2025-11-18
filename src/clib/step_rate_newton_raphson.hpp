@@ -211,7 +211,8 @@ inline void step_rate_newton_raphson(
   // calculations of the time derivatives of multiple values at once, we should
   // forward the buffers passed into this routine as arguments rather than
   // allocating separate buffers
-  t_deriv::MainScratchBuf main_scratch_buf = t_deriv::new_MainScratchBuf();
+  t_deriv::MainScratchBuf main_scratch_buf =
+    t_deriv::new_MainScratchBuf(my_rates->gr_N[1]);
 
   // collect args that are forwarded to the time-derivative calculation and are
   // effectively frozen between various calls
