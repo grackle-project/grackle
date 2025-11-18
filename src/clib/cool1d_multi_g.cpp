@@ -1485,20 +1485,27 @@ void grackle::impl::cool1d_multi_g(
   if (my_chemistry->primordial_chemistry == 0) {
     iZscale = 0;
     mycmbTfloor = 0;
-    FORTRAN_NAME(cool1d_cloudy_g)(
-        d.data(), rhoH, metallicity, &my_fields->grid_dimension[0],
-        &my_fields->grid_dimension[1], &my_fields->grid_dimension[2],
-        &idx_range.i_start, &idx_range.i_end, &idx_range.jp1, &idx_range.kp1,
-        logTlininterp_buf.logtem, edot, &comp2, &dom, &zr, &mycmbTfloor,
-        &my_chemistry->UVbackground, &iZscale,
-        &my_rates->cloudy_primordial.grid_rank,
-        my_rates->cloudy_primordial.grid_dimension,
-        my_rates->cloudy_primordial.grid_parameters[0],
-        my_rates->cloudy_primordial.grid_parameters[1],
-        my_rates->cloudy_primordial.grid_parameters[2],
-        &my_rates->cloudy_primordial.data_size,
-        my_rates->cloudy_primordial.cooling_data,
-        my_rates->cloudy_primordial.heating_data, itmask);
+    // FORTRAN_NAME(cool1d_cloudy_g)(
+    //     d.data(), rhoH, metallicity, &my_fields->grid_dimension[0],
+    //     &my_fields->grid_dimension[1], &my_fields->grid_dimension[2],
+    //     &idx_range.i_start, &idx_range.i_end, &idx_range.jp1, &idx_range.kp1,
+    //     logTlininterp_buf.logtem, edot, &comp2, &dom, &zr, &mycmbTfloor,
+    //     &my_chemistry->UVbackground, &iZscale,
+    //     &my_rates->cloudy_primordial.grid_rank,
+    //     my_rates->cloudy_primordial.grid_dimension,
+    //     my_rates->cloudy_primordial.grid_parameters[0],
+    //     my_rates->cloudy_primordial.grid_parameters[1],
+    //     my_rates->cloudy_primordial.grid_parameters[2],
+    //     &my_rates->cloudy_primordial.data_size,
+    //     my_rates->cloudy_primordial.cooling_data,
+    //     my_rates->cloudy_primordial.heating_data, itmask);
+
+    grackle::impl::fortran_wrapper::cool1d_cloudy_g(
+        rhoH, metallicity, idx_range, 
+        logTlininterp_buf.logtem, edot, comp2, dom, zr,
+        mycmbTfloor, my_chemistry->UVbackground, iZscale,
+        my_rates->cloudy_primordial, my_fields, itmask);
+
 
     // Calculate electron density from mean molecular weight
 
@@ -1658,20 +1665,26 @@ void grackle::impl::cool1d_multi_g(
 
     if (my_rates->cloudy_data_new == 1) {
       iZscale = 1;
-      FORTRAN_NAME(cool1d_cloudy_g)(
-          d.data(), rhoH, metallicity, &my_fields->grid_dimension[0],
-          &my_fields->grid_dimension[1], &my_fields->grid_dimension[2],
-          &idx_range.i_start, &idx_range.i_end, &idx_range.jp1, &idx_range.kp1,
-          logTlininterp_buf.logtem, edot, &comp2, &dom, &zr,
-          &my_chemistry->cmb_temperature_floor, &my_chemistry->UVbackground,
-          &iZscale, &my_rates->cloudy_metal.grid_rank,
-          my_rates->cloudy_metal.grid_dimension,
-          my_rates->cloudy_metal.grid_parameters[0],
-          my_rates->cloudy_metal.grid_parameters[1],
-          my_rates->cloudy_metal.grid_parameters[2],
-          &my_rates->cloudy_metal.data_size,
-          my_rates->cloudy_metal.cooling_data,
-          my_rates->cloudy_metal.heating_data, itmask_tab.data());
+      // FORTRAN_NAME(cool1d_cloudy_g)(
+      //     d.data(), rhoH, metallicity, &my_fields->grid_dimension[0],
+      //     &my_fields->grid_dimension[1], &my_fields->grid_dimension[2],
+      //     &idx_range.i_start, &idx_range.i_end, &idx_range.jp1, &idx_range.kp1,
+      //     logTlininterp_buf.logtem, edot, &comp2, &dom, &zr,
+      //     &my_chemistry->cmb_temperature_floor, &my_chemistry->UVbackground,
+      //     &iZscale, &my_rates->cloudy_metal.grid_rank,
+      //     my_rates->cloudy_metal.grid_dimension,
+      //     my_rates->cloudy_metal.grid_parameters[0],
+      //     my_rates->cloudy_metal.grid_parameters[1],
+      //     my_rates->cloudy_metal.grid_parameters[2],
+      //     &my_rates->cloudy_metal.data_size,
+      //     my_rates->cloudy_metal.cooling_data,
+      //     my_rates->cloudy_metal.heating_data, itmask_tab.data());
+
+      grackle::impl::fortran_wrapper::cool1d_cloudy_g(
+          rhoH, metallicity, idx_range, 
+          logTlininterp_buf.logtem, edot, comp2, dom, zr,
+          mycmbTfloor, my_chemistry->UVbackground, iZscale,
+          my_rates->cloudy_primordial, my_fields, itmask_tab.data());
 
     } else {
       FORTRAN_NAME(cool1d_cloudy_old_tables_g)(
