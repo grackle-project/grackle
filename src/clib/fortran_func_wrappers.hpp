@@ -159,7 +159,7 @@ inline void cool1d_cloudy_g(
   FORTRAN_NAME(cool1d_cloudy_g)(
     my_fields->density, rhoH, metallicity,
     &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], 
-    &my_fields->grid_start[0], &my_fields->grid_end[0], &idx_range.jp1, &idx_range.kp1,
+    &idx_range.i_start, &idx_range.i_end, &idx_range.jp1, &idx_range.kp1,
     logtem, edot, &comp2, &dom, &zr, &cmb_temperature_floor, &UVbackground, &iZscale, 
     &my_cloudy_data.grid_rank, my_cloudy_data.grid_dimension,
     my_cloudy_data.grid_parameters[0], my_cloudy_data.grid_parameters[1], my_cloudy_data.grid_parameters[2],
