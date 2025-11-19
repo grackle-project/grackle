@@ -114,7 +114,7 @@ protected:
       "internal_energy", "density", "metal_density"
     };
 
-    grackle::impl::BiMapMode mode = this->GetParam();
+    grackle::impl::BiMapMode mode = GetParam();
     grackle::impl::FrozenKeyIdxBiMap tmp
       = new_FrozenKeyIdxBiMap(ordered_keys, mode);
     ASSERT_TRUE(grackle::impl::FrozenKeyIdxBiMap_is_ok(&tmp));
