@@ -18,8 +18,8 @@
 /// be tweaked)
 ///
 /// If we decide to more fully embrace C++, it would make a LOT of sense to
-/// convert this to a full-blown class (and delete copy constructor/copy
-/// assignement OR adopt reference counting).
+/// convert this to a full-blown class (we would probably delete the copy
+/// constructor And copy assignement methods OR adopt reference counting).
 ///
 //===----------------------------------------------------------------------===//
 #ifndef UTILS_FROZENKEYIDXBIMAP_HPP
