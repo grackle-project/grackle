@@ -84,7 +84,6 @@ Checks: >
   readability-reference-to-constructed-temporary,
   readability-simplify-boolean-expr,
   readability-simplify-subscript-expr,
-  readability-static-accessed-through-instance,
   readability-string-compare,
   readability-uniqueptr-delete-release,
 

@@ -139,7 +139,7 @@ protected:
 
 };
 
-TEST_P(FrozenKeyIdxBiMapGeneralSuite, IdxFromKey_ContainedKey) {
+TEST_P(FrozenKeyIdxBiMapGeneralSuite, IdxFromKeyContainedKey) {
   EXPECT_EQ(
     grackle::impl::FrozenKeyIdxBiMap_idx_from_key(bimap_p, "density"),
     1
@@ -154,14 +154,14 @@ TEST_P(FrozenKeyIdxBiMapGeneralSuite, IdxFromKey_ContainedKey) {
   );
 }
 
-TEST_P(FrozenKeyIdxBiMapGeneralSuite, IdxFromKey_AbsentKey) {
+TEST_P(FrozenKeyIdxBiMapGeneralSuite, IdxFromKeyAbsentKey) {
   EXPECT_EQ(
     grackle::impl::FrozenKeyIdxBiMap_idx_from_key(bimap_p, "notAKey"),
     STRU16MAP_INVALID_VAL
   );
 }
 
-TEST_P(FrozenKeyIdxBiMapGeneralSuite, IdxFromKey_AbsentIrregularKeys) {
+TEST_P(FrozenKeyIdxBiMapGeneralSuite, IdxFromKeyAbsentIrregularKeys) {
   EXPECT_EQ(
     grackle::impl::FrozenKeyIdxBiMap_idx_from_key(bimap_p, ""),
     STRU16MAP_INVALID_VAL
@@ -174,7 +174,7 @@ TEST_P(FrozenKeyIdxBiMapGeneralSuite, IdxFromKey_AbsentIrregularKeys) {
   );
 }
 
-TEST_P(FrozenKeyIdxBiMapGeneralSuite, KeyFromIdx_InvalidIdx) {
+TEST_P(FrozenKeyIdxBiMapGeneralSuite, KeyFromIdxInvalidIdx) {
   EXPECT_EQ(grackle::impl::FrozenKeyIdxBiMap_key_from_idx(bimap_p, 3), nullptr);
   EXPECT_EQ(
     grackle::impl::FrozenKeyIdxBiMap_key_from_idx(bimap_p,
@@ -183,7 +183,7 @@ TEST_P(FrozenKeyIdxBiMapGeneralSuite, KeyFromIdx_InvalidIdx) {
   );
 }
 
-TEST_P(FrozenKeyIdxBiMapGeneralSuite, KeyFromIdx_ValidIdx) {
+TEST_P(FrozenKeyIdxBiMapGeneralSuite, KeyFromIdxValidIdx) {
   EXPECT_EQ(
     std::string(grackle::impl::FrozenKeyIdxBiMap_key_from_idx(bimap_p, 2)),
     std::string("metal_density")
