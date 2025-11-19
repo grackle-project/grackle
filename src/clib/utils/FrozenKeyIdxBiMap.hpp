@@ -12,11 +12,14 @@
 /// bookkeeping.
 ///
 /// The underlying implementation of this type is *highly* suboptimal (it's
-/// simplistic at the cost of speed). PR #270 introduce a drop-in replacement
-/// that maintains the exact same API
+/// simplistic at the cost of speed). PR #270 introduce a replacement that
+/// maintains almost the exact same API (the new_FrozenKeyIdxBiMap,
+/// FrozenKeyIdxBiMap_clone, and drop_FrozenKeyIdxBiMap functions will need to
+/// be tweaked)
 ///
-/// If we decide to more fully embrace C++, it would make a lot of sense to
-/// convert this to a full-blown class.
+/// If we decide to more fully embrace C++, it would make a LOT of sense to
+/// convert this to a full-blown class (and delete copy constructor/copy
+/// assignement OR adopt reference counting).
 ///
 //===----------------------------------------------------------------------===//
 #ifndef UTILS_FROZENKEYIDXBIMAP_HPP
@@ -105,40 +108,51 @@ struct FrozenKeyIdxBiMap{
 
 /// Constructs a new FrozenKeyIdxBiMap
 ///
-/// @param[out] out Pointer where the allocated type is stored
 /// @param[in]  keys Sequence of 1 or more unique strings. Each string must
 ///     include at least 1 non-null character and be null-terminated
 /// @param[in]  key_count The length of keys
 /// @param[in]  mode specifies handling of keys. This will be passed on to any
 ///     clones that are made.
-inline int new_FrozenKeyIdxBiMap(
-  FrozenKeyIdxBiMap** out, const char* keys[], int key_count,
-  BiMapMode mode
+///
+/// > [!note]
+/// > If this function returns `bimap`, then the caller should invoke
+/// > `FrozenKeyIdxBiMap_is_ok(&bimap)` to test whether there was an error.
+/// > This is pretty ugly/clunky, but its the only practical way to achieve
+/// > comparable behavior to other internal datatypes (ideally, we would make
+/// > this a simple C++ class instead)
+inline FrozenKeyIdxBiMap new_FrozenKeyIdxBiMap(
+  const char* keys[], int key_count, BiMapMode mode
 ) {
+  // this will be returned if there is an error
+  FrozenKeyIdxBiMap erroneous_obj{0, nullptr, BiMapMode::REFS_KEYDATA};
 
   // check the specified keys
   long long max_keys = static_cast<long long>(bimap::invalid_val) - 1LL;
   if (key_count < 1 || static_cast<long long>(key_count) > max_keys) {
-    return GrPrintAndReturnErr(
+    GrPrintErrMsg(
       "key_count must be positive and cannot exceed %lld", max_keys
     );
+    return erroneous_obj;
   } else if (keys == nullptr) {
-    return GrPrintAndReturnErr("keys must not be a nullptr");
+    GrPrintErrMsg("keys must not be a nullptr");
+    return erroneous_obj;
   }
   for (int i = 0; i < key_count; i++) {
     GR_INTERNAL_REQUIRE(keys[i] != nullptr, "Can't specify a nullptr key");
     std::size_t n_chrs_without_nul = std::strlen(keys[i]);
     if (n_chrs_without_nul == 0 || n_chrs_without_nul > bimap::keylen_max) {
-      return GrPrintAndReturnErr(
+      GrPrintErrMsg(
         "calling strlen on \"%s\", the key @ index %d, yields 0 or a length "
         "exceeding %d",
         keys[i], i, bimap::keylen_max
       );
+      return erroneous_obj;
     }
     // check uniqueness
     for (int j = 0; j < i; j++) {
       if (strcmp(keys[i], keys[j]) == 0) {
-        return GrPrintAndReturnErr("\"%s\" key repeats", keys[i]);
+        GrPrintErrMsg("\"%s\" key repeats", keys[i]);
+        return erroneous_obj;
       }
     }
   }
@@ -163,14 +177,22 @@ inline int new_FrozenKeyIdxBiMap(
       out_keys = (const char**)tmp_keys;
       break;
     }
-    default: return GrPrintAndReturnErr("unknown mode");
+    default: {
+      GrPrintErrMsg("unknown mode");
+      return erroneous_obj;
+    }
   }
 
-  (*out) = new FrozenKeyIdxBiMap;
-  (*out)->length = key_count;
-  (*out)->keys = out_keys;
+  return FrozenKeyIdxBiMap{
+    /* length = */ key_count,
+    /* keys = */ out_keys,
+    /* mode = */ mode
+  };
+}
 
-  return GR_SUCCESS;
+/// returns whether new_FrozenKeyIdxBiMap constructed a valid object
+inline bool FrozenKeyIdxBiMap_is_ok(FrozenKeyIdxBiMap* ptr) {
+  return (ptr->length > 0);
 }
 
 /// Destroys the specified FrozenKeyIdxBiMap
@@ -180,16 +202,23 @@ inline void drop_FrozenKeyIdxBiMap(FrozenKeyIdxBiMap* ptr) {
       delete[] ptr->keys[i];
     }
   }
-  delete[] ptr->keys;
-  delete ptr;
+  if (ptr->keys != nullptr) {
+    delete[] ptr->keys;
+  }
 }
 
 
 /// Makes a clone of the specified FrozenKeyIdxBiMap (the clone inherites the
 /// original BiMapMode).
-int FrozenKeyIdxBiMap_clone(FrozenKeyIdxBiMap** out,
-                            const FrozenKeyIdxBiMap* ptr) {
-  return new_FrozenKeyIdxBiMap(out, ptr->keys, ptr->length, ptr->mode);
+///
+/// > [!note]
+/// > If this function returns `bimap`, then the caller should invoke
+/// > `FrozenKeyIdxBiMap_is_ok(&bimap)` to test whether there was an error.
+/// > This is pretty ugly/clunky, but its the only practical way to achieve
+/// > comparable behavior to other internal datatypes (ideally, we would make
+/// > this a simple C++ class instead)
+FrozenKeyIdxBiMap FrozenKeyIdxBiMap_clone(const FrozenKeyIdxBiMap* ptr) {
+  return new_FrozenKeyIdxBiMap(ptr->keys, ptr->length, ptr->mode);
 };
 
 /// returns the value associated with the key or (if the key can't be found)
