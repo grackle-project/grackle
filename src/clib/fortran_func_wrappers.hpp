@@ -149,25 +149,6 @@ inline void calc_temp1d_cloudy_g(
 
 }
 
-inline void cool1d_cloudy_g(
-  double* rhoH, double* metallicity, IndexRange idx_range, 
-  double* logtem, double* edot, double comp2, double dom, double zr,
-  int cmb_temperature_floor, int UVbackground, int iZscale,
-  cloudy_data my_cloudy_data, grackle_field_data* my_fields,
-  gr_mask_type* itmask
-) {
-  FORTRAN_NAME(cool1d_cloudy_g)(
-    my_fields->density, rhoH, metallicity,
-    &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], 
-    &idx_range.i_start, &idx_range.i_end, &idx_range.jp1, &idx_range.kp1,
-    logtem, edot, &comp2, &dom, &zr, &cmb_temperature_floor, &UVbackground, &iZscale, 
-    &my_cloudy_data.grid_rank, my_cloudy_data.grid_dimension,
-    my_cloudy_data.grid_parameters[0], my_cloudy_data.grid_parameters[1], my_cloudy_data.grid_parameters[2],
-    &my_cloudy_data.data_size, my_cloudy_data.cooling_data, my_cloudy_data.heating_data, 
-    itmask
-  );
-}
-
 /// Performs Gauss-Jordan elimination to solve the specified system of linear
 /// equations and inverts the coefficient matrix.
 ///
