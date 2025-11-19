@@ -43,7 +43,7 @@ inline constexpr std::uint16_t invalid_val =
 
 /// specifies maximum allowed length of a key (excluding the null character).
 inline constexpr std::uint16_t keylen_max = 29;
-}
+}  // namespace grackle::impl::bimap
 
 // these are just here for to make it easier for us to adopt changes from PR
 // #270 (then we can delete these macros)
@@ -52,10 +52,7 @@ inline constexpr std::uint16_t keylen_max = 29;
 
 namespace grackle::impl {
 
-enum class BiMapMode {
-  REFS_KEYDATA = 0,
-  COPIES_KEYDATA = 1
-};
+enum class BiMapMode { REFS_KEYDATA = 0, COPIES_KEYDATA = 1 };
 
 /// @brief This is a bidirectional map (bimap). It is specialized to map `n`
 /// unique string keys to unique indexes with values of `0` through `n-1` and
@@ -94,7 +91,7 @@ enum class BiMapMode {
 /// > The contents of this struct should be considered an implementation
 /// > detail! Always prefer the associated functions (they are defined in such
 /// > a way that they should be inlined
-struct FrozenKeyIdxBiMap{
+struct FrozenKeyIdxBiMap {
   // don't forget to update FrozenKeyIdxBiMap_clone when changing members
 
   /// the number of contained strings
@@ -120,18 +117,16 @@ struct FrozenKeyIdxBiMap{
 /// > This is pretty ugly/clunky, but its the only practical way to achieve
 /// > comparable behavior to other internal datatypes (ideally, we would make
 /// > this a simple C++ class instead)
-inline FrozenKeyIdxBiMap new_FrozenKeyIdxBiMap(
-  const char* keys[], int key_count, BiMapMode mode
-) {
+inline FrozenKeyIdxBiMap new_FrozenKeyIdxBiMap(const char* keys[],
+                                               int key_count, BiMapMode mode) {
   // this will be returned if there is an error
   FrozenKeyIdxBiMap erroneous_obj{0, nullptr, BiMapMode::REFS_KEYDATA};
 
   // check the specified keys
   long long max_keys = static_cast<long long>(bimap::invalid_val) - 1LL;
   if (key_count < 1 || static_cast<long long>(key_count) > max_keys) {
-    GrPrintErrMsg(
-      "key_count must be positive and cannot exceed %lld", max_keys
-    );
+    GrPrintErrMsg("key_count must be positive and cannot exceed %lld",
+                  max_keys);
     return erroneous_obj;
   } else if (keys == nullptr) {
     GrPrintErrMsg("keys must not be a nullptr");
@@ -142,10 +137,9 @@ inline FrozenKeyIdxBiMap new_FrozenKeyIdxBiMap(
     std::size_t n_chrs_without_nul = std::strlen(keys[i]);
     if (n_chrs_without_nul == 0 || n_chrs_without_nul > bimap::keylen_max) {
       GrPrintErrMsg(
-        "calling strlen on \"%s\", the key @ index %d, yields 0 or a length "
-        "exceeding %d",
-        keys[i], i, bimap::keylen_max
-      );
+          "calling strlen on \"%s\", the key @ index %d, yields 0 or a length "
+          "exceeding %d",
+          keys[i], i, bimap::keylen_max);
       return erroneous_obj;
     }
     // check uniqueness
@@ -183,11 +177,9 @@ inline FrozenKeyIdxBiMap new_FrozenKeyIdxBiMap(
     }
   }
 
-  return FrozenKeyIdxBiMap{
-    /* length = */ key_count,
-    /* keys = */ out_keys,
-    /* mode = */ mode
-  };
+  return FrozenKeyIdxBiMap{/* length = */ key_count,
+                           /* keys = */ out_keys,
+                           /* mode = */ mode};
 }
 
 /// returns whether new_FrozenKeyIdxBiMap constructed a valid object
@@ -207,7 +199,6 @@ inline void drop_FrozenKeyIdxBiMap(FrozenKeyIdxBiMap* ptr) {
   }
 }
 
-
 /// Makes a clone of the specified FrozenKeyIdxBiMap (the clone inherites the
 /// original BiMapMode).
 ///
@@ -224,9 +215,7 @@ FrozenKeyIdxBiMap FrozenKeyIdxBiMap_clone(const FrozenKeyIdxBiMap* ptr) {
 /// returns the value associated with the key or (if the key can't be found)
 /// @ref grackle::impl::bimap::invalid_val
 inline std::uint16_t FrozenKeyIdxBiMap_idx_from_key(
-  const FrozenKeyIdxBiMap* map, const char* key
-)
-{
+    const FrozenKeyIdxBiMap* map, const char* key) {
   GR_INTERNAL_REQUIRE(key != nullptr, "A nullptr key is forbidden");
   for (int i = 0; i < map->length; i++) {
     if (std::strcmp(map->keys[i], key) == 0) {
@@ -242,15 +231,17 @@ inline int FrozenKeyIdxBiMap_contains(const FrozenKeyIdxBiMap* map,
   return FrozenKeyIdxBiMap_idx_from_key(map, key) != bimap::invalid_val;
 }
 
-inline int FrozenKeyIdxBiMap_size(const FrozenKeyIdxBiMap* map)
-{ return map->length; }
+inline int FrozenKeyIdxBiMap_size(const FrozenKeyIdxBiMap* map) {
+  return map->length;
+}
 
 /// Return the ith key (this is effectively a reverse lookup)
-inline const char* FrozenKeyIdxBiMap_key_from_idx(
-  const FrozenKeyIdxBiMap* map, std::uint16_t i
-) {
-  if (i >= map->length) { return nullptr; }
-  return map->keys[i]; // this can't be a nullptr
+inline const char* FrozenKeyIdxBiMap_key_from_idx(const FrozenKeyIdxBiMap* map,
+                                                  std::uint16_t i) {
+  if (i >= map->length) {
+    return nullptr;
+  }
+  return map->keys[i];  // this can't be a nullptr
 }
 
 }  // namespace grackle::impl
