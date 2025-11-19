@@ -15,6 +15,9 @@
 /// simplistic at the cost of speed). PR #270 introduce a drop-in replacement
 /// that maintains the exact same API
 ///
+/// If we decide to more fully embrace C++, it would make a lot of sense to
+/// convert this to a full-blown class.
+///
 //===----------------------------------------------------------------------===//
 #ifndef UTILS_FROZENKEYIDXBIMAP_HPP
 #define UTILS_FROZENKEYIDXBIMAP_HPP

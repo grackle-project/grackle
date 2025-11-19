@@ -38,7 +38,7 @@ TEST_P(FrozenKeyIdxBiMapConstructorSuite, LongKey) {
   grackle::impl::FrozenKeyIdxBiMap* tmp = nullptr;
 
   const char* first_key = "density";
-  std::string long_key(STRU16MAP_KEYLEN_MAX, 'A');
+  std::string long_key(grackle::impl::bimap::keylen_max, 'A');
   const char* keys[2] = {first_key, long_key.data()};
   EXPECT_EQ(new_FrozenKeyIdxBiMap(&tmp, keys, 2, GetParam()), GR_SUCCESS);
   ASSERT_NE(tmp, nullptr);
@@ -49,7 +49,7 @@ TEST_P(FrozenKeyIdxBiMapConstructorSuite, TooLongKey) {
   grackle::impl::FrozenKeyIdxBiMap* tmp = nullptr;
 
   const char* first_key = "density";
-  std::string long_key(STRU16MAP_KEYLEN_MAX+1, 'A');
+  std::string long_key(grackle::impl::bimap::keylen_max+1, 'A');
   const char* keys[2] = {first_key, long_key.data()};
   EXPECT_NE(new_FrozenKeyIdxBiMap(&tmp, keys, 2, GetParam()), GR_SUCCESS);
   ASSERT_EQ(tmp, nullptr);
@@ -157,28 +157,28 @@ TEST_P(FrozenKeyIdxBiMapGeneralSuite, IdxFromKeyContainedKey) {
 TEST_P(FrozenKeyIdxBiMapGeneralSuite, IdxFromKeyAbsentKey) {
   EXPECT_EQ(
     grackle::impl::FrozenKeyIdxBiMap_idx_from_key(bimap_p, "notAKey"),
-    STRU16MAP_INVALID_VAL
+    grackle::impl::bimap::invalid_val
   );
 }
 
 TEST_P(FrozenKeyIdxBiMapGeneralSuite, IdxFromKeyAbsentIrregularKeys) {
   EXPECT_EQ(
     grackle::impl::FrozenKeyIdxBiMap_idx_from_key(bimap_p, ""),
-    STRU16MAP_INVALID_VAL
+    grackle::impl::bimap::invalid_val
   );
 
-  std::string key(STRU16MAP_KEYLEN_MAX+1, 'A');
+  std::string key(grackle::impl::bimap::keylen_max+1, 'A');
   EXPECT_EQ(
     grackle::impl::FrozenKeyIdxBiMap_idx_from_key(bimap_p, key.data()),
-    STRU16MAP_INVALID_VAL
+    grackle::impl::bimap::invalid_val
   );
 }
 
 TEST_P(FrozenKeyIdxBiMapGeneralSuite, KeyFromIdxInvalidIdx) {
   EXPECT_EQ(grackle::impl::FrozenKeyIdxBiMap_key_from_idx(bimap_p, 3), nullptr);
   EXPECT_EQ(
-    grackle::impl::FrozenKeyIdxBiMap_key_from_idx(bimap_p,
-                                                  STRU16MAP_INVALID_VAL),
+    grackle::impl::FrozenKeyIdxBiMap_key_from_idx(
+      bimap_p, grackle::impl::bimap::invalid_val),
     nullptr
   );
 }
@@ -223,7 +223,7 @@ TEST_P(FrozenKeyIdxBiMapGeneralSuite, Clone) {
   );
   EXPECT_EQ(
     grackle::impl::FrozenKeyIdxBiMap_idx_from_key(clone_p, "notAKey"),
-    STRU16MAP_INVALID_VAL
+    grackle::impl::bimap::invalid_val
   );
 
   EXPECT_EQ(
