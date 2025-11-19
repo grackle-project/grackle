@@ -48,6 +48,10 @@ target_compile_definitions(grtest_utils
 
 # start declaring targets for tests
 # ---------------------------------
+add_executable(testFrozenKeyIdxBiMap test_unit_FrozenKeyIdxBiMap.cpp)
+target_link_libraries(testFrozenKeyIdxBiMap testdeps)
+gtest_discover_tests(testFrozenKeyIdxBiMap)
+
 add_executable(runInterpolationTests test_unit_interpolators_g.cpp)
 target_link_libraries(runInterpolationTests testdeps)
 
