@@ -152,7 +152,7 @@ inline void calc_temp1d_cloudy_g(
 // Solve cloudy cooling by interpolating from the data. This version uses tables
 // formatted for the original Cloudy cooling functionality in Enzo.
 // TODO: check my_chemistry->UVbackground argument position
-inline void cool1D_cloudy_old_tables_g(
+inline void cool1d_cloudy_old_tables_g(
   double* rhoH, double* metallicity, grackle_field_data* my_fields, IndexRange idx_range,
   double* logtem, double* edot, double comp2, double dom, double zr, chemistry_data* my_chemistry,
   chemistry_data_storage* my_rates, std::vector<gr_mask_type> itmask_tab
