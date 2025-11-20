@@ -32,7 +32,7 @@ void grackle::impl::cool1d_cloudy_old_tables_g(
 
   // Locals
 
-  int i, q;
+  int i;
   double inv_log10, log10_tCMB;
   std::vector<double> dclPar(my_rates->cloudy_metal.grid_rank);
 
