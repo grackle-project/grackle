@@ -15,11 +15,11 @@
 
 namespace grackle::impl {
 
-/// Solve cloudy cooling by interpolating from the data. This version uses tables
-/// formatted for the original Cloudy cooling functionality in Enzo.
+/// Solve cloudy cooling by interpolating from the data. This version uses
+/// tables formatted for the original Cloudy cooling functionality in Enzo.
 ///
 /// Solve cloudy metal cooling for old cloudy metal cooling tables
-/// 
+///
 /// @param[in] rhoH 1D array to hold the computed Hydrogen mass density for the
 /// @p idx_range
 /// @param[in] metallicity 1D array to hold the computed metallicity for the @p
@@ -41,13 +41,14 @@ namespace grackle::impl {
 /// written by: Britton Smith, 2009
 /// modified1: November, 2025 by Christopher Bignamini & Matthew Abruzzo; C++
 /// port
-void cool1d_cloudy_old_tables_g(
-  double* rhoH, double* metallicity, double* logtem, double* edot,
-  double comp2, double dom, double zr, gr_mask_type* itmask,
-  chemistry_data* my_chemistry, chemistry_data_storage* my_rates,
-  grackle_field_data* my_fields, IndexRange idx_range
-);
+void cool1d_cloudy_old_tables_g(double* rhoH, double* metallicity,
+                                double* logtem, double* edot, double comp2,
+                                double dom, double zr, gr_mask_type* itmask,
+                                chemistry_data* my_chemistry,
+                                chemistry_data_storage* my_rates,
+                                grackle_field_data* my_fields,
+                                IndexRange idx_range);
 
-} // namespace grackle::impl
+}  // namespace grackle::impl
 
 #endif /* COOL1D_CLOUDY_OLD_TABLES_G_HPP */
