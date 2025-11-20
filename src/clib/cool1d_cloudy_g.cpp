@@ -24,11 +24,11 @@
 #include "cool1d_cloudy_g.hpp"
 
 void grackle::impl::cool1d_cloudy_g(
-  double* rhoH, double* metallicity, double* logtem, double* edot,
+  const double* rhoH, const double* metallicity, const double* logtem, double* edot,
   double comp2, double dom, double zr, int icmbTfloor, int iClHeat,
   int iZscale, long long clGridRank, long long* clGridDim, double* clPar1,
   double* clPar2, double* clPar3, long long* clDataSize, double* clCooling,
-  double* clHeating, gr_mask_type* itmask, grackle_field_data* my_fields,
+  double* clHeating, const gr_mask_type* itmask, grackle_field_data* my_fields,
   IndexRange idx_range
 )
 {
@@ -114,21 +114,21 @@ void grackle::impl::cool1d_cloudy_g(
       // Interpolate over temperature.
       if (clGridRank == 1)  {
          FORTRAN_NAME(interpolate_1d_g)(&log10tem[i], clGridDim, clPar1,
-             &dclPar[0], clDataSize, clCooling, &log_cool[i]);
+             dclPar.data(), clDataSize, clCooling, &log_cool[i]);
         edot_met[i] = -std::pow(10.,log_cool[i]);
 
         // Ignore CMB term if T >> T_CMB
         if ((icmbTfloor == 1)  &&
              ((log10tem[i] - log10_tCMB) < 2.))  {
            FORTRAN_NAME(interpolate_1d_g)(&log10_tCMB, clGridDim, clPar1,
-               &dclPar[0], clDataSize, clCooling,
+               dclPar.data(), clDataSize, clCooling,
                &log_cool_cmb[i]);
           edot_met[i] = edot_met[i] + std::pow(10.,log_cool_cmb[i]);
         }
 
         if (get_heat == 1)  {
            FORTRAN_NAME(interpolate_1d_g)(&log10tem[i], clGridDim, clPar1,
-               &dclPar[0], clDataSize, clHeating,
+               dclPar.data(), clDataSize, clHeating,
                &log_heat[i]);
           edot_met[i] = edot_met[i] + std::pow(10.,log_heat[i]);
         }
@@ -136,7 +136,7 @@ void grackle::impl::cool1d_cloudy_g(
         // Interpolate over density and temperature.
       } else if (clGridRank == 2)  {
          FORTRAN_NAME(interpolate_2d_g)(&log_n_h[i], &log10tem[i], clGridDim,
-             clPar1, &dclPar[0], clPar2, &dclPar[1],
+             clPar1, dclPar.data(), clPar2, &dclPar[1],
              clDataSize, clCooling, &log_cool[i]);
         edot_met[i] = -std::pow(10.,log_cool[i]);
 
@@ -144,14 +144,14 @@ void grackle::impl::cool1d_cloudy_g(
         if ((icmbTfloor == 1)  &&
              ((log10tem[i] - log10_tCMB) < 2.))  {
            FORTRAN_NAME(interpolate_2d_g)(&log_n_h[i], &log10_tCMB,
-               clGridDim, clPar1, &dclPar[0], clPar2, &dclPar[1],
+               clGridDim, clPar1, dclPar.data(), clPar2, &dclPar[1],
                clDataSize, clCooling, &log_cool_cmb[i]);
           edot_met[i] = edot_met[i] + std::pow(10.,log_cool_cmb[i]);
         }
 
         if (get_heat == 1)  {
            FORTRAN_NAME(interpolate_2d_g)(&log_n_h[i], &log10tem[i], clGridDim,
-               clPar1, &dclPar[0], clPar2, &dclPar[1],
+               clPar1, dclPar.data(), clPar2, &dclPar[1],
                clDataSize, clHeating, &log_heat[i]);
           edot_met[i] = edot_met[i] + std::pow(10.,log_heat[i]);
         }
@@ -160,7 +160,7 @@ void grackle::impl::cool1d_cloudy_g(
       } else if (clGridRank == 3)  {
          FORTRAN_NAME(interpolate_3dz_g)(&log_n_h[i], &zr, &log10tem[i],
              clGridDim,
-             clPar1, &dclPar[0],
+             clPar1, dclPar.data(),
              clPar2, &zindex,
              clPar3, &dclPar[2],
              clDataSize, clCooling,
@@ -172,7 +172,7 @@ void grackle::impl::cool1d_cloudy_g(
              ((log10tem[i] - log10_tCMB) < 2.))  {
            FORTRAN_NAME(interpolate_3dz_g)(&log_n_h[i], &zr, &log10_tCMB,
                clGridDim,
-               clPar1, &dclPar[0],
+               clPar1, dclPar.data(),
                clPar2, &zindex,
                clPar3, &dclPar[2],
                clDataSize, clCooling,
@@ -183,7 +183,7 @@ void grackle::impl::cool1d_cloudy_g(
         if (get_heat == 1)  {
            FORTRAN_NAME(interpolate_3dz_g)(&log_n_h[i], &zr, &log10tem[i],
                clGridDim,
-               clPar1, &dclPar[0],
+               clPar1, dclPar.data(),
                clPar2, &zindex,
                clPar3, &dclPar[2],
                clDataSize, clHeating,
