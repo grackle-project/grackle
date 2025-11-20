@@ -25,8 +25,8 @@
 
 void grackle::impl::cool1d_cloudy_g(
   double* rhoH, double* metallicity, double* logtem, double* edot,
-  double comp2, double* dom, double* zr, int* icmbTfloor, int* iClHeat,
-  int* iZscale, long long* clGridRank, long long* clGridDim, double* clPar1,
+  double comp2, double dom, double zr, int icmbTfloor, int iClHeat,
+  int iZscale, long long clGridRank, long long* clGridDim, double* clPar1,
   double* clPar2, double* clPar3, long long* clDataSize, double* clCooling,
   double* clHeating, gr_mask_type* itmask, grackle_field_data* my_fields,
   IndexRange idx_range
@@ -37,7 +37,7 @@ void grackle::impl::cool1d_cloudy_g(
   int i, get_heat;
   long long zindex, zmidpt, zhighpt;
   double inv_log10, log10_tCMB;
-  std::vector<double> dclPar((*clGridRank));
+  std::vector<double> dclPar(clGridRank);
   long long end_int;
 
   // Slice locals
@@ -53,53 +53,53 @@ void grackle::impl::cool1d_cloudy_g(
   // =======================================================================
 
   end_int = 0;
-  get_heat = (*iClHeat);
+  get_heat = iClHeat;
 
   inv_log10 = 1. / std::log(10.);
   log10_tCMB = std::log10(comp2);
 
   // Calculate parameter value slopes
 
-  dclPar[1-1] = (clPar1[clGridDim[1-1]-1] - clPar1[1-1]) /
-       (double)(clGridDim[1-1] - 1 );
-  if ((*clGridRank) > 1)  {
-    dclPar[2-1] = (clPar2[clGridDim[2-1]-1] - clPar2[1-1]) /
-         (double)(clGridDim[2-1] - 1 );
+  dclPar[0] = (clPar1[clGridDim[0]-1] - clPar1[0]) /
+       (double)(clGridDim[0] - 1 );
+  if (clGridRank > 1)  {
+    dclPar[1] = (clPar2[clGridDim[1]-1] - clPar2[0]) /
+         (double)(clGridDim[1] - 1 );
   }
-  if ((*clGridRank) > 2)  {
-    dclPar[3-1] = (clPar3[clGridDim[3-1]-1] - clPar3[1-1]) /
-         (double)(clGridDim[3-1] - 1 );
+  if (clGridRank > 2)  {
+    dclPar[2] = (clPar3[clGridDim[2]-1] - clPar3[0]) /
+         (double)(clGridDim[2] - 1 );
   }
 
-  for (i = idx_range.i_start + 1; i<=(idx_range.i_end + 1); i++) {
-    if (itmask[i-1] != MASK_FALSE)  {
+  for (i = idx_range.i_start; i<=idx_range.i_end; i++) {
+    if (itmask[i] != MASK_FALSE)  {
 
-      log10tem[i-1] = logtem[i-1] * inv_log10;
+      log10tem[i] = logtem[i] * inv_log10;
 
       // Calculate proper log(n_H)
 
-      log_n_h[i-1] = std::log10(rhoH[i-1] * (*dom));
+      log_n_h[i] = std::log10(rhoH[i] * dom);
 
       // Calculate index for redshift dimension
 
-      if ((*clGridRank) > 2)  {
+      if (clGridRank > 2)  {
 
         // Get index for redshift dimension via bisection
 
-        if ((*zr) <= clPar2[1-1])  {
+        if (zr <= clPar2[0])  {
           zindex = 1;
-        } else if ((*zr) >= clPar2[clGridDim[2-1]-1-1])  {
-          zindex = clGridDim[2-1];
+        } else if (zr >= clPar2[clGridDim[1]-1-1])  {
+          zindex = clGridDim[1];
           end_int = 1;
           get_heat = 0;
-        } else if ((*zr) >= clPar2[clGridDim[2-1]-2-1])  {
-          zindex = clGridDim[2-1] - 2;
+        } else if (zr >= clPar2[clGridDim[1]-2-1])  {
+          zindex = clGridDim[1] - 2;
         } else {
           zindex = 1;
-          zhighpt = clGridDim[2-1] - 2;
+          zhighpt = clGridDim[1] - 2;
           while ((zhighpt - zindex) > 1) {
             zmidpt = int((zhighpt + zindex) / 2);
-            if ((*zr) >= clPar2[zmidpt-1])  {
+            if (zr >= clPar2[zmidpt-1])  {
               zindex = zmidpt;
             } else {
               zhighpt = zmidpt;
@@ -112,83 +112,83 @@ void grackle::impl::cool1d_cloudy_g(
       // Call interpolation functions to get heating/cooling
 
       // Interpolate over temperature.
-      if ((*clGridRank) == 1)  {
-         FORTRAN_NAME(interpolate_1d_g)(&log10tem[i-1], clGridDim, clPar1,
-             &dclPar[1-1], clDataSize, clCooling, &log_cool[i-1]);
-        edot_met[i-1] = -std::pow(10.,log_cool[i-1]);
+      if (clGridRank == 1)  {
+         FORTRAN_NAME(interpolate_1d_g)(&log10tem[i], clGridDim, clPar1,
+             &dclPar[0], clDataSize, clCooling, &log_cool[i]);
+        edot_met[i] = -std::pow(10.,log_cool[i]);
 
         // Ignore CMB term if T >> T_CMB
-        if (((*icmbTfloor) == 1)  && 
-             ((log10tem[i-1] - log10_tCMB) < 2.))  {
+        if ((icmbTfloor == 1)  &&
+             ((log10tem[i] - log10_tCMB) < 2.))  {
            FORTRAN_NAME(interpolate_1d_g)(&log10_tCMB, clGridDim, clPar1,
-               &dclPar[1-1], clDataSize, clCooling,
-               &log_cool_cmb[i-1]);
-          edot_met[i-1] = edot_met[i-1] + std::pow(10.,log_cool_cmb[i-1]);
+               &dclPar[0], clDataSize, clCooling,
+               &log_cool_cmb[i]);
+          edot_met[i] = edot_met[i] + std::pow(10.,log_cool_cmb[i]);
         }
 
         if (get_heat == 1)  {
-           FORTRAN_NAME(interpolate_1d_g)(&log10tem[i-1], clGridDim, clPar1,
-               &dclPar[1-1], clDataSize, clHeating,
-               &log_heat[i-1]);
-          edot_met[i-1] = edot_met[i-1] + std::pow(10.,log_heat[i-1]);
+           FORTRAN_NAME(interpolate_1d_g)(&log10tem[i], clGridDim, clPar1,
+               &dclPar[0], clDataSize, clHeating,
+               &log_heat[i]);
+          edot_met[i] = edot_met[i] + std::pow(10.,log_heat[i]);
         }
 
         // Interpolate over density and temperature.
-      } else if ((*clGridRank) == 2)  {
-         FORTRAN_NAME(interpolate_2d_g)(&log_n_h[i-1], &log10tem[i-1], clGridDim,
-             clPar1, &dclPar[1-1], clPar2, &dclPar[2-1],
-             clDataSize, clCooling, &log_cool[i-1]);
-        edot_met[i-1] = -std::pow(10.,log_cool[i-1]);
+      } else if (clGridRank == 2)  {
+         FORTRAN_NAME(interpolate_2d_g)(&log_n_h[i], &log10tem[i], clGridDim,
+             clPar1, &dclPar[0], clPar2, &dclPar[1],
+             clDataSize, clCooling, &log_cool[i]);
+        edot_met[i] = -std::pow(10.,log_cool[i]);
 
         // Ignore CMB term if T >> T_CMB
-        if (((*icmbTfloor) == 1)  && 
-             ((log10tem[i-1] - log10_tCMB) < 2.))  {
-           FORTRAN_NAME(interpolate_2d_g)(&log_n_h[i-1], &log10_tCMB,
-               clGridDim, clPar1, &dclPar[1-1], clPar2, &dclPar[2-1],
-               clDataSize, clCooling, &log_cool_cmb[i-1]);
-          edot_met[i-1] = edot_met[i-1] + std::pow(10.,log_cool_cmb[i-1]);
+        if ((icmbTfloor == 1)  &&
+             ((log10tem[i] - log10_tCMB) < 2.))  {
+           FORTRAN_NAME(interpolate_2d_g)(&log_n_h[i], &log10_tCMB,
+               clGridDim, clPar1, &dclPar[0], clPar2, &dclPar[1],
+               clDataSize, clCooling, &log_cool_cmb[i]);
+          edot_met[i] = edot_met[i] + std::pow(10.,log_cool_cmb[i]);
         }
 
         if (get_heat == 1)  {
-           FORTRAN_NAME(interpolate_2d_g)(&log_n_h[i-1], &log10tem[i-1], clGridDim,
-               clPar1, &dclPar[1-1], clPar2, &dclPar[2-1],
-               clDataSize, clHeating, &log_heat[i-1]);
-          edot_met[i-1] = edot_met[i-1] + std::pow(10.,log_heat[i-1]);
+           FORTRAN_NAME(interpolate_2d_g)(&log_n_h[i], &log10tem[i], clGridDim,
+               clPar1, &dclPar[0], clPar2, &dclPar[1],
+               clDataSize, clHeating, &log_heat[i]);
+          edot_met[i] = edot_met[i] + std::pow(10.,log_heat[i]);
         }
 
         // Interpolate over density, redshift, and temperature.
-      } else if ((*clGridRank) == 3)  {
-         FORTRAN_NAME(interpolate_3dz_g)(&log_n_h[i-1], zr, &log10tem[i-1],
+      } else if (clGridRank == 3)  {
+         FORTRAN_NAME(interpolate_3dz_g)(&log_n_h[i], &zr, &log10tem[i],
              clGridDim,
-             clPar1, &dclPar[1-1],
+             clPar1, &dclPar[0],
              clPar2, &zindex,
-             clPar3, &dclPar[3-1],
+             clPar3, &dclPar[2],
              clDataSize, clCooling,
-             &end_int, &log_cool[i-1]);
-        edot_met[i-1] = -std::pow(10.,log_cool[i-1]);
+             &end_int, &log_cool[i]);
+        edot_met[i] = -std::pow(10.,log_cool[i]);
 
         // Ignore CMB term if T >> T_CMB
-        if (((*icmbTfloor) == 1)  && 
-             ((log10tem[i-1] - log10_tCMB) < 2.))  {
-           FORTRAN_NAME(interpolate_3dz_g)(&log_n_h[i-1], zr, &log10_tCMB,
+        if ((icmbTfloor == 1)  &&
+             ((log10tem[i] - log10_tCMB) < 2.))  {
+           FORTRAN_NAME(interpolate_3dz_g)(&log_n_h[i], &zr, &log10_tCMB,
                clGridDim,
-               clPar1, &dclPar[1-1],
+               clPar1, &dclPar[0],
                clPar2, &zindex,
-               clPar3, &dclPar[3-1],
+               clPar3, &dclPar[2],
                clDataSize, clCooling,
-               &end_int, &log_cool_cmb[i-1]);
-          edot_met[i-1] = edot_met[i-1] + std::pow(10.,log_cool_cmb[i-1]);
+               &end_int, &log_cool_cmb[i]);
+          edot_met[i] = edot_met[i] + std::pow(10.,log_cool_cmb[i]);
         }
 
         if (get_heat == 1)  {
-           FORTRAN_NAME(interpolate_3dz_g)(&log_n_h[i-1], zr, &log10tem[i-1],
+           FORTRAN_NAME(interpolate_3dz_g)(&log_n_h[i], &zr, &log10tem[i],
                clGridDim,
-               clPar1, &dclPar[1-1],
+               clPar1, &dclPar[0],
                clPar2, &zindex,
-               clPar3, &dclPar[3-1],
+               clPar3, &dclPar[2],
                clDataSize, clHeating,
-               &end_int, &log_heat[i-1]);
-          edot_met[i-1] = edot_met[i-1] + std::pow(10.,log_heat[i-1]);
+               &end_int, &log_heat[i]);
+          edot_met[i] = edot_met[i] + std::pow(10.,log_heat[i]);
         }
 
       } else {
@@ -201,12 +201,12 @@ void grackle::impl::cool1d_cloudy_g(
 
       // Scale cooling by metallicity.
 
-      if ((*iZscale) == 1)  {
-        edot_met[i-1] = edot_met[i-1] * metallicity[i-1];
+      if (iZscale == 1)  {
+        edot_met[i] = edot_met[i] * metallicity[i];
       }
 
-      edot[i-1] = edot[i-1] +
-           (edot_met[i-1] * rhoH[i-1] * rhoH[i-1]);
+      edot[i] = edot[i] +
+           (edot_met[i] * rhoH[i] * rhoH[i]);
 
     }
   }

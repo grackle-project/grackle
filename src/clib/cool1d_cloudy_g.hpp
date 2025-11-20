@@ -54,8 +54,8 @@ namespace grackle::impl {
 /// modified1: November, 2025 by Christopher Bignamini & Matthew Abruzzo; C++ port
 void cool1d_cloudy_g(
   double* rhoH, double* metallicity, double* logtem, double* edot,
-  double comp2, double* dom, double* zr, int* icmbTfloor, int* iClHeat,
-  int* iZscale, long long* clGridRank, long long* clGridDim, double* clPar1,
+  double comp2, double dom, double zr, int icmbTfloor, int iClHeat,
+  int iZscale, long long clGridRank, long long* clGridDim, double* clPar1,
   double* clPar2, double* clPar3, long long* clDataSize, double* clCooling,
   double* clHeating, gr_mask_type* itmask, grackle_field_data* my_fields,
   IndexRange idx_range
