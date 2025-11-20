@@ -26,10 +26,8 @@ namespace grackle::impl {
 ///
 /// Solve cloudy cooling by interpolating from the data.
 ///
-/// @param[in] rhoH 1D array to hold the computed Hydrogen mass density for the
-/// @p idx_range
-/// @param[in] metallicity 1D array to hold the computed metallicity for the @p
-/// idx_range
+/// @param[in] rhoH 1D array to hold the computed Hydrogen mass density for the @p idx_range
+/// @param[in] metallicity 1D array to hold the computed metallicity for the @p idx_range
 /// @param[in] logtem Natural log of temperature values
 /// @param[out] edot 1D array to hold the computed the time derivative of the
 ///     internal energy in the @p idx_range
@@ -53,17 +51,16 @@ namespace grackle::impl {
 ///
 /// @par History
 /// written by: Britton Smith, 2009
-/// modified1: November, 2025 by Christopher Bignamini & Matthew Abruzzo; C++
-/// port
-void cool1d_cloudy_g(const double* rhoH, const double* metallicity,
-                     const double* logtem, double* edot, double comp2,
-                     double dom, double zr, int icmbTfloor, int iClHeat,
-                     int iZscale, long long clGridRank, long long* clGridDim,
-                     double* clPar1, double* clPar2, double* clPar3,
-                     long long clDataSize, double clCooling, double clHeating,
-                     const gr_mask_type* itmask, grackle_field_data* my_fields,
-                     IndexRange idx_range);
+/// modified1: November, 2025 by Christopher Bignamini & Matthew Abruzzo; C++ port
+void cool1d_cloudy_g(
+  double* rhoH, double* metallicity, double* logtem, double* edot,
+  double comp2, double* dom, double* zr, int* icmbTfloor, int* iClHeat,
+  int* iZscale, long long* clGridRank, long long* clGridDim, double* clPar1,
+  double* clPar2, double* clPar3, long long* clDataSize, double* clCooling,
+  double* clHeating, gr_mask_type* itmask, grackle_field_data* my_fields,
+  IndexRange idx_range
+);
 
-}  // namespace grackle::impl
+} // namespace grackle::impl
 
 #endif /* COOL1D_CLOUDY_G_HPP */
