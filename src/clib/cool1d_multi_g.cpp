@@ -1677,7 +1677,7 @@ void grackle::impl::cool1d_multi_g(
     } else {
       grackle::impl::cool1d_cloudy_old_tables_g(
           rhoH, metallicity, logTlininterp_buf.logtem, edot, comp2, dom, zr,
-          itmask_tab.data(), my_chemistry, my_rates, my_fields, idx_range);
+          itmask_tab.data(), my_chemistry, my_rates->cloudy_metal, my_fields->density, my_fields->e_density, my_fields, idx_range);
     }
 
     if (my_chemistry->metal_chemistry == 1) {
