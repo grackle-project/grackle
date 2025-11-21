@@ -34,6 +34,9 @@ namespace grackle::impl {
 /// @param[in] my_chemistry holds a number of configuration parameters.
 /// @param[in] my_rates Holds assorted rate data and other internal
 ///     configuration info.
+/// @param[in] cloudy_table Cloudy cooling table data
+/// @param[in] density total density field
+/// @param[in] e_density electron density field
 /// @param[in] my_fields Specifies the field data.
 /// @param[in] idx_range Specifies the current index-range
 ///
@@ -45,7 +48,8 @@ void cool1d_cloudy_old_tables_g(double* rhoH, double* metallicity,
                                 double* logtem, double* edot, double comp2,
                                 double dom, double zr, gr_mask_type* itmask,
                                 chemistry_data* my_chemistry,
-                                chemistry_data_storage* my_rates,
+                                cloudy_data cloudy_table,
+                                gr_float* density, gr_float* e_density,
                                 grackle_field_data* my_fields,
                                 IndexRange idx_range);
 
