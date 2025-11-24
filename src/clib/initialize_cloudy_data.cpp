@@ -51,7 +51,6 @@ int grackle::impl::initialize_cloudy_data(
     code_units *my_units, int read_data)
 {
 
-  double *temp_data;
   long long temp_int;
   char parameter_name[MAX_PARAMETER_NAME_LENGTH];
   const std::size_t pname_bufsize =
@@ -255,7 +254,7 @@ int grackle::impl::initialize_cloudy_data(
   // Read Heating data.
   if (my_chemistry->UVbackground == 1) {
 
-    temp_data = (double*) malloc(my_cloudy->data_size * sizeof(double));
+    double* tmp_heat_data = new double[my_cloudy->data_size];
 
     std::snprintf(parameter_name, pname_bufsize, "/CoolingRates/%s/Heating",
                   group_name);
@@ -266,7 +265,8 @@ int grackle::impl::initialize_cloudy_data(
       return GR_FAIL;
     }
 
-    status = H5Dread(dset_id, HDF5_R8, H5S_ALL, H5S_ALL, H5P_DEFAULT, temp_data);
+    status = H5Dread(dset_id, HDF5_R8, H5S_ALL, H5S_ALL, H5P_DEFAULT,
+                     tmp_heat_data);
     if (grackle_verbose)
       std::fprintf(stdout,"Reading Cloudy Heating dataset.\n");
     if (status == h5_error) {
@@ -276,13 +276,13 @@ int grackle::impl::initialize_cloudy_data(
 
     my_cloudy->heating_data = (double*) malloc(my_cloudy->data_size * sizeof(double));
     for (long long q = 0LL; q < my_cloudy->data_size; q++) {
-      my_cloudy->heating_data[q] = temp_data[q] > 0 ?
-        (double) std::log10(temp_data[q]) : (double) SMALL_LOG_VALUE;
+      my_cloudy->heating_data[q] = tmp_heat_data[q] > 0 ?
+        (double) std::log10(tmp_heat_data[q]) : (double) SMALL_LOG_VALUE;
 
       // Convert to code units.
       my_cloudy->heating_data[q] -= std::log10(CoolUnit);
     }
-    free(temp_data);
+    delete[] tmp_heat_data;
 
     status = H5Dclose(dset_id);
     if (status == h5_error) {
