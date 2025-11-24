@@ -175,15 +175,15 @@ int grackle::impl::initialize_cloudy_data(
       std::snprintf(parameter_name, pname_bufsize, "Temperature");
     }
 
-    temp_data = (double*) malloc(my_cloudy->grid_dimension[q] * sizeof(double));
-
     attr_id = H5Aopen_name(dset_id, parameter_name);
     if (attr_id == h5_error) {
       std::fprintf(stderr,"Failed to open %s attribute in Cooling dataset.\n",
               parameter_name);
       return GR_FAIL;
     }
-    status = H5Aread(attr_id, HDF5_R8, temp_data);
+
+    double* tmp_param_buf = new double[my_cloudy->grid_dimension[q]];
+    status = H5Aread(attr_id, HDF5_R8, tmp_param_buf);
     if (attr_id == h5_error) {
       std::fprintf(stderr,"Failed to read %s attribute in Cooling dataset.\n",
                    parameter_name);
@@ -194,14 +194,15 @@ int grackle::impl::initialize_cloudy_data(
                                            sizeof(double));
     for (long long w = 0LL; w < my_cloudy->grid_dimension[q]; w++) {
       if (q < my_cloudy->grid_rank - 1) {
-	my_cloudy->grid_parameters[q][w] = (double) temp_data[w];
+	my_cloudy->grid_parameters[q][w] = (double) tmp_param_buf[w];
       }
       else {
 	// convert temeperature to log
-	my_cloudy->grid_parameters[q][w] = (double) std::log10(temp_data[w]);
+	my_cloudy->grid_parameters[q][w] = (double) std::log10(tmp_param_buf[w]);
       }
 
     }
+    delete[] tmp_param_buf;
     if (grackle_verbose) {
       std::fprintf(stdout,
           "%s: %g to %g (%lld steps).\n",
@@ -216,8 +217,6 @@ int grackle::impl::initialize_cloudy_data(
               parameter_name);
       return GR_FAIL;
     }
-    free(temp_data);
-
   }
 
   // Read Cooling data.
