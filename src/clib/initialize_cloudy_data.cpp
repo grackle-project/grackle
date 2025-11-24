@@ -21,6 +21,8 @@
 #include "initialize_cloudy_data.hpp"
 
 #define SMALL_LOG_VALUE (-99.0)
+#define MAX_PARAMETER_NAME_LENGTH (512)
+
 
 namespace { // stuff inside of an anonymous namespace is read-only
 
@@ -52,8 +54,9 @@ int grackle::impl::initialize_cloudy_data(
   double *temp_data;
   long long temp_int;
   long long *temp_int_arr;
-  char parameter_name[MAX_LINE_LENGTH];
-  const std::size_t pname_bufsize = static_cast<std::size_t>(MAX_LINE_LENGTH);
+  char parameter_name[MAX_PARAMETER_NAME_LENGTH];
+  const std::size_t pname_bufsize =
+    static_cast<std::size_t>(MAX_PARAMETER_NAME_LENGTH);
 
   // Initialize things (to the null-state) even if cloudy cooling is not used.
   initialize_empty_cloudy_data_struct(my_cloudy);
