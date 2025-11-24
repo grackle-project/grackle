@@ -53,7 +53,6 @@ int grackle::impl::initialize_cloudy_data(
 
   double *temp_data;
   long long temp_int;
-  long long *temp_int_arr;
   char parameter_name[MAX_PARAMETER_NAME_LENGTH];
   const std::size_t pname_bufsize =
     static_cast<std::size_t>(MAX_PARAMETER_NAME_LENGTH);
@@ -138,13 +137,13 @@ int grackle::impl::initialize_cloudy_data(
   }
 
   // Grid dimension.
-  temp_int_arr = (long long*)malloc(my_cloudy->grid_rank * sizeof(long long));
+  long long* temp_int_arr = new long long[my_cloudy->grid_rank];
   attr_id = H5Aopen_name(dset_id, "Dimension");
   if (attr_id == h5_error) {
     std::fprintf(stderr,"Failed to open Dimension attribute in Cooling dataset.\n");
     return GR_FAIL;
   }
-  status = H5Aread(attr_id, HDF5_I8,temp_int_arr);
+  status = H5Aread(attr_id, HDF5_I8, temp_int_arr);
   if (attr_id == h5_error) {
     std::fprintf(stderr,"Failed to read Dimension attribute in Cooling dataset.\n");
     return GR_FAIL;
@@ -164,7 +163,7 @@ int grackle::impl::initialize_cloudy_data(
     std::fprintf(stderr,"Failed to close Dimension attribute in Cooling dataset.\n");
     return GR_FAIL;
   }
-  free(temp_int_arr);
+  delete[] temp_int_arr;
 
   // Grid parameters.
   for (long long q = 0LL; q < my_cloudy->grid_rank; q++) {
