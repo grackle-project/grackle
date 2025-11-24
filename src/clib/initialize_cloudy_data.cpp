@@ -238,7 +238,6 @@ int grackle::impl::initialize_cloudy_data(
   }
   if (h5io::read_dataset(file_id, dset_name, tmp_cool_data) != GR_SUCCESS) {
     delete[] tmp_cool_data;
-    std::fprintf(stderr,"Failed to read Cooling dataset.\n");
     return GR_FAIL;
   }
 
@@ -256,23 +255,13 @@ int grackle::impl::initialize_cloudy_data(
   // Read Heating data.
   if (my_chemistry->UVbackground == 1) {
 
-    double* tmp_heat_data = new double[my_cloudy->data_size];
 
-    std::snprintf(parameter_name, name_bufsize, "/CoolingRates/%s/Heating",
+    std::snprintf(dset_name, name_bufsize, "/CoolingRates/%s/Heating",
                   group_name);
-    dset_id =  H5Dopen(file_id, parameter_name);
-    if (dset_id == h5_error) {
-      std::fprintf(stderr,"Can't open Heating in %s.\n",
-              my_chemistry->grackle_data_file);
-      return GR_FAIL;
-    }
 
-    status = H5Dread(dset_id, HDF5_R8, H5S_ALL, H5S_ALL, H5P_DEFAULT,
-                     tmp_heat_data);
-    if (grackle_verbose)
-      std::fprintf(stdout,"Reading Cloudy Heating dataset.\n");
-    if (status == h5_error) {
-      std::fprintf(stderr,"Failed to read Heating dataset.\n");
+    double* tmp_heat_data = new double[my_cloudy->data_size];
+    if (h5io::read_dataset(file_id, dset_name, tmp_heat_data) != GR_SUCCESS) {
+      delete[] tmp_heat_data;
       return GR_FAIL;
     }
 
@@ -285,12 +274,6 @@ int grackle::impl::initialize_cloudy_data(
       my_cloudy->heating_data[q] -= std::log10(CoolUnit);
     }
     delete[] tmp_heat_data;
-
-    status = H5Dclose(dset_id);
-    if (status == h5_error) {
-      std::fprintf(stderr,"Failed to close Heating dataset.\n");
-      return GR_FAIL;
-    }
   }
 
   // Read MMW data.
