@@ -328,8 +328,8 @@ ENTRY(exit_after_iterations_exceeded, INT, FALSE)
 ENTRY(omp_nthreads, INT, 0)
 
 /* solver to be used 
- * 1: gs-only
- * 2: nr-only
- * 3: gs-nr
+* 1: gs-nr
+* 2: gs-only
+* 3: nr-only
 */
 ENTRY(solver_method, INT, 1)

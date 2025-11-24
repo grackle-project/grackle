@@ -306,9 +306,9 @@ typedef struct
   int omp_nthreads;
 
   /* solver to be used 
-   * 1: gs-only
-   * 2: nr-only
-   * 3: gs-nr
+   * 1: gs-nr
+   * 2: gs-only
+   * 3: nr-only
   */
   int solver_method;
 
