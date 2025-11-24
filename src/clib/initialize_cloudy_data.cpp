@@ -53,7 +53,6 @@ int grackle::impl::initialize_cloudy_data(
 
   long long temp_int;
   char dset_name[MAX_PARAMETER_NAME_LENGTH];
-  char parameter_name[MAX_PARAMETER_NAME_LENGTH];
   const std::size_t name_bufsize =
     static_cast<std::size_t>(MAX_PARAMETER_NAME_LENGTH);
 
@@ -167,6 +166,7 @@ int grackle::impl::initialize_cloudy_data(
 
   // Grid parameters.
   for (long long q = 0LL; q < my_cloudy->grid_rank; q++) {
+    char parameter_name[MAX_PARAMETER_NAME_LENGTH];
 
     if (q < my_cloudy->grid_rank - 1) {
       std::snprintf(parameter_name, name_bufsize, "Parameter%lld",(q+1));
@@ -255,7 +255,6 @@ int grackle::impl::initialize_cloudy_data(
   // Read Heating data.
   if (my_chemistry->UVbackground == 1) {
 
-
     std::snprintf(dset_name, name_bufsize, "/CoolingRates/%s/Heating",
                   group_name);
 
@@ -281,30 +280,12 @@ int grackle::impl::initialize_cloudy_data(
       std::strcmp(group_name, "Primordial") == 0) {
 
     my_cloudy->mmw_data = new double[my_cloudy->data_size];
-
-    std::snprintf(parameter_name, name_bufsize, "/CoolingRates/%s/MMW",
-                  group_name);
-    dset_id =  H5Dopen(file_id, parameter_name);
-    if (dset_id == h5_error) {
-      std::fprintf(stderr,"Can't open MMW in %s.\n",
-              my_chemistry->grackle_data_file);
+    if (h5io::read_dataset(file_id, "/CoolingRates/Primordial/MMW",
+                           my_cloudy->mmw_data) != GR_SUCCESS) {
+      // nothing to cleanup right now
       return GR_FAIL;
     }
 
-    status = H5Dread(dset_id, HDF5_R8, H5S_ALL, H5S_ALL, H5P_DEFAULT,
-                     my_cloudy->mmw_data);
-    if (grackle_verbose)
-      std::fprintf(stdout,"Reading Cloudy MMW dataset.\n");
-    if (status == h5_error) {
-      std::fprintf(stderr,"Failed to read MMW dataset.\n");
-      return GR_FAIL;
-    }
-
-    status = H5Dclose(dset_id);
-    if (status == h5_error) {
-      std::fprintf(stderr,"Failed to close MMW dataset.\n");
-      return GR_FAIL;
-    }
   }
 
   status = H5Fclose (file_id);
