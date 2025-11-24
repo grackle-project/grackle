@@ -12,7 +12,7 @@
 ************************************************************************/
 
 #include <stdlib.h>
-#include <cstdio> // std::fprintf, std::sprintf, stderr, stdio
+#include <cstdio> // std::fprintf, std::snprintf, stderr, stdio
 #include <cmath> // std::log10, std::pow
 #include <cstring> // std::strcmp
 #include "hdf5.h"
@@ -47,11 +47,11 @@ int initialize_cloudy_data(chemistry_data *my_chemistry,
                            code_units *my_units, int read_data)
 {
 
-  long long w;
   double *temp_data;
   long long temp_int;
   long long *temp_int_arr;
   char parameter_name[MAX_LINE_LENGTH];
+  const std::size_t pname_bufsize = static_cast<std::size_t>(MAX_LINE_LENGTH);
 
   // Initialize things (to the null-state) even if cloudy cooling is not used.
   initialize_empty_cloudy_data_struct(my_cloudy);
@@ -103,7 +103,8 @@ int initialize_cloudy_data(chemistry_data *my_chemistry,
 
   // Open cooling dataset and get grid dimensions.
 
-  std::sprintf(parameter_name, "/CoolingRates/%s/Cooling", group_name);
+  std::snprintf(parameter_name, pname_bufsize, "/CoolingRates/%s/Cooling",
+                group_name);
   dset_id =  H5Dopen(file_id, parameter_name);
   if (dset_id == h5_error) {
     std::fprintf(stderr,"Can't open Cooling in %s.\n",
@@ -164,10 +165,10 @@ int initialize_cloudy_data(chemistry_data *my_chemistry,
   for (long long q = 0LL; q < my_cloudy->grid_rank; q++) {
 
     if (q < my_cloudy->grid_rank - 1) {
-      std::sprintf(parameter_name,"Parameter%lld",(q+1));
+      std::snprintf(parameter_name, pname_bufsize, "Parameter%lld",(q+1));
     }
     else {
-      std::sprintf(parameter_name,"Temperature");
+      std::snprintf(parameter_name, pname_bufsize, "Temperature");
     }
 
     temp_data = (double*) malloc(my_cloudy->grid_dimension[q] * sizeof(double));
@@ -251,7 +252,8 @@ int initialize_cloudy_data(chemistry_data *my_chemistry,
 
     temp_data = (double*) malloc(my_cloudy->data_size * sizeof(double));
 
-    std::sprintf(parameter_name, "/CoolingRates/%s/Heating", group_name);
+    std::snprintf(parameter_name, pname_bufsize, "/CoolingRates/%s/Heating",
+                  group_name);
     dset_id =  H5Dopen(file_id, parameter_name);
     if (dset_id == h5_error) {
       std::fprintf(stderr,"Can't open Heating in %s.\n",
@@ -290,7 +292,8 @@ int initialize_cloudy_data(chemistry_data *my_chemistry,
 
     my_cloudy->mmw_data = (double*) malloc(my_cloudy->data_size * sizeof(double));
 
-    std::sprintf(parameter_name, "/CoolingRates/%s/MMW", group_name);
+    std::snprintf(parameter_name, pname_bufsize, "/CoolingRates/%s/MMW",
+                  group_name);
     dset_id =  H5Dopen(file_id, parameter_name);
     if (dset_id == h5_error) {
       std::fprintf(stderr,"Can't open MMW in %s.\n",
