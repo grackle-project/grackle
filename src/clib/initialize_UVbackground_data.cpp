@@ -17,10 +17,10 @@
 #include "grackle.h"
 #include "grackle_macros.h"
 
-#include "initialize_UVbackground_data.h"
+#include "initialize_UVbackground_data.hpp"
 
 // function prototypes
-int read_dataset(hid_t file_id, char *dset_name, double *buffer);
+int read_dataset(hid_t file_id, const char *dset_name, double *buffer);
 
 /**
  * Initializes an empty #UVBtable struct with zeros and NULLs.
@@ -132,27 +132,27 @@ int initialize_UVbackground_data(chemistry_data *my_chemistry,
   // Now allocate memory for UV background table.
   my_rates->UVbackground_table.Nz = Nz;
 
-  my_rates->UVbackground_table.z = malloc(Nz * sizeof(double));
-  my_rates->UVbackground_table.k24 = malloc(Nz * sizeof(double));
-  my_rates->UVbackground_table.k25 = malloc(Nz * sizeof(double));
-  my_rates->UVbackground_table.k26 = malloc(Nz * sizeof(double));
+  my_rates->UVbackground_table.z = (double*)malloc(Nz * sizeof(double));
+  my_rates->UVbackground_table.k24 = (double*)malloc(Nz * sizeof(double));
+  my_rates->UVbackground_table.k25 = (double*)malloc(Nz * sizeof(double));
+  my_rates->UVbackground_table.k26 = (double*)malloc(Nz * sizeof(double));
 
   if (my_chemistry->primordial_chemistry > 1) {
-    my_rates->UVbackground_table.k27 = malloc(Nz * sizeof(double));
-    my_rates->UVbackground_table.k28 = malloc(Nz * sizeof(double));
-    my_rates->UVbackground_table.k29 = malloc(Nz * sizeof(double));
-    my_rates->UVbackground_table.k30 = malloc(Nz * sizeof(double));
-    my_rates->UVbackground_table.k31 = malloc(Nz * sizeof(double));
+    my_rates->UVbackground_table.k27 = (double*)malloc(Nz * sizeof(double));
+    my_rates->UVbackground_table.k28 = (double*)malloc(Nz * sizeof(double));
+    my_rates->UVbackground_table.k29 = (double*)malloc(Nz * sizeof(double));
+    my_rates->UVbackground_table.k30 = (double*)malloc(Nz * sizeof(double));
+    my_rates->UVbackground_table.k31 = (double*)malloc(Nz * sizeof(double));
   }
 
-  my_rates->UVbackground_table.piHI = malloc(Nz * sizeof(double));
-  my_rates->UVbackground_table.piHeII = malloc(Nz * sizeof(double));
-  my_rates->UVbackground_table.piHeI = malloc(Nz * sizeof(double));
+  my_rates->UVbackground_table.piHI = (double*)malloc(Nz * sizeof(double));
+  my_rates->UVbackground_table.piHeII = (double*)malloc(Nz * sizeof(double));
+  my_rates->UVbackground_table.piHeI = (double*)malloc(Nz * sizeof(double));
 
   if (my_chemistry->self_shielding_method > 0){
-    my_rates->UVbackground_table.crsHI   = malloc(Nz * sizeof(double));
-    my_rates->UVbackground_table.crsHeII = malloc(Nz * sizeof(double));
-    my_rates->UVbackground_table.crsHeI  = malloc(Nz * sizeof(double));
+    my_rates->UVbackground_table.crsHI   = (double*)malloc(Nz * sizeof(double));
+    my_rates->UVbackground_table.crsHeII = (double*)malloc(Nz * sizeof(double));
+    my_rates->UVbackground_table.crsHeI  = (double*)malloc(Nz * sizeof(double));
   }
 
 
@@ -341,7 +341,7 @@ int initialize_UVbackground_data(chemistry_data *my_chemistry,
 
 
 
-int read_dataset(hid_t file_id, char *dset_name, double *buffer) {
+int read_dataset(hid_t file_id, const char *dset_name, double *buffer) {
   hid_t dset_id;
   herr_t status;
   herr_t h5_error = -1;

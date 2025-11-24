@@ -90,7 +90,6 @@ add_library(Grackle_Grackle
   dynamic_api.c
   grackle_units.c
   index_helper.c
-  initialize_UVbackground_data.c  initialize_UVbackground_data.h
   rate_functions.c
   set_default_chemistry_parameters.c
   solve_chemistry.c
@@ -116,6 +115,7 @@ add_library(Grackle_Grackle
   initialize_cloudy_data.cpp initialize_cloudy_data.hpp
   initialize_dust_yields.cpp initialize_dust_yields.hpp
   initialize_rates.cpp initialize_rates.hpp
+  initialize_UVbackground_data.cpp initialize_UVbackground_data.hpp
   internal_types.cpp internal_types.hpp
   lookup_cool_rates1d.hpp
   make_consistent.cpp make_consistent.hpp

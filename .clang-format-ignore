@@ -30,7 +30,7 @@ src/clib/grackle_units.c
 src/clib/index_helper.c
 src/clib/index_helper.h
 src/clib/init_misc_species_cool_rates.cpp
-src/clib/initialize_UVbackground_data.c
+src/clib/initialize_UVbackground_data.cpp
 src/clib/initialize_chemistry_data.cpp
 src/clib/initialize_cloudy_data.cpp
 src/clib/initialize_dust_yields.cpp

@@ -24,7 +24,7 @@
 #include "initialize_cloudy_data.hpp"
 #include "initialize_dust_yields.hpp"  // free_dust_yields
 #include "initialize_rates.hpp"
-#include "initialize_UVbackground_data.h"
+#include "initialize_UVbackground_data.hpp"
 #include "internal_types.hpp" // drop_CollisionalRxnRateCollection
 #include "opaque_storage.hpp" // gr_opaque_storage
 #include "phys_constants.h"
