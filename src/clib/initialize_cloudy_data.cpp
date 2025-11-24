@@ -47,7 +47,7 @@ int initialize_cloudy_data(chemistry_data *my_chemistry,
                            code_units *my_units, int read_data)
 {
 
-  long long q, w;
+  long long w;
   double *temp_data;
   long long temp_int;
   long long *temp_int_arr;
@@ -146,7 +146,7 @@ int initialize_cloudy_data(chemistry_data *my_chemistry,
   if (grackle_verbose) {
     std::fprintf(stdout, "Cloudy cooling grid dimensions:");
   }
-  for (q = 0;q < my_cloudy->grid_rank;q++) {
+  for (long long q = 0LL; q < my_cloudy->grid_rank; q++) {
     my_cloudy->grid_dimension[q] = (long long) temp_int_arr[q];
     if (grackle_verbose)
       std::fprintf(stdout," %lld", my_cloudy->grid_dimension[q]);
@@ -161,7 +161,7 @@ int initialize_cloudy_data(chemistry_data *my_chemistry,
   free(temp_int_arr);
 
   // Grid parameters.
-  for (q = 0;q < my_cloudy->grid_rank;q++) {
+  for (long long q = 0LL; q < my_cloudy->grid_rank; q++) {
 
     if (q < my_cloudy->grid_rank - 1) {
       std::sprintf(parameter_name,"Parameter%lld",(q+1));
@@ -187,7 +187,7 @@ int initialize_cloudy_data(chemistry_data *my_chemistry,
 
     my_cloudy->grid_parameters[q] = (double*) malloc(my_cloudy->grid_dimension[q] *
                                            sizeof(double));
-    for (w = 0;w < my_cloudy->grid_dimension[q];w++) {
+    for (long long w = 0LL; w < my_cloudy->grid_dimension[q]; w++) {
       if (q < my_cloudy->grid_rank - 1) {
 	my_cloudy->grid_parameters[q][w] = (double) temp_data[w];
       }
@@ -217,7 +217,7 @@ int initialize_cloudy_data(chemistry_data *my_chemistry,
 
   // Read Cooling data.
   my_cloudy->data_size = 1;
-  for (q = 0;q < my_cloudy->grid_rank;q++) {
+  for (long long q = 0LL; q < my_cloudy->grid_rank; q++) {
     my_cloudy->data_size *= my_cloudy->grid_dimension[q];
   }
   temp_data = (double*) malloc(my_cloudy->data_size * sizeof(double));
@@ -231,7 +231,7 @@ int initialize_cloudy_data(chemistry_data *my_chemistry,
   }
 
   my_cloudy->cooling_data = (double*) malloc(my_cloudy->data_size * sizeof(double));
-  for (q = 0;q < my_cloudy->data_size;q++) {
+  for (long long q = 0LL; q < my_cloudy->data_size; q++) {
     my_cloudy->cooling_data[q] = temp_data[q] > 0 ?
       (double) std::log10(temp_data[q]) : (double) SMALL_LOG_VALUE;
 
@@ -268,7 +268,7 @@ int initialize_cloudy_data(chemistry_data *my_chemistry,
     }
 
     my_cloudy->heating_data = (double*) malloc(my_cloudy->data_size * sizeof(double));
-    for (q = 0;q < my_cloudy->data_size;q++) {
+    for (long long q = 0LL; q < my_cloudy->data_size; q++) {
       my_cloudy->heating_data[q] = temp_data[q] > 0 ?
         (double) std::log10(temp_data[q]) : (double) SMALL_LOG_VALUE;
 
