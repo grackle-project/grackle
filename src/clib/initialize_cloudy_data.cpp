@@ -18,6 +18,7 @@
 #include "grackle.h"
 #include "grackle_macros.h" // HDF5_I8, HDF5_R8, TRUE
 #include "initialize_cloudy_data.hpp"
+#include "utils/h5io.hpp"
 
 #define SMALL_LOG_VALUE (-99.0)
 #define MAX_PARAMETER_NAME_LENGTH (512)
@@ -51,8 +52,9 @@ int grackle::impl::initialize_cloudy_data(
 {
 
   long long temp_int;
+  char dset_name[MAX_PARAMETER_NAME_LENGTH];
   char parameter_name[MAX_PARAMETER_NAME_LENGTH];
-  const std::size_t pname_bufsize =
+  const std::size_t name_bufsize =
     static_cast<std::size_t>(MAX_PARAMETER_NAME_LENGTH);
 
   // Initialize things (to the null-state) even if cloudy cooling is not used.
@@ -105,12 +107,12 @@ int grackle::impl::initialize_cloudy_data(
 
   // Open cooling dataset and get grid dimensions.
 
-  std::snprintf(parameter_name, pname_bufsize, "/CoolingRates/%s/Cooling",
+  std::snprintf(dset_name, name_bufsize, "/CoolingRates/%s/Cooling",
                 group_name);
-  dset_id =  H5Dopen(file_id, parameter_name);
+  dset_id =  H5Dopen(file_id, dset_name);
   if (dset_id == h5_error) {
-    std::fprintf(stderr,"Can't open Cooling in %s.\n",
-            my_chemistry->grackle_data_file);
+    std::fprintf(stderr,"Can't open \"%s\" dataset in %s.\n",
+                 dset_name, my_chemistry->grackle_data_file);
     return GR_FAIL;
   }
 
@@ -167,10 +169,10 @@ int grackle::impl::initialize_cloudy_data(
   for (long long q = 0LL; q < my_cloudy->grid_rank; q++) {
 
     if (q < my_cloudy->grid_rank - 1) {
-      std::snprintf(parameter_name, pname_bufsize, "Parameter%lld",(q+1));
+      std::snprintf(parameter_name, name_bufsize, "Parameter%lld",(q+1));
     }
     else {
-      std::snprintf(parameter_name, pname_bufsize, "Temperature");
+      std::snprintf(parameter_name, name_bufsize, "Temperature");
     }
 
     attr_id = H5Aopen_name(dset_id, parameter_name);
@@ -216,20 +218,27 @@ int grackle::impl::initialize_cloudy_data(
     }
   }
 
+  // to make the logic more concise, we do something a *little* silly
+  // -> we effectively close the dataset and then call a function that reopens
+  //    and closes the dataset
+  status = H5Dclose(dset_id);
+  if (status == h5_error) {
+    std::fprintf(stderr,"Error while to closing %s dataset.\n", dset_name);
+    return GR_FAIL;
+  }
+
   // Read Cooling data.
   my_cloudy->data_size = 1;
   for (long long q = 0LL; q < my_cloudy->grid_rank; q++) {
     my_cloudy->data_size *= my_cloudy->grid_dimension[q];
   }
   double* tmp_cool_data = new double[my_cloudy->data_size];
-
-  status = H5Dread(dset_id, HDF5_R8, H5S_ALL, H5S_ALL, H5P_DEFAULT,
-                   tmp_cool_data);
-  if (grackle_verbose)
-    std::fprintf(stdout,"Reading Cloudy Cooling dataset.\n");
-  if (status == h5_error) {
-    std::fprintf(stderr,"Failed to read Cooling dataset.\n");
+  if (grackle_verbose) {
+    std::fprintf(stdout,"Reading from \"%s\" dataset.\n", dset_name);
+  }
+  if (h5io::read_dataset(file_id, dset_name, tmp_cool_data) != GR_SUCCESS) {
     delete[] tmp_cool_data;
+    std::fprintf(stderr,"Failed to read Cooling dataset.\n");
     return GR_FAIL;
   }
 
@@ -243,18 +252,13 @@ int grackle::impl::initialize_cloudy_data(
   }
   delete[] tmp_cool_data;
 
-  status = H5Dclose(dset_id);
-  if (status == h5_error) {
-    std::fprintf(stderr,"Failed to close Cooling dataset.\n");
-    return GR_FAIL;
-  }
 
   // Read Heating data.
   if (my_chemistry->UVbackground == 1) {
 
     double* tmp_heat_data = new double[my_cloudy->data_size];
 
-    std::snprintf(parameter_name, pname_bufsize, "/CoolingRates/%s/Heating",
+    std::snprintf(parameter_name, name_bufsize, "/CoolingRates/%s/Heating",
                   group_name);
     dset_id =  H5Dopen(file_id, parameter_name);
     if (dset_id == h5_error) {
@@ -295,7 +299,7 @@ int grackle::impl::initialize_cloudy_data(
 
     my_cloudy->mmw_data = new double[my_cloudy->data_size];
 
-    std::snprintf(parameter_name, pname_bufsize, "/CoolingRates/%s/MMW",
+    std::snprintf(parameter_name, name_bufsize, "/CoolingRates/%s/MMW",
                   group_name);
     dset_id =  H5Dopen(file_id, parameter_name);
     if (dset_id == h5_error) {

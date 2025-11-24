@@ -14,26 +14,29 @@
 #include "hdf5.h"
 #include "grackle.h"
 #include "grackle_macros.h"
-
 #include "h5io.hpp"
 #include "../status_reporting.h"
 
 /// read the dataset named dset_name from file_id into buffer
 int grackle::impl::h5io::read_dataset(hid_t file_id, const char* dset_name,
                                       double* buffer) {
-  hid_t dset_id;
-  herr_t status;
-  herr_t h5_error = -1;
-
-  dset_id = H5Dopen(file_id, dset_name);
-  if (dset_id == h5_error) {
-    std::fprintf(stderr, "Failed to open dataset 'z'.\n");
+  if (dset_name == nullptr) {
+    std::fprintf(stderr, "dset_name is a nullptr");
     return GR_FAIL;
   }
 
-  status = H5Dread(dset_id, HDF5_R8, H5S_ALL, H5S_ALL, H5P_DEFAULT, buffer);
+  const herr_t h5_error = -1;
+
+  hid_t dset_id = H5Dopen(file_id, dset_name);
+  if (dset_id == h5_error) {
+    std::fprintf(stderr, "Failed to open dataset \"%s\".\n", dset_name);
+    return GR_FAIL;
+  }
+
+  herr_t status =
+      H5Dread(dset_id, HDF5_R8, H5S_ALL, H5S_ALL, H5P_DEFAULT, buffer);
   if (status == h5_error) {
-    std::fprintf(stderr, "Failed to read dataset 'z'.\n");
+    std::fprintf(stderr, "Failed to read dataset \"%s\".\n", dset_name);
     return GR_FAIL;
   }
 
