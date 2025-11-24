@@ -189,8 +189,7 @@ int grackle::impl::initialize_cloudy_data(
       return GR_FAIL;
     }
 
-    my_cloudy->grid_parameters[q] = (double*) malloc(my_cloudy->grid_dimension[q] *
-                                           sizeof(double));
+    my_cloudy->grid_parameters[q] = new double[my_cloudy->grid_dimension[q]];
     for (long long w = 0LL; w < my_cloudy->grid_dimension[q]; w++) {
       if (q < my_cloudy->grid_rank - 1) {
 	my_cloudy->grid_parameters[q][w] = (double) tmp_param_buf[w];
@@ -235,7 +234,7 @@ int grackle::impl::initialize_cloudy_data(
     return GR_FAIL;
   }
 
-  my_cloudy->cooling_data = (double*) malloc(my_cloudy->data_size * sizeof(double));
+  my_cloudy->cooling_data = new double[my_cloudy->data_size];
   for (long long q = 0LL; q < my_cloudy->data_size; q++) {
     my_cloudy->cooling_data[q] = tmp_cool_data[q] > 0 ?
       (double) std::log10(tmp_cool_data[q]) : (double) SMALL_LOG_VALUE;
@@ -274,7 +273,7 @@ int grackle::impl::initialize_cloudy_data(
       return GR_FAIL;
     }
 
-    my_cloudy->heating_data = (double*) malloc(my_cloudy->data_size * sizeof(double));
+    my_cloudy->heating_data = new double[my_cloudy->data_size];
     for (long long q = 0LL; q < my_cloudy->data_size; q++) {
       my_cloudy->heating_data[q] = tmp_heat_data[q] > 0 ?
         (double) std::log10(tmp_heat_data[q]) : (double) SMALL_LOG_VALUE;
@@ -295,7 +294,7 @@ int grackle::impl::initialize_cloudy_data(
   if (my_chemistry->primordial_chemistry == 0 &&
       std::strcmp(group_name, "Primordial") == 0) {
 
-    my_cloudy->mmw_data = (double*) malloc(my_cloudy->data_size * sizeof(double));
+    my_cloudy->mmw_data = new double[my_cloudy->data_size];
 
     std::snprintf(parameter_name, pname_bufsize, "/CoolingRates/%s/MMW",
                   group_name);
@@ -338,18 +337,27 @@ int grackle::impl::initialize_cloudy_data(
 int grackle::impl::free_cloudy_data(cloudy_data *my_cloudy,
                                     chemistry_data *my_chemistry,
                                     int primordial) {
-  int i;
 
-  for(i = 0; i < my_cloudy->grid_rank; i++) {
-    GRACKLE_FREE(my_cloudy->grid_parameters[i]);
+  for(int i = 0; i < my_cloudy->grid_rank; i++) {
+    if (my_cloudy->grid_parameters[i] != nullptr) {
+      delete[] my_cloudy->grid_parameters[i];
+      my_cloudy->grid_parameters[i] = nullptr;
+    }
   }
 
-  GRACKLE_FREE(my_cloudy->cooling_data);
-  if (my_chemistry->UVbackground == 1) {
-    GRACKLE_FREE(my_cloudy->heating_data);
+  if (my_cloudy->cooling_data != nullptr) {
+    delete[] my_cloudy->cooling_data;
+    my_cloudy->cooling_data = nullptr;
   }
-  if (my_chemistry->primordial_chemistry == 0 && primordial) {
-    GRACKLE_FREE(my_cloudy->mmw_data);
+
+  if (my_cloudy->heating_data != nullptr) {
+    delete[] my_cloudy->heating_data;
+    my_cloudy->heating_data = nullptr;
+  }
+
+  if (my_cloudy->mmw_data != nullptr) {
+    delete[] my_cloudy->mmw_data;
+    my_cloudy->mmw_data = nullptr;
   }
   return GR_SUCCESS;
 }
