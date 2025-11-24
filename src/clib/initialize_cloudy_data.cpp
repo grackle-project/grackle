@@ -11,13 +11,12 @@
 / software.
 ************************************************************************/
 
-#include <stdlib.h>
-#include <cstdio> // std::fprintf, std::snprintf, stderr, stdio
 #include <cmath> // std::log10, std::pow
+#include <cstdio> // std::fprintf, std::snprintf, stderr, stdio
 #include <cstring> // std::strcmp
 #include "hdf5.h"
 #include "grackle.h"
-#include "grackle_macros.h"
+#include "grackle_macros.h" // HDF5_I8, HDF5_R8, TRUE
 #include "initialize_cloudy_data.hpp"
 
 #define SMALL_LOG_VALUE (-99.0)
