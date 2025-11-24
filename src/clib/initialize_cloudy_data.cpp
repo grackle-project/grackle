@@ -224,25 +224,27 @@ int grackle::impl::initialize_cloudy_data(
   for (long long q = 0LL; q < my_cloudy->grid_rank; q++) {
     my_cloudy->data_size *= my_cloudy->grid_dimension[q];
   }
-  temp_data = (double*) malloc(my_cloudy->data_size * sizeof(double));
+  double* tmp_cool_data = new double[my_cloudy->data_size];
 
-  status = H5Dread(dset_id, HDF5_R8, H5S_ALL, H5S_ALL, H5P_DEFAULT, temp_data);
+  status = H5Dread(dset_id, HDF5_R8, H5S_ALL, H5S_ALL, H5P_DEFAULT,
+                   tmp_cool_data);
   if (grackle_verbose)
     std::fprintf(stdout,"Reading Cloudy Cooling dataset.\n");
   if (status == h5_error) {
     std::fprintf(stderr,"Failed to read Cooling dataset.\n");
+    delete[] tmp_cool_data;
     return GR_FAIL;
   }
 
   my_cloudy->cooling_data = (double*) malloc(my_cloudy->data_size * sizeof(double));
   for (long long q = 0LL; q < my_cloudy->data_size; q++) {
-    my_cloudy->cooling_data[q] = temp_data[q] > 0 ?
-      (double) std::log10(temp_data[q]) : (double) SMALL_LOG_VALUE;
+    my_cloudy->cooling_data[q] = tmp_cool_data[q] > 0 ?
+      (double) std::log10(tmp_cool_data[q]) : (double) SMALL_LOG_VALUE;
 
     // Convert to code units.
     my_cloudy->cooling_data[q] -= std::log10(CoolUnit);
   }
-  free(temp_data);
+  delete[] tmp_cool_data;
 
   status = H5Dclose(dset_id);
   if (status == h5_error) {
