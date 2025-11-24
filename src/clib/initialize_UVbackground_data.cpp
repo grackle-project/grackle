@@ -22,10 +22,10 @@
 // function prototypes
 int read_dataset(hid_t file_id, const char *dset_name, double *buffer);
 
-/**
- * Initializes an empty #UVBtable struct with zeros and NULLs.
- */
-void grackle::impl::initialize_empty_UVBtable_struct(UVBtable *table)
+namespace { // stuff inside an anonymous namespace is only used in this file
+
+/// Initializes an empty #UVBtable struct with zeros and nullptrs.
+void initialize_empty_UVBtable_struct(UVBtable *table)
 {
   table->Nz     = 0LL;
   table->z      = nullptr;
@@ -45,10 +45,13 @@ void grackle::impl::initialize_empty_UVBtable_struct(UVBtable *table)
   table->crsHeI = nullptr;
 }
 
+} // anonymous namespace
+
 // Initialize UV Background data
 int grackle::impl::initialize_UVbackground_data(chemistry_data *my_chemistry,
                                                 chemistry_data_storage *my_rates)
 {
+  initialize_empty_UVBtable_struct(&my_rates->UVbackground_table);
   long long Nz;
 
   // Return if no UV background selected or using fully tabulated cooling.

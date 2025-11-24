@@ -446,7 +446,6 @@ extern "C" int local_initialize_chemistry_data(chemistry_data *my_chemistry,
   }
 
   /* Initialize UV Background data. */
-  grackle::impl::initialize_empty_UVBtable_struct(&my_rates->UVbackground_table);
   if (grackle::impl::initialize_UVbackground_data(my_chemistry, my_rates)
       != GR_SUCCESS) {
     fprintf(stderr, "Error in initialize_UVbackground_data.\n");
