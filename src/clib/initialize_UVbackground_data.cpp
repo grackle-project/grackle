@@ -25,7 +25,7 @@ int read_dataset(hid_t file_id, const char *dset_name, double *buffer);
 /**
  * Initializes an empty #UVBtable struct with zeros and NULLs.
  */
-void initialize_empty_UVBtable_struct(UVBtable *table)
+void grackle::impl::initialize_empty_UVBtable_struct(UVBtable *table)
 {
   table->Nz     = 0LL;
   table->z      = NULL;
@@ -45,10 +45,9 @@ void initialize_empty_UVBtable_struct(UVBtable *table)
   table->crsHeI = NULL;
 }
 
-
 // Initialize UV Background data
-int initialize_UVbackground_data(chemistry_data *my_chemistry,
-                                 chemistry_data_storage *my_rates)
+int grackle::impl::initialize_UVbackground_data(chemistry_data *my_chemistry,
+                                                chemistry_data_storage *my_rates)
 {
   long long Nz;
 
@@ -339,6 +338,24 @@ int initialize_UVbackground_data(chemistry_data *my_chemistry,
   return SUCCESS;
 }
 
+void grackle::impl::free_UVBtable(UVBtable *table)
+{
+  GRACKLE_FREE(table->z);
+  GRACKLE_FREE(table->k24);
+  GRACKLE_FREE(table->k25);
+  GRACKLE_FREE(table->k26);
+  GRACKLE_FREE(table->k27);
+  GRACKLE_FREE(table->k28);
+  GRACKLE_FREE(table->k29);
+  GRACKLE_FREE(table->k30);
+  GRACKLE_FREE(table->k31);
+  GRACKLE_FREE(table->piHI);
+  GRACKLE_FREE(table->piHeII);
+  GRACKLE_FREE(table->piHeI);
+  GRACKLE_FREE(table->crsHI);
+  GRACKLE_FREE(table->crsHeII);
+  GRACKLE_FREE(table->crsHeI);
+}
 
 
 int read_dataset(hid_t file_id, const char *dset_name, double *buffer) {
