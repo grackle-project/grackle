@@ -12,6 +12,7 @@
 ************************************************************************/
 
 #include <cstdio>
+#include <vector>
 #include "hdf5.h"
 #include "grackle.h"
 #include "grackle_macros.h"
@@ -83,12 +84,13 @@ int grackle::impl::initialize_UVbackground_data(chemistry_data *my_chemistry,
   }
 
   int strlen = (int)(H5Dget_storage_size(dset_id));
-  char info_string[strlen+1];
+  std::vector<char> info_string(strlen+1);
 
   hid_t memtype = H5Tcopy(H5T_C_S1);
   H5Tset_size(memtype, strlen+1);
 
-  status = H5Dread(dset_id, memtype, H5S_ALL, H5S_ALL, H5P_DEFAULT, info_string);
+  status = H5Dread(dset_id, memtype, H5S_ALL, H5S_ALL, H5P_DEFAULT,
+                   info_string.data());
   if (status == h5_error) {
     std::fprintf(stderr, "Failed to read dataset 'Info'.\n");
     return GR_FAIL;
@@ -297,7 +299,7 @@ int grackle::impl::initialize_UVbackground_data(chemistry_data *my_chemistry,
   // Print out some information about the dataset just read in.
   if (grackle_verbose) {
     std::fprintf(stdout, "UV background information:\n");
-    std::fprintf(stdout, "  %s\n",info_string);
+    std::fprintf(stdout, "  %s\n",info_string.data());
     std::fprintf(stdout, "  z_min = %6.3f\n  z_max = %6.3f\n",
             my_rates->UVbackground_table.zmin,
             my_rates->UVbackground_table.zmax);
