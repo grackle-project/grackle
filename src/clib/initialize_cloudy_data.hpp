@@ -19,9 +19,6 @@
 extern "C" {
 #endif /* __cplusplus */
 
-/// Initializes an empty #cloudy_data struct with zeros and NULLs.
-void initialize_empty_cloudy_data_struct(cloudy_data* my_cloudy);
-
 // initialize cloudy cooling data
 int initialize_cloudy_data(chemistry_data* my_chemistry,
                            chemistry_data_storage* my_rates,

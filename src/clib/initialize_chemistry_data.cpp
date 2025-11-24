@@ -21,7 +21,7 @@
 #include "auto_general.h"
 #include "interp_table_utils.h" // free_interp_grid_
 #include "init_misc_species_cool_rates.hpp"  // free_misc_species_cool_rates
-#include "initialize_cloudy_data.h"
+#include "initialize_cloudy_data.hpp"
 #include "initialize_dust_yields.hpp"  // free_dust_yields
 #include "initialize_rates.hpp"
 #include "initialize_UVbackground_data.h"
