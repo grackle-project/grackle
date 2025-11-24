@@ -34,7 +34,7 @@ jobs:
     name: Make SDist
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           # fetch the full git history to let us run all our tests
           fetch-depth: 0
@@ -86,7 +86,7 @@ jobs:
         ]
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           # fetch the full git history to let us run all our tests
           fetch-depth: 0
