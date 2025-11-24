@@ -326,3 +326,10 @@ ENTRY(exit_after_iterations_exceeded, INT, FALSE)
 
 /* number of OpenMP threads, if supported */
 ENTRY(omp_nthreads, INT, 0)
+
+/* solver to be used 
+ * 1: gs-only
+ * 2: nr-only
+ * 3: gs-nr
+*/
+ENTRY(solver_method, INT, 1)

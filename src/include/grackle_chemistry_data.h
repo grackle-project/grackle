@@ -305,6 +305,13 @@ typedef struct
   /* number of OpenMP threads, if supported */
   int omp_nthreads;
 
+  /* solver to be used 
+   * 1: gs-only
+   * 2: nr-only
+   * 3: gs-nr
+  */
+  int solver_method;
+
 } chemistry_data;
 
 /*****************************
