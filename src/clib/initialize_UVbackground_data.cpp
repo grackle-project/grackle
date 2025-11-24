@@ -16,11 +16,9 @@
 #include "hdf5.h"
 #include "grackle.h"
 #include "grackle_macros.h"
+#include "utils/h5io.hpp"
 
 #include "initialize_UVbackground_data.hpp"
-
-// function prototypes
-int read_dataset(hid_t file_id, const char *dset_name, double *buffer);
 
 namespace { // stuff inside an anonymous namespace is only used in this file
 
@@ -159,6 +157,8 @@ int grackle::impl::initialize_UVbackground_data(chemistry_data *my_chemistry,
 
 
   // Now read everything.
+
+  using ::grackle::impl::h5io::read_dataset;
 
 
   // *** Redshift ***
@@ -366,27 +366,4 @@ void grackle::impl::free_UVBtable(UVBtable *table)
   cleanup_fn(table->crsHI);
   cleanup_fn(table->crsHeII);
   cleanup_fn(table->crsHeI);
-}
-
-
-int read_dataset(hid_t file_id, const char *dset_name, double *buffer) {
-  hid_t dset_id;
-  herr_t status;
-  herr_t h5_error = -1;
-
-  dset_id =  H5Dopen(file_id, dset_name);
-  if (dset_id == h5_error) {
-    std::fprintf(stderr, "Failed to open dataset 'z'.\n");
-    return GR_FAIL;
-  }
-
-  status = H5Dread(dset_id, HDF5_R8, H5S_ALL, H5S_ALL, H5P_DEFAULT, buffer);
-  if (status == h5_error) {
-    std::fprintf(stderr, "Failed to read dataset 'z'.\n");
-    return GR_FAIL;
-  }
-
-  H5Dclose(dset_id);
-
-  return GR_SUCCESS;
 }
