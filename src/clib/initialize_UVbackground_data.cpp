@@ -11,7 +11,6 @@
 / software.
 ************************************************************************/
 
-#include <stdlib.h>
 #include <math.h>
 #include "hdf5.h"
 #include "grackle.h"
@@ -28,21 +27,21 @@ int read_dataset(hid_t file_id, const char *dset_name, double *buffer);
 void grackle::impl::initialize_empty_UVBtable_struct(UVBtable *table)
 {
   table->Nz     = 0LL;
-  table->z      = NULL;
-  table->k24    = NULL;
-  table->k25    = NULL;
-  table->k26    = NULL;
-  table->k27    = NULL;
-  table->k28    = NULL;
-  table->k29    = NULL;
-  table->k30    = NULL;
-  table->k31    = NULL;
-  table->piHI   = NULL;
-  table->piHeI  = NULL;
-  table->piHeII = NULL;
-  table->crsHI  = NULL;
-  table->crsHeII = NULL;
-  table->crsHeI = NULL;
+  table->z      = nullptr;
+  table->k24    = nullptr;
+  table->k25    = nullptr;
+  table->k26    = nullptr;
+  table->k27    = nullptr;
+  table->k28    = nullptr;
+  table->k29    = nullptr;
+  table->k30    = nullptr;
+  table->k31    = nullptr;
+  table->piHI   = nullptr;
+  table->piHeI  = nullptr;
+  table->piHeII = nullptr;
+  table->crsHI  = nullptr;
+  table->crsHeII = nullptr;
+  table->crsHeI = nullptr;
 }
 
 // Initialize UV Background data
@@ -127,31 +126,30 @@ int grackle::impl::initialize_UVbackground_data(chemistry_data *my_chemistry,
   H5Dclose(dset_id);
 
 
-
   // Now allocate memory for UV background table.
   my_rates->UVbackground_table.Nz = Nz;
 
-  my_rates->UVbackground_table.z = (double*)malloc(Nz * sizeof(double));
-  my_rates->UVbackground_table.k24 = (double*)malloc(Nz * sizeof(double));
-  my_rates->UVbackground_table.k25 = (double*)malloc(Nz * sizeof(double));
-  my_rates->UVbackground_table.k26 = (double*)malloc(Nz * sizeof(double));
+  my_rates->UVbackground_table.z = new double[Nz];
+  my_rates->UVbackground_table.k24 = new double[Nz];
+  my_rates->UVbackground_table.k25 = new double[Nz];
+  my_rates->UVbackground_table.k26 = new double[Nz];
 
   if (my_chemistry->primordial_chemistry > 1) {
-    my_rates->UVbackground_table.k27 = (double*)malloc(Nz * sizeof(double));
-    my_rates->UVbackground_table.k28 = (double*)malloc(Nz * sizeof(double));
-    my_rates->UVbackground_table.k29 = (double*)malloc(Nz * sizeof(double));
-    my_rates->UVbackground_table.k30 = (double*)malloc(Nz * sizeof(double));
-    my_rates->UVbackground_table.k31 = (double*)malloc(Nz * sizeof(double));
+    my_rates->UVbackground_table.k27 = new double[Nz];
+    my_rates->UVbackground_table.k28 = new double[Nz];
+    my_rates->UVbackground_table.k29 = new double[Nz];
+    my_rates->UVbackground_table.k30 = new double[Nz];
+    my_rates->UVbackground_table.k31 = new double[Nz];
   }
 
-  my_rates->UVbackground_table.piHI = (double*)malloc(Nz * sizeof(double));
-  my_rates->UVbackground_table.piHeII = (double*)malloc(Nz * sizeof(double));
-  my_rates->UVbackground_table.piHeI = (double*)malloc(Nz * sizeof(double));
+  my_rates->UVbackground_table.piHI = new double[Nz];
+  my_rates->UVbackground_table.piHeII = new double[Nz];
+  my_rates->UVbackground_table.piHeI = new double[Nz];
 
   if (my_chemistry->self_shielding_method > 0){
-    my_rates->UVbackground_table.crsHI   = (double*)malloc(Nz * sizeof(double));
-    my_rates->UVbackground_table.crsHeII = (double*)malloc(Nz * sizeof(double));
-    my_rates->UVbackground_table.crsHeI  = (double*)malloc(Nz * sizeof(double));
+    my_rates->UVbackground_table.crsHI   = new double[Nz];
+    my_rates->UVbackground_table.crsHeII = new double[Nz];
+    my_rates->UVbackground_table.crsHeI  = new double[Nz];
   }
 
 
@@ -340,21 +338,29 @@ int grackle::impl::initialize_UVbackground_data(chemistry_data *my_chemistry,
 
 void grackle::impl::free_UVBtable(UVBtable *table)
 {
-  GRACKLE_FREE(table->z);
-  GRACKLE_FREE(table->k24);
-  GRACKLE_FREE(table->k25);
-  GRACKLE_FREE(table->k26);
-  GRACKLE_FREE(table->k27);
-  GRACKLE_FREE(table->k28);
-  GRACKLE_FREE(table->k29);
-  GRACKLE_FREE(table->k30);
-  GRACKLE_FREE(table->k31);
-  GRACKLE_FREE(table->piHI);
-  GRACKLE_FREE(table->piHeII);
-  GRACKLE_FREE(table->piHeI);
-  GRACKLE_FREE(table->crsHI);
-  GRACKLE_FREE(table->crsHeII);
-  GRACKLE_FREE(table->crsHeI);
+  // define a function that loosely approximates GRACKLE_FREE
+  auto cleanup_fn = [](double*& ptr) {
+    if (ptr != nullptr) {
+      delete[] ptr;
+      ptr = nullptr;
+    }
+  };
+
+  cleanup_fn(table->z);
+  cleanup_fn(table->k24);
+  cleanup_fn(table->k25);
+  cleanup_fn(table->k26);
+  cleanup_fn(table->k27);
+  cleanup_fn(table->k28);
+  cleanup_fn(table->k29);
+  cleanup_fn(table->k30);
+  cleanup_fn(table->k31);
+  cleanup_fn(table->piHI);
+  cleanup_fn(table->piHeII);
+  cleanup_fn(table->piHeI);
+  cleanup_fn(table->crsHI);
+  cleanup_fn(table->crsHeII);
+  cleanup_fn(table->crsHeI);
 }
 
 
