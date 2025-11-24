@@ -150,7 +150,17 @@ static void setup_chem_scheme_masks_(
   for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {
     if ( itmask[i] != MASK_FALSE )  {
       bool usemetal = (imetal == 1) && (metallicity[i] > min_metallicity);
-      bool is_hi_dens = (ddom[i] >= 1.e8) || (usemetal && (ddom[i] >= 1.0e6));
+      bool is_hi_dens;
+      if (my_chemistry->solver_method == 2) {
+        // Force Gauss-Seidel
+        is_hi_dens = false;
+      } else if (my_chemistry->solver_method == 3) {
+        // Force Newton-Raphson
+        is_hi_dens = true;
+      } else {
+        // Default
+        is_hi_dens = (ddom[i] >= 1.e8) || (usemetal && (ddom[i] >= 1.0e6));
+      }
 
       itmask_gs[i] = (!is_hi_dens) ? MASK_TRUE : MASK_FALSE;
       itmask_nr[i] = (is_hi_dens) ? MASK_TRUE : MASK_FALSE;
