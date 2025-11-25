@@ -50,7 +50,6 @@ int grackle::impl::initialize_UVbackground_data(chemistry_data *my_chemistry,
                                                 chemistry_data_storage *my_rates)
 {
   initialize_empty_UVBtable_struct(&my_rates->UVbackground_table);
-  long long Nz;
 
   // Return if no UV background selected or using fully tabulated cooling.
   if (my_chemistry->UVbackground == 0 ||
@@ -100,34 +99,21 @@ int grackle::impl::initialize_UVbackground_data(chemistry_data *my_chemistry,
   H5Tclose(memtype);
   H5Dclose(dset_id);
 
-
-
   // Open redshift dataset and get number of elements
 
-  dset_id =  H5Dopen(file_id, "/UVBRates/z");
-  if (dset_id == h5_error) {
-    std::fprintf(stderr, "Can't open redshift dataset ('z') in %s.\n",
-            my_chemistry->grackle_data_file);
+  const h5io::ArrayShape common_shape
+    = h5io::read_dataset_shape(file_id, "/UVBRates/z");
+  if (!h5io::ArrayShape_is_valid(common_shape)) {
+    return GR_FAIL; // error messages are already printed
+  } else if (common_shape.ndim != 1 || common_shape.shape[0] < 0) {
+    std::fprintf(
+        stderr,
+        "Redshift dataset (\"/UVBRates/z\") in %s has inappropriate shape\n",
+        my_chemistry->grackle_data_file);
     return GR_FAIL;
   }
 
-  dspace_id = H5Dget_space(dset_id);
-  if (dspace_id == h5_error) {
-    std::fprintf(stderr, "Error opening dataspace for dataset 'z' in %s.\n",
-            my_chemistry->grackle_data_file);
-    return GR_FAIL;
-  }
-
-  Nz = H5Sget_simple_extent_npoints(dspace_id);
-  if(Nz <= 0) {
-    std::fprintf(stderr, "Redshift dataset ('z') has inappropriate size = %lld in %s.\n",
-            Nz, my_chemistry->grackle_data_file);
-    return GR_FAIL;
-  }
-
-  H5Sclose(dspace_id);
-  H5Dclose(dset_id);
-
+  long long Nz = static_cast<long long>(common_shape.shape[0]);
 
   // Now allocate memory for UV background table.
   my_rates->UVbackground_table.Nz = Nz;
