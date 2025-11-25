@@ -50,6 +50,7 @@ OBJS_CONFIG_LIB = \
         rate_functions.lo \
         rate_utils.lo \
         gaussj_g.lo \
+        utils/h5io.lo \
         utils.lo \
         utils-cpp.lo \
         internal_types.lo
