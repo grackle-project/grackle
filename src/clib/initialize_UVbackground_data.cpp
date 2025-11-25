@@ -146,10 +146,10 @@ int grackle::impl::initialize_UVbackground_data(chemistry_data *my_chemistry,
 
   using ::grackle::impl::h5io::read_dataset;
 
-
   // *** Redshift ***
   if(! read_dataset(file_id, "/UVBRates/z",
-                    my_rates->UVbackground_table.z) ) {
+                    my_rates->UVbackground_table.z,
+                    /* expected_shape = */ &common_shape) ) {
     std::fprintf(stderr, "Error reading dataset 'z' in %s.\n",
             my_chemistry->grackle_data_file);
     return GR_FAIL;
@@ -157,7 +157,8 @@ int grackle::impl::initialize_UVbackground_data(chemistry_data *my_chemistry,
 
   // *** k24 ***
   if(! read_dataset(file_id, "/UVBRates/Chemistry/k24",
-                    my_rates->UVbackground_table.k24) ) {
+                    my_rates->UVbackground_table.k24,
+                    /* expected_shape = */ &common_shape) ) {
     std::fprintf(stderr, "Error reading dataset '/UVBRates/Chemistry/k24' in %s.\n",
             my_chemistry->grackle_data_file);
     return GR_FAIL;
@@ -165,7 +166,8 @@ int grackle::impl::initialize_UVbackground_data(chemistry_data *my_chemistry,
 
   // *** k25 ***
   if(! read_dataset(file_id, "/UVBRates/Chemistry/k25",
-                    my_rates->UVbackground_table.k25) ) {
+                    my_rates->UVbackground_table.k25,
+                    /* expected_shape = */ &common_shape) ) {
     std::fprintf(stderr, "Error reading dataset '/UVBRates/Chemistry/k25' in %s.\n",
             my_chemistry->grackle_data_file);
     return GR_FAIL;
@@ -173,7 +175,8 @@ int grackle::impl::initialize_UVbackground_data(chemistry_data *my_chemistry,
 
   // *** k26 ***
   if(! read_dataset(file_id, "/UVBRates/Chemistry/k26",
-                    my_rates->UVbackground_table.k26) ) {
+                    my_rates->UVbackground_table.k26,
+                    /* expected_shape = */ &common_shape) ) {
     std::fprintf(stderr, "Error reading dataset '/UVBRates/Chemistry/k26' in %s.\n",
             my_chemistry->grackle_data_file);
     return GR_FAIL;
@@ -183,7 +186,8 @@ int grackle::impl::initialize_UVbackground_data(chemistry_data *my_chemistry,
 
     // *** k27 ***
     if(! read_dataset(file_id, "/UVBRates/Chemistry/k27",
-                      my_rates->UVbackground_table.k27) ) {
+                      my_rates->UVbackground_table.k27,
+                      /* expected_shape = */ &common_shape) ) {
       std::fprintf(stderr, "Error reading dataset '/UVBRates/Chemistry/k27' in %s.\n",
               my_chemistry->grackle_data_file);
       return GR_FAIL;
@@ -191,7 +195,8 @@ int grackle::impl::initialize_UVbackground_data(chemistry_data *my_chemistry,
 
     // *** k28 ***
     if(! read_dataset(file_id, "/UVBRates/Chemistry/k28",
-                      my_rates->UVbackground_table.k28) ) {
+                      my_rates->UVbackground_table.k28,
+                      /* expected_shape = */ &common_shape) ) {
       std::fprintf(stderr, "Error reading dataset '/UVBRates/Chemistry/k28' in %s.\n",
               my_chemistry->grackle_data_file);
       return GR_FAIL;
@@ -199,7 +204,8 @@ int grackle::impl::initialize_UVbackground_data(chemistry_data *my_chemistry,
 
     // *** k29 ***
     if(! read_dataset(file_id, "/UVBRates/Chemistry/k29",
-                      my_rates->UVbackground_table.k29) ) {
+                      my_rates->UVbackground_table.k29,
+                      /* expected_shape = */ &common_shape) ) {
       std::fprintf(stderr, "Error reading dataset '/UVBRates/Chemistry/k29' in %s.\n",
               my_chemistry->grackle_data_file);
       return GR_FAIL;
@@ -207,7 +213,8 @@ int grackle::impl::initialize_UVbackground_data(chemistry_data *my_chemistry,
 
     // *** k30 ***
     if(! read_dataset(file_id, "/UVBRates/Chemistry/k30",
-                      my_rates->UVbackground_table.k30) ) {
+                      my_rates->UVbackground_table.k30,
+                      /* expected_shape = */ &common_shape) ) {
       std::fprintf(stderr, "Error reading dataset '/UVBRates/Chemistry/k30' in %s.\n",
               my_chemistry->grackle_data_file);
       return GR_FAIL;
@@ -215,7 +222,8 @@ int grackle::impl::initialize_UVbackground_data(chemistry_data *my_chemistry,
 
     // *** k31 ***
     if(! read_dataset(file_id, "/UVBRates/Chemistry/k31",
-                      my_rates->UVbackground_table.k31) ) {
+                      my_rates->UVbackground_table.k31,
+                      /* expected_shape = */ &common_shape) ) {
       std::fprintf(stderr, "Error reading dataset '/UVBRates/Chemistry/k31' in %s.\n",
               my_chemistry->grackle_data_file);
       return GR_FAIL;
@@ -225,7 +233,8 @@ int grackle::impl::initialize_UVbackground_data(chemistry_data *my_chemistry,
 
   // *** piHI ***
   if(! read_dataset(file_id, "/UVBRates/Photoheating/piHI",
-                    my_rates->UVbackground_table.piHI) ) {
+                    my_rates->UVbackground_table.piHI,
+                    /* expected_shape = */ &common_shape) ) {
     std::fprintf(stderr, "Error reading dataset '/UVBRates/Photoheating/piHI' in %s.\n",
             my_chemistry->grackle_data_file);
     return GR_FAIL;
@@ -233,7 +242,8 @@ int grackle::impl::initialize_UVbackground_data(chemistry_data *my_chemistry,
 
   // *** piHeII ***
   if(! read_dataset(file_id, "/UVBRates/Photoheating/piHeII",
-                    my_rates->UVbackground_table.piHeII) ) {
+                    my_rates->UVbackground_table.piHeII,
+                    /* expected_shape = */ &common_shape) ) {
     std::fprintf(stderr, "Error reading dataset '/UVBRates/Photoheating/piHeII' in %s.\n",
             my_chemistry->grackle_data_file);
     return GR_FAIL;
@@ -241,7 +251,8 @@ int grackle::impl::initialize_UVbackground_data(chemistry_data *my_chemistry,
 
   // *** piHeI ***
   if(! read_dataset(file_id, "/UVBRates/Photoheating/piHeI",
-                    my_rates->UVbackground_table.piHeI) ) {
+                    my_rates->UVbackground_table.piHeI,
+                    /* expected_shape = */ &common_shape) ) {
     std::fprintf(stderr, "Error reading dataset '/UVBRates/Photoheating/piHeI' in %s.\n",
             my_chemistry->grackle_data_file);
     return GR_FAIL;
@@ -251,7 +262,8 @@ int grackle::impl::initialize_UVbackground_data(chemistry_data *my_chemistry,
   if (my_chemistry->self_shielding_method > 0) {
     // *** crsHI ***
     if(! read_dataset(file_id, "/UVBRates/CrossSections/hi_avg_crs",
-                      my_rates->UVbackground_table.crsHI) ) {
+                      my_rates->UVbackground_table.crsHI,
+                      /* expected_shape = */ &common_shape) ) {
       std::fprintf(stderr, "Error reading dataset '/UVBRates/CrossSections/hi_avg_crs' in %s.\n",
               my_chemistry->grackle_data_file);
       std::fprintf(stderr, "In order to use self-shielding, you must use the shielding datasets\n");
@@ -260,7 +272,8 @@ int grackle::impl::initialize_UVbackground_data(chemistry_data *my_chemistry,
 
     // *** crsHeII ***
     if(! read_dataset(file_id, "/UVBRates/CrossSections/heii_avg_crs",
-                    my_rates->UVbackground_table.crsHeII) ) {
+                      my_rates->UVbackground_table.crsHeII,
+                      /* expected_shape = */ &common_shape) ) {
       std::fprintf(stderr, "Error reading dataset '/UVBRates/CrossSections/heii_avg_crs' in %s.\n",
               my_chemistry->grackle_data_file);
       std::fprintf(stderr, "In order to use self-shielding, you must use the shielding datasets\n");
@@ -269,7 +282,8 @@ int grackle::impl::initialize_UVbackground_data(chemistry_data *my_chemistry,
 
     // *** crsHeI ***
     if(! read_dataset(file_id, "/UVBRates/CrossSections/hei_avg_crs",
-                      my_rates->UVbackground_table.crsHeI) ) {
+                      my_rates->UVbackground_table.crsHeI,
+                      /* expected_shape = */ &common_shape) ) {
       std::fprintf(stderr, "Error reading dataset '/UVBRates/CrossSections/hei_avg_crs' in %s.\n",
               my_chemistry->grackle_data_file);
       std::fprintf(stderr, "In order to use self-shielding, you must use the shielding datasets\n");
