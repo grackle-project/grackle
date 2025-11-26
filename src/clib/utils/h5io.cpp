@@ -130,7 +130,6 @@ int grackle::impl::h5io::read_str_attribute(hid_t attr_id, int bufsz,
     //   the leading byte has a value doesn't correspond to an ASCII character
     const char max_val = static_cast<char>(127);
     for (int i = 0; i < bufsz; i++) {
-      char chr = buffer[i];
       if (buffer[i] == '\0') {
         break;
       } else if (buffer[i] < '\0' || buffer[i] > max_val) {
@@ -464,8 +463,17 @@ int set_grid_axes_props(hid_t dset_id, const char* dset_name,
 }
 
 int get_num_attrs(hid_t dset_id, const char* dset_name) {
-  H5O_info1_t info;
-  if (H5Oget_info2(dset_id, &info, H5O_INFO_NUM_ATTRS) < 0) {
+#if H5_VERSION_LE(1, 10, 2)
+  return -2;
+#else
+#if H5_VERSION_GE(1, 12, 0)
+  H5O_info2_t info;
+  herr_t status = H5Oget_info3(dset_id, &info, H5O_INFO_NUM_ATTRS);
+#else
+  H5O_info_t info;
+  herr_t status = H5Oget_info2(dset_id, &info, H5O_INFO_NUM_ATTRS);
+#endif
+  if (status < 0) {
     std::fprintf(stderr, "Can't get num_attrs for \"%s\" dataset.\n",
                  dset_name);
     return -1;
@@ -476,6 +484,7 @@ int get_num_attrs(hid_t dset_id, const char* dset_name) {
   } else {
     return static_cast<int>(info.num_attrs);
   }
+#endif
 }
 
 }  // anonymous namespace
@@ -522,10 +531,14 @@ grackle::impl::h5io::GridTableProps grackle::impl::h5io::parse_GridTableProps(
     return out;
   }
 
+  int total_accessed_attrs_count = shape_attr_count + axes_prop_attr_count;
+
   // perform a check to confirm that we have accessed every available attribute
   // -> we may want to disable this check...
   int num_attrs = get_num_attrs(dset_id, dset_name);
-  if (num_attrs < 0) {
+  if (num_attrs == -2) {
+    num_attrs = total_accessed_attrs_count;
+  } else if (num_attrs == -1) {
     H5Dclose(dset_id);
     drop_GridTableProps(&out);
     // get_num_attrs already printed error messages in this case
@@ -534,7 +547,6 @@ grackle::impl::h5io::GridTableProps grackle::impl::h5io::parse_GridTableProps(
 
   H5Dclose(dset_id);
 
-  int total_accessed_attrs_count = shape_attr_count + axes_prop_attr_count;
   if (num_attrs != total_accessed_attrs_count) {
     drop_GridTableProps(&out);
     std::fprintf(
