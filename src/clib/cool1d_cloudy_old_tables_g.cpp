@@ -18,8 +18,8 @@
 #include "cool1d_cloudy_old_tables_g.hpp"
 
 void grackle::impl::cool1d_cloudy_old_tables_g(
-    double* rhoH, double* metallicity, double* logtem, double* edot,
-    double comp2, double dom, double zr, gr_mask_type* itmask,
+    const double* rhoH, double* metallicity, const double* logtem, double* edot,
+    double comp2, double dom, double zr, const gr_mask_type* itmask,
     chemistry_data* my_chemistry, cloudy_data cloudy_table, gr_float* density,
     gr_float* e_density, grackle_field_data* my_fields, IndexRange idx_range) {
   // General Arguments
