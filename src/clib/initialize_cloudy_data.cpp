@@ -51,7 +51,6 @@ int grackle::impl::initialize_cloudy_data(
     code_units *my_units, int read_data)
 {
 
-  long long temp_int;
   char dset_name[MAX_PARAMETER_NAME_LENGTH];
   const std::size_t name_bufsize =
     static_cast<std::size_t>(MAX_PARAMETER_NAME_LENGTH);
@@ -91,12 +90,8 @@ int grackle::impl::initialize_cloudy_data(
   ) / (std::pow(tbase1, 3.0) * dbase1);
 
   // Read cooling data in from hdf5 file.
-  hid_t       file_id, dset_id, attr_id;
-  herr_t      status;
-  herr_t      h5_error = -1;
-
-  file_id = H5Fopen(my_chemistry->grackle_data_file,
-                    H5F_ACC_RDONLY, H5P_DEFAULT);
+  hid_t file_id = H5Fopen(my_chemistry->grackle_data_file,
+                          H5F_ACC_RDONLY, H5P_DEFAULT);
 
   if (H5Aexists(file_id, "old_style")) {
     my_rates->cloudy_data_new = 0;
@@ -224,7 +219,7 @@ int grackle::impl::initialize_cloudy_data(
 
   }
 
-  status = H5Fclose (file_id);
+  H5Fclose (file_id);
 
   if (my_cloudy->grid_rank > GRACKLE_CLOUDY_TABLE_MAX_DIMENSION) {
     std::fprintf(
