@@ -1489,7 +1489,7 @@ void grackle::impl::cool1d_multi_g(
     grackle::impl::cool1d_cloudy_g(
         rhoH, metallicity, logTlininterp_buf.logtem, edot,
         comp2, dom, zr, mycmbTfloor, my_chemistry->UVbackground, iZscale, itmask,
-        my_rates->cloudy_primordial, my_fields, idx_range);
+        my_rates->cloudy_primordial, idx_range);
 
 
     // Calculate electron density from mean molecular weight
@@ -1653,8 +1653,7 @@ void grackle::impl::cool1d_multi_g(
       grackle::impl::cool1d_cloudy_g(
         rhoH, metallicity, logTlininterp_buf.logtem, edot,
         comp2, dom, zr, my_chemistry->cmb_temperature_floor, my_chemistry->UVbackground, iZscale, itmask_tab.data(),
-        my_rates->cloudy_metal, my_fields,
-        idx_range);
+        my_rates->cloudy_metal, idx_range);
 
     } else {
       FORTRAN_NAME(cool1d_cloudy_old_tables_g)(

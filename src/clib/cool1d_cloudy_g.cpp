@@ -28,7 +28,7 @@ void grackle::impl::cool1d_cloudy_g(
   const double* rhoH, const double* metallicity, const double* logtem, double* edot,
   double comp2, double dom, double zr, int icmbTfloor, int iClHeat,
   int iZscale, const gr_mask_type* itmask, cloudy_data cloudy_table,
-  grackle_field_data* my_fields, IndexRange idx_range
+  IndexRange idx_range
 )
 {
   // Locals
@@ -41,12 +41,12 @@ void grackle::impl::cool1d_cloudy_g(
 
   // Slice locals
 
-  std::vector<double> log_n_h(my_fields->grid_dimension[0]);
-  std::vector<double> log_cool(my_fields->grid_dimension[0]);
-  std::vector<double> log_cool_cmb(my_fields->grid_dimension[0]);
-  std::vector<double> log_heat(my_fields->grid_dimension[0]);
-  std::vector<double> edot_met(my_fields->grid_dimension[0]);
-  std::vector<double> log10tem(my_fields->grid_dimension[0]);
+  std::vector<double> log_n_h(idx_range.i_stop);
+  std::vector<double> log_cool(idx_range.i_stop);
+  std::vector<double> log_cool_cmb(idx_range.i_stop);
+  std::vector<double> log_heat(idx_range.i_stop);
+  std::vector<double> edot_met(idx_range.i_stop);
+  std::vector<double> log10tem(idx_range.i_stop);
 
   // \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
   // =======================================================================

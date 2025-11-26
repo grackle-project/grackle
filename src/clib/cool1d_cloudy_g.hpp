@@ -50,7 +50,7 @@ namespace grackle::impl {
     const double* rhoH, const double* metallicity, const double* logtem, double* edot,
     double comp2, double dom, double zr, int icmbTfloor, int iClHeat,
     int iZscale, const gr_mask_type* itmask, cloudy_data cloudy_table,
-    grackle_field_data* my_fields, IndexRange idx_range
+    IndexRange idx_range
   );
 
 } // namespace grackle::impl
