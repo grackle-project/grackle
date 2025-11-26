@@ -20,6 +20,30 @@
 
 namespace grackle::impl::h5io {
 
+/// copies the string encoded in the specified hdf5 attribute and into
+/// ``buffer`` as a null-terminated string, and returns ``min_req_bufsz``.
+///
+/// ``min_req_bufsz`` is the minimum required ``bufsz`` (i.e. ``bufsz`` is the
+/// the length of ``buffer``) where this function will try to load the
+/// attribute.
+/// - this is the maximum length of the string (including the null character).
+///   To put it another way, after this function succeeds, std::strlen(buffer),
+///   will return a ``x`` that is bounded by ``0 <= x <= min_req_bufsz``.
+/// - this function's behavoir is described in terms of ``min_req_bufsz``,
+///   rather than the exact required buffer length because the exact length
+///   can't be determined without loading the buffer.
+///
+/// This function fails if ``bufsz`` is smaller than ``min_req_bufsz``, unless
+/// unless ``bufsz`` is zero. In the event that ``bufsz`` is zero, nothing is
+/// written and ``buffer`` may be a ``nullptr``. In this case, the function
+/// returns ``min_req_bufsz``. If this function fails, a negative value is
+/// returned.
+///
+/// @note
+/// The function reports an error if it reads a utf8-encoded string that
+/// contains non-ASCII characters
+int read_str_attribute(hid_t attr_id, int bufsz, char* buffer);
+
 /// represents a contiguous array shape
 ///
 /// @note
@@ -38,6 +62,19 @@ inline bool ArrayShape_is_scalar(ArrayShape shape) { return shape.ndim == 0; }
 
 /// checks whether shape is null
 inline bool ArrayShape_is_null(ArrayShape shape) { return shape.ndim == -1; }
+
+/// calculates the total number of elements in the array
+inline std::int64_t ArrayShape_elem_count(ArrayShape shape) {
+  if (shape.ndim < 0) {
+    return -1;
+  } else {  // this works even if shape.ndim is 0
+    std::int64_t product = 1;
+    for (int i = 0; i < shape.ndim; i++) {
+      product *= shape.shape[i];
+    }
+    return product;
+  }
+}
 
 /// checks whether shape_a and shape_b are the same
 ///
@@ -63,6 +100,37 @@ ArrayShape read_dataset_shape(hid_t file_id, const char* dset_name);
 /// the data is read
 int read_dataset(hid_t file_id, const char* dset_name, double* buffer,
                  const ArrayShape* expected_shape = nullptr);
+
+struct GridTableAxis {
+  char* name;
+  double* values;
+};
+
+/// Used to represent properties of an interpolation table
+struct GridTableProps {
+  ArrayShape table_shape;
+  GridTableAxis axes[GRACKLE_CLOUDY_TABLE_MAX_DIMENSION];
+};
+
+inline bool GridTableProps_is_valid(GridTableProps grid_props) {
+  return ArrayShape_is_valid(grid_props.table_shape);
+}
+
+inline void drop_GridTableProps(GridTableProps* ptr) {
+  for (int i = 0; i < GRACKLE_CLOUDY_TABLE_MAX_DIMENSION; i++) {
+    if (ptr->axes[i].name != nullptr) {
+      delete[] ptr->axes[i].name;
+    }
+    if (ptr->axes[i].values != nullptr) {
+      delete[] ptr->axes[i].values;
+    }
+    ptr->axes[i].name = nullptr;
+    ptr->axes[i].values = nullptr;
+  }
+}
+
+/// parses the GridTableProps from dataset attributes
+GridTableProps parse_GridTableProps(hid_t file_id, const char* dset_name);
 
 }  // namespace grackle::impl::h5io
 
