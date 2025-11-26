@@ -26,8 +26,10 @@ namespace grackle::impl {
 ///
 /// Solve cloudy cooling by interpolating from the data.
 ///
-/// @param[in] rhoH 1D array to hold the computed Hydrogen mass density for the @p idx_range
-/// @param[in] metallicity 1D array to hold the computed metallicity for the @p idx_range
+/// @param[in] rhoH 1D array to hold the computed Hydrogen mass density for the
+/// @p idx_range
+/// @param[in] metallicity 1D array to hold the computed metallicity for the @p
+/// idx_range
 /// @param[in] logtem Natural log of temperature values
 /// @param[out] edot 1D array to hold the computed the time derivative of the
 ///     internal energy in the @p idx_range
@@ -53,6 +55,6 @@ namespace grackle::impl {
     IndexRange idx_range
   );
 
-} // namespace grackle::impl
+}  // namespace grackle::impl
 
 #endif /* COOL1D_CLOUDY_G_HPP */

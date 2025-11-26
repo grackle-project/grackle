@@ -31,7 +31,7 @@ void grackle::impl::cool1d_cloudy_g(
 )
 {
   // Locals
-  
+
   int i, get_heat;
   long long zindex, zmidpt, zhighpt;
   double inv_log10, log10_tCMB;
@@ -69,9 +69,8 @@ void grackle::impl::cool1d_cloudy_g(
          (double)(cloudy_table.grid_dimension[2] - 1 );
   }
 
-  for (i = idx_range.i_start; i<=idx_range.i_end; i++) {
-    if (itmask[i] != MASK_FALSE)  {
-
+  for (i = idx_range.i_start; i <= idx_range.i_end; i++) {
+    if (itmask[i] != MASK_FALSE) {
       log10tem[i] = logtem[i] * inv_log10;
 
       // Calculate proper log(n_H)
@@ -104,7 +103,6 @@ void grackle::impl::cool1d_cloudy_g(
             }
           }
         }
-
       }
 
       // Call interpolation functions to get heating/cooling
@@ -206,8 +204,7 @@ void grackle::impl::cool1d_cloudy_g(
         }
 
       } else {
-        OMP_PRAGMA_CRITICAL
-        {
+        OMP_PRAGMA_CRITICAL {
           printf("Maximum cooling data grid rank is 3!\n");
         }
         return;
@@ -215,13 +212,11 @@ void grackle::impl::cool1d_cloudy_g(
 
       // Scale cooling by metallicity.
 
-      if (iZscale == 1)  {
+      if (iZscale == 1) {
         edot_met[i] = edot_met[i] * metallicity[i];
       }
 
-      edot[i] = edot[i] +
-           (edot_met[i] * rhoH[i] * rhoH[i]);
-
+      edot[i] = edot[i] + (edot_met[i] * rhoH[i] * rhoH[i]);
     }
   }
 
