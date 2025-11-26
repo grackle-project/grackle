@@ -37,14 +37,8 @@ namespace grackle::impl {
 /// @param[in] icmbTfloor Flag to include temperature floor from cmb
 /// @param[in] iClHeat Flag to include cloudy heating
 /// @param[in] iZscale Flag to scale cooling by metallicity
-/// @param[in] clGridRank Rank of cloudy cooling data grid
-/// @param[in] clGridDim Array containing dimensions of cloudy data
-/// @param[in] clPar1, clPar2, clPar3 Arrays containing cloudy
-///     grid parameter values
-/// @param[in] clDataSize Total size of flattened 1D cooling data array
-/// @param[in] clCooling Cloudy cooling data
-/// @param[in] clHeating Cloudy heating data
 /// @param[in] itmask Iteration mask
+/// @param[in] cloudy_table Cloudy cooling table data
 /// @param[in] my_fields Grackle field data
 /// @param[in] idx_range Index range specifying the portion of the grid to
 ///     operate on
@@ -52,14 +46,12 @@ namespace grackle::impl {
 /// @par History
 /// written by: Britton Smith, 2009
 /// modified1: November, 2025 by Christopher Bignamini & Matthew Abruzzo; C++ port
-void cool1d_cloudy_g(
-  const double* rhoH, const double* metallicity, const double* logtem, double* edot,
-  double comp2, double dom, double zr, int icmbTfloor, int iClHeat,
-  int iZscale, long long clGridRank, long long* clGridDim, double* clPar1,
-  double* clPar2, double* clPar3, long long* clDataSize, double* clCooling,
-  double* clHeating, const gr_mask_type* itmask, grackle_field_data* my_fields,
-  IndexRange idx_range
-);
+  void cool1d_cloudy_g(
+    const double* rhoH, const double* metallicity, const double* logtem, double* edot,
+    double comp2, double dom, double zr, int icmbTfloor, int iClHeat,
+    int iZscale, const gr_mask_type* itmask, cloudy_data cloudy_table,
+    grackle_field_data* my_fields, IndexRange idx_range
+  );
 
 } // namespace grackle::impl
 
