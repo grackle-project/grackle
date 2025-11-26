@@ -47,13 +47,13 @@ namespace grackle::impl {
 ///
 /// @par History
 /// written by: Britton Smith, 2009
-/// modified1: November, 2025 by Christopher Bignamini & Matthew Abruzzo; C++ port
-  void cool1d_cloudy_g(
-    const double* rhoH, const double* metallicity, const double* logtem, double* edot,
-    double comp2, double dom, double zr, int icmbTfloor, int iClHeat,
-    int iZscale, const gr_mask_type* itmask, cloudy_data cloudy_table,
-    IndexRange idx_range
-  );
+/// modified1: November, 2025 by Christopher Bignamini & Matthew Abruzzo; C++
+/// port
+void cool1d_cloudy_g(const double* rhoH, const double* metallicity,
+                     const double* logtem, double* edot, double comp2,
+                     double dom, double zr, int icmbTfloor, int iClHeat,
+                     int iZscale, const gr_mask_type* itmask,
+                     cloudy_data cloudy_table, IndexRange idx_range);
 
 }  // namespace grackle::impl
 
