@@ -18,7 +18,6 @@
 #include <vector>
 
 #include "grackle.h"
-#include "fortran_func_decls.h"
 #include "fortran_func_wrappers.hpp"
 #include "utils-cpp.hpp"
 
@@ -112,81 +111,97 @@ void grackle::impl::cool1d_cloudy_g(
 
       // Interpolate over temperature.
       if (cloudy_table.grid_rank == 1)  {
-         FORTRAN_NAME(interpolate_1d_g)(&log10tem[i], cloudy_table.grid_dimension, cloudy_table.grid_parameters[0],
-             dclPar.data(), &cloudy_table.data_size, cloudy_table.cooling_data, &log_cool[i]);
+        log_cool[i] = grackle::impl::fortran_wrapper::interpolate_1d_g(
+            log10tem[i], cloudy_table.grid_dimension,
+            cloudy_table.grid_parameters[0], dclPar[0], cloudy_table.data_size,
+            cloudy_table.cooling_data);
         edot_met[i] = -std::pow(10.,log_cool[i]);
 
         // Ignore CMB term if T >> T_CMB
         if ((icmbTfloor == 1)  &&
              ((log10tem[i] - log10_tCMB) < 2.))  {
-           FORTRAN_NAME(interpolate_1d_g)(&log10_tCMB, cloudy_table.grid_dimension, cloudy_table.grid_parameters[0],
-               dclPar.data(), &cloudy_table.data_size, cloudy_table.cooling_data,
-               &log_cool_cmb[i]);
+          log_cool_cmb[i] = grackle::impl::fortran_wrapper::interpolate_1d_g(
+              log10_tCMB, cloudy_table.grid_dimension,
+              cloudy_table.grid_parameters[0], dclPar[0], cloudy_table.data_size,
+              cloudy_table.cooling_data);
           edot_met[i] = edot_met[i] + std::pow(10.,log_cool_cmb[i]);
         }
 
         if (get_heat == 1)  {
-           FORTRAN_NAME(interpolate_1d_g)(&log10tem[i], cloudy_table.grid_dimension, cloudy_table.grid_parameters[0],
-               dclPar.data(), &cloudy_table.data_size, cloudy_table.heating_data,
-               &log_heat[i]);
+          log_cool[i] = grackle::impl::fortran_wrapper::interpolate_1d_g(
+              log10tem[i], cloudy_table.grid_dimension,
+              cloudy_table.grid_parameters[0], dclPar[0], cloudy_table.data_size,
+              cloudy_table.heating_data);
           edot_met[i] = edot_met[i] + std::pow(10.,log_heat[i]);
         }
 
         // Interpolate over density and temperature.
       } else if (cloudy_table.grid_rank == 2)  {
-         FORTRAN_NAME(interpolate_2d_g)(&log_n_h[i], &log10tem[i], cloudy_table.grid_dimension,
-             cloudy_table.grid_parameters[0], dclPar.data(), cloudy_table.grid_parameters[1], &dclPar[1],
-             &cloudy_table.data_size, cloudy_table.cooling_data, &log_cool[i]);
+        log_cool[i] = grackle::impl::fortran_wrapper::interpolate_2d_g(
+            log_n_h[i], log10tem[i], cloudy_table.grid_dimension,
+            cloudy_table.grid_parameters[0], dclPar[0],
+            cloudy_table.grid_parameters[1], dclPar[1],
+            cloudy_table.data_size,
+            cloudy_table.cooling_data);
         edot_met[i] = -std::pow(10.,log_cool[i]);
 
         // Ignore CMB term if T >> T_CMB
         if ((icmbTfloor == 1)  &&
              ((log10tem[i] - log10_tCMB) < 2.))  {
-           FORTRAN_NAME(interpolate_2d_g)(&log_n_h[i], &log10_tCMB,
-               cloudy_table.grid_dimension, cloudy_table.grid_parameters[0], dclPar.data(), cloudy_table.grid_parameters[1], &dclPar[1],
-               &cloudy_table.data_size, cloudy_table.cooling_data, &log_cool_cmb[i]);
+          log_cool_cmb[i] = grackle::impl::fortran_wrapper::interpolate_2d_g(
+              log_n_h[i], log10_tCMB, cloudy_table.grid_dimension,
+              cloudy_table.grid_parameters[0], dclPar[0],
+              cloudy_table.grid_parameters[1], dclPar[1],
+              cloudy_table.data_size,
+              cloudy_table.cooling_data);
           edot_met[i] = edot_met[i] + std::pow(10.,log_cool_cmb[i]);
         }
 
         if (get_heat == 1)  {
-           FORTRAN_NAME(interpolate_2d_g)(&log_n_h[i], &log10tem[i], cloudy_table.grid_dimension,
-               cloudy_table.grid_parameters[0], dclPar.data(), cloudy_table.grid_parameters[1], &dclPar[1],
-               &cloudy_table.data_size, cloudy_table.heating_data, &log_heat[i]);
+          log_heat[i] = grackle::impl::fortran_wrapper::interpolate_2d_g(
+              log_n_h[i], log10tem[i], cloudy_table.grid_dimension,
+              cloudy_table.grid_parameters[0], dclPar[0],
+              cloudy_table.grid_parameters[1], dclPar[1],
+              cloudy_table.data_size,
+              cloudy_table.heating_data);
           edot_met[i] = edot_met[i] + std::pow(10.,log_heat[i]);
         }
 
         // Interpolate over density, redshift, and temperature.
       } else if (cloudy_table.grid_rank == 3)  {
-         FORTRAN_NAME(interpolate_3dz_g)(&log_n_h[i], &zr, &log10tem[i],
-             cloudy_table.grid_dimension,
-             cloudy_table.grid_parameters[0], dclPar.data(),
-             cloudy_table.grid_parameters[1], &zindex,
-             cloudy_table.grid_parameters[2], &dclPar[2],
-             &cloudy_table.data_size, cloudy_table.cooling_data,
-             &end_int, &log_cool[i]);
+        log_cool[i] = grackle::impl::fortran_wrapper::interpolate_3dz_g(
+              log_n_h[i], zr, log10tem[i],
+              cloudy_table.grid_dimension,
+              cloudy_table.grid_parameters[0], dclPar[0],
+              cloudy_table.grid_parameters[1], zindex,
+              cloudy_table.grid_parameters[2], dclPar[2],
+              cloudy_table.data_size, cloudy_table.cooling_data,
+              end_int);
         edot_met[i] = -std::pow(10.,log_cool[i]);
 
         // Ignore CMB term if T >> T_CMB
         if ((icmbTfloor == 1)  &&
              ((log10tem[i] - log10_tCMB) < 2.))  {
-           FORTRAN_NAME(interpolate_3dz_g)(&log_n_h[i], &zr, &log10_tCMB,
-               cloudy_table.grid_dimension,
-               cloudy_table.grid_parameters[0], dclPar.data(),
-               cloudy_table.grid_parameters[1], &zindex,
-               cloudy_table.grid_parameters[2], &dclPar[2],
-               &cloudy_table.data_size, cloudy_table.cooling_data,
-               &end_int, &log_cool_cmb[i]);
+          log_cool_cmb[i] = grackle::impl::fortran_wrapper::interpolate_3dz_g(
+              log_n_h[i], zr, log10_tCMB,
+              cloudy_table.grid_dimension,
+              cloudy_table.grid_parameters[0], dclPar[0],
+              cloudy_table.grid_parameters[1], zindex,
+              cloudy_table.grid_parameters[2], dclPar[2],
+              cloudy_table.data_size, cloudy_table.cooling_data,
+              end_int);
           edot_met[i] = edot_met[i] + std::pow(10.,log_cool_cmb[i]);
         }
 
         if (get_heat == 1)  {
-           FORTRAN_NAME(interpolate_3dz_g)(&log_n_h[i], &zr, &log10tem[i],
-               cloudy_table.grid_dimension,
-               cloudy_table.grid_parameters[0], dclPar.data(),
-               cloudy_table.grid_parameters[1], &zindex,
-               cloudy_table.grid_parameters[2], &dclPar[2],
-               &cloudy_table.data_size, cloudy_table.heating_data,
-               &end_int, &log_heat[i]);
+          log_heat[i] = grackle::impl::fortran_wrapper::interpolate_3dz_g(
+              log_n_h[i], zr, log10tem[i],
+              cloudy_table.grid_dimension,
+              cloudy_table.grid_parameters[0], dclPar[0],
+              cloudy_table.grid_parameters[1], zindex,
+              cloudy_table.grid_parameters[2], dclPar[2],
+              cloudy_table.data_size, cloudy_table.heating_data,
+              end_int);
           edot_met[i] = edot_met[i] + std::pow(10.,log_heat[i]);
         }
 
