@@ -57,7 +57,7 @@ struct ArrayShape {
 /// checks whether shape is valid
 inline bool ArrayShape_is_valid(ArrayShape shape) { return shape.ndim >= -1; }
 
-/// checks whether shape is valid
+/// checks whether shape refers to a scalar
 inline bool ArrayShape_is_scalar(ArrayShape shape) { return shape.ndim == 0; }
 
 /// checks whether shape is null
@@ -116,6 +116,7 @@ inline bool GridTableProps_is_valid(GridTableProps grid_props) {
   return ArrayShape_is_valid(grid_props.table_shape);
 }
 
+/// acts as a destructor for the contents within ptr
 inline void drop_GridTableProps(GridTableProps* ptr) {
   for (int i = 0; i < GRACKLE_CLOUDY_TABLE_MAX_DIMENSION; i++) {
     if (ptr->axes[i].name != nullptr) {
@@ -130,6 +131,14 @@ inline void drop_GridTableProps(GridTableProps* ptr) {
 }
 
 /// parses the GridTableProps from dataset attributes
+///
+/// @param[in] file_id File identifier
+/// @param[in] dset_name The name of the dataset that the parameters are
+///     attached to.
+///
+/// @returns Returns the appropriate GridTableProps object. The caller should
+///     use the GridTableProps_is_valid function to confirm that the function
+///     was successful.
 GridTableProps parse_GridTableProps(hid_t file_id, const char* dset_name);
 
 }  // namespace grackle::impl::h5io

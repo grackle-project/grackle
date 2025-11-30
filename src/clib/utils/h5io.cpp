@@ -273,26 +273,159 @@ int grackle::impl::h5io::read_dataset(
 
 namespace {  // stuff inside an anonymous namespace is local to this file
 
-static constexpr int attr_name_set_capacity = 30;
+/// @defgroup AttrNameRecorderGroup Attribute Recording Group
+/// This is a collection of crude machinery used when we parse hdf5 dataset
+/// attributes that specify Grid Table properties. This machinery is designed
+/// to operate in 2 modes:
+/// 1. A lightweight counter of attribute names
+/// 2. A heavier weight mode that actually tracks alls attribute names. The
+///    premise is to only use this mode (when we already know that there is an
+///    error) in order to provide a descriptive error message.
+///@{
+static constexpr int attr_name_recorder_capacity =
+    (GRACKLE_CLOUDY_TABLE_MAX_DIMENSION * 3 + 4);
 
-/// Acts as a crude set of attribute names
+/// Acts as a crude tool for checking the set of attribute names
 ///
 /// @note
 /// if we ever choose to embrace C++, it would be **MUCH** nicer to use
 /// std::set<std::string>
-struct AttrNameSet {
-  char* vals[attr_name_set_capacity];
-  int capacity;
+struct AttrNameRecorder {
+  bool only_count;
   int length;
+  int capacity;
+  char* names[attr_name_recorder_capacity];
 };
+
+AttrNameRecorder new_AttrNameRecorder(bool only_count) {
+  AttrNameRecorder out;
+  out.only_count = only_count;
+  out.capacity = attr_name_recorder_capacity;
+  out.length = 0;
+  for (int i = 0; i < attr_name_recorder_capacity; i++) {
+    out.names[i] = nullptr;
+  }
+  return out;
+}
+
+/// acts as a destructor for all data contained within ptr
+void drop_AttrNameRecorder(AttrNameRecorder* ptr) {
+  if (!ptr->only_count) {
+    for (int i = 0; i < ptr->length; i++) {
+      delete[] ptr->names[i];
+    }
+  }
+  ptr->length = 0;
+}
+
+/// records the attribute name
+///
+/// @returns GR_SUCCESS if successful. Any other value denotes an issue
+///
+/// @note
+/// There are implicit assumptions that ptr and name are not nullptrs. It also
+/// makes some sense to assume that name wasn't already recorded.
+int AttrNameRecorder_record_name(AttrNameRecorder* ptr, const char* name) {
+  if (ptr->length == ptr->capacity) {
+    std::fprintf(stderr,
+                 "encountered more attribute names than hardcoded maximum\n");
+    return GR_FAIL;
+  }
+
+  if (!ptr->only_count) {
+    std::size_t len_without_nullchr = std::strlen(name);
+    std::size_t buf_len = len_without_nullchr + 1;
+    char* buf = new char[buf_len];
+    std::memcpy(buf, name, buf_len);
+    ptr->names[ptr->length] = buf;
+  }
+
+  ptr->length++;
+  return GR_SUCCESS;
+}
+
+int AttrNameRecorder_length(AttrNameRecorder* ptr) { return ptr->length; }
+
+/// writes a representation of all recorded attribute names to a character
+/// string @p buffer.
+///
+/// Just like ``std::snprintf``, this function writes at most ``buf_size - 1``
+/// characters and the resulting character string is terminated with a null
+/// character. As with ``std::snprintf``, when @p buf_size is zero, nothing is
+/// written, but the return value is still calculated.
+///
+/// @param[in] buffer Pointer to the buffer where characters are written. This
+///   can **only** be a nullptr if `buf_size` is 0.
+/// @param[in] buf_size Specifies that `buf_size - 1` characters can be written
+///   to `buffer`, in addition to the null terminator character.
+/// @param[in] obj The object whose contents are being printed
+///
+/// \returns If successful, returns number of characters that would be written
+/// for a sufficiently large buffer. This value always excludes the terminating
+/// null character. Otherwise, a negative value denotes an error.
+///
+/// @note
+/// Obviously, this could be simplified substantially if we fully embrace C++
+/// (e.g. we could simply return a `std::string` rather than mimic the
+/// interface of `std::snprintf`)
+int AttrNameRecorder_stringify_attr_names(char* buffer, std::size_t buf_size,
+                                          const AttrNameRecorder* obj) {
+  int length = obj->length;
+
+  if (obj->only_count) {
+    return std::snprintf(buffer, buf_size, "{<%d unspecified attrs>}", length);
+  }
+
+  // this is inefficient, but probably okay since its only for error reporting
+
+  const int total_bufsz = (buf_size > static_cast<std::size_t>(INT_MAX))
+                              ? INT_MAX
+                              : static_cast<int>(buf_size);
+  int total_offset = 0;  // accumulated offset from start of buffer
+
+  auto helper_fn = [&total_offset, total_bufsz, buffer](const char* s) -> bool {
+    bool write = total_bufsz > total_offset;
+    int rslt = std::snprintf((write) ? buffer + total_offset : nullptr,
+                             (write) ? total_bufsz - total_offset : 0, "%s", s);
+    bool is_err = rslt < 0;
+    total_offset = rslt + ((is_err) ? 0 : total_offset);
+    fprintf(stderr, "component, total_offset: `%s`, %d\n", s, total_offset);
+    return is_err;
+  };
+
+  if (helper_fn("{")) {
+    return total_offset;
+  }
+
+  for (int i = 0; i < length; i++) {
+    if (i > 0 && helper_fn(", ")) {
+      return total_offset;
+    }
+    if (helper_fn("\"") || helper_fn(obj->names[i]) || helper_fn("\"")) {
+      return total_offset;
+    }
+  }
+
+  helper_fn("}");
+  return total_offset;
+}
+
+///@}
 
 /// helper function that calculates ArrayShape from the "Rank" and "Dimension"
 /// attributes
 ///
-/// @note
-/// we only carry around dset_name argument for nicer error messages
-grackle::impl::h5io::ArrayShape shape_from_grid_attrs(hid_t dset_id,
-                                                      const char* dset_name) {
+/// @param[in] dset_id The dataset identifier
+/// @param[in] dset_name Name associated with dset_id (only used for producing
+///     nicer error messages)
+/// @param[inout] name_recorder Updated to track each attribute involved
+///     in parsing a dataset's grid table properties.
+///
+/// @returns the parsed array shape for the grid shape properties. The caller
+///     should ensure that this function was successful by calling
+///     ArrayShape_is_valid on the returned value.
+grackle::impl::h5io::ArrayShape shape_from_grid_attrs(
+    hid_t dset_id, const char* dset_name, AttrNameRecorder* name_recorder) {
   hid_t attr_id = H5Aopen_name(dset_id, "Rank");
   if (attr_id == H5I_INVALID_HID) {
     std::fprintf(stderr,
@@ -316,6 +449,13 @@ grackle::impl::h5io::ArrayShape shape_from_grid_attrs(hid_t dset_id,
         "\"Rank\" attribute of \"%s\" dataset, %lld, is negative or exceeds "
         "the hardcoded maximum, %d.\n",
         dset_name, rank, GRACKLE_CLOUDY_TABLE_MAX_DIMENSION);
+    return mk_invalid_array_shape();
+  }
+  if (AttrNameRecorder_record_name(name_recorder, "Rank") != GR_SUCCESS) {
+    std::fprintf(
+        stderr,
+        "issue recording access of \"Rank\" attribute of \"%s\" dataset.",
+        dset_name);
     return mk_invalid_array_shape();
   }
 
@@ -350,6 +490,13 @@ grackle::impl::h5io::ArrayShape shape_from_grid_attrs(hid_t dset_id,
       return mk_invalid_array_shape();
     }
   }
+  if (AttrNameRecorder_record_name(name_recorder, "Dimension") != GR_SUCCESS) {
+    std::fprintf(
+        stderr,
+        "issue recording access of \"Dimension\" attribute of \"%s\" dataset.",
+        dset_name);
+    return mk_invalid_array_shape();
+  }
 
   // finally, let's format the output
   grackle::impl::h5io::ArrayShape out;
@@ -364,10 +511,19 @@ static constexpr int max_attr_name_length = 64;
 
 /// updates axes with parsed parameters
 ///
-/// returns the number of uniqued attributes accessed by this function
+/// @param[in] dset_id The dataset identifier
+/// @param[in] dset_name Name associated with dset_id (only used for producing
+///     nicer error messages)
+/// @param[in] grid_shape Specifies the pre-parsed grid shape
+/// @param[out] axes Buffers theat will be updated with the grid axes
+/// @param[inout] name_recorder Updated to track each attribute involved
+///     in parsing a dataset's grid table properties.
+///
+/// @returns GR_SUCCESS if successful. Any other value denotes an issue
 int set_grid_axes_props(hid_t dset_id, const char* dset_name,
                         grackle::impl::h5io::ArrayShape grid_shape,
-                        grackle::impl::h5io::GridTableAxis* axes) {
+                        grackle::impl::h5io::GridTableAxis* axes,
+                        AttrNameRecorder* name_recorder) {
   using grackle::impl::h5io::read_str_attribute;
   int accessed_attr_count = 0;
 
@@ -389,7 +545,7 @@ int set_grid_axes_props(hid_t dset_id, const char* dset_name,
         std::fprintf(stderr,
                      "Failed to open \"%s\" attribute of \"%s\" dataset.\n",
                      tmp_attr_name, dset_name);
-        return -1;
+        return GR_FAIL;
       }
 
       int min_buf_length = read_str_attribute(attr_id, 0, nullptr);
@@ -398,7 +554,7 @@ int set_grid_axes_props(hid_t dset_id, const char* dset_name,
             stderr,
             "can't determine string size held by \"%s\" attr of \"%s\" dset.\n",
             tmp_attr_name, dset_name);
-        return -1;
+        return GR_FAIL;
       }
 
       axes[i].name = new char[min_buf_length];
@@ -406,10 +562,17 @@ int set_grid_axes_props(hid_t dset_id, const char* dset_name,
         std::fprintf(stderr,
                      "error loading the \"%s\" attr from \"%s\" dataset\n",
                      tmp_attr_name, dset_name);
-        return -1;
+        return GR_FAIL;
       }
       H5Aclose(attr_id);
-      accessed_attr_count++;
+
+      if (AttrNameRecorder_record_name(name_recorder, tmp_attr_name) !=
+          GR_SUCCESS) {
+        std::fprintf(stderr,
+                     "issue recording access of \"%s\" attr of \"%s\" dataset",
+                     tmp_attr_name, dset_name);
+        return GR_FAIL;
+      }
 
     } else if (is_last_axis && H5Aexists(dset_id, "Temperature") > 0) {
       axes[i].name = new char[12];
@@ -424,7 +587,7 @@ int set_grid_axes_props(hid_t dset_id, const char* dset_name,
           "Failed to determine attribute associated with axis %d of the "
           "\"%s\" dataset. \"%s\" is not a known attribute.%s\n",
           i, val_attr_name, dset_name, extra_detail);
-      return -1;
+      return GR_FAIL;
     }
 
     // step 2: load the values associated with axes[i].name and store them in
@@ -434,7 +597,7 @@ int set_grid_axes_props(hid_t dset_id, const char* dset_name,
     if (attr_id == H5I_INVALID_HID) {
       std::fprintf(stderr, "Failed to open \"%s\" attr of \"%s\" dataset.\n",
                    val_attr_name, dset_name);
-      return -1;
+      return GR_FAIL;
     }
 
     hid_t space_id = H5Aget_space(attr_id);
@@ -446,7 +609,7 @@ int set_grid_axes_props(hid_t dset_id, const char* dset_name,
           "The \"%s\" attr of the \"%s\" dataset isn't an array with a shape "
           "that is consistent with the dataset's \"Dimension\" attr.\n",
           val_attr_name, dset_name);
-      return -1;
+      return GR_FAIL;
     }
 
     axes[i].values = new double[grid_shape.shape[i]];
@@ -454,12 +617,72 @@ int set_grid_axes_props(hid_t dset_id, const char* dset_name,
       H5Aclose(attr_id);
       std::fprintf(stderr, "failed to read \"%s\" attr of \"%s\" dataset.\n",
                    val_attr_name, dset_name);
-      return -1;
+      return GR_FAIL;
     }
     H5Aclose(attr_id);
-    accessed_attr_count++;
+    if (AttrNameRecorder_record_name(name_recorder, val_attr_name) !=
+        GR_SUCCESS) {
+      std::fprintf(stderr,
+                   "issue recording access of \"%s\" attr of \"%s\" dataset",
+                   val_attr_name, dset_name);
+      return GR_FAIL;
+    }
   }
-  return accessed_attr_count;
+  return GR_SUCCESS;
+}
+
+grackle::impl::h5io::GridTableProps mk_invalid_GridTableProps() {
+  grackle::impl::h5io::GridTableProps out;
+  out.table_shape = mk_invalid_array_shape();
+  for (int i = 0; i < GRACKLE_CLOUDY_TABLE_MAX_DIMENSION; i++) {
+    out.axes[i].name = nullptr;
+    out.axes[i].values = nullptr;
+  }
+  return out;
+}
+
+/// helper function that parses the GridTableProps from dataset attributes
+///
+/// @param[in] dset_id The dataset identifier
+/// @param[in] dset_name Name associated with dset_id (only used for producing
+///     nicer error messages)
+/// @param[inout] name_recorder Updated to track each attribute involved
+///     in parsing a dataset's grid table properties.
+///
+/// @returns Returns the appropriate GridTableProps object. The caller should
+///     use the GridTableProps_is_valid function to confirm that the function
+///     was successful.
+grackle::impl::h5io::GridTableProps parse_GridTableProps_helper(
+    hid_t dset_id, const char* dset_name, AttrNameRecorder* name_recorder) {
+  // setup the output object so that we're always prepared to return an object
+  // - the default object is constructed to denote a failure
+  grackle::impl::h5io::GridTableProps out = mk_invalid_GridTableProps();
+
+  // if optional Description attribute is present, record that we accessed it
+  // (this is done purely for error-handling purposes).
+  if ((H5Aexists(dset_id, "Description") > 0) &&
+      (AttrNameRecorder_record_name(name_recorder, "Description") !=
+       GR_SUCCESS)) {
+    return out;
+  }
+
+  // infer the shape of the table from the attributes
+  grackle::impl::h5io::ArrayShape inferred_shape =
+      shape_from_grid_attrs(dset_id, dset_name, name_recorder);
+  if (!ArrayShape_is_valid(inferred_shape)) {
+    return out;
+  }
+
+  // parse the quantities along each axis
+  if (set_grid_axes_props(dset_id, dset_name, inferred_shape, out.axes,
+                          name_recorder) != GR_SUCCESS) {
+    drop_GridTableProps(&out);
+    return out;
+  }
+
+  out.table_shape = inferred_shape;  // we intentionally do this as the very
+                                     // last step!
+  return out;
 }
 
 int get_num_attrs(hid_t dset_id, const char* dset_name) {
@@ -491,50 +714,36 @@ int get_num_attrs(hid_t dset_id, const char* dset_name) {
 
 grackle::impl::h5io::GridTableProps grackle::impl::h5io::parse_GridTableProps(
     hid_t file_id, const char* dset_name) {
-  // setup the output object so that we're always prepared to return an object
-  // - the default object is constructed to denote a failure
-  grackle::impl::h5io::GridTableProps out;
-  out.table_shape = shape_from_space(H5I_INVALID_HID);
-  for (int i = 0; i < GRACKLE_CLOUDY_TABLE_MAX_DIMENSION; i++) {
-    out.axes[i].name = nullptr;
-    out.axes[i].values = nullptr;
-  }
-
   if (dset_name == nullptr) {  // sanity check!
     std::fprintf(stderr, "dset_name is a nullptr");
-    return out;
+    return mk_invalid_GridTableProps();
   }
 
   hid_t dset_id = H5Dopen(file_id, dset_name);
   if (dset_id == H5I_INVALID_HID) {
     std::fprintf(stderr, "Can't open \"%s\" dataset.\n", dset_name);
-    return out;
+    return mk_invalid_GridTableProps();
   }
 
-  // infer the shape of the table from the attributes
-  grackle::impl::h5io::ArrayShape inferred_shape =
-      shape_from_grid_attrs(dset_id, dset_name);
-  if (!ArrayShape_is_valid(inferred_shape)) {
+  // construct object to count accessed attributes
+  AttrNameRecorder attr_counter = new_AttrNameRecorder(true);
+  // actually parse GridTableProps
+  GridTableProps out =
+      parse_GridTableProps_helper(dset_id, dset_name, &attr_counter);
+  // get the attribute count and cleanup the counter
+  int total_accessed_attrs_count = AttrNameRecorder_length(&attr_counter);
+  drop_AttrNameRecorder(&attr_counter);
+
+  if (!GridTableProps_is_valid(out)) {
     H5Dclose(dset_id);
-    // shape_from_grid_attrs already printed error messages in this case
-    return out;
-  }
-  int shape_attr_count = 2;
-
-  // parse the quantities along each axis
-  int axes_prop_attr_count =
-      set_grid_axes_props(dset_id, dset_name, inferred_shape, out.axes);
-  if (axes_prop_attr_count < 0) {
-    H5Dclose(dset_id);
-    drop_GridTableProps(&out);
-    // shape_from_grid_attrs already printed error messages in this case
+    // parse_GridTableProps_helper already printed appropriate errors messages
     return out;
   }
 
-  int total_accessed_attrs_count = shape_attr_count + axes_prop_attr_count;
-
-  // perform a check to confirm that we have accessed every available attribute
-  // -> we may want to disable this check...
+  // now, we will perform a check validating that dataset doesn't have
+  // unexpected attributes (i.e. we want to avoid the situation where the
+  // creator expects new attributes to introduce some behavior that Grackle
+  // doesn't know about)
   int num_attrs = get_num_attrs(dset_id, dset_name);
   if (num_attrs == -2) {
     num_attrs = total_accessed_attrs_count;
@@ -543,22 +752,52 @@ grackle::impl::h5io::GridTableProps grackle::impl::h5io::parse_GridTableProps(
     drop_GridTableProps(&out);
     // get_num_attrs already printed error messages in this case
     return out;
+  } else if (num_attrs != total_accessed_attrs_count) {
+    drop_GridTableProps(&out);
+    // to provide a detailed error message that will make it straight-forward
+    // to debug the underlying problem, we are going to call
+    // parse_GridTableProps_helper, but this time, we are going to actually
+    // record every accessed name.
+    AttrNameRecorder attr_name_recorder = new_AttrNameRecorder(false);
+    // let's parse GridTableProps (again)
+    GridTableProps tmp =
+        parse_GridTableProps_helper(dset_id, dset_name, &attr_name_recorder);
+
+    int bufsz_without_nullchr =
+        AttrNameRecorder_stringify_attr_names(nullptr, 0, &attr_name_recorder);
+    int bufsz = bufsz_without_nullchr + 1;
+    char* stringified_attr_list = nullptr;
+    if (bufsz > 0) {
+      stringified_attr_list = new char[bufsz];
+      if (AttrNameRecorder_stringify_attr_names(stringified_attr_list,
+                                                static_cast<std::size_t>(bufsz),
+                                                &attr_name_recorder) < 0) {
+        delete[] stringified_attr_list;
+        stringified_attr_list = nullptr;
+      }
+    }
+
+    if (stringified_attr_list == nullptr) {
+      std::fprintf(
+          stderr,
+          "encountered error while stringifying list of recognized attrs for "
+          "the \"%s\" dataset\n",
+          dset_name);
+    } else {
+      std::fprintf(
+          stderr,
+          "while parsing the %dD grid table properties from attributes of the "
+          "\"%s\" dataset, encountered (one or more) unrecognized attributes. "
+          "Recognized attributes include: %s\n",
+          tmp.table_shape.ndim, dset_name, stringified_attr_list);
+      delete[] stringified_attr_list;
+    }
+    drop_GridTableProps(&tmp);
+    drop_AttrNameRecorder(&attr_name_recorder);
+    H5Dclose(dset_id);
+    return mk_invalid_GridTableProps();
   }
 
   H5Dclose(dset_id);
-
-  if (num_attrs != total_accessed_attrs_count) {
-    drop_GridTableProps(&out);
-    std::fprintf(
-        stderr,
-        "the number of accessed attributes, %d, for the \"%s\" dataset isn't "
-        "equal to the number of available attributes, %d. This may be a sign "
-        "of a problem\n",
-        total_accessed_attrs_count, dset_name, num_attrs);
-    return out;
-  }
-
-  out.table_shape = inferred_shape;  // we intentionally do this as the very
-                                     // last step!
   return out;
 }
