@@ -19,6 +19,21 @@
 #include "h5io.hpp"
 #include "../status_reporting.h"
 
+// HDF5 definitions
+// -> these were moved out of the grackle_macros.h header
+// -> most of these are unnecessary!
+
+#define HDF5_FILE_I4 H5T_STD_I32BE
+#define HDF5_FILE_I8 H5T_STD_I64BE
+#define HDF5_FILE_R4 H5T_IEEE_F32BE
+#define HDF5_FILE_R8 H5T_IEEE_F64BE
+#define HDF5_FILE_B8 H5T_STD_B8BE
+
+#define HDF5_I4 H5T_NATIVE_INT
+#define HDF5_I8 H5T_NATIVE_LLONG
+#define HDF5_R4 H5T_NATIVE_FLOAT
+#define HDF5_R8 H5T_NATIVE_DOUBLE
+
 int grackle::impl::h5io::read_str_attribute(hid_t attr_id, int bufsz,
                                             char* buffer) {
   if (bufsz < 0 || attr_id == H5I_INVALID_HID) {

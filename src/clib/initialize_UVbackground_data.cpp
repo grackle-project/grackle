@@ -15,7 +15,7 @@
 #include <vector>
 #include "hdf5.h"
 #include "grackle.h"
-#include "grackle_macros.h"
+#include "grackle_macros.h"  // FLOAT_UNDEFINED
 #include "utils/h5io.hpp"
 
 #include "initialize_UVbackground_data.hpp"

@@ -82,20 +82,6 @@
   #define GRFLOAT_C(DBL_LITERAL) ( DBL_LITERAL )
 #endif
 
-/* HDF5 definitions */
-
-#define HDF5_FILE_I4 H5T_STD_I32BE
-#define HDF5_FILE_I8 H5T_STD_I64BE
-#define HDF5_FILE_R4 H5T_IEEE_F32BE
-#define HDF5_FILE_R8 H5T_IEEE_F64BE
-#define HDF5_FILE_B8 H5T_STD_B8BE
-
-#define HDF5_I4  H5T_NATIVE_INT
-#define HDF5_I8  H5T_NATIVE_LLONG
-#define HDF5_R4  H5T_NATIVE_FLOAT
-#define HDF5_R8  H5T_NATIVE_DOUBLE
-#define HDF5_R16 H5T_NATIVE_LDOUBLE
-
 /* Precision-dependent definitions */
 
 #ifdef GRACKLE_FLOAT_4

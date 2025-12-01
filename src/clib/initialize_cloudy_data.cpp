@@ -16,7 +16,7 @@
 #include <cstring> // std::strcmp
 #include "hdf5.h"
 #include "grackle.h"
-#include "grackle_macros.h" // HDF5_I8, HDF5_R8, TRUE
+#include "grackle_macros.h" // TRUE
 #include "initialize_cloudy_data.hpp"
 #include "utils/h5io.hpp"
 
