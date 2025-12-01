@@ -63,7 +63,7 @@ int grackle::impl::initialize_UVbackground_data(chemistry_data *my_chemistry,
 
   // Read in UV background data from hdf5 file.
 
-  hid_t       file_id, dset_id, dspace_id;
+  hid_t       file_id, dset_id;
   herr_t      status;
   herr_t      h5_error = -1;
 

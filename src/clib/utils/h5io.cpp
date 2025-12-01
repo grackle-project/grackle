@@ -499,7 +499,9 @@ grackle::impl::h5io::ArrayShape shape_from_grid_attrs(
   }
 
   // finally, let's format the output
-  grackle::impl::h5io::ArrayShape out;
+  // -> we use mk_invalid_array_shape to suppress compiler warnings that out
+  //    may be uninitialized
+  grackle::impl::h5io::ArrayShape out = mk_invalid_array_shape();
   out.ndim = static_cast<int>(rank);
   for (int i = 0; i < out.ndim; i++) {
     out.shape[i] = grid_dimensions[i];
@@ -525,7 +527,6 @@ int set_grid_axes_props(hid_t dset_id, const char* dset_name,
                         grackle::impl::h5io::GridTableAxis* axes,
                         AttrNameRecorder* name_recorder) {
   using grackle::impl::h5io::read_str_attribute;
-  int accessed_attr_count = 0;
 
   for (int i = 0; i < grid_shape.ndim; i++) {
     bool is_last_axis = (i + 1) == grid_shape.ndim;
