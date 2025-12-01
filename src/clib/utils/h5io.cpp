@@ -36,6 +36,42 @@
 #define HDF5_R4 H5T_NATIVE_FLOAT
 #define HDF5_R8 H5T_NATIVE_DOUBLE
 
+namespace {  // stuff inside an anonymous namespace is local to this file
+
+/// Determines whether the specified buffer contains a null-terminated byte
+/// string of ascii characters.
+///
+/// @returns true if buffer only contains ascii characters and contains a null
+///   character at buffer[i] for `i < bufsz`. Otherwise it returns true.
+///
+/// @par Purpose
+/// The function is primarily intended for checking whether a UTF-8 encoded
+/// string is also a valid ASCII string (i.e. it only includes UTF-8 code
+/// points that are valid ASCII characters). For the uninitiated:
+/// - all 128 standard ASCII characters are encoded in 7 bits. UTF-8 was
+///   designed for backwards compatibility with these characters; the first
+///   128 UTF-8 code points are all encoded using a single byte and have an
+///   **EXACT** one-to-one correspondence with the ascii characters.
+/// - all other utf8 codepoints are represented by 2 or more bytes &
+///   the leading byte has a value doesn't correspond to an ASCII character
+bool is_ascii_string(const char* buffer, int bufsz) {
+  const char max_val = static_cast<char>(127);
+  for (int i = 0; i < bufsz; i++) {
+    if (buffer[i] == '\0') {
+      return true;
+    } else if (buffer[i] < '\0' || buffer[i] > max_val) {
+      // I'm pretty sure we must verfiy that buffer[i] BOTH isn't smaller
+      // than '\0' AND doesn't exceed max_val since the standard doesn't
+      // specify whether char is signed or unsigned
+      return false;
+    }
+  }
+
+  return false;  // (buffer doesn't contain a null character)
+}
+
+}  // anonymous namespace
+
 int grackle::impl::h5io::read_str_attribute(hid_t attr_id, int bufsz,
                                             char* buffer) {
   if (bufsz < 0 || attr_id == H5I_INVALID_HID) {
@@ -137,27 +173,14 @@ int grackle::impl::h5io::read_str_attribute(hid_t attr_id, int bufsz,
   H5Tclose(memory_typeid);
 
   if (uses_utf8_encoding) {
-    // if the string used utf8 encoding on disk, we need to confirm that the
-    // characters are all compatible with ASCII characterset.
-    //
-    // For the uninitiated
-    // - for the uninitiated, all 128 standard ASCII characters are encoded in
-    //   7bits and have an identical representation in utf8-encoding.
-    // - all other utf8 codepoints are represented by 2 or more bytes &
-    //   the leading byte has a value doesn't correspond to an ASCII character
-    const char max_val = static_cast<char>(127);
-    for (int i = 0; i < bufsz; i++) {
-      if (buffer[i] == '\0') {
-        break;
-      } else if (buffer[i] < '\0' || buffer[i] > max_val) {
-        // I'm pretty sure we must verfiy that buffer[i] BOTH isn't smaller
-        // than '\0' AND doesn't exceed max_val since the standard doesn't
-        // specify whether char is signed or unsigned
-        std::fprintf(stderr,
-                     "Error: read a utf8-encoded string from an attribute that "
-                     "contains non-ASCII characters\n");
-        return -1;
-      }
+    // if the string was stored on the disk with a utf-8 encoding, we need to
+    // confirm that the string *only* includes the subset of utf-8 code-points
+    // that are also valid characters are all compatible with ASCII.
+    if (!is_ascii_string(buffer, bufsz)) {
+      std::fprintf(stderr,
+                   "Error: read a UTF-8 encoded string from an attribute that "
+                   "contains non-ASCII code points\n");
+      return -1;
     }
   }
 
