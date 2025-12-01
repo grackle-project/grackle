@@ -20,29 +20,76 @@
 
 namespace grackle::impl::h5io {
 
-/// copies the string encoded in the specified hdf5 attribute and into
-/// ``buffer`` as a null-terminated string, and returns ``min_req_bufsz``.
+/// copies the string encoded in the specified hdf5 dataset into ``buffer`` as
+/// a null-terminated string, and returns ``min_req_bufsz`` (if successful).
 ///
-/// ``min_req_bufsz`` is the minimum required ``bufsz`` (i.e. ``bufsz`` is the
-/// the length of ``buffer``) where this function will try to load the
-/// attribute.
+/// @param[in] attr_id Attribute identifier
+/// @param[in] bufsz Number of ascii characters (including the null terminating
+///   character) that can be written to @p buffer
+/// @param[out] buffer Pointer to the buffer where characters are written. This
+///   can **only** be a nullptr if @p bufsz is 0.
+///
+/// @returns If successful, returns ``min_req_bufsz`` (see below). Otherwise,
+///   returns a negative value.
+///
+/// ``min_req_bufsz`` is the minimum required @p bufsz that this function must
+/// receive for it to attempt to load the string.
 /// - this is the maximum length of the string (including the null character).
-///   To put it another way, after this function succeeds, std::strlen(buffer),
-///   will return a ``x`` that is bounded by ``0 <= x <= min_req_bufsz``.
+///   Thus, after succesfully calling this function
+///   ``std::strlen(buffer) + 1 <= min_req_bufsz``.
 /// - this function's behavoir is described in terms of ``min_req_bufsz``,
 ///   rather than the exact required buffer length because the exact length
 ///   can't be determined without loading the buffer.
 ///
-/// This function fails if ``bufsz`` is smaller than ``min_req_bufsz``, unless
-/// unless ``bufsz`` is zero. In the event that ``bufsz`` is zero, nothing is
-/// written and ``buffer`` may be a ``nullptr``. In this case, the function
-/// returns ``min_req_bufsz``. If this function fails, a negative value is
-/// returned.
+/// This function fails if @p bufsz is smaller than ``min_req_bufsz``, unless
+/// @p bufsz is zero. In that case, nothing is written to @p buffer and the
+/// returns ``min_req_bufsz``. The function reports an error if the user tries
+/// to reads a utf8-encoded string that contains non-ASCII characters.
 ///
 /// @note
-/// The function reports an error if it reads a utf8-encoded string that
-/// contains non-ASCII characters
+/// If we are more willing to embrace C++, we could return a std::string or
+/// std::vector rather than requiring a pre-allocated buffer
 int read_str_attribute(hid_t attr_id, int bufsz, char* buffer);
+
+/// copies the string encoded in the specified hdf5 dataset into ``buffer`` as
+/// a null-terminated string, and returns ``min_req_bufsz`` (if successful).
+///
+/// @param[in] file_id File identifier
+/// @param[in] dset_name The name of the dataset to read attributes from.
+/// @param[in] bufsz Number of ascii characters (including the null terminating
+///   character) that can be written to @p buffer
+/// @param[out] buffer Pointer to the buffer where characters are written. This
+///   can **only** be a nullptr if @p bufsz is 0.
+///
+/// @returns If successful, returns ``min_req_bufsz`` (see below). Otherwise,
+///   returns a negative value.
+///
+/// ``min_req_bufsz`` is the minimum required @p bufsz that this function must
+/// receive for it to attempt to load the string.
+/// - this is the maximum length of the string (including the null character).
+///   Thus, after succesfully calling this function
+///   ``std::strlen(buffer) + 1 <= min_req_bufsz``.
+/// - this function's behavoir is described in terms of ``min_req_bufsz``,
+///   rather than the exact required buffer length because the exact length
+///   can't be determined without loading the buffer.
+///
+/// This function fails if @p bufsz is smaller than ``min_req_bufsz``, unless
+/// @p bufsz is zero. In that case, nothing is written to @p buffer and the
+/// returns ``min_req_bufsz``. The function reports an error if the user tries
+/// to reads a utf8-encoded string that contains non-ASCII characters.
+///
+/// @note
+/// If we are more willing to embrace C++, we could return a std::string or
+/// std::vector rather than requiring a pre-allocated buffer
+///
+/// @note
+/// The choice to accept @p file_id and @p dset_name, rather than an already
+/// open dataset identifier, was made for consistency with the interfaces of
+/// read_dataset and read_dataset_shape. However, the choice is a little
+/// "clunky" because this function is usually called twice (once to query
+/// ``min_req_bufsz`` and once to load the string).
+int read_str_dataset(hid_t file_id, const char* dset_name, int bufsz,
+                     char* buffer);
 
 /// represents a contiguous array shape
 ///
@@ -133,8 +180,7 @@ inline void drop_GridTableProps(GridTableProps* ptr) {
 /// parses the GridTableProps from dataset attributes
 ///
 /// @param[in] file_id File identifier
-/// @param[in] dset_name The name of the dataset that the parameters are
-///     attached to.
+/// @param[in] dset_name The name of the dataset to read attributes from.
 ///
 /// @returns Returns the appropriate GridTableProps object. The caller should
 ///     use the GridTableProps_is_valid function to confirm that the function

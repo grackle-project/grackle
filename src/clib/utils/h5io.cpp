@@ -70,11 +70,9 @@ bool is_ascii_string(const char* buffer, int bufsz) {
   return false;  // (buffer doesn't contain a null character)
 }
 
-}  // anonymous namespace
-
-int grackle::impl::h5io::read_str_attribute(hid_t attr_id, int bufsz,
-                                            char* buffer) {
-  if (bufsz < 0 || attr_id == H5I_INVALID_HID) {
+/// does the heavy lifting for read_str_attribute and read_str_dataset
+int read_str_data_helper_(hid_t id, bool is_attr, int bufsz, char* buffer) {
+  if (bufsz < 0 || id == H5I_INVALID_HID) {
     return -1;
   }
 
@@ -82,7 +80,8 @@ int grackle::impl::h5io::read_str_attribute(hid_t attr_id, int bufsz,
   // -> if we ever see Parameter names get clipped, my guess is that this line
   //    doesn't handle variable length strings properly
   // -> with that said, I *think* this is correct
-  hsize_t storage_size = H5Aget_storage_size(attr_id);
+  hsize_t storage_size =
+      (is_attr) ? H5Aget_storage_size(id) : H5Dget_storage_size(id);
   if (storage_size > static_cast<hsize_t>(INT_MAX - 1)) {
     std::fprintf(
         stderr,
@@ -104,7 +103,7 @@ int grackle::impl::h5io::read_str_attribute(hid_t attr_id, int bufsz,
   //   ASCII before we return
   bool is_variable, uses_utf8_encoding;
   {
-    hid_t disk_typeid = H5Aget_type(attr_id);
+    hid_t disk_typeid = (is_attr) ? H5Aget_type(id) : H5Dget_type(id);
     if (disk_typeid == H5I_INVALID_HID) {
       std::fprintf(stderr, "Failed to get type of attribute.\n");
       return -1;
@@ -135,8 +134,6 @@ int grackle::impl::h5io::read_str_attribute(hid_t attr_id, int bufsz,
 
   // construct the disk_typeid that we use for describing `buffer` to the hdf5
   // library
-  // - it might be nice if we actually cached this type and carried it around
-  //   so that we can avoid remaking the type every time we load a string
   hid_t memory_typeid = H5Tcopy(H5T_C_S1);
   if (H5Tset_size(memory_typeid, is_variable ? H5T_VARIABLE : bufsz) < 0) {
     fprintf(stderr, "error in H5Tset_size (for memory datatype)\n");
@@ -153,20 +150,32 @@ int grackle::impl::h5io::read_str_attribute(hid_t attr_id, int bufsz,
     H5Tclose(memory_typeid);
     return -1;
   }
+
+  // actually read the data
   if (is_variable) {
     char* tmp_str = nullptr;
-    if (H5Aread(attr_id, memory_typeid, static_cast<void*>(&tmp_str)) < 0) {
-      // is there a memory leak?
-      fprintf(stderr, "error in H5Aread for a variable length string\n");
+    herr_t status =
+        (is_attr) ? H5Aread(id, memory_typeid, static_cast<void*>(&tmp_str))
+                  : H5Dread(id, memory_typeid, H5S_ALL, H5S_ALL, H5P_DEFAULT,
+                            static_cast<void*>(&tmp_str));
+    if (status < 0) {
       H5Tclose(memory_typeid);
+      if (tmp_str != nullptr) {
+        H5free_memory(tmp_str);
+      }
+      fprintf(stderr, "error in %s for a variable length string\n",
+              (is_attr) ? "H5Aread" : "H5Dread");
       return -1;
     }
     std::strncpy(buffer, tmp_str, static_cast<std::size_t>(required_bufsz));
-    H5free_memory(tmp_str);
   } else {
-    if (H5Aread(attr_id, memory_typeid, buffer) < 0) {
+    herr_t status = (is_attr) ? H5Aread(id, memory_typeid, buffer)
+                              : H5Dread(id, memory_typeid, H5S_ALL, H5S_ALL,
+                                        H5P_DEFAULT, buffer);
+    if (status < 0) {
       H5Tclose(memory_typeid);
-      fprintf(stderr, "error in H5Aread\n");
+      fprintf(stderr, "error in %s for a fixed length string\n",
+              (is_attr) ? "H5Aread" : "H5Dread");
       return -1;
     }
   }
@@ -185,6 +194,31 @@ int grackle::impl::h5io::read_str_attribute(hid_t attr_id, int bufsz,
   }
 
   return required_bufsz;
+}
+
+}  // anonymous namespace
+
+int grackle::impl::h5io::read_str_attribute(hid_t attr_id, int bufsz,
+                                            char* buffer) {
+  return read_str_data_helper_(attr_id, true, bufsz, buffer);
+}
+
+int grackle::impl::h5io::read_str_dataset(hid_t file_id, const char* dset_name,
+                                          int bufsz, char* buffer) {
+  if (dset_name == nullptr) {
+    std::fprintf(stderr, "dset_name is a nullptr");
+    return GR_FAIL;
+  }
+
+  hid_t dset_id = H5Dopen(file_id, dset_name);
+  if (dset_id == H5I_INVALID_HID) {
+    std::fprintf(stderr, "Failed to open dataset \"%s\".\n", dset_name);
+    return GR_FAIL;
+  }
+
+  int out = read_str_data_helper_(dset_id, false, bufsz, buffer);
+  H5Dclose(dset_id);
+  return out;
 }
 
 namespace {  // stuff inside an anonymous namespace is local to this file

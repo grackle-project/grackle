@@ -62,42 +62,27 @@ int grackle::impl::initialize_UVbackground_data(chemistry_data *my_chemistry,
 
 
   // Read in UV background data from hdf5 file.
-
-  hid_t       file_id, dset_id;
-  herr_t      status;
-  herr_t      h5_error = -1;
-
   if (grackle_verbose)
     std::fprintf(stdout, "Reading UV background data from %s.\n",
             my_chemistry->grackle_data_file);
-  file_id = H5Fopen(my_chemistry->grackle_data_file,
-                    H5F_ACC_RDONLY, H5P_DEFAULT);
+  hid_t file_id = H5Fopen(my_chemistry->grackle_data_file,
+                          H5F_ACC_RDONLY, H5P_DEFAULT);
 
 
   // Read Info dataset
-
-  dset_id =  H5Dopen(file_id, "/UVBRates/Info");
-  if (dset_id == h5_error) {
-    std::fprintf(stderr, "Can't open 'Info' dataset in %s.\n",
-            my_chemistry->grackle_data_file);
+  int buflen = h5io::read_str_dataset(file_id, "/UVBRates/Info", 0, nullptr);
+  if (buflen < 0) {
+    std::fprintf(stderr, "Error loading \"/UVBRates/Info\" dataset in %s.\n",
+                 my_chemistry->grackle_data_file);
     return GR_FAIL;
   }
-
-  int strlen = (int)(H5Dget_storage_size(dset_id));
-  std::vector<char> info_string(strlen+1);
-
-  hid_t memtype = H5Tcopy(H5T_C_S1);
-  H5Tset_size(memtype, strlen+1);
-
-  status = H5Dread(dset_id, memtype, H5S_ALL, H5S_ALL, H5P_DEFAULT,
-                   info_string.data());
-  if (status == h5_error) {
-    std::fprintf(stderr, "Failed to read dataset 'Info'.\n");
+  std::vector<char> info_string(buflen);
+  if (h5io::read_str_dataset(file_id, "/UVBRates/Info", buflen,
+                             info_string.data()) < 0) {
+    std::fprintf(stderr, "Error loading \"/UVBRates/Info\" dataset in %s.\n",
+                 my_chemistry->grackle_data_file);
     return GR_FAIL;
   }
-
-  H5Tclose(memtype);
-  H5Dclose(dset_id);
 
   // Open redshift dataset and get number of elements
 
