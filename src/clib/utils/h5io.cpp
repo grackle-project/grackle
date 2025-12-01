@@ -8,6 +8,8 @@
 /// @file
 /// Implements functions to help read from hdf5 files
 ///
+/// The error-handling in these functions leaves a lot to be desired...
+///
 //===----------------------------------------------------------------------===//
 #include <climits>
 #include <cstdio>
@@ -164,6 +166,7 @@ int grackle::impl::h5io::read_str_attribute(hid_t attr_id, int bufsz,
 
 namespace {  // stuff inside an anonymous namespace is local to this file
 
+/// Construct an ArrayShape instance from a HDF5 dataspace
 grackle::impl::h5io::ArrayShape shape_from_space(hid_t space_id) {
   grackle::impl::h5io::ArrayShape out;
   out.ndim = -2;  // set up an output value that denotes an error
@@ -215,6 +218,10 @@ grackle::impl::h5io::ArrayShape shape_from_space(hid_t space_id) {
   }
 }
 
+/// Construct an ArrayShape object that represents an invalid instance
+///
+/// @note
+/// This is useful for encoding that a function produced an error
 grackle::impl::h5io::ArrayShape mk_invalid_array_shape() {
   return shape_from_space(H5I_INVALID_HID);
 }
