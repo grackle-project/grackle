@@ -211,6 +211,8 @@ typedef struct
   gr_float *vol_org_dust_temperature;
   gr_float *H2O_ice_dust_temperature;
 
+  // dust model parameter
+  gr_float *SNe_ThisTimeStep;
 } grackle_field_data;
 
 
