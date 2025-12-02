@@ -878,6 +878,22 @@ grackle::impl::h5io::GridTableProps grackle::impl::h5io::parse_GridTableProps(
     return mk_invalid_GridTableProps();
   }
 
+  // check for consistency between the GridTableProps and the dataset shape
+  hid_t space_id = H5Dget_space(dset_id);
+  ArrayShape actual_shape = shape_from_space(space_id);
+  H5Sclose(space_id);
+  if (!ArrayShape_is_null(actual_shape) &&
+      !ArrayShape_is_same(out.table_shape, actual_shape)) {
+    drop_GridTableProps(&out);
+    H5Dclose(dset_id);
+    std::fprintf(
+        stderr,
+        "The grid table properties parsed from the attributes of the \"%s\" "
+        "dataset are inconsistent with the dataset's shape.\n",
+        dset_name);
+    return mk_invalid_GridTableProps();
+  }
+
   H5Dclose(dset_id);
   return out;
 }
