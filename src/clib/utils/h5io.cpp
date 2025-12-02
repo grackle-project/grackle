@@ -607,15 +607,20 @@ int set_grid_axes_props(hid_t dset_id, const char* dset_name,
                         AttrNameRecorder* name_recorder) {
   using grackle::impl::h5io::read_str_attribute;
 
+  bool legacy_mode = H5Aexists(dset_id, "Temperature") > 0;
+
   for (int i = 0; i < grid_shape.ndim; i++) {
-    bool is_last_axis = (i + 1) == grid_shape.ndim;
-
-    // Step 1: get the name of the attribute holding the values along axis i
-    //         AND fill axes[i].name with the name of the varying quantity
+    // Step 1: fill axes[i].name with the name of the quantity that varies
+    //         along axis i and fill val_attr_name with the name of the
+    //         attribute containing the values of the quantitiy
     char val_attr_name[max_attr_name_length];
-    std::snprintf(val_attr_name, max_attr_name_length, "Parameter%d", i + 1);
 
-    if (H5Aexists(dset_id, val_attr_name) > 0) {
+    if (legacy_mode && ((i + 1) == grid_shape.ndim)) {
+      axes[i].name = new char[12];
+      std::snprintf(axes[i].name, 12, "Temperature");
+
+      std::snprintf(val_attr_name, max_attr_name_length, "Temperature");
+    } else {
       char tmp_attr_name[max_attr_name_length];
       std::snprintf(tmp_attr_name, max_attr_name_length, "Parameter%d_Name",
                     i + 1);
@@ -636,7 +641,6 @@ int set_grid_axes_props(hid_t dset_id, const char* dset_name,
             tmp_attr_name, dset_name);
         return GR_FAIL;
       }
-
       axes[i].name = new char[min_buf_length];
       if (read_str_attribute(attr_id, min_buf_length, axes[i].name) < 0) {
         std::fprintf(stderr,
@@ -654,25 +658,11 @@ int set_grid_axes_props(hid_t dset_id, const char* dset_name,
         return GR_FAIL;
       }
 
-    } else if (is_last_axis && H5Aexists(dset_id, "Temperature") > 0) {
-      axes[i].name = new char[12];
-      std::snprintf(val_attr_name, max_attr_name_length, "Temperature");
-      std::snprintf(axes[i].name, 12, "Temperature");
-
-    } else {
-      const char* extra_detail =
-          (is_last_axis) ? "" : " Neither is \"Temperature\".";
-      std::fprintf(
-          stderr,
-          "Failed to determine attribute associated with axis %d of the "
-          "\"%s\" dataset. \"%s\" is not a known attribute.%s\n",
-          i, val_attr_name, dset_name, extra_detail);
-      return GR_FAIL;
+      std::snprintf(val_attr_name, max_attr_name_length, "Parameter%d", i + 1);
     }
 
-    // step 2: load the values associated with axes[i].name and store them in
+    // step 2: load the values associated with axis i and store them in
     //         axes[i].values
-
     hid_t attr_id = H5Aopen_name(dset_id, val_attr_name);
     if (attr_id == H5I_INVALID_HID) {
       std::fprintf(stderr, "Failed to open \"%s\" attr of \"%s\" dataset.\n",
@@ -683,12 +673,17 @@ int set_grid_axes_props(hid_t dset_id, const char* dset_name,
     hid_t space_id = H5Aget_space(attr_id);
     grackle::impl::h5io::ArrayShape axis_shape = shape_from_space(space_id);
     H5Sclose(space_id);
-    if (axis_shape.ndim != 1 || axis_shape.shape[0] != grid_shape.shape[i]) {
+    if (axis_shape.ndim != 1) {
+      std::fprintf(stderr, "The \"%s\" dataset's \"%s\" attr isn't 1D\n",
+                   val_attr_name, dset_name);
+      return GR_FAIL;
+    } else if (axis_shape.shape[0] != grid_shape.shape[i]) {
       std::fprintf(
           stderr,
-          "The \"%s\" attr of the \"%s\" dataset isn't an array with a shape "
-          "that is consistent with the dataset's \"Dimension\" attr.\n",
-          val_attr_name, dset_name);
+          "The \"%s\" dataset's \"Dimension\" attr suggests that axis %d has "
+          "%lld values. The \"%s\" attribute actually %lld values\n",
+          dset_name, i, static_cast<long long>(grid_shape.shape[i]),
+          val_attr_name, static_cast<long long>(axis_shape.shape[0]));
       return GR_FAIL;
     }
 
