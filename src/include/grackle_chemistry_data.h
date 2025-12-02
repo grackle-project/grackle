@@ -312,6 +312,15 @@ typedef struct
    */
   int solver_method;
 
+  /* flag and parameters for Li+ 2019 dust growth and destruction */
+  double dust_destruction_eff;
+  double sne_coeff;
+  double sne_shockspeed;
+  double dust_grainsize;
+  double dust_growth_densref;
+  double dust_growth_tauref;
+  double SolarAbundances[NUM_METAL_SPECIES_GRACKLE];
+
 } chemistry_data;
 
 /*****************************
