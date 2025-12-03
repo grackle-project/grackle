@@ -87,7 +87,7 @@ void grackle::impl::calc_temp1d_cloudy_g(
   }
 
   // Calculate index for redshift dimension
-
+  zindex = 1;
   if (cloudy_table.grid_rank > 2) {
     // Get index for redshift dimension via bisection
 
