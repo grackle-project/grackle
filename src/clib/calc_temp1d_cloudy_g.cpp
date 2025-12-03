@@ -24,8 +24,8 @@
 #include "calc_temp1d_cloudy_g.hpp"
 
 void grackle::impl::calc_temp1d_cloudy_g(
-    double* rhoH, double* tgas, double* mmw, double dom, double zr, int imetal,
-    gr_mask_type* itmask, chemistry_data* my_chemistry,
+    const double* rhoH, double* tgas, double* mmw, double dom, double zr, int imetal,
+    const gr_mask_type* itmask, chemistry_data* my_chemistry,
     cloudy_data cloudy_table, grackle_field_data* my_fields,
     InternalGrUnits internalu, IndexRange idx_range) {
   // General Arguments
