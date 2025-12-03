@@ -35,7 +35,6 @@ void calc_temp_cloudy_g(gr_float* temperature_data_, int imetal,
                         cloudy_data cloudy_primordial,
                         grackle_field_data* my_fields,
                         InternalGrUnits internalu) {
-
   // Calc quantities using values specified by internalu
   const double dom = internalu_calc_dom_(internalu);
   const double zr = 1. / (internalu.a_value * internalu.a_units) - 1.;

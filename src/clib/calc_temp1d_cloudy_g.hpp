@@ -38,8 +38,9 @@ namespace grackle::impl {
 /// written by: Britton Smith, 2015
 /// modified1: November, 2025 by Christopher Bignamini & Matthew Abruzzo; C++
 /// port
-void calc_temp1d_cloudy_g(const double* rhoH, double* tgas, double* mmw, double dom,
-                          double zr, int imetal, const gr_mask_type* itmask,
+void calc_temp1d_cloudy_g(const double* rhoH, double* tgas, double* mmw,
+                          double dom, double zr, int imetal,
+                          const gr_mask_type* itmask,
                           chemistry_data* my_chemistry,
                           cloudy_data cloudy_table,
                           grackle_field_data* my_fields,
