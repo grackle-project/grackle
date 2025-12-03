@@ -24,16 +24,21 @@
 #include "calc_temp1d_cloudy_g.hpp"
 
 void grackle::impl::calc_temp1d_cloudy_g(
-  double* rhoH, double* tgas, double* mmw, double dom, double zr, int imetal,
-  gr_mask_type* itmask, chemistry_data* my_chemistry, cloudy_data cloudy_table, 
-  grackle_field_data* my_fields, InternalGrUnits internalu, IndexRange idx_range
-)
-{
+    double* rhoH, double* tgas, double* mmw, double dom, double zr, int imetal,
+    gr_mask_type* itmask, chemistry_data* my_chemistry,
+    cloudy_data cloudy_table, grackle_field_data* my_fields,
+    InternalGrUnits internalu, IndexRange idx_range) {
   // General Arguments
 
-  grackle::impl::View<gr_float***> d(my_fields->density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> metal(my_fields->metal_density, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
-  grackle::impl::View<gr_float***> e(my_fields->internal_energy, my_fields->grid_dimension[0], my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  grackle::impl::View<gr_float***> d(
+      my_fields->density, my_fields->grid_dimension[0],
+      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  grackle::impl::View<gr_float***> metal(
+      my_fields->metal_density, my_fields->grid_dimension[0],
+      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
+  grackle::impl::View<gr_float***> e(
+      my_fields->internal_energy, my_fields->grid_dimension[0],
+      my_fields->grid_dimension[1], my_fields->grid_dimension[2]);
   std::vector<double> logtem(my_fields->grid_dimension[0]);
 
   // Parameters
@@ -64,62 +69,71 @@ void grackle::impl::calc_temp1d_cloudy_g(
 
   // Calculate parameter value slopes
 
-  dclPar[0] = (cloudy_table.grid_parameters[0][cloudy_table.grid_dimension[0]-1] - cloudy_table.grid_parameters[0][0]) /
-       (double)(cloudy_table.grid_dimension[0] - 1 );
-  if (cloudy_table.grid_rank > 1)  {
-    dclPar[1] = (cloudy_table.grid_parameters[1][cloudy_table.grid_dimension[1]-1] - cloudy_table.grid_parameters[1][0]) /
-         (double)(cloudy_table.grid_dimension[1] - 1 );
+  dclPar[0] =
+      (cloudy_table.grid_parameters[0][cloudy_table.grid_dimension[0] - 1] -
+       cloudy_table.grid_parameters[0][0]) /
+      (double)(cloudy_table.grid_dimension[0] - 1);
+  if (cloudy_table.grid_rank > 1) {
+    dclPar[1] =
+        (cloudy_table.grid_parameters[1][cloudy_table.grid_dimension[1] - 1] -
+         cloudy_table.grid_parameters[1][0]) /
+        (double)(cloudy_table.grid_dimension[1] - 1);
   }
-  if (cloudy_table.grid_rank > 2)  {
-    dclPar[2] = (cloudy_table.grid_parameters[2][cloudy_table.grid_dimension[2]-1] - cloudy_table.grid_parameters[2][0]) /
-         (double)(cloudy_table.grid_dimension[2] - 1 );
+  if (cloudy_table.grid_rank > 2) {
+    dclPar[2] =
+        (cloudy_table.grid_parameters[2][cloudy_table.grid_dimension[2] - 1] -
+         cloudy_table.grid_parameters[2][0]) /
+        (double)(cloudy_table.grid_dimension[2] - 1);
   }
 
   // Calculate index for redshift dimension
 
-  if (cloudy_table.grid_rank > 2)  {
-
+  if (cloudy_table.grid_rank > 2) {
     // Get index for redshift dimension via bisection
 
-    if (zr <= cloudy_table.grid_parameters[1][0])  {
+    if (zr <= cloudy_table.grid_parameters[1][0]) {
       zindex = 1;
-    } else if (zr >= cloudy_table.grid_parameters[1][cloudy_table.grid_dimension[1]-2])  {
+    } else if (zr >=
+               cloudy_table
+                   .grid_parameters[1][cloudy_table.grid_dimension[1] - 2]) {
       zindex = cloudy_table.grid_dimension[1];
       end_int = 1;
-    } else if (zr >= cloudy_table.grid_parameters[1][cloudy_table.grid_dimension[1]-3])  {
+    } else if (zr >=
+               cloudy_table
+                   .grid_parameters[1][cloudy_table.grid_dimension[1] - 3]) {
       zindex = cloudy_table.grid_dimension[1] - 2;
     } else {
       zindex = 1;
       zhighpt = cloudy_table.grid_dimension[1] - 2;
       while ((zhighpt - zindex) > 1) {
         zmidpt = int((zhighpt + zindex) / 2);
-        if (zr >= cloudy_table.grid_parameters[1][zmidpt-1])  {
+        if (zr >= cloudy_table.grid_parameters[1][zmidpt - 1]) {
           zindex = zmidpt;
         } else {
           zhighpt = zmidpt;
         }
       }
     }
-
   }
 
-  for (i = my_fields->grid_start[0]; i<=my_fields->grid_end[0]; i++) {
-    if ( itmask[i] != MASK_FALSE )  {
+  for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
+    if (itmask[i] != MASK_FALSE) {
       // Calculate proper log(n_H)
       log_n_h[i] = std::log10(rhoH[i] * dom);
     }
   }
 
-  for (i = my_fields->grid_start[0]; i<=my_fields->grid_end[0]; i++) {
-    if ( itmask[i] != MASK_FALSE )  {
+  for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
+    if (itmask[i] != MASK_FALSE) {
       munew = 1.;
       bool skip_mmw_update = false;
-      for (ti = 1; ti<=(ti_max); ti++) {
+      for (ti = 1; ti <= (ti_max); ti++) {
         muold = munew;
 
         tgas[i] = std::fmax((my_chemistry->Gamma - 1.) *
-             e(i,idx_range.j,idx_range.k) * munew * internalu.utem,
-             my_chemistry->TemperatureStart);
+                                e(i, idx_range.j, idx_range.k) * munew *
+                                internalu.utem,
+                            my_chemistry->TemperatureStart);
         logtem[i] = std::log(tgas[i]);
 
         log10tem[i] = logtem[i] * inv_log10;
@@ -127,76 +141,67 @@ void grackle::impl::calc_temp1d_cloudy_g(
         // Call interpolation functions to get heating/cooling
 
         // Interpolate over temperature.
-        if (cloudy_table.grid_rank == 1)  {
+        if (cloudy_table.grid_rank == 1) {
           munew = grackle::impl::fortran_wrapper::interpolate_1d_g(
-            log10tem[i],
-            cloudy_table.grid_dimension,
-            cloudy_table.grid_parameters[0], dclPar[0],
-            cloudy_table.data_size, cloudy_table.mmw_data);
+              log10tem[i], cloudy_table.grid_dimension,
+              cloudy_table.grid_parameters[0], dclPar[0],
+              cloudy_table.data_size, cloudy_table.mmw_data);
 
           // Interpolate over density and temperature.
-        } else if (cloudy_table.grid_rank == 2)  {
+        } else if (cloudy_table.grid_rank == 2) {
           munew = grackle::impl::fortran_wrapper::interpolate_2d_g(
-            log_n_h[i], log10tem[i],
-            cloudy_table.grid_dimension,
-            cloudy_table.grid_parameters[0], dclPar[0],
-            cloudy_table.grid_parameters[1], dclPar[1],
-            cloudy_table.data_size, cloudy_table.mmw_data);
+              log_n_h[i], log10tem[i], cloudy_table.grid_dimension,
+              cloudy_table.grid_parameters[0], dclPar[0],
+              cloudy_table.grid_parameters[1], dclPar[1],
+              cloudy_table.data_size, cloudy_table.mmw_data);
 
           // Interpolate over density, redshift, and temperature.
-        } else if (cloudy_table.grid_rank == 3)  {
+        } else if (cloudy_table.grid_rank == 3) {
           munew = grackle::impl::fortran_wrapper::interpolate_3dz_g(
-            log_n_h[i], zr, log10tem[i],
-            cloudy_table.grid_dimension, // 3 elements
-            cloudy_table.grid_parameters[0], dclPar[0],
-            cloudy_table.grid_parameters[1], zindex,
-            cloudy_table.grid_parameters[2], dclPar[2],
-            cloudy_table.data_size, cloudy_table.mmw_data,
-            end_int);
+              log_n_h[i], zr, log10tem[i],
+              cloudy_table.grid_dimension,  // 3 elements
+              cloudy_table.grid_parameters[0], dclPar[0],
+              cloudy_table.grid_parameters[1], zindex,
+              cloudy_table.grid_parameters[2], dclPar[2],
+              cloudy_table.data_size, cloudy_table.mmw_data, end_int);
         } else {
-
-          OMP_PRAGMA_CRITICAL
-          {
-            printf("Maximum mmw data grid rank is 3!\n");
-          }
+          OMP_PRAGMA_CRITICAL { printf("Maximum mmw data grid rank is 3!\n"); }
           return;
         }
 
         munew = 0.5f * (munew + muold);
         tgas[i] = tgas[i] * munew / muold;
 
-        if (std::fabs((munew/muold) - 1.) <=
-             1.e-2)  {
+        if (std::fabs((munew / muold) - 1.) <= 1.e-2) {
           muold = munew;
 
           // Add metal species to mean molecular weight
 
-          if (imetal == 1)  {
-            munew = d(i,idx_range.j,idx_range.k) /
-                 ((d(i,idx_range.j,idx_range.k) - metal(i,idx_range.j,idx_range.k))/ munew +
-                 metal(i,idx_range.j,idx_range.k) / mu_metal);
+          if (imetal == 1) {
+            munew = d(i, idx_range.j, idx_range.k) /
+                    ((d(i, idx_range.j, idx_range.k) -
+                      metal(i, idx_range.j, idx_range.k)) /
+                         munew +
+                     metal(i, idx_range.j, idx_range.k) / mu_metal);
             tgas[i] = tgas[i] * munew / muold;
           }
 
           mmw[i] = munew;
           skip_mmw_update = true;
           break;
-//          goto label_9998;
+          //          goto label_9998;
         }
-
       }
 
       if (!skip_mmw_update) {
         mmw[i] = munew;
 
-        OMP_PRAGMA_CRITICAL
-        {
-          printf("Mean molecular weight not converged! %e %e %e\n",
-              munew, muold, std::fabs((munew/muold) - 1.));
+        OMP_PRAGMA_CRITICAL {
+          printf("Mean molecular weight not converged! %e %e %e\n", munew,
+                 muold, std::fabs((munew / muold) - 1.));
         }
       }
-// label_9998:
-
+      // label_9998:
     }
   }
 

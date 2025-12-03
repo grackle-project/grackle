@@ -12,7 +12,7 @@
 #include "grackle.h"             // gr_float
 #include "fortran_func_decls.h"  // gr_mask_int
 #include "index_helper.h"
-#include "internal_units.h" 
+#include "internal_units.h"
 
 namespace grackle::impl {
 
@@ -38,12 +38,13 @@ namespace grackle::impl {
 /// written by: Britton Smith, 2015
 /// modified1: November, 2025 by Christopher Bignamini & Matthew Abruzzo; C++
 /// port
-void calc_temp1d_cloudy_g(
-  double* rhoH, double* tgas, double* mmw, double dom, double zr, int imetal,
-  gr_mask_type* itmask, chemistry_data* my_chemistry, cloudy_data cloudy_table, 
-  grackle_field_data* my_fields, InternalGrUnits internalu, IndexRange idx_range
-);
+void calc_temp1d_cloudy_g(double* rhoH, double* tgas, double* mmw, double dom,
+                          double zr, int imetal, gr_mask_type* itmask,
+                          chemistry_data* my_chemistry,
+                          cloudy_data cloudy_table,
+                          grackle_field_data* my_fields,
+                          InternalGrUnits internalu, IndexRange idx_range);
 
-} // namespace grackle::impl
+}  // namespace grackle::impl
 
 #endif /* CALC_TEMP1D_CLOUDY_G_HPP */

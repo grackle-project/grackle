@@ -103,9 +103,8 @@ void calc_temp_cloudy_g(gr_float* temperature_data_, int imetal,
 
       // Calculate temperature and mean molecular weight
       grackle::impl::calc_temp1d_cloudy_g(
-        rhoH.data(), tgas.data(), mmw.data(), dom, zr, imetal,
-        itmask.data(), my_chemistry, cloudy_primordial, my_fields,
-        internalu, idx_range);
+          rhoH.data(), tgas.data(), mmw.data(), dom, zr, imetal, itmask.data(),
+          my_chemistry, cloudy_primordial, my_fields, internalu, idx_range);
 
       // Record the computed temperature values in the output array
       for (int i = idx_range.i_start; i < idx_range.i_stop; i++) {

@@ -294,10 +294,8 @@ void grackle::impl::cool1d_multi_g(
     }
 
     grackle::impl::calc_temp1d_cloudy_g(
-      rhoH, tgas, mmw, dom, zr, imetal,
-      itmask, my_chemistry, my_rates->cloudy_primordial,
-      my_fields, internalu, idx_range
-    );
+        rhoH, tgas, mmw, dom, zr, imetal, itmask, my_chemistry,
+        my_rates->cloudy_primordial, my_fields, internalu, idx_range);
 
   } else {
     // Compute mean molecular weight (and temperature) directly
