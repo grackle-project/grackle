@@ -126,7 +126,7 @@ inline std::int64_t ArrayShape_elem_count(ArrayShape shape) {
 /// checks whether shape_a and shape_b are the same
 ///
 /// returns false if the either shape is invalid
-inline bool ArrayShape_is_same(ArrayShape shape_a, ArrayShape shape_b) {
+inline bool ArrayShape_is_equal(ArrayShape shape_a, ArrayShape shape_b) {
   if ((!ArrayShape_is_valid(shape_a)) || (shape_a.ndim != shape_b.ndim)) {
     return false;
   }
@@ -186,6 +186,19 @@ inline void drop_GridTableProps(GridTableProps* ptr) {
 ///     use the GridTableProps_is_valid function to confirm that the function
 ///     was successful.
 GridTableProps parse_GridTableProps(hid_t file_id, const char* dset_name);
+
+/// checks whether props_a and props_b hold equivalent values
+///
+/// @returns true if objects are equal and false in all other cases (including
+///     when either object is invalid)
+bool GridTableProps_is_equal(GridTableProps props_a, GridTableProps props_b);
+
+/// checks whether the specified dataset has consistent grid properties
+///
+/// @returns GR_SUCCESS if the specified dataset has equivalent properties and
+///     a different value in all other cases
+int assert_has_consistent_GridTableProps(hid_t file_id, const char* dset_name,
+                                         GridTableProps expected);
 
 }  // namespace grackle::impl::h5io
 

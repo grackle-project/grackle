@@ -40,6 +40,35 @@ void initialize_empty_cloudy_data_struct(cloudy_data *my_cloudy)
   my_cloudy->data_size = 0LL;
 }
 
+double* load_heatcool_data(hid_t file_id, const char* dset_name,
+                           double CoolUnit,
+                           grackle::impl::h5io::ArrayShape expected_shape) {
+  long long data_size =
+    grackle::impl::h5io::ArrayShape_elem_count(expected_shape);
+  double* tmp_data = new double[data_size];
+
+  if (grackle_verbose) {
+    std::fprintf(stdout,"Reading from \"%s\" dataset.\n", dset_name);
+  }
+  if (grackle::impl::h5io::read_dataset(file_id, dset_name, tmp_data,
+                                        &expected_shape) != GR_SUCCESS) {
+    delete[] tmp_data;
+    return nullptr;
+  }
+
+  double* out = new double[data_size];
+  for (long long q = 0LL; q < data_size; q++) {
+    out[q] = tmp_data[q] > 0 ?
+      (double) std::log10(tmp_data[q]) : (double) SMALL_LOG_VALUE;
+
+    // Convert to code units.
+    out[q] -= std::log10(CoolUnit);
+  }
+  delete[] tmp_data;
+
+  return out;
+}
+
 }  // anonymous namespace
 
 
@@ -150,30 +179,17 @@ int grackle::impl::initialize_cloudy_data(
     fprintf(stdout, "}\n");
   }
   h5io::ArrayShape expected_shape = grid_props.table_shape;
-  h5io::drop_GridTableProps(&grid_props);
 
   // Read Cooling data.
   my_cloudy->data_size = h5io::ArrayShape_elem_count(expected_shape);
-  double* tmp_cool_data = new double[my_cloudy->data_size];
-  if (grackle_verbose) {
-    std::fprintf(stdout,"Reading from \"%s\" dataset.\n", dset_name);
-  }
-  if (h5io::read_dataset(file_id, dset_name, tmp_cool_data, &expected_shape)
-      != GR_SUCCESS) {
-    delete[] tmp_cool_data;
+  my_cloudy->cooling_data = load_heatcool_data(file_id, dset_name, CoolUnit,
+                                               expected_shape);
+
+  if (my_cloudy->cooling_data == nullptr) {
+    h5io::drop_GridTableProps(&grid_props);
+    H5Fclose(file_id);
     return GR_FAIL;
   }
-
-  my_cloudy->cooling_data = new double[my_cloudy->data_size];
-  for (long long q = 0LL; q < my_cloudy->data_size; q++) {
-    my_cloudy->cooling_data[q] = tmp_cool_data[q] > 0 ?
-      (double) std::log10(tmp_cool_data[q]) : (double) SMALL_LOG_VALUE;
-
-    // Convert to code units.
-    my_cloudy->cooling_data[q] -= std::log10(CoolUnit);
-  }
-  delete[] tmp_cool_data;
-
 
   // Read Heating data.
   if (my_chemistry->UVbackground == 1) {
@@ -184,22 +200,19 @@ int grackle::impl::initialize_cloudy_data(
     std::snprintf(dset_name, name_bufsize, "/CoolingRates/%s/Heating",
                   group_name);
 
-    double* tmp_heat_data = new double[my_cloudy->data_size];
-    if (h5io::read_dataset(file_id, dset_name, tmp_heat_data, &expected_shape)
-        != GR_SUCCESS) {
-      delete[] tmp_heat_data;
+    //if (h5io::assert_has_consistent_GridTableProps(file_id, dset_name,
+    //                                               grid_props) != GR_SUCCESS){
+    //  h5io::drop_GridTableProps(&grid_props);
+    //  H5Fclose(file_id);
+    //  return GR_FAIL;
+    //}
+    my_cloudy->heating_data = load_heatcool_data(file_id, dset_name, CoolUnit,
+                                                 expected_shape);
+    if (my_cloudy->heating_data == nullptr) {
+      h5io::drop_GridTableProps(&grid_props);
+      H5Fclose(file_id);
       return GR_FAIL;
     }
-
-    my_cloudy->heating_data = new double[my_cloudy->data_size];
-    for (long long q = 0LL; q < my_cloudy->data_size; q++) {
-      my_cloudy->heating_data[q] = tmp_heat_data[q] > 0 ?
-        (double) std::log10(tmp_heat_data[q]) : (double) SMALL_LOG_VALUE;
-
-      // Convert to code units.
-      my_cloudy->heating_data[q] -= std::log10(CoolUnit);
-    }
-    delete[] tmp_heat_data;
   }
 
   // Read MMW data.
@@ -209,11 +222,20 @@ int grackle::impl::initialize_cloudy_data(
     // and confirm it's consistent with the Cooling table
     // -> at this point, this is easy to do, but it introduces overhead
 
+    const char* mmw_dset_name = "/CoolingRates/Primordial/MMW";
+
+    //if (h5io::assert_has_consistent_GridTableProps(file_id, mmw_dset_name,
+    //                                               grid_props) != GR_SUCCESS){
+    //  h5io::drop_GridTableProps(&grid_props);
+    //  H5Fclose(file_id);
+    //  return GR_FAIL;
+    //}
+
     my_cloudy->mmw_data = new double[my_cloudy->data_size];
-    if (h5io::read_dataset(file_id, "/CoolingRates/Primordial/MMW",
-                           my_cloudy->mmw_data, &expected_shape)
-        != GR_SUCCESS) {
-      // nothing to cleanup right now
+    if (h5io::read_dataset(file_id, mmw_dset_name, my_cloudy->mmw_data,
+                           &expected_shape) != GR_SUCCESS) {
+      h5io::drop_GridTableProps(&grid_props);
+      H5Fclose(file_id);
       return GR_FAIL;
     }
 

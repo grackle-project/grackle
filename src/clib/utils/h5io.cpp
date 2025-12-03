@@ -331,7 +331,7 @@ int grackle::impl::h5io::read_dataset(
     ArrayShape actual_shape = shape_from_space(space_id);
     H5Sclose(space_id);
 
-    if (!ArrayShape_is_same(*expected_shape, actual_shape)) {
+    if (!ArrayShape_is_equal(*expected_shape, actual_shape)) {
       H5Dclose(dset_id);
       std::fprintf(stderr, "The \"%s\" dataset has an unexpected shape.\n",
                    dset_name);
@@ -878,7 +878,7 @@ grackle::impl::h5io::GridTableProps grackle::impl::h5io::parse_GridTableProps(
   ArrayShape actual_shape = shape_from_space(space_id);
   H5Sclose(space_id);
   if (!ArrayShape_is_null(actual_shape) &&
-      !ArrayShape_is_same(out.table_shape, actual_shape)) {
+      !ArrayShape_is_equal(out.table_shape, actual_shape)) {
     drop_GridTableProps(&out);
     H5Dclose(dset_id);
     std::fprintf(
@@ -891,4 +891,54 @@ grackle::impl::h5io::GridTableProps grackle::impl::h5io::parse_GridTableProps(
 
   H5Dclose(dset_id);
   return out;
+}
+
+bool grackle::impl::h5io::GridTableProps_is_equal(
+    grackle::impl::h5io::GridTableProps props_a,
+    grackle::impl::h5io::GridTableProps props_b) {
+  if (!ArrayShape_is_equal(props_a.table_shape, props_b.table_shape)) {
+    return false;
+  }
+  for (int i = 0; i < props_a.table_shape.ndim; i++) {
+    if (std::strcmp(props_a.axes[i].name, props_b.axes[i].name) != 0) {
+      return false;
+    }
+    std::int64_t length = props_a.table_shape.shape[i];
+    std::int64_t n_equal = 0;
+    for (std::int64_t j = 0; j < length; j++) {
+      bool is_equal = (props_a.axes[i].values[j] == props_b.axes[i].values[j]);
+      n_equal += static_cast<std::int64_t>(is_equal);
+    }
+    if (n_equal != length) {
+      return false;
+    }
+  }
+  return true;
+}
+
+int grackle::impl::h5io::assert_has_consistent_GridTableProps(
+    hid_t file_id, const char* dset_name,
+    grackle::impl::h5io::GridTableProps expected) {
+  // the current implementation is crude (we may be able to do better)
+
+  GridTableProps actual = parse_GridTableProps(file_id, dset_name);
+
+  if (!GridTableProps_is_valid(actual)) {
+    drop_GridTableProps(&actual);
+    fprintf(stderr,
+            "Error constructing the grid properties for the \"%s\" dataset\n",
+            dset_name);
+    return GR_FAIL;
+  }
+
+  bool is_equal = GridTableProps_is_equal(actual, expected);
+  drop_GridTableProps(&actual);
+  if (!is_equal) {
+    fprintf(stderr,
+            "the \"%s\" dataset doesn't have the expected grid properties\n",
+            dset_name);
+    return GR_FAIL;
+  }
+
+  return GR_SUCCESS;
 }
