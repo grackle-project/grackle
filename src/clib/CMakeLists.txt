@@ -107,6 +107,7 @@ add_library(Grackle_Grackle
   # C++ Source (and Private Header Files)
   calc_tdust_3d.cpp calc_tdust_3d.h
   calc_temp_cloudy_g.cpp calc_temp_cloudy_g.h
+  calc_temp1d_cloudy_g.cpp calc_temp1d_cloudy_g.hpp
   ceiling_species.hpp
   collisional_rate_props.cpp collisional_rate_props.hpp
   cool1d_multi_g.cpp cool1d_multi_g.hpp
@@ -136,7 +137,6 @@ add_library(Grackle_Grackle
   # Fortran Source Files
   calc_all_tdust_gasgr_1d_g.F
   calc_tdust_1d_g.F
-  calc_temp1d_cloudy_g.F
   cool1d_cloudy_g.F
   cool1d_cloudy_old_tables_g.F
   interpolators_g.F
