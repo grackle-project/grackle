@@ -35,8 +35,6 @@ void calc_temp_cloudy_g(gr_float* temperature_data_, int imetal,
                         cloudy_data cloudy_primordial,
                         grackle_field_data* my_fields,
                         InternalGrUnits internalu) {
-  // shorten `grackle::impl::fortran_wrapper` to `f_wrap` within this function
-  namespace f_wrap = ::grackle::impl::fortran_wrapper;
 
   // Calc quantities using values specified by internalu
   const double dom = internalu_calc_dom_(internalu);
