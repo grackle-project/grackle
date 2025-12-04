@@ -36,6 +36,32 @@ extern "C" {
 #include "grackle_macros.h"
 #include "phys_constants.h"
 
+/// this represents all of the different choices for the hydrogen mass that
+/// have been used in different parts of the codebase.
+///
+/// Tradtionally
+///
+/// @todo
+/// This is meant to be a stopgap solution to help us consolidate all similar
+/// code. Once we finish transcription, we'll "rip the band-aid off" and use
+/// a consistent constant throughout the codebase.
+enum InternalU_MassH_Choice {
+  /// - A value of 1 indicates that we'll use `mh_grflt` (the constant is
+  ///   expressed as a value of type gr_float -- this is consistent with what
+  ///   Grackle's Fortran routines have historically done).
+  /// Denotes that we'll use `mh` which is always expressed as a double. Prior
+  /// to transcription, nearly all of Grackle's C functions used this constant
+  InternalU_MassH_DOUBLE = 1,
+  /// Denotes that we'll use `mh_grflt`, which is always expressed a value of
+  /// type gr_float. Prior to transcription, all of Grackle's Fortran's
+  /// functions used this constant
+  InternalU_MassH_GRFLOAT = 2,
+  /// Denotes that we'll use 1.67e-24, which is always expressed as double
+  /// literal. Prior to transcription, this was used while initializing cloudy
+  /// cooling tables.
+  InternalU_MassH_ABBREVIATED = 3
+};
+
 /// Encapsulates Grackle’s Internal Unit System. 
 ///
 /// Grackle internally employs an Enzo-style comoving coordinate system (and 
@@ -167,15 +193,9 @@ typedef struct InternalGrUnits{
   double utem;
 
   /// Specifies which constant to use for the hydrogen mass.
-  /// - A value of 1 indicates that we'll use `mh_grflt` (the constant is
-  ///   expressed as a value of type gr_float -- this is consistent with what
-  ///   Grackle's Fortran routines have historically done).
-  /// - A value of 0 indicates that we'll use `mh` (the constant is always
-  ///   expressed as a double -- consistent with what has historically happened
-  ///   in Grackle's C functions)
   ///
   /// TODO: Once we finish transcription, we should remove this!
-  int use_mh_grflt_;
+  enum InternalU_MassH_Choice mh_choice_;
 
 } InternalGrUnits;
 
@@ -184,11 +204,12 @@ static inline double internalu_get_mh_(InternalGrUnits internalu) {
   // purely for the sake of consistency, this value of the hydrogen mass is
   // initialized as a floating point literal (with the same precision as
   // gr_float and then it is casted to a double)
-  if (internalu.use_mh_grflt_ == 1) {
-    return (double)(mh_grflt);
-  } else {
-    return mh;
+  switch (internalu.mh_choice_) {
+    case InternalU_MassH_DOUBLE: return mh;
+    case InternalU_MassH_GRFLOAT: return (double)(mh_grflt);
+    case InternalU_MassH_ABBREVIATED: return 1.67e-24;
   }
+  return NAN; // should be unreachable
 }
 
 /// Return the cm*a_unit/s per 1 velocity unit
@@ -308,7 +329,7 @@ static inline double internalu_calc_kunit_(InternalGrUnits internalu) {
 /// instead of calling this function directly
 static inline InternalGrUnits new_internalu_helper_(
   const code_units* frontend_units,
-  int uses_mh_grflt
+  enum InternalU_MassH_Choice mh_choice
 ) {
   // rename the frontend_units object for convenience
   const code_units* my_units = frontend_units;
@@ -372,7 +393,7 @@ static inline InternalGrUnits new_internalu_helper_(
   internalu.dbase1   = internalu.urho*pow((my_units->a_value*my_units->a_units),3); // urho is [dens]/a^3 = [dens]/([a]*a')^3 '
 
   // lastly, compute coolunit (make sure we use the correct version of mh)
-  internalu.use_mh_grflt_ = uses_mh_grflt;
+  internalu.mh_choice_ = mh_choice;
   const double mh_local_var = internalu_get_mh_(internalu);
   internalu.coolunit = (
     pow(my_units->a_units,5) * pow(internalu.xbase1,2) * pow(mh_local_var,2)
@@ -387,7 +408,7 @@ static inline InternalGrUnits new_internalu_helper_(
 static inline InternalGrUnits new_internalu_(
   const code_units* frontend_units
 ) {
-  return new_internalu_helper_(frontend_units, 1);
+  return new_internalu_helper_(frontend_units, InternalU_MassH_GRFLOAT);
 }
 
 /// Construct an instance of InternalGrUnits from the frontend_units, while
@@ -399,7 +420,7 @@ static inline InternalGrUnits new_internalu_(
 static inline InternalGrUnits new_internalu_legacy_C_(
   const code_units* frontend_units
 ) {
-  return new_internalu_helper_(frontend_units, 0);
+  return new_internalu_helper_(frontend_units, InternalU_MassH_DOUBLE);
 }
 
 
