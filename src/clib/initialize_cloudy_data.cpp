@@ -193,12 +193,15 @@ int grackle::impl::initialize_cloudy_data(
 
   // Read Heating data.
   if (my_chemistry->UVbackground == 1) {
-    // Ideally we would parse the attributes describing how the table varies
-    // and confirm it's consistent with the Cooling table
-    // -> at this point, this is easy to do, but it introduces overhead
-
     std::snprintf(dset_name, name_bufsize, "/CoolingRates/%s/Heating",
                   group_name);
+
+    // Ideally we would uncomment the following block of logic that verifies
+    // that the Grid Table properties are identical to the cooling table
+    // -> uncommenting the logic would be useful for enforcing consistency
+    //    in any new data files (all files currently shipped with Grackle
+    //    already satisfy this requirement)
+    // -> the only downside to uncommenting the block is a little overhead
 
     //if (h5io::assert_has_consistent_GridTableProps(file_id, dset_name,
     //                                               grid_props) != GR_SUCCESS){
@@ -218,11 +221,14 @@ int grackle::impl::initialize_cloudy_data(
   // Read MMW data.
   if (my_chemistry->primordial_chemistry == 0 &&
       std::strcmp(group_name, "Primordial") == 0) {
-    // Ideally we would parse the attributes describing how the table varies
-    // and confirm it's consistent with the Cooling table
-    // -> at this point, this is easy to do, but it introduces overhead
-
     const char* mmw_dset_name = "/CoolingRates/Primordial/MMW";
+
+    // Ideally we would uncomment the following block of logic that verifies
+    // that the Grid Table properties are identical to the cooling table
+    // -> uncommenting the logic would be useful for enforcing consistency
+    //    in any new data files (all files currently shipped with Grackle
+    //    already satisfy this requirement)
+    // -> the only downside to uncommenting the block is a little overhead
 
     //if (h5io::assert_has_consistent_GridTableProps(file_id, mmw_dset_name,
     //                                               grid_props) != GR_SUCCESS){
