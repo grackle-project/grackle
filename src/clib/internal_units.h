@@ -412,15 +412,30 @@ static inline InternalGrUnits new_internalu_(
 }
 
 /// Construct an instance of InternalGrUnits from the frontend_units, while
-/// following the conventions for defining the hydrogen that have historically
-/// been observed in the C layer
+/// following the convention for defining the hydrogen mass that has
+/// historically been observed in the C layer (other than when initializing
+/// cloudy tables)
 ///
-/// The goal is to eliminate the distinction between this and new_internalu_
-/// after we finish up with transcription
+/// @note
+/// The eventual goal is to eliminate the distinction between this and the
+/// other 2 versions of `new_internalu_`.
 static inline InternalGrUnits new_internalu_legacy_C_(
   const code_units* frontend_units
 ) {
   return new_internalu_helper_(frontend_units, InternalU_MassH_DOUBLE);
+}
+
+/// Construct an instance of InternalGrUnits from the frontend_units, while
+/// following the convention for defining the hydrogen mass that has
+/// historically been observed when initializing cloudy data tables.
+///
+/// @note
+/// The eventual goal is to eliminate the distinction between this and the
+/// other 2 versions of `new_internalu_`.
+static inline InternalGrUnits new_internalu_legacy_init_cloudy_data_(
+  const code_units* frontend_units
+) {
+  return new_internalu_helper_(frontend_units, InternalU_MassH_ABBREVIATED);
 }
 
 
