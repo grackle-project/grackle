@@ -12,8 +12,6 @@
 #ifndef GRAIN_METAL_INJECT_PATHWAYS_HPP
 #define GRAIN_METAL_INJECT_PATHWAYS_HPP
 
-// after dealing with GH Issue #446, move this file into the dust subdirectory
-
 #include "LUT.hpp"
 #include "internal_types.hpp"
 #include "visitor/common.hpp"

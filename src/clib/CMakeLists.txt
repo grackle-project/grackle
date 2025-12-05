@@ -113,11 +113,11 @@ add_library(Grackle_Grackle
   cool_multi_time_g.cpp cool_multi_time_g.h
   dust_props.hpp
   dust/grain_species_info.cpp dust/grain_species_info.hpp
-  grain_metal_inject_pathways.hpp
   init_misc_species_cool_rates.cpp init_misc_species_cool_rates.hpp
   initialize_chemistry_data.cpp
   initialize_dust_yields.cpp initialize_dust_yields.hpp
   initialize_rates.cpp initialize_rates.hpp
+  inject_model/grain_metal_inject_pathways.hpp
   internal_types.cpp internal_types.hpp
   interp_table_utils.hpp
   lookup_cool_rates1d.hpp

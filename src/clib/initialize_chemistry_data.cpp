@@ -19,7 +19,7 @@
 #include "grackle.h"
 #include "grackle_macros.h"
 #include "auto_general.h"
-#include "grain_metal_inject_pathways.hpp"
+#include "inject_model/grain_metal_inject_pathways.hpp"
 #include "interp_table_utils.hpp"
 #include "init_misc_species_cool_rates.hpp"  // free_misc_species_cool_rates
 #include "initialize_cloudy_data.h"

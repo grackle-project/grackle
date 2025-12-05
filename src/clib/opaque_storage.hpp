@@ -15,7 +15,7 @@
 
 #include "grackle.h"
 #include "dust/grain_species_info.hpp"
-#include "grain_metal_inject_pathways.hpp"
+#include "inject_model/grain_metal_inject_pathways.hpp"
 #include "internal_types.hpp"
 
 /// a struct that used to wrap some private storage details
