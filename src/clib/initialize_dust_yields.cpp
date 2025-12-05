@@ -11,7 +11,8 @@
 //===----------------------------------------------------------------------===//
 
 #include <cstring>
-#include <stdlib.h> 
+#include <stdlib.h>
+#include <hdf5.h>
 #include <stdio.h>
 #include <math.h>
 #include "grackle_macros.h"
@@ -21,10 +22,22 @@
 #include "opaque_storage.hpp"
 #include "status_reporting.h" // GrPrintAndReturnErr
 
-static constexpr int N_Tdust_Opacity_Table = 35;
+/// datastructures declared in this namespace are a temporarily introduced for
+/// encoding the injection model data, until we shift to using HDF5
+///
+/// @note
+/// At this point, the main barrier to adopting HDF5 is that I would like to
+/// first remove all usage of MetalNuclideYieldProps::total_yield (so that we
+/// don't need to encode it in the HDF5 file).
+namespace grackle::impl::inj_model_input {
+
+/// the number of opacity-related coefficients that are grouped together
+/// in the opacity table
 static constexpr int N_Opacity_Coef = 4;
 
-namespace {  // stuff inside an anonymous namespace is local to this file
+/// the number of Tdust values in an opacity table for a given grain species
+/// and injection pathway. For each Tdust, there are N_Opacity_Coef coefficients
+static constexpr int N_Tdust_Opacity_Table = 35;
 
 struct MetalNuclideYieldProps;
 struct GrainSpeciesYieldProps;
@@ -60,12 +73,13 @@ struct MetalNuclideYieldProps {
   /// name of the nuclide
   const char* name;
 
-  /// total fraction of non-primordial injection corresponding to the nuclide
-  double total_yield;
-
   /// fraction of non-primordial injection corresponding to the nuclide in
   /// the gas phase
   double gas_yield;
+
+  /// total fraction of non-primordial injection corresponding to the nuclide
+  /// - I'm pretty sure we can get rid of this information in the future
+  double total_yield;
 };
 
 /// Each injection array will hold an array of these structs
@@ -91,6 +105,10 @@ struct GrainSpeciesYieldProps {
 
   double opacity_coef_table[N_Tdust_Opacity_Table][N_Opacity_Coef];
 };
+
+} // namespace grackle::impl::inj_model_input
+
+namespace {  // stuff inside an anonymous namespace is local to this file
 
 // forward declare some functions
 int calc_rates_dust_loc(int iSN, chemistry_data *my_chemistry, chemistry_data_storage *my_rates);
@@ -239,7 +257,7 @@ int grackle::impl::initialize_dust_yields(chemistry_data *my_chemistry,
   //       - δr(t) refers to the derived "size increment" (it is a central
   //         quantity in the model)
   //       - I **think** the resulting quantity is the optical cross-section
-  double NTd = N_Tdust_Opacity_Table;  // todo: remove me!
+  double NTd = grackle::impl::inj_model_input::N_Tdust_Opacity_Table;
   double Td0 = 0.0000000; // todo: remove me!
   double dTd = 0.1000000; // todo: remove me!
 
@@ -374,8 +392,9 @@ namespace {  // stuff inside an anonymous namespace is local to this file
 int setup_yield_table_helper(
     int pathway_idx,
     chemistry_data_storage *my_rates,
-    const InjectionPathwayInputData *input)
+    const grackle::impl::inj_model_input::InjectionPathwayInputData *input)
 {
+  namespace inj_input = ::grackle::impl::inj_model_input;
 
   grackle::impl::GrainMetalInjectPathways* inject_pathway_props
     = my_rates->opaque_storage->inject_pathway_props;
@@ -385,7 +404,8 @@ int setup_yield_table_helper(
   //    some sense to be semi-consistent with the handling of the dust species
   //    yields
   for (int i = 0; i < input->n_metal_nuclide_yields; i++) {
-    const MetalNuclideYieldProps& yield_info = input->metal_nuclide_yields[i];
+    const inj_input::MetalNuclideYieldProps& yield_info =
+      input->metal_nuclide_yields[i];
 
     double* total_yield = nullptr;
     double* gas_yield = nullptr;
@@ -424,7 +444,7 @@ int setup_yield_table_helper(
   // record each grain species yield
   for (int yield_idx = 0; yield_idx < input->n_injected_grain_species;
        yield_idx++) {
-    const GrainSpeciesYieldProps& yield_info =
+    const inj_input::GrainSpeciesYieldProps& yield_info =
       input->initial_grain_props[yield_idx];
 
     int grain_species_idx = -1;
