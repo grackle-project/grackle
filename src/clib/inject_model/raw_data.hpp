@@ -11,17 +11,21 @@
 /// declares a function for accessing this data.
 ///
 /// @note
-/// It's worth emphasizing that all machinery declared in this file are only
-/// introduced temporarily. The long-term plan is to drop all of the machinery
-/// once we start encoding the data within HDF5 files. The main barrier to
-/// adopting HDF5 for this purpose is that I would like to first remove all
-/// usage of the data currently encoded in MetalNuclideYieldProps::total_yield
-/// (so that we can avoid encoding it in the HDF5 file).
+/// It's worth emphasizing that all machinery declared in this file is only
+/// intended to be temporary. The long-term plan is to drop all of the
+/// machinery once we start encoding the data within HDF5 files. The main
+/// barrier to adopting HDF5 for this purpose is that I would like to first
+/// remove all usage of the data currently encoded in
+/// MetalNuclideYieldProps::total_yield (so that we can avoid encoding it in
+/// the HDF5 file).
 ///
 //===----------------------------------------------------------------------===//
 
 #ifndef INJECT_MODEL_RAW_DATA_HPP
 #define INJECT_MODEL_RAW_DATA_HPP
+
+#include "grackle.h"  // GR_SUCCESS
+
 namespace grackle::impl::inj_model_input {
 
 /// the number of opacity-related coefficients that are grouped together
@@ -52,8 +56,6 @@ struct GrainSpeciesYieldProps;
 /// @note
 /// The plan is to eventually shift the data into a file loaded at runtime
 struct InjectionPathwayInputData {
-  const char* name;
-
   const MetalNuclideYieldProps* metal_nuclide_yields;
   int n_metal_nuclide_yields;
 
@@ -97,6 +99,29 @@ struct GrainSpeciesYieldProps {
 
   double opacity_coef_table[N_Tdust_Opacity_Table][N_Opacity_Coef];
 };
+
+extern "C" {
+/// protoype for callback function used with input_inject_model_iterate
+typedef int (*inj_iterate_t)(const char* name, InjectionPathwayInputData* input,
+                             void* op_data);
+}
+
+/// iterates over injection model input data packs with user callback routine
+///
+/// @param[in] op Callback function
+/// @param[inout] op_data User-defined callback function context
+///
+/// @returns GR_SUCCESS if all calls to @p op returns GR_SUCCESS. Any other
+///     value denotes an error.
+///
+/// If any call to @p op is not `GR_SUCCESS`, this function exits immediately
+///
+/// @note
+/// we choose to provide access to each injection model's raw input data via
+/// callback routines since the equivalent HDF5 (when we eventually shift) will
+/// also involve callbacks (i.e. via `H5Literate`). By initially writing the
+/// code using callbacks, the transition to HDF5 should be easier.
+int input_inject_model_iterate(inj_iterate_t op, void* op_data);
 
 }  // namespace grackle::impl::inj_model_input
 

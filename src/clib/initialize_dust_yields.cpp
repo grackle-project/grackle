@@ -43,6 +43,160 @@ int calc_rates_dust_Y19(int iSN, chemistry_data *my_chemistry, chemistry_data_st
 
 typedef int calc_yield_rate_fn(int, chemistry_data*, chemistry_data_storage*);
 
+
+namespace {  // stuff inside an anonymous namespace is local to this file
+
+int setup_yield_table_helper(
+    int pathway_idx,
+    chemistry_data_storage *my_rates,
+    const grackle::impl::inj_model_input::InjectionPathwayInputData *input)
+{
+  namespace inj_input = ::grackle::impl::inj_model_input;
+
+  grackle::impl::GrainMetalInjectPathways* inject_pathway_props
+    = my_rates->opaque_storage->inject_pathway_props;
+
+  // record each metal nuclide yield
+  // -> there is less value to using string keys in this case, but it makes
+  //    some sense to be semi-consistent with the handling of the dust species
+  //    yields
+  for (int i = 0; i < input->n_metal_nuclide_yields; i++) {
+    const inj_input::MetalNuclideYieldProps& yield_info =
+      input->metal_nuclide_yields[i];
+
+    double* total_yield = nullptr;
+    double* gas_yield = nullptr;
+
+    // todo: refactor to use a map (I have a rough plan)
+    if (std::strcmp("C", yield_info.name) == 0) {
+      total_yield = inject_pathway_props->total_metal_nuclide_yields.C;
+      gas_yield = inject_pathway_props->gas_metal_nuclide_yields.C;
+    } else if (std::strcmp("O", yield_info.name) == 0) {
+      total_yield = inject_pathway_props->total_metal_nuclide_yields.O;
+      gas_yield = inject_pathway_props->gas_metal_nuclide_yields.O;
+    } else if (std::strcmp("Mg", yield_info.name) == 0) {
+      total_yield = inject_pathway_props->total_metal_nuclide_yields.Mg;
+      gas_yield = inject_pathway_props->gas_metal_nuclide_yields.Mg;
+    } else if (std::strcmp("Al", yield_info.name) == 0) {
+      total_yield = inject_pathway_props->total_metal_nuclide_yields.Al;
+      gas_yield = inject_pathway_props->gas_metal_nuclide_yields.Al;
+    } else if (std::strcmp("Si", yield_info.name) == 0) {
+      total_yield = inject_pathway_props->total_metal_nuclide_yields.Si;
+      gas_yield = inject_pathway_props->gas_metal_nuclide_yields.Si;
+    } else if (std::strcmp("S", yield_info.name) == 0) {
+      total_yield = inject_pathway_props->total_metal_nuclide_yields.S;
+      gas_yield = inject_pathway_props->gas_metal_nuclide_yields.S;
+    } else if (std::strcmp("Fe", yield_info.name) == 0) {
+      total_yield = inject_pathway_props->total_metal_nuclide_yields.Fe;
+      gas_yield = inject_pathway_props->gas_metal_nuclide_yields.Fe;
+    } else {
+      return GrPrintAndReturnErr(
+        "`%s` not a known metal nuclide", yield_info.name);
+    }
+
+    total_yield[pathway_idx] = yield_info.total_yield;
+    gas_yield[pathway_idx] = yield_info.gas_yield;
+  }
+
+  // record each grain species yield
+  for (int yield_idx = 0; yield_idx < input->n_injected_grain_species;
+       yield_idx++) {
+    const inj_input::GrainSpeciesYieldProps& yield_info =
+      input->initial_grain_props[yield_idx];
+
+    int grain_species_idx = -1;
+    double* size_mom_table = nullptr;
+    double* opac_coef_table = nullptr;
+
+    // with a little refactoring, this will get a lot more concise
+    if (std::strcmp("MgSiO3_dust", yield_info.name) == 0) {
+      grain_species_idx = OnlyGrainSpLUT::MgSiO3_dust;
+      size_mom_table = my_rates->SN0_r0MgSiO3;
+      opac_coef_table = my_rates->SN0_kpMgSiO3;
+    } else if (std::strcmp("AC_dust", yield_info.name) == 0) {
+      grain_species_idx = OnlyGrainSpLUT::AC_dust;
+      size_mom_table = my_rates->SN0_r0AC;
+      opac_coef_table = my_rates->SN0_kpAC;
+    } else if (std::strcmp("SiM_dust", yield_info.name) == 0) {
+      grain_species_idx = OnlyGrainSpLUT::SiM_dust;
+      size_mom_table = my_rates->SN0_r0SiM;
+      opac_coef_table = my_rates->SN0_kpSiM;
+    } else if (std::strcmp("FeM_dust", yield_info.name) == 0) {
+      grain_species_idx = OnlyGrainSpLUT::FeM_dust;
+      size_mom_table = my_rates->SN0_r0FeM;
+      opac_coef_table = my_rates->SN0_kpFeM;
+    } else if (std::strcmp("Mg2SiO4_dust", yield_info.name) == 0) {
+      grain_species_idx = OnlyGrainSpLUT::Mg2SiO4_dust;
+      size_mom_table = my_rates->SN0_r0Mg2SiO4;
+      opac_coef_table = my_rates->SN0_kpMg2SiO4;
+    } else if (std::strcmp("Fe3O4_dust", yield_info.name) == 0) {
+      grain_species_idx = OnlyGrainSpLUT::Fe3O4_dust;
+      size_mom_table = my_rates->SN0_r0Fe3O4;
+      opac_coef_table = my_rates->SN0_kpFe3O4;
+    } else if (std::strcmp("SiO2_dust", yield_info.name) == 0) {
+      grain_species_idx = OnlyGrainSpLUT::SiO2_dust;
+      size_mom_table = my_rates->SN0_r0SiO2D;
+      opac_coef_table = my_rates->SN0_kpSiO2D;
+    } else if (std::strcmp("MgO_dust", yield_info.name) == 0) {
+      grain_species_idx = OnlyGrainSpLUT::MgO_dust;
+      size_mom_table = my_rates->SN0_r0MgO;
+      opac_coef_table = my_rates->SN0_kpMgO;
+    } else if (std::strcmp("FeS_dust", yield_info.name) == 0) {
+      grain_species_idx = OnlyGrainSpLUT::FeS_dust;
+      size_mom_table = my_rates->SN0_r0FeS;
+      opac_coef_table = my_rates->SN0_kpFeS;
+    } else if (std::strcmp("Al2O3_dust", yield_info.name) == 0) {
+      grain_species_idx = OnlyGrainSpLUT::Al2O3_dust;
+      size_mom_table = my_rates->SN0_r0Al2O3;
+      opac_coef_table = my_rates->SN0_kpAl2O3;
+    } else if (std::strcmp("ref_org_dust", yield_info.name) == 0) {
+      grain_species_idx = OnlyGrainSpLUT::ref_org_dust;
+      size_mom_table = my_rates->SN0_r0reforg;
+      opac_coef_table = my_rates->SN0_kpreforg;
+    } else if (std::strcmp("vol_org_dust", yield_info.name) == 0) {
+      grain_species_idx = OnlyGrainSpLUT::vol_org_dust;
+      size_mom_table = my_rates->SN0_r0volorg;
+      opac_coef_table = my_rates->SN0_kpvolorg;
+    } else if (std::strcmp("H2O_ice_dust", yield_info.name) == 0) {
+      grain_species_idx = OnlyGrainSpLUT::H2O_ice_dust;
+      size_mom_table = my_rates->SN0_r0H2Oice;
+      opac_coef_table = my_rates->SN0_kpH2Oice;
+    } else {
+      return GrPrintAndReturnErr(
+        "`%s` not a known grain species", yield_info.name);
+    }
+
+    // copy the nonprimordial yield fraction
+    inject_pathway_props->grain_yields.data[grain_species_idx][pathway_idx]
+      = yield_info.nonprimoridal_yield_frac;
+
+    /*
+    // copy the 1st, 2nd, and 3rd moments of the size distribution
+    // (the 0th moment isn't recorded anywhere
+    for (int i = 0; i < 3; i++) {
+      size_mom_table[pathway_idx*3+i] = yield_info.size_moments[i];
+    }
+
+    // copy over the opacity coefficients table
+    {
+      int n_Td = N_Tdust_Opacity_Table;
+      int n_coef = N_Opacity_Coef;
+
+      for (int i_Td = 0; i_Td < n_Td; i_Td++) {
+        for (int i_coef = 0; i_coef < n_coef; i_coef++) {
+          int i = (pathway_idx * n_Td * n_coef) + (i_Td * n_coef) + i_coef;
+          opac_coef_table[i] = yield_info.opacity_coef_table[i_Td][i_coef];
+        }
+      }
+    }
+    */
+  }
+
+  return GR_SUCCESS;
+}
+
+}  // anonymous namespace
+
 int grackle::impl::initialize_dust_yields(chemistry_data *my_chemistry,
                                           chemistry_data_storage *my_rates,
                                           code_units *my_units)
@@ -302,156 +456,8 @@ int grackle::impl::free_dust_yields(chemistry_data *my_chemistry,
   return SUCCESS;
 }
 
+
 namespace {  // stuff inside an anonymous namespace is local to this file
-
-int setup_yield_table_helper(
-    int pathway_idx,
-    chemistry_data_storage *my_rates,
-    const grackle::impl::inj_model_input::InjectionPathwayInputData *input)
-{
-  namespace inj_input = ::grackle::impl::inj_model_input;
-
-  grackle::impl::GrainMetalInjectPathways* inject_pathway_props
-    = my_rates->opaque_storage->inject_pathway_props;
-
-  // record each metal nuclide yield
-  // -> there is less value to using string keys in this case, but it makes
-  //    some sense to be semi-consistent with the handling of the dust species
-  //    yields
-  for (int i = 0; i < input->n_metal_nuclide_yields; i++) {
-    const inj_input::MetalNuclideYieldProps& yield_info =
-      input->metal_nuclide_yields[i];
-
-    double* total_yield = nullptr;
-    double* gas_yield = nullptr;
-
-    // todo: refactor to use a map (I have a rough plan)
-    if (std::strcmp("C", yield_info.name) == 0) {
-      total_yield = inject_pathway_props->total_metal_nuclide_yields.C;
-      gas_yield = inject_pathway_props->gas_metal_nuclide_yields.C;
-    } else if (std::strcmp("O", yield_info.name) == 0) {
-      total_yield = inject_pathway_props->total_metal_nuclide_yields.O;
-      gas_yield = inject_pathway_props->gas_metal_nuclide_yields.O;
-    } else if (std::strcmp("Mg", yield_info.name) == 0) {
-      total_yield = inject_pathway_props->total_metal_nuclide_yields.Mg;
-      gas_yield = inject_pathway_props->gas_metal_nuclide_yields.Mg;
-    } else if (std::strcmp("Al", yield_info.name) == 0) {
-      total_yield = inject_pathway_props->total_metal_nuclide_yields.Al;
-      gas_yield = inject_pathway_props->gas_metal_nuclide_yields.Al;
-    } else if (std::strcmp("Si", yield_info.name) == 0) {
-      total_yield = inject_pathway_props->total_metal_nuclide_yields.Si;
-      gas_yield = inject_pathway_props->gas_metal_nuclide_yields.Si;
-    } else if (std::strcmp("S", yield_info.name) == 0) {
-      total_yield = inject_pathway_props->total_metal_nuclide_yields.S;
-      gas_yield = inject_pathway_props->gas_metal_nuclide_yields.S;
-    } else if (std::strcmp("Fe", yield_info.name) == 0) {
-      total_yield = inject_pathway_props->total_metal_nuclide_yields.Fe;
-      gas_yield = inject_pathway_props->gas_metal_nuclide_yields.Fe;
-    } else {
-      return GrPrintAndReturnErr(
-        "`%s` not a known metal nuclide", yield_info.name);
-    }
-
-    total_yield[pathway_idx] = yield_info.total_yield;
-    gas_yield[pathway_idx] = yield_info.gas_yield;
-  }
-
-  // record each grain species yield
-  for (int yield_idx = 0; yield_idx < input->n_injected_grain_species;
-       yield_idx++) {
-    const inj_input::GrainSpeciesYieldProps& yield_info =
-      input->initial_grain_props[yield_idx];
-
-    int grain_species_idx = -1;
-    double* size_mom_table = nullptr;
-    double* opac_coef_table = nullptr;
-
-    // with a little refactoring, this will get a lot more concise
-    if (std::strcmp("MgSiO3_dust", yield_info.name) == 0) {
-      grain_species_idx = OnlyGrainSpLUT::MgSiO3_dust;
-      size_mom_table = my_rates->SN0_r0MgSiO3;
-      opac_coef_table = my_rates->SN0_kpMgSiO3;
-    } else if (std::strcmp("AC_dust", yield_info.name) == 0) {
-      grain_species_idx = OnlyGrainSpLUT::AC_dust;
-      size_mom_table = my_rates->SN0_r0AC;
-      opac_coef_table = my_rates->SN0_kpAC;
-    } else if (std::strcmp("SiM_dust", yield_info.name) == 0) {
-      grain_species_idx = OnlyGrainSpLUT::SiM_dust;
-      size_mom_table = my_rates->SN0_r0SiM;
-      opac_coef_table = my_rates->SN0_kpSiM;
-    } else if (std::strcmp("FeM_dust", yield_info.name) == 0) {
-      grain_species_idx = OnlyGrainSpLUT::FeM_dust;
-      size_mom_table = my_rates->SN0_r0FeM;
-      opac_coef_table = my_rates->SN0_kpFeM;
-    } else if (std::strcmp("Mg2SiO4_dust", yield_info.name) == 0) {
-      grain_species_idx = OnlyGrainSpLUT::Mg2SiO4_dust;
-      size_mom_table = my_rates->SN0_r0Mg2SiO4;
-      opac_coef_table = my_rates->SN0_kpMg2SiO4;
-    } else if (std::strcmp("Fe3O4_dust", yield_info.name) == 0) {
-      grain_species_idx = OnlyGrainSpLUT::Fe3O4_dust;
-      size_mom_table = my_rates->SN0_r0Fe3O4;
-      opac_coef_table = my_rates->SN0_kpFe3O4;
-    } else if (std::strcmp("SiO2_dust", yield_info.name) == 0) {
-      grain_species_idx = OnlyGrainSpLUT::SiO2_dust;
-      size_mom_table = my_rates->SN0_r0SiO2D;
-      opac_coef_table = my_rates->SN0_kpSiO2D;
-    } else if (std::strcmp("MgO_dust", yield_info.name) == 0) {
-      grain_species_idx = OnlyGrainSpLUT::MgO_dust;
-      size_mom_table = my_rates->SN0_r0MgO;
-      opac_coef_table = my_rates->SN0_kpMgO;
-    } else if (std::strcmp("FeS_dust", yield_info.name) == 0) {
-      grain_species_idx = OnlyGrainSpLUT::FeS_dust;
-      size_mom_table = my_rates->SN0_r0FeS;
-      opac_coef_table = my_rates->SN0_kpFeS;
-    } else if (std::strcmp("Al2O3_dust", yield_info.name) == 0) {
-      grain_species_idx = OnlyGrainSpLUT::Al2O3_dust;
-      size_mom_table = my_rates->SN0_r0Al2O3;
-      opac_coef_table = my_rates->SN0_kpAl2O3;
-    } else if (std::strcmp("ref_org_dust", yield_info.name) == 0) {
-      grain_species_idx = OnlyGrainSpLUT::ref_org_dust;
-      size_mom_table = my_rates->SN0_r0reforg;
-      opac_coef_table = my_rates->SN0_kpreforg;
-    } else if (std::strcmp("vol_org_dust", yield_info.name) == 0) {
-      grain_species_idx = OnlyGrainSpLUT::vol_org_dust;
-      size_mom_table = my_rates->SN0_r0volorg;
-      opac_coef_table = my_rates->SN0_kpvolorg;
-    } else if (std::strcmp("H2O_ice_dust", yield_info.name) == 0) {
-      grain_species_idx = OnlyGrainSpLUT::H2O_ice_dust;
-      size_mom_table = my_rates->SN0_r0H2Oice;
-      opac_coef_table = my_rates->SN0_kpH2Oice;
-    } else {
-      return GrPrintAndReturnErr(
-        "`%s` not a known grain species", yield_info.name);
-    }
-
-    // copy the nonprimordial yield fraction
-    inject_pathway_props->grain_yields.data[grain_species_idx][pathway_idx]
-      = yield_info.nonprimoridal_yield_frac;
-
-    /*
-    // copy the 1st, 2nd, and 3rd moments of the size distribution
-    // (the 0th moment isn't recorded anywhere
-    for (int i = 0; i < 3; i++) {
-      size_mom_table[pathway_idx*3+i] = yield_info.size_moments[i];
-    }
-
-    // copy over the opacity coefficients table
-    {
-      int n_Td = N_Tdust_Opacity_Table;
-      int n_coef = N_Opacity_Coef;
-
-      for (int i_Td = 0; i_Td < n_Td; i_Td++) {
-        for (int i_coef = 0; i_coef < n_coef; i_coef++) {
-          int i = (pathway_idx * n_Td * n_coef) + (i_Td * n_coef) + i_coef;
-          opac_coef_table[i] = yield_info.opacity_coef_table[i_Td][i_coef];
-        }
-      }
-    }
-    */
-  }
-
-  return GR_SUCCESS;
-}
 
 int calc_rates_dust_loc(int iSN, chemistry_data *my_chemistry, chemistry_data_storage *my_rates)
 {
