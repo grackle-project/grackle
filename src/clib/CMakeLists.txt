@@ -118,6 +118,7 @@ add_library(Grackle_Grackle
   initialize_dust_yields.cpp initialize_dust_yields.hpp
   initialize_rates.cpp initialize_rates.hpp
   inject_model/grain_metal_inject_pathways.hpp
+  inject_model/raw_data.hpp
   internal_types.cpp internal_types.hpp
   interp_table_utils.hpp
   lookup_cool_rates1d.hpp
