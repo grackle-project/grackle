@@ -102,7 +102,8 @@ struct GrainSpeciesYieldProps {
 
 extern "C" {
 /// protoype for callback function used with input_inject_model_iterate
-typedef int (*inj_iterate_t)(const char* name, InjectionPathwayInputData* input,
+typedef int (*inj_iterate_t)(const char* name,
+                             const InjectionPathwayInputData* input,
                              void* op_data);
 }
 

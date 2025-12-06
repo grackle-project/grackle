@@ -46,12 +46,55 @@ typedef int calc_yield_rate_fn(int, chemistry_data*, chemistry_data_storage*);
 
 namespace {  // stuff inside an anonymous namespace is local to this file
 
-int setup_yield_table_helper(
-    int pathway_idx,
-    chemistry_data_storage *my_rates,
-    const grackle::impl::inj_model_input::InjectionPathwayInputData *input)
+int lookup_pathway_idx(const char* name) {
+  const char * known_names[12] = {
+    "local_ISM", "ccsn13", "ccsn20", "ccsn25", "ccsn30", "fsn13",
+    "fsn15", "fsn50", "fsn80", "pisn170", "pisn200", "y19",
+  };
+
+  for (int i = 0; i < 12; i++){
+    if (std::strcmp(known_names[i], name) == 0){
+      return i;
+    }
+  }
+  return -1;
+}
+
+/// the context object for setup_yield_table_callback
+struct SetupCallbackCtx{
+  chemistry_data_storage *my_rates;
+  int setup_counter;
+};
+
+/// a callback function that sets up the appropriate parts of
+/// GrainMetalInjectPathways given data for a particular injection pathway
+///
+/// @param[in] name Name of the current injection pathway
+/// @param[in] input Holds the data for the current injection pathway.
+/// @param[inout] ctx A pointer to a SetupCallbackCtx instance
+///
+/// @note
+/// This function has C linkage because that's the expectation of the function
+/// receiving this callback
+extern "C" int setup_yield_table_callback(
+    const char* name,
+    const grackle::impl::inj_model_input::InjectionPathwayInputData *input,
+    void* ctx)
 {
   namespace inj_input = ::grackle::impl::inj_model_input;
+
+
+  int pathway_idx = lookup_pathway_idx(name);
+
+  if (pathway_idx < 0) {
+    return GrPrintAndReturnErr(
+      "`%s` is an unexpected injection pathway name", name);
+  }
+  //printf("encounterd: `%s`, pathway_idx: %d\n", name, pathway_idx);
+  //fflush(stdout);
+
+  chemistry_data_storage *my_rates =
+    static_cast<SetupCallbackCtx*>(ctx)->my_rates;
 
   grackle::impl::GrainMetalInjectPathways* inject_pathway_props
     = my_rates->opaque_storage->inject_pathway_props;
@@ -94,8 +137,8 @@ int setup_yield_table_helper(
         "`%s` not a known metal nuclide", yield_info.name);
     }
 
-    total_yield[pathway_idx] = yield_info.total_yield;
-    gas_yield[pathway_idx] = yield_info.gas_yield;
+    //total_yield[pathway_idx] = yield_info.total_yield;
+    //gas_yield[pathway_idx] = yield_info.gas_yield;
   }
 
   // record each grain species yield
@@ -166,11 +209,11 @@ int setup_yield_table_helper(
         "`%s` not a known grain species", yield_info.name);
     }
 
+    /*
     // copy the nonprimordial yield fraction
     inject_pathway_props->grain_yields.data[grain_species_idx][pathway_idx]
       = yield_info.nonprimoridal_yield_frac;
 
-    /*
     // copy the 1st, 2nd, and 3rd moments of the size distribution
     // (the 0th moment isn't recorded anywhere
     for (int i = 0; i < 3; i++) {
@@ -392,8 +435,16 @@ int grackle::impl::initialize_dust_yields(chemistry_data *my_chemistry,
         int rv = fn_list[i](i, my_chemistry, my_rates);
         if (rv != SUCCESS) { return rv; }
       }
+  SetupCallbackCtx ctx = {my_rates, 0};
 
-  return SUCCESS;
+  int ret = grackle::impl::inj_model_input::input_inject_model_iterate(
+      &setup_yield_table_callback, static_cast<void*>(&ctx));
+  if (ret != GR_SUCCESS) {
+    GRIMPL_ERROR("THERE WAS AN ERROR");
+  }
+  //return GR_FAIL;
+
+  return GR_SUCCESS;
 }
 
 int grackle::impl::free_dust_yields(chemistry_data *my_chemistry,
