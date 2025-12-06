@@ -616,7 +616,7 @@ int grackle::impl::initialize_dust_yields(chemistry_data *my_chemistry,
   }
   //if (raw != original_set) { return GrPrintAndReturnErr("expected to fail!"); }
 
-  //override_dust_inject_props(my_rates, 0.0, n_pathways);
+  override_dust_inject_props(my_rates, 0.0, n_pathways);
   SetupCallbackCtx ctx = {my_rates, 0};
 
   int ret = grackle::impl::inj_model_input::input_inject_model_iterate(
