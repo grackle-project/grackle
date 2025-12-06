@@ -215,7 +215,6 @@ extern "C" int setup_yield_table_callback(
         "`%s` not a known grain species", yield_info.name);
     }
 
-    /*
     // copy the nonprimordial yield fraction
     inject_pathway_props->grain_yields.data[grain_species_idx][pathway_idx]
       = yield_info.nonprimoridal_yield_frac;
@@ -228,8 +227,8 @@ extern "C" int setup_yield_table_callback(
 
     // copy over the opacity coefficients table
     {
-      int n_Td = N_Tdust_Opacity_Table;
-      int n_coef = N_Opacity_Coef;
+      int n_Td = grackle::impl::inj_model_input::N_Tdust_Opacity_Table;
+      int n_coef = grackle::impl::inj_model_input::N_Opacity_Coef;
 
       for (int i_Td = 0; i_Td < n_Td; i_Td++) {
         for (int i_coef = 0; i_coef < n_coef; i_coef++) {
@@ -238,7 +237,6 @@ extern "C" int setup_yield_table_callback(
         }
       }
     }
-    */
   }
 
   (static_cast<SetupCallbackCtx*>(ctx)->counter)++;
@@ -612,14 +610,67 @@ int grackle::impl::initialize_dust_yields(chemistry_data *my_chemistry,
 
   std::vector<SummaryGrainYieldProp> original_set = get_summary(my_rates,
                                                                 n_pathways);
-  // if (raw != original_set) { return GrPrintAndReturnErr("expected to fail!"); }
+  printf("\nn grains: %d\n", (int)original_set.size());
+  for (int i = 0; i < original_set.size(); i++){
+    printf("->\"%s\"\n", original_set[i].name.c_str());
+  }
+  //if (raw != original_set) { return GrPrintAndReturnErr("expected to fail!"); }
 
+  //override_dust_inject_props(my_rates, 0.0, n_pathways);
   SetupCallbackCtx ctx = {my_rates, 0};
 
   int ret = grackle::impl::inj_model_input::input_inject_model_iterate(
       &setup_yield_table_callback, static_cast<void*>(&ctx));
   if (ret != GR_SUCCESS) {
     return GR_FAIL;
+  }
+
+  std::vector<SummaryGrainYieldProp> newer_set = get_summary(my_rates,
+                                                             n_pathways);
+  if (newer_set.size() != original_set.size()) {
+    return GrPrintAndReturnErr("Shouldn't be an issue!");
+  }
+
+  for (int i =0; i < original_set.size(); i++) {
+    if (newer_set[i].name != original_set[i].name) {
+      return GrPrintAndReturnErr("Shouldn't be an issue!");
+    }
+
+    if (newer_set[i].yield_frac != original_set[i].yield_frac) {
+      return GrPrintAndReturnErr("issue with yield_frac");
+    }
+
+    if (newer_set[i].size_moments != original_set[i].size_moments) {
+      return GrPrintAndReturnErr("issue with size_moments");
+    }
+
+    for (int iSN = 0; iSN < n_pathways; iSN++) {
+      for (int j = 0; j < my_rates->gr_Size; j++) {
+        int idx = iSN * my_rates->gr_Size + j;
+        if (newer_set[i].opacity_coef_table[idx] !=
+            original_set[i].opacity_coef_table[idx]) {
+          return GrPrintAndReturnErr(
+            "issue with opacity_coef_table for: %s iSN = %d, j =%d.\n"
+            "Traditional: %g. New:%g\n, trad - new: %g",
+            newer_set[i].name.c_str(),
+            iSN, j, original_set[i].opacity_coef_table[idx],
+            newer_set[i].opacity_coef_table[idx],
+            original_set[i].opacity_coef_table[idx] -
+            newer_set[i].opacity_coef_table[idx]
+            );
+        }
+
+      }
+    }
+
+    if (newer_set[i].opacity_coef_table != original_set[i].opacity_coef_table) {
+      return GrPrintAndReturnErr("issue with opacity_coef_table");
+    }
+  }
+
+
+  if (newer_set != original_set) {
+    return GrPrintAndReturnErr("there seems to be an issue!");
   }
 
   GR_INTERNAL_REQUIRE(ctx.counter == 12, "sanity-checking");
