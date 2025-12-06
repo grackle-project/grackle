@@ -103,48 +103,6 @@ extern "C" int setup_yield_table_callback(
   grackle::impl::GrainMetalInjectPathways* inject_pathway_props
     = my_rates->opaque_storage->inject_pathway_props;
 
-  GR_INTERNAL_REQUIRE(input->n_metal_nuclide_yields == 7, "sanity-checking");
-
-  auto copy_data = [pathway_idx](const grackle::impl::yields::MetalTables& tab,
-                                 double* ptr)
-  {
-    ptr[0] = tab.C[pathway_idx];
-    ptr[1] = tab.O[pathway_idx];
-    ptr[2] = tab.Mg[pathway_idx];
-    ptr[3] = tab.Al[pathway_idx];
-    ptr[4] = tab.Si[pathway_idx];
-    ptr[5] = tab.S[pathway_idx];
-    ptr[6] = tab.Fe[pathway_idx];
-  };
-
-  auto clear_tab = [pathway_idx](const grackle::impl::yields::MetalTables& tab)
-  {
-    tab.C[pathway_idx] = NAN;
-    tab.O[pathway_idx] = NAN;
-    tab.Mg[pathway_idx] = NAN;
-    tab.Al[pathway_idx] = NAN;
-    tab.Si[pathway_idx] = NAN;
-    tab.S[pathway_idx] = NAN;
-    tab.Fe[pathway_idx] = NAN;
-  };
-
-  double original[7] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-  double updated[7] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-
-  copy_data(inject_pathway_props->gas_metal_nuclide_yields, original);
-
-  printf("\n");
-  for (int i = 0; i < 7; i++) {
-    printf("%g, ", original[i]);
-  }
-  printf("\n");
-  fflush(stdout);
-
-  clear_tab(inject_pathway_props->total_metal_nuclide_yields);
-  clear_tab(inject_pathway_props->gas_metal_nuclide_yields);
-
-
-
   // record each metal nuclide yield
   // -> there is less value to using string keys in this case, but it makes
   //    some sense to be semi-consistent with the handling of the dust species
@@ -185,15 +143,6 @@ extern "C" int setup_yield_table_callback(
 
     total_yield[pathway_idx] = yield_info.total_yield;
     gas_yield[pathway_idx] = yield_info.gas_yield;
-  }
-
-  copy_data(inject_pathway_props->gas_metal_nuclide_yields, updated);
-  for (int i =0; i <7; i++){
-    if (original[i] != updated[i]) {
-      printf("nuclide %d has changed!\n", i);
-      fflush(stdout);
-      return GR_FAIL;
-    }
   }
 
   // record each grain species yield
@@ -577,22 +526,6 @@ int calc_rates_dust_loc(int iSN, chemistry_data *my_chemistry, chemistry_data_st
   grackle::impl::GrainMetalInjectPathways* inject_pathway_props
     = my_rates->opaque_storage->inject_pathway_props;
 
-  inject_pathway_props->total_metal_nuclide_yields.C [iSN] =   1.79042e-01;
-  inject_pathway_props->total_metal_nuclide_yields.O [iSN] =   5.11524e-01;
-  inject_pathway_props->total_metal_nuclide_yields.Mg[iSN] =   3.46246e-02;
-  inject_pathway_props->total_metal_nuclide_yields.Al[iSN] =   3.07922e-03;
-  inject_pathway_props->total_metal_nuclide_yields.Si[iSN] =   3.76121e-02;
-  inject_pathway_props->total_metal_nuclide_yields.S [iSN] =   2.21374e-02;
-  inject_pathway_props->total_metal_nuclide_yields.Fe[iSN] =   6.77017e-02;
-
-  inject_pathway_props->gas_metal_nuclide_yields.C [iSN] =   5.01317e-02;
-  inject_pathway_props->gas_metal_nuclide_yields.O [iSN] =   2.78491e-01;
-  inject_pathway_props->gas_metal_nuclide_yields.Mg[iSN] =   0.00000e+00;
-  inject_pathway_props->gas_metal_nuclide_yields.Al[iSN] =   3.07922e-03;
-  inject_pathway_props->gas_metal_nuclide_yields.Si[iSN] =   3.50813e-03;
-  inject_pathway_props->gas_metal_nuclide_yields.S [iSN] =   0.00000e+00;
-  inject_pathway_props->gas_metal_nuclide_yields.Fe[iSN] =   1.66568e-04;
-
   inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::FeM_dust]    [iSN] =   1.35403e-02;
   inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::Mg2SiO4_dust][iSN] =   1.36165e-01;
   inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::MgSiO3_dust] [iSN] =   3.84003e-02;
@@ -916,22 +849,6 @@ int calc_rates_dust_C13(int iSN, chemistry_data *my_chemistry, chemistry_data_st
 
   grackle::impl::GrainMetalInjectPathways* inject_pathway_props
     = my_rates->opaque_storage->inject_pathway_props;
-
-  inject_pathway_props->total_metal_nuclide_yields.C [iSN] =   2.65314e-01;
-  inject_pathway_props->total_metal_nuclide_yields.O [iSN] =   3.00982e-01;
-  inject_pathway_props->total_metal_nuclide_yields.Mg[iSN] =   3.06651e-02;
-  inject_pathway_props->total_metal_nuclide_yields.Al[iSN] =   2.47296e-04;
-  inject_pathway_props->total_metal_nuclide_yields.Si[iSN] =   6.38319e-02;
-  inject_pathway_props->total_metal_nuclide_yields.S [iSN] =   3.40910e-02;
-  inject_pathway_props->total_metal_nuclide_yields.Fe[iSN] =   9.62448e-02;
-
-  inject_pathway_props->gas_metal_nuclide_yields.C [iSN] =   2.16731e-01;
-  inject_pathway_props->gas_metal_nuclide_yields.O [iSN] =   2.99231e-01;
-  inject_pathway_props->gas_metal_nuclide_yields.Mg[iSN] =   3.03586e-02;
-  inject_pathway_props->gas_metal_nuclide_yields.Al[iSN] =   2.47296e-04;
-  inject_pathway_props->gas_metal_nuclide_yields.Si[iSN] =   4.59041e-02;
-  inject_pathway_props->gas_metal_nuclide_yields.S [iSN] =   3.40903e-02;
-  inject_pathway_props->gas_metal_nuclide_yields.Fe[iSN] =   7.22586e-02;
 
   inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::SiM_dust]     [iSN] =   1.65746e-02;
   inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::FeM_dust]     [iSN] =   2.39849e-02;
@@ -1298,22 +1215,6 @@ int calc_rates_dust_C20(int iSN, chemistry_data *my_chemistry, chemistry_data_st
 
   grackle::impl::GrainMetalInjectPathways* inject_pathway_props
     = my_rates->opaque_storage->inject_pathway_props;
-
-  inject_pathway_props->total_metal_nuclide_yields.C [iSN] =   1.00183e-01;
-  inject_pathway_props->total_metal_nuclide_yields.O [iSN] =   6.06515e-01;
-  inject_pathway_props->total_metal_nuclide_yields.Mg[iSN] =   2.75968e-02;
-  inject_pathway_props->total_metal_nuclide_yields.Al[iSN] =   1.87118e-04;
-  inject_pathway_props->total_metal_nuclide_yields.Si[iSN] =   1.00051e-01;
-  inject_pathway_props->total_metal_nuclide_yields.S [iSN] =   6.02208e-02;
-  inject_pathway_props->total_metal_nuclide_yields.Fe[iSN] =   3.07560e-02;
-
-  inject_pathway_props->gas_metal_nuclide_yields.C [iSN] =   8.74563e-02;
-  inject_pathway_props->gas_metal_nuclide_yields.O [iSN] =   6.04383e-01;
-  inject_pathway_props->gas_metal_nuclide_yields.Mg[iSN] =   2.63753e-02;
-  inject_pathway_props->gas_metal_nuclide_yields.Al[iSN] =   1.87118e-04;
-  inject_pathway_props->gas_metal_nuclide_yields.Si[iSN] =   6.44592e-02;
-  inject_pathway_props->gas_metal_nuclide_yields.S [iSN] =   6.02018e-02;
-  inject_pathway_props->gas_metal_nuclide_yields.Fe[iSN] =   2.69505e-02;
 
   inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::SiM_dust]     [iSN] =   3.44388e-02;
   inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::FeM_dust]     [iSN] =   3.77223e-03;
@@ -1723,22 +1624,6 @@ int calc_rates_dust_C25(int iSN, chemistry_data *my_chemistry, chemistry_data_st
   grackle::impl::GrainMetalInjectPathways* inject_pathway_props
     = my_rates->opaque_storage->inject_pathway_props;
 
-  inject_pathway_props->total_metal_nuclide_yields.C [iSN] =   1.75488e-01;
-  inject_pathway_props->total_metal_nuclide_yields.O [iSN] =   5.69674e-01;
-  inject_pathway_props->total_metal_nuclide_yields.Mg[iSN] =   3.12340e-02;
-  inject_pathway_props->total_metal_nuclide_yields.Al[iSN] =   2.98415e-04;
-  inject_pathway_props->total_metal_nuclide_yields.Si[iSN] =   8.33205e-02;
-  inject_pathway_props->total_metal_nuclide_yields.S [iSN] =   4.73930e-02;
-  inject_pathway_props->total_metal_nuclide_yields.Fe[iSN] =   1.98197e-02;
-
-  inject_pathway_props->gas_metal_nuclide_yields.C [iSN] =   1.34092e-01;
-  inject_pathway_props->gas_metal_nuclide_yields.O [iSN] =   5.53726e-01;
-  inject_pathway_props->gas_metal_nuclide_yields.Mg[iSN] =   2.48100e-02;
-  inject_pathway_props->gas_metal_nuclide_yields.Al[iSN] =   2.98415e-04;
-  inject_pathway_props->gas_metal_nuclide_yields.Si[iSN] =   3.47760e-02;
-  inject_pathway_props->gas_metal_nuclide_yields.S [iSN] =   4.72556e-02;
-  inject_pathway_props->gas_metal_nuclide_yields.Fe[iSN] =   1.46955e-02;
-
   inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::SiM_dust]     [iSN] =   3.83373e-02;
   inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::FeM_dust]     [iSN] =   4.88366e-03;
   inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::Mg2SiO4_dust] [iSN] =   1.68068e-02;
@@ -2146,22 +2031,6 @@ int calc_rates_dust_C30(int iSN, chemistry_data *my_chemistry, chemistry_data_st
 
   grackle::impl::GrainMetalInjectPathways* inject_pathway_props
     = my_rates->opaque_storage->inject_pathway_props;
-
-  inject_pathway_props->total_metal_nuclide_yields.C [iSN] =   4.99965e-02;
-  inject_pathway_props->total_metal_nuclide_yields.O [iSN] =   7.32832e-01;
-  inject_pathway_props->total_metal_nuclide_yields.Mg[iSN] =   3.87430e-02;
-  inject_pathway_props->total_metal_nuclide_yields.Al[iSN] =   8.61678e-04;
-  inject_pathway_props->total_metal_nuclide_yields.Si[iSN] =   7.18810e-02;
-  inject_pathway_props->total_metal_nuclide_yields.S [iSN] =   3.70455e-02;
-  inject_pathway_props->total_metal_nuclide_yields.Fe[iSN] =   1.45822e-02;
-
-  inject_pathway_props->gas_metal_nuclide_yields.C [iSN] =   4.93773e-02;
-  inject_pathway_props->gas_metal_nuclide_yields.O [iSN] =   7.29130e-01;
-  inject_pathway_props->gas_metal_nuclide_yields.Mg[iSN] =   3.76731e-02;
-  inject_pathway_props->gas_metal_nuclide_yields.Al[iSN] =   8.61678e-04;
-  inject_pathway_props->gas_metal_nuclide_yields.Si[iSN] =   4.01269e-02;
-  inject_pathway_props->gas_metal_nuclide_yields.S [iSN] =   3.68812e-02;
-  inject_pathway_props->gas_metal_nuclide_yields.Fe[iSN] =   1.23641e-02;
 
   inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::SiM_dust]     [iSN] =   2.91389e-02;
   inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::FeM_dust]     [iSN] =   1.93065e-03;
@@ -2571,22 +2440,6 @@ int calc_rates_dust_F13(int iSN, chemistry_data *my_chemistry, chemistry_data_st
   grackle::impl::GrainMetalInjectPathways* inject_pathway_props
     = my_rates->opaque_storage->inject_pathway_props;
 
-  inject_pathway_props->total_metal_nuclide_yields.C [iSN] =   6.69235e-01;
-  inject_pathway_props->total_metal_nuclide_yields.O [iSN] =   3.30556e-01;
-  inject_pathway_props->total_metal_nuclide_yields.Mg[iSN] =   1.86824e-04;
-  inject_pathway_props->total_metal_nuclide_yields.Al[iSN] =   1.97017e-07;
-  inject_pathway_props->total_metal_nuclide_yields.Si[iSN] =   1.30184e-05;
-  inject_pathway_props->total_metal_nuclide_yields.S [iSN] =   0.00000e+00;
-  inject_pathway_props->total_metal_nuclide_yields.Fe[iSN] =   8.90341e-06;
-
-  inject_pathway_props->gas_metal_nuclide_yields.C [iSN] =   4.93693e-01;
-  inject_pathway_props->gas_metal_nuclide_yields.O [iSN] =   3.30556e-01;
-  inject_pathway_props->gas_metal_nuclide_yields.Mg[iSN] =   1.86824e-04;
-  inject_pathway_props->gas_metal_nuclide_yields.Al[iSN] =   1.97017e-07;
-  inject_pathway_props->gas_metal_nuclide_yields.Si[iSN] =   1.30184e-05;
-  inject_pathway_props->gas_metal_nuclide_yields.S [iSN] =   0.00000e+00;
-  inject_pathway_props->gas_metal_nuclide_yields.Fe[iSN] =   8.90341e-06;
-
   inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::FeM_dust]     [iSN] =   6.31648e-26;
   inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::Mg2SiO4_dust] [iSN] =   2.06081e-16;
   inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::MgSiO3_dust]  [iSN] =   3.19262e-15;
@@ -2910,22 +2763,6 @@ int calc_rates_dust_F15(int iSN, chemistry_data *my_chemistry, chemistry_data_st
 
   grackle::impl::GrainMetalInjectPathways* inject_pathway_props
     = my_rates->opaque_storage->inject_pathway_props;
-
-  inject_pathway_props->total_metal_nuclide_yields.C [iSN] =   6.46299e-01;
-  inject_pathway_props->total_metal_nuclide_yields.O [iSN] =   3.53548e-01;
-  inject_pathway_props->total_metal_nuclide_yields.Mg[iSN] =   1.29204e-04;
-  inject_pathway_props->total_metal_nuclide_yields.Al[iSN] =   2.22729e-07;
-  inject_pathway_props->total_metal_nuclide_yields.Si[iSN] =   1.32242e-05;
-  inject_pathway_props->total_metal_nuclide_yields.S [iSN] =   0.00000e+00;
-  inject_pathway_props->total_metal_nuclide_yields.Fe[iSN] =   9.66658e-06;
-
-  inject_pathway_props->gas_metal_nuclide_yields.C [iSN] =   4.57071e-01;
-  inject_pathway_props->gas_metal_nuclide_yields.O [iSN] =   3.53548e-01;
-  inject_pathway_props->gas_metal_nuclide_yields.Mg[iSN] =   1.29204e-04;
-  inject_pathway_props->gas_metal_nuclide_yields.Al[iSN] =   2.22729e-07;
-  inject_pathway_props->gas_metal_nuclide_yields.Si[iSN] =   1.32242e-05;
-  inject_pathway_props->gas_metal_nuclide_yields.S [iSN] =   0.00000e+00;
-  inject_pathway_props->gas_metal_nuclide_yields.Fe[iSN] =   9.66658e-06;
 
   inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::FeM_dust]     [iSN] =   1.53361e-25;
   inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::Mg2SiO4_dust] [iSN] =   1.56864e-15;
@@ -3251,22 +3088,6 @@ int calc_rates_dust_F50(int iSN, chemistry_data *my_chemistry, chemistry_data_st
   grackle::impl::GrainMetalInjectPathways* inject_pathway_props
     = my_rates->opaque_storage->inject_pathway_props;
 
-  inject_pathway_props->total_metal_nuclide_yields.C [iSN] =   2.79167e-01;
-  inject_pathway_props->total_metal_nuclide_yields.O [iSN] =   7.20575e-01;
-  inject_pathway_props->total_metal_nuclide_yields.Mg[iSN] =   2.49794e-04;
-  inject_pathway_props->total_metal_nuclide_yields.Al[iSN] =   1.66468e-08;
-  inject_pathway_props->total_metal_nuclide_yields.Si[iSN] =   4.01099e-06;
-  inject_pathway_props->total_metal_nuclide_yields.S [iSN] =   0.00000e+00;
-  inject_pathway_props->total_metal_nuclide_yields.Fe[iSN] =   4.15804e-06;
-
-  inject_pathway_props->gas_metal_nuclide_yields.C [iSN] =   2.79057e-01;
-  inject_pathway_props->gas_metal_nuclide_yields.O [iSN] =   7.20575e-01;
-  inject_pathway_props->gas_metal_nuclide_yields.Mg[iSN] =   2.49793e-04;
-  inject_pathway_props->gas_metal_nuclide_yields.Al[iSN] =   1.66468e-08;
-  inject_pathway_props->gas_metal_nuclide_yields.Si[iSN] =   4.01058e-06;
-  inject_pathway_props->gas_metal_nuclide_yields.S [iSN] =   0.00000e+00;
-  inject_pathway_props->gas_metal_nuclide_yields.Fe[iSN] =   4.15804e-06;
-
   inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::FeM_dust]     [iSN] =   2.33171e-24;
   inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::Mg2SiO4_dust] [iSN] =   2.62486e-10;
   inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::MgSiO3_dust]  [iSN] =   1.21446e-09;
@@ -3590,22 +3411,6 @@ int calc_rates_dust_F80(int iSN, chemistry_data *my_chemistry, chemistry_data_st
 
   grackle::impl::GrainMetalInjectPathways* inject_pathway_props
     = my_rates->opaque_storage->inject_pathway_props;
-
-  inject_pathway_props->total_metal_nuclide_yields.C [iSN] =   2.52563e-01;
-  inject_pathway_props->total_metal_nuclide_yields.O [iSN] =   7.46061e-01;
-  inject_pathway_props->total_metal_nuclide_yields.Mg[iSN] =   1.36917e-03;
-  inject_pathway_props->total_metal_nuclide_yields.Al[iSN] =   1.55602e-08;
-  inject_pathway_props->total_metal_nuclide_yields.Si[iSN] =   3.63906e-06;
-  inject_pathway_props->total_metal_nuclide_yields.S [iSN] =   0.00000e+00;
-  inject_pathway_props->total_metal_nuclide_yields.Fe[iSN] =   2.43915e-06;
-
-  inject_pathway_props->gas_metal_nuclide_yields.C [iSN] =   2.43883e-01;
-  inject_pathway_props->gas_metal_nuclide_yields.O [iSN] =   7.46061e-01;
-  inject_pathway_props->gas_metal_nuclide_yields.Mg[iSN] =   1.36917e-03;
-  inject_pathway_props->gas_metal_nuclide_yields.Al[iSN] =   1.55602e-08;
-  inject_pathway_props->gas_metal_nuclide_yields.Si[iSN] =   3.63906e-06;
-  inject_pathway_props->gas_metal_nuclide_yields.S [iSN] =   0.00000e+00;
-  inject_pathway_props->gas_metal_nuclide_yields.Fe[iSN] =   2.43915e-06;
 
   inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::FeM_dust]     [iSN] =   3.87590e-26;
   inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::Mg2SiO4_dust] [iSN] =   2.36180e-13;
@@ -3931,22 +3736,6 @@ int calc_rates_dust_P170(int iSN, chemistry_data *my_chemistry, chemistry_data_s
   grackle::impl::GrainMetalInjectPathways* inject_pathway_props
     = my_rates->opaque_storage->inject_pathway_props;
 
-  inject_pathway_props->total_metal_nuclide_yields.C [iSN] =   5.29975e-02;
-  inject_pathway_props->total_metal_nuclide_yields.O [iSN] =   5.60864e-01;
-  inject_pathway_props->total_metal_nuclide_yields.Mg[iSN] =   3.58367e-02;
-  inject_pathway_props->total_metal_nuclide_yields.Al[iSN] =   3.27680e-04;
-  inject_pathway_props->total_metal_nuclide_yields.Si[iSN] =   1.52750e-01;
-  inject_pathway_props->total_metal_nuclide_yields.S [iSN] =   8.06035e-02;
-  inject_pathway_props->total_metal_nuclide_yields.Fe[iSN] =   5.29729e-02;
-
-  inject_pathway_props->gas_metal_nuclide_yields.C [iSN] =   5.29528e-02;
-  inject_pathway_props->gas_metal_nuclide_yields.O [iSN] =   5.60799e-01;
-  inject_pathway_props->gas_metal_nuclide_yields.Mg[iSN] =   3.58366e-02;
-  inject_pathway_props->gas_metal_nuclide_yields.Al[iSN] =   3.27680e-04;
-  inject_pathway_props->gas_metal_nuclide_yields.Si[iSN] =   1.39585e-01;
-  inject_pathway_props->gas_metal_nuclide_yields.S [iSN] =   8.06035e-02;
-  inject_pathway_props->gas_metal_nuclide_yields.Fe[iSN] =   5.29394e-02;
-
   inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::SiM_dust]     [iSN] =   1.31079e-02;
   inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::FeM_dust]     [iSN] =   3.34688e-05;
   inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::Mg2SiO4_dust] [iSN] =   2.84952e-13;
@@ -4271,22 +4060,6 @@ int calc_rates_dust_P200(int iSN, chemistry_data *my_chemistry, chemistry_data_s
   grackle::impl::GrainMetalInjectPathways* inject_pathway_props
     = my_rates->opaque_storage->inject_pathway_props;
 
-  inject_pathway_props->total_metal_nuclide_yields.C [iSN] =   3.65050e-02;
-  inject_pathway_props->total_metal_nuclide_yields.O [iSN] =   4.88552e-01;
-  inject_pathway_props->total_metal_nuclide_yields.Mg[iSN] =   2.69665e-02;
-  inject_pathway_props->total_metal_nuclide_yields.Al[iSN] =   1.36872e-04;
-  inject_pathway_props->total_metal_nuclide_yields.Si[iSN] =   1.87324e-01;
-  inject_pathway_props->total_metal_nuclide_yields.S [iSN] =   1.15582e-01;
-  inject_pathway_props->total_metal_nuclide_yields.Fe[iSN] =   6.79294e-02;
-
-  inject_pathway_props->gas_metal_nuclide_yields.C [iSN] =   3.64677e-02;
-  inject_pathway_props->gas_metal_nuclide_yields.O [iSN] =   4.88307e-01;
-  inject_pathway_props->gas_metal_nuclide_yields.Mg[iSN] =   2.69665e-02;
-  inject_pathway_props->gas_metal_nuclide_yields.Al[iSN] =   1.36872e-04;
-  inject_pathway_props->gas_metal_nuclide_yields.Si[iSN] =   1.87051e-01;
-  inject_pathway_props->gas_metal_nuclide_yields.S [iSN] =   1.15582e-01;
-  inject_pathway_props->gas_metal_nuclide_yields.Fe[iSN] =   6.75026e-02;
-
   inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::SiM_dust]     [iSN] =   5.90622e-05;
   inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::FeM_dust]     [iSN] =   4.26809e-04;
   inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::Mg2SiO4_dust] [iSN] =   4.08246e-15;
@@ -4568,22 +4341,6 @@ int calc_rates_dust_Y19(int iSN, chemistry_data *my_chemistry, chemistry_data_st
 
   grackle::impl::GrainMetalInjectPathways* inject_pathway_props
     = my_rates->opaque_storage->inject_pathway_props;
-
-  inject_pathway_props->total_metal_nuclide_yields.C [iSN] =   2.50000e-01;
-  inject_pathway_props->total_metal_nuclide_yields.O [iSN] =   2.93867e-01;
-  inject_pathway_props->total_metal_nuclide_yields.Mg[iSN] =   6.00000e-02;
-  inject_pathway_props->total_metal_nuclide_yields.Al[iSN] =   2.85361e-03;
-  inject_pathway_props->total_metal_nuclide_yields.Si[iSN] =   7.00000e-02;
-  inject_pathway_props->total_metal_nuclide_yields.S [iSN] =   1.58191e-02;
-  inject_pathway_props->total_metal_nuclide_yields.Fe[iSN] =   6.64078e-02;
-
-  inject_pathway_props->gas_metal_nuclide_yields.C [iSN] =   0.00000e+00;
-  inject_pathway_props->gas_metal_nuclide_yields.O [iSN] =   1.73867e-01;
-  inject_pathway_props->gas_metal_nuclide_yields.Mg[iSN] =   0.00000e+00;
-  inject_pathway_props->gas_metal_nuclide_yields.Al[iSN] =   2.85361e-03;
-  inject_pathway_props->gas_metal_nuclide_yields.Si[iSN] =   0.00000e+00;
-  inject_pathway_props->gas_metal_nuclide_yields.S [iSN] =   1.58191e-02;
-  inject_pathway_props->gas_metal_nuclide_yields.Fe[iSN] =   6.64078e-02;
 
   inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::MgSiO3_dust][iSN] =   2.50000e-01;
   inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::AC_dust]    [iSN] =   2.50000e-01;
