@@ -281,6 +281,7 @@ void override_dust_inject_props(chemistry_data_storage *my_rates,
     = my_rates->opaque_storage->inject_pathway_props;
 
   if (inject_pathway_props != nullptr) {
+    // handle the grain yields
     for(int iSN = 0; iSN < n_pathways; iSN++) {
       inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::SiM_dust]     [iSN] = value;
       inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::FeM_dust]     [iSN] = value;
@@ -298,6 +299,44 @@ void override_dust_inject_props(chemistry_data_storage *my_rates,
     }
   }
 
+  if (true) { // NOLINT(readability-simplify-boolean-expr)
+
+    // handle the size moments
+    int moment_table_len = n_pathways * 3; // there are 3 size moments
+    for(int i = 0; i < moment_table_len; i++) {
+      my_rates->SN0_r0SiM     [i] = value;
+      my_rates->SN0_r0FeM     [i] = value;
+      my_rates->SN0_r0Mg2SiO4 [i] = value;
+      my_rates->SN0_r0MgSiO3  [i] = value;
+      my_rates->SN0_r0Fe3O4   [i] = value;
+      my_rates->SN0_r0AC      [i] = value;
+      my_rates->SN0_r0SiO2D   [i] = value;
+      my_rates->SN0_r0MgO     [i] = value;
+      my_rates->SN0_r0FeS     [i] = value;
+      my_rates->SN0_r0Al2O3   [i] = value;
+      my_rates->SN0_r0reforg  [i] = value;
+      my_rates->SN0_r0volorg  [i] = value;
+      my_rates->SN0_r0H2Oice  [i] = value;
+    }
+
+    // handle the opacity coefficient table
+    int opac_table_len = n_pathways * my_rates->gr_Size;
+    for(int i = 0; i < opac_table_len; i++) {
+      my_rates->SN0_kpSiM     [i] = value;
+      my_rates->SN0_kpFeM     [i] = value;
+      my_rates->SN0_kpMg2SiO4 [i] = value;
+      my_rates->SN0_kpMgSiO3  [i] = value;
+      my_rates->SN0_kpFe3O4   [i] = value;
+      my_rates->SN0_kpAC      [i] = value;
+      my_rates->SN0_kpSiO2D   [i] = value;
+      my_rates->SN0_kpMgO     [i] = value;
+      my_rates->SN0_kpFeS     [i] = value;
+      my_rates->SN0_kpAl2O3   [i] = value;
+      my_rates->SN0_kpreforg  [i] = value;
+      my_rates->SN0_kpvolorg  [i] = value;
+      my_rates->SN0_kpH2Oice  [i] = value;
+    }
+  }
 }
 
 }  // anonymous namespace
@@ -357,26 +396,6 @@ int grackle::impl::initialize_dust_yields(chemistry_data *my_chemistry,
       my_rates->SN0_r0volorg   = (double*)malloc(NSN * 3 * sizeof(double));
       my_rates->SN0_r0H2Oice   = (double*)malloc(NSN * 3 * sizeof(double));
 
-      int itab = 0;
-      for(int iSN = 0; iSN < NSN; iSN++) {
-        for(int imom = 0; imom < 3; imom++) {
-          my_rates->SN0_r0SiM     [itab] = 0.0;
-          my_rates->SN0_r0FeM     [itab] = 0.0;
-          my_rates->SN0_r0Mg2SiO4 [itab] = 0.0;
-          my_rates->SN0_r0MgSiO3  [itab] = 0.0;
-          my_rates->SN0_r0Fe3O4   [itab] = 0.0;
-          my_rates->SN0_r0AC      [itab] = 0.0;
-          my_rates->SN0_r0SiO2D   [itab] = 0.0;
-          my_rates->SN0_r0MgO     [itab] = 0.0;
-          my_rates->SN0_r0FeS     [itab] = 0.0;
-          my_rates->SN0_r0Al2O3   [itab] = 0.0;
-          my_rates->SN0_r0reforg  [itab] = 0.0;
-          my_rates->SN0_r0volorg  [itab] = 0.0;
-          my_rates->SN0_r0H2Oice  [itab] = 0.0;
-          itab++;
-        }
-      }
-
   // write out the opacity related quantities
 
   // todo: consider renaming Nmom -> Ncoef
@@ -427,30 +446,6 @@ int grackle::impl::initialize_dust_yields(chemistry_data *my_chemistry,
       my_rates->SN0_kpvolorg   = (double*)malloc(NSN * Nmom * NTd * sizeof(double));
       my_rates->SN0_kpH2Oice   = (double*)malloc(NSN * Nmom * NTd * sizeof(double));
 
-      itab = 0;
-      for(int iSN = 0; iSN < NSN; iSN++) {
-        // TODO: I'm pretty sure we want to flip the order of inner loops
-        // - while it doesn't actually effect the result this is extremely
-        //   confusing if the grain-temperature axis isn't the fast axis.
-        for(int imom = 0; imom < Nmom; imom++) {
-          for(int iTd = 0; iTd < NTd; iTd++) {
-            my_rates->SN0_kpSiM     [itab] = 0.0;
-            my_rates->SN0_kpFeM     [itab] = 0.0;
-            my_rates->SN0_kpMg2SiO4 [itab] = 0.0;
-            my_rates->SN0_kpMgSiO3  [itab] = 0.0;
-            my_rates->SN0_kpFe3O4   [itab] = 0.0;
-            my_rates->SN0_kpAC      [itab] = 0.0;
-            my_rates->SN0_kpSiO2D   [itab] = 0.0;
-            my_rates->SN0_kpMgO     [itab] = 0.0;
-            my_rates->SN0_kpFeS     [itab] = 0.0;
-            my_rates->SN0_kpAl2O3   [itab] = 0.0;
-            my_rates->SN0_kpreforg  [itab] = 0.0;
-            my_rates->SN0_kpvolorg  [itab] = 0.0;
-            my_rates->SN0_kpH2Oice  [itab] = 0.0;
-            itab++;
-          }
-        }
-      }
 
   // zero-out all metal injection yield fractions and dust grain properties
   override_metal_inject_props(inject_pathway_props, 0.0, n_pathways);
