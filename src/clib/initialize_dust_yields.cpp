@@ -244,6 +244,62 @@ extern "C" int setup_yield_table_callback(
   return GR_SUCCESS;
 }
 
+/// a helper function override the values of all metal injection properties
+void override_metal_inject_props(
+  grackle::impl::GrainMetalInjectPathways* inject_pathway_props,
+  double value, int n_pathways)
+{
+  for(int iSN = 0; iSN < n_pathways; iSN++) {
+    inject_pathway_props->total_metal_nuclide_yields.C [iSN] = value;
+    inject_pathway_props->total_metal_nuclide_yields.O [iSN] = value;
+    inject_pathway_props->total_metal_nuclide_yields.Mg[iSN] = value;
+    inject_pathway_props->total_metal_nuclide_yields.Al[iSN] = value;
+    inject_pathway_props->total_metal_nuclide_yields.Si[iSN] = value;
+    inject_pathway_props->total_metal_nuclide_yields.S [iSN] = value;
+    inject_pathway_props->total_metal_nuclide_yields.Fe[iSN] = value;
+
+    inject_pathway_props->gas_metal_nuclide_yields.C [iSN] = value;
+    inject_pathway_props->gas_metal_nuclide_yields.O [iSN] = value;
+    inject_pathway_props->gas_metal_nuclide_yields.Mg[iSN] = value;
+    inject_pathway_props->gas_metal_nuclide_yields.Al[iSN] = value;
+    inject_pathway_props->gas_metal_nuclide_yields.Si[iSN] = value;
+    inject_pathway_props->gas_metal_nuclide_yields.S [iSN] = value;
+    inject_pathway_props->gas_metal_nuclide_yields.Fe[iSN] = value;
+  }
+}
+
+/// a helper function to override the values of all dust inject properties
+///
+/// @note
+/// to start, this only handles the grain yields
+void override_dust_inject_props(chemistry_data_storage *my_rates,
+                                double value, int n_pathways) {
+
+  GRIMPL_REQUIRE(my_rates != nullptr && my_rates->opaque_storage != nullptr,
+                 "sanity check -- should never ever fail!");
+  grackle::impl::GrainMetalInjectPathways* inject_pathway_props
+    = my_rates->opaque_storage->inject_pathway_props;
+
+  if (inject_pathway_props != nullptr) {
+    for(int iSN = 0; iSN < n_pathways; iSN++) {
+      inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::SiM_dust]     [iSN] = value;
+      inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::FeM_dust]     [iSN] = value;
+      inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::Mg2SiO4_dust] [iSN] = value;
+      inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::MgSiO3_dust]  [iSN] = value;
+      inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::Fe3O4_dust]   [iSN] = value;
+      inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::AC_dust]      [iSN] = value;
+      inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::SiO2_dust]   [iSN] = value;
+      inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::MgO_dust]     [iSN] = value;
+      inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::FeS_dust]     [iSN] = value;
+      inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::Al2O3_dust]   [iSN] = value;
+      inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::ref_org_dust]  [iSN] = value;
+      inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::vol_org_dust]  [iSN] = value;
+      inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::H2O_ice_dust]  [iSN] = value;
+    }
+  }
+
+}
+
 }  // anonymous namespace
 
 int grackle::impl::initialize_dust_yields(chemistry_data *my_chemistry,
@@ -286,38 +342,6 @@ int grackle::impl::initialize_dust_yields(chemistry_data *my_chemistry,
   my_rates->SN0_fSi = inject_pathway_props->gas_metal_nuclide_yields.Si;
   my_rates->SN0_fS  = inject_pathway_props->gas_metal_nuclide_yields.S;
   my_rates->SN0_fFe = inject_pathway_props->gas_metal_nuclide_yields.Fe;
-
-  for(int iSN = 0; iSN < NSN; iSN++) {
-    inject_pathway_props->total_metal_nuclide_yields.C [iSN] = 0.0;
-    inject_pathway_props->total_metal_nuclide_yields.O [iSN] = 0.0;
-    inject_pathway_props->total_metal_nuclide_yields.Mg[iSN] = 0.0;
-    inject_pathway_props->total_metal_nuclide_yields.Al[iSN] = 0.0;
-    inject_pathway_props->total_metal_nuclide_yields.Si[iSN] = 0.0;
-    inject_pathway_props->total_metal_nuclide_yields.S [iSN] = 0.0;
-    inject_pathway_props->total_metal_nuclide_yields.Fe[iSN] = 0.0;
-
-    inject_pathway_props->gas_metal_nuclide_yields.C [iSN] = 0.0;
-    inject_pathway_props->gas_metal_nuclide_yields.O [iSN] = 0.0;
-    inject_pathway_props->gas_metal_nuclide_yields.Mg[iSN] = 0.0;
-    inject_pathway_props->gas_metal_nuclide_yields.Al[iSN] = 0.0;
-    inject_pathway_props->gas_metal_nuclide_yields.Si[iSN] = 0.0;
-    inject_pathway_props->gas_metal_nuclide_yields.S [iSN] = 0.0;
-    inject_pathway_props->gas_metal_nuclide_yields.Fe[iSN] = 0.0;
-
-    inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::SiM_dust]     [iSN] = 0.0;
-    inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::FeM_dust]     [iSN] = 0.0;
-    inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::Mg2SiO4_dust] [iSN] = 0.0;
-    inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::MgSiO3_dust]  [iSN] = 0.0;
-    inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::Fe3O4_dust]   [iSN] = 0.0;
-    inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::AC_dust]      [iSN] = 0.0;
-    inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::SiO2_dust]   [iSN] = 0.0;
-    inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::MgO_dust]     [iSN] = 0.0;
-    inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::FeS_dust]     [iSN] = 0.0;
-    inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::Al2O3_dust]   [iSN] = 0.0;
-    inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::ref_org_dust]  [iSN] = 0.0;
-    inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::vol_org_dust]  [iSN] = 0.0;
-    inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::H2O_ice_dust]  [iSN] = 0.0;
-  }
 
       my_rates->SN0_r0SiM      = (double*)malloc(NSN * 3 * sizeof(double));
       my_rates->SN0_r0FeM      = (double*)malloc(NSN * 3 * sizeof(double));
@@ -428,6 +452,11 @@ int grackle::impl::initialize_dust_yields(chemistry_data *my_chemistry,
         }
       }
 
+  // zero-out all metal injection yield fractions and dust grain properties
+  override_metal_inject_props(inject_pathway_props, 0.0, n_pathways);
+  override_dust_inject_props(my_rates, 0.0, n_pathways);
+
+  // initialize all of the properties
       calc_yield_rate_fn* fn_list[] = {
         &calc_rates_dust_loc, &calc_rates_dust_C13, &calc_rates_dust_C20,
         &calc_rates_dust_C25, &calc_rates_dust_C30, &calc_rates_dust_F13,
