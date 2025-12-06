@@ -15,6 +15,8 @@
 #include <hdf5.h>
 #include <stdio.h>
 #include <math.h>
+#include <string>
+#include <vector>
 #include "grackle_macros.h"
 #include "grackle_chemistry_data.h"
 #include "initialize_dust_yields.hpp" // forward declarations
@@ -339,6 +341,145 @@ void override_dust_inject_props(chemistry_data_storage *my_rates,
   }
 }
 
+struct SummaryGrainYieldProp{
+  std::string name;
+  std::vector<double> yield_frac;
+  std::vector<double> size_moments;
+  std::vector<double> opacity_coef_table;
+
+  bool operator==(const SummaryGrainYieldProp& other) const {
+    return (
+        (name == other.name) &&
+        (yield_frac == other.yield_frac) &&
+        (size_moments == other.size_moments) &&
+        (opacity_coef_table == other.opacity_coef_table)
+      );
+  }
+
+
+  bool operator!=(const SummaryGrainYieldProp& other) const {
+    return (
+        (name != other.name) ||
+        (yield_frac != other.yield_frac) ||
+        (size_moments != other.size_moments) ||
+        (opacity_coef_table != other.opacity_coef_table)
+      );
+  }
+};
+
+std::vector<SummaryGrainYieldProp>
+get_summary(chemistry_data_storage *my_rates, int n_pathways) {
+
+  GRIMPL_REQUIRE(my_rates != nullptr && my_rates->opaque_storage != nullptr,
+                 "sanity check -- should never ever fail!");
+  grackle::impl::GrainMetalInjectPathways* inject_pathway_props
+    = my_rates->opaque_storage->inject_pathway_props;
+
+  GRIMPL_REQUIRE(inject_pathway_props != nullptr,
+                 "sanity check -- should never ever fail!");
+  auto helper_fn = [=](const char* name) {
+
+    int grain_species_idx = -1;
+    const double* cur_size_mom_table = nullptr;
+    const double* cur_opac_coef_table = nullptr;
+    if (std::strcmp("MgSiO3_dust", name) == 0) {
+      grain_species_idx = OnlyGrainSpLUT::MgSiO3_dust;
+      cur_size_mom_table = my_rates->SN0_r0MgSiO3;
+      cur_opac_coef_table = my_rates->SN0_kpMgSiO3;
+    } else if (std::strcmp("AC_dust", name) == 0) {
+      grain_species_idx = OnlyGrainSpLUT::AC_dust;
+      cur_size_mom_table = my_rates->SN0_r0AC;
+      cur_opac_coef_table = my_rates->SN0_kpAC;
+    } else if (std::strcmp("SiM_dust", name) == 0) {
+      grain_species_idx = OnlyGrainSpLUT::SiM_dust;
+      cur_size_mom_table = my_rates->SN0_r0SiM;
+      cur_opac_coef_table = my_rates->SN0_kpSiM;
+    } else if (std::strcmp("FeM_dust", name) == 0) {
+      grain_species_idx = OnlyGrainSpLUT::FeM_dust;
+      cur_size_mom_table = my_rates->SN0_r0FeM;
+      cur_opac_coef_table = my_rates->SN0_kpFeM;
+    } else if (std::strcmp("Mg2SiO4_dust", name) == 0) {
+      grain_species_idx = OnlyGrainSpLUT::Mg2SiO4_dust;
+      cur_size_mom_table = my_rates->SN0_r0Mg2SiO4;
+      cur_opac_coef_table = my_rates->SN0_kpMg2SiO4;
+    } else if (std::strcmp("Fe3O4_dust", name) == 0) {
+      grain_species_idx = OnlyGrainSpLUT::Fe3O4_dust;
+      cur_size_mom_table = my_rates->SN0_r0Fe3O4;
+      cur_opac_coef_table = my_rates->SN0_kpFe3O4;
+    } else if (std::strcmp("SiO2_dust", name) == 0) {
+      grain_species_idx = OnlyGrainSpLUT::SiO2_dust;
+      cur_size_mom_table = my_rates->SN0_r0SiO2D;
+      cur_opac_coef_table = my_rates->SN0_kpSiO2D;
+    } else if (std::strcmp("MgO_dust", name) == 0) {
+      grain_species_idx = OnlyGrainSpLUT::MgO_dust;
+      cur_size_mom_table = my_rates->SN0_r0MgO;
+      cur_opac_coef_table = my_rates->SN0_kpMgO;
+    } else if (std::strcmp("FeS_dust", name) == 0) {
+      grain_species_idx = OnlyGrainSpLUT::FeS_dust;
+      cur_size_mom_table = my_rates->SN0_r0FeS;
+      cur_opac_coef_table = my_rates->SN0_kpFeS;
+    } else if (std::strcmp("Al2O3_dust", name) == 0) {
+      grain_species_idx = OnlyGrainSpLUT::Al2O3_dust;
+      cur_size_mom_table = my_rates->SN0_r0Al2O3;
+      cur_opac_coef_table = my_rates->SN0_kpAl2O3;
+    } else if (std::strcmp("ref_org_dust", name) == 0) {
+      grain_species_idx = OnlyGrainSpLUT::ref_org_dust;
+      cur_size_mom_table = my_rates->SN0_r0reforg;
+      cur_opac_coef_table = my_rates->SN0_kpreforg;
+    } else if (std::strcmp("vol_org_dust", name) == 0) {
+      grain_species_idx = OnlyGrainSpLUT::vol_org_dust;
+      cur_size_mom_table = my_rates->SN0_r0volorg;
+      cur_opac_coef_table = my_rates->SN0_kpvolorg;
+    } else if (std::strcmp("H2O_ice_dust", name) == 0) {
+      grain_species_idx = OnlyGrainSpLUT::H2O_ice_dust;
+      cur_size_mom_table = my_rates->SN0_r0H2Oice;
+      cur_opac_coef_table = my_rates->SN0_kpH2Oice;
+    } else {
+      GRIMPL_ERROR("THERE'S A PROBLEM");
+    }
+
+    const double* cur_yields =
+      inject_pathway_props->grain_yields.data[grain_species_idx];
+
+    std::vector<double> yields(cur_yields, cur_yields + n_pathways);
+    std::vector<double> size_mom_table
+      (cur_size_mom_table, cur_size_mom_table + (n_pathways*3));
+    std::vector<double> opac_coef_table
+      (cur_opac_coef_table,
+       cur_opac_coef_table + (n_pathways*my_rates->gr_Size));
+    return SummaryGrainYieldProp{std::string(name),
+                                 yields,
+                                 size_mom_table,
+                                 opac_coef_table};
+  };
+
+  std::vector<std::string> names = {
+    "MgSiO3_dust",
+    "AC_dust",
+    "SiM_dust",
+    "FeM_dust",
+    "Mg2SiO4_dust",
+    "Fe3O4_dust",
+    "SiO2_dust",
+    "MgO_dust",
+    "FeS_dust",
+    "Al2O3_dust",
+    "ref_org_dust",
+    "vol_org_dust",
+    "H2O_ice_dust",
+  };
+
+
+  std::vector<SummaryGrainYieldProp> out;
+  for (auto name : names){
+    out.push_back(helper_fn(name.c_str()));
+  }
+  std::printf("%s\n", out[2].name.c_str());
+  return out;
+
+}
+
+
 }  // anonymous namespace
 
 int grackle::impl::initialize_dust_yields(chemistry_data *my_chemistry,
@@ -451,6 +592,9 @@ int grackle::impl::initialize_dust_yields(chemistry_data *my_chemistry,
   override_metal_inject_props(inject_pathway_props, 0.0, n_pathways);
   override_dust_inject_props(my_rates, 0.0, n_pathways);
 
+
+  std::vector<SummaryGrainYieldProp> raw = get_summary(my_rates, n_pathways);
+
   // initialize all of the properties
       calc_yield_rate_fn* fn_list[] = {
         &calc_rates_dust_loc, &calc_rates_dust_C13, &calc_rates_dust_C20,
@@ -465,6 +609,11 @@ int grackle::impl::initialize_dust_yields(chemistry_data *my_chemistry,
         int rv = fn_list[i](i, my_chemistry, my_rates);
         if (rv != SUCCESS) { return rv; }
       }
+
+  std::vector<SummaryGrainYieldProp> original_set = get_summary(my_rates,
+                                                                n_pathways);
+  // if (raw != original_set) { return GrPrintAndReturnErr("expected to fail!"); }
+
   SetupCallbackCtx ctx = {my_rates, 0};
 
   int ret = grackle::impl::inj_model_input::input_inject_model_iterate(
