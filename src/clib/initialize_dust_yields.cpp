@@ -63,7 +63,7 @@ int lookup_pathway_idx(const char* name) {
 /// the context object for setup_yield_table_callback
 struct SetupCallbackCtx{
   chemistry_data_storage *my_rates;
-  int setup_counter;
+  int counter;
 };
 
 /// a callback function that sets up the appropriate parts of
@@ -90,6 +90,10 @@ extern "C" int setup_yield_table_callback(
     return GrPrintAndReturnErr(
       "`%s` is an unexpected injection pathway name", name);
   }
+
+  int counter_val = static_cast<SetupCallbackCtx*>(ctx)->counter;
+
+  GR_INTERNAL_REQUIRE(counter_val == pathway_idx, "sanity-checking");
   //printf("encounterd: `%s`, pathway_idx: %d\n", name, pathway_idx);
   //fflush(stdout);
 
@@ -98,6 +102,47 @@ extern "C" int setup_yield_table_callback(
 
   grackle::impl::GrainMetalInjectPathways* inject_pathway_props
     = my_rates->opaque_storage->inject_pathway_props;
+
+  GR_INTERNAL_REQUIRE(input->n_metal_nuclide_yields == 7, "sanity-checking");
+
+  auto copy_data = [pathway_idx](const grackle::impl::yields::MetalTables& tab,
+                                 double* ptr)
+  {
+    ptr[0] = tab.C[pathway_idx];
+    ptr[1] = tab.O[pathway_idx];
+    ptr[2] = tab.Mg[pathway_idx];
+    ptr[3] = tab.Al[pathway_idx];
+    ptr[4] = tab.Si[pathway_idx];
+    ptr[5] = tab.S[pathway_idx];
+    ptr[6] = tab.Fe[pathway_idx];
+  };
+
+  auto clear_tab = [pathway_idx](const grackle::impl::yields::MetalTables& tab)
+  {
+    tab.C[pathway_idx] = NAN;
+    tab.O[pathway_idx] = NAN;
+    tab.Mg[pathway_idx] = NAN;
+    tab.Al[pathway_idx] = NAN;
+    tab.Si[pathway_idx] = NAN;
+    tab.S[pathway_idx] = NAN;
+    tab.Fe[pathway_idx] = NAN;
+  };
+
+  double original[7] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+  double updated[7] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+
+  copy_data(inject_pathway_props->total_metal_nuclide_yields, original);
+
+  printf("\n");
+  for (int i = 0; i < 7; i++) {
+    printf("%g, ", original[i]);
+  }
+  printf("\n");
+  fflush(stdout);
+
+  clear_tab(inject_pathway_props->total_metal_nuclide_yields);
+
+
 
   // record each metal nuclide yield
   // -> there is less value to using string keys in this case, but it makes
@@ -137,8 +182,17 @@ extern "C" int setup_yield_table_callback(
         "`%s` not a known metal nuclide", yield_info.name);
     }
 
-    //total_yield[pathway_idx] = yield_info.total_yield;
+    total_yield[pathway_idx] = yield_info.total_yield;
     //gas_yield[pathway_idx] = yield_info.gas_yield;
+  }
+
+  copy_data(inject_pathway_props->total_metal_nuclide_yields, updated);
+  for (int i =0; i <7; i++){
+    if (original[i] != updated[i]) {
+      printf("nuclide %d has changed!\n", i);
+      fflush(stdout);
+      return GR_FAIL;
+    }
   }
 
   // record each grain species yield
@@ -234,6 +288,8 @@ extern "C" int setup_yield_table_callback(
     }
     */
   }
+
+  (static_cast<SetupCallbackCtx*>(ctx)->counter)++;
 
   return GR_SUCCESS;
 }
@@ -440,9 +496,10 @@ int grackle::impl::initialize_dust_yields(chemistry_data *my_chemistry,
   int ret = grackle::impl::inj_model_input::input_inject_model_iterate(
       &setup_yield_table_callback, static_cast<void*>(&ctx));
   if (ret != GR_SUCCESS) {
-    GRIMPL_ERROR("THERE WAS AN ERROR");
+    return GR_FAIL;
   }
-  //return GR_FAIL;
+
+  GR_INTERNAL_REQUIRE(ctx.counter == 12, "sanity-checking");
 
   return GR_SUCCESS;
 }
