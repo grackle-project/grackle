@@ -131,7 +131,7 @@ extern "C" int setup_yield_table_callback(
   double original[7] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
   double updated[7] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
-  copy_data(inject_pathway_props->total_metal_nuclide_yields, original);
+  copy_data(inject_pathway_props->gas_metal_nuclide_yields, original);
 
   printf("\n");
   for (int i = 0; i < 7; i++) {
@@ -141,6 +141,7 @@ extern "C" int setup_yield_table_callback(
   fflush(stdout);
 
   clear_tab(inject_pathway_props->total_metal_nuclide_yields);
+  clear_tab(inject_pathway_props->gas_metal_nuclide_yields);
 
 
 
@@ -183,10 +184,10 @@ extern "C" int setup_yield_table_callback(
     }
 
     total_yield[pathway_idx] = yield_info.total_yield;
-    //gas_yield[pathway_idx] = yield_info.gas_yield;
+    gas_yield[pathway_idx] = yield_info.gas_yield;
   }
 
-  copy_data(inject_pathway_props->total_metal_nuclide_yields, updated);
+  copy_data(inject_pathway_props->gas_metal_nuclide_yields, updated);
   for (int i =0; i <7; i++){
     if (original[i] != updated[i]) {
       printf("nuclide %d has changed!\n", i);
