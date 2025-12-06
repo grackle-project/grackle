@@ -119,6 +119,7 @@ add_library(Grackle_Grackle
   initialize_rates.cpp initialize_rates.hpp
   internal_types.cpp internal_types.hpp
   lookup_cool_rates1d.hpp
+  make_consistent.cpp make_consistent.hpp
   opaque_storage.hpp
   rate_utils.cpp
   scale_fields.cpp scale_fields.hpp
