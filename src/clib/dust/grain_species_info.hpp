@@ -226,9 +226,9 @@ inline GrainSpeciesInfo new_GrainSpeciesInfo(int dust_species_parameter) {
         // {coef, species_idx, particle mass}
         {1, SpLUT::CI, 12.},
         GRIMPL_INGREDIENT_LIST_SENTINEL};
-    out.species_info[1] =
-        mk_gsp_info_entry_helper_(SpLUT::AC_dust, OnlyGrainSpLUT::AC_dust,
-                                  "AC_dust", true, 1800.0, AC_dust_ingred);
+    out.species_info[1] = mk_gsp_info_entry_helper_(
+        SpLUT::AC_dust, OnlyGrainSpLUT::AC_dust, "AC_dust", true,
+        1800.0, AC_dust_ingred);
   }
 
   if (dust_species_parameter > 1) {
@@ -236,17 +236,17 @@ inline GrainSpeciesInfo new_GrainSpeciesInfo(int dust_species_parameter) {
         // {coef, species_idx, particle mass}
         {1, SpLUT::SiI, 28.},
         GRIMPL_INGREDIENT_LIST_SENTINEL};
-    out.species_info[2] =
-        mk_gsp_info_entry_helper_(SpLUT::SiM_dust, OnlyGrainSpLUT::SiM_dust,
-                                  "SiM_dust", false, 1500.0, SiM_dust_ingred);
+    out.species_info[2] = mk_gsp_info_entry_helper_(
+        SpLUT::SiM_dust, OnlyGrainSpLUT::SiM_dust, "SiM_dust", false,
+        1500.0, SiM_dust_ingred);
 
     const GrainGrowthIngredient FeM_dust_ingred[] = {
         // {coef, species_idx, particle mass}
         {1, SpLUT::Fe, 56.},
         GRIMPL_INGREDIENT_LIST_SENTINEL};
-    out.species_info[3] =
-        mk_gsp_info_entry_helper_(SpLUT::FeM_dust, OnlyGrainSpLUT::FeM_dust,
-                                  "FeM_dust", false, 1500.0, FeM_dust_ingred);
+    out.species_info[3] = mk_gsp_info_entry_helper_(
+        SpLUT::FeM_dust, OnlyGrainSpLUT::FeM_dust, "FeM_dust", false,
+        1500.0, FeM_dust_ingred);
 
     const GrainGrowthIngredient Mg2SiO4_dust_ingred[] = {
         // {coef, species_idx, particle mass}
@@ -255,8 +255,8 @@ inline GrainSpeciesInfo new_GrainSpeciesInfo(int dust_species_parameter) {
         {3, SpLUT::H2O, 18.},
         GRIMPL_INGREDIENT_LIST_SENTINEL};
     out.species_info[4] = mk_gsp_info_entry_helper_(
-        SpLUT::Mg2SiO4_dust, OnlyGrainSpLUT::Mg2SiO4_dust, "Mg2SiO4_dust",
-        false, 1277.0, Mg2SiO4_dust_ingred);
+        SpLUT::Mg2SiO4_dust, OnlyGrainSpLUT::Mg2SiO4_dust, "Mg2SiO4_dust", false,
+        1277.0, Mg2SiO4_dust_ingred);
 
     const GrainGrowthIngredient Fe3O4_dust_ingred[] = {
         // {coef, species_idx, particle mass}
@@ -271,27 +271,27 @@ inline GrainSpeciesInfo new_GrainSpeciesInfo(int dust_species_parameter) {
         // {coef, species_idx, particle mass}
         {1, SpLUT::SiO2I, 60.},
         GRIMPL_INGREDIENT_LIST_SENTINEL};
-    out.species_info[6] =
-        mk_gsp_info_entry_helper_(SpLUT::SiO2_dust, OnlyGrainSpLUT::SiO2_dust,
-                                  "SiO2_dust", false, 1500.0, SiO2_dust_ingred);
+    out.species_info[6] = mk_gsp_info_entry_helper_(
+        SpLUT::SiO2_dust, OnlyGrainSpLUT::SiO2_dust, "SiO2_dust", false,
+        1500.0, SiO2_dust_ingred);
 
     const GrainGrowthIngredient MgO_dust_ingred[] = {
         // {coef, species_idx, particle mass}
         {1, SpLUT::Mg, 24.},
         {1, SpLUT::H2O, 18.},
         GRIMPL_INGREDIENT_LIST_SENTINEL};
-    out.species_info[7] =
-        mk_gsp_info_entry_helper_(SpLUT::MgO_dust, OnlyGrainSpLUT::MgO_dust,
-                                  "MgO_dust", false, 1500.0, MgO_dust_ingred);
+    out.species_info[7] = mk_gsp_info_entry_helper_(
+        SpLUT::MgO_dust, OnlyGrainSpLUT::MgO_dust, "MgO_dust", false,
+        1500.0, MgO_dust_ingred);
 
     const GrainGrowthIngredient FeS_dust_ingred[] = {
         // {coef, species_idx, particle mass}
         {1, SpLUT::Fe, 56.},
         {1, SpLUT::S, 32.},
         GRIMPL_INGREDIENT_LIST_SENTINEL};
-    out.species_info[8] =
-        mk_gsp_info_entry_helper_(SpLUT::FeS_dust, OnlyGrainSpLUT::FeS_dust,
-                                  "FeS_dust", false, 680.0, FeS_dust_ingred);
+    out.species_info[8] = mk_gsp_info_entry_helper_(
+        SpLUT::FeS_dust, OnlyGrainSpLUT::FeS_dust, "FeS_dust", false,
+        680.0, FeS_dust_ingred);
 
     const GrainGrowthIngredient Al2O3_dust_ingred[] = {
         // {coef, species_idx, particle mass}
