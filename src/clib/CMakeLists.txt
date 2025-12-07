@@ -112,7 +112,7 @@ add_library(Grackle_Grackle
   cool1d_multi_g.cpp cool1d_multi_g.hpp
   cool_multi_time_g.cpp cool_multi_time_g.h
   dust_props.hpp
-  dust/grain_species_info.hpp
+  dust/grain_species_info.cpp dust/grain_species_info.hpp
   dust/lookup_dust_rates1d.hpp
   init_misc_species_cool_rates.cpp init_misc_species_cool_rates.hpp
   initialize_chemistry_data.cpp
@@ -120,6 +120,7 @@ add_library(Grackle_Grackle
   initialize_rates.cpp initialize_rates.hpp
   internal_types.cpp internal_types.hpp
   lookup_cool_rates1d.hpp
+  make_consistent.cpp make_consistent.hpp
   opaque_storage.hpp
   rate_utils.cpp
   scale_fields.cpp scale_fields.hpp

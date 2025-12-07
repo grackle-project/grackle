@@ -6,16 +6,12 @@
 //===----------------------------------------------------------------------===//
 ///
 /// @file
-/// Defines details about the dust grain species
+/// Declares GrainSpeciesInfo as well as other associated types and functions
 ///
 //===----------------------------------------------------------------------===//
 
 #ifndef GRAIN_SPECIES_INFO_HPP
 #define GRAIN_SPECIES_INFO_HPP
-
-#include "LUT.hpp"
-#include "grackle_macros.h"
-#include <cstring>  // memcpy
 
 namespace grackle::impl {
 
@@ -71,8 +67,16 @@ struct GrainSpeciesInfoEntry {
   /// to track the information in this manner.
   bool h2dust_uses_carbonaceous_table;
 
-  /// The sublimation temperature
+  /// The sublimation temperature in units of Kelvin
   double sublimation_temperature;
+
+  /// specifies the density of a single grain in units of g/cm^3
+  ///
+  /// @note
+  /// The values are consistent with the values quoted within table 2 of
+  /// [Chiaki+ 2015](https://ui.adsabs.harvard.edu/abs/2015MNRAS.446.2659C)
+  /// assuming that all grains are spherical.
+  double bulk_density_cgs;
 
   /// The number of growth ingredients
   int n_growth_ingredients;
@@ -140,189 +144,11 @@ inline int get_n_grain_species(int dust_species_parameter) {
 /// The correctness of this constant is explicitly checked in a unit test
 inline constexpr int max_ingredients_per_grain_species = 3;
 
-// define a few macros to help implement new_GrainSpeciesInfo
-// - we undef all of these macros after they're used for cleanliness
-// - we may want to consider an alternative that avoids macros in the future
-#define GRIMPL_INGREDIENT_LIST_SENTINEL {-1, -1, -1.0}
-
-// does the heavy-lifting for implementing GR_MK_GRAIN_INFO_ENTRY
-inline GrainSpeciesInfoEntry mk_gsp_info_entry_helper_(
-    int species_idx, int onlygrainsp_idx, const char* name,
-    bool h2dust_uses_carbonaceous_table, double sublimation_temperature,
-    const GrainGrowthIngredient* growth_ingredients) {
-  GrainGrowthIngredient* out_ingredient_ptr = nullptr;
-  int n_ingredients = 0;
-
-  if (growth_ingredients != nullptr) {
-    n_ingredients = 0;
-    // increment the counter until we reach the sentinel
-    while (growth_ingredients[n_ingredients].coef != -1) {
-      n_ingredients++;
-    }
-    // allocate and initialize the pointer
-    out_ingredient_ptr = new GrainGrowthIngredient[n_ingredients];
-    std::memcpy(out_ingredient_ptr, growth_ingredients,
-                (std::size_t)n_ingredients);
-  }
-
-  return GrainSpeciesInfoEntry{species_idx,
-                               onlygrainsp_idx,
-                               name,
-                               h2dust_uses_carbonaceous_table,
-                               sublimation_temperature,
-                               n_ingredients,
-                               out_ingredient_ptr};
-}
-
-/// fills the specified out.species_infoay with the number of grain species.
-///
-/// The out.species_infoay is expected to have space for the number of entries
-/// returned by get_n_grain_species(dust_species_paramter)
+/// Constructs an returns a fully initialized GrainSpeciesInfo instance.
 ///
 /// @param[in]  dust_species_parameter The parameter tracked by #chemistry_data
 /// @returns A fully initialized GrainSpeciesInfo instance
-inline GrainSpeciesInfo new_GrainSpeciesInfo(int dust_species_parameter) {
-  GrainSpeciesInfo out{-1, nullptr};  // indicates an error
-  out.n_species = get_n_grain_species(dust_species_parameter);
-
-  if (out.n_species <= 0) {
-    return out;
-  }
-
-  out.species_info = new GrainSpeciesInfoEntry[out.n_species];
-
-  // At the time of writing:
-  // - we **only** use h2rate_carbonaceous_coef_table for the AC_dust
-  //   species (amorphous carbon grains)
-  // - we use h2rate_silicate_coef_table for **ALL** other grain species
-  //   (including species that are obviously NOT silicates)
-  //
-  // It is not obvious at all why this is the case...
-  //
-  // TODO: we should add documentation clearly addressing each of the
-  // following questions and replace this todo-item with a reference to the
-  // part of the documentation that discusses this! The documentation
-  // should make sure to address:
-  // - if this choice physically motivated or a common convention? (or if
-  //   it was a quick & dirty choice because Gen didn't know what to do)
-  // - do we have a sense for how "wrong" the choice is? (e.g. will it
-  //   generally overpredict/underpredict?)
-  // - why don't we use the generic my_rates->h2dusta rate as a generic
-  //   fallback for non-silicate grains instead of using h2dustS? I realize
-  //   that h2dusta has very different units...
-
-  if (dust_species_parameter > 0) {
-    const GrainGrowthIngredient MgSiO3_dust_ingred[] = {
-        // {coef, species_idx, particle mass}
-        {1, SpLUT::Mg, 24.},
-        {1, SpLUT::SiOI, 44.},
-        {2, SpLUT::H2O, 18.},
-        GRIMPL_INGREDIENT_LIST_SENTINEL};
-    out.species_info[0] = mk_gsp_info_entry_helper_(
-        SpLUT::MgSiO3_dust, OnlyGrainSpLUT::MgSiO3_dust, "MgSiO3_dust", false,
-        1222.0, MgSiO3_dust_ingred);
-
-    const GrainGrowthIngredient AC_dust_ingred[] = {
-        // {coef, species_idx, particle mass}
-        {1, SpLUT::CI, 12.},
-        GRIMPL_INGREDIENT_LIST_SENTINEL};
-    out.species_info[1] =
-        mk_gsp_info_entry_helper_(SpLUT::AC_dust, OnlyGrainSpLUT::AC_dust,
-                                  "AC_dust", true, 1800.0, AC_dust_ingred);
-  }
-
-  if (dust_species_parameter > 1) {
-    const GrainGrowthIngredient SiM_dust_ingred[] = {
-        // {coef, species_idx, particle mass}
-        {1, SpLUT::SiI, 28.},
-        GRIMPL_INGREDIENT_LIST_SENTINEL};
-    out.species_info[2] =
-        mk_gsp_info_entry_helper_(SpLUT::SiM_dust, OnlyGrainSpLUT::SiM_dust,
-                                  "SiM_dust", false, 1500.0, SiM_dust_ingred);
-
-    const GrainGrowthIngredient FeM_dust_ingred[] = {
-        // {coef, species_idx, particle mass}
-        {1, SpLUT::Fe, 56.},
-        GRIMPL_INGREDIENT_LIST_SENTINEL};
-    out.species_info[3] =
-        mk_gsp_info_entry_helper_(SpLUT::FeM_dust, OnlyGrainSpLUT::FeM_dust,
-                                  "FeM_dust", false, 1500.0, FeM_dust_ingred);
-
-    const GrainGrowthIngredient Mg2SiO4_dust_ingred[] = {
-        // {coef, species_idx, particle mass}
-        {2, SpLUT::Mg, 24.},
-        {1, SpLUT::SiOI, 44.},
-        {3, SpLUT::H2O, 18.},
-        GRIMPL_INGREDIENT_LIST_SENTINEL};
-    out.species_info[4] = mk_gsp_info_entry_helper_(
-        SpLUT::Mg2SiO4_dust, OnlyGrainSpLUT::Mg2SiO4_dust, "Mg2SiO4_dust",
-        false, 1277.0, Mg2SiO4_dust_ingred);
-
-    const GrainGrowthIngredient Fe3O4_dust_ingred[] = {
-        // {coef, species_idx, particle mass}
-        {3, SpLUT::Fe, 56.},
-        {4, SpLUT::H2O, 18.},
-        GRIMPL_INGREDIENT_LIST_SENTINEL};
-    out.species_info[5] = mk_gsp_info_entry_helper_(
-        SpLUT::Fe3O4_dust, OnlyGrainSpLUT::Fe3O4_dust, "Fe3O4_dust", false,
-        1500.0, Fe3O4_dust_ingred);
-
-    const GrainGrowthIngredient SiO2_dust_ingred[] = {
-        // {coef, species_idx, particle mass}
-        {1, SpLUT::SiO2I, 60.},
-        GRIMPL_INGREDIENT_LIST_SENTINEL};
-    out.species_info[6] =
-        mk_gsp_info_entry_helper_(SpLUT::SiO2_dust, OnlyGrainSpLUT::SiO2_dust,
-                                  "SiO2_dust", false, 1500.0, SiO2_dust_ingred);
-
-    const GrainGrowthIngredient MgO_dust_ingred[] = {
-        // {coef, species_idx, particle mass}
-        {1, SpLUT::Mg, 24.},
-        {1, SpLUT::H2O, 18.},
-        GRIMPL_INGREDIENT_LIST_SENTINEL};
-    out.species_info[7] =
-        mk_gsp_info_entry_helper_(SpLUT::MgO_dust, OnlyGrainSpLUT::MgO_dust,
-                                  "MgO_dust", false, 1500.0, MgO_dust_ingred);
-
-    const GrainGrowthIngredient FeS_dust_ingred[] = {
-        // {coef, species_idx, particle mass}
-        {1, SpLUT::Fe, 56.},
-        {1, SpLUT::S, 32.},
-        GRIMPL_INGREDIENT_LIST_SENTINEL};
-    out.species_info[8] =
-        mk_gsp_info_entry_helper_(SpLUT::FeS_dust, OnlyGrainSpLUT::FeS_dust,
-                                  "FeS_dust", false, 680.0, FeS_dust_ingred);
-
-    const GrainGrowthIngredient Al2O3_dust_ingred[] = {
-        // {coef, species_idx, particle mass}
-        {2, SpLUT::Al, 27.},
-        {3, SpLUT::H2O, 18.},
-        GRIMPL_INGREDIENT_LIST_SENTINEL};
-    out.species_info[9] = mk_gsp_info_entry_helper_(
-        SpLUT::Al2O3_dust, OnlyGrainSpLUT::Al2O3_dust, "Al2O3_dust", false,
-        1500.0, Al2O3_dust_ingred);
-  }
-
-  if (dust_species_parameter > 2) {
-    // We do not consider the growth of refractory organics, volatile
-    // organics, and water ice because their sublimation temperatures
-    // are low (100-600 K). They sublimate before the growth occurs.
-
-    out.species_info[10] = mk_gsp_info_entry_helper_(
-        SpLUT::ref_org_dust, OnlyGrainSpLUT::ref_org_dust, "ref_org_dust",
-        false, 575.0, nullptr);
-    out.species_info[11] = mk_gsp_info_entry_helper_(
-        SpLUT::vol_org_dust, OnlyGrainSpLUT::vol_org_dust, "vol_org_dust",
-        false, 375.0, nullptr);
-    out.species_info[12] = mk_gsp_info_entry_helper_(
-        SpLUT::H2O_ice_dust, OnlyGrainSpLUT::H2O_ice_dust, "H2O_ice_dust",
-        false, 153.0, nullptr);
-  }
-
-  return out;
-}
-
-#undef GRIMPL_INGREDIENT_LIST_SENTINEL
+GrainSpeciesInfo new_GrainSpeciesInfo(int dust_species_parameter);
 
 /// performs cleanup of the contents of GrainSpeciesInfo
 ///
