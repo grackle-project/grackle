@@ -154,13 +154,6 @@ static void initialize_empty_chemistry_data_storage_struct(chemistry_data_storag
   my_rates->gr_dT = 0.;
   my_rates->gr_Td = NULL;
   my_rates->SN0_N = 0;
-  my_rates->SN0_XC = nullptr;
-  my_rates->SN0_XO = nullptr;
-  my_rates->SN0_XMg = nullptr;
-  my_rates->SN0_XAl = nullptr;
-  my_rates->SN0_XSi = nullptr;
-  my_rates->SN0_XS = nullptr;
-  my_rates->SN0_XFe = nullptr;
   my_rates->SN0_fC = nullptr;
   my_rates->SN0_fO = nullptr;
   my_rates->SN0_fMg = nullptr;

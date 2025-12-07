@@ -609,7 +609,6 @@ typedef struct
   int    *gr_N, gr_Size;
   double gr_dT, *gr_Td;
   int     SN0_N;
-  double *SN0_XC , *SN0_XO , *SN0_XMg, *SN0_XAl, *SN0_XSi, *SN0_XS , *SN0_XFe;
   double *SN0_fC , *SN0_fO , *SN0_fMg, *SN0_fAl, *SN0_fSi, *SN0_fS , *SN0_fFe;
   double *SN0_r0SiM, *SN0_r0FeM, *SN0_r0Mg2SiO4, *SN0_r0MgSiO3, *SN0_r0Fe3O4
        , *SN0_r0AC, *SN0_r0SiO2D, *SN0_r0MgO, *SN0_r0FeS, *SN0_r0Al2O3

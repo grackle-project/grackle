@@ -334,17 +334,7 @@ int grackle::impl::initialize_dust_yields(chemistry_data *my_chemistry,
   int NSN = n_pathways;  // todo: delete me!
   my_rates->SN0_N = n_pathways;
 
-  // crude hack (until we delete all of chemistry_data_storage's SN0_X* and
-  // SN0_f* members -- this has to wait until after we merge in the
-  // transcription of make_consistent)
-  my_rates->SN0_XC  = inject_pathway_props->total_metal_nuclide_yields.C;
-  my_rates->SN0_XO = inject_pathway_props->total_metal_nuclide_yields.O;  
-  my_rates->SN0_XMg = inject_pathway_props->total_metal_nuclide_yields.Mg; 
-  my_rates->SN0_XAl = inject_pathway_props->total_metal_nuclide_yields.Al; 
-  my_rates->SN0_XSi = inject_pathway_props->total_metal_nuclide_yields.Si; 
-  my_rates->SN0_XS = inject_pathway_props->total_metal_nuclide_yields.S;  
-  my_rates->SN0_XFe = inject_pathway_props->total_metal_nuclide_yields.Fe; 
-
+  // crude hack (holding onto this momentarily)
   my_rates->SN0_fC  = inject_pathway_props->gas_metal_nuclide_yields.C;
   my_rates->SN0_fO  = inject_pathway_props->gas_metal_nuclide_yields.O;
   my_rates->SN0_fMg = inject_pathway_props->gas_metal_nuclide_yields.Mg;
@@ -442,18 +432,8 @@ int grackle::impl::free_dust_yields(chemistry_data *my_chemistry,
   if (my_chemistry->metal_chemistry == 0)
     return SUCCESS;
 
-  // reminder: we have adopted a crude hack (until we delete all of
-  // chemistry_data_storage's SN0_X* and SN0_f* members -- this has to wait
-  // until after we merge in the transcription of make_consistent), where
-  // the yield fraction for each metal nuclide is an alias to a pointer
-  my_rates->SN0_XC = nullptr;
-  my_rates->SN0_XO = nullptr;
-  my_rates->SN0_XMg = nullptr;
-  my_rates->SN0_XAl = nullptr;
-  my_rates->SN0_XSi = nullptr;
-  my_rates->SN0_XS = nullptr;
-  my_rates->SN0_XFe = nullptr;
-
+  // reminder: we are holding on to SN0_f<nuclide> as a crude hack (we will
+  // delete them later)
   my_rates->SN0_fC = nullptr;
   my_rates->SN0_fO = nullptr;
   my_rates->SN0_fMg = nullptr;
