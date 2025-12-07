@@ -125,61 +125,47 @@ extern "C" int setup_yield_table_callback(
       input->initial_grain_props[yield_idx];
 
     int grain_species_idx = -1;
-    double* size_mom_table = nullptr;
     double* opac_coef_table = nullptr;
 
     // with a little refactoring, this will get a lot more concise
     if (std::strcmp("MgSiO3_dust", yield_info.name) == 0) {
       grain_species_idx = OnlyGrainSpLUT::MgSiO3_dust;
-      size_mom_table = my_rates->SN0_r0MgSiO3;
       opac_coef_table = my_rates->SN0_kpMgSiO3;
     } else if (std::strcmp("AC_dust", yield_info.name) == 0) {
       grain_species_idx = OnlyGrainSpLUT::AC_dust;
-      size_mom_table = my_rates->SN0_r0AC;
       opac_coef_table = my_rates->SN0_kpAC;
     } else if (std::strcmp("SiM_dust", yield_info.name) == 0) {
       grain_species_idx = OnlyGrainSpLUT::SiM_dust;
-      size_mom_table = my_rates->SN0_r0SiM;
       opac_coef_table = my_rates->SN0_kpSiM;
     } else if (std::strcmp("FeM_dust", yield_info.name) == 0) {
       grain_species_idx = OnlyGrainSpLUT::FeM_dust;
-      size_mom_table = my_rates->SN0_r0FeM;
       opac_coef_table = my_rates->SN0_kpFeM;
     } else if (std::strcmp("Mg2SiO4_dust", yield_info.name) == 0) {
       grain_species_idx = OnlyGrainSpLUT::Mg2SiO4_dust;
-      size_mom_table = my_rates->SN0_r0Mg2SiO4;
       opac_coef_table = my_rates->SN0_kpMg2SiO4;
     } else if (std::strcmp("Fe3O4_dust", yield_info.name) == 0) {
       grain_species_idx = OnlyGrainSpLUT::Fe3O4_dust;
-      size_mom_table = my_rates->SN0_r0Fe3O4;
       opac_coef_table = my_rates->SN0_kpFe3O4;
     } else if (std::strcmp("SiO2_dust", yield_info.name) == 0) {
       grain_species_idx = OnlyGrainSpLUT::SiO2_dust;
-      size_mom_table = my_rates->SN0_r0SiO2D;
       opac_coef_table = my_rates->SN0_kpSiO2D;
     } else if (std::strcmp("MgO_dust", yield_info.name) == 0) {
       grain_species_idx = OnlyGrainSpLUT::MgO_dust;
-      size_mom_table = my_rates->SN0_r0MgO;
       opac_coef_table = my_rates->SN0_kpMgO;
     } else if (std::strcmp("FeS_dust", yield_info.name) == 0) {
       grain_species_idx = OnlyGrainSpLUT::FeS_dust;
-      size_mom_table = my_rates->SN0_r0FeS;
       opac_coef_table = my_rates->SN0_kpFeS;
     } else if (std::strcmp("Al2O3_dust", yield_info.name) == 0) {
       grain_species_idx = OnlyGrainSpLUT::Al2O3_dust;
-      size_mom_table = my_rates->SN0_r0Al2O3;
       opac_coef_table = my_rates->SN0_kpAl2O3;
     } else if (std::strcmp("ref_org_dust", yield_info.name) == 0) {
       grain_species_idx = OnlyGrainSpLUT::ref_org_dust;
-      size_mom_table = my_rates->SN0_r0reforg;
       opac_coef_table = my_rates->SN0_kpreforg;
     } else if (std::strcmp("vol_org_dust", yield_info.name) == 0) {
       grain_species_idx = OnlyGrainSpLUT::vol_org_dust;
-      size_mom_table = my_rates->SN0_r0volorg;
       opac_coef_table = my_rates->SN0_kpvolorg;
     } else if (std::strcmp("H2O_ice_dust", yield_info.name) == 0) {
       grain_species_idx = OnlyGrainSpLUT::H2O_ice_dust;
-      size_mom_table = my_rates->SN0_r0H2Oice;
       opac_coef_table = my_rates->SN0_kpH2Oice;
     } else {
       return GrPrintAndReturnErr(
@@ -192,6 +178,8 @@ extern "C" int setup_yield_table_callback(
 
     // copy the 1st, 2nd, and 3rd moments of the size distribution
     // (the 0th moment isn't recorded anywhere
+    double* size_mom_table =
+      inject_pathway_props->size_moments.data[grain_species_idx];
     for (int i = 0; i < 3; i++) {
       size_mom_table[pathway_idx*3+i] = yield_info.size_moments[i];
     }
@@ -251,44 +239,31 @@ void override_dust_inject_props(chemistry_data_storage *my_rates,
   grackle::impl::GrainMetalInjectPathways* inject_pathway_props
     = my_rates->opaque_storage->inject_pathway_props;
 
-  if (inject_pathway_props != nullptr) {
-    // handle the grain yields
+  GRIMPL_REQUIRE(inject_pathway_props != nullptr,
+                 "sanity check -- should never ever fail!");
+
+  const int n_grain_species = OnlyGrainSpLUT::NUM_ENTRIES;
+
+  // handle the grain yields
+  for (int grain_species_idx = 0; grain_species_idx < n_grain_species;
+      grain_species_idx++){
+    double* arr = inject_pathway_props->grain_yields.data[grain_species_idx];
     for(int iSN = 0; iSN < n_pathways; iSN++) {
-      inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::SiM_dust]     [iSN] = value;
-      inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::FeM_dust]     [iSN] = value;
-      inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::Mg2SiO4_dust] [iSN] = value;
-      inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::MgSiO3_dust]  [iSN] = value;
-      inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::Fe3O4_dust]   [iSN] = value;
-      inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::AC_dust]      [iSN] = value;
-      inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::SiO2_dust]   [iSN] = value;
-      inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::MgO_dust]     [iSN] = value;
-      inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::FeS_dust]     [iSN] = value;
-      inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::Al2O3_dust]   [iSN] = value;
-      inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::ref_org_dust]  [iSN] = value;
-      inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::vol_org_dust]  [iSN] = value;
-      inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::H2O_ice_dust]  [iSN] = value;
+      arr[iSN] = value;
+    }
+  }
+
+  // handle the size moments
+  int moment_table_len = n_pathways * 3; // there are 3 size moments
+  for (int grain_species_idx = 0; grain_species_idx < n_grain_species;
+      grain_species_idx++){
+    double* arr = inject_pathway_props->size_moments.data[grain_species_idx];
+    for(int i = 0; i < moment_table_len; i++) {
+      arr[i] = value;
     }
   }
 
   if (true) { // NOLINT(readability-simplify-boolean-expr)
-
-    // handle the size moments
-    int moment_table_len = n_pathways * 3; // there are 3 size moments
-    for(int i = 0; i < moment_table_len; i++) {
-      my_rates->SN0_r0SiM     [i] = value;
-      my_rates->SN0_r0FeM     [i] = value;
-      my_rates->SN0_r0Mg2SiO4 [i] = value;
-      my_rates->SN0_r0MgSiO3  [i] = value;
-      my_rates->SN0_r0Fe3O4   [i] = value;
-      my_rates->SN0_r0AC      [i] = value;
-      my_rates->SN0_r0SiO2D   [i] = value;
-      my_rates->SN0_r0MgO     [i] = value;
-      my_rates->SN0_r0FeS     [i] = value;
-      my_rates->SN0_r0Al2O3   [i] = value;
-      my_rates->SN0_r0reforg  [i] = value;
-      my_rates->SN0_r0volorg  [i] = value;
-      my_rates->SN0_r0H2Oice  [i] = value;
-    }
 
     // handle the opacity coefficient table
     int opac_table_len = n_pathways * my_rates->gr_Size;
@@ -343,19 +318,19 @@ int grackle::impl::initialize_dust_yields(chemistry_data *my_chemistry,
   my_rates->SN0_fS  = inject_pathway_props->gas_metal_nuclide_yields.S;
   my_rates->SN0_fFe = inject_pathway_props->gas_metal_nuclide_yields.Fe;
 
-      my_rates->SN0_r0SiM      = (double*)malloc(NSN * 3 * sizeof(double));
-      my_rates->SN0_r0FeM      = (double*)malloc(NSN * 3 * sizeof(double));
-      my_rates->SN0_r0Mg2SiO4  = (double*)malloc(NSN * 3 * sizeof(double));
-      my_rates->SN0_r0MgSiO3   = (double*)malloc(NSN * 3 * sizeof(double));
-      my_rates->SN0_r0Fe3O4    = (double*)malloc(NSN * 3 * sizeof(double));
-      my_rates->SN0_r0AC       = (double*)malloc(NSN * 3 * sizeof(double));
-      my_rates->SN0_r0SiO2D    = (double*)malloc(NSN * 3 * sizeof(double));
-      my_rates->SN0_r0MgO      = (double*)malloc(NSN * 3 * sizeof(double));
-      my_rates->SN0_r0FeS      = (double*)malloc(NSN * 3 * sizeof(double));
-      my_rates->SN0_r0Al2O3    = (double*)malloc(NSN * 3 * sizeof(double));
-      my_rates->SN0_r0reforg   = (double*)malloc(NSN * 3 * sizeof(double));
-      my_rates->SN0_r0volorg   = (double*)malloc(NSN * 3 * sizeof(double));
-      my_rates->SN0_r0H2Oice   = (double*)malloc(NSN * 3 * sizeof(double));
+  my_rates->SN0_r0SiM     = inject_pathway_props->size_moments.data[OnlyGrainSpLUT::SiM_dust];
+  my_rates->SN0_r0FeM     = inject_pathway_props->size_moments.data[OnlyGrainSpLUT::FeM_dust];
+  my_rates->SN0_r0Mg2SiO4 = inject_pathway_props->size_moments.data[OnlyGrainSpLUT::Mg2SiO4_dust];
+  my_rates->SN0_r0MgSiO3  = inject_pathway_props->size_moments.data[OnlyGrainSpLUT::MgSiO3_dust];
+  my_rates->SN0_r0Fe3O4   = inject_pathway_props->size_moments.data[OnlyGrainSpLUT::Fe3O4_dust];
+  my_rates->SN0_r0AC      = inject_pathway_props->size_moments.data[OnlyGrainSpLUT::AC_dust];
+  my_rates->SN0_r0SiO2D   = inject_pathway_props->size_moments.data[OnlyGrainSpLUT::SiO2_dust];
+  my_rates->SN0_r0MgO     = inject_pathway_props->size_moments.data[OnlyGrainSpLUT::MgO_dust];
+  my_rates->SN0_r0FeS     = inject_pathway_props->size_moments.data[OnlyGrainSpLUT::FeS_dust];
+  my_rates->SN0_r0Al2O3   = inject_pathway_props->size_moments.data[OnlyGrainSpLUT::Al2O3_dust];
+  my_rates->SN0_r0reforg  = inject_pathway_props->size_moments.data[OnlyGrainSpLUT::ref_org_dust];
+  my_rates->SN0_r0volorg  = inject_pathway_props->size_moments.data[OnlyGrainSpLUT::vol_org_dust];
+  my_rates->SN0_r0H2Oice  = inject_pathway_props->size_moments.data[OnlyGrainSpLUT::H2O_ice_dust];
 
   // write out the opacity related quantities
 
@@ -442,19 +417,19 @@ int grackle::impl::free_dust_yields(chemistry_data *my_chemistry,
   my_rates->SN0_fS = nullptr;
   my_rates->SN0_fFe = nullptr;
 
-  GRACKLE_FREE(my_rates->SN0_r0SiM);
-  GRACKLE_FREE(my_rates->SN0_r0FeM);
-  GRACKLE_FREE(my_rates->SN0_r0Mg2SiO4);
-  GRACKLE_FREE(my_rates->SN0_r0MgSiO3);
-  GRACKLE_FREE(my_rates->SN0_r0Fe3O4);
-  GRACKLE_FREE(my_rates->SN0_r0AC);
-  GRACKLE_FREE(my_rates->SN0_r0SiO2D);
-  GRACKLE_FREE(my_rates->SN0_r0MgO);
-  GRACKLE_FREE(my_rates->SN0_r0FeS);
-  GRACKLE_FREE(my_rates->SN0_r0Al2O3);
-  GRACKLE_FREE(my_rates->SN0_r0reforg);
-  GRACKLE_FREE(my_rates->SN0_r0volorg);
-  GRACKLE_FREE(my_rates->SN0_r0H2Oice);
+  my_rates->SN0_r0SiM = nullptr;
+  my_rates->SN0_r0FeM = nullptr;
+  my_rates->SN0_r0Mg2SiO4 = nullptr;
+  my_rates->SN0_r0MgSiO3 = nullptr;
+  my_rates->SN0_r0Fe3O4 = nullptr;
+  my_rates->SN0_r0AC = nullptr;
+  my_rates->SN0_r0SiO2D = nullptr;
+  my_rates->SN0_r0MgO = nullptr;
+  my_rates->SN0_r0FeS = nullptr;
+  my_rates->SN0_r0Al2O3 = nullptr;
+  my_rates->SN0_r0reforg = nullptr;
+  my_rates->SN0_r0volorg = nullptr;
+  my_rates->SN0_r0H2Oice = nullptr;
 
   GRACKLE_FREE(my_rates->gr_Td);
 
