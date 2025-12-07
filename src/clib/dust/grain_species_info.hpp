@@ -71,8 +71,16 @@ struct GrainSpeciesInfoEntry {
   /// to track the information in this manner.
   bool h2dust_uses_carbonaceous_table;
 
-  /// The sublimation temperature
+  /// The sublimation temperature in units of Kelvin
   double sublimation_temperature;
+
+  /// specifies the density of a single grain in units of g/cm^3
+  ///
+  /// @note
+  /// The values are consistent with the values quoted within table 2 of
+  /// [Chiaki+ 2015](https://ui.adsabs.harvard.edu/abs/2015MNRAS.446.2659C)
+  /// assuming that all grains are spherical.
+  double bulk_density_cgs;
 
   /// The number of growth ingredients
   int n_growth_ingredients;
@@ -149,7 +157,7 @@ inline constexpr int max_ingredients_per_grain_species = 3;
 inline GrainSpeciesInfoEntry mk_gsp_info_entry_helper_(
     int species_idx, int onlygrainsp_idx, const char* name,
     bool h2dust_uses_carbonaceous_table, double sublimation_temperature,
-    const GrainGrowthIngredient* growth_ingredients) {
+    double bulk_density_cgs, const GrainGrowthIngredient* growth_ingredients) {
   GrainGrowthIngredient* out_ingredient_ptr = nullptr;
   int n_ingredients = 0;
 
@@ -170,6 +178,7 @@ inline GrainSpeciesInfoEntry mk_gsp_info_entry_helper_(
                                name,
                                h2dust_uses_carbonaceous_table,
                                sublimation_temperature,
+                               bulk_density_cgs,
                                n_ingredients,
                                out_ingredient_ptr};
 }
@@ -224,6 +233,7 @@ inline GrainSpeciesInfo new_GrainSpeciesInfo(int dust_species_parameter) {
         /* name = */ "MgSiO3_dust",
         /* h2dust_uses_carbonaceous_table = */ false,
         /* sublimation_temperature = */ 1222.0,
+        /* bulk_density_cgs = */ 3.20185,
         /* growth_ingredients = */ MgSiO3_dust_ingred);
 
     const GrainGrowthIngredient AC_dust_ingred[] = {
@@ -236,6 +246,7 @@ inline GrainSpeciesInfo new_GrainSpeciesInfo(int dust_species_parameter) {
         /* name = */ "AC_dust",
         /* h2dust_uses_carbonaceous_table = */ true,
         /* sublimation_temperature = */ 1800.0,
+        /* bulk_density_cgs = */ 2.27949,
         /* growth_ingredients = */ AC_dust_ingred);
   }
 
@@ -250,6 +261,7 @@ inline GrainSpeciesInfo new_GrainSpeciesInfo(int dust_species_parameter) {
         /* name = */ "SiM_dust",
         /* h2dust_uses_carbonaceous_table = */ false,
         /* sublimation_temperature = */ 1500.0,
+        /* bulk_density_cgs = */ 2.34118,
         /* growth_ingredients = */ SiM_dust_ingred);
 
     const GrainGrowthIngredient FeM_dust_ingred[] = {
@@ -262,6 +274,7 @@ inline GrainSpeciesInfo new_GrainSpeciesInfo(int dust_species_parameter) {
         /* name = */ "FeM_dust",
         /* h2dust_uses_carbonaceous_table = */ false,
         /* sublimation_temperature = */ 1500.0,
+        /* bulk_density_cgs = */ 7.95995,
         /* growth_ingredients = */ FeM_dust_ingred);
 
     const GrainGrowthIngredient Mg2SiO4_dust_ingred[] = {
@@ -276,6 +289,7 @@ inline GrainSpeciesInfo new_GrainSpeciesInfo(int dust_species_parameter) {
         /* name = */ "Mg2SiO4_dust",
         /* h2dust_uses_carbonaceous_table = */ false,
         /* sublimation_temperature = */ 1277.0,
+        /* bulk_density_cgs = */ 3.22133,
         /* growth_ingredients = */ Mg2SiO4_dust_ingred);
 
     const GrainGrowthIngredient Fe3O4_dust_ingred[] = {
@@ -289,6 +303,7 @@ inline GrainSpeciesInfo new_GrainSpeciesInfo(int dust_species_parameter) {
         /* name = */ "Fe3O4_dust",
         /* h2dust_uses_carbonaceous_table = */ false,
         /* sublimation_temperature = */ 1500.0,
+        /* bulk_density_cgs = */ 5.25096,
         /* growth_ingredients = */ Fe3O4_dust_ingred);
 
     const GrainGrowthIngredient SiO2_dust_ingred[] = {
@@ -301,6 +316,7 @@ inline GrainSpeciesInfo new_GrainSpeciesInfo(int dust_species_parameter) {
         /* name = */ "SiO2_dust",
         /* h2dust_uses_carbonaceous_table = */ false,
         /* sublimation_temperature = */ 1500.0,
+        /* bulk_density_cgs = */ 2.66235,
         /* growth_ingredients = */ SiO2_dust_ingred);
 
     const GrainGrowthIngredient MgO_dust_ingred[] = {
@@ -314,6 +330,7 @@ inline GrainSpeciesInfo new_GrainSpeciesInfo(int dust_species_parameter) {
         /* name = */ "MgO_dust",
         /* h2dust_uses_carbonaceous_table = */ false,
         /* sublimation_temperature = */ 1500.0,
+        /* bulk_density_cgs = */ 3.58157,
         /* growth_ingredients = */ MgO_dust_ingred);
 
     const GrainGrowthIngredient FeS_dust_ingred[] = {
@@ -327,6 +344,7 @@ inline GrainSpeciesInfo new_GrainSpeciesInfo(int dust_species_parameter) {
         /* name = */ "FeS_dust",
         /* h2dust_uses_carbonaceous_table = */ false,
         /* sublimation_temperature = */ 680.0,
+        /* bulk_density_cgs = */ 4.87265,
         /* growth_ingredients = */ FeS_dust_ingred);
 
     const GrainGrowthIngredient Al2O3_dust_ingred[] = {
@@ -340,6 +358,7 @@ inline GrainSpeciesInfo new_GrainSpeciesInfo(int dust_species_parameter) {
         /* name = */ "Al2O3_dust",
         /* h2dust_uses_carbonaceous_table = */ false,
         /* sublimation_temperature = */ 1500.0,
+        /* bulk_density_cgs = */ 4.01610,
         /* growth_ingredients = */ Al2O3_dust_ingred);
   }
 
@@ -354,6 +373,7 @@ inline GrainSpeciesInfo new_GrainSpeciesInfo(int dust_species_parameter) {
         /* name = */ "ref_org_dust",
         /* h2dust_uses_carbonaceous_table = */ false,
         /* sublimation_temperature = */ 575.0,
+        /* bulk_density_cgs = */ 1.5,
         /* growth_ingredients = */ nullptr);
     out.species_info[11] = mk_gsp_info_entry_helper_(
         /* species_idx = */ SpLUT::vol_org_dust,
@@ -361,6 +381,7 @@ inline GrainSpeciesInfo new_GrainSpeciesInfo(int dust_species_parameter) {
         /* name = */ "vol_org_dust",
         /* h2dust_uses_carbonaceous_table = */ false,
         /* sublimation_temperature = */ 375.0,
+        /* bulk_density_cgs = */ 1.0,
         /* growth_ingredients = */ nullptr);
     out.species_info[12] = mk_gsp_info_entry_helper_(
         /* species_idx = */ SpLUT::H2O_ice_dust,
@@ -368,6 +389,7 @@ inline GrainSpeciesInfo new_GrainSpeciesInfo(int dust_species_parameter) {
         /* name = */ "H2O_ice_dust",
         /* h2dust_uses_carbonaceous_table = */ false,
         /* sublimation_temperature = */ 153.0,
+        /* bulk_density_cgs = */ 0.92,
         /* growth_ingredients = */ nullptr);
   }
 
