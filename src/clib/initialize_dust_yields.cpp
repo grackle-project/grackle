@@ -43,24 +43,9 @@ int grackle::impl::initialize_dust_yields(chemistry_data *my_chemistry,
                                           code_units *my_units)
 {
 
-  if (my_chemistry->metal_chemistry == 0)
+  if (my_chemistry->metal_chemistry == 0) {
     return SUCCESS;
-
-//-------kdMgSiO3  :    Mg   +    SiO + 2H2O -> MgSiO3  + 2H2I
-//-------kdAC      :    C                    -> AC      
-                                 
-//-------kdSiM     :    Si                   -> SiM     
-//-------kdFeM     :    Fe                   -> FeM     
-//-------kdMg2SiO4 :   2Mg   +    SiO + 3H2O -> Mg2SiO4 + 3H2I
-//-------kdFe3O4   :   3Fe   +   4H2O        -> Fe3O4   + 4H2I
-//-------kdSiO2D   :    SiO2                 -> SiO2D   
-//-------kdMgO     :    Mg   +    H2O        -> MgO     +  H2I
-//-------kdFeS     :    Fe   +    S          -> FeS     
-//-------kdAl2O3   :   2Al   +   3H2O        -> Al2O3   + 3H2I
-                     
-//-------kdreforg  : 0.5CO   + 0.5CH2 + 1.2N -> reforg (C:H:O:N = 1:1:0.5:1.2)
-//-------kdvolorg  :    CO   +   2H2I        -> volorg (CH3OH)
-//-------kdH2Oice  :    H2O                  -> H2Oice
+  }
 
       int NSN, NTd, Nmom;
       double Td0, dTd;

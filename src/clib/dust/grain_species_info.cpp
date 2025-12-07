@@ -119,6 +119,7 @@ grackle::impl::GrainSpeciesInfo grackle::impl::new_GrainSpeciesInfo(
   //   that h2dusta has very different units...
 
   if (dust_species_parameter > 0) {
+    // growth rxn: "Mg + SiO + 2H2O -> MgSiO3_dust + 2H2I"
     const GrainGrowthIngredient MgSiO3_dust_ingred[] = {
         // {coef, species_idx, particle mass}
         {1, SpLUT::Mg, 24.},
@@ -134,6 +135,7 @@ grackle::impl::GrainSpeciesInfo grackle::impl::new_GrainSpeciesInfo(
         /* bulk_density_cgs = */ 3.20185,
         /* growth_ingredients = */ MgSiO3_dust_ingred);
 
+    // growth rxn: "C -> AC_dust"
     const GrainGrowthIngredient AC_dust_ingred[] = {
         // {coef, species_idx, particle mass}
         {1, SpLUT::CI, 12.},
@@ -149,6 +151,7 @@ grackle::impl::GrainSpeciesInfo grackle::impl::new_GrainSpeciesInfo(
   }
 
   if (dust_species_parameter > 1) {
+    // growth rxn: "Si -> SiM_dust"
     const GrainGrowthIngredient SiM_dust_ingred[] = {
         // {coef, species_idx, particle mass}
         {1, SpLUT::SiI, 28.},
@@ -162,6 +165,7 @@ grackle::impl::GrainSpeciesInfo grackle::impl::new_GrainSpeciesInfo(
         /* bulk_density_cgs = */ 2.34118,
         /* growth_ingredients = */ SiM_dust_ingred);
 
+    // growth rxn: "Fe -> FeM_dust"
     const GrainGrowthIngredient FeM_dust_ingred[] = {
         // {coef, species_idx, particle mass}
         {1, SpLUT::Fe, 56.},
@@ -175,6 +179,7 @@ grackle::impl::GrainSpeciesInfo grackle::impl::new_GrainSpeciesInfo(
         /* bulk_density_cgs = */ 7.95995,
         /* growth_ingredients = */ FeM_dust_ingred);
 
+    // growth rxn: "2Mg + SiO + 3H2O -> Mg2SiO4_dust + 3H2I"
     const GrainGrowthIngredient Mg2SiO4_dust_ingred[] = {
         // {coef, species_idx, particle mass}
         {2, SpLUT::Mg, 24.},
@@ -190,6 +195,7 @@ grackle::impl::GrainSpeciesInfo grackle::impl::new_GrainSpeciesInfo(
         /* bulk_density_cgs = */ 3.22133,
         /* growth_ingredients = */ Mg2SiO4_dust_ingred);
 
+    // growth rxn: "3Fe + 4H2O -> Fe3O4_dust + 4H2I"
     const GrainGrowthIngredient Fe3O4_dust_ingred[] = {
         // {coef, species_idx, particle mass}
         {3, SpLUT::Fe, 56.},
@@ -204,6 +210,7 @@ grackle::impl::GrainSpeciesInfo grackle::impl::new_GrainSpeciesInfo(
         /* bulk_density_cgs = */ 5.25096,
         /* growth_ingredients = */ Fe3O4_dust_ingred);
 
+    // growth rxn: "SiO2 -> SiO2_dust"
     const GrainGrowthIngredient SiO2_dust_ingred[] = {
         // {coef, species_idx, particle mass}
         {1, SpLUT::SiO2I, 60.},
@@ -217,6 +224,7 @@ grackle::impl::GrainSpeciesInfo grackle::impl::new_GrainSpeciesInfo(
         /* bulk_density_cgs = */ 2.66235,
         /* growth_ingredients = */ SiO2_dust_ingred);
 
+    // growth rxn: "Mg + H2O -> MgO_dust + H2I"
     const GrainGrowthIngredient MgO_dust_ingred[] = {
         // {coef, species_idx, particle mass}
         {1, SpLUT::Mg, 24.},
@@ -231,6 +239,7 @@ grackle::impl::GrainSpeciesInfo grackle::impl::new_GrainSpeciesInfo(
         /* bulk_density_cgs = */ 3.58157,
         /* growth_ingredients = */ MgO_dust_ingred);
 
+    // growth rxn: "Fe + S -> FeS_dust"
     const GrainGrowthIngredient FeS_dust_ingred[] = {
         // {coef, species_idx, particle mass}
         {1, SpLUT::Fe, 56.},
@@ -245,6 +254,7 @@ grackle::impl::GrainSpeciesInfo grackle::impl::new_GrainSpeciesInfo(
         /* bulk_density_cgs = */ 4.87265,
         /* growth_ingredients = */ FeS_dust_ingred);
 
+    // growth rxn: "2Al + 3H2O -> Al2O3_dust + 3H2I"
     const GrainGrowthIngredient Al2O3_dust_ingred[] = {
         // {coef, species_idx, particle mass}
         {2, SpLUT::Al, 27.},
@@ -265,6 +275,8 @@ grackle::impl::GrainSpeciesInfo grackle::impl::new_GrainSpeciesInfo(
     // organics, and water ice because their sublimation temperatures
     // are low (100-600 K). They sublimate before the growth occurs.
 
+    // nominal growth rxn: "0.5CO + 0.5CH2 + 1.2N -> ref_org_dust"
+    // nuclide ratios: C:H:O:N = 1:1:0.5:1.2
     out.species_info[10] = mk_gsp_info_entry_helper_(
         /* species_idx = */ SpLUT::ref_org_dust,
         /* onlygrainsp_idx = */ OnlyGrainSpLUT::ref_org_dust,
@@ -273,6 +285,9 @@ grackle::impl::GrainSpeciesInfo grackle::impl::new_GrainSpeciesInfo(
         /* sublimation_temperature = */ 575.0,
         /* bulk_density_cgs = */ 1.5,
         /* growth_ingredients = */ nullptr);
+
+    // nominal growth rxn: "CO + 2H2I -> vol_org_dust"
+    // effective formula: CH3OH
     out.species_info[11] = mk_gsp_info_entry_helper_(
         /* species_idx = */ SpLUT::vol_org_dust,
         /* onlygrainsp_idx = */ OnlyGrainSpLUT::vol_org_dust,
@@ -281,6 +296,8 @@ grackle::impl::GrainSpeciesInfo grackle::impl::new_GrainSpeciesInfo(
         /* sublimation_temperature = */ 375.0,
         /* bulk_density_cgs = */ 1.0,
         /* growth_ingredients = */ nullptr);
+
+    // nominal growth rxn: "H2O -> H2O_ice_dust"
     out.species_info[12] = mk_gsp_info_entry_helper_(
         /* species_idx = */ SpLUT::H2O_ice_dust,
         /* onlygrainsp_idx = */ OnlyGrainSpLUT::H2O_ice_dust,
