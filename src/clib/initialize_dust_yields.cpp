@@ -297,13 +297,20 @@ int grackle::impl::initialize_dust_yields(chemistry_data *my_chemistry,
   }
 
   int n_pathways = 12;
+  int n_log10Tdust_vals = grackle::impl::inj_model_input::N_Tdust_Opacity_Table;
+  int n_opac_poly_coef = grackle::impl::inj_model_input::N_Opacity_Coef;
   my_rates->opaque_storage->inject_pathway_props =
     new grackle::impl::GrainMetalInjectPathways;
   *(my_rates->opaque_storage->inject_pathway_props) =
-    new_GrainMetalInjectPathways(n_pathways);
+    new_GrainMetalInjectPathways(n_pathways, n_log10Tdust_vals,
+                                 n_opac_poly_coef);
 
   grackle::impl::GrainMetalInjectPathways* inject_pathway_props
     = my_rates->opaque_storage->inject_pathway_props;
+
+  if (!GrainMetalInjectPathways_is_valid(inject_pathway_props)) {
+    return GR_FAIL;
+  }
 
 
   int NSN = n_pathways;  // todo: delete me!
@@ -335,7 +342,7 @@ int grackle::impl::initialize_dust_yields(chemistry_data *my_chemistry,
   // write out the opacity related quantities
 
   // todo: consider renaming Nmom -> Ncoef
-  int Nmom = 4; // todo: remove me!
+  int Nmom = n_opac_poly_coef; // todo: remove me!
   // todo: more this into GrainMetalInjectPathways
   // - essentially, each SN0_kpGRSP array is a 3D array of shape
   //   (n_pathways, NTd, Nmom). This shape uses numpy conventions (i.e. Nmom is
@@ -354,7 +361,7 @@ int grackle::impl::initialize_dust_yields(chemistry_data *my_chemistry,
   //       - δr(t) refers to the derived "size increment" (it is a central
   //         quantity in the model)
   //       - I **think** the resulting quantity is the optical cross-section
-  double NTd = grackle::impl::inj_model_input::N_Tdust_Opacity_Table;
+  double NTd = n_log10Tdust_vals;
   double Td0 = 0.0000000; // todo: remove me!
   double dTd = 0.1000000; // todo: remove me!
 
