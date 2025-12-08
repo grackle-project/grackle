@@ -141,9 +141,6 @@ struct GrainMetalInjectPathways {
   ///   when injected by pathway ``j``. The value has units of centimeters
   ///   cubed.
   ///
-  /// @todo
-  /// What are the units of each quantity? (the dimensionality is obvious)
-  ///
   /// where \f$\langle r^2 \rangle_j=\int_0^\infty r^p \Phi_j(r)\, {\rm d}r\f$
   /// is an abbreviation for the ``p``th moment of the \f$\Phi_j(r)\f$, or the
   /// initial differential grain size distribution for pathway ``j`` (this
