@@ -18,6 +18,23 @@
 
 namespace grackle::impl {
 
+/// initialize an empty #gr_interp_grid_props
+inline void init_empty_interp_grid_props_(gr_interp_grid_props* props) {
+  props->rank = 0;
+  for (int i = 0; i < GRACKLE_CLOUDY_TABLE_MAX_DIMENSION; i++) {
+    props->dimension[i] = 0;
+    props->parameters[i] = nullptr;
+    props->parameter_spacing[i] = 0.0;
+  }
+  props->data_size = 0;
+}
+
+/// Initialize an empty #gr_interp_grid
+inline void initialize_empty_interp_grid_(gr_interp_grid* grid) {
+  init_empty_interp_grid_props_(&(grid->props));
+  grid->data = nullptr;
+}
+
 /// Free memory associated with a #gr_interp_grid_props instance
 inline void free_interp_grid_props_(gr_interp_grid_props* props,
                                     bool use_delete) {

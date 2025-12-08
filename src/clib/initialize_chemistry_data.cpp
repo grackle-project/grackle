@@ -19,7 +19,7 @@
 #include "grackle.h"
 #include "grackle_macros.h"
 #include "auto_general.h"
-#include "interp_table_utils.hpp" // free_interp_grid_
+#include "interp_table_utils.hpp"
 #include "init_misc_species_cool_rates.hpp"  // free_misc_species_cool_rates
 #include "initialize_cloudy_data.h"
 #include "initialize_dust_yields.hpp"  // free_dust_yields
@@ -49,23 +49,6 @@ static void show_version(FILE *fp)
   fprintf (fp, "\n");
 }
 
-/// initialize an empty #gr_interp_grid_props
-static void init_empty_interp_grid_props_(gr_interp_grid_props* props) {
-  props->rank = 0;
-  for (int i = 0; i < GRACKLE_CLOUDY_TABLE_MAX_DIMENSION; i++){
-    props->dimension[i] = 0;
-    props->parameters[i] = nullptr;
-    props->parameter_spacing[i] = 0.0;
-  }
-  props->data_size = 0;
-}
-
-/// Initialize an empty #gr_interp_grid
-static void initialize_empty_interp_grid_(gr_interp_grid* grid)
-{
-  init_empty_interp_grid_props_(&(grid->props));
-  grid->data=NULL;
-}
 
 /**
  * Initializes an empty #chemistry_data_storage struct with zeros and NULLs.
@@ -152,18 +135,18 @@ static void initialize_empty_chemistry_data_storage_struct(chemistry_data_storag
 
   my_rates->cieY06 = NULL;
 
-  initialize_empty_interp_grid_(&my_rates->LH2);
-  initialize_empty_interp_grid_(&my_rates->LHD);
+  grackle::impl::initialize_empty_interp_grid_(&my_rates->LH2);
+  grackle::impl::initialize_empty_interp_grid_(&my_rates->LHD);
 
-  initialize_empty_interp_grid_(&my_rates->LCI);
-  initialize_empty_interp_grid_(&my_rates->LCII);
-  initialize_empty_interp_grid_(&my_rates->LOI);
+  grackle::impl::initialize_empty_interp_grid_(&my_rates->LCI);
+  grackle::impl::initialize_empty_interp_grid_(&my_rates->LCII);
+  grackle::impl::initialize_empty_interp_grid_(&my_rates->LOI);
 
-  initialize_empty_interp_grid_(&my_rates->LCO);
-  initialize_empty_interp_grid_(&my_rates->LOH);
-  initialize_empty_interp_grid_(&my_rates->LH2O);
+  grackle::impl::initialize_empty_interp_grid_(&my_rates->LCO);
+  grackle::impl::initialize_empty_interp_grid_(&my_rates->LOH);
+  grackle::impl::initialize_empty_interp_grid_(&my_rates->LH2O);
 
-  initialize_empty_interp_grid_(&my_rates->alphap);
+  grackle::impl::initialize_empty_interp_grid_(&my_rates->alphap);
 
   my_rates->gr_N = NULL;
   my_rates->gr_Size = 0;
@@ -400,7 +383,7 @@ extern "C" int local_initialize_chemistry_data(chemistry_data *my_chemistry,
   my_rates->opaque_storage->kcol_rate_tables = nullptr;
   my_rates->opaque_storage->used_kcol_rate_indices = nullptr;
   my_rates->opaque_storage->n_kcol_rate_indices = 0;
-  init_empty_interp_grid_props_(
+  grackle::impl::init_empty_interp_grid_props_(
     &my_rates->opaque_storage->h2dust_grain_interp_props);
   my_rates->opaque_storage->grain_species_info = nullptr;
 
