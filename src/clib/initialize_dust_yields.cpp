@@ -321,14 +321,14 @@ int grackle::impl::initialize_dust_yields(chemistry_data *my_chemistry,
   double dTd = 0.1000000; // todo: remove me!
 
   // todo: rename gr_Td, dTd since they are related to log10(Tdust) or ln(Tdust)
+  inject_pathway_props->log10Tdust_interp_props.parameter_spacing[0] = dTd;
       my_rates->gr_Td = (double*)malloc(NTd * Nmom * sizeof(double));
       my_rates->gr_Size = NTd * Nmom;
       my_rates->gr_N[0] = Nmom;
       my_rates->gr_N[1] = NTd;
-      my_rates->gr_dT   = dTd;
-      for(int iTd = 0; iTd < NTd; iTd++) {
-        my_rates->gr_Td[iTd] = Td0 + (double)iTd * dTd;
-      }
+  for(int iTd = 0; iTd < NTd; iTd++) {
+    my_rates->gr_Td[iTd] = Td0 + (double)iTd * dTd;
+  }
 
 
   // zero-out all metal injection yield fractions and dust grain properties
