@@ -609,7 +609,6 @@ typedef struct
   int    *gr_N, gr_Size;
   double gr_dT, *gr_Td;
   int     SN0_N;
-  double *SN0_fC , *SN0_fO , *SN0_fMg, *SN0_fAl, *SN0_fSi, *SN0_fS , *SN0_fFe;
 
   /* UV background data */
   UVBtable UVbackground_table;

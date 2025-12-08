@@ -296,17 +296,6 @@ int grackle::impl::initialize_dust_yields(chemistry_data *my_chemistry,
   int NSN = n_pathways;  // todo: delete me!
   my_rates->SN0_N = n_pathways;
 
-  // crude hack (holding onto this momentarily)
-  my_rates->SN0_fC  = inject_pathway_props->gas_metal_nuclide_yields.C;
-  my_rates->SN0_fO  = inject_pathway_props->gas_metal_nuclide_yields.O;
-  my_rates->SN0_fMg = inject_pathway_props->gas_metal_nuclide_yields.Mg;
-  my_rates->SN0_fAl = inject_pathway_props->gas_metal_nuclide_yields.Al;
-  my_rates->SN0_fSi = inject_pathway_props->gas_metal_nuclide_yields.Si;
-  my_rates->SN0_fS  = inject_pathway_props->gas_metal_nuclide_yields.S;
-  my_rates->SN0_fFe = inject_pathway_props->gas_metal_nuclide_yields.Fe;
-
-  // write out the opacity related quantities
-
   // todo: consider renaming Nmom -> Ncoef
   int Nmom = n_opac_poly_coef; // todo: remove me!
   // todo: more this into GrainMetalInjectPathways
@@ -365,16 +354,6 @@ int grackle::impl::free_dust_yields(chemistry_data *my_chemistry,
 
   if (my_chemistry->metal_chemistry == 0)
     return SUCCESS;
-
-  // reminder: we are holding on to SN0_f<nuclide> as a crude hack (we will
-  // delete them later)
-  my_rates->SN0_fC = nullptr;
-  my_rates->SN0_fO = nullptr;
-  my_rates->SN0_fMg = nullptr;
-  my_rates->SN0_fAl = nullptr;
-  my_rates->SN0_fSi = nullptr;
-  my_rates->SN0_fS = nullptr;
-  my_rates->SN0_fFe = nullptr;
 
   GRACKLE_FREE(my_rates->gr_Td);
 
