@@ -161,32 +161,6 @@ static void initialize_empty_chemistry_data_storage_struct(chemistry_data_storag
   my_rates->SN0_fSi = nullptr;
   my_rates->SN0_fS = nullptr;
   my_rates->SN0_fFe = nullptr;
-  my_rates->SN0_r0SiM = NULL;
-  my_rates->SN0_r0FeM = NULL;
-  my_rates->SN0_r0Mg2SiO4 = NULL;
-  my_rates->SN0_r0MgSiO3 = NULL;
-  my_rates->SN0_r0Fe3O4 = NULL;
-  my_rates->SN0_r0AC = NULL;
-  my_rates->SN0_r0SiO2D = NULL;
-  my_rates->SN0_r0MgO = NULL;
-  my_rates->SN0_r0FeS = NULL;
-  my_rates->SN0_r0Al2O3 = NULL;
-  my_rates->SN0_r0reforg = NULL;
-  my_rates->SN0_r0volorg = NULL;
-  my_rates->SN0_r0H2Oice = NULL;
-  my_rates->SN0_kpSiM = NULL;
-  my_rates->SN0_kpFeM = NULL;
-  my_rates->SN0_kpMg2SiO4 = NULL;
-  my_rates->SN0_kpMgSiO3 = NULL;
-  my_rates->SN0_kpFe3O4 = NULL;
-  my_rates->SN0_kpAC = NULL;
-  my_rates->SN0_kpSiO2D = NULL;
-  my_rates->SN0_kpMgO = NULL;
-  my_rates->SN0_kpFeS = NULL;
-  my_rates->SN0_kpAl2O3 = NULL;
-  my_rates->SN0_kpreforg = NULL;
-  my_rates->SN0_kpvolorg = NULL;
-  my_rates->SN0_kpH2Oice = NULL;
 
   my_rates->cloudy_data_new = -1;
 

@@ -305,20 +305,6 @@ int grackle::impl::initialize_dust_yields(chemistry_data *my_chemistry,
   my_rates->SN0_fS  = inject_pathway_props->gas_metal_nuclide_yields.S;
   my_rates->SN0_fFe = inject_pathway_props->gas_metal_nuclide_yields.Fe;
 
-  my_rates->SN0_r0SiM     = inject_pathway_props->size_moments.data[OnlyGrainSpLUT::SiM_dust];
-  my_rates->SN0_r0FeM     = inject_pathway_props->size_moments.data[OnlyGrainSpLUT::FeM_dust];
-  my_rates->SN0_r0Mg2SiO4 = inject_pathway_props->size_moments.data[OnlyGrainSpLUT::Mg2SiO4_dust];
-  my_rates->SN0_r0MgSiO3  = inject_pathway_props->size_moments.data[OnlyGrainSpLUT::MgSiO3_dust];
-  my_rates->SN0_r0Fe3O4   = inject_pathway_props->size_moments.data[OnlyGrainSpLUT::Fe3O4_dust];
-  my_rates->SN0_r0AC      = inject_pathway_props->size_moments.data[OnlyGrainSpLUT::AC_dust];
-  my_rates->SN0_r0SiO2D   = inject_pathway_props->size_moments.data[OnlyGrainSpLUT::SiO2_dust];
-  my_rates->SN0_r0MgO     = inject_pathway_props->size_moments.data[OnlyGrainSpLUT::MgO_dust];
-  my_rates->SN0_r0FeS     = inject_pathway_props->size_moments.data[OnlyGrainSpLUT::FeS_dust];
-  my_rates->SN0_r0Al2O3   = inject_pathway_props->size_moments.data[OnlyGrainSpLUT::Al2O3_dust];
-  my_rates->SN0_r0reforg  = inject_pathway_props->size_moments.data[OnlyGrainSpLUT::ref_org_dust];
-  my_rates->SN0_r0volorg  = inject_pathway_props->size_moments.data[OnlyGrainSpLUT::vol_org_dust];
-  my_rates->SN0_r0H2Oice  = inject_pathway_props->size_moments.data[OnlyGrainSpLUT::H2O_ice_dust];
-
   // write out the opacity related quantities
 
   // todo: consider renaming Nmom -> Ncoef
@@ -355,20 +341,6 @@ int grackle::impl::initialize_dust_yields(chemistry_data *my_chemistry,
         my_rates->gr_Td[iTd] = Td0 + (double)iTd * dTd;
       }
 
-  my_rates->SN0_kpSiM     = inject_pathway_props->opacity_coef_table.data[OnlyGrainSpLUT::SiM_dust];
-  my_rates->SN0_kpFeM     = inject_pathway_props->opacity_coef_table.data[OnlyGrainSpLUT::FeM_dust];
-  my_rates->SN0_kpMg2SiO4 = inject_pathway_props->opacity_coef_table.data[OnlyGrainSpLUT::Mg2SiO4_dust];
-  my_rates->SN0_kpMgSiO3  = inject_pathway_props->opacity_coef_table.data[OnlyGrainSpLUT::MgSiO3_dust];
-  my_rates->SN0_kpFe3O4   = inject_pathway_props->opacity_coef_table.data[OnlyGrainSpLUT::Fe3O4_dust];
-  my_rates->SN0_kpAC      = inject_pathway_props->opacity_coef_table.data[OnlyGrainSpLUT::AC_dust];
-  my_rates->SN0_kpSiO2D   = inject_pathway_props->opacity_coef_table.data[OnlyGrainSpLUT::SiO2_dust];
-  my_rates->SN0_kpMgO     = inject_pathway_props->opacity_coef_table.data[OnlyGrainSpLUT::MgO_dust];
-  my_rates->SN0_kpFeS     = inject_pathway_props->opacity_coef_table.data[OnlyGrainSpLUT::FeS_dust];
-  my_rates->SN0_kpAl2O3   = inject_pathway_props->opacity_coef_table.data[OnlyGrainSpLUT::Al2O3_dust];
-  my_rates->SN0_kpreforg  = inject_pathway_props->opacity_coef_table.data[OnlyGrainSpLUT::ref_org_dust];
-  my_rates->SN0_kpvolorg  = inject_pathway_props->opacity_coef_table.data[OnlyGrainSpLUT::vol_org_dust];
-  my_rates->SN0_kpH2Oice  = inject_pathway_props->opacity_coef_table.data[OnlyGrainSpLUT::H2O_ice_dust];
-
 
   // zero-out all metal injection yield fractions and dust grain properties
   override_metal_inject_props(inject_pathway_props, 0.0, n_pathways);
@@ -404,35 +376,7 @@ int grackle::impl::free_dust_yields(chemistry_data *my_chemistry,
   my_rates->SN0_fS = nullptr;
   my_rates->SN0_fFe = nullptr;
 
-  my_rates->SN0_r0SiM = nullptr;
-  my_rates->SN0_r0FeM = nullptr;
-  my_rates->SN0_r0Mg2SiO4 = nullptr;
-  my_rates->SN0_r0MgSiO3 = nullptr;
-  my_rates->SN0_r0Fe3O4 = nullptr;
-  my_rates->SN0_r0AC = nullptr;
-  my_rates->SN0_r0SiO2D = nullptr;
-  my_rates->SN0_r0MgO = nullptr;
-  my_rates->SN0_r0FeS = nullptr;
-  my_rates->SN0_r0Al2O3 = nullptr;
-  my_rates->SN0_r0reforg = nullptr;
-  my_rates->SN0_r0volorg = nullptr;
-  my_rates->SN0_r0H2Oice = nullptr;
-
   GRACKLE_FREE(my_rates->gr_Td);
-
-  my_rates->SN0_kpSiM = nullptr;
-  my_rates->SN0_kpFeM = nullptr;
-  my_rates->SN0_kpMg2SiO4 = nullptr;
-  my_rates->SN0_kpMgSiO3 = nullptr;
-  my_rates->SN0_kpFe3O4 = nullptr;
-  my_rates->SN0_kpAC = nullptr;
-  my_rates->SN0_kpSiO2D = nullptr;
-  my_rates->SN0_kpMgO = nullptr;
-  my_rates->SN0_kpFeS = nullptr;
-  my_rates->SN0_kpAl2O3 = nullptr;
-  my_rates->SN0_kpreforg = nullptr;
-  my_rates->SN0_kpvolorg = nullptr;
-  my_rates->SN0_kpH2Oice = nullptr;
 
   return SUCCESS;
 }

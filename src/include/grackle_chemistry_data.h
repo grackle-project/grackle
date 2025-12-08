@@ -610,12 +610,6 @@ typedef struct
   double gr_dT, *gr_Td;
   int     SN0_N;
   double *SN0_fC , *SN0_fO , *SN0_fMg, *SN0_fAl, *SN0_fSi, *SN0_fS , *SN0_fFe;
-  double *SN0_r0SiM, *SN0_r0FeM, *SN0_r0Mg2SiO4, *SN0_r0MgSiO3, *SN0_r0Fe3O4
-       , *SN0_r0AC, *SN0_r0SiO2D, *SN0_r0MgO, *SN0_r0FeS, *SN0_r0Al2O3
-       , *SN0_r0reforg , *SN0_r0volorg , *SN0_r0H2Oice;
-  double *SN0_kpSiM, *SN0_kpFeM, *SN0_kpMg2SiO4, *SN0_kpMgSiO3, *SN0_kpFe3O4
-       , *SN0_kpAC, *SN0_kpSiO2D, *SN0_kpMgO, *SN0_kpFeS, *SN0_kpAl2O3
-       , *SN0_kpreforg , *SN0_kpvolorg , *SN0_kpH2Oice;
 
   /* UV background data */
   UVBtable UVbackground_table;
