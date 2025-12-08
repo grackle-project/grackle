@@ -125,48 +125,34 @@ extern "C" int setup_yield_table_callback(
       input->initial_grain_props[yield_idx];
 
     int grain_species_idx = -1;
-    double* opac_coef_table = nullptr;
 
     // with a little refactoring, this will get a lot more concise
     if (std::strcmp("MgSiO3_dust", yield_info.name) == 0) {
       grain_species_idx = OnlyGrainSpLUT::MgSiO3_dust;
-      opac_coef_table = my_rates->SN0_kpMgSiO3;
     } else if (std::strcmp("AC_dust", yield_info.name) == 0) {
       grain_species_idx = OnlyGrainSpLUT::AC_dust;
-      opac_coef_table = my_rates->SN0_kpAC;
     } else if (std::strcmp("SiM_dust", yield_info.name) == 0) {
       grain_species_idx = OnlyGrainSpLUT::SiM_dust;
-      opac_coef_table = my_rates->SN0_kpSiM;
     } else if (std::strcmp("FeM_dust", yield_info.name) == 0) {
       grain_species_idx = OnlyGrainSpLUT::FeM_dust;
-      opac_coef_table = my_rates->SN0_kpFeM;
     } else if (std::strcmp("Mg2SiO4_dust", yield_info.name) == 0) {
       grain_species_idx = OnlyGrainSpLUT::Mg2SiO4_dust;
-      opac_coef_table = my_rates->SN0_kpMg2SiO4;
     } else if (std::strcmp("Fe3O4_dust", yield_info.name) == 0) {
       grain_species_idx = OnlyGrainSpLUT::Fe3O4_dust;
-      opac_coef_table = my_rates->SN0_kpFe3O4;
     } else if (std::strcmp("SiO2_dust", yield_info.name) == 0) {
       grain_species_idx = OnlyGrainSpLUT::SiO2_dust;
-      opac_coef_table = my_rates->SN0_kpSiO2D;
     } else if (std::strcmp("MgO_dust", yield_info.name) == 0) {
       grain_species_idx = OnlyGrainSpLUT::MgO_dust;
-      opac_coef_table = my_rates->SN0_kpMgO;
     } else if (std::strcmp("FeS_dust", yield_info.name) == 0) {
       grain_species_idx = OnlyGrainSpLUT::FeS_dust;
-      opac_coef_table = my_rates->SN0_kpFeS;
     } else if (std::strcmp("Al2O3_dust", yield_info.name) == 0) {
       grain_species_idx = OnlyGrainSpLUT::Al2O3_dust;
-      opac_coef_table = my_rates->SN0_kpAl2O3;
     } else if (std::strcmp("ref_org_dust", yield_info.name) == 0) {
       grain_species_idx = OnlyGrainSpLUT::ref_org_dust;
-      opac_coef_table = my_rates->SN0_kpreforg;
     } else if (std::strcmp("vol_org_dust", yield_info.name) == 0) {
       grain_species_idx = OnlyGrainSpLUT::vol_org_dust;
-      opac_coef_table = my_rates->SN0_kpvolorg;
     } else if (std::strcmp("H2O_ice_dust", yield_info.name) == 0) {
       grain_species_idx = OnlyGrainSpLUT::H2O_ice_dust;
-      opac_coef_table = my_rates->SN0_kpH2Oice;
     } else {
       return GrPrintAndReturnErr(
         "`%s` not a known grain species", yield_info.name);
@@ -186,6 +172,8 @@ extern "C" int setup_yield_table_callback(
 
     // copy over the opacity coefficients table
     {
+      double* opac_coef_table =
+        inject_pathway_props->opacity_coef_table.data[grain_species_idx];
       int n_Td = grackle::impl::inj_model_input::N_Tdust_Opacity_Table;
       int n_coef = grackle::impl::inj_model_input::N_Opacity_Coef;
 
@@ -232,7 +220,7 @@ void override_metal_inject_props(
 /// @note
 /// to start, this only handles the grain yields
 void override_dust_inject_props(chemistry_data_storage *my_rates,
-                                double value, int n_pathways) {
+                                double value) {
 
   GRIMPL_REQUIRE(my_rates != nullptr && my_rates->opaque_storage != nullptr,
                  "sanity check -- should never ever fail!");
@@ -243,6 +231,8 @@ void override_dust_inject_props(chemistry_data_storage *my_rates,
                  "sanity check -- should never ever fail!");
 
   const int n_grain_species = OnlyGrainSpLUT::NUM_ENTRIES;
+
+  int n_pathways = inject_pathway_props->n_pathways;
 
   // handle the grain yields
   for (int grain_species_idx = 0; grain_species_idx < n_grain_species;
@@ -263,24 +253,14 @@ void override_dust_inject_props(chemistry_data_storage *my_rates,
     }
   }
 
-  if (true) { // NOLINT(readability-simplify-boolean-expr)
-
-    // handle the opacity coefficient table
-    int opac_table_len = n_pathways * my_rates->gr_Size;
+  // handle the opacity coefficient table
+  int opac_table_len = n_pathways * my_rates->gr_Size;
+  for (int grain_species_idx = 0; grain_species_idx < n_grain_species;
+      grain_species_idx++){
+    double* arr =
+      inject_pathway_props->opacity_coef_table.data[grain_species_idx];
     for(int i = 0; i < opac_table_len; i++) {
-      my_rates->SN0_kpSiM     [i] = value;
-      my_rates->SN0_kpFeM     [i] = value;
-      my_rates->SN0_kpMg2SiO4 [i] = value;
-      my_rates->SN0_kpMgSiO3  [i] = value;
-      my_rates->SN0_kpFe3O4   [i] = value;
-      my_rates->SN0_kpAC      [i] = value;
-      my_rates->SN0_kpSiO2D   [i] = value;
-      my_rates->SN0_kpMgO     [i] = value;
-      my_rates->SN0_kpFeS     [i] = value;
-      my_rates->SN0_kpAl2O3   [i] = value;
-      my_rates->SN0_kpreforg  [i] = value;
-      my_rates->SN0_kpvolorg  [i] = value;
-      my_rates->SN0_kpH2Oice  [i] = value;
+      arr[i] = value;
     }
   }
 }
@@ -375,24 +355,24 @@ int grackle::impl::initialize_dust_yields(chemistry_data *my_chemistry,
         my_rates->gr_Td[iTd] = Td0 + (double)iTd * dTd;
       }
 
-      my_rates->SN0_kpSiM      = (double*)malloc(NSN * Nmom * NTd * sizeof(double));
-      my_rates->SN0_kpFeM      = (double*)malloc(NSN * Nmom * NTd * sizeof(double));
-      my_rates->SN0_kpMg2SiO4  = (double*)malloc(NSN * Nmom * NTd * sizeof(double));
-      my_rates->SN0_kpMgSiO3   = (double*)malloc(NSN * Nmom * NTd * sizeof(double));
-      my_rates->SN0_kpFe3O4    = (double*)malloc(NSN * Nmom * NTd * sizeof(double));
-      my_rates->SN0_kpAC       = (double*)malloc(NSN * Nmom * NTd * sizeof(double));
-      my_rates->SN0_kpSiO2D    = (double*)malloc(NSN * Nmom * NTd * sizeof(double));
-      my_rates->SN0_kpMgO      = (double*)malloc(NSN * Nmom * NTd * sizeof(double));
-      my_rates->SN0_kpFeS      = (double*)malloc(NSN * Nmom * NTd * sizeof(double));
-      my_rates->SN0_kpAl2O3    = (double*)malloc(NSN * Nmom * NTd * sizeof(double));
-      my_rates->SN0_kpreforg   = (double*)malloc(NSN * Nmom * NTd * sizeof(double));
-      my_rates->SN0_kpvolorg   = (double*)malloc(NSN * Nmom * NTd * sizeof(double));
-      my_rates->SN0_kpH2Oice   = (double*)malloc(NSN * Nmom * NTd * sizeof(double));
+  my_rates->SN0_kpSiM     = inject_pathway_props->opacity_coef_table.data[OnlyGrainSpLUT::SiM_dust];
+  my_rates->SN0_kpFeM     = inject_pathway_props->opacity_coef_table.data[OnlyGrainSpLUT::FeM_dust];
+  my_rates->SN0_kpMg2SiO4 = inject_pathway_props->opacity_coef_table.data[OnlyGrainSpLUT::Mg2SiO4_dust];
+  my_rates->SN0_kpMgSiO3  = inject_pathway_props->opacity_coef_table.data[OnlyGrainSpLUT::MgSiO3_dust];
+  my_rates->SN0_kpFe3O4   = inject_pathway_props->opacity_coef_table.data[OnlyGrainSpLUT::Fe3O4_dust];
+  my_rates->SN0_kpAC      = inject_pathway_props->opacity_coef_table.data[OnlyGrainSpLUT::AC_dust];
+  my_rates->SN0_kpSiO2D   = inject_pathway_props->opacity_coef_table.data[OnlyGrainSpLUT::SiO2_dust];
+  my_rates->SN0_kpMgO     = inject_pathway_props->opacity_coef_table.data[OnlyGrainSpLUT::MgO_dust];
+  my_rates->SN0_kpFeS     = inject_pathway_props->opacity_coef_table.data[OnlyGrainSpLUT::FeS_dust];
+  my_rates->SN0_kpAl2O3   = inject_pathway_props->opacity_coef_table.data[OnlyGrainSpLUT::Al2O3_dust];
+  my_rates->SN0_kpreforg  = inject_pathway_props->opacity_coef_table.data[OnlyGrainSpLUT::ref_org_dust];
+  my_rates->SN0_kpvolorg  = inject_pathway_props->opacity_coef_table.data[OnlyGrainSpLUT::vol_org_dust];
+  my_rates->SN0_kpH2Oice  = inject_pathway_props->opacity_coef_table.data[OnlyGrainSpLUT::H2O_ice_dust];
 
 
   // zero-out all metal injection yield fractions and dust grain properties
   override_metal_inject_props(inject_pathway_props, 0.0, n_pathways);
-  override_dust_inject_props(my_rates, 0.0, n_pathways);
+  override_dust_inject_props(my_rates, 0.0);
 
   SetupCallbackCtx ctx = {my_rates, 0};
 
@@ -440,19 +420,19 @@ int grackle::impl::free_dust_yields(chemistry_data *my_chemistry,
 
   GRACKLE_FREE(my_rates->gr_Td);
 
-  GRACKLE_FREE(my_rates->SN0_kpSiM);
-  GRACKLE_FREE(my_rates->SN0_kpFeM);
-  GRACKLE_FREE(my_rates->SN0_kpMg2SiO4);
-  GRACKLE_FREE(my_rates->SN0_kpMgSiO3);
-  GRACKLE_FREE(my_rates->SN0_kpFe3O4);
-  GRACKLE_FREE(my_rates->SN0_kpAC);
-  GRACKLE_FREE(my_rates->SN0_kpSiO2D);
-  GRACKLE_FREE(my_rates->SN0_kpMgO);
-  GRACKLE_FREE(my_rates->SN0_kpFeS);
-  GRACKLE_FREE(my_rates->SN0_kpAl2O3);
-  GRACKLE_FREE(my_rates->SN0_kpreforg);
-  GRACKLE_FREE(my_rates->SN0_kpvolorg);
-  GRACKLE_FREE(my_rates->SN0_kpH2Oice);
+  my_rates->SN0_kpSiM = nullptr;
+  my_rates->SN0_kpFeM = nullptr;
+  my_rates->SN0_kpMg2SiO4 = nullptr;
+  my_rates->SN0_kpMgSiO3 = nullptr;
+  my_rates->SN0_kpFe3O4 = nullptr;
+  my_rates->SN0_kpAC = nullptr;
+  my_rates->SN0_kpSiO2D = nullptr;
+  my_rates->SN0_kpMgO = nullptr;
+  my_rates->SN0_kpFeS = nullptr;
+  my_rates->SN0_kpAl2O3 = nullptr;
+  my_rates->SN0_kpreforg = nullptr;
+  my_rates->SN0_kpvolorg = nullptr;
+  my_rates->SN0_kpH2Oice = nullptr;
 
   return SUCCESS;
 }
