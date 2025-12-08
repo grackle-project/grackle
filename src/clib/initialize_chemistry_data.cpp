@@ -19,7 +19,7 @@
 #include "grackle.h"
 #include "grackle_macros.h"
 #include "auto_general.h"
-#include "interp_table_utils.h" // free_interp_grid_
+#include "interp_table_utils.hpp" // free_interp_grid_
 #include "init_misc_species_cool_rates.hpp"  // free_misc_species_cool_rates
 #include "initialize_cloudy_data.h"
 #include "initialize_dust_yields.hpp"  // free_dust_yields
@@ -574,13 +574,13 @@ extern "C" int local_free_chemistry_data(chemistry_data *my_chemistry,
     GRACKLE_FREE(my_rates->gas_grain);
     GRACKLE_FREE(my_rates->gas_grain2);
 
-    free_interp_grid_(&my_rates->LH2);
-    free_interp_grid_(&my_rates->LHD);
+    grackle::impl::free_interp_grid_(&my_rates->LH2);
+    grackle::impl::free_interp_grid_(&my_rates->LHD);
 
     // we deal with freeing other interp grids inside of
     // free_misc_species_cool_rates
 
-    free_interp_grid_(&my_rates->alphap);
+    grackle::impl::free_interp_grid_(&my_rates->alphap);
 
     GRACKLE_FREE(my_rates->gr_N);
 
@@ -647,7 +647,9 @@ extern "C" int local_free_chemistry_data(chemistry_data *my_chemistry,
 
   // delete contents of h2dust_grain_interp_props (automatically handles the
   // case where we didn't allocate anything)
-  free_interp_grid_props_(&my_rates->opaque_storage->h2dust_grain_interp_props);
+  grackle::impl::free_interp_grid_props_(
+      &my_rates->opaque_storage->h2dust_grain_interp_props,
+      /* use_delete = */ false);
   // since h2dust_grain_interp_props isn't a pointer, there is nothing more to
   // allocate right here
 

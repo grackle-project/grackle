@@ -118,6 +118,7 @@ add_library(Grackle_Grackle
   initialize_dust_yields.cpp initialize_dust_yields.hpp
   initialize_rates.cpp initialize_rates.hpp
   internal_types.cpp internal_types.hpp
+  interp_table_utils.hpp
   lookup_cool_rates1d.hpp
   make_consistent.cpp make_consistent.hpp
   opaque_storage.hpp
@@ -173,7 +174,6 @@ add_library(Grackle_Grackle
   grackle_chemistry_data_fields.def # <-- acts as a C header
   grackle_macros.h
   index_helper.h
-  interp_table_utils.h
   phys_constants.h
   collisional_rxn_rate_members.def # <-- acts as a C header
   utils.h
