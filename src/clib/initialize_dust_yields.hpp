@@ -21,9 +21,6 @@ int initialize_dust_yields(chemistry_data* my_chemistry,
                            chemistry_data_storage* my_rates,
                            code_units* my_units);
 
-int free_dust_yields(chemistry_data* my_chemistry,
-                     chemistry_data_storage* my_rates);
-
 }  // namespace grackle::impl
 
 #endif /* INITIALIZE_DUST_YIELDS_HPP */

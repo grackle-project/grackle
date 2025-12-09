@@ -316,10 +316,3 @@ int grackle::impl::initialize_dust_yields(chemistry_data *my_chemistry,
 
   return GR_SUCCESS;
 }
-
-int grackle::impl::free_dust_yields(chemistry_data *my_chemistry,
-                                    chemistry_data_storage *my_rates)
-{
-  return SUCCESS;
-}
-
