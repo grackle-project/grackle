@@ -117,7 +117,7 @@ struct FrozenKeyIdxBiMap {
 /// > This is pretty ugly/clunky, but its the only practical way to achieve
 /// > comparable behavior to other internal datatypes (ideally, we would make
 /// > this a simple C++ class instead)
-inline FrozenKeyIdxBiMap new_FrozenKeyIdxBiMap(const char* keys[],
+inline FrozenKeyIdxBiMap new_FrozenKeyIdxBiMap(const char* const keys[],
                                                int key_count, BiMapMode mode) {
   // this will be returned if there is an error
   FrozenKeyIdxBiMap erroneous_obj{0, nullptr, BiMapMode::REFS_KEYDATA};

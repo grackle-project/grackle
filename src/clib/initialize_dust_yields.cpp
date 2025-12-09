@@ -22,27 +22,53 @@
 #include "LUT.hpp"
 #include "opaque_storage.hpp"
 #include "status_reporting.h" // GrPrintAndReturnErr
+#include "utils/FrozenKeyIdxBiMap.hpp"
 
 namespace {  // stuff inside an anonymous namespace is local to this file
 
-int lookup_pathway_idx(const char* name) {
-  const char * known_names[12] = {
-    "local_ISM", "ccsn13", "ccsn20", "ccsn25", "ccsn30", "fsn13",
-    "fsn15", "fsn50", "fsn80", "pisn170", "pisn200", "y19",
-  };
-
-  for (int i = 0; i < 12; i++){
-    if (std::strcmp(known_names[i], name) == 0){
-      return i;
-    }
-  }
-  return -1;
-}
+/// names of all injection pathways known to grackle listed in the order
+/// in other parts of the codebase
+///
+/// @see SetupCallbackCtx::inj_path_names - The entity that is initialized with
+///   the values in this variable. Its docstring provides more details.
+constexpr const char * const known_inj_path_names[] = {
+  "local_ISM", "ccsn13", "ccsn20", "ccsn25", "ccsn30", "fsn13",
+  "fsn15", "fsn50", "fsn80", "pisn170", "pisn200", "y19",
+};
 
 /// the context object for setup_yield_table_callback
 struct SetupCallbackCtx{
-  chemistry_data_storage *my_rates;
+  /// The object that gets updated by the values that the callback loads
+  grackle::impl::GrainMetalInjectPathways* inject_pathway_props;
+
+  /// a counter that is incremented every time setup_yield_table_callback loads
+  /// data from an injection pathway
   int counter;
+
+  /// maps the names of known injection pathways to a unique index
+  ///
+  /// The callback function reports an error if an injection is encountered
+  /// that has a name that isn't included in this map. Furthermore, data is
+  /// organized within GrainMetalInjectPathways according to the order of keys
+  /// in this map.
+  ///
+  /// @par Why This Is Needed
+  /// For some background context:
+  /// - to make use of the injection pathway information, Grackle requires
+  ///   users to provide mass densities fields specifying the total amount of
+  ///   injected metals by each pathway
+  /// - currently, the names of the user accessed fields have hard-coded names
+  /// - currently, Grackle loops over the data specified by these fields in a
+  ///   standardized order and assumes data within an instance of
+  ///   grackle::impl::GrainMetalInjectPathways has the same order
+  ///
+  /// @par How this should change
+  /// Before any functionality involving injection pathways is included in a
+  /// public release of Grackle, the plan is to stop hard-coding the names of
+  /// injection pathway density fields, and to load in injection pathway data
+  /// from HDF5 files. At that point, we'll need to tweak the callback function
+  /// to load in data for models with arbitrary names.
+  const grackle::impl::FrozenKeyIdxBiMap* inj_path_names;
 };
 
 /// a callback function that sets up the appropriate parts of
@@ -62,19 +88,23 @@ extern "C" int setup_yield_table_callback(
 {
   namespace inj_input = ::grackle::impl::inj_model_input;
 
+  SetupCallbackCtx* my_ctx = static_cast<SetupCallbackCtx*>(ctx);
 
-  int pathway_idx = lookup_pathway_idx(name);
-
-  if (pathway_idx < 0) {
+  // lookup the pathway associated with the current injection pathway name
+  // and report an error if there is one
+  // -> see the docstring for SetupCallbackCtx::inj_path_names for how this
+  //    behavior will change when we start loading data from HDF5 files
+  int pathway_idx = static_cast<int>(
+    FrozenKeyIdxBiMap_idx_from_key(my_ctx->inj_path_names, name)
+  );
+  if (pathway_idx == static_cast<int>(grackle::impl::bimap::invalid_val)) {
     return GrPrintAndReturnErr(
       "`%s` is an unexpected injection pathway name", name);
   }
 
-  chemistry_data_storage *my_rates =
-    static_cast<SetupCallbackCtx*>(ctx)->my_rates;
-
+  // load the object that we update with the data we read
   grackle::impl::GrainMetalInjectPathways* inject_pathway_props
-    = my_rates->opaque_storage->inject_pathway_props;
+    = my_ctx->inject_pathway_props;
 
   // record each metal nuclide yield
   // -> there is less value to using string keys in this case, but it makes
@@ -186,7 +216,7 @@ extern "C" int setup_yield_table_callback(
     }
   }
 
-  (static_cast<SetupCallbackCtx*>(ctx)->counter)++;
+  (my_ctx->counter)++;
 
   return GR_SUCCESS;
 }
@@ -244,10 +274,23 @@ int grackle::impl::initialize_dust_yields(chemistry_data *my_chemistry,
 {
 
   if (my_chemistry->metal_chemistry == 0) {
-    return SUCCESS;
+    return GR_SUCCESS;
   }
 
-  int n_pathways = 12;
+  // construct a mapping of all known models
+  // -> in the future, we are going to move away from this hardcoded approach
+  // -> since the strings are statically allocates, the map won't make copies
+  //    of the strings
+  constexpr int n_pathways = static_cast<int>(
+    sizeof(known_inj_path_names) / sizeof(char*));
+
+  FrozenKeyIdxBiMap inj_path_names = new_FrozenKeyIdxBiMap(
+      known_inj_path_names, n_pathways, BiMapMode::REFS_KEYDATA);
+  if (!FrozenKeyIdxBiMap_is_ok(&inj_path_names)) {
+    return GrPrintAndReturnErr(
+      "there was a problem building the map of model names");
+  }
+
   int n_log10Tdust_vals = grackle::impl::inj_model_input::N_Tdust_Opacity_Table;
   int n_opac_poly_coef = grackle::impl::inj_model_input::N_Opacity_Coef;
   my_rates->opaque_storage->inject_pathway_props =
@@ -260,6 +303,7 @@ int grackle::impl::initialize_dust_yields(chemistry_data *my_chemistry,
     = my_rates->opaque_storage->inject_pathway_props;
 
   if (!GrainMetalInjectPathways_is_valid(inject_pathway_props)) {
+    drop_FrozenKeyIdxBiMap(&inj_path_names);
     return GR_FAIL;
   }
 
@@ -282,12 +326,21 @@ int grackle::impl::initialize_dust_yields(chemistry_data *my_chemistry,
       &inject_pathway_props->gas_metal_nuclide_yields, n_pathways);
   zero_out_dust_inject_props(inject_pathway_props);
 
-  SetupCallbackCtx ctx = {my_rates, 0};
+  // actually load in the data for each injection pathway
+  SetupCallbackCtx ctx = {
+    /* inject_pathway_props = */ my_rates->opaque_storage->inject_pathway_props,
+    /* counter = */ 0,
+    /* inj_path_names = */ &inj_path_names,
+  };
 
   int ret = grackle::impl::inj_model_input::input_inject_model_iterate(
       &setup_yield_table_callback, static_cast<void*>(&ctx));
+
+  drop_FrozenKeyIdxBiMap(&inj_path_names);
   if (ret != GR_SUCCESS) {
-    return GR_FAIL;
+    return GrPrintAndReturnErr(
+        "some kind of unspecified error occured when loading data from each "
+        "injection pathway");
   }
 
   GR_INTERNAL_REQUIRE(ctx.counter == 12, "sanity-checking");
