@@ -36,6 +36,40 @@ constexpr const char * const known_inj_path_names[] = {
   "fsn15", "fsn50", "fsn80", "pisn170", "pisn200", "y19",
 };
 
+/// a crude map-like function
+bool lookup_metal_yield_ptrs(
+  grackle::impl::GrainMetalInjectPathways* inject_pathway_props,
+  const char* metal_nuclide_name, double** total_yield_ptr,
+  double** gasonly_yield_ptr
+) {
+  if (std::strcmp("C", metal_nuclide_name) == 0) {
+    (*total_yield_ptr) = inject_pathway_props->total_metal_nuclide_yields.C;
+    (*gasonly_yield_ptr) = inject_pathway_props->gas_metal_nuclide_yields.C;
+  } else if (std::strcmp("O", metal_nuclide_name) == 0) {
+    (*total_yield_ptr) = inject_pathway_props->total_metal_nuclide_yields.O;
+    (*gasonly_yield_ptr) = inject_pathway_props->gas_metal_nuclide_yields.O;
+  } else if (std::strcmp("Mg", metal_nuclide_name) == 0) {
+    (*total_yield_ptr) = inject_pathway_props->total_metal_nuclide_yields.Mg;
+    (*gasonly_yield_ptr) = inject_pathway_props->gas_metal_nuclide_yields.Mg;
+  } else if (std::strcmp("Al", metal_nuclide_name) == 0) {
+    (*total_yield_ptr) = inject_pathway_props->total_metal_nuclide_yields.Al;
+    (*gasonly_yield_ptr) = inject_pathway_props->gas_metal_nuclide_yields.Al;
+  } else if (std::strcmp("Si", metal_nuclide_name) == 0) {
+    (*total_yield_ptr) = inject_pathway_props->total_metal_nuclide_yields.Si;
+    (*gasonly_yield_ptr) = inject_pathway_props->gas_metal_nuclide_yields.Si;
+  } else if (std::strcmp("S", metal_nuclide_name) == 0) {
+    (*total_yield_ptr) = inject_pathway_props->total_metal_nuclide_yields.S;
+    (*gasonly_yield_ptr) = inject_pathway_props->gas_metal_nuclide_yields.S;
+  } else if (std::strcmp("Fe", metal_nuclide_name) == 0) {
+    (*total_yield_ptr) = inject_pathway_props->total_metal_nuclide_yields.Fe;
+    (*gasonly_yield_ptr) = inject_pathway_props->gas_metal_nuclide_yields.Fe;
+  } else {
+    return false;
+  }
+  return true;
+
+}
+
 /// the context object for setup_yield_table_callback
 struct SetupCallbackCtx{
   /// The object that gets updated by the values that the callback loads
@@ -106,40 +140,14 @@ extern "C" int setup_yield_table_callback(
   grackle::impl::GrainMetalInjectPathways* inject_pathway_props
     = my_ctx->inject_pathway_props;
 
-  // record each metal nuclide yield
-  // -> there is less value to using string keys in this case, but it makes
-  //    some sense to be semi-consistent with the handling of the dust species
-  //    yields
+  // record the yields for each metal nuclide
   for (int i = 0; i < input->n_metal_nuclide_yields; i++) {
     const inj_input::MetalNuclideYieldProps& yield_info =
       input->metal_nuclide_yields[i];
 
-    double* total_yield = nullptr;
-    double* gas_yield = nullptr;
-
-    // todo: refactor to use a map (I have a rough plan)
-    if (std::strcmp("C", yield_info.name) == 0) {
-      total_yield = inject_pathway_props->total_metal_nuclide_yields.C;
-      gas_yield = inject_pathway_props->gas_metal_nuclide_yields.C;
-    } else if (std::strcmp("O", yield_info.name) == 0) {
-      total_yield = inject_pathway_props->total_metal_nuclide_yields.O;
-      gas_yield = inject_pathway_props->gas_metal_nuclide_yields.O;
-    } else if (std::strcmp("Mg", yield_info.name) == 0) {
-      total_yield = inject_pathway_props->total_metal_nuclide_yields.Mg;
-      gas_yield = inject_pathway_props->gas_metal_nuclide_yields.Mg;
-    } else if (std::strcmp("Al", yield_info.name) == 0) {
-      total_yield = inject_pathway_props->total_metal_nuclide_yields.Al;
-      gas_yield = inject_pathway_props->gas_metal_nuclide_yields.Al;
-    } else if (std::strcmp("Si", yield_info.name) == 0) {
-      total_yield = inject_pathway_props->total_metal_nuclide_yields.Si;
-      gas_yield = inject_pathway_props->gas_metal_nuclide_yields.Si;
-    } else if (std::strcmp("S", yield_info.name) == 0) {
-      total_yield = inject_pathway_props->total_metal_nuclide_yields.S;
-      gas_yield = inject_pathway_props->gas_metal_nuclide_yields.S;
-    } else if (std::strcmp("Fe", yield_info.name) == 0) {
-      total_yield = inject_pathway_props->total_metal_nuclide_yields.Fe;
-      gas_yield = inject_pathway_props->gas_metal_nuclide_yields.Fe;
-    } else {
+    double *total_yield, *gas_yield;
+    if (!lookup_metal_yield_ptrs(inject_pathway_props, yield_info.name, 
+                                 &total_yield, &gas_yield)){
       return GrPrintAndReturnErr(
         "`%s` not a known metal nuclide", yield_info.name);
     }
