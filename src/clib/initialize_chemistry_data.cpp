@@ -149,8 +149,6 @@ static void initialize_empty_chemistry_data_storage_struct(chemistry_data_storag
 
   grackle::impl::initialize_empty_interp_grid_(&my_rates->alphap);
 
-  my_rates->gr_Td = NULL;
-
   my_rates->cloudy_data_new = -1;
 
   my_rates->opaque_storage = NULL;

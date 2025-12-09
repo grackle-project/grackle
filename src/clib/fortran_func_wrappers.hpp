@@ -56,6 +56,7 @@ inline void calc_all_tdust_gasgr_1d_g(
     my_rates->opaque_storage->inject_pathway_props;
 
   double dlog10Tdust = 0.0;
+  double* log10Tdust_vals = nullptr;
 
   // NOTE: gr_N and gr_Size are historical names
   // -> they are pretty uninformative and should be changed!
@@ -64,6 +65,8 @@ inline void calc_all_tdust_gasgr_1d_g(
   if (inject_pathway_props != nullptr) {
     dlog10Tdust =
       inject_pathway_props->log10Tdust_interp_props.parameter_spacing[0];
+    log10Tdust_vals =
+      inject_pathway_props->log10Tdust_interp_props.parameters[0];
 
     gr_N[0] = inject_pathway_props->n_opac_poly_coef;
     gr_N[1] = static_cast<int>(
@@ -79,8 +82,8 @@ inline void calc_all_tdust_gasgr_1d_g(
     metallicity, dust2gas, nh, gasgr_tdust,
     itmask_metal,
     &my_chemistry->dust_species, &my_chemistry->use_multiple_dust_temperatures,
-    gr_N, &gr_Size, &dlog10Tdust,
-    my_rates->gr_Td, grain_temperatures.data[OnlyGrainSpLUT::SiM_dust], grain_temperatures.data[OnlyGrainSpLUT::FeM_dust], grain_temperatures.data[OnlyGrainSpLUT::Mg2SiO4_dust], grain_temperatures.data[OnlyGrainSpLUT::MgSiO3_dust], grain_temperatures.data[OnlyGrainSpLUT::Fe3O4_dust],
+    gr_N, &gr_Size, &dlog10Tdust, log10Tdust_vals,
+    grain_temperatures.data[OnlyGrainSpLUT::SiM_dust], grain_temperatures.data[OnlyGrainSpLUT::FeM_dust], grain_temperatures.data[OnlyGrainSpLUT::Mg2SiO4_dust], grain_temperatures.data[OnlyGrainSpLUT::MgSiO3_dust], grain_temperatures.data[OnlyGrainSpLUT::Fe3O4_dust],
     grain_temperatures.data[OnlyGrainSpLUT::AC_dust], grain_temperatures.data[OnlyGrainSpLUT::SiO2_dust], grain_temperatures.data[OnlyGrainSpLUT::MgO_dust], grain_temperatures.data[OnlyGrainSpLUT::FeS_dust], grain_temperatures.data[OnlyGrainSpLUT::Al2O3_dust], grain_temperatures.data[OnlyGrainSpLUT::ref_org_dust],
     grain_temperatures.data[OnlyGrainSpLUT::vol_org_dust], grain_temperatures.data[OnlyGrainSpLUT::H2O_ice_dust], my_rates->gas_grain2, &my_rates->gamma_isrf2,
     &coolunit, gasgr, myisrf, internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::SiM_dust], internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::FeM_dust], internal_dust_prop_buf.grain_sigma_per_gas_mass.data[OnlyGrainSpLUT::Mg2SiO4_dust],
@@ -173,7 +176,7 @@ inline void calc_grain_size_increment_1d (
     my_rates->opaque_storage->inject_pathway_props->size_moments.data[OnlyGrainSpLUT::H2O_ice_dust],
     gr_N, &gr_Size,
     &my_rates->opaque_storage->inject_pathway_props->log10Tdust_interp_props.parameter_spacing[0],
-    my_rates->gr_Td,
+    inject_pathway_props->log10Tdust_interp_props.parameters[0],
     my_rates->opaque_storage->inject_pathway_props->opacity_coef_table.data[OnlyGrainSpLUT::SiM_dust],
     my_rates->opaque_storage->inject_pathway_props->opacity_coef_table.data[OnlyGrainSpLUT::FeM_dust],
     my_rates->opaque_storage->inject_pathway_props->opacity_coef_table.data[OnlyGrainSpLUT::Mg2SiO4_dust],

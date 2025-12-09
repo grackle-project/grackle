@@ -605,9 +605,6 @@ typedef struct
    * -> alphap.parameters[1] is log10(temperature) */
   gr_interp_grid alphap;
 
-  /* metal/dust abundance */
-  double *gr_Td;
-
   /* UV background data */
   UVBtable UVbackground_table;
 

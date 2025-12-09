@@ -288,18 +288,15 @@ int grackle::impl::initialize_dust_yields(chemistry_data *my_chemistry,
     return GR_FAIL;
   }
 
+  double log10Tdust_lo = 0.0;
+  double log10Tdust_step = 0.1;
 
-  // todo: consider renaming Nmom -> Ncoef
-  int Nmom = n_opac_poly_coef; // todo: remove me!
-  double NTd = n_log10Tdust_vals;
-  double Td0 = 0.0000000; // todo: remove me!
-  double dTd = 0.1000000; // todo: remove me!
-
-  // todo: rename gr_Td, dTd since they are related to log10(Tdust) or ln(Tdust)
-  inject_pathway_props->log10Tdust_interp_props.parameter_spacing[0] = dTd;
-      my_rates->gr_Td = (double*)malloc(NTd * Nmom * sizeof(double));
-  for(int iTd = 0; iTd < NTd; iTd++) {
-    my_rates->gr_Td[iTd] = Td0 + (double)iTd * dTd;
+  inject_pathway_props->log10Tdust_interp_props.parameter_spacing[0]
+    = log10Tdust_step;
+  double* log10Tdust_vals =
+    inject_pathway_props->log10Tdust_interp_props.parameters[0];
+  for(int iTd = 0; iTd < n_log10Tdust_vals; iTd++) {
+    log10Tdust_vals[iTd] = log10Tdust_lo + (double)iTd * log10Tdust_step;
   }
 
 
@@ -323,12 +320,6 @@ int grackle::impl::initialize_dust_yields(chemistry_data *my_chemistry,
 int grackle::impl::free_dust_yields(chemistry_data *my_chemistry,
                                     chemistry_data_storage *my_rates)
 {
-
-  if (my_chemistry->metal_chemistry == 0)
-    return SUCCESS;
-
-  GRACKLE_FREE(my_rates->gr_Td);
-
   return SUCCESS;
 }
 
