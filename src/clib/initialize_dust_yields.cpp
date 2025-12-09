@@ -15,6 +15,7 @@
 #include <hdf5.h>
 #include <stdio.h>
 #include <math.h>
+#include "dust/grain_species_info.hpp"
 #include "grackle_macros.h"
 #include "grackle_chemistry_data.h"
 #include "initialize_dust_yields.hpp" // forward declarations
@@ -78,6 +79,9 @@ struct SetupCallbackCtx{
   /// a counter that is incremented every time setup_yield_table_callback loads
   /// data from an injection pathway
   int counter;
+
+  /// the number of dust grain species
+  const int n_grain_species;
 
   /// maps the names of known injection pathways to a unique index
   ///
@@ -194,6 +198,10 @@ extern "C" int setup_yield_table_callback(
     } else {
       return GrPrintAndReturnErr(
         "`%s` not a known grain species", yield_info.name);
+    }
+
+    if (grain_species_idx >= my_ctx->n_grain_species) {
+      continue;
     }
 
     // copy the nonprimordial yield fraction
@@ -338,6 +346,7 @@ int grackle::impl::initialize_dust_yields(chemistry_data *my_chemistry,
   SetupCallbackCtx ctx = {
     /* inject_pathway_props = */ my_rates->opaque_storage->inject_pathway_props,
     /* counter = */ 0,
+    /* n_grain_species = */ get_n_grain_species(my_chemistry->dust_species),
     /* inj_path_names = */ &inj_path_names,
   };
 
