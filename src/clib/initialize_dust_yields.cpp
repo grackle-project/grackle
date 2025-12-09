@@ -191,37 +191,12 @@ extern "C" int setup_yield_table_callback(
   return GR_SUCCESS;
 }
 
-/// a helper function override the values of all metal injection properties
-void override_metal_inject_props(
-  grackle::impl::GrainMetalInjectPathways* inject_pathway_props,
-  double value, int n_pathways)
-{
-  for(int iSN = 0; iSN < n_pathways; iSN++) {
-    inject_pathway_props->total_metal_nuclide_yields.C [iSN] = value;
-    inject_pathway_props->total_metal_nuclide_yields.O [iSN] = value;
-    inject_pathway_props->total_metal_nuclide_yields.Mg[iSN] = value;
-    inject_pathway_props->total_metal_nuclide_yields.Al[iSN] = value;
-    inject_pathway_props->total_metal_nuclide_yields.Si[iSN] = value;
-    inject_pathway_props->total_metal_nuclide_yields.S [iSN] = value;
-    inject_pathway_props->total_metal_nuclide_yields.Fe[iSN] = value;
-
-    inject_pathway_props->gas_metal_nuclide_yields.C [iSN] = value;
-    inject_pathway_props->gas_metal_nuclide_yields.O [iSN] = value;
-    inject_pathway_props->gas_metal_nuclide_yields.Mg[iSN] = value;
-    inject_pathway_props->gas_metal_nuclide_yields.Al[iSN] = value;
-    inject_pathway_props->gas_metal_nuclide_yields.Si[iSN] = value;
-    inject_pathway_props->gas_metal_nuclide_yields.S [iSN] = value;
-    inject_pathway_props->gas_metal_nuclide_yields.Fe[iSN] = value;
-  }
-}
-
 /// a helper function to override the values of all dust inject properties
 ///
 /// @note
 /// to start, this only handles the grain yields
-void override_dust_inject_props(
-    grackle::impl::GrainMetalInjectPathways* inject_pathway_props,
-    double value) {
+void zero_out_dust_inject_props(
+    grackle::impl::GrainMetalInjectPathways* inject_pathway_props) {
 
   const int n_grain_species = OnlyGrainSpLUT::NUM_ENTRIES;
 
@@ -232,7 +207,7 @@ void override_dust_inject_props(
       grain_species_idx++){
     double* arr = inject_pathway_props->grain_yields.data[grain_species_idx];
     for(int iSN = 0; iSN < n_pathways; iSN++) {
-      arr[iSN] = value;
+      arr[iSN] = 0.0;
     }
   }
 
@@ -242,7 +217,7 @@ void override_dust_inject_props(
       grain_species_idx++){
     double* arr = inject_pathway_props->size_moments.data[grain_species_idx];
     for(int i = 0; i < moment_table_len; i++) {
-      arr[i] = value;
+      arr[i] = 0.0;
     }
   }
 
@@ -256,7 +231,7 @@ void override_dust_inject_props(
     double* arr =
       inject_pathway_props->opacity_coef_table.data[grain_species_idx];
     for(long long i = 0LL; i < opac_table_len; i++) {
-      arr[i] = value;
+      arr[i] = 0.0;
     }
   }
 }
@@ -301,8 +276,11 @@ int grackle::impl::initialize_dust_yields(chemistry_data *my_chemistry,
 
 
   // zero-out all metal injection yield fractions and dust grain properties
-  override_metal_inject_props(inject_pathway_props, 0.0, n_pathways);
-  override_dust_inject_props(inject_pathway_props, 0.0);
+  yields::MetalTables_zero_out(
+      &inject_pathway_props->total_metal_nuclide_yields, n_pathways);
+  yields::MetalTables_zero_out(
+      &inject_pathway_props->gas_metal_nuclide_yields, n_pathways);
+  zero_out_dust_inject_props(inject_pathway_props);
 
   SetupCallbackCtx ctx = {my_rates, 0};
 

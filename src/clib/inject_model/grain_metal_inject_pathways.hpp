@@ -73,6 +73,19 @@ inline void drop_MetalTables(MetalTables* ptr) {
   delete[] ptr->Fe;
 }
 
+/// fills elements with zeros
+inline void MetalTables_zero_out(MetalTables* ptr, int nelem) {
+  for (int i = 0; i < nelem; i++) {
+    ptr->C [i] = 0.0;
+    ptr->O [i] = 0.0;
+    ptr->Mg[i] = 0.0;
+    ptr->Al[i] = 0.0;
+    ptr->Si[i] = 0.0;
+    ptr->S [i] = 0.0;
+    ptr->Fe[i] = 0.0;
+  }
+}
+
 }  // namespace grackle::impl::yields
 
 namespace grackle::impl {
