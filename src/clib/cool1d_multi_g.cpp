@@ -1107,7 +1107,8 @@ void grackle::impl::cool1d_multi_g(
   if ((my_chemistry->use_dust_density_field > 0) &&
       (my_chemistry->dust_species > 0)) {
     grackle::impl::fortran_wrapper::calc_grain_size_increment_1d(
-        dom, idx_range, itmask_metal, my_chemistry, my_rates, my_fields,
+        dom, idx_range, itmask_metal, my_chemistry,
+        my_rates->opaque_storage->inject_pathway_props, my_fields,
         internal_dust_prop_buf);
   }
 
