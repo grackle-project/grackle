@@ -144,7 +144,7 @@ inline void calc_grain_size_increment_1d (
     my_fields->ccsn13_metal_density, my_fields->ccsn20_metal_density, my_fields->ccsn25_metal_density, my_fields->ccsn30_metal_density,
     my_fields->fsn13_metal_density, my_fields->fsn15_metal_density, my_fields->fsn50_metal_density, my_fields->fsn80_metal_density,
     my_fields->pisn170_metal_density, my_fields->pisn200_metal_density, my_fields->y19_metal_density,
-    &my_rates->SN0_N,
+    &inject_pathway_props->n_pathways,
     my_rates->opaque_storage->inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::SiM_dust],
     my_rates->opaque_storage->inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::FeM_dust],
     my_rates->opaque_storage->inject_pathway_props->grain_yields.data[OnlyGrainSpLUT::Mg2SiO4_dust],

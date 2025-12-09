@@ -289,29 +289,8 @@ int grackle::impl::initialize_dust_yields(chemistry_data *my_chemistry,
   }
 
 
-  int NSN = n_pathways;  // todo: delete me!
-  my_rates->SN0_N = n_pathways;
-
   // todo: consider renaming Nmom -> Ncoef
   int Nmom = n_opac_poly_coef; // todo: remove me!
-  // todo: more this into GrainMetalInjectPathways
-  // - essentially, each SN0_kpGRSP array is a 3D array of shape
-  //   (n_pathways, NTd, Nmom). This shape uses numpy conventions (i.e. Nmom is
-  //   the fast-axis).
-  // - In more detail:
-  //   - n_pathways is the number of injection pathways
-  //   - NTd corresponds to the number of dust temperatures we consider
-  //   - Nmom corresponds to the number of coefficients that we track for
-  //     computing an opacity related quantity. This quantity is given by
-  //       4πζ/3 * ( SN0_kpGRSP[path_j, iTd, 3] +
-  //                 SN0_kpGRSP[path_j, iTd, 2] * δr(t) +
-  //                 SN0_kpGRSP[path_j, iTd, 1] * δr²(t) +
-  //                 SN0_kpGRSP[path_j, iTd, 0] * δr³(t))
-  //     where
-  //       - ζ is the mass density of a single grain (in g/cm³)
-  //       - δr(t) refers to the derived "size increment" (it is a central
-  //         quantity in the model)
-  //       - I **think** the resulting quantity is the optical cross-section
   double NTd = n_log10Tdust_vals;
   double Td0 = 0.0000000; // todo: remove me!
   double dTd = 0.1000000; // todo: remove me!

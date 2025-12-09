@@ -607,7 +607,6 @@ typedef struct
 
   /* metal/dust abundance */
   double *gr_Td;
-  int     SN0_N;
 
   /* UV background data */
   UVBtable UVbackground_table;

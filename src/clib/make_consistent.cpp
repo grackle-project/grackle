@@ -242,11 +242,19 @@ void make_consistent(int imetal, double dom, chemistry_data* my_chemistry,
       correctFe;
   gr_float correctCg, correctOg, correctMgg, correctSig, correctFeg;
   gr_float correctCd, correctOd, correctMgd, correctSid, correctFed;
-  int iSN, nSN, iSN0;
+  int iSN, iSN0;
+
+  const grackle::impl::GrainMetalInjectPathways* inject_pathway_props =
+      my_rates->opaque_storage->inject_pathway_props;
+  const int n_pathways = (inject_pathway_props == nullptr) ? 0 :
+    inject_pathway_props->n_pathways;
   std::vector<gr_float> SN_metal_data_(my_fields->grid_dimension[0] *
-                                       my_rates->SN0_N);
-  grackle::impl::View<gr_float**> SN_metal(
-      SN_metal_data_.data(), my_fields->grid_dimension[0], my_rates->SN0_N);
+                                       n_pathways);
+  grackle::impl::View<gr_float**> SN_metal;
+  if (n_pathways > 0) {
+    SN_metal = grackle::impl::View<gr_float**>(
+        SN_metal_data_.data(), my_fields->grid_dimension[0], n_pathways);
+  }
   std::vector<double> Ct(my_fields->grid_dimension[0]);
   std::vector<double> Ot(my_fields->grid_dimension[0]);
   std::vector<double> Mgt(my_fields->grid_dimension[0]);
@@ -268,9 +276,6 @@ void make_consistent(int imetal, double dom, chemistry_data* my_chemistry,
   std::vector<double> Sid(my_fields->grid_dimension[0]);
   std::vector<double> Sd(my_fields->grid_dimension[0]);
   std::vector<double> Fed(my_fields->grid_dimension[0]);
-
-  const grackle::impl::GrainMetalInjectPathways* inject_pathway_props =
-      my_rates->opaque_storage->inject_pathway_props;
 
   // Loop over all zones
 
@@ -393,7 +398,6 @@ void make_consistent(int imetal, double dom, chemistry_data* my_chemistry,
           //           metal_Y19(i,j,k) = metal_Y19(i,j,k) * correctZ
           //        enddo
 
-          nSN = 12;
           for (i = my_fields->grid_start[0]; i <= my_fields->grid_end[0]; i++) {
             SN_metal(i, 0) = metal_loc(i, j, k);
             SN_metal(i, 1) = metal_C13(i, j, k);
@@ -424,7 +428,7 @@ void make_consistent(int imetal, double dom, chemistry_data* my_chemistry,
             Sg[i] = 0.;
             Fet[i] = 0.;
             Feg[i] = 0.;
-            for (iSN = 0; iSN < nSN; iSN++) {
+            for (iSN = 0; iSN < n_pathways; iSN++) {
               Ct[i] = Ct[i] + total_metal_yields.C[iSN] * SN_metal(i, iSN);
               Ot[i] = Ot[i] + total_metal_yields.O[iSN] * SN_metal(i, iSN);
               Mgt[i] = Mgt[i] + total_metal_yields.Mg[iSN] * SN_metal(i, iSN);
