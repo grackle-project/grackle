@@ -50,14 +50,36 @@ inline void calc_all_tdust_gasgr_1d_g(
   grackle::impl::InternalDustPropBuf internal_dust_prop_buf
 ) {
 
+  // after transcription, we should obviously move this logic inside of
+  // the transcribed function
+  grackle::impl::GrainMetalInjectPathways* inject_pathway_props =
+    my_rates->opaque_storage->inject_pathway_props;
+
+  double dlog10Tdust = 0.0;
+
+  // NOTE: gr_N and gr_Size are historical names
+  // -> they are pretty uninformative and should be changed!
+  int gr_N[2] = {0, 0};
+  int gr_Size = 0;
+  if (inject_pathway_props != nullptr) {
+    dlog10Tdust =
+      inject_pathway_props->log10Tdust_interp_props.parameter_spacing[0];
+
+    gr_N[0] = inject_pathway_props->n_opac_poly_coef;
+    gr_N[1] = static_cast<int>(
+      inject_pathway_props->log10Tdust_interp_props.dimension[0]);
+  };
+  gr_Size = gr_N[0] * gr_N[1];
+
+
   FORTRAN_NAME(calc_all_tdust_gasgr_1d_g)(
     &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &my_chemistry->NumberOfTemperatureBins,
     &my_chemistry->use_dust_density_field, &idx_range.i_start, &idx_range.i_end, &idx_range.jp1, &idx_range.kp1, &my_chemistry->local_dust_to_gas_ratio, &my_rates->gamma_isrf,
     &trad, my_rates->gas_grain, logTlininterp_buf.indixe, logTlininterp_buf.tdef, tgas, tdust,
     metallicity, dust2gas, nh, gasgr_tdust,
     itmask_metal,
-    &my_chemistry->dust_species, &my_chemistry->use_multiple_dust_temperatures, my_rates->gr_N, &my_rates->gr_Size,
-    &my_rates->opaque_storage->inject_pathway_props->log10Tdust_interp_props.parameter_spacing[0],
+    &my_chemistry->dust_species, &my_chemistry->use_multiple_dust_temperatures,
+    gr_N, &gr_Size, &dlog10Tdust,
     my_rates->gr_Td, grain_temperatures.data[OnlyGrainSpLUT::SiM_dust], grain_temperatures.data[OnlyGrainSpLUT::FeM_dust], grain_temperatures.data[OnlyGrainSpLUT::Mg2SiO4_dust], grain_temperatures.data[OnlyGrainSpLUT::MgSiO3_dust], grain_temperatures.data[OnlyGrainSpLUT::Fe3O4_dust],
     grain_temperatures.data[OnlyGrainSpLUT::AC_dust], grain_temperatures.data[OnlyGrainSpLUT::SiO2_dust], grain_temperatures.data[OnlyGrainSpLUT::MgO_dust], grain_temperatures.data[OnlyGrainSpLUT::FeS_dust], grain_temperatures.data[OnlyGrainSpLUT::Al2O3_dust], grain_temperatures.data[OnlyGrainSpLUT::ref_org_dust],
     grain_temperatures.data[OnlyGrainSpLUT::vol_org_dust], grain_temperatures.data[OnlyGrainSpLUT::H2O_ice_dust], my_rates->gas_grain2, &my_rates->gamma_isrf2,
@@ -99,6 +121,19 @@ inline void calc_grain_size_increment_1d (
   grackle::impl::InternalDustPropBuf internal_dust_prop_buf
 ) {
 
+  // we can be VERY confident that inject_pathway_props is not a nullptr
+  grackle::impl::GrainMetalInjectPathways* inject_pathway_props =
+    my_rates->opaque_storage->inject_pathway_props;
+
+  // NOTE: gr_N and gr_Size are historical names
+  // -> they are pretty uninformative and should be changed!
+  int gr_N[2] = {
+    inject_pathway_props->n_opac_poly_coef,
+    static_cast<int>(inject_pathway_props->log10Tdust_interp_props.dimension[0])
+  };
+  int gr_Size = gr_N[0] * gr_N[1];
+
+
   FORTRAN_NAME(calc_grain_size_increment_1d)(
     &my_chemistry->multi_metals, &my_chemistry->metal_abundances, &my_chemistry->dust_species, &my_chemistry->grain_growth, itmask_metal,
     &my_fields->grid_dimension[0], &my_fields->grid_dimension[1], &my_fields->grid_dimension[2], &idx_range.i_start, &idx_range.i_end, &idx_range.jp1, &idx_range.kp1, &dom, my_fields->density,
@@ -136,7 +171,7 @@ inline void calc_grain_size_increment_1d (
     my_rates->opaque_storage->inject_pathway_props->size_moments.data[OnlyGrainSpLUT::ref_org_dust],
     my_rates->opaque_storage->inject_pathway_props->size_moments.data[OnlyGrainSpLUT::vol_org_dust],
     my_rates->opaque_storage->inject_pathway_props->size_moments.data[OnlyGrainSpLUT::H2O_ice_dust],
-    my_rates->gr_N, &my_rates->gr_Size,
+    gr_N, &gr_Size,
     &my_rates->opaque_storage->inject_pathway_props->log10Tdust_interp_props.parameter_spacing[0],
     my_rates->gr_Td,
     my_rates->opaque_storage->inject_pathway_props->opacity_coef_table.data[OnlyGrainSpLUT::SiM_dust],
