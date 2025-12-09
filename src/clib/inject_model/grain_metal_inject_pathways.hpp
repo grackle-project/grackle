@@ -296,6 +296,24 @@ inline bool GrainMetalInjectPathways_is_valid(const GrainMetalInjectPathways* pt
   return ptr->n_pathways != -1;
 }
 
+/// Queries the specified GrainMetalInjectPathways instance for the number of
+/// log10(Tdust) values that are relevant for the opacity coefficient table.
+///
+/// This function is intended to be called whenever we construct a new
+/// InternalDustPropBuf instance.
+///
+/// @param[in] ptr The instance to query. It is ok for this to be a `nullptr`,
+///     however the result is undefined if GrainMetalInjectPathways_is_valid
+///     would return false.
+///
+/// @note
+/// Frankly, this is intended to be short-term solution until we have a chance
+/// to reduce the number of places where InternalDustPropBuf is constructed
+inline int GrainMetalInjectPathways_get_n_log10Tdust_vals
+  (const GrainMetalInjectPathways* ptr) {
+  return (ptr == nullptr) ? 0 : ptr->log10Tdust_interp_props.dimension[0];
+}
+
 
 /// performs cleanup of the contents of GrainMetalInjectPathways
 ///

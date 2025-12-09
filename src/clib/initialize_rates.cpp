@@ -471,9 +471,6 @@ int grackle::impl::initialize_rates(
     double coolingUnits = (pow(my_units->a_units, 5) * pow(lengthBase1, 2) * pow(mh, 2))
                           / (densityBase1 * pow(timeBase1, 3));
 
-    // These always need to be allocated since we define other variables by them.
-    my_rates->gr_N = (int*)calloc(2, sizeof(int));
-
     if (my_chemistry->use_primordial_continuum_opacity == 1) {
       initialize_primordial_opacity(my_chemistry, my_rates);
     }

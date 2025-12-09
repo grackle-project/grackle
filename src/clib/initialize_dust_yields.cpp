@@ -219,16 +219,9 @@ void override_metal_inject_props(
 ///
 /// @note
 /// to start, this only handles the grain yields
-void override_dust_inject_props(chemistry_data_storage *my_rates,
-                                double value) {
-
-  GRIMPL_REQUIRE(my_rates != nullptr && my_rates->opaque_storage != nullptr,
-                 "sanity check -- should never ever fail!");
-  grackle::impl::GrainMetalInjectPathways* inject_pathway_props
-    = my_rates->opaque_storage->inject_pathway_props;
-
-  GRIMPL_REQUIRE(inject_pathway_props != nullptr,
-                 "sanity check -- should never ever fail!");
+void override_dust_inject_props(
+    grackle::impl::GrainMetalInjectPathways* inject_pathway_props,
+    double value) {
 
   const int n_grain_species = OnlyGrainSpLUT::NUM_ENTRIES;
 
@@ -254,12 +247,15 @@ void override_dust_inject_props(chemistry_data_storage *my_rates,
   }
 
   // handle the opacity coefficient table
-  int opac_table_len = n_pathways * my_rates->gr_Size;
+  long long opac_table_len = (
+      static_cast<long long>(n_pathways) *
+      static_cast<long long>(inject_pathway_props->n_opac_poly_coef) *
+      inject_pathway_props->log10Tdust_interp_props.dimension[0]);
   for (int grain_species_idx = 0; grain_species_idx < n_grain_species;
       grain_species_idx++){
     double* arr =
       inject_pathway_props->opacity_coef_table.data[grain_species_idx];
-    for(int i = 0; i < opac_table_len; i++) {
+    for(long long i = 0LL; i < opac_table_len; i++) {
       arr[i] = value;
     }
   }
@@ -323,9 +319,6 @@ int grackle::impl::initialize_dust_yields(chemistry_data *my_chemistry,
   // todo: rename gr_Td, dTd since they are related to log10(Tdust) or ln(Tdust)
   inject_pathway_props->log10Tdust_interp_props.parameter_spacing[0] = dTd;
       my_rates->gr_Td = (double*)malloc(NTd * Nmom * sizeof(double));
-      my_rates->gr_Size = NTd * Nmom;
-      my_rates->gr_N[0] = Nmom;
-      my_rates->gr_N[1] = NTd;
   for(int iTd = 0; iTd < NTd; iTd++) {
     my_rates->gr_Td[iTd] = Td0 + (double)iTd * dTd;
   }
@@ -333,7 +326,7 @@ int grackle::impl::initialize_dust_yields(chemistry_data *my_chemistry,
 
   // zero-out all metal injection yield fractions and dust grain properties
   override_metal_inject_props(inject_pathway_props, 0.0, n_pathways);
-  override_dust_inject_props(my_rates, 0.0);
+  override_dust_inject_props(inject_pathway_props, 0.0);
 
   SetupCallbackCtx ctx = {my_rates, 0};
 
