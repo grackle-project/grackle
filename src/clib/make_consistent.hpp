@@ -30,9 +30,10 @@ namespace grackle::impl {
 /// @param[in] inject_pathway_props holds data about the modelled injection
 ///     pathways for all metals and grain species
 /// @param[in] my_fields specifies the field data
-void make_consistent(int imetal, double dom, chemistry_data* my_chemistry,
-                     const grackle::impl::GrainMetalInjectPathways* inject_pathway_props,
-                     grackle_field_data* my_fields);
+void make_consistent(
+    int imetal, double dom, chemistry_data* my_chemistry,
+    const grackle::impl::GrainMetalInjectPathways* inject_pathway_props,
+    grackle_field_data* my_fields);
 
 }  // namespace grackle::impl
 

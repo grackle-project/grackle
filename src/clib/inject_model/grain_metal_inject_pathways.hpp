@@ -76,12 +76,12 @@ inline void drop_MetalTables(MetalTables* ptr) {
 /// fills elements with zeros
 inline void MetalTables_zero_out(MetalTables* ptr, int nelem) {
   for (int i = 0; i < nelem; i++) {
-    ptr->C [i] = 0.0;
-    ptr->O [i] = 0.0;
+    ptr->C[i] = 0.0;
+    ptr->O[i] = 0.0;
     ptr->Mg[i] = 0.0;
     ptr->Al[i] = 0.0;
     ptr->Si[i] = 0.0;
-    ptr->S [i] = 0.0;
+    ptr->S[i] = 0.0;
     ptr->Fe[i] = 0.0;
   }
 }
@@ -257,7 +257,6 @@ struct GrainMetalInjectPathways {
 ///     computed from the opacity coefficient table.
 inline GrainMetalInjectPathways new_GrainMetalInjectPathways(
     int n_pathways, int n_log10Tdust_vals, int n_opac_poly_coef) {
-
   bool err = false;
 
   if (n_pathways <= 0) {
@@ -305,7 +304,8 @@ inline GrainMetalInjectPathways new_GrainMetalInjectPathways(
 
 /// Checks whether the GrainMetalInjectPathways that is returned by
 /// new_GrainMetalInjectPathways is valid
-inline bool GrainMetalInjectPathways_is_valid(const GrainMetalInjectPathways* ptr) {
+inline bool GrainMetalInjectPathways_is_valid(
+    const GrainMetalInjectPathways* ptr) {
   return ptr->n_pathways != -1;
 }
 
@@ -322,17 +322,16 @@ inline bool GrainMetalInjectPathways_is_valid(const GrainMetalInjectPathways* pt
 /// @note
 /// Frankly, this is intended to be short-term solution until we have a chance
 /// to reduce the number of places where InternalDustPropBuf is constructed
-inline int GrainMetalInjectPathways_get_n_log10Tdust_vals
-  (const GrainMetalInjectPathways* ptr) {
+inline int GrainMetalInjectPathways_get_n_log10Tdust_vals(
+    const GrainMetalInjectPathways* ptr) {
   return (ptr == nullptr) ? 0 : ptr->log10Tdust_interp_props.dimension[0];
 }
-
 
 /// performs cleanup of the contents of GrainMetalInjectPathways
 ///
 /// This effectively invokes a destructor
 inline void drop_GrainMetalInjectPathways(GrainMetalInjectPathways* ptr) {
-  if (GrainMetalInjectPathways_is_valid(ptr)){
+  if (GrainMetalInjectPathways_is_valid(ptr)) {
     yields::drop_MetalTables(&ptr->total_metal_nuclide_yields);
     yields::drop_MetalTables(&ptr->gas_metal_nuclide_yields);
     drop_GrainSpeciesCollection(&ptr->grain_yields);

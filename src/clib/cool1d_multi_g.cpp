@@ -188,9 +188,7 @@ void grackle::impl::cool1d_multi_g(
       grackle::impl::new_InternalDustPropBuf(
           my_fields->grid_dimension[0],
           GrainMetalInjectPathways_get_n_log10Tdust_vals(
-             my_rates->opaque_storage->inject_pathway_props
-          )
-      );
+              my_rates->opaque_storage->inject_pathway_props));
   // opacity coefficients for each dust grain (the product of opacity
   // coefficient & gas mass density is the linear absortpion coefficient)
   grackle::impl::GrainSpeciesCollection grain_kappa =

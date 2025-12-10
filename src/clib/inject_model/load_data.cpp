@@ -17,7 +17,7 @@
 #include "raw_data.hpp"
 #include "../LUT.hpp"
 #include "../opaque_storage.hpp"
-#include "../status_reporting.h" // GrPrintAndReturnErr
+#include "../status_reporting.h"  // GrPrintAndReturnErr
 #include "../utils/FrozenKeyIdxBiMap.hpp"
 
 namespace {  // stuff inside an anonymous namespace is local to this file
@@ -27,17 +27,16 @@ namespace {  // stuff inside an anonymous namespace is local to this file
 ///
 /// @see SetupCallbackCtx::inj_path_names - The entity that is initialized with
 ///   the values in this variable. Its docstring provides more details.
-constexpr const char * const known_inj_path_names[] = {
-  "local_ISM", "ccsn13", "ccsn20", "ccsn25", "ccsn30", "fsn13",
-  "fsn15", "fsn50", "fsn80", "pisn170", "pisn200", "y19",
+constexpr const char* const known_inj_path_names[] = {
+    "local_ISM", "ccsn13", "ccsn20", "ccsn25",  "ccsn30",  "fsn13",
+    "fsn15",     "fsn50",  "fsn80",  "pisn170", "pisn200", "y19",
 };
 
 /// a crude map-like function
 bool lookup_metal_yield_ptrs(
-  grackle::impl::GrainMetalInjectPathways* inject_pathway_props,
-  const char* metal_nuclide_name, double** total_yield_ptr,
-  double** gasonly_yield_ptr
-) {
+    grackle::impl::GrainMetalInjectPathways* inject_pathway_props,
+    const char* metal_nuclide_name, double** total_yield_ptr,
+    double** gasonly_yield_ptr) {
   if (std::strcmp("C", metal_nuclide_name) == 0) {
     (*total_yield_ptr) = inject_pathway_props->total_metal_nuclide_yields.C;
     (*gasonly_yield_ptr) = inject_pathway_props->gas_metal_nuclide_yields.C;
@@ -63,11 +62,10 @@ bool lookup_metal_yield_ptrs(
     return false;
   }
   return true;
-
 }
 
 /// the context object for setup_yield_table_callback
-struct SetupCallbackCtx{
+struct SetupCallbackCtx {
   /// The object that gets updated by the values that the callback loads
   grackle::impl::GrainMetalInjectPathways* inject_pathway_props;
 
@@ -117,9 +115,8 @@ struct SetupCallbackCtx{
 /// receiving this callback
 extern "C" int setup_yield_table_callback(
     const char* name,
-    const grackle::impl::inj_model_input::InjectionPathwayInputData *input,
-    void* ctx)
-{
+    const grackle::impl::inj_model_input::InjectionPathwayInputData* input,
+    void* ctx) {
   namespace inj_input = ::grackle::impl::inj_model_input;
   namespace bimap = ::grackle::impl::bimap;
 
@@ -130,27 +127,26 @@ extern "C" int setup_yield_table_callback(
   // -> see the docstring for SetupCallbackCtx::inj_path_names for how this
   //    behavior will change when we start loading data from HDF5 files
   int pathway_idx = static_cast<int>(
-    FrozenKeyIdxBiMap_idx_from_key(my_ctx->inj_path_names, name)
-  );
+      FrozenKeyIdxBiMap_idx_from_key(my_ctx->inj_path_names, name));
   if (pathway_idx == static_cast<int>(bimap::invalid_val)) {
-    return GrPrintAndReturnErr(
-      "`%s` is an unexpected injection pathway name", name);
+    return GrPrintAndReturnErr("`%s` is an unexpected injection pathway name",
+                               name);
   }
 
   // load the object that we update with the data we read
-  grackle::impl::GrainMetalInjectPathways* inject_pathway_props
-    = my_ctx->inject_pathway_props;
+  grackle::impl::GrainMetalInjectPathways* inject_pathway_props =
+      my_ctx->inject_pathway_props;
 
   // record the yields for each metal nuclide
   for (int i = 0; i < input->n_metal_nuclide_yields; i++) {
     const inj_input::MetalNuclideYieldProps& yield_info =
-      input->metal_nuclide_yields[i];
+        input->metal_nuclide_yields[i];
 
     double *total_yield, *gas_yield;
-    if (!lookup_metal_yield_ptrs(inject_pathway_props, yield_info.name, 
-                                 &total_yield, &gas_yield)){
-      return GrPrintAndReturnErr(
-        "`%s` not a known metal nuclide", yield_info.name);
+    if (!lookup_metal_yield_ptrs(inject_pathway_props, yield_info.name,
+                                 &total_yield, &gas_yield)) {
+      return GrPrintAndReturnErr("`%s` not a known metal nuclide",
+                                 yield_info.name);
     }
 
     total_yield[pathway_idx] = yield_info.total_yield;
@@ -163,31 +159,29 @@ extern "C" int setup_yield_table_callback(
     for (int yield_idx = 0; yield_idx < input->n_injected_grain_species;
          yield_idx++) {
       const inj_input::GrainSpeciesYieldProps& yield_info =
-        input->initial_grain_props[yield_idx];
+          input->initial_grain_props[yield_idx];
 
-      int grain_species_idx = static_cast<int>(
-        FrozenKeyIdxBiMap_idx_from_key(my_ctx->grain_species_names,
-                                       yield_info.name)
-      );
+      int grain_species_idx = static_cast<int>(FrozenKeyIdxBiMap_idx_from_key(
+          my_ctx->grain_species_names, yield_info.name));
       if (grain_species_idx == static_cast<int>(bimap::invalid_val)) {
         continue;
       }
 
       // copy the nonprimordial yield fraction
-      inject_pathway_props->grain_yields.data[grain_species_idx][pathway_idx]
-        = yield_info.nonprimoridal_yield_frac;
+      inject_pathway_props->grain_yields.data[grain_species_idx][pathway_idx] =
+          yield_info.nonprimoridal_yield_frac;
 
       // copy the 1st, 2nd, and 3rd moments of the size distribution
       // (the 0th moment isn't recorded anywhere
       double* size_mom_table =
-        inject_pathway_props->size_moments.data[grain_species_idx];
+          inject_pathway_props->size_moments.data[grain_species_idx];
       for (int i = 0; i < 3; i++) {
-        size_mom_table[pathway_idx*3+i] = yield_info.size_moments[i];
+        size_mom_table[pathway_idx * 3 + i] = yield_info.size_moments[i];
       }
 
       // copy over the opacity coefficients table
       double* opac_coef_table =
-        inject_pathway_props->opacity_coef_table.data[grain_species_idx];
+          inject_pathway_props->opacity_coef_table.data[grain_species_idx];
       int n_Td = grackle::impl::inj_model_input::N_Tdust_Opacity_Table;
       int n_coef = grackle::impl::inj_model_input::N_Opacity_Coef;
 
@@ -197,9 +191,7 @@ extern "C" int setup_yield_table_callback(
           opac_coef_table[i] = yield_info.opacity_coef_table[i_Td][i_coef];
         }
       }
-      
     }
-
   }
 
   (my_ctx->counter)++;
@@ -213,40 +205,39 @@ extern "C" int setup_yield_table_callback(
 /// to start, this only handles the grain yields
 void zero_out_dust_inject_props(
     grackle::impl::GrainMetalInjectPathways* inject_pathway_props) {
-
   const int n_grain_species = OnlyGrainSpLUT::NUM_ENTRIES;
 
   int n_pathways = inject_pathway_props->n_pathways;
 
   // handle the grain yields
   for (int grain_species_idx = 0; grain_species_idx < n_grain_species;
-      grain_species_idx++){
+       grain_species_idx++) {
     double* arr = inject_pathway_props->grain_yields.data[grain_species_idx];
-    for(int iSN = 0; iSN < n_pathways; iSN++) {
+    for (int iSN = 0; iSN < n_pathways; iSN++) {
       arr[iSN] = 0.0;
     }
   }
 
   // handle the size moments
-  int moment_table_len = n_pathways * 3; // there are 3 size moments
+  int moment_table_len = n_pathways * 3;  // there are 3 size moments
   for (int grain_species_idx = 0; grain_species_idx < n_grain_species;
-      grain_species_idx++){
+       grain_species_idx++) {
     double* arr = inject_pathway_props->size_moments.data[grain_species_idx];
-    for(int i = 0; i < moment_table_len; i++) {
+    for (int i = 0; i < moment_table_len; i++) {
       arr[i] = 0.0;
     }
   }
 
   // handle the opacity coefficient table
-  long long opac_table_len = (
-      static_cast<long long>(n_pathways) *
-      static_cast<long long>(inject_pathway_props->n_opac_poly_coef) *
-      inject_pathway_props->log10Tdust_interp_props.dimension[0]);
+  long long opac_table_len =
+      (static_cast<long long>(n_pathways) *
+       static_cast<long long>(inject_pathway_props->n_opac_poly_coef) *
+       inject_pathway_props->log10Tdust_interp_props.dimension[0]);
   for (int grain_species_idx = 0; grain_species_idx < n_grain_species;
-      grain_species_idx++){
+       grain_species_idx++) {
     double* arr =
-      inject_pathway_props->opacity_coef_table.data[grain_species_idx];
-    for(long long i = 0LL; i < opac_table_len; i++) {
+        inject_pathway_props->opacity_coef_table.data[grain_species_idx];
+    for (long long i = 0LL; i < opac_table_len; i++) {
       arr[i] = 0.0;
     }
   }
@@ -254,9 +245,8 @@ void zero_out_dust_inject_props(
 
 }  // anonymous namespace
 
-int grackle::impl::load_inject_path_data(const chemistry_data *my_chemistry,
-                                         chemistry_data_storage *my_rates)
-{
+int grackle::impl::load_inject_path_data(const chemistry_data* my_chemistry,
+                                         chemistry_data_storage* my_rates) {
   // Currently, this function "loads" injection pathway data from data that is
   // directly embedded as part of the Grackle library in a manner controlled
   // by raw_data.hpp and raw_data.cpp
@@ -271,27 +261,27 @@ int grackle::impl::load_inject_path_data(const chemistry_data *my_chemistry,
   // -> in the future, we are going to move away from this hardcoded approach
   // -> since the strings are statically allocates, the map won't make copies
   //    of the strings
-  constexpr int n_pathways = static_cast<int>(
-    sizeof(known_inj_path_names) / sizeof(char*));
+  constexpr int n_pathways =
+      static_cast<int>(sizeof(known_inj_path_names) / sizeof(char*));
 
   FrozenKeyIdxBiMap inj_path_names = new_FrozenKeyIdxBiMap(
       known_inj_path_names, n_pathways, BiMapMode::REFS_KEYDATA);
   if (!FrozenKeyIdxBiMap_is_ok(&inj_path_names)) {
     return GrPrintAndReturnErr(
-      "there was a problem building the map of model names");
+        "there was a problem building the map of model names");
   }
 
   // initialize the object that will hold the loaded data
   int n_log10Tdust_vals = grackle::impl::inj_model_input::N_Tdust_Opacity_Table;
   int n_opac_poly_coef = grackle::impl::inj_model_input::N_Opacity_Coef;
   my_rates->opaque_storage->inject_pathway_props =
-    new grackle::impl::GrainMetalInjectPathways;
+      new grackle::impl::GrainMetalInjectPathways;
   *(my_rates->opaque_storage->inject_pathway_props) =
-    new_GrainMetalInjectPathways(n_pathways, n_log10Tdust_vals,
-                                 n_opac_poly_coef);
+      new_GrainMetalInjectPathways(n_pathways, n_log10Tdust_vals,
+                                   n_opac_poly_coef);
 
-  grackle::impl::GrainMetalInjectPathways* inject_pathway_props
-    = my_rates->opaque_storage->inject_pathway_props;
+  grackle::impl::GrainMetalInjectPathways* inject_pathway_props =
+      my_rates->opaque_storage->inject_pathway_props;
 
   if (!GrainMetalInjectPathways_is_valid(inject_pathway_props)) {
     drop_FrozenKeyIdxBiMap(&inj_path_names);
@@ -302,32 +292,33 @@ int grackle::impl::load_inject_path_data(const chemistry_data *my_chemistry,
   double log10Tdust_lo = 0.0;
   double log10Tdust_step = 0.1;
 
-  inject_pathway_props->log10Tdust_interp_props.parameter_spacing[0]
-    = log10Tdust_step;
+  inject_pathway_props->log10Tdust_interp_props.parameter_spacing[0] =
+      log10Tdust_step;
   double* log10Tdust_vals =
-    inject_pathway_props->log10Tdust_interp_props.parameters[0];
-  for(int iTd = 0; iTd < n_log10Tdust_vals; iTd++) {
+      inject_pathway_props->log10Tdust_interp_props.parameters[0];
+  for (int iTd = 0; iTd < n_log10Tdust_vals; iTd++) {
     log10Tdust_vals[iTd] = log10Tdust_lo + (double)iTd * log10Tdust_step;
   }
 
   // zero-out all metal injection yield fractions and dust grain properties
   yields::MetalTables_zero_out(
       &inject_pathway_props->total_metal_nuclide_yields, n_pathways);
-  yields::MetalTables_zero_out(
-      &inject_pathway_props->gas_metal_nuclide_yields, n_pathways);
+  yields::MetalTables_zero_out(&inject_pathway_props->gas_metal_nuclide_yields,
+                               n_pathways);
   zero_out_dust_inject_props(inject_pathway_props);
 
   // actually load in the data for each injection pathway
-  GrainSpeciesInfo* grain_species_info = 
-    my_rates->opaque_storage->grain_species_info;
+  GrainSpeciesInfo* grain_species_info =
+      my_rates->opaque_storage->grain_species_info;
   const FrozenKeyIdxBiMap* grain_species_names =
-    (grain_species_info == nullptr) ? nullptr : &grain_species_info->name_map;
+      (grain_species_info == nullptr) ? nullptr : &grain_species_info->name_map;
 
   SetupCallbackCtx ctx = {
-    /* inject_pathway_props = */ my_rates->opaque_storage->inject_pathway_props,
-    /* counter = */ 0,
-    /* inj_path_names = */ &inj_path_names,
-    /* grain_species_names = */ grain_species_names,
+      /* inject_pathway_props = */ my_rates->opaque_storage
+          ->inject_pathway_props,
+      /* counter = */ 0,
+      /* inj_path_names = */ &inj_path_names,
+      /* grain_species_names = */ grain_species_names,
   };
 
   int ret = grackle::impl::inj_model_input::input_inject_model_iterate(
@@ -340,8 +331,8 @@ int grackle::impl::load_inject_path_data(const chemistry_data *my_chemistry,
         "injection pathway");
   } else if (ctx.counter != n_pathways) {
     return GrPrintAndReturnErr(
-        "Only loaded data for %d of the %d available pathways",
-        ctx.counter, n_pathways);
+        "Only loaded data for %d of the %d available pathways", ctx.counter,
+        n_pathways);
   }
 
   return GR_SUCCESS;

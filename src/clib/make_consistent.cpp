@@ -26,9 +26,10 @@
 
 namespace grackle::impl {
 
-void make_consistent(int imetal, double dom, chemistry_data* my_chemistry,
-                     const grackle::impl::GrainMetalInjectPathways* inject_pathway_props,
-                     grackle_field_data* my_fields) {
+void make_consistent(
+    int imetal, double dom, chemistry_data* my_chemistry,
+    const grackle::impl::GrainMetalInjectPathways* inject_pathway_props,
+    grackle_field_data* my_fields) {
   // Arguments
 
   grackle::impl::View<gr_float***> de(
@@ -244,8 +245,8 @@ void make_consistent(int imetal, double dom, chemistry_data* my_chemistry,
   gr_float correctCd, correctOd, correctMgd, correctSid, correctFed;
   int iSN, iSN0;
 
-  const int n_pathways = (inject_pathway_props == nullptr) ? 0 :
-    inject_pathway_props->n_pathways;
+  const int n_pathways =
+      (inject_pathway_props == nullptr) ? 0 : inject_pathway_props->n_pathways;
   std::vector<gr_float> SN_metal_data_(my_fields->grid_dimension[0] *
                                        n_pathways);
   grackle::impl::View<gr_float**> SN_metal;
