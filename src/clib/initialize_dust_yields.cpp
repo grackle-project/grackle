@@ -80,9 +80,6 @@ struct SetupCallbackCtx{
   /// data from an injection pathway
   int counter;
 
-  /// the number of dust grain species
-  const int n_grain_species;
-
   /// maps the names of known injection pathways to a unique index
   ///
   /// The callback function reports an error if an injection is encountered
@@ -107,6 +104,10 @@ struct SetupCallbackCtx{
   /// from HDF5 files. At that point, we'll need to tweak the callback function
   /// to load in data for models with arbitrary names.
   const grackle::impl::FrozenKeyIdxBiMap* inj_path_names;
+
+  /// maps the names of the grain species for which data will be loaded to the
+  /// appropriate grain species index
+  const grackle::impl::FrozenKeyIdxBiMap* grain_species_names;
 };
 
 /// a callback function that sets up the appropriate parts of
@@ -125,6 +126,7 @@ extern "C" int setup_yield_table_callback(
     void* ctx)
 {
   namespace inj_input = ::grackle::impl::inj_model_input;
+  namespace bimap = ::grackle::impl::bimap;
 
   SetupCallbackCtx* my_ctx = static_cast<SetupCallbackCtx*>(ctx);
 
@@ -135,7 +137,7 @@ extern "C" int setup_yield_table_callback(
   int pathway_idx = static_cast<int>(
     FrozenKeyIdxBiMap_idx_from_key(my_ctx->inj_path_names, name)
   );
-  if (pathway_idx == static_cast<int>(grackle::impl::bimap::invalid_val)) {
+  if (pathway_idx == static_cast<int>(bimap::invalid_val)) {
     return GrPrintAndReturnErr(
       "`%s` is an unexpected injection pathway name", name);
   }
@@ -160,64 +162,35 @@ extern "C" int setup_yield_table_callback(
     gas_yield[pathway_idx] = yield_info.gas_yield;
   }
 
-  // record each grain species yield
-  for (int yield_idx = 0; yield_idx < input->n_injected_grain_species;
-       yield_idx++) {
-    const inj_input::GrainSpeciesYieldProps& yield_info =
-      input->initial_grain_props[yield_idx];
+  if (my_ctx->grain_species_names != nullptr) {
+    // loop over chunks of yield data. Each chunk holds data for the current
+    // pathway that corresponds to a distinct grain species
+    for (int yield_idx = 0; yield_idx < input->n_injected_grain_species;
+         yield_idx++) {
+      const inj_input::GrainSpeciesYieldProps& yield_info =
+        input->initial_grain_props[yield_idx];
 
-    int grain_species_idx = -1;
+      int grain_species_idx = static_cast<int>(
+        FrozenKeyIdxBiMap_idx_from_key(my_ctx->grain_species_names,
+                                       yield_info.name)
+      );
+      if (grain_species_idx == static_cast<int>(bimap::invalid_val)) {
+        continue;
+      }
 
-    // with a little refactoring, this will get a lot more concise
-    if (std::strcmp("MgSiO3_dust", yield_info.name) == 0) {
-      grain_species_idx = OnlyGrainSpLUT::MgSiO3_dust;
-    } else if (std::strcmp("AC_dust", yield_info.name) == 0) {
-      grain_species_idx = OnlyGrainSpLUT::AC_dust;
-    } else if (std::strcmp("SiM_dust", yield_info.name) == 0) {
-      grain_species_idx = OnlyGrainSpLUT::SiM_dust;
-    } else if (std::strcmp("FeM_dust", yield_info.name) == 0) {
-      grain_species_idx = OnlyGrainSpLUT::FeM_dust;
-    } else if (std::strcmp("Mg2SiO4_dust", yield_info.name) == 0) {
-      grain_species_idx = OnlyGrainSpLUT::Mg2SiO4_dust;
-    } else if (std::strcmp("Fe3O4_dust", yield_info.name) == 0) {
-      grain_species_idx = OnlyGrainSpLUT::Fe3O4_dust;
-    } else if (std::strcmp("SiO2_dust", yield_info.name) == 0) {
-      grain_species_idx = OnlyGrainSpLUT::SiO2_dust;
-    } else if (std::strcmp("MgO_dust", yield_info.name) == 0) {
-      grain_species_idx = OnlyGrainSpLUT::MgO_dust;
-    } else if (std::strcmp("FeS_dust", yield_info.name) == 0) {
-      grain_species_idx = OnlyGrainSpLUT::FeS_dust;
-    } else if (std::strcmp("Al2O3_dust", yield_info.name) == 0) {
-      grain_species_idx = OnlyGrainSpLUT::Al2O3_dust;
-    } else if (std::strcmp("ref_org_dust", yield_info.name) == 0) {
-      grain_species_idx = OnlyGrainSpLUT::ref_org_dust;
-    } else if (std::strcmp("vol_org_dust", yield_info.name) == 0) {
-      grain_species_idx = OnlyGrainSpLUT::vol_org_dust;
-    } else if (std::strcmp("H2O_ice_dust", yield_info.name) == 0) {
-      grain_species_idx = OnlyGrainSpLUT::H2O_ice_dust;
-    } else {
-      return GrPrintAndReturnErr(
-        "`%s` not a known grain species", yield_info.name);
-    }
+      // copy the nonprimordial yield fraction
+      inject_pathway_props->grain_yields.data[grain_species_idx][pathway_idx]
+        = yield_info.nonprimoridal_yield_frac;
 
-    if (grain_species_idx >= my_ctx->n_grain_species) {
-      continue;
-    }
+      // copy the 1st, 2nd, and 3rd moments of the size distribution
+      // (the 0th moment isn't recorded anywhere
+      double* size_mom_table =
+        inject_pathway_props->size_moments.data[grain_species_idx];
+      for (int i = 0; i < 3; i++) {
+        size_mom_table[pathway_idx*3+i] = yield_info.size_moments[i];
+      }
 
-    // copy the nonprimordial yield fraction
-    inject_pathway_props->grain_yields.data[grain_species_idx][pathway_idx]
-      = yield_info.nonprimoridal_yield_frac;
-
-    // copy the 1st, 2nd, and 3rd moments of the size distribution
-    // (the 0th moment isn't recorded anywhere
-    double* size_mom_table =
-      inject_pathway_props->size_moments.data[grain_species_idx];
-    for (int i = 0; i < 3; i++) {
-      size_mom_table[pathway_idx*3+i] = yield_info.size_moments[i];
-    }
-
-    // copy over the opacity coefficients table
-    {
+      // copy over the opacity coefficients table
       double* opac_coef_table =
         inject_pathway_props->opacity_coef_table.data[grain_species_idx];
       int n_Td = grackle::impl::inj_model_input::N_Tdust_Opacity_Table;
@@ -229,7 +202,9 @@ extern "C" int setup_yield_table_callback(
           opac_coef_table[i] = yield_info.opacity_coef_table[i_Td][i_coef];
         }
       }
+      
     }
+
   }
 
   (my_ctx->counter)++;
@@ -343,11 +318,16 @@ int grackle::impl::initialize_dust_yields(chemistry_data *my_chemistry,
   zero_out_dust_inject_props(inject_pathway_props);
 
   // actually load in the data for each injection pathway
+  GrainSpeciesInfo* grain_species_info = 
+    my_rates->opaque_storage->grain_species_info;
+  const FrozenKeyIdxBiMap* grain_species_names =
+    (grain_species_info == nullptr) ? nullptr : &grain_species_info->name_map;
+
   SetupCallbackCtx ctx = {
     /* inject_pathway_props = */ my_rates->opaque_storage->inject_pathway_props,
     /* counter = */ 0,
-    /* n_grain_species = */ get_n_grain_species(my_chemistry->dust_species),
     /* inj_path_names = */ &inj_path_names,
+    /* grain_species_names = */ grain_species_names,
   };
 
   int ret = grackle::impl::inj_model_input::input_inject_model_iterate(
